@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 
+#include <RDBoost/export.h>
 #ifndef _RD_PYSEQUENCEHOLDER_H_
 #define _RD_PYSEQUENCEHOLDER_H_
 

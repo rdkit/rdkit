@@ -29,6 +29,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
+#include <RDBoost/export.h>
 #ifndef RDKIT_PROPERTIES_H
 #define RDKIT_PROPERTIES_H
 
@@ -42,7 +43,7 @@
 
 namespace RDKit {
 namespace Descriptors {
-  struct PropertyFunctor {
+  struct RDKIT_DESCRIPTORS_EXPORT PropertyFunctor {
     // Registry of property functions
     //  See REGISTER_DESCRIPTOR
     std::string propName;
@@ -67,7 +68,7 @@ namespace Descriptors {
 
   
 //! Holds a collection of properties for computation purposes
-class Properties {
+class RDKIT_DESCRIPTORS_EXPORT Properties {
 protected:
   std::vector<boost::shared_ptr<PropertyFunctor> > m_properties;
   
@@ -117,7 +118,7 @@ T* makePropertyQuery(const std::string &name, double what) {
 }
 
 
-PROP_RANGE_QUERY *makePropertyRangeQuery(const std::string &name,
+RDKIT_DESCRIPTORS_EXPORT PROP_RANGE_QUERY *makePropertyRangeQuery(const std::string &name,
                                          double min,
                                          double max);
 

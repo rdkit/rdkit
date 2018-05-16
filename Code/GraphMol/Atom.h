@@ -12,6 +12,7 @@
   \brief Defines the Atom class and associated typedefs
 
 */
+#include <RDBoost/export.h>
 #ifndef _RD_ATOM_H
 #define _RD_ATOM_H
 
@@ -65,7 +66,7 @@ class AtomMonomerInfo;
   at the *end* of the list of other bonds.
 
 */
-class Atom : public RDProps {
+class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   friend class MolPickler;  //!< the pickler needs access to our privates
   friend class ROMol;
   friend class RWMol;
@@ -405,26 +406,26 @@ class Atom : public RDProps {
 
 //! Set the atom's MDL integer RLabel
 //   Setting to 0 clears the rlabel.  Rlabel must be in the range [0..99]
-void setAtomRLabel(Atom *atm, int rlabel);
-int getAtomRLabel(const Atom *atm);
+RDKIT_GRAPHMOL_EXPORT void setAtomRLabel(Atom *atm, int rlabel);
+RDKIT_GRAPHMOL_EXPORT int getAtomRLabel(const Atom *atm);
 
 //! Set the atom's MDL atom alias
 //   Setting to an empty string clears the alias
-void setAtomAlias(Atom *atom, const std::string &alias);
-std::string getAtomAlias(const Atom *atom);
+RDKIT_GRAPHMOL_EXPORT void setAtomAlias(Atom *atom, const std::string &alias);
+RDKIT_GRAPHMOL_EXPORT std::string getAtomAlias(const Atom *atom);
 
 //! Set the atom's MDL atom value
 //   Setting to an empty string clears the value
 //   This is where recursive smarts get stored in MolBlock Queries
-void setAtomValue(Atom *atom, const std::string &value);
-std::string getAtomValue(const Atom *atom);
+RDKIT_GRAPHMOL_EXPORT void setAtomValue(Atom *atom, const std::string &value);
+RDKIT_GRAPHMOL_EXPORT std::string getAtomValue(const Atom *atom);
 
 //! Sets the supplemental label that will follow the atom when writing
 //   smiles strings.
-void setSupplementalSmilesLabel(Atom *atom, const std::string &label);
-std::string getSupplementalSmilesLabel(const Atom *atom);
+RDKIT_GRAPHMOL_EXPORT void setSupplementalSmilesLabel(Atom *atom, const std::string &label);
+RDKIT_GRAPHMOL_EXPORT std::string getSupplementalSmilesLabel(const Atom *atom);
 };
 //! allows Atom objects to be dumped to streams
-std::ostream &operator<<(std::ostream &target, const RDKit::Atom &at);
+RDKIT_GRAPHMOL_EXPORT std::ostream &operator<<(std::ostream &target, const RDKit::Atom &at);
 
 #endif

@@ -13,6 +13,7 @@
 
 */
 
+#include <RDBoost/export.h>
 #ifndef __RD_RWMOL_H__
 #define __RD_RWMOL_H__
 
@@ -27,7 +28,7 @@ namespace RDKit {
     See documentation for ROMol for general remarks
 
  */
-class RWMol : public ROMol {
+class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
  public:
   RWMol() : ROMol() { d_partialBonds.clear(); }
 

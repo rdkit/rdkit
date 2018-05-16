@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef _RD_FILEPARSERUTILS_H
 #define _RD_FILEPARSERUTILS_H
 
@@ -31,25 +32,25 @@ T stripSpacesAndCast(const std::string &input, bool acceptSpaces = false) {
     return boost::lexical_cast<T>(trimmed);
   }
 }
-int toInt(const std::string &input, bool acceptSpaces = false);
-double toDouble(const std::string &input, bool acceptSpaces = true);
+RDKIT_FILEPARSERS_EXPORT int toInt(const std::string &input, bool acceptSpaces = false);
+RDKIT_FILEPARSERS_EXPORT double toDouble(const std::string &input, bool acceptSpaces = true);
 
 // reads a line from an MDL v3K CTAB
-std::string getV3000Line(std::istream *inStream, unsigned int &line);
+RDKIT_FILEPARSERS_EXPORT std::string getV3000Line(std::istream *inStream, unsigned int &line);
 
 // nAtoms and nBonds are ignored on input, set on output
-bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
+RDKIT_FILEPARSERS_EXPORT bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
                     Conformer *&conf, bool &chiralityPossible,
                     unsigned int &nAtoms, unsigned int &nBonds,
                     bool strictParsing = true, bool expectMEND = true);
 
 // nAtoms and nBonds are used
-bool ParseV2000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
+RDKIT_FILEPARSERS_EXPORT bool ParseV2000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
                     Conformer *&conf, bool &chiralityPossible,
                     unsigned int &nAtoms, unsigned int &nBonds,
                     bool strictParsing = true);
 
-Atom *replaceAtomWithQueryAtom(RWMol *mol, Atom *atom);
+RDKIT_FILEPARSERS_EXPORT Atom *replaceAtomWithQueryAtom(RWMol *mol, Atom *atom);
 }
 }
 

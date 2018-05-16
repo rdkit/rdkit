@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef __FEATURE_H_30112004_1121__
 #define __FEATURE_H_30112004_1121__
 

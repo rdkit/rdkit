@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef _RD_SEQUENCEWRITE_H_
 #define _RD_SEQUENCEWRITE_H_
 #include <string>
@@ -22,7 +23,7 @@ class ROMol;
  *   \note \c mol should contain monomer information in \c AtomMonomerInfo
  *structures
  */
-std::string MolToSequence(const ROMol &mol);
+RDKIT_FILEPARSERS_EXPORT std::string MolToSequence(const ROMol &mol);
 // \brief construct a FASTA string from a molecule (currently only supports
 // peptides)
 /*!
@@ -31,7 +32,7 @@ std::string MolToSequence(const ROMol &mol);
  *   \note \c mol should contain monomer information in \c AtomMonomerInfo
  *structures
  */
-std::string MolToFASTA(const ROMol &mol);
+RDKIT_FILEPARSERS_EXPORT std::string MolToFASTA(const ROMol &mol);
 // \brief construct a HELM string from a molecule (currently only supports
 // peptides)
 /*!
@@ -40,7 +41,7 @@ std::string MolToFASTA(const ROMol &mol);
  *   \note \c mol should contain monomer information in \c AtomMonomerInfo
  *structures
  */
-std::string MolToHELM(const ROMol &mol);
+RDKIT_FILEPARSERS_EXPORT std::string MolToHELM(const ROMol &mol);
 }
 
 #endif

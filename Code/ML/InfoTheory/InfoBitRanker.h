@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 
+#include <RDBoost/export.h>
 #ifndef _RD_INFORANKER_H_
 #define _RD_INFORANKER_H_
 
@@ -83,7 +84,7 @@ namespace RDInfoTheory {
 typedef std::vector<RDKit::USHORT> USHORT_VECT;
 typedef std::vector<USHORT_VECT> VECT_USHORT_VECT;
 
-class InfoBitRanker {
+class RDKIT_INFOTHEORY_EXPORT InfoBitRanker {
  public:
   /*! \brief the type of measure for information
    *

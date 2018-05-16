@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 
+#include <RDBoost/export.h>
 #ifndef RDDEPICTOR_H
 #define RDDEPICTOR_H
 
@@ -22,12 +23,12 @@ class ROMol;
 namespace RDDepict {
 
 #ifdef BUILD_COORDGEN_SUPPORT
-extern bool preferCoordGen;
+RDKIT_DEPICTOR_EXPORT extern bool preferCoordGen;
 #endif
 
 typedef boost::shared_array<double> DOUBLE_SMART_PTR;
 
-class DepictException : public std::exception {
+class RDKIT_DEPICTOR_EXPORT DepictException : public std::exception {
  public:
   DepictException(const char *msg) : _msg(msg){};
   DepictException(const std::string msg) : _msg(msg){};
@@ -69,7 +70,7 @@ class DepictException : public std::exception {
   2D coordinates
 
 */
-unsigned int compute2DCoords(RDKit::ROMol &mol,
+RDKIT_DEPICTOR_EXPORT unsigned int compute2DCoords(RDKit::ROMol &mol,
                              const RDGeom::INT_POINT2D_MAP *coordMap = 0,
                              bool canonOrient = false, bool clearConfs = true,
                              unsigned int nFlipsPerSample = 0,
@@ -126,7 +127,7 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
 
 
 */
-unsigned int compute2DCoordsMimicDistMat(
+RDKIT_DEPICTOR_EXPORT unsigned int compute2DCoordsMimicDistMat(
     RDKit::ROMol &mol, const DOUBLE_SMART_PTR *dmat = 0,
     bool canonOrient = true, bool clearConfs = true, double weightDistMat = 0.5,
     unsigned int nFlipsPerSample = 3, unsigned int nSamples = 100,
@@ -158,7 +159,7 @@ unsigned int compute2DCoordsMimicDistMat(
                          reference; if false, throws a DepictException.
 
 */
-void generateDepictionMatching2DStructure(
+RDKIT_DEPICTOR_EXPORT void generateDepictionMatching2DStructure(
     RDKit::ROMol &mol, const RDKit::ROMol &reference, int confId = -1,
     RDKit::ROMol *referencePattern = static_cast<RDKit::ROMol *>(0),
     bool acceptFailure = false, bool forceRDKit = false);
@@ -185,7 +186,7 @@ void generateDepictionMatching2DStructure(
                          for molecules that don't match the reference or the
                          referencePattern; if false, throws a DepictException.
 */
-void generateDepictionMatching3DStructure(RDKit::ROMol &mol,
+RDKIT_DEPICTOR_EXPORT void generateDepictionMatching3DStructure(RDKit::ROMol &mol,
                                           const RDKit::ROMol &reference,
                                           int confId = -1,
                                           RDKit::ROMol *referencePattern = 0,

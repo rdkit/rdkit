@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef _GRIDUTILS_H_20050126
 #define _GRIDUTILS_H_20050126
 
@@ -24,7 +25,7 @@ class Point3D;
 */
 
 template <class GRIDTYPE>
-double tverskyIndex(const GRIDTYPE &grid1, const GRIDTYPE &grid2, double alpha, double beta);
+RDKIT_RDGEOMETRYLIB_EXPORT double tverskyIndex(const GRIDTYPE &grid1, const GRIDTYPE &grid2, double alpha, double beta);
 
 //! calculate the tanimoto distance between the shapes encoded on two grids
 /*!
@@ -34,7 +35,7 @@ double tverskyIndex(const GRIDTYPE &grid1, const GRIDTYPE &grid2, double alpha, 
 */
 
 template <class GRIDTYPE>
-double tanimotoDistance(const GRIDTYPE &grid1, const GRIDTYPE &grid2);
+RDKIT_RDGEOMETRYLIB_EXPORT double tanimotoDistance(const GRIDTYPE &grid1, const GRIDTYPE &grid2);
 //! calculate the protrude distance between the shapes encoded on two grids
 /*!
 
@@ -42,15 +43,15 @@ double tanimotoDistance(const GRIDTYPE &grid1, const GRIDTYPE &grid2);
 
 */
 template <class GRIDTYPE>
-double protrudeDistance(const GRIDTYPE &grid1, const GRIDTYPE &grid2);
+RDKIT_RDGEOMETRYLIB_EXPORT double protrudeDistance(const GRIDTYPE &grid1, const GRIDTYPE &grid2);
 
 //! calculate the grid centroid within a window of a point
-Point3D computeGridCentroid(const UniformGrid3D &grid, const Point3D &pt,
+RDKIT_RDGEOMETRYLIB_EXPORT Point3D computeGridCentroid(const UniformGrid3D &grid, const Point3D &pt,
                             double windowRadius, double &weightSum);
 
 //! find terminal points of a shape encoded on a grid
 //!  this is part of the subshape implementation
-std::vector<Point3D> findGridTerminalPoints(const UniformGrid3D &grid,
+RDKIT_RDGEOMETRYLIB_EXPORT std::vector<Point3D> findGridTerminalPoints(const UniformGrid3D &grid,
                                             double windowRadius,
                                             double inclusionFraction);
 }

@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef _RD_BOUNDS_MATRIX_BUILDER_H_
 #define _RD_BOUNDS_MATRIX_BUILDER_H_
 
@@ -22,9 +23,9 @@ namespace DGeomHelpers {
   \param defaultMax  default value for the upper distance bounds
 
 */
-void initBoundsMat(DistGeom::BoundsMatrix *mmat, double defaultMin = 0.0,
+RDKIT_DISTGEOMHELPERS_EXPORT void initBoundsMat(DistGeom::BoundsMatrix *mmat, double defaultMin = 0.0,
                    double defaultMax = 1000.0);
-void initBoundsMat(DistGeom::BoundsMatPtr mmat, double defaultMin = 0.0,
+RDKIT_DISTGEOMHELPERS_EXPORT void initBoundsMat(DistGeom::BoundsMatPtr mmat, double defaultMin = 0.0,
                    double defaultMax = 1000.0);
 
 //! Set upper and lower distance bounds between atoms in a molecule based on
@@ -52,11 +53,11 @@ void initBoundsMat(DistGeom::BoundsMatPtr mmat, double defaultMin = 0.0,
   fail triangle smoothing. In these cases it is recommended to back out and
   recompute the bounds matrix with no 1-5 bounds and with vdW scaling.
 */
-void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
+RDKIT_DISTGEOMHELPERS_EXPORT void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                     bool set15bounds = true, bool scaleVDW = false);
 
 /*! Overload for experimental torsion angle preferences */
-void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
+RDKIT_DISTGEOMHELPERS_EXPORT void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                     std::vector<std::pair<int, int> > &bonds,
                     std::vector<std::vector<int> > &angles,
                     bool set15bounds = true, bool scaleVDW = false);

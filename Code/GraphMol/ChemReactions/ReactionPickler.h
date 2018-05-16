@@ -8,6 +8,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef RD_RXNPICKLE_H_2JUNE2009
 #define RD_RXNPICKLE_H_2JUNE2009
 
@@ -24,7 +25,7 @@ namespace RDKit {
 class ChemicalReaction;
 
 //! used to indicate exceptions whilst pickling (serializing) reactions
-class ReactionPicklerException : public std::exception {
+class RDKIT_CHEMREACTIONS_EXPORT ReactionPicklerException : public std::exception {
  public:
   ReactionPicklerException(const char *msg) : _msg(msg){};
   ReactionPicklerException(const std::string msg) : _msg(msg){};
@@ -36,10 +37,11 @@ class ReactionPicklerException : public std::exception {
 };
 
 //! handles pickling (serializing) reactions
-class ReactionPickler {
+class RDKIT_CHEMREACTIONS_EXPORT ReactionPickler {
  public:
-  static const boost::int32_t versionMajor, versionMinor,
-      versionPatch;                      //!< mark the pickle version
+  static const boost::int32_t versionMajor; //!< mark the pickle version
+  static const boost::int32_t versionMinor; //!< mark the pickle version
+  static const boost::int32_t versionPatch; //!< mark the pickle version
   static const boost::int32_t endianId;  //! mark the endian-ness of the pickle
 
   //! the pickle format is tagged using these tags:

@@ -41,33 +41,33 @@
 #include <sstream>
 
 namespace RDKit{
-  class ROMol;
-  class Conformer;
-  namespace ConformerParser {
+class ROMol;
+class Conformer;
+namespace ConformerParser {
 
-    /*!
-      Adds the conformations read from a list of doubles
+/*!
+  Adds the conformations read from a list of doubles
 
-      \param mol          the molecule of interest
-      \param coords       list with coordinates
-      \param numConf      number of conformers to read (default: all)
+  \param mol          the molecule of interest
+  \param coords       list with coordinates
+  \param numConf      number of conformers to read (default: all)
 
-      Returns: integer vector with confIds
-    */
-    INT_VECT addConformersFromList(ROMol &mol, const std::vector<std::vector<double> > &coords,
-                               int numConf=-1);
+  Returns: integer vector with confIds
+*/
+INT_VECT addConformersFromList(ROMol &mol, const std::vector<std::vector<double> > &coords,
+                           int numConf=-1);
 
-    /*!
-      Converts an Amber trajectory into a list of doubles
+/*!
+  Converts an Amber trajectory into a list of doubles
 
-      \param inStream     input file
-      \param coords       list with coordinates
+  \param inStream     input file
+  \param coords       list with coordinates
 
-    */
-    void readAmberTrajectory(const std::string &fName, std::vector<std::vector<double> > &coords,
-                             unsigned int numAtoms);
+*/
+void readAmberTrajectory(const std::string &fName, std::vector<std::vector<double> > &coords,
+                         unsigned int numAtoms);
 
-  } // end namespace ConformerParser
+} // end namespace ConformerParser
 } // end namespace RDKit
 
 #endif

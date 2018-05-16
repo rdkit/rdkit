@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef _RD_FINGERPRINTS_H_
 #define _RD_FINGERPRINTS_H_
 
@@ -49,7 +50,7 @@ class ROMol;
     - the caller is responsible for <tt>delete</tt>ing the result
 
 */
-ExplicitBitVect *RDKFingerprintMol(
+RDKIT_FINGERPRINTS_EXPORT ExplicitBitVect *RDKFingerprintMol(
     const ROMol &mol, unsigned int minPath = 1, unsigned int maxPath = 7,
     unsigned int fpSize = 2048, unsigned int nBitsPerHash = 2,
     bool useHs = true, double tgtDensity = 0.0, unsigned int minSize = 128,
@@ -101,7 +102,7 @@ const std::string RDKFingerprintMolVersion = "2.0.0";
      - 0x10: ring sizes
      - 0x20: aromaticity
 */
-ExplicitBitVect *LayeredFingerprintMol(
+RDKIT_FINGERPRINTS_EXPORT ExplicitBitVect *LayeredFingerprintMol(
     const ROMol &mol, unsigned int layerFlags = 0xFFFFFFFF,
     unsigned int minPath = 1, unsigned int maxPath = 7,
     unsigned int fpSize = 2048, std::vector<unsigned int> *atomCounts = 0,
@@ -140,12 +141,12 @@ const unsigned int substructLayers = 0x07;
     - the caller is responsible for <tt>delete</tt>ing the result
 
 */
-ExplicitBitVect *PatternFingerprintMol(
+RDKIT_FINGERPRINTS_EXPORT ExplicitBitVect *PatternFingerprintMol(
     const ROMol &mol, unsigned int fpSize = 2048,
     std::vector<unsigned int> *atomCounts = 0,
     ExplicitBitVect *setOnlyBits = 0);
 
-SparseIntVect<boost::uint64_t> *getUnfoldedRDKFingerprintMol(const ROMol &mol,unsigned int minPath=1,
+RDKIT_FINGERPRINTS_EXPORT SparseIntVect<boost::uint64_t> *getUnfoldedRDKFingerprintMol(const ROMol &mol,unsigned int minPath=1,
       unsigned int maxPath=7,
       bool useHs=true,
       bool branchedPaths=true,

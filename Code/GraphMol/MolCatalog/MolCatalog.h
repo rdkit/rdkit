@@ -2,6 +2,7 @@
 //  Copyright (C) 2006 Greg Landrum
 //
 //
+#include <RDBoost/export.h>
 #ifndef _RD_MOL_CATALOG_H_
 #define _RD_MOL_CATALOG_H_
 

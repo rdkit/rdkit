@@ -13,6 +13,7 @@
   \brief Use MolDescriptors.h in client code.
 
 */
+#include <RDBoost/export.h>
 #ifndef __RD_MQN_H__
 #define __RD_MQN_H__
 
@@ -37,7 +38,7 @@ const std::string MQNVersion = "1.0.0";
   \return a vector with the MQNs
 
 */
-std::vector<unsigned int> calcMQNs(const ROMol &mol, bool force = false);
+RDKIT_DESCRIPTORS_EXPORT std::vector<unsigned int> calcMQNs(const ROMol &mol, bool force = false);
 
 }  // end of namespace Descriptors
 }  // end of namespace RDKit

@@ -29,6 +29,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
+#include <RDBoost/export.h>
 #ifndef __RD_FILTER_CATALOG_H__
 #define __RD_FILTER_CATALOG_H__
 
@@ -51,7 +52,7 @@
 namespace RDKit {
 typedef std::map<std::string, std::string> STRING_PROPS;
 
-class FilterCatalogEntry : public RDCatalog::CatalogEntry {
+class RDKIT_FILTERCATALOG_EXPORT FilterCatalogEntry : public RDCatalog::CatalogEntry {
  private:
   boost::shared_ptr<FilterMatcherBase> d_matcher;
   Dict d_props;

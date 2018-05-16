@@ -12,6 +12,7 @@
   \brief Not intended for client-code use.
 
 */
+#include <RDBoost/export.h>
 #ifndef _RD_CHIRALITY_20AUG2008_H_
 #define _RD_CHIRALITY_20AUG2008_H_
 #include <RDGeneral/types.h>
@@ -30,7 +31,7 @@ namespace Chirality {
        CIP ranking.
 
 */
-void assignAtomCIPRanks(const ROMol &mol, UINT_VECT &ranks);
+RDKIT_GRAPHMOL_EXPORT void assignAtomCIPRanks(const ROMol &mol, UINT_VECT &ranks);
 }
 }
 /// @endcond

@@ -371,11 +371,11 @@ std::string MolsToJSONData(const std::vector<T> &mols) {
   return buffer.GetString();
 };
 
-template std::string MolsToJSONData<ROMol *>(const std::vector<ROMol *> &);
-template std::string MolsToJSONData<RWMol *>(const std::vector<RWMol *> &);
-template std::string MolsToJSONData<const ROMol *>(
+template RDKIT_MOLINTERCHANGE_EXPORT std::string MolsToJSONData<ROMol *>(const std::vector<ROMol *> &);
+template RDKIT_MOLINTERCHANGE_EXPORT std::string MolsToJSONData<RWMol *>(const std::vector<RWMol *> &);
+template RDKIT_MOLINTERCHANGE_EXPORT std::string MolsToJSONData<const ROMol *>(
     const std::vector<const ROMol *> &);
-template std::string MolsToJSONData<const RWMol *>(
+template RDKIT_MOLINTERCHANGE_EXPORT std::string MolsToJSONData<const RWMol *>(
     const std::vector<const RWMol *> &);
 
 }  // end of namespace MolInterchange

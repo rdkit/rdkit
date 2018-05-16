@@ -1,3 +1,5 @@
+
+add_definitions(-DRDKIT_EIGENSOLVERS_BUILD)
 rdkit_library(EigenSolvers PowerEigenSolver.cpp LINK_LIBRARIES RDGeneral)
 
 rdkit_headers(PowerEigenSolver.h DEST Numerics/EigenSolvers)

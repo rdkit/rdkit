@@ -28,6 +28,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
+#include <RDBoost/export.h>
 #ifndef _RD_LOCALESWITCHER_H
 #define _RD_LOCALESWITCHER_H
 
@@ -40,7 +41,7 @@ namespace detail {
 class LocaleSwitcherImpl; // concrete OS dependent implementation
 }
 
-class LocaleSwitcher {
+class RDKIT_RDGENERAL_EXPORT LocaleSwitcher {
   detail::LocaleSwitcherImpl *impl;
 public:
   LocaleSwitcher();

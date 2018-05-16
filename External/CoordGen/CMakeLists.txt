@@ -19,6 +19,9 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
 
     file(GLOB MAESOURCES "${MAEPARSER_DIR}/*.cpp")
     rdkit_library(maeparser ${MAESOURCES} SHARED )
+    if(MSVC AND RDK_INSTALL_DYNAMIC_LIBS)
+      set_target_properties(maeparser PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+    endif()
     install(TARGETS maeparser DESTINATION ${RDKit_LibDir})
 
     if(NOT DEFINED COORDGEN_DIR)
@@ -39,6 +42,9 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
 
     file(GLOB CGSOURCES "${COORDGEN_DIR}/*.cpp")
     rdkit_library(coordgenlib ${CGSOURCES} SHARED LINK_LIBRARIES maeparser)
+    if(MSVC AND RDK_INSTALL_DYNAMIC_LIBS)
+      set_target_properties(coordgenlib PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+    endif()
     install(TARGETS coordgenlib DESTINATION ${RDKit_LibDir})
 
     set(MAE_FILES ${COORDGEN_DIR}/templates.mae )

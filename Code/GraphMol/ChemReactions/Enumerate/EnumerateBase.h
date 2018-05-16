@@ -29,6 +29,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
+#include <RDBoost/export.h>
 #ifndef RDKIT_ENUMERATEBASE_H
 #define RDKIT_ENUMERATEBASE_H
 
@@ -59,7 +60,7 @@ namespace RDKit {
   See Reaction.h for more details on how ChemicalReactions are
   used.
 */
-class EnumerateLibraryBase {
+class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibraryBase {
  protected:
   ChemicalReaction m_rxn;
   boost::shared_ptr<EnumerationStrategyBase> m_enumerator;

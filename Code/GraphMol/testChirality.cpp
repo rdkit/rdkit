@@ -10,6 +10,7 @@
 //
 // There are chirality test cases spread all over the place. Many of the
 // tests here are repeats, but it's good to have everything in one place.
+#include <RDBoost/test.h>
 #include <RDGeneral/utils.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>

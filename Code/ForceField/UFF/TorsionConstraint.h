@@ -9,6 +9,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef __RD_UFFTORSIONCONSTRAINT_H__
 #define __RD_UFFTORSIONCONSTRAINT_H__
 #include <iostream>
@@ -18,7 +19,7 @@ namespace ForceFields {
 namespace UFF {
 
 //! A dihedral angle range constraint modelled after a TorsionContrib
-class TorsionConstraintContrib : public ForceFieldContrib {
+class RDKIT_FORCEFIELD_EXPORT TorsionConstraintContrib : public ForceFieldContrib {
  public:
   TorsionConstraintContrib()
       : d_at1Idx(-1), d_at2Idx(-1), d_at3Idx(-1), d_at4Idx(-1){};

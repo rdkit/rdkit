@@ -29,6 +29,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
+#include <RDBoost/export.h>
 #ifndef RDKIT_PREPROCESS_RXN_H
 #define RDKIT_PREPROCESS_RXN_H
 
@@ -38,21 +39,21 @@
 
 namespace RDKit {
 
-bool preprocessReaction(ChemicalReaction &rxn,
+RDKIT_CHEMREACTIONS_EXPORT bool preprocessReaction(ChemicalReaction &rxn,
                         const std::string &propName=common_properties::molFileValue);
 
-bool preprocessReaction(ChemicalReaction &rxn,
+RDKIT_CHEMREACTIONS_EXPORT bool preprocessReaction(ChemicalReaction &rxn,
                         unsigned int &numWarnings,
                         unsigned int &numErrors,
                         std::vector<
                           std::vector<std::pair<unsigned int,std::string> > >&reactantLabels,
                         const std::string &propName=common_properties::molFileValue);
 
-bool preprocessReaction(ChemicalReaction &rxn,
+RDKIT_CHEMREACTIONS_EXPORT bool preprocessReaction(ChemicalReaction &rxn,
                         const std::map<std::string, ROMOL_SPTR> &queries,
                         const std::string &propName=common_properties::molFileValue);
   
-bool preprocessReaction(ChemicalReaction &rxn,
+RDKIT_CHEMREACTIONS_EXPORT bool preprocessReaction(ChemicalReaction &rxn,
                         unsigned int &numWarnings,
                         unsigned int &numErrors,
                         std::vector<

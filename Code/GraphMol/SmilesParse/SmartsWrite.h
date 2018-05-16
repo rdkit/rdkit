@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef _RD_SMARTSWRITE_H
 #define _RD_SMARTSWRITE_H
 
@@ -17,14 +18,14 @@ class QueryAtom;
 class QueryBond;
 namespace SmartsWrite {
 //! returns the SMARTS for a QueryAtom
-std::string GetAtomSmarts(const QueryAtom *qatom);
+RDKIT_SMILESPARSE_EXPORT std::string GetAtomSmarts(const QueryAtom *qatom);
 //! returns the SMARTS for a QueryBond
-std::string GetBondSmarts(const QueryBond *qbond, int atomToLeftIdx = -1);
+RDKIT_SMILESPARSE_EXPORT std::string GetBondSmarts(const QueryBond *qbond, int atomToLeftIdx = -1);
 }
 
 class ROMol;
 //! returns the SMARTS for a molecule
-std::string MolToSmarts(ROMol &mol, bool doIsomericSmarts = true);
+RDKIT_SMILESPARSE_EXPORT std::string MolToSmarts(ROMol &mol, bool doIsomericSmarts = true);
 };
 
 #endif

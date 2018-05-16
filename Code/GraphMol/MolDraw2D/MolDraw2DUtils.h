@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 
+#include <RDBoost/export.h>
 #ifndef MOLDRAW2DUTILS_H
 #define MOLDRAW2DUTILS_H
 #include <GraphMol/RWMol.h>
@@ -34,12 +35,12 @@ happens the molecule will be in an inconsistent, partially kekulized, state.
 This isn't normally a problem for molecules that have been sanitized, but can be
 problematic if the molecules have been modified post santitization.
 */
-void prepareMolForDrawing(RWMol &mol, bool kekulize = true,
+RDKIT_MOLDRAW2D_EXPORT void prepareMolForDrawing(RWMol &mol, bool kekulize = true,
                           bool addChiralHs = true, bool wedgeBonds = true,
                           bool forceCoords = false);
 
-void updateDrawerParamsFromJSON(MolDraw2D &drawer, const char *json);
-void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json);
+RDKIT_MOLDRAW2D_EXPORT void updateDrawerParamsFromJSON(MolDraw2D &drawer, const char *json);
+RDKIT_MOLDRAW2D_EXPORT void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json);
 }
 }
 #endif  // MOLDRAW2DUTILS_H

@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 
+#include <RDBoost/export.h>
 #ifndef RDKITMOLDRAW2DDETAILS_H
 #define RDKITMOLDRAW2DDETAILS_H
 
@@ -46,7 +47,7 @@ const int char_widths[] = {
     0,   0,    0,   889, 0,   0,   0,    278,  0,    0,   222,  611, 944,  611,
     0,   0,    834};
 
-void arcPoints(const Point2D &cds1, const Point2D &cds2,
+RDKIT_MOLDRAW2D_EXPORT void arcPoints(const Point2D &cds1, const Point2D &cds2,
                std::vector<Point2D> &res, float startAng = 0,
                float extent = 360);
 }

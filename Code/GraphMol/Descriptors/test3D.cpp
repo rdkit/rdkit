@@ -13,6 +13,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
+#include <RDBoost/test.h>
 #include <iostream>
 #include <fstream>
 

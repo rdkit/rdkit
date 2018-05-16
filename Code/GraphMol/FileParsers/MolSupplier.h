@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef _RD_MOLSUPPLIER_H
 #define _RD_MOLSUPPLIER_H
 
@@ -19,7 +20,7 @@
 #include <GraphMol/ROMol.h>
 
 namespace RDKit {
-std::string strip(const std::string &orig);
+RDKIT_FILEPARSERS_EXPORT std::string strip(const std::string &orig);
 
 /*!
 //
@@ -42,7 +43,7 @@ std::string strip(const std::string &orig);
 //
 //
 */
-class MolSupplier {
+class RDKIT_FILEPARSERS_EXPORT MolSupplier {
   // this is an abstract base class to supply molecules one at a time
  public:
   MolSupplier(){};
@@ -68,7 +69,7 @@ class MolSupplier {
 };
 
 // \brief a supplier from an SD file that only reads forward:
-class ForwardSDMolSupplier : public MolSupplier {
+class RDKIT_FILEPARSERS_EXPORT ForwardSDMolSupplier : public MolSupplier {
   /*************************************************************************
    * A lazy mol supplier from a SD file.
    *  - When new molecules are read using "next" their positions in the file are
@@ -105,7 +106,7 @@ class ForwardSDMolSupplier : public MolSupplier {
 };
 
 // \brief a lazy supplier from an SD file
-class SDMolSupplier : public ForwardSDMolSupplier {
+class RDKIT_FILEPARSERS_EXPORT SDMolSupplier : public ForwardSDMolSupplier {
   /*************************************************************************
    * A lazy mol supplier from a SD file.
    *  - When new molecules are read using "next" their positions in the file are
@@ -178,7 +179,7 @@ class SDMolSupplier : public ForwardSDMolSupplier {
 };
 
 //! lazy file parser for Smiles tables
-class SmilesMolSupplier : public MolSupplier {
+class RDKIT_FILEPARSERS_EXPORT SmilesMolSupplier : public MolSupplier {
   /**************************************************************************
    * Lazy file parser for Smiles table file, similar to the lazy SD
    * file parser above
@@ -261,7 +262,7 @@ class SmilesMolSupplier : public MolSupplier {
 };
 
 //! lazy file parser for TDT files
-class TDTMolSupplier : public MolSupplier {
+class RDKIT_FILEPARSERS_EXPORT TDTMolSupplier : public MolSupplier {
   /**************************************************************************
    * Lazy file parser for TDT files, similar to the lazy SD
    * file parser above
@@ -327,7 +328,7 @@ class TDTMolSupplier : public MolSupplier {
 };
 
 //! lazy file parser for PDB files
-class PDBMolSupplier : public MolSupplier {
+class RDKIT_FILEPARSERS_EXPORT PDBMolSupplier : public MolSupplier {
  public:
   explicit PDBMolSupplier(std::istream *inStream, bool takeOwnership = true,
                           bool sanitize = true, bool removeHs = true,

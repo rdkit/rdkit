@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/test.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/utils.h>
 #include <Geometry/Transform3D.h>

@@ -33,6 +33,7 @@
 //  #include <RDGeneral/BoostStartInclude.h>
 //  # include boost stuff
 //  #include <RDGeneral/BoostEndInclude.h>
+#include <RDBoost/export.h>
 #if defined(__clang__)
 /* Clang/LLVM. ---------------------------------------------- */
 #pragma GCC diagnostic push

@@ -13,6 +13,7 @@
   \brief Use MolDescriptors.h in client code.
 
 */
+#include <RDBoost/export.h>
 #ifndef __RD_MOLSURF_H__
 #define __RD_MOLSURF_H__
 
@@ -39,7 +40,7 @@ const std::string labuteASAVersion = "1.0.2";
   \return the sum of the atomic contributions
 
 */
-double getLabuteAtomContribs(const ROMol &mol, std::vector<double> &Vi,
+RDKIT_DESCRIPTORS_EXPORT double getLabuteAtomContribs(const ROMol &mol, std::vector<double> &Vi,
                              double &hContrib, bool includeHs = true,
                              bool force = false);
 
@@ -55,7 +56,7 @@ double getLabuteAtomContribs(const ROMol &mol, std::vector<double> &Vi,
   \param force      (optional) calculate the value even if it's cached.
 
 */
-double calcLabuteASA(const ROMol &mol, bool includeHs = true,
+RDKIT_DESCRIPTORS_EXPORT double calcLabuteASA(const ROMol &mol, bool includeHs = true,
                      bool force = false);
 
 const std::string tpsaVersion = "1.1.0";
@@ -74,7 +75,7 @@ const std::string tpsaVersion = "1.1.0";
   \return the sum of the atomic contributions
 
 */
-double getTPSAAtomContribs(const ROMol &mol, std::vector<double> &Vi,
+RDKIT_DESCRIPTORS_EXPORT double getTPSAAtomContribs(const ROMol &mol, std::vector<double> &Vi,
                            bool force = false);
 
 //! calculates the TPSA value for a molecule
@@ -89,14 +90,14 @@ double getTPSAAtomContribs(const ROMol &mol, std::vector<double> &Vi,
   \param force      (optional) calculate the value even if it's cached.
 
 */
-double calcTPSA(const ROMol &mol, bool force = false);
+RDKIT_DESCRIPTORS_EXPORT double calcTPSA(const ROMol &mol, bool force = false);
 
-std::vector<double> calcSlogP_VSA(const ROMol &mol,
+RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcSlogP_VSA(const ROMol &mol,
                                   std::vector<double> *bins = 0,
                                   bool force = false);
-std::vector<double> calcSMR_VSA(const ROMol &mol, std::vector<double> *bins = 0,
+RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcSMR_VSA(const ROMol &mol, std::vector<double> *bins = 0,
                                 bool force = false);
-std::vector<double> calcPEOE_VSA(const ROMol &mol,
+RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcPEOE_VSA(const ROMol &mol,
                                  std::vector<double> *bins = 0,
                                  bool force = false);
 

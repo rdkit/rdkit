@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 
+#include <RDBoost/export.h>
 #ifndef __RD_SNAPSHOT_H__
 #define __RD_SNAPSHOT_H__
 #include <Geometry/point.h>
@@ -21,7 +22,7 @@ namespace RDKit {
 
 namespace RDKit {
 
-class Snapshot {
+class RDKIT_TRAJECTORY_EXPORT Snapshot {
   friend class Trajectory;
   public:
     /*! \brief Constructor

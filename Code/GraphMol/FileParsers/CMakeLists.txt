@@ -1,3 +1,6 @@
+
+remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
+add_definitions(-DRDKIT_FILEPARSERS_BUILD)
 rdkit_library(FileParsers
               Mol2FileParser.cpp
               MolFileParser.cpp MolFileStereochem.cpp MolFileWriter.cpp

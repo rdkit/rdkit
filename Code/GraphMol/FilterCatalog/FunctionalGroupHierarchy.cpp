@@ -30,6 +30,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
+#include "FunctionalGroupHierarchy.h"
 #include "FilterMatchers.h"
 #include "FilterCatalog.h"
 #include <GraphMol/SmilesParse/SmilesParse.h>

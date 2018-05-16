@@ -8,6 +8,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef __RD_SPARSE_INT_VECT_20070921__
 #define __RD_SPARSE_INT_VECT_20070921__
 

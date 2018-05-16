@@ -12,6 +12,7 @@
   \brief Defines the Dict class
 
 */
+#include <RDBoost/export.h>
 #ifndef __RD_DICT_H__
 #define __RD_DICT_H__
 
@@ -32,7 +33,7 @@ typedef std::vector<std::string> STR_VECT;
 //!
 //!  The actual storage is done using \c RDValue objects.
 //!
-class Dict {
+class RDKIT_RDGENERAL_EXPORT Dict {
  public:
   struct Pair {
     std::string key;

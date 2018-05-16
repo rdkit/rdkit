@@ -31,7 +31,7 @@ macro(rdkit_library)
     ${ARGN})
   CAR(RDKLIB_NAME ${RDKLIB_DEFAULT_ARGS})
   CDR(RDKLIB_SOURCES ${RDKLIB_DEFAULT_ARGS})
-  if(MSVC)
+  if(RDK_INSTALL_STATIC_LIBS AND NOT RDK_INSTALL_DYNAMIC_LIBS)
     add_library(${RDKLIB_NAME} ${RDKLIB_SOURCES})
     target_link_libraries(${RDKLIB_NAME} PUBLIC rdkit_base)
     if(RDK_INSTALL_DEV_COMPONENT)
@@ -39,38 +39,38 @@ macro(rdkit_library)
               DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
               COMPONENT dev )
     endif(RDK_INSTALL_DEV_COMPONENT)
-  else(MSVC)
+  else()
     # we're going to always build in shared mode since we
     # need exceptions to be (correctly) catchable across
     # boundaries. As of now (June 2010), this doesn't work
     # with g++ unless libraries are shared.
-      add_library(${RDKLIB_NAME} SHARED ${RDKLIB_SOURCES})
-      target_link_libraries(${RDKLIB_NAME} PUBLIC rdkit_base)
-      INSTALL(TARGETS ${RDKLIB_NAME} EXPORT ${RDKit_EXPORTED_TARGETS}
-              DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
-              COMPONENT runtime )
-      if(RDK_INSTALL_STATIC_LIBS)
-        add_library(${RDKLIB_NAME}_static ${RDKLIB_SOURCES})
+    add_library(${RDKLIB_NAME} SHARED ${RDKLIB_SOURCES})
+    target_link_libraries(${RDKLIB_NAME} PUBLIC rdkit_base)
+    INSTALL(TARGETS ${RDKLIB_NAME} EXPORT ${RDKit_EXPORTED_TARGETS}
+            DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
+            COMPONENT runtime )
+    if(RDK_INSTALL_STATIC_LIBS)
+      add_library(${RDKLIB_NAME}_static ${RDKLIB_SOURCES})
 
-        foreach(linkLib ${RDKLIB_LINK_LIBRARIES})
-          if(${linkLib} MATCHES "^(Boost)|(Thread)|(boost)")
-            set(rdk_static_link_libraries "${rdk_static_link_libraries}${linkLib};")
-          else()
-            set(rdk_static_link_libraries "${rdk_static_link_libraries}${linkLib}_static;")
-          endif()
-        endforeach()
-        target_link_libraries(${RDKLIB_NAME}_static PUBLIC ${rdk_static_link_libraries})
-        target_link_libraries(${RDKLIB_NAME}_static PUBLIC rdkit_base)
-        if(RDK_INSTALL_DEV_COMPONENT)
-          INSTALL(TARGETS ${RDKLIB_NAME}_static EXPORT ${RDKit_EXPORTED_TARGETS}
-                  DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
-                  COMPONENT dev )
-        endif(RDK_INSTALL_DEV_COMPONENT)
-        set_target_properties(${RDKLIB_NAME}_static PROPERTIES
-                              OUTPUT_NAME "RDKit${RDKLIB_NAME}_static")
+      foreach(linkLib ${RDKLIB_LINK_LIBRARIES})
+        if(${linkLib} MATCHES "^(Boost)|(Thread)|(boost)")
+          set(rdk_static_link_libraries "${rdk_static_link_libraries}${linkLib};")
+        else()
+          set(rdk_static_link_libraries "${rdk_static_link_libraries}${linkLib}_static;")
+        endif()
+      endforeach()
+      target_link_libraries(${RDKLIB_NAME}_static PUBLIC ${rdk_static_link_libraries})
+      target_link_libraries(${RDKLIB_NAME}_static PUBLIC rdkit_base)
+      if(RDK_INSTALL_DEV_COMPONENT)
+        INSTALL(TARGETS ${RDKLIB_NAME}_static EXPORT ${RDKit_EXPORTED_TARGETS}
+                DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
+                COMPONENT dev )
+      endif(RDK_INSTALL_DEV_COMPONENT)
+      set_target_properties(${RDKLIB_NAME}_static PROPERTIES
+                            OUTPUT_NAME "RDKit${RDKLIB_NAME}_static")
 
-      endif(RDK_INSTALL_STATIC_LIBS)
-  endif(MSVC)
+    endif(RDK_INSTALL_STATIC_LIBS)
+  endif()
   IF(RDKLIB_LINK_LIBRARIES)
     target_link_libraries(${RDKLIB_NAME} PUBLIC ${RDKLIB_LINK_LIBRARIES})
   ENDIF(RDKLIB_LINK_LIBRARIES)
@@ -196,3 +196,56 @@ function(downloadAndCheckMD5 url target md5chksum)
     endif()
   endif()
 endfunction(downloadAndCheckMD5)
+
+function(createExportTestHeaders)
+  file(GLOB_RECURSE cmakeLists LIST_DIRECTORIES false
+       ${CMAKE_SOURCE_DIR}/CMakeLists.txt)
+  set(exportLibs "")
+  foreach(cmakeList ${cmakeLists})
+    file(STRINGS ${cmakeList} rdkitLibraryItems REGEX "rdkit_library[ ]*\\([ ]*[^ ]+.*$")
+    if (NOT "${rdkitLibraryItems}" STREQUAL "")
+      foreach (rdkitLibrary ${rdkitLibraryItems})
+        string(REGEX REPLACE "^[ ]*rdkit_library[ ]*\\([ ]*([^ ]+).*$" "\\1" libName "${rdkitLibrary}")
+        list(APPEND exportLibs "${libName}")
+      endforeach()
+    endif()
+  endforeach()
+  list(REMOVE_DUPLICATES exportLibs)
+  list(SORT exportLibs)
+  file(WRITE "${CMAKE_SOURCE_DIR}/Code/RDBoost/export.h"
+    "// auto-generated __declspec definition header\n"
+    "#pragma once\n"
+    "#ifndef SWIG\n"
+    "#ifdef _MSC_VER\n"
+    "#pragma warning(disable:4251)\n"
+    "#pragma warning(disable:4275)\n"
+    "#endif\n"
+    "\n"
+    "#include <boost/config.hpp>\n"
+    "#endif\n")
+  file(WRITE "${CMAKE_SOURCE_DIR}/Code/RDBoost/test.h"
+    "// auto-generated header to be imported in all cpp tests\n"
+    "#pragma once\n")
+  foreach(exportLib ${exportLibs})
+    string(TOUPPER "${exportLib}" exportLib)
+    file(APPEND "${CMAKE_SOURCE_DIR}/Code/RDBoost/export.h"
+      "\n"
+      "// RDKIT_${exportLib}_EXPORT definitions\n"
+      "#if defined(BOOST_HAS_DECLSPEC) && defined(RDKIT_DYN_LINK) && !defined(SWIG)\n"
+      "#ifdef RDKIT_${exportLib}_BUILD\n"
+      "#define RDKIT_${exportLib}_EXPORT __declspec(dllexport)\n"
+      "#else\n"
+      "#define RDKIT_${exportLib}_EXPORT __declspec(dllimport)\n"
+      "#endif\n"
+      "#endif\n"
+      "#ifndef RDKIT_${exportLib}_EXPORT\n"
+      "#define RDKIT_${exportLib}_EXPORT\n"
+      "#endif\n"
+      "// RDKIT_${exportLib}_EXPORT end definitions\n")
+    file(APPEND "${CMAKE_SOURCE_DIR}/Code/RDBoost/test.h"
+      "\n"
+      "#ifdef RDKIT_${exportLib}_BUILD\n"
+      "#undef RDKIT_${exportLib}_BUILD\n"
+      "#endif\n")
+  endforeach()
+endfunction(createExportTestHeaders)

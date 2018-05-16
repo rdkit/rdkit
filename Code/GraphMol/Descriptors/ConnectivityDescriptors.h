@@ -13,6 +13,7 @@
   \brief Use MolDescriptors.h in client code.
 
 */
+#include <RDBoost/export.h>
 #ifndef __RD_CONNECTIVITYDESCRIPTORS_H__
 #define __RD_CONNECTIVITYDESCRIPTORS_H__
 
@@ -30,7 +31,7 @@ namespace Descriptors {
   \param force         forces the value to be recalculated instead
                        of pulled from the cache
 */
-double calcChi0v(const ROMol &mol, bool force = false);
+RDKIT_DESCRIPTORS_EXPORT double calcChi0v(const ROMol &mol, bool force = false);
 const std::string chi0vVersion = "1.2.0";
 //! From equations (5),(9) and (10) of Rev. Comp. Chem. vol 2, 367-422, (1991)
 /*!
@@ -38,7 +39,7 @@ const std::string chi0vVersion = "1.2.0";
   \param force         forces the value to be recalculated instead
                        of pulled from the cache
 */
-double calcChi1v(const ROMol &mol, bool force = false);
+RDKIT_DESCRIPTORS_EXPORT double calcChi1v(const ROMol &mol, bool force = false);
 const std::string chi1vVersion = "1.2.0";
 //! From equations (5),(9) and (10) of Rev. Comp. Chem. vol 2, 367-422, (1991)
 /*!
@@ -46,7 +47,7 @@ const std::string chi1vVersion = "1.2.0";
   \param force         forces the value to be recalculated instead
                        of pulled from the cache
 */
-double calcChi2v(const ROMol &mol, bool force = false);
+RDKIT_DESCRIPTORS_EXPORT double calcChi2v(const ROMol &mol, bool force = false);
 const std::string chi2vVersion = "1.2.0";
 //! From equations (5),(9) and (10) of Rev. Comp. Chem. vol 2, 367-422, (1991)
 /*!
@@ -54,7 +55,7 @@ const std::string chi2vVersion = "1.2.0";
   \param force         forces the value to be recalculated instead
                        of pulled from the cache
 */
-double calcChi3v(const ROMol &mol, bool force = false);
+RDKIT_DESCRIPTORS_EXPORT double calcChi3v(const ROMol &mol, bool force = false);
 const std::string chi3vVersion = "1.2.0";
 //! From equations (5),(9) and (10) of Rev. Comp. Chem. vol 2, 367-422, (1991)
 /*!
@@ -62,7 +63,7 @@ const std::string chi3vVersion = "1.2.0";
   \param force         forces the value to be recalculated instead
                        of pulled from the cache
 */
-double calcChi4v(const ROMol &mol, bool force = false);
+RDKIT_DESCRIPTORS_EXPORT double calcChi4v(const ROMol &mol, bool force = false);
 const std::string chi4vVersion = "1.2.0";
 //! From equations (5),(9) and (10) of Rev. Comp. Chem. vol 2, 367-422, (1991)
 /*!
@@ -71,7 +72,7 @@ const std::string chi4vVersion = "1.2.0";
   \param force         forces the value to be recalculated instead
                        of pulled from the cache
 */
-double calcChiNv(const ROMol &mol, unsigned int n, bool force = false);
+RDKIT_DESCRIPTORS_EXPORT double calcChiNv(const ROMol &mol, unsigned int n, bool force = false);
 const std::string chiNvVersion = "1.2.0";
 
 //! Similar to Hall Kier ChiXv, but uses nVal instead of valence
@@ -81,7 +82,7 @@ const std::string chiNvVersion = "1.2.0";
   \param force         forces the value to be recalculated instead
                        of pulled from the cache
 */
-double calcChi0n(const ROMol &mol, bool force = false);
+RDKIT_DESCRIPTORS_EXPORT double calcChi0n(const ROMol &mol, bool force = false);
 const std::string chi0nVersion = "1.2.0";
 //! Similar to Hall Kier ChiXv, but uses nVal instead of valence
 //!   This makes a big difference after we get out of the first row.
@@ -90,7 +91,7 @@ const std::string chi0nVersion = "1.2.0";
   \param force         forces the value to be recalculated instead
                        of pulled from the cache
 */
-double calcChi1n(const ROMol &mol, bool force = false);
+RDKIT_DESCRIPTORS_EXPORT double calcChi1n(const ROMol &mol, bool force = false);
 const std::string chi1nVersion = "1.2.0";
 //! Similar to Hall Kier ChiXv, but uses nVal instead of valence
 //!   This makes a big difference after we get out of the first row.
@@ -99,7 +100,7 @@ const std::string chi1nVersion = "1.2.0";
   \param force         forces the value to be recalculated instead
                        of pulled from the cache
 */
-double calcChi2n(const ROMol &mol, bool force = false);
+RDKIT_DESCRIPTORS_EXPORT double calcChi2n(const ROMol &mol, bool force = false);
 const std::string chi2nVersion = "1.2.0";
 //! Similar to Hall Kier ChiXv, but uses nVal instead of valence
 //!   This makes a big difference after we get out of the first row.
@@ -108,7 +109,7 @@ const std::string chi2nVersion = "1.2.0";
   \param force         forces the value to be recalculated instead
                        of pulled from the cache
 */
-double calcChi3n(const ROMol &mol, bool force = false);
+RDKIT_DESCRIPTORS_EXPORT double calcChi3n(const ROMol &mol, bool force = false);
 const std::string chi3nVersion = "1.2.0";
 //! Similar to Hall Kier ChiXv, but uses nVal instead of valence
 //!   This makes a big difference after we get out of the first row.
@@ -117,7 +118,7 @@ const std::string chi3nVersion = "1.2.0";
   \param force         forces the value to be recalculated instead
                        of pulled from the cache
 */
-double calcChi4n(const ROMol &mol, bool force = false);
+RDKIT_DESCRIPTORS_EXPORT double calcChi4n(const ROMol &mol, bool force = false);
 const std::string chi4nVersion = "1.2.0";
 //! Similar to Hall Kier ChiXv, but uses nVal instead of valence
 //!   This makes a big difference after we get out of the first row.
@@ -127,7 +128,7 @@ const std::string chi4nVersion = "1.2.0";
   \param force         forces the value to be recalculated instead
                        of pulled from the cache
 */
-double calcChiNn(const ROMol &mol, unsigned int n, bool force = false);
+RDKIT_DESCRIPTORS_EXPORT double calcChiNn(const ROMol &mol, unsigned int n, bool force = false);
 const std::string chiNnVersion = "1.2.0";
 
 //! calculate the Hall-Kier alpha value for a molecule
@@ -140,7 +141,7 @@ const std::string chiNnVersion = "1.2.0";
                        neccessarily sum to the full value.
                        Note: this can be a time-consuming calculation.
 */
-double calcHallKierAlpha(const ROMol &mol,
+RDKIT_DESCRIPTORS_EXPORT double calcHallKierAlpha(const ROMol &mol,
                          std::vector<double> *atomContribs = 0);
 const std::string hallKierAlphaVersion = "1.2.0";
 
@@ -149,7 +150,7 @@ const std::string hallKierAlphaVersion = "1.2.0";
 /*!
   \param mol           the molecule of interest
 */
-double calcKappa1(const ROMol &mol);
+RDKIT_DESCRIPTORS_EXPORT double calcKappa1(const ROMol &mol);
 const std::string kappa1Version = "1.1.0";
 
 //! calculate the Hall-Kier kappa2 value for a molecule
@@ -157,7 +158,7 @@ const std::string kappa1Version = "1.1.0";
 /*!
   \param mol           the molecule of interest
 */
-double calcKappa2(const ROMol &mol);
+RDKIT_DESCRIPTORS_EXPORT double calcKappa2(const ROMol &mol);
 const std::string kappa2Version = "1.1.0";
 
 //! calculate the Hall-Kier kappa3 value for a molecule
@@ -166,11 +167,11 @@ const std::string kappa2Version = "1.1.0";
 /*!
   \param mol           the molecule of interest
 */
-double calcKappa3(const ROMol &mol);
+RDKIT_DESCRIPTORS_EXPORT double calcKappa3(const ROMol &mol);
 const std::string kappa3Version = "1.1.0";
 
 namespace detail {
-void hkDeltas(const ROMol &mol, std::vector<double> &deltas, bool force);
+RDKIT_DESCRIPTORS_EXPORT void hkDeltas(const ROMol &mol, std::vector<double> &deltas, bool force);
 }
 
 }  // end of namespace Descriptors

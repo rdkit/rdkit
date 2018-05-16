@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef _RD_QUERYBOND_H
 #define _RD_QUERYBOND_H
 
@@ -24,7 +25,7 @@ namespace RDKit {
 
  */
 
-class QueryBond : public Bond {
+class RDKIT_GRAPHMOL_EXPORT QueryBond : public Bond {
  public:
   typedef Queries::Query<int, Bond const *, true> QUERYBOND_QUERY;
 

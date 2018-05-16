@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/test.h>
 #include "../RDKitBase.h"
 #include "../FileParsers/FileParsers.h"  //MOL single molecule !
 #include "../FileParsers/MolSupplier.h"  //SDF
@@ -18,6 +19,7 @@
 #include "../../RDGeneral/BadFileException.h"
 
 #include "StructChecker.h"
+#include "StructCheckerOptions.h"
 #include "Stereo.h"
 #include "Pattern.h"
 
@@ -498,11 +500,6 @@ void testCheckAtomFiles() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
-namespace RDKit {
-namespace StructureCheck {
-bool StringToAugmentedAtom(const char* str, AugmentedAtom& aa);
-}
-}
 void testCheckMatch() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
   BOOST_LOG(rdInfoLog) << "testCheckMatch\n";

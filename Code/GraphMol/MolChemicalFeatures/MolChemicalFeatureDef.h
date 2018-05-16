@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef __CHEMICALFEATUREDEF_H_02122004_1750__
 #define __CHEMICALFEATUREDEF_H_02122004_1750__
 
@@ -21,7 +22,7 @@ namespace RDKit {
 class ROMol;
 class MolChemicalFeatureDef;
 
-class MolChemicalFeatureDef {
+class RDKIT_MOLCHEMICALFEATURES_EXPORT MolChemicalFeatureDef {
  public:
   typedef std::list<boost::shared_ptr<MolChemicalFeatureDef> > CollectionType;
 

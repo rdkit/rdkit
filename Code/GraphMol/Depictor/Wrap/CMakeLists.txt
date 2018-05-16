@@ -1,3 +1,4 @@
+remove_definitions(-DRDKIT_DEPICTOR_BUILD)
 rdkit_python_extension(rdDepictor
                        rdDepictor.cpp
                        DEST Chem

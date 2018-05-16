@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef __RD_BITOPS_H__
 #define __RD_BITOPS_H__
 /*! \file BitOps.h
@@ -66,53 +67,53 @@ double SimilarityWrapper(const T& bv1, const T& bv2, double a, double b,
   return res;
 }
 
-bool AllProbeBitsMatch(const char* probe, const char* ref);
-bool AllProbeBitsMatch(const std::string& probe, const std::string& ref);
-bool AllProbeBitsMatch(const ExplicitBitVect& probe,
+RDKIT_DATASTRUCTS_EXPORT bool AllProbeBitsMatch(const char* probe, const char* ref);
+RDKIT_DATASTRUCTS_EXPORT bool AllProbeBitsMatch(const std::string& probe, const std::string& ref);
+RDKIT_DATASTRUCTS_EXPORT bool AllProbeBitsMatch(const ExplicitBitVect& probe,
                        const ExplicitBitVect& ref);
 
 template <typename T1>
-bool AllProbeBitsMatch(const T1& probe, const std::string& pkl);
+RDKIT_DATASTRUCTS_EXPORT bool AllProbeBitsMatch(const T1& probe, const std::string& pkl);
 
 template <typename T1>
-bool AllProbeBitsMatch(const T1& probe, const T1& ref);
+RDKIT_DATASTRUCTS_EXPORT bool AllProbeBitsMatch(const T1& probe, const T1& ref);
 
 //! returns the number of on bits in common between two bit vectors
 /*!
   \return (bv1&bv2)_o
 */
 template <typename T1, typename T2>
-int NumOnBitsInCommon(const T1& bv1, const T2& bv2);
+RDKIT_DATASTRUCTS_EXPORT int NumOnBitsInCommon(const T1& bv1, const T2& bv2);
 
-int NumOnBitsInCommon(const ExplicitBitVect& bv1, const ExplicitBitVect& bv2);
+RDKIT_DATASTRUCTS_EXPORT int NumOnBitsInCommon(const ExplicitBitVect& bv1, const ExplicitBitVect& bv2);
 
 //! returns the Tanimoto similarity between two bit vects
 /*!
   \return <tt>(bv1&bv2)_o / [bv1_o + bv2_o - (bv1&bv2)_o]</tt>
 */
 template <typename T1, typename T2>
-double TanimotoSimilarity(const T1& bv1, const T2& bv2);
+RDKIT_DATASTRUCTS_EXPORT double TanimotoSimilarity(const T1& bv1, const T2& bv2);
 
 //! returns the Cosine similarity between two bit vects
 /*!
   \return <tt>(bv1&bv2)_o / sqrt(bv1_o + bv2_o)</tt>
 */
 template <typename T1, typename T2>
-double CosineSimilarity(const T1& bv1, const T2& bv2);
+RDKIT_DATASTRUCTS_EXPORT double CosineSimilarity(const T1& bv1, const T2& bv2);
 
 //! returns the Kulczynski similarity between two bit vects
 /*!
   \return <tt>(bv1&bv2)_o * [bv1_o + bv2_o] / [2 * bv1_o * bv2_o]</tt>
 */
 template <typename T1, typename T2>
-double KulczynskiSimilarity(const T1& bv1, const T2& bv2);
+RDKIT_DATASTRUCTS_EXPORT double KulczynskiSimilarity(const T1& bv1, const T2& bv2);
 
 //! returns the Dice similarity between two bit vects
 /*!
   \return <tt>2*(bv1&bv2)_o / [bv1_o + bv2_o]</tt>
 */
 template <typename T1, typename T2>
-double DiceSimilarity(const T1& bv1, const T2& bv2);
+RDKIT_DATASTRUCTS_EXPORT double DiceSimilarity(const T1& bv1, const T2& bv2);
 
 //! returns the Tversky similarity between two bit vects
 /*!
@@ -125,14 +126,14 @@ double DiceSimilarity(const T1& bv1, const T2& bv2);
 
 */
 template <typename T1, typename T2>
-double TverskySimilarity(const T1& bv1, const T2& bv2, double a, double b);
+RDKIT_DATASTRUCTS_EXPORT double TverskySimilarity(const T1& bv1, const T2& bv2, double a, double b);
 
 //! returns the Sokal similarity between two bit vects
 /*!
   \return <tt>(bv1&bv2)_o / [2*bv1_o + 2*bv2_o - 3*(bv1&bv2)_o]</tt>
 */
 template <typename T1, typename T2>
-double SokalSimilarity(const T1& bv1, const T2& bv2);
+RDKIT_DATASTRUCTS_EXPORT double SokalSimilarity(const T1& bv1, const T2& bv2);
 
 //! returns the McConnaughey similarity between two bit vects
 /*!
@@ -140,21 +141,21 @@ double SokalSimilarity(const T1& bv1, const T2& bv2);
   bv2_o)</tt>
 */
 template <typename T1, typename T2>
-double McConnaugheySimilarity(const T1& bv1, const T2& bv2);
+RDKIT_DATASTRUCTS_EXPORT double McConnaugheySimilarity(const T1& bv1, const T2& bv2);
 
 //! returns the Asymmetric similarity between two bit vects
 /*!
   \return <tt>(bv1&bv2)_o / min(bv1_o,bv2_o)</tt>
 */
 template <typename T1, typename T2>
-double AsymmetricSimilarity(const T1& bv1, const T2& bv2);
+RDKIT_DATASTRUCTS_EXPORT double AsymmetricSimilarity(const T1& bv1, const T2& bv2);
 
 //! returns the Braun-Blanquet similarity between two bit vects
 /*!
   \return <tt>(bv1&bv2)_o / max(bv1_o,bv2_o)</tt>
 */
 template <typename T1, typename T2>
-double BraunBlanquetSimilarity(const T1& bv1, const T2& bv2);
+RDKIT_DATASTRUCTS_EXPORT double BraunBlanquetSimilarity(const T1& bv1, const T2& bv2);
 
 //! returns the Russel similarity between two bit vects
 /*!
@@ -165,7 +166,7 @@ double BraunBlanquetSimilarity(const T1& bv1, const T2& bv2);
 
 */
 template <typename T1, typename T2>
-double RusselSimilarity(const T1& bv1, const T2& bv2);
+RDKIT_DATASTRUCTS_EXPORT double RusselSimilarity(const T1& bv1, const T2& bv2);
 
 //! returns the Rogot-Goldberg similarity between two bit vects
 /*!
@@ -173,23 +174,23 @@ double RusselSimilarity(const T1& bv1, const T2& bv2);
   + (bv1_n - bv1_o - bv2_o + (bv1&bv2)_o) / (2*bv1_n - bv1_o - bv2_o) </tt>
 */
 template <typename T1, typename T2>
-double RogotGoldbergSimilarity(const T1& bv1, const T2& bv2);
+RDKIT_DATASTRUCTS_EXPORT double RogotGoldbergSimilarity(const T1& bv1, const T2& bv2);
 
 //! returns the on bit similarity between two bit vects
 /*!
   \return <tt>(bv1&bv2)_o / (bv1|bv2)_o </tt>
 */
 template <typename T1, typename T2>
-double OnBitSimilarity(const T1& bv1, const T2& bv2);
+RDKIT_DATASTRUCTS_EXPORT double OnBitSimilarity(const T1& bv1, const T2& bv2);
 
 //! returns the number of common bits (on and off) between two bit vects
 /*!
   \return <tt>bv1_n - (bv1^bv2)_o</tt>
 */
 template <typename T1, typename T2>
-int NumBitsInCommon(const T1& bv1, const T2& bv2);
+RDKIT_DATASTRUCTS_EXPORT int NumBitsInCommon(const T1& bv1, const T2& bv2);
 
-int NumBitsInCommon(const ExplicitBitVect& bv1, const ExplicitBitVect& bv2);
+RDKIT_DATASTRUCTS_EXPORT int NumBitsInCommon(const ExplicitBitVect& bv1, const ExplicitBitVect& bv2);
 
 //! returns the common-bit similarity (on and off) between two bit vects
 //! This is also called Manhattan similarity.
@@ -197,17 +198,17 @@ int NumBitsInCommon(const ExplicitBitVect& bv1, const ExplicitBitVect& bv2);
   \return <tt>[bv1_n - (bv1^bv2)_o] / bv1_n</tt>
 */
 template <typename T1, typename T2>
-double AllBitSimilarity(const T1& bv1, const T2& bv2);
+RDKIT_DATASTRUCTS_EXPORT double AllBitSimilarity(const T1& bv1, const T2& bv2);
 
 //! returns an IntVect with indices of all on bits in common between two bit
 // vects
 template <typename T1, typename T2>
-IntVect OnBitsInCommon(const T1& bv1, const T2& bv2);
+RDKIT_DATASTRUCTS_EXPORT IntVect OnBitsInCommon(const T1& bv1, const T2& bv2);
 
 //! returns an IntVect with indices of all off bits in common between two bit
 // vects
 template <typename T1, typename T2>
-IntVect OffBitsInCommon(const T1& bv1, const T2& bv2);
+RDKIT_DATASTRUCTS_EXPORT IntVect OffBitsInCommon(const T1& bv1, const T2& bv2);
 
 //! returns the on-bit projected similarities between two bit vects
 /*!
@@ -216,7 +217,7 @@ IntVect OffBitsInCommon(const T1& bv1, const T2& bv2);
       - <tt>(bv1&bv2)_o / bv2_o</tt>
 */
 template <typename T1, typename T2>
-DoubleVect OnBitProjSimilarity(const T1& bv1, const T2& bv2);
+RDKIT_DATASTRUCTS_EXPORT DoubleVect OnBitProjSimilarity(const T1& bv1, const T2& bv2);
 
 //! returns the on-bit projected similarities between two bit vects
 /*!
@@ -228,7 +229,7 @@ DoubleVect OnBitProjSimilarity(const T1& bv1, const T2& bv2);
 
 */
 template <typename T1, typename T2>
-DoubleVect OffBitProjSimilarity(const T1& bv1, const T2& bv2);
+RDKIT_DATASTRUCTS_EXPORT DoubleVect OffBitProjSimilarity(const T1& bv1, const T2& bv2);
 
 //! folds a bit vector \c factor times and returns the result
 /*!
@@ -241,7 +242,7 @@ DoubleVect OffBitProjSimilarity(const T1& bv1, const T2& bv2);
    <b>Note:</b> The caller is responsible for <tt>delete</tt>ing the result.
  */
 template <typename T1>
-T1* FoldFingerprint(const T1& bv1, unsigned int factor = 2);
+RDKIT_DATASTRUCTS_EXPORT T1* FoldFingerprint(const T1& bv1, unsigned int factor = 2);
 
 //! returns a text representation of a bit vector (a string of 0s and 1s)
 /*!
@@ -251,7 +252,7 @@ T1* FoldFingerprint(const T1& bv1, unsigned int factor = 2);
 
  */
 template <typename T1>
-std::string BitVectToText(const T1& bv1);
+RDKIT_DATASTRUCTS_EXPORT std::string BitVectToText(const T1& bv1);
 
 //! returns a hex representation of a bit vector compatible with Andrew Dalke's
 // FPS format
@@ -262,7 +263,7 @@ std::string BitVectToText(const T1& bv1);
 
  */
 template <typename T1>
-std::string BitVectToFPSText(const T1& bv1);
+RDKIT_DATASTRUCTS_EXPORT std::string BitVectToFPSText(const T1& bv1);
 
 //! returns a binary string representation of a bit vector (an array of bytes)
 /*!
@@ -272,7 +273,7 @@ std::string BitVectToFPSText(const T1& bv1);
 
  */
 template <typename T1>
-std::string BitVectToBinaryText(const T1& bv1);
+RDKIT_DATASTRUCTS_EXPORT std::string BitVectToBinaryText(const T1& bv1);
 
 //! updates a bit vector from Andrew Dalke's FPS format
 /*!
@@ -282,7 +283,7 @@ std::string BitVectToBinaryText(const T1& bv1);
 
  */
 template <typename T1>
-void UpdateBitVectFromFPSText(T1& bv1, const std::string& fps);
+RDKIT_DATASTRUCTS_EXPORT void UpdateBitVectFromFPSText(T1& bv1, const std::string& fps);
 
 //! updates a bit vector from a binary string representation of a bit vector (an
 // array of bytes)
@@ -293,18 +294,18 @@ void UpdateBitVectFromFPSText(T1& bv1, const std::string& fps);
 
  */
 template <typename T1>
-void UpdateBitVectFromBinaryText(T1& bv1, const std::string& fps);
+RDKIT_DATASTRUCTS_EXPORT void UpdateBitVectFromBinaryText(T1& bv1, const std::string& fps);
 
 // FIX: docs and tests please
 
-unsigned int CalcBitmapPopcount(const unsigned char* bv1, unsigned int nBytes);
+RDKIT_DATASTRUCTS_EXPORT unsigned int CalcBitmapPopcount(const unsigned char* bv1, unsigned int nBytes);
 
-double CalcBitmapTanimoto(const unsigned char* bv1, const unsigned char* bv2,
+RDKIT_DATASTRUCTS_EXPORT double CalcBitmapTanimoto(const unsigned char* bv1, const unsigned char* bv2,
                           unsigned int nBytes);
-double CalcBitmapDice(const unsigned char* bv1, const unsigned char* bv2,
+RDKIT_DATASTRUCTS_EXPORT double CalcBitmapDice(const unsigned char* bv1, const unsigned char* bv2,
                       unsigned int nBytes);
-double CalcBitmapTversky(const unsigned char* bv1, const unsigned char* bv2,
+RDKIT_DATASTRUCTS_EXPORT double CalcBitmapTversky(const unsigned char* bv1, const unsigned char* bv2,
                          unsigned int nBytes, double ca, double cb);
-bool CalcBitmapAllProbeBitsMatch(const unsigned char* probe,
+RDKIT_DATASTRUCTS_EXPORT bool CalcBitmapAllProbeBitsMatch(const unsigned char* probe,
                                  const unsigned char* ref, unsigned int nBytes);
 #endif

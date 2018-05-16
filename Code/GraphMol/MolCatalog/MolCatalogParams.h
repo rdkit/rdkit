@@ -1,6 +1,7 @@
 //
 //  Copyright (C) 2006 Greg Landrum
 //
+#include <RDBoost/export.h>
 #ifndef _RD_MOL_CATALOG_PARAMS_H_
 #define _RD_MOL_CATALOG_PARAMS_H_
 
@@ -11,7 +12,7 @@
 namespace RDKit {
 
 //! container for user parameters used to create a mol catalog
-class MolCatalogParams : public RDCatalog::CatalogParams {
+class RDKIT_MOLCATALOG_EXPORT MolCatalogParams : public RDCatalog::CatalogParams {
  public:
   MolCatalogParams() { d_typeStr = "MolCatalog Parameters"; }
 

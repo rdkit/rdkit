@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef _RD_PERIODIC_TABLE_H
 #define _RD_PERIODIC_TABLE_H
 
@@ -28,7 +29,7 @@ namespace RDKit {
   \endverbatim
 
 */
-class PeriodicTable {
+class RDKIT_GRAPHMOL_EXPORT PeriodicTable {
  public:
   //! returns a pointer to the singleton PeriodicTable
   /*

@@ -17,6 +17,7 @@ future
 releases.
 
 */
+#include <RDBoost/export.h>
 #pragma once
 #ifndef RD_STRUCTCHECKER_H_Oct2016
 #define RD_STRUCTCHECKER_H_Oct2016
@@ -59,7 +60,7 @@ enum AATopology {
   CHAIN = 2     // Chain
 };
 
-struct Ligand {
+struct RDKIT_STRUCTCHECKER_EXPORT Ligand {
   std::string AtomSymbol;
   int Charge;
   RadicalType Radical;
@@ -72,7 +73,7 @@ struct Ligand {
         BondType(ANY_BOND) {}
 };
 
-struct AugmentedAtom {
+struct RDKIT_STRUCTCHECKER_EXPORT AugmentedAtom {
   std::string AtomSymbol;
   std::string ShortName;
   int Charge;
@@ -92,7 +93,7 @@ struct AugmentedAtom {
         Topology(topology) {}
 };
 
-struct IncEntry {
+struct RDKIT_STRUCTCHECKER_EXPORT IncEntry {
   std::string AtomSymbol;
   double LocalInc;
   double AlphaInc;
@@ -106,7 +107,7 @@ struct IncEntry {
   int mult_inc_used;
 };
 
-struct PathEntry {
+struct RDKIT_STRUCTCHECKER_EXPORT PathEntry {
   AugmentedAtom Path;
   double Cond;
   // Used for logging
@@ -117,7 +118,7 @@ struct PathEntry {
 //! Structure Check Options
 //    Holds all the user options for the StructureChecking.
 //    Can be initialized from factory functions, perhaps serialized
-struct StructCheckerOptions {
+struct RDKIT_STRUCTCHECKER_EXPORT StructCheckerOptions {
   double AcidityLimit;
   bool RemoveMinorFragments;
   int DesiredCharge;
@@ -196,9 +197,9 @@ struct StructCheckerOptions {
   bool loadChargeDataTables(const std::string &path);  // file path
 };
 
-bool parseOptionsJSON(const std::string &json, StructCheckerOptions &op);
+RDKIT_STRUCTCHECKER_EXPORT bool parseOptionsJSON(const std::string &json, StructCheckerOptions &op);
 
-bool loadOptionsFromFiles(
+RDKIT_STRUCTCHECKER_EXPORT bool loadOptionsFromFiles(
     StructCheckerOptions &op,
     const std::string &augmentedAtomTranslationsFile = "",
     // ?? AcidicAtoms;
@@ -240,7 +241,7 @@ or
     }
 \endcode
 */
-class StructChecker {
+class RDKIT_STRUCTCHECKER_EXPORT StructChecker {
  public:
   typedef enum StructureFlags {
     NO_CHANGE = 0,

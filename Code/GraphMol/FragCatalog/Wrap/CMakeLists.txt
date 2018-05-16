@@ -1,3 +1,4 @@
+remove_definitions(-DRDKIT_FRAGCATALOG_BUILD)
 rdkit_python_extension(rdfragcatalog
                        rdfragcatalog.cpp FragCatalog.cpp FragCatParams.cpp 
                        FragCatGenerator.cpp FragFPGenerator.cpp

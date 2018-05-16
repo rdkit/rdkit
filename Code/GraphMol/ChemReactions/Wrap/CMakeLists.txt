@@ -1,3 +1,4 @@
+remove_definitions(-DRDKIT_CHEMREACTIONS_BUILD)
 rdkit_python_extension(rdChemReactions
                        Enumerate.cpp
                        rdChemReactions.cpp

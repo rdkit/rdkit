@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef __RD_TRIANGLE_SMOOTH_H__
 #define __RD_TRIANGLE_SMOOTH_H__
 
@@ -25,9 +26,9 @@ namespace DistGeom {
   \param tol   a tolerance (percent) for errors in the smoothing process
 
 */
-bool triangleSmoothBounds(BoundsMatrix *boundsMat, double tol = 0.);
+RDKIT_DISTGEOMETRY_EXPORT bool triangleSmoothBounds(BoundsMatrix *boundsMat, double tol = 0.);
 //! \overload
-bool triangleSmoothBounds(BoundsMatPtr boundsMat, double tol = 0.);
+RDKIT_DISTGEOMETRY_EXPORT bool triangleSmoothBounds(BoundsMatPtr boundsMat, double tol = 0.);
 }
 
 #endif

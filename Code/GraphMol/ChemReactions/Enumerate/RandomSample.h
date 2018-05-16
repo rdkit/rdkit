@@ -30,6 +30,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
+#include <RDBoost/export.h>
 #ifndef RGROUP_RANDOM_SAMPLE_H
 #define RGROUP_RANDOM_SAMPLE_H
 
@@ -61,7 +62,7 @@ namespace RDKit {
 
   See EnumerationStrategyBase for more details and usage.
 */
-class RandomSampleStrategy : public EnumerationStrategyBase {
+class RDKIT_CHEMREACTIONS_EXPORT RandomSampleStrategy : public EnumerationStrategyBase {
   boost::uint64_t m_numPermutationsProcessed;
   boost::minstd_rand m_rng;
   std::vector<boost::random::uniform_int_distribution<> > m_distributions;

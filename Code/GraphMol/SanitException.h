@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 
+#include <RDBoost/export.h>
 #ifndef _RD_SANITEXCEPTION_H
 #define _RD_SANITEXCEPTION_H
 
@@ -23,7 +24,7 @@
 namespace RDKit {
 
 //! class for flagging sanitization errors
-class MolSanitizeException : public std::exception {
+class RDKIT_GRAPHMOL_EXPORT MolSanitizeException : public std::exception {
  public:
   MolSanitizeException(const char *msg) : _msg(msg){};
   MolSanitizeException(const std::string &msg) : _msg(msg){};

@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 
+#include <RDBoost/export.h>
 #ifndef RD_TRAJECTORY_H
 #define RD_TRAJECTORY_H
 #include <vector>
@@ -17,7 +18,7 @@ namespace RDKit {
 
 class ROMol;
 
-class Trajectory {
+class RDKIT_TRAJECTORY_EXPORT Trajectory {
   public:
     /*! \brief Constructor
         \param dimension represents the dimensionality of this Trajectory's coordinate tuples;
@@ -97,12 +98,12 @@ class Trajectory {
            into the traj Trajectory object
     \return the number of Snapshot objects read in
  */
-unsigned int readAmberTrajectory(const std::string &fName, Trajectory &traj);
+RDKIT_TRAJECTORY_EXPORT unsigned int readAmberTrajectory(const std::string &fName, Trajectory &traj);
 /*! \brief Reads coordinates from a GROMOS trajectory file
            into the traj Trajectory object
     \return the number of Snapshot objects read in
  */
-unsigned int readGromosTrajectory(const std::string &fName, Trajectory &traj);
+RDKIT_TRAJECTORY_EXPORT unsigned int readGromosTrajectory(const std::string &fName, Trajectory &traj);
 
 }
 #endif

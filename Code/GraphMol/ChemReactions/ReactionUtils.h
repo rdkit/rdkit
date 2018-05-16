@@ -30,6 +30,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
+#include <RDBoost/export.h>
 #ifndef __RD_REACTION_UTILS_H
 #define __RD_REACTION_UTILS_H
 
@@ -39,31 +40,31 @@ namespace RDKit {
 
 enum ReactionMoleculeType { Reactant, Product, Agent };
 
-MOL_SPTR_VECT::const_iterator getStartIterator(const ChemicalReaction &rxn,
+RDKIT_CHEMREACTIONS_EXPORT MOL_SPTR_VECT::const_iterator getStartIterator(const ChemicalReaction &rxn,
                                                ReactionMoleculeType t);
-MOL_SPTR_VECT::const_iterator getEndIterator(const ChemicalReaction &rxn,
+RDKIT_CHEMREACTIONS_EXPORT MOL_SPTR_VECT::const_iterator getEndIterator(const ChemicalReaction &rxn,
                                              ReactionMoleculeType t);
 
-bool hasReactantTemplateSubstructMatch(const ChemicalReaction &rxn,
+RDKIT_CHEMREACTIONS_EXPORT bool hasReactantTemplateSubstructMatch(const ChemicalReaction &rxn,
                                        const ChemicalReaction &query_rxn);
 
-bool hasProductTemplateSubstructMatch(const ChemicalReaction &rxn,
+RDKIT_CHEMREACTIONS_EXPORT bool hasProductTemplateSubstructMatch(const ChemicalReaction &rxn,
                                       const ChemicalReaction &query_rxn);
 
-bool hasAgentTemplateSubstructMatch(const ChemicalReaction &rxn,
+RDKIT_CHEMREACTIONS_EXPORT bool hasAgentTemplateSubstructMatch(const ChemicalReaction &rxn,
                                     const ChemicalReaction &query_rxn);
 
-bool hasReactionSubstructMatch(const ChemicalReaction &rxn,
+RDKIT_CHEMREACTIONS_EXPORT bool hasReactionSubstructMatch(const ChemicalReaction &rxn,
                                const ChemicalReaction &query_rxn,
                                bool includeAgents = false);
 
-bool hasReactionAtomMapping(const ChemicalReaction &rxn);
+RDKIT_CHEMREACTIONS_EXPORT bool hasReactionAtomMapping(const ChemicalReaction &rxn);
 
-bool isReactionTemplateMoleculeAgent(const ROMol &mol, double agentThreshold);
+RDKIT_CHEMREACTIONS_EXPORT bool isReactionTemplateMoleculeAgent(const ROMol &mol, double agentThreshold);
 
-void updateProductsStereochem(ChemicalReaction *rxn);
+RDKIT_CHEMREACTIONS_EXPORT void updateProductsStereochem(ChemicalReaction *rxn);
 
-void removeMappingNumbersFromReactions(const ChemicalReaction &rxn);
+RDKIT_CHEMREACTIONS_EXPORT void removeMappingNumbersFromReactions(const ChemicalReaction &rxn);
 
 }  // end of RDKit namespace
 

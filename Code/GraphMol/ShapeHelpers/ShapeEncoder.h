@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef _RD_SHAPE_ENCODER_H_20050125_0800_
 #define _RD_SHAPE_ENCODER_H_20050125_0800_
 
@@ -39,7 +40,7 @@ namespace MolShapes {
   \param ignoreHs  if true, ignore the hydrogen atoms in the shape encoding
   process
 */
-void EncodeShape(const ROMol &mol, RDGeom::UniformGrid3D &grid, int confId = -1,
+RDKIT_SHAPEHELPERS_EXPORT void EncodeShape(const ROMol &mol, RDGeom::UniformGrid3D &grid, int confId = -1,
                  const RDGeom::Transform3D *trans = 0, double vdwScale = 0.8,
                  double stepSize = 0.25, int maxLayers = -1,
                  bool ignoreHs = true);
@@ -63,7 +64,7 @@ void EncodeShape(const ROMol &mol, RDGeom::UniformGrid3D &grid, int confId = -1,
   \param ignoreHs  if true, ignore the hydrogen atoms in the shape encoding
   process
 */
-void EncodeShape(const Conformer &conf, RDGeom::UniformGrid3D &grid,
+RDKIT_SHAPEHELPERS_EXPORT void EncodeShape(const Conformer &conf, RDGeom::UniformGrid3D &grid,
                  const RDGeom::Transform3D *trans = 0, double vdwScale = 0.8,
                  double stepSize = 0.25, int maxLayers = -1,
                  bool ignoreHs = true);

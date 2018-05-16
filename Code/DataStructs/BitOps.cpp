@@ -163,9 +163,9 @@ bool AllProbeBitsMatch(const T1& probe, const std::string& pkl) {
   }
   return true;
 }
-template bool AllProbeBitsMatch(const SparseBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT bool AllProbeBitsMatch(const SparseBitVect& bv1,
                                 const std::string& pkl);
-template bool AllProbeBitsMatch(const ExplicitBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT bool AllProbeBitsMatch(const ExplicitBitVect& bv1,
                                 const std::string& pkl);
 template <typename T1>
 bool AllProbeBitsMatch(const T1& probe, const T1& ref) {
@@ -176,7 +176,7 @@ bool AllProbeBitsMatch(const T1& probe, const T1& ref) {
   }
   return true;
 }
-template bool AllProbeBitsMatch(const SparseBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT bool AllProbeBitsMatch(const SparseBitVect& bv1,
                                 const SparseBitVect& bv2);
 // template bool AllProbeBitsMatch(const ExplicitBitVect& bv1,const
 // ExplicitBitVect &bv2);
@@ -724,98 +724,98 @@ void UpdateBitVectFromBinaryText(T1& bv1, const std::string& fps) {
   }
 }
 
-template double TanimotoSimilarity(const SparseBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT double TanimotoSimilarity(const SparseBitVect& bv1,
                                    const SparseBitVect& bv2);
-template double TverskySimilarity(const SparseBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT double TverskySimilarity(const SparseBitVect& bv1,
                                   const SparseBitVect& bv2, double a, double b);
-template double CosineSimilarity(const SparseBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT double CosineSimilarity(const SparseBitVect& bv1,
                                  const SparseBitVect& bv2);
-template double KulczynskiSimilarity(const SparseBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT double KulczynskiSimilarity(const SparseBitVect& bv1,
                                      const SparseBitVect& bv2);
-template double DiceSimilarity(const SparseBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT double DiceSimilarity(const SparseBitVect& bv1,
                                const SparseBitVect& bv2);
-template double SokalSimilarity(const SparseBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT double SokalSimilarity(const SparseBitVect& bv1,
                                 const SparseBitVect& bv2);
-template double McConnaugheySimilarity(const SparseBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT double McConnaugheySimilarity(const SparseBitVect& bv1,
                                        const SparseBitVect& bv2);
-template double AsymmetricSimilarity(const SparseBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT double AsymmetricSimilarity(const SparseBitVect& bv1,
                                      const SparseBitVect& bv2);
-template double BraunBlanquetSimilarity(const SparseBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT double BraunBlanquetSimilarity(const SparseBitVect& bv1,
                                         const SparseBitVect& bv2);
-template double RusselSimilarity(const SparseBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT double RusselSimilarity(const SparseBitVect& bv1,
                                  const SparseBitVect& bv2);
-template double RogotGoldbergSimilarity(const SparseBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT double RogotGoldbergSimilarity(const SparseBitVect& bv1,
                                         const SparseBitVect& bv2);
-template double OnBitSimilarity(const SparseBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT double OnBitSimilarity(const SparseBitVect& bv1,
                                 const SparseBitVect& bv2);
-template int NumBitsInCommon(const SparseBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT int NumBitsInCommon(const SparseBitVect& bv1,
                              const SparseBitVect& bv2);
-template double AllBitSimilarity(const SparseBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT double AllBitSimilarity(const SparseBitVect& bv1,
                                  const SparseBitVect& bv2);
-template int NumOnBitsInCommon(const SparseBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT int NumOnBitsInCommon(const SparseBitVect& bv1,
                                const SparseBitVect& bv2);
-template IntVect OnBitsInCommon(const SparseBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT IntVect OnBitsInCommon(const SparseBitVect& bv1,
                                 const SparseBitVect& bv2);
-template IntVect OffBitsInCommon(const SparseBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT IntVect OffBitsInCommon(const SparseBitVect& bv1,
                                  const SparseBitVect& bv2);
-template DoubleVect OnBitProjSimilarity(const SparseBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT DoubleVect OnBitProjSimilarity(const SparseBitVect& bv1,
                                         const SparseBitVect& bv2);
-template DoubleVect OffBitProjSimilarity(const SparseBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT DoubleVect OffBitProjSimilarity(const SparseBitVect& bv1,
                                          const SparseBitVect& bv2);
 
-template double TanimotoSimilarity(const ExplicitBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT double TanimotoSimilarity(const ExplicitBitVect& bv1,
                                    const ExplicitBitVect& bv2);
-template double TverskySimilarity(const ExplicitBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT double TverskySimilarity(const ExplicitBitVect& bv1,
                                   const ExplicitBitVect& bv2, double a,
                                   double b);
-template double CosineSimilarity(const ExplicitBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT double CosineSimilarity(const ExplicitBitVect& bv1,
                                  const ExplicitBitVect& bv2);
-template double KulczynskiSimilarity(const ExplicitBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT double KulczynskiSimilarity(const ExplicitBitVect& bv1,
                                      const ExplicitBitVect& bv2);
-template double DiceSimilarity(const ExplicitBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT double DiceSimilarity(const ExplicitBitVect& bv1,
                                const ExplicitBitVect& bv2);
-template double SokalSimilarity(const ExplicitBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT double SokalSimilarity(const ExplicitBitVect& bv1,
                                 const ExplicitBitVect& bv2);
-template double McConnaugheySimilarity(const ExplicitBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT double McConnaugheySimilarity(const ExplicitBitVect& bv1,
                                        const ExplicitBitVect& bv2);
-template double AsymmetricSimilarity(const ExplicitBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT double AsymmetricSimilarity(const ExplicitBitVect& bv1,
                                      const ExplicitBitVect& bv2);
-template double BraunBlanquetSimilarity(const ExplicitBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT double BraunBlanquetSimilarity(const ExplicitBitVect& bv1,
                                         const ExplicitBitVect& bv2);
-template double RusselSimilarity(const ExplicitBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT double RusselSimilarity(const ExplicitBitVect& bv1,
                                  const ExplicitBitVect& bv2);
-template double RogotGoldbergSimilarity(const ExplicitBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT double RogotGoldbergSimilarity(const ExplicitBitVect& bv1,
                                         const ExplicitBitVect& bv2);
-template double OnBitSimilarity(const ExplicitBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT double OnBitSimilarity(const ExplicitBitVect& bv1,
                                 const ExplicitBitVect& bv2);
-template int NumBitsInCommon(const ExplicitBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT int NumBitsInCommon(const ExplicitBitVect& bv1,
                              const ExplicitBitVect& bv2);
-template double AllBitSimilarity(const ExplicitBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT double AllBitSimilarity(const ExplicitBitVect& bv1,
                                  const ExplicitBitVect& bv2);
-template IntVect OnBitsInCommon(const ExplicitBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT IntVect OnBitsInCommon(const ExplicitBitVect& bv1,
                                 const ExplicitBitVect& bv2);
-template IntVect OffBitsInCommon(const ExplicitBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT IntVect OffBitsInCommon(const ExplicitBitVect& bv1,
                                  const ExplicitBitVect& bv2);
-template DoubleVect OnBitProjSimilarity(const ExplicitBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT DoubleVect OnBitProjSimilarity(const ExplicitBitVect& bv1,
                                         const ExplicitBitVect& bv2);
-template DoubleVect OffBitProjSimilarity(const ExplicitBitVect& bv1,
+template RDKIT_DATASTRUCTS_EXPORT DoubleVect OffBitProjSimilarity(const ExplicitBitVect& bv1,
                                          const ExplicitBitVect& bv2);
 
-template SparseBitVect* FoldFingerprint(const SparseBitVect&, unsigned int);
-template ExplicitBitVect* FoldFingerprint(const ExplicitBitVect&, unsigned int);
+template RDKIT_DATASTRUCTS_EXPORT SparseBitVect* FoldFingerprint(const SparseBitVect&, unsigned int);
+template RDKIT_DATASTRUCTS_EXPORT ExplicitBitVect* FoldFingerprint(const ExplicitBitVect&, unsigned int);
 
-template std::string BitVectToText(const SparseBitVect&);
-template std::string BitVectToText(const ExplicitBitVect&);
+template RDKIT_DATASTRUCTS_EXPORT std::string BitVectToText(const SparseBitVect&);
+template RDKIT_DATASTRUCTS_EXPORT std::string BitVectToText(const ExplicitBitVect&);
 
-template std::string BitVectToFPSText(const SparseBitVect&);
-template std::string BitVectToFPSText(const ExplicitBitVect&);
-template void UpdateBitVectFromFPSText(SparseBitVect&, const std::string&);
-template void UpdateBitVectFromFPSText(ExplicitBitVect&, const std::string&);
+template RDKIT_DATASTRUCTS_EXPORT std::string BitVectToFPSText(const SparseBitVect&);
+template RDKIT_DATASTRUCTS_EXPORT std::string BitVectToFPSText(const ExplicitBitVect&);
+template RDKIT_DATASTRUCTS_EXPORT void UpdateBitVectFromFPSText(SparseBitVect&, const std::string&);
+template RDKIT_DATASTRUCTS_EXPORT void UpdateBitVectFromFPSText(ExplicitBitVect&, const std::string&);
 
-template std::string BitVectToBinaryText(const SparseBitVect&);
-template std::string BitVectToBinaryText(const ExplicitBitVect&);
-template void UpdateBitVectFromBinaryText(SparseBitVect&, const std::string&);
-template void UpdateBitVectFromBinaryText(ExplicitBitVect&, const std::string&);
+template RDKIT_DATASTRUCTS_EXPORT std::string BitVectToBinaryText(const SparseBitVect&);
+template RDKIT_DATASTRUCTS_EXPORT std::string BitVectToBinaryText(const ExplicitBitVect&);
+template RDKIT_DATASTRUCTS_EXPORT void UpdateBitVectFromBinaryText(SparseBitVect&, const std::string&);
+template RDKIT_DATASTRUCTS_EXPORT void UpdateBitVectFromBinaryText(ExplicitBitVect&, const std::string&);
 
 // from here:
 // http://stackoverflow.com/questions/3849337/msvc-equivalent-to-builtin-popcount

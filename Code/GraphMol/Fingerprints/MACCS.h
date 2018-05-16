@@ -1,8 +1,10 @@
 /*! \file MACCS.h
 
 */
+#include <RDBoost/export.h>
 #ifndef __RD_MACCSFPS_H__
 #define __RD_MACCSFPS_H__
+#include <string>
 
 class ExplicitBitVect;
 namespace RDKit {
@@ -22,7 +24,7 @@ const std::string maccsFingerprintVersion = "2.0.0";
   responsible for calling delete on this.
 
 */
-ExplicitBitVect *getFingerprintAsBitVect(const ROMol &mol);
+RDKIT_FINGERPRINTS_EXPORT ExplicitBitVect *getFingerprintAsBitVect(const ROMol &mol);
 }
 }
 

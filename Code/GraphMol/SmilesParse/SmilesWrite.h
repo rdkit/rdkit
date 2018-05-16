@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef _RD_SMILESWRITE_H
 #define _RD_SMILESWRITE_H
 
@@ -19,7 +20,7 @@ class Bond;
 class ROMol;
 namespace SmilesWrite {
 //! \brief returns true if the atom number is in the SMILES organic subset
-bool inOrganicSubset(int atomicNumber);
+RDKIT_SMILESPARSE_EXPORT bool inOrganicSubset(int atomicNumber);
 
 //! \brief returns the SMILES for an atom
 /*!
@@ -31,7 +32,7 @@ bool inOrganicSubset(int atomicNumber);
   \param allHsExplicit : if true, hydrogen counts will be provided for every
   atom.
 */
-std::string GetAtomSmiles(const Atom *atom, bool doKekule = false,
+RDKIT_SMILESPARSE_EXPORT std::string GetAtomSmiles(const Atom *atom, bool doKekule = false,
                           const Bond *bondIn = 0, bool allHsExplicit = false);
 
 //! \brief returns the SMILES for a bond
@@ -43,7 +44,7 @@ std::string GetAtomSmiles(const Atom *atom, bool doKekule = false,
     bond orders for aromatic bonds)
   \param allBondsExplicit : if true, symbols will be included for all bonds.
 */
-std::string GetBondSmiles(const Bond *bond, int atomToLeftIdx = -1,
+RDKIT_SMILESPARSE_EXPORT std::string GetBondSmiles(const Bond *bond, int atomToLeftIdx = -1,
                           bool doKekule = false, bool allBondsExplicit = false);
 }
 
@@ -61,7 +62,7 @@ std::string GetBondSmiles(const Bond *bond, int atomToLeftIdx = -1,
   \param allHsExplicit : if true, hydrogen counts will be provided for every
   atom.
  */
-std::string MolToSmiles(const ROMol &mol, bool doIsomericSmiles = true,
+RDKIT_SMILESPARSE_EXPORT std::string MolToSmiles(const ROMol &mol, bool doIsomericSmiles = true,
                         bool doKekule = false, int rootedAtAtom = -1,
                         bool canonical = true, bool allBondsExplicit = false,
                         bool allHsExplicit = false);
@@ -89,7 +90,7 @@ std::string MolToSmiles(const ROMol &mol, bool doIsomericSmiles = true,
   \b NOTE: the bondSymbols are *not* currently used in the canonicalization.
 
  */
-std::string MolFragmentToSmiles(const ROMol &mol,
+RDKIT_SMILESPARSE_EXPORT std::string MolFragmentToSmiles(const ROMol &mol,
                                 const std::vector<int> &atomsToUse,
                                 const std::vector<int> *bondsToUse = 0,
                                 const std::vector<std::string> *atomSymbols = 0,

@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef __RD_SPARSEBITVECTS_H__
 #define __RD_SPARSEBITVECTS_H__
 
@@ -30,7 +31,7 @@ typedef IntSet::const_iterator IntSetConstIter;
     vectors but become rather a nightmare if they need to be negated.
 
  */
-class SparseBitVect : public BitVect {
+class RDKIT_DATASTRUCTS_EXPORT SparseBitVect : public BitVect {
  public:
   SparseBitVect() : dp_bits(0), d_size(0){};
   //! initialize with a particular size;

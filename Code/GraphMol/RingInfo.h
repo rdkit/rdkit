@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef _RD_RINGINFO_H
 #define _RD_RINGINFO_H
 
@@ -18,7 +19,7 @@ namespace RDKit {
 /*!
 
  */
-class RingInfo {
+class RDKIT_GRAPHMOL_EXPORT RingInfo {
   friend class MolPickler;
 
  public:

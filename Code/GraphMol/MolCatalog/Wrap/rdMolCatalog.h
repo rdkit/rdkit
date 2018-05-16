@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef _RDMOLCATALOG_WRAP_INCL_
 #define _RDMOLCATALOG_WRAP_INCL_
 

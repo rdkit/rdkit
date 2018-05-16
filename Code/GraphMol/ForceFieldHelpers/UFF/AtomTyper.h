@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef _RD_UFFATOMTYPER_H__
 #define _RD_UFFATOMTYPER_H__
 
@@ -26,29 +27,29 @@ class Atom;
 namespace UFF {
 typedef std::vector<const ForceFields::UFF::AtomicParams *> AtomicParamVect;
 
-std::pair<AtomicParamVect, bool> getAtomTypes(
+RDKIT_FORCEFIELDHELPERS_EXPORT std::pair<AtomicParamVect, bool> getAtomTypes(
     const ROMol &mol, const std::string &paramData = "");
-bool getUFFBondStretchParams(const ROMol &mol, unsigned int idx1,
+RDKIT_FORCEFIELDHELPERS_EXPORT bool getUFFBondStretchParams(const ROMol &mol, unsigned int idx1,
                              unsigned int idx2,
                              ForceFields::UFF::UFFBond &uffBondStretchParams);
-bool getUFFAngleBendParams(const ROMol &mol, unsigned int idx1,
+RDKIT_FORCEFIELDHELPERS_EXPORT bool getUFFAngleBendParams(const ROMol &mol, unsigned int idx1,
                            unsigned int idx2, unsigned int idx3,
                            ForceFields::UFF::UFFAngle &uffAngleBendParams);
-bool getUFFTorsionParams(const ROMol &mol, unsigned int idx1, unsigned int idx2,
+RDKIT_FORCEFIELDHELPERS_EXPORT bool getUFFTorsionParams(const ROMol &mol, unsigned int idx1, unsigned int idx2,
                          unsigned int idx3, unsigned int idx4,
                          ForceFields::UFF::UFFTor &uffTorsionParams);
-bool getUFFInversionParams(const ROMol &mol, unsigned int idx1,
+RDKIT_FORCEFIELDHELPERS_EXPORT bool getUFFInversionParams(const ROMol &mol, unsigned int idx1,
                            unsigned int idx2, unsigned int idx3,
                            unsigned int idx4,
                            ForceFields::UFF::UFFInv &uffInversionParams);
-bool getUFFVdWParams(const ROMol &mol, unsigned int idx1, unsigned int idx2,
+RDKIT_FORCEFIELDHELPERS_EXPORT bool getUFFVdWParams(const ROMol &mol, unsigned int idx1, unsigned int idx2,
                      ForceFields::UFF::UFFVdW &uffVdWParams);
 
 namespace Tools {
 // these functions are primarily exposed so they can be tested.
-void addAtomChargeFlags(const Atom *atom, std::string &atomKey,
+RDKIT_FORCEFIELDHELPERS_EXPORT void addAtomChargeFlags(const Atom *atom, std::string &atomKey,
                         bool tolerateChargeMismatch = true);
-std::string getAtomLabel(const Atom *atom);
+RDKIT_FORCEFIELDHELPERS_EXPORT std::string getAtomLabel(const Atom *atom);
 }
 }
 }

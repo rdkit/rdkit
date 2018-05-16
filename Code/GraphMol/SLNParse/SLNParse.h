@@ -31,6 +31,7 @@
 //
 // Created by Greg Landrum, September 2006
 //
+#include <RDBoost/export.h>
 #ifndef __RD_SLNPARSE_H__
 #define __RD_SLNPARSE_H__
 
@@ -42,16 +43,16 @@ class RWMol;
 class ROMol;
 
 namespace SLNParse {
-void finalizeQueryMol(ROMol *mol, bool mergeHs);
+RDKIT_SLNPARSE_EXPORT void finalizeQueryMol(ROMol *mol, bool mergeHs);
 }
 
-RWMol *SLNToMol(const std::string &smi, bool sanitize = true,
+RDKIT_SLNPARSE_EXPORT RWMol *SLNToMol(const std::string &smi, bool sanitize = true,
                 int debugParse = 0);
 
-RWMol *SLNQueryToMol(const std::string &smi, bool mergeHs = true,
+RDKIT_SLNPARSE_EXPORT RWMol *SLNQueryToMol(const std::string &smi, bool mergeHs = true,
                      int debugParse = 0);
 
-class SLNParseException : public std::exception {
+class RDKIT_SLNPARSE_EXPORT SLNParseException : public std::exception {
  public:
   SLNParseException(const char *msg) : _msg(msg){};
   SLNParseException(const std::string &msg) : _msg(msg){};

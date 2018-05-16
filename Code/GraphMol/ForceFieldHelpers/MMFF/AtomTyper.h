@@ -9,6 +9,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef _RD_MMFFATOMTYPER_H__
 #define _RD_MMFFATOMTYPER_H__
 
@@ -27,7 +28,7 @@ class Bond;
 namespace MMFF {
 class RingMembershipSize;
 using namespace ForceFields::MMFF;
-class MMFFAtomProperties {
+class RDKIT_FORCEFIELDHELPERS_EXPORT MMFFAtomProperties {
  public:
   MMFFAtomProperties()
       : mmffAtomType(0), mmffFormalCharge(0.0), mmffPartialCharge(0.0){};
@@ -44,7 +45,7 @@ enum {
   MMFF_VERBOSITY_LOW = 1,
   MMFF_VERBOSITY_HIGH = 2
 };
-class MMFFMolProperties {
+class RDKIT_FORCEFIELDHELPERS_EXPORT MMFFMolProperties {
  public:
   MMFFMolProperties(ROMol &mol, const std::string &mmffVariant = "MMFF94",
                     boost::uint8_t verbosity = MMFF_VERBOSITY_NONE,
@@ -173,28 +174,28 @@ class MMFFMolProperties {
   std::ostream *d_oStream;
   std::vector<MMFFAtomPropertiesPtr> d_MMFFAtomPropertiesPtrVect;
 };
-unsigned int isAngleInRingOfSize3or4(const ROMol &mol, const unsigned int idx1,
+RDKIT_FORCEFIELDHELPERS_EXPORT unsigned int isAngleInRingOfSize3or4(const ROMol &mol, const unsigned int idx1,
                                      const unsigned int idx2,
                                      const unsigned int idx3);
-unsigned int isTorsionInRingOfSize4or5(const ROMol &mol,
+RDKIT_FORCEFIELDHELPERS_EXPORT unsigned int isTorsionInRingOfSize4or5(const ROMol &mol,
                                        const unsigned int idx1,
                                        const unsigned int idx2,
                                        const unsigned int idx3,
                                        const unsigned int idx4);
-bool isRingAromatic(const ROMol &mol, const INT_VECT &ringIndxVect);
-bool isAtomInAromaticRingOfSize(const Atom *atom, const unsigned int ringSize);
-bool isAtomNOxide(const Atom *atom);
-bool areAtomsInSameAromaticRing(const ROMol &mol, const unsigned int idx1,
+RDKIT_FORCEFIELDHELPERS_EXPORT bool isRingAromatic(const ROMol &mol, const INT_VECT &ringIndxVect);
+RDKIT_FORCEFIELDHELPERS_EXPORT bool isAtomInAromaticRingOfSize(const Atom *atom, const unsigned int ringSize);
+RDKIT_FORCEFIELDHELPERS_EXPORT bool isAtomNOxide(const Atom *atom);
+RDKIT_FORCEFIELDHELPERS_EXPORT bool areAtomsInSameAromaticRing(const ROMol &mol, const unsigned int idx1,
                                 const unsigned int idx2);
-bool areAtomsInSameRingOfSize(const ROMol &mol, const unsigned int ringSize,
+RDKIT_FORCEFIELDHELPERS_EXPORT bool areAtomsInSameRingOfSize(const ROMol &mol, const unsigned int ringSize,
                               const unsigned int numAtoms, ...);
-unsigned int sanitizeMMFFMol(RWMol &mol);
-void setMMFFAromaticity(RWMol &mol);
-unsigned int getMMFFStretchBendType(const unsigned int angleType,
+RDKIT_FORCEFIELDHELPERS_EXPORT unsigned int sanitizeMMFFMol(RWMol &mol);
+RDKIT_FORCEFIELDHELPERS_EXPORT void setMMFFAromaticity(RWMol &mol);
+RDKIT_FORCEFIELDHELPERS_EXPORT unsigned int getMMFFStretchBendType(const unsigned int angleType,
                                     const unsigned int bondType1,
                                     const unsigned int bondType2);
-unsigned int getPeriodicTableRow(const int atomicNum);
-const ForceFields::MMFF::MMFFAngle *getMMFFAngleBendEmpiricalRuleParams(
+RDKIT_FORCEFIELDHELPERS_EXPORT unsigned int getPeriodicTableRow(const int atomicNum);
+RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFAngle *getMMFFAngleBendEmpiricalRuleParams(
     const ROMol &mol, const ForceFields::MMFF::MMFFAngle *oldMMFFAngleParams,
     const ForceFields::MMFF::MMFFProp *mmffPropParamsCentralAtom,
     const ForceFields::MMFF::MMFFBond *mmffBondParams1,

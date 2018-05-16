@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef RDKIT_RGROUPDECOMP_H
 #define RDKIT_RGROUPDECOMP_H
 
@@ -49,7 +50,7 @@ typedef enum {
   MCS = 0x01,
 } RGroupCoreAlignment;
 
-struct RGroupDecompositionParameters {
+struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
   unsigned int labels;
   unsigned int matchingStrategy;
   unsigned int rgroupLabelling;
@@ -90,7 +91,7 @@ typedef std::vector<RGroupRow> RGroupRows;
 typedef std::map<std::string, RGroupColumn> RGroupColumns;
 
 struct RGroupDecompData;
-class RGroupDecomposition {
+class RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecomposition {
   RGroupDecompData *data;                            // implementation details
   RGroupDecomposition(const RGroupDecomposition &);  // no copy construct
   RGroupDecomposition &operator=(
@@ -115,14 +116,14 @@ class RGroupDecomposition {
   RGroupColumns getRGroupsAsColumns() const;
 };
 
-unsigned int RGroupDecompose(const std::vector<ROMOL_SPTR> &cores,
+RDKIT_RGROUPDECOMPOSITION_EXPORT unsigned int RGroupDecompose(const std::vector<ROMOL_SPTR> &cores,
                              const std::vector<ROMOL_SPTR> &mols,
                              RGroupRows &rows,
                              std::vector<unsigned int> *unmatched = 0,
                              const RGroupDecompositionParameters &options =
                                  RGroupDecompositionParameters());
 
-unsigned int RGroupDecompose(const std::vector<ROMOL_SPTR> &cores,
+RDKIT_RGROUPDECOMPOSITION_EXPORT unsigned int RGroupDecompose(const std::vector<ROMOL_SPTR> &cores,
                              const std::vector<ROMOL_SPTR> &mols,
                              RGroupColumns &columns,
                              std::vector<unsigned int> *unmatched = 0,

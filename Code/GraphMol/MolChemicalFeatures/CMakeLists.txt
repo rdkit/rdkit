@@ -1,3 +1,6 @@
+
+remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
+add_definitions(-DRDKIT_MOLCHEMICALFEATURES_BUILD)
 rdkit_library(MolChemicalFeatures
               MolChemicalFeature.cpp MolChemicalFeatureDef.cpp 
               MolChemicalFeatureFactory.cpp FeatureParser.cpp

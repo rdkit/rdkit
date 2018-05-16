@@ -1,3 +1,4 @@
+remove_definitions(-DRDKIT_MMPA_BUILD)
 rdkit_python_extension(rdMMPA
                        rdMMPA.cpp
                        DEST Chem

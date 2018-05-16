@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef __RD_FORCEFIELD_H__
 #define __RD_FORCEFIELD_H__
 
@@ -54,7 +55,7 @@ typedef std::vector<ContribPtr> ContribPtrVect;
        this is almost certainly inefficient.
 
 */
-class ForceField {
+class RDKIT_FORCEFIELD_EXPORT ForceField {
  public:
   //! construct with a dimension
   ForceField(unsigned int dimension = 3)

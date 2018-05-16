@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef _RD_FRAG_FP_GENERATOR_H_
 #define _RD_FRAG_FP_GENERATOR_H_
 
@@ -22,7 +23,7 @@ typedef RDCatalog::HierarchCatalog<FragCatalogEntry, FragCatParams, int>
     FragCatalog;
 typedef std::vector<std::pair<int, int> > MatchVectType;
 
-class FragFPGenerator {
+class RDKIT_FRAGCATALOG_EXPORT FragFPGenerator {
  public:
   FragFPGenerator() {}
 

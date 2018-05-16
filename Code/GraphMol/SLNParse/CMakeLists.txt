@@ -38,6 +38,9 @@ else(BISON_EXECUTABLE)
 endif(BISON_EXECUTABLE)
 
 
+
+remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
+add_definitions(-DRDKIT_SLNPARSE_BUILD)
 rdkit_library(SLNParse
               SLNParse.cpp SLNAttribs.cpp
               ${BISON_OUTPUT_FILES} ${FLEX_OUTPUT_FILES}

@@ -9,6 +9,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef __RD_UFFANGLECONSTRAINT_H__
 #define __RD_UFFANGLECONSTRAINT_H__
 #include <iostream>
@@ -18,7 +19,7 @@ namespace ForceFields {
 namespace UFF {
 
 //! An angle range constraint modelled after a AngleBendContrib
-class AngleConstraintContrib : public ForceFieldContrib {
+class RDKIT_FORCEFIELD_EXPORT AngleConstraintContrib : public ForceFieldContrib {
  public:
   AngleConstraintContrib() : d_at1Idx(-1), d_at2Idx(-1), d_at3Idx(-1){};
   //! Constructor

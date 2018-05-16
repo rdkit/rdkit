@@ -1,3 +1,4 @@
+remove_definitions(-DRDKIT_SIMDIVPICKERS_BUILD)
 rdkit_python_extension(rdSimDivPickers 
                        MaxMinPicker.cpp HierarchicalClusterPicker.cpp 
                        rdSimDivPickers.cpp 

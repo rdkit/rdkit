@@ -14,6 +14,7 @@
 
 */
 
+#include <RDBoost/export.h>
 #ifndef __RD_ROMOL_H__
 #define __RD_ROMOL_H__
 
@@ -62,9 +63,9 @@ class QueryAtomIterator_;
 template <class T1, class T2>
 class MatchingAtomIterator_;
 
-extern const int ci_RIGHTMOST_ATOM;
-extern const int ci_LEADING_BOND;
-extern const int ci_ATOM_HOLDER;
+RDKIT_GRAPHMOL_EXPORT extern const int ci_RIGHTMOST_ATOM;
+RDKIT_GRAPHMOL_EXPORT extern const int ci_LEADING_BOND;
+RDKIT_GRAPHMOL_EXPORT extern const int ci_ATOM_HOLDER;
 
 //! ROMol is a molecule class that is intended to have a fixed topology
 /*!
@@ -165,7 +166,7 @@ struct CXXBondIterator {
   CXXBondIter end() { return {graph, vend}; }
 };
 
-class ROMol : public RDProps {
+class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
  public:
   friend class MolPickler;
   friend class RWMol;

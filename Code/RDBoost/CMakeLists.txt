@@ -1,7 +1,11 @@
 if(WIN32 OR "${Py_ENABLE_SHARED}" STREQUAL "1")
+
+  add_definitions(-DRDKIT_RDBOOST_BUILD)
   rdkit_library(RDBoost Wrap.cpp
                 LINK_LIBRARIES RDGeneral ${PYTHON_LIBRARIES} ${Boost_LIBRARIES})
 else()
+
+    add_definitions(-DRDKIT_RDBOOST_BUILD)
     rdkit_library(RDBoost Wrap.cpp
                 LINK_LIBRARIES RDGeneral ${Boost_LIBRARIES})
     if("${PYTHON_LDSHARED}" STREQUAL "")
@@ -17,6 +21,8 @@ rdkit_headers(Wrap.h PySequenceHolder.h
               python.h
               boost_numpy.h
               python_streambuf.h
+              export.h
+              test.h
               DEST RDBoost)
 
 add_subdirectory(Wrap)

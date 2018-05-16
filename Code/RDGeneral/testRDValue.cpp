@@ -1,3 +1,4 @@
+#include <RDBoost/test.h>
 #include "RDValue.h"
 #include "RDProps.h"
 #include "Invariant.h"

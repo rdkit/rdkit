@@ -28,6 +28,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
+#include <RDBoost/export.h>
 #ifndef RDKIT_SUBSTRUCT_LIBRARY
 #define RDKIT_SUBSTRUCT_LIBRARY
 
@@ -47,7 +48,7 @@ namespace RDKit {
   indexing molecules for substructure searching.  It simply
   provides an API for adding and getting molecules from a set.
  */
-class MolHolderBase {
+class RDKIT_SUBSTRUCTLIBRARY_EXPORT MolHolderBase {
  public:
   virtual ~MolHolderBase() {}
 
@@ -67,7 +68,7 @@ class MolHolderBase {
     This is currently one of the faster implementations.
     However it is very memory intensive.
 */
-class MolHolder : public MolHolderBase {
+class RDKIT_SUBSTRUCTLIBRARY_EXPORT MolHolder : public MolHolderBase {
   std::vector<boost::shared_ptr<ROMol>> mols;
 
  public:
@@ -96,7 +97,7 @@ class MolHolder : public MolHolderBase {
 
   See RDKit::FPHolder
 */
-class CachedMolHolder : public MolHolderBase {
+class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedMolHolder : public MolHolderBase {
   std::vector<std::string> mols;
 
  public:
@@ -136,7 +137,7 @@ class CachedMolHolder : public MolHolderBase {
 
     See RDKit::FPHolder
 */
-class CachedSmilesMolHolder : public MolHolderBase {
+class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedSmilesMolHolder : public MolHolderBase {
   std::vector<std::string> mols;
 
  public:
@@ -181,7 +182,7 @@ class CachedSmilesMolHolder : public MolHolderBase {
 
     See RDKit::FPHolder
 */
-class CachedTrustedSmilesMolHolder : public MolHolderBase {
+class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedTrustedSmilesMolHolder : public MolHolderBase {
   std::vector<std::string> mols;
 
  public:
@@ -214,7 +215,7 @@ class CachedTrustedSmilesMolHolder : public MolHolderBase {
 };
 
 //! Base FPI for the fingerprinter used to rule out impossible matches
-class FPHolderBase {
+class RDKIT_SUBSTRUCTLIBRARY_EXPORT FPHolderBase {
   std::vector<ExplicitBitVect *> fps;
 
  public:
@@ -254,7 +255,7 @@ class FPHolderBase {
 };
 
 //! Uses the pattern fingerprinter to rule out matches
-class PatternHolder : public FPHolderBase {
+class RDKIT_SUBSTRUCTLIBRARY_EXPORT PatternHolder : public FPHolderBase {
  public:
   //! Caller owns the vector!
   virtual ExplicitBitVect *makeFingerprint(const ROMol &m) const {
@@ -338,7 +339,7 @@ class PatternHolder : public FPHolderBase {
      \endcode
      
 */
-class SubstructLibrary {
+class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
   boost::shared_ptr<MolHolderBase> molholder;
   boost::shared_ptr<FPHolderBase> fpholder;
   MolHolderBase *mols;  // used for a small optimization

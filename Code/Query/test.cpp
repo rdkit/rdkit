@@ -9,6 +9,7 @@
 //  of the RDKit source tree.
 //
 
+#include <RDBoost/test.h>
 #include "QueryObjects.h"
 #include <iostream>
 #include <math.h>

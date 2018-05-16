@@ -30,6 +30,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
+#include <RDBoost/export.h>
 #ifndef RGROUP_RANDOM_SAMPLE_ALLBBS_H
 #define RGROUP_RANDOM_SAMPLE_ALLBBS_H
 
@@ -64,7 +65,7 @@ namespace RDKit {
   See EnumerationStrategyBase for more details and usage.
 */
 
-class RandomSampleAllBBsStrategy : public EnumerationStrategyBase {
+class RDKIT_CHEMREACTIONS_EXPORT RandomSampleAllBBsStrategy : public EnumerationStrategyBase {
   boost::uint64_t m_numPermutationsProcessed;
   size_t m_offset;
   size_t m_maxoffset;

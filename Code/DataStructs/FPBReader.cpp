@@ -199,7 +199,7 @@ boost::uint8_t *copyBytes(const FPBReader_impl *dp_impl, unsigned int which) {
 };
 
 // caller is responsible for delete'ing the result
-boost::dynamic_bitset<> *bytesToBitset(const boost::uint8_t *fpData,
+RDKIT_DATASTRUCTS_EXPORT boost::dynamic_bitset<> *bytesToBitset(const boost::uint8_t *fpData,
                                        boost::uint32_t nBits) {
   unsigned int nBytes = nBits / 8;
   if (!(nBytes % sizeof(boost::dynamic_bitset<>::block_type))) {
@@ -215,7 +215,7 @@ boost::dynamic_bitset<> *bytesToBitset(const boost::uint8_t *fpData,
 }
 
 // caller is responsible for delete []'ing the result
-boost::uint8_t *bitsetToBytes(const boost::dynamic_bitset<> &bitset) {
+RDKIT_DATASTRUCTS_EXPORT boost::uint8_t *bitsetToBytes(const boost::dynamic_bitset<> &bitset) {
   unsigned int nBits = bitset.size();
   unsigned int nBytes = nBits / 8;
 

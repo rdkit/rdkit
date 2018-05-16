@@ -1,3 +1,4 @@
+#include <RDBoost/export.h>
 #ifndef RDKIT_ITERATOR_NEXT_INCLUDED
 #define RDKIT_ITERATOR_NEXT_INCLUDED
 

@@ -29,12 +29,13 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
+#include <RDBoost/export.h>
 #ifndef RDKIT_INCHI_30JUNE2011
 #define RDKIT_INCHI_30JUNE2011
 #include <GraphMol/RDKitBase.h>
 #include <string>
 namespace RDKit {
-  struct ExtraInchiReturnValues {
+  struct RDKIT_RDINCHILIB_EXPORT ExtraInchiReturnValues {
     int returnCode;
     std::string messagePtr;
     std::string logPtr;
@@ -49,7 +50,7 @@ namespace RDKit {
    * \param removeHs Whether to remove hydrogens from the generated molecule
    * before returning it.
    */
-  RWMol* InchiToMol(const std::string &inchi, ExtraInchiReturnValues& rv,
+  RDKIT_RDINCHILIB_EXPORT RWMol* InchiToMol(const std::string &inchi, ExtraInchiReturnValues& rv,
                     bool sanitize=true, bool removeHs=true);
   /*! Get the InChI string for a given molecule
    * \param mol The input molecule
@@ -64,12 +65,12 @@ namespace RDKit {
    * and the User Guide:
    * http://www.inchi-trust.org/fileadmin/user_upload/software/inchi-v1.04/InChI_UserGuide.pdf
    */
-  std::string MolToInchi(const ROMol& mol, ExtraInchiReturnValues& rv,
+  RDKIT_RDINCHILIB_EXPORT std::string MolToInchi(const ROMol& mol, ExtraInchiReturnValues& rv,
                          const char *options=NULL);
   /*! Get the InChI Key for an input InChI string
    * \param inchi The input InChI string, which can be standard or not.
    */
-  std::string InchiToInchiKey(const std::string &inchi);
+  RDKIT_RDINCHILIB_EXPORT std::string InchiToInchiKey(const std::string &inchi);
 
   /*! Get the InChI key for a given molecule directly
    * \param mol The input molecule

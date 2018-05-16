@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef _RD_EMBEDDED_FRAG_H_
 #define _RD_EMBEDDED_FRAG_H_
 
@@ -25,7 +26,7 @@ namespace RDDepict {
 typedef boost::shared_array<double> DOUBLE_SMART_PTR;
 
 //! Class that contains the data for an atoms that has alredy been embedded
-class EmbeddedAtom {
+class RDKIT_DEPICTOR_EXPORT EmbeddedAtom {
  public:
   typedef enum { UNSPECIFIED = 0, CISTRANS, RING } EAtomType;
 
@@ -151,7 +152,7 @@ typedef INT_EATOM_MAP::const_iterator INT_EATOM_MAP_CI;
   - so at the end of the process  the whole molecule end up being one these
   embedded frag objects
 */
-class EmbeddedFrag {
+class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   // REVIEW: think about moving member functions up to global level and just
   // using
   // this class as a container

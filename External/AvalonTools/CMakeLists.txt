@@ -86,11 +86,14 @@ endif()
 
 
 rdkit_library(avalon_clib ${avalon_clib_srcs})
-
+if(MSVC AND RDK_INSTALL_DYNAMIC_LIBS)
+  set_target_properties(avalon_clib PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${AVALON_SRC_PATH})
 
+add_definitions(-DRDKIT_AVALONLIB_BUILD)
 rdkit_library(AvalonLib AvalonTools.cpp SHARED LINK_LIBRARIES avalon_clib FileParsers SmilesParse GraphMol DataStructs RDGeometryLib RDGeneral )
 rdkit_headers(AvalonTools.h DEST GraphMol)
 rdkit_test(testAvalonLib1 test1.cpp

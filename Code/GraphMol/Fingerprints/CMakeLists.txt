@@ -1,3 +1,6 @@
+
+remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
+add_definitions(-DRDKIT_FINGERPRINTS_BUILD)
 rdkit_library(Fingerprints
               Fingerprints.cpp PatternFingerprints.cpp MorganFingerprints.cpp AtomPairs.cpp MACCS.cpp
               LINK_LIBRARIES Subgraphs SubstructMatch SmilesParse GraphMol

@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef _RD_MOLPICKLE_H
 #define _RD_MOLPICKLE_H
 
@@ -31,7 +32,7 @@ class ROMol;
 class RingInfo;
 
 //! used to indicate exceptions whilst pickling (serializing) molecules
-class MolPicklerException : public std::exception {
+class RDKIT_GRAPHMOL_EXPORT MolPicklerException : public std::exception {
  public:
   MolPicklerException(const char *msg) : _msg(msg){};
   MolPicklerException(const std::string msg) : _msg(msg){};
@@ -58,10 +59,11 @@ typedef enum {
 }
 
 //! handles pickling (serializing) molecules
-class MolPickler {
+class RDKIT_GRAPHMOL_EXPORT MolPickler {
  public:
-  static const boost::int32_t versionMajor, versionMinor,
-      versionPatch;                      //!< mark the pickle version
+  static const boost::int32_t versionMajor; //!< mark the pickle major version
+  static const boost::int32_t versionMinor; //!< mark the pickle minor version
+  static const boost::int32_t versionPatch; //!< mark the pickle patch version
   static const boost::int32_t endianId;  //! mark the endian-ness of the pickle
 
   //! the pickle format is tagged using these tags:

@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef _RD_DISTPICKER_H
 #define _RD_DISTPICKER_H
 
@@ -27,7 +28,7 @@ namespace RDPickers {
  *    if (i > j) : distMat[i*(i-1)/2 + j]
  *    if (j < i) : distMat[j*(j-1)/2 + i]
  */
-double getDistFromLTM(const double *distMat, unsigned int i, unsigned int j);
+RDKIT_SIMDIVPICKERS_EXPORT double getDistFromLTM(const double *distMat, unsigned int i, unsigned int j);
 
 /*! \brief Abstract base class to do perform item picking (typically molecules)
  *using a
@@ -40,7 +41,7 @@ double getDistFromLTM(const double *distMat, unsigned int i, unsigned int j);
  *  This class contains a pointer to a distance matrix, but it is not
  *responsible for cleaning it up
  */
-class DistPicker {
+class RDKIT_SIMDIVPICKERS_EXPORT DistPicker {
  public:
   /*! \brief Default constructor
    *

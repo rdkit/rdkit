@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef RD_MULTIFPBREADER_H_APR2016
 #define RD_MULTIFPBREADER_H_APR2016
 /*! \file MultiFPBReader.h
@@ -50,7 +51,7 @@ namespace RDKit {
   \c lazyRead mode.
 
 */
-class MultiFPBReader {
+class RDKIT_DATASTRUCTS_EXPORT MultiFPBReader {
  public:
   typedef boost::tuple<double, unsigned int, unsigned int> ResultTuple;
   MultiFPBReader()

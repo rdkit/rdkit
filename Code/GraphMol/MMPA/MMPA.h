@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #pragma once
 #include <vector>
 #include <string>
@@ -32,7 +33,7 @@ namespace MMPA {
  \return true if the molecule was fragmented, false otherwise.
 */
 
-bool fragmentMol(const ROMol& mol,
+RDKIT_MMPA_EXPORT bool fragmentMol(const ROMol& mol,
                  std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> >& result,
                  unsigned int maxCuts = 3, unsigned int maxCutBonds = 20,
                  const std::string& pattern = "[#6+0;!$(*=,#[!#6])]!@!=!#[*]");
@@ -53,7 +54,7 @@ bool fragmentMol(const ROMol& mol,
 
  \return true if the molecule was fragmented, false otherwise.
 */
-bool fragmentMol(const ROMol& mol,
+RDKIT_MMPA_EXPORT bool fragmentMol(const ROMol& mol,
                  std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> >& result,
                  unsigned int minCuts,
                  unsigned int maxCuts,
@@ -73,7 +74,7 @@ bool fragmentMol(const ROMol& mol,
                         fragments.
  \return true if the molecule was fragmented, false otherwise.
 */
-bool fragmentMol(const ROMol& mol,
+RDKIT_MMPA_EXPORT bool fragmentMol(const ROMol& mol,
                  std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> >& result,
                  const std::vector<unsigned int>& bondsToCut,
                  unsigned int minCuts = 1,

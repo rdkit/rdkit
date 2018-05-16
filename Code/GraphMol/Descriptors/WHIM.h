@@ -33,6 +33,7 @@
 //
 // Created by Guillaume GODIN
 
+#include <RDBoost/export.h>
 #ifndef WHIMRDKIT_H_SEPT2016
 #define WHIMRDKIT_H_SEPT2016
 
@@ -41,7 +42,7 @@ namespace RDKit {
 class ROMol;
 namespace Descriptors {
 const std::string WHIMVersion = "1.0.0";
-void WHIM(const ROMol &, std::vector<double> &res, int confId = -1,
+RDKIT_DESCRIPTORS_EXPORT void WHIM(const ROMol &, std::vector<double> &res, int confId = -1,
           double th = 0.001, const std::string &customAtomPropName = "");
 }  // namespace Descriptors
 }  // namespace RDKit

@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef __FREECHEMICALFEATURE_H_13012005_1023__
 #define __FREECHEMICALFEATURE_H_13012005_1023__
 
@@ -18,7 +19,7 @@ namespace ChemicalFeatures {
 //------------------------------------------------------
 //! Class for chemical features that do not orignate from molecules
 //  e.g. pharamcophores, site-maps etc.
-class FreeChemicalFeature : public ChemicalFeature {
+class RDKIT_CHEMICALFEATURES_EXPORT FreeChemicalFeature : public ChemicalFeature {
  public:
   //! start with everything specified
   FreeChemicalFeature(const std::string &family, std::string type,

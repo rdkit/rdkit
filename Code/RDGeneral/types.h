@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 
+#include <RDBoost/export.h>
 #ifndef RD_TYPES_H
 #define RD_TYPES_H
 
@@ -46,134 +47,134 @@ namespace RDKit {
 
 namespace detail {
 // used in various places for computed properties
-extern const std::string computedPropName;
+RDKIT_RDGENERAL_EXPORT extern const std::string computedPropName;
 }
 
 namespace common_properties {
 ///////////////////////////////////////////////////////////////
 // Molecule Props
-extern const std::string _Name;            // string
-extern const std::string MolFileInfo;      // string
-extern const std::string MolFileComments;  // string
-extern const std::string _2DConf;          // int (combine into dimension?)
-extern const std::string _3DConf;          // int
-extern const std::string _doIsoSmiles;     // int (should probably be removed)
-extern const std::string extraRings;       // vec<vec<int> >
-extern const std::string _smilesAtomOutputOrder;  // vec<int> computed
-extern const std::string _StereochemDone;         // int
-extern const std::string _NeedsQueryScan;         // int (bool)
-extern const std::string _fragSMARTS;             // std::string
-extern const std::string maxAttachIdx;            // int TemplEnumTools.cpp
-extern const std::string origNoImplicit;          // int (bool)
-extern const std::string ringMembership;          //? unused (molopstest.cpp)
+RDKIT_RDGENERAL_EXPORT extern const std::string _Name;            // string
+RDKIT_RDGENERAL_EXPORT extern const std::string MolFileInfo;      // string
+RDKIT_RDGENERAL_EXPORT extern const std::string MolFileComments;  // string
+RDKIT_RDGENERAL_EXPORT extern const std::string _2DConf;          // int (combine into dimension?)
+RDKIT_RDGENERAL_EXPORT extern const std::string _3DConf;          // int
+RDKIT_RDGENERAL_EXPORT extern const std::string _doIsoSmiles;     // int (should probably be removed)
+RDKIT_RDGENERAL_EXPORT extern const std::string extraRings;       // vec<vec<int> >
+RDKIT_RDGENERAL_EXPORT extern const std::string _smilesAtomOutputOrder;  // vec<int> computed
+RDKIT_RDGENERAL_EXPORT extern const std::string _StereochemDone;         // int
+RDKIT_RDGENERAL_EXPORT extern const std::string _NeedsQueryScan;         // int (bool)
+RDKIT_RDGENERAL_EXPORT extern const std::string _fragSMARTS;             // std::string
+RDKIT_RDGENERAL_EXPORT extern const std::string maxAttachIdx;            // int TemplEnumTools.cpp
+RDKIT_RDGENERAL_EXPORT extern const std::string origNoImplicit;          // int (bool)
+RDKIT_RDGENERAL_EXPORT extern const std::string ringMembership;          //? unused (molopstest.cpp)
 
 // Computed Values
 // ConnectivityDescriptors
-extern const std::string _connectivityHKDeltas;  // std::vector<double> computed
-extern const std::string _connectivityNVals;     // std::vector<double> computed
+RDKIT_RDGENERAL_EXPORT extern const std::string _connectivityHKDeltas;  // std::vector<double> computed
+RDKIT_RDGENERAL_EXPORT extern const std::string _connectivityNVals;     // std::vector<double> computed
 
-extern const std::string _crippenLogP;          // double computed
-extern const std::string _crippenLogPContribs;  // std::vector<double> computed
+RDKIT_RDGENERAL_EXPORT extern const std::string _crippenLogP;          // double computed
+RDKIT_RDGENERAL_EXPORT extern const std::string _crippenLogPContribs;  // std::vector<double> computed
 
-extern const std::string _crippenMR;          // double computed
-extern const std::string _crippenMRContribs;  // std::vector<double> computed
+RDKIT_RDGENERAL_EXPORT extern const std::string _crippenMR;          // double computed
+RDKIT_RDGENERAL_EXPORT extern const std::string _crippenMRContribs;  // std::vector<double> computed
 
-extern const std::string _labuteASA;           // double computed
-extern const std::string _labuteAtomContribs;  // vec<double> computed
-extern const std::string _labuteAtomHContrib;  // double computed
+RDKIT_RDGENERAL_EXPORT extern const std::string _labuteASA;           // double computed
+RDKIT_RDGENERAL_EXPORT extern const std::string _labuteAtomContribs;  // vec<double> computed
+RDKIT_RDGENERAL_EXPORT extern const std::string _labuteAtomHContrib;  // double computed
 
-extern const std::string _tpsa;              // double computed
-extern const std::string _tpsaAtomContribs;  // vec<double> computed
+RDKIT_RDGENERAL_EXPORT extern const std::string _tpsa;              // double computed
+RDKIT_RDGENERAL_EXPORT extern const std::string _tpsaAtomContribs;  // vec<double> computed
 
-extern const std::string numArom;         // int computed (only uses in tests?)
-extern const std::string _MMFFSanitized;  // int (bool) computed
+RDKIT_RDGENERAL_EXPORT extern const std::string numArom;         // int computed (only uses in tests?)
+RDKIT_RDGENERAL_EXPORT extern const std::string _MMFFSanitized;  // int (bool) computed
 
-extern const std::string _CrippenLogP;      // Unused (in the basement)
-extern const std::string _CrippenMR;        // Unused (in the basement)
-extern const std::string _GasteigerCharge;  // used to hold partial charges
-extern const std::string
+RDKIT_RDGENERAL_EXPORT extern const std::string _CrippenLogP;      // Unused (in the basement)
+RDKIT_RDGENERAL_EXPORT extern const std::string _CrippenMR;        // Unused (in the basement)
+RDKIT_RDGENERAL_EXPORT extern const std::string _GasteigerCharge;  // used to hold partial charges
+RDKIT_RDGENERAL_EXPORT extern const std::string
     _GasteigerHCharge;  // used to hold partial charges from implicit Hs
 
 ///////////////////////////////////////////////////////////////
 // Atom Props
 
 // Chirality stuff
-extern const std::string _BondsPotentialStereo;  // int (or bool) COMPUTED
-extern const std::string _CIPCode;               // std::string COMPUTED
-extern const std::string _CIPRank;               // int COMPUTED
-extern const std::string _ChiralityPossible;     // int
-extern const std::string _UnknownStereo;         // int (bool) AddHs/Chirality
-extern const std::string
+RDKIT_RDGENERAL_EXPORT extern const std::string _BondsPotentialStereo;  // int (or bool) COMPUTED
+RDKIT_RDGENERAL_EXPORT extern const std::string _CIPCode;               // std::string COMPUTED
+RDKIT_RDGENERAL_EXPORT extern const std::string _CIPRank;               // int COMPUTED
+RDKIT_RDGENERAL_EXPORT extern const std::string _ChiralityPossible;     // int
+RDKIT_RDGENERAL_EXPORT extern const std::string _UnknownStereo;         // int (bool) AddHs/Chirality
+RDKIT_RDGENERAL_EXPORT extern const std::string
     _ringStereoAtoms;  // int vect Canon/Chiral/MolHash/MolOps//Renumber//RWmol
-extern const std::string _ringStereochemCand;  // chirality bool COMPUTED
-extern const std::string _ringStereoWarning;   // obsolete ?
+RDKIT_RDGENERAL_EXPORT extern const std::string _ringStereochemCand;  // chirality bool COMPUTED
+RDKIT_RDGENERAL_EXPORT extern const std::string _ringStereoWarning;   // obsolete ?
 
 // Smiles parsing
-extern const std::string _SmilesStart;               // int
-extern const std::string _TraversalBondIndexOrder;   // ? unused
-extern const std::string _TraversalRingClosureBond;  // unsigned int
-extern const std::string _TraversalStartPoint;       // bool
-extern const std::string _queryRootAtom;  // int SLNParse/SubstructMatch
-extern const std::string _hasMassQuery;   // atom bool
-extern const std::string _protected;      // atom int (bool)
-extern const std::string _supplementalSmilesLabel;  // atom string (SmilesWrite)
-extern const std::string _unspecifiedOrder;  // atom int (bool) smarts/smiles
-extern const std::string _RingClosures;      // INT_VECT smarts/smiles/canon
-extern const std::string atomLabel;          // atom string from CXSMILES
+RDKIT_RDGENERAL_EXPORT extern const std::string _SmilesStart;               // int
+RDKIT_RDGENERAL_EXPORT extern const std::string _TraversalBondIndexOrder;   // ? unused
+RDKIT_RDGENERAL_EXPORT extern const std::string _TraversalRingClosureBond;  // unsigned int
+RDKIT_RDGENERAL_EXPORT extern const std::string _TraversalStartPoint;       // bool
+RDKIT_RDGENERAL_EXPORT extern const std::string _queryRootAtom;  // int SLNParse/SubstructMatch
+RDKIT_RDGENERAL_EXPORT extern const std::string _hasMassQuery;   // atom bool
+RDKIT_RDGENERAL_EXPORT extern const std::string _protected;      // atom int (bool)
+RDKIT_RDGENERAL_EXPORT extern const std::string _supplementalSmilesLabel;  // atom string (SmilesWrite)
+RDKIT_RDGENERAL_EXPORT extern const std::string _unspecifiedOrder;  // atom int (bool) smarts/smiles
+RDKIT_RDGENERAL_EXPORT extern const std::string _RingClosures;      // INT_VECT smarts/smiles/canon
+RDKIT_RDGENERAL_EXPORT extern const std::string atomLabel;          // atom string from CXSMILES
 
 // MDL Style Properties (MolFileParser)
-extern const std::string molAtomMapNumber;    // int
-extern const std::string molFileAlias;        // string
-extern const std::string molFileValue;        // string
-extern const std::string molInversionFlag;    // int
-extern const std::string molParity;           // int
-extern const std::string molRxnComponent;     // int
-extern const std::string molRxnRole;          // int
-extern const std::string molTotValence;       // int
-extern const std::string _MolFileRLabel;      // int
-extern const std::string _MolFileChiralFlag;  // int
-extern const std::string MRV_SMA;             // smarts string from Marvin
-extern const std::string dummyLabel;          // atom string
+RDKIT_RDGENERAL_EXPORT extern const std::string molAtomMapNumber;    // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molFileAlias;        // string
+RDKIT_RDGENERAL_EXPORT extern const std::string molFileValue;        // string
+RDKIT_RDGENERAL_EXPORT extern const std::string molInversionFlag;    // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molParity;           // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molRxnComponent;     // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molRxnRole;          // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molTotValence;       // int
+RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileRLabel;      // int
+RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileChiralFlag;  // int
+RDKIT_RDGENERAL_EXPORT extern const std::string MRV_SMA;             // smarts string from Marvin
+RDKIT_RDGENERAL_EXPORT extern const std::string dummyLabel;          // atom string
 
 // Reaction Information (Reactions.cpp)
-extern const std::string _QueryFormalCharge;      //  int
-extern const std::string _QueryHCount;            // int
-extern const std::string _QueryIsotope;           // int
-extern const std::string _QueryMass;              // int = round(float * 1000)
-extern const std::string _ReactionDegreeChanged;  // int (bool)
-extern const std::string NullBond;                // int (bool)
-extern const std::string _rgroupAtomMaps;
-extern const std::string _rgroupBonds;
+RDKIT_RDGENERAL_EXPORT extern const std::string _QueryFormalCharge;      //  int
+RDKIT_RDGENERAL_EXPORT extern const std::string _QueryHCount;            // int
+RDKIT_RDGENERAL_EXPORT extern const std::string _QueryIsotope;           // int
+RDKIT_RDGENERAL_EXPORT extern const std::string _QueryMass;              // int = round(float * 1000)
+RDKIT_RDGENERAL_EXPORT extern const std::string _ReactionDegreeChanged;  // int (bool)
+RDKIT_RDGENERAL_EXPORT extern const std::string NullBond;                // int (bool)
+RDKIT_RDGENERAL_EXPORT extern const std::string _rgroupAtomMaps;
+RDKIT_RDGENERAL_EXPORT extern const std::string _rgroupBonds;
 
 // SLN
-extern const std::string _AtomID;           // unsigned int SLNParser
-extern const std::string _starred;          // atom int COMPUTED (SLN)
-extern const std::string _SLN_s;            // string SLNAttribs (chiral info)
-extern const std::string _Unfinished_SLN_;  // int (bool)
+RDKIT_RDGENERAL_EXPORT extern const std::string _AtomID;           // unsigned int SLNParser
+RDKIT_RDGENERAL_EXPORT extern const std::string _starred;          // atom int COMPUTED (SLN)
+RDKIT_RDGENERAL_EXPORT extern const std::string _SLN_s;            // string SLNAttribs (chiral info)
+RDKIT_RDGENERAL_EXPORT extern const std::string _Unfinished_SLN_;  // int (bool)
 
 // Smarts Smiles
-extern const std::string _brokenChirality;  // atom bool
-extern const std::string isImplicit;        // atom int (bool)
-extern const std::string smilesSymbol;      // atom string (only used in test?)
+RDKIT_RDGENERAL_EXPORT extern const std::string _brokenChirality;  // atom bool
+RDKIT_RDGENERAL_EXPORT extern const std::string isImplicit;        // atom int (bool)
+RDKIT_RDGENERAL_EXPORT extern const std::string smilesSymbol;      // atom string (only used in test?)
 
 // Tripos
-extern const std::string _TriposAtomType;  // string Mol2FileParser
+RDKIT_RDGENERAL_EXPORT extern const std::string _TriposAtomType;  // string Mol2FileParser
 // missing defs for _TriposAtomName//_TriposPartialCharge...
 
 ///////////////////////////////////////////////////////////////
 // misc props
-extern const std::string
+RDKIT_RDGENERAL_EXPORT extern const std::string
     TWOD;  // need THREED -> confusing using in TDTMol supplier
            //  converge with _2DConf?
-extern const std::string BalabanJ;   // mol double
-extern const std::string BalanbanJ;  // typo!! fix...
+RDKIT_RDGENERAL_EXPORT extern const std::string BalabanJ;   // mol double
+RDKIT_RDGENERAL_EXPORT extern const std::string BalanbanJ;  // typo!! fix...
 
-extern const std::string Discrims;  // FragCatalog Entry
+RDKIT_RDGENERAL_EXPORT extern const std::string Discrims;  // FragCatalog Entry
 // Subgraphs::DiscrimTuple (uint32,uint32,uint32)
-extern const std::string DistanceMatrix_Paths;  // boost::shared_array<double>
+RDKIT_RDGENERAL_EXPORT extern const std::string DistanceMatrix_Paths;  // boost::shared_array<double>
 //  - note, confusing creation of names in
 //  - getDistanceMat
-extern const std::string internalRgroupSmiles;
+RDKIT_RDGENERAL_EXPORT extern const std::string internalRgroupSmiles;
 
 }  // end common_properties
 #ifndef WIN32
@@ -188,11 +189,11 @@ typedef __int64 LONGINT;
 #undef min  // FUCK I hate this nonsense
 #endif
 
-extern const double MAX_DOUBLE;
-extern const double EPS_DOUBLE;
-extern const double SMALL_DOUBLE;
-extern const double MAX_INT;
-extern const double MAX_LONGINT;
+RDKIT_RDGENERAL_EXPORT extern const double MAX_DOUBLE;
+RDKIT_RDGENERAL_EXPORT extern const double EPS_DOUBLE;
+RDKIT_RDGENERAL_EXPORT extern const double SMALL_DOUBLE;
+RDKIT_RDGENERAL_EXPORT extern const double MAX_INT;
+RDKIT_RDGENERAL_EXPORT extern const double MAX_LONGINT;
 
 typedef unsigned int UINT;
 typedef unsigned short USHORT;
@@ -252,7 +253,7 @@ typedef INT_SET::iterator INT_SET_I;
 typedef INT_SET::const_iterator INT_SET_CI;
 
 //! functor to compare two doubles with a tolerance
-struct ltDouble {
+struct RDKIT_RDGENERAL_EXPORT ltDouble {
  public:
   ltDouble() : _tol(1.0e-8){};
   bool operator()(double d1, double d2) const {
@@ -272,12 +273,12 @@ typedef std::map<double, int, ltDouble> DOUBLE_INT_MAP;
 
 //! functor for returning the larger of two values
 template <typename T>
-struct larger_of {
+struct RDKIT_RDGENERAL_EXPORT larger_of {
   T operator()(T arg1, T arg2) { return arg1 > arg2 ? arg1 : arg2; };
 };
 
 //! functor for comparing two strings
-struct charptr_functor {
+struct RDKIT_RDGENERAL_EXPORT charptr_functor {
   bool operator()(const char *s1, const char *s2) const {
     // std::cout << s1 << " " << s2 << " " << strcmp(s1, s2) << "\n";
 
@@ -287,11 +288,11 @@ struct charptr_functor {
 
 //! \brief calculate the union of two INT_VECTs and put the results in a
 //! third vector
-void Union(const INT_VECT &r1, const INT_VECT &r2, INT_VECT &res);
+RDKIT_RDGENERAL_EXPORT void Union(const INT_VECT &r1, const INT_VECT &r2, INT_VECT &res);
 
 //! \brief calculate the intersection of two INT_VECTs and put the results in a
 //! third vector
-void Intersect(const INT_VECT &r1, const INT_VECT &r2, INT_VECT &res);
+RDKIT_RDGENERAL_EXPORT void Intersect(const INT_VECT &r1, const INT_VECT &r2, INT_VECT &res);
 
 //! calculating the union of the INT_VECT's in a VECT_INT_VECT
 /*!
@@ -300,7 +301,7 @@ void Intersect(const INT_VECT &r1, const INT_VECT &r2, INT_VECT &res);
     \param exclude any values in this optional INT_VECT will be excluded
            from the union.
 */
-void Union(const VECT_INT_VECT &rings, INT_VECT &res,
+RDKIT_RDGENERAL_EXPORT void Union(const VECT_INT_VECT &rings, INT_VECT &res,
            const INT_VECT *exclude = NULL);
 
 //! given a current combination of numbers change it to the next possible
@@ -316,10 +317,10 @@ void Union(const VECT_INT_VECT &rings, INT_VECT &res,
 
 
 */
-int nextCombination(INT_VECT &comb, int tot);
+RDKIT_RDGENERAL_EXPORT int nextCombination(INT_VECT &comb, int tot);
 
 //! rounds a value to the closest int
-double round(double v);
+RDKIT_RDGENERAL_EXPORT double round(double v);
 
 };  // end of namespace
 

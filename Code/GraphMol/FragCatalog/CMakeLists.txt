@@ -1,3 +1,6 @@
+
+remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
+add_definitions(-DRDKIT_FRAGCATALOG_BUILD)
 rdkit_library(FragCatalog
               FragCatalogUtils.cpp FragCatGenerator.cpp FragCatalogEntry.cpp 
               FragCatParams.cpp FragFPGenerator.cpp

@@ -25,6 +25,7 @@
       has 3 _subgraphs_ of length 3: (0,1,2),(0,1,3),(2,1,3)
       but only 2 _paths_ of length 3: (0,1,3),(2,1,3)
 */
+#include <RDBoost/export.h>
 #ifndef _RD_SUBGRAPHS_H_
 #define _RD_SUBGRAPHS_H_
 
@@ -64,7 +65,7 @@ typedef INT_PATH_LIST_MAP::iterator INT_PATH_LIST_MAP_I;
  *   The result is a map from subgraph size -> list of paths
  *               (i.e. list of list of bond indices)
 */
-INT_PATH_LIST_MAP findAllSubgraphsOfLengthsMtoN(const ROMol &mol,
+RDKIT_SUBGRAPHS_EXPORT INT_PATH_LIST_MAP findAllSubgraphsOfLengthsMtoN(const ROMol &mol,
                                                 unsigned int lowerLen,
                                                 unsigned int upperLen,
                                                 bool useHs = false,
@@ -83,7 +84,7 @@ INT_PATH_LIST_MAP findAllSubgraphsOfLengthsMtoN(const ROMol &mol,
  *
  *   The result is a list of paths (i.e. list of list of bond indices)
 */
-PATH_LIST findAllSubgraphsOfLengthN(const ROMol &mol, unsigned int targetLen,
+RDKIT_SUBGRAPHS_EXPORT PATH_LIST findAllSubgraphsOfLengthN(const ROMol &mol, unsigned int targetLen,
                                     bool useHs = false, int rootedAtAtom = -1);
 
 //! \brief find unique bond subgraphs of a particular size
@@ -100,7 +101,7 @@ PATH_LIST findAllSubgraphsOfLengthN(const ROMol &mol, unsigned int targetLen,
  *
  *   The result is a list of paths (i.e. list of list of bond indices)
 */
-PATH_LIST findUniqueSubgraphsOfLengthN(const ROMol &mol, unsigned int targetLen,
+RDKIT_SUBGRAPHS_EXPORT PATH_LIST findUniqueSubgraphsOfLengthN(const ROMol &mol, unsigned int targetLen,
                                        bool useHs = false, bool useBO = true,
                                        int rootedAtAtom = -1);
 //! \brief find all paths of a particular size
@@ -117,10 +118,10 @@ PATH_LIST findUniqueSubgraphsOfLengthN(const ROMol &mol, unsigned int targetLen,
  *
  *   The result is a list of paths (i.e. list of list of bond indices)
 */
-PATH_LIST findAllPathsOfLengthN(const ROMol &mol, unsigned int targetLen,
+RDKIT_SUBGRAPHS_EXPORT PATH_LIST findAllPathsOfLengthN(const ROMol &mol, unsigned int targetLen,
                                 bool useBonds = true, bool useHs = false,
                                 int rootedAtAtom = -1);
-INT_PATH_LIST_MAP findAllPathsOfLengthsMtoN(
+RDKIT_SUBGRAPHS_EXPORT INT_PATH_LIST_MAP findAllPathsOfLengthsMtoN(
     const ROMol &mol, unsigned int lowerLen, unsigned int upperLen,
     bool useBonds = true, bool useHs = false, int rootedAtAtom = -1);
 
@@ -135,7 +136,7 @@ INT_PATH_LIST_MAP findAllPathsOfLengthsMtoN(
  *
  *   The result is a path (a vector of bond indices)
 */
-PATH_TYPE findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius,
+RDKIT_SUBGRAPHS_EXPORT PATH_TYPE findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius,
                                        unsigned int rootedAtAtom,
                                        bool useHs = false);
 }

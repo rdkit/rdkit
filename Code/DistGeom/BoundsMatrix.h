@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef __RD_BOUNDS_MATRIX_H__
 #define __RD_BOUNDS_MATRIX_H__
 
@@ -23,7 +24,7 @@ namespace DistGeom {
   with lower distance bounds on the lower traingle and upper bounds in the upper
   triangle
 */
-class BoundsMatrix : public RDNumeric::SquareMatrix<double> {
+class RDKIT_DISTGEOMETRY_EXPORT BoundsMatrix : public RDNumeric::SquareMatrix<double> {
  public:
   typedef boost::shared_array<double> DATA_SPTR;
 

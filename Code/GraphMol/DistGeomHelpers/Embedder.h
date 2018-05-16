@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 
+#include <RDBoost/export.h>
 #ifndef RD_EMBEDDER_H_GUARD
 #define RD_EMBEDDER_H_GUARD
 
@@ -95,7 +96,7 @@ namespace DGeomHelpers {
 
   onlyHeavyAtomsForRMS  only use the heavy atoms when doing RMS filtering
 */
-struct EmbedParameters {
+struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   unsigned int maxIterations;
   int numThreads;
   int randomSeed;
@@ -166,7 +167,7 @@ struct EmbedParameters {
 };
 
 //*! Embed multiple conformations for a molecule
-void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
+RDKIT_DISTGEOMHELPERS_EXPORT void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
                         const EmbedParameters &params);
 inline INT_VECT EmbedMultipleConfs(ROMol &mol, unsigned int numConfs,
                                    const EmbedParameters &params) {
@@ -392,13 +393,13 @@ inline INT_VECT EmbedMultipleConfs(
 };
 
 //! Parameters corresponding to Sereina Riniker's KDG approach
-extern const EmbedParameters KDG;
+RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters KDG;
 //! Parameters corresponding to Sereina Riniker's ETDG approach
-extern const EmbedParameters ETDG;
+RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters ETDG;
 //! Parameters corresponding to Sereina Riniker's ETKDG approach
-extern const EmbedParameters ETKDG;
+RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters ETKDG;
 //! Parameters corresponding to Sereina Riniker's ETKDG approach - version 2
-extern const EmbedParameters ETKDGv2;
+RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters ETKDGv2;
 }
 }
 

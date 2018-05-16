@@ -7,13 +7,14 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #pragma once
 #include "StructChecker.h"
 
 namespace RDKit {
 namespace StructureCheck {
 
-class StructCheckTautomer {
+class RDKIT_STRUCTCHECKER_EXPORT StructCheckTautomer {
   RWMol &Mol;
   const StructCheckerOptions &Options;
 

@@ -35,7 +35,7 @@ namespace RDKit {
 class ROMol;
 namespace Descriptors {
 const std::string EEMVersion = "1.0.0";
-	void EEM(ROMol &mol, std::vector<double> &res, int confId);
+	void RDKIT_DESCRIPTORS_EXPORT EEM(ROMol &mol, std::vector<double> &res, int confId);
 }
 }
 #endif

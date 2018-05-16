@@ -30,6 +30,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
+#include <RDBoost/test.h>
 #include <RDGeneral/utils.h>
 #include <RDGeneral/Exceptions.h>
 #include <GraphMol/RDKitBase.h>

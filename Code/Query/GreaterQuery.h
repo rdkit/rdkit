@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef __RD_GREATERQUERY_H__
 #define __RD_GREATERQUERY_H__
 #include "Query.h"

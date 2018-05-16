@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef RDKIT_SUBSTRUCT_METHODS_H
 #define RDKIT_SUBSTRUCT_METHODS_H
 #include <boost/python.hpp>

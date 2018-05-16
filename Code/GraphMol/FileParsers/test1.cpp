@@ -6,6 +6,8 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+
+#include <RDBoost/test.h>
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Canon.h>
@@ -18,6 +20,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/FileParsers/ProximityBonds.h>
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/LocaleSwitcher.h>
@@ -4160,9 +4163,6 @@ void testGithub164() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
-namespace RDKit {
-bool SamePDBResidue(AtomPDBResidueInfo *p, AtomPDBResidueInfo *q);
-}
 void testGithub194() {
   BOOST_LOG(rdInfoLog) << "testing github issue 194: bad bond types from pdb"
                        << std::endl;

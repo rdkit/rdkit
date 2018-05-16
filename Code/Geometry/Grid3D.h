@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef _GRID3D_H_20050124_1113
 #define _GRID3D_H_20050124_1113
 #include <exception>
@@ -18,7 +19,7 @@ class DiscreteValueVect;
 namespace RDGeom {
 class Point3D;
 
-class GridException : public std::exception {
+class RDKIT_RDGEOMETRYLIB_EXPORT GridException : public std::exception {
  public:
   //! construct with an error message
   GridException(const char *msg) : _msg(msg){};
@@ -33,7 +34,7 @@ class GridException : public std::exception {
 };
 
 //! Virtual base class for a grid object
-class Grid3D {
+class RDKIT_RDGEOMETRYLIB_EXPORT Grid3D {
  public:
   virtual ~Grid3D(){};
   virtual int getGridPointIndex(const Point3D &point) const = 0;

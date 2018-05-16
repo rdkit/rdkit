@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef RD_FPBREADER_H_DEC2015
 #define RD_FPBREADER_H_DEC2015
 /*! \file FPBReader.h
@@ -54,7 +55,7 @@ struct FPBReader_impl;
   \c lazyRead mode.
 
 */
-class FPBReader {
+class RDKIT_DATASTRUCTS_EXPORT FPBReader {
  public:
   FPBReader()
       : dp_istrm(NULL),

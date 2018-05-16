@@ -8,6 +8,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef __RD_EXPLICITBITVECTS_H__
 #define __RD_EXPLICITBITVECTS_H__
 
@@ -25,7 +26,7 @@
     sparsely occupied vectors.
 
  */
-class ExplicitBitVect : public BitVect {
+class RDKIT_DATASTRUCTS_EXPORT ExplicitBitVect : public BitVect {
  public:
   ExplicitBitVect() : dp_bits(0), d_size(0), d_numOnBits(0){};
   //! initialize with a particular size;

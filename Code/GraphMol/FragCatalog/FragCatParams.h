@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef _RD_FRAG_CAT_PARAMS_H_
 #define _RD_FRAG_CAT_PARAMS_H_
 
@@ -20,7 +21,7 @@ class ROMol;
 typedef std::vector<boost::shared_ptr<ROMol> > MOL_SPTR_VECT;
 
 //! container for user parameters used to create a fragment catalog
-class FragCatParams : public RDCatalog::CatalogParams {
+class RDKIT_FRAGCATALOG_EXPORT FragCatParams : public RDCatalog::CatalogParams {
   // FIX: this container is still missing all the CASE-type functional groups
   // stuff
  public:

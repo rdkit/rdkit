@@ -37,6 +37,7 @@
 /*! \file MorganFingerprints.h
 
 */
+#include <RDBoost/export.h>
 #ifndef __RD_MORGANFPS_H__
 #define __RD_MORGANFPS_H__
 
@@ -49,7 +50,7 @@
 namespace RDKit {
 class ROMol;
 namespace MorganFingerprints {
-extern std::vector<std::string> defaultFeatureSmarts;
+RDKIT_FINGERPRINTS_EXPORT extern std::vector<std::string> defaultFeatureSmarts;
 
 typedef std::map<boost::uint32_t,
                  std::vector<std::pair<boost::uint32_t, boost::uint32_t> > >
@@ -100,7 +101,7 @@ const std::string morganFingerprintVersion = "1.0.0";
   responsible for calling delete on this.
 
 */
-SparseIntVect<boost::uint32_t> *getFingerprint(
+RDKIT_FINGERPRINTS_EXPORT SparseIntVect<boost::uint32_t> *getFingerprint(
     const ROMol &mol, unsigned int radius,
     std::vector<boost::uint32_t> *invariants = 0,
     const std::vector<boost::uint32_t> *fromAtoms = 0,
@@ -149,7 +150,7 @@ SparseIntVect<boost::uint32_t> *getFingerprint(
   responsible for calling delete on this.
 
 */
-SparseIntVect<boost::uint32_t> *getHashedFingerprint(
+RDKIT_FINGERPRINTS_EXPORT SparseIntVect<boost::uint32_t> *getHashedFingerprint(
     const ROMol &mol, unsigned int radius, unsigned int nBits = 2048,
     std::vector<boost::uint32_t> *invariants = 0,
     const std::vector<boost::uint32_t> *fromAtoms = 0,
@@ -188,7 +189,7 @@ SparseIntVect<boost::uint32_t> *getHashedFingerprint(
   responsible for calling delete on this.
 
 */
-ExplicitBitVect *getFingerprintAsBitVect(
+RDKIT_FINGERPRINTS_EXPORT ExplicitBitVect *getFingerprintAsBitVect(
     const ROMol &mol, unsigned int radius, unsigned int nBits,
     std::vector<boost::uint32_t> *invariants = 0,
     const std::vector<boost::uint32_t> *fromAtoms = 0,
@@ -203,7 +204,7 @@ ExplicitBitVect *getFingerprintAsBitVect(
   \param includeRingMembership : if set, whether or not the atom is in
              a ring will be used in the invariant list.
 */
-void getConnectivityInvariants(const ROMol &mol,
+RDKIT_FINGERPRINTS_EXPORT void getConnectivityInvariants(const ROMol &mol,
                                std::vector<boost::uint32_t> &invars,
                                bool includeRingMembership = true);
 const std::string morganConnectivityInvariantVersion = "1.0.0";
@@ -221,7 +222,7 @@ const std::string morganConnectivityInvariantVersion = "1.0.0";
   Acidic
 
 */
-void getFeatureInvariants(const ROMol &mol,
+RDKIT_FINGERPRINTS_EXPORT void getFeatureInvariants(const ROMol &mol,
                           std::vector<boost::uint32_t> &invars,
                           std::vector<const ROMol *> *patterns = 0);
 const std::string morganFeatureInvariantVersion = "0.1.0";

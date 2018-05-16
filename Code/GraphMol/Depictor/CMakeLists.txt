@@ -1,3 +1,6 @@
+
+remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
+add_definitions(-DRDKIT_DEPICTOR_BUILD)
 rdkit_library(Depictor
               RDDepictor.cpp EmbeddedFrag.cpp DepictUtils.cpp
               LINK_LIBRARIES ${RDK_COORDGEN_LIBS} SubstructMatch GraphMol)

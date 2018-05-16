@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef __RD_QUERY_H__
 #define __RD_QUERY_H__
 
@@ -143,15 +144,22 @@ class Query {
   CHILD_VECT d_children;
   bool df_negate;
   bool (*d_matchFunc)(MatchFuncArgType);
-  MatchFuncArgType (*d_dataFunc)(DataFuncArgType);
-
+  
+ // MSVC complains at compile time when TypeConvert(MatchFuncArgType what, Int2Type<false>)
+ // attempts to pass what (which is of type MatchFuncArgType) as parameter of d_dataFunc()
+ // (which should be of type DataFuncArgType). The union is but a trick to avoid
+ // silly casts and keep MSVC happy when building DLLs
+ union {
+    MatchFuncArgType (*d_dataFunc)(DataFuncArgType);
+    MatchFuncArgType (*d_dataFuncSameType)(MatchFuncArgType);
+  };
   //! \brief calls our \c dataFunc (if it's set) on \c what and returns
   //! the result, otherwise returns \c what
   MatchFuncArgType TypeConvert(MatchFuncArgType what,
                                Int2Type<false> /*d*/) const {
     MatchFuncArgType mfArg;
-    if (this->d_dataFunc != NULL) {
-      mfArg = this->d_dataFunc(what);
+    if (this->d_dataFuncSameType != NULL && std::is_same<MatchFuncArgType, DataFuncArgType>::value) {
+      mfArg = this->d_dataFuncSameType(what);
     } else {
       mfArg = what;
     }

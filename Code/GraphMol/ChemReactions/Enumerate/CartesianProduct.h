@@ -30,6 +30,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
+#include <RDBoost/export.h>
 #ifndef CARTESIANPRODUCT_H
 #define CARTESIANPRODUCT_H
 
@@ -66,7 +67,7 @@ namespace RDKit {
 See EnumerationStrategyBase for more details and usage.
 */
 
-class CartesianProductStrategy : public EnumerationStrategyBase {
+class RDKIT_CHEMREACTIONS_EXPORT CartesianProductStrategy : public EnumerationStrategyBase {
   size_t m_numPermutationsProcessed;
 
  public:

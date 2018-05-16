@@ -37,7 +37,7 @@ double tverskyIndex(const GRIDTYPE &grid1, const GRIDTYPE &grid2, double alpha, 
   return tversky_res;
 }
 
-template double tverskyIndex(const UniformGrid3D &grid1,
+template RDKIT_RDGEOMETRYLIB_EXPORT double tverskyIndex(const UniformGrid3D &grid1,
                                  const UniformGrid3D &grid2, 
 				 double alpha, 
 				 double beta);
@@ -57,7 +57,7 @@ double tanimotoDistance(const GRIDTYPE &grid1, const GRIDTYPE &grid2) {
   return res;
 }
 
-template double tanimotoDistance(const UniformGrid3D &grid1,
+template RDKIT_RDGEOMETRYLIB_EXPORT double tanimotoDistance(const UniformGrid3D &grid1,
                                  const UniformGrid3D &grid2);
 
 template <class GRIDTYPE>
@@ -75,7 +75,7 @@ double protrudeDistance(const GRIDTYPE &grid1, const GRIDTYPE &grid2) {
   return res;
 }
 
-template double protrudeDistance(const UniformGrid3D &grid1,
+template RDKIT_RDGEOMETRYLIB_EXPORT double protrudeDistance(const UniformGrid3D &grid1,
                                  const UniformGrid3D &grid2);
 
 std::map<int, std::vector<int> > gridIdxCache;

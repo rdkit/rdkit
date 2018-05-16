@@ -22,6 +22,7 @@
 #include <RDGeneral/LocaleSwitcher.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FileParsers/MolWriters.h>
+#include <GraphMol/FileParsers/FileParsers.h>
 
 #include <GraphMol/MonomerInfo.h>
 

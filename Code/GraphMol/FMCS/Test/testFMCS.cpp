@@ -30,7 +30,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-#ifdef WIN32
+#ifdef _WIN32
+#include <RDBoost/test.h>
 #include <Windows.h>
 #else
 #include <unistd.h>

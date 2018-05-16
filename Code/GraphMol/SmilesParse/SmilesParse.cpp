@@ -23,17 +23,21 @@
 //
 //
 //
+#include "SmilesParse.h"
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #include <GraphMol/RDKitBase.h>
-#include "SmilesParse.h"
 #include "SmilesParseOps.h"
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/Invariant.h>
 #include <list>
+
+#ifdef RDKIT_GRAPHMOL_BUILD
+pippo pippo pippo
+#endif
 
 int yysmiles_parse(const char *, std::vector<RDKit::RWMol *> *,
                    std::list<unsigned int> *, void *);

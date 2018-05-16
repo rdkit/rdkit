@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef _RD_GASTEIGERPARAMS_H
 #define _RD_GASTEIGERPARAMS_H
 
@@ -26,7 +27,7 @@ const double IONXH = 20.02;
 const double DAMP_SCALE = 0.5;
 const double DAMP = 0.5;
 
-class GasteigerParams {
+class RDKIT_PARTIALCHARGES_EXPORT GasteigerParams {
   /* \brief Container for all the partial charge paramters
    *
    * It is filled by the paramData string defined in GasteigerParams.cpp

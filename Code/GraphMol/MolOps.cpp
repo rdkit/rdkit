@@ -645,13 +645,13 @@ std::map<T, boost::shared_ptr<ROMol>> getMolFragsWithQuery(
   }
   return res;
 }
-template std::map<std::string, boost::shared_ptr<ROMol>> getMolFragsWithQuery(
+template RDKIT_GRAPHMOL_EXPORT std::map<std::string, boost::shared_ptr<ROMol>> getMolFragsWithQuery(
     const ROMol &mol, std::string (*query)(const ROMol &, const Atom *),
     bool sanitizeFrags, const std::vector<std::string> *, bool);
-template std::map<int, boost::shared_ptr<ROMol>> getMolFragsWithQuery(
+template RDKIT_GRAPHMOL_EXPORT std::map<int, boost::shared_ptr<ROMol>> getMolFragsWithQuery(
     const ROMol &mol, int (*query)(const ROMol &, const Atom *),
     bool sanitizeFrags, const std::vector<int> *, bool);
-template std::map<unsigned int, boost::shared_ptr<ROMol>> getMolFragsWithQuery(
+template RDKIT_GRAPHMOL_EXPORT std::map<unsigned int, boost::shared_ptr<ROMol>> getMolFragsWithQuery(
     const ROMol &mol, unsigned int (*query)(const ROMol &, const Atom *),
     bool sanitizeFrags, const std::vector<unsigned int> *, bool);
 

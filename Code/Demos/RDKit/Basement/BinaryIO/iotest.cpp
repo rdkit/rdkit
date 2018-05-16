@@ -8,6 +8,7 @@
 // of that library.
 //
 
+#include <RDBoost/test.h>
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
 
