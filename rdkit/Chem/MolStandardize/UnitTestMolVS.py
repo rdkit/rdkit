@@ -11,8 +11,6 @@ molvs.standardize.canonicalize_tautomer_smiles
 molvs.validate.Validator()
 Standardizer().fragment_parent
 """
-from __future__ import print_function
-
 from collections import namedtuple
 import unittest
 import gzip
@@ -22,7 +20,6 @@ from rdkit import Chem
 from rdkit import RDConfig
 import molvs
 from molvs import Standardizer, validate
-
 
 doLong = False
 TestData = namedtuple('TestData', 'lineNo,smiles,mol,expected')
