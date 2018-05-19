@@ -15,9 +15,17 @@
 
 #include <string>
 #include <list>
+#include <memory>
 #include <vector>
 #include <iostream>
 #include <GraphMol/ROMol.h>
+
+namespace schrodinger {
+  namespace mae {
+    class Reader;
+    class Block;
+  }
+}
 
 namespace RDKit {
 RDKIT_FILEPARSERS_EXPORT std::string strip(const std::string &orig);
@@ -349,6 +357,30 @@ class RDKIT_FILEPARSERS_EXPORT PDBMolSupplier : public MolSupplier {
  protected:
   bool df_sanitize, df_removeHs, df_proximityBonding;
   unsigned int d_flavor;
+};
+
+//! lazy file parser for MAE files
+class RDKIT_FILEPARSERS_EXPORT MaeMolSupplier : public MolSupplier {
+ public:
+  explicit MaeMolSupplier(std::istream *inStream, bool takeOwnership = true,
+                          bool sanitize = true, bool removeHs = true);
+  explicit MaeMolSupplier(const std::string &fname, bool sanitize = true,
+                          bool removeHs = true);
+
+  virtual ~MaeMolSupplier() {
+    if (df_owner && dp_inStream) delete dp_inStream;
+  };
+
+  virtual void init();
+  virtual void reset();
+  virtual ROMol *next();
+  virtual bool atEnd();
+
+ protected:
+  bool df_sanitize, df_removeHs;
+ private:
+  std::shared_ptr<schrodinger::mae::Reader> d_reader;
+  std::shared_ptr<schrodinger::mae::Block> d_next_struct;
 };
 }
 
