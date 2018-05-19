@@ -358,10 +358,11 @@ class RDKIT_FILEPARSERS_EXPORT PDBMolSupplier : public MolSupplier {
   bool df_sanitize, df_removeHs, df_proximityBonding;
   unsigned int d_flavor;
 };
-
+#ifdef BUILD_COORDGEN_SUPPORT
 //! lazy file parser for MAE files
 class RDKIT_FILEPARSERS_EXPORT MaeMolSupplier : public MolSupplier {
  public:
+  MaeMolSupplier() { init(); };
   explicit MaeMolSupplier(std::istream *inStream, bool takeOwnership = true,
                           bool sanitize = true, bool removeHs = true);
   explicit MaeMolSupplier(const std::string &fname, bool sanitize = true,
@@ -378,10 +379,10 @@ class RDKIT_FILEPARSERS_EXPORT MaeMolSupplier : public MolSupplier {
 
  protected:
   bool df_sanitize, df_removeHs;
- private:
   std::shared_ptr<schrodinger::mae::Reader> d_reader;
   std::shared_ptr<schrodinger::mae::Block> d_next_struct;
 };
+#endif // BUILD_COORDGEN_SUPPORT
 }
 
 #endif

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) ????  Who to put here when contributing to rdkit?
+//  Copyright (C) 2018 Pat Lorton
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.

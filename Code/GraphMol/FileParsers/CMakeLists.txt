@@ -1,6 +1,13 @@
 
 remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
 add_definitions(-DRDKIT_FILEPARSERS_BUILD)
+
+if(RDK_BUILD_COORDGEN_SUPPORT)
+    set (maesupplier MaeMolSupplier.cpp)
+else()
+    set (maesupplier "")
+endif()
+
 rdkit_library(FileParsers
               Mol2FileParser.cpp
               MolFileParser.cpp MolFileStereochem.cpp MolFileWriter.cpp
@@ -9,7 +16,7 @@ rdkit_library(FileParsers
               TDTMolSupplier.cpp TDTWriter.cpp
               TplFileParser.cpp TplFileWriter.cpp
               PDBParser.cpp PDBWriter.cpp PDBSupplier.cpp
-              MaeMolSupplier.cpp
+              ${maesupplier}
               ProximityBonds.cpp
               SequenceParsers.cpp SequenceWriters.cpp
               LINK_LIBRARIES Depictor SmilesParse GraphMol maeparser)

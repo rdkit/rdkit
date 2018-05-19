@@ -113,6 +113,10 @@ int testMolSup() {
       if (nmol) {
         TEST_ASSERT(nmol->hasProp(common_properties::_Name));
         TEST_ASSERT(nmol->getNumAtoms() > 0);
+        if(i == 0) {
+            auto smiles = MolToSmiles(*nmol);
+            TEST_ASSERT(smiles == "CCC1=[O+][Cu]2([O+]=C(CC)C1)[O+]=C(CC)CC(CC)=[O+]2");
+        }
       }
     }
     TEST_ASSERT(maesup.atEnd());
