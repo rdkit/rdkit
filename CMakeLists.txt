@@ -190,19 +190,24 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   if(PYTHON_VERSION_MAJOR EQUAL 3)
     # Find boost-python3 using name specified as command line option then fall back to commonly used names
     set(RDK_BOOST_PYTHON3_NAME "python3" CACHE STRING "Name of the boost python3 library. If installed as libboost_python-xxx.so, use python-xxx.")
-    foreach(Boost_Python_Lib "${RDK_BOOST_PYTHON3_NAME}" "python-py3${PYTHON_VERSION_MINOR}" "python3")
-      find_package(Boost 1.56.0 COMPONENTS "${Boost_Python_Lib}" QUIET)
-      if(Boost_FOUND)
-        break()
-      endif()
-    endforeach()
-    # If boost-python3 not found, just find boost-python and hope that it is compatible with python3
-    if(NOT Boost_FOUND)
-      find_package(Boost 1.56.0 COMPONENTS python REQUIRED)
-    endif()
-  else(PYTHON_VERSION_MAJOR EQUAL 3)
-     find_package(Boost 1.56.0 COMPONENTS python REQUIRED)
+    list(APPEND Boost_Python_Names "${RDK_BOOST_PYTHON3_NAME}" "python-py3${PYTHON_VERSION_MINOR}" "python3")
   endif(PYTHON_VERSION_MAJOR EQUAL 3)
+
+  # Boost 1.67+ uses a version suffix like "python36" or "python27"
+  list(APPEND Boost_Python_Names "python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}")
+
+  # Try each potential boost-python name until one works
+  foreach(Boost_Python_Lib ${Boost_Python_Names})
+    find_package(Boost 1.56.0 COMPONENTS "${Boost_Python_Lib}" QUIET)
+    if(Boost_FOUND)
+      break()
+    endif()
+  endforeach()
+
+  # Finally just try "python" and hope it is a compatible version
+  if(NOT Boost_FOUND)
+    find_package(Boost 1.56.0 COMPONENTS python REQUIRED)
+  endif()
 
 
   if(RDK_INSTALL_INTREE)
