@@ -79,6 +79,9 @@ static inline int queryAtomTotalDegree(Atom const *at) {
   return at->getTotalDegree();
 };
 static inline int queryAtomHeavyAtomDegree(Atom const *at) {
+  return at->getTotalDegree() - at->getTotalNumHs(true);
+}
+static inline int queryAtomNonHydrogenDegree(Atom const *at) {
   int heavyDegree = 0;
   ROMol::ADJ_ITER nbrIdx, endNbrs;
   boost::tie(nbrIdx, endNbrs) = at->getOwningMol().getAtomNeighbors(at);
