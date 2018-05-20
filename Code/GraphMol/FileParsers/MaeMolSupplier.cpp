@@ -25,6 +25,7 @@ using RDKit::MolInterchange::bolookup;
 
 MaeMolSupplier::MaeMolSupplier(std::istream *inStream, bool takeOwnership,
                                bool sanitize, bool removeHs) {
+  PRECONDITION(inStream, "bad stream");
   dp_inStream = inStream;
   df_owner = takeOwnership;
   df_sanitize = sanitize;
@@ -57,14 +58,16 @@ ROMol *MaeMolSupplier::next() {
   if (d_next_struct == nullptr) {
     throw FileParseException("All structures read from Maestro file");
   }
+  // Make sure even if later calls except, we're ready to read the next struct
+  auto current_struct = d_next_struct;
+  d_next_struct = d_reader->next("f_m_ct");
 
   auto mol = new RWMol();
-  auto mol_title = d_next_struct->getStringProperty("s_m_title");
+  auto mol_title = current_struct->getStringProperty("s_m_title");
   mol->setProp(common_properties::_Name, mol_title);
-  std::map<int, Atom *> amap;
   // Atom data is in the m_atom indexed block
   {
-    const auto atom_data = d_next_struct->getIndexedBlock("m_atom");
+    const auto atom_data = current_struct->getIndexedBlock("m_atom");
     // All atoms are gauranteed to have these three field names:
     const auto atomic_numbers = atom_data->getIntProperty("i_m_atomic_number");
     const auto xs = atom_data->getRealProperty("r_m_x_coord");
@@ -82,7 +85,6 @@ ROMol *MaeMolSupplier::next() {
     conf->setId(0);
     for (size_t i=0; i<size; ++i) {
       Atom *atom = new Atom(atomic_numbers->at(i));
-      amap[i] = atom;
       mol->addAtom(atom, true, true);
       if(atomic_charges) {
           atom->setFormalCharge(atomic_charges->at(i));
@@ -99,7 +101,7 @@ ROMol *MaeMolSupplier::next() {
 
   // Bond data is in the m_bond indexed block
   {
-    const auto bond_data = d_next_struct->getIndexedBlock("m_bond");
+    const auto bond_data = current_struct->getIndexedBlock("m_bond");
     // All bonds are gauranteed to have these three field names:
     auto from_atoms = bond_data->getIntProperty("i_m_from");
     auto to_atoms = bond_data->getIntProperty("i_m_to");
@@ -115,8 +117,8 @@ ROMol *MaeMolSupplier::next() {
 
       auto bond = new Bond(order);
       bond->setOwningMol(mol);
-      bond->setBeginAtom(amap[from_atom]);
-      bond->setEndAtom(amap[to_atom]);
+      bond->setBeginAtomIdx(from_atom);
+      bond->setEndAtomIdx(to_atom);
       mol->addBond(bond, true);
     }
   }
@@ -134,8 +136,8 @@ ROMol *MaeMolSupplier::next() {
 
   /* Set tetrahedral chirality from 3D co-ordinates */
   MolOps::assignChiralTypesFrom3D(*mol);
+  MolOps::detectBondStereochemistry(*mol);
 
-  d_next_struct = d_reader->next("f_m_ct");
   return (ROMol *)mol;
 }
 

@@ -4,8 +4,10 @@ add_definitions(-DRDKIT_FILEPARSERS_BUILD)
 
 if(RDK_BUILD_COORDGEN_SUPPORT)
     set (maesupplier MaeMolSupplier.cpp)
+    set (maeparser_var maeparser)
 else()
     set (maesupplier "")
+    set (maeparser_var "")
 endif()
 
 rdkit_library(FileParsers
@@ -19,7 +21,7 @@ rdkit_library(FileParsers
               ${maesupplier}
               ProximityBonds.cpp
               SequenceParsers.cpp SequenceWriters.cpp
-              LINK_LIBRARIES Depictor SmilesParse GraphMol maeparser)
+              LINK_LIBRARIES Depictor SmilesParse GraphMol ${maeparser_var})
 
 rdkit_headers(FileParsers.h
               FileParserUtils.h
