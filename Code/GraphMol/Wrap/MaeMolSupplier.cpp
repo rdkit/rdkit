@@ -53,7 +53,22 @@ class LocalMaeMolSupplier : public RDKit::MaeMolSupplier {
   }
 
   LocalMaeMolSupplier(const std::string &fname, bool sanitize = true,
-          bool removeHs = true);
+          bool removeHs = true)
+    {
+        auto *ifs = new std::ifstream(fname.c_str(), std::ios_base::binary);
+        if (!ifs || !(*ifs) || ifs->bad()) {
+            std::ostringstream errout;
+            errout << "Bad input file " << fname;
+            throw RDKit::BadFileException(errout.str());
+        }
+        dp_inStream = (std::istream *)ifs;
+        df_owner = true;
+        df_sanitize = sanitize;
+        df_removeHs = removeHs;
+
+        d_reader.reset(new schrodinger::mae::Reader(*ifs));
+        d_next_struct = d_reader->next("f_m_ct");
+    };
 
 };
 

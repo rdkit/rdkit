@@ -111,6 +111,7 @@ ROMol *MaeMolSupplier::next() {
       const auto from_atom = from_atoms->at(i) - 1;
       const auto to_atom = to_atoms->at(i) - 1;
       const auto order = bolookup.find(orders->at(i))->second;
+      if(from_atom > to_atom) continue; // Maestro files double-list bonds
 
       auto bond = new Bond(order);
       bond->setOwningMol(mol);
