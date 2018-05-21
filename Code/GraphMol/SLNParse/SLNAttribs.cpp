@@ -241,7 +241,7 @@ void parseAtomAttribs(Atom *atom, AttribListType attribs, bool doingQuery) {
                                 fTag + "AtomHCount");
       } else if (attribName == "hac") {
         if (fTag == "") val = parseIntAttribVal(attribName, attribVal);
-        query = makeQueryFromOp(attribPtr->op, val, queryAtomHeavyAtomDegree,
+        query = makeQueryFromOp(attribPtr->op, val, queryAtomNonHydrogenDegree,
                                 fTag + "AtomHeavyAtomDegree");
       } else if (attribName == "f") {
         if (fTag == "") val = parseIntAttribVal(attribName, attribVal);
