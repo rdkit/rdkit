@@ -412,6 +412,33 @@ void testGitHubIssue1705() {
 
 }
 
+void testMatchOnlyAtRgroupHs() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "test matching only rgroups but allows Hs" << std::endl;
+
+  RWMol *core = SmilesToMol("*OCC");
+  RGroupDecompositionParameters params;
+  params.onlyMatchAtRGroups = true;
+  RGroupDecomposition decomp(*core, params);
+  const char *smilesData[2] = {"OCC","COCC"};
+  for (int i = 0; i < 2; ++i) {
+    ROMol *mol = SmilesToMol(smilesData[i]);
+    int res = decomp.add(*mol);
+  }
+  decomp.process();
+
+  std::stringstream ss;
+  RGroupColumns groups = decomp.getRGroupsAsColumns();
+  for (auto &column : groups) {
+    ss << "Rgroup===" << column.first << std::endl;
+    for (auto &rgroup : column.second ) {
+      ss << MolToSmiles(*rgroup) << std::endl;
+    }
+  }
+  std::cerr << ss.str() << std::endl;
+  TEST_ASSERT(ss.str() == "Rgroup===Core\nCCO[*:1]\nCCO[*:1]\nRgroup===R1\n[H][*:1]\n[H]C([H])([H])[*:1]\n");
+}
 
 int main() {
   RDLog::InitLogs();
@@ -432,7 +459,8 @@ int main() {
   testRemoveHs();
 
   testGitHubIssue1705();
-
+  testMatchOnlyAtRgroupHs();
+  
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;
