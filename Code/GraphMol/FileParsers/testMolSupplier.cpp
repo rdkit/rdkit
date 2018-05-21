@@ -104,6 +104,7 @@ int testMolSup() {
     }
     TEST_ASSERT(i == 16);
   }
+#ifdef BUILD_COORDGEN_SUPPORT
   {
     fname = rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.mae";
     MaeMolSupplier maesup(fname);
@@ -128,6 +129,7 @@ int testMolSup() {
     }
     TEST_ASSERT(ok);
   }
+#endif //BUILD_COORDGEN_SUPPORT
   return 1;
 }
 
@@ -2078,6 +2080,7 @@ int testForwardSDSupplier() {
     TEST_ASSERT(i == 16);
   }
 
+#ifdef BUILD_COORDGEN_SUPPORT
   // Now test that Maestro parsing of gz files works
   std::string maefname = rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.mae";
   std::string maefname2 = rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.maegz";
@@ -2128,6 +2131,7 @@ int testForwardSDSupplier() {
     }
     TEST_ASSERT(i == 16);
   }
+#endif //BUILD_COORDGEN_SUPPORT
 
 
 #endif
