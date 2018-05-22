@@ -36,6 +36,7 @@ MaeMolSupplier::MaeMolSupplier(std::istream *inStream, bool takeOwnership,
 }
 
 MaeMolSupplier::MaeMolSupplier(const std::string &fileName, bool sanitize, bool removeHs) {
+  df_owner = true;
   auto *ifs = new std::ifstream(fileName.c_str(), std::ios_base::binary);
   if (!ifs || !(*ifs) || ifs->bad()) {
     std::ostringstream errout;
@@ -43,7 +44,6 @@ MaeMolSupplier::MaeMolSupplier(const std::string &fileName, bool sanitize, bool 
     throw BadFileException(errout.str());
   }
   dp_inStream = (std::istream *)ifs;
-  df_owner = true;
   df_sanitize = sanitize;
   df_removeHs = removeHs;
 
