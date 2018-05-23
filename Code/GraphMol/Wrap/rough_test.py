@@ -2714,11 +2714,7 @@ CAS<~>
     molNames = ["48", "78", "128", "163", "164", "170", "180", "186", "192", "203", "210", "211",
                 "213", "220", "229", "256"]
     inf = gzip.open(fileN)
-    if 0:
-      sb = Chem.streambuf(inf)
-      suppl = MaeMolSupplier(sb)
-    else:
-      suppl = MaeMolSupplier(inf)
+    suppl = MaeMolSupplier(inf)
 
     i = 0
     while not suppl.atEnd():
