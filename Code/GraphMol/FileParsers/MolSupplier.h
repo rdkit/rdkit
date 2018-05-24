@@ -20,12 +20,14 @@
 #include <iostream>
 #include <GraphMol/ROMol.h>
 
+#ifdef BUILD_COORDGEN_SUPPORT
 namespace schrodinger {
   namespace mae {
     class Reader;
     class Block;
   }
 }
+#endif // BUILD_COORDGEN_SUPPORT
 
 namespace RDKit {
 RDKIT_FILEPARSERS_EXPORT std::string strip(const std::string &orig);
