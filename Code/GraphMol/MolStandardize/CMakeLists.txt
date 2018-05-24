@@ -1,8 +1,6 @@
 rdkit_library(MolStandardize
               MolStandardize.cpp
-	      SHARED
-              LINK_LIBRARIES RDGeneral
-                 ${RDKit_THREAD_LIBS})
+              LINK_LIBRARIES RDGeneral GraphMol) 
 
 rdkit_headers(MolStandardize.h
 	      DEST GraphMol/MolStandardize)

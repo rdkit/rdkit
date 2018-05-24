@@ -12,12 +12,11 @@ using namespace std;
 
 void testStandardize(){
 	string smi;
-	RWMol *m, *m2;
 	CleanupParameters *params;
 
 	smi = "CCCC(=O)O";
-	m = SmilesToMol(smi);
-	m2 = SmilesToMol(smi);
+	unique_ptr<RWMol> m( SmilesToMol(smi) );
+	unique_ptr<RWMol> m2( SmilesToMol(smi) );
 	TEST_ASSERT(m);
 	// empty cleanup function
 	MolStandardize::cleanup(*m, *params);

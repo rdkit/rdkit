@@ -8,7 +8,6 @@ using namespace std;
 namespace RDKit{
 
 CleanupParameters::CleanupParameters(){}
-CleanupParameters::~CleanupParameters(){}
 
 namespace MolStandardize{
 bool cleanup(RWMol &mol, const CleanupParameters &params){	

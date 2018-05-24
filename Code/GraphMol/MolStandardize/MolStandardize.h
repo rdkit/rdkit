@@ -5,10 +5,8 @@ namespace RDKit{
 class RWMol;
 class ROMol;
 
-class CleanupParameters{
-	public:
-		CleanupParameters();
-		~CleanupParameters();
+struct CleanupParameters{
+	CleanupParameters();
 };
 
 namespace MolStandardize{
