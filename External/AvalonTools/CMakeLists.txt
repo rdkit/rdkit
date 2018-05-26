@@ -86,7 +86,7 @@ endif()
 
 
 rdkit_library(avalon_clib ${avalon_clib_srcs})
-if(MSVC AND RDK_INSTALL_DYNAMIC_LIBS)
+if((MSVC AND RDK_INSTALL_DLLS_MSVC) OR ((NOT MSVC) AND WIN32))
   set_target_properties(avalon_clib PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 endif()
 
