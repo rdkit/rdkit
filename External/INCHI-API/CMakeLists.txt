@@ -61,7 +61,7 @@ if(RDK_BUILD_INCHI_SUPPORT)
       src/INCHI_API/libinchi/src/ixa/ixa_read_inchi.c 
       src/INCHI_API/libinchi/src/ixa/ixa_read_mol.c
       src/INCHI_API/libinchi/src/ixa/ixa_status.c SHARED)
-      if(MSVC AND RDK_INSTALL_DYNAMIC_LIBS)
+      if((MSVC AND RDK_INSTALL_DLLS_MSVC) OR ((NOT MSVC) AND WIN32))
         set_target_properties(Inchi PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
       endif()
     install(TARGETS Inchi DESTINATION ${RDKit_LibDir})
