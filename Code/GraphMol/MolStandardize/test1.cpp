@@ -18,9 +18,26 @@ void testStandardize(){
 	unique_ptr<RWMol> m( SmilesToMol(smi) );
 	unique_ptr<RWMol> m2( SmilesToMol(smi) );
 	TEST_ASSERT(m);
+
 	// empty cleanup function
 	MolStandardize::cleanup(*m, *params);
 	// testing nothing has changed
+	TEST_ASSERT(MolToSmiles(*m) == MolToSmiles(*m2));
+
+	// empty tautomer parent function
+	MolStandardize::tautomerParent(*m, *params);
+	TEST_ASSERT(MolToSmiles(*m) == MolToSmiles(*m2));
+
+	// empty isotope parent function
+	MolStandardize::isotopeParent(*m, *params);
+	TEST_ASSERT(MolToSmiles(*m) == MolToSmiles(*m2));
+
+	// empty charge parent function
+	MolStandardize::chargeParent(*m, *params);
+	TEST_ASSERT(MolToSmiles(*m) == MolToSmiles(*m2));
+
+	// empty super parent function
+	MolStandardize::superParent(*m, *params);
 	TEST_ASSERT(MolToSmiles(*m) == MolToSmiles(*m2));
 }
 
