@@ -1,49 +1,71 @@
+#ifndef RD_FINGERPRINTGEN_H_2018_05
+#define RD_FINGERPRINTGEN_H_2018_05
+
 #include <DataStructs/SparseIntVect.h>
 #include <DataStructs/ExplicitBitVect.h>
 
-#ifndef _RD_FINGERPRINTGEN_H_
-#define _RD_FINGERPRINTGEN_H_
-
 namespace RDKit {
-    class ROMol;
-    
+class ROMol;
 
-    class AtomEnvironmentGenerator{};
+class AtomEnvironmentGenerator {};
 
-    class AtomInvariants{
-        // arguments
-
-        public:
-        std::vector<boost::uint32_t> getAtomInvariants(const ROMol &mol);
-    };
-
-    class BondInvariants{
-        //arguments
-        
-        public:
-        std::vector<boost::uint32_t> getBondInvariants(const ROMol &mol);
-    };
-
-    class FingerprintGenerator{
-        AtomEnvironmentGenerator atomEnvironmentGenerator;
-        AtomInvariants atomInvariant;
-        BondInvariants bondInvariant;
-        //more data to hold arguments and fp type
-
-        //extra return
-        std::vector<std::vector<boost::uint32_t> > *atomBits;
-        std::map<boost::uint64_t,std::vector<std::vector<int> > > *bitInfo;
-
-        public:
-        SparseIntVect<boost::int32_t> *getFingerPrint(const ROMol &mol);
-        SparseIntVect<boost::int32_t> *getCountFingerPrint(const ROMol &mol);
-        SparseIntVect<boost::int32_t> *getHashedFingerPrint(const ROMol &mol);
-        ExplicitBitVect *getFingerprintAsBitVect(const ROMol &mol);
-
-        std::vector<std::vector<boost::uint32_t> > *getLastAtomBits();
-        std::map<boost::uint64_t,std::vector<std::vector<int> > > *getLastBitInfo();
-
-    }
+union AdditionalOutput {
+  // will hold differently stuctured additonal output
 }
+
+class AtomInvariants {
+  // arguments
+
+ public:
+  std::vector<boost::uint32_t> getAtomInvariants(const ROMol &mol);
+};
+
+class BondInvariants {
+  // arguments
+
+ public:
+  std::vector<boost::uint32_t> getBondInvariants(const ROMol &mol);
+};
+
+class FingerprintGenerator {
+  AtomEnvironmentGenerator atomEnvironmentGenerator;
+  AtomInvariants atomInvariant;
+  BondInvariants bondInvariant;
+  // more data to hold arguments and fp type
+
+ public:
+  SparseIntVect<boost::uint32_t> *getFingerprint(
+      const ROMol &mol, const std::vector<boost::uint32_t> *fromAtoms = 0,
+      const std::vector<boost::uint32_t> *ignoreAtoms = 0,
+      const int confId = -1,  // for atom pair fp
+      const AdditionalOutput *additionalOutput = 0) const;
+
+  ExplicitBitVect *getFingerprintAsBitVect(
+      const ROMol &mol, const std::vector<boost::uint32_t> *fromAtoms = 0,
+      const std::vector<boost::uint32_t> *ignoreAtoms = 0,
+      const int confId = -1,
+      const AdditionalOutput *additionalOutput = 0) const;
+
+  SparseIntVect<boost::uint32_t> *getHashedFingerprint(
+      const ROMol &mol, const std::vector<boost::uint32_t> *fromAtoms = 0,
+      const std::vector<boost::uint32_t> *ignoreAtoms = 0,
+      const AdditionalOutput *additionalOutput = 0) const;
+
+  ExplicitBitVect *getHashedFingerprintAsBitVect(
+      const ROMol &mol, const std::vector<boost::uint32_t> *fromAtoms = 0,
+      const std::vector<boost::uint32_t> *ignoreAtoms = 0,
+      const AdditionalOutput *additionalOutput = 0) const;
+
+  SparseIntVect<boost::uint32_t> *getCountFingerprint(
+      const ROMol &mol, const std::vector<boost::uint32_t> *fromAtoms = 0,
+      const std::vector<boost::uint32_t> *ignoreAtoms = 0,
+      const AdditionalOutput *additionalOutput = 0) const;
+
+  ExplicitBitVect *getCountFingerprintAsBitVect(
+      const ROMol &mol, const std::vector<boost::uint32_t> *fromAtoms = 0,
+      const std::vector<boost::uint32_t> *ignoreAtoms = 0,
+      const AdditionalOutput *additionalOutput = 0) const;
+}
+}  // namespace RDKit
 
 #endif
