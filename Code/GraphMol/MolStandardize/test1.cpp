@@ -1,4 +1,5 @@
 #include "MolStandardize.h"
+#include "Metal.h"
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -41,7 +42,19 @@ void testStandardize(){
 	TEST_ASSERT(MolToSmiles(*m) == MolToSmiles(*m2));
 }
 
+void testMetalDisconnector(){
+	string smi = "NC(CC(=O)O)C(=O)[O-].O.O.[Na+]";
+	unique_ptr<RWMol> m( SmilesToMol(smi) );
+	unique_ptr<RWMol> m2( SmilesToMol(smi) );
+	TEST_ASSERT(m);
+
+	// empty MetalDisconnector
+	MolStandardize::MetalDisconnector md;
+	md.disconnect(*m);
+	TEST_ASSERT(MolToSmiles(*m) == MolToSmiles(*m2));
+}
 int main() {
 	testStandardize();
+	testMetalDisconnector();
 	return 0;
 }

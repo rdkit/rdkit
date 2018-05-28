@@ -8,10 +8,10 @@ class ROMol;
 struct CleanupParameters{
 	// TODO
 	// std::vector<std::string> normalisations;
-	// std::vestd::vector<std::string> acidBasePairs;
-	// std::vestd::vector<std::string> chargeCorrections;
-	// std::vestd::vector<std::string> tautomerTransforms;
-	// std::vestd::vector<std::string> TautomerScores;
+	// std::vector<std::string> acidBasePairs;
+	// std::vector<std::string> chargeCorrections;
+	// std::vector<std::string> tautomerTransforms;
+	// std::vector<std::string> TautomerScores;
 	int maxRestarts; // The maximum number of times to attempt to apply the series of normalizations (default 200).
 	int maxTautomers; // The maximum number of tautomers to enumerate (default 1000).
 	bool preferOrganic; // Whether to prioritize organic fragments when choosing fragment parent (default False).
