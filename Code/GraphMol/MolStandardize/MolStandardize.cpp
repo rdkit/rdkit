@@ -1,4 +1,5 @@
 #include "MolStandardize.h"
+#include "Metal.h"
 #include <GraphMol/RDKitBase.h>
 #include <iostream>
 #include <GraphMol/ROMol.h>
@@ -7,7 +8,6 @@
 using namespace std;
 
 namespace RDKit{
-
 namespace MolStandardize{
 
 bool cleanup(RWMol &mol, const CleanupParameters &params){	
@@ -18,7 +18,8 @@ bool cleanup(RWMol &mol, const CleanupParameters &params){
 	RDKit::MolOps::removeHs(*newM);
 
 	// TODO
-        // disconnect_metals(*newM)
+	MolStandardize::MetalDisconnector md;
+	md.disconnect(mol);
         // normalize(*newM)
 	// reionize(*newM)
 	RDKit::MolOps::assignStereochemistry(*newM);

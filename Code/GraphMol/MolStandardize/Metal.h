@@ -9,10 +9,11 @@ namespace MolStandardize{
 class MetalDisconnector{
 	public:
 		MetalDisconnector();
+		// TODO inputting ROMol doesn't work
 		ROMol* disconnect(const ROMol &mol);
 		// overload
 		// modifies the molecule in place
-		void disconnect(RWMol &mol);
+		void disconnect(RWMol &mol); // static?
 	private:
 		ROMol* metal_nof;
 		ROMol* metal_non;

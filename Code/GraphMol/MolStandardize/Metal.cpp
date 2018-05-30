@@ -1,9 +1,16 @@
+//#include <typeinfo> 
 #include "Metal.h"
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
+
+#include <GraphMol/RDKitQueries.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/Substruct/SubstructUtils.h>
 
 using namespace std;
-
+using namespace RDKit;
 namespace RDKit{
 class RWMol;
 class ROMol;
@@ -16,15 +23,43 @@ MetalDisconnector::MetalDisconnector()
 	  };
 
 ROMol* MetalDisconnector::disconnect(const ROMol &mol){
-	auto *res = new RWMol(mol);
+	RWMol *res = new RWMol(mol);
 	MetalDisconnector::disconnect(*res);
 	return static_cast<ROMol *>(res);
 }
 
 void MetalDisconnector::disconnect(RWMol &mol){
+	
+	std::list<ROMol*> metalList = {metal_nof, metal_non};
+	std::list<ROMol*>::iterator it;
+	for (it = metalList.begin(); it != metalList.end(); it++) {
+		ROMol* &query = *it;
+		
+		std::vector<MatchVectType> matches;
+		unsigned int matched;
 
+		matched = SubstructMatch( mol, *query, matches );
+
+		for ( size_t i = 0; i < matched; ++i ) {
+			// disconnecting metal-R bond
+	//		std::cout << "Match " << i + 1 << " : ";
+			int metal_idx = matches[i][0].second;
+			int non_idx =  matches[i][1].second;
+			Bond* b = mol.getBondBetweenAtoms( metal_idx, non_idx );
+			double order = b->getBondTypeAsDouble();
+	//		std::cout << "Bond as double: " << order << std::endl;
+			mol.removeBond( metal_idx, non_idx );
+
+			// adjusting neighbouring charges
+			Atom* a1 = mol.getAtomWithIdx(metal_idx);
+			a1->setFormalCharge( a1->getFormalCharge() + int(order) );
+			Atom* a2 = mol.getAtomWithIdx(non_idx);
+			a2->setFormalCharge( a2->getFormalCharge() - int(order) );
+
+		}
+//	std::cout << "After removing bond and charge adjustment: " << MolToSmiles(mol) << std::endl;
+	}
+	MolOps::sanitizeMol(mol);
 }
-
 } // namespace MolStandardize
 } // namespace RDKit
-
