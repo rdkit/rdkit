@@ -23,7 +23,7 @@ MetalDisconnector::MetalDisconnector()
 	  };
 
 ROMol* MetalDisconnector::disconnect(const ROMol &mol){
-	RWMol *res = new RWMol(mol);
+	auto *res = new RWMol(mol);
 	MetalDisconnector::disconnect(*res);
 	return static_cast<ROMol *>(res);
 }
