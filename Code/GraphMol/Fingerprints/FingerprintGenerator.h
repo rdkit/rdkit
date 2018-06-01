@@ -31,6 +31,7 @@ union AdditionalOutput {
 
 template <class T1, class T2>
 class AtomEnvironmentGenerator {
+ public:
   virtual std::vector<T1> getEnvironments(
       const ROMol &mol, const T2 arguments,
       const std::vector<boost::uint32_t> *fromAtoms = 0,
@@ -38,20 +39,26 @@ class AtomEnvironmentGenerator {
       const int confId = -1,
       const AdditionalOutput *additionalOutput = 0) const = 0;
 
+  virtual void cleanUpEnvironments(
+      const std::vector<T1> &atomEnvironments) const = 0;
+  // to remove dynamically allocated resources that are shared
+  // between atom environments if there are any
 };
 
 template <class T>
 class AtomEnvironment {
-  virtual boost::uint32_t getBitId(T arguments) const = 0;
-
+ public:
+  virtual boost::uint32_t getBitId(
+      const T arguments, const std::vector<boost::uint32_t> *atomInvariants = 0,
+      const std::vector<boost::uint32_t> *bondInvariants = 0) const = 0;
 };
 
 class FingerprintArguments {
+ public:
   bool countSimulation;
 
+  virtual unsigned int getResultSize() const = 0;
 };
-
-
 
 class AtomInvariants {
   // arguments
@@ -67,7 +74,7 @@ class BondInvariants {
   std::vector<boost::uint32_t> getBondInvariants(const ROMol &mol);
 };
 
-template <class T1, class T2>
+template <class T1, class T2, class T3>
 class FingerprintGenerator {
   T1 atomEnvironmentGenerator;
   AtomInvariants *atomInvariants;
@@ -77,10 +84,9 @@ class FingerprintGenerator {
   // more data to hold arguments and fp type
 
  public:
-  FingerprintGenerator(
-      T1 atomEnvironmentGenerator,
-      T2 fingerprintArguments, AtomInvariants *atomInvariant = 0,
-      BondInvariants *bondInvariants = 0);
+  FingerprintGenerator(T1 atomEnvironmentGenerator, T2 fingerprintArguments,
+                       AtomInvariants *atomInvariant = 0,
+                       BondInvariants *bondInvariants = 0);
 
   SparseIntVect<boost::uint32_t> *getFingerprint(
       const ROMol &mol, const std::vector<boost::uint32_t> *fromAtoms = 0,
