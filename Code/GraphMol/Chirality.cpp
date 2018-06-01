@@ -1735,7 +1735,7 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
   }
 }
 
-bool isBondCandidateForStereo(const Bond *bond, const ROMol &mol) {
+bool isBondCandidateForStereo(const Bond *bond) {
   PRECONDITION(bond, "no bond");
   if (bond->getBondType() == Bond::DOUBLE &&
       bond->getStereo() != Bond::STEREOANY &&
@@ -1774,7 +1774,7 @@ void setDoubleBondNeighborDirections(ROMol &mol, const Conformer *conf) {
 
   for (RWMol::BondIterator bondIt = mol.beginBonds(); bondIt != mol.endBonds();
        ++bondIt) {
-    if (isBondCandidateForStereo(*bondIt, mol)) {
+    if (isBondCandidateForStereo(*bondIt)) {
       const Atom *a1 = (*bondIt)->getBeginAtom();
       const Atom *a2 = (*bondIt)->getEndAtom();
 
