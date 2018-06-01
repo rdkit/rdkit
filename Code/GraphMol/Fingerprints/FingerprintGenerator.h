@@ -8,8 +8,6 @@
 namespace RDKit {
 class ROMol;
 
-class AtomEnvironmentGenerator {};
-
 union AdditionalOutput {
   // will hold differently stuctured additonal output
 
@@ -29,7 +27,31 @@ union AdditionalOutput {
   std::vector<unsigned int> *atomCounts;
   // number of paths that set bits for each atom, must have the same size as
   // atom count for molecule
-}
+};
+
+template <class T1, class T2>
+class AtomEnvironmentGenerator {
+  virtual std::vector<T1> getEnvironments(
+      const ROMol &mol, const T2 arguments,
+      const std::vector<boost::uint32_t> *fromAtoms = 0,
+      const std::vector<boost::uint32_t> *ignoreAtoms = 0,
+      const int confId = -1,
+      const AdditionalOutput *additionalOutput = 0) const = 0;
+
+};
+
+template <class T>
+class AtomEnvironment {
+  virtual boost::uint32_t getBitId(T arguments) const = 0;
+
+};
+
+class FingerprintArguments {
+  bool countSimulation;
+
+};
+
+
 
 class AtomInvariants {
   // arguments
@@ -45,13 +67,21 @@ class BondInvariants {
   std::vector<boost::uint32_t> getBondInvariants(const ROMol &mol);
 };
 
+template <class T1, class T2>
 class FingerprintGenerator {
-  AtomEnvironmentGenerator atomEnvironmentGenerator;
-  AtomInvariants atomInvariant;
-  BondInvariants bondInvariant;
+  T1 atomEnvironmentGenerator;
+  AtomInvariants *atomInvariants;
+  BondInvariants *bondInvariants;
+  FingerprintArguments *asCommonArguments;
+  T2 fingerprintArguments;
   // more data to hold arguments and fp type
 
  public:
+  FingerprintGenerator(
+      T1 atomEnvironmentGenerator,
+      T2 fingerprintArguments, AtomInvariants *atomInvariant = 0,
+      BondInvariants *bondInvariants = 0);
+
   SparseIntVect<boost::uint32_t> *getFingerprint(
       const ROMol &mol, const std::vector<boost::uint32_t> *fromAtoms = 0,
       const std::vector<boost::uint32_t> *ignoreAtoms = 0,
@@ -73,7 +103,7 @@ class FingerprintGenerator {
       const ROMol &mol, const std::vector<boost::uint32_t> *fromAtoms = 0,
       const std::vector<boost::uint32_t> *ignoreAtoms = 0,
       const AdditionalOutput *additionalOutput = 0) const;
-}
+};
 }  // namespace RDKit
 
 #endif
