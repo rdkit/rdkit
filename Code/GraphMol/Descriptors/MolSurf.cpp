@@ -12,6 +12,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/PartialCharges/GasteigerCharges.h>
+#include <GraphMol/Descriptors/MolData3Ddescriptors.h>
 #include <vector>
 #include <algorithm>
 
@@ -21,6 +22,9 @@
 
 namespace RDKit {
 namespace Descriptors {
+
+MolData3Ddescriptors moldata3D;
+
 double getLabuteAtomContribs(const ROMol &mol, std::vector<double> &Vi,
                              double &hContrib, bool includeHs, bool force) {
   TEST_ASSERT(Vi.size() == mol.getNumAtoms());
@@ -354,6 +358,24 @@ std::vector<double> calcPEOE_VSA(const ROMol &mol, std::vector<double> *bins,
   std::vector<double> chgs(mol.getNumAtoms(), 0.0);
   computeGasteigerCharges(mol, chgs);
   assignContribsToBins(vsaContribs, chgs, lbins, res);
+
+  return res;
+}
+
+std::vector<double> calcCustomProp_VSA(const ROMol &mol, const std::string &customPropName,
+		                         std::vector<double> *bins, bool force) {
+  std::vector<double> lbins;
+  lbins.resize(bins->size());
+  std::copy(bins->begin(), bins->end(), lbins.begin());
+  std::vector<double> res(lbins.size() + 1, 0);
+
+  std::vector<double> vsaContribs(mol.getNumAtoms());
+  double tmp;
+  getLabuteAtomContribs(mol, vsaContribs, tmp, true, force);
+
+  std::vector<double> prop(mol.getNumAtoms(), 0.0);
+  prop = moldata3D.GetCustomAtomProp(mol, customPropName);
+  assignContribsToBins(vsaContribs, prop, lbins, res);
 
   return res;
 }

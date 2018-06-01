@@ -562,5 +562,14 @@ class TestCase(unittest.TestCase):
     mol = Chem.MolFromSmiles("c1ccccc1O")
     self.assertRaises(ValueError, lambda : rdMD.GetMorganFingerprintAsBitVect(mol,2,fromAtoms=[10]))
 
+  def testCustomVSA(self):
+    mol = Chem.MolFromSmiles("c1ccccc1O")
+    peoe_vsa = rdMD.PEOE_VSA_(mol)
+    AllChem.ComputeGasteigerCharges(mol)
+    bins = [-.3, -.25, -.20, -.15, -.10, -.05, 0, .05, .10,  .15,  .20,  .25,  .30]
+    custom_vsa = rdMD.CustomProp_VSA_(mol, customPropName='_GasteigerCharge', bins=bins) 
+    for p,c in zip(peoe_vsa, custom_vsa):
+      self.assertTrue(feq(p, c, .001))
+
 if __name__ == '__main__':
   unittest.main()
