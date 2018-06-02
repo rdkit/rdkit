@@ -2703,6 +2703,60 @@ CAS<~>
       i += 1
     self.assertEqual(i, 16)
 
+  def testMaeStreamSupplier(self):
+    try:
+        MaeMolSupplier = Chem.MaeMolSupplier
+    except AttributeError:  # Built without Maestro support, return w/o testing
+        return
+
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'NCI_aids_few.maegz')
+    molNames = ["48", "78", "128", "163", "164", "170", "180", "186", "192", "203", "210", "211",
+                "213", "220", "229", "256"]
+    inf = gzip.open(fileN)
+    suppl = MaeMolSupplier(inf)
+
+    i = 0
+    while not suppl.atEnd():
+      mol = six.next(suppl)
+      self.assertTrue(mol)
+      self.assertTrue(mol.GetProp("_Name") == molNames[i])
+      i += 1
+    self.assertEqual(i, 16)
+
+    # make sure we have object ownership preserved
+    inf = gzip.open(fileN)
+    suppl = MaeMolSupplier(inf)
+    inf = None
+    i = 0
+    while not suppl.atEnd():
+      mol = six.next(suppl)
+      self.assertTrue(mol)
+      self.assertTrue(mol.GetProp("_Name") == molNames[i])
+      i += 1
+    self.assertEqual(i, 16)
+
+
+  def testMaeFileSupplier(self):
+    try:
+        MaeMolSupplier = Chem.MaeMolSupplier
+    except AttributeError:  # Built without Maestro support, return w/o testing
+        return
+
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'NCI_aids_few.mae')
+    molNames = ["48", "78", "128", "163", "164", "170", "180", "186", "192", "203", "210", "211",
+                "213", "220", "229", "256"]
+    suppl = MaeMolSupplier(fileN)
+
+    i = 0
+    while not suppl.atEnd():
+      mol = six.next(suppl)
+      self.assertTrue(mol)
+      self.assertTrue(mol.GetProp("_Name") == molNames[i])
+      i += 1
+    self.assertEqual(i, 16)
+
   def test66StreamSupplierIter(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'NCI_aids_few.sdf.gz')

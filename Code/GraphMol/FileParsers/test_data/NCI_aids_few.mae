@@ -1,0 +1,1663 @@
+{ 
+ s_m_m2io_version
+ :::
+ 2.0.0 
+} 
+
+f_m_ct { 
+ s_m_title
+ s_m_entry_id
+ s_m_entry_name
+ i_sd_NSC
+ s_sd_CAS\_RN
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_IC50
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_EC50
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_Conclusion
+ b_sd_chiral_flag
+ i_sd_version
+ i_m_ct_enhanced_stereo_status
+ s_m_Source_Path
+ s_m_Source_File
+ i_m_Source_File_Index
+ s_m_subgroup_title
+ s_m_subgroupid
+ b_m_subgroup_collapsed
+ i_m_ct_format
+ :::
+ 48 
+  1 
+  NCI_aids_few.1 
+  48
+  15716-70-8 
+  "2.00E-04	M	=	2.46E-05	3" 
+  "2.00E-04	M	>	2.00E-04	3" 
+  CI 
+  0
+  0
+  0
+  /Users/lorton/Desktop 
+  NCI_aids_few.sdf 
+  1
+  NCI_aids_few 
+  NCI_aids_few 
+  0
+  2
+ m_atom[19] { 
+  # First column is atom index #
+  i_m_mmod_type
+  r_m_x_coord
+  r_m_y_coord
+  r_m_z_coord
+  i_m_residue_number
+  i_m_color
+  i_m_atomic_number
+  i_m_formal_charge
+  s_m_color_rgb
+  i_m_minimize_atom_index
+  :::
+  1 5 1.397061 -2.611162 -1.314020 900 2 6 0 A0A0A0  1
+  2 6 0.617928 -3.334828 -0.196596 900 2 6 0 A0A0A0  2
+  3 2 2.732411 -2.034793 -0.841139 900 2 6 0 A0A0A0  3
+  4 20 2.839828 -0.686768 -0.673014 900 70 8 1 FF2F2F  4
+  5 5 3.944737 -2.883585 -0.484556 900 2 6 0 A0A0A0  5
+  6 85 3.741314 -0.025539 0.237863 900 4 29 0 1E1EE1  6
+  7 2 4.968398 -2.161871 0.387270 900 2 6 0 A0A0A0  7
+  8 20 2.794694 0.657596 1.112194 900 70 8 1 FF2F2F  8
+  9 20 4.695954 0.864963 -0.371680 900 70 8 1 FF2F2F  9
+  10 20 4.624730 -0.950167 0.948767 900 70 8 1 FF2F2F  10
+  11 5 6.368986 -2.710753 0.670636 900 2 6 0 A0A0A0  11
+  12 2 2.701594 2.011042 1.258879 900 2 6 0 A0A0A0  12
+  13 2 4.991026 2.116804 0.111189 900 2 6 0 A0A0A0  13
+  14 6 6.354735 -4.065574 1.405169 900 2 6 0 A0A0A0  14
+  15 5 1.361960 2.605791 1.694724 900 2 6 0 A0A0A0  15
+  16 5 3.932152 2.848878 0.932186 900 2 6 0 A0A0A0  16
+  17 5 6.379352 2.690720 -0.184727 900 2 6 0 A0A0A0  17
+  18 6 0.644094 3.380844 0.570671 900 2 6 0 A0A0A0  18
+  19 6 6.344370 4.108667 -0.787523 900 2 6 0 A0A0A0  19
+  :::
+ } 
+ m_bond[20] { 
+  # First column is bond index #
+  i_m_from
+  i_m_to
+  i_m_order
+  :::
+  1 1 2 1
+  2 1 3 1
+  3 3 4 2
+  4 3 5 1
+  5 4 6 1
+  6 5 7 1
+  7 6 8 1
+  8 6 9 1
+  9 6 10 1
+  10 7 11 1
+  11 7 10 2
+  12 8 12 2
+  13 9 13 2
+  14 11 14 1
+  15 12 15 1
+  16 12 16 1
+  17 13 17 1
+  18 13 16 1
+  19 15 18 1
+  20 17 19 1
+  :::
+ } 
+} 
+
+f_m_ct { 
+ s_m_title
+ s_m_entry_id
+ s_m_entry_name
+ i_sd_NSC
+ s_sd_CAS\_RN
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_IC50
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_EC50
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_Conclusion
+ b_sd_chiral_flag
+ i_sd_version
+ i_m_ct_enhanced_stereo_status
+ s_m_Source_Path
+ s_m_Source_File
+ i_m_Source_File_Index
+ s_m_subgroup_title
+ s_m_subgroupid
+ b_m_subgroup_collapsed
+ i_m_ct_format
+ :::
+ 78 
+  2 
+  NCI_aids_few.2 
+  78
+  6290-84-2 
+  "2.00E-04	M	=	9.80E-05	3" 
+  "2.00E-04	M	>	2.00E-04	3" 
+  CI 
+  0
+  0
+  0
+  /Users/lorton/Desktop 
+  NCI_aids_few.sdf 
+  2
+  NCI_aids_few 
+  NCI_aids_few 
+  0
+  2
+ m_atom[39] { 
+  # First column is atom index #
+  i_m_mmod_type
+  r_m_x_coord
+  r_m_y_coord
+  r_m_z_coord
+  i_m_residue_number
+  i_m_color
+  i_m_atomic_number
+  i_m_formal_charge
+  s_m_color_rgb
+  i_m_minimize_atom_index
+  :::
+  1 7 8.438812 2.295776 1.023555 900 2 6 0 A0A0A0  1
+  2 7 8.854817 3.582115 1.014101 900 2 6 0 A0A0A0  2
+  3 2 7.067459 1.909279 0.723229 900 2 6 0 A0A0A0  3
+  4 2 10.243648 4.050441 1.197560 900 2 6 0 A0A0A0  4
+  5 20 6.808487 0.565331 0.434943 900 70 8 1 FF2F2F  5
+  6 5 5.897035 2.850468 0.385108 900 2 6 0 A0A0A0  6
+  7 7 10.519261 5.394152 0.917029 900 2 6 0 A0A0A0  7
+  8 7 11.294661 3.203504 1.584760 900 2 6 0 A0A0A0  8
+  9 85 6.103043 0.082552 -0.755210 900 4 29 0 1E1EE1  9
+  10 2 4.945470 2.267687 -0.674382 900 2 6 0 A0A0A0  10
+  11 7 11.818159 5.884021 1.008657 900 2 6 0 A0A0A0  11
+  12 7 12.595325 3.696163 1.673535 900 2 6 0 A0A0A0  12
+  13 20 7.094234 -0.740106 -1.356986 900 70 8 1 FF2F2F  13
+  14 20 5.383042 1.208872 -1.422489 900 70 8 1 FF2F2F  14
+  15 20 4.888064 -0.709142 -0.350326 900 70 8 1 FF2F2F  15
+  16 2 3.533652 2.628973 -0.808481 900 2 6 0 A0A0A0  16
+  17 7 12.850973 5.031939 1.382434 900 2 6 0 A0A0A0  17
+  18 2 7.195747 -2.066445 -1.046078 900 2 6 0 A0A0A0  18
+  19 2 4.643676 -2.009047 -0.778514 900 2 6 0 A0A0A0  19
+  20 7 2.588310 2.037064 0.040140 900 2 6 0 A0A0A0  20
+  21 7 3.135066 3.516710 -1.812168 900 2 6 0 A0A0A0  21
+  22 5 5.899853 -2.881932 -0.874003 900 2 6 0 A0A0A0  22
+  23 2 8.539514 -2.571386 -0.769829 900 2 6 0 A0A0A0  23
+  24 7 3.330718 -2.316366 -1.328243 900 2 6 0 A0A0A0  24
+  25 7 1.240863 2.335202 -0.124708 900 2 6 0 A0A0A0  25
+  26 7 1.783895 3.809245 -1.966759 900 2 6 0 A0A0A0  26
+  27 7 9.291517 -3.137439 -1.804954 900 2 6 0 A0A0A0  27
+  28 7 9.086884 -2.426145 0.512730 900 2 6 0 A0A0A0  28
+  29 7 2.412619 -3.105592 -0.733515 900 2 6 0 A0A0A0  29
+  30 7 0.845706 3.216957 -1.126603 900 2 6 0 A0A0A0  30
+  31 7 10.590264 -3.566845 -1.551202 900 2 6 0 A0A0A0  31
+  32 7 10.388761 -2.853858 0.753110 900 2 6 0 A0A0A0  32
+  33 2 2.529688 -3.828901 0.537578 900 2 6 0 A0A0A0  33
+  34 7 11.133034 -3.415798 -0.279203 900 2 6 0 A0A0A0  34
+  35 7 1.625190 -3.530854 1.558911 900 2 6 0 A0A0A0  35
+  36 7 3.472455 -4.847185 0.706087 900 2 6 0 A0A0A0  36
+  37 7 1.681294 -4.229994 2.760140 900 2 6 0 A0A0A0  37
+  38 7 3.527217 -5.545717 1.909970 900 2 6 0 A0A0A0  38
+  39 7 2.633964 -5.231022 2.930448 900 2 6 0 A0A0A0  39
+  :::
+ } 
+ m_bond[44] { 
+  # First column is bond index #
+  i_m_from
+  i_m_to
+  i_m_order
+  :::
+  1 1 2 2
+  2 1 3 1
+  3 2 4 1
+  4 3 5 2
+  5 3 6 1
+  6 4 7 2
+  7 4 8 1
+  8 5 9 1
+  9 6 10 1
+  10 7 11 1
+  11 8 12 2
+  12 9 13 1
+  13 9 14 1
+  14 9 15 1
+  15 10 16 1
+  16 10 14 2
+  17 11 17 2
+  18 12 17 1
+  19 13 18 2
+  20 15 19 2
+  21 16 20 2
+  22 16 21 1
+  23 18 22 1
+  24 18 23 1
+  25 19 24 1
+  26 19 22 1
+  27 20 25 1
+  28 21 26 2
+  29 23 27 2
+  30 23 28 1
+  31 24 29 2
+  32 25 30 2
+  33 26 30 1
+  34 27 31 1
+  35 28 32 2
+  36 29 33 1
+  37 31 34 2
+  38 32 34 1
+  39 33 35 2
+  40 33 36 1
+  41 35 37 1
+  42 36 38 2
+  43 37 39 2
+  44 38 39 1
+  :::
+ } 
+} 
+
+f_m_ct { 
+ s_m_title
+ s_m_entry_id
+ s_m_entry_name
+ i_sd_NSC
+ s_sd_CAS\_RN
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_IC50
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_EC50
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_Conclusion
+ b_sd_chiral_flag
+ i_sd_version
+ i_m_ct_enhanced_stereo_status
+ s_m_Source_Path
+ s_m_Source_File
+ i_m_Source_File_Index
+ s_m_subgroup_title
+ s_m_subgroupid
+ b_m_subgroup_collapsed
+ i_m_ct_format
+ :::
+ 128 
+  3 
+  NCI_aids_few.3 
+  128
+  5395-10-8 
+  "2.00E-04	M	=	4.60E-05	4" 
+  "2.00E-04	M	>	2.00E-04	4" 
+  CI 
+  0
+  0
+  0
+  /Users/lorton/Desktop 
+  NCI_aids_few.sdf 
+  3
+  NCI_aids_few 
+  NCI_aids_few 
+  0
+  2
+ m_atom[21] { 
+  # First column is atom index #
+  i_m_mmod_type
+  r_m_x_coord
+  r_m_y_coord
+  r_m_z_coord
+  i_m_residue_number
+  i_m_color
+  i_m_atomic_number
+  s_m_color_rgb
+  i_m_minimize_atom_index
+  :::
+  1 2 2.401204 2.227648 0.980465 900 2 6 A0A0A0  1
+  2 6 2.446433 3.692529 1.435576 900 2 6 A0A0A0  2
+  3 15 1.340054 1.646428 1.218008 900 70 8 FF2F2F  3
+  4 25 3.501558 1.622630 0.408346 900 43 7 5757FF  4
+  5 2 3.523531 0.209118 0.205345 900 2 6 A0A0A0  5
+  6 2 4.668672 2.370417 0.093538 900 2 6 A0A0A0  6
+  7 2 4.650865 -0.538500 0.607465 900 2 6 A0A0A0  7
+  8 7 2.437582 -0.457706 -0.379569 900 2 6 A0A0A0  8
+  9 2 5.924153 1.902412 0.515989 900 2 6 A0A0A0  9
+  10 7 4.615796 3.560555 -0.655848 900 2 6 A0A0A0  10
+  11 2 4.649089 -1.967591 0.480910 900 2 6 A0A0A0  11
+  12 49 6.090090 0.305152 1.250499 900 13 16 E1E11E  12
+  13 7 2.415298 -1.838181 -0.517777 900 2 6 A0A0A0  13
+  14 7 7.071541 2.668044 0.302659 900 2 6 A0A0A0  14
+  15 7 5.767828 4.313128 -0.885156 900 2 6 A0A0A0  15
+  16 2 3.508206 -2.616280 -0.086884 900 2 6 A0A0A0  16
+  17 7 5.746345 -2.785253 0.881633 900 2 6 A0A0A0  17
+  18 7 6.993653 3.876346 -0.387450 900 2 6 A0A0A0  18
+  19 7 3.493960 -4.028062 -0.218521 900 2 6 A0A0A0  19
+  20 7 5.705642 -4.168655 0.732335 900 2 6 A0A0A0  20
+  21 7 4.586610 -4.786312 0.189251 900 2 6 A0A0A0  21
+  :::
+ } 
+ m_bond[24] { 
+  # First column is bond index #
+  i_m_from
+  i_m_to
+  i_m_order
+  :::
+  1 1 2 1
+  2 1 3 2
+  3 1 4 1
+  4 4 5 1
+  5 4 6 1
+  6 5 7 2
+  7 5 8 1
+  8 6 9 2
+  9 6 10 1
+  10 7 11 1
+  11 7 12 1
+  12 8 13 2
+  13 9 14 1
+  14 9 12 1
+  15 10 15 2
+  16 11 16 2
+  17 11 17 1
+  18 13 16 1
+  19 14 18 2
+  20 15 18 1
+  21 16 19 1
+  22 17 20 2
+  23 19 21 2
+  24 20 21 1
+  :::
+ } 
+} 
+
+f_m_ct { 
+ s_m_title
+ s_m_entry_id
+ s_m_entry_name
+ i_sd_NSC
+ s_sd_CAS\_RN
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_IC50
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_EC50
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_Conclusion
+ b_sd_chiral_flag
+ i_sd_version
+ i_m_ct_enhanced_stereo_status
+ s_m_Source_Path
+ s_m_Source_File
+ i_m_Source_File_Index
+ s_m_subgroup_title
+ s_m_subgroupid
+ b_m_subgroup_collapsed
+ i_m_ct_format
+ :::
+ 163 
+  4 
+  NCI_aids_few.4 
+  163
+  81-11-8 
+  "6.75E-04	M	>	6.75E-04	2" 
+  "6.75E-04	M	>	6.75E-04	2" 
+  CI 
+  0
+  0
+  0
+  /Users/lorton/Desktop 
+  NCI_aids_few.sdf 
+  4
+  NCI_aids_few 
+  NCI_aids_few 
+  0
+  2
+ m_atom[24] { 
+  # First column is atom index #
+  i_m_mmod_type
+  r_m_x_coord
+  r_m_y_coord
+  r_m_z_coord
+  i_m_residue_number
+  i_m_color
+  i_m_atomic_number
+  s_m_color_rgb
+  i_m_minimize_atom_index
+  :::
+  1 113 9.054949 1.932905 0.028594 900 13 16 E1E11E  1
+  2 15 9.344910 2.385341 -1.332801 900 70 8 FF2F2F  2
+  3 15 7.937164 2.463509 0.813306 900 70 8 FF2F2F  3
+  4 17 10.407490 2.134798 0.941842 900 70 8 FF2F2F  4
+  5 2 8.983908 0.129559 0.012728 900 2 6 A0A0A0  5
+  6 2 7.763414 -0.576131 -0.041570 900 2 6 A0A0A0  6
+  7 7 10.192798 -0.581024 0.030811 900 2 6 A0A0A0  7
+  8 7 6.466085 0.123317 -0.121984 900 2 6 A0A0A0  8
+  9 7 7.789392 -1.978245 -0.027592 900 2 6 A0A0A0  9
+  10 2 10.198873 -1.972210 0.035461 900 2 6 A0A0A0  10
+  11 7 5.318523 -0.277964 0.459098 900 2 6 A0A0A0  11
+  12 7 8.998095 -2.671739 0.013835 900 2 6 A0A0A0  12
+  13 30 11.404390 -2.663521 0.058452 900 43 7 5757FF  13
+  14 2 4.034683 0.444863 0.369490 900 2 6 A0A0A0  14
+  15 2 2.814494 -0.221608 0.130476 900 2 6 A0A0A0  15
+  16 7 4.035969 1.841505 0.494287 900 2 6 A0A0A0  16
+  17 113 2.745509 -2.015259 -0.077280 900 13 16 E1E11E  17
+  18 7 1.635791 0.529470 -0.004433 900 2 6 A0A0A0  18
+  19 7 2.854625 2.571345 0.379259 900 2 6 A0A0A0  19
+  20 15 3.440702 -2.654236 1.042324 900 70 8 FF2F2F  20
+  21 15 3.058433 -2.323888 -1.473411 900 70 8 FF2F2F  21
+  22 17 1.139823 -2.271346 0.166762 900 70 8 FF2F2F  22
+  23 2 1.656730 1.914916 0.123291 900 2 6 A0A0A0  23
+  24 30 0.481793 2.644549 -0.013572 900 43 7 5757FF  24
+  :::
+ } 
+ m_bond[25] { 
+  # First column is bond index #
+  i_m_from
+  i_m_to
+  i_m_order
+  :::
+  1 1 2 2
+  2 1 3 2
+  3 1 4 1
+  4 1 5 1
+  5 5 6 2
+  6 5 7 1
+  7 6 8 1
+  8 6 9 1
+  9 7 10 2
+  10 8 11 2
+  11 9 12 2
+  12 10 13 1
+  13 10 12 1
+  14 11 14 1
+  15 14 15 2
+  16 14 16 1
+  17 15 17 1
+  18 15 18 1
+  19 16 19 2
+  20 17 20 2
+  21 17 21 2
+  22 17 22 1
+  23 18 23 2
+  24 19 23 1
+  25 23 24 1
+  :::
+ } 
+} 
+
+f_m_ct { 
+ s_m_title
+ s_m_entry_id
+ s_m_entry_name
+ i_sd_NSC
+ s_sd_CAS\_RN
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_IC50
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_EC50
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_Conclusion
+ b_sd_chiral_flag
+ i_sd_version
+ i_m_ct_enhanced_stereo_status
+ s_m_Source_Path
+ s_m_Source_File
+ i_m_Source_File_Index
+ s_m_subgroup_title
+ s_m_subgroupid
+ b_m_subgroup_collapsed
+ i_m_ct_format
+ :::
+ 164 
+  5 
+  NCI_aids_few.5 
+  164
+  5325-43-9 
+  "2.00E-04	M	>	2.00E-04	2" 
+  "2.00E-04	M	>	2.00E-04	2" 
+  CI 
+  0
+  0
+  0
+  /Users/lorton/Desktop 
+  NCI_aids_few.sdf 
+  5
+  NCI_aids_few 
+  NCI_aids_few 
+  0
+  2
+ m_atom[10] { 
+  # First column is atom index #
+  i_m_mmod_type
+  r_m_x_coord
+  r_m_y_coord
+  r_m_z_coord
+  i_m_residue_number
+  i_m_color
+  i_m_atomic_number
+  s_m_color_rgb
+  i_m_minimize_atom_index
+  :::
+  1 5 3.543923 0.410554 0.032840 900 2 6 A0A0A0  1
+  2 5 4.785291 -0.409522 0.493104 900 2 6 A0A0A0  2
+  3 113 1.991143 -0.635862 0.042422 900 13 16 E1E11E  3
+  4 113 6.339078 0.634799 0.472577 900 13 16 E1E11E  4
+  5 15 1.590749 -0.886414 1.425599 900 70 8 FF2F2F  5
+  6 15 2.134886 -1.707678 -0.941718 900 70 8 FF2F2F  6
+  7 17 0.964403 0.491642 -0.554895 900 70 8 FF2F2F  7
+  8 15 6.730623 0.885435 -0.913287 900 70 8 FF2F2F  8
+  9 15 6.204291 1.705722 1.458858 900 70 8 FF2F2F  9
+  10 17 7.368083 -0.493589 1.062477 900 70 8 FF2F2F  10
+  :::
+ } 
+ m_bond[9] { 
+  # First column is bond index #
+  i_m_from
+  i_m_to
+  i_m_order
+  :::
+  1 1 2 1
+  2 1 3 1
+  3 2 4 1
+  4 3 5 2
+  5 3 6 2
+  6 3 7 1
+  7 4 8 2
+  8 4 9 2
+  9 4 10 1
+  :::
+ } 
+} 
+
+f_m_ct { 
+ s_m_title
+ s_m_entry_id
+ s_m_entry_name
+ i_sd_NSC
+ s_sd_CAS\_RN
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_EC50
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_Conclusion
+ b_sd_chiral_flag
+ i_sd_version
+ i_m_ct_enhanced_stereo_status
+ s_m_Source_Path
+ s_m_Source_File
+ i_m_Source_File_Index
+ s_m_subgroup_title
+ s_m_subgroupid
+ b_m_subgroup_collapsed
+ i_m_ct_format
+ :::
+ 170 
+  6 
+  NCI_aids_few.6 
+  170
+  999-99-9 
+  "9.47E-04	M	>	9.47E-04	1" 
+  CI 
+  0
+  0
+  0
+  /Users/lorton/Desktop 
+  NCI_aids_few.sdf 
+  6
+  NCI_aids_few 
+  NCI_aids_few 
+  0
+  2
+ m_atom[16] { 
+  # First column is atom index #
+  i_m_mmod_type
+  r_m_x_coord
+  r_m_y_coord
+  r_m_z_coord
+  i_m_residue_number
+  i_m_color
+  i_m_atomic_number
+  s_m_color_rgb
+  i_m_minimize_atom_index
+  :::
+  1 29 3.476603 -0.187641 0.188037 900 43 7 5757FF  1
+  2 107 4.343388 1.119601 -0.448496 900 15 15 8E236B  2
+  3 2 3.767092 -1.567513 0.178497 900 2 6 A0A0A0  3
+  4 16 4.951356 1.841149 0.877446 900 70 8 FF2F2F  4
+  5 16 3.171567 2.153619 -0.913131 900 70 8 FF2F2F  5
+  6 15 5.346880 0.828619 -1.504299 900 70 8 FF2F2F  6
+  7 7 2.787663 -2.448682 0.641324 900 2 6 A0A0A0  7
+  8 7 4.986819 -2.079486 -0.276702 900 2 6 A0A0A0  8
+  9 5 5.718839 3.025503 0.746346 900 2 6 A0A0A0  9
+  10 5 2.175187 2.615098 -0.016942 900 2 6 A0A0A0  10
+  11 2 3.016031 -3.823332 0.637647 900 2 6 A0A0A0  11
+  12 7 5.218682 -3.455970 -0.280060 900 2 6 A0A0A0  12
+  13 6 7.207737 2.673119 0.650601 900 2 6 A0A0A0  13
+  14 6 1.815836 4.046519 -0.418734 900 2 6 A0A0A0  14
+  15 57 1.793768 -4.900607 1.202592 900 9 17 006400  15
+  16 7 4.230258 -4.327904 0.176281 900 2 6 A0A0A0  16
+  :::
+ } 
+ m_bond[16] { 
+  # First column is bond index #
+  i_m_from
+  i_m_to
+  i_m_order
+  :::
+  1 1 2 1
+  2 1 3 1
+  3 2 4 1
+  4 2 5 1
+  5 2 6 2
+  6 3 7 2
+  7 3 8 1
+  8 4 9 1
+  9 5 10 1
+  10 7 11 1
+  11 8 12 2
+  12 9 13 1
+  13 10 14 1
+  14 11 15 1
+  15 11 16 2
+  16 12 16 1
+  :::
+ } 
+} 
+
+f_m_ct { 
+ s_m_title
+ s_m_entry_id
+ s_m_entry_name
+ i_sd_NSC
+ s_sd_CAS\_RN
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_IC50
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_EC50
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_Conclusion
+ b_sd_chiral_flag
+ i_sd_version
+ i_m_ct_enhanced_stereo_status
+ s_m_Source_Path
+ s_m_Source_File
+ i_m_Source_File_Index
+ s_m_subgroup_title
+ s_m_subgroupid
+ b_m_subgroup_collapsed
+ i_m_ct_format
+ :::
+ 180 
+  7 
+  NCI_aids_few.7 
+  180
+  69-72-7 
+  "6.46E-04	M	=	5.80E-04	2
+1.81E-03	M	=	6.90E-04	2" 
+  "6.46E-04	M	>	6.46E-04	2
+1.81E-03	M	>	1.81E-03	2" 
+  CI 
+  0
+  0
+  0
+  /Users/lorton/Desktop 
+  NCI_aids_few.sdf 
+  7
+  NCI_aids_few 
+  NCI_aids_few 
+  0
+  2
+ m_atom[10] { 
+  # First column is atom index #
+  i_m_mmod_type
+  r_m_x_coord
+  r_m_y_coord
+  r_m_z_coord
+  i_m_residue_number
+  i_m_color
+  i_m_atomic_number
+  s_m_color_rgb
+  i_m_minimize_atom_index
+  :::
+  1 2 3.835075 1.936913 0.290592 900 2 6 A0A0A0  1
+  2 15 4.887108 2.564856 0.221759 900 70 8 FF2F2F  2
+  3 17 2.626551 2.534493 0.397777 900 70 8 FF2F2F  3
+  4 2 3.791585 0.427206 0.283864 900 2 6 A0A0A0  4
+  5 2 2.593124 -0.310062 0.240634 900 2 6 A0A0A0  5
+  6 7 5.006099 -0.279379 0.313351 900 2 6 A0A0A0  6
+  7 17 1.364378 0.291669 0.204824 900 70 8 FF2F2F  7
+  8 7 2.616428 -1.703129 0.235985 900 2 6 A0A0A0  8
+  9 7 5.024050 -1.672858 0.305848 900 2 6 A0A0A0  9
+  10 7 3.829828 -2.386631 0.268648 900 2 6 A0A0A0  10
+  :::
+ } 
+ m_bond[10] { 
+  # First column is bond index #
+  i_m_from
+  i_m_to
+  i_m_order
+  :::
+  1 1 2 2
+  2 1 3 1
+  3 1 4 1
+  4 4 5 2
+  5 4 6 1
+  6 5 7 1
+  7 5 8 1
+  8 6 9 2
+  9 8 10 2
+  10 9 10 1
+  :::
+ } 
+} 
+
+f_m_ct { 
+ s_m_title
+ s_m_entry_id
+ s_m_entry_name
+ i_sd_NSC
+ s_sd_CAS\_RN
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_IC50
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_EC50
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_Conclusion
+ b_sd_chiral_flag
+ i_sd_version
+ i_m_ct_enhanced_stereo_status
+ s_m_Source_Path
+ s_m_Source_File
+ i_m_Source_File_Index
+ s_m_subgroup_title
+ s_m_subgroupid
+ b_m_subgroup_collapsed
+ i_m_ct_format
+ :::
+ 186 
+  8 
+  NCI_aids_few.8 
+  186
+  518-75-2 
+  "1.44E-04	M	=	2.49E-05	2" 
+  "1.44E-04	M	>	1.44E-04	2" 
+  CI 
+  0
+  0
+  0
+  /Users/lorton/Desktop 
+  NCI_aids_few.sdf 
+  8
+  NCI_aids_few 
+  NCI_aids_few 
+  0
+  2
+ m_atom[18] { 
+  # First column is atom index #
+  i_m_mmod_type
+  r_m_x_coord
+  r_m_y_coord
+  r_m_z_coord
+  i_m_residue_number
+  i_m_color
+  i_m_atomic_number
+  s_m_color_rgb
+  i_m_minimize_atom_index
+  :::
+  1 6 3.973180 -2.794869 -0.617295 900 2 6 A0A0A0  1
+  2 2 4.175638 -1.307798 -0.283493 900 2 6 A0A0A0  2
+  3 2 5.391944 -0.735300 -0.078818 900 2 6 A0A0A0  3
+  4 2 2.889610 -0.555621 -0.138541 900 2 6 A0A0A0  4
+  5 2 5.470547 0.675442 0.281343 900 2 6 A0A0A0  5
+  6 4 6.718267 -1.510104 -0.159361 900 2 6 A0A0A0  6
+  7 15 1.810767 -1.129756 -0.311250 900 70 8 FF2F2F  7
+  8 2 3.008089 0.883188 0.258543 900 2 6 A0A0A0  8
+  9 2 4.239443 1.441124 0.473230 900 2 6 A0A0A0  9
+  10 7 6.690043 1.241109 0.436536 900 2 6 A0A0A0  10
+  11 6 7.000324 -2.192465 1.199514 900 2 6 A0A0A0  11
+  12 4 7.833650 -0.519526 -0.609059 900 2 6 A0A0A0  12
+  13 2 1.775109 1.662983 0.353237 900 2 6 A0A0A0  13
+  14 17 4.376837 2.743221 0.848397 900 70 8 FF2F2F  14
+  15 16 7.896867 0.662614 0.197603 900 70 8 FF2F2F  15
+  16 6 9.238819 -1.135236 -0.658005 900 2 6 A0A0A0  16
+  17 15 0.743005 1.465393 -0.271921 900 70 8 FF2F2F  17
+  18 17 1.820686 2.702952 1.220169 900 70 8 FF2F2F  18
+  :::
+ } 
+ m_bond[19] { 
+  # First column is bond index #
+  i_m_from
+  i_m_to
+  i_m_order
+  :::
+  1 1 2 1
+  2 2 3 2
+  3 2 4 1
+  4 3 5 1
+  5 3 6 1
+  6 4 7 2
+  7 4 8 1
+  8 5 9 1
+  9 5 10 2
+  10 6 11 1
+  11 6 12 1
+  12 8 13 1
+  13 8 9 2
+  14 9 14 1
+  15 10 15 1
+  16 12 16 1
+  17 12 15 1
+  18 13 17 2
+  19 13 18 1
+  :::
+ } 
+} 
+
+f_m_ct { 
+ s_m_title
+ s_m_entry_id
+ s_m_entry_name
+ i_sd_NSC
+ s_sd_CAS\_RN
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_IC50
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_EC50
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_Conclusion
+ b_sd_chiral_flag
+ i_sd_version
+ i_m_ct_enhanced_stereo_status
+ s_m_Source_Path
+ s_m_Source_File
+ i_m_Source_File_Index
+ s_m_subgroup_title
+ s_m_subgroupid
+ b_m_subgroup_collapsed
+ i_m_ct_format
+ :::
+ 192 
+  9 
+  NCI_aids_few.9 
+  192
+  2217-55-2 
+  "2.00E-04	M	=	3.38E-06	2" 
+  "2.00E-04	M	>	2.00E-04	2" 
+  CI 
+  0
+  0
+  0
+  /Users/lorton/Desktop 
+  NCI_aids_few.sdf 
+  9
+  NCI_aids_few 
+  NCI_aids_few 
+  0
+  2
+ m_atom[26] { 
+  # First column is atom index #
+  i_m_mmod_type
+  r_m_x_coord
+  r_m_y_coord
+  r_m_z_coord
+  i_m_residue_number
+  i_m_color
+  i_m_atomic_number
+  i_m_formal_charge
+  s_m_color_rgb
+  i_m_minimize_atom_index
+  :::
+  1 49 7.232642 0.036720 -0.684117 900 13 16 0 E1E11E  1
+  2 49 6.282206 -0.056837 1.115676 900 13 16 0 E1E11E  2
+  3 2 8.797925 -0.673544 -0.277693 900 2 6 0 A0A0A0  3
+  4 2 4.722655 0.663310 0.703880 900 2 6 0 A0A0A0  4
+  5 2 9.931196 0.115320 -0.005755 900 2 6 0 A0A0A0  5
+  6 7 8.903985 -2.063283 -0.311906 900 2 6 0 A0A0A0  6
+  7 2 3.585819 -0.118465 0.426720 900 2 6 0 A0A0A0  7
+  8 7 4.626603 2.053926 0.733081 900 2 6 0 A0A0A0  8
+  9 31 9.876625 1.591836 0.045112 900 43 7 1 5757FF  9
+  10 7 11.158488 -0.523734 0.223333 900 2 6 0 A0A0A0  10
+  11 7 10.126509 -2.684732 -0.067553 900 2 6 0 A0A0A0  11
+  12 31 3.629115 -1.595606 0.384743 900 43 7 1 5757FF  12
+  13 7 2.365492 0.528764 0.183464 900 2 6 0 A0A0A0  13
+  14 7 3.410839 2.683222 0.476034 900 2 6 0 A0A0A0  14
+  15 15 10.771799 2.208011 -0.524326 900 70 8 0 FF2F2F  15
+  16 18 8.983254 2.130260 0.691289 900 70 8 -1 FF2F2F  16
+  17 2 11.273031 -1.922838 0.199811 900 2 6 0 A0A0A0  17
+  18 15 2.726224 -2.200708 0.952982 900 70 8 0 FF2F2F  18
+  19 18 4.521702 -2.144902 -0.253259 900 70 8 -1 FF2F2F  19
+  20 2 2.261460 1.928843 0.198928 900 2 6 0 A0A0A0  20
+  21 31 12.578781 -2.580821 0.450222 900 43 7 1 5757FF  21
+  22 31 0.963516 2.595371 -0.070022 900 43 7 1 5757FF  22
+  23 15 12.619258 -3.807357 0.457093 900 70 8 0 FF2F2F  23
+  24 18 13.560024 -1.869824 0.641224 900 70 8 -1 FF2F2F  24
+  25 15 0.918046 3.820519 -0.017982 900 70 8 0 FF2F2F  25
+  26 18 -0.006078 1.892170 -0.334917 900 70 8 -1 FF2F2F  26
+  :::
+ } 
+ m_bond[27] { 
+  # First column is bond index #
+  i_m_from
+  i_m_to
+  i_m_order
+  :::
+  1 1 2 1
+  2 1 3 1
+  3 2 4 1
+  4 3 5 2
+  5 3 6 1
+  6 4 7 2
+  7 4 8 1
+  8 5 9 1
+  9 5 10 1
+  10 6 11 2
+  11 7 12 1
+  12 7 13 1
+  13 8 14 2
+  14 9 15 2
+  15 9 16 1
+  16 10 17 2
+  17 11 17 1
+  18 12 18 2
+  19 12 19 1
+  20 13 20 2
+  21 14 20 1
+  22 17 21 1
+  23 20 22 1
+  24 21 23 2
+  25 21 24 1
+  26 22 25 2
+  27 22 26 1
+  :::
+ } 
+} 
+
+f_m_ct { 
+ s_m_title
+ s_m_entry_id
+ s_m_entry_name
+ i_sd_NSC
+ s_sd_CAS\_RN
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_Conclusion
+ b_sd_chiral_flag
+ i_sd_version
+ i_m_ct_enhanced_stereo_status
+ s_m_Source_Path
+ s_m_Source_File
+ i_m_Source_File_Index
+ s_m_subgroup_title
+ s_m_subgroupid
+ b_m_subgroup_collapsed
+ i_m_ct_format
+ :::
+ 203 
+  10 
+  NCI_aids_few.10 
+  203
+  1155-00-6 
+  CI 
+  0
+  0
+  0
+  /Users/lorton/Desktop 
+  NCI_aids_few.sdf 
+  10
+  NCI_aids_few 
+  NCI_aids_few 
+  0
+  2
+ m_atom[20] { 
+  # First column is atom index #
+  i_m_mmod_type
+  r_m_x_coord
+  r_m_y_coord
+  r_m_z_coord
+  i_m_residue_number
+  i_m_color
+  i_m_atomic_number
+  i_m_formal_charge
+  s_m_color_rgb
+  i_m_minimize_atom_index
+  :::
+  1 49 5.523137 -0.072631 1.113362 900 13 16 0 E1E11E  1
+  2 49 4.523348 -0.012920 -0.660487 900 13 16 0 E1E11E  2
+  3 2 7.082302 -0.717248 0.592970 900 2 6 0 A0A0A0  3
+  4 2 2.980780 0.682404 -0.154665 900 2 6 0 A0A0A0  4
+  5 2 8.200503 0.112591 0.377787 900 2 6 0 A0A0A0  5
+  6 7 7.199473 -2.102523 0.463073 900 2 6 0 A0A0A0  6
+  7 2 1.846920 -0.115944 0.094165 900 2 6 0 A0A0A0  7
+  8 7 2.890156 2.073861 -0.085743 900 2 6 0 A0A0A0  8
+  9 31 8.130773 1.584095 0.504731 900 43 7 1 5757FF  9
+  10 7 9.423525 -0.482437 0.030723 900 2 6 0 A0A0A0  10
+  11 7 8.418029 -2.676625 0.105141 900 2 6 0 A0A0A0  11
+  12 31 1.888527 -1.592856 0.033477 900 43 7 1 5757FF  12
+  13 7 0.633581 0.517677 0.406022 900 2 6 0 A0A0A0  13
+  14 7 1.680762 2.687121 0.237773 900 2 6 0 A0A0A0  14
+  15 15 9.018236 2.136036 1.148106 900 70 8 0 FF2F2F  15
+  16 18 7.236384 2.189092 -0.079287 900 70 8 -1 FF2F2F  16
+  17 7 9.532002 -1.866330 -0.108888 900 2 6 0 A0A0A0  17
+  18 15 0.982447 -2.157191 -0.572760 900 70 8 0 FF2F2F  18
+  19 18 2.778692 -2.188285 0.632605 900 70 8 -1 FF2F2F  19
+  20 7 0.551077 1.908438 0.480170 900 2 6 0 A0A0A0  20
+  :::
+ } 
+ m_bond[21] { 
+  # First column is bond index #
+  i_m_from
+  i_m_to
+  i_m_order
+  :::
+  1 1 2 1
+  2 1 3 1
+  3 2 4 1
+  4 3 5 2
+  5 3 6 1
+  6 4 7 2
+  7 4 8 1
+  8 5 9 1
+  9 5 10 1
+  10 6 11 2
+  11 7 12 1
+  12 7 13 1
+  13 8 14 2
+  14 9 15 2
+  15 9 16 1
+  16 10 17 2
+  17 11 17 1
+  18 12 18 2
+  19 12 19 1
+  20 13 20 2
+  21 14 20 1
+  :::
+ } 
+} 
+
+f_m_ct { 
+ s_m_title
+ s_m_entry_id
+ s_m_entry_name
+ i_sd_NSC
+ s_sd_CAS\_RN
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_IC50
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_EC50
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_Conclusion
+ b_sd_chiral_flag
+ i_sd_version
+ i_m_ct_enhanced_stereo_status
+ s_m_Source_Path
+ s_m_Source_File
+ i_m_Source_File_Index
+ s_m_subgroup_title
+ s_m_subgroupid
+ b_m_subgroup_collapsed
+ i_m_ct_format
+ :::
+ 210 
+  11 
+  NCI_aids_few.11 
+  210
+  5325-75-7 
+  "1.33E-03	M	>	1.33E-03	2" 
+  "1.33E-03	M	>	1.33E-03	2" 
+  CI 
+  0
+  0
+  0
+  /Users/lorton/Desktop 
+  NCI_aids_few.sdf 
+  11
+  NCI_aids_few 
+  NCI_aids_few 
+  0
+  2
+ m_atom[13] { 
+  # First column is atom index #
+  i_m_mmod_type
+  r_m_x_coord
+  r_m_y_coord
+  r_m_z_coord
+  i_m_residue_number
+  i_m_color
+  i_m_atomic_number
+  s_m_color_rgb
+  i_m_minimize_atom_index
+  :::
+  1 3 5.396713 -0.204173 -0.593467 900 2 6 A0A0A0  1
+  2 5 6.419310 0.752981 0.089638 900 2 6 A0A0A0  2
+  3 5 4.658970 -1.126544 0.428413 900 2 6 A0A0A0  3
+  4 6 6.129723 -1.107698 -1.613584 900 2 6 A0A0A0  4
+  5 6 4.385328 0.652993 -1.388152 900 2 6 A0A0A0  5
+  6 5 7.479282 0.080592 1.001817 900 2 6 A0A0A0  6
+  7 5 3.872759 -0.451925 1.590203 900 2 6 A0A0A0  7
+  8 2 8.489726 1.071284 1.566640 900 2 6 A0A0A0  8
+  9 2 2.453475 -0.011764 1.242645 900 2 6 A0A0A0  9
+  10 15 8.430020 1.543954 2.691768 900 70 8 FF2F2F  10
+  11 17 9.465701 1.371528 0.682935 900 70 8 FF2F2F  11
+  12 15 2.079991 1.151809 1.231237 900 70 8 FF2F2F  12
+  13 17 1.639199 -1.053697 0.966281 900 70 8 FF2F2F  13
+  :::
+ } 
+ m_bond[12] { 
+  # First column is bond index #
+  i_m_from
+  i_m_to
+  i_m_order
+  :::
+  1 1 2 1
+  2 1 3 1
+  3 1 4 1
+  4 1 5 1
+  5 2 6 1
+  6 3 7 1
+  7 6 8 1
+  8 7 9 1
+  9 8 10 2
+  10 8 11 1
+  11 9 12 2
+  12 9 13 1
+  :::
+ } 
+} 
+
+f_m_ct { 
+ s_m_title
+ s_m_entry_id
+ s_m_entry_name
+ i_sd_NSC
+ s_sd_CAS\_RN
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_IC50
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_EC50
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_Conclusion
+ b_sd_chiral_flag
+ i_sd_version
+ i_m_ct_enhanced_stereo_status
+ s_m_Source_Path
+ s_m_Source_File
+ i_m_Source_File_Index
+ s_m_subgroup_title
+ s_m_subgroupid
+ b_m_subgroup_collapsed
+ i_m_ct_format
+ :::
+ 211 
+  12 
+  NCI_aids_few.12 
+  211
+  5325-76-8 
+  "2.00E-04	M	>	2.00E-04	8
+2.00E-03	M	=	1.12E-03	2" 
+  "2.00E-04	M	>	7.42E-05	8
+2.00E-03	M	=	6.35E-05	2" 
+  CM 
+  0
+  0
+  0
+  /Users/lorton/Desktop 
+  NCI_aids_few.sdf 
+  12
+  NCI_aids_few 
+  NCI_aids_few 
+  0
+  2
+ m_atom[22] { 
+  # First column is atom index #
+  i_m_mmod_type
+  r_m_x_coord
+  r_m_y_coord
+  r_m_z_coord
+  i_m_residue_number
+  i_m_color
+  i_m_atomic_number
+  s_m_color_rgb
+  i_m_minimize_atom_index
+  :::
+  1 49 4.088980 0.418525 0.979014 900 13 16 E1E11E  1
+  2 49 4.348251 -0.450422 -0.850698 900 13 16 E1E11E  2
+  3 2 4.362569 2.129808 0.631986 900 2 6 A0A0A0  3
+  4 2 4.052986 -2.153631 -0.502769 900 2 6 A0A0A0  4
+  5 7 5.517686 2.533064 -0.039307 900 2 6 A0A0A0  5
+  6 7 3.408745 3.065087 1.027204 900 2 6 A0A0A0  6
+  7 7 5.077007 -2.938145 0.023331 900 2 6 A0A0A0  7
+  8 7 2.826478 -2.720622 -0.840905 900 2 6 A0A0A0  8
+  9 7 5.711004 3.881882 -0.328859 900 2 6 A0A0A0  9
+  10 7 3.603283 4.414392 0.739208 900 2 6 A0A0A0  10
+  11 7 4.868680 -4.300884 0.222782 900 2 6 A0A0A0  11
+  12 7 2.621931 -4.084209 -0.650199 900 2 6 A0A0A0  12
+  13 2 4.751738 4.823272 0.052093 900 2 6 A0A0A0  13
+  14 2 3.641227 -4.880225 -0.114697 900 2 6 A0A0A0  14
+  15 5 4.963497 6.300679 -0.265210 900 2 6 A0A0A0  15
+  16 5 3.457033 -6.389444 0.037024 900 2 6 A0A0A0  16
+  17 2 5.775090 7.006511 0.815175 900 2 6 A0A0A0  17
+  18 2 2.253743 -6.787206 0.889535 900 2 6 A0A0A0  18
+  19 15 5.281456 7.640858 1.737689 900 70 8 FF2F2F  19
+  20 17 7.108340 6.848397 0.647804 900 70 8 FF2F2F  20
+  21 15 2.298440 -6.965639 2.098241 900 70 8 FF2F2F  21
+  22 17 1.123151 -6.931403 0.161314 900 70 8 FF2F2F  22
+  :::
+ } 
+ m_bond[23] { 
+  # First column is bond index #
+  i_m_from
+  i_m_to
+  i_m_order
+  :::
+  1 1 2 1
+  2 1 3 1
+  3 2 4 1
+  4 3 5 2
+  5 3 6 1
+  6 4 7 2
+  7 4 8 1
+  8 5 9 1
+  9 6 10 2
+  10 7 11 1
+  11 8 12 2
+  12 9 13 2
+  13 10 13 1
+  14 11 14 2
+  15 12 14 1
+  16 13 15 1
+  17 14 16 1
+  18 15 17 1
+  19 16 18 1
+  20 17 19 2
+  21 17 20 1
+  22 18 21 2
+  23 18 22 1
+  :::
+ } 
+} 
+
+f_m_ct { 
+ s_m_title
+ s_m_entry_id
+ s_m_entry_name
+ i_sd_NSC
+ s_sd_CAS\_RN
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_IC50
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_EC50
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_Conclusion
+ b_sd_chiral_flag
+ i_sd_version
+ i_m_ct_enhanced_stereo_status
+ s_m_Source_Path
+ s_m_Source_File
+ i_m_Source_File_Index
+ s_m_subgroup_title
+ s_m_subgroupid
+ b_m_subgroup_collapsed
+ i_m_ct_format
+ :::
+ 213 
+  13 
+  NCI_aids_few.13 
+  213
+  119-80-2 
+  "2.00E-04	M	>	2.00E-04	4" 
+  "2.00E-04	M	>	2.00E-04	4" 
+  CI 
+  0
+  0
+  0
+  /Users/lorton/Desktop 
+  NCI_aids_few.sdf 
+  13
+  NCI_aids_few 
+  NCI_aids_few 
+  0
+  2
+ m_atom[20] { 
+  # First column is atom index #
+  i_m_mmod_type
+  r_m_x_coord
+  r_m_y_coord
+  r_m_z_coord
+  i_m_residue_number
+  i_m_color
+  i_m_atomic_number
+  s_m_color_rgb
+  i_m_minimize_atom_index
+  :::
+  1 49 5.506763 -0.050063 1.000264 900 13 16 E1E11E  1
+  2 49 4.523285 -0.045353 -0.785645 900 13 16 E1E11E  2
+  3 2 7.098541 -0.680034 0.534650 900 2 6 A0A0A0  3
+  4 2 2.956979 0.641189 -0.313384 900 2 6 A0A0A0  4
+  5 2 8.202491 0.151483 0.243391 900 2 6 A0A0A0  5
+  6 7 7.246202 -2.068260 0.499080 900 2 6 A0A0A0  6
+  7 2 1.808113 -0.147580 -0.081242 900 2 6 A0A0A0  7
+  8 7 2.869692 2.033149 -0.241801 900 2 6 A0A0A0  8
+  9 2 8.122703 1.654269 0.262155 900 2 6 A0A0A0  9
+  10 7 9.419290 -0.445593 -0.121288 900 2 6 A0A0A0  10
+  11 7 8.465084 -2.646176 0.151599 900 2 6 A0A0A0  11
+  12 2 1.814385 -1.649993 -0.171909 900 2 6 A0A0A0  12
+  13 7 0.596537 0.495690 0.218783 900 2 6 A0A0A0  13
+  14 7 1.663479 2.655740 0.073847 900 2 6 A0A0A0  14
+  15 15 8.537762 2.356007 -0.652977 900 70 8 FF2F2F  15
+  16 17 7.639461 2.195525 1.402531 900 70 8 FF2F2F  16
+  17 7 9.550676 -1.833293 -0.162699 900 2 6 A0A0A0  17
+  18 15 0.975153 -2.281820 -0.803668 900 70 8 FF2F2F  18
+  19 17 2.759221 -2.274015 0.565531 900 70 8 FF2F2F  19
+  20 7 0.526130 1.885781 0.301874 900 2 6 A0A0A0  20
+  :::
+ } 
+ m_bond[21] { 
+  # First column is bond index #
+  i_m_from
+  i_m_to
+  i_m_order
+  :::
+  1 1 2 1
+  2 1 3 1
+  3 2 4 1
+  4 3 5 2
+  5 3 6 1
+  6 4 7 2
+  7 4 8 1
+  8 5 9 1
+  9 5 10 1
+  10 6 11 2
+  11 7 12 1
+  12 7 13 1
+  13 8 14 2
+  14 9 15 2
+  15 9 16 1
+  16 10 17 2
+  17 11 17 1
+  18 12 18 2
+  19 12 19 1
+  20 13 20 2
+  21 14 20 1
+  :::
+ } 
+} 
+
+f_m_ct { 
+ s_m_title
+ s_m_entry_id
+ s_m_entry_name
+ i_sd_NSC
+ s_sd_CAS\_RN
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_IC50
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_EC50
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_Conclusion
+ b_sd_chiral_flag
+ i_sd_version
+ i_m_ct_enhanced_stereo_status
+ s_m_Source_Path
+ s_m_Source_File
+ i_m_Source_File_Index
+ s_m_subgroup_title
+ s_m_subgroupid
+ b_m_subgroup_collapsed
+ i_m_ct_format
+ :::
+ 220 
+  14 
+  NCI_aids_few.14 
+  220
+  5325-83-7 
+  "2.00E-04	M	>	2.00E-04	4" 
+  "2.00E-04	M	>	2.00E-04	4" 
+  CI 
+  0
+  0
+  0
+  /Users/lorton/Desktop 
+  NCI_aids_few.sdf 
+  14
+  NCI_aids_few 
+  NCI_aids_few 
+  0
+  2
+ m_atom[42] { 
+  # First column is atom index #
+  i_m_mmod_type
+  r_m_x_coord
+  r_m_y_coord
+  r_m_z_coord
+  i_m_residue_number
+  i_m_color
+  i_m_atomic_number
+  s_m_color_rgb
+  i_m_minimize_atom_index
+  :::
+  1 49 6.654529 0.214010 -2.525432 900 13 16 E1E11E  1
+  2 49 5.298804 -0.658340 -1.257599 900 13 16 E1E11E  2
+  3 2 6.892839 1.801584 -1.794354 900 2 6 A0A0A0  3
+  4 2 6.123964 -2.039633 -0.509935 900 2 6 A0A0A0  4
+  5 7 8.183695 2.265700 -1.548347 900 2 6 A0A0A0  5
+  6 7 5.785759 2.587691 -1.484566 900 2 6 A0A0A0  6
+  7 7 7.500570 -2.250597 -0.635812 900 2 6 A0A0A0  7
+  8 7 5.333423 -2.971784 0.157962 900 2 6 A0A0A0  8
+  9 7 8.368372 3.536116 -1.003561 900 2 6 A0A0A0  9
+  10 7 5.968439 3.853883 -0.941653 900 2 6 A0A0A0  10
+  11 7 8.073516 -3.415595 -0.131639 900 2 6 A0A0A0  11
+  12 7 5.904065 -4.133920 0.666928 900 2 6 A0A0A0  12
+  13 2 7.262902 4.342110 -0.717594 900 2 6 A0A0A0  13
+  14 2 7.266940 -4.374984 0.492489 900 2 6 A0A0A0  14
+  15 29 7.511796 5.618442 -0.184448 900 43 7 5757FF  15
+  16 29 7.734562 -5.615664 0.942501 900 43 7 5757FF  16
+  17 2 6.755828 6.724688 -0.322229 900 2 6 A0A0A0  17
+  18 2 8.727201 -6.368051 0.436736 900 2 6 A0A0A0  18
+  19 5 7.226130 7.984711 0.409631 900 2 6 A0A0A0  19
+  20 15 5.724798 6.782252 -0.986727 900 70 8 FF2F2F  20
+  21 5 8.730389 -7.839620 0.871755 900 2 6 A0A0A0  21
+  22 15 9.572773 -5.972229 -0.360059 900 70 8 FF2F2F  22
+  23 5 8.676579 8.439896 0.103306 900 2 6 A0A0A0  23
+  24 5 7.413710 -8.596098 0.539930 900 2 6 A0A0A0  24
+  25 5 9.690390 8.073789 1.209064 900 2 6 A0A0A0  25
+  26 5 6.319729 -8.483704 1.626667 900 2 6 A0A0A0  26
+  27 5 11.115070 8.615261 0.968525 900 2 6 A0A0A0  27
+  28 5 4.903736 -8.841815 1.137455 900 2 6 A0A0A0  28
+  29 5 11.194907 10.154417 0.927978 900 2 6 A0A0A0  29
+  30 5 4.736024 -10.311468 0.712784 900 2 6 A0A0A0  30
+  31 5 12.632881 10.693325 0.841946 900 2 6 A0A0A0  31
+  32 5 3.263199 -10.690106 0.476251 900 2 6 A0A0A0  32
+  33 5 12.668513 12.222428 0.661054 900 2 6 A0A0A0  33
+  34 5 3.076690 -12.178941 0.135414 900 2 6 A0A0A0  34
+  35 5 14.094158 12.789169 0.542024 900 2 6 A0A0A0  35
+  36 5 1.597076 -12.601610 0.097557 900 2 6 A0A0A0  36
+  37 5 14.099246 14.304231 0.267237 900 2 6 A0A0A0  37
+  38 5 1.420212 -14.111593 -0.140850 900 2 6 A0A0A0  38
+  39 5 15.516792 14.884383 0.129455 900 2 6 A0A0A0  39
+  40 5 -0.048988 -14.560432 -0.068909 900 2 6 A0A0A0  40
+  41 6 15.511927 16.387160 -0.184041 900 2 6 A0A0A0  41
+  42 6 -0.214178 -16.075239 -0.253952 900 2 6 A0A0A0  42
+  :::
+ } 
+ m_bond[43] { 
+  # First column is bond index #
+  i_m_from
+  i_m_to
+  i_m_order
+  :::
+  1 1 2 1
+  2 1 3 1
+  3 2 4 1
+  4 3 5 2
+  5 3 6 1
+  6 4 7 2
+  7 4 8 1
+  8 5 9 1
+  9 6 10 2
+  10 7 11 1
+  11 8 12 2
+  12 9 13 2
+  13 10 13 1
+  14 11 14 2
+  15 12 14 1
+  16 13 15 1
+  17 14 16 1
+  18 15 17 1
+  19 16 18 1
+  20 17 19 1
+  21 17 20 2
+  22 18 21 1
+  23 18 22 2
+  24 19 23 1
+  25 21 24 1
+  26 23 25 1
+  27 24 26 1
+  28 25 27 1
+  29 26 28 1
+  30 27 29 1
+  31 28 30 1
+  32 29 31 1
+  33 30 32 1
+  34 31 33 1
+  35 32 34 1
+  36 33 35 1
+  37 34 36 1
+  38 35 37 1
+  39 36 38 1
+  40 37 39 1
+  41 38 40 1
+  42 39 41 1
+  43 40 42 1
+  :::
+ } 
+} 
+
+f_m_ct { 
+ s_m_title
+ s_m_entry_id
+ s_m_entry_name
+ i_sd_NSC
+ s_sd_CAS\_RN
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_IC50
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_EC50
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_Conclusion
+ b_sd_chiral_flag
+ i_sd_version
+ i_m_ct_enhanced_stereo_status
+ s_m_Source_Path
+ s_m_Source_File
+ i_m_Source_File_Index
+ s_m_subgroup_title
+ s_m_subgroupid
+ b_m_subgroup_collapsed
+ i_m_ct_format
+ :::
+ 229 
+  15 
+  NCI_aids_few.15 
+  229
+  5325-88-2 
+  "2.00E-04	M	>	2.00E-04	2" 
+  "2.00E-04	M	>	2.00E-04	2" 
+  CI 
+  0
+  0
+  0
+  /Users/lorton/Desktop 
+  NCI_aids_few.sdf 
+  15
+  NCI_aids_few 
+  NCI_aids_few 
+  0
+  2
+ m_atom[12] { 
+  # First column is atom index #
+  i_m_mmod_type
+  r_m_x_coord
+  r_m_y_coord
+  r_m_z_coord
+  i_m_residue_number
+  i_m_color
+  i_m_atomic_number
+  s_m_color_rgb
+  i_m_minimize_atom_index
+  :::
+  1 49 2.392297 -3.132226 0.029908 900 13 16 E1E11E  1
+  2 2 2.434080 -1.361567 0.132930 900 2 6 A0A0A0  2
+  3 2 3.716439 -0.718308 0.113383 900 2 6 A0A0A0  3
+  4 7 1.252639 -0.637502 0.225903 900 2 6 A0A0A0  4
+  5 2 3.747967 0.717760 0.190016 900 2 6 A0A0A0  5
+  6 7 4.956788 -1.421715 0.021965 900 2 6 A0A0A0  6
+  7 7 1.291771 0.746255 0.304254 900 2 6 A0A0A0  7
+  8 2 5.030262 1.361167 0.164481 900 2 6 A0A0A0  8
+  9 7 2.508008 1.421248 0.286348 900 2 6 A0A0A0  9
+  10 7 6.172940 -0.746778 0.006169 900 2 6 A0A0A0  10
+  11 49 5.071150 3.132566 0.248323 900 13 16 E1E11E  11
+  12 7 6.211845 0.637360 0.075059 900 2 6 A0A0A0  12
+  :::
+ } 
+ m_bond[13] { 
+  # First column is bond index #
+  i_m_from
+  i_m_to
+  i_m_order
+  :::
+  1 1 2 1
+  2 2 3 2
+  3 2 4 1
+  4 3 5 1
+  5 3 6 1
+  6 4 7 2
+  7 5 8 1
+  8 5 9 2
+  9 6 10 2
+  10 7 9 1
+  11 8 11 1
+  12 8 12 2
+  13 10 12 1
+  :::
+ } 
+} 
+
+f_m_ct { 
+ s_m_title
+ s_m_entry_id
+ s_m_entry_name
+ i_sd_NSC
+ s_sd_CAS\_RN
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_IC50
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_EC50
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_Conclusion
+ b_sd_chiral_flag
+ i_sd_version
+ i_m_ct_enhanced_stereo_status
+ s_m_Source_Path
+ s_m_Source_File
+ i_m_Source_File_Index
+ s_m_subgroup_title
+ s_m_subgroupid
+ b_m_subgroup_collapsed
+ i_m_ct_format
+ :::
+ 256 
+  16 
+  NCI_aids_few.16 
+  256
+  5326-06-7 
+  "2.00E-04	M	>	2.00E-04	4" 
+  "2.00E-04	M	>	2.00E-04	4" 
+  CI 
+  0
+  0
+  0
+  /Users/lorton/Desktop 
+  NCI_aids_few.sdf 
+  16
+  NCI_aids_few 
+  NCI_aids_few 
+  0
+  2
+ m_atom[12] { 
+  # First column is atom index #
+  i_m_mmod_type
+  r_m_x_coord
+  r_m_y_coord
+  r_m_z_coord
+  i_m_residue_number
+  i_m_color
+  i_m_atomic_number
+  s_m_color_rgb
+  i_m_minimize_atom_index
+  :::
+  1 107 2.653614 0.577339 0.732038 900 15 15 8E236B  1
+  2 16 3.665963 1.249582 -0.347791 900 70 8 FF2F2F  2
+  3 30 1.196169 1.013914 0.068217 900 43 7 5757FF  3
+  4 15 2.816956 1.046857 2.127154 900 70 8 FF2F2F  4
+  5 2 2.827099 -1.197808 0.418566 900 2 6 A0A0A0  5
+  6 5 4.680276 2.145958 0.077194 900 2 6 A0A0A0  6
+  7 7 1.728449 -2.036691 0.613491 900 2 6 A0A0A0  7
+  8 7 4.049412 -1.721393 -0.008373 900 2 6 A0A0A0  8
+  9 6 4.100548 3.563706 0.158999 900 2 6 A0A0A0  9
+  10 7 1.847300 -3.402444 0.370741 900 2 6 A0A0A0  10
+  11 7 4.167597 -3.089061 -0.250533 900 2 6 A0A0A0  11
+  12 7 3.065959 -3.922977 -0.061543 900 2 6 A0A0A0  12
+  :::
+ } 
+ m_bond[12] { 
+  # First column is bond index #
+  i_m_from
+  i_m_to
+  i_m_order
+  :::
+  1 1 2 1
+  2 1 3 1
+  3 1 4 2
+  4 1 5 1
+  5 2 6 1
+  6 5 7 2
+  7 5 8 1
+  8 6 9 1
+  9 7 10 1
+  10 8 11 2
+  11 10 12 2
+  12 11 12 1
+  :::
+ } 
+} 
+

@@ -340,6 +340,9 @@ void wrap_sdsupplier();
 void wrap_forwardsdsupplier();
 void wrap_tdtsupplier();
 void wrap_smisupplier();
+#ifdef BUILD_COORDGEN_SUPPORT
+void wrap_maesupplier();
+#endif
 
 // mol writer stuff
 void wrap_smiwriter();
@@ -1128,6 +1131,9 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
   wrap_forwardsdsupplier();
   wrap_tdtsupplier();
   wrap_smisupplier();
+#ifdef BUILD_COORDGEN_SUPPORT
+  wrap_maesupplier();
+#endif
   // wrap_pdbsupplier();
 
   /********************************************************
