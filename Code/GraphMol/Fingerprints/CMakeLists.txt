@@ -2,7 +2,7 @@
 remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
 add_definitions(-DRDKIT_FINGERPRINTS_BUILD)
 rdkit_library(Fingerprints
-              Fingerprints.cpp PatternFingerprints.cpp MorganFingerprints.cpp AtomPairs.cpp MACCS.cpp FingerprintGenerator.cpp
+              Fingerprints.cpp PatternFingerprints.cpp MorganFingerprints.cpp AtomPairs.cpp MACCS.cpp FingerprintGenerator.cpp AtomPairGenerator.cpp
               LINK_LIBRARIES Subgraphs SubstructMatch SmilesParse GraphMol
                 ${RDKit_THREAD_LIBS} )
 
@@ -11,6 +11,7 @@ rdkit_headers(AtomPairs.h
               MorganFingerprints.h
               MACCS.h
               FingerprintGenerator.h
+              AtomPairGenerator.h
               DEST GraphMol/Fingerprints)
 
 rdkit_test(testFingerprints test1.cpp LINK_LIBRARIES 
