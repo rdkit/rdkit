@@ -2,27 +2,30 @@
 #include <DataStructs/SparseIntVect.h>
 #include <DataStructs/ExplicitBitVect.h>
 #include <DataStructs/SparseBitVect.h>
-#include "FingerprintGenerator.h"
+#include <GraphMol/Fingerprints/FingerprintGenerator.h>
 
 namespace RDKit {
+
+FingerprintArguments::FingerprintArguments(const bool countSimulation)
+    : countSimulation(countSimulation) {}
 
 template <class T1, class T2, class T3>
 FingerprintGenerator<T1, T2, T3>::FingerprintGenerator(
     T1 atomEnvironmentGenerator, T2 fingerprintArguments,
-    AtomInvariants *atomInvariants, BondInvariants *bondInvariants) {
+    AtomInvariantsGenerator *atomInvariantsGenerator,
+    BondInvariantsGenerator *bondInvariantsGenerator) {
   this->atomEnvironmentGenerator = atomEnvironmentGenerator;
   this->fingerprintArguments = fingerprintArguments;
   this->asCommonArguments = &this->fingerprintArguments;
-  this->atomInvariants = atomInvariants;
-  this->bondInvariants = bondInvariants;
+  this->atomInvariantsGenerator = atomInvariantsGenerator;
+  this->bondInvariantsGenerator = bondInvariantsGenerator;
 }
 
 template <class T1, class T2, class T3>
 SparseIntVect<boost::uint32_t>
     *FingerprintGenerator<T1, T2, T3>::getFingerprint(
         const ROMol &mol, const std::vector<boost::uint32_t> *fromAtoms,
-        const std::vector<boost::uint32_t> *ignoreAtoms,
-        const int confId,  // for atom pair fp
+        const std::vector<boost::uint32_t> *ignoreAtoms, const int confId,
         const AdditionalOutput *additionalOutput) const {
   SparseIntVect<boost::uint32_t> *res = new SparseIntVect<boost::uint32_t>(
       this->asCommonArguments->getResultSize());
