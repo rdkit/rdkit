@@ -5,6 +5,7 @@
 namespace RDKit {
 namespace AtomPair {
 
+// taken from existing atom pair implementation
 unsigned int numPiElectrons(const Atom *atom) {
   PRECONDITION(atom, "no atom");
   unsigned int res = 0;
@@ -98,12 +99,15 @@ AtomPairArguments::AtomPairArguments(const bool countSimulation,
 // AtomPairAtomEnv
 
 boost::uint32_t AtomPairAtomEnv::getBitId(
-    AtomPairArguments arguments,
+    FingerprintArguments *arguments,
     const std::vector<boost::uint32_t> *atomInvariants,
     const std::vector<boost::uint32_t> *bondInvariants) const {
+  AtomPairArguments *atomPairArguments =
+      dynamic_cast<AtomPairArguments *>(arguments);
+
   return getAtomPairCode(atomCodeCache->at(atomIdFirst),
                          atomCodeCache->at(atomIdSecond), distance,
-                         arguments.includeChirality);
+                         atomPairArguments->includeChirality);
 }
 
 const std::vector<boost::uint32_t> *AtomPairAtomEnv::getAtomCodeCache() const {
@@ -121,8 +125,8 @@ AtomPairAtomEnv::AtomPairAtomEnv(
 
 // AtomPairEnvGenerator
 
-std::vector<AtomPairAtomEnv> AtomPairEnvGenerator::getEnvironments(
-    const ROMol &mol, const AtomPairArguments arguments,
+std::vector<AtomEnvironment *> AtomPairEnvGenerator::getEnvironments(
+    const ROMol &mol, FingerprintArguments *arguments,
     const std::vector<boost::uint32_t> *fromAtoms,
     const std::vector<boost::uint32_t> *ignoreAtoms, const int confId,
     const AdditionalOutput *additionalOutput,
@@ -131,9 +135,11 @@ std::vector<AtomPairAtomEnv> AtomPairEnvGenerator::getEnvironments(
   PRECONDITION(!atomInvariants || atomInvariants->size() >= mol.getNumAtoms(),
                "bad atomInvariants size");
 
-  std::vector<AtomPairAtomEnv> result = std::vector<AtomPairAtomEnv>();
+  AtomPairArguments *atomPairArguments =
+      dynamic_cast<AtomPairArguments *>(arguments);
+  std::vector<AtomEnvironment *> result = std::vector<AtomEnvironment *>();
   const double *distanceMatrix;
-  if (arguments.use2D) {
+  if (atomPairArguments->use2D) {
     distanceMatrix = MolOps::getDistanceMat(mol);
   } else {
     distanceMatrix = MolOps::get3DDistanceMat(mol, confId);
@@ -147,7 +153,7 @@ std::vector<AtomPairAtomEnv> AtomPairEnvGenerator::getEnvironments(
        atomItI != mol.endAtoms(); ++atomItI) {
     if (!atomInvariants) {
       atomCodeCache->push_back(
-          getAtomCode(*atomItI, 0, arguments.includeChirality));
+          getAtomCode(*atomItI, 0, atomPairArguments->includeChirality));
     } else {
       atomCodeCache->push_back((*atomInvariants)[(*atomItI)->getIdx()] %
                                ((1 << codeSize) - 1));
@@ -179,9 +185,9 @@ std::vector<AtomPairAtomEnv> AtomPairEnvGenerator::getEnvironments(
         unsigned int distance =
             static_cast<unsigned int>(floor(distanceMatrix[i * atomCount + j]));
 
-        if (distance >= arguments.minDistance &&
-            distance <= arguments.maxDistance) {
-          result.push_back(AtomPairAtomEnv(atomCodeCache, i, j, distance));
+        if (distance >= atomPairArguments->minDistance &&
+            distance <= atomPairArguments->maxDistance) {
+          result.push_back(new AtomPairAtomEnv(atomCodeCache, i, j, distance));
         }
       }
     }
@@ -193,46 +199,31 @@ std::vector<AtomPairAtomEnv> AtomPairEnvGenerator::getEnvironments(
     delete atomCodeCache;
   }
 
-  return std::vector<AtomPairAtomEnv>();
+  return result;
 };
 
 void AtomPairEnvGenerator::cleanUpEnvironments(
-    const std::vector<AtomPairAtomEnv> &atomEnvironments) const {
+    std::vector<AtomEnvironment *> atomEnvironments) const {
   if (!atomEnvironments.empty()) {
-    delete atomEnvironments[0].getAtomCodeCache();
+    AtomPairAtomEnv *firstEnv =
+        dynamic_cast<AtomPairAtomEnv *>(atomEnvironments[0]);
+    delete firstEnv->getAtomCodeCache();
   }
 }
 
-FingerprintGenerator<AtomPairEnvGenerator, AtomPairArguments, AtomPairAtomEnv>
-getAtomPairGenerator(const ROMol &mol, const unsigned int minDistance,
-                     const unsigned int maxDistance,
-                     const bool includeChirality, const bool use2D,
-                     const bool useCountSimulation,
-                     AtomInvariantsGenerator *atomInvariantsGenerator = 0,
-                     BondInvariantsGenerator *bondInvariantsGenerator = 0) {
-  AtomPairArguments atomPairArguments = AtomPairArguments(
+FingerprintGenerator *getAtomPairGenerator(
+    const ROMol &mol, const unsigned int minDistance,
+    const unsigned int maxDistance, const bool includeChirality,
+    const bool use2D, const bool useCountSimulation,
+    AtomInvariantsGenerator *atomInvariantsGenerator = 0,
+    BondInvariantsGenerator *bondInvariantsGenerator = 0) {
+  AtomEnvironmentGenerator *atomPairEnvGenerator = new AtomPairEnvGenerator();
+  FingerprintArguments *atomPairArguments = new AtomPairArguments(
       useCountSimulation, includeChirality, use2D, minDistance, maxDistance);
-  AtomPairEnvGenerator atomPairEnvGenerator = AtomPairEnvGenerator();
 
-  return FingerprintGenerator<AtomPairEnvGenerator, AtomPairArguments,
-                              AtomPairAtomEnv>(
-      atomPairEnvGenerator, atomPairArguments, atomInvariantsGenerator,
-      bondInvariantsGenerator);
+  return new FingerprintGenerator(atomPairEnvGenerator, atomPairArguments,
+                                  atomInvariantsGenerator,
+                                  bondInvariantsGenerator);
 }
 }  // namespace AtomPair
-
-template<>
-FingerprintGenerator<AtomPair::AtomPairEnvGenerator,
-                     AtomPair::AtomPairArguments, AtomPair::AtomPairAtomEnv>::
-    FingerprintGenerator(
-        AtomPair::AtomPairEnvGenerator atomEnvironmentGenerator,
-        AtomPair::AtomPairArguments fingerprintArguments,
-        AtomInvariantsGenerator *atomInvariantsGenerator,
-        BondInvariantsGenerator *bondInvariantsGenerator) {
-  this->atomEnvironmentGenerator = atomEnvironmentGenerator;
-  this->fingerprintArguments = fingerprintArguments;
-  this->asCommonArguments = &this->fingerprintArguments;
-  this->atomInvariantsGenerator = atomInvariantsGenerator;
-  this->bondInvariantsGenerator = bondInvariantsGenerator;
-}
 }  // namespace RDKit

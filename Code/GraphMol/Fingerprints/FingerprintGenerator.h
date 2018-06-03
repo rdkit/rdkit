@@ -44,13 +44,33 @@ class FingerprintArguments {
     Returns the size of the fingerprint based on arguments
   */
   virtual unsigned int getResultSize() const = 0;
+
+  virtual ~FingerprintArguments() = 0;
+};
+
+/*
+Class to hold atom environments and hash them into bit ids
+*/
+class AtomEnvironment {
+ public:
+  /*
+  returns hashed bit id from this atom environment
+  arguments: fingerprint style specific arguments
+  atomInvariants: a list of invariants to use for the atom hashes
+  bondInvariants: a list of invariants to use for the bond hashes
+  */
+  virtual boost::uint32_t getBitId(
+      FingerprintArguments *arguments,
+      const std::vector<boost::uint32_t> *atomInvariants = 0,
+      const std::vector<boost::uint32_t> *bondInvariants = 0) const = 0;
+
+  virtual ~AtomEnvironment() = 0;
 };
 
 /*
     Class for generating atom environments from the molecule and clean up
    resources after atom environments are no longer needed
 */
-template <class T1, class T2>
 class AtomEnvironmentGenerator {
  public:
   /*
@@ -66,8 +86,8 @@ class AtomEnvironmentGenerator {
   atomInvariants: a list of invariants to use for the atom hashes
   bondInvariants: a list of invariants to use for the bond hashes
   */
-  virtual std::vector<T1> getEnvironments(
-      const ROMol &mol, const T2 arguments,
+  virtual std::vector<AtomEnvironment *> getEnvironments(
+      const ROMol &mol, FingerprintArguments *arguments,
       const std::vector<boost::uint32_t> *fromAtoms = 0,
       const std::vector<boost::uint32_t> *ignoreAtoms = 0,
       const int confId = -1, const AdditionalOutput *additionalOutput = 0,
@@ -75,43 +95,31 @@ class AtomEnvironmentGenerator {
       const std::vector<boost::uint32_t> *bondInvariants = 0) const = 0;
 
   /*
-  Does clean up for shared resources created for atom environments to use
+  Does clean up for shared resources created for atom environments to use, does
+  not remove instance in the vector just the resources they use if any
   atomEnvironments: vector of atom environments that hold the resources to be
   cleaned
   */
   virtual void cleanUpEnvironments(
-      const std::vector<T1> &atomEnvironments) const = 0;
-};
+      std::vector<AtomEnvironment *> atomEnvironments) const = 0;
 
-/*
-Class to hold atom environments and hash them into bit ids
-*/
-template <class T>
-class AtomEnvironment {
- public:
-  /*
-  returns hashed bit id from this atom environment
-  arguments: fingerprint style specific arguments
-  atomInvariants: a list of invariants to use for the atom hashes
-  bondInvariants: a list of invariants to use for the bond hashes
-  */
-  virtual boost::uint32_t getBitId(
-      const T arguments, const std::vector<boost::uint32_t> *atomInvariants = 0,
-      const std::vector<boost::uint32_t> *bondInvariants = 0) const = 0;
+  virtual ~AtomEnvironmentGenerator() = 0;
 };
 
 class AtomInvariantsGenerator {
   // arguments
 
  public:
-  std::vector<boost::uint32_t> getAtomInvariants(const ROMol &mol);
+  virtual std::vector<boost::uint32_t> getAtomInvariants(
+      const ROMol &mol) const = 0;
 };
 
 class BondInvariantsGenerator {
   // arguments
 
  public:
-  std::vector<boost::uint32_t> getBondInvariants(const ROMol &mol);
+  virtual std::vector<boost::uint32_t> getBondInvariants(
+      const ROMol &mol) const = 0;
 };
 
 /*
@@ -119,22 +127,26 @@ Class to generate same fingerprint style for different output formats
 atomEnvironmentGenerator: environment generator class to use for fingerprinting
 atomInvariantsGenerator: atom invariants generator
 bondInvariantsGenerator: bond invariants generator
-asCommonArguments: fingerprintArguments as FingerprintArguments, used to access
-fingerprint style independent arguments
 fingerprintArguments: holds fingerprint style specific arguments
 */
-template <class T1, class T2, class T3>
 class FingerprintGenerator {
-  T1 atomEnvironmentGenerator;
+  FingerprintArguments *fingerprintArguments;
+  AtomEnvironmentGenerator *atomEnvironmentGenerator;
   AtomInvariantsGenerator *atomInvariantsGenerator;
   BondInvariantsGenerator *bondInvariantsGenerator;
-  FingerprintArguments *asCommonArguments;
-  T2 fingerprintArguments;
 
  public:
-  FingerprintGenerator(T1 atomEnvironmentGenerator, T2 fingerprintArguments,
+  FingerprintGenerator(AtomEnvironmentGenerator *atomEnvironmentGenerator,
+                       FingerprintArguments *fingerprintArguments,
                        AtomInvariantsGenerator *atomInvariantsGenerator = 0,
                        BondInvariantsGenerator *bondInvariantsGenerator = 0);
+
+  /*
+  Deletes atomEnvironmentGenerator, fingerprintArguments
+  since they have virtual destructors they will be properly deleted but the
+  instance can not be used anymore after calling this
+  */
+  void cleanUpResources();
 
   SparseIntVect<boost::uint32_t> *getFingerprint(
       const ROMol &mol, const std::vector<boost::uint32_t> *fromAtoms = 0,
