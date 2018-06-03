@@ -205,6 +205,13 @@ else(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.3)
   set(RDKIT_GIN_BFP_TRICONSISTENT "FUNCTION    6   gin_bfp_triconsistent(internal, int2, bfp, int4, internal, internal, internal),")
 endif(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.3)
 
+if(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.6)
+    set(RDKIT_PARALLEL_SAFE "")
+else(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.6)
+    set(RDKIT_PARALLEL_SAFE "PARALLEL SAFE")
+endif(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.6)
+
+
 configure_file("${PG_CURRENT_SOURCE_DIR}${EXTENSION}.sql.in"
                "${PG_CURRENT_BINARY_DIR}${EXTENSION}--${PG_EXTVERSION}.sql")
 set(installPgSQLBody "${installPgSQLBody}"
