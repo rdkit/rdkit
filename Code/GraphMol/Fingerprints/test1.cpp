@@ -19,6 +19,7 @@
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
 #include <GraphMol/Fingerprints/MACCS.h>
 #include <GraphMol/Fingerprints/AtomPairs.h>
+#include <GraphMol/Fingerprints/AtomPairGenerator.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <DataStructs/ExplicitBitVect.h>
 #include <DataStructs/BitOps.h>
