@@ -38,9 +38,9 @@ from rdkit.RDLogger import logger
 from rdkit.Chem.EnumerateStereoisomers import StereoEnumerationOptions, EnumerateStereoisomers
 
 try:
-    from rdkit.Chem.rdSLNParse import *
+  from rdkit.Chem.rdSLNParse import *
 except ImportError:
-    pass
+  pass
 
 Mol.Compute2DCoords = Compute2DCoords
 Mol.ComputeGasteigerCharges = ComputeGasteigerCharges
@@ -48,34 +48,32 @@ logger = logger()
 
 
 def TransformMol(mol, tform, confId=-1, keepConfs=False):
-    """  Applies the transformation (usually a 4x4 double matrix) to a molecule
+  """  Applies the transformation (usually a 4x4 double matrix) to a molecule
   if keepConfs is False then all but that conformer are removed
   """
-    refConf = mol.GetConformer(confId)
-    TransformConformer(refConf, tform)
-    if not keepConfs:
-        if confId == -1:
-            confId = 0
-        allConfIds = [c.GetId() for c in mol.GetConformers()]
-        for cid in allConfIds:
-            if not cid == confId:
-                mol.RemoveConformer(cid)
-        # reset the conf Id to zero since there is only one conformer left
-        mol.GetConformer(confId).SetId(0)
+  refConf = mol.GetConformer(confId)
+  TransformConformer(refConf, tform)
+  if not keepConfs:
+    if confId == -1:
+      confId = 0
+    allConfIds = [c.GetId() for c in mol.GetConformers()]
+    for cid in allConfIds:
+      if not cid == confId:
+        mol.RemoveConformer(cid)
+    # reset the conf Id to zero since there is only one conformer left
+    mol.GetConformer(confId).SetId(0)
 
 
-def ComputeMolShape(mol, confId=-1, boxDim=(20, 20, 20), spacing=0.5,
-                    **kwargs):
-    """ returns a grid representation of the molecule's shape
+def ComputeMolShape(mol, confId=-1, boxDim=(20, 20, 20), spacing=0.5, **kwargs):
+  """ returns a grid representation of the molecule's shape
   """
-    res = rdGeometry.UniformGrid3D(
-        boxDim[0], boxDim[1], boxDim[2], spacing=spacing)
-    EncodeShape(mol, res, confId, **kwargs)
-    return res
+  res = rdGeometry.UniformGrid3D(boxDim[0], boxDim[1], boxDim[2], spacing=spacing)
+  EncodeShape(mol, res, confId, **kwargs)
+  return res
 
 
 def ComputeMolVolume(mol, confId=-1, gridSpacing=0.2, boxMargin=2.0):
-    """ Calculates the volume of a particular conformer of a molecule
+  """ Calculates the volume of a particular conformer of a molecule
   based on a grid-encoding of the molecular shape.
 
   A bit of demo as well as a test of github #1883:
@@ -94,25 +92,23 @@ def ComputeMolVolume(mol, confId=-1, gridSpacing=0.2, boxMargin=2.0):
   23...
 
   """
-    mol = rdchem.Mol(mol)
-    conf = mol.GetConformer(confId)
-    CanonicalizeConformer(conf, ignoreHs=False)
-    box = ComputeConfBox(conf)
-    sideLen = (box[1].x - box[0].x + 2 * boxMargin,
-               box[1].y - box[0].y + 2 * boxMargin,
-               box[1].z - box[0].z + 2 * boxMargin)
-    shape = rdGeometry.UniformGrid3D(
-        sideLen[0], sideLen[1], sideLen[2], spacing=gridSpacing)
-    EncodeShape(mol, shape, confId, ignoreHs=False, vdwScale=1.0)
-    voxelVol = gridSpacing**3
-    occVect = shape.GetOccupancyVect()
-    voxels = [1 for x in occVect if x == 3]
-    vol = voxelVol * len(voxels)
-    return vol
+  mol = rdchem.Mol(mol)
+  conf = mol.GetConformer(confId)
+  CanonicalizeConformer(conf, ignoreHs=False)
+  box = ComputeConfBox(conf)
+  sideLen = (box[1].x - box[0].x + 2 * boxMargin, box[1].y - box[0].y + 2 * boxMargin,
+             box[1].z - box[0].z + 2 * boxMargin)
+  shape = rdGeometry.UniformGrid3D(sideLen[0], sideLen[1], sideLen[2], spacing=gridSpacing)
+  EncodeShape(mol, shape, confId, ignoreHs=False, vdwScale=1.0)
+  voxelVol = gridSpacing**3
+  occVect = shape.GetOccupancyVect()
+  voxels = [1 for x in occVect if x == 3]
+  vol = voxelVol * len(voxels)
+  return vol
 
 
 def GetConformerRMS(mol, confId1, confId2, atomIds=None, prealigned=False):
-    """ Returns the RMS between two conformations.
+  """ Returns the RMS between two conformations.
   By default, the conformers will be aligned to the first conformer
   before the RMS calculation and, as a side-effect, the second will be left
   in the aligned state.
@@ -128,28 +124,27 @@ def GetConformerRMS(mol, confId1, confId2, atomIds=None, prealigned=False):
                   to the first
 
   """
-    # align the conformers if necessary
-    # Note: the reference conformer is always the first one
-    if not prealigned:
-        if atomIds:
-            AlignMolConformers(
-                mol, confIds=[confId1, confId2], atomIds=atomIds)
-        else:
-            AlignMolConformers(mol, confIds=[confId1, confId2])
+  # align the conformers if necessary
+  # Note: the reference conformer is always the first one
+  if not prealigned:
+    if atomIds:
+      AlignMolConformers(mol, confIds=[confId1, confId2], atomIds=atomIds)
+    else:
+      AlignMolConformers(mol, confIds=[confId1, confId2])
 
-    # calculate the RMS between the two conformations
-    conf1 = mol.GetConformer(id=confId1)
-    conf2 = mol.GetConformer(id=confId2)
-    ssr = 0
-    for i in range(mol.GetNumAtoms()):
-        d = conf1.GetAtomPosition(i).Distance(conf2.GetAtomPosition(i))
-        ssr += d * d
-    ssr /= mol.GetNumAtoms()
-    return numpy.sqrt(ssr)
+  # calculate the RMS between the two conformations
+  conf1 = mol.GetConformer(id=confId1)
+  conf2 = mol.GetConformer(id=confId2)
+  ssr = 0
+  for i in range(mol.GetNumAtoms()):
+    d = conf1.GetAtomPosition(i).Distance(conf2.GetAtomPosition(i))
+    ssr += d * d
+  ssr /= mol.GetNumAtoms()
+  return numpy.sqrt(ssr)
 
 
 def GetConformerRMSMatrix(mol, atomIds=None, prealigned=False):
-    """ Returns the RMS matrix of the conformers of a molecule.
+  """ Returns the RMS matrix of the conformers of a molecule.
   As a side-effect, the conformers will be aligned to the first
   conformer (i.e. the reference) and will left in the aligned state.
 
@@ -173,43 +168,30 @@ def GetConformerRMSMatrix(mol, atomIds=None, prealigned=False):
   clustering.
 
   """
-    # if necessary, align the conformers
-    # Note: the reference conformer is always the first one
-    rmsvals = []
-    confIds = [conf.GetId() for conf in mol.GetConformers()]
-    if not prealigned:
-        if atomIds:
-            AlignMolConformers(mol, atomIds=atomIds, RMSlist=rmsvals)
-        else:
-            AlignMolConformers(mol, RMSlist=rmsvals)
-    else:  # already prealigned
-        for i in range(1, len(confIds)):
-            rmsvals.append(
-                GetConformerRMS(
-                    mol,
-                    confIds[0],
-                    confIds[i],
-                    atomIds=atomIds,
-                    prealigned=prealigned))
-    # loop over the conformations (except the reference one)
-    cmat = []
+  # if necessary, align the conformers
+  # Note: the reference conformer is always the first one
+  rmsvals = []
+  confIds = [conf.GetId() for conf in mol.GetConformers()]
+  if not prealigned:
+    if atomIds:
+      AlignMolConformers(mol, atomIds=atomIds, RMSlist=rmsvals)
+    else:
+      AlignMolConformers(mol, RMSlist=rmsvals)
+  else:  # already prealigned
     for i in range(1, len(confIds)):
-        cmat.append(rmsvals[i - 1])
-        for j in range(1, i):
-            cmat.append(
-                GetConformerRMS(
-                    mol,
-                    confIds[i],
-                    confIds[j],
-                    atomIds=atomIds,
-                    prealigned=True))
-    return cmat
+      rmsvals.append(
+        GetConformerRMS(mol, confIds[0], confIds[i], atomIds=atomIds, prealigned=prealigned))
+  # loop over the conformations (except the reference one)
+  cmat = []
+  for i in range(1, len(confIds)):
+    cmat.append(rmsvals[i - 1])
+    for j in range(1, i):
+      cmat.append(GetConformerRMS(mol, confIds[i], confIds[j], atomIds=atomIds, prealigned=True))
+  return cmat
 
 
-def EnumerateLibraryFromReaction(reaction,
-                                 sidechainSets,
-                                 returnReactants=False):
-    """ Returns a generator for the virtual library defined by
+def EnumerateLibraryFromReaction(reaction, sidechainSets, returnReactants=False):
+  """ Returns a generator for the virtual library defined by
    a reaction and a sequence of sidechain sets
 
   >>> from rdkit import Chem
@@ -239,40 +221,34 @@ def EnumerateLibraryFromReaction(reaction,
 
 
   """
-    if len(sidechainSets) != reaction.GetNumReactantTemplates():
-        raise ValueError(
-            '%d sidechains provided, %d required' %
-            (len(sidechainSets), reaction.GetNumReactantTemplates()))
+  if len(sidechainSets) != reaction.GetNumReactantTemplates():
+    raise ValueError('%d sidechains provided, %d required' % (len(sidechainSets),
+                                                              reaction.GetNumReactantTemplates()))
 
-    def _combiEnumerator(items, depth=0):
-        for item in items[depth]:
-            if depth + 1 < len(items):
-                v = _combiEnumerator(items, depth + 1)
-                for entry in v:
-                    l = [item]
-                    l.extend(entry)
-                    yield l
-            else:
-                yield [item]
+  def _combiEnumerator(items, depth=0):
+    for item in items[depth]:
+      if depth + 1 < len(items):
+        v = _combiEnumerator(items, depth + 1)
+        for entry in v:
+          l = [item]
+          l.extend(entry)
+          yield l
+      else:
+        yield [item]
 
-    ProductReactants = namedtuple('ProductReactants', 'products,reactants')
-    for chains in _combiEnumerator(sidechainSets):
-        prodSets = reaction.RunReactants(chains)
-        for prods in prodSets:
-            if returnReactants:
-                yield ProductReactants(prods, chains)
-            else:
-                yield prods
+  ProductReactants = namedtuple('ProductReactants', 'products,reactants')
+  for chains in _combiEnumerator(sidechainSets):
+    prodSets = reaction.RunReactants(chains)
+    for prods in prodSets:
+      if returnReactants:
+        yield ProductReactants(prods, chains)
+      else:
+        yield prods
 
 
-def ConstrainedEmbed(mol,
-                     core,
-                     useTethers=True,
-                     coreConfId=-1,
-                     randomseed=2342,
-                     getForceField=UFFGetMoleculeForceField,
-                     **kwargs):
-    """ generates an embedding of a molecule where part of the molecule
+def ConstrainedEmbed(mol, core, useTethers=True, coreConfId=-1, randomseed=2342,
+                     getForceField=UFFGetMoleculeForceField, **kwargs):
+  """ generates an embedding of a molecule where part of the molecule
   is constrained to have particular coordinates
 
   Arguments
@@ -312,60 +288,60 @@ def ConstrainedEmbed(mol,
     True
 
   """
-    match = mol.GetSubstructMatch(core)
-    if not match:
-        raise ValueError("molecule doesn't match the core")
-    coordMap = {}
-    coreConf = core.GetConformer(coreConfId)
+  match = mol.GetSubstructMatch(core)
+  if not match:
+    raise ValueError("molecule doesn't match the core")
+  coordMap = {}
+  coreConf = core.GetConformer(coreConfId)
+  for i, idxI in enumerate(match):
+    corePtI = coreConf.GetAtomPosition(i)
+    coordMap[idxI] = corePtI
+
+  ci = EmbedMolecule(mol, coordMap=coordMap, randomSeed=randomseed, **kwargs)
+  if ci < 0:
+    raise ValueError('Could not embed molecule.')
+
+  algMap = [(j, i) for i, j in enumerate(match)]
+
+  if not useTethers:
+    # clean up the conformation
+    ff = getForceField(mol, confId=0)
     for i, idxI in enumerate(match):
-        corePtI = coreConf.GetAtomPosition(i)
-        coordMap[idxI] = corePtI
-
-    ci = EmbedMolecule(mol, coordMap=coordMap, randomSeed=randomseed, **kwargs)
-    if ci < 0:
-        raise ValueError('Could not embed molecule.')
-
-    algMap = [(j, i) for i, j in enumerate(match)]
-
-    if not useTethers:
-        # clean up the conformation
-        ff = getForceField(mol, confId=0)
-        for i, idxI in enumerate(match):
-            for j in range(i + 1, len(match)):
-                idxJ = match[j]
-                d = coordMap[idxI].Distance(coordMap[idxJ])
-                ff.AddDistanceConstraint(idxI, idxJ, d, d, 100.)
-        ff.Initialize()
-        n = 4
-        more = ff.Minimize()
-        while more and n:
-            more = ff.Minimize()
-            n -= 1
-        # rotate the embedded conformation onto the core:
-        rms = AlignMol(mol, core, atomMap=algMap)
-    else:
-        # rotate the embedded conformation onto the core:
-        rms = AlignMol(mol, core, atomMap=algMap)
-        ff = getForceField(mol, confId=0)
-        conf = core.GetConformer()
-        for i in range(core.GetNumAtoms()):
-            p = conf.GetAtomPosition(i)
-            pIdx = ff.AddExtraPoint(p.x, p.y, p.z, fixed=True) - 1
-            ff.AddDistanceConstraint(pIdx, match[i], 0, 0, 100.)
-        ff.Initialize()
-        n = 4
-        more = ff.Minimize(energyTol=1e-4, forceTol=1e-3)
-        while more and n:
-            more = ff.Minimize(energyTol=1e-4, forceTol=1e-3)
-            n -= 1
-        # realign
-        rms = AlignMol(mol, core, atomMap=algMap)
-    mol.SetProp('EmbedRMS', str(rms))
-    return mol
+      for j in range(i + 1, len(match)):
+        idxJ = match[j]
+        d = coordMap[idxI].Distance(coordMap[idxJ])
+        ff.AddDistanceConstraint(idxI, idxJ, d, d, 100.)
+    ff.Initialize()
+    n = 4
+    more = ff.Minimize()
+    while more and n:
+      more = ff.Minimize()
+      n -= 1
+    # rotate the embedded conformation onto the core:
+    rms = AlignMol(mol, core, atomMap=algMap)
+  else:
+    # rotate the embedded conformation onto the core:
+    rms = AlignMol(mol, core, atomMap=algMap)
+    ff = getForceField(mol, confId=0)
+    conf = core.GetConformer()
+    for i in range(core.GetNumAtoms()):
+      p = conf.GetAtomPosition(i)
+      pIdx = ff.AddExtraPoint(p.x, p.y, p.z, fixed=True) - 1
+      ff.AddDistanceConstraint(pIdx, match[i], 0, 0, 100.)
+    ff.Initialize()
+    n = 4
+    more = ff.Minimize(energyTol=1e-4, forceTol=1e-3)
+    while more and n:
+      more = ff.Minimize(energyTol=1e-4, forceTol=1e-3)
+      n -= 1
+    # realign
+    rms = AlignMol(mol, core, atomMap=algMap)
+  mol.SetProp('EmbedRMS', str(rms))
+  return mol
 
 
 def AssignBondOrdersFromTemplate(refmol, mol):
-    """ assigns bond orders to a molecule based on the
+  """ assigns bond orders to a molecule based on the
       bond orders in a template molecule
 
   Arguments
@@ -401,53 +377,52 @@ def AssignBondOrdersFromTemplate(refmol, mol):
     'COc1cc(-c2ccc3c(c2)Nc2ccc(CC(=O)N(C)C)cc2NC3=O)ccc1[N+](=O)[O-]'
 
   """
-    refmol2 = rdchem.Mol(refmol)
-    mol2 = rdchem.Mol(mol)
-    # do the molecules match already?
-    matching = mol2.GetSubstructMatch(refmol2)
-    if not matching:  # no, they don't match
-        # check if bonds of mol are SINGLE
-        for b in mol2.GetBonds():
-            if b.GetBondType() != BondType.SINGLE:
-                b.SetBondType(BondType.SINGLE)
-                b.SetIsAromatic(False)
-        # set the bonds of mol to SINGLE
-        for b in refmol2.GetBonds():
-            b.SetBondType(BondType.SINGLE)
-            b.SetIsAromatic(False)
-        # set atom charges to zero;
-        for a in refmol2.GetAtoms():
-            a.SetFormalCharge(0)
-        for a in mol2.GetAtoms():
-            a.SetFormalCharge(0)
+  refmol2 = rdchem.Mol(refmol)
+  mol2 = rdchem.Mol(mol)
+  # do the molecules match already?
+  matching = mol2.GetSubstructMatch(refmol2)
+  if not matching:  # no, they don't match
+    # check if bonds of mol are SINGLE
+    for b in mol2.GetBonds():
+      if b.GetBondType() != BondType.SINGLE:
+        b.SetBondType(BondType.SINGLE)
+        b.SetIsAromatic(False)
+    # set the bonds of mol to SINGLE
+    for b in refmol2.GetBonds():
+      b.SetBondType(BondType.SINGLE)
+      b.SetIsAromatic(False)
+    # set atom charges to zero;
+    for a in refmol2.GetAtoms():
+      a.SetFormalCharge(0)
+    for a in mol2.GetAtoms():
+      a.SetFormalCharge(0)
 
-        matching = mol2.GetSubstructMatches(refmol2, uniquify=False)
-        # do the molecules match now?
-        if matching:
-            if len(matching) > 1:
-                logger.warning(
-                    "More than one matching pattern found - picking one")
-            matching = matching[0]
-            # apply matching: set bond properties
-            for b in refmol.GetBonds():
-                atom1 = matching[b.GetBeginAtomIdx()]
-                atom2 = matching[b.GetEndAtomIdx()]
-                b2 = mol2.GetBondBetweenAtoms(atom1, atom2)
-                b2.SetBondType(b.GetBondType())
-                b2.SetIsAromatic(b.GetIsAromatic())
-            # apply matching: set atom properties
-            for a in refmol.GetAtoms():
-                a2 = mol2.GetAtomWithIdx(matching[a.GetIdx()])
-                a2.SetHybridization(a.GetHybridization())
-                a2.SetIsAromatic(a.GetIsAromatic())
-                a2.SetNumExplicitHs(a.GetNumExplicitHs())
-                a2.SetFormalCharge(a.GetFormalCharge())
-            SanitizeMol(mol2)
-            if hasattr(mol2, '__sssAtoms'):
-                mol2.__sssAtoms = None  # we don't want all bonds highlighted
-        else:
-            raise ValueError("No matching found")
-    return mol2
+    matching = mol2.GetSubstructMatches(refmol2, uniquify=False)
+    # do the molecules match now?
+    if matching:
+      if len(matching) > 1:
+        logger.warning("More than one matching pattern found - picking one")
+      matching = matching[0]
+      # apply matching: set bond properties
+      for b in refmol.GetBonds():
+        atom1 = matching[b.GetBeginAtomIdx()]
+        atom2 = matching[b.GetEndAtomIdx()]
+        b2 = mol2.GetBondBetweenAtoms(atom1, atom2)
+        b2.SetBondType(b.GetBondType())
+        b2.SetIsAromatic(b.GetIsAromatic())
+      # apply matching: set atom properties
+      for a in refmol.GetAtoms():
+        a2 = mol2.GetAtomWithIdx(matching[a.GetIdx()])
+        a2.SetHybridization(a.GetHybridization())
+        a2.SetIsAromatic(a.GetIsAromatic())
+        a2.SetNumExplicitHs(a.GetNumExplicitHs())
+        a2.SetFormalCharge(a.GetFormalCharge())
+      SanitizeMol(mol2)
+      if hasattr(mol2, '__sssAtoms'):
+        mol2.__sssAtoms = None  # we don't want all bonds highlighted
+    else:
+      raise ValueError("No matching found")
+  return mol2
 
 
 # ------------------------------------
@@ -455,11 +430,11 @@ def AssignBondOrdersFromTemplate(refmol, mol):
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-    import sys
-    import doctest
-    failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
-    sys.exit(failed)
+  import sys
+  import doctest
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
+  sys.exit(failed)
 
 
 if __name__ == '__main__':  # pragma: nocover
-    _runDoctests()
+  _runDoctests()
