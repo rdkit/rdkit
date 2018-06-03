@@ -159,36 +159,33 @@ std::vector<AtomEnvironment *> AtomPairEnvGenerator::getEnvironments(
                                ((1 << codeSize) - 1));
     }
 
-    for (ROMol::ConstAtomIterator atomItI = mol.beginAtoms();
-         atomItI != mol.endAtoms(); ++atomItI) {
-      unsigned int i = (*atomItI)->getIdx();
+    unsigned int i = (*atomItI)->getIdx();
+    if (ignoreAtoms && std::find(ignoreAtoms->begin(), ignoreAtoms->end(), i) !=
+                           ignoreAtoms->end()) {
+      continue;
+    }
+
+    for (ROMol::ConstAtomIterator atomItJ = atomItI + 1;
+         atomItJ != mol.endAtoms(); ++atomItJ) {
+      unsigned int j = (*atomItJ)->getIdx();
       if (ignoreAtoms && std::find(ignoreAtoms->begin(), ignoreAtoms->end(),
-                                   i) != ignoreAtoms->end()) {
+                                   j) != ignoreAtoms->end()) {
         continue;
       }
 
-      for (ROMol::ConstAtomIterator atomItJ = atomItI + 1;
-           atomItJ != mol.endAtoms(); ++atomItJ) {
-        unsigned int j = (*atomItJ)->getIdx();
-        if (ignoreAtoms && std::find(ignoreAtoms->begin(), ignoreAtoms->end(),
-                                     j) != ignoreAtoms->end()) {
-          continue;
-        }
+      if (fromAtoms &&
+          (std::find(fromAtoms->begin(), fromAtoms->end(), i) ==
+           fromAtoms->end()) &&
+          (std::find(fromAtoms->begin(), fromAtoms->end(), j) ==
+           fromAtoms->end())) {
+        continue;
+      }
+      unsigned int distance =
+          static_cast<unsigned int>(floor(distanceMatrix[i * atomCount + j]));
 
-        if (fromAtoms &&
-            (std::find(fromAtoms->begin(), fromAtoms->end(), i) ==
-             fromAtoms->end()) &&
-            (std::find(fromAtoms->begin(), fromAtoms->end(), j) ==
-             fromAtoms->end())) {
-          continue;
-        }
-        unsigned int distance =
-            static_cast<unsigned int>(floor(distanceMatrix[i * atomCount + j]));
-
-        if (distance >= atomPairArguments->minDistance &&
-            distance <= atomPairArguments->maxDistance) {
-          result.push_back(new AtomPairAtomEnv(atomCodeCache, i, j, distance));
-        }
+      if (distance >= atomPairArguments->minDistance &&
+          distance <= atomPairArguments->maxDistance) {
+        result.push_back(new AtomPairAtomEnv(atomCodeCache, i, j, distance));
       }
     }
   }
@@ -211,19 +208,18 @@ void AtomPairEnvGenerator::cleanUpEnvironments(
   }
 }
 
-FingerprintGenerator *getAtomPairGenerator(
-    const ROMol &mol, const unsigned int minDistance,
-    const unsigned int maxDistance, const bool includeChirality,
-    const bool use2D, const bool useCountSimulation,
-    AtomInvariantsGenerator *atomInvariantsGenerator = 0,
-    BondInvariantsGenerator *bondInvariantsGenerator = 0) {
+FingerprintGenerator getAtomPairGenerator(
+    const unsigned int minDistance, const unsigned int maxDistance,
+    const bool includeChirality, const bool use2D,
+    const bool useCountSimulation,
+    AtomInvariantsGenerator *atomInvariantsGenerator,
+    BondInvariantsGenerator *bondInvariantsGenerator) {
   AtomEnvironmentGenerator *atomPairEnvGenerator = new AtomPairEnvGenerator();
   FingerprintArguments *atomPairArguments = new AtomPairArguments(
       useCountSimulation, includeChirality, use2D, minDistance, maxDistance);
 
-  return new FingerprintGenerator(atomPairEnvGenerator, atomPairArguments,
-                                  atomInvariantsGenerator,
-                                  bondInvariantsGenerator);
+  return FingerprintGenerator(atomPairEnvGenerator, atomPairArguments,
+                              atomInvariantsGenerator, bondInvariantsGenerator);
 }
 }  // namespace AtomPair
 }  // namespace RDKit

@@ -94,6 +94,13 @@ class AtomPairEnvGenerator : public AtomEnvironmentGenerator {
       std::vector<AtomEnvironment *> atomEnvironments) const;
 };
 
+FingerprintGenerator getAtomPairGenerator(
+    const unsigned int minDistance = 1,
+    const unsigned int maxDistance = maxPathLen - 1,
+    const bool includeChirality = false, const bool use2D = true,
+    const bool useCountSimulation = true,
+    AtomInvariantsGenerator *atomInvariantsGenerator = 0,
+    BondInvariantsGenerator *bondInvariantsGenerator = 0);
 }  // namespace AtomPair
 }  // namespace RDKit
 

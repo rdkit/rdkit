@@ -45,15 +45,25 @@ SparseIntVect<boost::uint32_t> *FingerprintGenerator::getFingerprint(
           mol, this->fingerprintArguments, fromAtoms, ignoreAtoms, confId,
           additionalOutput);
 
-  std::vector<boost::uint32_t> atomInvariants =
-      this->atomInvariantsGenerator->getAtomInvariants(mol);
-  std::vector<boost::uint32_t> bondInvariants =
-      this->bondInvariantsGenerator->getBondInvariants(mol);
+  std::vector<boost::uint32_t> *atomInvariantsAsPointer = 0;
+  std::vector<boost::uint32_t> atomInvariants;
+  if (this->atomInvariantsGenerator) {
+    atomInvariants = this->atomInvariantsGenerator->getAtomInvariants(mol);
+    atomInvariantsAsPointer = &atomInvariants;
+  }
+
+  std::vector<boost::uint32_t> *bondInvariantsAsPointer = 0;
+  std::vector<boost::uint32_t> bondInvariants;
+  if (this->atomInvariantsGenerator) {
+    bondInvariants = this->bondInvariantsGenerator->getBondInvariants(mol);
+    bondInvariantsAsPointer = &bondInvariants;
+  }
 
   for (std::vector<AtomEnvironment *>::iterator it = atomEnvironments.begin();
        it != atomEnvironments.end(); it++) {
-    boost::uint32_t bitId = (*it)->getBitId(this->fingerprintArguments,
-                                            &atomInvariants, &bondInvariants);
+    boost::uint32_t bitId =
+        (*it)->getBitId(this->fingerprintArguments, atomInvariantsAsPointer,
+                        bondInvariantsAsPointer);
 
     if (this->fingerprintArguments->countSimulation) {
       res->setVal(bitId, res->getVal(bitId) + 1);
