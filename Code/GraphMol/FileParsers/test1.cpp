@@ -5322,7 +5322,9 @@ void testLocaleSwitcher() {
 #include <future>
 
 namespace {
-void runblock() { testLocaleSwitcher(); }
+void runblock() {
+  std::setlocale(LC_ALL, "de_DE.UTF-8");
+  testLocaleSwitcher(); }
 }
 void testMultiThreadedSwitcher() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
@@ -5361,8 +5363,8 @@ int main(int argc, char *argv[]) {
 
   BOOST_LOG(rdInfoLog) << " ---- Running with German locale ----- "
                        << std::endl;
-  setlocale(LC_ALL, "de_DE.UTF-8");
-  std::cout << setlocale(LC_ALL, nullptr) << std::endl;
+  std::setlocale(LC_ALL, "de_DE.UTF-8");
+  std::cout << std::setlocale(LC_ALL, nullptr) << std::endl;
   testLocaleSwitcher();  // must be the last test
   testMultiThreadedSwitcher();
   RunTests();
