@@ -1,6 +1,8 @@
 from __future__ import print_function
 
 import doctest
+if (getattr(doctest, 'ELLIPSIS_MARKER')):
+  doctest.ELLIPSIS_MARKER = '*...*'
 import gzip
 import os
 import shutil
