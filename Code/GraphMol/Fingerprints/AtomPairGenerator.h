@@ -20,45 +20,49 @@ const unsigned int numPathBits = 5;
 const unsigned int maxPathLen = (1 << numPathBits) - 1;
 const unsigned int numAtomPairFingerprintBits = numPathBits + 2 * codeSize;
 
-/*
-Class that holds atom pair fingerprinting arguments
-includeChirality: if set, chirality will be used in the atom invariants (note:
-this is ignored if atomInvariantsGenerator is present for the fingerprint
-generator that uses this)
-use2D: if set, the 2D (topological) distance matrix is used
-minDistance: minimum distance between atoms to be considered in a pair. Default
-is 1 bond.
-maxDistance: maximum distance between atoms to be considered in a pair. Default
-is maxPathLen-1 bonds
-*/
+/*!
+  /brief class that holds atom-pair fingerprint specific arguments
+
+ */
 class AtomPairArguments : public FingerprintArguments {
  public:
-  const bool includeChirality;
-  const bool use2D;
-  const unsigned int minDistance;
-  const unsigned int maxDistance;
+  const bool df_includeChirality;
+  const bool df_use2D;
+  const unsigned int d_minDistance;
+  const unsigned int d_maxDistance;
 
-  unsigned int getResultSize() const;
+  boost::uint64_t getResultSize() const;
 
+  /*!
+    /brief construct a new AtomPairArguments object
+
+    /param countSimulation  if set, use count simulation while generating the
+    fingerprint
+    /param includeChirality if set, chirality will be used in the atom
+    invariants, this is ignored if atomInvariantsGenerator is present for
+    the /c FingerprintGenerator that uses this
+    /param use2D            if set, the 2D (topological) distance matrix will be
+    used
+    /param minDistance      minimum distance between atoms to be considered in a
+    pair, default is 1 bond
+    /param maxDistance      maximum distance between atoms to be considered in a
+    pair, default is maxPathLen-1 bonds
+   */
   AtomPairArguments(const bool countSimulation, const bool includeChirality,
                     const bool use2D, const unsigned int minDistance = 1,
                     const unsigned int maxDistance = (maxPathLen - 1));
 };
 
-/*
-Class to hold atom environment data for atom pair fingerprinting
-atomCodeCache: list of atom codes for all atoms in the molecule, used to avoid
-generating atom code for the same atom multiple times. This is deleted by
-calling AtomPairEnvGenerator::cleanUpEnvironments
-atomIdFirst: index of the first atom of the pair
-atomIdSecond: index of the second atom of the pair
-distance: distance between the atoms
-*/
+/*!
+  /brief class that holds atom-environment data needed for atom-pair fingerprint
+  generation
+
+ */
 class AtomPairAtomEnv : public AtomEnvironment {
   const std::vector<boost::uint32_t> *atomCodeCache;
-  const unsigned int atomIdFirst;
-  const unsigned int atomIdSecond;
-  const unsigned int distance;
+  const unsigned int d_atomIdFirst;
+  const unsigned int d_atomIdSecond;
+  const unsigned int d_distance;
 
  public:
   boost::uint32_t getBitId(
@@ -66,41 +70,67 @@ class AtomPairAtomEnv : public AtomEnvironment {
       const std::vector<boost::uint32_t> *atomInvariants,
       const std::vector<boost::uint32_t> *bondInvariants) const;
 
-  /*
-  returns a pointer to the atom code cache so it can be deleted
-  */
   const std::vector<boost::uint32_t> *getAtomCodeCache() const;
 
+  /*!
+    /brief construct a new AtomPairAtomEnv object
+
+    /param atomIdFirst  id of the first atom of the atom-pair
+    /param atomIdSecond id of the second atom of the atom-pair
+    /param distance     distance between the atoms
+   */
   AtomPairAtomEnv(const std::vector<boost::uint32_t> *atomCodeCache,
                   const unsigned int atomIdFirst,
                   const unsigned int atomIdSecond, const unsigned int distance);
 };
 
-/*
-Class to generate atom environments from a molecule to be used for atom pair
-fingerprinting
-*/
+/*!
+  /brief class that generates atom-environments for atom-pair fingerprint
+
+ */
 class AtomPairEnvGenerator : public AtomEnvironmentGenerator {
  public:
   std::vector<AtomEnvironment *> getEnvironments(
       const ROMol &mol, FingerprintArguments *arguments,
-      const std::vector<boost::uint32_t> *fromAtoms = 0,
-      const std::vector<boost::uint32_t> *ignoreAtoms = 0,
-      const int confId = -1, const AdditionalOutput *additionalOutput = 0,
-      const std::vector<boost::uint32_t> *atomInvariants = 0,
-      const std::vector<boost::uint32_t> *bondInvariants = 0) const;
+      const std::vector<boost::uint32_t> *fromAtoms = nullptr,
+      const std::vector<boost::uint32_t> *ignoreAtoms = nullptr,
+      const int confId = -1, const AdditionalOutput *additionalOutput = nullptr,
+      const std::vector<boost::uint32_t> *atomInvariants = nullptr,
+      const std::vector<boost::uint32_t> *bondInvariants = nullptr) const;
 
   void cleanUpEnvironments(
       std::vector<AtomEnvironment *> atomEnvironments) const;
 };
 
+/*!
+  /brief helper function that generates a /c FingerprintGenerator that generates
+  atom-pair fingerprints
+
+
+  /param minDistance            minimum distance between atoms to be considered
+  in a pair, default is 1 bond
+  /param maxDistance            maximum distance between atoms to be considered
+  in a pair, default is maxPathLen-1 bonds
+  /param includeChirality       if set, chirality will be used in the atom
+  invariants, this is ignored if atomInvariantsGenerator is provided
+  /param use2D                  if set, the 2D (topological) distance matrix
+  will be used
+  /param useCountSimulation         if set, use count simulation while
+  generating the fingerprint
+  /param atomInvariantsGenerator    atom invariants to be used during
+  fingerprint generation
+  /param bondInvariantsGenerator    bond invariants to be used during
+  fingerprint generation
+
+  /return FingerprintGenerator that generates atom-pair fingerprints
+ */
 FingerprintGenerator getAtomPairGenerator(
     const unsigned int minDistance = 1,
     const unsigned int maxDistance = maxPathLen - 1,
     const bool includeChirality = false, const bool use2D = true,
     const bool useCountSimulation = true,
-    AtomInvariantsGenerator *atomInvariantsGenerator = 0,
-    BondInvariantsGenerator *bondInvariantsGenerator = 0);
+    AtomInvariantsGenerator *atomInvariantsGenerator = nullptr,
+    BondInvariantsGenerator *bondInvariantsGenerator = nullptr);
 }  // namespace AtomPair
 }  // namespace RDKit
 

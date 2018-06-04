@@ -5,7 +5,7 @@
 namespace RDKit {
 namespace AtomPair {
 
-// taken from existing atom pair implementation
+//! taken from the existing implementation
 unsigned int numPiElectrons(const Atom *atom) {
   PRECONDITION(atom, "no atom");
   unsigned int res = 0;
@@ -21,6 +21,7 @@ unsigned int numPiElectrons(const Atom *atom) {
   return res;
 }
 
+//! taken from the existing implementation
 boost::uint32_t getAtomCode(const Atom *atom, unsigned int branchSubtract,
                             bool includeChirality) {
   PRECONDITION(atom, "no atom");
@@ -77,10 +78,8 @@ boost::uint32_t getAtomPairCode(boost::uint32_t codeI, boost::uint32_t codeJ,
   return res;
 }
 
-// AtomPairArguments
-
-unsigned int AtomPairArguments::getResultSize() const {
-  return (1 << (numAtomPairFingerprintBits + 2 * (includeChirality ? 2 : 0)));
+boost::uint64_t AtomPairArguments::getResultSize() const {
+  return (1 << (numAtomPairFingerprintBits + 2 * (df_includeChirality ? 2 : 0)));
 }
 
 AtomPairArguments::AtomPairArguments(const bool countSimulation,
@@ -89,14 +88,13 @@ AtomPairArguments::AtomPairArguments(const bool countSimulation,
                                      const unsigned int minDistance,
                                      const unsigned int maxDistance)
     : FingerprintArguments(countSimulation),
-      includeChirality(includeChirality),
-      use2D(use2D),
-      minDistance(minDistance),
-      maxDistance(maxDistance) {
+      df_includeChirality(includeChirality),
+      df_use2D(use2D),
+      d_minDistance(minDistance),
+      d_maxDistance(maxDistance) {
   PRECONDITION(minDistance <= maxDistance, "bad distances provided");
 };
 
-// AtomPairAtomEnv
 
 boost::uint32_t AtomPairAtomEnv::getBitId(
     FingerprintArguments *arguments,
@@ -105,9 +103,9 @@ boost::uint32_t AtomPairAtomEnv::getBitId(
   AtomPairArguments *atomPairArguments =
       dynamic_cast<AtomPairArguments *>(arguments);
 
-  return getAtomPairCode(atomCodeCache->at(atomIdFirst),
-                         atomCodeCache->at(atomIdSecond), distance,
-                         atomPairArguments->includeChirality);
+  return getAtomPairCode(atomCodeCache->at(d_atomIdFirst),
+                         atomCodeCache->at(d_atomIdSecond), d_distance,
+                         atomPairArguments->df_includeChirality);
 }
 
 const std::vector<boost::uint32_t> *AtomPairAtomEnv::getAtomCodeCache() const {
@@ -119,11 +117,10 @@ AtomPairAtomEnv::AtomPairAtomEnv(
     const unsigned int atomIdFirst, const unsigned int atomIdSecond,
     const unsigned int distance)
     : atomCodeCache(atomCodeCache),
-      atomIdFirst(atomIdFirst),
-      atomIdSecond(atomIdSecond),
-      distance(distance) {}
+      d_atomIdFirst(atomIdFirst),
+      d_atomIdSecond(atomIdSecond),
+      d_distance(distance) {}
 
-// AtomPairEnvGenerator
 
 std::vector<AtomEnvironment *> AtomPairEnvGenerator::getEnvironments(
     const ROMol &mol, FingerprintArguments *arguments,
@@ -139,7 +136,7 @@ std::vector<AtomEnvironment *> AtomPairEnvGenerator::getEnvironments(
       dynamic_cast<AtomPairArguments *>(arguments);
   std::vector<AtomEnvironment *> result = std::vector<AtomEnvironment *>();
   const double *distanceMatrix;
-  if (atomPairArguments->use2D) {
+  if (atomPairArguments->df_use2D) {
     distanceMatrix = MolOps::getDistanceMat(mol);
   } else {
     distanceMatrix = MolOps::get3DDistanceMat(mol, confId);
@@ -153,7 +150,7 @@ std::vector<AtomEnvironment *> AtomPairEnvGenerator::getEnvironments(
        atomItI != mol.endAtoms(); ++atomItI) {
     if (!atomInvariants) {
       atomCodeCache->push_back(
-          getAtomCode(*atomItI, 0, atomPairArguments->includeChirality));
+          getAtomCode(*atomItI, 0, atomPairArguments->df_includeChirality));
     } else {
       atomCodeCache->push_back((*atomInvariants)[(*atomItI)->getIdx()] %
                                ((1 << codeSize) - 1));
@@ -183,8 +180,8 @@ std::vector<AtomEnvironment *> AtomPairEnvGenerator::getEnvironments(
       unsigned int distance =
           static_cast<unsigned int>(floor(distanceMatrix[i * atomCount + j]));
 
-      if (distance >= atomPairArguments->minDistance &&
-          distance <= atomPairArguments->maxDistance) {
+      if (distance >= atomPairArguments->d_minDistance &&
+          distance <= atomPairArguments->d_maxDistance) {
         result.push_back(new AtomPairAtomEnv(atomCodeCache, i, j, distance));
       }
     }

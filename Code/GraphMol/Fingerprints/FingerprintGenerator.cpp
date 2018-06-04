@@ -7,7 +7,7 @@
 namespace RDKit {
 
 FingerprintArguments::FingerprintArguments(const bool countSimulation)
-    : countSimulation(countSimulation) {}
+    : d_countSimulation(countSimulation) {}
 
 FingerprintArguments::~FingerprintArguments() {}
 
@@ -20,17 +20,17 @@ FingerprintGenerator::FingerprintGenerator(
     FingerprintArguments *fingerprintArguments,
     AtomInvariantsGenerator *atomInvariantsGenerator,
     BondInvariantsGenerator *bondInvariantsGenerator) {
-  this->atomEnvironmentGenerator = atomEnvironmentGenerator;
-  this->fingerprintArguments = fingerprintArguments;
-  this->atomInvariantsGenerator = atomInvariantsGenerator;
-  this->bondInvariantsGenerator = bondInvariantsGenerator;
+  this->dp_atomEnvironmentGenerator = atomEnvironmentGenerator;
+  this->dp_fingerprintArguments = fingerprintArguments;
+  this->dp_atomInvariantsGenerator = atomInvariantsGenerator;
+  this->dp_bondInvariantsGenerator = bondInvariantsGenerator;
 }
 
 void FingerprintGenerator::cleanUpResources() {
-  delete atomEnvironmentGenerator;
-  delete fingerprintArguments;
-  atomEnvironmentGenerator = 0;
-  fingerprintArguments = 0;
+  delete dp_atomEnvironmentGenerator;
+  delete dp_fingerprintArguments;
+  dp_atomEnvironmentGenerator = nullptr;
+  dp_fingerprintArguments = nullptr;
 }
 
 SparseIntVect<boost::uint32_t> *FingerprintGenerator::getFingerprint(
@@ -38,41 +38,41 @@ SparseIntVect<boost::uint32_t> *FingerprintGenerator::getFingerprint(
     const std::vector<boost::uint32_t> *ignoreAtoms, const int confId,
     const AdditionalOutput *additionalOutput) const {
   SparseIntVect<boost::uint32_t> *res = new SparseIntVect<boost::uint32_t>(
-      this->fingerprintArguments->getResultSize());
+      dp_fingerprintArguments->getResultSize());
 
   std::vector<AtomEnvironment *> atomEnvironments =
-      this->atomEnvironmentGenerator->getEnvironments(
-          mol, this->fingerprintArguments, fromAtoms, ignoreAtoms, confId,
+      dp_atomEnvironmentGenerator->getEnvironments(
+          mol, dp_fingerprintArguments, fromAtoms, ignoreAtoms, confId,
           additionalOutput);
 
-  std::vector<boost::uint32_t> *atomInvariantsAsPointer = 0;
+  std::vector<boost::uint32_t> *atomInvariantsAsPointer = nullptr;
   std::vector<boost::uint32_t> atomInvariants;
-  if (this->atomInvariantsGenerator) {
-    atomInvariants = this->atomInvariantsGenerator->getAtomInvariants(mol);
+  if (dp_atomInvariantsGenerator) {
+    atomInvariants = dp_atomInvariantsGenerator->getAtomInvariants(mol, dp_fingerprintArguments);
     atomInvariantsAsPointer = &atomInvariants;
   }
 
-  std::vector<boost::uint32_t> *bondInvariantsAsPointer = 0;
+  std::vector<boost::uint32_t> *bondInvariantsAsPointer = nullptr;
   std::vector<boost::uint32_t> bondInvariants;
-  if (this->atomInvariantsGenerator) {
-    bondInvariants = this->bondInvariantsGenerator->getBondInvariants(mol);
+  if (dp_bondInvariantsGenerator) {
+    bondInvariants = dp_bondInvariantsGenerator->getBondInvariants(mol, dp_fingerprintArguments);
     bondInvariantsAsPointer = &bondInvariants;
   }
 
   for (std::vector<AtomEnvironment *>::iterator it = atomEnvironments.begin();
        it != atomEnvironments.end(); it++) {
     boost::uint32_t bitId =
-        (*it)->getBitId(this->fingerprintArguments, atomInvariantsAsPointer,
+        (*it)->getBitId(dp_fingerprintArguments, atomInvariantsAsPointer,
                         bondInvariantsAsPointer);
 
-    if (this->fingerprintArguments->countSimulation) {
+    if (dp_fingerprintArguments->d_countSimulation) {
       res->setVal(bitId, res->getVal(bitId) + 1);
     } else {
       res->setVal(bitId, 1);
     }
   }
 
-  this->atomEnvironmentGenerator->cleanUpEnvironments(atomEnvironments);
+  dp_atomEnvironmentGenerator->cleanUpEnvironments(atomEnvironments);
 
   for (std::vector<AtomEnvironment *>::iterator it = atomEnvironments.begin();
        it != atomEnvironments.end(); it++) {
