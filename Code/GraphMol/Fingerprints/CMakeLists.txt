@@ -19,4 +19,7 @@ rdkit_test(testFingerprints test1.cpp LINK_LIBRARIES
            Subgraphs GraphMol DataStructs RDGeometryLib
            RDGeneral  ${RDKit_THREAD_LIBS}  )
 
+rdkit_test(testFingerprintGenerators testFingerprintGenerators.cpp LINK_LIBRARIES 
+           Fingerprints SmilesParse GraphMol DataStructs
+           RDGeneral )
 
