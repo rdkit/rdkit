@@ -1,6 +1,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
 #include <GraphMol/Fingerprints/AtomPairGenerator.h>
+#include <cstdint>
 
 namespace RDKit {
 namespace AtomPair {
@@ -22,10 +23,10 @@ unsigned int numPiElectrons(const Atom *atom) {
 }
 
 //! taken from the existing implementation
-boost::uint32_t getAtomCode(const Atom *atom, unsigned int branchSubtract,
-                            bool includeChirality) {
+std::uint32_t getAtomCode(const Atom *atom, unsigned int branchSubtract,
+                          bool includeChirality) {
   PRECONDITION(atom, "no atom");
-  boost::uint32_t code;
+  std::uint32_t code;
 
   unsigned int numBranches = 0;
   if (atom->getDegree() > branchSubtract) {
@@ -54,7 +55,7 @@ boost::uint32_t getAtomCode(const Atom *atom, unsigned int branchSubtract,
   if (includeChirality) {
     std::string cipCode;
     if (atom->getPropIfPresent(common_properties::_CIPCode, cipCode)) {
-      boost::uint32_t offset = numBranchBits + numPiBits + numTypeBits;
+      std::uint32_t offset = numBranchBits + numPiBits + numTypeBits;
       if (cipCode == "R") {
         code |= 1 << offset;
       } else if (cipCode == "S") {
@@ -62,24 +63,25 @@ boost::uint32_t getAtomCode(const Atom *atom, unsigned int branchSubtract,
       }
     }
   }
-  POSTCONDITION(code < static_cast<boost::uint32_t>(
+  POSTCONDITION(code < static_cast<std::uint32_t>(
                            1 << (codeSize + (includeChirality ? 2 : 0))),
                 "code exceeds number of bits");
   return code;
 };
 
-boost::uint32_t getAtomPairCode(boost::uint32_t codeI, boost::uint32_t codeJ,
-                                unsigned int dist, bool includeChirality) {
+std::uint32_t getAtomPairCode(std::uint32_t codeI, std::uint32_t codeJ,
+                              unsigned int dist, bool includeChirality) {
   PRECONDITION(dist < maxPathLen, "dist too long");
-  boost::uint32_t res = dist;
+  std::uint32_t res = dist;
   res |= std::min(codeI, codeJ) << numPathBits;
   res |= std::max(codeI, codeJ)
          << (numPathBits + codeSize + (includeChirality ? numChiralBits : 0));
   return res;
 }
 
-boost::uint64_t AtomPairArguments::getResultSize() const {
-  return (1 << (numAtomPairFingerprintBits + 2 * (df_includeChirality ? 2 : 0)));
+std::uint64_t AtomPairArguments::getResultSize() const {
+  return (
+      1 << (numAtomPairFingerprintBits + 2 * (df_includeChirality ? 2 : 0)));
 }
 
 AtomPairArguments::AtomPairArguments(const bool countSimulation,
@@ -93,42 +95,37 @@ AtomPairArguments::AtomPairArguments(const bool countSimulation,
       d_minDistance(minDistance),
       d_maxDistance(maxDistance) {
   PRECONDITION(minDistance <= maxDistance, "bad distances provided");
-};
+}
 
-
-boost::uint32_t AtomPairAtomEnv::getBitId(
+std::uint32_t AtomPairAtomEnv::getBitId(
     FingerprintArguments *arguments,
-    const std::vector<boost::uint32_t> *atomInvariants,
-    const std::vector<boost::uint32_t> *bondInvariants) const {
+    const std::vector<std::uint32_t> *atomInvariants,
+    const std::vector<std::uint32_t> *bondInvariants) const {
   AtomPairArguments *atomPairArguments =
       dynamic_cast<AtomPairArguments *>(arguments);
 
-  return getAtomPairCode(atomCodeCache->at(d_atomIdFirst),
-                         atomCodeCache->at(d_atomIdSecond), d_distance,
+  return getAtomPairCode(d_atomCodeFirst, d_atomCodeSecond, d_distance,
                          atomPairArguments->df_includeChirality);
 }
 
-const std::vector<boost::uint32_t> *AtomPairAtomEnv::getAtomCodeCache() const {
-  return atomCodeCache;
-}
-
-AtomPairAtomEnv::AtomPairAtomEnv(
-    const std::vector<boost::uint32_t> *atomCodeCache,
-    const unsigned int atomIdFirst, const unsigned int atomIdSecond,
-    const unsigned int distance)
-    : atomCodeCache(atomCodeCache),
-      d_atomIdFirst(atomIdFirst),
+AtomPairAtomEnv::AtomPairAtomEnv(const unsigned int atomIdFirst,
+                                 const unsigned int atomIdSecond,
+                                 const unsigned int distance,
+                                 const std::uint32_t atomCodeFirst,
+                                 const std::uint32_t atomCodeSecond)
+    : d_atomIdFirst(atomIdFirst),
       d_atomIdSecond(atomIdSecond),
-      d_distance(distance) {}
-
+      d_distance(distance),
+      d_atomCodeFirst(atomCodeFirst),
+      d_atomCodeSecond(atomCodeSecond) {}
 
 std::vector<AtomEnvironment *> AtomPairEnvGenerator::getEnvironments(
     const ROMol &mol, FingerprintArguments *arguments,
-    const std::vector<boost::uint32_t> *fromAtoms,
-    const std::vector<boost::uint32_t> *ignoreAtoms, const int confId,
+    const std::vector<std::uint32_t> *fromAtoms,
+    const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
     const AdditionalOutput *additionalOutput,
-    const std::vector<boost::uint32_t> *atomInvariants,
-    const std::vector<boost::uint32_t> *bondInvariants) const {
+    const std::vector<std::uint32_t> *atomInvariants,
+    const std::vector<std::uint32_t> *bondInvariants) const {
   PRECONDITION(!atomInvariants || atomInvariants->size() >= mol.getNumAtoms(),
                "bad atomInvariants size");
 
@@ -144,18 +141,20 @@ std::vector<AtomEnvironment *> AtomPairEnvGenerator::getEnvironments(
 
   const unsigned int atomCount = mol.getNumAtoms();
 
-  std::vector<boost::uint32_t> *atomCodeCache =
-      new std::vector<boost::uint32_t>();
+  std::vector<std::uint32_t> atomCodeCache = std::vector<std::uint32_t>();
   for (ROMol::ConstAtomIterator atomItI = mol.beginAtoms();
        atomItI != mol.endAtoms(); ++atomItI) {
     if (!atomInvariants) {
-      atomCodeCache->push_back(
+      atomCodeCache.push_back(
           getAtomCode(*atomItI, 0, atomPairArguments->df_includeChirality));
     } else {
-      atomCodeCache->push_back((*atomInvariants)[(*atomItI)->getIdx()] %
-                               ((1 << codeSize) - 1));
+      atomCodeCache.push_back((*atomInvariants)[(*atomItI)->getIdx()] %
+                              ((1 << codeSize) - 1));
     }
+  }
 
+  for (ROMol::ConstAtomIterator atomItI = mol.beginAtoms();
+       atomItI != mol.endAtoms(); ++atomItI) {
     unsigned int i = (*atomItI)->getIdx();
     if (ignoreAtoms && std::find(ignoreAtoms->begin(), ignoreAtoms->end(), i) !=
                            ignoreAtoms->end()) {
@@ -182,27 +181,13 @@ std::vector<AtomEnvironment *> AtomPairEnvGenerator::getEnvironments(
 
       if (distance >= atomPairArguments->d_minDistance &&
           distance <= atomPairArguments->d_maxDistance) {
-        result.push_back(new AtomPairAtomEnv(atomCodeCache, i, j, distance));
+        result.push_back(new AtomPairAtomEnv(i, j, distance, atomCodeCache[i],
+                                             atomCodeCache[j]));
       }
     }
   }
 
-  if (result.empty()) {
-    // cleanUpEnvironments will not be able to clear shared resources since the
-    // result is empty so we do it here
-    delete atomCodeCache;
-  }
-
   return result;
-};
-
-void AtomPairEnvGenerator::cleanUpEnvironments(
-    std::vector<AtomEnvironment *> atomEnvironments) const {
-  if (!atomEnvironments.empty()) {
-    AtomPairAtomEnv *firstEnv =
-        dynamic_cast<AtomPairAtomEnv *>(atomEnvironments[0]);
-    delete firstEnv->getAtomCodeCache();
-  }
 }
 
 FingerprintGenerator getAtomPairGenerator(
@@ -211,12 +196,14 @@ FingerprintGenerator getAtomPairGenerator(
     const bool useCountSimulation,
     AtomInvariantsGenerator *atomInvariantsGenerator,
     BondInvariantsGenerator *bondInvariantsGenerator) {
-  AtomEnvironmentGenerator *atomPairEnvGenerator = new AtomPairEnvGenerator();
-  FingerprintArguments *atomPairArguments = new AtomPairArguments(
+  AtomEnvironmentGenerator *atomPairEnvGenerator =
+      new AtomPair::AtomPairEnvGenerator();
+  FingerprintArguments *atomPairArguments = new AtomPair::AtomPairArguments(
       useCountSimulation, includeChirality, use2D, minDistance, maxDistance);
 
   return FingerprintGenerator(atomPairEnvGenerator, atomPairArguments,
                               atomInvariantsGenerator, bondInvariantsGenerator);
 }
+
 }  // namespace AtomPair
 }  // namespace RDKit

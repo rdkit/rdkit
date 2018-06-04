@@ -3,6 +3,7 @@
 #include <DataStructs/ExplicitBitVect.h>
 #include <DataStructs/SparseBitVect.h>
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
+#include <cstdint>
 
 namespace RDKit {
 
@@ -33,35 +34,37 @@ void FingerprintGenerator::cleanUpResources() {
   dp_fingerprintArguments = nullptr;
 }
 
-SparseIntVect<boost::uint32_t> *FingerprintGenerator::getFingerprint(
-    const ROMol &mol, const std::vector<boost::uint32_t> *fromAtoms,
-    const std::vector<boost::uint32_t> *ignoreAtoms, const int confId,
+SparseIntVect<std::uint32_t> *FingerprintGenerator::getFingerprint(
+    const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms,
+    const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
     const AdditionalOutput *additionalOutput) const {
-  SparseIntVect<boost::uint32_t> *res = new SparseIntVect<boost::uint32_t>(
+  SparseIntVect<std::uint32_t> *res = new SparseIntVect<std::uint32_t>(
       dp_fingerprintArguments->getResultSize());
 
   std::vector<AtomEnvironment *> atomEnvironments =
-      dp_atomEnvironmentGenerator->getEnvironments(
-          mol, dp_fingerprintArguments, fromAtoms, ignoreAtoms, confId,
-          additionalOutput);
+      dp_atomEnvironmentGenerator->getEnvironments(mol, dp_fingerprintArguments,
+                                                   fromAtoms, ignoreAtoms,
+                                                   confId, additionalOutput);
 
-  std::vector<boost::uint32_t> *atomInvariantsAsPointer = nullptr;
-  std::vector<boost::uint32_t> atomInvariants;
+  std::vector<std::uint32_t> *atomInvariantsAsPointer = nullptr;
+  std::vector<std::uint32_t> atomInvariants;
   if (dp_atomInvariantsGenerator) {
-    atomInvariants = dp_atomInvariantsGenerator->getAtomInvariants(mol, dp_fingerprintArguments);
+    atomInvariants = dp_atomInvariantsGenerator->getAtomInvariants(
+        mol, dp_fingerprintArguments);
     atomInvariantsAsPointer = &atomInvariants;
   }
 
-  std::vector<boost::uint32_t> *bondInvariantsAsPointer = nullptr;
-  std::vector<boost::uint32_t> bondInvariants;
+  std::vector<std::uint32_t> *bondInvariantsAsPointer = nullptr;
+  std::vector<std::uint32_t> bondInvariants;
   if (dp_bondInvariantsGenerator) {
-    bondInvariants = dp_bondInvariantsGenerator->getBondInvariants(mol, dp_fingerprintArguments);
+    bondInvariants = dp_bondInvariantsGenerator->getBondInvariants(
+        mol, dp_fingerprintArguments);
     bondInvariantsAsPointer = &bondInvariants;
   }
 
   for (std::vector<AtomEnvironment *>::iterator it = atomEnvironments.begin();
        it != atomEnvironments.end(); it++) {
-    boost::uint32_t bitId =
+    std::uint32_t bitId =
         (*it)->getBitId(dp_fingerprintArguments, atomInvariantsAsPointer,
                         bondInvariantsAsPointer);
 
@@ -72,33 +75,26 @@ SparseIntVect<boost::uint32_t> *FingerprintGenerator::getFingerprint(
     }
   }
 
-  dp_atomEnvironmentGenerator->cleanUpEnvironments(atomEnvironments);
-
-  for (std::vector<AtomEnvironment *>::iterator it = atomEnvironments.begin();
-       it != atomEnvironments.end(); it++) {
-    delete (*it);
-  }
-
   return res;
 }
 
 SparseBitVect *FingerprintGenerator::getFingerprintAsBitVect(
-    const ROMol &mol, const std::vector<boost::uint32_t> *fromAtoms,
-    const std::vector<boost::uint32_t> *ignoreAtoms, const int confId,
+    const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms,
+    const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
     const AdditionalOutput *additionalOutput) const {
   return 0;
 }
 
-SparseIntVect<boost::uint32_t> *FingerprintGenerator::getFoldedFingerprint(
-    const ROMol &mol, const std::vector<boost::uint32_t> *fromAtoms,
-    const std::vector<boost::uint32_t> *ignoreAtoms,
+SparseIntVect<std::uint32_t> *FingerprintGenerator::getFoldedFingerprint(
+    const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms,
+    const std::vector<std::uint32_t> *ignoreAtoms,
     const AdditionalOutput *additionalOutput) const {
   return 0;
 }
 
 ExplicitBitVect *FingerprintGenerator::getFoldedFingerprintAsBitVect(
-    const ROMol &mol, const std::vector<boost::uint32_t> *fromAtoms,
-    const std::vector<boost::uint32_t> *ignoreAtoms,
+    const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms,
+    const std::vector<std::uint32_t> *ignoreAtoms,
     const AdditionalOutput *additionalOutput) const {
   return 0;
 }

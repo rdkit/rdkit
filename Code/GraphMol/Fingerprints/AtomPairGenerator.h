@@ -2,6 +2,7 @@
 #define RD_ATOMPAIRGEN_H_2018_06
 
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
+#include <cstdint>
 
 namespace RDKit {
 namespace AtomPair {
@@ -31,7 +32,7 @@ class AtomPairArguments : public FingerprintArguments {
   const unsigned int d_minDistance;
   const unsigned int d_maxDistance;
 
-  boost::uint64_t getResultSize() const;
+  std::uint64_t getResultSize() const;
 
   /*!
     /brief construct a new AtomPairArguments object
@@ -59,29 +60,31 @@ class AtomPairArguments : public FingerprintArguments {
 
  */
 class AtomPairAtomEnv : public AtomEnvironment {
-  const std::vector<boost::uint32_t> *atomCodeCache;
   const unsigned int d_atomIdFirst;
   const unsigned int d_atomIdSecond;
   const unsigned int d_distance;
+  const std::uint32_t d_atomCodeFirst;
+  const std::uint32_t d_atomCodeSecond;
 
  public:
-  boost::uint32_t getBitId(
+  std::uint32_t getBitId(
       FingerprintArguments *arguments,
-      const std::vector<boost::uint32_t> *atomInvariants,
-      const std::vector<boost::uint32_t> *bondInvariants) const;
-
-  const std::vector<boost::uint32_t> *getAtomCodeCache() const;
+      const std::vector<std::uint32_t> *atomInvariants,
+      const std::vector<std::uint32_t> *bondInvariants) const;
 
   /*!
     /brief construct a new AtomPairAtomEnv object
 
-    /param atomIdFirst  id of the first atom of the atom-pair
-    /param atomIdSecond id of the second atom of the atom-pair
-    /param distance     distance between the atoms
+    /param atomIdFirst      id of the first atom of the atom-pair
+    /param atomIdSecond     id of the second atom of the atom-pair
+    /param distance         distance between the atoms
+    /param atomCodeFirst    hashed atom code for the first atom
+    /param atomCodeSecond   hashed atom code for the second atom
    */
-  AtomPairAtomEnv(const std::vector<boost::uint32_t> *atomCodeCache,
-                  const unsigned int atomIdFirst,
-                  const unsigned int atomIdSecond, const unsigned int distance);
+  AtomPairAtomEnv(const unsigned int atomIdFirst,
+                  const unsigned int atomIdSecond, const unsigned int distance,
+                  const std::uint32_t atomCodeFirst,
+                  const std::uint32_t atomCodeSecond);
 };
 
 /*!
@@ -92,11 +95,11 @@ class AtomPairEnvGenerator : public AtomEnvironmentGenerator {
  public:
   std::vector<AtomEnvironment *> getEnvironments(
       const ROMol &mol, FingerprintArguments *arguments,
-      const std::vector<boost::uint32_t> *fromAtoms = nullptr,
-      const std::vector<boost::uint32_t> *ignoreAtoms = nullptr,
+      const std::vector<std::uint32_t> *fromAtoms = nullptr,
+      const std::vector<std::uint32_t> *ignoreAtoms = nullptr,
       const int confId = -1, const AdditionalOutput *additionalOutput = nullptr,
-      const std::vector<boost::uint32_t> *atomInvariants = nullptr,
-      const std::vector<boost::uint32_t> *bondInvariants = nullptr) const;
+      const std::vector<std::uint32_t> *atomInvariants = nullptr,
+      const std::vector<std::uint32_t> *bondInvariants = nullptr) const;
 
   void cleanUpEnvironments(
       std::vector<AtomEnvironment *> atomEnvironments) const;
