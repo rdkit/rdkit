@@ -17,7 +17,7 @@ nprocs=`getconf _NPROCESSORS_ONLN`
 make -j $nprocs
 cpack -G DEB
 
-# # to install all the necessary dependencies
+# # to install all necessary dependencies on Ubuntu
 # sudo apt-get install \
 #      fonts-freefont-ttf \
 #      libboost-python1.58.0 \
