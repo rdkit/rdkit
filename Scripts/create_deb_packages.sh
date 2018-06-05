@@ -6,7 +6,7 @@
 
 mkdir -p build
 cd build
-cmake -Wno-dev \
+cmake \
     -DRDK_INSTALL_INTREE=OFF \
     -DRDK_BUILD_INCHI_SUPPORT=ON \
     -DRDK_BUILD_AVALON_SUPPORT=ON \
