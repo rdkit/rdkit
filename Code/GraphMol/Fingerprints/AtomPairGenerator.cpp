@@ -26,19 +26,17 @@ unsigned int numPiElectrons(const Atom *atom) {
 std::uint32_t getAtomCode(const Atom *atom, unsigned int branchSubtract,
                           bool includeChirality) {
   PRECONDITION(atom, "no atom");
-  std::uint32_t code;
 
-  unsigned int numBranches = 0;
+  std::uint32_t numBranches = 0;
   if (atom->getDegree() > branchSubtract) {
     numBranches = atom->getDegree() - branchSubtract;
   }
 
-  code = numBranches % maxNumBranches;
-  unsigned int nPi = numPiElectrons(atom) % maxNumPi;
-  code |= nPi << numBranchBits;
+  std::uint32_t branchBits = numBranches % maxNumBranches;
+  std::uint32_t nPi = numPiElectrons(atom) % maxNumPi;
 
-  unsigned int typeIdx = 0;
-  unsigned int nTypes = 1 << numTypeBits;
+  std::uint32_t typeIdx = 0;
+  std::uint32_t nTypes = 1 << numTypeBits;
   while (typeIdx < nTypes) {
     if (atomNumberTypes[typeIdx] ==
         static_cast<unsigned int>(atom->getAtomicNum())) {
@@ -51,20 +49,27 @@ std::uint32_t getAtomCode(const Atom *atom, unsigned int branchSubtract,
     ++typeIdx;
   }
   if (typeIdx == nTypes) --typeIdx;
-  code |= typeIdx << (numBranchBits + numPiBits);
+
+  std::uint32_t cipCodeBits = 0;
   if (includeChirality) {
     std::string cipCode;
     if (atom->getPropIfPresent(common_properties::_CIPCode, cipCode)) {
-      std::uint32_t offset = numBranchBits + numPiBits + numTypeBits;
       if (cipCode == "R") {
-        code |= 1 << offset;
+        cipCodeBits = 1;
       } else if (cipCode == "S") {
-        code |= 2 << offset;
+        cipCodeBits = 2;
       }
     }
   }
+
+  std::uint32_t code;
+  code = branchBits;
+  code |= nPi << numBranchBits;
+  code |= typeIdx << (numBranchBits + numPiBits);
+  code |= cipCodeBits << (numBranchBits + numPiBits + numTypeBits);
+
   POSTCONDITION(code < static_cast<std::uint32_t>(
-                           1 << (codeSize + (includeChirality ? 2 : 0))),
+                           1 << (codeSize + (includeChirality ? numChiralBits : 0))),
                 "code exceeds number of bits");
   return code;
 };
@@ -81,7 +86,7 @@ std::uint32_t getAtomPairCode(std::uint32_t codeI, std::uint32_t codeJ,
 
 std::uint64_t AtomPairArguments::getResultSize() const {
   return (
-      1 << (numAtomPairFingerprintBits + 2 * (df_includeChirality ? 2 : 0)));
+      1 << (numAtomPairFingerprintBits + 2 * (df_includeChirality ? numChiralBits : 0)));
 }
 
 AtomPairArguments::AtomPairArguments(const bool countSimulation,
