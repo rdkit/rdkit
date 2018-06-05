@@ -21,6 +21,12 @@ const unsigned int numPathBits = 5;
 const unsigned int maxPathLen = (1 << numPathBits) - 1;
 const unsigned int numAtomPairFingerprintBits = numPathBits + 2 * codeSize;
 
+unsigned int numPiElectrons(const Atom *atom);
+std::uint32_t getAtomCode(const Atom *atom, unsigned int branchSubtract = 0,
+                          bool includeChirality = false);
+std::uint32_t getAtomPairCode(std::uint32_t codeI, std::uint32_t codeJ,
+                              unsigned int dist, bool includeChirality = false);
+
 /*!
   /brief class that holds atom-pair fingerprint specific arguments
 
