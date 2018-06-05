@@ -12,7 +12,6 @@ cmake -Wno-dev \
     -DRDK_BUILD_AVALON_SUPPORT=ON \
     -DRDK_BUILD_PYTHON_WRAPPERS=ON \
     -DCMAKE_INSTALL_PREFIX=/usr \
-    -DRDKit_VERSION=`date +%Y.%m` \
     ../
 nprocs=`getconf _NPROCESSORS_ONLN`
 make -j $nprocs
