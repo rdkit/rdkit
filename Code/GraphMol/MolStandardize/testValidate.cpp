@@ -9,27 +9,49 @@
 
 using namespace RDKit;
 using namespace std;
+using namespace MolStandardize;
 
 void testValidate(){
-	string smi1;
-	MolStandardize::Validator v;
+	string smi1, smi2, smi3;
+	Validator v;
 
-	smi1 = "ClCCCl.c1ccccc1O";
-	unique_ptr<ROMol> m1( SmilesToMol(smi1) );
-	std::ostringstream errout = v.validate(*m1, MolStandardize::RDKitDefault);
-	std::string msg = errout.str();
-	TEST_ASSERT(msg == "RDKitDefault mode");
-	std::cout << msg << std::endl;
+	// testing RDKitDefault
+	smi1 = "CO(C)C";
+	unique_ptr<ROMol> m1( SmilesToMol(smi1, 0, false) );
+	vector<ValidationErrorInfo> errout1 = v.validate(*m1, MolStandardize::RDKitDefault);
+	for (auto &query : errout1) {
+	std::string msg = query.message();
+	TEST_ASSERT(msg == "Explicit valence for atom # 1 O, 3, is greater than permitted");
+	}
 
-	std::ostringstream errout2 = v.validate(*m1, MolStandardize::AllowedAtoms);    
-        std::string msg2 = errout2.str();                                               
-        TEST_ASSERT(msg2 == "AllowedAtoms mode");
-	std::cout << msg2 << std::endl;
+	smi2 = "";
+	unique_ptr<ROMol> m2( SmilesToMol(smi2, 0, false) );
+	vector<ValidationErrorInfo> errout2 = v.validate(*m2, MolStandardize::RDKitDefault);
+	for (auto &query : errout2) {
+	std::string msg = query.message();
+	TEST_ASSERT(msg == "Molecule has no atoms");
+	}
 
-	std::ostringstream errout3 = v.validate(*m1, MolStandardize::DisallowedAtoms);
-	std::string msg3 = errout3.str();
-	TEST_ASSERT(msg3 == "DisallowedAtoms mode");
-	std::cout << msg3 << std::endl;
+	smi3 = "CO(C)CCN(=O)=O";
+	unique_ptr<ROMol> m3( SmilesToMol(smi3, 0, false) );
+	vector<ValidationErrorInfo> errout3 = v.validate(*m3, MolStandardize::RDKitDefault);
+	std::vector<string> msgs;
+	std::vector<string> ans = {"Explicit valence for atom # 1 O, 3, is greater than permitted", 
+			"Explicit valence for atom # 5 N, 5, is greater than permitted"};
+	for (auto &query : errout3) {
+		msgs.push_back(query.message());
+	}
+	TEST_ASSERT(msgs == ans);
+	
+//	MolStandardize::ValidationErrorInfo errout2 = v.validate(*m1, MolStandardize::AllowedAtoms);    
+//        std::string msg2 = errout2.message();                                               
+//        TEST_ASSERT(msg2 == "AllowedAtoms mode");
+//	std::cout << msg2 << std::endl;
+//
+//	MolStandardize::ValidationErrorInfo errout3 = v.validate(*m1, MolStandardize::DisallowedAtoms);
+//	std::string msg3 = errout3.message();
+//	TEST_ASSERT(msg3 == "DisallowedAtoms mode");
+//	std::cout << msg3 << std::endl;
 }
 
 int main() {

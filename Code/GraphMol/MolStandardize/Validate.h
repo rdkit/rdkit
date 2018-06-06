@@ -1,7 +1,13 @@
 #ifndef __RD_VALIDATE_H__
 #define __RD_VALIDATE_H__
 
+#include <GraphMol/RDKitBase.h>
+#include <GraphMol/ROMol.h>
+#include <GraphMol/Atom.h>
 #include <iostream>
+#include <exception>
+#include <string>
+#include <vector>
 
 namespace RDKit{
 class RWMol;
@@ -24,14 +30,26 @@ enum ValidationType {
 //	ValidationType valType;
 //};
 
+class ValidationErrorInfo: public std::exception {
+	public:
+		ValidationErrorInfo(const std::string &msg): _msg(msg){};
+		const char* message() const { return _msg.c_str(); };
+		~ValidationErrorInfo() throw() {};
+	private:
+		std::string _msg;
+}; // class ValidationErrorInfo
+
 class Validator{
 	public:
 		Validator();
 		Validator(const Validator &other);
 		~Validator();
 		
-		std::ostringstream validate(const ROMol &mol, const ValidationType &vtype);
+		std::vector<ValidationErrorInfo> validate(const ROMol &mol, const ValidationType &vtype, bool reportAllFailures = true);
 
+		std::vector<ValidationErrorInfo> validateRDKitDefault(const ROMol &mol);
+//		ValidationErrorInfo validateAllowedAtoms(const ROMol &mol); 
+//		ValidationErrorInfo validateDisallowedAtoms(const ROMol &mol); 
 }; // class Validator
 } // namespace MolStandardize
 } // namespace RDKit
