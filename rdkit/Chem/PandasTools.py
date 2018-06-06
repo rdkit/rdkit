@@ -135,6 +135,8 @@ try:
       pd.set_option('display.height', 1000000000)
     if 'display.max_colwidth' in pd.core.config._registered_options:
       pd.set_option('display.max_colwidth', 1000000000)
+    if 'display.max_columns' in pd.core.config._registered_options:
+      pd.set_option('display.max_columns', 20)
     # saves the default pandas rendering to allow restoration
     defPandasRendering = pd.core.frame.DataFrame.to_html
 except ImportError:
@@ -256,7 +258,7 @@ def PrintAsBase64PNGString(x, renderer=None):
     svg = Draw._moltoSVG(x, molSize, highlightAtoms, "", True)
     return SVG(svg).data
   else:
-    data = Draw._moltoimg(x,molSize,highlightAtoms,"",returnPNG=True, kekulize=True)
+    data = Draw._moltoimg(x, molSize, highlightAtoms, "", returnPNG=True, kekulize=True)
     return '<img src="data:image/png;base64,%s" alt="Mol"/>' % _get_image(data)
 
 
@@ -386,9 +388,10 @@ def WriteSDF(df, out, molColName='ROMol', idName=None, properties=None, allNumer
   else:
     properties = list(properties)
   if allNumeric:
-    properties.extend(
-      [dt for dt in df.dtypes.keys()
-       if (np.issubdtype(df.dtypes[dt], float) or np.issubdtype(df.dtypes[dt], int))])
+    properties.extend([
+      dt for dt in df.dtypes.keys()
+      if (np.issubdtype(df.dtypes[dt], float) or np.issubdtype(df.dtypes[dt], int))
+    ])
 
   if molColName in properties:
     properties.remove(molColName)
@@ -582,35 +585,34 @@ def _runDoctests(verbose=None):  # pragma: nocover
   import doctest
   failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS + doctest.NORMALIZE_WHITESPACE,
                               verbose=verbose)
-  if(failed):
+  if (failed):
     sys.exit(failed)
+
 
 if __name__ == '__main__':  # pragma: nocover
   import unittest
   try:
     import xlsxwriter
   except ImportError:
-    print('not there')
     xlsxwriter = None
+
   class TestCase(unittest.TestCase):
-    @unittest.skipIf(xlsxwriter is None,'xlsxwriter not installed')
+
+    @unittest.skipIf(xlsxwriter is None, 'xlsxwriter not installed')
     def testGithub1507(self):
       import os
       from rdkit import RDConfig
-      sdfFile = os.path.join(RDConfig.RDDataDir,'NCI/first_200.props.sdf')
+      sdfFile = os.path.join(RDConfig.RDDataDir, 'NCI/first_200.props.sdf')
       frame = LoadSDF(sdfFile)
-      SaveXlsxFromFrame(frame,'foo.xlsx')
+      SaveXlsxFromFrame(frame, 'foo.xlsx')
 
   if pd is None:
     print("pandas installation not found, skipping tests", file=sys.stderr)
   elif _getPandasVersion() < (0, 10):
     print("pandas installation >=0.10 not found, skipping tests", file=sys.stderr)
   else:
-    _runDoctests();
+    _runDoctests()
     unittest.main()
-
-
-
 
 # $Id$
 #
