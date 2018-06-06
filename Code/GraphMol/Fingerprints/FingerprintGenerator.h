@@ -178,7 +178,7 @@ class FingerprintGenerator {
       AtomInvariantsGenerator *atomInvariantsGenerator = nullptr,
       BondInvariantsGenerator *bondInvariantsGenerator = nullptr);
 
-  void cleanUpResources();
+  ~FingerprintGenerator();
 
   SparseIntVect<std::uint32_t> *getFingerprint(
       const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms = nullptr,

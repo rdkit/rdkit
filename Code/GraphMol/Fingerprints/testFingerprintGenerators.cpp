@@ -84,10 +84,10 @@ void testAtomPairFP() {
   SparseIntVect<std::uint32_t> *fp;
   std::uint32_t c1, c2, c3;
 
-  FingerprintGenerator atomPairGenerator = AtomPair::getAtomPairGenerator();
+  FingerprintGenerator *atomPairGenerator = AtomPair::getAtomPairGenerator();
 
   mol = SmilesToMol("CCC");
-  fp = atomPairGenerator.getFingerprint(*mol);
+  fp = atomPairGenerator->getFingerprint(*mol);
   TEST_ASSERT(fp->getTotalVal() == 3);
   TEST_ASSERT(fp->getNonzeroElements().size() == 2);
 
@@ -100,7 +100,7 @@ void testAtomPairFP() {
   delete mol;
   delete fp;
   mol = SmilesToMol("CC=O.Cl");
-  fp = atomPairGenerator.getFingerprint(*mol);
+  fp = atomPairGenerator->getFingerprint(*mol);
   TEST_ASSERT(fp->getTotalVal() == 3);
   TEST_ASSERT(fp->getNonzeroElements().size() == 3);
 
@@ -113,7 +113,8 @@ void testAtomPairFP() {
 
   delete mol;
   delete fp;
-  atomPairGenerator.cleanUpResources();
+  delete atomPairGenerator;
+
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
@@ -128,11 +129,11 @@ void testAtomPairOld() {
     SparseIntVect<boost::int32_t> *fp1, *fp2;
     SparseIntVect<boost::uint32_t> *fpu;
 
-    FingerprintGenerator atomPairGenerator = AtomPair::getAtomPairGenerator();
+    FingerprintGenerator *atomPairGenerator = AtomPair::getAtomPairGenerator();
 
     mol = SmilesToMol("CCC");
     fp1 = AtomPairs::getAtomPairFingerprint(*mol);
-    fpu = atomPairGenerator.getFingerprint(*mol);
+    fpu = atomPairGenerator->getFingerprint(*mol);
     fp2 = new SparseIntVect<boost::int32_t>(fpu->size());
     std::map<boost::uint32_t, int> nz = fpu->getNonzeroElements();
     for (std::map<boost::uint32_t, int>::iterator it = nz.begin();
@@ -150,7 +151,7 @@ void testAtomPairOld() {
 
     mol = SmilesToMol("CC=O.Cl");
     fp1 = AtomPairs::getAtomPairFingerprint(*mol);
-    fpu = atomPairGenerator.getFingerprint(*mol);
+    fpu = atomPairGenerator->getFingerprint(*mol);
     fp2 = new SparseIntVect<boost::int32_t>(fpu->size());
     nz = fpu->getNonzeroElements();
     for (std::map<boost::uint32_t, int>::iterator it = nz.begin();
@@ -165,8 +166,7 @@ void testAtomPairOld() {
     delete fp1;
     delete fp2;
     delete fpu;
-
-    atomPairGenerator.cleanUpResources();
+    delete atomPairGenerator;
 
     BOOST_LOG(rdErrorLog) << "  done" << std::endl;
   }
@@ -179,6 +179,6 @@ int main(int argc, char *argv[]) {
   testAtomCodes();
   testAtomPairFP();
   testAtomPairOld();
-  
+
   return 0;
 }

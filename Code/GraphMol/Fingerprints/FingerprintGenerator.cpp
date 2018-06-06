@@ -27,7 +27,7 @@ FingerprintGenerator::FingerprintGenerator(
   this->dp_bondInvariantsGenerator = bondInvariantsGenerator;
 }
 
-void FingerprintGenerator::cleanUpResources() {
+FingerprintGenerator::~FingerprintGenerator() {
   delete dp_atomEnvironmentGenerator;
   delete dp_fingerprintArguments;
   dp_atomEnvironmentGenerator = nullptr;

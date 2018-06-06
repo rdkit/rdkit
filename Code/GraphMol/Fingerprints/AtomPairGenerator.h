@@ -133,7 +133,7 @@ class AtomPairEnvGenerator : public AtomEnvironmentGenerator {
 
   /return FingerprintGenerator that generates atom-pair fingerprints
  */
-FingerprintGenerator getAtomPairGenerator(
+FingerprintGenerator *getAtomPairGenerator(
     const unsigned int minDistance = 1,
     const unsigned int maxDistance = maxPathLen - 1,
     const bool includeChirality = false, const bool use2D = true,

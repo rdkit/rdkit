@@ -68,9 +68,10 @@ std::uint32_t getAtomCode(const Atom *atom, unsigned int branchSubtract,
   code |= typeIdx << (numBranchBits + numPiBits);
   code |= cipCodeBits << (numBranchBits + numPiBits + numTypeBits);
 
-  POSTCONDITION(code < static_cast<std::uint32_t>(
-                           1 << (codeSize + (includeChirality ? numChiralBits : 0))),
-                "code exceeds number of bits");
+  POSTCONDITION(
+      code < static_cast<std::uint32_t>(
+                 1 << (codeSize + (includeChirality ? numChiralBits : 0))),
+      "code exceeds number of bits");
   return code;
 };
 
@@ -85,8 +86,8 @@ std::uint32_t getAtomPairCode(std::uint32_t codeI, std::uint32_t codeJ,
 }
 
 std::uint64_t AtomPairArguments::getResultSize() const {
-  return (
-      1 << (numAtomPairFingerprintBits + 2 * (df_includeChirality ? numChiralBits : 0)));
+  return (1 << (numAtomPairFingerprintBits +
+                2 * (df_includeChirality ? numChiralBits : 0)));
 }
 
 AtomPairArguments::AtomPairArguments(const bool countSimulation,
@@ -195,7 +196,7 @@ std::vector<AtomEnvironment *> AtomPairEnvGenerator::getEnvironments(
   return result;
 }
 
-FingerprintGenerator getAtomPairGenerator(
+FingerprintGenerator *getAtomPairGenerator(
     const unsigned int minDistance, const unsigned int maxDistance,
     const bool includeChirality, const bool use2D,
     const bool useCountSimulation,
@@ -206,8 +207,9 @@ FingerprintGenerator getAtomPairGenerator(
   FingerprintArguments *atomPairArguments = new AtomPair::AtomPairArguments(
       useCountSimulation, includeChirality, use2D, minDistance, maxDistance);
 
-  return FingerprintGenerator(atomPairEnvGenerator, atomPairArguments,
-                              atomInvariantsGenerator, bondInvariantsGenerator);
+  return new FingerprintGenerator(atomPairEnvGenerator, atomPairArguments,
+                                  atomInvariantsGenerator,
+                                  bondInvariantsGenerator);
 }
 
 }  // namespace AtomPair
