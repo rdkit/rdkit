@@ -172,6 +172,48 @@ void testAtomPairOld() {
   }
 }
 
+void testAtomPairOutput() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Test atom-pair additional output" << std::endl;
+
+  ROMol *mol;
+  SparseIntVect<std::uint32_t> *fp;
+  std::uint32_t c1, c2, c3;
+  AdditionalOutput additionalOutput = {nullptr, nullptr, nullptr, nullptr};
+  std::vector<std::uint64_t> v;
+
+  FingerprintGenerator *atomPairGenerator = AtomPair::getAtomPairGenerator();
+  mol = SmilesToMol("CCC");
+  additionalOutput.atomToBits =
+      new std::vector<std::vector<std::uint64_t>>(mol->getNumAtoms());
+  fp = atomPairGenerator->getFingerprint(*mol, nullptr, nullptr, -1,
+                                         &additionalOutput);
+  c1 = AtomPair::getAtomCode(mol->getAtomWithIdx(0));
+  c2 = AtomPair::getAtomCode(mol->getAtomWithIdx(1));
+  c3 = AtomPair::getAtomCode(mol->getAtomWithIdx(2));
+  std::cout << additionalOutput.atomToBits->at(0).empty() << std::endl;
+  v = additionalOutput.atomToBits->at(0);
+  TEST_ASSERT(std::find(v.begin(), v.end(),
+                        (AtomPair::getAtomPairCode(c1, c2, 1))) != v.end());
+  TEST_ASSERT(std::find(v.begin(), v.end(),
+                        (AtomPair::getAtomPairCode(c1, c3, 2))) != v.end());
+  v = additionalOutput.atomToBits->at(1);
+  TEST_ASSERT(std::find(v.begin(), v.end(),
+                        (AtomPair::getAtomPairCode(c1, c2, 1))) != v.end());
+  TEST_ASSERT(std::find(v.begin(), v.end(),
+                        (AtomPair::getAtomPairCode(c2, c3, 1))) != v.end());
+  v = additionalOutput.atomToBits->at(2);
+  TEST_ASSERT(std::find(v.begin(), v.end(),
+                        (AtomPair::getAtomPairCode(c1, c3, 2))) != v.end());
+  TEST_ASSERT(std::find(v.begin(), v.end(),
+                        (AtomPair::getAtomPairCode(c2, c3, 1))) != v.end());
+
+  delete mol;
+  delete fp;
+  delete additionalOutput.atomToBits;
+  delete atomPairGenerator;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -179,6 +221,7 @@ int main(int argc, char *argv[]) {
   testAtomCodes();
   testAtomPairFP();
   testAtomPairOld();
+  testAtomPairOutput();
 
   return 0;
 }

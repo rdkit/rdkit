@@ -76,7 +76,8 @@ class AtomPairAtomEnv : public AtomEnvironment {
   std::uint32_t getBitId(
       FingerprintArguments *arguments,
       const std::vector<std::uint32_t> *atomInvariants,
-      const std::vector<std::uint32_t> *bondInvariants) const;
+      const std::vector<std::uint32_t> *bondInvariants,
+      const AdditionalOutput *additionalOutput) const;
 
   /*!
     /brief construct a new AtomPairAtomEnv object

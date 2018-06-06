@@ -106,12 +106,20 @@ AtomPairArguments::AtomPairArguments(const bool countSimulation,
 std::uint32_t AtomPairAtomEnv::getBitId(
     FingerprintArguments *arguments,
     const std::vector<std::uint32_t> *atomInvariants,
-    const std::vector<std::uint32_t> *bondInvariants) const {
+    const std::vector<std::uint32_t> *bondInvariants,
+    const AdditionalOutput *additionalOutput) const {
   AtomPairArguments *atomPairArguments =
       dynamic_cast<AtomPairArguments *>(arguments);
 
-  return getAtomPairCode(d_atomCodeFirst, d_atomCodeSecond, d_distance,
-                         atomPairArguments->df_includeChirality);
+  std::uint32_t bitId =
+      getAtomPairCode(d_atomCodeFirst, d_atomCodeSecond, d_distance,
+                      atomPairArguments->df_includeChirality);
+
+  if (additionalOutput && additionalOutput->atomToBits) {
+    additionalOutput->atomToBits->at(d_atomIdFirst).push_back(bitId);
+    additionalOutput->atomToBits->at(d_atomIdSecond).push_back(bitId);
+  }
+  return bitId;
 }
 
 AtomPairAtomEnv::AtomPairAtomEnv(const unsigned int atomIdFirst,
@@ -134,6 +142,10 @@ std::vector<AtomEnvironment *> AtomPairEnvGenerator::getEnvironments(
     const std::vector<std::uint32_t> *bondInvariants) const {
   PRECONDITION(!atomInvariants || atomInvariants->size() >= mol.getNumAtoms(),
                "bad atomInvariants size");
+  const unsigned int atomCount = mol.getNumAtoms();
+  PRECONDITION(!additionalOutput || !additionalOutput->atomToBits ||
+                   additionalOutput->atomToBits->size() == atomCount,
+               "bad atomToBits size in AdditionalOutput");
 
   AtomPairArguments *atomPairArguments =
       dynamic_cast<AtomPairArguments *>(arguments);
@@ -144,8 +156,6 @@ std::vector<AtomEnvironment *> AtomPairEnvGenerator::getEnvironments(
   } else {
     distanceMatrix = MolOps::get3DDistanceMat(mol, confId);
   }
-
-  const unsigned int atomCount = mol.getNumAtoms();
 
   std::vector<std::uint32_t> atomCodeCache = std::vector<std::uint32_t>();
   for (ROMol::ConstAtomIterator atomItI = mol.beginAtoms();

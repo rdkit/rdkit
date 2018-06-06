@@ -12,6 +12,8 @@ class ROMol;
 struct AdditionalOutput {
   // will review this structure once more fignerprint types are implemented
 
+  std::vector<std::vector<std::uint64_t>> *atomToBits;
+
   std::map<std::uint32_t, std::vector<std::pair<std::uint32_t, std::uint32_t>>>
       *bitInfoMap;
   // morgan fp
@@ -69,8 +71,9 @@ class AtomEnvironment {
    */
   virtual std::uint32_t getBitId(
       FingerprintArguments *arguments,
-      const std::vector<std::uint32_t> *atomInvariants = nullptr,
-      const std::vector<std::uint32_t> *bondInvariants = nullptr) const = 0;
+      const std::vector<std::uint32_t> *atomInvariants,
+      const std::vector<std::uint32_t> *bondInvariants,
+      const AdditionalOutput *AdditionalOutput) const = 0;
 
   virtual ~AtomEnvironment() = 0;
 };

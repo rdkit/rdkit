@@ -66,7 +66,7 @@ SparseIntVect<std::uint32_t> *FingerprintGenerator::getFingerprint(
        it != atomEnvironments.end(); it++) {
     std::uint32_t bitId =
         (*it)->getBitId(dp_fingerprintArguments, atomInvariantsAsPointer,
-                        bondInvariantsAsPointer);
+                        bondInvariantsAsPointer, additionalOutput);
 
     if (dp_fingerprintArguments->d_countSimulation) {
       res->setVal(bitId, res->getVal(bitId) + 1);
