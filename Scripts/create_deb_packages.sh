@@ -18,16 +18,21 @@ make -j $nprocs
 cpack -G DEB
 
 # # to install all necessary dependencies on Ubuntu
-# sudo apt-get install \
-#      fonts-freefont-ttf \
-#      libboost-python1.58.0 \
-#      libboost-regex1.58.0 \
-#      libboost-system1.58.0 \
-#      libboost-thread1.58.0 \
-#      libc6 \
-#      libgcc1 \
-#      libpython2.7 \
-#      libstdc++6 \
-#      python
+#sudo apt install -y \
+#  curl \
+#  wget \
+#  libboost-all-dev \
+#  cmake \
+#  git \
+#  g++ \
+#  libeigen3-dev \
+#  python3 \
+#  libpython3-all-dev \
+#  python3-numpy \
+#  python3-pip \
+#  python3-pil \
+#  python3-six \
+#  python3-pandas
+
 # # to install the freshly built rdkit packages
 # sudo dpkg -i *.deb
