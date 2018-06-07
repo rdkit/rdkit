@@ -150,10 +150,11 @@ ROMol *MolFromMolBlock(python::object imolBlock, bool sanitize, bool removeHs,
 }
 
 ROMol *MolFromMol2File(const char *molFilename, bool sanitize = true,
-                       bool removeHs = true) {
+                       bool removeHs = true, bool cleanupSubstructures = true) {
   RWMol *newM;
   try {
-    newM = Mol2FileToMol(molFilename, sanitize, removeHs);
+    newM = Mol2FileToMol(molFilename, sanitize, removeHs, CORINA,
+                         cleanupSubstructures);
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.message());
     throw python::error_already_set();
@@ -164,11 +165,13 @@ ROMol *MolFromMol2File(const char *molFilename, bool sanitize = true,
 }
 
 ROMol *MolFromMol2Block(std::string mol2Block, bool sanitize = true,
-                        bool removeHs = true) {
+                        bool removeHs = true,
+                        bool cleanupSubstructures = true) {
   std::istringstream inStream(mol2Block);
   RWMol *newM;
   try {
-    newM = Mol2DataStreamToMol(inStream, sanitize, removeHs);
+    newM = Mol2DataStreamToMol(inStream, sanitize, removeHs, CORINA,
+                               cleanupSubstructures);
   } catch (...) {
     newM = nullptr;
   }
@@ -330,7 +333,7 @@ ROMol *MolFromSmilesHelper(python::object ismiles,
 
   return SmilesToMol(smiles, params);
 }
-}
+}  // namespace RDKit
 
 // MolSupplier stuff
 #ifdef SUPPORT_COMPRESSED_SUPPLIERS
@@ -481,13 +484,18 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       This only make sense when sanitization is done.\n\
       Defaults to true.\n\
 \n\
+    - cleanupSubstructures: (optional) toggles standardizing some \n\
+      substructures found in mol2 files.\n\
+      Defaults to true.\n\
+\n\
   RETURNS:\n\
 \n\
     a Mol object, None on failure.\n\
 \n";
   python::def("MolFromMol2File", RDKit::MolFromMol2File,
               (python::arg("molFileName"), python::arg("sanitize") = true,
-               python::arg("removeHs") = true),
+               python::arg("removeHs") = true,
+               python::arg("cleanupSubstructures") = true),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
   docString =
@@ -508,13 +516,18 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       This only make sense when sanitization is done.\n\
       Defaults to true.\n\
 \n\
+    - cleanupSubstructures: (optional) toggles standardizing some \n\
+      substructures found in mol2 files.\n\
+      Defaults to true.\n\
+\n\
   RETURNS:\n\
 \n\
     a Mol object, None on failure.\n\
 \n";
   python::def("MolFromMol2Block", RDKit::MolFromMol2Block,
               (python::arg("molBlock"), python::arg("sanitize") = true,
-               python::arg("removeHs") = true),
+               python::arg("removeHs") = true,
+               python::arg("cleanupSubstructures") = true),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
 

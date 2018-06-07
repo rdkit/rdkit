@@ -791,7 +791,7 @@ void ParseMol2BondBlock(std::istream *inStream, RWMol *res, unsigned int nBonds,
 //
 //------------------------------------------------
 RWMol *Mol2DataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
-                           Mol2Type variant) {
+                           Mol2Type variant, bool cleanupSubstructures) {
   RDUNUSED_PARAM(variant);
   PRECONDITION(inStream, "no stream");
   std::string tempStr, lineBeg;
@@ -920,7 +920,12 @@ RWMol *Mol2DataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
   }
 
   if (!chargeStart) {
-    bool molFixed = cleanUpMol2Substructures(res);
+    bool molFixed;
+    if (cleanupSubstructures) {
+      molFixed = cleanUpMol2Substructures(res);
+    } else {
+      molFixed = true;
+    }
 
     if (!molFixed) {
       delete res;
@@ -982,9 +987,10 @@ RWMol *Mol2DataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
 };
 
 RWMol *Mol2DataStreamToMol(std::istream &inStream, bool sanitize, bool removeHs,
-                           Mol2Type variant) {
+                           Mol2Type variant, bool cleanupSubstructures) {
   RDUNUSED_PARAM(variant);
-  return Mol2DataStreamToMol(&inStream, sanitize, removeHs);
+  return Mol2DataStreamToMol(&inStream, sanitize, removeHs, variant,
+                             cleanupSubstructures);
 };
 //------------------------------------------------
 //
@@ -992,10 +998,11 @@ RWMol *Mol2DataStreamToMol(std::istream &inStream, bool sanitize, bool removeHs,
 //
 //------------------------------------------------
 RWMol *Mol2BlockToMol(const std::string &molBlock, bool sanitize, bool removeHs,
-                      Mol2Type variant) {
+                      Mol2Type variant, bool cleanupSubstructures) {
   RDUNUSED_PARAM(variant);
   std::istringstream inStream(molBlock);
-  return Mol2DataStreamToMol(inStream, sanitize, removeHs);
+  return Mol2DataStreamToMol(inStream, sanitize, removeHs, variant,
+                             cleanupSubstructures);
 }
 
 //------------------------------------------------
@@ -1004,7 +1011,7 @@ RWMol *Mol2BlockToMol(const std::string &molBlock, bool sanitize, bool removeHs,
 //
 //------------------------------------------------
 RWMol *Mol2FileToMol(const std::string &fName, bool sanitize, bool removeHs,
-                     Mol2Type variant) {
+                     Mol2Type variant, bool cleanupSubstructures) {
   // FIX: this binary mode of opening file is here because of a bug in VC++ 6.0
   // the function "tellg" does not work correctly if we do not open it this way
   //   Jan 2009: Confirmed that this is still the case in visual studio 2008
@@ -1017,7 +1024,8 @@ RWMol *Mol2FileToMol(const std::string &fName, bool sanitize, bool removeHs,
   }
   RWMol *res = nullptr;
   if (!inStream.eof()) {
-    res = Mol2DataStreamToMol(inStream, sanitize, removeHs);
+    res = Mol2DataStreamToMol(inStream, sanitize, removeHs, variant,
+                              cleanupSubstructures);
   }
   return res;
 }

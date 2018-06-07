@@ -169,9 +169,14 @@ typedef enum {
  *   \param removeHs - toggles removal of Hs from the molecule. H removal
  *                     is only done if the molecule is sanitized
  *   \param variant  - the atom type definitions to use
+ *   \param cleanupSubstructures - toggles recognition and cleanup of common
+ *                                 substructures
  */
-RDKIT_FILEPARSERS_EXPORT RWMol *Mol2FileToMol(const std::string &fName, bool sanitize = true,
-                     bool removeHs = true, Mol2Type variant = CORINA);
+RDKIT_FILEPARSERS_EXPORT RWMol *Mol2FileToMol(const std::string &fName,
+                                              bool sanitize = true,
+                                              bool removeHs = true,
+                                              Mol2Type variant = CORINA,
+                                              bool cleanupSubstructures = true);
 
 // \brief construct a molecule from Tripos mol2 data in a stream
 /*!
@@ -180,12 +185,16 @@ RDKIT_FILEPARSERS_EXPORT RWMol *Mol2FileToMol(const std::string &fName, bool san
  *   \param removeHs - toggles removal of Hs from the molecule. H removal
  *                     is only done if the molecule is sanitized
  *   \param variant  - the atom type definitions to use
+ *   \param cleanupSubstructures - toggles recognition and cleanup of common
+ *                                 substructures
  */
-RDKIT_FILEPARSERS_EXPORT RWMol *Mol2DataStreamToMol(std::istream *inStream, bool sanitize = true,
-                           bool removeHs = true, Mol2Type variant = CORINA);
+RDKIT_FILEPARSERS_EXPORT RWMol *Mol2DataStreamToMol(
+    std::istream *inStream, bool sanitize = true, bool removeHs = true,
+    Mol2Type variant = CORINA, bool cleanupSubstructures = true);
 // \overload
-RDKIT_FILEPARSERS_EXPORT RWMol *Mol2DataStreamToMol(std::istream &inStream, bool sanitize = true,
-                           bool removeHs = true, Mol2Type variant = CORINA);
+RDKIT_FILEPARSERS_EXPORT RWMol *Mol2DataStreamToMol(
+    std::istream &inStream, bool sanitize = true, bool removeHs = true,
+    Mol2Type variant = CORINA, bool cleanupSubstructures = true);
 
 // \brief construct a molecule from a Tripos mol2 block
 /*!
@@ -194,9 +203,9 @@ RDKIT_FILEPARSERS_EXPORT RWMol *Mol2DataStreamToMol(std::istream &inStream, bool
  *   \param removeHs - toggles removal of Hs from the molecule. H removal
  *                     is only done if the molecule is sanitized
  *   \param variant  - the atom type definitions to use
+ *   \param cleanupSubstructures - toggles recognition and cleanup of common
+ *                                 substructures
  */
-RDKIT_FILEPARSERS_EXPORT RWMol *Mol2BlockToMol(const std::string &molBlock, bool sanitize = true,
-                      bool removeHs = true, Mol2Type variant = CORINA);
 
 RDKIT_FILEPARSERS_EXPORT RWMol *PDBBlockToMol(const char *str, bool sanitize = true,
                      bool removeHs = true, unsigned int flavor = 0,

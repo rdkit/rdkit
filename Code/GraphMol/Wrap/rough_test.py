@@ -2480,6 +2480,18 @@ CAS<~>
     self.assertTrue(m.GetNumAtoms() == 5)
     self.assertTrue(Chem.MolToSmiles(m) == 'c1cn[nH]c1', Chem.MolToSmiles(m))
 
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         '3505.mol2')
+    m = Chem.MolFromMol2File(fileN)
+    self.assertTrue(m.GetBondBetweenAtoms(3, 12) is not None)
+    self.assertEqual(m.GetBondBetweenAtoms(3, 12).GetBondType(), Chem.BondType.SINGLE)
+    self.assertEqual(m.GetAtomWithIdx(12).GetFormalCharge(), 0)
+
+    m = Chem.MolFromMol2File(fileN, cleanupSubstructures=False)
+    self.assertTrue(m.GetBondBetweenAtoms(3, 12) is not None)
+    self.assertEqual(m.GetBondBetweenAtoms(3, 12).GetBondType(), Chem.BondType.DOUBLE)
+    self.assertEqual(m.GetAtomWithIdx(12).GetFormalCharge(), 1)
+
   def test55LayeredFingerprint(self):
     m1 = Chem.MolFromSmiles('CC(C)C')
     fp1 = Chem.LayeredFingerprint(m1)
