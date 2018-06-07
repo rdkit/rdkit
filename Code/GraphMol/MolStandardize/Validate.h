@@ -15,21 +15,6 @@ class ROMol;
 
 namespace MolStandardize{
 
-enum ValidationType {
-	Unspecified = 0,
-	RDKitDefault, 
-	AllowedAtoms,
-	DisallowedAtoms
-};
-
-//struct ValidationParams{
-//	ValidationParams()
-//	       : valType(Unspecified) {}	
-//	ValidationParams(ValidationType valType)
-//		: valType(valType) {}
-//	ValidationType valType;
-//};
-
 class ValidationErrorInfo: public std::exception {
 	public:
 		ValidationErrorInfo(const std::string &msg): _msg(msg){};
@@ -39,18 +24,16 @@ class ValidationErrorInfo: public std::exception {
 		std::string _msg;
 }; // class ValidationErrorInfo
 
-class Validator{
+class ValidationMethod{
 	public:
-		Validator();
-		Validator(const Validator &other);
-		~Validator();
-		
-		std::vector<ValidationErrorInfo> validate(const ROMol &mol, const ValidationType &vtype, bool reportAllFailures = true);
+		virtual std::vector<ValidationErrorInfo> validate(const ROMol &mol, bool reportAllFailures) = 0;
+};
 
-		std::vector<ValidationErrorInfo> validateRDKitDefault(const ROMol &mol);
-//		ValidationErrorInfo validateAllowedAtoms(const ROMol &mol); 
-//		ValidationErrorInfo validateDisallowedAtoms(const ROMol &mol); 
-}; // class Validator
+class RDKitValidation : public ValidationMethod {
+	public:
+		std::vector<ValidationErrorInfo> validate(const ROMol &mol, bool reportAllFailures) override;
+};
+
 } // namespace MolStandardize
 } // namespace RDKit
 
