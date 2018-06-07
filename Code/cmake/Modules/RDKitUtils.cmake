@@ -167,6 +167,13 @@ macro(add_pytest)
   endif(RDK_BUILD_PYTHON_WRAPPERS)
 endmacro(add_pytest)
 
+function(computeMD5 target md5chksum)
+  execute_process(COMMAND ${CMAKE_COMMAND} -E md5sum ${target} OUTPUT_VARIABLE md5list)
+  string(REGEX REPLACE "([a-z0-9]+)" "\\1;" md5list "${md5list}")
+  list(GET md5list 0 md5)
+  set(${md5chksum} ${md5} PARENT_SCOPE)
+endfunction(computeMD5)
+
 function(downloadAndCheckMD5 url target md5chksum)
   if (NOT ${url} EQUAL "")
     get_filename_component(targetDir ${target} PATH)
@@ -187,15 +194,28 @@ function(downloadAndCheckMD5 url target md5chksum)
       MESSAGE(FATAL_ERROR "The download of ${url} failed.")
     endif()
     if (NOT ${md5chksum} EQUAL "")
-      execute_process(COMMAND ${CMAKE_COMMAND} -E md5sum ${target} OUTPUT_VARIABLE md5list)
-      string(REGEX REPLACE "([a-z0-9]+)" "\\1;" md5list "${md5list}")
-      list(GET md5list 0 md5)
+      computeMD5(${target} md5)
       if (NOT md5 STREQUAL ${md5chksum})
         MESSAGE(FATAL_ERROR "The md5 checksum for ${target} is incorrect; expected: ${md5chksum}, found: ${md5}")
       endif()
     endif()
   endif()
 endfunction(downloadAndCheckMD5)
+
+function(overwriteIfChanged src dest)
+  set(overwrite TRUE)
+  if (EXISTS "${dest}")
+    computeMD5("${dest}" destMD5)
+    computeMD5("${src}" srcMD5)
+    if (${destMD5} STREQUAL ${srcMD5})
+      set(overwrite FALSE)
+    endif()
+  endif()
+  if (overwrite)
+    get_filename_component(destDir "${dest}" DIRECTORY)
+    file(COPY "${src}" DESTINATION "${destDir}")
+  endif()
+endfunction(overwriteIfChanged)
 
 function(createExportTestHeaders)
   file(GLOB_RECURSE cmakeLists LIST_DIRECTORIES false
@@ -212,7 +232,8 @@ function(createExportTestHeaders)
   endforeach()
   list(REMOVE_DUPLICATES exportLibs)
   list(SORT exportLibs)
-  file(WRITE "${CMAKE_SOURCE_DIR}/Code/RDBoost/export.h"
+  set(exportPath "Code/RDBoost/export.h")
+  file(WRITE "${CMAKE_BINARY_DIR}/${exportPath}"
     "// auto-generated __declspec definition header\n"
     "#pragma once\n"
     "#ifndef SWIG\n"
@@ -223,12 +244,13 @@ function(createExportTestHeaders)
     "\n"
     "#include <boost/config.hpp>\n"
     "#endif\n")
-  file(WRITE "${CMAKE_SOURCE_DIR}/Code/RDBoost/test.h"
+  set(testPath "Code/RDBoost/test.h")
+  file(WRITE "${CMAKE_BINARY_DIR}/${testPath}"
     "// auto-generated header to be imported in all cpp tests\n"
     "#pragma once\n")
   foreach(exportLib ${exportLibs})
     string(TOUPPER "${exportLib}" exportLib)
-    file(APPEND "${CMAKE_SOURCE_DIR}/Code/RDBoost/export.h"
+    file(APPEND "${CMAKE_BINARY_DIR}/${exportPath}"
       "\n"
       "// RDKIT_${exportLib}_EXPORT definitions\n"
       "#if defined(BOOST_HAS_DECLSPEC) && defined(RDKIT_DYN_LINK) && !defined(SWIG)\n"
@@ -242,10 +264,12 @@ function(createExportTestHeaders)
       "#define RDKIT_${exportLib}_EXPORT\n"
       "#endif\n"
       "// RDKIT_${exportLib}_EXPORT end definitions\n")
-    file(APPEND "${CMAKE_SOURCE_DIR}/Code/RDBoost/test.h"
+    file(APPEND "${CMAKE_BINARY_DIR}/${testPath}"
       "\n"
       "#ifdef RDKIT_${exportLib}_BUILD\n"
       "#undef RDKIT_${exportLib}_BUILD\n"
       "#endif\n")
   endforeach()
+  overwriteIfChanged("${CMAKE_BINARY_DIR}/${exportPath}" "${CMAKE_SOURCE_DIR}/${exportPath}")
+  overwriteIfChanged("${CMAKE_BINARY_DIR}/${testPath}" "${CMAKE_SOURCE_DIR}/${testPath}")
 endfunction(createExportTestHeaders)
