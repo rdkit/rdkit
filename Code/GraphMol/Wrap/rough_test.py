@@ -2306,6 +2306,11 @@ CAS<~>
     self.assertTrue(m.GetAtomWithIdx(1).GetSmarts() == 'O')
     self.assertTrue(m.GetBondBetweenAtoms(0, 1).GetSmarts() == '=')
 
+    m = Chem.MolFromSmiles('C[C@H](F)[15NH3+]')
+    self.assertEqual(m.GetAtomWithIdx(0).GetSmarts(), 'C')
+    self.assertEqual(m.GetAtomWithIdx(0).GetSmarts(allHsExplicit=True), '[CH3]')
+    self.assertEqual(m.GetAtomWithIdx(3).GetSmarts(), '[15NH3+]')
+    self.assertEqual(m.GetAtomWithIdx(3).GetSmarts(allHsExplicit=True), '[15NH3+]')
   def test48Issue1928819(self):
     """ test a crash involving looping directly over mol suppliers
     """
