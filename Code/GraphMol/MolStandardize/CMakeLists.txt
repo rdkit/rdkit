@@ -16,4 +16,4 @@ rdkit_test(molStandardizeTest test1.cpp LINK_LIBRARIES MolStandardize
 rdkit_test(molNormalizeTest testNormalize.cpp LINK_LIBRARIES MolStandardize
 	SmilesParse RDGeneral GraphMol SubstructMatch)
 rdkit_test(molValidateTest testValidate.cpp LINK_LIBRARIES MolStandardize
-	SmilesParse RDGeneral GraphMol SubstructMatch)
+	SmilesParse RDGeneral GraphMol SubstructMatch FileParsers)

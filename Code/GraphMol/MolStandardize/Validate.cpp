@@ -13,7 +13,7 @@ class ROMol;
 
 namespace MolStandardize{
 
-std::vector<ValidationErrorInfo> RDKitValidation::validate(const ROMol &mol, bool reportAllFailures) {
+std::vector<ValidationErrorInfo> RDKitValidation::validate(const ROMol &mol, bool reportAllFailures) const {
 	
 	ROMol molCopy = mol;
 	std::vector<ValidationErrorInfo> errors;
@@ -38,6 +38,22 @@ std::vector<ValidationErrorInfo> RDKitValidation::validate(const ROMol &mol, boo
 		}
 	}
 	return errors;
+}
+
+
+std::vector<ValidationErrorInfo> MolVSValidation::validate(const ROMol &mol, bool reportAllFailures) const {
+
+	std::vector<ValidationErrorInfo> errors;
+
+	this->isNoneValidation(&mol, reportAllFailures, errors);
+
+	return errors;
+}
+
+void MolVSValidation::isNoneValidation(const ROMol *mol, bool reportAllFailures, std::vector<ValidationErrorInfo> &errors) const {
+	if (mol) {
+		errors.push_back(ValidationErrorInfo("Molecule is None."));
+				}
 }
 
 } // namespace MolStandardize

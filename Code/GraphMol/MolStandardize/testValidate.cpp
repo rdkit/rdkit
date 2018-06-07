@@ -4,6 +4,7 @@
 #include <GraphMol/ROMol.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/FileParsers/FileParsers.h>
 
 #include <iostream>
 
@@ -11,7 +12,7 @@ using namespace RDKit;
 using namespace std;
 using namespace MolStandardize;
 
-void testValidate(){
+void testRDKitValidation(){
 	string smi1, smi2, smi3, smi4;
 	RDKitValidation vm;
 
@@ -58,7 +59,26 @@ void testValidate(){
 	TEST_ASSERT(msgs2 == ans2);
 }
 
+void testMolVSValidation() {
+	string file_root = getenv("RDBASE");
+	file_root += "/Docs/Book/data/";
+	MolVSValidation vm;
+
+	string invalid_mol = file_root + "invalid.mol";
+	unique_ptr<RWMol> m1( RDKit::MolFileToMol(invalid_mol, false) );
+	unique_ptr<ROMol> res( new ROMol(*m1) );
+	vector<ValidationErrorInfo> errout1 = vm.validate(*res, true);
+
+	for (auto &query : errout1) {
+	std::string msg = query.message();
+	std::cout << msg << std::endl;
+	TEST_ASSERT(msg == "Molecule is None.");
+	}
+
+}
+
 int main() {
-	testValidate();
+	//testRDKitValidation();
+	testMolVSValidation();
 	return 0;
 }

@@ -26,12 +26,19 @@ class ValidationErrorInfo: public std::exception {
 
 class ValidationMethod{
 	public:
-		virtual std::vector<ValidationErrorInfo> validate(const ROMol &mol, bool reportAllFailures) = 0;
+		virtual std::vector<ValidationErrorInfo> validate(const ROMol &mol, bool reportAllFailures) const = 0;
 };
 
 class RDKitValidation : public ValidationMethod {
 	public:
-		std::vector<ValidationErrorInfo> validate(const ROMol &mol, bool reportAllFailures) override;
+		std::vector<ValidationErrorInfo> validate(const ROMol &mol, bool reportAllFailures) const override;
+};
+
+class MolVSValidation : public ValidationMethod {
+	public:
+		std::vector<ValidationErrorInfo> validate(const ROMol &mol, bool reportAllFailures) const override;
+	private:
+		void isNoneValidation(const ROMol *mol, bool reportAllFailures, std::vector<ValidationErrorInfo> &errors) const;
 };
 
 } // namespace MolStandardize
