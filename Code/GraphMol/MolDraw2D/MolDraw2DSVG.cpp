@@ -380,6 +380,14 @@ void MolDraw2DSVG::addMoleculeMetadata(const ROMol &mol,int confId){
 
     d_os << " />" << std::endl;
   }
+  for(const auto bond : mol.bonds()) {
+    d_os << "<rdkit:bond idx=\"" << bond->getIdx()+1 << "\"";
+    d_os << " begin-atom-idx=\"" << bond->getBeginAtomIdx()+1 << "\"";
+    d_os << " end-atom-idx=\"" << bond->getEndAtomIdx()+1 << "\"";
+    bool doKekule=false, allBondsExplicit=true;
+    d_os << " bond-smiles=\"" << SmilesWrite::GetBondSmiles(bond, -1, doKekule, allBondsExplicit) << "\"";
+    d_os << " />" << std::endl;
+  }
   d_os << "</rdkit:mol>"<<std::endl;
  }
 
