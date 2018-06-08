@@ -13,12 +13,16 @@
     - `BUILD_SLN_SUPPORT` -> `RDK_BUILD_SLN_SUPPORT`
     - `RDK_CAIRO_BUILD` -> `RDK_BUILD_CAIRO_SUPPORT`
 
-
 ## Backwards incompatible changes
+This release includes a set of changes to make the default arguments to common
+functions less error prone (github #1679).
+- GetAtomSmiles() now generates isomeric SMILES by default.
 
 ## Acknowledgements:
 
 ## Highlights:
+
+## Contrib updates:
 
 ## New Features and Enhancements:
 
