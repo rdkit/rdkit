@@ -300,7 +300,8 @@ std::string FragmentSmilesConstruct(
         }
         // std::cout<<"\t\tAtom: "<<mSE.obj.atom->getIdx()<<std::endl;
         if (!atomSymbols) {
-          res << GetAtomSmiles(mSE.obj.atom, doKekule, bond, allHsExplicit);
+          res << GetAtomSmiles(mSE.obj.atom, doKekule, bond, allHsExplicit,
+                               doIsomericSmiles);
         } else {
           res << (*atomSymbols)[mSE.obj.atom->getIdx()];
         }
