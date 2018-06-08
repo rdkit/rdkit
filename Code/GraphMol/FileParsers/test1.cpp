@@ -5365,7 +5365,7 @@ int main(int argc, char *argv[]) {
                        << std::endl;
   std::setlocale(LC_ALL, "de_DE.UTF-8");
   std::cout << std::setlocale(LC_ALL, nullptr) << std::endl;
-  testLocaleSwitcher();  // must be the last test
+  testLocaleSwitcher();
   testMultiThreadedSwitcher();
   RunTests();
 
