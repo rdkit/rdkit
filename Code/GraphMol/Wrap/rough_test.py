@@ -2311,6 +2311,7 @@ CAS<~>
     self.assertEqual(m.GetAtomWithIdx(0).GetSmarts(allHsExplicit=True), '[CH3]')
     self.assertEqual(m.GetAtomWithIdx(3).GetSmarts(), '[15NH3+]')
     self.assertEqual(m.GetAtomWithIdx(3).GetSmarts(allHsExplicit=True), '[15NH3+]')
+
   def test48Issue1928819(self):
     """ test a crash involving looping directly over mol suppliers
     """
