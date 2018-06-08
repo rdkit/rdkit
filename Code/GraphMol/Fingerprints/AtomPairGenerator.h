@@ -22,10 +22,10 @@ const unsigned int maxPathLen = (1 << numPathBits) - 1;
 const unsigned int numAtomPairFingerprintBits = numPathBits + 2 * codeSize;
 
 unsigned int numPiElectrons(const Atom *atom);
-std::uint32_t getAtomCode(const Atom *atom, unsigned int branchSubtract = 0,
-                          bool includeChirality = false);
+std::uint32_t getAtomCode(const Atom *atom, unsigned int branchSubtract,
+                          bool includeChirality);
 std::uint32_t getAtomPairCode(std::uint32_t codeI, std::uint32_t codeJ,
-                              unsigned int dist, bool includeChirality = false);
+                              unsigned int dist, bool includeChirality);
 
 /*!
   /brief class that holds atom-pair fingerprint specific arguments
@@ -55,8 +55,9 @@ class AtomPairArguments : public FingerprintArguments {
     /param maxDistance      maximum distance between atoms to be considered in a
     pair, default is maxPathLen-1 bonds
    */
-  AtomPairArguments(const bool countSimulation, const bool includeChirality,
-                    const bool use2D, const unsigned int minDistance = 1,
+  AtomPairArguments(const bool countSimulation = true,
+                    const bool includeChirality = false,
+                    const bool use2D = true, const unsigned int minDistance = 1,
                     const unsigned int maxDistance = (maxPathLen - 1));
 };
 
@@ -73,11 +74,10 @@ class AtomPairAtomEnv : public AtomEnvironment {
   const std::uint32_t d_atomCodeSecond;
 
  public:
-  std::uint32_t getBitId(
-      FingerprintArguments *arguments,
-      const std::vector<std::uint32_t> *atomInvariants,
-      const std::vector<std::uint32_t> *bondInvariants,
-      const AdditionalOutput *additionalOutput) const;
+  std::uint32_t getBitId(FingerprintArguments *arguments,
+                         const std::vector<std::uint32_t> *atomInvariants,
+                         const std::vector<std::uint32_t> *bondInvariants,
+                         const AdditionalOutput *additionalOutput) const;
 
   /*!
     /brief construct a new AtomPairAtomEnv object
@@ -102,12 +102,11 @@ class AtomPairEnvGenerator : public AtomEnvironmentGenerator {
  public:
   std::vector<AtomEnvironment *> getEnvironments(
       const ROMol &mol, FingerprintArguments *arguments,
-      const std::vector<std::uint32_t> *fromAtoms = nullptr,
-      const std::vector<std::uint32_t> *ignoreAtoms = nullptr,
-      const int confId = -1, const AdditionalOutput *additionalOutput = nullptr,
-      const std::vector<std::uint32_t> *atomInvariants = nullptr,
-      const std::vector<std::uint32_t> *bondInvariants = nullptr) const;
-
+      const std::vector<std::uint32_t> *fromAtoms,
+      const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
+      const AdditionalOutput *additionalOutput,
+      const std::vector<std::uint32_t> *atomInvariants,
+      const std::vector<std::uint32_t> *bondInvariants) const;
 };
 
 /*!
