@@ -60,21 +60,58 @@ void testRDKitValidation(){
 }
 
 void testMolVSValidation() {
-	string file_root = getenv("RDBASE");
-	file_root += "/Docs/Book/data/";
+	string smi1, smi2, smi3, smi4, smi5, smi6;
 	MolVSValidation vm;
 
-	string invalid_mol = file_root + "invalid.mol";
-	unique_ptr<RWMol> m1( RDKit::MolFileToMol(invalid_mol, false) );
-	unique_ptr<ROMol> res( new ROMol(*m1) );
-	vector<ValidationErrorInfo> errout1 = vm.validate(*res, true);
-
+	// testing MolVSDefault
+	// testing for molecule with no atoms
+	smi1 = "";
+	unique_ptr<ROMol> m1( SmilesToMol(smi1, 0, false) );
+	vector<ValidationErrorInfo> errout1 = vm.validate(*m1, true);
 	for (auto &query : errout1) {
 	std::string msg = query.message();
-	std::cout << msg << std::endl;
-	TEST_ASSERT(msg == "Molecule is None.");
+	TEST_ASSERT(msg == "Molecule has no atoms");
 	}
 
+	smi2 = "O=C([O-])c1ccccc1";
+	unique_ptr<ROMol> m2( SmilesToMol(smi2, 0, false) );
+	vector<ValidationErrorInfo> errout2 = vm.validate(*m2, true);
+	for (auto &query : errout2) {
+	std::string msg = query.message();
+	TEST_ASSERT(msg == "Not an overall neutral system (-1)");
+	}
+
+	smi3 = "CN=[NH+]CN=N";
+	unique_ptr<ROMol> m3( SmilesToMol(smi3, 0, false) );
+	vector<ValidationErrorInfo> errout3 = vm.validate(*m3, true);
+	for (auto &query : errout3) {
+	std::string msg = query.message();
+	TEST_ASSERT(msg == "Not an overall neutral system (1)"); // fix to show + sign
+	}
+
+	smi4 = "[13CH4]";
+	unique_ptr<ROMol> m4( SmilesToMol(smi4, 0, false) );
+	vector<ValidationErrorInfo> errout4 = vm.validate(*m4, true);
+	for (auto &query : errout4) {
+	std::string msg = query.message();
+	TEST_ASSERT(msg == "Molecule contains isotope 13C");
+	}
+
+	smi5 = "[2H]C(Cl)(Cl)Cl";
+	unique_ptr<ROMol> m5( SmilesToMol(smi5, 0, false) );
+	vector<ValidationErrorInfo> errout5 = vm.validate(*m5, true);
+	for (auto &query : errout5) {
+	std::string msg = query.message();
+	TEST_ASSERT(msg == "Molecule contains isotope 2H");
+	}
+
+	smi6 = "[2H]OC([2H])([2H])[2H]";
+	unique_ptr<ROMol> m6( SmilesToMol(smi6, 0, false) );
+	vector<ValidationErrorInfo> errout6 = vm.validate(*m6, true);
+	for (auto &query : errout6) {
+	std::string msg = query.message();
+	TEST_ASSERT(msg == "Molecule contains isotope 2H");
+	}
 }
 
 int main() {

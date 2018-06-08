@@ -38,7 +38,9 @@ class MolVSValidation : public ValidationMethod {
 	public:
 		std::vector<ValidationErrorInfo> validate(const ROMol &mol, bool reportAllFailures) const override;
 	private:
-		void isNoneValidation(const ROMol *mol, bool reportAllFailures, std::vector<ValidationErrorInfo> &errors) const;
+		void noAtomValidation(const ROMol &mol, bool reportAllFailures, std::vector<ValidationErrorInfo> &errors) const;
+		void neutralValidation(const ROMol &mol, bool reportAllFailures, std::vector<ValidationErrorInfo> &errors) const;
+		void isotopeValidation(const ROMol &mol, bool reportAllFailures, std::vector<ValidationErrorInfo> &errors) const;
 };
 
 } // namespace MolStandardize

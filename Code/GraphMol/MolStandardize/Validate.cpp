@@ -3,6 +3,7 @@
 #include <GraphMol/ROMol.h>
 #include <iostream>
 #include <vector>
+#include <string>
 
 using namespace std;
 using namespace RDKit;
@@ -45,15 +46,53 @@ std::vector<ValidationErrorInfo> MolVSValidation::validate(const ROMol &mol, boo
 
 	std::vector<ValidationErrorInfo> errors;
 
-	this->isNoneValidation(&mol, reportAllFailures, errors);
+	this->noAtomValidation(mol, reportAllFailures, errors);
+	// TODO
+	//this->fragmentValidation(mol, reportAllFailures, errors);
+	this->neutralValidation(mol, reportAllFailures, errors);
+	this->isotopeValidation(mol, reportAllFailures, errors);
 
 	return errors;
 }
 
-void MolVSValidation::isNoneValidation(const ROMol *mol, bool reportAllFailures, std::vector<ValidationErrorInfo> &errors) const {
-	if (mol) {
-		errors.push_back(ValidationErrorInfo("Molecule is None."));
-				}
+void MolVSValidation::noAtomValidation(const ROMol &mol, bool reportAllFailures, std::vector<ValidationErrorInfo> &errors) const {
+	unsigned int na = mol.getNumAtoms();
+	
+	if (!na){
+		errors.push_back(ValidationErrorInfo("Molecule has no atoms"));
+	}	
+}
+
+void MolVSValidation::neutralValidation(const ROMol &mol, bool reportAllFailures, std::vector<ValidationErrorInfo> &errors) const {
+	int charge = RDKit::MolOps::getFormalCharge(mol);
+	if (charge != 0) {
+		std::string msg = "Not an overall neutral system (" + std::to_string(charge) + ')';
+//		std::cout << msg << std::endl;
+		errors.push_back(ValidationErrorInfo(msg));
+	}
+}
+
+void MolVSValidation::isotopeValidation(const ROMol &mol, bool reportAllFailures, std::vector<ValidationErrorInfo> &errors) const {
+
+	unsigned int na = mol.getNumAtoms();
+	std::set<string> isotopes;
+	
+	// loop over atoms
+	for (size_t i = 0; i < na; ++i) {
+		if (!reportAllFailures) {
+			if (errors.size() >= 1) {break;}
+		}
+		const Atom* atom = mol.getAtomWithIdx(i);
+		unsigned int isotope = atom->getIsotope();
+		if (isotope != 0) {
+			std::string symbol = atom->getSymbol();
+			isotopes.insert( std::to_string(isotope) + symbol );
+		}
+	}
+
+	for (auto &isotope : isotopes) {
+		errors.push_back(ValidationErrorInfo("Molecule contains isotope " + isotope));
+	}
 }
 
 } // namespace MolStandardize
