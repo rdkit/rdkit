@@ -47,8 +47,7 @@ std::vector<ValidationErrorInfo> MolVSValidation::validate(const ROMol &mol, boo
 	std::vector<ValidationErrorInfo> errors;
 
 	this->noAtomValidation(mol, reportAllFailures, errors);
-	// TODO
-	//this->fragmentValidation(mol, reportAllFailures, errors);
+	this->fragmentValidation(mol, reportAllFailures, errors); //TODO filterscatalog stuff
 	this->neutralValidation(mol, reportAllFailures, errors);
 	this->isotopeValidation(mol, reportAllFailures, errors);
 
@@ -61,6 +60,10 @@ void MolVSValidation::noAtomValidation(const ROMol &mol, bool reportAllFailures,
 	if (!na){
 		errors.push_back(ValidationErrorInfo("Molecule has no atoms"));
 	}	
+}
+
+void MolVSValidation::fragmentValidation(const ROMol &mol, bool reportAllFailures, std::vector<ValidationErrorInfo> &errors) const {
+
 }
 
 void MolVSValidation::neutralValidation(const ROMol &mol, bool reportAllFailures, std::vector<ValidationErrorInfo> &errors) const {
@@ -82,7 +85,7 @@ void MolVSValidation::isotopeValidation(const ROMol &mol, bool reportAllFailures
 		if (!reportAllFailures) {
 			if (errors.size() >= 1) {break;}
 		}
-		const Atom* atom = mol.getAtomWithIdx(i);
+		const Atom* atom = mol.getAtomWithIdx(i) ;
 		unsigned int isotope = atom->getIsotope();
 		if (isotope != 0) {
 			std::string symbol = atom->getSymbol();
@@ -93,6 +96,32 @@ void MolVSValidation::isotopeValidation(const ROMol &mol, bool reportAllFailures
 	for (auto &isotope : isotopes) {
 		errors.push_back(ValidationErrorInfo("Molecule contains isotope " + isotope));
 	}
+}
+
+std::vector<ValidationErrorInfo> AllowedAtomsValidation::validate(const ROMol &mol, bool reportAllFailures) const {
+
+	std::vector<ValidationErrorInfo> errors;
+	unsigned int na = mol.getNumAtoms();
+
+	for (size_t i = 0; i < na; ++i) {
+		if (!reportAllFailures) {
+			if (errors.size() >= 1) {break;}
+		}
+		const Atom* qatom = mol.getAtomWithIdx(i);
+		bool match = false;
+		// checks to see qatom matches one of list of allowedAtoms
+		for (const auto &allowedAtom : this->d_allowedList) {
+			if ( allowedAtom->Match(qatom) ) {
+			       match = true;
+			}		
+		}
+		// if no match, append to list of errors.
+		if (! match) {
+			std::string symbol = qatom->getSymbol();
+			errors.push_back(ValidationErrorInfo("Atom " + symbol + " is not in allowedAtoms list"));
+		}
+	}
+	return errors;
 }
 
 } // namespace MolStandardize

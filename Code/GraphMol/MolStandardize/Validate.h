@@ -39,8 +39,19 @@ class MolVSValidation : public ValidationMethod {
 		std::vector<ValidationErrorInfo> validate(const ROMol &mol, bool reportAllFailures) const override;
 	private:
 		void noAtomValidation(const ROMol &mol, bool reportAllFailures, std::vector<ValidationErrorInfo> &errors) const;
+		void fragmentValidation(const ROMol &mol, bool reportAllFailures, std::vector<ValidationErrorInfo> &errors) const;
 		void neutralValidation(const ROMol &mol, bool reportAllFailures, std::vector<ValidationErrorInfo> &errors) const;
 		void isotopeValidation(const ROMol &mol, bool reportAllFailures, std::vector<ValidationErrorInfo> &errors) const;
+};
+
+class AllowedAtomsValidation : public ValidationMethod {
+	public:
+		AllowedAtomsValidation(const std::vector<std::shared_ptr<Atom>> &atoms) : d_allowedList(atoms) {};
+		std::vector<ValidationErrorInfo> validate(const ROMol &mol, bool reportAllFailures) const override;
+	private:
+		std::vector<std::shared_ptr<Atom>> d_allowedList;
+		// void initializeDefaultAtoms; // TODO with filtersCatalog
+		// stuff
 };
 
 } // namespace MolStandardize
