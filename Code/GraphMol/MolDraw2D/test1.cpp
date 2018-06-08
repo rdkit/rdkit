@@ -2127,6 +2127,34 @@ void testGithub1829() {
 }
 
 
+void test16MoleculeMetadata() {
+  std::cout << " ----------------- Testing inclusion of molecule metadata"
+            << std::endl;
+  {
+    std::string smiles = "CN[C@H](Cl)C(=O)O";
+    std::unique_ptr<RWMol> m1(SmilesToMol(smiles));
+    TEST_ASSERT(m1);
+    MolDraw2DUtils::prepareMolForDrawing(*m1);
+
+    {  // start with color
+      MolDraw2DSVG drawer(200, 200);
+      drawer.drawMolecule(*m1, "m1");
+      drawer.addMoleculeMetadata(*m1);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+
+
+      std::ofstream outs("test16_1.svg");
+      outs << text;
+      outs.flush();
+    }
+  }
+  std::cerr << " Done" << std::endl;
+}
+
+
+
+
 int main() {
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   RDDepict::preferCoordGen = false;
@@ -2167,4 +2195,5 @@ int main() {
   test14BWPalette();
   test15ContinuousHighlightingWithGrid();
   testGithub1829();
+  test16MoleculeMetadata();
 }

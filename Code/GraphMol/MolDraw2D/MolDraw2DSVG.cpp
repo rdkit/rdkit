@@ -12,6 +12,9 @@
 
 #include "MolDraw2DSVG.h"
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <Geometry/point.h>
+
 #include <boost/algorithm/string.hpp>
 #include <sstream>
 
@@ -361,6 +364,25 @@ void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds) {
   d_os << span << "</tspan>";
   d_os << "</text>\n";
 }
+
+void MolDraw2DSVG::addMoleculeMetadata(const ROMol &mol,int confId){
+  PRECONDITION(d_os, "no output stream");
+  d_os << "<rdkit:mol>";
+  for(const auto atom : mol.atoms()) {
+    d_os << "<rdkit:atom idx=\"" << atom->getIdx()+1 << "\"";
+    bool doKekule=false, allHsExplicit=true, isomericSmiles=true;
+    d_os << " atom-smiles=\"" << SmilesWrite::GetAtomSmiles(atom, doKekule, nullptr, allHsExplicit, isomericSmiles) << "\"";
+    Point2D dpos = getDrawCoords(atomCoords()[atom->getIdx()]);
+    d_os << " drawing-x=\"" << dpos.x<< "\"" << " drawing-y=\"" << dpos.y<< "\"";
+    const Conformer &conf = mol.getConformer(confId);
+    RDGeom::Point3D pos = conf.getAtomPos(atom->getIdx());
+    d_os << " x=\"" << pos.x<< "\"" << " y=\"" << pos.y<< "\"" << " z=\"" << pos.z<< "\"";
+
+    d_os << " />" << std::endl;
+  }
+  d_os << "</rdkit:mol>"<<std::endl;
+ }
+
 
 void MolDraw2DSVG::tagAtoms(const ROMol &mol) {
   PRECONDITION(d_os, "no output stream");
