@@ -108,8 +108,6 @@ class AtomPairEnvGenerator : public AtomEnvironmentGenerator {
       const std::vector<std::uint32_t> *atomInvariants = nullptr,
       const std::vector<std::uint32_t> *bondInvariants = nullptr) const;
 
-  void cleanUpEnvironments(
-      std::vector<AtomEnvironment *> atomEnvironments) const;
 };
 
 /*!
