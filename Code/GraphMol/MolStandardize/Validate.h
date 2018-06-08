@@ -54,6 +54,16 @@ class AllowedAtomsValidation : public ValidationMethod {
 		// stuff
 };
 
+class DisallowedAtomsValidation : public ValidationMethod {
+	public:
+		DisallowedAtomsValidation(const std::vector<std::shared_ptr<Atom>> &atoms) : d_disallowedList(atoms) {};
+		std::vector<ValidationErrorInfo> validate(const ROMol &mol, bool reportAllFailures) const override;
+	private:
+		std::vector<std::shared_ptr<Atom>> d_disallowedList;
+		// void initializeDefaultAtoms; // TODO with filtersCatalog
+		// stuff
+};
+
 } // namespace MolStandardize
 } // namespace RDKit
 

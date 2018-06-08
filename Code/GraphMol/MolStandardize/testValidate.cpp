@@ -137,9 +137,34 @@ void testAllowedAtomsValidation() {
 
 }
 
+void testDisallowedAtomsValidation() {
+	std::vector<string> atoms = {"F", "Cl", "Br"};
+	std::vector<shared_ptr<Atom>> atomList;	
+
+	for (auto &atom : atoms) {
+		shared_ptr<Atom> a( new Atom(atom) );
+		atomList.push_back(a);
+	}
+
+	DisallowedAtomsValidation vm(atomList);
+	std::string smi1;
+
+	smi1 = "CC(=O)CF";
+	unique_ptr<ROMol> m1( SmilesToMol(smi1) );
+	vector<ValidationErrorInfo> errout1 = vm.validate(*m1, true);
+	for (auto &query : errout1) {
+	std::string msg = query.message();
+	std::cout << msg << std::endl;
+	TEST_ASSERT(msg == "Atom F is in disallowedAtoms list");
+	}
+
+}
+
+
 int main() {
 	//testRDKitValidation();
 	//testMolVSValidation();
-	testAllowedAtomsValidation();
+//	testAllowedAtomsValidation();
+	testDisallowedAtomsValidation();
 	return 0;
 }

@@ -124,5 +124,31 @@ std::vector<ValidationErrorInfo> AllowedAtomsValidation::validate(const ROMol &m
 	return errors;
 }
 
+std::vector<ValidationErrorInfo> DisallowedAtomsValidation::validate(const ROMol &mol, bool reportAllFailures) const {
+
+	std::vector<ValidationErrorInfo> errors;
+	unsigned int na = mol.getNumAtoms();
+
+	for (size_t i = 0; i < na; ++i) {
+		if (!reportAllFailures) {
+			if (errors.size() >= 1) {break;}
+		}
+		const Atom* qatom = mol.getAtomWithIdx(i);
+		bool match = false;
+		// checks to see qatom matches one of list of allowedAtoms
+		for (const auto &disallowedAtom : this->d_disallowedList) {
+			if ( disallowedAtom->Match(qatom) ) {
+			       match = true;
+			}		
+		}
+		// if no match, append to list of errors.
+		if (match) {
+			std::string symbol = qatom->getSymbol();
+			errors.push_back(ValidationErrorInfo("Atom " + symbol + " is in disallowedAtoms list"));
+		}
+	}
+	return errors;
+}
+
 } // namespace MolStandardize
 } // namespace RDKit
