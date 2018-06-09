@@ -6,7 +6,7 @@
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
 #include <GraphMol/MolDraw2D/MolDraw2DCairo.h>
 #endif
 
@@ -25,7 +25,7 @@ int main( int argc , char **argv ) {
   svg_drawer.finishDrawing();
   outs.close();
 
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
   RDKit::MolDraw2DCairo cairo_drawer(300, 300);
   cairo_drawer.drawMolecule(*mol1);
   cairo_drawer.finishDrawing();

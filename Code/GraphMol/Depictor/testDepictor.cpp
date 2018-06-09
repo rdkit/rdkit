@@ -1032,7 +1032,7 @@ void testGithub1691() {
 }
 
 int main() {
-#ifdef BUILD_COORDGEN_SUPPORT
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
   RDDepict::preferCoordGen = false;
 #endif
 

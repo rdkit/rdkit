@@ -2,6 +2,8 @@ CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/versions.cpp.cmake
                ${CMAKE_CURRENT_SOURCE_DIR}/versions.cpp )
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/versions.h.cmake
                ${CMAKE_CURRENT_SOURCE_DIR}/versions.h )
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/RDConfig.h.cmake
+              ${CMAKE_CURRENT_SOURCE_DIR}/RDConfig.h )
 
 
 add_definitions(-DRDKIT_RDGENERAL_BUILD)
@@ -52,6 +54,7 @@ rdkit_headers(Exceptions.h
               types.h
               utils.h
               versions.h
+              RDConfig.h
               LocaleSwitcher.h
               Ranking.h
               hanoiSort.h

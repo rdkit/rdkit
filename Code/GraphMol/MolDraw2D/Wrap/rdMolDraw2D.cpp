@@ -18,7 +18,7 @@
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <Geometry/point.h>
 #include <boost/python/suite/indexing/map_indexing_suite.hpp>
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
 #include <cairo.h>
 #include <GraphMol/MolDraw2D/MolDraw2DCairo.h>
 #endif
@@ -245,7 +245,7 @@ void drawReactionHelper(MolDraw2D &self, const ChemicalReaction &rxn,
                     confIds.get());
 }
 
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
 python::object getCairoDrawingText(const RDKit::MolDraw2DCairo &self) {
   std::string res = self.getDrawingText();
   python::object retval = python::object(
@@ -442,7 +442,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def("GetDrawingText", &RDKit::MolDraw2DSVG::getDrawingText,
            "return the SVG");
 
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
   docString = "Cairo molecule drawer";
   python::class_<RDKit::MolDraw2DCairo, python::bases<RDKit::MolDraw2D>,
                  boost::noncopyable>("MolDraw2DCairo", docString.c_str(),

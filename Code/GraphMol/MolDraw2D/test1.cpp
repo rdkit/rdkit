@@ -109,7 +109,7 @@ void test1() {
   std::cout << " Done" << std::endl;
 }
 
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
 #include <cairo.h>
 #include "MolDraw2DCairo.h"
 void test2() {
@@ -173,7 +173,7 @@ void test2() {
   }
   std::cout << " Done" << std::endl;
 }
-#else  // RDK_CAIRO_BUILD
+#else  // RDK_BUILD_CAIRO_SUPPORT
 void test2() {}
 #endif
 
@@ -194,7 +194,7 @@ void test3() {
     atomLabels[0] = "[CH2;X2:4]";
     atomLabels[6] = "[NH2+:7]";
 
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(300, 300);
       drawer.drawOptions().atomLabels = atomLabels;
@@ -225,7 +225,7 @@ void test3() {
     static const int ha[] = {0, 3, 4, 5};
     std::vector<int> highlight_atoms(ha, ha + sizeof(ha) / sizeof(int));
 
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(300, 300);
       drawer.drawOptions().circleAtoms = false;
@@ -257,7 +257,7 @@ void test3() {
     highlight_colors[12] = DrawColour(0, 0, 1);
     highlight_colors[13] = DrawColour(0, 1, 0);
 
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(300, 300);
       drawer.drawOptions().circleAtoms = true;
@@ -293,7 +293,7 @@ void test3() {
     options.highlightColour = DrawColour(1, .5, .5);
     options.continuousHighlight = true;
 
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(300, 300);
       drawer.drawOptions() = options;
@@ -329,7 +329,7 @@ void test3() {
     options.highlightColour = DrawColour(1, .5, .5);
     options.continuousHighlight = true;
 
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(200, 200);
       drawer.drawOptions() = options;
@@ -367,7 +367,7 @@ void test3() {
     options.atomRegions.push_back(highlight_atoms2);
     options.includeAtomTags = true;
 
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(300, 300);
       drawer.drawOptions() = options;
@@ -405,7 +405,7 @@ void test3() {
     std::map<int, DrawColour> highlight_colors;
     highlight_colors[17] = DrawColour(.5, .5, 1.);
 
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(300, 300);
       drawer.drawOptions() = options;
@@ -440,7 +440,7 @@ void test4() {
     std::string nameBase = "test4_1";
     TEST_ASSERT(m);
 
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(300, 300);
       drawer.drawMolecule(*m);
@@ -473,7 +473,7 @@ void test5() {
     MolDrawOptions options;
     options.dummiesAreAttachments = true;
     options.atomLabels[0] = "R1";
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(300, 300);
       drawer.drawOptions() = options;
@@ -501,7 +501,7 @@ void test5() {
     WedgeMolBonds(*m, &(m->getConformer()));
     MolDrawOptions options;
     options.dummiesAreAttachments = true;
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(300, 300);
       drawer.drawOptions() = options;
@@ -530,7 +530,7 @@ void test5() {
     WedgeMolBonds(*m, &(m->getConformer()));
     MolDrawOptions options;
     options.dummiesAreAttachments = true;
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(300, 300);
       drawer.drawOptions() = options;
@@ -658,7 +658,7 @@ void test7() {
     TEST_ASSERT(txt.find("<svg") != std::string::npos);
     TEST_ASSERT(txt.find("<rect") == std::string::npos);
   }
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
   {
     std::string nameBase = "test7_1";
     MolDraw2DCairo drawer(300, 300);
@@ -681,7 +681,7 @@ void test7() {
     TEST_ASSERT(txt.find("<rect") != std::string::npos);
     TEST_ASSERT(txt.find("fill:#CCCCCC") != std::string::npos);
   }
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
   {
     std::string nameBase = "test7_2";
     MolDraw2DCairo drawer(300, 300);
@@ -907,7 +907,7 @@ void testGithub774() {
     WedgeMolBonds(*m, &(m->getConformer()));
     MolOps::Kekulize(*m);
 
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(300, 300);
       drawer.drawMolecule(*m);
@@ -942,7 +942,7 @@ void testGithub774() {
     WedgeMolBonds(*m, &(m->getConformer()));
     MolOps::Kekulize(*m);
 
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(300, 300);
       drawer.drawMolecule(*m);
@@ -996,7 +996,7 @@ void testGithub852() {
     TEST_ASSERT(m);
     MolDraw2DUtils::prepareMolForDrawing(*m);
 
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(300, 300);
       drawer.drawMolecule(*m);
@@ -1021,7 +1021,7 @@ void testGithub852() {
     TEST_ASSERT(m);
     MolDraw2DUtils::prepareMolForDrawing(*m);
 
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(300, 300);
       drawer.drawMolecule(*m);
@@ -1052,7 +1052,7 @@ void testGithub860() {
     TEST_ASSERT(m);
     MolDraw2DUtils::prepareMolForDrawing(*m);
 
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(300, 300);
       drawer.drawMolecule(*m);
@@ -1076,7 +1076,7 @@ void testGithub860() {
     TEST_ASSERT(m);
     MolDraw2DUtils::prepareMolForDrawing(*m);
 
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(300, 300);
       drawer.drawMolecule(*m);
@@ -1099,7 +1099,7 @@ void testGithub860() {
     TEST_ASSERT(m);
     MolDraw2DUtils::prepareMolForDrawing(*m);
 
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(300, 300);
       drawer.drawMolecule(*m);
@@ -2128,7 +2128,7 @@ void testGithub1829() {
 
 
 int main() {
-#ifdef BUILD_COORDGEN_SUPPORT
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
   RDDepict::preferCoordGen = false;
 #endif
 
