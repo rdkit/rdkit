@@ -364,7 +364,6 @@ std::vector<double> calcPEOE_VSA(const ROMol &mol, std::vector<double> *bins,
 
 std::vector<double> calcCustomProp_VSA(const ROMol &mol, const std::string &customPropName,
 		const std::vector<double> &bins, bool force) {
-  //std::vector<double> lbins = bins;
   std::vector<double> res(bins.size() + 1, 0);
 
   std::vector<double> vsaContribs(mol.getNumAtoms());
