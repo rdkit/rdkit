@@ -82,15 +82,15 @@ static RDKit::RWMOL_SPTR MolFromTPLFile(std::string fName,bool sanitize=true,
   return RDKit::RWMOL_SPTR(mol);
 }
 static RDKit::RWMOL_SPTR MolFromMol2File(std::string fName,bool sanitize=true,bool removeHs=true,
-                       RDKit::Mol2Type variant=RDKit::CORINA) {
+                       RDKit::Mol2Type variant=RDKit::CORINA, bool cleanupSubstructures=true) {
   RDKit::RWMol *mol=0;
-  mol=RDKit::Mol2FileToMol(fName, sanitize, removeHs, variant);
+  mol=RDKit::Mol2FileToMol(fName, sanitize, removeHs, variant, cleanupSubstructures);
   return RDKit::RWMOL_SPTR(mol);
 }
 static RDKit::RWMOL_SPTR MolFromMol2Block(const std::string &molBlock,bool sanitize=true,bool removeHs=true,
-                        RDKit::Mol2Type variant=RDKit::CORINA) {
+                        RDKit::Mol2Type variant=RDKit::CORINA, bool cleanupSubstructures=true) {
   RDKit::RWMol *mol=0;
-    mol=RDKit::Mol2BlockToMol(molBlock, sanitize, removeHs, variant);
+    mol=RDKit::Mol2BlockToMol(molBlock, sanitize, removeHs, variant, cleanupSubstructures);
   return RDKit::RWMOL_SPTR(mol);
 }
 

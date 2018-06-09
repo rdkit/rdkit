@@ -78,7 +78,7 @@ void readFormalChargesFromAttr(std::istream *inStream, RWMol *res) {
   PRECONDITION(inStream, "inStream not valid");
   PRECONDITION(!inStream->eof(), "inStream is at eof");
   PRECONDITION(res, "RWMol not valid");
-  typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+  typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
   boost::char_separator<char> sep(" \t\n");
   bool readNextAtomAttribs = true;
   unsigned int atomIdx = 0, noAtomAttr = 0;
@@ -203,8 +203,9 @@ void guessFormalCharges(RWMol *res) {
         std::string nm;
         res->getProp(common_properties::_Name, nm);
         BOOST_LOG(rdWarningLog)
-            << nm << ": warning - aromatic N with 3 aromatic bonds - "
-                     "skipping charge guess for this atom"
+            << nm
+            << ": warning - aromatic N with 3 aromatic bonds - "
+               "skipping charge guess for this atom"
             << std::endl;
         continue;
       }
@@ -307,8 +308,8 @@ bool cleanUpMol2Substructures(RWMol *res) {
       // phosphates,
       // FIX: do it also for phsopahtes and sulphates ...
       if (at->getDegree() != 1) {
-        BOOST_LOG(rdWarningLog) << "Warning - O.co2 with degree >1."
-                                << std::endl;
+        BOOST_LOG(rdWarningLog)
+            << "Warning - O.co2 with degree >1." << std::endl;
         return false;
       }
       ROMol::ADJ_ITER nbrIdxIt, endNbrsIdxIt;
@@ -509,7 +510,7 @@ bool cleanUpMol2Substructures(RWMol *res) {
 }
 
 Atom *ParseMol2FileAtomLine(const std::string atomLine, RDGeom::Point3D &pos) {
-  typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+  typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
   boost::char_separator<char> sep(" \t\n");
   std::string tAN, tAT;
   tokenizer tokens(atomLine, sep);
@@ -624,7 +625,7 @@ Bond *ParseMol2FileBondLine(const std::string bondLine,
                             const INT_VECT &idxCorresp) {
   unsigned int idx1, idx2;
 
-  typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+  typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
   boost::char_separator<char> sep(" \t\n");
 
   tokenizer tokens(bondLine, sep);
@@ -734,9 +735,10 @@ void ParseMol2AtomBlock(std::istream *inStream, RWMol *res, unsigned int nAtoms,
   if (!hasHAtoms) {
     std::string nm;
     res->getProp(common_properties::_Name, nm);
-    BOOST_LOG(rdWarningLog) << nm << ": Warning - no explicit hydrogens in "
-                                     "mol2 file but needed for formal charge "
-                                     "estimation."
+    BOOST_LOG(rdWarningLog) << nm
+                            << ": Warning - no explicit hydrogens in "
+                               "mol2 file but needed for formal charge "
+                               "estimation."
                             << std::endl;
   }
   // create conformer based on 3DPoints and add to RWMol
@@ -791,11 +793,11 @@ void ParseMol2BondBlock(std::istream *inStream, RWMol *res, unsigned int nBonds,
 //
 //------------------------------------------------
 RWMol *Mol2DataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
-                           Mol2Type variant) {
+                           Mol2Type variant, bool cleanupSubstructures) {
   RDUNUSED_PARAM(variant);
   PRECONDITION(inStream, "no stream");
   std::string tempStr, lineBeg;
-  typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+  typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
   boost::char_separator<char> sep(" \t\n");
   Utils::LocaleSwitcher ls;
 
@@ -920,7 +922,12 @@ RWMol *Mol2DataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
   }
 
   if (!chargeStart) {
-    bool molFixed = cleanUpMol2Substructures(res);
+    bool molFixed;
+    if (cleanupSubstructures) {
+      molFixed = cleanUpMol2Substructures(res);
+    } else {
+      molFixed = true;
+    }
 
     if (!molFixed) {
       delete res;
@@ -982,9 +989,10 @@ RWMol *Mol2DataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
 };
 
 RWMol *Mol2DataStreamToMol(std::istream &inStream, bool sanitize, bool removeHs,
-                           Mol2Type variant) {
+                           Mol2Type variant, bool cleanupSubstructures) {
   RDUNUSED_PARAM(variant);
-  return Mol2DataStreamToMol(&inStream, sanitize, removeHs);
+  return Mol2DataStreamToMol(&inStream, sanitize, removeHs, variant,
+                             cleanupSubstructures);
 };
 //------------------------------------------------
 //
@@ -992,10 +1000,11 @@ RWMol *Mol2DataStreamToMol(std::istream &inStream, bool sanitize, bool removeHs,
 //
 //------------------------------------------------
 RWMol *Mol2BlockToMol(const std::string &molBlock, bool sanitize, bool removeHs,
-                      Mol2Type variant) {
+                      Mol2Type variant, bool cleanupSubstructures) {
   RDUNUSED_PARAM(variant);
   std::istringstream inStream(molBlock);
-  return Mol2DataStreamToMol(inStream, sanitize, removeHs);
+  return Mol2DataStreamToMol(inStream, sanitize, removeHs, variant,
+                             cleanupSubstructures);
 }
 
 //------------------------------------------------
@@ -1004,7 +1013,7 @@ RWMol *Mol2BlockToMol(const std::string &molBlock, bool sanitize, bool removeHs,
 //
 //------------------------------------------------
 RWMol *Mol2FileToMol(const std::string &fName, bool sanitize, bool removeHs,
-                     Mol2Type variant) {
+                     Mol2Type variant, bool cleanupSubstructures) {
   // FIX: this binary mode of opening file is here because of a bug in VC++ 6.0
   // the function "tellg" does not work correctly if we do not open it this way
   //   Jan 2009: Confirmed that this is still the case in visual studio 2008
@@ -1017,8 +1026,9 @@ RWMol *Mol2FileToMol(const std::string &fName, bool sanitize, bool removeHs,
   }
   RWMol *res = nullptr;
   if (!inStream.eof()) {
-    res = Mol2DataStreamToMol(inStream, sanitize, removeHs);
+    res = Mol2DataStreamToMol(inStream, sanitize, removeHs, variant,
+                              cleanupSubstructures);
   }
   return res;
 }
-}
+}  // namespace RDKit

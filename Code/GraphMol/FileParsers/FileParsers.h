@@ -42,13 +42,17 @@ typedef std::vector<RWMOL_SPTR> RWMOL_SPTR_VECT;
  *                          of the contents.
  *
  */
-RDKIT_FILEPARSERS_EXPORT RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
-                          bool sanitize = true, bool removeHs = true,
-                          bool strictParsing = true);
+RDKIT_FILEPARSERS_EXPORT RWMol *MolDataStreamToMol(std::istream *inStream,
+                                                   unsigned int &line,
+                                                   bool sanitize = true,
+                                                   bool removeHs = true,
+                                                   bool strictParsing = true);
 // \overload
-RDKIT_FILEPARSERS_EXPORT RWMol *MolDataStreamToMol(std::istream &inStream, unsigned int &line,
-                          bool sanitize = true, bool removeHs = true,
-                          bool strictParsing = true);
+RDKIT_FILEPARSERS_EXPORT RWMol *MolDataStreamToMol(std::istream &inStream,
+                                                   unsigned int &line,
+                                                   bool sanitize = true,
+                                                   bool removeHs = true,
+                                                   bool strictParsing = true);
 // \brief construct a molecule from an MDL mol block
 /*!
  *   \param molBlock - string containing the mol block
@@ -59,8 +63,10 @@ RDKIT_FILEPARSERS_EXPORT RWMol *MolDataStreamToMol(std::istream &inStream, unsig
  *   \param strictParsing - if set, the parser is more lax about correctness
  *                          of the contents.
  */
-RDKIT_FILEPARSERS_EXPORT RWMol *MolBlockToMol(const std::string &molBlock, bool sanitize = true,
-                     bool removeHs = true, bool strictParsing = true);
+RDKIT_FILEPARSERS_EXPORT RWMol *MolBlockToMol(const std::string &molBlock,
+                                              bool sanitize = true,
+                                              bool removeHs = true,
+                                              bool strictParsing = true);
 
 // \brief construct a molecule from an MDL mol file
 /*!
@@ -72,8 +78,10 @@ RDKIT_FILEPARSERS_EXPORT RWMol *MolBlockToMol(const std::string &molBlock, bool 
  *   \param strictParsing - if set, the parser is more lax about correctness
  *                          of the contents.
  */
-RDKIT_FILEPARSERS_EXPORT RWMol *MolFileToMol(const std::string &fName, bool sanitize = true,
-                    bool removeHs = true, bool strictParsing = true);
+RDKIT_FILEPARSERS_EXPORT RWMol *MolFileToMol(const std::string &fName,
+                                             bool sanitize = true,
+                                             bool removeHs = true,
+                                             bool strictParsing = true);
 
 // \brief generates an MDL mol block for a molecule
 /*!
@@ -86,9 +94,11 @@ RDKIT_FILEPARSERS_EXPORT RWMol *MolFileToMol(const std::string &fName, bool sani
  * automatically with
  *                          more than 999 atoms or bonds)
  */
-RDKIT_FILEPARSERS_EXPORT std::string MolToMolBlock(const ROMol &mol, bool includeStereo = true,
-                          int confId = -1, bool kekulize = true,
-                          bool forceV3000 = false);
+RDKIT_FILEPARSERS_EXPORT std::string MolToMolBlock(const ROMol &mol,
+                                                   bool includeStereo = true,
+                                                   int confId = -1,
+                                                   bool kekulize = true,
+                                                   bool forceV3000 = false);
 // \brief Writes a molecule to an MDL mol file
 /*!
  *   \param mol           - the molecule in question
@@ -101,9 +111,9 @@ RDKIT_FILEPARSERS_EXPORT std::string MolToMolBlock(const ROMol &mol, bool includ
  * automatically with
  *                          more than 999 atoms or bonds)
  */
-RDKIT_FILEPARSERS_EXPORT void MolToMolFile(const ROMol &mol, const std::string &fName,
-                  bool includeStereo = true, int confId = -1,
-                  bool kekulize = true, bool forceV3000 = false);
+RDKIT_FILEPARSERS_EXPORT void MolToMolFile(
+    const ROMol &mol, const std::string &fName, bool includeStereo = true,
+    int confId = -1, bool kekulize = true, bool forceV3000 = false);
 
 //-----
 //  TPL handling:
@@ -125,8 +135,10 @@ RDKIT_FILEPARSERS_EXPORT void MolToMolFile(const ROMol &mol, const std::string &
   mis-feature
                         to be parsed when this flag is set.
 */
-RDKIT_FILEPARSERS_EXPORT RWMol *TPLDataStreamToMol(std::istream *inStream, unsigned int &line,
-                          bool sanitize = true, bool skipFirstConf = false);
+RDKIT_FILEPARSERS_EXPORT RWMol *TPLDataStreamToMol(std::istream *inStream,
+                                                   unsigned int &line,
+                                                   bool sanitize = true,
+                                                   bool skipFirstConf = false);
 
 //! \brief construct a multi-conf molecule from a TPL (BioCad format) file
 /*!
@@ -143,15 +155,17 @@ RDKIT_FILEPARSERS_EXPORT RWMol *TPLDataStreamToMol(std::istream *inStream, unsig
   mis-feature
                         to be parsed when this flag is set.
 */
-RDKIT_FILEPARSERS_EXPORT RWMol *TPLFileToMol(const std::string &fName, bool sanitize = true,
-                    bool skipFirstConf = false);
+RDKIT_FILEPARSERS_EXPORT RWMol *TPLFileToMol(const std::string &fName,
+                                             bool sanitize = true,
+                                             bool skipFirstConf = false);
 
 RDKIT_FILEPARSERS_EXPORT std::string MolToTPLText(
     const ROMol &mol, const std::string &partialChargeProp = "_GasteigerCharge",
     bool writeFirstConfTwice = false);
-RDKIT_FILEPARSERS_EXPORT void MolToTPLFile(const ROMol &mol, const std::string &fName,
-                  const std::string &partialChargeProp = "_GasteigerCharge",
-                  bool writeFirstConfTwice = false);
+RDKIT_FILEPARSERS_EXPORT void MolToTPLFile(
+    const ROMol &mol, const std::string &fName,
+    const std::string &partialChargeProp = "_GasteigerCharge",
+    bool writeFirstConfTwice = false);
 
 //-----
 //  MOL2 handling
@@ -169,9 +183,14 @@ typedef enum {
  *   \param removeHs - toggles removal of Hs from the molecule. H removal
  *                     is only done if the molecule is sanitized
  *   \param variant  - the atom type definitions to use
+ *   \param cleanupSubstructures - toggles recognition and cleanup of common
+ *                                 substructures
  */
-RDKIT_FILEPARSERS_EXPORT RWMol *Mol2FileToMol(const std::string &fName, bool sanitize = true,
-                     bool removeHs = true, Mol2Type variant = CORINA);
+RDKIT_FILEPARSERS_EXPORT RWMol *Mol2FileToMol(const std::string &fName,
+                                              bool sanitize = true,
+                                              bool removeHs = true,
+                                              Mol2Type variant = CORINA,
+                                              bool cleanupSubstructures = true);
 
 // \brief construct a molecule from Tripos mol2 data in a stream
 /*!
@@ -180,12 +199,16 @@ RDKIT_FILEPARSERS_EXPORT RWMol *Mol2FileToMol(const std::string &fName, bool san
  *   \param removeHs - toggles removal of Hs from the molecule. H removal
  *                     is only done if the molecule is sanitized
  *   \param variant  - the atom type definitions to use
+ *   \param cleanupSubstructures - toggles recognition and cleanup of common
+ *                                 substructures
  */
-RDKIT_FILEPARSERS_EXPORT RWMol *Mol2DataStreamToMol(std::istream *inStream, bool sanitize = true,
-                           bool removeHs = true, Mol2Type variant = CORINA);
+RDKIT_FILEPARSERS_EXPORT RWMol *Mol2DataStreamToMol(
+    std::istream *inStream, bool sanitize = true, bool removeHs = true,
+    Mol2Type variant = CORINA, bool cleanupSubstructures = true);
 // \overload
-RDKIT_FILEPARSERS_EXPORT RWMol *Mol2DataStreamToMol(std::istream &inStream, bool sanitize = true,
-                           bool removeHs = true, Mol2Type variant = CORINA);
+RDKIT_FILEPARSERS_EXPORT RWMol *Mol2DataStreamToMol(
+    std::istream &inStream, bool sanitize = true, bool removeHs = true,
+    Mol2Type variant = CORINA, bool cleanupSubstructures = true);
 
 // \brief construct a molecule from a Tripos mol2 block
 /*!
@@ -194,26 +217,35 @@ RDKIT_FILEPARSERS_EXPORT RWMol *Mol2DataStreamToMol(std::istream &inStream, bool
  *   \param removeHs - toggles removal of Hs from the molecule. H removal
  *                     is only done if the molecule is sanitized
  *   \param variant  - the atom type definitions to use
+ *   \param cleanupSubstructures - toggles recognition and cleanup of common
+ *                                 substructures
  */
-RDKIT_FILEPARSERS_EXPORT RWMol *Mol2BlockToMol(const std::string &molBlock, bool sanitize = true,
-                      bool removeHs = true, Mol2Type variant = CORINA);
+RDKIT_FILEPARSERS_EXPORT RWMol *Mol2BlockToMol(
+    const std::string &molBlock, bool sanitize = true, bool removeHs = true,
+    Mol2Type variant = CORINA, bool cleanupSubstructures = true);
 
-RDKIT_FILEPARSERS_EXPORT RWMol *PDBBlockToMol(const char *str, bool sanitize = true,
-                     bool removeHs = true, unsigned int flavor = 0,
-                     bool proximityBonding = true);
+RDKIT_FILEPARSERS_EXPORT RWMol *PDBBlockToMol(const char *str,
+                                              bool sanitize = true,
+                                              bool removeHs = true,
+                                              unsigned int flavor = 0,
+                                              bool proximityBonding = true);
 
-RDKIT_FILEPARSERS_EXPORT RWMol *PDBBlockToMol(const std::string &str, bool sanitize = true,
-                     bool removeHs = true, unsigned int flavor = 0,
-                     bool proximityBonding = true);
-RDKIT_FILEPARSERS_EXPORT RWMol *PDBDataStreamToMol(std::istream *inStream, bool sanitize = true,
-                          bool removeHs = true, unsigned int flavor = 0,
-                          bool proximityBonding = true);
-RDKIT_FILEPARSERS_EXPORT RWMol *PDBDataStreamToMol(std::istream &inStream, bool sanitize = true,
-                          bool removeHs = true, unsigned int flavor = 0,
-                          bool proximityBonding = true);
-RDKIT_FILEPARSERS_EXPORT RWMol *PDBFileToMol(const std::string &fname, bool sanitize = true,
-                    bool removeHs = true, unsigned int flavor = 0,
-                    bool proximityBonding = true);
+RDKIT_FILEPARSERS_EXPORT RWMol *PDBBlockToMol(const std::string &str,
+                                              bool sanitize = true,
+                                              bool removeHs = true,
+                                              unsigned int flavor = 0,
+                                              bool proximityBonding = true);
+RDKIT_FILEPARSERS_EXPORT RWMol *PDBDataStreamToMol(
+    std::istream *inStream, bool sanitize = true, bool removeHs = true,
+    unsigned int flavor = 0, bool proximityBonding = true);
+RDKIT_FILEPARSERS_EXPORT RWMol *PDBDataStreamToMol(
+    std::istream &inStream, bool sanitize = true, bool removeHs = true,
+    unsigned int flavor = 0, bool proximityBonding = true);
+RDKIT_FILEPARSERS_EXPORT RWMol *PDBFileToMol(const std::string &fname,
+                                             bool sanitize = true,
+                                             bool removeHs = true,
+                                             unsigned int flavor = 0,
+                                             bool proximityBonding = true);
 
 // \brief generates an PDB block for a molecule
 /*!
@@ -227,8 +259,9 @@ RDKIT_FILEPARSERS_EXPORT RWMol *PDBFileToMol(const std::string &fname, bool sani
  *         flavor & 16 : Write MASTER record
  *         flavor & 32 : Write TER record
  */
-RDKIT_FILEPARSERS_EXPORT std::string MolToPDBBlock(const ROMol &mol, int confId = -1,
-                          unsigned int flavor = 0);
+RDKIT_FILEPARSERS_EXPORT std::string MolToPDBBlock(const ROMol &mol,
+                                                   int confId = -1,
+                                                   unsigned int flavor = 0);
 // \brief Writes a molecule to an MDL mol file
 /*!
  *   \param mol           - the molecule in question
@@ -242,8 +275,10 @@ RDKIT_FILEPARSERS_EXPORT std::string MolToPDBBlock(const ROMol &mol, int confId 
  *         flavor & 16 : Write MASTER record
  *         flavor & 32 : Write TER record
  */
-RDKIT_FILEPARSERS_EXPORT void MolToPDBFile(const ROMol &mol, const std::string &fname, int confId = -1,
-                  unsigned int flavor = 0);
-}
+RDKIT_FILEPARSERS_EXPORT void MolToPDBFile(const ROMol &mol,
+                                           const std::string &fname,
+                                           int confId = -1,
+                                           unsigned int flavor = 0);
+}  // namespace RDKit
 
 #endif
