@@ -5,14 +5,14 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
       set(MAEPARSER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/maeparser")
     endif()
     if(NOT EXISTS "${MAEPARSER_DIR}/MaeParser.hpp")
-        set(SHA "83368293dcc0eb07562dadfb7728b8d18d23a6cb")
-        downloadAndCheckMD5("https://codeload.github.com/schrodinger/maeparser/tar.gz/${SHA}"
+        set(RELEASE_NO "1.0.0")
+        downloadAndCheckMD5("https://github.com/schrodinger/maeparser/archive/${RELEASE_NO}.tar.gz"
               "${CMAKE_CURRENT_SOURCE_DIR}/master.tar.gz"
-              "32c0c3b315bba49fbf4c41a07aa58528")
+              "770d941264dde4825aaa505e59642e51")
         execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf
           ${CMAKE_CURRENT_SOURCE_DIR}/master.tar.gz
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-        file(RENAME "maeparser-${SHA}" "${MAEPARSER_DIR}")
+        file(RENAME "maeparser-${RELEASE_NO}" "${MAEPARSER_DIR}")
     else()
       message("-- Found MAEParser source in ${MAEPARSER_DIR}")
     endif()
@@ -28,14 +28,15 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
       set(COORDGEN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/coordgenlibs")
     endif()
     if(NOT EXISTS "${COORDGEN_DIR}/sketcherMinimizer.h")
+        set(RELEASE_NO "1.1")
         set(SHA "ede3191bf1c1dde53f70ca086014ff9ec7768c55")
-        downloadAndCheckMD5("https://codeload.github.com/schrodinger/coordgenlibs/tar.gz/${SHA}"
+        downloadAndCheckMD5("https://github.com/schrodinger/coordgenlibs/archive/v${RELEASE_NO}.tar.gz"
               "${CMAKE_CURRENT_SOURCE_DIR}/master.tar.gz"
-              "") # we aren't testing the md5 here because this code is still changing quickly
+              "493cf2eab7d4ab6242e25da112831798")
         execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf
           ${CMAKE_CURRENT_SOURCE_DIR}/master.tar.gz
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-        file(RENAME "coordgenlibs-${SHA}" "${COORDGEN_DIR}")
+        file(RENAME "coordgenlibs-${RELEASE_NO}" "${COORDGEN_DIR}")
     else()
       message("-- Found coordgenlibs source in ${COORDGEN_DIR}")
     endif()
