@@ -20,14 +20,14 @@
 #include <iostream>
 #include <GraphMol/ROMol.h>
 
-#ifdef BUILD_COORDGEN_SUPPORT
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
 namespace schrodinger {
-  namespace mae {
-    class Reader;
-    class Block;
-  }
-}
-#endif // BUILD_COORDGEN_SUPPORT
+namespace mae {
+class Reader;
+class Block;
+}  // namespace mae
+}  // namespace schrodinger
+#endif  // RDK_BUILD_COORDGEN_SUPPORT
 
 namespace RDKit {
 RDKIT_FILEPARSERS_EXPORT std::string strip(const std::string &orig);
@@ -342,7 +342,8 @@ class RDKIT_FILEPARSERS_EXPORT PDBMolSupplier : public MolSupplier {
  public:
   explicit PDBMolSupplier(std::istream *inStream, bool takeOwnership = true,
                           bool sanitize = true, bool removeHs = true,
-                          unsigned int flavor = 0, bool proximityBonding = true);
+                          unsigned int flavor = 0,
+                          bool proximityBonding = true);
   explicit PDBMolSupplier(const std::string &fname, bool sanitize = true,
                           bool removeHs = true, unsigned int flavor = 0,
                           bool proximityBonding = true);
@@ -360,7 +361,7 @@ class RDKIT_FILEPARSERS_EXPORT PDBMolSupplier : public MolSupplier {
   bool df_sanitize, df_removeHs, df_proximityBonding;
   unsigned int d_flavor;
 };
-#ifdef BUILD_COORDGEN_SUPPORT
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
 //! lazy file parser for MAE files
 class RDKIT_FILEPARSERS_EXPORT MaeMolSupplier : public MolSupplier {
  public:
@@ -384,7 +385,7 @@ class RDKIT_FILEPARSERS_EXPORT MaeMolSupplier : public MolSupplier {
   std::shared_ptr<schrodinger::mae::Reader> d_reader;
   std::shared_ptr<schrodinger::mae::Block> d_next_struct;
 };
-#endif // BUILD_COORDGEN_SUPPORT
-}
+#endif  // RDK_BUILD_COORDGEN_SUPPORT
+}  // namespace RDKit
 
 #endif
