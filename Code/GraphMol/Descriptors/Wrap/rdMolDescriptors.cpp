@@ -705,11 +705,10 @@ python::list CalcPEOEVSA(const RDKit::ROMol &mol, python::object bins,
 }
 python::list CalcCustomPropVSA(const RDKit::ROMol &mol, const std::string customPropName,
 		                 python::object bins, bool force) {
-  std::vector<double> *lbins = nullptr;
   unsigned int nBins = python::extract<unsigned int>(bins.attr("__len__")());
-  lbins = new std::vector<double>(nBins, 0.0);
+  std::vector<double> lbins = std::vector<double>(nBins, 0.0);
   for (unsigned int i = 0; i < nBins; ++i) {
-    (*lbins)[i] = python::extract<double>(bins[i]);
+    lbins[i] = python::extract<double>(bins[i]);
   }
   std::vector<double> res;
   res = RDKit::Descriptors::calcCustomProp_VSA(mol, customPropName, lbins, force);

@@ -102,7 +102,7 @@ RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcPEOE_VSA(const ROMol &mol,
                                  bool force = false);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcCustomProp_VSA(const ROMol &mol,
 		                         const std::string &customPropName,
-                                 std::vector<double> *bins,
+								const std::vector<double> &bins,
                                  bool force = false);
 
 }  // end of namespace Descriptors

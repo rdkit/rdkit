@@ -272,7 +272,7 @@ double calcTPSA(const ROMol &mol, bool force) {
 namespace {
 void assignContribsToBins(const std::vector<double> &contribs,
                           const std::vector<double> &binProp,
-                          std::vector<double> &bins, std::vector<double> &res) {
+                          const std::vector<double> &bins, std::vector<double> &res) {
   PRECONDITION(contribs.size() == binProp.size(), "mismatched array sizes");
   PRECONDITION(res.size() >= bins.size() + 1, "mismatched array sizes");
   for (unsigned int i = 0; i < contribs.size(); ++i) {
@@ -363,11 +363,9 @@ std::vector<double> calcPEOE_VSA(const ROMol &mol, std::vector<double> *bins,
 }
 
 std::vector<double> calcCustomProp_VSA(const ROMol &mol, const std::string &customPropName,
-		                         std::vector<double> *bins, bool force) {
-  std::vector<double> lbins;
-  lbins.resize(bins->size());
-  std::copy(bins->begin(), bins->end(), lbins.begin());
-  std::vector<double> res(lbins.size() + 1, 0);
+		const std::vector<double> &bins, bool force) {
+  //std::vector<double> lbins = bins;
+  std::vector<double> res(bins.size() + 1, 0);
 
   std::vector<double> vsaContribs(mol.getNumAtoms());
   double tmp;
@@ -375,7 +373,7 @@ std::vector<double> calcCustomProp_VSA(const ROMol &mol, const std::string &cust
 
   std::vector<double> prop(mol.getNumAtoms(), 0.0);
   prop = moldata3D.GetCustomAtomProp(mol, customPropName);
-  assignContribsToBins(vsaContribs, prop, lbins, res);
+  assignContribsToBins(vsaContribs, prop, bins, res);
 
   return res;
 }
