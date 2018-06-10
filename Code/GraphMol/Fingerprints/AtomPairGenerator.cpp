@@ -85,6 +85,23 @@ std::uint32_t getAtomPairCode(std::uint32_t codeI, std::uint32_t codeJ,
   return res;
 }
 
+AtomPairAtomInvGenerator::AtomPairAtomInvGenerator(bool includeChirality)
+    : df_includeChirality(includeChirality) {}
+
+std::vector<std::uint32_t> *AtomPairAtomInvGenerator::getAtomInvariants(
+    const ROMol &mol) const {
+  std::vector<std::uint32_t> *atomInvariants =
+      new std::vector<std::uint32_t>(mol.getNumAtoms());
+
+  for (ROMol::ConstAtomIterator atomItI = mol.beginAtoms();
+       atomItI != mol.endAtoms(); ++atomItI) {
+    (*atomInvariants)[(*atomItI)->getIdx()] =
+        getAtomCode(*atomItI, 0, df_includeChirality);
+  }
+
+  return atomInvariants;
+}
+
 std::uint64_t AtomPairArguments::getResultSize() const {
   return (1 << (numAtomPairFingerprintBits +
                 2 * (df_includeChirality ? numChiralBits : 0)));
@@ -108,11 +125,26 @@ std::uint32_t AtomPairAtomEnv::getBitId(
     const std::vector<std::uint32_t> *atomInvariants,
     const std::vector<std::uint32_t> *bondInvariants,
     const AdditionalOutput *additionalOutput) const {
+  PRECONDITION((atomInvariants->size() >= d_atomIdFirst) &&
+                   (atomInvariants->size() >= d_atomIdSecond),
+               "bad atom invriants size");
+
   AtomPairArguments *atomPairArguments =
       dynamic_cast<AtomPairArguments *>(arguments);
 
+  std::uint32_t codeSizeLimit =
+      (1 << (codeSize +
+             (atomPairArguments->df_includeChirality ? numChiralBits : 0))) -
+      1;
+
+  std::uint32_t atomCodeFirst =
+      (*atomInvariants)[d_atomIdFirst] % codeSizeLimit;
+
+  std::uint32_t atomCodeSecond =
+      (*atomInvariants)[d_atomIdSecond] % codeSizeLimit;
+
   std::uint32_t bitId =
-      getAtomPairCode(d_atomCodeFirst, d_atomCodeSecond, d_distance,
+      getAtomPairCode(atomCodeFirst, atomCodeSecond, d_distance,
                       atomPairArguments->df_includeChirality);
 
   if (additionalOutput && additionalOutput->atomToBits) {
@@ -124,14 +156,10 @@ std::uint32_t AtomPairAtomEnv::getBitId(
 
 AtomPairAtomEnv::AtomPairAtomEnv(const unsigned int atomIdFirst,
                                  const unsigned int atomIdSecond,
-                                 const unsigned int distance,
-                                 const std::uint32_t atomCodeFirst,
-                                 const std::uint32_t atomCodeSecond)
+                                 const unsigned int distance)
     : d_atomIdFirst(atomIdFirst),
       d_atomIdSecond(atomIdSecond),
-      d_distance(distance),
-      d_atomCodeFirst(atomCodeFirst),
-      d_atomCodeSecond(atomCodeSecond) {}
+      d_distance(distance) {}
 
 std::vector<AtomEnvironment *> AtomPairEnvGenerator::getEnvironments(
     const ROMol &mol, FingerprintArguments *arguments,
@@ -140,8 +168,6 @@ std::vector<AtomEnvironment *> AtomPairEnvGenerator::getEnvironments(
     const AdditionalOutput *additionalOutput,
     const std::vector<std::uint32_t> *atomInvariants,
     const std::vector<std::uint32_t> *bondInvariants) const {
-  PRECONDITION(!atomInvariants || atomInvariants->size() >= mol.getNumAtoms(),
-               "bad atomInvariants size");
   const unsigned int atomCount = mol.getNumAtoms();
   PRECONDITION(!additionalOutput || !additionalOutput->atomToBits ||
                    additionalOutput->atomToBits->size() == atomCount,
@@ -155,18 +181,6 @@ std::vector<AtomEnvironment *> AtomPairEnvGenerator::getEnvironments(
     distanceMatrix = MolOps::getDistanceMat(mol);
   } else {
     distanceMatrix = MolOps::get3DDistanceMat(mol, confId);
-  }
-
-  std::vector<std::uint32_t> atomCodeCache = std::vector<std::uint32_t>();
-  for (ROMol::ConstAtomIterator atomItI = mol.beginAtoms();
-       atomItI != mol.endAtoms(); ++atomItI) {
-    if (!atomInvariants) {
-      atomCodeCache.push_back(
-          getAtomCode(*atomItI, 0, atomPairArguments->df_includeChirality));
-    } else {
-      atomCodeCache.push_back((*atomInvariants)[(*atomItI)->getIdx()] %
-                              ((1 << codeSize) - 1));
-    }
   }
 
   for (ROMol::ConstAtomIterator atomItI = mol.beginAtoms();
@@ -197,8 +211,7 @@ std::vector<AtomEnvironment *> AtomPairEnvGenerator::getEnvironments(
 
       if (distance >= atomPairArguments->d_minDistance &&
           distance <= atomPairArguments->d_maxDistance) {
-        result.push_back(new AtomPairAtomEnv(i, j, distance, atomCodeCache[i],
-                                             atomCodeCache[j]));
+        result.push_back(new AtomPairAtomEnv(i, j, distance));
       }
     }
   }
@@ -217,9 +230,15 @@ FingerprintGenerator *getAtomPairGenerator(
   FingerprintArguments *atomPairArguments = new AtomPair::AtomPairArguments(
       useCountSimulation, includeChirality, use2D, minDistance, maxDistance);
 
-  return new FingerprintGenerator(atomPairEnvGenerator, atomPairArguments,
-                                  atomInvariantsGenerator,
-                                  bondInvariantsGenerator);
+  bool ownsAtomInvGenerator = false;
+  if (!atomInvariantsGenerator) {
+    atomInvariantsGenerator = new AtomPairAtomInvGenerator(includeChirality);
+    ownsAtomInvGenerator = true;
+  }
+
+  return new FingerprintGenerator(
+      atomPairEnvGenerator, atomPairArguments, atomInvariantsGenerator,
+      bondInvariantsGenerator, ownsAtomInvGenerator, false);
 }
 
 }  // namespace AtomPair

@@ -27,6 +27,15 @@ std::uint32_t getAtomCode(const Atom *atom, unsigned int branchSubtract,
 std::uint32_t getAtomPairCode(std::uint32_t codeI, std::uint32_t codeJ,
                               unsigned int dist, bool includeChirality);
 
+class AtomPairAtomInvGenerator : public AtomInvariantsGenerator {
+  const bool df_includeChirality;
+
+ public:
+  AtomPairAtomInvGenerator(bool includeChirality);
+
+  std::vector<std::uint32_t> *getAtomInvariants(const ROMol &mol) const;
+};
+
 /*!
   /brief class that holds atom-pair fingerprint specific arguments
 
@@ -70,8 +79,6 @@ class AtomPairAtomEnv : public AtomEnvironment {
   const unsigned int d_atomIdFirst;
   const unsigned int d_atomIdSecond;
   const unsigned int d_distance;
-  const std::uint32_t d_atomCodeFirst;
-  const std::uint32_t d_atomCodeSecond;
 
  public:
   std::uint32_t getBitId(FingerprintArguments *arguments,
@@ -85,13 +92,9 @@ class AtomPairAtomEnv : public AtomEnvironment {
     /param atomIdFirst      id of the first atom of the atom-pair
     /param atomIdSecond     id of the second atom of the atom-pair
     /param distance         distance between the atoms
-    /param atomCodeFirst    hashed atom code for the first atom
-    /param atomCodeSecond   hashed atom code for the second atom
    */
   AtomPairAtomEnv(const unsigned int atomIdFirst,
-                  const unsigned int atomIdSecond, const unsigned int distance,
-                  const std::uint32_t atomCodeFirst,
-                  const std::uint32_t atomCodeSecond);
+                  const unsigned int atomIdSecond, const unsigned int distance);
 };
 
 /*!

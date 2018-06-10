@@ -131,15 +131,14 @@ class AtomInvariantsGenerator {
     /brief get atom invariants from a molecule
 
     /param mol                   molecule to generate the atom invariants for
-    /param fingerprintArguments  fingerprinting type specific molecule
-    independent arguments
 
     /return std::vector<std::uint32_t> atom invariants generated for the given
     molecule
    */
-  virtual std::vector<std::uint32_t> getAtomInvariants(
-      const ROMol &mol,
-      const FingerprintArguments *fingerprintArguments) const = 0;
+  virtual std::vector<std::uint32_t> *getAtomInvariants(
+      const ROMol &mol) const = 0;
+
+  virtual ~AtomInvariantsGenerator() = 0;
 };
 
 /*!
@@ -152,15 +151,14 @@ class BondInvariantsGenerator {
     /brief get bond invariants from a molecule
 
     /param mol                   molecule to generate the bond invariants for
-    /param fingerprintArguments  fingerprinting type specific molecule
-    independent arguments
 
     /return std::vector<std::uint32_t> bond invariants generated for the given
     molecule
    */
-  virtual std::vector<std::uint32_t> getBondInvariants(
-      const ROMol &mol,
-      const FingerprintArguments *fingerprintArguments) const = 0;
+  virtual std::vector<std::uint32_t> *getBondInvariants(
+      const ROMol &mol) const = 0;
+
+  virtual ~BondInvariantsGenerator() = 0;
 };
 
 /*!
@@ -173,13 +171,16 @@ class FingerprintGenerator {
   AtomEnvironmentGenerator *dp_atomEnvironmentGenerator;
   AtomInvariantsGenerator *dp_atomInvariantsGenerator;
   BondInvariantsGenerator *dp_bondInvariantsGenerator;
+  const bool df_ownsAtomInvGenerator;
+  const bool df_ownsBondInvGenerator;
 
  public:
   FingerprintGenerator(
       AtomEnvironmentGenerator *atomEnvironmentGenerator,
       FingerprintArguments *fingerprintArguments,
       AtomInvariantsGenerator *atomInvariantsGenerator = nullptr,
-      BondInvariantsGenerator *bondInvariantsGenerator = nullptr);
+      BondInvariantsGenerator *bondInvariantsGenerator = nullptr,
+      bool ownsAtomInvGenerator = false, bool ownsBondInvGenerator = false);
 
   ~FingerprintGenerator();
 
