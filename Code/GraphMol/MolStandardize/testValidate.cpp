@@ -115,7 +115,8 @@ void testMolVSValidation() {
 }
 
 void testAllowedAtomsValidation() {
-	std::vector<string> atoms = {"C", "N", "O"};
+//	std::vector<string> atoms = {"C", "N", "O"};
+	std::vector<unsigned int> atoms = {6, 7, 8};
 	std::vector<shared_ptr<Atom>> atomList;	
 
 	for (auto &atom : atoms) {
@@ -138,7 +139,8 @@ void testAllowedAtomsValidation() {
 }
 
 void testDisallowedAtomsValidation() {
-	std::vector<string> atoms = {"F", "Cl", "Br"};
+//	std::vector<string> atoms = {"F", "Cl", "Br"};
+	std::vector<unsigned int> atoms = {9, 17, 35};
 	std::vector<shared_ptr<Atom>> atomList;	
 
 	for (auto &atom : atoms) {

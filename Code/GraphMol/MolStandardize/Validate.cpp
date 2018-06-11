@@ -113,6 +113,7 @@ std::vector<ValidationErrorInfo> AllowedAtomsValidation::validate(const ROMol &m
 		for (const auto &allowedAtom : this->d_allowedList) {
 			if ( allowedAtom->Match(qatom) ) {
 			       match = true;
+			       break;
 			}		
 		}
 		// if no match, append to list of errors.
