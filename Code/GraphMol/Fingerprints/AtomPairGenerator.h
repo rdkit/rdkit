@@ -63,11 +63,16 @@ class AtomPairArguments : public FingerprintArguments {
     pair, default is 1 bond
     /param maxDistance      maximum distance between atoms to be considered in a
     pair, default is maxPathLen-1 bonds
+    /param countBounds      boundries for count simulation, corresponding bit
+    will be set if the count is higher than the number provided for that spot
+
    */
   AtomPairArguments(const bool countSimulation = true,
                     const bool includeChirality = false,
                     const bool use2D = true, const unsigned int minDistance = 1,
-                    const unsigned int maxDistance = (maxPathLen - 1));
+                    const unsigned int maxDistance = (maxPathLen - 1),
+                    const std::vector<std::uint32_t> countBounds = {1, 2, 4,
+                                                                    8});
 };
 
 /*!

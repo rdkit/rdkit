@@ -39,8 +39,10 @@ struct AdditionalOutput {
  */
 class FingerprintArguments {
  public:
-  FingerprintArguments(const bool countSimulation);
+  FingerprintArguments(const bool countSimulation,
+                       const std::vector<std::uint32_t> countBounds);
   const bool d_countSimulation;
+  const std::vector<std::uint32_t> d_countBounds;
 
   /*!
     /brief Returns the size of the fingerprint based on arguments
@@ -199,11 +201,13 @@ class FingerprintGenerator {
   SparseIntVect<std::uint32_t> *getFoldedFingerprint(
       const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms = nullptr,
       const std::vector<std::uint32_t> *ignoreAtoms = nullptr,
+      const int confId = -1,
       const AdditionalOutput *additionalOutput = nullptr) const;
 
   ExplicitBitVect *getFoldedFingerprintAsBitVect(
       const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms = nullptr,
       const std::vector<std::uint32_t> *ignoreAtoms = nullptr,
+      const int confId = -1,
       const AdditionalOutput *additionalOutput = nullptr) const;
 };
 }  // namespace RDKit

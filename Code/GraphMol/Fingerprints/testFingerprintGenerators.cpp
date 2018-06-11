@@ -172,6 +172,62 @@ void testAtomPairOld() {
   }
 }
 
+void testAtomPairBitvector() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Test consistency between different output types "
+                           "for unfolded atom pair fingerprint"
+                        << std::endl;
+  {
+    ROMol *mol;
+    SparseIntVect<boost::uint32_t> *fp1;
+    SparseBitVect *fp2;
+
+    FingerprintGenerator *atomPairGenerator = AtomPair::getAtomPairGenerator();
+    std::vector<std::uint32_t> defaultCountBounds = {1, 2, 4, 8};
+
+    mol = SmilesToMol("CCC");
+    fp1 = atomPairGenerator->getFingerprint(*mol);
+    fp2 = atomPairGenerator->getFingerprintAsBitVect(*mol);
+
+    std::map<boost::uint32_t, int> nz = fp1->getNonzeroElements();
+    for (std::map<boost::uint32_t, int>::iterator it = nz.begin();
+         it != nz.end(); it++) {
+      for (unsigned int i = 0; i < defaultCountBounds.size(); i++) {
+        if (it->second >= defaultCountBounds[i]) {
+          bool isSet = fp2->getBit(it->first * defaultCountBounds.size() + i);
+          TEST_ASSERT(isSet);
+        }
+      }
+    }
+
+    delete mol;
+    delete fp1;
+    delete fp2;
+
+    mol = SmilesToMol("CC=O.Cl");
+    fp1 = atomPairGenerator->getFingerprint(*mol);
+    fp2 = atomPairGenerator->getFingerprintAsBitVect(*mol);
+
+    nz = fp1->getNonzeroElements();
+    for (std::map<boost::uint32_t, int>::iterator it = nz.begin();
+         it != nz.end(); it++) {
+      for (unsigned int i = 0; i < defaultCountBounds.size(); i++) {
+        if (it->second >= defaultCountBounds[i]) {
+          bool isSet = fp2->getBit(it->first * defaultCountBounds.size() + i);
+          TEST_ASSERT(isSet);
+        }
+      }
+    }
+
+    delete mol;
+    delete fp1;
+    delete fp2;
+    delete atomPairGenerator;
+
+    BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  }
+}
+
 void testAtomPairOutput() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "Test atom-pair additional output" << std::endl;
@@ -227,6 +283,7 @@ int main(int argc, char *argv[]) {
   testAtomCodes();
   testAtomPairFP();
   testAtomPairOld();
+  testAtomPairBitvector();
   testAtomPairOutput();
 
   return 0;

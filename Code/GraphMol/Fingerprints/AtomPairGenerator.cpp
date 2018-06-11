@@ -111,8 +111,9 @@ AtomPairArguments::AtomPairArguments(const bool countSimulation,
                                      const bool includeChirality,
                                      const bool use2D,
                                      const unsigned int minDistance,
-                                     const unsigned int maxDistance)
-    : FingerprintArguments(countSimulation),
+                                     const unsigned int maxDistance,
+                                     const std::vector<std::uint32_t> countBounds)
+    : FingerprintArguments(countSimulation, countBounds),
       df_includeChirality(includeChirality),
       df_use2D(use2D),
       d_minDistance(minDistance),
