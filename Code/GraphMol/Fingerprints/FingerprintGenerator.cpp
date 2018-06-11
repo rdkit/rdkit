@@ -3,13 +3,17 @@
 #include <DataStructs/ExplicitBitVect.h>
 #include <DataStructs/SparseBitVect.h>
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
+#include <RDGeneral/hash/hash.hpp>
 #include <cstdint>
 
 namespace RDKit {
 
 FingerprintArguments::FingerprintArguments(
-    const bool countSimulation, const std::vector<std::uint32_t> countBounds)
-    : d_countSimulation(countSimulation), d_countBounds(countBounds) {
+    const bool countSimulation, const std::vector<std::uint32_t> countBounds,
+    std::uint32_t foldedSize)
+    : d_countSimulation(countSimulation),
+      d_countBounds(countBounds),
+      d_foldedSize(foldedSize) {
   PRECONDITION(!countSimulation || !countBounds.empty(),
                "bad count bounds provided");
 }
@@ -110,8 +114,6 @@ SparseBitVect *FingerprintGenerator::getFingerprintAsBitVect(
     result = new SparseBitVect(dp_fingerprintArguments->getResultSize());
   }
 
-  const std::map<std::uint32_t, int> nonZero = tempResult->getNonzeroElements();
-
   BOOST_FOREACH (SparseIntVect<std::uint32_t>::StorageType::value_type val,
                  tempResult->getNonzeroElements()) {
     if (dp_fingerprintArguments->d_countSimulation) {
@@ -133,14 +135,56 @@ SparseIntVect<std::uint32_t> *FingerprintGenerator::getFoldedFingerprint(
     const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms,
     const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
     const AdditionalOutput *additionalOutput) const {
-  return nullptr;
+  SparseIntVect<std::uint32_t> *tempResult =
+      getFingerprint(mol, fromAtoms, ignoreAtoms, confId, additionalOutput);
+  SparseIntVect<std::uint32_t> *result =
+      new SparseIntVect<std::uint32_t>(dp_fingerprintArguments->d_foldedSize);
+
+  BOOST_FOREACH (SparseIntVect<std::uint32_t>::StorageType::value_type val,
+                 tempResult->getNonzeroElements()) {
+    boost::uint32_t foldedBitId = 0;
+    gboost::hash_combine(foldedBitId, val.first);
+    result->setVal(foldedBitId % dp_fingerprintArguments->d_foldedSize,
+                   val.second);
+  }
+
+  delete tempResult;
+  return result;
 }
 
 ExplicitBitVect *FingerprintGenerator::getFoldedFingerprintAsBitVect(
     const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms,
     const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
     const AdditionalOutput *additionalOutput) const {
-  return nullptr;
+  SparseIntVect<std::uint32_t> *tempResult = getFoldedFingerprint(
+      mol, fromAtoms, ignoreAtoms, confId, additionalOutput);
+  std::uint32_t countBitsPerBit = dp_fingerprintArguments->d_countBounds.size();
+
+  ExplicitBitVect *result;
+
+  if (dp_fingerprintArguments->d_countSimulation) {
+    std::uint32_t sizeWithCount =
+        dp_fingerprintArguments->d_foldedSize * countBitsPerBit;
+    result = new ExplicitBitVect(sizeWithCount);
+  } else {
+    result = new ExplicitBitVect(dp_fingerprintArguments->d_foldedSize);
+  }
+
+  BOOST_FOREACH (SparseIntVect<std::uint32_t>::StorageType::value_type val,
+                 tempResult->getNonzeroElements()) {
+    if (dp_fingerprintArguments->d_countSimulation) {
+      for (unsigned int i = 0; i < countBitsPerBit; ++i) {
+        if (val.second >= dp_fingerprintArguments->d_countBounds[i]) {
+          result->setBit(val.first * countBitsPerBit + i);
+        }
+      }
+    } else {
+      result->setBit(val.first);
+    }
+  }
+
+  delete tempResult;
+  return result;
 }
 
 }  // namespace RDKit

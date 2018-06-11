@@ -40,9 +40,11 @@ struct AdditionalOutput {
 class FingerprintArguments {
  public:
   FingerprintArguments(const bool countSimulation,
-                       const std::vector<std::uint32_t> countBounds);
+                       const std::vector<std::uint32_t> countBounds,
+                       const std::uint32_t foldedSize);
   const bool d_countSimulation;
   const std::vector<std::uint32_t> d_countBounds;
+  const std::uint32_t d_foldedSize;
 
   /*!
     /brief Returns the size of the fingerprint based on arguments

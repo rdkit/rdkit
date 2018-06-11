@@ -193,10 +193,8 @@ void testAtomPairBitvector() {
     for (std::map<boost::uint32_t, int>::iterator it = nz.begin();
          it != nz.end(); it++) {
       for (unsigned int i = 0; i < defaultCountBounds.size(); i++) {
-        if (it->second >= defaultCountBounds[i]) {
-          bool isSet = fp2->getBit(it->first * defaultCountBounds.size() + i);
-          TEST_ASSERT(isSet);
-        }
+        bool isSet = fp2->getBit(it->first * defaultCountBounds.size() + i);
+        TEST_ASSERT(isSet == (it->second >= defaultCountBounds[i]));
       }
     }
 
@@ -212,10 +210,60 @@ void testAtomPairBitvector() {
     for (std::map<boost::uint32_t, int>::iterator it = nz.begin();
          it != nz.end(); it++) {
       for (unsigned int i = 0; i < defaultCountBounds.size(); i++) {
-        if (it->second >= defaultCountBounds[i]) {
-          bool isSet = fp2->getBit(it->first * defaultCountBounds.size() + i);
-          TEST_ASSERT(isSet);
-        }
+        bool isSet = fp2->getBit(it->first * defaultCountBounds.size() + i);
+        TEST_ASSERT(isSet == (it->second >= defaultCountBounds[i]));
+      }
+    }
+
+    delete mol;
+    delete fp1;
+    delete fp2;
+    delete atomPairGenerator;
+
+    BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  }
+}
+
+void testAtomPairFoldedBitvector() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Test consistency between different output types "
+                           "for folded atom pair fingerprint"
+                        << std::endl;
+  {
+    ROMol *mol;
+    SparseIntVect<boost::uint32_t> *fp1;
+    ExplicitBitVect *fp2;
+
+    FingerprintGenerator *atomPairGenerator = AtomPair::getAtomPairGenerator();
+    std::vector<std::uint32_t> defaultCountBounds = {1, 2, 4, 8};
+
+    mol = SmilesToMol("CCC");
+    fp1 = atomPairGenerator->getFoldedFingerprint(*mol);
+    fp2 = atomPairGenerator->getFoldedFingerprintAsBitVect(*mol);
+
+    std::map<boost::uint32_t, int> nz = fp1->getNonzeroElements();
+    for (std::map<boost::uint32_t, int>::iterator it = nz.begin();
+         it != nz.end(); it++) {
+      for (unsigned int i = 0; i < defaultCountBounds.size(); i++) {
+        bool isSet = fp2->getBit(it->first * defaultCountBounds.size() + i);
+        TEST_ASSERT(isSet == (it->second >= defaultCountBounds[i]));
+      }
+    }
+
+    delete mol;
+    delete fp1;
+    delete fp2;
+
+    mol = SmilesToMol("CC=O.Cl");
+    fp1 = atomPairGenerator->getFoldedFingerprint(*mol);
+    fp2 = atomPairGenerator->getFoldedFingerprintAsBitVect(*mol);
+
+    nz = fp1->getNonzeroElements();
+    for (std::map<boost::uint32_t, int>::iterator it = nz.begin();
+         it != nz.end(); it++) {
+      for (unsigned int i = 0; i < defaultCountBounds.size(); i++) {
+        bool isSet = fp2->getBit(it->first * defaultCountBounds.size() + i);
+        TEST_ASSERT(isSet == (it->second >= defaultCountBounds[i]));
       }
     }
 
@@ -284,6 +332,7 @@ int main(int argc, char *argv[]) {
   testAtomPairFP();
   testAtomPairOld();
   testAtomPairBitvector();
+  testAtomPairFoldedBitvector();
   testAtomPairOutput();
 
   return 0;

@@ -112,8 +112,9 @@ AtomPairArguments::AtomPairArguments(const bool countSimulation,
                                      const bool use2D,
                                      const unsigned int minDistance,
                                      const unsigned int maxDistance,
-                                     const std::vector<std::uint32_t> countBounds)
-    : FingerprintArguments(countSimulation, countBounds),
+                                     const std::vector<std::uint32_t> countBounds,
+                                     const std::uint32_t foldedSize)
+    : FingerprintArguments(countSimulation, countBounds, foldedSize),
       df_includeChirality(includeChirality),
       df_use2D(use2D),
       d_minDistance(minDistance),

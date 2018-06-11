@@ -71,8 +71,8 @@ class AtomPairArguments : public FingerprintArguments {
                     const bool includeChirality = false,
                     const bool use2D = true, const unsigned int minDistance = 1,
                     const unsigned int maxDistance = (maxPathLen - 1),
-                    const std::vector<std::uint32_t> countBounds = {1, 2, 4,
-                                                                    8});
+                    const std::vector<std::uint32_t> countBounds = {1, 2, 4, 8},
+                    const std::uint32_t foldedSize = 2048);
 };
 
 /*!
