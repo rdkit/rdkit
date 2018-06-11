@@ -2136,19 +2136,45 @@ void test16MoleculeMetadata() {
     TEST_ASSERT(m1);
     MolDraw2DUtils::prepareMolForDrawing(*m1);
 
-    {  // start with color
+    {  // one molecule
       MolDraw2DSVG drawer(200, 200);
       drawer.drawMolecule(*m1, "m1");
       drawer.addMoleculeMetadata(*m1);
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
 
-
       std::ofstream outs("test16_1.svg");
       outs << text;
       outs.flush();
     }
+
+#if 0
+    // FIX: this does not currently work particularlly well because the drawing
+    // coordinates are always in a local reference frame (not offset by the
+    // origin of the pane the molecule is in).
+    {  // multiple molecules
+      MolDraw2DSVG drawer(400, 400, 200, 200);
+      ROMol *rom = rdcast<ROMol *>(m1.get());
+      std::vector<ROMol *> ms = {rom,rom,rom,rom};
+      drawer.drawMolecules(ms);
+      for(const auto m : ms ){
+        drawer.addMoleculeMetadata(*m);
+      }
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+
+      std::ofstream outs("test16_2.svg");
+      outs << text;
+      outs.flush();
+    }
+#endif
+
   }
+
+  {
+
+  }
+
   std::cerr << " Done" << std::endl;
 }
 
