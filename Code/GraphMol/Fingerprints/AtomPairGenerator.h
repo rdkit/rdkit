@@ -34,6 +34,8 @@ class AtomPairAtomInvGenerator : public AtomInvariantsGenerator {
   AtomPairAtomInvGenerator(bool includeChirality);
 
   std::vector<std::uint32_t> *getAtomInvariants(const ROMol &mol) const;
+
+  std::string infoString() const;
 };
 
 /*!
@@ -48,6 +50,8 @@ class AtomPairArguments : public FingerprintArguments {
   const unsigned int d_maxDistance;
 
   std::uint64_t getResultSize() const;
+
+  std::string infoString() const;
 
   /*!
     /brief construct a new AtomPairArguments object
@@ -115,6 +119,8 @@ class AtomPairEnvGenerator : public AtomEnvironmentGenerator {
       const AdditionalOutput *additionalOutput,
       const std::vector<std::uint32_t> *atomInvariants,
       const std::vector<std::uint32_t> *bondInvariants) const;
+
+  std::string infoString() const;
 };
 
 /*!

@@ -102,24 +102,35 @@ std::vector<std::uint32_t> *AtomPairAtomInvGenerator::getAtomInvariants(
   return atomInvariants;
 }
 
+std::string AtomPairAtomInvGenerator::infoString() const {
+  return "AtomPairInvariantGenerator includeChirality=" +
+         std::to_string(df_includeChirality);
+}
+
 std::uint64_t AtomPairArguments::getResultSize() const {
   return (1 << (numAtomPairFingerprintBits +
                 2 * (df_includeChirality ? numChiralBits : 0)));
 }
 
-AtomPairArguments::AtomPairArguments(const bool countSimulation,
-                                     const bool includeChirality,
-                                     const bool use2D,
-                                     const unsigned int minDistance,
-                                     const unsigned int maxDistance,
-                                     const std::vector<std::uint32_t> countBounds,
-                                     const std::uint32_t foldedSize)
+AtomPairArguments::AtomPairArguments(
+    const bool countSimulation, const bool includeChirality, const bool use2D,
+    const unsigned int minDistance, const unsigned int maxDistance,
+    const std::vector<std::uint32_t> countBounds,
+    const std::uint32_t foldedSize)
     : FingerprintArguments(countSimulation, countBounds, foldedSize),
       df_includeChirality(includeChirality),
       df_use2D(use2D),
       d_minDistance(minDistance),
       d_maxDistance(maxDistance) {
   PRECONDITION(minDistance <= maxDistance, "bad distances provided");
+}
+
+std::string AtomPairArguments::infoString() const {
+  return "AtomPairArguments includeChirality=" +
+         std::to_string(df_includeChirality) +
+         " use2D=" + std::to_string(df_use2D) +
+         " minDistance=" + std::to_string(d_minDistance) +
+         " maxDistance=" + std::to_string(d_maxDistance);
 }
 
 std::uint32_t AtomPairAtomEnv::getBitId(
@@ -219,6 +230,10 @@ std::vector<AtomEnvironment *> AtomPairEnvGenerator::getEnvironments(
   }
 
   return result;
+}
+
+std::string AtomPairEnvGenerator::infoString() const {
+  return "AtomPairEnvironmentGenerator";
 }
 
 FingerprintGenerator *getAtomPairGenerator(

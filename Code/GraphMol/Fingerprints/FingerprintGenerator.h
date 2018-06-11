@@ -53,6 +53,10 @@ class FingerprintArguments {
    */
   virtual std::uint64_t getResultSize() const = 0;
 
+  virtual std::string infoString() const = 0;
+
+  std::string commonArgumentsString() const;
+
   virtual ~FingerprintArguments() = 0;
 };
 
@@ -122,6 +126,8 @@ class AtomEnvironmentGenerator {
       const std::vector<std::uint32_t> *atomInvariants = nullptr,
       const std::vector<std::uint32_t> *bondInvariants = nullptr) const = 0;
 
+  virtual std::string infoString() const = 0;
+
   virtual ~AtomEnvironmentGenerator() = 0;
 };
 
@@ -142,6 +148,8 @@ class AtomInvariantsGenerator {
   virtual std::vector<std::uint32_t> *getAtomInvariants(
       const ROMol &mol) const = 0;
 
+  virtual std::string infoString() const = 0;
+
   virtual ~AtomInvariantsGenerator() = 0;
 };
 
@@ -161,6 +169,8 @@ class BondInvariantsGenerator {
    */
   virtual std::vector<std::uint32_t> *getBondInvariants(
       const ROMol &mol) const = 0;
+
+  virtual std::string infoString() const = 0;
 
   virtual ~BondInvariantsGenerator() = 0;
 };
@@ -211,6 +221,8 @@ class FingerprintGenerator {
       const std::vector<std::uint32_t> *ignoreAtoms = nullptr,
       const int confId = -1,
       const AdditionalOutput *additionalOutput = nullptr) const;
+
+  std::string infoString() const;
 };
 }  // namespace RDKit
 

@@ -18,6 +18,12 @@ FingerprintArguments::FingerprintArguments(
                "bad count bounds provided");
 }
 
+std::string FingerprintArguments::commonArgumentsString() const {
+  return "Common arguments\tcountSimulation=" +
+         std::to_string(d_countSimulation) +
+         " foldedSize=" + std::to_string(d_foldedSize);
+}
+
 FingerprintArguments::~FingerprintArguments() {}
 
 AtomEnvironmentGenerator::~AtomEnvironmentGenerator() {}
@@ -51,6 +57,19 @@ FingerprintGenerator::~FingerprintGenerator() {
   if (df_ownsBondInvGenerator) {
     delete dp_bondInvariantsGenerator;
   }
+}
+
+std::string FingerprintGenerator::infoString() const {
+  std::string seperator = " : ";
+  return dp_fingerprintArguments->commonArgumentsString() + seperator +
+         dp_fingerprintArguments->infoString() + seperator +
+         dp_atomEnvironmentGenerator->infoString() + seperator +
+         (dp_atomInvariantsGenerator
+              ? (dp_atomInvariantsGenerator->infoString() + seperator)
+              : "No atom invariants generator") +
+         (dp_bondInvariantsGenerator
+              ? (dp_bondInvariantsGenerator->infoString() + seperator)
+              : "No bond invariants generator");
 }
 
 SparseIntVect<std::uint32_t> *FingerprintGenerator::getFingerprint(
