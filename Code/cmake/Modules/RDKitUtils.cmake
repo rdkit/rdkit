@@ -273,3 +273,20 @@ function(createExportTestHeaders)
   overwriteIfChanged("${CMAKE_BINARY_DIR}/${exportPath}" "${CMAKE_SOURCE_DIR}/${exportPath}")
   overwriteIfChanged("${CMAKE_BINARY_DIR}/${testPath}" "${CMAKE_SOURCE_DIR}/${testPath}")
 endfunction(createExportTestHeaders)
+
+function(patchCoordGenMaeExportHeaders keyword path)
+  file(APPEND "${path}"
+    "// appended by CMake patchCoordGenMaeExportHeaders\n"
+    "#if !defined(RDKIT_DYN_LINK) || defined(SWIG)\n"
+    "#ifdef EXPORT_${keyword}\n"
+    "#undef EXPORT_${keyword}\n"
+    "#endif\n"
+    "#define EXPORT_${keyword}\n"
+    "#endif\n"
+    "#ifndef SWIG\n"
+    "#ifdef _MSC_VER\n"
+    "#pragma warning(disable:4251)\n"
+    "#pragma warning(disable:4275)\n"
+    "#endif\n"
+    "#endif\n")
+endfunction(patchCoordGenMaeExportHeaders)
