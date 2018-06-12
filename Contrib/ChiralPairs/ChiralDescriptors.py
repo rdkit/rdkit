@@ -36,6 +36,7 @@ from collections import defaultdict, Counter, namedtuple
 import seaborn as sns
 import numpy as np
 import re
+from numpy import linalg
 
 from rdkit import Chem
 from rdkit.Chem import AllChem
@@ -53,21 +54,26 @@ def _svgsToGrid(svgs, labels, svgsPerRow=4,molSize=(250,150),fontSize=12):
     blocks = ['']*(nRows*svgsPerRow)
     labelSizeDist = fontSize*5
     fullSize=(svgsPerRow*(molSize[0]+molSize[0]/10.0),nRows*(molSize[1]+labelSizeDist))
-    print(fullSize)
 
     count=0
     for svg,name in zip(svgs,labels):
         h,r,b = matcher.match(svg).groups()
         if hdr == '': 
-            hdr = h.replace("width='"+str(molSize[0])+"px'","width='%dpx'"%fullSize[0])
-            hdr = hdr.replace("height='"+str(molSize[1])+"px'","height='%dpx'"%fullSize[1])
+            hdr = h.replace("width='{}px'".format(molSize[0]),"width='{}px'".format(fullSize[0]))
+            hdr = hdr.replace("height='{}px'".format(molSize[1]),"height='{}px'".format(fullSize[1]))
         if rect == '': 
             rect = r
-        legend = '<text font-family="sans-serif" font-size="'+str(fontSize)+'px" text-anchor="middle" fill="black">\n'
-        legend += '<tspan x="'+str(molSize[0]/2.)+'" y="'+str(molSize[1]+fontSize*2)+'">'+name.split('|')[0]+'</tspan>\n'
-        if len(name.split('|')) > 1:
-            legend += '<tspan x="'+str(molSize[0]/2.)+'" y="'+str(molSize[1]+fontSize*3.5)+'">'+name.split('|')[1]+'</tspan>\n'
-        legend += '</text>\n'
+        
+        tspanFmt = '<tspan x="{0}" y="{1}">{2}</tspan>'
+        names = name.split('|')
+        legend = []
+        legend.append('<text font-family="sans-serif" font-size="{}px" text-anchor="middle" fill="black">'.format(fontSize))
+        legend.append(tspanFmt.format(molSize[0]/2., molSize[1]+fontSize*2, names[0]))
+        if len(names) > 1:
+            legend.append(tspanFmt.format(molSize[0]/2., molSize[1]+fontSize*3.5, names[1]))
+        legend.append('</text>')
+        legend = '\n'.join(legend)
+
         blocks[count] = b + legend
         count+=1
 
@@ -85,15 +91,15 @@ def determineAtomSubstituents(atomID, mol, distanceMatrix, verbose=False):
     # determine the direct neighbors of the atom
     neighbors = [n for n,i in enumerate(atomPaths) if i == 1]
     # store the ids of the neighbors (substituents)
-    sub_dict = defaultdict(list)
+    subs = defaultdict(list)
     # track in how many substituents an atom is involved (can happen in rings)
-    sharedNeighbors_dict = defaultdict(int)
-    # determine the max path lenght for each substituent
-    maxShell_dict=defaultdict(int)
+    sharedNeighbors = defaultdict(int)
+    # determine the max path length for each substituent
+    maxShell=defaultdict(int)
     for n in neighbors:
-        sub_dict[n].append(n)
-        sharedNeighbors_dict[n]+=1
-        maxShell_dict[n]=0
+        subs[n].append(n)
+        sharedNeighbors[n]+=1
+        maxShell[n]=0
     # second shell of neighbors
     mindist=2
     # max distance from atom
@@ -109,28 +115,26 @@ def determineAtomSubstituents(atomID, mol, distanceMatrix, verbose=False):
             # find neighbors of the current atom that are part of the substituent already
             for n in atom.GetNeighbors():
                 nidx = n.GetIdx()
-                for k,v in sub_dict.items():
+                for k,v in subs.items():
                     # is the neighbor in the substituent and is not inthe same shell as the current atom 
                     # and we haven't added the current atom already then put it in the correct substituent list
                     if nidx in v and nidx not in newShell and aidx not in v:
-                        sub_dict[k].append(aidx)
-                        sharedNeighbors_dict[aidx]+=1
-                        maxShell_dict[k]=d
+                        subs[k].append(aidx)
+                        sharedNeighbors[aidx]+=1
+                        maxShell[k]=d
                         if verbose:
                             print("Atom ",aidx," assigned to ",nidx)
     if verbose:
-        print(sub_dict)
-        print(sharedNeighbors_dict)
+        print(subs)
+        print(sharedNeighbors)
         
-    return sub_dict, sharedNeighbors_dict, maxShell_dict
+    return subs, sharedNeighbors, maxShell
 
-def _getSizeOfSubstituents(sub, sharedNeighbors_dict, weighdownShared=True):
-    size=0
+def _getSizeOfSubstituents(sub, sharedNeighbors, weighdownShared=True):
     if weighdownShared:
-        for a in sub:
-            size+=1.0/sharedNeighbors_dict[a]
-        return size
-    return(len(sub))
+        return sum(1.0 / sharedNeighbors[a] for a in sub)
+    else:
+        return len(sub)
     
 def getBondsSubstituent(mol, atoms):
     bonds=[]
@@ -141,15 +145,11 @@ def getBondsSubstituent(mol, atoms):
             bonds.append(b.GetIdx())
     return bonds
 
-def getAromaticBondsSubstituent(mol, subAtoms):
-    bonds = getBondsSubstituent(mol, subAtoms)
-    aroBonds=0
-    for b in bonds:
-        if mol.GetBondWithIdx(b).GetIsAromatic():
-            aroBonds+=1
-    return aroBonds
+def getNumAromaticBondsSubstituent(mol, subAtoms):    
+    return sum(1 for b in getBondsSubstituent(mol, subAtoms) 
+           if mol.GetBondWithIdx(b).GetIsAromatic())
 
-def getRotatableBondsSubstituent(mol, subAtoms):
+def getNumRotatableBondsSubstituent(mol, subAtoms):
     rotatableBond = Chem.MolFromSmarts('[!$(*#*)&!D1]-&!@[!$(*#*)&!D1]')
     matches = mol.GetSubstructMatches(rotatableBond)
     numRotBonds=0
@@ -163,26 +163,25 @@ substituentDescriptor = namedtuple('substituentDescriptor',
                                    ['size','relSize','numNO','relNumNO','relNumNO_2','pathLength','relPathLength','relPathLength_2',
                                     'sharedNeighbors', 'numRotBonds', 'numAroBonds'])    
 
-def calcSizeSubstituents(mol, sub_dict, sharedNeighbors_dict, maxShell_dict):  
+def calcSizeSubstituents(mol, subs, sharedNeighbors, maxShell):  
     sizeDict=defaultdict()
     numAtoms = mol.GetNumAtoms()
-    #print(sharedNeighbors_dict)
-    for sidx, sub in sorted(sub_dict.items(), key= lambda x: len(x[1])):
-        size = _getSizeOfSubstituents(sub, sharedNeighbors_dict)
+    for sidx, sub in sorted(subs.items(), key= lambda x: len(x[1])):
+        size = _getSizeOfSubstituents(sub, sharedNeighbors)
         numNOs=0
         numShared=0
         # determine the number of oxygen and nitrogen atoms
         for i in sub:
             if mol.GetAtomWithIdx(i).GetAtomicNum() in [7,8]:
-                numNOs+=1.0/sharedNeighbors_dict[i]
-            if sharedNeighbors_dict[i] > 1:
+                numNOs+=1.0/sharedNeighbors[i]
+            if sharedNeighbors[i] > 1:
                 numShared+=1
-        numRotBs = getRotatableBondsSubstituent(mol, set(sub))
-        aroBonds = getAromaticBondsSubstituent(mol, set(sub))
+        numRotBs = getNumRotatableBondsSubstituent(mol, set(sub))
+        aroBonds = getNumAromaticBondsSubstituent(mol, set(sub))
         # fill the substituentDescriptor tuple
         sizeDict[sidx]=substituentDescriptor(size=size,relSize=size/numAtoms,numNO=numNOs,relNumNO=numNOs/numAtoms,
-                                             relNumNO_2=numNOs/size,pathLength=maxShell_dict[sidx],
-                                             relPathLength=maxShell_dict[sidx]/numAtoms,relPathLength_2=maxShell_dict[sidx]/size,
+                                             relNumNO_2=numNOs/size,pathLength=maxShell[sidx],
+                                             relPathLength=maxShell[sidx]/numAtoms,relPathLength_2=maxShell[sidx]/size,
                                                  sharedNeighbors=numShared, numRotBonds=numRotBs, numAroBonds=aroBonds)
     # if we have less then 4 substituents the missing ones need to be an hydrogen atoms
     if len(sizeDict) < 4:
@@ -197,24 +196,20 @@ def calcSizeSubstituents(mol, sub_dict, sharedNeighbors_dict, maxShell_dict):
 def visualizeSubstituentsGrid(mol, aIdx, molSize=(300,150), kekulize=True,):
     dists = Chem.GetDistanceMatrix(mol)
     idxChiral = Chem.FindMolChiralCenters(mol)[0][0]
-    subDict, sn_dict, maxShell_dict = determineAtomSubstituents(aIdx, mol, dists, False)
+    subs, sharedNeighbors, maxShell = determineAtomSubstituents(aIdx, mol, dists, False)
     
-    colors = sns.husl_palette(len(subDict), s=.6)    
+    colors = sns.husl_palette(len(subs), s=.6)    
     mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulize)
     count=0
     svgs=[]
     labels=[]
-    for sidx, sub in sorted(subDict.items(), key= lambda x: _getSizeOfSubstituents(x[1], sn_dict)):
+    for sub in sorted(subs.values(), key= lambda x: _getSizeOfSubstituents(x, sharedNeighbors)):
         color = tuple(colors[count])        
         count+=1
-        atColors={}
-        for atom in sub:
-            atColors[atom]=color
+        atColors = {atom: color for atom in sub}
         
         bonds = getBondsSubstituent(mol, set(sub)) 
-        bnColors={}
-        for b in bonds:
-            bnColors[b]=color
+        bnColors = {bond: color for bond in bonds}
         
         drawer = rdMolDraw2D.MolDraw2DSVG(molSize[0],molSize[1])
         drawer.DrawMolecule(mc,highlightAtoms=atColors.keys(),
@@ -222,7 +217,8 @@ def visualizeSubstituentsGrid(mol, aIdx, molSize=(300,150), kekulize=True,):
         drawer.FinishDrawing()
         svg = drawer.GetDrawingText()
         svgs.append(svg.replace('svg:',''))
-        labels.append("Substituent "+str(count)+" (#atoms: "+str(len(sub))+", size normed: "+str(_getSizeOfSubstituents(sub, sn_dict))+")")
+        labels.append("Substituent "+str(count)+" (#atoms: "+str(len(sub))+", size normed: "+
+                      str(_getSizeOfSubstituents(sub, sharedNeighbors))+")")
     return _svgsToGrid(svgs, labels, svgsPerRow=len(svgs),molSize=molSize,fontSize=12)    
     
 def visualizeChiralSubstituentsGrid(mol):
@@ -230,7 +226,6 @@ def visualizeChiralSubstituentsGrid(mol):
     return visualizeSubstituentsGrid(mol, idxChiral)
 
 # Chiral moment descriptor    
-from numpy import linalg as LA
 def calcSP3CarbonSubstituentMoment(subSizes):
 
     if len(subSizes) != 4:
@@ -242,15 +237,14 @@ def calcSP3CarbonSubstituentMoment(subSizes):
     x3=np.array([1,-1,-1])
     x4=np.array([-1,-1,1])
 
-    substituentMoment= LA.norm((subSizes[0]*x1)+(subSizes[1]*x2)+(subSizes[2]*x3)+(subSizes[3]*x4))
+    substituentMoment= linalg.norm((subSizes[0]*x1)+(subSizes[1]*x2)+(subSizes[2]*x3)+(subSizes[3]*x4))
     return substituentMoment
 
-def generateChiralDescriptors(mol):
-    desc={}
-    dists = Chem.GetDistanceMatrix(mol)
-    idxChiral = Chem.FindMolChiralCenters(mol)[0][0]
-    subDict, sn_dict, maxShell_dict = determineAtomSubstituents(idxChiral, mol, dists, False)
-    sizes = calcSizeSubstituents(mol, subDict, sn_dict, maxShell_dict)
+def calculateChiralDescriptors(mol, idxChiral, dists, verbose=False):
+    
+    desc = {}
+    subs, sharedNeighbors, maxShell = determineAtomSubstituents(idxChiral, mol, dists, verbose)
+    sizes = calcSizeSubstituents(mol, subs, sharedNeighbors, maxShell)
     paths = dists[idxChiral]
     # set some basic descriptors
     desc['numAtoms'] = mol.GetNumAtoms()
@@ -272,22 +266,23 @@ def generateChiralDescriptors(mol):
     # determine the number of nitrogen and oxygen atoms in a certain level around the chiral center
     for i in range(1,4):
         desc['phLevel'+str(i)]=len([n for n,j in enumerate(paths) if j==i and mol.GetAtomWithIdx(n).GetAtomicNum() in [7,8]])
-    # determine the number of arometic atoms in a certain level around the chiral center
+    # determine the number of aromatic atoms in a certain level around the chiral center
     for i in range(1,4):
         desc['arLevel'+str(i)]=len([n for n,j in enumerate(paths) if j==i and mol.GetAtomWithIdx(n).GetIsAromatic()])
     # set the size descriptors for each substituent, sort them from smallest to largest
-    for n,v in enumerate(sorted(sizes.items(), key=lambda x: x[1].size)):
-        desc['s'+str(n+1)+'_size'] = v[1].size
-        desc['s'+str(n+1)+'_relSize'] = v[1].relSize
-        desc['s'+str(n+1)+'_phSize'] = v[1].numNO
-        desc['s'+str(n+1)+'_phRelSize'] = v[1].relNumNO
-        desc['s'+str(n+1)+'_phRelSize_2'] = v[1].relNumNO_2
-        desc['s'+str(n+1)+'_pathLength'] = v[1].pathLength
-        desc['s'+str(n+1)+'_relPathLength'] = v[1].relPathLength
-        desc['s'+str(n+1)+'_relPathLength_2'] = v[1].relPathLength_2
-        desc['s'+str(n+1)+'_numSharedNeighbors']=v[1].sharedNeighbors
-        desc['s'+str(n+1)+'_numRotBonds']=v[1].numRotBonds
-        desc['s'+str(n+1)+'_numAroBonds']=v[1].numAroBonds
+    for n, v in enumerate(sorted(sizes.values(), key=lambda x: x.size), 1):
+        sn = 's' + str(n)
+        desc[sn+'_size'] = v.size
+        desc[sn+'_relSize'] = v.relSize
+        desc[sn+'_phSize'] = v.numNO
+        desc[sn+'_phRelSize'] = v.relNumNO
+        desc[sn+'_phRelSize_2'] = v.relNumNO_2
+        desc[sn+'_pathLength'] = v.pathLength
+        desc[sn+'_relPathLength'] = v.relPathLength
+        desc[sn+'_relPathLength_2'] = v.relPathLength_2
+        desc[sn+'_numSharedNeighbors']=v.sharedNeighbors
+        desc[sn+'_numRotBonds']=v.numRotBonds
+        desc[sn+'_numAroBonds']=v.numAroBonds
     # some combination of substituent sizes
     desc['s34_size'] = desc['s3_size']+desc['s4_size']
     desc['s34_phSize'] = desc['s3_phSize']+desc['s4_phSize']
@@ -298,3 +293,99 @@ def generateChiralDescriptors(mol):
     desc['chiralPhMoment'] = calcSP3CarbonSubstituentMoment([desc['s1_phSize'],desc['s2_phSize'],
                                                                          desc['s3_phSize'],desc['s4_phSize']])
     return desc
+
+def generateChiralDescriptorsForAllCenters(mol, verbose=False):
+    """
+    Generates descriptors for all chiral centers in the molecule.
+    Details of these descriptors are described in: 
+    Schneider et al., Chiral Cliffs: Investigating the Influence of Chirality on Binding Affinity
+    https://doi.org/10.1002/cmdc.201700798. 
+    >>> # test molecules are taken from the publication above (see Figure 3 and Figure 8)
+    >>> testmols = {
+    ...   "CHEMBL319180" : 'CCCN1C(=O)[C@@H](NC(=O)Nc2cccc(C)c2)N=C(N3CCN(C)CC3)c4ccccc14',
+    ...   }
+    >>> mol = Chem.MolFromSmiles(testmols['CHEMBL319180'])
+    >>> desc = generateChiralDescriptorsForAllCenters(mol)
+    >>> desc.keys()
+    dict_keys([6])
+    >>> desc[6]['arLevel2']
+    0
+    >>> desc[6]['s4_pathLength']
+    7
+    >>> desc[6]['maxDist']
+    14
+    >>> desc[6]['maxDistfromCC']
+    7
+    """
+    
+    desc={}
+    dists = Chem.GetDistanceMatrix(mol)
+    for idxChiral, _ in Chem.FindMolChiralCenters(mol):
+        desc[idxChiral] = calculateChiralDescriptors(mol, idxChiral, dists, verbose=False)
+    return desc
+
+def generateChiralDescriptors(mol, verbose=False):
+    """
+    Generates descriptors for the 'first' chiral centers in the molecule.
+    Details of these descriptors are described in: 
+    Schneider et al., Chiral Cliffs: Investigating the Influence of Chirality on Binding Affinity
+    https://doi.org/10.1002/cmdc.201700798. 
+    >>> # test molecules are taken from the publication above (see Figure 3 and Figure 8)
+    >>> testmols = {
+    ...   "CHEMBL319180" : 'CCCN1C(=O)[C@@H](NC(=O)Nc2cccc(C)c2)N=C(N3CCN(C)CC3)c4ccccc14',
+    ...   "CHEMBL3350250" : 'CC(C)[C@@]1(CCc2ccc(O)cc2)CC(=O)C(=C(O)O1)Sc3cc(C)c(NS(=O)(=O)c4ccc(cn4)C(F)(F)F)cc3C(C)(C)C',
+    ...   "CHEMBL3698720" : 'N[C@@H]1CCN(C1)c2cnc(Nc3ncc4c5ccncc5n(C6CCCC6)c4n3)cn2'
+    ...   }
+    >>> mol = Chem.MolFromSmiles(testmols['CHEMBL319180'])
+    >>> desc = generateChiralDescriptors(mol)
+    >>> desc['arLevel2']
+    0
+    >>> desc['s4_pathLength']
+    7
+    >>> desc['maxDist']
+    14
+    >>> desc['maxDistfromCC']
+    7
+    >>> mol = Chem.MolFromSmiles(testmols['CHEMBL3350250'])
+    >>> desc = generateChiralDescriptors(mol)
+    >>> desc['nLevel8']
+    5
+    >>> desc['s1_pathLength']
+    2
+    >>> desc['s2_size']
+    9.0
+    >>> desc['numRotBonds']
+    9
+    >>> mol = Chem.MolFromSmiles(testmols['CHEMBL3698720'])
+    >>> desc = generateChiralDescriptors(mol)
+    >>> desc['s3_numRotBonds']
+    0
+    >>> desc['s34_size']
+    29.0
+    >>> desc['phLevel2']
+    1
+    >>> desc['s2_numSharedNeighbors']
+    0
+    
+    """    
+    
+    dists = Chem.GetDistanceMatrix(mol)
+    idxChiral = Chem.FindMolChiralCenters(mol)[0][0]
+    return calculateChiralDescriptors(mol, idxChiral, dists, verbose=False)
+
+
+#------------------------------------
+#
+#  doctest boilerplate
+#
+def _test():
+    import doctest, sys
+    return doctest.testmod(sys.modules["__main__"])
+
+
+if __name__ == '__main__':
+    import sys
+    failed, tried = _test()
+    sys.exit(failed)
+    
+    
