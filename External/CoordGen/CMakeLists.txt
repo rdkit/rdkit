@@ -1,6 +1,9 @@
 add_custom_target(coordgen_support ALL)
 
 if(RDK_BUILD_COORDGEN_SUPPORT)
+    add_definitions(-DIN_MAEPARSER)
+    add_definitions(-DIN_COORDGEN)
+    include(RDKitUtils)
     if(NOT DEFINED MAEPARSER_DIR)
       set(MAEPARSER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/maeparser")
     endif()
@@ -19,8 +22,8 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
 
     file(GLOB MAESOURCES "${MAEPARSER_DIR}/*.cpp")
     rdkit_library(maeparser ${MAESOURCES} SHARED )
-    if((MSVC AND RDK_INSTALL_DLLS_MSVC) OR ((NOT MSVC) AND WIN32))
-      set_target_properties(maeparser PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+    if(NOT RDK_DYN_LINK)
+      target_compile_definitions(maeparser PUBLIC -DSTATIC_MAEPARSER)
     endif()
     install(TARGETS maeparser DESTINATION ${RDKit_LibDir})
 
@@ -43,8 +46,8 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
 
     file(GLOB CGSOURCES "${COORDGEN_DIR}/*.cpp")
     rdkit_library(coordgenlib ${CGSOURCES} SHARED LINK_LIBRARIES maeparser)
-    if((MSVC AND RDK_INSTALL_DLLS_MSVC) OR ((NOT MSVC) AND WIN32))
-      set_target_properties(coordgenlib PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+    if(NOT RDK_DYN_LINK)
+      target_compile_definitions(coordgenlib PUBLIC -DSTATIC_COORDGEN)
     endif()
     install(TARGETS coordgenlib DESTINATION ${RDKit_LibDir})
 
