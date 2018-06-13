@@ -6,12 +6,10 @@
 #include <GraphMol/Fingerprints/AtomPairGenerator.h>
 #include <cstdint>
 
-using namespace boost::python;
 using namespace RDKit;
 using namespace RDKit::AtomPair;
 namespace python = boost::python;
 
-// A friendly class.
 class FingerprintGeneratorWrapper {
  public:
   FingerprintGenerator *dp_fingerprintGenerator;
@@ -45,7 +43,8 @@ class FingerprintGeneratorWrapper {
       }
     }
 
-    return dp_fingerprintGenerator->getFingerprint(mol, fromAtoms, ignoreAtoms, confId, nullptr);
+    return dp_fingerprintGenerator->getFingerprint(mol, fromAtoms, ignoreAtoms,
+                                                   confId, nullptr);
   };
 
   ~FingerprintGeneratorWrapper() { delete dp_fingerprintGenerator; }
@@ -80,8 +79,9 @@ FingerprintGeneratorWrapper *getAtomPairGeneratorWrapped(
 std::string docString = "";
 
 BOOST_PYTHON_MODULE(rdAtomPairGenerator) {
-  class_<FingerprintGeneratorWrapper>("FingerprintGeneratorWrapper",
-                                      init<FingerprintGeneratorWrapper>())
+  python::class_<FingerprintGeneratorWrapper>(
+      "FingerprintGeneratorWrapper",
+      python::init<FingerprintGeneratorWrapper>())
       .def("getFingerprint", &FingerprintGeneratorWrapper::getFingerprint,
            (python::arg("mol"), python::arg("fromAtoms") = python::list(),
             python::arg("ignoreAtoms") = python::list(),
