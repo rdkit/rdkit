@@ -70,6 +70,14 @@
 #define BOOST_NO_CXX11_NULLPTR
 %include <boost/smart_ptr/shared_array.hpp>
 
+/* undefine RDKIT_<LIBNAME>_EXPORT macros and the like in coordgen/maeparser */
+#ifndef COORDGEN_STATIC
+#define STATIC_COORDGEN
+#endif
+#ifndef MAEPARSER_STATIC
+#define STATIC_MAEPARSER
+#endif
+%include <RDBoost/export.h>
 /* Include the base types before anything that will utilize them */
 #ifdef SWIGWIN
 %include "../msvc_stdint.i"
