@@ -307,19 +307,19 @@ void testGithub1908() {
 
     Conformer &conf = m->getConformer();
     double dist = getBondLength(conf, 0, 1);
-    std::cerr << " 1: " << dist << std::endl;
+    //std::cerr << " 1: " << dist << std::endl;
     TEST_ASSERT(feq(dist, 1.38, .02));
     dist = getBondLength(conf, 1, 2);
-    std::cerr << " 2: " << dist << std::endl;
+    //std::cerr << " 2: " << dist << std::endl;
     TEST_ASSERT(feq(dist, 1.38, .02));
 
     canonicalizeConformer(conf);
 
     dist = getBondLength(conf, 0, 1);
-    std::cerr << " 3: " << dist << std::endl;
+    //std::cerr << " 3: " << dist << std::endl;
     TEST_ASSERT(feq(dist, 1.38, .02));
     dist = getBondLength(conf, 1, 2);
-    std::cerr << " 4: " << dist << std::endl;
+    //std::cerr << " 4: " << dist << std::endl;
     TEST_ASSERT(feq(dist, 1.38, .02));
   }
   {  // a disc (benzene)
@@ -330,19 +330,19 @@ void testGithub1908() {
 
     Conformer &conf = m->getConformer();
     double dist = getBondLength(conf, 0, 1);
-    std::cerr << " 1: " << dist << std::endl;
+    //std::cerr << " 1: " << dist << std::endl;
     TEST_ASSERT(feq(dist, 1.38, .02));
     dist = getBondLength(conf, 1, 2);
-    std::cerr << " 2: " << dist << std::endl;
+    //std::cerr << " 2: " << dist << std::endl;
     TEST_ASSERT(feq(dist, 1.38, .02));
 
     canonicalizeConformer(conf);
 
     dist = getBondLength(conf, 0, 1);
-    std::cerr << " 3: " << dist << std::endl;
+    //std::cerr << " 3: " << dist << std::endl;
     TEST_ASSERT(feq(dist, 1.38, .02));
     dist = getBondLength(conf, 1, 2);
-    std::cerr << " 4: " << dist << std::endl;
+    //std::cerr << " 4: " << dist << std::endl;
     TEST_ASSERT(feq(dist, 1.38, .02));
   }
 }
@@ -371,7 +371,6 @@ int main() {
   std::cout << "\t---------------------------------\n";
   std::cout << "\t testGithub1262: PMI descriptors incorrect  \n\n";
   testGithub1262();
-  std::cout << "***********************************************************\n";
 #endif
   std::cout << "\t---------------------------------\n";
   std::cout
