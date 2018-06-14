@@ -205,8 +205,7 @@ void testGetSetDihedral() {
 void testGetSetDihedralThroughTripleBond() {
   std::string rdbase = getenv("RDBASE");
   std::string fName =
-      rdbase +
-      "/Code/GraphMol/MolTransforms/test_data/github1262_2.mol";
+      rdbase + "/Code/GraphMol/MolTransforms/test_data/github1262_2.mol";
   RWMol *m = MolFileToMol(fName, true, false);
   TEST_ASSERT(m);
   Conformer &conf = m->getConformer();
@@ -227,8 +226,7 @@ void testGetSetDihedralThroughTripleBond() {
   bool exceptionRaised = false;
   try {
     setDihedralDeg(conf, 6, 0, 3, 9, 0.0);
-  }
-  catch (ValueErrorException &e) {
+  } catch (ValueErrorException &e) {
     exceptionRaised = true;
   }
   TEST_ASSERT(exceptionRaised);
@@ -299,11 +297,62 @@ void testGithub1262() {
 }
 #endif
 
+void testGithub1908() {
+  std::string rdbase = getenv("RDBASE");
+  {  // a disc (benzene)
+    std::string fName =
+        rdbase + "/Code/GraphMol/MolTransforms/test_data/github1908_2.mol";
+    std::unique_ptr<RWMol> m(MolFileToMol(fName));
+    TEST_ASSERT(m);
+
+    Conformer &conf = m->getConformer();
+    double dist = getBondLength(conf, 0, 1);
+    //std::cerr << " 1: " << dist << std::endl;
+    TEST_ASSERT(feq(dist, 1.38, .02));
+    dist = getBondLength(conf, 1, 2);
+    //std::cerr << " 2: " << dist << std::endl;
+    TEST_ASSERT(feq(dist, 1.38, .02));
+
+    canonicalizeConformer(conf);
+
+    dist = getBondLength(conf, 0, 1);
+    //std::cerr << " 3: " << dist << std::endl;
+    TEST_ASSERT(feq(dist, 1.38, .02));
+    dist = getBondLength(conf, 1, 2);
+    //std::cerr << " 4: " << dist << std::endl;
+    TEST_ASSERT(feq(dist, 1.38, .02));
+  }
+  {  // a disc (benzene)
+    std::string fName =
+        rdbase + "/Code/GraphMol/MolTransforms/test_data/github1908_1.mol";
+    std::unique_ptr<RWMol> m(MolFileToMol(fName));
+    TEST_ASSERT(m);
+
+    Conformer &conf = m->getConformer();
+    double dist = getBondLength(conf, 0, 1);
+    //std::cerr << " 1: " << dist << std::endl;
+    TEST_ASSERT(feq(dist, 1.38, .02));
+    dist = getBondLength(conf, 1, 2);
+    //std::cerr << " 2: " << dist << std::endl;
+    TEST_ASSERT(feq(dist, 1.38, .02));
+
+    canonicalizeConformer(conf);
+
+    dist = getBondLength(conf, 0, 1);
+    //std::cerr << " 3: " << dist << std::endl;
+    TEST_ASSERT(feq(dist, 1.38, .02));
+    dist = getBondLength(conf, 1, 2);
+    //std::cerr << " 4: " << dist << std::endl;
+    TEST_ASSERT(feq(dist, 1.38, .02));
+  }
+}
+
 int main() {
   // test1();
   std::cout << "***********************************************************\n";
   std::cout << "Testing MolTransforms\n";
 
+#if 1
   std::cout << "\t---------------------------------\n";
   std::cout << "\t test1Canonicalization \n\n";
   test1Canonicalization();
@@ -322,6 +371,11 @@ int main() {
   std::cout << "\t---------------------------------\n";
   std::cout << "\t testGithub1262: PMI descriptors incorrect  \n\n";
   testGithub1262();
+#endif
+  std::cout << "\t---------------------------------\n";
+  std::cout
+      << "\t testGithub1908: CanonicalizeMol() distorting bond lengths\n\n";
+  testGithub1908();
   std::cout << "***********************************************************\n";
   return (0);
 }
