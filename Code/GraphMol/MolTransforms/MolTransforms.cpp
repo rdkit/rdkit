@@ -18,7 +18,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/Exceptions.h>
 
-#define EIGEN_TOLERANCE 1.0e-2
+#define EIGEN_TOLERANCE 5.0e-2
 namespace MolTransforms {
 
 using namespace RDKit;
@@ -286,6 +286,7 @@ RDGeom::Transform3D *computeCanonicalTransform(const Conformer &conf,
     // deal with zero eigen value systems
     unsigned int i, j, dim = 3;
     for (i = 0; i < 3; ++i) {
+      // std::cerr<<"  ev: "<<i<<": "<<eigVals.getVal(i)<<std::endl;
       if (fabs(eigVals.getVal(i)) < EIGEN_TOLERANCE) {
         dim--;
       }
