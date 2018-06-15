@@ -74,13 +74,13 @@ macro(rdkit_library)
   IF(RDKLIB_LINK_LIBRARIES)
     target_link_libraries(${RDKLIB_NAME} PUBLIC ${RDKLIB_LINK_LIBRARIES})
   ENDIF(RDKLIB_LINK_LIBRARIES)
-  if(WIN32)
+  if((NOT MSVC) OR RDK_INSTALL_DLLS_MSVC)
     set_target_properties(${RDKLIB_NAME} PROPERTIES
                           OUTPUT_NAME "RDKit${RDKLIB_NAME}"
                           VERSION "${RDKit_ABI}.${RDKit_Year}.${RDKit_Month}.${RDKit_Revision}"
                           VERSION ${RDKit_VERSION}
                           SOVERSION ${RDKit_ABI} )
-  endif(WIN32)
+  endif()
   set_target_properties(${RDKLIB_NAME} PROPERTIES
                         ARCHIVE_OUTPUT_DIRECTORY ${RDK_ARCHIVE_OUTPUT_DIRECTORY}
                         RUNTIME_OUTPUT_DIRECTORY ${RDK_RUNTIME_OUTPUT_DIRECTORY}
