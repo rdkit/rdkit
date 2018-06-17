@@ -382,6 +382,7 @@ atom_expr: atom_expr AND_TOKEN atom_expr {
 
 point_query: NOT_TOKEN point_query {
   $2->getQuery()->setNegation(!($2->getQuery()->getNegation()));
+  $2->setAtomicNum(0);
   SmilesParseOps::ClearAtomChemicalProps($2);
   $$ = $2;
 }
