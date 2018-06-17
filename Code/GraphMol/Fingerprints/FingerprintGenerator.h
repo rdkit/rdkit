@@ -53,8 +53,20 @@ class FingerprintArguments {
    */
   virtual std::uint64_t getResultSize() const = 0;
 
+  /**
+   /brief method that returns information string about the fingerprint specific
+   argument set and the arguments themselves
+
+   /return std::string information string
+   */
   virtual std::string infoString() const = 0;
 
+  /**
+   /brief method that returns informtion string about common fingerprinting
+   arguments' values
+
+   /return std::string information string
+   */
   std::string commonArgumentsString() const;
 
   virtual ~FingerprintArguments() = 0;
@@ -126,6 +138,12 @@ class AtomEnvironmentGenerator {
       const std::vector<std::uint32_t> *atomInvariants = nullptr,
       const std::vector<std::uint32_t> *bondInvariants = nullptr) const = 0;
 
+  /**
+   /brief method that returns information about this /c AtomEnvironmentGenerator
+   and its arguments if any
+
+   /return std::string information string
+   */
   virtual std::string infoString() const = 0;
 
   virtual ~AtomEnvironmentGenerator() = 0;
@@ -148,6 +166,12 @@ class AtomInvariantsGenerator {
   virtual std::vector<std::uint32_t> *getAtomInvariants(
       const ROMol &mol) const = 0;
 
+  /**
+   /brief method that returns information about this /c AtomInvariantsGenerator
+   and its arguments
+
+   /return std::string information string
+   */
   virtual std::string infoString() const = 0;
 
   virtual ~AtomInvariantsGenerator() = 0;
@@ -170,6 +194,12 @@ class BondInvariantsGenerator {
   virtual std::vector<std::uint32_t> *getBondInvariants(
       const ROMol &mol) const = 0;
 
+  /**
+ /brief method that returns information about this /c BondInvariantsGenerator
+ and its arguments
+
+ /return std::string information string
+ */
   virtual std::string infoString() const = 0;
 
   virtual ~BondInvariantsGenerator() = 0;

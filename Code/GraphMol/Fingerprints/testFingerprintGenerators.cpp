@@ -118,6 +118,74 @@ void testAtomPairFP() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testAtomPairArgs() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog)
+      << "Test atom-pair fp generator with different arguments" << std::endl;
+
+  ROMol *mol;
+  SparseIntVect<std::uint32_t> *fp;
+  std::uint32_t c1, c2, c3;
+
+  FingerprintGenerator *atomPairGenerator = AtomPair::getAtomPairGenerator(2);
+
+  mol = SmilesToMol("CCC");
+  fp = atomPairGenerator->getFingerprint(*mol);
+  TEST_ASSERT(fp->getTotalVal() == 1);
+  TEST_ASSERT(fp->getNonzeroElements().size() == 1);
+
+  c1 = AtomPair::getAtomCode(mol->getAtomWithIdx(0), 0, false);
+  c2 = AtomPair::getAtomCode(mol->getAtomWithIdx(1), 0, false);
+  c3 = AtomPair::getAtomCode(mol->getAtomWithIdx(2), 0, false);
+  TEST_ASSERT(fp->getVal(AtomPair::getAtomPairCode(c1, c2, 1, false)) == 0);
+  TEST_ASSERT(fp->getVal(AtomPair::getAtomPairCode(c1, c3, 2, false)) == 1);
+
+  delete fp;
+  delete atomPairGenerator;
+
+  atomPairGenerator = AtomPair::getAtomPairGenerator(1, 1);
+  fp = atomPairGenerator->getFingerprint(*mol);
+  TEST_ASSERT(fp->getTotalVal() == 2);
+  TEST_ASSERT(fp->getNonzeroElements().size() == 1);
+
+  c1 = AtomPair::getAtomCode(mol->getAtomWithIdx(0), 0, false);
+  c2 = AtomPair::getAtomCode(mol->getAtomWithIdx(1), 0, false);
+  c3 = AtomPair::getAtomCode(mol->getAtomWithIdx(2), 0, false);
+  TEST_ASSERT(fp->getVal(AtomPair::getAtomPairCode(c1, c2, 1, false)) == 2);
+  TEST_ASSERT(fp->getVal(AtomPair::getAtomPairCode(c1, c3, 2, false)) == 0);
+
+  delete fp;
+  delete atomPairGenerator;
+
+  atomPairGenerator = AtomPair::getAtomPairGenerator(1, 30, true);
+  fp = atomPairGenerator->getFingerprint(*mol);
+  TEST_ASSERT(fp->getTotalVal() == 3);
+  TEST_ASSERT(fp->getNonzeroElements().size() == 2);
+
+  c1 = AtomPair::getAtomCode(mol->getAtomWithIdx(0), 0, true);
+  c2 = AtomPair::getAtomCode(mol->getAtomWithIdx(1), 0, true);
+  c3 = AtomPair::getAtomCode(mol->getAtomWithIdx(2), 0, true);
+  TEST_ASSERT(fp->getVal(AtomPair::getAtomPairCode(c1, c2, 1, true)) == 2);
+  TEST_ASSERT(fp->getVal(AtomPair::getAtomPairCode(c1, c3, 2, true)) == 1);
+
+  atomPairGenerator = AtomPair::getAtomPairGenerator(1, 30, false, true, false);
+  fp = atomPairGenerator->getFingerprint(*mol);
+  TEST_ASSERT(fp->getTotalVal() == 2);
+  TEST_ASSERT(fp->getNonzeroElements().size() == 2);
+
+  c1 = AtomPair::getAtomCode(mol->getAtomWithIdx(0), 0, false);
+  c2 = AtomPair::getAtomCode(mol->getAtomWithIdx(1), 0, false);
+  c3 = AtomPair::getAtomCode(mol->getAtomWithIdx(2), 0, false);
+  TEST_ASSERT(fp->getVal(AtomPair::getAtomPairCode(c1, c2, 1, false)) == 1);
+  TEST_ASSERT(fp->getVal(AtomPair::getAtomPairCode(c1, c3, 2, false)) == 1);
+
+  delete mol;
+  delete fp;
+  delete atomPairGenerator;
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 void testAtomPairOld() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "Test compatibility between atom pair "
@@ -330,6 +398,7 @@ int main(int argc, char *argv[]) {
   RDLog::InitLogs();
   testAtomCodes();
   testAtomPairFP();
+  testAtomPairArgs();
   testAtomPairOld();
   testAtomPairBitvector();
   testAtomPairFoldedBitvector();
