@@ -1,5 +1,5 @@
 rdkit_python_extension(rdAtomPairGenerator
-                       AtomPairGeneratorWrapper.cpp
+                       FingerprintGeneratorWrapper.cpp
                        DEST Chem
                        LINK_LIBRARIES Fingerprints 
                        DataStructs RDGeneral RDBoost)
