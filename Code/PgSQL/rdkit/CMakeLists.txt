@@ -35,7 +35,7 @@ if(RDK_BUILD_INCHI_SUPPORT)
   include_directories(${CMAKE_SOURCE_DIR}/External)
   add_definitions(-DRDK_BUILD_INCHI_SUPPORT)
 endif(RDK_BUILD_INCHI_SUPPORT)
-add_definitions(-DRDKITVER="007300")
+add_definitions(-DRDKITVER="007400")
 if(NOT DEFINED PostgreSQL_ROOT)
   if(DEFINED ENV{PostgreSQL_ROOT})
     set(PostgreSQL_ROOT "$ENV{PostgreSQL_ROOT}")
@@ -204,6 +204,13 @@ if(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.3)
 else(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.3)
   set(RDKIT_GIN_BFP_TRICONSISTENT "FUNCTION    6   gin_bfp_triconsistent(internal, int2, bfp, int4, internal, internal, internal),")
 endif(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.3)
+
+if(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.6)
+    set(RDKIT_PARALLEL_SAFE "")
+else(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.6)
+    set(RDKIT_PARALLEL_SAFE "PARALLEL SAFE")
+endif(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.6)
+
 
 configure_file("${PG_CURRENT_SOURCE_DIR}${EXTENSION}.sql.in"
                "${PG_CURRENT_BINARY_DIR}${EXTENSION}--${PG_EXTVERSION}.sql")
