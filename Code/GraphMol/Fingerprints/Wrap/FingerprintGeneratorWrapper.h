@@ -16,7 +16,21 @@ class FingerprintGeneratorWrapper {
   SparseIntVect<std::uint32_t> *getFingerprint(const ROMol &mol,
                                                python::object py_fromAtoms,
                                                python::object py_ignoreAtoms,
-                                               const int confId);
+                                               const int confId) const;
+
+  SparseBitVect *getFingerprintAsBitVect(const ROMol &mol,
+                                         python::object py_fromAtoms,
+                                         python::object py_ignoreAtoms,
+                                         const int confId) const;
+
+  SparseIntVect<std::uint32_t> *getFoldedFingerprint(
+      const ROMol &mol, python::object py_fromAtoms,
+      python::object py_ignoreAtoms, const int confId) const;
+
+  ExplicitBitVect *getFoldedFingerprintAsBitVect(const ROMol &mol,
+                                                 python::object py_fromAtoms,
+                                                 python::object py_ignoreAtoms,
+                                                 const int confId) const;
 
   FingerprintGeneratorWrapper();
   ~FingerprintGeneratorWrapper();

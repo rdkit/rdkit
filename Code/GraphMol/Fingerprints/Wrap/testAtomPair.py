@@ -15,5 +15,17 @@ class TestCase(unittest.TestCase):
     nz = fp.GetNonzeroElements()
     self.assertEqual(len(nz), 2)
 
+    fp = g.getFoldedFingerprint(m)
+    nz = fp.GetNonzeroElements()
+    self.assertEqual(len(nz), 2)
+
+    fp = g.getFingerprintAsBitVect(m)
+    nzc = fp.GetNumOnBits()
+    self.assertEqual(nzc, 3)
+
+    fp = g.getFoldedFingerprintAsBitVect(m)
+    nzc = fp.GetNumOnBits()
+    self.assertEqual(nzc, 3)
+
 if __name__ == '__main__':
   unittest.main()
