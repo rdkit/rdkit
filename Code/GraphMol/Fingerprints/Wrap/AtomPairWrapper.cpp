@@ -14,9 +14,13 @@ namespace AtomPairWrapper {
 FingerprintGeneratorWrapper *getAtomPairGeneratorWrapped(
     const unsigned int minDistance, const unsigned int maxDistance,
     const bool includeChirality, const bool use2D,
-    const bool useCountSimulation) {
-  AtomInvariantsGenerator *atomInvariantsGenerator = nullptr;
-  BondInvariantsGenerator *bondInvariantsGenerator = nullptr;
+    const bool useCountSimulation,
+    AtomInvGeneratorWrapper &atomInvGeneratorWrapper,
+    BondInvGeneratorWrapper &bondInvGeneratorWrapper) {
+  AtomInvariantsGenerator *atomInvariantsGenerator =
+      atomInvGeneratorWrapper.dp_atomInvariantsGenerator;
+  BondInvariantsGenerator *bondInvariantsGenerator =
+      bondInvGeneratorWrapper.dp_bondInvariantsGenerator;
   AtomEnvironmentGenerator *atomPairEnvGenerator =
       new AtomPair::AtomPairEnvGenerator();
   FingerprintArguments *atomPairArguments = new AtomPair::AtomPairArguments(
@@ -37,6 +41,16 @@ FingerprintGeneratorWrapper *getAtomPairGeneratorWrapped(
   return wrapped;
 }
 
+AtomInvGeneratorWrapper *getAtomPairAtomInvGen(const bool includeChirality) {
+  AtomInvGeneratorWrapper *atomInvGeneratorWrapper =
+      new AtomInvGeneratorWrapper();
+
+  atomInvGeneratorWrapper->dp_atomInvariantsGenerator =
+      new AtomPairAtomInvGenerator(includeChirality);
+
+  return atomInvGeneratorWrapper;
+}
+
 void exportAtompair() {
   std::string docString = "";
   python::def(
@@ -44,9 +58,16 @@ void exportAtompair() {
       (python::arg("minDistance") = 1,
        python::arg("maxDistance") = AtomPair::maxPathLen - 1,
        python::arg("includeChirality") = false, python::arg("use2D") = true,
-       python::arg("useCountSimulation") = true),
+       python::arg("useCountSimulation") = true,
+       python::arg("atomInvGeneratorWrapper") = AtomInvGeneratorWrapper(),
+       python::arg("BondInvGeneratorWrapper") = BondInvGeneratorWrapper()),
       docString.c_str(),
       python::return_value_policy<python::manage_new_object>());
+
+  docString = "";
+  python::def("getAtomPairAtomInvGen", &getAtomPairAtomInvGen,
+              (python::arg("includeChirality") = false), docString.c_str(),
+              python::return_value_policy<python::manage_new_object>());
 
   return;
 }

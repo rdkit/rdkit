@@ -51,6 +51,22 @@ ArgumentHelper convertPyArguments(python::object py_fromAtoms,
   return argumentHelper;
 }
 
+AtomInvGeneratorWrapper::AtomInvGeneratorWrapper() {
+  dp_atomInvariantsGenerator = nullptr;
+}
+
+AtomInvGeneratorWrapper::~AtomInvGeneratorWrapper() {
+  delete dp_atomInvariantsGenerator;
+}
+
+BondInvGeneratorWrapper::BondInvGeneratorWrapper() {
+  dp_bondInvariantsGenerator = nullptr;
+}
+
+BondInvGeneratorWrapper::~BondInvGeneratorWrapper() {
+  delete dp_bondInvariantsGenerator;
+}
+
 SparseIntVect<std::uint32_t> *FingerprintGeneratorWrapper::getFingerprint(
     const ROMol &mol, python::object py_fromAtoms,
     python::object py_ignoreAtoms, const int confId) const {
@@ -129,6 +145,13 @@ FingerprintGeneratorWrapper::~FingerprintGeneratorWrapper() {
 BOOST_PYTHON_MODULE(rdAtomPairGenerator) {
   std::string docString = "";
 
+  python::class_<AtomInvGeneratorWrapper>(
+      "AtomInvGeneratorWrapper", python::init<AtomInvGeneratorWrapper>());
+
+  python::class_<BondInvGeneratorWrapper>(
+      "BondInvGeneratorWrapper", python::init<BondInvGeneratorWrapper>());
+
+  docString = "";
   python::class_<FingerprintGeneratorWrapper>(
       "FingerprintGeneratorWrapper",
       python::init<FingerprintGeneratorWrapper>())
