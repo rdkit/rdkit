@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2018 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -908,7 +908,7 @@ void testIssue330() {
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
   wsma = MolToSmarts(*matcher1);
-  BOOST_LOG(rdInfoLog) << "sma: " << wsma << std::endl;
+  // BOOST_LOG(rdInfoLog) << "sma: " << wsma << std::endl;
 
   delete matcher1;
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -2088,7 +2088,7 @@ void testGithub1338() {
     TEST_ASSERT(p);
     std::string asma = SmartsWrite::GetAtomSmarts(
         static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
-    std::cerr << "  SMA: " << asma << std::endl;
+    // std::cerr << "  SMA: " << asma << std::endl;
     TEST_ASSERT(asma == "[N&2*&H1&+]");
     delete p;
   }
@@ -2534,6 +2534,22 @@ void testGithub1719() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub1920() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github #1920: Negated atom number queries "
+                          "in SMARTS should not set atomic number of query atom"
+                       << std::endl;
+  std::unique_ptr<ROMol> m(SmartsToMol("[#6][#6;!#1][!#6][!#6;H1]"));
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getAtomicNum() == 6);
+  TEST_ASSERT(m->getAtomWithIdx(1)->getAtomicNum() == 6);
+  TEST_ASSERT(m->getAtomWithIdx(2)->getAtomicNum() == 0);
+  TEST_ASSERT(m->getAtomWithIdx(3)->getAtomicNum() == 0);
+  _checkMatches("[!#6;!#1]", "CO", 1, 1);
+  _checkNoMatches("[!#6;!#1]", "CC");
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -2580,5 +2596,6 @@ int main(int argc, char *argv[]) {
   testChargesAndIsotopes();
   testGithub1756();
   testGithub1719();
+  testGithub1920();
   return 0;
 }
