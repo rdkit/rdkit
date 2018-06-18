@@ -3,13 +3,15 @@ rdkit_library(MolStandardize
 	      Metal.cpp
 	      Normalize.cpp
 	      Validate.cpp
-              LINK_LIBRARIES RDGeneral GraphMol) 
+	      LINK_LIBRARIES RDGeneral GraphMol FragmentCatalog) 
 
 rdkit_headers(MolStandardize.h
 	      Metal.h
 	      Normalize.h
 	      Validate.h
 	      DEST GraphMol/MolStandardize)
+    
+add_subdirectory(FragmentCatalog)
 
 rdkit_test(molStandardizeTest test1.cpp LINK_LIBRARIES MolStandardize
 	SmilesParse RDGeneral GraphMol SubstructMatch)

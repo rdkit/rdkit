@@ -4,7 +4,10 @@
 #include <iostream>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/MolOps.h>
+#include <GraphMol/MolStandardize/FragmentCatalog/FragmentRemover.h>
 
+#include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
 using namespace std;
 
 namespace RDKit{
@@ -28,6 +31,23 @@ bool cleanup(RWMol &mol, const CleanupParameters &params){
 }
 
 void tautomerParent(RWMol &mol, const CleanupParameters &params){
+}
+
+// Return the fragment parent of a given molecule.
+// The fragment parent is the largest organic covalent unit in the molecule.
+//
+void fragmentParent(RWMol &mol, const CleanupParameters &params, bool skip_standardize) {
+	
+	if (!skip_standardize) {
+		cleanup(mol, params);
+	}
+
+	// TODO
+	// largest fragment 
+	LargestFragmentChooser lfragchooser(params.preferOrganic);
+	std::shared_ptr<ROMol> nm( new ROMol(mol) );
+	boost::shared_ptr<ROMol> lfrag = lfragchooser.choose(*nm);
+	mol = RWMol(*lfrag);
 }
 
 void stereoParent(RWMol &mol, const CleanupParameters &params){

@@ -82,37 +82,5 @@ std::vector<std::shared_ptr<ROMol>> readFuncGroups(std::istream &inStream, int n
 	return funcGroups;
 }
 
-//ROMol *removeFrags(const ROMol &mol, const FragmentCatalogParams *fparams) {
-//	
-//	PRECONDITION(fparams, "");
-//
-//	const std::vector<std::shared_ptr<ROMol>> &fgrps = fparams->getFuncGroups();
-//	std::vector<std::shared_ptr<ROMol>>::const_iterator fgci;
-//	auto *removed =  new ROMol(mol) ;
-//
-//	for (fgci = fgrps.begin(); fgci != fgrps.end(); fgci++) {
-//
-//		std::vector<boost::shared_ptr<ROMol>> frags =
-//		       	MolOps::getMolFrags(*removed);
-//		// If nothing is left or leave_last and only one fragment, end here
-//		if (removed->getNumAtoms() == 0 || this->LEAVE_LAST 
-//		  && frags.size() <= 1 ) {
-//			break;
-//		}
-//
-//
-//		const ROMol *fgrp = fgci->get();
-//		std::string fname;
-//		(*fgci)->getProp(common_properties::_Name, fname);
-//		ROMol *tmp = RDKit::deleteSubstructs(*removed, *fgrp, true);
-//
-//		if (tmp->getNumAtoms() != removed->getNumAtoms()) {
-//			std::cout << "Removed fragment: " << fname << std::endl;
-//			removed = tmp;
-//		}
-//	}
-//	return removed;
-//}
-
 } // namespace MolStandardize
 } // namespace RDKit

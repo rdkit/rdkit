@@ -29,6 +29,32 @@ class FragmentRemover {
 		bool LEAVE_LAST = true;
 
 }; // class FragmentRemover
+
+bool isOrganic(const ROMol &frag);
+
+class LargestFragmentChooser {
+	public:
+		LargestFragmentChooser() {};
+		LargestFragmentChooser(bool prefer_organic) :
+			PREFER_ORGANIC(prefer_organic) {};
+		LargestFragmentChooser(const LargestFragmentChooser &other);
+		~LargestFragmentChooser() {};
+
+		boost::shared_ptr<ROMol> choose(const ROMol &mol);
+		struct Largest {
+				Largest();
+				Largest(std::string &smiles, const boost::shared_ptr<ROMol> &fragment,
+												unsigned int &atoms, double &weight, bool &organic);
+				std::string Smiles;
+				boost::shared_ptr<ROMol> Fragment;
+				unsigned int Atoms;
+				double Weight;
+				bool Organic;			
+		};
+
+	private:
+		bool PREFER_ORGANIC = false;
+}; // class LargestFragmentChooser
 } // namespace MolStandardize
 } // namespace RDKit
 

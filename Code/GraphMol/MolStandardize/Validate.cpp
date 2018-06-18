@@ -1,6 +1,9 @@
 #include "Validate.h"
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/ROMol.h>
+#include <GraphMol/MolStandardize/FragmentCatalog/FragmentCalaogParams.h>
+#include <GraphMol/MolStandardize/FragmentCatalog/FragmentRemover.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
 #include <iostream>
 #include <vector>
 #include <string>
@@ -63,7 +66,36 @@ void MolVSValidation::noAtomValidation(const ROMol &mol, bool reportAllFailures,
 }
 
 void MolVSValidation::fragmentValidation(const ROMol &mol, bool reportAllFailures, std::vector<ValidationErrorInfo> &errors) const {
+	std::string rdbase = getenv("RDBASE");
+	std::string fgrpFile = 
+		rdbase + "/Code/GraphMol/MolStandardize/FragmentCatalog/test_data/fragmentPatterns.txt";
+	auto *fparams = new FragmentCatalogParams(fgrpFile);
+	FragmentCatalog fcat(fparams);
 
+	const std::vector<std::shared_ptr<ROMol>> &fgrps = fparams->getFuncGroups();
+	INT_VECT mapping;
+	VECT_INT_VECT atom_mapping;
+	std::vector<ROMOL_SPTR> frags = MolOps::getMolFrags(mol, true, &mapping, &atom_mapping);
+
+	for (auto &fgrp : fgrps) {
+		RDKit::MatchVectType res;
+		unsigned int matches = SubstructMatch(mol, *fgrp, res);
+		if ( matches != 0 && frags.size() != 0 ) {
+			std::vector<int> substructidx; // store idxs of frag from substructmatch
+			for (auto &pair : res) { 
+							//std::cout << pair.first << ", " << pair.second << std::endl; 
+							substructidx.push_back(pair.second);
+			}
+			for (auto &molfragidx : atom_mapping) {
+				if ( molfragidx == substructidx ) {
+					std::string fname;
+					fgrp->getProp(common_properties::_Name, fname);
+					std::string msg = "Fragment " + fname + " is present.";
+					errors.push_back(ValidationErrorInfo(msg));
+				}
+			}
+		}
+	}
 }
 
 void MolVSValidation::neutralValidation(const ROMol &mol, bool reportAllFailures, std::vector<ValidationErrorInfo> &errors) const {

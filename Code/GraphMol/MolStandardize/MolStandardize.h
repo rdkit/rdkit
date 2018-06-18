@@ -36,6 +36,9 @@ bool cleanup(RWMol &mol, const CleanupParameters &params);
 
 void tautomerParent(RWMol &mol, const CleanupParameters &params);
 
+void fragmentParent(RWMol &mol, const CleanupParameters &params, 
+		bool skip_standardize = false);
+
 void stereoParent(RWMol &mol, const CleanupParameters &params);
 
 void isotopeParent(RWMol &mol, const CleanupParameters &params);

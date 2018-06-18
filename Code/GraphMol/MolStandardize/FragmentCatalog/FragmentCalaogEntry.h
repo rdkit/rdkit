@@ -13,7 +13,7 @@ namespace MolStandardize {
 class FragmentCatalogEntry : public RDCatalog::CatalogEntry {
 	public:
 		FragmentCatalogEntry() :
-			dp_mol(0), d_descrip("") {
+			dp_mol(nullptr), d_descrip("") {
 				dp_props = new Dict();
 				setBitId(-1);
 			}
@@ -23,11 +23,9 @@ class FragmentCatalogEntry : public RDCatalog::CatalogEntry {
 
 		~FragmentCatalogEntry() override {
 			delete dp_mol;
-			dp_mol = 0;
-			if (dp_props) {
-				delete dp_props;
-				dp_props = 0;
-			}
+			dp_mol = nullptr;
+			delete dp_props;
+			dp_props = nullptr;
 		}
 
 		std::string getDescription() const override { return d_descrip; }

@@ -159,14 +159,31 @@ void testDisallowedAtomsValidation() {
 	std::cout << msg << std::endl;
 	TEST_ASSERT(msg == "Atom F is in disallowedAtoms list");
 	}
-
 }
 
+void testFragment() {
+	string smi1, smi2, smi3, smi4, smi5, smi6;
+	MolVSValidation vm;
+
+	// testing MolVSValidation fragmentValidation
+	// FragmentValidation should identify 1,2-dichloroethane.
+	smi1 = "ClCCCl.c1ccccc1O";
+	unique_ptr<ROMol> m1( SmilesToMol(smi1, 0, false) );
+	vector<ValidationErrorInfo> errout1 = vm.validate(*m1, true);
+	for (auto &query : errout1) {
+	std::string msg = query.message();
+	std::cout << msg << std::endl;
+	TEST_ASSERT(msg == "Fragment 1,2-dichloroethane is present.");
+	}
+
+
+}
 
 int main() {
 	//testRDKitValidation();
 	//testMolVSValidation();
 //	testAllowedAtomsValidation();
-	testDisallowedAtomsValidation();
+//	testDisallowedAtomsValidation();
+	testFragment();
 	return 0;
 }

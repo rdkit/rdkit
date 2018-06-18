@@ -10,6 +10,7 @@
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <RDGeneral/FileParseException.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
+#include <GraphMol/MolStandardize/MolStandardize.h>
 
 #include <iostream>
 #include <fstream>
@@ -119,8 +120,91 @@ void test2() {
 	TEST_ASSERT(MolToSmiles(*remove12) == "CC(=O)Nc1ccc(O)cc1");
 }
 
+void test_largest_fragment() {
+	std::string smi1, smi2, smi3, smi4, smi5, smi6, smi7, smi8, smi9, smi10;
+	LargestFragmentChooser lfragchooser;
+	LargestFragmentChooser lfrag_preferOrg(true);
+	CleanupParameters *params = new CleanupParameters;
+
+	// Multiple organic fragments of different sizes. 
+	smi2 = "O=C(O)c1ccccc1.O=C(O)c1ccccc1.O=C(O)c1ccccc1";
+//	std::shared_ptr<ROMol> m2( SmilesToMol(smi2) );
+//	boost::shared_ptr<ROMol> lfrag2 = lfragchooser.choose(*m2);
+//	std::cout << MolToSmiles(*lfrag2) << std::endl;
+//	TEST_ASSERT(MolToSmiles(*lfrag2) == "O=C(O)c1ccccc1");
+	std::shared_ptr<RWMol> m2( SmilesToMol(smi2) );
+	MolStandardize::fragmentParent(*m2, *params);
+	TEST_ASSERT(MolToSmiles(*m2) == "O=C(O)c1ccccc1");
+
+
+	// No organic fragments
+	smi3 = "[N+](=O)([O-])[O-]";
+	std::shared_ptr<ROMol> m3( SmilesToMol(smi3) );
+	boost::shared_ptr<ROMol> lfrag3 = lfragchooser.choose(*m3);
+	std::cout << MolToSmiles(*lfrag3) << std::endl;
+	TEST_ASSERT(MolToSmiles(*lfrag3) == "O=[N+]([O-])[O-]");
+
+	// Larger inorganic should be chosen
+	smi4 = "[N+](=O)([O-])[O-].[CH3+]";
+	std::shared_ptr<ROMol> m4( SmilesToMol(smi4) );
+	boost::shared_ptr<ROMol> lfrag4 = lfragchooser.choose(*m4);
+	std::cout << MolToSmiles(*lfrag4) << std::endl;
+	TEST_ASSERT(MolToSmiles(*lfrag4) == "O=[N+]([O-])[O-]");
+
+	// Smaller organic fragment should be chosen over larger inorganic fragment.
+	smi5 = "[N+](=O)([O-])[O-].[CH3+]";
+	std::shared_ptr<ROMol> m5( SmilesToMol(smi5) );
+	boost::shared_ptr<ROMol> lfrag5 = lfrag_preferOrg.choose(*m5);
+	std::cout << MolToSmiles(*lfrag5) << std::endl;
+	TEST_ASSERT(MolToSmiles(*lfrag5) == "[CH3+]");
+
+
+	// Salt without charges.
+	smi1 = "[Na].O=C(O)c1ccccc1";
+	std::shared_ptr<RWMol> m1( SmilesToMol(smi1) );
+	MolStandardize::fragmentParent(*m1, *params);
+	std::cout << MolToSmiles(*m1) << std::endl;
+//	TEST_ASSERT(MolToSmiles(*lfrag) == "CN(C)C");
+
+	smi6 = "[Na]OC(=O)c1ccccc1";
+	std::shared_ptr<RWMol> m6( SmilesToMol(smi6) );
+//	MolStandardize::cleanup(*m6, *params);
+	MolStandardize::fragmentParent(*m6, *params);
+	std::cout << MolToSmiles(*m6) << std::endl;
+	TEST_ASSERT(MolToSmiles(*m6) == "O=C([O-])c1ccccc1");
+
+	smi7 = "c1ccccc1C(=O)O[Ca]OC(=O)c1ccccc1";
+	std::shared_ptr<RWMol> m7( SmilesToMol(smi7) );
+	MolStandardize::fragmentParent(*m7, *params);
+	std::cout << MolToSmiles(*m7) << std::endl;
+	TEST_ASSERT(MolToSmiles(*m7) == "O=C([O-])c1ccccc1");
+
+	smi8 = "[Pt](Cl)(Cl)(O)(O)(NC(C)C)NC(C)C";
+	std::shared_ptr<RWMol> m8( SmilesToMol(smi8) );
+	MolStandardize::fragmentParent(*m8, *params);
+	std::cout << MolToSmiles(*m8) << std::endl;
+	TEST_ASSERT(MolToSmiles(*m8) == "CC(C)[NH-]");
+
+	// Mercury containing compound.
+	smi9 = "CC[Hg]SC1=C(C=CC=C1)C(=O)[O][Na]";
+	std::shared_ptr<RWMol> m9( SmilesToMol(smi9) );
+	MolStandardize::fragmentParent(*m9, *params);
+	std::cout << MolToSmiles(*m9) << std::endl;
+	TEST_ASSERT(MolToSmiles(*m9) == "CC[Hg]Sc1ccccc1C(=O)[O-]");
+
+	// Covalent bond with metal.
+	smi10 = "[Ag]OC(=O)O[Ag]";
+	std::shared_ptr<RWMol> m10( SmilesToMol(smi10) );
+	MolStandardize::fragmentParent(*m10, *params);
+	std::cout << MolToSmiles(*m10) << std::endl;
+	TEST_ASSERT(MolToSmiles(*m10) == "O=C([O-])[O-]");
+
+//params->preferOrganic = true;
+}
+
 int main() {
 //	test1();
-	test2();
+//	test2();
+	test_largest_fragment();
 	return 0;
 }
