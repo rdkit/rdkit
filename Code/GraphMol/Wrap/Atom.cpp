@@ -93,12 +93,15 @@ bool AtomIsInRingSize(const Atom *atom, int size) {
                                                                 size);
 }
 
-std::string AtomGetSmarts(const Atom *atom) {
+std::string AtomGetSmarts(const Atom *atom, bool doKekule, bool allHsExplicit,
+                          bool isomericSmiles) {
   std::string res;
   if (atom->hasQuery()) {
     res = SmartsWrite::GetAtomSmarts(static_cast<const QueryAtom *>(atom));
   } else {
-    res = SmilesWrite::GetAtomSmiles(atom);
+    // FIX: this should not be necessary
+    res = SmilesWrite::GetAtomSmiles(atom, doKekule, nullptr, allHsExplicit,
+                                     isomericSmiles);
   }
   return res;
 }
@@ -243,6 +246,9 @@ struct atom_wrapper {
              "debugging purposes.\n\n")
 
         .def("GetSmarts", AtomGetSmarts,
+             (python::arg("self"), python::arg("doKekule") = false,
+              python::arg("allHsExplicit") = false,
+              python::arg("isomericSmiles") = true),
              "returns the SMARTS (or SMILES) string for an Atom\n\n")
 
         // properties
@@ -449,5 +455,5 @@ These cannot currently be constructed directly from Python\n";
         "'C<xxx>'\n");
   }
 };
-}  // end of namespace
+}  // namespace RDKit
 void wrap_atom() { RDKit::atom_wrapper::wrap(); }
