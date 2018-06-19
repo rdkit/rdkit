@@ -176,6 +176,15 @@ void testFragment() {
 	TEST_ASSERT(msg == "Fragment 1,2-dichloroethane is present.");
 	}
 
+	smi2 = "COCCOC.CCCBr";
+	unique_ptr<ROMol> m2( SmilesToMol(smi2, 0, false) );
+	vector<ValidationErrorInfo> errout2 = vm.validate(*m2, true);
+	for (auto &query : errout2) {
+	std::string msg = query.message();
+	std::cout << msg << std::endl;
+	TEST_ASSERT(msg == "Fragment 1,2-dimethoxyethane is present.");
+	}
+
 
 }
 
