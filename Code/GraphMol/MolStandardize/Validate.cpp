@@ -1,7 +1,7 @@
 #include "Validate.h"
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/ROMol.h>
-#include <GraphMol/MolStandardize/FragmentCatalog/FragmentCalaogParams.h>
+#include <GraphMol/MolStandardize/FragmentCatalog/FragmentCatalogParams.h>
 #include <GraphMol/MolStandardize/FragmentCatalog/FragmentRemover.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <iostream>

@@ -4,7 +4,7 @@
 #include <Catalogs/CatalogEntry.h>
 #include <GraphMol/Subgraphs/Subgraphs.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
-#include "FragmentCalaogParams.h"
+#include "FragmentCatalogParams.h"
 #include <GraphMol/RDKitBase.h>
 
 namespace RDKit {

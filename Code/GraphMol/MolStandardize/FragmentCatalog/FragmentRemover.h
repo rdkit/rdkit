@@ -2,8 +2,8 @@
 #define __RD_FRAGMENT_REMOVER_H__
 
 #include <Catalogs/Catalog.h>
-#include "FragmentCalaogEntry.h"
-#include "FragmentCalaogParams.h"
+#include "FragmentCatalogEntry.h"
+#include "FragmentCatalogParams.h"
 
 namespace RDKit {
 class ROMol;
@@ -30,8 +30,6 @@ class FragmentRemover {
 
 }; // class FragmentRemover
 
-bool isOrganic(const ROMol &frag);
-
 class LargestFragmentChooser {
 	public:
 		LargestFragmentChooser() {};
@@ -44,10 +42,10 @@ class LargestFragmentChooser {
 		struct Largest {
 				Largest();
 				Largest(std::string &smiles, const boost::shared_ptr<ROMol> &fragment,
-												unsigned int &atoms, double &weight, bool &organic);
+												unsigned int &numatoms, double &weight, bool &organic);
 				std::string Smiles;
 				boost::shared_ptr<ROMol> Fragment;
-				unsigned int Atoms;
+				unsigned int NumAtoms;
 				double Weight;
 				bool Organic;			
 		};

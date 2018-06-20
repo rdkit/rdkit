@@ -1,4 +1,4 @@
-#include "FragmentCalaogEntry.h"
+#include "FragmentCatalogEntry.h"
 
 #include <RDGeneral/types.h>
 #include <RDGeneral/utils.h>

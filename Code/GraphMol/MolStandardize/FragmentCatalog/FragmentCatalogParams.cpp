@@ -1,5 +1,5 @@
-#include "FragmentCalaogParams.h"
-#include "FragmentCalaogUtils.h"
+#include "FragmentCatalogParams.h"
+#include "FragmentCatalogUtils.h"
 #include <GraphMol/RDKitBase.h>
 #include <sstream>
 

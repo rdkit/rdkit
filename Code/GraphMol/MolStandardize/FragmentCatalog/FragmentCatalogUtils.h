@@ -2,7 +2,7 @@
 #define __RD_FRAGMENT_CATALOG_UTILS_H__
 
 #include <GraphMol/RDKitBase.h>
-#include "FragmentCalaogParams.h"
+#include "FragmentCatalogParams.h"
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <iostream>
 

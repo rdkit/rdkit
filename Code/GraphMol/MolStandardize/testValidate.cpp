@@ -189,10 +189,10 @@ void testFragment() {
 }
 
 int main() {
-	//testRDKitValidation();
-	//testMolVSValidation();
-//	testAllowedAtomsValidation();
-//	testDisallowedAtomsValidation();
+	testRDKitValidation();
+	testMolVSValidation();
+	testAllowedAtomsValidation();
+	testDisallowedAtomsValidation();
 	testFragment();
 	return 0;
 }

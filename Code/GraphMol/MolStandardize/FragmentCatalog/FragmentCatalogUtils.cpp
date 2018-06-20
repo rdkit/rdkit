@@ -1,4 +1,4 @@
-#include "FragmentCalaogUtils.h"
+#include "FragmentCatalogUtils.h"
 #include <RDGeneral/BadFileException.h>
 #include <boost/tokenizer.hpp>
 #include <GraphMol/SmilesParse/SmilesParse.h>

@@ -1,14 +1,14 @@
 rdkit_library(FragmentCatalog
-	FragmentCalaogParams.cpp
-	FragmentCalaogUtils.cpp
-	FragmentCalaogEntry.cpp
+	FragmentCatalogParams.cpp
+	FragmentCatalogUtils.cpp
+	FragmentCatalogEntry.cpp
 	FragmentRemover.cpp
 	LINK_LIBRARIES Catalogs GraphMol RDGeometryLib RDGeneral Descriptors
 	ChemTransforms)
 
-rdkit_headers(FragmentCalaogParams.h
-	FragmentCalaogUtils.h
-	FragmentCalaogEntry.h
+rdkit_headers(FragmentCatalogParams.h
+	FragmentCatalogUtils.h
+	FragmentCatalogEntry.h
 	FragmentRemover.h	
 	DEST GraphMol/MolStandardize/FragmentCatalog)
 

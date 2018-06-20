@@ -2,7 +2,7 @@
 #define __RD_FRAGMENT_CATALOG_PARAMS_H__
 
 #include <Catalogs/CatalogParams.h>
-#include "FragmentCalaogUtils.h"
+#include "FragmentCatalogUtils.h"
 #include <GraphMol/RDKitBase.h>
 #include <string>
 #include <vector>

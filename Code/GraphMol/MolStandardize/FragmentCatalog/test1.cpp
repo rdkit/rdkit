@@ -1,7 +1,6 @@
-#include "FragmentCalaogParams.h"
-#include "FragmentCalaogUtils.h"
+#include "FragmentCatalogParams.h"
+#include "FragmentCatalogUtils.h"
 #include "FragmentRemover.h"
-//#include "FragmentCalaogEntry.h"
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/ROMol.h>
@@ -96,7 +95,7 @@ void test2() {
 	std::shared_ptr<ROMol> m9( SmilesToMol(smi9) );
 	ROMol* remove9 = fragremover.remove(*m9, &fcat);
 	std::cout << MolToSmiles(*remove9) << std::endl;
-	TEST_ASSERT(MolToSmiles(*remove9) == "NCc1ccc(cc1)CC(=O)O");
+	TEST_ASSERT(MolToSmiles(*remove9) == "NCc1ccc(CC(=O)O)cc1");
 
 	// 1,4-Dioxane should be removed..
 	smi10 = "c1ccccc1O.O1CCOCC1";
@@ -203,8 +202,7 @@ void test_largest_fragment() {
 }
 
 int main() {
-//	test1();
-//	test2();
+	test2();
 	test_largest_fragment();
 	return 0;
 }
