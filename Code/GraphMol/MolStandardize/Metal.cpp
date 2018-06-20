@@ -22,6 +22,13 @@ MetalDisconnector::MetalDisconnector()
 	  metal_non(SmartsToMol("[Al,Sc,Ti,V,Cr,Mn,Fe,Co,Ni,Cu,Zn,Y,Zr,Nb,Mo,Tc,Ru,Rh,Pd,Ag,Cd,Hf,Ta,W,Re,Os,Ir,Pt,Au]~[B,C,Si,P,As,Sb,S,Se,Te,Cl,Br,I,At]")){
 	  };
 
+MetalDisconnector::MetalDisconnector(const MetalDisconnector &other) {
+	metal_nof = other.metal_nof;
+	metal_non = other.metal_non;
+};
+
+MetalDisconnector::~MetalDisconnector() {};
+
 ROMol* MetalDisconnector::disconnect(const ROMol &mol){
 	auto *res = new RWMol(mol);
 	MetalDisconnector::disconnect(*res);
@@ -31,9 +38,7 @@ ROMol* MetalDisconnector::disconnect(const ROMol &mol){
 void MetalDisconnector::disconnect(RWMol &mol){
 	
 	std::list<ROMol*> metalList = {metal_nof, metal_non};
-	std::list<ROMol*>::iterator it;
-	for (it = metalList.begin(); it != metalList.end(); it++) {
-		ROMol* &query = *it;
+	for (auto &query : metalList) {
 		
 		std::vector<MatchVectType> matches;
 		unsigned int matched;

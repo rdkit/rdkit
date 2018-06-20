@@ -9,6 +9,9 @@ namespace MolStandardize{
 class MetalDisconnector{
 	public:
 		MetalDisconnector();
+		MetalDisconnector(const MetalDisconnector &other);
+		~MetalDisconnector();
+
 		// TODO inputting ROMol doesn't work
 		ROMol* disconnect(const ROMol &mol);
 		// overload
