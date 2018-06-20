@@ -12,7 +12,6 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/PartialCharges/GasteigerCharges.h>
-#include <GraphMol/Descriptors/MolData3Ddescriptors.h>
 #include <vector>
 #include <algorithm>
 
@@ -22,8 +21,6 @@
 
 namespace RDKit {
 namespace Descriptors {
-
-MolData3Ddescriptors moldata3D;
 
 double getLabuteAtomContribs(const ROMol &mol, std::vector<double> &Vi,
                              double &hContrib, bool includeHs, bool force) {
@@ -371,7 +368,13 @@ std::vector<double> calcCustomProp_VSA(const ROMol &mol, const std::string &cust
   getLabuteAtomContribs(mol, vsaContribs, tmp, true, force);
 
   std::vector<double> prop(mol.getNumAtoms(), 0.0);
-  prop = moldata3D.GetCustomAtomProp(mol, customPropName);
+  for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+	if (mol.getAtomWithIdx(i)->hasProp(customPropName)) {
+	  prop[i] = mol.getAtomWithIdx(i)->getProp<double>(customPropName);
+	} else {
+	  prop[i] =1;
+	}
+  }
   assignContribsToBins(vsaContribs, prop, bins, res);
 
   return res;
