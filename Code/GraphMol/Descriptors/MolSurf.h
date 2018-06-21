@@ -100,6 +100,10 @@ RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcSMR_VSA(const ROMol &mol, std::
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcPEOE_VSA(const ROMol &mol,
                                  std::vector<double> *bins = 0,
                                  bool force = false);
+RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcCustomProp_VSA(const ROMol &mol,
+		                         const std::string &customPropName,
+								const std::vector<double> &bins,
+                                 bool force = false);
 
 }  // end of namespace Descriptors
 }  // end of namespace RDKit

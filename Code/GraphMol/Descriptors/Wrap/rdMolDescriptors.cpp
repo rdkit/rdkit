@@ -703,6 +703,20 @@ python::list CalcPEOEVSA(const RDKit::ROMol &mol, python::object bins,
   BOOST_FOREACH (double dv, res) { pyres.append(dv); }
   return pyres;
 }
+python::list CalcCustomPropVSA(const RDKit::ROMol &mol, const std::string customPropName,
+		                 python::object bins, bool force) {
+  unsigned int nBins = python::extract<unsigned int>(bins.attr("__len__")());
+  std::vector<double> lbins = std::vector<double>(nBins, 0.0);
+  for (unsigned int i = 0; i < nBins; ++i) {
+    lbins[i] = python::extract<double>(bins[i]);
+  }
+  std::vector<double> res;
+  res = RDKit::Descriptors::calcCustomProp_VSA(mol, customPropName, lbins, force);
+
+  python::list pyres;
+  BOOST_FOREACH (double dv, res) { pyres.append(dv); }
+  return pyres;
+}
 python::list CalcMQNs(const RDKit::ROMol &mol, bool force) {
   std::vector<unsigned int> res;
   res = RDKit::Descriptors::calcMQNs(mol, force);
@@ -1251,6 +1265,11 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::def("PEOE_VSA_", CalcPEOEVSA,
               (python::arg("mol"), python::arg("bins") = python::list(),
                python::arg("force") = false));
+  docString = "returns the VSA contributions based on a custom property for a molecule";
+  python::def("CustomProp_VSA_", CalcCustomPropVSA,
+  		       (python::arg("mol"), python::arg("customPropName"),
+			   python::arg("bins"),
+			   python::arg("force") = false));
   docString = "returns the MQN descriptors for a molecule";
   python::def("MQNs_", CalcMQNs,
               (python::arg("mol"), python::arg("force") = false));

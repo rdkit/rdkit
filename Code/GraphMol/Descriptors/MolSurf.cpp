@@ -21,6 +21,7 @@
 
 namespace RDKit {
 namespace Descriptors {
+
 double getLabuteAtomContribs(const ROMol &mol, std::vector<double> &Vi,
                              double &hContrib, bool includeHs, bool force) {
   TEST_ASSERT(Vi.size() == mol.getNumAtoms());
@@ -268,7 +269,7 @@ double calcTPSA(const ROMol &mol, bool force) {
 namespace {
 void assignContribsToBins(const std::vector<double> &contribs,
                           const std::vector<double> &binProp,
-                          std::vector<double> &bins, std::vector<double> &res) {
+                          const std::vector<double> &bins, std::vector<double> &res) {
   PRECONDITION(contribs.size() == binProp.size(), "mismatched array sizes");
   PRECONDITION(res.size() >= bins.size() + 1, "mismatched array sizes");
   for (unsigned int i = 0; i < contribs.size(); ++i) {
@@ -354,6 +355,27 @@ std::vector<double> calcPEOE_VSA(const ROMol &mol, std::vector<double> *bins,
   std::vector<double> chgs(mol.getNumAtoms(), 0.0);
   computeGasteigerCharges(mol, chgs);
   assignContribsToBins(vsaContribs, chgs, lbins, res);
+
+  return res;
+}
+
+std::vector<double> calcCustomProp_VSA(const ROMol &mol, const std::string &customPropName,
+		const std::vector<double> &bins, bool force) {
+  std::vector<double> res(bins.size() + 1, 0);
+
+  std::vector<double> vsaContribs(mol.getNumAtoms());
+  double tmp;
+  getLabuteAtomContribs(mol, vsaContribs, tmp, true, force);
+
+  std::vector<double> prop(mol.getNumAtoms(), 0.0);
+  for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+	if (mol.getAtomWithIdx(i)->hasProp(customPropName)) {
+	  prop[i] = mol.getAtomWithIdx(i)->getProp<double>(customPropName);
+	} else {
+	  prop[i] =1;
+	}
+  }
+  assignContribsToBins(vsaContribs, prop, bins, res);
 
   return res;
 }
