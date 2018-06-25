@@ -5,6 +5,7 @@
 #include <GraphMol/ChemReactions/ReactionParser.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SanitException.h>
+#include <GraphMol/ChemTransforms/ChemTransforms.h>
 
 using namespace std;
 using namespace RDKit;
@@ -25,8 +26,18 @@ ROMol* Normalizer::normalize(const ROMol &mol, TransformCatalog *tcat) {
 	PRECONDITION(tparams, "");
 	const std::vector<std::shared_ptr<ChemicalReaction>> &transforms = tparams->getTransformations();
 
-	ROMol* normalize = this->normalizeFragment(mol, transforms);
-	return normalize;
+	std::vector<boost::shared_ptr<ROMol>> frags =	MolOps::getMolFrags(mol);
+	std::vector<ROMol*> nfrags;//( frags.size() );
+	for (const auto &frag : frags) {	
+		ROMol* nfrag = this->normalizeFragment(*frag, transforms);
+		nfrags.push_back(nfrag);
+	}
+	ROMol* outmol = nfrags.back();
+	nfrags.pop_back();
+	for (const auto &nfrag : nfrags) {
+		outmol = combineMols(*outmol, *nfrag);
+	}
+	return outmol;
 }
 
 ROMol* Normalizer::normalizeFragment(const ROMol &mol, 
