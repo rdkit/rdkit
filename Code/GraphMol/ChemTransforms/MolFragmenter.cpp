@@ -358,13 +358,15 @@ void checkChiralityPostMove(const ROMol &mol, const Atom *oAt, Atom *nAt,
   static const std::string newBondOrder = "_newBondOrder";
   INT_LIST newOrder;
   INT_LIST incomingOrder;
+
+  const int check_bond_index = static_cast<int>(bond->getIdx());
   // since we may call this function more than once, we need to keep track of
   // whether or not we've already been called and what the new atom order is.
   // we do this with a property.
   // this was github #1734
   if (nAt->getPropIfPresent(newBondOrder, incomingOrder)) {
-    BOOST_FOREACH (int bidx, incomingOrder) {
-      if (bidx != bond->getIdx()) {
+    for (int bidx: incomingOrder) {
+      if (bidx != check_bond_index) {
         newOrder.push_back(bidx);
       }
     }

@@ -402,7 +402,6 @@ int ChargeFix::markMostAcidicAtoms(double &pKa_value, double &gap) {
   unsigned na = Mol.getNumAtoms();
 
   for (unsigned i = 0; i < na; i++) {
-    const Atom &atom = *Mol.getAtomWithIdx(i);
     if (AtomColor[i] != 0 && AtompKaValue[i] < min_pKa)
       min_pKa = AtompKaValue[i];
   }

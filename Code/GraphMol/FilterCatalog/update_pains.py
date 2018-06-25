@@ -137,9 +137,10 @@ sc = set(pains_c)
 
 PAINS = {}
 
-for smiles, name in csv.reader(open(PAINS_CSV)):
-  name = name.replace("<regId=", "").replace(">", "")
-  PAINS[name] = smiles
+with open(PAINS_CSV) as fh:
+  for smiles, name in csv.reader(fh):
+    name = name.replace("<regId=", "").replace(">", "")
+    PAINS[name] = smiles
 
 PAINS_A = []
 for n in pains_a:
@@ -166,17 +167,18 @@ PAINS_C = "const FilterData_t PAINS_C[] = {\n%s\n};" % ",\n".join(PAINS_C)
 
 
 def write_pains(filename, data):
-  t = open(filename).read()
+  with open(filename) as fh:
+    t = fh.read()
   if t != data:
     if py3:
       import io
       # newline = don't convert to windows style
-      f = io.open(filename, 'w', newline='')
-      f.write(data)
+      with io.open(filename, 'w', newline='') as f:
+        f.write(data)
     else:
       # wb = means don't convert newline to windows style
-      open(filename, 'wb').write(data)
-
+      with open(filename, 'wb') as f:
+        f.write(data)
 
 write_pains(PAINS_A_FILENAME, PAINS_A)
 write_pains(PAINS_B_FILENAME, PAINS_B)

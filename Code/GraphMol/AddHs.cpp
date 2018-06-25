@@ -494,7 +494,6 @@ bool adjustStereoAtomsIfRequired(RWMol &mol, const Atom *atom,
   const auto &cbnd =
       mol.getBondBetweenAtoms(atom->getIdx(), heavyAtom->getIdx());
   if (!cbnd) return false;
-  Bond *dblBond = nullptr;
   for (const auto &nbri :
        boost::make_iterator_range(mol.getAtomBonds(heavyAtom))) {
     Bond *bnd = mol[nbri];

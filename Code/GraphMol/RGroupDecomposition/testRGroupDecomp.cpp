@@ -425,7 +425,7 @@ void testMatchOnlyAtRgroupHs() {
   const char *smilesData[2] = {"OCC","COCC"};
   for (int i = 0; i < 2; ++i) {
     ROMol *mol = SmilesToMol(smilesData[i]);
-    int res = decomp.add(*mol);
+    decomp.add(*mol);
   }
   decomp.process();
 

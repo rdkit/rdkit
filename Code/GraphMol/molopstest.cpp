@@ -4691,7 +4691,7 @@ void testRenumberAtoms() {
     ROMol *m = new ROMol;
     TEST_ASSERT(m);
     std::vector<unsigned int> nVect;
-    ROMol *nm = MolOps::renumberAtoms(*m, nVect);
+    MolOps::renumberAtoms(*m, nVect);
     delete m;
   }
 
@@ -6939,6 +6939,8 @@ void testGithub1281() {
       bool ok = false;
       try {
         RWMol *m = SmilesToMol(smiles);
+        // Can never get here:
+        delete m;
       } catch (const ValueErrorException &) {
         ok = true;
       }
