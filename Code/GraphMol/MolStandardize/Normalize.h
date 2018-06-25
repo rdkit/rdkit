@@ -1,37 +1,35 @@
 #ifndef __RD_NORMALIZE_H__
 #define __RD_NORMALIZE_H__
 
-#include <string>
-using namespace std;
+#include <Catalogs/Catalog.h>
+#include <GraphMol/MolStandardize/TransformCatalog/TransformCatalogEntry.h>
+#include <GraphMol/MolStandardize/TransformCatalog/TransformCatalogParams.h>
 
 namespace RDKit{
 class RWMol;
 class ROMol;
-class ChemicalReaction;
 
 namespace MolStandardize{
 
-struct Normalizations_t {
-	const char* description;
-	const char* smarts;
-};
-
-unsigned int getNumEntries();
-
-class Normalization {
-	public:
-		Normalization( const string &var, const string &transform );
-		ChemicalReaction* transform(const string &transform);
-
-}; // Normalization class
+typedef RDCatalog::HierarchCatalog<TransformCatalogEntry, TransformCatalogParams, int>
+    TransformCatalog;
 
 class Normalizer {
 	public:
-		Normalizer();
-		RWMol* normalize(const ROMol &mol);
+		ROMol* normalize(const ROMol &mol, TransformCatalog *tcat);
+		struct Product {
+			std::string Smiles;
+			boost::shared_ptr<ROMol> Mol;
+			Product(std::string smiles, boost::shared_ptr<ROMol> &mol): Smiles(smiles), Mol(mol) {}
+
+			// sorting products alphabetically by SMILES
+			bool operator < (const Product &pdt) const {
+							return (Smiles < pdt.Smiles);
+			}
+		};
 	private:
-		RWMol* normalizeFragment(const ROMol &mol);
-		RWMol* applyTransform(const ROMol &mol, ChemicalReaction &rule);
+		ROMol* normalizeFragment(const ROMol &mol, const std::vector<std::shared_ptr<ChemicalReaction>> &transforms);
+		boost::shared_ptr<ROMol> applyTransform(const ROMol &mol, ChemicalReaction &rule);
 
 }; // Normalizer class
 }
