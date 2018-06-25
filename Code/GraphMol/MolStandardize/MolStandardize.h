@@ -1,13 +1,17 @@
 #ifndef __RD_MOLSTANDARDIZE_H__
 #define __RD_MOLSTANDARDIZE_H__
 
+#include <string>
+#include <GraphMol/RDKitBase.h>
+
 namespace RDKit{
 class RWMol;
 class ROMol;
 
 struct CleanupParameters{
 	// TODO
-	// std::vector<std::string> normalisations;
+	std::string rdbase = std::getenv("RDBASE");
+	 std::string normalizations;
 	// std::vector<std::string> acidBasePairs;
 	// std::vector<std::string> chargeCorrections;
 	// std::vector<std::string> tautomerTransforms;
@@ -18,7 +22,8 @@ struct CleanupParameters{
 
 	CleanupParameters()
 		: // TODO 
-  		  // normalisations(NORMALISATIONS)
+//			normalizations(""),//this->DEFAULT_TRANSFORMS),
+			normalizations(rdbase + "/Code/GraphMol/MolStandardize/TransformCatalog/test_data/normalizations.txt"),
 		  // acidBasePairs()
 		  // chargeCorrections()
 		  // tautomerTransforms()
@@ -47,6 +52,7 @@ void chargeParent(RWMol &mol, const CleanupParameters &params);
 
 void superParent(RWMol &mol, const CleanupParameters &params);
 
+void normalize(RWMol &mol, const CleanupParameters &params);
 }; // MolStandardize
 }
 #endif

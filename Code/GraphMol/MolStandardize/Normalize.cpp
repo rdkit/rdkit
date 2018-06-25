@@ -41,7 +41,7 @@ ROMol* Normalizer::normalizeFragment(const ROMol &mol,
 			transform->getProp(common_properties::_Name, tname);
 			boost::shared_ptr<ROMol> product = this->applyTransform(mol, *transform);
 			if (product != nullptr) {
-				std::cout << "Rule applied: " << tname << std::endl;
+//				std::cout << "Rule applied: " << tname << std::endl;
 				nfrag = new ROMol(*product);
 				loop_brake = true;
 				break;

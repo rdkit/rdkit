@@ -1,10 +1,12 @@
 #include "MolStandardize.h"
 #include "Metal.h"
+#include "Normalize.h"
 #include <GraphMol/RDKitBase.h>
 #include <iostream>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/MolStandardize/FragmentCatalog/FragmentRemover.h>
+#include <GraphMol/MolStandardize/TransformCatalog/TransformCatalogParams.h>
 
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -23,7 +25,7 @@ bool cleanup(RWMol &mol, const CleanupParameters &params){
 	// TODO
 	MolStandardize::MetalDisconnector md;
 	md.disconnect(mol);
-        // normalize(*newM)
+	MolStandardize::normalize(mol, params);
 	// reionize(*newM)
 	RDKit::MolOps::assignStereochemistry(*newM);
 
@@ -62,6 +64,17 @@ void chargeParent(RWMol &mol, const CleanupParameters &params){
 void superParent(RWMol &mol, const CleanupParameters &params){
 }
 
+void normalize(RWMol &mol, const CleanupParameters &params){
+	
+	auto *tparams = new TransformCatalogParams(params.normalizations);
+	TransformCatalog tcat(tparams);
+	Normalizer normalizer;
+
+	std::shared_ptr<ROMol> m( new ROMol(mol) );
+	ROMol* normalized = normalizer.normalize(*m, &tcat);
+
+	mol = RWMol(*normalized);
+}
 
 } // end of namespace MolStandardize
 } // end of namespace RDKit
