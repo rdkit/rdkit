@@ -33,7 +33,6 @@ bool StructCheckTautomer::applyTautomer(unsigned it) {
     return false;
   }
   const unsigned nta = toTautomer.getNumAtoms();
-  const unsigned ntb = toTautomer.getNumBonds();
   MatchVectType match;  // The format is (queryAtomIdx, molAtomIdx)
   std::vector<unsigned> atomIdxMap(
       Mol.getNumAtoms());  // matched tau atom indeces
