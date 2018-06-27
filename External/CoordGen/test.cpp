@@ -138,7 +138,7 @@ bool compareConfs(const ROMol* m, const ROMol* templ, const MatchVectType& mv,
   }
   return true;
 }
-}
+}  // namespace
 
 void test2() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
@@ -391,10 +391,31 @@ void test2() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub1929() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "testing github1929: make sure coordgen works with bogus file names"
+      << std::endl;
+  {
+    ROMol* m = SmilesToMol("c1cc(CC)cnc1CC(=O)O");
+    TEST_ASSERT(m);
+    m->setProp("_Name", "test1");
+    CoordGen::CoordGenParams params;
+    params.templateFileDir = "I_do_not_exist";
+
+    TEST_ASSERT(CoordGen::addCoords(*m, &params) == 0);
+    TEST_ASSERT(m->getNumConformers() == 1);
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc, char* argv[]) {
   (void)argc;
   (void)argv;
   RDLog::InitLogs();
   test2();
   test1();
+  testGithub1929();
 }
