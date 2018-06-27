@@ -53,7 +53,7 @@ void test1() {
   qM.addAtom(qA);
   delete qA;
   qM.addAtom(new QueryAtom(8), true, true);
-  
+
   QueryBond *qB;
   qB = new QueryBond(Bond::UNSPECIFIED);
   qB->setOwningMol(qM);
@@ -833,6 +833,31 @@ void testNumHeteroatomNeighborQueries() {
   BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
 }
 
+
+void testAtomTypeQueries() {
+  BOOST_LOG(rdErrorLog)
+      << "---------------------- Test atom type queries"
+      << std::endl;
+
+  RWMol *m = SmilesToMol("CCc1ccccc1");
+  {
+    QueryAtom qA1;
+    qA1.setQuery(makeAtomTypeQuery(6,true));
+    QueryAtom qA2;
+    qA2.setQuery(makeAtomTypeQuery(6,false));
+    QueryAtom qA3;
+    qA3.setQuery(makeAtomTypeQuery(7,true));
+    TEST_ASSERT(!qA1.Match(m->getAtomWithIdx(0)));
+    TEST_ASSERT(qA2.Match(m->getAtomWithIdx(0)));
+    TEST_ASSERT(!qA3.Match(m->getAtomWithIdx(0)));
+    TEST_ASSERT(qA1.Match(m->getAtomWithIdx(2)));
+    TEST_ASSERT(!qA2.Match(m->getAtomWithIdx(2)));
+    TEST_ASSERT(!qA3.Match(m->getAtomWithIdx(2)));
+  }
+
+  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -853,6 +878,6 @@ int main() {
   testExtraAtomQueries();
   testExtraBondQueries();
   testNumHeteroatomNeighborQueries();
-
+  testAtomTypeQueries();
   return 0;
 }

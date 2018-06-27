@@ -117,6 +117,12 @@ static inline int queryAtomUnsaturated(Atom const *at) {
   return static_cast<int>(at->getDegree()) < at->getExplicitValence();
 };
 static inline int queryAtomNum(Atom const *at) { return at->getAtomicNum(); };
+static inline int makeAtomType(int atomic_num, bool aromatic) {
+  return atomic_num + 1000 * static_cast<int>(aromatic);
+}
+static inline int queryAtomType(Atom const *at) {
+  return makeAtomType(at->getAtomicNum(), at->getIsAromatic());
+};
 const int massIntegerConversionFactor = 1000;
 static inline int queryAtomMass(Atom const *at) {
   return static_cast<int>(round(massIntegerConversionFactor * at->getMass()));
@@ -308,6 +314,16 @@ T *makeAtomNumQuery(int what, const std::string &descr) {
 //! \overload
 RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *makeAtomNumQuery(int what);
 
+//! returns a Query for matching atomic number and aromaticity
+template <class T>
+T *makeAtomTypeQuery(int num, int aromatic, const std::string &descr) {
+  return makeAtomSimpleQuery<T>(makeAtomType(num, aromatic), queryAtomType,
+                                descr);
+}
+//! \overload
+RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *makeAtomTypeQuery(int num,
+                                                           int aromatic);
+
 //! returns a Query for matching implicit valence
 template <class T>
 T *makeAtomImplicitValenceQuery(int what, const std::string &descr) {
@@ -435,7 +451,8 @@ T *makeAtomNumRadicalElectronsQuery(int what, const std::string &descr) {
   return makeAtomSimpleQuery<T>(what, queryAtomNumRadicalElectrons, descr);
 }
 //! \overload
-RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *makeAtomNumRadicalElectronsQuery(int what);
+RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *makeAtomNumRadicalElectronsQuery(
+    int what);
 
 //! returns a Query for matching whether or not chirality has been set on the
 //! atom
@@ -529,7 +546,8 @@ T *makeAtomNumHeteroatomNbrsQuery(int what, const std::string &descr) {
   return makeAtomSimpleQuery<T>(what, queryAtomNumHeteroatomNbrs, descr);
 }
 //! \overload
-RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *makeAtomNumHeteroatomNbrsQuery(int what);
+RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *makeAtomNumHeteroatomNbrsQuery(
+    int what);
 
 //! returns a Query for matching atoms that have heteroatom neighbors
 template <class T>
@@ -546,7 +564,8 @@ T *makeAtomNumAliphaticHeteroatomNbrsQuery(int what, const std::string &descr) {
                                 descr);
 }
 //! \overload
-RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *makeAtomNumAliphaticHeteroatomNbrsQuery(int what);
+RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *
+makeAtomNumAliphaticHeteroatomNbrsQuery(int what);
 
 //! returns a Query for matching atoms that have heteroatom neighbors
 template <class T>
@@ -554,12 +573,15 @@ T *makeAtomHasAliphaticHeteroatomNbrsQuery(const std::string &descr) {
   return makeAtomSimpleQuery<T>(1, queryAtomHasAliphaticHeteroatomNbrs, descr);
 }
 //! \overload
-RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *makeAtomHasAliphaticHeteroatomNbrsQuery();
+RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *
+makeAtomHasAliphaticHeteroatomNbrsQuery();
 
 //! returns a Query for matching bond orders
-RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *makeBondOrderEqualsQuery(Bond::BondType what);
+RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *makeBondOrderEqualsQuery(
+    Bond::BondType what);
 //! returns a Query for matching bond directions
-RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *makeBondDirEqualsQuery(Bond::BondDir what);
+RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *makeBondDirEqualsQuery(
+    Bond::BondDir what);
 //! returns a Query for matching bonds with stereo set
 RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *makeBondHasStereoQuery();
 //! returns a Query for matching ring bonds
@@ -587,7 +609,8 @@ static inline int queryAtomRingMembership(Atom const *at) {
 // incorrect code if we don't do this... so let's do it.
 typedef Atom const *ConstAtomPtr;
 
-class RDKIT_GRAPHMOL_EXPORT AtomRingQuery : public Queries::EqualityQuery<int, ConstAtomPtr, true> {
+class RDKIT_GRAPHMOL_EXPORT AtomRingQuery
+    : public Queries::EqualityQuery<int, ConstAtomPtr, true> {
  public:
   AtomRingQuery() : Queries::EqualityQuery<int, ConstAtomPtr, true>(-1) {
     // default is to just do a number of rings query:
@@ -884,6 +907,6 @@ Queries::EqualityQuery<int, const Target *, true> *makePropQuery(
 RDKIT_GRAPHMOL_EXPORT bool isComplexQuery(const Bond *b);
 RDKIT_GRAPHMOL_EXPORT bool isComplexQuery(const Atom *a);
 RDKIT_GRAPHMOL_EXPORT bool isAtomAromatic(const Atom *a);
-};
+};  // namespace RDKit
 
 #endif

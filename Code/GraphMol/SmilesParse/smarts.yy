@@ -576,12 +576,12 @@ simple_atom: 	ORGANIC_ATOM_TOKEN {
   // The following rule applies a similar logic to aromatic atoms.
   //
   $$ = new QueryAtom($1);
-  $$->expandQuery(makeAtomAliphaticQuery(),Queries::COMPOSITE_AND);
+  $$->setQuery(makeAtomTypeQuery($1,false));
 }
 | AROMATIC_ATOM_TOKEN {
   $$ = new QueryAtom($1);
   $$->setIsAromatic(true);
-  $$->expandQuery(makeAtomAromaticQuery(),Queries::COMPOSITE_AND);
+  $$->setQuery(makeAtomTypeQuery($1,true));
 }
 | SIMPLE_ATOM_QUERY_TOKEN
 ;

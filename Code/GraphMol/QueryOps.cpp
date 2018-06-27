@@ -220,6 +220,10 @@ ATOM_EQUALS_QUERY *makeAtomNumQuery(int what) {
                                                 "AtomAtomicNum");
 }
 
+ATOM_EQUALS_QUERY *makeAtomTypeQuery(int num, int aromatic) {
+  return makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(makeAtomType(num, aromatic),
+                                                queryAtomType, "AtomType");
+}
 ATOM_EQUALS_QUERY *makeAtomExplicitDegreeQuery(int what) {
   ATOM_EQUALS_QUERY *res =
       makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(what, queryAtomExplicitDegree);
@@ -642,4 +646,4 @@ bool isAtomAromatic(const Atom *a) {
   }
   return res;
 }
-};
+};  // namespace RDKit
