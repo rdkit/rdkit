@@ -212,6 +212,10 @@ RDKIT_GRAPHMOL_EXPORT unsigned int queryAtomAllBondProduct(Atom const *at);
 static inline int queryBondOrder(Bond const *bond) {
   return static_cast<int>(bond->getBondType());
 };
+static inline int queryBondIsSingleOrAromatic(Bond const *bond) {
+  return static_cast<int>(bond->getBondType()==Bond::SINGLE ||
+      bond->getBondType()==Bond::AROMATIC);
+};
 static inline int queryBondDir(Bond const *bond) {
   return static_cast<int>(bond->getBondDir());
 };
@@ -579,6 +583,8 @@ makeAtomHasAliphaticHeteroatomNbrsQuery();
 //! returns a Query for matching bond orders
 RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *makeBondOrderEqualsQuery(
     Bond::BondType what);
+//! returns a Query for unspecified SMARTS bonds
+RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *makeSingleOrAromaticBondQuery();
 //! returns a Query for matching bond directions
 RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *makeBondDirEqualsQuery(
     Bond::BondDir what);

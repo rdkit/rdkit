@@ -124,14 +124,10 @@ mol: atomd {
   // a SMARTS molecule:
   if(!(a1->getIsAromatic() && $2->getIsAromatic())){
     newB = new QueryBond(Bond::SINGLE);
-    newB->expandQuery(makeBondOrderEqualsQuery(Bond::AROMATIC),
-  			    Queries::COMPOSITE_OR,
-  			    true);
+    newB->setQuery(makeSingleOrAromaticBondQuery());
   } else {
     newB = new QueryBond(Bond::AROMATIC);
-    newB->expandQuery(makeBondOrderEqualsQuery(Bond::SINGLE),
-  			    Queries::COMPOSITE_OR,
-  			    true);
+    newB->setQuery(makeSingleOrAromaticBondQuery());
   }
   newB->setProp(RDKit::common_properties::_unspecifiedOrder,1);
   newB->setOwningMol(mp);

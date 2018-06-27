@@ -502,6 +502,16 @@ BOND_EQUALS_QUERY *makeBondOrderEqualsQuery(Bond::BondType what) {
   return res;
 }
 
+RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *makeSingleOrAromaticBondQuery() {
+  auto *res = new BOND_EQUALS_QUERY;
+  res->setVal(true);
+  res->setDataFunc(queryBondIsSingleOrAromatic);
+  res->setDescription("SingleOrAromaticBond");
+  return res;
+
+};
+
+
 BOND_EQUALS_QUERY *makeBondDirEqualsQuery(Bond::BondDir what) {
   auto *res = new BOND_EQUALS_QUERY;
   res->setVal(what);
