@@ -801,7 +801,7 @@ void ParseMarvinSmartsLine(RWMol *mol, const std::string &text, unsigned int lin
   } catch(...) {
     // Is this every used?
   }
-  
+
   if (m) {
     QueryAtom::QUERYATOM_QUERY *query = new RecursiveStructureQuery(m);
     if (!at->hasQuery()) {
@@ -1345,7 +1345,9 @@ Bond *ParseMolFileBondLine(const std::string &text, unsigned int line) {
         BOND_NULL_QUERY *q;
         q = makeBondNullQuery();
         res->setQuery(q);
-      } else if (bType == 5 || bType == 6 || bType == 7) {
+      } else if ( bType == 6 ){
+        res->setQuery(makeSingleOrAromaticBondQuery());
+      } else if (bType == 5 || bType == 7) {
         BOND_OR_QUERY *q;
         q = new BOND_OR_QUERY;
         if (bType == 5) {
@@ -1354,13 +1356,6 @@ Bond *ParseMolFileBondLine(const std::string &text, unsigned int line) {
               makeBondOrderEqualsQuery(Bond::SINGLE)));
           q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(
               makeBondOrderEqualsQuery(Bond::DOUBLE)));
-          q->setDescription("BondOr");
-        } else if (bType == 6) {
-          // single or aromatic
-          q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(
-              makeBondOrderEqualsQuery(Bond::SINGLE)));
-          q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(
-              makeBondOrderEqualsQuery(Bond::AROMATIC)));
           q->setDescription("BondOr");
         } else if (bType == 7) {
           // double or aromatic
@@ -2047,7 +2042,9 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
           BOND_NULL_QUERY *q;
           q = makeBondNullQuery();
           bond->setQuery(q);
-        } else if (bType == 5 || bType == 6 || bType == 7) {
+        } else if (bType == 6){
+          bond->setQuery(makeSingleOrAromaticBondQuery());
+        } else if (bType == 5 || bType == 7) {
           BOND_OR_QUERY *q;
           q = new BOND_OR_QUERY;
           if (bType == 5) {
@@ -2056,13 +2053,6 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
                 makeBondOrderEqualsQuery(Bond::SINGLE)));
             q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(
                 makeBondOrderEqualsQuery(Bond::DOUBLE)));
-            q->setDescription("BondOr");
-          } else if (bType == 6) {
-            // single or aromatic
-            q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(
-                makeBondOrderEqualsQuery(Bond::SINGLE)));
-            q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(
-                makeBondOrderEqualsQuery(Bond::AROMATIC)));
             q->setDescription("BondOr");
           } else if (bType == 7) {
             // double or aromatic

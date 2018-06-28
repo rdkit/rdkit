@@ -2288,7 +2288,7 @@ CAS<~>
     m = Chem.MolFromSmarts("[C,N]C")
     self.assertTrue(m.GetAtomWithIdx(0).GetSmarts() == '[C,N]')
     self.assertTrue(m.GetAtomWithIdx(1).GetSmarts() == 'C')
-    self.assertTrue(m.GetBondBetweenAtoms(0, 1).GetSmarts() == '-,:')
+    self.assertEqual(m.GetBondBetweenAtoms(0, 1).GetSmarts(),'')
 
     m = Chem.MolFromSmarts("[$(C=O)]-O")
     self.assertTrue(m.GetAtomWithIdx(0).GetSmarts() == '[$(C=O)]')

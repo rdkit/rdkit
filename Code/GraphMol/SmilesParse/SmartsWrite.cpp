@@ -259,6 +259,13 @@ std::string getAtomSmartsSimple(const QueryAtom *qatom,
   } else if (descrip == "AtomUnsaturated") {
     res << "$(*=,:,#*)";
     needParen = true;
+  } else if (descrip == "AtomType") {
+    int atNum;
+    bool isAromatic;
+    parseAtomType(query->getVal(),atNum,isAromatic);
+    std::string symbol = PeriodicTable::getTable()->getElementSymbol(atNum);
+    if(isAromatic) symbol[0] += ('a' - 'A');
+    res << symbol;
   } else {
     BOOST_LOG(rdWarningLog)
         << "Cannot write SMARTS for query type : " << descrip
@@ -338,6 +345,8 @@ std::string getBondSmartsSimple(const Bond *bond,
     res += "~";
   } else if (descrip == "BondInRing") {
     res += "@";
+  } else if (descrip == "SingleOrAromaticBond") {
+    // don't need to do anything here... :-)
   } else if (descrip == "BondDir") {
     int val = bquery->getVal();
     if (val == static_cast<int>(Bond::ENDDOWNRIGHT)) {

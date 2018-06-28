@@ -361,7 +361,7 @@ void testQueries() {
   MolPickler::molFromPickle(pickle, *m1);
   TEST_ASSERT(m1->getNumAtoms() == 1);
   TEST_ASSERT(m1->getAtomWithIdx(0)->hasQuery());
-  TEST_ASSERT(m1->getAtomWithIdx(0)->getQuery()->getDescription() == "AtomAnd");
+  TEST_ASSERT(m1->getAtomWithIdx(0)->getQuery()->getDescription() == "AtomType");
   // query should be for aliphatic C:
   smi = "C";
   m2 = SmilesToMol(smi);
@@ -528,7 +528,7 @@ void testQueries() {
   TEST_ASSERT(m1->getAtomWithIdx(0)->hasQuery());
   TEST_ASSERT(m1->getAtomWithIdx(1)->hasQuery());
   TEST_ASSERT(m1->getBondWithIdx(0)->hasQuery());
-  TEST_ASSERT(m1->getBondWithIdx(0)->getQuery()->getDescription() == "BondOr");
+  TEST_ASSERT(m1->getBondWithIdx(0)->getQuery()->getDescription() == "SingleOrAromaticBond");
   smi = "CC";
   m2 = SmilesToMol(smi);
   TEST_ASSERT(m2);

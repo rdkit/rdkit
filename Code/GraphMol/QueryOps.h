@@ -120,6 +120,24 @@ static inline int queryAtomNum(Atom const *at) { return at->getAtomicNum(); };
 static inline int makeAtomType(int atomic_num, bool aromatic) {
   return atomic_num + 1000 * static_cast<int>(aromatic);
 }
+static inline void parseAtomType(int val, int &atomic_num, bool &aromatic) {
+  if(val>1000) {
+    aromatic = true;
+    atomic_num = val - 1000;
+  } else {
+    aromatic = false;
+    atomic_num = val;
+  }
+}
+static inline bool getAtomTypeIsAromatic(int val){
+    if(val>1000) return true;
+    return false;
+}
+static inline int getAtomTypeAtomicNum(int val){
+    if(val>1000) return val-1000;
+    return val;
+}
+
 static inline int queryAtomType(Atom const *at) {
   return makeAtomType(at->getAtomicNum(), at->getIsAromatic());
 };

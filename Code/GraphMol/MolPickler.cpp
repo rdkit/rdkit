@@ -287,6 +287,8 @@ void finalizeQueryFromDescription(Query<int, Atom const *, true> *query,
   } else if (descr == "AtomNull") {
     query->setDataFunc(nullDataFun);
     query->setMatchFunc(nullQueryFun);
+  } else if (descr == "AtomType") {
+    query->setDataFunc(queryAtomType);
   } else if (descr == "AtomInNRings" || descr == "RecursiveStructure") {
     // don't need to do anything here because the classes
     // automatically have everything set
@@ -319,6 +321,8 @@ void finalizeQueryFromDescription(Query<int, Bond const *, true> *query,
     query->setDataFunc(queryIsBondInRing);
   } else if (descr == "BondInNRings") {
     query->setDataFunc(queryIsBondInNRings);
+  } else if (descr == "SingleOrAromaticBond") {
+    query->setDataFunc(queryBondIsSingleOrAromatic);
   } else if (descr == "BondNull") {
     query->setDataFunc(nullDataFun);
     query->setMatchFunc(nullQueryFun);
