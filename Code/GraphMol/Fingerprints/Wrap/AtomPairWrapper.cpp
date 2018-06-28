@@ -14,8 +14,8 @@ namespace AtomPairWrapper {
 FingerprintGeneratorWrapper *getAtomPairGeneratorWrapped(
     const unsigned int minDistance, const unsigned int maxDistance,
     const bool includeChirality, const bool use2D,
-    const bool useCountSimulation, python::object py_atomInvGen,
-    python::object py_bondInvGen) {
+    const bool useCountSimulation, python::object &py_atomInvGen,
+    python::object &py_bondInvGen) {
   AtomInvariantsGenerator *atomInvariantsGenerator = nullptr;
   BondInvariantsGenerator *bondInvariantsGenerator = nullptr;
 
@@ -56,7 +56,7 @@ AtomInvariantsGenerator *getAtomPairAtomInvGen(const bool includeChirality) {
 void exportAtompair() {
   std::string docString = "";
   python::def(
-      "getAtomPairGenerator", &getAtomPairGeneratorWrapped,
+      "GetAtomPairGenerator", &getAtomPairGeneratorWrapped,
       (python::arg("minDistance") = 1,
        python::arg("maxDistance") = AtomPair::maxPathLen - 1,
        python::arg("includeChirality") = false, python::arg("use2D") = true,
@@ -64,10 +64,13 @@ void exportAtompair() {
        python::arg("atomInvariantsGenerator") = python::object(),
        python::arg("bondInvariantsGenerator") = python::object()),
       docString.c_str(),
-      python::return_value_policy<python::manage_new_object>());
+      python::return_value_policy<
+          python::manage_new_object,
+          python::return_internal_reference<
+              6, python::return_internal_reference<7>>>());
 
   docString = "";
-  python::def("getAtomPairAtomInvGen", &getAtomPairAtomInvGen,
+  python::def("GetAtomPairAtomInvGen", &getAtomPairAtomInvGen,
               (python::arg("includeChirality") = false), docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
 
