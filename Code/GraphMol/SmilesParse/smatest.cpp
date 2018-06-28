@@ -2558,6 +2558,7 @@ void testCombinedQueries() {
   std::unique_ptr<ROMol> m(SmartsToMol("Oc1ccccc1"));
   TEST_ASSERT(m);
   std::string sma = MolToSmarts(*m);
+  std::cerr<<" SMA: "<<sma<<std::endl;
   TEST_ASSERT(sma=="Oc1ccccc1");
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
