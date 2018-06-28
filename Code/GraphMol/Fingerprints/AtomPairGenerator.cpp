@@ -140,7 +140,7 @@ std::uint32_t AtomPairAtomEnv::getBitId(
     const AdditionalOutput *additionalOutput) const {
   PRECONDITION((atomInvariants->size() >= d_atomIdFirst) &&
                    (atomInvariants->size() >= d_atomIdSecond),
-               "bad atom invriants size");
+               "bad atom invariants size");
 
   AtomPairArguments *atomPairArguments =
       dynamic_cast<AtomPairArguments *>(arguments);
