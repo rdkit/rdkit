@@ -9,24 +9,11 @@ namespace python = boost::python;
 namespace RDKit {
 namespace FingerprintWrapper {
 
-class AtomInvGeneratorWrapper {
- public:
-  AtomInvariantsGenerator *dp_atomInvariantsGenerator;
+/**
+ /brief Python wrapper for FingerprintGenerator, "-Wrapped" suffix is not there
+ from Python side
 
-  AtomInvGeneratorWrapper();
-
-  ~AtomInvGeneratorWrapper();
-};
-
-class BondInvGeneratorWrapper {
- public:
-  BondInvariantsGenerator *dp_bondInvariantsGenerator;
-
-  BondInvGeneratorWrapper();
-
-  ~BondInvGeneratorWrapper();
-};
-
+ */
 class FingerprintGeneratorWrapper {
  public:
   FingerprintGenerator *dp_fingerprintGenerator;

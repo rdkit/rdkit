@@ -14,13 +14,21 @@ namespace AtomPairWrapper {
 FingerprintGeneratorWrapper *getAtomPairGeneratorWrapped(
     const unsigned int minDistance, const unsigned int maxDistance,
     const bool includeChirality, const bool use2D,
-    const bool useCountSimulation,
-    AtomInvGeneratorWrapper &atomInvGeneratorWrapper,
-    BondInvGeneratorWrapper &bondInvGeneratorWrapper) {
-  AtomInvariantsGenerator *atomInvariantsGenerator =
-      atomInvGeneratorWrapper.dp_atomInvariantsGenerator;
-  BondInvariantsGenerator *bondInvariantsGenerator =
-      bondInvGeneratorWrapper.dp_bondInvariantsGenerator;
+    const bool useCountSimulation, python::object py_atomInvGen,
+    python::object py_bondInvGen) {
+  AtomInvariantsGenerator *atomInvariantsGenerator = nullptr;
+  BondInvariantsGenerator *bondInvariantsGenerator = nullptr;
+
+  python::extract<AtomInvariantsGenerator *> atomInvGen(py_atomInvGen);
+  if (atomInvGen.check()) {
+    atomInvariantsGenerator = atomInvGen();
+  }
+
+  python::extract<BondInvariantsGenerator *> bondInvGen(py_bondInvGen);
+  if (bondInvGen.check()) {
+    bondInvariantsGenerator = bondInvGen();
+  }
+
   AtomEnvironmentGenerator *atomPairEnvGenerator =
       new AtomPair::AtomPairEnvGenerator();
   FingerprintArguments *atomPairArguments = new AtomPair::AtomPairArguments(
@@ -41,26 +49,20 @@ FingerprintGeneratorWrapper *getAtomPairGeneratorWrapped(
   return wrapped;
 }
 
-AtomInvGeneratorWrapper *getAtomPairAtomInvGen(const bool includeChirality) {
-  AtomInvGeneratorWrapper *atomInvGeneratorWrapper =
-      new AtomInvGeneratorWrapper();
-
-  atomInvGeneratorWrapper->dp_atomInvariantsGenerator =
-      new AtomPairAtomInvGenerator(includeChirality);
-
-  return atomInvGeneratorWrapper;
+AtomInvariantsGenerator *getAtomPairAtomInvGen(const bool includeChirality) {
+  return new AtomPairAtomInvGenerator(includeChirality);
 }
 
 void exportAtompair() {
   std::string docString = "";
   python::def(
-      "getAtomPairGeneratorWrapped", &getAtomPairGeneratorWrapped,
+      "getAtomPairGenerator", &getAtomPairGeneratorWrapped,
       (python::arg("minDistance") = 1,
        python::arg("maxDistance") = AtomPair::maxPathLen - 1,
        python::arg("includeChirality") = false, python::arg("use2D") = true,
        python::arg("useCountSimulation") = true,
-       python::arg("atomInvGeneratorWrapper") = AtomInvGeneratorWrapper(),
-       python::arg("BondInvGeneratorWrapper") = BondInvGeneratorWrapper()),
+       python::arg("atomInvariantsGenerator") = python::object(),
+       python::arg("bondInvariantsGenerator") = python::object()),
       docString.c_str(),
       python::return_value_policy<python::manage_new_object>());
 

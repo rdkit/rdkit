@@ -24,7 +24,7 @@ ArgumentHelper convertPyArguments(python::object py_fromAtoms,
   argumentHelper.dp_fromAtoms = nullptr;
   argumentHelper.dp_ignoreAtoms = nullptr;
 
-  if (py_fromAtoms) {
+  if (!py_fromAtoms.is_none()) {
     unsigned int len =
         python::extract<unsigned int>(py_fromAtoms.attr("__len__")());
     if (len) {
@@ -36,7 +36,7 @@ ArgumentHelper convertPyArguments(python::object py_fromAtoms,
     }
   }
 
-  if (py_ignoreAtoms) {
+  if (!py_ignoreAtoms.is_none()) {
     unsigned int len =
         python::extract<unsigned int>(py_ignoreAtoms.attr("__len__")());
     if (len) {
@@ -49,22 +49,6 @@ ArgumentHelper convertPyArguments(python::object py_fromAtoms,
   }
 
   return argumentHelper;
-}
-
-AtomInvGeneratorWrapper::AtomInvGeneratorWrapper() {
-  dp_atomInvariantsGenerator = nullptr;
-}
-
-AtomInvGeneratorWrapper::~AtomInvGeneratorWrapper() {
-  delete dp_atomInvariantsGenerator;
-}
-
-BondInvGeneratorWrapper::BondInvGeneratorWrapper() {
-  dp_bondInvariantsGenerator = nullptr;
-}
-
-BondInvGeneratorWrapper::~BondInvGeneratorWrapper() {
-  delete dp_bondInvariantsGenerator;
 }
 
 SparseIntVect<std::uint32_t> *FingerprintGeneratorWrapper::getFingerprint(
@@ -145,37 +129,36 @@ FingerprintGeneratorWrapper::~FingerprintGeneratorWrapper() {
 BOOST_PYTHON_MODULE(rdAtomPairGenerator) {
   std::string docString = "";
 
-  python::class_<AtomInvGeneratorWrapper>(
-      "AtomInvGeneratorWrapper", python::init<AtomInvGeneratorWrapper>());
+  python::class_<AtomInvariantsGenerator, boost::noncopyable>(
+      "AtomInvariantsGenerator", python::no_init);
 
-  python::class_<BondInvGeneratorWrapper>(
-      "BondInvGeneratorWrapper", python::init<BondInvGeneratorWrapper>());
+  python::class_<BondInvariantsGenerator, boost::noncopyable>(
+      "BondInvariantsGenerator", python::no_init);
 
   docString = "";
   python::class_<FingerprintGeneratorWrapper>(
-      "FingerprintGeneratorWrapper",
-      python::init<FingerprintGeneratorWrapper>())
-      .def("getFingerprint", &FingerprintGeneratorWrapper::getFingerprint,
+      "FingerprintGenerator", python::init<FingerprintGeneratorWrapper>())
+      .def("GetFingerprint", &FingerprintGeneratorWrapper::getFingerprint,
            (python::arg("mol"), python::arg("fromAtoms") = python::list(),
             python::arg("ignoreAtoms") = python::list(),
             python::arg("confId") = -1),
            docString.c_str(),
            python::return_value_policy<python::manage_new_object>())
-      .def("getFingerprintAsBitVect",
+      .def("GetFingerprintAsBitVect",
            &FingerprintGeneratorWrapper::getFingerprintAsBitVect,
            (python::arg("mol"), python::arg("fromAtoms") = python::list(),
             python::arg("ignoreAtoms") = python::list(),
             python::arg("confId") = -1),
            docString.c_str(),
            python::return_value_policy<python::manage_new_object>())
-      .def("getFoldedFingerprint",
+      .def("GetFoldedFingerprint",
            &FingerprintGeneratorWrapper::getFoldedFingerprint,
            (python::arg("mol"), python::arg("fromAtoms") = python::list(),
             python::arg("ignoreAtoms") = python::list(),
             python::arg("confId") = -1),
            docString.c_str(),
            python::return_value_policy<python::manage_new_object>())
-      .def("getFoldedFingerprintAsBitVect",
+      .def("GetFoldedFingerprintAsBitVect",
            &FingerprintGeneratorWrapper::getFoldedFingerprintAsBitVect,
            (python::arg("mol"), python::arg("fromAtoms") = python::list(),
             python::arg("ignoreAtoms") = python::list(),
