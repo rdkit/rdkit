@@ -806,8 +806,9 @@ void ParseMarvinSmartsLine(RWMol *mol, const std::string &text, unsigned int lin
     QueryAtom::QUERYATOM_QUERY *query = new RecursiveStructureQuery(m);
     if (!at->hasQuery()) {
       QueryAtom qAt(*at);
-      mol->replaceAtom(at->getIdx(), &qAt);
-      at = mol->getAtomWithIdx(at->getIdx());
+      int oidx  = at->getIdx();
+      mol->replaceAtom(oidx, &qAt);
+      at = mol->getAtomWithIdx(oidx);
     }
     at->expandQuery(query, Queries::COMPOSITE_AND);
   } else {
