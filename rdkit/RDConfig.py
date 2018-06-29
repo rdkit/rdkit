@@ -37,6 +37,8 @@ elif 'CONDA_DEFAULT_ENV' in os.environ:
   RDContribDir = os.path.join(_share, 'Contrib')
 else:
   from rdkit.RDPaths import *
+  import rdkit.RDPaths
+  os.environ['RDBASE'] = rdkit.RDPaths._share
 
 rpcTestPort = 8423
 pythonTestCommand = "python"
@@ -51,6 +53,7 @@ class ObsoleteCodeError(Exception):
 
 class UnimplementedCodeError(Exception):
   pass
+
 
 # ---------------------
 # the following block contains stuff used by the
