@@ -11,8 +11,8 @@ class ROMol;
 struct CleanupParameters{
 	// TODO
 	std::string rdbase = std::getenv("RDBASE");
-	 std::string normalizations;
-	// std::vector<std::string> acidBasePairs;
+	std::string normalizations;
+	std::string acidbaseFile;
 	// std::vector<std::string> chargeCorrections;
 	// std::vector<std::string> tautomerTransforms;
 	// std::vector<std::string> TautomerScores;
@@ -24,7 +24,7 @@ struct CleanupParameters{
 		: // TODO 
 //			normalizations(""),//this->DEFAULT_TRANSFORMS),
 			normalizations(rdbase + "/Code/GraphMol/MolStandardize/TransformCatalog/test_data/normalizations.txt"),
-		  // acidBasePairs()
+		  acidbaseFile(rdbase + "/Code/GraphMol/MolStandardize/AcidBaseCatalog/test_data/acid_base_pairs.txt"),
 		  // chargeCorrections()
 		  // tautomerTransforms()
 		  // TautomerScores()
@@ -48,11 +48,14 @@ void stereoParent(RWMol &mol, const CleanupParameters &params);
 
 void isotopeParent(RWMol &mol, const CleanupParameters &params);
 
-void chargeParent(RWMol &mol, const CleanupParameters &params);
+void chargeParent(RWMol &mol, const CleanupParameters &params, 
+								bool skip_standardize=false);
 
 void superParent(RWMol &mol, const CleanupParameters &params);
 
 void normalize(RWMol &mol, const CleanupParameters &params);
+
+void reionize(RWMol &mol, const CleanupParameters &params);
 }; // MolStandardize
 }
 #endif

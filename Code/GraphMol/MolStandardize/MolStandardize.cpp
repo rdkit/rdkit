@@ -7,6 +7,7 @@
 #include <GraphMol/MolOps.h>
 #include <GraphMol/MolStandardize/FragmentCatalog/FragmentRemover.h>
 #include <GraphMol/MolStandardize/TransformCatalog/TransformCatalogParams.h>
+#include "Charge.h"
 
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -26,7 +27,7 @@ bool cleanup(RWMol &mol, const CleanupParameters &params){
 	MolStandardize::MetalDisconnector md;
 	md.disconnect(mol);
 	MolStandardize::normalize(mol, params);
-	// reionize(*newM)
+	MolStandardize::reionize(mol, params);
 	RDKit::MolOps::assignStereochemistry(*newM);
 
 	return passedOp;
@@ -58,7 +59,29 @@ void stereoParent(RWMol &mol, const CleanupParameters &params){
 void isotopeParent(RWMol &mol, const CleanupParameters &params){
 }
 
-void chargeParent(RWMol &mol, const CleanupParameters &params){
+void chargeParent(RWMol &mol, const CleanupParameters &params, 
+								bool skip_standardize){
+	// Return the charge parent of a given molecule.
+	// The charge parent is the uncharged version of the fragment parent.
+	
+	if (!skip_standardize) {
+		cleanup(mol, params);
+	}
+	// TODO
+//	unsigned int atoms_before = mol.getNumAtoms();
+	fragmentParent(mol, params, true);
+//	unsigned int atoms_after = mol.getNumAtoms();
+
+
+	// if fragment...
+//	if (atoms_before > atoms_after) {
+		std::shared_ptr<ROMol> nm( new ROMol(mol) );
+
+		Uncharger uncharger;
+		ROMol* uncharged = uncharger.uncharge(*nm);
+		mol = RWMol(*uncharged);
+		cleanup(mol, params);
+//	}
 }
 
 void superParent(RWMol &mol, const CleanupParameters &params){
@@ -76,6 +99,18 @@ void normalize(RWMol &mol, const CleanupParameters &params){
 	mol = RWMol(*normalized);
 }
 
+void reionize(RWMol &mol, const CleanupParameters &params){
+
+	auto *abparams = new AcidBaseCatalogParams(params.acidbaseFile);
+	AcidBaseCatalog abcat(abparams);
+	Reionizer reionizer;
+	std::shared_ptr<ROMol> m( new ROMol(mol) );
+	ROMol* reionized = reionizer.reionize(*m, &abcat);
+
+	mol = RWMol(*reionized);
+
+
+}
 } // end of namespace MolStandardize
 } // end of namespace RDKit
 
