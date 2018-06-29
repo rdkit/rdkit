@@ -50,8 +50,11 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
   if (params->templateFileDir != "") {
     templateFileDir = params->templateFileDir;
   } else {
-    templateFileDir = std::getenv("RDBASE");
-    templateFileDir += "/Data/";
+    auto rdbase = std::getenv("RDBASE");
+    if (rdbase != nullptr) {
+      templateFileDir += rdbase;
+      templateFileDir += "/Data/";
+    }
   }
   double scaleFactor = params->coordgenScaling;
 
@@ -60,8 +63,9 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
 
   // FIX: only do this check once.
   std::cerr << "  TEMPLATES: " << templateFileDir << std::endl;
-  minimizer.setTemplateFileDir(templateFileDir);
-
+  if (templateFileDir != "") {
+    minimizer.setTemplateFileDir(templateFileDir);
+  }
   bool hasTemplateMatch = false;
   MatchVectType mv;
   if (params->templateMol && params->templateMol->getNumConformers() == 1) {
