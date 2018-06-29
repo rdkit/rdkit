@@ -86,9 +86,11 @@ void SubSearcher(const ROMol &in_query, const Bits &bits,
                  std::atomic<int> &counter, const int maxResults) {
   ROMol query(in_query);
   MatchVectType matchVect;
-  for (unsigned int idx = start; idx < end; idx += numThreads) {
+  for (unsigned int idx = start;
+       idx < end && (maxResults == -1 || counter < maxResults);
+       idx += numThreads) {
     if (!bits.check(idx)) continue;
-    // need shared_ptr as it (may) controls the lifespan of the
+    // need shared_ptr as it (may) control the lifespan of the
     //  returned molecule!
     const boost::shared_ptr<ROMol> &m = mols.getMol(idx);
     const ROMol *mol = m.get();
