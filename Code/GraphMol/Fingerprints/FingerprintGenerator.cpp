@@ -76,13 +76,6 @@ SparseIntVect<std::uint32_t> *FingerprintGenerator::getFingerprint(
     const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms,
     const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
     const AdditionalOutput *additionalOutput) const {
-  // create all atom environments that will generate the bit-ids that will make
-  // up the fingerprint
-  std::vector<AtomEnvironment *> atomEnvironments =
-      dp_atomEnvironmentGenerator->getEnvironments(mol, dp_fingerprintArguments,
-                                                   fromAtoms, ignoreAtoms,
-                                                   confId, additionalOutput);
-
   // create the atom and bond invariants using the generators if there are any,
   // created invariants will be passed to each atom environment's getBitId call
   std::vector<std::uint32_t> *atomInvariants =
@@ -93,6 +86,13 @@ SparseIntVect<std::uint32_t> *FingerprintGenerator::getFingerprint(
       dp_bondInvariantsGenerator
           ? dp_bondInvariantsGenerator->getBondInvariants(mol)
           : nullptr;
+
+  // create all atom environments that will generate the bit-ids that will make
+  // up the fingerprint
+  std::vector<AtomEnvironment *> atomEnvironments =
+      dp_atomEnvironmentGenerator->getEnvironments(
+          mol, dp_fingerprintArguments, fromAtoms, ignoreAtoms, confId,
+          additionalOutput, atomInvariants, bondInvariants);
 
   // allocate the result
   SparseIntVect<std::uint32_t> *res = new SparseIntVect<std::uint32_t>(

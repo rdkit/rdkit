@@ -9,6 +9,23 @@
 
 using namespace RDKit;
 
+std::string smis[] = {
+    "C[C@@H]1CCC[C@H](C)[C@H]1C",
+    "N[C@@]1(C[C@H]([18F])C1)C(=O)O",
+    "CC(C)CCCC[C@@H]1C[C@H](/C=C/[C@]2(C)CC[C@H](O)CC2)[C@@H](O)[C@H]1O",
+    "COC(=O)/C=C/C(C)=C/C=C/C(C)=C/C=C/C=C(C)/C=C/C=C(\\C)/C=C/C(=O)[O-]",
+    "[O:1]=[C:2]([CH2:3][C:4]1=[CH:5][CH:6]=[CH:7][CH:8]=[CH:9]1)[NH2:10]",
+    "Cl[C@H]1[C@@H](Cl)[C@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H]1Cl",
+    "O=S(=O)(NC[C@H]1CC[C@H](CNCc2ccc3ccccc3c2)CC1)c1ccc2ccccc2c1",
+    "CCn1c2ccc3cc2c2cc(ccc21)C(=O)c1ccc(cc1)Cn1cc[n+](c1)Cc1ccc(cc1)-c1cccc(-"
+    "c2ccc(cc2)C[n+]2ccn(c2)Cc2ccc(cc2)C3=O)c1C(=O)O.[Br-].[Br-]",
+    "CCCCCCC1C23C4=c5c6c7c8c9c%10c%11c%12c%13c%14c%15c%16c%17c%18c%19c%20c%21c%"
+    "22c%23c(c5c5c6c6c8c%11c8c%11c%12c%15c%12c(c%20%16)c%21c%15c%23c5c(c68)c%"
+    "15c%12%11)C2(C[N+]1(C)C)C%22C%19c1c-%18c2c5c(c13)C4C7C9=C5C1(C2C%17%14)C("
+    "CCCCCC)[N+](C)(C)CC%10%131.[I-].[I-]",
+    "C12C3C4C5C6C7C8C1C1C9C5C5C%10C2C2C%11C%12C%13C3C3C7C%10C7C4C%11C1C3C(C5C8%"
+    "12)C(C62)C7C9%13"};
+
 void testAtomCodes() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "Test atom codes AtomPairGenerator" << std::endl;
@@ -199,41 +216,26 @@ void testAtomPairOld() {
 
     FingerprintGenerator *atomPairGenerator = AtomPair::getAtomPairGenerator();
 
-    mol = SmilesToMol("CCC");
-    fp1 = AtomPairs::getAtomPairFingerprint(*mol);
-    fpu = atomPairGenerator->getFingerprint(*mol);
-    fp2 = new SparseIntVect<boost::int32_t>(fpu->size());
-    std::map<boost::uint32_t, int> nz = fpu->getNonzeroElements();
-    for (std::map<boost::uint32_t, int>::iterator it = nz.begin();
-         it != nz.end(); it++) {
-      fp2->setVal(static_cast<boost::int32_t>(it->first), it->second);
+    BOOST_FOREACH (std::string sm, smis) {
+      mol = SmilesToMol(sm);
+      fp1 = AtomPairs::getAtomPairFingerprint(*mol);
+      fpu = atomPairGenerator->getFingerprint(*mol);
+      fp2 = new SparseIntVect<boost::int32_t>(fpu->size());
+      std::map<boost::uint32_t, int> nz = fpu->getNonzeroElements();
+      for (std::map<boost::uint32_t, int>::iterator it = nz.begin();
+           it != nz.end(); it++) {
+        fp2->setVal(static_cast<boost::int32_t>(it->first), it->second);
+      }
+
+      TEST_ASSERT(DiceSimilarity(*fp1, *fp2) == 1.0);
+      TEST_ASSERT(*fp1 == *fp2);
+
+      delete mol;
+      delete fp1;
+      delete fp2;
+      delete fpu;
     }
 
-    TEST_ASSERT(DiceSimilarity(*fp1, *fp2) == 1.0);
-    TEST_ASSERT(*fp1 == *fp2);
-
-    delete mol;
-    delete fp1;
-    delete fp2;
-    delete fpu;
-
-    mol = SmilesToMol("CC=O.Cl");
-    fp1 = AtomPairs::getAtomPairFingerprint(*mol);
-    fpu = atomPairGenerator->getFingerprint(*mol);
-    fp2 = new SparseIntVect<boost::int32_t>(fpu->size());
-    nz = fpu->getNonzeroElements();
-    for (std::map<boost::uint32_t, int>::iterator it = nz.begin();
-         it != nz.end(); it++) {
-      fp2->setVal(static_cast<boost::int32_t>(it->first), it->second);
-    }
-
-    TEST_ASSERT(DiceSimilarity(*fp1, *fp2) == 1.0);
-    TEST_ASSERT(*fp1 == *fp2);
-
-    delete mol;
-    delete fp1;
-    delete fp2;
-    delete fpu;
     delete atomPairGenerator;
 
     BOOST_LOG(rdErrorLog) << "  done" << std::endl;

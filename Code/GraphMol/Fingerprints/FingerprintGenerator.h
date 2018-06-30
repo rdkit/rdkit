@@ -37,7 +37,7 @@ struct AdditionalOutput {
   hold fingerprint type specific arguments
 
  */
-class FingerprintArguments {
+class FingerprintArguments : private boost::noncopyable {
  public:
   FingerprintArguments(const bool countSimulation,
                        const std::vector<std::uint32_t> countBounds,
@@ -77,7 +77,7 @@ class FingerprintArguments {
   generate the fingerprint
 
  */
-class AtomEnvironment {
+class AtomEnvironment : private boost::noncopyable {
  public:
   /*!
     /brief calculates and returns the bit id to be set for this atom-environment
@@ -102,7 +102,7 @@ class AtomEnvironment {
   /brief abstract base class that generates atom-environments from a molecule
 
  */
-class AtomEnvironmentGenerator {
+class AtomEnvironmentGenerator : private boost::noncopyable {
  public:
   /*!
     /brief generate and return all atom-envorinments from a molecule
@@ -153,7 +153,7 @@ class AtomEnvironmentGenerator {
   /brief abstract base class for atom invariants generators
 
  */
-class AtomInvariantsGenerator {
+class AtomInvariantsGenerator : private boost::noncopyable {
  public:
   /*!
     /brief get atom invariants from a molecule
@@ -181,7 +181,7 @@ class AtomInvariantsGenerator {
   /brief abstract base class for bond invariants generators
 
  */
-class BondInvariantsGenerator {
+class BondInvariantsGenerator : private boost::noncopyable {
  public:
   /*!
     /brief get bond invariants from a molecule
@@ -210,7 +210,7 @@ class BondInvariantsGenerator {
   formats
 
  */
-class FingerprintGenerator {
+class FingerprintGenerator : private boost::noncopyable {
   FingerprintArguments *dp_fingerprintArguments;
   AtomEnvironmentGenerator *dp_atomEnvironmentGenerator;
   AtomInvariantsGenerator *dp_atomInvariantsGenerator;
