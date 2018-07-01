@@ -29,13 +29,19 @@ ROMol* Reionizer::reionize(const ROMol &mol, AcidBaseCatalog *abcat,
 	int start_charge = MolOps::getFormalCharge(*omol);
 
 	for (const auto &cc : ccs) {
-		RDKit::MatchVectType res;
-		std::cout << cc.Smarts << std::endl;
+		std::vector<MatchVectType> res;
+//		std::cout << cc.Smarts << std::endl;
 		unsigned int matches = SubstructMatch(*omol, *(SmartsToMol(cc.Smarts)), res);
 		if ( matches != 0 ) {
-			for (auto &pair : res) {
+			std::vector<unsigned int> res_idx_matches;
+			for (const auto &match : res) {
+				for (const auto &pair : match) {
+					res_idx_matches.push_back(pair.second);
+				}
+			}
+			for (auto &idx : res_idx_matches) {
 				// std::cout << pair.first << ", " << pair.second << std::endl; 
-				Atom* atom = omol->getAtomWithIdx(pair.second);
+				Atom* atom = omol->getAtomWithIdx(idx);
 				// std::cout << atom->getSymbol() << std::endl;
 				std::cout << "Applying charge correction " << cc.Name << " " << 
 								atom->getSymbol() << " " << cc.Charge << std::endl;
@@ -108,7 +114,12 @@ ROMol* Reionizer::reionize(const ROMol &mol, AcidBaseCatalog *abcat,
 
 			std::vector<int> key = {poccur.back(), ioccur.back()};
 			std::sort(key.begin(), key.end());
-			
+			const bool is_in = already_moved.find(key) != already_moved.end();
+			if (is_in) {
+				std::cout << "Aborting reionization to avoid infinite loop due \
+								to it being ambiguous where to put a Hydrogen" << std::endl;
+				break;
+			}
 			already_moved.insert(key);
 
 			std::string prot_name, ionized_name;
@@ -150,9 +161,13 @@ ROMol* Reionizer::reionize(const ROMol &mol, AcidBaseCatalog *abcat,
 	} // while loop
 
 	std::cout << MolToSmiles(*omol) << std::endl;
-	MolOps::sanitizeMol(* (static_cast<RWMol*>(omol)) );
+//	MolOps::sanitizeMol(* (static_cast<RWMol*>(omol)) );
+	RWMol *wmol = static_cast<RWMol*>(omol);
+	MolOps::sanitizeMol(*wmol);
+	std::cout << MolToSmiles(*wmol) << std::endl;
 
-	return omol;
+
+	return static_cast<ROMol*>(wmol); //omol;
 }
 
 std::pair<unsigned int, std::vector<unsigned int>>* Reionizer::strongestProtonated(

@@ -47,21 +47,39 @@ void testReionizer() {
 	std::cout << MolToSmiles(*reionized3) << std::endl;
 	TEST_ASSERT(MolToSmiles(*reionized3) == "O=S(O)c1ccc(S(=O)(=O)[O-])cc1");
 
-//	// Charge parent!!
-//	// Test reionizer moves proton to weaker acid.
-//	smi4 = "[Na].[Na]";
-//	std::shared_ptr<ROMol> m4( SmilesToMol(smi4) );
-//	std::cout << "Before reionizing: " << MolToSmiles(*m4) << std::endl;
-//	ROMol* reionized4 = reionizer.reionize(*m4, &abcat);
-//	std::cout << MolToSmiles(*reionized4) << std::endl;
-//	TEST_ASSERT(MolToSmiles(*reionized4) == "[Na+].[Na+]");
+	// Test reionizer moves proton to weaker acid.
+	smi5 = "C1=C(C=CC(=C1)[S]([O-])=O)[S](O)(=O)=O";
+	std::shared_ptr<ROMol> m5( SmilesToMol(smi5) );
+	std::cout << "Before reionizing: " << MolToSmiles(*m5) << std::endl;
+	ROMol* reionized5 = reionizer.reionize(*m5, &abcat);
+	std::cout << MolToSmiles(*reionized5) << std::endl;
+	TEST_ASSERT(MolToSmiles(*reionized3) == "O=S(O)c1ccc(S(=O)(=O)[O-])cc1");
 
+	// Test charged carbon doesn't get recognised as alpha-carbon-hydrogen-keto.
+	smi6 = "CCOC(=O)C(=O)[CH-]C#N";
+	std::shared_ptr<ROMol> m6( SmilesToMol(smi6) );
+	std::cout << "Before reionizing: " << MolToSmiles(*m6) << std::endl;
+	ROMol* reionized6 = reionizer.reionize(*m6, &abcat);
+	std::cout << MolToSmiles(*reionized6) << std::endl;
+	TEST_ASSERT(MolToSmiles(*reionized6) == "CCOC(=O)C(=O)[CH-]C#N");
+
+	// TODO... can't make this work. Python SanitizeMol looks to correct... 
+	// what is different with MolOps::sanitizeMol? 
+	smi7 = "C[N+]1=C[CH-]N(C(=N)N)/C1=C/[N+](=O)[O-]";
+	std::shared_ptr<ROMol> m7( SmilesToMol(smi7) );
+	std::cout << "Before reionizing: " << MolToSmiles(*m7) << std::endl;
+	ROMol* reionized7 = reionizer.reionize(*m7, &abcat);
+	std::cout << MolToSmiles(*reionized7) << std::endl;
+//	TEST_ASSERT(MolToSmiles(*reionized7) == "C[N+]1=CCN(C(=N)N)C1=[C-][N+](=O)[O-]");
 }
 
 void testChargeParent() {
 	std::string smi1, smi2, smi3, smi4, smi5, smi6, smi7, smi8, smi9, smi10, 
 					smi11, smi12;
 	CleanupParameters params;
+	// initialize CleanupParameters with preferOrganic=true
+  CleanupParameters params_preferorg;
+	params_preferorg.preferOrganic = true;
 
 	// Test neutralization of ionized acids and bases.
 	smi1 = "C(C(=O)[O-])(Cc1n[n-]nn1)(C[NH3+])(C[N+](=O)[O-])";
@@ -130,9 +148,9 @@ void testChargeParent() {
 	// No organic fragments.
 	smi10 = "[N+](=O)([O-])[O-]";
 	std::unique_ptr<RWMol> m10( SmilesToMol(smi10) );
-	MolStandardize::chargeParent(*m10, params);
+	MolStandardize::chargeParent(*m10, params_preferorg);
 	std::cout << MolToSmiles(*m10) << std::endl;
-//	TEST_ASSERT(MolToSmiles(*m10) == "");
+	TEST_ASSERT(MolToSmiles(*m10) == "O=[N+]([O-])[O-]");
 
 	// Larger inorganic fragment should be chosen.
 	smi11 = "[N+](=O)([O-])[O-].[CH2]";
@@ -145,9 +163,9 @@ void testChargeParent() {
 	// Smaller organic fragment should be chosen over larger inorganic fragment.
 	smi12 = "[N+](=O)([O-])[O-].[CH2]";
 	std::unique_ptr<RWMol> m12( SmilesToMol(smi12) );
-	MolStandardize::chargeParent(*m12, params);
+	MolStandardize::chargeParent(*m12, params_preferorg);
 	std::cout << MolToSmiles(*m12) << std::endl;
-//	TEST_ASSERT(MolToSmiles(*m12) == "[CH2]");
+	TEST_ASSERT(MolToSmiles(*m12) == "[CH2]");
 
 }
 

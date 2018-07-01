@@ -11,7 +11,7 @@
 using namespace RDKit;
 using namespace std;
 
-void testCleaup(){
+void testCleanup(){
 	string smi1, smi2, smi3, smi4;
 	CleanupParameters params;
 
@@ -355,11 +355,40 @@ void testNormalizeMultiFrags() {
 
 }
 
+void testCharge() {
+	std::string smi1, smi2, smi3, smi4;
+
+	// Reionization should not infinitely loop forever on these molecules.
+	smi1 = "CCCCCCCCCCCCCCCCCC(=O)CC(=C)C(=O)O[Ti](=O)(OC(C)C)C(C)C";
+	std::string ss =	MolStandardize::standardizeSmiles(smi1);
+	std::cout << ss << std::endl;
+	TEST_ASSERT(ss == "C=C(CC(=O)[CH-]CCCCCCCCCCCCCCCC)C(=O)[O-].CC(C)[O-].CCC.[O-2].[Ti+5]");
+
+	// Reionization should not infinitely loop forever on these molecules.
+	smi2 = "OP(=O)(O)[O-].OP(=O)([O-])[O-].[O-]S(=O)(=O)[O-].[Na+].[Na+].[Na+].[Mg+2].[Cl-].[Cl-].[K+].[K+]";
+	std::string ss2 = MolStandardize::standardizeSmiles(smi2);
+	TEST_ASSERT(ss2 == "O=P([O-])(O)O.O=P([O-])([O-])O.O=S(=O)([O-])[O-].[Cl-].[Cl-].[K+].[K+].[Mg+2].[Na+].[Na+].[Na+]");
+
+  // Charge parent!!
+  // Test reionizer moves proton to weaker acid.
+  smi3 = "[Na].[Na]";
+	std::string ss3 = MolStandardize::standardizeSmiles(smi3);
+  TEST_ASSERT(ss3 == "[Na+].[Na+]");
+
+	// TODO: Arguably should become selenite ion... O=[Se]([O-])[O-]. 
+	// Need an AcidBasePair?
+  smi4 = "[Na].[Na].O[Se](O)=O";
+	std::string ss4 = MolStandardize::standardizeSmiles(smi4);
+  TEST_ASSERT(ss4 == "O=[Se](O)O.[Na+].[Na+]");
+
+}
+
 int main() {
-	testCleaup();
+	testCleanup();
 	testStandardize();
 	testMetalDisconnector();
 	testNormalize();
 	testNormalizeMultiFrags();
+	testCharge();
 	return 0;
 }

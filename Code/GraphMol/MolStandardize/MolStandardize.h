@@ -56,6 +56,9 @@ void superParent(RWMol &mol, const CleanupParameters &params);
 void normalize(RWMol &mol, const CleanupParameters &params);
 
 void reionize(RWMol &mol, const CleanupParameters &params);
+
+std::string standardizeSmiles(const std::string &smiles);
+
 }; // MolStandardize
 }
 #endif

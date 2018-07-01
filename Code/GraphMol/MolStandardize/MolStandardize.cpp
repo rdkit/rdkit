@@ -108,9 +108,15 @@ void reionize(RWMol &mol, const CleanupParameters &params){
 	ROMol* reionized = reionizer.reionize(*m, &abcat);
 
 	mol = RWMol(*reionized);
-
-
 }
+
+std::string standardizeSmiles(const std::string &smiles){
+	std::unique_ptr<RWMol> mol( SmilesToMol(smiles, 0, false) );
+	CleanupParameters params;
+	cleanup(*mol, params);
+	return MolToSmiles(*mol);
+}
+
 } // end of namespace MolStandardize
 } // end of namespace RDKit
 
