@@ -220,6 +220,10 @@ ATOM_EQUALS_QUERY *makeAtomNumQuery(int what) {
                                                 "AtomAtomicNum");
 }
 
+ATOM_EQUALS_QUERY *makeAtomTypeQuery(int num, int aromatic) {
+  return makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(makeAtomType(num, aromatic),
+                                                queryAtomType, "AtomType");
+}
 ATOM_EQUALS_QUERY *makeAtomExplicitDegreeQuery(int what) {
   ATOM_EQUALS_QUERY *res =
       makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(what, queryAtomExplicitDegree);
@@ -498,6 +502,16 @@ BOND_EQUALS_QUERY *makeBondOrderEqualsQuery(Bond::BondType what) {
   return res;
 }
 
+RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *makeSingleOrAromaticBondQuery() {
+  auto *res = new BOND_EQUALS_QUERY;
+  res->setVal(true);
+  res->setDataFunc(queryBondIsSingleOrAromatic);
+  res->setDescription("SingleOrAromaticBond");
+  return res;
+
+};
+
+
 BOND_EQUALS_QUERY *makeBondDirEqualsQuery(Bond::BondDir what) {
   auto *res = new BOND_EQUALS_QUERY;
   res->setVal(what);
@@ -551,7 +565,7 @@ bool isComplexQuery(const Bond *b) {
   // negated things are always complex:
   if (b->getQuery()->getNegation()) return true;
   std::string descr = b->getQuery()->getDescription();
-  if (descr == "BondOrder") return false;
+  if (descr == "BondOrder" || descr == "SingleOrAromaticBond") return false;
   if (descr == "BondAnd" || descr == "BondXor") return true;
   if (descr == "BondOr") {
     // detect the types of queries that appear for unspecified bonds in SMARTS:
@@ -579,7 +593,7 @@ bool _complexQueryHelper(Atom::QUERYATOM_QUERY const *query, bool &hasAtNum) {
   if (query->getNegation()) return true;
   std::string descr = query->getDescription();
   // std::cerr<<" |"<<descr;
-  if (descr == "AtomAtomicNum") {
+  if (descr == "AtomAtomicNum" || descr=="AtomType") {
     hasAtNum = true;
     return false;
   }
@@ -600,7 +614,7 @@ bool isComplexQuery(const Atom *a) {
   if (a->getQuery()->getNegation()) return true;
   std::string descr = a->getQuery()->getDescription();
   // std::cerr<<" "<<descr;
-  if (descr == "AtomAtomicNum") return false;
+  if (descr == "AtomAtomicNum" || descr == "AtomType") return false;
   if (descr == "AtomOr" || descr == "AtomXor") return true;
   if (descr == "AtomAnd") {
     bool hasAtNum = false;
@@ -627,6 +641,9 @@ bool isAtomAromatic(const Atom *a) {
     } else if (descr == "AtomIsAliphatic") {
       res = false;
       if (a->getQuery()->getNegation()) res = !res;
+    } else if (descr == "AtomType") {
+      res = getAtomTypeIsAromatic(static_cast<ATOM_EQUALS_QUERY *>(a->getQuery())->getVal());
+      if (a->getQuery()->getNegation()) res = !res;
     } else if (descr == "AtomAnd") {
       auto childIt = a->getQuery()->beginChildren();
       if ((*childIt)->getDescription() == "AtomAtomicNum") {
@@ -642,4 +659,4 @@ bool isAtomAromatic(const Atom *a) {
   }
   return res;
 }
-};
+};  // namespace RDKit

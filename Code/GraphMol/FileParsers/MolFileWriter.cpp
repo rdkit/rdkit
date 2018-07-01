@@ -111,6 +111,8 @@ int getQueryBondSymbol(const Bond *bond) {
           }
         }
       }
+    } else if( qry->getDescription() == "SingleOrAromaticBond" && !qry->getNegation()) {
+      res = 6;
     }
   }
   return res;

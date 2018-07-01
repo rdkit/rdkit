@@ -408,10 +408,10 @@ M  END
     rxn = rdChemReactions.ReactionFromSmarts('[C:1]1[O:2][N:3]1>>[C:1][O:2].[N:3]')
     r1 = rxn.GetReactantTemplate(0)
     sma = Chem.MolToSmarts(r1)
-    self.assertEqual(sma, '[C:1]1-,:[O:2]-,:[N:3]-,:1')
+    self.assertEqual(sma, '[C:1]1[O:2][N:3]1')
     p1 = rxn.GetProductTemplate(0)
     sma = Chem.MolToSmarts(p1)
-    self.assertEqual(sma, '[C:1]-,:[O:2]')
+    self.assertEqual(sma, '[C:1][O:2]')
 
     p2 = rxn.GetProductTemplate(1)
     sma = Chem.MolToSmarts(p2)

@@ -438,6 +438,7 @@ int numComplexQueries(
   }
   return res;
 }
+#if 0
 // FIX: this is adapted from Fingerprints.cpp and we really should have code
 // like this centralized
 bool isComplexQuery(const Atom &a) {
@@ -456,7 +457,7 @@ bool isComplexQuery(const Atom &a) {
   }
   return true;
 }
-
+#endif
 bool isChangedAtom(const Atom &rAtom, const Atom &pAtom, int mapNum,
                    const std::map<int, const Atom *> &mappedProductAtoms) {
   PRECONDITION(mappedProductAtoms.find(mapNum) != mappedProductAtoms.end(),
@@ -469,7 +470,7 @@ bool isChangedAtom(const Atom &rAtom, const Atom &pAtom, int mapNum,
   } else if (rAtom.getDegree() != pAtom.getDegree()) {
     // the degree changed
     return true;
-  } else if (pAtom.getAtomicNum() > 0 && isComplexQuery(rAtom)) {
+  } else if (pAtom.getAtomicNum() > 0 && isComplexQuery(&rAtom)) {
     // more than a simple query
     return true;
   }
@@ -514,8 +515,11 @@ bool isChangedAtom(const Atom &rAtom, const Atom &pAtom, int mapNum,
             // null queries are trump, they match everything
           } else if (rBond->getBondType() == Bond::SINGLE &&
                      pBond->getBondType() == Bond::SINGLE &&
-                     rBond->getQuery()->getDescription() == "BondOr" &&
-                     pBond->getQuery()->getDescription() == "BondOr") {
+                     ((rBond->getQuery()->getDescription() == "BondOr" &&
+                       pBond->getQuery()->getDescription() == "BondOr") ||
+                      (rBond->getQuery()->getDescription() == "SingleOrAromaticBond" &&
+                       pBond->getQuery()->getDescription() == "SingleOrAromaticBond"))
+                   ) {
             // The SMARTS parser tags unspecified bonds as single, but then adds
             // a query so that they match single or double.
             // these cases match

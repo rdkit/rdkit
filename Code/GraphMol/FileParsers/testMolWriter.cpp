@@ -953,7 +953,6 @@ void testZBO() {
 
     std::string mb = MolToMolBlock(*m);
     delete m;
-    std::cerr << "MOLBLOCK:\n" << mb << "------\n";
     m = MolBlockToMol(mb);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 11);
@@ -1225,14 +1224,14 @@ void testGithub266() {
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumBonds() == 4);
     TEST_ASSERT(m->getBondWithIdx(1)->hasQuery());
-    TEST_ASSERT(m->getBondWithIdx(1)->getQuery()->getDescription() == "BondOr");
+    TEST_ASSERT(m->getBondWithIdx(1)->getQuery()->getDescription() == "SingleOrAromaticBond");
 
     std::string mb = MolToMolBlock(*m);
     RWMol *m2 = MolBlockToMol(mb);
     TEST_ASSERT(m2->getNumBonds() == 4);
     TEST_ASSERT(m2->getBondWithIdx(1)->hasQuery());
     TEST_ASSERT(m2->getBondWithIdx(1)->getQuery()->getDescription() ==
-                "BondOr");
+                "SingleOrAromaticBond");
 
     // try v3k
     mb = MolToMolBlock(*m, true, -1, true, true);
@@ -1241,7 +1240,7 @@ void testGithub266() {
     TEST_ASSERT(m2->getNumBonds() == 4);
     TEST_ASSERT(m2->getBondWithIdx(1)->hasQuery());
     TEST_ASSERT(m2->getBondWithIdx(1)->getQuery()->getDescription() ==
-                "BondOr");
+                "SingleOrAromaticBond");
 
     delete m;
   }
@@ -1288,7 +1287,7 @@ void testGithub266() {
     TEST_ASSERT(!m2->getBondWithIdx(0)->hasQuery());
     TEST_ASSERT(m2->getBondWithIdx(1)->hasQuery());
     TEST_ASSERT(m2->getBondWithIdx(1)->getQuery()->getDescription() ==
-                "BondOr");
+                "SingleOrAromaticBond");
   }
 }
 
