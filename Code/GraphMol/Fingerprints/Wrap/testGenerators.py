@@ -1,5 +1,5 @@
 from rdkit import Chem
-from rdkit.Chem import rdAtomPairGenerator
+from rdkit.Chem import rdFingerprintGenerator
 import unittest
 
 class TestCase(unittest.TestCase):
@@ -10,7 +10,7 @@ class TestCase(unittest.TestCase):
 
   def testAtomPairGenerator(self):
     m = Chem.MolFromSmiles('CCC')
-    g = rdAtomPairGenerator.GetAtomPairGenerator()
+    g = rdFingerprintGenerator.GetAtomPairGenerator()
     fp = g.GetFingerprint(m)
     nz = fp.GetNonzeroElements()
     self.assertEqual(len(nz), 2)
@@ -27,35 +27,42 @@ class TestCase(unittest.TestCase):
     nzc = fp.GetNumOnBits()
     self.assertEqual(nzc, 3)
 
-    g = rdAtomPairGenerator.GetAtomPairGenerator(atomInvariantsGenerator = rdAtomPairGenerator.GetAtomPairAtomInvGen() )
+    g = rdFingerprintGenerator.GetAtomPairGenerator(atomInvariantsGenerator = rdFingerprintGenerator.GetAtomPairAtomInvGen() )
     fp = g.GetFingerprint(m)
     nz = fp.GetNonzeroElements()
     self.assertEqual(len(nz), 2)
 
-    g = rdAtomPairGenerator.GetAtomPairGenerator(minDistance = 2)
+    g = rdFingerprintGenerator.GetAtomPairGenerator(minDistance = 2)
     fp = g.GetFingerprint(m)
     nz = fp.GetNonzeroElements()
     self.assertEqual(len(nz), 1)
 
-    g = rdAtomPairGenerator.GetAtomPairGenerator(maxDistance = 1)
+    g = rdFingerprintGenerator.GetAtomPairGenerator(maxDistance = 1)
     fp = g.GetFingerprint(m)
     nz = fp.GetNonzeroElements()
     self.assertEqual(len(nz), 1)
 
-    g = rdAtomPairGenerator.GetAtomPairGenerator(useCountSimulation = False)
+    g = rdFingerprintGenerator.GetAtomPairGenerator(useCountSimulation = False)
     fp = g.GetFingerprintAsBitVect(m)
     nzc = fp.GetNumOnBits()
     self.assertEqual(nzc, 2)
 
-    invGen = rdAtomPairGenerator.GetAtomPairAtomInvGen(includeChirality = False)
-    invGenChirality = rdAtomPairGenerator.GetAtomPairAtomInvGen(includeChirality = True)
-    g = rdAtomPairGenerator.GetAtomPairGenerator(includeChirality = False, atomInvariantsGenerator = invGen)
-    gChirality = rdAtomPairGenerator.GetAtomPairGenerator(includeChirality = True, atomInvariantsGenerator = invGenChirality)
+    invGen = rdFingerprintGenerator.GetAtomPairAtomInvGen(includeChirality = False)
+    invGenChirality = rdFingerprintGenerator.GetAtomPairAtomInvGen(includeChirality = True)
+    g = rdFingerprintGenerator.GetAtomPairGenerator(includeChirality = False, atomInvariantsGenerator = invGen)
+    gChirality = rdFingerprintGenerator.GetAtomPairGenerator(includeChirality = True, atomInvariantsGenerator = invGenChirality)
     fp = g.GetFingerprint(m)
     nz = fp.GetNonzeroElements()
     fpChirality = gChirality.GetFingerprint(m)
     nzChirality = fpChirality.GetNonzeroElements()
     self.assertNotEqual(nz.keys()[0], nzChirality.keys()[0])
+
+  def testMorganGenerator(self):
+    m = Chem.MolFromSmiles('CCCCC')
+    g = rdFingerprintGenerator.GetMorganGenerator(3)
+    fp = g.GetFingerprint(m)
+    nz = fp.GetNonzeroElements()
+    self.assertEqual(len(nz), 7)
 
 
 if __name__ == '__main__':

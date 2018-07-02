@@ -1,8 +1,8 @@
-rdkit_python_extension(rdAtomPairGenerator
+rdkit_python_extension(rdFingerprintGenerator
                        FingerprintGeneratorWrapper.cpp
                        DEST Chem
                        LINK_LIBRARIES Fingerprints 
                        DataStructs RDGeneral RDBoost)
                        
-add_pytest(pyAtomPairGenerator ${CMAKE_CURRENT_SOURCE_DIR}/testAtomPair.py)
+add_pytest(pyTestGenerator ${CMAKE_CURRENT_SOURCE_DIR}/testGenerators.py)
 

@@ -5,6 +5,7 @@
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
 #include <GraphMol/Fingerprints/Wrap/FingerprintGeneratorWrapper.h>
 #include <GraphMol/Fingerprints/Wrap/AtomPairWrapper.cpp>
+#include <GraphMol/Fingerprints/Wrap/MorganWrapper.cpp>
 #include <cstdint>
 
 namespace python = boost::python;
@@ -117,7 +118,7 @@ FingerprintGeneratorWrapper::~FingerprintGeneratorWrapper() {
   delete dp_fingerprintGenerator;
 }
 
-BOOST_PYTHON_MODULE(rdAtomPairGenerator) {
+BOOST_PYTHON_MODULE(rdFingerprintGenerator) {
   std::string docString = "";
 
   python::class_<AtomInvariantsGenerator, boost::noncopyable>(
@@ -159,6 +160,7 @@ BOOST_PYTHON_MODULE(rdAtomPairGenerator) {
            python::return_value_policy<python::manage_new_object>());
 
   AtomPairWrapper::exportAtompair();
+  MorganWrapper::exportMorgan();
 }
 
 }  // namespace FingerprintWrapper

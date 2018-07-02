@@ -1,4 +1,4 @@
-tests = [("python", "testAtomPair.py", {}), ]
+tests = [("python", "testGenerators.py", {}), ]
 
 longTests = []
 
