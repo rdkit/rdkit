@@ -7364,18 +7364,33 @@ void testGithub1810() {
   }
 #if 1
   {
-    std::unique_ptr<RWMol> mol(SmilesToMol("FC=C(F)[H]",false, false));
+    std::unique_ptr<RWMol> mol(SmilesToMol("FC=C(F)[H]", false, false));
     TEST_ASSERT(mol);
     MolOps::sanitizeMol(*mol);
-    TEST_ASSERT(mol->getNumAtoms()==5);
-    mol->getBondBetweenAtoms(1,2)->setStereoAtoms(0,4);
-    mol->getBondBetweenAtoms(1,2)->setStereo(Bond::STEREOTRANS);
+    TEST_ASSERT(mol->getNumAtoms() == 5);
+    mol->getBondBetweenAtoms(1, 2)->setStereoAtoms(0, 4);
+    mol->getBondBetweenAtoms(1, 2)->setStereo(Bond::STEREOTRANS);
     MolOps::removeHs(*mol);
-    TEST_ASSERT(mol->getNumAtoms()==4);
-    TEST_ASSERT(mol->getBondBetweenAtoms(1,2)->getStereoAtoms()[0]==0);
-    TEST_ASSERT(mol->getBondBetweenAtoms(1,2)->getStereoAtoms()[1]==3);
+    TEST_ASSERT(mol->getNumAtoms() == 4);
+    TEST_ASSERT(mol->getBondBetweenAtoms(1, 2)->getStereoAtoms()[0] == 0);
+    TEST_ASSERT(mol->getBondBetweenAtoms(1, 2)->getStereoAtoms()[1] == 3);
   }
 #endif
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+void testGithub1936() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing Github issue "
+         "1936: Bad aromaticity for rings with radical carbocations"
+      << std::endl;
+  {
+    std::unique_ptr<RWMol> mol(SmilesToMol("C1=CC=C[C+]C=C1"));
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 7);
+    TEST_ASSERT(mol->getAtomWithIdx(4)->getNumRadicalElectrons() == 1);
+    TEST_ASSERT(!mol->getAtomWithIdx(0)->getIsAromatic());
+  }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
@@ -7485,8 +7500,9 @@ int main() {
   testGithub1605();
   testGithub1614();
   testGithub1622();
-#endif
   testGithub1703();
   testGithub1810();
+#endif
+  testGithub1936();
   return 0;
 }
