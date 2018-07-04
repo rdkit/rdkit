@@ -176,10 +176,13 @@ void markAtomsBondsArom(ROMol &mol, const VECT_INT_VECT &srings,
     aring = srings[*ri];
 
     // first mark the atoms in the ring
+    std::cerr << "aring:";
     for (ai = aring.begin(); ai != aring.end(); ai++) {
+      std::cerr << " " << *ai;
       mol.getAtomWithIdx(*ai)->setIsAromatic(true);
       doneAtms.insert(*ai);
     }
+    std::cerr << std::endl;
   }
 
   // mark the bonds
@@ -202,7 +205,9 @@ void markAtomsBondsArom(ROMol &mol, const VECT_INT_VECT &srings,
     }
   }
   // now mark bonds that have a count of 1 to be aromatic;
+  std::cerr << "bring:";
   for (bci = bndCntr.begin(); bci != bndCntr.end(); bci++) {
+    std::cerr << " " << bci->first << "(" << bci->second << ")";
     if ((*bci).second == 1) {
       Bond *bond = mol.getBondWithIdx(bci->first);
       bond->setIsAromatic(true);
@@ -216,6 +221,7 @@ void markAtomsBondsArom(ROMol &mol, const VECT_INT_VECT &srings,
       }
     }
   }
+  std::cerr << std::endl;
 }
 
 void getMinMaxAtomElecs(ElectronDonorType dtype, int &atlw, int &atup) {
