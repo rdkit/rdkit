@@ -7391,6 +7391,17 @@ void testGithub1936() {
     TEST_ASSERT(mol->getAtomWithIdx(4)->getNumRadicalElectrons() == 1);
     TEST_ASSERT(!mol->getAtomWithIdx(0)->getIsAromatic());
   }
+
+  {  // the original report
+    std::string pathName = getenv("RDBASE");
+    pathName += "/Code/GraphMol/test_data/";
+    std::unique_ptr<RWMol> mol(MolFileToMol(pathName + "github1936.mol"));
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 7);
+    TEST_ASSERT(mol->getAtomWithIdx(4)->getNumRadicalElectrons() == 1);
+    TEST_ASSERT(!mol->getAtomWithIdx(0)->getIsAromatic());
+  }
+
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
