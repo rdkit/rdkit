@@ -2258,7 +2258,7 @@ object:
   >>> fparams.GetFuncGroup(1)
   <rdkit.Chem.rdchem.Mol object at 0x...>
   >>> Chem.MolToSmarts(fparams.GetFuncGroup(1))
-  '*-C(=O)-,:[O&D1]'
+  '*-C(=O)[O&D1]'
   >>> Chem.MolToSmarts(fparams.GetFuncGroup(34))
   '*-[O&D1]'
   >>> fparams.GetFuncGroup(1).GetProp('_Name')

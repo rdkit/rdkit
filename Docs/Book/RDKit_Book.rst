@@ -105,7 +105,23 @@ A special case, heteroatoms with radicals are not considered candidates for arom
   >>> m.GetAtomWithIdx(2).GetNumRadicalElectrons()
   1
 
-Carbons with radicals, however, are still considered:
+Charged carbons with radicals are also not considered:
+
+.. image:: images/picture_12.png
+
+.. doctest::
+
+  >>> m = Chem.MolFromSmiles('C1=CC=CC=C[C+]1')
+  >>> m.GetAtomWithIdx(0).GetIsAromatic()
+  False
+  >>> m.GetAtomWithIdx(6).GetIsAromatic()
+  False
+  >>> m.GetAtomWithIdx(6).GetFormalCharge()
+  1
+  >>> m.GetAtomWithIdx(6).GetNumRadicalElectrons()
+  1
+
+Neutral carbons with radicals, however, are still considered:
 
 .. image:: images/picture_11.png
 
@@ -118,6 +134,9 @@ Carbons with radicals, however, are still considered:
   True
   >>> m.GetAtomWithIdx(1).GetNumRadicalElectrons()
   1
+
+
+
 
 The Simple Aromaticity Model
 ----------------------------

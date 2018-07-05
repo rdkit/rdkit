@@ -448,16 +448,17 @@ bool isAtomCandForArom(const Atom *at, const ElectronDonorType edon,
 
   // atoms that aren't in their default valence state also get shut out
   int defVal = PeriodicTable::getTable()->getDefaultValence(at->getAtomicNum());
-  if (defVal > 0 &&
-      rdcast<int>(at->getTotalValence()) >
-          (PeriodicTable::getTable()->getDefaultValence(
-              at->getAtomicNum() - at->getFormalCharge()))) {
+  if (defVal > 0 && rdcast<int>(at->getTotalValence()) >
+                        (PeriodicTable::getTable()->getDefaultValence(
+                            at->getAtomicNum() - at->getFormalCharge()))) {
     return false;
   }
 
-  // heretoratoms with radicals also disqualify us from being considered.
-  // This was github issue 432
-  if (at->getNumRadicalElectrons() && at->getAtomicNum() != 6) {
+  // heteroatoms or charged carbons with radicals also disqualify us from being
+  // considered. This was github issue 432 (heteroatoms) and 1936 (charged
+  // carbons)
+  if (at->getNumRadicalElectrons() &&
+      (at->getAtomicNum() != 6 || at->getFormalCharge())) {
     return false;
   }
 
@@ -586,7 +587,7 @@ ElectronDonorType getAtomDonorTypeArom(
   }
   return (res);
 }
-}  // end of local utility namespace
+}  // namespace
 
 namespace RDKit {
 namespace MolOps {
