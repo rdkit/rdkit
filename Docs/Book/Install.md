@@ -80,12 +80,8 @@ Start by downloading the latest anaconda installer from [Anaconda](https://www.a
 Numpy and matplotlib are already part of the base installation of anaconda. Due to the latest boost libraries being currently built with a GLIBC version higher than the default in anaconda, we need to update to a more recent version:
 
 	conda install -y gxx_linux-64
-
-After that, numpy's include path must be fixed to allow RDKit to find its headers in the proper location. For that, from your anaconda root directory (usually ~/anaconda3/), run:
-
-	ln -s ./lib/python3.6/site-packages/numpy/core/include/numpy ./include/
 	
-At this point, you should be able to clone the RDKit repository to the desired build location, and start the build:
+At this point, you should be able to clone the RDKit repository to the desired build location, and start the build. Please consider that it is necessary to indicate the path to the numpy headers for RDKit to find them, since anaconda hides them inside the numpy package:
 
 	git clone https://github.com/rdkit/rdkit.git
 	cd rdkit
