@@ -93,8 +93,7 @@ At this point, you should be able to clone the RDKit repository to the desired b
 	cmake .. -DPy_ENABLE_SHARED=1 \
 		-DRDK_INSTALL_INTREE=ON \
 		-DRDK_INSTALL_STATIC_LIBS=OFF \
-		-DRDK_BUILD_CPP_TESTS=ON \
-		-DRDK_OPTIMIZE_NATIVE=OFF
+		-DRDK_BUILD_CPP_TESTS=ON
 	  
 And finally, `make`, `make install` and `ctest`
 
