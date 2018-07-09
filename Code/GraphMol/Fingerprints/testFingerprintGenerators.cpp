@@ -5,6 +5,8 @@
 #include <RDBoost/test.h>
 #include <GraphMol/Fingerprints/AtomPairs.h>
 #include <GraphMol/Fingerprints/AtomPairGenerator.h>
+#include <GraphMol/Fingerprints/MorganFingerprints.h>
+#include <GraphMol/Fingerprints/MorganGenerator.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 
 using namespace RDKit;
@@ -394,6 +396,34 @@ void testAtomPairOutput() {
   delete atomPairGenerator;
 }
 
+void testMorganFP() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Test morgan fp generator" << std::endl;
+
+  ROMol *mol;
+  SparseIntVect<std::uint32_t> *fp, *fpOld;
+  int radius = 100;
+
+  FingerprintGenerator *morganGenerator =
+      MorganFingerprint::getMorganGenerator(radius);
+
+  BOOST_FOREACH (std::string sm, smis) {
+    mol = SmilesToMol(sm);
+    fp = morganGenerator->getFingerprint(*mol);
+    fpOld = MorganFingerprints::getFingerprint(*mol, radius);
+    TEST_ASSERT(DiceSimilarity(*fp, *fpOld) == 1.0);
+    TEST_ASSERT(*fp == *fpOld);
+
+    delete mol;
+    delete fp;
+    delete fpOld;
+  }
+
+  delete morganGenerator;
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -405,6 +435,7 @@ int main(int argc, char *argv[]) {
   testAtomPairBitvector();
   testAtomPairFoldedBitvector();
   testAtomPairOutput();
+  testMorganFP();
 
   return 0;
 }
