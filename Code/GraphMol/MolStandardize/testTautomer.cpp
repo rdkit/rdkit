@@ -482,14 +482,90 @@ void test1() {
 	std::shared_ptr<ROMol> m50( SmilesToMol(smi50) );
 	std::vector<std::string> res50 = te.enumerate(*m50, &tautcat);
 	std::vector<std::string> ans50 = {"CC#CO", "CC=C=O"};
-//	TEST_ASSERT(res50 == ans50);
+	TEST_ASSERT(res50 == ans50);
 
-//	// keten/ynol tautomer
-//	std::string smi51 = "CC#CO";
-//	std::shared_ptr<ROMol> m51( SmilesToMol(smi51) );
-//	std::vector<std::string> res51 = te.enumerate(*m51, &tautcat);
-//	std::vector<std::string> ans51 = {"CC#CO", "CC=C=O"};
-//	TEST_ASSERT(res51 == ans51);
+	// keten/ynol tautomer
+	std::string smi51 = "CC#CO";
+	std::shared_ptr<ROMol> m51( SmilesToMol(smi51) );
+	std::vector<std::string> res51 = te.enumerate(*m51, &tautcat);
+	std::vector<std::string> ans51 = {"CC#CO", "CC=C=O"};
+	TEST_ASSERT(res51 == ans51);
+
+	// ionic nitro/aci-nitro tautomer
+	std::string smi52 = "C([N+](=O)[O-])C";
+	std::shared_ptr<ROMol> m52( SmilesToMol(smi52) );
+	std::vector<std::string> res52 = te.enumerate(*m52, &tautcat);
+	std::vector<std::string> ans52 = {"CC=[N+]([O-])O", "CC[N+](=O)[O-]"};
+	TEST_ASSERT(res52 == ans52);
+
+	// ionic nitro/aci-nitro tautomer
+	std::string smi53 = "C(=[N+](O)[O-])C";
+	std::shared_ptr<ROMol> m53( SmilesToMol(smi53) );
+	std::vector<std::string> res53 = te.enumerate(*m53, &tautcat);
+	std::vector<std::string> ans53 = {"CC=[N+]([O-])O", "CC[N+](=O)[O-]"};
+	TEST_ASSERT(res53 == ans53);
+
+	// oxim nitroso tautomer
+	std::string smi54 = "CC(C)=NO";
+	std::shared_ptr<ROMol> m54( SmilesToMol(smi54) );
+	std::vector<std::string> res54 = te.enumerate(*m54, &tautcat);
+	std::vector<std::string> ans54 = {"C=C(C)NO", "CC(C)=NO", "CC(C)N=O"};
+	TEST_ASSERT(res54 == ans54);
+
+	// oxim nitroso tautomer
+	std::string smi55 = "CC(C)N=O";
+	std::shared_ptr<ROMol> m55( SmilesToMol(smi55) );
+	std::vector<std::string> res55 = te.enumerate(*m55, &tautcat);
+	std::vector<std::string> ans55 = {"C=C(C)NO", "CC(C)=NO", "CC(C)N=O"};
+	TEST_ASSERT(res55 == ans55);
+
+	// oxim/nitroso tautomer via phenol
+	std::string smi56 = "O=Nc1ccc(O)cc1";
+	std::shared_ptr<ROMol> m56( SmilesToMol(smi56) );
+	std::vector<std::string> res56 = te.enumerate(*m56, &tautcat);
+	std::vector<std::string> ans56 = {
+					"O=C1C=CC(=NO)C=C1", 
+					"O=NC1C=CC(=O)C=C1", 
+					"O=Nc1ccc(O)cc1"};
+	TEST_ASSERT(res56 == ans56);
+
+	// oxim/nitroso tautomer via phenol
+	std::string smi57 = "O=C1C=CC(=NO)C=C1";
+	std::shared_ptr<ROMol> m57( SmilesToMol(smi57) );
+	std::vector<std::string> res57 = te.enumerate(*m57, &tautcat);
+	std::vector<std::string> ans57 = {
+					"O=C1C=CC(=NO)C=C1", 
+					"O=NC1C=CC(=O)C=C1", 
+					"O=Nc1ccc(O)cc1"};
+	TEST_ASSERT(res57 == ans57);
+
+	// cyano/iso-cyanic acid tautomer
+	std::string smi58 = "C(#N)O";
+	std::shared_ptr<ROMol> m58( SmilesToMol(smi58) );
+	std::vector<std::string> res58 = te.enumerate(*m58, &tautcat);
+	std::vector<std::string> ans58 = {"N#CO", "N=C=O"};
+	TEST_ASSERT(res58 == ans58);
+
+	// cyano/iso-cyanic acid tautomer
+	std::string smi59 = "C(=N)=O";
+	std::shared_ptr<ROMol> m59( SmilesToMol(smi59) );
+	std::vector<std::string> res59 = te.enumerate(*m59, &tautcat);
+	std::vector<std::string> ans59 = {"N#CO", "N=C=O"};
+	TEST_ASSERT(res59 == ans59);
+
+	// isocyanide tautomer
+	std::string smi60 = "C#N";
+	std::shared_ptr<ROMol> m60( SmilesToMol(smi60) );
+	std::vector<std::string> res60 = te.enumerate(*m60, &tautcat);
+	std::vector<std::string> ans60 = {"C#N", "[C-]#[NH+]"};
+	TEST_ASSERT(res60 == ans60);
+
+	// isocyanide tautomer
+	std::string smi61 = "[C-]#[NH+]";
+	std::shared_ptr<ROMol> m61( SmilesToMol(smi61) );
+	std::vector<std::string> res61 = te.enumerate(*m61, &tautcat);
+	std::vector<std::string> ans61 = {"C#N", "[C-]#[NH+]"};
+	TEST_ASSERT(res61 == ans61);
 
 
 

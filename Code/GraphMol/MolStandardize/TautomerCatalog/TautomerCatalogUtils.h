@@ -5,6 +5,7 @@
 #include "TautomerCatalogParams.h"
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/ChemReactions/Reaction.h>
+#include <GraphMol/Bond.h>
 #include <iostream>
 
 namespace RDKit {
@@ -13,15 +14,24 @@ class ROMol;
 namespace MolStandardize {
 class TautomerCatalogParams;
 
+//typedef enum {
+//	SINGLE,
+//	DOUBLE,
+//	TRIPLE,
+//	AROMATIC,
+//} BondType;
+
 //typedef std::vector<ROMol*, std::string, std::string> tautomerTransform;
 struct TautomerTransform {
 				ROMol* Mol;
-				std::string Bonds;
+				std::vector<Bond::BondType> BondTypes;
 				std::string Charges;
-				TautomerTransform(ROMol* mol, std::string bonds,
+				TautomerTransform(ROMol* mol, std::vector<Bond::BondType> bondtypes,
 												std::string charges)
-								: Mol(mol), Bonds(bonds), Charges(charges) {}
+								: Mol(mol), BondTypes(bondtypes), Charges(charges) {}
 };
+
+std::vector<Bond::BondType> stringToBondType(std::string bond_str);
 
 std::vector<TautomerTransform> readTautomers(std::string fileName);
 std::vector<TautomerTransform> readTautomers(std::istream &inStream, int nToRead = -1);

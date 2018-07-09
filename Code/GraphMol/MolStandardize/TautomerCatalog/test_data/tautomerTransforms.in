@@ -19,19 +19,19 @@ special imine r	[CX4!H0]-[c]=[n]
 1,11 aromatic heteroatom H shift f	[#7,O;!H0]-[#6,nX2]=[#6,nX2]-[#6,nX2]=[#6,nX2]-[#6,nX2]=[#6,nX2]-[#6,nX2]=[#6,nX2]-[#6,nX2]=[#7X2,O]
 furanone f	[O,S,N;!H0]-[#6r5]=[#6X3r5;$([#6]([#6r5])=[#6r5])]
 furanone r	[#6r5!H0;$([#6]([#6r5])[#6r5])]-[#6r5]=[O,S,N]
-keten/ynol f	[C!H0]=[C]=[O,S,Se,Te;X1]	bonds='#-'
-keten/ynol r	[O,S,Se,Te;!H0X2]-[C]#[C]	bonds='=='
+keten/ynol f	[C!H0]=[C]=[O,S,Se,Te;X1]	#-
+keten/ynol r	[O,S,Se,Te;!H0X2]-[C]#[C]	==
 ionic nitro/aci-nitro f	[C!H0]-[N+;$([N][O-])]=[O]
 ionic nitro/aci-nitro r	[O!H0]-[N+;$([N][O-])]=[C]
 oxim/nitroso f	[O!H0]-[N]=[C]
 oxim/nitroso r	[C!H0]-[N]=[O]
 oxim/nitroso via phenol f	[O!H0]-[N]=[C]-[C]=[C]-[C]=[OH0]
 oxim/nitroso via phenol r	[O!H0]-[c]=[c]-[c]=[c]-[N]=[OH0]
-cyano/iso-cyanic acid f	[O!H0]-[C]#[N]	bonds='=='
-cyano/iso-cyanic acid r	[N!H0]=[C]=[O]	bonds='#-'
-//formamidinesulfinic acid f	[O,N;!H0]-[C]=[S,Se,Te]=[O]	bonds='=--' // TODO: WAT!?
-//formamidinesulfinic acid r	[O!H0]-[S,Se,Te]-[C]=[O,N]	bonds='=--'
-isocyanide f	[C-0!H0]#[N+0]	bonds='#'	charges='-+'
-isocyanide r	[N+!H0]#[C-]	bonds='#'	charges='-+'
-phosphonic acid f	[OH]-[PH0]	bonds='='
-phosphonic acid r	[PH]=[O]	bonds='-'
+cyano/iso-cyanic acid f	[O!H0]-[C]#[N]	==
+cyano/iso-cyanic acid r	[N!H0]=[C]=[O]	#-
+//formamidinesulfinic acid f	[O,N;!H0]-[C]=[S,Se,Te]=[O]	=-- // TODO: WAT!?
+//formamidinesulfinic acid r	[O!H0]-[S,Se,Te]-[C]=[O,N]	=--
+isocyanide f	[C-0!H0]#[N+0]	#	charges='-+'
+isocyanide r	[N+!H0]#[C-]	#	charges='-+'
+phosphonic acid f	[OH]-[PH0]	=
+phosphonic acid r	[PH]=[O]	-

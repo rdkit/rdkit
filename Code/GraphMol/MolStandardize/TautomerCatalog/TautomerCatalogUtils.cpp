@@ -11,8 +11,9 @@ typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
 
 namespace RDKit {
 namespace {
+
 MolStandardize::TautomerTransform* getTautomer(const std::string &tmpStr) {
-MolStandardize::TautomerTransform* transform = nullptr;
+	MolStandardize::TautomerTransform* transform = nullptr;
 	if (tmpStr.length() == 0) {
     // empty line
     return transform;
@@ -28,7 +29,7 @@ MolStandardize::TautomerTransform* transform = nullptr;
 	// tautomer information to collect from each line
 	std::string name = "";
 	std::string smarts = "";
-	std::string bonds = ""; 
+	std::string bond_str = ""; 
 	std::string charges = ""; 
 
 	// line must have at least two tab separated values
@@ -45,25 +46,28 @@ MolStandardize::TautomerTransform* transform = nullptr;
 	if ( result.size() == 3 ) {
 		name = result[0];
 		smarts = result[1];
-		bonds = result[2];
+		bond_str = result[2];
 	}
 	// line has name, smarts, bonds, charges
 	if ( result.size() == 4 ) {
 		name = result[0];
 		smarts = result[1];
-		bonds = result[2];
+		bond_str = result[2];
 		charges = result[3];
 	}
 
   boost::erase_all(smarts, " ");
   boost::erase_all(name, " ");
-  boost::erase_all(bonds, " ");
+  boost::erase_all(bond_str, " ");
   boost::erase_all(charges, " ");
+
+	std::vector<Bond::BondType> bond_types = 
+					MolStandardize::stringToBondType(bond_str);
 
 	ROMol* tautomer = SmartsToMol(smarts);
   CHECK_INVARIANT(tautomer, smarts);
   tautomer->setProp(common_properties::_Name, name);
-	transform = new MolStandardize::TautomerTransform( tautomer, bonds, charges );
+	transform = new MolStandardize::TautomerTransform( tautomer, bond_types, charges );
 	
 	return transform;
 }
@@ -72,6 +76,27 @@ MolStandardize::TautomerTransform* transform = nullptr;
 
 
 namespace MolStandardize {
+
+std::vector<Bond::BondType> stringToBondType(std::string bond_str) {
+	std::vector<Bond::BondType> bonds;
+	for (const auto &c : bond_str) {
+		switch (c) {
+			case '-':
+				bonds.push_back(Bond::SINGLE);
+				break;
+			case '=':
+				bonds.push_back(Bond::DOUBLE);
+				break;
+			case '#':
+				bonds.push_back(Bond::TRIPLE);
+				break;
+			case ':':
+				bonds.push_back(Bond::AROMATIC);
+				break;
+		}
+	}
+	return bonds;
+}
 
 std::vector<TautomerTransform> readTautomers(std::string fileName) {
 	std::ifstream inStream(fileName.c_str());

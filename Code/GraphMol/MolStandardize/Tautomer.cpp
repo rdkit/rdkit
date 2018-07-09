@@ -99,10 +99,12 @@ std::vector<std::string> TautomerEnumerator::enumerate(const ROMol &mol, Tautome
 						std::vector<std::pair<unsigned int, unsigned int>> pvect = 
 										MolStandardize::pairwise(idx_matches);
 						for ( const auto &pair : pvect ) {
-							// TODO - if bonds is specified in tatuomer.in file
-							if (!transform.Bonds.empty()) {}
-							else {
-								Bond* bond = product->getBondBetweenAtoms(pair.first, pair.second);
+							Bond* bond = product->getBondBetweenAtoms(pair.first, pair.second);
+							// check if bonds is specified in tatuomer.in file
+							if (!transform.BondTypes.empty()) {
+								bond->setBondType(transform.BondTypes[bi]);
+								++bi;
+							} else {
 								Bond::BondType bondtype = bond->getBondType();
 								std::cout << "Bond as double: " << bond->getBondTypeAsDouble() << std::endl;
 //								std::cout << bondtype << std::endl;
@@ -115,7 +117,6 @@ std::vector<std::string> TautomerEnumerator::enumerate(const ROMol &mol, Tautome
 									std::cout << "Set bond to single" << std::endl;
 								}
 							}
-							++bi;
 						}
 						// TODO adjust charges
 						if (!transform.Charges.empty()) {}
