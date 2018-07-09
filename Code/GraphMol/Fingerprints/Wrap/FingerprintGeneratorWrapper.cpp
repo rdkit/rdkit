@@ -12,26 +12,17 @@ namespace python = boost::python;
 namespace RDKit {
 namespace FingerprintWrapper {
 
-struct ArgumentHelper {
-  std::vector<std::uint32_t> *dp_fromAtoms;
-  std::vector<std::uint32_t> *dp_ignoreAtoms;
-};
-
-ArgumentHelper convertPyArguments(python::object py_fromAtoms,
-                                  python::object py_ignoreAtoms) {
-  ArgumentHelper argumentHelper;
-
-  argumentHelper.dp_fromAtoms = nullptr;
-  argumentHelper.dp_ignoreAtoms = nullptr;
-
+void convertPyArguments(python::object py_fromAtoms,
+                        python::object py_ignoreAtoms,
+                        std::vector<std::uint32_t> *&fromAtoms,
+                        std::vector<std::uint32_t> *&ignoreAtoms) {
   if (!py_fromAtoms.is_none()) {
     unsigned int len =
         python::extract<unsigned int>(py_fromAtoms.attr("__len__")());
     if (len) {
-      argumentHelper.dp_fromAtoms = new std::vector<std::uint32_t>();
+      fromAtoms = new std::vector<std::uint32_t>();
       for (unsigned int i = 0; i < len; ++i) {
-        argumentHelper.dp_fromAtoms->push_back(
-            python::extract<std::uint32_t>(py_fromAtoms[i]));
+        fromAtoms->push_back(python::extract<std::uint32_t>(py_fromAtoms[i]));
       }
     }
   }
@@ -40,30 +31,30 @@ ArgumentHelper convertPyArguments(python::object py_fromAtoms,
     unsigned int len =
         python::extract<unsigned int>(py_ignoreAtoms.attr("__len__")());
     if (len) {
-      argumentHelper.dp_ignoreAtoms = new std::vector<std::uint32_t>();
+      ignoreAtoms = new std::vector<std::uint32_t>();
       for (unsigned int i = 0; i < len; ++i) {
-        argumentHelper.dp_ignoreAtoms->push_back(
+        ignoreAtoms->push_back(
             python::extract<std::uint32_t>(py_ignoreAtoms[i]));
       }
     }
   }
 
-  return argumentHelper;
+  return;
 }
 
 SparseIntVect<std::uint32_t> *FingerprintGeneratorWrapper::getFingerprint(
     const ROMol &mol, python::object py_fromAtoms,
     python::object py_ignoreAtoms, const int confId) const {
-  ArgumentHelper argumentHelper =
-      convertPyArguments(py_fromAtoms, py_ignoreAtoms);
+  std::vector<std::uint32_t> *fromAtoms = nullptr;
+  std::vector<std::uint32_t> *ignoreAtoms = nullptr;
+  convertPyArguments(py_fromAtoms, py_ignoreAtoms, fromAtoms, ignoreAtoms);
 
   SparseIntVect<std::uint32_t> *result =
-      dp_fingerprintGenerator->getFingerprint(mol, argumentHelper.dp_fromAtoms,
-                                              argumentHelper.dp_ignoreAtoms,
+      dp_fingerprintGenerator->getFingerprint(mol, fromAtoms, ignoreAtoms,
                                               confId, nullptr);
 
-  delete argumentHelper.dp_fromAtoms;
-  delete argumentHelper.dp_ignoreAtoms;
+  delete fromAtoms;
+  delete ignoreAtoms;
 
   return result;
 }
@@ -71,15 +62,15 @@ SparseIntVect<std::uint32_t> *FingerprintGeneratorWrapper::getFingerprint(
 SparseBitVect *FingerprintGeneratorWrapper::getFingerprintAsBitVect(
     const ROMol &mol, python::object py_fromAtoms,
     python::object py_ignoreAtoms, const int confId) const {
-  ArgumentHelper argumentHelper =
-      convertPyArguments(py_fromAtoms, py_ignoreAtoms);
+  std::vector<std::uint32_t> *fromAtoms = nullptr;
+  std::vector<std::uint32_t> *ignoreAtoms = nullptr;
+  convertPyArguments(py_fromAtoms, py_ignoreAtoms, fromAtoms, ignoreAtoms);
 
   SparseBitVect *result = dp_fingerprintGenerator->getFingerprintAsBitVect(
-      mol, argumentHelper.dp_fromAtoms, argumentHelper.dp_ignoreAtoms, confId,
-      nullptr);
+      mol, fromAtoms, ignoreAtoms, confId, nullptr);
 
-  delete argumentHelper.dp_fromAtoms;
-  delete argumentHelper.dp_ignoreAtoms;
+  delete fromAtoms;
+  delete ignoreAtoms;
 
   return result;
 }
@@ -87,16 +78,16 @@ SparseBitVect *FingerprintGeneratorWrapper::getFingerprintAsBitVect(
 SparseIntVect<std::uint32_t> *FingerprintGeneratorWrapper::getFoldedFingerprint(
     const ROMol &mol, python::object py_fromAtoms,
     python::object py_ignoreAtoms, const int confId) const {
-  ArgumentHelper argumentHelper =
-      convertPyArguments(py_fromAtoms, py_ignoreAtoms);
+  std::vector<std::uint32_t> *fromAtoms = nullptr;
+  std::vector<std::uint32_t> *ignoreAtoms = nullptr;
+  convertPyArguments(py_fromAtoms, py_ignoreAtoms, fromAtoms, ignoreAtoms);
 
   SparseIntVect<std::uint32_t> *result =
-      dp_fingerprintGenerator->getFoldedFingerprint(
-          mol, argumentHelper.dp_fromAtoms, argumentHelper.dp_ignoreAtoms,
-          confId, nullptr);
+      dp_fingerprintGenerator->getFoldedFingerprint(mol, fromAtoms, ignoreAtoms,
+                                                    confId, nullptr);
 
-  delete argumentHelper.dp_fromAtoms;
-  delete argumentHelper.dp_ignoreAtoms;
+  delete fromAtoms;
+  delete ignoreAtoms;
 
   return result;
 }
@@ -104,16 +95,16 @@ SparseIntVect<std::uint32_t> *FingerprintGeneratorWrapper::getFoldedFingerprint(
 ExplicitBitVect *FingerprintGeneratorWrapper::getFoldedFingerprintAsBitVect(
     const ROMol &mol, python::object py_fromAtoms,
     python::object py_ignoreAtoms, const int confId) const {
-  ArgumentHelper argumentHelper =
-      convertPyArguments(py_fromAtoms, py_ignoreAtoms);
+  std::vector<std::uint32_t> *fromAtoms = nullptr;
+  std::vector<std::uint32_t> *ignoreAtoms = nullptr;
+  convertPyArguments(py_fromAtoms, py_ignoreAtoms, fromAtoms, ignoreAtoms);
 
   ExplicitBitVect *result =
       dp_fingerprintGenerator->getFoldedFingerprintAsBitVect(
-          mol, argumentHelper.dp_fromAtoms, argumentHelper.dp_ignoreAtoms,
-          confId, nullptr);
+          mol, fromAtoms, ignoreAtoms, confId, nullptr);
 
-  delete argumentHelper.dp_fromAtoms;
-  delete argumentHelper.dp_ignoreAtoms;
+  delete fromAtoms;
+  delete ignoreAtoms;
 
   return result;
 }
@@ -136,6 +127,7 @@ BOOST_PYTHON_MODULE(rdAtomPairGenerator) {
       "BondInvariantsGenerator", python::no_init);
 
   docString = "";
+  // todo remove the wrapper class if possible
   python::class_<FingerprintGeneratorWrapper>(
       "FingerprintGenerator", python::init<FingerprintGeneratorWrapper>())
       .def("GetFingerprint", &FingerprintGeneratorWrapper::getFingerprint,
