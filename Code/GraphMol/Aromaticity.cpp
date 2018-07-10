@@ -86,7 +86,8 @@ bool checkFused(const INT_VECT &rids, INT_INT_VECT_MAP &ringNeighs) {
 }
 
 void makeRingNeighborMap(const VECT_INT_VECT &brings,
-                         INT_INT_VECT_MAP &neighMap, unsigned int maxSize) {
+                         INT_INT_VECT_MAP &neighMap, unsigned int maxSize,
+                         unsigned int maxOverlapSize) {
   int nrings = rdcast<int>(brings.size());
   int i, j;
   INT_VECT ring1;
@@ -102,7 +103,8 @@ void makeRingNeighborMap(const VECT_INT_VECT &brings,
       if (maxSize && brings[j].size() > maxSize) continue;
       INT_VECT inter;
       Intersect(ring1, brings[j], inter);
-      if (inter.size() > 0) {
+      if (inter.size() > 0 &&
+          (!maxOverlapSize || inter.size() <= maxOverlapSize)) {
         neighMap[i].push_back(j);
         neighMap[j].push_back(i);
       }
@@ -176,13 +178,13 @@ void markAtomsBondsArom(ROMol &mol, const VECT_INT_VECT &srings,
     aring = srings[*ri];
 
     // first mark the atoms in the ring
-    std::cerr << "aring:";
+    // std::cerr << "aring:";
     for (ai = aring.begin(); ai != aring.end(); ai++) {
-      std::cerr << " " << *ai;
+      // std::cerr << " " << *ai;
       mol.getAtomWithIdx(*ai)->setIsAromatic(true);
       doneAtms.insert(*ai);
     }
-    std::cerr << std::endl;
+    // std::cerr << std::endl;
   }
 
   // mark the bonds
@@ -205,9 +207,9 @@ void markAtomsBondsArom(ROMol &mol, const VECT_INT_VECT &srings,
     }
   }
   // now mark bonds that have a count of 1 to be aromatic;
-  std::cerr << "bring:";
+  // std::cerr << "bring:";
   for (bci = bndCntr.begin(); bci != bndCntr.end(); bci++) {
-    std::cerr << " " << bci->first << "(" << bci->second << ")";
+    // std::cerr << " " << bci->first << "(" << bci->second << ")";
     if ((*bci).second == 1) {
       Bond *bond = mol.getBondWithIdx(bci->first);
       bond->setIsAromatic(true);
@@ -221,7 +223,7 @@ void markAtomsBondsArom(ROMol &mol, const VECT_INT_VECT &srings,
       }
     }
   }
-  std::cerr << std::endl;
+  // std::cerr << std::endl;
 }
 
 void getMinMaxAtomElecs(ElectronDonorType dtype, int &atlw, int &atup) {
@@ -717,7 +719,7 @@ int mdlAromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings) {
   // shares at least one bond
   // useful to figure out fused systems
   INT_INT_VECT_MAP neighMap;
-  RingUtils::makeRingNeighborMap(brings, neighMap, maxFusedAromaticRingSize);
+  RingUtils::makeRingNeighborMap(brings, neighMap, maxFusedAromaticRingSize, 1);
 
   // now loop over all the candidate rings and check the
   // huckel rule - of course paying attention to fused systems.
@@ -824,7 +826,7 @@ int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
     // shares at least one bond
     // useful to figure out fused systems
     INT_INT_VECT_MAP neighMap;
-    RingUtils::makeRingNeighborMap(brings, neighMap, maxFusedAromaticRingSize);
+    RingUtils::makeRingNeighborMap(brings, neighMap, maxFusedAromaticRingSize, 1);
 
     // now loop over all the candidate rings and check the
     // huckel rule - of course paying attention to fused systems.

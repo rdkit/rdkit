@@ -4373,6 +4373,7 @@ void testSFNetIssue249() {
     RWMol *m = SmilesToMol(smi, 0, 0);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 278);
+    std::cerr << smi << std::endl;
     std::cerr << "starting sanitization" << std::endl;
     MolOps::sanitizeMol(*m);
     std::cerr << "done" << std::endl;
@@ -7413,7 +7414,6 @@ void testGithub1928() {
     std::unique_ptr<ROMol> mol(
         SmilesToMol("N1C2=CC3=CC=CC=C3OC1=CC1=C(O2)C=CC=C1"));
     TEST_ASSERT(mol);
-    mol->debugMol(std::cerr);
     TEST_ASSERT(mol->getNumAtoms() == 19);
     TEST_ASSERT(mol->getBondBetweenAtoms(0, 1)->getBondType() == Bond::SINGLE);
     TEST_ASSERT(!mol->getBondBetweenAtoms(0, 1)->getIsAromatic());
@@ -7423,7 +7423,6 @@ void testGithub1928() {
     std::unique_ptr<ROMol> mol(SmilesToMol(
         "C12=C3C=CC=C1CCC(=O)C2=C4OC5=CC=CC6=C5C(=C(N4)O3)C(=O)CC6"));
     TEST_ASSERT(mol);
-    mol->debugMol(std::cerr);
     TEST_ASSERT(mol->getNumAtoms() == 27);
     TEST_ASSERT(mol->getBondBetweenAtoms(20, 21)->getBondType() ==
                 Bond::SINGLE);
@@ -7437,7 +7436,7 @@ int main() {
   RDLog::InitLogs();
   // boost::logging::enable_logs("rdApp.debug");
 
-#if 0
+#if 1
   test1();
   test2();
   test3();
