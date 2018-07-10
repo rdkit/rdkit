@@ -1,13 +1,66 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
 #include <GraphMol/Fingerprints/MorganGenerator.h>
-#include <cstdint>
 #include <RDGeneral/hash/hash.hpp>
+#include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
+
+#include <boost/dynamic_bitset.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/tuple/tuple_comparison.hpp>
+#include <boost/foreach.hpp>
+//#include <algorithm>
+
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/flyweight.hpp>
+#include <boost/flyweight/key_value.hpp>
+#include <boost/flyweight/no_tracking.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 namespace RDKit {
 namespace MorganFingerprint {
+
+class ss_matcher {
+ public:
+  ss_matcher(){};
+  ss_matcher(const std::string &pattern) {
+    RDKit::RWMol *p = RDKit::SmartsToMol(pattern);
+    TEST_ASSERT(p);
+    m_matcher.reset(p);
+  };
+
+  // const RDKit::ROMOL_SPTR &getMatcher() const { return m_matcher; };
+  const RDKit::ROMol *getMatcher() const { return m_matcher.get(); };
+
+ private:
+  RDKit::ROMOL_SPTR m_matcher;
+};
+
+// Definitions for feature points adapted from:
+// Gobbi and Poppinger, Biotech. Bioeng. _61_ 47-54 (1998)
+const char *smartsPatterns[6] = {
+    "[$([N;!H0;v3,v4&+1]),\
+$([O,S;H1;+0]),\
+n&H1&+0]",                                                  // Donor
+    "[$([O,S;H1;v2;!$(*-*=[O,N,P,S])]),\
+$([O,S;H0;v2]),\
+$([O,S;-]),\
+$([N;v3;!$(N-*=[O,N,P,S])]),\
+n&H0&+0,\
+$([o,s;+0;!$([o,s]:n);!$([o,s]:c:n)])]",                    // Acceptor
+    "[a]",                                                  // Aromatic
+    "[F,Cl,Br,I]",                                          // Halogen
+    "[#7;+,\
+$([N;H2&+0][$([C,a]);!$([C,a](=O))]),\
+$([N;H1&+0]([$([C,a]);!$([C,a](=O))])[$([C,a]);!$([C,a](=O))]),\
+$([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]",  // Basic
+    "[$([C,S](=[O,S,P])-[O;H1,-1])]"                        // Acidic
+};
+std::vector<std::string> defaultFeatureSmarts(smartsPatterns,
+                                              smartsPatterns + 6);
+typedef boost::flyweight<boost::flyweights::key_value<std::string, ss_matcher>,
+                         boost::flyweights::no_tracking>
+    pattern_flyweight;
 
 typedef boost::tuple<boost::dynamic_bitset<>, uint32_t, unsigned int>
     AccumTuple;
@@ -43,7 +96,97 @@ std::vector<std::uint32_t> *MorganAtomInvGenerator::getAtomInvariants(
 }
 
 std::string MorganAtomInvGenerator::infoString() const {
-  return "MorganInvariantGenerator";
+  return "MorganInvariantGenerator includeRingMembership=" +
+         std::to_string(df_includeRingMembership);
+}
+
+MorganFeatureAtomInvGenerator::MorganFeatureAtomInvGenerator(
+    std::vector<const ROMol *> *patterns) {
+  std::vector<const ROMol *> featureMatchers;
+  if (!patterns) {
+    dp_patterns->reserve(defaultFeatureSmarts.size());
+    for (std::vector<std::string>::const_iterator smaIt =
+             defaultFeatureSmarts.begin();
+         smaIt != defaultFeatureSmarts.end(); ++smaIt) {
+      const ROMol *matcher = pattern_flyweight(*smaIt).get().getMatcher();
+      CHECK_INVARIANT(matcher, "bad smarts");
+      dp_patterns->push_back(matcher);
+    }
+    df_ownsData = true;
+  } else {
+    dp_patterns = patterns;
+    df_ownsData = false;
+  }
+}
+
+MorganFeatureAtomInvGenerator::~MorganFeatureAtomInvGenerator() {
+  if (df_ownsData) {
+    delete dp_patterns;
+  }
+}
+
+std::string MorganFeatureAtomInvGenerator::infoString() const {
+  return "MorganFeatureInvariantGenerator";
+}
+
+std::vector<std::uint32_t> *MorganFeatureAtomInvGenerator::getAtomInvariants(
+    const ROMol &mol) const {
+  unsigned int nAtoms = mol.getNumAtoms();
+  std::vector<std::uint32_t> *result = new std::vector<std::uint32_t>(nAtoms);
+
+  std::vector<const ROMol *> featureMatchers;
+  std::vector<const ROMol *> *patterns;
+
+  std::fill(result->begin(), result->end(), 0);
+  for (unsigned int i = 0; i < patterns->size(); ++i) {
+    std::uint32_t mask = 1 << i;
+    std::vector<MatchVectType> matchVect;
+    // to maintain thread safety, we have to copy the pattern
+    // molecules:
+    SubstructMatch(mol, ROMol(*(*patterns)[i], true), matchVect);
+    for (std::vector<MatchVectType>::const_iterator mvIt = matchVect.begin();
+         mvIt != matchVect.end(); ++mvIt) {
+      for (const auto &mIt : *mvIt) {
+        (*result)[mIt.second] |= mask;
+      }
+    }
+  }
+  return result;
+}
+
+MorganBondInvGenerator::MorganBondInvGenerator(const bool useBondTypes,
+                                               const bool useChirality)
+    : df_useBondTypes(useBondTypes), df_useChirality(useChirality) {}
+
+std::vector<std::uint32_t> *MorganBondInvGenerator::getBondInvariants(
+    const ROMol &mol) const {
+  std::vector<std::uint32_t> *result =
+      new std::vector<std::uint32_t>(mol.getNumBonds());
+  for (unsigned int i = 0; i < mol.getNumBonds(); ++i) {
+    Bond const *bond = mol.getBondWithIdx(i);
+    int32_t bondInvariant = 1;
+    if (df_useBondTypes) {
+      if (!df_useChirality || bond->getBondType() != Bond::DOUBLE ||
+          bond->getStereo() == Bond::STEREONONE) {
+        bondInvariant = static_cast<int32_t>(bond->getBondType());
+      } else {
+        const int32_t stereoOffset = 100;
+        const int32_t bondTypeOffset = 10;
+        bondInvariant =
+            stereoOffset +
+            bondTypeOffset * static_cast<int32_t>(bond->getBondType()) +
+            static_cast<int32_t>(bond->getStereo());
+      }
+    }
+    result->push_back(static_cast<uint32_t>(bondInvariant));
+  }
+  return result;
+}
+
+std::string MorganBondInvGenerator::infoString() const {
+  return "MorganInvariantGenerator useBondTypes=" +
+         std::to_string(df_useBondTypes) +
+         " useChirality=" + std::to_string(df_useChirality);
 }
 
 std::uint64_t MorganArguments::getResultSize() const {
@@ -53,20 +196,17 @@ std::uint64_t MorganArguments::getResultSize() const {
 MorganArguments::MorganArguments(const unsigned int radius,
                                  const bool countSimulation,
                                  const bool includeChirality,
-                                 const bool useBondTypes,
                                  const bool onlyNonzeroInvariants,
                                  const std::vector<std::uint32_t> countBounds,
                                  const std::uint32_t foldedSize)
     : FingerprintArguments(countSimulation, countBounds, foldedSize),
       df_includeChirality(includeChirality),
-      df_useBondTypes(useBondTypes),
       df_onlyNonzeroInvariants(onlyNonzeroInvariants),
       d_radius(radius) {}
 
 std::string MorganArguments::infoString() const {
   return "MorganArguments includeChirality=" +
          std::to_string(df_includeChirality) +
-         " useBondTypes=" + std::to_string(df_useBondTypes) +
          " onlyNonzeroInvariants=" + std::to_string(df_onlyNonzeroInvariants) +
          " radius=" + std::to_string(d_radius);
 }
@@ -185,20 +325,10 @@ std::vector<AtomEnvironment *> MorganEnvGenerator::getEnvironments(
           unsigned int oIdx = bond->getOtherAtomIdx(atomIdx);
           roundAtomNeighborhoods[atomIdx] |= atomNeighborhoods[oIdx];
 
-          int32_t bt = 1;
-          if (morganArguments->df_useBondTypes) {
-            if (!morganArguments->df_includeChirality ||
-                bond->getBondType() != Bond::DOUBLE ||
-                bond->getStereo() == Bond::STEREONONE) {
-              bt = static_cast<int32_t>(bond->getBondType());
-            } else {
-              const int32_t stereoOffset = 100;
-              const int32_t bondTypeOffset = 10;
-              bt = stereoOffset +
-                   bondTypeOffset * static_cast<int32_t>(bond->getBondType()) +
-                   static_cast<int32_t>(bond->getStereo());
-            }
-          }
+          int32_t bt = static_cast<int32_t>((*bondInvariants)[bond->getIdx()]);
+
+          std::cout << "new " << bond->getIdx() << " " << (*bondInvariants)[bond->getIdx()] << std::endl;
+
           nbrs.push_back(std::make_pair(bt, currentInvariants[oIdx]));
 
           ++beg;
@@ -296,14 +426,14 @@ FingerprintGenerator *getMorganGenerator(
     const unsigned int radius, const bool countSimulation,
     const bool includeChirality, const bool useBondTypes,
     const bool onlyNonzeroInvariants,
-    const std::vector<std::uint32_t> countBounds,
-    const std::uint32_t foldedSize,
     AtomInvariantsGenerator *atomInvariantsGenerator,
-    BondInvariantsGenerator *bondInvariantsGenerator) {
+    BondInvariantsGenerator *bondInvariantsGenerator,
+    const std::uint32_t foldedSize,
+    const std::vector<std::uint32_t> countBounds) {
   AtomEnvironmentGenerator *morganEnvGenerator = new MorganEnvGenerator();
-  FingerprintArguments *morganArguments = new MorganArguments(
-      radius, countSimulation, includeChirality, useBondTypes,
-      onlyNonzeroInvariants, countBounds, foldedSize);
+  FingerprintArguments *morganArguments =
+      new MorganArguments(radius, countSimulation, includeChirality,
+                          onlyNonzeroInvariants, countBounds, foldedSize);
 
   bool ownsAtomInvGenerator = false;
   if (!atomInvariantsGenerator) {
@@ -311,9 +441,16 @@ FingerprintGenerator *getMorganGenerator(
     ownsAtomInvGenerator = true;
   }
 
+  bool ownsBondInvGenerator = false;
+  if (!bondInvariantsGenerator) {
+    bondInvariantsGenerator =
+        new MorganBondInvGenerator(useBondTypes, includeChirality);
+    ownsBondInvGenerator = true;
+  }
+
   return new FingerprintGenerator(
       morganEnvGenerator, morganArguments, atomInvariantsGenerator,
-      bondInvariantsGenerator, ownsAtomInvGenerator, false);
+      bondInvariantsGenerator, ownsAtomInvGenerator, ownsBondInvGenerator);
 }
 
 }  // namespace MorganFingerprint

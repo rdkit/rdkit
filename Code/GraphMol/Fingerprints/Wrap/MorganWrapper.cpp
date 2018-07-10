@@ -28,23 +28,11 @@ FingerprintGeneratorWrapper *getMorganGeneratorWrapped(
     bondInvariantsGenerator = bondInvGen();
   }
 
-  AtomEnvironmentGenerator *morganEnvGenerator =
-      new MorganFingerprint::MorganEnvGenerator();
-  FingerprintArguments *morganArguments =
-      new MorganFingerprint::MorganArguments(radius, countSimulation,
-                                             includeChirality, useBondTypes,
-                                             onlyNonzeroInvariants);
-
-  bool ownsAtomInvGenerator = false;
-  if (!atomInvariantsGenerator) {
-    atomInvariantsGenerator =
-        new MorganFingerprint::MorganAtomInvGenerator(includeRingMembership);
-    ownsAtomInvGenerator = true;
-  }
-
-  FingerprintGenerator *fingerprintGenerator = new FingerprintGenerator(
-      morganEnvGenerator, morganArguments, atomInvariantsGenerator,
-      bondInvariantsGenerator, ownsAtomInvGenerator, false);
+  FingerprintGenerator *fingerprintGenerator =
+      MorganFingerprint::getMorganGenerator(
+          radius, countSimulation, includeChirality, useBondTypes,
+          onlyNonzeroInvariants, atomInvariantsGenerator,
+          bondInvariantsGenerator);
 
   FingerprintGeneratorWrapper *wrapped = new FingerprintGeneratorWrapper();
   wrapped->dp_fingerprintGenerator = fingerprintGenerator;

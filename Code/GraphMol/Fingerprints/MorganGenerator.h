@@ -19,10 +19,34 @@ class MorganAtomInvGenerator : public AtomInvariantsGenerator {
   std::string infoString() const;
 };
 
+class MorganFeatureAtomInvGenerator : public AtomInvariantsGenerator {
+  std::vector<const ROMol *> *dp_patterns;
+  bool df_ownsData;
+
+ public:
+  MorganFeatureAtomInvGenerator(std::vector<const ROMol *> *patterns = nullptr);
+  ~MorganFeatureAtomInvGenerator();
+
+  std::vector<std::uint32_t> *getAtomInvariants(const ROMol &mol) const;
+
+  std::string infoString() const;
+};
+
+class MorganBondInvGenerator : public BondInvariantsGenerator {
+  const bool df_useBondTypes;
+  const bool df_useChirality;
+
+ public:
+  MorganBondInvGenerator(const bool useBondTypes, const bool useChirality);
+
+  std::vector<std::uint32_t> *getBondInvariants(const ROMol &mol) const;
+
+  std::string infoString() const;
+};
+
 class MorganArguments : public FingerprintArguments {
  public:
   const bool df_includeChirality;
-  const bool df_useBondTypes;
   const bool df_onlyNonzeroInvariants;
   const unsigned int d_radius;
 
@@ -32,7 +56,6 @@ class MorganArguments : public FingerprintArguments {
 
   MorganArguments(const unsigned int radius, const bool countSimulation = true,
                   const bool includeChirality = false,
-                  const bool useBondTypes = true,
                   const bool onlyNonzeroInvariants = false,
                   const std::vector<std::uint32_t> countBounds = {1, 2, 4, 8},
                   const std::uint32_t foldedSize = 2048);
@@ -70,10 +93,10 @@ FingerprintGenerator *getMorganGenerator(
     const unsigned int radius, const bool countSimulation = true,
     const bool includeChirality = false, const bool useBondTypes = true,
     const bool onlyNonzeroInvariants = false,
-    const std::vector<std::uint32_t> countBounds = {1, 2, 4, 8},
-    const std::uint32_t foldedSize = 2048,
     AtomInvariantsGenerator *atomInvariantsGenerator = nullptr,
-    BondInvariantsGenerator *bondInvariantsGenerator = nullptr);
+    BondInvariantsGenerator *bondInvariantsGenerator = nullptr,
+    const std::uint32_t foldedSize = 2048,
+    const std::vector<std::uint32_t> countBounds = {1, 2, 4, 8});
 
 }  // namespace MorganFingerprint
 }  // namespace RDKit
