@@ -178,7 +178,7 @@ std::vector<std::uint32_t> *MorganBondInvGenerator::getBondInvariants(
             static_cast<int32_t>(bond->getStereo());
       }
     }
-    result->push_back(static_cast<uint32_t>(bondInvariant));
+    (*result)[bond->getIdx()] = static_cast<int32_t>(bondInvariant);
   }
   return result;
 }
@@ -326,8 +326,6 @@ std::vector<AtomEnvironment *> MorganEnvGenerator::getEnvironments(
           roundAtomNeighborhoods[atomIdx] |= atomNeighborhoods[oIdx];
 
           int32_t bt = static_cast<int32_t>((*bondInvariants)[bond->getIdx()]);
-
-          std::cout << "new " << bond->getIdx() << " " << (*bondInvariants)[bond->getIdx()] << std::endl;
 
           nbrs.push_back(std::make_pair(bt, currentInvariants[oIdx]));
 
