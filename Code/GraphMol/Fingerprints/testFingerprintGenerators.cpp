@@ -452,8 +452,7 @@ void testInvariantGenerators() {
   delete atomInvariantsGenerator;
   delete bondInvariantsGenerator;
 
-  atomInvariantsGenerator =
-      new MorganFingerprint::MorganAtomInvGenerator();
+  atomInvariantsGenerator = new MorganFingerprint::MorganAtomInvGenerator();
   bondInvariantsGenerator = new MorganFingerprint::MorganBondInvGenerator();
 
   morganGenerator = MorganFingerprint::getMorganGenerator(
@@ -502,6 +501,43 @@ void testInvariantGenerators() {
   delete mol;
   delete fp;
   delete morganGenerator;
+  delete atomInvariantsGenerator;
+  delete bondInvariantsGenerator;
+
+  atomInvariantsGenerator = new MorganFingerprint::MorganAtomInvGenerator();
+  bondInvariantsGenerator = nullptr;
+
+  FingerprintGenerator *atomPairGenerator = AtomPair::getAtomPairGenerator(
+      1, radius, false, true, true, atomInvariantsGenerator,
+      bondInvariantsGenerator);
+
+  mol = SmilesToMol("CCC");
+  fp = atomPairGenerator->getFingerprint(*mol);
+
+  TEST_ASSERT(fp->getNonzeroElements().size() == 2);
+
+  delete mol;
+  delete fp;
+  delete atomPairGenerator;
+  delete atomInvariantsGenerator;
+  delete bondInvariantsGenerator;
+
+  atomInvariantsGenerator =
+      new MorganFingerprint::MorganFeatureAtomInvGenerator();
+  bondInvariantsGenerator = nullptr;
+
+  atomPairGenerator = AtomPair::getAtomPairGenerator(
+      1, radius, false, true, true, atomInvariantsGenerator,
+      bondInvariantsGenerator);
+
+  mol = SmilesToMol("CCC");
+  fp = atomPairGenerator->getFingerprint(*mol);
+
+  TEST_ASSERT(fp->getNonzeroElements().size() == 2);
+
+  delete mol;
+  delete fp;
+  delete atomPairGenerator;
   delete atomInvariantsGenerator;
   delete bondInvariantsGenerator;
 
