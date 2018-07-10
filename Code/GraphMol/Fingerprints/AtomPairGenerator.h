@@ -31,7 +31,7 @@ class AtomPairAtomInvGenerator : public AtomInvariantsGenerator {
   const bool df_includeChirality;
 
  public:
-  AtomPairAtomInvGenerator(bool includeChirality);
+  AtomPairAtomInvGenerator(bool includeChirality = false);
 
   std::vector<std::uint32_t> *getAtomInvariants(const ROMol &mol) const;
 

@@ -424,6 +424,90 @@ void testMorganFP() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testInvariantGenerators() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Test different invariant generator combinations"
+                        << std::endl;
+
+  ROMol *mol;
+  SparseIntVect<std::uint32_t> *fp;
+  int radius = 100;
+
+  AtomInvariantsGenerator *atomInvariantsGenerator =
+      new MorganFingerprint::MorganAtomInvGenerator();
+  BondInvariantsGenerator *bondInvariantsGenerator =
+      new MorganFingerprint::MorganBondInvGenerator();
+
+  FingerprintGenerator *morganGenerator = MorganFingerprint::getMorganGenerator(
+      radius, true, false, true, false, atomInvariantsGenerator,
+      bondInvariantsGenerator);
+
+  mol = SmilesToMol("CCCCC");
+  fp = morganGenerator->getFingerprint(*mol);
+  TEST_ASSERT(fp->getNonzeroElements().size() == 7);
+
+  delete mol;
+  delete fp;
+  delete morganGenerator;
+  delete atomInvariantsGenerator;
+  delete bondInvariantsGenerator;
+
+  atomInvariantsGenerator =
+      new MorganFingerprint::MorganAtomInvGenerator();
+  bondInvariantsGenerator = new MorganFingerprint::MorganBondInvGenerator();
+
+  morganGenerator = MorganFingerprint::getMorganGenerator(
+      radius, true, false, true, false, atomInvariantsGenerator,
+      bondInvariantsGenerator);
+
+  mol = SmilesToMol("CCCCC");
+  fp = morganGenerator->getFingerprint(*mol);
+  TEST_ASSERT(fp->getNonzeroElements().size() == 7);
+
+  delete mol;
+  delete fp;
+  delete morganGenerator;
+  delete atomInvariantsGenerator;
+  delete bondInvariantsGenerator;
+
+  atomInvariantsGenerator =
+      new MorganFingerprint::MorganFeatureAtomInvGenerator();
+  bondInvariantsGenerator = new MorganFingerprint::MorganBondInvGenerator();
+
+  morganGenerator = MorganFingerprint::getMorganGenerator(
+      radius, true, false, true, false, atomInvariantsGenerator,
+      bondInvariantsGenerator);
+
+  mol = SmilesToMol("CCCCC");
+  fp = morganGenerator->getFingerprint(*mol);
+  TEST_ASSERT(fp->getNonzeroElements().size() == 7);
+
+  delete mol;
+  delete fp;
+  delete morganGenerator;
+  delete atomInvariantsGenerator;
+  delete bondInvariantsGenerator;
+
+  atomInvariantsGenerator = new AtomPair::AtomPairAtomInvGenerator();
+  bondInvariantsGenerator = new MorganFingerprint::MorganBondInvGenerator();
+
+  morganGenerator = MorganFingerprint::getMorganGenerator(
+      radius, true, false, true, false, atomInvariantsGenerator,
+      bondInvariantsGenerator);
+
+  mol = SmilesToMol("CCCCC");
+  fp = morganGenerator->getFingerprint(*mol);
+  TEST_ASSERT(fp->getNonzeroElements().size() == 7);
+
+  delete mol;
+  delete fp;
+  delete morganGenerator;
+  delete atomInvariantsGenerator;
+  delete bondInvariantsGenerator;
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;

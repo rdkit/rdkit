@@ -37,7 +37,7 @@ class MorganBondInvGenerator : public BondInvariantsGenerator {
   const bool df_useChirality;
 
  public:
-  MorganBondInvGenerator(const bool useBondTypes, const bool useChirality);
+  MorganBondInvGenerator(const bool useBondTypes = true, const bool useChirality = false);
 
   std::vector<std::uint32_t> *getBondInvariants(const ROMol &mol) const;
 
