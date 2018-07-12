@@ -1,6 +1,8 @@
 #ifndef __RD_METAL_H__
 #define __RD_METAL_H__
 
+#include <GraphMol/ROMol.h>
+
 namespace RDKit{
 class RWMol;
 class ROMol;
@@ -18,8 +20,8 @@ class MetalDisconnector{
 		// modifies the molecule in place
 		void disconnect(RWMol &mol); // static?
 	private:
-		ROMol* metal_nof;
-		ROMol* metal_non;
+		ROMOL_SPTR metal_nof;
+		ROMOL_SPTR metal_non;
 
 }; // class Metal
 } // namespace MolStandardize

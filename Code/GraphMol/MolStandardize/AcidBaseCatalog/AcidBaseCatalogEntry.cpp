@@ -30,9 +30,7 @@ std::string AcidBaseCatalogEntry::Serialize() const {
 }
 
 void AcidBaseCatalogEntry::initFromStream(std::istream &ss) {
-  // the molecule:
-  dp_pair->first = new ROMol();
- 	dp_pair->second =	new ROMol();
+  // the molecule TODO:
 //  ReactionPickler::reactionFromPickle(ss, *dp_transform);
 
   boost::int32_t tmpInt;

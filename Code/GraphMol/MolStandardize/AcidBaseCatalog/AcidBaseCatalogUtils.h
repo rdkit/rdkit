@@ -13,8 +13,8 @@ class ROMol;
 namespace MolStandardize {
 class AcidBaseCatalogParams;
 
-std::vector<std::pair<ROMol*, ROMol*>> readPairs(std::string fileName);
-std::vector<std::pair<ROMol*, ROMol*>> readPairs(std::istream &inStream, int nToRead = -1);
+std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> readPairs(std::string fileName);
+std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> readPairs(std::istream &inStream, int nToRead = -1);
 
 } // namespace MolStandardize
 } // namespace RDKit

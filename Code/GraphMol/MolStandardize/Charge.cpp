@@ -21,15 +21,16 @@ ROMol* Reionizer::reionize(const ROMol &mol, AcidBaseCatalog *abcat,
 	const AcidBaseCatalogParams *abparams = abcat->getCatalogParams();
 
 	PRECONDITION(abparams, "");
-	const std::vector<std::pair<ROMol*, ROMol*>> abpairs = abparams->getPairs();
+	const std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> abpairs = abparams->getPairs();
 	
-	ROMol* omol = new ROMol(mol);
+	ROMOL_SPTR omol( new ROMol(mol) );
 	int start_charge = MolOps::getFormalCharge(*omol);
 
 	for (const auto &cc : ccs) {
 		std::vector<MatchVectType> res;
 //		std::cout << cc.Smarts << std::endl;
-		unsigned int matches = SubstructMatch(*omol, *(SmartsToMol(cc.Smarts)), res);
+		ROMOL_SPTR ccmol( SmartsToMol(cc.Smarts) );
+		unsigned int matches = SubstructMatch(*omol, *ccmol, res);
 		if ( matches ) {
 			for (const auto &match : res) {
 				for (const auto &pair : match) {
@@ -51,19 +52,20 @@ ROMol* Reionizer::reionize(const ROMol &mol, AcidBaseCatalog *abcat,
 	// If molecule is now neutral, assume everything is now fixed
 	// But otherwise, if charge has become more positive, 
 	// look for additional protonated acid groups to ionize
-	
+
 	if (current_charge != 0) {
 		while (charge_diff > 0) {
 			// returns the acid strength ranking (ppos) 
 			// and the substruct match (poccur) in a pair
-			std::pair<unsigned int, std::vector<unsigned int>>* res = 
-							this->strongestProtonated(mol, abpairs);
+			std::shared_ptr<std::pair<unsigned int, std::vector<unsigned int>>> res( 
+							this->strongestProtonated(mol, abpairs) );
 			if (res == nullptr) {break;}
 			else {
 				unsigned int ppos = res->first;
 				std::vector<unsigned int> poccur = res->second;
 				std::string abname;
-				std::pair<ROMol*, ROMol*> abpair = abpairs[ppos];
+				std::pair<ROMOL_SPTR, ROMOL_SPTR> abpair = abpairs[ppos];
+	std::cout << "Got here" << std::endl;	
 				(abpair.first)->getProp(common_properties::_Name, abname);
 				std::cout << "Ionizing " << abname << 
 								" to balance previous charge corrections" << std::endl;
@@ -87,10 +89,10 @@ ROMol* Reionizer::reionize(const ROMol &mol, AcidBaseCatalog *abcat,
 	std::set< std::vector<int> > already_moved;
 	while (true) {
 		
-	std::pair<unsigned int, std::vector<unsigned int>>* sp_res =
-              this->strongestProtonated(*omol, abpairs);
-	std::pair<unsigned int, std::vector<unsigned int>>* wi_res =
-              this->weakestIonized(*omol, abpairs);
+	std::shared_ptr<std::pair<unsigned int, std::vector<unsigned int>>> sp_res(
+              this->strongestProtonated(*omol, abpairs) );
+	std::shared_ptr<std::pair<unsigned int, std::vector<unsigned int>>> wi_res(
+              this->weakestIonized(*omol, abpairs) );
 	if ( sp_res != nullptr && wi_res != nullptr ) {
 		unsigned int ppos = sp_res->first;
 		unsigned int ipos = wi_res->first;
@@ -116,8 +118,8 @@ ROMol* Reionizer::reionize(const ROMol &mol, AcidBaseCatalog *abcat,
 			already_moved.insert(key);
 
 			std::string prot_name, ionized_name;
-			std::pair<ROMol*, ROMol*> prot_pair = abpairs[ppos];
-			std::pair<ROMol*, ROMol*> ionized_pair = abpairs[ipos];
+			std::pair<ROMOL_SPTR, ROMOL_SPTR> prot_pair = abpairs[ppos];
+			std::pair<ROMOL_SPTR, ROMOL_SPTR> ionized_pair = abpairs[ipos];
 			(prot_pair.first)->getProp(common_properties::_Name, prot_name);
 			(ionized_pair.first)->getProp(common_properties::_Name, ionized_name);
 
@@ -155,17 +157,16 @@ ROMol* Reionizer::reionize(const ROMol &mol, AcidBaseCatalog *abcat,
 
 	std::cout << MolToSmiles(*omol) << std::endl;
 //	MolOps::sanitizeMol(* (static_cast<RWMol*>(omol)) );
-	RWMol *wmol = static_cast<RWMol*>(omol);
+	RWMOL_SPTR wmol( new RWMol(*omol) );
 	MolOps::sanitizeMol(*wmol);
 	std::cout << MolToSmiles(*wmol) << std::endl;
 
-
-	return static_cast<ROMol*>(wmol); //omol;
+	return new ROMol(*wmol);
 }
 
 std::pair<unsigned int, std::vector<unsigned int>>* Reionizer::strongestProtonated(
 								const ROMol &mol, 
-								const std::vector<std::pair<ROMol*, ROMol*>> &abpairs) {
+								const std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> &abpairs) {
 
 	// position is the position in the acid list. 
 	unsigned int position = 0;
@@ -188,7 +189,7 @@ std::pair<unsigned int, std::vector<unsigned int>>* Reionizer::strongestProtonat
 
 std::pair<unsigned int, std::vector<unsigned int>>* Reionizer::weakestIonized(
 								const ROMol &mol, 
-								const std::vector<std::pair<ROMol*, ROMol*>> &abpairs) {
+								const std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> &abpairs) {
 
 	// position is the position in the acid list. 
 	unsigned int position = 0;

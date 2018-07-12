@@ -35,10 +35,10 @@ class Reionizer {
 	private:
 		std::pair<unsigned int, std::vector<unsigned int>>* strongestProtonated(
 										const ROMol &mol,
-										const std::vector<std::pair<ROMol*, ROMol*>> &abpairs);		
+										const std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> &abpairs);		
 		std::pair<unsigned int, std::vector<unsigned int>>* weakestIonized(
 										const ROMol &mol,
-										const std::vector<std::pair<ROMol*, ROMol*>> &abpairs);		
+										const std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> &abpairs);		
 
 
 }; // Reionizer class

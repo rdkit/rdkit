@@ -37,7 +37,7 @@ ROMol* MetalDisconnector::disconnect(const ROMol &mol){
 
 void MetalDisconnector::disconnect(RWMol &mol){
 	
-	std::list<ROMol*> metalList = {metal_nof, metal_non};
+	std::list<ROMOL_SPTR> metalList = {metal_nof, metal_non};
 	for (auto &query : metalList) {
 		
 		std::vector<MatchVectType> matches;

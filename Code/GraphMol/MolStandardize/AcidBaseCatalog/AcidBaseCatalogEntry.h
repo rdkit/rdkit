@@ -15,8 +15,8 @@ class AcidBaseCatalogEntry : public RDCatalog::CatalogEntry {
 	public:
 		AcidBaseCatalogEntry(){
 //				dp_pair(std::pair<new ROMol(), new ROMol()>);
-				dp_pair->first = new ROMol();
-				dp_pair->second = new ROMol();
+				dp_pair->first = nullptr;//new ROMol();
+				dp_pair->second = nullptr;//new ROMol();
 			 	d_descrip = "";
 				dp_props = new Dict();
 				setBitId(-1);
@@ -24,8 +24,8 @@ class AcidBaseCatalogEntry : public RDCatalog::CatalogEntry {
 
 		~AcidBaseCatalogEntry() override {
 			//delete dp_pair;
-			dp_pair->first = new ROMol();
-		 	dp_pair->second =	new ROMol();
+			//delete dp_pair->first;
+		 	//delete dp_pair->second;
 			delete dp_props;
 			dp_props = nullptr;
 		}
@@ -38,7 +38,7 @@ class AcidBaseCatalogEntry : public RDCatalog::CatalogEntry {
 		void initFromStream(std::istream &ss) override;
 		void initFromString(const std::string &text) override;
 	private:
-		std::shared_ptr<std::pair<ROMol*, ROMol*>> dp_pair;
+		std::shared_ptr<std::pair<ROMOL_SPTR, ROMOL_SPTR>> dp_pair;
 		Dict *dp_props;
 		std::string d_descrip;
 

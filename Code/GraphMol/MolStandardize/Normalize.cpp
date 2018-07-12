@@ -103,7 +103,7 @@ boost::shared_ptr<ROMol> Normalizer::applyTransform(const ROMol &mol, ChemicalRe
 		if (pdts.size() != 0) {
 			std::sort(pdts.begin(), pdts.end());
 			mols.clear();
-			for (const auto pdt : pdts) {
+			for (const auto &pdt : pdts) {
 				mols.push_back(pdt.Mol);
 			}
 		} else {

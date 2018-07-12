@@ -29,9 +29,9 @@ class AcidBaseCatalogParams : public RDCatalog::CatalogParams {
 		unsigned int getNumPairs() const {
 		       return static_cast<unsigned int>(d_pairs.size()); }
 
-		const std::vector<std::pair<ROMol*, ROMol*>> &getPairs() const;
+		const std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> &getPairs() const;
 
-		const std::pair<ROMol*, ROMol*> getPair(unsigned int fid) const;
+		const std::pair<ROMOL_SPTR, ROMOL_SPTR> getPair(unsigned int fid) const;
 		
 		void toStream(std::ostream &) const override;
 		std::string Serialize() const override;
@@ -39,7 +39,7 @@ class AcidBaseCatalogParams : public RDCatalog::CatalogParams {
 		void initFromString(const std::string &text) override;
 
 	private: 
-		std::vector<std::pair<ROMol*, ROMol*>> d_pairs;
+		std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> d_pairs;
 
 }; // class AcidBaseCatalogParams
 

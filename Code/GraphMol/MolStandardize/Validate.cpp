@@ -17,7 +17,8 @@ class ROMol;
 
 namespace MolStandardize{
 
-std::vector<ValidationErrorInfo> RDKitValidation::validate(const ROMol &mol, bool reportAllFailures) const {
+std::vector<ValidationErrorInfo> RDKitValidation::validate(
+								const ROMol &mol, bool reportAllFailures) const {
 	
 	ROMol molCopy = mol;
 	std::vector<ValidationErrorInfo> errors;
@@ -45,19 +46,22 @@ std::vector<ValidationErrorInfo> RDKitValidation::validate(const ROMol &mol, boo
 }
 
 
-std::vector<ValidationErrorInfo> MolVSValidation::validate(const ROMol &mol, bool reportAllFailures) const {
+std::vector<ValidationErrorInfo> MolVSValidation::validate(
+								const ROMol &mol, bool reportAllFailures) const {
 
 	std::vector<ValidationErrorInfo> errors;
 
 	this->noAtomValidation(mol, reportAllFailures, errors);
-	this->fragmentValidation(mol, reportAllFailures, errors); //TODO filterscatalog stuff
+	this->fragmentValidation(mol, reportAllFailures, errors); 
 	this->neutralValidation(mol, reportAllFailures, errors);
 	this->isotopeValidation(mol, reportAllFailures, errors);
 
 	return errors;
 }
 
-void MolVSValidation::noAtomValidation(const ROMol &mol, bool reportAllFailures, std::vector<ValidationErrorInfo> &errors) const {
+void MolVSValidation::noAtomValidation(const ROMol &mol, 
+								bool reportAllFailures, 
+								std::vector<ValidationErrorInfo> &errors) const {
 	unsigned int na = mol.getNumAtoms();
 	
 	if (!na){
@@ -65,12 +69,13 @@ void MolVSValidation::noAtomValidation(const ROMol &mol, bool reportAllFailures,
 	}	
 }
 
-void MolVSValidation::fragmentValidation(const ROMol &mol, bool reportAllFailures, std::vector<ValidationErrorInfo> &errors) const {
+void MolVSValidation::fragmentValidation(const ROMol &mol, 
+								bool reportAllFailures, std::vector<ValidationErrorInfo> &errors) const {
 	std::string rdbase = getenv("RDBASE");
 	std::string fgrpFile = 
 		rdbase + "/Code/GraphMol/MolStandardize/FragmentCatalog/test_data/fragmentPatterns.txt";
-	auto *fparams = new FragmentCatalogParams(fgrpFile);
-	FragmentCatalog fcat(fparams);
+	std::shared_ptr<FragmentCatalogParams> fparams( new FragmentCatalogParams(fgrpFile) );
+	FragmentCatalog fcat(fparams.get());
 
 	const std::vector<std::shared_ptr<ROMol>> &fgrps = fparams->getFuncGroups();
 	INT_VECT mapping;
@@ -98,7 +103,8 @@ void MolVSValidation::fragmentValidation(const ROMol &mol, bool reportAllFailure
 	}
 }
 
-void MolVSValidation::neutralValidation(const ROMol &mol, bool reportAllFailures, std::vector<ValidationErrorInfo> &errors) const {
+void MolVSValidation::neutralValidation(const ROMol &mol, bool reportAllFailures, 
+								std::vector<ValidationErrorInfo> &errors) const {
 	int charge = RDKit::MolOps::getFormalCharge(mol);
 	if (charge != 0) {
 		std::string msg = "Not an overall neutral system (" + std::to_string(charge) + ')';
@@ -107,7 +113,8 @@ void MolVSValidation::neutralValidation(const ROMol &mol, bool reportAllFailures
 	}
 }
 
-void MolVSValidation::isotopeValidation(const ROMol &mol, bool reportAllFailures, std::vector<ValidationErrorInfo> &errors) const {
+void MolVSValidation::isotopeValidation(const ROMol &mol, bool reportAllFailures,
+							 	std::vector<ValidationErrorInfo> &errors) const {
 
 	unsigned int na = mol.getNumAtoms();
 	std::set<string> isotopes;
@@ -130,7 +137,8 @@ void MolVSValidation::isotopeValidation(const ROMol &mol, bool reportAllFailures
 	}
 }
 
-std::vector<ValidationErrorInfo> AllowedAtomsValidation::validate(const ROMol &mol, bool reportAllFailures) const {
+std::vector<ValidationErrorInfo> AllowedAtomsValidation::validate(const ROMol &mol, 
+								bool reportAllFailures) const {
 
 	std::vector<ValidationErrorInfo> errors;
 	unsigned int na = mol.getNumAtoms();
@@ -151,13 +159,15 @@ std::vector<ValidationErrorInfo> AllowedAtomsValidation::validate(const ROMol &m
 		// if no match, append to list of errors.
 		if (! match) {
 			std::string symbol = qatom->getSymbol();
-			errors.push_back(ValidationErrorInfo("Atom " + symbol + " is not in allowedAtoms list"));
+			errors.push_back(ValidationErrorInfo(
+															"Atom " + symbol + " is not in allowedAtoms list"));
 		}
 	}
 	return errors;
 }
 
-std::vector<ValidationErrorInfo> DisallowedAtomsValidation::validate(const ROMol &mol, bool reportAllFailures) const {
+std::vector<ValidationErrorInfo> DisallowedAtomsValidation::validate(
+								const ROMol &mol, bool reportAllFailures) const {
 
 	std::vector<ValidationErrorInfo> errors;
 	unsigned int na = mol.getNumAtoms();
@@ -177,7 +187,8 @@ std::vector<ValidationErrorInfo> DisallowedAtomsValidation::validate(const ROMol
 		// if no match, append to list of errors.
 		if (match) {
 			std::string symbol = qatom->getSymbol();
-			errors.push_back(ValidationErrorInfo("Atom " + symbol + " is in disallowedAtoms list"));
+			errors.push_back(ValidationErrorInfo(
+															"Atom " + symbol + " is in disallowedAtoms list"));
 		}
 	}
 	return errors;

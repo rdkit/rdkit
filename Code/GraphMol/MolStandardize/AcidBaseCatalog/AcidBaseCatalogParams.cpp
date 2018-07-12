@@ -15,19 +15,19 @@ AcidBaseCatalogParams::AcidBaseCatalogParams(const AcidBaseCatalogParams &other)
 	d_typeStr = other.d_typeStr;
 	d_pairs.clear();
 
-	const std::vector<std::pair<ROMol*, ROMol*>> &abpairs = other.getPairs();
+	const std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> &abpairs = other.getPairs();
 	for (auto &pairi : abpairs) {
-		d_pairs.push_back( std::pair<ROMol*, ROMol*>(pairi.first, pairi.second) );
+		d_pairs.push_back( std::pair<ROMOL_SPTR, ROMOL_SPTR>(pairi.first, pairi.second) );
 	}
 }
 
 AcidBaseCatalogParams::~AcidBaseCatalogParams() {}
 
-const std::vector<std::pair<ROMol*, ROMol*>> &AcidBaseCatalogParams::getPairs() const {
+const std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> &AcidBaseCatalogParams::getPairs() const {
   return d_pairs;
 }
 
-const std::pair<ROMol*, ROMol*> AcidBaseCatalogParams::getPair(unsigned int fid) const {
+const std::pair<ROMOL_SPTR, ROMOL_SPTR> AcidBaseCatalogParams::getPair(unsigned int fid) const {
   URANGE_CHECK(fid, d_pairs.size());
   // return d_pairs[fid];
   return d_pairs[fid];//.get();

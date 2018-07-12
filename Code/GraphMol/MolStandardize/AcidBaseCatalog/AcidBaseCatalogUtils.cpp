@@ -40,8 +40,10 @@ std::pair<ROMol*, ROMol*>* getPair(const std::string &tmpStr) {
   boost::erase_all(base_smarts, " ");
   ++token;
 
-	ROMol* acid = SmartsToMol(acid_smarts);
-	ROMol* base = SmartsToMol(base_smarts);
+	ROMol* acid( SmartsToMol(acid_smarts) );
+	ROMol* base( SmartsToMol(base_smarts) );
+// 	ROMOL_SPTR acid( SmartsToMol(acid_smarts) );
+//	ROMOL_SPTR base( SmartsToMol(base_smarts) );
   CHECK_INVARIANT(acid, acid_smarts);
   CHECK_INVARIANT(base, base_smarts);
   acid->setProp(common_properties::_Name, name);
@@ -49,6 +51,7 @@ std::pair<ROMol*, ROMol*>* getPair(const std::string &tmpStr) {
 //  transformation->setProp(common_properties::_SMIRKS, smirks); // TODO
 //  RDGeneral/types.h does not have a common property to use?...
 	mol_pair = new std::pair<ROMol*, ROMol*>(acid, base) ;
+	//mol_pair = new std::pair<ROMol*, ROMol*>(acid.get(), base.get()) ;
   return mol_pair;
 }
 } // end of local utility namespace
@@ -57,19 +60,19 @@ std::pair<ROMol*, ROMol*>* getPair(const std::string &tmpStr) {
 
 namespace MolStandardize {
 
-std::vector<std::pair<ROMol*, ROMol*>> readPairs(std::string fileName) {
+std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> readPairs(std::string fileName) {
 	std::ifstream inStream(fileName.c_str());
 	if ((!inStream) || (inStream.bad())) {
 		std::ostringstream errout;
 		errout << "Bad input file " << fileName;
 		throw BadFileException(errout.str());
 	}
-	std::vector<std::pair<ROMol*, ROMol*>> mol_pairs = readPairs(inStream);
+	std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> mol_pairs = readPairs(inStream);
 	return mol_pairs;
 }
 
-std::vector<std::pair<ROMol*, ROMol*>> readPairs(std::istream &inStream, int nToRead) {
-	std::vector<std::pair<ROMol*, ROMol*>> pairs;
+std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> readPairs(std::istream &inStream, int nToRead) {
+	std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> pairs;
 	pairs.clear();
 	if (inStream.bad()) {
 		throw BadFileException("Bad stream contents.");
@@ -82,9 +85,10 @@ std::vector<std::pair<ROMol*, ROMol*>> readPairs(std::istream &inStream, int nTo
 		inStream.getline(inLine, MAX_LINE_LEN, '\n');
 		tmpstr = inLine;
 		// parse the molpair on this line (if there is one)
-		std::pair<ROMol*, ROMol*>* mol_pair = getPair(tmpstr) ;
+		std::shared_ptr<std::pair<ROMol*, ROMol*>> mol_pair( getPair(tmpstr) );
 		if (mol_pair != nullptr) {
-			pairs.push_back(*mol_pair);
+			pairs.push_back(std::pair<ROMOL_SPTR, ROMOL_SPTR>(
+															ROMOL_SPTR(mol_pair->first), ROMOL_SPTR(mol_pair->second)));
 			nRead++;
 		}
 	}
