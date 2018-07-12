@@ -22,10 +22,9 @@ ROMol* FragmentRemover::remove(const ROMol &mol, FragmentCatalog *fcat) {
 	PRECONDITION(fparams, "");
 
 	const std::vector<std::shared_ptr<ROMol>> &fgrps = fparams->getFuncGroups();
-	std::vector<std::shared_ptr<ROMol>>::const_iterator fgci;
 	auto *removed =  new ROMol(mol) ;
 
-	for (fgci = fgrps.begin(); fgci != fgrps.end(); fgci++) {
+	for (auto &fgci : fgrps) {
 
 		std::vector<boost::shared_ptr<ROMol>> frags =
 		       	MolOps::getMolFrags(*removed);
@@ -33,10 +32,9 @@ ROMol* FragmentRemover::remove(const ROMol &mol, FragmentCatalog *fcat) {
 		if (removed->getNumAtoms() == 0 || ( this->LEAVE_LAST 
 		  && frags.size() <= 1 ) ) { break; }
 
-		const ROMol *fgrp = fgci->get();
 		std::string fname;
-		(*fgci)->getProp(common_properties::_Name, fname);
-		ROMol *tmp = RDKit::deleteSubstructs(*removed, *fgrp, true);
+		fgci->getProp(common_properties::_Name, fname);
+		ROMol *tmp = RDKit::deleteSubstructs(*removed, *fgci, true);
 
 		if (tmp->getNumAtoms() != removed->getNumAtoms()) {
 			std::cout << "Removed fragment: " << fname << std::endl;

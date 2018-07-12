@@ -24,7 +24,7 @@ class FragmentCatalogParams : public RDCatalog::CatalogParams {
 		// copy constructor
 		FragmentCatalogParams(const FragmentCatalogParams &other);
 
-		~FragmentCatalogParams();
+		~FragmentCatalogParams() override;
 
 		unsigned int getNumFuncGroups() const {
 		       return static_cast<unsigned int>(d_funcGroups.size()); }
@@ -33,10 +33,10 @@ class FragmentCatalogParams : public RDCatalog::CatalogParams {
 
 		const ROMol *getFuncGroup(unsigned int fid) const;
 		
-		void toStream(std::ostream &) const;
-		std::string Serialize() const;
-		void initFromStream(std::istream &ss);
-		void initFromString(const std::string &text);
+		void toStream(std::ostream &) const override;
+		std::string Serialize() const override;
+		void initFromStream(std::istream &ss) override;
+		void initFromString(const std::string &text) override;
 
 	private: 
 		std::vector<std::shared_ptr<ROMol>> d_funcGroups;

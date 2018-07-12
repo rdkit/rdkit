@@ -11,14 +11,14 @@
 namespace RDKit {
 namespace MolStandardize {
 
-FragmentCatalogEntry::FragmentCatalogEntry(const ROMol *omol, const PATH_TYPE &path) {
-	PRECONDITION(omol, "bad mol");
-}
-
-FragmentCatalogEntry::FragmentCatalogEntry(const std::string &pickle) {
-	dp_props = new Dict();
-	this->initFromString(pickle);
-}
+//FragmentCatalogEntry::FragmentCatalogEntry(const ROMol *omol, const PATH_TYPE &path) {
+//	PRECONDITION(omol, "bad mol");
+//}
+//
+//FragmentCatalogEntry::FragmentCatalogEntry(const std::string &pickle) {
+//	dp_props = new Dict();
+//	this->initFromString(pickle);
+//}
 
 void FragmentCatalogEntry::toStream(std::ostream &ss) const {
   MolPickler::pickleMol(*dp_mol, ss);

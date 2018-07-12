@@ -18,8 +18,8 @@ class FragmentCatalogEntry : public RDCatalog::CatalogEntry {
 				setBitId(-1);
 			}
 
-		FragmentCatalogEntry(const ROMol *omol, const PATH_TYPE &path);
-		FragmentCatalogEntry(const std::string &pickle);
+//		FragmentCatalogEntry(const ROMol *omol, const PATH_TYPE &path);
+//		FragmentCatalogEntry(const std::string &pickle);
 
 		~FragmentCatalogEntry() override {
 			delete dp_mol;
@@ -28,7 +28,7 @@ class FragmentCatalogEntry : public RDCatalog::CatalogEntry {
 			dp_props = nullptr;
 		}
 
-		std::string getDescription() const override { return d_descrip; }
+		//std::string getDescription() const override { return d_descrip; }
 
 		unsigned int getOrder() const { return dp_mol->getNumBonds(); }
 
