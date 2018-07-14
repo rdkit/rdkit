@@ -90,7 +90,8 @@ class RegressionTest(unittest.TestCase):
        ),
       ('CNc1ccc2nc3ccccc3[n+](C)c2c1.[O-]Cl(=O)(=O)=O',
        'InChI=1S/C14H13N3.ClHO4/c1-15-10-7-8-12-14(9-10)17(2)13-6-4-3-5-11(13)16-12;2-1(3,4)5/h3-9H,1-2H3;(H,2,3,4,5)'
-       ), )
+       ),
+    )
     for smiles, expected in examples:
       m = MolFromSmiles(smiles)
       inchi = MolToInchi(m)
@@ -201,10 +202,13 @@ class TestCase(unittest.TestCase):
               continue
           # InChI messed up the radical?
           unsanitizedInchiMol = MolFromInchi(x, sanitize=False)
-          if sum([a.GetNumRadicalElectrons() * a.GetAtomicNum() for a in m.GetAtoms()
-                  if a.GetNumRadicalElectrons() != 0]) != sum(
-                    [a.GetNumRadicalElectrons() * a.GetAtomicNum()
-                     for a in unsanitizedInchiMol.GetAtoms() if a.GetNumRadicalElectrons() != 0]):
+          if sum([
+              a.GetNumRadicalElectrons() * a.GetAtomicNum() for a in m.GetAtoms()
+              if a.GetNumRadicalElectrons() != 0
+          ]) != sum([
+              a.GetNumRadicalElectrons() * a.GetAtomicNum() for a in unsanitizedInchiMol.GetAtoms()
+              if a.GetNumRadicalElectrons() != 0
+          ]):
             reasonable += 1
             continue
 
@@ -248,9 +252,9 @@ class TestCase(unittest.TestCase):
           same += 1
       fmt = "\n{0}InChI read Summary: {1} identical, {2} variance, {3} reasonable variance{4}"
       print(fmt.format(COLOR_GREEN, same, diff, reasonable, COLOR_RESET))
-      self.assertEqual(same, 624)
+      self.assertEqual(same, 627)
       self.assertEqual(diff, 0)
-      self.assertEqual(reasonable, 557)
+      self.assertEqual(reasonable, 554)
 
   def test2InchiOptions(self):
     m = MolFromSmiles("CC=C(N)C")
@@ -267,7 +271,7 @@ class TestCase(unittest.TestCase):
     inchi = MolToInchi(m)
     k1 = InchiToInchiKey(inchi)
     k2 = MolToInchiKey(m)
-    self.assertEqual(k1,k2)
+    self.assertEqual(k1, k2)
 
 
 if __name__ == '__main__':  # pragma: nocover

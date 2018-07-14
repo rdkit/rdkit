@@ -25,8 +25,8 @@ class ROMol;
 
 namespace RingUtils {
 typedef std::vector<int> INT_VECT;
-typedef std::vector<std::vector<int> > VECT_INT_VECT;
-typedef std::map<int, std::vector<int> > INT_INT_VECT_MAP;
+typedef std::vector<std::vector<int>> VECT_INT_VECT;
+typedef std::map<int, std::vector<int>> INT_INT_VECT_MAP;
 
 //! Pick a set of rings that are fused together and contain a specified ring
 /*!
@@ -43,8 +43,11 @@ typedef std::map<int, std::vector<int> > INT_INT_VECT_MAP;
    \param depth used to track recursion depth
 
 */
-RDKIT_GRAPHMOL_EXPORT void pickFusedRings(int curr, const INT_INT_VECT_MAP &neighMap, INT_VECT &res,
-                    boost::dynamic_bitset<> &done, int depth = 0);
+RDKIT_GRAPHMOL_EXPORT void pickFusedRings(int curr,
+                                          const INT_INT_VECT_MAP &neighMap,
+                                          INT_VECT &res,
+                                          boost::dynamic_bitset<> &done,
+                                          int depth = 0);
 
 //! \brief For each ring in bring compute and strore the ring that are fused
 //! (share atleast one bond with it).
@@ -58,10 +61,14 @@ RDKIT_GRAPHMOL_EXPORT void pickFusedRings(int curr, const INT_INT_VECT_MAP &neig
               rings (rather their IDs) that are fused with this ring
   \param maxSize if this is >0, rings that are larger than the threshold
                  will not be considered as candidates to be neighbors
+  \param maxOverlapSize if this is >0, rings that overlap by more bonds than
+                        this will not be considered to be neighbors
 
 */
 RDKIT_GRAPHMOL_EXPORT void makeRingNeighborMap(const VECT_INT_VECT &brings,
-                         INT_INT_VECT_MAP &neighMap, unsigned int maxSize = 0);
+                                               INT_INT_VECT_MAP &neighMap,
+                                               unsigned int maxSize = 0,
+                                               unsigned int maxOverlapSize = 0);
 
 //! converts a list of atom indices into a list of bond indices
 /*!
@@ -75,8 +82,9 @@ RDKIT_GRAPHMOL_EXPORT void makeRingNeighborMap(const VECT_INT_VECT &brings,
    - each list of atom ids in "res" form a legitimate ring
    - each of these list of ordered such that a ring can be traversed
 */
-RDKIT_GRAPHMOL_EXPORT void convertToBonds(const VECT_INT_VECT &res, VECT_INT_VECT &brings,
-                    const RDKit::ROMol &mol);
-};
+RDKIT_GRAPHMOL_EXPORT void convertToBonds(const VECT_INT_VECT &res,
+                                          VECT_INT_VECT &brings,
+                                          const RDKit::ROMol &mol);
+};  // namespace RingUtils
 
 #endif
