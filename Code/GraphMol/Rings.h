@@ -24,8 +24,8 @@ class ROMol;
 
 namespace RingUtils {
 typedef std::vector<int> INT_VECT;
-typedef std::vector<std::vector<int> > VECT_INT_VECT;
-typedef std::map<int, std::vector<int> > INT_INT_VECT_MAP;
+typedef std::vector<std::vector<int>> VECT_INT_VECT;
+typedef std::map<int, std::vector<int>> INT_INT_VECT_MAP;
 
 //! Pick a set of rings that are fused together and contain a specified ring
 /*!
@@ -57,10 +57,13 @@ void pickFusedRings(int curr, const INT_INT_VECT_MAP &neighMap, INT_VECT &res,
               rings (rather their IDs) that are fused with this ring
   \param maxSize if this is >0, rings that are larger than the threshold
                  will not be considered as candidates to be neighbors
+  \param maxOverlapSize if this is >0, rings that overlap by more bonds than
+                        this will not be considered to be neighbors
 
 */
 void makeRingNeighborMap(const VECT_INT_VECT &brings,
-                         INT_INT_VECT_MAP &neighMap, unsigned int maxSize = 0);
+                         INT_INT_VECT_MAP &neighMap, unsigned int maxSize = 0,
+                         unsigned int maxOverlapSize = 0);
 
 //! converts a list of atom indices into a list of bond indices
 /*!

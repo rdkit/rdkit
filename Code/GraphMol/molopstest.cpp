@@ -4372,6 +4372,7 @@ void testSFNetIssue249() {
     RWMol *m = SmilesToMol(smi, 0, 0);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 278);
+    std::cerr << smi << std::endl;
     std::cerr << "starting sanitization" << std::endl;
     MolOps::sanitizeMol(*m);
     std::cerr << "done" << std::endl;
@@ -7398,7 +7399,33 @@ void testGithub1936() {
     TEST_ASSERT(mol->getAtomWithIdx(4)->getNumRadicalElectrons() == 1);
     TEST_ASSERT(!mol->getAtomWithIdx(0)->getIsAromatic());
   }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
 
+void testGithub1928() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing Github issue "
+         "1928: incorrect aromatic SMILES generated for structure"
+      << std::endl;
+  {
+    std::unique_ptr<ROMol> mol(
+        SmilesToMol("N1C2=CC3=CC=CC=C3OC1=CC1=C(O2)C=CC=C1"));
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 19);
+    TEST_ASSERT(mol->getBondBetweenAtoms(0, 1)->getBondType() == Bond::SINGLE);
+    TEST_ASSERT(!mol->getBondBetweenAtoms(0, 1)->getIsAromatic());
+    TEST_ASSERT(!mol->getAtomWithIdx(0)->getIsAromatic());
+  }
+  {  // the original report
+    std::unique_ptr<ROMol> mol(SmilesToMol(
+        "C12=C3C=CC=C1CCC(=O)C2=C4OC5=CC=CC6=C5C(=C(N4)O3)C(=O)CC6"));
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 27);
+    TEST_ASSERT(mol->getBondBetweenAtoms(20, 21)->getBondType() ==
+                Bond::SINGLE);
+    TEST_ASSERT(!mol->getBondBetweenAtoms(20, 21)->getIsAromatic());
+    TEST_ASSERT(!mol->getAtomWithIdx(21)->getIsAromatic());
+  }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
@@ -7512,5 +7539,6 @@ int main() {
   testGithub1810();
 #endif
   testGithub1936();
+  testGithub1928();
   return 0;
 }

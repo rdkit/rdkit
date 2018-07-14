@@ -2638,7 +2638,6 @@ int main(int argc, char *argv[]) {
   testGithub1756();
   testGithub1920();
   testGithub1719();
-  testCombinedQueries();
   testGithub1906();
 #endif
   testGithub1985();
