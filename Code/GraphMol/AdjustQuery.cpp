@@ -23,7 +23,7 @@ namespace {
 bool isMapped(const Atom *atom) {
   return atom->hasProp(common_properties::molAtomMapNumber);
 }
-}
+}  // namespace
 
 namespace MolOps {
 ROMol *adjustQueryProperties(const ROMol &mol,
@@ -166,15 +166,39 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
       }
       qa->expandQuery(makeAtomInNRingsQuery(nRings));
     }  // end of adjust ring count
+    if (params.adjustRingChain &&
+        !((params.adjustRingChainFlags & ADJUST_IGNORECHAINS) && !nRings) &&
+        !((params.adjustRingChainFlags & ADJUST_IGNORERINGS) && nRings) &&
+        !((params.adjustRingChainFlags & ADJUST_IGNOREDUMMIES) && !atomicNum) &&
+        !((params.adjustRingChainFlags & ADJUST_IGNORENONDUMMIES) &&
+          atomicNum) &&
+        !((params.adjustRingChainFlags & ADJUST_IGNOREMAPPED) &&
+          isMapped(at))) {
+      QueryAtom *qa;
+      if (!at->hasQuery()) {
+        qa = new QueryAtom(*at);
+        const bool updateLabel = false;
+        const bool preserveProps = true;
+        mol.replaceAtom(i, qa, updateLabel, preserveProps);
+        delete qa;
+        qa = static_cast<QueryAtom *>(mol.getAtomWithIdx(i));
+        at = static_cast<Atom *>(qa);
+      } else {
+        qa = static_cast<QueryAtom *>(at);
+      }
+      ATOM_EQUALS_QUERY *nq = makeAtomInRingQuery();
+      if (!nRings) nq->setNegation(true);
+      qa->expandQuery(nq);
+    }  // end of adjust ring chain
   }    // end of loop over atoms
   if (params.makeBondsGeneric) {
     ROMol::EDGE_ITER firstB, lastB;
     boost::tie(firstB, lastB) = mol.getEdges();
     while (firstB != lastB) {
-      //Bond *bond = mol[*firstB];
+      // Bond *bond = mol[*firstB];
       ++firstB;
     }
   }
 }
-}  // end of MolOps namespace
-}  // end of RDKit namespace
+}  // namespace MolOps
+}  // namespace RDKit
