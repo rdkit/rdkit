@@ -13,8 +13,8 @@ from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors as _rdMolDescriptors
 from rdkit.Chem import rdPartialCharges, rdMolDescriptors
 import rdkit.Chem.ChemUtils.DescriptorUtilities as _du
-from rdkit.Chem.EState.EState import (MaxEStateIndex, MinEStateIndex,
-                                      MaxAbsEStateIndex, MinAbsEStateIndex)
+from rdkit.Chem.EState.EState import (MaxEStateIndex, MinEStateIndex, MaxAbsEStateIndex,
+                                      MinAbsEStateIndex)
 from rdkit.Chem.QED import qed
 
 
@@ -34,7 +34,7 @@ def _setupDescriptors(namespace):
 
   otherMods = [Chem]
 
-  for nm, thing in namespace.items():
+  for nm, thing in tuple(namespace.items()):
     if nm[0] != '_' and _isCallable(thing):
       _descList.append((nm, thing))
 
@@ -190,7 +190,7 @@ MinAbsPartialCharge.version = "1.0.0"
 
 
 def _FingerprintDensity(mol, func, *args, **kwargs):
-  fp = func(*((mol,) + args), **kwargs)
+  fp = func(*((mol, ) + args), **kwargs)
   if hasattr(fp, 'GetNumOnBits'):
     val = fp.GetNumOnBits()
   else:
