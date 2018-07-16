@@ -2515,7 +2515,7 @@ void testGithub1756() {
     m->updatePropertyCache(false);
     auto sma = MolToSmarts(*m);
     // std::cerr << sma << std::endl;
-    TEST_ASSERT(sma == "C-[C@&*&H0](-Cl)-F"); // FIX: this seems odd...
+    TEST_ASSERT(sma == "C-[C@&*&H0](-Cl)-F");  // FIX: this seems odd...
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
@@ -2558,8 +2558,28 @@ void testCombinedQueries() {
   std::unique_ptr<ROMol> m(SmartsToMol("Oc1ccccc1"));
   TEST_ASSERT(m);
   std::string sma = MolToSmarts(*m);
-  std::cerr<<" SMA: "<<sma<<std::endl;
-  TEST_ASSERT(sma=="Oc1ccccc1");
+  // std::cerr << " SMA: " << sma << std::endl;
+  TEST_ASSERT(sma == "Oc1ccccc1");
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testGithub1906() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Testing github #1906: Bond stereo information not output to SMARTS"
+      << std::endl;
+  {
+    std::unique_ptr<ROMol> m(SmartsToMol("C/C=C/C"));
+    TEST_ASSERT(m);
+    std::string sma = MolToSmarts(*m);
+    TEST_ASSERT(sma == "C/C=C/C");
+  }
+  {
+    std::unique_ptr<ROMol> m(SmilesToMol("C/C=C\\C"));
+    TEST_ASSERT(m);
+    std::string sma = MolToSmarts(*m);
+    TEST_ASSERT(sma == "[#6]/[#6]=[#6]\\[#6]");
+  }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
@@ -2581,7 +2601,8 @@ int main(int argc, char *argv[]) {
   testProblems();
   testIssue196();
   testIssue254();
-  //testIssue255(); // this is a slow one and doesn't really actually test much without someone watching memory consumption
+  // testIssue255(); // this is a slow one and doesn't really actually test much
+  // without someone watching memory consumption
   testIssue330();
   testIssue351();
   testAtomMap();
@@ -2605,11 +2626,12 @@ int main(int argc, char *argv[]) {
   testTransuranic();
   testGithub1338();
   testCactvsExtensions();
-#endif
   testChargesAndIsotopes();
   testGithub1756();
-  testGithub1719();
   testGithub1920();
+  testGithub1719();
   testCombinedQueries();
+#endif
+  testGithub1906();
   return 0;
 }
