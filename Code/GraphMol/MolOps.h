@@ -66,7 +66,8 @@ RDKIT_GRAPHMOL_EXPORT bool atomHasConjugatedBond(const Atom *at);
   \return the number of fragments found.
 
 */
-RDKIT_GRAPHMOL_EXPORT unsigned int getMolFrags(const ROMol &mol, std::vector<int> &mapping);
+RDKIT_GRAPHMOL_EXPORT unsigned int getMolFrags(const ROMol &mol,
+                                               std::vector<int> &mapping);
 //! find fragments (disconnected components of the molecular graph)
 /*!
 
@@ -78,8 +79,8 @@ RDKIT_GRAPHMOL_EXPORT unsigned int getMolFrags(const ROMol &mol, std::vector<int
   \return the number of fragments found.
 
 */
-RDKIT_GRAPHMOL_EXPORT unsigned int getMolFrags(const ROMol &mol,
-                         std::vector<std::vector<int>> &frags);
+RDKIT_GRAPHMOL_EXPORT unsigned int getMolFrags(
+    const ROMol &mol, std::vector<std::vector<int>> &frags);
 
 //! splits a molecule into its component fragments
 //  (disconnected components of the molecular graph)
@@ -119,10 +120,11 @@ RDKIT_GRAPHMOL_EXPORT std::vector<boost::shared_ptr<ROMol>> getMolFrags(
 
 */
 template <typename T>
-RDKIT_GRAPHMOL_EXPORT std::map<T, boost::shared_ptr<ROMol>> getMolFragsWithQuery(
-    const ROMol &mol, T (*query)(const ROMol &, const Atom *),
-    bool sanitizeFrags = true, const std::vector<T> *whiteList = 0,
-    bool negateList = false);
+RDKIT_GRAPHMOL_EXPORT std::map<T, boost::shared_ptr<ROMol>>
+getMolFragsWithQuery(const ROMol &mol, T (*query)(const ROMol &, const Atom *),
+                     bool sanitizeFrags = true,
+                     const std::vector<T> *whiteList = 0,
+                     bool negateList = false);
 
 #if 0
     //! finds a molecule's minimium spanning tree (MST)
@@ -146,9 +148,9 @@ RDKIT_GRAPHMOL_EXPORT std::map<T, boost::shared_ptr<ROMol>> getMolFragsWithQuery
   \return the J index
 
 */
-RDKIT_GRAPHMOL_EXPORT double computeBalabanJ(const ROMol &mol, bool useBO = true, bool force = false,
-                       const std::vector<int> *bondPath = 0,
-                       bool cacheIt = true);
+RDKIT_GRAPHMOL_EXPORT double computeBalabanJ(
+    const ROMol &mol, bool useBO = true, bool force = false,
+    const std::vector<int> *bondPath = 0, bool cacheIt = true);
 //! \overload
 RDKIT_GRAPHMOL_EXPORT double computeBalabanJ(double *distMat, int nb, int nAts);
 
@@ -178,12 +180,15 @@ RDKIT_GRAPHMOL_EXPORT double computeBalabanJ(double *distMat, int nb, int nAts);
    returns.
  */
 RDKIT_GRAPHMOL_EXPORT ROMol *addHs(const ROMol &mol, bool explicitOnly = false,
-             bool addCoords = false, const UINT_VECT *onlyOnAtoms = NULL,
-             bool addResidueInfo = false);
+                                   bool addCoords = false,
+                                   const UINT_VECT *onlyOnAtoms = NULL,
+                                   bool addResidueInfo = false);
 //! \overload
 // modifies the molecule in place
-RDKIT_GRAPHMOL_EXPORT void addHs(RWMol &mol, bool explicitOnly = false, bool addCoords = false,
-           const UINT_VECT *onlyOnAtoms = NULL, bool addResidueInfo = false);
+RDKIT_GRAPHMOL_EXPORT void addHs(RWMol &mol, bool explicitOnly = false,
+                                 bool addCoords = false,
+                                 const UINT_VECT *onlyOnAtoms = NULL,
+                                 bool addResidueInfo = false);
 
 //! returns a copy of a molecule with hydrogens removed
 /*!
@@ -214,12 +219,15 @@ RDKIT_GRAPHMOL_EXPORT void addHs(RWMol &mol, bool explicitOnly = false, bool add
        - the caller is responsible for <tt>delete</tt>ing the pointer this
    returns.
 */
-RDKIT_GRAPHMOL_EXPORT ROMol *removeHs(const ROMol &mol, bool implicitOnly = false,
-                bool updateExplicitCount = false, bool sanitize = true);
+RDKIT_GRAPHMOL_EXPORT ROMol *removeHs(const ROMol &mol,
+                                      bool implicitOnly = false,
+                                      bool updateExplicitCount = false,
+                                      bool sanitize = true);
 //! \overload
 // modifies the molecule in place
 RDKIT_GRAPHMOL_EXPORT void removeHs(RWMol &mol, bool implicitOnly = false,
-              bool updateExplicitCount = false, bool sanitize = true);
+                                    bool updateExplicitCount = false,
+                                    bool sanitize = true);
 
 //! returns a copy of a molecule with hydrogens removed and added as queries
 //!  to the heavy atoms to which they are bound.
@@ -245,10 +253,12 @@ RDKIT_GRAPHMOL_EXPORT void removeHs(RWMol &mol, bool implicitOnly = false,
       in an atom map will be retained
 
 */
-RDKIT_GRAPHMOL_EXPORT ROMol *mergeQueryHs(const ROMol &mol, bool mergeUnmappedOnly = false);
+RDKIT_GRAPHMOL_EXPORT ROMol *mergeQueryHs(const ROMol &mol,
+                                          bool mergeUnmappedOnly = false);
 //! \overload
 // modifies the molecule in place
-RDKIT_GRAPHMOL_EXPORT void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly = false);
+RDKIT_GRAPHMOL_EXPORT void mergeQueryHs(RWMol &mol,
+                                        bool mergeUnmappedOnly = false);
 
 typedef enum {
   ADJUST_IGNORENONE = 0x0,
@@ -298,12 +308,12 @@ struct RDKIT_GRAPHMOL_EXPORT AdjustQueryParameters {
 
   \return the new molecule
 */
-RDKIT_GRAPHMOL_EXPORT ROMol *adjustQueryProperties(const ROMol &mol,
-                             const AdjustQueryParameters *params = NULL);
+RDKIT_GRAPHMOL_EXPORT ROMol *adjustQueryProperties(
+    const ROMol &mol, const AdjustQueryParameters *params = NULL);
 //! \overload
 // modifies the molecule in place
-RDKIT_GRAPHMOL_EXPORT void adjustQueryProperties(RWMol &mol,
-                           const AdjustQueryParameters *params = NULL);
+RDKIT_GRAPHMOL_EXPORT void adjustQueryProperties(
+    RWMol &mol, const AdjustQueryParameters *params = NULL);
 
 //! returns a copy of a molecule with the atoms renumbered
 /*!
@@ -319,8 +329,8 @@ RDKIT_GRAPHMOL_EXPORT void adjustQueryProperties(RWMol &mol,
     - the caller is responsible for <tt>delete</tt>ing the pointer this returns.
 
 */
-RDKIT_GRAPHMOL_EXPORT ROMol *renumberAtoms(const ROMol &mol,
-                     const std::vector<unsigned int> &newOrder);
+RDKIT_GRAPHMOL_EXPORT ROMol *renumberAtoms(
+    const ROMol &mol, const std::vector<unsigned int> &newOrder);
 
 //@}
 
@@ -380,8 +390,9 @@ typedef enum {
       function to a ROMol, so that new atoms and bonds cannot be added to the
       molecule and screw up the sanitizing that has been done here
 */
-RDKIT_GRAPHMOL_EXPORT void sanitizeMol(RWMol &mol, unsigned int &operationThatFailed,
-                 unsigned int sanitizeOps = SANITIZE_ALL);
+RDKIT_GRAPHMOL_EXPORT void sanitizeMol(RWMol &mol,
+                                       unsigned int &operationThatFailed,
+                                       unsigned int sanitizeOps = SANITIZE_ALL);
 //! \overload
 RDKIT_GRAPHMOL_EXPORT void sanitizeMol(RWMol &mol);
 
@@ -431,8 +442,9 @@ typedef enum {
       been called)
 
 */
-RDKIT_GRAPHMOL_EXPORT int setAromaticity(RWMol &mol, AromaticityModel model = AROMATICITY_DEFAULT,
-                   int (*func)(RWMol &) = NULL);
+RDKIT_GRAPHMOL_EXPORT int setAromaticity(
+    RWMol &mol, AromaticityModel model = AROMATICITY_DEFAULT,
+    int (*func)(RWMol &) = NULL);
 
 //! Designed to be called by the sanitizer to handle special cases before
 // anything is done.
@@ -502,7 +514,7 @@ RDKIT_GRAPHMOL_EXPORT void adjustHs(RWMol &mol);
 
 */
 RDKIT_GRAPHMOL_EXPORT void Kekulize(RWMol &mol, bool markAtomsBonds = true,
-              unsigned int maxBackTracks = 100);
+                                    unsigned int maxBackTracks = 100);
 
 //! flags the molecule's conjugated bonds
 RDKIT_GRAPHMOL_EXPORT void setConjugation(ROMol &mol);
@@ -558,9 +570,11 @@ RDKIT_GRAPHMOL_EXPORT void setHybridization(ROMol &mol);
     - Since SSSR may not be unique, a post-SSSR step to symmetrize may be done.
       The extra rings this process adds can be quite useful.
 */
-RDKIT_GRAPHMOL_EXPORT int findSSSR(const ROMol &mol, std::vector<std::vector<int>> &res);
+RDKIT_GRAPHMOL_EXPORT int findSSSR(const ROMol &mol,
+                                   std::vector<std::vector<int>> &res);
 //! \overload
-RDKIT_GRAPHMOL_EXPORT int findSSSR(const ROMol &mol, std::vector<std::vector<int>> *res = 0);
+RDKIT_GRAPHMOL_EXPORT int findSSSR(const ROMol &mol,
+                                   std::vector<std::vector<int>> *res = 0);
 
 //! use a DFS algorithm to identify ring bonds and atoms in a molecule
 /*!
@@ -596,7 +610,8 @@ RDKIT_GRAPHMOL_EXPORT void fastFindRings(const ROMol &mol);
    - if no SSSR rings are found on the molecule - MolOps::findSSSR() is called
   first
 */
-RDKIT_GRAPHMOL_EXPORT int symmetrizeSSSR(ROMol &mol, std::vector<std::vector<int>> &res);
+RDKIT_GRAPHMOL_EXPORT int symmetrizeSSSR(ROMol &mol,
+                                         std::vector<std::vector<int>> &res);
 //! \overload
 RDKIT_GRAPHMOL_EXPORT int symmetrizeSSSR(ROMol &mol);
 
@@ -622,10 +637,10 @@ RDKIT_GRAPHMOL_EXPORT int symmetrizeSSSR(ROMol &mol);
       this pointer.
 
 */
-RDKIT_GRAPHMOL_EXPORT double *getAdjacencyMatrix(const ROMol &mol, bool useBO = false,
-                           int emptyVal = 0, bool force = false,
-                           const char *propNamePrefix = 0,
-                           const boost::dynamic_bitset<> *bondsToUse = 0);
+RDKIT_GRAPHMOL_EXPORT double *getAdjacencyMatrix(
+    const ROMol &mol, bool useBO = false, int emptyVal = 0, bool force = false,
+    const char *propNamePrefix = 0,
+    const boost::dynamic_bitset<> *bondsToUse = 0);
 
 //! Computes the molecule's topological distance matrix
 /*!
@@ -649,9 +664,11 @@ RDKIT_GRAPHMOL_EXPORT double *getAdjacencyMatrix(const ROMol &mol, bool useBO = 
 
 
 */
-RDKIT_GRAPHMOL_EXPORT double *getDistanceMat(const ROMol &mol, bool useBO = false,
-                       bool useAtomWts = false, bool force = false,
-                       const char *propNamePrefix = 0);
+RDKIT_GRAPHMOL_EXPORT double *getDistanceMat(const ROMol &mol,
+                                             bool useBO = false,
+                                             bool useAtomWts = false,
+                                             bool force = false,
+                                             const char *propNamePrefix = 0);
 
 //! Computes the molecule's topological distance matrix
 /*!
@@ -676,9 +693,10 @@ RDKIT_GRAPHMOL_EXPORT double *getDistanceMat(const ROMol &mol, bool useBO = fals
 
 
 */
-RDKIT_GRAPHMOL_EXPORT double *getDistanceMat(const ROMol &mol, const std::vector<int> &activeAtoms,
-                       const std::vector<const Bond *> &bonds,
-                       bool useBO = false, bool useAtomWts = false);
+RDKIT_GRAPHMOL_EXPORT double *getDistanceMat(
+    const ROMol &mol, const std::vector<int> &activeAtoms,
+    const std::vector<const Bond *> &bonds, bool useBO = false,
+    bool useAtomWts = false);
 
 //! Computes the molecule's 3D distance matrix
 /*!
@@ -696,14 +714,16 @@ RDKIT_GRAPHMOL_EXPORT double *getDistanceMat(const ROMol &mol, const std::vector
   \return the distance matrix.
 
   <b>Notes</b>
-    - The result of this is cached in the molecule's local property dictionary,
-      which will handle deallocation. Do the caller should <b>not</b> \c delete
-      this pointer.
+    - If propNamePrefix is not empty the result of this is cached in the
+      molecule's local property dictionary, which will handle deallocation.
+      In other cases the caller is responsible for freeing the memory.
 
 */
-RDKIT_GRAPHMOL_EXPORT double *get3DDistanceMat(const ROMol &mol, int confId = -1,
-                         bool useAtomWts = false, bool force = false,
-                         const char *propNamePrefix = 0);
+RDKIT_GRAPHMOL_EXPORT double *get3DDistanceMat(const ROMol &mol,
+                                               int confId = -1,
+                                               bool useAtomWts = false,
+                                               bool force = false,
+                                               const char *propNamePrefix = 0);
 //! Find the shortest path between two atoms
 /*!
   Uses the Bellman-Ford algorithm
@@ -720,7 +740,8 @@ RDKIT_GRAPHMOL_EXPORT double *get3DDistanceMat(const ROMol &mol, int confId = -1
    - if no path is found, an empty path is returned
 
 */
-RDKIT_GRAPHMOL_EXPORT std::list<int> getShortestPath(const ROMol &mol, int aid1, int aid2);
+RDKIT_GRAPHMOL_EXPORT std::list<int> getShortestPath(const ROMol &mol, int aid1,
+                                                     int aid2);
 
 //@}
 
@@ -802,8 +823,8 @@ RDKIT_GRAPHMOL_EXPORT void cleanupChirality(RWMol &mol);
 
   If the conformer provided is not a 3D conformer, nothing will be done.
 */
-RDKIT_GRAPHMOL_EXPORT void assignChiralTypesFrom3D(ROMol &mol, int confId = -1,
-                             bool replaceExistingTags = true);
+RDKIT_GRAPHMOL_EXPORT void assignChiralTypesFrom3D(
+    ROMol &mol, int confId = -1, bool replaceExistingTags = true);
 
 //! \brief Uses a conformer to assign ChiralTypes to a molecule's atoms and
 //! stereo flags to its bonds
@@ -815,8 +836,8 @@ RDKIT_GRAPHMOL_EXPORT void assignChiralTypesFrom3D(ROMol &mol, int confId = -1,
                               stereochemistry will be replaced
 
 */
-RDKIT_GRAPHMOL_EXPORT void assignStereochemistryFrom3D(ROMol &mol, int confId = -1,
-                                 bool replaceExistingTags = true);
+RDKIT_GRAPHMOL_EXPORT void assignStereochemistryFrom3D(
+    ROMol &mol, int confId = -1, bool replaceExistingTags = true);
 
 //! \brief Uses a conformer to assign directionality to the single bonds
 //!   around double bonds
@@ -825,8 +846,10 @@ RDKIT_GRAPHMOL_EXPORT void assignStereochemistryFrom3D(ROMol &mol, int confId = 
   \param mol                  the molecule of interest
   \param confId               the conformer to use
 */
-RDKIT_GRAPHMOL_EXPORT void detectBondStereochemistry(ROMol &mol, int confId = -1);
-RDKIT_GRAPHMOL_EXPORT void setDoubleBondNeighborDirections(ROMol &mol, const Conformer *conf = NULL);
+RDKIT_GRAPHMOL_EXPORT void detectBondStereochemistry(ROMol &mol,
+                                                     int confId = -1);
+RDKIT_GRAPHMOL_EXPORT void setDoubleBondNeighborDirections(
+    ROMol &mol, const Conformer *conf = NULL);
 
 //! Assign stereochemistry tags to atoms (i.e. R/S) and bonds (i.e. Z/E)
 /*!
@@ -852,8 +875,9 @@ RDKIT_GRAPHMOL_EXPORT void setDoubleBondNeighborDirections(ROMol &mol, const Con
       graph.
 
 */
-RDKIT_GRAPHMOL_EXPORT void assignStereochemistry(ROMol &mol, bool cleanIt = false, bool force = false,
-                           bool flagPossibleStereoCenters = false);
+RDKIT_GRAPHMOL_EXPORT void assignStereochemistry(
+    ROMol &mol, bool cleanIt = false, bool force = false,
+    bool flagPossibleStereoCenters = false);
 //! Removes all stereochemistry information from atoms (i.e. R/S) and bonds
 //(i.e. Z/E)
 /*!
@@ -884,11 +908,13 @@ RDKIT_GRAPHMOL_EXPORT void removeStereochemistry(ROMol &mol);
   The CIPranks on the neighboring atoms are checked in this function. The
   _CIPCode property if set to any on the double bond.
 */
-RDKIT_GRAPHMOL_EXPORT void findPotentialStereoBonds(ROMol &mol, bool cleanIt = false);
+RDKIT_GRAPHMOL_EXPORT void findPotentialStereoBonds(ROMol &mol,
+                                                    bool cleanIt = false);
 //@}
 
 //! returns the number of atoms which have a particular property set
-RDKIT_GRAPHMOL_EXPORT unsigned getNumAtomsWithDistinctProperty(const ROMol &mol, std::string prop);
+RDKIT_GRAPHMOL_EXPORT unsigned getNumAtomsWithDistinctProperty(
+    const ROMol &mol, std::string prop);
 
 };  // end of namespace MolOps
 };  // end of namespace RDKit
