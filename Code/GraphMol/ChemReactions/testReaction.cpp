@@ -6641,6 +6641,36 @@ void testGithub1950() {
     TEST_ASSERT(smi == "CCOc1ccccc1");
   }
 
+  {  // a modification using MRV SMA
+    auto fName =
+        rdbase + "/Code/GraphMol/ChemReactions/testData/github1950_2.rxn";
+    std::cerr << "-------------" << std::endl;
+    auto rxn = RxnFileToChemicalReaction(fName);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates() == 2);
+    TEST_ASSERT(rxn->getNumProductTemplates() == 1);
+
+    MOL_SPTR_VECT reacts;
+    std::string smi = "c1ccccc1Cl";
+    auto mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    reacts.push_back(ROMOL_SPTR(mol));
+
+    smi = "CCO";
+    mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    reacts.push_back(ROMOL_SPTR(mol));
+
+    rxn->initReactantMatchers();
+    auto prods = rxn->runReactants(reacts);
+    TEST_ASSERT(prods.size() == 2);  // symmetric, so two products
+    TEST_ASSERT(prods[0].size() == 1);
+
+    smi = MolToSmiles(*prods[0][0]);
+    std::cerr << smi << std::endl;
+    TEST_ASSERT(smi == "CCOc1ccccc1");
+  }
+
   {  // make sure we didn't break anything,
      // this is roughly the same reaction as SMARTS
     std::string smarts =

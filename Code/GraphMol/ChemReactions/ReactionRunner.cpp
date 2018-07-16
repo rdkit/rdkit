@@ -417,7 +417,7 @@ void setReactantAtomPropertiesToProduct(Atom *productAtom,
                                         bool setImplicitProperties) {
   // which properties need to be set from the reactant?
   if (productAtom->getAtomicNum() <= 0 ||
-      productAtom->hasProp(common_properties::_MolFileAtomList)) {
+      productAtom->hasProp(common_properties::_MolFileAtomQuery)) {
     productAtom->setAtomicNum(reactantAtom.getAtomicNum());
     productAtom->setIsAromatic(reactantAtom.getIsAromatic());
     // don't copy isotope information over from dummy atoms

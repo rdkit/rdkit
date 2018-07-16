@@ -133,7 +133,7 @@ RDKIT_RDGENERAL_EXPORT extern const std::string molRxnRole;          // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molTotValence;       // int
 RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileRLabel;      // int
 RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileChiralFlag;  // int
-RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileAtomList;    // int
+RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileAtomQuery;   // int
 RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileBondQuery;   // int
 RDKIT_RDGENERAL_EXPORT extern const std::string MRV_SMA;             // smarts string from Marvin
 RDKIT_RDGENERAL_EXPORT extern const std::string dummyLabel;          // atom string

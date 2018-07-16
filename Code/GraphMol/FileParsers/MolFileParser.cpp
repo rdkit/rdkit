@@ -219,6 +219,8 @@ void ParseOldAtomList(RWMol *mol, const std::string &text, unsigned int line) {
   }
 
   a.setQuery(q);
+  a.setProp(common_properties::_MolFileAtomQuery, 1);
+
   mol->replaceAtom(idx, &a);
 };
 
@@ -814,6 +816,7 @@ void ParseMarvinSmartsLine(RWMol *mol, const std::string &text,
       at = mol->getAtomWithIdx(oidx);
     }
     at->expandQuery(query, Queries::COMPOSITE_AND);
+    at->setProp(common_properties::_MolFileAtomQuery, 1);
   } else {
     std::ostringstream errout;
     errout << "Cannot parse smarts: '" << sma << "' on line " << line;
@@ -876,7 +879,7 @@ void ParseNewAtomList(RWMol *mol, const std::string &text, unsigned int line) {
     }
   }
   ASSERT_INVARIANT(a, "no atom built");
-  a->setProp(common_properties::_MolFileAtomList, 1);
+  a->setProp(common_properties::_MolFileAtomQuery, 1);
   switch (text[14]) {
     case 'T':
       a->getQuery()->setNegation(true);
