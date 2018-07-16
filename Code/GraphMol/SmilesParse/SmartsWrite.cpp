@@ -338,12 +338,13 @@ std::string getBasicBondRepr(Bond::BondType typ, Bond::BondDir dir,
   std::string res;
   switch (typ) {
     case Bond::SINGLE:
-      if (dir == Bond::ENDDOWNRIGHT && doIsomericSmiles) {
-        res = "\\";
-      } else if (dir == Bond::ENDUPRIGHT && doIsomericSmiles) {
-        res = "/";
-      } else {
-        res = "-";
+      res = "-";
+      if (doIsomericSmiles) {
+        if (dir == Bond::ENDDOWNRIGHT) {
+          res = "\\";
+        } else if (dir == Bond::ENDUPRIGHT) {
+          res = "/";
+        }
       }
       break;
     case Bond::DOUBLE:
@@ -356,10 +357,10 @@ std::string getBasicBondRepr(Bond::BondType typ, Bond::BondDir dir,
       res = ":";
       break;
     case Bond::DATIVE:
-      if (!reverseDative)
-        res = "->";
-      else
+      if (reverseDative)
         res = "<-";
+      else
+        res = "->";
       break;
     default:
       res = "";
