@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2016 Greg Landrum and  Rational Discovery LLC
+//  Copyright (C) 2003-2018 Greg Landrum and  Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -4053,6 +4053,19 @@ void testHashAtomExtension() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub1925() {
+  BOOST_LOG(rdInfoLog) << "Testing Github #1925: Atom with bond to itself is "
+                          "accepted by the SMILES parser."
+                       << std::endl;
+  {
+    std::string smi = "C1CC111";
+    RWMol *m = nullptr;
+    m = SmilesToMol(smi);
+    TEST_ASSERT(!m);
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -4121,8 +4134,9 @@ int main(int argc, char *argv[]) {
   testGithub1219();
   testSmilesParseParams();
   testRingClosureNumberWithBrackets();
-#endif
   testGithub1652();
   testIsomericSmilesIsDefault();
   testHashAtomExtension();
+#endif
+  testGithub1925();
 }
