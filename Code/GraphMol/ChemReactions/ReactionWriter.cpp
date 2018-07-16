@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (c) 2010-2014, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2010-2018, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,6 +36,7 @@
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/MolOps.h>
 #include <sstream>
 
 namespace {
@@ -50,10 +50,17 @@ void setRXNRoleOfAllMoleculeAtoms(RDKit::ROMol &mol, int role) {
 }
 
 std::string molToString(RDKit::ROMol &mol, bool toSmiles) {
+  std::string res = "";
   if (toSmiles) {
-    return MolToSmiles(mol, true);
+    res = MolToSmiles(mol, true);
+  } else {
+    res = MolToSmarts(mol, true);
   }
-  return MolToSmarts(mol, true);
+  std::vector<int> mapping;
+  if (RDKit::MolOps::getMolFrags(mol, mapping) > 1) {
+    res = "(" + res + ")";
+  }
+  return res;
 }
 
 std::string chemicalReactionTemplatesToString(
@@ -91,7 +98,7 @@ std::string chemicalReactionToRxnToString(const RDKit::ChemicalReaction &rxn,
                                            canonical);
   return res;
 }
-}
+}  // namespace
 
 namespace RDKit {
 
@@ -179,4 +186,4 @@ ROMol *ChemicalReactionToRxnMol(const ChemicalReaction &rxn) {
   }
   return (ROMol *)res;
 }
-}
+}  // namespace RDKit
