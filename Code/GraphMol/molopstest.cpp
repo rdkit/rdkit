@@ -5839,6 +5839,40 @@ void testAdjustQueryProperties() {
     delete qm;
     delete aqm;
   }
+
+  {  // ring-chain membership
+    std::string smiles = "CC1CCC1";
+    ROMol *qm = SmartsToMol(smiles);
+    TEST_ASSERT(qm);
+    TEST_ASSERT(qm->getNumAtoms() == 5);
+    MolOps::AdjustQueryParameters params;
+    params.adjustRingChain = true;
+    params.adjustDegree = false;
+    ROMol *aqm = MolOps::adjustQueryProperties(*qm, &params);
+    TEST_ASSERT(aqm);
+    TEST_ASSERT(aqm->getNumAtoms() == 5);
+    {
+      smiles = "C1CCC12CCC2";
+      ROMol *m = SmilesToMol(smiles);
+      TEST_ASSERT(m);
+      MatchVectType match;
+      TEST_ASSERT(SubstructMatch(*m, *qm, match));
+      TEST_ASSERT(!SubstructMatch(*m, *aqm, match));
+      delete m;
+    }
+    {
+      smiles = "C1CCC1CCC";
+      ROMol *m = SmilesToMol(smiles);
+      TEST_ASSERT(m);
+      MatchVectType match;
+      TEST_ASSERT(SubstructMatch(*m, *qm, match));
+      TEST_ASSERT(SubstructMatch(*m, *aqm, match));
+      delete m;
+    }
+    delete qm;
+    delete aqm;
+  }
+
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 

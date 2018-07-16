@@ -2160,7 +2160,7 @@ Attributes:\n\
   - adjustRingCount: \n\
       modified atoms have a ring-count query added based on their ring count in the query \n\
   - adjustRingCountFlags: \n\
-      controls which atoms have a ring-cout query added \n\
+      controls which atoms have a ring-count query added \n\
   - makeDummiesQueries: \n\
       dummy atoms that do not have a specified isotope are converted to any-atom queries \n\
   - aromatizeIfPossible: \n\
@@ -2173,6 +2173,10 @@ Attributes:\n\
       convert atoms to generic (any) atoms \n\
   - makeAtomsGenericFlags: \n\
       controls which atoms are made generic \n\
+  - adjustRingChain: \n\
+      modified atoms have a ring-chain query added based on whether or not they are in a ring \n\
+  - adjustRingChainFlags: \n\
+      controls which atoms have a ring-chain query added \n\
 \n\
 A note on the flags controlling which atoms/bonds are modified: \n\
    These generally limit the set of atoms/bonds to be modified.\n\
@@ -2206,7 +2210,11 @@ A note on the flags controlling which atoms/bonds are modified: \n\
         .def_readwrite("makeAtomsGeneric",
                        &MolOps::AdjustQueryParameters::makeAtomsGeneric)
         .def_readwrite("makeAtomsGenericFlags",
-                       &MolOps::AdjustQueryParameters::makeAtomsGenericFlags);
+                       &MolOps::AdjustQueryParameters::makeAtomsGenericFlags)
+        .def_readwrite("adjustRingChain",
+                       &MolOps::AdjustQueryParameters::adjustRingChain)
+        .def_readwrite("adjustRingChainFlags",
+                       &MolOps::AdjustQueryParameters::adjustRingChainFlags);
 
     docString =
         "Returns a new molecule where the query properties of atoms have been "

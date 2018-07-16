@@ -286,6 +286,8 @@ struct RDKIT_GRAPHMOL_EXPORT AdjustQueryParameters {
   bool adjustHeavyDegree; /**< adjust the heavy-atom degree instead of overall
                              degree */
   boost::uint32_t adjustHeavyDegreeFlags;
+  bool adjustRingChain; /**< add ring-chain queries */
+  boost::uint32_t adjustRingChainFlags;
 
   AdjustQueryParameters()
       : adjustDegree(true),
@@ -299,7 +301,9 @@ struct RDKIT_GRAPHMOL_EXPORT AdjustQueryParameters {
         makeAtomsGeneric(false),
         makeAtomsGenericFlags(ADJUST_IGNORENONE),
         adjustHeavyDegree(false),
-        adjustHeavyDegreeFlags(ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINS) {}
+        adjustHeavyDegreeFlags(ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINS),
+        adjustRingChain(false),
+        adjustRingChainFlags(ADJUST_IGNORENONE) {}
 };
 //! returns a copy of a molecule with query properties adjusted
 /*!
