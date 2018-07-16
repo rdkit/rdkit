@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/foreach.hpp>
+#include <boost/format.hpp>
 #include <RDGeneral/RDLog.h>
 
 namespace SmilesParseOps {
@@ -442,9 +443,14 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
         if (!toleratePartials && atomIt == atomsEnd) {
           ReportParseError("unclosed ring");
         } else if (atomIt != atomsEnd && *atomIt == atom1) {
-          // make sure we don't try to connect an atom to itself,
-          // this was bug 3145697:
-          ++atomIt;
+          // make sure we don't try to connect an atom to itself
+          // this was github #1925
+          auto fmt =
+              boost::format{
+                  "duplicated ring closure %1% bonds atom %2% to itself"} %
+              bookmarkIt->first % atom1->getIdx();
+          std::string msg = fmt.str();
+          ReportParseError(msg.c_str(), true);
         } else if (atomIt != atomsEnd) {
           // we actually found an atom, so connect it to the first
           Atom *atom2 = *atomIt;
