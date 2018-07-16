@@ -695,9 +695,9 @@ double *getDistanceMat(const ROMol &mol, const std::vector<int> &activeAtoms,
   \return the distance matrix.
 
   <b>Notes</b>
-    - The result of this is cached in the molecule's local property dictionary,
-      which will handle deallocation. Do the caller should <b>not</b> \c delete
-      this pointer.
+    - If propNamePrefix is not empty the result of this is cached in the
+      molecule's local property dictionary, which will handle deallocation.
+      In other cases the caller is responsible for freeing the memory.
 
 */
 double *get3DDistanceMat(const ROMol &mol, int confId = -1,

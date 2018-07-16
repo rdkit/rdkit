@@ -207,7 +207,7 @@ std::string getChainId(const ROMol &m, const Atom *at) {
   return static_cast<const AtomPDBResidueInfo *>(at->getMonomerInfo())
       ->getChainId();
 }
-}
+}  // namespace
 python::dict splitMolByPDBResidues(const ROMol &mol, python::object pyWhiteList,
                                    bool negateList) {
   std::vector<std::string> *whiteList = nullptr;
@@ -358,7 +358,7 @@ MolOps::SanitizeFlags sanitizeMol(ROMol &mol, boost::uint64_t sanitizeOps,
   if (catchErrors) {
     try {
       MolOps::sanitizeMol(wmol, operationThatFailed, sanitizeOps);
-    } catch ( const MolSanitizeException &e){
+    } catch (const MolSanitizeException &e) {
       // this really should not be necessary, but at some point it
       // started to be required with VC++17. Doesn't seem like it does
       // any harm.
@@ -449,6 +449,9 @@ PyObject *get3DDistanceMatrix(ROMol &mol, int confId = -1,
   memcpy(PyArray_DATA(res), static_cast<void *>(distMat),
          nats * nats * sizeof(double));
 
+  if (prefix == nullptr || std::string(prefix) == "") {
+    delete[] distMat;
+  }
   return PyArray_Return(res);
 }
 
@@ -992,7 +995,7 @@ struct molops_wrapper {
       will not be removed\n\
 \n";
     python::def("RemoveHs",
-                (ROMol * (*)(const ROMol &, bool, bool, bool))MolOps::removeHs,
+                (ROMol * (*)(const ROMol &, bool, bool, bool)) MolOps::removeHs,
                 (python::arg("mol"), python::arg("implicitOnly") = false,
                  python::arg("updateExplicitCount") = false,
                  python::arg("sanitize") = true),
@@ -1862,7 +1865,6 @@ ARGUMENTS:\n\
 \n";
     python::def("WedgeBond", WedgeBond, docString.c_str());
 
-
     // ------------------------------------------------------------------------
     docString =
         "Replaces sidechains in a molecule with dummy atoms for their attachment points.\n\
@@ -2030,8 +2032,9 @@ EXAMPLES:\n\
    '[1*]CN'\n\
 \n\
 \n";
-    python::def("ReplaceCore", (ROMol * (*)(const ROMol &, const ROMol &, bool,
-                                            bool, bool, bool))replaceCore,
+    python::def("ReplaceCore",
+                (ROMol * (*)(const ROMol &, const ROMol &, bool, bool, bool,
+                             bool)) replaceCore,
                 (python::arg("mol"), python::arg("coreQuery"),
                  python::arg("replaceDummies") = true,
                  python::arg("labelByIndex") = false,
@@ -2214,6 +2217,6 @@ A note on the flags controlling which atoms/bonds are modified: \n\
                 python::return_value_policy<python::manage_new_object>());
   };
 };
-}
+}  // namespace RDKit
 
 void wrap_molops() { RDKit::molops_wrapper::wrap(); }
