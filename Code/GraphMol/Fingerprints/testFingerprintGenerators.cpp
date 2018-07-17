@@ -402,7 +402,7 @@ void testMorganFP() {
 
   ROMol *mol;
   SparseIntVect<std::uint32_t> *fp, *fpOld;
-  int radius = 100;
+  int radius = 3;
 
   FingerprintGenerator *morganGenerator =
       MorganFingerprint::getMorganGenerator(radius);
