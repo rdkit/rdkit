@@ -8,10 +8,21 @@ namespace RDKit {
 
 namespace MorganFingerprint {
 
+/**
+ /brief Default atom invariants generator for Morgan fingerprint, generates
+ ECFP-type invariants
+
+ */
 class MorganAtomInvGenerator : public AtomInvariantsGenerator {
   const bool df_includeRingMembership;
 
  public:
+  /**
+   /brief Construct a new MorganAtomInvGenerator object
+
+   /param includeRingMembership : if set, whether or not the atom is in a ring
+   will be used in the invariant list.
+   */
   MorganAtomInvGenerator(const bool includeRingMembership = true);
 
   std::vector<std::uint32_t> *getAtomInvariants(const ROMol &mol) const;
@@ -19,11 +30,24 @@ class MorganAtomInvGenerator : public AtomInvariantsGenerator {
   std::string infoString() const;
 };
 
+/**
+ /brief Alternative atom invariants generator for Morgan fingerprint, generate
+ FCFP-type invariants
+
+ */
 class MorganFeatureAtomInvGenerator : public AtomInvariantsGenerator {
   std::vector<const ROMol *> *dp_patterns;
   bool df_ownsData;
 
  public:
+  /**
+   /brief Construct a new MorganFeatureAtomInvGenerator object
+
+   /param patterns : if provided should contain the queries used to assign
+   atom-types. if not provided, feature definitions adapted from reference:
+   Gobbi and Poppinger, Biotech. Bioeng. _61_ 47-54 (1998) will be used for
+   Donor, Acceptor, Aromatic, Halogen, Basic,
+   */
   MorganFeatureAtomInvGenerator(std::vector<const ROMol *> *patterns = nullptr);
   ~MorganFeatureAtomInvGenerator();
 
@@ -32,18 +56,35 @@ class MorganFeatureAtomInvGenerator : public AtomInvariantsGenerator {
   std::string infoString() const;
 };
 
+/**
+ /brief Bond invariants generator for Morgan fingerprint
+
+ */
 class MorganBondInvGenerator : public BondInvariantsGenerator {
   const bool df_useBondTypes;
   const bool df_useChirality;
 
  public:
-  MorganBondInvGenerator(const bool useBondTypes = true, const bool useChirality = false);
+  /**
+   /brief Construct a new MorganBondInvGenerator object
+
+   /param useBondTypes : if set, bond types will be included as a part of the
+   bond invariants
+   /param useChirality : if set, chirality information will be included as a
+   part of the bond invariants
+   */
+  MorganBondInvGenerator(const bool useBondTypes = true,
+                         const bool useChirality = false);
 
   std::vector<std::uint32_t> *getBondInvariants(const ROMol &mol) const;
 
   std::string infoString() const;
 };
 
+/**
+ /brief Class for holding Morgan fingerprint specific arguments
+
+ */
 class MorganArguments : public FingerprintArguments {
  public:
   const bool df_includeChirality;
@@ -54,6 +95,20 @@ class MorganArguments : public FingerprintArguments {
 
   std::string infoString() const;
 
+  /**
+   /brief Construct a new MorganArguments object
+
+   /param radius : the number of iterations to grow the fingerprint
+   /param countSimulation : if set, use count simulation while generating the
+    fingerprint
+   /param includeChirality : if set, chirality information will be added to the
+   generated bit id, independently from bond invariants
+   /param onlyNonzeroInvariants : if set, bits will only be set from atoms that
+   have a nonzero invariant
+   /param countBounds : boundries for count simulation, corresponding bit will
+   be set if the count is higher than the number provided for that spot
+   /param foldedSize : size of the folded version of the fingerprints
+   */
   MorganArguments(const unsigned int radius, const bool countSimulation = true,
                   const bool includeChirality = false,
                   const bool onlyNonzeroInvariants = false,
@@ -61,6 +116,11 @@ class MorganArguments : public FingerprintArguments {
                   const std::uint32_t foldedSize = 2048);
 };
 
+/**
+ /brief Class for holding the bit-id created from Morgan fingerprint
+ environments and the additional data necessary extra outputs
+
+ */
 class MorganAtomEnv : public AtomEnvironment {
   const std::uint32_t d_code;
   const unsigned int d_atomId;
@@ -72,10 +132,21 @@ class MorganAtomEnv : public AtomEnvironment {
                          const std::vector<std::uint32_t> *bondInvariants,
                          const AdditionalOutput *additionalOutput) const;
 
+  /**
+   /brief Construct a new MorganAtomEnv object
+
+   /param code : bit id generated from this environment
+   /param atomId : atom id of the atom at the center of this environment
+   /param layer : radius of this environment
+   */
   MorganAtomEnv(const std::uint32_t code, const unsigned int atomId,
                 const unsigned int layer);
 };
 
+/**
+ /brief Class that generates atom environments for Morgan fingerprint
+
+ */
 class MorganEnvGenerator : public AtomEnvironmentGenerator {
  public:
   std::vector<AtomEnvironment *> getEnvironments(
@@ -89,6 +160,21 @@ class MorganEnvGenerator : public AtomEnvironmentGenerator {
   std::string infoString() const;
 };
 
+/**
+ /brief Get a fingerprint generator for Morgan fingerprint
+
+ /param radius : radius for MorganArguments
+ /param countSimulation : countSimulation for MorganArguments
+ /param includeChirality : sets includeChirality flag for both MorganArguments
+ and the default bond generator MorganBondInvGenerator
+ /param useBondTypes : useBondTypes for MorganBondInvGenerator
+ /param onlyNonzeroInvariants : onlyNonzeroInvariants for MorganArguments
+ /param atomInvariantsGenerator : custom atom invariants generator to use
+ /param bondInvariantsGenerator : custom bond invariants generator to use
+ /param foldedSize : foldedSize for MorganArguments
+ /param countBounds : countBounds for MorganArguments
+ /return FingerprintGenerator* that generates Morgan fingerprints
+ */
 FingerprintGenerator *getMorganGenerator(
     const unsigned int radius, const bool countSimulation = true,
     const bool includeChirality = false, const bool useBondTypes = true,

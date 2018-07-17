@@ -234,24 +234,13 @@ std::vector<AtomEnvironment *> MorganEnvGenerator::getEnvironments(
     const std::vector<std::uint32_t> *bondInvariants) const {
   PRECONDITION(atomInvariants && (atomInvariants->size() >= mol.getNumAtoms()),
                "bad atom invariants size");
+  PRECONDITION(bondInvariants && (bondInvariants->size() >= mol.getNumBonds()),
+               "bad bond invariants size");
   unsigned int nAtoms = mol.getNumAtoms();
   std::vector<AtomEnvironment *> result = std::vector<AtomEnvironment *>();
   MorganArguments *morganArguments = dynamic_cast<MorganArguments *>(arguments);
-  std::vector<uint32_t> *currentAtomInvariants =
-      new std::vector<uint32_t>(nAtoms);
-  std::vector<uint32_t> *nextAtomInvariants = new std::vector<uint32_t>(nAtoms);
-  std::copy(atomInvariants->begin(), atomInvariants->end(),
-            currentAtomInvariants->begin());
-  std::copy(atomInvariants->begin(), atomInvariants->end(),
-            nextAtomInvariants->begin());
 
-  boost::dynamic_bitset<> *chiralAtomsP = new boost::dynamic_bitset<>(nAtoms);
-
-  unsigned int *lastLayer = new unsigned int(0);
-
-  std::vector<uint32_t> currentInvariants(nAtoms);
-  std::copy(atomInvariants->begin(), atomInvariants->end(),
-            currentInvariants.begin());
+  std::vector<uint32_t> currentInvariants(*atomInvariants);
 
   boost::dynamic_bitset<> includeAtoms(nAtoms);
   if (fromAtoms) {
@@ -270,6 +259,9 @@ std::vector<AtomEnvironment *> MorganEnvGenerator::getEnvironments(
       nAtoms, boost::dynamic_bitset<>(mol.getNumBonds()));
   boost::dynamic_bitset<> deadAtoms(nAtoms);
 
+  // if df_onlyNonzeroInvariants is set order the atoms to make sure atoms with
+  // zero invariants are processed last so that in case of duplicate
+  // environments atoms with non-zero invariants are used
   std::vector<unsigned int> atomOrder(nAtoms);
   if (morganArguments->df_onlyNonzeroInvariants) {
     std::vector<std::pair<int32_t, uint32_t>> ordering;
@@ -300,21 +292,34 @@ std::vector<AtomEnvironment *> MorganEnvGenerator::getEnvironments(
 
   // now do our subsequent rounds:
   for (unsigned int layer = 0; layer < morganArguments->d_radius; ++layer) {
-    std::vector<uint32_t> roundInvariants(nAtoms);
+    // will hold bit ids calculated this round to be used as invariants next
+    // round
+    std::vector<uint32_t> nextLayerInvariants(nAtoms);
+
+    // holds atoms in the environment (neighborhood) for the current layer for
+    // each atom, starts with the immediate neighbors of atoms and expands with
+    // every iteration
     std::vector<boost::dynamic_bitset<>> roundAtomNeighborhoods =
         atomNeighborhoods;
-    std::vector<AccumTuple> neighborhoodsThisRound;
-
+    std::vector<AccumTuple> allNeighborhoodsThisRound;
     BOOST_FOREACH (unsigned int atomIdx, atomOrder) {
+      // skip atoms which will not generate unique environments (neighborhoods)
+      // anymore
       if (!deadAtoms[atomIdx]) {
         const Atom *tAtom = mol.getAtomWithIdx(atomIdx);
         if (!tAtom->getDegree()) {
           deadAtoms.set(atomIdx, 1);
           continue;
         }
-        std::vector<std::pair<int32_t, uint32_t>> nbrs;
+
         ROMol::OEDGE_ITER beg, end;
         boost::tie(beg, end) = mol.getAtomBonds(tAtom);
+
+        // will hold up to date invariants of neighboring atoms with bond types,
+        // these invariants hold information from atoms around radius as big as
+        // current layer around the current atom
+        std::vector<std::pair<int32_t, uint32_t>> neighborhoodInvariants;
+        // add up to date invariants of neighbors
         while (beg != end) {
           const Bond *bond = mol[*beg];
           roundAtomNeighborhoods[atomIdx][bond->getIdx()] = 1;
@@ -323,22 +328,22 @@ std::vector<AtomEnvironment *> MorganEnvGenerator::getEnvironments(
           roundAtomNeighborhoods[atomIdx] |= atomNeighborhoods[oIdx];
 
           int32_t bt = static_cast<int32_t>((*bondInvariants)[bond->getIdx()]);
-
-          nbrs.push_back(std::make_pair(bt, currentInvariants[oIdx]));
+          neighborhoodInvariants.push_back(
+              std::make_pair(bt, currentInvariants[oIdx]));
 
           ++beg;
         }
 
         // sort the neighbor list:
-        std::sort(nbrs.begin(), nbrs.end());
+        std::sort(neighborhoodInvariants.begin(), neighborhoodInvariants.end());
         // and now calculate the new invariant and test if the atom is newly
         // "chiral"
         boost::uint32_t invar = layer;
         gboost::hash_combine(invar, currentInvariants[atomIdx]);
         bool looksChiral = (tAtom->getChiralTag() != Atom::CHI_UNSPECIFIED);
         for (std::vector<std::pair<int32_t, uint32_t>>::const_iterator it =
-                 nbrs.begin();
-             it != nbrs.end(); ++it) {
+                 neighborhoodInvariants.begin();
+             it != neighborhoodInvariants.end(); ++it) {
           // add the contribution to the new invariant:
           gboost::hash_combine(invar, *it);
 
@@ -347,11 +352,13 @@ std::vector<AtomEnvironment *> MorganEnvGenerator::getEnvironments(
               chiralAtoms[atomIdx]) {
             if (it->first != static_cast<int32_t>(Bond::SINGLE)) {
               looksChiral = false;
-            } else if (it != nbrs.begin() && it->second == (it - 1)->second) {
+            } else if (it != neighborhoodInvariants.begin() &&
+                       it->second == (it - 1)->second) {
               looksChiral = false;
             }
           }
         }
+
         if (morganArguments->df_includeChirality && looksChiral) {
           chiralAtoms[atomIdx] = 1;
           // add an extra value to the invariant to reflect chirality:
@@ -365,8 +372,14 @@ std::vector<AtomEnvironment *> MorganEnvGenerator::getEnvironments(
             gboost::hash_combine(invar, 1);
           }
         }
-        roundInvariants[atomIdx] = static_cast<uint32_t>(invar);
-        neighborhoodsThisRound.push_back(
+
+        // this rounds bit id will be next rounds atom invariant, so we save it
+        // here
+        nextLayerInvariants[atomIdx] = static_cast<uint32_t>(invar);
+
+        // store the environment that generated this bit id along with the bit
+        // id and the atom id
+        allNeighborhoodsThisRound.push_back(
             boost::make_tuple(roundAtomNeighborhoods[atomIdx],
                               static_cast<uint32_t>(invar), atomIdx));
         if (std::find(neighborhoods.begin(), neighborhoods.end(),
@@ -378,13 +391,11 @@ std::vector<AtomEnvironment *> MorganEnvGenerator::getEnvironments(
       }
     }
 
-    std::vector<MorganAtomEnv *> *deadEnvThisRound =
-        new std::vector<MorganAtomEnv *>();
-
-    std::sort(neighborhoodsThisRound.begin(), neighborhoodsThisRound.end());
+    std::sort(allNeighborhoodsThisRound.begin(),
+              allNeighborhoodsThisRound.end());
     for (std::vector<AccumTuple>::const_iterator iter =
-             neighborhoodsThisRound.begin();
-         iter != neighborhoodsThisRound.end(); ++iter) {
+             allNeighborhoodsThisRound.begin();
+         iter != allNeighborhoodsThisRound.end(); ++iter) {
       // if we haven't seen this exact environment before, add it to the result
       if (std::find(neighborhoods.begin(), neighborhoods.end(),
                     iter->get<0>()) == neighborhoods.end()) {
@@ -404,9 +415,11 @@ std::vector<AtomEnvironment *> MorganEnvGenerator::getEnvironments(
     }
 
     // the invariants from this round become the next round invariants:
-    std::copy(roundInvariants.begin(), roundInvariants.end(),
+    std::copy(nextLayerInvariants.begin(), nextLayerInvariants.end(),
               currentInvariants.begin());
 
+    // this rounds calculated neighbors will be next rounds initial neighbors,
+    // so the radius can grow every iteration
     atomNeighborhoods = roundAtomNeighborhoods;
   }
 
