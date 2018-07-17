@@ -102,8 +102,8 @@ std::string MorganAtomInvGenerator::infoString() const {
 
 MorganFeatureAtomInvGenerator::MorganFeatureAtomInvGenerator(
     std::vector<const ROMol *> *patterns) {
-  std::vector<const ROMol *> featureMatchers;
   if (!patterns) {
+    dp_patterns = new std::vector<const ROMol *>();
     dp_patterns->reserve(defaultFeatureSmarts.size());
     for (std::vector<std::string>::const_iterator smaIt =
              defaultFeatureSmarts.begin();
@@ -134,16 +134,13 @@ std::vector<std::uint32_t> *MorganFeatureAtomInvGenerator::getAtomInvariants(
   unsigned int nAtoms = mol.getNumAtoms();
   std::vector<std::uint32_t> *result = new std::vector<std::uint32_t>(nAtoms);
 
-  std::vector<const ROMol *> featureMatchers;
-  std::vector<const ROMol *> *patterns;
-
   std::fill(result->begin(), result->end(), 0);
-  for (unsigned int i = 0; i < patterns->size(); ++i) {
+  for (unsigned int i = 0; i < dp_patterns->size(); ++i) {
     std::uint32_t mask = 1 << i;
     std::vector<MatchVectType> matchVect;
     // to maintain thread safety, we have to copy the pattern
     // molecules:
-    SubstructMatch(mol, ROMol(*(*patterns)[i], true), matchVect);
+    SubstructMatch(mol, ROMol(*(*dp_patterns)[i], true), matchVect);
     for (std::vector<MatchVectType>::const_iterator mvIt = matchVect.begin();
          mvIt != matchVect.end(); ++mvIt) {
       for (const auto &mIt : *mvIt) {

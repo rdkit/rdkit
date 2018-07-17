@@ -479,7 +479,7 @@ void testInvariantGenerators() {
 
   mol = SmilesToMol("CCCCC");
   fp = morganGenerator->getFingerprint(*mol);
-  TEST_ASSERT(fp->getNonzeroElements().size() == 7);
+  TEST_ASSERT(fp->getNonzeroElements().size()  == 5);
 
   delete mol;
   delete fp;
@@ -556,6 +556,7 @@ int main(int argc, char *argv[]) {
   testAtomPairFoldedBitvector();
   testAtomPairOutput();
   testMorganFP();
+  testInvariantGenerators();
 
   return 0;
 }
