@@ -771,8 +771,8 @@ void test8Validation() {
   rxn = RxnSmartsToChemicalReaction(smi);
   TEST_ASSERT(rxn);
   /* 08/08/14
-  * This test is changed due to allowing same atom mapping muliple times in the
-  * products */
+   * This test is changed due to allowing same atom mapping muliple times in the
+   * products */
   TEST_ASSERT(rxn->validate(nWarn, nError, false));
   TEST_ASSERT(nWarn == 2);
   TEST_ASSERT(nError == 0);
@@ -6604,6 +6604,104 @@ void testReactionProperties() {
   BOOST_LOG(rdInfoLog) << "Done" << std::endl;
 }
 
+void testGithub1950() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github #1950: Query features in products of "
+                          "rxn files not properly handled"
+                       << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+
+  {  // the original report
+    auto fName =
+        rdbase + "/Code/GraphMol/ChemReactions/testData/github1950_1.rxn";
+
+    auto rxn = RxnFileToChemicalReaction(fName);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates() == 2);
+    TEST_ASSERT(rxn->getNumProductTemplates() == 1);
+
+    MOL_SPTR_VECT reacts;
+    std::string smi = "c1ccccc1Cl";
+    auto mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    reacts.push_back(ROMOL_SPTR(mol));
+
+    smi = "CCO";
+    mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    reacts.push_back(ROMOL_SPTR(mol));
+
+    rxn->initReactantMatchers();
+    auto prods = rxn->runReactants(reacts);
+    TEST_ASSERT(prods.size() == 2);  // symmetric, so two products
+    TEST_ASSERT(prods[0].size() == 1);
+
+    smi = MolToSmiles(*prods[0][0]);
+    TEST_ASSERT(smi == "CCOc1ccccc1");
+  }
+
+  {  // a modification using MRV SMA
+    auto fName =
+        rdbase + "/Code/GraphMol/ChemReactions/testData/github1950_2.rxn";
+    std::cerr << "-------------" << std::endl;
+    auto rxn = RxnFileToChemicalReaction(fName);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates() == 2);
+    TEST_ASSERT(rxn->getNumProductTemplates() == 1);
+
+    MOL_SPTR_VECT reacts;
+    std::string smi = "c1ccccc1Cl";
+    auto mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    reacts.push_back(ROMOL_SPTR(mol));
+
+    smi = "CCO";
+    mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    reacts.push_back(ROMOL_SPTR(mol));
+
+    rxn->initReactantMatchers();
+    auto prods = rxn->runReactants(reacts);
+    TEST_ASSERT(prods.size() == 2);  // symmetric, so two products
+    TEST_ASSERT(prods[0].size() == 1);
+
+    smi = MolToSmiles(*prods[0][0]);
+    std::cerr << smi << std::endl;
+    TEST_ASSERT(smi == "CCOc1ccccc1");
+  }
+
+  {  // make sure we didn't break anything,
+     // this is roughly the same reaction as SMARTS
+    std::string smarts =
+        "Cl[#6:2]=,:[#6,#7:3].[#8:5]-[#6:4]>>[#6:4]-[#8:5]-[#6:2]~[*:3]";
+    auto rxn = RxnSmartsToChemicalReaction(smarts);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates() == 2);
+    TEST_ASSERT(rxn->getNumProductTemplates() == 1);
+
+    MOL_SPTR_VECT reacts;
+    std::string smi = "c1ccccc1Cl";
+    auto mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    reacts.push_back(ROMOL_SPTR(mol));
+
+    smi = "CCO";
+    mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    reacts.push_back(ROMOL_SPTR(mol));
+
+    rxn->initReactantMatchers();
+    auto prods = rxn->runReactants(reacts);
+    TEST_ASSERT(prods.size() == 2);  // symmetric, so two products
+    TEST_ASSERT(prods[0].size() == 1);
+
+    smi = MolToSmiles(*prods[0][0]);
+    TEST_ASSERT(smi == "CCOc1ccccc1");
+  }
+  BOOST_LOG(rdInfoLog) << "Done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -6683,12 +6781,12 @@ int main() {
   test66SanitizeMappedHs();
   test67SanitizeMappedHsInReactantAndProd();
   test68MappedHToHeavy();
-#endif
-
   test69Github1387();
   test70Github1544();
   testSanitizeException();
   testReactionProperties();
+#endif
+  testGithub1950();
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
   return (0);

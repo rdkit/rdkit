@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2001-2016 Greg Landrum and Rational Discovery LLC
+// Copyright (C) 2001-2018 Greg Landrum and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -48,7 +48,7 @@ namespace RDKit {
 namespace detail {
 // used in various places for computed properties
 RDKIT_RDGENERAL_EXPORT extern const std::string computedPropName;
-}
+}  // namespace detail
 
 namespace common_properties {
 ///////////////////////////////////////////////////////////////
@@ -133,6 +133,8 @@ RDKIT_RDGENERAL_EXPORT extern const std::string molRxnRole;          // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molTotValence;       // int
 RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileRLabel;      // int
 RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileChiralFlag;  // int
+RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileAtomQuery;   // int
+RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileBondQuery;   // int
 RDKIT_RDGENERAL_EXPORT extern const std::string MRV_SMA;             // smarts string from Marvin
 RDKIT_RDGENERAL_EXPORT extern const std::string dummyLabel;          // atom string
 

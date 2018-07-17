@@ -120,7 +120,7 @@ Atom *replaceAtomWithQueryAtom(RWMol *mol, Atom *atom) {
   mol->replaceAtom(idx, &qa);
   return mol->getAtomWithIdx(idx);
 }
-}
+}  // namespace FileParserUtils
 using RDKit::FileParserUtils::getV3000Line;
 
 namespace {
@@ -219,6 +219,8 @@ void ParseOldAtomList(RWMol *mol, const std::string &text, unsigned int line) {
   }
 
   a.setQuery(q);
+  a.setProp(common_properties::_MolFileAtomQuery, 1);
+
   mol->replaceAtom(idx, &a);
 };
 
@@ -313,8 +315,8 @@ void ParseSGroup2000STYLine(RWMol *mol, const std::string &text,
       errout << "S group " << typ;
       throw MolFileUnhandledFeatureException(errout.str());
     } else {
-      BOOST_LOG(rdWarningLog) << " S group " << typ << " ignored on line "
-                              << line << std::endl;
+      BOOST_LOG(rdWarningLog)
+          << " S group " << typ << " ignored on line " << line << std::endl;
     }
     spos += 4;
   }
@@ -523,9 +525,10 @@ void ParseUnsaturationLine(RWMol *mol, const std::string &text,
           atom->expandQuery(q, Queries::COMPOSITE_AND);
         } else {
           std::ostringstream errout;
-          errout << "Value " << count << " is not supported as an unsaturation "
-                                         "query (only 0 and 1 are allowed). "
-                                         "line: "
+          errout << "Value " << count
+                 << " is not supported as an unsaturation "
+                    "query (only 0 and 1 are allowed). "
+                    "line: "
                  << line;
           throw FileParseException(errout.str());
         }
@@ -767,7 +770,8 @@ void ParseZBOLine(RWMol *mol, const std::string &text, unsigned int line) {
   }
 }
 
-void ParseMarvinSmartsLine(RWMol *mol, const std::string &text, unsigned int line) {
+void ParseMarvinSmartsLine(RWMol *mol, const std::string &text,
+                           unsigned int line) {
   const unsigned int atomNumStart = 10;
   const unsigned int smartsStart = 15;
   const unsigned int SMA = 7;
@@ -779,26 +783,27 @@ void ParseMarvinSmartsLine(RWMol *mol, const std::string &text, unsigned int lin
   }
 
   unsigned int idx;
-  std::string idxTxt = text.substr(atomNumStart, smartsStart-atomNumStart);
+  std::string idxTxt = text.substr(atomNumStart, smartsStart - atomNumStart);
   try {
     idx = FileParserUtils::stripSpacesAndCast<unsigned int>(idxTxt) - 1;
   } catch (boost::bad_lexical_cast &) {
-        std::ostringstream errout;
-        errout << "Cannot convert " << idxTxt << " to an atom index on line "
-               << line;
-        throw FileParseException(errout.str());
+    std::ostringstream errout;
+    errout << "Cannot convert " << idxTxt << " to an atom index on line "
+           << line;
+    throw FileParseException(errout.str());
   }
 
   URANGE_CHECK(idx, mol->getNumAtoms());
-  // Should we check the validity of the marvin line here?  Should we automatically
+  // Should we check the validity of the marvin line here?  Should we
+  // automatically
   //   Add these as recursive smarts?  I tend to think so...
   std::string sma = text.substr(smartsStart);
-  Atom * at = mol->getAtomWithIdx(idx);
+  Atom *at = mol->getAtomWithIdx(idx);
   at->setProp(common_properties::MRV_SMA, sma);
   RWMol *m = 0;
   try {
     m = SmartsToMol(sma);
-  } catch(...) {
+  } catch (...) {
     // Is this every used?
   }
 
@@ -806,15 +811,15 @@ void ParseMarvinSmartsLine(RWMol *mol, const std::string &text, unsigned int lin
     QueryAtom::QUERYATOM_QUERY *query = new RecursiveStructureQuery(m);
     if (!at->hasQuery()) {
       QueryAtom qAt(*at);
-      int oidx  = at->getIdx();
+      int oidx = at->getIdx();
       mol->replaceAtom(oidx, &qAt);
       at = mol->getAtomWithIdx(oidx);
     }
     at->expandQuery(query, Queries::COMPOSITE_AND);
+    at->setProp(common_properties::_MolFileAtomQuery, 1);
   } else {
     std::ostringstream errout;
-    errout << "Cannot parse smarts: '" << sma << "' on line "
-           << line;
+    errout << "Cannot parse smarts: '" << sma << "' on line " << line;
     throw FileParseException(errout.str());
   }
 }
@@ -874,7 +879,7 @@ void ParseNewAtomList(RWMol *mol, const std::string &text, unsigned int line) {
     }
   }
   ASSERT_INVARIANT(a, "no atom built");
-
+  a->setProp(common_properties::_MolFileAtomQuery, 1);
   switch (text[14]) {
     case 'T':
       a->getQuery()->setNegation(true);
@@ -1333,9 +1338,9 @@ Bond *ParseMolFileBondLine(const std::string &text, unsigned int line) {
     case 0:
       type = Bond::UNSPECIFIED;
       res = new Bond;
-      BOOST_LOG(rdWarningLog) << "bond with order 0 found on line " << line
-                              << ". This is not part of the MDL specification."
-                              << std::endl;
+      BOOST_LOG(rdWarningLog)
+          << "bond with order 0 found on line " << line
+          << ". This is not part of the MDL specification." << std::endl;
       break;
     default:
       type = Bond::UNSPECIFIED;
@@ -1345,8 +1350,9 @@ Bond *ParseMolFileBondLine(const std::string &text, unsigned int line) {
         BOND_NULL_QUERY *q;
         q = makeBondNullQuery();
         res->setQuery(q);
-      } else if ( bType == 6 ){
+      } else if (bType == 6) {
         res->setQuery(makeSingleOrAromaticBondQuery());
+        res->setProp(common_properties::_MolFileBondQuery, 1);
       } else if (bType == 5 || bType == 7) {
         BOND_OR_QUERY *q;
         q = new BOND_OR_QUERY;
@@ -1357,6 +1363,7 @@ Bond *ParseMolFileBondLine(const std::string &text, unsigned int line) {
           q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(
               makeBondOrderEqualsQuery(Bond::DOUBLE)));
           q->setDescription("BondOr");
+          res->setProp(common_properties::_MolFileBondQuery, 1);
         } else if (bType == 7) {
           // double or aromatic
           q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(
@@ -1366,13 +1373,14 @@ Bond *ParseMolFileBondLine(const std::string &text, unsigned int line) {
           q->setDescription("BondOr");
         }
         res->setQuery(q);
+        res->setProp(common_properties::_MolFileBondQuery, 1);
       } else {
         BOND_NULL_QUERY *q;
         q = makeBondNullQuery();
         res->setQuery(q);
-        BOOST_LOG(rdWarningLog) << "unrecognized query bond type, " << bType
-                                << ", found on line " << line
-                                << ". Using an \"any\" query." << std::endl;
+        BOOST_LOG(rdWarningLog)
+            << "unrecognized query bond type, " << bType << ", found on line "
+            << line << ". Using an \"any\" query." << std::endl;
       }
       break;
   }
@@ -1574,11 +1582,9 @@ bool ParseMolBlockProperties(std::istream *inStream, unsigned int &line,
       ParseZBOLine(mol, tempStr, line);
     else if (lineBeg == "M  ZCH") {
       ParseZCHLine(mol, tempStr, line);
-    }
-    else if (lineBeg == "M  HYD") {
+    } else if (lineBeg == "M  HYD") {
       ParseHYDLine(mol, tempStr, line);
-    }
-    else if (lineBeg == "M  MRV") {
+    } else if (lineBeg == "M  MRV") {
       ParseMarvinSmartsLine(mol, tempStr, line);
     }
     line++;
@@ -2042,8 +2048,9 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
           BOND_NULL_QUERY *q;
           q = makeBondNullQuery();
           bond->setQuery(q);
-        } else if (bType == 6){
+        } else if (bType == 6) {
           bond->setQuery(makeSingleOrAromaticBondQuery());
+          bond->setProp(common_properties::_MolFileBondQuery, 1);
         } else if (bType == 5 || bType == 7) {
           BOND_OR_QUERY *q;
           q = new BOND_OR_QUERY;
@@ -2062,14 +2069,15 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
                 makeBondOrderEqualsQuery(Bond::AROMATIC)));
             q->setDescription("BondOr");
           }
+          bond->setProp(common_properties::_MolFileBondQuery, 1);
           bond->setQuery(q);
         } else {
           BOND_NULL_QUERY *q;
           q = makeBondNullQuery();
           bond->setQuery(q);
-          BOOST_LOG(rdWarningLog) << "unrecognized query bond type, " << bType
-                                  << ", found on line " << line
-                                  << ". Using an \"any\" query." << std::endl;
+          BOOST_LOG(rdWarningLog)
+              << "unrecognized query bond type, " << bType << ", found on line "
+              << line << ". Using an \"any\" query." << std::endl;
         }
         break;
     }
@@ -2164,7 +2172,7 @@ void ProcessMolProps(RWMol *mol) {
       atom->setNoImplicit(true);
       if (totV == 15     // V2000
           || totV == -1  // v3000
-          ) {
+      ) {
         atom->setNumExplicitHs(0);
       } else {
         if (atom->getExplicitValence() > totV) {
@@ -2181,7 +2189,7 @@ void ProcessMolProps(RWMol *mol) {
   }
 }
 
-}  // end of local namespace
+}  // namespace
 namespace FileParserUtils {
 bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
                     Conformer *&conf, bool &chiralityPossible,
@@ -2303,8 +2311,8 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
 
   while (tempStr.length() > 5 && tempStr.substr(0, 5) == "BEGIN") {
     // skip blocks we don't know how to read
-    BOOST_LOG(rdWarningLog) << "skipping block at line " << line << ": "
-                            << tempStr << std::endl;
+    BOOST_LOG(rdWarningLog)
+        << "skipping block at line " << line << ": " << tempStr << std::endl;
     tempStr = getV3000Line(inStream, line);
 
     while (tempStr.length() < 3 || tempStr.substr(0, 3) != "END") {
@@ -2363,7 +2371,7 @@ bool ParseV2000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
   return fileComplete;
 }
 
-}  // end of FileParserUtils namespace
+}  // namespace FileParserUtils
 
 //------------------------------------------------
 //
@@ -2681,4 +2689,4 @@ RWMol *MolFileToMol(const std::string &fName, bool sanitize, bool removeHs,
   }
   return res;
 }
-}
+}  // namespace RDKit

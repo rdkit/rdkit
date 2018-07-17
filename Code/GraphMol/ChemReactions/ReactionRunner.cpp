@@ -54,7 +54,7 @@ const std::string WAS_DUMMY =
     "was_dummy";  // was the atom originally a dummy in product
 const std::string OLD_MAPNO =
     "old_mapno";  // the original mapno (mapno gets cleared)
-}
+}  // namespace
 
 namespace ReactionRunnerUtils {
 //! returns whether or not all reactants matched
@@ -234,7 +234,7 @@ RWMOL_SPTR convertTemplateToMol(const ROMOL_SPTR prodTemplateSptr) {
   // and the bonds:
   ROMol::BOND_ITER_PAIR bondItP = prodTemplate->getEdges();
   while (bondItP.first != bondItP.second) {
-    const Bond* oldB = (*prodTemplate)[*(bondItP.first++)];
+    const Bond *oldB = (*prodTemplate)[*(bondItP.first++)];
     unsigned int bondIdx;
     bondIdx = res->addBond(oldB->getBeginAtomIdx(), oldB->getEndAtomIdx(),
                            oldB->getBondType()) -
@@ -266,6 +266,9 @@ RWMOL_SPTR convertTemplateToMol(const ROMOL_SPTR prodTemplateSptr) {
         newB->setProp(common_properties::NullBond, 1);
       }
     }
+    // copy properties over:
+    bool preserveExisting = true;
+    newB->updateProps(*static_cast<const RDProps *>(oldB), preserveExisting);
   }
   return RWMOL_SPTR(res);
 }  // end of convertTemplateToMol()
@@ -300,7 +303,7 @@ ReactantProductAtomMapping *getAtomMappingsReactantProduct(
     ROMol::EDGE_ITER firstB, lastB;
     boost::tie(firstB, lastB) = reactantTemplate.getEdges();
     while (firstB != lastB) {
-      const Bond* bond = reactantTemplate[*firstB];
+      const Bond *bond = reactantTemplate[*firstB];
       // this will put in pairs with 0s for things that aren't mapped, but we
       // don't care about that
       int a1mapidx = bond->getBeginAtom()->getAtomMapNum();
@@ -345,9 +348,10 @@ void setReactantBondPropertiesToProduct(RWMOL_SPTR product,
                                         ReactantProductAtomMapping *mapping) {
   ROMol::BOND_ITER_PAIR bondItP = product->getEdges();
   while (bondItP.first != bondItP.second) {
-    Bond* pBond = (*product)[*(bondItP.first)];
+    Bond *pBond = (*product)[*(bondItP.first)];
     ++bondItP.first;
-    if (pBond->hasProp(common_properties::NullBond)) {
+    if (pBond->hasProp(common_properties::NullBond) ||
+        pBond->hasProp(common_properties::_MolFileBondQuery)) {
       if (mapping->prodReactAtomMap.find(pBond->getBeginAtomIdx()) !=
               mapping->prodReactAtomMap.end() &&
           mapping->prodReactAtomMap.find(pBond->getEndAtomIdx()) !=
@@ -360,7 +364,9 @@ void setReactantBondPropertiesToProduct(RWMOL_SPTR product,
         pBond->setBondType(rBond->getBondType());
         pBond->setBondDir(rBond->getBondDir());
         pBond->setIsAromatic(rBond->getIsAromatic());
-        pBond->clearProp(common_properties::NullBond);
+        if (pBond->hasProp(common_properties::NullBond)) {
+          pBond->clearProp(common_properties::NullBond);
+        }
       }
     }
   }
@@ -410,7 +416,8 @@ void setReactantAtomPropertiesToProduct(Atom *productAtom,
                                         const Atom &reactantAtom,
                                         bool setImplicitProperties) {
   // which properties need to be set from the reactant?
-  if (productAtom->getAtomicNum() <= 0) {
+  if (productAtom->getAtomicNum() <= 0 ||
+      productAtom->hasProp(common_properties::_MolFileAtomQuery)) {
     productAtom->setAtomicNum(reactantAtom.getAtomicNum());
     productAtom->setIsAromatic(reactantAtom.getIsAromatic());
     // don't copy isotope information over from dummy atoms
@@ -734,7 +741,7 @@ void checkAndCorrectChiralityOfProduct(
         boost::tie(beg, end) =
             reactantAtom->getOwningMol().getAtomBonds(reactantAtom);
         while (beg != end) {
-          const Bond* reactantBond = reactantAtom->getOwningMol()[*beg];
+          const Bond *reactantBond = reactantAtom->getOwningMol()[*beg];
           unsigned int oAtomIdx =
               reactantBond->getOtherAtomIdx(reactantAtom->getIdx());
           CHECK_INVARIANT(mapping->reactProdAtomMap.find(oAtomIdx) !=
@@ -902,7 +909,7 @@ MOL_SPTR_VECT generateOneProductSet(
   }
   return res;
 }
-}  // end namespace RectionRunnerUtils
+}  // namespace ReactionRunnerUtils
 
 std::vector<MOL_SPTR_VECT> run_Reactants(const ChemicalReaction &rxn,
                                          const MOL_SPTR_VECT &reactants) {
@@ -1021,7 +1028,7 @@ int getAtomMapNo(ROMol::ATOM_BOOKMARK_MAP *map, Atom *atom) {
   }
   return -1;
 }
-}
+}  // namespace
 
 namespace {
 struct RGroup {
@@ -1033,7 +1040,7 @@ struct RGroup {
   RGroup(const RGroup &rhs)
       : rAtom(rhs.rAtom), bond_type(rhs.bond_type), mapno(rhs.mapno) {}
 };
-}
+}  // namespace
 ROMol *reduceProductToSideChains(const ROMOL_SPTR &product,
                                  bool addDummyAtoms) {
   CHECK_INVARIANT(product, "bad molecule");
@@ -1064,8 +1071,9 @@ ROMol *reduceProductToSideChains(const ROMOL_SPTR &product,
         if (nbr->hasProp(REACT_ATOM_IDX)) {
           if (nbr->hasProp(WAS_DUMMY)) {
             bonds_to_product.push_back(RGroup(
-                nbr, mol->getBondBetweenAtoms(scaffold_atom->getIdx(), *nbrIdx)
-                         ->getBondType(),
+                nbr,
+                mol->getBondBetweenAtoms(scaffold_atom->getIdx(), *nbrIdx)
+                    ->getBondType(),
                 nbr->getProp<int>(OLD_MAPNO)));
           } else {
             bonds_to_product.push_back(RGroup(
@@ -1134,4 +1142,4 @@ ROMol *reduceProductToSideChains(const ROMOL_SPTR &product,
   return mol;
 }
 
-}  // end of RDKit namespace
+}  // namespace RDKit
