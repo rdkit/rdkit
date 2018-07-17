@@ -75,17 +75,24 @@ std::string FingerprintGenerator::infoString() const {
 SparseIntVect<std::uint32_t> *FingerprintGenerator::getFingerprint(
     const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms,
     const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
-    const AdditionalOutput *additionalOutput) const {
+    const AdditionalOutput *additionalOutput,
+    const std::vector<std::uint32_t> *customAtomInvariants,
+    const std::vector<std::uint32_t> *customBondInvariants) const {
   // create the atom and bond invariants using the generators if there are any,
   // created invariants will be passed to each atom environment's getBitId call
-  std::vector<std::uint32_t> *atomInvariants =
-      dp_atomInvariantsGenerator
-          ? dp_atomInvariantsGenerator->getAtomInvariants(mol)
-          : nullptr;
-  std::vector<std::uint32_t> *bondInvariants =
-      dp_bondInvariantsGenerator
-          ? dp_bondInvariantsGenerator->getBondInvariants(mol)
-          : nullptr;
+  std::vector<std::uint32_t> *atomInvariants = nullptr;
+  if (customAtomInvariants) {
+    atomInvariants = new std::vector<std::uint32_t>(*customAtomInvariants);
+  } else if (dp_atomInvariantsGenerator) {
+    atomInvariants = dp_atomInvariantsGenerator->getAtomInvariants(mol);
+  }
+
+  std::vector<std::uint32_t> *bondInvariants = nullptr;
+  if (customBondInvariants) {
+    bondInvariants = new std::vector<std::uint32_t>(*customBondInvariants);
+  } else if (dp_bondInvariantsGenerator) {
+    bondInvariants = dp_bondInvariantsGenerator->getBondInvariants(mol);
+  }
 
   // create all atom environments that will generate the bit-ids that will make
   // up the fingerprint
@@ -126,10 +133,13 @@ SparseIntVect<std::uint32_t> *FingerprintGenerator::getFingerprint(
 SparseBitVect *FingerprintGenerator::getFingerprintAsBitVect(
     const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms,
     const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
-    const AdditionalOutput *additionalOutput) const {
+    const AdditionalOutput *additionalOutput,
+    const std::vector<std::uint32_t> *customAtomInvariants,
+    const std::vector<std::uint32_t> *customBondInvariants) const {
   // generate fingerprint using getFingerprint and convert it to SparseBitVect
   SparseIntVect<std::uint32_t> *tempResult =
-      getFingerprint(mol, fromAtoms, ignoreAtoms, confId, additionalOutput);
+      getFingerprint(mol, fromAtoms, ignoreAtoms, confId, additionalOutput,
+                     customAtomInvariants, customBondInvariants);
   std::uint32_t countBitsPerBit = dp_fingerprintArguments->d_countBounds.size();
 
   SparseBitVect *result;
@@ -165,10 +175,13 @@ SparseBitVect *FingerprintGenerator::getFingerprintAsBitVect(
 SparseIntVect<std::uint32_t> *FingerprintGenerator::getFoldedFingerprint(
     const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms,
     const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
-    const AdditionalOutput *additionalOutput) const {
+    const AdditionalOutput *additionalOutput,
+    const std::vector<std::uint32_t> *customAtomInvariants,
+    const std::vector<std::uint32_t> *customBondInvariants) const {
   // generate fingerprint using getFingerprint and fold it to reduce the size
   SparseIntVect<std::uint32_t> *tempResult =
-      getFingerprint(mol, fromAtoms, ignoreAtoms, confId, additionalOutput);
+      getFingerprint(mol, fromAtoms, ignoreAtoms, confId, additionalOutput,
+                     customAtomInvariants, customBondInvariants);
   SparseIntVect<std::uint32_t> *result =
       new SparseIntVect<std::uint32_t>(dp_fingerprintArguments->d_foldedSize);
 
@@ -192,11 +205,14 @@ SparseIntVect<std::uint32_t> *FingerprintGenerator::getFoldedFingerprint(
 ExplicitBitVect *FingerprintGenerator::getFoldedFingerprintAsBitVect(
     const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms,
     const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
-    const AdditionalOutput *additionalOutput) const {
+    const AdditionalOutput *additionalOutput,
+    const std::vector<std::uint32_t> *customAtomInvariants,
+    const std::vector<std::uint32_t> *customBondInvariants) const {
   // same idea from getFingerprintAsBitVect, generate the fingerprint using
   // getFoldedFingerprint and convert it to a ExplicitBitVect
   SparseIntVect<std::uint32_t> *tempResult = getFoldedFingerprint(
-      mol, fromAtoms, ignoreAtoms, confId, additionalOutput);
+      mol, fromAtoms, ignoreAtoms, confId, additionalOutput,
+      customAtomInvariants, customBondInvariants);
   std::uint32_t countBitsPerBit = dp_fingerprintArguments->d_countBounds.size();
 
   ExplicitBitVect *result;

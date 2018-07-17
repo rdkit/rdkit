@@ -431,7 +431,7 @@ void testInvariantGenerators() {
 
   ROMol *mol;
   SparseIntVect<std::uint32_t> *fp;
-  int radius = 100;
+  int radius = 3;
 
   AtomInvariantsGenerator *atomInvariantsGenerator =
       new MorganFingerprint::MorganAtomInvGenerator();
@@ -479,7 +479,7 @@ void testInvariantGenerators() {
 
   mol = SmilesToMol("CCCCC");
   fp = morganGenerator->getFingerprint(*mol);
-  TEST_ASSERT(fp->getNonzeroElements().size()  == 5);
+  TEST_ASSERT(fp->getNonzeroElements().size() == 5);
 
   delete mol;
   delete fp;
@@ -544,6 +544,39 @@ void testInvariantGenerators() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testCustomInvariants() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Test invariant overriding" << std::endl;
+
+  ROMol *mol;
+  SparseIntVect<std::uint32_t> *fp1, *fp2;
+  int radius = 3;
+
+  AtomInvariantsGenerator *atomInvariantsGenerator =
+      new AtomPair::AtomPairAtomInvGenerator();
+
+  FingerprintGenerator *morganGenerator = MorganFingerprint::getMorganGenerator(
+      radius, true, false, true, false, atomInvariantsGenerator);
+
+  FingerprintGenerator *defaultMorganGenerator =
+      MorganFingerprint::getMorganGenerator(radius);
+
+  mol = SmilesToMol("CCCCC");
+  std::vector<std::uint32_t> *customInvariants =
+      atomInvariantsGenerator->getAtomInvariants(*mol);
+  fp1 = morganGenerator->getFingerprint(*mol);
+  fp2 = defaultMorganGenerator->getFingerprint(*mol, nullptr, nullptr, -1,
+                                               nullptr, customInvariants);
+  TEST_ASSERT(DiceSimilarity(*fp1, *fp2) == 1.0);
+  TEST_ASSERT(*fp1 == *fp2);
+
+  delete mol;
+  delete fp1, fp2;
+  delete morganGenerator, defaultMorganGenerator;
+  delete atomInvariantsGenerator;
+  delete customInvariants;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -557,6 +590,7 @@ int main(int argc, char *argv[]) {
   testAtomPairOutput();
   testMorganFP();
   testInvariantGenerators();
+  testCustomInvariants();
 
   return 0;
 }

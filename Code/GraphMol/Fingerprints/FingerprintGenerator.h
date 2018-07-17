@@ -231,26 +231,30 @@ class FingerprintGenerator : private boost::noncopyable {
   SparseIntVect<std::uint32_t> *getFingerprint(
       const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms = nullptr,
       const std::vector<std::uint32_t> *ignoreAtoms = nullptr,
-      const int confId = -1,
-      const AdditionalOutput *additionalOutput = nullptr) const;
+      const int confId = -1, const AdditionalOutput *additionalOutput = nullptr,
+      const std::vector<std::uint32_t> *customAtomInvariants = nullptr,
+      const std::vector<std::uint32_t> *customBondInvariants = nullptr) const;
 
   SparseBitVect *getFingerprintAsBitVect(
       const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms = nullptr,
       const std::vector<std::uint32_t> *ignoreAtoms = nullptr,
-      const int confId = -1,
-      const AdditionalOutput *additionalOutput = nullptr) const;
+      const int confId = -1, const AdditionalOutput *additionalOutput = nullptr,
+      const std::vector<std::uint32_t> *customAtomInvariants = nullptr,
+      const std::vector<std::uint32_t> *customBondInvariants = nullptr) const;
 
   SparseIntVect<std::uint32_t> *getFoldedFingerprint(
       const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms = nullptr,
       const std::vector<std::uint32_t> *ignoreAtoms = nullptr,
-      const int confId = -1,
-      const AdditionalOutput *additionalOutput = nullptr) const;
+      const int confId = -1, const AdditionalOutput *additionalOutput = nullptr,
+      const std::vector<std::uint32_t> *customAtomInvariants = nullptr,
+      const std::vector<std::uint32_t> *customBondInvariants = nullptr) const;
 
   ExplicitBitVect *getFoldedFingerprintAsBitVect(
       const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms = nullptr,
       const std::vector<std::uint32_t> *ignoreAtoms = nullptr,
-      const int confId = -1,
-      const AdditionalOutput *additionalOutput = nullptr) const;
+      const int confId = -1, const AdditionalOutput *additionalOutput = nullptr,
+      const std::vector<std::uint32_t> *customAtomInvariants = nullptr,
+      const std::vector<std::uint32_t> *customBondInvariants = nullptr) const;
 
   std::string infoString() const;
 };
