@@ -2550,6 +2550,26 @@ void testGithub1920() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub1906() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Testing github #1906: Bond stereo information not output to SMARTS"
+      << std::endl;
+  {
+    std::unique_ptr<ROMol> m(SmartsToMol("C/C=C/C"));
+    TEST_ASSERT(m);
+    std::string sma = MolToSmarts(*m);
+    TEST_ASSERT(sma == "C/C=C/C");
+  }
+  {
+    std::unique_ptr<ROMol> m(SmilesToMol("C/C=C\\C"));
+    TEST_ASSERT(m);
+    std::string sma = MolToSmarts(*m);
+    TEST_ASSERT(sma == "[#6]/[#6]=[#6]\\[#6]");
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -2592,10 +2612,10 @@ int main(int argc, char *argv[]) {
   testTransuranic();
   testGithub1338();
   testCactvsExtensions();
-#endif
   testChargesAndIsotopes();
   testGithub1756();
-  testGithub1719();
   testGithub1920();
+  testGithub1719();
+  testGithub1906();
   return 0;
 }
