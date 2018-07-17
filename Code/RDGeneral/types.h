@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2001-2016 Greg Landrum and Rational Discovery LLC
+// Copyright (C) 2001-2018 Greg Landrum and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -47,7 +47,7 @@ namespace RDKit {
 namespace detail {
 // used in various places for computed properties
 extern const std::string computedPropName;
-}
+}  // namespace detail
 
 namespace common_properties {
 ///////////////////////////////////////////////////////////////
@@ -132,6 +132,8 @@ extern const std::string molRxnRole;          // int
 extern const std::string molTotValence;       // int
 extern const std::string _MolFileRLabel;      // int
 extern const std::string _MolFileChiralFlag;  // int
+extern const std::string _MolFileAtomQuery;   // int
+extern const std::string _MolFileBondQuery;   // int
 extern const std::string MRV_SMA;             // smarts string from Marvin
 extern const std::string dummyLabel;          // atom string
 
@@ -175,7 +177,7 @@ extern const std::string DistanceMatrix_Paths;  // boost::shared_array<double>
 //  - getDistanceMat
 extern const std::string internalRgroupSmiles;
 
-}  // end common_properties
+}  // namespace common_properties
 #ifndef WIN32
 typedef long long int LONGINT;
 #else
@@ -321,6 +323,6 @@ int nextCombination(INT_VECT &comb, int tot);
 //! rounds a value to the closest int
 double round(double v);
 
-};  // end of namespace
+};  // namespace RDKit
 
 #endif
