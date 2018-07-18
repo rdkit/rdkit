@@ -1,3 +1,43 @@
+# Release_2018.03.3
+(Changes relative to Release_2018.03.2)
+
+## Acknowledgements:
+Thomas Blaschke, Brian Kelley, Josh Meyers, Dan Nealschneider, Noel O'Boyle, 
+Jon Sorenson, Paulo Tosco, 'jaechanglim'
+
+## Bug Fixes:
+  - R-group Decomposition: allow H replacements when matchOnlyAtRgroups is set
+ (github pull #1871 from bp-kelley)
+  - Fixes locale handling on Windows
+ (github pull #1892 from ptosco)
+  - get the pandas tests working with pandas 0.23
+ (github pull #1896 from greglandrum)
+  - Fix curl fallback for downloading files
+ (github pull #1904 from d-b-w)
+  - Bond stereo information not output to SMARTS
+ (github issue #1906 from greglandrum)
+  - Library .so names missing RDKit?
+ (github issue #1913 from baoilleach)
+  - Negated atom number queries in SMARTS should not set atomic number of query atom
+ (github issue #1920 from greglandrum)
+  - memory leak in Get3DDistanceMatrix
+ (github issue #1924 from jaechanglim)
+  - Atom with bond to itself is accepted by the SMILES parser.
+ (github issue #1925 from tblaschke)
+  - Using the coordgen library seems to cause a seg fault
+ (github issue #1929 from JoshuaMeyers)
+  - Aromaticity failure in 7-ring with charged radical carbon
+ (github issue #1936 from bp-kelley)
+  - Fix embarassing bug, check the counter each iteration
+ (github pull #1939 from bp-kelley)
+  - RuntimeError when importing rdkit.Chem.Descriptors with Python 3.7
+ (github issue #1948 from drkeoni)
+  - Query features in products of rxn files not properly handled
+ (github issue #1950 from greglandrum)
+  - ReactionToSmarts broken for multi-component templates
+ (github issue #1955 from bp-kelley)
+
+
 # Release_2018.03.2
 (Changes relative to Release_2018.03.1)
 
