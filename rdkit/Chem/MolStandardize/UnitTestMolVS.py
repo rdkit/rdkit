@@ -186,7 +186,7 @@ class TestCase(unittest.TestCase):
 
 def readPCStestData(filename):
     """ Read test data for MolVS from file """
-    with gzip.open(filename, 'r') as f:
+    with gzip.open(filename, 'rt') as f:
         for lineNo, line in enumerate(f, 1):
             if line[0] == '#':
                 continue

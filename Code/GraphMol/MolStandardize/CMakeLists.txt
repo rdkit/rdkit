@@ -34,3 +34,4 @@ rdkit_test(molTautomerTest testTautomer.cpp LINK_LIBRARIES MolStandardize
 	TautomerCatalog) 
 rdkit_test(molStandardizeSmallTest test2.cpp LINK_LIBRARIES MolStandardize
 	SmilesParse RDGeneral GraphMol SubstructMatch) 
+rdkit_test(compareMolVSTest testPCS.cpp LINK_LIBRARIES RDGeneral boost_iostreams SmilesParse RDGeneral GraphMol MolStandardize)
