@@ -1,6 +1,5 @@
 #include "AcidBaseCatalogUtils.h"
 #include <RDGeneral/BadFileException.h>
-#include <boost/tokenizer.hpp>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/tokenizer.hpp>

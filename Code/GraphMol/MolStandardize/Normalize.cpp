@@ -27,16 +27,16 @@ ROMol* Normalizer::normalize(const ROMol &mol, TransformCatalog *tcat) {
 	const std::vector<std::shared_ptr<ChemicalReaction>> &transforms = tparams->getTransformations();
 
 	std::vector<boost::shared_ptr<ROMol>> frags =	MolOps::getMolFrags(mol);
-	std::vector<ROMol*> nfrags;//( frags.size() );
+	std::vector<ROMOL_SPTR> nfrags;//( frags.size() );
 	for (const auto &frag : frags) {
-		ROMol* nfrag = this->normalizeFragment(*frag, transforms);
+		ROMOL_SPTR nfrag( this->normalizeFragment(*frag, transforms) );
 		nfrags.push_back(nfrag);
 	}
-	ROMol* outmol = nfrags.back();
+	ROMol* outmol = new ROMol(*(nfrags.back()));
 	nfrags.pop_back();
 	for (const auto &nfrag : nfrags) {
 		outmol = combineMols(*outmol, *nfrag);
-		delete nfrag;
+//		delete nfrag;
 	}
 	return outmol;
 }
@@ -53,7 +53,7 @@ ROMol* Normalizer::normalizeFragment(const ROMol &mol,
 			transform->getProp(common_properties::_Name, tname);
 			boost::shared_ptr<ROMol> product = this->applyTransform(*nfrag, *transform);
 			if (product != nullptr) {
-//				std::cout << "Rule applied: " << tname << std::endl;
+				std::cout << "Rule applied: " << tname << std::endl;
  				delete nfrag;
 				nfrag = new ROMol(*product);
 				loop_brake = true;
@@ -88,16 +88,18 @@ boost::shared_ptr<ROMol> Normalizer::applyTransform(const ROMol &mol, ChemicalRe
 		std::vector<Normalizer::Product> pdts;
 		for (auto &m : mols) {
 			std::vector<MOL_SPTR_VECT> products = transform.runReactants( {m} );
+
 			for (auto &pdt : products) {
 				//shared_ptr<ROMol> p0( new RWMol(*pdt[0]) );
 //				std::cout << MolToSmiles(*p0) << std::endl;
 				unsigned int failed;
-				MolOps::sanitizeMol(*static_cast<RWMol *>(pdt[0].get()), failed);
-				if (!failed ) {
-					//boost::shared_ptr<ROMol> p0_ROMol( *p0 );
+				try {
+					MolOps::sanitizeMol(*static_cast<RWMol *>(pdt[0].get()), failed);
 					Normalizer::Product np(MolToSmiles(*pdt[0]), pdt[0]);
 					pdts.push_back(np);
-				}	else { std::cout << "FAILED sanitizeMol." << std::endl; }
+				} catch (MolSanitizeException) {
+					std::cout << "FAILED sanitizeMol." << std::endl; 
+				}
 			}
 		}
 		if (pdts.size() != 0) {

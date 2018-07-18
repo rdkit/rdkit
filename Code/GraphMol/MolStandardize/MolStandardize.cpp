@@ -134,8 +134,8 @@ RWMol* reionize(const RWMol *mol, const CleanupParameters &params){
 std::string standardizeSmiles(const std::string &smiles){
 	std::unique_ptr<RWMol> mol( SmilesToMol(smiles, 0, false) );
 	CleanupParameters params;
-	cleanup(*mol, params);
-	return MolToSmiles(*mol);
+	RWMOL_SPTR cleaned( cleanup(*mol, params) );
+	return MolToSmiles(*cleaned);
 }
 
 std::vector<std::string> enumerateTautomerSmiles(const std::string &smiles,

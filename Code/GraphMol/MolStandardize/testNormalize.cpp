@@ -88,6 +88,14 @@ void test1() {
 	std::cout << MolToSmiles(*normalized7) << std::endl;
 	TEST_ASSERT(MolToSmiles(*normalized7) == "C[N+]1=C2C=[N+]([O-])C=CN2CCC1");
 
+	// Failed on 1k normalize test sanitizeMol step
+	std::string smi8 = "O=c1cc([O-])[n+](C2OC(CO)C(O)C2O)c2sccn12";
+	std::shared_ptr<ROMol> m8( SmilesToMol(smi8) );
+	std::cout << "Before normalizing: " << MolToSmiles(*m8) << std::endl;
+	ROMOL_SPTR normalized8( normalizer.normalize(*m8, &tcat) );
+	std::cout << MolToSmiles(*normalized8) << std::endl;
+	TEST_ASSERT(MolToSmiles(*normalized8) == "O=c1cc([O-])[n+](C2OC(CO)C(O)C2O)c2sccn12");
+
 
 
 }

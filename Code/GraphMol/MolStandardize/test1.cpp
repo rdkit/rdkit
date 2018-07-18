@@ -250,108 +250,108 @@ void testNormalizeMultiFrags() {
 	// All fragments should stay if one gets transformed by normalization.
 	smi1 = "[Na]OC(=O)c1ccc(C[S+2]([O-])([O-]))cc1";
 	unique_ptr<RWMol> m1( SmilesToMol(smi1) );
-	MolStandardize::cleanup(*m1, params);
-	std::cout << MolToSmiles(*m1) << std::endl;
-	TEST_ASSERT(MolToSmiles(*m1) == "O=C([O-])c1ccc(C[S](=O)=O)cc1.[Na+]");
+	unique_ptr<RWMol> res1( MolStandardize::cleanup(*m1, params) );
+	std::cout << MolToSmiles(*res1) << std::endl;
+	TEST_ASSERT(MolToSmiles(*res1) == "O=C([O-])c1ccc(C[S](=O)=O)cc1.[Na+]");
 
 	// All fragments should stay if one gets transformed by normalization.
 	smi2 = "[Na+].[O-]C(=O)c1ccc(C[S+2]([O-])([O-]))cc1";
 	unique_ptr<RWMol> m2( SmilesToMol(smi2) );
-	MolStandardize::cleanup(*m2, params);
-	std::cout << MolToSmiles(*m2) << std::endl;
-	TEST_ASSERT(MolToSmiles(*m2) == "O=C([O-])c1ccc(C[S](=O)=O)cc1.[Na+]");
+	unique_ptr<RWMol> res2( MolStandardize::cleanup(*m2, params) );
+	std::cout << MolToSmiles(*res2) << std::endl;
+	TEST_ASSERT(MolToSmiles(*res2) == "O=C([O-])c1ccc(C[S](=O)=O)cc1.[Na+]");
 
 	// Recombine non-aromatic 1,3-separated charges.
 	smi3 = "C[N-]C(C)=[N+](C)C";
 	unique_ptr<RWMol> m3( SmilesToMol(smi3) );
-	MolStandardize::cleanup(*m3, params);
-	std::cout << MolToSmiles(*m3) << std::endl;
-	TEST_ASSERT(MolToSmiles(*m3) == "CN=C(C)N(C)C");
+	unique_ptr<RWMol> res3( MolStandardize::cleanup(*m3, params) );
+	std::cout << MolToSmiles(*res3) << std::endl;
+	TEST_ASSERT(MolToSmiles(*res3) == "CN=C(C)N(C)C");
 
 	// Recombine aromatic 1,3-separated charges.
 	smi4 = "[n-]1c(=[N+](C)C)cccc1";
 	unique_ptr<RWMol> m4( SmilesToMol(smi4) );
-	MolStandardize::cleanup(*m4, params);
-	std::cout << MolToSmiles(*m4) << std::endl;
-	TEST_ASSERT(MolToSmiles(*m4) == "CN(C)c1ccccn1");
+	unique_ptr<RWMol> res4( MolStandardize::cleanup(*m4, params) );
+	std::cout << MolToSmiles(*res4) << std::endl;
+	TEST_ASSERT(MolToSmiles(*res4) == "CN(C)c1ccccn1");
 
 	// Recombine aromatic 1,3-separated charges.
 	smi5 = "C[n+]1c([N-](C))cccc1";
 	unique_ptr<RWMol> m5( SmilesToMol(smi5) );
-	MolStandardize::cleanup(*m5, params);
-	std::cout << MolToSmiles(*m5) << std::endl;
-	TEST_ASSERT(MolToSmiles(*m5) == "CN=c1ccccn1C");
+	unique_ptr<RWMol> res5( MolStandardize::cleanup(*m5, params) );
+	std::cout << MolToSmiles(*res5) << std::endl;
+	TEST_ASSERT(MolToSmiles(*res5) == "CN=c1ccccn1C");
 
 	// Recombine aromatic 1,3-separated charges to form pyrimidone.
 	smi6 = "[O-]c1[n+](C)cccc1";
 	unique_ptr<RWMol> m6( SmilesToMol(smi6) );
-	MolStandardize::cleanup(*m6, params);
-	std::cout << MolToSmiles(*m6) << std::endl;
-	TEST_ASSERT(MolToSmiles(*m6) == "Cn1ccccc1=O");
+	unique_ptr<RWMol> res6( MolStandardize::cleanup(*m6, params) );
+	std::cout << MolToSmiles(*res6) << std::endl;
+	TEST_ASSERT(MolToSmiles(*res6) == "Cn1ccccc1=O");
 
 	// Recombine aromatic 1,3-separated charges to form pyrimidone.
 	smi7 = "COc1cc2ccc3c4c(OC)cc(OC)c(OC)c4c([O-])[n+](C)c3c2cc1OC";
 	unique_ptr<RWMol> m7( SmilesToMol(smi7) );
-	MolStandardize::cleanup(*m7, params);
-	std::cout << MolToSmiles(*m7) << std::endl;
-	TEST_ASSERT(MolToSmiles(*m7) == 
+	unique_ptr<RWMol> res7( MolStandardize::cleanup(*m7, params) );
+	std::cout << MolToSmiles(*res7) << std::endl;
+	TEST_ASSERT(MolToSmiles(*res7) == 
 									"COc1cc2ccc3c4c(OC)cc(OC)c(OC)c4c(=O)n(C)c3c2cc1OC");
 
 	// Recombine non-aromatic 1,5-separated charges.
 	smi8 = "C[N-]C=CC=[N+](C)C";
 	unique_ptr<RWMol> m8( SmilesToMol(smi8) );
-	MolStandardize::cleanup(*m8, params);
-	std::cout << MolToSmiles(*m8) << std::endl;
-	TEST_ASSERT(MolToSmiles(*m8) == "CN=CC=CN(C)C");
+	unique_ptr<RWMol> res8( MolStandardize::cleanup(*m8, params) );
+	std::cout << MolToSmiles(*res8) << std::endl;
+	TEST_ASSERT(MolToSmiles(*res8) == "CN=CC=CN(C)C");
 
 	// Recombine aromatic 1,5-separated charges.
 	smi9 = "[n-]1ccc(=[N+](C)C)cc1";
 	unique_ptr<RWMol> m9( SmilesToMol(smi9) );
-	MolStandardize::cleanup(*m9, params);
-	std::cout << MolToSmiles(*m9) << std::endl;
-	TEST_ASSERT(MolToSmiles(*m9) == "CN(C)c1ccncc1");
+	unique_ptr<RWMol> res9( MolStandardize::cleanup(*m9, params) );
+	std::cout << MolToSmiles(*res9) << std::endl;
+	TEST_ASSERT(MolToSmiles(*res9) == "CN(C)c1ccncc1");
 
 	// Recombine aromatic 1,5-separated charges.
 	smi10 = "C[n+]1ccc([N-]C)cc1";
 	unique_ptr<RWMol> m10( SmilesToMol(smi10) );
-	MolStandardize::cleanup(*m10, params);
-	std::cout << MolToSmiles(*m10) << std::endl;
-	TEST_ASSERT(MolToSmiles(*m10) == "CN=c1ccn(C)cc1");
+	unique_ptr<RWMol> res10( MolStandardize::cleanup(*m10, params) );
+	std::cout << MolToSmiles(*res10) << std::endl;
+	TEST_ASSERT(MolToSmiles(*res10) == "CN=c1ccn(C)cc1");
 
 	// Shift positive charge from nonprotonated to protonated atom.
 	smi11 = "CNC=[N+](C)C";
 	unique_ptr<RWMol> m11( SmilesToMol(smi11) );
-	MolStandardize::cleanup(*m11, params);
-	std::cout << MolToSmiles(*m11) << std::endl;
-	TEST_ASSERT(MolToSmiles(*m11) == "C[NH+]=CN(C)C");
+	unique_ptr<RWMol> res11( MolStandardize::cleanup(*m11, params) );
+	std::cout << MolToSmiles(*res11) << std::endl;
+	TEST_ASSERT(MolToSmiles(*res11) == "C[NH+]=CN(C)C");
 
 	// Shift positive charge from nonprotonated to protonated atom."
 	smi12 = "CNC=CC=[N+](C)C";
 	unique_ptr<RWMol> m12( SmilesToMol(smi12) );
-	MolStandardize::cleanup(*m12, params);
-	std::cout << MolToSmiles(*m12) << std::endl;
-	TEST_ASSERT(MolToSmiles(*m12) == "C[NH+]=CC=CN(C)C");
+	unique_ptr<RWMol> res12( MolStandardize::cleanup(*m12, params) );
+	std::cout << MolToSmiles(*res12) << std::endl;
+	TEST_ASSERT(MolToSmiles(*res12) == "C[NH+]=CC=CN(C)C");
 
 	// Shift positive charge from nonprotonated to protonated atom."
 	smi13 = "[nH]1ccc(=[N+](C)C)cc1";
 	unique_ptr<RWMol> m13( SmilesToMol(smi13) );
-	MolStandardize::cleanup(*m13, params);
-	std::cout << MolToSmiles(*m13) << std::endl;
-	TEST_ASSERT(MolToSmiles(*m13) == "CN(C)c1cc[nH+]cc1");
+	unique_ptr<RWMol> res13( MolStandardize::cleanup(*m13, params) );
+	std::cout << MolToSmiles(*res13) << std::endl;
+	TEST_ASSERT(MolToSmiles(*res13) == "CN(C)c1cc[nH+]cc1");
 
 	// Ensure no transforms inadvertently breaks open rings.
 	smi14 = "[O-]C1=CC=CC2=CC=CC=[N+]12";
 	unique_ptr<RWMol> m14( SmilesToMol(smi14) );
-	MolStandardize::cleanup(*m14, params);
-	std::cout << MolToSmiles(*m14) << std::endl;
-	TEST_ASSERT(MolToSmiles(*m14) == "O=c1cccc2ccccn12");
+	unique_ptr<RWMol> res14( MolStandardize::cleanup(*m14, params) );
+	std::cout << MolToSmiles(*res14) << std::endl;
+	TEST_ASSERT(MolToSmiles(*res14) == "O=c1cccc2ccccn12");
 
 	// Shift positive charge from nonprotonated to protonated atom.
 	smi15 = "[nH]1c(=[N+](C)C)cccc1";
 	unique_ptr<RWMol> m15( SmilesToMol(smi15) );
-	MolStandardize::cleanup(*m15, params);
-	std::cout << MolToSmiles(*m15) << std::endl;
-	TEST_ASSERT(MolToSmiles(*m15) == "CN(C)c1cccc[nH+]1");
+	unique_ptr<RWMol> res15( MolStandardize::cleanup(*m15, params) );
+	std::cout << MolToSmiles(*res15) << std::endl;
+	TEST_ASSERT(MolToSmiles(*res15) == "CN(C)c1cccc[nH+]1");
 
 }
 
@@ -393,12 +393,12 @@ void testEnumerateTautomerSmiles(){
 }
 
 int main() {
-//	testCleanup();
-//	testStandardize();
+	testCleanup();
+	testStandardize();
 	testMetalDisconnector();
 	testNormalize();
-//	testNormalizeMultiFrags();
-//	testCharge();
+	testNormalizeMultiFrags();
+	testCharge();
 //	testEnumerateTautomerSmiles();
 	return 0;
 }
