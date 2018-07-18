@@ -2616,6 +2616,7 @@ int main(int argc, char *argv[]) {
   testGithub1756();
   testGithub1920();
   testGithub1719();
+#endif
   testGithub1906();
   return 0;
 }

@@ -6718,7 +6718,8 @@ void testGithub1869() {
     TEST_ASSERT(nError == 0);
 
     smi = ChemicalReactionToRxnSmarts(*rxn);
-    TEST_ASSERT(smi == "([C:1].[C:2]).[C:3][C:4]>>[#6:1]-[#6:2]-[#6:3]-[#6:4]");
+    TEST_ASSERT(smi ==
+                "([C:1].[C:2]).[C:3]-,:[C:4]>>[#6:1]-[#6:2]-[#6:3]-[#6:4]");
 
     delete rxn;
   }
