@@ -7,6 +7,8 @@
 #include <GraphMol/Fingerprints/AtomPairGenerator.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
 #include <GraphMol/Fingerprints/MorganGenerator.h>
+#include <GraphMol/Fingerprints/RDKitFPGenerator.h>
+#include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 
 using namespace RDKit;
@@ -577,6 +579,43 @@ void testCustomInvariants() {
   delete customInvariants;
 }
 
+void testRDKitFP() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Test RDKit fp generator" << std::endl;
+
+  ROMol *mol;
+  SparseIntVect<std::uint32_t> *fp, *fpOld;
+  SparseIntVect<std::uint64_t> *fp64;
+
+  FingerprintGenerator *fpGenerator = RDKitFP::getRDKitFPGenerator();
+
+  BOOST_FOREACH (std::string sm, smis) {
+    mol = SmilesToMol(sm);
+    fp = fpGenerator->getFingerprint(*mol);
+    fp64 = getUnfoldedRDKFingerprintMol(*mol);
+    std::map<std::uint64_t, int> nz = fp64->getNonzeroElements();
+
+    // todo fix this after switching everything to 64 bits
+    fpOld = new SparseIntVect<std::uint32_t>(std::numeric_limits<uint32_t>::max());
+    for (std::map<std::uint64_t, int>::iterator it = nz.begin(); it != nz.end();
+         it++) {
+      fpOld->setVal(it->first, it->second);
+    }
+
+    TEST_ASSERT(DiceSimilarity(*fp, *fpOld) == 1.0);
+    TEST_ASSERT(*fp == *fpOld);
+
+    delete mol;
+    delete fp;
+    delete fpOld;
+    delete fp64;
+  }
+
+  delete fpGenerator;
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -591,6 +630,7 @@ int main(int argc, char *argv[]) {
   testMorganFP();
   testInvariantGenerators();
   testCustomInvariants();
+  testRDKitFP();
 
   return 0;
 }

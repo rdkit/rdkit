@@ -6,6 +6,7 @@
 #include <GraphMol/Fingerprints/Wrap/FingerprintGeneratorWrapper.h>
 #include <GraphMol/Fingerprints/Wrap/AtomPairWrapper.cpp>
 #include <GraphMol/Fingerprints/Wrap/MorganWrapper.cpp>
+#include <GraphMol/Fingerprints/Wrap/RDKitFPWrapper.cpp>
 #include <cstdint>
 
 namespace python = boost::python;
@@ -161,6 +162,7 @@ BOOST_PYTHON_MODULE(rdFingerprintGenerator) {
 
   AtomPairWrapper::exportAtompair();
   MorganWrapper::exportMorgan();
+  RDKitFPWrapper::exportRDKit();
 }
 
 }  // namespace FingerprintWrapper
