@@ -1,5 +1,5 @@
 //
-//  Copyright (c) 2007-2017, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2007-2018, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -6665,6 +6665,67 @@ void testGithub1950() {
   BOOST_LOG(rdInfoLog) << "Done" << std::endl;
 }
 
+void testGithub1869() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing github #1869 and #1955: parens around "
+                          "reactant/product fragments."
+                       << std::endl;
+  {
+    std::string smi;
+    // nonsense test case
+    smi = "([C:1].[Cl:2]).[N:3]-[C:4]>>[Cl:2]-[C:1].([N:3].[C:4])";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates() == 2);
+    TEST_ASSERT(rxn->getNumProductTemplates() == 2);
+    rxn->initReactantMatchers();
+    unsigned int nWarn, nError;
+    TEST_ASSERT(rxn->validate(nWarn, nError, false));
+    TEST_ASSERT(nWarn == 0);
+    TEST_ASSERT(nError == 0);
+
+    smi = ChemicalReactionToRxnSmarts(*rxn);
+    TEST_ASSERT(smi ==
+                "([C:1].[Cl:2]).[N:3]-[C:4]>>[Cl:2]-[C:1].([N:3].[C:4])");
+
+    delete rxn;
+  }
+  {  // #1869 example
+    std::string smi;
+    smi = "[R:1]~;!@[*:2]>>([*:1].[*:2])";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    rxn->initReactantMatchers();
+    unsigned int nWarn, nError;
+    TEST_ASSERT(rxn->validate(nWarn, nError, false));
+    TEST_ASSERT(nWarn == 0);
+    TEST_ASSERT(nError == 0);
+
+    smi = ChemicalReactionToRxnSmarts(*rxn);
+    TEST_ASSERT(smi == "[R:1]~&!@[*:2]>>([*:1].[*:2])");
+
+    delete rxn;
+  }
+  {  // #1955 example
+    std::string smi;
+    smi = "([C:1].[C:2]).([C:3][C:4])>>[#6:1]-[#6:2]-[#6:3]-[#6:4]";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    rxn->initReactantMatchers();
+    unsigned int nWarn, nError;
+    TEST_ASSERT(rxn->validate(nWarn, nError, false));
+    TEST_ASSERT(nWarn == 0);
+    TEST_ASSERT(nError == 0);
+
+    smi = ChemicalReactionToRxnSmarts(*rxn);
+    TEST_ASSERT(smi == "([C:1].[C:2]).[C:3][C:4]>>[#6:1]-[#6:2]-[#6:3]-[#6:4]");
+
+    delete rxn;
+  }
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -6749,6 +6810,8 @@ int main() {
   testSanitizeException();
 #endif
   testGithub1950();
+  testGithub1869();
+
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
   return (0);
