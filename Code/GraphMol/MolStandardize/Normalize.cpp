@@ -35,7 +35,9 @@ ROMol* Normalizer::normalize(const ROMol &mol, TransformCatalog *tcat) {
 	ROMol* outmol = new ROMol(*(nfrags.back()));
 	nfrags.pop_back();
 	for (const auto &nfrag : nfrags) {
-		outmol = combineMols(*outmol, *nfrag);
+		ROMol* tmol = combineMols(*outmol, *nfrag);
+		delete outmol;
+		outmol = tmol;
 //		delete nfrag;
 	}
 	return outmol;
