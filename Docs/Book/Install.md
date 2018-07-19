@@ -16,20 +16,26 @@ The easiest way to get Conda is having it installed as part of the [Anaconda Pyt
 
 Creating a new conda environment with the RDKit installed requires one single command similar to the following::
 
-  $ conda create -c rdkit -n my-rdkit-env rdkit
+    $ conda create -c rdkit -n my-rdkit-env rdkit
 
 Finally, the new environment must be activated so that the corresponding python interpreter becomes available in the same shell:
 
-  $ source activate my-rdkit-env
+    $ source activate my-rdkit-env
 
 If for some reason this does not work, try:
 
-  $ cd [anaconda folder]/bin
-  $ source activate my-rdkit-env
+    $ cd [anaconda folder]/bin
+    $ source activate my-rdkit-env
 
 Windows users will use a slightly different command:
 
-  C:\> activate my-rdkit-env
+    C:\> activate my-rdkit-env
+  
+#### conda-forge package
+
+A [conda-forge](https://conda-forge.org/#about) RDKit package is also available, which may offer an easier installation for users already using other conda-forge packages. This package can be installed with:
+
+    $ conda install -c conda-forge rdkit
 
 ### How to build from source with Conda
 
