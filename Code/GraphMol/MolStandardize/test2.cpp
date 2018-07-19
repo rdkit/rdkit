@@ -21,8 +21,8 @@ void test1(){
 
 	std::string smi1 = "C1=CC=CC=C1";
 //	std::shared_ptr<RWMol> m1( SmilesToMol(smi1) );
-	RWMol *m1 = SmilesToMol(smi1);
-	RWMol *res = cleanup(*m1, params);
+	std::unique_ptr<RWMol> m1( SmilesToMol(smi1) );
+	std::unique_ptr<RWMol> res( cleanup(*m1, params) );
 	TEST_ASSERT(MolToSmiles(*res) == "c1ccccc1");
 
 //	std::string smi1 = "CCC(=O)O[Na]";
@@ -53,7 +53,7 @@ void testValidate() {
 	std::vector<ValidationErrorInfo> errout1 = vm.validate(*m1, true);
 	for (auto &query : errout1) {
 	std::string msg = query.message();
-	TEST_ASSERT(msg == "Explicit valence for atom # 1 O, 3, is greater than permitted");
+	TEST_ASSERT(msg == "INFO: [ValenceValidation] Explicit valence for atom # 1 O, 3, is greater than permitted");
 	}
 //**************************
 	MolVSValidation vm2;
@@ -62,7 +62,7 @@ void testValidate() {
 	std::vector<ValidationErrorInfo> errout2 = vm2.validate(*m2, true);
 	for (auto &query : errout2) {
 	std::string msg = query.message();
-	TEST_ASSERT(msg == "Not an overall neutral system (-1)");
+	TEST_ASSERT(msg == "INFO: [NeutralValidation] Not an overall neutral system (-1)");
 	}
 // ************************
 	std::vector<unsigned int> atoms = {6, 7, 8};
@@ -81,7 +81,7 @@ void testValidate() {
 	for (auto &query : errout3) {
 		std::string msg = query.message();
 		std::cout << msg << std::endl;
-		TEST_ASSERT(msg == "Atom F is not in allowedAtoms list");
+		TEST_ASSERT(msg == "INFO: [AllowedAtomsValidation] Atom F is not in allowedAtoms list");
 	}
 //********************************
 	std::vector<unsigned int> atoms2 = {9, 17, 35};
@@ -100,7 +100,7 @@ void testValidate() {
 	for (auto &query : errout4) {
 		std::string msg = query.message();
 		std::cout << msg << std::endl;
-		TEST_ASSERT(msg == "Atom F is in disallowedAtoms list");
+		TEST_ASSERT(msg == "INFO: [DisallowedAtomsValidation] Atom F is in disallowedAtoms list");
 	}
 //********************************
 	MolVSValidation vm5;
@@ -113,7 +113,7 @@ void testValidate() {
 	for (auto &query : errout5) {
 	std::string msg = query.message();
 	std::cout << msg << std::endl;
-	TEST_ASSERT(msg == "Fragment 1,2-dichloroethane is present.");
+	TEST_ASSERT(msg == "INFO: [FragmentValidation] 1,2-dichloroethane is present");
 	}	
 }
 
@@ -192,10 +192,10 @@ void testNormalize() {
 }
 
 int main(){
-//	test1(); // cleanup test
+	test1(); // cleanup test
 	testMetal();	
 	testValidate();
-	//testCharge(); // TODO
+	testCharge(); // TODO
 	testNormalize();	
 	return 0;
 }

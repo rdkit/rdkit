@@ -17,13 +17,13 @@ namespace MolStandardize{
 
 class ValidationErrorInfo: public std::exception {
 	public:
-		ValidationErrorInfo(const std::string &msg): _msg(msg){
-			BOOST_LOG(rdInfoLog) << _msg << std::endl;
+		ValidationErrorInfo(const std::string &msg): d_msg(msg){
+			BOOST_LOG(rdInfoLog) << d_msg << std::endl;
 		};
-		const char* message() const { return _msg.c_str(); };
+		const char* message() const { return d_msg.c_str(); };
 		~ValidationErrorInfo() throw() {};
 	private:
-		std::string _msg;
+		std::string d_msg;
 }; // class ValidationErrorInfo
 
 class ValidationMethod{

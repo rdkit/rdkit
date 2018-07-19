@@ -22,7 +22,7 @@ void testRDKitValidation(){
 	vector<ValidationErrorInfo> errout1 = vm.validate(*m1, true);
 	for (auto &query : errout1) {
 	std::string msg = query.message();
-	TEST_ASSERT(msg == "Explicit valence for atom # 1 O, 3, is greater than permitted");
+	TEST_ASSERT(msg == "INFO: [ValenceValidation] Explicit valence for atom # 1 O, 3, is greater than permitted");
 	}
 
 	// testing for molecule with no atoms
@@ -31,7 +31,7 @@ void testRDKitValidation(){
 	vector<ValidationErrorInfo> errout2 = vm.validate(*m2, true);
 	for (auto &query : errout2) {
 	std::string msg = query.message();
-	TEST_ASSERT(msg == "Molecule has no atoms");
+	TEST_ASSERT(msg == "ERROR: [NoAtomValidation] Molecule has no atoms");
 	}
 
 	// testing molecule with multiple valency errors
@@ -39,8 +39,8 @@ void testRDKitValidation(){
 	unique_ptr<ROMol> m3( SmilesToMol(smi3, 0, false) );
 	vector<ValidationErrorInfo> errout3 = vm.validate(*m3, true);
 	std::vector<string> msgs1;
-	std::vector<string> ans1 = {"Explicit valence for atom # 1 O, 3, is greater than permitted", 
-			"Explicit valence for atom # 5 N, 5, is greater than permitted"};
+	std::vector<string> ans1 = {"INFO: [ValenceValidation] Explicit valence for atom # 1 O, 3, is greater than permitted", 
+			"INFO: [ValenceValidation] Explicit valence for atom # 5 N, 5, is greater than permitted"};
 	for (auto &query : errout3) {
 		msgs1.push_back(query.message());
 	}
@@ -52,7 +52,7 @@ void testRDKitValidation(){
 	unique_ptr<ROMol> m4( SmilesToMol(smi4, 0, false) );
 	vector<ValidationErrorInfo> errout4 = vm.validate(*m4, false);
 	std::vector<string> msgs2;
-	std::vector<string> ans2 = {"Explicit valence for atom # 1 O, 3, is greater than permitted"};
+	std::vector<string> ans2 = {"INFO: [ValenceValidation] Explicit valence for atom # 1 O, 3, is greater than permitted"};
 	for (auto &query : errout4) {
 		msgs2.push_back(query.message());
 	}
@@ -70,7 +70,7 @@ void testMolVSValidation() {
 	vector<ValidationErrorInfo> errout1 = vm.validate(*m1, true);
 	for (auto &query : errout1) {
 	std::string msg = query.message();
-	TEST_ASSERT(msg == "Molecule has no atoms");
+	TEST_ASSERT(msg == "ERROR: [NoAtomValidation] Molecule has no atoms");
 	}
 
 	smi2 = "O=C([O-])c1ccccc1";
@@ -78,7 +78,7 @@ void testMolVSValidation() {
 	vector<ValidationErrorInfo> errout2 = vm.validate(*m2, true);
 	for (auto &query : errout2) {
 	std::string msg = query.message();
-	TEST_ASSERT(msg == "Not an overall neutral system (-1)");
+	TEST_ASSERT(msg == "INFO: [NeutralValidation] Not an overall neutral system (-1)");
 	}
 
 	smi3 = "CN=[NH+]CN=N";
@@ -86,7 +86,7 @@ void testMolVSValidation() {
 	vector<ValidationErrorInfo> errout3 = vm.validate(*m3, true);
 	for (auto &query : errout3) {
 	std::string msg = query.message();
-	TEST_ASSERT(msg == "Not an overall neutral system (1)"); // fix to show + sign
+	TEST_ASSERT(msg == "INFO: [NeutralValidation] Not an overall neutral system (+1)"); // fix to show + sign
 	}
 
 	smi4 = "[13CH4]";
@@ -94,7 +94,7 @@ void testMolVSValidation() {
 	vector<ValidationErrorInfo> errout4 = vm.validate(*m4, true);
 	for (auto &query : errout4) {
 	std::string msg = query.message();
-	TEST_ASSERT(msg == "Molecule contains isotope 13C");
+	TEST_ASSERT(msg == "INFO: [IsotopeValidation] Molecule contains isotope 13C");
 	}
 
 	smi5 = "[2H]C(Cl)(Cl)Cl";
@@ -102,7 +102,7 @@ void testMolVSValidation() {
 	vector<ValidationErrorInfo> errout5 = vm.validate(*m5, true);
 	for (auto &query : errout5) {
 	std::string msg = query.message();
-	TEST_ASSERT(msg == "Molecule contains isotope 2H");
+	TEST_ASSERT(msg == "INFO: [IsotopeValidation] Molecule contains isotope 2H");
 	}
 
 	smi6 = "[2H]OC([2H])([2H])[2H]";
@@ -110,7 +110,45 @@ void testMolVSValidation() {
 	vector<ValidationErrorInfo> errout6 = vm.validate(*m6, true);
 	for (auto &query : errout6) {
 	std::string msg = query.message();
-	TEST_ASSERT(msg == "Molecule contains isotope 2H");
+	TEST_ASSERT(msg == "INFO: [IsotopeValidation] Molecule contains isotope 2H");
+	}
+
+	std::string smi7 = "COc1cccc(C=N[N-]C(N)=O)c1[O-].O.O.O.O=[U+2]=O";
+	unique_ptr<ROMol> m7( SmilesToMol(smi7, 0, false) );
+	vector<ValidationErrorInfo> errout7 = vm.validate(*m7, true);
+	TEST_ASSERT(errout7.size() != 0);
+	for (auto &query : errout7) {
+	std::string msg = query.message();
+	TEST_ASSERT(msg == "INFO: [FragmentValidation] water/hydroxide is present");
+	}
+
+	std::string smi8 = "CC(=O)O.NCC(=O)NCCCCCCCCCCNC(=O)CN";
+	unique_ptr<ROMol> m8( SmilesToMol(smi8, 0, false) );
+	vector<ValidationErrorInfo> errout8 = vm.validate(*m8, true);
+	TEST_ASSERT(errout8.size() != 0);
+	for (auto &query : errout8) {
+	std::string msg = query.message();
+	TEST_ASSERT(msg == "INFO: [FragmentValidation] acetate/acetic acid is present");
+	}
+
+	std::string smi9 = "N#CC(Br)(Br)C#N.[Br-].[K+]";
+	unique_ptr<ROMol> m9( SmilesToMol(smi9, 0, false) );
+	vector<ValidationErrorInfo> errout9 = vm.validate(*m9, true);
+	std::vector<std::string> ans = {"INFO: [FragmentValidation] bromine is present", 
+					"INFO: [FragmentValidation] potassium is present"};
+	TEST_ASSERT(errout9.size() == ans.size());
+	for (size_t i=0; i < errout9.size(); ++i) {
+		TEST_ASSERT(errout9[i].message() == ans[i]);
+	}
+
+	std::string smi10 = "C1COCCO1.O=C(NO)NO";
+	unique_ptr<ROMol> m10( SmilesToMol(smi10, 0, false) );
+	vector<ValidationErrorInfo> errout10 = vm.validate(*m10, true);
+	std::vector<std::string> ans10 = {"INFO: [FragmentValidation] 1,2-dimethoxyethane is present", 
+					"INFO: [FragmentValidation] 1,4-dioxane is present"};
+	TEST_ASSERT(errout10.size() == ans10.size());
+	for (size_t i=0; i < errout10.size(); ++i) {
+		TEST_ASSERT(errout10[i].message() == ans10[i]);
 	}
 }
 
@@ -133,7 +171,7 @@ void testAllowedAtomsValidation() {
 	for (auto &query : errout1) {
 	std::string msg = query.message();
 	std::cout << msg << std::endl;
-	TEST_ASSERT(msg == "Atom F is not in allowedAtoms list");
+	TEST_ASSERT(msg == "INFO: [AllowedAtomsValidation] Atom F is not in allowedAtoms list");
 	}
 
 }
@@ -157,7 +195,7 @@ void testDisallowedAtomsValidation() {
 	for (auto &query : errout1) {
 	std::string msg = query.message();
 	std::cout << msg << std::endl;
-	TEST_ASSERT(msg == "Atom F is in disallowedAtoms list");
+	TEST_ASSERT(msg == "INFO: [DisallowedAtomsValidation] Atom F is in disallowedAtoms list");
 	}
 }
 
@@ -173,7 +211,7 @@ void testFragment() {
 	for (auto &query : errout1) {
 	std::string msg = query.message();
 	std::cout << msg << std::endl;
-	TEST_ASSERT(msg == "Fragment 1,2-dichloroethane is present.");
+	TEST_ASSERT(msg == "INFO: [FragmentValidation] 1,2-dichloroethane is present");
 	}
 
 	smi2 = "COCCOC.CCCBr";
@@ -182,9 +220,8 @@ void testFragment() {
 	for (auto &query : errout2) {
 	std::string msg = query.message();
 	std::cout << msg << std::endl;
-	TEST_ASSERT(msg == "Fragment 1,2-dimethoxyethane is present.");
+	TEST_ASSERT(msg == "INFO: [FragmentValidation] 1,2-dimethoxyethane is present");
 	}
-
 
 }
 

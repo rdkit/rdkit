@@ -9,6 +9,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/tokenizer.hpp>
 #include "Metal.h"
+#include "Validate.h"
 #include "MolStandardize.h"
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -61,24 +62,51 @@ RDKitStandardizeMode setMode(const std::string &argv1, const std::string &argv2)
 }
 	
 std::pair<std::string, std::string> readLine(const std::string &line) {
-	std::pair<std::string, std::string> smiles;
+	std::pair<std::string, std::string> smiles = std::pair<std::string, std::string>("","");
 	// empty line
 	if (line.length() == 0) {
 		return smiles;
 	}
-	boost::char_separator<char> commaSep(",");
-	tokenizer tokens(line, commaSep);
-	tokenizer::iterator token = tokens.begin();
+  if (line.substr(0, 2) == "//") {
+    // comment line
+    return smiles;
+  }
 
-	// smiles from PCS
-	std::string smi = *token;
+	boost::char_separator<char> tabSep("\t");
+	tokenizer tokens(line, tabSep);
+	std::vector<std::string> result(tokens.begin(), tokens.end());
+	
+	// line must have at least two tab separated values
+	if ( result.size() < 2 ) {
+		std::cout << "Invalid line." << std::endl;
+		return smiles;
+	}
+
+	std::string smi = result[0];
 	boost::erase_all(smi, " ");
-	++token;
+	result.erase(result.begin()); // delete first element
 
-	// smiles after MolVS
-	std::string molvsSmi = *token;
-	boost::erase_all(molvsSmi, " ");
-	++token;
+	std::string molvsSmi;
+	// dealing with multiple outputs from molvs
+	unsigned int counter = 0;
+	for (const auto &r : result) {
+		if (counter == 0) {molvsSmi = r;}
+		else {molvsSmi = molvsSmi + " " + r;}
+		++counter;
+	}
+
+
+//	tokenizer::iterator token = tokens.begin();
+//
+//	// smiles from PCS
+//	std::string smi = *token;
+//	boost::erase_all(smi, " ");
+//	++token;
+//
+//	// smiles after MolVS
+//	std::string molvsSmi = *token;
+////	boost::erase_all(molvsSmi, " ");
+//	++token;
 
 	return std::pair<std::string, std::string>(smi, molvsSmi);
 }
@@ -101,9 +129,11 @@ std::vector<std::pair<std::string, std::string>> readCSV(const RDKitStandardizeM
 		break;
 	case RDKitStandardizeMode::ValidateShort:	
 		filename = rdbase + "/rdkit/Chem/MolStandardize/test_data/1kPCS_validate.csv.gz";
+		//filename = "/data/dipper/leung/gsoc/downloads/1kPCS_validate.csv.gz";
 		break;
 	case RDKitStandardizeMode::ValidateLong:
 		filename = rdbase + "/rdkit/Chem/MolStandardize/test_data/100kPCS_validate.csv.gz";
+		//filename = "/data/dipper/leung/gsoc/downloads/100kPCS_validate.csv.gz";
 		break;
 	case RDKitStandardizeMode::FragmentShort:	
 		filename = rdbase + "/rdkit/Chem/MolStandardize/test_data/1kPCS_fragment.csv.gz";
@@ -136,7 +166,8 @@ std::vector<std::pair<std::string, std::string>> readCSV(const RDKitStandardizeM
 	std::vector<std::pair<std::string, std::string>> res;
   while(std::getline(instream, line)) {
 		std::pair<std::string, std::string> smiles = readLine(line);
-		res.push_back(smiles);
+		// smiles.first and smiles.second will be empty for comment lines
+		if (!(smiles.first == "" & smiles.second == "")) { res.push_back(smiles); }
   }
   //Cleanup
   file.close();
@@ -177,9 +208,21 @@ std::string rdkitMolStandardizeStandardizeSm(const std::string &smi) {
 }
 
 std::string rdkitMolStandardizeValidate(const std::string &smi) {
-//	RDKitValidation vm; 
-//	std::unique_ptr<RWMol> m( SmilesToMol(smi) );
-//	vector<ValidationErrorInfo> errout1 = vm.validate(*m, true);
+	MolStandardize::MolVSValidation vm; 
+	std::unique_ptr<RWMol> m( SmilesToMol(smi) );
+	std::vector<MolStandardize::ValidationErrorInfo> errout = vm.validate(*m, true);
+	std::string res;
+	if (errout.size() != 0) {
+		unsigned int counter = 0;
+		for (const auto &err : errout) {
+			if (counter == 0) { res = err.message(); }
+			else { res = res + " " + err.message(); }
+			++counter;
+		}
+	} else {
+		res = "[]";
+	}
+	return res;
 }
 
 void testfunc(const std::vector<std::pair<std::string, std::string>> &molvs_res, const RDKitStandardizeMode &func) {
@@ -218,7 +261,7 @@ void testfunc(const std::vector<std::pair<std::string, std::string>> &molvs_res,
 		if ( rdkit_smi != pair.second ) {
 			std::cout << "RDKIT DOES NOT MATCH MOLVS" << std::endl; 
 			std::cout << "smi, molvs standardize, rdkit standardize" << std::endl;
-			std::cout << pair.first << " " << pair.second << " " << rdkit_smi << std::endl;
+			std::cout << pair.first << std::endl << pair.second << std::endl << rdkit_smi << std::endl;
 		}
 
 		TEST_ASSERT(rdkit_smi == pair.second);	

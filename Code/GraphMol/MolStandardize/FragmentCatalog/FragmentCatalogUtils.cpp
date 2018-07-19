@@ -27,7 +27,7 @@ ROMol *getSmarts(const std::string &tmpStr) {
 
   // name of the functional groups
   std::string name = *token;
-  boost::erase_all(name, " ");
+//  boost::erase_all(name, " ");
   ++token;
 
   // grab the smarts:
