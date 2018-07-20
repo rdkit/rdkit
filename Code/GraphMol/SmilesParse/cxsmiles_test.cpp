@@ -381,7 +381,7 @@ void testGithub1968() {
   BOOST_LOG(rdInfoLog)
       << "testing Github1968: CXSMILES should be parsed before H removal"
       << std::endl;
-  {  // testing atom properties
+  {  // the original report
     std::string smiles = "[H]C* |$;;X$|";
     SmilesParserParams params;
     params.allowCXSMILES = true;
@@ -391,6 +391,20 @@ void testGithub1968() {
     TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::atomLabel));
     TEST_ASSERT(m->getAtomWithIdx(1)->getProp<std::string>(
                     common_properties::atomLabel) == "X");
+    TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp(common_properties::atomLabel));
+    delete m;
+  }
+  {
+    std::string smiles = "C([H])* |$;Y;X$|";
+    SmilesParserParams params;
+    params.allowCXSMILES = true;
+    ROMol *m = SmilesToMol(smiles, params);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 2);
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::atomLabel));
+    TEST_ASSERT(m->getAtomWithIdx(1)->getProp<std::string>(
+                    common_properties::atomLabel) == "X");
+    TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp(common_properties::atomLabel));
     delete m;
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
