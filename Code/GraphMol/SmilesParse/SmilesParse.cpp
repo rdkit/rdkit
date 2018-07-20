@@ -39,7 +39,8 @@
 pippo pippo pippo
 #endif
 
-int yysmiles_parse(const char *, std::vector<RDKit::RWMol *> *,
+    int
+    yysmiles_parse(const char *, std::vector<RDKit::RWMol *> *,
                    std::list<unsigned int> *, void *);
 int yysmiles_lex_init(void **);
 int yysmiles_lex_destroy(void *);
@@ -138,7 +139,7 @@ std::string labelRecursivePatterns(const std::string &sma) {
   return sma;
 #endif
 }
-}  // end of local namespace
+}  // namespace
 
 RWMol *toMol(const std::string &inp,
              int func(const std::string &, std::vector<RDKit::RWMol *> &),
@@ -158,9 +159,8 @@ RWMol *toMol(const std::string &inp,
         res->clearAtomBookmark(ci_RIGHTMOST_ATOM);
       }
       SmilesParseOps::CleanupAfterParsing(res);
-      molVect[0] =
-          nullptr;  // NOTE: to avoid leaks on failures, this should occur
-                    // last in this if.
+      molVect[0] = nullptr;  // NOTE: to avoid leaks on failures, this should
+                             // occur last in this if.
     }
   } catch (SmilesParseException &e) {
     std::string nm = "SMILES";
@@ -225,6 +225,14 @@ RWMol *SmilesToMol(const std::string &smiles,
   } else {
     res = toMol(lsmiles, smiles_parse, lsmiles);
   }
+  if (res && params.allowCXSMILES && cxPart != "") {
+    std::string::const_iterator pos = cxPart.cbegin();
+    SmilesParseOps::parseCXExtensions(*res, cxPart, pos);
+    if (params.parseName && pos != cxPart.cend()) {
+      std::string nmpart(pos, cxPart.cend());
+      name = boost::trim_copy(nmpart);
+    }
+  }
   if (res && (params.sanitize || params.removeHs)) {
     try {
       if (params.removeHs) {
@@ -241,18 +249,6 @@ RWMol *SmilesToMol(const std::string &smiles,
     // figure out stereochemistry:
     bool cleanIt = true, force = true, flagPossible = true;
     MolOps::assignStereochemistry(*res, cleanIt, force, flagPossible);
-  }
-  if (res && params.allowCXSMILES && cxPart != "") {
-    // it's goofy that we have to do this, but c++0x doesn't seem to have
-    // a way to get a const_iterator from a non-const std::string. In C++11
-    // we could just use .cend()
-    const std::string &cxcopy = cxPart;
-    std::string::const_iterator pos = cxcopy.begin();
-    SmilesParseOps::parseCXExtensions(*res, cxcopy, pos);
-    if (params.parseName && pos != cxcopy.end()) {
-      std::string nmpart(pos, cxcopy.end());
-      name = boost::trim_copy(nmpart);
-    }
   }
   if (res && name != "") res->setProp(common_properties::_Name, name);
   return res;
@@ -294,4 +290,4 @@ RWMol *SmartsToMol(const std::string &smarts, int debugParse, bool mergeHs,
   }
   return res;
 };
-}
+}  // namespace RDKit
