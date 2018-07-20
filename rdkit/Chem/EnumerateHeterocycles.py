@@ -1,4 +1,10 @@
 # Copyright 2017, D. E. Shaw Research. All rights reserved.
+#
+#  This file is part of the RDKit.
+#  The contents are covered by the terms of the BSD license
+#  which is included in the file license.txt, found at the root
+#  of the RDKit source tree.
+#
 import collections
 from rdkit import Chem
 from rdkit.Chem import AllChem
