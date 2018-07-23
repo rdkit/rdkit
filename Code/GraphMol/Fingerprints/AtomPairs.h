@@ -29,7 +29,7 @@
   includeChirality is true.
 
 */
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef __RD_ATOMPAIRS_H__
 #define __RD_ATOMPAIRS_H__
 

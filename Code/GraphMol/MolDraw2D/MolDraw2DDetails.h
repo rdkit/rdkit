@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef RDKITMOLDRAW2DDETAILS_H
 #define RDKITMOLDRAW2DDETAILS_H
 

@@ -12,7 +12,7 @@
 /*!
     \brief Includes a bunch of functionality for handling Atom and Bond queries.
 */
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef _RD_QUERY_OPS_H
 #define _RD_QUERY_OPS_H
 

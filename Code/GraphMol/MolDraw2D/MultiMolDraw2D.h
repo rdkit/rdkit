@@ -7,7 +7,7 @@
 //  of the RDKit source tree.
 //
 
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef RDKITMULTIMOLDRAW2D_H
 #define RDKITMULTIMOLDRAW2D_H
 

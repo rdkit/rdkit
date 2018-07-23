@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef _DATASTRUCTS_EXCEPTION_H_20050126
 #define _DATASTRUCTS_EXCEPTION_H_20050126
 

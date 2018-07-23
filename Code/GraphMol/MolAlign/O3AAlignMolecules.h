@@ -8,7 +8,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef _RD_O3AALIGNMOLECULES_H_
 #define _RD_O3AALIGNMOLECULES_H_
 

@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef _RD_SHAPE_ENCODER_H_20050125_0800_
 #define _RD_SHAPE_ENCODER_H_20050125_0800_
 

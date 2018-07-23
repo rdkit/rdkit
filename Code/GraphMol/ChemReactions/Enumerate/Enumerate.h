@@ -29,7 +29,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.n
 //
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef RDKIT_ENUMERATE_H
 #define RDKIT_ENUMERATE_H
 #include "EnumerateBase.h"

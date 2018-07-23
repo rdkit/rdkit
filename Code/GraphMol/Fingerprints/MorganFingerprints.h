@@ -37,7 +37,7 @@
 /*! \file MorganFingerprints.h
 
 */
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef __RD_MORGANFPS_H__
 #define __RD_MORGANFPS_H__
 

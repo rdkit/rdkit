@@ -30,7 +30,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef __RD_REACTION_UTILS_H
 #define __RD_REACTION_UTILS_H
 

@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef MOLDRAW2DUTILS_H
 #define MOLDRAW2DUTILS_H
 #include <GraphMol/RWMol.h>

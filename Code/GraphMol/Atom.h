@@ -12,7 +12,7 @@
   \brief Defines the Atom class and associated typedefs
 
 */
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef _RD_ATOM_H
 #define _RD_ATOM_H
 

@@ -13,7 +13,7 @@
 
 */
 
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef RD_MOLBUNDLE_AUG2017
 #define RD_MOLBUNDLE_AUG2017
 

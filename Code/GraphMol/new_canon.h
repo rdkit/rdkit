@@ -9,7 +9,7 @@
 //  of the RDKit source tree.
 //
 
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #include <RDGeneral/hanoiSort.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/RingInfo.h>

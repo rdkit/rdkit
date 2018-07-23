@@ -1,6 +1,6 @@
 // Boost python numpy available in Boost 1.63+
 // Boost python numeric removed in Boost 1.65+
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #if BOOST_VERSION < 106500
 #include <boost/python/numeric.hpp>
 typedef boost::python::numeric::array NumpyArrayType;

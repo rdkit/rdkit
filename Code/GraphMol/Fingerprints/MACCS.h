@@ -1,7 +1,7 @@
 /*! \file MACCS.h
 
 */
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef __RD_MACCSFPS_H__
 #define __RD_MACCSFPS_H__
 #include <string>

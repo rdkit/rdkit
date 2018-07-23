@@ -16,7 +16,7 @@
       $(shell pkg-config --libs cairo)
 */
 
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef _RD_DRAWING_TO_CAIRO_H_
 #define _RD_DRAWING_TO_CAIRO_H_
 

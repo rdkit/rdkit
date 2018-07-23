@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef RD_TYPES_H
 #define RD_TYPES_H
 

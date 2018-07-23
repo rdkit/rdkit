@@ -1,4 +1,4 @@
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef RDKIT_PYINT_API_INCLUDED
 #define RDKIT_PYINT_API_INCLUDED
 

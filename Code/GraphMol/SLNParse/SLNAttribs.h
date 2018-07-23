@@ -31,7 +31,7 @@
 //
 // Created by Greg Landrum, September 2006
 //
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef __RD_SLNATTRIBS_H__
 #define __RD_SLNATTRIBS_H__
 

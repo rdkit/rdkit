@@ -10,7 +10,7 @@
 
 
 // inspired by: https://github.com/openbabel/openbabel/blob/master/src/config.h.cmake
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 /* Version check macro
    Can be used like #if (RDKIT_VERSION >= RDKIT_VERSION_CHECK(2018, 3, 1)) */
 #define RDKIT_VERSION_CHECK(year, month, rev) ((year*1000)+(month*10)+(rev))

@@ -40,7 +40,7 @@
 // Created by Nicholas Firth, November 2011
 // Modifications by Greg Landrum for inclusion in the RDKit core, September 2016
 
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef PBFRDKIT_H_SEPT2016
 #define PBFRDKIT_H_SEPT2016
 

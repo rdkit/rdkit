@@ -12,7 +12,7 @@
   \brief pulls in RWMol and ROMol
 
 */
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef _GRAPH_MOL_H
 #define _GRAPH_MOL_H
 

@@ -232,7 +232,7 @@ function(createExportTestHeaders)
   endforeach()
   list(REMOVE_DUPLICATES exportLibs)
   list(SORT exportLibs)
-  set(exportPath "Code/RDBoost/export.h")
+  set(exportPath "Code/RDGeneral/export.h")
   file(WRITE "${CMAKE_BINARY_DIR}/${exportPath}"
     "// auto-generated __declspec definition header\n"
     "#pragma once\n"

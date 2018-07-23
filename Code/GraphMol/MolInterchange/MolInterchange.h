@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef RD_MOLINTERCHANGE_H_JAN2018
 #define RD_MOLINTERCHANGE_H_JAN2018
 

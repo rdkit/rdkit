@@ -21,7 +21,6 @@ rdkit_headers(Wrap.h PySequenceHolder.h
               python.h
               boost_numpy.h
               python_streambuf.h
-              export.h
               test.h
               DEST RDBoost)
 

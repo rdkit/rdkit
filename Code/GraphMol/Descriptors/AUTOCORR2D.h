@@ -33,7 +33,7 @@
 //
 // Created by Guillaume GODIN, 2016
 
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef AUTOCORR2DRDKIT_H_SEPT2016
 #define AUTOCORR2DRDKIT_H_SEPT2016
 

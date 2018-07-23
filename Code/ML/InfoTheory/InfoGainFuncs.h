@@ -3,7 +3,7 @@
 //  Copyright (C) 2003 Rational Discovery LLC
 //
 
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef INFOGAINFUNC_H
 #define INFOGAINFUNC_H
 
