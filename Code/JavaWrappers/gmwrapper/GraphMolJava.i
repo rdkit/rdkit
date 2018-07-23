@@ -70,7 +70,7 @@
 %include <boost/smart_ptr/shared_array.hpp>
 
 /* undefine RDKIT_<LIBNAME>_EXPORT macros */
-%include <RDBoost/export.h>
+%include <RDGeneral/export.h>
 /* Include the base types before anything that will utilize them */
 #ifdef SWIGWIN
 %include "../msvc_stdint.i"
