@@ -31,7 +31,8 @@ std::string TautomerCatalogEntry::Serialize() const {
 
 void TautomerCatalogEntry::initFromStream(std::istream &ss) {
   // the tautomer TODO:
-	dp_transform = new TautomerTransform(nullptr, std::vector<Bond::BondType>(), "");	
+	dp_transform = new TautomerTransform(nullptr, std::vector<Bond::BondType>(),
+									std::vector<int>());	
 //  ReactionPickler::reactionFromPickle(ss, *dp_transform);
 
   boost::int32_t tmpInt;

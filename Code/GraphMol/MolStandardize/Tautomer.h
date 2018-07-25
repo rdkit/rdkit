@@ -32,7 +32,7 @@ class TautomerCanonicalizer {
 
 class TautomerEnumerator {
 	public:
-		std::vector<std::string> enumerate(const ROMol &mol, TautomerCatalog *tautcat);
+		std::vector<ROMOL_SPTR> enumerate(const ROMol &mol, TautomerCatalog *tautcat);
 
 //		struct Tautomer {
 //			std::string Smiles;

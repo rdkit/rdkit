@@ -31,7 +31,7 @@ cyano/iso-cyanic acid f	[O!H0]-[C]#[N]	==
 cyano/iso-cyanic acid r	[N!H0]=[C]=[O]	#-
 //formamidinesulfinic acid f	[O,N;!H0]-[C]=[S,Se,Te]=[O]	=-- // TODO: WAT!?
 //formamidinesulfinic acid r	[O!H0]-[S,Se,Te]-[C]=[O,N]	=--
-isocyanide f	[C-0!H0]#[N+0]	#	charges='-+'
-isocyanide r	[N+!H0]#[C-]	#	charges='-+'
+isocyanide f	[C-0!H0]#[N+0]	#	-+
+isocyanide r	[N+!H0]#[C-]	#	-+
 phosphonic acid f	[OH]-[PH0]	=
 phosphonic acid r	[PH]=[O]	-

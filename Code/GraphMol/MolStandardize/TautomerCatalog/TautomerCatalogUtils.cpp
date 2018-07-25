@@ -30,7 +30,7 @@ MolStandardize::TautomerTransform* getTautomer(const std::string &tmpStr) {
 	std::string name = "";
 	std::string smarts = "";
 	std::string bond_str = ""; 
-	std::string charges = ""; 
+	std::string charge_str = ""; 
 
 	// line must have at least two tab separated values
 	if ( result.size() < 2 ) {
@@ -53,16 +53,17 @@ MolStandardize::TautomerTransform* getTautomer(const std::string &tmpStr) {
 		name = result[0];
 		smarts = result[1];
 		bond_str = result[2];
-		charges = result[3];
+		charge_str = result[3];
 	}
 
   boost::erase_all(smarts, " ");
   boost::erase_all(name, " ");
   boost::erase_all(bond_str, " ");
-  boost::erase_all(charges, " ");
+  boost::erase_all(charge_str, " ");
 
 	std::vector<Bond::BondType> bond_types = 
 					MolStandardize::stringToBondType(bond_str);
+	std::vector<int> charges = MolStandardize::stringToCharge(charge_str);
 
 	ROMol* tautomer = SmartsToMol(smarts);
   CHECK_INVARIANT(tautomer, smarts);
@@ -96,6 +97,26 @@ std::vector<Bond::BondType> stringToBondType(std::string bond_str) {
 		}
 	}
 	return bonds;
+}
+
+std::vector<int> stringToCharge(std::string charge_str) {
+	std::vector<int> charges;
+	for (const auto &c : charge_str) {
+		switch (c) {
+			case '+':
+				charges.push_back(1);
+				break;
+			case '0':
+				charges.push_back(0);
+				break;
+			case '-':
+				charges.push_back(-1);
+				break;
+			default:
+				throw ValueErrorException("Charge symbol not recognised.");
+		}
+	}
+	return charges;
 }
 
 std::vector<TautomerTransform> readTautomers(std::string fileName) {

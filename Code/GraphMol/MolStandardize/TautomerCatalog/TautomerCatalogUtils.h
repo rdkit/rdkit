@@ -25,13 +25,14 @@ class TautomerCatalogParams;
 struct TautomerTransform {
 				ROMol* Mol;
 				std::vector<Bond::BondType> BondTypes;
-				std::string Charges;
+				std::vector<int> Charges;
 				TautomerTransform(ROMol* mol, std::vector<Bond::BondType> bondtypes,
-												std::string charges)
+												std::vector<int> charges)
 								: Mol(mol), BondTypes(bondtypes), Charges(charges) {}
 };
 
 std::vector<Bond::BondType> stringToBondType(std::string bond_str);
+std::vector<int> stringToCharge(std::string charge_str);
 
 std::vector<TautomerTransform> readTautomers(std::string fileName);
 std::vector<TautomerTransform> readTautomers(std::istream &inStream, int nToRead = -1);

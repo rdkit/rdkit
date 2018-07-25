@@ -31,7 +31,7 @@ std::string TransformCatalogEntry::Serialize() const {
 }
 
 void TransformCatalogEntry::initFromStream(std::istream &ss) {
-  // the molecule:
+  // the reaction:
   dp_transform = new ChemicalReaction();
   ReactionPickler::reactionFromPickle(ss, *dp_transform);
 

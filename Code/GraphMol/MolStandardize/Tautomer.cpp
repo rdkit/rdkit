@@ -16,12 +16,12 @@ unsigned int MAX_TAUTOMERS = 1000;
 ROMol* TautomerCanonicalizer::canonicalize(const ROMol &mol, TautomerCatalog *tautcat) {
 
 	TautomerEnumerator tenum;
-	std::vector<std::string> omol = tenum.enumerate(mol, tautcat);
+	std::vector<ROMOL_SPTR> omol = tenum.enumerate(mol, tautcat);
 	return new ROMol(mol);
 
 }
 
-std::vector<std::string> TautomerEnumerator::enumerate(const ROMol &mol, TautomerCatalog *tautcat) {
+std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(const ROMol &mol, TautomerCatalog *tautcat) {
 	
 	std::cout << "**********************************" << std::endl;
 
@@ -106,23 +106,33 @@ std::vector<std::string> TautomerEnumerator::enumerate(const ROMol &mol, Tautome
 								++bi;
 							} else {
 								Bond::BondType bondtype = bond->getBondType();
-								std::cout << "Bond as double: " << bond->getBondTypeAsDouble() << std::endl;
+//								std::cout << "Bond as double: " << bond->getBondTypeAsDouble() << std::endl;
 //								std::cout << bondtype << std::endl;
 								if (bondtype == 1) {
 									bond->setBondType(Bond::DOUBLE);
-									std::cout << "Set bond to double" << std::endl;
+//									std::cout << "Set bond to double" << std::endl;
 								}
 								if (bondtype == 2) {
 									bond->setBondType(Bond::SINGLE);
-									std::cout << "Set bond to single" << std::endl;
+//									std::cout << "Set bond to single" << std::endl;
 								}
 							}
 						}
 						// TODO adjust charges
-						if (!transform.Charges.empty()) {}
+						if (!transform.Charges.empty()) {
+							unsigned int ci = 0;
+							for (const auto idx : idx_matches) {
+								Atom* atom = product->getAtomWithIdx(idx);
+								atom->setFormalCharge( 
+																atom->getFormalCharge() + transform.Charges[ci] );
+								++ci;
+							}	
+						}
 
-						MolOps::sanitizeMol(*static_cast<RWMol*>(product.get()));
-						tsmiles = MolToSmiles(*product, true);
+						boost::shared_ptr<RWMol> wproduct( new RWMol(*product) );
+						MolOps::sanitizeMol(*wproduct);
+//						MolOps::sanitizeMol(*static_cast<RWMol*>(product.get()));
+						tsmiles = MolToSmiles(*wproduct, true);
 //						std::string name;
 //						(transform.Mol)->getProp(common_properties::_Name, name);
 						std::cout << "Applied rule: " << name << " to " << 
@@ -130,10 +140,16 @@ std::vector<std::string> TautomerEnumerator::enumerate(const ROMol &mol, Tautome
 						const bool is_in = tautomers.find(tsmiles) != tautomers.end();
 						if (!is_in) {
 							std::cout << "New tautomer produced: " << tsmiles << std::endl;
-							boost::shared_ptr<RWMol> kekulized_product( new RWMol(*product) );
+							boost::shared_ptr<RWMol> kekulized_product( new RWMol(*wproduct) );
+							tautomers[tsmiles] = wproduct;
 							MolOps::Kekulize(*kekulized_product, false);
-							tautomers[tsmiles] = product;
 							kekulized_mols[tsmiles] = kekulized_product;
+
+							std::cout << "Now completed: "<< std::endl;
+							for (const auto &tautomer : tautomers) {
+								std::cout << tautomer.first << std::endl;
+							}
+
 						} else {
 							std::cout << "Previous tautomer produced again: " << tsmiles << std::endl;
 						}
@@ -150,7 +166,7 @@ std::vector<std::string> TautomerEnumerator::enumerate(const ROMol &mol, Tautome
 	if (!broken) {
 		std::cout << "Tautomer enumeration stopped at maximum " << MAX_TAUTOMERS << std::endl;
 	}
-/*
+
 	// Clean up stereochemistry
 	for (auto &tautomer : tautomers) {
 		auto &tmp = tautomer.second;
@@ -177,19 +193,22 @@ std::vector<std::string> TautomerEnumerator::enumerate(const ROMol &mol, Tautome
 							
 							++beg;
 						}
+						MolOps::assignStereochemistry(*tmp, true, true);
+						std::cout << "Removed stereochemistry from unfixed double bond" << std::endl;
+						break;
 					}
 
 				}
 			}
 
 		}
-	} */	
+	} 
 
 	// get vector of enumerated smiles
-	std::vector<std::string> res;
+	std::vector<ROMOL_SPTR> res;
 	for (const auto &tautomer : tautomers) {
-		res.push_back(tautomer.first);
-		std::cout << tautomer.first << std::endl;
+		res.push_back(tautomer.second);
+		std::cout << MolToSmiles(*(tautomer.second)) << std::endl;
 	}
 	return res;
 }
