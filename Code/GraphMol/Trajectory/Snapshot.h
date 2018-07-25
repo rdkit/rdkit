@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef __RD_SNAPSHOT_H__
 #define __RD_SNAPSHOT_H__
 #include <Geometry/point.h>

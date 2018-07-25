@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef RD_MOLINTERCHANGEDETAILS_H_FEB2018
 #define RD_MOLINTERCHANGEDETAILS_H_FEB2018
 #include <GraphMol/Atom.h>

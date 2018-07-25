@@ -10,7 +10,7 @@
 //
 //  Includes contributions from Dave Cosgrove (davidacosgroveaz@gmail.com)
 //
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef _RD_MOLDRAWING_H_
 #define _RD_MOLDRAWING_H_
 

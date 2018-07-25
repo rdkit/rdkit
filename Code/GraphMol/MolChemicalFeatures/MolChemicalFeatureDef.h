@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef __CHEMICALFEATUREDEF_H_02122004_1750__
 #define __CHEMICALFEATUREDEF_H_02122004_1750__
 

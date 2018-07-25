@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef _UNIFORMGRID3D_H_20050124_1703
 #define _UNIFORMGRID3D_H_20050124_1703
 

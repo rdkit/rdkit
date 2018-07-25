@@ -19,7 +19,7 @@
 // library-specific drawing code such as drawing lines, writing strings
 // etc.
 
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef RDKITMOLDRAW2D_H
 #define RDKITMOLDRAW2D_H
 

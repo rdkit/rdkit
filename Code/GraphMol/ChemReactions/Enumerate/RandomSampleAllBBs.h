@@ -30,7 +30,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef RGROUP_RANDOM_SAMPLE_ALLBBS_H
 #define RGROUP_RANDOM_SAMPLE_ALLBBS_H
 

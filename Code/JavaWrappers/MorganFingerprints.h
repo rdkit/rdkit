@@ -1,5 +1,5 @@
 
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #include <GraphMol/Atom.h>
 #include <GraphMol/GraphMol.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>

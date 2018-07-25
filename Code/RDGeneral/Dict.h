@@ -12,7 +12,7 @@
   \brief Defines the Dict class
 
 */
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef __RD_DICT_H__
 #define __RD_DICT_H__
 

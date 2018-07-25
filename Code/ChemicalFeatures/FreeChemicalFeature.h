@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef __FREECHEMICALFEATURE_H_13012005_1023__
 #define __FREECHEMICALFEATURE_H_13012005_1023__
 

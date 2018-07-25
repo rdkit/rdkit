@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 //
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef _RD_STREAMOPS_H
 #define _RD_STREAMOPS_H
 

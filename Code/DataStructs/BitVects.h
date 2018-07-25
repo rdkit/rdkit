@@ -12,7 +12,7 @@
   \brief Pulls in all the BitVect classes
 
 */
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef __BITVECTS_H__
 #define __BITVECTS_H__
 

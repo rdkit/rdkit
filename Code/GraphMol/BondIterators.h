@@ -14,7 +14,7 @@
    <b>WARNING:</b> If you go changing the molecule underneath one of
    these iterators you will be sad...
 */
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef _RD_BOND_ITERATORS_H
 #define _RD_BOND_ITERATORS_H
 

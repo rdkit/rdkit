@@ -35,7 +35,7 @@
   \brief Contains the USR descriptor. Use MolDescriptors.h in client code.
 
 */
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef __RD_USR_H__
 #define __RD_USR_H__
 

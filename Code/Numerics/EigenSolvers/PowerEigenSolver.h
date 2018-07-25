@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef _RD_POWER_EIGENSOLVER_H
 #define _RD_POWER_EIGENSOLVER_H
 

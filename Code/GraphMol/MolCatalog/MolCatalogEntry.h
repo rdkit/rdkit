@@ -1,7 +1,7 @@
 //
 //  Copyright (C) 2006 Greg Landrum
 //
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef _RD_MOLCATALOGENTRY_H_
 #define _RD_MOLCATALOGENTRY_H_
 

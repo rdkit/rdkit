@@ -33,7 +33,7 @@
 //
 // Created by Guillaume Godin 2016
 
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef RDFRDKIT_H_SEPT2016
 #define RDFRDKIT_H_SEPT2016
 

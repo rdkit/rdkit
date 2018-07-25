@@ -31,7 +31,7 @@
 //
 // Created by  MORSE by Guillaume Godin
 
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef MORSERDKIT_H_SEPT2016
 #define MORSERDKIT_H_SEPT2016
 

@@ -4,7 +4,7 @@
 
         - From The Shogakukan DICTIONARY OF NEW ENGLISH (Second edition) */
 
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef F2C_INCLUDE
 #define F2C_INCLUDE
 

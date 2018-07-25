@@ -11,7 +11,7 @@
 //! \file Rings.h
 //! \brief utility functionality for working with ring systems
 
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef _RDRINGS_H_
 #define _RDRINGS_H_
 

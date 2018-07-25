@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef _RDLOG_H_29JUNE2005_
 #define _RDLOG_H_29JUNE2005_
 

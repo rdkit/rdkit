@@ -9,7 +9,7 @@
 //  of the RDKit source tree.
 //
 
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef __RD_INVARIANT_H__
 #define __RD_INVARIANT_H__
 

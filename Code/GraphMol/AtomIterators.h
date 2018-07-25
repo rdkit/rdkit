@@ -14,7 +14,7 @@
    <b>WARNING:</b> If you go changing the molecule underneath one of
    these iterators you will be sad...
 */
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef __RD_ATOM_ITERATORS_H__
 #define __RD_ATOM_ITERATORS_H__
 

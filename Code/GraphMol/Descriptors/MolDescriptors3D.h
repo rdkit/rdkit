@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef RD_MOLDESCRIPTORS3D_H_SEPT2016
 #define RD_MOLDESCRIPTORS3D_H_SEPT2016
 

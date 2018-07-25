@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef _RD_MOLDESCRIPTORS_H_
 #define _RD_MOLDESCRIPTORS_H_
 

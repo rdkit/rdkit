@@ -12,7 +12,7 @@
 // This is a concrete class derived from MolDraw2D that uses RDKit to draw a
 // molecule into a cairo drawing context
 
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef MOLDRAW2DCAIRO_H
 #define MOLDRAW2DCAIRO_H
 

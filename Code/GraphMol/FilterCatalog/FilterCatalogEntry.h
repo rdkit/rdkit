@@ -29,7 +29,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef __RD_FILTER_CATALOG_H__
 #define __RD_FILTER_CATALOG_H__
 

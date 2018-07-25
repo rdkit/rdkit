@@ -13,7 +13,7 @@
   \brief Use MolDescriptors.h in client code.
 
 */
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef __RD_MQN_H__
 #define __RD_MQN_H__
 

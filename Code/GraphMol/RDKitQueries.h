@@ -13,7 +13,7 @@
   \brief pulls in the \c RDKit Query functionality
 
 */
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef _RDKIT_QUERIES_H
 #define _RDKIT_QUERIES_H
 

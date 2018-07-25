@@ -12,7 +12,7 @@
   \brief Not intended for client-code use.
 
 */
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef _RD_CHIRALITY_20AUG2008_H_
 #define _RD_CHIRALITY_20AUG2008_H_
 #include <RDGeneral/types.h>

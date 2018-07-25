@@ -32,7 +32,7 @@
 * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #ifndef _RD_DRAWING_TO_SVG_H_
 #define _RD_DRAWING_TO_SVG_H_
 

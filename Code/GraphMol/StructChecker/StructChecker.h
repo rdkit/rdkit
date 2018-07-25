@@ -17,7 +17,7 @@ future
 releases.
 
 */
-#include <RDBoost/export.h>
+#include <RDGeneral/export.h>
 #pragma once
 #ifndef RD_STRUCTCHECKER_H_Oct2016
 #define RD_STRUCTCHECKER_H_Oct2016
