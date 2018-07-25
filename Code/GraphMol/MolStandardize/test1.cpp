@@ -42,35 +42,33 @@ void testCleanup(){
 
 }
 
-void testStandardize(){
-	string smi;
-	CleanupParameters params;
+void testStandardizeSm() {
 
-	smi = "CCCC(=O)O";
-	unique_ptr<RWMol> m( SmilesToMol(smi) );
-	unique_ptr<RWMol> m2( SmilesToMol(smi) );
-	TEST_ASSERT(m);
+	// check aromaticity 
+	std::string smi1 = "C1=CC=CC=C1";
+	std::string ss1 =	MolStandardize::standardizeSmiles(smi1);
+	TEST_ASSERT(ss1 == "c1ccccc1");
 
-	// cleanup function
-	MolStandardize::cleanup(*m, params);
-	// testing nothing has changed
-	TEST_ASSERT(MolToSmiles(*m) == MolToSmiles(*m2));
+	// both rings should be aromatic
+	std::string smi2 = "C[N]1C=NC2=C1C(=O)N(C)C(=O)N2C";
+	std::string ss2 =	MolStandardize::standardizeSmiles(smi2);
+	TEST_ASSERT(ss2 == "Cn1c(=O)c2c(ncn2C)n(C)c1=O");
 
-	// empty tautomer parent function
-	MolStandardize::tautomerParent(*m, params);
-	TEST_ASSERT(MolToSmiles(*m) == MolToSmiles(*m2));
+	// both rings should be aromatic
+	std::string smi3 = "C=Cc1ccc2c(c1)[nH]c(=O)/c/2=C\\c1ccc[nH]1";
+	std::string ss3 =	MolStandardize::standardizeSmiles(smi3);
+	TEST_ASSERT(ss3 == "C=Cc1ccc2c(c1)NC(=O)/C2=C\\c1ccc[nH]1");
 
-	// empty isotope parent function
-	MolStandardize::isotopeParent(*m, params);
-	TEST_ASSERT(MolToSmiles(*m) == MolToSmiles(*m2));
+	// check stereochemistry is correctly perceived
+	std::string smi4 = "Cl\\C=C/Cl";
+	std::string ss4 =	MolStandardize::standardizeSmiles(smi4);
+	TEST_ASSERT(ss4 == "Cl/C=C\\Cl");
 
-	// empty charge parent function
-	MolStandardize::chargeParent(*m, params);
-	TEST_ASSERT(MolToSmiles(*m) == MolToSmiles(*m2));
+	// Break metal-organic covalent bonds
+	std::string smi5 = "[Na]OC(=O)c1ccccc1";
+	std::string ss5 =	MolStandardize::standardizeSmiles(smi5);
+	TEST_ASSERT(ss5 == "O=C([O-])c1ccccc1.[Na+]");
 
-	// empty super parent function
-	MolStandardize::superParent(*m, params);
-	TEST_ASSERT(MolToSmiles(*m) == MolToSmiles(*m2));
 }
 
 void testMetalDisconnector(){
@@ -394,7 +392,7 @@ void testEnumerateTautomerSmiles(){
 
 int main() {
 	testCleanup();
-	testStandardize();
+	testStandardizeSm();
 	testMetalDisconnector();
 	testNormalize();
 	testNormalizeMultiFrags();
