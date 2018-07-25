@@ -1,16 +1,15 @@
 
 #include <boost/python.hpp>
-#include <GraphMol/Fingerprints/Wrap/FingerprintGeneratorWrapper.h>
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
-#include <GraphMol/Fingerprints/RDKitFPGenerator.h>
+#include <GraphMol/Fingerprints/RDKitFPGenerator.cpp>
 
 using namespace RDKit;
-using namespace RDKit::FingerprintWrapper;
 namespace python = boost::python;
 
 namespace RDKit {
 namespace RDKitFPWrapper {
-FingerprintGeneratorWrapper *getRDKitFPWrapped(
+template <typename OutputType>
+FingerprintGenerator<OutputType> *getRDKitFPGenerator(
     const unsigned int minPath, const unsigned int maxPath, const bool useHs,
     const bool branchedPaths, const bool useBondOrder,
     const bool countSimulation, python::object &py_countBounds,
@@ -37,14 +36,10 @@ FingerprintGeneratorWrapper *getRDKitFPWrapped(
 
   const std::vector<std::uint32_t> countBoundsC = countBounds;
 
-  FingerprintGenerator *fingerprintGenerator = RDKitFP::getRDKitFPGenerator(
+  return RDKitFP::getRDKitFPGenerator<OutputType>(
       minPath, maxPath, useHs, branchedPaths, useBondOrder,
       atomInvariantsGenerator, bondInvariantsGenerator, countSimulation,
       countBoundsC, foldedSize);
-
-  FingerprintGeneratorWrapper *wrapped = new FingerprintGeneratorWrapper();
-  wrapped->dp_fingerprintGenerator = fingerprintGenerator;
-  return wrapped;
 }
 
 AtomInvariantsGenerator *getRDKitAtomInvGen() {
@@ -54,21 +49,35 @@ AtomInvariantsGenerator *getRDKitAtomInvGen() {
 void exportRDKit() {
   std::string docString = "";
 
-  python::def(
-      "GetRDKitFPWrapped", &getRDKitFPWrapped,
-      (python::arg("minPath") = 1, python::arg("maxPath") = 7,
-       python::arg("useHs") = true, python::arg("branchedPaths") = true,
-       python::arg("useBondOrder") = true,
-       python::arg("countSimulation") = true,
-       python::arg("countBounds") = python::object(),
-       python::arg("foldedSize") = 2048,
-       python::arg("atomInvariantsGenerator") = python::object(),
-       python::arg("bondInvariantsGenerator") = python::object()),
-      docString.c_str(),
-      python::return_value_policy<
-          python::manage_new_object,
-          python::return_internal_reference<
-              7, python::return_internal_reference<8>>>());
+  python::def("GetRDKitFPGenerator32", &getRDKitFPGenerator<std::uint32_t>,
+              (python::arg("minPath") = 1, python::arg("maxPath") = 7,
+               python::arg("useHs") = true, python::arg("branchedPaths") = true,
+               python::arg("useBondOrder") = true,
+               python::arg("countSimulation") = true,
+               python::arg("countBounds") = python::object(),
+               python::arg("foldedSize") = 2048,
+               python::arg("atomInvariantsGenerator") = python::object(),
+               python::arg("bondInvariantsGenerator") = python::object()),
+              docString.c_str(),
+              python::return_value_policy<
+                  python::manage_new_object,
+                  python::return_internal_reference<
+                      7, python::return_internal_reference<8>>>());
+
+  python::def("GetRDKitFPGenerator64", &getRDKitFPGenerator<std::uint64_t>,
+              (python::arg("minPath") = 1, python::arg("maxPath") = 7,
+               python::arg("useHs") = true, python::arg("branchedPaths") = true,
+               python::arg("useBondOrder") = true,
+               python::arg("countSimulation") = true,
+               python::arg("countBounds") = python::object(),
+               python::arg("foldedSize") = 2048,
+               python::arg("atomInvariantsGenerator") = python::object(),
+               python::arg("bondInvariantsGenerator") = python::object()),
+              docString.c_str(),
+              python::return_value_policy<
+                  python::manage_new_object,
+                  python::return_internal_reference<
+                      7, python::return_internal_reference<8>>>());
 
   docString = "";
   // todo add inv generator creator

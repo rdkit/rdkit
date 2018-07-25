@@ -59,10 +59,29 @@ class TestCase(unittest.TestCase):
 
   def testMorganGenerator(self):
     m = Chem.MolFromSmiles('CCCCC')
-    g = rdFingerprintGenerator.GetMorganGenerator(3)
+    g = rdFingerprintGenerator.GetMorganGenerator32(3)
     fp = g.GetFingerprint(m)
     nz = fp.GetNonzeroElements()
     self.assertEqual(len(nz), 7)
+
+    m = Chem.MolFromSmiles('CCCCC')
+    g = rdFingerprintGenerator.GetMorganGenerator64(3)
+    fp = g.GetFingerprint(m)
+    nz = fp.GetNonzeroElements()
+    self.assertEqual(len(nz), 7)
+
+  def testRDKitFPGenerator(self):
+    m = Chem.MolFromSmiles('CCCCC')
+    g = rdFingerprintGenerator.GetRDKitFPGenerator32()
+    fp = g.GetFingerprint(m)
+    nz = fp.GetNonzeroElements()
+    self.assertEqual(len(nz), 4)
+
+    m = Chem.MolFromSmiles('CCCCC')
+    g = rdFingerprintGenerator.GetRDKitFPGenerator64()
+    fp = g.GetFingerprint(m)
+    nz = fp.GetNonzeroElements()
+    self.assertEqual(len(nz), 4)
 
 
 if __name__ == '__main__':

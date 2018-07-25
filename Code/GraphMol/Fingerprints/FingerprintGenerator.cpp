@@ -8,7 +8,8 @@
 
 namespace RDKit {
 
-FingerprintArguments::FingerprintArguments(
+template<typename OutputType>
+FingerprintArguments<OutputType>::FingerprintArguments(
     const bool countSimulation, const std::vector<std::uint32_t> countBounds,
     std::uint32_t foldedSize)
     : d_countSimulation(countSimulation),
@@ -18,25 +19,30 @@ FingerprintArguments::FingerprintArguments(
                "bad count bounds provided");
 }
 
-std::string FingerprintArguments::commonArgumentsString() const {
+template<typename OutputType>
+std::string FingerprintArguments<OutputType>::commonArgumentsString() const {
   return "Common arguments\tcountSimulation=" +
          std::to_string(d_countSimulation) +
          " foldedSize=" + std::to_string(d_foldedSize);
 }
 
-FingerprintArguments::~FingerprintArguments() {}
+template<typename OutputType>
+FingerprintArguments<OutputType>::~FingerprintArguments() {}
 
-AtomEnvironmentGenerator::~AtomEnvironmentGenerator() {}
+template<typename OutputType>
+AtomEnvironmentGenerator<OutputType>::~AtomEnvironmentGenerator() {}
 
-AtomEnvironment::~AtomEnvironment() {}
+template<typename OutputType>
+AtomEnvironment<OutputType>::~AtomEnvironment() {}
 
 AtomInvariantsGenerator::~AtomInvariantsGenerator() {}
 
 BondInvariantsGenerator::~BondInvariantsGenerator() {}
 
-FingerprintGenerator::FingerprintGenerator(
-    AtomEnvironmentGenerator *atomEnvironmentGenerator,
-    FingerprintArguments *fingerprintArguments,
+template<typename OutputType>
+FingerprintGenerator<OutputType>::FingerprintGenerator(
+    AtomEnvironmentGenerator<OutputType> *atomEnvironmentGenerator,
+    FingerprintArguments<OutputType> *fingerprintArguments,
     AtomInvariantsGenerator *atomInvariantsGenerator,
     BondInvariantsGenerator *bondInvariantsGenerator, bool ownsAtomInvGenerator,
     bool ownsBondInvGenerator)
@@ -48,7 +54,8 @@ FingerprintGenerator::FingerprintGenerator(
   this->dp_bondInvariantsGenerator = bondInvariantsGenerator;
 }
 
-FingerprintGenerator::~FingerprintGenerator() {
+template<typename OutputType>
+FingerprintGenerator<OutputType>::~FingerprintGenerator() {
   delete dp_atomEnvironmentGenerator;
   delete dp_fingerprintArguments;
   if (df_ownsAtomInvGenerator) {
@@ -59,7 +66,8 @@ FingerprintGenerator::~FingerprintGenerator() {
   }
 }
 
-std::string FingerprintGenerator::infoString() const {
+template<typename OutputType>
+std::string FingerprintGenerator<OutputType>::infoString() const {
   std::string seperator = " : ";
   return dp_fingerprintArguments->commonArgumentsString() + seperator +
          dp_fingerprintArguments->infoString() + seperator +
@@ -72,7 +80,8 @@ std::string FingerprintGenerator::infoString() const {
               : "No bond invariants generator");
 }
 
-SparseIntVect<std::uint32_t> *FingerprintGenerator::getFingerprint(
+template<typename OutputType>
+SparseIntVect<std::uint32_t> *FingerprintGenerator<OutputType>::getFingerprint(
     const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms,
     const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
     const AdditionalOutput *additionalOutput,
@@ -96,7 +105,7 @@ SparseIntVect<std::uint32_t> *FingerprintGenerator::getFingerprint(
 
   // create all atom environments that will generate the bit-ids that will make
   // up the fingerprint
-  std::vector<AtomEnvironment *> atomEnvironments =
+  std::vector<AtomEnvironment<OutputType> *> atomEnvironments =
       dp_atomEnvironmentGenerator->getEnvironments(
           mol, dp_fingerprintArguments, fromAtoms, ignoreAtoms, confId,
           additionalOutput, atomInvariants, bondInvariants);
@@ -107,7 +116,7 @@ SparseIntVect<std::uint32_t> *FingerprintGenerator::getFingerprint(
 
   // iterate over every atom environment and generate bit-ids that will make up
   // the fingerprint
-  for (std::vector<AtomEnvironment *>::iterator it = atomEnvironments.begin();
+  for (auto it = atomEnvironments.begin();
        it != atomEnvironments.end(); it++) {
     std::uint32_t bitId =
         (*it)->getBitId(dp_fingerprintArguments, atomInvariants, bondInvariants,
@@ -130,7 +139,8 @@ SparseIntVect<std::uint32_t> *FingerprintGenerator::getFingerprint(
   return res;
 }
 
-SparseBitVect *FingerprintGenerator::getFingerprintAsBitVect(
+template<typename OutputType>
+SparseBitVect *FingerprintGenerator<OutputType>::getFingerprintAsBitVect(
     const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms,
     const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
     const AdditionalOutput *additionalOutput,
@@ -172,7 +182,8 @@ SparseBitVect *FingerprintGenerator::getFingerprintAsBitVect(
   return result;
 }
 
-SparseIntVect<std::uint32_t> *FingerprintGenerator::getFoldedFingerprint(
+template<typename OutputType>
+SparseIntVect<std::uint32_t> *FingerprintGenerator<OutputType>::getFoldedFingerprint(
     const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms,
     const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
     const AdditionalOutput *additionalOutput,
@@ -202,7 +213,8 @@ SparseIntVect<std::uint32_t> *FingerprintGenerator::getFoldedFingerprint(
   return result;
 }
 
-ExplicitBitVect *FingerprintGenerator::getFoldedFingerprintAsBitVect(
+template<typename OutputType>
+ExplicitBitVect *FingerprintGenerator<OutputType>::getFoldedFingerprintAsBitVect(
     const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms,
     const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
     const AdditionalOutput *additionalOutput,

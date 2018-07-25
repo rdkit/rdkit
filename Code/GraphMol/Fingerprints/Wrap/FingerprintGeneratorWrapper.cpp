@@ -3,7 +3,6 @@
 #include <boost/python.hpp>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
-#include <GraphMol/Fingerprints/Wrap/FingerprintGeneratorWrapper.h>
 #include <GraphMol/Fingerprints/Wrap/AtomPairWrapper.cpp>
 #include <GraphMol/Fingerprints/Wrap/MorganWrapper.cpp>
 #include <GraphMol/Fingerprints/Wrap/RDKitFPWrapper.cpp>
@@ -44,16 +43,17 @@ void convertPyArguments(python::object py_fromAtoms,
   return;
 }
 
-SparseIntVect<std::uint32_t> *FingerprintGeneratorWrapper::getFingerprint(
-    const ROMol &mol, python::object py_fromAtoms,
-    python::object py_ignoreAtoms, const int confId) const {
+template <typename OutputType>
+SparseIntVect<OutputType> *getFingerprint(
+    const FingerprintGenerator<OutputType> *fpGen, const ROMol &mol,
+    python::object py_fromAtoms, python::object py_ignoreAtoms,
+    const int confId) {
   std::vector<std::uint32_t> *fromAtoms = nullptr;
   std::vector<std::uint32_t> *ignoreAtoms = nullptr;
   convertPyArguments(py_fromAtoms, py_ignoreAtoms, fromAtoms, ignoreAtoms);
 
-  SparseIntVect<std::uint32_t> *result =
-      dp_fingerprintGenerator->getFingerprint(mol, fromAtoms, ignoreAtoms,
-                                              confId, nullptr);
+  SparseIntVect<OutputType> *result =
+      fpGen->getFingerprint(mol, fromAtoms, ignoreAtoms, confId, nullptr);
 
   delete fromAtoms;
   delete ignoreAtoms;
@@ -61,14 +61,16 @@ SparseIntVect<std::uint32_t> *FingerprintGeneratorWrapper::getFingerprint(
   return result;
 }
 
-SparseBitVect *FingerprintGeneratorWrapper::getFingerprintAsBitVect(
-    const ROMol &mol, python::object py_fromAtoms,
-    python::object py_ignoreAtoms, const int confId) const {
+template <typename OutputType>
+SparseBitVect *getFingerprintAsBitVect(
+    const FingerprintGenerator<OutputType> *fpGen, const ROMol &mol,
+    python::object py_fromAtoms, python::object py_ignoreAtoms,
+    const int confId) {
   std::vector<std::uint32_t> *fromAtoms = nullptr;
   std::vector<std::uint32_t> *ignoreAtoms = nullptr;
   convertPyArguments(py_fromAtoms, py_ignoreAtoms, fromAtoms, ignoreAtoms);
 
-  SparseBitVect *result = dp_fingerprintGenerator->getFingerprintAsBitVect(
+  SparseBitVect *result = fpGen->getFingerprintAsBitVect(
       mol, fromAtoms, ignoreAtoms, confId, nullptr);
 
   delete fromAtoms;
@@ -77,16 +79,17 @@ SparseBitVect *FingerprintGeneratorWrapper::getFingerprintAsBitVect(
   return result;
 }
 
-SparseIntVect<std::uint32_t> *FingerprintGeneratorWrapper::getFoldedFingerprint(
-    const ROMol &mol, python::object py_fromAtoms,
-    python::object py_ignoreAtoms, const int confId) const {
+template <typename OutputType>
+SparseIntVect<OutputType> *getFoldedFingerprint(
+    const FingerprintGenerator<OutputType> *fpGen, const ROMol &mol,
+    python::object py_fromAtoms, python::object py_ignoreAtoms,
+    const int confId) {
   std::vector<std::uint32_t> *fromAtoms = nullptr;
   std::vector<std::uint32_t> *ignoreAtoms = nullptr;
   convertPyArguments(py_fromAtoms, py_ignoreAtoms, fromAtoms, ignoreAtoms);
 
-  SparseIntVect<std::uint32_t> *result =
-      dp_fingerprintGenerator->getFoldedFingerprint(mol, fromAtoms, ignoreAtoms,
-                                                    confId, nullptr);
+  SparseIntVect<OutputType> *result =
+      fpGen->getFoldedFingerprint(mol, fromAtoms, ignoreAtoms, confId, nullptr);
 
   delete fromAtoms;
   delete ignoreAtoms;
@@ -94,29 +97,22 @@ SparseIntVect<std::uint32_t> *FingerprintGeneratorWrapper::getFoldedFingerprint(
   return result;
 }
 
-ExplicitBitVect *FingerprintGeneratorWrapper::getFoldedFingerprintAsBitVect(
-    const ROMol &mol, python::object py_fromAtoms,
-    python::object py_ignoreAtoms, const int confId) const {
+template <typename OutputType>
+ExplicitBitVect *getFoldedFingerprintAsBitVect(
+    const FingerprintGenerator<OutputType> *fpGen, const ROMol &mol,
+    python::object py_fromAtoms, python::object py_ignoreAtoms,
+    const int confId) {
   std::vector<std::uint32_t> *fromAtoms = nullptr;
   std::vector<std::uint32_t> *ignoreAtoms = nullptr;
   convertPyArguments(py_fromAtoms, py_ignoreAtoms, fromAtoms, ignoreAtoms);
 
-  ExplicitBitVect *result =
-      dp_fingerprintGenerator->getFoldedFingerprintAsBitVect(
-          mol, fromAtoms, ignoreAtoms, confId, nullptr);
+  ExplicitBitVect *result = fpGen->getFoldedFingerprintAsBitVect(
+      mol, fromAtoms, ignoreAtoms, confId, nullptr);
 
   delete fromAtoms;
   delete ignoreAtoms;
 
   return result;
-}
-
-FingerprintGeneratorWrapper::FingerprintGeneratorWrapper() {
-  dp_fingerprintGenerator = nullptr;
-}
-
-FingerprintGeneratorWrapper::~FingerprintGeneratorWrapper() {
-  delete dp_fingerprintGenerator;
 }
 
 BOOST_PYTHON_MODULE(rdFingerprintGenerator) {
@@ -130,30 +126,56 @@ BOOST_PYTHON_MODULE(rdFingerprintGenerator) {
 
   docString = "";
   // todo remove the wrapper class if possible
-  python::class_<FingerprintGeneratorWrapper>(
-      "FingerprintGenerator", python::init<FingerprintGeneratorWrapper>())
-      .def("GetFingerprint", &FingerprintGeneratorWrapper::getFingerprint,
+  python::class_<FingerprintGenerator<std::uint32_t>, boost::noncopyable>(
+      "FingerprintGenerator32", python::no_init)
+      .def("GetFingerprint", getFingerprint<std::uint32_t>,
            (python::arg("mol"), python::arg("fromAtoms") = python::list(),
             python::arg("ignoreAtoms") = python::list(),
             python::arg("confId") = -1),
            docString.c_str(),
            python::return_value_policy<python::manage_new_object>())
-      .def("GetFingerprintAsBitVect",
-           &FingerprintGeneratorWrapper::getFingerprintAsBitVect,
+      .def("GetFingerprintAsBitVect", getFingerprintAsBitVect<std::uint32_t>,
            (python::arg("mol"), python::arg("fromAtoms") = python::list(),
             python::arg("ignoreAtoms") = python::list(),
             python::arg("confId") = -1),
            docString.c_str(),
            python::return_value_policy<python::manage_new_object>())
-      .def("GetFoldedFingerprint",
-           &FingerprintGeneratorWrapper::getFoldedFingerprint,
+      .def("GetFoldedFingerprint", getFoldedFingerprint<std::uint32_t>,
            (python::arg("mol"), python::arg("fromAtoms") = python::list(),
             python::arg("ignoreAtoms") = python::list(),
             python::arg("confId") = -1),
            docString.c_str(),
            python::return_value_policy<python::manage_new_object>())
       .def("GetFoldedFingerprintAsBitVect",
-           &FingerprintGeneratorWrapper::getFoldedFingerprintAsBitVect,
+           getFoldedFingerprintAsBitVect<std::uint32_t>,
+           (python::arg("mol"), python::arg("fromAtoms") = python::list(),
+            python::arg("ignoreAtoms") = python::list(),
+            python::arg("confId") = -1),
+           docString.c_str(),
+           python::return_value_policy<python::manage_new_object>());
+
+  python::class_<FingerprintGenerator<std::uint64_t>, boost::noncopyable>(
+      "FingerprintGenerator64", python::no_init)
+      .def("GetFingerprint", getFingerprint<std::uint64_t>,
+           (python::arg("mol"), python::arg("fromAtoms") = python::list(),
+            python::arg("ignoreAtoms") = python::list(),
+            python::arg("confId") = -1),
+           docString.c_str(),
+           python::return_value_policy<python::manage_new_object>())
+      .def("GetFingerprintAsBitVect", getFingerprintAsBitVect<std::uint64_t>,
+           (python::arg("mol"), python::arg("fromAtoms") = python::list(),
+            python::arg("ignoreAtoms") = python::list(),
+            python::arg("confId") = -1),
+           docString.c_str(),
+           python::return_value_policy<python::manage_new_object>())
+      .def("GetFoldedFingerprint", getFoldedFingerprint<std::uint64_t>,
+           (python::arg("mol"), python::arg("fromAtoms") = python::list(),
+            python::arg("ignoreAtoms") = python::list(),
+            python::arg("confId") = -1),
+           docString.c_str(),
+           python::return_value_policy<python::manage_new_object>())
+      .def("GetFoldedFingerprintAsBitVect",
+           getFoldedFingerprintAsBitVect<std::uint64_t>,
            (python::arg("mol"), python::arg("fromAtoms") = python::list(),
             python::arg("ignoreAtoms") = python::list(),
             python::arg("confId") = -1),

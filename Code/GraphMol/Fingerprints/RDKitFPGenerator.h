@@ -6,7 +6,8 @@
 namespace RDKit {
 namespace RDKitFP {
 
-class RDKitFPArguments : public FingerprintArguments {
+template <typename OutputType>
+class RDKitFPArguments : public FingerprintArguments<OutputType> {
  public:
   const unsigned int d_minPath;
   const unsigned int d_maxPath;
@@ -14,7 +15,7 @@ class RDKitFPArguments : public FingerprintArguments {
   const bool df_branchedPaths;
   const bool df_useBondOrder;
 
-  std::uint64_t getResultSize() const;
+  OutputType getResultSize() const;
 
   std::string infoString() const;
 
@@ -32,24 +33,26 @@ class RDKitFPAtomInvGenerator : public AtomInvariantsGenerator {
   std::string infoString() const;
 };
 
-class RDKitFPAtomEnv : public AtomEnvironment {
-  const std::uint32_t d_bitId;
+template <typename OutputType>
+class RDKitFPAtomEnv : public AtomEnvironment<OutputType> {
+  const OutputType d_bitId;
   const boost::dynamic_bitset<> d_atomsInPath;
 
  public:
-  std::uint32_t getBitId(FingerprintArguments *arguments,
+  OutputType getBitId(FingerprintArguments<OutputType> *arguments,
                          const std::vector<std::uint32_t> *atomInvariants,
                          const std::vector<std::uint32_t> *bondInvariants,
                          const AdditionalOutput *additionalOutput) const;
 
-  RDKitFPAtomEnv(const std::uint32_t bitId,
+  RDKitFPAtomEnv(const OutputType bitId,
                  const boost::dynamic_bitset<> atomsInPath);
 };
 
-class RDKitFPEnvGenerator : public AtomEnvironmentGenerator {
+template <typename OutputType>
+class RDKitFPEnvGenerator : public AtomEnvironmentGenerator<OutputType> {
  public:
-  std::vector<AtomEnvironment *> getEnvironments(
-      const ROMol &mol, FingerprintArguments *arguments,
+  std::vector<AtomEnvironment<OutputType> *> getEnvironments(
+      const ROMol &mol, FingerprintArguments<OutputType> *arguments,
       const std::vector<std::uint32_t> *fromAtoms,
       const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
       const AdditionalOutput *additionalOutput,
@@ -59,7 +62,8 @@ class RDKitFPEnvGenerator : public AtomEnvironmentGenerator {
   std::string infoString() const;
 };
 
-FingerprintGenerator *getRDKitFPGenerator(
+template <typename OutputType>
+FingerprintGenerator<OutputType> *getRDKitFPGenerator(
     const unsigned int minPath = 1, const unsigned int maxPath = 7,
     const bool useHs = true, const bool branchedPaths = true,
     const bool useBondOrder = true,

@@ -197,11 +197,18 @@ std::string RDKitFPAtomInvGenerator::infoString() const {
   return "RDKitFPAtomInvGenerator";
 }
 
-std::uint64_t RDKitFPArguments::getResultSize() const {
+template <>
+std::uint64_t RDKitFPArguments<std::uint64_t>::getResultSize() const {
+  return std::numeric_limits<std::uint64_t>::max();
+}
+
+template <>
+std::uint32_t RDKitFPArguments<std::uint32_t>::getResultSize() const {
   return std::numeric_limits<uint32_t>::max();
 }
 
-std::string RDKitFPArguments::infoString() const {
+template <typename OutputType>
+std::string RDKitFPArguments<OutputType>::infoString() const {
   return "RDKitFPArguments minPath=" + std::to_string(d_minPath) +
          " maxPath=" + std::to_string(d_maxPath) +
          " useHs=" + std::to_string(df_useHs) +
@@ -209,13 +216,14 @@ std::string RDKitFPArguments::infoString() const {
          " useBondOrder=" + std::to_string(df_useBondOrder);
 }
 
-RDKitFPArguments::RDKitFPArguments(unsigned int minPath, unsigned int maxPath,
-                                   bool useHs, bool branchedPaths,
-                                   bool useBondOrder,
-                                   const bool countSimulation,
-                                   const std::vector<std::uint32_t> countBounds,
-                                   const std::uint32_t foldedSize)
-    : FingerprintArguments(countSimulation, countBounds, foldedSize),
+template <typename OutputType>
+RDKitFPArguments<OutputType>::RDKitFPArguments(
+    unsigned int minPath, unsigned int maxPath, bool useHs, bool branchedPaths,
+    bool useBondOrder, const bool countSimulation,
+    const std::vector<std::uint32_t> countBounds,
+    const std::uint32_t foldedSize)
+    : FingerprintArguments<OutputType>(countSimulation, countBounds,
+                                       foldedSize),
       d_minPath(minPath),
       d_maxPath(maxPath),
       df_useHs(useHs),
@@ -225,8 +233,9 @@ RDKitFPArguments::RDKitFPArguments(unsigned int minPath, unsigned int maxPath,
   PRECONDITION(maxPath >= minPath, "maxPath<minPath");
 }
 
-std::uint32_t RDKitFPAtomEnv::getBitId(
-    FingerprintArguments *arguments,
+template <typename OutputType>
+OutputType RDKitFPAtomEnv<OutputType>::getBitId(
+    FingerprintArguments<OutputType> *arguments,
     const std::vector<std::uint32_t> *atomInvariants,
     const std::vector<std::uint32_t> *bondInvariants,
     const AdditionalOutput *additionalOutput) const {
@@ -234,16 +243,20 @@ std::uint32_t RDKitFPAtomEnv::getBitId(
   return d_bitId;
 }
 
-RDKitFPAtomEnv::RDKitFPAtomEnv(const std::uint32_t bitId,
-                               const boost::dynamic_bitset<> atomsInPath)
+template <typename OutputType>
+RDKitFPAtomEnv<OutputType>::RDKitFPAtomEnv(
+    const OutputType bitId, const boost::dynamic_bitset<> atomsInPath)
     : d_bitId(bitId), d_atomsInPath(atomsInPath) {}
 
-std::string RDKitFPEnvGenerator::infoString() const {
+template <typename OutputType>
+std::string RDKitFPEnvGenerator<OutputType>::infoString() const {
   return "RDKitFPEnvGenerator";
 }
 
-std::vector<AtomEnvironment *> RDKitFPEnvGenerator::getEnvironments(
-    const ROMol &mol, FingerprintArguments *arguments,
+template <typename OutputType>
+std::vector<AtomEnvironment<OutputType> *>
+RDKitFPEnvGenerator<OutputType>::getEnvironments(
+    const ROMol &mol, FingerprintArguments<OutputType> *arguments,
     const std::vector<std::uint32_t> *fromAtoms,
     const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
     const AdditionalOutput *additionalOutput,
@@ -252,10 +265,10 @@ std::vector<AtomEnvironment *> RDKitFPEnvGenerator::getEnvironments(
   PRECONDITION(!atomInvariants || atomInvariants->size() >= mol.getNumAtoms(),
                "bad atomInvariants size");
 
-  RDKitFPArguments *rDKitFPArguments =
-      dynamic_cast<RDKitFPArguments *>(arguments);
+  RDKitFPArguments<OutputType> *rDKitFPArguments =
+      dynamic_cast<RDKitFPArguments<OutputType> *>(arguments);
 
-  std::vector<AtomEnvironment *> result;
+  std::vector<AtomEnvironment<OutputType> *> result;
 
   // get all paths
   INT_PATH_LIST_MAP allPaths;
@@ -274,7 +287,7 @@ std::vector<AtomEnvironment *> RDKitFPEnvGenerator::getEnvironments(
        paths++) {
     BOOST_FOREACH (const PATH_TYPE &path, paths->second) {
       // the bond hashes of the path
-      std::vector<unsigned int> bondHashes = utils::generateBondHashes(
+      std::vector<std::uint32_t> bondHashes = utils::generateBondHashes(
           mol, atomsInPath, bondCache, isQueryBond, path,
           rDKitFPArguments->df_useBondOrder, atomInvariants);
       if (!bondHashes.size()) {
@@ -289,30 +302,34 @@ std::vector<AtomEnvironment *> RDKitFPEnvGenerator::getEnvironments(
         // finally, we will add the number of distinct atoms in the path at the
         // end
         // of the vect. This allows us to distinguish C1CC1 from CC(C)C
-        bondHashes.push_back(static_cast<unsigned int>(atomsInPath.count()));
+        bondHashes.push_back(static_cast<std::uint32_t>(atomsInPath.count()));
         seed = gboost::hash_range(bondHashes.begin(), bondHashes.end());
       } else {
         seed = bondHashes[0];
       }
 
-      result.push_back(new RDKitFPAtomEnv(seed, atomsInPath));
+
+      result.push_back(new RDKitFPAtomEnv<OutputType>(static_cast<OutputType>(seed), atomsInPath));
     }
   }
 
   return result;
 }
 
-FingerprintGenerator *getRDKitFPGenerator(
+template <typename OutputType>
+FingerprintGenerator<OutputType> *getRDKitFPGenerator(
     const unsigned int minPath, const unsigned int maxPath, const bool useHs,
     const bool branchedPaths, const bool useBondOrder,
     AtomInvariantsGenerator *atomInvariantsGenerator,
     BondInvariantsGenerator *bondInvariantsGenerator,
     const bool countSimulation, const std::vector<std::uint32_t> countBounds,
     const std::uint32_t foldedSize) {
-  AtomEnvironmentGenerator *envGenerator = new RDKitFPEnvGenerator();
-  FingerprintArguments *arguments =
-      new RDKitFPArguments(minPath, maxPath, useHs, branchedPaths, useBondOrder,
-                           countSimulation, countBounds, foldedSize);
+  AtomEnvironmentGenerator<OutputType> *envGenerator =
+      new RDKitFPEnvGenerator<OutputType>();
+  FingerprintArguments<OutputType> *arguments =
+      new RDKitFPArguments<OutputType>(minPath, maxPath, useHs, branchedPaths,
+                                       useBondOrder, countSimulation,
+                                       countBounds, foldedSize);
 
   bool ownsAtomInvGenerator = false;
   if (!atomInvariantsGenerator) {
@@ -322,7 +339,7 @@ FingerprintGenerator *getRDKitFPGenerator(
 
   bool ownsBondInvGenerator = false;
 
-  return new FingerprintGenerator(
+  return new FingerprintGenerator<OutputType>(
       envGenerator, arguments, atomInvariantsGenerator, bondInvariantsGenerator,
       ownsAtomInvGenerator, ownsBondInvGenerator);
 }

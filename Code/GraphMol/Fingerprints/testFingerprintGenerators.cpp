@@ -4,12 +4,12 @@
 #include <GraphMol/RDKitBase.h>
 #include <RDBoost/test.h>
 #include <GraphMol/Fingerprints/AtomPairs.h>
-#include <GraphMol/Fingerprints/AtomPairGenerator.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
-#include <GraphMol/Fingerprints/MorganGenerator.h>
-#include <GraphMol/Fingerprints/RDKitFPGenerator.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/Fingerprints/AtomPairGenerator.cpp>
+#include <GraphMol/Fingerprints/MorganGenerator.cpp>
+#include <GraphMol/Fingerprints/RDKitFPGenerator.cpp>
 
 using namespace RDKit;
 
@@ -105,7 +105,8 @@ void testAtomPairFP() {
   SparseIntVect<std::uint32_t> *fp;
   std::uint32_t c1, c2, c3;
 
-  FingerprintGenerator *atomPairGenerator = AtomPair::getAtomPairGenerator();
+  FingerprintGenerator<std::uint32_t> *atomPairGenerator =
+      AtomPair::getAtomPairGenerator();
 
   mol = SmilesToMol("CCC");
   fp = atomPairGenerator->getFingerprint(*mol);
@@ -148,7 +149,8 @@ void testAtomPairArgs() {
   SparseIntVect<std::uint32_t> *fp;
   std::uint32_t c1, c2, c3;
 
-  FingerprintGenerator *atomPairGenerator = AtomPair::getAtomPairGenerator(2);
+  FingerprintGenerator<std::uint32_t> *atomPairGenerator =
+      AtomPair::getAtomPairGenerator(2);
 
   mol = SmilesToMol("CCC");
   fp = atomPairGenerator->getFingerprint(*mol);
@@ -218,7 +220,8 @@ void testAtomPairOld() {
     SparseIntVect<boost::int32_t> *fp1, *fp2;
     SparseIntVect<boost::uint32_t> *fpu;
 
-    FingerprintGenerator *atomPairGenerator = AtomPair::getAtomPairGenerator();
+    FingerprintGenerator<std::uint32_t> *atomPairGenerator =
+        AtomPair::getAtomPairGenerator();
 
     BOOST_FOREACH (std::string sm, smis) {
       mol = SmilesToMol(sm);
@@ -256,7 +259,8 @@ void testAtomPairBitvector() {
     SparseIntVect<boost::uint32_t> *fp1;
     SparseBitVect *fp2;
 
-    FingerprintGenerator *atomPairGenerator = AtomPair::getAtomPairGenerator();
+    FingerprintGenerator<std::uint32_t> *atomPairGenerator =
+        AtomPair::getAtomPairGenerator();
     std::vector<std::uint32_t> defaultCountBounds = {1, 2, 4, 8};
 
     mol = SmilesToMol("CCC");
@@ -308,7 +312,8 @@ void testAtomPairFoldedBitvector() {
     SparseIntVect<boost::uint32_t> *fp1;
     ExplicitBitVect *fp2;
 
-    FingerprintGenerator *atomPairGenerator = AtomPair::getAtomPairGenerator();
+    FingerprintGenerator<std::uint32_t> *atomPairGenerator =
+        AtomPair::getAtomPairGenerator();
     std::vector<std::uint32_t> defaultCountBounds = {1, 2, 4, 8};
 
     mol = SmilesToMol("CCC");
@@ -360,7 +365,8 @@ void testAtomPairOutput() {
   AdditionalOutput additionalOutput = {nullptr, nullptr, nullptr, nullptr};
   std::vector<std::uint64_t> v;
 
-  FingerprintGenerator *atomPairGenerator = AtomPair::getAtomPairGenerator();
+  FingerprintGenerator<std::uint32_t> *atomPairGenerator =
+      AtomPair::getAtomPairGenerator();
   mol = SmilesToMol("CCC");
   additionalOutput.atomToBits =
       new std::vector<std::vector<std::uint64_t>>(mol->getNumAtoms());
@@ -369,7 +375,6 @@ void testAtomPairOutput() {
   c1 = AtomPair::getAtomCode(mol->getAtomWithIdx(0), 0, false);
   c2 = AtomPair::getAtomCode(mol->getAtomWithIdx(1), 0, false);
   c3 = AtomPair::getAtomCode(mol->getAtomWithIdx(2), 0, false);
-  std::cout << additionalOutput.atomToBits->at(0).empty() << std::endl;
   v = additionalOutput.atomToBits->at(0);
   TEST_ASSERT(std::find(v.begin(), v.end(),
                         (AtomPair::getAtomPairCode(c1, c2, 1, false))) !=
@@ -396,6 +401,8 @@ void testAtomPairOutput() {
   delete fp;
   delete additionalOutput.atomToBits;
   delete atomPairGenerator;
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
 void testMorganFP() {
@@ -406,8 +413,8 @@ void testMorganFP() {
   SparseIntVect<std::uint32_t> *fp, *fpOld;
   int radius = 3;
 
-  FingerprintGenerator *morganGenerator =
-      MorganFingerprint::getMorganGenerator(radius);
+  FingerprintGenerator<std::uint32_t> *morganGenerator =
+      MorganFingerprint::getMorganGenerator<std::uint32_t>(radius);
 
   BOOST_FOREACH (std::string sm, smis) {
     mol = SmilesToMol(sm);
@@ -440,9 +447,10 @@ void testInvariantGenerators() {
   BondInvariantsGenerator *bondInvariantsGenerator =
       new MorganFingerprint::MorganBondInvGenerator();
 
-  FingerprintGenerator *morganGenerator = MorganFingerprint::getMorganGenerator(
-      radius, true, false, true, false, atomInvariantsGenerator,
-      bondInvariantsGenerator);
+  FingerprintGenerator<std::uint32_t> *morganGenerator =
+      MorganFingerprint::getMorganGenerator<std::uint32_t>(
+          radius, true, false, true, false, atomInvariantsGenerator,
+          bondInvariantsGenerator);
 
   mol = SmilesToMol("CCCCC");
   fp = morganGenerator->getFingerprint(*mol);
@@ -457,7 +465,7 @@ void testInvariantGenerators() {
   atomInvariantsGenerator = new MorganFingerprint::MorganAtomInvGenerator();
   bondInvariantsGenerator = new MorganFingerprint::MorganBondInvGenerator();
 
-  morganGenerator = MorganFingerprint::getMorganGenerator(
+  morganGenerator = MorganFingerprint::getMorganGenerator<std::uint32_t>(
       radius, true, false, true, false, atomInvariantsGenerator,
       bondInvariantsGenerator);
 
@@ -475,7 +483,7 @@ void testInvariantGenerators() {
       new MorganFingerprint::MorganFeatureAtomInvGenerator();
   bondInvariantsGenerator = new MorganFingerprint::MorganBondInvGenerator();
 
-  morganGenerator = MorganFingerprint::getMorganGenerator(
+  morganGenerator = MorganFingerprint::getMorganGenerator<std::uint32_t>(
       radius, true, false, true, false, atomInvariantsGenerator,
       bondInvariantsGenerator);
 
@@ -492,7 +500,7 @@ void testInvariantGenerators() {
   atomInvariantsGenerator = new AtomPair::AtomPairAtomInvGenerator();
   bondInvariantsGenerator = new MorganFingerprint::MorganBondInvGenerator();
 
-  morganGenerator = MorganFingerprint::getMorganGenerator(
+  morganGenerator = MorganFingerprint::getMorganGenerator<std::uint32_t>(
       radius, true, false, true, false, atomInvariantsGenerator,
       bondInvariantsGenerator);
 
@@ -509,9 +517,10 @@ void testInvariantGenerators() {
   atomInvariantsGenerator = new MorganFingerprint::MorganAtomInvGenerator();
   bondInvariantsGenerator = nullptr;
 
-  FingerprintGenerator *atomPairGenerator = AtomPair::getAtomPairGenerator(
-      1, radius, false, true, true, atomInvariantsGenerator,
-      bondInvariantsGenerator);
+  FingerprintGenerator<std::uint32_t> *atomPairGenerator =
+      AtomPair::getAtomPairGenerator(1, radius, false, true, true,
+                                     atomInvariantsGenerator,
+                                     bondInvariantsGenerator);
 
   mol = SmilesToMol("CCC");
   fp = atomPairGenerator->getFingerprint(*mol);
@@ -557,11 +566,12 @@ void testCustomInvariants() {
   AtomInvariantsGenerator *atomInvariantsGenerator =
       new AtomPair::AtomPairAtomInvGenerator();
 
-  FingerprintGenerator *morganGenerator = MorganFingerprint::getMorganGenerator(
-      radius, true, false, true, false, atomInvariantsGenerator);
+  FingerprintGenerator<std::uint32_t> *morganGenerator =
+      MorganFingerprint::getMorganGenerator<std::uint32_t>(
+          radius, true, false, true, false, atomInvariantsGenerator);
 
-  FingerprintGenerator *defaultMorganGenerator =
-      MorganFingerprint::getMorganGenerator(radius);
+  FingerprintGenerator<std::uint32_t> *defaultMorganGenerator =
+      MorganFingerprint::getMorganGenerator<std::uint32_t>(radius);
 
   mol = SmilesToMol("CCCCC");
   std::vector<std::uint32_t> *customInvariants =
@@ -577,6 +587,8 @@ void testCustomInvariants() {
   delete morganGenerator, defaultMorganGenerator;
   delete atomInvariantsGenerator;
   delete customInvariants;
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
 void testRDKitFP() {
@@ -584,21 +596,21 @@ void testRDKitFP() {
   BOOST_LOG(rdErrorLog) << "Test RDKit fp generator" << std::endl;
 
   ROMol *mol;
-  SparseIntVect<std::uint32_t> *fp, *fpOld;
-  SparseIntVect<std::uint64_t> *fp64;
+  SparseIntVect<std::uint64_t> *fp, *fpTemp, *fpOld;
 
-  FingerprintGenerator *fpGenerator = RDKitFP::getRDKitFPGenerator();
+  FingerprintGenerator<std::uint64_t> *fpGenerator =
+      RDKitFP::getRDKitFPGenerator<std::uint64_t>();
 
   BOOST_FOREACH (std::string sm, smis) {
     mol = SmilesToMol(sm);
     fp = fpGenerator->getFingerprint(*mol);
-    fp64 = getUnfoldedRDKFingerprintMol(*mol);
-    std::map<std::uint64_t, int> nz = fp64->getNonzeroElements();
+    fpTemp = getUnfoldedRDKFingerprintMol(*mol);
 
-    // todo fix this after switching everything to 64 bits
-    fpOld = new SparseIntVect<std::uint32_t>(std::numeric_limits<uint32_t>::max());
-    for (std::map<std::uint64_t, int>::iterator it = nz.begin(); it != nz.end();
-         it++) {
+    // Old and new versions produce different length results, but data should be
+    // the same
+    std::map<std::uint64_t, int> nz = fpTemp->getNonzeroElements();
+    fpOld = new SparseIntVect<std::uint64_t>(fp->getLength());
+    for (auto it = nz.begin(); it != nz.end(); it++) {
       fpOld->setVal(it->first, it->second);
     }
 
@@ -608,7 +620,7 @@ void testRDKitFP() {
     delete mol;
     delete fp;
     delete fpOld;
-    delete fp64;
+    delete fpTemp;
   }
 
   delete fpGenerator;

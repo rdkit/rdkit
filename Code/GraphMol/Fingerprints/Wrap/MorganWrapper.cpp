@@ -1,16 +1,15 @@
 
 #include <boost/python.hpp>
-#include <GraphMol/Fingerprints/Wrap/FingerprintGeneratorWrapper.h>
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
-#include <GraphMol/Fingerprints/MorganGenerator.h>
+#include <GraphMol/Fingerprints/MorganGenerator.cpp>
 
 using namespace RDKit;
-using namespace RDKit::FingerprintWrapper;
 namespace python = boost::python;
 
 namespace RDKit {
 namespace MorganWrapper {
-FingerprintGeneratorWrapper *getMorganGeneratorWrapped(
+template <typename OutputType>
+FingerprintGenerator<OutputType> *getMorganGenerator(
     const unsigned int radius, const bool countSimulation,
     const bool includeChirality, const bool useBondTypes,
     const bool onlyNonzeroInvariants, const bool includeRingMembership,
@@ -28,15 +27,9 @@ FingerprintGeneratorWrapper *getMorganGeneratorWrapped(
     bondInvariantsGenerator = bondInvGen();
   }
 
-  FingerprintGenerator *fingerprintGenerator =
-      MorganFingerprint::getMorganGenerator(
-          radius, countSimulation, includeChirality, useBondTypes,
-          onlyNonzeroInvariants, atomInvariantsGenerator,
-          bondInvariantsGenerator);
-
-  FingerprintGeneratorWrapper *wrapped = new FingerprintGeneratorWrapper();
-  wrapped->dp_fingerprintGenerator = fingerprintGenerator;
-  return wrapped;
+  return MorganFingerprint::getMorganGenerator<OutputType>(
+      radius, countSimulation, includeChirality, useBondTypes,
+      onlyNonzeroInvariants, atomInvariantsGenerator, bondInvariantsGenerator);
 }
 
 AtomInvariantsGenerator *getMorganAtomInvGen(const bool includeRingMembership) {
@@ -47,7 +40,22 @@ void exportMorgan() {
   std::string docString = "";
 
   python::def(
-      "GetMorganGenerator", &getMorganGeneratorWrapped,
+      "GetMorganGenerator32", getMorganGenerator<std::uint32_t>,
+      (python::arg("radius") = 3, python::arg("useCountSimulation") = true,
+       python::arg("includeChirality") = false,
+       python::arg("useBondTypes") = true,
+       python::arg("onlyNonzeroInvariants") = false,
+       python::arg("includeRingMembership") = true,
+       python::arg("atomInvariantsGenerator") = python::object(),
+       python::arg("bondInvariantsGenerator") = python::object()),
+      docString.c_str(),
+      python::return_value_policy<
+          python::manage_new_object,
+          python::return_internal_reference<
+              7, python::return_internal_reference<8>>>());
+
+  python::def(
+      "GetMorganGenerator64", getMorganGenerator<std::uint64_t>,
       (python::arg("radius") = 3, python::arg("useCountSimulation") = true,
        python::arg("includeChirality") = false,
        python::arg("useBondTypes") = true,

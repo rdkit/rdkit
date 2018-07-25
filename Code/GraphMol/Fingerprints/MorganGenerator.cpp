@@ -186,30 +186,39 @@ std::string MorganBondInvGenerator::infoString() const {
          " useChirality=" + std::to_string(df_useChirality);
 }
 
-std::uint64_t MorganArguments::getResultSize() const {
+template <>
+uint32_t MorganArguments<uint32_t>::getResultSize() const {
   return std::numeric_limits<uint32_t>::max();
 }
 
-MorganArguments::MorganArguments(const unsigned int radius,
-                                 const bool countSimulation,
-                                 const bool includeChirality,
-                                 const bool onlyNonzeroInvariants,
-                                 const std::vector<std::uint32_t> countBounds,
-                                 const std::uint32_t foldedSize)
-    : FingerprintArguments(countSimulation, countBounds, foldedSize),
+template <>
+uint64_t MorganArguments<uint64_t>::getResultSize() const {
+  return std::numeric_limits<uint64_t>::max();
+}
+
+template <typename OutputType>
+MorganArguments<OutputType>::MorganArguments(
+    const unsigned int radius, const bool countSimulation,
+    const bool includeChirality, const bool onlyNonzeroInvariants,
+    const std::vector<std::uint32_t> countBounds,
+    const std::uint32_t foldedSize)
+    : FingerprintArguments<OutputType>(countSimulation, countBounds,
+                                       foldedSize),
       df_includeChirality(includeChirality),
       df_onlyNonzeroInvariants(onlyNonzeroInvariants),
       d_radius(radius) {}
 
-std::string MorganArguments::infoString() const {
+template <typename OutputType>
+std::string MorganArguments<OutputType>::infoString() const {
   return "MorganArguments includeChirality=" +
          std::to_string(df_includeChirality) +
          " onlyNonzeroInvariants=" + std::to_string(df_onlyNonzeroInvariants) +
          " radius=" + std::to_string(d_radius);
 }
 
-std::uint32_t MorganAtomEnv::getBitId(
-    FingerprintArguments *arguments,
+template <typename OutputType>
+OutputType MorganAtomEnv<OutputType>::getBitId(
+    FingerprintArguments<OutputType> *arguments,
     const std::vector<std::uint32_t> *atomInvariants,
     const std::vector<std::uint32_t> *bondInvariants,
     const AdditionalOutput *additionalOutput) const {
@@ -220,13 +229,16 @@ std::uint32_t MorganAtomEnv::getBitId(
   return d_code;
 }
 
-MorganAtomEnv::MorganAtomEnv(const std::uint32_t code,
-                             const unsigned int atomId,
-                             const unsigned int layer)
+template <typename OutputType>
+MorganAtomEnv<OutputType>::MorganAtomEnv(const std::uint32_t code,
+                                         const unsigned int atomId,
+                                         const unsigned int layer)
     : d_code(code), d_atomId(atomId), d_layer(layer) {}
 
-std::vector<AtomEnvironment *> MorganEnvGenerator::getEnvironments(
-    const ROMol &mol, FingerprintArguments *arguments,
+template <typename OutputType>
+std::vector<AtomEnvironment<OutputType> *>
+MorganEnvGenerator<OutputType>::getEnvironments(
+    const ROMol &mol, FingerprintArguments<OutputType> *arguments,
     const std::vector<std::uint32_t> *fromAtoms,
     const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
     const AdditionalOutput *additionalOutput,
@@ -237,10 +249,14 @@ std::vector<AtomEnvironment *> MorganEnvGenerator::getEnvironments(
   PRECONDITION(bondInvariants && (bondInvariants->size() >= mol.getNumBonds()),
                "bad bond invariants size");
   unsigned int nAtoms = mol.getNumAtoms();
-  std::vector<AtomEnvironment *> result = std::vector<AtomEnvironment *>();
-  MorganArguments *morganArguments = dynamic_cast<MorganArguments *>(arguments);
+  std::vector<AtomEnvironment<OutputType> *> result =
+      std::vector<AtomEnvironment<OutputType> *>();
+  MorganArguments<OutputType> *morganArguments =
+      dynamic_cast<MorganArguments<OutputType> *>(arguments);
 
-  std::vector<uint32_t> currentInvariants(*atomInvariants);
+  std::vector<OutputType> currentInvariants(atomInvariants->size());
+  std::copy(atomInvariants->begin(), atomInvariants->end(),
+            currentInvariants.begin());
 
   boost::dynamic_bitset<> includeAtoms(nAtoms);
   if (fromAtoms) {
@@ -285,7 +301,8 @@ std::vector<AtomEnvironment *> MorganEnvGenerator::getEnvironments(
   for (unsigned int i = 0; i < nAtoms; ++i) {
     if (includeAtoms[i]) {
       if (!morganArguments->df_onlyNonzeroInvariants || currentInvariants[i]) {
-        result.push_back(new MorganAtomEnv(currentInvariants[i], i, 0));
+        result.push_back(
+            new MorganAtomEnv<OutputType>(currentInvariants[i], i, 0));
       }
     }
   }
@@ -294,7 +311,7 @@ std::vector<AtomEnvironment *> MorganEnvGenerator::getEnvironments(
   for (unsigned int layer = 0; layer < morganArguments->d_radius; ++layer) {
     // will hold bit ids calculated this round to be used as invariants next
     // round
-    std::vector<uint32_t> nextLayerInvariants(nAtoms);
+    std::vector<OutputType> nextLayerInvariants(nAtoms);
 
     // holds atoms in the environment (neighborhood) for the current layer for
     // each atom, starts with the immediate neighbors of atoms and expands with
@@ -338,7 +355,7 @@ std::vector<AtomEnvironment *> MorganEnvGenerator::getEnvironments(
         std::sort(neighborhoodInvariants.begin(), neighborhoodInvariants.end());
         // and now calculate the new invariant and test if the atom is newly
         // "chiral"
-        boost::uint32_t invar = layer;
+        std::uint32_t invar = layer;
         gboost::hash_combine(invar, currentInvariants[atomIdx]);
         bool looksChiral = (tAtom->getChiralTag() != Atom::CHI_UNSPECIFIED);
         for (std::vector<std::pair<int32_t, uint32_t>>::const_iterator it =
@@ -375,13 +392,13 @@ std::vector<AtomEnvironment *> MorganEnvGenerator::getEnvironments(
 
         // this rounds bit id will be next rounds atom invariant, so we save it
         // here
-        nextLayerInvariants[atomIdx] = static_cast<uint32_t>(invar);
+        nextLayerInvariants[atomIdx] = static_cast<OutputType>(invar);
 
         // store the environment that generated this bit id along with the bit
         // id and the atom id
         allNeighborhoodsThisRound.push_back(
             boost::make_tuple(roundAtomNeighborhoods[atomIdx],
-                              static_cast<uint32_t>(invar), atomIdx));
+                              static_cast<OutputType>(invar), atomIdx));
         if (std::find(neighborhoods.begin(), neighborhoods.end(),
                       roundAtomNeighborhoods[atomIdx]) != neighborhoods.end()) {
           // we have seen this exact environment before, this atom
@@ -402,8 +419,8 @@ std::vector<AtomEnvironment *> MorganEnvGenerator::getEnvironments(
         if (!morganArguments->df_onlyNonzeroInvariants ||
             (*atomInvariants)[iter->get<2>()]) {
           if (includeAtoms[iter->get<2>()]) {
-            result.push_back(
-                new MorganAtomEnv(iter->get<1>(), iter->get<2>(), layer + 1));
+            result.push_back(new MorganAtomEnv<OutputType>(
+                iter->get<1>(), iter->get<2>(), layer + 1));
             neighborhoods.push_back(iter->get<0>());
           }
         }
@@ -426,11 +443,13 @@ std::vector<AtomEnvironment *> MorganEnvGenerator::getEnvironments(
   return result;
 }
 
-std::string MorganEnvGenerator::infoString() const {
+template <typename OutputType>
+std::string MorganEnvGenerator<OutputType>::infoString() const {
   return "MorganEnvironmentGenerator";
 }
 
-FingerprintGenerator *getMorganGenerator(
+template <typename OutputType>
+FingerprintGenerator<OutputType> *getMorganGenerator(
     const unsigned int radius, const bool countSimulation,
     const bool includeChirality, const bool useBondTypes,
     const bool onlyNonzeroInvariants,
@@ -438,10 +457,12 @@ FingerprintGenerator *getMorganGenerator(
     BondInvariantsGenerator *bondInvariantsGenerator,
     const std::uint32_t foldedSize,
     const std::vector<std::uint32_t> countBounds) {
-  AtomEnvironmentGenerator *morganEnvGenerator = new MorganEnvGenerator();
-  FingerprintArguments *morganArguments =
-      new MorganArguments(radius, countSimulation, includeChirality,
-                          onlyNonzeroInvariants, countBounds, foldedSize);
+  AtomEnvironmentGenerator<OutputType> *morganEnvGenerator =
+      new MorganEnvGenerator<OutputType>();
+  FingerprintArguments<OutputType> *morganArguments =
+      new MorganArguments<OutputType>(radius, countSimulation, includeChirality,
+                                      onlyNonzeroInvariants, countBounds,
+                                      foldedSize);
 
   bool ownsAtomInvGenerator = false;
   if (!atomInvariantsGenerator) {
@@ -456,7 +477,7 @@ FingerprintGenerator *getMorganGenerator(
     ownsBondInvGenerator = true;
   }
 
-  return new FingerprintGenerator(
+  return new FingerprintGenerator<OutputType>(
       morganEnvGenerator, morganArguments, atomInvariantsGenerator,
       bondInvariantsGenerator, ownsAtomInvGenerator, ownsBondInvGenerator);
 }

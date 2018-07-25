@@ -85,13 +85,14 @@ class MorganBondInvGenerator : public BondInvariantsGenerator {
  /brief Class for holding Morgan fingerprint specific arguments
 
  */
-class MorganArguments : public FingerprintArguments {
+template <typename OutputType>
+class MorganArguments : public FingerprintArguments<OutputType> {
  public:
   const bool df_includeChirality;
   const bool df_onlyNonzeroInvariants;
   const unsigned int d_radius;
 
-  std::uint64_t getResultSize() const;
+  OutputType getResultSize() const;
 
   std::string infoString() const;
 
@@ -121,13 +122,14 @@ class MorganArguments : public FingerprintArguments {
  environments and the additional data necessary extra outputs
 
  */
-class MorganAtomEnv : public AtomEnvironment {
-  const std::uint32_t d_code;
+template <typename OutputType>
+class MorganAtomEnv : public AtomEnvironment<OutputType> {
+  const OutputType d_code;
   const unsigned int d_atomId;
   const unsigned int d_layer;
 
  public:
-  std::uint32_t getBitId(FingerprintArguments *arguments,
+  OutputType getBitId(FingerprintArguments<OutputType> *arguments,
                          const std::vector<std::uint32_t> *atomInvariants,
                          const std::vector<std::uint32_t> *bondInvariants,
                          const AdditionalOutput *additionalOutput) const;
@@ -147,10 +149,11 @@ class MorganAtomEnv : public AtomEnvironment {
  /brief Class that generates atom environments for Morgan fingerprint
 
  */
-class MorganEnvGenerator : public AtomEnvironmentGenerator {
+template <typename OutputType>
+class MorganEnvGenerator : public AtomEnvironmentGenerator<OutputType> {
  public:
-  std::vector<AtomEnvironment *> getEnvironments(
-      const ROMol &mol, FingerprintArguments *arguments,
+  std::vector<AtomEnvironment<OutputType> *> getEnvironments(
+      const ROMol &mol, FingerprintArguments<OutputType> *arguments,
       const std::vector<std::uint32_t> *fromAtoms,
       const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
       const AdditionalOutput *additionalOutput,
@@ -175,7 +178,8 @@ class MorganEnvGenerator : public AtomEnvironmentGenerator {
  /param countBounds : countBounds for MorganArguments
  /return FingerprintGenerator* that generates Morgan fingerprints
  */
-FingerprintGenerator *getMorganGenerator(
+template <typename OutputType>
+FingerprintGenerator<OutputType> *getMorganGenerator(
     const unsigned int radius, const bool countSimulation = true,
     const bool includeChirality = false, const bool useBondTypes = true,
     const bool onlyNonzeroInvariants = false,

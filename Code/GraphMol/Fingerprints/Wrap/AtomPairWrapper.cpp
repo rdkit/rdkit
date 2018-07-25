@@ -1,17 +1,15 @@
 
 #include <boost/python.hpp>
-#include <GraphMol/Fingerprints/Wrap/FingerprintGeneratorWrapper.h>
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
 #include <GraphMol/Fingerprints/AtomPairGenerator.h>
 
 using namespace RDKit;
 using namespace RDKit::AtomPair;
-using namespace RDKit::FingerprintWrapper;
 namespace python = boost::python;
 
 namespace RDKit {
 namespace AtomPairWrapper {
-FingerprintGeneratorWrapper *getAtomPairGeneratorWrapped(
+FingerprintGenerator<std::uint32_t> *getAtomPairGeneratorWrapped(
     const unsigned int minDistance, const unsigned int maxDistance,
     const bool includeChirality, const bool use2D,
     const bool useCountSimulation, python::object &py_atomInvGen,
@@ -29,24 +27,9 @@ FingerprintGeneratorWrapper *getAtomPairGeneratorWrapped(
     bondInvariantsGenerator = bondInvGen();
   }
 
-  AtomEnvironmentGenerator *atomPairEnvGenerator =
-      new AtomPair::AtomPairEnvGenerator();
-  FingerprintArguments *atomPairArguments = new AtomPair::AtomPairArguments(
-      useCountSimulation, includeChirality, use2D, minDistance, maxDistance);
-
-  bool ownsAtomInvGenerator = false;
-  if (!atomInvariantsGenerator) {
-    atomInvariantsGenerator = new AtomPairAtomInvGenerator(includeChirality);
-    ownsAtomInvGenerator = true;
-  }
-
-  FingerprintGenerator *fingerprintGenerator = new FingerprintGenerator(
-      atomPairEnvGenerator, atomPairArguments, atomInvariantsGenerator,
-      bondInvariantsGenerator, ownsAtomInvGenerator, false);
-
-  FingerprintGeneratorWrapper *wrapped = new FingerprintGeneratorWrapper();
-  wrapped->dp_fingerprintGenerator = fingerprintGenerator;
-  return wrapped;
+  return AtomPair::getAtomPairGenerator(
+      minDistance, maxDistance, includeChirality, use2D, useCountSimulation,
+      atomInvariantsGenerator, bondInvariantsGenerator);
 }
 
 AtomInvariantsGenerator *getAtomPairAtomInvGen(const bool includeChirality) {

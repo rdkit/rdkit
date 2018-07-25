@@ -42,14 +42,15 @@ class AtomPairAtomInvGenerator : public AtomInvariantsGenerator {
   /brief class that holds atom-pair fingerprint specific arguments
 
  */
-class AtomPairArguments : public FingerprintArguments {
+template <typename OutputType>
+class AtomPairArguments : public FingerprintArguments<OutputType> {
  public:
   const bool df_includeChirality;
   const bool df_use2D;
   const unsigned int d_minDistance;
   const unsigned int d_maxDistance;
 
-  std::uint64_t getResultSize() const;
+  OutputType getResultSize() const;
 
   std::string infoString() const;
 
@@ -85,13 +86,14 @@ class AtomPairArguments : public FingerprintArguments {
   generation
 
  */
-class AtomPairAtomEnv : public AtomEnvironment {
+template <typename OutputType>
+class AtomPairAtomEnv : public AtomEnvironment<OutputType> {
   const unsigned int d_atomIdFirst;
   const unsigned int d_atomIdSecond;
   const unsigned int d_distance;
 
  public:
-  std::uint32_t getBitId(FingerprintArguments *arguments,
+  std::uint32_t getBitId(FingerprintArguments<OutputType> *arguments,
                          const std::vector<std::uint32_t> *atomInvariants,
                          const std::vector<std::uint32_t> *bondInvariants,
                          const AdditionalOutput *additionalOutput) const;
@@ -111,10 +113,11 @@ class AtomPairAtomEnv : public AtomEnvironment {
   /brief class that generates atom-environments for atom-pair fingerprint
 
  */
-class AtomPairEnvGenerator : public AtomEnvironmentGenerator {
+template <typename OutputType>
+class AtomPairEnvGenerator : public AtomEnvironmentGenerator<OutputType> {
  public:
-  std::vector<AtomEnvironment *> getEnvironments(
-      const ROMol &mol, FingerprintArguments *arguments,
+  std::vector<AtomEnvironment<OutputType> *> getEnvironments(
+      const ROMol &mol, FingerprintArguments<OutputType> *arguments,
       const std::vector<std::uint32_t> *fromAtoms,
       const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
       const AdditionalOutput *additionalOutput,
@@ -146,7 +149,7 @@ class AtomPairEnvGenerator : public AtomEnvironmentGenerator {
 
   /return FingerprintGenerator that generates atom-pair fingerprints
  */
-FingerprintGenerator *getAtomPairGenerator(
+FingerprintGenerator<std::uint32_t> *getAtomPairGenerator(
     const unsigned int minDistance = 1,
     const unsigned int maxDistance = maxPathLen - 1,
     const bool includeChirality = false, const bool use2D = true,
