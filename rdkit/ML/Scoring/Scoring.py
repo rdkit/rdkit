@@ -14,6 +14,7 @@ after a file from Peter Gedeck, Greg Landrum
 """
 
 import math
+from collections import namedtuple
 
 
 def CalcROC(scores, col):
@@ -22,7 +23,7 @@ def CalcROC(scores, col):
   if numMol == 0:
     raise ValueError('score list is empty')
   TPR = [0] * numMol  # True positive rate: TP/(TP+FN)
-  FPR = [0] * numMol  # True negative rate: FP/(TN+FP)
+  FPR = [0] * numMol  # False positive rate: FP/(TN+FP)
   numActives = 0
   numInactives = 0
 
@@ -41,15 +42,16 @@ def CalcROC(scores, col):
   if numInactives > 0:
     FPR = [1.0 * i / numInactives for i in FPR]
 
-  return [FPR, TPR]
+  RocCurve = namedtuple('RocCurve', ['FPR', 'TPR'])
+  return RocCurve(FPR=FPR, TPR=TPR)
 
 
 def CalcAUC(scores, col):
   """ Determines the area under the ROC curve """
   # determine the ROC curve
   roc = CalcROC(scores, col)
-  FPR = roc[0]
-  TPR = roc[1]
+  FPR = roc.FPR
+  TPR = roc.TPR
 
   numMol = len(scores)
   AUC = 0
