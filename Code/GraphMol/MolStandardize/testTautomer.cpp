@@ -6,7 +6,7 @@
 using namespace RDKit;
 using namespace MolStandardize;
 
-void test1() {
+void testEnumerator() {
 	std::string rdbase = getenv("RDBASE");
 	std::string tautomerFile = 
 		rdbase + "/Code/GraphMol/MolStandardize/TautomerCatalog/test_data/tautomerTransforms.in";
@@ -859,7 +859,28 @@ void test1() {
 
 }
 
+void testCanonicalize() {
+	std::string rdbase = getenv("RDBASE");
+	std::string tautomerFile = 
+		rdbase + "/Code/GraphMol/MolStandardize/TautomerCatalog/test_data/tautomerTransforms.in";
+	auto *tautparams = new TautomerCatalogParams(tautomerFile);
+	unsigned int ntautomers = tautparams->getNumTautomers();
+	TEST_ASSERT(ntautomers == 34);
+
+	TautomerCatalog tautcat(tautparams);
+	TautomerCanonicalizer tc;
+
+	// Enumerate 1,3 keto/enol tautomer.
+	std::string smi1 = "C1(=CCCCC1)O";
+	std::shared_ptr<ROMol> m1( SmilesToMol(smi1) );
+	ROMol* res = tc.canonicalize(*m1, &tautcat);
+//		TEST_ASSERT(MolToSmiles(*res) == "O=C1CCCCC1");
+
+
+}
+
 int main() {
-	test1();
+	testEnumerator();
+	testCanonicalize();
 	return 0;
 }

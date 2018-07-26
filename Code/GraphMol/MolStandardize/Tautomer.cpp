@@ -16,7 +16,30 @@ unsigned int MAX_TAUTOMERS = 1000;
 ROMol* TautomerCanonicalizer::canonicalize(const ROMol &mol, TautomerCatalog *tautcat) {
 
 	TautomerEnumerator tenum;
-	std::vector<ROMOL_SPTR> omol = tenum.enumerate(mol, tautcat);
+	std::vector<ROMOL_SPTR> tautomers = tenum.enumerate(mol, tautcat);
+	if (tautomers.size() == 1) {
+			return tautomers[0].get();
+	}
+	// Calculate score for each tautomer
+	for (const auto t : tautomers) {
+		std::string smiles = MolToSmiles(*t);
+		std::cout << "Tautomer: " << smiles << std::endl;
+		unsigned int score = 0;
+		// Add aromatic ring scores
+		VECT_INT_VECT rings;
+		MolOps::symmetrizeSSSR(*t, rings);
+		for (const auto ring : rings) {
+			for (const auto pair: MolStandardize::pairwise(ring)){
+//				std::cout << pair.first << " " << pair.second << std::endl;
+				Bond::BondType btype = t->getBondBetweenAtoms(pair.first, pair.second)->getBondType();
+//				std::cout << btype << std::endl;
+				// Stopping for the moment to do the Python wrap				
+
+			}
+		}
+
+	}
+
 	return new ROMol(mol);
 
 }
@@ -78,7 +101,7 @@ std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(const ROMol &mol, Tautomer
 
 					std::cout << "Matched: " << name << std::endl; }
 					for (const auto &match : matches) {
-						std::vector<unsigned int> idx_matches;
+						std::vector<int> idx_matches;
 						for (const auto &pair : match) {
 							idx_matches.push_back(pair.second);
 						}
@@ -213,7 +236,7 @@ std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(const ROMol &mol, Tautomer
 	return res;
 }
 
-std::vector<std::pair<unsigned int, unsigned int>> pairwise(const std::vector<unsigned int> vect) {
+std::vector<std::pair<unsigned int, unsigned int>> pairwise(const std::vector<int> vect) {
 	std::vector<std::pair<unsigned int, unsigned int>> pvect;
 	for ( size_t i = 0; i < vect.size()-1; ++i ) {
 		std::pair<unsigned int, unsigned int> p = 

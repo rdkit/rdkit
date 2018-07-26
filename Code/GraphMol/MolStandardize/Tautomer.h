@@ -57,7 +57,7 @@ class TautomerEnumerator {
 //		unsigned int MAX_TAUTOMERS;
 }; // TautomerEnumerator class
 
-std::vector<std::pair<unsigned int, unsigned int>> pairwise(const std::vector<unsigned int> vect);
+std::vector<std::pair<unsigned int, unsigned int>> pairwise(const std::vector<int> vect);
 } // namespace MolStandardize
 } // namespace RDKit
 
