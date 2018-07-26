@@ -79,7 +79,7 @@ void MolVSValidation::fragmentValidation(
   std::string rdbase = getenv("RDBASE");
   std::string fgrpFile = rdbase +
                          "/Code/GraphMol/MolStandardize/FragmentCatalog/"
-                         "test_data/fragmentPatterns.txt";
+                         "data/fragmentPatterns.txt";
   std::shared_ptr<FragmentCatalogParams> fparams(
       new FragmentCatalogParams(fgrpFile));
   FragmentCatalog fcat(fparams.get());
@@ -116,11 +116,11 @@ void MolVSValidation::fragmentValidation(
           std::sort(substructidx.begin(), substructidx.end());
           //					// help to debug...
           //					std::cout << "molfragidx: "  <<
-          //std::endl; 					for (const auto &i : molfragidx) { std::cout << i; };
-          //					std::cout << std::endl;
-          //					std::cout << "substructidx: "  <<
-          //std::endl; 					for (const auto &i : substructidx) { std::cout << i; };
-          //					std::cout << std::endl;
+          // std::endl; 					for (const auto &i : molfragidx) {
+          // std::cout << i; }; 					std::cout << std::endl; 					std::cout <<
+          //"substructidx: "  << std::endl;
+          // for (const auto &i : substructidx) { std::cout << i; }; 					std::cout <<
+          //std::endl;
           //					//
           if (molfragidx == substructidx & !fpresent) {
             std::string msg = fname + " is present";

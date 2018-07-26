@@ -28,14 +28,14 @@ struct CleanupParameters {
          //			normalizations(""),//this->DEFAULT_TRANSFORMS),
         normalizations(rdbase +
                        "/Code/GraphMol/MolStandardize/TransformCatalog/"
-                       "test_data/normalizations.txt"),
+                       "data/normalizations.txt"),
         acidbaseFile(rdbase +
-                     "/Code/GraphMol/MolStandardize/AcidBaseCatalog/test_data/"
+                     "/Code/GraphMol/MolStandardize/AcidBaseCatalog/data/"
                      "acid_base_pairs.txt"),
         // chargeCorrections()
         tautomerTransforms(rdbase +
                            "/Code/GraphMol/MolStandardize/TautomerCatalog/"
-                           "test_data/tautomerTransforms.in"),
+                           "data/tautomerTransforms.in"),
         // TautomerScores()
         maxRestarts(200),
         maxTautomers(1000),

@@ -128,7 +128,7 @@ void testCharge() {
   std::string rdbase = getenv("RDBASE");
   std::string acidbaseFile = rdbase +
                              "/Code/GraphMol/MolStandardize/AcidBaseCatalog/"
-                             "test_data/acid_base_pairs.txt";
+                             "data/acid_base_pairs.txt";
   std::shared_ptr<AcidBaseCatalogParams> abparams(
       new AcidBaseCatalogParams(acidbaseFile));
   unsigned int npairs = abparams->getNumPairs();
@@ -171,7 +171,7 @@ void testNormalize() {
   std::string rdbase = getenv("RDBASE");
   std::string transformFile = rdbase +
                               "/Code/GraphMol/MolStandardize/TransformCatalog/"
-                              "test_data/normalizations.txt";
+                              "data/normalizations.txt";
   std::shared_ptr<TransformCatalogParams> tparams(
       new TransformCatalogParams(transformFile));
   unsigned int ntransforms = tparams->getNumTransformations();

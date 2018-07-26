@@ -15,7 +15,7 @@ void testReionizer() {
   std::string rdbase = getenv("RDBASE");
   std::string acidbaseFile = rdbase +
                              "/Code/GraphMol/MolStandardize/AcidBaseCatalog/"
-                             "test_data/acid_base_pairs.txt";
+                             "data/acid_base_pairs.txt";
   std::shared_ptr<AcidBaseCatalogParams> abparams(
       new AcidBaseCatalogParams(acidbaseFile));
   unsigned int npairs = abparams->getNumPairs();

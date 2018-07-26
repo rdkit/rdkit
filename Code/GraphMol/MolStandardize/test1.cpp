@@ -104,7 +104,7 @@ void testNormalize() {
   std::string rdbase = getenv("RDBASE");
   std::string transformFile = rdbase +
                               "/Code/GraphMol/MolStandardize/TransformCatalog/"
-                              "test_data/normalizations.txt";
+                              "data/normalizations.txt";
   params.normalizations = transformFile;
   std::cout << params.normalizations << std::endl;
 
@@ -238,7 +238,7 @@ void testNormalizeMultiFrags() {
   std::string rdbase = getenv("RDBASE");
   std::string transformFile = rdbase +
                               "/Code/GraphMol/MolStandardize/TransformCatalog/"
-                              "test_data/normalizations.txt";
+                              "data/normalizations.txt";
   params.normalizations = transformFile;
 
   // All fragments should stay if one gets transformed by normalization.

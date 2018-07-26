@@ -24,7 +24,7 @@ void test1() {
   std::string rdbase = getenv("RDBASE");
   std::string transformFile = rdbase +
                               "/Code/GraphMol/MolStandardize/TransformCatalog/"
-                              "test_data/normalizations.txt";
+                              "data/normalizations.txt";
   std::shared_ptr<TransformCatalogParams> tparams(
       new TransformCatalogParams(transformFile));
   unsigned int ntransforms = tparams->getNumTransformations();
