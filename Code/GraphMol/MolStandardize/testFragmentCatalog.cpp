@@ -1,6 +1,6 @@
-#include "FragmentCatalogParams.h"
-#include "FragmentCatalogUtils.h"
-#include "FragmentRemover.h"
+#include <GraphMol/MolStandardize/FragmentCatalog/FragmentCatalogParams.h>
+#include <GraphMol/MolStandardize/FragmentCatalog/FragmentCatalogUtils.h>
+#include <GraphMol/MolStandardize/FragmentCatalog/FragmentRemover.h>
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/ROMol.h>
@@ -25,7 +25,7 @@ void test2() {
   std::string rdbase = getenv("RDBASE");
   std::string fgrpFile = rdbase +
                          "/Code/GraphMol/MolStandardize/FragmentCatalog/"
-                         "test_data/fragmentPatterns.txt";
+                         "data/fragmentPatterns.txt";
   auto* fparams = new FragmentCatalogParams(fgrpFile);
   unsigned int numfg = fparams->getNumFuncGroups();
   TEST_ASSERT(fparams->getNumFuncGroups() == 61);
