@@ -11,39 +11,39 @@ namespace RDKit {
 namespace MolStandardize {
 
 class FragmentCatalogEntry : public RDCatalog::CatalogEntry {
-	public:
-		FragmentCatalogEntry() :
-			dp_mol(nullptr), d_descrip("") {
-				dp_props = new Dict();
-				setBitId(-1);
-			}
+ public:
+  FragmentCatalogEntry() : dp_mol(nullptr), d_descrip("") {
+    dp_props = new Dict();
+    setBitId(-1);
+  }
 
-//		FragmentCatalogEntry(const ROMol *omol, const PATH_TYPE &path);
-//		FragmentCatalogEntry(const std::string &pickle);
+  //		FragmentCatalogEntry(const ROMol *omol, const PATH_TYPE &path);
+  //		FragmentCatalogEntry(const std::string &pickle);
 
-		~FragmentCatalogEntry() override {
-			delete dp_mol;
-			dp_mol = nullptr;
-			delete dp_props;
-			dp_props = nullptr;
-		}
+  ~FragmentCatalogEntry() override {
+    delete dp_mol;
+    dp_mol = nullptr;
+    delete dp_props;
+    dp_props = nullptr;
+  }
 
-		//std::string getDescription() const override { return d_descrip; }
+  // std::string getDescription() const override { return d_descrip; }
 
-		unsigned int getOrder() const { return dp_mol->getNumBonds(); }
+  unsigned int getOrder() const { return dp_mol->getNumBonds(); }
 
-		void toStream(std::ostream &ss) const override;
-		std::string Serialize() const override;
-		void initFromStream(std::istream &ss) override;
-		void initFromString(const std::string &text) override;
-	private:
-		ROMol *dp_mol;
-		Dict *dp_props;
-		std::string d_descrip;
+  void toStream(std::ostream &ss) const override;
+  std::string Serialize() const override;
+  void initFromStream(std::istream &ss) override;
+  void initFromString(const std::string &text) override;
 
-}; // class FragmentCatalogEntry
+ private:
+  ROMol *dp_mol;
+  Dict *dp_props;
+  std::string d_descrip;
 
-} // namespace MolStandardize 
-} // namespace RDKit
+};  // class FragmentCatalogEntry
+
+}  // namespace MolStandardize
+}  // namespace RDKit
 
 #endif

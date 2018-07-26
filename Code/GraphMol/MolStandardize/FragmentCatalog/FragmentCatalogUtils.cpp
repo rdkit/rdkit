@@ -4,7 +4,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/tokenizer.hpp>
-typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 #include <fstream>
 #include <string>
 
@@ -27,7 +27,7 @@ ROMol *getSmarts(const std::string &tmpStr) {
 
   // name of the functional groups
   std::string name = *token;
-//  boost::erase_all(name, " ");
+  //  boost::erase_all(name, " ");
   ++token;
 
   // grab the smarts:
@@ -41,46 +41,45 @@ ROMol *getSmarts(const std::string &tmpStr) {
   mol->setProp(common_properties::_fragSMARTS, smarts);
   return mol;
 }
-} // end of local utility namespace
-	
-
+}  // namespace
 
 namespace MolStandardize {
 
 std::vector<std::shared_ptr<ROMol>> readFuncGroups(std::string fileName) {
-	std::ifstream inStream(fileName.c_str());
-	if ((!inStream) || (inStream.bad())) {
-		std::ostringstream errout;
-		errout << "Bad input file " << fileName;
-		throw BadFileException(errout.str());
-	}
-	std::vector<std::shared_ptr<ROMol>> funcGroups;
-	funcGroups = readFuncGroups(inStream);
-	return funcGroups;
+  std::ifstream inStream(fileName.c_str());
+  if ((!inStream) || (inStream.bad())) {
+    std::ostringstream errout;
+    errout << "Bad input file " << fileName;
+    throw BadFileException(errout.str());
+  }
+  std::vector<std::shared_ptr<ROMol>> funcGroups;
+  funcGroups = readFuncGroups(inStream);
+  return funcGroups;
 }
 
-std::vector<std::shared_ptr<ROMol>> readFuncGroups(std::istream &inStream, int nToRead) {
-	std::vector<std::shared_ptr<ROMol>> funcGroups;
-	funcGroups.clear();
-	if (inStream.bad()) {
-		throw BadFileException("Bad stream contents.");
-	}
-	const int MAX_LINE_LEN = 512;
-	char inLine[MAX_LINE_LEN];
-	std::string tmpstr;
-	int nRead = 0;
-	while (!inStream.eof() && (nToRead < 0 || nRead < nToRead)) {
-		inStream.getline(inLine, MAX_LINE_LEN, '\n');
-		tmpstr = inLine;
-		// parse the molecule on this line (if there is one)
-		std::shared_ptr<ROMol> mol( getSmarts(tmpstr) );
-		if (mol) {
-			funcGroups.push_back(mol);
-			nRead++;
-		}
-	}
-	return funcGroups;
+std::vector<std::shared_ptr<ROMol>> readFuncGroups(std::istream &inStream,
+                                                   int nToRead) {
+  std::vector<std::shared_ptr<ROMol>> funcGroups;
+  funcGroups.clear();
+  if (inStream.bad()) {
+    throw BadFileException("Bad stream contents.");
+  }
+  const int MAX_LINE_LEN = 512;
+  char inLine[MAX_LINE_LEN];
+  std::string tmpstr;
+  int nRead = 0;
+  while (!inStream.eof() && (nToRead < 0 || nRead < nToRead)) {
+    inStream.getline(inLine, MAX_LINE_LEN, '\n');
+    tmpstr = inLine;
+    // parse the molecule on this line (if there is one)
+    std::shared_ptr<ROMol> mol(getSmarts(tmpstr));
+    if (mol) {
+      funcGroups.push_back(mol);
+      nRead++;
+    }
+  }
+  return funcGroups;
 }
 
-} // namespace MolStandardize
-} // namespace RDKit
+}  // namespace MolStandardize
+}  // namespace RDKit

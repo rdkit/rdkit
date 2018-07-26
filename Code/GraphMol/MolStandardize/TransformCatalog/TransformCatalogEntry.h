@@ -12,35 +12,35 @@ namespace RDKit {
 namespace MolStandardize {
 
 class TransformCatalogEntry : public RDCatalog::CatalogEntry {
-	public:
-		TransformCatalogEntry() :
-			dp_transform(nullptr), d_descrip("") {
-				dp_props = new Dict();
-				setBitId(-1);
-			}
+ public:
+  TransformCatalogEntry() : dp_transform(nullptr), d_descrip("") {
+    dp_props = new Dict();
+    setBitId(-1);
+  }
 
-		~TransformCatalogEntry() override {
-			delete dp_transform;
-			dp_transform = nullptr;
-			delete dp_props;
-			dp_props = nullptr;
-		}
+  ~TransformCatalogEntry() override {
+    delete dp_transform;
+    dp_transform = nullptr;
+    delete dp_props;
+    dp_props = nullptr;
+  }
 
-		// TODO Catalog.h requires a getOrder function
-		unsigned int getOrder() const { return 0; }//dp_mol->getNumBonds(); }
+  // TODO Catalog.h requires a getOrder function
+  unsigned int getOrder() const { return 0; }  // dp_mol->getNumBonds(); }
 
-		void toStream(std::ostream &ss) const override;
-		std::string Serialize() const override;
-		void initFromStream(std::istream &ss) override;
-		void initFromString(const std::string &text) override;
-	private:
-		ChemicalReaction *dp_transform;
-		Dict *dp_props;
-		std::string d_descrip;
+  void toStream(std::ostream &ss) const override;
+  std::string Serialize() const override;
+  void initFromStream(std::istream &ss) override;
+  void initFromString(const std::string &text) override;
 
-}; // class TransformCatalogEntry
+ private:
+  ChemicalReaction *dp_transform;
+  Dict *dp_props;
+  std::string d_descrip;
 
-} // namespace MolStandardize 
-} // namespace RDKit
+};  // class TransformCatalogEntry
+
+}  // namespace MolStandardize
+}  // namespace RDKit
 
 #endif

@@ -6,59 +6,61 @@
 #include <GraphMol/MolStandardize/TautomerCatalog/TautomerCatalogEntry.h>
 #include <GraphMol/MolStandardize/TautomerCatalog/TautomerCatalogParams.h>
 
-namespace RDKit{
+namespace RDKit {
 class ROMol;
 class RWMol;
 
-namespace MolStandardize{
+namespace MolStandardize {
 
-typedef RDCatalog::HierarchCatalog<TautomerCatalogEntry, TautomerCatalogParams, int>
+typedef RDCatalog::HierarchCatalog<TautomerCatalogEntry, TautomerCatalogParams,
+                                   int>
     TautomerCatalog;
 
 class TautomerCanonicalizer {
-	public:
-//	TautomerCanonicalizer(unsigned int max_tautomers)
-//			: MAX_TAUTOMERS(max_tautomers) {};
-//	TautomerCanonicalizer(const TautomerCanonicalizer &other) {
-//		MAX_TAUTOMERS = other.MAX_TAUTOMERS;
-//	};
-//	~TautomerCanonicalizer() {};
+ public:
+  //	TautomerCanonicalizer(unsigned int max_tautomers)
+  //			: MAX_TAUTOMERS(max_tautomers) {};
+  //	TautomerCanonicalizer(const TautomerCanonicalizer &other) {
+  //		MAX_TAUTOMERS = other.MAX_TAUTOMERS;
+  //	};
+  //	~TautomerCanonicalizer() {};
 
-	ROMol* canonicalize(const ROMol &mol, TautomerCatalog *tautcat);
-	
-//	private:
-//		unsigned int MAX_TAUTOMERS;
-}; // TautomerCanonicalizer class
+  ROMol *canonicalize(const ROMol &mol, TautomerCatalog *tautcat);
+
+  //	private:
+  //		unsigned int MAX_TAUTOMERS;
+};  // TautomerCanonicalizer class
 
 class TautomerEnumerator {
-	public:
-		std::vector<ROMOL_SPTR> enumerate(const ROMol &mol, TautomerCatalog *tautcat);
+ public:
+  std::vector<ROMOL_SPTR> enumerate(const ROMol &mol, TautomerCatalog *tautcat);
 
-//		struct Tautomer {
-//			std::string Smiles;
-//			boost::shared_ptr<ROMol> Mol;
-//			Tautomer(std::string smiles, boost::shared_ptr<ROMol> mol)
-//				: Smiles(smiles), Mol(mol) {}
-//
-//			// sorting products alphabetically by SMILES
-//			bool operator < (const Tautomer &tautomer) const {
-//				return (Smiles < tautomer.Smiles);
-//			}
-//
-//		};	
+  //		struct Tautomer {
+  //			std::string Smiles;
+  //			boost::shared_ptr<ROMol> Mol;
+  //			Tautomer(std::string smiles, boost::shared_ptr<ROMol>
+  // mol) 				: Smiles(smiles), Mol(mol) {}
+  //
+  //			// sorting products alphabetically by SMILES
+  //			bool operator < (const Tautomer &tautomer) const {
+  //				return (Smiles < tautomer.Smiles);
+  //			}
+  //
+  //		};
 
-//		TautomerEnumerator(unsigned int max_tautomers)
-//			: MAX_TAUTOMERS(max_tautomers) {};
-//		TautomerEnumerator(const TautomerEnumerator &other) {
-//			MAX_TAUTOMERS = other.MAX_TAUTOMERS;
-//		};
-//		~TautomerEnumerator() {};
-//	private:
-//		unsigned int MAX_TAUTOMERS;
-}; // TautomerEnumerator class
+  //		TautomerEnumerator(unsigned int max_tautomers)
+  //			: MAX_TAUTOMERS(max_tautomers) {};
+  //		TautomerEnumerator(const TautomerEnumerator &other) {
+  //			MAX_TAUTOMERS = other.MAX_TAUTOMERS;
+  //		};
+  //		~TautomerEnumerator() {};
+  //	private:
+  //		unsigned int MAX_TAUTOMERS;
+};  // TautomerEnumerator class
 
-std::vector<std::pair<unsigned int, unsigned int>> pairwise(const std::vector<int> vect);
-} // namespace MolStandardize
-} // namespace RDKit
+std::vector<std::pair<unsigned int, unsigned int>> pairwise(
+    const std::vector<int> vect);
+}  // namespace MolStandardize
+}  // namespace RDKit
 
 #endif

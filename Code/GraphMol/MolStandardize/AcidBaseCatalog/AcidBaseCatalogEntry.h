@@ -12,39 +12,40 @@ namespace RDKit {
 namespace MolStandardize {
 
 class AcidBaseCatalogEntry : public RDCatalog::CatalogEntry {
-	public:
-		AcidBaseCatalogEntry(){
-//				dp_pair(std::pair<new ROMol(), new ROMol()>);
-				dp_pair->first = nullptr;//new ROMol();
-				dp_pair->second = nullptr;//new ROMol();
-			 	d_descrip = "";
-				dp_props = new Dict();
-				setBitId(-1);
-		}
+ public:
+  AcidBaseCatalogEntry() {
+    //				dp_pair(std::pair<new ROMol(), new ROMol()>);
+    dp_pair->first = nullptr;   // new ROMol();
+    dp_pair->second = nullptr;  // new ROMol();
+    d_descrip = "";
+    dp_props = new Dict();
+    setBitId(-1);
+  }
 
-		~AcidBaseCatalogEntry() override {
-			//delete dp_pair;
-			//delete dp_pair->first;
-		 	//delete dp_pair->second;
-			delete dp_props;
-			dp_props = nullptr;
-		}
+  ~AcidBaseCatalogEntry() override {
+    // delete dp_pair;
+    // delete dp_pair->first;
+    // delete dp_pair->second;
+    delete dp_props;
+    dp_props = nullptr;
+  }
 
-		// TODO Catalog.h requires a getOrder function
-		unsigned int getOrder() const { return 0; }//dp_mol->getNumBonds(); }
+  // TODO Catalog.h requires a getOrder function
+  unsigned int getOrder() const { return 0; }  // dp_mol->getNumBonds(); }
 
-		void toStream(std::ostream &ss) const override;
-		std::string Serialize() const override;
-		void initFromStream(std::istream &ss) override;
-		void initFromString(const std::string &text) override;
-	private:
-		std::shared_ptr<std::pair<ROMOL_SPTR, ROMOL_SPTR>> dp_pair;
-		Dict *dp_props;
-		std::string d_descrip;
+  void toStream(std::ostream &ss) const override;
+  std::string Serialize() const override;
+  void initFromStream(std::istream &ss) override;
+  void initFromString(const std::string &text) override;
 
-}; // class AcidBaseCatalogEntry
+ private:
+  std::shared_ptr<std::pair<ROMOL_SPTR, ROMOL_SPTR>> dp_pair;
+  Dict *dp_props;
+  std::string d_descrip;
 
-} // namespace MolStandardize 
-} // namespace RDKit
+};  // class AcidBaseCatalogEntry
+
+}  // namespace MolStandardize
+}  // namespace RDKit
 
 #endif

@@ -14,37 +14,38 @@ class ROMol;
 
 namespace MolStandardize {
 class TransformCatalogParams : public RDCatalog::CatalogParams {
+ public:
+  TransformCatalogParams() {
+    d_typeStr = "Transform Catalog Parameters";
+    d_transformations.clear();
+  }
 
-	public:
-		TransformCatalogParams() {
-			d_typeStr = "Transform Catalog Parameters";
-			d_transformations.clear();
-		}
+  TransformCatalogParams(const std::string &transformFile);
+  // copy constructor
+  TransformCatalogParams(const TransformCatalogParams &other);
 
-		TransformCatalogParams(const std::string &transformFile);
-		// copy constructor
-		TransformCatalogParams(const TransformCatalogParams &other);
+  ~TransformCatalogParams() override;
 
-		~TransformCatalogParams() override;
+  unsigned int getNumTransformations() const {
+    return static_cast<unsigned int>(d_transformations.size());
+  }
 
-		unsigned int getNumTransformations() const {
-		       return static_cast<unsigned int>(d_transformations.size()); }
+  const std::vector<std::shared_ptr<ChemicalReaction>> &getTransformations()
+      const;
 
-		const std::vector<std::shared_ptr<ChemicalReaction>> &getTransformations() const;
+  const ChemicalReaction *getTransformation(unsigned int fid) const;
 
-		const ChemicalReaction *getTransformation(unsigned int fid) const;
-		
-		void toStream(std::ostream &) const override;
-		std::string Serialize() const override;
-		void initFromStream(std::istream &ss) override;
-		void initFromString(const std::string &text) override;
+  void toStream(std::ostream &) const override;
+  std::string Serialize() const override;
+  void initFromStream(std::istream &ss) override;
+  void initFromString(const std::string &text) override;
 
-	private: 
-		std::vector<std::shared_ptr<ChemicalReaction>> d_transformations;
+ private:
+  std::vector<std::shared_ptr<ChemicalReaction>> d_transformations;
 
-}; // class TransformCatalogParams
+};  // class TransformCatalogParams
 
-} // namespace MolStandardize
-} // namespace RDKit
+}  // namespace MolStandardize
+}  // namespace RDKit
 
 #endif

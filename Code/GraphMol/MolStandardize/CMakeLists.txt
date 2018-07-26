@@ -11,7 +11,7 @@ rdkit_library(MolStandardize
 	      Charge.cpp
 	      Tautomer.cpp
 	      LINK_LIBRARIES RDGeneral GraphMol FragmentCatalog TransformCatalog
-	      AcidBaseCatalog TautomerCatalog) 
+	      AcidBaseCatalog TautomerCatalog)
 
 rdkit_headers(MolStandardize.h
 	      Metal.h
@@ -20,7 +20,7 @@ rdkit_headers(MolStandardize.h
 	      Charge.h
 	      Tautomer.h
 	      DEST GraphMol/MolStandardize)
-    
+
 rdkit_test(molStandardizeTest test1.cpp LINK_LIBRARIES MolStandardize
 	SmilesParse RDGeneral GraphMol SubstructMatch FragmentCatalog)
 rdkit_test(molNormalizeTest testNormalize.cpp LINK_LIBRARIES MolStandardize
@@ -28,10 +28,16 @@ rdkit_test(molNormalizeTest testNormalize.cpp LINK_LIBRARIES MolStandardize
 rdkit_test(molValidateTest testValidate.cpp LINK_LIBRARIES MolStandardize
 	SmilesParse RDGeneral GraphMol SubstructMatch FileParsers FragmentCatalog)
 rdkit_test(molChargeTest testCharge.cpp LINK_LIBRARIES MolStandardize
-	SmilesParse RDGeneral GraphMol SubstructMatch FileParsers AcidBaseCatalog) 
+	SmilesParse RDGeneral GraphMol SubstructMatch FileParsers AcidBaseCatalog)
 rdkit_test(molTautomerTest testTautomer.cpp LINK_LIBRARIES MolStandardize
 	SmilesParse RDGeneral GraphMol SubstructMatch FileParsers
-	TautomerCatalog) 
+	TautomerCatalog)
 rdkit_test(molStandardizeSmallTest test2.cpp LINK_LIBRARIES MolStandardize
-	SmilesParse RDGeneral GraphMol SubstructMatch) 
-rdkit_test(compareMolVSTest testPCS.cpp LINK_LIBRARIES RDGeneral boost_iostreams SmilesParse RDGeneral GraphMol MolStandardize)
+	SmilesParse RDGeneral GraphMol SubstructMatch)
+
+find_package(Boost 1.56.0 COMPONENTS system iostreams REQUIRED)
+if (NOT Boost_USE_STATIC_LIBS)
+  add_definitions("-DBOOST_IOSTREAMS_DYN_LINK")
+endif()
+
+rdkit_test(compareMolVSTest testPCS.cpp LINK_LIBRARIES RDGeneral SmilesParse RDGeneral GraphMol MolStandardize  ${Boost_LIBRARIES})

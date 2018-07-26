@@ -13,10 +13,12 @@ class ROMol;
 namespace MolStandardize {
 class TransformCatalogParams;
 
-std::vector<std::shared_ptr<ChemicalReaction>> readTransformations(std::string fileName);
-std::vector<std::shared_ptr<ChemicalReaction>> readTransformations(std::istream &inStream, int nToRead = -1);
+std::vector<std::shared_ptr<ChemicalReaction>> readTransformations(
+    std::string fileName);
+std::vector<std::shared_ptr<ChemicalReaction>> readTransformations(
+    std::istream &inStream, int nToRead = -1);
 
-} // namespace MolStandardize
-} // namespace RDKit
+}  // namespace MolStandardize
+}  // namespace RDKit
 
 #endif

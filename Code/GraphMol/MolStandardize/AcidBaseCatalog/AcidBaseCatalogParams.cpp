@@ -7,45 +7,50 @@ namespace RDKit {
 namespace MolStandardize {
 
 AcidBaseCatalogParams::AcidBaseCatalogParams(const std::string &acidBaseFile) {
-	d_pairs.clear();
-	d_pairs = readPairs(acidBaseFile);
+  d_pairs.clear();
+  d_pairs = readPairs(acidBaseFile);
 }
 
-AcidBaseCatalogParams::AcidBaseCatalogParams(const AcidBaseCatalogParams &other) {
-	d_typeStr = other.d_typeStr;
-	d_pairs.clear();
+AcidBaseCatalogParams::AcidBaseCatalogParams(
+    const AcidBaseCatalogParams &other) {
+  d_typeStr = other.d_typeStr;
+  d_pairs.clear();
 
-	const std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> &abpairs = other.getPairs();
-	for (auto &pairi : abpairs) {
-		d_pairs.push_back( std::pair<ROMOL_SPTR, ROMOL_SPTR>(pairi.first, pairi.second) );
-	}
+  const std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> &abpairs =
+      other.getPairs();
+  for (auto &pairi : abpairs) {
+    d_pairs.push_back(
+        std::pair<ROMOL_SPTR, ROMOL_SPTR>(pairi.first, pairi.second));
+  }
 }
 
 AcidBaseCatalogParams::~AcidBaseCatalogParams() {}
 
-const std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> &AcidBaseCatalogParams::getPairs() const {
+const std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>>
+    &AcidBaseCatalogParams::getPairs() const {
   return d_pairs;
 }
 
-const std::pair<ROMOL_SPTR, ROMOL_SPTR> AcidBaseCatalogParams::getPair(unsigned int fid) const {
+const std::pair<ROMOL_SPTR, ROMOL_SPTR> AcidBaseCatalogParams::getPair(
+    unsigned int fid) const {
   URANGE_CHECK(fid, d_pairs.size());
   // return d_pairs[fid];
-  return d_pairs[fid];//.get();
+  return d_pairs[fid];  //.get();
 }
 
 void AcidBaseCatalogParams::toStream(std::ostream &ss) const {
-	ss << d_pairs.size() << "\n";
+  ss << d_pairs.size() << "\n";
 }
 
 std::string AcidBaseCatalogParams::Serialize() const {
-	std::stringstream ss;
-	toStream(ss);
-	return ss.str();
+  std::stringstream ss;
+  toStream(ss);
+  return ss.str();
 }
 
 void AcidBaseCatalogParams::initFromStream(std::istream &ss) {}
 
 void AcidBaseCatalogParams::initFromString(const std::string &text) {}
 
-} // namespace MolStandardize
-} // namespace RDKit
+}  // namespace MolStandardize
+}  // namespace RDKit

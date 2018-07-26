@@ -11,11 +11,11 @@
 namespace RDKit {
 namespace MolStandardize {
 
-//FragmentCatalogEntry::FragmentCatalogEntry(const ROMol *omol, const PATH_TYPE &path) {
-//	PRECONDITION(omol, "bad mol");
+// FragmentCatalogEntry::FragmentCatalogEntry(const ROMol *omol, const PATH_TYPE
+// &path) { 	PRECONDITION(omol, "bad mol");
 //}
 //
-//FragmentCatalogEntry::FragmentCatalogEntry(const std::string &pickle) {
+// FragmentCatalogEntry::FragmentCatalogEntry(const std::string &pickle) {
 //	dp_props = new Dict();
 //	this->initFromString(pickle);
 //}
@@ -56,7 +56,6 @@ void FragmentCatalogEntry::initFromStream(std::istream &ss) {
   tmpText[tmpInt] = 0;
   d_descrip = tmpText;
   delete[] tmpText;
-
 }
 
 void FragmentCatalogEntry::initFromString(const std::string &text) {
@@ -68,5 +67,5 @@ void FragmentCatalogEntry::initFromString(const std::string &text) {
   initFromStream(ss);
 }
 
-} // namespace MolStandardize
-} // namespace RDKit
+}  // namespace MolStandardize
+}  // namespace RDKit

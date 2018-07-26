@@ -10,8 +10,8 @@
 namespace RDKit {
 namespace MolStandardize {
 
-	void AcidBaseCatalogEntry::toStream(std::ostream &ss) const {
-//  ReactionPickler::pickleReaction(*dp_transform, ss);
+void AcidBaseCatalogEntry::toStream(std::ostream &ss) const {
+  //  ReactionPickler::pickleReaction(*dp_transform, ss);
 
   boost::int32_t tmpInt;
   tmpInt = getBitId();
@@ -31,7 +31,7 @@ std::string AcidBaseCatalogEntry::Serialize() const {
 
 void AcidBaseCatalogEntry::initFromStream(std::istream &ss) {
   // the molecule TODO:
-//  ReactionPickler::reactionFromPickle(ss, *dp_transform);
+  //  ReactionPickler::reactionFromPickle(ss, *dp_transform);
 
   boost::int32_t tmpInt;
   // the bitId:
@@ -45,7 +45,6 @@ void AcidBaseCatalogEntry::initFromStream(std::istream &ss) {
   tmpText[tmpInt] = 0;
   d_descrip = tmpText;
   delete[] tmpText;
-
 }
 
 void AcidBaseCatalogEntry::initFromString(const std::string &text) {
@@ -57,5 +56,5 @@ void AcidBaseCatalogEntry::initFromString(const std::string &text) {
   initFromStream(ss);
 }
 
-} // namespace MolStandardize
-} // namespace RDKit
+}  // namespace MolStandardize
+}  // namespace RDKit

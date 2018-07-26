@@ -13,37 +13,37 @@ class ROMol;
 
 namespace MolStandardize {
 class AcidBaseCatalogParams : public RDCatalog::CatalogParams {
+ public:
+  AcidBaseCatalogParams() {
+    d_typeStr = "AcidBase Catalog Parameters";
+    d_pairs.clear();
+  }
 
-	public:
-		AcidBaseCatalogParams() {
-			d_typeStr = "AcidBase Catalog Parameters";
-			d_pairs.clear();
-		}
+  AcidBaseCatalogParams(const std::string &acidBaseFile);
+  // copy constructor
+  AcidBaseCatalogParams(const AcidBaseCatalogParams &other);
 
-		AcidBaseCatalogParams(const std::string &acidBaseFile);
-		// copy constructor
-		AcidBaseCatalogParams(const AcidBaseCatalogParams &other);
+  ~AcidBaseCatalogParams() override;
 
-		~AcidBaseCatalogParams() override;
+  unsigned int getNumPairs() const {
+    return static_cast<unsigned int>(d_pairs.size());
+  }
 
-		unsigned int getNumPairs() const {
-		       return static_cast<unsigned int>(d_pairs.size()); }
+  const std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> &getPairs() const;
 
-		const std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> &getPairs() const;
+  const std::pair<ROMOL_SPTR, ROMOL_SPTR> getPair(unsigned int fid) const;
 
-		const std::pair<ROMOL_SPTR, ROMOL_SPTR> getPair(unsigned int fid) const;
-		
-		void toStream(std::ostream &) const override;
-		std::string Serialize() const override;
-		void initFromStream(std::istream &ss) override;
-		void initFromString(const std::string &text) override;
+  void toStream(std::ostream &) const override;
+  std::string Serialize() const override;
+  void initFromStream(std::istream &ss) override;
+  void initFromString(const std::string &text) override;
 
-	private: 
-		std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> d_pairs;
+ private:
+  std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> d_pairs;
 
-}; // class AcidBaseCatalogParams
+};  // class AcidBaseCatalogParams
 
-} // namespace MolStandardize
-} // namespace RDKit
+}  // namespace MolStandardize
+}  // namespace RDKit
 
 #endif

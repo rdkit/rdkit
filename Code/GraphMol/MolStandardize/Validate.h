@@ -9,64 +9,79 @@
 #include <string>
 #include <vector>
 
-namespace RDKit{
+namespace RDKit {
 class RWMol;
 class ROMol;
 
-namespace MolStandardize{
+namespace MolStandardize {
 
-class ValidationErrorInfo: public std::exception {
-	public:
-		ValidationErrorInfo(const std::string &msg): d_msg(msg){
-			BOOST_LOG(rdInfoLog) << d_msg << std::endl;
-		};
-		const char* message() const { return d_msg.c_str(); };
-		~ValidationErrorInfo() throw() {};
-	private:
-		std::string d_msg;
-}; // class ValidationErrorInfo
+class ValidationErrorInfo : public std::exception {
+ public:
+  ValidationErrorInfo(const std::string &msg) : d_msg(msg) {
+    BOOST_LOG(rdInfoLog) << d_msg << std::endl;
+  };
+  const char *message() const { return d_msg.c_str(); };
+  ~ValidationErrorInfo() throw(){};
 
-class ValidationMethod{
-	public:
-		virtual std::vector<ValidationErrorInfo> validate(const ROMol &mol, bool reportAllFailures) const = 0;
+ private:
+  std::string d_msg;
+};  // class ValidationErrorInfo
+
+class ValidationMethod {
+ public:
+  virtual std::vector<ValidationErrorInfo> validate(
+      const ROMol &mol, bool reportAllFailures) const = 0;
 };
 
 class RDKitValidation : public ValidationMethod {
-	public:
-		std::vector<ValidationErrorInfo> validate(const ROMol &mol, bool reportAllFailures) const override;
+ public:
+  std::vector<ValidationErrorInfo> validate(
+      const ROMol &mol, bool reportAllFailures) const override;
 };
 
 class MolVSValidation : public ValidationMethod {
-	public:
-		std::vector<ValidationErrorInfo> validate(const ROMol &mol, bool reportAllFailures) const override;
-	private:
-		void noAtomValidation(const ROMol &mol, bool reportAllFailures, std::vector<ValidationErrorInfo> &errors) const;
-		void fragmentValidation(const ROMol &mol, bool reportAllFailures, std::vector<ValidationErrorInfo> &errors) const;
-		void neutralValidation(const ROMol &mol, bool reportAllFailures, std::vector<ValidationErrorInfo> &errors) const;
-		void isotopeValidation(const ROMol &mol, bool reportAllFailures, std::vector<ValidationErrorInfo> &errors) const;
+ public:
+  std::vector<ValidationErrorInfo> validate(
+      const ROMol &mol, bool reportAllFailures) const override;
+
+ private:
+  void noAtomValidation(const ROMol &mol, bool reportAllFailures,
+                        std::vector<ValidationErrorInfo> &errors) const;
+  void fragmentValidation(const ROMol &mol, bool reportAllFailures,
+                          std::vector<ValidationErrorInfo> &errors) const;
+  void neutralValidation(const ROMol &mol, bool reportAllFailures,
+                         std::vector<ValidationErrorInfo> &errors) const;
+  void isotopeValidation(const ROMol &mol, bool reportAllFailures,
+                         std::vector<ValidationErrorInfo> &errors) const;
 };
 
 class AllowedAtomsValidation : public ValidationMethod {
-	public:
-		AllowedAtomsValidation(const std::vector<std::shared_ptr<Atom>> &atoms) : d_allowedList(atoms) {};
-		std::vector<ValidationErrorInfo> validate(const ROMol &mol, bool reportAllFailures) const override;
-	private:
-		std::vector<std::shared_ptr<Atom>> d_allowedList;
-		// void initializeDefaultAtoms; // TODO with filtersCatalog
-		// stuff
+ public:
+  AllowedAtomsValidation(const std::vector<std::shared_ptr<Atom>> &atoms)
+      : d_allowedList(atoms){};
+  std::vector<ValidationErrorInfo> validate(
+      const ROMol &mol, bool reportAllFailures) const override;
+
+ private:
+  std::vector<std::shared_ptr<Atom>> d_allowedList;
+  // void initializeDefaultAtoms; // TODO with filtersCatalog
+  // stuff
 };
 
 class DisallowedAtomsValidation : public ValidationMethod {
-	public:
-		DisallowedAtomsValidation(const std::vector<std::shared_ptr<Atom>> &atoms) : d_disallowedList(atoms) {};
-		std::vector<ValidationErrorInfo> validate(const ROMol &mol, bool reportAllFailures) const override;
-	private:
-		std::vector<std::shared_ptr<Atom>> d_disallowedList;
-		// void initializeDefaultAtoms; // TODO with filtersCatalog
-		// stuff
+ public:
+  DisallowedAtomsValidation(const std::vector<std::shared_ptr<Atom>> &atoms)
+      : d_disallowedList(atoms){};
+  std::vector<ValidationErrorInfo> validate(
+      const ROMol &mol, bool reportAllFailures) const override;
+
+ private:
+  std::vector<std::shared_ptr<Atom>> d_disallowedList;
+  // void initializeDefaultAtoms; // TODO with filtersCatalog
+  // stuff
 };
 
-} // namespace MolStandardize
-} // namespace RDKit
+}  // namespace MolStandardize
+}  // namespace RDKit
 
 #endif

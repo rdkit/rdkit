@@ -11,7 +11,7 @@
 namespace RDKit {
 namespace MolStandardize {
 
-	void TransformCatalogEntry::toStream(std::ostream &ss) const {
+void TransformCatalogEntry::toStream(std::ostream &ss) const {
   ReactionPickler::pickleReaction(*dp_transform, ss);
 
   boost::int32_t tmpInt;
@@ -47,7 +47,6 @@ void TransformCatalogEntry::initFromStream(std::istream &ss) {
   tmpText[tmpInt] = 0;
   d_descrip = tmpText;
   delete[] tmpText;
-
 }
 
 void TransformCatalogEntry::initFromString(const std::string &text) {
@@ -59,5 +58,5 @@ void TransformCatalogEntry::initFromString(const std::string &text) {
   initFromStream(ss);
 }
 
-} // namespace MolStandardize
-} // namespace RDKit
+}  // namespace MolStandardize
+}  // namespace RDKit
