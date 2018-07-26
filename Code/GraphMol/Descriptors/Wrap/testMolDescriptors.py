@@ -42,30 +42,38 @@ class TestCase(unittest.TestCase):
                     0 | (2 | 1<<params.numPiBits)<<params.numBranchBits)
 
   def testAtomPairTypesChirality(self):
-    mols = [Chem.MolFromSmiles(x) for x in ("CC(F)Cl","C[C@@H](F)Cl","C[C@H](F)Cl")]
-    self.assertEqual(rdMD.GetAtomPairAtomCode(mols[0].GetAtomWithIdx(1)),
-        rdMD.GetAtomPairAtomCode(mols[1].GetAtomWithIdx(1)))
-    self.assertEqual(rdMD.GetAtomPairAtomCode(mols[0].GetAtomWithIdx(1)),
-        rdMD.GetAtomPairAtomCode(mols[2].GetAtomWithIdx(1)))
-    self.assertEqual(rdMD.GetAtomPairAtomCode(mols[0].GetAtomWithIdx(1),includeChirality=True),
-        rdMD.GetAtomPairAtomCode(mols[0].GetAtomWithIdx(1)))
-    self.assertNotEqual(rdMD.GetAtomPairAtomCode(mols[0].GetAtomWithIdx(1),includeChirality=True),
-        rdMD.GetAtomPairAtomCode(mols[1].GetAtomWithIdx(1),includeChirality=True))
-    self.assertNotEqual(rdMD.GetAtomPairAtomCode(mols[0].GetAtomWithIdx(1),includeChirality=True),
-        rdMD.GetAtomPairAtomCode(mols[2].GetAtomWithIdx(1),includeChirality=True))
-    self.assertNotEqual(rdMD.GetAtomPairAtomCode(mols[1].GetAtomWithIdx(1),includeChirality=True),
-        rdMD.GetAtomPairAtomCode(mols[2].GetAtomWithIdx(1),includeChirality=True))
+    mols = [Chem.MolFromSmiles(x) for x in ("CC(F)Cl", "C[C@@H](F)Cl", "C[C@H](F)Cl")]
+    self.assertEqual(
+      rdMD.GetAtomPairAtomCode(mols[0].GetAtomWithIdx(1)),
+      rdMD.GetAtomPairAtomCode(mols[1].GetAtomWithIdx(1)))
+    self.assertEqual(
+      rdMD.GetAtomPairAtomCode(mols[0].GetAtomWithIdx(1)),
+      rdMD.GetAtomPairAtomCode(mols[2].GetAtomWithIdx(1)))
+    self.assertEqual(
+      rdMD.GetAtomPairAtomCode(mols[0].GetAtomWithIdx(1), includeChirality=True),
+      rdMD.GetAtomPairAtomCode(mols[0].GetAtomWithIdx(1)))
+    self.assertNotEqual(
+      rdMD.GetAtomPairAtomCode(mols[0].GetAtomWithIdx(1), includeChirality=True),
+      rdMD.GetAtomPairAtomCode(mols[1].GetAtomWithIdx(1), includeChirality=True))
+    self.assertNotEqual(
+      rdMD.GetAtomPairAtomCode(mols[0].GetAtomWithIdx(1), includeChirality=True),
+      rdMD.GetAtomPairAtomCode(mols[2].GetAtomWithIdx(1), includeChirality=True))
+    self.assertNotEqual(
+      rdMD.GetAtomPairAtomCode(mols[1].GetAtomWithIdx(1), includeChirality=True),
+      rdMD.GetAtomPairAtomCode(mols[2].GetAtomWithIdx(1), includeChirality=True))
 
     fps = [rdMD.GetAtomPairFingerprint(x) for x in mols]
-    chiralFps = [rdMD.GetAtomPairFingerprint(x,includeChirality=True) for x in mols]
-    for mol,fp,cfp in zip(mols, fps, chiralFps):
-        ac0 = rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(0))
-        ac1 = rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1))
-        self.assertTrue(rdMD.GetAtomPairCode(ac0,ac1,1) in fp.GetNonzeroElements())
-        ac0 = rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(0),includeChirality=True)
-        ac1 = rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1),includeChirality=True)
-        self.assertFalse(rdMD.GetAtomPairCode(ac0,ac1,1,includeChirality=True) in fp.GetNonzeroElements())
-        self.assertTrue(rdMD.GetAtomPairCode(ac0,ac1,1,includeChirality=True) in cfp.GetNonzeroElements())
+    chiralFps = [rdMD.GetAtomPairFingerprint(x, includeChirality=True) for x in mols]
+    for mol, fp, cfp in zip(mols, fps, chiralFps):
+      ac0 = rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(0))
+      ac1 = rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1))
+      self.assertTrue(rdMD.GetAtomPairCode(ac0, ac1, 1) in fp.GetNonzeroElements())
+      ac0 = rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(0), includeChirality=True)
+      ac1 = rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1), includeChirality=True)
+      self.assertFalse(
+        rdMD.GetAtomPairCode(ac0, ac1, 1, includeChirality=True) in fp.GetNonzeroElements())
+      self.assertTrue(
+        rdMD.GetAtomPairCode(ac0, ac1, 1, includeChirality=True) in cfp.GetNonzeroElements())
 
   def testAtomPairs(self):
     m = Chem.MolFromSmiles('CCC')
@@ -246,29 +254,29 @@ class TestCase(unittest.TestCase):
   def testUSR(self):
     mol = Chem.MolFromSmiles("CC")
     AllChem.Compute2DCoords(mol)
-    self.assertRaises(ValueError, lambda : rdMD.GetUSR(mol))
+    self.assertRaises(ValueError, lambda: rdMD.GetUSR(mol))
     mol = Chem.MolFromSmiles("C1CCCCC1")
     mol = Chem.AddHs(mol)
-    self.assertRaises(ValueError, lambda : rdMD.GetUSR(mol))
+    self.assertRaises(ValueError, lambda: rdMD.GetUSR(mol))
     AllChem.Compute2DCoords(mol)
     usr = rdMD.GetUSR(mol)
     self.assertEqual(len(usr), 12)
 
-    self.assertRaises(ValueError, lambda : rdMD.GetUSRDistributions([]))
+    self.assertRaises(ValueError, lambda: rdMD.GetUSRDistributions([]))
 
     conf = mol.GetConformer()
     coords = [conf.GetAtomPosition(i) for i in range(mol.GetNumAtoms())]
     dist = rdMD.GetUSRDistributions(coords)
     self.assertEqual(len(dist), 4)
     self.assertEqual(len(dist[0]), mol.GetNumAtoms())
-    self.assertRaises(ValueError, lambda : rdMD.GetUSRFromDistributions([]))
+    self.assertRaises(ValueError, lambda: rdMD.GetUSRFromDistributions([]))
     usr2 = rdMD.GetUSRFromDistributions(dist)
     self.assertEqual(usr, usr2)
 
-    self.assertRaises(ValueError, lambda : rdMD.GetUSRDistributionsFromPoints(coords, []))
+    self.assertRaises(ValueError, lambda: rdMD.GetUSRDistributionsFromPoints(coords, []))
     p = []
     dist = rdMD.GetUSRDistributions(coords, p)
-    self.assertRaises(ValueError, lambda : rdMD.GetUSRDistributionsFromPoints([], p))
+    self.assertRaises(ValueError, lambda: rdMD.GetUSRDistributionsFromPoints([], p))
     dist2 = rdMD.GetUSRDistributionsFromPoints(coords, p)
     usr2 = rdMD.GetUSRFromDistributions(dist2)
     self.assertEqual(usr, usr2)
@@ -277,7 +285,7 @@ class TestCase(unittest.TestCase):
     mol2 = Chem.AddHs(mol2)
     AllChem.Compute2DCoords(mol2)
     usr2 = rdMD.GetUSR(mol2)
-    self.assertRaises(ValueError, lambda : rdMD.GetUSRScore(usr, usr2[:2]))
+    self.assertRaises(ValueError, lambda: rdMD.GetUSRScore(usr, usr2[:2]))
     self.assertEqual(rdMD.GetUSRScore(usr, usr2), 1.0)
 
     m1 = [4.44, 2.98, 1.04, 4.55, 4.70, 0.23, 8.30, 16.69, -22.97, 7.37, 15.64, 0.51]
@@ -287,14 +295,14 @@ class TestCase(unittest.TestCase):
   def testUSRCAT(self):
     mol = Chem.MolFromSmiles("CC")
     AllChem.Compute2DCoords(mol)
-    self.assertRaises(ValueError, lambda : rdMD.GetUSRCAT(mol))
+    self.assertRaises(ValueError, lambda: rdMD.GetUSRCAT(mol))
     mol = Chem.MolFromSmiles("C1CCCCC1")
     mol = Chem.AddHs(mol)
-    self.assertRaises(ValueError, lambda : rdMD.GetUSRCAT(mol))
+    self.assertRaises(ValueError, lambda: rdMD.GetUSRCAT(mol))
     AllChem.Compute2DCoords(mol)
     usr = rdMD.GetUSRCAT(mol)
     self.assertEqual(len(usr), 60)
-    self.assertRaises(ValueError, lambda : rdMD.GetUSRCAT(mol, atomSelections=[]))
+    self.assertRaises(ValueError, lambda: rdMD.GetUSRCAT(mol, atomSelections=[]))
     atoms = [[1, 2, 3, 4, 5, 6], []]
     usr2 = rdMD.GetUSRCAT(mol, atomSelections=atoms)
     self.assertEqual(len(usr2), 36)
@@ -327,7 +335,8 @@ class TestCase(unittest.TestCase):
        ),
       ('CNc1ccco1',
        b'AQAAAAQAAAAAAIAAEAAAACOECgABAAAAJIQKAAIAAABBhQoAAgAAAEKFCgABAAAAIsQKAAEAAABB\nxQoAAQAAAELFCgACAAAAIYQQAAEAAABChRAAAQAAAEOFEAACAAAAYYUQAAEAAAAjhBoAAQAAAEGF\nGgABAAAAQoUaAAIAAABhhRoAAQAAAEKIGgABAAAA\n'
-       ), )
+       ),
+    )
     for smi, txt in testD:
       pkl = base64.decodestring(txt)
       fp = rdMD.GetAtomPairFingerprint(Chem.MolFromSmiles(smi))
@@ -341,7 +350,8 @@ class TestCase(unittest.TestCase):
       ('CCCO', b'AQAAAAgAAAD/////DwAAAAEAAAAAAAAAIECAAAMAAAABAAAA\n'),
       ('CNc1ccco1',
        b'AQAAAAgAAAD/////DwAAAAkAAAAAAAAAIICkSAEAAAABAAAAKVKgSQEAAAABAAAAKVCgUAEAAAAB\nAAAAKVCgUQEAAAABAAAAKVCkCAIAAAABAAAAKdCkCAIAAAABAAAAKVCgSAMAAAABAAAAKVCkSAMA\nAAABAAAAIICkSAMAAAABAAAA\n'
-       ), )
+       ),
+    )
     for smi, txt in testD:
       pkl = base64.decodestring(txt)
       fp = rdMD.GetTopologicalTorsionFingerprint(Chem.MolFromSmiles(smi))
@@ -443,13 +453,15 @@ class TestCase(unittest.TestCase):
     self.assertEqual(sorted(sa), [6, 9])
 
   def testNumRotatableBonds(self):
-    for s in ["C1CC1CC",
-              "CCNC(=O)NCC",
-              'Cc1cccc(C)c1c1c(C)cccc1C',
-              'CCc1cccc(C)c1c1c(C)cccc1CC',
-              'Cc1cccc(C)c1c1c(C)nccc1C',
-              'Cc1cccc(C)c1c1c(C)cccc1',
-              'CCO', ]:
+    for s in [
+        "C1CC1CC",
+        "CCNC(=O)NCC",
+        'Cc1cccc(C)c1c1c(C)cccc1C',
+        'CCc1cccc(C)c1c1c(C)cccc1CC',
+        'Cc1cccc(C)c1c1c(C)nccc1C',
+        'Cc1cccc(C)c1c1c(C)cccc1',
+        'CCO',
+    ]:
 
       m = Chem.MolFromSmiles(s)
 
@@ -533,26 +545,30 @@ class TestCase(unittest.TestCase):
 
   def testNumStereoCenters(self):
     m = Chem.MolFromSmiles('CC(F)(Cl)[C@H](Cl)Br')
-    self.assertEqual(rdMD.CalcNumAtomStereoCenters(m),2)
-    self.assertEqual(rdMD.CalcNumUnspecifiedAtomStereoCenters(m),1)
+    self.assertEqual(rdMD.CalcNumAtomStereoCenters(m), 2)
+    self.assertEqual(rdMD.CalcNumUnspecifiedAtomStereoCenters(m), 1)
     # Tests from Berend Huisman:
-    for (smiles, expected) in (("C", 0),
-                          ("c1ccccc1", 0),
-                          ("CC(Cl)Br", 1),
-                          ("CCC(C)C(Cl)Br", 2),
-                          ("CCC(C(Cl)Br)C(F)I", 3),
-                          ("[H][C@](F)(I)C(CC)C(Cl)Br", 3),
-                          ("[H][C@](F)(I)[C@@]([H])(CC)C(Cl)Br", 3), ):
+    for (smiles, expected) in (
+      ("C", 0),
+      ("c1ccccc1", 0),
+      ("CC(Cl)Br", 1),
+      ("CCC(C)C(Cl)Br", 2),
+      ("CCC(C(Cl)Br)C(F)I", 3),
+      ("[H][C@](F)(I)C(CC)C(Cl)Br", 3),
+      ("[H][C@](F)(I)[C@@]([H])(CC)C(Cl)Br", 3),
+    ):
       mol = Chem.MolFromSmiles(smiles)
       actual = len(Chem.FindMolChiralCenters(mol, includeUnassigned=True))
       self.assertEqual(rdMD.CalcNumAtomStereoCenters(mol), expected)
-    for (smiles, expected) in (("C", 0),
-                          ("c1ccccc1", 0),
-                          ("CC(Cl)Br", 1),
-                          ("CCC(C)C(Cl)Br", 2),
-                          ("CCC(C(Cl)Br)C(F)I", 3),
-                          ("[H][C@](F)(I)C(CC)C(Cl)Br", 2),
-                          ("[H][C@](F)(I)[C@@]([H])(CC)C(Cl)Br", 1), ):
+    for (smiles, expected) in (
+      ("C", 0),
+      ("c1ccccc1", 0),
+      ("CC(Cl)Br", 1),
+      ("CCC(C)C(Cl)Br", 2),
+      ("CCC(C(Cl)Br)C(F)I", 3),
+      ("[H][C@](F)(I)C(CC)C(Cl)Br", 2),
+      ("[H][C@](F)(I)[C@@]([H])(CC)C(Cl)Br", 1),
+    ):
       mol = Chem.MolFromSmiles(smiles)
       actual = sum(1 for x in Chem.FindMolChiralCenters(mol, includeUnassigned=True) if x[1] == '?')
       self.assertEqual(actual, expected)
@@ -560,16 +576,31 @@ class TestCase(unittest.TestCase):
 
   def testGithub1749(self):
     mol = Chem.MolFromSmiles("c1ccccc1O")
-    self.assertRaises(ValueError, lambda : rdMD.GetMorganFingerprintAsBitVect(mol,2,fromAtoms=[10]))
+    self.assertRaises(ValueError,
+                      lambda: rdMD.GetMorganFingerprintAsBitVect(mol, 2, fromAtoms=[10]))
 
   def testCustomVSA(self):
     mol = Chem.MolFromSmiles("c1ccccc1O")
     peoe_vsa = rdMD.PEOE_VSA_(mol)
     AllChem.ComputeGasteigerCharges(mol)
-    bins = [-.3, -.25, -.20, -.15, -.10, -.05, 0, .05, .10,  .15,  .20,  .25,  .30]
-    custom_vsa = rdMD.CustomProp_VSA_(mol, customPropName='_GasteigerCharge', bins=bins) 
-    for p,c in zip(peoe_vsa, custom_vsa):
+    bins = [-.3, -.25, -.20, -.15, -.10, -.05, 0, .05, .10, .15, .20, .25, .30]
+    custom_vsa = rdMD.CustomProp_VSA_(mol, customPropName='_GasteigerCharge', bins=bins)
+    for p, c in zip(peoe_vsa, custom_vsa):
       self.assertTrue(feq(p, c, .001))
+
+  def testGithub1973(self):
+
+    smiles = ("c1ccccc1S", "c1cscc1", "CC(=S)C", "CSC", "CS(=O)C", "CP(C)C", "CP=O", "CP(C)(C)=O",
+              "C[PH](C)=O")
+    orig_tpsa = (0, 0, 0, 0, 17.07, 0.0, 17.07, 17.07, 17.07)
+    new_tpsa = (38.8, 28.24, 32.09, 25.30, 36.28, 13.59, 51.21, 26.88, 40.54)
+    for i, smi in enumerate(smiles):
+      mol = Chem.MolFromSmiles(smi)
+      oTPSA = rdMD.CalcTPSA(mol)
+      self.assertAlmostEqual(oTPSA, orig_tpsa[i], 2)
+      nTPSA = rdMD.CalcTPSA(mol, force=True, includeSandP=True)
+      self.assertAlmostEqual(nTPSA, new_tpsa[i], 2)
+
 
 if __name__ == '__main__':
   unittest.main()
