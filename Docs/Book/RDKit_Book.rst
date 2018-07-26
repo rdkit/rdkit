@@ -920,6 +920,45 @@ Known Problems
     we provide), a mutex is used to ensure that only one thread is
     using a given recursive query at a time.
 
+Implementation of the TPSA Descriptor
+=====================================
+
+The topological polar surface area (TPSA) descriptor implemented in the RDKit
+is described in a publication by Peter Ertl et al.
+(https://pubs.acs.org/doi/abs/10.1021/jm000942e)
+The RDKit's implementation differs from what is described in that publication.
+This section describes the difference and why it's there.
+
+The RDKit's TPSA implementation only includes, by default, contributions from N
+and O atoms. Table 1 of the TPSA publication. however, includes parameters for
+polar S and P in addition to N and O. What's going on?
+
+The original TPSA implementation that is in the Daylight Contrib dir
+(http://www.daylight.com/download/contrib/tpsa.html) does not include
+contributions from polar S or P and, it turns out, the reference values that
+are included in the TPSA paper also don't include S or P contributions. For
+example, the TPSA provided in Table 3 for foscarnet (SMILES `OC(=O)P(=O)(O)O`),
+94.8, corresponds the sum of the O contributions - `3x20.23 + 2*17.07 = 94.8`.
+Adding the P contribution - `9.81`- would give a PSA of 104.6. This is also
+true for the other P and S containing compounds in Table 3.
+
+In the RDKit implementation, we chose to reproduce the behavior of the `tpsa.c`
+Contrib program and what is provided in Table 3 of the paper, so polar S and P
+are ignored. Based on a couple of user requests, for the `2018.09` release of
+the RDKit we added the option to include S and P contributions:
+
+.. doctest::
+
+  >>> from rdkit.Chem import Descriptors
+  >>> Descriptors.TPSA(Chem.MolFromSmiles('OC(=O)P(=O)(O)O')) # foscarnet
+  94.83
+  >>> Descriptors.TPSA(Chem.MolFromSmiles('OC(=O)P(=O)(O)O'), includeSandP=True)
+  104.64...
+  >>> Descriptors.TPSA(Chem.MolFromSmiles('Cc1ccccc1N1C(=O)c2cc(S(N)(=O)=O)c(Cl)cc2NC1C')) # metolazone
+  92.5
+  >>> Descriptors.TPSA(Chem.MolFromSmiles('Cc1ccccc1N1C(=O)c2cc(S(N)(=O)=O)c(Cl)cc2NC1C'), includeSandP=True)
+  100.88
+
 
 .. rubric:: Footnotes
 
