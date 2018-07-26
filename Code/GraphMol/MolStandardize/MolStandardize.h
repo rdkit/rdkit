@@ -8,6 +8,8 @@ namespace RDKit {
 class RWMol;
 class ROMol;
 
+namespace MolStandardize {
+
 struct CleanupParameters {
   // TODO
   std::string rdbase = std::getenv("RDBASE");
@@ -41,8 +43,6 @@ struct CleanupParameters {
         maxTautomers(1000),
         preferOrganic(false) {}
 };
-
-namespace MolStandardize {
 
 RWMol *cleanup(const RWMol &mol, const CleanupParameters &params);
 

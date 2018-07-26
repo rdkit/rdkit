@@ -123,7 +123,8 @@ void test_largest_fragment() {
   std::string smi1, smi2, smi3, smi4, smi5, smi6, smi7, smi8, smi9, smi10;
   LargestFragmentChooser lfragchooser;
   LargestFragmentChooser lfrag_preferOrg(true);
-  CleanupParameters* params = new CleanupParameters;
+  MolStandardize::CleanupParameters* params =
+      new MolStandardize::CleanupParameters;
 
   // Multiple organic fragments of different sizes.
   smi2 = "O=C(O)c1ccccc1.O=C(O)c1ccccc1.O=C(O)c1ccccc1";

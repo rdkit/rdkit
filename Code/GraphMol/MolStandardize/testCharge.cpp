@@ -78,9 +78,9 @@ void testReionizer() {
 void testChargeParent() {
   std::string smi1, smi2, smi3, smi4, smi5, smi6, smi7, smi8, smi9, smi10,
       smi11, smi12;
-  CleanupParameters params;
+  MolStandardize::CleanupParameters params;
   // initialize CleanupParameters with preferOrganic=true
-  CleanupParameters params_preferorg;
+  MolStandardize::CleanupParameters params_preferorg;
   params_preferorg.preferOrganic = true;
 
   // Test neutralization of ionized acids and bases.

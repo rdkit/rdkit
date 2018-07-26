@@ -17,7 +17,7 @@ using namespace RDKit;
 using namespace MolStandardize;
 
 void test1() {
-  CleanupParameters params;
+  MolStandardize::CleanupParameters params;
 
   std::string smi1 = "C1=CC=CC=C1";
   //	std::shared_ptr<RWMol> m1( SmilesToMol(smi1) );
@@ -145,9 +145,9 @@ void testCharge() {
   std::cout << MolToSmiles(*reionized) << std::endl;
   TEST_ASSERT(MolToSmiles(*reionized) == "[Cl-].[Na+]");
   //*******************************
-  CleanupParameters params;
+  MolStandardize::CleanupParameters params;
   // initialize CleanupParameters with preferOrganic=true
-  CleanupParameters params_preferorg;
+  MolStandardize::CleanupParameters params_preferorg;
   params_preferorg.preferOrganic = true;
 
   // Test neutralization of ionized acids and bases.

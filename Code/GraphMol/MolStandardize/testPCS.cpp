@@ -229,21 +229,21 @@ std::string rdkitMolStandardizeMetal(const std::string &smi) {
 }
 
 std::string rdkitMolStandardizeReionize(const std::string &smi) {
-  CleanupParameters params;
+  MolStandardize::CleanupParameters params;
   std::unique_ptr<RWMol> m(SmilesToMol(smi));
   RWMOL_SPTR reionized(MolStandardize::reionize(m.get(), params));
   return MolToSmiles(*reionized);
 }
 
 std::string rdkitMolStandardizeNormalize(const std::string &smi) {
-  CleanupParameters params;
+  MolStandardize::CleanupParameters params;
   std::unique_ptr<RWMol> m(SmilesToMol(smi));
   RWMOL_SPTR normalized(MolStandardize::normalize(m.get(), params));
   return MolToSmiles(*normalized);
 }
 
 std::string rdkitMolStandardizeFragment(const std::string &smi) {
-  CleanupParameters params;
+  MolStandardize::CleanupParameters params;
   std::unique_ptr<RWMol> m(SmilesToMol(smi));
   RWMOL_SPTR fragmentParent(MolStandardize::fragmentParent(*m, params));
   return MolToSmiles(*fragmentParent);

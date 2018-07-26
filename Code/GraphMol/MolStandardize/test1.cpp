@@ -13,7 +13,7 @@ using namespace std;
 
 void testCleanup() {
   string smi1, smi2, smi3, smi4;
-  CleanupParameters params;
+  MolStandardize::CleanupParameters params;
 
   // Test covalent metal is disconnected during standardize.
   smi1 = "CCC(=O)O[Na]";
@@ -99,7 +99,7 @@ void testMetalDisconnector() {
 void testNormalize() {
   string smi1, smi2, smi3, smi4, smi5, smi6, smi7, smi8, smi9, smi10, smi11,
       smi12, smi13, smi14, smi15, smi16, smi17;
-  CleanupParameters params;
+  MolStandardize::CleanupParameters params;
 
   std::string rdbase = getenv("RDBASE");
   std::string transformFile = rdbase +
@@ -233,7 +233,7 @@ void testNormalize() {
 void testNormalizeMultiFrags() {
   string smi1, smi2, smi3, smi4, smi5, smi6, smi7, smi8, smi9, smi10, smi11,
       smi12, smi13, smi14, smi15, smi16, smi17;
-  CleanupParameters params;
+  MolStandardize::CleanupParameters params;
 
   std::string rdbase = getenv("RDBASE");
   std::string transformFile = rdbase +
@@ -382,7 +382,7 @@ void testCharge() {
 }
 
 void testEnumerateTautomerSmiles() {
-  CleanupParameters params;
+  MolStandardize::CleanupParameters params;
   std::string smi1 = "c1(ccccc1)/C=C(/O)\\C";
   std::vector<std::string> tsmiles =
       MolStandardize::enumerateTautomerSmiles(smi1, params);
