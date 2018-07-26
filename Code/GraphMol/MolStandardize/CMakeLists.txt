@@ -1,6 +1,3 @@
-add_subdirectory(TransformCatalog)
-add_subdirectory(AcidBaseCatalog)
-add_subdirectory(TautomerCatalog)
 
 rdkit_library(MolStandardize
               MolStandardize.cpp
@@ -13,8 +10,16 @@ rdkit_library(MolStandardize
         FragmentCatalog/FragmentCatalogParams.cpp
         FragmentCatalog/FragmentCatalogUtils.cpp
         FragmentCatalog/FragmentRemover.cpp
-	      LINK_LIBRARIES RDGeneral GraphMol TransformCatalog
-	      AcidBaseCatalog TautomerCatalog)
+        AcidBaseCatalog/AcidBaseCatalogEntry.cpp
+        AcidBaseCatalog/AcidBaseCatalogParams.cpp
+        AcidBaseCatalog/AcidBaseCatalogUtils.cpp
+        TransformCatalog/TransformCatalogEntry.cpp
+        TransformCatalog/TransformCatalogParams.cpp
+        TransformCatalog/TransformCatalogUtils.cpp
+        TautomerCatalog/TautomerCatalogEntry.cpp
+        TautomerCatalog/TautomerCatalogParams.cpp
+        TautomerCatalog/TautomerCatalogUtils.cpp
+	      LINK_LIBRARIES ChemReactions ChemTransforms GraphMol RDGeneral )
 
 rdkit_headers(MolStandardize.h
 	      Metal.h
@@ -26,19 +31,27 @@ rdkit_headers(MolStandardize.h
         FragmentCatalog/FragmentCatalogParams.h
         FragmentCatalog/FragmentCatalogUtils.h
         FragmentCatalog/FragmentRemover.h
+        AcidBaseCatalog/AcidBaseCatalogEntry.h
+        AcidBaseCatalog/AcidBaseCatalogParams.h
+        AcidBaseCatalog/AcidBaseCatalogUtils.h
+        TransformCatalog/TransformCatalogEntry.h
+        TransformCatalog/TransformCatalogParams.h
+        TransformCatalog/TransformCatalogUtils.h
+        TautomerCatalog/TautomerCatalogEntry.h
+        TautomerCatalog/TautomerCatalogParams.h
+        TautomerCatalog/TautomerCatalogUtils.h
 	      DEST GraphMol/MolStandardize)
 
 rdkit_test(molStandardizeTest test1.cpp LINK_LIBRARIES MolStandardize
 	SmilesParse RDGeneral GraphMol SubstructMatch )
 rdkit_test(molNormalizeTest testNormalize.cpp LINK_LIBRARIES MolStandardize
-	SmilesParse RDGeneral GraphMol SubstructMatch TransformCatalog)
+	SmilesParse RDGeneral GraphMol SubstructMatch )
 rdkit_test(molValidateTest testValidate.cpp LINK_LIBRARIES MolStandardize
-	SmilesParse RDGeneral GraphMol SubstructMatch FileParsers FragmentCatalog)
+	SmilesParse RDGeneral GraphMol SubstructMatch FileParsers )
 rdkit_test(molChargeTest testCharge.cpp LINK_LIBRARIES MolStandardize
-	SmilesParse RDGeneral GraphMol SubstructMatch FileParsers AcidBaseCatalog)
+	SmilesParse RDGeneral GraphMol SubstructMatch FileParsers )
 rdkit_test(molTautomerTest testTautomer.cpp LINK_LIBRARIES MolStandardize
-	SmilesParse RDGeneral GraphMol SubstructMatch FileParsers
-	TautomerCatalog)
+	SmilesParse RDGeneral GraphMol SubstructMatch FileParsers )
 rdkit_test(molStandardizeSmallTest test2.cpp LINK_LIBRARIES MolStandardize
 	SmilesParse RDGeneral GraphMol SubstructMatch)
 rdkit_test(molFragmentCatalogTest testFragmentCatalog.cpp LINK_LIBRARIES MolStandardize
