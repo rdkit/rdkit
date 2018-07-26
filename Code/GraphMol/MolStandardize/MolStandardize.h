@@ -44,30 +44,43 @@ struct CleanupParameters {
         preferOrganic(false) {}
 };
 
-RWMol *cleanup(const RWMol &mol, const CleanupParameters &params);
+extern const CleanupParameters defaultCleanupParameters;
 
-void tautomerParent(RWMol &mol, const CleanupParameters &params);
+RWMol *cleanup(const RWMol &mol,
+               const CleanupParameters &params = defaultCleanupParameters);
 
-RWMol *fragmentParent(const RWMol &mol, const CleanupParameters &params,
-                      bool skip_standardize = false);
+void tautomerParent(RWMol &mol,
+                    const CleanupParameters &params = defaultCleanupParameters);
 
-void stereoParent(RWMol &mol, const CleanupParameters &params);
+RWMol *fragmentParent(
+    const RWMol &mol,
+    const CleanupParameters &params = defaultCleanupParameters,
+    bool skip_standardize = false);
 
-void isotopeParent(RWMol &mol, const CleanupParameters &params);
+void stereoParent(RWMol &mol,
+                  const CleanupParameters &params = defaultCleanupParameters);
 
-RWMol *chargeParent(const RWMol &mol, const CleanupParameters &params,
+void isotopeParent(RWMol &mol,
+                   const CleanupParameters &params = defaultCleanupParameters);
+
+RWMol *chargeParent(const RWMol &mol,
+                    const CleanupParameters &params = defaultCleanupParameters,
                     bool skip_standardize = false);
 
-void superParent(RWMol &mol, const CleanupParameters &params);
+void superParent(RWMol &mol,
+                 const CleanupParameters &params = defaultCleanupParameters);
 
-RWMol *normalize(const RWMol *mol, const CleanupParameters &params);
+RWMol *normalize(const RWMol *mol,
+                 const CleanupParameters &params = defaultCleanupParameters);
 
-RWMol *reionize(const RWMol *mol, const CleanupParameters &params);
+RWMol *reionize(const RWMol *mol,
+                const CleanupParameters &params = defaultCleanupParameters);
 
 std::string standardizeSmiles(const std::string &smiles);
 
 std::vector<std::string> enumerateTautomerSmiles(
-    const std::string &smiles, const CleanupParameters &params);
+    const std::string &smiles,
+    const CleanupParameters &params = defaultCleanupParameters);
 };  // namespace MolStandardize
 }  // namespace RDKit
 #endif

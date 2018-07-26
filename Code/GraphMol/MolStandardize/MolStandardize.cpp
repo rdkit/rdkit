@@ -16,6 +16,7 @@ using namespace std;
 
 namespace RDKit {
 namespace MolStandardize {
+const CleanupParameters defaultCleanupParameters;
 
 RWMol *cleanup(const RWMol &mol, const CleanupParameters &params) {
   //	bool passedOp = false;

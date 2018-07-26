@@ -42,6 +42,8 @@ rdkit_headers(MolStandardize.h
         TautomerCatalog/TautomerCatalogUtils.h
 	      DEST GraphMol/MolStandardize)
 
+add_subdirectory(Wrap)
+
 rdkit_test(molStandardizeTest test1.cpp LINK_LIBRARIES MolStandardize
 	SmilesParse RDGeneral GraphMol SubstructMatch )
 rdkit_test(molNormalizeTest testNormalize.cpp LINK_LIBRARIES MolStandardize
@@ -57,8 +59,6 @@ rdkit_test(molStandardizeSmallTest test2.cpp LINK_LIBRARIES MolStandardize
 rdkit_test(molFragmentCatalogTest testFragmentCatalog.cpp LINK_LIBRARIES MolStandardize
 	Catalogs SmilesParse RDGeneral GraphMol SubstructMatch FileParsers
 	ChemTransforms Descriptors)
-
-
 
 find_package(Boost 1.56.0 COMPONENTS system iostreams REQUIRED)
 if (NOT Boost_USE_STATIC_LIBS)
