@@ -88,7 +88,7 @@ ROMol *Reionizer::reionize(const ROMol &mol, AcidBaseCatalog *abcat,
   std::cout << MolToSmiles(*omol) << std::endl;
   std::cout << "Charge diff: " << charge_diff << std::endl;
 
-  std::set<std::vector<int>> already_moved;
+  std::set<std::vector<unsigned int>> already_moved;
   while (true) {
     std::shared_ptr<std::pair<unsigned int, std::vector<unsigned int>>> sp_res(
         this->strongestProtonated(*omol, abpairs));
@@ -109,7 +109,7 @@ ROMol *Reionizer::reionize(const ROMol &mol, AcidBaseCatalog *abcat,
           break;
         }
 
-        std::vector<int> key = {poccur.back(), ioccur.back()};
+        std::vector<unsigned int> key = {poccur.back(), ioccur.back()};
         std::sort(key.begin(), key.end());
         const bool is_in = already_moved.find(key) != already_moved.end();
         if (is_in) {
