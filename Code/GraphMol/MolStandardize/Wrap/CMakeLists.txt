@@ -1,5 +1,5 @@
 rdkit_python_extension(rdMolStandardize rdMolStandardize.cpp
-                       DEST Chem
+                       DEST Chem/MolStandardize
                        LINK_LIBRARIES
 LINK_LIBRARIES MolStandardize SmilesParse
 SubstructMatch GraphMol RDGeneral RDGeometryLib RDBoost )
