@@ -4066,6 +4066,65 @@ void testGithub1925() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub1972() {
+  BOOST_LOG(rdInfoLog)
+      << "Testing Github #1972: Incorrect tetrahedral stereo when reading "
+         "SMILES with ring closure as last neighbor"
+      << std::endl;
+  {
+    std::vector<std::vector<std::string>> smiles = {
+        {"[C@@]1(Cl)(F)(I).Br1", "[C@@](Br)(Cl)(F)(I)"},
+        {"[C@@](Cl)(F)(I)1.Br1", "[C@@](Cl)(F)(I)Br"},
+        {"[C@@](Cl)1(F)(I).Br1", "[C@@](Cl)(Br)(F)(I)"},
+        {"[C@@](Cl)(F)1(I).Br1", "[C@@](Cl)(F)(Br)(I)"}};
+    for (const auto &pr : smiles) {
+      // std::cerr << "--------------------------" << std::endl;
+      // std::cerr << pr[0] << " " << pr[1] << std::endl;
+      std::unique_ptr<ROMol> m1(SmilesToMol(pr[0]));
+      // std::cerr << "------------" << std::endl;
+      std::unique_ptr<ROMol> m2(SmilesToMol(pr[1]));
+      TEST_ASSERT(m1);
+      TEST_ASSERT(m2);
+      // m1->debugMol(std::cerr);
+      // std::cerr << "------------" << std::endl;
+      // m2->debugMol(std::cerr);
+      auto csmi1 = MolToSmiles(*m1);
+      auto csmi2 = MolToSmiles(*m2);
+      // std::cerr << ">>> " << (csmi1 == csmi2) << " " << csmi1 << " " << csmi2
+      //           << std::endl;
+      TEST_ASSERT(csmi1 == csmi2);
+    }
+  }
+  {  // even stupider examples
+    std::vector<std::vector<std::string>> smiles = {
+        {"[C@@]1(Cl)2(I).Br1.F2", "[C@@](Br)(Cl)(F)(I)"},
+        {"[C@@](Cl)2(I)1.Br1.F2", "[C@@](Cl)(F)(I)Br"},
+        {"[C@@]12(Cl)(I).Br1.F2", "[C@@](Br)(F)(Cl)(I)"},
+        {"[C@@]21(Cl)(I).Br1.F2", "[C@@](F)(Br)(Cl)(I)"},
+        {"[C@@](Cl)12(I).Br1.F2", "[C@@](Cl)(Br)(F)(I)"},
+        {"[C@@](Cl)21(I).Br1.F2", "[C@@](Cl)(F)(Br)(I)"},
+        {"[C@@](Cl)(I)21.Br1.F2", "[C@@](Cl)(I)(F)(Br)"},
+        {"[C@@](Cl)(I)12.Br1.F2", "[C@@](Cl)(I)(Br)(F)"}};
+    for (const auto &pr : smiles) {
+      // std::cerr << "--------------------------" << std::endl;
+      // std::cerr << pr[0] << " " << pr[1] << std::endl;
+      std::unique_ptr<ROMol> m1(SmilesToMol(pr[0]));
+      // std::cerr << "------------" << std::endl;
+      std::unique_ptr<ROMol> m2(SmilesToMol(pr[1]));
+      TEST_ASSERT(m1);
+      TEST_ASSERT(m2);
+      // m1->debugMol(std::cerr);
+      // std::cerr << "------------" << std::endl;
+      // m2->debugMol(std::cerr);
+      auto csmi1 = MolToSmiles(*m1);
+      auto csmi2 = MolToSmiles(*m2);
+      // std::cerr << ">>> " << (csmi1 == csmi2) << " " << csmi1 << " " << csmi2
+      //           << std::endl;
+      TEST_ASSERT(csmi1 == csmi2);
+    }
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -4137,6 +4196,7 @@ int main(int argc, char *argv[]) {
   testGithub1652();
   testIsomericSmilesIsDefault();
   testHashAtomExtension();
-#endif
   testGithub1925();
+#endif
+  testGithub1972();
 }

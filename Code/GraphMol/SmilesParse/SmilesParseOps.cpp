@@ -43,11 +43,19 @@ void CheckRingClosureBranchStatus(RDKit::Atom *atom, RDKit::RWMol *mp) {
   // We recognize these situations using the index of the chiral atom
   // and the degree of that chiral atom at the time the ring closure
   // digit is encountered during parsing.
+  // ----------
+  // github #1972 adds these examples:
+  //   1) [C@@]1(Cl)(F)I.Br1    (ok)
+  //   2) [C@@](Cl)1(F)I.Br1    (reverse)
+  //   3) [C@@](Cl)(F)1I.Br1    (ok)
+  //   4) [C@@](Cl)(F)(I)1.Br1  (reverse)
   if (atom->getIdx() != mp->getNumAtoms(true) - 1 &&
       (atom->getDegree() == 1 ||
-       (atom->getDegree() == 2 && atom->getIdx() != 0)) &&
+       (atom->getDegree() == 2 && atom->getIdx() != 0) ||
+       (atom->getDegree() == 3 && atom->getIdx() == 0)) &&
       (atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
        atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW)) {
+    // std::cerr << "crcbs: " << atom->getIdx() << std::endl;
     atom->invertChirality();
   }
 }
@@ -307,10 +315,10 @@ void AdjustAtomChiralityFlags(RWMol *mol) {
                                   ringClosures);
 
 #if 0
-      std::cout << "CLOSURES: ";
+      std::cerr << "CLOSURES: ";
       std::copy(ringClosures.begin(), ringClosures.end(),
-                std::ostream_iterator<int>(std::cout, " "));
-      std::cout << std::endl;
+                std::ostream_iterator<int>(std::cerr, " "));
+      std::cerr << std::endl;
 #endif
       std::list<SIZET_PAIR> neighbors;
       // push this atom onto the list of neighbors (we'll use this
