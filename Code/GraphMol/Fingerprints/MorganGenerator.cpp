@@ -383,5 +383,23 @@ FingerprintGenerator<OutputType> *getMorganGenerator(
       bondInvariantsGenerator, ownsAtomInvGenerator, ownsBondInvGenerator);
 }
 
+template FingerprintGenerator<std::uint32_t> *getMorganGenerator(
+    const unsigned int radius, const bool countSimulation,
+    const bool includeChirality, const bool useBondTypes,
+    const bool onlyNonzeroInvariants,
+    AtomInvariantsGenerator *atomInvariantsGenerator,
+    BondInvariantsGenerator *bondInvariantsGenerator,
+    const std::uint32_t foldedSize,
+    const std::vector<std::uint32_t> countBounds);
+
+template FingerprintGenerator<std::uint64_t> *getMorganGenerator(
+    const unsigned int radius, const bool countSimulation,
+    const bool includeChirality, const bool useBondTypes,
+    const bool onlyNonzeroInvariants,
+    AtomInvariantsGenerator *atomInvariantsGenerator,
+    BondInvariantsGenerator *bondInvariantsGenerator,
+    const std::uint32_t foldedSize,
+    const std::vector<std::uint32_t> countBounds);
+
 }  // namespace MorganFingerprint
 }  // namespace RDKit

@@ -191,5 +191,20 @@ FingerprintGenerator<OutputType> *getRDKitFPGenerator(
       ownsAtomInvGenerator, ownsBondInvGenerator);
 }
 
+template FingerprintGenerator<std::uint32_t> *getRDKitFPGenerator(
+    const unsigned int minPath, const unsigned int maxPath, const bool useHs,
+    const bool branchedPaths, const bool useBondOrder,
+    AtomInvariantsGenerator *atomInvariantsGenerator,
+    BondInvariantsGenerator *bondInvariantsGenerator,
+    const bool countSimulation, const std::vector<std::uint32_t> countBounds,
+    const std::uint32_t foldedSize);
+
+template FingerprintGenerator<std::uint64_t> *getRDKitFPGenerator(
+    const unsigned int minPath, const unsigned int maxPath, const bool useHs,
+    const bool branchedPaths, const bool useBondOrder,
+    AtomInvariantsGenerator *atomInvariantsGenerator,
+    BondInvariantsGenerator *bondInvariantsGenerator,
+    const bool countSimulation, const std::vector<std::uint32_t> countBounds,
+    const std::uint32_t foldedSize);
 }  // namespace RDKitFP
 }  // namespace RDKit

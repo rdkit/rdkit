@@ -66,7 +66,7 @@ std::string AtomPairArguments<OutputType>::infoString() const {
 }
 
 template <typename OutputType>
-std::uint32_t AtomPairAtomEnv<OutputType>::getBitId(
+OutputType AtomPairAtomEnv<OutputType>::getBitId(
     FingerprintArguments<OutputType> *arguments,
     const std::vector<std::uint32_t> *atomInvariants,
     const std::vector<std::uint32_t> *bondInvariants,
@@ -174,18 +174,19 @@ std::string AtomPairEnvGenerator<OutputType>::infoString() const {
   return "AtomPairEnvironmentGenerator";
 }
 
-FingerprintGenerator<std::uint32_t> *getAtomPairGenerator(
+template <typename OutputType>
+FingerprintGenerator<OutputType> *getAtomPairGenerator(
     const unsigned int minDistance, const unsigned int maxDistance,
     const bool includeChirality, const bool use2D,
     const bool useCountSimulation,
     AtomInvariantsGenerator *atomInvariantsGenerator,
     BondInvariantsGenerator *bondInvariantsGenerator) {
-  AtomEnvironmentGenerator<std::uint32_t> *atomPairEnvGenerator =
-      new AtomPair::AtomPairEnvGenerator<std::uint32_t>();
-  FingerprintArguments<std::uint32_t> *atomPairArguments =
-      new AtomPair::AtomPairArguments<std::uint32_t>(useCountSimulation,
-                                                     includeChirality, use2D,
-                                                     minDistance, maxDistance);
+  AtomEnvironmentGenerator<OutputType> *atomPairEnvGenerator =
+      new AtomPair::AtomPairEnvGenerator<OutputType>();
+  FingerprintArguments<OutputType> *atomPairArguments =
+      new AtomPair::AtomPairArguments<OutputType>(useCountSimulation,
+                                                  includeChirality, use2D,
+                                                  minDistance, maxDistance);
 
   bool ownsAtomInvGenerator = false;
   if (!atomInvariantsGenerator) {
@@ -193,10 +194,23 @@ FingerprintGenerator<std::uint32_t> *getAtomPairGenerator(
     ownsAtomInvGenerator = true;
   }
 
-  return new FingerprintGenerator<std::uint32_t>(
+  return new FingerprintGenerator<OutputType>(
       atomPairEnvGenerator, atomPairArguments, atomInvariantsGenerator,
       bondInvariantsGenerator, ownsAtomInvGenerator, false);
 }
 
+template FingerprintGenerator<std::uint32_t> *getAtomPairGenerator(
+    const unsigned int minDistance, const unsigned int maxDistance,
+    const bool includeChirality, const bool use2D,
+    const bool useCountSimulation,
+    AtomInvariantsGenerator *atomInvariantsGenerator,
+    BondInvariantsGenerator *bondInvariantsGenerator);
+
+template FingerprintGenerator<std::uint64_t> *getAtomPairGenerator(
+    const unsigned int minDistance, const unsigned int maxDistance,
+    const bool includeChirality, const bool use2D,
+    const bool useCountSimulation,
+    AtomInvariantsGenerator *atomInvariantsGenerator,
+    BondInvariantsGenerator *bondInvariantsGenerator);
 }  // namespace AtomPair
 }  // namespace RDKit

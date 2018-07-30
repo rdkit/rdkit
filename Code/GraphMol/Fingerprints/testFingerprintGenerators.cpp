@@ -7,9 +7,9 @@
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
-#include <GraphMol/Fingerprints/AtomPairGenerator.cpp>
-#include <GraphMol/Fingerprints/MorganGenerator.cpp>
-#include <GraphMol/Fingerprints/RDKitFPGenerator.cpp>
+#include <GraphMol/Fingerprints/AtomPairGenerator.h>
+#include <GraphMol/Fingerprints/MorganGenerator.h>
+#include <GraphMol/Fingerprints/RDKitFPGenerator.h>
 
 using namespace RDKit;
 
@@ -106,7 +106,7 @@ void testAtomPairFP() {
   std::uint32_t c1, c2, c3;
 
   FingerprintGenerator<std::uint32_t> *atomPairGenerator =
-      AtomPair::getAtomPairGenerator();
+      AtomPair::getAtomPairGenerator<std::uint32_t>();
 
   mol = SmilesToMol("CCC");
   fp = atomPairGenerator->getFingerprint(*mol);
@@ -150,7 +150,7 @@ void testAtomPairArgs() {
   std::uint32_t c1, c2, c3;
 
   FingerprintGenerator<std::uint32_t> *atomPairGenerator =
-      AtomPair::getAtomPairGenerator(2);
+      AtomPair::getAtomPairGenerator<std::uint32_t>(2);
 
   mol = SmilesToMol("CCC");
   fp = atomPairGenerator->getFingerprint(*mol);
@@ -166,7 +166,7 @@ void testAtomPairArgs() {
   delete fp;
   delete atomPairGenerator;
 
-  atomPairGenerator = AtomPair::getAtomPairGenerator(1, 1);
+  atomPairGenerator = AtomPair::getAtomPairGenerator<std::uint32_t>(1, 1);
   fp = atomPairGenerator->getFingerprint(*mol);
   TEST_ASSERT(fp->getTotalVal() == 2);
   TEST_ASSERT(fp->getNonzeroElements().size() == 1);
@@ -180,7 +180,8 @@ void testAtomPairArgs() {
   delete fp;
   delete atomPairGenerator;
 
-  atomPairGenerator = AtomPair::getAtomPairGenerator(1, 30, true);
+  atomPairGenerator =
+      AtomPair::getAtomPairGenerator<std::uint32_t>(1, 30, true);
   fp = atomPairGenerator->getFingerprint(*mol);
   TEST_ASSERT(fp->getTotalVal() == 3);
   TEST_ASSERT(fp->getNonzeroElements().size() == 2);
@@ -191,7 +192,8 @@ void testAtomPairArgs() {
   TEST_ASSERT(fp->getVal(AtomPair::getAtomPairCode(c1, c2, 1, true)) == 2);
   TEST_ASSERT(fp->getVal(AtomPair::getAtomPairCode(c1, c3, 2, true)) == 1);
 
-  atomPairGenerator = AtomPair::getAtomPairGenerator(1, 30, false, true, false);
+  atomPairGenerator =
+      AtomPair::getAtomPairGenerator<std::uint32_t>(1, 30, false, true, false);
   fp = atomPairGenerator->getFingerprint(*mol);
   TEST_ASSERT(fp->getTotalVal() == 2);
   TEST_ASSERT(fp->getNonzeroElements().size() == 2);
@@ -221,7 +223,7 @@ void testAtomPairOld() {
     SparseIntVect<boost::uint32_t> *fpu;
 
     FingerprintGenerator<std::uint32_t> *atomPairGenerator =
-        AtomPair::getAtomPairGenerator();
+        AtomPair::getAtomPairGenerator<std::uint32_t>();
 
     BOOST_FOREACH (std::string sm, smis) {
       mol = SmilesToMol(sm);
@@ -260,7 +262,7 @@ void testAtomPairBitvector() {
     SparseBitVect *fp2;
 
     FingerprintGenerator<std::uint32_t> *atomPairGenerator =
-        AtomPair::getAtomPairGenerator();
+        AtomPair::getAtomPairGenerator<std::uint32_t>();
     std::vector<std::uint32_t> defaultCountBounds = {1, 2, 4, 8};
 
     mol = SmilesToMol("CCC");
@@ -313,7 +315,7 @@ void testAtomPairFoldedBitvector() {
     ExplicitBitVect *fp2;
 
     FingerprintGenerator<std::uint32_t> *atomPairGenerator =
-        AtomPair::getAtomPairGenerator();
+        AtomPair::getAtomPairGenerator<std::uint32_t>();
     std::vector<std::uint32_t> defaultCountBounds = {1, 2, 4, 8};
 
     mol = SmilesToMol("CCC");
@@ -366,7 +368,7 @@ void testAtomPairOutput() {
   std::vector<std::uint64_t> v;
 
   FingerprintGenerator<std::uint32_t> *atomPairGenerator =
-      AtomPair::getAtomPairGenerator();
+      AtomPair::getAtomPairGenerator<std::uint32_t>();
   mol = SmilesToMol("CCC");
   additionalOutput.atomToBits =
       new std::vector<std::vector<std::uint64_t>>(mol->getNumAtoms());
@@ -518,9 +520,9 @@ void testInvariantGenerators() {
   bondInvariantsGenerator = nullptr;
 
   FingerprintGenerator<std::uint32_t> *atomPairGenerator =
-      AtomPair::getAtomPairGenerator(1, radius, false, true, true,
-                                     atomInvariantsGenerator,
-                                     bondInvariantsGenerator);
+      AtomPair::getAtomPairGenerator<std::uint32_t>(
+          1, radius, false, true, true, atomInvariantsGenerator,
+          bondInvariantsGenerator);
 
   mol = SmilesToMol("CCC");
   fp = atomPairGenerator->getFingerprint(*mol);
@@ -537,7 +539,7 @@ void testInvariantGenerators() {
       new MorganFingerprint::MorganFeatureAtomInvGenerator();
   bondInvariantsGenerator = nullptr;
 
-  atomPairGenerator = AtomPair::getAtomPairGenerator(
+  atomPairGenerator = AtomPair::getAtomPairGenerator<std::uint32_t>(
       1, radius, false, true, true, atomInvariantsGenerator,
       bondInvariantsGenerator);
 

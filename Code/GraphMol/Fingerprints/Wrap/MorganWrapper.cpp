@@ -1,7 +1,7 @@
 
 #include <boost/python.hpp>
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
-#include <GraphMol/Fingerprints/MorganGenerator.cpp>
+#include <GraphMol/Fingerprints/MorganGenerator.h>
 
 using namespace RDKit;
 namespace python = boost::python;

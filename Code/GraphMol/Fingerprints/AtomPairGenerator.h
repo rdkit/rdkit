@@ -74,10 +74,10 @@ class AtomPairAtomEnv : public AtomEnvironment<OutputType> {
   const unsigned int d_distance;
 
  public:
-  std::uint32_t getBitId(FingerprintArguments<OutputType> *arguments,
-                         const std::vector<std::uint32_t> *atomInvariants,
-                         const std::vector<std::uint32_t> *bondInvariants,
-                         const AdditionalOutput *additionalOutput) const;
+  OutputType getBitId(FingerprintArguments<OutputType> *arguments,
+                      const std::vector<std::uint32_t> *atomInvariants,
+                      const std::vector<std::uint32_t> *bondInvariants,
+                      const AdditionalOutput *additionalOutput) const;
 
   /*!
     /brief construct a new AtomPairAtomEnv object
@@ -130,7 +130,8 @@ class AtomPairEnvGenerator : public AtomEnvironmentGenerator<OutputType> {
 
   /return FingerprintGenerator that generates atom-pair fingerprints
  */
-FingerprintGenerator<std::uint32_t> *getAtomPairGenerator(
+template <typename OutputType>
+FingerprintGenerator<OutputType> *getAtomPairGenerator(
     const unsigned int minDistance = 1,
     const unsigned int maxDistance = maxPathLen - 1,
     const bool includeChirality = false, const bool use2D = true,
