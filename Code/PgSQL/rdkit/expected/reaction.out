@@ -49,9 +49,9 @@ SELECT reaction_to_smiles(reaction_from_smarts('c1ccc[n,c]c1>>c1nccnc1'));
 (1 row)
 
 SELECT reaction_to_smarts(reaction_from_smarts('c1ccc[n,c]c1>>c1nccnc1'));
-                     reaction_to_smarts                     
-------------------------------------------------------------
- c1:,-c:,-c:,-c:,-[n,c]:,-c:,-1>>c1:,-n:,-c:,-c:,-n:,-c:,-1
+   reaction_to_smarts   
+------------------------
+ c1ccc[n,c]c1>>c1nccnc1
 (1 row)
 
 SELECT reaction_to_smarts('c1cccnc1>>c1nccnc1'::reaction);
