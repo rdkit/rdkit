@@ -1,89 +1,11 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
 #include <GraphMol/Fingerprints/AtomPairGenerator.h>
-#include <cstdint>
+#include <GraphMol/Fingerprints/FingerprintUtil.h>
 
 namespace RDKit {
 namespace AtomPair {
-
-//! taken from the existing implementation
-unsigned int numPiElectrons(const Atom *atom) {
-  PRECONDITION(atom, "no atom");
-  unsigned int res = 0;
-  if (atom->getIsAromatic()) {
-    res = 1;
-  } else if (atom->getHybridization() != Atom::SP3) {
-    unsigned int val = static_cast<unsigned int>(atom->getExplicitValence());
-    val -= atom->getNumExplicitHs();
-    CHECK_INVARIANT(val >= atom->getDegree(),
-                    "explicit valence exceeds atom degree");
-    res = val - atom->getDegree();
-  }
-  return res;
-}
-
-//! taken from the existing implementation
-std::uint32_t getAtomCode(const Atom *atom, unsigned int branchSubtract,
-                          bool includeChirality) {
-  PRECONDITION(atom, "no atom");
-
-  std::uint32_t numBranches = 0;
-  if (atom->getDegree() > branchSubtract) {
-    numBranches = atom->getDegree() - branchSubtract;
-  }
-
-  std::uint32_t branchBits = numBranches % maxNumBranches;
-  std::uint32_t nPi = numPiElectrons(atom) % maxNumPi;
-
-  std::uint32_t typeIdx = 0;
-  std::uint32_t nTypes = 1 << numTypeBits;
-  while (typeIdx < nTypes) {
-    if (atomNumberTypes[typeIdx] ==
-        static_cast<unsigned int>(atom->getAtomicNum())) {
-      break;
-    } else if (atomNumberTypes[typeIdx] >
-               static_cast<unsigned int>(atom->getAtomicNum())) {
-      typeIdx = nTypes;
-      break;
-    }
-    ++typeIdx;
-  }
-  if (typeIdx == nTypes) --typeIdx;
-
-  std::uint32_t cipCodeBits = 0;
-  if (includeChirality) {
-    std::string cipCode;
-    if (atom->getPropIfPresent(common_properties::_CIPCode, cipCode)) {
-      if (cipCode == "R") {
-        cipCodeBits = 1;
-      } else if (cipCode == "S") {
-        cipCodeBits = 2;
-      }
-    }
-  }
-
-  std::uint32_t code;
-  code = branchBits;
-  code |= nPi << numBranchBits;
-  code |= typeIdx << (numBranchBits + numPiBits);
-  code |= cipCodeBits << (numBranchBits + numPiBits + numTypeBits);
-
-  POSTCONDITION(
-      code < static_cast<std::uint32_t>(
-                 1 << (codeSize + (includeChirality ? numChiralBits : 0))),
-      "code exceeds number of bits");
-  return code;
-};
-
-std::uint32_t getAtomPairCode(std::uint32_t codeI, std::uint32_t codeJ,
-                              unsigned int dist, bool includeChirality) {
-  PRECONDITION(dist < maxPathLen, "dist too long");
-  std::uint32_t res = dist;
-  res |= std::min(codeI, codeJ) << numPathBits;
-  res |= std::max(codeI, codeJ)
-         << (numPathBits + codeSize + (includeChirality ? numChiralBits : 0));
-  return res;
-}
+using namespace AtomPairs;
 
 AtomPairAtomInvGenerator::AtomPairAtomInvGenerator(bool includeChirality)
     : df_includeChirality(includeChirality) {}

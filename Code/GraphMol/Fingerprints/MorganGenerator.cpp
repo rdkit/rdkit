@@ -9,61 +9,13 @@
 #include <boost/tuple/tuple.hpp>
 #include <boost/tuple/tuple_comparison.hpp>
 #include <boost/foreach.hpp>
-//#include <algorithm>
 
-#include <RDGeneral/BoostStartInclude.h>
-#include <boost/flyweight.hpp>
-#include <boost/flyweight/key_value.hpp>
-#include <boost/flyweight/no_tracking.hpp>
-#include <RDGeneral/BoostEndInclude.h>
+#include <GraphMol/Fingerprints/FingerprintUtil.h>
 
 namespace RDKit {
 namespace MorganFingerprint {
 
-class ss_matcher {
- public:
-  ss_matcher(){};
-  ss_matcher(const std::string &pattern) {
-    RDKit::RWMol *p = RDKit::SmartsToMol(pattern);
-    TEST_ASSERT(p);
-    m_matcher.reset(p);
-  };
-
-  // const RDKit::ROMOL_SPTR &getMatcher() const { return m_matcher; };
-  const RDKit::ROMol *getMatcher() const { return m_matcher.get(); };
-
- private:
-  RDKit::ROMOL_SPTR m_matcher;
-};
-
-// Definitions for feature points adapted from:
-// Gobbi and Poppinger, Biotech. Bioeng. _61_ 47-54 (1998)
-const char *smartsPatterns[6] = {
-    "[$([N;!H0;v3,v4&+1]),\
-$([O,S;H1;+0]),\
-n&H1&+0]",                                                  // Donor
-    "[$([O,S;H1;v2;!$(*-*=[O,N,P,S])]),\
-$([O,S;H0;v2]),\
-$([O,S;-]),\
-$([N;v3;!$(N-*=[O,N,P,S])]),\
-n&H0&+0,\
-$([o,s;+0;!$([o,s]:n);!$([o,s]:c:n)])]",                    // Acceptor
-    "[a]",                                                  // Aromatic
-    "[F,Cl,Br,I]",                                          // Halogen
-    "[#7;+,\
-$([N;H2&+0][$([C,a]);!$([C,a](=O))]),\
-$([N;H1&+0]([$([C,a]);!$([C,a](=O))])[$([C,a]);!$([C,a](=O))]),\
-$([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]",  // Basic
-    "[$([C,S](=[O,S,P])-[O;H1,-1])]"                        // Acidic
-};
-std::vector<std::string> defaultFeatureSmarts(smartsPatterns,
-                                              smartsPatterns + 6);
-typedef boost::flyweight<boost::flyweights::key_value<std::string, ss_matcher>,
-                         boost::flyweights::no_tracking>
-    pattern_flyweight;
-
-typedef boost::tuple<boost::dynamic_bitset<>, uint32_t, unsigned int>
-    AccumTuple;
+using namespace MorganFingerprints;
 
 MorganAtomInvGenerator::MorganAtomInvGenerator(const bool includeRingMembership)
     : df_includeRingMembership(includeRingMembership) {}
@@ -73,25 +25,7 @@ std::vector<std::uint32_t> *MorganAtomInvGenerator::getAtomInvariants(
   unsigned int nAtoms = mol.getNumAtoms();
   std::vector<std::uint32_t> *atomInvariants =
       new std::vector<std::uint32_t>(nAtoms);
-  gboost::hash<std::vector<uint32_t>> vectHasher;
-  for (unsigned int i = 0; i < nAtoms; ++i) {
-    Atom const *atom = mol.getAtomWithIdx(i);
-    std::vector<uint32_t> components;
-    components.push_back(atom->getAtomicNum());
-    components.push_back(atom->getTotalDegree());
-    components.push_back(atom->getTotalNumHs());
-    components.push_back(atom->getFormalCharge());
-    int deltaMass = static_cast<int>(
-        atom->getMass() -
-        PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum()));
-    components.push_back(deltaMass);
-
-    if (df_includeRingMembership &&
-        atom->getOwningMol().getRingInfo()->numAtomRings(atom->getIdx())) {
-      components.push_back(1);
-    }
-    (*atomInvariants)[i] = vectHasher(components);
-  }
+  getConnectivityInvariants(mol, *atomInvariants, df_includeRingMembership);
   return atomInvariants;
 }
 
@@ -102,27 +36,7 @@ std::string MorganAtomInvGenerator::infoString() const {
 
 MorganFeatureAtomInvGenerator::MorganFeatureAtomInvGenerator(
     std::vector<const ROMol *> *patterns) {
-  if (!patterns) {
-    dp_patterns = new std::vector<const ROMol *>();
-    dp_patterns->reserve(defaultFeatureSmarts.size());
-    for (std::vector<std::string>::const_iterator smaIt =
-             defaultFeatureSmarts.begin();
-         smaIt != defaultFeatureSmarts.end(); ++smaIt) {
-      const ROMol *matcher = pattern_flyweight(*smaIt).get().getMatcher();
-      CHECK_INVARIANT(matcher, "bad smarts");
-      dp_patterns->push_back(matcher);
-    }
-    df_ownsData = true;
-  } else {
-    dp_patterns = patterns;
-    df_ownsData = false;
-  }
-}
-
-MorganFeatureAtomInvGenerator::~MorganFeatureAtomInvGenerator() {
-  if (df_ownsData) {
-    delete dp_patterns;
-  }
+  dp_patterns = patterns;
 }
 
 std::string MorganFeatureAtomInvGenerator::infoString() const {
@@ -134,20 +48,7 @@ std::vector<std::uint32_t> *MorganFeatureAtomInvGenerator::getAtomInvariants(
   unsigned int nAtoms = mol.getNumAtoms();
   std::vector<std::uint32_t> *result = new std::vector<std::uint32_t>(nAtoms);
 
-  std::fill(result->begin(), result->end(), 0);
-  for (unsigned int i = 0; i < dp_patterns->size(); ++i) {
-    std::uint32_t mask = 1 << i;
-    std::vector<MatchVectType> matchVect;
-    // to maintain thread safety, we have to copy the pattern
-    // molecules:
-    SubstructMatch(mol, ROMol(*(*dp_patterns)[i], true), matchVect);
-    for (std::vector<MatchVectType>::const_iterator mvIt = matchVect.begin();
-         mvIt != matchVect.end(); ++mvIt) {
-      for (const auto &mIt : *mvIt) {
-        (*result)[mIt.second] |= mask;
-      }
-    }
-  }
+  getFeatureInvariants(mol, *result, dp_patterns);
   return result;
 }
 

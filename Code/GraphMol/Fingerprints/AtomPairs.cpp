@@ -17,79 +17,10 @@
 #include <boost/cstdint.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/foreach.hpp>
+#include <GraphMol/Fingerprints/FingerprintUtil.h>
 
 namespace RDKit {
 namespace AtomPairs {
-unsigned int numPiElectrons(const Atom *atom) {
-  PRECONDITION(atom, "no atom");
-  unsigned int res = 0;
-  if (atom->getIsAromatic()) {
-    res = 1;
-  } else if (atom->getHybridization() != Atom::SP3) {
-    unsigned int val = static_cast<unsigned int>(atom->getExplicitValence());
-    val -= atom->getNumExplicitHs();
-    CHECK_INVARIANT(val >= atom->getDegree(),
-                    "explicit valence exceeds atom degree");
-    res = val - atom->getDegree();
-  }
-  return res;
-}
-
-boost::uint32_t getAtomCode(const Atom *atom, unsigned int branchSubtract,
-                            bool includeChirality) {
-  PRECONDITION(atom, "no atom");
-  boost::uint32_t code;
-
-  unsigned int numBranches = 0;
-  if (atom->getDegree() > branchSubtract) {
-    numBranches = atom->getDegree() - branchSubtract;
-  }
-
-  code = numBranches % maxNumBranches;
-  unsigned int nPi = numPiElectrons(atom) % maxNumPi;
-  code |= nPi << numBranchBits;
-
-  unsigned int typeIdx = 0;
-  unsigned int nTypes = 1 << numTypeBits;
-  while (typeIdx < nTypes) {
-    if (atomNumberTypes[typeIdx] ==
-        static_cast<unsigned int>(atom->getAtomicNum())) {
-      break;
-    } else if (atomNumberTypes[typeIdx] >
-               static_cast<unsigned int>(atom->getAtomicNum())) {
-      typeIdx = nTypes;
-      break;
-    }
-    ++typeIdx;
-  }
-  if (typeIdx == nTypes) --typeIdx;
-  code |= typeIdx << (numBranchBits + numPiBits);
-  if (includeChirality) {
-    std::string cipCode;
-    if (atom->getPropIfPresent(common_properties::_CIPCode, cipCode)) {
-      boost::uint32_t offset = numBranchBits + numPiBits + numTypeBits;
-      if (cipCode == "R") {
-        code |= 1 << offset;
-      } else if (cipCode == "S") {
-        code |= 2 << offset;
-      }
-    }
-  }
-  POSTCONDITION(code < static_cast<boost::uint32_t>(
-                           1 << (codeSize + (includeChirality ? 2 : 0))),
-                "code exceeds number of bits");
-  return code;
-};
-
-boost::uint32_t getAtomPairCode(boost::uint32_t codeI, boost::uint32_t codeJ,
-                                unsigned int dist, bool includeChirality) {
-  PRECONDITION(dist < maxPathLen, "dist too long");
-  boost::uint32_t res = dist;
-  res |= std::min(codeI, codeJ) << numPathBits;
-  res |= std::max(codeI, codeJ)
-         << (numPathBits + codeSize + (includeChirality ? numChiralBits : 0));
-  return res;
-}
 
 template <typename T1, typename T2>
 void updateElement(SparseIntVect<T1> &v, T2 elem) {

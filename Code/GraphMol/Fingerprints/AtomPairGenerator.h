@@ -2,30 +2,11 @@
 #define RD_ATOMPAIRGEN_H_2018_06
 
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
-#include <cstdint>
+#include <GraphMol/Fingerprints/FingerprintUtil.h>
 
 namespace RDKit {
 namespace AtomPair {
-
-// constants taken from existing atom pairs implementation
-const unsigned int numTypeBits = 4;
-const unsigned int atomNumberTypes[1 << numTypeBits] = {
-    5, 6, 7, 8, 9, 14, 15, 16, 17, 33, 34, 35, 51, 52, 43};
-const unsigned int numPiBits = 2;
-const unsigned int maxNumPi = (1 << numPiBits) - 1;
-const unsigned int numBranchBits = 3;
-const unsigned int maxNumBranches = (1 << numBranchBits) - 1;
-const unsigned int numChiralBits = 2;
-const unsigned int codeSize = numTypeBits + numPiBits + numBranchBits;
-const unsigned int numPathBits = 5;
-const unsigned int maxPathLen = (1 << numPathBits) - 1;
-const unsigned int numAtomPairFingerprintBits = numPathBits + 2 * codeSize;
-
-unsigned int numPiElectrons(const Atom *atom);
-std::uint32_t getAtomCode(const Atom *atom, unsigned int branchSubtract,
-                          bool includeChirality);
-std::uint32_t getAtomPairCode(std::uint32_t codeI, std::uint32_t codeJ,
-                              unsigned int dist, bool includeChirality);
+using namespace AtomPairs;
 
 class AtomPairAtomInvGenerator : public AtomInvariantsGenerator {
   const bool df_includeChirality;

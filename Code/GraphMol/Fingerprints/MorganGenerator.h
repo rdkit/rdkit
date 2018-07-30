@@ -37,7 +37,6 @@ class MorganAtomInvGenerator : public AtomInvariantsGenerator {
  */
 class MorganFeatureAtomInvGenerator : public AtomInvariantsGenerator {
   std::vector<const ROMol *> *dp_patterns;
-  bool df_ownsData;
 
  public:
   /**
@@ -46,10 +45,9 @@ class MorganFeatureAtomInvGenerator : public AtomInvariantsGenerator {
    /param patterns : if provided should contain the queries used to assign
    atom-types. if not provided, feature definitions adapted from reference:
    Gobbi and Poppinger, Biotech. Bioeng. _61_ 47-54 (1998) will be used for
-   Donor, Acceptor, Aromatic, Halogen, Basic,
+   Donor, Acceptor, Aromatic, Halogen, Basic, Acidic.
    */
   MorganFeatureAtomInvGenerator(std::vector<const ROMol *> *patterns = nullptr);
-  ~MorganFeatureAtomInvGenerator();
 
   std::vector<std::uint32_t> *getAtomInvariants(const ROMol &mol) const;
 
@@ -130,9 +128,9 @@ class MorganAtomEnv : public AtomEnvironment<OutputType> {
 
  public:
   OutputType getBitId(FingerprintArguments<OutputType> *arguments,
-                         const std::vector<std::uint32_t> *atomInvariants,
-                         const std::vector<std::uint32_t> *bondInvariants,
-                         const AdditionalOutput *additionalOutput) const;
+                      const std::vector<std::uint32_t> *atomInvariants,
+                      const std::vector<std::uint32_t> *bondInvariants,
+                      const AdditionalOutput *additionalOutput) const;
 
   /**
    /brief Construct a new MorganAtomEnv object
