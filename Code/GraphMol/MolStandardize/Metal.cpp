@@ -33,6 +33,18 @@ MetalDisconnector::MetalDisconnector(const MetalDisconnector &other) {
 
 MetalDisconnector::~MetalDisconnector(){};
 
+ROMol *MetalDisconnector::getMetalNof() {return metal_nof.get();}
+
+ROMol *MetalDisconnector::getMetalNon() {return metal_non.get();}
+
+void MetalDisconnector::setMetalNof(const ROMol &mol) {
+	this->metal_nof = static_cast<ROMOL_SPTR>(new ROMol(mol));
+}
+
+void MetalDisconnector::setMetalNon(const ROMol &mol) {
+	this->metal_non = static_cast<ROMOL_SPTR>(new ROMol(mol));
+}
+
 ROMol *MetalDisconnector::disconnect(const ROMol &mol) {
   auto *res = new RWMol(mol);
   MetalDisconnector::disconnect(*res);

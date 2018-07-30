@@ -14,7 +14,11 @@ class MetalDisconnector {
   MetalDisconnector(const MetalDisconnector &other);
   ~MetalDisconnector();
 
-  // TODO inputting ROMol doesn't work
+	ROMol *getMetalNof(); // {return metal_nof;}
+	ROMol *getMetalNon(); // {return metal_non;}
+	void setMetalNof(const ROMol &mol);
+	void setMetalNon(const ROMol &mol);
+
   ROMol *disconnect(const ROMol &mol);
   // overload
   // modifies the molecule in place
