@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2004-2012 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2018 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -845,7 +844,7 @@ void runblock(const std::vector<ROMol *> &mols, unsigned int count,
     }
   }
 };
-}
+}  // namespace
 #include <thread>
 #include <future>
 void testMultiThread() {
@@ -2112,6 +2111,56 @@ void testGithub1702() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testGithub1973() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog)
+      << "    Test Github #1973: support P and S terms for TPSA calculation"
+      << std::endl;
+
+  {
+    // Some examples from the original publication, including the non S and P
+    // values calculated with RDKit (which match what's in table 3 of the
+    // original publication) and then values with S and P contributions added by
+    // hand.
+    std::vector<std::string> smiles = {
+        "Cc1ccccc1N1C(=O)c2cc(S(N)(=O)=O)c(Cl)cc2NC1C", "O=C(O)P(=O)(O)O",
+        "O=C(O)c1cc(N=Nc2ccc(S(=O)(=O)Nc3ccccn3)cc2)ccc1O"};
+    std::vector<double> orig_tpsa = {92.50, 94.83, 141.31};
+    std::vector<double> new_tpsa = {100.88, 104.64, 149.69};
+    for (unsigned int i = 0; i < smiles.size(); ++i) {
+      std::unique_ptr<ROMol> mol(SmilesToMol(smiles[i]));
+      TEST_ASSERT(mol);
+      auto oTPSA = calcTPSA(*mol);
+      TEST_ASSERT(feq(oTPSA, orig_tpsa[i], 0.01));
+      auto nTPSA = calcTPSA(*mol, true, true);
+      // std::cerr << smiles[i] << " " << new_tpsa[i] << " " << nTPSA <<
+      // std::endl;
+      TEST_ASSERT(feq(nTPSA, new_tpsa[i], 0.01));
+    }
+  }
+  {
+    // Some examples constructed by hand
+    std::vector<std::string> smiles = {"c1ccccc1S", "c1cscc1",    "CC(=S)C",
+                                       "CSC",       "CS(=O)C",    "CP(C)C",
+                                       "CP=O",      "CP(C)(C)=O", "C[PH](C)=O"};
+    std::vector<double> orig_tpsa = {0,   0,     0,     0,    17.07,
+                                     0.0, 17.07, 17.07, 17.07};
+    std::vector<double> new_tpsa = {38.8,  28.24, 32.09, 25.30, 36.28,
+                                    13.59, 51.21, 26.88, 40.54};
+    for (unsigned int i = 0; i < smiles.size(); ++i) {
+      std::unique_ptr<ROMol> mol(SmilesToMol(smiles[i]));
+      TEST_ASSERT(mol);
+      auto oTPSA = calcTPSA(*mol);
+      TEST_ASSERT(feq(oTPSA, orig_tpsa[i], 0.01));
+      auto nTPSA = calcTPSA(*mol, true, true);
+      // std::cerr << smiles[i] << " " << new_tpsa[i] << " " << nTPSA <<
+      // std::endl;
+      TEST_ASSERT(feq(nTPSA, new_tpsa[i], 0.01));
+    }
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -2144,7 +2193,6 @@ int main() {
   testMQNs();
   testGitHubIssue56();
   testGitHubIssue92();
-#endif
   testGitHubIssue463();
   testSpiroAndBridgeheads();
   testGitHubIssue694();
@@ -2153,4 +2201,6 @@ int main() {
   testStereoCounting();
   testUSRDescriptor();
   testGithub1702();
+#endif
+  testGithub1973();
 }

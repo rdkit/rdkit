@@ -2665,6 +2665,8 @@ List of Available Descriptors
 |TPSA                                                 |*J. Med. Chem.*                                             | C++      |
 |                                                     |**43**:3714\-7,                                             |          |
 |                                                     |(2000)                                                      |          |
+|                                                     | See the section in the RDKit book describing differences   |          |
+|                                                     |   to the original publication.                             |          |
 +-----------------------------------------------------+------------------------------------------------------------+----------+
 |LabuteASA                                            |*J. Mol. Graph. Mod.*                                       | C++      |
 |                                                     |**18**:464\-77 (2000)                                       |          |
