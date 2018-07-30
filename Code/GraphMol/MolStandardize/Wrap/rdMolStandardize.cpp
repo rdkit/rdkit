@@ -26,6 +26,47 @@ RDKit::ROMol *cleanupHelper(const RDKit::ROMol *mol, python::object params) {
   return static_cast<RDKit::ROMol *>(RDKit::MolStandardize::cleanup(
       *static_cast<const RDKit::RWMol *>(mol), *ps));
 }
+
+RDKit::ROMol *fragmentParentHelper(const RDKit::ROMol *mol, python::object params, bool skip_standardize) {
+	const RDKit::MolStandardize::CleanupParameters *ps = 
+			&RDKit::MolStandardize::defaultCleanupParameters;
+	if (params) {
+		ps = python::extract<RDKit::MolStandardize::CleanupParameters *>(params);
+	}
+	return static_cast<RDKit::ROMol *>(RDKit::MolStandardize::fragmentParent(
+			*static_cast<const RDKit::RWMol *>(mol), *ps, skip_standardize));
+}
+
+RDKit::ROMol *chargeParentHelper(const RDKit::ROMol *mol, python::object params, bool skip_standardize) {
+	const RDKit::MolStandardize::CleanupParameters *ps = 
+			&RDKit::MolStandardize::defaultCleanupParameters;
+	if (params) {
+		ps = python::extract<RDKit::MolStandardize::CleanupParameters *>(params);
+	}
+	return static_cast<RDKit::ROMol *>(RDKit::MolStandardize::chargeParent(
+			*static_cast<const RDKit::RWMol *>(mol), *ps, skip_standardize));
+}
+
+RDKit::ROMol *normalizeHelper(const RDKit::ROMol *mol, python::object params) {
+  const RDKit::MolStandardize::CleanupParameters *ps =
+      &RDKit::MolStandardize::defaultCleanupParameters;
+  if (params) {
+    ps = python::extract<RDKit::MolStandardize::CleanupParameters *>(params);
+  }
+  return static_cast<RDKit::ROMol *>(RDKit::MolStandardize::normalize(
+      static_cast<const RDKit::RWMol *>(mol), *ps));
+}
+
+RDKit::ROMol *reionizeHelper(const RDKit::ROMol *mol, python::object params) {
+  const RDKit::MolStandardize::CleanupParameters *ps =
+      &RDKit::MolStandardize::defaultCleanupParameters;
+  if (params) {
+    ps = python::extract<RDKit::MolStandardize::CleanupParameters *>(params);
+  }
+  return static_cast<RDKit::ROMol *>(RDKit::MolStandardize::reionize(
+      static_cast<const RDKit::RWMol *>(mol), *ps));
+}
+
 }  // namespace
 
 BOOST_PYTHON_MODULE(rdMolStandardize) {
@@ -64,5 +105,25 @@ BOOST_PYTHON_MODULE(rdMolStandardize) {
               python::return_value_policy<python::manage_new_object>());
   docString = "";
   python::def("StandardizeSmiles", RDKit::MolStandardize::standardizeSmiles,
-              (python::arg("mol")), docString.c_str());
+              (python::arg("smiles")), docString.c_str());
+  docString = "";
+  python::def("FragmentParent", fragmentParentHelper,
+              (python::arg("mol"), python::arg("params") = python::object(), 
+							 python::arg("skipStandardize") = false ), docString.c_str(),
+							 python::return_value_policy<python::manage_new_object>());
+	docString = "";
+	python::def("ChargeParent", chargeParentHelper,
+							(python::arg("mol"), python::arg("params") = python::object(),
+							 python::arg("skipStandardize") = false ), docString.c_str(),
+							 python::return_value_policy<python::manage_new_object>());
+  docString = "";
+  python::def("Normalize", normalizeHelper,
+              (python::arg("mol"), python::arg("params") = python::object()),
+              docString.c_str(),
+              python::return_value_policy<python::manage_new_object>());
+	docString = "";
+  python::def("Reionize", reionizeHelper,
+              (python::arg("mol"), python::arg("params") = python::object()),
+              docString.c_str(),
+              python::return_value_policy<python::manage_new_object>());
 }
