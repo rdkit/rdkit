@@ -636,6 +636,9 @@ std::string FragmentSmartsConstruct(ROMol &mol, unsigned int atomIdx,
   VECT_INT_VECT rings;
   mol.getRingInfo()->reset();
   mol.getRingInfo()->initialize();
+  for (auto &atom : mol.atoms()) {
+    atom->updatePropertyCache(false);
+  }
   Canon::canonicalizeFragment(mol, atomIdx, colors, ranks, molStack);
 
   // now clear the "SSSR" property
