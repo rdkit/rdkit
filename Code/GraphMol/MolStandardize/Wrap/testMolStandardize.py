@@ -70,6 +70,13 @@ class TestCase(unittest.TestCase):
     nm2 = reionizer2.reionize(mol)
     self.assertEqual(Chem.MolToSmiles(nm2), "O=S([O-])c1ccc(S(=O)(=O)O)cc1")
 
+    # test Uncharger
+    uncharger = Charge.Uncharger();
+    mol3 = Chem.MolFromSmiles("O=C([O-])c1ccccc1")
+    nm3 = uncharger.uncharge(mol3)
+    self.assertEqual(Chem.MolToSmiles(nm3), "O=C(O)c1ccccc1")
+
+
 if __name__ == "__main__":
   unittest.main()
 #  print(Charge.CHARGE_CORRECTIONS)

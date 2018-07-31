@@ -40,8 +40,16 @@ BOOST_PYTHON_MODULE(Charge) {
 					.def("reionize", &reionizeHelper,
 							 (python::arg("self"), python::arg("mol")),
 							 "",
-							 python::return_value_policy<python::manage_new_object>())					;
+							 python::return_value_policy<python::manage_new_object>())
+					;
 
+	python::class_<MolStandardize::Uncharger, boost::noncopyable>(
+				"Uncharger", python::init<>() )
+					.def("uncharge", &MolStandardize::Uncharger::uncharge,
+							(python::arg("self"), python::arg("mol")),
+							"",
+							python::return_value_policy<python::manage_new_object>())
+					;
 
 }
 
