@@ -2583,6 +2583,21 @@ void testGithub1906() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub1988() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Testing github #1988: QueryAtoms with atom list queries should not have the atomic number set"
+      << std::endl;
+  {
+    std::unique_ptr<ROMol> m(SmartsToMol("[Li,Na]"));
+    TEST_ASSERT(m->getAtomWithIdx(0)->getAtomicNum()==0);
+  }
+  // {
+  //   std::unique_ptr<ROMol> m(SmartsToMol("C-,=C`"));
+  //   TEST_ASSERT(m->getBondWithIdx(0)->getBondType()==Bond::UNSPECIFIED);
+  // }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -2631,7 +2646,8 @@ int main(int argc, char *argv[]) {
   testGithub1920();
   testGithub1719();
   testCombinedQueries();
-#endif
   testGithub1906();
+#endif
+  testGithub1988();
   return 0;
 }
