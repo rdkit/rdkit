@@ -29,16 +29,11 @@ std::string AtomPairAtomInvGenerator::infoString() const {
          std::to_string(df_includeChirality);
 }
 
-template <>
-std::uint64_t AtomPairArguments<std::uint64_t>::getResultSize() const {
-  return (1 << (numAtomPairFingerprintBits +
-                2 * (df_includeChirality ? numChiralBits : 0)));
-}
-
-template <>
-std::uint32_t AtomPairArguments<std::uint32_t>::getResultSize() const {
-  return (1 << (numAtomPairFingerprintBits +
-                2 * (df_includeChirality ? numChiralBits : 0)));
+template <typename OutputType>
+OutputType AtomPairArguments<OutputType>::getResultSize() const {
+  OutputType result = 1;
+  return (result << (numAtomPairFingerprintBits +
+                     2 * (df_includeChirality ? numChiralBits : 0)));
 }
 
 template <typename OutputType>

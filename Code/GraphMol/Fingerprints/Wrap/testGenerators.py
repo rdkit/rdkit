@@ -82,6 +82,14 @@ class TestCase(unittest.TestCase):
     fp = g.GetFingerprint(m)
     nz = fp.GetNonzeroElements()
     self.assertEqual(len(nz), 4)
+  
+  def testTopologicalTorsionGenerator(self):
+
+    m = Chem.MolFromSmiles('CCCCC')
+    g = rdFingerprintGenerator.GetTopologicalTorsionGenerator64()
+    fp = g.GetFingerprint(m)
+    nz = fp.GetNonzeroElements()
+    self.assertEqual(len(nz), 1)
 
 
 if __name__ == '__main__':

@@ -162,14 +162,7 @@ RDKIT_FINGERPRINTS_EXPORT ExplicitBitVect *getHashedAtomPairFingerprintAsBitVect
     unsigned int nBitsPerEntry = 4, bool includeChirality = false,
     bool use2D = true, int confId = -1);
 
-//! returns an topological torsion hash based on the atom hashes
-//! passed in
-/*!
-  \param atomCodes  the vector of atom hashes
-*/
-RDKIT_FINGERPRINTS_EXPORT boost::uint64_t getTopologicalTorsionCode(
-    const std::vector<boost::uint32_t> &atomCodes,
-    bool includeChirality = false);
+
 
 //! returns the topological-torsion fingerprint for a molecule
 /*!

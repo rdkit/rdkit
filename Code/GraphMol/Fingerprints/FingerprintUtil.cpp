@@ -104,6 +104,37 @@ std::uint32_t getAtomPairCode(std::uint32_t codeI, std::uint32_t codeJ,
          << (numPathBits + codeSize + (includeChirality ? numChiralBits : 0));
   return res;
 }
+
+std::uint64_t getTopologicalTorsionCode(
+    const std::vector<std::uint32_t> &pathCodes, bool includeChirality) {
+  bool reverseIt = false;
+  unsigned int i = 0;
+  unsigned int j = pathCodes.size() - 1;
+  while (i < j) {
+    if (pathCodes[i] > pathCodes[j]) {
+      reverseIt = true;
+      break;
+    } else if (pathCodes[i] < pathCodes[j]) {
+      break;
+    }
+    ++i;
+    --j;
+  }
+
+  int shiftSize = codeSize + (includeChirality ? numChiralBits : 0);
+  std::uint64_t res = 0;
+  if (reverseIt) {
+    for (unsigned int i = 0; i < pathCodes.size(); ++i) {
+      res |= static_cast<std::uint64_t>(pathCodes[pathCodes.size() - i - 1])
+             << (shiftSize * i);
+    }
+  } else {
+    for (unsigned int i = 0; i < pathCodes.size(); ++i) {
+      res |= static_cast<std::uint64_t>(pathCodes[i]) << (shiftSize * i);
+    }
+  }
+  return res;
+}
 }  // namespace AtomPairs
 
 namespace MorganFingerprints {

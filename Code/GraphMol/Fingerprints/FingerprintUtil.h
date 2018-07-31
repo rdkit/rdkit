@@ -1,6 +1,8 @@
 #ifndef RD_FINGERPRINTUTIL_H_2018_07
 #define RD_FINGERPRINTUTIL_H_2018_07
 
+
+#include <GraphMol/RDKitBase.h>
 #include <DataStructs/SparseIntVect.h>
 #include <DataStructs/BitVects.h>
 #include <boost/cstdint.hpp>
@@ -56,6 +58,18 @@ RDKIT_FINGERPRINTS_EXPORT std::uint32_t getAtomCode(
 RDKIT_FINGERPRINTS_EXPORT std::uint32_t getAtomPairCode(
     std::uint32_t codeI, std::uint32_t codeJ, unsigned int dist,
     bool includeChirality = false);
+
+
+
+//! returns an topological torsion hash based on the atom hashes
+//! passed in
+/*!
+  \param atomCodes  the vector of atom hashes
+*/
+RDKIT_FINGERPRINTS_EXPORT std::uint64_t getTopologicalTorsionCode(
+    const std::vector<std::uint32_t> &atomCodes,
+    bool includeChirality = false);
+
 }  // namespace AtomPairs
 
 namespace MorganFingerprints {

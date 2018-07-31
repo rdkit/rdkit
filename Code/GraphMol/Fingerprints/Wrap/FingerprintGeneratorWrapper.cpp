@@ -6,6 +6,7 @@
 #include <GraphMol/Fingerprints/Wrap/AtomPairWrapper.cpp>
 #include <GraphMol/Fingerprints/Wrap/MorganWrapper.cpp>
 #include <GraphMol/Fingerprints/Wrap/RDKitFPWrapper.cpp>
+#include <GraphMol/Fingerprints/Wrap/TopologicalTorsionWrapper.cpp>
 #include <cstdint>
 
 namespace python = boost::python;
@@ -125,7 +126,6 @@ BOOST_PYTHON_MODULE(rdFingerprintGenerator) {
       "BondInvariantsGenerator", python::no_init);
 
   docString = "";
-  // todo remove the wrapper class if possible
   python::class_<FingerprintGenerator<std::uint32_t>, boost::noncopyable>(
       "FingerprintGenerator32", python::no_init)
       .def("GetFingerprint", getFingerprint<std::uint32_t>,
@@ -185,6 +185,8 @@ BOOST_PYTHON_MODULE(rdFingerprintGenerator) {
   AtomPairWrapper::exportAtompair();
   MorganWrapper::exportMorgan();
   RDKitFPWrapper::exportRDKit();
+  TopologicalTorsionWrapper::exportTopologicalTorsion();
+  
 }
 
 }  // namespace FingerprintWrapper

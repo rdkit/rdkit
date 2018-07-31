@@ -10,6 +10,7 @@
 #include <GraphMol/Fingerprints/AtomPairGenerator.h>
 #include <GraphMol/Fingerprints/MorganGenerator.h>
 #include <GraphMol/Fingerprints/RDKitFPGenerator.h>
+#include <GraphMol/Fingerprints/TopologicalTorsionGenerator.h>
 
 using namespace RDKit;
 
@@ -630,6 +631,43 @@ void testRDKitFP() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testTopologicalTorsionFPOld() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Test topological torsion fp generator" << std::endl;
+
+  ROMol *mol;
+  SparseIntVect<std::int64_t> *fpSigned;
+  SparseIntVect<std::uint64_t> *fp, *fpOld;
+
+  FingerprintGenerator<std::uint64_t> *fpGenerator =
+      TopologicalTorsion::getTopologicalTorsionGenerator<std::uint64_t>();
+
+  BOOST_FOREACH (std::string sm, smis) {
+    mol = SmilesToMol(sm);
+    fp = fpGenerator->getFingerprint(*mol);
+    fpSigned = AtomPairs::getTopologicalTorsionFingerprint(*mol);
+
+    fpOld = new SparseIntVect<boost::uint64_t>(fp->getLength());
+    std::map<boost::int64_t, int> nz = fpSigned->getNonzeroElements();
+    for (std::map<boost::int64_t, int>::iterator it = nz.begin();
+         it != nz.end(); it++) {
+      fpOld->setVal(static_cast<boost::uint64_t>(it->first), it->second);
+    }
+
+    TEST_ASSERT(DiceSimilarity(*fp, *fpOld) == 1.0);
+    TEST_ASSERT(*fp == *fpOld);
+
+    delete mol;
+    delete fp;
+    delete fpOld;
+    delete fpSigned;
+  }
+
+  delete fpGenerator;
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -645,6 +683,7 @@ int main(int argc, char *argv[]) {
   testInvariantGenerators();
   testCustomInvariants();
   testRDKitFP();
+  testTopologicalTorsionFPOld();
 
   return 0;
 }
