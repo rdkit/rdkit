@@ -223,8 +223,8 @@ class SaltRemover(object):
     1
     >>> deleted[0].GetNumAtoms()
     1
-    >>> Chem.MolToSmiles(deleted[0])
-    'Cl'
+    >>> Chem.MolToSmarts(deleted[0])
+    '[Cl,Br]'
 
     Multiple occurrences of 'Cl' and without tuple destructuring
     >>> mol = Chem.MolFromSmiles('CN(C)C.Cl.Cl')
@@ -236,8 +236,8 @@ class SaltRemover(object):
     1
     >>> tup.deleted[0].GetNumAtoms()
     1
-    >>> Chem.MolToSmiles(deleted[0])
-    'Cl'
+    >>> Chem.MolToSmarts(deleted[0])
+    '[Cl,Br]'
     """
     return self._StripMol(mol, dontRemoveEverything)
 
@@ -285,8 +285,8 @@ class SaltRemover(object):
     >>> remover = SaltRemover(defnData="[Cl,Br]")
     >>> len(remover.salts)
     1
-    >>> Chem.MolToSmiles(remover.salts[0])
-    'Cl'
+    >>> Chem.MolToSmarts(remover.salts[0])
+    '[Cl,Br]'
 
     >>> mol = Chem.MolFromSmiles('CN(C)C.Cl')
     >>> res = remover(mol)
