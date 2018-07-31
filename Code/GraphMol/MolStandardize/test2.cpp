@@ -124,24 +124,24 @@ void testValidate() {
 }
 
 void testCharge() {
-  // testing parsing of acid base catalog
-  std::string rdbase = getenv("RDBASE");
-  std::string acidbaseFile = rdbase +
-                             "/Code/GraphMol/MolStandardize/AcidBaseCatalog/"
-                             "data/acid_base_pairs.txt";
-  std::shared_ptr<AcidBaseCatalogParams> abparams(
-      new AcidBaseCatalogParams(acidbaseFile));
-  unsigned int npairs = abparams->getNumPairs();
-  TEST_ASSERT(npairs == 33);
-
-  AcidBaseCatalog abcat(abparams.get());
+//  // testing parsing of acid base catalog
+//  std::string rdbase = getenv("RDBASE");
+//  std::string acidbaseFile = rdbase +
+//                             "/Code/GraphMol/MolStandardize/AcidBaseCatalog/"
+//                             "data/acid_base_pairs.txt";
+//  std::shared_ptr<AcidBaseCatalogParams> abparams(
+//      new AcidBaseCatalogParams(acidbaseFile));
+//  unsigned int npairs = abparams->getNumPairs();
+//  TEST_ASSERT(npairs == 33);
+//
+//  AcidBaseCatalog abcat(abparams.get());
   Reionizer reionizer;
 
   // Test table salt.
   std::string smi1 = "[Na].[Cl]";
   std::shared_ptr<ROMol> m1(SmilesToMol(smi1));
   std::cout << "Before reionizing: " << MolToSmiles(*m1) << std::endl;
-  ROMOL_SPTR reionized(reionizer.reionize(*m1, &abcat));
+  ROMOL_SPTR reionized(reionizer.reionize(*m1));
   std::cout << MolToSmiles(*reionized) << std::endl;
   TEST_ASSERT(MolToSmiles(*reionized) == "[Cl-].[Na+]");
   //*******************************

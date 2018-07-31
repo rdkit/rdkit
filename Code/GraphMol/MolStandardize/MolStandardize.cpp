@@ -118,12 +118,12 @@ RWMol *normalize(const RWMol *mol, const CleanupParameters &params) {
 }
 
 RWMol *reionize(const RWMol *mol, const CleanupParameters &params) {
-  std::unique_ptr<AcidBaseCatalogParams> abparams(
-      new AcidBaseCatalogParams(params.acidbaseFile));
-  AcidBaseCatalog abcat(abparams.get());
+//  std::unique_ptr<AcidBaseCatalogParams> abparams(
+//      new AcidBaseCatalogParams(params.acidbaseFile));
+//  AcidBaseCatalog abcat(abparams.get());
   Reionizer reionizer;
   ROMol m(*mol);
-  ROMol *reionized = reionizer.reionize(m, &abcat);
+  ROMol *reionized = reionizer.reionize(m);
   std::cout << "After reionizing: " << MolToSmiles(*reionized) << std::endl;
   //	mol = nullptr;
 

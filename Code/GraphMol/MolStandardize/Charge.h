@@ -33,10 +33,18 @@ class Reionizer {
   //  ionize first.
 
  public:
-  ROMol *reionize(const ROMol &mol, AcidBaseCatalog *abcat,
-                  std::vector<ChargeCorrection> ccs = CHARGE_CORRECTIONS);
+	Reionizer();
+	Reionizer(const Reionizer &other);
+	~Reionizer();
+
+//	Reionizer(const AcidBaseCatalog *abcat, const std::vector<ChargeCorrection> ccs = CHARGE_CORRECTIONS);
+
+  ROMol *reionize(const ROMol &mol);
 
  private:
+	AcidBaseCatalog *d_abcat;
+	std::vector<ChargeCorrection> d_ccs;
+
   std::pair<unsigned int, std::vector<unsigned int>> *strongestProtonated(
       const ROMol &mol,
       const std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> &abpairs);

@@ -53,8 +53,12 @@ class TestCase(unittest.TestCase):
     nm2 = md.Disconnect(mol2)
     self.assertEqual(Chem.MolToSmiles(nm2), "CCC(=O)O[Na]")
 
-    def test6Charge(self):
-        print("Hello world")
+  def test6Charge(self):
+    mol = Chem.MolFromSmiles("C1=C(C=CC(=C1)[S]([O-])=O)[S](O)(=O)=O")
+    # instantiate with default acid base pair library
+    reionizer = Charge.Reionizer()
+    nm = reionizer.reionize(mol)
+    self.assertEqual(Chem.MolToSmiles(nm), "O=S(O)c1ccc(S(=O)(=O)[O-])cc1")
 
 if __name__ == "__main__":
   unittest.main()

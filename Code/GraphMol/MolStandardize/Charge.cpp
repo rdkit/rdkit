@@ -1,4 +1,5 @@
 #include "Charge.h"
+#include "MolStandardize.h"
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/RDKitBase.h>
@@ -8,16 +9,36 @@
 namespace RDKit {
 namespace MolStandardize {
 
+extern const CleanupParameters defaultCleanupParameters;
+
 // The default list of ChargeCorrections.
 std::vector<ChargeCorrection> CHARGE_CORRECTIONS = {
     ChargeCorrection("[Li,Na,K]", "[Li,Na,K;X0+0]", 1),
     ChargeCorrection("[Mg,Ca]", "[Mg,Ca;X0+0]", 2),
     ChargeCorrection("[Cl]", "[Cl;X0+0]", -1)};
 
-ROMol *Reionizer::reionize(const ROMol &mol, AcidBaseCatalog *abcat,
-                           std::vector<ChargeCorrection> ccs) {
-  PRECONDITION(abcat, "");
-  const AcidBaseCatalogParams *abparams = abcat->getCatalogParams();
+// constructor
+Reionizer::Reionizer() {
+	AcidBaseCatalogParams abparams(defaultCleanupParameters.acidbaseFile);
+	this->d_abcat = new AcidBaseCatalog(&abparams);
+	this->d_ccs = CHARGE_CORRECTIONS;
+}
+
+Reionizer::Reionizer(const Reionizer &other) {
+	d_abcat = other.d_abcat;
+	d_ccs = other.d_ccs;
+}
+
+Reionizer::~Reionizer() {
+	delete d_abcat;
+}
+
+//Reionizer::Reionizer(const AcidBaseCatalog *abcat, const std::vector<ChargeCorrection> ccs = CHARGE_CORRECTIONS) 
+//	: d_abcat(abcat), d_css(css) {};
+
+ROMol *Reionizer::reionize(const ROMol &mol) {
+  PRECONDITION(this->d_abcat, "");
+  const AcidBaseCatalogParams *abparams = this->d_abcat->getCatalogParams();
 
   PRECONDITION(abparams, "");
   const std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> abpairs =
@@ -26,7 +47,7 @@ ROMol *Reionizer::reionize(const ROMol &mol, AcidBaseCatalog *abcat,
   ROMOL_SPTR omol(new ROMol(mol));
   int start_charge = MolOps::getFormalCharge(*omol);
 
-  for (const auto &cc : ccs) {
+  for (const auto &cc : this->d_ccs) {
     std::vector<MatchVectType> res;
     //		std::cout << cc.Smarts << std::endl;
     ROMOL_SPTR ccmol(SmartsToMol(cc.Smarts));
