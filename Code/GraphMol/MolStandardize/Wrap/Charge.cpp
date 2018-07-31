@@ -34,7 +34,9 @@ BOOST_PYTHON_MODULE(Charge) {
 	python::def("CHARGE_CORRECTIONS", defaultChargeCorrections);
 
 	python::class_<MolStandardize::Reionizer, boost::noncopyable>(
-				"Reionizer", python::init<>())
+				"Reionizer", python::init<>()	)
+					.def(python::init<std::string>())
+					.def(python::init<std::string, std::vector<MolStandardize::ChargeCorrection>>())
 					.def("reionize", &reionizeHelper,
 							 (python::arg("self"), python::arg("mol")),
 							 "",

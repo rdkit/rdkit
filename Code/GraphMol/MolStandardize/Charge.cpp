@@ -1,5 +1,4 @@
 #include "Charge.h"
-#include "MolStandardize.h"
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/RDKitBase.h>
@@ -8,8 +7,6 @@
 
 namespace RDKit {
 namespace MolStandardize {
-
-extern const CleanupParameters defaultCleanupParameters;
 
 // The default list of ChargeCorrections.
 std::vector<ChargeCorrection> CHARGE_CORRECTIONS = {
@@ -22,6 +19,18 @@ Reionizer::Reionizer() {
 	AcidBaseCatalogParams abparams(defaultCleanupParameters.acidbaseFile);
 	this->d_abcat = new AcidBaseCatalog(&abparams);
 	this->d_ccs = CHARGE_CORRECTIONS;
+}
+
+Reionizer::Reionizer(const std::string acidbaseFile) {
+	AcidBaseCatalogParams abparams(acidbaseFile);
+	this->d_abcat = new AcidBaseCatalog(&abparams);
+	this->d_ccs = CHARGE_CORRECTIONS;
+}
+
+Reionizer::Reionizer(const std::string acidbaseFile,	const std::vector<ChargeCorrection> ccs) {
+	AcidBaseCatalogParams abparams(acidbaseFile);
+	this->d_abcat = new AcidBaseCatalog(&abparams);
+	this->d_ccs = ccs;
 }
 
 Reionizer::Reionizer(const Reionizer &other) {

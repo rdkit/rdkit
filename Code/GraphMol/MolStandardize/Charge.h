@@ -1,6 +1,7 @@
 #ifndef __RD_CHARGE_H__
 #define __RD_CHARGE_H__
 
+#include "MolStandardize.h"
 #include <Catalogs/Catalog.h>
 #include <GraphMol/MolStandardize/AcidBaseCatalog/AcidBaseCatalogEntry.h>
 #include <GraphMol/MolStandardize/AcidBaseCatalog/AcidBaseCatalogParams.h>
@@ -10,6 +11,8 @@ class RWMol;
 class ROMol;
 
 namespace MolStandardize {
+
+extern const CleanupParameters defaultCleanupParameters;
 
 typedef RDCatalog::HierarchCatalog<AcidBaseCatalogEntry, AcidBaseCatalogParams,
                                    int>
@@ -34,6 +37,8 @@ class Reionizer {
 
  public:
 	Reionizer();
+	Reionizer(const std::string acidbaseFile);
+	Reionizer(const std::string acidbaseFile, const std::vector<ChargeCorrection> ccs);
 	Reionizer(const Reionizer &other);
 	~Reionizer();
 

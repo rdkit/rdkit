@@ -60,6 +60,16 @@ class TestCase(unittest.TestCase):
     nm = reionizer.reionize(mol)
     self.assertEqual(Chem.MolToSmiles(nm), "O=S(O)c1ccc(S(=O)(=O)[O-])cc1")
 
+    # try reionize with another acid base pair library without the right 
+    # pairs
+    RDBaseDir = os.environ['RDBASE']
+    #abfile = os.path.join(RDBaseDir, ')
+    abfile = os.path.join(RDBaseDir, 'Code', 'GraphMol', 'MolStandardize',
+            'AcidBaseCatalog', 'data', 'acid_base_pairs2.txt')
+    reionizer2 = Charge.Reionizer(abfile)
+    nm2 = reionizer2.reionize(mol)
+    self.assertEqual(Chem.MolToSmiles(nm2), "O=S([O-])c1ccc(S(=O)(=O)O)cc1")
+
 if __name__ == "__main__":
   unittest.main()
 #  print(Charge.CHARGE_CORRECTIONS)
