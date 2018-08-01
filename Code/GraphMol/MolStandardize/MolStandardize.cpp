@@ -60,7 +60,7 @@ RWMol *fragmentParent(const RWMol &mol, const CleanupParameters &params,
   // largest fragment
   LargestFragmentChooser lfragchooser(params.preferOrganic);
   ROMol nm(*cleaned);
-  ROMOL_SPTR lfrag = lfragchooser.choose(nm);
+  ROMOL_SPTR lfrag( lfragchooser.choose(nm) );
   delete cleaned;
   std::cout << "lfrag: " << MolToSmiles(*lfrag) << std::endl;
   return new RWMol(*lfrag);

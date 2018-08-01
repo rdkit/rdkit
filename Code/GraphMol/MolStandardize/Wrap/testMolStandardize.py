@@ -4,7 +4,7 @@ import unittest
 from rdkit import DataStructs
 from rdkit import Chem
 from rdkit.Geometry import rdGeometry as geom
-from rdkit.Chem.MolStandardize import rdMolStandardize, Metal, Charge
+from rdkit.Chem.MolStandardize import rdMolStandardize, Metal, Charge, Fragment
 
 
 class TestCase(unittest.TestCase):
@@ -71,10 +71,27 @@ class TestCase(unittest.TestCase):
     self.assertEqual(Chem.MolToSmiles(nm2), "O=S([O-])c1ccc(S(=O)(=O)O)cc1")
 
     # test Uncharger
-    uncharger = Charge.Uncharger();
+    uncharger = Charge.Uncharger()
     mol3 = Chem.MolFromSmiles("O=C([O-])c1ccccc1")
     nm3 = uncharger.uncharge(mol3)
     self.assertEqual(Chem.MolToSmiles(nm3), "O=C(O)c1ccccc1")
+
+  def test7Fragment(self):
+    fragremover = Fragment.FragmentRemover()
+    mol = Chem.MolFromSmiles("CN(C)C.Cl.Cl.Br")
+    nm = fragremover.remove(mol)
+    self.assertEqual(Chem.MolToSmiles(nm), "CN(C)C")
+
+    lfragchooser = Fragment.LargestFragmentChooser()
+    mol2 = Chem.MolFromSmiles("[N+](=O)([O-])[O-].[CH3+]")
+    nm2 = lfragchooser.choose(mol2)
+    self.assertEqual(Chem.MolToSmiles(nm2), "O=[N+]([O-])[O-]")
+
+    lfragchooser2 = Fragment.LargestFragmentChooser(preferOrganic = True)
+    nm3 = lfragchooser2.choose(mol2)
+    self.assertEqual(Chem.MolToSmiles(nm3), "[CH3+]")
+
+
 
 
 if __name__ == "__main__":

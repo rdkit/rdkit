@@ -4,11 +4,14 @@
 #include <Catalogs/Catalog.h>
 #include "FragmentCatalogEntry.h"
 #include "FragmentCatalogParams.h"
+#include <GraphMol/MolStandardize/MolStandardize.h>
 
 namespace RDKit {
 class ROMol;
 
 namespace MolStandardize {
+
+extern const CleanupParameters defaultCleanupParameters;
 
 typedef RDCatalog::HierarchCatalog<FragmentCatalogEntry, FragmentCatalogParams,
                                    int>
@@ -16,30 +19,32 @@ typedef RDCatalog::HierarchCatalog<FragmentCatalogEntry, FragmentCatalogParams,
 
 class FragmentRemover {
  public:
-  FragmentRemover(){};
-  FragmentRemover(bool leave_last) : LEAVE_LAST(leave_last){};
+	FragmentRemover();
+  FragmentRemover(const std::string fragmentFile, const bool leave_last);
+//  FragmentRemover(bool leave_last) : LEAVE_LAST(leave_last){};
   FragmentRemover(const FragmentRemover &other);
-  ~FragmentRemover(){};
+  ~FragmentRemover();
 
-  ROMol *remove(const ROMol &mol, FragmentCatalog *fcat);
+  ROMol *remove(const ROMol &mol);
 
  private:
   // Setting leave_last to True will ensure at least one fragment
   //  is left in the molecule, even if it is matched by a
   //  FragmentPattern
-  bool LEAVE_LAST = true;
+  bool LEAVE_LAST;
+	FragmentCatalog *d_fcat;
 
 };  // class FragmentRemover
 
 class LargestFragmentChooser {
  public:
-  LargestFragmentChooser(){};
-  LargestFragmentChooser(bool prefer_organic)
+//  LargestFragmentChooser(){};
+  LargestFragmentChooser(bool prefer_organic = false)
       : PREFER_ORGANIC(prefer_organic){};
   LargestFragmentChooser(const LargestFragmentChooser &other);
   ~LargestFragmentChooser(){};
 
-  boost::shared_ptr<ROMol> choose(const ROMol &mol);
+  ROMol *choose(const ROMol &mol);
   struct Largest {
     Largest();
     Largest(std::string &smiles, const boost::shared_ptr<ROMol> &fragment,
@@ -52,7 +57,7 @@ class LargestFragmentChooser {
   };
 
  private:
-  bool PREFER_ORGANIC = false;
+  bool PREFER_ORGANIC;
 };  // class LargestFragmentChooser
 }  // namespace MolStandardize
 }  // namespace RDKit

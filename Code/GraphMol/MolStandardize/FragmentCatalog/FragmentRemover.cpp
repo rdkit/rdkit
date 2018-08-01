@@ -10,13 +10,35 @@ typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 namespace RDKit {
 namespace MolStandardize {
 
+//constructor
+FragmentRemover::FragmentRemover(){
+  FragmentCatalogParams fparams(defaultCleanupParameters.fragmentFile);
+//  unsigned int numfg = fparams->getNumFuncGroups();
+//  TEST_ASSERT(fparams->getNumFuncGroups() == 61);
+  this->d_fcat = new FragmentCatalog(&fparams);
+	this->LEAVE_LAST = true; 
+}
+
+//overloaded constructor
+FragmentRemover::FragmentRemover(const std::string fragmentFile, const bool leave_last){
+  FragmentCatalogParams fparams(fragmentFile);
+  this->d_fcat = new FragmentCatalog(&fparams);
+	this->LEAVE_LAST = leave_last; 
+}
+
 FragmentRemover::FragmentRemover(const FragmentRemover &other) {
+	d_fcat = other.d_fcat;
   LEAVE_LAST = other.LEAVE_LAST;
 };
 
-ROMol *FragmentRemover::remove(const ROMol &mol, FragmentCatalog *fcat) {
-  PRECONDITION(fcat, "");
-  const FragmentCatalogParams *fparams = fcat->getCatalogParams();
+//Destructor
+FragmentRemover::~FragmentRemover(){
+	delete d_fcat;
+};
+
+ROMol *FragmentRemover::remove(const ROMol &mol) {
+  PRECONDITION(this->d_fcat, "");
+  const FragmentCatalogParams *fparams = this->d_fcat->getCatalogParams();
 
   PRECONDITION(fparams, "");
 
@@ -41,8 +63,10 @@ ROMol *FragmentRemover::remove(const ROMol &mol, FragmentCatalog *fcat) {
 
     if (this->LEAVE_LAST && tmp->getNumAtoms() == 0) {
       // All the remaining fragments match this pattern - leave them all
+			delete tmp;
       break;
     }
+		delete removed;
     removed = tmp;
   }
   return removed;
@@ -63,7 +87,7 @@ LargestFragmentChooser::LargestFragmentChooser(
   PREFER_ORGANIC = other.PREFER_ORGANIC;
 }
 
-boost::shared_ptr<ROMol> LargestFragmentChooser::choose(const ROMol &mol) {
+ROMol *LargestFragmentChooser::choose(const ROMol &mol) {
   //	auto m = new ROMol(mol);
 
   std::vector<boost::shared_ptr<ROMol>> frags = MolOps::getMolFrags(mol);
@@ -110,8 +134,7 @@ boost::shared_ptr<ROMol> LargestFragmentChooser::choose(const ROMol &mol) {
     l.Organic = organic;
   }
 
-  return l.Fragment;
-  //	return m;
+  return new ROMol(*(l.Fragment));
 }
 
 LargestFragmentChooser::Largest::Largest()
