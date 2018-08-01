@@ -5734,8 +5734,6 @@ void test60RunSingleReactant() {
         TEST_ASSERT(MolToSmiles(*prod[prodidx]) == expected);
         ROMol *sidechain = reduceProductToSideChains(prod[prodidx]);
         std::string smi = MolToSmiles(*sidechain, isomericSmiles);
-        std::cerr<<expected_sidechain<<std::endl;
-        std::cerr<<smi<<std::endl;
         TEST_ASSERT(smi == expected_sidechain);
       }
     }
@@ -6767,8 +6765,9 @@ void testGithub1869() {
 
 void testGithub1269() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing github #1269: preserve reactant atom idx in products"
-                       << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Testing github #1269: preserve reactant atom idx in products"
+      << std::endl;
   {
     // nonsense test case
     std::string sma = "[C:1]>>[O:1]";
@@ -6777,7 +6776,6 @@ void testGithub1269() {
     TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
     TEST_ASSERT(rxn->getNumProductTemplates() == 1);
     rxn->initReactantMatchers();
-
 
     MOL_SPTR_VECT reacts;
     std::string smi = "NC";
@@ -6788,11 +6786,13 @@ void testGithub1269() {
     auto prods = rxn->runReactants(reacts);
     TEST_ASSERT(prods.size() == 1);
     TEST_ASSERT(prods[0].size() == 1);
-    TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getAtomicNum()==8);
+    TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getAtomicNum() == 8);
     TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->hasProp("react_atom_idx"));
-    TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getProp<unsigned int>("react_atom_idx")==1);
+    TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getProp<unsigned int>(
+                    "react_atom_idx") == 1);
     TEST_ASSERT(prods[0][0]->getAtomWithIdx(1)->hasProp("react_atom_idx"));
-    TEST_ASSERT(prods[0][0]->getAtomWithIdx(1)->getProp<unsigned int>("react_atom_idx")==0);
+    TEST_ASSERT(prods[0][0]->getAtomWithIdx(1)->getProp<unsigned int>(
+                    "react_atom_idx") == 0);
 
     delete rxn;
   }
