@@ -6770,7 +6770,7 @@ void testGithub1269() {
       << std::endl;
   {
     // nonsense test case
-    std::string sma = "[C:1]>>[O:1]";
+    std::string sma = "[C:1]>>[O:1]Cl";
     ChemicalReaction *rxn = RxnSmartsToChemicalReaction(sma);
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
@@ -6787,11 +6787,15 @@ void testGithub1269() {
     TEST_ASSERT(prods.size() == 1);
     TEST_ASSERT(prods[0].size() == 1);
     TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getAtomicNum() == 8);
-    TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->hasProp("react_atom_idx"));
+    TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->hasProp(
+        common_properties::reactantAtomIdx));
     TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getProp<unsigned int>(
                     "react_atom_idx") == 1);
-    TEST_ASSERT(prods[0][0]->getAtomWithIdx(1)->hasProp("react_atom_idx"));
-    TEST_ASSERT(prods[0][0]->getAtomWithIdx(1)->getProp<unsigned int>(
+    TEST_ASSERT(!prods[0][0]->getAtomWithIdx(1)->hasProp(
+        common_properties::reactantAtomIdx));
+    TEST_ASSERT(prods[0][0]->getAtomWithIdx(2)->hasProp(
+        common_properties::reactantAtomIdx));
+    TEST_ASSERT(prods[0][0]->getAtomWithIdx(2)->getProp<unsigned int>(
                     "react_atom_idx") == 0);
 
     delete rxn;
