@@ -16,11 +16,38 @@ class ROMol;
 
 namespace MolStandardize {
 
-unsigned int MAX_RESTARTS = 200;
+//unsigned int MAX_RESTARTS = 200;
 
-ROMol *Normalizer::normalize(const ROMol &mol, TransformCatalog *tcat) {
-  PRECONDITION(tcat, "");
-  const TransformCatalogParams *tparams = tcat->getCatalogParams();
+// constructor
+Normalizer::Normalizer() {
+  TransformCatalogParams tparams(defaultCleanupParameters.normalizations);
+//  unsigned int ntransforms = tparams->getNumTransformations();
+//  TEST_ASSERT(ntransforms == 22);
+	this->d_tcat = new TransformCatalog(&tparams);
+	this->MAX_RESTARTS = 200;
+}
+
+// overloaded constructor
+Normalizer::Normalizer(const std::string normalizeFile, const unsigned int maxRestarts) {
+  TransformCatalogParams tparams(normalizeFile);
+	this->d_tcat = new TransformCatalog(&tparams);
+	this->MAX_RESTARTS = maxRestarts;
+}
+
+// copy constructor
+Normalizer::Normalizer(const Normalizer &other){
+	d_tcat = other.d_tcat;
+	MAX_RESTARTS = other.MAX_RESTARTS;	
+}
+
+// destructor
+Normalizer::~Normalizer(){
+	delete d_tcat;
+}
+
+ROMol *Normalizer::normalize(const ROMol &mol) {
+  PRECONDITION(this->d_tcat, "");
+  const TransformCatalogParams *tparams = this->d_tcat->getCatalogParams();
 
   PRECONDITION(tparams, "");
   const std::vector<std::shared_ptr<ChemicalReaction>> &transforms =

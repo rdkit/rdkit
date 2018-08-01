@@ -104,13 +104,10 @@ RWMol *chargeParent(const RWMol &mol, const CleanupParameters &params,
 void superParent(RWMol &mol, const CleanupParameters &params) {}
 
 RWMol *normalize(const RWMol *mol, const CleanupParameters &params) {
-  std::shared_ptr<TransformCatalogParams> tparams(
-      new TransformCatalogParams(params.normalizations));
-  TransformCatalog tcat(tparams.get());
-  Normalizer normalizer;
+  Normalizer normalizer(params.normalizations, params.maxRestarts);
 
   ROMol m(*mol);
-  ROMol *normalized = normalizer.normalize(m, &tcat);
+  ROMol *normalized = normalizer.normalize(m);
 
   std::cout << "normalized: " << MolToSmiles(*normalized) << std::endl;
   //	mol = static_cast<RWMol*>(normalized.get());

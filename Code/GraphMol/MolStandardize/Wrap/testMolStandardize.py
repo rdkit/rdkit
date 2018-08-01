@@ -4,7 +4,7 @@ import unittest
 from rdkit import DataStructs
 from rdkit import Chem
 from rdkit.Geometry import rdGeometry as geom
-from rdkit.Chem.MolStandardize import rdMolStandardize, Metal, Charge, Fragment
+from rdkit.Chem.MolStandardize import rdMolStandardize, Metal, Charge, Fragment, Normalize
 
 
 class TestCase(unittest.TestCase):
@@ -90,6 +90,12 @@ class TestCase(unittest.TestCase):
     lfragchooser2 = Fragment.LargestFragmentChooser(preferOrganic = True)
     nm3 = lfragchooser2.choose(mol2)
     self.assertEqual(Chem.MolToSmiles(nm3), "[CH3+]")
+
+  def test8Normalize(self):
+    normalizer = Normalize.Normalizer()
+    mol = Chem.MolFromSmiles("C[n+]1ccccc1[O-]")
+    nm = normalizer.normalize(mol)
+    self.assertEqual(Chem.MolToSmiles(nm), "Cn1ccccc1=O")
 
 
 

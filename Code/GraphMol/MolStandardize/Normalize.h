@@ -4,12 +4,14 @@
 #include <Catalogs/Catalog.h>
 #include <GraphMol/MolStandardize/TransformCatalog/TransformCatalogEntry.h>
 #include <GraphMol/MolStandardize/TransformCatalog/TransformCatalogParams.h>
+#include <GraphMol/MolStandardize/MolStandardize.h>
 
 namespace RDKit {
 class RWMol;
 class ROMol;
 
 namespace MolStandardize {
+extern const CleanupParameters defaultCleanupParameters;
 
 typedef RDCatalog::HierarchCatalog<TransformCatalogEntry,
                                    TransformCatalogParams, int>
@@ -17,7 +19,12 @@ typedef RDCatalog::HierarchCatalog<TransformCatalogEntry,
 
 class Normalizer {
  public:
-  ROMol *normalize(const ROMol &mol, TransformCatalog *tcat);
+	Normalizer();
+	Normalizer(const std::string normalizeFile, const unsigned int maxRestarts);
+	Normalizer(const Normalizer &other);
+	~Normalizer();
+
+  ROMol *normalize(const ROMol &mol);
   struct Product {
     std::string Smiles;
     boost::shared_ptr<ROMol> Mol;
@@ -29,6 +36,9 @@ class Normalizer {
   };
 
  private:
+	TransformCatalog *d_tcat;
+	unsigned int MAX_RESTARTS;
+
   ROMol *normalizeFragment(
       const ROMol &mol,
       const std::vector<std::shared_ptr<ChemicalReaction>> &transforms);

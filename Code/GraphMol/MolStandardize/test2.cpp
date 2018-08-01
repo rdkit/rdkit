@@ -167,24 +167,13 @@ void testCharge() {
 }
 
 void testNormalize() {
-  // testing parsing of transform catalog
-  std::string rdbase = getenv("RDBASE");
-  std::string transformFile = rdbase +
-                              "/Code/GraphMol/MolStandardize/TransformCatalog/"
-                              "data/normalizations.txt";
-  std::shared_ptr<TransformCatalogParams> tparams(
-      new TransformCatalogParams(transformFile));
-  unsigned int ntransforms = tparams->getNumTransformations();
-  TEST_ASSERT(ntransforms == 22);
-
-  TransformCatalog tcat(tparams.get());
   Normalizer normalizer;
 
   // Test sulfoxide normalization.
   std::string smi1 = "CS(C)=O";
   std::shared_ptr<ROMol> m1(SmilesToMol(smi1));
   std::cout << "Before normalizing: " << MolToSmiles(*m1) << std::endl;
-  ROMOL_SPTR normalized(normalizer.normalize(*m1, &tcat));
+  ROMOL_SPTR normalized(normalizer.normalize(*m1));
   std::cout << MolToSmiles(*normalized) << std::endl;
   TEST_ASSERT(MolToSmiles(*normalized) == "C[S+](C)[O-]");
 
@@ -192,7 +181,7 @@ void testNormalize() {
   std::string smi2 = "C[S+2]([O-])([O-])C";
   std::shared_ptr<ROMol> m2(SmilesToMol(smi2));
   std::cout << "Before normalizing: " << MolToSmiles(*m2) << std::endl;
-  ROMOL_SPTR normalized2(normalizer.normalize(*m2, &tcat));
+  ROMOL_SPTR normalized2(normalizer.normalize(*m2));
   std::cout << MolToSmiles(*normalized2) << std::endl;
   TEST_ASSERT(MolToSmiles(*normalized2) == "CS(C)(=O)=O");
 }
