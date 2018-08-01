@@ -438,10 +438,8 @@ void setReactantAtomPropertiesToProduct(Atom *productAtom,
   } else {
     // remove bookkeeping labels (if present)
     if (productAtom->hasProp(WAS_DUMMY)) productAtom->clearProp(WAS_DUMMY);
-    if (productAtom->hasProp(REACT_ATOM_IDX))
-      productAtom->clearProp(REACT_ATOM_IDX);
   }
-
+  productAtom->setProp<unsigned int>(REACT_ATOM_IDX,reactantAtom.getIdx());
   if (setImplicitProperties) {
     updateImplicitAtomProperties(productAtom, &reactantAtom);
   }
