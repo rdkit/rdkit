@@ -439,7 +439,7 @@ void setReactantAtomPropertiesToProduct(Atom *productAtom,
     // remove bookkeeping labels (if present)
     if (productAtom->hasProp(WAS_DUMMY)) productAtom->clearProp(WAS_DUMMY);
   }
-  productAtom->setProp<unsigned int>(REACT_ATOM_IDX,reactantAtom.getIdx());
+  productAtom->setProp<unsigned int>(REACT_ATOM_IDX, reactantAtom.getIdx());
   if (setImplicitProperties) {
     updateImplicitAtomProperties(productAtom, &reactantAtom);
   }
@@ -1058,7 +1058,9 @@ ROMol *reduceProductToSideChains(const ROMOL_SPTR &product,
     Atom *scaffold_atom =
         mol->getAtomWithIdx(rdcast<unsigned int>(scaffold_atom_idx));
     // add map no's here from dummy atoms
-    if (!scaffold_atom->hasProp(REACT_ATOM_IDX)) {
+    // was this atom in one of the reactant templates?
+    if (scaffold_atom->hasProp(OLD_MAPNO) ||
+        !scaffold_atom->hasProp(REACT_ATOM_IDX)) {
       // are we attached to a reactant atom?
       ROMol::ADJ_ITER nbrIdx, endNbrs;
       boost::tie(nbrIdx, endNbrs) = mol->getAtomNeighbors(scaffold_atom);
@@ -1066,7 +1068,7 @@ ROMol *reduceProductToSideChains(const ROMOL_SPTR &product,
 
       while (nbrIdx != endNbrs) {
         Atom *nbr = mol->getAtomWithIdx(*nbrIdx);
-        if (nbr->hasProp(REACT_ATOM_IDX)) {
+        if (!nbr->hasProp(OLD_MAPNO) && nbr->hasProp(REACT_ATOM_IDX)) {
           if (nbr->hasProp(WAS_DUMMY)) {
             bonds_to_product.push_back(RGroup(
                 nbr,
