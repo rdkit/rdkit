@@ -172,6 +172,33 @@ void testMolVSValidation() {
   }
 }
 
+void testMolVSOptions() {
+	vector<MolVSValidations*> validations = {new IsotopeValidation};
+  MolVSValidation vm(validations);
+
+	// testing MolVSDefault
+  // testing for molecule with no atoms
+	string smi1 = "";
+  unique_ptr<ROMol> m1(SmilesToMol(smi1, 0, false));
+  vector<ValidationErrorInfo> errout1 = vm.validate(*m1, true);
+  for (auto &query : errout1) {
+    std::string msg = query.message();
+//    TEST_ASSERT(msg == "ERROR: [NoAtomValidation] Molecule has no atoms");
+    TEST_ASSERT(msg == "");
+  }
+
+  string smi2 = "O=C([O-])c1ccccc1";
+  unique_ptr<ROMol> m2(SmilesToMol(smi2, 0, false));
+  vector<ValidationErrorInfo> errout2 = vm.validate(*m2, true);
+  for (auto &query : errout2) {
+    std::string msg = query.message();
+//    TEST_ASSERT(msg ==
+//                "INFO: [NeutralValidation] Not an overall neutral system (-1)");
+    	TEST_ASSERT(msg == "");
+  }
+}
+
+
 void testAllowedAtomsValidation() {
   //	std::vector<string> atoms = {"C", "N", "O"};
   std::vector<unsigned int> atoms = {6, 7, 8};
@@ -252,6 +279,7 @@ void testFragment() {
 int main() {
   testRDKitValidation();
   testMolVSValidation();
+	testMolVSOptions();
   testAllowedAtomsValidation();
   testDisallowedAtomsValidation();
   testFragment();

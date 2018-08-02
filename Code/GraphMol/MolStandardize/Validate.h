@@ -39,20 +39,54 @@ class RDKitValidation : public ValidationMethod {
       const ROMol &mol, bool reportAllFailures) const override;
 };
 
+//////////////////////////////
+// MolVS Validations
+//
+class MolVSValidations {
+	public:
+		virtual void run(const ROMol &mol, bool reportAllFailures, 
+			std::vector<ValidationErrorInfo> &errors) const = 0;
+};
+
+class NoAtomValidation : public MolVSValidations {
+	public:
+		void run(const ROMol &mol, bool reportAllFailures,
+  	  std::vector<ValidationErrorInfo> &errors) const override;
+};
+
+class FragmentValidation : public MolVSValidations {
+	public:
+	  void run(const ROMol &mol, bool reportAllFailures,
+	    std::vector<ValidationErrorInfo> &errors) const override;
+};
+
+class NeutralValidation : public MolVSValidations {
+	public:
+	  void run(const ROMol &mol, bool reportAllFailures,
+			std::vector<ValidationErrorInfo> &errors) const override;
+};
+
+class IsotopeValidation : public MolVSValidations {
+	public:
+	  void run(const ROMol &mol, bool reportAllFailures,
+	  	std::vector<ValidationErrorInfo> &errors) const override;
+};
+////////////////////////////////
+
 class MolVSValidation : public ValidationMethod {
  public:
+	// constructor
+	MolVSValidation();
+	// overloaded constructor
+	MolVSValidation(const std::vector<MolVSValidations*> validations);
+	MolVSValidation(const MolVSValidation &other);
+	~MolVSValidation();
+
   std::vector<ValidationErrorInfo> validate(
       const ROMol &mol, bool reportAllFailures) const override;
-
  private:
-  void noAtomValidation(const ROMol &mol, bool reportAllFailures,
-                        std::vector<ValidationErrorInfo> &errors) const;
-  void fragmentValidation(const ROMol &mol, bool reportAllFailures,
-                          std::vector<ValidationErrorInfo> &errors) const;
-  void neutralValidation(const ROMol &mol, bool reportAllFailures,
-                         std::vector<ValidationErrorInfo> &errors) const;
-  void isotopeValidation(const ROMol &mol, bool reportAllFailures,
-                         std::vector<ValidationErrorInfo> &errors) const;
+	std::vector<MolVSValidations*> d_validations;
+
 };
 
 class AllowedAtomsValidation : public ValidationMethod {

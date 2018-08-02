@@ -51,18 +51,7 @@ std::vector<ValidationErrorInfo> RDKitValidation::validate(
   return errors;
 }
 
-std::vector<ValidationErrorInfo> MolVSValidation::validate(
-    const ROMol &mol, bool reportAllFailures) const {
-  std::vector<ValidationErrorInfo> errors;
-  this->noAtomValidation(mol, reportAllFailures, errors);
-  this->fragmentValidation(mol, reportAllFailures, errors);
-  this->neutralValidation(mol, reportAllFailures, errors);
-  this->isotopeValidation(mol, reportAllFailures, errors);
-
-  return errors;
-}
-
-void MolVSValidation::noAtomValidation(
+void NoAtomValidation::run(
     const ROMol &mol, bool reportAllFailures,
     std::vector<ValidationErrorInfo> &errors) const {
   unsigned int na = mol.getNumAtoms();
@@ -73,7 +62,7 @@ void MolVSValidation::noAtomValidation(
   }
 }
 
-void MolVSValidation::fragmentValidation(
+void FragmentValidation::run(
     const ROMol &mol, bool reportAllFailures,
     std::vector<ValidationErrorInfo> &errors) const {
   std::string rdbase = getenv("RDBASE");
@@ -134,7 +123,7 @@ void MolVSValidation::fragmentValidation(
   }
 }
 
-void MolVSValidation::neutralValidation(
+void NeutralValidation::run(
     const ROMol &mol, bool reportAllFailures,
     std::vector<ValidationErrorInfo> &errors) const {
   int charge = RDKit::MolOps::getFormalCharge(mol);
@@ -151,7 +140,7 @@ void MolVSValidation::neutralValidation(
   }
 }
 
-void MolVSValidation::isotopeValidation(
+void IsotopeValidation::run(
     const ROMol &mol, bool reportAllFailures,
     std::vector<ValidationErrorInfo> &errors) const {
   unsigned int na = mol.getNumAtoms();
@@ -178,8 +167,45 @@ void MolVSValidation::isotopeValidation(
   }
 }
 
-std::vector<ValidationErrorInfo> AllowedAtomsValidation::validate(
+// constructor
+MolVSValidation::MolVSValidation() {
+	std::vector<MolVSValidations*> validations = 
+	{new NoAtomValidation(), 
+	new FragmentValidation(), 
+	new NeutralValidation(), 
+	new IsotopeValidation()};
+	this->d_validations = validations;
+}
+
+// overloaded constructor
+MolVSValidation::MolVSValidation(const std::vector<MolVSValidations*> validations) {
+	this->d_validations = validations;
+}
+
+// copy constructor
+MolVSValidation::MolVSValidation(const MolVSValidation &other) {
+	d_validations = other.d_validations;
+}
+
+MolVSValidation::~MolVSValidation() {
+	for (const auto p_method : this->d_validations) {
+		delete p_method;
+	}
+};
+
+std::vector<ValidationErrorInfo> MolVSValidation::validate(
     const ROMol &mol, bool reportAllFailures) const {
+  std::vector<ValidationErrorInfo> errors;
+
+	for (const auto method : this->d_validations) {
+		method->run(mol, reportAllFailures, errors); 
+	}
+
+  return errors;
+}
+
+std::vector<ValidationErrorInfo> AllowedAtomsValidation::validate(
+		const ROMol &mol, bool reportAllFailures) const {
   std::vector<ValidationErrorInfo> errors;
   unsigned int na = mol.getNumAtoms();
 
