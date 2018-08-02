@@ -4,7 +4,8 @@ import unittest
 from rdkit import DataStructs
 from rdkit import Chem
 from rdkit.Geometry import rdGeometry as geom
-from rdkit.Chem.MolStandardize import rdMolStandardize, Metal, Charge, Fragment, Normalize
+from rdkit.Chem.MolStandardize import rdMolStandardize, Metal, Charge, \
+        Fragment, Normalize, Validate
 
 
 class TestCase(unittest.TestCase):
@@ -96,6 +97,14 @@ class TestCase(unittest.TestCase):
     mol = Chem.MolFromSmiles("C[n+]1ccccc1[O-]")
     nm = normalizer.normalize(mol)
     self.assertEqual(Chem.MolToSmiles(nm), "Cn1ccccc1=O")
+
+  def test9Validate(self):
+    vm = Validate.RDKitValidation()
+    mol = Chem.MolFromSmiles("CO(C)C", sanitize=False)
+    msg = vm.validate(mol)
+    self.assertEqual(len(msg), 1)
+    self.assertEqual
+    ("""INFO: [ValenceValidation] Explicit valence for atom # 1 O, 3, is greater than permitted""", msg[0])
 
 
 
