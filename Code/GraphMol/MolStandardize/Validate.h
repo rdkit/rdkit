@@ -43,50 +43,64 @@ class RDKitValidation : public ValidationMethod {
 // MolVS Validations
 //
 class MolVSValidations {
-	public:
-		virtual void run(const ROMol &mol, bool reportAllFailures, 
-			std::vector<ValidationErrorInfo> &errors) const = 0;
+ public:
+  virtual void run(const ROMol &mol, bool reportAllFailures,
+                   std::vector<ValidationErrorInfo> &errors) const = 0;
+  virtual MolVSValidations *copy() const = 0;
 };
 
 class NoAtomValidation : public MolVSValidations {
-	public:
-		void run(const ROMol &mol, bool reportAllFailures,
-  	  std::vector<ValidationErrorInfo> &errors) const override;
+ public:
+  void run(const ROMol &mol, bool reportAllFailures,
+           std::vector<ValidationErrorInfo> &errors) const override;
+  virtual MolVSValidations *copy() const override {
+    return new NoAtomValidation(*this);
+  };
 };
 
 class FragmentValidation : public MolVSValidations {
-	public:
-	  void run(const ROMol &mol, bool reportAllFailures,
-	    std::vector<ValidationErrorInfo> &errors) const override;
+ public:
+  void run(const ROMol &mol, bool reportAllFailures,
+           std::vector<ValidationErrorInfo> &errors) const override;
+  virtual MolVSValidations *copy() const override {
+    return new FragmentValidation(*this);
+  };
 };
 
 class NeutralValidation : public MolVSValidations {
-	public:
-	  void run(const ROMol &mol, bool reportAllFailures,
-			std::vector<ValidationErrorInfo> &errors) const override;
+ public:
+  void run(const ROMol &mol, bool reportAllFailures,
+           std::vector<ValidationErrorInfo> &errors) const override;
+  virtual MolVSValidations *copy() const override {
+    return new NeutralValidation(*this);
+  };
 };
 
 class IsotopeValidation : public MolVSValidations {
-	public:
-	  void run(const ROMol &mol, bool reportAllFailures,
-	  	std::vector<ValidationErrorInfo> &errors) const override;
+ public:
+  void run(const ROMol &mol, bool reportAllFailures,
+           std::vector<ValidationErrorInfo> &errors) const override;
+  virtual MolVSValidations *copy() const override {
+    return new IsotopeValidation(*this);
+  };
 };
+
 ////////////////////////////////
 
 class MolVSValidation : public ValidationMethod {
  public:
-	// constructor
-	MolVSValidation();
-	// overloaded constructor
-	MolVSValidation(const std::vector<MolVSValidations*> validations);
-	MolVSValidation(const MolVSValidation &other);
-	~MolVSValidation();
+  // constructor
+  MolVSValidation();
+  // overloaded constructor
+  MolVSValidation(const std::vector<MolVSValidations *> validations);
+  MolVSValidation(const MolVSValidation &other);
+  ~MolVSValidation();
 
   std::vector<ValidationErrorInfo> validate(
       const ROMol &mol, bool reportAllFailures) const override;
- private:
-	std::vector<MolVSValidations*> d_validations;
 
+ private:
+  std::vector<MolVSValidations *> d_validations;
 };
 
 class AllowedAtomsValidation : public ValidationMethod {
