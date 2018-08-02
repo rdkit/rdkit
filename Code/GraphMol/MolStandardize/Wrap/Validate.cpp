@@ -48,12 +48,13 @@ BOOST_PYTHON_MODULE(Validate) {
 					;
 
 	python::class_<MolStandardize::MolVSValidations, boost::noncopyable>(
-					"MolVSValidations", python::init<>() )
+					"MolVSValidations", python::no_init )
 					.def("run", &MolStandardize::MolVSValidations::run, 
 							(python::arg("self"), python::arg("mol"), python::arg("reportAllFailures"),
 								python::arg("errors")),
 							 "")
 					;
+	
 //	python::class_<MolStandardize::NoAtomValidation, 
 //					python::bases<MolStandardize::MolVSValidations>>(
 //													"NoAtomValidation", python::init<>() )
@@ -67,12 +68,13 @@ BOOST_PYTHON_MODULE(Validate) {
 
 
 
-	python::class_<MolStandardize::MolVSValidation, boost::noncopyable>(
-									"MolVSValidation", python::init<>() )
+//	python::class_<MolStandardize::MolVSValidation, boost::noncopyable>(
+//									"MolVSValidation", python::init<>() )
 //					.def(python::init<const std::vector<MolStandardize::MolVSValidations*>())
 //					.def("__init__", python::make_constructor(&getMolVSValidation))
-					.def("Validate", &MolStandardize::MolVSValidation::Validate,
-							(python::arg("self"), python::arg("mol"), python::arg("reportAllFailures") = false),
-							"")
-					;
+//					.def("Validate", &MolStandardize::MolVSValidation::Validate,
+//							(python::arg("self"), python::arg("mol"), python::arg("reportAllFailures") = false),
+//							"")
+//					;
+					
 }
