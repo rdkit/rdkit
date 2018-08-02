@@ -128,7 +128,12 @@ RWMol *reionize(const RWMol *mol, const CleanupParameters &params) {
 }
 
 std::string standardizeSmiles(const std::string &smiles) {
-  std::unique_ptr<RWMol> mol(SmilesToMol(smiles, 0, false));
+	RWMOL_SPTR mol( SmilesToMol(smiles, 0, false) );
+	if (!mol) {
+		std::string message = "SMILES Parse Error: syntax error for input: " + smiles;
+		throw ValueErrorException(message);
+	}
+
   CleanupParameters params;
   RWMOL_SPTR cleaned(cleanup(*mol, params));
   return MolToSmiles(*cleaned);

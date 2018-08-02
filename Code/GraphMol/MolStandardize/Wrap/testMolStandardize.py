@@ -20,6 +20,9 @@ class TestCase(unittest.TestCase):
 
   def test2StandardizeSmiles(self):
     self.assertEqual(rdMolStandardize.StandardizeSmiles("CCC(=O)O[Na]"), "CCC(=O)[O-].[Na+]")
+    # should get ValueError
+#    rdMolStandardize.StandardizeSmiles("C1CCC1C(=O)O.Na")
+
 
   def test3FragmentParent(self):
     mol = Chem.MolFromSmiles("[Na]OC(=O)c1ccccc1")
@@ -106,6 +109,12 @@ class TestCase(unittest.TestCase):
     self.assertEqual
     ("""INFO: [ValenceValidation] Explicit valence for atom # 1 O, 3, is greater than permitted""", msg[0])
 
+    vm2 = Validate.MolVSValidation()
+    mol2 = Chem.MolFromSmiles("COc1cccc(C=N[N-]C(N)=O)c1[O-].O.O.O.O=[U+2]=O")
+    msg = vm.validate(mol2)
+    self.assertEqual(len(msg), 1)
+    self.assertEqual
+    ("""INFO: [FragmentValidation] water/hydroxide is present""", msg[0])
 
 
 

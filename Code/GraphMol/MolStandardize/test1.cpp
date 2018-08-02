@@ -66,6 +66,11 @@ void testStandardizeSm() {
   std::string smi5 = "[Na]OC(=O)c1ccccc1";
   std::string ss5 = MolStandardize::standardizeSmiles(smi5);
   TEST_ASSERT(ss5 == "O=C([O-])c1ccccc1.[Na+]");
+
+	// SMILES parsing error should stop tests
+//	std::string smi6 = "C1CCC1C(=O)O.Na";
+//	std::string ss6 = MolStandardize::standardizeSmiles(smi6);
+	
 }
 
 void testMetalDisconnector() {
