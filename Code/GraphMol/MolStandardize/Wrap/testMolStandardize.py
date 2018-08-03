@@ -127,6 +127,15 @@ class TestCase(unittest.TestCase):
     self.assertEqual
     ("""INFO: [FragmentValidation] 1,4-dioxane is present""", msg3[1])
 
+    atomic_no = [6,7,8]
+    allowed_atoms = [Atom(i) for i in atomic_no]
+    vm4 = rdMolStandardize.AllowedAtomsValidation(allowed_atoms)
+    mol4 = Chem.MolFromSmiles("CC(=O)CF")
+    msg4 = vm4.validate(mol4)
+    self.assertEqual(len(msg4), 1)
+    self.assertEqual
+    ("""INFO: [AllowedAtomsValidation] Atom F is not in allowedAtoms list""", msg3[0])
+
 
 if __name__ == "__main__":
   unittest.main()
