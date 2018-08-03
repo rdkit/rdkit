@@ -46,17 +46,12 @@ python::list molVSvalidateHelper(MolStandardize::MolVSValidation &self,
 
 MolStandardize::AllowedAtomsValidation *getAllowedAtomsValidation(
     python::object atoms) {
-//  std::vector< std::shared_ptr<Atom> atomList;
-
-//  std::unique_ptr<std::vector< std::shared_ptr<Atom> >> p_atomList =
-//     pythonObjectToVect< std::shared_ptr<Atom> >(atoms);
     std::unique_ptr<std::vector<Atom *> > p_atomList = 
 						pythonObjectToVect<Atom *>(atoms);     
 		std::vector<std::shared_ptr<Atom>> satoms;
 	  for (auto ap : *p_atomList) {
  			satoms.push_back(std::shared_ptr<Atom>(ap->copy()));
 		}
-
   return new MolStandardize::AllowedAtomsValidation(satoms);
 }
 
@@ -73,19 +68,31 @@ python::list allowedAtomsValidate(MolStandardize::AllowedAtomsValidation &self,
   return res;
 }
 
-//python::list rdkitValidate(MolStandardize::RDKitValidation &self,
-//                           const ROMol &mol, const bool reportAllFailures) {
-//  python::list res;
-//  std::vector<MolStandardize::ValidationErrorInfo> errout =
-//      self.validate(mol, reportAllFailures);
-//  for (auto &query : errout) {
-//    std::string msg = query.message();
-//    res.append(msg);
-//  }
-//  return res;
-//}
+MolStandardize::DisallowedAtomsValidation *getDisallowedAtomsValidation(
+    python::object atoms) {
+    std::unique_ptr<std::vector<Atom *> > p_atomList = 
+						pythonObjectToVect<Atom *>(atoms);     
+		std::vector<std::shared_ptr<Atom>> satoms;
+	  for (auto ap : *p_atomList) {
+ 			satoms.push_back(std::shared_ptr<Atom>(ap->copy()));
+		}
+  return new MolStandardize::DisallowedAtomsValidation(satoms);
+}
 
+
+python::list disallowedAtomsValidate(MolStandardize::DisallowedAtomsValidation &self,
+                           const ROMol &mol, const bool reportAllFailures) {
+  python::list res;
+  std::vector<MolStandardize::ValidationErrorInfo> errout =
+      self.validate(mol, reportAllFailures);
+  for (auto &query : errout) {
+    std::string msg = query.message();
+    res.append(msg);
+  }
+  return res;
+}
 }  // namespace
+
 struct validate_wrapper {
   static void wrap() {
     std::string docString = "";
@@ -143,20 +150,21 @@ struct validate_wrapper {
              "");
 
     python::class_<MolStandardize::AllowedAtomsValidation, boost::noncopyable>(
-        "AllowedAtomsValidation", python::init<>())
+        "AllowedAtomsValidation", python::no_init)
 				.def("__init__", python::make_constructor(&getAllowedAtomsValidation))
-//        .def("validate", allowedAtomsValidate,
-//             (python::arg("self"), python::arg("mol"),
-//              python::arg("reportAllFailures") = false),
-//             "");
+        .def("validate", allowedAtomsValidate,
+             (python::arg("self"), python::arg("mol"),
+              python::arg("reportAllFailures") = false),
+             "");
              ;
 
-//    python::class_<MolStandardize::RDKitValidation, boost::noncopyable>(
-//        "RDKitValidation", python::init<>())
-//        .def("validate", rdkitValidate,
-//             (python::arg("self"), python::arg("mol"),
-//              python::arg("reportAllFailures") = false),
-//             "");
+    python::class_<MolStandardize::DisallowedAtomsValidation, boost::noncopyable>(
+        "DisallowedAtomsValidation", python::no_init)
+				.def("__init__", python::make_constructor(&getDisallowedAtomsValidation))
+        .def("validate", disallowedAtomsValidate,
+             (python::arg("self"), python::arg("mol"),
+              python::arg("reportAllFailures") = false),
+             "");
 
   }
 };

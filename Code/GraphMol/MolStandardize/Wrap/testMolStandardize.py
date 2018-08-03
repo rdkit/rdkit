@@ -4,6 +4,7 @@ import unittest
 from rdkit import DataStructs
 from rdkit import Chem
 from rdkit.Geometry import rdGeometry as geom
+from rdkit.Chem.rdchem import Atom
 from rdkit.Chem.MolStandardize import rdMolStandardize, Metal, Charge, \
         Fragment, Normalize
 
@@ -134,7 +135,19 @@ class TestCase(unittest.TestCase):
     msg4 = vm4.validate(mol4)
     self.assertEqual(len(msg4), 1)
     self.assertEqual
-    ("""INFO: [AllowedAtomsValidation] Atom F is not in allowedAtoms list""", msg3[0])
+    ("""INFO: [AllowedAtomsValidation] Atom F is not in allowedAtoms list""",
+            msg4[0])
+
+    atomic_no = [9, 17, 35]
+    disallowed_atoms = [Atom(i) for i in atomic_no]
+    vm5 = rdMolStandardize.DisallowedAtomsValidation(disallowed_atoms)
+    mol5 = Chem.MolFromSmiles("CC(=O)CF")
+    msg5 = vm4.validate(mol5)
+    self.assertEqual(len(msg5), 1)
+    self.assertEqual
+    ("""INFO: [DisallowedAtomsValidation] Atom F is in disallowedAtoms list""",
+            msg5[0])
+
 
 
 if __name__ == "__main__":
