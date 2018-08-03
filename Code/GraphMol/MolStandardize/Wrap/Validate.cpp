@@ -33,6 +33,19 @@ MolStandardize::MolVSValidation *getMolVSValidation(
   return new MolStandardize::MolVSValidation(vs);
 }
 
+// TODO
+python::list molVSvalidateHelper(MolStandardize::MolVSValidation &self,
+	const ROMol &mol, bool reportAllFailures) {
+		python::list s;
+		std::vector<MolStandardize::ValidationErrorInfo> errout = 
+						self.validate(mol, reportAllFailures);
+		for (auto &query : errout) {
+			s.append(query.message());
+		}
+		return s;
+}
+
+//
 }  // namespace
 struct validate_wrapper {
   static void wrap() {
@@ -83,9 +96,9 @@ struct validate_wrapper {
              "");
 
     python::class_<MolStandardize::MolVSValidation, boost::noncopyable>(
-        "MolVSValidation", python::init<>())
+        "MolVSValidation")
         .def("__init__", python::make_constructor(&getMolVSValidation))
-        .def("Validate", &MolStandardize::MolVSValidation::validate,
+        .def("validate", molVSvalidateHelper,
              (python::arg("self"), python::arg("mol"),
               python::arg("reportAllFailures") = false),
              "");

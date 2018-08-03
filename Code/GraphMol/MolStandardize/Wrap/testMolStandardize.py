@@ -5,7 +5,7 @@ from rdkit import DataStructs
 from rdkit import Chem
 from rdkit.Geometry import rdGeometry as geom
 from rdkit.Chem.MolStandardize import rdMolStandardize, Metal, Charge, \
-        Fragment, Normalize, Validate
+        Fragment, Normalize
 
 
 class TestCase(unittest.TestCase):
@@ -102,20 +102,30 @@ class TestCase(unittest.TestCase):
     self.assertEqual(Chem.MolToSmiles(nm), "Cn1ccccc1=O")
 
   def test9Validate(self):
-    vm = Validate.RDKitValidation()
+    vm = rdMolStandardize.RDKitValidation()
     mol = Chem.MolFromSmiles("CO(C)C", sanitize=False)
     msg = vm.validate(mol)
     self.assertEqual(len(msg), 1)
     self.assertEqual
     ("""INFO: [ValenceValidation] Explicit valence for atom # 1 O, 3, is greater than permitted""", msg[0])
 
-    vm2 = Validate.MolVSValidation()
+    vm2 = rdMolStandardize.MolVSValidation([rdMolStandardize.FragmentValidation()])
+    # with no argument it also works
+#    vm2 = rdMolStandardize.MolVSValidation()
     mol2 = Chem.MolFromSmiles("COc1cccc(C=N[N-]C(N)=O)c1[O-].O.O.O.O=[U+2]=O")
-    msg = vm.validate(mol2)
-    self.assertEqual(len(msg), 1)
+    msg2 = vm2.validate(mol2)
+    self.assertEqual(len(msg2), 1)
     self.assertEqual
-    ("""INFO: [FragmentValidation] water/hydroxide is present""", msg[0])
+    ("""INFO: [FragmentValidation] water/hydroxide is present""", msg2[0])
 
+    vm3 = rdMolStandardize.MolVSValidation()
+    mol3 = Chem.MolFromSmiles("C1COCCO1.O=C(NO)NO")
+    msg3 = vm3.validate(mol3)
+    self.assertEqual(len(msg3), 2)
+    self.assertEqual
+    ("""INFO: [FragmentValidation] 1,2-dimethoxyethane is present""", msg3[0])
+    self.assertEqual
+    ("""INFO: [FragmentValidation] 1,4-dioxane is present""", msg3[1])
 
 
 if __name__ == "__main__":
