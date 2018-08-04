@@ -136,9 +136,8 @@ template <typename OutputType>
 FingerprintGenerator<OutputType> *getTopologicalTorsionGenerator(
     const bool includeChirality, const uint32_t torsionAtomCount,
     AtomInvariantsGenerator *atomInvariantsGenerator,
-    BondInvariantsGenerator *bondInvariantsGenerator,
     const bool countSimulation, const std::vector<std::uint32_t> countBounds,
-    const std::uint32_t foldedSize) {
+    const std::uint32_t foldedSize, const bool ownsAtomInvGen) {
   TopologicalTorsionEnvGenerator<OutputType> *envGenerator =
       new TopologicalTorsionEnvGenerator<OutputType>();
 
@@ -147,32 +146,25 @@ FingerprintGenerator<OutputType> *getTopologicalTorsionGenerator(
           includeChirality, torsionAtomCount, countSimulation, countBounds,
           foldedSize);
 
-  bool ownsAtomInvGenerator = false;
+  bool ownsAtomInvGenerator = ownsAtomInvGen;
   if (!atomInvariantsGenerator) {
     atomInvariantsGenerator =
         new AtomPair::AtomPairAtomInvGenerator(includeChirality);
     ownsAtomInvGenerator = true;
   }
 
-  return new FingerprintGenerator<OutputType>(
-      envGenerator, arguments, atomInvariantsGenerator, bondInvariantsGenerator,
-      ownsAtomInvGenerator, false);
+  return new FingerprintGenerator<OutputType>(envGenerator, arguments,
+                                              atomInvariantsGenerator, nullptr,
+                                              ownsAtomInvGenerator, false);
 };
 
 // Topological torsion fingerprint does not support 32 bit output yet
-/*template FingerprintGenerator<std::uint32_t> *getTopologicalTorsionGenerator(
-    const bool includeChirality, const uint32_t torsionAtomCount,
-    AtomInvariantsGenerator *atomInvariantsGenerator,
-    BondInvariantsGenerator *bondInvariantsGenerator,
-    const bool countSimulation, const std::vector<std::uint32_t> countBounds,
-    const std::uint32_t foldedSize);*/
 
 template FingerprintGenerator<std::uint64_t> *getTopologicalTorsionGenerator(
     const bool includeChirality, const uint32_t torsionAtomCount,
     AtomInvariantsGenerator *atomInvariantsGenerator,
-    BondInvariantsGenerator *bondInvariantsGenerator,
     const bool countSimulation, const std::vector<std::uint32_t> countBounds,
-    const std::uint32_t foldedSize);
+    const std::uint32_t foldedSize, const bool ownsAtomInvGen);
 
 }  // namespace TopologicalTorsion
 }  // namespace RDKit

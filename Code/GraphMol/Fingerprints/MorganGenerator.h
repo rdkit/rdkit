@@ -28,6 +28,7 @@ class MorganAtomInvGenerator : public AtomInvariantsGenerator {
   std::vector<std::uint32_t> *getAtomInvariants(const ROMol &mol) const;
 
   std::string infoString() const;
+  MorganAtomInvGenerator *clone() const;
 };
 
 /**
@@ -52,6 +53,7 @@ class MorganFeatureAtomInvGenerator : public AtomInvariantsGenerator {
   std::vector<std::uint32_t> *getAtomInvariants(const ROMol &mol) const;
 
   std::string infoString() const;
+  MorganFeatureAtomInvGenerator *clone() const;
 };
 
 /**
@@ -77,6 +79,7 @@ class MorganBondInvGenerator : public BondInvariantsGenerator {
   std::vector<std::uint32_t> *getBondInvariants(const ROMol &mol) const;
 
   std::string infoString() const;
+  MorganBondInvGenerator *clone() const;
 };
 
 /**
@@ -164,7 +167,16 @@ class MorganEnvGenerator : public AtomEnvironmentGenerator<OutputType> {
 /**
  /brief Get a fingerprint generator for Morgan fingerprint
 
- /param radius : radius for MorganArguments
+ /param radius : the number of iterations to grow the fingerprint
+ /param countSimulation : if set, use count simulation while generating the
+ fingerprint
+ /param includeChirality : if set, chirality information will be added to the
+ generated bit id, independently from bond invariants
+ /param onlyNonzeroInvariants : if set, bits will only be set from atoms that
+ have a nonzero invariant
+ /param countBounds : boundries for count simulation, corresponding bit willbe
+ set if the count is higher than the number provided for that spot
+ /param foldedSize : size of the folded version of the fingerprints
  /param countSimulation : countSimulation for MorganArguments
  /param includeChirality : sets includeChirality flag for both MorganArguments
  and the default bond generator MorganBondInvGenerator
@@ -172,8 +184,11 @@ class MorganEnvGenerator : public AtomEnvironmentGenerator<OutputType> {
  /param onlyNonzeroInvariants : onlyNonzeroInvariants for MorganArguments
  /param atomInvariantsGenerator : custom atom invariants generator to use
  /param bondInvariantsGenerator : custom bond invariants generator to use
- /param foldedSize : foldedSize for MorganArguments
- /param countBounds : countBounds for MorganArguments
+  /param ownsAtomInvGen  if set atom invariants generator is destroyed with the
+  fingerprint generator
+  /param ownsBondInvGen  if set bond invariants generator is destroyed with the
+  fingerprint generator
+
  /return FingerprintGenerator* that generates Morgan fingerprints
  */
 template <typename OutputType>
@@ -184,7 +199,8 @@ FingerprintGenerator<OutputType> *getMorganGenerator(
     AtomInvariantsGenerator *atomInvariantsGenerator = nullptr,
     BondInvariantsGenerator *bondInvariantsGenerator = nullptr,
     const std::uint32_t foldedSize = 2048,
-    const std::vector<std::uint32_t> countBounds = {1, 2, 4, 8});
+    const std::vector<std::uint32_t> countBounds = {1, 2, 4, 8},
+    const bool ownsAtomInvGen = false, const bool ownsBondInvGen = false);
 
 }  // namespace MorganFingerprint
 }  // namespace RDKit

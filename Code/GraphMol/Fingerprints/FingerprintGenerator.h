@@ -178,6 +178,7 @@ class AtomInvariantsGenerator : private boost::noncopyable {
   virtual std::string infoString() const = 0;
 
   virtual ~AtomInvariantsGenerator() = 0;
+  virtual AtomInvariantsGenerator* clone() const = 0;
 };
 
 /*!
@@ -206,6 +207,7 @@ class BondInvariantsGenerator : private boost::noncopyable {
   virtual std::string infoString() const = 0;
 
   virtual ~BondInvariantsGenerator() = 0;
+  virtual BondInvariantsGenerator* clone() const = 0;
 };
 
 /*!
@@ -295,8 +297,10 @@ template <typename OutputType>
 AtomEnvironment<OutputType>::~AtomEnvironment() {}
 
 inline AtomInvariantsGenerator::~AtomInvariantsGenerator() {}
+inline AtomInvariantsGenerator* AtomInvariantsGenerator::clone() const{}
 
 inline BondInvariantsGenerator::~BondInvariantsGenerator() {}
+inline BondInvariantsGenerator* BondInvariantsGenerator::clone() const{}
 
 template <typename OutputType>
 FingerprintGenerator<OutputType>::FingerprintGenerator(

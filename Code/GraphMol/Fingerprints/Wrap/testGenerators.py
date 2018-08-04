@@ -59,34 +59,21 @@ class TestCase(unittest.TestCase):
 
   def testMorganGenerator(self):
     m = Chem.MolFromSmiles('CCCCC')
-    g = rdFingerprintGenerator.GetMorganGenerator32(3)
-    fp = g.GetFingerprint(m)
-    nz = fp.GetNonzeroElements()
-    self.assertEqual(len(nz), 7)
-
-    m = Chem.MolFromSmiles('CCCCC')
-    g = rdFingerprintGenerator.GetMorganGenerator64(3)
+    g = rdFingerprintGenerator.GetMorganGenerator(3)
     fp = g.GetFingerprint(m)
     nz = fp.GetNonzeroElements()
     self.assertEqual(len(nz), 7)
 
   def testRDKitFPGenerator(self):
     m = Chem.MolFromSmiles('CCCCC')
-    g = rdFingerprintGenerator.GetRDKitFPGenerator32()
+    g = rdFingerprintGenerator.GetRDKitFPGenerator()
     fp = g.GetFingerprint(m)
     nz = fp.GetNonzeroElements()
     self.assertEqual(len(nz), 4)
-
-    m = Chem.MolFromSmiles('CCCCC')
-    g = rdFingerprintGenerator.GetRDKitFPGenerator64()
-    fp = g.GetFingerprint(m)
-    nz = fp.GetNonzeroElements()
-    self.assertEqual(len(nz), 4)
-  
+ 
   def testTopologicalTorsionGenerator(self):
-
     m = Chem.MolFromSmiles('CCCCC')
-    g = rdFingerprintGenerator.GetTopologicalTorsionGenerator64()
+    g = rdFingerprintGenerator.GetTopologicalTorsionGenerator()
     fp = g.GetFingerprint(m)
     nz = fp.GetNonzeroElements()
     self.assertEqual(len(nz), 1)

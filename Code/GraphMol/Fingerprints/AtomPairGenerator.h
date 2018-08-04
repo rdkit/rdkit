@@ -17,6 +17,7 @@ class AtomPairAtomInvGenerator : public AtomInvariantsGenerator {
   std::vector<std::uint32_t> *getAtomInvariants(const ROMol &mol) const;
 
   std::string infoString() const;
+  AtomPairAtomInvGenerator *clone() const;
 };
 
 /*!
@@ -121,12 +122,15 @@ class AtomPairEnvGenerator : public AtomEnvironmentGenerator<OutputType> {
   invariants, this is ignored if atomInvariantsGenerator is provided
   /param use2D                  if set, the 2D (topological) distance matrix
   will be used
-  /param useCountSimulation         if set, use count simulation while
-  generating the fingerprint
   /param atomInvariantsGenerator    atom invariants to be used during
   fingerprint generation
-  /param bondInvariantsGenerator    bond invariants to be used during
-  fingerprint generation
+  /param useCountSimulation         if set, use count simulation while
+  generating the fingerprint
+  /param countBounds  boundries for count simulation, corresponding bit will be
+  set if the count is higher than the number provided for that spot
+  /param foldedSize size of the folded version of the fingerprints
+  /param ownsAtomInvGen  if set atom invariants generator is destroyed with the
+  fingerprint generator
 
   /return FingerprintGenerator that generates atom-pair fingerprints
  */
@@ -135,9 +139,11 @@ FingerprintGenerator<OutputType> *getAtomPairGenerator(
     const unsigned int minDistance = 1,
     const unsigned int maxDistance = maxPathLen - 1,
     const bool includeChirality = false, const bool use2D = true,
-    const bool useCountSimulation = true,
     AtomInvariantsGenerator *atomInvariantsGenerator = nullptr,
-    BondInvariantsGenerator *bondInvariantsGenerator = nullptr);
+    const bool useCountSimulation = true, const std::uint32_t foldedSize = 2048,
+    const std::vector<std::uint32_t> countBounds = {1, 2, 4, 8},
+    const bool ownsAtomInvGen = false);
+
 }  // namespace AtomPair
 }  // namespace RDKit
 

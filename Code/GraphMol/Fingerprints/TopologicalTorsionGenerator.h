@@ -56,10 +56,9 @@ template <typename OutputType>
 FingerprintGenerator<OutputType> *getTopologicalTorsionGenerator(
     const bool includeChirality = false, const uint32_t torsionAtomCount = 4,
     AtomInvariantsGenerator *atomInvariantsGenerator = nullptr,
-    BondInvariantsGenerator *bondInvariantsGenerator = nullptr,
     const bool countSimulation = true,
     const std::vector<std::uint32_t> countBounds = {1, 2, 4, 8},
-    const std::uint32_t foldedSize = 2048);
+    const std::uint32_t foldedSize = 2048, const bool ownsAtomInvGen = false);
 }  // namespace TopologicalTorsion
 }  // namespace RDKit
 

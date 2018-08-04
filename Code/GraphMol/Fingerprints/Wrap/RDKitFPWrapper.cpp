@@ -13,24 +13,18 @@ FingerprintGenerator<OutputType> *getRDKitFPGenerator(
     const unsigned int minPath, const unsigned int maxPath, const bool useHs,
     const bool branchedPaths, const bool useBondOrder,
     const bool countSimulation, python::object &py_countBounds,
-    const std::uint32_t foldedSize, python::object &py_atomInvGen,
-    python::object &py_bondInvGen) {
+    const std::uint32_t foldedSize, python::object &py_atomInvGen) {
   AtomInvariantsGenerator *atomInvariantsGenerator = nullptr;
   BondInvariantsGenerator *bondInvariantsGenerator = nullptr;
 
   python::extract<AtomInvariantsGenerator *> atomInvGen(py_atomInvGen);
-  if (atomInvGen.check()) {
-    atomInvariantsGenerator = atomInvGen();
-  }
-
-  python::extract<BondInvariantsGenerator *> bondInvGen(py_bondInvGen);
-  if (bondInvGen.check()) {
-    bondInvariantsGenerator = bondInvGen();
+  if (atomInvGen.check() && atomInvGen()) {
+    atomInvariantsGenerator = atomInvGen()->clone();
   }
 
   std::vector<std::uint32_t> countBounds = {1, 2, 4, 8};
   python::extract<std::vector<std::uint32_t>> countBoundsE(py_countBounds);
-  if (countBoundsE.check()) {
+  if (countBoundsE.check() && !countBoundsE().empty()) {
     countBounds = countBoundsE();
   }
 
@@ -38,8 +32,7 @@ FingerprintGenerator<OutputType> *getRDKitFPGenerator(
 
   return RDKitFP::getRDKitFPGenerator<OutputType>(
       minPath, maxPath, useHs, branchedPaths, useBondOrder,
-      atomInvariantsGenerator, bondInvariantsGenerator, countSimulation,
-      countBoundsC, foldedSize);
+      atomInvariantsGenerator, countSimulation, countBoundsC, foldedSize, true);
 }
 
 AtomInvariantsGenerator *getRDKitAtomInvGen() {
@@ -49,35 +42,27 @@ AtomInvariantsGenerator *getRDKitAtomInvGen() {
 void exportRDKit() {
   std::string docString = "";
 
-  python::def("GetRDKitFPGenerator32", &getRDKitFPGenerator<std::uint32_t>,
+  /*python::def("GetRDKitFPGenerator32", &getRDKitFPGenerator<std::uint32_t>,
               (python::arg("minPath") = 1, python::arg("maxPath") = 7,
                python::arg("useHs") = true, python::arg("branchedPaths") = true,
                python::arg("useBondOrder") = true,
                python::arg("countSimulation") = true,
                python::arg("countBounds") = python::object(),
                python::arg("foldedSize") = 2048,
-               python::arg("atomInvariantsGenerator") = python::object(),
-               python::arg("bondInvariantsGenerator") = python::object()),
+               python::arg("atomInvariantsGenerator") = python::object()),
               docString.c_str(),
-              python::return_value_policy<
-                  python::manage_new_object,
-                  python::return_internal_reference<
-                      9, python::return_internal_reference<10>>>());
+              python::return_value_policy<python::manage_new_object>());*/
 
-  python::def("GetRDKitFPGenerator64", &getRDKitFPGenerator<std::uint64_t>,
+  python::def("GetRDKitFPGenerator", &getRDKitFPGenerator<std::uint64_t>,
               (python::arg("minPath") = 1, python::arg("maxPath") = 7,
                python::arg("useHs") = true, python::arg("branchedPaths") = true,
                python::arg("useBondOrder") = true,
                python::arg("countSimulation") = true,
                python::arg("countBounds") = python::object(),
                python::arg("foldedSize") = 2048,
-               python::arg("atomInvariantsGenerator") = python::object(),
-               python::arg("bondInvariantsGenerator") = python::object()),
+               python::arg("atomInvariantsGenerator") = python::object()),
               docString.c_str(),
-              python::return_value_policy<
-                  python::manage_new_object,
-                  python::return_internal_reference<
-                      9, python::return_internal_reference<10>>>());
+              python::return_value_policy<python::manage_new_object>());
 
   docString = "";
   // todo add inv generator creator

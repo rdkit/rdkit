@@ -31,73 +31,6 @@ std::string smis[] = {
     "C12C3C4C5C6C7C8C1C1C9C5C5C%10C2C2C%11C%12C%13C3C3C7C%10C7C4C%11C1C3C(C5C8%"
     "12)C(C62)C7C9%13"};
 
-void testAtomCodes() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "Test atom codes AtomPairGenerator" << std::endl;
-
-  ROMol *mol;
-  std::uint32_t tgt;
-  std::uint32_t c1, c2, c3;
-
-  mol = SmilesToMol("C=C");
-  TEST_ASSERT(AtomPair::getAtomCode(mol->getAtomWithIdx(0), 0, false) ==
-              AtomPair::getAtomCode(mol->getAtomWithIdx(1), 0, false));
-  tgt = 1 | (1 | 1 << AtomPair::numPiBits) << AtomPair::numBranchBits;
-  TEST_ASSERT(AtomPair::getAtomCode(mol->getAtomWithIdx(0), 0, false) == tgt);
-  tgt = 1 << AtomPair::numBranchBits |
-        1 << (AtomPair::numBranchBits + AtomPair::numPiBits);
-  TEST_ASSERT(AtomPair::getAtomCode(mol->getAtomWithIdx(0), 1, false) == tgt);
-
-  delete mol;
-  mol = SmilesToMol("C#CO");
-  tgt = 1 | 2 << AtomPair::numBranchBits |
-        1 << (AtomPair::numBranchBits + AtomPair::numPiBits);
-  TEST_ASSERT(AtomPair::getAtomCode(mol->getAtomWithIdx(0), 0, false) == tgt);
-  tgt = 2 | 2 << AtomPair::numBranchBits |
-        1 << (AtomPair::numBranchBits + AtomPair::numPiBits);
-  TEST_ASSERT(AtomPair::getAtomCode(mol->getAtomWithIdx(1), 0, false) == tgt);
-  tgt = 1 | 0 << AtomPair::numBranchBits |
-        3 << (AtomPair::numBranchBits + AtomPair::numPiBits);
-  TEST_ASSERT(AtomPair::getAtomCode(mol->getAtomWithIdx(2), 0, false) == tgt);
-
-  delete mol;
-  mol = SmilesToMol("CC(O)C(O)(O)C");
-  tgt = 1 | 0 << AtomPair::numBranchBits |
-        1 << (AtomPair::numBranchBits + AtomPair::numPiBits);
-  TEST_ASSERT(AtomPair::getAtomCode(mol->getAtomWithIdx(1), 2, false) == tgt);
-  tgt = 2 | 0 << AtomPair::numBranchBits |
-        1 << (AtomPair::numBranchBits + AtomPair::numPiBits);
-  TEST_ASSERT(AtomPair::getAtomCode(mol->getAtomWithIdx(3), 2, false) == tgt);
-
-  delete mol;
-  mol = SmilesToMol("C=CC(=O)O");
-  tgt = 0 | 0 << AtomPair::numBranchBits |
-        3 << (AtomPair::numBranchBits + AtomPair::numPiBits);
-  TEST_ASSERT(AtomPair::getAtomCode(mol->getAtomWithIdx(4), 1, false) == tgt);
-  tgt = 3 | 1 << AtomPair::numBranchBits |
-        1 << (AtomPair::numBranchBits + AtomPair::numPiBits);
-  TEST_ASSERT(AtomPair::getAtomCode(mol->getAtomWithIdx(2), 0, false) == tgt);
-
-  delete mol;
-
-  mol = SmilesToMol("CCCCC");
-  c1 = AtomPair::getAtomCode(mol->getAtomWithIdx(0), 0, false);
-  c2 = AtomPair::getAtomCode(mol->getAtomWithIdx(1), 0, false);
-  c3 = AtomPair::getAtomCode(mol->getAtomWithIdx(2), 0, false);
-  tgt = 1 | (std::min(c1, c2) | std::max(c1, c2) << AtomPair::codeSize)
-                << AtomPair::numPathBits;
-  TEST_ASSERT(AtomPair::getAtomPairCode(c1, c2, 1, false) == tgt);
-  TEST_ASSERT(AtomPair::getAtomPairCode(c2, c1, 1, false) == tgt);
-  tgt = 2 | (std::min(c1, c3) | std::max(c1, c3) << AtomPair::codeSize)
-                << AtomPair::numPathBits;
-  TEST_ASSERT(AtomPair::getAtomPairCode(c1, c3, 2, false) == tgt);
-  TEST_ASSERT(AtomPair::getAtomPairCode(c3, c1, 2, false) == tgt);
-
-  delete mol;
-
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
-}
-
 void testAtomPairFP() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "Test atom-pair fp generator" << std::endl;
@@ -193,8 +126,8 @@ void testAtomPairArgs() {
   TEST_ASSERT(fp->getVal(AtomPair::getAtomPairCode(c1, c2, 1, true)) == 2);
   TEST_ASSERT(fp->getVal(AtomPair::getAtomPairCode(c1, c3, 2, true)) == 1);
 
-  atomPairGenerator =
-      AtomPair::getAtomPairGenerator<std::uint32_t>(1, 30, false, true, false);
+  atomPairGenerator = AtomPair::getAtomPairGenerator<std::uint32_t>(
+      1, 30, false, true, nullptr, false);
   fp = atomPairGenerator->getFingerprint(*mol);
   TEST_ASSERT(fp->getTotalVal() == 2);
   TEST_ASSERT(fp->getNonzeroElements().size() == 2);
@@ -521,9 +454,9 @@ void testInvariantGenerators() {
   bondInvariantsGenerator = nullptr;
 
   FingerprintGenerator<std::uint32_t> *atomPairGenerator =
-      AtomPair::getAtomPairGenerator<std::uint32_t>(
-          1, radius, false, true, true, atomInvariantsGenerator,
-          bondInvariantsGenerator);
+      AtomPair::getAtomPairGenerator<std::uint32_t>(1, radius, false, true,
+                                                    atomInvariantsGenerator,
+                                                    bondInvariantsGenerator);
 
   mol = SmilesToMol("CCC");
   fp = atomPairGenerator->getFingerprint(*mol);
@@ -541,8 +474,7 @@ void testInvariantGenerators() {
   bondInvariantsGenerator = nullptr;
 
   atomPairGenerator = AtomPair::getAtomPairGenerator<std::uint32_t>(
-      1, radius, false, true, true, atomInvariantsGenerator,
-      bondInvariantsGenerator);
+      1, radius, false, true, atomInvariantsGenerator, bondInvariantsGenerator);
 
   mol = SmilesToMol("CCC");
   fp = atomPairGenerator->getFingerprint(*mol);
@@ -672,7 +604,6 @@ int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
   RDLog::InitLogs();
-  testAtomCodes();
   testAtomPairFP();
   testAtomPairArgs();
   testAtomPairOld();

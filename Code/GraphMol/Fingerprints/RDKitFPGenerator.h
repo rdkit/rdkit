@@ -31,6 +31,7 @@ class RDKitFPAtomInvGenerator : public AtomInvariantsGenerator {
   std::vector<std::uint32_t> *getAtomInvariants(const ROMol &mol) const;
 
   std::string infoString() const;
+  RDKitFPAtomInvGenerator *clone() const;
 };
 
 template <typename OutputType>
@@ -40,9 +41,9 @@ class RDKitFPAtomEnv : public AtomEnvironment<OutputType> {
 
  public:
   OutputType getBitId(FingerprintArguments<OutputType> *arguments,
-                         const std::vector<std::uint32_t> *atomInvariants,
-                         const std::vector<std::uint32_t> *bondInvariants,
-                         const AdditionalOutput *additionalOutput) const;
+                      const std::vector<std::uint32_t> *atomInvariants,
+                      const std::vector<std::uint32_t> *bondInvariants,
+                      const AdditionalOutput *additionalOutput) const;
 
   RDKitFPAtomEnv(const OutputType bitId,
                  const boost::dynamic_bitset<> atomsInPath);
@@ -68,10 +69,9 @@ FingerprintGenerator<OutputType> *getRDKitFPGenerator(
     const bool useHs = true, const bool branchedPaths = true,
     const bool useBondOrder = true,
     AtomInvariantsGenerator *atomInvariantsGenerator = nullptr,
-    BondInvariantsGenerator *bondInvariantsGenerator = nullptr,
     const bool countSimulation = true,
     const std::vector<std::uint32_t> countBounds = {1, 2, 4, 8},
-    const std::uint32_t foldedSize = 2048);
+    const std::uint32_t foldedSize = 2048, const bool ownsAtomInvGen = false);
 
 }  // namespace RDKitFP
 }  // namespace RDKit
