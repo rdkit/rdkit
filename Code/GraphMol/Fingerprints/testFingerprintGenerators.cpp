@@ -341,7 +341,7 @@ void testAtomPairOutput() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
-void testMorganFP() {
+void testMorganFPOld() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "Test morgan fp generator" << std::endl;
 
@@ -365,6 +365,505 @@ void testMorganFP() {
   }
 
   delete morganGenerator;
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+void testMorganFP() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test Morgan Fingerprints." << std::endl;
+
+  {
+    ROMol *mol;
+    SparseIntVect<boost::uint32_t> *fp;
+    FingerprintGenerator<std::uint32_t> *morganGenerator;
+
+    mol = SmilesToMol("CCCCC");
+    morganGenerator = MorganFingerprint::getMorganGenerator<std::uint32_t>(0);
+    fp = morganGenerator->getFingerprint(*mol);
+    TEST_ASSERT(fp->getNonzeroElements().size() == 2);
+    delete fp;
+
+    fp = morganGenerator->getFoldedFingerprint(*mol);
+    TEST_ASSERT(fp->getNonzeroElements().size() == 2);
+    delete fp;
+    delete morganGenerator;
+
+    morganGenerator = MorganFingerprint::getMorganGenerator<std::uint32_t>(1);
+    fp = MorganFingerprints::getFingerprint(*mol, 1);
+    TEST_ASSERT(fp->getNonzeroElements().size() == 5);
+    delete fp;
+    fp = morganGenerator->getFoldedFingerprint(*mol);
+    TEST_ASSERT(fp->getNonzeroElements().size() == 5);
+    delete fp;
+    delete morganGenerator;
+
+    morganGenerator = MorganFingerprint::getMorganGenerator<std::uint32_t>(2);
+    fp = morganGenerator->getFingerprint(*mol);
+    TEST_ASSERT(fp->getNonzeroElements().size() == 7);
+    delete fp;
+    delete morganGenerator;
+
+    morganGenerator = MorganFingerprint::getMorganGenerator<std::uint32_t>(3);
+    fp = morganGenerator->getFingerprint(*mol);
+    TEST_ASSERT(fp->getNonzeroElements().size() == 7);
+    delete fp;
+    delete morganGenerator;
+
+    delete mol;
+  }
+  {
+    ROMol *mol;
+    SparseIntVect<boost::uint32_t> *fp;
+    FingerprintGenerator<std::uint32_t> *morganGenerator;
+
+    mol = SmilesToMol("O=C(O)CC1CC1");
+    morganGenerator = MorganFingerprint::getMorganGenerator<std::uint32_t>(0);
+    fp = morganGenerator->getFingerprint(*mol);
+    TEST_ASSERT(fp->getNonzeroElements().size() == 6);
+    delete fp;
+    delete morganGenerator;
+
+    morganGenerator = MorganFingerprint::getMorganGenerator<std::uint32_t>(1);
+    fp = MorganFingerprints::getFingerprint(*mol, 1);
+    TEST_ASSERT(fp->getNonzeroElements().size() == 12);
+    delete fp;
+    delete morganGenerator;
+
+    morganGenerator = MorganFingerprint::getMorganGenerator<std::uint32_t>(2);
+    fp = morganGenerator->getFingerprint(*mol);
+    TEST_ASSERT(fp->getNonzeroElements().size() == 16);
+    delete fp;
+    delete morganGenerator;
+
+    morganGenerator = MorganFingerprint::getMorganGenerator<std::uint32_t>(3);
+    fp = morganGenerator->getFingerprint(*mol);
+    TEST_ASSERT(fp->getNonzeroElements().size() == 17);
+    delete fp;
+    delete morganGenerator;
+
+    delete mol;
+  }
+
+  {
+    // test that the results aren't order dependent, i.e. that we're
+    // "canonicalizing" the fps correctly
+    ROMol *mol, *mol2;
+    SparseIntVect<boost::uint32_t> *fp, *fp2;
+    FingerprintGenerator<std::uint32_t> *morganGenerator;
+
+    mol = SmilesToMol("O=C(O)CC1CC1");
+    mol2 = SmilesToMol("OC(=O)CC1CC1");
+    morganGenerator = MorganFingerprint::getMorganGenerator<std::uint32_t>(0);
+    fp = morganGenerator->getFingerprint(*mol);
+    fp2 = morganGenerator->getFingerprint(*mol2);
+    TEST_ASSERT(fp->getNonzeroElements().size() == 6);
+    TEST_ASSERT(fp2->getNonzeroElements().size() == 6);
+    TEST_ASSERT(*fp == *fp2);
+    delete fp;
+    delete fp2;
+    delete morganGenerator;
+
+    morganGenerator = MorganFingerprint::getMorganGenerator<std::uint32_t>(1);
+    fp = morganGenerator->getFingerprint(*mol);
+    fp2 = morganGenerator->getFingerprint(*mol2);
+    TEST_ASSERT(fp->getNonzeroElements().size() == 12);
+    TEST_ASSERT(fp2->getNonzeroElements().size() == 12);
+    TEST_ASSERT(*fp == *fp2);
+    delete fp;
+    delete fp2;
+    delete morganGenerator;
+
+    morganGenerator = MorganFingerprint::getMorganGenerator<std::uint32_t>(2);
+    fp = morganGenerator->getFingerprint(*mol);
+    fp2 = morganGenerator->getFingerprint(*mol2);
+    TEST_ASSERT(fp->getNonzeroElements().size() == 16);
+    TEST_ASSERT(fp2->getNonzeroElements().size() == 16);
+    TEST_ASSERT(*fp == *fp2);
+    delete fp;
+    delete fp2;
+    delete morganGenerator;
+
+    morganGenerator = MorganFingerprint::getMorganGenerator<std::uint32_t>(3);
+    fp = morganGenerator->getFingerprint(*mol);
+    fp2 = morganGenerator->getFingerprint(*mol2);
+    TEST_ASSERT(fp->getNonzeroElements().size() == 17);
+    TEST_ASSERT(fp2->getNonzeroElements().size() == 17);
+    TEST_ASSERT(*fp == *fp2);
+    delete fp;
+    delete fp2;
+    delete morganGenerator;
+
+    delete mol;
+    delete mol2;
+  }
+
+  {
+    // symmetry test:
+    ROMol *mol;
+    SparseIntVect<boost::uint32_t> *fp;
+    FingerprintGenerator<std::uint32_t> *morganGenerator;
+
+    morganGenerator = MorganFingerprint::getMorganGenerator<std::uint32_t>(2);
+    mol = SmilesToMol("OCCCCO");
+    fp = morganGenerator->getFingerprint(*mol);
+    TEST_ASSERT(fp->getNonzeroElements().size() == 7);
+    SparseIntVect<boost::uint32_t>::StorageType::const_iterator iter;
+    for (iter = fp->getNonzeroElements().begin();
+         iter != fp->getNonzeroElements().end(); ++iter) {
+      TEST_ASSERT(iter->second == 2 || iter->second == 4);
+    }
+
+    delete fp;
+    delete mol;
+    delete morganGenerator;
+  }
+
+  {
+    // chirality test:
+    ROMol *mol;
+    SparseIntVect<boost::uint32_t> *fp;
+    FingerprintGenerator<std::uint32_t> *morganGenerator;
+
+    mol = SmilesToMol("CC(F)(Cl)C(F)(Cl)C");
+    morganGenerator = MorganFingerprint::getMorganGenerator<std::uint32_t>(0);
+    fp = morganGenerator->getFingerprint(*mol);
+    TEST_ASSERT(fp->getNonzeroElements().size() == 4);
+    delete fp;
+    delete morganGenerator;
+
+    morganGenerator = MorganFingerprint::getMorganGenerator<std::uint32_t>(1);
+    fp = morganGenerator->getFingerprint(*mol);
+    TEST_ASSERT(fp->getNonzeroElements().size() == 8);
+    delete mol;
+    delete fp;
+    delete morganGenerator;
+
+    mol = SmilesToMol("CC(F)(Cl)[C@](F)(Cl)C");
+    morganGenerator = MorganFingerprint::getMorganGenerator<std::uint32_t>(0);
+    fp = morganGenerator->getFingerprint(*mol);
+    TEST_ASSERT(fp->getNonzeroElements().size() == 4);
+    delete fp;
+    delete morganGenerator;
+    morganGenerator = MorganFingerprint::getMorganGenerator<std::uint32_t>(1);
+    fp = morganGenerator->getFingerprint(*mol);
+    TEST_ASSERT(fp->getNonzeroElements().size() == 8);
+    delete fp;
+    delete morganGenerator;
+
+    morganGenerator =
+        MorganFingerprint::getMorganGenerator<std::uint32_t>(0, true, true);
+    fp = morganGenerator->getFingerprint(*mol);
+    TEST_ASSERT(fp->getNonzeroElements().size() == 4);
+    delete fp;
+    delete morganGenerator;
+
+    morganGenerator =
+        MorganFingerprint::getMorganGenerator<std::uint32_t>(1, true, true);
+    fp = morganGenerator->getFingerprint(*mol);
+    TEST_ASSERT(fp->getNonzeroElements().size() == 9);
+    delete fp;
+    delete morganGenerator;
+    delete mol;
+  }
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+void testMorganFPFromAtoms() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog)
+      << "    Test Morgan Fingerprints using fromAtoms argument." << std::endl;
+
+  FingerprintGenerator<std::uint32_t> *radius0Generator =
+      MorganFingerprint::getMorganGenerator<std::uint32_t>(0);
+  FingerprintGenerator<std::uint32_t> *radius1Generator =
+      MorganFingerprint::getMorganGenerator<std::uint32_t>(1);
+  FingerprintGenerator<std::uint32_t> *radius2Generator =
+      MorganFingerprint::getMorganGenerator<std::uint32_t>(2);
+  FingerprintGenerator<std::uint32_t> *radius3Generator =
+      MorganFingerprint::getMorganGenerator<std::uint32_t>(3);
+  {
+    ROMol *mol;
+    SparseIntVect<boost::uint32_t> *fp;
+    std::vector<boost::uint32_t> atoms;
+    atoms.push_back(0);
+
+    mol = SmilesToMol("CCCCC");
+    fp = radius0Generator->getFingerprint(*mol);
+    TEST_ASSERT(fp->getNonzeroElements().size() == 2);
+    delete fp;
+
+    fp = radius0Generator->getFingerprint(*mol, &atoms);
+    TEST_ASSERT(fp->getNonzeroElements().size() == 1);
+    delete fp;
+
+    fp = radius1Generator->getFingerprint(*mol, &atoms);
+    TEST_ASSERT(fp->getNonzeroElements().size() == 2);
+    delete fp;
+
+    // tests issue 3415636
+    fp = radius2Generator->getFingerprint(*mol, &atoms);
+    TEST_ASSERT(fp->getNonzeroElements().size() == 3);
+    delete fp;
+
+    delete mol;
+  }
+
+  {
+    ROMol *mol;
+    SparseIntVect<boost::uint32_t> *fp;
+    std::vector<boost::uint32_t> atoms;
+
+    mol = SmilesToMol("CCCCC");
+    fp = radius0Generator->getFingerprint(*mol, &atoms);
+    TEST_ASSERT(fp->getNonzeroElements().size() == 0);
+    delete fp;
+
+    fp = radius1Generator->getFingerprint(*mol, &atoms);
+    TEST_ASSERT(fp->getNonzeroElements().size() == 0);
+    delete fp;
+
+    delete mol;
+  }
+
+  {
+    ROMol *mol;
+    SparseIntVect<boost::uint32_t> *fp;
+    std::vector<boost::uint32_t> atoms;
+    atoms.push_back(0);
+
+    mol = SmilesToMol("C(CC)CO");
+
+    fp = radius0Generator->getFingerprint(*mol, &atoms);
+    TEST_ASSERT(fp->getNonzeroElements().size() == 1);
+    delete fp;
+
+    fp = radius1Generator->getFingerprint(*mol, &atoms);
+    TEST_ASSERT(fp->getNonzeroElements().size() == 2);
+    delete fp;
+
+    fp = radius2Generator->getFingerprint(*mol, &atoms);
+    TEST_ASSERT(fp->getNonzeroElements().size() == 3);
+    delete fp;
+
+    // tests issue 3415636
+    fp = radius3Generator->getFingerprint(*mol, &atoms);
+    TEST_ASSERT(fp->getNonzeroElements().size() == 3);
+    delete fp;
+
+    delete mol;
+  }
+
+  delete radius0Generator;
+  delete radius1Generator;
+  delete radius2Generator;
+  delete radius3Generator;
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+void testMorganFPBitVect() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test Morgan Fingerprints as bit vects."
+                        << std::endl;
+
+  {
+    ROMol *mol;
+    ExplicitBitVect *fp;
+    FingerprintGenerator<std::uint32_t> *radius0Generator =
+        MorganFingerprint::getMorganGenerator<std::uint32_t>(0);
+    FingerprintGenerator<std::uint32_t> *radius1Generator =
+        MorganFingerprint::getMorganGenerator<std::uint32_t>(1);
+    FingerprintGenerator<std::uint32_t> *radius2Generator =
+        MorganFingerprint::getMorganGenerator<std::uint32_t>(2);
+    FingerprintGenerator<std::uint32_t> *radius3Generator =
+        MorganFingerprint::getMorganGenerator<std::uint32_t>(3);
+
+    mol = SmilesToMol("CCCCC");
+    fp = radius0Generator->getFoldedFingerprintAsBitVect(*mol);
+    TEST_ASSERT(fp->getNumOnBits() == 4);
+    delete fp;
+    fp = radius1Generator->getFoldedFingerprintAsBitVect(*mol);
+    TEST_ASSERT(fp->getNumOnBits() == 9);
+    delete fp;
+    fp = radius2Generator->getFoldedFingerprintAsBitVect(*mol);
+    TEST_ASSERT(fp->getNumOnBits() == 12);
+    delete fp;
+    fp = radius3Generator->getFoldedFingerprintAsBitVect(*mol);
+    TEST_ASSERT(fp->getNumOnBits() == 12);
+    delete fp;
+
+    delete mol;
+    delete radius0Generator;
+    delete radius1Generator;
+    delete radius2Generator;
+    delete radius3Generator;
+  }
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+void testMorganFPFeatureInvs() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog)
+      << "    Test Morgan Fingerprints with feature invariants." << std::endl;
+
+  {
+    ROMol *mol;
+    mol = SmilesToMol("Cc1ccccc1");
+    TEST_ASSERT(mol);
+    MorganFingerprint::MorganFeatureAtomInvGenerator *invGen =
+        new MorganFingerprint::MorganFeatureAtomInvGenerator();
+    std::vector<boost::uint32_t> *invars = invGen->getAtomInvariants(*mol);
+    TEST_ASSERT((*invars)[0] == 0);
+    TEST_ASSERT((*invars)[1] != 0);
+    TEST_ASSERT((*invars)[1] == (*invars)[2]);
+    TEST_ASSERT((*invars)[1] == (*invars)[3]);
+    TEST_ASSERT((*invars)[1] == (*invars)[4]);
+    TEST_ASSERT((*invars)[1] == (*invars)[5]);
+    TEST_ASSERT((*invars)[1] == (*invars)[6]);
+    delete mol;
+    delete invGen;
+    delete invars;
+  }
+  {
+    ROMol *mol;
+    mol = SmilesToMol("FCCCl");
+    TEST_ASSERT(mol);
+    MorganFingerprint::MorganFeatureAtomInvGenerator *invGen =
+        new MorganFingerprint::MorganFeatureAtomInvGenerator();
+    std::vector<boost::uint32_t> *invars = invGen->getAtomInvariants(*mol);
+    TEST_ASSERT((*invars)[1] == (*invars)[2]);
+    TEST_ASSERT((*invars)[1] == 0);
+    TEST_ASSERT((*invars)[0] == (*invars)[3]);
+    TEST_ASSERT((*invars)[0] != 0);
+    delete mol;
+    delete invGen;
+    delete invars;
+  }
+
+  {
+    ROMol *mol;
+    mol = SmilesToMol("Cc1ncccc1O");
+    TEST_ASSERT(mol);
+    std::vector<const ROMol *> patterns(2);
+
+    RWMol *p;
+    p = SmartsToMol("[A]");
+    patterns[0] = static_cast<const ROMol *>(p);
+    p = SmartsToMol("[a]");
+    patterns[1] = static_cast<const ROMol *>(p);
+    MorganFingerprint::MorganFeatureAtomInvGenerator *invGen =
+        new MorganFingerprint::MorganFeatureAtomInvGenerator(&patterns);
+
+    std::vector<boost::uint32_t> *invars = invGen->getAtomInvariants(*mol);
+    TEST_ASSERT((*invars)[0] != 0);
+    TEST_ASSERT((*invars)[1] != 0);
+    TEST_ASSERT((*invars)[0] != (*invars)[1]);
+    TEST_ASSERT((*invars)[1] == (*invars)[2]);
+    TEST_ASSERT((*invars)[0] == (*invars)[7]);
+    delete mol;
+    delete invGen;
+    delete invars;
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+void testMorganFPOptions() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test additional Morgan fingerprints options."
+                        << std::endl;
+
+  {
+    ROMol *m1, *m2;
+    ExplicitBitVect *fp1, *fp2;
+    FingerprintGenerator<std::uint32_t> *generator =
+        MorganFingerprint::getMorganGenerator<std::uint32_t>(2);
+    FingerprintGenerator<std::uint32_t> *generatorNoBoundType =
+        MorganFingerprint::getMorganGenerator<std::uint32_t>(2, true, false,
+                                                             false);
+    std::vector<boost::uint32_t> invars(3);
+    invars[0] = 1;
+    invars[1] = 1;
+    invars[2] = 1;
+
+    m1 = SmilesToMol("CCC");
+    TEST_ASSERT(m1);
+    m2 = SmilesToMol("CC=C");
+    TEST_ASSERT(m2);
+
+    fp1 = generator->getFoldedFingerprintAsBitVect(*m1, nullptr, nullptr, -1,
+                                                   nullptr, &invars);
+    invars[0] = 1;
+    invars[1] = 1;
+    invars[2] = 1;
+    fp2 = generator->getFoldedFingerprintAsBitVect(*m2, nullptr, nullptr, -1,
+                                                   nullptr, &invars);
+    TEST_ASSERT((*fp1) != (*fp2));
+    delete fp1;
+    delete fp2;
+
+    invars[0] = 1;
+    invars[1] = 1;
+    invars[2] = 1;
+    fp1 = generatorNoBoundType->getFoldedFingerprintAsBitVect(
+        *m1, nullptr, nullptr, -1, nullptr, &invars);
+    invars[0] = 1;
+    invars[1] = 1;
+    invars[2] = 1;
+    fp2 = generatorNoBoundType->getFoldedFingerprintAsBitVect(
+        *m2, nullptr, nullptr, -1, nullptr, &invars);
+    TEST_ASSERT((*fp1) == (*fp2));
+    delete fp1;
+    delete fp2;
+
+    delete m1;
+    delete m2;
+    delete generator;
+    delete generatorNoBoundType;
+  }
+
+  {
+    ROMol *m1, *m2, *m3;
+    ExplicitBitVect *fp1, *fp2, *fp3;
+    FingerprintGenerator<std::uint32_t> *generator =
+        MorganFingerprint::getMorganGenerator<std::uint32_t>(2);
+    FingerprintGenerator<std::uint32_t> *generatorChirality =
+        MorganFingerprint::getMorganGenerator<std::uint32_t>(2, true, true);
+
+    m1 = SmilesToMol("C[C@H](F)Cl");
+    TEST_ASSERT(m1);
+    m2 = SmilesToMol("C[C@@H](F)Cl");
+    TEST_ASSERT(m2);
+    m3 = SmilesToMol("CC(F)Cl");
+    TEST_ASSERT(m3);
+
+    fp1 = generator->getFoldedFingerprintAsBitVect(*m1);
+    fp2 = generator->getFoldedFingerprintAsBitVect(*m2);
+    fp3 = generator->getFoldedFingerprintAsBitVect(*m3);
+    TEST_ASSERT((*fp1) == (*fp2));
+    TEST_ASSERT((*fp1) == (*fp3));
+    TEST_ASSERT((*fp2) == (*fp3));
+    delete fp1;
+    delete fp2;
+    delete fp3;
+
+    fp1 = generatorChirality->getFoldedFingerprintAsBitVect(*m1);
+    fp2 = generatorChirality->getFoldedFingerprintAsBitVect(*m2);
+    fp3 = generatorChirality->getFoldedFingerprintAsBitVect(*m3);
+    TEST_ASSERT((*fp1) != (*fp2));
+    TEST_ASSERT((*fp1) != (*fp3));
+    TEST_ASSERT((*fp2) != (*fp3));
+    delete fp1;
+    delete fp2;
+    delete fp3;
+
+    delete m1;
+    delete m2;
+    delete generator;
+    delete generatorChirality;
+  }
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
@@ -611,6 +1110,11 @@ int main(int argc, char *argv[]) {
   testAtomPairFoldedBitvector();
   testAtomPairOutput();
   testMorganFP();
+  testMorganFPOld();
+  testMorganFPFromAtoms();
+  testMorganFPBitVect();
+  testMorganFPFeatureInvs();
+  testMorganFPOptions();
   testInvariantGenerators();
   testCustomInvariants();
   testRDKitFP();

@@ -184,10 +184,10 @@ class MorganEnvGenerator : public AtomEnvironmentGenerator<OutputType> {
  /param onlyNonzeroInvariants : onlyNonzeroInvariants for MorganArguments
  /param atomInvariantsGenerator : custom atom invariants generator to use
  /param bondInvariantsGenerator : custom bond invariants generator to use
-  /param ownsAtomInvGen  if set atom invariants generator is destroyed with the
-  fingerprint generator
-  /param ownsBondInvGen  if set bond invariants generator is destroyed with the
-  fingerprint generator
+ /param ownsAtomInvGen  if set atom invariants generator is destroyed with the
+ fingerprint generator
+ /param ownsBondInvGen  if set bond invariants generator is destroyed with the
+ fingerprint generator
 
  /return FingerprintGenerator* that generates Morgan fingerprints
  */
