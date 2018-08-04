@@ -14,7 +14,8 @@ ROMol* normalizeHelper(MolStandardize::Normalizer &self, const ROMol &mol) {
 
 } // namespace
 
-BOOST_PYTHON_MODULE(Normalize) {
+struct normalize_wrapper {
+	static void wrap() {
 	python::scope().attr("__doc__") = 
 					"Module containing tools for normalizing molecules defined by SMARTS patterns";
 
@@ -28,8 +29,9 @@ BOOST_PYTHON_MODULE(Normalize) {
 								"",
 								python::return_value_policy<python::manage_new_object>())
 					;
+	}
+};
 
-
-}
+void wrap_normalize() { normalize_wrapper::wrap(); }
 
 

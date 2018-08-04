@@ -33,7 +33,8 @@ void setMetalNofHelper(RDKit::MolStandardize::MetalDisconnector &self,
 
 } // namespace
 
-BOOST_PYTHON_MODULE(Metal) {
+struct metal_wrapper{
+	static void wrap() {
 	python::scope().attr("__doc__") = 
 			"Module containing functions for molecular standardization";
 
@@ -61,12 +62,7 @@ BOOST_PYTHON_MODULE(Metal) {
 	        (python::arg("self"), python::arg("mol")), docString.c_str(),
 					python::return_value_policy<python::manage_new_object>());
 
+	}
+};
 
-//  python::def("Disconnect", RDKit::MolStandardize::MetalDisconnector::disconnect,
-//              (python::arg("mol")),
-//              docString.c_str());
-//  python::def("Disconnect", disconnect,
-//              (python::arg("mol")), docString.c_str());
-
-
-}
+void wrap_metal() { metal_wrapper::wrap(); }

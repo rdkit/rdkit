@@ -18,7 +18,8 @@ ROMol *reionizeHelper(MolStandardize::Reionizer &self, const ROMol &mol) {
 
 } // namespace
 
-BOOST_PYTHON_MODULE(Charge) {
+struct charge_wrapper{
+	static void wrap() {
 	python::scope().attr("__doc__") = 
 					"Module containing functions for charge corrections";
 	
@@ -51,5 +52,8 @@ BOOST_PYTHON_MODULE(Charge) {
 							python::return_value_policy<python::manage_new_object>())
 					;
 
-}
+	}
+};
+
+void wrap_charge() { charge_wrapper::wrap(); }
 

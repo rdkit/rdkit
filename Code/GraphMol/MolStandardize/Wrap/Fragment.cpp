@@ -18,7 +18,8 @@ ROMol* chooseHelper(MolStandardize::LargestFragmentChooser &self, const ROMol &m
 
 } // namespace
 
-BOOST_PYTHON_MODULE(Fragment) {
+struct fragment_wrapper{
+	static void wrap(){
 	python::scope().attr("__doc__") = 
 					"Module containing tools for dealing with molecules with more than \
 					covalently bonded unit";
@@ -42,9 +43,7 @@ BOOST_PYTHON_MODULE(Fragment) {
 							"",
 							python::return_value_policy<python::manage_new_object>())
 					;
+	}
+};
 
-//					.def(python 
-
-
-
-}
+void wrap_fragment() { fragment_wrapper::wrap(); }

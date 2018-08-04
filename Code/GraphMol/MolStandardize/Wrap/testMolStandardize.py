@@ -5,9 +5,7 @@ from rdkit import DataStructs
 from rdkit import Chem
 from rdkit.Geometry import rdGeometry as geom
 from rdkit.Chem.rdchem import Atom
-from rdkit.Chem.MolStandardize import rdMolStandardize, Metal, Charge, \
-        Fragment, Normalize
-
+from rdkit.Chem.MolStandardize import rdMolStandardize
 
 class TestCase(unittest.TestCase):
 
@@ -47,7 +45,7 @@ class TestCase(unittest.TestCase):
 
   def test5Metal(self):
     mol = Chem.MolFromSmiles("C1(CCCCC1)[Zn]Br")
-    md = Metal.MetalDisconnector()
+    md = rdMolStandardize.MetalDisconnector()
     nm = md.Disconnect(mol)
 #    Metal.MetalDisconnector.Disconnect(mol)
     self.assertEqual(Chem.MolToSmiles(nm), "[Br-].[CH-]1CCCCC1.[Zn+2]")
@@ -61,7 +59,7 @@ class TestCase(unittest.TestCase):
   def test6Charge(self):
     mol = Chem.MolFromSmiles("C1=C(C=CC(=C1)[S]([O-])=O)[S](O)(=O)=O")
     # instantiate with default acid base pair library
-    reionizer = Charge.Reionizer()
+    reionizer = rdMolStandardize.Reionizer()
     nm = reionizer.reionize(mol)
     self.assertEqual(Chem.MolToSmiles(nm), "O=S(O)c1ccc(S(=O)(=O)[O-])cc1")
 
@@ -71,33 +69,33 @@ class TestCase(unittest.TestCase):
     #abfile = os.path.join(RDBaseDir, ')
     abfile = os.path.join(RDBaseDir, 'Code', 'GraphMol', 'MolStandardize',
             'AcidBaseCatalog', 'data', 'acid_base_pairs2.txt')
-    reionizer2 = Charge.Reionizer(abfile)
+    reionizer2 = rdMolStandardize.Reionizer(abfile)
     nm2 = reionizer2.reionize(mol)
     self.assertEqual(Chem.MolToSmiles(nm2), "O=S([O-])c1ccc(S(=O)(=O)O)cc1")
 
     # test Uncharger
-    uncharger = Charge.Uncharger()
+    uncharger = rdMolStandardize.Uncharger()
     mol3 = Chem.MolFromSmiles("O=C([O-])c1ccccc1")
     nm3 = uncharger.uncharge(mol3)
     self.assertEqual(Chem.MolToSmiles(nm3), "O=C(O)c1ccccc1")
 
   def test7Fragment(self):
-    fragremover = Fragment.FragmentRemover()
+    fragremover = rdMolStandardize.FragmentRemover()
     mol = Chem.MolFromSmiles("CN(C)C.Cl.Cl.Br")
     nm = fragremover.remove(mol)
     self.assertEqual(Chem.MolToSmiles(nm), "CN(C)C")
 
-    lfragchooser = Fragment.LargestFragmentChooser()
+    lfragchooser = rdMolStandardize.LargestFragmentChooser()
     mol2 = Chem.MolFromSmiles("[N+](=O)([O-])[O-].[CH3+]")
     nm2 = lfragchooser.choose(mol2)
     self.assertEqual(Chem.MolToSmiles(nm2), "O=[N+]([O-])[O-]")
 
-    lfragchooser2 = Fragment.LargestFragmentChooser(preferOrganic = True)
+    lfragchooser2 = rdMolStandardize.LargestFragmentChooser(preferOrganic = True)
     nm3 = lfragchooser2.choose(mol2)
     self.assertEqual(Chem.MolToSmiles(nm3), "[CH3+]")
 
   def test8Normalize(self):
-    normalizer = Normalize.Normalizer()
+    normalizer = rdMolStandardize.Normalizer()
     mol = Chem.MolFromSmiles("C[n+]1ccccc1[O-]")
     nm = normalizer.normalize(mol)
     self.assertEqual(Chem.MolToSmiles(nm), "Cn1ccccc1=O")
@@ -148,8 +146,5 @@ class TestCase(unittest.TestCase):
     ("""INFO: [DisallowedAtomsValidation] Atom F is in disallowedAtoms list""",
             msg5[0])
 
-
-
 if __name__ == "__main__":
   unittest.main()
-#  print(Charge.CHARGE_CORRECTIONS)

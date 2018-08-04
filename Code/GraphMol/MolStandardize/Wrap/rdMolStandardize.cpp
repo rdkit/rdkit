@@ -73,6 +73,10 @@ RDKit::ROMol *reionizeHelper(const RDKit::ROMol *mol, python::object params) {
 }  // namespace
 
 void wrap_validate();
+void wrap_charge();
+void wrap_metal();
+void wrap_fragment();
+void wrap_normalize();
 
 BOOST_PYTHON_MODULE(rdMolStandardize) {
   python::scope().attr("__doc__") =
@@ -135,4 +139,8 @@ BOOST_PYTHON_MODULE(rdMolStandardize) {
               python::return_value_policy<python::manage_new_object>());
 
   wrap_validate();
+	wrap_charge();
+	wrap_metal();
+	wrap_fragment();
+	wrap_normalize();
 }
