@@ -7,8 +7,10 @@ namespace RDKit {
 namespace AtomPair {
 using namespace AtomPairs;
 
-AtomPairAtomInvGenerator::AtomPairAtomInvGenerator(bool includeChirality)
-    : df_includeChirality(includeChirality) {}
+AtomPairAtomInvGenerator::AtomPairAtomInvGenerator(
+    bool includeChirality, bool topologicalTorsionCorrection)
+    : df_includeChirality(includeChirality),
+      df_topologicalTorsionCorrection(topologicalTorsionCorrection) {}
 
 std::vector<std::uint32_t> *AtomPairAtomInvGenerator::getAtomInvariants(
     const ROMol &mol) const {
@@ -18,7 +20,8 @@ std::vector<std::uint32_t> *AtomPairAtomInvGenerator::getAtomInvariants(
   for (ROMol::ConstAtomIterator atomItI = mol.beginAtoms();
        atomItI != mol.endAtoms(); ++atomItI) {
     (*atomInvariants)[(*atomItI)->getIdx()] =
-        getAtomCode(*atomItI, 0, df_includeChirality);
+        getAtomCode(*atomItI, 0, df_includeChirality) -
+        (df_topologicalTorsionCorrection ? 2 : 0);
   }
 
   return atomInvariants;
@@ -26,11 +29,14 @@ std::vector<std::uint32_t> *AtomPairAtomInvGenerator::getAtomInvariants(
 
 std::string AtomPairAtomInvGenerator::infoString() const {
   return "AtomPairInvariantGenerator includeChirality=" +
-         std::to_string(df_includeChirality);
+         std::to_string(df_includeChirality) +
+         " topologicalTorsionCorrection=" +
+         std::to_string(df_topologicalTorsionCorrection);
 }
 
 AtomPairAtomInvGenerator *AtomPairAtomInvGenerator::clone() const {
-  return new AtomPairAtomInvGenerator(df_includeChirality);
+  return new AtomPairAtomInvGenerator(df_includeChirality,
+                                      df_topologicalTorsionCorrection);
 }
 
 template <typename OutputType>
@@ -69,7 +75,7 @@ OutputType AtomPairAtomEnv<OutputType>::getBitId(
     FingerprintArguments<OutputType> *arguments,
     const std::vector<std::uint32_t> *atomInvariants,
     const std::vector<std::uint32_t> *bondInvariants,
-    const AdditionalOutput *additionalOutput) const {
+    const AdditionalOutput *additionalOutput, const bool hashResults) const {
   PRECONDITION((atomInvariants->size() >= d_atomIdFirst) &&
                    (atomInvariants->size() >= d_atomIdSecond),
                "bad atom invariants size");
@@ -88,9 +94,16 @@ OutputType AtomPairAtomEnv<OutputType>::getBitId(
   std::uint32_t atomCodeSecond =
       (*atomInvariants)[d_atomIdSecond] % codeSizeLimit;
 
-  std::uint32_t bitId =
-      getAtomPairCode(atomCodeFirst, atomCodeSecond, d_distance,
-                      atomPairArguments->df_includeChirality);
+  std::uint32_t bitId;
+  if (hashResults) {
+    boost::uint32_t bit = 0;
+    gboost::hash_combine(bitId, std::min(atomCodeFirst, atomCodeSecond));
+    gboost::hash_combine(bitId, d_distance);
+    gboost::hash_combine(bitId, std::max(atomCodeFirst, atomCodeSecond));
+  } else {
+    bitId = getAtomPairCode(atomCodeFirst, atomCodeSecond, d_distance,
+                            atomPairArguments->df_includeChirality);
+  }
 
   if (additionalOutput && additionalOutput->atomToBits) {
     additionalOutput->atomToBits->at(d_atomIdFirst).push_back(bitId);
@@ -115,7 +128,8 @@ AtomPairEnvGenerator<OutputType>::getEnvironments(
     const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
     const AdditionalOutput *additionalOutput,
     const std::vector<std::uint32_t> *atomInvariants,
-    const std::vector<std::uint32_t> *bondInvariants) const {
+    const std::vector<std::uint32_t> *bondInvariants,
+    const bool hashResults) const {
   const unsigned int atomCount = mol.getNumAtoms();
   PRECONDITION(!additionalOutput || !additionalOutput->atomToBits ||
                    additionalOutput->atomToBits->size() == atomCount,

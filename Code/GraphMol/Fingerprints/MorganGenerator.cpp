@@ -129,7 +129,7 @@ OutputType MorganAtomEnv<OutputType>::getBitId(
     FingerprintArguments<OutputType> *arguments,
     const std::vector<std::uint32_t> *atomInvariants,
     const std::vector<std::uint32_t> *bondInvariants,
-    const AdditionalOutput *additionalOutput) const {
+    const AdditionalOutput *additionalOutput, const bool hashResults) const {
   if (additionalOutput) {
     // todo: set additional outputs
   }
@@ -151,7 +151,8 @@ MorganEnvGenerator<OutputType>::getEnvironments(
     const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
     const AdditionalOutput *additionalOutput,
     const std::vector<std::uint32_t> *atomInvariants,
-    const std::vector<std::uint32_t> *bondInvariants) const {
+    const std::vector<std::uint32_t> *bondInvariants,
+    const bool hashResults) const {
   PRECONDITION(atomInvariants && (atomInvariants->size() >= mol.getNumAtoms()),
                "bad atom invariants size");
   PRECONDITION(bondInvariants && (bondInvariants->size() >= mol.getNumBonds()),
@@ -364,8 +365,8 @@ FingerprintGenerator<OutputType> *getMorganGenerator(
     AtomInvariantsGenerator *atomInvariantsGenerator,
     BondInvariantsGenerator *bondInvariantsGenerator,
     const std::uint32_t foldedSize,
-    const std::vector<std::uint32_t> countBounds,
-    const bool ownsAtomInvGen, const bool ownsBondInvGen) {
+    const std::vector<std::uint32_t> countBounds, const bool ownsAtomInvGen,
+    const bool ownsBondInvGen) {
   AtomEnvironmentGenerator<OutputType> *morganEnvGenerator =
       new MorganEnvGenerator<OutputType>();
   FingerprintArguments<OutputType> *morganArguments =
@@ -398,8 +399,8 @@ template FingerprintGenerator<std::uint32_t> *getMorganGenerator(
     AtomInvariantsGenerator *atomInvariantsGenerator,
     BondInvariantsGenerator *bondInvariantsGenerator,
     const std::uint32_t foldedSize,
-    const std::vector<std::uint32_t> countBounds,
-    const bool ownsAtomInvGen, const bool ownsBondInvGen);
+    const std::vector<std::uint32_t> countBounds, const bool ownsAtomInvGen,
+    const bool ownsBondInvGen);
 
 template FingerprintGenerator<std::uint64_t> *getMorganGenerator(
     const unsigned int radius, const bool countSimulation,
@@ -408,8 +409,8 @@ template FingerprintGenerator<std::uint64_t> *getMorganGenerator(
     AtomInvariantsGenerator *atomInvariantsGenerator,
     BondInvariantsGenerator *bondInvariantsGenerator,
     const std::uint32_t foldedSize,
-    const std::vector<std::uint32_t> countBounds,
-    const bool ownsAtomInvGen, const bool ownsBondInvGen);
+    const std::vector<std::uint32_t> countBounds, const bool ownsAtomInvGen,
+    const bool ownsBondInvGen);
 
 }  // namespace MorganFingerprint
 }  // namespace RDKit

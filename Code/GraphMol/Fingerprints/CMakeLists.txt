@@ -27,7 +27,7 @@ rdkit_test(testFingerprints test1.cpp LINK_LIBRARIES
            RDGeneral  ${RDKit_THREAD_LIBS}  )
 
 rdkit_test(testFingerprintGenerators testFingerprintGenerators.cpp LINK_LIBRARIES 
-           Fingerprints SmilesParse GraphMol DataStructs
+           Fingerprints SmilesParse GraphMol DataStructs FileParsers
            RDGeneral )
 
 add_subdirectory(Wrap)

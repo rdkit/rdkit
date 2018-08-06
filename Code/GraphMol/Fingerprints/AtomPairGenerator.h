@@ -10,9 +10,11 @@ using namespace AtomPairs;
 
 class AtomPairAtomInvGenerator : public AtomInvariantsGenerator {
   const bool df_includeChirality;
+  const bool df_topologicalTorsionCorrection;
 
  public:
-  AtomPairAtomInvGenerator(bool includeChirality = false);
+  AtomPairAtomInvGenerator(bool includeChirality = false,
+                           bool topologicalTorsionCorrection = false);
 
   std::vector<std::uint32_t> *getAtomInvariants(const ROMol &mol) const;
 
@@ -78,7 +80,7 @@ class AtomPairAtomEnv : public AtomEnvironment<OutputType> {
   OutputType getBitId(FingerprintArguments<OutputType> *arguments,
                       const std::vector<std::uint32_t> *atomInvariants,
                       const std::vector<std::uint32_t> *bondInvariants,
-                      const AdditionalOutput *additionalOutput) const;
+                      const AdditionalOutput *additionalOutput, const bool hashResults = false) const;
 
   /*!
     /brief construct a new AtomPairAtomEnv object
@@ -104,7 +106,7 @@ class AtomPairEnvGenerator : public AtomEnvironmentGenerator<OutputType> {
       const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
       const AdditionalOutput *additionalOutput,
       const std::vector<std::uint32_t> *atomInvariants,
-      const std::vector<std::uint32_t> *bondInvariants) const;
+      const std::vector<std::uint32_t> *bondInvariants, const bool hashResults = false) const;
 
   std::string infoString() const;
 };

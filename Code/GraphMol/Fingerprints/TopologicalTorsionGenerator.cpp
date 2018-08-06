@@ -35,7 +35,7 @@ OutputType TopologicalTorsionAtomEnv<OutputType>::getBitId(
     FingerprintArguments<OutputType> *arguments,
     const std::vector<std::uint32_t> *atomInvariants,
     const std::vector<std::uint32_t> *bondInvariants,
-    const AdditionalOutput *additionalOutput) const {
+    const AdditionalOutput *additionalOutput, const bool hashResults) const {
   return d_bitId;
 };
 
@@ -52,7 +52,8 @@ TopologicalTorsionEnvGenerator<OutputType>::getEnvironments(
     const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
     const AdditionalOutput *additionalOutput,
     const std::vector<std::uint32_t> *atomInvariants,
-    const std::vector<std::uint32_t> *bondInvariants) const {
+    const std::vector<std::uint32_t> *bondInvariants,
+    const bool hashResults) const {
   TopologicalTorsionArguments<OutputType> *topologicalTorsionArguments =
       dynamic_cast<TopologicalTorsionArguments<OutputType> *>(arguments);
 
@@ -107,7 +108,7 @@ TopologicalTorsionEnvGenerator<OutputType>::getEnvironments(
           break;
         }
         pAtoms.set(*pIt);
-        unsigned int code = (*atomInvariants)[*pIt] % ((1 << codeSize) - 1) - 1;
+        unsigned int code = (*atomInvariants)[*pIt] % ((1 << codeSize) - 1) + 1;
         // subtract off the branching number:
         if (pIt != path.begin() && pIt + 1 != path.end()) {
           --code;
@@ -115,8 +116,14 @@ TopologicalTorsionEnvGenerator<OutputType>::getEnvironments(
         pathCodes.push_back(code);
       }
       if (pathCodes.size()) {
-        OutputType code = getTopologicalTorsionCode(
-            pathCodes, topologicalTorsionArguments->df_includeChirality);
+        OutputType code;
+        if (hashResults) {
+          code = getTopologicalTorsionHash(pathCodes);
+        } else {
+          code = getTopologicalTorsionCode(
+              pathCodes, topologicalTorsionArguments->df_includeChirality);
+        }
+
         result.push_back(new TopologicalTorsionAtomEnv<OutputType>(code));
       }
     }
@@ -149,7 +156,7 @@ FingerprintGenerator<OutputType> *getTopologicalTorsionGenerator(
   bool ownsAtomInvGenerator = ownsAtomInvGen;
   if (!atomInvariantsGenerator) {
     atomInvariantsGenerator =
-        new AtomPair::AtomPairAtomInvGenerator(includeChirality);
+        new AtomPair::AtomPairAtomInvGenerator(includeChirality, true);
     ownsAtomInvGenerator = true;
   }
 

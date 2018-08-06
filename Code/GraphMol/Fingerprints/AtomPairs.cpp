@@ -253,35 +253,6 @@ ExplicitBitVect *getHashedAtomPairFingerprintAsBitVect(
 }
 
 
-size_t getTopologicalTorsionHash(
-    const std::vector<boost::uint32_t> &pathCodes) {
-  bool reverseIt = false;
-  unsigned int i = 0;
-  unsigned int j = pathCodes.size() - 1;
-  while (i < j) {
-    if (pathCodes[i] > pathCodes[j]) {
-      reverseIt = true;
-      break;
-    } else if (pathCodes[i] < pathCodes[j]) {
-      break;
-    }
-    ++i;
-    --j;
-  }
-
-  boost::uint32_t res = 0;
-  if (reverseIt) {
-    for (unsigned int i = 0; i < pathCodes.size(); ++i) {
-      gboost::hash_combine(res, pathCodes[pathCodes.size() - i - 1]);
-    }
-  } else {
-    for (unsigned int pathCode : pathCodes) {
-      gboost::hash_combine(res, pathCode);
-    }
-  }
-  return res;
-}
-
 SparseIntVect<boost::int64_t> *getTopologicalTorsionFingerprint(
     const ROMol &mol, unsigned int targetSize,
     const std::vector<boost::uint32_t> *fromAtoms,

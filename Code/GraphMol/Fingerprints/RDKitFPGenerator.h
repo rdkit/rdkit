@@ -43,7 +43,8 @@ class RDKitFPAtomEnv : public AtomEnvironment<OutputType> {
   OutputType getBitId(FingerprintArguments<OutputType> *arguments,
                       const std::vector<std::uint32_t> *atomInvariants,
                       const std::vector<std::uint32_t> *bondInvariants,
-                      const AdditionalOutput *additionalOutput) const;
+                      const AdditionalOutput *additionalOutput,
+                      const bool hashResults = false) const;
 
   RDKitFPAtomEnv(const OutputType bitId,
                  const boost::dynamic_bitset<> atomsInPath);
@@ -58,7 +59,8 @@ class RDKitFPEnvGenerator : public AtomEnvironmentGenerator<OutputType> {
       const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
       const AdditionalOutput *additionalOutput,
       const std::vector<std::uint32_t> *atomInvariants,
-      const std::vector<std::uint32_t> *bondInvariants) const;
+      const std::vector<std::uint32_t> *bondInvariants,
+      const bool hashResults = false) const;
 
   std::string infoString() const;
 };

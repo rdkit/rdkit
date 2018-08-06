@@ -135,6 +135,35 @@ std::uint64_t getTopologicalTorsionCode(
   }
   return res;
 }
+
+std::uint32_t getTopologicalTorsionHash(
+    const std::vector<std::uint32_t> &pathCodes) {
+  bool reverseIt = false;
+  unsigned int i = 0;
+  unsigned int j = pathCodes.size() - 1;
+  while (i < j) {
+    if (pathCodes[i] > pathCodes[j]) {
+      reverseIt = true;
+      break;
+    } else if (pathCodes[i] < pathCodes[j]) {
+      break;
+    }
+    ++i;
+    --j;
+  }
+
+  std::uint32_t res = 0;
+  if (reverseIt) {
+    for (unsigned int i = 0; i < pathCodes.size(); ++i) {
+      gboost::hash_combine(res, pathCodes[pathCodes.size() - i - 1]);
+    }
+  } else {
+    for (unsigned int pathCode : pathCodes) {
+      gboost::hash_combine(res, pathCode);
+    }
+  }
+  return res;
+}
 }  // namespace AtomPairs
 
 namespace MorganFingerprints {

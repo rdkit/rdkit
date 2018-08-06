@@ -88,14 +88,15 @@ class AtomEnvironment : private boost::noncopyable {
     arguments
     /param atomInvariants    Atom-invariants to be used during hashing
     /param bondInvariants    Bond-invariants to be used during hashing
+    /param hashResults   if set results will be ready to be folded by modding
 
     /return OutputType  calculated bit id for this environment
    */
-  virtual OutputType getBitId(
-      FingerprintArguments<OutputType> *arguments,
-      const std::vector<std::uint32_t> *atomInvariants,
-      const std::vector<std::uint32_t> *bondInvariants,
-      const AdditionalOutput *AdditionalOutput) const = 0;
+  virtual OutputType getBitId(FingerprintArguments<OutputType> *arguments,
+                              const std::vector<std::uint32_t> *atomInvariants,
+                              const std::vector<std::uint32_t> *bondInvariants,
+                              const AdditionalOutput *AdditionalOutput,
+                              const bool hashResults = false) const = 0;
 
   virtual ~AtomEnvironment() = 0;
 };
@@ -129,6 +130,7 @@ class AtomEnvironmentGenerator : private boost::noncopyable {
     generation so it is also passed here
     /param bondInvariants   bond invariants to be used during environment
     generation, same as atomInvariants it might be needed
+    /param hashResults   if set results will be ready to be folded by modding
 
     /return std::vector<AtomEnvironment *>  atom-environments generated from
     this molecule
@@ -139,7 +141,8 @@ class AtomEnvironmentGenerator : private boost::noncopyable {
       const std::vector<std::uint32_t> *ignoreAtoms = nullptr,
       const int confId = -1, const AdditionalOutput *additionalOutput = nullptr,
       const std::vector<std::uint32_t> *atomInvariants = nullptr,
-      const std::vector<std::uint32_t> *bondInvariants = nullptr) const = 0;
+      const std::vector<std::uint32_t> *bondInvariants = nullptr,
+      const bool hashResults = false) const = 0;
 
   /**
    /brief method that returns information about this /c AtomEnvironmentGenerator
@@ -178,7 +181,7 @@ class AtomInvariantsGenerator : private boost::noncopyable {
   virtual std::string infoString() const = 0;
 
   virtual ~AtomInvariantsGenerator() = 0;
-  virtual AtomInvariantsGenerator* clone() const = 0;
+  virtual AtomInvariantsGenerator *clone() const = 0;
 };
 
 /*!
@@ -207,7 +210,7 @@ class BondInvariantsGenerator : private boost::noncopyable {
   virtual std::string infoString() const = 0;
 
   virtual ~BondInvariantsGenerator() = 0;
-  virtual BondInvariantsGenerator* clone() const = 0;
+  virtual BondInvariantsGenerator *clone() const = 0;
 };
 
 /*!
@@ -297,10 +300,10 @@ template <typename OutputType>
 AtomEnvironment<OutputType>::~AtomEnvironment() {}
 
 inline AtomInvariantsGenerator::~AtomInvariantsGenerator() {}
-inline AtomInvariantsGenerator* AtomInvariantsGenerator::clone() const{}
+inline AtomInvariantsGenerator *AtomInvariantsGenerator::clone() const {}
 
 inline BondInvariantsGenerator::~BondInvariantsGenerator() {}
-inline BondInvariantsGenerator* BondInvariantsGenerator::clone() const{}
+inline BondInvariantsGenerator *BondInvariantsGenerator::clone() const {}
 
 template <typename OutputType>
 FingerprintGenerator<OutputType>::FingerprintGenerator(
@@ -382,7 +385,6 @@ SparseIntVect<OutputType> *FingerprintGenerator<OutputType>::getFingerprint(
   for (auto it = atomEnvironments.begin(); it != atomEnvironments.end(); it++) {
     OutputType bitId = (*it)->getBitId(dp_fingerprintArguments, atomInvariants,
                                        bondInvariants, additionalOutput);
-
     if (dp_fingerprintArguments->d_countSimulation) {
       // keep the occurrence count for every bit generated
       res->setVal(bitId, res->getVal(bitId) + 1);
@@ -443,27 +445,6 @@ SparseBitVect *FingerprintGenerator<OutputType>::getFingerprintAsBitVect(
 }
 
 template <typename OutputType>
-OutputType mixBits(OutputType bitId);
-
-template <>
-inline std::uint32_t mixBits(std::uint32_t bitId) {
-  std::uint32_t result = 0;
-  gboost::hash_combine(result, bitId);
-  return result;
-}
-
-// 64 bit version keeps 32 bit halfs seperate so if the fingerprint is only
-// using 32 bits of the 64 bits it will be identical to the 32 bit version of
-// that fingerprint even after hashing
-template <>
-inline std::uint64_t mixBits(std::uint64_t bitId) {
-  std::uint32_t firstHalf = 0, secondHalf = 0;
-  gboost::hash_combine(firstHalf, (std::uint32_t)bitId);
-  gboost::hash_combine(secondHalf, (std::uint32_t)(bitId >> 32));
-  return ((std::uint64_t)secondHalf) << 32 | firstHalf;
-}
-
-template <typename OutputType>
 SparseIntVect<OutputType>
     *FingerprintGenerator<OutputType>::getFoldedFingerprint(
         const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms,
@@ -471,25 +452,56 @@ SparseIntVect<OutputType>
         const AdditionalOutput *additionalOutput,
         const std::vector<std::uint32_t> *customAtomInvariants,
         const std::vector<std::uint32_t> *customBondInvariants) const {
-  // generate fingerprint using getFingerprint and fold it to reduce the size
-  SparseIntVect<OutputType> *tempResult =
-      getFingerprint(mol, fromAtoms, ignoreAtoms, confId, additionalOutput,
-                     customAtomInvariants, customBondInvariants);
-  SparseIntVect<OutputType> *result =
-      new SparseIntVect<OutputType>(dp_fingerprintArguments->d_foldedSize);
-
-  BOOST_FOREACH (auto val, tempResult->getNonzeroElements()) {
-    // hash_combine the bit-id with 0 before modding to distrubute bits set in
-    // the bit-id more evenly
-    OutputType foldedBitId = mixBits<OutputType>(val.first);
-    // mod the bit-id to limit the size to the desired amount (d_foldedSize in
-    // fingerprint arguments)
-    result->setVal(foldedBitId % dp_fingerprintArguments->d_foldedSize,
-                   val.second);
+  // create the atom and bond invariants using the generators if there are any,
+  // created invariants will be passed to each atom environment's getBitId call
+  std::vector<std::uint32_t> *atomInvariants = nullptr;
+  if (customAtomInvariants) {
+    atomInvariants = new std::vector<std::uint32_t>(*customAtomInvariants);
+  } else if (dp_atomInvariantsGenerator) {
+    atomInvariants = dp_atomInvariantsGenerator->getAtomInvariants(mol);
   }
 
-  delete tempResult;
-  return result;
+  std::vector<std::uint32_t> *bondInvariants = nullptr;
+  if (customBondInvariants) {
+    bondInvariants = new std::vector<std::uint32_t>(*customBondInvariants);
+  } else if (dp_bondInvariantsGenerator) {
+    bondInvariants = dp_bondInvariantsGenerator->getBondInvariants(mol);
+  }
+
+  // create all atom environments that will generate the bit-ids that will make
+  // up the fingerprint
+  std::vector<AtomEnvironment<OutputType> *> atomEnvironments =
+      dp_atomEnvironmentGenerator->getEnvironments(
+          mol, dp_fingerprintArguments, fromAtoms, ignoreAtoms, confId,
+          additionalOutput, atomInvariants, bondInvariants, true);
+
+  // allocate the result
+  SparseIntVect<OutputType> *res =
+      new SparseIntVect<OutputType>(dp_fingerprintArguments->d_foldedSize);
+
+  // iterate over every atom environment and generate bit-ids that will make up
+  // the fingerprint
+  for (auto it = atomEnvironments.begin(); it != atomEnvironments.end(); it++) {
+    OutputType bitId = (*it)->getBitId(dp_fingerprintArguments, atomInvariants,
+                                       bondInvariants, additionalOutput, true);
+
+    bitId = bitId % dp_fingerprintArguments->d_foldedSize;
+
+    if (dp_fingerprintArguments->d_countSimulation) {
+      // keep the occurrence count for every bit generated
+      res->setVal(bitId, res->getVal(bitId) + 1);
+    } else {
+      // do not keep the count, just set to 1
+      res->setVal(bitId, 1);
+    }
+
+    delete (*it);
+  }
+
+  delete atomInvariants;
+  delete bondInvariants;
+
+  return res;
 }
 
 template <typename OutputType>
