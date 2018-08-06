@@ -13,6 +13,7 @@
 #include <GraphMol/Fingerprints/TopologicalTorsionGenerator.h>
 
 #include <GraphMol/FileParsers/MolSupplier.h>
+#include <GraphMol/FileParsers/FileParsers.h>
 
 using namespace RDKit;
 
@@ -155,7 +156,7 @@ void testAtomPairOld() {
                         << std::endl;
   {
     ROMol *mol;
-    SparseIntVect<boost::int32_t> *fp1, *fp2;
+    SparseIntVect<std::int32_t> *fp1, *fp2;
     SparseIntVect<std::uint32_t> *fpu;
 
     FingerprintGenerator<std::uint32_t> *atomPairGenerator =
@@ -165,11 +166,11 @@ void testAtomPairOld() {
       mol = SmilesToMol(sm);
       fp1 = AtomPairs::getAtomPairFingerprint(*mol);
       fpu = atomPairGenerator->getFingerprint(*mol);
-      fp2 = new SparseIntVect<boost::int32_t>(fpu->size());
+      fp2 = new SparseIntVect<std::int32_t>(fpu->size());
       std::map<std::uint32_t, int> nz = fpu->getNonzeroElements();
       for (std::map<std::uint32_t, int>::iterator it = nz.begin();
            it != nz.end(); it++) {
-        fp2->setVal(static_cast<boost::int32_t>(it->first), it->second);
+        fp2->setVal(static_cast<std::int32_t>(it->first), it->second);
       }
 
       TEST_ASSERT(DiceSimilarity(*fp1, *fp2) == 1.0);
@@ -340,6 +341,287 @@ void testAtomPairOutput() {
   delete additionalOutput.atomToBits;
   delete atomPairGenerator;
 
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+// Old version test name testHashedAtomPairs
+void testFoldedAtomPairs() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test Folded Atom Pairs." << std::endl;
+
+  {
+    FingerprintGenerator<std::uint32_t> *generator =
+        AtomPair::getAtomPairGenerator<std::uint32_t>(1, 30, false, true,
+                                                      nullptr, true, 1024);
+    ROMol *mol;
+    mol = SmilesToMol("c1ccccc1");
+    SparseIntVect<std::uint32_t> *fp1;
+    fp1 = generator->getFoldedFingerprint(*mol);
+    SparseIntVect<std::uint32_t> *fp2;
+    fp2 = generator->getFoldedFingerprint(*mol);
+    TEST_ASSERT(DiceSimilarity(*fp1, *fp2) == 1.0);
+    TEST_ASSERT(*fp1 == *fp2);
+
+    delete mol;
+    delete fp2;
+    mol = SmilesToMol("c1ccccn1");
+    fp2 = generator->getFoldedFingerprint(*mol);
+    RANGE_CHECK(0.0, DiceSimilarity(*fp1, *fp2), 1.0);
+
+    delete mol;
+    delete fp1;
+    delete fp2;
+    delete generator;
+  }
+
+  {
+    FingerprintGenerator<std::uint32_t> *generator1 =
+        AtomPair::getAtomPairGenerator<std::uint32_t>();
+    FingerprintGenerator<std::uint32_t> *generator2 =
+        AtomPair::getAtomPairGenerator<std::uint32_t>(1, 2);
+    FingerprintGenerator<std::uint32_t> *generator3 =
+        AtomPair::getAtomPairGenerator<std::uint32_t>(1, 3);
+    ROMol *mol;
+    mol = SmilesToMol("c1ccccc1");
+    SparseIntVect<std::uint32_t> *fp1;
+    fp1 = generator1->getFoldedFingerprint(*mol);
+    SparseIntVect<std::uint32_t> *fp2;
+    fp2 = generator3->getFoldedFingerprint(*mol);
+    TEST_ASSERT(DiceSimilarity(*fp1, *fp2) == 1.0);
+    TEST_ASSERT(*fp1 == *fp2);
+
+    delete fp2;
+    fp2 = generator2->getFoldedFingerprint(*mol);
+    RANGE_CHECK(0.0, DiceSimilarity(*fp1, *fp2), 1.0);
+
+    delete mol;
+    delete fp1;
+    delete fp2;
+    delete generator1;
+    delete generator2;
+    delete generator3;
+  }
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+void testRootedAtomPairs() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test Rooted Atom Pairs." << std::endl;
+
+  FingerprintGenerator<std::uint32_t> *generator =
+      AtomPair::getAtomPairGenerator<std::uint32_t>();
+  ROMol *mol;
+  SparseIntVect<std::uint32_t> *fp1, *fp2;
+  std::vector<std::uint32_t> roots;
+
+  mol = SmilesToMol("OCCCCC");
+  fp1 = generator->getFingerprint(*mol);
+  SparseIntVect<std::uint32_t>::StorageType nz1 = fp1->getNonzeroElements();
+  TEST_ASSERT(nz1.size() > 0);
+
+  roots.push_back(0);
+  fp2 = generator->getFingerprint(*mol, &roots);
+  SparseIntVect<std::uint32_t>::StorageType nz2 = fp2->getNonzeroElements();
+  TEST_ASSERT(nz2.size() > 0);
+  TEST_ASSERT(nz2.size() < nz1.size());
+
+  for (SparseIntVect<std::uint32_t>::StorageType::const_iterator bIt =
+           nz2.begin();
+       bIt != nz2.end(); ++bIt) {
+    TEST_ASSERT(bIt->second <= fp2->getVal(bIt->first));
+  }
+
+  delete mol;
+  delete fp1;
+  delete fp2;
+  delete generator;
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+void testIgnoreAtomPairs() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test ignoring atoms in Atom Pairs."
+                        << std::endl;
+
+  FingerprintGenerator<std::uint32_t> *generator =
+      AtomPair::getAtomPairGenerator<std::uint32_t>(1, 5, false, true, nullptr,
+                                                    true, 4096);
+
+  {
+    ROMol *mol;
+    SparseIntVect<std::uint32_t> *fp1, *fp2;
+    std::vector<std::uint32_t> roots;
+
+    mol = SmilesToMol("OCCCCC");
+    fp1 = generator->getFingerprint(*mol);
+    SparseIntVect<std::uint32_t>::StorageType nz1 = fp1->getNonzeroElements();
+    TEST_ASSERT(nz1.size() > 0);
+
+    roots.push_back(0);
+    fp2 = generator->getFingerprint(*mol, nullptr, &roots);
+    SparseIntVect<std::uint32_t>::StorageType nz2 = fp2->getNonzeroElements();
+    TEST_ASSERT(nz2.size() == nz1.size() - 5);
+
+    for (SparseIntVect<std::uint32_t>::StorageType::const_iterator bIt =
+             nz2.begin();
+         bIt != nz2.end(); ++bIt) {
+      TEST_ASSERT(bIt->second <= fp2->getVal(bIt->first));
+    }
+
+    delete mol;
+    delete fp1;
+    delete fp2;
+  }
+  {
+    ROMol *mol;
+    SparseIntVect<std::uint32_t> *fp2;
+    std::vector<std::uint32_t> roots;
+
+    mol = SmilesToMol("OCCCCC");
+    roots.push_back(0);
+    fp2 = generator->getFingerprint(*mol, &roots, &roots);
+    SparseIntVect<std::uint32_t>::StorageType nz2 = fp2->getNonzeroElements();
+    TEST_ASSERT(nz2.size() == 0);
+
+    delete mol;
+    delete fp2;
+  }
+
+  {
+    ROMol *mol;
+    SparseIntVect<std::uint32_t> *fp1, *fp2;
+    std::vector<std::uint32_t> roots;
+
+    mol = SmilesToMol("OCCCCC");
+    fp1 = generator->getFoldedFingerprint(*mol);
+    SparseIntVect<std::uint32_t>::StorageType nz1 = fp1->getNonzeroElements();
+    TEST_ASSERT(nz1.size() > 0);
+
+    roots.push_back(0);
+    fp2 = generator->getFoldedFingerprint(*mol, nullptr, &roots);
+    SparseIntVect<std::uint32_t>::StorageType nz2 = fp2->getNonzeroElements();
+    TEST_ASSERT(nz2.size() < nz1.size());
+
+    for (SparseIntVect<std::uint32_t>::StorageType::const_iterator bIt =
+             nz2.begin();
+         bIt != nz2.end(); ++bIt) {
+      TEST_ASSERT(bIt->second <= fp2->getVal(bIt->first));
+    }
+
+    delete mol;
+    delete fp1;
+    delete fp2;
+  }
+  delete generator;
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+void testChiralPairs() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test Atom Pairs including info about chirality."
+                        << std::endl;
+
+  FingerprintGenerator<std::uint32_t> *generator =
+      AtomPair::getAtomPairGenerator<std::uint32_t>(1, 5, false, true, nullptr,
+                                                    true, 4096);
+  FingerprintGenerator<std::uint32_t> *generatorChirality =
+      AtomPair::getAtomPairGenerator<std::uint32_t>(1, 5, true, true, nullptr,
+                                                    true, 4096);
+  ROMol *m1, *m2, *m3;
+
+  m1 = SmilesToMol("CC[CH](F)Cl");
+  TEST_ASSERT(m1);
+  m2 = SmilesToMol("CC[C@H](F)Cl");
+  TEST_ASSERT(m1);
+  m3 = SmilesToMol("CC[C@@H](F)Cl");
+  TEST_ASSERT(m1);
+
+  {
+    SparseIntVect<std::uint32_t> *fp1, *fp2, *fp3;
+    fp1 = generator->getFingerprint(*m1);
+    TEST_ASSERT(fp1->getTotalVal() == 10);
+    TEST_ASSERT(fp1->getNonzeroElements().size() == 10);
+    fp2 = generator->getFingerprint(*m2);
+    TEST_ASSERT(fp2->getTotalVal() == 10);
+    TEST_ASSERT(fp2->getNonzeroElements().size() == 10);
+    fp3 = generator->getFingerprint(*m3);
+    TEST_ASSERT(fp3->getTotalVal() == 10);
+    TEST_ASSERT(fp3->getNonzeroElements().size() == 10);
+
+    TEST_ASSERT((*fp1) == (*fp2));
+    TEST_ASSERT((*fp1) == (*fp3));
+    TEST_ASSERT((*fp2) == (*fp3));
+
+    delete fp1;
+    delete fp2;
+    delete fp3;
+
+    fp1 = generatorChirality->getFingerprint(*m1);
+    TEST_ASSERT(fp1->getTotalVal() == 10);
+    TEST_ASSERT(fp1->getNonzeroElements().size() == 10);
+    fp2 = generatorChirality->getFingerprint(*m2);
+    TEST_ASSERT(fp2->getTotalVal() == 10);
+    TEST_ASSERT(fp2->getNonzeroElements().size() == 10);
+    fp3 = generatorChirality->getFingerprint(*m3);
+    TEST_ASSERT(fp3->getTotalVal() == 10);
+    TEST_ASSERT(fp3->getNonzeroElements().size() == 10);
+
+    TEST_ASSERT((*fp1) != (*fp2));
+    TEST_ASSERT((*fp1) != (*fp3));
+    TEST_ASSERT((*fp2) != (*fp3));
+
+    delete fp1;
+    delete fp2;
+    delete fp3;
+  }
+
+  {
+    SparseIntVect<std::uint32_t> *fp1, *fp2, *fp3;
+    fp1 = generator->getFoldedFingerprint(*m1);
+    TEST_ASSERT(fp1->getTotalVal() == 10);
+    TEST_ASSERT(fp1->getNonzeroElements().size() == 10);
+    fp2 = generator->getFoldedFingerprint(*m2);
+    TEST_ASSERT(fp2->getTotalVal() == 10);
+    TEST_ASSERT(fp2->getNonzeroElements().size() == 10);
+    fp3 = generator->getFoldedFingerprint(*m3);
+    TEST_ASSERT(fp3->getTotalVal() == 10);
+    TEST_ASSERT(fp3->getNonzeroElements().size() == 10);
+
+    TEST_ASSERT((*fp1) == (*fp2));
+    TEST_ASSERT((*fp1) == (*fp3));
+    TEST_ASSERT((*fp2) == (*fp3));
+
+    delete fp1;
+    delete fp2;
+    delete fp3;
+
+    fp1 = generatorChirality->getFoldedFingerprint(*m1);
+    TEST_ASSERT(fp1->getTotalVal() == 10);
+    TEST_ASSERT(fp1->getNonzeroElements().size() == 10);
+    fp2 = generatorChirality->getFoldedFingerprint(*m2);
+    TEST_ASSERT(fp2->getTotalVal() == 10);
+    TEST_ASSERT(fp2->getNonzeroElements().size() == 10);
+    fp3 = generatorChirality->getFoldedFingerprint(*m3);
+    TEST_ASSERT(fp3->getTotalVal() == 10);
+    TEST_ASSERT(fp3->getNonzeroElements().size() == 10);
+
+    TEST_ASSERT((*fp1) != (*fp2));
+    TEST_ASSERT((*fp1) != (*fp3));
+    TEST_ASSERT((*fp2) != (*fp3));
+
+    delete fp1;
+    delete fp2;
+    delete fp3;
+  }
+
+  delete m1;
+  delete m2;
+  delete m3;
+  delete generator;
+  delete generatorChirality;
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
@@ -674,26 +956,26 @@ void testMorganFPBitVect() {
     ROMol *mol;
     ExplicitBitVect *fp;
     FingerprintGenerator<std::uint32_t> *radius0Generator =
-        MorganFingerprint::getMorganGenerator<std::uint32_t>(0);
+        MorganFingerprint::getMorganGenerator<std::uint32_t>(0, false);
     FingerprintGenerator<std::uint32_t> *radius1Generator =
-        MorganFingerprint::getMorganGenerator<std::uint32_t>(1);
+        MorganFingerprint::getMorganGenerator<std::uint32_t>(1, false);
     FingerprintGenerator<std::uint32_t> *radius2Generator =
-        MorganFingerprint::getMorganGenerator<std::uint32_t>(2);
+        MorganFingerprint::getMorganGenerator<std::uint32_t>(2, false);
     FingerprintGenerator<std::uint32_t> *radius3Generator =
-        MorganFingerprint::getMorganGenerator<std::uint32_t>(3);
+        MorganFingerprint::getMorganGenerator<std::uint32_t>(3, false);
 
     mol = SmilesToMol("CCCCC");
     fp = radius0Generator->getFoldedFingerprintAsBitVect(*mol);
-    TEST_ASSERT(fp->getNumOnBits() == 4);
+    TEST_ASSERT(fp->getNumOnBits() == 2);
     delete fp;
     fp = radius1Generator->getFoldedFingerprintAsBitVect(*mol);
-    TEST_ASSERT(fp->getNumOnBits() == 9);
+    TEST_ASSERT(fp->getNumOnBits() == 5);
     delete fp;
     fp = radius2Generator->getFoldedFingerprintAsBitVect(*mol);
-    TEST_ASSERT(fp->getNumOnBits() == 12);
+    TEST_ASSERT(fp->getNumOnBits() == 7);
     delete fp;
     fp = radius3Generator->getFoldedFingerprintAsBitVect(*mol);
-    TEST_ASSERT(fp->getNumOnBits() == 12);
+    TEST_ASSERT(fp->getNumOnBits() == 7);
     delete fp;
 
     delete mol;
@@ -1215,6 +1497,102 @@ void testRDKitFP() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testRDKFPUnfolded() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test unfolded version of RDKFP   " << std::endl;
+  {
+    FingerprintGenerator<std::uint64_t> *generator =
+        RDKitFP::getRDKitFPGenerator<std::uint64_t>();
+    ROMol *m1 = SmilesToMol("c1ccccc1N");
+    TEST_ASSERT(m1);
+    SparseIntVect<std::uint64_t> *fp1;
+    SparseIntVect<std::uint64_t>::StorageType::const_iterator iter;
+
+    fp1 = generator->getFingerprint(*m1);
+    TEST_ASSERT(fp1);
+    TEST_ASSERT(fp1->getNonzeroElements().size() == 19);
+    iter = fp1->getNonzeroElements().find(374073638);
+    TEST_ASSERT(iter != fp1->getNonzeroElements().end() && iter->second == 6);
+    iter = fp1->getNonzeroElements().find(464351883);
+    TEST_ASSERT(iter != fp1->getNonzeroElements().end() && iter->second == 2);
+    iter = fp1->getNonzeroElements().find(1949583554);
+    TEST_ASSERT(iter != fp1->getNonzeroElements().end() && iter->second == 6);
+    iter = fp1->getNonzeroElements().find(4105342207);
+    TEST_ASSERT(iter != fp1->getNonzeroElements().end() && iter->second == 1);
+    iter = fp1->getNonzeroElements().find(794080973);
+    TEST_ASSERT(iter != fp1->getNonzeroElements().end() && iter->second == 1);
+    iter = fp1->getNonzeroElements().find(3826517238);
+    TEST_ASSERT(iter != fp1->getNonzeroElements().end() && iter->second == 2);
+
+    delete m1;
+    delete generator;
+  }
+  {
+    FingerprintGenerator<std::uint64_t> *generator =
+        RDKitFP::getRDKitFPGenerator<std::uint64_t>();
+    ROMol *m1 = SmilesToMol("Cl");
+    TEST_ASSERT(m1);
+    SparseIntVect<std::uint64_t> *fp1;
+    SparseIntVect<std::uint64_t>::StorageType::const_iterator iter;
+
+    fp1 = generator->getFingerprint(*m1);
+    TEST_ASSERT(fp1);
+    TEST_ASSERT(fp1->getNonzeroElements().size() == 0);
+
+    delete m1;
+    delete generator;
+  }
+  // additional outputs are not fully functional yet
+  /*{
+    FingerprintGenerator<std::uint64_t> *generator =
+        RDKitFP::getRDKitFPGenerator<std::uint64_t>();
+    ROMol *m1 = SmilesToMol("CCCO");
+    TEST_ASSERT(m1);
+    SparseIntVect<std::uint64_t> *fp1;
+    SparseIntVect<std::uint64_t>::StorageType::const_iterator iter;
+    std::map<std::uint64_t, std::vector<std::vector<int>>> bitInfo;
+    std::map<std::uint64_t, std::vector<std::vector<int>>>::const_iterator
+        iter2;
+
+    fp1 = getUnfoldedRDKFingerprintMol(*m1, 1, 7, true, true, true, nullptr,
+                                       nullptr, nullptr, &bitInfo);
+    TEST_ASSERT(fp1);
+
+    TEST_ASSERT(fp1->getNonzeroElements().size() == 5);
+    iter = fp1->getNonzeroElements().find(1524090560);
+    TEST_ASSERT(iter != fp1->getNonzeroElements().end() && iter->second == 1);
+    iter = fp1->getNonzeroElements().find(1940446997);
+    TEST_ASSERT(iter != fp1->getNonzeroElements().end() && iter->second == 1);
+    iter = fp1->getNonzeroElements().find(3977409745);
+    TEST_ASSERT(iter != fp1->getNonzeroElements().end() && iter->second == 1);
+    iter = fp1->getNonzeroElements().find(4274652475);
+    TEST_ASSERT(iter != fp1->getNonzeroElements().end() && iter->second == 1);
+    iter = fp1->getNonzeroElements().find(4275705116);
+    TEST_ASSERT(iter != fp1->getNonzeroElements().end() && iter->second == 2);
+
+    iter2 = bitInfo.find(4275705116);
+    TEST_ASSERT(iter2 != bitInfo.end() && iter2->second[0][0] == 0);
+    TEST_ASSERT(iter2 != bitInfo.end() && iter2->second.size() == 2 &&
+                iter2->second[1][0] == 1);
+    iter2 = bitInfo.find(4274652475);
+    TEST_ASSERT(iter2 != bitInfo.end() && iter2->second[0][0] == 2);
+    iter2 = bitInfo.find(3977409745);
+    TEST_ASSERT(iter2 != bitInfo.end() && iter2->second[0].size() == 3 &&
+                iter2->second[0][0] == 0);
+    TEST_ASSERT(iter2 != bitInfo.end() && iter2->second[0].size() == 3 &&
+                iter2->second[0][1] == 1);
+    TEST_ASSERT(iter2 != bitInfo.end() && iter2->second[0].size() == 3 &&
+                iter2->second[0][2] == 2);
+    iter2 = bitInfo.find(1524090560);
+    TEST_ASSERT(iter2 != bitInfo.end() && iter2->second[0].size() == 2 &&
+                iter2->second[0][0] == 1);
+    TEST_ASSERT(iter2 != bitInfo.end() && iter2->second[0].size() == 2 &&
+                iter2->second[0][1] == 2);
+
+    delete m1;
+  }*/
+}
+
 void testTopologicalTorsionFPOld() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "Test topological torsion fp generator" << std::endl;
@@ -1284,6 +1662,63 @@ void testTorsions() {
   delete mol;
   delete fp;
   delete generator;
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+// previous version test name: testHashedTorsions
+void testFoldedTorsions() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test Folded torsions." << std::endl;
+
+  {
+    FingerprintGenerator<std::uint64_t> *generator =
+        TopologicalTorsion::getTopologicalTorsionGenerator<std::uint64_t>();
+    ROMol *mol;
+    mol = SmilesToMol("c1ccccc1");
+    SparseIntVect<std::uint64_t> *fp1;
+    fp1 = generator->getFoldedFingerprint(*mol);
+    SparseIntVect<std::uint64_t> *fp2;
+    fp2 = generator->getFoldedFingerprint(*mol);
+    TEST_ASSERT(DiceSimilarity(*fp1, *fp2) == 1.0);
+    TEST_ASSERT(*fp1 == *fp2);
+
+    delete mol;
+    delete fp2;
+    mol = SmilesToMol("c1ccccn1");
+    fp2 = generator->getFoldedFingerprint(*mol);
+    RANGE_CHECK(0.0, DiceSimilarity(*fp1, *fp2), 1.0);
+
+    delete mol;
+    delete fp1;
+    delete fp2;
+    delete generator;
+  }
+
+  {
+    FingerprintGenerator<std::uint64_t> *generator =
+        TopologicalTorsion::getTopologicalTorsionGenerator<std::uint64_t>(false,
+                                                                          6);
+    ROMol *mol;
+    mol = SmilesToMol("c1ccccc1");
+    SparseIntVect<std::uint64_t> *fp1;
+    fp1 = generator->getFoldedFingerprint(*mol);
+    SparseIntVect<std::uint64_t> *fp2;
+    fp2 = generator->getFoldedFingerprint(*mol);
+    TEST_ASSERT(DiceSimilarity(*fp1, *fp2) == 1.0);
+    TEST_ASSERT(*fp1 == *fp2);
+
+    delete mol;
+    delete fp2;
+    mol = SmilesToMol("c1ccccn1");
+    fp2 = generator->getFoldedFingerprint(*mol);
+    RANGE_CHECK(0.0, DiceSimilarity(*fp1, *fp2), 1.0);
+
+    delete mol;
+    delete fp1;
+    delete fp2;
+    delete generator;
+  }
+
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
@@ -1591,6 +2026,65 @@ void testPairsAndTorsionsOptions() {
     delete generator;
   }
 
+  {
+    FingerprintGenerator<std::uint64_t> *generator =
+        TopologicalTorsion::getTopologicalTorsionGenerator<std::uint64_t>(
+            false, 4, nullptr, true, {1, 2, 4, 8}, 1024);
+    std::string smi = "C1=CC=CC=C1";
+    RWMol *m1 = SmilesToMol(smi);
+    TEST_ASSERT(m1);
+    smi = "C1=CC=CC=N1";
+    RWMol *m2 = SmilesToMol(smi);
+    TEST_ASSERT(m2);
+    SparseIntVect<std::uint64_t> *fp1 = generator->getFoldedFingerprint(*m1);
+    SparseIntVect<std::uint64_t> *fp2 = generator->getFoldedFingerprint(*m2);
+
+    TEST_ASSERT(*fp1 != *fp2);
+    delete fp1;
+    delete fp2;
+
+    UINT_VECT invars(6, 1);
+    fp1 = generator->getFoldedFingerprint(*m1, nullptr, nullptr, -1, nullptr,
+                                          &invars);
+    fp2 = generator->getFoldedFingerprint(*m2, nullptr, nullptr, -1, nullptr,
+                                          &invars);
+    TEST_ASSERT(*fp1 == *fp2);
+    delete m1;
+    delete m2;
+    delete fp1;
+    delete fp2;
+    delete generator;
+  }
+  {
+    FingerprintGenerator<std::uint64_t> *generator =
+        TopologicalTorsion::getTopologicalTorsionGenerator<std::uint64_t>(
+            false, 4, nullptr, true, {1, 2, 4, 8}, 1024);
+    std::string smi = "C1=CC=CC=C1";
+    RWMol *m1 = SmilesToMol(smi);
+    TEST_ASSERT(m1);
+    smi = "C1=CC=CC=N1";
+    RWMol *m2 = SmilesToMol(smi);
+    TEST_ASSERT(m2);
+    ExplicitBitVect *fp1 = generator->getFoldedFingerprintAsBitVect(*m1);
+    ExplicitBitVect *fp2 = generator->getFoldedFingerprintAsBitVect(*m2);
+
+    TEST_ASSERT(*fp1 != *fp2);
+    delete fp1;
+    delete fp2;
+
+    UINT_VECT invars(6, 1);
+    fp1 = generator->getFoldedFingerprintAsBitVect(*m1, nullptr, nullptr, -1,
+                                                   nullptr, &invars);
+    fp2 = generator->getFoldedFingerprintAsBitVect(*m2, nullptr, nullptr, -1,
+                                                   nullptr, &invars);
+    TEST_ASSERT(*fp1 == *fp2);
+    delete m1;
+    delete m2;
+    delete fp1;
+    delete fp2;
+    delete generator;
+  }
+
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
@@ -1725,12 +2219,14 @@ void testGitHubIssue25() {
     delete m1;
     delete generator;
   }
-  /*
   {
+    FingerprintGenerator<std::uint64_t> *generator =
+        TopologicalTorsion::getTopologicalTorsionGenerator<std::uint64_t>(
+            false, 4, nullptr, true, {1, 2, 4, 8}, 1000);
     ROMol *m1 = SmilesToMol("CCCCO");
     TEST_ASSERT(m1);
-    SparseIntVect<boost::int64_t> *fp1;
-    fp1 = AtomPairs::getHashedTopologicalTorsionFingerprint(*m1, 1000);
+    SparseIntVect<std::uint64_t> *fp1;
+    fp1 = generator->getFoldedFingerprint(*m1);
     TEST_ASSERT(fp1);
     TEST_ASSERT(fp1->getTotalVal() == 2);
     TEST_ASSERT(fp1->getNonzeroElements().size() == 2);
@@ -1738,8 +2234,9 @@ void testGitHubIssue25() {
     TEST_ASSERT((*fp1)[288] == 1);
     delete fp1;
     delete m1;
+    delete generator;
   }
-  */
+
   {
     FingerprintGenerator<std::uint32_t> *generator =
         AtomPair::getAtomPairGenerator<std::uint32_t>();
@@ -1757,12 +2254,13 @@ void testGitHubIssue25() {
     delete m1;
     delete generator;
   }
-  /*
   {
+    FingerprintGenerator<std::uint32_t> *generator =
+        AtomPair::getAtomPairGenerator<std::uint32_t>();
     ROMol *m1 = SmilesToMol("CCO");
     TEST_ASSERT(m1);
-    SparseIntVect<boost::int32_t> *fp1;
-    fp1 = AtomPairs::getHashedAtomPairFingerprint(*m1);
+    SparseIntVect<std::uint32_t> *fp1;
+    fp1 = generator->getFoldedFingerprint(*m1);
     TEST_ASSERT(fp1);
     TEST_ASSERT(fp1->getTotalVal() == 3);
     TEST_ASSERT(fp1->getNonzeroElements().size() == 3);
@@ -1771,9 +2269,121 @@ void testGitHubIssue25() {
     TEST_ASSERT((*fp1)[1503] == 1);
     delete fp1;
     delete m1;
+    delete generator;
   }
-  */
 
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+void testGitHubIssue334() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test GitHub Issue 334: explicit Hs in SMILES "
+                           "modifies atom pair (and topological torsion) FP."
+                        << std::endl;
+
+  {
+    FingerprintGenerator<std::uint32_t> *generator =
+        AtomPair::getAtomPairGenerator<std::uint32_t>();
+    ROMol *m1 = SmilesToMol("N#C");
+    TEST_ASSERT(m1);
+    SparseIntVect<std::uint32_t> *fp1;
+    fp1 = generator->getFingerprint(*m1);
+    TEST_ASSERT(fp1);
+    delete m1;
+
+    m1 = SmilesToMol("N#[CH]");
+    SparseIntVect<std::uint32_t> *fp2;
+    fp2 = generator->getFingerprint(*m1);
+    TEST_ASSERT(fp2);
+    delete m1;
+
+    TEST_ASSERT(fp1->getTotalVal() == fp2->getTotalVal());
+    TEST_ASSERT(fp1->getNonzeroElements().size() ==
+                fp2->getNonzeroElements().size());
+    TEST_ASSERT(*fp1 == *fp2);
+    delete fp1;
+    delete fp2;
+    delete generator;
+  }
+  {
+    FingerprintGenerator<std::uint64_t> *generator =
+        TopologicalTorsion::getTopologicalTorsionGenerator<std::uint64_t>();
+    ROMol *m1 = SmilesToMol("N#C");
+    TEST_ASSERT(m1);
+    SparseIntVect<std::uint64_t> *fp1;
+    fp1 = generator->getFingerprint(*m1);
+    TEST_ASSERT(fp1);
+    delete m1;
+
+    m1 = SmilesToMol("N#[CH]");
+    SparseIntVect<std::uint64_t> *fp2;
+    fp2 = generator->getFingerprint(*m1);
+    TEST_ASSERT(fp2);
+    delete m1;
+
+    TEST_ASSERT(fp1->getTotalVal() == fp2->getTotalVal());
+    TEST_ASSERT(fp1->getNonzeroElements().size() ==
+                fp2->getNonzeroElements().size());
+    TEST_ASSERT(*fp1 == *fp2);
+    delete fp1;
+    delete fp2;
+    delete generator;
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+void testGitHubIssue811() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test GitHub Issue 811: rooted atom fingerprint "
+                           "non identical for the same molecules #811"
+                        << std::endl;
+  {
+    FingerprintGenerator<std::uint64_t> *generator =
+        TopologicalTorsion::getTopologicalTorsionGenerator<std::uint64_t>(false,
+                                                                          7);
+    std::string dirName = getenv("RDBASE");
+    dirName += "/Code/GraphMol/Fingerprints/testData/";
+
+    ROMol *m1 = MolFileToMol(dirName + "github811a.mol");
+    TEST_ASSERT(m1);
+    ROMol *m2 = MolFileToMol(dirName + "github811b.mol");
+    TEST_ASSERT(m2);
+
+    SparseIntVect<std::uint64_t> *fp1, *fp2;
+
+    std::vector<std::uint32_t> roots;
+    roots.push_back(1);
+
+    fp1 = generator->getFingerprint(*m1, &roots);
+    SparseIntVect<std::uint64_t>::StorageType nz1 = fp1->getNonzeroElements();
+    TEST_ASSERT(nz1.size() == 4);
+    fp2 = generator->getFingerprint(*m1, &roots);
+    SparseIntVect<std::uint64_t>::StorageType nz2 = fp2->getNonzeroElements();
+    TEST_ASSERT(nz2.size() == 4);
+
+    TEST_ASSERT(*fp1 == *fp2);
+
+    delete fp1;
+    delete fp2;
+    delete m1;
+    delete m2;
+    delete generator;
+  }
+  {
+    FingerprintGenerator<std::uint64_t> *generator =
+        TopologicalTorsion::getTopologicalTorsionGenerator<std::uint64_t>();
+    ROMol *m1 = SmilesToMol("C1CC1");
+    TEST_ASSERT(m1);
+
+    SparseIntVect<std::uint64_t> *fp1;
+
+    fp1 = generator->getFingerprint(*m1);
+    SparseIntVect<std::uint64_t>::StorageType nz1 = fp1->getNonzeroElements();
+    TEST_ASSERT(nz1.size() == 1);
+    delete fp1;
+    delete m1;
+    delete generator;
+  }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
@@ -1787,6 +2397,10 @@ int main(int argc, char *argv[]) {
   testAtomPairBitvector();
   testAtomPairFoldedBitvector();
   testAtomPairOutput();
+  testFoldedAtomPairs();
+  testRootedAtomPairs();
+  testIgnoreAtomPairs();
+  testChiralPairs();
   testMorganFP();
   testMorganFPOld();
   testMorganFPFromAtoms();
@@ -1798,14 +2412,18 @@ int main(int argc, char *argv[]) {
   testInvariantGenerators();
   testCustomInvariants();
   testRDKitFP();
+  testRDKFPUnfolded();
   testTopologicalTorsionFPOld();
   testTorsions();
+  testFoldedTorsions();
   testBulkTorsions();
   testRootedTorsions();
   testIgnoreTorsions();
   testPairsAndTorsionsOptions();
   testChiralTorsions();
   testGitHubIssue25();
+  testGitHubIssue334();
+  testGitHubIssue811();
 
   return 0;
 }
