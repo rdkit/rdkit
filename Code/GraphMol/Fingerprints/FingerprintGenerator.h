@@ -63,7 +63,7 @@ class FingerprintArguments : private boost::noncopyable {
   virtual std::string infoString() const = 0;
 
   /**
-   /brief method that returns informtion string about common fingerprinting
+   /brief method that returns information string about common fingerprinting
    arguments' values
 
    /return std::string information string

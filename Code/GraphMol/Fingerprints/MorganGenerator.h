@@ -107,7 +107,7 @@ class MorganArguments : public FingerprintArguments<OutputType> {
    generated bit id, independently from bond invariants
    /param onlyNonzeroInvariants : if set, bits will only be set from atoms that
    have a nonzero invariant
-   /param countBounds : boundries for count simulation, corresponding bit will
+   /param countBounds : boundaries for count simulation, corresponding bit will
    be set if the count is higher than the number provided for that spot
    /param foldedSize : size of the folded version of the fingerprints
    */
@@ -167,6 +167,8 @@ class MorganEnvGenerator : public AtomEnvironmentGenerator<OutputType> {
 /**
  /brief Get a fingerprint generator for Morgan fingerprint
 
+ /tparam OutputType determines the size of the bitIds and the result, can be 32
+ or 64 bit unsigned integer
  /param radius : the number of iterations to grow the fingerprint
  /param countSimulation : if set, use count simulation while generating the
  fingerprint
@@ -174,7 +176,7 @@ class MorganEnvGenerator : public AtomEnvironmentGenerator<OutputType> {
  generated bit id, independently from bond invariants
  /param onlyNonzeroInvariants : if set, bits will only be set from atoms that
  have a nonzero invariant
- /param countBounds : boundries for count simulation, corresponding bit willbe
+ /param countBounds : boundaries for count simulation, corresponding bit willbe
  set if the count is higher than the number provided for that spot
  /param foldedSize : size of the folded version of the fingerprints
  /param countSimulation : countSimulation for MorganArguments
@@ -189,7 +191,7 @@ class MorganEnvGenerator : public AtomEnvironmentGenerator<OutputType> {
  /param ownsBondInvGen  if set bond invariants generator is destroyed with the
  fingerprint generator
 
- /return FingerprintGenerator* that generates Morgan fingerprints
+ /return FingerprintGenerator<OutputType>* that generates Morgan fingerprints
  */
 template <typename OutputType>
 FingerprintGenerator<OutputType> *getMorganGenerator(

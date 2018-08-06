@@ -19,6 +19,23 @@ class RDKitFPArguments : public FingerprintArguments<OutputType> {
 
   std::string infoString() const;
 
+  /**
+   /brief Construct a new RDKitFPArguments object
+
+   /param minPath the minimum path length (in bonds) to be included
+   /param maxPath the minimum path length (in bonds) to be included
+   /param useHs toggles inclusion of Hs in paths (if the molecule has
+   explicit Hs)
+   /param branchedPaths toggles generation of branched subgraphs, not just
+   linear paths
+   /param useBondOrder toggles inclusion of bond orders in the path hashes
+   /param useCountSimulation         if set, use count simulation while
+   generating the fingerprint
+   /param countBounds  boundaries for count simulation, corresponding bit will be
+   set if the count is higher than the number provided for that spot
+   /param foldedSize size of the folded version of the fingerprints
+
+   */
   RDKitFPArguments(unsigned int minPath, unsigned int maxPath, bool useHs,
                    bool branchedPaths, bool useBondOrder,
                    const bool countSimulation,
@@ -46,6 +63,13 @@ class RDKitFPAtomEnv : public AtomEnvironment<OutputType> {
                       const AdditionalOutput *additionalOutput,
                       const bool hashResults = false) const;
 
+  /**
+  /brief Construct a new RDKitFPAtomEnv object
+
+  /param bitId bitId generated for this environment
+  /param atomsInPath holds atoms in this environment to set additional output
+
+  */
   RDKitFPAtomEnv(const OutputType bitId,
                  const boost::dynamic_bitset<> atomsInPath);
 };
@@ -65,6 +89,29 @@ class RDKitFPEnvGenerator : public AtomEnvironmentGenerator<OutputType> {
   std::string infoString() const;
 };
 
+/**
+ /brief Get a RDKit fingerprint generator with given parameters
+
+ /tparam OutputType determines the size of the bitIds and the result, can be 32
+ or 64 bit unsigned integer
+ /param minPath the minimum path length (in bonds) to be included
+ /param maxPath the minimum path length (in bonds) to be included
+ /param useHs toggles inclusion of Hs in paths (if the molecule has
+ explicit Hs)
+ /param branchedPaths toggles generation of branched subgraphs, not just
+ linear paths
+ /param useBondOrder toggles inclusion of bond orders in the path hashes
+ /param atomInvariantsGenerator custom atom invariants generator to use
+ /param useCountSimulation         if set, use count simulation while
+ generating the fingerprint
+ /param countBounds  boundaries for count simulation, corresponding bit will be
+ set if the count is higher than the number provided for that spot
+ /param foldedSize size of the folded version of the fingerprints
+ /param ownsAtomInvGen  if set atom invariants generator is destroyed with the
+ fingerprint generator
+
+ /return FingerprintGenerator<OutputType>* that generated RDKit fingerprints
+ */
 template <typename OutputType>
 FingerprintGenerator<OutputType> *getRDKitFPGenerator(
     const unsigned int minPath = 1, const unsigned int maxPath = 7,

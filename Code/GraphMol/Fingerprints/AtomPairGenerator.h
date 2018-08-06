@@ -13,6 +13,14 @@ class AtomPairAtomInvGenerator : public AtomInvariantsGenerator {
   const bool df_topologicalTorsionCorrection;
 
  public:
+  /**
+   /brief Construct a new AtomPairAtomInvGenerator object
+
+   /param includeChirality toggles the inclusions of bits indicating R/S
+   chirality
+   /param topologicalTorsionCorrection when set subtracts 2 from invariants
+   returned, added so TopologicalTorsionGenerator can use this
+   */
   AtomPairAtomInvGenerator(bool includeChirality = false,
                            bool topologicalTorsionCorrection = false);
 
@@ -52,7 +60,7 @@ class AtomPairArguments : public FingerprintArguments<OutputType> {
     pair, default is 1 bond
     /param maxDistance      maximum distance between atoms to be considered in a
     pair, default is maxPathLen-1 bonds
-    /param countBounds      boundries for count simulation, corresponding bit
+    /param countBounds      boundaries for count simulation, corresponding bit
     will be set if the count is higher than the number provided for that spot
     /param foldedSize       size of the folded version of the fingerprint
 
@@ -80,7 +88,8 @@ class AtomPairAtomEnv : public AtomEnvironment<OutputType> {
   OutputType getBitId(FingerprintArguments<OutputType> *arguments,
                       const std::vector<std::uint32_t> *atomInvariants,
                       const std::vector<std::uint32_t> *bondInvariants,
-                      const AdditionalOutput *additionalOutput, const bool hashResults = false) const;
+                      const AdditionalOutput *additionalOutput,
+                      const bool hashResults = false) const;
 
   /*!
     /brief construct a new AtomPairAtomEnv object
@@ -106,7 +115,8 @@ class AtomPairEnvGenerator : public AtomEnvironmentGenerator<OutputType> {
       const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
       const AdditionalOutput *additionalOutput,
       const std::vector<std::uint32_t> *atomInvariants,
-      const std::vector<std::uint32_t> *bondInvariants, const bool hashResults = false) const;
+      const std::vector<std::uint32_t> *bondInvariants,
+      const bool hashResults = false) const;
 
   std::string infoString() const;
 };
@@ -115,7 +125,8 @@ class AtomPairEnvGenerator : public AtomEnvironmentGenerator<OutputType> {
   /brief helper function that generates a /c FingerprintGenerator that generates
   atom-pair fingerprints
 
-
+  /tparam OutputType determines the size of the bitIds and the result, can be 32
+  or 64 bit unsigned integer
   /param minDistance            minimum distance between atoms to be considered
   in a pair, default is 1 bond
   /param maxDistance            maximum distance between atoms to be considered
@@ -128,13 +139,13 @@ class AtomPairEnvGenerator : public AtomEnvironmentGenerator<OutputType> {
   fingerprint generation
   /param useCountSimulation         if set, use count simulation while
   generating the fingerprint
-  /param countBounds  boundries for count simulation, corresponding bit will be
+  /param countBounds  boundaries for count simulation, corresponding bit will be
   set if the count is higher than the number provided for that spot
   /param foldedSize size of the folded version of the fingerprints
   /param ownsAtomInvGen  if set atom invariants generator is destroyed with the
   fingerprint generator
 
-  /return FingerprintGenerator that generates atom-pair fingerprints
+  /return FingerprintGenerator<OutputType>* that generates atom-pair fingerprints
  */
 template <typename OutputType>
 FingerprintGenerator<OutputType> *getAtomPairGenerator(
