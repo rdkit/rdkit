@@ -41,7 +41,6 @@ AtomInvariantsGenerator *getAtomPairAtomInvGen(const bool includeChirality) {
 }
 
 void exportAtompair() {
-  std::string docString = "";
   /*python::def(
       "GetAtomPairGenerator", &getAtomPairGenerator<std::uint32_t>,
       (python::arg("minDistance") = 1,
@@ -54,7 +53,6 @@ void exportAtompair() {
       docString.c_str(),
       python::return_value_policy<python::manage_new_object>());*/
 
-  docString = "";
   python::def(
       "GetAtomPairGenerator", &getAtomPairGenerator<std::uint64_t>,
       (python::arg("minDistance") = 1,
@@ -64,12 +62,34 @@ void exportAtompair() {
        python::arg("countBounds") = python::object(),
        python::arg("foldedSize") = 2048,
        python::arg("atomInvariantsGenerator") = python::object()),
-      docString.c_str(),
+      "Get an atom pair fingerprint generator\n\n"
+      "  ARGUMENTS:\n"
+      "    - minDistance: minimum distance between atoms to be considered in a "
+      "pair, default is 1 bond\n"
+      "    - maxDistance: maximum distance between atoms to be considered in a "
+      "pair, default is maxPathLen-1 bonds\n"
+      "    - includeChirality: if set, chirality will be used in the atom  "
+      "invariants, this is ignored if atomInvariantsGenerator is provided\n"
+      "    - use2D: if set, the 2D (topological) distance matrix  will be "
+      "used\n"
+      "    - useCountSimulation:  if set, use count simulation while  "
+      "generating the fingerprint\n"
+      "    - countBounds: boundaries for count simulation, corresponding bit "
+      "will be  set if the count is higher than the number provided for that "
+      "spot\n"
+      "    - foldedSize: size of the folded version of the fingerprints\n"
+      "    - atomInvariantsGenerator: atom invariants to be used during "
+      "fingerprint generation\n\n"
+      "  RETURNS: FingerprintGenerator\n\n",
       python::return_value_policy<python::manage_new_object>());
 
-  docString = "";
   python::def("GetAtomPairAtomInvGen", &getAtomPairAtomInvGen,
-              (python::arg("includeChirality") = false), docString.c_str(),
+              (python::arg("includeChirality") = false),
+              "Get an atom pair atom-invariant generator\n\n"
+              "  ARGUMENTS:\n"
+              "    - includeChirality: if set, chirality will be taken into "
+              "account for invariants\n"
+              "  RETURNS: AtomInvariantsGenerator\n\n",
               python::return_value_policy<python::manage_new_object>());
 
   return;
