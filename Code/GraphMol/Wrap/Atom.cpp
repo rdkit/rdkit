@@ -35,6 +35,12 @@ void expandQuery(QueryAtom *self, const QueryAtom *other,
   }
 }
 
+void setQuery(QueryAtom *self, const QueryAtom *other) {
+  if (other->hasQuery()) {
+    self->setQuery(other->getQuery()->copy());
+  }
+}
+
 template <class T>
 void AtomSetProp(const Atom *atom, const char *key, const T &val) {
   // std::cerr<<"asp: "<<atom<<" " << key<<" - " << val << std::endl;
@@ -417,7 +423,10 @@ These cannot currently be constructed directly from Python\n";
              (python::arg("self"), python::arg("other"),
               python::arg("how") = Queries::COMPOSITE_AND,
               python::arg("maintainOrder") = true),
-             "combines the query from other with ours");
+             "combines the query from other with ours")
+        .def("SetQuery", setQuery,
+             (python::arg("self"), python::arg("other")),
+             "Replace our query with a copy of the other query");
 
     python::def(
         "GetAtomRLabel", getAtomRLabel, (python::arg("atom")),
