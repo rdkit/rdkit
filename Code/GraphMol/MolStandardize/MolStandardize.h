@@ -24,7 +24,7 @@ struct CleanupParameters {
   std::string rdbase = std::getenv("RDBASE");
   std::string normalizations;
   std::string acidbaseFile;
-	std::string fragmentFile;
+  std::string fragmentFile;
   // std::vector<std::string> chargeCorrections;
   std::string tautomerTransforms;
   // std::vector<std::string> TautomerScores;
@@ -38,19 +38,12 @@ struct CleanupParameters {
   CleanupParameters()
       :  // TODO
          //			normalizations(""),//this->DEFAULT_TRANSFORMS),
-        normalizations(rdbase +
-                       "/Code/GraphMol/MolStandardize/TransformCatalog/"
-                       "data/normalizations.txt"),
-        acidbaseFile(rdbase +
-                     "/Code/GraphMol/MolStandardize/AcidBaseCatalog/data/"
-                     "acid_base_pairs.txt"),
-				fragmentFile(rdbase +
-										 "/Code/GraphMol/MolStandardize/FragmentCatalog/"
-										 "data/fragmentPatterns.txt"),
+        normalizations(rdbase + "/Data/MolStandardize/normalizations.txt"),
+        acidbaseFile(rdbase + "/Data/MolStandardize/acid_base_pairs.txt"),
+        fragmentFile(rdbase + "/Data/MolStandardize/fragmentPatterns.txt"),
         // chargeCorrections()
         tautomerTransforms(rdbase +
-                           "/Code/GraphMol/MolStandardize/TautomerCatalog/"
-                           "data/tautomerTransforms.in"),
+                           "/Data/MolStandardize/tautomerTransforms.in"),
         // TautomerScores()
         maxRestarts(200),
         maxTautomers(1000),

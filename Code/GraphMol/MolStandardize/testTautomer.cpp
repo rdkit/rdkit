@@ -17,9 +17,8 @@ using namespace MolStandardize;
 
 void testEnumerator() {
   std::string rdbase = getenv("RDBASE");
-  std::string tautomerFile = rdbase +
-                             "/Code/GraphMol/MolStandardize/TautomerCatalog/"
-                             "data/tautomerTransforms.in";
+  std::string tautomerFile =
+      rdbase + "/Data/MolStandardize/tautomerTransforms.in";
   auto *tautparams = new TautomerCatalogParams(tautomerFile);
   unsigned int ntautomers = tautparams->getNumTautomers();
   TEST_ASSERT(ntautomers == 34);
@@ -780,9 +779,8 @@ void testEnumerator() {
 
 void testCanonicalize() {
   std::string rdbase = getenv("RDBASE");
-  std::string tautomerFile = rdbase +
-                             "/Code/GraphMol/MolStandardize/TautomerCatalog/"
-                             "data/tautomerTransforms.in";
+  std::string tautomerFile =
+      rdbase + "/Data/MolStandardize/tautomerTransforms.in";
   auto *tautparams = new TautomerCatalogParams(tautomerFile);
   unsigned int ntautomers = tautparams->getNumTautomers();
   TEST_ASSERT(ntautomers == 34);

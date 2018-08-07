@@ -76,20 +76,19 @@ void testStandardizeSm() {
   std::string ss5 = MolStandardize::standardizeSmiles(smi5);
   TEST_ASSERT(ss5 == "O=C([O-])c1ccccc1.[Na+]");
 
-	// SMILES parsing error should stop tests
-//	std::string smi6 = "C1CCC1C(=O)O.Na";
-//	std::string ss6 = MolStandardize::standardizeSmiles(smi6);
-	
+  // SMILES parsing error should stop tests
+  //	std::string smi6 = "C1CCC1C(=O)O.Na";
+  //	std::string ss6 = MolStandardize::standardizeSmiles(smi6);
 }
 
 void testMetalDisconnector() {
   MolStandardize::MetalDisconnector md;
 
-	// testing overloaded function
+  // testing overloaded function
   string smi1 = "CCC(=O)O[Na]";
   unique_ptr<ROMol> m1(SmilesToMol(smi1));
   TEST_ASSERT(m1);
-  unique_ptr<ROMol> nm( md.disconnect(*m1) );
+  unique_ptr<ROMol> nm(md.disconnect(*m1));
   TEST_ASSERT(MolToSmiles(*nm) == "CCC(=O)[O-].[Na+]");
 
   string smi2 = "[Na]OC(=O)CCC(=O)O[Na]";
@@ -110,21 +109,19 @@ void testMetalDisconnector() {
   md.disconnect(*m4);
   TEST_ASSERT(MolToSmiles(*m4) == "O=C([O-])CCc1ccccc1[Mg]Br.[Na+]");
 
-	// test input own metal_non, metal_nof
-	// missing out Na 
-	unique_ptr<ROMol> metal_nof( 
-  SmartsToMol("[Li,K,Rb,Cs,Fr,Be,Mg,Ca,Sr,Ba,Ra,Sc,Ti,V,Cr,Mn,Fe,Co,"
-                      "Ni,Cu,Zn,Al,Ga,Y,Zr,Nb,Mo,Tc,Ru,Rh,Pd,Ag,Cd,In,Sn,Hf,Ta,"
-                      "W,Re,Os,Ir,Pt,Au,Hg,Tl,Pb,Bi]~[N,O,F]") );
-	md.setMetalNof(*metal_nof);
+  // test input own metal_non, metal_nof
+  // missing out Na
+  unique_ptr<ROMol> metal_nof(
+      SmartsToMol("[Li,K,Rb,Cs,Fr,Be,Mg,Ca,Sr,Ba,Ra,Sc,Ti,V,Cr,Mn,Fe,Co,"
+                  "Ni,Cu,Zn,Al,Ga,Y,Zr,Nb,Mo,Tc,Ru,Rh,Pd,Ag,Cd,In,Sn,Hf,Ta,"
+                  "W,Re,Os,Ir,Pt,Au,Hg,Tl,Pb,Bi]~[N,O,F]"));
+  md.setMetalNof(*metal_nof);
   string smi5 = "CCC(=O)O[Na]";
   unique_ptr<ROMol> m5(SmilesToMol(smi5));
   TEST_ASSERT(m5);
-  unique_ptr<ROMol> nm5( md.disconnect(*m5) );
-	std::cout << MolToSmiles(*nm5) << std::endl;
-  TEST_ASSERT(MolToSmiles(*nm5) == "CCC(=O)O[Na]"); // not disconnected
-
-	
+  unique_ptr<ROMol> nm5(md.disconnect(*m5));
+  std::cout << MolToSmiles(*nm5) << std::endl;
+  TEST_ASSERT(MolToSmiles(*nm5) == "CCC(=O)O[Na]");  // not disconnected
 }
 
 void testNormalize() {
@@ -133,9 +130,8 @@ void testNormalize() {
   MolStandardize::CleanupParameters params;
 
   std::string rdbase = getenv("RDBASE");
-  std::string transformFile = rdbase +
-                              "/Code/GraphMol/MolStandardize/TransformCatalog/"
-                              "data/normalizations.txt";
+  std::string transformFile =
+      rdbase + "/Data/MolStandardize/normalizations.txt";
   params.normalizations = transformFile;
   std::cout << params.normalizations << std::endl;
 
@@ -267,9 +263,8 @@ void testNormalizeMultiFrags() {
   MolStandardize::CleanupParameters params;
 
   std::string rdbase = getenv("RDBASE");
-  std::string transformFile = rdbase +
-                              "/Code/GraphMol/MolStandardize/TransformCatalog/"
-                              "data/normalizations.txt";
+  std::string transformFile =
+      rdbase + "/Data/MolStandardize/normalizations.txt";
   params.normalizations = transformFile;
 
   // All fragments should stay if one gets transformed by normalization.

@@ -11,6 +11,7 @@ from rdkit.Geometry import rdGeometry as geom
 from rdkit.Chem.rdchem import Atom
 from rdkit.Chem.MolStandardize import rdMolStandardize
 
+
 class TestCase(unittest.TestCase):
 
   def setUp(self):
@@ -24,8 +25,9 @@ class TestCase(unittest.TestCase):
   def test2StandardizeSmiles(self):
     self.assertEqual(rdMolStandardize.StandardizeSmiles("CCC(=O)O[Na]"), "CCC(=O)[O-].[Na+]")
     # should get ValueError
-#    rdMolStandardize.StandardizeSmiles("C1CCC1C(=O)O.Na")
 
+
+#    rdMolStandardize.StandardizeSmiles("C1CCC1C(=O)O.Na")
 
   def test3FragmentParent(self):
     mol = Chem.MolFromSmiles("[Na]OC(=O)c1ccccc1")
@@ -51,11 +53,14 @@ class TestCase(unittest.TestCase):
     mol = Chem.MolFromSmiles("C1(CCCCC1)[Zn]Br")
     md = rdMolStandardize.MetalDisconnector()
     nm = md.Disconnect(mol)
-#    Metal.MetalDisconnector.Disconnect(mol)
+    #    Metal.MetalDisconnector.Disconnect(mol)
     self.assertEqual(Chem.MolToSmiles(nm), "[Br-].[CH-]1CCCCC1.[Zn+2]")
 
     # test user defined metal_nof
-    md.SetMetalNof(Chem.MolFromSmarts("[Li,K,Rb,Cs,Fr,Be,Mg,Ca,Sr,Ba,Ra,Sc,Ti,V,Cr,Mn,Fe,Co,Ni,Cu,Zn,Al,Ga,Y,Zr,Nb,Mo,Tc,Ru,Rh,Pd,Ag,Cd,In,Sn,Hf,Ta,W,Re,Os,Ir,Pt,Au,Hg,Tl,Pb,Bi]~[N,O,F]"))
+    md.SetMetalNof(
+      Chem.MolFromSmarts(
+        "[Li,K,Rb,Cs,Fr,Be,Mg,Ca,Sr,Ba,Ra,Sc,Ti,V,Cr,Mn,Fe,Co,Ni,Cu,Zn,Al,Ga,Y,Zr,Nb,Mo,Tc,Ru,Rh,Pd,Ag,Cd,In,Sn,Hf,Ta,W,Re,Os,Ir,Pt,Au,Hg,Tl,Pb,Bi]~[N,O,F]"
+      ))
     mol2 = Chem.MolFromSmiles("CCC(=O)O[Na]")
     nm2 = md.Disconnect(mol2)
     self.assertEqual(Chem.MolToSmiles(nm2), "CCC(=O)O[Na]")
@@ -67,12 +72,9 @@ class TestCase(unittest.TestCase):
     nm = reionizer.reionize(mol)
     self.assertEqual(Chem.MolToSmiles(nm), "O=S(O)c1ccc(S(=O)(=O)[O-])cc1")
 
-    # try reionize with another acid base pair library without the right 
+    # try reionize with another acid base pair library without the right
     # pairs
-    RDBaseDir = os.environ['RDBASE']
-    #abfile = os.path.join(RDBaseDir, ')
-    abfile = os.path.join(RDBaseDir, 'Code', 'GraphMol', 'MolStandardize',
-            'AcidBaseCatalog', 'data', 'acid_base_pairs2.txt')
+    abfile = os.path.join(RDConfig.RDDataDir, 'MolStandardize', 'acid_base_pairs2.txt')
     reionizer2 = rdMolStandardize.Reionizer(abfile)
     nm2 = reionizer2.reionize(mol)
     self.assertEqual(Chem.MolToSmiles(nm2), "O=S([O-])c1ccc(S(=O)(=O)O)cc1")
@@ -94,7 +96,7 @@ class TestCase(unittest.TestCase):
     nm2 = lfragchooser.choose(mol2)
     self.assertEqual(Chem.MolToSmiles(nm2), "O=[N+]([O-])[O-]")
 
-    lfragchooser2 = rdMolStandardize.LargestFragmentChooser(preferOrganic = True)
+    lfragchooser2 = rdMolStandardize.LargestFragmentChooser(preferOrganic=True)
     nm3 = lfragchooser2.choose(mol2)
     self.assertEqual(Chem.MolToSmiles(nm3), "[CH3+]")
 
@@ -110,11 +112,12 @@ class TestCase(unittest.TestCase):
     msg = vm.validate(mol)
     self.assertEqual(len(msg), 1)
     self.assertEqual
-    ("""INFO: [ValenceValidation] Explicit valence for atom # 1 O, 3, is greater than permitted""", msg[0])
+    ("""INFO: [ValenceValidation] Explicit valence for atom # 1 O, 3, is greater than permitted""",
+     msg[0])
 
     vm2 = rdMolStandardize.MolVSValidation([rdMolStandardize.FragmentValidation()])
     # with no argument it also works
-#    vm2 = rdMolStandardize.MolVSValidation()
+    #    vm2 = rdMolStandardize.MolVSValidation()
     mol2 = Chem.MolFromSmiles("COc1cccc(C=N[N-]C(N)=O)c1[O-].O.O.O.O=[U+2]=O")
     msg2 = vm2.validate(mol2)
     self.assertEqual(len(msg2), 1)
@@ -130,15 +133,14 @@ class TestCase(unittest.TestCase):
     self.assertEqual
     ("""INFO: [FragmentValidation] 1,4-dioxane is present""", msg3[1])
 
-    atomic_no = [6,7,8]
+    atomic_no = [6, 7, 8]
     allowed_atoms = [Atom(i) for i in atomic_no]
     vm4 = rdMolStandardize.AllowedAtomsValidation(allowed_atoms)
     mol4 = Chem.MolFromSmiles("CC(=O)CF")
     msg4 = vm4.validate(mol4)
     self.assertEqual(len(msg4), 1)
     self.assertEqual
-    ("""INFO: [AllowedAtomsValidation] Atom F is not in allowedAtoms list""",
-            msg4[0])
+    ("""INFO: [AllowedAtomsValidation] Atom F is not in allowedAtoms list""", msg4[0])
 
     atomic_no = [9, 17, 35]
     disallowed_atoms = [Atom(i) for i in atomic_no]
@@ -147,8 +149,7 @@ class TestCase(unittest.TestCase):
     msg5 = vm4.validate(mol5)
     self.assertEqual(len(msg5), 1)
     self.assertEqual
-    ("""INFO: [DisallowedAtomsValidation] Atom F is in disallowedAtoms list""",
-            msg5[0])
+    ("""INFO: [DisallowedAtomsValidation] Atom F is in disallowedAtoms list""", msg5[0])
 
 if __name__ == "__main__":
   unittest.main()
