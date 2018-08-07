@@ -88,7 +88,7 @@ struct reaction_pickle_suite : python::pickle_suite {
 };
 
 template <typename T>
-PyObject *RunReactants(ChemicalReaction *self, T reactants) {
+PyObject *RunReactants(ChemicalReaction *self, T reactants, unsigned int maxProducts) {
   if (!self->isInitialized()) {
     NOGIL gil;
     self->initReactantMatchers();
@@ -104,7 +104,7 @@ PyObject *RunReactants(ChemicalReaction *self, T reactants) {
   std::vector<MOL_SPTR_VECT> mols;
   {
     NOGIL gil;
-    mols = self->runReactants(reacts);
+    mols = self->runReactants(reacts, maxProducts);
   }
   PyObject *res = PyTuple_New(mols.size());
 
@@ -500,13 +500,18 @@ Sample Usage:\n\
            "Removes agents from reaction. If targetList is provide the agents "
            "will be transfered to that list.")
       .def("RunReactants", (PyObject * (*)(RDKit::ChemicalReaction *,
-                                           python::tuple))RDKit::RunReactants,
+                                           python::tuple,
+                                           unsigned int maxProducts))RDKit::RunReactants,
+           (python::arg("self"), python::arg("reactants"), python::arg("maxProducts")=1000),
            "apply the reaction to a sequence of reactant molecules and return "
-           "the products as a tuple of tuples")
+           "the products as a tuple of tuples.  If maxProducts is not zero,"
+           " stop the reaction when maxProducts have been generated [default=1000]")
       .def("RunReactants", (PyObject * (*)(RDKit::ChemicalReaction *,
-                                           python::list))RDKit::RunReactants,
+                                           python::list, unsigned int maxProducts))RDKit::RunReactants,
+           (python::arg("self"), python::arg("reactants"), python::arg("maxProducts")=1000),
            "apply the reaction to a sequence of reactant molecules and return "
-           "the products as a tuple of tuples")
+           "the products as a tuple of tuples.  If maxProducts is not zero,"
+           " stop the reaction when maxProducts have been generated [default=1000]")
       .def("RunReactant",
            (PyObject * (*)(RDKit::ChemicalReaction *, python::object,
                            unsigned))RDKit::RunReactant,

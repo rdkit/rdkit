@@ -694,5 +694,21 @@ M  END
     self.assertTrue(nrxn.HasProp("intprop"))
     self.assertEquals(nrxn.GetIntProp("intprop"),3)
 
+  def testRoundTripException(self):
+    smarts = '[C:1]([C@:3]1([OH:24])[CH2:8][CH2:7][C@H:6]2[C@H:9]3[C@H:19]([C@@H:20]([F:22])[CH2:21][C@:4]12[CH3:5])[C@:17]1([CH3:18])[C:12](=[CH:13][C:14](=[O:23])[CH2:15][CH2:16]1)[CH:11]=[CH:10]3)#[CH:2].C(Cl)CCl.ClC1C=CC=C(C(OO)=[O:37])C=1.C(O)(C)(C)C>C(OCC)(=O)C>[C:1]([C@:3]1([OH:24])[CH2:8][CH2:7][C@H:6]2[C@H:9]3[C@H:19]([C@@H:20]([F:22])[CH2:21][C@:4]12[CH3:5])[C@:17]1([CH3:18])[C:12](=[CH:13][C:14](=[O:23])[CH2:15][CH2:16]1)[C@H:11]1[O:37][C@@H:10]31)#[CH:2]'
+    rxn = rdChemReactions.ReactionFromSmarts(smarts)
+    # this shouldn't throw an exception
+    smarts = rdChemReactions.ReactionToSmarts(rxn)
+
+  def testMaxProducts(self):
+    smarts = "[c:1]1[c:2][c:3][c:4][c:5][c:6]1>>[c:1]1[c:2][c:3][c:4][c:5][c:6]1"
+    rxn = rdChemReactions.ReactionFromSmarts(smarts)
+    m = Chem.MolFromSmiles("c1ccccc1")
+    prods = rxn.RunReactants([m])
+    self.assertEqual(len(prods), 12)
+    
+    prods = rxn.RunReactants([m],1)
+    self.assertEqual(len(prods), 1)
+    
 if __name__ == '__main__':
   unittest.main(verbosity=True)
