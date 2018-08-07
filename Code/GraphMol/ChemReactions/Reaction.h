@@ -207,6 +207,8 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction : public RDProps {
     \param reactants  the reactants to be used. The length of this must be equal
     to
                       this->getNumReactantTemplates()
+    \param maxProducts:  if non zero, the maximum number of products to generate
+                         before stopping.  If hit a warning will be generated.
 
     \return a vector of vectors of products. Each subvector will be
             this->getNumProductTemplates() long.
@@ -216,7 +218,8 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction : public RDProps {
     map multiple times onto its reactant. This leads to multiple possible result
     sets.
   */
-  std::vector<MOL_SPTR_VECT> runReactants(const MOL_SPTR_VECT reactants) const;
+  std::vector<MOL_SPTR_VECT> runReactants(const MOL_SPTR_VECT reactants,
+                                          unsigned int numProducts=1000) const;
 
   //! Runs a single reactant against a single reactant template
   /*!
