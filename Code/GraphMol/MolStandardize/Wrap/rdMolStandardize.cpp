@@ -92,6 +92,9 @@ BOOST_PYTHON_MODULE(rdMolStandardize) {
       .def_readwrite("acidbaseFile",
                      &RDKit::MolStandardize::CleanupParameters::acidbaseFile,
                      "file containing the acid and base definitions")
+      .def_readwrite("fragmentFile",
+                     &RDKit::MolStandardize::CleanupParameters::fragmentFile,
+                     "file containing the acid and base definitions")
       .def_readwrite(
           "tautomerTransformsFile",
           &RDKit::MolStandardize::CleanupParameters::tautomerTransforms,
