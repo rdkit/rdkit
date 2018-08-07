@@ -1,3 +1,7 @@
+#
+# Copyright (C) 2018 Susan H. Leung
+#         All Rights Reserved
+#
 from rdkit import RDConfig
 import os, sys, math
 import unittest
