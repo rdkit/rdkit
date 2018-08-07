@@ -100,6 +100,18 @@ python::list disallowedAtomsValidate(MolStandardize::DisallowedAtomsValidation &
   }
   return res;
 }
+
+python::list standardizeSmilesHelper(const std::string &smiles) {
+	python::list res;
+	std::vector<MolStandardize::ValidationErrorInfo> errout = 
+		MolStandardize::validateSmiles(smiles);
+	for (auto &query : errout) {
+		std::string msg = query.message();
+		res.append(msg);
+	}
+	return res;
+}	
+
 }  // namespace
 
 struct validate_wrapper {
@@ -175,6 +187,8 @@ struct validate_wrapper {
               python::arg("reportAllFailures") = false),
              "");
 
+		python::def("ValidateSmiles", standardizeSmilesHelper,
+							 (python::arg("mol")), docString.c_str());
   }
 };
 

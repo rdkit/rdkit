@@ -270,5 +270,18 @@ std::vector<ValidationErrorInfo> DisallowedAtomsValidation::validate(
   return errors;
 }
 
+std::vector<ValidationErrorInfo> validateSmiles(const std::string &smiles) {
+	RWMOL_SPTR mol( SmilesToMol(smiles) );
+	if (!mol) {
+		std::string message = "SMILES Parse Error: syntax error for input: " + smiles;
+		throw ValueErrorException(message);
+	}
+
+  MolVSValidation vm;
+	std::vector<ValidationErrorInfo> errors = vm.validate(*mol, true);
+
+	return errors;
+}
+
 }  // namespace MolStandardize
 }  // namespace RDKit

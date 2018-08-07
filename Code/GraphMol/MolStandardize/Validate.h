@@ -138,6 +138,8 @@ class DisallowedAtomsValidation : public ValidationMethod {
   // stuff
 };
 
+std::vector<ValidationErrorInfo> validateSmiles(const std::string &smiles);
+
 }  // namespace MolStandardize
 }  // namespace RDKit
 

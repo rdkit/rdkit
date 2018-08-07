@@ -151,5 +151,10 @@ class TestCase(unittest.TestCase):
     self.assertEqual
     ("""INFO: [DisallowedAtomsValidation] Atom F is in disallowedAtoms list""", msg5[0])
 
+    msg6 = rdMolStandardize.ValidateSmiles("ClCCCl.c1ccccc1O")
+    self.assertEqual(len(msg6), 1)
+    self.assertEqual
+    ("""INFO: [FragmentValidation] 1,2-dichloroethane is present""", msg6[0])
+
 if __name__ == "__main__":
   unittest.main()

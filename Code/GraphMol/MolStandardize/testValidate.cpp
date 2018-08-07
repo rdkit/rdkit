@@ -285,6 +285,31 @@ void testFragment() {
   }
 }
 
+void testValidateSmiles() {
+	// an invalid smiles should throw a ValueErrorException error
+	try {
+		vector<ValidationErrorInfo> errout1 = validateSmiles("3478q439g98h");
+	} catch ( const ValueErrorException &e ) {
+		std::cout << e.message() << std::endl;
+		TEST_ASSERT( e.message() == "SMILES Parse Error: syntax error for input: 3478q439g98h" )};
+
+	vector<ValidationErrorInfo> errout2 = validateSmiles("");
+ 	for (auto &query : errout2) {
+    std::string msg = query.message();
+		std::cout << msg << std::endl;
+    TEST_ASSERT(msg ==
+                "ERROR: [NoAtomValidation] Molecule has no atoms");
+  }
+
+	vector<ValidationErrorInfo> errout3 = validateSmiles("ClCCCl.c1ccccc1O");
+ 	for (auto &query : errout3) {
+    std::string msg = query.message();
+    TEST_ASSERT(msg ==
+                "INFO: [FragmentValidation] 1,2-dichloroethane is present");
+  }
+
+}
+
 int main() {
   testRDKitValidation();
   testMolVSValidation();
@@ -292,5 +317,6 @@ int main() {
   testAllowedAtomsValidation();
   testDisallowedAtomsValidation();
   testFragment();
+	testValidateSmiles();
   return 0;
 }
