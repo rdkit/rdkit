@@ -45,29 +45,32 @@ extern int yysmiles_debug;
 # define YYTOKENTYPE
   enum yytokentype
   {
-    AROMATIC_ATOM_TOKEN = 258,
-    ATOM_TOKEN = 259,
-    ORGANIC_ATOM_TOKEN = 260,
-    NONZERO_DIGIT_TOKEN = 261,
-    ZERO_TOKEN = 262,
-    GROUP_OPEN_TOKEN = 263,
-    GROUP_CLOSE_TOKEN = 264,
-    SEPARATOR_TOKEN = 265,
-    LOOP_CONNECTOR_TOKEN = 266,
-    MINUS_TOKEN = 267,
-    PLUS_TOKEN = 268,
-    CHIRAL_MARKER_TOKEN = 269,
-    CHI_CLASS_TOKEN = 270,
-    CHI_CLASS_OH_TOKEN = 271,
-    H_TOKEN = 272,
-    AT_TOKEN = 273,
-    PERCENT_TOKEN = 274,
-    COLON_TOKEN = 275,
-    HASH_TOKEN = 276,
-    BOND_TOKEN = 277,
-    ATOM_OPEN_TOKEN = 278,
-    ATOM_CLOSE_TOKEN = 279,
-    EOS_TOKEN = 280
+    START_MOL = 258,
+    START_ATOM = 259,
+    START_BOND = 260,
+    AROMATIC_ATOM_TOKEN = 261,
+    ATOM_TOKEN = 262,
+    ORGANIC_ATOM_TOKEN = 263,
+    NONZERO_DIGIT_TOKEN = 264,
+    ZERO_TOKEN = 265,
+    GROUP_OPEN_TOKEN = 266,
+    GROUP_CLOSE_TOKEN = 267,
+    SEPARATOR_TOKEN = 268,
+    LOOP_CONNECTOR_TOKEN = 269,
+    MINUS_TOKEN = 270,
+    PLUS_TOKEN = 271,
+    CHIRAL_MARKER_TOKEN = 272,
+    CHI_CLASS_TOKEN = 273,
+    CHI_CLASS_OH_TOKEN = 274,
+    H_TOKEN = 275,
+    AT_TOKEN = 276,
+    PERCENT_TOKEN = 277,
+    COLON_TOKEN = 278,
+    HASH_TOKEN = 279,
+    BOND_TOKEN = 280,
+    ATOM_OPEN_TOKEN = 281,
+    ATOM_CLOSE_TOKEN = 282,
+    EOS_TOKEN = 283
   };
 #endif
 
@@ -76,14 +79,14 @@ extern int yysmiles_debug;
 
 union YYSTYPE
 {
-#line 57 "smiles.yy" /* yacc.c:1909  */
+#line 78 "smiles.yy" /* yacc.c:1909  */
 
   int                      moli;
   RDKit::Atom * atom;
   RDKit::Bond * bond;
   int                      ival;
 
-#line 87 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.hpp" /* yacc.c:1909  */
+#line 90 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.hpp" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;
@@ -93,6 +96,13 @@ typedef union YYSTYPE YYSTYPE;
 
 
 
-int yysmiles_parse (const char *input, std::vector<RDKit::RWMol *> *molList, std::list<unsigned int> *branchPoints, void *scanner);
+int yysmiles_parse (const char *input, std::vector<RDKit::RWMol *> *molList, RDKit::Atom* &lastAtom, RDKit::Bond* &lastBond, std::list<unsigned int> *branchPoints, void *scanner, int& start_token);
+/* "%code provides" blocks.  */
+#line 73 "smiles.yy" /* yacc.c:1909  */
+
+#define YY_DECL int yylex \
+               (YYSTYPE * yylval_param , yyscan_t yyscanner, int& start_token)
+
+#line 107 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.hpp" /* yacc.c:1909  */
 
 #endif /* !YY_YYSMILES_SCRATCH_RDKIT_GIT_CODE_GRAPHMOL_SMILESPARSE_SMILES_TAB_HPP_INCLUDED  */
