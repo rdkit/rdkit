@@ -237,28 +237,28 @@ class FingerprintGenerator : private boost::noncopyable {
 
   ~FingerprintGenerator();
 
-  SparseIntVect<OutputType> *getFingerprint(
+  SparseIntVect<OutputType> *getSparseCountFingerprint(
       const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms = nullptr,
       const std::vector<std::uint32_t> *ignoreAtoms = nullptr,
       const int confId = -1, const AdditionalOutput *additionalOutput = nullptr,
       const std::vector<std::uint32_t> *customAtomInvariants = nullptr,
       const std::vector<std::uint32_t> *customBondInvariants = nullptr) const;
 
-  SparseBitVect *getFingerprintAsBitVect(
+  SparseBitVect *getSparseFingerprint(
       const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms = nullptr,
       const std::vector<std::uint32_t> *ignoreAtoms = nullptr,
       const int confId = -1, const AdditionalOutput *additionalOutput = nullptr,
       const std::vector<std::uint32_t> *customAtomInvariants = nullptr,
       const std::vector<std::uint32_t> *customBondInvariants = nullptr) const;
 
-  SparseIntVect<OutputType> *getFoldedFingerprint(
+  SparseIntVect<OutputType> *getCountFingerprint(
       const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms = nullptr,
       const std::vector<std::uint32_t> *ignoreAtoms = nullptr,
       const int confId = -1, const AdditionalOutput *additionalOutput = nullptr,
       const std::vector<std::uint32_t> *customAtomInvariants = nullptr,
       const std::vector<std::uint32_t> *customBondInvariants = nullptr) const;
 
-  ExplicitBitVect *getFoldedFingerprintAsBitVect(
+  ExplicitBitVect *getFingerprint(
       const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms = nullptr,
       const std::vector<std::uint32_t> *ignoreAtoms = nullptr,
       const int confId = -1, const AdditionalOutput *additionalOutput = nullptr,

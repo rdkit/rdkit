@@ -11,39 +11,39 @@ class TestCase(unittest.TestCase):
   def testAtomPairGenerator(self):
     m = Chem.MolFromSmiles('CCC')
     g = rdFingerprintGenerator.GetAtomPairGenerator()
-    fp = g.GetFingerprint(m)
+    fp = g.GetSparseCountFingerprint(m)
     nz = fp.GetNonzeroElements()
     self.assertEqual(len(nz), 2)
 
-    fp = g.GetFoldedFingerprint(m)
+    fp = g.GetCountFingerprint(m)
     nz = fp.GetNonzeroElements()
     self.assertEqual(len(nz), 2)
 
-    fp = g.GetFingerprintAsBitVect(m)
+    fp = g.GetSparseFingerprint(m)
     nzc = fp.GetNumOnBits()
     self.assertEqual(nzc, 3)
 
-    fp = g.GetFoldedFingerprintAsBitVect(m)
+    fp = g.GetFingerprint(m)
     nzc = fp.GetNumOnBits()
     self.assertEqual(nzc, 3)
 
     g = rdFingerprintGenerator.GetAtomPairGenerator(atomInvariantsGenerator = rdFingerprintGenerator.GetAtomPairAtomInvGen() )
-    fp = g.GetFingerprint(m)
+    fp = g.GetSparseCountFingerprint(m)
     nz = fp.GetNonzeroElements()
     self.assertEqual(len(nz), 2)
 
     g = rdFingerprintGenerator.GetAtomPairGenerator(minDistance = 2)
-    fp = g.GetFingerprint(m)
+    fp = g.GetSparseCountFingerprint(m)
     nz = fp.GetNonzeroElements()
     self.assertEqual(len(nz), 1)
 
     g = rdFingerprintGenerator.GetAtomPairGenerator(maxDistance = 1)
-    fp = g.GetFingerprint(m)
+    fp = g.GetSparseCountFingerprint(m)
     nz = fp.GetNonzeroElements()
     self.assertEqual(len(nz), 1)
 
     g = rdFingerprintGenerator.GetAtomPairGenerator(useCountSimulation = False)
-    fp = g.GetFingerprintAsBitVect(m)
+    fp = g.GetSparseFingerprint(m)
     nzc = fp.GetNumOnBits()
     self.assertEqual(nzc, 2)
 
@@ -51,30 +51,30 @@ class TestCase(unittest.TestCase):
     invGenChirality = rdFingerprintGenerator.GetAtomPairAtomInvGen(includeChirality = True)
     g = rdFingerprintGenerator.GetAtomPairGenerator(includeChirality = False, atomInvariantsGenerator = invGen)
     gChirality = rdFingerprintGenerator.GetAtomPairGenerator(includeChirality = True, atomInvariantsGenerator = invGenChirality)
-    fp = g.GetFingerprint(m)
+    fp = g.GetSparseCountFingerprint(m)
     nz = fp.GetNonzeroElements()
-    fpChirality = gChirality.GetFingerprint(m)
+    fpChirality = gChirality.GetSparseCountFingerprint(m)
     nzChirality = fpChirality.GetNonzeroElements()
     self.assertNotEqual(nz.keys()[0], nzChirality.keys()[0])
 
   def testMorganGenerator(self):
     m = Chem.MolFromSmiles('CCCCC')
     g = rdFingerprintGenerator.GetMorganGenerator(3)
-    fp = g.GetFingerprint(m)
+    fp = g.GetSparseCountFingerprint(m)
     nz = fp.GetNonzeroElements()
     self.assertEqual(len(nz), 7)
 
   def testRDKitFPGenerator(self):
     m = Chem.MolFromSmiles('CCCCC')
     g = rdFingerprintGenerator.GetRDKitFPGenerator()
-    fp = g.GetFingerprint(m)
+    fp = g.GetSparseCountFingerprint(m)
     nz = fp.GetNonzeroElements()
     self.assertEqual(len(nz), 4)
  
   def testTopologicalTorsionGenerator(self):
     m = Chem.MolFromSmiles('CCCCC')
     g = rdFingerprintGenerator.GetTopologicalTorsionGenerator()
-    fp = g.GetFingerprint(m)
+    fp = g.GetSparseCountFingerprint(m)
     nz = fp.GetNonzeroElements()
     self.assertEqual(len(nz), 1)
 
