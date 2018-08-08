@@ -119,7 +119,7 @@ SparseBitVect *getSparseFingerprint(
 }
 
 template <typename OutputType>
-SparseIntVect<OutputType> *getCountFingerprint(
+SparseIntVect<std::uint32_t> *getCountFingerprint(
     const FingerprintGenerator<OutputType> *fpGen, const ROMol &mol,
     python::object py_fromAtoms, python::object py_ignoreAtoms,
     const int confId, python::object py_atomInvs, python::object py_bondInvs) {
@@ -131,7 +131,7 @@ SparseIntVect<OutputType> *getCountFingerprint(
                      fromAtoms, ignoreAtoms, customAtomInvariants,
                      customBondInvariants);
 
-  SparseIntVect<OutputType> *result =
+  SparseIntVect<std::uint32_t> *result =
       fpGen->getCountFingerprint(mol, fromAtoms, ignoreAtoms, confId, nullptr,
                                  customAtomInvariants, customBondInvariants);
 

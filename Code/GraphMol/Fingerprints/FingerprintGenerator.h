@@ -251,7 +251,7 @@ class FingerprintGenerator : private boost::noncopyable {
       const std::vector<std::uint32_t> *customAtomInvariants = nullptr,
       const std::vector<std::uint32_t> *customBondInvariants = nullptr) const;
 
-  SparseIntVect<OutputType> *getCountFingerprint(
+  SparseIntVect<std::uint32_t> *getCountFingerprint(
       const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms = nullptr,
       const std::vector<std::uint32_t> *ignoreAtoms = nullptr,
       const int confId = -1, const AdditionalOutput *additionalOutput = nullptr,

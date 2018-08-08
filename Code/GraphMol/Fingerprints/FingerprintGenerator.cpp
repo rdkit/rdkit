@@ -158,13 +158,8 @@ SparseIntVect<OutputType>
   for (auto it = atomEnvironments.begin(); it != atomEnvironments.end(); it++) {
     OutputType bitId = (*it)->getBitId(dp_fingerprintArguments, atomInvariants,
                                        bondInvariants, additionalOutput);
-    if (dp_fingerprintArguments->d_countSimulation) {
-      // keep the occurrence count for every bit generated
-      res->setVal(bitId, res->getVal(bitId) + 1);
-    } else {
-      // do not keep the count, just set to 1
-      res->setVal(bitId, 1);
-    }
+
+    res->setVal(bitId, res->getVal(bitId) + 1);
 
     delete (*it);
   }
@@ -219,7 +214,7 @@ SparseBitVect *FingerprintGenerator<OutputType>::getSparseFingerprint(
 }
 
 template <typename OutputType>
-SparseIntVect<OutputType>
+SparseIntVect<std::uint32_t>
     *FingerprintGenerator<OutputType>::getCountFingerprint(
         const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms,
         const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
@@ -250,8 +245,8 @@ SparseIntVect<OutputType>
           additionalOutput, atomInvariants, bondInvariants, true);
 
   // allocate the result
-  SparseIntVect<OutputType> *res =
-      new SparseIntVect<OutputType>(dp_fingerprintArguments->d_foldedSize);
+  SparseIntVect<std::uint32_t> *res =
+      new SparseIntVect<std::uint32_t>(dp_fingerprintArguments->d_foldedSize);
 
   // iterate over every atom environment and generate bit-ids that will make up
   // the fingerprint
@@ -259,15 +254,11 @@ SparseIntVect<OutputType>
     OutputType bitId = (*it)->getBitId(dp_fingerprintArguments, atomInvariants,
                                        bondInvariants, additionalOutput, true);
 
-    bitId = bitId % dp_fingerprintArguments->d_foldedSize;
+    // dp_fingerprintArguments->d_foldedSize is 32 bits so the result will fit
+    // into 32 bit integer
+    std::uint32_t bitId32 = bitId % dp_fingerprintArguments->d_foldedSize;
 
-    if (dp_fingerprintArguments->d_countSimulation) {
-      // keep the occurrence count for every bit generated
-      res->setVal(bitId, res->getVal(bitId) + 1);
-    } else {
-      // do not keep the count, just set to 1
-      res->setVal(bitId, 1);
-    }
+    res->setVal(bitId32, res->getVal(bitId32) + 1);
 
     delete (*it);
   }
@@ -287,7 +278,7 @@ ExplicitBitVect *FingerprintGenerator<OutputType>::getFingerprint(
     const std::vector<std::uint32_t> *customBondInvariants) const {
   // same idea from getSparseFingerprint, generate the fingerprint using
   // getCountFingerprint and convert it to a ExplicitBitVect
-  SparseIntVect<OutputType> *tempResult =
+  SparseIntVect<std::uint32_t> *tempResult =
       getCountFingerprint(mol, fromAtoms, ignoreAtoms, confId, additionalOutput,
                           customAtomInvariants, customBondInvariants);
   OutputType countBitsPerBit = dp_fingerprintArguments->d_countBounds.size();
@@ -359,7 +350,7 @@ template SparseIntVect<std::uint32_t>
         const std::vector<std::uint32_t> *customAtomInvariants,
         const std::vector<std::uint32_t> *customBondInvariants) const;
 
-template SparseIntVect<std::uint64_t>
+template SparseIntVect<std::uint32_t>
     *FingerprintGenerator<std::uint64_t>::getCountFingerprint(
         const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms,
         const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
