@@ -67,6 +67,7 @@ rdkit_headers(primes.h
               SmilesWrite.h DEST GraphMol/SmilesParse)
 
 rdkit_test(smiTest1 test.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )
+rdkit_test(smiTest2 test2.cpp LINK_LIBRARIES SmilesParse GraphMol RDGeneral RDGeometryLib )
 rdkit_test(cxsmilesTest cxsmiles_test.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )
 
 rdkit_test(smaTest1 smatest.cpp LINK_LIBRARIES SmilesParse SubstructMatch GraphMol RDGeneral RDGeometryLib )

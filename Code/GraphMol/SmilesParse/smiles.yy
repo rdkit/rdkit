@@ -37,6 +37,18 @@ namespace {
 void
 yysmiles_error( const char *input,
                 std::vector<RDKit::RWMol *> *ms,
+                RDKit::Atom* &lastAtom,
+                RDKit::Bond* &lastBond,
+                std::list<unsigned int> *branchPoints,
+		void *scanner,int start_token, const char * msg )
+{
+  yyErrorCleanup(ms);
+  throw RDKit::SmilesParseException(msg);
+}
+
+void
+yysmiles_error( const char *input,
+                std::vector<RDKit::RWMol *> *ms,
                 std::list<unsigned int> *branchPoints,
 		void *scanner,int start_token, const char * msg )
 {
@@ -52,6 +64,8 @@ yysmiles_error( const char *input,
 %lex-param   {int& start_token}
 %parse-param {const char *input}
 %parse-param {std::vector<RDKit::RWMol *> *molList}
+%parse-param {RDKit::Atom* &lastAtom}
+%parse-param {RDKit::Bond* &lastBond}
 %parse-param {std::list<unsigned int> *branchPoints}
 %parse-param {void *scanner}
 %parse-param {int& start_token}
@@ -87,9 +101,14 @@ yysmiles_error( const char *input,
 %%
 
 meta_start: START_MOL mol {
+// the molList has already been updated, no need to do anything
 }
-| START_ATOM atomd
-| START_BOND bondd
+| START_ATOM atomd {
+  lastAtom = $2;
+}
+| START_BOND bondd {
+  lastBond = $2;
+}
 | meta_start error EOS_TOKEN{
   yyclearin;
   yyerrok;
@@ -266,7 +285,9 @@ mol: atomd {
 
 /* --------------------------------------------------------------- */
 bondd:      BOND_TOKEN
-          | MINUS_TOKEN
+          | MINUS_TOKEN {
+          $$ = new Bond(Bond::SINGLE);
+          }
 ;
 
 
