@@ -7,6 +7,11 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+/*! \file Metal.h
+
+	\brief Defines the MetalDisconnector class.
+
+*/
 #ifndef __RD_METAL_H__
 #define __RD_METAL_H__
 
@@ -17,6 +22,13 @@ class RWMol;
 class ROMol;
 
 namespace MolStandardize {
+//! The MetalDisconnector class contains tools for disconnecting metal atoms that are defined as covalently bonded to non-metals.
+/*!
+
+  <b>Notes:</b>
+    - 
+*/
+
 class MetalDisconnector {
  public:
   MetalDisconnector();
@@ -28,8 +40,16 @@ class MetalDisconnector {
 	void setMetalNof(const ROMol &mol);
 	void setMetalNon(const ROMol &mol);
 
+	//! Break covalent bonds between metals and organic atoms under certain conditions.
+	/*!
+	  <b>Notes:</b>
+		The algorithm works as follows:
+    - Disconnect N, O, F from any metal.
+    - Disconnect other non-metals from transition metals + Al (but not Hg, Ga, Ge, In, Sn, As, Tl, Pb, Bi, Po).
+		- For every bond broken, adjust the charges of the begin and end atoms accordingly.  
+	*/ 
   ROMol *disconnect(const ROMol &mol);
-  // overload
+  //! overload
   // modifies the molecule in place
   void disconnect(RWMol &mol);  // static?
  private:

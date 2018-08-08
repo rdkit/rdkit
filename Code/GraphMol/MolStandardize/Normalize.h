@@ -7,6 +7,11 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+/*! \file Normalize.h
+
+	\brief Defines the Normalizer class.
+
+*/
 #ifndef __RD_NORMALIZE_H__
 #define __RD_NORMALIZE_H__
 
@@ -26,13 +31,29 @@ typedef RDCatalog::HierarchCatalog<TransformCatalogEntry,
                                    TransformCatalogParams, int>
     TransformCatalog;
 
+//! The Normalizer class for applying Normalization transforms.
+/*!
+
+  <b>Notes:</b>
+    - This class is typically used to apply a series of Normalization transforms to correct functional groups and recombine charges. 
+		- Each transform is repeatedly applied until no further changes occur.
+*/
+
 class Normalizer {
  public:
 	Normalizer();
+	//! Construct a Normalizer with a particular normalizeFile and maxRestarts
 	Normalizer(const std::string normalizeFile, const unsigned int maxRestarts);
 	Normalizer(const Normalizer &other);
 	~Normalizer();
 
+	//! Apply a series of Normalization transforms to correct functional groups and recombine charges.
+  /*!
+    <b>Notes:</b>
+      - A series of transforms are applied to the molecule. For each Normalization, the transform is applied repeatedly until no further changes occur.
+      - If any changes occurred, we go back and start from the first Normalization again, in case the changes mean an earlier transform is now applicable.
+			- The molecule is returned once the entire series of Normalizations cause no further changes or if max_restarts (default 200) is reached.
+  */
   ROMol *normalize(const ROMol &mol);
   struct Product {
     std::string Smiles;

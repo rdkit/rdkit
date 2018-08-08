@@ -7,6 +7,11 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+/*! \file Charge.h
+
+	\brief Defines the Reionizer class and Uncharger class.
+
+*/
 #ifndef __RD_CHARGE_H__
 #define __RD_CHARGE_H__
 
@@ -39,20 +44,25 @@ struct ChargeCorrection {
 // The default list of ChargeCorrections.
 extern std::vector<ChargeCorrection> CHARGE_CORRECTIONS;
 
-class Reionizer {
-  // A class to fix charges and reionize a molecule such that the strongest
-  // acids
-  //  ionize first.
+//! The reionizer class to fix charges and reionize a molecule such that the strongest acids ionize first.
+/*!
 
+  <b>Notes:</b>
+    - 
+*/
+
+class Reionizer {
  public:
 	Reionizer();
+	//! construct a Reionizer with a particular acidbaseFile
 	Reionizer(const std::string acidbaseFile);
+	//! construct a Reionizer with a particular acidbaseFile and charge
+	//corrections
 	Reionizer(const std::string acidbaseFile, const std::vector<ChargeCorrection> ccs);
 	Reionizer(const Reionizer &other);
 	~Reionizer();
 
-//	Reionizer(const AcidBaseCatalog *abcat, const std::vector<ChargeCorrection> ccs = CHARGE_CORRECTIONS);
-
+	//! Enforce charges on certain atoms, then perform competitive reionization.
   ROMol *reionize(const ROMol &mol);
 
  private:
@@ -68,9 +78,17 @@ class Reionizer {
 
 };  // Reionizer class
 
-class Uncharger {
-  // Class for neutralizing ionized acids and bases.
+//! The Uncharger class for neutralizing ionized acids and bases.
+/*!
 
+  <b>Notes:</b>
+    - This class uncharges molecules by adding and/or removing hydrogens.
+	  - For zwitterions, hydrogens are moved to eliminate charges where possible.
+	  - In cases where there is a positive charge that is not neutralizable, an	attempt is made to also preserve the corresponding negative charge.
+
+*/
+
+class Uncharger {
  public:
   Uncharger();
   Uncharger(const Uncharger &other);
