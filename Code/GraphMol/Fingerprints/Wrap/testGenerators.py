@@ -55,7 +55,7 @@ class TestCase(unittest.TestCase):
     nz = fp.GetNonzeroElements()
     fpChirality = gChirality.GetSparseCountFingerprint(m)
     nzChirality = fpChirality.GetNonzeroElements()
-    self.assertNotEqual(nz.keys()[0], nzChirality.keys()[0])
+    self.assertNotEqual(nz.keys(), nzChirality.keys())
 
   def testMorganGenerator(self):
     m = Chem.MolFromSmiles('CCCCC')
