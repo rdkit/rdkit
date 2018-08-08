@@ -170,7 +170,7 @@ std::vector<std::pair<std::string, std::string>> readCSV(
       filename =
           rdbase +
           "/rdkit/Chem/MolStandardize/test_data/100kPCS_standardize_sm.csv.gz";
-      break;
+			break;
     case RDKitStandardizeMode::ValidateShort:
       filename =
           rdbase + "/rdkit/Chem/MolStandardize/test_data/1kPCS_validate.csv.gz";
@@ -208,7 +208,13 @@ std::vector<std::pair<std::string, std::string>> readCSV(
       break;
   }
 
+	std::cout << "Reading: " << filename << std::endl;
+
   std::ifstream file(filename, std::ios_base::in | std::ios_base::binary);
+	if (!file) {
+		std::cerr << "Unable to open file.\n";
+    exit(1);   // call system to stop
+	}	
   boost::iostreams::filtering_streambuf<boost::iostreams::input> inbuf;
   inbuf.push(boost::iostreams::gzip_decompressor());
   inbuf.push(file);
