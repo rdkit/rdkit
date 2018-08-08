@@ -2,6 +2,7 @@
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
 #include <GraphMol/Fingerprints/AtomPairGenerator.h>
 #include <GraphMol/Fingerprints/FingerprintUtil.h>
+#include <RDGeneral/hash/hash.hpp>
 
 namespace RDKit {
 namespace AtomPair {
