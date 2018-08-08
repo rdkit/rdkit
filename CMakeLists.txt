@@ -2,9 +2,6 @@ cmake_minimum_required(VERSION 3.1)
 
 project (RDKit)
 
-#include catch
-add_subdirectory(${RDKit_ExternalDir}/catch)
-
 IF(NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE Release CACHE STRING
       "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel."
@@ -72,8 +69,6 @@ if(NOT (MSVC AND (NOT RDK_INSTALL_DLLS_MSVC)))
   add_definitions(-DRDKIT_DYN_LINK)
 endif()
 
-include_directories(${CATCH_INCLUDE_DIR} ${COMMON_INCLUDES})
-
 if(RDK_PGSQL_STATIC AND RDK_BUILD_PGSQL)
   if(NOT RDK_INSTALL_STATIC_LIBS)
     message("Enabling RDK_INSTALL_STATIC_LIBS because RDK_PGSQL_STATIC is set.")
@@ -105,6 +100,12 @@ string(REGEX REPLACE "^0" "" RDKit_intMonth ${RDKit_Month} )
 
 set(RDKit_CodeDir "${CMAKE_CURRENT_SOURCE_DIR}/Code")
 set(RDKit_ExternalDir "${CMAKE_CURRENT_SOURCE_DIR}/External")
+
+#include catch
+add_subdirectory(${RDKit_ExternalDir}/catch)
+
+
+include_directories(${CATCH_INCLUDE_DIR} ${COMMON_INCLUDES})
 
 if(RDK_INSTALL_INTREE)
   set(RDKit_BinDir "${CMAKE_SOURCE_DIR}/bin")
