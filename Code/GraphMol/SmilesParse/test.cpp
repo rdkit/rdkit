@@ -116,7 +116,7 @@ void testPass() {
   while (smis[i] != "EOS") {
     string smi = smis[i];
     BOOST_LOG(rdInfoLog) << "***: " << smi << std::endl;
-    mol = SmilesToMol(smi, true);
+    mol = SmilesToMol(smi);
     CHECK_INVARIANT(mol, smi);
     if (mol) {
       unsigned int nAts = mol->getNumAtoms();

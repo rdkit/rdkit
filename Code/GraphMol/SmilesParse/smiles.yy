@@ -20,7 +20,7 @@
 #define YYDEBUG 1
 #include "smiles.tab.hpp"
 
-extern int yysmiles_lex(YYSTYPE *,void *,int);
+extern int yysmiles_lex(YYSTYPE *,void *,int &);
 
 
 using namespace RDKit;
@@ -87,26 +87,19 @@ yysmiles_error( const char *input,
 %%
 
 meta_start: START_MOL mol {
-std::cerr<<" MOL! "<<std::endl;
 }
 | START_ATOM atomd
 | START_BOND bondd
 | meta_start error EOS_TOKEN{
-std::cerr<<" ERR! "<<std::endl;
-
   yyclearin;
   yyerrok;
   yyErrorCleanup(molList);
   YYABORT;
 }
 | meta_start EOS_TOKEN {
-std::cerr<<" EOS! "<<std::endl;
-
   YYACCEPT;
 }
 | error EOS_TOKEN {
-std::cerr<<" ERR_EOS! "<<std::endl;
-
   yyclearin;
   yyerrok;
   yyErrorCleanup(molList);

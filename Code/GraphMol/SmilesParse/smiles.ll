@@ -95,7 +95,6 @@ size_t setup_smiles_string(const std::string &text,yyscan_t yyscanner){
     {
       int t = start_token;
       start_token = 0;
-      std::cerr<<"INIT: "<<t<<std::endl;
       return t;
     }
 %}
