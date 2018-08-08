@@ -30,7 +30,7 @@ FingerprintGenerator<OutputType> *getMorganGenerator(
 
   std::vector<std::uint32_t> countBounds = {1, 2, 4, 8};
   python::extract<std::vector<std::uint32_t>> countBoundsE(py_countBounds);
-  if (countBoundsE.check() && !countBoundsE().empty() ) {
+  if (countBoundsE.check() && !countBoundsE().empty()) {
     countBounds = countBoundsE();
   }
 
@@ -65,8 +65,6 @@ BondInvariantsGenerator *getMorganBondInvGen(const bool useBondTypes,
 }
 
 void exportMorgan() {
-  std::string docString = "";
-
   /*python::def(
       "GetMorganGenerator32", getMorganGenerator<std::uint32_t>,
       (python::arg("radius") = 3, python::arg("useCountSimulation") = true,
@@ -92,24 +90,57 @@ void exportMorgan() {
        python::arg("foldedSize") = 2048,
        python::arg("atomInvariantsGenerator") = python::object(),
        python::arg("bondInvariantsGenerator") = python::object()),
-      docString.c_str(),
+      "Get a morgan fingerprint generator\n\n"
+      "  ARGUMENTS:\n"
+      "    - radius:  the number of iterations to grow the fingerprint\n"
+      "    - useCountSimulation: if set, use count simulation while generating "
+      "the fingerprint\n"
+      "    - includeChirality: if set, chirality information will be added to "
+      "the generated fingerprint\n"
+      "    - useBondTypes: if set, bond types will be included as a part of "
+      "the default bond invariants\n"
+      "    - useCountSimulation:  if set, use count simulation while  "
+      "generating the fingerprint\n"
+      "    - countBounds: boundaries for count simulation, corresponding bit "
+      "will be  set if the count is higher than the number provided for that "
+      "spot\n"
+      "    - foldedSize: size of the folded version of the fingerprints\n"
+      "    - atomInvariantsGenerator: atom invariants to be used during "
+      "fingerprint generation\n\n"
+      "  RETURNS: FingerprintGenerator\n\n",
       python::return_value_policy<python::manage_new_object>());
 
-  docString = "";
   python::def("GetMorganAtomInvGen", &getMorganAtomInvGen,
-              (python::arg("includeRingMembership") = false), docString.c_str(),
+              (python::arg("includeRingMembership") = false),
+              "Get a morgan atom invariants generator\n\n"
+              "  ARGUMENTS:\n"
+              "    - includeRingMembership: if set, whether or not the atom is "
+              "in a ring will be used in the invariant list\n\n"
+              "  RETURNS: AtomInvariantsGenerator\n\n",
               python::return_value_policy<python::manage_new_object>());
 
-  docString = "";
-  python::def("GetMorganFeatureAtomInvGen", &getMorganFeatureAtomInvGen,
-              (python::arg("patterns") = python::object()), docString.c_str(),
-              python::return_value_policy<python::manage_new_object>());
+  python::def(
+      "GetMorganFeatureAtomInvGen", &getMorganFeatureAtomInvGen,
+      (python::arg("patterns") = python::object()),
+      "Get a morgan feature atom invariants generator\n\n"
+      "  ARGUMENTS:\n"
+      "    - patterns: if provided should contain the queries used to assign "
+      "atom-types. if not provided, feature definitions adapted from "
+      "reference: Gobbi and Poppinger, Biotech. Bioeng. _61_ 47-54 (1998) will "
+      "be used for Donor, Acceptor, Aromatic, Halogen, Basic, Acidic.\n\n"
+      "  RETURNS: AtomInvariantsGenerator\n\n",
+      python::return_value_policy<python::manage_new_object>());
 
-  docString = "";
   python::def(
       "GetMorganBondInvGen", &getMorganBondInvGen,
       (python::arg("useBondTypes") = true, python::arg("useChirality") = false),
-      docString.c_str(),
+      "Get a morgan bond invariants generator\n\n"
+      "  ARGUMENTS:\n"
+      "    - useBondTypes: if set, bond types will be included as a part of "
+      "the bond invariants\n"
+      "    - useChirality: if set, chirality information will be included as a "
+      "part of the bond invariants\n\n"
+      "  RETURNS: BondInvariantsGenerator\n\n",
       python::return_value_policy<python::manage_new_object>());
 
   return;

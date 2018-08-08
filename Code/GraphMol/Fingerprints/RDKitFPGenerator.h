@@ -23,7 +23,7 @@ class RDKitFPArguments : public FingerprintArguments<OutputType> {
    /brief Construct a new RDKitFPArguments object
 
    /param minPath the minimum path length (in bonds) to be included
-   /param maxPath the minimum path length (in bonds) to be included
+   /param maxPath the maximum path length (in bonds) to be included
    /param useHs toggles inclusion of Hs in paths (if the molecule has
    explicit Hs)
    /param branchedPaths toggles generation of branched subgraphs, not just
@@ -31,8 +31,8 @@ class RDKitFPArguments : public FingerprintArguments<OutputType> {
    /param useBondOrder toggles inclusion of bond orders in the path hashes
    /param useCountSimulation         if set, use count simulation while
    generating the fingerprint
-   /param countBounds  boundaries for count simulation, corresponding bit will be
-   set if the count is higher than the number provided for that spot
+   /param countBounds  boundaries for count simulation, corresponding bit will
+   be set if the count is higher than the number provided for that spot
    /param foldedSize size of the folded version of the fingerprints
 
    */
@@ -95,7 +95,7 @@ class RDKitFPEnvGenerator : public AtomEnvironmentGenerator<OutputType> {
  /tparam OutputType determines the size of the bitIds and the result, can be 32
  or 64 bit unsigned integer
  /param minPath the minimum path length (in bonds) to be included
- /param maxPath the minimum path length (in bonds) to be included
+ /param maxPath the maximum path length (in bonds) to be included
  /param useHs toggles inclusion of Hs in paths (if the molecule has
  explicit Hs)
  /param branchedPaths toggles generation of branched subgraphs, not just

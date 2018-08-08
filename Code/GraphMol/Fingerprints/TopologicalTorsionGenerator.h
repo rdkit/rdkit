@@ -25,7 +25,7 @@ class TopologicalTorsionArguments : public FingerprintArguments<OutputType> {
    /param useCountSimulation         if set, use count simulation while
    generating the fingerprint
    /param countBounds  boundaries for count simulation, corresponding bit will
-   be set if the count is higher than the number provided for that spot 
+   be set if the count is higher than the number provided for that spot
    /param foldedSize size of the folded version of the fingerprints
    */
   TopologicalTorsionArguments(const bool includeChirality,
@@ -81,7 +81,7 @@ class TopologicalTorsionEnvGenerator
  /param useCountSimulation         if set, use count simulation while
  generating the fingerprint
  /param countBounds  boundaries for count simulation, corresponding bit will
- be set if the count is higher than the number provided for that spot 
+ be set if the count is higher than the number provided for that spot
  /param foldedSize size of the folded version of the fingerprints
  /param ownsAtomInvGen  if set atom invariants generator is destroyed with the
  fingerprint generator

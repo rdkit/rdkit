@@ -176,14 +176,16 @@ class MorganEnvGenerator : public AtomEnvironmentGenerator<OutputType> {
  generated bit id, independently from bond invariants
  /param onlyNonzeroInvariants : if set, bits will only be set from atoms that
  have a nonzero invariant
- /param countBounds : boundaries for count simulation, corresponding bit willbe
+ /param countBounds : boundaries for count simulation, corresponding bit will be
  set if the count is higher than the number provided for that spot
  /param foldedSize : size of the folded version of the fingerprints
- /param countSimulation : countSimulation for MorganArguments
+ /param countSimulation : if set, use count simulation while generating the fingerprint
  /param includeChirality : sets includeChirality flag for both MorganArguments
  and the default bond generator MorganBondInvGenerator
- /param useBondTypes : useBondTypes for MorganBondInvGenerator
- /param onlyNonzeroInvariants : onlyNonzeroInvariants for MorganArguments
+ /param useBondTypes : if set, bond types will be included as a part of the
+ default bond invariants
+ /param onlyNonzeroInvariants : if set, bits will only be set from atoms that
+ have a nonzero invariant
  /param atomInvariantsGenerator : custom atom invariants generator to use
  /param bondInvariantsGenerator : custom bond invariants generator to use
  /param ownsAtomInvGen  if set atom invariants generator is destroyed with the

@@ -36,22 +36,33 @@ FingerprintGenerator<OutputType> *getTopologicalTorsionFPGenerator(
 }
 
 void exportTopologicalTorsion() {
-  std::string docString = "";
-
   // Topological torsion fingerprint does not support 32 bit output yet
 
-  docString = "";
-
-  python::def("GetTopologicalTorsionGenerator",
-              &getTopologicalTorsionFPGenerator<std::uint64_t>,
-              (python::arg("includeChirality") = false,
-               python::arg("torsionAtomCount") = 4,
-               python::arg("countSimulation") = true,
-               python::arg("countBounds") = python::object(),
-               python::arg("foldedSize") = 2048,
-               python::arg("atomInvariantsGenerator") = python::object()),
-              docString.c_str(),
-              python::return_value_policy<python::manage_new_object>());
+  python::def(
+      "GetTopologicalTorsionGenerator",
+      &getTopologicalTorsionFPGenerator<std::uint64_t>,
+      (python::arg("includeChirality") = false,
+       python::arg("torsionAtomCount") = 4,
+       python::arg("countSimulation") = true,
+       python::arg("countBounds") = python::object(),
+       python::arg("foldedSize") = 2048,
+       python::arg("atomInvariantsGenerator") = python::object()),
+      "Get an atom pair fingerprint generator\n\n"
+      "  ARGUMENTS:\n"
+      "    - includeChirality: includeChirality argument for both the default "
+      "atom invariants generator and the fingerprint arguments\n"
+      "    - torsionAtomCount: the number of atoms to include in the "
+      "\"torsions\"\n"
+      "    - useCountSimulation:  if set, use count simulation while  "
+      "generating the fingerprint\n"
+      "    - countBounds: boundaries for count simulation, corresponding bit "
+      "will be  set if the count is higher than the number provided for that "
+      "spot\n"
+      "    - foldedSize: size of the folded version of the fingerprints\n"
+      "    - atomInvariantsGenerator: atom invariants to be used during "
+      "fingerprint generation\n\n"
+      "  RETURNS: FingerprintGenerator\n\n",
+      python::return_value_policy<python::manage_new_object>());
 
   return;
 }

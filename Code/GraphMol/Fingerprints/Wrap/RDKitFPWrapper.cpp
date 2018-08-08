@@ -40,8 +40,6 @@ AtomInvariantsGenerator *getRDKitAtomInvGen() {
 }
 
 void exportRDKit() {
-  std::string docString = "";
-
   /*python::def("GetRDKitFPGenerator32", &getRDKitFPGenerator<std::uint32_t>,
               (python::arg("minPath") = 1, python::arg("maxPath") = 7,
                python::arg("useHs") = true, python::arg("branchedPaths") = true,
@@ -53,19 +51,40 @@ void exportRDKit() {
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());*/
 
-  python::def("GetRDKitFPGenerator", &getRDKitFPGenerator<std::uint64_t>,
-              (python::arg("minPath") = 1, python::arg("maxPath") = 7,
-               python::arg("useHs") = true, python::arg("branchedPaths") = true,
-               python::arg("useBondOrder") = true,
-               python::arg("countSimulation") = true,
-               python::arg("countBounds") = python::object(),
-               python::arg("foldedSize") = 2048,
-               python::arg("atomInvariantsGenerator") = python::object()),
-              docString.c_str(),
-              python::return_value_policy<python::manage_new_object>());
+  python::def(
+      "GetRDKitFPGenerator", &getRDKitFPGenerator<std::uint64_t>,
+      (python::arg("minPath") = 1, python::arg("maxPath") = 7,
+       python::arg("useHs") = true, python::arg("branchedPaths") = true,
+       python::arg("useBondOrder") = true,
+       python::arg("countSimulation") = true,
+       python::arg("countBounds") = python::object(),
+       python::arg("foldedSize") = 2048,
+       python::arg("atomInvariantsGenerator") = python::object()),
+      "Get an RDKit fingerprint generator\n\n"
+      "  ARGUMENTS:\n"
+      "    - minPath: the minimum path length (in bonds) to be included\n"
+      "    - maxPath: the maximum path length (in bonds) to be included\n"
+      "    - useHs: toggles inclusion of Hs in paths (if the molecule has "
+      "explicit Hs)\n"
+      "    - branchedPaths: toggles generation of branched subgraphs, not just "
+      "linear paths\n"
+      "    - useBondOrder: toggles inclusion of bond orders in the path "
+      "hashes\n"
+      "    - useCountSimulation:  if set, use count simulation while  "
+      "generating the fingerprint\n"
+      "    - countBounds: boundaries for count simulation, corresponding bit "
+      "will be  set if the count is higher than the number provided for that "
+      "spot\n"
+      "    - foldedSize: size of the folded version of the fingerprints\n"
+      "    - atomInvariantsGenerator: atom invariants to be used during "
+      "fingerprint generation\n\n"
+      "  RETURNS: FingerprintGenerator\n\n",
+      python::return_value_policy<python::manage_new_object>());
 
-  docString = "";
-  // todo add inv generator creator
+  python::def("GetRDKitAtomInvGen", &getRDKitAtomInvGen,
+              "Get an RDKit atom invariants generator\n\n"
+              "  RETURNS: AtomInvariantsGenerator\n\n",
+              python::return_value_policy<python::manage_new_object>());
 
   return;
 }
