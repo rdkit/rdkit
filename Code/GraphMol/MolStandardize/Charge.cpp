@@ -67,7 +67,6 @@ ROMol *Reionizer::reionize(const ROMol &mol) {
 
   for (const auto &cc : this->d_ccs) {
     std::vector<MatchVectType> res;
-    //		std::cout << cc.Smarts << std::endl;
     ROMOL_SPTR ccmol(SmartsToMol(cc.Smarts));
     unsigned int matches = SubstructMatch(*omol, *ccmol, res);
     if (matches) {
@@ -75,18 +74,17 @@ ROMol *Reionizer::reionize(const ROMol &mol) {
         for (const auto &pair : match) {
           auto idx = pair.second;
           Atom *atom = omol->getAtomWithIdx(idx);
-          std::cout << "Applying charge correction " << cc.Name << " "
-                    << atom->getSymbol() << " " << cc.Charge << std::endl;
+          BOOST_LOG(rdInfoLog) << "Applying charge correction " << cc.Name << " "
+                    << atom->getSymbol() << " " << cc.Charge << "\n";
           atom->setFormalCharge(cc.Charge);
         }
       }
     }
   }
-  std::cout << MolToSmiles(*omol) << std::endl;
   int current_charge = MolOps::getFormalCharge(*omol);
   int charge_diff = current_charge - start_charge;
-  std::cout << "Current charge: " << current_charge << std::endl;
-  std::cout << "Charge diff: " << charge_diff << std::endl;
+  //std::cout << "Current charge: " << current_charge << std::endl;
+  //std::cout << "Charge diff: " << charge_diff << std::endl;
 
   // If molecule is now neutral, assume everything is now fixed
   // But otherwise, if charge has become more positive,
@@ -105,13 +103,10 @@ ROMol *Reionizer::reionize(const ROMol &mol) {
         std::vector<unsigned int> poccur = res->second;
         std::string abname;
         std::pair<ROMOL_SPTR, ROMOL_SPTR> abpair = abpairs[ppos];
-        std::cout << "Got here" << std::endl;
         (abpair.first)->getProp(common_properties::_Name, abname);
-        std::cout << "Ionizing " << abname
-                  << " to balance previous charge corrections" << std::endl;
+        BOOST_LOG(rdInfoLog) << "Ionizing " << abname
+                  << " to balance previous charge corrections\n" ;
         Atom *patom = omol->getAtomWithIdx(poccur.back());
-        //				std::cout << patom->getSymbol() <<
-        //std::endl;
         patom->setFormalCharge(patom->getFormalCharge() - 1);
 
         if (patom->getNumExplicitHs() > 0) {
@@ -124,8 +119,8 @@ ROMol *Reionizer::reionize(const ROMol &mol) {
     }
   }
 
-  std::cout << MolToSmiles(*omol) << std::endl;
-  std::cout << "Charge diff: " << charge_diff << std::endl;
+  //std::cout << MolToSmiles(*omol) << std::endl;
+  //std::cout << "Charge diff: " << charge_diff << std::endl;
 
   std::set<std::vector<unsigned int>> already_moved;
   while (true) {
@@ -138,13 +133,10 @@ ROMol *Reionizer::reionize(const ROMol &mol) {
       unsigned int ipos = wi_res->first;
       std::vector<unsigned int> poccur = sp_res->second;
       std::vector<unsigned int> ioccur = wi_res->second;
-      std::cout << "ppos: " << ppos << std::endl;
-      std::cout << "ipos: " << ipos << std::endl;
       if (ppos < ipos) {
         if (poccur.back() == ioccur.back()) {
           // Bad! H wouldn't be moved, resulting in infinite loop.
-          std::cout << "Aborted reionization due to unexpected situation"
-                    << std::endl;
+          BOOST_LOG(rdInfoLog) << "Aborted reionization due to unexpected situation\n";
           break;
         }
 
@@ -152,9 +144,8 @@ ROMol *Reionizer::reionize(const ROMol &mol) {
         std::sort(key.begin(), key.end());
         const bool is_in = already_moved.find(key) != already_moved.end();
         if (is_in) {
-          std::cout << "Aborting reionization to avoid infinite loop due \
-								to it being ambiguous where to put a Hydrogen"
-                    << std::endl;
+          BOOST_LOG(rdInfoLog) << "Aborting reionization to avoid infinite loop due \
+								to it being ambiguous where to put a Hydrogen\n";
           break;
         }
         already_moved.insert(key);
@@ -165,8 +156,8 @@ ROMol *Reionizer::reionize(const ROMol &mol) {
         (prot_pair.first)->getProp(common_properties::_Name, prot_name);
         (ionized_pair.first)->getProp(common_properties::_Name, ionized_name);
 
-        std::cout << "Moved proton from " << prot_name << " to " << ionized_name
-                  << std::endl;
+        BOOST_LOG(rdInfoLog) << "Moved proton from " << prot_name << " to " << ionized_name
+                  << "\n";
         // Remove hydrogen from strongest protonated
         Atom *patom = omol->getAtomWithIdx(poccur.back());
         patom->setFormalCharge(patom->getFormalCharge() - 1);
@@ -203,11 +194,8 @@ ROMol *Reionizer::reionize(const ROMol &mol) {
     }
   }  // while loop
 
-  std::cout << MolToSmiles(*omol) << std::endl;
-  //	MolOps::sanitizeMol(* (static_cast<RWMol*>(omol)) );
   RWMOL_SPTR wmol(new RWMol(*omol));
   MolOps::sanitizeMol(*wmol);
-  std::cout << MolToSmiles(*wmol) << std::endl;
 
   return new ROMol(*wmol);
 }
@@ -220,13 +208,11 @@ std::pair<unsigned int, std::vector<unsigned int>>
   unsigned int position = 0;
   for (const auto &abpair : abpairs) {
     RDKit::MatchVectType res;
-    //	std::cout << MolToSmiles(*(abpair.first)) << std::endl;
     unsigned int matches = SubstructMatch(mol, *(abpair.first), res);
     if (matches > 0) {
       std::vector<unsigned int> occurence;
       for (const auto &pair : res) {
         occurence.push_back(pair.second);
-        //				std::cout << pair.second << std::endl;
       }
       return new std::pair<unsigned int, std::vector<unsigned int>>(position,
                                                                     occurence);
@@ -243,13 +229,11 @@ std::pair<unsigned int, std::vector<unsigned int>> *Reionizer::weakestIonized(
   unsigned int position = 0;
   for (const auto &abpair : boost::adaptors::reverse(abpairs)) {
     RDKit::MatchVectType res;
-    //	std::cout << MolToSmiles(*(abpair.first)) << std::endl;
     unsigned int matches = SubstructMatch(mol, *(abpair.second), res);
     if (matches > 0) {
       std::vector<unsigned int> occurence;
       for (const auto &pair : res) {
         occurence.push_back(pair.second);
-        //				std::cout << pair.second << std::endl;
       }
       return new std::pair<unsigned int, std::vector<unsigned int>>(
           (abpairs.size() - position - 1), occurence);
@@ -275,6 +259,7 @@ Uncharger::Uncharger(const Uncharger &other) {
 Uncharger::~Uncharger(){};
 
 ROMol *Uncharger::uncharge(const ROMol &mol) {
+	BOOST_LOG(rdInfoLog) << "Running Uncharger\n";
   ROMol *omol = new ROMol(mol);
 
   std::vector<MatchVectType> p_matches;
@@ -313,18 +298,14 @@ ROMol *Uncharger::uncharge(const ROMol &mol) {
         atom->setNumExplicitHs(atom->getNumExplicitHs() + 1);
         atom->setFormalCharge(atom->getFormalCharge() + 1);
         --neg_surplus;
-        std::cout << "Removed negative charge." << std::endl;
-        //				std::cout << MolToSmiles(*omol) <<
-        //std::endl;
+        BOOST_LOG(rdInfoLog) << "Removed negative charge.\n";
       }
     }
   } else {
     std::vector<unsigned int> n_idx_matches;
-    std::cout << "Negative matches " << std::endl;
     for (const auto &match : n_matches) {
       for (const auto &pair : match) {
         n_idx_matches.push_back(pair.second);
-        // std::cout << pair.second << std::endl;
       }
     }
     for (const auto &idx : n_idx_matches) {
@@ -332,9 +313,7 @@ ROMol *Uncharger::uncharge(const ROMol &mol) {
       while (atom->getFormalCharge() < 0) {
         atom->setNumExplicitHs(atom->getNumExplicitHs() + 1);
         atom->setFormalCharge(atom->getFormalCharge() + 1);
-        std::cout << "Removed negative charge." << std::endl;
-        //					std::cout << MolToSmiles(*omol) <<
-        //std::endl;
+        BOOST_LOG(rdInfoLog) << "Removed negative charge.\n";
       }
     }
   }
@@ -350,7 +329,7 @@ ROMol *Uncharger::uncharge(const ROMol &mol) {
     while (atom->getFormalCharge() > 0 && atom->getNumExplicitHs() > 0) {
       atom->setNumExplicitHs(atom->getNumExplicitHs() - 1);
       atom->setFormalCharge(atom->getFormalCharge() - 1);
-      std::cout << "Removed positive charge." << std::endl;
+      BOOST_LOG(rdInfoLog) << "Removed positive charge.\n";
     }
   }
   return omol;

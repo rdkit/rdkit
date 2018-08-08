@@ -21,6 +21,7 @@ namespace MolStandardize {
 
 //constructor
 FragmentRemover::FragmentRemover(){
+	BOOST_LOG(rdInfoLog) << "Initializing FragmentRemover\n" ;
   FragmentCatalogParams fparams(defaultCleanupParameters.fragmentFile);
 //  unsigned int numfg = fparams->getNumFuncGroups();
 //  TEST_ASSERT(fparams->getNumFuncGroups() == 61);
@@ -46,6 +47,7 @@ FragmentRemover::~FragmentRemover(){
 };
 
 ROMol *FragmentRemover::remove(const ROMol &mol) {
+	BOOST_LOG(rdInfoLog) << "Running FragmentRemover\n" ;
   PRECONDITION(this->d_fcat, "");
   const FragmentCatalogParams *fparams = this->d_fcat->getCatalogParams();
 
@@ -67,7 +69,7 @@ ROMol *FragmentRemover::remove(const ROMol &mol) {
     ROMol *tmp = RDKit::deleteSubstructs(*removed, *fgci, true);
 
     if (tmp->getNumAtoms() != removed->getNumAtoms()) {
-      std::cout << "Removed fragment: " << fname << std::endl;
+      BOOST_LOG(rdInfoLog) << "Removed fragment: " << fname << "\n";
     }
 
     if (this->LEAVE_LAST && tmp->getNumAtoms() == 0) {
@@ -93,18 +95,19 @@ bool isOrganic(const ROMol &frag) {
 
 LargestFragmentChooser::LargestFragmentChooser(
     const LargestFragmentChooser &other) {
+	BOOST_LOG(rdInfoLog) << "Initializing LargestFragmentChooser\n";
   PREFER_ORGANIC = other.PREFER_ORGANIC;
 }
 
 ROMol *LargestFragmentChooser::choose(const ROMol &mol) {
-  //	auto m = new ROMol(mol);
+	BOOST_LOG(rdInfoLog) << "Running LargestFragmentChooser\n";
 
   std::vector<boost::shared_ptr<ROMol>> frags = MolOps::getMolFrags(mol);
   LargestFragmentChooser::Largest l;
 
   for (const auto &frag : frags) {
     std::string smiles = MolToSmiles(*frag);
-    std::cout << "Fragment: " << smiles << std::endl;
+		BOOST_LOG(rdInfoLog) << "Fragment: " << smiles << "\n";
     bool organic = isOrganic(*frag);
     if (this->PREFER_ORGANIC) {
       // Skip this fragment if not organic and we already have an organic
@@ -135,6 +138,8 @@ ROMol *LargestFragmentChooser::choose(const ROMol &mol) {
         (weight == l.Weight) && (smiles > l.Smiles))
       continue;
 
+		BOOST_LOG(rdInfoLog) << "New largest fragment: " << smiles << " (" <<
+				numatoms << ")\n";
     // Otherwise this is the largest so far
     l.Smiles = smiles;
     l.Fragment = frag;

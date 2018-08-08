@@ -29,6 +29,7 @@ namespace MolStandardize {
 
 // constructor
 Normalizer::Normalizer() {
+	BOOST_LOG(rdInfoLog) << "Initializing Normalizer\n";
   TransformCatalogParams tparams(defaultCleanupParameters.normalizations);
 //  unsigned int ntransforms = tparams->getNumTransformations();
 //  TEST_ASSERT(ntransforms == 22);
@@ -38,6 +39,7 @@ Normalizer::Normalizer() {
 
 // overloaded constructor
 Normalizer::Normalizer(const std::string normalizeFile, const unsigned int maxRestarts) {
+	BOOST_LOG(rdInfoLog) << "Initializing Normalizer\n";
   TransformCatalogParams tparams(normalizeFile);
 	this->d_tcat = new TransformCatalog(&tparams);
 	this->MAX_RESTARTS = maxRestarts;
@@ -55,6 +57,7 @@ Normalizer::~Normalizer(){
 }
 
 ROMol *Normalizer::normalize(const ROMol &mol) {
+	BOOST_LOG(rdInfoLog) << "Running Normalizer\n";
   PRECONDITION(this->d_tcat, "");
   const TransformCatalogParams *tparams = this->d_tcat->getCatalogParams();
 
@@ -92,7 +95,7 @@ ROMol *Normalizer::normalizeFragment(
       boost::shared_ptr<ROMol> product =
           this->applyTransform(*nfrag, *transform);
       if (product != nullptr) {
-        std::cout << "Rule applied: " << tname << std::endl;
+        BOOST_LOG(rdInfoLog) << "Rule applied: " << tname << "\n";
         delete nfrag;
         nfrag = new ROMol(*product);
         loop_brake = true;
@@ -104,8 +107,8 @@ ROMol *Normalizer::normalizeFragment(
       return nfrag;
     }
   }
-  std::cout << "Gave up normalization after " << MAX_RESTARTS << " restarts."
-            << std::endl;
+  BOOST_LOG(rdInfoLog) << "Gave up normalization after " << MAX_RESTARTS 
+		<< " restarts.\n";
   return nfrag;
 }
 
@@ -142,7 +145,7 @@ boost::shared_ptr<ROMol> Normalizer::applyTransform(
           Normalizer::Product np(MolToSmiles(*pdt[0]), pdt[0]);
           pdts.push_back(np);
         } catch (MolSanitizeException) {
-          std::cout << "FAILED sanitizeMol." << std::endl;
+          BOOST_LOG(rdInfoLog) << "FAILED sanitizeMol.\n";
         }
       }
     }

@@ -52,7 +52,6 @@ std::vector<ValidationErrorInfo> RDKitValidation::validate(
     try {
       int explicitValence = atom->calcExplicitValence();
     } catch (const MolSanitizeException &e) {
-      // std::cout << e.message() << std::endl;
       errors.push_back(ValidationErrorInfo("INFO: [ValenceValidation] " +
                                            std::string(e.message())));
     }
@@ -142,7 +141,6 @@ void NeutralValidation::run(const ROMol &mol, bool reportAllFailures,
       charge_str = std::to_string(charge);
     }
     std::string msg = "Not an overall neutral system (" + charge_str + ')';
-    //		std::cout << msg << std::endl;
     errors.push_back(ValidationErrorInfo("INFO: [NeutralValidation] " + msg));
   }
 }
