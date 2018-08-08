@@ -33,16 +33,19 @@
 #include "SmilesParseOps.h"
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/Invariant.h>
+#include "smiles.tab.hpp"
 #include <list>
 
 #ifdef RDKIT_GRAPHMOL_BUILD
 pippo pippo pippo
 #endif
 
+    // int
+    // yysmiles_parse(const char *, std::vector<RDKit::RWMol *> *,
+    //                std::list<unsigned int> *, void *, int &);
+
     int
-    yysmiles_parse(const char *, std::vector<RDKit::RWMol *> *,
-                   std::list<unsigned int> *, void *);
-int yysmiles_lex_init(void **);
+    yysmiles_lex_init(void **);
 int yysmiles_lex_destroy(void *);
 size_t setup_smiles_string(const std::string &text, void *);
 extern int yysmiles_debug;
@@ -62,7 +65,9 @@ int smiles_parse(const std::string &inp, std::vector<RDKit::RWMol *> &molVect) {
   TEST_ASSERT(!yysmiles_lex_init(&scanner));
   try {
     size_t ltrim = setup_smiles_string(inp, scanner);
-    res = yysmiles_parse(inp.c_str() + ltrim, &molVect, &branchPoints, scanner);
+    int start_tok = static_cast<int>(START_MOL);
+    res = yysmiles_parse(inp.c_str() + ltrim, &molVect, &branchPoints, scanner,
+                         start_tok);
   } catch (...) {
     yysmiles_lex_destroy(scanner);
     throw;

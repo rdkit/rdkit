@@ -20,7 +20,7 @@
 #define YYDEBUG 1
 #include "smiles.tab.hpp"
 
-extern int yysmiles_lex(YYSTYPE *,void *);
+extern int yysmiles_lex(YYSTYPE *,void *,int);
 
 
 using namespace RDKit;
@@ -38,7 +38,7 @@ void
 yysmiles_error( const char *input,
                 std::vector<RDKit::RWMol *> *ms,
                 std::list<unsigned int> *branchPoints,
-		void *scanner,const char * msg )
+		void *scanner,int start_token, const char * msg )
 {
   yyErrorCleanup(ms);
   throw RDKit::SmilesParseException(msg);
@@ -47,12 +47,19 @@ yysmiles_error( const char *input,
 
 %}
 
-%define api.pure
+%define api.pure full
 %lex-param   {yyscan_t *scanner}
+%lex-param   {int& start_token}
 %parse-param {const char *input}
 %parse-param {std::vector<RDKit::RWMol *> *molList}
 %parse-param {std::list<unsigned int> *branchPoints}
 %parse-param {void *scanner}
+%parse-param {int& start_token}
+
+%code provides {
+#define YY_DECL int yylex \
+               (YYSTYPE * yylval_param , yyscan_t yyscanner, int& start_token)
+}
 
 %union {
   int                      moli;
@@ -61,6 +68,7 @@ yysmiles_error( const char *input,
   int                      ival;
 }
 
+%token START_MOL START_ATOM START_BOND;
 %token <atom> AROMATIC_ATOM_TOKEN ATOM_TOKEN ORGANIC_ATOM_TOKEN
 %token <ival> NONZERO_DIGIT_TOKEN ZERO_TOKEN
 %token GROUP_OPEN_TOKEN GROUP_CLOSE_TOKEN SEPARATOR_TOKEN LOOP_CONNECTOR_TOKEN
@@ -69,30 +77,43 @@ yysmiles_error( const char *input,
 %token <bond> BOND_TOKEN
 %type <moli> cmpd mol
 %type <atom> atomd element chiral_element h_element charge_element simple_atom
+%type <bond> bondd
 %type <ival>  nonzero_number number ring_number digit
 %token ATOM_OPEN_TOKEN ATOM_CLOSE_TOKEN
 %token EOS_TOKEN
 
+%start meta_start
+
 %%
 
-/* --------------------------------------------------------------- */
-cmpd: mol
-| cmpd error EOS_TOKEN{
+meta_start: START_MOL mol {
+std::cerr<<" MOL! "<<std::endl;
+}
+| START_ATOM atomd
+| START_BOND bondd
+| meta_start error EOS_TOKEN{
+std::cerr<<" ERR! "<<std::endl;
+
   yyclearin;
   yyerrok;
   yyErrorCleanup(molList);
   YYABORT;
 }
-| cmpd EOS_TOKEN {
+| meta_start EOS_TOKEN {
+std::cerr<<" EOS! "<<std::endl;
+
   YYACCEPT;
 }
 | error EOS_TOKEN {
+std::cerr<<" ERR_EOS! "<<std::endl;
+
   yyclearin;
   yyerrok;
   yyErrorCleanup(molList);
   YYABORT;
 }
 ;
+
 
 /* --------------------------------------------------------------- */
 // FIX: mol MINUS DIGIT
@@ -243,12 +264,18 @@ mol: atomd {
   branchPoints->push_back(atomIdx1);
 }
 | mol GROUP_CLOSE_TOKEN {
-  if(branchPoints->empty()) yyerror(input,molList,branchPoints,scanner,"extra close parentheses");
+  if(branchPoints->empty()) yyerror(input,molList,branchPoints,scanner,start_token,"extra close parentheses");
   RWMol *mp = (*molList)[$$];
   mp->setActiveAtom(branchPoints->back());
   branchPoints->pop_back();
 }
 ;
+
+/* --------------------------------------------------------------- */
+bondd:      BOND_TOKEN
+          | MINUS_TOKEN
+;
+
 
 
 /* --------------------------------------------------------------- */
