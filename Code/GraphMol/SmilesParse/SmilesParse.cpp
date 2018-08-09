@@ -34,6 +34,11 @@
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/Invariant.h>
 #include "smiles.tab.hpp"
+// NOTE: this is a bit fragile since a lot of the #defines in smiles.tab.hpp
+// could prevent the same #defines in smarts.tab.hpp from being read.
+// Fortunately if there are actually any problems here, they will inevitably
+// show up very quickly in the tests.
+#include "smarts.tab.hpp"
 #include <list>
 
 int yysmiles_lex_init(void **);
@@ -41,13 +46,51 @@ int yysmiles_lex_destroy(void *);
 size_t setup_smiles_string(const std::string &text, void *);
 extern int yysmiles_debug;
 
-int yysmarts_parse(const char *, std::vector<RDKit::RWMol *> *, void *);
 int yysmarts_lex_init(void **);
 int yysmarts_lex_destroy(void *);
 size_t setup_smarts_string(const std::string &text, void *);
 extern int yysmarts_debug;
 namespace RDKit {
 namespace {
+int smarts_bond_parse(const std::string &inp, Bond *&bond) {
+  void *scanner;
+  int res;
+
+  TEST_ASSERT(!yysmarts_lex_init(&scanner));
+  try {
+    size_t ltrim = setup_smarts_string(inp, scanner);
+    int start_tok = static_cast<int>(START_BOND);
+    std::vector<RWMol *> molVect;
+    Atom *lastAtom = nullptr;
+    res = yysmarts_parse(inp.c_str() + ltrim, &molVect, lastAtom, bond, scanner,
+                         start_tok);
+  } catch (...) {
+    yysmarts_lex_destroy(scanner);
+    throw;
+  }
+  yysmarts_lex_destroy(scanner);
+  return res;
+}
+int smarts_atom_parse(const std::string &inp, Atom *&atom) {
+  void *scanner;
+  int res;
+
+  TEST_ASSERT(!yysmarts_lex_init(&scanner));
+  try {
+    size_t ltrim = setup_smarts_string(inp, scanner);
+    int start_tok = static_cast<int>(START_ATOM);
+    std::vector<RWMol *> molVect;
+    Bond *lastBond = nullptr;
+    res = yysmarts_parse(inp.c_str() + ltrim, &molVect, atom, lastBond, scanner,
+                         start_tok);
+  } catch (...) {
+    yysmarts_lex_destroy(scanner);
+    throw;
+  }
+  yysmarts_lex_destroy(scanner);
+  return res;
+}
+
 int smiles_bond_parse(const std::string &inp, Bond *&bond) {
   std::list<unsigned int> branchPoints;
   void *scanner;
@@ -117,7 +160,11 @@ int smarts_parse(const std::string &inp, std::vector<RDKit::RWMol *> &molVect) {
   TEST_ASSERT(!yysmarts_lex_init(&scanner));
   try {
     size_t ltrim = setup_smarts_string(inp, scanner);
-    res = yysmarts_parse(inp.c_str() + ltrim, &molVect, scanner);
+    int start_tok = static_cast<int>(START_MOL);
+    Atom *lastAtom = nullptr;
+    Bond *lastBond = nullptr;
+    res = yysmarts_parse(inp.c_str() + ltrim, &molVect, lastAtom, lastBond,
+                         scanner, start_tok);
   } catch (...) {
     yysmarts_lex_destroy(scanner);
     throw;
@@ -352,6 +399,22 @@ RWMol *SmilesToMol(const std::string &smiles,
   if (res && name != "") res->setProp(common_properties::_Name, name);
   return res;
 };
+Atom *SmartsToAtom(const std::string &smiles) {
+  yysmarts_debug = false;
+
+  Atom *res = nullptr;
+  res = toAtom(smiles, smarts_atom_parse);
+  return res;
+};
+
+Bond *SmartsToBond(const std::string &smiles) {
+  yysmarts_debug = false;
+
+  Bond *res = nullptr;
+  res = toBond(smiles, smarts_bond_parse);
+  return res;
+};
+
 RWMol *SmartsToMol(const std::string &smarts, int debugParse, bool mergeHs,
                    std::map<std::string, std::string> *replacements) {
   yysmarts_debug = debugParse;

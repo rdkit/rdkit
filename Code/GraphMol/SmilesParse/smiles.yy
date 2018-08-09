@@ -89,7 +89,7 @@ yysmiles_error( const char *input,
 %token MINUS_TOKEN PLUS_TOKEN CHIRAL_MARKER_TOKEN CHI_CLASS_TOKEN CHI_CLASS_OH_TOKEN
 %token H_TOKEN AT_TOKEN PERCENT_TOKEN COLON_TOKEN HASH_TOKEN
 %token <bond> BOND_TOKEN
-%type <moli> cmpd mol
+%type <moli> mol
 %type <atom> atomd element chiral_element h_element charge_element simple_atom
 %type <bond> bondd
 %type <ival>  nonzero_number number ring_number digit

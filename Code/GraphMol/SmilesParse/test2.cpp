@@ -60,6 +60,49 @@ void testParseBondSmiles() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testParseAtomSmarts() {
+  BOOST_LOG(rdInfoLog) << "Testing ParseAtomSmarts" << std::endl;
+  {  // these should pass
+    std::vector<std::string> smiles = {"C", "[NH4+]", "[13C@H]",
+                                       "[C,N,$(C=CC)]"};
+    for (const auto &pr : smiles) {
+      std::unique_ptr<Atom> a1(SmartsToAtom(pr));
+      TEST_ASSERT(a1);
+      TEST_ASSERT(a1->getAtomicNum() > 0);
+    }
+  }
+
+  {  // these should fail
+    std::vector<std::string> smiles = {"CO", "", "C-O", "-", "[Bg]"};
+    for (const auto &pr : smiles) {
+      std::unique_ptr<Atom> a1(SmartsToAtom(pr));
+      TEST_ASSERT(!a1);
+    }
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testParseBondSmarts() {
+  BOOST_LOG(rdInfoLog) << "Testing ParseBondSmarts" << std::endl;
+  {  // these should pass
+    std::vector<std::string> smiles = {":",  "=", "#",  "-",  "/",
+                                       "\\", "@", "!-", "=,#"};
+    for (const auto &pr : smiles) {
+      std::unique_ptr<Bond> a1(SmartsToBond(pr));
+      TEST_ASSERT(a1);
+    }
+  }
+
+  {  // these should fail
+    std::vector<std::string> smiles = {"C", "", "-O", "*"};
+    for (const auto &pr : smiles) {
+      std::unique_ptr<Bond> a1(SmartsToBond(pr));
+      TEST_ASSERT(!a1);
+    }
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -68,5 +111,7 @@ int main(int argc, char *argv[]) {
 #if 1
   testParseAtomSmiles();
   testParseBondSmiles();
+  testParseAtomSmarts();
+  testParseBondSmarts();
 #endif
 }
