@@ -9,7 +9,8 @@
 //
 /*! \file Validate.h
 
-	\brief Defines the ValidationErrorInfo class and four different validation methods: RDKitValidation, MolVSValidation, AllowedAtomsValidation, DisallowedAtomsValidation.
+	\brief Defines the ValidationErrorInfo class and four different validation methods:
+ 	RDKitValidation, MolVSValidation, AllowedAtomsValidation, DisallowedAtomsValidation.
 
 */
 #ifndef __RD_VALIDATE_H__
@@ -29,7 +30,8 @@ class ROMol;
 
 namespace MolStandardize {
 
-//! The ValidationErrorInfo class is used to store the information returned by a ValidationMethod validate.
+//! The ValidationErrorInfo class is used to store the information returned by a 
+// ValidationMethod validate.
 class ValidationErrorInfo : public std::exception {
  public:
   ValidationErrorInfo(const std::string &msg) : d_msg(msg) {
@@ -55,7 +57,8 @@ class ValidationMethod {
 /*!
 
   <b>Notes:</b>
-    - RDKit automatically throws up atom valency issues but this class was made for completeness of the project.
+    - RDKit automatically throws up atom valency issues but this class was made for 
+		completeness of the project.
 */
 class RDKitValidation : public ValidationMethod {
  public:
@@ -141,7 +144,8 @@ class MolVSValidation : public ValidationMethod {
   std::vector<MolVSValidations *> d_validations;
 };
 
-//! The AllowedAtomsValidation class lets the user input a list of atoms, anything not on the list throws an error. 
+//! The AllowedAtomsValidation class lets the user input a list of atoms, anything not on 
+//the list throws an error. 
 class AllowedAtomsValidation : public ValidationMethod {
  public:
   AllowedAtomsValidation(const std::vector<std::shared_ptr<Atom>> &atoms)
@@ -153,7 +157,8 @@ class AllowedAtomsValidation : public ValidationMethod {
   std::vector<std::shared_ptr<Atom>> d_allowedList;
 };
 
-//! The DisallowedAtomsValidation class lets the user input a list of atoms and as long as there are no atoms from the list it is deemed acceptable. 
+//! The DisallowedAtomsValidation class lets the user input a list of atoms and as long 
+//as there are no atoms from the list it is deemed acceptable. 
 class DisallowedAtomsValidation : public ValidationMethod {
  public:
   DisallowedAtomsValidation(const std::vector<std::shared_ptr<Atom>> &atoms)

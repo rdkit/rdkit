@@ -41,7 +41,6 @@ const std::vector<std::shared_ptr<ROMol>>
 
 const ROMol *FragmentCatalogParams::getFuncGroup(unsigned int fid) const {
   URANGE_CHECK(fid, d_funcGroups.size());
-  // return d_funcGroups[fid];
   return d_funcGroups[fid].get();
 }
 

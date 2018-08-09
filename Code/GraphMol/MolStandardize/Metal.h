@@ -51,7 +51,7 @@ class MetalDisconnector {
   ROMol *disconnect(const ROMol &mol);
   //! overload
   // modifies the molecule in place
-  void disconnect(RWMol &mol);  // static?
+  void disconnect(RWMol &mol);
  private:
   ROMOL_SPTR metal_nof;
   ROMOL_SPTR metal_non;

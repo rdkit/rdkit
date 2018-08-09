@@ -50,16 +50,14 @@ std::pair<ROMol*, ROMol*>* getPair(const std::string& tmpStr) {
 
   ROMol* acid(SmartsToMol(acid_smarts));
   ROMol* base(SmartsToMol(base_smarts));
-  // 	ROMOL_SPTR acid( SmartsToMol(acid_smarts) );
-  //	ROMOL_SPTR base( SmartsToMol(base_smarts) );
-  CHECK_INVARIANT(acid, acid_smarts);
+  
+	CHECK_INVARIANT(acid, acid_smarts);
   CHECK_INVARIANT(base, base_smarts);
-  acid->setProp(common_properties::_Name, name);
+  
+	acid->setProp(common_properties::_Name, name);
   base->setProp(common_properties::_Name, name);
-  //  transformation->setProp(common_properties::_SMIRKS, smirks); // TODO
-  //  RDGeneral/types.h does not have a common property to use?...
-  mol_pair = new std::pair<ROMol*, ROMol*>(acid, base);
-  // mol_pair = new std::pair<ROMol*, ROMol*>(acid.get(), base.get()) ;
+  
+	mol_pair = new std::pair<ROMol*, ROMol*>(acid, base);
   return mol_pair;
 }
 }  // namespace

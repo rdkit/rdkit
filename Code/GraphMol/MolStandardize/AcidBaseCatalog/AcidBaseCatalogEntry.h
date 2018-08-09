@@ -23,18 +23,14 @@ namespace MolStandardize {
 class AcidBaseCatalogEntry : public RDCatalog::CatalogEntry {
  public:
   AcidBaseCatalogEntry() {
-    //				dp_pair(std::pair<new ROMol(), new ROMol()>);
-    dp_pair->first = nullptr;   // new ROMol();
-    dp_pair->second = nullptr;  // new ROMol();
+    dp_pair->first = nullptr;
+    dp_pair->second = nullptr;
     d_descrip = "";
     dp_props = new Dict();
     setBitId(-1);
   }
 
   ~AcidBaseCatalogEntry() override {
-    // delete dp_pair;
-    // delete dp_pair->first;
-    // delete dp_pair->second;
     delete dp_props;
     dp_props = nullptr;
   }

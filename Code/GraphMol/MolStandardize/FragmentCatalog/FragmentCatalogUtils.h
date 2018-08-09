@@ -24,7 +24,6 @@ class FragmentCatalogParams;
 std::vector<std::shared_ptr<ROMol>> readFuncGroups(std::string fileName);
 std::vector<std::shared_ptr<ROMol>> readFuncGroups(std::istream &inStream,
                                                    int nToRead = -1);
-// ROMol* removeFrags(const ROMol &mol, const FragmentCatalogParams *params);
 
 }  // namespace MolStandardize
 }  // namespace RDKit

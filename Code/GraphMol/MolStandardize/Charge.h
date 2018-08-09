@@ -44,7 +44,8 @@ struct ChargeCorrection {
 // The default list of ChargeCorrections.
 extern std::vector<ChargeCorrection> CHARGE_CORRECTIONS;
 
-//! The reionizer class to fix charges and reionize a molecule such that the strongest acids ionize first.
+//! The reionizer class to fix charges and reionize a molecule such that the 
+// strongest acids ionize first.
 /*!
 
   <b>Notes:</b>
@@ -84,7 +85,8 @@ class Reionizer {
   <b>Notes:</b>
     - This class uncharges molecules by adding and/or removing hydrogens.
 	  - For zwitterions, hydrogens are moved to eliminate charges where possible.
-	  - In cases where there is a positive charge that is not neutralizable, an	attempt is made to also preserve the corresponding negative charge.
+	  - In cases where there is a positive charge that is not neutralizable, 
+		an	attempt is made to also preserve the corresponding negative charge.
 
 */
 

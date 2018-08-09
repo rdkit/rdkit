@@ -70,7 +70,8 @@ extern const CleanupParameters defaultCleanupParameters;
 
 //! The cleanup function is equivalent to the
 // molvs.Standardizer().standardize(mol) function. It calls the same steps,
-// namely: RemoveHs, RDKit SanitizeMol, MetalDisconnector, Normalizer, Reionizer, RDKit AssignStereochemistry.
+// namely: RemoveHs, RDKit SanitizeMol, MetalDisconnector, Normalizer, Reionizer, 
+// RDKit AssignStereochemistry.
 RWMol *cleanup(const RWMol &mol,
                const CleanupParameters &params = defaultCleanupParameters);
 
