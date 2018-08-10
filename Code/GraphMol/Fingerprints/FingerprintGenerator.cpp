@@ -35,31 +35,6 @@ std::string FingerprintArguments<OutputType>::commonArgumentsString() const {
 }
 
 template <typename OutputType>
-FingerprintArguments<OutputType>::~FingerprintArguments() {}
-
-template FingerprintArguments<std::uint32_t>::~FingerprintArguments();
-
-template FingerprintArguments<std::uint64_t>::~FingerprintArguments();
-
-template <typename OutputType>
-AtomEnvironmentGenerator<OutputType>::~AtomEnvironmentGenerator() {}
-
-template AtomEnvironmentGenerator<std::uint32_t>::~AtomEnvironmentGenerator();
-template AtomEnvironmentGenerator<std::uint64_t>::~AtomEnvironmentGenerator();
-
-template <typename OutputType>
-AtomEnvironment<OutputType>::~AtomEnvironment() {}
-
-template AtomEnvironment<std::uint32_t>::~AtomEnvironment();
-template AtomEnvironment<std::uint64_t>::~AtomEnvironment();
-
-AtomInvariantsGenerator::~AtomInvariantsGenerator() {}
-AtomInvariantsGenerator *AtomInvariantsGenerator::clone() const {}
-
-BondInvariantsGenerator::~BondInvariantsGenerator() {}
-BondInvariantsGenerator *BondInvariantsGenerator::clone() const {}
-
-template <typename OutputType>
 FingerprintGenerator<OutputType>::FingerprintGenerator(
     AtomEnvironmentGenerator<OutputType> *atomEnvironmentGenerator,
     FingerprintArguments<OutputType> *fingerprintArguments,

@@ -70,7 +70,7 @@ class FingerprintArguments : private boost::noncopyable {
    */
   std::string commonArgumentsString() const;
 
-  virtual ~FingerprintArguments() = 0;
+  virtual ~FingerprintArguments(){};
 };
 
 /*!
@@ -98,7 +98,7 @@ class AtomEnvironment : private boost::noncopyable {
                               const AdditionalOutput *AdditionalOutput,
                               const bool hashResults = false) const = 0;
 
-  virtual ~AtomEnvironment() = 0;
+  virtual ~AtomEnvironment(){};
 };
 
 /*!
@@ -152,7 +152,7 @@ class AtomEnvironmentGenerator : private boost::noncopyable {
    */
   virtual std::string infoString() const = 0;
 
-  virtual ~AtomEnvironmentGenerator() = 0;
+  virtual ~AtomEnvironmentGenerator(){};
 };
 
 /*!
@@ -180,7 +180,7 @@ class AtomInvariantsGenerator : private boost::noncopyable {
    */
   virtual std::string infoString() const = 0;
 
-  virtual ~AtomInvariantsGenerator() = 0;
+  virtual ~AtomInvariantsGenerator(){};
   virtual AtomInvariantsGenerator *clone() const = 0;
 };
 
@@ -209,9 +209,9 @@ class BondInvariantsGenerator : private boost::noncopyable {
  */
   virtual std::string infoString() const = 0;
 
-  virtual ~BondInvariantsGenerator() = 0;
+  virtual ~BondInvariantsGenerator(){};
   virtual BondInvariantsGenerator *clone() const = 0;
-};
+};  // namespace RDKit
 
 /*!
   /brief class that generates same fingerprint style for different output
