@@ -172,33 +172,44 @@ class MorganEnvGenerator : public AtomEnvironmentGenerator<OutputType> {
 
  /param OutputType determines the size of the bitIds and the result, can be 32
  or 64 bit unsigned integer
+
  /param radius : the number of iterations to grow the fingerprint
+
  /param countSimulation : if set, use count simulation while generating the
  fingerprint
+
  /param includeChirality : if set, chirality information will be added to the
  generated bit id, independently from bond invariants
+
  /param onlyNonzeroInvariants : if set, bits will only be set from atoms that
  have a nonzero invariant
+
  /param countBounds : boundaries for count simulation, corresponding bit will be
  set if the count is higher than the number provided for that spot
+
  /param foldedSize : size of the folded version of the fingerprints
+
  /param countSimulation : if set, use count simulation while generating the
  fingerprint
- /param includeChirality : sets includeChirality flag for both
- MorganArguments and the default bond generator MorganBondInvGenerator
- /param
- useBondTypes : if set, bond types will be included as a part of the default
- bond invariants
- /param onlyNonzeroInvariants : if set, bits will only be set
- from atoms that have a nonzero invariant
- /param atomInvariantsGenerator :
- custom atom invariants generator to use
- /param bondInvariantsGenerator : custom
- bond invariants generator to use
- /param ownsAtomInvGen  if set atom invariants
- generator is destroyed with the fingerprint generator
- /param ownsBondInvGen  if
- set bond invariants generator is destroyed with the fingerprint generator
+
+ /param includeChirality : sets includeChirality flag for both MorganArguments
+ and the default bond generator MorganBondInvGenerator
+
+ /param useBondTypes : if set, bond types will be included as a part of the
+ default bond invariants
+
+ /param onlyNonzeroInvariants : if set, bits will only be set from atoms that
+ have a nonzero invariant
+
+ /param atomInvariantsGenerator : custom atom invariants generator to use
+
+ /param bondInvariantsGenerator : custom  bond invariants generator to use
+
+ /param ownsAtomInvGen  if set atom invariants  generator is destroyed with the
+ fingerprint generator
+
+ /param ownsBondInvGen  if set bond invariants generator is destroyed with the
+ fingerprint generator
 
  /return FingerprintGenerator<OutputType>* that generates Morgan fingerprints
  */
