@@ -10,7 +10,7 @@
 #include <RDBoost/Wrap.h>
 
 #include <GraphMol/RDKitBase.h>
-#include <GraphMol/MolStandardize/FragmentCatalog/FragmentRemover.h>
+#include <GraphMol/MolStandardize/Fragment.h>
 
 namespace python = boost::python;
 using namespace RDKit;

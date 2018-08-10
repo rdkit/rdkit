@@ -7,8 +7,8 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include "FragmentRemover.h"
-#include "FragmentCatalogUtils.h"
+#include "Fragment.h"
+#include <GraphMol/MolStandardize/FragmentCatalog/FragmentCatalogUtils.h>
 #include <boost/tokenizer.hpp>
 typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
@@ -35,11 +35,6 @@ FragmentRemover::FragmentRemover(const std::string fragmentFile, const bool leav
   this->d_fcat = new FragmentCatalog(&fparams);
 	this->LEAVE_LAST = leave_last; 
 }
-
-FragmentRemover::FragmentRemover(const FragmentRemover &other) {
-	d_fcat = other.d_fcat;
-  LEAVE_LAST = other.LEAVE_LAST;
-};
 
 //Destructor
 FragmentRemover::~FragmentRemover(){

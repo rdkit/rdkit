@@ -11,11 +11,11 @@
 #include "Metal.h"
 #include "Normalize.h"
 #include "Tautomer.h"
+#include "Fragment.h"
 #include <GraphMol/RDKitBase.h>
 #include <iostream>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/MolOps.h>
-#include <GraphMol/MolStandardize/FragmentCatalog/FragmentRemover.h>
 #include <GraphMol/MolStandardize/TransformCatalog/TransformCatalogParams.h>
 #include "Charge.h"
 

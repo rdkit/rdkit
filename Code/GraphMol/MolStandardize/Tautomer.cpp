@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 #include "Tautomer.h"
-#include <GraphMol/MolStandardize/FragmentCatalog/FragmentRemover.h>
+#include "Fragment.h"
 #include <GraphMol/MolStandardize/FragmentCatalog/FragmentCatalogUtils.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>

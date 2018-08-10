@@ -11,8 +11,8 @@
 #define __RD_FRAGMENT_REMOVER_H__
 
 #include <Catalogs/Catalog.h>
-#include "FragmentCatalogEntry.h"
-#include "FragmentCatalogParams.h"
+#include <GraphMol/MolStandardize/FragmentCatalog/FragmentCatalogEntry.h>
+#include <GraphMol/MolStandardize/FragmentCatalog/FragmentCatalogParams.h>
 #include <GraphMol/MolStandardize/MolStandardize.h>
 
 namespace RDKit {
@@ -31,7 +31,9 @@ class FragmentRemover {
 	FragmentRemover();
   FragmentRemover(const std::string fragmentFile, const bool leave_last);
 //  FragmentRemover(bool leave_last) : LEAVE_LAST(leave_last){};
-  FragmentRemover(const FragmentRemover &other);
+	//! making FragmentRemover objects non-copyable
+  FragmentRemover(const FragmentRemover &other) = delete;
+	FragmentRemover& operator=(FragmentRemover const&) = delete;
   ~FragmentRemover();
 
   ROMol *remove(const ROMol &mol);

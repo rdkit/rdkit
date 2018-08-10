@@ -9,7 +9,7 @@
 //
 #include <GraphMol/MolStandardize/FragmentCatalog/FragmentCatalogParams.h>
 #include <GraphMol/MolStandardize/FragmentCatalog/FragmentCatalogUtils.h>
-#include <GraphMol/MolStandardize/FragmentCatalog/FragmentRemover.h>
+#include <GraphMol/MolStandardize/Fragment.h>
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/ROMol.h>
