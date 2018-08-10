@@ -31,10 +31,10 @@ python::list rdkitValidate(MolStandardize::RDKitValidation &self,
 
 MolStandardize::MolVSValidation *getMolVSValidation(
     python::object validations) {
-  std::vector<MolStandardize::MolVSValidations *> vs;
+  std::vector< boost::shared_ptr<MolStandardize::MolVSValidations> > vs;
 
-  std::unique_ptr<std::vector<MolStandardize::MolVSValidations *>> pvect =
-      pythonObjectToVect<MolStandardize::MolVSValidations *>(validations);
+  std::unique_ptr<std::vector< boost::shared_ptr<MolStandardize::MolVSValidations> >> pvect =
+      pythonObjectToVect< boost::shared_ptr<MolStandardize::MolVSValidations> >(validations);
 
   for (auto v : *pvect) {
     vs.push_back(v->copy());

@@ -44,7 +44,9 @@ class Normalizer {
 	Normalizer();
 	//! Construct a Normalizer with a particular normalizeFile and maxRestarts
 	Normalizer(const std::string normalizeFile, const unsigned int maxRestarts);
-	Normalizer(const Normalizer &other);
+	//! making Normalizer objects non-copyable
+	Normalizer(const Normalizer &other) = delete;
+	Normalizer& operator=(Normalizer const&) = delete;
 	~Normalizer();
 
 	//! Apply a series of Normalization transforms to correct functional groups and recombine charges.

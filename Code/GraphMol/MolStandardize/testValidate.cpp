@@ -182,7 +182,7 @@ void testMolVSValidation() {
 }
 
 void testMolVSOptions() {
-	vector<MolVSValidations*> validations = {new IsotopeValidation};
+	vector< boost::shared_ptr<MolVSValidations> > validations = { boost::make_shared<IsotopeValidation>()};
   MolVSValidation vm(validations);
 
 	// testing MolVSDefault

@@ -45,12 +45,6 @@ Normalizer::Normalizer(const std::string normalizeFile, const unsigned int maxRe
 	this->MAX_RESTARTS = maxRestarts;
 }
 
-// copy constructor
-Normalizer::Normalizer(const Normalizer &other){
-	d_tcat = other.d_tcat;
-	MAX_RESTARTS = other.MAX_RESTARTS;	
-}
-
 // destructor
 Normalizer::~Normalizer(){
 	delete d_tcat;

@@ -60,7 +60,9 @@ class Reionizer {
 	//! construct a Reionizer with a particular acidbaseFile and charge
 	//corrections
 	Reionizer(const std::string acidbaseFile, const std::vector<ChargeCorrection> ccs);
-	Reionizer(const Reionizer &other);
+	//! making Reionizer objects non-copyable
+  Reionizer(const Reionizer &other) = delete;
+	Reionizer& operator=(Reionizer const&) = delete;
 	~Reionizer();
 
 	//! Enforce charges on certain atoms, then perform competitive reionization.

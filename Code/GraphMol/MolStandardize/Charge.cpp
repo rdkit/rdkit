@@ -42,11 +42,6 @@ Reionizer::Reionizer(const std::string acidbaseFile,	const std::vector<ChargeCor
 	this->d_ccs = ccs;
 }
 
-Reionizer::Reionizer(const Reionizer &other) {
-	d_abcat = other.d_abcat;
-	d_ccs = other.d_ccs;
-}
-
 Reionizer::~Reionizer() {
 	delete d_abcat;
 }

@@ -60,9 +60,9 @@ rdkit_test(molFragmentCatalogTest testFragmentCatalog.cpp LINK_LIBRARIES MolStan
 	Catalogs SmilesParse RDGeneral GraphMol SubstructMatch FileParsers
 	ChemTransforms Descriptors)
 
-find_package(Boost 1.56.0 COMPONENTS system iostreams REQUIRED)
-if (NOT Boost_USE_STATIC_LIBS)
-  add_definitions("-DBOOST_IOSTREAMS_DYN_LINK")
-endif()
+#find_package(Boost 1.56.0 COMPONENTS system iostreams REQUIRED)
+#if (NOT Boost_USE_STATIC_LIBS)
+#  add_definitions("-DBOOST_IOSTREAMS_DYN_LINK")
+#endif()
 
 # rdkit_test(compareMolVSTest testPCS.cpp LINK_LIBRARIES RDGeneral SmilesParse RDGeneral GraphMol MolStandardize  ${Boost_LIBRARIES})
