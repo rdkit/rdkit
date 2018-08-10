@@ -2395,6 +2395,7 @@ int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
   RDLog::InitLogs();
+#if 1
   testAtomPairFP();
   testAtomPairArgs();
   testAtomPairOld();
@@ -2425,6 +2426,7 @@ int main(int argc, char *argv[]) {
   testIgnoreTorsions();
   testPairsAndTorsionsOptions();
   testChiralTorsions();
+#endif
   testGitHubIssue25();
   testGitHubIssue334();
   testGitHubIssue811();

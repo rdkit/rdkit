@@ -95,9 +95,8 @@ OutputType AtomPairAtomEnv<OutputType>::getBitId(
   std::uint32_t atomCodeSecond =
       (*atomInvariants)[d_atomIdSecond] % codeSizeLimit;
 
-  std::uint32_t bitId;
+  std::uint32_t bitId = 0;
   if (hashResults) {
-    boost::uint32_t bit = 0;
     gboost::hash_combine(bitId, std::min(atomCodeFirst, atomCodeSecond));
     gboost::hash_combine(bitId, d_distance);
     gboost::hash_combine(bitId, std::max(atomCodeFirst, atomCodeSecond));
