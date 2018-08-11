@@ -22,7 +22,7 @@ FingerprintGenerator<OutputType> *getMorganGenerator(
     const unsigned int radius, const bool countSimulation,
     const bool includeChirality, const bool useBondTypes,
     const bool onlyNonzeroInvariants, const bool includeRingMembership,
-    python::object &py_countBounds, const std::uint32_t foldedSize,
+    python::object &py_countBounds, const std::uint32_t fpSize,
     python::object &py_atomInvGen, python::object &py_bondInvGen) {
   AtomInvariantsGenerator *atomInvariantsGenerator = nullptr;
   BondInvariantsGenerator *bondInvariantsGenerator = nullptr;
@@ -48,7 +48,7 @@ FingerprintGenerator<OutputType> *getMorganGenerator(
   return MorganFingerprint::getMorganGenerator<OutputType>(
       radius, countSimulation, includeChirality, useBondTypes,
       onlyNonzeroInvariants, atomInvariantsGenerator, bondInvariantsGenerator,
-      foldedSize, countBounds, true, true);
+      fpSize, countBounds, true, true);
 }
 
 AtomInvariantsGenerator *getMorganAtomInvGen(const bool includeRingMembership) {
@@ -82,7 +82,7 @@ void exportMorgan() {
        python::arg("onlyNonzeroInvariants") = false,
        python::arg("includeRingMembership") = true,
        python::arg("countBounds") = python::object(),
-       python::arg("foldedSize") = 2048,
+       python::arg("fpSize") = 2048,
        python::arg("atomInvariantsGenerator") = python::object(),
        python::arg("bondInvariantsGenerator") = python::object()),
       docString.c_str(),
@@ -96,7 +96,7 @@ void exportMorgan() {
        python::arg("onlyNonzeroInvariants") = false,
        python::arg("includeRingMembership") = true,
        python::arg("countBounds") = python::object(),
-       python::arg("foldedSize") = 2048,
+       python::arg("fpSize") = 2048,
        python::arg("atomInvariantsGenerator") = python::object(),
        python::arg("bondInvariantsGenerator") = python::object()),
       "Get a morgan fingerprint generator\n\n"
@@ -113,7 +113,8 @@ void exportMorgan() {
       "    - countBounds: boundaries for count simulation, corresponding bit "
       "will be  set if the count is higher than the number provided for that "
       "spot\n"
-      "    - foldedSize: size of the folded version of the fingerprints\n"
+      "    - fpSize: size of the generated fingerprint, does not affect the "
+      "sparse versions\n"
       "    - atomInvariantsGenerator: atom invariants to be used during "
       "fingerprint generation\n\n"
       "  RETURNS: FingerprintGenerator\n\n",

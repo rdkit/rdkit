@@ -20,27 +20,27 @@ namespace RDKit {
 template <typename OutputType>
 FingerprintArguments<OutputType>::FingerprintArguments(
     const bool countSimulation, const std::vector<std::uint32_t> countBounds,
-    std::uint32_t foldedSize)
+    std::uint32_t fpSize)
     : d_countSimulation(countSimulation),
       d_countBounds(countBounds),
-      d_foldedSize(foldedSize) {
+      d_fpSize(fpSize) {
   PRECONDITION(!countSimulation || !countBounds.empty(),
                "bad count bounds provided");
 }
 
 template FingerprintArguments<std::uint32_t>::FingerprintArguments(
     const bool countSimulation, const std::vector<std::uint32_t> countBounds,
-    std::uint32_t foldedSize);
+    std::uint32_t fpSize);
 
 template FingerprintArguments<std::uint64_t>::FingerprintArguments(
     const bool countSimulation, const std::vector<std::uint32_t> countBounds,
-    std::uint32_t foldedSize);
+    std::uint32_t fpSize);
 
 template <typename OutputType>
 std::string FingerprintArguments<OutputType>::commonArgumentsString() const {
   return "Common arguments\tcountSimulation=" +
          std::to_string(d_countSimulation) +
-         " foldedSize=" + std::to_string(d_foldedSize);
+         " fpSize=" + std::to_string(d_fpSize);
 }
 
 template <typename OutputType>
@@ -230,7 +230,7 @@ SparseIntVect<std::uint32_t>
 
   // allocate the result
   SparseIntVect<std::uint32_t> *res =
-      new SparseIntVect<std::uint32_t>(dp_fingerprintArguments->d_foldedSize);
+      new SparseIntVect<std::uint32_t>(dp_fingerprintArguments->d_fpSize);
 
   // iterate over every atom environment and generate bit-ids that will make up
   // the fingerprint
@@ -238,9 +238,9 @@ SparseIntVect<std::uint32_t>
     OutputType bitId = (*it)->getBitId(dp_fingerprintArguments, atomInvariants,
                                        bondInvariants, additionalOutput, true);
 
-    // dp_fingerprintArguments->d_foldedSize is 32 bits so the result will fit
+    // dp_fingerprintArguments->d_fpSize is 32 bits so the result will fit
     // into 32 bit integer
-    std::uint32_t bitId32 = bitId % dp_fingerprintArguments->d_foldedSize;
+    std::uint32_t bitId32 = bitId % dp_fingerprintArguments->d_fpSize;
 
     res->setVal(bitId32, res->getVal(bitId32) + 1);
 
@@ -271,10 +271,10 @@ ExplicitBitVect *FingerprintGenerator<OutputType>::getFingerprint(
 
   if (dp_fingerprintArguments->d_countSimulation) {
     OutputType sizeWithCount =
-        dp_fingerprintArguments->d_foldedSize * countBitsPerBit;
+        dp_fingerprintArguments->d_fpSize * countBitsPerBit;
     result = new ExplicitBitVect(sizeWithCount);
   } else {
-    result = new ExplicitBitVect(dp_fingerprintArguments->d_foldedSize);
+    result = new ExplicitBitVect(dp_fingerprintArguments->d_fpSize);
   }
 
   BOOST_FOREACH (auto val, tempResult->getNonzeroElements()) {

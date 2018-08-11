@@ -22,7 +22,7 @@ FingerprintGenerator<OutputType> *getRDKitFPGenerator(
     const unsigned int minPath, const unsigned int maxPath, const bool useHs,
     const bool branchedPaths, const bool useBondOrder,
     const bool countSimulation, python::object &py_countBounds,
-    const std::uint32_t foldedSize, python::object &py_atomInvGen) {
+    const std::uint32_t fpSize, python::object &py_atomInvGen) {
   AtomInvariantsGenerator *atomInvariantsGenerator = nullptr;
   BondInvariantsGenerator *bondInvariantsGenerator = nullptr;
 
@@ -41,7 +41,7 @@ FingerprintGenerator<OutputType> *getRDKitFPGenerator(
 
   return RDKitFP::getRDKitFPGenerator<OutputType>(
       minPath, maxPath, useHs, branchedPaths, useBondOrder,
-      atomInvariantsGenerator, countSimulation, countBoundsC, foldedSize, true);
+      atomInvariantsGenerator, countSimulation, countBoundsC, fpSize, true);
 }
 
 AtomInvariantsGenerator *getRDKitAtomInvGen() {
@@ -55,7 +55,7 @@ void exportRDKit() {
                python::arg("useBondOrder") = true,
                python::arg("countSimulation") = true,
                python::arg("countBounds") = python::object(),
-               python::arg("foldedSize") = 2048,
+               python::arg("fpSize") = 2048,
                python::arg("atomInvariantsGenerator") = python::object()),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());*/
@@ -67,7 +67,7 @@ void exportRDKit() {
        python::arg("useBondOrder") = true,
        python::arg("countSimulation") = true,
        python::arg("countBounds") = python::object(),
-       python::arg("foldedSize") = 2048,
+       python::arg("fpSize") = 2048,
        python::arg("atomInvariantsGenerator") = python::object()),
       "Get an RDKit fingerprint generator\n\n"
       "  ARGUMENTS:\n"
@@ -84,7 +84,8 @@ void exportRDKit() {
       "    - countBounds: boundaries for count simulation, corresponding bit "
       "will be  set if the count is higher than the number provided for that "
       "spot\n"
-      "    - foldedSize: size of the folded version of the fingerprints\n"
+      "    - fpSize: size of the generated fingerprint, does not affect the "
+      "sparse versions\n"
       "    - atomInvariantsGenerator: atom invariants to be used during "
       "fingerprint generation\n\n"
       "  RETURNS: FingerprintGenerator\n\n",

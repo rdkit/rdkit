@@ -8,7 +8,6 @@
 //  of the RDKit source tree.
 //
 
-
 #include <boost/python.hpp>
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
 #include <GraphMol/Fingerprints/AtomPairGenerator.h>
@@ -24,7 +23,7 @@ FingerprintGenerator<OutputType> *getAtomPairGenerator(
     const unsigned int minDistance, const unsigned int maxDistance,
     const bool includeChirality, const bool use2D,
     const bool useCountSimulation, python::object &py_countBounds,
-    const std::uint32_t foldedSize, python::object &py_atomInvGen) {
+    const std::uint32_t fpSize, python::object &py_atomInvGen) {
   AtomInvariantsGenerator *atomInvariantsGenerator = nullptr;
 
   python::extract<AtomInvariantsGenerator *> atomInvGen(py_atomInvGen);
@@ -42,8 +41,7 @@ FingerprintGenerator<OutputType> *getAtomPairGenerator(
 
   return AtomPair::getAtomPairGenerator<OutputType>(
       minDistance, maxDistance, includeChirality, use2D,
-      atomInvariantsGenerator, useCountSimulation, foldedSize, countBoundsC,
-      true);
+      atomInvariantsGenerator, useCountSimulation, fpSize, countBoundsC, true);
 }
 
 AtomInvariantsGenerator *getAtomPairAtomInvGen(const bool includeChirality) {
@@ -58,7 +56,7 @@ void exportAtompair() {
        python::arg("includeChirality") = false, python::arg("use2D") = true,
        python::arg("useCountSimulation") = true,
        python::arg("countBounds") = python::object(),
-       python::arg("foldedSize") = 2048,
+       python::arg("fpSize") = 2048,
        python::arg("atomInvariantsGenerator") = python::object()),
       docString.c_str(),
       python::return_value_policy<python::manage_new_object>());*/
@@ -70,7 +68,7 @@ void exportAtompair() {
        python::arg("includeChirality") = false, python::arg("use2D") = true,
        python::arg("useCountSimulation") = true,
        python::arg("countBounds") = python::object(),
-       python::arg("foldedSize") = 2048,
+       python::arg("fpSize") = 2048,
        python::arg("atomInvariantsGenerator") = python::object()),
       "Get an atom pair fingerprint generator\n\n"
       "  ARGUMENTS:\n"
@@ -87,7 +85,8 @@ void exportAtompair() {
       "    - countBounds: boundaries for count simulation, corresponding bit "
       "will be  set if the count is higher than the number provided for that "
       "spot\n"
-      "    - foldedSize: size of the folded version of the fingerprints\n"
+      "    - fpSize: size of the generated fingerprint, does not affect the "
+      "sparse versions\n"
       "    - atomInvariantsGenerator: atom invariants to be used during "
       "fingerprint generation\n\n"
       "  RETURNS: FingerprintGenerator\n\n",

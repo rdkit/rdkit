@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2018 Boran Adas
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -61,10 +61,8 @@ template <typename OutputType>
 AtomPairArguments<OutputType>::AtomPairArguments(
     const bool countSimulation, const bool includeChirality, const bool use2D,
     const unsigned int minDistance, const unsigned int maxDistance,
-    const std::vector<std::uint32_t> countBounds,
-    const std::uint32_t foldedSize)
-    : FingerprintArguments<OutputType>(countSimulation, countBounds,
-                                       foldedSize),
+    const std::vector<std::uint32_t> countBounds, const std::uint32_t fpSize)
+    : FingerprintArguments<OutputType>(countSimulation, countBounds, fpSize),
       df_includeChirality(includeChirality),
       df_use2D(use2D),
       d_minDistance(minDistance),
@@ -202,14 +200,14 @@ FingerprintGenerator<OutputType> *getAtomPairGenerator(
     const unsigned int minDistance, const unsigned int maxDistance,
     const bool includeChirality, const bool use2D,
     AtomInvariantsGenerator *atomInvariantsGenerator,
-    const bool useCountSimulation, const std::uint32_t foldedSize,
+    const bool useCountSimulation, const std::uint32_t fpSize,
     const std::vector<std::uint32_t> countBounds, const bool ownsAtomInvGen) {
   AtomEnvironmentGenerator<OutputType> *atomPairEnvGenerator =
       new AtomPair::AtomPairEnvGenerator<OutputType>();
   FingerprintArguments<OutputType> *atomPairArguments =
       new AtomPair::AtomPairArguments<OutputType>(
           useCountSimulation, includeChirality, use2D, minDistance, maxDistance,
-          countBounds, foldedSize);
+          countBounds, fpSize);
 
   bool ownsAtomInvGenerator = ownsAtomInvGen;
   if (!atomInvariantsGenerator) {
@@ -226,14 +224,14 @@ template FingerprintGenerator<std::uint32_t> *getAtomPairGenerator(
     const unsigned int minDistance, const unsigned int maxDistance,
     const bool includeChirality, const bool use2D,
     AtomInvariantsGenerator *atomInvariantsGenerator,
-    const bool useCountSimulation, const std::uint32_t foldedSize,
+    const bool useCountSimulation, const std::uint32_t fpSize,
     const std::vector<std::uint32_t> countBounds, const bool ownsAtomInvGen);
 
 template FingerprintGenerator<std::uint64_t> *getAtomPairGenerator(
     const unsigned int minDistance, const unsigned int maxDistance,
     const bool includeChirality, const bool use2D,
     AtomInvariantsGenerator *atomInvariantsGenerator,
-    const bool useCountSimulation, const std::uint32_t foldedSize,
+    const bool useCountSimulation, const std::uint32_t fpSize,
     const std::vector<std::uint32_t> countBounds, const bool ownsAtomInvGen);
 }  // namespace AtomPair
 }  // namespace RDKit

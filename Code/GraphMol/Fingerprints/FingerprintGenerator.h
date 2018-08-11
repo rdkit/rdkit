@@ -42,7 +42,7 @@ struct AdditionalOutput {
 };
 
 /*!
-  /brief Abstract base class that holds molecule independent arguments that are
+  \brief Abstract base class that holds molecule independent arguments that are
   common amongst all fingerprint types and classes inherited from this would
   hold fingerprint type specific arguments
 
@@ -52,31 +52,31 @@ class FingerprintArguments : private boost::noncopyable {
  public:
   FingerprintArguments(const bool countSimulation,
                        const std::vector<std::uint32_t> countBounds,
-                       const std::uint32_t foldedSize);
+                       const std::uint32_t fpSize);
   const bool d_countSimulation;
   const std::vector<std::uint32_t> d_countBounds;
-  const std::uint32_t d_foldedSize;
+  const std::uint32_t d_fpSize;
 
   /*!
-    /brief Returns the size of the fingerprint based on arguments
+    \brief Returns the size of the fingerprint based on arguments
 
-    /return OutputType size of the fingerprint
+    \return OutputType size of the fingerprint
    */
   virtual OutputType getResultSize() const = 0;
 
   /**
-   /brief method that returns information string about the fingerprint specific
+   \brief method that returns information string about the fingerprint specific
    argument set and the arguments themselves
 
-   /return std::string information string
+   \return std::string information string
    */
   virtual std::string infoString() const = 0;
 
   /**
-   /brief method that returns information string about common fingerprinting
+   \brief method that returns information string about common fingerprinting
    arguments' values
 
-   /return std::string information string
+   \return std::string information string
    */
   std::string commonArgumentsString() const;
 
@@ -84,7 +84,7 @@ class FingerprintArguments : private boost::noncopyable {
 };
 
 /*!
-  /brief abstract base class that holds atom-environments that will be hashed to
+  \brief abstract base class that holds atom-environments that will be hashed to
   generate the fingerprint
 
  */
@@ -92,15 +92,15 @@ template <typename OutputType>
 class AtomEnvironment : private boost::noncopyable {
  public:
   /*!
-    /brief calculates and returns the bit id to be set for this atom-environment
+    \brief calculates and returns the bit id to be set for this atom-environment
 
-    /param arguments         Fingerprinting type specific molecule independent
+    \param arguments         Fingerprinting type specific molecule independent
     arguments
-    /param atomInvariants    Atom-invariants to be used during hashing
-    /param bondInvariants    Bond-invariants to be used during hashing
-    /param hashResults   if set results will be ready to be folded by modding
+    \param atomInvariants    Atom-invariants to be used during hashing
+    \param bondInvariants    Bond-invariants to be used during hashing
+    \param hashResults   if set results will be ready to be modded
 
-    /return OutputType  calculated bit id for this environment
+    \return OutputType  calculated bit id for this environment
    */
   virtual OutputType getBitId(FingerprintArguments<OutputType> *arguments,
                               const std::vector<std::uint32_t> *atomInvariants,
@@ -112,37 +112,37 @@ class AtomEnvironment : private boost::noncopyable {
 };
 
 /*!
-  /brief abstract base class that generates atom-environments from a molecule
+  \brief abstract base class that generates atom-environments from a molecule
 
  */
 template <typename OutputType>
 class AtomEnvironmentGenerator : private boost::noncopyable {
  public:
   /*!
-    /brief generate and return all atom-envorinments from a molecule
+    \brief generate and return all atom-envorinments from a molecule
 
-    /param mol               molecule to generate the atom-environments from
-    /param arguments         fingerprint type specific molecule independent
+    \param mol               molecule to generate the atom-environments from
+    \param arguments         fingerprint type specific molecule independent
     arguments
-    /param fromAtoms         atoms to be used during environment generation,
+    \param fromAtoms         atoms to be used during environment generation,
     usage of this parameter depends on the implementation of different
     fingerprint types
-    /param ignoreAtoms      atoms to be ignored during environment generation,
+    \param ignoreAtoms      atoms to be ignored during environment generation,
     usage of this parameter depends on the implementation of different
     fingerprint types
-    /param confId           which conformation to use during environment
+    \param confId           which conformation to use during environment
     generation, needed for some fingerprint types
-    /param additionalOutput contains pointers for additional outputs of
+    \param additionalOutput contains pointers for additional outputs of
     fingerprinting operation, usage depends on implementation of the fingerprint
     type
-    /param atomInvariants   atom invariants to be used during environment
+    \param atomInvariants   atom invariants to be used during environment
     generation, in some cases some of the hashing can be done during environment
     generation so it is also passed here
-    /param bondInvariants   bond invariants to be used during environment
+    \param bondInvariants   bond invariants to be used during environment
     generation, same as atomInvariants it might be needed
-    /param hashResults   if set results will be ready to be folded by modding
+    \param hashResults   if set results will be ready to be modded
 
-    /return std::vector<AtomEnvironment *>  atom-environments generated from
+    \return std::vector<AtomEnvironment *>  atom-environments generated from
     this molecule
    */
   virtual std::vector<AtomEnvironment<OutputType> *> getEnvironments(
@@ -155,10 +155,10 @@ class AtomEnvironmentGenerator : private boost::noncopyable {
       const bool hashResults = false) const = 0;
 
   /**
-   /brief method that returns information about this /c AtomEnvironmentGenerator
+   \brief method that returns information about this /c AtomEnvironmentGenerator
    and its arguments if any
 
-   /return std::string information string
+   \return std::string information string
    */
   virtual std::string infoString() const = 0;
 
@@ -166,27 +166,27 @@ class AtomEnvironmentGenerator : private boost::noncopyable {
 };
 
 /*!
-  /brief abstract base class for atom invariants generators
+  \brief abstract base class for atom invariants generators
 
  */
 class AtomInvariantsGenerator : private boost::noncopyable {
  public:
   /*!
-    /brief get atom invariants from a molecule
+    \brief get atom invariants from a molecule
 
-    /param mol                   molecule to generate the atom invariants for
+    \param mol                   molecule to generate the atom invariants for
 
-    /return std::vector<std::uint32_t> atom invariants generated for the given
+    \return std::vector<std::uint32_t> atom invariants generated for the given
     molecule
    */
   virtual std::vector<std::uint32_t> *getAtomInvariants(
       const ROMol &mol) const = 0;
 
   /**
-   /brief method that returns information about this /c AtomInvariantsGenerator
+   \brief method that returns information about this /c AtomInvariantsGenerator
    and its arguments
 
-   /return std::string information string
+   \return std::string information string
    */
   virtual std::string infoString() const = 0;
 
@@ -195,27 +195,27 @@ class AtomInvariantsGenerator : private boost::noncopyable {
 };
 
 /*!
-  /brief abstract base class for bond invariants generators
+  \brief abstract base class for bond invariants generators
 
  */
 class BondInvariantsGenerator : private boost::noncopyable {
  public:
   /*!
-    /brief get bond invariants from a molecule
+    \brief get bond invariants from a molecule
 
-    /param mol                   molecule to generate the bond invariants for
+    \param mol                   molecule to generate the bond invariants for
 
-    /return std::vector<std::uint32_t> bond invariants generated for the given
+    \return std::vector<std::uint32_t> bond invariants generated for the given
     molecule
    */
   virtual std::vector<std::uint32_t> *getBondInvariants(
       const ROMol &mol) const = 0;
 
   /**
- /brief method that returns information about this /c BondInvariantsGenerator
+ \brief method that returns information about this /c BondInvariantsGenerator
  and its arguments
 
- /return std::string information string
+ \return std::string information string
  */
   virtual std::string infoString() const = 0;
 
@@ -224,7 +224,7 @@ class BondInvariantsGenerator : private boost::noncopyable {
 };  // namespace RDKit
 
 /*!
-  /brief class that generates same fingerprint style for different output
+  \brief class that generates same fingerprint style for different output
   formats
 
  */

@@ -28,21 +28,22 @@ class TopologicalTorsionArguments : public FingerprintArguments<OutputType> {
   std::string infoString() const;
 
   /**
-   /brief Construct a new Topological Torsion Arguments object
+   \brief Construct a new Topological Torsion Arguments object
 
-   /param includeChirality if set, chirality will be used in non-folded result
-   /param torsionAtomCount the number of atoms to include in the "torsions"
-   /param useCountSimulation         if set, use count simulation while
+   \param includeChirality if set, chirality will be used in sparse result
+   \param torsionAtomCount the number of atoms to include in the "torsions"
+   \param useCountSimulation         if set, use count simulation while
    generating the fingerprint
-   /param countBounds  boundaries for count simulation, corresponding bit will
+   \param countBounds  boundaries for count simulation, corresponding bit will
    be set if the count is higher than the number provided for that spot
-   /param foldedSize size of the folded version of the fingerprints
+   \param fpSize size of the generated fingerprint, does not affect the sparse
+   versions
    */
   TopologicalTorsionArguments(const bool includeChirality,
                               const uint32_t torsionAtomCount,
                               const bool countSimulation,
                               const std::vector<std::uint32_t> countBounds,
-                              const std::uint32_t foldedSize);
+                              const std::uint32_t fpSize);
 };
 
 template <typename OutputType>
@@ -56,9 +57,9 @@ class TopologicalTorsionAtomEnv : public AtomEnvironment<OutputType> {
                       const AdditionalOutput *additionalOutput,
                       const bool hashResults = false) const;
   /**
-   /brief Construct a new Topological Torsion Atom Env object
+   \brief Construct a new Topological Torsion Atom Env object
 
-   /param bitId bitId generated for this environment
+   \param bitId bitId generated for this environment
    */
   TopologicalTorsionAtomEnv(OutputType bitId);
 };
@@ -80,20 +81,21 @@ class TopologicalTorsionEnvGenerator
 };
 
 /**
- /brief Get the Topological Torsion Generator object
+ \brief Get the Topological Torsion Generator object
 
- /tparam OutputType determines the size of the bitIds and the result, can only
+ \tparam OutputType determines the size of the bitIds and the result, can only
  be 64 bit unsigned integer for this type
- /param includeChirality includeChirality argument for both the default atom
+ \param includeChirality includeChirality argument for both the default atom
  invariants generator and the fingerprint arguments
- /param torsionAtomCount the number of atoms to include in the "torsions"
- /param atomInvariantsGenerator custom atom invariants generator to use
- /param useCountSimulation         if set, use count simulation while
+ \param torsionAtomCount the number of atoms to include in the "torsions"
+ \param atomInvariantsGenerator custom atom invariants generator to use
+ \param useCountSimulation         if set, use count simulation while
  generating the fingerprint
- /param countBounds  boundaries for count simulation, corresponding bit will
+ \param countBounds  boundaries for count simulation, corresponding bit will
  be set if the count is higher than the number provided for that spot
- /param foldedSize size of the folded version of the fingerprints
- /param ownsAtomInvGen  if set atom invariants generator is destroyed with the
+ \param fpSize size of the generated fingerprint, does not affect the sparse
+ versions
+ \param ownsAtomInvGen  if set atom invariants generator is destroyed with the
  fingerprint generator
 
  /return FingerprintGenerator<OutputType>* that generates topological-torsion
@@ -105,7 +107,7 @@ FingerprintGenerator<OutputType> *getTopologicalTorsionGenerator(
     AtomInvariantsGenerator *atomInvariantsGenerator = nullptr,
     const bool countSimulation = true,
     const std::vector<std::uint32_t> countBounds = {1, 2, 4, 8},
-    const std::uint32_t foldedSize = 2048, const bool ownsAtomInvGen = false);
+    const std::uint32_t fpSize = 2048, const bool ownsAtomInvGen = false);
 }  // namespace TopologicalTorsion
 }  // namespace RDKit
 

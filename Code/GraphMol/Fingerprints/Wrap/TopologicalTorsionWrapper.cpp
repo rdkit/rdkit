@@ -21,7 +21,7 @@ template <typename OutputType>
 FingerprintGenerator<OutputType> *getTopologicalTorsionFPGenerator(
     const bool includeChirality, const uint32_t torsionAtomCount,
     const bool countSimulation, python::object &py_countBounds,
-    const std::uint32_t foldedSize, python::object &py_atomInvGen) {
+    const std::uint32_t fpSize, python::object &py_atomInvGen) {
   AtomInvariantsGenerator *atomInvariantsGenerator = nullptr;
   BondInvariantsGenerator *bondInvariantsGenerator = nullptr;
 
@@ -41,7 +41,7 @@ FingerprintGenerator<OutputType> *getTopologicalTorsionFPGenerator(
 
   return TopologicalTorsion::getTopologicalTorsionGenerator<OutputType>(
       includeChirality, torsionAtomCount, atomInvariantsGenerator,
-      countSimulation, countBoundsC, foldedSize, false);
+      countSimulation, countBoundsC, fpSize, false);
 }
 
 void exportTopologicalTorsion() {
@@ -54,7 +54,7 @@ void exportTopologicalTorsion() {
        python::arg("torsionAtomCount") = 4,
        python::arg("countSimulation") = true,
        python::arg("countBounds") = python::object(),
-       python::arg("foldedSize") = 2048,
+       python::arg("fpSize") = 2048,
        python::arg("atomInvariantsGenerator") = python::object()),
       "Get an atom pair fingerprint generator\n\n"
       "  ARGUMENTS:\n"
@@ -67,7 +67,8 @@ void exportTopologicalTorsion() {
       "    - countBounds: boundaries for count simulation, corresponding bit "
       "will be  set if the count is higher than the number provided for that "
       "spot\n"
-      "    - foldedSize: size of the folded version of the fingerprints\n"
+      "    - fpSize: size of the generated fingerprint, does not affect the "
+      "sparse versions\n"
       "    - atomInvariantsGenerator: atom invariants to be used during "
       "fingerprint generation\n\n"
       "  RETURNS: FingerprintGenerator\n\n",

@@ -21,11 +21,10 @@ template <typename OutputType>
 TopologicalTorsionArguments<OutputType>::TopologicalTorsionArguments(
     const bool includeChirality, const uint32_t torsionAtomCount,
     const bool countSimulation, const std::vector<std::uint32_t> countBounds,
-    const std::uint32_t foldedSize)
+    const std::uint32_t fpSize)
     : df_includeChirality(includeChirality),
       d_torsionAtomCount(torsionAtomCount),
-      FingerprintArguments<OutputType>(countSimulation, countBounds,
-                                       foldedSize){};
+      FingerprintArguments<OutputType>(countSimulation, countBounds, fpSize){};
 
 template <typename OutputType>
 OutputType TopologicalTorsionArguments<OutputType>::getResultSize() const {
@@ -154,14 +153,14 @@ FingerprintGenerator<OutputType> *getTopologicalTorsionGenerator(
     const bool includeChirality, const uint32_t torsionAtomCount,
     AtomInvariantsGenerator *atomInvariantsGenerator,
     const bool countSimulation, const std::vector<std::uint32_t> countBounds,
-    const std::uint32_t foldedSize, const bool ownsAtomInvGen) {
+    const std::uint32_t fpSize, const bool ownsAtomInvGen) {
   TopologicalTorsionEnvGenerator<OutputType> *envGenerator =
       new TopologicalTorsionEnvGenerator<OutputType>();
 
   TopologicalTorsionArguments<OutputType> *arguments =
       new TopologicalTorsionArguments<OutputType>(
           includeChirality, torsionAtomCount, countSimulation, countBounds,
-          foldedSize);
+          fpSize);
 
   bool ownsAtomInvGenerator = ownsAtomInvGen;
   if (!atomInvariantsGenerator) {
@@ -181,7 +180,7 @@ template FingerprintGenerator<std::uint64_t> *getTopologicalTorsionGenerator(
     const bool includeChirality, const uint32_t torsionAtomCount,
     AtomInvariantsGenerator *atomInvariantsGenerator,
     const bool countSimulation, const std::vector<std::uint32_t> countBounds,
-    const std::uint32_t foldedSize, const bool ownsAtomInvGen);
+    const std::uint32_t fpSize, const bool ownsAtomInvGen);
 
 }  // namespace TopologicalTorsion
 }  // namespace RDKit

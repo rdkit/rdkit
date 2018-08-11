@@ -75,10 +75,8 @@ template <typename OutputType>
 RDKitFPArguments<OutputType>::RDKitFPArguments(
     unsigned int minPath, unsigned int maxPath, bool useHs, bool branchedPaths,
     bool useBondOrder, const bool countSimulation,
-    const std::vector<std::uint32_t> countBounds,
-    const std::uint32_t foldedSize)
-    : FingerprintArguments<OutputType>(countSimulation, countBounds,
-                                       foldedSize),
+    const std::vector<std::uint32_t> countBounds, const std::uint32_t fpSize)
+    : FingerprintArguments<OutputType>(countSimulation, countBounds, fpSize),
       d_minPath(minPath),
       d_maxPath(maxPath),
       df_useHs(useHs),
@@ -178,13 +176,13 @@ FingerprintGenerator<OutputType> *getRDKitFPGenerator(
     const bool branchedPaths, const bool useBondOrder,
     AtomInvariantsGenerator *atomInvariantsGenerator,
     const bool countSimulation, const std::vector<std::uint32_t> countBounds,
-    const std::uint32_t foldedSize, const bool ownsAtomInvGen) {
+    const std::uint32_t fpSize, const bool ownsAtomInvGen) {
   AtomEnvironmentGenerator<OutputType> *envGenerator =
       new RDKitFPEnvGenerator<OutputType>();
   FingerprintArguments<OutputType> *arguments =
       new RDKitFPArguments<OutputType>(minPath, maxPath, useHs, branchedPaths,
                                        useBondOrder, countSimulation,
-                                       countBounds, foldedSize);
+                                       countBounds, fpSize);
 
   bool ownsAtomInvGenerator = ownsAtomInvGen;
   if (!atomInvariantsGenerator) {
@@ -202,13 +200,13 @@ template FingerprintGenerator<std::uint32_t> *getRDKitFPGenerator(
     const bool branchedPaths, const bool useBondOrder,
     AtomInvariantsGenerator *atomInvariantsGenerator,
     const bool countSimulation, const std::vector<std::uint32_t> countBounds,
-    const std::uint32_t foldedSize, const bool ownsAtomInvGen);
+    const std::uint32_t fpSize, const bool ownsAtomInvGen);
 
 template FingerprintGenerator<std::uint64_t> *getRDKitFPGenerator(
     const unsigned int minPath, const unsigned int maxPath, const bool useHs,
     const bool branchedPaths, const bool useBondOrder,
     AtomInvariantsGenerator *atomInvariantsGenerator,
     const bool countSimulation, const std::vector<std::uint32_t> countBounds,
-    const std::uint32_t foldedSize, const bool ownsAtomInvGen);
+    const std::uint32_t fpSize, const bool ownsAtomInvGen);
 }  // namespace RDKitFP
 }  // namespace RDKit
