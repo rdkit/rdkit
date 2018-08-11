@@ -29,7 +29,7 @@ using boost::uint32_t;
 namespace RDKit {
 
 const int32_t MolPickler::versionMajor = 9;
-const int32_t MolPickler::versionMinor = 0;
+const int32_t MolPickler::versionMinor = 1;
 const int32_t MolPickler::versionPatch = 0;
 const int32_t MolPickler::endianId = 0xDEADBEEF;
 
@@ -76,7 +76,7 @@ std::mutex &GetPropMutex() {
   return propmutex_get();
 }
 #endif
-}
+}  // namespace
 
 unsigned int MolPickler::getDefaultPickleProperties() {
 #ifdef RDK_THREADSAFE_SSS
@@ -777,11 +777,11 @@ void MolPickler::molFromPickle(std::istream &ss, ROMol *mol) {
   streamRead(ss, patchVersion);
   if (majorVersion > versionMajor ||
       (majorVersion == versionMajor && minorVersion > versionMinor)) {
-    BOOST_LOG(rdWarningLog) << "Depickling from a version number ("
-                            << majorVersion << "." << minorVersion << ")"
-                            << "that is higher than our version ("
-                            << versionMajor << "." << versionMinor
-                            << ").\nThis probably won't work." << std::endl;
+    BOOST_LOG(rdWarningLog)
+        << "Depickling from a version number (" << majorVersion << "."
+        << minorVersion << ")"
+        << "that is higher than our version (" << versionMajor << "."
+        << versionMinor << ").\nThis probably won't work." << std::endl;
   }
   majorVersion = 1000 * majorVersion + minorVersion * 10 + patchVersion;
   if (majorVersion == 1) {
@@ -1072,7 +1072,7 @@ bool getAtomMapNumber(const Atom *atom, int &mapNum) {
   if (res) mapNum = tmpInt;
   return res;
 }
-}
+}  // namespace
 
 int32_t MolPickler::_pickleAtomData(std::ostream &tss, const Atom *atom) {
   int32_t propFlags = 0;
@@ -1230,8 +1230,14 @@ void MolPickler::_pickleAtom(std::ostream &ss, const Atom *atom) {
     streamWrite(ss, ENDQUERY);
   }
   if (getAtomMapNumber(atom, tmpInt)) {
-    tmpChar = static_cast<char>(tmpInt % 256);
-    streamWrite(ss, ATOM_MAPNUMBER, tmpChar);
+    if (tmpInt < 128) {
+      tmpChar = static_cast<char>(tmpInt % 128);
+      streamWrite(ss, ATOM_MAPNUMBER, tmpChar);
+    } else {
+      tmpChar = static_cast<char>(255);
+      streamWrite(ss, ATOM_MAPNUMBER, tmpChar);
+      streamWrite(ss, tmpInt);
+    }
   }
   if (atom->hasProp(common_properties::dummyLabel)) {
     streamWrite(ss, ATOM_DUMMYLABEL,
@@ -1410,7 +1416,7 @@ Atom *MolPickler::_addAtomFromPickle(std::istream &ss, ROMol *mol,
       Tags tag;
       streamRead(ss, tag, version);
       if (tag == ATOM_MAPNUMBER) {
-        int tmpInt;
+        int32_t tmpInt;
         streamRead(ss, tmpChar, version);
         tmpInt = tmpChar;
         atom->setProp(common_properties::molAtomMapNumber, tmpInt);
@@ -1427,7 +1433,11 @@ Atom *MolPickler::_addAtomFromPickle(std::istream &ss, ROMol *mol,
         }
         int tmpInt;
         streamRead(ss, tmpChar, version);
-        tmpInt = tmpChar;
+        if (tmpChar < 0 && version > 9000) {
+          streamRead(ss, tmpInt, version);
+        } else {
+          tmpInt = tmpChar;
+        }
         atom->setProp(common_properties::molAtomMapNumber, tmpInt);
       }
       if (hasDummyLabel) {
@@ -1896,4 +1906,4 @@ void MolPickler::_addBondFromPickleV1(std::istream &ss, ROMol *mol) {
   }
   mol->addBond(bond, true);
 }
-};
+};  // namespace RDKit

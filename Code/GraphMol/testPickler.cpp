@@ -361,7 +361,8 @@ void testQueries() {
   MolPickler::molFromPickle(pickle, *m1);
   TEST_ASSERT(m1->getNumAtoms() == 1);
   TEST_ASSERT(m1->getAtomWithIdx(0)->hasQuery());
-  TEST_ASSERT(m1->getAtomWithIdx(0)->getQuery()->getDescription() == "AtomType");
+  TEST_ASSERT(m1->getAtomWithIdx(0)->getQuery()->getDescription() ==
+              "AtomType");
   // query should be for aliphatic C:
   smi = "C";
   m2 = SmilesToMol(smi);
@@ -528,7 +529,8 @@ void testQueries() {
   TEST_ASSERT(m1->getAtomWithIdx(0)->hasQuery());
   TEST_ASSERT(m1->getAtomWithIdx(1)->hasQuery());
   TEST_ASSERT(m1->getBondWithIdx(0)->hasQuery());
-  TEST_ASSERT(m1->getBondWithIdx(0)->getQuery()->getDescription() == "SingleOrAromaticBond");
+  TEST_ASSERT(m1->getBondWithIdx(0)->getQuery()->getDescription() ==
+              "SingleOrAromaticBond");
   smi = "CC";
   m2 = SmilesToMol(smi);
   TEST_ASSERT(m2);
@@ -1272,6 +1274,33 @@ void testGithub1710() {
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
 
+void testGithub1999() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG(rdInfoLog) << "Testing Github 1999: pickling atom map numbers >127 "
+                          "gives negative values"
+                       << std::endl;
+
+  {
+    RWMol m;
+    m.addAtom(new Atom(6), false, true);
+    m.getAtomWithIdx(0)->setAtomMapNum(777);
+    std::string pkl;
+    MolPickler::pickleMol(m, pkl);
+    std::unique_ptr<RWMol> m2(new RWMol(pkl));
+    TEST_ASSERT(m2->getAtomWithIdx(0)->getAtomMapNum() == 777);
+  }
+  {
+    RWMol m;
+    m.addAtom(new Atom(6), false, true);
+    m.getAtomWithIdx(0)->setAtomMapNum(128);
+    std::string pkl;
+    MolPickler::pickleMol(m, pkl);
+    std::unique_ptr<RWMol> m2(new RWMol(pkl));
+    TEST_ASSERT(m2->getAtomWithIdx(0)->getAtomMapNum() == 128);
+  }
+  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
   bool doLong = false;
@@ -1306,4 +1335,5 @@ int main(int argc, char *argv[]) {
   testGithub713();
   testGithub1563();
   testGithub1710();
+  testGithub1999();
 }
