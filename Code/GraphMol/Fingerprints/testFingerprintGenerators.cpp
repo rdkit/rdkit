@@ -19,6 +19,7 @@
 #include <GraphMol/Fingerprints/MorganGenerator.h>
 #include <GraphMol/Fingerprints/RDKitFPGenerator.h>
 #include <GraphMol/Fingerprints/TopologicalTorsionGenerator.h>
+#include <GraphMol/Fingerprints/FingerprintGenerator.h>
 
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/FileParsers/FileParsers.h>
@@ -2399,6 +2400,55 @@ void testGitHubIssue811() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testBulkFP() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog)
+      << "    Test convenience and bulk fp calculation functions" << std::endl;
+
+  std::vector<std::pair<FingerprintGenerator<std::uint64_t> *, FPType>>
+      testPairs;
+
+  std::vector<const ROMol *> molVect;
+
+  BOOST_FOREACH (std::string sm, smis) { molVect.push_back(SmilesToMol(sm)); }
+
+  testPairs.push_back(std::pair<FingerprintGenerator<std::uint64_t> *, FPType>(
+      AtomPair::getAtomPairGenerator<std::uint64_t>(), FPType::AtomPairFP));
+
+  testPairs.push_back(std::pair<FingerprintGenerator<std::uint64_t> *, FPType>(
+      MorganFingerprint::getMorganGenerator<std::uint64_t>(3),
+      FPType::MorganFP));
+
+  testPairs.push_back(std::pair<FingerprintGenerator<std::uint64_t> *, FPType>(
+      RDKitFP::getRDKitFPGenerator<std::uint64_t>(), FPType::RDKitFP));
+
+  testPairs.push_back(std::pair<FingerprintGenerator<std::uint64_t> *, FPType>(
+      TopologicalTorsion::getTopologicalTorsionGenerator<std::uint64_t>(),
+      FPType::TopologicalTorsionFP));
+
+  BOOST_FOREACH (auto it, testPairs) {
+    std::vector<SparseIntVect<std::uint64_t> *> results =
+        getSparseCountFPBulk(molVect, it.second);
+
+    std::vector<SparseIntVect<std::uint64_t> *> compareRes;
+
+    BOOST_FOREACH (auto m, molVect) {
+      compareRes.push_back(it.first->getSparseCountFingerprint(*m));
+    }
+
+    for (int i = 0; i < results.size(); i++) {
+      TEST_ASSERT(*results[i] == *compareRes[i]);
+
+      delete results[i];
+      delete compareRes[i];
+    }
+  }
+
+  BOOST_FOREACH (auto m, molVect) { delete m; }
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -2438,6 +2488,7 @@ int main(int argc, char *argv[]) {
   testGitHubIssue25();
   testGitHubIssue334();
   testGitHubIssue811();
+  testBulkFP();
 
   return 0;
 }

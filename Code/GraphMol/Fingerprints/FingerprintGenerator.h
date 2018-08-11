@@ -277,6 +277,46 @@ class FingerprintGenerator : private boost::noncopyable {
 
   std::string infoString() const;
 };
+
+enum class FPType { AtomPairFP, MorganFP, RDKitFP, TopologicalTorsionFP };
+
+//! used to indicate errors for unimplemented fp types in convenience functions
+class RDKIT_GRAPHMOL_EXPORT UnimplementedFPException : public std::exception {
+ public:
+  //! construct with an error message
+  UnimplementedFPException(const char *msg) : _msg(msg){};
+  //! construct with an error message
+  UnimplementedFPException(const std::string &msg) : _msg(msg){};
+  //! get the error message
+  const char *message() const { return _msg.c_str(); };
+  ~UnimplementedFPException() throw(){};
+
+ private:
+  std::string _msg;
+};
+
+// convenience functions, fingerprint generation with default values
+
+SparseIntVect<std::uint64_t> *getSparseCountFP(const ROMol &mol, FPType fPType);
+
+SparseBitVect *getSparseFP(const ROMol &mol, FPType fPType);
+
+SparseIntVect<std::uint32_t> *getCountFP(const ROMol &mol, FPType fPType);
+
+ExplicitBitVect *getFP(const ROMol &mol, FPType fPType);
+
+std::vector<SparseIntVect<std::uint64_t> *> getSparseCountFPBulk(
+    const std::vector<const ROMol *> molVector, FPType fPType);
+
+std::vector<SparseBitVect *> getSparseFPBulk(
+    const std::vector<const ROMol *> molVector, FPType fPType);
+
+std::vector<SparseIntVect<std::uint32_t> *> getCountFPBulk(
+    const std::vector<const ROMol *> molVector, FPType fPType);
+
+std::vector<ExplicitBitVect *> getFPBulk(
+    const std::vector<const ROMol *> molVector, FPType fPType);
+
 }  // namespace RDKit
 
 #endif
