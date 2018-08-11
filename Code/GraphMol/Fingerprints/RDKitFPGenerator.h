@@ -1,3 +1,13 @@
+//
+//  Copyright (C) 2018 Boran Adas
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
+
 #ifndef RD_RDFINGERPRINTGEN_H_2018_07
 #define RD_RDFINGERPRINTGEN_H_2018_07
 
