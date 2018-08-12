@@ -2570,6 +2570,28 @@ void testGithub1906() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub1985() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github #1985: MolFromSmarts/MolToSmarts "
+                          "fails to round trip on patterns with chirality"
+                       << std::endl;
+  {
+    std::vector<std::string> smarts = {
+        "[C@]",
+        "[C:1]([C@:3]1([OH:24])[CH2:8][CH2:7][C@H:6]2[C@H:9]3[C@H:19]([C@@H:20]"
+        "([F:22])[CH2:21][C@:4]12[CH3:5])[C@:17]1([CH3:18])[C:12](=[CH:13][C:"
+        "14](=[O:23])[CH2:15][CH2:16]1)[CH:11]=[CH:10]3)#[CH:2]"};
+    for (const auto &pr : smarts) {
+      std::unique_ptr<ROMol> m1(SmartsToMol(pr));
+      TEST_ASSERT(m1);
+      auto csma1 = MolToSmarts(*m1);
+      TEST_ASSERT(csma1.find("C@") != std::string::npos);
+    }
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -2616,7 +2638,10 @@ int main(int argc, char *argv[]) {
   testGithub1756();
   testGithub1920();
   testGithub1719();
-#endif
+  testCombinedQueries();
   testGithub1906();
+#endif
+  testGithub1985();
+
   return 0;
 }
