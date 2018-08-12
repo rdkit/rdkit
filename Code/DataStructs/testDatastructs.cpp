@@ -881,7 +881,7 @@ void test6SparseIntVect() {
   }
 
   {  // operator== and operator!=
-    SparseIntVect<int> iV1(5), iV2(5), iV3(3);
+    SparseIntVect<int> iV1(5), iV2(5), iV3(3), iV4(5);
     iV1.setVal(0, 2);
     iV1.setVal(2, 1);
     iV1.setVal(3, 4);
@@ -892,6 +892,11 @@ void test6SparseIntVect() {
     iV2.setVal(3, 4);
     iV2.setVal(4, 6);
 
+    iV4.setVal(1, 2);
+    iV4.setVal(2, 3);
+    iV4.setVal(3, 4);
+    iV4.setVal(4, 6);
+
     TEST_ASSERT(iV1 == iV1);
     TEST_ASSERT(iV2 == iV2);
     TEST_ASSERT(iV3 == iV3);
@@ -900,6 +905,8 @@ void test6SparseIntVect() {
     TEST_ASSERT(iV2 != iV1);
     TEST_ASSERT(iV3 != iV1);
     TEST_ASSERT(iV1 != iV3);
+    TEST_ASSERT(iV1 != iV4);
+    TEST_ASSERT(iV2 == iV4);
   }
 
   {  // test negative values (was sf.net Issue 3295215)
