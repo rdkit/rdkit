@@ -50,7 +50,7 @@
 #define YYSKELETON_NAME "yacc.c"
 
 /* Pure parsers.  */
-#define YYPURE 1
+#define YYPURE 2
 
 /* Push parsers.  */
 #define YYPUSH 0
@@ -91,7 +91,7 @@
 #define YYDEBUG 1
 #include "smiles.tab.hpp"
 
-extern int yysmiles_lex(YYSTYPE *,void *);
+extern int yysmiles_lex(YYSTYPE *,void *,int &);
 
 
 using namespace RDKit;
@@ -108,8 +108,20 @@ namespace {
 void
 yysmiles_error( const char *input,
                 std::vector<RDKit::RWMol *> *ms,
+                RDKit::Atom* &lastAtom,
+                RDKit::Bond* &lastBond,
                 std::list<unsigned int> *branchPoints,
-		void *scanner,const char * msg )
+		void *scanner,int start_token, const char * msg )
+{
+  yyErrorCleanup(ms);
+  throw RDKit::SmilesParseException(msg);
+}
+
+void
+yysmiles_error( const char *input,
+                std::vector<RDKit::RWMol *> *ms,
+                std::list<unsigned int> *branchPoints,
+		void *scanner,int start_token, const char * msg )
 {
   yyErrorCleanup(ms);
   throw RDKit::SmilesParseException(msg);
@@ -117,7 +129,7 @@ yysmiles_error( const char *input,
 
 
 
-#line 121 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:339  */
+#line 133 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:339  */
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -152,29 +164,32 @@ extern int yysmiles_debug;
 # define YYTOKENTYPE
   enum yytokentype
   {
-    AROMATIC_ATOM_TOKEN = 258,
-    ATOM_TOKEN = 259,
-    ORGANIC_ATOM_TOKEN = 260,
-    NONZERO_DIGIT_TOKEN = 261,
-    ZERO_TOKEN = 262,
-    GROUP_OPEN_TOKEN = 263,
-    GROUP_CLOSE_TOKEN = 264,
-    SEPARATOR_TOKEN = 265,
-    LOOP_CONNECTOR_TOKEN = 266,
-    MINUS_TOKEN = 267,
-    PLUS_TOKEN = 268,
-    CHIRAL_MARKER_TOKEN = 269,
-    CHI_CLASS_TOKEN = 270,
-    CHI_CLASS_OH_TOKEN = 271,
-    H_TOKEN = 272,
-    AT_TOKEN = 273,
-    PERCENT_TOKEN = 274,
-    COLON_TOKEN = 275,
-    HASH_TOKEN = 276,
-    BOND_TOKEN = 277,
-    ATOM_OPEN_TOKEN = 278,
-    ATOM_CLOSE_TOKEN = 279,
-    EOS_TOKEN = 280
+    START_MOL = 258,
+    START_ATOM = 259,
+    START_BOND = 260,
+    AROMATIC_ATOM_TOKEN = 261,
+    ATOM_TOKEN = 262,
+    ORGANIC_ATOM_TOKEN = 263,
+    NONZERO_DIGIT_TOKEN = 264,
+    ZERO_TOKEN = 265,
+    GROUP_OPEN_TOKEN = 266,
+    GROUP_CLOSE_TOKEN = 267,
+    SEPARATOR_TOKEN = 268,
+    LOOP_CONNECTOR_TOKEN = 269,
+    MINUS_TOKEN = 270,
+    PLUS_TOKEN = 271,
+    CHIRAL_MARKER_TOKEN = 272,
+    CHI_CLASS_TOKEN = 273,
+    CHI_CLASS_OH_TOKEN = 274,
+    H_TOKEN = 275,
+    AT_TOKEN = 276,
+    PERCENT_TOKEN = 277,
+    COLON_TOKEN = 278,
+    HASH_TOKEN = 279,
+    BOND_TOKEN = 280,
+    ATOM_OPEN_TOKEN = 281,
+    ATOM_CLOSE_TOKEN = 282,
+    EOS_TOKEN = 283
   };
 #endif
 
@@ -183,14 +198,14 @@ extern int yysmiles_debug;
 
 union YYSTYPE
 {
-#line 57 "smiles.yy" /* yacc.c:355  */
+#line 78 "smiles.yy" /* yacc.c:355  */
 
   int                      moli;
   RDKit::Atom * atom;
   RDKit::Bond * bond;
   int                      ival;
 
-#line 194 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:355  */
+#line 209 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:355  */
 };
 
 typedef union YYSTYPE YYSTYPE;
@@ -200,13 +215,20 @@ typedef union YYSTYPE YYSTYPE;
 
 
 
-int yysmiles_parse (const char *input, std::vector<RDKit::RWMol *> *molList, std::list<unsigned int> *branchPoints, void *scanner);
+int yysmiles_parse (const char *input, std::vector<RDKit::RWMol *> *molList, RDKit::Atom* &lastAtom, RDKit::Bond* &lastBond, std::list<unsigned int> *branchPoints, void *scanner, int& start_token);
+/* "%code provides" blocks.  */
+#line 73 "smiles.yy" /* yacc.c:355  */
+
+#define YY_DECL int yylex \
+               (YYSTYPE * yylval_param , yyscan_t yyscanner, int& start_token)
+
+#line 226 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:355  */
 
 #endif /* !YY_YYSMILES_SCRATCH_RDKIT_GIT_CODE_GRAPHMOL_SMILESPARSE_SMILES_TAB_HPP_INCLUDED  */
 
 /* Copy the second part of user declarations.  */
 
-#line 210 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:358  */
+#line 232 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -446,23 +468,23 @@ union yyalloc
 #endif /* !YYCOPY_NEEDED */
 
 /* YYFINAL -- State number of the termination state.  */
-#define YYFINAL  22
+#define YYFINAL  17
 /* YYLAST -- Last index in YYTABLE.  */
 #define YYLAST   115
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  26
+#define YYNTOKENS  29
 /* YYNNTS -- Number of nonterminals.  */
-#define YYNNTS  13
+#define YYNNTS  14
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  60
+#define YYNRULES  64
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  85
+#define YYNSTATES  92
 
 /* YYTRANSLATE[YYX] -- Symbol number corresponding to YYX as returned
    by yylex, with out-of-bounds checking.  */
 #define YYUNDEFTOK  2
-#define YYMAXUTOK   280
+#define YYMAXUTOK   283
 
 #define YYTRANSLATE(YYX)                                                \
   ((unsigned int) (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
@@ -499,20 +521,20 @@ static const yytype_uint8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
        5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
       15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
-      25
+      25,    26,    27,    28
 };
 
 #if YYDEBUG
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,    79,    79,    80,    86,    89,    99,   110,   120,   140,
-     148,   154,   173,   191,   207,   217,   237,   245,   255,   256,
-     263,   271,   272,   273,   274,   275,   276,   277,   281,   282,
-     283,   284,   285,   286,   287,   288,   289,   293,   294,   295,
-     299,   300,   301,   302,   303,   304,   308,   309,   313,   314,
-     315,   316,   317,   318,   319,   323,   324,   328,   329,   332,
-     333
+       0,   103,   103,   106,   109,   112,   118,   121,   132,   143,
+     153,   173,   181,   187,   206,   224,   240,   250,   270,   278,
+     287,   288,   296,   297,   304,   312,   313,   314,   315,   316,
+     317,   318,   322,   323,   324,   325,   326,   327,   328,   329,
+     330,   334,   335,   336,   340,   341,   342,   343,   344,   345,
+     349,   350,   354,   355,   356,   357,   358,   359,   360,   364,
+     365,   369,   370,   373,   374
 };
 #endif
 
@@ -521,16 +543,16 @@ static const yytype_uint16 yyrline[] =
    First, the terminals, then, starting at YYNTOKENS, nonterminals.  */
 static const char *const yytname[] =
 {
-  "$end", "error", "$undefined", "AROMATIC_ATOM_TOKEN", "ATOM_TOKEN",
-  "ORGANIC_ATOM_TOKEN", "NONZERO_DIGIT_TOKEN", "ZERO_TOKEN",
-  "GROUP_OPEN_TOKEN", "GROUP_CLOSE_TOKEN", "SEPARATOR_TOKEN",
-  "LOOP_CONNECTOR_TOKEN", "MINUS_TOKEN", "PLUS_TOKEN",
-  "CHIRAL_MARKER_TOKEN", "CHI_CLASS_TOKEN", "CHI_CLASS_OH_TOKEN",
-  "H_TOKEN", "AT_TOKEN", "PERCENT_TOKEN", "COLON_TOKEN", "HASH_TOKEN",
-  "BOND_TOKEN", "ATOM_OPEN_TOKEN", "ATOM_CLOSE_TOKEN", "EOS_TOKEN",
-  "$accept", "cmpd", "mol", "atomd", "charge_element", "h_element",
-  "chiral_element", "element", "simple_atom", "ring_number", "number",
-  "nonzero_number", "digit", YY_NULLPTR
+  "$end", "error", "$undefined", "START_MOL", "START_ATOM", "START_BOND",
+  "AROMATIC_ATOM_TOKEN", "ATOM_TOKEN", "ORGANIC_ATOM_TOKEN",
+  "NONZERO_DIGIT_TOKEN", "ZERO_TOKEN", "GROUP_OPEN_TOKEN",
+  "GROUP_CLOSE_TOKEN", "SEPARATOR_TOKEN", "LOOP_CONNECTOR_TOKEN",
+  "MINUS_TOKEN", "PLUS_TOKEN", "CHIRAL_MARKER_TOKEN", "CHI_CLASS_TOKEN",
+  "CHI_CLASS_OH_TOKEN", "H_TOKEN", "AT_TOKEN", "PERCENT_TOKEN",
+  "COLON_TOKEN", "HASH_TOKEN", "BOND_TOKEN", "ATOM_OPEN_TOKEN",
+  "ATOM_CLOSE_TOKEN", "EOS_TOKEN", "$accept", "meta_start", "mol", "bondd",
+  "atomd", "charge_element", "h_element", "chiral_element", "element",
+  "simple_atom", "ring_number", "number", "nonzero_number", "digit", YY_NULLPTR
 };
 #endif
 
@@ -541,14 +563,14 @@ static const yytype_uint16 yytoknum[] =
 {
        0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
      265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
-     275,   276,   277,   278,   279,   280
+     275,   276,   277,   278,   279,   280,   281,   282,   283
 };
 # endif
 
-#define YYPACT_NINF -22
+#define YYPACT_NINF -32
 
 #define yypact_value_is_default(Yystate) \
-  (!!((Yystate) == (-22)))
+  (!!((Yystate) == (-32)))
 
 #define YYTABLE_NINF -1
 
@@ -559,15 +581,16 @@ static const yytype_uint16 yytoknum[] =
      STATE-NUM.  */
 static const yytype_int8 yypact[] =
 {
-       8,   -15,   -22,   -22,    94,     5,    60,   -22,   -22,   -22,
-     -22,   -22,   -22,     1,    47,   -17,    80,    20,    21,   -22,
-      85,    74,   -22,    17,   -22,   -22,   -22,    73,   -22,    -1,
-      68,     6,    68,   -22,   -22,   -22,    47,   -22,    47,   -22,
-       9,    13,    47,    28,   -22,    33,    47,   -22,   -22,   -22,
-      -1,    -1,   -22,   -22,   -22,   -22,    74,    74,   -22,   -22,
-     -22,    35,   -22,   -22,   -22,   -22,   -22,   -22,    47,   -22,
-     -22,   -22,   -22,    38,   -22,   -22,   -22,    42,   -22,    98,
-     -22,   103,   -22,    48,   -22
+       5,   -11,     8,     8,   -10,     2,   -32,   -32,   -32,    88,
+      54,   -32,   -32,   -32,   -32,   -32,   -32,   -32,    -8,   -32,
+     -32,   -32,   -32,     4,    68,    -5,    74,     9,    15,   -32,
+      79,   105,   -32,   -32,    67,   -32,     8,    62,    39,    62,
+     -32,   -32,   -32,   -32,    68,   -32,    68,   -32,    32,     3,
+      68,    18,   -32,    25,    68,   -32,   -32,     8,     8,   -32,
+     -32,   -32,   -32,   105,   105,   -32,   -32,   -32,    24,   -32,
+     -32,   -32,   -32,   -32,   -32,    68,   -32,   -32,   -32,   -32,
+      34,   -32,   -32,   -32,    92,   -32,    97,   -32,   101,   -32,
+      49,   -32
 };
 
   /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -575,29 +598,30 @@ static const yytype_int8 yypact[] =
      means the default is an error.  */
 static const yytype_uint8 yydefact[] =
 {
-       0,     0,    47,    46,     0,     0,     2,     6,    18,     5,
-      42,    57,    55,    28,     0,     0,    21,    34,    37,    40,
-       0,    56,     1,     0,     4,    59,    60,     0,    17,     0,
-       0,     0,     0,     7,    11,    48,    30,    44,     0,    20,
-      25,    22,    35,    38,    43,    29,     0,    41,    58,     3,
-       0,     0,    14,    10,     9,    13,     0,     0,     8,    12,
-      32,     0,    26,    27,    23,    24,    36,    39,    31,    45,
-      16,    15,    49,     0,    19,    33,    50,     0,    51,     0,
-      52,     0,    53,     0,    54
+       0,     0,     0,     0,     0,     0,     7,    51,    50,     0,
+       2,     8,    22,     3,    21,    20,     4,     1,     0,     6,
+      46,    61,    59,    32,     0,     0,    25,    38,    41,    44,
+       0,    60,    63,    64,     0,    19,     0,     0,     0,     0,
+       9,    13,    52,     5,    34,    48,     0,    24,    29,    26,
+      39,    42,    47,    33,     0,    45,    62,     0,     0,    16,
+      12,    11,    15,     0,     0,    10,    14,    36,     0,    30,
+      31,    27,    28,    40,    43,    35,    49,    18,    17,    53,
+       0,    23,    37,    54,     0,    55,     0,    56,     0,    57,
+       0,    58
 };
 
   /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -22,   -22,   -22,    11,   -22,   -22,   -22,   -22,     4,     2,
-     -13,   -22,   -21
+     -32,   -32,   -32,   -32,     1,   -32,   -32,   -32,   -32,    -2,
+      17,   -23,   -32,   -31
 };
 
   /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-      -1,     5,     6,     7,    15,    16,    17,    18,     8,    34,
-      20,    21,    35
+      -1,     5,    10,    16,    11,    25,    26,    27,    28,    12,
+      41,    30,    31,    42
 };
 
   /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -605,73 +629,74 @@ static const yytype_int8 yydefgoto[] =
      number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_uint8 yytable[] =
 {
-      48,    37,     2,    38,     3,    22,    23,    39,    19,     1,
-       9,     2,    56,     3,    57,    11,    12,    33,    36,    11,
-      12,    62,     4,    60,    47,    61,    64,    63,    65,    66,
-      24,     4,    55,    69,    59,    72,    73,    42,    52,    43,
-      53,    54,    49,    58,    25,    26,    67,    76,    25,    26,
-      68,    78,    77,    11,    12,    75,    79,    84,    81,    74,
-      83,    70,    71,     2,     0,     3,    25,    26,    27,    28,
-      29,     2,    30,     3,    25,    26,     2,     0,     3,    31,
-      25,    26,    32,     4,     0,    50,     0,    31,     2,    44,
-       3,     4,    40,    41,     0,    51,     4,     2,    10,     3,
-      11,    12,    45,     0,    25,    26,    46,    80,     0,    25,
-      26,    13,    82,     0,     0,    14
+      56,    45,    17,    18,    13,    14,     1,    29,     2,     3,
+       4,    40,    21,    22,     7,    15,     8,     6,    46,    71,
+      43,    67,    47,    68,    44,    70,    72,    73,    55,    50,
+      19,    76,    79,    80,     9,    59,    51,    60,    61,    74,
+      65,    21,    22,    32,    33,    75,    83,    69,    63,    84,
+      64,    81,    82,    86,    62,    88,    66,    90,    77,    78,
+       7,    91,     8,    32,    33,    34,    35,    36,     7,    37,
+       8,    32,    33,     7,     0,     8,    38,    21,    22,    39,
+       9,     0,    57,     0,    38,     7,    52,     8,     9,    48,
+      49,     0,    58,     9,     7,    20,     8,    21,    22,    53,
+       0,    32,    33,    54,    85,     0,    32,    33,    23,    87,
+      32,    33,    24,    89,    32,    33
 };
 
 static const yytype_int8 yycheck[] =
 {
-      21,    14,     3,    20,     5,     0,     1,    24,     4,     1,
-      25,     3,     6,     5,     8,     6,     7,     6,    17,     6,
-       7,    12,    23,    36,    20,    38,    13,    40,    41,    42,
-      25,    23,    30,    46,    32,    56,    57,    17,    27,    18,
-      29,    30,    25,    32,     6,     7,    18,     9,     6,     7,
-      17,     9,    73,     6,     7,    68,    77,     9,    79,    24,
-      81,    50,    51,     3,    -1,     5,     6,     7,     8,     9,
-      10,     3,    12,     5,     6,     7,     3,    -1,     5,    19,
-       6,     7,    22,    23,    -1,    12,    -1,    19,     3,     4,
-       5,    23,    12,    13,    -1,    22,    23,     3,     4,     5,
-       6,     7,    17,    -1,     6,     7,    21,     9,    -1,     6,
-       7,    17,     9,    -1,    -1,    21
+      31,    24,     0,     1,     3,    15,     1,     9,     3,     4,
+       5,    10,     9,    10,     6,    25,     8,    28,    23,    16,
+      28,    44,    27,    46,    20,    48,    49,    50,    30,    20,
+      28,    54,    63,    64,    26,    34,    21,    36,    37,    21,
+      39,     9,    10,     9,    10,    20,    12,    15,     9,    80,
+      11,    27,    75,    84,    37,    86,    39,    88,    57,    58,
+       6,    12,     8,     9,    10,    11,    12,    13,     6,    15,
+       8,     9,    10,     6,    -1,     8,    22,     9,    10,    25,
+      26,    -1,    15,    -1,    22,     6,     7,     8,    26,    15,
+      16,    -1,    25,    26,     6,     7,     8,     9,    10,    20,
+      -1,     9,    10,    24,    12,    -1,     9,    10,    20,    12,
+       9,    10,    24,    12,     9,    10
 };
 
   /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
      symbol of state STATE-NUM.  */
 static const yytype_uint8 yystos[] =
 {
-       0,     1,     3,     5,    23,    27,    28,    29,    34,    25,
-       4,     6,     7,    17,    21,    30,    31,    32,    33,    34,
-      36,    37,     0,     1,    25,     6,     7,     8,     9,    10,
-      12,    19,    22,    29,    35,    38,    17,    36,    20,    24,
-      12,    13,    17,    18,     4,    17,    21,    34,    38,    25,
-      12,    22,    29,    29,    29,    35,     6,     8,    29,    35,
-      36,    36,    12,    36,    13,    36,    36,    18,    17,    36,
-      29,    29,    38,    38,    24,    36,     9,    38,     9,    38,
-       9,    38,     9,    38,     9
+       0,     1,     3,     4,     5,    30,    28,     6,     8,    26,
+      31,    33,    38,    33,    15,    25,    32,     0,     1,    28,
+       7,     9,    10,    20,    24,    34,    35,    36,    37,    38,
+      40,    41,     9,    10,    11,    12,    13,    15,    22,    25,
+      33,    39,    42,    28,    20,    40,    23,    27,    15,    16,
+      20,    21,     7,    20,    24,    38,    42,    15,    25,    33,
+      33,    33,    39,     9,    11,    33,    39,    40,    40,    15,
+      40,    16,    40,    40,    21,    20,    40,    33,    33,    42,
+      42,    27,    40,    12,    42,    12,    42,    12,    42,    12,
+      42,    12
 };
 
   /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
 static const yytype_uint8 yyr1[] =
 {
-       0,    26,    27,    27,    27,    27,    28,    28,    28,    28,
-      28,    28,    28,    28,    28,    28,    28,    28,    29,    29,
-      29,    30,    30,    30,    30,    30,    30,    30,    31,    31,
-      31,    31,    31,    31,    31,    31,    31,    32,    32,    32,
-      33,    33,    33,    33,    33,    33,    34,    34,    35,    35,
-      35,    35,    35,    35,    35,    36,    36,    37,    37,    38,
-      38
+       0,    29,    30,    30,    30,    30,    30,    30,    31,    31,
+      31,    31,    31,    31,    31,    31,    31,    31,    31,    31,
+      32,    32,    33,    33,    33,    34,    34,    34,    34,    34,
+      34,    34,    35,    35,    35,    35,    35,    35,    35,    35,
+      35,    36,    36,    36,    37,    37,    37,    37,    37,    37,
+      38,    38,    39,    39,    39,    39,    39,    39,    39,    40,
+      40,    41,    41,    42,    42
 };
 
   /* YYR2[YYN] -- Number of symbols on the right hand side of rule YYN.  */
 static const yytype_uint8 yyr2[] =
 {
-       0,     2,     1,     3,     2,     2,     1,     2,     3,     3,
-       3,     2,     3,     3,     3,     4,     4,     2,     1,     5,
-       3,     1,     2,     3,     3,     2,     3,     3,     1,     2,
-       2,     3,     3,     4,     1,     2,     3,     1,     2,     3,
-       1,     2,     1,     2,     2,     3,     1,     1,     1,     3,
-       4,     5,     6,     7,     8,     1,     1,     1,     2,     1,
-       1
+       0,     2,     2,     2,     2,     3,     2,     2,     1,     2,
+       3,     3,     3,     2,     3,     3,     3,     4,     4,     2,
+       1,     1,     1,     5,     3,     1,     2,     3,     3,     2,
+       3,     3,     1,     2,     2,     3,     3,     4,     1,     2,
+       3,     1,     2,     3,     1,     2,     1,     2,     2,     3,
+       1,     1,     1,     3,     4,     5,     6,     7,     8,     1,
+       1,     1,     2,     1,     1
 };
 
 
@@ -699,7 +724,7 @@ do                                                              \
     }                                                           \
   else                                                          \
     {                                                           \
-      yyerror (input, molList, branchPoints, scanner, YY_("syntax error: cannot back up")); \
+      yyerror (input, molList, lastAtom, lastBond, branchPoints, scanner, start_token, YY_("syntax error: cannot back up")); \
       YYERROR;                                                  \
     }                                                           \
 while (0)
@@ -736,7 +761,7 @@ do {                                                                      \
     {                                                                     \
       YYFPRINTF (stderr, "%s ", Title);                                   \
       yy_symbol_print (stderr,                                            \
-                  Type, Value, input, molList, branchPoints, scanner); \
+                  Type, Value, input, molList, lastAtom, lastBond, branchPoints, scanner, start_token); \
       YYFPRINTF (stderr, "\n");                                           \
     }                                                                     \
 } while (0)
@@ -747,14 +772,17 @@ do {                                                                      \
 `----------------------------------------*/
 
 static void
-yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, const char *input, std::vector<RDKit::RWMol *> *molList, std::list<unsigned int> *branchPoints, void *scanner)
+yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, const char *input, std::vector<RDKit::RWMol *> *molList, RDKit::Atom* &lastAtom, RDKit::Bond* &lastBond, std::list<unsigned int> *branchPoints, void *scanner, int& start_token)
 {
   FILE *yyo = yyoutput;
   YYUSE (yyo);
   YYUSE (input);
   YYUSE (molList);
+  YYUSE (lastAtom);
+  YYUSE (lastBond);
   YYUSE (branchPoints);
   YYUSE (scanner);
+  YYUSE (start_token);
   if (!yyvaluep)
     return;
 # ifdef YYPRINT
@@ -770,12 +798,12 @@ yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvalue
 `--------------------------------*/
 
 static void
-yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, const char *input, std::vector<RDKit::RWMol *> *molList, std::list<unsigned int> *branchPoints, void *scanner)
+yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, const char *input, std::vector<RDKit::RWMol *> *molList, RDKit::Atom* &lastAtom, RDKit::Bond* &lastBond, std::list<unsigned int> *branchPoints, void *scanner, int& start_token)
 {
   YYFPRINTF (yyoutput, "%s %s (",
              yytype < YYNTOKENS ? "token" : "nterm", yytname[yytype]);
 
-  yy_symbol_value_print (yyoutput, yytype, yyvaluep, input, molList, branchPoints, scanner);
+  yy_symbol_value_print (yyoutput, yytype, yyvaluep, input, molList, lastAtom, lastBond, branchPoints, scanner, start_token);
   YYFPRINTF (yyoutput, ")");
 }
 
@@ -808,7 +836,7 @@ do {                                                            \
 `------------------------------------------------*/
 
 static void
-yy_reduce_print (yytype_int16 *yyssp, YYSTYPE *yyvsp, int yyrule, const char *input, std::vector<RDKit::RWMol *> *molList, std::list<unsigned int> *branchPoints, void *scanner)
+yy_reduce_print (yytype_int16 *yyssp, YYSTYPE *yyvsp, int yyrule, const char *input, std::vector<RDKit::RWMol *> *molList, RDKit::Atom* &lastAtom, RDKit::Bond* &lastBond, std::list<unsigned int> *branchPoints, void *scanner, int& start_token)
 {
   unsigned long int yylno = yyrline[yyrule];
   int yynrhs = yyr2[yyrule];
@@ -822,7 +850,7 @@ yy_reduce_print (yytype_int16 *yyssp, YYSTYPE *yyvsp, int yyrule, const char *in
       yy_symbol_print (stderr,
                        yystos[yyssp[yyi + 1 - yynrhs]],
                        &(yyvsp[(yyi + 1) - (yynrhs)])
-                                              , input, molList, branchPoints, scanner);
+                                              , input, molList, lastAtom, lastBond, branchPoints, scanner, start_token);
       YYFPRINTF (stderr, "\n");
     }
 }
@@ -830,7 +858,7 @@ yy_reduce_print (yytype_int16 *yyssp, YYSTYPE *yyvsp, int yyrule, const char *in
 # define YY_REDUCE_PRINT(Rule)          \
 do {                                    \
   if (yydebug)                          \
-    yy_reduce_print (yyssp, yyvsp, Rule, input, molList, branchPoints, scanner); \
+    yy_reduce_print (yyssp, yyvsp, Rule, input, molList, lastAtom, lastBond, branchPoints, scanner, start_token); \
 } while (0)
 
 /* Nonzero means print parse trace.  It is left uninitialized so that
@@ -1088,13 +1116,16 @@ yysyntax_error (YYSIZE_T *yymsg_alloc, char **yymsg,
 `-----------------------------------------------*/
 
 static void
-yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, const char *input, std::vector<RDKit::RWMol *> *molList, std::list<unsigned int> *branchPoints, void *scanner)
+yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, const char *input, std::vector<RDKit::RWMol *> *molList, RDKit::Atom* &lastAtom, RDKit::Bond* &lastBond, std::list<unsigned int> *branchPoints, void *scanner, int& start_token)
 {
   YYUSE (yyvaluep);
   YYUSE (input);
   YYUSE (molList);
+  YYUSE (lastAtom);
+  YYUSE (lastBond);
   YYUSE (branchPoints);
   YYUSE (scanner);
+  YYUSE (start_token);
   if (!yymsg)
     yymsg = "Deleting";
   YY_SYMBOL_PRINT (yymsg, yytype, yyvaluep, yylocationp);
@@ -1112,7 +1143,7 @@ yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, const char *input,
 `----------*/
 
 int
-yyparse (const char *input, std::vector<RDKit::RWMol *> *molList, std::list<unsigned int> *branchPoints, void *scanner)
+yyparse (const char *input, std::vector<RDKit::RWMol *> *molList, RDKit::Atom* &lastAtom, RDKit::Bond* &lastBond, std::list<unsigned int> *branchPoints, void *scanner, int& start_token)
 {
 /* The lookahead symbol.  */
 int yychar;
@@ -1281,7 +1312,7 @@ yybackup:
   if (yychar == YYEMPTY)
     {
       YYDPRINTF ((stderr, "Reading a token: "));
-      yychar = yylex (&yylval, scanner);
+      yychar = yylex (&yylval, scanner, start_token);
     }
 
   if (yychar <= YYEOF)
@@ -1359,38 +1390,62 @@ yyreduce:
   YY_REDUCE_PRINT (yyn);
   switch (yyn)
     {
-        case 3:
-#line 80 "smiles.yy" /* yacc.c:1646  */
+        case 2:
+#line 103 "smiles.yy" /* yacc.c:1646  */
     {
-  yyclearin;
-  yyerrok;
-  yyErrorCleanup(molList);
-  YYABORT;
+// the molList has already been updated, no need to do anything
 }
-#line 1371 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1399 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+    break;
+
+  case 3:
+#line 106 "smiles.yy" /* yacc.c:1646  */
+    {
+  lastAtom = (yyvsp[0].atom);
+}
+#line 1407 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 4:
-#line 86 "smiles.yy" /* yacc.c:1646  */
+#line 109 "smiles.yy" /* yacc.c:1646  */
     {
-  YYACCEPT;
+  lastBond = (yyvsp[0].bond);
 }
-#line 1379 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1415 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 5:
-#line 89 "smiles.yy" /* yacc.c:1646  */
+#line 112 "smiles.yy" /* yacc.c:1646  */
     {
   yyclearin;
   yyerrok;
   yyErrorCleanup(molList);
   YYABORT;
 }
-#line 1390 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1426 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 6:
-#line 99 "smiles.yy" /* yacc.c:1646  */
+#line 118 "smiles.yy" /* yacc.c:1646  */
+    {
+  YYACCEPT;
+}
+#line 1434 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+    break;
+
+  case 7:
+#line 121 "smiles.yy" /* yacc.c:1646  */
+    {
+  yyclearin;
+  yyerrok;
+  yyErrorCleanup(molList);
+  YYABORT;
+}
+#line 1445 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+    break;
+
+  case 8:
+#line 132 "smiles.yy" /* yacc.c:1646  */
     {
   int sz     = molList->size();
   molList->resize( sz + 1);
@@ -1401,11 +1456,11 @@ yyreduce:
   delete (yyvsp[0].atom);
   (yyval.moli) = sz;
 }
-#line 1405 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1460 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
-  case 7:
-#line 110 "smiles.yy" /* yacc.c:1646  */
+  case 9:
+#line 143 "smiles.yy" /* yacc.c:1646  */
     {
   RWMol *mp = (*molList)[(yyval.moli)];
   Atom *a1 = mp->getActiveAtom();
@@ -1415,11 +1470,11 @@ yyreduce:
 	      SmilesParseOps::GetUnspecifiedBondType(mp,a1,mp->getAtomWithIdx(atomIdx2)));
   //delete $2;
 }
-#line 1419 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1474 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
-  case 8:
-#line 120 "smiles.yy" /* yacc.c:1646  */
+  case 10:
+#line 153 "smiles.yy" /* yacc.c:1646  */
     {
   RWMol *mp = (*molList)[(yyval.moli)];
   int atomIdx1 = mp->getActiveAtom()->getIdx();
@@ -1439,11 +1494,11 @@ yyreduce:
   mp->addBond((yyvsp[-1].bond),true);
   //delete $3;
 }
-#line 1443 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1498 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
-  case 9:
-#line 140 "smiles.yy" /* yacc.c:1646  */
+  case 11:
+#line 173 "smiles.yy" /* yacc.c:1646  */
     {
   RWMol *mp = (*molList)[(yyval.moli)];
   int atomIdx1 = mp->getActiveAtom()->getIdx();
@@ -1451,21 +1506,21 @@ yyreduce:
   mp->addBond(atomIdx1,atomIdx2,Bond::SINGLE);
   //delete $3;
 }
-#line 1455 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1510 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
-  case 10:
-#line 148 "smiles.yy" /* yacc.c:1646  */
+  case 12:
+#line 181 "smiles.yy" /* yacc.c:1646  */
     {
   RWMol *mp = (*molList)[(yyval.moli)];
   (yyvsp[0].atom)->setProp(RDKit::common_properties::_SmilesStart,1,true);
   mp->addAtom((yyvsp[0].atom),true,true);
 }
-#line 1465 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1520 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
-  case 11:
-#line 154 "smiles.yy" /* yacc.c:1646  */
+  case 13:
+#line 187 "smiles.yy" /* yacc.c:1646  */
     {
   RWMol * mp = (*molList)[(yyval.moli)];
   Atom *atom=mp->getActiveAtom();
@@ -1484,11 +1539,11 @@ yyreduce:
   atom->setProp(RDKit::common_properties::_RingClosures,tmp);
 
 }
-#line 1488 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1543 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
-  case 12:
-#line 173 "smiles.yy" /* yacc.c:1646  */
+  case 14:
+#line 206 "smiles.yy" /* yacc.c:1646  */
     {
   RWMol * mp = (*molList)[(yyval.moli)];
   Atom *atom=mp->getActiveAtom();
@@ -1506,11 +1561,11 @@ yyreduce:
   atom->setProp(RDKit::common_properties::_RingClosures,tmp);
   delete (yyvsp[-1].bond);
 }
-#line 1510 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1565 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
-  case 13:
-#line 191 "smiles.yy" /* yacc.c:1646  */
+  case 15:
+#line 224 "smiles.yy" /* yacc.c:1646  */
     {
   RWMol * mp = (*molList)[(yyval.moli)];
   Atom *atom=mp->getActiveAtom();
@@ -1526,11 +1581,11 @@ yyreduce:
   tmp.push_back(-((yyvsp[0].ival)+1));
   atom->setProp(RDKit::common_properties::_RingClosures,tmp);
 }
-#line 1530 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1585 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
-  case 14:
-#line 207 "smiles.yy" /* yacc.c:1646  */
+  case 16:
+#line 240 "smiles.yy" /* yacc.c:1646  */
     {
   RWMol *mp = (*molList)[(yyval.moli)];
   Atom *a1 = mp->getActiveAtom();
@@ -1541,11 +1596,11 @@ yyreduce:
   //delete $3;
   branchPoints->push_back(atomIdx1);
 }
-#line 1545 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1600 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
-  case 15:
-#line 217 "smiles.yy" /* yacc.c:1646  */
+  case 17:
+#line 250 "smiles.yy" /* yacc.c:1646  */
     {
   RWMol *mp = (*molList)[(yyval.moli)];
   int atomIdx1 = mp->getActiveAtom()->getIdx();
@@ -1566,11 +1621,11 @@ yyreduce:
   //delete $4;
   branchPoints->push_back(atomIdx1);
 }
-#line 1570 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1625 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
-  case 16:
-#line 237 "smiles.yy" /* yacc.c:1646  */
+  case 18:
+#line 270 "smiles.yy" /* yacc.c:1646  */
     {
   RWMol *mp = (*molList)[(yyval.moli)];
   int atomIdx1 = mp->getActiveAtom()->getIdx();
@@ -1579,203 +1634,211 @@ yyreduce:
   //delete $4;
   branchPoints->push_back(atomIdx1);
 }
-#line 1583 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1638 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
-  case 17:
-#line 245 "smiles.yy" /* yacc.c:1646  */
+  case 19:
+#line 278 "smiles.yy" /* yacc.c:1646  */
     {
-  if(branchPoints->empty()) yyerror(input,molList,branchPoints,scanner,"extra close parentheses");
+  if(branchPoints->empty()) yyerror(input,molList,branchPoints,scanner,start_token,"extra close parentheses");
   RWMol *mp = (*molList)[(yyval.moli)];
   mp->setActiveAtom(branchPoints->back());
   branchPoints->pop_back();
 }
-#line 1594 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1649 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
-  case 19:
-#line 257 "smiles.yy" /* yacc.c:1646  */
+  case 21:
+#line 288 "smiles.yy" /* yacc.c:1646  */
+    {
+          (yyval.bond) = new Bond(Bond::SINGLE);
+          }
+#line 1657 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+    break;
+
+  case 23:
+#line 298 "smiles.yy" /* yacc.c:1646  */
     {
   (yyval.atom) = (yyvsp[-3].atom);
   (yyval.atom)->setNoImplicit(true);
   (yyval.atom)->setProp(RDKit::common_properties::molAtomMapNumber,(yyvsp[-1].ival));
 }
-#line 1604 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1667 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
-  case 20:
-#line 264 "smiles.yy" /* yacc.c:1646  */
+  case 24:
+#line 305 "smiles.yy" /* yacc.c:1646  */
     {
   (yyval.atom) = (yyvsp[-1].atom);
   (yyvsp[-1].atom)->setNoImplicit(true);
 }
-#line 1613 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
-    break;
-
-  case 22:
-#line 272 "smiles.yy" /* yacc.c:1646  */
-    { (yyvsp[-1].atom)->setFormalCharge(1); }
-#line 1619 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
-    break;
-
-  case 23:
-#line 273 "smiles.yy" /* yacc.c:1646  */
-    { (yyvsp[-2].atom)->setFormalCharge(2); }
-#line 1625 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
-    break;
-
-  case 24:
-#line 274 "smiles.yy" /* yacc.c:1646  */
-    { (yyvsp[-2].atom)->setFormalCharge((yyvsp[0].ival)); }
-#line 1631 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
-    break;
-
-  case 25:
-#line 275 "smiles.yy" /* yacc.c:1646  */
-    { (yyvsp[-1].atom)->setFormalCharge(-1); }
-#line 1637 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1676 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 26:
-#line 276 "smiles.yy" /* yacc.c:1646  */
-    { (yyvsp[-2].atom)->setFormalCharge(-2); }
-#line 1643 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 313 "smiles.yy" /* yacc.c:1646  */
+    { (yyvsp[-1].atom)->setFormalCharge(1); }
+#line 1682 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 27:
-#line 277 "smiles.yy" /* yacc.c:1646  */
-    { (yyvsp[-2].atom)->setFormalCharge(-(yyvsp[0].ival)); }
-#line 1649 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 314 "smiles.yy" /* yacc.c:1646  */
+    { (yyvsp[-2].atom)->setFormalCharge(2); }
+#line 1688 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 28:
-#line 281 "smiles.yy" /* yacc.c:1646  */
-    { (yyval.atom) = new Atom(1); }
-#line 1655 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 315 "smiles.yy" /* yacc.c:1646  */
+    { (yyvsp[-2].atom)->setFormalCharge((yyvsp[0].ival)); }
+#line 1694 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 29:
-#line 282 "smiles.yy" /* yacc.c:1646  */
-    { (yyval.atom) = new Atom(1); (yyval.atom)->setIsotope((yyvsp[-1].ival)); }
-#line 1661 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 316 "smiles.yy" /* yacc.c:1646  */
+    { (yyvsp[-1].atom)->setFormalCharge(-1); }
+#line 1700 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 30:
-#line 283 "smiles.yy" /* yacc.c:1646  */
-    { (yyval.atom) = new Atom(1); (yyval.atom)->setNumExplicitHs(1); }
-#line 1667 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 317 "smiles.yy" /* yacc.c:1646  */
+    { (yyvsp[-2].atom)->setFormalCharge(-2); }
+#line 1706 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 31:
-#line 284 "smiles.yy" /* yacc.c:1646  */
-    { (yyval.atom) = new Atom(1); (yyval.atom)->setIsotope((yyvsp[-2].ival)); (yyval.atom)->setNumExplicitHs(1);}
-#line 1673 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 318 "smiles.yy" /* yacc.c:1646  */
+    { (yyvsp[-2].atom)->setFormalCharge(-(yyvsp[0].ival)); }
+#line 1712 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 32:
-#line 285 "smiles.yy" /* yacc.c:1646  */
-    { (yyval.atom) = new Atom(1); (yyval.atom)->setNumExplicitHs((yyvsp[0].ival)); }
-#line 1679 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 322 "smiles.yy" /* yacc.c:1646  */
+    { (yyval.atom) = new Atom(1); }
+#line 1718 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 33:
-#line 286 "smiles.yy" /* yacc.c:1646  */
-    { (yyval.atom) = new Atom(1); (yyval.atom)->setIsotope((yyvsp[-3].ival)); (yyval.atom)->setNumExplicitHs((yyvsp[0].ival));}
-#line 1685 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 323 "smiles.yy" /* yacc.c:1646  */
+    { (yyval.atom) = new Atom(1); (yyval.atom)->setIsotope((yyvsp[-1].ival)); }
+#line 1724 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+    break;
+
+  case 34:
+#line 324 "smiles.yy" /* yacc.c:1646  */
+    { (yyval.atom) = new Atom(1); (yyval.atom)->setNumExplicitHs(1); }
+#line 1730 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 35:
-#line 288 "smiles.yy" /* yacc.c:1646  */
-    { (yyval.atom) = (yyvsp[-1].atom); (yyvsp[-1].atom)->setNumExplicitHs(1);}
-#line 1691 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 325 "smiles.yy" /* yacc.c:1646  */
+    { (yyval.atom) = new Atom(1); (yyval.atom)->setIsotope((yyvsp[-2].ival)); (yyval.atom)->setNumExplicitHs(1);}
+#line 1736 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 36:
-#line 289 "smiles.yy" /* yacc.c:1646  */
-    { (yyval.atom) = (yyvsp[-2].atom); (yyvsp[-2].atom)->setNumExplicitHs((yyvsp[0].ival));}
-#line 1697 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 326 "smiles.yy" /* yacc.c:1646  */
+    { (yyval.atom) = new Atom(1); (yyval.atom)->setNumExplicitHs((yyvsp[0].ival)); }
+#line 1742 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
-  case 38:
-#line 294 "smiles.yy" /* yacc.c:1646  */
-    { (yyvsp[-1].atom)->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW); }
-#line 1703 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+  case 37:
+#line 327 "smiles.yy" /* yacc.c:1646  */
+    { (yyval.atom) = new Atom(1); (yyval.atom)->setIsotope((yyvsp[-3].ival)); (yyval.atom)->setNumExplicitHs((yyvsp[0].ival));}
+#line 1748 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 39:
-#line 295 "smiles.yy" /* yacc.c:1646  */
-    { (yyvsp[-2].atom)->setChiralTag(Atom::CHI_TETRAHEDRAL_CW); }
-#line 1709 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 329 "smiles.yy" /* yacc.c:1646  */
+    { (yyval.atom) = (yyvsp[-1].atom); (yyvsp[-1].atom)->setNumExplicitHs(1);}
+#line 1754 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
-  case 41:
-#line 300 "smiles.yy" /* yacc.c:1646  */
-    { (yyvsp[0].atom)->setIsotope( (yyvsp[-1].ival) ); (yyval.atom) = (yyvsp[0].atom); }
-#line 1715 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+  case 40:
+#line 330 "smiles.yy" /* yacc.c:1646  */
+    { (yyval.atom) = (yyvsp[-2].atom); (yyvsp[-2].atom)->setNumExplicitHs((yyvsp[0].ival));}
+#line 1760 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+    break;
+
+  case 42:
+#line 335 "smiles.yy" /* yacc.c:1646  */
+    { (yyvsp[-1].atom)->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW); }
+#line 1766 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 43:
-#line 302 "smiles.yy" /* yacc.c:1646  */
-    { (yyvsp[0].atom)->setIsotope( (yyvsp[-1].ival) ); (yyval.atom) = (yyvsp[0].atom); }
-#line 1721 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
-    break;
-
-  case 44:
-#line 303 "smiles.yy" /* yacc.c:1646  */
-    { (yyval.atom) = new Atom((yyvsp[0].ival)); }
-#line 1727 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 336 "smiles.yy" /* yacc.c:1646  */
+    { (yyvsp[-2].atom)->setChiralTag(Atom::CHI_TETRAHEDRAL_CW); }
+#line 1772 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 45:
-#line 304 "smiles.yy" /* yacc.c:1646  */
-    { (yyval.atom) = new Atom((yyvsp[0].ival)); (yyval.atom)->setIsotope((yyvsp[-2].ival)); }
-#line 1733 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 341 "smiles.yy" /* yacc.c:1646  */
+    { (yyvsp[0].atom)->setIsotope( (yyvsp[-1].ival) ); (yyval.atom) = (yyvsp[0].atom); }
+#line 1778 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+    break;
+
+  case 47:
+#line 343 "smiles.yy" /* yacc.c:1646  */
+    { (yyvsp[0].atom)->setIsotope( (yyvsp[-1].ival) ); (yyval.atom) = (yyvsp[0].atom); }
+#line 1784 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+    break;
+
+  case 48:
+#line 344 "smiles.yy" /* yacc.c:1646  */
+    { (yyval.atom) = new Atom((yyvsp[0].ival)); }
+#line 1790 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 49:
-#line 314 "smiles.yy" /* yacc.c:1646  */
-    { (yyval.ival) = (yyvsp[-1].ival)*10+(yyvsp[0].ival); }
-#line 1739 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
-    break;
-
-  case 50:
-#line 315 "smiles.yy" /* yacc.c:1646  */
-    { (yyval.ival) = (yyvsp[-1].ival); }
-#line 1745 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
-    break;
-
-  case 51:
-#line 316 "smiles.yy" /* yacc.c:1646  */
-    { (yyval.ival) = (yyvsp[-2].ival)*10+(yyvsp[-1].ival); }
-#line 1751 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
-    break;
-
-  case 52:
-#line 317 "smiles.yy" /* yacc.c:1646  */
-    { (yyval.ival) = (yyvsp[-3].ival)*100+(yyvsp[-2].ival)*10+(yyvsp[-1].ival); }
-#line 1757 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 345 "smiles.yy" /* yacc.c:1646  */
+    { (yyval.atom) = new Atom((yyvsp[0].ival)); (yyval.atom)->setIsotope((yyvsp[-2].ival)); }
+#line 1796 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 53:
-#line 318 "smiles.yy" /* yacc.c:1646  */
-    { (yyval.ival) = (yyvsp[-4].ival)*1000+(yyvsp[-3].ival)*100+(yyvsp[-2].ival)*10+(yyvsp[-1].ival); }
-#line 1763 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 355 "smiles.yy" /* yacc.c:1646  */
+    { (yyval.ival) = (yyvsp[-1].ival)*10+(yyvsp[0].ival); }
+#line 1802 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 54:
-#line 319 "smiles.yy" /* yacc.c:1646  */
-    { (yyval.ival) = (yyvsp[-5].ival)*10000+(yyvsp[-4].ival)*1000+(yyvsp[-3].ival)*100+(yyvsp[-2].ival)*10+(yyvsp[-1].ival); }
-#line 1769 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 356 "smiles.yy" /* yacc.c:1646  */
+    { (yyval.ival) = (yyvsp[-1].ival); }
+#line 1808 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+    break;
+
+  case 55:
+#line 357 "smiles.yy" /* yacc.c:1646  */
+    { (yyval.ival) = (yyvsp[-2].ival)*10+(yyvsp[-1].ival); }
+#line 1814 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+    break;
+
+  case 56:
+#line 358 "smiles.yy" /* yacc.c:1646  */
+    { (yyval.ival) = (yyvsp[-3].ival)*100+(yyvsp[-2].ival)*10+(yyvsp[-1].ival); }
+#line 1820 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+    break;
+
+  case 57:
+#line 359 "smiles.yy" /* yacc.c:1646  */
+    { (yyval.ival) = (yyvsp[-4].ival)*1000+(yyvsp[-3].ival)*100+(yyvsp[-2].ival)*10+(yyvsp[-1].ival); }
+#line 1826 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 58:
-#line 329 "smiles.yy" /* yacc.c:1646  */
+#line 360 "smiles.yy" /* yacc.c:1646  */
+    { (yyval.ival) = (yyvsp[-5].ival)*10000+(yyvsp[-4].ival)*1000+(yyvsp[-3].ival)*100+(yyvsp[-2].ival)*10+(yyvsp[-1].ival); }
+#line 1832 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+    break;
+
+  case 62:
+#line 370 "smiles.yy" /* yacc.c:1646  */
     { (yyval.ival) = (yyvsp[-1].ival)*10 + (yyvsp[0].ival); }
-#line 1775 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1838 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
     break;
 
 
-#line 1779 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
+#line 1842 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1825,7 +1888,7 @@ yyerrlab:
     {
       ++yynerrs;
 #if ! YYERROR_VERBOSE
-      yyerror (input, molList, branchPoints, scanner, YY_("syntax error"));
+      yyerror (input, molList, lastAtom, lastBond, branchPoints, scanner, start_token, YY_("syntax error"));
 #else
 # define YYSYNTAX_ERROR yysyntax_error (&yymsg_alloc, &yymsg, \
                                         yyssp, yytoken)
@@ -1852,7 +1915,7 @@ yyerrlab:
                 yymsgp = yymsg;
               }
           }
-        yyerror (input, molList, branchPoints, scanner, yymsgp);
+        yyerror (input, molList, lastAtom, lastBond, branchPoints, scanner, start_token, yymsgp);
         if (yysyntax_error_status == 2)
           goto yyexhaustedlab;
       }
@@ -1876,7 +1939,7 @@ yyerrlab:
       else
         {
           yydestruct ("Error: discarding",
-                      yytoken, &yylval, input, molList, branchPoints, scanner);
+                      yytoken, &yylval, input, molList, lastAtom, lastBond, branchPoints, scanner, start_token);
           yychar = YYEMPTY;
         }
     }
@@ -1932,7 +1995,7 @@ yyerrlab1:
 
 
       yydestruct ("Error: popping",
-                  yystos[yystate], yyvsp, input, molList, branchPoints, scanner);
+                  yystos[yystate], yyvsp, input, molList, lastAtom, lastBond, branchPoints, scanner, start_token);
       YYPOPSTACK (1);
       yystate = *yyssp;
       YY_STACK_PRINT (yyss, yyssp);
@@ -1969,7 +2032,7 @@ yyabortlab:
 | yyexhaustedlab -- memory exhaustion comes here.  |
 `-------------------------------------------------*/
 yyexhaustedlab:
-  yyerror (input, molList, branchPoints, scanner, YY_("memory exhausted"));
+  yyerror (input, molList, lastAtom, lastBond, branchPoints, scanner, start_token, YY_("memory exhausted"));
   yyresult = 2;
   /* Fall through.  */
 #endif
@@ -1981,7 +2044,7 @@ yyreturn:
          user semantic actions for why this is necessary.  */
       yytoken = YYTRANSLATE (yychar);
       yydestruct ("Cleanup: discarding lookahead",
-                  yytoken, &yylval, input, molList, branchPoints, scanner);
+                  yytoken, &yylval, input, molList, lastAtom, lastBond, branchPoints, scanner, start_token);
     }
   /* Do not reclaim the symbols of the rule whose action triggered
      this YYABORT or YYACCEPT.  */
@@ -1990,7 +2053,7 @@ yyreturn:
   while (yyssp != yyss)
     {
       yydestruct ("Cleanup: popping",
-                  yystos[*yyssp], yyvsp, input, molList, branchPoints, scanner);
+                  yystos[*yyssp], yyvsp, input, molList, lastAtom, lastBond, branchPoints, scanner, start_token);
       YYPOPSTACK (1);
     }
 #ifndef yyoverflow
@@ -2003,5 +2066,5 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 343 "smiles.yy" /* yacc.c:1906  */
+#line 384 "smiles.yy" /* yacc.c:1906  */
 

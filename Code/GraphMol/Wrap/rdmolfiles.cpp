@@ -698,6 +698,14 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
                python::arg("replacements") = python::dict()),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
+  docString = "Construct an atom from a SMILES string";
+  python::def("AtomFromSmiles", SmilesToAtom, python::arg("SMILES"),
+              docString.c_str(),
+              python::return_value_policy<python::manage_new_object>());
+  docString = "Construct a bond from a SMILES string";
+  python::def("BondFromSmiles", SmilesToBond, python::arg("SMILES"),
+              docString.c_str(),
+              python::return_value_policy<python::manage_new_object>());
 
   docString =
       "Construct a molecule from a SMARTS string.\n\n\
@@ -719,6 +727,14 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
   python::def("MolFromSmarts", RDKit::MolFromSmarts,
               (python::arg("SMARTS"), python::arg("mergeHs") = false,
                python::arg("replacements") = python::dict()),
+              docString.c_str(),
+              python::return_value_policy<python::manage_new_object>());
+  docString = "Construct an atom from a SMARTS string";
+  python::def("AtomFromSmarts", SmartsToAtom, python::arg("SMARTS"),
+              docString.c_str(),
+              python::return_value_policy<python::manage_new_object>());
+  docString = "Construct a bond from a SMARTS string";
+  python::def("BondFromSmarts", SmartsToBond, python::arg("SMILES"),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
 
