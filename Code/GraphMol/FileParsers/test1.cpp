@@ -4278,7 +4278,7 @@ std::string getResidue(const ROMol &, const Atom *at) {
   return static_cast<const AtomPDBResidueInfo *>(at->getMonomerInfo())
       ->getResidueName();
 }
-}
+}  // namespace
 void testPDBResidues() {
   BOOST_LOG(rdInfoLog) << "testing splitting on PDB residues" << std::endl;
   std::string rdbase = getenv("RDBASE");
@@ -5184,8 +5184,33 @@ void testGithub1615() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub2000() {
+  BOOST_LOG(rdInfoLog)
+      << "testing github #2000: Error while parsing empty atom list"
+      << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+  {
+    std::string fName = rdbase + "github2000.sdf";
+    std::unique_ptr<RWMol> m1(MolFileToMol(fName));
+    TEST_ASSERT(m1);
+    TEST_ASSERT(!m1->getAtomWithIdx(0)->hasQuery());
+  }
+  {
+    std::string fName = rdbase + "github2000.2.sdf";
+    bool ok = false;
+    try {
+      std::unique_ptr<RWMol> m1(MolFileToMol(fName));
+    } catch (FileParseException &e) {
+      ok = true;
+    }
+    TEST_ASSERT(ok);
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 void RunTests() {
-#if 1
+#if 0
   test1();
   test2();
   test4();
@@ -5277,12 +5302,13 @@ void RunTests() {
   testGithub1029();
   testGithub1340();
   testGithub1034();
-#endif
   testMolBlockChirality();
   testMolBlock3DStereochem();
   testGithub1689();
   testWedgeBondToDoublebond();
   testGithub1615();
+#endif
+  testGithub2000();
 }
 
 // must be in German Locale for test...
@@ -5324,8 +5350,9 @@ void testLocaleSwitcher() {
 namespace {
 void runblock() {
   std::setlocale(LC_ALL, "de_DE.UTF-8");
-  testLocaleSwitcher(); }
+  testLocaleSwitcher();
 }
+}  // namespace
 void testMultiThreadedSwitcher() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Test multithreading Locale Switching"

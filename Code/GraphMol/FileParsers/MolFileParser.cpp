@@ -856,7 +856,18 @@ void ParseNewAtomList(RWMol *mol, const std::string &text, unsigned int line) {
     throw FileParseException(errout.str());
   }
 
-  ASSERT_INVARIANT(nQueries > 0, "no queries provided");
+  if (!nQueries) {
+    BOOST_LOG(rdWarningLog) << "Empty atom list: '" << text << "' on line "
+                            << line << "." << std::endl;
+    return;
+  }
+
+  if (nQueries < 0) {
+    std::ostringstream errout;
+    errout << "negative length atom list: '" << text << "' on line " << line
+           << "." << std::endl;
+    throw FileParseException(errout.str());
+  }
   for (unsigned int i = 0; i < static_cast<unsigned int>(nQueries); i++) {
     unsigned int pos = 16 + i * 4;
     if (text.size() < pos + 4) {
