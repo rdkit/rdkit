@@ -7478,7 +7478,7 @@ void testGithub1990() {
     TEST_ASSERT(mol->getNumAtoms() == 4);
     TEST_ASSERT(mol->getBondWithIdx(1)->getStereoAtoms().size() == 2);
   }
-  {  // make sure that stereo is removed when it comes from Hs:
+  {  // make sure that stereo is not removed when it comes from Hs:
     std::unique_ptr<RWMol> mol(SmilesToMol("F/C=C/F"));
     TEST_ASSERT(mol);
     MolOps::addHs(*mol);
@@ -7488,7 +7488,7 @@ void testGithub1990() {
     TEST_ASSERT(mol->getBondWithIdx(1)->getStereoAtoms().size() == 2);
     mol->getBondWithIdx(1)->getStereoAtoms()[0] = 0;
   }
-  {  // make sure that stereo is removed when it comes from Hs:
+  {  // make sure that stereo is not removed when it comes from Hs:
     std::unique_ptr<RWMol> mol(SmilesToMol("F/C=C/F"));
     TEST_ASSERT(mol);
     MolOps::addHs(*mol);
