@@ -237,6 +237,14 @@ class FingerprintGenerator : private boost::noncopyable {
   const bool df_ownsAtomInvGenerator;
   const bool df_ownsBondInvGenerator;
 
+  SparseIntVect<OutputType> *getFingerprintHelper(
+      const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms = nullptr,
+      const std::vector<std::uint32_t> *ignoreAtoms = nullptr,
+      const int confId = -1, const AdditionalOutput *additionalOutput = nullptr,
+      const std::vector<std::uint32_t> *customAtomInvariants = nullptr,
+      const std::vector<std::uint32_t> *customBondInvariants = nullptr,
+      const std::uint64_t fpSize = 0) const;
+
  public:
   FingerprintGenerator(
       AtomEnvironmentGenerator<OutputType> *atomEnvironmentGenerator,
@@ -305,16 +313,16 @@ SparseIntVect<std::uint32_t> *getCountFP(const ROMol &mol, FPType fPType);
 
 ExplicitBitVect *getFP(const ROMol &mol, FPType fPType);
 
-std::vector<SparseIntVect<std::uint64_t> *> getSparseCountFPBulk(
+std::vector<SparseIntVect<std::uint64_t> *> *getSparseCountFPBulk(
     const std::vector<const ROMol *> molVector, FPType fPType);
 
-std::vector<SparseBitVect *> getSparseFPBulk(
+std::vector<SparseBitVect *> *getSparseFPBulk(
     const std::vector<const ROMol *> molVector, FPType fPType);
 
-std::vector<SparseIntVect<std::uint32_t> *> getCountFPBulk(
+std::vector<SparseIntVect<std::uint32_t> *> *getCountFPBulk(
     const std::vector<const ROMol *> molVector, FPType fPType);
 
-std::vector<ExplicitBitVect *> getFPBulk(
+std::vector<ExplicitBitVect *> *getFPBulk(
     const std::vector<const ROMol *> molVector, FPType fPType);
 
 }  // namespace RDKit

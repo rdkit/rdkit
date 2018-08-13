@@ -175,6 +175,100 @@ ExplicitBitVect *getFingerprint(const FingerprintGenerator<OutputType> *fpGen,
   return result;
 }
 
+const std::vector<const ROMol *> convertPyArgumentsForBulk(
+    python::list &py_molVect, std::string py_fpType, FPType &fpType) {
+  std::vector<const ROMol *> molVect;
+  if (!py_molVect.is_none()) {
+    unsigned int len =
+        python::extract<unsigned int>(py_molVect.attr("__len__")());
+    if (len) {
+      for (int i = 0; i < len; i++) {
+        molVect.push_back(python::extract<const ROMol *>(py_molVect[i]));
+      }
+    }
+  }
+
+  if (py_fpType == "AtomPairs") {
+    fpType = FPType::AtomPairFP;
+
+  } else if (py_fpType == "Morgan") {
+    fpType = FPType::MorganFP;
+
+  } else if (py_fpType == "RDKit") {
+    fpType = FPType::RDKitFP;
+
+  } else if (py_fpType == "TopologicalTorsion") {
+    fpType = FPType::TopologicalTorsionFP;
+
+  } else {
+    PyErr_SetString(PyExc_ValueError,
+                    ("Unsupported fingerprint type: " + py_fpType).c_str());
+    boost::python::throw_error_already_set();
+  }
+
+  return molVect;
+}
+
+python::list getSparseCountFPBulkPy(python::list &py_molVect,
+                                    std::string py_fpType) {
+  FPType fPType = FPType::AtomPairFP;
+  const std::vector<const ROMol *> molVect =
+      convertPyArgumentsForBulk(py_molVect, py_fpType, fPType);
+  auto tempResult = getSparseCountFPBulk(molVect, fPType);
+  python::list result;
+
+  for (auto it = tempResult->begin(); it != tempResult->end(); ++it) {
+    result.append((boost::shared_ptr<SparseIntVect<std::uint64_t>>)*it);
+  }
+  delete tempResult;
+  return result;
+}
+
+python::list getSparseFPBulkPy(python::list &py_molVect,
+                               std::string py_fpType) {
+  FPType fPType = FPType::AtomPairFP;
+  const std::vector<const ROMol *> molVect =
+      convertPyArgumentsForBulk(py_molVect, py_fpType, fPType);
+  auto tempResult = getSparseFPBulk(molVect, fPType);
+  python::list result;
+
+  for (auto it = tempResult->begin(); it != tempResult->end(); ++it) {
+    // todo every other bulk method casts results to boost::shared_ptr, except
+    // this one. It should also be boost::shared_ptr
+    result.append(*it);
+  }
+  delete tempResult;
+  return result;
+}
+
+python::list getCountFPBulkPy(python::list &py_molVect, std::string py_fpType) {
+  FPType fPType = FPType::AtomPairFP;
+  const std::vector<const ROMol *> molVect =
+      convertPyArgumentsForBulk(py_molVect, py_fpType, fPType);
+  auto tempResult = getCountFPBulk(molVect, fPType);
+  python::list result;
+
+  for (auto it = tempResult->begin(); it != tempResult->end(); ++it) {
+    result.append((boost::shared_ptr<SparseIntVect<std::uint32_t>>)*it);
+  }
+  delete tempResult;
+  return result;
+}
+
+python::list getFPBulkPy(python::list &py_molVect, std::string py_fpType) {
+  FPType fPType = FPType::AtomPairFP;
+  const std::vector<const ROMol *> molVect =
+      convertPyArgumentsForBulk(py_molVect, py_fpType, fPType);
+  auto tempResult = getFPBulk(molVect, fPType);
+  python::list result;
+
+  for (auto it = tempResult->begin(); it != tempResult->end(); ++it) {
+    result.append((boost::shared_ptr<ExplicitBitVect>)*it);
+  }
+  delete tempResult;
+  return result;
+}
+
 BOOST_PYTHON_MODULE(rdFingerprintGenerator) {
   python::class_<AtomInvariantsGenerator, boost::noncopyable>(
       "AtomInvariantsGenerator", python::no_init);
@@ -357,6 +451,26 @@ BOOST_PYTHON_MODULE(rdFingerprintGenerator) {
            "overrides invariants from the invariant generator\n\n"
            "  RETURNS: a ExplicitBitVect containing fingerprint\n\n",
            python::return_value_policy<python::manage_new_object>());
+
+  python::def("GetSparseCountFP", &getSparseCountFPBulkPy,
+              (python::arg("molecules") = python::list(),
+               python::arg("fpType") = "RDKit"),
+              "");
+
+  python::def("GetSparseFP", &getSparseFPBulkPy,
+              (python::arg("molecules") = python::list(),
+               python::arg("fpType") = "RDKit"),
+              "");
+
+  python::def("GetCountFP", &getCountFPBulkPy,
+              (python::arg("molecules") = python::list(),
+               python::arg("fpType") = "RDKit"),
+              "");
+
+  python::def("GetFP", &getFPBulkPy,
+              (python::arg("molecules") = python::list(),
+               python::arg("fpType") = "RDKit"),
+              "");
 
   AtomPairWrapper::exportAtompair();
   MorganWrapper::exportMorgan();
