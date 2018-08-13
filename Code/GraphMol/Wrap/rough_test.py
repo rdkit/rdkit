@@ -2288,7 +2288,7 @@ CAS<~>
     m = Chem.MolFromSmarts("[C,N]C")
     self.assertTrue(m.GetAtomWithIdx(0).GetSmarts() == '[C,N]')
     self.assertTrue(m.GetAtomWithIdx(1).GetSmarts() == 'C')
-    self.assertEqual(m.GetBondBetweenAtoms(0, 1).GetSmarts(),'')
+    self.assertEqual(m.GetBondBetweenAtoms(0, 1).GetSmarts(), '')
 
     m = Chem.MolFromSmarts("[$(C=O)]-O")
     self.assertTrue(m.GetAtomWithIdx(0).GetSmarts() == '[$(C=O)]')
@@ -4788,6 +4788,25 @@ M  END"""
     self.assertEqual(m.GetBondWithIdx(0).GetBondDir(), Chem.BondDir.NONE)
     Chem.WedgeBond(m.GetBondWithIdx(0), 1, m.GetConformer())
     self.assertEqual(m.GetBondWithIdx(0).GetBondDir(), Chem.BondDir.BEGINWEDGE)
+
+  def testSmilesToAtom(self):
+    a = Chem.AtomFromSmiles("C")
+    self.assertEqual(a.GetAtomicNum(), 6)
+    b = Chem.BondFromSmiles("=")
+    self.assertEqual(b.GetBondType(), Chem.BondType.DOUBLE)
+    a = Chem.AtomFromSmiles("error")
+    self.assertIs(a, None)
+    b = Chem.BondFromSmiles("d")
+    self.assertIs(b, None)
+
+    a = Chem.AtomFromSmarts("C")
+    self.assertEqual(a.GetAtomicNum(), 6)
+    b = Chem.BondFromSmarts("=")
+    self.assertEqual(b.GetBondType(), Chem.BondType.DOUBLE)
+    a = Chem.AtomFromSmarts("error")
+    self.assertIs(a, None)
+    b = Chem.BondFromSmarts("d")
+    self.assertIs(b, None)
 
 
 if __name__ == '__main__':

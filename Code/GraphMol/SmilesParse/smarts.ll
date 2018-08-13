@@ -90,6 +90,15 @@ size_t setup_smarts_string(const std::string &text,yyscan_t yyscanner){
 %s IN_RECURSION_STATE
 %%
 
+%{
+  if (start_token)
+    {
+      int t = start_token;
+      start_token = 0;
+      return t;
+    }
+%}
+
 @[' ']*TH |
 @[' ']*AL |
 @[' ']*SQ |

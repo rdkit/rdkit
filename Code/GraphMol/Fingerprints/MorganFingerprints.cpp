@@ -68,12 +68,12 @@ class ss_matcher {
  private:
   RDKit::ROMOL_SPTR m_matcher;
 };
-}
+}  // namespace
 
 namespace RDKit {
 namespace MorganFingerprints {
-using boost::uint32_t;
 using boost::int32_t;
+using boost::uint32_t;
 typedef boost::tuple<boost::dynamic_bitset<>, uint32_t, unsigned int>
     AccumTuple;
 
@@ -100,7 +100,8 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]",  // Basic
 std::vector<std::string> defaultFeatureSmarts(smartsPatterns,
                                               smartsPatterns + 6);
 typedef boost::flyweight<boost::flyweights::key_value<std::string, ss_matcher>,
-                         boost::flyweights::no_tracking> pattern_flyweight;
+                         boost::flyweights::no_tracking>
+    pattern_flyweight;
 void getFeatureInvariants(const ROMol &mol, std::vector<uint32_t> &invars,
                           std::vector<const ROMol *> *patterns) {
   unsigned int nAtoms = mol.getNumAtoms();
@@ -138,7 +139,7 @@ void getConnectivityInvariants(const ROMol &mol, std::vector<uint32_t> &invars,
                                bool includeRingMembership) {
   unsigned int nAtoms = mol.getNumAtoms();
   PRECONDITION(invars.size() >= nAtoms, "vector too small");
-  gboost::hash<std::vector<uint32_t> > vectHasher;
+  gboost::hash<std::vector<uint32_t>> vectHasher;
   for (unsigned int i = 0; i < nAtoms; ++i) {
     Atom const *atom = mol.getAtomWithIdx(i);
     std::vector<uint32_t> components;
@@ -184,12 +185,19 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
                      bool useBondTypes, bool useCounts,
                      bool onlyNonzeroInvariants, BitInfoMap *atomsSettingBits,
                      T &res) {
-  unsigned int nAtoms = mol.getNumAtoms();
+  const ROMol *lmol = &mol;
+  std::unique_ptr<ROMol> tmol;
+  if (useChirality && !mol.hasProp(common_properties::_StereochemDone)) {
+    tmol = std::unique_ptr<ROMol>(new ROMol(mol));
+    MolOps::assignStereochemistry(*tmol);
+    lmol = tmol.get();
+  }
+  unsigned int nAtoms = lmol->getNumAtoms();
   bool owner = false;
   if (!invariants) {
     invariants = new std::vector<uint32_t>(nAtoms);
     owner = true;
-    getConnectivityInvariants(mol, *invariants);
+    getConnectivityInvariants(*lmol, *invariants);
   }
   // Make a copy of the invariants:
   std::vector<uint32_t> invariantCpy(nAtoms);
@@ -197,9 +205,8 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
 
   // add the round 0 invariants to the result:
   for (unsigned int i = 0; i < nAtoms; ++i) {
-    if (!fromAtoms ||
-        std::find(fromAtoms->begin(), fromAtoms->end(), i) !=
-            fromAtoms->end()) {
+    if (!fromAtoms || std::find(fromAtoms->begin(), fromAtoms->end(), i) !=
+                          fromAtoms->end()) {
       if (!onlyNonzeroInvariants || (*invariants)[i]) {
         uint32_t bit = updateElement(res, (*invariants)[i], useCounts);
         if (atomsSettingBits)
@@ -212,10 +219,10 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
 
   // these are the neighborhoods that have already been added
   // to the fingerprint
-  std::vector<boost::dynamic_bitset<> > neighborhoods;
+  std::vector<boost::dynamic_bitset<>> neighborhoods;
   // these are the environments around each atom:
-  std::vector<boost::dynamic_bitset<> > atomNeighborhoods(
-      nAtoms, boost::dynamic_bitset<>(mol.getNumBonds()));
+  std::vector<boost::dynamic_bitset<>> atomNeighborhoods(
+      nAtoms, boost::dynamic_bitset<>(lmol->getNumBonds()));
   boost::dynamic_bitset<> deadAtoms(nAtoms);
 
   boost::dynamic_bitset<> includeAtoms(nAtoms);
@@ -227,7 +234,7 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
 
   std::vector<unsigned int> atomOrder(nAtoms);
   if (onlyNonzeroInvariants) {
-    std::vector<std::pair<int32_t, uint32_t> > ordering;
+    std::vector<std::pair<int32_t, uint32_t>> ordering;
     for (unsigned int i = 0; i < nAtoms; ++i) {
       if (!(*invariants)[i])
         ordering.push_back(std::make_pair(1, i));
@@ -246,22 +253,22 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
   // now do our subsequent rounds:
   for (unsigned int layer = 0; layer < radius; ++layer) {
     std::vector<uint32_t> roundInvariants(nAtoms);
-    std::vector<boost::dynamic_bitset<> > roundAtomNeighborhoods =
+    std::vector<boost::dynamic_bitset<>> roundAtomNeighborhoods =
         atomNeighborhoods;
     std::vector<AccumTuple> neighborhoodsThisRound;
 
     BOOST_FOREACH (unsigned int atomIdx, atomOrder) {
       if (!deadAtoms[atomIdx]) {
-        const Atom *tAtom = mol.getAtomWithIdx(atomIdx);
+        const Atom *tAtom = lmol->getAtomWithIdx(atomIdx);
         if (!tAtom->getDegree()) {
           deadAtoms.set(atomIdx, 1);
           continue;
         }
-        std::vector<std::pair<int32_t, uint32_t> > nbrs;
+        std::vector<std::pair<int32_t, uint32_t>> nbrs;
         ROMol::OEDGE_ITER beg, end;
-        boost::tie(beg, end) = mol.getAtomBonds(tAtom);
+        boost::tie(beg, end) = lmol->getAtomBonds(tAtom);
         while (beg != end) {
-          const Bond*  bond = mol[*beg];
+          const Bond *bond = (*lmol)[*beg];
           roundAtomNeighborhoods[atomIdx][bond->getIdx()] = 1;
 
           unsigned int oIdx = bond->getOtherAtomIdx(atomIdx);
@@ -292,7 +299,7 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
         boost::uint32_t invar = layer;
         gboost::hash_combine(invar, (*invariants)[atomIdx]);
         bool looksChiral = (tAtom->getChiralTag() != Atom::CHI_UNSPECIFIED);
-        for (std::vector<std::pair<int32_t, uint32_t> >::const_iterator it =
+        for (std::vector<std::pair<int32_t, uint32_t>>::const_iterator it =
                  nbrs.begin();
              it != nbrs.end(); ++it) {
           // add the contribution to the new invariant:
@@ -351,9 +358,8 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
               (*atomsSettingBits)[bit].push_back(
                   std::make_pair(iter->get<2>(), layer + 1));
           }
-          if (!fromAtoms ||
-              std::find(fromAtoms->begin(), fromAtoms->end(), iter->get<2>()) !=
-                  fromAtoms->end()) {
+          if (!fromAtoms || std::find(fromAtoms->begin(), fromAtoms->end(),
+                                      iter->get<2>()) != fromAtoms->end()) {
             neighborhoods.push_back(iter->get<0>());
           }
         }
