@@ -150,7 +150,7 @@ void RWMol::replaceBond(unsigned int idx, Bond *bond_pin, bool preserveProps) {
   URANGE_CHECK(idx, getNumBonds());
   BOND_ITER_PAIR bIter = getEdges();
   for (unsigned int i = 0; i < idx; i++) ++bIter.first;
-  Bond* obond = d_graph[*(bIter.first)];
+  Bond *obond = d_graph[*(bIter.first)];
   Bond *bond_p = bond_pin->copy();
   bond_p->setOwningMol(this);
   bond_p->setIdx(idx);
@@ -205,7 +205,7 @@ void RWMol::removeAtom(Atom *atom) {
   }
 
   // remove bonds attached to the atom
-  std::vector<std::pair<unsigned int, unsigned int> > nbrs;
+  std::vector<std::pair<unsigned int, unsigned int>> nbrs;
   ADJ_ITER b1, b2;
   boost::tie(b1, b2) = getAtomNeighbors(atom);
   while (b1 != b2) {
@@ -241,7 +241,7 @@ void RWMol::removeAtom(Atom *atom) {
   EDGE_ITER beg, end;
   boost::tie(beg, end) = getEdges();
   while (beg != end) {
-    Bond* bond = d_graph[*beg++];
+    Bond *bond = d_graph[*beg++];
     unsigned int tmpIdx = bond->getBeginAtomIdx();
     if (tmpIdx > idx) bond->setBeginAtomIdx(tmpIdx - 1);
     tmpIdx = bond->getEndAtomIdx();
@@ -351,7 +351,9 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
     if (oIdx == aid2) continue;
     Bond *obnd = getBondBetweenAtoms(aid1, oIdx);
     if (!obnd) continue;
-    obnd->getStereoAtoms().clear();
+    if (std::find(obnd->getStereoAtoms().begin(), obnd->getStereoAtoms().end(),
+                  aid2) != obnd->getStereoAtoms().end())
+      obnd->getStereoAtoms().clear();
   }
   boost::tie(a1, a2) = boost::adjacent_vertices(aid2, d_graph);
   while (a1 != a2) {
@@ -360,7 +362,9 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
     if (oIdx == aid1) continue;
     Bond *obnd = getBondBetweenAtoms(aid2, oIdx);
     if (!obnd) continue;
-    obnd->getStereoAtoms().clear();
+    if (std::find(obnd->getStereoAtoms().begin(), obnd->getStereoAtoms().end(),
+                  aid1) != obnd->getStereoAtoms().end())
+      obnd->getStereoAtoms().clear();
   }
 
   // reset our ring info structure, because it is pretty likely
@@ -371,7 +375,7 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
   ROMol::EDGE_ITER firstB, lastB;
   boost::tie(firstB, lastB) = this->getEdges();
   while (firstB != lastB) {
-    Bond* bond = (*this)[*firstB];
+    Bond *bond = (*this)[*firstB];
     if (bond->getIdx() > idx) {
       bond->setIdx(bond->getIdx() - 1);
     }
@@ -407,4 +411,4 @@ unsigned int RWMol::finishPartialBond(unsigned int atomIdx2, int bondBookmark,
   return addBond(bsp->getBeginAtomIdx(), atomIdx2, bondType);
 }
 
-}  // end o' namespace
+}  // namespace RDKit

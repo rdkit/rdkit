@@ -1252,7 +1252,7 @@ void runblock(const std::vector<ROMol *> &mols,
     }
   }
 };
-}
+}  // namespace
 
 #include <thread>
 #include <future>
@@ -1623,7 +1623,7 @@ void compareConfs(const ROMol *m, const ROMol *expected, int molConfId = -1,
     TEST_ASSERT((pt1i - pt2i).length() < 10e-4);
   }
 }
-}
+}  // namespace
 
 void testGithub971() {
   {
@@ -2017,6 +2017,29 @@ void testGithubPullRequest1635() {
   }
 }
 
+void testGithub1990() {
+  {  // we saw the problem here (though it came from something in MolOps)
+    std::unique_ptr<RWMol> mol(SmilesToMol("F/C=C/F"));
+    TEST_ASSERT(mol);
+    MolOps::addHs(*mol);
+    MolOps::removeHs(*mol);
+    TEST_ASSERT(mol->getNumAtoms() == 4);
+    int cid = DGeomHelpers::EmbedMolecule(*mol);
+    TEST_ASSERT(cid >= 0);
+  }
+  {  // The original problem report
+    std::unique_ptr<RWMol> mol(SmilesToMol(
+        "CCCCCCCCCCCCCCCC(=O)O[C@@H]1CC(C)=C(/C=C/C(C)=C/C=C/C(C)=C/"
+        "C=C\\C=C(C)\\C=C\\C=C(C)\\C=C\\C2=C(C)C[C@@H](OC(=O)CCCCCCCCCCCCCCC)"
+        "CC2(C)C)C(C)(C)C1"));
+    TEST_ASSERT(mol);
+    MolOps::addHs(*mol);
+    MolOps::removeHs(*mol);
+    int cid = DGeomHelpers::EmbedMolecule(*mol);
+    TEST_ASSERT(cid >= 0);
+  }
+}
+
 int main() {
   RDLog::InitLogs();
   BOOST_LOG(rdInfoLog)
@@ -2180,7 +2203,6 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test embed parameters structure.\n";
   testEmbedParameters();
-#endif
 
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog)
@@ -2194,6 +2216,11 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t Deterministic with large random seeds\n";
   testGithubPullRequest1635();
+#endif
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t Github #1990: seg fault after RemoveHs\n";
+  testGithub1990();
 
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
