@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Boran Adas
+//  Copyright (C) 2018 Boran Adas, Google Summer of Code
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
