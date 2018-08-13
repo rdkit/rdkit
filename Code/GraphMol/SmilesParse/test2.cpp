@@ -68,7 +68,6 @@ void testParseAtomSmarts() {
     for (const auto &pr : smiles) {
       std::unique_ptr<Atom> a1(SmartsToAtom(pr));
       TEST_ASSERT(a1);
-      TEST_ASSERT(a1->getAtomicNum() > 0);
     }
   }
 
