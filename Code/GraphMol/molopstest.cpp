@@ -7429,6 +7429,41 @@ void testGithub1928() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testGithub1990() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Github issue "
+                          "1990: removeHs screws up bond stereo"
+                       << std::endl;
+  {
+    std::unique_ptr<RWMol> mol(SmilesToMol("F/C=C/F"));
+    TEST_ASSERT(mol);
+    MolOps::addHs(*mol);
+    MolOps::removeHs(*mol);
+    TEST_ASSERT(mol->getNumAtoms() == 4);
+    TEST_ASSERT(mol->getBondWithIdx(1)->getStereoAtoms().size() == 2);
+  }
+  {  // make sure that stereo is not removed when it comes from Hs:
+    std::unique_ptr<RWMol> mol(SmilesToMol("F/C=C/F"));
+    TEST_ASSERT(mol);
+    MolOps::addHs(*mol);
+    TEST_ASSERT(mol->getBondWithIdx(1)->getStereoAtoms().size() == 2);
+    mol->getBondWithIdx(1)->getStereoAtoms()[0] = 4;
+    MolOps::removeHs(*mol);
+    TEST_ASSERT(mol->getBondWithIdx(1)->getStereoAtoms().size() == 2);
+    mol->getBondWithIdx(1)->getStereoAtoms()[0] = 0;
+  }
+  {  // make sure that stereo is not removed when it comes from Hs:
+    std::unique_ptr<RWMol> mol(SmilesToMol("F/C=C/F"));
+    TEST_ASSERT(mol);
+    MolOps::addHs(*mol);
+    TEST_ASSERT(mol->getBondWithIdx(1)->getStereoAtoms().size() == 2);
+    mol->getBondWithIdx(1)->getStereoAtoms()[1] = 5;
+    MolOps::removeHs(*mol);
+    TEST_ASSERT(mol->getBondWithIdx(1)->getStereoAtoms().size() == 2);
+    mol->getBondWithIdx(1)->getStereoAtoms()[1] = 3;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
   // boost::logging::enable_logs("rdApp.debug");
@@ -7537,8 +7572,9 @@ int main() {
   testGithub1622();
   testGithub1703();
   testGithub1810();
-#endif
   testGithub1936();
   testGithub1928();
+#endif
+  testGithub1990();
   return 0;
 }
