@@ -1,8 +1,30 @@
+# Release_2018.03.4
+(Changes relative to Release_2018.03.3)
+
+## Acknowledgements:
+Brian Kelley, Noel O'Boyle, Rim Shayakhmetov, Jon Sorenson
+
+## Bug Fixes:
+ - Possibly incorrect aromatic SMILES generated for structure
+ (github issue #1928 from baoilleach)
+ - Update KNIME URLs in overview.md
+ (github pull #1966 from greglandrum)
+ - CXN extended SMILES labels are not applied to the correct atom in SMILES
+   with explicit H
+ (github issue #1928 from baoilleach)
+ - MolFromSmarts MolToSmarts fails to roundtrip on patterns with chirality
+ (github issue #1985 from bp-kelley)
+ - RemoveHs not properly updating double bond stereoatoms
+ (github issue #1990 from shayakhmetov)
+ - Error while parsing empty atom list in Mol files.
+ (github issue #2000 from drkeoni)
+
+
 # Release_2018.03.3
 (Changes relative to Release_2018.03.2)
 
 ## Acknowledgements:
-Thomas Blaschke, Brian Kelley, Josh Meyers, Dan Nealschneider, Noel O'Boyle, 
+Thomas Blaschke, Brian Kelley, Josh Meyers, Dan Nealschneider, Noel O'Boyle,
 Jon Sorenson, Paulo Tosco, 'jaechanglim'
 
 ## Bug Fixes:
