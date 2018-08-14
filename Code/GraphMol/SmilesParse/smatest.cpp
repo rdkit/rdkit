@@ -2585,7 +2585,7 @@ void testGithub1985() {
       std::unique_ptr<ROMol> m1(SmartsToMol(pr));
       TEST_ASSERT(m1);
       auto csma1 = MolToSmarts(*m1);
-      TEST_ASSERT(csma1.find("C@") != std::string::npos);
+      TEST_ASSERT(csma1.find("@") != std::string::npos);
     }
   }
 
