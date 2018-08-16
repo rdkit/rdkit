@@ -33,7 +33,7 @@ SELECT reaction_from_smarts('C(F)(F)F.[c1:1][c:2][c:3][c:4]c[c1:5]>CC(=O)O>[c1:1
 SELECT reaction_from_smarts('c1ccc[n,c]c1>>c1nccnc1');
  reaction_from_smarts 
 ----------------------
- c1ccncc1>>c1cnccn1
+ *1ccccc1>>c1cnccn1
 (1 row)
 
 SELECT reaction_to_smiles(reaction_from_smiles('c1ccccc1>>c1cccnc1'));
@@ -45,7 +45,7 @@ SELECT reaction_to_smiles(reaction_from_smiles('c1ccccc1>>c1cccnc1'));
 SELECT reaction_to_smiles(reaction_from_smarts('c1ccc[n,c]c1>>c1nccnc1'));
  reaction_to_smiles 
 --------------------
- c1ccncc1>>c1cnccn1
+ *1ccccc1>>c1cnccn1
 (1 row)
 
 SELECT reaction_to_smarts(reaction_from_smarts('c1ccc[n,c]c1>>c1nccnc1'));

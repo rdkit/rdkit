@@ -52,7 +52,7 @@ SELECT is_valid_smarts('c1ccc[n,c]1');
 SELECT mol_from_smarts('c1ccc[n,c]1');
  mol_from_smarts 
 -----------------
- c1ccnc1
+ *1cccc1
 (1 row)
 
 SELECT is_valid_smarts('c1ccc');
@@ -89,7 +89,7 @@ SELECT mol_to_smarts('c1cccc[n,c]1'::qmol);
 SELECT mol_to_smiles('c1cccc[n,c]1'::qmol);
  mol_to_smiles 
 ---------------
- c1ccncc1
+ *1ccccc1
 (1 row)
 
 SELECT is_valid_smiles('');
