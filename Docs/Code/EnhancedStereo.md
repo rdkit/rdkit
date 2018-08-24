@@ -1,7 +1,7 @@
 # Enhanced Stereochemistry in the RDKit
 Greg Landrum (greg.landrum@t5informatics.com)
 
-May 2018
+September 2018
 
 *This is still a DRAFT*
 
@@ -25,11 +25,14 @@ Here are some illustrations of what the various combinations mean:
 
 ## Use cases
 
+The initial target is to not lose data on an V3k mol -> RDKit -> V3k mol round trip. Manipulation,
+depiction, and searching is a secondary goal.
+
 ## Representation
 
-Likely stored as a vector of `StereoGroup` objects.
+Stored as a vector of `StereoGroup` objects.
 
-A `StereoGroup` contains an enum with the type as well as pointers to the atoms involved. We will need to adjust this when atoms are removed or replaced.
+A `StereoGroup` contains an enum with the type as well as pointers to the atoms involved. We will need to adjust this when atoms are removed or replaced. `StereoGroup`s are not exposed to Python, as the implementation is still tentative.
 
 ## Enumeration
 
