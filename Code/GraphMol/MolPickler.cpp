@@ -11,6 +11,7 @@
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/MonomerInfo.h>
+#include <GraphMol/StereoGroup.h>
 #include <RDGeneral/utils.h>
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/StreamOps.h>
@@ -867,6 +868,15 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
     _pickleSSSR<T>(ss, ringInfo, atomIdxMap);
   }
 
+  // Write Stereo Groups
+  {
+    auto stereo_groups = mol->getStereoGroups();
+    if (stereo_groups.size() > 0u) {
+      streamWrite(ss, BEGINSTEREOGROUP);
+      _pickleStereo<T>(ss, stereo_groups, atomIdxMap);
+    }
+  }
+
   // pickle the conformations if necessary
 
   if (includeAtomCoords) {
@@ -984,6 +994,11 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
   streamRead(ss, tag, version);
   if (tag == BEGINSSSR) {
     _addRingInfoFromPickle<T>(ss, mol, version, directMap);
+    streamRead(ss, tag, version);
+  }
+
+  if (tag == BEGINSTEREOGROUP) {
+    _depickleStereo<T>(ss, mol, version);
     streamRead(ss, tag, version);
   }
 
@@ -1709,6 +1724,52 @@ void MolPickler::_addRingInfoFromPickle(std::istream &ss, ROMol *mol,
       }
       ringInfo->addRing(atoms, bonds);
     }
+  }
+}
+
+template <typename T>
+void MolPickler::_pickleStereo(std::ostream &ss,
+                               const std::vector<StereoGroup> &groups,
+                               std::map<int, int> &atomIdxMap) {
+  T tmpT = static_cast<T>(groups.size());
+  streamWrite(ss, tmpT);
+  for (auto &&group : groups) {
+    streamWrite(ss, static_cast<T>(group.grouptype));
+    streamWrite(ss, static_cast<T>(group.atoms.size()));
+    for (auto &&atom : group.atoms) {
+      tmpT = static_cast<T>(atomIdxMap[atom->getIdx()]);
+      streamWrite(ss, tmpT);
+    }
+  }
+}
+
+template <typename T>
+void MolPickler::_depickleStereo(std::istream &ss, ROMol *mol, int version) {
+  T tmpT;
+  streamRead(ss, tmpT, version);
+  const unsigned numGroups = static_cast<unsigned>(tmpT);
+
+  if (numGroups > 0u) {
+    std::vector<StereoGroup> groups;
+    for (unsigned group = 0u; group < numGroups; ++group) {
+      T tmpT;
+      streamRead(ss, tmpT, version);
+      const auto groupType = static_cast<RDKit::StereoGroupType>(tmpT);
+
+      streamRead(ss, tmpT, version);
+      const unsigned numAtoms = static_cast<unsigned>(tmpT);
+
+      std::vector<Atom *> atoms;
+      atoms.reserve(numAtoms);
+      for (unsigned i = 0u; i < numAtoms; ++i) {
+        streamRead(ss, tmpT, version);
+        atoms.push_back(mol->getAtomWithIdx(tmpT));
+      }
+
+      groups.emplace_back(groupType, std::move(atoms));
+    }
+
+    mol->setStereoGroups(std::move(groups));
   }
 }
 

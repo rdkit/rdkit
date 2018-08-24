@@ -34,7 +34,7 @@ void ROMol::destroy() {
   d_atomBookmarks.clear();
   d_bondBookmarks.clear();
 
-  ATOM_ITER_PAIR atItP = boost::vertices(d_graph);  
+  ATOM_ITER_PAIR atItP = boost::vertices(d_graph);
   while (atItP.first != atItP.second) {
     delete (d_graph)[*(atItP.first++)];
   }
@@ -43,7 +43,7 @@ void ROMol::destroy() {
   while (bondItP.first != bondItP.second) {
     delete (d_graph)[*(bondItP.first++)];
   }
-  
+
   d_graph.clear();
 
   if (dp_ringInfo) {
@@ -83,6 +83,16 @@ void ROMol::initFromOther(const ROMol &other, bool quickCopy, int confId) {
     dp_ringInfo = new RingInfo(*(other.dp_ringInfo));
   } else {
     dp_ringInfo = new RingInfo();
+  }
+
+  // enhanced stereochemical information
+  d_stereo_groups.clear();
+  for (auto &&otherGroup : other.d_stereo_groups) {
+    std::vector<Atom *> atoms;
+    for (auto &&otherAtom : otherGroup.atoms) {
+      atoms.push_back(getAtomWithIdx(otherAtom->getIdx()));
+    }
+    d_stereo_groups.emplace_back(otherGroup.grouptype, std::move(atoms));
   }
 
   if (!quickCopy) {
@@ -374,6 +384,10 @@ unsigned int ROMol::addBond(Bond *bond_pin, bool takeOwnership) {
   return numBonds;  // res;
 }
 
+void ROMol::setStereoGroups(std::vector<StereoGroup> stereo_groups) {
+  d_stereo_groups = std::move(stereo_groups);
+}
+
 void ROMol::debugMol(std::ostream &str) const {
   ATOM_ITER_PAIR atItP = getVertices();
   BOND_ITER_PAIR bondItP = getEdges();
@@ -479,10 +493,10 @@ void ROMol::clearComputedProps(bool includeRings) const {
 
   RDProps::clearComputedProps();
 
-  for (auto atom: atoms()) {
+  for (auto atom : atoms()) {
     atom->clearComputedProps();
   }
-  
+
   for (ConstBondIterator bondIt = this->beginBonds();
        bondIt != this->endBonds(); bondIt++) {
     (*bondIt)->clearComputedProps();
@@ -579,4 +593,4 @@ unsigned int ROMol::addConformer(Conformer *conf, bool assignId) {
   return conf->getId();
 }
 
-}  // end o' namespace
+}  // namespace RDKit
