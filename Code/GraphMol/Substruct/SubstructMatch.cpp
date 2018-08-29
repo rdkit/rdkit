@@ -17,6 +17,7 @@
 
 #include "SubstructMatch.h"
 #include "SubstructUtils.h"
+#include <boost/serialization/array_wrapper.hpp>
 #include <boost/smart_ptr.hpp>
 #include <map>
 
