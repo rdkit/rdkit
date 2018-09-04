@@ -71,3 +71,4 @@ rdkit_test(smiTest2 test2.cpp LINK_LIBRARIES SmilesParse GraphMol RDGeneral RDGe
 rdkit_test(cxsmilesTest cxsmiles_test.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )
 
 rdkit_test(smaTest1 smatest.cpp LINK_LIBRARIES SmilesParse SubstructMatch GraphMol RDGeneral RDGeometryLib )
+rdkit_catch_test(smiTestCatch catch_tests.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )
