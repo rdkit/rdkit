@@ -188,6 +188,48 @@ class TestCase(unittest.TestCase):
                                useSVG=True)
     self.assertTrue(svg.find("width='900px' height='1200px'") > -1)
 
+  def testDrawMorgan(self):
+    from rdkit.Chem import rdMolDescriptors
+    m = Chem.MolFromSmiles('c1ccccc1CC1CC1')
+    bi = {}
+    fp = rdMolDescriptors.GetMorganFingerprintAsBitVect(m,radius=2,bitInfo=bi)
+    self.assertTrue(872 in bi)
+
+    svg1 = Draw.DrawMorganBit(m,872,bi)
+    aid,r = bi[872][0]
+    svg2 = Draw.DrawMorganEnv(m,aid,r)
+    self.assertEqual(svg1,svg2)
+    self.assertTrue("style='fill:#CCCCCC;" in svg1)
+    self.assertTrue("style='fill:#E5E533;" in svg1)
+    self.assertTrue("style='fill:#9999E5;" in svg1)
+
+    svg1 = Draw.DrawMorganBit(m,872,bi,centerColor=None)
+    aid,r = bi[872][0]
+    svg2 = Draw.DrawMorganEnv(m,aid,r,centerColor=None)
+    self.assertEqual(svg1,svg2)
+    self.assertTrue("style='fill:#CCCCCC;" in svg1)
+    self.assertTrue("style='fill:#E5E533;" in svg1)
+    self.assertFalse("style='fill:#9999E5;" in svg1)
+    with self.assertRaises(KeyError):
+        Draw.DrawMorganBit(m,32,bi)
+
+  def testDrawRDKit(self):
+    m = Chem.MolFromSmiles('c1ccccc1CC1CC1')
+    bi = {}
+    rdkfp = Chem.RDKFingerprint(m,maxPath=5,bitInfo=bi)
+    self.assertTrue(1553 in bi)
+    svg1 = Draw.DrawRDKitBit(m,1553,bi)
+    path = bi[1553][0]
+    svg2 = Draw.DrawRDKitEnv(m,path)
+    self.assertEqual(svg1,svg2)
+    self.assertTrue("style='fill:#E5E533;" in svg1)
+    self.assertFalse("style='fill:#CCCCCC;" in svg1)
+    self.assertFalse("style='fill:#9999E5;" in svg1)
+    with self.assertRaises(KeyError):
+        Draw.DrawRDKitBit(m,32,bi)
+
+
+
 
 if __name__ == '__main__':
   unittest.main()
