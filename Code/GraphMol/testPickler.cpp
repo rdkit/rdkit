@@ -1314,11 +1314,11 @@ void testEnhancedStereoChemistry() {
   {
     std::vector<StereoGroup> groups;
     std::vector<Atom *> atoms0 = {{m.getAtomWithIdx(0), m.getAtomWithIdx(1)}};
-    groups.emplace_back(RDKit::StereoGroupType::ABSOLUTE, std::move(atoms0));
+    groups.emplace_back(RDKit::StereoGroupType::STEREO_ABSOLUTE, std::move(atoms0));
     std::vector<Atom *> atoms1 = {{m.getAtomWithIdx(2), m.getAtomWithIdx(3)}};
-    groups.emplace_back(RDKit::StereoGroupType::OR, std::move(atoms1));
+    groups.emplace_back(RDKit::StereoGroupType::STEREO_OR, std::move(atoms1));
     std::vector<Atom *> atoms2 = {{m.getAtomWithIdx(4), m.getAtomWithIdx(5)}};
-    groups.emplace_back(RDKit::StereoGroupType::AND, std::move(atoms2));
+    groups.emplace_back(RDKit::StereoGroupType::STEREO_AND, std::move(atoms2));
     m.setStereoGroups(std::move(groups));
   }
 
