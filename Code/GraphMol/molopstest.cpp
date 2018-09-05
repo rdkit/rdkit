@@ -2144,6 +2144,34 @@ void testSanitOps() {
   TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge() == 1);
   delete m;
 
+  smi = "I(O)(O)(O)(O)O";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms() == 6);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge() == 0);
+  delete m;
+
+  smi = "I(O)(O)O";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms() == 4);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge() == 0);
+  delete m;
+
+  smi = "I(=O)(O)(O)(O)";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms() == 5);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge() == 1);
+  delete m;
+  
+  smi = "CC(=O)O[IH2](O)OC(C)=O";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms() == 10);
+  TEST_ASSERT(m->getAtomWithIdx(4)->getFormalCharge() == 0);
+  delete m;
+  
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
