@@ -25,7 +25,7 @@ class Atom;
 
 // OR means that it is known to be one or the other, but not both
 // AND means that it is known to be a mix.
-enum class StereoGroupType : int { ABSOLUTE = 0, OR = 1, AND = 2 };
+enum class StereoGroupType : int { STEREO_ABSOLUTE = 0, STEREO_OR = 1, STEREO_AND = 2 };
 
 //! StereoGroup is a collection of atoms with a known stereochemical
 //! relationship

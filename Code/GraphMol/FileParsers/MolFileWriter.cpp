@@ -1017,15 +1017,15 @@ void appendEnhancedStereoGroups(std::string &res, const RWMol &tmol) {
     for (auto &&group : stereo_groups) {
       res += "M  V30 MDLV30/";
       switch (group.grouptype) {
-        case RDKit::StereoGroupType::ABSOLUTE:
+        case RDKit::StereoGroupType::STEREO_ABSOLUTE:
           res += "STEABS";
           break;
-        case RDKit::StereoGroupType::OR:
+        case RDKit::StereoGroupType::STEREO_OR:
           res += "STEREL";
           res += boost::lexical_cast<std::string>(or_count);
           ++or_count;
           break;
-        case RDKit::StereoGroupType::AND:
+        case RDKit::StereoGroupType::STEREO_AND:
           res += "STERAC";
           res += boost::lexical_cast<std::string>(and_count);
           ++and_count;
