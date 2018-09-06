@@ -138,7 +138,7 @@ def _GetSubstructMatch(mol, query, **kwargs):
   else:
     mol.__sssAtoms = []
   return res
-
+_GetSubstructMatch.__doc__ = rdchem.Mol.GetSubstructMatch.__doc__
 
 def _GetSubstructMatches(mol, query, **kwargs):
   res = mol.__GetSubstructMatches(query, **kwargs)
@@ -147,6 +147,7 @@ def _GetSubstructMatches(mol, query, **kwargs):
     for entry in res:
       mol.__sssAtoms.extend(list(entry))
   return res
+_GetSubstructMatches.__doc__ = rdchem.Mol.GetSubstructMatches.__doc__
 
 
 # code for displaying PIL images directly,
@@ -180,7 +181,7 @@ def ShowMols(mols, maxMols=50, **kwargs):
     return SVG(res)
   else:
     return res
-
+ShowMols.__doc__ = Draw.MolsToGridImage.__doc__
 
 def InstallIPythonRenderer():
   global _MolsToGridImageSaved
