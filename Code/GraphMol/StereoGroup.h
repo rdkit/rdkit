@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2015 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2018 Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -15,8 +15,8 @@
 */
 
 #include <RDGeneral/export.h>
-#ifndef __RD_StereoGroup_H__
-#define __RD_StereoGroup_H__
+#ifndef RD_StereoGroup_092018
+#define RD_StereoGroup_092018
 
 #include <vector>
 
@@ -25,7 +25,11 @@ class Atom;
 
 // OR means that it is known to be one or the other, but not both
 // AND means that it is known to be a mix.
-enum class StereoGroupType : int { STEREO_ABSOLUTE = 0, STEREO_OR = 1, STEREO_AND = 2 };
+enum class StereoGroupType {
+  STEREO_ABSOLUTE = 0,
+  STEREO_OR = 1,
+  STEREO_AND = 2
+};
 
 //! StereoGroup is a collection of atoms with a known stereochemical
 //! relationship
@@ -36,11 +40,11 @@ enum class StereoGroupType : int { STEREO_ABSOLUTE = 0, STEREO_OR = 1, STEREO_AN
  */
 class RDKIT_GRAPHMOL_EXPORT StereoGroup {
  public:
-  StereoGroup(StereoGroupType grouptype, std::vector<Atom*>&& atoms)
+  StereoGroup(StereoGroupType grouptype, std::vector<Atom *> &&atoms)
       : grouptype(grouptype), atoms(atoms) {}
 
   const StereoGroupType grouptype;
-  const std::vector<Atom*> atoms;
+  const std::vector<RDKit::Atom *> atoms;
 };
 
 }  // namespace RDKit

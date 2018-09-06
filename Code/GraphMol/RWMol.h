@@ -198,7 +198,7 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
     Stereo groups are also called enhanced stereochemistry in the SDF/Mol3000
     file format. stereo_groups should be std::move()ed into this function.
   */
-  void setStereoGroups(std::vector<StereoGroup> stereo_groups) {
+  void setStereoGroups(std::vector<StereoGroup> &&stereo_groups) {
     return ROMol::setStereoGroups(std::move(stereo_groups));
   };
 

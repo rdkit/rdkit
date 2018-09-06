@@ -1314,7 +1314,8 @@ void testEnhancedStereoChemistry() {
   {
     std::vector<StereoGroup> groups;
     std::vector<Atom *> atoms0 = {{m.getAtomWithIdx(0), m.getAtomWithIdx(1)}};
-    groups.emplace_back(RDKit::StereoGroupType::STEREO_ABSOLUTE, std::move(atoms0));
+    groups.emplace_back(RDKit::StereoGroupType::STEREO_ABSOLUTE,
+                        std::move(atoms0));
     std::vector<Atom *> atoms1 = {{m.getAtomWithIdx(2), m.getAtomWithIdx(3)}};
     groups.emplace_back(RDKit::StereoGroupType::STEREO_OR, std::move(atoms1));
     std::vector<Atom *> atoms2 = {{m.getAtomWithIdx(4), m.getAtomWithIdx(5)}};
@@ -1329,6 +1330,7 @@ void testEnhancedStereoChemistry() {
 
   auto &ref_groups = m.getStereoGroups();
   auto &new_groups = roundTripped->getStereoGroups();
+  TEST_ASSERT(ref_groups.size() == new_groups.size());
   for (unsigned i = 0u; i < 3; ++i) {
     TEST_ASSERT(ref_groups[i].grouptype == new_groups[i].grouptype);
   }
@@ -1369,4 +1371,5 @@ int main(int argc, char *argv[]) {
   testGithub1563();
   testGithub1710();
   testGithub1999();
+  testEnhancedStereoChemistry();
 }

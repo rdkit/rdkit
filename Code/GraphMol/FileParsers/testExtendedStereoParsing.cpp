@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2017 Greg Landrum
+//  Copyright (C) 2018 Rational Discovery LLC
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -22,12 +22,12 @@
 
 using namespace RDKit;
 
-std::unique_ptr<RWMol> readTestFile(const std::string& baseName) {
+std::unique_ptr<RWMol> readTestFile(const std::string &baseName) {
   std::string rdbase = getenv("RDBASE");
   std::string fName =
       rdbase + "/Code/GraphMol/FileParsers/test_data/" + baseName;
   auto m = MolFileToMol(fName);
-  return std::move(std::unique_ptr<RWMol>(m));
+  return std::unique_ptr<RWMol>(m);
 }
 
 void testOr() {
@@ -40,7 +40,8 @@ void testOr() {
 
   auto stereo_groups = m->getStereoGroups();
   TEST_ASSERT(stereo_groups.size() == 2);
-  TEST_ASSERT(stereo_groups[0].grouptype == RDKit::StereoGroupType::STEREO_ABSOLUTE);
+  TEST_ASSERT(stereo_groups[0].grouptype ==
+              RDKit::StereoGroupType::STEREO_ABSOLUTE);
   TEST_ASSERT(stereo_groups[0].atoms.size() == 1u);
   TEST_ASSERT(stereo_groups[1].grouptype == RDKit::StereoGroupType::STEREO_OR);
   TEST_ASSERT(stereo_groups[1].atoms.size() == 2u);
@@ -58,7 +59,8 @@ void testAnd() {
 
   auto stereo_groups = m->getStereoGroups();
   TEST_ASSERT(stereo_groups.size() == 2);
-  TEST_ASSERT(stereo_groups[0].grouptype == RDKit::StereoGroupType::STEREO_ABSOLUTE);
+  TEST_ASSERT(stereo_groups[0].grouptype ==
+              RDKit::StereoGroupType::STEREO_ABSOLUTE);
   TEST_ASSERT(stereo_groups[1].grouptype == RDKit::StereoGroupType::STEREO_AND);
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
@@ -76,6 +78,7 @@ void testWrite() {
   // types and same atoms marked for extended stereo.
   auto stereo_groups0 = m0->getStereoGroups();
   auto stereo_groups1 = m1->getStereoGroups();
+  TEST_ASSERT(stereo_groups0.size() == stereo_groups1.size());
 
   for (unsigned i = 0u; i < 2; ++i) {
     TEST_ASSERT(stereo_groups0[i].grouptype == stereo_groups1[i].grouptype);
@@ -87,11 +90,12 @@ void testWrite() {
       TEST_ASSERT((*atom0)->getIdx() == (*atom1)->getIdx());
     }
   }
+  delete (m1);
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
 

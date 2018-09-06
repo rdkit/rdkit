@@ -39,6 +39,7 @@ rdkit_headers(Atom.h
               ROMol.h
               RWMol.h
               SanitException.h
+              StereoGroup.h
               MonomerInfo.h
               new_canon.h
               MolBundle.h

@@ -29,8 +29,8 @@ using boost::int32_t;
 using boost::uint32_t;
 namespace RDKit {
 
-const int32_t MolPickler::versionMajor = 9;
-const int32_t MolPickler::versionMinor = 1;
+const int32_t MolPickler::versionMajor = 10;
+const int32_t MolPickler::versionMinor = 0;
 const int32_t MolPickler::versionPatch = 0;
 const int32_t MolPickler::endianId = 0xDEADBEEF;
 
@@ -870,7 +870,7 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
 
   // Write Stereo Groups
   {
-    auto stereo_groups = mol->getStereoGroups();
+    auto &stereo_groups = mol->getStereoGroups();
     if (stereo_groups.size() > 0u) {
       streamWrite(ss, BEGINSTEREOGROUP);
       _pickleStereo<T>(ss, stereo_groups, atomIdxMap);
