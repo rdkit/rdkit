@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2018 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -1031,6 +1031,37 @@ void testGithub1691() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testGithub2027() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Github issue "
+                          "2027: \"linear\" fragments not canonically oriented"
+                       << std::endl;
+  {
+    std::unique_ptr<RWMol> mol(SmilesToMol("C#CC#CC#CC#CC#CC#CC#C"));
+    TEST_ASSERT(mol);
+    RDDepict::compute2DCoords(*mol, nullptr, true);
+    const Conformer &conf = mol->getConformer();
+    TEST_ASSERT(feq(conf.getAtomPos(0).y, 0.0));
+    TEST_ASSERT(feq(conf.getAtomPos(1).y, 0.0));
+    TEST_ASSERT(feq(conf.getAtomPos(2).y, 0.0));
+  }
+  {
+    std::unique_ptr<RWMol> mol(SmilesToMol("C1=CC=CC2=CC3=CC=CC=C3C=C12"));
+    TEST_ASSERT(mol);
+    RDDepict::compute2DCoords(*mol, nullptr, true);
+
+    // a stupidly simple test to ensure that we're oriented along the x axis:
+    const Conformer &conf = mol->getConformer();
+    RDGeom::Point2D paccum(0, 0);
+    for (const auto &pt : conf.getPositions()) {
+      paccum.x += fabs(pt.x);
+      paccum.y += fabs(pt.y);
+    }
+    TEST_ASSERT(paccum.x > paccum.y);
+  }
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main() {
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   RDDepict::preferCoordGen = false;
@@ -1228,8 +1259,9 @@ int main() {
   testGitHubIssue1286();
   BOOST_LOG(rdInfoLog)
       << "***********************************************************\n";
-#endif
   testGithub1691();
+#endif
+  testGithub2027();
 
   return (0);
 }
