@@ -1163,9 +1163,8 @@ void EmbeddedFrag::canonicalizeOrientation() {
   if (d_eatoms.size() <= 1) return;
 
   RDGeom::Point2D cent(0.0, 0.0);
-  INT_EATOM_MAP_I eri;
-  for (eri = d_eatoms.begin(); eri != d_eatoms.end(); eri++) {
-    cent += eri->second.loc;
+  for (const auto &elem : d_eatoms) {
+    cent += elem.second.loc;
   }
   cent *= (1.0 / d_eatoms.size());
 
@@ -1176,11 +1175,11 @@ void EmbeddedFrag::canonicalizeOrientation() {
 
   // shift the center of the fragment to the origin and compute the covariance
   // matrix
-  for (eri = d_eatoms.begin(); eri != d_eatoms.end(); eri++) {
-    eri->second.loc -= cent;
-    xx += (eri->second.loc.x) * (eri->second.loc.x);
-    xy += (eri->second.loc.x) * (eri->second.loc.y);
-    yy += (eri->second.loc.y) * (eri->second.loc.y);
+  for (auto &elem : d_eatoms ){
+    elem.second.loc -= cent;
+    xx += (elem.second.loc.x) * (elem.second.loc.x);
+    xy += (elem.second.loc.x) * (elem.second.loc.y);
+    yy += (elem.second.loc.y) * (elem.second.loc.y);
   }
 
   RDGeom::Point2D eig1, eig2;
@@ -1198,15 +1197,15 @@ void EmbeddedFrag::canonicalizeOrientation() {
 
   eig2.x = 2 * xy;
   eig2.y = (yy - xx) - d;
-  if (eig2.length() <= 1e-4) return;
   double eVal2 = (xx + yy - d) / 2;
-  eig2.normalize();
 
-  // make sure eig1 corresponds to the larger eigenvalue:
-  if (eVal2 > eVal1) {
-    RDGeom::Point2D tmp = eig1;
-    eig1 = eig2;
-    eig2 = tmp;
+  if (eig2.length() > 1e-4) {
+    eig2.normalize();
+
+    // make sure eig1 corresponds to the larger eigenvalue:
+    if (eVal2 > eVal1) {
+      std::swap(eig1, eig2);
+    }
   }
   // now rotate eig1 onto the X axis:
   trans.setVal(0, 0, eig1.x);
