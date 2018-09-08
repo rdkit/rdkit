@@ -200,11 +200,13 @@ std::string GetBondSmiles(const Bond *bond, int atomToLeftIdx, bool doKekule,
       if (dir != Bond::NONE && dir != Bond::UNKNOWN) {
         switch (dir) {
           case Bond::ENDDOWNRIGHT:
-            if (bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))
+            if (allBondsExplicit ||
+                bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))
               res = "\\";
             break;
           case Bond::ENDUPRIGHT:
-            if (bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))
+            if (allBondsExplicit ||
+                bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))
               res = "/";
             break;
           default:
@@ -235,11 +237,13 @@ std::string GetBondSmiles(const Bond *bond, int atomToLeftIdx, bool doKekule,
       if (dir != Bond::NONE && dir != Bond::UNKNOWN) {
         switch (dir) {
           case Bond::ENDDOWNRIGHT:
-            if (bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))
+            if (allBondsExplicit ||
+                bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))
               res = "\\";
             break;
           case Bond::ENDUPRIGHT:
-            if (bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))
+            if (allBondsExplicit ||
+                bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))
               res = "/";
             break;
           default:
