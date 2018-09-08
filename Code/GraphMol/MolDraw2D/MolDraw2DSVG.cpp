@@ -366,7 +366,7 @@ void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds) {
   d_os << "</text>\n";
 }
 
-void MolDraw2DSVG::addMoleculeMetadata(const ROMol &mol, int confId) {
+void MolDraw2DSVG::addMoleculeMetadata(const ROMol &mol, int confId) const {
   PRECONDITION(d_os, "no output stream");
   d_os << "<rdkit:mol>";
   for (const auto atom : mol.atoms()) {
@@ -408,7 +408,7 @@ void MolDraw2DSVG::addMoleculeMetadata(const ROMol &mol, int confId) {
 }
 
 void MolDraw2DSVG::addMoleculeMetadata(const std::vector<ROMol *> &mols,
-                                       const std::vector<int> confIds) {
+                                       const std::vector<int> confIds) const {
   for (unsigned int i = 0; i < mols.size(); ++i) {
     int confId = -1;
     if (confIds.size() == mols.size()) confId = confIds[i];

@@ -69,9 +69,9 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
 
   void tagAtoms(const ROMol &mol);
 
-  void addMoleculeMetadata(const ROMol &mol, int confId = -1);
+  void addMoleculeMetadata(const ROMol &mol, int confId = -1) const;
   void addMoleculeMetadata(const std::vector<ROMol *> &mols,
-                           const std::vector<int> confIds = {});
+                           const std::vector<int> confIds = {}) const;
 
  private:
   std::ostream &d_os;
