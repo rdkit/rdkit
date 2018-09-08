@@ -39,7 +39,7 @@ before_install:
  - if [[ "$CONDA_PYTHON_VERSION" == "3.6" ]] ; then export PYMAJOR="3"; fi
  - if [[ "$CONDA_PYTHON_VERSION" == "2.7" ]] ; then export PYMAJOR="2"; fi
  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget http://repo.continuum.io/miniconda/Miniconda$PYMAJOR-4.4.10-Linux-x86_64.sh -O miniconda.sh; fi
- - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then wget http://repo.continuum.io/miniconda/Miniconda$PYMAJOR-4.4.10-MacOSX-x86_64.sh -O miniconda.sh; fi 
+ - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then wget http://repo.continuum.io/miniconda/Miniconda$PYMAJOR-4.4.10-MacOSX-x86_64.sh -O miniconda.sh; fi
  - bash miniconda.sh -b -p $HOME/conda
  - export PATH="$HOME/conda/bin:$PATH"
  - hash -r
@@ -82,7 +82,8 @@ script:
   - cd build
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then  export CXX="clang++-3.9" ; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then  export CC="clang-3.9" ; fi
-  - cmake -D Python_ADDITIONAL_VERSIONS=$CONDA_PYTHON_VERSION -D PYTHON_EXECUTABLE=$PYTHON -D PYTHON_LIBRARY=`find $PY_PREFIX -name "libpython$CONDA_PYTHON_VERSION*.so"` -D PYTHON_NUMPY_INCLUDE_PATH=$PY_SP_DIR/numpy/core/include -D BOOST_ROOT=$PY_PREFIX -D Boost_NO_SYSTEM_PATHS=ON -D RDK_BUILD_AVALON_SUPPORT=ON -D RDK_BUILD_INCHI_SUPPORT=ON -DRDK_BUILD_THREADSAFE_SSS=on -DRDK_TEST_MULTITHREADED=on -DRDK_INSTALL_STATIC_LIBS=OFF -DRDK_BUILD_SWIG_WRAPPERS=OFF -DRDK_SWIG_STATIC=OFF -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_BUILD_FREESASA_SUPPORT=ON ..
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then  export REGEX_EXTRA="-DRDK_USE_BOOST_REGEX=ON" ; fi
+    - cmake $REGEX_EXTRA -D Python_ADDITIONAL_VERSIONS=$CONDA_PYTHON_VERSION -D PYTHON_EXECUTABLE=$PYTHON -D PYTHON_LIBRARY=`find $PY_PREFIX -name "libpython$CONDA_PYTHON_VERSION*.so"` -D PYTHON_NUMPY_INCLUDE_PATH=$PY_SP_DIR/numpy/core/include -D BOOST_ROOT=$PY_PREFIX -D Boost_NO_SYSTEM_PATHS=ON -D RDK_BUILD_AVALON_SUPPORT=ON -D RDK_BUILD_INCHI_SUPPORT=ON -DRDK_BUILD_THREADSAFE_SSS=on -DRDK_TEST_MULTITHREADED=on -DRDK_INSTALL_STATIC_LIBS=OFF -DRDK_BUILD_SWIG_WRAPPERS=OFF -DRDK_SWIG_STATIC=OFF -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_BUILD_FREESASA_SUPPORT=ON ..
   - make -j2 VERBOSE=3
   - make install
   - ls "$PY_PREFIX/lib"

@@ -10,10 +10,10 @@ else()
     set (maeparser_var "")
 endif()
 
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.9)
-find_package(Boost 1.56.0 COMPONENTS regex REQUIRED)
-add_definitions(-DRDKIT_USE_BOOST_REGEX)
-set(regex_lib Boost::regex)
+if(RDK_USE_BOOST_REGEX)
+  add_definitions(-DRDKIT_USE_BOOST_REGEX)
+  find_package(Boost 1.58.0 COMPONENTS regex REQUIRED)
+  set(regex_lib Boost::regex)
 endif()
 
 rdkit_library(FileParsers
