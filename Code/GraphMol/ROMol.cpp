@@ -34,7 +34,7 @@ void ROMol::destroy() {
   d_atomBookmarks.clear();
   d_bondBookmarks.clear();
 
-  ATOM_ITER_PAIR atItP = boost::vertices(d_graph);  
+  ATOM_ITER_PAIR atItP = boost::vertices(d_graph);
   while (atItP.first != atItP.second) {
     delete (d_graph)[*(atItP.first++)];
   }
@@ -43,7 +43,7 @@ void ROMol::destroy() {
   while (bondItP.first != bondItP.second) {
     delete (d_graph)[*(bondItP.first++)];
   }
-  
+
   d_graph.clear();
 
   if (dp_ringInfo) {
@@ -479,10 +479,10 @@ void ROMol::clearComputedProps(bool includeRings) const {
 
   RDProps::clearComputedProps();
 
-  for (auto atom: atoms()) {
+  for (auto atom : atoms()) {
     atom->clearComputedProps();
   }
-  
+
   for (ConstBondIterator bondIt = this->beginBonds();
        bondIt != this->endBonds(); bondIt++) {
     (*bondIt)->clearComputedProps();
@@ -579,4 +579,4 @@ unsigned int ROMol::addConformer(Conformer *conf, bool assignId) {
   return conf->getId();
 }
 
-}  // end o' namespace
+}  // namespace RDKit

@@ -571,7 +571,7 @@ void runblock(const std::vector<ROMol *> &mols,
     }
   }
 }
-}
+}  // namespace
 
 void testMultiThreaded() {
   std::cout << " ----------------- Test multi-threaded drawing" << std::endl;
@@ -2100,7 +2100,7 @@ void test15ContinuousHighlightingWithGrid() {
       drawer.drawOptions().continuousHighlight = true;
       drawer.drawMolecules(mols, nullptr, &atHighlights);
       drawer.finishDrawing();
-      std::string text= drawer.getDrawingText();
+      std::string text = drawer.getDrawingText();
       std::ofstream outs("test15_2.svg");
       outs << text;
       outs.flush();
@@ -2113,7 +2113,8 @@ void test15ContinuousHighlightingWithGrid() {
 }
 
 void testGithub1829() {
-  std::cerr << " ----------------- Testing github 1829: crash when drawMolecules() is called with an empty list"
+  std::cerr << " ----------------- Testing github 1829: crash when "
+               "drawMolecules() is called with an empty list"
             << std::endl;
   {
     std::vector<ROMol *> mols;
@@ -2125,7 +2126,6 @@ void testGithub1829() {
   }
   std::cerr << " Done" << std::endl;
 }
-
 
 void test16MoleculeMetadata() {
   std::cout << " ----------------- Testing inclusion of molecule metadata"
@@ -2142,44 +2142,46 @@ void test16MoleculeMetadata() {
       drawer.addMoleculeMetadata(*m1);
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
-
+      TEST_ASSERT(text.find("idx=\"2\" atom-smiles=\"[NH]\" drawing-x=\"52.") !=
+                  std::string::npos);
+      TEST_ASSERT(text.find("idx=\"2\" begin-atom-idx=\"2\" end-atom-idx=\"3\" "
+                            "bond-smiles=\"-\"") != std::string::npos);
       std::ofstream outs("test16_1.svg");
       outs << text;
       outs.flush();
     }
 
-#if 0
+#if 1
     // FIX: this does not currently work particularlly well because the drawing
     // coordinates are always in a local reference frame (not offset by the
     // origin of the pane the molecule is in).
     {  // multiple molecules
       MolDraw2DSVG drawer(400, 400, 200, 200);
       ROMol *rom = rdcast<ROMol *>(m1.get());
-      std::vector<ROMol *> ms = {rom,rom,rom,rom};
+      std::vector<ROMol *> ms = {new ROMol(*rom), new ROMol(*rom),
+                                 new ROMol(*rom), new ROMol(*rom)};
       drawer.drawMolecules(ms);
-      for(const auto m : ms ){
-        drawer.addMoleculeMetadata(*m);
-      }
+      drawer.addMoleculeMetadata(ms);
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
+
+      TEST_ASSERT(text.find("atom-smiles=\"[NH]\" drawing-x=\"60.") !=
+                  std::string::npos);
+      TEST_ASSERT(text.find("atom-smiles=\"[NH]\" drawing-x=\"260.") !=
+                  std::string::npos);
 
       std::ofstream outs("test16_2.svg");
       outs << text;
       outs.flush();
+      for (auto ptr : ms) delete ptr;
     }
 #endif
-
   }
 
-  {
-
-  }
+  {}
 
   std::cerr << " Done" << std::endl;
 }
-
-
-
 
 int main() {
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
@@ -2214,12 +2216,12 @@ int main() {
   test13JSONConfig();
   testGithub1090();
   testGithub1035();
-#endif
   testGithub1271();
   testGithub1322();
   testGithub565();
   test14BWPalette();
   test15ContinuousHighlightingWithGrid();
   testGithub1829();
+#endif
   test16MoleculeMetadata();
 }

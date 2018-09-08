@@ -16,6 +16,7 @@
 #include <Geometry/point.h>
 
 #include <boost/algorithm/string.hpp>
+#include <boost/format.hpp>
 #include <sstream>
 
 namespace RDKit {
@@ -46,7 +47,7 @@ std::string DrawColourToSVG(const DrawColour &col) {
   res[i++] = convert[v % 16];
   return res;
 }
-}
+}  // namespace
 
 void MolDraw2DSVG::initDrawing() {
   d_os << "<?xml version='1.0' encoding='iso-8859-1'?>\n";
@@ -281,7 +282,7 @@ void escape_xhtml(std::string &data) {
   boost::algorithm::replace_all(data, "<", "&lt;");
   boost::algorithm::replace_all(data, ">", "&gt;");
 }
-}
+}  // namespace
 
 // ****************************************************************************
 // draws the string centred on cds
@@ -365,32 +366,55 @@ void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds) {
   d_os << "</text>\n";
 }
 
-void MolDraw2DSVG::addMoleculeMetadata(const ROMol &mol,int confId){
+void MolDraw2DSVG::addMoleculeMetadata(const ROMol &mol, int confId) {
   PRECONDITION(d_os, "no output stream");
   d_os << "<rdkit:mol>";
-  for(const auto atom : mol.atoms()) {
-    d_os << "<rdkit:atom idx=\"" << atom->getIdx()+1 << "\"";
-    bool doKekule=false, allHsExplicit=true, isomericSmiles=true;
-    d_os << " atom-smiles=\"" << SmilesWrite::GetAtomSmiles(atom, doKekule, nullptr, allHsExplicit, isomericSmiles) << "\"";
-    Point2D dpos = getDrawCoords(atomCoords()[atom->getIdx()]);
-    d_os << " drawing-x=\"" << dpos.x<< "\"" << " drawing-y=\"" << dpos.y<< "\"";
+  for (const auto atom : mol.atoms()) {
+    d_os << "<rdkit:atom idx=\"" << atom->getIdx() + 1 << "\"";
+    bool doKekule = false, allHsExplicit = true, isomericSmiles = true;
+    d_os << " atom-smiles=\""
+         << SmilesWrite::GetAtomSmiles(atom, doKekule, nullptr, allHsExplicit,
+                                       isomericSmiles)
+         << "\"";
+    auto tag = boost::str(boost::format("_atomdrawpos_%d") % confId);
+
     const Conformer &conf = mol.getConformer(confId);
     RDGeom::Point3D pos = conf.getAtomPos(atom->getIdx());
-    d_os << " x=\"" << pos.x<< "\"" << " y=\"" << pos.y<< "\"" << " z=\"" << pos.z<< "\"";
+
+    Point2D dpos(pos.x, pos.y);
+    if (atom->hasProp(tag))
+      dpos = atom->getProp<Point2D>(tag);
+    else
+      dpos = getDrawCoords(dpos);
+    d_os << " drawing-x=\"" << dpos.x << "\""
+         << " drawing-y=\"" << dpos.y << "\"";
+    d_os << " x=\"" << pos.x << "\""
+         << " y=\"" << pos.y << "\""
+         << " z=\"" << pos.z << "\"";
 
     d_os << " />" << std::endl;
   }
-  for(const auto bond : mol.bonds()) {
-    d_os << "<rdkit:bond idx=\"" << bond->getIdx()+1 << "\"";
-    d_os << " begin-atom-idx=\"" << bond->getBeginAtomIdx()+1 << "\"";
-    d_os << " end-atom-idx=\"" << bond->getEndAtomIdx()+1 << "\"";
-    bool doKekule=false, allBondsExplicit=true;
-    d_os << " bond-smiles=\"" << SmilesWrite::GetBondSmiles(bond, -1, doKekule, allBondsExplicit) << "\"";
+  for (const auto bond : mol.bonds()) {
+    d_os << "<rdkit:bond idx=\"" << bond->getIdx() + 1 << "\"";
+    d_os << " begin-atom-idx=\"" << bond->getBeginAtomIdx() + 1 << "\"";
+    d_os << " end-atom-idx=\"" << bond->getEndAtomIdx() + 1 << "\"";
+    bool doKekule = false, allBondsExplicit = true;
+    d_os << " bond-smiles=\""
+         << SmilesWrite::GetBondSmiles(bond, -1, doKekule, allBondsExplicit)
+         << "\"";
     d_os << " />" << std::endl;
   }
-  d_os << "</rdkit:mol>"<<std::endl;
- }
+  d_os << "</rdkit:mol>" << std::endl;
+}
 
+void MolDraw2DSVG::addMoleculeMetadata(const std::vector<ROMol *> &mols,
+                                       const std::vector<int> confIds) {
+  for (unsigned int i = 0; i < mols.size(); ++i) {
+    int confId = -1;
+    if (confIds.size() == mols.size()) confId = confIds[i];
+    addMoleculeMetadata(*(mols[i]), confId);
+  }
+};
 
 void MolDraw2DSVG::tagAtoms(const ROMol &mol) {
   PRECONDITION(d_os, "no output stream");
@@ -412,4 +436,4 @@ void MolDraw2DSVG::tagAtoms(const ROMol &mol) {
          << " />" << std::endl;
   }
 }
-}  // EO namespace RDKit
+}  // namespace RDKit
