@@ -208,6 +208,7 @@ std::string GetBondSmiles(const Bond *bond, int atomToLeftIdx, bool doKekule,
               res = "/";
             break;
           default:
+            if (allBondsExplicit) res = "-";
             break;
         }
       } else {
@@ -242,6 +243,7 @@ std::string GetBondSmiles(const Bond *bond, int atomToLeftIdx, bool doKekule,
               res = "/";
             break;
           default:
+            if (allBondsExplicit || !aromatic) res = ":";
             break;
         }
       } else if (allBondsExplicit || !aromatic) {

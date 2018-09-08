@@ -46,3 +46,19 @@ TEST_CASE("Github #1972", "[SMILES,bug]") {
     }
   }
 }
+
+TEST_CASE("Github #2029", "[SMILES,bug]") {
+  SECTION("basics") {
+    std::unique_ptr<ROMol> m1(SmilesToMol("CN[C@H](Cl)C(=O)O"));
+    REQUIRE(m1);
+    m1->getBondWithIdx(1)->setBondDir(Bond::BEGINWEDGE);
+    bool doKekule = false, allBondsExplicit = false;
+    auto bsmi = SmilesWrite::GetBondSmiles(m1->getBondWithIdx(1), -1, doKekule,
+                                           allBondsExplicit);
+    CHECK(bsmi == "");
+    allBondsExplicit = true;
+    bsmi = SmilesWrite::GetBondSmiles(m1->getBondWithIdx(1), -1, doKekule,
+                                      allBondsExplicit);
+    CHECK(bsmi == "-");
+  }
+}
