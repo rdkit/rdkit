@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Rational Discovery LLC
+//  Copyright (C) 2018 T5 Informatics GmbH
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -44,7 +44,7 @@ class RDKIT_GRAPHMOL_EXPORT StereoGroup {
       : grouptype(grouptype), atoms(atoms) {}
 
   const StereoGroupType grouptype;
-  const std::vector<RDKit::Atom *> atoms;
+  const std::vector<Atom *> atoms;
 };
 
 }  // namespace RDKit

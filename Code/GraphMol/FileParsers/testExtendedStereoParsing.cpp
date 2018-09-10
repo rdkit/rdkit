@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Rational Discovery LLC
+//  Copyright (C) 2018 T5 Informatics GmbH
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
