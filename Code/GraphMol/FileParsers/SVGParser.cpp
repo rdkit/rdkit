@@ -11,6 +11,7 @@
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
+#include <Geometry/point.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 
 #include <boost/property_tree/ptree.hpp>
@@ -24,12 +25,19 @@ namespace RDKit {
 namespace {
 void ptreeToMol(RWMol *mol, const pt::ptree &molE) {
   PRECONDITION(mol, "no molecule");
+  std::vector<RDGeom::Point3D> pts;
+  bool is3D = false;
   for (const auto &atE : molE) {
     if (atE.first == "rdkit:atom") {
       std::string asmi = atE.second.get<std::string>("<xmlattr>.atom-smiles");
       Atom *atom = SmilesToAtom(asmi);
       bool updateLabel = false, takeOwnership = true;
       mol->addAtom(atom, updateLabel, takeOwnership);
+      RDGeom::Point3D pt(atE.second.get<double>("<xmlattr>.x", 0.0),
+                         atE.second.get<double>("<xmlattr>.y", 0.0),
+                         atE.second.get<double>("<xmlattr>.z", 0.0));
+      pts.push_back(pt);
+      if (atE.second.get<std::string>("<xmlattr>.z", "0") != "0") is3D = true;
     }
   }
   for (const auto &atE : molE) {
@@ -43,6 +51,12 @@ void ptreeToMol(RWMol *mol, const pt::ptree &molE) {
       mol->addBond(bond, takeOwnership);
     }
   }
+  Conformer *conf = new Conformer(mol->getNumAtoms());
+  for (unsigned int i = 0; i < mol->getNumAtoms(); ++i) {
+    conf->setAtomPos(i, pts[i]);
+  }
+  conf->set3D(is3D);
+  mol->addConformer(conf, true);
 }
 }  // namespace
 

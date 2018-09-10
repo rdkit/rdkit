@@ -56,8 +56,8 @@ width='200px' height='200px' >
     std::unique_ptr<RWMol> mol(RDKitSVGToMol(svg));
     REQUIRE(mol);
     CHECK(mol->getNumAtoms() == 7);
-    // CHECK(mol->getNumConformers() == 1);
-    // REQUIRE_FALSE(mol->getConformer().is3D());
+    CHECK(mol->getNumConformers() == 1);
+    REQUIRE_FALSE(mol->getConformer().is3D());
     auto smiles = MolToSmiles(*mol);
     CHECK(smiles == "CN[C@H](Cl)C(=O)O");
   }
