@@ -30,7 +30,17 @@
 #include <RDGeneral/LocaleSwitcher.h>
 #include <typeinfo>
 #include <exception>
+#ifdef RDKIT_USE_BOOST_REGEX
+#include <boost/regex.hpp>
+using boost::regex;
+using boost::regex_match;
+using boost::smatch;
+#else
 #include <regex>
+using std::regex;
+using std::regex_match;
+using std::smatch;
+#endif
 #include <sstream>
 #include <locale>
 #include <stdlib.h>
@@ -164,10 +174,10 @@ std::string parseEnhancedStereo(std::istream *inStream, unsigned int &line,
   // M  V30 MDLV30/STEABS ATOMS=(2 2 3)
   // M  V30 MDLV30/STEREL1 ATOMS=(1 12)
   // M  V30 MDLV30/STERAC1 ATOMS=(1 12)
-  const std::regex stereo_label(
+  const regex stereo_label(
       R"regex(MDLV30/STE(...)[0-9]* +ATOMS=\(([0-9]+) +(.*)\))regex");
 
-  std::smatch match;
+  smatch match;
   std::vector<StereoGroup> groups;
 
   // Read the collection until the end
@@ -175,7 +185,7 @@ std::string parseEnhancedStereo(std::istream *inStream, unsigned int &line,
   boost::to_upper(tempStr);
   while (!startsWith(tempStr, "END", 3)) {
     // If this line in the collection is part of a stereo group
-    if (std::regex_match(tempStr, match, stereo_label)) {
+    if (regex_match(tempStr, match, stereo_label)) {
       StereoGroupType grouptype = RDKit::StereoGroupType::STEREO_ABSOLUTE;
 
       if (match[1] == "ABS") {
