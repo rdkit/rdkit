@@ -2757,6 +2757,23 @@ void testIssue1735() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testStereoGroupUpdating() {
+  BOOST_LOG(rdInfoLog) << "-----------------------------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Are stereo groups updated when atoms and bonds are deleted?" << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  std::string fName =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/two_centers_or.mol";
+  std::unique_ptr<RWMol> m(MolFileToMol(fName));
+  TEST_ASSERT(m.get());
+
+  TEST_ASSERT(m->getStereoGroups().size() == 2);
+  m->removeAtom(3);
+  TEST_ASSERT(m->getStereoGroups().size() == 1);
+  m->removeAtom(m->getAtomWithIdx(0));
+  TEST_ASSERT(m->getStereoGroups().size() == 0u);
+}
+
 
 int main() {
   RDLog::InitLogs();
@@ -2783,10 +2800,11 @@ int main() {
   testGithub553();
   testGithub803();
   testGithub1294();
-#endif
+  #endif
   testGithub1423();
   testAssignStereochemistryFrom3D();
   testDoubleBondStereoInRings();
   testIssue1735();
+  testStereoGroupUpdating();
   return 0;
 }

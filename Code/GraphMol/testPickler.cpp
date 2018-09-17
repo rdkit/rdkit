@@ -1332,7 +1332,7 @@ void testEnhancedStereoChemistry() {
   auto &new_groups = roundTripped->getStereoGroups();
   TEST_ASSERT(ref_groups.size() == new_groups.size());
   for (unsigned i = 0u; i < 3; ++i) {
-    TEST_ASSERT(ref_groups[i].grouptype == new_groups[i].grouptype);
+    TEST_ASSERT(ref_groups[i].getGroupType() == new_groups[i].getGroupType());
   }
 }
 

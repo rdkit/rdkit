@@ -1734,9 +1734,10 @@ void MolPickler::_pickleStereo(std::ostream &ss,
   T tmpT = static_cast<T>(groups.size());
   streamWrite(ss, tmpT);
   for (auto &&group : groups) {
-    streamWrite(ss, static_cast<T>(group.grouptype));
-    streamWrite(ss, static_cast<T>(group.atoms.size()));
-    for (auto &&atom : group.atoms) {
+    streamWrite(ss, static_cast<T>(group.getGroupType()));
+    auto& atoms = group.getAtoms();
+    streamWrite(ss, static_cast<T>(atoms.size()));
+    for (auto &&atom : atoms) {
       tmpT = static_cast<T>(atomIdxMap[atom->getIdx()]);
       streamWrite(ss, tmpT);
     }

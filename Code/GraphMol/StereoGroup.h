@@ -39,13 +39,20 @@ enum class StereoGroupType {
 
  */
 class RDKIT_GRAPHMOL_EXPORT StereoGroup {
- public:
-  StereoGroup(StereoGroupType grouptype, std::vector<Atom *> &&atoms)
-      : grouptype(grouptype), atoms(atoms) {}
+private:
+  StereoGroupType d_grouptype;
+  std::vector<Atom *> d_atoms;
 
-  const StereoGroupType grouptype;
-  const std::vector<Atom *> atoms;
+public:
+  // Takes control of atoms if possible.
+  StereoGroup(StereoGroupType grouptype, std::vector<Atom *> &&atoms);
+  StereoGroupType getGroupType() const;
+  const std::vector<Atom *>& getAtoms() const;
 };
+
+void remove_groups_with_atom(const Atom* atom, std::vector<StereoGroup>& groups);
+void remove_groups_with_atoms(const std::vector<Atom*>& atoms, std::vector<StereoGroup>& groups);
+
 
 }  // namespace RDKit
 

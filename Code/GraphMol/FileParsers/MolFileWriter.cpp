@@ -1016,7 +1016,7 @@ void appendEnhancedStereoGroups(std::string &res, const RWMol &tmol) {
     res += "M  V30 BEGIN COLLECTION\n";
     for (auto &&group : stereo_groups) {
       res += "M  V30 MDLV30/";
-      switch (group.grouptype) {
+      switch (group.getGroupType()) {
         case RDKit::StereoGroupType::STEREO_ABSOLUTE:
           res += "STEABS";
           break;
@@ -1032,8 +1032,9 @@ void appendEnhancedStereoGroups(std::string &res, const RWMol &tmol) {
           break;
       }
       res += " ATOMS=(";
-      res += boost::lexical_cast<std::string>(group.atoms.size());
-      for (auto &&atom : group.atoms) {
+      auto& atoms = group.getAtoms();
+      res += boost::lexical_cast<std::string>(atoms.size());
+      for (auto &&atom : atoms) {
         res += ' ';
         // atoms are 1 indexed in molfiles
         res += boost::lexical_cast<std::string>(atom->getIdx() + 1);

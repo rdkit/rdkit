@@ -33,7 +33,6 @@
 #include <RDGeneral/RDProps.h>
 #include "Atom.h"
 #include "Bond.h"
-
 #include "Conformer.h"
 #include "StereoGroup.h"
 

@@ -40,11 +40,11 @@ void testOr() {
 
   auto stereo_groups = m->getStereoGroups();
   TEST_ASSERT(stereo_groups.size() == 2);
-  TEST_ASSERT(stereo_groups[0].grouptype ==
+  TEST_ASSERT(stereo_groups[0].getGroupType() ==
               RDKit::StereoGroupType::STEREO_ABSOLUTE);
-  TEST_ASSERT(stereo_groups[0].atoms.size() == 1u);
-  TEST_ASSERT(stereo_groups[1].grouptype == RDKit::StereoGroupType::STEREO_OR);
-  TEST_ASSERT(stereo_groups[1].atoms.size() == 2u);
+  TEST_ASSERT(stereo_groups[0].getAtoms().size() == 1u);
+  TEST_ASSERT(stereo_groups[1].getGroupType() == RDKit::StereoGroupType::STEREO_OR);
+  TEST_ASSERT(stereo_groups[1].getAtoms().size() == 2u);
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
@@ -59,9 +59,9 @@ void testAnd() {
 
   auto stereo_groups = m->getStereoGroups();
   TEST_ASSERT(stereo_groups.size() == 2);
-  TEST_ASSERT(stereo_groups[0].grouptype ==
+  TEST_ASSERT(stereo_groups[0].getGroupType() ==
               RDKit::StereoGroupType::STEREO_ABSOLUTE);
-  TEST_ASSERT(stereo_groups[1].grouptype == RDKit::StereoGroupType::STEREO_AND);
+  TEST_ASSERT(stereo_groups[1].getGroupType() == RDKit::StereoGroupType::STEREO_AND);
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
@@ -81,12 +81,12 @@ void testWrite() {
   TEST_ASSERT(stereo_groups0.size() == stereo_groups1.size());
 
   for (unsigned i = 0u; i < 2; ++i) {
-    TEST_ASSERT(stereo_groups0[i].grouptype == stereo_groups1[i].grouptype);
-    TEST_ASSERT(stereo_groups0[i].atoms.size() ==
-                stereo_groups1[i].atoms.size());
-    for (auto &&atom0 = stereo_groups0[i].atoms.begin(),
-              atom1 = stereo_groups1[i].atoms.begin();
-         atom0 != stereo_groups0[i].atoms.end(); ++atom0, ++atom1) {
+    TEST_ASSERT(stereo_groups0[i].getGroupType() == stereo_groups1[i].getGroupType());
+    TEST_ASSERT(stereo_groups0[i].getAtoms().size() ==
+                stereo_groups1[i].getAtoms().size());
+    for (auto &&atom0 = stereo_groups0[i].getAtoms().begin(),
+              atom1 = stereo_groups1[i].getAtoms().begin();
+         atom0 != stereo_groups0[i].getAtoms().end(); ++atom0, ++atom1) {
       TEST_ASSERT((*atom0)->getIdx() == (*atom1)->getIdx());
     }
   }
