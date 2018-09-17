@@ -12,17 +12,20 @@ from __future__ import print_function
 import math
 import sys
 import time
+from enum import Enum
 
 import numpy
 
-from rdkit import Chem
+from rdkit import Chem, DistanceGeometry, Geometry
 from rdkit import RDLogger as logging
 from rdkit.Chem import ChemicalFeatures
 from rdkit.Chem import ChemicalForceFields
-from rdkit.Chem import rdDistGeom as MolDG
-from rdkit.Chem.Pharm3D import ExcludedVolume
+from rdkit.Chem import rdDistGeom
+from rdkit.Chem import rdMolTransforms, rdMolDescriptors, rdForceFieldHelpers
+from rdkit.Chem.Pharm3D import ExcludedVolume, Pharmacophore
 import rdkit.DistanceGeometry as DG
 from rdkit.ML.Data import Stats
+from rdkit.Numerics import rdAlignment
 
 _times = {}
 
@@ -159,16 +162,21 @@ def EmbedMol(mol, bm, atomMatch=None, weight=2.0, randomSeed=-1, excludedVolumes
   ExcludedVolume objects
 
   >>> m = Chem.MolFromSmiles('c1ccccc1C')
-  >>> bounds = MolDG.GetMoleculeBoundsMatrix(m)
+  >>> bounds = rdDistGeom.GetMoleculeBoundsMatrix(m)
   >>> bounds.shape == (7, 7)
   True
   >>> m.GetNumConformers()
   0
   >>> EmbedMol(m,bounds,randomSeed=23)
+    array([[ 0.27537887, -1.17366013, -0.16149145],
+           [-1.09522602, -1.18039585, -0.09717973],
+           [-1.72461367, -0.0120659 ,  0.31416206],
+           [-1.12846094,  1.16791887, -0.11307189],
+           [ 0.25888206,  1.19464724, -0.1244621 ],
+           [ 0.96303191,  0.01193697,  0.04251547],
+           [ 2.45100778, -0.00838119,  0.13952764]])
   >>> m.GetNumConformers()
   1
-
-
   """
   nAts = mol.GetNumAtoms()
   weights = []
@@ -182,21 +190,23 @@ def EmbedMol(mol, bm, atomMatch=None, weight=2.0, randomSeed=-1, excludedVolumes
       # excluded volumes affect every other atom:
       for i in range(nAts):
         weights.append((i, idx, weight))
-  coords = DG.EmbedBoundsMatrix(bm, weights=weights, numZeroFail=1, randomSeed=randomSeed)
+  coords = DG.EmbedBoundsMatrix(bm, weights=weights, numZeroFail=1,
+    randomSeed=randomSeed)
   # for row in coords:
   #  print(', '.join(['%.2f'%x for x in row]))
 
   conf = Chem.Conformer(nAts)
-  conf.SetId(0)
+  # conf.SetId(0)  # may duplicate an existing conformer
   for i in range(nAts):
     conf.SetAtomPosition(i, list(coords[i]))
   if excludedVolumes:
     for vol in excludedVolumes:
       vol.pos = numpy.array(coords[vol.index])
-
     print('   % 7.4f   % 7.4f   % 7.4f Ar  0  0  0  0  0  0  0  0  0  0  0  0' % tuple(coords[-1]),
           file=sys.stderr)
-  mol.AddConformer(conf)
+
+  mol.AddConformer(conf, assignId=True)
+  return coords
 
 
 def AddExcludedVolumes(bm, excludedVolumes, smoothIt=True):
@@ -243,7 +253,8 @@ def AddExcludedVolumes(bm, excludedVolumes, smoothIt=True):
           res[bmIdx, index] = minV
           res[index, bmIdx] = maxV
         except IndexError:
-          logger.error('BAD INDEX: res[%d,%d], shape is %s' % (bmIdx, index, str(res.shape)))
+          logger.error('BAD INDEX: res[%d,%d], shape is %s' % (bmIdx, index,
+            str(res.shape)))
           raise IndexError
 
     # set values to other excluded volumes:
@@ -256,8 +267,8 @@ def AddExcludedVolumes(bm, excludedVolumes, smoothIt=True):
   return res
 
 
-def UpdatePharmacophoreBounds(bm, atomMatch, pcophore, useDirs=False, dirLength=defaultFeatLength,
-                              mol=None):
+def UpdatePharmacophoreBounds(bm, atomMatch, pcophore, useDirs=False,
+                              dirLength=defaultFeatLength, mol=None):
   """ loops over a distance bounds matrix and replaces the elements
   that are altered by a pharmacophore
 
@@ -318,9 +329,9 @@ def UpdatePharmacophoreBounds(bm, atomMatch, pcophore, useDirs=False, dirLength=
   return bm
 
 
-def EmbedPharmacophore(mol, atomMatch, pcophore, randomSeed=-1, count=10, smoothFirst=True,
-                       silent=False, bounds=None, excludedVolumes=None, targetNumber=-1,
-                       useDirs=False):
+def EmbedPharmacophore(mol, atomMatch, pcophore, randomSeed=-1, count=10,
+                       smoothFirst=True, silent=False, bounds=None,
+                       excludedVolumes=None, targetNumber=-1, useDirs=False):
   """ Generates one or more embeddings for a molecule that satisfy a pharmacophore
 
   atomMatch is a sequence of sequences containing atom indices
@@ -377,7 +388,7 @@ def EmbedPharmacophore(mol, atomMatch, pcophore, randomSeed=-1, count=10, smooth
     mol._chiralCenters = Chem.FindMolChiralCenters(mol)
 
   if bounds is None:
-    bounds = MolDG.GetMoleculeBoundsMatrix(mol)
+    bounds = rdDistGeom.GetMoleculeBoundsMatrix(mol)
   if smoothFirst:
     DG.DoTriangleSmoothing(bounds)
 
@@ -405,7 +416,7 @@ def EmbedPharmacophore(mol, atomMatch, pcophore, randomSeed=-1, count=10, smooth
   if targetNumber <= 0:
     targetNumber = count
   nFailed = 0
-  res = []
+  embeddings = []
   for i in range(count):
     tmpM = bm[:, :]
     m2 = Chem.Mol(mol)
@@ -431,12 +442,12 @@ def EmbedPharmacophore(mol, atomMatch, pcophore, randomSeed=-1, count=10, smooth
             keepIt = False
             break
       if keepIt:
-        res.append(m2)
+        embeddings.append(m2)
       else:
         logger.debug('Removed embedding due to chiral constraints.')
-      if len(res) == targetNumber:
+      if len(embeddings) == targetNumber:
         break
-  return bm, res, nFailed
+  return bm, embeddings, nFailed
 
 
 def isNaN(v):
@@ -461,8 +472,8 @@ def isNaN(v):
   return False
 
 
-def OptimizeMol(mol, bm, atomMatches=None, excludedVolumes=None, forceConstant=1200.0, maxPasses=5,
-                verbose=False):
+def OptimizeMol(mol, bm, atomMatches=None, excludedVolumes=None,
+                forceConstant=1200.0, maxPasses=5, verbose=False):
   """  carries out a UFF optimization for a molecule optionally subject
   to the constraints in a bounds matrix
 
@@ -555,7 +566,8 @@ def OptimizeMol(mol, bm, atomMatches=None, excludedVolumes=None, forceConstant=1
     idx = nAts
     for exVol in excludedVolumes:
       assert exVol.pos is not None
-      logger.debug('ff.AddExtraPoint(%.4f,%.4f,%.4f)' % (exVol.pos[0], exVol.pos[1], exVol.pos[2]))
+      logger.debug('ff.AddExtraPoint(%.4f,%.4f,%.4f)' % (exVol.pos[0],
+                   exVol.pos[1], exVol.pos[2]))
       ff.AddExtraPoint(exVol.pos[0], exVol.pos[1], exVol.pos[2], True)
       indices = []
       for localIndices, _, _ in exVol.featInfo:
@@ -572,7 +584,8 @@ def OptimizeMol(mol, bm, atomMatches=None, excludedVolumes=None, forceConstant=1
         else:
           logger.debug('ff.AddDistanceConstraint(%d,%d,%.3f,%.3f,%.0f)' %
                        (i, idx, bm[exVol.index, i], bm[i, exVol.index], forceConstant))
-          ff.AddDistanceConstraint(i, idx, bm[exVol.index, i], bm[i, exVol.index], forceConstant)
+          ff.AddDistanceConstraint(i, idx, bm[exVol.index, i],
+                                   bm[i, exVol.index], forceConstant)
       idx += 1
   ff.Initialize()
   e1 = ff.CalcEnergy()
@@ -629,8 +642,8 @@ def EmbedOne(mol, name, match, pcophore, count=1, silent=0, **kwargs):
   """
   global _times
   atomMatch = [list(x.GetAtomIds()) for x in match]
-  bm, ms, nFailed = EmbedPharmacophore(mol, atomMatch, pcophore, count=count, silent=silent,
-                                       **kwargs)
+  bm, ms, nFailed = EmbedPharmacophore(mol, atomMatch, pcophore, count=count,
+                                       silent=silent, **kwargs)
   e1s = []
   e2s = []
   e3s = []
@@ -692,7 +705,7 @@ def EmbedOne(mol, name, match, pcophore, count=1, silent=0, **kwargs):
   return e1, e1d, e2, e2d, e3, e3d, e4, e4d, nFailed
 
 
-def MatchPharmacophoreToMol(mol, featFactory, pcophore):
+def MatchPharmacophoreToMol(mol, featFactory, pcophore, partialMatching=False):
   """ generates a list of all possible mappings of a pharmacophore to a molecule
 
   Returns a 2-tuple:
@@ -733,7 +746,9 @@ def MatchPharmacophoreToMol(mol, featFactory, pcophore):
     (3,)
 
   """
-  return MatchFeatsToMol(mol, featFactory, pcophore.getFeatures())
+  if not partialMatching:
+    return MatchFeatsToMol(mol, featFactory, pcophore.getFeatures())
+  return MatchFeatsToMolPartial(mol, featFactory, pcophore)
 
 
 def _getFeatDict(mol, featFactory, features):
@@ -771,7 +786,6 @@ def _getFeatDict(mol, featFactory, features):
       matches = featFactory.GetFeaturesForMol(mol, includeOnly=family)
       molFeats[family] = matches
   return molFeats
-
 
 def MatchFeatsToMol(mol, featFactory, features):
   """ generates a list of all possible mappings of each feature to a molecule
@@ -820,6 +834,40 @@ def MatchFeatsToMol(mol, featFactory, features):
       return False, None
     res.append(matches)
   return True, res
+
+
+def MatchFeatsToMolPartial(mol, featFactory, pcophore):
+  """ generates a list of all possible mappings of each feature to a molecule,
+  allowing for partial matching of features
+  """
+  explicit = False
+  if isinstance(pcophore, Pharmacophore.ExplicitPharmacophore):
+    explicit = True
+
+  feats = []
+  radii = []
+  res = []
+
+  features = pcophore.getFeatures()
+  molFeats = _getFeatDict(mol, featFactory, features)
+
+  for i, feat in enumerate(features):
+    matches = molFeats.get(feat.GetFamily(), [])
+    if len(matches) > 0:
+      feats.append(feat)
+      if explicit:
+        radii.append(pcophore.getRadius(i))
+      res.append(matches)
+
+  if len(feats) == 0:
+      return False, [], None
+
+  if explicit:
+    new_pcophore = Pharmacophore.ExplicitPharmacophore(feats, radii)
+    new_pcophore.applyRadiiToBounds()
+  else:
+    new_pcophore = Pharmacophore.Pharmacophore(feats)
+  return True, res, new_pcophore
 
 
 def CombiEnum(sequence):
@@ -1046,14 +1094,31 @@ def Check2DBounds(atomMatch, mol, pcophore):
   return True
 
 
+def _getAtomMatch(featMatch):
+  """
+  Returns a list of lists of atom IDs for a list of matching features, or
+  None if the list of features contains duplicates.
+  """
+  res = []
+  seen = []
+  for feat in featMatch:
+    ats = feat.GetAtomIds()
+    if set(ats) in seen:
+      return None
+    seen.append(set(ats))
+    res.append(ats)
+  return res
+
+
 def _checkMatch(match, mol, bounds, pcophore, use2DLimits):
   """ **INTERNAL USE ONLY**
 
   checks whether a particular atom match can be satisfied by
   a molecule
-
   """
-  atomMatch = ChemicalFeatures.GetAtomMatch(match)
+  # The function in ChemicalFeatures doesn't behave as expected.
+  # atomMatch = ChemicalFeatures.GetAtomMatch(match)
+  atomMatch = _getAtomMatch(match)
   if not atomMatch:
     return None
   elif use2DLimits:
@@ -1064,12 +1129,11 @@ def _checkMatch(match, mol, bounds, pcophore, use2DLimits):
   return atomMatch
 
 
-def ConstrainedEnum(matches, mol, pcophore, bounds, use2DLimits=False, index=0, soFar=[]):
+def ConstrainedEnum(matches, mol, pcophore, bounds, use2DLimits=False, index=0,
+                    soFar=[]):
   """ Enumerates the list of atom mappings a molecule
   has to a particular pharmacophore.
   We do check distance bounds here.
-
-
   """
   nMatches = len(matches)
   if index >= nMatches:
@@ -1080,7 +1144,7 @@ def ConstrainedEnum(matches, mol, pcophore, bounds, use2DLimits=False, index=0, 
       if index != 0:
         atomMatch = _checkMatch(nextStep, mol, bounds, pcophore, use2DLimits)
       else:
-        atomMatch = ChemicalFeatures.GetAtomMatch(nextStep)
+        atomMatch = _getAtomMatch(nextStep)
       if atomMatch:
         yield soFar + [entry], atomMatch
   else:
@@ -1090,21 +1154,22 @@ def ConstrainedEnum(matches, mol, pcophore, bounds, use2DLimits=False, index=0, 
         atomMatch = _checkMatch(nextStep, mol, bounds, pcophore, use2DLimits)
         if not atomMatch:
           continue
-      for val in ConstrainedEnum(matches, mol, pcophore, bounds, use2DLimits=use2DLimits,
+      for val in ConstrainedEnum(matches, mol, pcophore, bounds,
+                                 use2DLimits=use2DLimits,
                                  index=index + 1, soFar=nextStep):
         if val:
           yield val
 
 
-def MatchPharmacophore(matches, bounds, pcophore, useDownsampling=False, use2DLimits=False,
-                       mol=None, excludedVolumes=None, useDirs=False):
+def MatchPharmacophore(matches, bounds, pcophore, useDownsampling=False,
+                       use2DLimits=False, mol=None, excludedVolumes=None,
+                       useDirs=False):
   """
-
   if use2DLimits is set, the molecule must also be provided and topological
   distances will also be used to filter out matches
-
   """
-  for match, atomMatch in ConstrainedEnum(matches, mol, pcophore, bounds, use2DLimits=use2DLimits):
+  for match, atomMatch in ConstrainedEnum(matches, mol, pcophore, bounds,
+                                          use2DLimits=use2DLimits):
     bm = bounds.copy()
     bm = UpdatePharmacophoreBounds(bm, atomMatch, pcophore, useDirs=useDirs, mol=mol)
 
@@ -1116,7 +1181,8 @@ def MatchPharmacophore(matches, bounds, pcophore, useDownsampling=False, use2DLi
           info = list(eV.featInfo[i])
           info[0] = entry
           featInfo.append(info)
-        localEvs.append(ExcludedVolume.ExcludedVolume(featInfo, eV.index, eV.exclusionDist))
+        localEvs.append(ExcludedVolume.ExcludedVolume(featInfo, eV.index,
+                                                      eV.exclusionDist))
       bm = AddExcludedVolumes(bm, localEvs, smoothIt=False)
 
     sz = bm.shape[0]
@@ -1134,8 +1200,50 @@ def MatchPharmacophore(matches, bounds, pcophore, useDownsampling=False, use2DLi
   return 1, None, None, None
 
 
-def GetAllPharmacophoreMatches(matches, bounds, pcophore, useDownsampling=0, progressCallback=None,
-                               use2DLimits=False, mol=None, verbose=False):
+def MatchPharmacophores(matches, bounds, pcophore, useDownsampling=False,
+    use2DLimits=False, mol=None, excludedVolumes=None, useDirs=False):
+  """
+  Custom version of MatchPharmacophore which yields all permutations of
+  matched pharmacophore features, rather than returning only the first one.
+
+  if use2DLimits is set, the molecule must also be provided and topological
+  distances will also be used to filter out matches
+  """
+  for match, atomMatch in ConstrainedEnum(matches, mol, pcophore, bounds,
+                                          use2DLimits=use2DLimits):
+    bm = bounds.copy()
+    bm = UpdatePharmacophoreBounds(
+        bm, atomMatch, pcophore, useDirs=useDirs, mol=mol)
+
+    if excludedVolumes:
+      localEvs = []
+      for eV in excludedVolumes:
+        featInfo = []
+        for i, entry in enumerate(atomMatch):
+          info = list(eV.featInfo[i])
+          info[0] = entry
+          featInfo.append(info)
+        localEvs.append(ExcludedVolume.ExcludedVolume(
+          featInfo, eV.index, eV.exclusionDist))
+      bm = AddExcludedVolumes(bm, localEvs, smoothIt=False)
+
+    sz = bm.shape[0]
+    if useDownsampling:
+      indices = []
+      for entry in atomMatch:
+        indices.extend(entry)
+      if excludedVolumes:
+        for vol in localEvs:
+          indices.append(vol.index)
+      bm = DownsampleBoundsMatrix(bm, indices)
+
+    if DG.DoTriangleSmoothing(bm):
+      yield 0, bm, match, (sz, bm.shape[0])
+
+
+def GetAllPharmacophoreMatches(matches, bounds, pcophore, useDownsampling=0,
+                               progressCallback=None, use2DLimits=False,
+                               mol=None, verbose=False):
   res = []
   nDone = 0
   for match in CombiEnum(matches):
@@ -1227,9 +1335,6 @@ def ComputeChiralVolume(mol, centerIdx, confId=-1):
     'S'
     >>> ComputeChiralVolume(mol,1)>0
     True
-
-
-
   """
   conf = mol.GetConformer(confId)
   Chem.AssignStereochemistry(mol)
@@ -1257,6 +1362,309 @@ def ComputeChiralVolume(mol, centerIdx, confId=-1):
 
   res = v1.DotProduct(v2.CrossProduct(v3))
   return res
+
+
+def GetAlignmentTransformToPharmacophore(conf, mapping, pharmacophore):
+  """
+  From Nikolaus Stiefl
+  https://github.com/rdkit/UGM_2016/blob/master/Notebooks/Stiefl_
+    RDKitPh4FullPublication.ipynb
+  """
+  alignProbe = []
+  for matchIds in mapping:
+    dummyPoint = Geometry.Point3D(0.0,0.0,0.0)
+    for id in matchIds:
+      dummyPoint += conf.GetAtomPosition(id)
+    dummyPoint /= len(matchIds)
+    alignProbe.append(dummyPoint)
+  alignRef = [f.GetPos() for f in pharmacophore.getFeatures()]
+  return rdAlignment.GetAlignmentTransform(alignRef, alignProbe)
+
+
+def GetAlignedConformers(embedding, pharmacophore, mapping, minimize):
+  """
+  Calculates the MMFF single point energy of each conformer in an embedding,
+  performs an optional MMFF minimization, and aligns each conformer to the
+  pharmacophore. Returns the embedding (Mol), a list of MMFF energies,
+  and a list of SSDs from the pharmacophore.
+  """
+  SSDs = []
+  energies = []
+  ids = [conf.GetId() for conf in embedding.GetConformers()]
+  assert len(set(ids)) == len(ids)
+  props = rdForceFieldHelpers.MMFFGetMoleculeProperties(embedding)
+
+  for confId in ids:
+    ff = rdForceFieldHelpers.MMFFGetMoleculeForceField(embedding, props,
+                                                       confId=confId)
+    ff.Initialize()
+    if minimize:
+      try:
+        ret = 1
+        while (ret == 1):
+          ret = ff.Minimize()
+      except RuntimeError as e:
+        pass
+    energies.append(ff.CalcEnergy())
+
+    if mapping is None:
+      SSDs.append(-1)
+      continue
+
+    conf = embedding.GetConformer(confId)
+    SSD, transformMat = GetAlignmentTransformToPharmacophore(conf, mapping,
+                                                             pharmacophore)
+    rdMolTransforms.TransformConformer(conf, transformMat)
+    SSDs.append(SSD)
+
+  return embedding, energies, SSDs
+
+
+def GetNumOptimalConformers(ligand):
+  # Optimal number of conformers from https://github.com/rdkit/UGM_2017/blob/
+  # master/Presentations/Herrero_RDKitUGM_Pharmacelera_Conf_Generation.pdf
+  numConfs = rdMolDescriptors.CalcNumRotatableBonds(ligand) ** 3
+  numConfs = max(50, numConfs)
+  return numConfs
+
+
+class EmbedException(Exception):
+  """
+  To be raised when error conditions are met during conformer generation.
+  """
+  pass
+
+
+class ExitState(Enum):
+  """
+  ExitStates to be used when raising EmbedExceptions.
+  """
+  SUCCESS = 0
+  CANNOT_MATCH_MOL = 1
+  NO_MAPPINGS_FOUND = 2
+  NO_CONSTRAINTS_FOUND = 3
+  NO_EMBEDDINGS_FOUND = 4
+
+
+class Ph4ConstrainedEmbedderSettings:
+  def __init__(self, usePh4Constraints=True, useETKDG=True, minimize=False,
+               maxMappings=10, maxEmbeddings=10, maxConformers=500,
+               partialMatching=False, minFeaturesMatched=0):
+    self.usePh4Constraints = usePh4Constraints
+    self.useETKDG = useETKDG
+    self.minimize = minimize
+    self.partialMatching = partialMatching
+
+    self.maxMappings = maxMappings
+    self.maxEmbeddings = maxEmbeddings
+    self.maxConformers = maxConformers
+    self.minFeaturesMatched = minFeaturesMatched
+
+  def __str__(self):
+    c = "ph4-constrained" if self.usePh4Constraints else "unconstrained"
+    e = "ETKDG" if self.useETKDG else "DG"
+    m = "minimized" if self.minimize else "unminimized"
+    mappings = "maxMappings%i" % self.maxMappings
+    embeddings = "maxEmbeddings%i" % self.maxEmbeddings
+    conformers = "maxConformers%i" % self.maxConformers
+    features = "minFeatures%i" % self.minFeaturesMatched
+    return "_".join([c, e, m, mappings, embeddings, conformers, features])
+
+
+class Ph4ConstrainedEmbedder:
+  def __init__(self, ligand, pharmacophore, settings):
+    self.ligand = ligand
+    self.pharmacophore = pharmacophore
+    self.settings = settings
+
+  def _match_pharmacophore(self, featFactory):
+    if self.settings.partialMatching:
+      canMatch, allMatches, pcophore = MatchPharmacophoreToMol(
+          self.ligand, featFactory, self.pharmacophore,
+          partialMatching=self.settings.partialMatching)
+      self.pharmacophore = pcophore
+    else:
+      canMatch, allMatches = MatchPharmacophoreToMol(
+          self.ligand, featFactory, self.pharmacophore,
+          partialMatching=False)
+
+    if not canMatch or (len(self.pharmacophore.getFeatures()) <
+        self.settings.minFeaturesMatched):
+      raise EmbedException(ExitState.CANNOT_MATCH_MOL)
+    return allMatches
+
+  def _recursive_map(self, matches, mat, pharmacophore):
+    """
+    Returns all valid mappings (after distance constraints are applied) while
+    allowing for partial matching of pharmacophore features.
+    """
+    if len(pharmacophore.getFeatures()) < self.settings.minFeaturesMatched:
+      return  # not enough features matched
+
+    explicit = False
+    if isinstance(pharmacophore, Pharmacophore.ExplicitPharmacophore):
+      explicit = True
+
+    for (_, _, mapping, _) in MatchPharmacophores(matches, mat, pharmacophore,
+        use2DLimits=True, mol=self.ligand, useDownsampling=False):
+      matches = [list(x.GetAtomIds()) for x in mapping]
+      self.mappings.append((matches, pharmacophore))
+      if len(self.mappings) > self.settings.maxMappings:
+        return
+
+    if not self.settings.partialMatching:
+      return  # stop after the first attempt
+
+    if len(self.mappings) == 0:
+      feats = pharmacophore.getFeatures()
+      for i in range(len(feats)):
+        featcopy = list(feats)
+        matchcopy = list(matches)
+        featcopy.pop(i)
+        matchcopy.pop(i)
+
+        if explicit:
+          radiicopy = list(pharmacophore.getRadii())
+          radiicopy.pop(i)
+          nextPh4 = Pharmacophore.Pharmacophore(featcopy, radiicopy)
+          nextPh4.applyRadiiToBounds()
+        else:
+          nextPh4 = Pharmacophore.Pharmacophore(featcopy)
+        self._recursive_map(matchcopy, mat, nextPh4)
+
+  def get_mappings(self, featFactory):
+    if not self.settings.usePh4Constraints:
+      return [(None, self.pharmacophore)]
+
+    self.mappings = []
+    allMatches = self._match_pharmacophore(featFactory)
+    mat = rdDistGeom.GetMoleculeBoundsMatrix(self.ligand)
+    self._recursive_map(allMatches, mat, self.pharmacophore)
+    mappings = self.mappings
+    del self.mappings
+
+    if len(mappings) == 0:
+      raise EmbedException(ExitState.NO_MAPPINGS_FOUND)
+    return mappings
+
+  def get_ph4_constraints_from_mapping(self, mapping, pharmacophore):
+    """
+    NOTE: At least 2018.06.01 rdkit version must be used, otherwise several
+    bounds smoothing errors will occur here.
+    """
+    if not self.settings.usePh4Constraints:
+      return [(None, mapping, self.pharmacophore)]
+
+    ph4_constraints = []
+    self.ligand = Chem.AddHs(self.ligand)
+    # recommended for good 3D conformations
+    Chem.AssignStereochemistry(self.ligand, cleanIt=True, force=True)
+
+    try:
+      _, embeddings, _ = EmbedPharmacophore(
+        self.ligand, mapping, pharmacophore, self.settings.maxEmbeddings)
+    except ValueError as e:
+      return []    # This is a bogus mapping
+    else:
+      if len(embeddings) == 0:
+        return []  # This is a bogus mapping
+
+    coords = [embed.GetConformer(0).GetPositions() for embed in embeddings]
+    for coordTuple in coords:
+      ph4_constraints.append(coordTuple)
+    return ph4_constraints
+
+  def get_conformers_from_ph4_constraint(self, ph4_constraint, mapping, pharmacophore):
+    if self.settings.usePh4Constraints:
+      embedding = self._embed_conformers_constrained(ph4_constraint, mapping)
+    else:
+      embedding = self._embed_conformers_unconstrained()
+    if embedding is None:
+      return None
+    return GetAlignedConformers(embedding, pharmacophore, mapping, self.settings.minimize)
+
+  def _embed_conformers_unconstrained(self):
+    self.ligand.RemoveAllConformers()
+    numConfs = min(GetNumOptimalConformers(self.ligand), self.settings.maxConformers)
+    mol = Chem.Mol(self.ligand)
+
+    if self.settings.useETKDG:
+      # FIX: EmbedMultipleConfs args != EmbedParameters fields
+      rdDistGeom.EmbedMultipleConfs(mol, numConfs, rdDistGeom.ETKDG())
+    else:
+      rdDistGeom.EmbedMultipleConfs(mol, numConfs)
+    if mol.GetNumConformers() > 0:
+      return mol
+
+  def _embed_conformers_constrained(self, ph4_constraint, mapping):
+    self.ligand.RemoveAllConformers()
+    mol = Chem.Mol(self.ligand)
+    numConfs = max(1,
+                   min(GetNumOptimalConformers(self.ligand),
+                       self.settings.maxConformers)
+                   // self.settings.maxMappings
+                   // self.settings.maxEmbeddings) # enforce floor int division
+
+    # Currently we select the first atom from each MolFeature. This can
+    # (and should) be changed.
+    staticAts = [molFeat[0] for molFeat in mapping]
+    coordMap = {i:Geometry.Point3D(*ph4_constraint[i]) for i in range(
+          len(mapping)) if i in staticAts}
+    assert len(coordMap) > 0
+
+    if self.settings.useETKDG:
+      # params = rdDistGeom.ETKDG()
+      # params.coordMap = coordMap  # for now, need to manually specify coordMap
+      rdDistGeom.EmbedMultipleConfs(
+          mol,        # mol
+          numConfs,   # numConfs
+          0,          # maxAttempts
+          -1,         # randomSeed
+          True,       # clearConfs
+          False,      # useRandomCoords
+          2.0,        # boxSizeMult
+          True,       # randNegEig
+          1,          # numZeroFail
+          -1.0,       # pruneRmsThresh
+          coordMap,   # coordMap
+          1e-3,       # forceTol
+          False,      # ignoreSmoothingFailures
+          True,       # enforceChirality
+          1,          # numThreads
+          True,       # useExpTorsionAnglePrefs
+          True,       # useBasicKnowledge
+          False)      # printExpTorsionAngles
+    else:
+      nAts = mol.GetNumAtoms()
+      conf = Chem.Conformer(nAts)
+      for i in range(nAts):
+        conf.SetAtomPosition(i, list(mapping[i]))
+      mol.AddConformer(conf, assignId=True)
+      rdDistGeom.EmbedMultipleConfs(mol, numConfs, coordMap=coordMap)
+
+    if mol.GetNumConformers() > 0:
+      return mol
+
+
+def EmbedMoleculeToPharmacophore(ligand, pharmacophore, settings, featFactory):
+  """
+  Generates conformers for a single molecule and pharmacophore.
+  """
+  embedder = Ph4ConstrainedEmbedder(ligand, pharmacophore, settings)
+  mappings = embedder.get_mappings(featFactory)
+  all_embeddings = []
+  for mapping, pharmacophore in mappings:
+    ph4_constraints = embedder.get_ph4_constraints_from_mapping(mapping,
+                                                                pharmacophore)
+    for ph4_constraint in ph4_constraints:
+      conformers = embedder.get_conformers_from_ph4_constraint(ph4_constraint,
+                                                               mapping,
+                                                               pharmacophore)
+      if conformers is None:
+        continue
+      all_embeddings.append(conformers)
+  return all_embeddings
+
 
 
 # ------------------------------------

@@ -14,14 +14,16 @@ import gzip
 import io
 import os
 import unittest
+import glob
+import csv
+import sys
 
 from rdkit import Chem
 from rdkit import DistanceGeometry as DG
 from rdkit import Geometry
 from rdkit import RDConfig
-from rdkit.Chem import ChemicalFeatures, rdDistGeom
-from rdkit.Chem.Pharm3D import EmbedLib
-from rdkit.Chem.Pharm3D import Pharmacophore
+from rdkit.Chem import ChemicalFeatures, rdDistGeom, rdMolAlign, SDMolSupplier
+from rdkit.Chem.Pharm3D import EmbedLib, Pharmacophore
 from rdkit.six import PY3
 from rdkit.six.moves import cPickle
 
@@ -70,6 +72,22 @@ class TestCase(unittest.TestCase):
     self.pcophore.setLowerBound(1, 2, 2.6)
     self.pcophore.setUpperBound(1, 2, 3.0)
 
+    self.mol_with_structure = Chem.SDMolSupplier(
+        os.path.join(self.dataDir, 'comt.sdf'))[0]
+    feats = [
+      ChemicalFeatures.FreeChemicalFeature('HBondAcceptor', 'HAcceptor1',
+          Geometry.Point3D(-4.73, -10.119, -15.972)),
+      ChemicalFeatures.FreeChemicalFeature('HBondDonor', 'HDonor1',
+          Geometry.Point3D(-4.979, -12.746, -14.93)),
+      ChemicalFeatures.FreeChemicalFeature('Aromatic', 'Aromatic1',
+          Geometry.Point3D(-4.088, -12.3305, -17.5528333333333))
+    ]
+    radii = [1.2, 1.2, 1.6]
+    self.pcophore_with_structure = Pharmacophore.ExplicitPharmacophore(feats, radii)
+    self.pcophore_with_structure.applyRadiiToBounds()
+    self.target_rmsd = 2.0
+
+
   def _matchMol(self, tpl, pcophore, featFactory, downSample):
     _, molPkl, boundsMat = tpl
     mol = Chem.Mol(molPkl)
@@ -95,7 +113,7 @@ class TestCase(unittest.TestCase):
           tpl = tpl[0], tpl[1].encode('latin1'), tpl[2]
         # tpl=tpl[0],tpl[1],numpy.array(tpl[2])
         # cPickle.dump(tpl,outF)
-      except Exception:
+      except EOFError:
         break
       if self._matchMol(tpl, self.pcophore, self.featFactory, 0):
         nHits += 1
@@ -113,7 +131,7 @@ class TestCase(unittest.TestCase):
         tpl = cPickle.load(inF, encoding='latin1')
         if PY3:
           tpl = tpl[0], tpl[1].encode('latin1'), tpl[2]
-      except Exception:
+      except EOFError:
         break
       if self._matchMol(tpl, self.pcophore, self.featFactory, 1):
         nHits += 1
@@ -136,7 +154,7 @@ class TestCase(unittest.TestCase):
         name, molPkl, _ = cPickle.load(inF, encoding='latin1')
         if PY3:
           molPkl = bytes(molPkl, encoding='latin1')
-      except Exception:
+      except EOFError:
         break
 
       nDone += 1
@@ -199,7 +217,7 @@ class TestCase(unittest.TestCase):
         _, molPkl, boundsMat = cPickle.load(inF, encoding='latin1')
         if PY3:
           molPkl = bytes(molPkl, encoding='latin1')
-      except Exception:
+      except EOFError:
         break
 
       nDone += 1
@@ -258,6 +276,187 @@ class TestCase(unittest.TestCase):
       len(EmbedLib.MatchPharmacophore(mList1, b1, pcop, mol=m1, use2DLimits=True)[2]), 4)
     self.assertEqual(
       len(EmbedLib.MatchPharmacophore(mList2, b2, pcop, mol=m2, use2DLimits=True)[2]), 4)
+
+  def testEmbedLigandToPharmacophore(self):
+    """
+    Uses different combinations of input parameters and ensures that
+    EmbedMoleculeToPharmacophore can reasonably get close to the cognate
+    structure comt.
+    """
+    def testEmbedderForSettings(usePh4Constraints=True, useETKDG=True,
+                                minimize=False, partialMatching=False,
+                                minFeaturesMatched=0):
+      settings = EmbedLib.Ph4ConstrainedEmbedderSettings(
+        usePh4Constraints=usePh4Constraints,
+        useETKDG=useETKDG,
+        minimize=minimize,
+        partialMatching=partialMatching,
+        maxMappings=10,
+        maxEmbeddings=10,
+        maxConformers=500,
+        minFeaturesMatched=minFeaturesMatched)
+
+      cognate = self.mol_with_structure
+      ligand = cognate.__copy__()
+      pharmacophore = self.pcophore_with_structure
+
+      try:
+        results = EmbedLib.EmbedMoleculeToPharmacophore(
+          ligand, pharmacophore, settings, self.featFactory)
+      except EmbedLib.EmbedException as e:
+        return False
+
+      rmsds = []
+      for embedding, energies, SSDs in results:
+        embedding = Chem.RemoveHs(embedding)
+        for conf in embedding.GetConformers():
+          rmsd = rdMolAlign.GetBestRMS(embedding, cognate, prbId=conf.GetId())
+          if rmsd < self.target_rmsd:
+            return True
+          rmsds.append(rmsd)
+      return False
+
+    conditions = [
+      {
+        "usePh4Constraints":True,
+        "useETKDG":True,
+        "minimize":True
+      },{
+        "usePh4Constraints":True,
+        "useETKDG":True,
+        "minimize":False
+      },{
+        "usePh4Constraints":True,
+        "useETKDG":True,
+        "minimize":False,
+        "partialMatching":True,
+        "minFeaturesMatched":2
+      },{
+        "usePh4Constraints":True,
+        "useETKDG":True,
+        "minimize":False,
+        "partialMatching":True,
+        "minFeaturesMatched":3
+      },{
+        "usePh4Constraints":False,
+        "useETKDG":True,
+        "minimize":False
+      },{
+        "usePh4Constraints":False,
+        "useETKDG":False,
+        "minimize":False
+      }
+    ]
+    for condition in conditions:
+      # For each condition, ensure that we can get reasonably close to the
+      # molecule without failing
+      res = testEmbedderForSettings(**condition)
+      if not res:
+        self.fail("failed to match cognate ligand with RMSD < %f: lowest value %f" %
+                  (self.target_rmsd, min(rmsds)))
+
+    # This test confirms that a pharmacophore with 3 features can't have 4
+    # features matched in the molecule
+    res = testEmbedderForSettings(**{
+        "usePh4Constraints":True,
+        "useETKDG":True,
+        "minimize":False,
+        "partialMatching":True,
+        "minFeaturesMatched":4
+      })
+    self.assertFalse(res)
+
+  def testMatchPharmacophoreToMol(self):
+    """
+    Ensure that the cognate ligand can be matched to the pharmacophore, and
+    that the set of features produced by the cognate ligand is always a
+    superset of the features present in the pharmacophore.
+    """
+    mol = self.mol_with_structure
+    canMatch, allMatches = EmbedLib.MatchPharmacophoreToMol(
+        mol, self.featFactory, self.pcophore_with_structure)
+
+    self.assertTrue(canMatch)
+    self.assertEquals(len(allMatches), len(self.pcophore_with_structure.getFeatures()))
+    for match in allMatches:
+      self.assertGreater(len(match), 0)
+
+  def testMatchFeatsToMolPartial(self):
+    """
+    Ensure that performing a partial match where all pharmacophore features
+    are found in the molecule returns a pharmacophore that is identical to
+    the input.
+    """
+    mol = self.mol_with_structure
+    canMatch, allMatches, newPh4 = EmbedLib.MatchFeatsToMolPartial(mol,
+        self.featFactory, self.pcophore_with_structure)
+    self.assertEquals(str(newPh4), str(self.pcophore_with_structure))
+
+  def testMatchPharmacophore(self):
+    """
+    Ensure that at least one mapping of ph4 features to mol features
+    returns the desired mapping to the cognate ligand.
+    """
+    mol = self.mol_with_structure
+    alignRef = [f.GetPos() for f in self.pcophore.getFeatures()]
+    rdMolAlign.RandomTransform(mol)
+    pcophore = self.pcophore_with_structure
+
+    for partialMatching in (True, False):
+      if partialMatching:
+        canMatch, allMatches, newPh4 = EmbedLib.MatchPharmacophoreToMol(
+            mol, self.featFactory, pcophore, partialMatching=True)
+        pcophore = newPh4
+      else:
+        canMatch, allMatches = EmbedLib.MatchPharmacophoreToMol(
+            mol, self.featFactory, pcophore, partialMatching=False)
+
+      bounds = rdDistGeom.GetMoleculeBoundsMatrix(mol)
+      matcheds = []
+      for (failed, _, matched, _) in EmbedLib.MatchPharmacophores(
+          allMatches, bounds, pcophore):
+        matcheds.append(matched)
+
+      SSDs = []
+      target_ssd = 1e-6
+      for matched in matcheds:
+        atomMatch = [list(x.GetAtomIds()) for x in matched]
+        SSD, transformMatrix = EmbedLib.GetAlignmentTransformToPharmacophore(
+              mol.GetConformer(), atomMatch, pcophore)
+        if SSD < target_ssd:
+          return
+        SSDs.append(SSD)
+      self.fail("failed to match pharmacophore with SSD < %f: lowest value %f" %
+                (target_ssd, min(SSDs)))
+
+  def testEmbedPharmacophore(self):
+    """
+    Ensure that out of all embeddings, at least one has an RMSD that matches
+    the cognate ligand.
+    """
+    cognate = self.mol_with_structure
+    lig = cognate.__copy__()
+    Chem.Mol.RemoveAllConformers(lig)
+
+    canMatch, allMatches = EmbedLib.MatchPharmacophoreToMol(lig, self.featFactory,
+        self.pcophore_with_structure)
+
+    bounds = rdDistGeom.GetMoleculeBoundsMatrix(lig)
+    failed, _, matcheds, _ = EmbedLib.MatchPharmacophore(allMatches, bounds,
+        self.pcophore_with_structure)
+    matches = [list(x.GetAtomIds()) for x in matcheds]
+    _, embeddings, _ = EmbedLib.EmbedPharmacophore(lig, matches,
+        self.pcophore_with_structure)
+
+    rmsds = []
+    for embedding in embeddings:
+      for conf in embedding.GetConformers():
+        rmsd = rdMolAlign.GetBestRMS(embedding, cognate, prbId=conf.GetId())
+        if rmsd < self.target_rmsd:  # magic threshold number
+          return
+        rmsds.append(rmsd)
+    self.fail("failed to match cognate ligand with RMSD < %f: lowest value %f" %
+              (self.target_rmsd, min(rmsds)))
 
 
 if __name__ == '__main__':  # pragma: nocover

@@ -30,9 +30,8 @@ class Pharmacophore:
     self._feats = []
     for feat in feats:
       if isinstance(feat, ChemicalFeatures.MolChemicalFeature):
-        pos = feat.GetPos()
-        newFeat = ChemicalFeatures.FreeChemicalFeature(feat.GetFamily(), feat.GetType(),
-                                                       Geometry.Point3D(pos[0], pos[1], pos[2]))
+        newFeat = ChemicalFeatures.FreeChemicalFeature(
+          feat.GetFamily(), feat.GetType(), feat.GetPos())
         self._feats.append(newFeat)
       else:
         self._feats.append(feat)
@@ -130,13 +129,26 @@ class Pharmacophore:
     return res
 
 
-class ExplicitPharmacophore:
+class ExplicitPharmacophore(Pharmacophore):
   """ this is a pharmacophore with explicit point locations and radii
   """
 
-  def __init__(self, feats=None, radii=None):
-    if feats and radii:
+  def __init__(self, feats=None, radii=None, inputData=None, initMats=True):
+    if feats is not None and radii is not None:
       self._initializeFeats(feats, radii)
+    elif isinstance(inputData, file):
+      self.initFromFile(inputData)
+    elif isinstance(inputData, str):
+      self.initFromString(inputData)
+    else:
+      raise TypeError("At least one of (feats, radii) and inputData must be specified.")
+
+    nf = len(self._feats)
+    self._boundsMat = numpy.zeros((nf, nf), numpy.float)
+    self._boundsMat2D = numpy.zeros((nf, nf), numpy.int)
+    if initMats:
+      self._initializeMatrices()
+      self.applyRadiiToBounds()
 
   def _initializeFeats(self, feats, radii):
     if len(feats) != len(radii):
@@ -145,28 +157,35 @@ class ExplicitPharmacophore:
     self._radii = []
     for feat, rad in zip(feats, radii):
       if isinstance(feat, ChemicalFeatures.MolChemicalFeature):
-        pos = feat.GetPos()
-        newFeat = ChemicalFeatures.FreeChemicalFeature(feat.GetFamily(), feat.GetType(),
-                                                       Geometry.Point3D(pos[0], pos[1], pos[2]))
+        newFeat = ChemicalFeatures.FreeChemicalFeature(
+            feat.GetFamily(), feat.GetType(), feat.GetPos())
       else:
         newFeat = feat
       self._feats.append(newFeat)
       self._radii.append(rad)
 
-  def getFeatures(self):
-    return self._feats
-
   def getRadii(self):
     return self._radii
-
-  def getFeature(self, i):
-    return self._feats[i]
 
   def getRadius(self, i):
     return self._radii[i]
 
   def setRadius(self, i, rad):
     self._radii[i] = rad
+
+  def applyRadiiToBounds(self):
+    """
+    From Nikolaus Stiefl
+    https://github.com/rdkit/UGM_2016/blob/master/Notebooks/Stiefl_
+      RDKitPh4FullPublication.ipynb
+    """
+    self._initializeMatrices()
+    radii = self.getRadii()
+    for i in range(len(radii)):
+      for j in range(i+1, len(radii)):
+        sumRadii = radii[i] + radii[j]
+        self.setLowerBound(i, j, max(self.getLowerBound(i,j) - sumRadii, 0))
+        self.setUpperBound(i, j, self.getUpperBound(i, j) + sumRadii)
 
   def initFromString(self, text):
     lines = text.split(r'\n')
@@ -203,12 +222,20 @@ class ExplicitPharmacophore:
         rads.append(rad)
     self._initializeFeats(feats, rads)
 
-  def __str__(self):
-    res = ''
+  def getFeatureStr(self):
+    """
+    Returns a representation of the features that constitute the Pharmacophore.
+    The __str__ method, on the other hand, returns a representation of the
+    bounds matrix.
+    """
+    res = ' ' * 14
+    res += '%13s %13s %13s ' % ('x', 'y', 'z')
+    res += '%13s' % "Radius"
+    res += '\n'
     for feat, rad in zip(self._feats, self._radii):
-      res += '% 12s ' % feat.GetFamily()
+      res += '% 13s ' % feat.GetFamily()
       p = feat.GetPos()
-      res += '   % 8.4f % 8.4f % 8.4f    ' % (p.x, p.y, p.z)
-      res += '% 5.2f' % rad
+      res += '% 13.3f % 13.3f % 13.3f ' % (p.x, p.y, p.z)
+      res += '% 13.3f' % rad
       res += '\n'
     return res

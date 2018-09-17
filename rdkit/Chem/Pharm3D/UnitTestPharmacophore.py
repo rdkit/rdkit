@@ -46,6 +46,9 @@ class TestCase(unittest.TestCase):
                   ChemicalFeatures.FreeChemicalFeature('Aromatic', 'Aromatic1',
                                                        Geometry.Point3D(5.12, 0.908, 0.0)), ]
     self.pcophore = Pharmacophore.Pharmacophore(self.feats)
+    self.radii = [1.2, 1.2, 1.6]
+    self.explicit_pcophore = Pharmacophore.ExplicitPharmacophore(self.feats,
+                                                                 self.radii)
 
   def test1Basics(self):
     pcophore = self.pcophore
@@ -128,6 +131,30 @@ class TestCase(unittest.TestCase):
 
     AllChem.Compute2DCoords(m1)
     Pharmacophore.Pharmacophore(feats)
+
+  def testApplyRadiiToBounds(self):
+    """
+    Ensure that applying radii to pharmacophore feature bounds multiple times
+    results in the same bounds.
+    """
+    pcophore2 = Pharmacophore.ExplicitPharmacophore(self.feats, self.radii)
+    pcophore2.applyRadiiToBounds()
+    self.assertEquals(str(pcophore2), str(self.explicit_pcophore))
+    self.explicit_pcophore.applyRadiiToBounds()
+    self.assertEquals(str(pcophore2), str(self.explicit_pcophore))
+
+  def testExplicitPharmacophoreFeats(self):
+    """
+    Ensure that applying radii of 0.0 to the bounds results in the same
+    bounds matrix as a regular Pharmacophore.
+    """
+    explicit_pcophore = self.explicit_pcophore
+    self.assertListEqual(self.pcophore.getFeatures(), explicit_pcophore.getFeatures())
+
+    for i in range(len(explicit_pcophore.getFeatures())):
+      explicit_pcophore.setRadius(i, 0.0)
+    explicit_pcophore.applyRadiiToBounds()
+    self.assertEquals(str(explicit_pcophore), str(self.pcophore))
 
 
 if __name__ == '__main__':  # pragma: nocover
