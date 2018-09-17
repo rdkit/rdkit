@@ -281,14 +281,20 @@ RDKIT_FILEPARSERS_EXPORT void MolToPDBFile(const ROMol &mol,
                                            unsigned int flavor = 0);
 
 // \brief reads a molecule from the metadata in an RDKit-generated SVG file
-
 /*!
  *   \param svg      - string containing the SVG
  *   \param sanitize - toggles sanitization of the molecule
  *   \param removeHs - toggles removal of Hs from the molecule. H removal
  *                     is only done if the molecule is sanitized
+ *
+ *   **NOTE** This functionality should be considered beta.
  */
 RDKIT_FILEPARSERS_EXPORT RWMol *RDKitSVGToMol(const std::string &svg,
+                                              bool sanitize = true,
+                                              bool removeHs = true);
+/*! \overload
+ */
+RDKIT_FILEPARSERS_EXPORT RWMol *RDKitSVGToMol(std::istream *instream,
                                               bool sanitize = true,
                                               bool removeHs = true);
 

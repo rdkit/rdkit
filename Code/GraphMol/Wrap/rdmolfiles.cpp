@@ -149,6 +149,12 @@ ROMol *MolFromMolBlock(python::object imolBlock, bool sanitize, bool removeHs,
   return static_cast<ROMol *>(newM);
 }
 
+ROMol *MolFromSVG(python::object imolBlock, bool sanitize, bool removeHs) {
+  RWMol *res = nullptr;
+  res = RDKitSVGToMol(pyObjectToString(imolBlock), sanitize, removeHs);
+  return static_cast<ROMol *>(res);
+}
+
 ROMol *MolFromMol2File(const char *molFilename, bool sanitize = true,
                        bool removeHs = true, bool cleanupSubstructures = true) {
   RWMol *newM;
@@ -465,6 +471,31 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
        python::arg("removeHs") = true, python::arg("strictParsing") = true),
       docString.c_str(),
       python::return_value_policy<python::manage_new_object>());
+
+  docString =
+      "Construct a molecule from an RDKit-generate SVG string.\n\n\
+  ARGUMENTS:\n\
+\n\
+    - svg: string containing the SVG data (must include molecule metadata)\n\
+\n\
+    - sanitize: (optional) toggles sanitization of the molecule.\n\
+      Defaults to True.\n\
+\n\
+    - removeHs: (optional) toggles removing hydrogens from the molecule.\n\
+      This only make sense when sanitization is done.\n\
+      Defaults to true.\n\
+\n\
+  RETURNS:\n\
+\n\
+    a Mol object, None on failure.\n\
+\n\
+  NOTE: this functionality should be considered beta.\n\
+\n";
+  python::def("MolFromRDKitSVG", RDKit::MolFromSVG,
+              (python::arg("molBlock"), python::arg("sanitize") = true,
+               python::arg("removeHs") = true),
+              docString.c_str(),
+              python::return_value_policy<python::manage_new_object>());
 
   docString =
       "Construct a molecule from a Tripos Mol2 file.\n\n\

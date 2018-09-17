@@ -60,10 +60,10 @@ void ptreeToMol(RWMol *mol, const pt::ptree &molE) {
 }
 }  // namespace
 
-RWMol *RDKitSVGToMol(const std::string &svg, bool sanitize, bool removeHs) {
-  std::stringstream iss(svg);
+RWMol *RDKitSVGToMol(std::istream *instream, bool sanitize, bool removeHs) {
+  PRECONDITION(instream, "bad stream");
   pt::ptree tree;
-  pt::read_xml(iss, tree);
+  pt::read_xml(*instream, tree);
   RWMol *res = nullptr;
   pt::ptree empty_ptree;
   const pt::ptree &molsE = tree.get_child("svg", empty_ptree);
@@ -82,5 +82,9 @@ RWMol *RDKitSVGToMol(const std::string &svg, bool sanitize, bool removeHs) {
     }
   }
   return res;
+}
+RWMol *RDKitSVGToMol(const std::string &svg, bool sanitize, bool removeHs) {
+  std::stringstream iss(svg);
+  return RDKitSVGToMol(&iss, sanitize, removeHs);
 }
 }  // namespace RDKit
