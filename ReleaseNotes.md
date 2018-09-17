@@ -17,6 +17,8 @@
 This release includes a set of changes to make the default arguments to common
 functions less error prone (github #1679).
 - GetAtomSmiles() now generates isomeric SMILES by default.
+- The ringMatchesRingOnly option to the FindMCS() function now applies to
+  atom-atom matches as well as bond-bond matches. 
 
 ## Acknowledgements:
 
