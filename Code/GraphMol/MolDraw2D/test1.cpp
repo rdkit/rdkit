@@ -2152,9 +2152,6 @@ void test16MoleculeMetadata() {
     }
 
 #if 1
-    // FIX: this does not currently work particularlly well because the drawing
-    // coordinates are always in a local reference frame (not offset by the
-    // origin of the pane the molecule is in).
     {  // multiple molecules
       MolDraw2DSVG drawer(400, 400, 200, 200);
       ROMol *rom = rdcast<ROMol *>(m1.get());
@@ -2187,7 +2184,7 @@ int main() {
 #endif
 
   RDLog::InitLogs();
-#if 0
+#if 1
   test1();
   test2();
   test4();

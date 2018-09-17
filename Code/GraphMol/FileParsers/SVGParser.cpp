@@ -31,6 +31,12 @@ void ptreeToMol(RWMol *mol, const pt::ptree &molE) {
     if (atE.first == "rdkit:atom") {
       std::string asmi = atE.second.get<std::string>("<xmlattr>.atom-smiles");
       Atom *atom = SmilesToAtom(asmi);
+      if (!atom) {
+        BOOST_LOG(rdWarningLog) << " Could not convert SMILES '" << asmi
+                                << "' to a atom. Ignoring it." << std::endl;
+        continue;
+      }
+
       bool updateLabel = false, takeOwnership = true;
       mol->addAtom(atom, updateLabel, takeOwnership);
       RDGeom::Point3D pt(atE.second.get<double>("<xmlattr>.x", 0.0),
@@ -44,6 +50,11 @@ void ptreeToMol(RWMol *mol, const pt::ptree &molE) {
     if (atE.first == "rdkit:bond") {
       std::string asmi = atE.second.get<std::string>("<xmlattr>.bond-smiles");
       Bond *bond = SmilesToBond(asmi);
+      if (!bond) {
+        BOOST_LOG(rdWarningLog) << " Could not convert SMILES '" << asmi
+                                << "' to a bond. Ignoring it." << std::endl;
+        continue;
+      }
       bond->setBeginAtomIdx(atE.second.get<int>("<xmlattr>.begin-atom-idx") -
                             1);
       bond->setEndAtomIdx(atE.second.get<int>("<xmlattr>.end-atom-idx") - 1);
@@ -60,13 +71,14 @@ void ptreeToMol(RWMol *mol, const pt::ptree &molE) {
 }
 }  // namespace
 
-RWMol *RDKitSVGToMol(const std::string &svg, bool sanitize, bool removeHs) {
-  std::stringstream iss(svg);
+RWMol *RDKitSVGToMol(std::istream *instream, bool sanitize, bool removeHs) {
+  PRECONDITION(instream, "bad stream");
   pt::ptree tree;
-  pt::read_xml(iss, tree);
+  pt::read_xml(*instream, tree);
   RWMol *res = nullptr;
   pt::ptree empty_ptree;
-  const pt::ptree &molsE = tree.get_child("svg", empty_ptree);
+  // const pt::ptree &childE = tree.get_child("svg", empty_ptree);
+  const pt::ptree &molsE = tree.get_child("svg.metadata", empty_ptree);
   for (const auto &molE : molsE) {
     if (molE.first == "rdkit:mol") {
       res = new RWMol();
@@ -82,5 +94,9 @@ RWMol *RDKitSVGToMol(const std::string &svg, bool sanitize, bool removeHs) {
     }
   }
   return res;
+}
+RWMol *RDKitSVGToMol(const std::string &svg, bool sanitize, bool removeHs) {
+  std::stringstream iss(svg);
+  return RDKitSVGToMol(&iss, sanitize, removeHs);
 }
 }  // namespace RDKit

@@ -228,7 +228,7 @@ std::string GetBondSmiles(const Bond *bond, int atomToLeftIdx, bool doKekule,
       break;
     case Bond::DOUBLE:
       // see note above
-      if (!aromatic || !bond->getIsAromatic()) res = "=";
+      if (!aromatic || !bond->getIsAromatic() || allBondsExplicit) res = "=";
       break;
     case Bond::TRIPLE:
       res = "#";
