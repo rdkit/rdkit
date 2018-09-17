@@ -31,6 +31,12 @@ void ptreeToMol(RWMol *mol, const pt::ptree &molE) {
     if (atE.first == "rdkit:atom") {
       std::string asmi = atE.second.get<std::string>("<xmlattr>.atom-smiles");
       Atom *atom = SmilesToAtom(asmi);
+      if (!atom) {
+        BOOST_LOG(rdWarningLog) << " Could not convert SMILES '" << asmi
+                                << "' to a atom. Ignoring it." << std::endl;
+        continue;
+      }
+
       bool updateLabel = false, takeOwnership = true;
       mol->addAtom(atom, updateLabel, takeOwnership);
       RDGeom::Point3D pt(atE.second.get<double>("<xmlattr>.x", 0.0),
@@ -44,6 +50,11 @@ void ptreeToMol(RWMol *mol, const pt::ptree &molE) {
     if (atE.first == "rdkit:bond") {
       std::string asmi = atE.second.get<std::string>("<xmlattr>.bond-smiles");
       Bond *bond = SmilesToBond(asmi);
+      if (!bond) {
+        BOOST_LOG(rdWarningLog) << " Could not convert SMILES '" << asmi
+                                << "' to a bond. Ignoring it." << std::endl;
+        continue;
+      }
       bond->setBeginAtomIdx(atE.second.get<int>("<xmlattr>.begin-atom-idx") -
                             1);
       bond->setEndAtomIdx(atE.second.get<int>("<xmlattr>.end-atom-idx") - 1);
