@@ -73,4 +73,20 @@ TEST_CASE("Github #2029", "[SMILES,bug]") {
     CHECK("/" == SmilesWrite::GetBondSmiles(m1->getBondWithIdx(2), -1, doKekule,
                                             allBondsExplicit));
   }
+  SECTION("aromatic double bonds") {
+    std::unique_ptr<RWMol> m1(SmilesToMol("c1ccccc1"));
+    REQUIRE(m1);
+    bool markAtomsBonds = false;
+    MolOps::Kekulize(*m1, markAtomsBonds);
+    bool doKekule = false, allBondsExplicit = false;
+    CHECK("" == SmilesWrite::GetBondSmiles(m1->getBondWithIdx(0), -1, doKekule,
+                                           allBondsExplicit));
+    CHECK("" == SmilesWrite::GetBondSmiles(m1->getBondWithIdx(1), -1, doKekule,
+                                           allBondsExplicit));
+    allBondsExplicit = true;
+    CHECK("=" == SmilesWrite::GetBondSmiles(m1->getBondWithIdx(0), -1, doKekule,
+                                            allBondsExplicit));
+    CHECK("-" == SmilesWrite::GetBondSmiles(m1->getBondWithIdx(1), -1, doKekule,
+                                            allBondsExplicit));
+  }
 }
