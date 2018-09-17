@@ -17,6 +17,13 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
         file(RENAME "maeparser-${RELEASE_NO}" "${MAEPARSER_DIR}")
         patchCoordGenMaeExportHeaders("MAEPARSER" "${MAEPARSER_DIR}/MaeParserConfig.hpp")
+
+        # patch a bug in the 1.0.0 release of maeparser
+
+        file(READ "${MAEPARSER_DIR}/Buffer.cpp" buffer)
+        string(REPLACE "m_data->reserve(m_size + 1);"
+               "m_data->resize(m_size + 1);" buffer "${buffer}")
+        file(WRITE "${MAEPARSER_DIR}/Buffer.cpp" "${buffer}")        
     else()
       message("-- Found MAEParser source in ${MAEPARSER_DIR}")
     endif()
