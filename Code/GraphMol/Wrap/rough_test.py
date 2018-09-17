@@ -4836,7 +4836,9 @@ width='200px' height='200px' >
 <text x='132.777' y='56.228' style='font-size:15px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#FF0000' ><tspan>O</tspan></text>
 <text x='149.782' y='131.743' style='font-size:15px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#FF0000' ><tspan>OH</tspan></text>
 <text x='89.9952' y='194' style='font-size:12px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#000000' ><tspan>m1</tspan></text>
-<rdkit:mol><rdkit:atom idx="1" atom-smiles="[CH3]" drawing-x="9.09091" drawing-y="89.4974" x="-2.78651" y="0.295614" z="0" />
+<metadata>
+<rdkit:mol xmlns:rdkit = "http://www.rdkit.org/xml" version="0.9">
+<rdkit:atom idx="1" atom-smiles="[CH3]" drawing-x="9.09091" drawing-y="89.4974" x="-2.78651" y="0.295614" z="0" />
 <rdkit:atom idx="2" atom-smiles="[NH]" drawing-x="52.6897" drawing-y="75.8699" x="-1.35482" y="0.743114" z="0" />
 <rdkit:atom idx="3" atom-smiles="[C@H]" drawing-x="86.2908" drawing-y="106.814" x="-0.251428" y="-0.273019" z="0" />
 <rdkit:atom idx="4" atom-smiles="[Cl]" drawing-x="76.2932" drawing-y="151.385" x="-0.579728" y="-1.73665" z="0" />
@@ -4849,7 +4851,7 @@ width='200px' height='200px' >
 <rdkit:bond idx="4" begin-atom-idx="3" end-atom-idx="5" bond-smiles="-" />
 <rdkit:bond idx="5" begin-atom-idx="5" end-atom-idx="6" bond-smiles="=" />
 <rdkit:bond idx="6" begin-atom-idx="5" end-atom-idx="7" bond-smiles="-" />
-</rdkit:mol>
+</rdkit:mol></metadata>
 </svg>"""
     mol = Chem.MolFromRDKitSVG(svg)
     self.failUnlessEqual(mol.GetNumAtoms(), 7)

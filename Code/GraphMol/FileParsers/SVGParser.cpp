@@ -77,7 +77,8 @@ RWMol *RDKitSVGToMol(std::istream *instream, bool sanitize, bool removeHs) {
   pt::read_xml(*instream, tree);
   RWMol *res = nullptr;
   pt::ptree empty_ptree;
-  const pt::ptree &molsE = tree.get_child("svg", empty_ptree);
+  // const pt::ptree &childE = tree.get_child("svg", empty_ptree);
+  const pt::ptree &molsE = tree.get_child("svg.metadata", empty_ptree);
   for (const auto &molE : molsE) {
     if (molE.first == "rdkit:mol") {
       res = new RWMol();
