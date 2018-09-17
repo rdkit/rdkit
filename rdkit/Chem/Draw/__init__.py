@@ -540,7 +540,7 @@ def DrawMorganBit(mol, bitId, bitInfo, whichExample=0, **kwargs):
 
 # adapted from the function drawFPBits._drawFPBit() from the CheTo package
 # original author Nadine Schneider
-def DrawMorganEnv(mol, atomId, radius, molSize=(150, 150), baseRad=0.3, svg=True,
+def DrawMorganEnv(mol, atomId, radius, molSize=(150, 150), baseRad=0.3, useSVG=True,
                   aromaticColor=(0.9, 0.9, 0.2), ringColor=(0.8, 0.8, 0.8),
                   centerColor=(0.6, 0.6, 0.9), extraColor=(0.9, 0.9, 0.9), **kwargs):
   if not mol.GetNumConformers():
@@ -548,7 +548,7 @@ def DrawMorganEnv(mol, atomId, radius, molSize=(150, 150), baseRad=0.3, svg=True
   bitPath = Chem.FindAtomEnvironmentOfRadiusN(mol, radius, atomId)
 
   # get the atoms for highlighting
-  atomsToUse = set()
+  atomsToUse = set((atomId,))
   for b in bitPath:
     atomsToUse.add(mol.GetBondWithIdx(b).GetBeginAtomIdx())
     atomsToUse.add(mol.GetBondWithIdx(b).GetEndAtomIdx())
@@ -581,7 +581,7 @@ def DrawMorganEnv(mol, atomId, radius, molSize=(150, 150), baseRad=0.3, svg=True
       envSubmol.append(submol.GetBondBetweenAtoms(beginAtom, endAtom).GetIdx())
 
   # Drawing
-  if svg:
+  if useSVG:
     drawer = rdMolDraw2D.MolDraw2DSVG(molSize[0], molSize[1])
   else:
     drawer = rdMolDraw2D.MolDraw2DCairo(molSize[0], molSize[1])
@@ -628,7 +628,7 @@ def DrawRDKitBit(mol, bitId, bitInfo, whichExample=0, **kwargs):
   return DrawRDKitEnv(mol, bondPath, **kwargs)
 
 
-def DrawRDKitEnv(mol, bondPath, molSize=(150, 150), baseRad=0.3, svg=True,
+def DrawRDKitEnv(mol, bondPath, molSize=(150, 150), baseRad=0.3, useSVG=True,
                  aromaticColor=(0.9, 0.9, 0.2), extraColor=(0.9, 0.9,
                                                             0.9), nonAromaticColor=None, **kwargs):
   if not mol.GetNumConformers():
@@ -657,7 +657,7 @@ def DrawRDKitEnv(mol, bondPath, molSize=(150, 150), baseRad=0.3, svg=True,
       envSubmol.append(submol.GetBondBetweenAtoms(beginAtom, endAtom).GetIdx())
 
   # Drawing
-  if svg:
+  if useSVG:
     drawer = rdMolDraw2D.MolDraw2DSVG(molSize[0], molSize[1])
   else:
     drawer = rdMolDraw2D.MolDraw2DCairo(molSize[0], molSize[1])
