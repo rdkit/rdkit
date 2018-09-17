@@ -21,6 +21,7 @@ rdkit_library(FileParsers
               ${maesupplier}
               ProximityBonds.cpp
               SequenceParsers.cpp SequenceWriters.cpp
+              SVGParser.cpp
               LINK_LIBRARIES Depictor SmilesParse GraphMol ${maeparser_var})
 
 rdkit_headers(FileParsers.h
@@ -57,3 +58,5 @@ rdkit_test(testTplParser testTpls.cpp LINK_LIBRARIES FileParsers SmilesParse Gra
 rdkit_test(testMol2ToMol testMol2ToMol.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )
 
 rdkit_test(testSequence testSequence.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )
+
+rdkit_catch_test(fileParsersCatchTest catch_tests.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )

@@ -46,3 +46,31 @@ TEST_CASE("Github #1972", "[SMILES,bug]") {
     }
   }
 }
+
+TEST_CASE("Github #2029", "[SMILES,bug]") {
+  SECTION("wedging") {
+    std::unique_ptr<ROMol> m1(SmilesToMol("CN[C@H](Cl)C(=O)O"));
+    REQUIRE(m1);
+    m1->getBondWithIdx(1)->setBondDir(Bond::BEGINWEDGE);
+    bool doKekule = false, allBondsExplicit = false;
+    CHECK("" == SmilesWrite::GetBondSmiles(m1->getBondWithIdx(1), -1, doKekule,
+                                           allBondsExplicit));
+    allBondsExplicit = true;
+    CHECK("-" == SmilesWrite::GetBondSmiles(m1->getBondWithIdx(1), -1, doKekule,
+                                            allBondsExplicit));
+  }
+  SECTION("direction") {
+    std::unique_ptr<ROMol> m1(SmilesToMol("C/C=C/C"));
+    REQUIRE(m1);
+    bool doKekule = false, allBondsExplicit = false;
+    CHECK("" == SmilesWrite::GetBondSmiles(m1->getBondWithIdx(0), -1, doKekule,
+                                           allBondsExplicit));
+    CHECK("" == SmilesWrite::GetBondSmiles(m1->getBondWithIdx(2), -1, doKekule,
+                                           allBondsExplicit));
+    allBondsExplicit = true;
+    CHECK("/" == SmilesWrite::GetBondSmiles(m1->getBondWithIdx(0), -1, doKekule,
+                                            allBondsExplicit));
+    CHECK("/" == SmilesWrite::GetBondSmiles(m1->getBondWithIdx(2), -1, doKekule,
+                                            allBondsExplicit));
+  }
+}

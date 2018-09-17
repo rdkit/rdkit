@@ -295,6 +295,12 @@ void setAtomPalette(RDKit::MolDrawOptions &self, python::object cmap) {
   self.atomColourPalette.clear();
   updateAtomPalette(self, cmap);
 }
+
+void addMoleculeMetadata(const RDKit::MolDraw2DSVG &self, const RDKit::ROMol &m,
+                         int confId) {
+  self.addMoleculeMetadata(m, confId);
+}
+
 }  // namespace RDKit
 
 BOOST_PYTHON_MODULE(rdMolDraw2D) {
@@ -437,7 +443,8 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def(python::init<int, int, int, int>())
       .def("FinishDrawing", &RDKit::MolDraw2DSVG::finishDrawing,
            "add the last bits of SVG to finish the drawing")
-      .def("TagAtoms", &RDKit::MolDraw2DSVG::tagAtoms,
+      .def("AddMoleculeMetadata", RDKit::addMoleculeMetadata,
+           (python::arg("mol"), python::arg("confId") = -1),
            "add RDKit-specific information to the bottom of the drawing")
       .def("GetDrawingText", &RDKit::MolDraw2DSVG::getDrawingText,
            "return the SVG");
