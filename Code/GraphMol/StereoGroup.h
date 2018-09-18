@@ -50,8 +50,8 @@ public:
   const std::vector<Atom *>& getAtoms() const;
 };
 
-void remove_groups_with_atom(const Atom* atom, std::vector<StereoGroup>& groups);
-void remove_groups_with_atoms(const std::vector<Atom*>& atoms, std::vector<StereoGroup>& groups);
+void removeGroupsWithAtom(const Atom* atom, std::vector<StereoGroup>& groups);
+void removeGroupsWithAtoms(const std::vector<Atom*>& atoms, std::vector<StereoGroup>& groups);
 
 
 }  // namespace RDKit

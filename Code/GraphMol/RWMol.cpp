@@ -259,7 +259,7 @@ void RWMol::removeAtom(Atom *atom) {
   }
 
   // Remove any stereo group which includes the atom being deleted
-  remove_groups_with_atom(atom, d_stereo_groups);
+  removeGroupsWithAtom(atom, d_stereo_groups);
 
   // clear computed properties and reset our ring info structure
   // they are pretty likely to be wrong now:
