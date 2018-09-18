@@ -8,10 +8,10 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
       set(MAEPARSER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/maeparser")
     endif()
     if(NOT EXISTS "${MAEPARSER_DIR}/MaeParser.hpp")
-        set(RELEASE_NO "1.0.0")
-        downloadAndCheckMD5("https://github.com/schrodinger/maeparser/archive/${RELEASE_NO}.tar.gz"
+        set(RELEASE_NO "1.0.1")
+        downloadAndCheckMD5("https://github.com/schrodinger/maeparser/archive/v${RELEASE_NO}.tar.gz"
               "${CMAKE_CURRENT_SOURCE_DIR}/master.tar.gz"
-              "770d941264dde4825aaa505e59642e51")
+              "1292494df756e95fd1cce722286f28fe")
         execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf
           ${CMAKE_CURRENT_SOURCE_DIR}/master.tar.gz
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
@@ -19,11 +19,10 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
         patchCoordGenMaeExportHeaders("MAEPARSER" "${MAEPARSER_DIR}/MaeParserConfig.hpp")
 
         # patch a bug in the 1.0.0 release of maeparser
-
-        file(READ "${MAEPARSER_DIR}/Buffer.cpp" buffer)
-        string(REPLACE "m_data->reserve(m_size + 1);"
-               "m_data->resize(m_size + 1);" buffer "${buffer}")
-        file(WRITE "${MAEPARSER_DIR}/Buffer.cpp" "${buffer}")        
+        #file(READ "${MAEPARSER_DIR}/Buffer.cpp" buffer)
+        #string(REPLACE "m_data->reserve(m_size + 1);"
+        #       "m_data->resize(m_size + 1);" buffer "${buffer}")
+        #file(WRITE "${MAEPARSER_DIR}/Buffer.cpp" "${buffer}")
     else()
       message("-- Found MAEParser source in ${MAEPARSER_DIR}")
     endif()
