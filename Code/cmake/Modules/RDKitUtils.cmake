@@ -154,6 +154,21 @@ macro(rdkit_test)
   endif(RDK_BUILD_CPP_TESTS)
 endmacro(rdkit_test)
 
+macro(rdkit_catch_test)
+  PARSE_ARGUMENTS(RDKTEST
+    "LINK_LIBRARIES;DEPENDS;DEST"
+    ""
+    ${ARGN})
+  CAR(RDKTEST_NAME ${RDKTEST_DEFAULT_ARGS})
+  CDR(RDKTEST_SOURCES ${RDKTEST_DEFAULT_ARGS})
+  if(RDK_BUILD_CPP_TESTS)
+    add_executable(${RDKTEST_NAME} ${RDKTEST_SOURCES})
+    target_link_libraries(${RDKTEST_NAME} ${RDKTEST_LINK_LIBRARIES})
+    add_test(${RDKTEST_NAME} ${EXECUTABLE_OUTPUT_PATH}/${RDKTEST_NAME})
+    #ParseAndAddCatchTests(${RDKTEST_NAME})
+  endif(RDK_BUILD_CPP_TESTS)
+endmacro(rdkit_catch_test)
+
 macro(add_pytest)
   PARSE_ARGUMENTS(PYTEST
     "LINK_LIBRARIES;DEPENDS;DEST"

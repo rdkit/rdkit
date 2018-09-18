@@ -20,6 +20,10 @@
 #include <boost/smart_ptr.hpp>
 #include <map>
 
+#if BOOST_VERSION == 106400
+#include <boost/serialization/array_wrapper.hpp>
+#endif
+
 #ifdef RDK_THREADSAFE_SSS
 #include <mutex>
 #include <thread>

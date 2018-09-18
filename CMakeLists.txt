@@ -14,6 +14,7 @@ set(CMAKE_MODULE_PATH
     ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/Code/cmake/Modules/")
 
 add_library(rdkit_base INTERFACE)
+add_dependencies(rdkit_base catch)
 
 option(RDK_BUILD_SWIG_WRAPPERS "build the SWIG wrappers" OFF )
 option(RDK_BUILD_PYTHON_WRAPPERS "build the standard python wrappers" ON )
@@ -100,6 +101,12 @@ string(REGEX REPLACE "^0" "" RDKit_intMonth ${RDKit_Month} )
 
 set(RDKit_CodeDir "${CMAKE_CURRENT_SOURCE_DIR}/Code")
 set(RDKit_ExternalDir "${CMAKE_CURRENT_SOURCE_DIR}/External")
+
+#include catch
+add_subdirectory(${RDKit_ExternalDir}/catch)
+
+
+include_directories(${CATCH_INCLUDE_DIR} ${COMMON_INCLUDES})
 
 if(RDK_INSTALL_INTREE)
   set(RDKit_BinDir "${CMAKE_SOURCE_DIR}/bin")

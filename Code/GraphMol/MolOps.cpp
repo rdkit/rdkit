@@ -173,18 +173,20 @@ void halogenCleanup(RWMol &mol, Atom *atom) {
       ++nid1;
     }
     if (neighborsAllO) {
-      atom->setFormalCharge(ev / 2);
+      int formalCharge = 0;
       boost::tie(nid1, end1) = mol.getAtomNeighbors(atom);
       while (nid1 != end1) {
         Bond *b = mol.getBondBetweenAtoms(aid, *nid1);
         if (b->getBondType() == Bond::DOUBLE) {
           b->setBondType(Bond::SINGLE);
           Atom *otherAtom = mol.getAtomWithIdx(*nid1);
+          formalCharge++;
           otherAtom->setFormalCharge(-1);
           otherAtom->calcExplicitValence(false);
         }
         ++nid1;
       }
+      atom->setFormalCharge(formalCharge);
       atom->calcExplicitValence(false);
     }
   }

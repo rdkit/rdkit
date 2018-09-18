@@ -1520,6 +1520,63 @@ approach to do the same thing, using the function :py:func:`rdkit.Chem.MolFragme
   >>> Chem.MolFragmentToSmiles(m,atomsToUse=list(atoms),bondsToUse=env,rootedAtAtom=5)
   'c(C)(cc)nc'
 
+Generating images of fingerprint bits
+=====================================
+
+For the Morgan and RDKit fingerprint types, it's possible to generate images of
+the atom environment that defines the bit using the functions
+:py:func:`rdkit.Chem.Draw.DrawMorganBit()` and :py:func:`rdkit.Chem.Draw.DrawRDKitBit()`
+
+.. doctest::
+
+  >>> from rdkit.Chem import Draw
+  >>> mol = Chem.MolFromSmiles('c1ccccc1CC1CC1')
+  >>> bi = {}
+  >>> fp = AllChem.GetMorganFingerprintAsBitVect(mol, radius=2, bitInfo=bi)
+  >>> bi[872]
+  ((6, 2),)
+  >>> mfp2_svg = Draw.DrawMorganBit(mol, 872, bi)
+  >>> rdkbi = {}
+  >>> rdkfp = Chem.RDKFingerprint(mol, maxPath=5, bitInfo=rdkbi)
+  >>> rdkbi[1553]
+  [[0, 1, 9, 5, 4], [2, 3, 4, 9, 5]]
+  >>> rdk_svg = Draw.DrawRDKitBit(mol, 1553, rdkbi)
+
+Producing these images:
+
++-----------------------------------+-----------------------------------+
+| .. image:: images/mfp2_bit872.svg | .. image:: images/rdk_bit1553.svg |
++-----------------------------------+-----------------------------------+
+|         Morgan bit                |            RDKit bit              |
++-----------------------------------+-----------------------------------+
+
+The default highlight colors for the Morgan bits indicate:
+
+  - blue: the central atom in the environment
+  - yellow: aromatic atoms
+  - gray: aliphatic ring atoms
+
+The default highlight colors for the RDKit bits indicate:
+
+  - yellow: aromatic atoms
+
+Note that in cases where the same bit is set by multiple atoms in the molecule
+(as for bit 1553 for the RDKit fingerprint in the example above), the drawing
+functions will display the first example. You can change this by specifying which
+example to show:
+
+.. doctest::
+
+  >>> rdk_svg = Draw.DrawRDKitBit(mol, 1553, rdkbi, whichExample=1)
+
+Producing this image:
+
++-------------------------------------+
+| .. image:: images/rdk_bit1553_2.svg |
++-------------------------------------+
+|            RDKit bit                |
++-------------------------------------+
+
 
 Picking Diverse Molecules Using Fingerprints
 ============================================

@@ -1582,70 +1582,79 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               docString.c_str());
   python::scope().attr("_CalcNPR1_version") = RDKit::Descriptors::NPR1Version;
   docString = "";
-  python::def("CalcNPR1", RDKit::Descriptors::NPR1,
-              (python::arg("mol"), python::arg("confId") = -1,
-               python::arg("useAtomicMasses") = true),
-              docString.c_str());
+  python::def(
+      "CalcNPR1", RDKit::Descriptors::NPR1,
+      (python::arg("mol"), python::arg("confId") = -1,
+       python::arg("useAtomicMasses") = true, python::arg("force") = true),
+      docString.c_str());
   python::scope().attr("_CalcNPR2_version") = RDKit::Descriptors::NPR2Version;
   docString = "";
-  python::def("CalcNPR2", RDKit::Descriptors::NPR2,
-              (python::arg("mol"), python::arg("confId") = -1,
-               python::arg("useAtomicMasses") = true),
-              docString.c_str());
+  python::def(
+      "CalcNPR2", RDKit::Descriptors::NPR2,
+      (python::arg("mol"), python::arg("confId") = -1,
+       python::arg("useAtomicMasses") = true, python::arg("force") = true),
+      docString.c_str());
   python::scope().attr("_CalcPMI1_version") = RDKit::Descriptors::PMI1Version;
   docString = "";
-  python::def("CalcPMI1", RDKit::Descriptors::PMI1,
-              (python::arg("mol"), python::arg("confId") = -1,
-               python::arg("useAtomicMasses") = true),
-              docString.c_str());
+  python::def(
+      "CalcPMI1", RDKit::Descriptors::PMI1,
+      (python::arg("mol"), python::arg("confId") = -1,
+       python::arg("useAtomicMasses") = true, python::arg("force") = true),
+      docString.c_str());
   python::scope().attr("_CalcPMI2_version") = RDKit::Descriptors::PMI2Version;
   docString = "";
-  python::def("CalcPMI2", RDKit::Descriptors::PMI2,
-              (python::arg("mol"), python::arg("confId") = -1,
-               python::arg("useAtomicMasses") = true),
-              docString.c_str());
+  python::def(
+      "CalcPMI2", RDKit::Descriptors::PMI2,
+      (python::arg("mol"), python::arg("confId") = -1,
+       python::arg("useAtomicMasses") = true, python::arg("force") = true),
+      docString.c_str());
   python::scope().attr("_CalcPMI3_version") = RDKit::Descriptors::PMI3Version;
   docString = "";
-  python::def("CalcPMI3", RDKit::Descriptors::PMI3,
-              (python::arg("mol"), python::arg("confId") = -1,
-               python::arg("useAtomicMasses") = true),
-              docString.c_str());
+  python::def(
+      "CalcPMI3", RDKit::Descriptors::PMI3,
+      (python::arg("mol"), python::arg("confId") = -1,
+       python::arg("useAtomicMasses") = true, python::arg("force") = true),
+      docString.c_str());
 
   python::scope().attr("_CalcRadiusOfGyration_version") =
       RDKit::Descriptors::radiusOfGyrationVersion;
   docString = "";
-  python::def("CalcRadiusOfGyration", RDKit::Descriptors::radiusOfGyration,
-              (python::arg("mol"), python::arg("confId") = -1,
-               python::arg("useAtomicMasses") = true),
-              docString.c_str());
+  python::def(
+      "CalcRadiusOfGyration", RDKit::Descriptors::radiusOfGyration,
+      (python::arg("mol"), python::arg("confId") = -1,
+       python::arg("useAtomicMasses") = true, python::arg("force") = true),
+      docString.c_str());
   python::scope().attr("_CalcInertialShapeFactor_version") =
       RDKit::Descriptors::inertialShapeFactorVersion;
   docString = "";
-  python::def("CalcInertialShapeFactor",
-              RDKit::Descriptors::inertialShapeFactor,
-              (python::arg("mol"), python::arg("confId") = -1,
-               python::arg("useAtomicMasses") = true),
-              docString.c_str());
+  python::def(
+      "CalcInertialShapeFactor", RDKit::Descriptors::inertialShapeFactor,
+      (python::arg("mol"), python::arg("confId") = -1,
+       python::arg("useAtomicMasses") = true, python::arg("force") = true),
+      docString.c_str());
 
   python::scope().attr("_CalcEccentricity_version") =
       RDKit::Descriptors::eccentricityVersion;
   docString = "";
-  python::def("CalcEccentricity", RDKit::Descriptors::eccentricity,
-              (python::arg("mol"), python::arg("confId") = -1,
-               python::arg("useAtomicMasses") = true),
-              docString.c_str());
+  python::def(
+      "CalcEccentricity", RDKit::Descriptors::eccentricity,
+      (python::arg("mol"), python::arg("confId") = -1,
+       python::arg("useAtomicMasses") = true, python::arg("force") = true),
+      docString.c_str());
   python::scope().attr("_CalcAsphericity_version") =
       RDKit::Descriptors::asphericityVersion;
   docString = "";
-  python::def("CalcAsphericity", RDKit::Descriptors::asphericity,
-              (python::arg("mol"), python::arg("confId") = -1,
-               python::arg("useAtomicMasses") = true),
-              docString.c_str());
+  python::def(
+      "CalcAsphericity", RDKit::Descriptors::asphericity,
+      (python::arg("mol"), python::arg("confId") = -1,
+       python::arg("useAtomicMasses") = true, python::arg("force") = true),
+      docString.c_str());
   python::scope().attr("_CalcSpherocityIndex_version") =
       RDKit::Descriptors::spherocityIndexVersion;
   docString = "";
   python::def("CalcSpherocityIndex", RDKit::Descriptors::spherocityIndex,
-              (python::arg("mol"), python::arg("confId") = -1),
+              (python::arg("mol"), python::arg("confId") = -1,
+               python::arg("force") = true),
               docString.c_str());
 
   python::scope().attr("_CalcAUTOCORR2D_version") =

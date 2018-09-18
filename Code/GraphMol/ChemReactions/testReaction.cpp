@@ -6763,6 +6763,45 @@ void testGithub1869() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testGithub1269() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Testing github #1269: preserve reactant atom idx in products"
+      << std::endl;
+  {
+    // nonsense test case
+    std::string sma = "[C:1]>>[O:1]Cl";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(sma);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
+    TEST_ASSERT(rxn->getNumProductTemplates() == 1);
+    rxn->initReactantMatchers();
+
+    MOL_SPTR_VECT reacts;
+    std::string smi = "NC";
+    auto mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    reacts.push_back(ROMOL_SPTR(mol));
+
+    auto prods = rxn->runReactants(reacts);
+    TEST_ASSERT(prods.size() == 1);
+    TEST_ASSERT(prods[0].size() == 1);
+    TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getAtomicNum() == 8);
+    TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->hasProp(
+        common_properties::reactantAtomIdx));
+    TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getProp<unsigned int>(
+                    "react_atom_idx") == 1);
+    TEST_ASSERT(!prods[0][0]->getAtomWithIdx(1)->hasProp(
+        common_properties::reactantAtomIdx));
+    TEST_ASSERT(prods[0][0]->getAtomWithIdx(2)->hasProp(
+        common_properties::reactantAtomIdx));
+    TEST_ASSERT(prods[0][0]->getAtomWithIdx(2)->getProp<unsigned int>(
+                    "react_atom_idx") == 0);
+
+    delete rxn;
+  }
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -6846,9 +6885,10 @@ int main() {
   test70Github1544();
   testSanitizeException();
   testReactionProperties();
-#endif
   testGithub1950();
   testGithub1869();
+#endif
+  testGithub1269();
 
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
