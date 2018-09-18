@@ -221,10 +221,10 @@ void readPartialCharges(RWMol *mol, const rj::Value &repVal,
                "bad charges");
   if (!repVal.HasMember("formatVersion"))
     throw FileParseException("Bad Format: missing version");
-  if (repVal["version"].GetInt() > currentChargeRepresentationVersion) {
-    BOOST_LOG(rdWarningLog) << "partialCharges version "
-                            << repVal["formatVersion"].GetInt()
-                            << " too recent. Ignoring it." << std::endl;
+  if (repVal["formatVersion"].GetInt() > currentChargeRepresentationVersion) {
+    BOOST_LOG(rdWarningLog)
+        << "partialCharges version " << repVal["formatVersion"].GetInt()
+        << " too recent. Ignoring it." << std::endl;
     return;
   }
   {
@@ -246,12 +246,11 @@ void readPartialCharges(RWMol *mol, const rj::Value &repVal,
 void readRDKitRepresentation(RWMol *mol, const rj::Value &repVal,
                              const JSONParseParameters &params) {
   PRECONDITION(mol, "no molecule");
-  PRECONDITION(
-      repVal["name"].GetString() == std::string("rdkitRepresentation"),
-      "bad representation");
+  PRECONDITION(repVal["name"].GetString() == std::string("rdkitRepresentation"),
+               "bad representation");
   if (!repVal.HasMember("formatVersion"))
     throw FileParseException("Bad Format: missing format_version");
-  if (repVal["format_version"].GetInt() > 1) {
+  if (repVal["formatVersion"].GetInt() > 1) {
     BOOST_LOG(rdWarningLog) << "RDKit representation format version "
                             << repVal["formatVersion"].GetInt()
                             << " too recent. Ignoring it." << std::endl;
@@ -287,8 +286,9 @@ void readRDKitRepresentation(RWMol *mol, const rj::Value &repVal,
       for (const auto &val : miter->value.GetArray()) {
         if (!val.IsInt())
           throw FileParseException("Bad Format: ciprank not int");
-        mol->getAtomWithIdx(i++)->setProp(common_properties::_CIPRank,
-                                          val.GetInt());
+        mol->getAtomWithIdx(i++)->setProp(
+            common_properties::_CIPRank,
+            static_cast<unsigned int>(val.GetInt()));
       }
     }
   }
