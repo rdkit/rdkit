@@ -60,8 +60,30 @@ endif()
 
 SET(SWIG_MODULE_RDKFuncs_EXTRA_DEPS ${SWIG_SRC_FILES} )
 
-SWIG_ADD_LIBRARY(RDKFuncs TYPE MODULE LANGUAGE CSharp SOURCES GraphMolCSharp.i )
+if (MSVC)
+        MESSAGE("** Building swig with version in ${RDKIT_MSVC_VERSION}")
+	configure_file(
+	  ${CMAKE_SOURCE_DIR}/rdkit.ico
+	  ${CMAKE_CURRENT_BINARY_DIR}/rdkit.ico
+	  COPYONLY)
+      include(generate_msvc_version)		  
+      generate_product_version(
+       RDKFUNCS_MSVC_VERSION
+       NAME "RDKFuncs"
+       ICON "rdkit.ico"
+       VERSION_MAJOR ${RDKit_Year}
+       VERSION_MINOR ${RDKit_Month}
+       VERSION_PATCH ""
+       VERSION_REVISION ${RDKit_Revision}
+       FILE_DESCRIPTION "RDKit C# ${RDKIT_MSVC_VERSION}"
+      )
+      MESSAGE("== SWIG_ADD_LIBRARY(RDKFuncs TYPE MODULE LANGUAGE CSharp SOURCES GraphMolCSharp.i ${RDKFUNCS_MSVC_VERSION} ")
+      
+         SWIG_ADD_LIBRARY(RDKFuncs TYPE MODULE LANGUAGE CSharp SOURCES GraphMolCSharp.i ${RDKFUNCS_MSVC_VERSION} )
+else()
+	 SWIG_ADD_LIBRARY(RDKFuncs TYPE MODULE LANGUAGE CSharp SOURCES GraphMolCSharp.i )
 
+endif(MSVC)
 
 # it doesnt seem like the threading libs should need to be here, but
 # as of Oct 2012 using boost 1.51 under at least ubuntu 12.04 we get a
