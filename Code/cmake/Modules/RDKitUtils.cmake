@@ -32,7 +32,25 @@ macro(rdkit_library)
   CAR(RDKLIB_NAME ${RDKLIB_DEFAULT_ARGS})
   CDR(RDKLIB_SOURCES ${RDKLIB_DEFAULT_ARGS})
   if(MSVC AND (NOT RDK_INSTALL_DLLS_MSVC))
-    add_library(${RDKLIB_NAME} ${RDKLIB_SOURCES})
+  	configure_file(
+	  ${CMAKE_SOURCE_DIR}/rdkit.ico
+	  ${CMAKE_CURRENT_BINARY_DIR}/rdkit.ico
+	  COPYONLY)
+
+    include(generate_msvc_version)
+    generate_product_version(
+     RDKLIB_MSVC_VERSION
+     NAME "${RDKLIB_NAME}"
+     ICON "rdkit.ico"
+     VERSION_MAJOR ${RDKit_Year}
+     VERSION_MINOR ${RDKit_Month}
+     VERSION_PATCH ""
+     VERSION_REVISION ${RDKit_Revision}
+     FILE_DESCRIPTION "RDKit dll ${RDKLIB_NAME} ${RDK_WINDOWS_DLLNAME_PREFIX}"
+    )
+    	      
+    add_library(${RDKLIB_NAME} ${RDKLIB_SOURCES}
+            ${RDKLIB_MSVC_VERSION})
     target_link_libraries(${RDKLIB_NAME} PUBLIC rdkit_base)
     if(RDK_INSTALL_DEV_COMPONENT)
       INSTALL(TARGETS ${RDKLIB_NAME} EXPORT ${RDKit_EXPORTED_TARGETS}
