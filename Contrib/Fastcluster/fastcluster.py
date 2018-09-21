@@ -35,7 +35,7 @@ def smi2fp(molid, smiles):
     onbits = AllChem.GetMorganFingerprintAsBitVect(mol, 2).GetOnBits()
     row = molid
     for bit in onbits:
-        row += "FP_{}\t1.0".format(bit)
+        row += "\tFP_{}\t1.0".format(bit)
     row += "\n" 
     return row 
 
@@ -46,7 +46,7 @@ if __name__ == "__main__":
     with open(args.input, "r") as inputf:
         with open("fp.tsv", "w") as tempf:
             for line in inputf:
-                molid,smiles = line.split("\t")
+                molid,smiles = line.rstrip().split("\t")
                 tempf.write(smi2fp(molid, smiles))
     res = subprocess.call("time bayon -p -c {0.centroid} -n  {0.nclusters} fp.tsv > {0.output}".format(args), shell=True)
 
