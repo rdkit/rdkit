@@ -13,6 +13,7 @@
 #include <RDGeneral/Exceptions.h>
 #include <RDGeneral/hash/hash.hpp>
 #include <algorithm>
+//#include "boost/random.hpp" 
 
 namespace RDKit {
 namespace Canon {
@@ -567,11 +568,16 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
                    INT_VECT &bondVisitOrders, VECT_INT_VECT &atomRingClosures,
                    std::vector<INT_LIST> &atomTraversalBondOrder,
                    const boost::dynamic_bitset<> *bondsInPlay,
-                   const std::vector<std::string> *bondSymbols) {
+                   const std::vector<std::string> *bondSymbols,
+                   bool doRandom) {
 #if 0
     std::cerr<<"traverse from atom: "<<atomIdx<<" via bond "<<inBondIdx<<" num cycles available: "
              <<std::count(cyclesAvailable.begin(),cyclesAvailable.end(),1)<<std::endl;
 #endif
+
+
+
+
   Atom *atom = mol.getAtomWithIdx(atomIdx);
   INT_LIST directTravList, cycleEndList;
   boost::dynamic_bitset<> seenFromHere(mol.getNumAtoms());
@@ -639,6 +645,9 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
   ROMol::OBOND_ITER_PAIR bondsPair = mol.getAtomBonds(atom);
   possibles.reserve(bondsPair.second - bondsPair.first);
 
+
+
+
   while (bondsPair.first != bondsPair.second) {
     Bond* theBond = mol[*(bondsPair.first)];
     bondsPair.first++;
@@ -661,6 +670,9 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
         continue;
       }
       unsigned long rank = ranks[otherIdx];
+
+      //std::cerr<<"before the rules rings:  p: "<<otherIdx<<" "<<colors[otherIdx]<<" "<<theBond->getBondType()<<" "<<rank<<std::endl;
+
       if (theBond->getOwningMol().getRingInfo()->numBondRings(
               theBond->getIdx())) {
         if (!bondSymbols) {
@@ -672,8 +684,15 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
           rank += (hsh % MAX_NATOMS) * MAX_NATOMS * MAX_NATOMS;
         }
       }
-      // std::cerr<<"   p: "<<otherIdx<<" "<<colors[otherIdx]<<"
-      // "<<theBond->getBondType()<<" "<<rank<<std::endl;
+      // std::cerr<<"after the rules rings:  p: "<<otherIdx<<" "<<colors[otherIdx]<<" "<<theBond->getBondType()<<" "<<rank<<std::endl;
+      
+    if (doRandom) {
+      // set the seed for rand function (1 by default if not usinig srand call function)
+      // randomized the rank instead of using "rdkit rank rules"
+      rank = std::rand();
+    }
+      //std::cerr << "\nmygenerator:" << numberGenerator() << std::endl; 
+
       possibles.push_back(PossibleType(rank, otherIdx, theBond));
     }
   }
@@ -717,7 +736,7 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
     dfsBuildStack(mol, possibleIdx, bond->getIdx(), colors, cycles, ranks,
                   cyclesAvailable, molStack, atomOrders, bondVisitOrders,
                   atomRingClosures, atomTraversalBondOrder, bondsInPlay,
-                  bondSymbols);
+                  bondSymbols, doRandom);
     if (possiblesIt + 1 != possibles.end()) {
       molStack.push_back(MolStackElem(")", rdcast<int>(possiblesIt - possibles.begin())));
     }
@@ -735,7 +754,10 @@ void canonicalDFSTraversal(ROMol &mol, int atomIdx, int inBondIdx,
                            VECT_INT_VECT &atomRingClosures,
                            std::vector<INT_LIST> &atomTraversalBondOrder,
                            const boost::dynamic_bitset<> *bondsInPlay,
-                           const std::vector<std::string> *bondSymbols) {
+                           const std::vector<std::string> *bondSymbols,
+                           bool doRandom) {
+
+                    
   PRECONDITION(colors.size() >= mol.getNumAtoms(), "vector too small");
   PRECONDITION(ranks.size() >= mol.getNumAtoms(), "vector too small");
   PRECONDITION(atomOrders.size() >= mol.getNumAtoms(), "vector too small");
@@ -749,6 +771,7 @@ void canonicalDFSTraversal(ROMol &mol, int atomIdx, int inBondIdx,
   PRECONDITION(!bondSymbols || bondSymbols->size() >= mol.getNumBonds(),
                "bondSymbols too small");
 
+
   std::vector<AtomColors> tcolors;
   tcolors.resize(colors.size());
   std::copy(colors.begin(), colors.end(), tcolors.begin());
@@ -756,7 +779,7 @@ void canonicalDFSTraversal(ROMol &mol, int atomIdx, int inBondIdx,
                 atomRingClosures, bondsInPlay, bondSymbols);
   dfsBuildStack(mol, atomIdx, inBondIdx, colors, cycles, ranks, cyclesAvailable,
                 molStack, atomOrders, bondVisitOrders, atomRingClosures,
-                atomTraversalBondOrder, bondsInPlay, bondSymbols);
+                atomTraversalBondOrder, bondsInPlay, bondSymbols, doRandom);
 }
 
 bool canHaveDirection(const Bond *bond) {
@@ -891,7 +914,8 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
                           const UINT_VECT &ranks, MolStack &molStack,
                           const boost::dynamic_bitset<> *bondsInPlay,
                           const std::vector<std::string> *bondSymbols,
-                          bool doIsomericSmiles) {
+                          bool doIsomericSmiles,
+                          bool doRandom) {
   PRECONDITION(colors.size() >= mol.getNumAtoms(), "vector too small");
   PRECONDITION(ranks.size() >= mol.getNumAtoms(), "vector too small");
   PRECONDITION(!bondsInPlay || bondsInPlay->size() >= mol.getNumBonds(),
@@ -929,7 +953,7 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
   Canon::canonicalDFSTraversal(
       mol, atomIdx, -1, colors, cycles, ranks, cyclesAvailable, molStack,
       atomVisitOrders, bondVisitOrders, atomRingClosures,
-      atomTraversalBondOrder, bondsInPlay, bondSymbols);
+      atomTraversalBondOrder, bondsInPlay, bondSymbols, doRandom);
 
   PRECONDITION(!molStack.empty(), "Empty stack.");
   PRECONDITION(molStack.begin()->type == MOL_STACK_ATOM,

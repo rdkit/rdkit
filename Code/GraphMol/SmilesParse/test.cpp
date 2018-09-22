@@ -4066,6 +4066,51 @@ void testGithub1925() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+
+void testdoRandomSmileGeneration() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
+  BOOST_LOG(rdInfoLog)
+      << "Testing the random Generator for SMILES\n"
+      << std::endl;
+  {
+    std::srand(1); // be sure we use it for testcase!
+    const char *benzenes[1] = {
+        "c1ccncc1C"};
+
+    const char *rulesmiles[7] = {
+       "c1ccncc1C","c1cc(C)cnc1","c1ccc(C)cn1","n1cccc(C)c1",
+        "c1ncccc1C","c1(C)cccnc1","Cc1cccnc1"};
+    
+    const char *randomsmiles[7] = {
+      "c1ccncc1C","c1cc(cnc1)C","c1ccc(cn1)C","n1cccc(c1)C","c1ncccc1C",
+      "c1(cccnc1)C","Cc1cccnc1"};
+    
+    for (int i = 0; i < 1; ++i) {
+      ROMol *m = SmilesToMol(benzenes[i]);
+      TEST_ASSERT(m);
+      TEST_ASSERT(m->getNumAtoms() == 7);
+      std::string randombenzene = "";
+      std::string rulebenzene = "";
+      for (int j = 0; j < 7; ++j) {
+        randombenzene = MolToSmiles(*m, true, false, j, false,false,false,true);
+        BOOST_LOG(rdInfoLog) << "random :" <<  randombenzene << std::endl;
+        rulebenzene = MolToSmiles(*m, true, false, j, false,false,false,false);
+        BOOST_LOG(rdInfoLog) << "rule :" <<  rulebenzene << std::endl;
+        TEST_ASSERT(randombenzene == randomsmiles[j]);
+        TEST_ASSERT(rulebenzene == rulesmiles[j]);
+      }
+      
+      delete m;
+    }
+
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+
+
+
+
 void testGithub1972() {
   BOOST_LOG(rdInfoLog)
       << "Testing Github #1972: Incorrect tetrahedral stereo when reading "
@@ -4180,6 +4225,7 @@ int main(int argc, char *argv[]) {
   testGithub389();
   testBug1719046();
   testBug1844617();
+
 #if 1  // POSTPONED during canonicalization rewrite
   // testGithub298();
   testFragmentSmiles();
@@ -4199,4 +4245,6 @@ int main(int argc, char *argv[]) {
   testGithub1925();
 #endif
   testGithub1972();
+  testdoRandomSmileGeneration();
+
 }
