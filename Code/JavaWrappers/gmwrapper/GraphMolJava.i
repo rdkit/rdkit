@@ -1,5 +1,4 @@
 /*
-* $Id$
 *
 *  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
 *  All rights reserved.
@@ -184,6 +183,7 @@ typedef unsigned long long int	uintmax_t;
 %include "../Conformer.i"
 %include "../Dict.i"
 %include "../RDProps.i"
+%include "../StereoGroup.i"
 %include "../ROMol.i"
 %include "../RWMol.i"
 %include "../Bond.i"
