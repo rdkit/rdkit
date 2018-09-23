@@ -28,7 +28,6 @@ namespace MolStandardize {
 const CleanupParameters defaultCleanupParameters;
 
 RWMol *cleanup(const RWMol &mol, const CleanupParameters &params) {
-
   RWMol m(mol);
   MolOps::sanitizeMol(m);
   MolOps::removeHs(m);
@@ -42,7 +41,11 @@ RWMol *cleanup(const RWMol &mol, const CleanupParameters &params) {
   return reionized;
 }
 
-void tautomerParent(RWMol &mol, const CleanupParameters &params) {}
+void tautomerParent(RWMol &mol, const CleanupParameters &params) {
+  RDUNUSED_PARAM(mol);
+  RDUNUSED_PARAM(params);
+  UNDER_CONSTRUCTION("Not yet implmented");
+}
 
 // Return the fragment parent of a given molecule.
 // The fragment parent is the largest organic covalent unit in the molecule.
@@ -59,14 +62,22 @@ RWMol *fragmentParent(const RWMol &mol, const CleanupParameters &params,
 
   LargestFragmentChooser lfragchooser(params.preferOrganic);
   ROMol nm(*cleaned);
-  ROMOL_SPTR lfrag( lfragchooser.choose(nm) );
+  ROMOL_SPTR lfrag(lfragchooser.choose(nm));
   delete cleaned;
   return new RWMol(*lfrag);
 }
 
-void stereoParent(RWMol &mol, const CleanupParameters &params) {}
+void stereoParent(RWMol &mol, const CleanupParameters &params) {
+  RDUNUSED_PARAM(mol);
+  RDUNUSED_PARAM(params);
+  UNDER_CONSTRUCTION("Not yet implmented");
+}
 
-void isotopeParent(RWMol &mol, const CleanupParameters &params) {}
+void isotopeParent(RWMol &mol, const CleanupParameters &params) {
+  RDUNUSED_PARAM(mol);
+  RDUNUSED_PARAM(params);
+  UNDER_CONSTRUCTION("Not yet implmented");
+}
 
 RWMol *chargeParent(const RWMol &mol, const CleanupParameters &params,
                     bool skip_standardize) {
@@ -90,7 +101,11 @@ RWMol *chargeParent(const RWMol &mol, const CleanupParameters &params,
   return omol;
 }
 
-void superParent(RWMol &mol, const CleanupParameters &params) {}
+void superParent(RWMol &mol, const CleanupParameters &params) {
+  RDUNUSED_PARAM(mol);
+  RDUNUSED_PARAM(params);
+  UNDER_CONSTRUCTION("Not yet implmented");
+}
 
 RWMol *normalize(const RWMol *mol, const CleanupParameters &params) {
   Normalizer normalizer(params.normalizations, params.maxRestarts);
@@ -102,6 +117,7 @@ RWMol *normalize(const RWMol *mol, const CleanupParameters &params) {
 }
 
 RWMol *reionize(const RWMol *mol, const CleanupParameters &params) {
+  RDUNUSED_PARAM(params);
   Reionizer reionizer;
   ROMol m(*mol);
   ROMol *reionized = reionizer.reionize(m);
@@ -110,11 +126,12 @@ RWMol *reionize(const RWMol *mol, const CleanupParameters &params) {
 }
 
 std::string standardizeSmiles(const std::string &smiles) {
-	RWMOL_SPTR mol( SmilesToMol(smiles, 0, false) );
-	if (!mol) {
-		std::string message = "SMILES Parse Error: syntax error for input: " + smiles;
-		throw ValueErrorException(message);
-	}
+  RWMOL_SPTR mol(SmilesToMol(smiles, 0, false));
+  if (!mol) {
+    std::string message =
+        "SMILES Parse Error: syntax error for input: " + smiles;
+    throw ValueErrorException(message);
+  }
 
   CleanupParameters params;
   RWMOL_SPTR cleaned(cleanup(*mol, params));

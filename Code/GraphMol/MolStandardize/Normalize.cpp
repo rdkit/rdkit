@@ -25,33 +25,32 @@ class ROMol;
 
 namespace MolStandardize {
 
-//unsigned int MAX_RESTARTS = 200;
+// unsigned int MAX_RESTARTS = 200;
 
 // constructor
 Normalizer::Normalizer() {
-	BOOST_LOG(rdInfoLog) << "Initializing Normalizer\n";
+  BOOST_LOG(rdInfoLog) << "Initializing Normalizer\n";
   TransformCatalogParams tparams(defaultCleanupParameters.normalizations);
-//  unsigned int ntransforms = tparams->getNumTransformations();
-//  TEST_ASSERT(ntransforms == 22);
-	this->d_tcat = new TransformCatalog(&tparams);
-	this->MAX_RESTARTS = 200;
+  //  unsigned int ntransforms = tparams->getNumTransformations();
+  //  TEST_ASSERT(ntransforms == 22);
+  this->d_tcat = new TransformCatalog(&tparams);
+  this->MAX_RESTARTS = 200;
 }
 
 // overloaded constructor
-Normalizer::Normalizer(const std::string normalizeFile, const unsigned int maxRestarts) {
-	BOOST_LOG(rdInfoLog) << "Initializing Normalizer\n";
+Normalizer::Normalizer(const std::string normalizeFile,
+                       const unsigned int maxRestarts) {
+  BOOST_LOG(rdInfoLog) << "Initializing Normalizer\n";
   TransformCatalogParams tparams(normalizeFile);
-	this->d_tcat = new TransformCatalog(&tparams);
-	this->MAX_RESTARTS = maxRestarts;
+  this->d_tcat = new TransformCatalog(&tparams);
+  this->MAX_RESTARTS = maxRestarts;
 }
 
 // destructor
-Normalizer::~Normalizer(){
-	delete d_tcat;
-}
+Normalizer::~Normalizer() { delete d_tcat; }
 
 ROMol *Normalizer::normalize(const ROMol &mol) {
-	BOOST_LOG(rdInfoLog) << "Running Normalizer\n";
+  BOOST_LOG(rdInfoLog) << "Running Normalizer\n";
   PRECONDITION(this->d_tcat, "");
   const TransformCatalogParams *tparams = this->d_tcat->getCatalogParams();
 
@@ -101,8 +100,8 @@ ROMol *Normalizer::normalizeFragment(
       return nfrag;
     }
   }
-  BOOST_LOG(rdInfoLog) << "Gave up normalization after " << MAX_RESTARTS 
-		<< " restarts.\n";
+  BOOST_LOG(rdInfoLog) << "Gave up normalization after " << MAX_RESTARTS
+                       << " restarts.\n";
   return nfrag;
 }
 
@@ -132,7 +131,7 @@ boost::shared_ptr<ROMol> Normalizer::applyTransform(
       for (auto &pdt : products) {
         // shared_ptr<ROMol> p0( new RWMol(*pdt[0]) );
         //				std::cout << MolToSmiles(*p0) <<
-        //std::endl;
+        // std::endl;
         unsigned int failed;
         try {
           MolOps::sanitizeMol(*static_cast<RWMol *>(pdt[0].get()), failed);
@@ -157,6 +156,10 @@ boost::shared_ptr<ROMol> Normalizer::applyTransform(
       }
     }
   }
+  if (mols.size())
+    return mols[0];
+  else
+    return nullptr;
 }
 
 }  // namespace MolStandardize

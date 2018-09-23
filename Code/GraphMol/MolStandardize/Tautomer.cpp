@@ -24,6 +24,10 @@ unsigned int MAX_TAUTOMERS = 1000;
 
 ROMol *TautomerCanonicalizer::canonicalize(const ROMol &mol,
                                            TautomerCatalog *tautcat) {
+  PRECONDITION(tautcat, "tautcat not provided");
+  // REVIEW: I think it's a good idea to raise an error if this unfinished code
+  // is called.
+  UNDER_CONSTRUCTION("Tautomer enumeration not yet implemented");
   TautomerEnumerator tenum;
   std::vector<ROMOL_SPTR> tautomers = tenum.enumerate(mol, tautcat);
   if (tautomers.size() == 1) {
@@ -39,7 +43,8 @@ ROMol *TautomerCanonicalizer::canonicalize(const ROMol &mol,
     MolOps::symmetrizeSSSR(*t, rings);
     for (const auto ring : rings) {
       for (const auto pair : MolStandardize::pairwise(ring)) {
-        //				std::cout << pair.first << " " << pair.second
+        //				std::cout << pair.first << " " <<
+        // pair.second
         //<< std::endl;
         Bond::BondType btype =
             t->getBondBetweenAtoms(pair.first, pair.second)->getBondType();
@@ -92,11 +97,13 @@ std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(
           // find kekulized_mol in kekulized_mols with same smiles as taut
           auto kmol = kekulized_mols.find(tautomer.first);
           //					if (search !=
-          //kekulized_mols.end() 					for (const auto &mol : kekulized_mols) { 							if
-          //(mol.first == tautomer.first) { 								std::cout << mol.first << std::endl;
+          // kekulized_mols.end() 					for (const auto &mol
+          // : kekulized_mols) { if (mol.first == tautomer.first) {
+          // std::cout << mol.first << std::endl;
           //							}
-          //					std::cout << MolToSmiles(*transform.Mol) <<
-          //std::endl;
+          //					std::cout <<
+          //MolToSmiles(*transform.Mol)
+          //<< std::endl;
           std::vector<MatchVectType> matches;
           unsigned int matched =
               SubstructMatch(*(kmol->second), *(transform.Mol), matches);
@@ -146,18 +153,20 @@ std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(
                 ++bi;
               } else {
                 Bond::BondType bondtype = bond->getBondType();
-                //								std::cout <<
-                //"Bond as double: " << bond->getBondTypeAsDouble() <<
-                //std::endl; 								std::cout << bondtype << std::endl;
+                //								std::cout
+                //<< "Bond as double: " << bond->getBondTypeAsDouble() <<
+                // std::endl;
+                // std::cout
+                // << bondtype << std::endl;
                 if (bondtype == 1) {
                   bond->setBondType(Bond::DOUBLE);
-                  //									std::cout << "Set bond
-                  //to double" << std::endl;
+                  //									std::cout <<
+                  //"Set bond to double" << std::endl;
                 }
                 if (bondtype == 2) {
                   bond->setBondType(Bond::SINGLE);
-                  //									std::cout << "Set bond
-                  //to single" << std::endl;
+                  //									std::cout <<
+                  //"Set bond to single" << std::endl;
                 }
               }
             }
@@ -178,7 +187,7 @@ std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(
             tsmiles = MolToSmiles(*wproduct, true);
             //						std::string name;
             //						(transform.Mol)->getProp(common_properties::_Name,
-            //name);
+            // name);
             std::cout << "Applied rule: " << name << " to " << tautomer.first
                       << std::endl;
             const bool is_in = tautomers.find(tsmiles) != tautomers.end();
