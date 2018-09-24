@@ -69,9 +69,9 @@ void testCopyConstructor() {
 
 // -------------------------------------------------------------------
 int main() {
-  //RDLog::InitLogs();
+  RDLog::InitLogs();
   // boost::logging::enable_logs("rdApp.info");
-  //test1();
+  test1();
   testCopyConstructor();
   return 0;
 }
