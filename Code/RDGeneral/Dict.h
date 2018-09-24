@@ -94,6 +94,7 @@ class RDKIT_RDGENERAL_EXPORT Dict {
   Dict &operator=(const Dict &other) {
     _hasNonPodData = other._hasNonPodData;
     if (_hasNonPodData) {
+      reset();
       std::vector<Pair> data(other._data.size());
       _data.swap(data);
       for (size_t i = 0; i < _data.size(); ++i) {

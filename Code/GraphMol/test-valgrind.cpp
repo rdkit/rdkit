@@ -60,11 +60,18 @@ void test2() {
   }
 }
 
+void testCopyConstructor() {
+  RDKit::RWMol mol1;
+  RDKit::RWMol mol2(mol1);
+  RDKit::RWMol mol3;
+  mol3 = mol2;
+}
+
 // -------------------------------------------------------------------
 int main() {
-  RDLog::InitLogs();
+  //RDLog::InitLogs();
   // boost::logging::enable_logs("rdApp.info");
-  test1();
-
+  //test1();
+  testCopyConstructor();
   return 0;
 }
