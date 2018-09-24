@@ -16,6 +16,9 @@ using namespace RDKit;
 using namespace MolStandardize;
 
 void testEnumerator() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing tautomer enumeration" << std::endl;
+
   std::string rdbase = getenv("RDBASE");
   std::string tautomerFile =
       rdbase + "/Data/MolStandardize/tautomerTransforms.in";
@@ -715,7 +718,7 @@ void testEnumerator() {
                                     "CC(=O)Cc1ccccc1"};
   TEST_ASSERT(res64.size() == ans64.size());
   for (size_t i = 0; i < res64.size(); ++i) {
-    std::cout << MolToSmiles(*res64[i]) << ", " << ans64[i] << std::endl;
+    // std::cout << MolToSmiles(*res64[i]) << ", " << ans64[i] << std::endl;
     TEST_ASSERT(MolToSmiles(*res64[i]) == ans64[i]);
   }
 
@@ -731,7 +734,7 @@ void testEnumerator() {
   }
 
   // Remove stereochemistry from mobile double bonds
-  std::string smi66 = "C/C=C\C(C)=O";
+  std::string smi66 = "C/C=C\\C(C)=O";
   std::shared_ptr<ROMol> m66(SmilesToMol(smi66));
   std::vector<ROMOL_SPTR> res66 = te.enumerate(*m66, &tautcat);
   std::vector<std::string> ans66 = {"C=C(O)C=CC", "C=CC=C(C)O", "CC=CC(C)=O",
@@ -775,6 +778,7 @@ void testEnumerator() {
   std::shared_ptr<ROMol> m68(SmilesToMol(smi68));
   std::vector<ROMOL_SPTR> res68 = te.enumerate(*m68, &tautcat);
   TEST_ASSERT(res68.size() == 375);
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testCanonicalize() {
@@ -797,6 +801,6 @@ void testCanonicalize() {
 
 int main() {
   testEnumerator();
-  testCanonicalize();
+  // testCanonicalize();
   return 0;
 }

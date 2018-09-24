@@ -55,10 +55,12 @@ std::string TautomerCatalogParams::Serialize() const {
 }
 
 void TautomerCatalogParams::initFromStream(std::istream &ss) {
+  RDUNUSED_PARAM(ss);
   UNDER_CONSTRUCTION("not implemented");
 }
 
 void TautomerCatalogParams::initFromString(const std::string &text) {
+  RDUNUSED_PARAM(text);
   UNDER_CONSTRUCTION("not implemented");
 }
 
