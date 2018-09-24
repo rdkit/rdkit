@@ -22,6 +22,9 @@ using namespace std;
 using namespace MolStandardize;
 
 void testRDKitValidation() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing RDKit validation"
+                       << std::endl;
+
   string smi1, smi2, smi3, smi4;
   RDKitValidation vm;
 
@@ -73,9 +76,12 @@ void testRDKitValidation() {
     msgs2.push_back(query.message());
   }
   TEST_ASSERT(msgs2 == ans2);
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testMolVSValidation() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing MolVS validation"
+                       << std::endl;
   string smi1, smi2, smi3, smi4, smi5, smi6;
   MolVSValidation vm;
 
@@ -179,20 +185,24 @@ void testMolVSValidation() {
   for (size_t i = 0; i < errout10.size(); ++i) {
     TEST_ASSERT(errout10[i].message() == ans10[i]);
   }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testMolVSOptions() {
-	vector< boost::shared_ptr<MolVSValidations> > validations = { boost::make_shared<IsotopeValidation>()};
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing MolVS Options"
+                       << std::endl;
+  vector<boost::shared_ptr<MolVSValidations>> validations = {
+      boost::make_shared<IsotopeValidation>()};
   MolVSValidation vm(validations);
 
-	// testing MolVSDefault
+  // testing MolVSDefault
   // testing for molecule with no atoms
-	string smi1 = "";
+  string smi1 = "";
   unique_ptr<ROMol> m1(SmilesToMol(smi1, 0, false));
   vector<ValidationErrorInfo> errout1 = vm.validate(*m1, true);
   for (auto &query : errout1) {
     std::string msg = query.message();
-//    TEST_ASSERT(msg == "ERROR: [NoAtomValidation] Molecule has no atoms");
+    //    TEST_ASSERT(msg == "ERROR: [NoAtomValidation] Molecule has no atoms");
     TEST_ASSERT(msg == "");
   }
 
@@ -201,14 +211,19 @@ void testMolVSOptions() {
   vector<ValidationErrorInfo> errout2 = vm.validate(*m2, true);
   for (auto &query : errout2) {
     std::string msg = query.message();
-//    TEST_ASSERT(msg ==
-//                "INFO: [NeutralValidation] Not an overall neutral system (-1)");
-    	TEST_ASSERT(msg == "");
+    //    TEST_ASSERT(msg ==
+    //                "INFO: [NeutralValidation] Not an overall neutral system
+    //                (-1)");
+    TEST_ASSERT(msg == "");
   }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
-
 void testAllowedAtomsValidation() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing AllowedAtoms validation"
+      << std::endl;
+
   //	std::vector<string> atoms = {"C", "N", "O"};
   std::vector<unsigned int> atoms = {6, 7, 8};
   std::vector<shared_ptr<Atom>> atomList;
@@ -231,9 +246,14 @@ void testAllowedAtomsValidation() {
         msg ==
         "INFO: [AllowedAtomsValidation] Atom F is not in allowedAtoms list");
   }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testDisallowedAtomsValidation() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing DisallowedAtoms validation"
+      << std::endl;
+
   //	std::vector<string> atoms = {"F", "Cl", "Br"};
   std::vector<unsigned int> atoms = {9, 17, 35};
   std::vector<shared_ptr<Atom>> atomList;
@@ -256,9 +276,13 @@ void testDisallowedAtomsValidation() {
         msg ==
         "INFO: [DisallowedAtomsValidation] Atom F is in disallowedAtoms list");
   }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testFragment() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing fragment validation" << std::endl;
+
   string smi1, smi2, smi3, smi4, smi5, smi6;
   MolVSValidation vm;
 
@@ -283,40 +307,45 @@ void testFragment() {
     TEST_ASSERT(msg ==
                 "INFO: [FragmentValidation] 1,2-dimethoxyethane is present");
   }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testValidateSmiles() {
-	// an invalid smiles should throw a ValueErrorException error
-	try {
-		vector<ValidationErrorInfo> errout1 = validateSmiles("3478q439g98h");
-	} catch ( const ValueErrorException &e ) {
-		std::cout << e.message() << std::endl;
-		TEST_ASSERT( e.message() == "SMILES Parse Error: syntax error for input: 3478q439g98h" )};
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing ValidateSmiles"
+                       << std::endl;
 
-	vector<ValidationErrorInfo> errout2 = validateSmiles("");
- 	for (auto &query : errout2) {
+  // an invalid smiles should throw a ValueErrorException error
+  try {
+    vector<ValidationErrorInfo> errout1 = validateSmiles("3478q439g98h");
+  } catch (const ValueErrorException &e) {
+    std::cout << e.message() << std::endl;
+    TEST_ASSERT(e.message() ==
+                "SMILES Parse Error: syntax error for input: 3478q439g98h")
+  };
+
+  vector<ValidationErrorInfo> errout2 = validateSmiles("");
+  for (auto &query : errout2) {
     std::string msg = query.message();
-		std::cout << msg << std::endl;
-    TEST_ASSERT(msg ==
-                "ERROR: [NoAtomValidation] Molecule has no atoms");
+    std::cout << msg << std::endl;
+    TEST_ASSERT(msg == "ERROR: [NoAtomValidation] Molecule has no atoms");
   }
 
-	vector<ValidationErrorInfo> errout3 = validateSmiles("ClCCCl.c1ccccc1O");
- 	for (auto &query : errout3) {
+  vector<ValidationErrorInfo> errout3 = validateSmiles("ClCCCl.c1ccccc1O");
+  for (auto &query : errout3) {
     std::string msg = query.message();
     TEST_ASSERT(msg ==
                 "INFO: [FragmentValidation] 1,2-dichloroethane is present");
   }
-
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
 int main() {
   testRDKitValidation();
   testMolVSValidation();
-	testMolVSOptions();
+  testMolVSOptions();
   testAllowedAtomsValidation();
   testDisallowedAtomsValidation();
   testFragment();
-	testValidateSmiles();
+  testValidateSmiles();
   return 0;
 }

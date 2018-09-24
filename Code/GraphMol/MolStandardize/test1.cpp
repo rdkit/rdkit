@@ -21,6 +21,7 @@ using namespace RDKit;
 using namespace std;
 
 void testCleanup() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n test cleanup" << std::endl;
   string smi1, smi2, smi3, smi4;
   MolStandardize::CleanupParameters params;
 
@@ -47,9 +48,13 @@ void testCleanup() {
   unique_ptr<RWMol> m4(SmilesToMol(smi4));
   unique_ptr<RWMol> res4(MolStandardize::cleanup(*m4, params));
   TEST_ASSERT(MolToSmiles(*res4) == "C[Hg]C")
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testStandardizeSm() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n test standardize smiles"
+                       << std::endl;
+
   // check aromaticity
   std::string smi1 = "C1=CC=CC=C1";
   std::string ss1 = MolStandardize::standardizeSmiles(smi1);
@@ -78,9 +83,13 @@ void testStandardizeSm() {
   // SMILES parsing error should stop tests
   //	std::string smi6 = "C1CCC1C(=O)O.Na";
   //	std::string ss6 = MolStandardize::standardizeSmiles(smi6);
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testMetalDisconnector() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n test metal disconnector"
+                       << std::endl;
+
   MolStandardize::MetalDisconnector md;
 
   // testing overloaded function
@@ -120,9 +129,13 @@ void testMetalDisconnector() {
   TEST_ASSERT(m5);
   unique_ptr<ROMol> nm5(md.disconnect(*m5));
   TEST_ASSERT(MolToSmiles(*nm5) == "CCC(=O)O[Na]");  // not disconnected
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testNormalize() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n test normalize"
+                       << std::endl;
+
   string smi1, smi2, smi3, smi4, smi5, smi6, smi7, smi8, smi9, smi10, smi11,
       smi12, smi13, smi14, smi15, smi16, smi17;
   MolStandardize::CleanupParameters params;
@@ -235,9 +248,13 @@ void testNormalize() {
   unique_ptr<RWMol> m17(SmilesToMol(smi17));
   unique_ptr<RWMol> res17(MolStandardize::cleanup(*m17, params));
   TEST_ASSERT(MolToSmiles(*res17) == "CC(N)=[NH2+]");
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testNormalizeMultiFrags() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n test normalize multiple frags" << std::endl;
+
   string smi1, smi2, smi3, smi4, smi5, smi6, smi7, smi8, smi9, smi10, smi11,
       smi12, smi13, smi14, smi15, smi16, smi17;
   MolStandardize::CleanupParameters params;
@@ -337,9 +354,12 @@ void testNormalizeMultiFrags() {
   unique_ptr<RWMol> m15(SmilesToMol(smi15));
   unique_ptr<RWMol> res15(MolStandardize::cleanup(*m15, params));
   TEST_ASSERT(MolToSmiles(*res15) == "CN(C)c1cccc[nH+]1");
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testCharge() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n test charges" << std::endl;
+
   std::string smi1, smi2, smi3, smi4;
 
   // Reionization should not infinitely loop forever on these molecules.
@@ -369,13 +389,18 @@ void testCharge() {
   smi4 = "[Na].[Na].O[Se](O)=O";
   std::string ss4 = MolStandardize::standardizeSmiles(smi4);
   TEST_ASSERT(ss4 == "O=[Se](O)O.[Na+].[Na+]");
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testEnumerateTautomerSmiles() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n test enumerate tautomer smiles"
+      << std::endl;
   MolStandardize::CleanupParameters params;
   std::string smi1 = "c1(ccccc1)/C=C(/O)\\C";
   std::vector<std::string> tsmiles =
       MolStandardize::enumerateTautomerSmiles(smi1, params);
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
 int main() {
