@@ -18,6 +18,9 @@ using namespace RDKit;
 using namespace MolStandardize;
 
 void testReionizer() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n test reionizer"
+                       << std::endl;
+
   std::string smi1, smi2, smi3, smi4, smi5, smi6, smi7;
 
   Reionizer reionizer;
@@ -57,11 +60,14 @@ void testReionizer() {
   smi7 = "C[N+]1=C[CH-]N(C(=N)N)/C1=C/[N+](=O)[O-]";
   std::shared_ptr<ROMol> m7(SmilesToMol(smi7));
   ROMOL_SPTR reionized7(reionizer.reionize(*m7));
- 	TEST_ASSERT(MolToSmiles(*reionized7) == "C[N+]1=CCN(C(=N)N)/C1=[C-]/[N+](=O)[O-]");
-	
+  TEST_ASSERT(MolToSmiles(*reionized7) ==
+              "C[N+]1=CCN(C(=N)N)/C1=[C-]/[N+](=O)[O-]");
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testChargeParent() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n test charge parent"
+                       << std::endl;
   std::string smi1, smi2, smi3, smi4, smi5, smi6, smi7, smi8, smi9, smi10,
       smi11, smi12;
   MolStandardize::CleanupParameters params;
@@ -144,6 +150,7 @@ void testChargeParent() {
   std::unique_ptr<RWMol> res12(
       MolStandardize::chargeParent(*m12, params_preferorg));
   TEST_ASSERT(MolToSmiles(*res12) == "[CH2]");
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
 int main() {

@@ -27,6 +27,7 @@ using namespace RDKit;
 using namespace MolStandardize;
 
 void test1() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n test1" << std::endl;
   std::string smi1, smi2, smi3, smi4, smi5, smi6, smi7;
 
   Normalizer normalizer;
@@ -80,7 +81,8 @@ void test1() {
   ROMOL_SPTR normalized8(normalizer.normalize(*m8));
   TEST_ASSERT(MolToSmiles(*normalized8) ==
               "O=c1cc([O-])[n+](C2OC(CO)C(O)C2O)c2sccn12");
-							
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
 int main() {

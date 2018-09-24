@@ -58,9 +58,15 @@ std::string TransformCatalogParams::Serialize() const {
   return ss.str();
 }
 
-void TransformCatalogParams::initFromStream(std::istream &ss) {}
+void TransformCatalogParams::initFromStream(std::istream &ss) {
+  RDUNUSED_PARAM(ss);
+  UNDER_CONSTRUCTION("not implemented");
+}
 
-void TransformCatalogParams::initFromString(const std::string &text) {}
+void TransformCatalogParams::initFromString(const std::string &text) {
+  RDUNUSED_PARAM(text);
+  UNDER_CONSTRUCTION("not implemented");
+}
 
 }  // namespace MolStandardize
 }  // namespace RDKit

@@ -56,9 +56,15 @@ std::string AcidBaseCatalogParams::Serialize() const {
   return ss.str();
 }
 
-void AcidBaseCatalogParams::initFromStream(std::istream &ss) {}
+void AcidBaseCatalogParams::initFromStream(std::istream &ss) {
+  RDUNUSED_PARAM(ss);
+  UNDER_CONSTRUCTION("not implemented");
+}
 
-void AcidBaseCatalogParams::initFromString(const std::string &text) {}
+void AcidBaseCatalogParams::initFromString(const std::string &text) {
+  RDUNUSED_PARAM(text);
+  UNDER_CONSTRUCTION("not implemented");
+}
 
 }  // namespace MolStandardize
 }  // namespace RDKit

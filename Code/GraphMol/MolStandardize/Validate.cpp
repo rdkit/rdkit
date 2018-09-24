@@ -50,7 +50,7 @@ std::vector<ValidationErrorInfo> RDKitValidation::validate(
     }
     Atom *atom = molCopy.getAtomWithIdx(i);
     try {
-      int explicitValence = atom->calcExplicitValence();
+      atom->calcExplicitValence();
     } catch (const MolSanitizeException &e) {
       errors.push_back(ValidationErrorInfo("INFO: [ValenceValidation] " +
                                            std::string(e.message())));
@@ -61,6 +61,7 @@ std::vector<ValidationErrorInfo> RDKitValidation::validate(
 
 void NoAtomValidation::run(const ROMol &mol, bool reportAllFailures,
                            std::vector<ValidationErrorInfo> &errors) const {
+  RDUNUSED_PARAM(reportAllFailures);
   unsigned int na = mol.getNumAtoms();
 
   if (!na) {
@@ -71,6 +72,7 @@ void NoAtomValidation::run(const ROMol &mol, bool reportAllFailures,
 
 void FragmentValidation::run(const ROMol &mol, bool reportAllFailures,
                              std::vector<ValidationErrorInfo> &errors) const {
+  // REVIEW: reportAllFailures is not being used here. is that correct?
   std::string rdbase = getenv("RDBASE");
   std::string fgrpFile = rdbase + "/Data/MolStandardize/fragmentPatterns.txt";
   std::shared_ptr<FragmentCatalogParams> fparams(
@@ -109,16 +111,17 @@ void FragmentValidation::run(const ROMol &mol, bool reportAllFailures,
           std::sort(substructidx.begin(), substructidx.end());
           //					// help to debug...
           //					std::cout << "molfragidx: "  <<
-          // std::endl; 					for (const auto &i : molfragidx)
+          // std::endl; 					for (const auto
+          // &i : molfragidx)
           // {
-          // std::cout << i; }; 					std::cout << std::endl;
-          // std::cout <<
+          // std::cout << i; }; std::cout
+          // << std::endl; std::cout <<
           //"substructidx: "  << std::endl;
           // for (const auto &i : substructidx) { std::cout << i; };
           // std::cout <<
           // std::endl;
           //					//
-          if (molfragidx == substructidx & !fpresent) {
+          if ((molfragidx == substructidx) && !fpresent) {
             std::string msg = fname + " is present";
             errors.push_back(
                 ValidationErrorInfo("INFO: [FragmentValidation] " + msg));
@@ -132,6 +135,7 @@ void FragmentValidation::run(const ROMol &mol, bool reportAllFailures,
 
 void NeutralValidation::run(const ROMol &mol, bool reportAllFailures,
                             std::vector<ValidationErrorInfo> &errors) const {
+  RDUNUSED_PARAM(reportAllFailures);
   int charge = RDKit::MolOps::getFormalCharge(mol);
   if (charge != 0) {
     std::string charge_str;
@@ -173,17 +177,17 @@ void IsotopeValidation::run(const ROMol &mol, bool reportAllFailures,
 
 // constructor
 MolVSValidation::MolVSValidation() {
-  std::vector< boost::shared_ptr<MolVSValidations> > validations = {
-		boost::make_shared<NoAtomValidation>(), 
-		boost::make_shared<FragmentValidation>(), 
-		boost::make_shared<NeutralValidation>(),
-		boost::make_shared<IsotopeValidation>()};
+  std::vector<boost::shared_ptr<MolVSValidations>> validations = {
+      boost::make_shared<NoAtomValidation>(),
+      boost::make_shared<FragmentValidation>(),
+      boost::make_shared<NeutralValidation>(),
+      boost::make_shared<IsotopeValidation>()};
   this->d_validations = validations;
 }
 
 // overloaded constructor
 MolVSValidation::MolVSValidation(
-    const std::vector< boost::shared_ptr<MolVSValidations> > validations) {
+    const std::vector<boost::shared_ptr<MolVSValidations>> validations) {
   this->d_validations = validations;
 }
 
@@ -192,7 +196,7 @@ MolVSValidation::MolVSValidation(const MolVSValidation &other) {
   d_validations = other.d_validations;
 }
 
-MolVSValidation::~MolVSValidation() {};
+MolVSValidation::~MolVSValidation(){};
 
 std::vector<ValidationErrorInfo> MolVSValidation::validate(
     const ROMol &mol, bool reportAllFailures) const {
@@ -267,16 +271,17 @@ std::vector<ValidationErrorInfo> DisallowedAtomsValidation::validate(
 }
 
 std::vector<ValidationErrorInfo> validateSmiles(const std::string &smiles) {
-	RWMOL_SPTR mol( SmilesToMol(smiles) );
-	if (!mol) {
-		std::string message = "SMILES Parse Error: syntax error for input: " + smiles;
-		throw ValueErrorException(message);
-	}
+  RWMOL_SPTR mol(SmilesToMol(smiles));
+  if (!mol) {
+    std::string message =
+        "SMILES Parse Error: syntax error for input: " + smiles;
+    throw ValueErrorException(message);
+  }
 
   MolVSValidation vm;
-	std::vector<ValidationErrorInfo> errors = vm.validate(*mol, true);
+  std::vector<ValidationErrorInfo> errors = vm.validate(*mol, true);
 
-	return errors;
+  return errors;
 }
 
 }  // namespace MolStandardize

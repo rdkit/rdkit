@@ -63,9 +63,15 @@ std::string FragmentCatalogParams::Serialize() const {
   return ss.str();
 }
 
-void FragmentCatalogParams::initFromStream(std::istream &ss) {}
+void FragmentCatalogParams::initFromStream(std::istream &ss) {
+  RDUNUSED_PARAM(ss);
+  UNDER_CONSTRUCTION("not implemented");
+}
 
-void FragmentCatalogParams::initFromString(const std::string &text) {}
+void FragmentCatalogParams::initFromString(const std::string &text) {
+  RDUNUSED_PARAM(text);
+  UNDER_CONSTRUCTION("not implemented");
+}
 
 }  // namespace MolStandardize
 }  // namespace RDKit

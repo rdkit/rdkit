@@ -26,6 +26,8 @@ using namespace RDKit;
 using namespace MolStandardize;
 
 void test1() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n test1" << std::endl;
+
   MolStandardize::CleanupParameters params;
 
   std::string smi1 = "C1=CC=CC=C1";
@@ -39,9 +41,11 @@ void test1() {
   //	RWMol *m1 = SmilesToMol(smi1);
   //	cleanup(*m1, params);
   //	TEST_ASSERT(MolToSmiles(*m1) == "CCC(=O)[O-].[Na+]");
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testMetal() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n test metal" << std::endl;
   MetalDisconnector md;
 
   std::string smi1 = "CCC(=O)O[Na]";
@@ -49,9 +53,12 @@ void testMetal() {
   TEST_ASSERT(m1);
   md.disconnect(*m1);
   TEST_ASSERT(MolToSmiles(*m1) == "CCC(=O)[O-].[Na+]");
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testValidate() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n test validate"
+                       << std::endl;
   RDKitValidation vm;
 
   // testing RDKitDefault
@@ -127,9 +134,12 @@ void testValidate() {
     TEST_ASSERT(msg ==
                 "INFO: [FragmentValidation] 1,2-dichloroethane is present");
   }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testCharge() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n test charge" << std::endl;
+
   Reionizer reionizer;
 
   // Test table salt.
@@ -155,9 +165,13 @@ void testCharge() {
   std::unique_ptr<RWMol> m3(SmilesToMol(smi3));
   std::unique_ptr<RWMol> res3(MolStandardize::reionize(m3.get(), params));
   TEST_ASSERT(MolToSmiles(*res3) == "O=S(O)c1ccc(S(=O)(=O)[O-])cc1");
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testNormalize() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n test normalize"
+                       << std::endl;
+
   Normalizer normalizer;
 
   // Test sulfoxide normalization.
@@ -171,6 +185,7 @@ void testNormalize() {
   std::shared_ptr<ROMol> m2(SmilesToMol(smi2));
   ROMOL_SPTR normalized2(normalizer.normalize(*m2));
   TEST_ASSERT(MolToSmiles(*normalized2) == "CS(C)(=O)=O");
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
 int main() {

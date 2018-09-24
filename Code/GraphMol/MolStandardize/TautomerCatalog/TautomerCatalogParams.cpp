@@ -54,9 +54,15 @@ std::string TautomerCatalogParams::Serialize() const {
   return ss.str();
 }
 
-void TautomerCatalogParams::initFromStream(std::istream &ss) {}
+void TautomerCatalogParams::initFromStream(std::istream &ss) {
+  RDUNUSED_PARAM(ss);
+  UNDER_CONSTRUCTION("not implemented");
+}
 
-void TautomerCatalogParams::initFromString(const std::string &text) {}
+void TautomerCatalogParams::initFromString(const std::string &text) {
+  RDUNUSED_PARAM(text);
+  UNDER_CONSTRUCTION("not implemented");
+}
 
 }  // namespace MolStandardize
 }  // namespace RDKit
