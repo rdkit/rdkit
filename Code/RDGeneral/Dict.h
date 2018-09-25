@@ -92,7 +92,6 @@ class RDKIT_RDGENERAL_EXPORT Dict {
   }
 
   Dict &operator=(const Dict &other) {
-    _hasNonPodData = other._hasNonPodData;
     if (_hasNonPodData) {
       reset();
       std::vector<Pair> data(other._data.size());
@@ -104,6 +103,7 @@ class RDKIT_RDGENERAL_EXPORT Dict {
     } else {
       _data = other._data;
     }
+    _hasNonPodData = other._hasNonPodData;
     return *this;
   };
 
