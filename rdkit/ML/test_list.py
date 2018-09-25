@@ -4,8 +4,10 @@ tests = [
   ("python", "UnitTestAnalyzeComposite.py", {}),
 ]
 
-for d in ['Cluster', 'Composite', 'Data', 'DecTree', 'Descriptors', 'InfoTheory', 'KNN',
-          'ModelPackage', 'NaiveBayes', 'Neural', 'SLT']:
+for d in [
+    'Cluster', 'Composite', 'Data', 'DecTree', 'Descriptors', 'InfoTheory', 'KNN', 'ModelPackage',
+    'NaiveBayes', 'Neural', 'SLT', 'Scoring'
+]:
   tests.append(('python', 'test_list.py', {'dir': d}))
 
 longTests = []
