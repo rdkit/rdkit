@@ -10,6 +10,12 @@ else()
     set (maeparser_var "")
 endif()
 
+if(RDK_USE_BOOST_REGEX)
+  add_definitions(-DRDKIT_USE_BOOST_REGEX)
+  find_package(Boost 1.58.0 COMPONENTS regex REQUIRED)
+  set(regex_lib Boost::regex)
+endif()
+
 rdkit_library(FileParsers
               Mol2FileParser.cpp
               MolFileParser.cpp MolFileStereochem.cpp MolFileWriter.cpp
@@ -22,7 +28,7 @@ rdkit_library(FileParsers
               ProximityBonds.cpp
               SequenceParsers.cpp SequenceWriters.cpp
               SVGParser.cpp
-              LINK_LIBRARIES Depictor SmilesParse GraphMol ${maeparser_var})
+              LINK_LIBRARIES Depictor SmilesParse GraphMol ${maeparser_var} ${regex_lib})
 
 rdkit_headers(FileParsers.h
               FileParserUtils.h
@@ -58,5 +64,8 @@ rdkit_test(testTplParser testTpls.cpp LINK_LIBRARIES FileParsers SmilesParse Gra
 rdkit_test(testMol2ToMol testMol2ToMol.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )
 
 rdkit_test(testSequence testSequence.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )
+
+rdkit_test(testExtendedStereoParsing testExtendedStereoParsing.cpp
+           LINK_LIBRARIES FileParsers Depictor GraphMol RDGeneral RDGeometryLib )
 
 rdkit_catch_test(fileParsersCatchTest catch_tests.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )

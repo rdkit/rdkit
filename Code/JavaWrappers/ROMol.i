@@ -37,6 +37,7 @@
 #include <RDGeneral/types.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/Conformer.h>
+#include <GraphMol/StereoGroup.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -66,6 +67,7 @@
 %template(ROMol_Vect) std::vector< boost::shared_ptr<RDKit::ROMol> >;
 %template(ROMol_Vect_Vect) std::vector< std::vector< boost::shared_ptr<RDKit::ROMol> > >;
 %template(Atom_Vect) std::vector<RDKit::Atom*>;
+%template(StereoGroup_Vect) std::vector<RDKit::StereoGroup>;
 
 // These prevent duplicate definitions in Java code
 %ignore RDKit::ROMol::hasProp(std::string const) const ;
@@ -126,7 +128,7 @@ bool getPreferCoordGen() {
 }
 void setPreferCoordGen(bool val) {
 }
-#endif 
+#endif
 %}
 
 bool getPreferCoordGen();

@@ -85,6 +85,16 @@ void ROMol::initFromOther(const ROMol &other, bool quickCopy, int confId) {
     dp_ringInfo = new RingInfo();
   }
 
+  // enhanced stereochemical information
+  d_stereo_groups.clear();
+  for (auto &&otherGroup : other.d_stereo_groups) {
+    std::vector<Atom *> atoms;
+    for (auto &&otherAtom : otherGroup.getAtoms()) {
+      atoms.push_back(getAtomWithIdx(otherAtom->getIdx()));
+    }
+    d_stereo_groups.emplace_back(otherGroup.getGroupType(), std::move(atoms));
+  }
+
   if (!quickCopy) {
     // copy conformations
     for (auto ci = other.beginConformers(); ci != other.endConformers(); ++ci) {
@@ -372,6 +382,10 @@ unsigned int ROMol::addBond(Bond *bond_pin, bool takeOwnership) {
   //  int res = rdcast<int>(boost::num_edges(d_graph));
   bond_p->setIdx(numBonds - 1);
   return numBonds;  // res;
+}
+
+void ROMol::setStereoGroups(std::vector<StereoGroup> stereo_groups) {
+  d_stereo_groups = std::move(stereo_groups);
 }
 
 void ROMol::debugMol(std::ostream &str) const {

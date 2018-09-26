@@ -20,6 +20,7 @@
 
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/RDKitQueries.h>
+#include <GraphMol/StereoGroup.h>
 #include <RDGeneral/StreamOps.h>
 #include <RDGeneral/RDLog.h>
 
@@ -29,9 +30,21 @@
 #include <RDGeneral/LocaleSwitcher.h>
 #include <typeinfo>
 #include <exception>
+#ifdef RDKIT_USE_BOOST_REGEX
+#include <boost/regex.hpp>
+using boost::regex;
+using boost::regex_match;
+using boost::smatch;
+#else
+#include <regex>
+using std::regex;
+using std::regex_match;
+using std::smatch;
+#endif
 #include <sstream>
 #include <locale>
 #include <stdlib.h>
+#include <cstdio>
 
 namespace RDKit {
 class MolFileUnhandledFeatureException : public std::exception {
@@ -139,7 +152,7 @@ void completeQueryAndChildren(ATOM_EQUALS_QUERY *query, Atom *tgt,
                              magicVal);
   }
 }
-void CompleteMolQueries(RWMol *mol, int magicVal = 0xDEADBEEF) {
+void completeMolQueries(RWMol *mol, int magicVal = 0xDEADBEEF) {
   for (ROMol::AtomIterator ai = mol->beginAtoms(); ai != mol->endAtoms();
        ++ai) {
     if ((*ai)->hasQuery()) {
@@ -148,6 +161,71 @@ void CompleteMolQueries(RWMol *mol, int magicVal = 0xDEADBEEF) {
       completeQueryAndChildren(query, *ai, magicVal);
     }
   }
+}
+
+bool startsWith(const std::string &haystack, const char *needle, size_t size) {
+  return haystack.compare(0u, size, needle, size) == 0;
+}
+
+//! parse a collection block to find enhanced stereo groups
+std::string parseEnhancedStereo(std::istream *inStream, unsigned int &line,
+                                RWMol *mol) {
+  // Lines like (absolute, relative, racemic):
+  // M  V30 MDLV30/STEABS ATOMS=(2 2 3)
+  // M  V30 MDLV30/STEREL1 ATOMS=(1 12)
+  // M  V30 MDLV30/STERAC1 ATOMS=(1 12)
+  const regex stereo_label(
+      R"regex(MDLV30/STE(...)[0-9]* +ATOMS=\(([0-9]+) +(.*)\))regex");
+
+  smatch match;
+  std::vector<StereoGroup> groups;
+
+  // Read the collection until the end
+  auto tempStr = getV3000Line(inStream, line);
+  boost::to_upper(tempStr);
+  while (!startsWith(tempStr, "END", 3)) {
+    // If this line in the collection is part of a stereo group
+    if (regex_match(tempStr, match, stereo_label)) {
+      StereoGroupType grouptype = RDKit::StereoGroupType::STEREO_ABSOLUTE;
+
+      if (match[1] == "ABS") {
+        grouptype = RDKit::StereoGroupType::STEREO_ABSOLUTE;
+      } else if (match[1] == "REL") {
+        grouptype = RDKit::StereoGroupType::STEREO_OR;
+      } else if (match[1] == "RAC") {
+        grouptype = RDKit::StereoGroupType::STEREO_AND;
+      } else {
+        std::ostringstream errout;
+        errout << "Unrecognized stereogroup type : '" << tempStr << "' on line"
+               << line;
+        throw FileParseException(errout.str());
+      }
+
+      const unsigned int count = FileParserUtils::toInt(match[2], true);
+      std::vector<Atom *> atoms;
+      std::stringstream ss(match[3]);
+      unsigned int index;
+      for (size_t i = 0; i < count; ++i) {
+        ss >> index;
+        // atoms are 1 indexed in molfiles
+        atoms.push_back(mol->getAtomWithIdx(index - 1));
+      }
+      groups.emplace_back(grouptype, std::move(atoms));
+    } else {
+      // skip collection types we don't know how to read. Only one documented
+      // is MDLV30/HILITE
+      BOOST_LOG(rdWarningLog) << "Skipping unrecognized collection type at "
+                                 "line "
+                              << line << ": " << tempStr << std::endl;
+    }
+    tempStr = getV3000Line(inStream, line);
+  }
+
+  if (!groups.empty()) {
+    mol->setStereoGroups(std::move(groups));
+  }
+  tempStr = getV3000Line(inStream, line);
+  return tempStr;
 }
 
 //*************************************
@@ -2321,15 +2399,17 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
   }
 
   while (tempStr.length() > 5 && tempStr.substr(0, 5) == "BEGIN") {
-    // skip blocks we don't know how to read
-    BOOST_LOG(rdWarningLog)
-        << "skipping block at line " << line << ": " << tempStr << std::endl;
-    tempStr = getV3000Line(inStream, line);
-
-    while (tempStr.length() < 3 || tempStr.substr(0, 3) != "END") {
+    if (tempStr.length() > 15 && tempStr.substr(6, 10) == "COLLECTION") {
+      tempStr = parseEnhancedStereo(inStream, line, mol);
+    } else {
+      // skip blocks we don't know how to read
+      BOOST_LOG(rdWarningLog)
+          << "skipping block at line " << line << ": " << tempStr << std::endl;
+      while (tempStr.length() < 3 || tempStr.substr(0, 3) != "END") {
+        tempStr = getV3000Line(inStream, line);
+      }
       tempStr = getV3000Line(inStream, line);
     }
-    tempStr = getV3000Line(inStream, line);
   }
 
   boost::to_upper(tempStr);
@@ -2658,7 +2738,7 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
 
     if (res->hasProp(common_properties::_NeedsQueryScan)) {
       res->clearProp(common_properties::_NeedsQueryScan);
-      CompleteMolQueries(res);
+      completeMolQueries(res);
     }
   }
   return res;
