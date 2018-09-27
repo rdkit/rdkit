@@ -1224,7 +1224,8 @@ void testGithub266() {
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumBonds() == 4);
     TEST_ASSERT(m->getBondWithIdx(1)->hasQuery());
-    TEST_ASSERT(m->getBondWithIdx(1)->getQuery()->getDescription() == "SingleOrAromaticBond");
+    TEST_ASSERT(m->getBondWithIdx(1)->getQuery()->getDescription() ==
+                "SingleOrAromaticBond");
 
     std::string mb = MolToMolBlock(*m);
     RWMol *m2 = MolBlockToMol(mb);
@@ -1505,7 +1506,7 @@ int main() {
 
   BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
   BOOST_LOG(rdInfoLog) << "Running testSmilesWriterClose()\n";
-  testSmilesWriterNoNames();
+  testSmilesWriterClose();
   BOOST_LOG(rdInfoLog) << "Finished\n";
   BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
 
