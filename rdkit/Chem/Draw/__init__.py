@@ -542,11 +542,30 @@ def DrawMorganBit(mol, bitId, bitInfo, whichExample=0, **kwargs):
   return DrawMorganEnv(mol, atomId, radius, **kwargs)
 
 
+def DrawMorganBits(tpls, **kwargs):
+  envs = []
+  for tpl in tpls:
+    if len(tpl)==4:
+      mol, bitId, bitInfo, whichExample=tpl
+    else:
+      mol, bitId, bitInfo=tpl
+      whichExample=0
+
+    atomId, radius = bitInfo[bitId][whichExample]
+    envs.append((mol, atomId, radius))
+  return DrawMorganEnvs(envs, **kwargs)
+
+
 # adapted from the function drawFPBits._drawFPBit() from the CheTo package
 # original author Nadine Schneider
-def DrawMorganEnv(mol, atomId, radius, molSize=(150, 150), baseRad=0.3, useSVG=True,
-                  aromaticColor=(0.9, 0.9, 0.2), ringColor=(0.8, 0.8, 0.8),
-                  centerColor=(0.6, 0.6, 0.9), extraColor=(0.9, 0.9, 0.9), **kwargs):
+from collections import namedtuple
+MorganEnv = namedtuple(
+  'MorganEnv',
+  ('submol', 'highlightAtoms', 'atomColors', 'highlightBonds', 'bondColors', 'highlightRadii'))
+
+
+def _getMorganEnv(mol, atomId, radius, baseRad, aromaticColor, ringColor, centerColor, extraColor,
+                  **kwargs):
   if not mol.GetNumConformers():
     rdDepictor.Compute2DCoords(mol)
   bitPath = Chem.FindAtomEnvironmentOfRadiusN(mol, radius, atomId)
@@ -606,13 +625,63 @@ def DrawMorganEnv(mol, atomId, radius, molSize=(150, 150), baseRad=0.3, useSVG=T
       #drawopt.atomLabels[amap[aidx]] = '*'
       submol.GetAtomWithIdx(amap[aidx]).SetAtomicNum(0)
       submol.GetAtomWithIdx(amap[aidx]).UpdatePropertyCache()
-  submol.Debug()
   color = extraColor
   for bid in submol.GetBonds():
     bidx = bid.GetIdx()
     if bidx not in envSubmol:
       bondcolors[bidx] = color
       highlightBonds.append(bidx)
+  return MorganEnv(submol, highlightAtoms, atomcolors, highlightBonds, bondcolors, highlightRadii)
+
+
+def DrawMorganEnvs(envs, molsPerRow=3, subImgSize=(150, 150), baseRad=0.3, useSVG=True,
+                   aromaticColor=(0.9, 0.9, 0.2), ringColor=(0.8, 0.8, 0.8),
+                   centerColor=(0.6, 0.6, 0.9), extraColor=(0.9, 0.9, 0.9), legends=None, **kwargs):
+  submols = []
+  highlightAtoms = []
+  atomColors = []
+  highlightBonds = []
+  bondColors = []
+  highlightRadii = []
+  for mol, atomId, radius in envs:
+    menv = _getMorganEnv(mol, atomId, radius, baseRad, aromaticColor, ringColor, centerColor,
+                         extraColor, **kwargs)
+    submols.append(menv.submol)
+    highlightAtoms.append(menv.highlightAtoms)
+    atomColors.append(menv.atomColors)
+    highlightBonds.append(menv.highlightBonds)
+    bondColors.append(menv.bondColors)
+    highlightRadii.append(menv.highlightRadii)
+
+  if legends is None:
+    legends = [''] * len(envs)
+
+  nRows = len(envs) // molsPerRow
+  if len(envs) % molsPerRow:
+    nRows += 1
+
+  fullSize = (molsPerRow * subImgSize[0], nRows * subImgSize[1])
+  # Drawing
+  if useSVG:
+    drawer = rdMolDraw2D.MolDraw2DSVG(fullSize[0], fullSize[1], subImgSize[0], subImgSize[1])
+  else:
+    drawer = rdMolDraw2D.MolDraw2DCairo(fullSize[0], fullSize[1], subImgSize[0], subImgSize[1])
+
+  drawopt = drawer.drawOptions()
+  drawopt.continuousHighlight = False
+
+  drawer.DrawMolecules(submols, legends=legends, highlightAtoms=highlightAtoms,
+                       highlightAtomColors=atomColors, highlightBonds=highlightBonds,
+                       highlightBondColors=bondColors, highlightAtomRadii=highlightRadii, **kwargs)
+  drawer.FinishDrawing()
+  return drawer.GetDrawingText()
+
+
+def DrawMorganEnv(mol, atomId, radius, molSize=(150, 150), baseRad=0.3, useSVG=True,
+                  aromaticColor=(0.9, 0.9, 0.2), ringColor=(0.8, 0.8, 0.8),
+                  centerColor=(0.6, 0.6, 0.9), extraColor=(0.9, 0.9, 0.9), **kwargs):
+  menv = _getMorganEnv(mol, atomId, radius, baseRad, aromaticColor, ringColor, centerColor,
+                       extraColor, **kwargs)
 
   # Drawing
   if useSVG:
@@ -623,9 +692,10 @@ def DrawMorganEnv(mol, atomId, radius, molSize=(150, 150), baseRad=0.3, useSVG=T
   drawopt = drawer.drawOptions()
   drawopt.continuousHighlight = False
 
-  drawer.DrawMolecule(submol, highlightAtoms=highlightAtoms, highlightAtomColors=atomcolors,
-                      highlightBonds=highlightBonds, highlightBondColors=bondcolors,
-                      highlightAtomRadii=highlightRadii, **kwargs)
+  drawer.DrawMolecule(menv.submol, highlightAtoms=menv.highlightAtoms,
+                      highlightAtomColors=menv.atomColors, highlightBonds=menv.highlightBonds,
+                      highlightBondColors=menv.bondColors, highlightAtomRadii=menv.highlightRadii,
+                      **kwargs)
   drawer.FinishDrawing()
   return drawer.GetDrawingText()
 
