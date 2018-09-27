@@ -248,11 +248,21 @@ def DrawRDKitBit(mol, bitId, bitInfo, **kwargs):
   return _DrawBit(fn, mol, bitId, bitInfo, **kwargs)
 DrawRDKitBit.__doc__ = Draw.DrawRDKitBit.__doc__
 
+_DrawRDKitBitsSaved = None
+def DrawRDKitBits(*args, **kwargs):
+  global _DrawRDKitBitsSaved
+  if _DrawRDKitBitsSaved is not None:
+    fn = _DrawRDKitBitsSaved
+  else:
+    fn = Draw.DrawRDKitBits
+  return _DrawBit(fn, *args, **kwargs)
+DrawRDKitBits.__doc__ = Draw.DrawRDKitBits.__doc__
+
 _rendererInstalled = False
 
 
 def InstallIPythonRenderer():
-  global _MolsToGridImageSaved, _DrawRDKitBitSaved, _DrawMorganBitSaved, _DrawMorganBitsSaved
+  global _MolsToGridImageSaved, _DrawRDKitBitSaved, _DrawRDKitBitsSaved, _DrawMorganBitSaved, _DrawMorganBitsSaved
   global _rendererInstalled
   if _rendererInstalled:
     return
@@ -273,6 +283,8 @@ def InstallIPythonRenderer():
   Draw.MolsToGridImage = ShowMols
   _DrawRDKitBitSaved = Draw.DrawRDKitBit
   Draw.DrawRDKitBit = DrawRDKitBit
+  _DrawRDKitBitsSaved = Draw.DrawRDKitBits
+  Draw.DrawRDKitBits = DrawRDKitBits
   _DrawMorganBitSaved = Draw.DrawMorganBit
   Draw.DrawMorganBit = DrawMorganBit
   _DrawMorganBitsSaved = Draw.DrawMorganBits
@@ -306,6 +318,8 @@ def UninstallIPythonRenderer():
     Draw.MolsToGridImage = _MolsToGridImageSaved
   if _DrawRDKitBitSaved is not None:
     Draw.DrawRDKitBit = _DrawRDKitBitSaved
+  if _DrawRDKitBitsSaved is not None:
+    Draw.DrawRDKitBits = _DrawRDKitBitsSaved
   if _DrawMorganBitSaved is not None:
     Draw.DrawMorganBit = _DrawMorganBitSaved
   if _DrawMorganBitsSaved is not None:

@@ -559,10 +559,9 @@ def DrawMorganBits(tpls, **kwargs):
 # adapted from the function drawFPBits._drawFPBit() from the CheTo package
 # original author Nadine Schneider
 from collections import namedtuple
-MorganEnv = namedtuple(
-  'MorganEnv',
+FingerprintEnv = namedtuple(
+  'FingerprintEnv',
   ('submol', 'highlightAtoms', 'atomColors', 'highlightBonds', 'bondColors', 'highlightRadii'))
-
 
 def _getMorganEnv(mol, atomId, radius, baseRad, aromaticColor, ringColor, centerColor, extraColor,
                   **kwargs):
@@ -631,7 +630,7 @@ def _getMorganEnv(mol, atomId, radius, baseRad, aromaticColor, ringColor, center
     if bidx not in envSubmol:
       bondcolors[bidx] = color
       highlightBonds.append(bidx)
-  return MorganEnv(submol, highlightAtoms, atomcolors, highlightBonds, bondcolors, highlightRadii)
+  return FingerprintEnv(submol, highlightAtoms, atomcolors, highlightBonds, bondcolors, highlightRadii)
 
 
 def DrawMorganEnvs(envs, molsPerRow=3, subImgSize=(150, 150), baseRad=0.3, useSVG=True,
@@ -700,38 +699,120 @@ def DrawMorganEnv(mol, atomId, radius, molSize=(150, 150), baseRad=0.3, useSVG=T
   return drawer.GetDrawingText()
 
 
+def DrawRDKitBits(tpls, **kwargs):
+  envs = []
+  for tpl in tpls:
+    if len(tpl)==4:
+      mol, bitId, bitInfo, whichExample=tpl
+    else:
+      mol, bitId, bitInfo=tpl
+      whichExample=0
+
+    bondpath = bitInfo[bitId][whichExample]
+    envs.append((mol, bondpath))
+  return DrawRDKitEnvs(envs, **kwargs)
+
 def DrawRDKitBit(mol, bitId, bitInfo, whichExample=0, **kwargs):
   bondPath = bitInfo[bitId][whichExample]
   return DrawRDKitEnv(mol, bondPath, **kwargs)
 
+def _getRDKitEnv(mol,bondPath,baseRad,aromaticColor,extraColor,nonAromaticColor,**kwargs):
+    if not mol.GetNumConformers():
+      rdDepictor.Compute2DCoords(mol)
+
+    # get the atoms for highlighting
+    atomsToUse = set()
+    for b in bondPath:
+      atomsToUse.add(mol.GetBondWithIdx(b).GetBeginAtomIdx())
+      atomsToUse.add(mol.GetBondWithIdx(b).GetEndAtomIdx())
+
+    # set the coordinates of the submol based on the coordinates of the original molecule
+    amap = {}
+    submol = Chem.PathToSubmol(mol, bondPath, atomMap=amap)
+    Chem.FastFindRings(submol)
+    conf = Chem.Conformer(submol.GetNumAtoms())
+    confOri = mol.GetConformer(0)
+    for i1, i2 in amap.items():
+      conf.SetAtomPosition(i2, confOri.GetAtomPosition(i1))
+    submol.AddConformer(conf)
+    envSubmol = []
+    for i1, i2 in amap.items():
+      for b in bondPath:
+        beginAtom = amap[mol.GetBondWithIdx(b).GetBeginAtomIdx()]
+        endAtom = amap[mol.GetBondWithIdx(b).GetEndAtomIdx()]
+        envSubmol.append(submol.GetBondBetweenAtoms(beginAtom, endAtom).GetIdx())
+
+    # color all atoms of the submol in gray which are not part of the bit
+    # highlight atoms which are in rings
+    atomcolors, bondcolors = {}, {}
+    highlightAtoms, highlightBonds = [], []
+    highlightRadii = {}
+    for aidx in amap.keys():
+      if aidx in atomsToUse:
+        color = None
+        if aromaticColor and mol.GetAtomWithIdx(aidx).GetIsAromatic():
+          color = aromaticColor
+        elif nonAromaticColor and not mol.GetAtomWithIdx(aidx).GetIsAromatic():
+          color = nonAromaticColor
+        if color is not None:
+          atomcolors[amap[aidx]] = color
+          highlightAtoms.append(amap[aidx])
+          highlightRadii[amap[aidx]] = baseRad
+    color = extraColor
+    for bid in submol.GetBonds():
+      bidx = bid.GetIdx()
+      if bidx not in envSubmol:
+        bondcolors[bidx] = color
+        highlightBonds.append(bidx)
+    return FingerprintEnv(submol, highlightAtoms, atomcolors, highlightBonds, bondcolors, highlightRadii)
+
+
+def DrawRDKitEnvs(envs, molsPerRow=3, subImgSize=(150, 150), baseRad=0.3, useSVG=True,
+                  aromaticColor=(0.9, 0.9, 0.2), extraColor=(0.9, 0.9,0.9),
+                  nonAromaticColor=None, legends=None, **kwargs):
+  submols = []
+  highlightAtoms = []
+  atomColors = []
+  highlightBonds = []
+  bondColors = []
+  highlightRadii = []
+  for mol, bondpath in envs:
+    menv = _getRDKitEnv(mol, bondpath, baseRad, aromaticColor, extraColor, nonAromaticColor,
+                        **kwargs)
+    submols.append(menv.submol)
+    highlightAtoms.append(menv.highlightAtoms)
+    atomColors.append(menv.atomColors)
+    highlightBonds.append(menv.highlightBonds)
+    bondColors.append(menv.bondColors)
+    highlightRadii.append(menv.highlightRadii)
+
+  if legends is None:
+    legends = [''] * len(envs)
+
+  nRows = len(envs) // molsPerRow
+  if len(envs) % molsPerRow:
+    nRows += 1
+
+  fullSize = (molsPerRow * subImgSize[0], nRows * subImgSize[1])
+  # Drawing
+  if useSVG:
+    drawer = rdMolDraw2D.MolDraw2DSVG(fullSize[0], fullSize[1], subImgSize[0], subImgSize[1])
+  else:
+    drawer = rdMolDraw2D.MolDraw2DCairo(fullSize[0], fullSize[1], subImgSize[0], subImgSize[1])
+
+  drawopt = drawer.drawOptions()
+  drawopt.continuousHighlight = False
+  drawer.DrawMolecules(submols, legends=legends, highlightAtoms=highlightAtoms,
+                       highlightAtomColors=atomColors, highlightBonds=highlightBonds,
+                       highlightBondColors=bondColors, highlightAtomRadii=highlightRadii, **kwargs)
+  drawer.FinishDrawing()
+  return drawer.GetDrawingText()
+
 
 def DrawRDKitEnv(mol, bondPath, molSize=(150, 150), baseRad=0.3, useSVG=True,
-                 aromaticColor=(0.9, 0.9, 0.2), extraColor=(0.9, 0.9,
-                                                            0.9), nonAromaticColor=None, **kwargs):
-  if not mol.GetNumConformers():
-    rdDepictor.Compute2DCoords(mol)
-
-  # get the atoms for highlighting
-  atomsToUse = set()
-  for b in bondPath:
-    atomsToUse.add(mol.GetBondWithIdx(b).GetBeginAtomIdx())
-    atomsToUse.add(mol.GetBondWithIdx(b).GetEndAtomIdx())
-
-  # set the coordinates of the submol based on the coordinates of the original molecule
-  amap = {}
-  submol = Chem.PathToSubmol(mol, bondPath, atomMap=amap)
-  Chem.FastFindRings(submol)
-  conf = Chem.Conformer(submol.GetNumAtoms())
-  confOri = mol.GetConformer(0)
-  for i1, i2 in amap.items():
-    conf.SetAtomPosition(i2, confOri.GetAtomPosition(i1))
-  submol.AddConformer(conf)
-  envSubmol = []
-  for i1, i2 in amap.items():
-    for b in bondPath:
-      beginAtom = amap[mol.GetBondWithIdx(b).GetBeginAtomIdx()]
-      endAtom = amap[mol.GetBondWithIdx(b).GetEndAtomIdx()]
-      envSubmol.append(submol.GetBondBetweenAtoms(beginAtom, endAtom).GetIdx())
+                 aromaticColor=(0.9, 0.9, 0.2), extraColor=(0.9, 0.9,0.9),
+                 nonAromaticColor=None, **kwargs):
+  menv = _getRDKitEnv(mol, bondPath, baseRad, aromaticColor, extraColor, nonAromaticColor, **kwargs)
 
   # Drawing
   if useSVG:
@@ -742,31 +823,9 @@ def DrawRDKitEnv(mol, bondPath, molSize=(150, 150), baseRad=0.3, useSVG=True,
   drawopt = drawer.drawOptions()
   drawopt.continuousHighlight = False
 
-  # color all atoms of the submol in gray which are not part of the bit
-  # highlight atoms which are in rings
-  atomcolors, bondcolors = {}, {}
-  highlightAtoms, highlightBonds = [], []
-  highlightRadii = {}
-  for aidx in amap.keys():
-    if aidx in atomsToUse:
-      color = None
-      if aromaticColor and mol.GetAtomWithIdx(aidx).GetIsAromatic():
-        color = aromaticColor
-      elif nonAromaticColor and not mol.GetAtomWithIdx(aidx).GetIsAromatic():
-        color = nonAromaticColor
-      if color is not None:
-        atomcolors[amap[aidx]] = color
-        highlightAtoms.append(amap[aidx])
-        highlightRadii[amap[aidx]] = baseRad
-  color = extraColor
-  for bid in submol.GetBonds():
-    bidx = bid.GetIdx()
-    if bidx not in envSubmol:
-      bondcolors[bidx] = color
-      highlightBonds.append(bidx)
-
-  drawer.DrawMolecule(submol, highlightAtoms=highlightAtoms, highlightAtomColors=atomcolors,
-                      highlightBonds=highlightBonds, highlightBondColors=bondcolors,
-                      highlightAtomRadii=highlightRadii, **kwargs)
+  drawer.DrawMolecule(menv.submol, highlightAtoms=menv.highlightAtoms,
+                      highlightAtomColors=menv.atomColors, highlightBonds=menv.highlightBonds,
+                      highlightBondColors=menv.bondColors, highlightAtomRadii=menv.highlightRadii,
+                      **kwargs)
   drawer.FinishDrawing()
   return drawer.GetDrawingText()
