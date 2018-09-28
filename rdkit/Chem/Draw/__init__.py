@@ -260,6 +260,28 @@ def MolToMPL(mol, size=(300, 300), kekulize=True, wedgeBonds=True, imageType=Non
   canvas._figure.set_size_inches(float(size[0]) / 100, float(size[1]) / 100)
   return canvas._figure
 
+import numpy
+def _bivariate_normal(X, Y, sigmax=1.0, sigmay=1.0,
+                     mux=0.0, muy=0.0, sigmaxy=0.0):
+    """
+
+    This is the implementation from matplotlib:
+    https://github.com/matplotlib/matplotlib/blob/81e8154dbba54ac1607b21b22984cabf7a6598fa/lib/matplotlib/mlab.py#L1866
+    it was deprecated in v2.2 of matplotlib, so we are including it here.
+
+
+    Bivariate Gaussian distribution for equal shape *X*, *Y*.
+    See `bivariate normal
+    <http://mathworld.wolfram.com/BivariateNormalDistribution.html>`_
+    at mathworld.
+    """
+    Xmu = X-mux
+    Ymu = Y-muy
+
+    rho = sigmaxy/(sigmax*sigmay)
+    z = Xmu**2/sigmax**2 + Ymu**2/sigmay**2 - 2*rho*Xmu*Ymu/(sigmax*sigmay)
+    denom = 2*numpy.pi*sigmax*sigmay*numpy.sqrt(1-rho**2)
+    return numpy.exp(-z/(2*(1-rho**2))) / denom
 
 def calcAtomGaussians(mol, a=0.03, step=0.02, weights=None):
   """
@@ -277,16 +299,14 @@ fig.savefig('coumlogps.colored.png',bbox_inches='tight')
 
 
   """
-  import numpy
-  from matplotlib import mlab
   x = numpy.arange(0, 1, step)
   y = numpy.arange(0, 1, step)
   X, Y = numpy.meshgrid(x, y)
   if weights is None:
     weights = [1.] * mol.GetNumAtoms()
-  Z = mlab.bivariate_normal(X, Y, a, a, mol._atomPs[0][0], mol._atomPs[0][1]) * weights[0]
+  Z = _bivariate_normal(X, Y, a, a, mol._atomPs[0][0], mol._atomPs[0][1]) * weights[0]
   for i in range(1, mol.GetNumAtoms()):
-    Zp = mlab.bivariate_normal(X, Y, a, a, mol._atomPs[i][0], mol._atomPs[i][1])
+    Zp = _bivariate_normal(X, Y, a, a, mol._atomPs[i][0], mol._atomPs[i][1])
     Z += Zp * weights[i]
   return X, Y, Z
 
