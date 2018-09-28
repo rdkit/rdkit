@@ -90,3 +90,23 @@ TEST_CASE("Github #2029", "[SMILES,bug]") {
                                             allBondsExplicit));
   }
 }
+
+TEST_CASE("Smiles literals", "[SMILES]") {
+  auto mol = "c1ccccc1"_smiles;
+  REQUIRE(mol);
+  CHECK(6 == mol->getNumAtoms());
+  auto fail1 = "c1ccccc"_smiles;
+  REQUIRE(!fail1);
+  auto fail2 = "c1cccn1"_smiles;
+  REQUIRE(!fail2);
+}
+
+TEST_CASE("Smarts literals", "[Smarts]") {
+  auto mol = "c1ccc[c,n]c1"_smarts;
+  REQUIRE(mol);
+  CHECK(6 == mol->getNumAtoms());
+  auto fail1 = "c1ccccc"_smarts;
+  REQUIRE(!fail1);
+  auto mol2 = "c1cccn1"_smarts;
+  REQUIRE(mol2);
+}
