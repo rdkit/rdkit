@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef __RD_TAUTOMER_CATALOG_ENTRY_H__
 #define __RD_TAUTOMER_CATALOG_ENTRY_H__
 
@@ -20,7 +21,8 @@
 namespace RDKit {
 namespace MolStandardize {
 
-class TautomerCatalogEntry : public RDCatalog::CatalogEntry {
+class RDKIT_MOLSTANDARDIZE_EXPORT TautomerCatalogEntry
+    : public RDCatalog::CatalogEntry {
  public:
   TautomerCatalogEntry() {
     dp_transform = nullptr;

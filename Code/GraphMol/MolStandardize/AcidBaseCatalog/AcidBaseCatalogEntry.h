@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef __RD_ACIDBASE_CATALOG_ENTRY_H__
 #define __RD_ACIDBASE_CATALOG_ENTRY_H__
 
@@ -20,7 +21,8 @@
 namespace RDKit {
 namespace MolStandardize {
 
-class AcidBaseCatalogEntry : public RDCatalog::CatalogEntry {
+class RDKIT_MOLSTANDARDIZE_EXPORT AcidBaseCatalogEntry
+    : public RDCatalog::CatalogEntry {
  public:
   AcidBaseCatalogEntry() {
     dp_pair->first = nullptr;

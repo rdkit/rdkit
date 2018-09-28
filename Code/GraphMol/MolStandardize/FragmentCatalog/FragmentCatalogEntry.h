@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef __RD_FRAGMENT_CATALOG_ENTRY_H__
 #define __RD_FRAGMENT_CATALOG_ENTRY_H__
 
@@ -19,7 +20,8 @@
 namespace RDKit {
 namespace MolStandardize {
 
-class FragmentCatalogEntry : public RDCatalog::CatalogEntry {
+class RDKIT_MOLSTANDARDIZE_EXPORT FragmentCatalogEntry
+    : public RDCatalog::CatalogEntry {
  public:
   FragmentCatalogEntry() : dp_mol(nullptr), d_descrip("") {
     dp_props = new Dict();

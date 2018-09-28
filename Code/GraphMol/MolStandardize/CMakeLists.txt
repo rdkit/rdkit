@@ -1,4 +1,6 @@
 
+remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
+add_definitions(-DRDKIT_MOLSTANDARDIZE_BUILD)
 rdkit_library(MolStandardize
               MolStandardize.cpp
 	      Metal.cpp

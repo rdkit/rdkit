@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef __RD_TAUTOMER_CATALOG_PARAMS_H__
 #define __RD_TAUTOMER_CATALOG_PARAMS_H__
 
@@ -23,7 +24,8 @@ class ROMol;
 namespace MolStandardize {
 struct TautomerTransform;
 
-class TautomerCatalogParams : public RDCatalog::CatalogParams {
+class RDKIT_MOLSTANDARDIZE_EXPORT TautomerCatalogParams
+    : public RDCatalog::CatalogParams {
  public:
   TautomerCatalogParams() {
     d_typeStr = "Tautomer Catalog Parameters";
