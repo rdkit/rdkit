@@ -1,0 +1,37 @@
+//	Name	SMARTS	Bonds	Charges
+1,3 (thio)keto/enol f	[CX4!H0]-[C]=[O,S,Se,Te;X1]
+1,3 (thio)keto/enol r	[O,S,Se,Te;X2!H0]-[C]=[C]
+1,5 (thio)keto/enol f	[CX4,NX3;!H0]-[C]=[C][CH0]=[O,S,Se,Te;X1]
+1,5 (thio)keto/enol r	[O,S,Se,Te;X2!H0]-[CH0]=[C]-[C]=[C,N]
+aliphatic imine f	[CX4!H0]-[C]=[NX2]
+aliphatic imine r	[NX3!H0]-[C]=[CX3]
+special imine f	[N!H0]-[C]=[CX3R0]
+special imine r	[CX4!H0]-[c]=[n]
+1,3 aromatic heteroatom H shift f	[#7!H0]-[#6R1]=[O,#7X2]
+1,3 aromatic heteroatom H shift 	[O,#7;!H0]-[#6R1]=[#7X2]
+1,3 heteroatom H shift	[#7,S,O,Se,Te;!H0]-[#7X2,#6,#15]=[#7,#16,#8,Se,Te]
+1,5 aromatic heteroatom H shift	[#7,#16,#8;!H0]-[#6,#7]=[#6]-[#6,#7]=[#7,#16,#8;H0]
+1,5 aromatic heteroatom H shift 	[#7,#16,#8,Se,Te;!H0]-[#6,nX2]=[#6,nX2]-[#6,#7X2]=[#7X2,S,O,Se,Te]
+1,5 aromatic heteroatom H shift r	[#7,S,O,Se,Te;!H0]-[#6,#7X2]=[#6,nX2]-[#6,nX2]=[#7,#16,#8,Se,Te]
+1,7 aromatic heteroatom H shift f	[#7,#8,#16,Se,Te;!H0]-[#6,#7X2]=[#6,#7X2]-[#6,#7X2]=[#6]-[#6,#7X2]=[#7X2,S,O,Se,Te,CX3]
+1,7 aromatic heteroatom H shift r	[#7,S,O,Se,Te,CX4;!H0]-[#6,#7X2]=[#6]-[#6,#7X2]=[#6,#7X2]-[#6,#7X2]=[NX2,S,O,Se,Te]
+1,9 aromatic heteroatom H shift f	[#7,O;!H0]-[#6,#7X2]=[#6,#7X2]-[#6,#7X2]=[#6,#7X2]-[#6,#7X2]=[#6,#7X2]-[#6,#7X2]=[#7,O]
+1,11 aromatic heteroatom H shift f	[#7,O;!H0]-[#6,nX2]=[#6,nX2]-[#6,nX2]=[#6,nX2]-[#6,nX2]=[#6,nX2]-[#6,nX2]=[#6,nX2]-[#6,nX2]=[#7X2,O]
+furanone f	[O,S,N;!H0]-[#6r5]=[#6X3r5;$([#6]([#6r5])=[#6r5])]
+furanone r	[#6r5!H0;$([#6]([#6r5])[#6r5])]-[#6r5]=[O,S,N]
+keten/ynol f	[C!H0]=[C]=[O,S,Se,Te;X1]	#-
+keten/ynol r	[O,S,Se,Te;!H0X2]-[C]#[C]	==
+ionic nitro/aci-nitro f	[C!H0]-[N+;$([N][O-])]=[O]
+ionic nitro/aci-nitro r	[O!H0]-[N+;$([N][O-])]=[C]
+oxim/nitroso f	[O!H0]-[N]=[C]
+oxim/nitroso r	[C!H0]-[N]=[O]
+oxim/nitroso via phenol f	[O!H0]-[N]=[C]-[C]=[C]-[C]=[OH0]
+oxim/nitroso via phenol r	[O!H0]-[c]=[c]-[c]=[c]-[N]=[OH0]
+cyano/iso-cyanic acid f	[O!H0]-[C]#[N]	==
+cyano/iso-cyanic acid r	[N!H0]=[C]=[O]	#-
+//formamidinesulfinic acid f	[O,N;!H0]-[C]=[S,Se,Te]=[O]	=-- // TODO: WAT!?
+//formamidinesulfinic acid r	[O!H0]-[S,Se,Te]-[C]=[O,N]	=--
+isocyanide f	[C-0!H0]#[N+0]	#	-+
+isocyanide r	[N+!H0]#[C-]	#	-+
+phosphonic acid f	[OH]-[PH0]	=
+phosphonic acid r	[PH]=[O]	-
