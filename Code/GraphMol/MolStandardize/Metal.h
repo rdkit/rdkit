@@ -31,7 +31,7 @@ namespace MolStandardize {
     -
 */
 
-class MetalDisconnector {
+class RDKIT_MOLSTANDARDIZE_EXPORT MetalDisconnector {
  public:
   MetalDisconnector();
   MetalDisconnector(const MetalDisconnector &other);

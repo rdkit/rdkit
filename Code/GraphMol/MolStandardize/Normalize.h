@@ -67,8 +67,8 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Normalizer {
     Normalizations cause no further changes or if max_restarts (default 200) is
     reached.
   */
-  RDKIT_MOLSTANDARDIZE_EXPORT ROMol *normalize(const ROMol &mol);
-  struct RDKIT_MOLSTANDARDIZE_EXPORT Product {
+  ROMol *normalize(const ROMol &mol);
+  struct Product {
     std::string Smiles;
     boost::shared_ptr<ROMol> Mol;
     Product(std::string smiles, boost::shared_ptr<ROMol> &mol)

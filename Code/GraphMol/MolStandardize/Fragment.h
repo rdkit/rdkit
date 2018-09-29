@@ -21,13 +21,14 @@ class ROMol;
 
 namespace MolStandardize {
 
-extern const CleanupParameters defaultCleanupParameters;
+RDKIT_MOLSTANDARDIZE_EXPORT extern const CleanupParameters
+    defaultCleanupParameters;
 
 typedef RDCatalog::HierarchCatalog<FragmentCatalogEntry, FragmentCatalogParams,
                                    int>
     FragmentCatalog;
 
-class FragmentRemover {
+class RDKIT_MOLSTANDARDIZE_EXPORT FragmentRemover {
  public:
   FragmentRemover();
   FragmentRemover(const std::string fragmentFile, const bool leave_last);
@@ -48,7 +49,7 @@ class FragmentRemover {
 
 };  // class FragmentRemover
 
-class LargestFragmentChooser {
+class RDKIT_MOLSTANDARDIZE_EXPORT LargestFragmentChooser {
  public:
   //  LargestFragmentChooser(){};
   LargestFragmentChooser(bool prefer_organic = false)
