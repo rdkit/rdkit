@@ -1,6 +1,6 @@
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do
                            // this in one cpp file
-#include "RDBoost/test.h"
+#include "RDGeneral/test.h"
 #include "catch.hpp"
 
 #include <GraphMol/RDKitBase.h>
