@@ -13,7 +13,6 @@
 #include <RDGeneral/Exceptions.h>
 #include <RDGeneral/hash/hash.hpp>
 #include <algorithm>
-//#include "boost/random.hpp" 
 
 namespace RDKit {
 namespace Canon {
@@ -670,27 +669,22 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
         continue;
       }
       unsigned long rank = ranks[otherIdx];
-
-      //std::cerr<<"before the rules rings:  p: "<<otherIdx<<" "<<colors[otherIdx]<<" "<<theBond->getBondType()<<" "<<rank<<std::endl;
-
-      if (theBond->getOwningMol().getRingInfo()->numBondRings(
+      if (!doRandom) {
+        if (theBond->getOwningMol().getRingInfo()->numBondRings(
               theBond->getIdx())) {
-        if (!bondSymbols) {
-          rank += static_cast<int>(MAX_BONDTYPE - theBond->getBondType()) *
+            if (!bondSymbols) {
+                rank += static_cast<int>(MAX_BONDTYPE - theBond->getBondType()) *
                   MAX_NATOMS * MAX_NATOMS;
-        } else {
-          const std::string &symb = (*bondSymbols)[theBond->getIdx()];
-          boost::uint32_t hsh = gboost::hash_range(symb.begin(), symb.end());
-          rank += (hsh % MAX_NATOMS) * MAX_NATOMS * MAX_NATOMS;
-        }
+            } else {
+            const std::string &symb = (*bondSymbols)[theBond->getIdx()];
+            boost::uint32_t hsh = gboost::hash_range(symb.begin(), symb.end());
+            rank += (hsh % MAX_NATOMS) * MAX_NATOMS * MAX_NATOMS;
+            }
+        }      
+      } else {
+         // randomize the rank      
+         rank = std::rand();
       }
-      // std::cerr<<"after the rules rings:  p: "<<otherIdx<<" "<<colors[otherIdx]<<" "<<theBond->getBondType()<<" "<<rank<<std::endl;
-      
-    if (doRandom) {
-      // set the seed for rand function (1 by default if not usinig srand call function)
-      // randomized the rank instead of using "rdkit rank rules"
-      rank = std::rand();
-    }
       //std::cerr << "\nmygenerator:" << numberGenerator() << std::endl; 
 
       possibles.push_back(PossibleType(rank, otherIdx, theBond));
