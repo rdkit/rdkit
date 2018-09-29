@@ -58,9 +58,10 @@ class RDKIT_GRAPHMOL_EXPORT StereoGroup {
     return (d_grouptype != other.d_grouptype) || (d_atoms != other.d_atoms);
   };
 };
-void removeGroupsWithAtom(const Atom* atom, std::vector<StereoGroup>& groups);
-void removeGroupsWithAtoms(const std::vector<Atom*>& atoms,
-                           std::vector<StereoGroup>& groups);
+RDKIT_GRAPHMOL_EXPORT void removeGroupsWithAtom(
+    const Atom* atom, std::vector<StereoGroup>& groups);
+RDKIT_GRAPHMOL_EXPORT void removeGroupsWithAtoms(
+    const std::vector<Atom*>& atoms, std::vector<StereoGroup>& groups);
 
 }  // namespace RDKit
 

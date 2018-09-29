@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef __RD_TRANSFORM_CATALOG_UTILS_H__
 #define __RD_TRANSFORM_CATALOG_UTILS_H__
 
@@ -22,10 +23,10 @@ class ROMol;
 namespace MolStandardize {
 class TransformCatalogParams;
 
-std::vector<std::shared_ptr<ChemicalReaction>> readTransformations(
-    std::string fileName);
-std::vector<std::shared_ptr<ChemicalReaction>> readTransformations(
-    std::istream &inStream, int nToRead = -1);
+RDKIT_MOLSTANDARDIZE_EXPORT std::vector<std::shared_ptr<ChemicalReaction>>
+readTransformations(std::string fileName);
+RDKIT_MOLSTANDARDIZE_EXPORT std::vector<std::shared_ptr<ChemicalReaction>>
+readTransformations(std::istream &inStream, int nToRead = -1);
 
 }  // namespace MolStandardize
 }  // namespace RDKit

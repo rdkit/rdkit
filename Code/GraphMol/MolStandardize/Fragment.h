@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef __RD_FRAGMENT_REMOVER_H__
 #define __RD_FRAGMENT_REMOVER_H__
 
@@ -20,20 +21,21 @@ class ROMol;
 
 namespace MolStandardize {
 
-extern const CleanupParameters defaultCleanupParameters;
+RDKIT_MOLSTANDARDIZE_EXPORT extern const CleanupParameters
+    defaultCleanupParameters;
 
 typedef RDCatalog::HierarchCatalog<FragmentCatalogEntry, FragmentCatalogParams,
                                    int>
     FragmentCatalog;
 
-class FragmentRemover {
+class RDKIT_MOLSTANDARDIZE_EXPORT FragmentRemover {
  public:
-	FragmentRemover();
+  FragmentRemover();
   FragmentRemover(const std::string fragmentFile, const bool leave_last);
-//  FragmentRemover(bool leave_last) : LEAVE_LAST(leave_last){};
-	//! making FragmentRemover objects non-copyable
+  //  FragmentRemover(bool leave_last) : LEAVE_LAST(leave_last){};
+  //! making FragmentRemover objects non-copyable
   FragmentRemover(const FragmentRemover &other) = delete;
-	FragmentRemover& operator=(FragmentRemover const&) = delete;
+  FragmentRemover &operator=(FragmentRemover const &) = delete;
   ~FragmentRemover();
 
   ROMol *remove(const ROMol &mol);
@@ -43,13 +45,13 @@ class FragmentRemover {
   //  is left in the molecule, even if it is matched by a
   //  FragmentPattern
   bool LEAVE_LAST;
-	FragmentCatalog *d_fcat;
+  FragmentCatalog *d_fcat;
 
 };  // class FragmentRemover
 
-class LargestFragmentChooser {
+class RDKIT_MOLSTANDARDIZE_EXPORT LargestFragmentChooser {
  public:
-//  LargestFragmentChooser(){};
+  //  LargestFragmentChooser(){};
   LargestFragmentChooser(bool prefer_organic = false)
       : PREFER_ORGANIC(prefer_organic){};
   LargestFragmentChooser(const LargestFragmentChooser &other);

@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef __RD_TRANSFORM_CATALOG_ENTRY_H__
 #define __RD_TRANSFORM_CATALOG_ENTRY_H__
 
@@ -20,7 +21,8 @@
 namespace RDKit {
 namespace MolStandardize {
 
-class TransformCatalogEntry : public RDCatalog::CatalogEntry {
+class RDKIT_MOLSTANDARDIZE_EXPORT TransformCatalogEntry
+    : public RDCatalog::CatalogEntry {
  public:
   TransformCatalogEntry() : dp_transform(nullptr), d_descrip("") {
     dp_props = new Dict();

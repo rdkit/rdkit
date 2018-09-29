@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef __RD_FRAGMENT_CATALOG_PARAMS_H__
 #define __RD_FRAGMENT_CATALOG_PARAMS_H__
 
@@ -21,7 +22,8 @@ namespace RDKit {
 class ROMol;
 
 namespace MolStandardize {
-class FragmentCatalogParams : public RDCatalog::CatalogParams {
+class RDKIT_MOLSTANDARDIZE_EXPORT FragmentCatalogParams
+    : public RDCatalog::CatalogParams {
  public:
   FragmentCatalogParams() {
     d_typeStr = "Fragment Catalog Parameters";

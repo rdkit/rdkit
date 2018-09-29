@@ -13,6 +13,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <Geometry/point.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/FileParsers/FileParsers.h>
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>

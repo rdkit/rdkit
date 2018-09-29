@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef __RD_ACIDBASE_CATALOG_PARAMS_H__
 #define __RD_ACIDBASE_CATALOG_PARAMS_H__
 
@@ -21,7 +22,8 @@ namespace RDKit {
 class ROMol;
 
 namespace MolStandardize {
-class AcidBaseCatalogParams : public RDCatalog::CatalogParams {
+class RDKIT_MOLSTANDARDIZE_EXPORT AcidBaseCatalogParams
+    : public RDCatalog::CatalogParams {
  public:
   AcidBaseCatalogParams() {
     d_typeStr = "AcidBase Catalog Parameters";

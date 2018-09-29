@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef __RD_TAUTOMER_H__
 #define __RD_TAUTOMER_H__
 
@@ -25,7 +26,7 @@ typedef RDCatalog::HierarchCatalog<TautomerCatalogEntry, TautomerCatalogParams,
                                    int>
     TautomerCatalog;
 
-class TautomerCanonicalizer {
+class RDKIT_MOLSTANDARDIZE_EXPORT TautomerCanonicalizer {
  public:
   //	TautomerCanonicalizer(unsigned int max_tautomers)
   //			: MAX_TAUTOMERS(max_tautomers) {};
@@ -40,7 +41,7 @@ class TautomerCanonicalizer {
   //		unsigned int MAX_TAUTOMERS;
 };  // TautomerCanonicalizer class
 
-class TautomerEnumerator {
+class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
  public:
   std::vector<ROMOL_SPTR> enumerate(const ROMol &mol, TautomerCatalog *tautcat);
 
