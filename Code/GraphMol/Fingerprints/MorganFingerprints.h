@@ -51,6 +51,9 @@
 namespace RDKit {
 class ROMol;
 namespace MorganFingerprints {
+typedef std::map<boost::uint32_t,
+                 std::vector<std::pair<boost::uint32_t, boost::uint32_t>>>
+    BitInfoMap;
 
 const std::string morganFingerprintVersion = "1.0.0";
 
@@ -193,6 +196,6 @@ RDKIT_FINGERPRINTS_EXPORT ExplicitBitVect *getFingerprintAsBitVect(
     bool onlyNonzeroInvariants = false, BitInfoMap *atomsSettingBits = 0);
 
 }  // end of namespace MorganFingerprints
-}
+}  // namespace RDKit
 
 #endif
