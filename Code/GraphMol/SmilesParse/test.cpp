@@ -4066,50 +4066,68 @@ void testGithub1925() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
-
 void testdoRandomSmileGeneration() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
-  BOOST_LOG(rdInfoLog)
-      << "Testing the random Generator for SMILES\n"
-      << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing the random Generator for SMILES"
+                       << std::endl;
   {
-    std::srand(1); // be sure we use it for testcase!
-    const char *benzenes[1] = {
-        "c1ccncc1C"};
+    // it's not trivial to test this because we're using std::rand(), which does
+    // not give consistent results across platforms. It's not worth adding the
+    // complexity of a real RNG, so we do some hand waving in the tests
+    std::srand(0xf00d);  // be sure we use it for testcase!
+    const std::vector<std::string> benzenes = {"COc1ccnc(CC)c1C"};
 
-    const char *rulesmiles[7] = {
-       "c1ccncc1C","c1cc(C)cnc1","c1ccc(C)cn1","n1cccc(C)c1",
-        "c1ncccc1C","c1(C)cccnc1","Cc1cccnc1"};
-    
-    const char *randomsmiles[7] = {
-      "c1ccncc1C","c1cc(cnc1)C","c1ccc(cn1)C","n1cccc(c1)C","c1ncccc1C",
-      "c1(cccnc1)C","Cc1cccnc1"};
-    
-    for (int i = 0; i < 1; ++i) {
-      ROMol *m = SmilesToMol(benzenes[i]);
+    const std::vector<std::string> rulesmiles = {
+        "COc1ccnc(CC)c1C",     "O(C)c1ccnc(CC)c1C",   "c1(OC)ccnc(CC)c1C",
+        "c1c(OC)c(C)c(CC)nc1", "c1cc(OC)c(C)c(CC)n1", "n1ccc(OC)c(C)c1CC",
+        "c1(CC)nccc(OC)c1C",   "C(c1nccc(OC)c1C)C",   "CCc1nccc(OC)c1C",
+        "c1(C)c(OC)ccnc1CC",   "Cc1c(OC)ccnc1CC"};
+
+    for (auto bz : benzenes) {
+      ROMol *m = SmilesToMol(bz);
       TEST_ASSERT(m);
-      TEST_ASSERT(m->getNumAtoms() == 7);
-      std::string randombenzene = "";
-      std::string rulebenzene = "";
-      for (int j = 0; j < 7; ++j) {
-        randombenzene = MolToSmiles(*m, true, false, j, false,false,false,true);
-        BOOST_LOG(rdInfoLog) << "random :" <<  randombenzene << std::endl;
-        rulebenzene = MolToSmiles(*m, true, false, j, false,false,false,false);
-        BOOST_LOG(rdInfoLog) << "rule :" <<  rulebenzene << std::endl;
-        TEST_ASSERT(randombenzene == randomsmiles[j]);
+      TEST_ASSERT(m->getNumAtoms() == 11);
+      for (unsigned int j = 0; j < m->getNumAtoms(); ++j) {
+        auto rulebenzene =
+            MolToSmiles(*m, true, false, j, false, false, false, false);
+        // BOOST_LOG(rdInfoLog) << "rule :" << rulebenzene << std::endl;
+        // std::cout << "\"" << rulebenzene << "\", ";
         TEST_ASSERT(rulebenzene == rulesmiles[j]);
+        std::set<std::string> rsmis;
+        for (unsigned int iter = 0; iter < 10; ++iter) {
+          auto randombenzene =
+              MolToSmiles(*m, true, false, j, false, false, false, true);
+          // BOOST_LOG(rdInfoLog) << "random :" << j << " " << iter << " "
+          //                      << randombenzene << std::endl;
+          rsmis.insert(randombenzene);
+        }
+        // we will get dupes, but there's enough choice available here that we
+        // should have gotten at least 3 unique
+        TEST_ASSERT(rsmis.size() >= 3);
       }
-      
+      // std::cout << std::endl;
+
+      // confirm that we also use random starting points:
+      std::set<char> starts;
+      for (unsigned int iter = 0; iter < 50; ++iter) {
+        auto randombenzene =
+            MolToSmiles(*m, true, false, -1, false, false, false, true);
+        // BOOST_LOG(rdInfoLog) << "random :" << j << " " << iter << " "
+        //                      << randombenzene << std::endl;
+        starts.insert(randombenzene[0]);
+      }
+      // we will get dupes, but there's enough choice available here that we
+      // should have gotten at least 3 unique
+      TEST_ASSERT(starts.find('C') != starts.end());
+      TEST_ASSERT(starts.find('c') != starts.end());
+      TEST_ASSERT(starts.find('n') != starts.end() ||
+                  starts.find('O') != starts.end());
+
       delete m;
     }
-
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
-
-
-
-
 
 void testGithub1972() {
   BOOST_LOG(rdInfoLog)
@@ -4175,7 +4193,7 @@ int main(int argc, char *argv[]) {
   (void)argv;
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.debug");
-#if 1
+#if 0
   testPass();
   testFail();
 
@@ -4243,8 +4261,7 @@ int main(int argc, char *argv[]) {
   testIsomericSmilesIsDefault();
   testHashAtomExtension();
   testGithub1925();
-#endif
   testGithub1972();
+#endif
   testdoRandomSmileGeneration();
-
 }
