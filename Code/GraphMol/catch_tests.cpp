@@ -43,3 +43,23 @@ TEST_CASE("Sanitization tests", "[molops]") {
     }
   }
 }
+
+TEST_CASE("Github #2062", "[bug, molops]") {
+  SmilesParserParams ps;
+  ps.removeHs = false;
+  ps.sanitize = true;
+  std::unique_ptr<RWMol> mol(SmilesToMol("[C:1][C:2]([H:3])([H])[O:4][H]",ps));
+  REQUIRE(mol);
+  CHECK(mol->getNumAtoms() == 6);
+  mol->getAtomWithIdx(1)->setProp("intProp",42);
+  MolOps::mergeQueryHs(*mol);
+  CHECK(mol->getNumAtoms() == 3);
+  SECTION("basics") {
+    CHECK(mol->getAtomWithIdx(1)->getAtomMapNum() == 2);
+  }
+  SECTION("other props") {
+  REQUIRE(mol->getAtomWithIdx(1)->hasProp("intProp"));
+  CHECK(mol->getAtomWithIdx(1)->getProp<int>("intProp") == 42);
+}
+
+}

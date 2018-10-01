@@ -879,6 +879,7 @@ void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly) {
           ATOM_EQUALS_QUERY *tmp = makeAtomNumQuery(atom->getAtomicNum());
           auto *newAt = new QueryAtom;
           newAt->setQuery(tmp);
+          newAt->updateProps(*atom);
           mol.replaceAtom(atom->getIdx(), newAt);
           delete newAt;
           atom = mol.getAtomWithIdx(currIdx);
