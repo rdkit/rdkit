@@ -56,4 +56,8 @@ rdkit_test(testEnumeration Enumerate/testEnumerate.cpp LINK_LIBRARIES
 ChemReactions ChemTransforms Descriptors Fingerprints Subgraphs DataStructs FileParsers SmilesParse SubstructMatch
 GraphMol RDGeneral RDGeometryLib ${RDKit_SERIALIZATION_LIBS} )
 
+rdkit_catch_test(rxnTestCatch catch_tests.cpp LINK_LIBRARIES ChemReactions ChemTransforms Descriptors Fingerprints
+Subgraphs DataStructs  FileParsers SmilesParse SubstructMatch
+GraphMol RDGeneral RDGeometryLib ${RDKit_SERIALIZATION_LIBS} )
+
 add_subdirectory(Wrap)

@@ -453,6 +453,11 @@ void setReactantAtomPropertiesToProduct(Atom *productAtom,
       productAtom->hasProp(common_properties::molInversionFlag)) {
     checkProductChirality(reactantAtom.getChiralTag(), productAtom);
   }
+
+  // copy over residue information if it's there. This was github #1632
+  if (reactantAtom.getMonomerInfo()) {
+    productAtom->setMonomerInfo(reactantAtom.getMonomerInfo()->copy());
+  }
 }
 
 void setNewProductBond(const Bond &origB, RWMOL_SPTR product,
