@@ -53,19 +53,18 @@ class TestCase(unittest.TestCase):
 
     positions = [[1.3041, -0.6079, 0.0924], [-0.7066, 0.5994, 0.1824], [1.3041, -0.6079, 0.0924]]
     targetAids = [[3], [1], [3]]
-    i = 0
-    for feat in feats:
-      self.failUnless(feat.GetFamily() == fTypes[i])
+    for i,feat in enumerate(feats):
+      self.assertEqual(feat.GetFamily(),fTypes[i])
       pos = list(feat.GetPos())
       aids = list(feat.GetAtomIds())
-      self.failUnless(aids == targetAids[i])
-      self.failUnless(lstFeq(pos, positions[i]))
+      self.assertEqual(aids,targetAids[i])
+      self.assertTrue(lstFeq(pos, positions[i]))
       nmol = feat.GetMol()
-      self.failUnless(Chem.MolToSmiles(nmol) == "COCN")
+      self.assertEqual(Chem.MolToSmiles(nmol),"COCN")
       ncfac = feat.GetFactory()
-      self.failUnless(ncfac.GetNumFeatureDefs() == 2)
-      i += 1
-
+      self.assertEqual(ncfac.GetNumFeatureDefs(), 2)
+      self.assertEqual(feat.GetActiveConformer(),-1)
+    
   def testIncludeOnly(self):
     cfac = ChemicalFeatures.BuildFeatureFactory(
       os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolChemicalFeatures', 'test_data',
