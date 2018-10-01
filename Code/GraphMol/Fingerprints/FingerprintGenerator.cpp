@@ -43,7 +43,7 @@ template FingerprintArguments<std::uint64_t>::FingerprintArguments(
 
 template <typename OutputType>
 std::string FingerprintArguments<OutputType>::commonArgumentsString() const {
-  return "Common arguments\tcountSimulation=" +
+  return "Common arguments : countSimulation=" +
          std::to_string(d_countSimulation) +
          " fpSize=" + std::to_string(d_fpSize);
 }
@@ -93,17 +93,21 @@ template FingerprintGenerator<std::uint32_t>::~FingerprintGenerator();
 
 template FingerprintGenerator<std::uint64_t>::~FingerprintGenerator();
 
+template std::string FingerprintGenerator<std::uint32_t>::infoString() const;
+
+template std::string FingerprintGenerator<std::uint64_t>::infoString() const;
+
 template <typename OutputType>
 std::string FingerprintGenerator<OutputType>::infoString() const {
-  std::string seperator = " : ";
+  std::string seperator = " --- ";
   return dp_fingerprintArguments->commonArgumentsString() + seperator +
          dp_fingerprintArguments->infoString() + seperator +
          dp_atomEnvironmentGenerator->infoString() + seperator +
          (dp_atomInvariantsGenerator
               ? (dp_atomInvariantsGenerator->infoString() + seperator)
-              : "No atom invariants generator") +
+              : ("No atom invariants generator"  + seperator)) +
          (dp_bondInvariantsGenerator
-              ? (dp_bondInvariantsGenerator->infoString() + seperator)
+              ? (dp_bondInvariantsGenerator->infoString())
               : "No bond invariants generator");
 }
 

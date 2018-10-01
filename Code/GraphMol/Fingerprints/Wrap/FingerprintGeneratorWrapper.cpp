@@ -175,6 +175,11 @@ ExplicitBitVect *getFingerprint(const FingerprintGenerator<OutputType> *fpGen,
   return result;
 }
 
+template <typename OutputType>
+std::string getInfoString(const FingerprintGenerator<OutputType> *fpGen) {
+  return std::string(fpGen->infoString());
+}
+
 const std::vector<const ROMol *> convertPyArgumentsForBulk(
     python::list &py_molVect, std::string py_fpType, FPType &fpType) {
   std::vector<const ROMol *> molVect;
@@ -362,7 +367,11 @@ BOOST_PYTHON_MODULE(rdFingerprintGenerator) {
            "    - customBondInvariants: custom bond invariants to be used, "
            "overrides invariants from the invariant generator\n\n"
            "  RETURNS: a ExplicitBitVect containing fingerprint\n\n",
-           python::return_value_policy<python::manage_new_object>());
+           python::return_value_policy<python::manage_new_object>())
+      .def("GetInfoString", getInfoString<std::uint32_t>,
+           "Returns a string containing information about the fingerprint "
+           "generator\n\n"
+           "  RETURNS: an information string\n\n");
 
   python::class_<FingerprintGenerator<std::uint64_t>, boost::noncopyable>(
       "FingerprintGenerator64", python::no_init)
@@ -450,7 +459,11 @@ BOOST_PYTHON_MODULE(rdFingerprintGenerator) {
            "    - customBondInvariants: custom bond invariants to be used, "
            "overrides invariants from the invariant generator\n\n"
            "  RETURNS: a ExplicitBitVect containing fingerprint\n\n",
-           python::return_value_policy<python::manage_new_object>());
+           python::return_value_policy<python::manage_new_object>())
+      .def("GetInfoString", getInfoString<std::uint64_t>,
+           "Returns a string containing information about the fingerprint "
+           "generator\n\n"
+           "  RETURNS: an information string\n\n");
 
   python::def("GetSparseCountFP", &getSparseCountFPBulkPy,
               (python::arg("molecules") = python::list(),
