@@ -57,18 +57,21 @@ class RDKIT_MOLCHEMICALFEATURES_EXPORT MolChemicalFeatureFactory {
     \param mol          The molecule of interest
     \param includeOnly  (optional) if this is non-null, only features in this
                         family will be returned
+    \param confId       (optional) the conformer id to use
   */
-  FeatSPtrList getFeaturesForMol(const ROMol &mol,
-                                 const char *includeOnly = "") const;
+  FeatSPtrList getFeaturesForMol(const ROMol &mol, const char *includeOnly = "",
+                                 int confId = -1) const;
 
  private:
   MolChemicalFeatureDef::CollectionType d_featDefs;
 };
 
 //! constructs a MolChemicalFeatureFactory from the data in a stream
-RDKIT_MOLCHEMICALFEATURES_EXPORT MolChemicalFeatureFactory *buildFeatureFactory(std::istream &inStream);
+RDKIT_MOLCHEMICALFEATURES_EXPORT MolChemicalFeatureFactory *buildFeatureFactory(
+    std::istream &inStream);
 //! constructs a MolChemicalFeatureFactory from the data in a string
-RDKIT_MOLCHEMICALFEATURES_EXPORT MolChemicalFeatureFactory *buildFeatureFactory(const std::string &featureData);
+RDKIT_MOLCHEMICALFEATURES_EXPORT MolChemicalFeatureFactory *buildFeatureFactory(
+    const std::string &featureData);
 
 }  // end of namespace RDKit
 

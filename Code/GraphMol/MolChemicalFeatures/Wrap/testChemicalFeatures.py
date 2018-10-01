@@ -63,6 +63,7 @@ class TestCase(unittest.TestCase):
       self.assertEqual(Chem.MolToSmiles(nmol),"COCN")
       ncfac = feat.GetFactory()
       self.assertEqual(ncfac.GetNumFeatureDefs(), 2)
+      self.assertEqual(feat.GetActiveConformer(),-1)
     
   def testIncludeOnly(self):
     cfac = ChemicalFeatures.BuildFeatureFactory(
