@@ -42,6 +42,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include "GraphMol/ChemReactions/ReactionRunner.h"
 #include <RDGeneral/Invariant.h>
+#include <GraphMol/MonomerInfo.h>
 
 namespace RDKit {
 typedef std::vector<MatchVectType> VectMatchVectType;
@@ -450,13 +451,15 @@ void setReactantAtomPropertiesToProduct(Atom *productAtom,
     if (productAtom->hasProp(common_properties::_MolFileRLabel)) {
       productAtom->clearProp(common_properties::_MolFileRLabel);
     }
-    productAtom->setProp<unsigned int>(common_properties::reactantAtomIdx, reactantAtom.getIdx());
+    productAtom->setProp<unsigned int>(common_properties::reactantAtomIdx,
+                                       reactantAtom.getIdx());
     productAtom->setProp(WAS_DUMMY, true);
   } else {
     // remove bookkeeping labels (if present)
     if (productAtom->hasProp(WAS_DUMMY)) productAtom->clearProp(WAS_DUMMY);
   }
-  productAtom->setProp<unsigned int>(common_properties::reactantAtomIdx, reactantAtom.getIdx());
+  productAtom->setProp<unsigned int>(common_properties::reactantAtomIdx,
+                                     reactantAtom.getIdx());
   if (setImplicitProperties) {
     updateImplicitAtomProperties(productAtom, &reactantAtom);
   }
@@ -473,6 +476,11 @@ void setReactantAtomPropertiesToProduct(Atom *productAtom,
       reactantAtom.getChiralTag() != Atom::CHI_OTHER &&
       productAtom->hasProp(common_properties::molInversionFlag)) {
     checkProductChirality(reactantAtom.getChiralTag(), productAtom);
+  }
+
+  // copy over residue information if it's there. This was github #1632
+  if (reactantAtom.getMonomerInfo()) {
+    productAtom->setMonomerInfo(reactantAtom.getMonomerInfo()->copy());
   }
 }
 
@@ -504,7 +512,8 @@ void addMissingProductAtom(const Atom &reactAtom, unsigned reactNeighborIdx,
                            ReactantProductAtomMapping *mapping) {
   auto *newAtom = new Atom(reactAtom);
   unsigned reactAtomIdx = reactAtom.getIdx();
-  newAtom->setProp<unsigned int>(common_properties::reactantAtomIdx, reactAtomIdx);
+  newAtom->setProp<unsigned int>(common_properties::reactantAtomIdx,
+                                 reactAtomIdx);
   unsigned productIdx = product->addAtom(newAtom, false, true);
   mapping->reactProdAtomMap[reactAtomIdx].push_back(productIdx);
   mapping->prodReactAtomMap[productIdx] = reactAtomIdx;
@@ -597,13 +606,17 @@ void addReactantNeighborsToProduct(
             if (!product->getBondBetweenAtoms(prodBeginIdx, prodEndIdx)) {
               // They must be mapped
               CHECK_INVARIANT(
-                  product->getAtomWithIdx(prodBeginIdx)->hasProp(common_properties::reactionMapNum) &&
-                      product->getAtomWithIdx(prodEndIdx)->hasProp(common_properties::reactionMapNum),
+                  product->getAtomWithIdx(prodBeginIdx)
+                          ->hasProp(common_properties::reactionMapNum) &&
+                      product->getAtomWithIdx(prodEndIdx)
+                          ->hasProp(common_properties::reactionMapNum),
                   "atoms should be mapped in product");
-              int a1mapidx = product->getAtomWithIdx(prodBeginIdx)
-                                 ->getProp<int>(common_properties::reactionMapNum);
+              int a1mapidx =
+                  product->getAtomWithIdx(prodBeginIdx)
+                      ->getProp<int>(common_properties::reactionMapNum);
               int a2mapidx =
-                  product->getAtomWithIdx(prodEndIdx)->getProp<int>(common_properties::reactionMapNum);
+                  product->getAtomWithIdx(prodEndIdx)
+                      ->getProp<int>(common_properties::reactionMapNum);
               if (a1mapidx > a2mapidx) std::swap(a1mapidx, a2mapidx);
               if (mapping->reactantTemplateAtomBonds.find(
                       std::make_pair(a1mapidx, a2mapidx)) ==
@@ -1087,7 +1100,8 @@ ROMol *reduceProductToSideChains(const ROMOL_SPTR &product,
 
       while (nbrIdx != endNbrs) {
         Atom *nbr = mol->getAtomWithIdx(*nbrIdx);
-        if (!nbr->hasProp(common_properties::reactionMapNum) && nbr->hasProp(common_properties::reactantAtomIdx)) {
+        if (!nbr->hasProp(common_properties::reactionMapNum) &&
+            nbr->hasProp(common_properties::reactantAtomIdx)) {
           if (nbr->hasProp(WAS_DUMMY)) {
             bonds_to_product.push_back(RGroup(
                 nbr,

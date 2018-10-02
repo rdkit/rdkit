@@ -50,7 +50,7 @@ class RDKIT_RDGENERAL_EXPORT Dict {
 
   Dict(const Dict &other) : _data(other._data) {
     _hasNonPodData = other._hasNonPodData;
-    if (_hasNonPodData) {
+    if (other._hasNonPodData) { // other has non pod data, need to copy
       std::vector<Pair> data(other._data.size());
       _data.swap(data);
       for (size_t i = 0; i < _data.size(); ++i) {
@@ -92,8 +92,10 @@ class RDKIT_RDGENERAL_EXPORT Dict {
   }
 
   Dict &operator=(const Dict &other) {
-    _hasNonPodData = other._hasNonPodData;
-    if (_hasNonPodData) {
+    if (this == &other) return *this;
+    if (_hasNonPodData) reset();
+    
+    if (other._hasNonPodData) {
       std::vector<Pair> data(other._data.size());
       _data.swap(data);
       for (size_t i = 0; i < _data.size(); ++i) {
@@ -103,6 +105,7 @@ class RDKIT_RDGENERAL_EXPORT Dict {
     } else {
       _data = other._data;
     }
+    _hasNonPodData = other._hasNonPodData;    
     return *this;
   };
 

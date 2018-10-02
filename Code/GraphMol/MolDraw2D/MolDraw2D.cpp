@@ -1269,7 +1269,9 @@ void MolDraw2D::drawBond(const ROMol &mol, const Bond *bond, int at1_idx,
     } else if (Bond::SINGLE == bt && Bond::UNKNOWN == bond->getBondDir()) {
       // unspecified stereo
       drawWavyLine(at1_cds, at2_cds, col1, col2);
-    } else if (Bond::DOUBLE == bt && Bond::EITHERDOUBLE == bond->getBondDir()) {
+    } else if (Bond::DOUBLE == bt &&
+               ((Bond::EITHERDOUBLE == bond->getBondDir()) ||
+                (Bond::STEREOANY == bond->getStereo()))) {
       // crossed bond
       Point2D perp = calcPerpendicular(at1_cds, at2_cds);
       perp *= double_bond_offset;

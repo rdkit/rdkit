@@ -54,10 +54,7 @@ install:
  #- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then conda install gcc_linux-64 gcc_linux-64 ; fi
  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then conda install -q -c rdkit boost=1.63; fi
  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then conda install -q py-boost=1.65.1 libboost=1.65.1 ; fi
- - conda install -q numpy pillow pandas cmake # matplotlib
- # install the conda boost packages from the RDKit binstar channel.
- # install eigen from conda-forge
- - conda install -q -c conda-forge eigen
+ - conda install -q numpy pillow pandas cmake eigen # matplotlib
 
 before_script:
  # RDKit
@@ -66,7 +63,7 @@ before_script:
  - echo $RDBASE
  - export PYTHONPATH=${RDBASE}
  - export LD_LIBRARY_PATH=${RDBASE}/lib
- - export DYLD_LIBRARY_PATH=${RDBASE}/lib
+ - export DYLD_FALLBACK_LIBRARY_PATH=${RDBASE}/lib
 
  - export PYTHON=`which python`
  - echo $PYTHON
@@ -83,8 +80,7 @@ script:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then  export CXX="clang++-3.9" ; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then  export CC="clang-3.9" ; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then  export REGEX_EXTRA="-DRDK_USE_BOOST_REGEX=ON" ; fi
-  - cmake $REGEX_EXTRA -D Python_ADDITIONAL_VERSIONS=$CONDA_PYTHON_VERSION -D PYTHON_EXECUTABLE=$PYTHON -D PYTHON_LIBRARY=`find $PY_PREFIX -name "libpython$CONDA_PYTHON_VERSION*.so"` -D PYTHON_NUMPY_INCLUDE_PATH=$PY_SP_DIR/numpy/core/include -D BOOST_ROOT=$PY_PREFIX -D Boost_NO_SYSTEM_PATHS=ON -D RDK_BUILD_AVALON_SUPPORT=ON -D RDK_BUILD_INCHI_SUPPORT=ON -DRDK_BUILD_THREADSAFE_SSS=on -DRDK_TEST_MULTITHREADED=on -DRDK_INSTALL_STATIC_LIBS=OFF -DRDK_BUILD_SWIG_WRAPPERS=OFF -DRDK_SWIG_STATIC=OFF -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_BUILD_FREESASA_SUPPORT=ON ..
-  - make -j2 VERBOSE=3
-  - make install
+  - cmake $REGEX_EXTRA -D PYTHON_EXECUTABLE=$PYTHON -D BOOST_ROOT=$PY_PREFIX -D Boost_NO_SYSTEM_PATHS=ON -D RDK_BUILD_AVALON_SUPPORT=ON -D RDK_BUILD_INCHI_SUPPORT=ON -DRDK_BUILD_THREADSAFE_SSS=on -DRDK_TEST_MULTITHREADED=on -DRDK_INSTALL_STATIC_LIBS=OFF -DRDK_BUILD_SWIG_WRAPPERS=OFF -DRDK_SWIG_STATIC=OFF -DRDK_BUILD_PYTHON_WRAPPERS=ON -DRDK_BUILD_FREESASA_SUPPORT=ON ..
+  - make -j2 install
   - ls "$PY_PREFIX/lib"
-  - LD_LIBRARY_PATH="$PY_PREFIX/lib:$PREFIX/lib;$SRC_DIR/lib;$LD_LIBRARY_PATH" DYLD_FALLBACK_LIBRARY_PATH="$PY_PREFIX/lib:$PREFIX/lib:$SRC_DIR/lib:$DYLD_LIBRARY_PATH" ctest -j2 --output-on-failure
+  - LD_LIBRARY_PATH="$PY_PREFIX/lib:$PREFIX/lib;$SRC_DIR/lib;$LD_LIBRARY_PATH" ctest -j2 --output-on-failure
