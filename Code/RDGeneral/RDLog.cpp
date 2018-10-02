@@ -20,11 +20,11 @@ namespace {
 // on windows
 boost::logging::rdLogger cerrLogger(&std::cerr);
 boost::logging::rdLogger coutLogger(&std::cout);
-}
+}  // namespace
 
 boost::logging::rdLogger *rdAppLog = nullptr;
 boost::logging::rdLogger *rdDebugLog = nullptr;
-boost::logging::rdLogger *rdInfoLog = &coutLogger;
+boost::logging::rdLogger *rdInfoLog = &cerrLogger;
 boost::logging::rdLogger *rdErrorLog = &cerrLogger;
 boost::logging::rdLogger *rdWarningLog = &cerrLogger;
 boost::logging::rdLogger *rdStatusLog = nullptr;
@@ -64,8 +64,8 @@ void disable_logs(const std::string &arg) {
     if (rdErrorLog) rdErrorLog->df_enabled = false;
   }
 };
-}
-}
+}  // namespace logging
+}  // namespace boost
 
 namespace RDLog {
 void InitLogs() {
@@ -82,7 +82,7 @@ std::ostream &toStream(std::ostream &logstrm) {
           << std::setw(2) << std::setfill('0') << int(details.tm_sec) << "] ";
   return logstrm;
 }
-}
+}  // namespace RDLog
 
 #else
 #include <boost/log/functions.hpp>
@@ -146,5 +146,5 @@ void InitLogs() {
   // start with the debug log disabled:
   logging::disable_logs("rdApp.debug");
 };
-}
+}  // namespace RDLog
 #endif
