@@ -1927,6 +1927,7 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
 }
 
 void tokenizeV3000Line(std::string line, std::vector<std::string> &tokens) {
+  tokens.clear();
   bool inQuotes = false, inParens = false;
   unsigned int start = 0;
   unsigned int pos = 0;
@@ -2084,7 +2085,6 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
   PRECONDITION(inStream, "bad stream");
   PRECONDITION(nBonds > 0, "bad bond count");
   PRECONDITION(mol, "bad molecule");
-
   std::string tempStr;
   std::vector<std::string> splitLine;
 
@@ -2094,7 +2094,8 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
   }
   for (unsigned int i = 0; i < nBonds; ++i) {
     tempStr = boost::trim_copy(getV3000Line(inStream, line));
-    tokenizeV3000Line(tempStr,splitLine);
+    std::cerr << " Bondline: " << line << " " << tempStr << std::endl;
+    tokenizeV3000Line(tempStr, splitLine);
     if (splitLine.size() < 4) {
       std::ostringstream errout;
       errout << "bond line " << line << " is too short";
@@ -2175,6 +2176,7 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
     std::ostringstream errout;
     while (lPos < splitLine.size()) {
       std::string prop, val;
+      std::cerr << " split: " << lPos << ": " << splitLine[lPos] << std::endl;
       if (!splitAssignToken(splitLine[lPos], prop, val)) {
         errout << "bad bond property '" << splitLine[lPos] << "' on line "
                << line;
