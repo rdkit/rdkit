@@ -2094,8 +2094,7 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
   }
   for (unsigned int i = 0; i < nBonds; ++i) {
     tempStr = boost::trim_copy(getV3000Line(inStream, line));
-    boost::split(splitLine, tempStr, boost::is_any_of(" \t"),
-                 boost::token_compress_on);
+    tokenizeV3000Line(tempStr,splitLine);
     if (splitLine.size() < 4) {
       std::ostringstream errout;
       errout << "bond line " << line << " is too short";

@@ -65,3 +65,14 @@ width='200px' height='200px' >
     CHECK(smiles == "CN[C@H](Cl)C(=O)O");
   }
 }
+
+TEST_CASE("Github #2040: Failure to parse V3K mol file with bonds to multi-center linkage points", "[bug,parser]") {
+  std::string rdbase = getenv("RDBASE");
+  SECTION("basics") {
+  std::string fName =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/github2040_1.mol";
+  std::unique_ptr<RWMol> mol(MolFileToMol(fName,false)); // don't sanitize yet
+  REQUIRE(mol);
+  REQUIRE(mol->getBondWithIdx(1)->getBondType()==Bond::SINGLE);
+}
+}
