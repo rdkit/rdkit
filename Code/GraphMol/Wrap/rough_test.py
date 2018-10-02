@@ -4903,9 +4903,11 @@ width='200px' height='200px' >
     self.assertTrue(Chem.MolFromSmiles("c1ccccc1").HasSubstructMatch(pat))
 
   def testGitHub1985(self):
-    # simple check
-    Chem.MolToSmarts(Chem.MolFromSmarts("[C@]"))
-
+    # simple check, this used to throw an exception
+    try:
+       Chem.MolToSmarts(Chem.MolFromSmarts("[C@]"))
+    except:
+       self.fail("[C@] caused an exception when roundtripping smarts")
     
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
