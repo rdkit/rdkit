@@ -200,14 +200,17 @@ std::string GetBondSmiles(const Bond *bond, int atomToLeftIdx, bool doKekule,
       if (dir != Bond::NONE && dir != Bond::UNKNOWN) {
         switch (dir) {
           case Bond::ENDDOWNRIGHT:
-            if (bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))
+            if (allBondsExplicit ||
+                bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))
               res = "\\";
             break;
           case Bond::ENDUPRIGHT:
-            if (bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))
+            if (allBondsExplicit ||
+                bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))
               res = "/";
             break;
           default:
+            if (allBondsExplicit) res = "-";
             break;
         }
       } else {
@@ -225,7 +228,7 @@ std::string GetBondSmiles(const Bond *bond, int atomToLeftIdx, bool doKekule,
       break;
     case Bond::DOUBLE:
       // see note above
-      if (!aromatic || !bond->getIsAromatic()) res = "=";
+      if (!aromatic || !bond->getIsAromatic() || allBondsExplicit) res = "=";
       break;
     case Bond::TRIPLE:
       res = "#";
@@ -234,14 +237,17 @@ std::string GetBondSmiles(const Bond *bond, int atomToLeftIdx, bool doKekule,
       if (dir != Bond::NONE && dir != Bond::UNKNOWN) {
         switch (dir) {
           case Bond::ENDDOWNRIGHT:
-            if (bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))
+            if (allBondsExplicit ||
+                bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))
               res = "\\";
             break;
           case Bond::ENDUPRIGHT:
-            if (bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))
+            if (allBondsExplicit ||
+                bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))
               res = "/";
             break;
           default:
+            if (allBondsExplicit || !aromatic) res = ":";
             break;
         }
       } else if (allBondsExplicit || !aromatic) {

@@ -7,7 +7,7 @@ rdkit_library(GraphMol
               AtomIterators.cpp BondIterators.cpp Aromaticity.cpp Kekulize.cpp
               MolDiscriminators.cpp ConjugHybrid.cpp AddHs.cpp
               Matrices.cpp Chirality.cpp RingInfo.cpp Conformer.cpp
-              Renumber.cpp AdjustQuery.cpp Resonance.cpp
+              Renumber.cpp AdjustQuery.cpp Resonance.cpp StereoGroup.cpp
               new_canon.cpp
               SHARED
               LINK_LIBRARIES RDGeometryLib RDGeneral
@@ -39,6 +39,7 @@ rdkit_headers(Atom.h
               ROMol.h
               RWMol.h
               SanitException.h
+              StereoGroup.h
               MonomerInfo.h
               new_canon.h
               MolBundle.h
@@ -96,6 +97,8 @@ if(RDK_BUILD_SLN_SUPPORT AND NOT CMAKE_COMPILER_IS_CLANG)
 endif()
 
 add_subdirectory(Wrap)
+
+add_subdirectory(MolStandardize)
 
 rdkit_test(graphmolTest1 test1.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol
 RDGeometryLib RDGeneral SubstructMatch ForceFieldHelpers ForceField)

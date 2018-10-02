@@ -809,7 +809,8 @@ void testNestedAtomTypes() {
 void testGithub252() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "Testing Github Issue #252: crash when calling "
-                           "getPos() with no conformer." << std::endl;
+                           "getPos() with no conformer."
+                        << std::endl;
   BOOST_LOG(rdErrorLog) << "     expect a precondition failure message below"
                         << std::endl;
 
@@ -846,6 +847,78 @@ void testGithub252() {
   BOOST_LOG(rdErrorLog) << "   Done" << std::endl;
 }
 
+void testGithub2077() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Testing github 2077: add confId argument to "
+                           "MolChemicalFeatureFactor::getFeaturesForMol()"
+                        << std::endl;
+
+  ROMol *testMol;
+  Conformer *conf;
+  std::string inText;
+  FeatSPtrList featSPtrs;
+  boost::shared_ptr<MolChemicalFeature> featSPtr;
+
+  MolChemicalFeatureFactory *factory;
+
+  MolChemicalFeatureDef::CollectionType::value_type featDef;
+
+  inText =
+      "DefineFeature HDonor1 [N,O;!H0]\n"
+      "  Family HBondDonor\n"
+      "  Weights 1.0\n"
+      "EndFeature\n"
+      "DefineFeature Carboxyl1 C(=O)[O;H1,-]\n"
+      "  Family ZnBinder\n"
+      "  Weights 1.0,1.0,1.0\n"
+      "EndFeature\n";
+
+  factory = buildFeatureFactory(inText);
+  TEST_ASSERT(factory);
+  TEST_ASSERT(factory->getNumFeatureDefs() == 2);
+
+  testMol = SmilesToMol("C(=O)O");
+  TEST_ASSERT(testMol);
+  conf = new Conformer(3);
+  testMol->addConformer(conf, true);
+  conf->setAtomPos(0, RDGeom::Point3D(0, 0, 0.0));
+  conf->setAtomPos(1, RDGeom::Point3D(1.2, 0, 0.0));
+  conf->setAtomPos(2, RDGeom::Point3D(0, 1.5, 0.0));
+
+  conf = new Conformer(3);
+  testMol->addConformer(conf, true);
+  conf->setAtomPos(0, RDGeom::Point3D(1, 0, 0.0));
+  conf->setAtomPos(1, RDGeom::Point3D(2.2, 0, 0.0));
+  conf->setAtomPos(2, RDGeom::Point3D(1, 1.5, 0.0));
+
+  {
+    featSPtrs = factory->getFeaturesForMol(*testMol);
+    TEST_ASSERT(featSPtrs.size() == 2);
+    featSPtr = *featSPtrs.begin();
+    TEST_ASSERT(featSPtr->getActiveConformer() == -1);
+    TEST_ASSERT(featSPtr->getFamily() == "HBondDonor");
+    TEST_ASSERT(featSPtr->getType() == "HDonor1");
+    TEST_ASSERT(feq(featSPtr->getPos().x, 0.0));
+    TEST_ASSERT(feq(featSPtr->getPos().y, 1.5));
+    TEST_ASSERT(feq(featSPtr->getPos().z, 0.0));
+  }
+  {
+    featSPtrs = factory->getFeaturesForMol(*testMol, "", 1);
+    TEST_ASSERT(featSPtrs.size() == 2);
+    featSPtr = *featSPtrs.begin();
+    TEST_ASSERT(featSPtr->getActiveConformer() == 1);
+    TEST_ASSERT(featSPtr->getFamily() == "HBondDonor");
+    TEST_ASSERT(featSPtr->getType() == "HDonor1");
+    TEST_ASSERT(feq(featSPtr->getPos().x, 1.0));
+    TEST_ASSERT(feq(featSPtr->getPos().y, 1.5));
+    TEST_ASSERT(feq(featSPtr->getPos().z, 0.0));
+  }
+  delete testMol;
+
+  delete factory;
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -867,4 +940,5 @@ int main() {
 #endif
   testNestedAtomTypes();
   testGithub252();
+  testGithub2077();
 }

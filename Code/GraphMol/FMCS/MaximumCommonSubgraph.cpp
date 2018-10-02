@@ -66,7 +66,8 @@ void MaximumCommonSubgraph::init() {
   void* userData = Parameters.CompareFunctionsUserData;
 
   if (Parameters.BondCompareParameters.CompleteRingsOnly ||
-      Parameters.BondCompareParameters.RingMatchesRingOnly) {
+      Parameters.BondCompareParameters.RingMatchesRingOnly ||
+      Parameters.AtomCompareParameters.RingMatchesRingOnly) {
 #ifdef FAST_SUBSTRUCT_CACHE
     RingMatchTables.init(QueryMolecule);
     Parameters.CompareFunctionsUserData = &RingMatchTables;
@@ -78,7 +79,8 @@ void MaximumCommonSubgraph::init() {
   // part of Query to Query
   if (!userData  // predefined functor - compute RingMatchTable for all targets
       && (Parameters.BondCompareParameters.CompleteRingsOnly ||
-          Parameters.BondCompareParameters.RingMatchesRingOnly))
+          Parameters.BondCompareParameters.RingMatchesRingOnly ||
+          Parameters.AtomCompareParameters.RingMatchesRingOnly))
     RingMatchTables.computeRingMatchTable(QueryMolecule, QueryMolecule,
                                           Parameters);
 
@@ -88,18 +90,20 @@ void MaximumCommonSubgraph::init() {
   for (size_t aj = 0; aj < nq; aj++)
     for (size_t ai = 0; ai < nq; ai++)
       QueryAtomMatchTable.set(
-          ai, aj, Parameters.AtomTyper(Parameters.AtomCompareParameters,
-                                       *QueryMolecule, ai, *QueryMolecule, aj,
-                                       Parameters.CompareFunctionsUserData));
+          ai, aj,
+          Parameters.AtomTyper(Parameters.AtomCompareParameters, *QueryMolecule,
+                               ai, *QueryMolecule, aj,
+                               Parameters.CompareFunctionsUserData));
 
   nq = QueryMolecule->getNumBonds();
   QueryBondMatchTable.resize(nq, nq);
   for (size_t aj = 0; aj < nq; aj++)
     for (size_t ai = 0; ai < nq; ai++)
       QueryBondMatchTable.set(
-          ai, aj, Parameters.BondTyper(Parameters.BondCompareParameters,
-                                       *QueryMolecule, ai, *QueryMolecule, aj,
-                                       Parameters.CompareFunctionsUserData));
+          ai, aj,
+          Parameters.BondTyper(Parameters.BondCompareParameters, *QueryMolecule,
+                               ai, *QueryMolecule, aj,
+                               Parameters.CompareFunctionsUserData));
   // Compute label values based on current functor and parameters for code
   // Morgan correct computation.
   unsigned currentLabelValue = 1;
@@ -519,9 +523,9 @@ std::string MaximumCommonSubgraph::generateResultSMARTS(
   for (auto&& ExcludedBond : seed.ExcludedBonds) ExcludedBond = false;
   std::vector<AtomMatchSet> atomMatchResult(mcsIdx.Targets.size());
   std::vector<unsigned> atomIdxMap(mcsIdx.QueryMolecule->getNumAtoms());
-  std::vector<std::map<unsigned, const Bond*> > bondMatchSet(
+  std::vector<std::map<unsigned, const Bond*>> bondMatchSet(
       mcsIdx.Bonds.size());  // key is unique BondType
-  std::vector<std::map<unsigned, const Atom*> > atomMatchSet(
+  std::vector<std::map<unsigned, const Atom*>> atomMatchSet(
       mcsIdx.Atoms.size());  // key is unique atomic number
 
   for (auto atom : mcsIdx.Atoms) {
@@ -1066,13 +1070,12 @@ bool MaximumCommonSubgraph::matchIncrementalFast(Seed& seed, unsigned itarget) {
                   seed.LastAddedAtomsBeginIdx  // RING: old atom, new atom in
                                                // matched substructure must be
                                                // new in seed
-              ||
-              std::find(seed.MoleculeFragment.AtomsIdx.begin() +
-                            seed.LastAddedAtomsBeginIdx,
-                        seed.MoleculeFragment.AtomsIdx.begin() +
-                            newBondAnotherAtomSeedIdx,
-                        newBondAnotherAtomQueryIdx) ==
-                  seed.MoleculeFragment.AtomsIdx.end()) {
+              || std::find(seed.MoleculeFragment.AtomsIdx.begin() +
+                               seed.LastAddedAtomsBeginIdx,
+                           seed.MoleculeFragment.AtomsIdx.begin() +
+                               newBondAnotherAtomSeedIdx,
+                           newBondAnotherAtomQueryIdx) ==
+                     seed.MoleculeFragment.AtomsIdx.end()) {
             if (!match.VisitedTargetAtoms[newBondAnotherAtomTargetIdx])
               continue;
           } else {
@@ -1140,5 +1143,5 @@ bool MaximumCommonSubgraph::matchIncrementalFast(Seed& seed, unsigned itarget) {
 #endif
   return matched;
 }
-}
+}  // namespace FMCS
 }  // namespace RDKit

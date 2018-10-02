@@ -486,19 +486,39 @@ void test3DEdges() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testInertialShapeFactor() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Inertial shape factor." << std::endl;
+  {
+    std::string pathName = getenv("RDBASE");
+    std::string sdfName =
+        pathName + "/Code/GraphMol/Descriptors/test_data/doravirine.mol";
+    bool sanitize = true, removeHs = false;
+    std::unique_ptr<RDKit::ROMol> m(MolFileToMol(sdfName, sanitize, removeHs));
+    TEST_ASSERT(m);
+
+    auto pmi1 = RDKit::Descriptors::PMI1(*m);
+    auto pmi2 = RDKit::Descriptors::PMI2(*m);
+    auto pmi3 = RDKit::Descriptors::PMI3(*m);
+    auto isf = RDKit::Descriptors::inertialShapeFactor(*m);
+    TEST_ASSERT(feq(isf, pmi2 / (pmi1 * pmi3)));
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 int main() {
   RDLog::InitLogs();
+#if 1
   testPMI1();
   testPMI2();
-
-#if 1
   testNPR1();
   testPMIEdges();
   testNPREdges();
   test3DVals();
   test3DEdges();
 #endif
+  testInertialShapeFactor();
 }

@@ -20,6 +20,7 @@
 #include <sstream>
 #include "SubstructMatchCustom.h"
 #include "MaximumCommonSubgraph.h"
+#include <GraphMol/QueryOps.h>
 
 namespace RDKit {
 
@@ -40,6 +41,8 @@ void parseMCSParametersJSON(const char* json, MCSParameters* params) {
         pt.get<bool>("MatchChiralTag", p.AtomCompareParameters.MatchChiralTag);
     p.AtomCompareParameters.MatchFormalCharge = pt.get<bool>(
         "MatchFormalCharge", p.AtomCompareParameters.MatchFormalCharge);
+    p.AtomCompareParameters.RingMatchesRingOnly = pt.get<bool>(
+        "RingMatchesRingOnly", p.AtomCompareParameters.RingMatchesRingOnly);
     p.BondCompareParameters.RingMatchesRingOnly = pt.get<bool>(
         "RingMatchesRingOnly", p.BondCompareParameters.RingMatchesRingOnly);
     p.BondCompareParameters.CompleteRingsOnly = pt.get<bool>(
@@ -107,6 +110,7 @@ MCSResult findMCS(const std::vector<ROMOL_SPTR>& mols, bool maximizeBonds,
       ps->AtomTyper = MCSAtomCompareIsotopes;
       break;
   }
+  ps->AtomCompareParameters.RingMatchesRingOnly = ringMatchesRingOnly;
   switch (bondComp) {
     case BondCompareAny:
       ps->BondTyper = MCSBondCompareAny;
@@ -136,6 +140,18 @@ bool MCSProgressCallbackTimeout(const MCSProgressData& stat,
 // PREDEFINED FUNCTORS:
 
 //=== ATOM COMPARE ========================================================
+static bool checkRingMatch(const MCSAtomCompareParameters& p, const ROMol& mol1,
+                           unsigned int atom1, const ROMol& mol2,
+                           unsigned int atom2) {
+  if (p.RingMatchesRingOnly) {
+    bool atom1inRing = queryIsAtomInRing(mol1.getAtomWithIdx(atom1));
+    bool atom2inRing = queryIsAtomInRing(mol2.getAtomWithIdx(atom2));
+    return atom1inRing == atom2inRing;
+  } else {
+    return true;
+  }
+}
+
 static bool checkAtomCharge(const MCSAtomCompareParameters& p,
                             const ROMol& mol1, unsigned int atom1,
                             const ROMol& mol2, unsigned int atom2) {
@@ -166,6 +182,7 @@ bool MCSAtomCompareAny(const MCSAtomCompareParameters& p, const ROMol& mol1,
     return false;
   if (p.MatchFormalCharge && !checkAtomCharge(p, mol1, atom1, mol2, atom2))
     return false;
+  if (p.RingMatchesRingOnly) return checkRingMatch(p, mol1, atom1, mol2, atom2);
 
   return true;
 }
@@ -182,6 +199,7 @@ bool MCSAtomCompareElements(const MCSAtomCompareParameters& p,
     return false;
   if (p.MatchFormalCharge && !checkAtomCharge(p, mol1, atom1, mol2, atom2))
     return false;
+  if (p.RingMatchesRingOnly) return checkRingMatch(p, mol1, atom1, mol2, atom2);
   return true;
 }
 
@@ -199,6 +217,7 @@ bool MCSAtomCompareIsotopes(const MCSAtomCompareParameters& p,
     return false;
   if (p.MatchFormalCharge && !checkAtomCharge(p, mol1, atom1, mol2, atom2))
     return false;
+  if (p.RingMatchesRingOnly) return checkRingMatch(p, mol1, atom1, mol2, atom2);
   return true;
 }
 
@@ -278,8 +297,8 @@ static bool checkRingMatch(const MCSBondCompareParameters& p, const ROMol& mol1,
       const INT_VECT& br1 = r1[r1i];  // ring contains bond1
       // check all target rings contained bond2
       for (unsigned long r2i : ringsIdx2) {
-        const INT_VECT& br2 = r2[r2i];   // ring contains bond2
-        if (br1.size() != br2.size())    // rings are different
+        const INT_VECT& br2 = r2[r2i];  // ring contains bond2
+        if (br1.size() != br2.size())   // rings are different
           continue;
         // compare rings as substructures
         if (ringMatchMatrixSet->isEqual(&br1, &br2,

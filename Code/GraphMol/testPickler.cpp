@@ -1301,6 +1301,41 @@ void testGithub1999() {
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
 
+void testEnhancedStereoChemistry() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG(rdInfoLog) << "Testing that enhanced stereochemistry is pickled"
+                       << std::endl;
+  RWMol m;
+  for (unsigned i = 0u; i < 6; ++i) {
+    m.addAtom(new Atom(6), false, true);
+  }
+
+  // add 3 stereo groups
+  {
+    std::vector<StereoGroup> groups;
+    std::vector<Atom *> atoms0 = {{m.getAtomWithIdx(0), m.getAtomWithIdx(1)}};
+    groups.emplace_back(RDKit::StereoGroupType::STEREO_ABSOLUTE,
+                        std::move(atoms0));
+    std::vector<Atom *> atoms1 = {{m.getAtomWithIdx(2), m.getAtomWithIdx(3)}};
+    groups.emplace_back(RDKit::StereoGroupType::STEREO_OR, std::move(atoms1));
+    std::vector<Atom *> atoms2 = {{m.getAtomWithIdx(4), m.getAtomWithIdx(5)}};
+    groups.emplace_back(RDKit::StereoGroupType::STEREO_AND, std::move(atoms2));
+    m.setStereoGroups(std::move(groups));
+  }
+
+  std::string pkl;
+  MolPickler::pickleMol(m, pkl);
+
+  std::unique_ptr<RWMol> roundTripped(new RWMol(pkl));
+
+  auto &ref_groups = m.getStereoGroups();
+  auto &new_groups = roundTripped->getStereoGroups();
+  TEST_ASSERT(ref_groups.size() == new_groups.size());
+  for (unsigned i = 0u; i < 3; ++i) {
+    TEST_ASSERT(ref_groups[i].getGroupType() == new_groups[i].getGroupType());
+  }
+}
+
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
   bool doLong = false;
@@ -1336,4 +1371,5 @@ int main(int argc, char *argv[]) {
   testGithub1563();
   testGithub1710();
   testGithub1999();
+  testEnhancedStereoChemistry();
 }

@@ -24,7 +24,7 @@
 namespace RDKit {
 
 FeatSPtrList MolChemicalFeatureFactory::getFeaturesForMol(
-    const ROMol &mol, const char *includeOnly) const {
+    const ROMol &mol, const char *includeOnly, int confId) const {
   PRECONDITION(includeOnly, "bad limits");
   std::string limits(includeOnly);
 
@@ -33,8 +33,7 @@ FeatSPtrList MolChemicalFeatureFactory::getFeaturesForMol(
 #endif
   FeatSPtrList res;
   int idx = 1;
-  typedef std::vector<std::pair<std::string, std::set<int> > >
-      MatchSetCollection;
+  typedef std::vector<std::pair<std::string, std::set<int>>> MatchSetCollection;
   MatchSetCollection matchSets;
   for (auto featDefIt = beginFeatureDefs(); featDefIt != endFeatureDefs();
        featDefIt++) {
@@ -73,6 +72,7 @@ FeatSPtrList MolChemicalFeatureFactory::getFeaturesForMol(
           // Set up the feature:
           auto *newFeat =
               new MolChemicalFeature(&mol, this, featDef.get(), idx++);
+          newFeat->setActiveConformer(confId);
           MolChemicalFeature::AtomPtrContainer &atoms = newFeat->d_atoms;
           atoms.resize(match.size());
 
@@ -119,4 +119,4 @@ MolChemicalFeatureFactory *buildFeatureFactory(std::istream &inStream) {
 
   return res;
 }
-}
+}  // namespace RDKit

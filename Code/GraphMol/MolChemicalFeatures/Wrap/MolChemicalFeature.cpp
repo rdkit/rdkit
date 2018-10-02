@@ -51,8 +51,9 @@ struct feat_wrapper {
         .def("GetType", &MolChemicalFeature::getType,
              "Get the specific type for the feature",
              python::return_value_policy<python::copy_const_reference>())
-        .def("GetPos", (RDGeom::Point3D (MolChemicalFeature::*)(int) const) &
-                           MolChemicalFeature::getPos,
+        .def("GetPos",
+             (RDGeom::Point3D(MolChemicalFeature::*)(int) const) &
+                 MolChemicalFeature::getPos,
              (python::arg("self"), python::arg("confId") = -1),
              "Get the location of the chemical feature")
         .def("GetAtomIds", getFeatAtomIds,
@@ -64,8 +65,12 @@ struct feat_wrapper {
              "Get the factory used to generate this feature",
              python::return_value_policy<python::reference_existing_object>())
         .def("ClearCache", &MolChemicalFeature::clearCache,
-             "Clears the cache used to store position information.");
+             "Clears the cache used to store position information.")
+        .def("SetActiveConformer", &MolChemicalFeature::setActiveConformer,
+             "Sets the conformer to use (must be associated with a molecule).")
+        .def("GetActiveConformer", &MolChemicalFeature::getActiveConformer,
+             "Gets the conformer to use.");
   };
 };
-}
+}  // namespace RDKit
 void wrap_MolChemicalFeat() { RDKit::feat_wrapper::wrap(); }

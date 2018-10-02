@@ -64,6 +64,7 @@ MCSResult *FindMCSWrapper(python::object mols, bool maximizeBonds,
   p.InitialSeed = seedSmarts;
   p.AtomCompareParameters.MatchValences = matchValences;
   p.AtomCompareParameters.MatchChiralTag = matchChiralTag;
+  p.AtomCompareParameters.RingMatchesRingOnly = ringMatchesRingOnly;
   SetMCSAtomTyper(p, atomComp);
   SetMCSBondTyper(p, bondComp);
   p.BondCompareParameters.RingMatchesRingOnly = ringMatchesRingOnly;
@@ -93,7 +94,7 @@ MCSResult *FindMCSWrapper2(python::object mols, const MCSParameters &params) {
   }
   return res;
 }
-}
+}  // namespace RDKit
 namespace {
 struct mcsresult_wrapper {
   static void wrap() {
@@ -109,7 +110,7 @@ struct mcsresult_wrapper {
                       "if True, the MCS calculation did not finish");
   }
 };
-}
+}  // namespace
 
 BOOST_PYTHON_MODULE(rdFMCS) {
   python::scope().attr("__doc__") =
@@ -185,7 +186,10 @@ BOOST_PYTHON_MODULE(rdFMCS) {
                      "include atom chirality in the match")
       .def_readwrite("MatchFormalCharge",
                      &RDKit::MCSAtomCompareParameters::MatchFormalCharge,
-                     "include formal charge in the match");
+                     "include formal charge in the match")
+      .def_readwrite("RingMatchesRingOnly",
+                     &RDKit::MCSAtomCompareParameters::RingMatchesRingOnly,
+                     "ring atoms are only allowed to match other ring atoms");
   python::class_<RDKit::MCSBondCompareParameters, boost::noncopyable>(
       "MCSBondCompareParameters",
       "Parameters controlling how bond-bond matching is done")

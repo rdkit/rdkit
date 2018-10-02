@@ -218,8 +218,8 @@ void RWMol::removeAtom(Atom *atom) {
 
   // loop over all atoms with higher indices and update their indices
   for (unsigned int i = idx + 1; i < getNumAtoms(); i++) {
-    Atom *atom = getAtomWithIdx(i);
-    atom->setIdx(i - 1);
+    Atom *higher_index_atom = getAtomWithIdx(i);
+    higher_index_atom->setIdx(i - 1);
   }
 
   // do the same with the coordinates in the conformations
@@ -257,6 +257,9 @@ void RWMol::removeAtom(Atom *atom) {
       }
     }
   }
+
+  // Remove any stereo group which includes the atom being deleted
+  removeGroupsWithAtom(atom, d_stereo_groups);
 
   // clear computed properties and reset our ring info structure
   // they are pretty likely to be wrong now:

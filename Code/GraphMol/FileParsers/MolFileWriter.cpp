@@ -111,13 +111,14 @@ int getQueryBondSymbol(const Bond *bond) {
           }
         }
       }
-    } else if( qry->getDescription() == "SingleOrAromaticBond" && !qry->getNegation()) {
+    } else if (qry->getDescription() == "SingleOrAromaticBond" &&
+               !qry->getNegation()) {
       res = 6;
     }
   }
   return res;
 }
-}
+}  // namespace
 
 const std::string GetMolFileChargeInfo(const RWMol &mol) {
   std::stringstream res;
@@ -276,9 +277,8 @@ const std::string GetMolFileQueryInfo(const RWMol &mol) {
       wrote_query = true;
     }
     std::string molFileValue;
-    if (!wrote_query &&
-        (*atomIt)->getPropIfPresent(common_properties::molFileValue,
-                                    molFileValue))
+    if (!wrote_query && (*atomIt)->getPropIfPresent(
+                            common_properties::molFileValue, molFileValue))
       ss << "V  " << std::setw(3) << (*atomIt)->getIdx() + 1 << " "
          << molFileValue << std::endl;
   }
@@ -510,7 +510,7 @@ unsigned int getAtomParityFlag(const Atom *atom, const Conformer *conf) {
   }
   return 0;
 }
-}
+}  // namespace
 
 bool hasNonDefaultValence(const Atom *atom) {
   if (atom->getNumRadicalElectrons() != 0) return true;
@@ -656,7 +656,7 @@ class RequiresV3000Exception : public std::runtime_error {
   explicit RequiresV3000Exception()
       : std::runtime_error("RequiresV3000Exception"){};
 };
-}
+}  // namespace
 
 int BondGetMolFileSymbol(const Bond *bond) {
   PRECONDITION(bond, "");
@@ -778,7 +778,7 @@ void GetMolFileBondStereoInfo(const Bond *bond, const INT_MAP_INT &wedgeBonds,
           boost::tie(beg, end) =
               bond->getOwningMol().getAtomBonds(bond->getBeginAtom());
           while (beg != end && !nbrHasDir) {
-            const Bond* nbrBond = bond->getOwningMol()[*beg];
+            const Bond *nbrBond = bond->getOwningMol()[*beg];
             if (nbrBond->getBondType() == Bond::SINGLE &&
                 (nbrBond->getBondDir() == Bond::ENDUPRIGHT ||
                  nbrBond->getBondDir() == Bond::ENDDOWNRIGHT)) {
@@ -789,7 +789,7 @@ void GetMolFileBondStereoInfo(const Bond *bond, const INT_MAP_INT &wedgeBonds,
           boost::tie(beg, end) =
               bond->getOwningMol().getAtomBonds(bond->getEndAtom());
           while (beg != end && !nbrHasDir) {
-            const Bond* nbrBond = bond->getOwningMol()[*beg];
+            const Bond *nbrBond = bond->getOwningMol()[*beg];
             if (nbrBond->getBondType() == Bond::SINGLE &&
                 (nbrBond->getBondDir() == Bond::ENDUPRIGHT ||
                  nbrBond->getBondDir() == Bond::ENDDOWNRIGHT)) {
@@ -1009,6 +1009,42 @@ const std::string GetV3000MolFileBondLine(const Bond *bond,
   return ss.str();
 }
 
+void appendEnhancedStereoGroups(std::string &res, const RWMol &tmol) {
+  unsigned or_count = 1u, and_count = 1u;
+  auto &stereo_groups = tmol.getStereoGroups();
+  if (!stereo_groups.empty()) {
+    res += "M  V30 BEGIN COLLECTION\n";
+    for (auto &&group : stereo_groups) {
+      res += "M  V30 MDLV30/";
+      switch (group.getGroupType()) {
+        case RDKit::StereoGroupType::STEREO_ABSOLUTE:
+          res += "STEABS";
+          break;
+        case RDKit::StereoGroupType::STEREO_OR:
+          res += "STEREL";
+          res += boost::lexical_cast<std::string>(or_count);
+          ++or_count;
+          break;
+        case RDKit::StereoGroupType::STEREO_AND:
+          res += "STERAC";
+          res += boost::lexical_cast<std::string>(and_count);
+          ++and_count;
+          break;
+      }
+      res += " ATOMS=(";
+      auto& atoms = group.getAtoms();
+      res += boost::lexical_cast<std::string>(atoms.size());
+      for (auto &&atom : atoms) {
+        res += ' ';
+        // atoms are 1 indexed in molfiles
+        res += boost::lexical_cast<std::string>(atom->getIdx() + 1);
+      }
+      res += ")\n";
+    }
+    res += "M  V30 END COLLECTION\n";
+  }
+}
+
 //------------------------------------------------
 //
 //  gets a mol block as a string
@@ -1073,7 +1109,8 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
   if (forceV3000)
     isV3000 = true;
   else
-    isV3000 = (nAtoms > 999) || (nBonds > 999);
+    isV3000 =
+        (nAtoms > 999) || (nBonds > 999) || !tmol.getStereoGroups().empty();
 
   // the counts line:
   std::stringstream ss;
@@ -1157,6 +1194,8 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
       }
       res += "M  V30 END BOND\n";
     }
+    appendEnhancedStereoGroups(res, tmol);
+
     res += "M  V30 END CTAB\n";
   }
   res += "M  END\n";
@@ -1219,4 +1258,4 @@ void MolToMolFile(const ROMol &mol, const std::string &fName,
   *outStream << outString;
   delete outStream;
 }
-}
+}  // namespace RDKit

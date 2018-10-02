@@ -260,6 +260,28 @@ def MolToMPL(mol, size=(300, 300), kekulize=True, wedgeBonds=True, imageType=Non
   canvas._figure.set_size_inches(float(size[0]) / 100, float(size[1]) / 100)
   return canvas._figure
 
+import numpy
+def _bivariate_normal(X, Y, sigmax=1.0, sigmay=1.0,
+                     mux=0.0, muy=0.0, sigmaxy=0.0):
+    """
+
+    This is the implementation from matplotlib:
+    https://github.com/matplotlib/matplotlib/blob/81e8154dbba54ac1607b21b22984cabf7a6598fa/lib/matplotlib/mlab.py#L1866
+    it was deprecated in v2.2 of matplotlib, so we are including it here.
+
+
+    Bivariate Gaussian distribution for equal shape *X*, *Y*.
+    See `bivariate normal
+    <http://mathworld.wolfram.com/BivariateNormalDistribution.html>`_
+    at mathworld.
+    """
+    Xmu = X-mux
+    Ymu = Y-muy
+
+    rho = sigmaxy/(sigmax*sigmay)
+    z = Xmu**2/sigmax**2 + Ymu**2/sigmay**2 - 2*rho*Xmu*Ymu/(sigmax*sigmay)
+    denom = 2*numpy.pi*sigmax*sigmay*numpy.sqrt(1-rho**2)
+    return numpy.exp(-z/(2*(1-rho**2))) / denom
 
 def calcAtomGaussians(mol, a=0.03, step=0.02, weights=None):
   """
@@ -277,16 +299,14 @@ fig.savefig('coumlogps.colored.png',bbox_inches='tight')
 
 
   """
-  import numpy
-  from matplotlib import mlab
   x = numpy.arange(0, 1, step)
   y = numpy.arange(0, 1, step)
   X, Y = numpy.meshgrid(x, y)
   if weights is None:
     weights = [1.] * mol.GetNumAtoms()
-  Z = mlab.bivariate_normal(X, Y, a, a, mol._atomPs[0][0], mol._atomPs[0][1]) * weights[0]
+  Z = _bivariate_normal(X, Y, a, a, mol._atomPs[0][0], mol._atomPs[0][1]) * weights[0]
   for i in range(1, mol.GetNumAtoms()):
-    Zp = mlab.bivariate_normal(X, Y, a, a, mol._atomPs[i][0], mol._atomPs[i][1])
+    Zp = _bivariate_normal(X, Y, a, a, mol._atomPs[i][0], mol._atomPs[i][1])
     Z += Zp * weights[i]
   return X, Y, Z
 
@@ -305,7 +325,10 @@ def MolsToImage(mols, subImgSize=(200, 200), legends=None, **kwargs):
     res.paste(MolToImage(mol, subImgSize, legend=legends[i], **kwargs), (i * subImgSize[0], 0))
   return res
 
+
 from io import BytesIO
+
+
 def _drawerToImage(d2d):
   try:
     import Image
@@ -314,7 +337,8 @@ def _drawerToImage(d2d):
   sio = BytesIO(d2d.GetDrawingText())
   return Image.open(sio)
 
-def _okToKekulizeMol(mol,kekulize):
+
+def _okToKekulizeMol(mol, kekulize):
   if kekulize:
     for bond in mol.GetBonds():
       if bond.GetIsAromatic() and bond.HasQuery():
@@ -322,16 +346,17 @@ def _okToKekulizeMol(mol,kekulize):
     return True
   return kekulize
 
+
 def _moltoimg(mol, sz, highlights, legend, returnPNG=False, **kwargs):
   try:
     mol.GetAtomWithIdx(0).GetExplicitValence()
   except RuntimeError:
     mol.UpdatePropertyCache(False)
 
-  kekulize=_okToKekulizeMol(mol,kwargs.get('kekulize', True))
+  kekulize = _okToKekulizeMol(mol, kwargs.get('kekulize', True))
 
   try:
-    mc = rdMolDraw2D.PrepareMolForDrawing(mol,kekulize=kekulize)
+    mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulize)
   except ValueError:  # <- can happen on a kekulization failure
     mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=False)
   if not hasattr(rdMolDraw2D, 'MolDraw2DCairo'):
@@ -345,10 +370,11 @@ def _moltoimg(mol, sz, highlights, legend, returnPNG=False, **kwargs):
     d2d.DrawMolecule(mc, legend=legend, highlightAtoms=highlights)
     d2d.FinishDrawing()
     if returnPNG:
-        img = d2d.GetDrawingText()
+      img = d2d.GetDrawingText()
     else:
-        img = _drawerToImage(d2d)
+      img = _drawerToImage(d2d)
   return img
+
 
 def _moltoSVG(mol, sz, highlights, legend, kekulize, **kwargs):
   try:
@@ -356,7 +382,7 @@ def _moltoSVG(mol, sz, highlights, legend, kekulize, **kwargs):
   except RuntimeError:
     mol.UpdatePropertyCache(False)
 
-  kekulize=_okToKekulizeMol(mol,kekulize)
+  kekulize = _okToKekulizeMol(mol, kekulize)
 
   try:
     mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulize)
@@ -367,7 +393,6 @@ def _moltoSVG(mol, sz, highlights, legend, kekulize, **kwargs):
   d2d.FinishDrawing()
   svg = d2d.GetDrawingText()
   return svg
-
 
 
 def _MolsToGridImage(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
@@ -398,17 +423,18 @@ def _MolsToGridImage(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
         res.paste(img, (col * subImgSize[0], row * subImgSize[1]))
   else:
     fullSize = (molsPerRow * subImgSize[0], nRows * subImgSize[1])
-    d2d = rdMolDraw2D.MolDraw2DCairo(fullSize[0],fullSize[1],subImgSize[0], subImgSize[1])
-    d2d.DrawMolecules(list(mols),legends=legends,highlightAtoms=highlightAtomLists,
-                      highlightBonds=highlightBondLists,**kwargs)
+    d2d = rdMolDraw2D.MolDraw2DCairo(fullSize[0], fullSize[1], subImgSize[0], subImgSize[1])
+    d2d.DrawMolecules(
+      list(mols), legends=legends, highlightAtoms=highlightAtomLists,
+      highlightBonds=highlightBondLists, **kwargs)
     d2d.FinishDrawing()
     res = _drawerToImage(d2d)
 
   return res
 
 
-def _MolsToGridSVG(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
-                   highlightAtomLists=None, highlightBondLists=None, **kwargs):
+def _MolsToGridSVG(mols, molsPerRow=3, subImgSize=(200, 200), legends=None, highlightAtomLists=None,
+                   highlightBondLists=None, **kwargs):
   """ returns an SVG of the grid
   """
   if legends is None:
@@ -422,34 +448,31 @@ def _MolsToGridSVG(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
 
   fullSize = (molsPerRow * subImgSize[0], nRows * subImgSize[1])
 
-  d2d = rdMolDraw2D.MolDraw2DSVG(fullSize[0],fullSize[1],subImgSize[0], subImgSize[1])
-  d2d.DrawMolecules(mols,legends=legends,highlightAtoms=highlightAtomLists,
-                    highlightBonds=highlightBondLists,**kwargs)
+  d2d = rdMolDraw2D.MolDraw2DSVG(fullSize[0], fullSize[1], subImgSize[0], subImgSize[1])
+  d2d.DrawMolecules(mols, legends=legends, highlightAtoms=highlightAtomLists,
+                    highlightBonds=highlightBondLists, **kwargs)
   d2d.FinishDrawing()
   res = d2d.GetDrawingText()
   return res
 
 
 def MolsToGridImage(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
-                    highlightAtomLists=None, highlightBondLists=None,
-                    useSVG=False, **kwargs):
-  if legends and len(legends)>len(mols):
+                    highlightAtomLists=None, highlightBondLists=None, useSVG=False, **kwargs):
+  if legends and len(legends) > len(mols):
     legends = legends[:len(mols)]
-  if highlightAtomLists and len(highlightAtomLists)>len(mols):
+  if highlightAtomLists and len(highlightAtomLists) > len(mols):
     highlightAtomLists = highlightAtomLists[:len(mols)]
-  if highlightBondLists and len(highlightBondLists)>len(mols):
+  if highlightBondLists and len(highlightBondLists) > len(mols):
     highlightBondLists = highlightBondLists[:len(mols)]
 
   if useSVG:
     return _MolsToGridSVG(mols, molsPerRow=molsPerRow, subImgSize=subImgSize, legends=legends,
                           highlightAtomLists=highlightAtomLists,
-                          highlightBondLists=highlightBondLists,
-                          **kwargs)
+                          highlightBondLists=highlightBondLists, **kwargs)
   else:
     return _MolsToGridImage(mols, molsPerRow=molsPerRow, subImgSize=subImgSize, legends=legends,
                             highlightAtomLists=highlightAtomLists,
-                            highlightBondLists=highlightBondLists,
-                            **kwargs)
+                            highlightBondLists=highlightBondLists, **kwargs)
 
 
 def _legacyReactionToImage(rxn, subImgSize=(200, 200), **kwargs):
@@ -492,19 +515,20 @@ def _legacyReactionToImage(rxn, subImgSize=(200, 200), **kwargs):
 
 def ReactionToImage(rxn, subImgSize=(200, 200), useSVG=False, **kwargs):
   if not useSVG and not hasattr(rdMolDraw2D, 'MolDraw2DCairo'):
-      return _legacyReactionToImage(rxn,subImgSize=subImgSize,**kwargs)
+    return _legacyReactionToImage(rxn, subImgSize=subImgSize, **kwargs)
   else:
-      width = subImgSize[0] * (rxn.GetNumReactantTemplates() + rxn.GetNumProductTemplates() + 1)
-      if useSVG:
-          d = rdMolDraw2D.MolDraw2DSVG(width, subImgSize[1])
-      else:
-          d = rdMolDraw2D.MolDraw2DCairo(width, subImgSize[1])
-      d.DrawReaction(rxn,**kwargs)
-      d.FinishDrawing()
-      if useSVG:
-          return d.GetDrawingText()
-      else:
-          return _drawerToImage(d)
+    width = subImgSize[0] * (rxn.GetNumReactantTemplates() + rxn.GetNumProductTemplates() + 1)
+    if useSVG:
+      d = rdMolDraw2D.MolDraw2DSVG(width, subImgSize[1])
+    else:
+      d = rdMolDraw2D.MolDraw2DCairo(width, subImgSize[1])
+    d.DrawReaction(rxn, **kwargs)
+    d.FinishDrawing()
+    if useSVG:
+      return d.GetDrawingText()
+    else:
+      return _drawerToImage(d)
+
 
 def MolToQPixmap(mol, size=(300, 300), kekulize=True, wedgeBonds=True, fitImage=False, options=None,
                  **kwargs):
@@ -538,17 +562,35 @@ def DrawMorganBit(mol, bitId, bitInfo, whichExample=0, **kwargs):
   return DrawMorganEnv(mol, atomId, radius, **kwargs)
 
 
+def DrawMorganBits(tpls, **kwargs):
+  envs = []
+  for tpl in tpls:
+    if len(tpl)==4:
+      mol, bitId, bitInfo, whichExample=tpl
+    else:
+      mol, bitId, bitInfo=tpl
+      whichExample=0
+
+    atomId, radius = bitInfo[bitId][whichExample]
+    envs.append((mol, atomId, radius))
+  return DrawMorganEnvs(envs, **kwargs)
+
+
 # adapted from the function drawFPBits._drawFPBit() from the CheTo package
 # original author Nadine Schneider
-def DrawMorganEnv(mol, atomId, radius, molSize=(150, 150), baseRad=0.3, svg=True,
-                  aromaticColor=(0.9, 0.9, 0.2), ringColor=(0.8, 0.8, 0.8),
-                  centerColor=(0.6, 0.6, 0.9), extraColor=(0.9, 0.9, 0.9), **kwargs):
+from collections import namedtuple
+FingerprintEnv = namedtuple(
+  'FingerprintEnv',
+  ('submol', 'highlightAtoms', 'atomColors', 'highlightBonds', 'bondColors', 'highlightRadii'))
+
+def _getMorganEnv(mol, atomId, radius, baseRad, aromaticColor, ringColor, centerColor, extraColor,
+                  **kwargs):
   if not mol.GetNumConformers():
     rdDepictor.Compute2DCoords(mol)
   bitPath = Chem.FindAtomEnvironmentOfRadiusN(mol, radius, atomId)
 
   # get the atoms for highlighting
-  atomsToUse = set()
+  atomsToUse = set((atomId, ))
   for b in bitPath:
     atomsToUse.add(mol.GetBondWithIdx(b).GetBeginAtomIdx())
     atomsToUse.add(mol.GetBondWithIdx(b).GetEndAtomIdx())
@@ -580,15 +622,6 @@ def DrawMorganEnv(mol, atomId, radius, molSize=(150, 150), baseRad=0.3, svg=True
       endAtom = amap[mol.GetBondWithIdx(b).GetEndAtomIdx()]
       envSubmol.append(submol.GetBondBetweenAtoms(beginAtom, endAtom).GetIdx())
 
-  # Drawing
-  if svg:
-    drawer = rdMolDraw2D.MolDraw2DSVG(molSize[0], molSize[1])
-  else:
-    drawer = rdMolDraw2D.MolDraw2DCairo(molSize[0], molSize[1])
-
-  drawopt = drawer.drawOptions()
-  drawopt.continuousHighlight = False
-
   # color all atoms of the submol in gray which are not part of the bit
   # highlight atoms which are in rings
   atomcolors, bondcolors = {}, {}
@@ -608,56 +641,69 @@ def DrawMorganEnv(mol, atomId, radius, molSize=(150, 150), baseRad=0.3, svg=True
         highlightAtoms.append(amap[aidx])
         highlightRadii[amap[aidx]] = baseRad
     else:
-      drawopt.atomLabels[amap[aidx]] = '*'
+      #drawopt.atomLabels[amap[aidx]] = '*'
+      submol.GetAtomWithIdx(amap[aidx]).SetAtomicNum(0)
+      submol.GetAtomWithIdx(amap[aidx]).UpdatePropertyCache()
   color = extraColor
   for bid in submol.GetBonds():
     bidx = bid.GetIdx()
     if bidx not in envSubmol:
       bondcolors[bidx] = color
       highlightBonds.append(bidx)
+  return FingerprintEnv(submol, highlightAtoms, atomcolors, highlightBonds, bondcolors, highlightRadii)
 
-  drawer.DrawMolecule(submol, highlightAtoms=highlightAtoms, highlightAtomColors=atomcolors,
-                      highlightBonds=highlightBonds, highlightBondColors=bondcolors,
-                      highlightAtomRadii=highlightRadii, **kwargs)
+
+def DrawMorganEnvs(envs, molsPerRow=3, subImgSize=(150, 150), baseRad=0.3, useSVG=True,
+                   aromaticColor=(0.9, 0.9, 0.2), ringColor=(0.8, 0.8, 0.8),
+                   centerColor=(0.6, 0.6, 0.9), extraColor=(0.9, 0.9, 0.9), legends=None, **kwargs):
+  submols = []
+  highlightAtoms = []
+  atomColors = []
+  highlightBonds = []
+  bondColors = []
+  highlightRadii = []
+  for mol, atomId, radius in envs:
+    menv = _getMorganEnv(mol, atomId, radius, baseRad, aromaticColor, ringColor, centerColor,
+                         extraColor, **kwargs)
+    submols.append(menv.submol)
+    highlightAtoms.append(menv.highlightAtoms)
+    atomColors.append(menv.atomColors)
+    highlightBonds.append(menv.highlightBonds)
+    bondColors.append(menv.bondColors)
+    highlightRadii.append(menv.highlightRadii)
+
+  if legends is None:
+    legends = [''] * len(envs)
+
+  nRows = len(envs) // molsPerRow
+  if len(envs) % molsPerRow:
+    nRows += 1
+
+  fullSize = (molsPerRow * subImgSize[0], nRows * subImgSize[1])
+  # Drawing
+  if useSVG:
+    drawer = rdMolDraw2D.MolDraw2DSVG(fullSize[0], fullSize[1], subImgSize[0], subImgSize[1])
+  else:
+    drawer = rdMolDraw2D.MolDraw2DCairo(fullSize[0], fullSize[1], subImgSize[0], subImgSize[1])
+
+  drawopt = drawer.drawOptions()
+  drawopt.continuousHighlight = False
+
+  drawer.DrawMolecules(submols, legends=legends, highlightAtoms=highlightAtoms,
+                       highlightAtomColors=atomColors, highlightBonds=highlightBonds,
+                       highlightBondColors=bondColors, highlightAtomRadii=highlightRadii, **kwargs)
   drawer.FinishDrawing()
   return drawer.GetDrawingText()
 
 
-def DrawRDKitBit(mol, bitId, bitInfo, whichExample=0, **kwargs):
-  bondPath = bitInfo[bitId][whichExample]
-  return DrawRDKitEnv(mol, bondPath, **kwargs)
-
-
-def DrawRDKitEnv(mol, bondPath, molSize=(150, 150), baseRad=0.3, svg=True,
-                 aromaticColor=(0.9, 0.9, 0.2), extraColor=(0.9, 0.9,
-                                                            0.9), nonAromaticColor=None, **kwargs):
-  if not mol.GetNumConformers():
-    rdDepictor.Compute2DCoords(mol)
-
-  # get the atoms for highlighting
-  atomsToUse = set()
-  for b in bondPath:
-    atomsToUse.add(mol.GetBondWithIdx(b).GetBeginAtomIdx())
-    atomsToUse.add(mol.GetBondWithIdx(b).GetEndAtomIdx())
-
-  # set the coordinates of the submol based on the coordinates of the original molecule
-  amap = {}
-  submol = Chem.PathToSubmol(mol, bondPath, atomMap=amap)
-  Chem.FastFindRings(submol)
-  conf = Chem.Conformer(submol.GetNumAtoms())
-  confOri = mol.GetConformer(0)
-  for i1, i2 in amap.items():
-    conf.SetAtomPosition(i2, confOri.GetAtomPosition(i1))
-  submol.AddConformer(conf)
-  envSubmol = []
-  for i1, i2 in amap.items():
-    for b in bondPath:
-      beginAtom = amap[mol.GetBondWithIdx(b).GetBeginAtomIdx()]
-      endAtom = amap[mol.GetBondWithIdx(b).GetEndAtomIdx()]
-      envSubmol.append(submol.GetBondBetweenAtoms(beginAtom, endAtom).GetIdx())
+def DrawMorganEnv(mol, atomId, radius, molSize=(150, 150), baseRad=0.3, useSVG=True,
+                  aromaticColor=(0.9, 0.9, 0.2), ringColor=(0.8, 0.8, 0.8),
+                  centerColor=(0.6, 0.6, 0.9), extraColor=(0.9, 0.9, 0.9), **kwargs):
+  menv = _getMorganEnv(mol, atomId, radius, baseRad, aromaticColor, ringColor, centerColor,
+                       extraColor, **kwargs)
 
   # Drawing
-  if svg:
+  if useSVG:
     drawer = rdMolDraw2D.MolDraw2DSVG(molSize[0], molSize[1])
   else:
     drawer = rdMolDraw2D.MolDraw2DCairo(molSize[0], molSize[1])
@@ -665,31 +711,141 @@ def DrawRDKitEnv(mol, bondPath, molSize=(150, 150), baseRad=0.3, svg=True,
   drawopt = drawer.drawOptions()
   drawopt.continuousHighlight = False
 
-  # color all atoms of the submol in gray which are not part of the bit
-  # highlight atoms which are in rings
-  atomcolors, bondcolors = {}, {}
-  highlightAtoms, highlightBonds = [], []
-  highlightRadii = {}
-  for aidx in amap.keys():
-    if aidx in atomsToUse:
-      color = None
-      if aromaticColor and mol.GetAtomWithIdx(aidx).GetIsAromatic():
-        color = aromaticColor
-      elif nonAromaticColor and not mol.GetAtomWithIdx(aidx).GetIsAromatic():
-        color = nonAromaticColor
-      if color is not None:
-        atomcolors[amap[aidx]] = color
-        highlightAtoms.append(amap[aidx])
-        highlightRadii[amap[aidx]] = baseRad
-  color = extraColor
-  for bid in submol.GetBonds():
-    bidx = bid.GetIdx()
-    if bidx not in envSubmol:
-      bondcolors[bidx] = color
-      highlightBonds.append(bidx)
+  drawer.DrawMolecule(menv.submol, highlightAtoms=menv.highlightAtoms,
+                      highlightAtomColors=menv.atomColors, highlightBonds=menv.highlightBonds,
+                      highlightBondColors=menv.bondColors, highlightAtomRadii=menv.highlightRadii,
+                      **kwargs)
+  drawer.FinishDrawing()
+  return drawer.GetDrawingText()
 
-  drawer.DrawMolecule(submol, highlightAtoms=highlightAtoms, highlightAtomColors=atomcolors,
-                      highlightBonds=highlightBonds, highlightBondColors=bondcolors,
-                      highlightAtomRadii=highlightRadii, **kwargs)
+
+def DrawRDKitBits(tpls, **kwargs):
+  envs = []
+  for tpl in tpls:
+    if len(tpl)==4:
+      mol, bitId, bitInfo, whichExample=tpl
+    else:
+      mol, bitId, bitInfo=tpl
+      whichExample=0
+
+    bondpath = bitInfo[bitId][whichExample]
+    envs.append((mol, bondpath))
+  return DrawRDKitEnvs(envs, **kwargs)
+
+def DrawRDKitBit(mol, bitId, bitInfo, whichExample=0, **kwargs):
+  bondPath = bitInfo[bitId][whichExample]
+  return DrawRDKitEnv(mol, bondPath, **kwargs)
+
+def _getRDKitEnv(mol,bondPath,baseRad,aromaticColor,extraColor,nonAromaticColor,**kwargs):
+    if not mol.GetNumConformers():
+      rdDepictor.Compute2DCoords(mol)
+
+    # get the atoms for highlighting
+    atomsToUse = set()
+    for b in bondPath:
+      atomsToUse.add(mol.GetBondWithIdx(b).GetBeginAtomIdx())
+      atomsToUse.add(mol.GetBondWithIdx(b).GetEndAtomIdx())
+
+    # set the coordinates of the submol based on the coordinates of the original molecule
+    amap = {}
+    submol = Chem.PathToSubmol(mol, bondPath, atomMap=amap)
+    Chem.FastFindRings(submol)
+    conf = Chem.Conformer(submol.GetNumAtoms())
+    confOri = mol.GetConformer(0)
+    for i1, i2 in amap.items():
+      conf.SetAtomPosition(i2, confOri.GetAtomPosition(i1))
+    submol.AddConformer(conf)
+    envSubmol = []
+    for i1, i2 in amap.items():
+      for b in bondPath:
+        beginAtom = amap[mol.GetBondWithIdx(b).GetBeginAtomIdx()]
+        endAtom = amap[mol.GetBondWithIdx(b).GetEndAtomIdx()]
+        envSubmol.append(submol.GetBondBetweenAtoms(beginAtom, endAtom).GetIdx())
+
+    # color all atoms of the submol in gray which are not part of the bit
+    # highlight atoms which are in rings
+    atomcolors, bondcolors = {}, {}
+    highlightAtoms, highlightBonds = [], []
+    highlightRadii = {}
+    for aidx in amap.keys():
+      if aidx in atomsToUse:
+        color = None
+        if aromaticColor and mol.GetAtomWithIdx(aidx).GetIsAromatic():
+          color = aromaticColor
+        elif nonAromaticColor and not mol.GetAtomWithIdx(aidx).GetIsAromatic():
+          color = nonAromaticColor
+        if color is not None:
+          atomcolors[amap[aidx]] = color
+          highlightAtoms.append(amap[aidx])
+          highlightRadii[amap[aidx]] = baseRad
+    color = extraColor
+    for bid in submol.GetBonds():
+      bidx = bid.GetIdx()
+      if bidx not in envSubmol:
+        bondcolors[bidx] = color
+        highlightBonds.append(bidx)
+    return FingerprintEnv(submol, highlightAtoms, atomcolors, highlightBonds, bondcolors, highlightRadii)
+
+
+def DrawRDKitEnvs(envs, molsPerRow=3, subImgSize=(150, 150), baseRad=0.3, useSVG=True,
+                  aromaticColor=(0.9, 0.9, 0.2), extraColor=(0.9, 0.9,0.9),
+                  nonAromaticColor=None, legends=None, **kwargs):
+  submols = []
+  highlightAtoms = []
+  atomColors = []
+  highlightBonds = []
+  bondColors = []
+  highlightRadii = []
+  for mol, bondpath in envs:
+    menv = _getRDKitEnv(mol, bondpath, baseRad, aromaticColor, extraColor, nonAromaticColor,
+                        **kwargs)
+    submols.append(menv.submol)
+    highlightAtoms.append(menv.highlightAtoms)
+    atomColors.append(menv.atomColors)
+    highlightBonds.append(menv.highlightBonds)
+    bondColors.append(menv.bondColors)
+    highlightRadii.append(menv.highlightRadii)
+
+  if legends is None:
+    legends = [''] * len(envs)
+
+  nRows = len(envs) // molsPerRow
+  if len(envs) % molsPerRow:
+    nRows += 1
+
+  fullSize = (molsPerRow * subImgSize[0], nRows * subImgSize[1])
+  # Drawing
+  if useSVG:
+    drawer = rdMolDraw2D.MolDraw2DSVG(fullSize[0], fullSize[1], subImgSize[0], subImgSize[1])
+  else:
+    drawer = rdMolDraw2D.MolDraw2DCairo(fullSize[0], fullSize[1], subImgSize[0], subImgSize[1])
+
+  drawopt = drawer.drawOptions()
+  drawopt.continuousHighlight = False
+  drawer.DrawMolecules(submols, legends=legends, highlightAtoms=highlightAtoms,
+                       highlightAtomColors=atomColors, highlightBonds=highlightBonds,
+                       highlightBondColors=bondColors, highlightAtomRadii=highlightRadii, **kwargs)
+  drawer.FinishDrawing()
+  return drawer.GetDrawingText()
+
+
+def DrawRDKitEnv(mol, bondPath, molSize=(150, 150), baseRad=0.3, useSVG=True,
+                 aromaticColor=(0.9, 0.9, 0.2), extraColor=(0.9, 0.9,0.9),
+                 nonAromaticColor=None, **kwargs):
+  menv = _getRDKitEnv(mol, bondPath, baseRad, aromaticColor, extraColor, nonAromaticColor, **kwargs)
+
+  # Drawing
+  if useSVG:
+    drawer = rdMolDraw2D.MolDraw2DSVG(molSize[0], molSize[1])
+  else:
+    drawer = rdMolDraw2D.MolDraw2DCairo(molSize[0], molSize[1])
+
+  drawopt = drawer.drawOptions()
+  drawopt.continuousHighlight = False
+
+  drawer.DrawMolecule(menv.submol, highlightAtoms=menv.highlightAtoms,
+                      highlightAtomColors=menv.atomColors, highlightBonds=menv.highlightBonds,
+                      highlightBondColors=menv.bondColors, highlightAtomRadii=menv.highlightRadii,
+                      **kwargs)
   drawer.FinishDrawing()
   return drawer.GetDrawingText()

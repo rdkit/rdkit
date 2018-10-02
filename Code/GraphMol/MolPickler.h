@@ -61,9 +61,9 @@ typedef enum {
 //! handles pickling (serializing) molecules
 class RDKIT_GRAPHMOL_EXPORT MolPickler {
  public:
-  static const boost::int32_t versionMajor; //!< mark the pickle major version
-  static const boost::int32_t versionMinor; //!< mark the pickle minor version
-  static const boost::int32_t versionPatch; //!< mark the pickle patch version
+  static const boost::int32_t versionMajor;  //!< mark the pickle major version
+  static const boost::int32_t versionMinor;  //!< mark the pickle minor version
+  static const boost::int32_t versionPatch;  //!< mark the pickle patch version
   static const boost::int32_t endianId;  //! mark the endian-ness of the pickle
 
   //! the pickle format is tagged using these tags:
@@ -132,6 +132,7 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
     BEGINATOMPROPS,
     BEGINBONDPROPS,
     BEGINQUERYATOMDATA,
+    BEGINSTEREOGROUP,
   } Tags;
 
   static unsigned int getDefaultPickleProperties();
@@ -198,6 +199,12 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
   static void _pickleSSSR(std::ostream &ss, const RingInfo *ringInfo,
                           std::map<int, int> &atomIdxMap);
 
+  //! do the actual work of pickling Stereo Group data
+  template <typename T>
+  static void _pickleStereo(std::ostream &ss,
+                            const std::vector<StereoGroup> &groups,
+                            std::map<int, int> &atomIdxMap);
+
   //! do the actual work of pickling a Conformer
   template <typename T>
   static void _pickleConformer(std::ostream &ss, const Conformer *conf);
@@ -225,6 +232,9 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
   static void _addRingInfoFromPickle(std::istream &ss, ROMol *mol, int version,
                                      bool directMap = false);
 
+  template <typename T>
+  static void _depickleStereo(std::istream &ss, ROMol *mol, int version);
+
   //! extract a conformation from a pickle
   template <typename T>
   static Conformer *_conformerFromPickle(std::istream &ss, int version);
@@ -244,6 +254,6 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
   //! backwards compatibility
   static void _addBondFromPickleV1(std::istream &ss, ROMol *mol);
 };
-};
+};  // namespace RDKit
 
 #endif

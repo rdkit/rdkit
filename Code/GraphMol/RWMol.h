@@ -191,6 +191,17 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
 
   //@}
 
+  //! Sets groups of atoms with relative stereochemistry
+  /*!
+    \param stereo_groups the new set of stereo groups. All will be replaced.
+
+    Stereo groups are also called enhanced stereochemistry in the SDF/Mol3000
+    file format. stereo_groups should be std::move()ed into this function.
+  */
+  void setStereoGroups(std::vector<StereoGroup> &&stereo_groups) {
+    return ROMol::setStereoGroups(std::move(stereo_groups));
+  };
+
   //! removes all atoms, bonds, properties, bookmarks, etc.
   void clear() {
     destroy();
@@ -198,15 +209,15 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
     ROMol::initMol();  // make sure we have a "fresh" ready to go copy
     numBonds = 0;
   };
- 
+
  private:
-  std::vector<Bond*> d_partialBonds;
+  std::vector<Bond *> d_partialBonds;
   void destroy();
 };
 
 typedef boost::shared_ptr<RWMol> RWMOL_SPTR;
 typedef std::vector<RWMOL_SPTR> RWMOL_SPTR_VECT;
 
-};  // end of RDKit namespace
+};  // namespace RDKit
 
 #endif
