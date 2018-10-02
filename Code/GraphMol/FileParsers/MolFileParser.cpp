@@ -2071,15 +2071,12 @@ void ParseV3000AtomBlock(std::istream *inStream, unsigned int &line,
   }
 
   if (mol->hasProp(common_properties::_2DConf)) {
-    std::cerr << "2d" << std::endl;
     conf->set3D(false);
     mol->clearProp(common_properties::_2DConf);
   } else if (mol->hasProp(common_properties::_3DConf)) {
-    std::cerr << "3d" << std::endl;
     conf->set3D(true);
     mol->clearProp(common_properties::_3DConf);
   } else {
-    std::cerr << "default" << std::endl;
     conf->set3D(false);
   }
 }
