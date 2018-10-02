@@ -2071,13 +2071,13 @@ void ParseV3000AtomBlock(std::istream *inStream, unsigned int &line,
   }
 
   if (mol->hasProp(common_properties::_2DConf)) {
-    conf->set3D(false);
+    conf->set3D(conf->hasZCoords());
     mol->clearProp(common_properties::_2DConf);
   } else if (mol->hasProp(common_properties::_3DConf)) {
     conf->set3D(true);
     mol->clearProp(common_properties::_3DConf);
   } else {
-    conf->set3D(false);
+    conf->set3D(conf->hasZCoords());
   }
 }
 void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
