@@ -38,6 +38,7 @@ class ValueErrorException : public std::runtime_error {
       : std::runtime_error("ValueErrorException"), _value(msg){};
   std::string message() const { return _value; };
   ~ValueErrorException() throw(){};
+  const char *what() const noexcept { return _value.c_str(); }
 
  private:
   std::string _value;
@@ -52,6 +53,7 @@ class KeyErrorException : public std::runtime_error {
       : std::runtime_error("KeyErrorException"), _key(key){};
   std::string key() const { return _key; };
   ~KeyErrorException() throw(){};
+  const char *what() const noexcept { return _key.c_str(); }
 
  private:
   std::string _key;

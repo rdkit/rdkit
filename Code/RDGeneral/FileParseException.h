@@ -27,10 +27,11 @@ class FileParseException : public std::runtime_error {
   //! get the error message
   const char *message() const { return _msg.c_str(); };
   ~FileParseException() throw(){};
+  const char *what() const noexcept { return _msg.c_str(); }
 
  private:
   std::string _msg;
 };
-}
+}  // namespace RDKit
 
 #endif
