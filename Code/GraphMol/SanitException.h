@@ -30,10 +30,11 @@ class RDKIT_GRAPHMOL_EXPORT MolSanitizeException : public std::exception {
   MolSanitizeException(const std::string &msg) : _msg(msg){};
   const char *message() const { return _msg.c_str(); };
   ~MolSanitizeException() throw(){};
+  const char *what() const noexcept { return _msg.c_str(); }
 
  private:
   std::string _msg;
 };
-}
+}  // namespace RDKit
 
 #endif
