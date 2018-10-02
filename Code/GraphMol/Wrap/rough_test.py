@@ -4917,7 +4917,15 @@ width='200px' height='200px' >
 M  END
 """
     self.assertTrue("@" in Chem.MolToSmiles(Chem.MolFromMolBlock(ctab),True))
-  
+
+  def testGitHub2082_2(self):
+    # test a mol block that lies is 3D but labelled 2D
+    ofile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+                         'issue2082.mol')
+    ctab = open(ofile).read()
+    m = Chem.MolFromMolBlock(ctab)
+    self.assertTrue(m.GetConformer().Is3D())
+    
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()
