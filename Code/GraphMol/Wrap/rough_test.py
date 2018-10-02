@@ -4891,7 +4891,33 @@ width='200px' height='200px' >
     with self.assertRaises(RuntimeError):
       mol = Chem.MolFromRDKitSVG("bad svg")
 
+  def testGitHub2082(self):
+    ctab="""
+  MJ150720
 
+  9  9  0  0  0  0  0  0  0  0999 V2000
+    2.5687   -0.7144    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.1562    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5687    0.7144    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3312    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.9187   -0.7144    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0937   -0.7144    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3187    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0937    0.7144    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.9187    0.7144    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  6
+  2  3  1  0
+  2  4  1  0
+  4  5  2  0
+  5  6  1  0
+  6  7  2  0
+  7  8  1  0
+  8  9  2  0
+  9  4  1  0
+M  END
+"""
+    self.assertTrue("@" in Chem.MolToSmiles(Chem.MolFromMolBlock(ctab),True))
+  
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()

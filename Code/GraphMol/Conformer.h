@@ -115,9 +115,13 @@ class RDKIT_GRAPHMOL_EXPORT Conformer {
 
   //! Get the number of atoms
   inline unsigned int getNumAtoms() const { return rdcast<unsigned int>(d_positions.size()); }
-
+  inline bool hasZCoords() const {
+    for(auto p: d_positions){ if (p.z != 0.0) return true; }
+    return false;
+  }
   inline bool is3D() const { return df_is3D; }
   inline void set3D(bool v) { df_is3D = v; }
+
 
  protected:
   //! Set owning moelcule
