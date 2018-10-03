@@ -4892,6 +4892,23 @@ width='200px' height='200px' >
       mol = Chem.MolFromRDKitSVG("bad svg")
 
 
+  def testSetQuery(self):
+    pat = Chem.MolFromSmarts("[C]")
+    self.assertFalse(Chem.MolFromSmiles("c1ccccc1").HasSubstructMatch(pat))
+
+    q = rdqueries.AtomNumEqualsQueryAtom(6)
+    for atom in pat.GetAtoms():
+      atom.SetQuery(q)
+
+    self.assertTrue(Chem.MolFromSmiles("c1ccccc1").HasSubstructMatch(pat))
+
+  def testGitHub1985(self):
+    # simple check, this used to throw an exception
+    try:
+       Chem.MolToSmarts(Chem.MolFromSmarts("[C@]"))
+    except:
+       self.fail("[C@] caused an exception when roundtripping smarts")
+    
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()
