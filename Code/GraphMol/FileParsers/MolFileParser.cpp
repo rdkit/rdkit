@@ -2226,6 +2226,10 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
         int reactStatus = FileParserUtils::toInt(val);
         bond->setProp("molReactStatus", reactStatus);
       } else if (prop == "STBOX") {
+      } else if (prop == "ENDPTS") {
+        bond->setProp(common_properties::_MolFileBondEndPts, val);
+      } else if (prop == "ATTACH") {
+        bond->setProp(common_properties::_MolFileBondAttach, val);
       }
       ++lPos;
     }
