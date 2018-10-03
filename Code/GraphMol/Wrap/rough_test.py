@@ -4916,7 +4916,9 @@ width='200px' height='200px' >
   9  4  1  0
 M  END
 """
-    self.assertTrue("@" in Chem.MolToSmiles(Chem.MolFromMolBlock(ctab),True))
+    mol = Chem.MolFromMolBlock(ctab)
+    self.assertFalse(mol.GetConformer().Is3D())
+    self.assertTrue("@" in Chem.MolToSmiles(mol,True))
 
   def testGitHub2082_2(self):
     # test a mol block that lies is 3D but labelled 2D
