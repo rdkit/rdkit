@@ -634,20 +634,14 @@ distance geometry has been used to generate them.  With this method,
 there should be no need to use a minimisation step to clean up the
 structures.
 
-The full process of embedding and optimizing a molecule is easier than all the above verbiage makes it sound:
+Since the 2018.09 release of the RDKit, ETKDG is the default conformation generation method.
+
+The full process of embedding a molecule is easier than all the above verbiage makes it sound:
 
 .. doctest::
 
-  >>> m = Chem.MolFromSmiles('C1CCC1OC')
   >>> m2=Chem.AddHs(m)
-  >>> # use the original distance geometry + minimisation method
   >>> AllChem.EmbedMolecule(m2)
-  0
-  >>> AllChem.UFFOptimizeMolecule(m2)
-  0
-  >>> m3=Chem.AddHs(m)
-  >>> # use the new method
-  >>> AllChem.EmbedMolecule(m3, AllChem.ETKDG())
   0
 
 The RDKit also has an implementation of the MMFF94 force field available. [#mmff1]_, [#mmff2]_, [#mmff3]_, [#mmff4]_, [#mmffs]_
@@ -655,6 +649,7 @@ Please note that the MMFF atom typing code uses its own aromaticity model,
 so the aromaticity flags of the molecule will be modified after calling
 MMFF-related methods.
 
+Here's an example of using MMFF94 to minimize an RDKit-generated conformer:
 .. doctest::
 
   >>> m = Chem.MolFromSmiles('C1CCC1OC')
@@ -682,12 +677,10 @@ to each other and the RMS values calculated.
 
   >>> m = Chem.MolFromSmiles('C1CCC1OC')
   >>> m2=Chem.AddHs(m)
-  >>> # run distance geometry 10 times
+  >>> # run ETKDG 10 times
   >>> cids = AllChem.EmbedMultipleConfs(m2, numConfs=10)
   >>> print(len(cids))
   10
-  >>> for cid in cids:
-  ...    _ = AllChem.MMFFOptimizeMolecule(m2, confId=cid)
   >>> rmslist = []
   >>> AllChem.AlignMolConformers(m2, RMSlist=rmslist)
   >>> print(len(rmslist))
@@ -700,21 +693,32 @@ The flag prealigned lets the user specify if the conformers are already aligned
 
 .. doctest::
 
-  >>> rms = AllChem.GetConformerRMS(m2, 1, 9, prealigned=True)
+>>> rms = AllChem.GetConformerRMS(m2, 1, 9, prealigned=True)
 
-We can also generate multiple conformers using the new CSD-based method:
+If you are interested in running MMFF94 on each of those conformers (again,
+this is often not necessary when using ETKDG), there's a convenience
+function available:
 
 .. doctest::
 
-  >>> m = Chem.MolFromSmiles('C1CCC1OC')
-  >>> m3=Chem.AddHs(m)
-  >>> # run the new CSD-based method
-  >>> cids = AllChem.EmbedMultipleConfs(m3, 10, AllChem.ETKDG())
-  >>> print(len(cids))
-  10
+  >>> res = AllChem.MMFFOptimizeMoleculeConfs(m2)
 
-More 3D functionality of the RDKit is described in the Cookbook.
+The result is a list a containing 2-tuples: `(not_converged, energy)` for
+each conformer. If `not_converged` is 0, the minimization for that conformer
+converged.
 
+By default `AllChem.EmbedMultipleConfs` and `AllChem.MMFFOptimizeMoleculeConfs()`
+run single threaded, but you can cause them to use
+multiple threads simultaneously for these embarassingly parallel tasks
+via the `numThreads` argument:
+
+.. doctest::
+
+  >>> cids = AllChem.EmbedMultipleConfs(m2, numThreads=0)
+  >>> res = AllChem.MMFFOptimizeMoleculeConfs(m2, numThreads=0)
+
+Setting `numThreads` to zero causes the software to use the maximum number
+of threads allowed on your computer.
 
 *Disclaimer/Warning*: Conformation generation is a difficult and subtle task.
 The original, default, 2D->3D conversion provided with the RDKit is not intended
