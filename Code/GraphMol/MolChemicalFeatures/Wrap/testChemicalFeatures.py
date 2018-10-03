@@ -36,7 +36,8 @@ class TestCase(unittest.TestCase):
     self.failUnless(fNames[1] == 'HBondAcceptor')
 
     mol = Chem.MolFromSmiles("COCN")
-    rdDistGeom.EmbedMolecule(mol, 30, 100)
+    rdDistGeom.EmbedMolecule(mol, 30, 100, useExpTorsionAnglePrefs=False,
+                            useBasicKnowledge=False)
 
     self.failUnless(cfac.GetNumMolFeatures(mol) == 3)
     for i in range(cfac.GetNumMolFeatures(mol)):
@@ -64,7 +65,7 @@ class TestCase(unittest.TestCase):
       ncfac = feat.GetFactory()
       self.assertEqual(ncfac.GetNumFeatureDefs(), 2)
       self.assertEqual(feat.GetActiveConformer(),-1)
-    
+
   def testIncludeOnly(self):
     cfac = ChemicalFeatures.BuildFeatureFactory(
       os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolChemicalFeatures', 'test_data',
