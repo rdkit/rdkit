@@ -260,7 +260,8 @@ BOOST_PYTHON_MODULE(rdForceFieldHelpers) {
     - ignoreInterfragInteractions : if true, nonbonded terms between\n\
                   fragments will not be added to the forcefield.\n\
 \n\
- RETURNS: 0 if the optimization converged, 1 if more iterations are required.\n\
+ RETURNS: a list of (not_converged, energy) 2-tuples. \n\
+     If not_converged is 0 the optimization converged for that conformer.\n\
 \n";
   python::def("UFFOptimizeMoleculeConfs", RDKit::UFFConfsHelper,
               (python::arg("self"), python::arg("numThreads") = 1,
@@ -390,7 +391,8 @@ BOOST_PYTHON_MODULE(rdForceFieldHelpers) {
     - ignoreInterfragInteractions : if true, nonbonded terms between\n\
                   fragments will not be added to the forcefield.\n\
 \n\
- RETURNS: 0 if the optimization converged, 1 if more iterations are required.\n\
+RETURNS: a list of (not_converged, energy) 2-tuples. \n\
+    If not_converged is 0 the optimization converged for that conformer.\n\
 \n";
   python::def(
       "MMFFOptimizeMoleculeConfs", RDKit::MMFFConfsHelper,
