@@ -1577,6 +1577,23 @@ struct molops_wrapper {
 
     // ------------------------------------------------------------------------
     docString =
+        "Uses a conformer to assign ChiralTypes to a molecule's atoms and\n\
+        stereo flags to its bonds\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use\n\
+    - confId: (optional) the conformation to use \n\
+    - replaceExistingTags: (optional) replace any existing information about stereochemistry\n\
+\n";
+    python::def("AssignStereochemistryFrom3D",
+                MolOps::assignStereochemistryFrom3D,
+                (python::arg("mol"), python::arg("confId") = -1,
+                 python::arg("replaceExistingTags") = true),
+                docString.c_str());
+
+    // ------------------------------------------------------------------------
+    docString =
         "Find bonds than can be cis/trans in a molecule and mark them as 'any'.\n\
          This function finds any double bonds that can potentially be part\n\
          of a cis/trans system. No attempt is made here to mark them cis or trans\n\
