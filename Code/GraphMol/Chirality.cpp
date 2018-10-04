@@ -326,7 +326,7 @@ void findAtomNeighborDirHelper(const ROMol &mol, const Atom *atom,
   ROMol::OEDGE_ITER beg, end;
   boost::tie(beg, end) = mol.getAtomBonds(atom);
   while (beg != end) {
-    const Bond* bond = mol[*beg];
+    const Bond *bond = mol[*beg];
     // check whether this bond is explictly set to have unknown stereo
     if (!hasExplicitUnknownStereo) {
       int explicit_unknown_stereo;
@@ -396,7 +396,7 @@ void findAtomNeighborsHelper(const ROMol &mol, const Atom *atom,
   ROMol::OEDGE_ITER beg, end;
   boost::tie(beg, end) = mol.getAtomBonds(atom);
   while (beg != end) {
-    const Bond* bond = mol[*beg];
+    const Bond *bond = mol[*beg];
     Bond::BondDir dir = bond->getBondDir();
     if (bond->getBondType() == Bond::SINGLE &&
         bond->getIdx() != refBond->getIdx()) {
@@ -432,7 +432,7 @@ bool atomIsCandidateForRingStereochem(const ROMol &mol, const Atom *atom) {
       std::vector<const Atom *> nonRingNbrs;
       std::vector<const Atom *> ringNbrs;
       while (beg != end) {
-        const Bond* bond = mol[*beg];
+        const Bond *bond = mol[*beg];
         if (!ringInfo->numBondRings(bond->getIdx())) {
           nonRingNbrs.push_back(bond->getOtherAtom(atom));
         } else {
@@ -933,7 +933,7 @@ void rerankAtoms(const ROMol &mol, UINT_VECT &ranks) {
     ROMol::OEDGE_ITER beg, end;
     boost::tie(beg, end) = mol.getAtomBonds(atom);
     while (beg != end) {
-      const Bond* oBond = mol[*beg];
+      const Bond *oBond = mol[*beg];
       if (oBond->getBondType() == Bond::DOUBLE) {
         if (oBond->getStereo() == Bond::STEREOE) {
           invars[i] += 1;
@@ -957,7 +957,7 @@ void rerankAtoms(const ROMol &mol, UINT_VECT &ranks) {
   }
 #endif
 }
-}  // end of chirality namespace
+}  // namespace Chirality
 
 namespace MolOps {
 
@@ -1025,7 +1025,7 @@ void assignStereochemistry(ROMol &mol, bool cleanIt, bool force,
       ROMol::OEDGE_ITER beg, end;
       boost::tie(beg, end) = mol.getAtomBonds((*bondIt)->getBeginAtom());
       while (!hasStereoBonds && beg != end) {
-        const Bond* nbond = mol[*beg];
+        const Bond *nbond = mol[*beg];
         ++beg;
         if (nbond->getBondDir() == Bond::ENDDOWNRIGHT ||
             nbond->getBondDir() == Bond::ENDUPRIGHT) {
@@ -1034,7 +1034,7 @@ void assignStereochemistry(ROMol &mol, bool cleanIt, bool force,
       }
       boost::tie(beg, end) = mol.getAtomBonds((*bondIt)->getEndAtom());
       while (!hasStereoBonds && beg != end) {
-        const Bond* nbond = mol[*beg];
+        const Bond *nbond = mol[*beg];
         ++beg;
         if (nbond->getBondDir() == Bond::ENDDOWNRIGHT ||
             nbond->getBondDir() == Bond::ENDUPRIGHT) {
@@ -1878,6 +1878,8 @@ void detectBondStereochemistry(ROMol &mol, int confId) {
 
 void assignStereochemistryFrom3D(ROMol &mol, int confId,
                                  bool replaceExistingTags) {
+  if (!mol.getNumConformers() || !mol.getConformer(confId).is3D()) return;
+
   detectBondStereochemistry(mol, confId);
   assignChiralTypesFrom3D(mol, confId, replaceExistingTags);
   bool force = true;

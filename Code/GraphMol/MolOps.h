@@ -839,6 +839,7 @@ RDKIT_GRAPHMOL_EXPORT void assignChiralTypesFrom3D(
   \param replaceExistingTags  if this flag is true, any existing info about
                               stereochemistry will be replaced
 
+  If the conformer provided is not a 3D conformer, nothing will be done.
 */
 RDKIT_GRAPHMOL_EXPORT void assignStereochemistryFrom3D(
     ROMol &mol, int confId = -1, bool replaceExistingTags = true);
