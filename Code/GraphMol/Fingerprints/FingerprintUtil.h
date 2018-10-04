@@ -11,7 +11,6 @@
 #ifndef RD_FINGERPRINTUTIL_H_2018_07
 #define RD_FINGERPRINTUTIL_H_2018_07
 
-
 #include <GraphMol/RDKitBase.h>
 #include <DataStructs/SparseIntVect.h>
 #include <DataStructs/BitVects.h>
@@ -69,16 +68,13 @@ RDKIT_FINGERPRINTS_EXPORT std::uint32_t getAtomPairCode(
     std::uint32_t codeI, std::uint32_t codeJ, unsigned int dist,
     bool includeChirality = false);
 
-
-
 //! returns an topological torsion hash based on the atom hashes
 //! passed in
 /*!
   \param atomCodes  the vector of atom hashes
 */
 RDKIT_FINGERPRINTS_EXPORT std::uint64_t getTopologicalTorsionCode(
-    const std::vector<std::uint32_t> &atomCodes,
-    bool includeChirality = false);
+    const std::vector<std::uint32_t> &atomCodes, bool includeChirality = false);
 
 RDKIT_FINGERPRINTS_EXPORT std::uint32_t getTopologicalTorsionHash(
     const std::vector<std::uint32_t> &pathCodes);
@@ -102,10 +98,6 @@ typedef boost::tuple<boost::dynamic_bitset<>, uint32_t, unsigned int>
     AccumTuple;
 
 RDKIT_FINGERPRINTS_EXPORT extern std::vector<std::string> defaultFeatureSmarts;
-
-typedef std::map<boost::uint32_t,
-                 std::vector<std::pair<boost::uint32_t, boost::uint32_t>>>
-    BitInfoMap;
 
 //! returns the connectivity invariants for a molecule
 /*!
@@ -145,7 +137,8 @@ namespace RDKitFPUtils {
 void buildDefaultRDKitFingerprintAtomInvariants(
     const ROMol &mol, std::vector<boost::uint32_t> &lAtomInvariants);
 
-void enumerateAllPaths(const ROMol &mol, INT_PATH_LIST_MAP &allPaths,
+void enumerateAllPaths(const ROMol &mol,
+                       std::map<int, std::list<std::vector<int>>> &allPaths,
                        const std::vector<boost::uint32_t> *fromAtoms,
                        bool branchedPaths, bool useHs, unsigned int minPath,
                        unsigned int maxPath);
@@ -156,7 +149,7 @@ void identifyQueryBonds(const ROMol &mol, std::vector<const Bond *> &bondCache,
 std::vector<unsigned int> generateBondHashes(
     const ROMol &mol, boost::dynamic_bitset<> &atomsInPath,
     const std::vector<const Bond *> &bondCache,
-    const std::vector<short> &isQueryBond, const PATH_TYPE &path,
+    const std::vector<short> &isQueryBond, const std::vector<int> &path,
     bool useBondOrder, const std::vector<boost::uint32_t> *atomInvariants);
 
 }  // namespace RDKitFPUtils
