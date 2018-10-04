@@ -411,9 +411,8 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
   // for their coordinates
   unsigned int numAddHyds = 0;
   for (auto at : mol.atoms()) {
-    if (!onlyOnAtoms ||
-        std::find(onlyOnAtoms->begin(), onlyOnAtoms->end(), at->getIdx()) !=
-            onlyOnAtoms->end()) {
+    if (!onlyOnAtoms || std::find(onlyOnAtoms->begin(), onlyOnAtoms->end(),
+                                  at->getIdx()) != onlyOnAtoms->end()) {
       numAddHyds += at->getNumExplicitHs();
       if (!explicitOnly) {
         numAddHyds += at->getNumImplicitHs();
@@ -431,9 +430,8 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
 
   unsigned int stopIdx = mol.getNumAtoms();
   for (unsigned int aidx = 0; aidx < stopIdx; ++aidx) {
-    if (onlyOnAtoms &&
-        std::find(onlyOnAtoms->begin(), onlyOnAtoms->end(), aidx) ==
-            onlyOnAtoms->end()) {
+    if (onlyOnAtoms && std::find(onlyOnAtoms->begin(), onlyOnAtoms->end(),
+                                 aidx) == onlyOnAtoms->end()) {
       continue;
     }
 
@@ -548,6 +546,7 @@ bool adjustStereoAtomsIfRequired(RWMol &mol, const Atom *atom,
 //   - Hs connected to dummy atoms will not be removed
 //   - Hs that are part of the definition of double bond Stereochemistry
 //     will not be removed
+//   - Hs that are not connected to anything else will not be removed
 //
 void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
               bool sanitize) {
@@ -562,7 +561,7 @@ void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
     Atom *atom = mol.getAtomWithIdx(currIdx);
     idxMap[origIdx] = currIdx;
     ++origIdx;
-    if (atom->getAtomicNum() == 1) {
+    if (atom->getAtomicNum() == 1 && atom->getDegree()) {
       bool removeIt = false;
       if (atom->hasProp(common_properties::isImplicit)) {
         removeIt = true;
@@ -604,6 +603,8 @@ void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
       if (removeIt) {
         ROMol::OEDGE_ITER beg, end;
         boost::tie(beg, end) = mol.getAtomBonds(atom);
+        // part of the fix for github #2086:
+        CHECK_INVARIANT(beg != end, "H has no neighbors!");
         // note the assumption that the H only has one neighbor... I
         // feel no need to handle the case of hypervalent hydrogen!
         // :-)

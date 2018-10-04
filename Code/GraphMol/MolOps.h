@@ -215,6 +215,7 @@ RDKIT_GRAPHMOL_EXPORT void addHs(RWMol &mol, bool explicitOnly = false,
        - Hs connected to dummy atoms will not be removed
        - Hs that are part of the definition of double bond Stereochemistry
          will not be removed
+       - Hs that are not connected to anything else will not be removed
 
        - the caller is responsible for <tt>delete</tt>ing the pointer this
    returns.
