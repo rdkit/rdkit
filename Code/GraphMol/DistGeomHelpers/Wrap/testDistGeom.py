@@ -525,10 +525,6 @@ class TestCase(unittest.TestCase):
     fn = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'DistGeomHelpers', 'test_data',
                         'simple_torsion.etkdg.mol')
     ref = Chem.MolFromMolFile(fn, removeHs=False)
-    params = rdDistGeom.EmbedParameters()
-    params.randomSeed = 42
-    params.useExpTorsionAnglePrefs = True
-    params.useBasicKnowledge = True
     self.assertEqual(rdDistGeom.EmbedMolecule(mol, randomSeed=42), 0)
     self._compareConfs(mol, ref, 0, 0)
 
