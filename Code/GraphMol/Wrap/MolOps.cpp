@@ -1577,8 +1577,8 @@ struct molops_wrapper {
 
     // ------------------------------------------------------------------------
     docString =
-        "Uses a conformer to assign ChiralTypes to a molecule's atoms and\n\
-        stereo flags to its bonds\n\
+        "Uses a conformer (should be 3D) to assign ChiralTypes to a molecule's atoms\n\
+        and stereo flags to its bonds\n\
 \n\
   ARGUMENTS:\n\
 \n\
