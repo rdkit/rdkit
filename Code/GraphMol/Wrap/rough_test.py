@@ -4891,6 +4891,32 @@ width='200px' height='200px' >
     with self.assertRaises(RuntimeError):
       mol = Chem.MolFromRDKitSVG("bad svg")
 
+  def testAssignStereochemistryFrom3D(self):
+    def _stereoTester(mol,expectedCIP,expectedStereo):
+        mol.UpdatePropertyCache()
+        self.assertEqual(mol.GetNumAtoms(),9)
+        self.assertFalse(mol.GetAtomWithIdx(1).HasProp("_CIPCode"))
+        self.assertEqual(mol.GetBondWithIdx(3).GetStereo(),Chem.BondStereo.STEREONONE)
+        for bond in mol.GetBonds():
+            bond.SetBondDir(Chem.BondDir.NONE)
+        Chem.AssignStereochemistryFrom3D(mol)
+        self.assertTrue(mol.GetAtomWithIdx(1).HasProp("_CIPCode"))
+        self.assertEqual(mol.GetAtomWithIdx(1).GetProp("_CIPCode"),expectedCIP)
+        self.assertEqual(mol.GetBondWithIdx(3).GetStereo(),expectedStereo)
+
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'test_data',
+                       'stereochem.sdf')
+    suppl = Chem.SDMolSupplier(fileN, sanitize=False)
+    expected = (
+    ("R",Chem.BondStereo.STEREOZ),
+    ("R",Chem.BondStereo.STEREOE),
+    ("S",Chem.BondStereo.STEREOZ),
+    ("S",Chem.BondStereo.STEREOE),
+    )
+    for i,mol in enumerate(suppl):
+        cip,stereo = expected[i]
+        _stereoTester(mol,cip,stereo)
+
   def testGitHub2082(self):
     ctab="""
   MJ150720
