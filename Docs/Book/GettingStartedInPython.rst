@@ -270,12 +270,12 @@ You can either include 2D coordinates (i.e. a depiction):
   M  END
   <BLANKLINE>
 
-Or you can add 3D coordinates by embedding the molecule (we're using the ETKDG
-method here, which is described in more detail below):
+Or you can add 3D coordinates by embedding the molecule (this uses the ETKDG
+method, which is described in more detail below):
 
 .. doctest::
 
-  >>> AllChem.EmbedMolecule(m2,AllChem.ETKDG())
+  >>> AllChem.EmbedMolecule(m2)
   0
   >>> print(Chem.MolToMolBlock(m2))    # doctest: +NORMALIZE_WHITESPACE
   cyclobutane
@@ -299,7 +299,7 @@ hydrogens to the molecule first:
 .. doctest::
 
   >>> m3 = Chem.AddHs(m2)
-  >>> AllChem.EmbedMolecule(m3,AllChem.ETKDG())
+  >>> AllChem.EmbedMolecule(m3)
   0
 
 These can then be removed:
@@ -665,10 +665,10 @@ but they are important for getting realistic geometries, so they
 generally should be added.  They can always be removed afterwards
 if necessary with a call to `Chem.RemoveHs()`.
 
-With the RDKit, multiple conformers can also be generated using the two
+With the RDKit, multiple conformers can also be generated using the 
 different embedding methods. In both cases this is simply a matter of
 running the distance geometry calculation multiple times from
-different random start points. The option numConfs allows the user to
+different random start points. The option `numConfs` allows the user to
 set the number of conformers that should be generated.  Otherwise the
 procedures are as before. The conformers so generated can be aligned
 to each other and the RMS values calculated.
@@ -695,7 +695,7 @@ The flag prealigned lets the user specify if the conformers are already aligned
 
 >>> rms = AllChem.GetConformerRMS(m2, 1, 9, prealigned=True)
 
-If you are interested in running MMFF94 on each of those conformers (again,
+If you are interested in running MMFF94 on a molecule's conformers (note that
 this is often not necessary when using ETKDG), there's a convenience
 function available:
 
@@ -721,7 +721,7 @@ Setting `numThreads` to zero causes the software to use the maximum number
 of threads allowed on your computer.
 
 *Disclaimer/Warning*: Conformation generation is a difficult and subtle task.
-The original, default, 2D->3D conversion provided with the RDKit is not intended
+The original 2D->3D conversion provided with the RDKit was not intended
 to be a replacement for a “real” conformational analysis tool; it
 merely provides quick 3D structures for cases when they are
 required. We believe, however, that the newer ETKDG method[#riniker2]_ should be
