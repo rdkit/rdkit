@@ -4893,6 +4893,7 @@ width='200px' height='200px' >
 
 
   def testSetQuery(self):
+    from rdkit.Chem import rdqueries
     pat = Chem.MolFromSmarts("[C]")
     self.assertFalse(Chem.MolFromSmiles("c1ccccc1").HasSubstructMatch(pat))
 
