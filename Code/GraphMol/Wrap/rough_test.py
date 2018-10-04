@@ -4917,9 +4917,43 @@ width='200px' height='200px' >
         cip,stereo = expected[i]
         _stereoTester(mol,cip,stereo)
 
+  def testGitHub2082(self):
+    ctab="""
+  MJ150720
 
+  9  9  0  0  0  0  0  0  0  0999 V2000
+    2.5687   -0.7144    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.1562    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5687    0.7144    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3312    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.9187   -0.7144    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0937   -0.7144    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3187    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0937    0.7144    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.9187    0.7144    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  6
+  2  3  1  0
+  2  4  1  0
+  4  5  2  0
+  5  6  1  0
+  6  7  2  0
+  7  8  1  0
+  8  9  2  0
+  9  4  1  0
+M  END
+"""
+    mol = Chem.MolFromMolBlock(ctab)
+    self.assertFalse(mol.GetConformer().Is3D())
+    self.assertTrue("@" in Chem.MolToSmiles(mol,True))
 
-
+  def testGitHub2082_2(self):
+    # test a mol block that lies is 3D but labelled 2D
+    ofile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+                         'issue2082.mol')
+    ctab = open(ofile).read()
+    m = Chem.MolFromMolBlock(ctab)
+    self.assertTrue(m.GetConformer().Is3D())
+    
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()
