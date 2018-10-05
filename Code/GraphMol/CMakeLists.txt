@@ -140,5 +140,5 @@ rdkit_test(molBundleTest testMolBundle.cpp
 
 rdkit_test(test-valgrind test-valgrind.cpp LINK_LIBRARIES SmilesParse GraphMol RDGeneral)
 
-rdkit_catch_test(testsCatch catch_tests.cpp
+rdkit_catch_test(graphmolTestsCatch catch_tests.cpp
            LINK_LIBRARIES SubstructMatch FileParsers SmilesParse GraphMol RDGeometryLib RDGeneral)

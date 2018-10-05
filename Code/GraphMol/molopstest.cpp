@@ -6745,6 +6745,7 @@ void testGithubIssue868() {
                 std::string::npos);
     delete m;
   }
+  rdWarningLog->ClearTee();
 
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }

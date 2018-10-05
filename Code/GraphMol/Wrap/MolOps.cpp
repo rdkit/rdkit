@@ -993,7 +993,8 @@ struct molops_wrapper {
     - Hs connected to dummy atoms will not be removed\n\
     - Hs that are part of the definition of double bond Stereochemistry\n\
       will not be removed\n\
-\n";
+    - Hs that are not connected to anything else will not be removed\n\
+\n ";
     python::def("RemoveHs",
                 (ROMol * (*)(const ROMol &, bool, bool, bool)) MolOps::removeHs,
                 (python::arg("mol"), python::arg("implicitOnly") = false,
