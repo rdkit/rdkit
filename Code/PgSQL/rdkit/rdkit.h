@@ -166,8 +166,6 @@ CROMol MolMurckoScaffold(CROMol i);
 CROMol MolAdjustQueryProperties(CROMol m, const char *params);
 char *MolGetSVG(CROMol i, unsigned int w, unsigned int h, const char *legend,
                 const char *params);
-char *ReactionGetSVG(CChemicalReaction i, unsigned int w, unsigned int h,
-                     bool highlightByReactant, const char *params);
 
 /* ExplicitBitVect */
 typedef void *CBfp;
@@ -264,6 +262,8 @@ CChemicalReaction parseChemReactCTAB(char *data, bool warnOnFail);
 char *makeChemReactBlob(CChemicalReaction data, int *len);
 char *makeChemReactText(CChemicalReaction data, int *len, bool asSmarts);
 char *makeCTABChemReact(CChemicalReaction data, int *len);
+char *ReactionGetSVG(CChemicalReaction i, unsigned int w, unsigned int h,
+                     bool highlightByReactant, const char *params);
 
 int ChemReactNumReactants(CChemicalReaction rxn);
 int ChemReactNumProducts(CChemicalReaction rxn);

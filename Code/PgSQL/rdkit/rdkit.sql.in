@@ -408,6 +408,12 @@ RETURNS cstring
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION reaction_to_svg(reaction, bool default false, integer default 400, integer default 200, cstring default '')
+RETURNS cstring
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
 
 -- Descriptor Functions
 -----------------------

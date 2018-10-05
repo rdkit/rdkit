@@ -166,3 +166,23 @@ reaction_rsubstructFP(PG_FUNCTION_ARGS) {
 
 REACTIONCMPFUNC(eq, ==, BOOL);
 REACTIONCMPFUNC(ne, !=, BOOL);
+
+PGDLLEXPORT Datum reaction_to_svg(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(reaction_to_svg);
+Datum reaction_to_svg(PG_FUNCTION_ARGS) {
+  CChemicalReaction rxn;
+  fcinfo->flinfo->fn_extra =
+      searchReactionCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                          PG_GETARG_DATUM(0), NULL, &rxn, NULL);
+  Assert(rxn != 0);
+
+  bool highlightByReactants = PG_GETARG_BOOL(1);
+  unsigned int w = PG_GETARG_UINT32(2);
+  unsigned int h = PG_GETARG_UINT32(3);
+  char *params = PG_GETARG_CSTRING(4);
+
+  char *str = ReactionGetSVG(rxn, w, h, highlightByReactants, params);
+  char *res = pnstrdup(str, strlen(str));
+  free((void *)str);
+  PG_RETURN_CSTRING(res);
+}

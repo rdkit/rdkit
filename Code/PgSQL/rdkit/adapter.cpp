@@ -721,7 +721,7 @@ extern "C" char *ReactionGetSVG(CChemicalReaction i, unsigned int w,
            "adjustQueryProperties: Invalid argument \'params\' ignored");
     }
   }
-  drawer.drawReaction(*im, highlightByReactant);
+  drawer.drawReaction(*rxn, highlightByReactant);
   drawer.finishDrawing();
   std::string txt = drawer.getDrawingText();
   return strdup(txt.c_str());
