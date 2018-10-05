@@ -206,8 +206,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
        python::arg("coordMap") = python::dict(), python::arg("forceTol") = 1e-3,
        python::arg("ignoreSmoothingFailures") = false,
        python::arg("enforceChirality") = true,
-       python::arg("useExpTorsionAnglePrefs") = false,
-       python::arg("useBasicKnowledge") = false,
+       python::arg("useExpTorsionAnglePrefs") = true,
+       python::arg("useBasicKnowledge") = true,
        python::arg("printExpTorsionAngles") = false),
       docString.c_str());
 
@@ -272,8 +272,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
        python::arg("coordMap") = python::dict(), python::arg("forceTol") = 1e-3,
        python::arg("ignoreSmoothingFailures") = false,
        python::arg("enforceChirality") = true, python::arg("numThreads") = 1,
-       python::arg("useExpTorsionAnglePrefs") = false,
-       python::arg("useBasicKnowledge") = false,
+       python::arg("useExpTorsionAnglePrefs") = true,
+       python::arg("useBasicKnowledge") = true,
        python::arg("printExpTorsionAngles") = false),
       docString.c_str());
 
