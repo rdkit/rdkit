@@ -561,39 +561,48 @@ void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
     Atom *atom = mol.getAtomWithIdx(currIdx);
     idxMap[origIdx] = currIdx;
     ++origIdx;
-    if (atom->getAtomicNum() == 1 && atom->getDegree()) {
+    if (atom->getAtomicNum() == 1) {
       bool removeIt = false;
-      if (atom->hasProp(common_properties::isImplicit)) {
-        removeIt = true;
-        if (atom->getDegree() == 1) {
-          // by default we remove implicit Hs, but not if they are
-          // attached to dummy atoms. This was Github #1439
+      if (!atom->getDegree()) {
+        BOOST_LOG(rdWarningLog)
+            << "WARNING: not removing hydrogen atom without neighbors"
+            << std::endl;
+      } else {
+        if (atom->hasProp(common_properties::isImplicit)) {
+          removeIt = true;
+          if (atom->getDegree() == 1) {
+            // by default we remove implicit Hs, but not if they are
+            // attached to dummy atoms. This was Github #1439
+            ROMol::ADJ_ITER begin, end;
+            boost::tie(begin, end) = mol.getAtomNeighbors(atom);
+            if (mol.getAtomWithIdx(*begin)->getAtomicNum() < 1) {
+              removeIt = false;
+              BOOST_LOG(rdWarningLog) << "WARNING: not removing hydrogen atom "
+                                         "with only dummy atom neighbors"
+                                      << std::endl;
+            }
+          }
+        } else if (!implicitOnly && !atom->getIsotope() &&
+                   atom->getDegree() == 1) {
           ROMol::ADJ_ITER begin, end;
           boost::tie(begin, end) = mol.getAtomNeighbors(atom);
-          if (mol.getAtomWithIdx(*begin)->getAtomicNum() < 1) {
-            removeIt = false;
-          }
-        }
-      } else if (!implicitOnly && !atom->getIsotope() &&
-                 atom->getDegree() == 1) {
-        ROMol::ADJ_ITER begin, end;
-        boost::tie(begin, end) = mol.getAtomNeighbors(atom);
-        auto nbr = mol.getAtomWithIdx(*begin);
-        if (nbr->getAtomicNum() > 1) {
-          removeIt = true;
-          // we're connected to a non-dummy, non H atom. Check to see
-          // if the neighbor has a double bond and we're the only neighbor
-          // at this end.  This was part of github #1810
-          if (nbr->getDegree() == 2) {
-            for (const auto &nbri :
-                 boost::make_iterator_range(mol.getAtomBonds(nbr))) {
-              const Bond *bnd = mol[nbri];
-              if (bnd->getBondType() == Bond::DOUBLE &&
-                  (bnd->getStereo() > Bond::STEREOANY ||
-                   mol.getBondBetweenAtoms(atom->getIdx(), nbr->getIdx())
-                           ->getBondDir() > Bond::NONE)) {
-                removeIt = false;
-                break;
+          auto nbr = mol.getAtomWithIdx(*begin);
+          if (nbr->getAtomicNum() > 1) {
+            removeIt = true;
+            // we're connected to a non-dummy, non H atom. Check to see
+            // if the neighbor has a double bond and we're the only neighbor
+            // at this end.  This was part of github #1810
+            if (nbr->getDegree() == 2) {
+              for (const auto &nbri :
+                   boost::make_iterator_range(mol.getAtomBonds(nbr))) {
+                const Bond *bnd = mol[nbri];
+                if (bnd->getBondType() == Bond::DOUBLE &&
+                    (bnd->getStereo() > Bond::STEREOANY ||
+                     mol.getBondBetweenAtoms(atom->getIdx(), nbr->getIdx())
+                             ->getBondDir() > Bond::NONE)) {
+                  removeIt = false;
+                  break;
+                }
               }
             }
           }
