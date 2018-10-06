@@ -70,7 +70,7 @@ void NoAtomValidation::run(const ROMol &mol, bool reportAllFailures,
   }
 }
 
-void FragmentValidation::run(const ROMol &mol, bool reportAllFailures,
+void FragmentValidation::run(const ROMol &mol, bool /* reportAllFailures */,
                              std::vector<ValidationErrorInfo> &errors) const {
   // REVIEW: reportAllFailures is not being used here. is that correct?
   std::string rdbase = getenv("RDBASE");

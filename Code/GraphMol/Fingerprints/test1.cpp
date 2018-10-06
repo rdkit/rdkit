@@ -885,7 +885,6 @@ void test1MorganFPs() {
     for (auto iter = fp->getNonzeroElements().begin();
          iter != fp->getNonzeroElements().end(); ++iter) {
       TEST_ASSERT(iter->second == 1);  // check that count == 1
-      ++iter;
     }
     delete fp;
 

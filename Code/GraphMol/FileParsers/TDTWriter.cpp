@@ -58,7 +58,7 @@ TDTWriter::TDTWriter(std::ostream *outStream, bool takeOwnership) {
   df_writeNames = true;
 }
 
-TDTWriter::~TDTWriter() {
+TDTWriter::~TDTWriter() throw() {
   // if we've written any mols, finish with a "|" line
   if (d_molid > 0) {
     CHECK_INVARIANT(dp_ostream,
@@ -172,4 +172,4 @@ void TDTWriter::writeProperty(const ROMol &mol, const std::string &name) {
   boost::replace_all(pval, "\n", " ");
   (*dp_ostream) << pval << ">\n";
 }
-}
+}  // namespace RDKit

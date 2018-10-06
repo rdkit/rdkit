@@ -790,13 +790,13 @@ void testCanonicalize() {
   TEST_ASSERT(ntautomers == 34);
 
   TautomerCatalog tautcat(tautparams);
-  TautomerCanonicalizer tc;
+  // TautomerCanonicalizer tc;
 
   // Enumerate 1,3 keto/enol tautomer.
   std::string smi1 = "C1(=CCCCC1)O";
   std::shared_ptr<ROMol> m1(SmilesToMol(smi1));
-  ROMol *res = tc.canonicalize(*m1, &tautcat);
-  //		TEST_ASSERT(MolToSmiles(*res) == "O=C1CCCCC1");
+  // ROMol *res = tc.canonicalize(*m1, &tautcat);
+  //    TEST_ASSERT(MolToSmiles(*res) == "O=C1CCCCC1");
 }
 
 int main() {

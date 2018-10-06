@@ -182,7 +182,7 @@ void testWHIM() {
                         << std::endl;
 }
 
-int main(int argc, char *argv[]) {
+int main() {
   RDLog::InitLogs();
   testWHIM();
   // testWHIM3();

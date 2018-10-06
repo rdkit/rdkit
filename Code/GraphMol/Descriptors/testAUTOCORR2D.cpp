@@ -69,7 +69,7 @@ void testautocorrelation() {
     for (int i = 0; i < 192; i++) {
       double ref = atof(myrow[i + 1].c_str());
 
-      if (abs(ref - res2d[i]) > 0.05) {
+      if (fabs(ref - res2d[i]) > 0.05) {
         std::cout << "value mismatch: pos" << i << " " << inm << " " << ref
                   << " " << res2d[i] << std::endl;
       }
@@ -85,7 +85,7 @@ void testautocorrelation() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
-int main(int argc, char *argv[]) {
+int main() {
   RDLog::InitLogs();
   testautocorrelation();
 }

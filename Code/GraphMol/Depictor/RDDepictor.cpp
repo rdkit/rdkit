@@ -418,7 +418,7 @@ unsigned int compute2DCoordsMimicDistMat(
     RDKit::ROMol &mol, const DOUBLE_SMART_PTR *dmat, bool canonOrient,
     bool clearConfs, double weightDistMat, unsigned int nFlipsPerSample,
     unsigned int nSamples, int sampleSeed, bool permuteDeg4Nodes,
-    bool forceRDKit) {
+    bool /* forceRDKit */) {
   // storage for pieces of a molecule/s that are embedded in 2D
   std::list<EmbeddedFrag> efrags;
   computeInitialCoords(mol, nullptr, efrags);

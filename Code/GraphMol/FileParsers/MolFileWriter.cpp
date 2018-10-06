@@ -1234,7 +1234,7 @@ std::string MolToMolBlock(const ROMol &mol, bool includeStereo, int confId,
 
   try {
     return outputMolToMolBlock(tmol, confId, forceV3000);
-  } catch (RequiresV3000Exception) {
+  } catch (RequiresV3000Exception &) {
     return outputMolToMolBlock(tmol, confId, true);
   }
 }

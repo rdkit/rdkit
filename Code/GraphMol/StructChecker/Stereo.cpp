@@ -363,22 +363,27 @@ static int Atom3Parity(struct stereo_bond_t ligands[3]) {
   int maxnum;
 
   maxnum = ligands[0].number;
-  for (unsigned i = 1; i < 3; i++)
+  for (unsigned i = 1; i < 3; i++) {
     if (maxnum < ligands[i].number) maxnum = ligands[i].number;
+  }
 
   reference = (-1);
-  for (unsigned i = 0; i < 3; i++)
-    if (ligands[i].direction != RDKit::Bond::NONE)
-      if (reference == (-1))
+  for (unsigned i = 0; i < 3; i++) {
+    if (ligands[i].direction != RDKit::Bond::NONE) {
+      if (reference == (-1)) {
         reference = i;
-      else {
+      } else {
         // stereo_error = "three attachments with more than 2 stereobonds";
         std::cerr << "three attachments with more than 2 stereobonds"
                   << std::endl;
         return (ILLEGAL_REPRESENTATION);
       }
+    }
+  }
 
-  if (reference == (-1)) return (UNDEFINED_PARITY);
+  if (reference == (-1)) {
+      return (UNDEFINED_PARITY);
+  }
 
   if (reference == 0) {
     a = 1;

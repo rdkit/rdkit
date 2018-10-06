@@ -178,7 +178,7 @@ int main(int argc, char *argv[]) {
           }
           delete om;
           delete m;
-        } catch (MolSanitizeException) {
+        } catch (MolSanitizeException &) {
           BOOST_LOG(rdErrorLog) << smi << "\n";
           delete om;
           delete m;

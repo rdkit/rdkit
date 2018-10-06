@@ -821,9 +821,9 @@ class HasPropWithValueQuery
       try {
         T atom_val = what->template getProp<T>(propname);
         res = Queries::queryCmp(atom_val, this->val, this->tolerance) == 0;
-      } catch (KeyErrorException e) {
+      } catch (KeyErrorException &e) {
         res = false;
-      } catch (boost::bad_any_cast) {
+      } catch (boost::bad_any_cast &) {
         res = false;
       }
 #ifdef __GNUC__
@@ -885,9 +885,9 @@ class HasPropWithValueQuery<TargetPtr, std::string>
       try {
         std::string atom_val = what->template getProp<std::string>(propname);
         res = atom_val == this->val;
-      } catch (KeyErrorException) {
+      } catch (KeyErrorException &) {
         res = false;
-      } catch (boost::bad_any_cast) {
+      } catch (boost::bad_any_cast &) {
         res = false;
       }
 #ifdef __GNUC__

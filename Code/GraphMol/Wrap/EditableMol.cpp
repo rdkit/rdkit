@@ -29,7 +29,7 @@ namespace {
 class EditableMol : boost::noncopyable {
  public:
   EditableMol(const ROMol &m) { dp_mol = new RWMol(m); };
-  ~EditableMol() {
+  ~EditableMol() throw() {
     PRECONDITION(dp_mol, "no molecule");
     delete dp_mol;
   };
@@ -73,7 +73,7 @@ class EditableMol : boost::noncopyable {
  private:
   RWMol *dp_mol;
 };
-}
+}  // namespace
 
 struct EditableMol_wrapper {
   static void wrap() {
@@ -132,5 +132,5 @@ struct EditableMol_wrapper {
   };
 };
 
-}  // end of namespace
+}  // namespace RDKit
 void wrap_EditableMol() { RDKit::EditableMol_wrapper::wrap(); }

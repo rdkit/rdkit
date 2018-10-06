@@ -64,7 +64,7 @@ void test1() {
               "CC12CCCCC1(Cl)[N+]([O-])=[N+]2[O-]");
 
   // Test 1,5-separated charges are recombined.
-  smi6 = "C[N+](C)=C\C=C\[O-]";
+  smi6 = R"(C[N+](C)=C\C=C\[O-])";
   std::shared_ptr<ROMol> m6(SmilesToMol(smi6));
   ROMOL_SPTR normalized6(normalizer.normalize(*m6));
   TEST_ASSERT(MolToSmiles(*normalized6) == "CN(C)C=CC=O");

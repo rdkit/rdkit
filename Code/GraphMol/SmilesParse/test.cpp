@@ -165,7 +165,7 @@ void testFail() {
     boost::logging::disable_logs("rdApp.error");
     try {
       mol = SmilesToMol(smi);
-    } catch (MolSanitizeException) {
+    } catch (MolSanitizeException &) {
       mol = (Mol *)nullptr;
     }
     boost::logging::enable_logs("rdApp.error");

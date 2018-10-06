@@ -137,7 +137,7 @@ boost::shared_ptr<ROMol> Normalizer::applyTransform(
           MolOps::sanitizeMol(*static_cast<RWMol *>(pdt[0].get()), failed);
           Normalizer::Product np(MolToSmiles(*pdt[0]), pdt[0]);
           pdts.push_back(np);
-        } catch (MolSanitizeException) {
+        } catch (MolSanitizeException &) {
           BOOST_LOG(rdInfoLog) << "FAILED sanitizeMol.\n";
         }
       }

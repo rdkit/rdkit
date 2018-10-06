@@ -61,7 +61,7 @@ void testRDF() {
     std::string inm = myrow[0];
     TEST_ASSERT(inm == nm);
 
-    for (int i = 0; i < drdf.size(); i++) {
+    for (size_t i = 0; i < drdf.size(); i++) {
       double ref = atof(myrow[i + 1].c_str());
 
       if (fabs(ref) > 1) {
@@ -94,7 +94,7 @@ void testRDF() {
                         << std::endl;
 }
 
-int main(int argc, char *argv[]) {
+int main() {
   RDLog::InitLogs();
   testRDF();
 }
