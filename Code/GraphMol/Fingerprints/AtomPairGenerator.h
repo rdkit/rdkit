@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include <Code/RDGeneral/export.h>
+#include <RDGeneral/export.h>
 #ifndef RD_ATOMPAIRGEN_H_2018_06
 #define RD_ATOMPAIRGEN_H_2018_06
 

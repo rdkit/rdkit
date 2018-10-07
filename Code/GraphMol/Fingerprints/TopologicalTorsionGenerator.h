@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include <Code/RDGeneral/export.h>
+#include <RDGeneral/export.h>
 #ifndef RD_TOPOLOGICALTORSIONGEN_H_2018_07
 #define RD_TOPOLOGICALTORSIONGEN_H_2018_07
 
@@ -104,8 +104,8 @@ class RDKIT_FINGERPRINTS_EXPORT TopologicalTorsionEnvGenerator
  /return FingerprintGenerator<OutputType>* that generates topological-torsion
  fingerprints
  */
-RDKIT_FINGERPRINTS_EXPORT template <typename OutputType>
-FingerprintGenerator<OutputType> *getTopologicalTorsionGenerator(
+template <typename OutputType>
+RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<OutputType> *getTopologicalTorsionGenerator(
     const bool includeChirality = false, const uint32_t torsionAtomCount = 4,
     AtomInvariantsGenerator *atomInvariantsGenerator = nullptr,
     const bool countSimulation = true,

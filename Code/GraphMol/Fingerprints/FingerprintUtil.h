@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include <Code/RDGeneral/export.h>
+#include <RDGeneral/export.h>
 #ifndef RD_FINGERPRINTUTIL_H_2018_07
 #define RD_FINGERPRINTUTIL_H_2018_07
 
