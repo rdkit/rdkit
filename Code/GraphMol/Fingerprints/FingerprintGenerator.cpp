@@ -105,7 +105,7 @@ std::string FingerprintGenerator<OutputType>::infoString() const {
          dp_atomEnvironmentGenerator->infoString() + seperator +
          (dp_atomInvariantsGenerator
               ? (dp_atomInvariantsGenerator->infoString() + seperator)
-              : ("No atom invariants generator"  + seperator)) +
+              : ("No atom invariants generator" + seperator)) +
          (dp_bondInvariantsGenerator
               ? (dp_bondInvariantsGenerator->infoString())
               : "No bond invariants generator");
