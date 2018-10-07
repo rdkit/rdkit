@@ -46,11 +46,7 @@
 #include <boost/foreach.hpp>
 #include <algorithm>
 
-#include <RDGeneral/BoostStartInclude.h>
-#include <boost/flyweight.hpp>
-#include <boost/flyweight/key_value.hpp>
-#include <boost/flyweight/no_tracking.hpp>
-#include <RDGeneral/BoostEndInclude.h>
+#include <GraphMol/Fingerprints/FingerprintUtil.h>
 
 namespace {
 class ss_matcher {
@@ -72,93 +68,6 @@ class ss_matcher {
 
 namespace RDKit {
 namespace MorganFingerprints {
-using boost::int32_t;
-using boost::uint32_t;
-typedef boost::tuple<boost::dynamic_bitset<>, uint32_t, unsigned int>
-    AccumTuple;
-
-// Definitions for feature points adapted from:
-// Gobbi and Poppinger, Biotech. Bioeng. _61_ 47-54 (1998)
-const char *smartsPatterns[6] = {
-    "[$([N;!H0;v3,v4&+1]),\
-$([O,S;H1;+0]),\
-n&H1&+0]",                                                  // Donor
-    "[$([O,S;H1;v2;!$(*-*=[O,N,P,S])]),\
-$([O,S;H0;v2]),\
-$([O,S;-]),\
-$([N;v3;!$(N-*=[O,N,P,S])]),\
-n&H0&+0,\
-$([o,s;+0;!$([o,s]:n);!$([o,s]:c:n)])]",                    // Acceptor
-    "[a]",                                                  // Aromatic
-    "[F,Cl,Br,I]",                                          // Halogen
-    "[#7;+,\
-$([N;H2&+0][$([C,a]);!$([C,a](=O))]),\
-$([N;H1&+0]([$([C,a]);!$([C,a](=O))])[$([C,a]);!$([C,a](=O))]),\
-$([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]",  // Basic
-    "[$([C,S](=[O,S,P])-[O;H1,-1])]"                        // Acidic
-};
-std::vector<std::string> defaultFeatureSmarts(smartsPatterns,
-                                              smartsPatterns + 6);
-typedef boost::flyweight<boost::flyweights::key_value<std::string, ss_matcher>,
-                         boost::flyweights::no_tracking>
-    pattern_flyweight;
-void getFeatureInvariants(const ROMol &mol, std::vector<uint32_t> &invars,
-                          std::vector<const ROMol *> *patterns) {
-  unsigned int nAtoms = mol.getNumAtoms();
-  PRECONDITION(invars.size() >= nAtoms, "vector too small");
-
-  std::vector<const ROMol *> featureMatchers;
-  if (!patterns) {
-    featureMatchers.reserve(defaultFeatureSmarts.size());
-    for (std::vector<std::string>::const_iterator smaIt =
-             defaultFeatureSmarts.begin();
-         smaIt != defaultFeatureSmarts.end(); ++smaIt) {
-      const ROMol *matcher = pattern_flyweight(*smaIt).get().getMatcher();
-      CHECK_INVARIANT(matcher, "bad smarts");
-      featureMatchers.push_back(matcher);
-    }
-    patterns = &featureMatchers;
-  }
-  std::fill(invars.begin(), invars.end(), 0);
-  for (unsigned int i = 0; i < patterns->size(); ++i) {
-    unsigned int mask = 1 << i;
-    std::vector<MatchVectType> matchVect;
-    // to maintain thread safety, we have to copy the pattern
-    // molecules:
-    SubstructMatch(mol, ROMol(*(*patterns)[i], true), matchVect);
-    for (std::vector<MatchVectType>::const_iterator mvIt = matchVect.begin();
-         mvIt != matchVect.end(); ++mvIt) {
-      for (const auto &mIt : *mvIt) {
-        invars[mIt.second] |= mask;
-      }
-    }
-  }
-}  // end of getFeatureInvariants()
-
-void getConnectivityInvariants(const ROMol &mol, std::vector<uint32_t> &invars,
-                               bool includeRingMembership) {
-  unsigned int nAtoms = mol.getNumAtoms();
-  PRECONDITION(invars.size() >= nAtoms, "vector too small");
-  gboost::hash<std::vector<uint32_t>> vectHasher;
-  for (unsigned int i = 0; i < nAtoms; ++i) {
-    Atom const *atom = mol.getAtomWithIdx(i);
-    std::vector<uint32_t> components;
-    components.push_back(atom->getAtomicNum());
-    components.push_back(atom->getTotalDegree());
-    components.push_back(atom->getTotalNumHs());
-    components.push_back(atom->getFormalCharge());
-    int deltaMass = static_cast<int>(
-        atom->getMass() -
-        PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum()));
-    components.push_back(deltaMass);
-
-    if (includeRingMembership &&
-        atom->getOwningMol().getRingInfo()->numAtomRings(atom->getIdx())) {
-      components.push_back(1);
-    }
-    invars[i] = vectHasher(components);
-  }
-}  // end of getConnectivityInvariants()
 
 uint32_t updateElement(SparseIntVect<uint32_t> &v, unsigned int elem,
                        bool counting) {
@@ -222,7 +131,7 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
   std::vector<boost::dynamic_bitset<>> neighborhoods;
   // these are the environments around each atom:
   std::vector<boost::dynamic_bitset<>> atomNeighborhoods(
-      nAtoms, boost::dynamic_bitset<>(lmol->getNumBonds()));
+      nAtoms, boost::dynamic_bitset<>(mol.getNumBonds()));
   boost::dynamic_bitset<> deadAtoms(nAtoms);
 
   boost::dynamic_bitset<> includeAtoms(nAtoms);
@@ -268,7 +177,7 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
         ROMol::OEDGE_ITER beg, end;
         boost::tie(beg, end) = lmol->getAtomBonds(tAtom);
         while (beg != end) {
-          const Bond *bond = (*lmol)[*beg];
+          const Bond *bond = mol[*beg];
           roundAtomNeighborhoods[atomIdx][bond->getIdx()] = 1;
 
           unsigned int oIdx = bond->getOtherAtomIdx(atomIdx);

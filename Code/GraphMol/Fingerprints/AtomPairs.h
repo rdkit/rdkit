@@ -36,53 +36,12 @@
 #include <DataStructs/SparseIntVect.h>
 #include <DataStructs/BitVects.h>
 #include <boost/cstdint.hpp>
+#include <GraphMol/Fingerprints/FingerprintUtil.h>
 namespace RDKit {
 class Atom;
 
 namespace AtomPairs {
 const std::string atomPairsVersion = "1.1.0";
-const unsigned int numTypeBits = 4;
-const unsigned int atomNumberTypes[1 << numTypeBits] = {
-    5, 6, 7, 8, 9, 14, 15, 16, 17, 33, 34, 35, 51, 52, 43};
-const unsigned int numPiBits = 2;
-const unsigned int maxNumPi = (1 << numPiBits) - 1;
-const unsigned int numBranchBits = 3;
-const unsigned int maxNumBranches = (1 << numBranchBits) - 1;
-const unsigned int numChiralBits = 2;
-const unsigned int codeSize = numTypeBits + numPiBits + numBranchBits;
-const unsigned int numPathBits = 5;
-const unsigned int maxPathLen = (1 << numPathBits) - 1;
-const unsigned int numAtomPairFingerprintBits =
-    numPathBits + 2 * codeSize;  // note that this is only accurate if chirality
-                                 // is not included
-
-//! returns a numeric code for the atom (the atom's hash in the
-//! atom-pair scheme)
-/*!
-  \param atom            the atom to be considered
-  \param branchSubtract  (optional) a constant to subtract from
-  the number of neighbors when the hash
-  is calculated (used in the topological
-  torsions code)
-  \param includeChirality toggles the inclusions of bits indicating R/S
-  chirality
-*/
-RDKIT_FINGERPRINTS_EXPORT boost::uint32_t getAtomCode(const Atom *atom, unsigned int branchSubtract = 0,
-                            bool includeChirality = false);
-
-//! returns an atom pair hash based on two atom hashes and the
-//! distance between the atoms.
-/*!
-  \param codeI  the hash for the first atom
-  \param codeJ  the hash for the second atom
-  \param dist   the distance (number of bonds) between the two
-  atoms
-  \param includeChirality toggles the inclusions of bits indicating R/S
-  chirality
-*/
-RDKIT_FINGERPRINTS_EXPORT boost::uint32_t getAtomPairCode(boost::uint32_t codeI, boost::uint32_t codeJ,
-                                unsigned int dist,
-                                bool includeChirality = false);
 
 //! returns the atom-pair fingerprint for a molecule
 /*!
@@ -203,14 +162,7 @@ RDKIT_FINGERPRINTS_EXPORT ExplicitBitVect *getHashedAtomPairFingerprintAsBitVect
     unsigned int nBitsPerEntry = 4, bool includeChirality = false,
     bool use2D = true, int confId = -1);
 
-//! returns an topological torsion hash based on the atom hashes
-//! passed in
-/*!
-  \param atomCodes  the vector of atom hashes
-*/
-RDKIT_FINGERPRINTS_EXPORT boost::uint64_t getTopologicalTorsionCode(
-    const std::vector<boost::uint32_t> &atomCodes,
-    bool includeChirality = false);
+
 
 //! returns the topological-torsion fingerprint for a molecule
 /*!
