@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 
+#include <Code/RDGeneral/export.h>
 #ifndef RD_ATOMPAIRGEN_H_2018_06
 #define RD_ATOMPAIRGEN_H_2018_06
 
@@ -18,7 +19,8 @@ namespace RDKit {
 namespace AtomPair {
 using namespace AtomPairs;
 
-class AtomPairAtomInvGenerator : public AtomInvariantsGenerator {
+class RDKIT_FINGERPRINTS_EXPORT AtomPairAtomInvGenerator
+    : public AtomInvariantsGenerator {
   const bool df_includeChirality;
   const bool df_topologicalTorsionCorrection;
 
@@ -45,7 +47,8 @@ class AtomPairAtomInvGenerator : public AtomInvariantsGenerator {
 
  */
 template <typename OutputType>
-class AtomPairArguments : public FingerprintArguments<OutputType> {
+class RDKIT_FINGERPRINTS_EXPORT AtomPairArguments
+    : public FingerprintArguments<OutputType> {
  public:
   const bool df_includeChirality;
   const bool df_use2D;
@@ -90,7 +93,8 @@ class AtomPairArguments : public FingerprintArguments<OutputType> {
 
  */
 template <typename OutputType>
-class AtomPairAtomEnv : public AtomEnvironment<OutputType> {
+class RDKIT_FINGERPRINTS_EXPORT AtomPairAtomEnv
+    : public AtomEnvironment<OutputType> {
   const unsigned int d_atomIdFirst;
   const unsigned int d_atomIdSecond;
   const unsigned int d_distance;
@@ -118,7 +122,8 @@ class AtomPairAtomEnv : public AtomEnvironment<OutputType> {
 
  */
 template <typename OutputType>
-class AtomPairEnvGenerator : public AtomEnvironmentGenerator<OutputType> {
+class RDKIT_FINGERPRINTS_EXPORT AtomPairEnvGenerator
+    : public AtomEnvironmentGenerator<OutputType> {
  public:
   std::vector<AtomEnvironment<OutputType> *> getEnvironments(
       const ROMol &mol, FingerprintArguments<OutputType> *arguments,
@@ -159,14 +164,15 @@ class AtomPairEnvGenerator : public AtomEnvironmentGenerator<OutputType> {
   fingerprints
  */
 template <typename OutputType>
-FingerprintGenerator<OutputType> *getAtomPairGenerator(
-    const unsigned int minDistance = 1,
-    const unsigned int maxDistance = maxPathLen - 1,
-    const bool includeChirality = false, const bool use2D = true,
-    AtomInvariantsGenerator *atomInvariantsGenerator = nullptr,
-    const bool useCountSimulation = true, const std::uint32_t fpSize = 2048,
-    const std::vector<std::uint32_t> countBounds = {1, 2, 4, 8},
-    const bool ownsAtomInvGen = false);
+RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<OutputType>
+    *getAtomPairGenerator(
+        const unsigned int minDistance = 1,
+        const unsigned int maxDistance = maxPathLen - 1,
+        const bool includeChirality = false, const bool use2D = true,
+        AtomInvariantsGenerator *atomInvariantsGenerator = nullptr,
+        const bool useCountSimulation = true, const std::uint32_t fpSize = 2048,
+        const std::vector<std::uint32_t> countBounds = {1, 2, 4, 8},
+        const bool ownsAtomInvGen = false);
 
 }  // namespace AtomPair
 }  // namespace RDKit
