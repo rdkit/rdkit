@@ -215,7 +215,8 @@ void readConformer(Conformer *conf, const rj::Value &confVal) {
 }
 
 void readPartialCharges(RWMol *mol, const rj::Value &repVal,
-                        const JSONParseParameters /* &params */) {
+                        const JSONParseParameters &params) {
+  RDUNUSED_PARAM(params);
   PRECONDITION(mol, "no molecule");
   PRECONDITION(repVal["name"].GetString() == std::string("partialCharges"),
                "bad charges");

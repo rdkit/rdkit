@@ -660,8 +660,9 @@ void StructCheckerOptions::parseTautomerData(
 }
 //--------------------------------------------------------------------------
 
-bool loadChargeDataTables(const std::string& /* path */) {
+bool loadChargeDataTables(const std::string& path) {
   // TODO: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  RDUNUSED_PARAM(path);
   /*
       double Elneg0; // elneg_table[0].value;
       std::map<unsigned, double> ElnegTable;   // AtomicNumber -> eleng

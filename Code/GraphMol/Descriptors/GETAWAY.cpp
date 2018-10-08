@@ -63,7 +63,7 @@ namespace Descriptors {
 
 namespace {
 
-MolData3Ddescriptors moldata3D{};
+MolData3Ddescriptors moldata3D;
 
 double roundn(double in, int factor) {
   return round(in * pow(10., factor)) / pow(10., factor);
@@ -112,7 +112,8 @@ int countZeros(std::string ta) {
   return nbzero;
 }
 
-bool IsClose2(double a, double b, unsigned int /* precision */) {
+bool IsClose2(double a, double b, unsigned int precision) {
+  RDUNUSED_PARAM(precision);
   bool isclose = false;
 
   std::string sa, sb;
@@ -150,7 +151,8 @@ bool IsClose2(double a, double b, unsigned int /* precision */) {
   return isclose;
 }
 
-bool IsClose3(double a, double b, unsigned int /* precision */) {
+bool IsClose3(double a, double b, unsigned int precision) {
+  RDUNUSED_PARAM(precision);
   bool isclose = false;
   std::string sa, sb;
   std::string ta, tb;

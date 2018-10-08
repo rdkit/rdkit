@@ -79,7 +79,7 @@ MMFFDefCollection::MMFFDefCollection(std::string mmffDef) {
   unsigned int atomType;
   while (!(inStream.eof())) {
     if (inLine[0] != '*') {
-      MMFFDef mmffDefObj{};
+      MMFFDef mmffDefObj;
       boost::char_separator<char> tabSep("\t");
       tokenizer tokens(inLine, tabSep);
       tokenizer::iterator token = tokens.begin();
@@ -472,7 +472,7 @@ MMFFPropCollection::MMFFPropCollection(std::string mmffProp) {
   std::string inLine = RDKit::getLine(inStream);
   while (!(inStream.eof())) {
     if (inLine[0] != '*') {
-      MMFFProp mmffPropObj{};
+      MMFFProp mmffPropObj;
       boost::char_separator<char> tabSep("\t");
       tokenizer tokens(inLine, tabSep);
       tokenizer::iterator token = tokens.begin();
@@ -644,7 +644,7 @@ MMFFPBCICollection::MMFFPBCICollection(std::string mmffPBCI) {
   std::string inLine = RDKit::getLine(inStream);
   while (!(inStream.eof())) {
     if (inLine[0] != '*') {
-      MMFFPBCI mmffPBCIObj{};
+      MMFFPBCI mmffPBCIObj;
       boost::char_separator<char> tabSep("\t");
       tokenizer tokens(inLine, tabSep);
       tokenizer::iterator token = tokens.begin();
@@ -802,7 +802,7 @@ MMFFChgCollection::MMFFChgCollection(std::string mmffChg) {
   std::string inLine = RDKit::getLine(inStream);
   while (!(inStream.eof())) {
     if (inLine[0] != '*') {
-      MMFFChg mmffChgObj{};
+      MMFFChg mmffChgObj;
       boost::char_separator<char> tabSep("\t");
       tokenizer tokens(inLine, tabSep);
       tokenizer::iterator token = tokens.begin();
@@ -1946,7 +1946,7 @@ MMFFBndkCollection::MMFFBndkCollection(std::string mmffBndk) {
   std::string inLine = RDKit::getLine(inStream);
   while (!(inStream.eof())) {
     if (inLine[0] != '*') {
-      MMFFBond mmffBondObj{};
+      MMFFBond mmffBondObj;
       boost::char_separator<char> tabSep("\t");
       tokenizer tokens(inLine, tabSep);
       tokenizer::iterator token = tokens.begin();
@@ -2074,7 +2074,7 @@ MMFFHerschbachLaurieCollection::MMFFHerschbachLaurieCollection(
   std::string inLine = RDKit::getLine(inStream);
   while (!(inStream.eof())) {
     if (inLine[0] != '*') {
-      MMFFHerschbachLaurie mmffHerschbachLaurieObj{};
+      MMFFHerschbachLaurie mmffHerschbachLaurieObj;
       boost::char_separator<char> tabSep("\t");
       tokenizer tokens(inLine, tabSep);
       tokenizer::iterator token = tokens.begin();
@@ -2164,7 +2164,7 @@ MMFFCovRadPauEleCollection::MMFFCovRadPauEleCollection(
   std::string inLine = RDKit::getLine(inStream);
   while (!(inStream.eof())) {
     if (inLine[0] != '*') {
-      MMFFCovRadPauEle mmffCovRadPauEleObj{};
+      MMFFCovRadPauEle mmffCovRadPauEleObj;
       boost::char_separator<char> tabSep("\t");
       tokenizer tokens(inLine, tabSep);
       tokenizer::iterator token = tokens.begin();
@@ -2239,7 +2239,7 @@ MMFFAngleCollection::MMFFAngleCollection(std::string mmffAngle) {
   std::string inLine = RDKit::getLine(inStream);
   while (!(inStream.eof())) {
     if (inLine[0] != '*') {
-      MMFFAngle mmffAngleObj{};
+      MMFFAngle mmffAngleObj;
       boost::char_separator<char> tabSep("\t");
       tokenizer tokens(inLine, tabSep);
       tokenizer::iterator token = tokens.begin();
@@ -5031,7 +5031,7 @@ MMFFDfsbCollection::MMFFDfsbCollection(std::string mmffDfsb) {
   std::string inLine = RDKit::getLine(inStream);
   while (!(inStream.eof())) {
     if (inLine[0] != '*') {
-      MMFFStbn mmffStbnObj{};
+      MMFFStbn mmffStbnObj;
       boost::char_separator<char> tabSep("\t");
       tokenizer tokens(inLine, tabSep);
       tokenizer::iterator token = tokens.begin();
@@ -5116,7 +5116,7 @@ MMFFOopCollection::MMFFOopCollection(const bool isMMFFs, std::string mmffOop) {
   std::string inLine = RDKit::getLine(inStream);
   while (!(inStream.eof())) {
     if (inLine[0] != '*') {
-      MMFFOop mmffOopObj{};
+      MMFFOop mmffOopObj;
       boost::char_separator<char> tabSep("\t");
       tokenizer tokens(inLine, tabSep);
       tokenizer::iterator token = tokens.begin();
@@ -5442,7 +5442,7 @@ MMFFTorCollection::MMFFTorCollection(const bool isMMFFs, std::string mmffTor) {
   std::string inLine = RDKit::getLine(inStream);
   while (!(inStream.eof())) {
     if (inLine[0] != '*') {
-      MMFFTor mmffTorObj{};
+      MMFFTor mmffTorObj;
       boost::char_separator<char> tabSep("\t");
       tokenizer tokens(inLine, tabSep);
       tokenizer::iterator token = tokens.begin();
@@ -8468,7 +8468,7 @@ MMFFVdWCollection::MMFFVdWCollection(std::string mmffVdW) {
         this->DAEPS = boost::lexical_cast<double>(*token);
         ++token;
       } else {
-        MMFFVdW mmffVdWObj{};
+        MMFFVdW mmffVdWObj;
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
         unsigned int atomType = boost::lexical_cast<unsigned int>(*token);
 #else

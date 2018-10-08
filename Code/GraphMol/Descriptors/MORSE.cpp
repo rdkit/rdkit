@@ -45,7 +45,7 @@ namespace RDKit {
 namespace Descriptors {
 namespace {
 
-MolData3Ddescriptors moldata3D{};
+MolData3Ddescriptors moldata3D;
 
 std::vector<double> getG(int n) {
   std::vector<double> res(n);
