@@ -31,9 +31,9 @@ macro(rdkit_library)
     ${ARGN})
   CAR(RDKLIB_NAME ${RDKLIB_DEFAULT_ARGS})
   CDR(RDKLIB_SOURCES ${RDKLIB_DEFAULT_ARGS})
-  if(MSVC AND (NOT RDK_INSTALL_DLLS_MSVC))
-  	configure_file(
-	  ${CMAKE_SOURCE_DIR}/rdkit.ico
+  if(MSVC)
+    configure_file(
+     	  ${CMAKE_SOURCE_DIR}/rdkit.ico
 	  ${CMAKE_CURRENT_BINARY_DIR}/rdkit.ico
 	  COPYONLY)
 
@@ -48,7 +48,11 @@ macro(rdkit_library)
      VERSION_REVISION ${RDKit_Revision}
      FILE_DESCRIPTION "RDKit dll ${RDKLIB_NAME} ${RDK_WINDOWS_DLLNAME_PREFIX}"
     )
-    	      
+  else()
+    set(RDKLIB_MSVC_VERSION "")
+  endif(MSVC)
+  
+  if(MSVC AND (NOT RDK_INSTALL_DLLS_MSVC))
     add_library(${RDKLIB_NAME} ${RDKLIB_SOURCES}
             ${RDKLIB_MSVC_VERSION})
     target_link_libraries(${RDKLIB_NAME} PUBLIC rdkit_base)
@@ -62,7 +66,8 @@ macro(rdkit_library)
     # need exceptions to be (correctly) catchable across
     # boundaries. As of now (June 2010), this doesn't work
     # with g++ unless libraries are shared.
-    add_library(${RDKLIB_NAME} SHARED ${RDKLIB_SOURCES})
+    add_library(${RDKLIB_NAME} SHARED ${RDKLIB_SOURCES}
+                ${RDKLIB_MSVC_VERSION})
     target_link_libraries(${RDKLIB_NAME} PUBLIC rdkit_base)
     INSTALL(TARGETS ${RDKLIB_NAME} EXPORT ${RDKit_EXPORTED_TARGETS}
             DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
