@@ -2,7 +2,6 @@
 (Changes relative to Release_2018.03.1)
 
 ## Deprecations
-
 - As part of the changes and cleaning up done for #1836 many of the `#defines`
   used in the RDKit have been renamed.
     - `USE_BUILTIN_POPCOUNT` -> `RDK_OPTIMIZE_NATIVE`
@@ -18,13 +17,24 @@ This release includes a set of changes to make the default arguments to common
 functions less error prone (github #1679).
 - GetAtomSmiles() now generates isomeric SMILES by default.
 - The ringMatchesRingOnly option to the FindMCS() function now applies to
-  atom-atom matches as well as bond-bond matches. 
+  atom-atom matches as well as bond-bond matches.
+- The Python functions EmbedMolecule() and EmbedMultipleConfs() now use the
+  ETKDG algorithm by default instead of standard distance geometry.
+
+## Highlights:
+- This release includes two contributions from the Google Summer of Code:
+   - A new generalized fingerprint generator.
+   - An integration/port of MolVS to the core RDKit.
+  The API on both may change a bit with future releases.
+- The rdkit.Chem.Draw module now includes functions for depicting fingerprint
+  bits. Morgan and RDKit fingerprints are currently supported.
+  
 
 ## Acknowledgements:
 
-## Highlights:
-
 ## Contrib updates:
+- The FastCluster code has been updated.
+
 
 ## New Features and Enhancements:
 

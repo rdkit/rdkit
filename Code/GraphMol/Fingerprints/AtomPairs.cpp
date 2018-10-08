@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2007-2013 Greg Landrum
 //
@@ -17,79 +16,10 @@
 #include <boost/cstdint.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/foreach.hpp>
+#include <GraphMol/Fingerprints/FingerprintUtil.h>
 
 namespace RDKit {
 namespace AtomPairs {
-unsigned int numPiElectrons(const Atom *atom) {
-  PRECONDITION(atom, "no atom");
-  unsigned int res = 0;
-  if (atom->getIsAromatic()) {
-    res = 1;
-  } else if (atom->getHybridization() != Atom::SP3) {
-    unsigned int val = static_cast<unsigned int>(atom->getExplicitValence());
-    val -= atom->getNumExplicitHs();
-    CHECK_INVARIANT(val >= atom->getDegree(),
-                    "explicit valence exceeds atom degree");
-    res = val - atom->getDegree();
-  }
-  return res;
-}
-
-boost::uint32_t getAtomCode(const Atom *atom, unsigned int branchSubtract,
-                            bool includeChirality) {
-  PRECONDITION(atom, "no atom");
-  boost::uint32_t code;
-
-  unsigned int numBranches = 0;
-  if (atom->getDegree() > branchSubtract) {
-    numBranches = atom->getDegree() - branchSubtract;
-  }
-
-  code = numBranches % maxNumBranches;
-  unsigned int nPi = numPiElectrons(atom) % maxNumPi;
-  code |= nPi << numBranchBits;
-
-  unsigned int typeIdx = 0;
-  unsigned int nTypes = 1 << numTypeBits;
-  while (typeIdx < nTypes) {
-    if (atomNumberTypes[typeIdx] ==
-        static_cast<unsigned int>(atom->getAtomicNum())) {
-      break;
-    } else if (atomNumberTypes[typeIdx] >
-               static_cast<unsigned int>(atom->getAtomicNum())) {
-      typeIdx = nTypes;
-      break;
-    }
-    ++typeIdx;
-  }
-  if (typeIdx == nTypes) --typeIdx;
-  code |= typeIdx << (numBranchBits + numPiBits);
-  if (includeChirality) {
-    std::string cipCode;
-    if (atom->getPropIfPresent(common_properties::_CIPCode, cipCode)) {
-      boost::uint32_t offset = numBranchBits + numPiBits + numTypeBits;
-      if (cipCode == "R") {
-        code |= 1 << offset;
-      } else if (cipCode == "S") {
-        code |= 2 << offset;
-      }
-    }
-  }
-  POSTCONDITION(code < static_cast<boost::uint32_t>(
-                           1 << (codeSize + (includeChirality ? 2 : 0))),
-                "code exceeds number of bits");
-  return code;
-};
-
-boost::uint32_t getAtomPairCode(boost::uint32_t codeI, boost::uint32_t codeJ,
-                                unsigned int dist, bool includeChirality) {
-  PRECONDITION(dist < maxPathLen, "dist too long");
-  boost::uint32_t res = dist;
-  res |= std::min(codeI, codeJ) << numPathBits;
-  res |= std::max(codeI, codeJ)
-         << (numPathBits + codeSize + (includeChirality ? numChiralBits : 0));
-  return res;
-}
 
 template <typename T1, typename T2>
 void updateElement(SparseIntVect<T1> &v, T2 elem) {
@@ -318,66 +248,6 @@ ExplicitBitVect *getHashedAtomPairFingerprintAsBitVect(
     }
   }
   delete sres;
-  return res;
-}
-
-boost::uint64_t getTopologicalTorsionCode(
-    const std::vector<boost::uint32_t> &pathCodes, bool includeChirality) {
-  bool reverseIt = false;
-  unsigned int i = 0;
-  unsigned int j = pathCodes.size() - 1;
-  while (i < j) {
-    if (pathCodes[i] > pathCodes[j]) {
-      reverseIt = true;
-      break;
-    } else if (pathCodes[i] < pathCodes[j]) {
-      break;
-    }
-    ++i;
-    --j;
-  }
-
-  int shiftSize = codeSize + (includeChirality ? numChiralBits : 0);
-  boost::uint64_t res = 0;
-  if (reverseIt) {
-    for (unsigned int i = 0; i < pathCodes.size(); ++i) {
-      res |= static_cast<boost::uint64_t>(pathCodes[pathCodes.size() - i - 1])
-             << (shiftSize * i);
-    }
-  } else {
-    for (unsigned int i = 0; i < pathCodes.size(); ++i) {
-      res |= static_cast<boost::uint64_t>(pathCodes[i]) << (shiftSize * i);
-    }
-  }
-  return res;
-}
-
-size_t getTopologicalTorsionHash(
-    const std::vector<boost::uint32_t> &pathCodes) {
-  bool reverseIt = false;
-  unsigned int i = 0;
-  unsigned int j = pathCodes.size() - 1;
-  while (i < j) {
-    if (pathCodes[i] > pathCodes[j]) {
-      reverseIt = true;
-      break;
-    } else if (pathCodes[i] < pathCodes[j]) {
-      break;
-    }
-    ++i;
-    --j;
-  }
-
-  boost::uint32_t res = 0;
-  if (reverseIt) {
-    for (unsigned int i = 0; i < pathCodes.size(); ++i) {
-      gboost::hash_combine(res, pathCodes[pathCodes.size() - i - 1]);
-    }
-  } else {
-    for (unsigned int pathCode : pathCodes) {
-      gboost::hash_combine(res, pathCode);
-    }
-  }
   return res;
 }
 

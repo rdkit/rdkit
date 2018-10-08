@@ -13,6 +13,7 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 
 namespace RDKit {
 class Atom;
@@ -70,7 +71,7 @@ RDKIT_SMILESPARSE_EXPORT std::string GetBondSmiles(
 RDKIT_SMILESPARSE_EXPORT std::string MolToSmiles(
     const ROMol &mol, bool doIsomericSmiles = true, bool doKekule = false,
     int rootedAtAtom = -1, bool canonical = true, bool allBondsExplicit = false,
-    bool allHsExplicit = false);
+    bool allHsExplicit = false, bool doRandom = false);
 
 //! \brief returns canonical SMILES for part of a molecule
 /*!

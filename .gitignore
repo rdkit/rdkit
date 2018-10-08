@@ -26,6 +26,10 @@ __pycache__/
 /build*/
 /Docs/Book/_build*/
 
+/Code/RDBoost/test.h
+/Code/RDGeneral/RDConfig.h
+/Code/RDGeneral/export.h
+/Code/RDGeneral/versions.h
 /Code/RDGeneral/versions.cpp
 
 /Code/GraphMol/SLNParse/lex.yysln.cpp
@@ -38,6 +42,20 @@ __pycache__/
 /Code/GraphMol/SmilesParse/smarts.tab.hpp
 /Code/GraphMol/SmilesParse/smiles.tab.cpp
 /Code/GraphMol/SmilesParse/smiles.tab.hpp
+
+/Data/templates.mae
+
+/External/catch/catch/
+/External/CoordGen/coordgenlibs/
+/External/CoordGen/maeparser/
+/External/CoordGen/master.tar.gz
+/External/FreeSASA/freesasa-2.0.1/
+/External/FreeSASA/master.tar.gz
+/External/INCHI-API/INCHI-1-SRC.zip
+/External/INCHI-API/INCHI-1-SRC/
+/External/INCHI-API/src/
+/External/rapidjson-1.1.0.tar.gz
+/External/rapidjson-1.1.0/
 
 /rdkit/RDPaths.py
 /rdkit/Chem/inchi.py
@@ -77,6 +95,9 @@ __pycache__/
 /Code/GraphMol/test_data/prop.pkl
 
 /Projects/DbCLI/testData/bzr/
+
+/rdkit/sping/tests/testallps.ps
+
 /rdkit/ML/Data/test_data/testgeneral.dat.pkl
 /rdkit/ML/Data/test_data/testquant.qdat.pkl
 .DS_Store

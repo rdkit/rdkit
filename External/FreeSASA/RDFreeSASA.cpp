@@ -49,13 +49,13 @@ const std::string SASA = "SASA";
 const std::string SASAClass = "SASAClass";  // Class type, 0,1,2... etc
 const std::string SASAClassName =
     "SASAClassName";  // Class name, Polar, APolar etc...
-}
+}  // namespace Atom
 namespace Molecule {
 const std::string SASA =
     "SASA";  // Total Solvent Accessible Surface area for molecule;
 }
-}
-}
+}  // namespace common_properties
+}  // namespace RDKit
 
 namespace FreeSASA {
 using namespace RDKit;
@@ -96,8 +96,8 @@ bool classifyAtoms(ROMol &mol, std::vector<double> &radii,
         radius = freesasa_classifier_radius(classifier, res_name, atom_name);
 
         if (radius == 0.0) {
-          BOOST_LOG(rdWarningLog) << "Atom " << atom->getIdx()
-                                  << " has zero radius" << std::endl;
+          BOOST_LOG(rdWarningLog)
+              << "Atom " << atom->getIdx() << " has zero radius" << std::endl;
         }
 
         cls = freesasa_classifier_class(classifier, res_name, atom_name);
@@ -123,8 +123,6 @@ namespace {
 double internalCalcSASA(const ROMol &mol, const std::vector<double> &radii,
                         int confIdx, const SASAOpts &opts) {
   PRECONDITION(mol.getNumConformers(), "No conformers in molecule");
-  PRECONDITION(confIdx < rdcast<int>(mol.getNumConformers()),
-               "Conformer index out of range");
   PRECONDITION(mol.getNumAtoms(), "Empty molecule");
 
   freesasa_parameters params = freesasa_default_parameters;
@@ -166,7 +164,7 @@ double internalCalcSASA(const ROMol &mol, const std::vector<double> &radii,
   freesasa_result_free(res);
   return sasa;
 }
-}
+}  // namespace
 
 double calcSASA(const RDKit::ROMol &mol, const std::vector<double> &radii,
                 int confIdx, const RDKit::QueryAtom *query,
@@ -194,4 +192,4 @@ const RDKit::QueryAtom *makeFreeSasaPolarAtomQuery() {
   qa->setQuery(makePropQuery<Atom, std::string>("SASAClassName", "Polar"));
   return qa;
 }
-}
+}  // namespace FreeSASA

@@ -2070,12 +2070,11 @@ void ParseV3000AtomBlock(std::istream *inStream, unsigned int &line,
     throw FileParseException(errout.str());
   }
 
-  if (mol->hasProp(common_properties::_2DConf)) {
-    conf->set3D(false);
-    mol->clearProp(common_properties::_2DConf);
-  } else if (mol->hasProp(common_properties::_3DConf)) {
+  if (mol->hasProp(common_properties::_3DConf)) {
     conf->set3D(true);
     mol->clearProp(common_properties::_3DConf);
+  } else {
+    conf->set3D(hasNonZeroZCoords(*conf));
   }
 }
 void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
@@ -2444,12 +2443,11 @@ bool ParseV2000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
   } else {
     ParseMolBlockAtoms(inStream, line, nAtoms, mol, conf);
 
-    if (mol->hasProp(common_properties::_2DConf)) {
-      conf->set3D(false);
-      mol->clearProp(common_properties::_2DConf);
-    } else if (mol->hasProp(common_properties::_3DConf)) {
+    if (mol->hasProp(common_properties::_3DConf)) {
       conf->set3D(true);
       mol->clearProp(common_properties::_3DConf);
+    } else { // default is 2D
+      conf->set3D(hasNonZeroZCoords(*conf));
     }
   }
   mol->addConformer(conf, true);
@@ -2491,9 +2489,8 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
   res->setProp("_MolFileInfo", tempStr);
   if (tempStr.length() >= 22) {
     std::string dimLabel = tempStr.substr(20, 2);
-    if (dimLabel == "2d" || dimLabel == common_properties::TWOD) {
-      res->setProp(common_properties::_2DConf, 1);
-    } else if (dimLabel == "3d" || dimLabel == "3D") {
+    // Unless labelled as 3D we assume 2D
+    if (dimLabel == "3d" || dimLabel == "3D") {
       res->setProp(common_properties::_3DConf, 1);
     }
   }

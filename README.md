@@ -1,5 +1,5 @@
 # RDKit
-[![Build status](https://travis-ci.org/rdkit/rdkit.svg)](https://travis-ci.org/rdkit/rdkit)
+[![Build status](https://travis-ci.com/rdkit/rdkit.svg)](https://travis-ci.com/rdkit/rdkit)
 [![Documentation Status](https://readthedocs.org/projects/rdkit/badge/?version=latest)](http://rdkit.readthedocs.org/en/latest/)
 [![DOI](https://zenodo.org/badge/10009991.svg)](https://zenodo.org/badge/latestdoi/10009991)
 

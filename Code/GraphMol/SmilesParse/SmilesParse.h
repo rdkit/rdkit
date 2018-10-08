@@ -11,14 +11,13 @@
 #ifndef _RD_SMILESPARSE_H_
 #define _RD_SMILESPARSE_H_
 
+#include <GraphMol/RWMol.h>
+#include <GraphMol/SanitException.h>
 #include <string>
 #include <exception>
 #include <map>
 
 namespace RDKit {
-class RWMol;
-class Atom;
-class Bond;
 
 struct RDKIT_SMILESPARSE_EXPORT SmilesParserParams {
   int debugParse;
@@ -113,6 +112,30 @@ class RDKIT_SMILESPARSE_EXPORT SmilesParseException : public std::exception {
  private:
   std::string _msg;
 };
+
+inline std::unique_ptr<RDKit::RWMol> operator"" _smiles(const char *text,
+                                                        size_t len) {
+  std::string smi(text, len);
+  RWMol *ptr = nullptr;
+  try {
+    ptr = SmilesToMol(smi);
+  } catch (const RDKit::MolSanitizeException &e) {
+    ptr = nullptr;
+  }
+  return std::unique_ptr<RWMol>(ptr);
+}
+inline std::unique_ptr<RDKit::RWMol> operator"" _smarts(const char *text,
+                                                        size_t len) {
+  std::string smi(text, len);
+  RWMol *ptr = nullptr;
+  try {
+    ptr = SmartsToMol(smi);
+  } catch (const RDKit::MolSanitizeException &e) {
+    ptr = nullptr;
+  }
+  return std::unique_ptr<RWMol>(ptr);
+}
+
 }  // namespace RDKit
 
 #endif

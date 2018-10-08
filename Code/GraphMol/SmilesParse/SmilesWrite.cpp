@@ -271,7 +271,7 @@ std::string FragmentSmilesConstruct(
     ROMol &mol, int atomIdx, std::vector<Canon::AtomColors> &colors,
     const UINT_VECT &ranks, bool doKekule, bool canonical,
     bool doIsomericSmiles, bool allBondsExplicit, bool allHsExplicit,
-    std::vector<unsigned int> &atomOrdering,
+    bool doRandom, std::vector<unsigned int> &atomOrdering,
     const boost::dynamic_bitset<> *bondsInPlay = nullptr,
     const std::vector<std::string> *atomSymbols = nullptr,
     const std::vector<std::string> *bondSymbols = nullptr) {
@@ -293,7 +293,7 @@ std::string FragmentSmilesConstruct(
   std::list<unsigned int> ringClosuresToErase;
 
   Canon::canonicalizeFragment(mol, atomIdx, colors, ranks, molStack,
-                              bondsInPlay, bondSymbols, doIsomericSmiles);
+                              bondsInPlay, bondSymbols, doIsomericSmiles, doRandom);
   Bond *bond = nullptr;
   BOOST_FOREACH (Canon::MolStackElem mSE, molStack) {
     switch (mSE.type) {
@@ -382,7 +382,7 @@ static bool SortBasedOnFirstElement(
 
 std::string MolToSmiles(const ROMol &mol, bool doIsomericSmiles, bool doKekule,
                         int rootedAtAtom, bool canonical, bool allBondsExplicit,
-                        bool allHsExplicit) {
+                        bool allHsExplicit, bool doRandom) {
   if (!mol.getNumAtoms()) return "";
   PRECONDITION(rootedAtAtom < 0 ||
                    static_cast<unsigned int>(rootedAtAtom) < mol.getNumAtoms(),
@@ -425,6 +425,18 @@ std::string MolToSmiles(const ROMol &mol, bool doIsomericSmiles, bool doKekule,
       tmol->debugMol(std::cout);
       std::cout << "----------------------------" << std::endl;
 #endif
+    
+    // adding randomness without setting the rootedAtAtom
+    if (doRandom ) {
+      if (rootedAtAtom == -1) {
+        rootedAtAtom = std::rand() % mol.getNumAtoms(); 
+        // need to find an atom id between 0 and mol.getNumAtoms() exclusively
+        PRECONDITION(rootedAtAtom < 0 ||
+                   static_cast<unsigned int>(rootedAtAtom) < mol.getNumAtoms(),
+               "rootedAtomAtom must be less than the number of atoms");
+      }
+    }
+
 
     std::string res;
     unsigned int nAtoms = tmol->getNumAtoms();
@@ -479,7 +491,7 @@ std::string MolToSmiles(const ROMol &mol, bool doIsomericSmiles, bool doKekule,
 
       subSmi = SmilesWrite::FragmentSmilesConstruct(
           *tmol, nextAtomIdx, colors, ranks, doKekule, canonical,
-          doIsomericSmiles, allBondsExplicit, allHsExplicit, atomOrdering);
+          doIsomericSmiles, allBondsExplicit, allHsExplicit, doRandom ,  atomOrdering);
 
       res += subSmi;
       colorIt = std::find(colors.begin(), colors.end(), Canon::WHITE_NODE);
@@ -679,7 +691,7 @@ std::string MolFragmentToSmiles(const ROMol &mol,
 
     subSmi = SmilesWrite::FragmentSmilesConstruct(
         tmol, nextAtomIdx, colors, ranks, doKekule, canonical, doIsomericSmiles,
-        allBondsExplicit, allHsExplicit, atomOrdering, &bondsInPlay,
+        allBondsExplicit, allHsExplicit, false, atomOrdering, &bondsInPlay,
         atomSymbols, bondSymbols);
 
     res += subSmi;

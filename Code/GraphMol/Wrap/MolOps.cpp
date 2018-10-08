@@ -993,7 +993,8 @@ struct molops_wrapper {
     - Hs connected to dummy atoms will not be removed\n\
     - Hs that are part of the definition of double bond Stereochemistry\n\
       will not be removed\n\
-\n";
+    - Hs that are not connected to anything else will not be removed\n\
+\n ";
     python::def("RemoveHs",
                 (ROMol * (*)(const ROMol &, bool, bool, bool)) MolOps::removeHs,
                 (python::arg("mol"), python::arg("implicitOnly") = false,
@@ -1573,6 +1574,23 @@ struct molops_wrapper {
                 (python::arg("mol"), python::arg("cleanIt") = false,
                  python::arg("force") = false,
                  python::arg("flagPossibleStereoCenters") = false),
+                docString.c_str());
+
+    // ------------------------------------------------------------------------
+    docString =
+        "Uses a conformer (should be 3D) to assign ChiralTypes to a molecule's atoms\n\
+        and stereo flags to its bonds\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use\n\
+    - confId: (optional) the conformation to use \n\
+    - replaceExistingTags: (optional) replace any existing information about stereochemistry\n\
+\n";
+    python::def("AssignStereochemistryFrom3D",
+                MolOps::assignStereochemistryFrom3D,
+                (python::arg("mol"), python::arg("confId") = -1,
+                 python::arg("replaceExistingTags") = true),
                 docString.c_str());
 
     // ------------------------------------------------------------------------

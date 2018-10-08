@@ -47,13 +47,16 @@ endif(NOT DEFINED PostgreSQL_ROOT)
 if(NOT DEFINED PostgreSQL_CONFIG_DIR)
   set(PostgreSQL_CONFIG_DIR "${PostgreSQL_ROOT}/bin")
 endif(NOT DEFINED PostgreSQL_CONFIG_DIR)
+if(NOT DEFINED PostgreSQL_CONFIG)
+  set(PostgreSQL_CONFIG "${PostgreSQL_CONFIG_DIR}/pg_config")
+endif(NOT DEFINED PostgreSQL_CONFIG)
 macro (run_pg_config arg var)
-  execute_process(COMMAND ${PostgreSQL_CONFIG_DIR}/pg_config ${arg}
+  execute_process(COMMAND ${PostgreSQL_CONFIG} ${arg}
                   RESULT_VARIABLE pgsql_config_result
                   OUTPUT_VARIABLE ${var}
                   OUTPUT_STRIP_TRAILING_WHITESPACE)
   if(NOT ${pgsql_config_result} EQUAL 0 OR NOT ${var})
-    message(FATAL_ERROR "${PostgreSQL_CONFIG_DIR}/pg_config ${arg} failed")
+    message(FATAL_ERROR "${PostgreSQL_CONFIG} ${arg} failed")
   endif()
 endmacro ()
 run_pg_config (--bindir PG_BINDIR)

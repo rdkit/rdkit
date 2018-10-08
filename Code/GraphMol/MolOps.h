@@ -215,6 +215,7 @@ RDKIT_GRAPHMOL_EXPORT void addHs(RWMol &mol, bool explicitOnly = false,
        - Hs connected to dummy atoms will not be removed
        - Hs that are part of the definition of double bond Stereochemistry
          will not be removed
+       - Hs that are not connected to anything else will not be removed
 
        - the caller is responsible for <tt>delete</tt>ing the pointer this
    returns.
@@ -839,6 +840,7 @@ RDKIT_GRAPHMOL_EXPORT void assignChiralTypesFrom3D(
   \param replaceExistingTags  if this flag is true, any existing info about
                               stereochemistry will be replaced
 
+  If the conformer provided is not a 3D conformer, nothing will be done.
 */
 RDKIT_GRAPHMOL_EXPORT void assignStereochemistryFrom3D(
     ROMol &mol, int confId = -1, bool replaceExistingTags = true);

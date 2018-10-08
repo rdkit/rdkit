@@ -141,7 +141,8 @@ class TestCase(unittest.TestCase):
     self.assertTrue(lstEq(conf.GetAtomPosition(2), [1.22207, -0.060276, 0.0]))
 
     mol = Chem.MolFromSmiles('C=C=C=C')
-    rdDistGeom.EmbedMolecule(mol, 10, 1)
+    rdDistGeom.EmbedMolecule(mol, 10, 1, useExpTorsionAnglePrefs=False,
+                             useBasicKnowledge=False)
     conf = mol.GetConformer()
 
     #writer.write(mol)
@@ -170,7 +171,9 @@ class TestCase(unittest.TestCase):
 
   def test3MultiConf(self):
     mol = Chem.MolFromSmiles("CC(C)(C)c(cc12)n[n]2C(=O)/C=C(N1)/COC")
-    cids = rdDistGeom.EmbedMultipleConfs(mol, 10, maxAttempts=30, randomSeed=100)
+    cids = rdDistGeom.EmbedMultipleConfs(mol, 10, maxAttempts=30, randomSeed=100,
+                             useExpTorsionAnglePrefs=False,
+                             useBasicKnowledge=False)
     energies = [112.98, 103.57, 110.78, 100.40, 95.37, 101.64, 114.72, 112.65, 124.53, 107.50]
     nenergies = []
     for cid in cids:
@@ -514,9 +517,16 @@ class TestCase(unittest.TestCase):
     mol = Chem.MolFromSmiles('CCCCC')
     bm1 = rdDistGeom.GetMoleculeBoundsMatrix(mol)
     bm2 = rdDistGeom.GetMoleculeBoundsMatrix(mol,doTriangleSmoothing=False)
-    print(bm1)
-    print(bm2)
     self.assertTrue(bm1[0, 4] < bm2[0,4])
+
+  def testGithub2057(self):
+      # ensure that ETKDG is the default Embedder
+    mol = Chem.AddHs(Chem.MolFromSmiles('OCCC'))
+    fn = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'DistGeomHelpers', 'test_data',
+                        'simple_torsion.etkdg.mol')
+    ref = Chem.MolFromMolFile(fn, removeHs=False)
+    self.assertEqual(rdDistGeom.EmbedMolecule(mol, randomSeed=42), 0)
+    self._compareConfs(mol, ref, 0, 0)
 
 if __name__ == '__main__':
   unittest.main()
