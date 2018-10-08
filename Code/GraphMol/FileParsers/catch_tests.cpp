@@ -1,3 +1,12 @@
+//
+//  Copyright (C) 2018 Greg Landrum
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
+
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do
                            // this in one cpp file
 #include "RDBoost/test.h"
@@ -60,8 +69,32 @@ width='200px' height='200px' >
     REQUIRE(mol);
     CHECK(mol->getNumAtoms() == 7);
     CHECK(mol->getNumConformers() == 1);
-    REQUIRE_FALSE(mol->getConformer().is3D());
+    CHECK_FALSE(mol->getConformer().is3D());
     auto smiles = MolToSmiles(*mol);
     CHECK(smiles == "CN[C@H](Cl)C(=O)O");
+  }
+}
+
+TEST_CASE(
+    "Github #2040: Failure to parse V3K mol file with bonds to multi-center "
+    "linkage points",
+    "[bug,parser]") {
+  std::string rdbase = getenv("RDBASE");
+  SECTION("basics") {
+    std::string fName =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/github2040_1.mol";
+    std::unique_ptr<RWMol> mol(
+        MolFileToMol(fName, false));  // don't sanitize yet
+    REQUIRE(mol);
+    CHECK(mol->getBondWithIdx(0)->getBondType() == Bond::SINGLE);
+    CHECK(
+        mol->getBondWithIdx(0)->hasProp(common_properties::_MolFileBondEndPts));
+    CHECK(mol->getBondWithIdx(0)->getProp<std::string>(
+              common_properties::_MolFileBondEndPts) == "(3 5 4 3)");
+    CHECK(
+        mol->getBondWithIdx(0)->hasProp(common_properties::_MolFileBondAttach));
+    CHECK(mol->getBondWithIdx(0)->getProp<std::string>(
+              common_properties::_MolFileBondAttach) == "ANY");
+    CHECK(mol->getBondWithIdx(1)->getBondType() == Bond::AROMATIC);
   }
 }
