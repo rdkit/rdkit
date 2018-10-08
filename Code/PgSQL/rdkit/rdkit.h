@@ -262,6 +262,8 @@ CChemicalReaction parseChemReactCTAB(char *data, bool warnOnFail);
 char *makeChemReactBlob(CChemicalReaction data, int *len);
 char *makeChemReactText(CChemicalReaction data, int *len, bool asSmarts);
 char *makeCTABChemReact(CChemicalReaction data, int *len);
+char *ReactionGetSVG(CChemicalReaction i, unsigned int w, unsigned int h,
+                     bool highlightByReactant, const char *params);
 
 int ChemReactNumReactants(CChemicalReaction rxn);
 int ChemReactNumProducts(CChemicalReaction rxn);

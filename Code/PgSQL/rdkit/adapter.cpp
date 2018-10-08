@@ -608,7 +608,7 @@ extern "C" CROMol MolMurckoScaffold(CROMol i) {
 }
 
 namespace {
-typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
 unsigned int parseWhichString(const std::string &txt) {
   unsigned int res = MolOps::ADJUST_IGNORENONE;
@@ -667,7 +667,7 @@ void parseAdjustQueryParameters(MolOps::AdjustQueryParameters &p,
       boost::to_upper_copy<std::string>(pt.get("makeAtomsGenericFlags", ""));
   if (which != "") p.makeAtomsGenericFlags = parseWhichString(which);
 }
-}
+}  // namespace
 
 extern "C" CROMol MolAdjustQueryProperties(CROMol i, const char *params) {
   const ROMol *im = (ROMol *)i;
@@ -702,6 +702,26 @@ extern "C" char *MolGetSVG(CROMol i, unsigned int w, unsigned int h,
     }
   }
   drawer.drawMolecule(*im, legend);
+  drawer.finishDrawing();
+  std::string txt = drawer.getDrawingText();
+  return strdup(txt.c_str());
+}
+
+extern "C" char *ReactionGetSVG(CChemicalReaction i, unsigned int w,
+                                unsigned int h, bool highlightByReactant,
+                                const char *params) {
+  ChemicalReaction *rxn = (ChemicalReaction *)i;
+
+  MolDraw2DSVG drawer(w, h);
+  if (params && strlen(params)) {
+    try {
+      MolDraw2DUtils::updateDrawerParamsFromJSON(drawer, params);
+    } catch (...) {
+      elog(WARNING,
+           "adjustQueryProperties: Invalid argument \'params\' ignored");
+    }
+  }
+  drawer.drawReaction(*rxn, highlightByReactant);
   drawer.finishDrawing();
   std::string txt = drawer.getDrawingText();
   return strdup(txt.c_str());
@@ -1795,7 +1815,7 @@ int compareMolDescriptors(const MoleculeDescriptors &md1,
   }
   return 0;
 }
-}
+}  // namespace
 
 extern "C" int reactioncmp(CChemicalReaction rxn, CChemicalReaction rxn2) {
   ChemicalReaction *rxnm = (ChemicalReaction *)rxn;

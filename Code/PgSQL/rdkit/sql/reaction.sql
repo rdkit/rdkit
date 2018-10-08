@@ -214,6 +214,9 @@ SELECT tanimoto_sml(reaction_structural_bfp('c1ccccc1>>c1ccncc1',5), reaction_st
 SELECT tanimoto_sml(reaction_structural_bfp('c1ccccc1>CC(=O)O.[Na+]>c1ccncc1',5), reaction_structural_bfp('c1ccccc1>CC(=O)O.[Na+]>c1ccncc1',5));
 SELECT tanimoto_sml(reaction_structural_bfp('c1ccccc1>CC(=O)O.[Na+]>c1ccncc1',5), reaction_structural_bfp('c1ncccc1>[Na+]>c1ncncc1',5));
 
+SELECT reaction_to_svg('[C:1][O:2].[C:3][C:4]>>[C:1][O:2][C:3][C:4]'::reaction) svg;
+SELECT reaction_to_svg('[C:1][O:2].[C:3][C:4]>>[C:1][O:2][C:3][C:4]'::reaction, true) svg;
+
 SET enable_indexscan=on;
 SET enable_bitmapscan=on;
 SET enable_seqscan=on;
