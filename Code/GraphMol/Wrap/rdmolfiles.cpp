@@ -796,7 +796,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       (python::arg("mol"), python::arg("isomericSmiles") = true,
        python::arg("kekuleSmiles") = false, python::arg("rootedAtAtom") = -1,
        python::arg("canonical") = true, python::arg("allBondsExplicit") = false,
-       python::arg("allHsExplicit") = false),
+       python::arg("allHsExplicit") = false, python::arg("doRandom") = false),
       docString.c_str());
 
   docString =
@@ -824,6 +824,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       in the output SMILES. Defaults to false.\n\
     - allHsExplicit: (optional) if true, all H counts will be explicitly indicated\n\
       in the output SMILES. Defaults to false.\n\
+    - doRandom: (optional) if true, randomized the DFS transversal graph,\n\
+      so we can generate random smiles. Defaults to false.\n\
 \n\
   RETURNS:\n\
 \n\

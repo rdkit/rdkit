@@ -116,7 +116,8 @@ RDKIT_GRAPHMOL_EXPORT void canonicalizeFragment(ROMol &mol, int atomIdx,
                           MolStack &molStack,
                           const boost::dynamic_bitset<> *bondsInPlay = 0,
                           const std::vector<std::string> *bondSymbols = 0,
-                          bool doIsomericSmiles = false);
+                          bool doIsomericSmiles = false,
+                          bool doRandom = false);
 
 }  // end of namespace Canon
 }  // end of namespace RDKit
