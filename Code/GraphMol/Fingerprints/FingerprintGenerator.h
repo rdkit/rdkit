@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 
+#include <RDGeneral/export.h>
 #ifndef RD_FINGERPRINTGEN_H_2018_05
 #define RD_FINGERPRINTGEN_H_2018_05
 
@@ -19,7 +20,7 @@
 namespace RDKit {
 class ROMol;
 
-struct AdditionalOutput {
+struct RDKIT_FINGERPRINTS_EXPORT AdditionalOutput {
   // will review this structure once more fignerprint types are implemented
 
   std::vector<std::vector<std::uint64_t>> *atomToBits;
@@ -48,7 +49,8 @@ struct AdditionalOutput {
 
  */
 template <typename OutputType>
-class FingerprintArguments : private boost::noncopyable {
+class RDKIT_FINGERPRINTS_EXPORT FingerprintArguments
+    : private boost::noncopyable {
  public:
   FingerprintArguments(const bool countSimulation,
                        const std::vector<std::uint32_t> countBounds,
@@ -89,7 +91,7 @@ class FingerprintArguments : private boost::noncopyable {
 
  */
 template <typename OutputType>
-class AtomEnvironment : private boost::noncopyable {
+class RDKIT_FINGERPRINTS_EXPORT AtomEnvironment : private boost::noncopyable {
  public:
   /*!
     \brief calculates and returns the bit id to be set for this atom-environment
@@ -116,7 +118,8 @@ class AtomEnvironment : private boost::noncopyable {
 
  */
 template <typename OutputType>
-class AtomEnvironmentGenerator : private boost::noncopyable {
+class RDKIT_FINGERPRINTS_EXPORT AtomEnvironmentGenerator
+    : private boost::noncopyable {
  public:
   /*!
     \brief generate and return all atom-envorinments from a molecule
@@ -169,7 +172,8 @@ class AtomEnvironmentGenerator : private boost::noncopyable {
   \brief abstract base class for atom invariants generators
 
  */
-class AtomInvariantsGenerator : private boost::noncopyable {
+class RDKIT_FINGERPRINTS_EXPORT AtomInvariantsGenerator
+    : private boost::noncopyable {
  public:
   /*!
     \brief get atom invariants from a molecule
@@ -198,7 +202,8 @@ class AtomInvariantsGenerator : private boost::noncopyable {
   \brief abstract base class for bond invariants generators
 
  */
-class BondInvariantsGenerator : private boost::noncopyable {
+class RDKIT_FINGERPRINTS_EXPORT BondInvariantsGenerator
+    : private boost::noncopyable {
  public:
   /*!
     \brief get bond invariants from a molecule
@@ -229,7 +234,8 @@ class BondInvariantsGenerator : private boost::noncopyable {
 
  */
 template <typename OutputType>
-class FingerprintGenerator : private boost::noncopyable {
+class RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator
+    : private boost::noncopyable {
   FingerprintArguments<OutputType> *dp_fingerprintArguments;
   AtomEnvironmentGenerator<OutputType> *dp_atomEnvironmentGenerator;
   AtomInvariantsGenerator *dp_atomInvariantsGenerator;
@@ -289,7 +295,8 @@ class FingerprintGenerator : private boost::noncopyable {
 enum class FPType { AtomPairFP, MorganFP, RDKitFP, TopologicalTorsionFP };
 
 //! used to indicate errors for unimplemented fp types in convenience functions
-class RDKIT_GRAPHMOL_EXPORT UnimplementedFPException : public std::exception {
+class RDKIT_FINGERPRINTS_EXPORT UnimplementedFPException
+    : public std::exception {
  public:
   //! construct with an error message
   UnimplementedFPException(const char *msg) : _msg(msg){};
@@ -305,24 +312,28 @@ class RDKIT_GRAPHMOL_EXPORT UnimplementedFPException : public std::exception {
 
 // convenience functions, fingerprint generation with default values
 
-SparseIntVect<std::uint64_t> *getSparseCountFP(const ROMol &mol, FPType fPType);
+RDKIT_FINGERPRINTS_EXPORT SparseIntVect<std::uint64_t> *getSparseCountFP(
+    const ROMol &mol, FPType fPType);
 
-SparseBitVect *getSparseFP(const ROMol &mol, FPType fPType);
+RDKIT_FINGERPRINTS_EXPORT SparseBitVect *getSparseFP(const ROMol &mol,
+                                                     FPType fPType);
 
-SparseIntVect<std::uint32_t> *getCountFP(const ROMol &mol, FPType fPType);
+RDKIT_FINGERPRINTS_EXPORT SparseIntVect<std::uint32_t> *getCountFP(
+    const ROMol &mol, FPType fPType);
 
-ExplicitBitVect *getFP(const ROMol &mol, FPType fPType);
+RDKIT_FINGERPRINTS_EXPORT ExplicitBitVect *getFP(const ROMol &mol,
+                                                 FPType fPType);
 
-std::vector<SparseIntVect<std::uint64_t> *> *getSparseCountFPBulk(
+RDKIT_FINGERPRINTS_EXPORT std::vector<SparseIntVect<std::uint64_t> *> *
+getSparseCountFPBulk(const std::vector<const ROMol *> molVector, FPType fPType);
+
+RDKIT_FINGERPRINTS_EXPORT std::vector<SparseBitVect *> *getSparseFPBulk(
     const std::vector<const ROMol *> molVector, FPType fPType);
 
-std::vector<SparseBitVect *> *getSparseFPBulk(
-    const std::vector<const ROMol *> molVector, FPType fPType);
+RDKIT_FINGERPRINTS_EXPORT std::vector<SparseIntVect<std::uint32_t> *>
+    *getCountFPBulk(const std::vector<const ROMol *> molVector, FPType fPType);
 
-std::vector<SparseIntVect<std::uint32_t> *> *getCountFPBulk(
-    const std::vector<const ROMol *> molVector, FPType fPType);
-
-std::vector<ExplicitBitVect *> *getFPBulk(
+RDKIT_FINGERPRINTS_EXPORT std::vector<ExplicitBitVect *> *getFPBulk(
     const std::vector<const ROMol *> molVector, FPType fPType);
 
 }  // namespace RDKit

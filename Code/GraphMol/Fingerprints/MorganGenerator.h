@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 
+#include <RDGeneral/export.h>
 #ifndef RD_MORGANGEN_H_2018_07
 #define RD_MORGANGEN_H_2018_07
 
@@ -23,7 +24,8 @@ namespace MorganFingerprint {
  ECFP-type invariants
 
  */
-class MorganAtomInvGenerator : public AtomInvariantsGenerator {
+class RDKIT_FINGERPRINTS_EXPORT MorganAtomInvGenerator
+    : public AtomInvariantsGenerator {
   const bool df_includeRingMembership;
 
  public:
@@ -46,7 +48,8 @@ class MorganAtomInvGenerator : public AtomInvariantsGenerator {
  FCFP-type invariants
 
  */
-class MorganFeatureAtomInvGenerator : public AtomInvariantsGenerator {
+class RDKIT_FINGERPRINTS_EXPORT MorganFeatureAtomInvGenerator
+    : public AtomInvariantsGenerator {
   std::vector<const ROMol *> *dp_patterns;
 
  public:
@@ -70,7 +73,8 @@ class MorganFeatureAtomInvGenerator : public AtomInvariantsGenerator {
  \brief Bond invariants generator for Morgan fingerprint
 
  */
-class MorganBondInvGenerator : public BondInvariantsGenerator {
+class RDKIT_FINGERPRINTS_EXPORT MorganBondInvGenerator
+    : public BondInvariantsGenerator {
   const bool df_useBondTypes;
   const bool df_useChirality;
 
@@ -98,7 +102,8 @@ class MorganBondInvGenerator : public BondInvariantsGenerator {
 
  */
 template <typename OutputType>
-class MorganArguments : public FingerprintArguments<OutputType> {
+class RDKIT_FINGERPRINTS_EXPORT MorganArguments
+    : public FingerprintArguments<OutputType> {
  public:
   const bool df_includeChirality;
   const bool df_onlyNonzeroInvariants;
@@ -136,7 +141,8 @@ class MorganArguments : public FingerprintArguments<OutputType> {
 
  */
 template <typename OutputType>
-class MorganAtomEnv : public AtomEnvironment<OutputType> {
+class RDKIT_FINGERPRINTS_EXPORT MorganAtomEnv
+    : public AtomEnvironment<OutputType> {
   const OutputType d_code;
   const unsigned int d_atomId;
   const unsigned int d_layer;
@@ -164,7 +170,8 @@ class MorganAtomEnv : public AtomEnvironment<OutputType> {
 
  */
 template <typename OutputType>
-class MorganEnvGenerator : public AtomEnvironmentGenerator<OutputType> {
+class RDKIT_FINGERPRINTS_EXPORT MorganEnvGenerator
+    : public AtomEnvironmentGenerator<OutputType> {
  public:
   std::vector<AtomEnvironment<OutputType> *> getEnvironments(
       const ROMol &mol, FingerprintArguments<OutputType> *arguments,
@@ -218,7 +225,7 @@ class MorganEnvGenerator : public AtomEnvironmentGenerator<OutputType> {
  \return FingerprintGenerator<OutputType>* that generates Morgan fingerprints
  */
 template <typename OutputType>
-FingerprintGenerator<OutputType> *getMorganGenerator(
+RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<OutputType> *getMorganGenerator(
     const unsigned int radius, const bool countSimulation = true,
     const bool includeChirality = false, const bool useBondTypes = true,
     const bool onlyNonzeroInvariants = false,

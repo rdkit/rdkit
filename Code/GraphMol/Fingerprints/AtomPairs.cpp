@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2007-2013 Greg Landrum
 //
@@ -251,7 +250,6 @@ ExplicitBitVect *getHashedAtomPairFingerprintAsBitVect(
   delete sres;
   return res;
 }
-
 
 SparseIntVect<boost::int64_t> *getTopologicalTorsionFingerprint(
     const ROMol &mol, unsigned int targetSize,

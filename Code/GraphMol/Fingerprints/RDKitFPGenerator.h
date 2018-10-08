@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 
+#include <RDGeneral/export.h>
 #ifndef RD_RDFINGERPRINTGEN_H_2018_07
 #define RD_RDFINGERPRINTGEN_H_2018_07
 
@@ -17,7 +18,8 @@ namespace RDKit {
 namespace RDKitFP {
 
 template <typename OutputType>
-class RDKitFPArguments : public FingerprintArguments<OutputType> {
+class RDKIT_FINGERPRINTS_EXPORT RDKitFPArguments
+    : public FingerprintArguments<OutputType> {
  public:
   const unsigned int d_minPath;
   const unsigned int d_maxPath;
@@ -54,7 +56,8 @@ class RDKitFPArguments : public FingerprintArguments<OutputType> {
                    const std::uint32_t fpSize);
 };
 
-class RDKitFPAtomInvGenerator : public AtomInvariantsGenerator {
+class RDKIT_FINGERPRINTS_EXPORT RDKitFPAtomInvGenerator
+    : public AtomInvariantsGenerator {
  public:
   std::vector<std::uint32_t> *getAtomInvariants(const ROMol &mol) const;
 
@@ -63,7 +66,8 @@ class RDKitFPAtomInvGenerator : public AtomInvariantsGenerator {
 };
 
 template <typename OutputType>
-class RDKitFPAtomEnv : public AtomEnvironment<OutputType> {
+class RDKIT_FINGERPRINTS_EXPORT RDKitFPAtomEnv
+    : public AtomEnvironment<OutputType> {
   const OutputType d_bitId;
   const boost::dynamic_bitset<> d_atomsInPath;
 
@@ -86,7 +90,8 @@ class RDKitFPAtomEnv : public AtomEnvironment<OutputType> {
 };
 
 template <typename OutputType>
-class RDKitFPEnvGenerator : public AtomEnvironmentGenerator<OutputType> {
+class RDKIT_FINGERPRINTS_EXPORT RDKitFPEnvGenerator
+    : public AtomEnvironmentGenerator<OutputType> {
  public:
   std::vector<AtomEnvironment<OutputType> *> getEnvironments(
       const ROMol &mol, FingerprintArguments<OutputType> *arguments,
@@ -125,7 +130,7 @@ class RDKitFPEnvGenerator : public AtomEnvironmentGenerator<OutputType> {
  /return FingerprintGenerator<OutputType>* that generated RDKit fingerprints
  */
 template <typename OutputType>
-FingerprintGenerator<OutputType> *getRDKitFPGenerator(
+RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<OutputType> *getRDKitFPGenerator(
     const unsigned int minPath = 1, const unsigned int maxPath = 7,
     const bool useHs = true, const bool branchedPaths = true,
     const bool useBondOrder = true,

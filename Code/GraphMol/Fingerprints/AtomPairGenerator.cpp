@@ -220,14 +220,14 @@ FingerprintGenerator<OutputType> *getAtomPairGenerator(
       ownsAtomInvGenerator, false);
 }
 
-template FingerprintGenerator<std::uint32_t> *getAtomPairGenerator(
+template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint32_t> *getAtomPairGenerator(
     const unsigned int minDistance, const unsigned int maxDistance,
     const bool includeChirality, const bool use2D,
     AtomInvariantsGenerator *atomInvariantsGenerator,
     const bool useCountSimulation, const std::uint32_t fpSize,
     const std::vector<std::uint32_t> countBounds, const bool ownsAtomInvGen);
 
-template FingerprintGenerator<std::uint64_t> *getAtomPairGenerator(
+template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint64_t> *getAtomPairGenerator(
     const unsigned int minDistance, const unsigned int maxDistance,
     const bool includeChirality, const bool use2D,
     AtomInvariantsGenerator *atomInvariantsGenerator,

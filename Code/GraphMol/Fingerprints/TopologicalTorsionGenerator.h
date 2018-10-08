@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 
+#include <RDGeneral/export.h>
 #ifndef RD_TOPOLOGICALTORSIONGEN_H_2018_07
 #define RD_TOPOLOGICALTORSIONGEN_H_2018_07
 
@@ -18,7 +19,8 @@ namespace RDKit {
 namespace TopologicalTorsion {
 
 template <typename OutputType>
-class TopologicalTorsionArguments : public FingerprintArguments<OutputType> {
+class RDKIT_FINGERPRINTS_EXPORT TopologicalTorsionArguments
+    : public FingerprintArguments<OutputType> {
  public:
   const bool df_includeChirality;
   const uint32_t d_torsionAtomCount;
@@ -47,7 +49,8 @@ class TopologicalTorsionArguments : public FingerprintArguments<OutputType> {
 };
 
 template <typename OutputType>
-class TopologicalTorsionAtomEnv : public AtomEnvironment<OutputType> {
+class RDKIT_FINGERPRINTS_EXPORT TopologicalTorsionAtomEnv
+    : public AtomEnvironment<OutputType> {
   const OutputType d_bitId;
 
  public:
@@ -65,7 +68,7 @@ class TopologicalTorsionAtomEnv : public AtomEnvironment<OutputType> {
 };
 
 template <typename OutputType>
-class TopologicalTorsionEnvGenerator
+class RDKIT_FINGERPRINTS_EXPORT TopologicalTorsionEnvGenerator
     : public AtomEnvironmentGenerator<OutputType> {
  public:
   std::vector<AtomEnvironment<OutputType> *> getEnvironments(
@@ -102,7 +105,7 @@ class TopologicalTorsionEnvGenerator
  fingerprints
  */
 template <typename OutputType>
-FingerprintGenerator<OutputType> *getTopologicalTorsionGenerator(
+RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<OutputType> *getTopologicalTorsionGenerator(
     const bool includeChirality = false, const uint32_t torsionAtomCount = 4,
     AtomInvariantsGenerator *atomInvariantsGenerator = nullptr,
     const bool countSimulation = true,

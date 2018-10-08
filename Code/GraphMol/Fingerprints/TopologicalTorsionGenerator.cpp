@@ -176,7 +176,7 @@ FingerprintGenerator<OutputType> *getTopologicalTorsionGenerator(
 
 // Topological torsion fingerprint does not support 32 bit output yet
 
-template FingerprintGenerator<std::uint64_t> *getTopologicalTorsionGenerator(
+template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint64_t> *getTopologicalTorsionGenerator(
     const bool includeChirality, const uint32_t torsionAtomCount,
     AtomInvariantsGenerator *atomInvariantsGenerator,
     const bool countSimulation, const std::vector<std::uint32_t> countBounds,

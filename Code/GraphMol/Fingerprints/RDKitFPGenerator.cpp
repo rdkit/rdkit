@@ -195,14 +195,14 @@ FingerprintGenerator<OutputType> *getRDKitFPGenerator(
                                               ownsAtomInvGenerator, false);
 }
 
-template FingerprintGenerator<std::uint32_t> *getRDKitFPGenerator(
+template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint32_t> *getRDKitFPGenerator(
     const unsigned int minPath, const unsigned int maxPath, const bool useHs,
     const bool branchedPaths, const bool useBondOrder,
     AtomInvariantsGenerator *atomInvariantsGenerator,
     const bool countSimulation, const std::vector<std::uint32_t> countBounds,
     const std::uint32_t fpSize, const bool ownsAtomInvGen);
 
-template FingerprintGenerator<std::uint64_t> *getRDKitFPGenerator(
+template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint64_t> *getRDKitFPGenerator(
     const unsigned int minPath, const unsigned int maxPath, const bool useHs,
     const bool branchedPaths, const bool useBondOrder,
     AtomInvariantsGenerator *atomInvariantsGenerator,

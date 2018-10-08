@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 
+#include <RDGeneral/export.h>
 #ifndef RD_FINGERPRINTUTIL_H_2018_07
 #define RD_FINGERPRINTUTIL_H_2018_07
 
@@ -82,7 +83,7 @@ RDKIT_FINGERPRINTS_EXPORT std::uint32_t getTopologicalTorsionHash(
 
 namespace MorganFingerprints {
 
-class ss_matcher {
+class RDKIT_FINGERPRINTS_EXPORT ss_matcher {
  public:
   ss_matcher();
   ss_matcher(const std::string &pattern);
@@ -134,19 +135,19 @@ const std::string morganFeatureInvariantVersion = "0.1.0";
 
 namespace RDKitFPUtils {
 
-void buildDefaultRDKitFingerprintAtomInvariants(
+RDKIT_FINGERPRINTS_EXPORT void buildDefaultRDKitFingerprintAtomInvariants(
     const ROMol &mol, std::vector<boost::uint32_t> &lAtomInvariants);
 
-void enumerateAllPaths(const ROMol &mol,
-                       std::map<int, std::list<std::vector<int>>> &allPaths,
-                       const std::vector<boost::uint32_t> *fromAtoms,
-                       bool branchedPaths, bool useHs, unsigned int minPath,
-                       unsigned int maxPath);
+RDKIT_FINGERPRINTS_EXPORT void enumerateAllPaths(
+    const ROMol &mol, std::map<int, std::list<std::vector<int>>> &allPaths,
+    const std::vector<boost::uint32_t> *fromAtoms, bool branchedPaths,
+    bool useHs, unsigned int minPath, unsigned int maxPath);
 
-void identifyQueryBonds(const ROMol &mol, std::vector<const Bond *> &bondCache,
-                        std::vector<short> &isQueryBond);
+RDKIT_FINGERPRINTS_EXPORT void identifyQueryBonds(
+    const ROMol &mol, std::vector<const Bond *> &bondCache,
+    std::vector<short> &isQueryBond);
 
-std::vector<unsigned int> generateBondHashes(
+RDKIT_FINGERPRINTS_EXPORT std::vector<unsigned int> generateBondHashes(
     const ROMol &mol, boost::dynamic_bitset<> &atomsInPath,
     const std::vector<const Bond *> &bondCache,
     const std::vector<short> &isQueryBond, const std::vector<int> &path,

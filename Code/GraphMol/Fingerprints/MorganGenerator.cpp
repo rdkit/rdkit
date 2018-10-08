@@ -399,7 +399,7 @@ FingerprintGenerator<OutputType> *getMorganGenerator(
       bondInvariantsGenerator, ownsAtomInvGenerator, ownsBondInvGenerator);
 }
 
-template FingerprintGenerator<std::uint32_t> *getMorganGenerator(
+template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint32_t> *getMorganGenerator(
     const unsigned int radius, const bool countSimulation,
     const bool includeChirality, const bool useBondTypes,
     const bool onlyNonzeroInvariants,
@@ -408,7 +408,7 @@ template FingerprintGenerator<std::uint32_t> *getMorganGenerator(
     const std::uint32_t fpSize, const std::vector<std::uint32_t> countBounds,
     const bool ownsAtomInvGen, const bool ownsBondInvGen);
 
-template FingerprintGenerator<std::uint64_t> *getMorganGenerator(
+template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint64_t> *getMorganGenerator(
     const unsigned int radius, const bool countSimulation,
     const bool includeChirality, const bool useBondTypes,
     const bool onlyNonzeroInvariants,
