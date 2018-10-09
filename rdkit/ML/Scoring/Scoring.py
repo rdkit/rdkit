@@ -105,6 +105,18 @@ def CalcBEDROC(scores, col, alpha):
     Truchon, J. & Bayly, C.I.
     Evaluating Virtual Screening Methods: Good and Bad Metric for the "Early Recognition"
     Problem. J. Chem. Inf. Model. 47, 488-508 (2007).
+    ** Arguments**
+
+      - scores: 2d list or numpy array
+             0th index representing sample
+             scores[sample_id] = vector of sample data
+      -  col: int
+             Index of sample data which reflects true label of a sample
+             scores[sample_id][col] = True iff that sample is active
+      -  alpha: float
+             hyper parameter from the initial paper for how much to enrich the top
+     **Returns**
+       float BedROC score
     """
   # calculate RIE
   RIE, numActives = _RIEHelper(scores, col, alpha)
