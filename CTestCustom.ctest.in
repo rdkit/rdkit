@@ -1,0 +1,15 @@
+SET(CTEST_CUSTOM_MEMCHECK_IGNORE
+  ${CTEST_CUSTOM_MEMCHECK_IGNORE}
+
+  # python tests are not memchecked: these are slow, and difficult to interpret
+  ${RDKIT_PYTEST_CACHE}
+
+  # Skip tests that which take too long to run and timeout.
+  # These can be run explcitly, with a longer timeout,
+  # i.e., as ctest -T memcheck -R [test] --timeout 10800
+  testDistGeomHelpers
+  testMolAlign
+)
+
+
+

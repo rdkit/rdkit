@@ -1,0 +1,783 @@
+{
+   uninitialised value used in logic
+   Memcheck:Cond
+   fun:_IO_default_xsputn
+   fun:__printf_fp
+   fun:vfprintf
+   fun:vsnprintf
+   obj:*
+}
+{
+   invalid read of size 4
+   Memcheck:Addr4
+   fun:_ZN5RDKit19addRecursiveQueriesERNS_5ROMolERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEN5boost10shared_ptrIS0_EESt4lessIS8_ESaISt4pairIKS8_SB_EEERSF_PSt6vectorISE_IjS8_ESaISN_EE
+}
+{
+   uninitialised value used in logic 0
+   Memcheck:Cond
+   fun:_ZN5RDKit5Canon16RefinePartitionsI19atomcomparefunctor3EEvRKNS_5ROMolEPNS0_10canon_atomET_iPiS9_RiS9_S9_Pc
+}
+{
+   uninitialised value used in logic 1
+   Memcheck:Cond
+   fun:_ZN5RDKit5Canon9BreakTiesI19atomcomparefunctor3EEvRKNS_5ROMolEPNS0_10canon_atomET_iPiS9_RiS9_S9_Pc
+}
+{
+   uninitialised value used in logic 2
+   Memcheck:Cond
+   fun:__GI_memcpy
+   fun:__printf_fp
+   fun:vfprintf
+   fun:vsnprintf
+   obj:*
+}
+{
+   uninitialised value used
+   Memcheck:Value8
+   fun:__GI_memcpy
+   fun:__printf_fp
+   fun:vfprintf
+   fun:vsnprintf
+   obj:*
+}
+{
+   uninitialised value used 1
+   Memcheck:Value8
+   fun:__mpn_add_n
+   fun:__mpn_mul
+   fun:__printf_fp
+   fun:vfprintf
+   fun:vsnprintf
+   obj:*
+}
+{
+   uninitialised value used 2
+   Memcheck:Value8
+   fun:__mpn_addmul_1
+   obj:*
+   fun:__printf_fp
+   fun:vfprintf
+   fun:vsnprintf
+   obj:*
+}
+{
+   uninitialised value used in logic 5
+   Memcheck:Cond
+   fun:__mpn_addmul_1
+   obj:*
+   fun:__printf_fp
+   fun:vfprintf
+   fun:vsnprintf
+   obj:*
+}
+{
+   uninitialised value used in logic 7
+   Memcheck:Cond
+   fun:__mpn_addmul_1
+   obj:*
+   obj:*
+   fun:__mpn_mul
+   obj:*
+   obj:*
+   obj:*
+   fun:deallocate
+   fun:deallocate
+   fun:_M_deallocate
+   fun:~_Vector_base
+   fun:~vector
+   fun:~dynamic_bitset
+   fun:_ZN5RDKit5Canon13dfsBuildStackERNS_5ROMolEiiRSt6vectorINS0_10AtomColorsESaIS4_EERS3_IS3_IiSaIiEESaIS9_EERKS3_IjSaIjEERS9_RS3_INS0_12MolStackElemESaISI_EESH_SH_SC_RS3_INSt7__cxx114listIiS8_EESaISO_EEPKN5boost14dynamic_bitsetImSaImEEEPKS3_INSM_12basic_stringIcSt11char_traitsIcESaIcEEESaIS12_EE
+   obj:*
+   obj:*
+}
+{
+   uninitialised value used 5
+   Memcheck:Value8
+   fun:__mpn_addmul_1
+   obj:*
+   obj:*
+   fun:__mpn_mul
+   obj:*
+   obj:*
+   obj:*
+   fun:deallocate
+   fun:deallocate
+   fun:_M_deallocate
+   fun:~_Vector_base
+   fun:~vector
+   fun:~dynamic_bitset
+   fun:_ZN5RDKit5Canon13dfsBuildStackERNS_5ROMolEiiRSt6vectorINS0_10AtomColorsESaIS4_EERS3_IS3_IiSaIiEESaIS9_EERKS3_IjSaIjEERS9_RS3_INS0_12MolStackElemESaISI_EESH_SH_SC_RS3_INSt7__cxx114listIiS8_EESaISO_EEPKN5boost14dynamic_bitsetImSaImEEEPKS3_INSM_12basic_stringIcSt11char_traitsIcESaIcEEESaIS12_EE
+   obj:*
+   obj:*
+}
+{
+   uninitialised value used 7
+   Memcheck:Value8
+   fun:__mpn_cmp
+   fun:__printf_fp
+   fun:vfprintf
+   fun:vsnprintf
+   obj:*
+}
+{
+   uninitialised value used in logic 9
+   Memcheck:Cond
+   fun:__mpn_cmp
+   fun:__printf_fp
+   fun:vfprintf
+   fun:vsnprintf
+   obj:*
+}
+{
+   uninitialised value used 8
+   Memcheck:Value8
+   fun:__mpn_divrem
+   fun:hack_digit.13624
+   fun:__printf_fp
+   fun:vfprintf
+   fun:vsnprintf
+   obj:*
+}
+{
+   uninitialised value used in logic 10
+   Memcheck:Cond
+   fun:__mpn_divrem
+   fun:hack_digit.13624
+   fun:__printf_fp
+   fun:vfprintf
+   fun:vsnprintf
+   obj:*
+}
+{
+   uninitialised value used in logic 15
+   Memcheck:Cond
+   fun:__mpn_extract_double
+   fun:__printf_fp
+   fun:vfprintf
+   fun:vsnprintf
+   obj:*
+}
+{
+   uninitialised value used 13
+   Memcheck:Value8
+   fun:__mpn_lshift
+   fun:__printf_fp
+   fun:vfprintf
+   fun:vsnprintf
+   obj:*
+}
+{
+   uninitialised value used in logic 16
+   Memcheck:Cond
+   fun:__mpn_lshift
+   fun:__printf_fp
+   fun:vfprintf
+   fun:vsnprintf
+   obj:*
+}
+{
+   uninitialised value used 16
+   Memcheck:Value8
+   fun:__mpn_mul
+   fun:__printf_fp
+   fun:vfprintf
+   fun:vsnprintf
+   obj:*
+}
+{
+   uninitialised value used in logic 18
+   Memcheck:Cond
+   fun:__mpn_mul
+   fun:__printf_fp
+   fun:vfprintf
+   fun:vsnprintf
+   obj:*
+}
+{
+   uninitialised value used 21
+   Memcheck:Value8
+   fun:__mpn_mul_1
+   fun:__mpn_mul
+   fun:__printf_fp
+   fun:vfprintf
+   fun:vsnprintf
+   obj:*
+}
+{
+   uninitialised value used in logic 23
+   Memcheck:Cond
+   fun:__mpn_mul_1
+   fun:__mpn_mul
+   fun:__printf_fp
+   fun:vfprintf
+   fun:vsnprintf
+   obj:*
+}
+{
+   uninitialised value used 24
+   Memcheck:Value8
+   fun:__mpn_mul_1
+   fun:__printf_fp
+   fun:vfprintf
+   fun:vsnprintf
+   obj:*
+}
+{
+   uninitialised value used in logic 25
+   Memcheck:Cond
+   fun:__mpn_mul_1
+   fun:__printf_fp
+   fun:vfprintf
+   fun:vsnprintf
+   obj:*
+}
+{
+   uninitialised value used 27
+   Memcheck:Value8
+   fun:__mpn_mul_1
+   fun:hack_digit.13624
+   fun:__printf_fp
+   fun:vfprintf
+   fun:vsnprintf
+   obj:*
+}
+{
+   uninitialised value used in logic 27
+   Memcheck:Cond
+   fun:__mpn_rshift
+   fun:__printf_fp
+   fun:vfprintf
+   fun:vsnprintf
+   obj:*
+}
+{
+   uninitialised value used 28
+   Memcheck:Value8
+   fun:__mpn_rshift
+   fun:__printf_fp
+   fun:vfprintf
+   fun:vsnprintf
+   obj:*
+}
+{
+   uninitialised value used 34
+   Memcheck:Value8
+   fun:__mpn_sub_n
+   fun:__mpn_divrem
+   fun:hack_digit.13624
+   fun:__printf_fp
+   fun:vfprintf
+   fun:vsnprintf
+   obj:*
+}
+{
+   uninitialised value used 36
+   Memcheck:Value8
+   fun:__mpn_submul_1
+   obj:*
+}
+{
+   uninitialised value used in logic 34
+   Memcheck:Cond
+   fun:__printf_fp
+   fun:vfprintf
+   fun:vsnprintf
+   obj:*
+}
+{
+   uninitialised value used 37
+   Memcheck:Value8
+   fun:__printf_fp
+   fun:vfprintf
+   fun:vsnprintf
+   obj:*
+}
+{
+   invalid read of size 2
+   Memcheck:Addr1
+   fun:getFormalCharge
+   fun:_ZN5RDKit14StructureCheck23TransformAugmentedAtomsERNS_5RWMolERKSt6vectorISt4pairINS0_13AugmentedAtomES5_ESaIS6_EEb
+   fun:_ZNK5RDKit14StructureCheck13StructChecker17checkMolStructureERNS_5RWMolE
+}
+{
+   invalid read of size 3
+   Memcheck:Addr1
+   fun:getNumRadicalElectrons
+   fun:_ZN5RDKit14StructureCheck23TransformAugmentedAtomsERNS_5RWMolERKSt6vectorISt4pairINS0_13AugmentedAtomES5_ESaIS6_EEb
+   fun:_ZNK5RDKit14StructureCheck13StructChecker17checkMolStructureERNS_5RWMolE
+}
+{
+   uninitialised value used in logic 46
+   Memcheck:Cond
+   fun:hack_digit.13624
+   fun:__printf_fp
+   fun:vfprintf
+   fun:vsnprintf
+   obj:*
+}
+{
+   uninitialised value used 48
+   Memcheck:Value8
+   fun:hack_digit.13624
+   fun:__printf_fp
+   fun:vfprintf
+   fun:vsnprintf
+   obj:*
+}
+{
+   uninitialised value used in logic 49
+   Memcheck:Cond
+   fun:is_overlap
+   fun:__GI_memcpy
+   fun:__printf_fp
+   fun:vfprintf
+   fun:vsnprintf
+   obj:*
+}
+{
+   uninitialised value used in logic 50
+   Memcheck:Cond
+   fun:memchr
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+}
+{
+   uninitialised value used in logic 51
+   Memcheck:Cond
+   fun:memset
+   fun:__mpn_mul
+   fun:__printf_fp
+   fun:vfprintf
+   fun:vsnprintf
+   obj:*
+}
+{
+   uninitialised value used 50
+   Memcheck:Value8
+   fun:memset
+   fun:__mpn_mul
+   fun:__printf_fp
+   fun:vfprintf
+   fun:vsnprintf
+   obj:*
+}
+{
+   uninitialised value used in logic 55
+   Memcheck:Cond
+   fun:memset
+   fun:__printf_fp
+   fun:vfprintf
+   fun:vsnprintf
+   obj:*
+}
+{
+   uninitialised value used 53
+   Memcheck:Value8
+   fun:memset
+   fun:__printf_fp
+   fun:vfprintf
+   fun:vsnprintf
+   obj:*
+}
+{
+   invalid read of size 23
+   Memcheck:Addr8
+   fun:size
+   fun:vertex_set
+   fun:num_vertices<boost::detail::adj_list_gen<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*, boost::no_property, boost::listS>::config, boost::undirected_graph_helper<boost::detail::adj_list_gen<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*, boost::no_property, boost::listS>::config> >
+   fun:_ZNK5RDKit5ROMol11getNumAtomsEb
+   fun:_ZN5RDKit11MolToSmartsB5cxx11ERNS_5ROMolEb
+}
+{
+   uninitialised value used in logic 58
+   Memcheck:Cond
+   fun:vfprintf
+   fun:printf
+}
+{
+   memory definitely lost
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:calloc
+   fun:_renumberTest2
+}
+{
+   memory definitely lost 0
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:malloc
+}
+{
+   memory indirectly lost
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:malloc
+   fun:_Z17yysln__scan_bytesPKcmPv
+   fun:_Z16setup_sln_stringRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPv
+   fun:_Z9sln_parseRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbRSt6vectorIPN5RDKit5RWMolESaISA_EE
+   fun:_ZN5RDKit8SLNParse5toMolENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+   fun:_ZN5RDKit8SLNToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
+{
+   memory indirectly lost 0
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:malloc
+   fun:_Z18yysln__scan_bufferPcmPv
+   fun:_Z17yysln__scan_bytesPKcmPv
+   fun:_Z16setup_sln_stringRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPv
+   fun:_Z9sln_parseRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbRSt6vectorIPN5RDKit5RWMolESaISA_EE
+   fun:_ZN5RDKit8SLNParse5toMolENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+   fun:_ZN5RDKit8SLNToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
+{
+   memory indirectly lost 1
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:malloc
+   fun:_ZL13yy_push_stateiPv
+   fun:_Z9yysln_lexP7YYSTYPEPv
+   fun:_Z11yysln_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EEbPv
+   fun:_Z9sln_parseRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbRSt6vectorIPN5RDKit5RWMolESaISA_EE
+   fun:_ZN5RDKit8SLNParse5toMolENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+   fun:_ZN5RDKit8SLNToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
+{
+   memory indirectly lost 2
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:malloc
+   fun:_ZL25yysln_ensure_buffer_stackPv
+   fun:_Z23yysln__switch_to_bufferP15yy_buffer_statePv
+   fun:_Z18yysln__scan_bufferPcmPv
+   fun:_Z17yysln__scan_bytesPKcmPv
+   fun:_Z16setup_sln_stringRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPv
+   fun:_Z9sln_parseRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbRSt6vectorIPN5RDKit5RWMolESaISA_EE
+   fun:_ZN5RDKit8SLNParse5toMolENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+   fun:_ZN5RDKit8SLNToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
+{
+   memory indirectly lost 3
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:malloc
+   obj:*
+}
+{
+   memory possibly lost
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:_Z3hs1RKSt6vectorIS_IiSaIiEESaIS1_EE
+}
+{
+   memory possibly lost 0
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   obj:*
+}
+{
+   syscall param write(buf) points to uninitialised byte(s)
+   Memcheck:Param
+   write(buf)
+   fun:__write_nocancel
+   fun:_IO_file_write
+   fun:_IO_do_write
+   fun:_IO_file_xsputn
+   fun:vfprintf
+   fun:printf
+}
+{
+   syscall param write(buf) points to uninitialised byte(s) 0
+   Memcheck:Param
+   write(buf)
+   fun:__write_nocancel
+   fun:_IO_file_write
+   fun:_IO_file_xsputn
+   fun:vfprintf
+   fun:printf
+}
+{
+   invalid read of size 1
+   Memcheck:Addr1
+   fun:_ZN5boost14char_separatorIcSt11char_traitsIcEEclIN9__gnu_cxx17__normal_iteratorIPKcNSt7__cxx1112basic_stringIcS2_SaIcEEEEESC_EEbRT_SE_RT0_
+   fun:initialize
+   fun:token_iterator
+   fun:begin
+}
+{
+   invalid read of size 5
+   Memcheck:Addr2
+   fun:memcpy
+   fun:_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE10_M_replaceEmmPKcm
+   fun:replace
+   fun:replace
+   fun:assign<__gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> > >
+   fun:assign<__gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> >
+   fun:_ZN5boost14char_separatorIcSt11char_traitsIcEEclIN9__gnu_cxx17__normal_iteratorIPKcNSt7__cxx1112basic_stringIcS2_SaIcEEEEESC_EEbRT_SE_RT0_
+   fun:initialize
+   fun:token_iterator
+   fun:begin
+}
+{
+   invalid read of size 6
+   Memcheck:Addr1
+   fun:memcpy
+   fun:_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE10_M_replaceEmmPKcm
+   fun:replace
+   fun:replace
+   fun:assign<__gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> > >
+   fun:assign<__gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> >
+   fun:_ZN5boost14char_separatorIcSt11char_traitsIcEEclIN9__gnu_cxx17__normal_iteratorIPKcNSt7__cxx1112basic_stringIcS2_SaIcEEEEESC_EEbRT_SE_RT0_
+   fun:initialize
+   fun:token_iterator
+   fun:begin
+}
+{
+   invalid read of size 7
+   Memcheck:Addr2
+   fun:memcpy
+   fun:_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE10_M_replaceEmmPKcm
+   fun:replace
+   fun:replace
+   fun:assign<__gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> > >
+   fun:assign<__gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> >
+   fun:operator()<__gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> >
+   fun:increment
+   fun:increment<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:operator++
+   fun:__distance<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:distance<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:_M_range_initialize<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:_M_initialize_dispatch<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:vector<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+}
+{
+   invalid read of size 8
+   Memcheck:Addr1
+   fun:memcpy
+   fun:_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE10_M_replaceEmmPKcm
+   fun:replace
+   fun:replace
+   fun:assign<__gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> > >
+   fun:assign<__gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> >
+   fun:operator()<__gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> >
+   fun:increment
+   fun:increment<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:operator++
+   fun:__distance<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:distance<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:_M_range_initialize<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:_M_initialize_dispatch<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:vector<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+}
+{
+   invalid read of size 10
+   Memcheck:Addr2
+   fun:memcpy
+   fun:_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE10_M_replaceEmmPKcm
+   fun:replace
+   fun:replace
+   fun:assign<__gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> > >
+   fun:assign<__gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> >
+   fun:operator()<__gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> >
+   fun:increment
+   fun:increment<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:operator++
+   fun:__uninit_copy<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char>*>
+   fun:uninitialized_copy<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char>*>
+   fun:__uninitialized_copy_a<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char>*, std::__cxx11::basic_string<char> >
+   fun:_M_range_initialize<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:_M_initialize_dispatch<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:vector<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+}
+{
+   invalid read of size 11
+   Memcheck:Addr1
+   fun:memcpy
+   fun:_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE10_M_replaceEmmPKcm
+   fun:replace
+   fun:replace
+   fun:assign<__gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> > >
+   fun:assign<__gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> >
+   fun:operator()<__gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> >
+   fun:increment
+   fun:increment<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:operator++
+   fun:__uninit_copy<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char>*>
+   fun:uninitialized_copy<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char>*>
+   fun:__uninitialized_copy_a<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char>*, std::__cxx11::basic_string<char> >
+   fun:_M_range_initialize<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:_M_initialize_dispatch<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:vector<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+}
+{
+   invalid read of size 21
+   Memcheck:Addr1
+   fun:operator()<__gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> >
+   fun:increment
+   fun:increment<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:operator++
+   fun:__distance<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:distance<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:_M_range_initialize<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:_M_initialize_dispatch<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:vector<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+}
+{
+   invalid read of size 22
+   Memcheck:Addr1
+   fun:operator()<__gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> >
+   fun:increment
+   fun:increment<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:operator++
+   fun:__uninit_copy<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char>*>
+   fun:uninitialized_copy<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char>*>
+   fun:__uninitialized_copy_a<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char>*, std::__cxx11::basic_string<char> >
+   fun:_M_range_initialize<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:_M_initialize_dispatch<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:vector<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+}
+{
+   invalid read of size 13
+   Memcheck:Addr2
+   fun:memcpy@GLIBC_2.2.5
+   fun:_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE10_M_replaceEmmPKcm
+   fun:replace
+   fun:replace
+   fun:assign<__gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> > >
+   fun:assign<__gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> >
+   fun:_ZN5boost14char_separatorIcSt11char_traitsIcEEclIN9__gnu_cxx17__normal_iteratorIPKcNSt7__cxx1112basic_stringIcS2_SaIcEEEEESC_EEbRT_SE_RT0_
+   fun:initialize
+   fun:token_iterator
+   fun:begin
+}
+{
+   invalid read of size 14
+   Memcheck:Addr1
+   fun:memcpy@GLIBC_2.2.5
+   fun:_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE10_M_replaceEmmPKcm
+   fun:replace
+   fun:replace
+   fun:assign<__gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> > >
+   fun:assign<__gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> >
+   fun:_ZN5boost14char_separatorIcSt11char_traitsIcEEclIN9__gnu_cxx17__normal_iteratorIPKcNSt7__cxx1112basic_stringIcS2_SaIcEEEEESC_EEbRT_SE_RT0_
+   fun:initialize
+   fun:token_iterator
+   fun:begin
+}
+{
+   invalid read of size 15
+   Memcheck:Addr2
+   fun:memcpy@GLIBC_2.2.5
+   fun:_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE10_M_replaceEmmPKcm
+   fun:replace
+   fun:replace
+   fun:assign<__gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> > >
+   fun:assign<__gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> >
+   fun:operator()<__gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> >
+   fun:increment
+   fun:increment<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:operator++
+   fun:__distance<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:distance<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:_M_range_initialize<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:_M_initialize_dispatch<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:vector<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+}
+{
+   invalid read of size 16
+   Memcheck:Addr1
+   fun:memcpy@GLIBC_2.2.5
+   fun:_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE10_M_replaceEmmPKcm
+   fun:replace
+   fun:replace
+   fun:assign<__gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> > >
+   fun:assign<__gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> >
+   fun:operator()<__gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> >
+   fun:increment
+   fun:increment<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:operator++
+   fun:__distance<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:distance<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:_M_range_initialize<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:_M_initialize_dispatch<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:vector<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+}
+{
+   invalid read of size 18
+   Memcheck:Addr2
+   fun:memcpy@GLIBC_2.2.5
+   fun:_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE10_M_replaceEmmPKcm
+   fun:replace
+   fun:replace
+   fun:assign<__gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> > >
+   fun:assign<__gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> >
+   fun:operator()<__gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> >
+   fun:increment
+   fun:increment<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:operator++
+   fun:__uninit_copy<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char>*>
+   fun:uninitialized_copy<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char>*>
+   fun:__uninitialized_copy_a<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char>*, std::__cxx11::basic_string<char> >
+   fun:_M_range_initialize<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:_M_initialize_dispatch<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:vector<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+}
+{
+   invalid read of size 19
+   Memcheck:Addr1
+   fun:memcpy@GLIBC_2.2.5
+   fun:_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE10_M_replaceEmmPKcm
+   fun:replace
+   fun:replace
+   fun:assign<__gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> > >
+   fun:assign<__gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> >
+   fun:operator()<__gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> >
+   fun:increment
+   fun:increment<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:operator++
+   fun:__uninit_copy<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char>*>
+   fun:uninitialized_copy<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char>*>
+   fun:__uninitialized_copy_a<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char>*, std::__cxx11::basic_string<char> >
+   fun:_M_range_initialize<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:_M_initialize_dispatch<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+   fun:vector<boost::token_iterator<boost::char_separator<char>, __gnu_cxx::__normal_iterator<char const*, std::__cxx11::basic_string<char> >, std::__cxx11::basic_string<char> > >
+}
+{
+   syscall param write(buf) points to uninitialised byte(s) 1
+   Memcheck:Param
+   write(buf)
+   fun:__write_nocancel
+   fun:_IO_file_write@@GLIBC_2.2.5
+   fun:_IO_do_write@@GLIBC_2.2.5
+   fun:_IO_file_xsputn@@GLIBC_2.2.5
+   fun:vfprintf
+   fun:printf
+}
+{
+   syscall param write(buf) points to uninitialised byte(s) 2
+   Memcheck:Param
+   write(buf)
+   fun:__write_nocancel
+   fun:_IO_file_write@@GLIBC_2.2.5
+   fun:_IO_file_xsputn@@GLIBC_2.2.5
+   fun:vfprintf
+   fun:printf
+}
