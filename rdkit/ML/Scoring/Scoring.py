@@ -109,6 +109,7 @@ def CalcBEDROC(scores, col, alpha):
 
       - scores: 2d list or numpy array
              0th index representing sample
+             scores must be in sorted order with low indexes "better"
              scores[sample_id] = vector of sample data
       -  col: int
              Index of sample data which reflects true label of a sample
