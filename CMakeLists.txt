@@ -171,7 +171,7 @@ endif(MINGW)
 
 # defines macros: rdkit_python_extension, rdkit_test
 include(RDKitUtils)
-install(EXPORT ${RDKit_EXPORTED_TARGETS} DESTINATION ${RDKit_LibDir})
+install(EXPORT ${RDKit_EXPORTED_TARGETS} DESTINATION ${RDKit_LibDir}/cmake/rdkit)
 install(TARGETS rdkit_base EXPORT ${RDKit_EXPORTED_TARGETS}
         COMPONENT dev )
 
