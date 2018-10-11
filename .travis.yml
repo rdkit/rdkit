@@ -31,7 +31,8 @@ addons:
          - libc++-dev
 
 before_install:
- # download and install miniconda
+ - sudo sed -i '/precedence ::ffff:0:0\/96 100/s/^#//g' /etc/gai.conf
+# download and install miniconda
  - echo "*************************************************"
  - echo "Building for $TRAVIS_OS_NAME"
  - echo "         for Python $CONDA_PYTHON_VERSION"
