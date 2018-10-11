@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2003-2013 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2018 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -1057,7 +1056,10 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
       }
       ssiz = rdcast<int>(fragRes.size());
       if (ssiz < nexpt) {
-        throw ValueErrorException("could not find number of expected rings.");
+        BOOST_LOG(rdWarningLog)<<"WARNING: could not find number of expected rings. Switching to an approximate ring finding algorithm."<<std::endl;
+        fastFindRings(mol);
+        res.clear();
+        res = mol.getRingInfo()->atomRings();
       }
     }
     // if we have more than expected we need to do some cleanup

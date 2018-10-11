@@ -2164,14 +2164,14 @@ void testSanitOps() {
   TEST_ASSERT(m->getNumAtoms() == 5);
   TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge() == 1);
   delete m;
-  
+
   smi = "CC(=O)O[IH2](O)OC(C)=O";
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms() == 10);
   TEST_ASSERT(m->getAtomWithIdx(4)->getFormalCharge() == 0);
   delete m;
-  
+
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
@@ -2505,24 +2505,8 @@ void testSFIssue1836576() {
   }
   TEST_ASSERT(ok);
   TEST_ASSERT(opThatFailed == MolOps::SANITIZE_PROPERTIES);
-
-  // this molecule shows a known bug related to ring
-  // ring finding in a molecule where all atoms are 4 connected.
-  smi = "C123C45C11C44C55C22C33C14C523";
-  m = SmilesToMol(smi, false, false);
-  TEST_ASSERT(m);
-
-  ok = false;
-  try {
-    MolOps::sanitizeMol(*m, opThatFailed);
-  } catch (ValueErrorException &vee) {
-    ok = true;
-  }
-  TEST_ASSERT(ok);
-  TEST_ASSERT(opThatFailed == MolOps::SANITIZE_SYMMRINGS);
-
   delete m;
-
+  
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
