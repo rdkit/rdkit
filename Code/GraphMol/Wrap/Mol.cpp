@@ -9,6 +9,7 @@
 //
 #define NO_IMPORT_ARRAY
 #include <RDBoost/python.h>
+#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include <string>
 
 #include "rdchem.h"
@@ -236,6 +237,9 @@ struct mol_wrapper {
         .value("AllProps", RDKit::PicklerOps::AllProps)
         .export_values();
     ;
+
+    python::class_<std::vector<StereoGroup>>("StereoGroupVector")
+        .def(python::vector_indexing_suite<std::vector<StereoGroup>>());
 
     python::def("GetDefaultPickleProperties",
                 MolPickler::getDefaultPickleProperties,
@@ -552,6 +556,12 @@ struct mol_wrapper {
              "Returns true or false depending on whether implicit and "
              "explicit "
              "valence of the molecule have already been calculated.\n\n")
+
+        .def("GetStereoGroups", &ROMol::getStereoGroups,
+             "Returns a list of StereoGroups defining the relative stereochemistry "
+             "of the atoms.\n",
+             python::return_internal_reference<
+                 1, python::with_custodian_and_ward_postcall<0, 1>>())
 
         .def("GetPropNames", &ROMol::getPropList,
              (python::arg("self"), python::arg("includePrivate") = false,

@@ -88,18 +88,10 @@ def getBtList2(resMolSuppl):
 
 class TestCase(unittest.TestCase):
 
-  def setUp(self):
-    pass
-
   def test0Except(self):
 
-    try:
+    with self.assertRaises(IndexError):
       Chem.tossit()
-    except IndexError:
-      ok = 1
-    else:
-      ok = 0
-    assert ok
 
   def test1Table(self):
 
@@ -4971,6 +4963,22 @@ M  END
        Chem.MolToSmarts(Chem.MolFromSmarts("[C@]"))
     except:
        self.fail("[C@] caused an exception when roundtripping smarts")
+
+  def testGetEnhancedStereo(self):
+
+    rdbase = os.environ['RDBASE']
+    filename = os.path.join(rdbase, 'Code/GraphMol/FileParsers/test_data/two_centers_or.mol')
+    suppl = Chem.SDMolSupplier(filename)
+    m = next(suppl)
+
+    sg = m.GetStereoGroups()
+    self.assertEqual(len(sg), 2)
+    group1 = sg[1]
+    self.assertEqual(group1.GetGroupType(), Chem.StereoGroupType.STEREO_OR)
+    stereo_atoms = group1.GetAtoms()
+    self.assertEqual(len(stereo_atoms), 2)
+    # file is 1 indexed and says 5
+    self.assertEqual(stereo_atoms[1].GetIdx(), 4)
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
