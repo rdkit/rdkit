@@ -69,7 +69,6 @@ add_subdirectory(MolChemicalFeatures)
 add_subdirectory(ShapeHelpers)
 add_subdirectory(MolCatalog)
 
-add_subdirectory(MolDrawing)
 add_subdirectory(MolDraw2D)
 
 add_subdirectory(FMCS)
