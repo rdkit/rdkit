@@ -9,7 +9,7 @@
 //  of the RDKit source tree.
 //
 
-#include <RDBoost/test.h>
+#include <RDGeneral/test.h>
 #include "Trajectory.h"
 #include <Geometry/point.h>
 #include <GraphMol/ROMol.h>
