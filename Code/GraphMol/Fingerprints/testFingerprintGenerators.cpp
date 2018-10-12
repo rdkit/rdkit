@@ -10,7 +10,7 @@
 
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
-#include <RDBoost/test.h>
+#include <RDGeneral/test.h>
 #include <GraphMol/Fingerprints/AtomPairs.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
