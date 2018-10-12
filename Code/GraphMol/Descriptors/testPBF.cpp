@@ -112,9 +112,7 @@ void testPBFEdges(){
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
-int
-main(int argc, char *argv[])
-{
+int main() {
   RDLog::InitLogs();
   test1();
   testPBFEdges();

@@ -163,7 +163,7 @@ bool ChargeFix::setpKaValues() {
   std::vector<Neighbourhood> neighbour_array(na);
   std::vector<unsigned> match;  //[MAXNEIGHBOURS + 1];
 
-  const AugmentedAtom *AAp;
+  // const AugmentedAtom *AAp;
 
   //    struct inc_entry_t  *cip, *ip;
   //    struct path_entry_t *ppa, *ppb;
@@ -187,7 +187,7 @@ bool ChargeFix::setpKaValues() {
                   Options.Verbose)) {
         AtomColor[i]++;
         AtompKaValue[i] = 0.0;
-        AAp = &AcidicAtom;
+        // AAp = &AcidicAtom;
         found = true;
         break;
       }
@@ -600,7 +600,7 @@ int ChargeFix::refineAcidicAtoms(std::vector<unsigned> &numbering) {
   } while (changed);
 
   // find smalles rank of coloured atoms
-  unsigned min_rank = (unsigned)atom_ranks.size();
+  size_t min_rank = atom_ranks.size();
   for (unsigned i = 0; i < atom_ranks.size(); i++)
     if (AtomColor[i] != 0 && atom_ranks[i].rank < min_rank)
       min_rank = atom_ranks[i].rank;

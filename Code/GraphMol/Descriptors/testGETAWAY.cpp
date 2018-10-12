@@ -104,7 +104,7 @@ void testGETAWAY() {
                         << std::endl;
 }
 
-int main(int argc, char *argv[]) {
+int main() {
   RDLog::InitLogs();
   testGETAWAY();
 }

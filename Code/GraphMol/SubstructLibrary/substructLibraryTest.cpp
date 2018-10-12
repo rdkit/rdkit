@@ -41,7 +41,7 @@ void runTest(SubstructLibrary &ssslib, const ROMol &pattern, int nThreads) {
     TEST_ASSERT(hasMatch[i] == matched);
   }
 };
-}
+}  // namespace
 
 void test1() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
@@ -246,7 +246,7 @@ void docTest() {
   BOOST_LOG(rdErrorLog) << "    Done (C++ doc tests)" << std::endl;
 }
 
-int main(int argc, char *argv[]) {
+int main() {
 #if 1
   test1();
   test2();

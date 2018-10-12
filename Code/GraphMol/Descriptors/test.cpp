@@ -1909,7 +1909,7 @@ void testProperties() {
       names.push_back("FakeName");
       Properties sink(names);
       TEST_ASSERT(0);  // should throw
-    } catch (KeyErrorException) {
+    } catch (KeyErrorException &) {
       BOOST_LOG(rdErrorLog)
           << "---Caught keyerror (bad property name)---" << std::endl;
     }
@@ -1957,7 +1957,7 @@ void testStereoCounting() {
   try {
     prop.computeProperties(*m);
     TEST_ASSERT(0);  // didn't catch exception
-  } catch (ValueErrorException) {
+  } catch (ValueErrorException &) {
     BOOST_LOG(rdErrorLog) << "---Caught stereo value error---" << std::endl;
   }
 

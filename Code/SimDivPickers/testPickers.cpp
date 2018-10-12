@@ -16,7 +16,7 @@
 
 namespace {
 double dist_on_line(unsigned int i, unsigned int j) {
-  return std::abs((double)i - (double)j);
+  return std::fabs((double)i - (double)j);
 }
 }
 void testGithub1421() {

@@ -168,7 +168,7 @@ CrippenParamCollection::CrippenParamCollection(const std::string &paramData) {
       if (*token != "") {
         try {
           paramObj.mr = boost::lexical_cast<double>(*token);
-        } catch (boost::bad_lexical_cast) {
+        } catch (boost::bad_lexical_cast &) {
           paramObj.mr = 0.0;
         }
       } else {

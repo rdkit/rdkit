@@ -162,8 +162,10 @@ std::string GetPDBBondLines(const Atom *atom, bool all, bool both, bool mult,
         break;
       case Bond::QUADRUPLE:
         v.push_back(dst);
+        /* FALLTHRU */
       case Bond::TRIPLE:
         v.push_back(dst);
+        /* FALLTHRU */
       case Bond::DOUBLE:
         v.push_back(dst);
         v.push_back(dst);

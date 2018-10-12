@@ -116,7 +116,7 @@ void Test(T arg) {
 
   try {
     t3.getBit(4000);
-  } catch (IndexErrorException) {
+  } catch (IndexErrorException &) {
     std::cout << " except " << endl;
   } catch (...) {
     std::cout << " ERROR EXCEPT " << endl;
@@ -1403,7 +1403,7 @@ int main() {
   RDLog::InitLogs();
   try {
     throw IndexErrorException(3);
-  } catch (IndexErrorException) {
+  } catch (IndexErrorException &) {
     BOOST_LOG(rdInfoLog) << "pass" << endl;
   }
 

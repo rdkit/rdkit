@@ -136,7 +136,7 @@ std::unique_ptr<double[]> getEEMMatrix(double *dist3D, unsigned int n,
   for (unsigned int i = 0; i < n; i++) {
     unsigned int t = EEMatoms.EEMatomtype[i];
     unsigned int idx = EEMatoms.Atomindex[i];
-    double v;
+    double v = 0.0;
     if (t == 1) {
       v = B1[idx];
     }

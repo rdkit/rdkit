@@ -37,21 +37,21 @@ ROMol *TautomerCanonicalizer::canonicalize(const ROMol &mol,
   for (const auto t : tautomers) {
     std::string smiles = MolToSmiles(*t);
     std::cout << "Tautomer: " << smiles << std::endl;
-    unsigned int score = 0;
+    // unsigned int score = 0;
     // Add aromatic ring scores
     VECT_INT_VECT rings;
     MolOps::symmetrizeSSSR(*t, rings);
-    for (const auto ring : rings) {
-      for (const auto pair : MolStandardize::pairwise(ring)) {
-        //				std::cout << pair.first << " " <<
-        // pair.second
-        //<< std::endl;
-        Bond::BondType btype =
-            t->getBondBetweenAtoms(pair.first, pair.second)->getBondType();
-        //				std::cout << btype << std::endl;
-        // Stopping for the moment to do the Python wrap
-      }
-    }
+    // for (const auto ring : rings) {
+    //   for (const auto pair : MolStandardize::pairwise(ring)) {
+    //     			std::cout << pair.first << " " <<
+    //     pair.second
+    //     << std::endl;
+    //     Bond::BondType btype =
+    //         t->getBondBetweenAtoms(pair.first, pair.second)->getBondType();
+    //     			std::cout << btype << std::endl;
+    //     Stopping for the moment to do the Python wrap
+    //   }
+    // }
   }
 
   return new ROMol(mol);

@@ -1498,7 +1498,7 @@ Bond *ParseMolFileBondLine(const std::string &text, unsigned int line) {
           res->setBondDir(Bond::UNKNOWN);
           break;
       }
-    } catch (boost::bad_lexical_cast) {
+    } catch (boost::bad_lexical_cast &) {
       ;
     }
   }
@@ -1526,7 +1526,7 @@ Bond *ParseMolFileBondLine(const std::string &text, unsigned int line) {
         }
         res->expandQuery(q);
       }
-    } catch (boost::bad_lexical_cast) {
+    } catch (boost::bad_lexical_cast &) {
       ;
     }
   }
@@ -1534,7 +1534,7 @@ Bond *ParseMolFileBondLine(const std::string &text, unsigned int line) {
     try {
       int reactStatus = FileParserUtils::toInt(text.substr(18, 3));
       res->setProp("molReactStatus", reactStatus);
-    } catch (boost::bad_lexical_cast) {
+    } catch (boost::bad_lexical_cast &) {
       ;
     }
   }

@@ -389,7 +389,7 @@ void get2DCoordsMol(RWMol &mol, double &offset, double spacing, double &maxY,
     p *= coordScale;
     minX = std::min(minX, conf.getAtomPos(i).x);
   }
-  offset += abs(minX);
+  offset += fabs(minX);
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
     RDGeom::Point3D &p = conf.getAtomPos(i);
     p.y += vShift;

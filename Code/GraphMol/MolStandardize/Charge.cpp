@@ -263,7 +263,7 @@ ROMol *Uncharger::uncharge(const ROMol &mol) {
   std::vector<MatchVectType> a_matches;
 
   // Get atom ids for matches
-  unsigned int p_matched = SubstructMatch(*omol, *(this->pos_h), p_matches);
+  SubstructMatch(*omol, *(this->pos_h), p_matches);
   unsigned int q_matched = SubstructMatch(*omol, *(this->pos_quat), q_matches);
   unsigned int n_matched = SubstructMatch(*omol, *(this->neg), n_matches);
   unsigned int a_matched = SubstructMatch(*omol, *(this->neg_acid), a_matches);

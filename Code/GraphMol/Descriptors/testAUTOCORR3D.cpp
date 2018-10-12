@@ -83,7 +83,7 @@ void testautocorrelation() {
                         << std::endl;
 }
 
-int main(int argc, char *argv[]) {
+int main() {
   RDLog::InitLogs();
   testautocorrelation();
 }
