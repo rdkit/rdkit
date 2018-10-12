@@ -25,10 +25,10 @@ functions less error prone (github #1679).
 - This release includes two contributions from the Google Summer of Code:
    - A new generalized fingerprint generator.
    - An integration/port of MolVS to the core RDKit.
-  The API on both may change a bit with future releases.
+  The API on both of these may change a bit with future releases.
 - The rdkit.Chem.Draw module now includes functions for depicting fingerprint
   bits. Morgan and RDKit fingerprints are currently supported.
-  
+
 
 ## Acknowledgements:
 
