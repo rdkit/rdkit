@@ -1,27 +1,26 @@
-{
-   uninitialised value used in logic 4
-   Memcheck:Cond
-   fun:__mpn_addmul_1
-   obj:*
-   obj:*
-   fun:__mpn_mul
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   fun:__printf_fp
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-}
+#
+# This suppressions file was generated on a Linux-x86_64 machine,
+# inside a conda environment. Used relevant software was:
+#
+# - valgrind: v3.14.0 final, built from git sources under the same env.
+# - Boost libs: conda package, v1.67.0 (py36_4)
+# - Compiler: conda package, gxx_linux-64 7.2.0 (h550dcbe_27)
+#
+# CMake command/options was:
+# cmake .. \
+#    -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+#    -DCMAKE_BUILD_TYPE=Debug \
+#    -DPy_ENABLE_SHARED=1 \
+#    -DRDK_INSTALL_INTREE=ON \
+#    -DRDK_INSTALL_STATIC_LIBS=OFF \
+#    -DRDK_BUILD_CPP_TESTS=ON \
+#    -DRDK_OPTIMIZE_NATIVE=OFF \
+#    -DRDK_BUILD_INCHI_SUPPORT=ON \
+#    -DRDK_BUILD_TEST_GZIP=ON \
+#    -DRDK_BUILD_FREESASA_SUPPORT=ON \
+#    -DRDK_USE_BOOST_REGEX=ON \
+#    -DPYTHON_NUMPY_INCLUDE_PATH="$CONDA_PREFIX/lib/python3.6/site-packages/numpy/core/include"
+#
 {
    uninitialised value used in logic 5
    Memcheck:Cond
@@ -29,22 +28,6 @@
    obj:*
    obj:*
    fun:__mpn_mul
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
 }
 {
    memory possibly lost 8
@@ -103,52 +86,12 @@
    fun:_ZN5RDKit17SmilesMolSupplier4nextEv
 }
 {
-   uninitialised value used 3
-   Memcheck:Value8
-   fun:__mpn_addmul_1
-   obj:*
-   obj:*
-   fun:__mpn_mul
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   fun:__printf_fp
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-}
-{
    uninitialised value used 4
    Memcheck:Value8
    fun:__mpn_addmul_1
    obj:*
    obj:*
    fun:__mpn_mul
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
 }
 {
    memory possibly lost 1
@@ -472,7 +415,6 @@
    uninitialised value used 14
    Memcheck:Value8
    fun:__mpn_submul_1
-   obj:*
 }
 {
    invalid read of size 13
@@ -2449,26 +2391,6 @@
    fun:_ZN5RDKit13MolToPDBBlockB5cxx11ERKNS_5ROMolEij
 }
 {
-   uninitialised value used in logic 3
-   Memcheck:Cond
-   fun:__mpn_addmul_1
-   obj:*
-   obj:*
-   fun:__mpn_mul
-   obj:*
-   obj:*
-   obj:*
-   fun:deallocate
-   fun:deallocate
-   fun:_M_deallocate
-   fun:~_Vector_base
-   fun:~vector
-   fun:~dynamic_bitset
-   fun:_ZN5RDKit5Canon13dfsBuildStackERNS_5ROMolEiiRSt6vectorINS0_10AtomColorsESaIS4_EERS3_IS3_IiSaIiEESaIS9_EERKS3_IjSaIjEERS9_RS3_INS0_12MolStackElemESaISI_EESH_SH_SC_RS3_INSt7__cxx114listIiS8_EESaISO_EEPKN5boost14dynamic_bitsetImSaImEEEPKS3_INSM_12basic_stringIcSt11char_traitsIcESaIcEEESaIS12_EE
-   obj:*
-   obj:*
-}
-{
    uninitialised value used in logic 6
    Memcheck:Cond
    fun:__mpn_cmp
@@ -2894,26 +2816,6 @@
    fun:_ZN5RDKit14GetPDBAtomLineB5cxx11EPKNS_4AtomEPKNS_9ConformerERSt3mapIjjSt4lessIjESaISt4pairIKjjEEE
    fun:_ZN5RDKit12MolToPDBBodyB5cxx11ERKNS_5ROMolEPKNS_9ConformerEjRjS6_S6_
    fun:_ZN5RDKit13MolToPDBBlockB5cxx11ERKNS_5ROMolEij
-}
-{
-   uninitialised value used 2
-   Memcheck:Value8
-   fun:__mpn_addmul_1
-   obj:*
-   obj:*
-   fun:__mpn_mul
-   obj:*
-   obj:*
-   obj:*
-   fun:deallocate
-   fun:deallocate
-   fun:_M_deallocate
-   fun:~_Vector_base
-   fun:~vector
-   fun:~dynamic_bitset
-   fun:_ZN5RDKit5Canon13dfsBuildStackERNS_5ROMolEiiRSt6vectorINS0_10AtomColorsESaIS4_EERS3_IS3_IiSaIiEESaIS9_EERKS3_IjSaIjEERS9_RS3_INS0_12MolStackElemESaISI_EESH_SH_SC_RS3_INSt7__cxx114listIiS8_EESaISO_EEPKN5boost14dynamic_bitsetImSaImEEEPKS3_INSM_12basic_stringIcSt11char_traitsIcESaIcEEESaIS12_EE
-   obj:*
-   obj:*
 }
 {
    uninitialised value used 5
