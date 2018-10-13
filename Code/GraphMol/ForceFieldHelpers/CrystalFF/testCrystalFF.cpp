@@ -145,6 +145,7 @@ void testTorsionPrefs() {
   ForceFields::CrystalFF::getExperimentalTorsions(
       *mol, expTorsionAtoms, expTorsionAngles, improperAtoms, true, false,
       1, false);
+  delete mol;
   TEST_ASSERT(expTorsionAtoms.size() == 2);
   TEST_ASSERT(expTorsionAngles.size() == 2);
 }
