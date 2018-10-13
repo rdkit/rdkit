@@ -42,11 +42,6 @@ namespace RDKit {
 namespace Descriptors {
 namespace {
 
-struct EEM_arrays {
-  unsigned int *Atomindex;
-  unsigned int *EEMatomtype;
-};
-
 // Those Parameters change to adapted to the molecule dataset using the
 // optimization method: The best parameters published in the NEEMP article
 // (https://jcheminf.springeropen.com/articles/10.1186/s13321-016-0171-1), are
@@ -127,7 +122,7 @@ unsigned int getAtomtype(const ROMol &mol, const RDKit::Atom *atom) {
 }
 
 std::unique_ptr<double[]> getEEMMatrix(double *dist3D, unsigned int n,
-                                       EEM_arrays EEMatoms) {
+                                       const EEM_arrays& EEMatoms) {
   PRECONDITION(dist3D != nullptr, "bad dist3D argument")
   int sizeArray = (n + 1) * (n + 1);
   double *EEM =
@@ -184,22 +179,29 @@ std::unique_ptr<double[]> getBVector(const ROMol &mol, unsigned int n,
   return std::unique_ptr<double[]>(b);
 }
 
-EEM_arrays calculate_EEM_parameters(ROMol mol, unsigned int n) {
+EEM_arrays::EEM_arrays(const ROMol &mol, unsigned int sz) : n(sz) {
   /* Fill vector b i.e. -A */
-  unsigned int *a = new unsigned int[n];
-  unsigned int *b = new unsigned int[n];
+  Atomindex = new unsigned int[n];
+  EEMatomtype = new unsigned int[n];
 
   for (unsigned int j = 0; j < n; j++) {
-    b[j] = getAtomtype(mol, mol.getAtomWithIdx(j));
-    a[j] = mol.getAtomWithIdx(j)->getAtomicNum();
+    EEMatomtype[j] = getAtomtype(mol, mol.getAtomWithIdx(j));
+    Atomindex[j] = mol.getAtomWithIdx(j)->getAtomicNum();
   }
+}
 
-  return EEM_arrays{a, b};
+EEM_arrays::~EEM_arrays() {
+  if (Atomindex != nullptr) {
+    delete[] Atomindex;
+  }
+  if (EEMatomtype != nullptr) {
+    delete[] EEMatomtype;
+  }
 }
 
 /* Calculate charges for a particular kappa_data structure */
 void calculate_charges(ROMol mol, double *dist3D, unsigned int numAtoms,
-                       EEM_arrays EEMatoms, std::vector<double> &res) {
+                       const EEM_arrays& EEMatoms, std::vector<double> &res) {
   std::unique_ptr<double[]> A = getEEMMatrix(dist3D, numAtoms, EEMatoms);
   std::unique_ptr<double[]> b = getBVector(mol, numAtoms, EEMatoms);
 
@@ -220,7 +222,7 @@ void getEEMs(const ROMol &mol, std::vector<double> &result,
              unsigned int numAtoms, int confId) {
   // 3D distance matrix
   double *dist3D = MolOps::get3DDistanceMat(mol, confId, false, true);
-  EEM_arrays EEMatoms = calculate_EEM_parameters(mol, numAtoms);
+  EEM_arrays EEMatoms(mol, numAtoms);
 
   result.clear();
   result.resize(numAtoms);
