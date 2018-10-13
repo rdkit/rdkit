@@ -872,6 +872,7 @@ void testChEMBL_TxtALL_chembl_II_sets(double th = 1.0) {
             testsmi.c_str(),
             "chembl_II_sets.P.res.csv");  // command for the same Python test
   }
+  fclose(fcmd);
 }
 
 void testChEMBL_TxtSLOW_chembl_II_sets(double th = 1.0) {
@@ -1220,11 +1221,15 @@ void testFileSDF_RandomSet(const char* test = "chembl13-10000-random-pairs.sdf",
   } catch (...) {
     std::cout << "ERROR: RDKit could not load input file"
               << "\n";
+    fclose(fcsv);
+    fclose(fcmd);
     return;
   }
   if (!suppl) {
     std::cout << "ERROR: unsupported input file format"
               << "\n";
+    fclose(fcsv);
+    fclose(fcmd);
     return;
   }
   // commands for prepare Python test:
@@ -1246,6 +1251,9 @@ void testFileSDF_RandomSet(const char* test = "chembl13-10000-random-pairs.sdf",
     FILE* fsmi = fopen(smiName, "wt");
     if (!fsmi) {
       std::cout << "ERROR: could not create SMI file " << smiName << "\n";
+      delete suppl;
+      fclose(fcsv);
+      fclose(fcmd);
       return;
     }
     ROMol* m = nullptr;

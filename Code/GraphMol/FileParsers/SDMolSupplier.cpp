@@ -37,6 +37,7 @@ SDMolSupplier::SDMolSupplier(const std::string &fileName, bool sanitize,
   if (!tmpStream || (!(*tmpStream)) || (tmpStream->bad())) {
     std::ostringstream errout;
     errout << "Bad input file " << fileName;
+    if (tmpStream) { delete tmpStream; }
     throw BadFileException(errout.str());
   }
 
