@@ -112,6 +112,7 @@ void testMol1() {
   TEST_ASSERT(cip == "R");
   MolOps::removeStereochemistry(*m);
   TEST_ASSERT(!m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
+  delete m;
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 };
@@ -269,6 +270,7 @@ void testRoundTrip() {
   TEST_ASSERT(smi == smi2);
 #endif
 
+  delete m;
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 };
 
@@ -336,6 +338,7 @@ void testMol2() {
   m->getAtomWithIdx(3)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "R");
 
+  delete m;
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 };
 
