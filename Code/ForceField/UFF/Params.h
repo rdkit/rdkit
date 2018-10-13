@@ -11,6 +11,7 @@
 #ifndef __RD_UFFPARAMS_H__
 #define __RD_UFFPARAMS_H__
 
+#include <memory>
 #include <string>
 #include <cmath>
 #include <map>
@@ -145,7 +146,7 @@ class RDKIT_FORCEFIELD_EXPORT ParamCollection {
  private:
   //! to force this to be a singleton, the constructor must be private
   ParamCollection(std::string paramData);
-  static class ParamCollection *ds_instance;     //!< the singleton
+  static class std::unique_ptr<ParamCollection> ds_instance;     //!< the singleton
   std::map<std::string, AtomicParams> d_params;  //!< the parameter map
 };
 }
