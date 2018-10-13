@@ -82,7 +82,7 @@ class Catalog {
 
   //------------------------------------
   //! sets our parameters by copying the \c params argument
-  virtual void setCatalogParams(paramType *params) {
+  virtual void setCatalogParams(const paramType *params) {
     PRECONDITION(params, "bad parameter object");
     // if we already have a paramter object throw an exception
     PRECONDITION(!dp_cParams,
