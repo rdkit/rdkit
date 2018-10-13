@@ -506,6 +506,7 @@ inline unsigned int streamReadProps(std::istream &ss, RDProps &props) {
   streamRead(ss, count);
 
   Dict &dict = props.getDict();
+  dict.reset(); // Clear data before repopulating
   dict.getData().resize(count);
   for(unsigned index = 0; index<count; ++index) {
     CHECK_INVARIANT(streamReadProp(ss, dict.getData()[index], dict.getNonPODStatus()),
