@@ -137,6 +137,8 @@ double tverskyIndex(const Conformer &conf1, const Conformer &conf2, double alpha
 
   EncodeShape(conf1, grd1, trans, vdwScale, stepSize, maxLayers, ignoreHs);
   EncodeShape(conf2, grd2, trans, vdwScale, stepSize, maxLayers, ignoreHs);
+
+  delete trans;
   return RDGeom::tverskyIndex(grd1, grd2, alpha, beta);
 }
 
@@ -180,6 +182,8 @@ double tanimotoDistance(const Conformer &conf1, const Conformer &conf2,
 
   EncodeShape(conf1, grd1, trans, vdwScale, stepSize, maxLayers, ignoreHs);
   EncodeShape(conf2, grd2, trans, vdwScale, stepSize, maxLayers, ignoreHs);
+
+  delete trans;
   return RDGeom::tanimotoDistance(grd1, grd2);
 }
 
@@ -226,6 +230,8 @@ double protrudeDistance(const Conformer &conf1, const Conformer &conf2,
 
   EncodeShape(conf1, grd1, trans, vdwScale, stepSize, maxLayers, ignoreHs);
   EncodeShape(conf2, grd2, trans, vdwScale, stepSize, maxLayers, ignoreHs);
+  delete trans;
+
   double res;
   if (allowReordering && (grd2.getOccupancyVect()->getTotalVal() <
                           grd1.getOccupancyVect()->getTotalVal())) {
