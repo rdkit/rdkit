@@ -31,6 +31,7 @@
 #include "RDFreeSASA.h"
 
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/QueryAtom.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 
@@ -398,10 +399,13 @@ void testPDB() {
   std::cerr << " polar " << polard << std::endl;
   std::cerr << " apolar " << apolard << std::endl;
 
-  TEST_ASSERT(fabs(polard + apolard - 5000.340175) < 1e-5);
-
+  delete polar;
+  delete apolar;
   delete m;
   delete mnoh;
+
+  TEST_ASSERT(fabs(polard + apolard - 5000.340175) < 1e-5);
+
   BOOST_LOG(rdInfoLog) << "Done" << std::endl;
 }
 
