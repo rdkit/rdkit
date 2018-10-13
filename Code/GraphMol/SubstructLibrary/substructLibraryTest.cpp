@@ -60,6 +60,7 @@ void test1() {
     }
     if (!mol) continue;
     ssslib.addMol(*mol);
+    delete mol;
   }
 
   {
@@ -105,6 +106,7 @@ void test2() {
     }
     if (!mol) continue;
     ssslib.addMol(*mol);
+    delete mol;
   }
 
   {
