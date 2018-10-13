@@ -69,10 +69,10 @@ void disable_logs(const std::string &arg) {
 
 namespace RDLog {
 void InitLogs() {
-  rdDebugLog = new boost::logging::rdLogger(&std::cerr);
-  rdInfoLog = new boost::logging::rdLogger(&std::cout);
-  rdWarningLog = new boost::logging::rdLogger(&std::cerr);
-  rdErrorLog = new boost::logging::rdLogger(&std::cerr);
+  rdDebugLog = &cerrLogger;
+  rdInfoLog = &coutLogger;
+  rdWarningLog = &cerrLogger;
+  rdErrorLog = &cerrLogger;
 }
 std::ostream &toStream(std::ostream &logstrm) {
   time_t t = time(nullptr);
