@@ -43,7 +43,9 @@ void test1() {
   CHECK_INVARIANT(newQ->Match(1.001), "");
   CHECK_INVARIANT(!newQ->Match(1.1), "");
   CHECK_INVARIANT(!newQ->Match(-2), "");
+  delete newQ;
 }
+
 
 void test2() {
   cout << "Set" << endl;
@@ -63,6 +65,7 @@ void test2() {
   CHECK_INVARIANT(newQ->Match(1), "");
   CHECK_INVARIANT(newQ->Match(3), "");
   CHECK_INVARIANT(!newQ->Match(-3), "");
+  delete newQ;
 }
 
 void test3() {
@@ -87,6 +90,9 @@ void test3() {
   CHECK_INVARIANT(newQ->Match(1), "");
   CHECK_INVARIANT(newQ->Match(3), "");
   CHECK_INVARIANT(!newQ->Match(-3), "");
+
+  delete newQ;
+  delete q;
 }
 
 void test4() {
@@ -111,6 +117,9 @@ void test4() {
   CHECK_INVARIANT(newQ->Match(1), "");
   CHECK_INVARIANT(newQ->Match(3), "");
   CHECK_INVARIANT(newQ->Match(-3), "");
+
+  delete newQ;
+  delete q;
 }
 
 void test5() {
@@ -137,6 +146,9 @@ void test5() {
   CHECK_INVARIANT(!newQ->Match(1), "");
   CHECK_INVARIANT(!newQ->Match(3), "");
   CHECK_INVARIANT(newQ->Match(-3), "");
+
+  delete newQ;
+  delete q;
 }
 
 int foofun(double bar) { return int(floor(bar)); };
@@ -166,6 +178,9 @@ void test6() {
   CHECK_INVARIANT(newQ3->Match(6.0), "");
   CHECK_INVARIANT(newQ3->Match(6.1), "");
   CHECK_INVARIANT(!newQ3->Match(5.0), "");
+
+  delete newQ;
+  delete newQ3;
 }
 
 bool matchF(int v) { return v == 3; }
@@ -275,6 +290,8 @@ void test7() {
   CHECK_INVARIANT(newQ->Match("1"), "");
   CHECK_INVARIANT(newQ->Match("3"), "");
   CHECK_INVARIANT(!newQ->Match("-3"), "");
+
+  delete newQ;
 }
 
 int main() {
