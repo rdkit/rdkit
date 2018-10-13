@@ -21,7 +21,7 @@ typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
 namespace RDKit {
 
-class PeriodicTable *PeriodicTable::ds_instance = nullptr;
+class std::unique_ptr<PeriodicTable> PeriodicTable::ds_instance = nullptr;
 
 PeriodicTable::PeriodicTable() {
   // it is assumed that the atomic atomData string constains atoms
@@ -83,16 +83,16 @@ PeriodicTable::PeriodicTable() {
   }
 }
 
-void PeriodicTable::initInstance() { ds_instance = new PeriodicTable(); }
+void PeriodicTable::initInstance() { ds_instance = std::unique_ptr<PeriodicTable>(new PeriodicTable()); }
 
 PeriodicTable *PeriodicTable::getTable() {
 #if RDK_BUILD_THREADSAFE_SSS
   static std::once_flag pt_init_once;
   std::call_once(pt_init_once, initInstance);
 #else
-  if (ds_instance == nullptr) initInstance();
+  if (!ds_instance) initInstance();
 #endif
-  return ds_instance;
+  return ds_instance.get();
 }
 
 }  // end of namespace
