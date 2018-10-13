@@ -85,6 +85,10 @@ int smarts_atom_parse(const std::string &inp, Atom *&atom) {
                          start_tok);
   } catch (...) {
     yysmarts_lex_destroy(scanner);
+    if (atom != nullptr) {
+      delete atom;
+      atom = nullptr;
+    }
     throw;
   }
   yysmarts_lex_destroy(scanner);
@@ -106,6 +110,10 @@ int smiles_bond_parse(const std::string &inp, Bond *&bond) {
                          &branchPoints, scanner, start_tok);
   } catch (...) {
     yysmiles_lex_destroy(scanner);
+    if (bond != nullptr) {
+      delete bond;
+      bond = nullptr;
+    }
     throw;
   }
   yysmiles_lex_destroy(scanner);
@@ -180,7 +188,7 @@ std::string labelRecursivePatterns(const std::string &sma) {
   std::list<SmaState> state;
   std::list<unsigned int> startRecurse;
   std::map<std::string, std::string> patterns;
-  std::string res = "";
+  std::string res;
 
   state.push_back(BASE);
 
@@ -230,7 +238,7 @@ RWMol *toMol(const std::string &inp,
              int func(const std::string &, std::vector<RDKit::RWMol *> &),
              const std::string &origInp) {
   // empty strings produce empty molecules:
-  if (inp == "") return new RWMol();
+  if (inp.empty()) return new RWMol();
   RWMol *res = nullptr;
   std::vector<RDKit::RWMol *> molVect;
   try {
@@ -269,7 +277,7 @@ RWMol *toMol(const std::string &inp,
 
 Atom *toAtom(const std::string &inp, int func(const std::string &, Atom *&)) {
   // empty strings produce empty molecules:
-  if (inp == "") return nullptr;
+  if (inp.empty()) return nullptr;
   Atom *res = nullptr;
   try {
     func(inp, res);
@@ -287,7 +295,7 @@ Atom *toAtom(const std::string &inp, int func(const std::string &, Atom *&)) {
 
 Bond *toBond(const std::string &inp, int func(const std::string &, Bond *&)) {
   // empty strings produce empty molecules:
-  if (inp == "") return nullptr;
+  if (inp.empty()) return nullptr;
   Bond *res = nullptr;
   try {
     func(inp, res);
@@ -321,7 +329,7 @@ void preprocessSmiles(const std::string &smiles,
     }
   }
 
-  if (lsmiles == "") {
+  if (lsmiles.empty()) {
     lsmiles = smiles;
   }
 
@@ -364,14 +372,14 @@ RWMol *SmilesToMol(const std::string &smiles,
                    const SmilesParserParams &params) {
   yysmiles_debug = params.debugParse;
 
-  std::string lsmiles = "", name = "", cxPart = "";
+  std::string lsmiles, name, cxPart;
   preprocessSmiles(smiles, params, lsmiles, name, cxPart);
   // strip any leading/trailing whitespace:
   // boost::trim_if(smi,boost::is_any_of(" \t\r\n"));
   RWMol *res = nullptr;
   res = toMol(lsmiles, smiles_parse, lsmiles);
 
-  if (res && params.allowCXSMILES && cxPart != "") {
+  if (res && params.allowCXSMILES && !cxPart.empty()) {
     std::string::const_iterator pos = cxPart.cbegin();
     SmilesParseOps::parseCXExtensions(*res, cxPart, pos);
     if (params.parseName && pos != cxPart.cend()) {
@@ -396,7 +404,7 @@ RWMol *SmilesToMol(const std::string &smiles,
     bool cleanIt = true, force = true, flagPossible = true;
     MolOps::assignStereochemistry(*res, cleanIt, force, flagPossible);
   }
-  if (res && name != "") res->setProp(common_properties::_Name, name);
+  if (res && !name.empty()) res->setProp(common_properties::_Name, name);
   return res;
 };
 Atom *SmartsToAtom(const std::string &smiles) {
