@@ -255,6 +255,7 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
     paramType *params = new paramType();
     params->initFromStream(ss);
     this->setCatalogParams(params);
+    delete params;
 
     // std::cout << "\tparams: " << getCatalogParams()->getLowerFragLength();
     // std::cout << " " << getCatalogParams()->getUpperFragLength();
