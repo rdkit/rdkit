@@ -99,6 +99,8 @@ void testAtomLabels() {
     TEST_ASSERT(m->getAtomWithIdx(5)->getProp<std::string>(
                     common_properties::atomLabel) == "_AP2");
     TEST_ASSERT(m->getAtomWithIdx(5)->getAtomMapNum() == 2);
+
+    delete m;
   }
   {  // query properties
     std::string smiles = "**C |$Q_e;QH_p;;$|";
