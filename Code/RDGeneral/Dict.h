@@ -110,6 +110,13 @@ class RDKIT_RDGENERAL_EXPORT Dict {
   };
 
   //----------------------------------------------------------
+  //! \brief Access to the underlying non-POD containment flag
+  //! This is meant to be used only in bulk updates of _data.
+  bool& getNonPODStatus() {
+      return _hasNonPodData;
+  }
+
+  //----------------------------------------------------------
   //! \brief Access to the underlying data.
   const DataType &getData() const { return _data; }
   DataType &getData() { return _data; }
