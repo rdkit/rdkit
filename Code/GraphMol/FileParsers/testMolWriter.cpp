@@ -149,28 +149,29 @@ void testSmilesWriterNoNames() {
       break;
     }
   }
-  writer->flush();
-  delete writer;
+  writer->close();
   delete nSup;
 
   // now read the molecules back in a check if we have the same properties etc
-  nSup = new SmilesMolSupplier(oname, ",", 0, -1);
+  nSup = new SmilesMolSupplier(oname, " ", 0, -1);
   int i = 0;
   mol = nSup->next();
   while (mol) {
     std::string mname, pval;
     mol->getProp(common_properties::_Name, mname);
-    TEST_ASSERT(mname != "bogus");
     mol->getProp("Column_2", pval);
+    delete mol;
+    TEST_ASSERT(mname != "bogus");
     TEST_ASSERT(pval == props[i]);
     i++;
-    delete mol;
     try {
       mol = nSup->next();
     } catch (FileParseException &) {
       break;
     }
   }
+  TEST_ASSERT(writer->numMols() == nSup->length());
+  delete writer;
   delete nSup;
 }
 
@@ -204,28 +205,28 @@ void testSmilesWriterClose() {
   }
   writer->close();
   delete nSup;
-  delete writer;
-  writer = nullptr;
 
   // now read the molecules back in a check if we have the same properties etc
-  nSup = new SmilesMolSupplier(oname, ",", 0, -1);
+  nSup = new SmilesMolSupplier(oname, " ", 0, -1);
   int i = 0;
   mol = nSup->next();
   while (mol) {
     std::string mname, pval;
     mol->getProp(common_properties::_Name, mname);
-    TEST_ASSERT(mname != "bogus");
     mol->getProp("Column_2", pval);
+    delete mol;
+    TEST_ASSERT(mname != "bogus");
     TEST_ASSERT(pval == props[i]);
     i++;
-    delete mol;
     try {
       mol = nSup->next();
     } catch (FileParseException &) {
       break;
     }
   }
+  TEST_ASSERT(writer->numMols() == nSup->length());
   delete nSup;
+  delete writer;
 }
 
 void testSDWriter() {
@@ -1232,6 +1233,7 @@ void testGithub266() {
                 "BondOr");
 
     delete m;
+    delete m2;
   }
 
   {
@@ -1260,6 +1262,7 @@ void testGithub266() {
                 "SingleOrAromaticBond");
 
     delete m;
+    delete m2;
   }
 
   {
@@ -1287,6 +1290,7 @@ void testGithub266() {
                 "BondOr");
 
     delete m;
+    delete m2;
   }
 
   {
