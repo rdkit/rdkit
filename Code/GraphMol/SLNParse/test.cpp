@@ -735,6 +735,7 @@ void test6() {
   TEST_ASSERT(mol);
   TEST_ASSERT(!RDKit::SubstructMatch(*mol, *patt, mV));
 
+  delete mol;
   delete patt;
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
@@ -787,6 +788,7 @@ void test7() {
   patt = RDKit::SLNQueryToMol(sln);
   TEST_ASSERT(patt);
 
+  delete mol;
   smi = "C[CH2+](C)C";
   mol = RDKit::SmilesToMol(smi);
   TEST_ASSERT(mol);
@@ -809,6 +811,7 @@ void test7() {
   patt = RDKit::SLNQueryToMol(sln);
   TEST_ASSERT(patt);
 
+  delete mol;
   smi = "C[CH2+](C)C";
   mol = RDKit::SmilesToMol(smi);
   TEST_ASSERT(mol);
@@ -831,6 +834,7 @@ void test7() {
   patt = RDKit::SLNQueryToMol(sln);
   TEST_ASSERT(patt);
 
+  delete mol;
   smi = "C[CH2+](C)C";
   mol = RDKit::SmilesToMol(smi);
   TEST_ASSERT(mol);
@@ -853,6 +857,7 @@ void test7() {
   patt = RDKit::SLNQueryToMol(sln);
   TEST_ASSERT(patt);
 
+  delete mol;
   smi = "C[CH2+](C)C";
   mol = RDKit::SmilesToMol(smi);
   TEST_ASSERT(mol);
@@ -875,6 +880,7 @@ void test7() {
   patt = RDKit::SLNQueryToMol(sln);
   TEST_ASSERT(patt);
 
+  delete mol;
   smi = "C[CH2+](C)C";
   mol = RDKit::SmilesToMol(smi);
   TEST_ASSERT(mol);
@@ -892,6 +898,7 @@ void test7() {
   TEST_ASSERT(mol);
   TEST_ASSERT(RDKit::SubstructMatch(*mol, *patt, mV) == 4);
 
+  delete mol;
   delete patt;
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
@@ -1527,6 +1534,7 @@ void test13() {
   mol = RDKit::SLNToMol(sln);
   TEST_ASSERT(!mol);
 
+  delete mol;
   sln = "CH2(CH2@1)";
   mol = RDKit::SLNToMol(sln);
   TEST_ASSERT(!mol);
@@ -1617,14 +1625,17 @@ void test14() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Test14: error catching " << std::endl;
 
+  delete mol;
   sln = "CH2(C@1H2)CH2(CH2CH2C[1]H2)";
   mol = RDKit::SLNToMol(sln);
   TEST_ASSERT(!mol);
 
+  delete mol;
   sln = "CH2(CH2[1])CH2(CH2CH2CH2@1)";
   mol = RDKit::SLNToMol(sln);
   TEST_ASSERT(!mol);
 
+  delete mol;
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
@@ -1908,6 +1919,7 @@ void testIssue277() {
     while (slns[i] != "EOF") {
       RDKit::RWMol *mol = RDKit::SLNQueryToMol(slns[i++]);
       TEST_ASSERT(mol);
+      delete mol;
     }
   }
 
@@ -1927,24 +1939,27 @@ void test17() {
   TEST_ASSERT(mol);
   TEST_ASSERT(mol->getNumAtoms() == 1);
 
+  delete mol;
   sln = "CH4\t";
   mol = RDKit::SLNToMol(sln);
   TEST_ASSERT(mol);
   TEST_ASSERT(mol->getNumAtoms() == 1);
-  delete mol;
 
+  delete mol;
   sln = "CH4\tfff";
   mol = RDKit::SLNToMol(sln);
   TEST_ASSERT(!mol);
-  delete mol;
 
+  delete mol;
   sln = "C[charge=+1] \t";
   mol = RDKit::SLNQueryToMol(sln);
   TEST_ASSERT(mol);
 
+  delete mol;
   sln = "C[charge=+1] \tfoo";
   mol = RDKit::SLNQueryToMol(sln);
   TEST_ASSERT(!mol);
+  delete mol;
 }
 
 int main(int argc, char *argv[]) {
