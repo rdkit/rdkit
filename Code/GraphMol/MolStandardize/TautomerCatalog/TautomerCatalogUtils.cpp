@@ -36,10 +36,10 @@ MolStandardize::TautomerTransform* getTautomer(const std::string& tmpStr) {
   std::vector<std::string> result(tokens.begin(), tokens.end());
 
   // tautomer information to collect from each line
-  std::string name = "";
-  std::string smarts = "";
-  std::string bond_str = "";
-  std::string charge_str = "";
+  std::string name;
+  std::string smarts;
+  std::string bond_str;
+  std::string charge_str;
 
   // line must have at least two tab separated values
   if (result.size() < 2) {
