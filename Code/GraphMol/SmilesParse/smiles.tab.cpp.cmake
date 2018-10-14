@@ -1452,8 +1452,8 @@ yyreduce:
   (*molList)[ sz ] = new RWMol();
   RDKit::RWMol *curMol = (*molList)[ sz ];
   (yyvsp[0].atom)->setProp(RDKit::common_properties::_SmilesStart,1);
-  curMol->addAtom((yyvsp[0].atom));
-  delete (yyvsp[0].atom);
+  curMol->addAtom((yyvsp[0].atom),true,true);
+  //delete (yyvsp[0].atom);
   (yyval.moli) = sz;
 }
 #line 1460 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.cpp" /* yacc.c:1646  */

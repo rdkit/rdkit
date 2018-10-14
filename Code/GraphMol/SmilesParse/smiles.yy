@@ -135,8 +135,8 @@ mol: atomd {
   (*molList)[ sz ] = new RWMol();
   RDKit::RWMol *curMol = (*molList)[ sz ];
   $1->setProp(RDKit::common_properties::_SmilesStart,1);
-  curMol->addAtom($1);
-  delete $1;
+  curMol->addAtom($1, true, true);
+  //delete $1;
   $$ = sz;
 }
 
