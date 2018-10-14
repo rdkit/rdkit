@@ -335,7 +335,7 @@ void test3() {
   sln = "CH4[I=13]";
   mol = RDKit::SLNToMol(sln);
   TEST_ASSERT(!mol);
-
+  delete mol;
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
