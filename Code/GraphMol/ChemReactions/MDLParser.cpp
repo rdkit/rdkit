@@ -66,13 +66,13 @@ void ParseV2000RxnBlock(std::istream &inStream, unsigned int &line,
   if (inStream.eof()) {
     throw ChemicalReactionParserException("premature EOF hit.");
   }
-  rxn = new ChemicalReaction();
 
   unsigned int nReacts = 0, nProds = 0, nAgents = 0;
   unsigned int spos = 0;
   if (tempStr.size() < 6) {
     throw ChemicalReactionParserException("rxn counts line is too short");
   }
+  rxn = new ChemicalReaction();
   try {
     nReacts =
         FileParserUtils::stripSpacesAndCast<unsigned int>(tempStr.substr(0, 3));
@@ -90,8 +90,6 @@ void ParseV2000RxnBlock(std::istream &inStream, unsigned int &line,
       }
     }
   } catch (boost::bad_lexical_cast &) {
-    delete rxn;
-    rxn = nullptr;
     std::ostringstream errout;
     errout << "Cannot convert " << tempStr.substr(spos, 3) << " to int";
     throw ChemicalReactionParserException(errout.str());
@@ -178,8 +176,6 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
   tempStr = getLine(inStream);
   line++;
 
-  rxn = new ChemicalReaction();
-
   tempStr = FileParserUtils::getV3000Line(&inStream, line);
   boost::to_upper(tempStr);
   tempStr = boost::trim_copy(tempStr);
@@ -203,6 +199,7 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
   if (tempStr.length() < 14 || tempStr.substr(0, 14) != "BEGIN REACTANT") {
     throw FileParseException("BEGIN REACTANT line not found");
   }
+  rxn = new ChemicalReaction();
   for (unsigned int i = 0; i < nReacts; ++i) {
     RWMol *react;
     unsigned int natoms, nbonds;
@@ -214,11 +211,10 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
                                       chiralityPossible, natoms, nbonds, true,
                                       false);
     } catch (FileParseException &e) {
-      delete react;
-      react = nullptr;
       std::ostringstream errout;
       errout << "Cannot parse reactant " << i << ". The error was:\n\t"
              << e.message();
+      delete react;
       throw ChemicalReactionParserException(errout.str());
     }
     if (!react) {
@@ -229,11 +225,13 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
   tempStr = FileParserUtils::getV3000Line(&inStream, line);
   boost::to_upper(tempStr);
   if (tempStr.length() < 12 || tempStr.substr(0, 12) != "END REACTANT") {
+    delete rxn;
     throw FileParseException("END REACTANT line not found");
   }
   tempStr = FileParserUtils::getV3000Line(&inStream, line);
   boost::to_upper(tempStr);
   if (tempStr.length() < 13 || tempStr.substr(0, 13) != "BEGIN PRODUCT") {
+    delete rxn;
     throw FileParseException("BEGIN PRODUCT line not found");
   }
   for (unsigned int i = 0; i < nProds; ++i) {
@@ -247,11 +245,10 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
                                       chiralityPossible, natoms, nbonds, true,
                                       false);
     } catch (FileParseException &e) {
-      delete prod;
-      prod = nullptr;
       std::ostringstream errout;
       errout << "Cannot parse product " << i << ". The error was:\n\t"
              << e.message();
+      delete prod;
       throw ChemicalReactionParserException(errout.str());
     }
     if (!prod) {
@@ -262,6 +259,7 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
   tempStr = FileParserUtils::getV3000Line(&inStream, line);
   boost::to_upper(tempStr);
   if (tempStr.length() < 11 || tempStr.substr(0, 11) != "END PRODUCT") {
+    delete rxn;
     throw FileParseException("END PRODUCT line not found");
   }
 
@@ -269,6 +267,7 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
     tempStr = FileParserUtils::getV3000Line(&inStream, line);
     boost::to_upper(tempStr);
     if (tempStr.length() < 14 || tempStr.substr(0, 14) != "BEGIN AGENT") {
+      delete rxn;
       throw FileParseException("BEGIN AGENT line not found");
     }
   }
@@ -283,11 +282,10 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
                                       chiralityPossible, natoms, nbonds, true,
                                       false);
     } catch (FileParseException &e) {
-      delete agent;
-      agent = nullptr;
       std::ostringstream errout;
       errout << "Cannot parse agent " << i << ". The error was:\n\t"
              << e.message();
+      delete agent;
       throw ChemicalReactionParserException(errout.str());
     }
     rxn->addAgentTemplate(ROMOL_SPTR(dynamic_cast<ROMol *>(agent)));
@@ -296,6 +294,7 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
     tempStr = FileParserUtils::getV3000Line(&inStream, line);
     boost::to_upper(tempStr);
     if (tempStr.length() < 12 || tempStr.substr(0, 12) != "END AGENT") {
+      delete rxn;
       throw FileParseException("END AGENT line not found");
     }
   }

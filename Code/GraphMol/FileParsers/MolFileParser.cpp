@@ -956,7 +956,7 @@ void ParseNewAtomList(RWMol *mol, const std::string &text, unsigned int line) {
     }
 
     std::string atSymb = text.substr(pos, 4);
-    atSymb.erase(atSymb.find(" "), atSymb.size());
+    atSymb.erase(atSymb.find(' '), atSymb.size());
     int atNum = PeriodicTable::getTable()->getAtomicNumber(atSymb);
     if (!i) {
       a = new QueryAtom(*(mol->getAtomWithIdx(idx)));
@@ -980,10 +980,12 @@ void ParseNewAtomList(RWMol *mol, const std::string &text, unsigned int line) {
       std::ostringstream errout;
       errout << "Unrecognized atom-list query modifier: " << text[14]
              << " on line " << line;
+      delete a;
       throw FileParseException(errout.str());
   }
 
   mol->replaceAtom(idx, a);
+  delete a;
 };
 
 void ParseV3000RGroups(RWMol *mol, Atom *&atom, const std::string &text,
@@ -1145,7 +1147,6 @@ void ParseAtomValue(RWMol *mol, std::string text, unsigned int line) {
 
 Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
                            unsigned int line) {
-  auto *res = new Atom;
   std::string symb;
   int massDiff, chg, hCount;
 
@@ -1201,6 +1202,7 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
       throw FileParseException(errout.str());
     }
   }
+  auto *res = new Atom;
   if (symb == "L" || symb == "A" || symb == "Q" || symb == "*" ||
       symb == "LP" || symb == "R" || symb == "R#" ||
       (symb[0] == 'R' && symb >= "R0" && symb <= "R99")) {
@@ -1277,6 +1279,7 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
       std::ostringstream errout;
       errout << "Cannot convert " << text.substr(39, 3) << " to int on line "
              << line;
+      delete res;
       throw FileParseException(errout.str());
     }
     res->setProp(common_properties::molParity, parity);
@@ -1290,6 +1293,7 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
       std::ostringstream errout;
       errout << "Cannot convert " << text.substr(45, 3) << " to int on line "
              << line;
+      delete res;
       throw FileParseException(errout.str());
     }
     res->setProp("molStereoCare", stereoCare);
@@ -1302,6 +1306,7 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
       std::ostringstream errout;
       errout << "Cannot convert " << text.substr(48, 3) << " to int on line "
              << line;
+      delete res;
       throw FileParseException(errout.str());
     }
     if (totValence != 0) {
@@ -1317,6 +1322,7 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
       std::ostringstream errout;
       errout << "Cannot convert " << text.substr(54, 3) << " to int on line "
              << line;
+      delete res;
       throw FileParseException(errout.str());
     }
     if (rxnRole != 0) {
@@ -1332,6 +1338,7 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
       std::ostringstream errout;
       errout << "Cannot convert " << text.substr(57, 3) << " to int on line "
              << line;
+      delete res;
       throw FileParseException(errout.str());
     }
     if (rxnComponent != 0) {
@@ -1347,6 +1354,7 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
       std::ostringstream errout;
       errout << "Cannot convert " << text.substr(60, 3) << " to int on line "
              << line;
+      delete res;
       throw FileParseException(errout.str());
     }
     res->setProp(common_properties::molAtomMapNumber, atomMapNumber);
@@ -1359,6 +1367,7 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
       std::ostringstream errout;
       errout << "Cannot convert " << text.substr(63, 3) << " to int on line "
              << line;
+      delete res;
       throw FileParseException(errout.str());
     }
     res->setProp(common_properties::molInversionFlag, inversionFlag);
@@ -1371,6 +1380,7 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
       std::ostringstream errout;
       errout << "Cannot convert " << text.substr(66, 3) << " to int on line "
              << line;
+      delete res;
       throw FileParseException(errout.str());
     }
     res->setProp("molExactChangeFlag", exactChangeFlag);

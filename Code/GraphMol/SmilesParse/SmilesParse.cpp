@@ -242,7 +242,9 @@ int smarts_parse(const std::string &inp, std::vector<RDKit::RWMol *> &molVect) {
                          scanner, start_tok);
   } catch (...) {
     yysmarts_lex_destroy(scanner);
-    molVect.clear();
+    for (auto&& molp : molVect) {
+        delete molp;
+    }
     if (lastBond != nullptr) {
         delete lastBond;
         lastBond = nullptr;
