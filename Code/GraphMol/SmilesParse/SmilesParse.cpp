@@ -242,13 +242,7 @@ int smarts_parse(const std::string &inp, std::vector<RDKit::RWMol *> &molVect) {
                          scanner, start_tok);
   } catch (...) {
     yysmarts_lex_destroy(scanner);
-    BOOST_FOREACH (RDKit::RWMol *molPtr, molVect) {
-      if (molPtr) {
-        // Clean-up the bond bookmarks when not calling CloseMolRings
-        SmilesParseOps::CleanupAfterParseError(molPtr);
-        delete molPtr;
-      }
-    }
+    molVect.clear();
     if (lastBond != nullptr) {
         delete lastBond;
         lastBond = nullptr;
