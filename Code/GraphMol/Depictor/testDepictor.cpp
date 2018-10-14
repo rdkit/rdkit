@@ -190,6 +190,7 @@ void test2() {
       // wmol = static_cast<RWMol *>(mol);
       RDDepict::compute2DCoords(*mol);
       writer.write(*mol);
+      delete mol;
     } catch (FileParseException &) {
       break;
     }
@@ -213,6 +214,7 @@ void test3() {
       // wmol = static_cast<RWMol *>(mol);
       RDDepict::compute2DCoords(*mol);
       writer.write(*mol);
+      delete mol;
     } catch (FileParseException &) {
       break;
     }
