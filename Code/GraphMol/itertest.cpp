@@ -83,6 +83,7 @@ void test1() {
   atIt -= 10;
   CHECK_INVARIANT(atIt >= atIt2, "past-the-end failed");
 
+  delete m;
   BOOST_LOG(rdInfoLog) << "test1 done" << endl;
 };
 
@@ -123,6 +124,7 @@ void test2() {
   bondIt = m->beginBonds();
   bondIt--;
 
+  delete m;
   BOOST_LOG(rdInfoLog) << "test2 done" << endl;
 };
 
@@ -156,6 +158,8 @@ void test3() {
     CHECK_INVARIANT((*--heteroIt)->getIdx() == heteros[0], "bad hetero");
     CHECK_INVARIANT((*heteroIt)->getIdx() == heteros[0], "bad hetero");
   }
+
+  delete m;
   BOOST_LOG(rdInfoLog) << "test3 done" << endl;
 };
 
@@ -193,6 +197,8 @@ void test4() {
   }
   smi = "CC(C)CC(C)CC(C)CC(C)C";
   unsigned int heteros2[] = {1, 4, 7, 10};
+
+  delete m;
   m = SmilesToMol(smi);
   // m->debugMol(cout);
   q->setQuery(makeAtomImplicitValenceQuery(1));
@@ -204,6 +210,9 @@ void test4() {
       nSeen++;
     }
   }
+
+  delete m;
+  delete q;
   BOOST_LOG(rdInfoLog) << "test4 done" << endl;
 };
 
@@ -233,6 +242,7 @@ void test5() {
   }
   CHECK_INVARIANT(idx == 3, "bad idx");
 
+  delete m;
   BOOST_LOG(rdInfoLog) << "test5 done" << endl;
 }
 
@@ -299,6 +309,7 @@ void test6() {
   Mol *m = SmilesToMol(smi);
   _test6Help(m);
 
+  delete m;
   BOOST_LOG(rdInfoLog) << "test6 done" << endl;
 };
 #endif
@@ -333,6 +344,8 @@ void test7() {
     idx++;
   }
   TEST_ASSERT(idx == 6);
+  delete m;
+
 #endif
   BOOST_LOG(rdInfoLog) << "test7 done" << endl;
 }
@@ -356,6 +369,7 @@ void testIssue263() {
     idx++;
   }
   CHECK_INVARIANT(idx == 7, "bad idx");
+  delete m;
 
 #endif
   BOOST_LOG(rdInfoLog) << "testIssue263 done" << endl;
