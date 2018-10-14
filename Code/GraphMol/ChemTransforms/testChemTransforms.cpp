@@ -39,38 +39,41 @@ void testDeleteSubstruct() {
   sma = "C=O";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
-
   mol2 = deleteSubstructs(*mol1, *matcher1, 0);
+  delete mol1;
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms() == 2)
-  mol2 = deleteSubstructs(*mol2, *matcher1, 0);
+  mol1 = deleteSubstructs(*mol2, *matcher1, 0);
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms() == 2)
-
   delete matcher1;
+  delete mol1;
+  delete mol2;
+
   sma = "[Cl;H1&X1,-]";
   matcher1 = SmartsToMol(sma);
   sma = "[Na+]";
   matcher2 = SmartsToMol(sma);
   sma = "[O;H2,H1&-,X0&-2]";
   matcher3 = SmartsToMol(sma);
-  delete mol1;
   mol1 = SmilesToMol("CCO.Cl");
   TEST_ASSERT(mol1);
   TEST_ASSERT(mol1->getNumAtoms() == 4);
-
-  delete mol2;
   mol2 = deleteSubstructs(*mol1, *matcher1, true);
-  TEST_ASSERT(mol2);
-  TEST_ASSERT(mol2->getNumAtoms() == 3);
-  mol2 = deleteSubstructs(*mol2, *matcher2, true);
-  TEST_ASSERT(mol2);
-  TEST_ASSERT(mol2->getNumAtoms() == 3);
-  mol2 = deleteSubstructs(*mol2, *matcher3, true);
-  TEST_ASSERT(mol2);
-  TEST_ASSERT(mol2->getNumAtoms() == 3);
-
   delete mol1;
+  TEST_ASSERT(mol2);
+  TEST_ASSERT(mol2->getNumAtoms() == 3);
+  mol1 = deleteSubstructs(*mol2, *matcher2, true);
+  delete mol1;
+  TEST_ASSERT(mol2);
+  TEST_ASSERT(mol2->getNumAtoms() == 3);
+  mol1 = deleteSubstructs(*mol2, *matcher3, true);
+  delete mol1;
+  TEST_ASSERT(mol2);
+  TEST_ASSERT(mol2->getNumAtoms() == 3);
+  delete mol2;
+  delete matcher3;
+
   mol1 = SmilesToMol("CC(=O)[O-].[Na+]");
   TEST_ASSERT(mol1);
   TEST_ASSERT(mol1->getNumAtoms() == 5);
@@ -81,16 +84,20 @@ void testDeleteSubstruct() {
   matcher2 = SmartsToMol("[Na+]");
 
   mol2 = deleteSubstructs(*mol1, *matcher1, true);
+  delete mol1;
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms() == 5);
-
-  mol2 = deleteSubstructs(*mol2, *matcher2, true);
-  TEST_ASSERT(mol2);
-  TEST_ASSERT(mol2->getNumAtoms() == 4);
-
-  mol2 = deleteSubstructs(*mol2, *matcher1, true);
-  TEST_ASSERT(mol2);
-  TEST_ASSERT(mol2->getNumAtoms() == 4);
+  mol1 = deleteSubstructs(*mol2, *matcher2, true);
+  delete mol2;
+  TEST_ASSERT(mol1);
+  TEST_ASSERT(mol1->getNumAtoms() == 4);
+  mol2 = deleteSubstructs(*mol1, *matcher1, true);
+  TEST_ASSERT(mol1);
+  TEST_ASSERT(mol1->getNumAtoms() == 4);
+  delete mol2;
+  delete mol1;
+  delete matcher1;
+  delete matcher2;
 
   // test chiralty
   smi = "CCO[C@H](N)(P)";
@@ -107,6 +114,7 @@ void testDeleteSubstruct() {
   smi1 = MolToSmiles(*mol2, true);
   std::cerr << "1 smi: " << smi1 << std::endl;
   TEST_ASSERT(smi1 == "CC");
+  delete mol2;
   delete matcher1;
 
   matcher1 = SmartsToMol("O[C@@H](N)(P)");
@@ -227,6 +235,7 @@ void testReplaceSubstructs() {
   TEST_ASSERT(vect.size() == 1);
   smi1 = MolToSmiles(*vect[0], true);
   TEST_ASSERT(smi1 == "CCNCC");
+  delete mol1;
 
   smi = "CCP([C@@H](N)O)CC";
   mol1 = SmilesToMol(smi);
@@ -243,7 +252,10 @@ void testReplaceSubstructs() {
   TEST_ASSERT(vect.size() == 1);
   smi1 = MolToSmiles(*vect[0], true);
   std::cerr << "replaceSub smi1:" << smi1 << std::endl;
-  ;
+  delete mol1;
+  delete frag;
+  delete matcher1;
+
   // no change
   TEST_ASSERT(smi1 == "CCNCC");
 
@@ -285,6 +297,7 @@ void testReplaceSubstructs2() {
     std::string csmi2 = MolToSmiles(*vect[0], true);
     TEST_ASSERT(csmi2 == csmi1);
     delete mol1;
+    delete frag;
     delete matcher1;
   }
 
@@ -309,37 +322,36 @@ void testReplaceSidechains() {
   mol2 = replaceSidechains(*mol1, *matcher1);
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms() == 6);
-
+  delete mol2;
   delete mol1;
+
   smi = "ClC1C(F)C1";
   mol1 = SmilesToMol(smi);
   TEST_ASSERT(mol1);
   mol2 = replaceSidechains(*mol1, *matcher1);
   TEST_ASSERT(!mol2);
+  delete mol1;
+  delete mol2;
 
   delete matcher1;
   sma = "C=O";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
 
-  delete mol1;
   smi = "CC=O";
   mol1 = SmilesToMol(smi);
   TEST_ASSERT(mol1);
-
-  delete mol2;
   mol2 = replaceSidechains(*mol1, *matcher1);
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms() == 3);
   smi = MolToSmiles(*mol2, true);
   TEST_ASSERT(smi == "[1*]C=O");
-
   delete mol1;
+  delete mol2;
+
   smi = "CC(C)=O";
   mol1 = SmilesToMol(smi);
   TEST_ASSERT(mol1);
-
-  delete mol2;
   mol2 = replaceSidechains(*mol1, *matcher1);
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms() == 4);
@@ -389,86 +401,79 @@ void testReplaceCore() {
   TEST_ASSERT(matcher1);
   mol2 = replaceCore(*mol1, *matcher1);
   TEST_ASSERT(!mol2);
+  delete mol1;
+  delete mol2;
+  delete matcher1;
 
   smi = "ClC1CC(F)C1";
   mol1 = SmilesToMol(smi);
   TEST_ASSERT(mol1);
-
   sma = "C1CCC1";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
-
   mol2 = replaceCore(*mol1, *matcher1);
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms() == 4);
   smi = MolToSmiles(*mol2, true);
   // there's no way to guarantee the order here:
   TEST_ASSERT(smi == "[1*]Cl.[2*]F" || smi == "[2*]Cl.[1*]F");
-
   delete mol1;
+  delete mol2;
+  delete matcher1;
+
   smi = "CCC=O";
   mol1 = SmilesToMol(smi);
   TEST_ASSERT(mol1);
-
-  delete matcher1;
   sma = "C=O";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
-
-  delete mol2;
   mol2 = replaceCore(*mol1, *matcher1);
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms() == 3);
   smi = MolToSmiles(*mol2, true);
   TEST_ASSERT(smi == "[1*]CC");
-
   delete mol1;
+  delete mol2;
+  delete matcher1;
+
   smi = "C1C(=O)CC1";
   mol1 = SmilesToMol(smi);
   TEST_ASSERT(mol1);
-
-  delete matcher1;
   sma = "C=O";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
-
-  delete mol2;
   mol2 = replaceCore(*mol1, *matcher1);
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms() == 5);
   smi = MolToSmiles(*mol2, true);
   // there's no way to guarantee the order here:
   TEST_ASSERT(smi == "[1*]CCC[2*]" || smi == "[1*]CCC[2*]");
-
   delete mol1;
+  delete mol2;
+  delete matcher1;
+
   smi = "CNC";
   mol1 = SmilesToMol(smi);
   TEST_ASSERT(mol1);
-
-  delete matcher1;
   sma = "N";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
-
-  delete mol2;
   mol2 = replaceCore(*mol1, *matcher1);
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms() == 4);
   smi = MolToSmiles(*mol2, true);
   // there's no way to guarantee the order here:
   TEST_ASSERT(smi == "[1*]C.[2*]C" || smi == "[2*]C.[1*]C");
-
   delete mol1;
+  delete mol2;
+  delete matcher1;
+
   smi = "OC1CCC1";
   mol1 = SmilesToMol(smi);
   TEST_ASSERT(mol1);
-
-  delete matcher1;
   sma = "[CH2][CH2][CH2]";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
-
-  delete mol2;
   mol2 = replaceCore(*mol1, *matcher1);
   TEST_ASSERT(mol2);
   smi = MolToSmiles(*mol2, true);
@@ -476,18 +481,16 @@ void testReplaceCore() {
   smi = MolToSmiles(*mol2, true);
   // there's no way to guarantee the order here:
   TEST_ASSERT(smi == "[2*]C([1*])O" || smi == "[1*]C([2*])O");
-
   delete mol1;
+  delete mol2;
+  delete matcher1;
+
   smi = "C/C=C/CN/C=C/O";
   mol1 = SmilesToMol(smi);
   TEST_ASSERT(mol1);
-
-  delete matcher1;
   sma = "N";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
-
-  delete mol2;
   mol2 = replaceCore(*mol1, *matcher1);
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms() == 9);
@@ -495,146 +498,149 @@ void testReplaceCore() {
   // there's no way to guarantee the order here:
   TEST_ASSERT(smi == "[1*]C/C=C/C.[2*]/C=C/O" ||
               smi == "[1*]/C=C/O.[2*]C/C=C/C");
-
   delete mol1;
+  delete mol2;
+  delete matcher1;
+
   smi = "C[C@](F)(Cl)N";
   mol1 = SmilesToMol(smi);
   TEST_ASSERT(mol1);
-  delete matcher1;
   sma = "N";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
-
-  delete mol2;
   mol2 = replaceCore(*mol1, *matcher1);
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms() == 5);
   smi = MolToSmiles(*mol2, true);
   TEST_ASSERT(smi == "[1*][C@@](C)(F)Cl");
   delete mol1;
+  delete mol2;
+
   smi = "C[C@](F)(N)Cl";
   mol1 = SmilesToMol(smi);
   TEST_ASSERT(mol1);
-  delete mol2;
   mol2 = replaceCore(*mol1, *matcher1);
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms() == 5);
   smi = MolToSmiles(*mol2, true);
   TEST_ASSERT(smi == "[1*][C@](C)(F)Cl");
   delete mol1;
+  delete mol2;
+
   smi = "N[C@](C)(F)Cl";
   mol1 = SmilesToMol(smi);
   TEST_ASSERT(mol1);
-  delete mol2;
   mol2 = replaceCore(*mol1, *matcher1);
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms() == 5);
   smi = MolToSmiles(*mol2, true);
   TEST_ASSERT(smi == "[1*][C@](C)(F)Cl");
-
   delete mol1;
+  delete mol2;
+  delete matcher1;
+
   smi = "C[C@@](F)(Cl)N";
   mol1 = SmilesToMol(smi);
   TEST_ASSERT(mol1);
-  delete matcher1;
   sma = "N";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
-
-  delete mol2;
   mol2 = replaceCore(*mol1, *matcher1);
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms() == 5);
   smi = MolToSmiles(*mol2, true);
   TEST_ASSERT(smi == "[1*][C@](C)(F)Cl");
   delete mol1;
+  delete mol2;
+
   smi = "C[C@@](F)(N)Cl";
   mol1 = SmilesToMol(smi);
   TEST_ASSERT(mol1);
-  delete mol2;
   mol2 = replaceCore(*mol1, *matcher1);
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms() == 5);
   smi = MolToSmiles(*mol2, true);
   TEST_ASSERT(smi == "[1*][C@@](C)(F)Cl");
   smi = "C[C@@](N)(Cl)F";
+  delete mol1;
+  delete mol2;
+
   mol1 = SmilesToMol(smi);
   TEST_ASSERT(mol1);
-  delete mol2;
   mol2 = replaceCore(*mol1, *matcher1);
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms() == 5);
   smi = MolToSmiles(*mol2, true);
   TEST_ASSERT(smi == "[1*][C@@](C)(F)Cl");
-
   delete mol1;
+  delete mol2;
+  delete matcher1;
+
   smi = "C[C@H](F)N";
   mol1 = SmilesToMol(smi);
   TEST_ASSERT(mol1);
-  delete matcher1;
   sma = "N";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
-
-  delete mol2;
   mol2 = replaceCore(*mol1, *matcher1);
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms() == 4);
   smi = MolToSmiles(*mol2, true);
   TEST_ASSERT(smi == "[1*][C@H](C)F");
   delete mol1;
+  delete mol2;
+
   smi = "C[C@H](N)F";
   mol1 = SmilesToMol(smi);
   TEST_ASSERT(mol1);
-  delete mol2;
   mol2 = replaceCore(*mol1, *matcher1);
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms() == 4);
   smi = MolToSmiles(*mol2, true);
   TEST_ASSERT(smi == "[1*][C@@H](C)F");
-
   delete mol1;
+  delete mol2;
+
   smi = "N[C@H](C)F";
   mol1 = SmilesToMol(smi);
   TEST_ASSERT(mol1);
-  delete mol2;
   mol2 = replaceCore(*mol1, *matcher1);
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms() == 4);
   smi = MolToSmiles(*mol2, true);
   TEST_ASSERT(smi == "[1*][C@H](C)F");
   delete mol1;
+  delete mol2;
+
   smi = "F[C@H](C)N";
   mol1 = SmilesToMol(smi);
   TEST_ASSERT(mol1);
-  delete mol2;
   mol2 = replaceCore(*mol1, *matcher1);
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms() == 4);
   smi = MolToSmiles(*mol2, true);
   TEST_ASSERT(smi == "[1*][C@@H](C)F");
-
   delete mol1;
+  delete mol2;
+
   smi = "N[C@H]1CCCO1";
   mol1 = SmilesToMol(smi);
   TEST_ASSERT(mol1);
-  delete mol2;
   mol2 = replaceCore(*mol1, *matcher1);
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms() == 6);
   smi = MolToSmiles(*mol2, true);
   TEST_ASSERT(smi == "[1*][C@H]1CCCO1");
-
   delete mol1;
+  delete mol2;
+  delete matcher1;
+
   smi = "ClC1CC(F)C1";
   mol1 = SmilesToMol(smi);
   TEST_ASSERT(mol1);
-
-  delete matcher1;
   sma = "*C1CC(*)C1";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
-
   mol2 = replaceCore(*mol1, *matcher1, false);
   TEST_ASSERT(mol2);
   smi = MolToSmiles(*mol2, true);
@@ -883,6 +889,10 @@ void testReplaceCoreCrash() {
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms() == 6);
   smi = MolToSmiles(*mol2, true);
+  delete mol1;
+  delete mol2;
+  delete matcher1;
+
   // there's no way to guarantee the order here:
   TEST_ASSERT(smi == "[1*]CC.[2*]CC" || smi == "[2*]CC.[1*]CC");
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -932,6 +942,9 @@ void testReplaceCorePositions() {
   TEST_ASSERT(feq(op.x, np.x));
   TEST_ASSERT(feq(op.y, np.y));
   TEST_ASSERT(feq(op.z, np.z));
+  delete mol1;
+  delete mol2;
+  delete matcher1;
 
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
@@ -1184,6 +1197,9 @@ void testIssue3453144() {
   TEST_ASSERT(feq(op.x, np.x));
   TEST_ASSERT(feq(op.y, np.y));
   TEST_ASSERT(feq(op.z, np.z));
+  delete mol1;
+  delete matcher1;
+  delete replacement;
 
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
@@ -1233,8 +1249,10 @@ void testCombineMols() {
                 (mol1->getNumAtoms() + mol2->getNumAtoms()));
     MolOps::findSSSR(*mol3);
     TEST_ASSERT(mol3->getRingInfo()->numRings() == 2);
+    delete mol1;
+    delete mol2;
+    delete mol3;
   }
-
   {
     std::string pathName = getenv("RDBASE");
     pathName += "/Code/GraphMol/ChemTransforms/testData/ethanol.mol";
@@ -1266,6 +1284,9 @@ void testCombineMols() {
                     mol3->getConformer().getAtomPos(3).y));
     TEST_ASSERT(feq(mol3->getConformer().getAtomPos(0).z,
                     mol3->getConformer().getAtomPos(3).z));
+    delete mol1;
+    delete mol2;
+    delete mol3;
   }
 
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -2002,6 +2023,7 @@ void testGithub1734() {
     smi = MolToSmiles(*nmol, true);
     TEST_ASSERT(smi == "[16*]c1ccccc1.[4*][C@]([8*])(C)I.[5*]NC");
     delete mol;
+    delete nmol;
   }
   {  // The original example
     std::string smi = "c1ccccc1[C@H](C)NC";
@@ -2014,6 +2036,7 @@ void testGithub1734() {
     smi = MolToSmiles(*nmol, true);
     TEST_ASSERT(smi == "[16*]c1ccccc1.[4*][C@H]([8*])C.[5*]NC");
     delete mol;
+    delete nmol;
   }
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
