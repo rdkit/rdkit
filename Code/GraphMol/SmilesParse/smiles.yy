@@ -22,7 +22,6 @@
 
 extern int yysmiles_lex(YYSTYPE *,void *,int &);
 
-
 using namespace RDKit;
 namespace {
  void yyErrorCleanup(std::vector<RDKit::RWMol *> *molList){
@@ -96,6 +95,9 @@ yysmiles_error( const char *input,
 %token ATOM_OPEN_TOKEN ATOM_CLOSE_TOKEN
 %token EOS_TOKEN
 
+%destructor { delete $$; } AROMATIC_ATOM_TOKEN ATOM_TOKEN ORGANIC_ATOM_TOKEN
+%destructor { delete $$; } <bond>
+
 %start meta_start
 
 %%
@@ -103,23 +105,38 @@ yysmiles_error( const char *input,
 meta_start: START_MOL mol {
 // the molList has already been updated, no need to do anything
 }
-| START_ATOM atomd {
+| START_ATOM atomd EOS_TOKEN {
   lastAtom = $2;
 }
-| START_BOND bondd {
+| START_ATOM atomd {
+  delete $2;
+  YYABORT;
+}
+| START_ATOM {
+  YYABORT;
+}
+| START_BOND bondd EOS_TOKEN {
   lastBond = $2;
 }
+| START_BOND bondd {
+  delete $2;
+  YYABORT;
+}
+| START_BOND {
+  YYABORT;
+}
 | meta_start error EOS_TOKEN{
-  yyclearin;
+  std::cout << "smiles error **********************" << std::endl;
   yyerrok;
   yyErrorCleanup(molList);
   YYABORT;
 }
 | meta_start EOS_TOKEN {
+  std::cout << "smiles accept **********************" << std::endl;
   YYACCEPT;
 }
 | error EOS_TOKEN {
-  yyclearin;
+  std::cout << "smiles error **********************" << std::endl;
   yyerrok;
   yyErrorCleanup(molList);
   YYABORT;

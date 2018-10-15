@@ -1,5 +1,6 @@
 %{
 
+  // $Id$
   //
   //  Copyright (C) 2003-2018 Greg Landrum and Rational Discovery LLC
   //
@@ -20,16 +21,6 @@
 
 extern int yysmarts_lex(YYSTYPE *,void *, int &);
 
-void
-yysmarts_error( const char *input,
-                std::vector<RDKit::RWMol *> *ms,
-                RDKit::Atom* &lastAtom,
-                RDKit::Bond* &lastBond,
-		void *scanner,int start_token, const char * msg )
-{
-  throw RDKit::SmilesParseException(msg);
-}
-
 using namespace RDKit;
 namespace {
  void yyErrorCleanup(std::vector<RDKit::RWMol *> *molList){
@@ -41,6 +32,17 @@ namespace {
   molList->resize(0);
  }
 }
+void
+yysmarts_error( const char *input,
+                std::vector<RDKit::RWMol *> *ms,
+                RDKit::Atom* &lastAtom,
+                RDKit::Bond* &lastBond,
+		void *scanner,int start_token, const char * msg )
+{
+  yyErrorCleanup(ms);
+  throw RDKit::SmilesParseException(msg);
+}
+
 %}
 
 %define api.pure full
@@ -93,31 +95,55 @@ namespace {
 %left AND_TOKEN
 %right NOT_TOKEN
 
+%destructor { delete $$; } ATOM_TOKEN
+%destructor { delete $$; } SIMPLE_ATOM_QUERY_TOKEN COMPLEX_ATOM_QUERY_TOKEN
+%destructor { delete $$; } RINGSIZE_ATOM_QUERY_TOKEN RINGBOND_ATOM_QUERY_TOKEN IMPLICIT_H_ATOM_QUERY_TOKEN
+%destructor { delete $$; } HYB_TOKEN HETERONEIGHBOR_ATOM_QUERY_TOKEN ALIPHATIC ALIPHATICHETERONEIGHBOR_ATOM_QUERY_TOKEN
+%destructor { delete $$; } bondd
+
 %start meta_start
 
 %%
 
-/* --------------------------------------------------------------- */
 meta_start: START_MOL mol {
 // the molList has already been updated, no need to do anything
 }
-| START_ATOM atomd {
+| START_ATOM atomd EOS_TOKEN {
   lastAtom = $2;
 }
-| START_BOND bond_expr {
+| START_ATOM atomd {
+  std::cout << "caught smarts atom error **********************" << std::endl;
+  delete $2;
+  YYABORT;
+}
+| START_ATOM {
+  std::cout << "caught smarts atom error **********************" << std::endl;
+  YYABORT;
+}
+| START_BOND bondd EOS_TOKEN {
   lastBond = $2;
 }
+| START_BOND bondd {
+  std::cout << "caught smarts bond error **********************" << std::endl;
+  delete $2;
+  YYABORT;
+}
+| START_BOND {
+  std::cout << "caught smarts bond error **********************" << std::endl;
+  YYABORT;
+}
 | meta_start error EOS_TOKEN{
-  yyclearin;
+  std::cout << "smarts error **********************" << std::endl;
   yyerrok;
   yyErrorCleanup(molList);
   YYABORT;
 }
 | meta_start EOS_TOKEN {
+  std::cout << "smarts accept **********************" << std::endl;
   YYACCEPT;
 }
 | error EOS_TOKEN {
-  yyclearin;
+  std::cout << "smarts error **********************" << std::endl;
   yyerrok;
   yyErrorCleanup(molList);
   YYABORT;
