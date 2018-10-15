@@ -30,7 +30,12 @@ functions less error prone (github #1679).
   bits. Morgan and RDKit fingerprints are currently supported.
 
 ## Acknowledgements:
-Boran Adas, Francois Berenger, Thomas Blaschke,  Brian Cole, Andrew Dalke, Guillaume Godin, Brice Hoff, Brian Kelley, Karl Leswing, Susan Leung, Pat Lorton, Josh Meyers, Hirotomo Moriwaki, Dan Nealschneider, Noel O'Boyle, Pavel Raiskup, Sereina Riniker, Ricardo Rodriguez Schmidt, Stephen Roughley, Roger Sayle, Rim Shayakhmetov, Gregory Simm, Jon Sorenson, Matt Swain, Kiran Telukunta, Paulo Tosco, Alain Vaucher, Maciej Wójcikowski, '0xDECAFC0FFEE', 'jaechanglim', 'paconius'
+Boran Adas, Francois Berenger, Thomas Blaschke,  Brian Cole, Andrew Dalke, Guillaume Godin, 
+Brice Hoff, Brian Kelley, Karl Leswing, Susan Leung, Pat Lorton, Josh Meyers, Hirotomo Moriwaki, 
+Dan Nealschneider, Noel O'Boyle, Pavel Raiskup, Sereina Riniker, Ricardo Rodriguez Schmidt, 
+Stephen Roughley, Roger Sayle, Takayuki Serizawa, Rim Shayakhmetov, Gregory Simm, Jon Sorenson, 
+Matt Swain, Kiran Telukunta, Paulo Tosco, Alain Vaucher, Maciej Wójcikowski, '0xDECAFC0FFEE', 
+'jaechanglim', 'paconius'
 
 ## Contrib updates:
 - The FastCluster code has been updated.
@@ -118,6 +123,8 @@ Boran Adas, Francois Berenger, Thomas Blaschke,  Brian Cole, Andrew Dalke, Guill
  (github pull #2030 from greglandrum)
   - MCS: add test for ring--non-ring matches at the atom level
  (github issue #2034 from greglandrum)
+  - Ability to generate a list of possible smiles representation for a given molecule
+ (github issue #2042 from thegodone)
   - add scoring test (relevant to #1975)
  (github pull #2064 from greglandrum)
   - actually run the SmilesWriterNoNames() test
