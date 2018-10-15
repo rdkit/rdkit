@@ -102,21 +102,21 @@ yysmiles_error( const char *input,
 
 %%
 
-meta_start: START_MOL mol {
+/* --------------------------------------------------------------- */
+meta_start:
+START_MOL mol {
 // the molList has already been updated, no need to do anything
 }
 | START_ATOM atomd EOS_TOKEN {
   lastAtom = $2;
+  YYACCEPT;
 }
-| START_ATOM atomd {
-  delete $2;
-  YYABORT;
-}
-| START_ATOM {
+| START_ATOM bad_atom_def {
   YYABORT;
 }
 | START_BOND bondd EOS_TOKEN {
   lastBond = $2;
+  YYACCEPT;
 }
 | START_BOND bondd {
   delete $2;
@@ -126,23 +126,29 @@ meta_start: START_MOL mol {
   YYABORT;
 }
 | meta_start error EOS_TOKEN{
-  std::cout << "smiles error **********************" << std::endl;
   yyerrok;
   yyErrorCleanup(molList);
   YYABORT;
 }
 | meta_start EOS_TOKEN {
-  std::cout << "smiles accept **********************" << std::endl;
   YYACCEPT;
 }
 | error EOS_TOKEN {
-  std::cout << "smiles error **********************" << std::endl;
   yyerrok;
   yyErrorCleanup(molList);
   YYABORT;
 }
 ;
 
+bad_atom_def:
+ATOM_OPEN_TOKEN bad_atom_def
+| ATOM_CLOSE_TOKEN bad_atom_def
+| COLON_TOKEN bad_atom_def
+| charge_element {
+  delete $1;
+  YYABORT;
+}
+;
 
 /* --------------------------------------------------------------- */
 // FIX: mol MINUS DIGIT
@@ -307,8 +313,6 @@ bondd:      BOND_TOKEN
           }
 ;
 
-
-
 /* --------------------------------------------------------------- */
 atomd:	simple_atom
 | ATOM_OPEN_TOKEN charge_element COLON_TOKEN number ATOM_CLOSE_TOKEN
@@ -317,7 +321,6 @@ atomd:	simple_atom
   $$->setNoImplicit(true);
   $$->setProp(RDKit::common_properties::molAtomMapNumber,$4);
 }
-
 | ATOM_OPEN_TOKEN charge_element ATOM_CLOSE_TOKEN
 {
   $$ = $2;
@@ -333,7 +336,7 @@ charge_element:	h_element
 | h_element MINUS_TOKEN { $1->setFormalCharge(-1); }
 | h_element MINUS_TOKEN MINUS_TOKEN { $1->setFormalCharge(-2); }
 | h_element MINUS_TOKEN number { $1->setFormalCharge(-$3); }
-		;
+;
 
 /* --------------------------------------------------------------- */
 h_element:      H_TOKEN { $$ = new Atom(1); }
@@ -363,7 +366,7 @@ element:	simple_atom
 		;
 
 /* --------------------------------------------------------------- */
-simple_atom:      ORGANIC_ATOM_TOKEN
+simple_atom:       ORGANIC_ATOM_TOKEN
                 | AROMATIC_ATOM_TOKEN
                 ;
 

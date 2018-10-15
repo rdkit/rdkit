@@ -99,53 +99,59 @@ yysmarts_error( const char *input,
 %destructor { delete $$; } SIMPLE_ATOM_QUERY_TOKEN COMPLEX_ATOM_QUERY_TOKEN
 %destructor { delete $$; } RINGSIZE_ATOM_QUERY_TOKEN RINGBOND_ATOM_QUERY_TOKEN IMPLICIT_H_ATOM_QUERY_TOKEN
 %destructor { delete $$; } HYB_TOKEN HETERONEIGHBOR_ATOM_QUERY_TOKEN ALIPHATIC ALIPHATICHETERONEIGHBOR_ATOM_QUERY_TOKEN
-%destructor { delete $$; } bondd
+%destructor { delete $$; } bond_expr
 
 %start meta_start
 
 %%
 
-meta_start: START_MOL mol {
+/* --------------------------------------------------------------- */
+meta_start:
+START_MOL mol {
 // the molList has already been updated, no need to do anything
 }
 | START_ATOM atomd EOS_TOKEN {
   lastAtom = $2;
+  YYACCEPT;
 }
-| START_ATOM atomd {
-  std::cout << "caught smarts atom error **********************" << std::endl;
-  delete $2;
+| START_ATOM bad_atom_def {
   YYABORT;
 }
 | START_ATOM {
-  std::cout << "caught smarts atom error **********************" << std::endl;
   YYABORT;
 }
-| START_BOND bondd EOS_TOKEN {
+| START_BOND bond_expr EOS_TOKEN {
   lastBond = $2;
+  YYACCEPT;
 }
-| START_BOND bondd {
-  std::cout << "caught smarts bond error **********************" << std::endl;
+| START_BOND bond_expr {
   delete $2;
   YYABORT;
 }
 | START_BOND {
-  std::cout << "caught smarts bond error **********************" << std::endl;
   YYABORT;
 }
 | meta_start error EOS_TOKEN{
-  std::cout << "smarts error **********************" << std::endl;
   yyerrok;
   yyErrorCleanup(molList);
   YYABORT;
 }
 | meta_start EOS_TOKEN {
-  std::cout << "smarts accept **********************" << std::endl;
   YYACCEPT;
 }
 | error EOS_TOKEN {
-  std::cout << "smarts error **********************" << std::endl;
   yyerrok;
   yyErrorCleanup(molList);
+  YYABORT;
+}
+;
+
+bad_atom_def:
+ATOM_OPEN_TOKEN bad_atom_def
+| ATOM_CLOSE_TOKEN bad_atom_def
+| COLON_TOKEN bad_atom_def
+| atom_expr {
+  delete $1;
   YYABORT;
 }
 ;
@@ -271,7 +277,6 @@ mol: atomd {
     molList->resize( sz-1 );
   }
 }
-
 ;
 
 /* --------------------------------------------------------------- */
