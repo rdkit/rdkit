@@ -249,6 +249,8 @@ Matt Swain, Kiran Telukunta, Paulo Tosco, Alain Vaucher, Maciej Wójcikowski, '0
  (github pull #2074 from ptosco)
   - CTABs behave differently than before regarding stereo
  (github issue #2082 from bp-kelley)
+  - BitInfo not complete for RDKFingerprint
+ (github issue #2115 from greglandrum)
 
 ## Removed code:
 - Remove the deprecated MolDrawing code
