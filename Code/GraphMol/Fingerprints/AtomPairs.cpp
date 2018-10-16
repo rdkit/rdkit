@@ -146,10 +146,15 @@ SparseIntVect<boost::int32_t> *getHashedAtomPairFingerprint(
   }
   auto *res = new SparseIntVect<boost::int32_t>(nBits);
   const double *dm;
-  if (use2D) {
-    dm = MolOps::getDistanceMat(*lmol);
-  } else {
-    dm = MolOps::get3DDistanceMat(*lmol, confId);
+  try {
+    if (use2D) {
+      dm = MolOps::getDistanceMat(*lmol);
+    } else {
+      dm = MolOps::get3DDistanceMat(*lmol, confId);
+    }
+  } catch (const ConformerException &) {
+    delete res;
+    throw;
   }
 
   const unsigned int nAtoms = lmol->getNumAtoms();

@@ -21,7 +21,8 @@
 #include <RDGeneral/BoostEndInclude.h>
 
 namespace {
-struct Patterns {
+class Patterns {
+ public:
   RDKit::ROMol *bit_8;
   RDKit::ROMol *bit_11;
   RDKit::ROMol *bit_13;
@@ -313,16 +314,154 @@ struct Patterns {
         bit_158(RDKit::SmartsToMol("[#6]-[#7]")),
         bit_162(RDKit::SmartsToMol("a")),
         bit_165(RDKit::SmartsToMol("[R]")) {}
+
+  ~Patterns() {
+    delete bit_8;
+    delete bit_11;
+    delete bit_13;
+    delete bit_14;
+    delete bit_15;
+    delete bit_16;
+    delete bit_17;
+    delete bit_19;
+    delete bit_20;
+    delete bit_21;
+    delete bit_22;
+    delete bit_23;
+    delete bit_24;
+    delete bit_25;
+    delete bit_26;
+    delete bit_28;
+    delete bit_30;
+    delete bit_31;
+    delete bit_32;
+    delete bit_33;
+    delete bit_34;
+    delete bit_36;
+    delete bit_37;
+    delete bit_38;
+    delete bit_39;
+    delete bit_40;
+    delete bit_41;
+    delete bit_43;
+    delete bit_44;
+    delete bit_45;
+    delete bit_47;
+    delete bit_48;
+    delete bit_49;
+    delete bit_50;
+    delete bit_51;
+    delete bit_52;
+    delete bit_53;
+    delete bit_54;
+    delete bit_55;
+    delete bit_56;
+    delete bit_57;
+    delete bit_58;
+    delete bit_59;
+    delete bit_60;
+    delete bit_61;
+    delete bit_62;
+    delete bit_63;
+    delete bit_64;
+    delete bit_65;
+    delete bit_66;
+    delete bit_67;
+    delete bit_68;
+    delete bit_69;
+    delete bit_70;
+    delete bit_71;
+    delete bit_72;
+    delete bit_73;
+    delete bit_74;
+    delete bit_75;
+    delete bit_76;
+    delete bit_77;
+    delete bit_78;
+    delete bit_79;
+    delete bit_80;
+    delete bit_81;
+    delete bit_82;
+    delete bit_83;
+    delete bit_84;
+    delete bit_85;
+    delete bit_86;
+    delete bit_87;
+    delete bit_89;
+    delete bit_90;
+    delete bit_91;
+    delete bit_92;
+    delete bit_93;
+    delete bit_94;
+    delete bit_95;
+    delete bit_96;
+    delete bit_97;
+    delete bit_98;
+    delete bit_99;
+    delete bit_100;
+    delete bit_101;
+    delete bit_102;
+    delete bit_104;
+    delete bit_105;
+    delete bit_106;
+    delete bit_107;
+    delete bit_108;
+    delete bit_109;
+    delete bit_110;
+    delete bit_111;
+    delete bit_112;
+    delete bit_113;
+    delete bit_114;
+    delete bit_115;
+    delete bit_116;
+    delete bit_117;
+    delete bit_118;
+    delete bit_119;
+    delete bit_120;
+    delete bit_121;
+    delete bit_122;
+    delete bit_123;
+    delete bit_124;
+    delete bit_126;
+    delete bit_127;
+    delete bit_128;
+    delete bit_129;
+    delete bit_131;
+    delete bit_132;
+    delete bit_133;
+    delete bit_135;
+    delete bit_136;
+    delete bit_137;
+    delete bit_138;
+    delete bit_139;
+    delete bit_140;
+    delete bit_141;
+    delete bit_142;
+    delete bit_144;
+    delete bit_145;
+    delete bit_147;
+    delete bit_148;
+    delete bit_149;
+    delete bit_150;
+    delete bit_151;
+    delete bit_152;
+    delete bit_154;
+    delete bit_155;
+    delete bit_156;
+    delete bit_157;
+    delete bit_158;
+    delete bit_162;
+    delete bit_165;
+  }
 };
 
-boost::flyweight<std::vector<Patterns *>, boost::flyweights::no_tracking> gpats;
+boost::flyweight<std::unique_ptr<Patterns>, boost::flyweights::no_tracking>
+    gpats;
 void GenerateFP(const RDKit::ROMol &mol, ExplicitBitVect &fp) {
-  if (gpats.get().size() == 0) {
-    std::vector<Patterns *> ps;
-    ps.push_back(new Patterns());
-    gpats = ps;
+  if (!gpats.get()) {
+    gpats = std::unique_ptr<Patterns>(new Patterns());
   }
-  const Patterns &pats = *(gpats.get().front());
+  const Patterns &pats = *(gpats.get());
   PRECONDITION(fp.size() == 167, "bad fingerprint");
   fp.clearBits();
 
@@ -651,7 +790,7 @@ void GenerateFP(const RDKit::ROMol &mol, ExplicitBitVect &fp) {
   std::vector<int> mapping;
   if (RDKit::MolOps::getMolFrags(mol, mapping) > 1) fp.setBit(166);
 }
-}  // end of local anonymous namespace
+}  // namespace
 
 namespace RDKit {
 namespace MACCSFingerprints {
@@ -660,5 +799,5 @@ ExplicitBitVect *getFingerprintAsBitVect(const ROMol &mol) {
   GenerateFP(mol, *fp);
   return fp;
 }
-}
-}
+}  // namespace MACCSFingerprints
+}  // namespace RDKit

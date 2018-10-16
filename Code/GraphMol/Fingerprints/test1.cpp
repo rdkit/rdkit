@@ -114,6 +114,8 @@ void test1() {
       delete m2;
       delete fp2;
     }
+    delete m1;
+    delete fp1;
   }
   {
     std::string smi = "Oc1cc2[nH]cnc2c(O)n1";
@@ -1194,6 +1196,8 @@ void test4MorganFPs() {
     TEST_ASSERT(invars[1] == invars[2]);
     TEST_ASSERT(invars[0] == invars[7]);
     delete mol;
+    delete patterns[0];
+    delete patterns[1];
   }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
@@ -1284,6 +1288,7 @@ void test5MorganFPs() {
 
     delete m1;
     delete m2;
+    delete m3;
   }
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
@@ -1452,6 +1457,8 @@ void testAtomPairs2() {
     fp = AtomPairs::getAtomPairFingerprint(*mol, 2, 2);
     TEST_ASSERT(fp->getTotalVal() == 1);
     TEST_ASSERT(fp->getNonzeroElements().size() == 1);
+    delete fp;
+    delete mol;
   }
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
@@ -2644,6 +2651,8 @@ void testGitHubIssue151() {
     TEST_ASSERT(SubstructMatch(*m, *qm, mv));
     TEST_ASSERT(AllProbeBitsMatch(*qbv, *mbv));
 
+    delete qbv;
+    delete mbv;
     delete qm;
     delete m;
   }
@@ -2659,6 +2668,8 @@ void testGitHubIssue151() {
     TEST_ASSERT(SubstructMatch(*m, *qm, mv));
     TEST_ASSERT(AllProbeBitsMatch(*qbv, *mbv));
 
+    delete qbv;
+    delete mbv;
     delete qm;
     delete m;
   }
@@ -2673,6 +2684,8 @@ void testGitHubIssue151() {
     TEST_ASSERT(SubstructMatch(*m, *qm, mv));
     TEST_ASSERT(AllProbeBitsMatch(*qbv, *mbv));
 
+    delete qbv;
+    delete mbv;
     delete qm;
     delete m;
   }
@@ -2688,6 +2701,8 @@ void testGitHubIssue151() {
     TEST_ASSERT(SubstructMatch(*m, *qm, mv));
     TEST_ASSERT(AllProbeBitsMatch(*qbv, *mbv));
 
+    delete qbv;
+    delete mbv;
     delete qm;
     delete m;
   }
@@ -2718,6 +2733,7 @@ void test3DAtomPairs() {
     TEST_ASSERT(fp->getTotalVal() == 3);
     TEST_ASSERT(fp->getNonzeroElements().size() == 1);
     delete fp;
+    fp = nullptr;
 
     // we should get a conformer exception if there are no conformers:
     mol->clearConformers();
@@ -2730,7 +2746,9 @@ void test3DAtomPairs() {
       ok = true;
     }
     TEST_ASSERT(ok);
-
+    if (fp != nullptr) {
+      delete fp;
+    }
     delete mol;
   }
   {
@@ -2765,7 +2783,7 @@ void testGitHubIssue195() {
     auto *m1 = new ROMol();
     ExplicitBitVect *fp1 = MACCSFingerprints::getFingerprintAsBitVect(*m1);
     TEST_ASSERT(fp1->getNumOnBits() == 0);
-
+    delete fp1;
     delete m1;
   }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
@@ -3203,7 +3221,6 @@ void testRDKFPUnfolded() {
 
     fp1 = getUnfoldedRDKFingerprintMol(*m1);
     TEST_ASSERT(fp1);
-
 #if 0
     for (iter = fp1->getNonzeroElements().begin();
          iter != fp1->getNonzeroElements().end(); ++iter) {
@@ -3224,7 +3241,7 @@ void testRDKFPUnfolded() {
     TEST_ASSERT(iter != fp1->getNonzeroElements().end() && iter->second == 1);
     iter = fp1->getNonzeroElements().find(3826517238);
     TEST_ASSERT(iter != fp1->getNonzeroElements().end() && iter->second == 2);
-
+    delete fp1;
     delete m1;
   }
   {
@@ -3236,7 +3253,7 @@ void testRDKFPUnfolded() {
     fp1 = getUnfoldedRDKFingerprintMol(*m1);
     TEST_ASSERT(fp1);
     TEST_ASSERT(fp1->getNonzeroElements().size() == 0);
-
+    delete fp1;
     delete m1;
   }
   {
@@ -3305,7 +3322,7 @@ void testRDKFPUnfolded() {
                 iter2->second[0][0] == 1);
     TEST_ASSERT(iter2 != bitInfo.end() && iter2->second[0].size() == 2 &&
                 iter2->second[0][1] == 2);
-
+    delete fp1;
     delete m1;
   }
 }
@@ -3360,7 +3377,7 @@ void testRDKFPBitInfo() {
                 iter2->second[0][0] == 1);
     TEST_ASSERT(iter2 != bitInfo.end() && iter2->second[0].size() == 2 &&
                 iter2->second[0][1] == 2);
-
+    delete fp1;
     delete m1;
   }
 }
