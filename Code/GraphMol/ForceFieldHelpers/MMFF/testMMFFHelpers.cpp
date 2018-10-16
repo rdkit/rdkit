@@ -418,17 +418,18 @@ void testMMFFBatch() {
     if (field) {
       field->initialize();
       int failed = field->minimize(500);
+      delete field;
       if (failed) {
         BOOST_LOG(rdErrorLog)
             << " not converged (code = " << failed << ")" << std::endl;
         std::cout << origMolBlock << "$$$$" << std::endl;
         std::cout << MolToMolBlock(*mol) << "$$$$" << std::endl;
       }
-      delete field;
     }
     delete mol;
     mol = suppl.next();
   }
+  delete mol;
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
@@ -627,6 +628,8 @@ void testGithub308() {
   field->initialize();
   needMore = field->minimize(200, 1.0e-6, 1.0e-3);
   TEST_ASSERT(!needMore);
+  delete mol;
+  delete field;
 }
 
 void testSFIssue1653802() {
@@ -767,6 +770,7 @@ void testMMFFParamGetters() {
     ROMol *mol = SmilesToMol("c1ccccc1CCNN");
     TEST_ASSERT(mol);
     ROMol *molH = MolOps::addHs(*mol);
+    delete mol;
     TEST_ASSERT(molH);
     MMFF::MMFFMolProperties *mmffMolProperties =
         new MMFF::MMFFMolProperties(*molH);
@@ -833,6 +837,7 @@ void testMMFFParamGetters() {
     RWMol *patt = SmartsToMol("NN[H]");
     MatchVectType matchVect;
     TEST_ASSERT(SubstructMatch(*molH, (ROMol &)*patt, matchVect));
+    delete patt;
     unsigned int nIdx = matchVect[0].second;
     unsigned int hIdx = matchVect[2].second;
     TEST_ASSERT(mmffMolProperties->getMMFFVdWParams(nIdx, hIdx, mmffVdWParams));
@@ -842,6 +847,8 @@ void testMMFFParamGetters() {
         ((int)boost::math::round(mmffVdWParams.epsilonUnscaled * 1000) == 34) &&
         ((int)boost::math::round(mmffVdWParams.R_ij_star * 1000) == 2657) &&
         ((int)boost::math::round(mmffVdWParams.epsilon * 1000) == 17));
+    delete molH;
+    delete mmffMolProperties;
   }
 }
 #ifdef RDK_TEST_MULTITHREADED
@@ -872,7 +879,7 @@ void runblock_mmff(const std::vector<ROMol *> &mols,
     }
   }
 }
-}
+}  // namespace
 #include <thread>
 #include <future>
 void testMMFFMultiThread() {
