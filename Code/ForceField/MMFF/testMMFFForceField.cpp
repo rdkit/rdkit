@@ -396,11 +396,15 @@ int mmffValidationSuite(int argc, char *argv[]) {
             sdfWriter->write(*mol);
             rdkFStream << "\nTOTAL MMFF ENERGY              =" << std::right
                        << std::setw(16) << std::fixed << std::setprecision(4)
-                       << field->calcEnergy() << "\n\n" << std::endl;
+                       << field->calcEnergy() << "\n\n"
+                       << std::endl;
             delete field;
           }
+          delete mmffMolProperties;
         }
+        BOOST_FOREACH (ROMol *m, molVec) { delete m; }
         sdfWriter->close();
+        delete sdfWriter;
         rdkFStream.close();
         std::cerr << "Checking against " << ref << "..." << std::endl;
         rdkFStream.open(rdk.c_str(), std::fstream::in | std::fstream::binary);
@@ -637,8 +641,9 @@ int mmffValidationSuite(int argc, char *argv[]) {
                 std::stringstream diff;
                 diff << "Bond stretching: found a difference\n";
                 if (haveLine) {
-                  diff << "Expected:\n" << rdkLine << "\nFound:\n" << refLine
-                       << "\n";
+                  diff << "Expected:\n"
+                       << rdkLine << "\nFound:\n"
+                       << refLine << "\n";
                 }
                 errorMsg += diff.str();
               }
@@ -792,8 +797,9 @@ int mmffValidationSuite(int argc, char *argv[]) {
                 std::stringstream diff;
                 diff << "Angle bending: found a difference\n";
                 if (haveLine) {
-                  diff << "Expected:\n" << rdkLine << "\nFound:\n" << refLine
-                       << "\n";
+                  diff << "Expected:\n"
+                       << rdkLine << "\nFound:\n"
+                       << refLine << "\n";
                 }
                 errorMsg += diff.str();
               }
@@ -952,8 +958,9 @@ int mmffValidationSuite(int argc, char *argv[]) {
                 std::stringstream diff;
                 diff << "Stretch-bending: found a difference\n";
                 if (haveLine) {
-                  diff << "Expected:\n" << rdkLine << "\nFound:\n" << refLine
-                       << "\n";
+                  diff << "Expected:\n"
+                       << rdkLine << "\nFound:\n"
+                       << refLine << "\n";
                 }
                 errorMsg += diff.str();
               }
@@ -1108,8 +1115,9 @@ int mmffValidationSuite(int argc, char *argv[]) {
                 std::stringstream diff;
                 diff << "Out-of-plane bending: found a difference\n";
                 if (haveLine) {
-                  diff << "Expected:\n" << rdkLine << "\nFound:\n" << refLine
-                       << "\n";
+                  diff << "Expected:\n"
+                       << rdkLine << "\nFound:\n"
+                       << refLine << "\n";
                 }
                 errorMsg += diff.str();
               }
@@ -1216,7 +1224,10 @@ int mmffValidationSuite(int argc, char *argv[]) {
                     ForceFields::MMFF::isDoubleZero(refTorsionEnergy))) {
                 fixTorsionInstance(torsionInstance);
                 refTorsionInstanceVec.push_back(torsionInstance);
-              }
+              } else {
+                delete torsionInstance;
+              torsionInstance;
+            }
               ++n;
             }
             if (!found) {
@@ -1275,14 +1286,15 @@ int mmffValidationSuite(int argc, char *argv[]) {
                 std::stringstream diff;
                 diff << "Torsional: found a difference\n";
                 if (haveLine) {
-                  diff << "Expected:\n" << rdkLine << "\nFound:\n" << refLine
-                       << "\n";
+                  diff << "Expected:\n"
+                       << rdkLine << "\nFound:\n"
+                       << refLine << "\n";
                 }
                 errorMsg += diff.str();
               }
-              delete rdkTorsionInstanceVec[j];
-              delete refTorsionInstanceVec[j];
             }
+            BOOST_FOREACH (auto &ti, rdkTorsionInstanceVec) { delete ti; }
+            BOOST_FOREACH (auto &ti, refTorsionInstanceVec) { delete ti; }
             error = (fabs(rdkEnergy - refEnergy) > ENERGY_TOLERANCE);
             if (error && checkEnergy) {
               failed = true;
