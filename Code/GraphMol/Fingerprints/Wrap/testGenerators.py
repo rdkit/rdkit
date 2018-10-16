@@ -93,7 +93,7 @@ class TestCase(unittest.TestCase):
         self.assertEqual(results[2], g.GetSparseCountFingerprint(m3))
         self.assertEqual(len(results), 3)
 
-        g = rdFingerprintGenerator.GetMorganGenerator(3)
+        g = rdFingerprintGenerator.GetMorganGenerator(2)
         results = rdFingerprintGenerator.GetSparseCountFPs([m1, m2, m3], rdFingerprintGenerator.MorganFP)
         self.assertEqual(results[0], g.GetSparseCountFingerprint(m1))
         self.assertEqual(results[1], g.GetSparseCountFingerprint(m2))
@@ -121,7 +121,7 @@ class TestCase(unittest.TestCase):
         self.assertEqual(results[2], g.GetSparseFingerprint(m3))
         self.assertEqual(len(results), 3)
 
-        g = rdFingerprintGenerator.GetMorganGenerator(3)
+        g = rdFingerprintGenerator.GetMorganGenerator(2)
         results = rdFingerprintGenerator.GetSparseFPs([m1, m2, m3], rdFingerprintGenerator.MorganFP)
         self.assertEqual(results[0], g.GetSparseFingerprint(m1))
         self.assertEqual(results[1], g.GetSparseFingerprint(m2))
@@ -149,7 +149,7 @@ class TestCase(unittest.TestCase):
         self.assertEqual(results[2], g.GetCountFingerprint(m3))
         self.assertEqual(len(results), 3)
 
-        g = rdFingerprintGenerator.GetMorganGenerator(3)
+        g = rdFingerprintGenerator.GetMorganGenerator(2)
         results = rdFingerprintGenerator.GetCountFPs([m1, m2, m3], rdFingerprintGenerator.MorganFP)
         self.assertEqual(results[0], g.GetCountFingerprint(m1))
         self.assertEqual(results[1], g.GetCountFingerprint(m2))

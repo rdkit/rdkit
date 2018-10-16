@@ -396,7 +396,7 @@ std::vector<SparseIntVect<std::uint64_t> *> *getSparseCountFPBulk(
       break;
     }
     case FPType::MorganFP: {
-      generator = MorganFingerprint::getMorganGenerator<std::uint64_t>(3);
+      generator = MorganFingerprint::getMorganGenerator<std::uint64_t>(2);
       break;
     }
     case FPType::RDKitFP: {
@@ -433,7 +433,7 @@ std::vector<SparseBitVect *> *getSparseFPBulk(
       break;
     }
     case FPType::MorganFP: {
-      generator = MorganFingerprint::getMorganGenerator<std::uint64_t>(3);
+      generator = MorganFingerprint::getMorganGenerator<std::uint64_t>(2);
       break;
     }
     case FPType::RDKitFP: {
@@ -469,7 +469,7 @@ std::vector<SparseIntVect<std::uint32_t> *> *getCountFPBulk(
       break;
     }
     case FPType::MorganFP: {
-      generator = MorganFingerprint::getMorganGenerator<std::uint64_t>(3);
+      generator = MorganFingerprint::getMorganGenerator<std::uint64_t>(2);
       break;
     }
     case FPType::RDKitFP: {
@@ -506,7 +506,7 @@ std::vector<ExplicitBitVect *> *getFPBulk(
       break;
     }
     case FPType::MorganFP: {
-      generator = MorganFingerprint::getMorganGenerator<std::uint64_t>(3);
+      generator = MorganFingerprint::getMorganGenerator<std::uint64_t>(2);
       break;
     }
     case FPType::RDKitFP: {
