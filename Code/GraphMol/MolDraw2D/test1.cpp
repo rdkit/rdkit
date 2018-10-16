@@ -614,6 +614,9 @@ void testMultiThreaded() {
   for (auto &fut : tg) {
     fut.get();
   }
+  for (auto&& mol : mols) {
+    delete mol;
+  }
   std::cerr << " Done" << std::endl;
 }
 #else
@@ -636,6 +639,7 @@ void test6() {
     std::ofstream outs("test6_1.svg");
     outs << txt;
     // TEST_ASSERT(txt.find("<svg")!=std::string::npos);
+    delete m;
   }
   std::cerr << " Done" << std::endl;
 }
@@ -691,6 +695,7 @@ void test7() {
     drawer.writeDrawingText(nameBase + ".png");
   }
 #endif
+  delete m;
   std::cerr << " Done" << std::endl;
 }
 
@@ -980,6 +985,7 @@ void test9MolLegends() {
     std::ofstream outs("test9_1.svg");
     outs << txt;
     // TEST_ASSERT(txt.find("<svg")!=std::string::npos);
+    delete m;
   }
   std::cerr << " Done" << std::endl;
 }
@@ -1067,6 +1073,7 @@ void testGithub860() {
       drawer.finishDrawing();
       outs.flush();
     }
+    delete m;
   }
   {
     std::string smiles =
@@ -1091,6 +1098,7 @@ void testGithub860() {
       drawer.finishDrawing();
       outs.flush();
     }
+    delete m;
   }
   {
     std::string smiles = "[15NH3+:1]-CCCCCCCC-[15NH3+:4]";
@@ -1114,6 +1122,7 @@ void testGithub860() {
       drawer.finishDrawing();
       outs.flush();
     }
+    delete m;
   }
   std::cerr << " Done" << std::endl;
 }
@@ -1438,6 +1447,7 @@ void testCrossedBonds() {
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
     outs.close();
+    delete m;
   }
   std::cerr << " Done" << std::endl;
 }
@@ -1722,6 +1732,7 @@ void test13JSONConfig() {
     TEST_ASSERT(text.find("text-anchor:start;fill:#FF7FFF") !=
                 std::string::npos);
     outs.close();
+    delete m;
   }
   std::cerr << " Done" << std::endl;
 }
@@ -2051,6 +2062,7 @@ void test14BWPalette() {
       outs << text;
       outs.flush();
     }
+    delete m1;
   }
   std::cerr << " Done" << std::endl;
 }
@@ -2106,6 +2118,9 @@ void test15ContinuousHighlightingWithGrid() {
       outs.flush();
       TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:8px;") !=
                   std::string::npos);
+    }
+    for (auto&& mol : mols) {
+      delete mol;
     }
   }
 
