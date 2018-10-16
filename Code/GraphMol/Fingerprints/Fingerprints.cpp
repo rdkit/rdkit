@@ -37,8 +37,8 @@
 
 namespace RDKit {
 namespace Fingerprints {
-namespace detail {}  // end of detail namespace
-}  // end of Fingerprint namespace
+namespace detail {}  // namespace detail
+}  // namespace Fingerprints
 namespace {
 /*
 boost::uint32_t hashBond(const Bond *bnd,const std::vector<boost::uint32_t>
@@ -215,7 +215,8 @@ ExplicitBitVect *RDKFingerprintMol(
   // build default atom invariants if need be:
   std::vector<boost::uint32_t> lAtomInvariants;
   if (!atomInvariants) {
-    RDKitFPUtils::buildDefaultRDKitFingerprintAtomInvariants(mol, lAtomInvariants);
+    RDKitFPUtils::buildDefaultRDKitFingerprintAtomInvariants(mol,
+                                                             lAtomInvariants);
     atomInvariants = &lAtomInvariants;
   }
 
@@ -223,8 +224,8 @@ ExplicitBitVect *RDKFingerprintMol(
 
   // get all paths
   INT_PATH_LIST_MAP allPaths;
-  RDKitFPUtils::enumerateAllPaths(mol, allPaths, fromAtoms, branchedPaths, useHs,
-                           minPath, maxPath);
+  RDKitFPUtils::enumerateAllPaths(mol, allPaths, fromAtoms, branchedPaths,
+                                  useHs, minPath, maxPath);
 
   // identify query bonds
   std::vector<short> isQueryBond(mol.getNumBonds(), 0);
@@ -263,9 +264,9 @@ ExplicitBitVect *RDKFingerprintMol(
 #endif
 #if 1
       // the bond hashes of the path
-      std::vector<unsigned int> bondHashes =
-          RDKitFPUtils::generateBondHashes(mol, atomsInPath, bondCache, isQueryBond,
-                                    path, useBondOrder, atomInvariants);
+      std::vector<unsigned int> bondHashes = RDKitFPUtils::generateBondHashes(
+          mol, atomsInPath, bondCache, isQueryBond, path, useBondOrder,
+          atomInvariants);
       if (!bondHashes.size()) {
         continue;
       }
@@ -335,7 +336,7 @@ ExplicitBitVect *RDKFingerprintMol(
 #endif
 
       unsigned int bit = seed % fpSize;
-// std::cerr<<"bit: "<<bit<<" hash: "<<seed<<std::endl;
+      // std::cerr<<"bit: "<<bit<<" hash: "<<seed<<std::endl;
 
 #ifdef REPORT_FP_STATS
       std::string fsmi = MolFragmentToSmiles(mol, atomsToUse, &path);
@@ -376,6 +377,9 @@ ExplicitBitVect *RDKFingerprintMol(
                 << std::endl;
 #endif
 
+      if (bitInfo) {
+        (*bitInfo)[bit].push_back(path);
+      }
       if (nBitsPerHash > 1) {
         generator.seed(static_cast<rng_type::result_type>(seed));
         for (unsigned int i = 1; i < nBitsPerHash; i++) {
@@ -392,19 +396,15 @@ ExplicitBitVect *RDKFingerprintMol(
               aIdx = atomsInPath.find_next(aIdx);
             }
           }
+          if (bitInfo) {
+            (*bitInfo)[bit].push_back(path);
+          }
+
 #ifdef VERBOSE_FINGERPRINTING
           std::cerr << "   bit: " << i << " " << bit << " " << atomsInPath
                     << std::endl;
 #endif
         }
-      }
-
-      if (bitInfo) {
-        std::vector<int> p;
-        for (int i : path) {
-          p.push_back(i);
-        }
-        (*bitInfo)[bit].push_back(p);
       }
     }
   }
@@ -719,14 +719,15 @@ SparseIntVect<boost::uint64_t> *getUnfoldedRDKFingerprintMol(
   // build default atom invariants if need be:
   std::vector<boost::uint32_t> lAtomInvariants;
   if (!atomInvariants) {
-    RDKitFPUtils::buildDefaultRDKitFingerprintAtomInvariants(mol, lAtomInvariants);
+    RDKitFPUtils::buildDefaultRDKitFingerprintAtomInvariants(mol,
+                                                             lAtomInvariants);
     atomInvariants = &lAtomInvariants;
   }
 
   // get all paths
   INT_PATH_LIST_MAP allPaths;
-  RDKitFPUtils::enumerateAllPaths(mol, allPaths, fromAtoms, branchedPaths, useHs,
-                           minPath, maxPath);
+  RDKitFPUtils::enumerateAllPaths(mol, allPaths, fromAtoms, branchedPaths,
+                                  useHs, minPath, maxPath);
 
   // identify query bonds
   std::vector<short> isQueryBond(mol.getNumBonds(), 0);
@@ -746,9 +747,9 @@ SparseIntVect<boost::uint64_t> *getUnfoldedRDKFingerprintMol(
        paths++) {
     BOOST_FOREACH (const PATH_TYPE &path, paths->second) {
       // the bond hashes of the path
-      std::vector<unsigned int> bondHashes =
-          RDKitFPUtils::generateBondHashes(mol, atomsInPath, bondCache, isQueryBond,
-                                    path, useBondOrder, atomInvariants);
+      std::vector<unsigned int> bondHashes = RDKitFPUtils::generateBondHashes(
+          mol, atomsInPath, bondCache, isQueryBond, path, useBondOrder,
+          atomInvariants);
       if (!bondHashes.size()) {
         continue;
       }
@@ -809,4 +810,4 @@ SparseIntVect<boost::uint64_t> *getUnfoldedRDKFingerprintMol(
 
   return res;
 }
-}
+}  // namespace RDKit
