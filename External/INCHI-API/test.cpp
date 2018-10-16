@@ -51,7 +51,7 @@ void runblock(const std::vector<ROMol *> &mols, unsigned int count,
     }
   }
 };
-}
+}  // namespace
 
 #include <thread>
 #include <future>
@@ -165,10 +165,11 @@ void testGithubIssue8() {
     ROMol *m2 = InchiToMol(inchi, tmp2);
     TEST_ASSERT(m2);
     std::string smi = MolToSmiles(*m2, true);
-    TEST_ASSERT(smi == "[H]/N=c1\\cc2oc3cc(N)ccc3c(-c3ccccc3C(=O)O)c-2cc1[125I]");
+    TEST_ASSERT(smi ==
+                "[H]/N=c1\\cc2oc3cc(N)ccc3c(-c3ccccc3C(=O)O)c-2cc1[125I]");
 
     inchi = MolToInchi(*m2, tmp2);
-    TEST_ASSERT(inchi == 
+    TEST_ASSERT(inchi ==
                 "InChI=1S/C20H13IN2O3/"
                 "c21-15-8-14-18(9-16(15)23)26-17-7-10(22)5-6-13(17)19(14)11-3-"
                 "1-2-4-12(11)20(24)25/h1-9,23H,22H2,(H,24,25)/b23-16+/i21-2");
@@ -302,6 +303,7 @@ void testGithubIssue437() {
     std::string smi2 = MolToSmiles(*m, true);
     // std::cerr<<" smi1: "<<smi1<<std::endl;
     // std::cerr<<" smi2: "<<smi2<<std::endl;
+    delete m;
     TEST_ASSERT(smi1 == smi2);
   }
   {
@@ -318,6 +320,7 @@ void testGithubIssue437() {
     std::string smi2 = MolToSmiles(*m, true);
     // std::cerr<<" smi1: "<<smi1<<std::endl;
     // std::cerr<<" smi2: "<<smi2<<std::endl;
+    delete m;
     TEST_ASSERT(smi1 == smi2);
   }
   {
@@ -334,6 +337,7 @@ void testGithubIssue437() {
     delete m;
     m = InchiToMol(inchi, tmp);
     std::string smi2 = MolToSmiles(*m, true);
+    delete m;
     TEST_ASSERT(smi1 == smi2);
   }
   {
@@ -352,6 +356,7 @@ void testGithubIssue437() {
     std::string smi2 = MolToSmiles(*m, true);
     // std::cerr<<" smi1: "<<smi1<<std::endl;
     // std::cerr<<" smi2: "<<smi2<<std::endl;
+    delete m;
     TEST_ASSERT(smi1 == smi2);
   }
   {
@@ -368,6 +373,7 @@ void testGithubIssue437() {
     delete m;
     m = InchiToMol(inchi, tmp);
     std::string smi2 = MolToSmiles(*m, true);
+    delete m;
     TEST_ASSERT(smi1 == smi2);
   }
   {
@@ -384,6 +390,7 @@ void testGithubIssue437() {
     delete m;
     m = InchiToMol(inchi, tmp);
     std::string smi2 = MolToSmiles(*m, true);
+    delete m;
     TEST_ASSERT(smi1 == smi2);
   }
 
@@ -403,6 +410,7 @@ void testGithubIssue437() {
     delete m;
     m = InchiToMol(inchi, tmp);
     std::string smi2 = MolToSmiles(*m, true);
+    delete m;
     TEST_ASSERT(smi1 == smi2);
   }
 
@@ -420,6 +428,7 @@ void testGithubIssue437() {
     delete m;
     m = InchiToMol(inchi, tmp);
     std::string smi2 = MolToSmiles(*m, true);
+    delete m;
     TEST_ASSERT(smi1 == smi2);
   }
   {
@@ -435,6 +444,7 @@ void testGithubIssue437() {
     delete m;
     m = InchiToMol(inchi, tmp);
     std::string smi2 = MolToSmiles(*m, true);
+    delete m;
     TEST_ASSERT(smi1 == smi2);
   }
   {
@@ -450,6 +460,7 @@ void testGithubIssue437() {
     delete m;
     m = InchiToMol(inchi, tmp);
     std::string smi2 = MolToSmiles(*m, true);
+    delete m;
     TEST_ASSERT(smi1 == smi2);
   }
   {
@@ -469,6 +480,7 @@ void testGithubIssue437() {
     delete m;
     m = InchiToMol(inchi, tmp);
     std::string smi2 = MolToSmiles(*m, true);
+    delete m;
     TEST_ASSERT(smi1 == smi2);
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
