@@ -9,7 +9,7 @@
 //  of the RDKit source tree.
 //
 
-#include <RDBoost/test.h>
+#include <RDGeneral/test.h>
 #include <RDGeneral/types.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/utils.h>
@@ -22,13 +22,13 @@
 using namespace RDGeom;
 using namespace std;
 
-double ptEq(const Point3D pt1, const Point3D pt2, double val = 1.e-8) {
-  return ((abs(pt1.x - pt2.x) < val) && (abs(pt1.y - pt2.y) < val) &&
-          (abs(pt1.z - pt2.z) < val));
+bool ptEq(const Point3D pt1, const Point3D pt2, double val = 1.e-8) {
+  return ((fabs(pt1.x - pt2.x) < val) && (fabs(pt1.y - pt2.y) < val) &&
+          (fabs(pt1.z - pt2.z) < val));
 }
 
-double ptEq(const Point2D pt1, const Point2D pt2, double val = 1.e-8) {
-  return ((abs(pt1.x - pt2.x) < val) && (abs(pt1.y - pt2.y) < val));
+bool ptEq(const Point2D pt1, const Point2D pt2, double val = 1.e-8) {
+  return ((fabs(pt1.x - pt2.x) < val) && (fabs(pt1.y - pt2.y) < val));
 }
 
 double randNum(double x = 5) {
@@ -54,39 +54,39 @@ void testPointND() {
   ep[4] = 0.6742;
 
   for (i = 0; i < 5; ++i) {
-    TEST_ASSERT(abs(pt[i] - ep[i]) < 1.e-4);
+    TEST_ASSERT(fabs(pt[i] - ep[i]) < 1.e-4);
   }
 
   PointND pt2(pt);
   for (i = 0; i < 5; ++i) {
-    TEST_ASSERT(abs(pt2[i] - ep[i]) < 1.e-4);
+    TEST_ASSERT(fabs(pt2[i] - ep[i]) < 1.e-4);
   }
 
   pt2 += pt;
   for (i = 0; i < 5; ++i) {
-    TEST_ASSERT(abs(pt2[i] - 2 * ep[i]) < 1.e-4);
+    TEST_ASSERT(fabs(pt2[i] - 2 * ep[i]) < 1.e-4);
   }
 
   pt2 /= 2.0;
   for (i = 0; i < 5; ++i) {
-    TEST_ASSERT(abs(pt2[i] - ep[i]) < 1.e-4);
+    TEST_ASSERT(fabs(pt2[i] - ep[i]) < 1.e-4);
   }
 
   pt2 -= pt;
   for (i = 0; i < 5; ++i) {
-    TEST_ASSERT(abs(pt2[i] - 0.0) < 1.e-4);
+    TEST_ASSERT(fabs(pt2[i] - 0.0) < 1.e-4);
   }
   pt2 = pt;
   pt2 *= 2.;
   for (i = 0; i < 5; ++i) {
-    TEST_ASSERT(abs(pt2[i] - 2 * ep[i]) < 1.e-4);
+    TEST_ASSERT(fabs(pt2[i] - 2 * ep[i]) < 1.e-4);
   }
 
   double dp = pt.dotProduct(pt2);
-  TEST_ASSERT(abs(dp - 2.0) < 1.e-4);
+  TEST_ASSERT(fabs(dp - 2.0) < 1.e-4);
 
   double angle = pt.angleTo(pt2);
-  TEST_ASSERT(abs(angle - 0.0) < 1.e-4);
+  TEST_ASSERT(fabs(angle - 0.0) < 1.e-4);
 }
 
 void testPointOps3D() {
@@ -95,20 +95,20 @@ void testPointOps3D() {
   Point3D pt2(-1, 0, 0);
   Point3D pt3(0, -1, 0);
 
-  TEST_ASSERT(abs(pt0.angleTo(pt0)) < 1e-4);
-  TEST_ASSERT(abs(pt0.angleTo(pt1) - M_PI / 2.) < 1e-4);
-  TEST_ASSERT(abs(pt0.angleTo(pt2) - M_PI) < 1e-4);
-  TEST_ASSERT(abs(pt0.angleTo(pt3) - M_PI / 2.) < 1e-4);
+  TEST_ASSERT(fabs(pt0.angleTo(pt0)) < 1e-4);
+  TEST_ASSERT(fabs(pt0.angleTo(pt1) - M_PI / 2.) < 1e-4);
+  TEST_ASSERT(fabs(pt0.angleTo(pt2) - M_PI) < 1e-4);
+  TEST_ASSERT(fabs(pt0.angleTo(pt3) - M_PI / 2.) < 1e-4);
 
-  TEST_ASSERT(abs(pt1.angleTo(pt0) - M_PI / 2.) < 1e-4);
-  TEST_ASSERT(abs(pt1.angleTo(pt1)) < 1e-4);
-  TEST_ASSERT(abs(pt1.angleTo(pt2) - M_PI / 2.) < 1e-4);
-  TEST_ASSERT(abs(pt1.angleTo(pt3) - M_PI) < 1e-4);
+  TEST_ASSERT(fabs(pt1.angleTo(pt0) - M_PI / 2.) < 1e-4);
+  TEST_ASSERT(fabs(pt1.angleTo(pt1)) < 1e-4);
+  TEST_ASSERT(fabs(pt1.angleTo(pt2) - M_PI / 2.) < 1e-4);
+  TEST_ASSERT(fabs(pt1.angleTo(pt3) - M_PI) < 1e-4);
 
-  TEST_ASSERT(abs(pt0.signedAngleTo(pt0)) < 1e-4);
-  TEST_ASSERT(abs(pt0.signedAngleTo(pt1) - M_PI / 2.) < 1e-4);
-  TEST_ASSERT(abs(pt0.signedAngleTo(pt2) - M_PI) < 1e-4);
-  TEST_ASSERT(abs(pt0.signedAngleTo(pt3) - 3. * M_PI / 2.) < 1e-4);
+  TEST_ASSERT(fabs(pt0.signedAngleTo(pt0)) < 1e-4);
+  TEST_ASSERT(fabs(pt0.signedAngleTo(pt1) - M_PI / 2.) < 1e-4);
+  TEST_ASSERT(fabs(pt0.signedAngleTo(pt2) - M_PI) < 1e-4);
+  TEST_ASSERT(fabs(pt0.signedAngleTo(pt3) - 3. * M_PI / 2.) < 1e-4);
 
   Point3D diffPt = pt0.directionVector(pt1);
   Point3D ref(-sqrt(2.) / 2., sqrt(2.) / 2., 0);
@@ -120,20 +120,20 @@ void testPointOps2D() {
   Point2D pt2(-1, 0);
   Point2D pt3(0, -1);
 
-  TEST_ASSERT(abs(pt0.angleTo(pt0)) < 1e-4);
-  TEST_ASSERT(abs(pt0.angleTo(pt1) - M_PI / 2.) < 1e-4);
-  TEST_ASSERT(abs(pt0.angleTo(pt2) - M_PI) < 1e-4);
-  TEST_ASSERT(abs(pt0.angleTo(pt3) - M_PI / 2.) < 1e-4);
+  TEST_ASSERT(fabs(pt0.angleTo(pt0)) < 1e-4);
+  TEST_ASSERT(fabs(pt0.angleTo(pt1) - M_PI / 2.) < 1e-4);
+  TEST_ASSERT(fabs(pt0.angleTo(pt2) - M_PI) < 1e-4);
+  TEST_ASSERT(fabs(pt0.angleTo(pt3) - M_PI / 2.) < 1e-4);
 
-  TEST_ASSERT(abs(pt1.angleTo(pt0) - M_PI / 2.) < 1e-4);
-  TEST_ASSERT(abs(pt1.angleTo(pt1)) < 1e-4);
-  TEST_ASSERT(abs(pt1.angleTo(pt2) - M_PI / 2.) < 1e-4);
-  TEST_ASSERT(abs(pt1.angleTo(pt3) - M_PI) < 1e-4);
+  TEST_ASSERT(fabs(pt1.angleTo(pt0) - M_PI / 2.) < 1e-4);
+  TEST_ASSERT(fabs(pt1.angleTo(pt1)) < 1e-4);
+  TEST_ASSERT(fabs(pt1.angleTo(pt2) - M_PI / 2.) < 1e-4);
+  TEST_ASSERT(fabs(pt1.angleTo(pt3) - M_PI) < 1e-4);
 
-  TEST_ASSERT(abs(pt0.signedAngleTo(pt0)) < 1e-4);
-  TEST_ASSERT(abs(pt0.signedAngleTo(pt1) - M_PI / 2.) < 1e-4);
-  TEST_ASSERT(abs(pt0.signedAngleTo(pt2) - M_PI) < 1e-4);
-  TEST_ASSERT(abs(pt0.signedAngleTo(pt3) - 3. * M_PI / 2.) < 1e-4);
+  TEST_ASSERT(fabs(pt0.signedAngleTo(pt0)) < 1e-4);
+  TEST_ASSERT(fabs(pt0.signedAngleTo(pt1) - M_PI / 2.) < 1e-4);
+  TEST_ASSERT(fabs(pt0.signedAngleTo(pt2) - M_PI) < 1e-4);
+  TEST_ASSERT(fabs(pt0.signedAngleTo(pt3) - 3. * M_PI / 2.) < 1e-4);
 
   Point2D diffPt = pt0.directionVector(pt1);
   Point2D ref(-sqrt(2.) / 2., sqrt(2.) / 2.);
@@ -145,8 +145,8 @@ void test12D() {
   Transform2D trans;
   trans.TransformPoint(pt);
 
-  CHECK_INVARIANT(abs(pt.x - 1.0) < 1.e-8, "");
-  CHECK_INVARIANT(abs(pt.y - 2.0) < 1.e-8, "");
+  CHECK_INVARIANT(fabs(pt.x - 1.0) < 1.e-8, "");
+  CHECK_INVARIANT(fabs(pt.y - 2.0) < 1.e-8, "");
 
   Point2D ref1(randNum(), randNum());
   Point2D ref2(randNum(), randNum());
@@ -166,8 +166,8 @@ void test12D() {
 
   // make sure pt1 overlaps ref1
   Point2D dif1 = pt1 - ref1;
-  CHECK_INVARIANT(abs(dif1.x) < 1.e-8, "");
-  CHECK_INVARIANT(abs(dif1.y) < 1.e-8, "");
+  CHECK_INVARIANT(fabs(dif1.x) < 1.e-8, "");
+  CHECK_INVARIANT(fabs(dif1.y) < 1.e-8, "");
 
   // now check that the angle between the two vectors (ref2 - ref1) and
   // (pt2 - pt1) is zero
@@ -176,7 +176,7 @@ void test12D() {
   rvec.normalize();
   pvec.normalize();
   double pdot = rvec.dotProduct(pvec);
-  CHECK_INVARIANT(abs(pdot - 1.0) < 1.e-8, "");
+  CHECK_INVARIANT(fabs(pdot - 1.0) < 1.e-8, "");
 
   // compute the reverse transform and make sure we are basically getting the
   // identity

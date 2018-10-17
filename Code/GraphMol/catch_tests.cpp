@@ -5,6 +5,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
@@ -70,5 +71,39 @@ TEST_CASE("Github #2086", "[bug, molops]") {
     mol->removeBond(4, 13);
     MolOps::removeHs(*mol);
     REQUIRE(mol->getNumAtoms() == 6);
+  }
+}
+
+TEST_CASE("github #299", "[bug, molops, SSSR]"){
+  SECTION("simplified"){
+    auto mol = "C13%13%14.C124%18.C25%13%15.C368%17.C4679.C75%10%17.C8%11%14%16.C9%11%12%18.C%10%12%15%16"_smiles;
+    REQUIRE(mol);
+    REQUIRE(mol->getNumAtoms()==9);
+  }
+
+  SECTION("old example from molopstest"){
+    auto mol = "C123C45C11C44C55C22C33C14C523"_smiles;
+    REQUIRE(mol);
+    REQUIRE(mol->getNumAtoms()==9);
+  }
+
+  SECTION("carborane"){
+    std::unique_ptr<RWMol> mol(SmilesToMol("[B]1234[B]567[B]118[B]229[B]33%10[B]454[B]656[B]711[B]822[C]933[B]%1045[C]6123",0,false));
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms()==12);
+    mol->updatePropertyCache(false);
+    MolOps::findSSSR(*mol);
+    REQUIRE(mol->getRingInfo()->isInitialized());
+  }
+  SECTION("original report from ChEbI"){
+    std::string pathName = getenv("RDBASE");
+    pathName += "/Code/GraphMol/test_data/";
+    std::unique_ptr<RWMol> mol(MolFileToMol(pathName + "ChEBI_50252.mol",false));
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms()==80);
+    mol->updatePropertyCache(false);
+    MolOps::findSSSR(*mol);
+    REQUIRE(mol->getRingInfo()->isInitialized());
+
   }
 }

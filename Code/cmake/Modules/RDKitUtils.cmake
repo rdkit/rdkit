@@ -259,7 +259,7 @@ function(createExportTestHeaders)
     "\n"
     "#include <boost/config.hpp>\n"
     "#endif\n")
-  set(testPath "Code/RDBoost/test.h")
+  set(testPath "Code/RDGeneral/test.h")
   file(WRITE "${CMAKE_BINARY_DIR}/${testPath}"
     "// auto-generated header to be imported in all cpp tests\n"
     "#pragma once\n")

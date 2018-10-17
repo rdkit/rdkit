@@ -32,7 +32,7 @@
 //
 //  Created by Greg Landrum September, 2006
 //
-#include <RDBoost/test.h>
+#include <RDGeneral/test.h>
 #include <iostream>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SLNParse/SLNParse.h>

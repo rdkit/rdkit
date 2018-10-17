@@ -8,7 +8,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDBoost/test.h>
+#include <RDGeneral/test.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -178,7 +178,7 @@ int main(int argc, char *argv[]) {
           }
           delete om;
           delete m;
-        } catch (MolSanitizeException) {
+        } catch (MolSanitizeException &) {
           BOOST_LOG(rdErrorLog) << smi << "\n";
           delete om;
           delete m;

@@ -112,7 +112,7 @@ std::vector<double> getWhimD(std::vector<double> weigthvector,
 
   double res = 0.0;
   for (int i = 0; i < 3; i++) {
-    res += std::abs(w[i] / w[3] - 1.0 / 3.0);
+    res += std::fabs(w[i] / w[3] - 1.0 / 3.0);
   }
 
   w[9] = 3.0 / 4.0 * res;  // K
@@ -171,7 +171,7 @@ std::vector<double> getWhimD(std::vector<double> weigthvector,
         if (j == k) {
           continue;
         }
-        if (std::abs(Scores(j, i) + Scores(k, i)) <= th) {
+        if (std::fabs(Scores(j, i) + Scores(k, i)) <= th) {
           // those that are close opposite & not close to the axis!
           ns += 1;  // check only once the symetric none null we need to add +2!
           // (reduce the loop duration)
@@ -186,7 +186,7 @@ std::vector<double> getWhimD(std::vector<double> weigthvector,
       if (!amatch) {
         na += 1;
         Symetric[j] = 0.0;
-        Symetric[j + numAtoms] = std::abs(Scores(j, i));
+        Symetric[j + numAtoms] = std::fabs(Scores(j, i));
       }
     }
     // take into account the atoms close to the axis

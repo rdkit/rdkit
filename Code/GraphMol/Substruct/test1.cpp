@@ -10,7 +10,7 @@
 //
 
 // std bits
-#include <RDBoost/test.h>
+#include <RDGeneral/test.h>
 #include <iostream>
 
 // RD bits

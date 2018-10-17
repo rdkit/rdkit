@@ -30,7 +30,6 @@ bool parseOptionsJSON(const std::string &json, StructCheckerOptions &op) {
   try {
     std::istringstream ss;
     ss.str(json);
-    std::istream &iss = ss;
     boost::property_tree::ptree pt;
     boost::property_tree::read_json(ss, pt);
     op = StructCheckerOptions();  // reset to default values
@@ -352,8 +351,7 @@ static bool ReadAAPairs(
     return false;
   }
   unsigned n = 0;
-
-  unsigned k = fscanf(fp, "%d", &n);
+  fscanf(fp, "%d", &n);
 
   char buffer[80];
 
@@ -662,8 +660,9 @@ void StructCheckerOptions::parseTautomerData(
 }
 //--------------------------------------------------------------------------
 
-bool loadChargeDataTables(const std::string &path) {
+bool loadChargeDataTables(const std::string& path) {
   // TODO: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  RDUNUSED_PARAM(path);
   /*
       double Elneg0; // elneg_table[0].value;
       std::map<unsigned, double> ElnegTable;   // AtomicNumber -> eleng

@@ -73,7 +73,7 @@ void testRDFcustom() {
     TEST_ASSERT(inm == nm);
 
     // std::cerr << inm << ",";
-    for (int i = 0; i < drdf.size(); i++) {
+    for (size_t i = 0; i < drdf.size(); i++) {
       double ref = atof(myrow[i + 1].c_str());
       // std::cerr << "[" << i << ":" << drdf[i] << "," << ref <<"]|";
       // if (fabs(ref - drdf[i]) > 0.01) {
@@ -139,7 +139,7 @@ void testMORSEcustom() {
     TEST_ASSERT(inm == nm);
 
     // std::cerr << inm << ",";
-    for (int i = 0; i < dmorse.size(); i++) {
+    for (size_t i = 0; i < dmorse.size(); i++) {
       double ref = atof(myrow[i + 1].c_str());
       // std::cerr << dmorse[i] << ",";
       // std::cerr << "[" << i << ":" << drdf[i] << "," << ref <<"]|";
@@ -206,7 +206,7 @@ void testAUTOCORR3Dcustom() {
     TEST_ASSERT(inm == nm);
 
     // std::cerr << inm << ",";
-    for (int i = 0; i < dauto3d.size(); i++) {
+    for (size_t i = 0; i < dauto3d.size(); i++) {
       double ref = atof(myrow[i + 1].c_str());
       // std::cerr << dauto3d[i] << ",";
       // std::cerr << "[" << i << ":" << drdf[i] << "," << ref <<"]|";
@@ -279,7 +279,7 @@ void testWHIMcustom() {
     TEST_ASSERT(inm == nm);
 
     // std::cerr << inm << ",";
-    for (int i = 0; i < dwhim.size(); i++) {
+    for (size_t i = 0; i < dwhim.size(); i++) {
       double ref = atof(myrow[i + 1].c_str());
       // std::cerr << dwhim[i] << ",";
       // std::cerr << "[" << i << ":" << drdf[i] << "," << ref <<"]|";
@@ -348,7 +348,7 @@ void testWHIMcustom1() {
     TEST_ASSERT(inm == nm);
 
     // std::cerr << inm << ",";
-    for (int i = 0; i < dwhim.size(); i++) {
+    for (size_t i = 0; i < dwhim.size(); i++) {
       double ref = atof(myrow[i + 1].c_str());
       // std::cerr << dwhim[i] << ",";
       // std::cerr << "[" << i << ":" << drdf[i] << "," << ref <<"]|";
@@ -408,6 +408,12 @@ void testGETAWAYcustom() {
     RDKit::computeGasteigerCharges(*m, charges, 12, true);
 
     const std::string atomprop = "_GasteigerCharge";
+
+    /*
+     * TO DO: fix this call: precision parameter is an *int*,
+     *        but setting it to 4 digits (= 0.0001) breaks this
+     *        test due to the references.
+     */
     RDKit::Descriptors::GETAWAY(*m, dgetaway, -1, 0.0001, atomprop);
 
     std::vector<std::string> myrow = data[nDone];
@@ -415,7 +421,7 @@ void testGETAWAYcustom() {
     TEST_ASSERT(inm == nm);
 
     // std::cerr << inm << ",";
-    for (int i = 0; i < dgetaway.size(); i++) {
+    for (size_t i = 0; i < dgetaway.size(); i++) {
       double ref = atof(myrow[i + 1].c_str());
       // std::cerr << dgetaway[i] << ",";
       // std::cerr << "[" << i << ":" << drdf[i] << "," << ref <<"]|";
@@ -436,7 +442,7 @@ void testGETAWAYcustom() {
                         << std::endl;
 }
 
-int main(int argc, char *argv[]) {
+int main() {
   RDLog::InitLogs();
   testRDFcustom();
   testMORSEcustom();

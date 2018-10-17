@@ -13,8 +13,8 @@
 #include <GraphMol/RWMol.h>
 
 namespace RDKit {
-static unsigned int ctdIGNORE_H_H_CONTACTS = 0x1;
-static unsigned int ctdALL_FLAGS = 0xFFFFFFFF;
+static const unsigned int ctdIGNORE_H_H_CONTACTS = 0x1;
+// static const unsigned int ctdALL_FLAGS = 0xFFFFFFFF;
 class AtomPDBResidueInfo;
 RDKIT_FILEPARSERS_EXPORT bool IsBlacklistedPair(Atom *beg_atom, Atom *end_atom);
 RDKIT_FILEPARSERS_EXPORT void ConnectTheDots(RWMol *mol, unsigned int flags = 0);

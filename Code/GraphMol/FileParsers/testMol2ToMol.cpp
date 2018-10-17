@@ -32,7 +32,7 @@
 //  created by Nik Stiefl May 2008
 //
 
-#include <RDBoost/test.h>
+#include <RDGeneral/test.h>
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
 #include "FileParsers.h"

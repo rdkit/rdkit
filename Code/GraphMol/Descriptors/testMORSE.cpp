@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include <RDBoost/test.h>
+#include <RDGeneral/test.h>
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
@@ -65,7 +65,7 @@ void testMORSE() {
     std::string inm = myrow[0];
     TEST_ASSERT(inm == nm);
 
-    for (int i = 0; i < dmorse.size(); i++) {
+    for (size_t i = 0; i < dmorse.size(); i++) {
       double ref = atof(myrow[i + 1].c_str());
 
       if (fabs(ref) > 0.01) {
@@ -98,7 +98,7 @@ void testMORSE() {
                         << std::endl;
 }
 
-int main(int argc, char *argv[]) {
+int main() {
   RDLog::InitLogs();
   testMORSE();
 }

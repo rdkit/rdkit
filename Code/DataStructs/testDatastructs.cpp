@@ -8,7 +8,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDBoost/test.h>
+#include <RDGeneral/test.h>
 #include <cstdlib>
 #include <iostream>
 #include <sstream>
@@ -116,7 +116,7 @@ void Test(T arg) {
 
   try {
     t3.getBit(4000);
-  } catch (IndexErrorException) {
+  } catch (IndexErrorException &) {
     std::cout << " except " << endl;
   } catch (...) {
     std::cout << " ERROR EXCEPT " << endl;
@@ -1403,7 +1403,7 @@ int main() {
   RDLog::InitLogs();
   try {
     throw IndexErrorException(3);
-  } catch (IndexErrorException) {
+  } catch (IndexErrorException &) {
     BOOST_LOG(rdInfoLog) << "pass" << endl;
   }
 

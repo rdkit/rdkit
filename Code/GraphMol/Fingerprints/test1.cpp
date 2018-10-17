@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include <RDBoost/test.h>
+#include <RDGeneral/test.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
@@ -885,7 +885,6 @@ void test1MorganFPs() {
     for (auto iter = fp->getNonzeroElements().begin();
          iter != fp->getNonzeroElements().end(); ++iter) {
       TEST_ASSERT(iter->second == 1);  // check that count == 1
-      ++iter;
     }
     delete fp;
 
@@ -3725,6 +3724,65 @@ void testGitHubIssue1993() {
   }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
+
+void testGitHubIssue2115() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog)
+      << "Github #2115: BitInfo not complete for RDKFingerprint" << std::endl;
+  {
+    auto mol = "c1ccccc1O"_smiles;
+    TEST_ASSERT(mol);
+
+    unsigned int minPath = 1;
+    unsigned int maxPath = 7;
+    unsigned int fpSize = 2048;
+    unsigned int nBitsPerHash = 2;
+    bool useHs = true;
+    double tgtDensity = 0.0;
+    unsigned int minSize = 128;
+    bool branchedPaths = true;
+    bool useBondOrder = true;
+    std::vector<boost::uint32_t> *atomInvariants = nullptr;
+    const std::vector<boost::uint32_t> *fromAtoms = nullptr;
+    std::vector<std::vector<boost::uint32_t>> *atomBits = nullptr;
+    std::map<boost::uint32_t, std::vector<std::vector<int>>> bitInfo;
+
+    std::unique_ptr<ExplicitBitVect> fp1(
+        RDKFingerprintMol(*mol, minPath, maxPath, fpSize, nBitsPerHash, useHs,
+                          tgtDensity, minSize, branchedPaths, useBondOrder,
+                          atomInvariants, fromAtoms, atomBits, &bitInfo));
+    TEST_ASSERT(fp1->getNumOnBits() == bitInfo.size());
+  }
+
+  {  // test that for atomBits too
+    auto m1("CCCO"_smiles);
+    TEST_ASSERT(m1);
+    std::vector<std::vector<boost::uint32_t>> atomBits(m1->getNumAtoms());
+    unsigned int minPath = 1;
+    unsigned int maxPath = 2;
+    unsigned int fpSize = 2048;
+    unsigned int nBitsPerHash = 2;
+    bool useHs = true;
+    double tgtDensity = 0.0;
+    unsigned int minSize = 128;
+    bool branchedPaths = true;
+    bool useBondOrder = true;
+    std::vector<boost::uint32_t> *atomInvariants = nullptr;
+    const std::vector<boost::uint32_t> *fromAtoms = nullptr;
+
+    std::unique_ptr<ExplicitBitVect> fp1(RDKFingerprintMol(
+        *m1, minPath, maxPath, fpSize, nBitsPerHash, useHs, tgtDensity, minSize,
+        branchedPaths, useBondOrder, atomInvariants, fromAtoms, &atomBits));
+    TEST_ASSERT(fp1->getNumOnBits() == 8);
+    TEST_ASSERT(atomBits[0].size() == 4);
+    TEST_ASSERT(atomBits[1].size() == 6);
+    TEST_ASSERT(atomBits[2].size() == 8);
+    TEST_ASSERT(atomBits[3].size() == 4);
+  }
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -3782,6 +3840,7 @@ int main(int argc, char *argv[]) {
   testGitHubIssue1793();
 #endif
   testGitHubIssue1993();
+  testGitHubIssue2115();
 
   return 0;
 }

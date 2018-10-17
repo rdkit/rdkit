@@ -144,7 +144,6 @@ bool EvenSamplePairsStrategy::try_add(size_t seed) {
       used_count[i] = 0;
       for (size_t j = 0; j < rgroups[i]; ++j) {
         var_used[i][j]--;
-        assert(var_used[i][j] >= 0);
         if (var_used[i][j] > 0) used_count[i]++;
       }
     }  // end scan
@@ -273,4 +272,4 @@ std::string EvenSamplePairsStrategy::stats() const {
      << std::endl;
   return ss.str();
 }
-}
+}  // namespace RDKit

@@ -30,7 +30,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-#include <RDBoost/test.h>
+#include <RDGeneral/test.h>
 #include <RDGeneral/utils.h>
 #include <RDGeneral/Exceptions.h>
 #include <GraphMol/RDKitBase.h>
@@ -369,19 +369,11 @@ void testGithub1657() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 #else
-void testGithub1657() {
-}
+void testGithub1657() {}
 #endif
 
-
-int main(int argc, char *argv[]) {
+int main() {
   RDLog::InitLogs();
-  bool doLong = false;
-  if (argc > 1) {
-    if (!strncmp(argv[1], "-l", 2)) {
-      doLong = true;
-    }
-  }
 #if 1
   testSamplers();
   testEvenSamplers();

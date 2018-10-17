@@ -64,7 +64,6 @@ void getRDFDesc(double* DM, const ROMol& mol, const Conformer& conf,
   // if (!conf.is3D()) return reserror;
 
   int numAtoms = conf.getNumAtoms();
-  int confId = conf.getId();
 
   std::vector<double> R = getG(30);
   std::vector<double> R1(30);
@@ -83,7 +82,7 @@ void getRDFDesc(double* DM, const ROMol& mol, const Conformer& conf,
   std::vector<double> IState = prepareIState(mol);
 
   double p;
-  for (int i = 0; i < R.size(); i++) {
+  for (size_t i = 0; i < R.size(); i++) {
     double res1 = 0.0;
     double res2 = 0.0;
     double res3 = 0.0;
@@ -134,7 +133,7 @@ void getRDFDescCustom(double* DM, const ROMol& mol, const Conformer& conf,
       moldata3D.GetCustomAtomProp(mol, customAtomPropName);
 
   double p;
-  for (int i = 0; i < R.size(); i++) {
+  for (size_t i = 0; i < R.size(); i++) {
     double res = 0.0;
     for (int j = 0; j < numAtoms - 1; j++) {
       for (int k = j + 1; k < numAtoms; k++) {
@@ -191,7 +190,7 @@ void RDF(const ROMol& mol, std::vector<double>& res, int confId,
   // RDF145s RDF150s RDF155s
 
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers")
-  int numAtoms = mol.getNumAtoms();
+  // int numAtoms = mol.getNumAtoms();
   // if (numAtoms < 4) return reserror;
 
   const Conformer& conf = mol.getConformer(confId);

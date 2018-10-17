@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDBoost/test.h>
+#include <RDGeneral/test.h>
 #include "../RDKitBase.h"
 #include "../FileParsers/FileParsers.h"  //MOL single molecule !
 #include "../FileParsers/MolSupplier.h"  //SDF
@@ -138,7 +138,7 @@ void testLoadOptionsFromFiles() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
   BOOST_LOG(rdInfoLog)
       << "testLoadOptionsFromFiles FROM CURRENT (.../test) DIRECTORY\n";
-  bool ok;
+
   StructCheckerOptions options;
   // options.Verbose = true;
   doLoadOptionsFromFiles(options);
@@ -323,7 +323,7 @@ void testStereo()  // stereochemistry
   TEST_ASSERT(options.loadAcidicAugmentedAtoms(testDataDir + "checkfgs.aci"));
   //  options.Verbose = true;
   StructChecker chk(options);
-  for (int i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
+  for (size_t i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
     BOOST_LOG(rdInfoLog) << i << " : " << smols[i] << "\n";
     RWMol* mol = SmilesToMol(smols[i]);
     TEST_ASSERT(mol);
@@ -399,7 +399,7 @@ void testOptionsDefault() {
   StructCheckerOptions options;
   //  options.Verbose = true;
   StructChecker chk(options);
-  for (int i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
+  for (size_t i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
     BOOST_LOG(rdInfoLog) << i << " : " << smols[i] << "\n";
     RWMol* mol = SmilesToMol(smols[i]);
     TEST_ASSERT(mol);
@@ -423,7 +423,7 @@ void testCheckAtomWithDefaultGoodAtoms() {
   StructCheckerOptions options;
   //  options.Verbose = true;
   StructChecker chk(options);
-  for (int i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
+  for (size_t i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
     BOOST_LOG(rdInfoLog) << i << " : " << smols[i] << "\n";
     RWMol* mol = SmilesToMol(smols[i]);
     TEST_ASSERT(mol);
@@ -447,7 +447,7 @@ void testCheckAtom() {
   doLoadOptionsFromFiles(options);
   //  options.Verbose = true;
   StructChecker chk(options);
-  for (int i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
+  for (size_t i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
     BOOST_LOG(rdInfoLog) << i << " : " << smols[i] << "\n";
     RWMol* mol = SmilesToMol(smols[i]);
     TEST_ASSERT(mol);
@@ -597,7 +597,7 @@ void testSpecificExamples() {
         "CC(=C)C(OCC[N+](C)(C)C)=[N+](S(=O)(=O)C(F)(F)F)S(=O)(=O)C(F)(F)F",
         "OC(=O)[C@@H]1CC=CN1"};
 
-    for (int i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
+    for (size_t i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
       BOOST_LOG(rdInfoLog) << i << " : " << smols[i] << "\n";
       RWMol* mol = SmilesToMol(smols[i]);
       TEST_ASSERT(mol);
@@ -670,7 +670,7 @@ void testSpecificOrder() {
   StructChecker chk(options);
   const char* smols[] = {"FC(F)O", "OC(F)F"};
 
-  for (int i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
+  for (size_t i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
     BOOST_LOG(rdInfoLog) << i << " : " << smols[i] << "\n";
     RWMol* mol = SmilesToMol(smols[i]);
     TEST_ASSERT(mol);
@@ -699,7 +699,7 @@ void testTransformTau() {
   StructChecker chk(options);
   const char* smols[] = {"FC=C(F)O"};
 
-  for (int i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
+  for (size_t i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
     BOOST_LOG(rdInfoLog) << i << " : " << smols[i] << "\n";
     RWMol* mol = SmilesToMol(smols[i]);
     //      TEST_ASSERT(mol);
@@ -743,7 +743,7 @@ void testTransformAtoms() {
   StructChecker chk(options);
   const char* smols[] = {"C(=O)C", "FC=CO"};
 
-  for (int i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
+  for (size_t i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
     BOOST_LOG(rdInfoLog) << i << " : " << smols[i] << "\n";
     RWMol* mol = SmilesToMol(smols[i]);
     TEST_ASSERT(mol);
@@ -838,7 +838,7 @@ void testCarboxylicAcids() {
 
 //==============================================================================
 
-int main(int argc, const char* argv[]) {
+int main() {
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
   BOOST_LOG(rdInfoLog) << "StructChecker Unit Test \n";

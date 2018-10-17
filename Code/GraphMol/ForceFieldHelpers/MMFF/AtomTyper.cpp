@@ -48,6 +48,7 @@ class RingMembership {
 class RingMembershipSize {
  typedef std::map<unsigned int, RingMembership> RingMembershipMap;
  typedef std::map<unsigned int, RingMembershipMap> RingSizeMembershipMap;
+
  public:
   static const boost::uint32_t IS_AROMATIC_BIT;
   RingMembershipSize(const ROMol &mol);
@@ -2346,7 +2347,7 @@ void MMFFMolProperties::setMMFFHydrogenType(const Atom *atom) {
               atomType = 33;
               break;
             }
-
+            /* FALLTHRU */
           default:
             // HO
             // Generic hydroxyl hydrogen

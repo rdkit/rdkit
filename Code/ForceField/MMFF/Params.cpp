@@ -47,7 +47,7 @@ MMFFAromCollection::MMFFAromCollection(const boost::uint8_t *mmffArom) {
   if (!mmffArom) {
     mmffArom = defaultMMFFArom;
   }
-  for (unsigned int i = 0; i < sizeof(mmffArom) / sizeof(mmffArom[0]); ++i) {
+  for (unsigned int i = 0; i < sizeof(mmffArom) / sizeof(boost::uint8_t); ++i) {
     d_params.push_back(mmffArom[i]);
   }
 }
@@ -62,7 +62,7 @@ extern const std::string defaultMMFFDef;
 MMFFDefCollection *MMFFDefCollection::getMMFFDef(const std::string &mmffDef) {
   if (!ds_instance) {
     ds_instance = new MMFFDefCollection(mmffDef);
-  } else if (mmffDef != "") {
+  } else if (!mmffDef.empty()) {
     delete ds_instance;
     ds_instance = new MMFFDefCollection(mmffDef);
   }
@@ -70,7 +70,7 @@ MMFFDefCollection *MMFFDefCollection::getMMFFDef(const std::string &mmffDef) {
 }
 
 MMFFDefCollection::MMFFDefCollection(std::string mmffDef) {
-  if (mmffDef == "") {
+  if (mmffDef.empty()) {
     mmffDef = defaultMMFFDef;
   }
   std::istringstream inStream(mmffDef);
@@ -457,7 +457,7 @@ MMFFPropCollection *MMFFPropCollection::getMMFFProp(
     const std::string &mmffProp) {
   if (!ds_instance) {
     ds_instance = new MMFFPropCollection(mmffProp);
-  } else if (mmffProp != "") {
+  } else if (!mmffProp.empty()) {
     delete ds_instance;
     ds_instance = new MMFFPropCollection(mmffProp);
   }
@@ -465,7 +465,7 @@ MMFFPropCollection *MMFFPropCollection::getMMFFProp(
 }
 
 MMFFPropCollection::MMFFPropCollection(std::string mmffProp) {
-  if (mmffProp == "") {
+  if (mmffProp.empty()) {
     mmffProp = defaultMMFFProp;
   }
   std::istringstream inStream(mmffProp);
@@ -629,7 +629,7 @@ MMFFPBCICollection *MMFFPBCICollection::getMMFFPBCI(
     const std::string &mmffPBCI) {
   if (!ds_instance) {
     ds_instance = new MMFFPBCICollection(mmffPBCI);
-  } else if (mmffPBCI != "") {
+  } else if (!mmffPBCI.empty()) {
     delete ds_instance;
     ds_instance = new MMFFPBCICollection(mmffPBCI);
   }
@@ -637,7 +637,7 @@ MMFFPBCICollection *MMFFPBCICollection::getMMFFPBCI(
 }
 
 MMFFPBCICollection::MMFFPBCICollection(std::string mmffPBCI) {
-  if (mmffPBCI == "") {
+  if (mmffPBCI.empty()) {
     mmffPBCI = defaultMMFFPBCI;
   }
   std::istringstream inStream(mmffPBCI);
@@ -787,7 +787,7 @@ extern const std::string defaultMMFFChg;
 MMFFChgCollection *MMFFChgCollection::getMMFFChg(const std::string &mmffChg) {
   if (!ds_instance) {
     ds_instance = new MMFFChgCollection(mmffChg);
-  } else if (mmffChg != "") {
+  } else if (!mmffChg.empty()) {
     delete ds_instance;
     ds_instance = new MMFFChgCollection(mmffChg);
   }
@@ -795,7 +795,7 @@ MMFFChgCollection *MMFFChgCollection::getMMFFChg(const std::string &mmffChg) {
 }
 
 MMFFChgCollection::MMFFChgCollection(std::string mmffChg) {
-  if (mmffChg == "") {
+  if (mmffChg.empty()) {
     mmffChg = defaultMMFFChg;
   }
   std::istringstream inStream(mmffChg);
@@ -1360,7 +1360,7 @@ MMFFBondCollection *MMFFBondCollection::getMMFFBond(
     const std::string &mmffBond) {
   if (!ds_instance) {
     ds_instance = new MMFFBondCollection(mmffBond);
-  } else if (mmffBond != "") {
+  } else if (!mmffBond.empty()) {
     delete ds_instance;
     ds_instance = new MMFFBondCollection(mmffBond);
   }
@@ -1368,7 +1368,7 @@ MMFFBondCollection *MMFFBondCollection::getMMFFBond(
 }
 
 MMFFBondCollection::MMFFBondCollection(std::string mmffBond) {
-  if (mmffBond == "") {
+  if (mmffBond.empty()) {
     mmffBond = defaultMMFFBond;
   }
   std::istringstream inStream(mmffBond);
@@ -1931,7 +1931,7 @@ MMFFBndkCollection *MMFFBndkCollection::getMMFFBndk(
     const std::string &mmffBndk) {
   if (!ds_instance) {
     ds_instance = new MMFFBndkCollection(mmffBndk);
-  } else if (mmffBndk != "") {
+  } else if (!mmffBndk.empty()) {
     delete ds_instance;
     ds_instance = new MMFFBndkCollection(mmffBndk);
   }
@@ -1939,7 +1939,7 @@ MMFFBndkCollection *MMFFBndkCollection::getMMFFBndk(
 }
 
 MMFFBndkCollection::MMFFBndkCollection(std::string mmffBndk) {
-  if (mmffBndk == "") {
+  if (mmffBndk.empty()) {
     mmffBndk = defaultMMFFBndk;
   }
   std::istringstream inStream(mmffBndk);
@@ -2058,7 +2058,7 @@ MMFFHerschbachLaurieCollection::getMMFFHerschbachLaurie(
     const std::string &mmffHerschbachLaurie) {
   if (!ds_instance) {
     ds_instance = new MMFFHerschbachLaurieCollection(mmffHerschbachLaurie);
-  } else if (mmffHerschbachLaurie != "") {
+  } else if (!mmffHerschbachLaurie.empty()) {
     delete ds_instance;
     ds_instance = new MMFFHerschbachLaurieCollection(mmffHerschbachLaurie);
   }
@@ -2067,7 +2067,7 @@ MMFFHerschbachLaurieCollection::getMMFFHerschbachLaurie(
 
 MMFFHerschbachLaurieCollection::MMFFHerschbachLaurieCollection(
     std::string mmffHerschbachLaurie) {
-  if (mmffHerschbachLaurie == "") {
+  if (mmffHerschbachLaurie.empty()) {
     mmffHerschbachLaurie = defaultMMFFHerschbachLaurie;
   }
   std::istringstream inStream(mmffHerschbachLaurie);
@@ -2148,7 +2148,7 @@ MMFFCovRadPauEleCollection *MMFFCovRadPauEleCollection::getMMFFCovRadPauEle(
     const std::string &mmffCovRadPauEle) {
   if (!ds_instance) {
     ds_instance = new MMFFCovRadPauEleCollection(mmffCovRadPauEle);
-  } else if (mmffCovRadPauEle != "") {
+  } else if (!mmffCovRadPauEle.empty()) {
     delete ds_instance;
     ds_instance = new MMFFCovRadPauEleCollection(mmffCovRadPauEle);
   }
@@ -2157,7 +2157,7 @@ MMFFCovRadPauEleCollection *MMFFCovRadPauEleCollection::getMMFFCovRadPauEle(
 
 MMFFCovRadPauEleCollection::MMFFCovRadPauEleCollection(
     std::string mmffCovRadPauEle) {
-  if (mmffCovRadPauEle == "") {
+  if (mmffCovRadPauEle.empty()) {
     mmffCovRadPauEle = defaultMMFFCovRadPauEle;
   }
   std::istringstream inStream(mmffCovRadPauEle);
@@ -2219,7 +2219,7 @@ MMFFAngleCollection *MMFFAngleCollection::getMMFFAngle(
     const std::string &mmffAngle) {
   if (!ds_instance) {
     ds_instance = new MMFFAngleCollection(mmffAngle);
-  } else if (mmffAngle != "") {
+  } else if (!mmffAngle.empty()) {
     delete ds_instance;
     ds_instance = new MMFFAngleCollection(mmffAngle);
   }
@@ -2227,7 +2227,7 @@ MMFFAngleCollection *MMFFAngleCollection::getMMFFAngle(
 }
 
 MMFFAngleCollection::MMFFAngleCollection(std::string mmffAngle) {
-  if (mmffAngle == "") {
+  if (mmffAngle.empty()) {
     unsigned int i = 0;
     while (defaultMMFFAngleData[i] != "EOS") {
       mmffAngle += defaultMMFFAngleData[i];
@@ -4653,7 +4653,7 @@ MMFFStbnCollection *MMFFStbnCollection::getMMFFStbn(
     const std::string &mmffStbn) {
   if (!ds_instance) {
     ds_instance = new MMFFStbnCollection(mmffStbn);
-  } else if (mmffStbn != "") {
+  } else if (!mmffStbn.empty()) {
     delete ds_instance;
     ds_instance = new MMFFStbnCollection(mmffStbn);
   }
@@ -4661,7 +4661,7 @@ MMFFStbnCollection *MMFFStbnCollection::getMMFFStbn(
 }
 
 MMFFStbnCollection::MMFFStbnCollection(std::string mmffStbn) {
-  if (mmffStbn == "") {
+  if (mmffStbn.empty()) {
     mmffStbn = defaultMMFFStbn;
   }
   std::istringstream inStream(mmffStbn);
@@ -5016,7 +5016,7 @@ MMFFDfsbCollection *MMFFDfsbCollection::getMMFFDfsb(
     const std::string &mmffDfsb) {
   if (!ds_instance) {
     ds_instance = new MMFFDfsbCollection(mmffDfsb);
-  } else if (mmffDfsb != "") {
+  } else if (!mmffDfsb.empty()) {
     delete ds_instance;
     ds_instance = new MMFFDfsbCollection(mmffDfsb);
   }
@@ -5024,7 +5024,7 @@ MMFFDfsbCollection *MMFFDfsbCollection::getMMFFDfsb(
 }
 
 MMFFDfsbCollection::MMFFDfsbCollection(std::string mmffDfsb) {
-  if (mmffDfsb == "") {
+  if (mmffDfsb.empty()) {
     mmffDfsb = defaultMMFFDfsb;
   }
   std::istringstream inStream(mmffDfsb);
@@ -5101,7 +5101,7 @@ MMFFOopCollection *MMFFOopCollection::getMMFFOop(const bool isMMFFs,
   unsigned int i = (isMMFFs ? 1 : 0);
   if (!ds_instance[i]) {
     ds_instance[i] = new MMFFOopCollection(isMMFFs, mmffOop);
-  } else if (mmffOop != "") {
+  } else if (!mmffOop.empty()) {
     delete ds_instance[i];
     ds_instance[i] = new MMFFOopCollection(isMMFFs, mmffOop);
   }
@@ -5109,7 +5109,7 @@ MMFFOopCollection *MMFFOopCollection::getMMFFOop(const bool isMMFFs,
 }
 
 MMFFOopCollection::MMFFOopCollection(const bool isMMFFs, std::string mmffOop) {
-  if (mmffOop == "") {
+  if (mmffOop.empty()) {
     mmffOop = (isMMFFs ? defaultMMFFsOop : defaultMMFFOop);
   }
   std::istringstream inStream(mmffOop);
@@ -5427,7 +5427,7 @@ MMFFTorCollection *MMFFTorCollection::getMMFFTor(const bool isMMFFs,
   unsigned int i = (isMMFFs ? 1 : 0);
   if (!ds_instance[i]) {
     ds_instance[i] = new MMFFTorCollection(isMMFFs, mmffTor);
-  } else if (mmffTor != "") {
+  } else if (!mmffTor.empty()) {
     delete ds_instance[i];
     ds_instance[i] = new MMFFTorCollection(isMMFFs, mmffTor);
   }
@@ -5435,7 +5435,7 @@ MMFFTorCollection *MMFFTorCollection::getMMFFTor(const bool isMMFFs,
 }
 
 MMFFTorCollection::MMFFTorCollection(const bool isMMFFs, std::string mmffTor) {
-  if (mmffTor == "") {
+  if (mmffTor.empty()) {
     mmffTor = (isMMFFs ? defaultMMFFsTor : defaultMMFFTor);
   }
   std::istringstream inStream(mmffTor);
@@ -8436,7 +8436,7 @@ extern const std::string defaultMMFFVdW;
 MMFFVdWCollection *MMFFVdWCollection::getMMFFVdW(const std::string &mmffVdW) {
   if (!ds_instance) {
     ds_instance = new MMFFVdWCollection(mmffVdW);
-  } else if (mmffVdW != "") {
+  } else if (!mmffVdW.empty()) {
     delete ds_instance;
     ds_instance = new MMFFVdWCollection(mmffVdW);
   }
@@ -8444,7 +8444,7 @@ MMFFVdWCollection *MMFFVdWCollection::getMMFFVdW(const std::string &mmffVdW) {
 }
 
 MMFFVdWCollection::MMFFVdWCollection(std::string mmffVdW) {
-  if (mmffVdW == "") {
+  if (mmffVdW.empty()) {
     mmffVdW = defaultMMFFVdW;
   }
   std::istringstream inStream(mmffVdW);
