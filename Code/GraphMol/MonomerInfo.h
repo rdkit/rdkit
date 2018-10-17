@@ -124,8 +124,8 @@ class RDKIT_GRAPHMOL_EXPORT AtomPDBResidueInfo : public AtomMonomerInfo {
   int d_residueNumber;
   std::string d_chainId;
   std::string d_insertionCode;
-  double d_occupancy;
-  double d_tempFactor;
+  double d_occupancy = 1.0;
+  double d_tempFactor = 0.0;
   // additional, non-PDB fields:
   bool df_heteroAtom;  // is this from a HETATM record?
   unsigned int d_secondaryStructure;
