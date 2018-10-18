@@ -2365,7 +2365,7 @@ void testBulkFP() {
       AtomPair::getAtomPairGenerator<std::uint64_t>(), FPType::AtomPairFP));
 
   testPairs.push_back(std::pair<FingerprintGenerator<std::uint64_t> *, FPType>(
-      MorganFingerprint::getMorganGenerator<std::uint64_t>(3),
+      MorganFingerprint::getMorganGenerator<std::uint64_t>(2),
       FPType::MorganFP));
 
   testPairs.push_back(std::pair<FingerprintGenerator<std::uint64_t> *, FPType>(
