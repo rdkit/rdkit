@@ -140,10 +140,12 @@ std::vector<TautomerTransform> readTautomers(std::string fileName) {
 
 std::vector<TautomerTransform> readTautomers(std::istream& inStream,
                                              int nToRead) {
-  std::vector<TautomerTransform> tautomers;
-  tautomers.clear();
   if (inStream.bad()) {
     throw BadFileException("Bad stream contents.");
+  }
+  std::vector<TautomerTransform> tautomers;
+  if (nToRead > 0) {
+    tautomers.reserve(nToRead);
   }
   const int MAX_LINE_LEN = 512;
   char inLine[MAX_LINE_LEN];
@@ -156,11 +158,13 @@ std::vector<TautomerTransform> readTautomers(std::istream& inStream,
     TautomerTransform* transform = getTautomer(tmpstr);
     if (transform != nullptr) {
       //			std::cout << MolToSmiles(*(transform->Mol) ) <<
-      //std::endl;
-      tautomers.push_back(*transform);
+      // std::endl;
+      tautomers.emplace_back(*transform);
+      delete transform;
       nRead++;
     }
   }
+
   return tautomers;
 }
 
