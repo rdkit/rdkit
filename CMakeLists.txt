@@ -105,9 +105,8 @@ set(RDKit_ExternalDir "${CMAKE_CURRENT_SOURCE_DIR}/External")
 
 #include catch
 add_subdirectory(${RDKit_ExternalDir}/catch)
+include_directories(${CATCH_INCLUDE_DIR})
 
-
-# include_directories(${CATCH_INCLUDE_DIR} ${COMMON_INCLUDES})
 
 if(RDK_INSTALL_INTREE)
   set(RDKit_BinDir "${CMAKE_SOURCE_DIR}/bin")
