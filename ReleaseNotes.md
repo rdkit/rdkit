@@ -12,6 +12,13 @@
     - `BUILD_SLN_SUPPORT` -> `RDK_BUILD_SLN_SUPPORT`
     - `RDK_CAIRO_BUILD` -> `RDK_BUILD_CAIRO_SUPPORT`
 
+## Documentation updates
+We have moved to using Sphinx's autodoc to create the Python API documentation. 
+`epydoc`, the tool we used to use, is no longer actively developed and only supports 
+Python2. There will undoubtedly be problems associated with the change; if you notice
+anything missing in the documetation or something that's really badly formatted, 
+please either let us know or submit a PR with a fix.
+
 ## Backwards incompatible changes
 This release includes a set of changes to make the default arguments to common
 functions less error prone (github #1679).
