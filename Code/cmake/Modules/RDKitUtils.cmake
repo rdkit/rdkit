@@ -166,6 +166,7 @@ macro(rdkit_catch_test)
     target_link_libraries(${RDKTEST_NAME} ${RDKTEST_LINK_LIBRARIES})
     add_test(${RDKTEST_NAME} ${EXECUTABLE_OUTPUT_PATH}/${RDKTEST_NAME})
     #ParseAndAddCatchTests(${RDKTEST_NAME})
+    add_dependencies(${RDKTEST_NAME} catch)
   endif(RDK_BUILD_CPP_TESTS)
 endmacro(rdkit_catch_test)
 
