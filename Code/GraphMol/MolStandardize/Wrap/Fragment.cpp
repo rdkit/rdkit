@@ -17,42 +17,37 @@ using namespace RDKit;
 
 namespace {
 
-ROMol* removeHelper(MolStandardize::FragmentRemover &self, const ROMol &mol){
-	return self.remove(mol);
+ROMol *removeHelper(MolStandardize::FragmentRemover &self, const ROMol &mol) {
+  return self.remove(mol);
 }
 
-ROMol* chooseHelper(MolStandardize::LargestFragmentChooser &self, const ROMol &mol){
-	return self.choose(mol);
+ROMol *chooseHelper(MolStandardize::LargestFragmentChooser &self,
+                    const ROMol &mol) {
+  return self.choose(mol);
 }
 
-} // namespace
+}  // namespace
 
-struct fragment_wrapper{
-	static void wrap(){
-	python::scope().attr("__doc__") = 
-					"Module containing tools for dealing with molecules with more than \
-					covalently bonded unit";
+struct fragment_wrapper {
+  static void wrap() {
+    python::scope().attr("__doc__") =
+        "Module containing tools for dealing with molecules with more than \
+					one covalently bonded unit";
 
-	std::string docString = "";
+    std::string docString = "";
 
-	python::class_<MolStandardize::FragmentRemover, boost::noncopyable>(
-					"FragmentRemover", python::init<>() )
-					.def(python::init<std::string, bool>())
-					.def("remove", &removeHelper,
-							(python::arg("self"), python::arg("mol")),
-							"",
-							python::return_value_policy<python::manage_new_object>())
-					;					
+    python::class_<MolStandardize::FragmentRemover, boost::noncopyable>(
+        "FragmentRemover", python::init<>())
+        .def(python::init<std::string, bool>())
+        .def("remove", &removeHelper, (python::arg("self"), python::arg("mol")),
+             "", python::return_value_policy<python::manage_new_object>());
 
-	python::class_<MolStandardize::LargestFragmentChooser, boost::noncopyable>(
-					"LargestFragmentChooser", python::init<bool>(
-									(python::arg("preferOrganic") = false) ))
-					.def("choose", &chooseHelper,
-							(python::arg("self"), python::arg("mol")),
-							"",
-							python::return_value_policy<python::manage_new_object>())
-					;
-	}
+    python::class_<MolStandardize::LargestFragmentChooser, boost::noncopyable>(
+        "LargestFragmentChooser",
+        python::init<bool>((python::arg("preferOrganic") = false)))
+        .def("choose", &chooseHelper, (python::arg("self"), python::arg("mol")),
+             "", python::return_value_policy<python::manage_new_object>());
+  }
 };
 
 void wrap_fragment() { fragment_wrapper::wrap(); }

@@ -31,10 +31,12 @@ python::list rdkitValidate(MolStandardize::RDKitValidation &self,
 
 MolStandardize::MolVSValidation *getMolVSValidation(
     python::object validations) {
-  std::vector< boost::shared_ptr<MolStandardize::MolVSValidations> > vs;
+  std::vector<boost::shared_ptr<MolStandardize::MolVSValidations>> vs;
 
-  std::unique_ptr<std::vector< boost::shared_ptr<MolStandardize::MolVSValidations> >> pvect =
-      pythonObjectToVect< boost::shared_ptr<MolStandardize::MolVSValidations> >(validations);
+  std::unique_ptr<
+      std::vector<boost::shared_ptr<MolStandardize::MolVSValidations>>>
+      pvect = pythonObjectToVect<
+          boost::shared_ptr<MolStandardize::MolVSValidations>>(validations);
 
   for (auto v : *pvect) {
     vs.push_back(v->copy());
@@ -43,30 +45,30 @@ MolStandardize::MolVSValidation *getMolVSValidation(
 }
 
 python::list molVSvalidateHelper(MolStandardize::MolVSValidation &self,
-	const ROMol &mol, bool reportAllFailures) {
-		python::list s;
-		std::vector<MolStandardize::ValidationErrorInfo> errout = 
-						self.validate(mol, reportAllFailures);
-		for (auto &query : errout) {
-			s.append(query.message());
-		}
-		return s;
+                                 const ROMol &mol, bool reportAllFailures) {
+  python::list s;
+  std::vector<MolStandardize::ValidationErrorInfo> errout =
+      self.validate(mol, reportAllFailures);
+  for (auto &query : errout) {
+    s.append(query.message());
+  }
+  return s;
 }
 
 MolStandardize::AllowedAtomsValidation *getAllowedAtomsValidation(
     python::object atoms) {
-    std::unique_ptr<std::vector<Atom *> > p_atomList = 
-						pythonObjectToVect<Atom *>(atoms);     
-		std::vector<std::shared_ptr<Atom>> satoms;
-	  for (auto ap : *p_atomList) {
- 			satoms.push_back(std::shared_ptr<Atom>(ap->copy()));
-		}
+  std::unique_ptr<std::vector<Atom *>> p_atomList =
+      pythonObjectToVect<Atom *>(atoms);
+  std::vector<std::shared_ptr<Atom>> satoms;
+  for (auto ap : *p_atomList) {
+    satoms.push_back(std::shared_ptr<Atom>(ap->copy()));
+  }
   return new MolStandardize::AllowedAtomsValidation(satoms);
 }
 
-
 python::list allowedAtomsValidate(MolStandardize::AllowedAtomsValidation &self,
-                           const ROMol &mol, const bool reportAllFailures) {
+                                  const ROMol &mol,
+                                  const bool reportAllFailures) {
   python::list res;
   std::vector<MolStandardize::ValidationErrorInfo> errout =
       self.validate(mol, reportAllFailures);
@@ -79,18 +81,18 @@ python::list allowedAtomsValidate(MolStandardize::AllowedAtomsValidation &self,
 
 MolStandardize::DisallowedAtomsValidation *getDisallowedAtomsValidation(
     python::object atoms) {
-    std::unique_ptr<std::vector<Atom *> > p_atomList = 
-						pythonObjectToVect<Atom *>(atoms);     
-		std::vector<std::shared_ptr<Atom>> satoms;
-	  for (auto ap : *p_atomList) {
- 			satoms.push_back(std::shared_ptr<Atom>(ap->copy()));
-		}
+  std::unique_ptr<std::vector<Atom *>> p_atomList =
+      pythonObjectToVect<Atom *>(atoms);
+  std::vector<std::shared_ptr<Atom>> satoms;
+  for (auto ap : *p_atomList) {
+    satoms.push_back(std::shared_ptr<Atom>(ap->copy()));
+  }
   return new MolStandardize::DisallowedAtomsValidation(satoms);
 }
 
-
-python::list disallowedAtomsValidate(MolStandardize::DisallowedAtomsValidation &self,
-                           const ROMol &mol, const bool reportAllFailures) {
+python::list disallowedAtomsValidate(
+    MolStandardize::DisallowedAtomsValidation &self, const ROMol &mol,
+    const bool reportAllFailures) {
   python::list res;
   std::vector<MolStandardize::ValidationErrorInfo> errout =
       self.validate(mol, reportAllFailures);
@@ -102,15 +104,15 @@ python::list disallowedAtomsValidate(MolStandardize::DisallowedAtomsValidation &
 }
 
 python::list standardizeSmilesHelper(const std::string &smiles) {
-	python::list res;
-	std::vector<MolStandardize::ValidationErrorInfo> errout = 
-		MolStandardize::validateSmiles(smiles);
-	for (auto &query : errout) {
-		std::string msg = query.message();
-		res.append(msg);
-	}
-	return res;
-}	
+  python::list res;
+  std::vector<MolStandardize::ValidationErrorInfo> errout =
+      MolStandardize::validateSmiles(smiles);
+  for (auto &query : errout) {
+    std::string msg = query.message();
+    res.append(msg);
+  }
+  return res;
+}
 
 }  // namespace
 
@@ -172,23 +174,25 @@ struct validate_wrapper {
 
     python::class_<MolStandardize::AllowedAtomsValidation, boost::noncopyable>(
         "AllowedAtomsValidation", python::no_init)
-				.def("__init__", python::make_constructor(&getAllowedAtomsValidation))
+        .def("__init__", python::make_constructor(&getAllowedAtomsValidation))
         .def("validate", allowedAtomsValidate,
              (python::arg("self"), python::arg("mol"),
               python::arg("reportAllFailures") = false),
              "");
-             ;
+    ;
 
-    python::class_<MolStandardize::DisallowedAtomsValidation, boost::noncopyable>(
-        "DisallowedAtomsValidation", python::no_init)
-				.def("__init__", python::make_constructor(&getDisallowedAtomsValidation))
+    python::class_<MolStandardize::DisallowedAtomsValidation,
+                   boost::noncopyable>("DisallowedAtomsValidation",
+                                       python::no_init)
+        .def("__init__",
+             python::make_constructor(&getDisallowedAtomsValidation))
         .def("validate", disallowedAtomsValidate,
              (python::arg("self"), python::arg("mol"),
               python::arg("reportAllFailures") = false),
              "");
 
-		python::def("ValidateSmiles", standardizeSmilesHelper,
-							 (python::arg("mol")), docString.c_str());
+    python::def("ValidateSmiles", standardizeSmilesHelper, (python::arg("mol")),
+                docString.c_str());
   }
 };
 
