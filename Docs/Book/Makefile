@@ -7,10 +7,6 @@ SPHINXBUILD   = sphinx-build
 PAPER         =
 BUILDDIR      = _build
 
-# Created by running epydoc in the $RDBASE/rdkit directory as follows:
-#  epydoc --config  epydoc.config
-APIDOCSHOME   = $(RDBASE)/rdkit/docs
-
 # Created by running doxygen in the $RDBASE/Code directory as follows:
 #  doxygen doxygen.config
 CPPAPIDOCSHOME   = $(RDBASE)/Code/docs
@@ -50,9 +46,7 @@ clean:
 	-rm -rf $(BUILDDIR)/*
 
 apidocs:
-	#mkdir -p $(BUILDDIR)/html/api
 	mkdir -p $(BUILDDIR)/html/cppapi
-	#cp $(APIDOCSHOME)/*  $(BUILDDIR)/html/api
 	cp -r $(CPPAPIDOCSHOME)/*  $(BUILDDIR)/html/cppapi
 
 html: apidocs $(RSTS_FROM_MD)
