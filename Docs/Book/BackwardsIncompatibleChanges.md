@@ -13,9 +13,21 @@ If you want to capture stereochemistry in Mol blocks, it's necessary to have coo
 ### The conformation generation code now uses ETKDG by default
 Earlier RDKit releases would, by default, generate conformations using standard distance geometry. The new default is to use Sereina Riniker's ETKDG algorithm, which is a bit slower but which has been shown to generate much better results.
 
+## Release 2018.09
+
+### `GetAtomSmiles()` generates isomeric SMILES by default
+In earlier releases, if you wanted to include information about stereochemistry or isotopic labels in the output SMILES it was necessary to set the optional `isomericSmiles` argument to true. The default value of this is now true. If you want to go back to the old behavior and get SMILES without stereochemistry information you can just set `isomericSmiles` to false.
+
+### Changes to ringMatchesRingOnly option in the MCS code
+The ringMatchesRingOnly option to the FindMCS() function now applies to atom-atom matches as well as bond-bond matches.
+
+### The conformation generation code now uses ETKDG by default when called from Python
+The Python functions EmbedMolecule() and EmbedMultipleConfs() now use the ETKDG algorithm by default instead of standard distance geometry.
+
+
 ## License
 
-This document is copyright (C) 2017 by Greg Landrum
+This document is copyright (C) 2017-2018 by Greg Landrum
 
 This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 License. To view a copy of this license, visit <http://creativecommons.org/licenses/by-sa/4.0/> or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.
 
