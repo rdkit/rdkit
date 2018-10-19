@@ -53,6 +53,7 @@ Submodules
    rdkit.Chem.MACCSkeys
    rdkit.Chem.MCS
    rdkit.Chem.MolCatalog
+   rdkit.Chem.MolStandardize
    rdkit.Chem.MolSurf
    rdkit.Chem.PandasTools
    rdkit.Chem.PeriodicTable
@@ -98,6 +99,7 @@ Submodules
    rdkit.Chem.rdfragcatalog
    rdkit.Chem.rdStructChecker
    rdkit.Chem.rdMolDescriptors
+   rdkit.Chem.rdFingerprintGenerator
    rdkit.Chem.rdSLNParse
 
 Module contents

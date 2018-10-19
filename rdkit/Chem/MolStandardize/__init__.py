@@ -5,6 +5,8 @@ MolVS - Molecule Validation and Standardization
 
 MolVS is a python tool built on top of RDKit that performs validation and standardization of chemical structures.
 
+Note that the C++ reimplementation of this is available in the module rdkit.Chem.MolStandardize.rdMolStandardize
+
 :copyright: (c) 2016 by Matt Swain.
 :license: MIT, see LICENSE file for more details.
 """
