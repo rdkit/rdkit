@@ -1625,7 +1625,6 @@ void test14() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Test14: error catching " << std::endl;
 
-  delete mol;
   sln = "CH2(C@1H2)CH2(CH2CH2C[1]H2)";
   mol = RDKit::SLNToMol(sln);
   TEST_ASSERT(!mol);
