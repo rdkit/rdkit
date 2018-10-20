@@ -410,6 +410,7 @@ void testInitStruChk() {
     int errs = AvalonTools::initCheckMol(struchk_init);
     TEST_ASSERT(!errs);
     RDKit::ROMOL_SPTR m = AvalonTools::checkMol(errs, "c1ccccc1", true);
+    AvalonTools::closeCheckMolFiles();
     TEST_ASSERT(errs == 0);
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
