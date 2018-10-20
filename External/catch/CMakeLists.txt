@@ -17,4 +17,4 @@ else()
   message("-- Found Catch2 source in ${CATCH_DIR}")
 endif()
 
-set(CATCH_INCLUDE_DIR "${CATCH_DIR}/single_include")
+set(CATCH_INCLUDE_DIR "${CATCH_DIR}/single_include" PARENT_SCOPE)
