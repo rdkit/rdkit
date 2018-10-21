@@ -101,13 +101,8 @@ void SmilesWriter::dumpHeader() const {
 }
 
 SmilesWriter::~SmilesWriter() {
-  if (df_owner) {
-    // this has to be froma ofstream
-    // cast it back to fstream and clsoe it
-    // std::ofstream *tmpStream = static_cast<std::ofstream *>(dp_ostream);
-    // tmpStream->close();
-    delete dp_ostream;
-  }
+  // close the writer if it's still open:
+  if (dp_ostream != nullptr) close();
 }
 
 void SmilesWriter::write(const ROMol &mol, int confId) {
@@ -146,4 +141,4 @@ void SmilesWriter::write(const ROMol &mol, int confId) {
   (*dp_ostream) << "\n";
   d_molid++;
 }
-}
+}  // namespace RDKit

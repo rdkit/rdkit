@@ -136,7 +136,7 @@ void _MolToSDStream(std::ostream *dp_ostream, const ROMol &mol, int confId,
   // add the $$$$ that marks the end of a molecule
   (*dp_ostream) << "$$$$\n";
 }
-}
+}  // namespace
 
 std::string SDWriter::getText(const ROMol &mol, int confId, bool kekulize,
                               bool forceV3000, int molid, STR_VECT *propNames) {
@@ -157,4 +157,4 @@ void SDWriter::writeProperty(const ROMol &mol, const std::string &name) {
 
   _writePropToStream(dp_ostream, mol, name, d_molid);
 }
-}
+}  // namespace RDKit

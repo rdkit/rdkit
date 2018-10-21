@@ -631,7 +631,7 @@ void testSmilesWriter() {
   // std::string fname = "../test_data/fewSmi.csv";
   SmilesMolSupplier *nSup = new SmilesMolSupplier(fname, ",", 1, 0, false);
   std::string oname =
-      rdbase + "/Code/GraphMol/FileParsers/test_data/outSmiles.csv";
+      rdbase + "/Code/GraphMol/FileParsers/test_data/outSmiles_molsupplier.csv";
   // std::string oname = "../test_data/outSmiles.csv";
 
   STR_VECT propNames;
@@ -658,7 +658,7 @@ void testSmilesWriter() {
       break;
     }
   }
-  writer->close();
+  writer->flush();
   delete nSup;
 
   // now read the molecules back in a check if we have the same properties etc
@@ -680,6 +680,7 @@ void testSmilesWriter() {
     }
   }
   TEST_ASSERT(nSup->length() == writer->numMols());
+  writer->close();
   delete writer;
   delete nSup;
 }
@@ -691,7 +692,8 @@ void testSDWriter() {
   SDMolSupplier sdsup(fname);
 
   std::string ofile =
-      rdbase + "/Code/GraphMol/FileParsers/test_data/outNCI_few.sdf";
+      rdbase +
+      "/Code/GraphMol/FileParsers/test_data/outNCI_few_molsupplier.sdf";
 
   auto *writer = new SDWriter(ofile);
 
@@ -706,8 +708,9 @@ void testSDWriter() {
     writer->write(*mol);
     delete mol;
   }
-  writer->close();
+  writer->flush();
   CHECK_INVARIANT(writer->numMols() == 16, "");
+  writer->close();
   delete writer;
 
   // now read in the file we just finished writing
@@ -854,7 +857,7 @@ void testCisTrans() {
   SmilesMolSupplier smiSup;
   smiSup.setData(text, " ", 1, 0, false, true);
 
-  std::string ofile = "cisTrans.sdf";
+  std::string ofile = "cisTrans_molsupplier.sdf";
   SDWriter writer(ofile);
   while (!smiSup.atEnd()) {
     ROMol *mol = smiSup.next();
@@ -863,12 +866,13 @@ void testCisTrans() {
     writer.write(*mol);
     delete mol;
   }
-  // do the round test
+  writer.close();
+  // do the round t;est
   // parse the sd file and write it out to smiles
 
   SDMolSupplier *reader;
   try {
-    reader = new SDMolSupplier("cisTrans.sdf");
+    reader = new SDMolSupplier("cisTrans_molsupplier.sdf");
   } catch (FileParseException &) {
     reader = nullptr;
   }
@@ -901,7 +905,8 @@ void testStereoRound() {
   TEST_ASSERT(smiSup)
   std::map<std::string, std::string> nameSmi;
   std::string ofile =
-      rdbase + "/Code/GraphMol/FileParsers/test_data/cdk2_stereo.sdf";
+      rdbase +
+      "/Code/GraphMol/FileParsers/test_data/cdk2_stereo_molsupplier.sdf";
   auto *writer = new SDWriter(ofile);
   int count = 0;
 
@@ -931,6 +936,7 @@ void testStereoRound() {
       BOOST_LOG(rdInfoLog) << count << " " << mname << "\n";
     }
   }
+  writer->close();
   delete smiSup;
   delete writer;
 
@@ -2299,7 +2305,8 @@ void testSkipLines() {
 
 void testGitHub23() {
   std::string rdbase = getenv("RDBASE");
-  std::string ofile = rdbase + "/Code/GraphMol/FileParsers/test_data/blah.sdf";
+  std::string ofile =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/blah_molsupplier.sdf";
   auto *writer = new SDWriter(ofile);
 
   ROMol *mol = SmilesToMol("CCCC");
@@ -2310,7 +2317,7 @@ void testGitHub23() {
   writer->write(*mol);
   delete mol;
 
-  writer->flush();
+  writer->close();
   delete writer;
 }
 

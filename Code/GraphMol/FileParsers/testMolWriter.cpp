@@ -55,7 +55,7 @@ void testSmilesWriter() {
       break;
     }
   }
-  writer->flush();
+  writer->close();
   delete writer;
   delete nSup;
 
@@ -96,7 +96,7 @@ void testSmilesWriter2() {
     mol = SmilesToMol("F[C@H](Cl)Br");
     writer->write(*mol);
     delete mol;
-    writer->flush();
+    writer->close();
     TEST_ASSERT(ss.str() == "c1ccccc1 0\nFC(Cl)Br 1\n");
     delete writer;
   }
@@ -115,7 +115,7 @@ void testSmilesWriter2() {
     mol = SmilesToMol("F[C@H](Cl)Br");
     writer->write(*mol);
     delete mol;
-    writer->flush();
+    writer->close();
     TEST_ASSERT(ss.str() == "C1=CC=CC=C1 0\nF[C@H](Cl)Br 1\n");
     delete writer;
   }
@@ -127,7 +127,7 @@ void testSmilesWriterNoNames() {
       rdbase + "/Code/GraphMol/FileParsers/test_data/fewSmi.csv";
   SmilesMolSupplier *nSup = new SmilesMolSupplier(fname, ",", 1, 0, false);
   std::string oname =
-      rdbase + "/Code/GraphMol/FileParsers/test_data/outSmiles.csv";
+      rdbase + "/Code/GraphMol/FileParsers/test_data/outSmiles_molwriter.csv";
 
   STR_VECT propNames;
   propNames.push_back(std::string("Column_2"));
@@ -149,7 +149,7 @@ void testSmilesWriterNoNames() {
       break;
     }
   }
-  writer->close();
+  writer->flush();
   delete nSup;
 
   // now read the molecules back in a check if we have the same properties etc
@@ -171,6 +171,7 @@ void testSmilesWriterNoNames() {
     }
   }
   TEST_ASSERT(writer->numMols() == nSup->length());
+  writer->close();
   delete writer;
   delete nSup;
 }
@@ -181,7 +182,7 @@ void testSmilesWriterClose() {
       rdbase + "/Code/GraphMol/FileParsers/test_data/fewSmi.csv";
   SmilesMolSupplier *nSup = new SmilesMolSupplier(fname, ",", 1, 0, false);
   std::string oname =
-      rdbase + "/Code/GraphMol/FileParsers/test_data/outSmiles.csv";
+      rdbase + "/Code/GraphMol/FileParsers/test_data/outSmiles_molwriter.csv";
 
   STR_VECT propNames;
   propNames.push_back(std::string("Column_2"));
@@ -203,7 +204,7 @@ void testSmilesWriterClose() {
       break;
     }
   }
-  writer->close();
+  writer->flush();
   delete nSup;
 
   // now read the molecules back in a check if we have the same properties etc
@@ -225,6 +226,7 @@ void testSmilesWriterClose() {
     }
   }
   TEST_ASSERT(writer->numMols() == nSup->length());
+  writer->close();
   delete nSup;
   delete writer;
 }
@@ -236,7 +238,8 @@ void testSDWriter() {
   SDMolSupplier sdsup(fname);
 
   std::string ofile =
-      rdbase + "/Code/GraphMol/FileParsers/test_data/outNCI_few.sdf";
+      rdbase +
+      "/Code/GraphMol/FileParsers/test_data/outNCI_few.sdf_molwriter.sdf";
   auto *writer = new SDWriter(ofile);
 
   STR_VECT names;
@@ -255,7 +258,6 @@ void testSDWriter() {
 
   // make sure we can close() the writer and delete it:
   writer->close();
-
   delete writer;
 
   // now read in the file we just finished writing
@@ -294,11 +296,10 @@ void testTDTWriter() {
   SDMolSupplier sdsup(fname);
 
   std::string ofile =
-      rdbase + "/Code/GraphMol/FileParsers/test_data/outNCI_few.tdt";
+      rdbase + "/Code/GraphMol/FileParsers/test_data/outNCI_few_molwriter.tdt";
   auto *writer = new TDTWriter(ofile);
 
   STR_VECT names;
-
   while (!sdsup.atEnd()) {
     ROMol *mol = sdsup.next();
     std::string mname;
@@ -308,8 +309,8 @@ void testTDTWriter() {
     writer->write(*mol);
     delete mol;
   }
-  writer->flush();
   TEST_ASSERT(writer->numMols() == 16);
+  writer->close();
   delete writer;
 
   // now read in the file we just finished writing
@@ -334,7 +335,7 @@ void testSmilesWriterStrm() {
       rdbase + "/Code/GraphMol/FileParsers/test_data/fewSmi.csv";
   SmilesMolSupplier *nSup = new SmilesMolSupplier(fname, ",", 1, 0, false);
   std::string oname =
-      rdbase + "/Code/GraphMol/FileParsers/test_data/outSmiles.csv";
+      rdbase + "/Code/GraphMol/FileParsers/test_data/outSmiles_molwriter.csv";
   auto *oStream = new std::ofstream(oname.c_str());
 
   STR_VECT propNames;
@@ -359,7 +360,7 @@ void testSmilesWriterStrm() {
       break;
     }
   }
-  writer->flush();
+  writer->close();
   delete writer;
   delete nSup;
   delete oStream;
@@ -393,7 +394,8 @@ void testSDWriterStrm() {
     SDMolSupplier sdsup(fname);
 
     std::string ofile =
-        rdbase + "/Code/GraphMol/FileParsers/test_data/outNCI_few.sdf";
+        rdbase +
+        "/Code/GraphMol/FileParsers/test_data/outNCI_few_molwriter.sdf";
     auto *oStream = new std::ofstream(ofile.c_str());
 
     auto *writer = new SDWriter(oStream);
@@ -411,6 +413,7 @@ void testSDWriterStrm() {
     }
     writer->flush();
     CHECK_INVARIANT(writer->numMols() == 16, "");
+    writer->close();
     delete writer;
     delete oStream;
 
@@ -451,7 +454,7 @@ void testTDTWriterStrm() {
   SDMolSupplier sdsup(fname);
 
   std::string ofile =
-      rdbase + "/Code/GraphMol/FileParsers/test_data/outNCI_few.tdt";
+      rdbase + "/Code/GraphMol/FileParsers/test_data/outNCI_few_molwriter.tdt";
   auto *oStream = new std::ofstream(ofile.c_str());
   auto *writer = new TDTWriter(oStream);
 
@@ -468,6 +471,7 @@ void testTDTWriterStrm() {
   }
   writer->flush();
   TEST_ASSERT(writer->numMols() == 16);
+  writer->close();
   delete writer;
   delete oStream;
 
@@ -491,9 +495,9 @@ void testSDMemoryCorruption() {
   std::string rdbase = getenv("RDBASE");
   std::string fname = rdbase + "/Data/NCI/first_200.props.sdf";
   SDMolSupplier sdsup(fname, true);
-  std::string ofile =
-      rdbase +
-      "/Code/GraphMol/FileParsers/test_data/outNCI_first_200.props.sdf";
+  std::string ofile = rdbase +
+                      "/Code/GraphMol/FileParsers/test_data/"
+                      "outNCI_first_200.props_molwriter.sdf";
   std::ostream *os = new std::ofstream(ofile.c_str());
   // std::ostream *os=new std::stringstream();
   auto *writer = new SDWriter(os, false);
@@ -528,6 +532,7 @@ void testSDMemoryCorruption() {
   CHECK_INVARIANT(nDone == 200, "");
   writer->flush();
   CHECK_INVARIANT(writer->numMols() == 200, "");
+  writer->close();
 
   delete writer;
   delete os;
@@ -677,9 +682,9 @@ void testIssue265() {
     std::stringstream sstream;
     TDTWriter writer(&sstream);
     writer.write(*m1);
-    writer.flush();
     std::string otext = sstream.str();
     TEST_ASSERT(otext == "$SMI<C1NO1>\n3D<0,0,0,0,1,0,1,0,0;>\n");
+    writer.close();
     delete m1;
   }
 }
@@ -832,6 +837,7 @@ void testSDWriterOptions() {
     delete mol;
     writer.flush();
     CHECK_INVARIANT(writer.numMols() == 1, "");
+    writer.close();
 
     std::string txt = ss.str();
     TEST_ASSERT(txt.find("V2000") != std::string::npos);
@@ -846,6 +852,7 @@ void testSDWriterOptions() {
     delete mol;
     writer.flush();
     CHECK_INVARIANT(writer.numMols() == 1, "");
+    writer.close();
 
     std::string txt = ss.str();
     TEST_ASSERT(txt.find("V2000") == std::string::npos);
@@ -861,6 +868,7 @@ void testSDWriterOptions() {
     delete mol;
     writer.flush();
     CHECK_INVARIANT(writer.numMols() == 2, "");
+    writer.close();
 
     std::string txt = ss.str();
     TEST_ASSERT(txt.find("V2000") != std::string::npos);
@@ -878,6 +886,7 @@ void testSDWriterOptions() {
     delete mol;
     writer.flush();
     CHECK_INVARIANT(writer.numMols() == 2, "");
+    writer.close();
 
     std::string txt = ss.str();
     TEST_ASSERT(txt.find("V2000") != std::string::npos);
@@ -893,6 +902,7 @@ void testSDWriterOptions() {
     delete mol;
     writer.flush();
     CHECK_INVARIANT(writer.numMols() == 1, "");
+    writer.close();
 
     std::string txt = ss.str();
     TEST_ASSERT(txt.find("  1  2  2") != std::string::npos);
@@ -908,6 +918,7 @@ void testSDWriterOptions() {
     delete mol;
     writer.flush();
     CHECK_INVARIANT(writer.numMols() == 1, "");
+    writer.close();
 
     std::string txt = ss.str();
     TEST_ASSERT(txt.find("  1  2  2") == std::string::npos);
@@ -924,6 +935,7 @@ void testSDWriterOptions() {
     delete mol;
     writer.flush();
     CHECK_INVARIANT(writer.numMols() == 2, "");
+    writer.close();
 
     std::string txt = ss.str();
     TEST_ASSERT(txt.find("  1  2  2") != std::string::npos);
@@ -942,6 +954,7 @@ void testSDWriterOptions() {
     delete mol;
     writer.flush();
     CHECK_INVARIANT(writer.numMols() == 2, "");
+    writer.close();
 
     std::string txt = ss.str();
     TEST_ASSERT(txt.find("  1  2  2") != std::string::npos);
