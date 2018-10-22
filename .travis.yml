@@ -6,13 +6,7 @@ matrix:
   include:
   - os: linux
     dist: trusty
-    env: CONDA_PYTHON_VERSION=2.7
-  - os: linux
-    dist: trusty
     env: CONDA_PYTHON_VERSION=3.6
-  - os: osx
-    osx_image: xcode8.3
-    env: CONDA_PYTHON_VERSION=2.7
   - os: osx
     osx_image: xcode8.3
     env: CONDA_PYTHON_VERSION=3.6
@@ -35,11 +29,9 @@ before_install:
  - echo "*************************************************"
  - echo "Building for $TRAVIS_OS_NAME"
  - echo "         for Python $CONDA_PYTHON_VERSION"
- - export PYMAJOR="";
- - if [[ "$CONDA_PYTHON_VERSION" == "3.6" ]] ; then export PYMAJOR="3"; fi
- - if [[ "$CONDA_PYTHON_VERSION" == "2.7" ]] ; then export PYMAJOR="2"; fi
- - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget http://repo.continuum.io/miniconda/Miniconda$PYMAJOR-4.4.10-Linux-x86_64.sh -O miniconda.sh; fi
- - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then wget http://repo.continuum.io/miniconda/Miniconda$PYMAJOR-4.4.10-MacOSX-x86_64.sh -O miniconda.sh; fi
+ - export PYMAJOR="3";
+ - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget http://repo.continuum.io/miniconda/Miniconda$PYMAJOR-4.5.11-Linux-x86_64.sh -O miniconda.sh; fi
+ - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then wget http://repo.continuum.io/miniconda/Miniconda$PYMAJOR-4.5.11-MacOSX-x86_64.sh -O miniconda.sh; fi
  - bash miniconda.sh -b -p $HOME/conda
  - export PATH="$HOME/conda/bin:$PATH"
  - hash -r
