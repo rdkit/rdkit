@@ -5,7 +5,7 @@
 ### Open source toolkit for cheminformatics
 -   Business-friendly BSD license
 -   Core data structures and algorithms in C++
--   Python (2.x and 3.x) wrappers generated using Boost.Python
+-   Python 3.x wrappers generated using Boost.Python
 -   Java and C\# wrappers generated with SWIG
 -   2D and 3D molecular operations
 -   Descriptor generation for machine learning

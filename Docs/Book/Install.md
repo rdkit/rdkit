@@ -30,7 +30,7 @@ If for some reason this does not work, try:
 Windows users will use a slightly different command:
 
     C:\> activate my-rdkit-env
-  
+
 #### conda-forge package
 
 A [conda-forge](https://conda-forge.org/#about) RDKit package is also available, which may offer an easier installation for users already using other conda-forge packages. This package can be installed with:
@@ -86,7 +86,7 @@ Start by downloading the latest anaconda installer from [Anaconda](https://www.a
 Numpy and matplotlib are already part of the base installation of anaconda. Due to the latest boost libraries being currently built with a GLIBC version higher than the default in anaconda, we need to update to a more recent version:
 
 	conda install -y gxx_linux-64
-	
+
 At this point, you should be able to clone the RDKit repository to the desired build location, and start the build. Please consider that it is necessary to indicate the path to the numpy headers for RDKit to find them, since anaconda hides them inside the numpy package:
 
 	git clone https://github.com/rdkit/rdkit.git
@@ -97,7 +97,7 @@ At this point, you should be able to clone the RDKit repository to the desired b
 		-DRDK_INSTALL_STATIC_LIBS=OFF \
 		-DRDK_BUILD_CPP_TESTS=ON \
 		-DPYTHON_NUMPY_INCLUDE_PATH="$CONDA_PREFIX/lib/python3.6/site-packages/numpy/core/include"
-	  
+
 And finally, `make`, `make install` and `ctest`
 
 
@@ -238,7 +238,7 @@ If you aren't using the default python installation for your computer, You need 
 
 Here's a sample command line:
 
-    cmake -D PYTHON_LIBRARY=/usr/lib/python2.7/config/libpython2.7.a -D PYTHON_INCLUDE_DIR=/usr/include/python2.7/ -D PYTHON_EXECUTABLE=/usr/bin/python ..
+    cmake -D PYTHON_LIBRARY=/usr/lib/python3.6/config/libpython3.6.a -D PYTHON_INCLUDE_DIR=/usr/include/python3.6/ -D PYTHON_EXECUTABLE=/usr/bin/python3 ..
 
 The `PYTHON_EXECUTABLE` part is optional if the correct python is the first version in your PATH.
 
@@ -364,7 +364,7 @@ Now it's safe to build boost and the RDKit.
 
 ### Prerequisites
 
--   Python 2.7 or 3.4+ (from http://www.python.org/)
+-   3.6+ (from http://www.python.org/)
 -   numpy (from http://numpy.scipy.org/ or use `pip install numpy`). Binaries for win64 are available here: http://www.lfd.uci.edu/~gohlke/pythonlibs/#numpy
 -   Pillow: (from https://python-pillow.github.io/> or use `pip install Pillow`)
 
