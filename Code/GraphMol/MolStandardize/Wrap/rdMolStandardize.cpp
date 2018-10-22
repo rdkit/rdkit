@@ -110,40 +110,42 @@ BOOST_PYTHON_MODULE(rdMolStandardize) {
                      "prefer organic fragments to inorganic ones when deciding "
                      "what to keep");
 
-  docString = "";
+  docString = "Standardizes a molecule";
   python::def("Cleanup", cleanupHelper,
               (python::arg("mol"), python::arg("params") = python::object()),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
-  docString = "";
+  docString = "Convenience function fo standardizing a SMILES";
   python::def("StandardizeSmiles", RDKit::MolStandardize::standardizeSmiles,
               (python::arg("smiles")), docString.c_str());
-  docString = "";
+  docString = "Returns the largest fragment after doing a cleanup";
   python::def("FragmentParent", fragmentParentHelper,
               (python::arg("mol"), python::arg("params") = python::object(),
                python::arg("skipStandardize") = false),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
-  docString = "";
+  docString = "Returns the uncharged version of the largest fragment";
   python::def("ChargeParent", chargeParentHelper,
               (python::arg("mol"), python::arg("params") = python::object(),
                python::arg("skipStandardize") = false),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
-  docString = "";
+  docString =
+      "Applies a series of standard transformations to correct functional "
+      "groups and recombine charges";
   python::def("Normalize", normalizeHelper,
               (python::arg("mol"), python::arg("params") = python::object()),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
-  docString = "";
+  docString = "Ensures the strongest acid groups are charged first";
   python::def("Reionize", reionizeHelper,
               (python::arg("mol"), python::arg("params") = python::object()),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
 
   wrap_validate();
-	wrap_charge();
-	wrap_metal();
-	wrap_fragment();
-	wrap_normalize();
+  wrap_charge();
+  wrap_metal();
+  wrap_fragment();
+  wrap_normalize();
 }
