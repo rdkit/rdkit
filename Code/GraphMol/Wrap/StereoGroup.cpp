@@ -39,11 +39,11 @@ struct stereogroup_wrap {
         .def(python::vector_indexing_suite<ROMol::ATOM_PTR_VECT>());
 
     python::class_<StereoGroup, boost::shared_ptr<StereoGroup>> (
-        "StereoGroup1", stereoGroupClassDoc.c_str(), python::init<>())
+        "StereoGroup", stereoGroupClassDoc.c_str(), python::init<>())
         .def("GetGroupType", &StereoGroup::getGroupType,
              "Returns the StereoGroupType.\n")
         .def("GetAtoms", &StereoGroup::getAtoms,
-             "Returns the StereoGroupType.\n",
+             "Access the atoms in the StereoGroup.\n",
              python::return_internal_reference<
                  1, python::with_custodian_and_ward_postcall<0, 1>>());
   }

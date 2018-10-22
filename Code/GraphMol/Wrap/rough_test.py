@@ -8,7 +8,7 @@ it's intended to be shallow, but broad
 
 """
 from __future__ import print_function
-import os, sys, tempfile, gzip
+import os, sys, tempfile, gzip, gc
 import unittest, doctest
 from rdkit import RDConfig, rdBase
 from rdkit import DataStructs
@@ -4979,6 +4979,26 @@ M  END
     self.assertEqual(len(stereo_atoms), 2)
     # file is 1 indexed and says 5
     self.assertEqual(stereo_atoms[1].GetIdx(), 4)
+
+  def testEnhancedStereoPreservesMol(self):
+    """
+    Check that the stereo group (and the atoms therein) preserve the lifetime
+    of the associated mol.
+    """
+    rdbase = os.environ['RDBASE']
+    filename = os.path.join(rdbase, 'Code/GraphMol/FileParsers/test_data/two_centers_or.mol')
+    suppl = Chem.SDMolSupplier(filename)
+    m = next(suppl)
+
+    sg = m.GetStereoGroups()
+    self.assertEqual(len(sg), 2)
+    group1 = sg[1]
+    self.assertEqual(group1.GetGroupType(), Chem.StereoGroupType.STEREO_OR)
+    stereo_atoms = group1.GetAtoms()
+    self.assertEqual(len(stereo_atoms), 2)
+    # file is 1 indexed and says 5
+    self.assertEqual(stereo_atoms[1].GetIdx(), 4)
+
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
