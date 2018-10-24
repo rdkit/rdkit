@@ -4968,8 +4968,7 @@ M  END
 
     rdbase = os.environ['RDBASE']
     filename = os.path.join(rdbase, 'Code/GraphMol/FileParsers/test_data/two_centers_or.mol')
-    suppl = Chem.SDMolSupplier(filename)
-    m = next(suppl)
+    m = Chem.MolFromMolFile(filename)
 
     sg = m.GetStereoGroups()
     self.assertEqual(len(sg), 2)
@@ -4987,17 +4986,18 @@ M  END
     """
     rdbase = os.environ['RDBASE']
     filename = os.path.join(rdbase, 'Code/GraphMol/FileParsers/test_data/two_centers_or.mol')
-    suppl = Chem.SDMolSupplier(filename)
-    m = next(suppl)
+    m = Chem.MolFromMolFile(filename)
 
     sg = m.GetStereoGroups()
+    m = None
+    gc.collect()
     self.assertEqual(len(sg), 2)
     group1 = sg[1]
-    self.assertEqual(group1.GetGroupType(), Chem.StereoGroupType.STEREO_OR)
     stereo_atoms = group1.GetAtoms()
-    self.assertEqual(len(stereo_atoms), 2)
-    # file is 1 indexed and says 5
+    sg = None
+    gc.collect()
     self.assertEqual(stereo_atoms[1].GetIdx(), 4)
+    self.assertEqual(stereo_atoms[1].GetOwningMol().GetNumAtoms(),8)
 
 
 if __name__ == '__main__':
