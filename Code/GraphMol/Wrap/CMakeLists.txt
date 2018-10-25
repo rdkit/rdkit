@@ -2,7 +2,7 @@ remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
 rdkit_python_extension(rdchem
                        rdchem.cpp Table.cpp Atom.cpp Bond.cpp Mol.cpp
                        Conformer.cpp RingInfo.cpp EditableMol.cpp MonomerInfo.cpp
-                       ResonanceMolSupplier.cpp MolBundle.cpp
+                       ResonanceMolSupplier.cpp MolBundle.cpp StereoGroup.cpp
                        DEST Chem
                        LINK_LIBRARIES
                        SmilesParse ChemTransforms SubstructMatch GraphMol RDGeometryLib RDGeneral RDBoost)
