@@ -75,7 +75,7 @@ const EmbedParameters KDG(0,      // maxIterations
                           -1.0,   // pruneRmsThresh
                           true,   // onlyHeavyAtomsForRMS
                           1       // ETversion
-                          );
+);
 
 //! Parameters corresponding to Sereina Riniker's ETDG approach
 const EmbedParameters ETDG(0,      // maxIterations
@@ -97,7 +97,7 @@ const EmbedParameters ETDG(0,      // maxIterations
                            -1.0,   // pruneRmsThresh
                            true,   // onlyHeavyAtomsForRMS
                            1       // ETversion
-                           );
+);
 //! Parameters corresponding to Sereina Riniker's ETKDG approach
 const EmbedParameters ETKDG(0,      // maxIterations
                             1,      // numThreads
@@ -118,7 +118,7 @@ const EmbedParameters ETKDG(0,      // maxIterations
                             -1.0,   // pruneRmsThresh
                             true,   // onlyHeavyAtomsForRMS
                             1       // ETversion
-                            );
+);
 
 //! Parameters corresponding to Sereina Riniker's ETKDG approach - version 2
 const EmbedParameters ETKDGv2(0,      // maxIterations
@@ -140,7 +140,38 @@ const EmbedParameters ETKDGv2(0,      // maxIterations
                               -1.0,   // pruneRmsThresh
                               true,   // onlyHeavyAtomsForRMS
                               2       // ETversion
-                              );
+);
+
+namespace detail {
+typedef struct {
+  boost::dynamic_bitset<> *confsOk;
+  bool fourD;
+  INT_VECT *fragMapping;
+  std::vector<Conformer *> *confs;
+  unsigned int fragIdx;
+  DistGeom::BoundsMatPtr mmat;
+  bool useRandomCoords;
+  double boxSizeMult;
+  bool randNegEig;
+  unsigned int numZeroFail;
+  double optimizerForceTol;
+  double basinThresh;
+  int seed;
+  unsigned int maxIterations;
+  DistGeom::VECT_CHIRALSET const *chiralCenters;
+  DistGeom::VECT_CHIRALSET const *tetrahedralCarbons;
+  bool enforceChirality;
+  bool useExpTorsionAnglePrefs;
+  bool useBasicKnowledge;
+  std::vector<std::pair<int, int>> *bonds;
+  std::vector<std::vector<int>> *angles;
+  std::vector<std::vector<int>> *expTorsionAtoms;
+  std::vector<std::pair<std::vector<int>, std::vector<double>>>
+      *expTorsionAngles;
+  std::vector<std::vector<int>> *improperAtoms;
+  std::vector<int> *atomNums;
+} EmbedArgs;
+}  // namespace detail
 
 bool _volumeTest(const DistGeom::ChiralSetPtr &chiralSet,
                  const RDGeom::PointPtrVect &positions, bool verbose = false) {
@@ -348,24 +379,12 @@ bool _minimizeWithExpTorsions(
   return planar;
 }
 
-bool _embedPoints(
-    RDGeom::PointPtrVect *positions, const DistGeom::BoundsMatPtr mmat,
-    bool useRandomCoords, double boxSizeMult, bool randNegEig,
-    unsigned int numZeroFail, double optimizerForceTol, double basinThresh,
-    int seed, unsigned int maxIterations,
-    const DistGeom::VECT_CHIRALSET *chiralCenters,
-    const DistGeom::VECT_CHIRALSET *tetrahedralCarbons, bool enforceChirality,
-    bool useExpTorsionAnglePrefs, bool useBasicKnowledge,
-    const std::vector<std::pair<int, int>> &bonds,
-    const std::vector<std::vector<int>> &angles,
-    const std::vector<std::vector<int>> &expTorsionAtoms,
-    const std::vector<std::pair<std::vector<int>, std::vector<double>>>
-        &expTorsionAngles,
-    const std::vector<std::vector<int>> &improperAtoms,
-    const std::vector<int> &atomNums) {
+bool _embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
+                  int seed) {
+  PRECONDITION(positions, "bogus positions");
   unsigned int nat = positions->size();
-  if (maxIterations == 0) {
-    maxIterations = 10 * nat;
+  if (eargs.maxIterations == 0) {
+    eargs.maxIterations = 10 * nat;
   }
   RDNumeric::DoubleSymmMatrix distMat(nat, 0.0);
 
@@ -373,7 +392,7 @@ bool _embedPoints(
   // random coordinates since it ends up ignoring 1-4 (and higher)
   // interactions. This causes us to get folded-up (and self-penetrating)
   // conformations for large flexible molecules
-  if (useRandomCoords) basinThresh = 1e8;
+  if (eargs.useRandomCoords) eargs.basinThresh = 1e8;
 
   RDKit::double_source_type *rng = nullptr;
   RDKit::rng_type *generator;
@@ -393,18 +412,18 @@ bool _embedPoints(
   unsigned int iter = 0;
   double largestDistance = -1.0;
   RDUNUSED_PARAM(largestDistance);
-  while ((gotCoords == false) && (iter < maxIterations)) {
+  while ((gotCoords == false) && (iter < eargs.maxIterations)) {
     ++iter;
-    if (!useRandomCoords) {
-      largestDistance = DistGeom::pickRandomDistMat(*mmat, distMat, *rng);
-      gotCoords = DistGeom::computeInitialCoords(distMat, *positions, *rng,
-                                                 randNegEig, numZeroFail);
+    if (!eargs.useRandomCoords) {
+      largestDistance = DistGeom::pickRandomDistMat(*eargs.mmat, distMat, *rng);
+      gotCoords = DistGeom::computeInitialCoords(
+          distMat, *positions, *rng, eargs.randNegEig, eargs.numZeroFail);
     } else {
       double boxSize;
-      if (boxSizeMult > 0) {
-        boxSize = 5. * boxSizeMult;
+      if (eargs.boxSizeMult > 0) {
+        boxSize = 5. * eargs.boxSizeMult;
       } else {
-        boxSize = -1 * boxSizeMult;
+        boxSize = -1 * eargs.boxSizeMult;
       }
       gotCoords = DistGeom::computeRandomCoords(*positions, boxSize, *rng);
     }
@@ -417,26 +436,27 @@ bool _embedPoints(
     // std::endl;
     if (gotCoords) {
       boost::scoped_ptr<ForceFields::ForceField> field(
-          DistGeom::constructForceField(*mmat, *positions, *chiralCenters, 1.0,
-                                        0.1, nullptr, basinThresh));
+          DistGeom::constructForceField(*eargs.mmat, *positions,
+                                        *eargs.chiralCenters, 1.0, 0.1, nullptr,
+                                        eargs.basinThresh));
       unsigned int nPasses = 0;
       field->initialize();
       // std::cerr << "FIELD E: " << field->calcEnergy() << std::endl;
       if (field->calcEnergy() > ERROR_TOL) {
         int needMore = 1;
         while (needMore) {
-          needMore = field->minimize(400, optimizerForceTol);
+          needMore = field->minimize(400, eargs.optimizerForceTol);
           ++nPasses;
         }
       }
       std::vector<double> e_contribs;
       double local_e = field->calcEnergy(&e_contribs);
-// if (e_contribs.size()) {
-//   std::cerr << "        check: " << local_e / nat << " "
-//             << *(std::max_element(e_contribs.begin(),
-//             e_contribs.end()))
-//             << std::endl;
-// }
+      // if (e_contribs.size()) {
+      //   std::cerr << "        check: " << local_e / nat << " "
+      //             << *(std::max_element(e_contribs.begin(),
+      //             e_contribs.end()))
+      //             << std::endl;
+      // }
 
 #ifdef DEBUG_EMBEDDING
       std::cerr << " Energy : " << local_e / nat << " "
@@ -464,7 +484,7 @@ bool _embedPoints(
       // for each of the atoms in the "tetrahedralCarbons" list, make sure
       // that there is a minimum volume around them and that they are inside
       // that volume. (this is part of github #971)
-      BOOST_FOREACH (DistGeom::ChiralSetPtr tetSet, *tetrahedralCarbons) {
+      BOOST_FOREACH (DistGeom::ChiralSetPtr tetSet, *eargs.tetrahedralCarbons) {
         // it could happen that the centroid is outside the volume defined
         // by the other
         // four points. That is also a fail.
@@ -486,9 +506,10 @@ bool _embedPoints(
 
       // Check if any of our chiral centers are badly out of whack. If so, try
       // again
-      if (gotCoords && enforceChirality && chiralCenters->size() > 0) {
+      if (gotCoords && eargs.enforceChirality &&
+          eargs.chiralCenters->size() > 0) {
         // check the chiral volume:
-        BOOST_FOREACH (DistGeom::ChiralSetPtr chiralSet, *chiralCenters) {
+        BOOST_FOREACH (DistGeom::ChiralSetPtr chiralSet, *eargs.chiralCenters) {
           double vol = DistGeom::ChiralViolationContrib::calcChiralVolume(
               chiralSet->d_idx1, chiralSet->d_idx2, chiralSet->d_idx3,
               chiralSet->d_idx4, *positions);
@@ -509,17 +530,19 @@ bool _embedPoints(
       // or have started from random coords. This
       // time removing the chiral constraints and
       // increasing the weight on the fourth dimension
-      if (gotCoords && (chiralCenters->size() > 0 || useRandomCoords)) {
+      if (gotCoords &&
+          (eargs.chiralCenters->size() > 0 || eargs.useRandomCoords)) {
         boost::scoped_ptr<ForceFields::ForceField> field2(
-            DistGeom::constructForceField(*mmat, *positions, *chiralCenters,
-                                          0.2, 1.0, nullptr, basinThresh));
+            DistGeom::constructForceField(*eargs.mmat, *positions,
+                                          *eargs.chiralCenters, 0.2, 1.0,
+                                          nullptr, eargs.basinThresh));
         field2->initialize();
         // std::cerr<<"FIELD2 E: "<<field2->calcEnergy()<<std::endl;
         if (field2->calcEnergy() > ERROR_TOL) {
           int needMore = 1;
           int nPasses2 = 0;
           while (needMore) {
-            needMore = field2->minimize(200, optimizerForceTol);
+            needMore = field2->minimize(200, eargs.optimizerForceTol);
             ++nPasses2;
           }
           // std::cerr<<"   "<<field2->calcEnergy()<<" after npasses2:
@@ -528,17 +551,20 @@ bool _embedPoints(
       }
 
       // (ET)(K)DG
-      if (gotCoords && (useExpTorsionAnglePrefs || useBasicKnowledge)) {
+      if (gotCoords &&
+          (eargs.useExpTorsionAnglePrefs || eargs.useBasicKnowledge)) {
         gotCoords = _minimizeWithExpTorsions(
-            *positions, mmat, optimizerForceTol, basinThresh, bonds, angles,
-            expTorsionAtoms, expTorsionAngles, improperAtoms, atomNums,
-            useBasicKnowledge);
+            *positions, eargs.mmat, eargs.optimizerForceTol, eargs.basinThresh,
+            *eargs.bonds, *eargs.angles, *eargs.expTorsionAtoms,
+            *eargs.expTorsionAngles, *eargs.improperAtoms, *eargs.atomNums,
+            eargs.useBasicKnowledge);
       }
       // test if chirality is correct
-      if (enforceChirality && gotCoords && (chiralCenters->size() > 0)) {
+      if (eargs.enforceChirality && gotCoords &&
+          (eargs.chiralCenters->size() > 0)) {
         // "distance matrix" chirality test
         std::set<int> atoms;
-        BOOST_FOREACH (DistGeom::ChiralSetPtr chiralSet, *chiralCenters) {
+        BOOST_FOREACH (DistGeom::ChiralSetPtr chiralSet, *eargs.chiralCenters) {
           if (chiralSet->d_idx0 != chiralSet->d_idx4) {
             atoms.insert(chiralSet->d_idx0);
             atoms.insert(chiralSet->d_idx1);
@@ -549,7 +575,7 @@ bool _embedPoints(
         }
         std::vector<int> atomsToCheck(atoms.begin(), atoms.end());
         if (atomsToCheck.size() > 0) {
-          if (!_boundsFulfilled(atomsToCheck, *mmat, *positions)) {
+          if (!_boundsFulfilled(atomsToCheck, *eargs.mmat, *positions)) {
             gotCoords = false;
 
 #ifdef DEBUG_EMBEDDING
@@ -561,7 +587,8 @@ bool _embedPoints(
 
         // "center in volume" chirality test
         if (gotCoords) {
-          BOOST_FOREACH (DistGeom::ChiralSetPtr chiralSet, *chiralCenters) {
+          BOOST_FOREACH (DistGeom::ChiralSetPtr chiralSet,
+                         *eargs.chiralCenters) {
             // it could happen that the centroid is outside the volume defined
             // by the other
             // four points. That is also a fail.
@@ -737,34 +764,6 @@ void adjustBoundsMatFromCoordMap(
 }
 
 namespace detail {
-typedef struct {
-  boost::dynamic_bitset<> *confsOk;
-  bool fourD;
-  INT_VECT *fragMapping;
-  std::vector<Conformer *> *confs;
-  unsigned int fragIdx;
-  DistGeom::BoundsMatPtr mmat;
-  bool useRandomCoords;
-  double boxSizeMult;
-  bool randNegEig;
-  unsigned int numZeroFail;
-  double optimizerForceTol;
-  double basinThresh;
-  int seed;
-  unsigned int maxIterations;
-  DistGeom::VECT_CHIRALSET const *chiralCenters;
-  DistGeom::VECT_CHIRALSET const *tetrahedralCarbons;
-  bool enforceChirality;
-  bool useExpTorsionAnglePrefs;
-  bool useBasicKnowledge;
-  std::vector<std::pair<int, int>> *bonds;
-  std::vector<std::vector<int>> *angles;
-  std::vector<std::vector<int>> *expTorsionAtoms;
-  std::vector<std::pair<std::vector<int>, std::vector<double>>>
-      *expTorsionAngles;
-  std::vector<std::vector<int>> *improperAtoms;
-  std::vector<int> *atomNums;
-} EmbedArgs;
 
 template <class T>
 bool multiplication_overflows_(T a, T b) {
@@ -775,6 +774,7 @@ bool multiplication_overflows_(T a, T b) {
 }
 
 void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs) {
+  PRECONDITION(eargs, "bogus eargs");
   unsigned int nAtoms = eargs->mmat->numRows();
   RDGeom::PointPtrVect positions;
   for (unsigned int i = 0; i < nAtoms; ++i) {
@@ -822,15 +822,15 @@ void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs) {
     CHECK_INVARIANT(new_seed >= -1,
                     "Something went wrong calculating a new seed");
 
-    bool gotCoords = _embedPoints(
-        &positions, eargs->mmat, eargs->useRandomCoords, eargs->boxSizeMult,
-        eargs->randNegEig, eargs->numZeroFail, eargs->optimizerForceTol,
-        eargs->basinThresh, new_seed, eargs->maxIterations,
-        eargs->chiralCenters, eargs->tetrahedralCarbons,
-        eargs->enforceChirality, eargs->useExpTorsionAnglePrefs,
-        eargs->useBasicKnowledge, *eargs->bonds, *eargs->angles,
-        *eargs->expTorsionAtoms, *eargs->expTorsionAngles,
-        *eargs->improperAtoms, *eargs->atomNums);
+    bool gotCoords = _embedPoints(&positions, *eargs, new_seed); /*
+          &positions, eargs->mmat, eargs->useRandomCoords, eargs->boxSizeMult,
+          eargs->randNegEig, eargs->numZeroFail, eargs->optimizerForceTol,
+          eargs->basinThresh, new_seed, eargs->maxIterations,
+          eargs->chiralCenters, eargs->tetrahedralCarbons,
+          eargs->enforceChirality, eargs->useExpTorsionAnglePrefs,
+          eargs->useBasicKnowledge, *eargs->bonds, *eargs->angles,
+          *eargs->expTorsionAtoms, *eargs->expTorsionAngles,
+          *eargs->improperAtoms, *eargs->atomNums);*/
 
     if (gotCoords) {
       Conformer *conf = (*eargs->confs)[ci];
