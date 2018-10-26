@@ -302,18 +302,8 @@ bool _boundsFulfilled(const std::vector<int> &atoms,
 }
 
 // the minimization using experimental torsion angle preferences
-bool _minimizeWithExpTorsions(
-    RDGeom::PointPtrVect &positions, DistGeom::BoundsMatPtr mmat,
-    double optimizerForceTol, double basinThresh,
-    const std::vector<std::pair<int, int>> &bonds,
-    const std::vector<std::vector<int>> &angles,
-    const std::vector<std::vector<int>> &expTorsionAtoms,
-    const std::vector<std::pair<std::vector<int>, std::vector<double>>>
-        &expTorsionAngles,
-    const std::vector<std::vector<int>> &improperAtoms,
-    const std::vector<int> &atomNums, bool useBasicKnowledge) {
-  RDUNUSED_PARAM(basinThresh);
-
+bool _minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
+                              const detail::EmbedArgs &eargs) {
   bool planar = true;
 
   // convert to 3D positions and create coordMap
@@ -325,14 +315,15 @@ bool _minimizeWithExpTorsions(
 
   // create the force field
   ForceFields::ForceField *field;
-  if (useBasicKnowledge) {  // ETKDG or KDG
-    field = DistGeom::construct3DForceField(*mmat, positions3D, bonds, angles,
-                                            expTorsionAtoms, expTorsionAngles,
-                                            improperAtoms, atomNums);
+  if (eargs.useBasicKnowledge) {  // ETKDG or KDG
+    field = DistGeom::construct3DForceField(
+        *eargs.mmat, positions3D, *eargs.bonds, *eargs.angles,
+        *eargs.expTorsionAtoms, *eargs.expTorsionAngles, *eargs.improperAtoms,
+        *eargs.atomNums);
   } else {  // plain ETDG
-    field = DistGeom::constructPlain3DForceField(*mmat, positions3D, bonds,
-                                                 angles, expTorsionAtoms,
-                                                 expTorsionAngles, atomNums);
+    field = DistGeom::constructPlain3DForceField(
+        *eargs.mmat, positions3D, *eargs.bonds, *eargs.angles,
+        *eargs.expTorsionAtoms, *eargs.expTorsionAngles, *eargs.atomNums);
   }
 
   // minimize!
@@ -342,7 +333,7 @@ bool _minimizeWithExpTorsions(
   // " << ERROR_TOL << std::endl;
   if (field->calcEnergy() > ERROR_TOL) {
     // while (needMore) {
-    field->minimize(300, optimizerForceTol);
+    field->minimize(300, eargs.optimizerForceTol);
     //      ++nPasses;
     //}
   }
@@ -350,18 +341,20 @@ bool _minimizeWithExpTorsions(
   delete field;
 
   // check for planarity if ETKDG or KDG
-  if (useBasicKnowledge) {
+  if (eargs.useBasicKnowledge) {
     // create a force field with only the impropers
     ForceFields::ForceField *field2;
-    field2 = DistGeom::construct3DImproperForceField(*mmat, positions3D,
-                                                     improperAtoms, atomNums);
+    field2 = DistGeom::construct3DImproperForceField(
+        *eargs.mmat, positions3D, *eargs.improperAtoms, *eargs.atomNums);
     field2->initialize();
     // check if the energy is low enough
     double planarityTolerance = 0.7;
-    if (field2->calcEnergy() > improperAtoms.size() * planarityTolerance) {
+    if (field2->calcEnergy() >
+        eargs.improperAtoms->size() * planarityTolerance) {
 #ifdef DEBUG_EMBEDDING
       std::cerr << "   planar fail: " << field2->calcEnergy() << " "
-                << improperAtoms.size() * planarityTolerance << std::endl;
+                << eargs.improperAtoms->size() * planarityTolerance
+                << std::endl;
 #endif
       planar = false;
     }
@@ -554,10 +547,10 @@ bool _embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
       if (gotCoords &&
           (eargs.useExpTorsionAnglePrefs || eargs.useBasicKnowledge)) {
         gotCoords = _minimizeWithExpTorsions(
-            *positions, eargs.mmat, eargs.optimizerForceTol, eargs.basinThresh,
-            *eargs.bonds, *eargs.angles, *eargs.expTorsionAtoms,
-            *eargs.expTorsionAngles, *eargs.improperAtoms, *eargs.atomNums,
-            eargs.useBasicKnowledge);
+            *positions, eargs); /*eargs.mmat, eargs.optimizerForceTol,
+           eargs.basinThresh, *eargs.bonds, *eargs.angles,
+           *eargs.expTorsionAtoms, *eargs.expTorsionAngles,
+           *eargs.improperAtoms, *eargs.atomNums, eargs.useBasicKnowledge); */
       }
       // test if chirality is correct
       if (eargs.enforceChirality && gotCoords &&
