@@ -1,0 +1,1453 @@
+#
+# This suppressions file was generated on a Linux-x86_64 machine,
+# inside a conda environment. Used relevant software was:
+#
+# - valgrind: v3.14.0 final, built from git sources under the same env.
+# - Boost libs: conda package, v1.67.0 (py36_4)
+# - Compiler: conda package, gxx_linux-64 7.2.0 (h550dcbe_27)
+#
+# CMake command/options was:
+# cmake .. \
+#    -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+#    -DCMAKE_BUILD_TYPE=Debug \
+#    -DPy_ENABLE_SHARED=1 \
+#    -DRDK_INSTALL_INTREE=ON \
+#    -DRDK_INSTALL_STATIC_LIBS=OFF \
+#    -DRDK_BUILD_CPP_TESTS=ON \
+#    -DRDK_OPTIMIZE_NATIVE=OFF \
+#    -DRDK_BUILD_TEST_GZIP=ON \
+#    -DRDK_BUILD_AVALON_SUPPORT=ON \
+#    -DRDK_BUILD_INCHI_SUPPORT=ON \
+#    -DRDK_BUILD_THREADSAFE_SSS=ON \
+#    -DRDK_TEST_MULTITHREADED=ON \
+#    -DRDK_BUILD_FREESASA_SUPPORT=ON \
+#    -DRDK_USE_BOOST_REGEX=ON \
+#    -DPYTHON_NUMPY_INCLUDE_PATH="$CONDA_PREFIX/lib/python3.6/site-packages/numpy/core/include"
+#
+{
+   memory definitely lost
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:_Znwm
+   fun:Reader
+   fun:_ZL12loadTemplateRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt6vectorIP25sketcherMinimizerMoleculeSaIS9_EE.constprop.1036
+   fun:_ZN17sketcherMinimizer13loadTemplatesEv
+   fun:_ZNK23CoordgenFragmentBuilder12findTemplateESt6vectorIP21sketcherMinimizerRingSaIS2_EE
+   fun:_ZNK23CoordgenFragmentBuilder31generateCoordinatesCentralRingsESt6vectorIP21sketcherMinimizerRingSaIS2_EE
+   fun:_ZNK23CoordgenFragmentBuilder10buildRingsEP25sketcherMinimizerFragment
+   fun:_ZNK23CoordgenFragmentBuilder13buildFragmentEP25sketcherMinimizerFragment
+   fun:_ZNK23CoordgenFragmentBuilder21initializeCoordinatesEP25sketcherMinimizerFragment
+   fun:_ZN17sketcherMinimizer19initializeFragmentsEv
+   fun:_ZN17sketcherMinimizer22runGenerateCoordinatesEv
+   fun:_ZN5RDKit8CoordGen9addCoordsINS_5ROMolEEEjRT_PKNS0_14CoordGenParamsE
+}
+{
+   memory definitely lost 0
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:_Znwm
+   fun:Reader
+   fun:_ZN5RDKit14MaeMolSupplierC1EPSibbb
+}
+{
+   memory definitely lost 1
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:_Znwm
+   fun:Reader
+   fun:_ZN5RDKit14MaeMolSupplierC1ERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbb
+}
+{
+   memory definitely lost 2
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:_Znwm
+   fun:_Z12yysmarts_lexP7YYSTYPEPvRi
+   fun:_Z14yysmarts_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EERPNS2_4AtomERPNS2_4BondEPvRi
+   fun:_ZN5RDKit12_GLOBAL__N_112smarts_parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt6vectorIPNS_5RWMolESaISB_EE
+   fun:_ZN5RDKit5toMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFiS7_RSt6vectorIPNS_5RWMolESaISA_EEES7_
+   fun:_ZN5RDKit11SmartsToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEibPSt3mapIS5_S5_St4lessIS5_ESaISt4pairIS6_S5_EEE
+}
+{
+   memory definitely lost 3
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:_Znwm
+   fun:_Z12yysmarts_lexP7YYSTYPEPvRi
+   fun:_Z14yysmarts_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EERPNS2_4AtomERPNS2_4BondEPvRi
+   fun:_ZN5RDKit12_GLOBAL__N_117smarts_bond_parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERPNS_4BondE
+   fun:_ZN5RDKit6toBondERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFiS7_RPNS_4BondEE
+}
+{
+   memory definitely lost 4
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:_Znwm
+   fun:_Z12yysmiles_lexP7YYSTYPEPvRi
+   fun:_Z14yysmiles_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EERPNS2_4AtomERPNS2_4BondEPNSt7__cxx114listIjSaIjEEEPvRi
+   fun:_ZN5RDKit12_GLOBAL__N_117smiles_atom_parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERPNS_4AtomE
+   fun:_ZN5RDKit6toAtomERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFiS7_RPNS_4AtomEE
+}
+{
+   memory definitely lost 5
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:_Znwm
+   fun:_Z12yysmiles_lexP7YYSTYPEPvRi
+   fun:_Z14yysmiles_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EERPNS2_4AtomERPNS2_4BondEPNSt7__cxx114listIjSaIjEEEPvRi
+   fun:_ZN5RDKit12_GLOBAL__N_117smiles_bond_parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERPNS_4BondE
+   fun:_ZN5RDKit6toBondERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFiS7_RPNS_4BondEE
+}
+{
+   memory definitely lost 6
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:_Znwm
+   fun:_Z14yysmarts_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EERPNS2_4AtomERPNS2_4BondEPvRi
+   fun:_ZN5RDKit12_GLOBAL__N_112smarts_parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt6vectorIPNS_5RWMolESaISB_EE
+   fun:_ZN5RDKit5toMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFiS7_RSt6vectorIPNS_5RWMolESaISA_EEES7_
+   fun:_ZN5RDKit11SmartsToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEibPSt3mapIS5_S5_St4lessIS5_ESaISt4pairIS6_S5_EEE
+}
+{
+   memory definitely lost 7
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:_Znwm
+   fun:_Z14yysmarts_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EERPNS2_4AtomERPNS2_4BondEPvRi
+   fun:_ZN5RDKit12_GLOBAL__N_117smarts_atom_parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERPNS_4AtomE
+   fun:_ZN5RDKit6toAtomERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFiS7_RPNS_4AtomEE
+}
+{
+   memory definitely lost 8
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:_Znwm
+   fun:_Z14yysmarts_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EERPNS2_4AtomERPNS2_4BondEPvRi
+   fun:_ZN5RDKit12_GLOBAL__N_117smarts_bond_parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERPNS_4BondE
+   fun:_ZN5RDKit6toBondERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFiS7_RPNS_4BondEE
+}
+{
+   memory definitely lost 9
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:_Znwm
+   fun:_Z9yysln_lexP7YYSTYPEPv
+   fun:_Z11yysln_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EEbPv
+   fun:_Z9sln_parseRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbRSt6vectorIPN5RDKit5RWMolESaISA_EE
+   fun:_ZN5RDKit8SLNParse5toMolENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+   fun:_ZN5RDKit8SLNToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
+{
+   memory definitely lost 10
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:_Znwm
+   fun:_ZN11schrodinger3mae9MaeParser21getIndexedBlockParserEv
+   fun:_ZN11schrodinger3mae9MaeParser9blockBodyERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZN11schrodinger3mae9MaeParser10outerBlockEv
+   fun:_ZN11schrodinger3mae6Reader4nextERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZL12loadTemplateRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt6vectorIP25sketcherMinimizerMoleculeSaIS9_EE.constprop.1036
+   fun:_ZN17sketcherMinimizer13loadTemplatesEv
+   fun:_ZNK23CoordgenFragmentBuilder12findTemplateESt6vectorIP21sketcherMinimizerRingSaIS2_EE
+   fun:_ZNK23CoordgenFragmentBuilder31generateCoordinatesCentralRingsESt6vectorIP21sketcherMinimizerRingSaIS2_EE
+   fun:_ZNK23CoordgenFragmentBuilder10buildRingsEP25sketcherMinimizerFragment
+   fun:_ZNK23CoordgenFragmentBuilder13buildFragmentEP25sketcherMinimizerFragment
+   fun:_ZNK23CoordgenFragmentBuilder21initializeCoordinatesEP25sketcherMinimizerFragment
+   fun:_ZN17sketcherMinimizer19initializeFragmentsEv
+   fun:_ZN17sketcherMinimizer22runGenerateCoordinatesEv
+   fun:_ZN5RDKit8CoordGen9addCoordsINS_5ROMolEEEjRT_PKNS0_14CoordGenParamsE
+}
+{
+   memory definitely lost 11
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:_Znwm
+   fun:_ZN11schrodinger3mae9MaeParser21getIndexedBlockParserEv
+   fun:_ZN11schrodinger3mae9MaeParser9blockBodyERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZN11schrodinger3mae9MaeParser10outerBlockEv
+   fun:_ZN11schrodinger3mae6Reader4nextERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZN5RDKit14MaeMolSupplier4nextEv
+}
+{
+   memory definitely lost 12
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:_Znwm
+   fun:_ZN11schrodinger3mae9MaeParser21getIndexedBlockParserEv
+   fun:_ZN11schrodinger3mae9MaeParser9blockBodyERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZN11schrodinger3mae9MaeParser10outerBlockEv
+   fun:_ZN11schrodinger3mae6Reader4nextERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZN5RDKit14MaeMolSupplierC1EPSibbb
+}
+{
+   memory definitely lost 13
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:_Znwm
+   fun:_ZN11schrodinger3mae9MaeParser21getIndexedBlockParserEv
+   fun:_ZN11schrodinger3mae9MaeParser9blockBodyERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZN11schrodinger3mae9MaeParser10outerBlockEv
+   fun:_ZN11schrodinger3mae6Reader4nextERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZN5RDKit14MaeMolSupplierC1ERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbb
+}
+{
+   memory definitely lost 14
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:_Znwm
+   fun:_ZN5RDKit8SLNParse13closeRingBondERSt6vectorIPNS_5RWMolESaIS3_EEjj
+   fun:_Z11yysln_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EEbPv
+   fun:_Z9sln_parseRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbRSt6vectorIPN5RDKit5RWMolESaISA_EE
+   fun:_ZN5RDKit8SLNParse5toMolENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+   fun:_ZN5RDKit8SLNToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
+{
+   memory definitely lost 15
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:_Znwm
+   fun:_ZN5RDKit8SLNParse14addBranchToMolERSt6vectorIPNS_5RWMolESaIS3_EEjj
+   fun:_Z11yysln_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EEbPv
+   fun:_Z9sln_parseRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbRSt6vectorIPN5RDKit5RWMolESaISA_EE
+   fun:_ZN5RDKit8SLNParse5toMolENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+   fun:_ZN5RDKit8SLNToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
+{
+   memory definitely lost 16
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:malloc
+   fun:_Z14yysln_lex_initPPv
+   fun:_Z9sln_parseRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbRSt6vectorIPN5RDKit5RWMolESaISA_EE
+   fun:_ZN5RDKit8SLNParse5toMolENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+   fun:_ZN5RDKit8SLNToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
+{
+   memory indirectly lost
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:RDValue
+   fun:_ZN5RDKit4Dict6setValISt6vectorINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESaIS8_EEEEvRKS8_RT_
+   fun:_ZN5RDKit5ROMol13initFromOtherERKS0_bi
+   fun:ROMol
+   fun:_ZNK5RDKit23RecursiveStructureQuery4copyEv
+   fun:_Z14yysmarts_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EERPNS2_4AtomERPNS2_4BondEPvRi
+   fun:_ZN5RDKit12_GLOBAL__N_112smarts_parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt6vectorIPNS_5RWMolESaISB_EE
+   fun:_ZN5RDKit5toMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFiS7_RSt6vectorIPNS_5RWMolESaISA_EEES7_
+   fun:_ZN5RDKit11SmartsToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEibPSt3mapIS5_S5_St4lessIS5_ESaISt4pairIS6_S5_EEE
+   fun:_ZN5RDKit5Local19expandAndTestSmartsERNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERKSt3mapIS6_S6_St4lessIS6_ESaISt4pairIKS6_S6_EEE
+   fun:_ZN5RDKit5Local13parseAtomTypeERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt3mapIS6_S6_St4lessIS6_ESaISt4pairIS7_S6_EEERKj
+}
+{
+   memory indirectly lost 0
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:RDValue
+   fun:_ZN5RDKit4Dict6setValISt6vectorINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESaIS8_EEEEvRKS8_RT_
+   fun:_ZN5RDKit5ROMol7initMolEv
+   fun:ROMol
+   fun:_Z14yysmarts_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EERPNS2_4AtomERPNS2_4BondEPvRi
+   fun:_ZN5RDKit12_GLOBAL__N_112smarts_parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt6vectorIPNS_5RWMolESaISB_EE
+   fun:_ZN5RDKit5toMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFiS7_RSt6vectorIPNS_5RWMolESaISA_EEES7_
+   fun:_ZN5RDKit11SmartsToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEibPSt3mapIS5_S5_St4lessIS5_ESaISt4pairIS6_S5_EEE
+   fun:_ZN5RDKit5Local19expandAndTestSmartsERNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERKSt3mapIS6_S6_St4lessIS6_ESaISt4pairIKS6_S6_EEE
+   fun:_ZN5RDKit5Local13parseAtomTypeERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt3mapIS6_S6_St4lessIS6_ESaISt4pairIS7_S6_EEERKj
+}
+{
+   memory indirectly lost 1
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:RDValue
+   fun:_ZN5RDKit4Dict6setValISt6vectorINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESaIS8_EEEEvRKS8_RT_
+   fun:_ZN5RDKit5ROMol7initMolEv
+   fun:ROMol
+   fun:_ZN5RDKit8SLNParse8startMolINS_4AtomEEEiRSt6vectorIPNS_5RWMolESaIS5_EEPT_b
+   fun:_Z11yysln_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EEbPv
+   fun:_Z9sln_parseRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbRSt6vectorIPN5RDKit5RWMolESaISA_EE
+   fun:_ZN5RDKit8SLNParse5toMolENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+   fun:_ZN5RDKit8SLNToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
+{
+   memory indirectly lost 2
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:RDValue
+   fun:setVal<std::__cxx11::basic_string<char> >
+   fun:_ZNK5RDKit7RDProps7setPropINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEEEvRKS7_T_b
+   fun:_Z12yysmiles_lexP7YYSTYPEPvRi
+   fun:_Z14yysmiles_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EERPNS2_4AtomERPNS2_4BondEPNSt7__cxx114listIjSaIjEEEPvRi
+   fun:_ZN5RDKit12_GLOBAL__N_117smiles_bond_parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERPNS_4BondE
+   fun:_ZN5RDKit6toBondERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFiS7_RPNS_4BondEE
+}
+{
+   memory indirectly lost 3
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:_Z14yysmarts_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EERPNS2_4AtomERPNS2_4BondEPvRi
+   fun:_ZN5RDKit12_GLOBAL__N_112smarts_parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt6vectorIPNS_5RWMolESaISB_EE
+   fun:_ZN5RDKit5toMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFiS7_RSt6vectorIPNS_5RWMolESaISA_EEES7_
+   fun:_ZN5RDKit11SmartsToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEibPSt3mapIS5_S5_St4lessIS5_ESaISt4pairIS6_S5_EEE
+   fun:_ZN5RDKit5Local19expandAndTestSmartsERNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERKSt3mapIS6_S6_St4lessIS6_ESaISt4pairIKS6_S6_EEE
+   fun:_ZN5RDKit5Local13parseAtomTypeERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt3mapIS6_S6_St4lessIS6_ESaISt4pairIS7_S6_EEERKj
+}
+{
+   memory indirectly lost 4
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:_ZN11schrodinger10BufferDataC1Em
+   fun:_ZN11schrodinger6Buffer4loadERPc
+   fun:_ZN11schrodinger3maeL24property_key_author_nameERNS_6BufferERPc
+   fun:_ZN11schrodinger3mae12property_keyB5cxx11ERNS_6BufferE
+   fun:_ZN11schrodinger3mae26BufferedIndexedBlockParser5parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEmRNS_6BufferE
+   fun:_ZN11schrodinger3mae9MaeParser9blockBodyERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZN11schrodinger3mae9MaeParser10outerBlockEv
+   fun:_ZN11schrodinger3mae6Reader4nextERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZL12loadTemplateRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt6vectorIP25sketcherMinimizerMoleculeSaIS9_EE.constprop.1036
+   fun:_ZN17sketcherMinimizer13loadTemplatesEv
+   fun:_ZNK23CoordgenFragmentBuilder12findTemplateESt6vectorIP21sketcherMinimizerRingSaIS2_EE
+   fun:_ZNK23CoordgenFragmentBuilder31generateCoordinatesCentralRingsESt6vectorIP21sketcherMinimizerRingSaIS2_EE
+   fun:_ZNK23CoordgenFragmentBuilder10buildRingsEP25sketcherMinimizerFragment
+   fun:_ZNK23CoordgenFragmentBuilder13buildFragmentEP25sketcherMinimizerFragment
+   fun:_ZNK23CoordgenFragmentBuilder21initializeCoordinatesEP25sketcherMinimizerFragment
+   fun:_ZN17sketcherMinimizer19initializeFragmentsEv
+   fun:_ZN17sketcherMinimizer22runGenerateCoordinatesEv
+   fun:_ZN5RDKit8CoordGen9addCoordsINS_5ROMolEEEjRT_PKNS0_14CoordGenParamsE
+}
+{
+   memory indirectly lost 5
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:_ZN11schrodinger10BufferDataC1Em
+   fun:_ZN11schrodinger6Buffer4loadERPc
+   fun:load
+   fun:MaeParser
+   fun:Reader
+   fun:_ZN5RDKit14MaeMolSupplierC1EPSibbb
+}
+{
+   memory indirectly lost 6
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:_ZN11schrodinger10BufferDataC1Em
+   fun:_ZN11schrodinger6Buffer4loadERPc
+   fun:load
+   fun:MaeParser
+   fun:Reader
+   fun:_ZN5RDKit14MaeMolSupplierC1ERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbb
+}
+{
+   memory indirectly lost 7
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:_ZN11schrodinger10BufferDataC1Em
+   fun:_ZN11schrodinger6BufferC1Em
+   fun:_ZN11schrodinger6BufferC1ERSim
+   fun:MaeParser
+   fun:Reader
+   fun:_ZL12loadTemplateRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt6vectorIP25sketcherMinimizerMoleculeSaIS9_EE.constprop.1036
+   fun:_ZN17sketcherMinimizer13loadTemplatesEv
+   fun:_ZNK23CoordgenFragmentBuilder12findTemplateESt6vectorIP21sketcherMinimizerRingSaIS2_EE
+   fun:_ZNK23CoordgenFragmentBuilder31generateCoordinatesCentralRingsESt6vectorIP21sketcherMinimizerRingSaIS2_EE
+   fun:_ZNK23CoordgenFragmentBuilder10buildRingsEP25sketcherMinimizerFragment
+   fun:_ZNK23CoordgenFragmentBuilder13buildFragmentEP25sketcherMinimizerFragment
+   fun:_ZNK23CoordgenFragmentBuilder21initializeCoordinatesEP25sketcherMinimizerFragment
+   fun:_ZN17sketcherMinimizer19initializeFragmentsEv
+   fun:_ZN17sketcherMinimizer22runGenerateCoordinatesEv
+   fun:_ZN5RDKit8CoordGen9addCoordsINS_5ROMolEEEjRT_PKNS0_14CoordGenParamsE
+}
+{
+   memory indirectly lost 8
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:_ZN11schrodinger6BufferC1ERSim
+   fun:MaeParser
+   fun:Reader
+   fun:_ZL12loadTemplateRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt6vectorIP25sketcherMinimizerMoleculeSaIS9_EE.constprop.1036
+   fun:_ZN17sketcherMinimizer13loadTemplatesEv
+   fun:_ZNK23CoordgenFragmentBuilder12findTemplateESt6vectorIP21sketcherMinimizerRingSaIS2_EE
+   fun:_ZNK23CoordgenFragmentBuilder31generateCoordinatesCentralRingsESt6vectorIP21sketcherMinimizerRingSaIS2_EE
+   fun:_ZNK23CoordgenFragmentBuilder10buildRingsEP25sketcherMinimizerFragment
+   fun:_ZNK23CoordgenFragmentBuilder13buildFragmentEP25sketcherMinimizerFragment
+   fun:_ZNK23CoordgenFragmentBuilder21initializeCoordinatesEP25sketcherMinimizerFragment
+   fun:_ZN17sketcherMinimizer19initializeFragmentsEv
+   fun:_ZN17sketcherMinimizer22runGenerateCoordinatesEv
+   fun:_ZN5RDKit8CoordGen9addCoordsINS_5ROMolEEEjRT_PKNS0_14CoordGenParamsE
+}
+{
+   memory indirectly lost 9
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:_ZN11schrodinger6BufferC1ERSim
+   fun:MaeParser
+   fun:Reader
+   fun:_ZN5RDKit14MaeMolSupplierC1EPSibbb
+}
+{
+   memory indirectly lost 10
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:_ZN11schrodinger6BufferC1ERSim
+   fun:MaeParser
+   fun:Reader
+   fun:_ZN5RDKit14MaeMolSupplierC1ERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbb
+}
+{
+   memory indirectly lost 11
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:_ZN5RDKit17makeAtomNullQueryEv
+   fun:_Z12yysmarts_lexP7YYSTYPEPvRi
+   fun:_Z14yysmarts_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EERPNS2_4AtomERPNS2_4BondEPvRi
+   fun:_ZN5RDKit12_GLOBAL__N_117smarts_bond_parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERPNS_4BondE
+   fun:_ZN5RDKit6toBondERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFiS7_RPNS_4BondEE
+}
+{
+   memory indirectly lost 12
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:_ZN5RDKit19makeAtomSimpleQueryIN7Queries13EqualityQueryIiPKNS_4AtomELb1EEEEEPT_iPFiS5_ERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZN5RDKit17makeAtomTypeQueryEii
+   fun:_Z14yysmarts_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EERPNS2_4AtomERPNS2_4BondEPvRi
+   fun:_ZN5RDKit12_GLOBAL__N_112smarts_parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt6vectorIPNS_5RWMolESaISB_EE
+   fun:_ZN5RDKit5toMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFiS7_RSt6vectorIPNS_5RWMolESaISA_EEES7_
+   fun:_ZN5RDKit11SmartsToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEibPSt3mapIS5_S5_St4lessIS5_ESaISt4pairIS6_S5_EEE
+}
+{
+   memory indirectly lost 13
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:_ZN5RDKit19makeAtomSimpleQueryIN7Queries13EqualityQueryIiPKNS_4AtomELb1EEEEEPT_iPFiS5_ERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZN5RDKit17makeAtomTypeQueryEii
+   fun:_Z14yysmarts_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EERPNS2_4AtomERPNS2_4BondEPvRi
+   fun:_ZN5RDKit12_GLOBAL__N_117smarts_atom_parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERPNS_4AtomE
+   fun:_ZN5RDKit6toAtomERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFiS7_RPNS_4AtomEE
+}
+{
+   memory indirectly lost 14
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:_ZN5RDKit19makeAtomSimpleQueryIN7Queries13EqualityQueryIiPKNS_4AtomELb1EEEEEPT_iPFiS5_ERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZN5RDKit19makeAtomHCountQueryEi
+   fun:_Z14yysmarts_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EERPNS2_4AtomERPNS2_4BondEPvRi
+   fun:_ZN5RDKit12_GLOBAL__N_112smarts_parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt6vectorIPNS_5RWMolESaISB_EE
+   fun:_ZN5RDKit5toMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFiS7_RSt6vectorIPNS_5RWMolESaISA_EEES7_
+   fun:_ZN5RDKit11SmartsToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEibPSt3mapIS5_S5_St4lessIS5_ESaISt4pairIS6_S5_EEE
+}
+{
+   memory indirectly lost 15
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:_ZN5RDKit24makeBondOrderEqualsQueryENS_4Bond8BondTypeE
+   fun:_Z12yysmarts_lexP7YYSTYPEPvRi
+   fun:_Z14yysmarts_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EERPNS2_4AtomERPNS2_4BondEPvRi
+   fun:_ZN5RDKit12_GLOBAL__N_112smarts_parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt6vectorIPNS_5RWMolESaISB_EE
+   fun:_ZN5RDKit5toMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFiS7_RSt6vectorIPNS_5RWMolESaISA_EEES7_
+   fun:_ZN5RDKit11SmartsToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEibPSt3mapIS5_S5_St4lessIS5_ESaISt4pairIS6_S5_EEE
+}
+{
+   memory indirectly lost 16
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:_ZN5RDKit24makeBondOrderEqualsQueryENS_4Bond8BondTypeE
+   fun:_Z14yysmarts_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EERPNS2_4AtomERPNS2_4BondEPvRi
+   fun:_ZN5RDKit12_GLOBAL__N_117smarts_bond_parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERPNS_4BondE
+   fun:_ZN5RDKit6toBondERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFiS7_RPNS_4BondEE
+}
+{
+   memory indirectly lost 17
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:_ZN5RDKit5ROMol13initFromOtherERKS0_bi
+   fun:ROMol
+   fun:_ZNK5RDKit23RecursiveStructureQuery4copyEv
+   fun:_Z14yysmarts_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EERPNS2_4AtomERPNS2_4BondEPvRi
+   fun:_ZN5RDKit12_GLOBAL__N_112smarts_parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt6vectorIPNS_5RWMolESaISB_EE
+   fun:_ZN5RDKit5toMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFiS7_RSt6vectorIPNS_5RWMolESaISA_EEES7_
+   fun:_ZN5RDKit11SmartsToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEibPSt3mapIS5_S5_St4lessIS5_ESaISt4pairIS6_S5_EEE
+   fun:_ZN5RDKit5Local19expandAndTestSmartsERNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERKSt3mapIS6_S6_St4lessIS6_ESaISt4pairIKS6_S6_EEE
+   fun:_ZN5RDKit5Local13parseAtomTypeERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt3mapIS6_S6_St4lessIS6_ESaISt4pairIS7_S6_EEERKj
+}
+{
+   memory indirectly lost 18
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:_ZN5RDKit5ROMol7initMolEv
+   fun:ROMol
+   fun:_Z14yysmarts_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EERPNS2_4AtomERPNS2_4BondEPvRi
+   fun:_ZN5RDKit12_GLOBAL__N_112smarts_parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt6vectorIPNS_5RWMolESaISB_EE
+   fun:_ZN5RDKit5toMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFiS7_RSt6vectorIPNS_5RWMolESaISA_EEES7_
+   fun:_ZN5RDKit11SmartsToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEibPSt3mapIS5_S5_St4lessIS5_ESaISt4pairIS6_S5_EEE
+   fun:_ZN5RDKit5Local19expandAndTestSmartsERNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERKSt3mapIS6_S6_St4lessIS6_ESaISt4pairIKS6_S6_EEE
+   fun:_ZN5RDKit5Local13parseAtomTypeERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt3mapIS6_S6_St4lessIS6_ESaISt4pairIS7_S6_EEERKj
+}
+{
+   memory indirectly lost 19
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:_ZN5RDKit5ROMol7initMolEv
+   fun:ROMol
+   fun:_ZN5RDKit8SLNParse8startMolINS_4AtomEEEiRSt6vectorIPNS_5RWMolESaIS5_EEPT_b
+   fun:_Z11yysln_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EEbPv
+   fun:_Z9sln_parseRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbRSt6vectorIPN5RDKit5RWMolESaISA_EE
+   fun:_ZN5RDKit8SLNParse5toMolENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+   fun:_ZN5RDKit8SLNToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
+{
+   memory indirectly lost 20
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:_ZN5RDKit5RWMol7addBondEjjNS_4Bond8BondTypeE
+   fun:_ZN5RDKit8SLNParse8startMolINS_4AtomEEEiRSt6vectorIPNS_5RWMolESaIS5_EEPT_b
+   fun:_Z11yysln_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EEbPv
+   fun:_Z9sln_parseRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbRSt6vectorIPN5RDKit5RWMolESaISA_EE
+   fun:_ZN5RDKit8SLNParse5toMolENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+   fun:_ZN5RDKit8SLNToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
+{
+   memory indirectly lost 21
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:_ZN5RDKit8SLNParse13closeRingBondERSt6vectorIPNS_5RWMolESaIS3_EEjj
+   fun:_Z11yysln_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EEbPv
+   fun:_Z9sln_parseRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbRSt6vectorIPN5RDKit5RWMolESaISA_EE
+   fun:_ZN5RDKit8SLNParse5toMolENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+   fun:_ZN5RDKit8SLNToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
+{
+   memory indirectly lost 22
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:_ZN5RDKit8SLNParse14addBranchToMolERSt6vectorIPNS_5RWMolESaIS3_EEjj
+   fun:_Z11yysln_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EEbPv
+   fun:_Z9sln_parseRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbRSt6vectorIPN5RDKit5RWMolESaISA_EE
+   fun:_ZN5RDKit8SLNParse5toMolENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+   fun:_ZN5RDKit8SLNToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
+{
+   memory indirectly lost 23
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:_ZN5RDKit8SLNParse8startMolINS_4AtomEEEiRSt6vectorIPNS_5RWMolESaIS5_EEPT_b
+   fun:_Z11yysln_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EEbPv
+   fun:_Z9sln_parseRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbRSt6vectorIPN5RDKit5RWMolESaISA_EE
+   fun:_ZN5RDKit8SLNParse5toMolENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+   fun:_ZN5RDKit8SLNToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
+{
+   memory indirectly lost 24
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:_ZN5RDKit9QueryAtom11expandQueryEPN7Queries5QueryIiPKNS_4AtomELb1EEENS1_18CompositeQueryTypeEb
+   fun:_Z14yysmarts_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EERPNS2_4AtomERPNS2_4BondEPvRi
+   fun:_ZN5RDKit12_GLOBAL__N_112smarts_parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt6vectorIPNS_5RWMolESaISB_EE
+   fun:_ZN5RDKit5toMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFiS7_RSt6vectorIPNS_5RWMolESaISA_EEES7_
+   fun:_ZN5RDKit11SmartsToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEibPSt3mapIS5_S5_St4lessIS5_ESaISt4pairIS6_S5_EEE
+   fun:_ZN5RDKit5Local19expandAndTestSmartsERNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERKSt3mapIS6_S6_St4lessIS6_ESaISt4pairIKS6_S6_EEE
+   fun:_ZN5RDKit5Local13parseAtomTypeERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt3mapIS6_S6_St4lessIS6_ESaISt4pairIS7_S6_EEERKj
+}
+{
+   memory indirectly lost 25
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:_ZNK5RDKit23RecursiveStructureQuery4copyEv
+   fun:_Z14yysmarts_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EERPNS2_4AtomERPNS2_4BondEPvRi
+   fun:_ZN5RDKit12_GLOBAL__N_112smarts_parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt6vectorIPNS_5RWMolESaISB_EE
+   fun:_ZN5RDKit5toMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFiS7_RSt6vectorIPNS_5RWMolESaISA_EEES7_
+   fun:_ZN5RDKit11SmartsToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEibPSt3mapIS5_S5_St4lessIS5_ESaISt4pairIS6_S5_EEE
+   fun:_ZN5RDKit5Local19expandAndTestSmartsERNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERKSt3mapIS6_S6_St4lessIS6_ESaISt4pairIKS6_S6_EEE
+   fun:_ZN5RDKit5Local13parseAtomTypeERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt3mapIS6_S6_St4lessIS6_ESaISt4pairIS7_S6_EEERKj
+}
+{
+   memory indirectly lost 26
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:_ZNK5RDKit4Atom4copyEv
+   fun:_ZN5RDKit5RWMol9insertMolERKNS_5ROMolE
+   fun:_ZN5RDKit8SLNParse14addBranchToMolINS_4BondEEEiRSt6vectorIPNS_5RWMolESaIS5_EEjjRPT_
+   fun:_ZN5RDKit8SLNParse14addBranchToMolERSt6vectorIPNS_5RWMolESaIS3_EEjj
+   fun:_Z11yysln_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EEbPv
+   fun:_Z9sln_parseRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbRSt6vectorIPN5RDKit5RWMolESaISA_EE
+   fun:_ZN5RDKit8SLNParse5toMolENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+   fun:_ZN5RDKit8SLNToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
+{
+   memory indirectly lost 27
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:_ZNK5RDKit4Bond4copyEv
+   fun:_ZN5RDKit5RWMol9insertMolERKNS_5ROMolE
+   fun:_ZN5RDKit8SLNParse14addBranchToMolINS_4BondEEEiRSt6vectorIPNS_5RWMolESaIS5_EEjjRPT_
+   fun:_ZN5RDKit8SLNParse14addBranchToMolERSt6vectorIPNS_5RWMolESaIS3_EEjj
+   fun:_Z11yysln_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EEbPv
+   fun:_Z9sln_parseRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbRSt6vectorIPN5RDKit5RWMolESaISA_EE
+   fun:_ZN5RDKit8SLNParse5toMolENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+   fun:_ZN5RDKit8SLNToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
+{
+   memory indirectly lost 28
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:_ZNK5RDKit9QueryAtom4copyEv
+   fun:_ZN5RDKit5ROMol13initFromOtherERKS0_bi
+   fun:ROMol
+   fun:_ZNK5RDKit23RecursiveStructureQuery4copyEv
+   fun:_Z14yysmarts_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EERPNS2_4AtomERPNS2_4BondEPvRi
+   fun:_ZN5RDKit12_GLOBAL__N_112smarts_parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt6vectorIPNS_5RWMolESaISB_EE
+   fun:_ZN5RDKit5toMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFiS7_RSt6vectorIPNS_5RWMolESaISA_EEES7_
+   fun:_ZN5RDKit11SmartsToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEibPSt3mapIS5_S5_St4lessIS5_ESaISt4pairIS6_S5_EEE
+   fun:_ZN5RDKit5Local19expandAndTestSmartsERNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERKSt3mapIS6_S6_St4lessIS6_ESaISt4pairIKS6_S6_EEE
+   fun:_ZN5RDKit5Local13parseAtomTypeERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt3mapIS6_S6_St4lessIS6_ESaISt4pairIS7_S6_EEERKj
+}
+{
+   memory indirectly lost 29
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:_ZNK7Queries13EqualityQueryIiPKN5RDKit4AtomELb1EE4copyEv
+   fun:QueryAtom
+   fun:_ZNK5RDKit9QueryAtom4copyEv
+   fun:_ZN5RDKit5ROMol13initFromOtherERKS0_bi
+   fun:ROMol
+   fun:_ZNK5RDKit23RecursiveStructureQuery4copyEv
+   fun:_Z14yysmarts_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EERPNS2_4AtomERPNS2_4BondEPvRi
+   fun:_ZN5RDKit12_GLOBAL__N_112smarts_parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt6vectorIPNS_5RWMolESaISB_EE
+   fun:_ZN5RDKit5toMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFiS7_RSt6vectorIPNS_5RWMolESaISA_EEES7_
+   fun:_ZN5RDKit11SmartsToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEibPSt3mapIS5_S5_St4lessIS5_ESaISt4pairIS6_S5_EEE
+   fun:_ZN5RDKit5Local19expandAndTestSmartsERNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERKSt3mapIS6_S6_St4lessIS6_ESaISt4pairIKS6_S6_EEE
+   fun:_ZN5RDKit5Local13parseAtomTypeERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt3mapIS6_S6_St4lessIS6_ESaISt4pairIS7_S6_EEERKj
+}
+{
+   memory indirectly lost 30
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:_ZNK7Queries13EqualityQueryIiPKN5RDKit4AtomELb1EE4copyEv
+   fun:_Z14yysmarts_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EERPNS2_4AtomERPNS2_4BondEPvRi
+   fun:_ZN5RDKit12_GLOBAL__N_112smarts_parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt6vectorIPNS_5RWMolESaISB_EE
+   fun:_ZN5RDKit5toMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFiS7_RSt6vectorIPNS_5RWMolESaISA_EEES7_
+   fun:_ZN5RDKit11SmartsToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEibPSt3mapIS5_S5_St4lessIS5_ESaISt4pairIS6_S5_EEE
+   fun:_ZN5RDKit5Local19expandAndTestSmartsERNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERKSt3mapIS6_S6_St4lessIS6_ESaISt4pairIKS6_S6_EEE
+   fun:_ZN5RDKit5Local13parseAtomTypeERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt3mapIS6_S6_St4lessIS6_ESaISt4pairIS7_S6_EEERKj
+}
+{
+   memory indirectly lost 31
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE12_M_constructIPcEEvT_S7_St20forward_iterator_tag.isra.219
+   fun:_M_construct_aux<char const*>
+   fun:_M_construct<char const*>
+   fun:basic_string
+   fun:setDescription
+   fun:_ZN5RDKit23RecursiveStructureQueryC1EPKNS_5ROMolEj
+   fun:_Z14yysmarts_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EERPNS2_4AtomERPNS2_4BondEPvRi
+   fun:_ZN5RDKit12_GLOBAL__N_112smarts_parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt6vectorIPNS_5RWMolESaISB_EE
+   fun:_ZN5RDKit5toMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFiS7_RSt6vectorIPNS_5RWMolESaISA_EEES7_
+   fun:_ZN5RDKit11SmartsToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEibPSt3mapIS5_S5_St4lessIS5_ESaISt4pairIS6_S5_EEE
+   fun:_ZN5RDKit5Local19expandAndTestSmartsERNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERKSt3mapIS6_S6_St4lessIS6_ESaISt4pairIKS6_S6_EEE
+   fun:_ZN5RDKit5Local13parseAtomTypeERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt3mapIS6_S6_St4lessIS6_ESaISt4pairIS7_S6_EEERKj
+}
+{
+   memory indirectly lost 32
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE12_M_constructIPcEEvT_S7_St20forward_iterator_tag.isra.219
+   fun:_M_construct_aux<char const*>
+   fun:_M_construct<char const*>
+   fun:basic_string
+   fun:setDescription
+   fun:_ZNK5RDKit23RecursiveStructureQuery4copyEv
+   fun:_Z14yysmarts_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EERPNS2_4AtomERPNS2_4BondEPvRi
+   fun:_ZN5RDKit12_GLOBAL__N_112smarts_parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt6vectorIPNS_5RWMolESaISB_EE
+   fun:_ZN5RDKit5toMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFiS7_RSt6vectorIPNS_5RWMolESaISA_EEES7_
+   fun:_ZN5RDKit11SmartsToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEibPSt3mapIS5_S5_St4lessIS5_ESaISt4pairIS6_S5_EEE
+   fun:_ZN5RDKit5Local19expandAndTestSmartsERNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERKSt3mapIS6_S6_St4lessIS6_ESaISt4pairIKS6_S6_EEE
+   fun:_ZN5RDKit5Local13parseAtomTypeERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt3mapIS6_S6_St4lessIS6_ESaISt4pairIS7_S6_EEERKj
+}
+{
+   memory indirectly lost 33
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:__shared_count<std::vector<char>*>
+   fun:__shared_count<std::vector<char>*>
+   fun:__shared_ptr<std::vector<char> >
+   fun:shared_ptr<std::vector<char> >
+   fun:_ZN11schrodinger10BufferDataC1Em
+   fun:_ZN11schrodinger6Buffer4loadERPc
+   fun:_ZN11schrodinger3maeL24property_key_author_nameERNS_6BufferERPc
+   fun:_ZN11schrodinger3mae12property_keyB5cxx11ERNS_6BufferE
+   fun:_ZN11schrodinger3mae26BufferedIndexedBlockParser5parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEmRNS_6BufferE
+   fun:_ZN11schrodinger3mae9MaeParser9blockBodyERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZN11schrodinger3mae9MaeParser10outerBlockEv
+   fun:_ZN11schrodinger3mae6Reader4nextERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZL12loadTemplateRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt6vectorIP25sketcherMinimizerMoleculeSaIS9_EE.constprop.1036
+   fun:_ZN17sketcherMinimizer13loadTemplatesEv
+   fun:_ZNK23CoordgenFragmentBuilder12findTemplateESt6vectorIP21sketcherMinimizerRingSaIS2_EE
+   fun:_ZNK23CoordgenFragmentBuilder31generateCoordinatesCentralRingsESt6vectorIP21sketcherMinimizerRingSaIS2_EE
+   fun:_ZNK23CoordgenFragmentBuilder10buildRingsEP25sketcherMinimizerFragment
+   fun:_ZNK23CoordgenFragmentBuilder13buildFragmentEP25sketcherMinimizerFragment
+   fun:_ZNK23CoordgenFragmentBuilder21initializeCoordinatesEP25sketcherMinimizerFragment
+   fun:_ZN17sketcherMinimizer19initializeFragmentsEv
+   fun:_ZN17sketcherMinimizer22runGenerateCoordinatesEv
+   fun:_ZN5RDKit8CoordGen9addCoordsINS_5ROMolEEEjRT_PKNS0_14CoordGenParamsE
+}
+{
+   memory indirectly lost 34
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:__shared_count<std::vector<char>*>
+   fun:__shared_count<std::vector<char>*>
+   fun:__shared_ptr<std::vector<char> >
+   fun:shared_ptr<std::vector<char> >
+   fun:_ZN11schrodinger10BufferDataC1Em
+   fun:_ZN11schrodinger6Buffer4loadERPc
+   fun:load
+   fun:MaeParser
+   fun:Reader
+   fun:_ZN5RDKit14MaeMolSupplierC1EPSibbb
+}
+{
+   memory indirectly lost 35
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:__shared_count<std::vector<char>*>
+   fun:__shared_count<std::vector<char>*>
+   fun:__shared_ptr<std::vector<char> >
+   fun:shared_ptr<std::vector<char> >
+   fun:_ZN11schrodinger10BufferDataC1Em
+   fun:_ZN11schrodinger6Buffer4loadERPc
+   fun:load
+   fun:MaeParser
+   fun:Reader
+   fun:_ZN5RDKit14MaeMolSupplierC1ERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbb
+}
+{
+   memory indirectly lost 36
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:__shared_count<std::vector<char>*>
+   fun:__shared_count<std::vector<char>*>
+   fun:__shared_ptr<std::vector<char> >
+   fun:shared_ptr<std::vector<char> >
+   fun:_ZN11schrodinger10BufferDataC1Em
+   fun:_ZN11schrodinger6BufferC1Em
+   fun:_ZN11schrodinger6BufferC1ERSim
+   fun:MaeParser
+   fun:Reader
+   fun:_ZL12loadTemplateRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt6vectorIP25sketcherMinimizerMoleculeSaIS9_EE.constprop.1036
+   fun:_ZN17sketcherMinimizer13loadTemplatesEv
+   fun:_ZNK23CoordgenFragmentBuilder12findTemplateESt6vectorIP21sketcherMinimizerRingSaIS2_EE
+   fun:_ZNK23CoordgenFragmentBuilder31generateCoordinatesCentralRingsESt6vectorIP21sketcherMinimizerRingSaIS2_EE
+   fun:_ZNK23CoordgenFragmentBuilder10buildRingsEP25sketcherMinimizerFragment
+   fun:_ZNK23CoordgenFragmentBuilder13buildFragmentEP25sketcherMinimizerFragment
+   fun:_ZNK23CoordgenFragmentBuilder21initializeCoordinatesEP25sketcherMinimizerFragment
+   fun:_ZN17sketcherMinimizer19initializeFragmentsEv
+   fun:_ZN17sketcherMinimizer22runGenerateCoordinatesEv
+   fun:_ZN5RDKit8CoordGen9addCoordsINS_5ROMolEEEjRT_PKNS0_14CoordGenParamsE
+}
+{
+   memory indirectly lost 37
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:adjacency_list
+   fun:ROMol
+   fun:_Z14yysmarts_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EERPNS2_4AtomERPNS2_4BondEPvRi
+   fun:_ZN5RDKit12_GLOBAL__N_112smarts_parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt6vectorIPNS_5RWMolESaISB_EE
+   fun:_ZN5RDKit5toMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFiS7_RSt6vectorIPNS_5RWMolESaISA_EEES7_
+   fun:_ZN5RDKit11SmartsToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEibPSt3mapIS5_S5_St4lessIS5_ESaISt4pairIS6_S5_EEE
+   fun:_ZN5RDKit5Local19expandAndTestSmartsERNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERKSt3mapIS6_S6_St4lessIS6_ESaISt4pairIKS6_S6_EEE
+   fun:_ZN5RDKit5Local13parseAtomTypeERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt3mapIS6_S6_St4lessIS6_ESaISt4pairIS7_S6_EEERKj
+}
+{
+   memory indirectly lost 38
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:adjacency_list
+   fun:ROMol
+   fun:_ZN5RDKit8SLNParse8startMolINS_4AtomEEEiRSt6vectorIPNS_5RWMolESaIS5_EEPT_b
+   fun:_Z11yysln_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EEbPv
+   fun:_Z9sln_parseRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbRSt6vectorIPN5RDKit5RWMolESaISA_EE
+   fun:_ZN5RDKit8SLNParse5toMolENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+   fun:_ZN5RDKit8SLNToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
+{
+   memory indirectly lost 39
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:adjacency_list
+   fun:ROMol
+   fun:_ZNK5RDKit23RecursiveStructureQuery4copyEv
+   fun:_Z14yysmarts_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EERPNS2_4AtomERPNS2_4BondEPvRi
+   fun:_ZN5RDKit12_GLOBAL__N_112smarts_parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt6vectorIPNS_5RWMolESaISB_EE
+   fun:_ZN5RDKit5toMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFiS7_RSt6vectorIPNS_5RWMolESaISA_EEES7_
+   fun:_ZN5RDKit11SmartsToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEibPSt3mapIS5_S5_St4lessIS5_ESaISt4pairIS6_S5_EEE
+   fun:_ZN5RDKit5Local19expandAndTestSmartsERNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERKSt3mapIS6_S6_St4lessIS6_ESaISt4pairIKS6_S6_EEE
+   fun:_ZN5RDKit5Local13parseAtomTypeERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt3mapIS6_S6_St4lessIS6_ESaISt4pairIS7_S6_EEERKj
+}
+{
+   memory indirectly lost 40
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:allocate
+   fun:allocate
+   fun:_M_allocate
+   fun:_M_default_append
+   fun:resize
+   fun:_ZN11schrodinger10BufferDataC1Em
+   fun:_ZN11schrodinger6Buffer4loadERPc
+   fun:_ZN11schrodinger3maeL24property_key_author_nameERNS_6BufferERPc
+   fun:_ZN11schrodinger3mae12property_keyB5cxx11ERNS_6BufferE
+   fun:_ZN11schrodinger3mae26BufferedIndexedBlockParser5parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEmRNS_6BufferE
+   fun:_ZN11schrodinger3mae9MaeParser9blockBodyERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZN11schrodinger3mae9MaeParser10outerBlockEv
+   fun:_ZN11schrodinger3mae6Reader4nextERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZL12loadTemplateRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt6vectorIP25sketcherMinimizerMoleculeSaIS9_EE.constprop.1036
+   fun:_ZN17sketcherMinimizer13loadTemplatesEv
+   fun:_ZNK23CoordgenFragmentBuilder12findTemplateESt6vectorIP21sketcherMinimizerRingSaIS2_EE
+   fun:_ZNK23CoordgenFragmentBuilder31generateCoordinatesCentralRingsESt6vectorIP21sketcherMinimizerRingSaIS2_EE
+   fun:_ZNK23CoordgenFragmentBuilder10buildRingsEP25sketcherMinimizerFragment
+   fun:_ZNK23CoordgenFragmentBuilder13buildFragmentEP25sketcherMinimizerFragment
+   fun:_ZNK23CoordgenFragmentBuilder21initializeCoordinatesEP25sketcherMinimizerFragment
+   fun:_ZN17sketcherMinimizer19initializeFragmentsEv
+   fun:_ZN17sketcherMinimizer22runGenerateCoordinatesEv
+   fun:_ZN5RDKit8CoordGen9addCoordsINS_5ROMolEEEjRT_PKNS0_14CoordGenParamsE
+}
+{
+   memory indirectly lost 41
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:allocate
+   fun:allocate
+   fun:_M_allocate
+   fun:_M_default_append
+   fun:resize
+   fun:_ZN11schrodinger10BufferDataC1Em
+   fun:_ZN11schrodinger6Buffer4loadERPc
+   fun:load
+   fun:MaeParser
+   fun:Reader
+   fun:_ZN5RDKit14MaeMolSupplierC1EPSibbb
+}
+{
+   memory indirectly lost 42
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:allocate
+   fun:allocate
+   fun:_M_allocate
+   fun:_M_default_append
+   fun:resize
+   fun:_ZN11schrodinger10BufferDataC1Em
+   fun:_ZN11schrodinger6Buffer4loadERPc
+   fun:load
+   fun:MaeParser
+   fun:Reader
+   fun:_ZN5RDKit14MaeMolSupplierC1ERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbb
+}
+{
+   memory indirectly lost 43
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:allocate
+   fun:allocate
+   fun:_M_allocate
+   fun:_M_default_append
+   fun:resize
+   fun:_ZN11schrodinger10BufferDataC1Em
+   fun:_ZN11schrodinger6BufferC1Em
+   fun:_ZN11schrodinger6BufferC1ERSim
+   fun:MaeParser
+   fun:Reader
+   fun:_ZL12loadTemplateRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt6vectorIP25sketcherMinimizerMoleculeSaIS9_EE.constprop.1036
+   fun:_ZN17sketcherMinimizer13loadTemplatesEv
+   fun:_ZNK23CoordgenFragmentBuilder12findTemplateESt6vectorIP21sketcherMinimizerRingSaIS2_EE
+   fun:_ZNK23CoordgenFragmentBuilder31generateCoordinatesCentralRingsESt6vectorIP21sketcherMinimizerRingSaIS2_EE
+   fun:_ZNK23CoordgenFragmentBuilder10buildRingsEP25sketcherMinimizerFragment
+   fun:_ZNK23CoordgenFragmentBuilder13buildFragmentEP25sketcherMinimizerFragment
+   fun:_ZNK23CoordgenFragmentBuilder21initializeCoordinatesEP25sketcherMinimizerFragment
+   fun:_ZN17sketcherMinimizer19initializeFragmentsEv
+   fun:_ZN17sketcherMinimizer22runGenerateCoordinatesEv
+   fun:_ZN5RDKit8CoordGen9addCoordsINS_5ROMolEEEjRT_PKNS0_14CoordGenParamsE
+}
+{
+   memory indirectly lost 44
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:allocate
+   fun:allocate
+   fun:_M_allocate
+   fun:_ZNSt6vectorIN5RDKit4Dict4PairESaIS2_EE17_M_realloc_insertIJS2_EEEvN9__gnu_cxx17__normal_iteratorIPS2_S4_EEDpOT_
+   fun:push_back
+   fun:_ZN5RDKit4Dict6setValISt6vectorINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESaIS8_EEEEvRKS8_RT_
+   fun:_ZN5RDKit5ROMol13initFromOtherERKS0_bi
+   fun:ROMol
+   fun:_ZNK5RDKit23RecursiveStructureQuery4copyEv
+   fun:_Z14yysmarts_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EERPNS2_4AtomERPNS2_4BondEPvRi
+   fun:_ZN5RDKit12_GLOBAL__N_112smarts_parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt6vectorIPNS_5RWMolESaISB_EE
+   fun:_ZN5RDKit5toMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFiS7_RSt6vectorIPNS_5RWMolESaISA_EEES7_
+   fun:_ZN5RDKit11SmartsToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEibPSt3mapIS5_S5_St4lessIS5_ESaISt4pairIS6_S5_EEE
+   fun:_ZN5RDKit5Local19expandAndTestSmartsERNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERKSt3mapIS6_S6_St4lessIS6_ESaISt4pairIKS6_S6_EEE
+   fun:_ZN5RDKit5Local13parseAtomTypeERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt3mapIS6_S6_St4lessIS6_ESaISt4pairIS7_S6_EEERKj
+}
+{
+   memory indirectly lost 45
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:allocate
+   fun:allocate
+   fun:_M_allocate
+   fun:_ZNSt6vectorIN5RDKit4Dict4PairESaIS2_EE17_M_realloc_insertIJS2_EEEvN9__gnu_cxx17__normal_iteratorIPS2_S4_EEDpOT_
+   fun:push_back
+   fun:_ZN5RDKit4Dict6setValISt6vectorINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESaIS8_EEEEvRKS8_RT_
+   fun:_ZN5RDKit5ROMol7initMolEv
+   fun:ROMol
+   fun:_Z14yysmarts_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EERPNS2_4AtomERPNS2_4BondEPvRi
+   fun:_ZN5RDKit12_GLOBAL__N_112smarts_parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt6vectorIPNS_5RWMolESaISB_EE
+   fun:_ZN5RDKit5toMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFiS7_RSt6vectorIPNS_5RWMolESaISA_EEES7_
+   fun:_ZN5RDKit11SmartsToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEibPSt3mapIS5_S5_St4lessIS5_ESaISt4pairIS6_S5_EEE
+   fun:_ZN5RDKit5Local19expandAndTestSmartsERNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERKSt3mapIS6_S6_St4lessIS6_ESaISt4pairIKS6_S6_EEE
+   fun:_ZN5RDKit5Local13parseAtomTypeERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt3mapIS6_S6_St4lessIS6_ESaISt4pairIS7_S6_EEERKj
+}
+{
+   memory indirectly lost 46
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:allocate
+   fun:allocate
+   fun:_M_allocate
+   fun:_ZNSt6vectorIN5RDKit4Dict4PairESaIS2_EE17_M_realloc_insertIJS2_EEEvN9__gnu_cxx17__normal_iteratorIPS2_S4_EEDpOT_
+   fun:push_back
+   fun:_ZN5RDKit4Dict6setValISt6vectorINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESaIS8_EEEEvRKS8_RT_
+   fun:_ZN5RDKit5ROMol7initMolEv
+   fun:ROMol
+   fun:_ZN5RDKit8SLNParse8startMolINS_4AtomEEEiRSt6vectorIPNS_5RWMolESaIS5_EEPT_b
+   fun:_Z11yysln_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EEbPv
+   fun:_Z9sln_parseRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbRSt6vectorIPN5RDKit5RWMolESaISA_EE
+   fun:_ZN5RDKit8SLNParse5toMolENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+   fun:_ZN5RDKit8SLNToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
+{
+   memory indirectly lost 47
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:allocate
+   fun:allocate
+   fun:_M_allocate
+   fun:_ZNSt6vectorIN5RDKit4Dict4PairESaIS2_EE17_M_realloc_insertIJS2_EEEvN9__gnu_cxx17__normal_iteratorIPS2_S4_EEDpOT_
+   fun:push_back
+   fun:setVal<std::__cxx11::basic_string<char> >
+   fun:_ZNK5RDKit7RDProps7setPropINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEEEvRKS7_T_b
+   fun:_Z12yysmiles_lexP7YYSTYPEPvRi
+   fun:_Z14yysmiles_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EERPNS2_4AtomERPNS2_4BondEPNSt7__cxx114listIjSaIjEEEPvRi
+   fun:_ZN5RDKit12_GLOBAL__N_117smiles_bond_parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERPNS_4BondE
+   fun:_ZN5RDKit6toBondERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFiS7_RPNS_4BondEE
+}
+{
+   memory indirectly lost 48
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:allocate
+   fun:allocate
+   fun:_M_allocate
+   fun:_ZNSt6vectorIN5boost10shared_ptrIN7Queries5QueryIiPKN5RDKit4AtomELb1EEEEESaIS9_EE17_M_realloc_insertIJRKS9_EEEvN9__gnu_cxx17__normal_iteratorIPS9_SB_EEDpOT_
+   fun:push_back
+   fun:addChild
+   fun:_ZN5RDKit9QueryAtom11expandQueryEPN7Queries5QueryIiPKNS_4AtomELb1EEENS1_18CompositeQueryTypeEb
+   fun:_Z14yysmarts_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EERPNS2_4AtomERPNS2_4BondEPvRi
+   fun:_ZN5RDKit12_GLOBAL__N_112smarts_parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt6vectorIPNS_5RWMolESaISB_EE
+   fun:_ZN5RDKit5toMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFiS7_RSt6vectorIPNS_5RWMolESaISA_EEES7_
+   fun:_ZN5RDKit11SmartsToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEibPSt3mapIS5_S5_St4lessIS5_ESaISt4pairIS6_S5_EEE
+   fun:_ZN5RDKit5Local19expandAndTestSmartsERNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERKSt3mapIS6_S6_St4lessIS6_ESaISt4pairIKS6_S6_EEE
+   fun:_ZN5RDKit5Local13parseAtomTypeERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt3mapIS6_S6_St4lessIS6_ESaISt4pairIS7_S6_EEERKj
+}
+{
+   memory indirectly lost 49
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:allocate
+   fun:allocate
+   fun:_M_allocate
+   fun:_ZNSt6vectorIN5boost6detail12adj_list_genINS0_14adjacency_listINS0_4vecSES4_NS0_11undirectedSEPN5RDKit4AtomEPNS6_4BondENS0_11no_propertyENS0_5listSEEES4_S4_S5_S8_SA_SB_SC_E6config13stored_vertexESaISG_EE17_M_default_appendEm
+   fun:resize
+   fun:add_vertex<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::detail::adj_list_gen<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*, boost::no_property, boost::listS>::config, boost::undirected_graph_helper<boost::detail::adj_list_gen<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*, boost::no_property, boost::listS>::config> >
+   fun:_ZN5RDKit5ROMol7addAtomEPNS_4AtomEbb
+   fun:_ZN5RDKit5ROMol13initFromOtherERKS0_bi
+   fun:ROMol
+   fun:_ZNK5RDKit23RecursiveStructureQuery4copyEv
+   fun:_Z14yysmarts_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EERPNS2_4AtomERPNS2_4BondEPvRi
+   fun:_ZN5RDKit12_GLOBAL__N_112smarts_parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt6vectorIPNS_5RWMolESaISB_EE
+   fun:_ZN5RDKit5toMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFiS7_RSt6vectorIPNS_5RWMolESaISA_EEES7_
+   fun:_ZN5RDKit11SmartsToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEibPSt3mapIS5_S5_St4lessIS5_ESaISt4pairIS6_S5_EEE
+   fun:_ZN5RDKit5Local19expandAndTestSmartsERNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERKSt3mapIS6_S6_St4lessIS6_ESaISt4pairIKS6_S6_EEE
+   fun:_ZN5RDKit5Local13parseAtomTypeERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt3mapIS6_S6_St4lessIS6_ESaISt4pairIS7_S6_EEERKj
+}
+{
+   memory indirectly lost 50
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:allocate
+   fun:allocate
+   fun:_M_allocate
+   fun:_ZNSt6vectorIN5boost6detail12adj_list_genINS0_14adjacency_listINS0_4vecSES4_NS0_11undirectedSEPN5RDKit4AtomEPNS6_4BondENS0_11no_propertyENS0_5listSEEES4_S4_S5_S8_SA_SB_SC_E6config13stored_vertexESaISG_EE17_M_default_appendEm
+   fun:resize
+   fun:add_vertex<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::detail::adj_list_gen<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*, boost::no_property, boost::listS>::config, boost::undirected_graph_helper<boost::detail::adj_list_gen<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*, boost::no_property, boost::listS>::config> >
+   fun:_ZN5RDKit5ROMol7addAtomEPNS_4AtomEbb
+   fun:addAtom
+   fun:_Z14yysmarts_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EERPNS2_4AtomERPNS2_4BondEPvRi
+   fun:_ZN5RDKit12_GLOBAL__N_112smarts_parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt6vectorIPNS_5RWMolESaISB_EE
+   fun:_ZN5RDKit5toMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFiS7_RSt6vectorIPNS_5RWMolESaISA_EEES7_
+   fun:_ZN5RDKit11SmartsToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEibPSt3mapIS5_S5_St4lessIS5_ESaISt4pairIS6_S5_EEE
+   fun:_ZN5RDKit5Local19expandAndTestSmartsERNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERKSt3mapIS6_S6_St4lessIS6_ESaISt4pairIKS6_S6_EEE
+   fun:_ZN5RDKit5Local13parseAtomTypeERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt3mapIS6_S6_St4lessIS6_ESaISt4pairIS7_S6_EEERKj
+}
+{
+   memory indirectly lost 51
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:allocate
+   fun:allocate
+   fun:_M_allocate
+   fun:_ZNSt6vectorIN5boost6detail12adj_list_genINS0_14adjacency_listINS0_4vecSES4_NS0_11undirectedSEPN5RDKit4AtomEPNS6_4BondENS0_11no_propertyENS0_5listSEEES4_S4_S5_S8_SA_SB_SC_E6config13stored_vertexESaISG_EE17_M_default_appendEm
+   fun:resize
+   fun:add_vertex<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::detail::adj_list_gen<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*, boost::no_property, boost::listS>::config, boost::undirected_graph_helper<boost::detail::adj_list_gen<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*, boost::no_property, boost::listS>::config> >
+   fun:_ZN5RDKit5ROMol7addAtomEPNS_4AtomEbb
+   fun:addAtom
+   fun:_ZN5RDKit5RWMol9insertMolERKNS_5ROMolE
+   fun:_ZN5RDKit8SLNParse14addBranchToMolINS_4BondEEEiRSt6vectorIPNS_5RWMolESaIS5_EEjjRPT_
+   fun:_ZN5RDKit8SLNParse14addBranchToMolERSt6vectorIPNS_5RWMolESaIS3_EEjj
+   fun:_Z11yysln_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EEbPv
+   fun:_Z9sln_parseRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbRSt6vectorIPN5RDKit5RWMolESaISA_EE
+   fun:_ZN5RDKit8SLNParse5toMolENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+   fun:_ZN5RDKit8SLNToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
+{
+   memory indirectly lost 52
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:allocate
+   fun:allocate
+   fun:_M_allocate
+   fun:_ZNSt6vectorIN5boost6detail16stored_edge_iterImSt14_List_iteratorINS0_9list_edgeImPN5RDKit4BondEEEES7_EESaISA_EE17_M_realloc_insertIJSA_EEEvN9__gnu_cxx17__normal_iteratorIPSA_SC_EEDpOT_
+   fun:push_back
+   fun:push_dispatch<std::vector<boost::detail::stored_edge_iter<long unsigned int, std::_List_iterator<boost::list_edge<long unsigned int, RDKit::Bond*> >, RDKit::Bond*>, std::allocator<boost::detail::stored_edge_iter<long unsigned int, std::_List_iterator<boost::list_edge<long unsigned int, RDKit::Bond*> >, RDKit::Bond*> > >, boost::detail::stored_edge_iter<long unsigned int, std::_List_iterator<boost::list_edge<long unsigned int, RDKit::Bond*> >, RDKit::Bond*> >
+   fun:push<std::vector<boost::detail::stored_edge_iter<long unsigned int, std::_List_iterator<boost::list_edge<long unsigned int, RDKit::Bond*> >, RDKit::Bond*>, std::allocator<boost::detail::stored_edge_iter<long unsigned int, std::_List_iterator<boost::list_edge<long unsigned int, RDKit::Bond*> >, RDKit::Bond*> > >, boost::detail::stored_edge_iter<long unsigned int, std::_List_iterator<boost::list_edge<long unsigned int, RDKit::Bond*> >, RDKit::Bond*> >
+   fun:add_edge<boost::detail::adj_list_gen<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*, boost::no_property, boost::listS>::config>
+   fun:add_edge<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::detail::adj_list_gen<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*, boost::no_property, boost::listS>::config, boost::undirected_graph_helper<boost::detail::adj_list_gen<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*, boost::no_property, boost::listS>::config> >
+   fun:add_edge<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::detail::adj_list_gen<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*, boost::no_property, boost::listS>::config, boost::undirected_graph_helper<boost::detail::adj_list_gen<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*, boost::no_property, boost::listS>::config> >
+   fun:_ZN5RDKit5ROMol7addBondEPNS_4BondEb
+   fun:addBond
+   fun:_ZN5RDKit5RWMol9insertMolERKNS_5ROMolE
+   fun:_ZN5RDKit8SLNParse14addBranchToMolINS_4BondEEEiRSt6vectorIPNS_5RWMolESaIS5_EEjjRPT_
+   fun:_ZN5RDKit8SLNParse14addBranchToMolERSt6vectorIPNS_5RWMolESaIS3_EEjj
+   fun:_Z11yysln_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EEbPv
+   fun:_Z9sln_parseRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbRSt6vectorIPN5RDKit5RWMolESaISA_EE
+   fun:_ZN5RDKit8SLNParse5toMolENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+   fun:_ZN5RDKit8SLNToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
+{
+   memory indirectly lost 53
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:allocate
+   fun:allocate
+   fun:_M_allocate
+   fun:_ZNSt6vectorIN5boost6detail16stored_edge_iterImSt14_List_iteratorINS0_9list_edgeImPN5RDKit4BondEEEES7_EESaISA_EE17_M_realloc_insertIJSA_EEEvN9__gnu_cxx17__normal_iteratorIPSA_SC_EEDpOT_
+   fun:push_back
+   fun:push_dispatch<std::vector<boost::detail::stored_edge_iter<long unsigned int, std::_List_iterator<boost::list_edge<long unsigned int, RDKit::Bond*> >, RDKit::Bond*>, std::allocator<boost::detail::stored_edge_iter<long unsigned int, std::_List_iterator<boost::list_edge<long unsigned int, RDKit::Bond*> >, RDKit::Bond*> > >, boost::detail::stored_edge_iter<long unsigned int, std::_List_iterator<boost::list_edge<long unsigned int, RDKit::Bond*> >, RDKit::Bond*> >
+   fun:push<std::vector<boost::detail::stored_edge_iter<long unsigned int, std::_List_iterator<boost::list_edge<long unsigned int, RDKit::Bond*> >, RDKit::Bond*>, std::allocator<boost::detail::stored_edge_iter<long unsigned int, std::_List_iterator<boost::list_edge<long unsigned int, RDKit::Bond*> >, RDKit::Bond*> > >, boost::detail::stored_edge_iter<long unsigned int, std::_List_iterator<boost::list_edge<long unsigned int, RDKit::Bond*> >, RDKit::Bond*> >
+   fun:add_edge<boost::detail::adj_list_gen<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*, boost::no_property, boost::listS>::config>
+   fun:add_edge<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::detail::adj_list_gen<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*, boost::no_property, boost::listS>::config, boost::undirected_graph_helper<boost::detail::adj_list_gen<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*, boost::no_property, boost::listS>::config> >
+   fun:add_edge<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::detail::adj_list_gen<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*, boost::no_property, boost::listS>::config, boost::undirected_graph_helper<boost::detail::adj_list_gen<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*, boost::no_property, boost::listS>::config> >
+   fun:_ZN5RDKit5ROMol7addBondEPNS_4BondEb
+   fun:addBond
+   fun:_ZN5RDKit8SLNParse12_GLOBAL__N_112addBondToMolINS_4BondEEEvPNS_5RWMolEPT_
+   fun:_ZN5RDKit8SLNParse14addBranchToMolINS_4BondEEEiRSt6vectorIPNS_5RWMolESaIS5_EEjjRPT_
+   fun:_ZN5RDKit8SLNParse14addBranchToMolERSt6vectorIPNS_5RWMolESaIS3_EEjj
+   fun:_Z11yysln_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EEbPv
+   fun:_Z9sln_parseRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbRSt6vectorIPN5RDKit5RWMolESaISA_EE
+   fun:_ZN5RDKit8SLNParse5toMolENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+   fun:_ZN5RDKit8SLNToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
+{
+   memory indirectly lost 54
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:allocate
+   fun:allocate
+   fun:_M_allocate
+   fun:_ZNSt6vectorIN5boost6detail16stored_edge_iterImSt14_List_iteratorINS0_9list_edgeImPN5RDKit4BondEEEES7_EESaISA_EE17_M_realloc_insertIJSA_EEEvN9__gnu_cxx17__normal_iteratorIPSA_SC_EEDpOT_
+   fun:push_back
+   fun:push_dispatch<std::vector<boost::detail::stored_edge_iter<long unsigned int, std::_List_iterator<boost::list_edge<long unsigned int, RDKit::Bond*> >, RDKit::Bond*>, std::allocator<boost::detail::stored_edge_iter<long unsigned int, std::_List_iterator<boost::list_edge<long unsigned int, RDKit::Bond*> >, RDKit::Bond*> > >, boost::detail::stored_edge_iter<long unsigned int, std::_List_iterator<boost::list_edge<long unsigned int, RDKit::Bond*> >, RDKit::Bond*> >
+   fun:push<std::vector<boost::detail::stored_edge_iter<long unsigned int, std::_List_iterator<boost::list_edge<long unsigned int, RDKit::Bond*> >, RDKit::Bond*>, std::allocator<boost::detail::stored_edge_iter<long unsigned int, std::_List_iterator<boost::list_edge<long unsigned int, RDKit::Bond*> >, RDKit::Bond*> > >, boost::detail::stored_edge_iter<long unsigned int, std::_List_iterator<boost::list_edge<long unsigned int, RDKit::Bond*> >, RDKit::Bond*> >
+   fun:add_edge<boost::detail::adj_list_gen<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*, boost::no_property, boost::listS>::config>
+   fun:add_edge<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::detail::adj_list_gen<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*, boost::no_property, boost::listS>::config, boost::undirected_graph_helper<boost::detail::adj_list_gen<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*, boost::no_property, boost::listS>::config> >
+   fun:add_edge<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::detail::adj_list_gen<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*, boost::no_property, boost::listS>::config, boost::undirected_graph_helper<boost::detail::adj_list_gen<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*, boost::no_property, boost::listS>::config> >
+   fun:_ZN5RDKit5RWMol7addBondEjjNS_4Bond8BondTypeE
+   fun:_ZN5RDKit8SLNParse8startMolINS_4AtomEEEiRSt6vectorIPNS_5RWMolESaIS5_EEPT_b
+   fun:_Z11yysln_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EEbPv
+   fun:_Z9sln_parseRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbRSt6vectorIPN5RDKit5RWMolESaISA_EE
+   fun:_ZN5RDKit8SLNParse5toMolENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+   fun:_ZN5RDKit8SLNToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
+{
+   memory indirectly lost 55
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:allocate
+   fun:allocate
+   fun:_M_get_node
+   fun:_M_create_node<RDKit::Atom* const&>
+   fun:_M_insert<RDKit::Atom* const&>
+   fun:push_back
+   fun:replaceAtomBookmark
+   fun:_ZN5RDKit5ROMol7addAtomEPNS_4AtomEbb
+   fun:addAtom
+   fun:_Z14yysmarts_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EERPNS2_4AtomERPNS2_4BondEPvRi
+   fun:_ZN5RDKit12_GLOBAL__N_112smarts_parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt6vectorIPNS_5RWMolESaISB_EE
+   fun:_ZN5RDKit5toMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFiS7_RSt6vectorIPNS_5RWMolESaISA_EEES7_
+   fun:_ZN5RDKit11SmartsToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEibPSt3mapIS5_S5_St4lessIS5_ESaISt4pairIS6_S5_EEE
+   fun:_ZN5RDKit5Local19expandAndTestSmartsERNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERKSt3mapIS6_S6_St4lessIS6_ESaISt4pairIKS6_S6_EEE
+   fun:_ZN5RDKit5Local13parseAtomTypeERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt3mapIS6_S6_St4lessIS6_ESaISt4pairIS7_S6_EEERKj
+}
+{
+   memory indirectly lost 56
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:allocate
+   fun:allocate
+   fun:_M_get_node
+   fun:_M_create_node<RDKit::Atom* const&>
+   fun:_M_insert<RDKit::Atom* const&>
+   fun:push_back
+   fun:replaceAtomBookmark
+   fun:_ZN5RDKit5ROMol7addAtomEPNS_4AtomEbb
+   fun:addAtom
+   fun:_ZN5RDKit8SLNParse8startMolINS_4AtomEEEiRSt6vectorIPNS_5RWMolESaIS5_EEPT_b
+   fun:_Z11yysln_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EEbPv
+   fun:_Z9sln_parseRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbRSt6vectorIPN5RDKit5RWMolESaISA_EE
+   fun:_ZN5RDKit8SLNParse5toMolENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+   fun:_ZN5RDKit8SLNToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
+{
+   memory indirectly lost 57
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:allocate
+   fun:allocate
+   fun:_M_get_node
+   fun:_M_create_node<RDKit::Bond* const&>
+   fun:_M_insert<RDKit::Bond* const&>
+   fun:push_back
+   fun:setBondBookmark
+   fun:_ZN5RDKit8SLNParse14addBranchToMolINS_4BondEEEiRSt6vectorIPNS_5RWMolESaIS5_EEjjRPT_
+   fun:_ZN5RDKit8SLNParse14addBranchToMolERSt6vectorIPNS_5RWMolESaIS3_EEjj
+   fun:_Z11yysln_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EEbPv
+   fun:_Z9sln_parseRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbRSt6vectorIPN5RDKit5RWMolESaISA_EE
+   fun:_ZN5RDKit8SLNParse5toMolENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+   fun:_ZN5RDKit8SLNToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
+{
+   memory indirectly lost 58
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:allocate
+   fun:allocate
+   fun:_M_get_node
+   fun:_M_create_node<const boost::list_edge<long unsigned int, RDKit::Bond*>&>
+   fun:_M_insert<const boost::list_edge<long unsigned int, RDKit::Bond*>&>
+   fun:push_back
+   fun:push_dispatch<std::__cxx11::list<boost::list_edge<long unsigned int, RDKit::Bond*>, std::allocator<boost::list_edge<long unsigned int, RDKit::Bond*> > >, boost::list_edge<long unsigned int, RDKit::Bond*>&>
+   fun:push<std::__cxx11::list<boost::list_edge<long unsigned int, RDKit::Bond*>, std::allocator<boost::list_edge<long unsigned int, RDKit::Bond*> > >, boost::list_edge<long unsigned int, RDKit::Bond*>&>
+   fun:add_edge<boost::detail::adj_list_gen<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*, boost::no_property, boost::listS>::config>
+   fun:add_edge<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::detail::adj_list_gen<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*, boost::no_property, boost::listS>::config, boost::undirected_graph_helper<boost::detail::adj_list_gen<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*, boost::no_property, boost::listS>::config> >
+   fun:add_edge<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::detail::adj_list_gen<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*, boost::no_property, boost::listS>::config, boost::undirected_graph_helper<boost::detail::adj_list_gen<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*, boost::no_property, boost::listS>::config> >
+   fun:_ZN5RDKit5ROMol7addBondEPNS_4BondEb
+   fun:addBond
+   fun:_ZN5RDKit5RWMol9insertMolERKNS_5ROMolE
+   fun:_ZN5RDKit8SLNParse14addBranchToMolINS_4BondEEEiRSt6vectorIPNS_5RWMolESaIS5_EEjjRPT_
+   fun:_ZN5RDKit8SLNParse14addBranchToMolERSt6vectorIPNS_5RWMolESaIS3_EEjj
+   fun:_Z11yysln_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EEbPv
+   fun:_Z9sln_parseRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbRSt6vectorIPN5RDKit5RWMolESaISA_EE
+   fun:_ZN5RDKit8SLNParse5toMolENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+   fun:_ZN5RDKit8SLNToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
+{
+   memory indirectly lost 59
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:allocate
+   fun:allocate
+   fun:_M_get_node
+   fun:_M_create_node<const boost::list_edge<long unsigned int, RDKit::Bond*>&>
+   fun:_M_insert<const boost::list_edge<long unsigned int, RDKit::Bond*>&>
+   fun:push_back
+   fun:push_dispatch<std::__cxx11::list<boost::list_edge<long unsigned int, RDKit::Bond*>, std::allocator<boost::list_edge<long unsigned int, RDKit::Bond*> > >, boost::list_edge<long unsigned int, RDKit::Bond*>&>
+   fun:push<std::__cxx11::list<boost::list_edge<long unsigned int, RDKit::Bond*>, std::allocator<boost::list_edge<long unsigned int, RDKit::Bond*> > >, boost::list_edge<long unsigned int, RDKit::Bond*>&>
+   fun:add_edge<boost::detail::adj_list_gen<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*, boost::no_property, boost::listS>::config>
+   fun:add_edge<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::detail::adj_list_gen<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*, boost::no_property, boost::listS>::config, boost::undirected_graph_helper<boost::detail::adj_list_gen<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*, boost::no_property, boost::listS>::config> >
+   fun:add_edge<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::detail::adj_list_gen<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*, boost::no_property, boost::listS>::config, boost::undirected_graph_helper<boost::detail::adj_list_gen<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*, boost::no_property, boost::listS>::config> >
+   fun:_ZN5RDKit5ROMol7addBondEPNS_4BondEb
+   fun:addBond
+   fun:_ZN5RDKit8SLNParse12_GLOBAL__N_112addBondToMolINS_4BondEEEvPNS_5RWMolEPT_
+   fun:_ZN5RDKit8SLNParse14addBranchToMolINS_4BondEEEiRSt6vectorIPNS_5RWMolESaIS5_EEjjRPT_
+   fun:_ZN5RDKit8SLNParse14addBranchToMolERSt6vectorIPNS_5RWMolESaIS3_EEjj
+   fun:_Z11yysln_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EEbPv
+   fun:_Z9sln_parseRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbRSt6vectorIPN5RDKit5RWMolESaISA_EE
+   fun:_ZN5RDKit8SLNParse5toMolENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+   fun:_ZN5RDKit8SLNToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
+{
+   memory indirectly lost 60
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:allocate
+   fun:allocate
+   fun:_M_get_node
+   fun:_M_create_node<const boost::list_edge<long unsigned int, RDKit::Bond*>&>
+   fun:_M_insert<const boost::list_edge<long unsigned int, RDKit::Bond*>&>
+   fun:push_back
+   fun:push_dispatch<std::__cxx11::list<boost::list_edge<long unsigned int, RDKit::Bond*>, std::allocator<boost::list_edge<long unsigned int, RDKit::Bond*> > >, boost::list_edge<long unsigned int, RDKit::Bond*>&>
+   fun:push<std::__cxx11::list<boost::list_edge<long unsigned int, RDKit::Bond*>, std::allocator<boost::list_edge<long unsigned int, RDKit::Bond*> > >, boost::list_edge<long unsigned int, RDKit::Bond*>&>
+   fun:add_edge<boost::detail::adj_list_gen<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*, boost::no_property, boost::listS>::config>
+   fun:add_edge<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::detail::adj_list_gen<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*, boost::no_property, boost::listS>::config, boost::undirected_graph_helper<boost::detail::adj_list_gen<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*, boost::no_property, boost::listS>::config> >
+   fun:add_edge<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::detail::adj_list_gen<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*, boost::no_property, boost::listS>::config, boost::undirected_graph_helper<boost::detail::adj_list_gen<boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*>, boost::vecS, boost::vecS, boost::undirectedS, RDKit::Atom*, RDKit::Bond*, boost::no_property, boost::listS>::config> >
+   fun:_ZN5RDKit5RWMol7addBondEjjNS_4Bond8BondTypeE
+   fun:_ZN5RDKit8SLNParse8startMolINS_4AtomEEEiRSt6vectorIPNS_5RWMolESaIS5_EEPT_b
+   fun:_Z11yysln_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EEbPv
+   fun:_Z9sln_parseRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbRSt6vectorIPN5RDKit5RWMolESaISA_EE
+   fun:_ZN5RDKit8SLNParse5toMolENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+   fun:_ZN5RDKit8SLNToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
+{
+   memory indirectly lost 61
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:allocate
+   fun:allocate
+   fun:_M_get_node
+   fun:_M_create_node<const std::piecewise_construct_t&, std::tuple<int const&>, std::tuple<> >
+   fun:_ZNSt8_Rb_treeIiSt4pairIKiNSt7__cxx114listIPN5RDKit4AtomESaIS6_EEEESt10_Select1stIS9_ESt4lessIiESaIS9_EE22_M_emplace_hint_uniqueIJRKSt21piecewise_construct_tSt5tupleIJRS1_EESK_IJEEEEESt17_Rb_tree_iteratorIS9_ESt23_Rb_tree_const_iteratorIS9_EDpOT_.isra.588
+   fun:operator[]
+   fun:replaceAtomBookmark
+   fun:_ZN5RDKit5ROMol7addAtomEPNS_4AtomEbb
+   fun:addAtom
+   fun:_Z14yysmarts_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EERPNS2_4AtomERPNS2_4BondEPvRi
+   fun:_ZN5RDKit12_GLOBAL__N_112smarts_parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt6vectorIPNS_5RWMolESaISB_EE
+   fun:_ZN5RDKit5toMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFiS7_RSt6vectorIPNS_5RWMolESaISA_EEES7_
+   fun:_ZN5RDKit11SmartsToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEibPSt3mapIS5_S5_St4lessIS5_ESaISt4pairIS6_S5_EEE
+   fun:_ZN5RDKit5Local19expandAndTestSmartsERNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERKSt3mapIS6_S6_St4lessIS6_ESaISt4pairIKS6_S6_EEE
+   fun:_ZN5RDKit5Local13parseAtomTypeERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt3mapIS6_S6_St4lessIS6_ESaISt4pairIS7_S6_EEERKj
+}
+{
+   memory indirectly lost 62
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:allocate
+   fun:allocate
+   fun:_M_get_node
+   fun:_M_create_node<const std::piecewise_construct_t&, std::tuple<int const&>, std::tuple<> >
+   fun:_ZNSt8_Rb_treeIiSt4pairIKiNSt7__cxx114listIPN5RDKit4AtomESaIS6_EEEESt10_Select1stIS9_ESt4lessIiESaIS9_EE22_M_emplace_hint_uniqueIJRKSt21piecewise_construct_tSt5tupleIJRS1_EESK_IJEEEEESt17_Rb_tree_iteratorIS9_ESt23_Rb_tree_const_iteratorIS9_EDpOT_.isra.588
+   fun:operator[]
+   fun:replaceAtomBookmark
+   fun:_ZN5RDKit5ROMol7addAtomEPNS_4AtomEbb
+   fun:addAtom
+   fun:_ZN5RDKit8SLNParse8startMolINS_4AtomEEEiRSt6vectorIPNS_5RWMolESaIS5_EEPT_b
+   fun:_Z11yysln_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EEbPv
+   fun:_Z9sln_parseRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbRSt6vectorIPN5RDKit5RWMolESaISA_EE
+   fun:_ZN5RDKit8SLNParse5toMolENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+   fun:_ZN5RDKit8SLNToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
+{
+   memory indirectly lost 63
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:allocate
+   fun:allocate
+   fun:_M_get_node
+   fun:_M_create_node<const std::piecewise_construct_t&, std::tuple<int const&>, std::tuple<> >
+   fun:_ZNSt8_Rb_treeIiSt4pairIKiNSt7__cxx114listIPN5RDKit4BondESaIS6_EEEESt10_Select1stIS9_ESt4lessIiESaIS9_EE22_M_emplace_hint_uniqueIJRKSt21piecewise_construct_tSt5tupleIJRS1_EESK_IJEEEEESt17_Rb_tree_iteratorIS9_ESt23_Rb_tree_const_iteratorIS9_EDpOT_.isra.407
+   fun:operator[]
+   fun:setBondBookmark
+   fun:_ZN5RDKit8SLNParse14addBranchToMolINS_4BondEEEiRSt6vectorIPNS_5RWMolESaIS5_EEjjRPT_
+   fun:_ZN5RDKit8SLNParse14addBranchToMolERSt6vectorIPNS_5RWMolESaIS3_EEjj
+   fun:_Z11yysln_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EEbPv
+   fun:_Z9sln_parseRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbRSt6vectorIPN5RDKit5RWMolESaISA_EE
+   fun:_ZN5RDKit8SLNParse5toMolENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+   fun:_ZN5RDKit8SLNToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
+{
+   memory indirectly lost 64
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:getStereoAtoms
+   fun:_ZN5RDKit5RWMol9insertMolERKNS_5ROMolE
+   fun:_ZN5RDKit8SLNParse14addBranchToMolINS_4BondEEEiRSt6vectorIPNS_5RWMolESaIS5_EEjjRPT_
+   fun:_ZN5RDKit8SLNParse14addBranchToMolERSt6vectorIPNS_5RWMolESaIS3_EEjj
+   fun:_Z11yysln_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EEbPv
+   fun:_Z9sln_parseRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbRSt6vectorIPN5RDKit5RWMolESaISA_EE
+   fun:_ZN5RDKit8SLNParse5toMolENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+   fun:_ZN5RDKit8SLNToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
+{
+   memory indirectly lost 65
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:shared_count<Queries::Query<int, const RDKit::Atom*, true> >
+   fun:sp_pointer_construct<Queries::Query<int, const RDKit::Atom*, true>, Queries::Query<int, const RDKit::Atom*, true> >
+   fun:shared_ptr<Queries::Query<int, const RDKit::Atom*, true> >
+   fun:_ZN5RDKit9QueryAtom11expandQueryEPN7Queries5QueryIiPKNS_4AtomELb1EEENS1_18CompositeQueryTypeEb
+   fun:_Z14yysmarts_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EERPNS2_4AtomERPNS2_4BondEPvRi
+   fun:_ZN5RDKit12_GLOBAL__N_112smarts_parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt6vectorIPNS_5RWMolESaISB_EE
+   fun:_ZN5RDKit5toMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFiS7_RSt6vectorIPNS_5RWMolESaISA_EEES7_
+   fun:_ZN5RDKit11SmartsToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEibPSt3mapIS5_S5_St4lessIS5_ESaISt4pairIS6_S5_EEE
+   fun:_ZN5RDKit5Local19expandAndTestSmartsERNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERKSt3mapIS6_S6_St4lessIS6_ESaISt4pairIKS6_S6_EEE
+   fun:_ZN5RDKit5Local13parseAtomTypeERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt3mapIS6_S6_St4lessIS6_ESaISt4pairIS7_S6_EEERKj
+}
+{
+   memory indirectly lost 66
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:shared_count<RDKit::ROMol>
+   fun:sp_pointer_construct<const RDKit::ROMol, RDKit::ROMol>
+   fun:shared_ptr<RDKit::ROMol>
+   fun:reset<RDKit::ROMol>
+   fun:_ZNK5RDKit23RecursiveStructureQuery4copyEv
+   fun:_Z14yysmarts_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EERPNS2_4AtomERPNS2_4BondEPvRi
+   fun:_ZN5RDKit12_GLOBAL__N_112smarts_parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt6vectorIPNS_5RWMolESaISB_EE
+   fun:_ZN5RDKit5toMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFiS7_RSt6vectorIPNS_5RWMolESaISA_EEES7_
+   fun:_ZN5RDKit11SmartsToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEibPSt3mapIS5_S5_St4lessIS5_ESaISt4pairIS6_S5_EEE
+   fun:_ZN5RDKit5Local19expandAndTestSmartsERNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERKSt3mapIS6_S6_St4lessIS6_ESaISt4pairIKS6_S6_EEE
+   fun:_ZN5RDKit5Local13parseAtomTypeERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt3mapIS6_S6_St4lessIS6_ESaISt4pairIS7_S6_EEERKj
+}
+{
+   memory indirectly lost 67
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:shared_count<const RDKit::ROMol>
+   fun:sp_pointer_construct<const RDKit::ROMol, const RDKit::ROMol>
+   fun:shared_ptr<const RDKit::ROMol>
+   fun:reset<const RDKit::ROMol>
+   fun:setQueryMol
+   fun:_ZN5RDKit23RecursiveStructureQueryC1EPKNS_5ROMolEj
+   fun:_Z14yysmarts_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EERPNS2_4AtomERPNS2_4BondEPvRi
+   fun:_ZN5RDKit12_GLOBAL__N_112smarts_parseERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt6vectorIPNS_5RWMolESaISB_EE
+   fun:_ZN5RDKit5toMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPFiS7_RSt6vectorIPNS_5RWMolESaISA_EEES7_
+   fun:_ZN5RDKit11SmartsToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEibPSt3mapIS5_S5_St4lessIS5_ESaISt4pairIS6_S5_EEE
+   fun:_ZN5RDKit5Local19expandAndTestSmartsERNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERKSt3mapIS6_S6_St4lessIS6_ESaISt4pairIKS6_S6_EEE
+   fun:_ZN5RDKit5Local13parseAtomTypeERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERSt3mapIS6_S6_St4lessIS6_ESaISt4pairIS7_S6_EEERKj
+}
+{
+   memory indirectly lost 68
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:malloc
+   fun:_Z17yysln__scan_bytesPKcmPv
+   fun:_Z16setup_sln_stringRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPv
+   fun:_Z9sln_parseRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbRSt6vectorIPN5RDKit5RWMolESaISA_EE
+   fun:_ZN5RDKit8SLNParse5toMolENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+   fun:_ZN5RDKit8SLNToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
+{
+   memory indirectly lost 69
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:malloc
+   fun:_Z18yysln__scan_bufferPcmPv
+   fun:_Z17yysln__scan_bytesPKcmPv
+   fun:_Z16setup_sln_stringRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPv
+   fun:_Z9sln_parseRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbRSt6vectorIPN5RDKit5RWMolESaISA_EE
+   fun:_ZN5RDKit8SLNParse5toMolENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+   fun:_ZN5RDKit8SLNToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
+{
+   memory indirectly lost 70
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:malloc
+   fun:_ZL13yy_push_stateiPv
+   fun:_Z9yysln_lexP7YYSTYPEPv
+   fun:_Z11yysln_parsePKcPSt6vectorIPN5RDKit5RWMolESaIS4_EEbPv
+   fun:_Z9sln_parseRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbRSt6vectorIPN5RDKit5RWMolESaISA_EE
+   fun:_ZN5RDKit8SLNParse5toMolENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+   fun:_ZN5RDKit8SLNToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
+{
+   memory indirectly lost 71
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:malloc
+   fun:_ZL25yysln_ensure_buffer_stackPv
+   fun:_Z23yysln__switch_to_bufferP15yy_buffer_statePv
+   fun:_Z18yysln__scan_bufferPcmPv
+   fun:_Z17yysln__scan_bytesPKcmPv
+   fun:_Z16setup_sln_stringRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPv
+   fun:_Z9sln_parseRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbRSt6vectorIPN5RDKit5RWMolESaISA_EE
+   fun:_ZN5RDKit8SLNParse5toMolENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+   fun:_ZN5RDKit8SLNToMolERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
