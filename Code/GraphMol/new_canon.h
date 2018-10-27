@@ -99,9 +99,7 @@ class RDKIT_GRAPHMOL_EXPORT canon_atom {
         p_symbol(NULL){};
 
   ~canon_atom() {
-    if (nbrIds != nullptr) {
       free(nbrIds);
-    }
   }
 };
 
