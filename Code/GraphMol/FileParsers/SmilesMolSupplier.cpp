@@ -41,7 +41,7 @@ SmilesMolSupplier::SmilesMolSupplier(const std::string &fileName,
   if (!tmpStream || (!(*tmpStream)) || (tmpStream->bad())) {
     std::ostringstream errout;
     errout << "Bad input file " << fileName;
-    if (tmpStream) { delete tmpStream; }
+    delete tmpStream;
     throw BadFileException(errout.str());
   }
   dp_inStream = static_cast<std::istream *>(tmpStream);
