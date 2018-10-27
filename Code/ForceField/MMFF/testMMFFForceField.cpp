@@ -1226,8 +1226,7 @@ int mmffValidationSuite(int argc, char *argv[]) {
                 refTorsionInstanceVec.push_back(torsionInstance);
               } else {
                 delete torsionInstance;
-              torsionInstance;
-            }
+              }
               ++n;
             }
             if (!found) {
@@ -1293,8 +1292,8 @@ int mmffValidationSuite(int argc, char *argv[]) {
                 errorMsg += diff.str();
               }
             }
-            BOOST_FOREACH (auto &ti, rdkTorsionInstanceVec) { delete ti; }
-            BOOST_FOREACH (auto &ti, refTorsionInstanceVec) { delete ti; }
+            for (auto &ti : rdkTorsionInstanceVec) { delete ti; }
+            for (auto &ti : refTorsionInstanceVec) { delete ti; }
             error = (fabs(rdkEnergy - refEnergy) > ENERGY_TOLERANCE);
             if (error && checkEnergy) {
               failed = true;
