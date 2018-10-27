@@ -32,7 +32,7 @@ extern const std::string defaultParamData;
 
 ParamCollection *ParamCollection::getParams(const std::string &paramData) {
   if (ds_instance == nullptr || !paramData.empty()) {
-    ds_instance = std::unique_ptr<ParamCollection>(new ParamCollection(paramData));
+    ds_instance.reset(new ParamCollection(paramData));
   }
   return ds_instance.get();
 }
