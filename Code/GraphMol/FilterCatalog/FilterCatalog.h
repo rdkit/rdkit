@@ -129,7 +129,7 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalog : public FCatalog {
 
   FilterCatalog(FilterCatalogParams::FilterCatalogs catalogs)
       : FCatalog(), d_entries() {
-    auto temp_params = static_cast<paramType_t>(catalogs);
+    paramType_t temp_params(catalogs);
     setCatalogParams(&temp_params);
   }
 
