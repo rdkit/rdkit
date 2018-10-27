@@ -314,23 +314,20 @@ bool _minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
   }
 
   // create the force field
-  ForceFields::ForceField *field;
+  std::unique_ptr<ForceFields::ForceField> field;
   if (eargs.useBasicKnowledge) {  // ETKDG or KDG
-    field = DistGeom::construct3DForceField(
+    field.reset(DistGeom::construct3DForceField(
         *eargs.mmat, positions3D, *eargs.bonds, *eargs.angles,
         *eargs.expTorsionAtoms, *eargs.expTorsionAngles, *eargs.improperAtoms,
-        *eargs.atomNums);
+        *eargs.atomNums));
   } else {  // plain ETDG
-    field = DistGeom::constructPlain3DForceField(
+    field.reset(DistGeom::constructPlain3DForceField(
         *eargs.mmat, positions3D, *eargs.bonds, *eargs.angles,
-        *eargs.expTorsionAtoms, *eargs.expTorsionAngles, *eargs.atomNums);
+        *eargs.expTorsionAtoms, *eargs.expTorsionAngles, *eargs.atomNums));
   }
 
   // minimize!
   field->initialize();
-  // std::cout << "Field with torsion constraints: " << field->calcEnergy() <<
-  // "
-  // " << ERROR_TOL << std::endl;
   if (field->calcEnergy() > ERROR_TOL) {
     // while (needMore) {
     field->minimize(300, eargs.optimizerForceTol);
@@ -338,14 +335,13 @@ bool _minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
     //}
   }
   // std::cout << field->calcEnergy() << std::endl;
-  delete field;
 
   // check for planarity if ETKDG or KDG
   if (eargs.useBasicKnowledge) {
     // create a force field with only the impropers
-    ForceFields::ForceField *field2;
-    field2 = DistGeom::construct3DImproperForceField(
-        *eargs.mmat, positions3D, *eargs.improperAtoms, *eargs.atomNums);
+    std::unique_ptr<ForceFields::ForceField> field2(
+        DistGeom::construct3DImproperForceField(
+            *eargs.mmat, positions3D, *eargs.improperAtoms, *eargs.atomNums));
     field2->initialize();
     // check if the energy is low enough
     double planarityTolerance = 0.7;
@@ -358,7 +354,6 @@ bool _minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
 #endif
       planar = false;
     }
-    delete field2;
   }
 
   // overwrite positions and delete the 3D ones
@@ -428,7 +423,7 @@ bool _embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
     // std::cerr << " ITER: " << iter << " gotCoords: " << gotCoords <<
     // std::endl;
     if (gotCoords) {
-      boost::scoped_ptr<ForceFields::ForceField> field(
+      std::unique_ptr<ForceFields::ForceField> field(
           DistGeom::constructForceField(*eargs.mmat, *positions,
                                         *eargs.chiralCenters, 1.0, 0.1, nullptr,
                                         eargs.basinThresh));
@@ -477,7 +472,7 @@ bool _embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
       // for each of the atoms in the "tetrahedralCarbons" list, make sure
       // that there is a minimum volume around them and that they are inside
       // that volume. (this is part of github #971)
-      BOOST_FOREACH (DistGeom::ChiralSetPtr tetSet, *eargs.tetrahedralCarbons) {
+      for (const auto tetSet : *eargs.tetrahedralCarbons) {
         // it could happen that the centroid is outside the volume defined
         // by the other
         // four points. That is also a fail.
@@ -502,7 +497,7 @@ bool _embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
       if (gotCoords && eargs.enforceChirality &&
           eargs.chiralCenters->size() > 0) {
         // check the chiral volume:
-        BOOST_FOREACH (DistGeom::ChiralSetPtr chiralSet, *eargs.chiralCenters) {
+        for (const auto chiralSet : *eargs.chiralCenters) {
           double vol = DistGeom::ChiralViolationContrib::calcChiralVolume(
               chiralSet->d_idx1, chiralSet->d_idx2, chiralSet->d_idx3,
               chiralSet->d_idx4, *positions);
@@ -525,7 +520,7 @@ bool _embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
       // increasing the weight on the fourth dimension
       if (gotCoords &&
           (eargs.chiralCenters->size() > 0 || eargs.useRandomCoords)) {
-        boost::scoped_ptr<ForceFields::ForceField> field2(
+        std::unique_ptr<ForceFields::ForceField> field2(
             DistGeom::constructForceField(*eargs.mmat, *positions,
                                           *eargs.chiralCenters, 0.2, 1.0,
                                           nullptr, eargs.basinThresh));
@@ -546,18 +541,14 @@ bool _embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
       // (ET)(K)DG
       if (gotCoords &&
           (eargs.useExpTorsionAnglePrefs || eargs.useBasicKnowledge)) {
-        gotCoords = _minimizeWithExpTorsions(
-            *positions, eargs); /*eargs.mmat, eargs.optimizerForceTol,
-           eargs.basinThresh, *eargs.bonds, *eargs.angles,
-           *eargs.expTorsionAtoms, *eargs.expTorsionAngles,
-           *eargs.improperAtoms, *eargs.atomNums, eargs.useBasicKnowledge); */
+        gotCoords = _minimizeWithExpTorsions(*positions, eargs);
       }
       // test if chirality is correct
       if (eargs.enforceChirality && gotCoords &&
           (eargs.chiralCenters->size() > 0)) {
         // "distance matrix" chirality test
         std::set<int> atoms;
-        BOOST_FOREACH (DistGeom::ChiralSetPtr chiralSet, *eargs.chiralCenters) {
+        for (const auto chiralSet : *eargs.chiralCenters) {
           if (chiralSet->d_idx0 != chiralSet->d_idx4) {
             atoms.insert(chiralSet->d_idx0);
             atoms.insert(chiralSet->d_idx1);
@@ -580,8 +571,7 @@ bool _embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
 
         // "center in volume" chirality test
         if (gotCoords) {
-          BOOST_FOREACH (DistGeom::ChiralSetPtr chiralSet,
-                         *eargs.chiralCenters) {
+          for (const auto chiralSet : *eargs.chiralCenters) {
             // it could happen that the centroid is outside the volume defined
             // by the other
             // four points. That is also a fail.
