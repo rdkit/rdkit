@@ -40,20 +40,20 @@
 
 //#define DEBUG_EMBEDDING 1
 
-#define ERROR_TOL 0.00001
+namespace {
+const double ERROR_TOL = 0.00001;
 // these tolerances, all to detect and filter out bogus conformations, are a
 // delicate balance between sensitive enough to detect obviously bad
 // conformations but not so sensitive that a bunch of ok conformations get
 // filtered out, which slows down the whole conformation generation process
-#define MAX_MINIMIZED_E_PER_ATOM 0.05
-#define MAX_MINIMIZED_E_CONTRIB 0.20
-#define MIN_TETRAHEDRAL_CHIRAL_VOL 0.50
-#define TETRAHEDRAL_CENTERINVOLUME_TOL 0.30
+const double MAX_MINIMIZED_E_PER_ATOM = 0.05;
+const double MAX_MINIMIZED_E_CONTRIB = 0.20;
+const double MIN_TETRAHEDRAL_CHIRAL_VOL = 0.50;
+const double TETRAHEDRAL_CENTERINVOLUME_TOL = 0.30;
+}  // namespace
 
 namespace RDKit {
 namespace DGeomHelpers {
-typedef std::pair<int, int> INT_PAIR;
-typedef std::vector<INT_PAIR> INT_PAIR_VECT;
 
 //! Parameters corresponding to Sereina Riniker's KDG approach
 const EmbedParameters KDG(0,      // maxIterations
@@ -143,7 +143,7 @@ const EmbedParameters ETKDGv2(0,      // maxIterations
 );
 
 namespace detail {
-typedef struct {
+struct EmbedArgs {
   boost::dynamic_bitset<> *confsOk;
   bool fourD;
   INT_VECT *fragMapping;
@@ -170,7 +170,7 @@ typedef struct {
       *expTorsionAngles;
   std::vector<std::vector<int>> *improperAtoms;
   std::vector<int> *atomNums;
-} EmbedArgs;
+};
 }  // namespace detail
 
 bool _volumeTest(const DistGeom::ChiralSetPtr &chiralSet,
@@ -367,6 +367,95 @@ bool _minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
   return planar;
 }
 
+namespace EmbeddingOps {
+bool generateInitialCoords(RDGeom::PointPtrVect *positions,
+                           detail::EmbedArgs eargs,
+                           RDNumeric::DoubleSymmMatrix &distMat,
+                           RDKit::double_source_type *rng) {
+  bool gotCoords = false;
+  if (!eargs.useRandomCoords) {
+    double largestDistance =
+        DistGeom::pickRandomDistMat(*eargs.mmat, distMat, *rng);
+    RDUNUSED_PARAM(largestDistance);
+    gotCoords = DistGeom::computeInitialCoords(
+        distMat, *positions, *rng, eargs.randNegEig, eargs.numZeroFail);
+  } else {
+    double boxSize;
+    if (eargs.boxSizeMult > 0) {
+      boxSize = 5. * eargs.boxSizeMult;
+    } else {
+      boxSize = -1 * eargs.boxSizeMult;
+    }
+    gotCoords = DistGeom::computeRandomCoords(*positions, boxSize, *rng);
+  }
+  return gotCoords;
+}
+bool firstMinimization(RDGeom::PointPtrVect *positions,
+                       detail::EmbedArgs eargs) {
+  bool gotCoords = false;
+  std::unique_ptr<ForceFields::ForceField> field(DistGeom::constructForceField(
+      *eargs.mmat, *positions, *eargs.chiralCenters, 1.0, 0.1, nullptr,
+      eargs.basinThresh));
+  unsigned int nPasses = 0;
+  field->initialize();
+  if (field->calcEnergy() > ERROR_TOL) {
+    int needMore = 1;
+    while (needMore) {
+      needMore = field->minimize(400, eargs.optimizerForceTol);
+      ++nPasses;
+    }
+  }
+  std::vector<double> e_contribs;
+  double local_e = field->calcEnergy(&e_contribs);
+
+#ifdef DEBUG_EMBEDDING
+  std::cerr << " Energy : " << local_e / positions.size() << " "
+            << *(std::max_element(e_contribs.begin(), e_contribs.end()))
+            << std::endl;
+#endif
+
+  // check that neither the energy nor any of the contributions to it are
+  // too high (this is part of github #971)
+  if (local_e / positions->size() >= MAX_MINIMIZED_E_PER_ATOM ||
+      (e_contribs.size() &&
+       *(std::max_element(e_contribs.begin(), e_contribs.end())) >
+           MAX_MINIMIZED_E_CONTRIB)) {
+#ifdef DEBUG_EMBEDDING
+    std::cerr << " Energy fail: " << local_e / positions->size() << " "
+              << *(std::max_element(e_contribs.begin(), e_contribs.end()))
+              << std::endl;
+#endif
+    gotCoords = false;
+  }
+  return gotCoords;
+}
+
+bool checkTetrahedralCenters(RDGeom::PointPtrVect *positions,
+                             detail::EmbedArgs eargs) {
+  // for each of the atoms in the "tetrahedralCarbons" list, make sure
+  // that there is a minimum volume around them and that they are inside
+  // that volume. (this is part of github #971)
+  for (const auto tetSet : *eargs.tetrahedralCarbons) {
+    // it could happen that the centroid is outside the volume defined
+    // by the other
+    // four points. That is also a fail.
+    if (!_volumeTest(tetSet, *positions) ||
+        !_centerInVolume(tetSet, *positions, TETRAHEDRAL_CENTERINVOLUME_TOL)) {
+#ifdef DEBUG_EMBEDDING
+      std::cerr << " fail2! (" << tetSet->d_idx0 << ") iter: " << iter
+                << " vol: " << _volumeTest(tetSet, *positions, true)
+                << " center: "
+                << _centerInVolume(tetSet, *positions,
+                                   TETRAHEDRAL_CENTERINVOLUME_TOL, true)
+                << std::endl;
+#endif
+      return false;
+    }
+  }
+  return true;
+}
+}  // namespace EmbeddingOps
+
 bool _embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
                   int seed) {
   PRECONDITION(positions, "bogus positions");
@@ -398,98 +487,19 @@ bool _embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
 
   bool gotCoords = false;
   unsigned int iter = 0;
-  double largestDistance = -1.0;
-  RDUNUSED_PARAM(largestDistance);
   while ((gotCoords == false) && (iter < eargs.maxIterations)) {
     ++iter;
-    if (!eargs.useRandomCoords) {
-      largestDistance = DistGeom::pickRandomDistMat(*eargs.mmat, distMat, *rng);
-      gotCoords = DistGeom::computeInitialCoords(
-          distMat, *positions, *rng, eargs.randNegEig, eargs.numZeroFail);
-    } else {
-      double boxSize;
-      if (eargs.boxSizeMult > 0) {
-        boxSize = 5. * eargs.boxSizeMult;
-      } else {
-        boxSize = -1 * eargs.boxSizeMult;
-      }
-      gotCoords = DistGeom::computeRandomCoords(*positions, boxSize, *rng);
-    }
+    gotCoords =
+        EmbeddingOps::generateInitialCoords(positions, eargs, distMat, rng);
 #ifdef DEBUG_EMBEDDING
     if (!gotCoords) {
       std::cerr << "Initial embedding failed!, Iter: " << iter << std::endl;
     }
 #endif
-    // std::cerr << " ITER: " << iter << " gotCoords: " << gotCoords <<
-    // std::endl;
     if (gotCoords) {
-      std::unique_ptr<ForceFields::ForceField> field(
-          DistGeom::constructForceField(*eargs.mmat, *positions,
-                                        *eargs.chiralCenters, 1.0, 0.1, nullptr,
-                                        eargs.basinThresh));
-      unsigned int nPasses = 0;
-      field->initialize();
-      // std::cerr << "FIELD E: " << field->calcEnergy() << std::endl;
-      if (field->calcEnergy() > ERROR_TOL) {
-        int needMore = 1;
-        while (needMore) {
-          needMore = field->minimize(400, eargs.optimizerForceTol);
-          ++nPasses;
-        }
-      }
-      std::vector<double> e_contribs;
-      double local_e = field->calcEnergy(&e_contribs);
-      // if (e_contribs.size()) {
-      //   std::cerr << "        check: " << local_e / nat << " "
-      //             << *(std::max_element(e_contribs.begin(),
-      //             e_contribs.end()))
-      //             << std::endl;
-      // }
-
-#ifdef DEBUG_EMBEDDING
-      std::cerr << " Energy : " << local_e / nat << " "
-                << *(std::max_element(e_contribs.begin(), e_contribs.end()))
-                << std::endl;
-// std::copy(e_contribs.begin(), e_contribs.end(),
-//           std::ostream_iterator<double>(std::cerr, " "));
-// std::cerr << std::endl;
-#endif
-
-      // check that neither the energy nor any of the contributions to it are
-      // too high (this is part of github #971)
-      if (local_e / nat >= MAX_MINIMIZED_E_PER_ATOM ||
-          (e_contribs.size() &&
-           *(std::max_element(e_contribs.begin(), e_contribs.end())) >
-               MAX_MINIMIZED_E_CONTRIB)) {
-#ifdef DEBUG_EMBEDDING
-        std::cerr << " Energy fail: " << local_e / nat << " "
-                  << *(std::max_element(e_contribs.begin(), e_contribs.end()))
-                  << std::endl;
-#endif
-        gotCoords = false;
-        continue;
-      }
-      // for each of the atoms in the "tetrahedralCarbons" list, make sure
-      // that there is a minimum volume around them and that they are inside
-      // that volume. (this is part of github #971)
-      for (const auto tetSet : *eargs.tetrahedralCarbons) {
-        // it could happen that the centroid is outside the volume defined
-        // by the other
-        // four points. That is also a fail.
-        if (!_volumeTest(tetSet, *positions) ||
-            !_centerInVolume(tetSet, *positions,
-                             TETRAHEDRAL_CENTERINVOLUME_TOL)) {
-#ifdef DEBUG_EMBEDDING
-          std::cerr << " fail2! (" << tetSet->d_idx0 << ") iter: " << iter
-                    << " vol: " << _volumeTest(tetSet, *positions, true)
-                    << " center: "
-                    << _centerInVolume(tetSet, *positions,
-                                       TETRAHEDRAL_CENTERINVOLUME_TOL, true)
-                    << std::endl;
-#endif
-          gotCoords = false;
-          continue;
-        }
+      gotCoords = EmbeddingOps::firstMinimization(positions, eargs);
+      if (gotCoords) {
+        gotCoords = EmbeddingOps::checkTetrahedralCenters(positions, eargs);
       }
 
       // Check if any of our chiral centers are badly out of whack. If so, try
