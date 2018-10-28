@@ -301,9 +301,140 @@ bool _boundsFulfilled(const std::vector<int> &atoms,
   return true;
 }
 
+namespace EmbeddingOps {
+bool generateInitialCoords(RDGeom::PointPtrVect *positions,
+                           const detail::EmbedArgs &eargs,
+                           RDNumeric::DoubleSymmMatrix &distMat,
+                           RDKit::double_source_type *rng) {
+  bool gotCoords = false;
+  if (!eargs.useRandomCoords) {
+    double largestDistance =
+        DistGeom::pickRandomDistMat(*eargs.mmat, distMat, *rng);
+    RDUNUSED_PARAM(largestDistance);
+    gotCoords = DistGeom::computeInitialCoords(
+        distMat, *positions, *rng, eargs.randNegEig, eargs.numZeroFail);
+  } else {
+    double boxSize;
+    if (eargs.boxSizeMult > 0) {
+      boxSize = 5. * eargs.boxSizeMult;
+    } else {
+      boxSize = -1 * eargs.boxSizeMult;
+    }
+    gotCoords = DistGeom::computeRandomCoords(*positions, boxSize, *rng);
+  }
+  return gotCoords;
+}
+bool firstMinimization(RDGeom::PointPtrVect *positions,
+                       const detail::EmbedArgs &eargs) {
+  bool gotCoords = false;
+  std::unique_ptr<ForceFields::ForceField> field(DistGeom::constructForceField(
+      *eargs.mmat, *positions, *eargs.chiralCenters, 1.0, 0.1, nullptr,
+      eargs.basinThresh));
+  unsigned int nPasses = 0;
+  field->initialize();
+  if (field->calcEnergy() > ERROR_TOL) {
+    int needMore = 1;
+    while (needMore) {
+      needMore = field->minimize(400, eargs.optimizerForceTol);
+      ++nPasses;
+    }
+  }
+  std::vector<double> e_contribs;
+  double local_e = field->calcEnergy(&e_contribs);
+
+#ifdef DEBUG_EMBEDDING
+  std::cerr << " Energy : " << local_e / positions.size() << " "
+            << *(std::max_element(e_contribs.begin(), e_contribs.end()))
+            << std::endl;
+#endif
+
+  // check that neither the energy nor any of the contributions to it are
+  // too high (this is part of github #971)
+  if (local_e / positions->size() >= MAX_MINIMIZED_E_PER_ATOM ||
+      (e_contribs.size() &&
+       *(std::max_element(e_contribs.begin(), e_contribs.end())) >
+           MAX_MINIMIZED_E_CONTRIB)) {
+#ifdef DEBUG_EMBEDDING
+    std::cerr << " Energy fail: " << local_e / positions->size() << " "
+              << *(std::max_element(e_contribs.begin(), e_contribs.end()))
+              << std::endl;
+#endif
+    gotCoords = false;
+  }
+  return gotCoords;
+}
+
+bool checkTetrahedralCenters(const RDGeom::PointPtrVect *positions,
+                             const detail::EmbedArgs &eargs) {
+  // for each of the atoms in the "tetrahedralCarbons" list, make sure
+  // that there is a minimum volume around them and that they are inside
+  // that volume. (this is part of github #971)
+  for (const auto tetSet : *eargs.tetrahedralCarbons) {
+    // it could happen that the centroid is outside the volume defined
+    // by the other
+    // four points. That is also a fail.
+    if (!_volumeTest(tetSet, *positions) ||
+        !_centerInVolume(tetSet, *positions, TETRAHEDRAL_CENTERINVOLUME_TOL)) {
+#ifdef DEBUG_EMBEDDING
+      std::cerr << " fail2! (" << tetSet->d_idx0 << ") iter: " << iter
+                << " vol: " << _volumeTest(tetSet, *positions, true)
+                << " center: "
+                << _centerInVolume(tetSet, *positions,
+                                   TETRAHEDRAL_CENTERINVOLUME_TOL, true)
+                << std::endl;
+#endif
+      return false;
+    }
+  }
+  return true;
+}
+bool checkChiralCenters(const RDGeom::PointPtrVect *positions,
+                        const detail::EmbedArgs &eargs) {
+  // check the chiral volume:
+  for (const auto chiralSet : *eargs.chiralCenters) {
+    double vol = DistGeom::ChiralViolationContrib::calcChiralVolume(
+        chiralSet->d_idx1, chiralSet->d_idx2, chiralSet->d_idx3,
+        chiralSet->d_idx4, *positions);
+    double lb = chiralSet->getLowerVolumeBound();
+    double ub = chiralSet->getUpperVolumeBound();
+    if ((lb > 0 && vol < lb && (lb - vol) / lb > .2) ||
+        (ub < 0 && vol > ub && (vol - ub) / ub > .2)) {
+#ifdef DEBUG_EMBEDDING
+      std::cerr << " fail! (" << chiralSet->d_idx0 << ") iter: " << iter << " "
+                << vol << " " << lb << "-" << ub << std::endl;
+#endif
+      return false;
+    }
+  }
+  return true;
+}
+bool minimizeFourthDimension(RDGeom::PointPtrVect *positions,
+                             const detail::EmbedArgs &eargs) {
+  // now redo the minimization if we have a chiral center
+  // or have started from random coords. This
+  // time removing the chiral constraints and
+  // increasing the weight on the fourth dimension
+
+  std::unique_ptr<ForceFields::ForceField> field2(DistGeom::constructForceField(
+      *eargs.mmat, *positions, *eargs.chiralCenters, 0.2, 1.0, nullptr,
+      eargs.basinThresh));
+  field2->initialize();
+  // std::cerr<<"FIELD2 E: "<<field2->calcEnergy()<<std::endl;
+  if (field2->calcEnergy() > ERROR_TOL) {
+    int needMore = 1;
+    int nPasses2 = 0;
+    while (needMore) {
+      needMore = field2->minimize(200, eargs.optimizerForceTol);
+      ++nPasses2;
+    }
+    // std::cerr<<"   "<<field2->calcEnergy()<<" after npasses2:
+    // "<<nPasses2<<std::endl;
+  }
+  return true;
+}
 // the minimization using experimental torsion angle preferences
-bool _minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
-                              const detail::EmbedArgs &eargs) {
+bool minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
+                             const detail::EmbedArgs &eargs) {
   bool planar = true;
 
   // convert to 3D positions and create coordMap
@@ -367,93 +498,46 @@ bool _minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
   return planar;
 }
 
-namespace EmbeddingOps {
-bool generateInitialCoords(RDGeom::PointPtrVect *positions,
-                           detail::EmbedArgs eargs,
-                           RDNumeric::DoubleSymmMatrix &distMat,
-                           RDKit::double_source_type *rng) {
-  bool gotCoords = false;
-  if (!eargs.useRandomCoords) {
-    double largestDistance =
-        DistGeom::pickRandomDistMat(*eargs.mmat, distMat, *rng);
-    RDUNUSED_PARAM(largestDistance);
-    gotCoords = DistGeom::computeInitialCoords(
-        distMat, *positions, *rng, eargs.randNegEig, eargs.numZeroFail);
-  } else {
-    double boxSize;
-    if (eargs.boxSizeMult > 0) {
-      boxSize = 5. * eargs.boxSizeMult;
-    } else {
-      boxSize = -1 * eargs.boxSizeMult;
-    }
-    gotCoords = DistGeom::computeRandomCoords(*positions, boxSize, *rng);
-  }
-  return gotCoords;
-}
-bool firstMinimization(RDGeom::PointPtrVect *positions,
-                       detail::EmbedArgs eargs) {
-  bool gotCoords = false;
-  std::unique_ptr<ForceFields::ForceField> field(DistGeom::constructForceField(
-      *eargs.mmat, *positions, *eargs.chiralCenters, 1.0, 0.1, nullptr,
-      eargs.basinThresh));
-  unsigned int nPasses = 0;
-  field->initialize();
-  if (field->calcEnergy() > ERROR_TOL) {
-    int needMore = 1;
-    while (needMore) {
-      needMore = field->minimize(400, eargs.optimizerForceTol);
-      ++nPasses;
+bool finalChiralChecks(RDGeom::PointPtrVect *positions,
+                       const detail::EmbedArgs &eargs) {
+  // "distance matrix" chirality test
+  std::set<int> atoms;
+  for (const auto chiralSet : *eargs.chiralCenters) {
+    if (chiralSet->d_idx0 != chiralSet->d_idx4) {
+      atoms.insert(chiralSet->d_idx0);
+      atoms.insert(chiralSet->d_idx1);
+      atoms.insert(chiralSet->d_idx2);
+      atoms.insert(chiralSet->d_idx3);
+      atoms.insert(chiralSet->d_idx4);
     }
   }
-  std::vector<double> e_contribs;
-  double local_e = field->calcEnergy(&e_contribs);
-
+  std::vector<int> atomsToCheck(atoms.begin(), atoms.end());
+  if (atomsToCheck.size() > 0) {
+    if (!_boundsFulfilled(atomsToCheck, *eargs.mmat, *positions)) {
 #ifdef DEBUG_EMBEDDING
-  std::cerr << " Energy : " << local_e / positions.size() << " "
-            << *(std::max_element(e_contribs.begin(), e_contribs.end()))
-            << std::endl;
-#endif
-
-  // check that neither the energy nor any of the contributions to it are
-  // too high (this is part of github #971)
-  if (local_e / positions->size() >= MAX_MINIMIZED_E_PER_ATOM ||
-      (e_contribs.size() &&
-       *(std::max_element(e_contribs.begin(), e_contribs.end())) >
-           MAX_MINIMIZED_E_CONTRIB)) {
-#ifdef DEBUG_EMBEDDING
-    std::cerr << " Energy fail: " << local_e / positions->size() << " "
-              << *(std::max_element(e_contribs.begin(), e_contribs.end()))
-              << std::endl;
-#endif
-    gotCoords = false;
-  }
-  return gotCoords;
-}
-
-bool checkTetrahedralCenters(RDGeom::PointPtrVect *positions,
-                             detail::EmbedArgs eargs) {
-  // for each of the atoms in the "tetrahedralCarbons" list, make sure
-  // that there is a minimum volume around them and that they are inside
-  // that volume. (this is part of github #971)
-  for (const auto tetSet : *eargs.tetrahedralCarbons) {
-    // it could happen that the centroid is outside the volume defined
-    // by the other
-    // four points. That is also a fail.
-    if (!_volumeTest(tetSet, *positions) ||
-        !_centerInVolume(tetSet, *positions, TETRAHEDRAL_CENTERINVOLUME_TOL)) {
-#ifdef DEBUG_EMBEDDING
-      std::cerr << " fail2! (" << tetSet->d_idx0 << ") iter: " << iter
-                << " vol: " << _volumeTest(tetSet, *positions, true)
-                << " center: "
-                << _centerInVolume(tetSet, *positions,
-                                   TETRAHEDRAL_CENTERINVOLUME_TOL, true)
+      std::cerr << " fail3a! (" << atomsToCheck[0] << ") iter: " << iter
                 << std::endl;
 #endif
       return false;
     }
   }
+
+  // "center in volume" chirality test
+  for (const auto chiralSet : *eargs.chiralCenters) {
+    // it could happen that the centroid is outside the volume defined
+    // by the other four points. That is also a fail.
+    if (!_centerInVolume(chiralSet, *positions)) {
+#ifdef DEBUG_EMBEDDING
+      std::cerr << " fail3b! (" << chiralSet->d_idx0 << ") iter: " << iter
+                << std::endl;
+#endif
+      return false;
+    }
+  }
+
   return true;
 }
+
 }  // namespace EmbeddingOps
 
 bool _embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
@@ -506,23 +590,7 @@ bool _embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
       // again
       if (gotCoords && eargs.enforceChirality &&
           eargs.chiralCenters->size() > 0) {
-        // check the chiral volume:
-        for (const auto chiralSet : *eargs.chiralCenters) {
-          double vol = DistGeom::ChiralViolationContrib::calcChiralVolume(
-              chiralSet->d_idx1, chiralSet->d_idx2, chiralSet->d_idx3,
-              chiralSet->d_idx4, *positions);
-          double lb = chiralSet->getLowerVolumeBound();
-          double ub = chiralSet->getUpperVolumeBound();
-          if ((lb > 0 && vol < lb && (lb - vol) / lb > .2) ||
-              (ub < 0 && vol > ub && (vol - ub) / ub > .2)) {
-#ifdef DEBUG_EMBEDDING
-            std::cerr << " fail! (" << chiralSet->d_idx0 << ") iter: " << iter
-                      << " " << vol << " " << lb << "-" << ub << std::endl;
-#endif
-            gotCoords = false;
-            break;
-          }
-        }
+        gotCoords = EmbeddingOps::checkChiralCenters(positions, eargs);
       }
       // now redo the minimization if we have a chiral center
       // or have started from random coords. This
@@ -530,71 +598,18 @@ bool _embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
       // increasing the weight on the fourth dimension
       if (gotCoords &&
           (eargs.chiralCenters->size() > 0 || eargs.useRandomCoords)) {
-        std::unique_ptr<ForceFields::ForceField> field2(
-            DistGeom::constructForceField(*eargs.mmat, *positions,
-                                          *eargs.chiralCenters, 0.2, 1.0,
-                                          nullptr, eargs.basinThresh));
-        field2->initialize();
-        // std::cerr<<"FIELD2 E: "<<field2->calcEnergy()<<std::endl;
-        if (field2->calcEnergy() > ERROR_TOL) {
-          int needMore = 1;
-          int nPasses2 = 0;
-          while (needMore) {
-            needMore = field2->minimize(200, eargs.optimizerForceTol);
-            ++nPasses2;
-          }
-          // std::cerr<<"   "<<field2->calcEnergy()<<" after npasses2:
-          // "<<nPasses2<<std::endl;
-        }
+        gotCoords = EmbeddingOps::minimizeFourthDimension(positions, eargs);
       }
 
       // (ET)(K)DG
       if (gotCoords &&
           (eargs.useExpTorsionAnglePrefs || eargs.useBasicKnowledge)) {
-        gotCoords = _minimizeWithExpTorsions(*positions, eargs);
+        gotCoords = EmbeddingOps::minimizeWithExpTorsions(*positions, eargs);
       }
       // test if chirality is correct
       if (eargs.enforceChirality && gotCoords &&
           (eargs.chiralCenters->size() > 0)) {
-        // "distance matrix" chirality test
-        std::set<int> atoms;
-        for (const auto chiralSet : *eargs.chiralCenters) {
-          if (chiralSet->d_idx0 != chiralSet->d_idx4) {
-            atoms.insert(chiralSet->d_idx0);
-            atoms.insert(chiralSet->d_idx1);
-            atoms.insert(chiralSet->d_idx2);
-            atoms.insert(chiralSet->d_idx3);
-            atoms.insert(chiralSet->d_idx4);
-          }
-        }
-        std::vector<int> atomsToCheck(atoms.begin(), atoms.end());
-        if (atomsToCheck.size() > 0) {
-          if (!_boundsFulfilled(atomsToCheck, *eargs.mmat, *positions)) {
-            gotCoords = false;
-
-#ifdef DEBUG_EMBEDDING
-            std::cerr << " fail3a! (" << atomsToCheck[0] << ") iter: " << iter
-                      << std::endl;
-#endif
-          }
-        }
-
-        // "center in volume" chirality test
-        if (gotCoords) {
-          for (const auto chiralSet : *eargs.chiralCenters) {
-            // it could happen that the centroid is outside the volume defined
-            // by the other
-            // four points. That is also a fail.
-            if (!_centerInVolume(chiralSet, *positions)) {
-#ifdef DEBUG_EMBEDDING
-              std::cerr << " fail3b! (" << chiralSet->d_idx0
-                        << ") iter: " << iter << std::endl;
-#endif
-              gotCoords = false;
-              break;
-            }
-          }
-        }
+        gotCoords = EmbeddingOps::finalChiralChecks(positions, eargs);
       }
     }  // if(gotCoords)
   }    // while
