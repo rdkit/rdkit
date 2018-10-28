@@ -138,7 +138,7 @@ class RecapHierarchyNode(object):
 
   def __del__(self):
     self.children = {}
-    self.parent = {}
+    self.parents = {}
     self.mol = None
 
 
