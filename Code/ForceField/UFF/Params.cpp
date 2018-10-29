@@ -26,23 +26,19 @@ typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
 namespace ForceFields {
 namespace UFF {
 
-class ParamCollection *ParamCollection::ds_instance = nullptr;
+class std::unique_ptr<ParamCollection> ParamCollection::ds_instance = nullptr;
 
 extern const std::string defaultParamData;
 
 ParamCollection *ParamCollection::getParams(const std::string &paramData) {
-  if (ds_instance == nullptr) {
-    ds_instance = new ParamCollection(paramData);
-  } else if (paramData != "") {
-    delete ds_instance;
-    ds_instance = nullptr;
-    ds_instance = new ParamCollection(paramData);
+  if (ds_instance == nullptr || !paramData.empty()) {
+    ds_instance.reset(new ParamCollection(paramData));
   }
-  return ds_instance;
+  return ds_instance.get();
 }
 
 ParamCollection::ParamCollection(std::string paramData) {
-  if (paramData == "") paramData = defaultParamData;
+  if (paramData.empty()) paramData = defaultParamData;
   std::istringstream inStream(paramData);
 
   std::string inLine = RDKit::getLine(inStream);

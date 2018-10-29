@@ -34,16 +34,18 @@ void test1() {
   unsigned int n;
 
   RWMol *m, *q1;
+  bool updateLabel = true;
+  bool takeOwnership = true;
   m = new RWMol();
-  m->addAtom(new Atom(8));
-  m->addAtom(new Atom(6));
-  m->addAtom(new Atom(6));
+  m->addAtom(new Atom(8), updateLabel, takeOwnership);
+  m->addAtom(new Atom(6), updateLabel, takeOwnership);
+  m->addAtom(new Atom(6), updateLabel, takeOwnership);
   m->addBond(0, 1, Bond::SINGLE);
   m->addBond(1, 2, Bond::SINGLE);
 
   q1 = new RWMol();
-  q1->addAtom(new QueryAtom(6));
-  q1->addAtom(new QueryAtom(6));
+  q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
+  q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
   q1->addBond(0, 1, Bond::SINGLE);
   n = SubstructMatch(*m, *q1, matches, false);
   CHECK_INVARIANT(n == 2, "");
@@ -78,9 +80,9 @@ void test1() {
 
   // make sure we reset the match vectors.
   // build a query we won't match:
-  q1->addAtom(new QueryAtom(6));
+  q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
   q1->addBond(1, 2, Bond::SINGLE);
-  q1->addAtom(new QueryAtom(6));
+  q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
   q1->addBond(2, 3, Bond::SINGLE);
 
   TEST_ASSERT(!SubstructMatch(*m, *q1, matchV));
@@ -90,6 +92,8 @@ void test1() {
   TEST_ASSERT(n == 0);
   TEST_ASSERT(matches.size() == 0);
 
+  delete m;
+  delete q1;
   std::cout << "Done\n" << std::endl;
 }
 
@@ -101,15 +105,17 @@ void test2() {
 
   RWMol *m, *q1;
   m = new RWMol();
-  m->addAtom(new Atom(6));
-  m->addAtom(new Atom(6));
-  m->addAtom(new Atom(8));
+  bool updateLabel = true;
+  bool takeOwnership = true;
+  m->addAtom(new Atom(6), updateLabel, takeOwnership);
+  m->addAtom(new Atom(6), updateLabel, takeOwnership);
+  m->addAtom(new Atom(8), updateLabel, takeOwnership);
   m->addBond(0, 1, Bond::SINGLE);
   m->addBond(1, 2, Bond::SINGLE);
 
   q1 = new RWMol();
-  q1->addAtom(new QueryAtom(6));
-  q1->addAtom(new QueryAtom(8));
+  q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
+  q1->addAtom(new QueryAtom(8), updateLabel, takeOwnership);
   q1->addBond(0, 1, Bond::SINGLE);
 
   n = SubstructMatch(*m, *q1, matchV);
@@ -134,9 +140,9 @@ void test2() {
 
   delete m;
   m = new RWMol();
-  m->addAtom(new Atom(6));
-  m->addAtom(new Atom(6));
-  m->addAtom(new Atom(8));
+  m->addAtom(new Atom(6), updateLabel, takeOwnership);
+  m->addAtom(new Atom(6), updateLabel, takeOwnership);
+  m->addAtom(new Atom(8), updateLabel, takeOwnership);
   m->addBond(0, 1, Bond::SINGLE);
   m->addBond(1, 2, Bond::DOUBLE);
 
@@ -148,6 +154,8 @@ void test2() {
   CHECK_INVARIANT(n == 0, "");
   CHECK_INVARIANT(matches.size() == n, "");
   CHECK_INVARIANT(!SubstructMatch(*m, *q1, matchV), "");
+  delete m;
+  delete q1;
 
   std::cout << "Done\n" << std::endl;
 }
@@ -160,15 +168,17 @@ void test3() {
 
   RWMol *m, *q1;
   m = new RWMol();
-  m->addAtom(new Atom(6));
-  m->addAtom(new Atom(6));
-  m->addAtom(new Atom(8));
+  bool updateLabel = true;
+  bool takeOwnership = true;
+  m->addAtom(new Atom(6), updateLabel, takeOwnership);
+  m->addAtom(new Atom(6), updateLabel, takeOwnership);
+  m->addAtom(new Atom(8), updateLabel, takeOwnership);
   m->addBond(0, 1, Bond::SINGLE);
   m->addBond(1, 2, Bond::SINGLE);
 
   q1 = new RWMol();
-  q1->addAtom(new QueryAtom(6));
-  q1->addAtom(new QueryAtom(8));
+  q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
+  q1->addAtom(new QueryAtom(8), updateLabel, takeOwnership);
   q1->addBond(0, 1, Bond::UNSPECIFIED);
   n = SubstructMatch(*m, *q1, matches, false);
   CHECK_INVARIANT(n == 1, "");
@@ -184,9 +194,9 @@ void test3() {
 
   delete m;
   m = new RWMol();
-  m->addAtom(new Atom(6));
-  m->addAtom(new Atom(6));
-  m->addAtom(new Atom(8));
+  m->addAtom(new Atom(6), updateLabel, takeOwnership);
+  m->addAtom(new Atom(6), updateLabel, takeOwnership);
+  m->addAtom(new Atom(8), updateLabel, takeOwnership);
   m->addBond(0, 1, Bond::SINGLE);
   m->addBond(1, 2, Bond::DOUBLE);
 
@@ -205,8 +215,8 @@ void test3() {
 
   delete q1;
   q1 = new RWMol();
-  q1->addAtom(new QueryAtom(6));
-  q1->addAtom(new QueryAtom(6));
+  q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
+  q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
   q1->addBond(0, 1, Bond::UNSPECIFIED);
   n = SubstructMatch(*m, *q1, matches, false);
   TEST_ASSERT(n == 2);
@@ -219,6 +229,8 @@ void test3() {
   TEST_ASSERT(n == 1);
   TEST_ASSERT(matches.size() == n);
 
+  delete m;
+  delete q1;
   std::cout << "Done\n" << std::endl;
 }
 
@@ -227,6 +239,8 @@ void test4() {
   MatchVectType matchV;
   std::vector<MatchVectType> matches;
   int n;
+  bool updateLabel = true;
+  bool takeOwnership = true;
 
   RWMol *m, *q1, *q2;
   auto *a6 = new Atom(6);
@@ -244,8 +258,8 @@ void test4() {
 
   // this will be the recursive query
   q1 = new RWMol();
-  q1->addAtom(new QueryAtom(6), true);
-  q1->addAtom(new QueryAtom(8), true);
+  q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
+  q1->addAtom(new QueryAtom(8), updateLabel, takeOwnership);
   q1->addBond(0, 1, Bond::UNSPECIFIED);
 
   // here's the main query
@@ -273,6 +287,10 @@ void test4() {
   TEST_ASSERT(matches[1].size() == 2);
   TEST_ASSERT(matches[0][0].second == matches[1][0].second);
   TEST_ASSERT(matches[0][1].second != matches[1][1].second);
+  delete m;
+  delete a6;
+  delete a8;
+  delete q2;
 
   std::cout << "Done\n" << std::endl;
 }
@@ -282,6 +300,8 @@ void test5() {
   MatchVectType matchV;
   std::vector<MatchVectType> matches;
   int n;
+  bool updateLabel = true;
+  bool takeOwnership = true;
 
   RWMol *m, *q1, *q2;
   auto *a6 = new Atom(6);
@@ -300,8 +320,8 @@ void test5() {
 
   // this will be the recursive query
   q1 = new RWMol();
-  q1->addAtom(new QueryAtom(6), true);
-  q1->addAtom(new QueryAtom(8), true);
+  q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
+  q1->addAtom(new QueryAtom(8), updateLabel, takeOwnership);
   q1->addBond(0, 1, Bond::UNSPECIFIED);
 
   // here's the main query
@@ -319,6 +339,10 @@ void test5() {
   n = SubstructMatch(*m, *q2, matches, true);
   CHECK_INVARIANT(n == 2, "");
   CHECK_INVARIANT(matches[0].size() == 2, "");
+  delete m;
+  delete a6;
+  delete a8;
+  delete q2;
 
   std::cout << "Done\n" << std::endl;
 }
@@ -327,6 +351,8 @@ void test5QueryRoot() {
   MatchVectType matchV;
   std::vector<MatchVectType> matches;
   int n;
+  bool updateLabel = true;
+  bool takeOwnership = true;
 
   RWMol *m, *q1, *q2;
   auto *a6 = new Atom(6);
@@ -345,8 +371,8 @@ void test5QueryRoot() {
 
   // this will be the recursive query
   q1 = new RWMol();
-  q1->addAtom(new QueryAtom(8), true);
-  q1->addAtom(new QueryAtom(6), true);
+  q1->addAtom(new QueryAtom(8), updateLabel, takeOwnership);
+  q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
   q1->addBond(0, 1, Bond::UNSPECIFIED);
   q1->setProp(common_properties::_queryRootAtom, 1);
 
@@ -365,6 +391,10 @@ void test5QueryRoot() {
   n = SubstructMatch(*m, *q2, matches, true);
   CHECK_INVARIANT(n == 2, "");
   CHECK_INVARIANT(matches[0].size() == 2, "");
+  delete m;
+  delete a6;
+  delete a8;
+  delete q2;
 
   std::cout << "Done\n" << std::endl;
 }
@@ -374,6 +404,8 @@ void test6() {
   MatchVectType matchV;
   std::vector<MatchVectType> matches;
   int n;
+  bool updateLabel = true;
+  bool takeOwnership = true;
 
   RWMol *m, *q1;
   auto *a6 = new Atom(6);
@@ -387,9 +419,9 @@ void test6() {
   m->addBond(0, 2, Bond::SINGLE);
 
   q1 = new RWMol();
-  q1->addAtom(new QueryAtom(6), true);
-  q1->addAtom(new QueryAtom(6), true);
-  q1->addAtom(new QueryAtom(6), true);
+  q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
+  q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
+  q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
   q1->addBond(0, 1, Bond::UNSPECIFIED);
   q1->addBond(1, 2, Bond::UNSPECIFIED);
 
@@ -408,6 +440,9 @@ void test6() {
   n = SubstructMatch(*m, *q1, matches, true);
   CHECK_INVARIANT(n == 1, "");
   CHECK_INVARIANT(matches[0].size() == 3, "");
+  delete m;
+  delete a6;
+  delete q1;
 
   std::cout << "Done\n" << std::endl;
 }
@@ -419,6 +454,8 @@ void test7() {
 
   RWMol *m, *q1;
   auto *a6 = new Atom(6);
+  bool updateLabel = true;
+  bool takeOwnership = true;
 
   m = new RWMol();
   m->addAtom(a6);
@@ -429,9 +466,9 @@ void test7() {
   m->addBond(0, 2, Bond::SINGLE);
 
   q1 = new RWMol();
-  q1->addAtom(new QueryAtom(6), true);
-  q1->addAtom(new QueryAtom(6), true);
-  q1->addAtom(new QueryAtom(6), true);
+  q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
+  q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
+  q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
   q1->addBond(0, 1, Bond::UNSPECIFIED);
   q1->addBond(1, 2, Bond::UNSPECIFIED);
 
@@ -445,6 +482,10 @@ void test7() {
     CHECK_INVARIANT(matches[0].size() == 3, "");
     if (!(i % 500)) std::cout << i << std::endl;
   }
+  delete m;
+  delete a6;
+  delete q1;
+
   std::cout << "Done\n" << std::endl;
 }
 
@@ -466,9 +507,9 @@ void test8() {
   m->addBond(0, 2, Bond::SINGLE);
 
   q1 = new RWMol();
-  q1->addAtom(new QueryAtom(6), true);
-  q1->addAtom(new QueryAtom(6), true);
-  q1->addAtom(new QueryAtom(6), true);
+  q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
+  q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
+  q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
   q1->addBond(0, 1, Bond::UNSPECIFIED);
   q1->addBond(1, 2, Bond::UNSPECIFIED);
 
@@ -482,6 +523,10 @@ void test8() {
     CHECK_INVARIANT(matches[0].size() == 3, "");
     if (!(i % 500)) std::cout << i << std::endl;
   }
+  delete m;
+  delete a6;
+  delete q1;
+
   std::cout << "Done\n" << std::endl;
 }
 #endif
@@ -496,11 +541,13 @@ void test9() {
   auto *a6 = new Atom(6);
 
   m = new RWMol();
+  bool updateLabel = true;
+  bool takeOwnership = true;
   m->addAtom(a6);
-  m->addAtom(new Atom(6));
-  m->addAtom(new Atom(7));
-  m->addAtom(new Atom(8));
-  m->addAtom(new Atom(9));
+  m->addAtom(new Atom(6), updateLabel, takeOwnership);
+  m->addAtom(new Atom(7), updateLabel, takeOwnership);
+  m->addAtom(new Atom(8), updateLabel, takeOwnership);
+  m->addAtom(new Atom(9), updateLabel, takeOwnership);
   m->addBond(0, 1, Bond::SINGLE);
   m->addBond(0, 2, Bond::SINGLE);
   m->addBond(0, 3, Bond::SINGLE);
@@ -546,6 +593,9 @@ void test9() {
   TEST_ASSERT(found);
   n = SubstructMatch(*q1, *q1, matches, true, true, true);
   TEST_ASSERT(n == 1);
+  delete m;
+  delete a6;
+  delete q1;
 
   std::cout << "Done\n" << std::endl;
 }
@@ -556,6 +606,8 @@ void testRecursiveSerialNumbers() {
   MatchVectType matchV;
   std::vector<MatchVectType> matches;
   int n;
+  bool updateLabel = true;
+  bool takeOwnership = true;
 
   RWMol *m, *q1, *q2;
   auto *a6 = new Atom(6);
@@ -574,8 +626,8 @@ void testRecursiveSerialNumbers() {
   {
     // this will be the recursive query
     q1 = new RWMol();
-    q1->addAtom(new QueryAtom(6), true);
-    q1->addAtom(new QueryAtom(8), true);
+    q1->addAtom(new QueryAtom(6), updateLabel, takeOwnership);
+    q1->addAtom(new QueryAtom(8), updateLabel, takeOwnership);
     q1->addBond(0, 1, Bond::UNSPECIFIED);
 
     // here's the main query
@@ -602,11 +654,12 @@ void testRecursiveSerialNumbers() {
     TEST_ASSERT(n == 1);
     TEST_ASSERT(matches.size() == 1);
     TEST_ASSERT(matches[0].size() == 3);
-
     delete q1;
     delete q2;
   }
   delete m;
+  delete a6;
+  delete a8;
   std::cout << "Done\n" << std::endl;
 }
 
@@ -736,6 +789,8 @@ void testChiralMatch() {
     ROMol *mol = SmilesToMol(mSmi);
     MatchVectType matchV;
     bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
     TEST_ASSERT(matched);
   }
   {
@@ -745,6 +800,8 @@ void testChiralMatch() {
     ROMol *mol = SmilesToMol(mSmi);
     MatchVectType matchV;
     bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
     TEST_ASSERT(!matched);
   }
   {
@@ -754,6 +811,8 @@ void testChiralMatch() {
     ROMol *mol = SmilesToMol(mSmi);
     MatchVectType matchV;
     bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
     TEST_ASSERT(matched);
   }
   {
@@ -763,6 +822,8 @@ void testChiralMatch() {
     ROMol *mol = SmilesToMol(mSmi);
     MatchVectType matchV;
     bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
     TEST_ASSERT(!matched);
   }
   {
@@ -772,6 +833,8 @@ void testChiralMatch() {
     ROMol *mol = SmilesToMol(mSmi);
     MatchVectType matchV;
     bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
     TEST_ASSERT(!matched);
   }
   {
@@ -781,6 +844,8 @@ void testChiralMatch() {
     ROMol *mol = SmilesToMol(mSmi);
     MatchVectType matchV;
     bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
     TEST_ASSERT(matched);
   }
 
@@ -791,6 +856,8 @@ void testChiralMatch() {
     ROMol *mol = SmilesToMol(mSmi);
     MatchVectType matchV;
     bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
     TEST_ASSERT(matched);
   }
 
@@ -801,6 +868,8 @@ void testChiralMatch() {
     ROMol *mol = SmilesToMol(mSmi);
     MatchVectType matchV;
     bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
     TEST_ASSERT(!matched);
   }
 
@@ -811,6 +880,8 @@ void testChiralMatch() {
     ROMol *mol = SmilesToMol(mSmi);
     std::vector<MatchVectType> matches;
     int count = SubstructMatch(*mol, *query, matches, true, true, true);
+    delete mol;
+    delete query;
     TEST_ASSERT(count == 2);
   }
 
@@ -821,6 +892,8 @@ void testChiralMatch() {
     ROMol *mol = SmilesToMol(mSmi);
     std::vector<MatchVectType> matches;
     int count = SubstructMatch(*mol, *query, matches, true, true, true);
+    delete mol;
+    delete query;
     TEST_ASSERT(count == 3);
   }
   {
@@ -830,6 +903,8 @@ void testChiralMatch() {
     ROMol *mol = SmilesToMol(mSmi);
     std::vector<MatchVectType> matches;
     int count = SubstructMatch(*mol, *query, matches, true, true, true);
+    delete mol;
+    delete query;
     TEST_ASSERT(count == 1);
   }
   {
@@ -842,9 +917,10 @@ void testChiralMatch() {
     // "<<mSmi<<"\n"<<std::endl;
     int count = SubstructMatch(*mol, *query, matches, true, true, true);
     // std::cerr<<"res: "<<count<<std::endl;
+    delete mol;
+    delete query;
     TEST_ASSERT(count == 0);
   }
-
   {
     std::string qSmi = "Cl[C@](*)(F)Br";
     std::string mSmi = "Cl[C@](C)(F)Br";
@@ -852,6 +928,8 @@ void testChiralMatch() {
     ROMol *mol = SmilesToMol(mSmi);
     MatchVectType matchV;
     bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
     TEST_ASSERT(matched);
   }
   {
@@ -861,6 +939,8 @@ void testChiralMatch() {
     ROMol *mol = SmilesToMol(mSmi);
     MatchVectType matchV;
     bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
     TEST_ASSERT(!matched);
   }
   {
@@ -870,6 +950,8 @@ void testChiralMatch() {
     ROMol *mol = SmilesToMol(mSmi);
     MatchVectType matchV;
     bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
     TEST_ASSERT(matched);
   }
   {
@@ -879,6 +961,8 @@ void testChiralMatch() {
     ROMol *mol = SmilesToMol(mSmi);
     MatchVectType matchV;
     bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
     TEST_ASSERT(matched);
   }
   {
@@ -888,6 +972,8 @@ void testChiralMatch() {
     ROMol *mol = SmilesToMol(mSmi);
     MatchVectType matchV;
     bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
     TEST_ASSERT(!matched);
   }
   {
@@ -897,6 +983,8 @@ void testChiralMatch() {
     ROMol *mol = SmilesToMol(mSmi);
     MatchVectType matchV;
     bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
     TEST_ASSERT(matched);
   }
   {
@@ -906,6 +994,8 @@ void testChiralMatch() {
     ROMol *mol = SmilesToMol(mSmi);
     MatchVectType matchV;
     bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
     TEST_ASSERT(!matched);
   }
   {
@@ -915,6 +1005,8 @@ void testChiralMatch() {
     ROMol *mol = SmilesToMol(mSmi);
     MatchVectType matchV;
     bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
     TEST_ASSERT(matched);
   }
   {
@@ -924,6 +1016,8 @@ void testChiralMatch() {
     ROMol *mol = SmilesToMol(mSmi);
     MatchVectType matchV;
     bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
     TEST_ASSERT(matched);
   }
   {
@@ -933,6 +1027,8 @@ void testChiralMatch() {
     ROMol *mol = SmilesToMol(mSmi);
     MatchVectType matchV;
     bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
     TEST_ASSERT(matched);
   }
 
@@ -950,6 +1046,8 @@ void testCisTransMatch() {
     ROMol *mol = SmilesToMol(mSmi);
     MatchVectType matchV;
     bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
     TEST_ASSERT(matched);
   }
   {
@@ -959,6 +1057,8 @@ void testCisTransMatch() {
     ROMol *mol = SmilesToMol(mSmi);
     MatchVectType matchV;
     bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
     TEST_ASSERT(matched);
   }
   {
@@ -968,6 +1068,8 @@ void testCisTransMatch() {
     ROMol *mol = SmilesToMol(mSmi);
     MatchVectType matchV;
     bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
     TEST_ASSERT(!matched);
   }
   {
@@ -977,6 +1079,8 @@ void testCisTransMatch() {
     ROMol *mol = SmilesToMol(mSmi);
     MatchVectType matchV;
     bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
     TEST_ASSERT(!matched);
   }
   {
@@ -986,6 +1090,8 @@ void testCisTransMatch() {
     ROMol *mol = SmilesToMol(mSmi);
     MatchVectType matchV;
     bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
     TEST_ASSERT(matched);
   }
   {
@@ -995,6 +1101,8 @@ void testCisTransMatch() {
     ROMol *mol = SmilesToMol(mSmi);
     MatchVectType matchV;
     bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
     TEST_ASSERT(!matched);
   }
   {
@@ -1004,6 +1112,8 @@ void testCisTransMatch() {
     ROMol *mol = SmilesToMol(mSmi);
     MatchVectType matchV;
     bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
     TEST_ASSERT(matched);
   }
   {
@@ -1013,6 +1123,8 @@ void testCisTransMatch() {
     ROMol *mol = SmilesToMol(mSmi);
     MatchVectType matchV;
     bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
     TEST_ASSERT(matched);
   }
   {
@@ -1022,6 +1134,8 @@ void testCisTransMatch() {
     ROMol *mol = SmilesToMol(mSmi);
     MatchVectType matchV;
     bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
     TEST_ASSERT(matched);
   }
   {
@@ -1031,6 +1145,8 @@ void testCisTransMatch() {
     ROMol *mol = SmilesToMol(mSmi);
     MatchVectType matchV;
     bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
     TEST_ASSERT(!matched);
   }
 
@@ -1070,8 +1186,9 @@ void testCisTransMatch2() {
     TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, true));
     query->getBondWithIdx(1)->setStereo(Bond::STEREOANY);
     TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, true));
+    delete mol;
+    delete query;
   }
-
   {
     std::string qSmi = "CC=CC";
     std::string mSmi = "CC=C(C)F";
@@ -1101,8 +1218,9 @@ void testCisTransMatch2() {
     TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, true));
     query->getBondWithIdx(1)->setStereo(Bond::STEREOANY);
     TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, true));
+    delete mol;
+    delete query;
   }
-
   {
     std::string qSmi = "CC=CC";
     std::string mSmi = "CCC=C(C)F";
@@ -1131,8 +1249,9 @@ void testCisTransMatch2() {
     TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, true));
     query->getBondWithIdx(1)->setStereo(Bond::STEREOANY);
     TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, true));
+    delete mol;
+    delete query;
   }
-
   {  // now make it harder: the stereoatoms don't match, but the stereochemistry
      // does
     std::string qSmi = "CC=CC";
@@ -1163,8 +1282,9 @@ void testCisTransMatch2() {
     TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, true));
     query->getBondWithIdx(1)->setStereo(Bond::STEREOANY);
     TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, true));
+    delete mol;
+    delete query;
   }
-
   {  // now make it harder: the stereoatoms don't match on either end, but the
      // stereochemistry does
     std::string qSmi = "CC=CC";
@@ -1195,6 +1315,8 @@ void testCisTransMatch2() {
     TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, true));
     query->getBondWithIdx(1)->setStereo(Bond::STEREOANY);
     TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, true));
+    delete mol;
+    delete query;
   }
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
@@ -1211,6 +1333,8 @@ void testGitHubIssue15() {
     ROMol *mol = SmilesToMol(mSmi);
     MatchVectType matchV;
     bool matched = SubstructMatch(*mol, *query, matchV, true, true, true);
+    delete mol;
+    delete query;
     TEST_ASSERT(!matched);
   }
   {
@@ -1220,6 +1344,8 @@ void testGitHubIssue15() {
     ROMol *mol = SmartsToMol(mSmi);
     MatchVectType matchV;
     bool matched = SubstructMatch(*mol, *query, matchV, true, true, true);
+    delete mol;
+    delete query;
     TEST_ASSERT(!matched);
   }
 
@@ -1240,6 +1366,7 @@ void testGitHubIssue409() {
     matched =
         SubstructMatch(*mol, *mol, matches, false, true, false, false, 16);
     TEST_ASSERT(matches.size() == 16);
+    delete mol;
   }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }

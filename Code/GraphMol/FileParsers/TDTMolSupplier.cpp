@@ -89,6 +89,7 @@ TDTMolSupplier::TDTMolSupplier(const std::string &fileName,
   if (!tmpStream || (!(*tmpStream)) || (tmpStream->bad())) {
     std::ostringstream errout;
     errout << "Bad input file " << fileName;
+    delete tmpStream;
     throw BadFileException(errout.str());
   }
 

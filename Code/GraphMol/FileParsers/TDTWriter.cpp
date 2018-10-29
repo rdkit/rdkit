@@ -59,16 +59,8 @@ TDTWriter::TDTWriter(std::ostream *outStream, bool takeOwnership) {
 }
 
 TDTWriter::~TDTWriter() throw() {
-  // if we've written any mols, finish with a "|" line
-  if (d_molid > 0) {
-    CHECK_INVARIANT(dp_ostream,
-                    "null outstream even though molecules were written");
-    (*dp_ostream) << "|\n";
-  }
-
-  if (df_owner) {
-    delete dp_ostream;
-  }
+  // close the writer if it's still open:
+  if (dp_ostream != nullptr) close();
 }
 
 void TDTWriter::setProps(const STR_VECT &propNames) {

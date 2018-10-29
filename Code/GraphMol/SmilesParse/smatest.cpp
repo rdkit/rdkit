@@ -154,6 +154,7 @@ void testFail() {
     } else {
       CHECK_INVARIANT(mol, smi);
     }
+    delete mol;
     i++;
   }
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -528,6 +529,8 @@ void testProblems() {
   _checkMatches("*-[N;H2,H1&-1,-2]", "CC([N-2])C", 1, 2);
   _checkNoMatches("*-[N;H2,H1&-1,-2]", "CC(=N)C");
   _checkNoMatches("*-[N;H2,H1&-1,-2]", "CC(NC)C");
+
+  delete matcher;
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
@@ -759,6 +762,7 @@ void testSmartsWrite() {
       delete m1;
       delete m2;
     }
+    delete nmol;
     i++;
   }
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -785,6 +789,8 @@ void testIssue196() {
   TEST_ASSERT(mts1);
   TEST_ASSERT(mV1.size() == 2);
 
+  delete mol1;
+  delete matcher1;
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
@@ -968,10 +974,12 @@ void testAtomMap() {
   sma = "[C:10H3]CC";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(!matcher1);
+  delete matcher1;
 
   sma = "[C:10:3]ON";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(!matcher1);
+  delete matcher1;
 
   sma = "C-C";
   matcher1 = SmartsToMol(sma);
@@ -994,6 +1002,7 @@ void testAtomMap() {
   sma = MolToSmarts(*matcher1);
   TEST_ASSERT(sma == "[C&$(C=O):2]-[O:3]");
 
+  delete matcher1;
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 

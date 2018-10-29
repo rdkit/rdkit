@@ -155,10 +155,10 @@ MolChemicalFeatureDef *parseFeatureDef(
 
   // handle a blank or comment first line:
   boost::trim_if(nextLine, boost::is_any_of(" \t\r\n"));
-  while (nextLine == "" || nextLine[0] == '#') {
+  while (nextLine.empty() || nextLine[0] == '#') {
     Local::getNextLine(inStream, nextLine, lineNo);
     // need to check for EOS before we strip:
-    if (nextLine == "") {
+    if (nextLine.empty()) {
       // we hit EOS:
       throw FeatureFileParseException(lineNo, inLine,
                                       "EOF hit parsing feature definition");
@@ -284,7 +284,7 @@ int parseFeatureData(std::istream &inStream,
   while (!inStream.eof()) {
     // clean any whitespace off the line:
     boost::trim_if(inLine, boost::is_any_of(" \t\r\n"));
-    if (inLine != "" && inLine[0] != '#' && inLine[0] != '\n') {
+    if (!inLine.empty() && inLine[0] != '#' && inLine[0] != '\n') {
       boost::tokenizer<> tok(inLine);
       boost::tokenizer<>::iterator tokIt = tok.begin();
       std::string token = boost::to_upper_copy(*tokIt);

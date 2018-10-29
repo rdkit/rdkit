@@ -210,6 +210,8 @@ void test3() {
   mol = SmilesToMol("C[2H]");
   TEST_ASSERT(mol);
   amw = calcAMW(*mol);
+  delete mol;
+
   TEST_ASSERT(feq(amw, 17.0, .1));
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
@@ -813,6 +815,7 @@ void testIssue3433771() {
   TEST_ASSERT(mol);
   calcCrippenDescriptors(*mol, logp, mr);
   TEST_ASSERT(feq(logp, 1.806, .001));
+  delete mol;
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
@@ -1529,6 +1532,7 @@ void testMQNs() {
       ROMol *test_mol =
           SmilesToMol("CC(C)(C)c1cc(O)c(cc1O)C(C)(C)C", 0, sanitize);
       if (calcNumRotatableBonds(*test_mol) == 2) tgt[18] = 26;
+      delete test_mol;
     }
     std::vector<unsigned int> accum(42, 0);
 
@@ -1901,6 +1905,7 @@ void testProperties() {
     sink.annotateProperties(*mol);
     TEST_ASSERT(mol->getProp<double>("NumSpiroAtoms") == 1.);
     TEST_ASSERT(mol->getProp<double>("NumBridgeheadAtoms") == 2.);
+    delete mol;
   }
 
   {
@@ -1931,16 +1936,20 @@ void testPropertyQueries() {
   }
 
   {
-    // these leak..
-    TEST_ASSERT(
-        makePropertyQuery<PROP_EQUALS_QUERY>("exactmw", calcExactMW(*mol))
-            ->Match(*mol));
-    TEST_ASSERT(makePropertyQuery<PROP_EQUALS_QUERY>("NumHBA", calcNumHBA(*mol))
-                    ->Match(*mol));
-    TEST_ASSERT(makePropertyQuery<PROP_EQUALS_QUERY>("lipinskiHBA",
-                                                     calcLipinskiHBA(*mol))
-                    ->Match(*mol));
+    auto pq = std::unique_ptr<PROP_EQUALS_QUERY>(
+        makePropertyQuery<PROP_EQUALS_QUERY>("exactmw", calcExactMW(*mol)));
+    TEST_ASSERT(pq->Match(*mol));
+
+    pq = std::unique_ptr<PROP_EQUALS_QUERY>(
+        makePropertyQuery<PROP_EQUALS_QUERY>("NumHBA", calcNumHBA(*mol)));
+    TEST_ASSERT(pq->Match(*mol));
+
+    pq =
+        std::unique_ptr<PROP_EQUALS_QUERY>(makePropertyQuery<PROP_EQUALS_QUERY>(
+            "lipinskiHBA", calcLipinskiHBA(*mol)));
+    TEST_ASSERT(pq->Match(*mol));
   }
+  delete mol;
 }
 
 void testStereoCounting() {
@@ -1966,6 +1975,7 @@ void testStereoCounting() {
   std::vector<double> res = prop.computeProperties(*m);
   TEST_ASSERT(res[0] == 1);
   TEST_ASSERT(res[1] == 1);
+  delete m;
 }
 
 void testUSRDescriptor() {
@@ -1981,6 +1991,7 @@ void testUSRDescriptor() {
   } catch (ConformerException &e) {
     ok = true;
   }
+  delete mol;
   TEST_ASSERT(ok);
 
   // number of atoms < 3
@@ -1991,6 +2002,7 @@ void testUSRDescriptor() {
   } catch (ValueErrorException &e) {
     ok = true;
   }
+  delete mol;
   TEST_ASSERT(ok);
 
   // DESCRIPTOR
@@ -2010,6 +2022,7 @@ void testUSRDescriptor() {
   for (unsigned int i = 0; i < myUSR.size(); ++i) {
     TEST_ASSERT(feq(myUSR[i], refUSR[i]));
   }
+  delete mol;
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 

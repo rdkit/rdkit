@@ -368,6 +368,7 @@ void test3() {
             "");
       }
     }
+    delete mol;
   }
 }
 
@@ -565,6 +566,7 @@ void testMultipleConfs() {
     TEST_ASSERT(energy < 300.0);
     delete ff;
   }
+  delete m;
 }
 
 void testMultipleConfsExpTors() {
@@ -587,6 +589,7 @@ void testMultipleConfsExpTors() {
     TEST_ASSERT(energy < 300.0);
     delete ff;
   }
+  delete m;
 }
 
 void testOrdering() {
@@ -646,6 +649,7 @@ void testIssue236() {
   DGeomHelpers::setTopolBounds(*m, bm);
   bool ok = DistGeom::triangleSmoothBounds(bm);
   TEST_ASSERT(ok);
+  delete m;
 
   smi = "Cc1cccc2c1c(C3=CCC3)c(C)cc2";
   m = SmilesToMol(smi, 0, 1);
@@ -1017,6 +1021,7 @@ void testConstrainedEmbedding() {
     TEST_ASSERT(ssd < 0.1);
     delete test;
   }
+  delete ref;
 }
 
 void testIssue2091864() {
@@ -1400,7 +1405,8 @@ void testGithub256() {
 #ifdef RDK_TEST_MULTITHREADED
 void testMultiThreadMultiConf() {
   boost::char_separator<char> sep("|");
-  tokenizer tokens(std::string(RDKit::rdkitBuild), sep);
+  auto bldString = std::string(RDKit::rdkitBuild);
+  tokenizer tokens(bldString, sep);
   std::vector<std::string> tokenVect(tokens.begin(), tokens.end());
   const double ENERGY_TOLERANCE = ((tokenVect[2] != "MINGW") ? 1.0e-6 : 1.0);
   const double MSD_TOLERANCE = ((tokenVect[2] != "MINGW") ? 1.0e-6 : 1.0e-5);
@@ -1439,6 +1445,7 @@ void testMultiThreadMultiConf() {
     delete ff;
     delete ff2;
   }
+  delete m;
 }
 #endif
 
@@ -1450,10 +1457,12 @@ void testGithub563() {
     std::cerr << csmi << std::endl;
     for (unsigned int i = 1; i < 100; ++i) {
       ROMol m2 = ROMol(*m);
-      MolOps::addHs(m2);
+      auto *tmpMol = MolOps::addHs(m2);
+      delete tmpMol;
       DGeomHelpers::EmbedMolecule(m2, 50, i);
       MolOps::assignChiralTypesFrom3D(m2);
-      MolOps::removeHs(m2);
+      auto *tmp = MolOps::removeHs(m2);
+      delete tmp;
       std::string smi = MolToSmiles(m2, true);
       TEST_ASSERT(smi == csmi);
     }

@@ -58,9 +58,7 @@ ROMol *deleteSubstructs(const ROMol &mol, const ROMol &query, bool onlyFrags,
   RWMol *res = static_cast<RWMol *>(new ROMol(mol, false));
   std::vector<MatchVectType> fgpMatches;
   std::vector<MatchVectType>::const_iterator mati;
-  std::pair<int, int> amat;
-  VECT_INT_VECT
-  matches;  // all matches on the molecule - list of list of atom ids
+  VECT_INT_VECT matches;  // all matches on the molecule - list of list of atom ids
   MatchVectType::const_iterator mi;
   // do the substructure matching and get the atoms that match the query
   const bool uniquify = true;
@@ -701,8 +699,9 @@ void addRecursiveQueries(
 
     if (!at->hasQuery()) {
       QueryAtom qAt(*at);
-      static_cast<RWMol &>(mol).replaceAtom(at->getIdx(), &qAt);
-      at = mol.getAtomWithIdx(at->getIdx());
+      unsigned int idx = at->getIdx();
+      static_cast<RWMol &>(mol).replaceAtom(idx, &qAt);
+      at = mol.getAtomWithIdx(idx);
     }
     at->expandQuery(qToAdd, Queries::COMPOSITE_AND);
   }

@@ -119,6 +119,7 @@ void test2() {
   CHECK_INVARIANT(qB->Match(m.getBondWithIdx(1)), "");
   CHECK_INVARIANT(qB->Match(m.getBondWithIdx(2)), "");
 
+  delete qB;
   BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
 }
 
@@ -237,6 +238,7 @@ void test3() {
   CHECK_INVARIANT(!beq->Match(m.getBondBetweenAtoms(5, 6)), "");
   CHECK_INVARIANT(!beq->Match(m.getBondBetweenAtoms(6, 5)), "");
 
+  delete beq;
   BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
 }
 
@@ -514,6 +516,7 @@ void testIssue2892580() {
   TEST_ASSERT(massVal == static_cast<int>(RDKit::round(
                              13.003 * massIntegerConversionFactor)));
 
+  delete a;
   BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
 }
 
@@ -530,6 +533,9 @@ void testGithub153() {
   TEST_ASSERT(SubstructMatch(*m, *q, mvv));
   TEST_ASSERT(mvv.size() == 3);
   TEST_ASSERT(mvv[0].size() == 1);
+
+  delete m;
+  delete q;
 
   BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
 }
@@ -855,6 +861,7 @@ void testAtomTypeQueries() {
     TEST_ASSERT(!qA3.Match(m->getAtomWithIdx(2)));
   }
 
+  delete m;
   BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
 }
 

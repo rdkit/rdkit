@@ -64,6 +64,7 @@ void test1Canonicalization() {
 
   conf->setAtomPos(0, RDGeom::Point3D(0.0, 0.0, 0.0));
   conf->setAtomPos(1, RDGeom::Point3D(0.0, 1.5, 0.0));
+  delete trans;
   trans = computeCanonicalTransform(*conf);
   canonicalizeConformer(*conf);
 
@@ -157,6 +158,7 @@ void testGetSetBondLength() {
   setBondLength(conf, 19, 0, 3.0);
   dist = getBondLength(conf, 0, 19);
   TEST_ASSERT(RDKit::feq(dist, 3.0));
+  delete m;
 }
 
 void testGetSetAngle() {
@@ -177,6 +179,7 @@ void testGetSetAngle() {
   TEST_ASSERT(RDKit::feq(angle, M_PI / 2.));
   angle = getAngleDeg(conf, 0, 19, 21);
   TEST_ASSERT(RDKit::feq(angle, 90.0));
+  delete m;
 }
 
 void testGetSetDihedral() {
@@ -200,6 +203,7 @@ void testGetSetDihedral() {
   TEST_ASSERT(RDKit::feq(dihedral, -2. / 3. * M_PI));
   dihedral = getDihedralDeg(conf, 8, 0, 19, 21);
   TEST_ASSERT(RDKit::feq(dihedral, -120.0));
+  delete m;
 }
 
 void testGetSetDihedralThroughTripleBond() {
@@ -230,6 +234,7 @@ void testGetSetDihedralThroughTripleBond() {
     exceptionRaised = true;
   }
   TEST_ASSERT(exceptionRaised);
+  delete m;
 }
 
 #ifndef RDK_HAS_EIGEN3

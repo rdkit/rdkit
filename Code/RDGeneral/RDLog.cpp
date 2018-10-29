@@ -15,19 +15,12 @@
 #include <string>
 #include <time.h>
 
-namespace {
-// this is a "bit" of a hack to work around shared/static library problems
-// on windows
-boost::logging::rdLogger cerrLogger(&std::cerr);
-boost::logging::rdLogger coutLogger(&std::cout);
-}  // namespace
-
-boost::logging::rdLogger *rdAppLog = nullptr;
-boost::logging::rdLogger *rdDebugLog = nullptr;
-boost::logging::rdLogger *rdInfoLog = &cerrLogger;
-boost::logging::rdLogger *rdErrorLog = &cerrLogger;
-boost::logging::rdLogger *rdWarningLog = &cerrLogger;
-boost::logging::rdLogger *rdStatusLog = nullptr;
+std::shared_ptr<boost::logging::rdLogger> rdAppLog = nullptr;
+std::shared_ptr<boost::logging::rdLogger> rdDebugLog = nullptr;
+std::shared_ptr<boost::logging::rdLogger> rdInfoLog = nullptr;
+std::shared_ptr<boost::logging::rdLogger> rdErrorLog = nullptr;
+std::shared_ptr<boost::logging::rdLogger> rdWarningLog = nullptr;
+std::shared_ptr<boost::logging::rdLogger> rdStatusLog = nullptr;
 
 namespace boost {
 namespace logging {
@@ -69,10 +62,10 @@ void disable_logs(const std::string &arg) {
 
 namespace RDLog {
 void InitLogs() {
-  rdDebugLog = new boost::logging::rdLogger(&std::cerr);
-  rdInfoLog = new boost::logging::rdLogger(&std::cout);
-  rdWarningLog = new boost::logging::rdLogger(&std::cerr);
-  rdErrorLog = new boost::logging::rdLogger(&std::cerr);
+  rdDebugLog = std::make_shared<boost::logging::rdLogger>(&std::cerr);
+  rdInfoLog = std::make_shared<boost::logging::rdLogger>(&std::cout);
+  rdWarningLog = std::make_shared<boost::logging::rdLogger>(&std::cerr);
+  rdErrorLog = std::make_shared<boost::logging::rdLogger>(&std::cerr);
 }
 std::ostream &toStream(std::ostream &logstrm) {
   time_t t = time(nullptr);

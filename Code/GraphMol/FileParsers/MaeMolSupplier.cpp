@@ -43,7 +43,7 @@ MaeMolSupplier::MaeMolSupplier(const std::string &fileName, bool sanitize, bool 
     errout << "Bad input file " << fileName;
     throw BadFileException(errout.str());
   }
-  dp_inStream = (std::istream *)ifs;
+  dp_inStream = static_cast<std::istream*>(ifs);
   df_sanitize = sanitize;
   df_removeHs = removeHs;
 

@@ -58,7 +58,7 @@ bool FilterCatalogParams::addCatalog(FilterCatalogs catalog) {
   return addedCatalog;
 }
 
-void FilterCatalogParams::fillCatalog(FilterCatalog &catalog) {
+void FilterCatalogParams::fillCatalog(FilterCatalog &catalog) const {
   for (auto catalogToAdd : getCatalogs()) {
     const unsigned int entries = GetNumEntries(catalogToAdd);
     const unsigned int propEntries = GetNumPropertyEntries(catalogToAdd);
@@ -185,7 +185,7 @@ unsigned int FilterCatalog::getIdxForEntry(CONST_SENTRY entry) const {
   return UINT_MAX;
 }
 
-void FilterCatalog::setCatalogParams(paramType_t *params) {
+void FilterCatalog::setCatalogParams(const paramType_t *params) {
   Clear();
   FCatalog::setCatalogParams(params);
   params->fillCatalog(*this);

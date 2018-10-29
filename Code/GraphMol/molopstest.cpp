@@ -303,6 +303,7 @@ void test3() {
   TEST_ASSERT(sssr[0].size() == 5);
   TEST_ASSERT(sssr[1].size() == 6);
   TEST_ASSERT(sssr[2].size() == 6);
+  delete m;
 
   // this yet another painful case
   smi = "CC1=CC=C(C=C1)S(=O)(=O)O[CH]2[CH]3CO[CH](O3)[CH]4OC(C)(C)O[CH]24";
@@ -314,6 +315,7 @@ void test3() {
   TEST_ASSERT(sssr[1].size() == 5);
   TEST_ASSERT(sssr[2].size() == 5);
   TEST_ASSERT(sssr[3].size() == 6);
+  delete m;
 
   smi = "C1CC2C1C2";
   m = SmilesToMol(smi, 0, 0);
@@ -388,6 +390,7 @@ void test4() {
   TEST_ASSERT(adjMat[1] == 1);
   TEST_ASSERT(adjMat[2] == 1);
   TEST_ASSERT(adjMat[3] == 0);
+  delete m;
 }
 
 void test5() {
@@ -401,11 +404,13 @@ void test5() {
   count = MolOps::findSSSR(*m, sssr);
   BOOST_LOG(rdInfoLog) << "Count: " << count << "\n";
   CHECK_INVARIANT(count == 5, "");
+  delete m;
 
   smi = "C1C(C2)CCC2C1";
   m = SmilesToMol(smi);
   count = MolOps::findSSSR(*m, sssr);
   CHECK_INVARIANT(count == 2, "");
+  delete m;
 }
 
 /*
@@ -514,96 +519,100 @@ void test8() {
   // BOOST_LOG(rdInfoLog) << "1" << std::endl;
   m2 = MolOps::addHs(*m);
   CHECK_INVARIANT(m2->getNumAtoms() == 11, "");
+  delete m;
+  delete m2;
 
   smi = "CC(=O)[OH]";
-  delete m;
   m = SmilesToMol(smi);
   CHECK_INVARIANT(m, "");
   CHECK_INVARIANT(m->getNumAtoms() == 4, "");
-
   // BOOST_LOG(rdInfoLog) << "2" << std::endl;
-  delete m2;
+
   m2 = MolOps::addHs(*m, true);
   CHECK_INVARIANT(m2->getNumAtoms() == 5, "");
-
   // BOOST_LOG(rdInfoLog) << "3" << std::endl;
   m3 = MolOps::addHs(*m2, false);
   CHECK_INVARIANT(m3->getNumAtoms() == 8, "");
-
-  // BOOST_LOG(rdInfoLog) << "4" << std::endl;
   delete m2;
+  delete m3;
+  // BOOST_LOG(rdInfoLog) << "4" << std::endl;
+
   m2 = MolOps::addHs(*m, false);
   CHECK_INVARIANT(m2->getNumAtoms() == 8, "");
-  delete m3;
+  delete m;
   // remove all
   // BOOST_LOG(rdInfoLog) << "5" << std::endl;
   m3 = MolOps::removeHs(*m2, false);
   CHECK_INVARIANT(m3->getNumAtoms() == 4, "");
   delete m3;
+
   // remove only implicit
   // BOOST_LOG(rdInfoLog) << "6" << std::endl;
   m3 = MolOps::removeHs(*m2, true);
   CHECK_INVARIANT(m3->getNumAtoms() == 5, "");
-
   // BOOST_LOG(rdInfoLog) << "7" << std::endl;
   // remove all after removing only implicit
   MolOps::removeHs(static_cast<RWMol &>(*m3), false);
   CHECK_INVARIANT(m3->getNumAtoms() == 4, "");
+  delete m2;
+  delete m3;
 
   // this test is also done in the same order in the python tests:
-  delete m;
   m = SmilesToMol(smi);
   CHECK_INVARIANT(m, "");
   CHECK_INVARIANT(m->getNumAtoms() == 4, "");
-
-  delete m2;
   m2 = MolOps::addHs(*m, true);
   CHECK_INVARIANT(m2->getNumAtoms() == 5, "");
   // BOOST_LOG(rdInfoLog) << "8" << std::endl;
   m3 = MolOps::removeHs(*m2, true);
   CHECK_INVARIANT(m3->getNumAtoms() == 5, "");
   delete m3;
+
   // BOOST_LOG(rdInfoLog) << "9" << std::endl;
   m3 = MolOps::removeHs(*m2, false);
   CHECK_INVARIANT(m3->getNumAtoms() == 4, "");
-
   delete m2;
+  delete m3;
+
   // BOOST_LOG(rdInfoLog) << "10" << std::endl;
   m2 = MolOps::addHs(*m, false);
   CHECK_INVARIANT(m2->getNumAtoms() == 8, "");
-  delete m3;
   // BOOST_LOG(rdInfoLog) << "11" << std::endl;
   m3 = MolOps::removeHs(*m2, true);
   CHECK_INVARIANT(m3->getNumAtoms() == 5, "");
   delete m3;
+
   // BOOST_LOG(rdInfoLog) << "12" << std::endl;
   m3 = MolOps::removeHs(*m2, false);
   CHECK_INVARIANT(m3->getNumAtoms() == 4, "");
+  delete m3;
+  delete m2;
+  delete m;
 
   // related to RDTrack Issues 109 and 110:
   smi =
       "C1C=C([C@H](N)C(=O)N[C@@]2([H])[C@]3([H])SC(C)(C)[C@@H](C(=O)O)N3C(=O)2)"
       "C=CC=1";
-  delete m;
   m = SmilesToMol(smi);
   CHECK_INVARIANT(m, "");
   CHECK_INVARIANT(m->getNumAtoms() == 24, "");
-  delete m3;
   // BOOST_LOG(rdInfoLog) << "13" << std::endl;
   m3 = MolOps::removeHs(*m, false);
   CHECK_INVARIANT(m3->getNumAtoms() == 24, "");
+  delete m;
+  delete m3;
 
   // RDTrack Issue 130:
-  delete m;
   smi = "[H][N+]([H])([H])[H]";
   m = SmilesToMol(smi, false, false);
   CHECK_INVARIANT(m, "");
   CHECK_INVARIANT(m->getNumAtoms() == 5, "");
-  delete m2;
   // BOOST_LOG(rdInfoLog) << "14" << std::endl;
   m2 = MolOps::removeHs(*m, 0, false);
   CHECK_INVARIANT(m2->getNumAtoms() == 1, "");
   delete m;
+  delete m2;
+
   smi = "[H][N+]([H])([H])[H]";
   m = SmilesToMol(smi);
   CHECK_INVARIANT(m, "");
@@ -614,13 +623,13 @@ void test8() {
   m = SmilesToMol(smi, false, false);
   CHECK_INVARIANT(m, "");
   CHECK_INVARIANT(m->getNumAtoms() == 2, "");
-  delete m2;
   // BOOST_LOG(rdInfoLog) << "15" << std::endl;
   m2 = MolOps::removeHs(*m, 0, false);
   CHECK_INVARIANT(m2->getNumAtoms() == 2, "");
+  delete m;
+  delete m2;
 
   std::string sma;
-  delete m;
   smi = "CC";
   m = SmartsToMol(smi);
   MolOps::sanitizeMol(*((RWMol *)m));
@@ -630,15 +639,14 @@ void test8() {
       static_cast<const QueryAtom *>(m->getAtomWithIdx(0)));
   TEST_ASSERT(sma == "C");
 
-  delete m2;
   // BOOST_LOG(rdInfoLog) << "16" << std::endl;
   m2 = MolOps::addHs(*m);
   TEST_ASSERT(m2->getNumAtoms() == 8);
   sma = SmartsWrite::GetAtomSmarts(
       static_cast<const QueryAtom *>(m2->getAtomWithIdx(0)));
   TEST_ASSERT(sma == "C");
-
   delete m;
+
   // BOOST_LOG(rdInfoLog) << "17" << std::endl;
   m = MolOps::mergeQueryHs(*m2);
   TEST_ASSERT(m->getNumAtoms() == 2);
@@ -647,41 +655,41 @@ void test8() {
   // BOOST_LOG(rdInfoLog) << "sma: " << sma<<std::endl;
   // this was sf.net issue 3415204:
   TEST_ASSERT(sma == "[C&!H0&!H1&!H2]");
+  delete m;
+  delete m2;
 
   // RDTrack Issue 1228:
-  delete m;
   smi = "c1c[nH]cc1";
   m = SmilesToMol(smi);
   CHECK_INVARIANT(m, "");
   CHECK_INVARIANT(m->getNumAtoms() == 5, "");
-  delete m2;
   // BOOST_LOG(rdInfoLog) << "18" << std::endl;
   m2 = MolOps::addHs(*m, false, false);
   CHECK_INVARIANT(m2->getNumAtoms() == 10, "");
-  delete m;
   // BOOST_LOG(rdInfoLog) << "19" << std::endl;
+  delete m;
   m = MolOps::removeHs(*m2);
   CHECK_INVARIANT(m, "");
   CHECK_INVARIANT(m->getNumAtoms() == 5, "");
+  delete m;
+  delete m2;
 
   // labelling:
-  delete m;
   smi = "c1cn([H])cc1";
   m = SmilesToMol(smi);
   CHECK_INVARIANT(m, "");
   CHECK_INVARIANT(m->getNumAtoms() == 5, "");
-  delete m2;
   // BOOST_LOG(rdInfoLog) << "19" << std::endl;
   m2 = MolOps::removeHs(*m);
   CHECK_INVARIANT(m, "");
   CHECK_INVARIANT(m->getNumAtoms() == 5, "");
-
   delete m;
+  delete m2;
+
   smi = "c1cn([2H])cc1";
   m = SmilesToMol(smi);
   CHECK_INVARIANT(m, "");
   CHECK_INVARIANT(m->getNumAtoms() == 6, "");
-  delete m2;
   // BOOST_LOG(rdInfoLog) << "19" << std::endl;
   m2 = MolOps::removeHs(*m);
   CHECK_INVARIANT(m, "");
@@ -759,6 +767,7 @@ void test9() {
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms() == 3);
+
   double *dMat;
   dMat = MolOps::getDistanceMat(*m, false, false);
   TEST_ASSERT(dMat);
@@ -809,6 +818,8 @@ void test9() {
   TEST_ASSERT(dMat[7] == 1.0);
   TEST_ASSERT(dMat[8] == 0.0);
 
+  delete m;
+
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
@@ -851,6 +862,7 @@ void test10() {
     TEST_ASSERT(m->getAtomWithIdx(i)->hasProp(common_properties::_CIPRank));
     m->getAtomWithIdx(i)->getProp(common_properties::_CIPRank, cip);
   }
+  delete m;
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
@@ -1290,7 +1302,7 @@ void test11() {
   TEST_ASSERT(m->getAtomWithIdx(2)->hasProp(common_properties::_CIPCode));
   m->getAtomWithIdx(2)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "S");
-
+  delete m;
   // -----------------------------------------------
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
@@ -1787,6 +1799,7 @@ void testIssue211() {
 
   const Atom *at = m->getAtomWithIdx(0);
   TEST_ASSERT(at->getHybridization() == Atom::SP3);
+  delete m;
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
@@ -2266,6 +2279,7 @@ void testHsAndAromaticity() {
   TEST_ASSERT(mol->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
   TEST_ASSERT(!mol->getAtomWithIdx(0)->getIsAromatic());
   TEST_ASSERT(!mol->getBondBetweenAtoms(0, 1)->getIsAromatic());
+  delete mol;
 
   smi = "C1=CC(=C)C(=C)C=C1";
   mol = SmilesToMol(smi);
@@ -2455,18 +2469,21 @@ void testSFIssue1811276() {
   TEST_ASSERT(m);
   smi = MolToSmiles(*m);
   TEST_ASSERT(smi == "O=c1ccocc1");
+  delete m;
 
   smi = "O=[n+]1ccocc1";
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
   smi = MolToSmiles(*m);
   TEST_ASSERT(smi == "O=[n+]1ccocc1");
+  delete m;
 
   smi = "O=[n+]1ccn([O-])cc1";
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
   smi = MolToSmiles(*m);
   TEST_ASSERT(smi == "O=[n+]1ccn([O-])cc1");
+  delete m;
 
   smi = "O=n1ccccc1";
   m = SmilesToMol(smi);
@@ -2506,7 +2523,7 @@ void testSFIssue1836576() {
   TEST_ASSERT(ok);
   TEST_ASSERT(opThatFailed == MolOps::SANITIZE_PROPERTIES);
   delete m;
-  
+
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
@@ -2901,6 +2918,7 @@ void testSFIssue1968608() {
   TEST_ASSERT(m->getRingInfo()->minAtomRingSize(3) == 0);
   TEST_ASSERT(m->getRingInfo()->minBondRingSize(0) == 3);
   TEST_ASSERT(m->getRingInfo()->minBondRingSize(3) == 0);
+  delete m;
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
@@ -3297,6 +3315,7 @@ void testSFNetIssue2316677() {
     std::cerr << "smi: " << smi << std::endl;
     TEST_ASSERT(smi ==
                 "Cc1ccc(S(=O)(=O)/N=C2\\CC(=N\\C(C)(C)C)/C2=N\\C(C)(C)C)cc1");
+    delete m;
   }
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
@@ -3557,6 +3576,7 @@ void testSFNetIssue3185548() {
     RWMol *m = MolFileToMol(pathName + "Issue3185548.mol");
     BOOST_LOG(rdInfoLog) << "  finished" << std::endl;
     TEST_ASSERT(m);
+    delete m;
   }
 
   {
@@ -3574,6 +3594,7 @@ void testSFNetIssue3185548() {
     TEST_ASSERT(nsssr = 48);
     nsssr = MolOps::symmetrizeSSSR(*m, sssrs);
     TEST_ASSERT(nsssr = 56);
+    delete m;
   }
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
@@ -4005,6 +4026,8 @@ void testBasicCanon() {
                 Bond::STEREOZ);
     TEST_ASSERT(m2->getBondBetweenAtoms(mmap[7], mmap[8])->getStereo() ==
                 Bond::STEREOZ);
+    delete m;
+    delete m2;
   }
   {
     std::string pathName = getenv("RDBASE");
@@ -4032,6 +4055,8 @@ void testBasicCanon() {
                 Bond::STEREOZ);
     TEST_ASSERT(m2->getBondBetweenAtoms(mmap[14], mmap[15])->getStereo() ==
                 Bond::STEREOZ);
+    delete m;
+    delete m2;
   }
 #endif
 
@@ -4089,6 +4114,7 @@ void testBasicCanon() {
     // std::cerr<<csmi1<<"\n"<<csmi2<<"\n-------------\n"<<std::endl;
     TEST_ASSERT(csmi1 == csmi2);
     delete m;
+    delete m2;
   }
   {
     std::string smi = "C\\N=c1/s/c(=N\\Cl)/c/1=N/F";
@@ -4181,7 +4207,6 @@ void testBasicCanon() {
     // std::cerr<<csmi1<<"\n"<<csmi2<<"\n-------------\n"<<std::endl;
     TEST_ASSERT(csmi1 == csmi2);
     delete m2;
-
     delete m;
   }
   {
@@ -4242,6 +4267,7 @@ void testBasicCanon() {
     TEST_ASSERT(m);
     smi = MolToSmiles(*m, true);
     TEST_ASSERT(csmi == smi);
+    delete m;
   }
   {
     // this was issue 3526831
@@ -4254,6 +4280,7 @@ void testBasicCanon() {
     TEST_ASSERT(m);
     smi = MolToSmiles(*m, true);
     TEST_ASSERT(csmi == smi);
+    delete m;
   }
 
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -4704,8 +4731,9 @@ void testRenumberAtoms() {
     ROMol *m = new ROMol;
     TEST_ASSERT(m);
     std::vector<unsigned int> nVect;
-    MolOps::renumberAtoms(*m, nVect);
+    auto *m1 = MolOps::renumberAtoms(*m, nVect);
     delete m;
+    delete m1;
   }
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
@@ -4736,13 +4764,13 @@ void testZBO() {
   {
     auto *m = new RWMol();
 
-    m->addAtom(new Atom(26));
-    m->addAtom(new Atom(6));
-    m->addAtom(new Atom(6));
-    m->addAtom(new Atom(6));
-    m->addAtom(new Atom(6));
-    m->addAtom(new Atom(6));
-    m->addAtom(new Atom(6));
+    m->addAtom(new Atom(26), true, true);
+    m->addAtom(new Atom(6), true, true);
+    m->addAtom(new Atom(6), true, true);
+    m->addAtom(new Atom(6), true, true);
+    m->addAtom(new Atom(6), true, true);
+    m->addAtom(new Atom(6), true, true);
+    m->addAtom(new Atom(6), true, true);
     m->addBond(1, 2, Bond::AROMATIC);
     m->addBond(2, 3, Bond::AROMATIC);
     m->addBond(3, 4, Bond::AROMATIC);
@@ -4775,6 +4803,7 @@ void testZBO() {
     TEST_ASSERT(m->getBondWithIdx(3)->getIsAromatic());
     TEST_ASSERT(m->getBondWithIdx(4)->getIsAromatic());
     TEST_ASSERT(m->getBondWithIdx(5)->getIsAromatic());
+    delete m;
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
@@ -5603,6 +5632,7 @@ void testAdjustQueryProperties() {
     t = SmilesToMol("c1ccc(Cl)cc1Cl");
     TEST_ASSERT(!SubstructMatch(*t, *m, match));
     delete m;
+    delete t;
   }
 
   {  // CTAB
@@ -5651,6 +5681,7 @@ void testAdjustQueryProperties() {
     t = SmilesToMol("c1c(Cl)cc(Cl)cc1Cl");
     TEST_ASSERT(SubstructMatch(*t, *m, match));
     delete m;
+    delete t;
   }
 #endif
   {  // make atoms generic
@@ -6310,6 +6341,8 @@ void testBondSetStereoAtoms() {
     doubleBond->setStereo(Bond::STEREOTRANS);
     BOOST_LOG(rdInfoLog) << MolToSmiles(*m, doIsomericSmiles) << std::endl;
     TEST_ASSERT(MolToSmiles(*m, doIsomericSmiles) == "F/C(Cl)=C(/Br)I");
+    delete m;
+    ;
   }
 }
 

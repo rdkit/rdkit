@@ -35,6 +35,8 @@ void test1Encode() {
   MolTransforms::canonicalizeMol(*m);
 
   MolShapes::EncodeShape(*m, grd, 0);
+  delete m;
+
   // RDGeom::writeGridToFile(grd, "junk.grd");
   // MolToMolFile(m, "junk.mol", 0);
   CHECK_INVARIANT(grd.getOccupancyVect()->getTotalVal() == 9250, "");
@@ -100,6 +102,7 @@ void test3Methane() {
   // dims.x, dims.y, dims.z, 0.5, DiscreteValueVect::TWOBITVALUE, &offSet);
   MolShapes::EncodeShape(*m, grd, 0);
   RDGeom::writeGridToFile(grd, "methane.grd");
+  delete m;
 }
 
 int main() {

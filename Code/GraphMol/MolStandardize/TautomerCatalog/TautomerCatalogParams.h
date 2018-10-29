@@ -22,7 +22,7 @@ namespace RDKit {
 class ROMol;
 
 namespace MolStandardize {
-struct TautomerTransform;
+class TautomerTransform;
 
 class RDKIT_MOLSTANDARDIZE_EXPORT TautomerCatalogParams
     : public RDCatalog::CatalogParams {

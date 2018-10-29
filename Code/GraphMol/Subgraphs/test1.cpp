@@ -21,12 +21,14 @@ void testSubgraphs() {
   std::cout << "-----------------------\n Subgraph retrieval" << std::endl;
   // build: CCC(C)CC
   RWMol mol;
-  mol.addAtom(new Atom(6));
-  mol.addAtom(new Atom(6));
-  mol.addAtom(new Atom(6));
-  mol.addAtom(new Atom(6));
-  mol.addAtom(new Atom(6));
-  mol.addAtom(new Atom(6));
+  bool updateLabel = true;
+  bool takeOwnership = true;
+  mol.addAtom(new Atom(6), updateLabel, takeOwnership);
+  mol.addAtom(new Atom(6), updateLabel, takeOwnership);
+  mol.addAtom(new Atom(6), updateLabel, takeOwnership);
+  mol.addAtom(new Atom(6), updateLabel, takeOwnership);
+  mol.addAtom(new Atom(6), updateLabel, takeOwnership);
+  mol.addAtom(new Atom(6), updateLabel, takeOwnership);
   mol.addBond(0, 1, Bond::SINGLE);
   mol.addBond(1, 2, Bond::SINGLE);
   mol.addBond(2, 3, Bond::SINGLE);
@@ -35,7 +37,6 @@ void testSubgraphs() {
 
   PATH_LIST tmp;
   PATH_LIST::iterator i;
-  PATH_TYPE::iterator j;
 
   int totPs = 0;
   tmp = findAllSubgraphsOfLengthN(mol, 1);
@@ -54,7 +55,7 @@ void testSubgraphs() {
   CHECK_INVARIANT(tmp.size() == 1, "");
   totPs += tmp.size();
   tmp = findAllSubgraphsOfLengthN(mol, 6);
-  CHECK_INVARIANT(tmp.size() == 0, "");
+  CHECK_INVARIANT(tmp.empty(), "");
   totPs += tmp.size();
 
   // now use the direct range function and check that we get the
@@ -69,7 +70,7 @@ void testSubgraphs() {
   CHECK_INVARIANT(totPs == newTot, "");
 
   // add an H and make sure things don't change:
-  mol.addAtom(new Atom(1));
+  mol.addAtom(new Atom(1), updateLabel, takeOwnership);
   mol.addBond(5, 6, Bond::SINGLE);
 
   tmp = findAllSubgraphsOfLengthN(mol, 1);
@@ -84,7 +85,7 @@ void testSubgraphs() {
   tmp = findAllSubgraphsOfLengthN(mol, 5);
   CHECK_INVARIANT(tmp.size() == 1, "");
   tmp = findAllSubgraphsOfLengthN(mol, 6);
-  CHECK_INVARIANT(tmp.size() == 0, "");
+  CHECK_INVARIANT(tmp.empty(), "");
 
   std::cout << "Finished" << std::endl;
 }
@@ -128,9 +129,9 @@ void testSubgraphs2() {
     nUnique += tmp.size();
   }
 
+  delete mol;
   CHECK_INVARIANT(nAll == 2433, "");
   CHECK_INVARIANT(nUnique == 300, "");
-  delete mol;
 
   mol = SmilesToMol("CCC(O)C(c1ccccc1)CC(C)N(C)C");
   CHECK_INVARIANT(mol, "");
@@ -144,8 +145,9 @@ void testSubgraphs2() {
     tmp = findUniqueSubgraphsOfLengthN(*mol, i);
     nUnique += tmp.size();
   }
-  CHECK_INVARIANT(nAll == 1990, "");
 
+  delete mol;
+  CHECK_INVARIANT(nAll == 1990, "");
   CHECK_INVARIANT(nUnique == 907, "");
 
   std::cout << "Finished" << std::endl;
@@ -166,12 +168,14 @@ void testPaths() {
   std::cout << "-----------------------\n Path retrieval" << std::endl;
   // build: CCC(C)CC
   RWMol mol;
-  mol.addAtom(new Atom(6));
-  mol.addAtom(new Atom(6));
-  mol.addAtom(new Atom(6));
-  mol.addAtom(new Atom(6));
-  mol.addAtom(new Atom(6));
-  mol.addAtom(new Atom(6));
+  bool updateLabel = true;
+  bool takeOwnership = true;
+  mol.addAtom(new Atom(6), updateLabel, takeOwnership);
+  mol.addAtom(new Atom(6), updateLabel, takeOwnership);
+  mol.addAtom(new Atom(6), updateLabel, takeOwnership);
+  mol.addAtom(new Atom(6), updateLabel, takeOwnership);
+  mol.addAtom(new Atom(6), updateLabel, takeOwnership);
+  mol.addAtom(new Atom(6), updateLabel, takeOwnership);
   mol.addBond(0, 1, Bond::SINGLE);
   mol.addBond(1, 2, Bond::SINGLE);
   mol.addBond(2, 3, Bond::SINGLE);
@@ -192,9 +196,9 @@ void testPaths() {
   tmp = findAllPathsOfLengthN(mol, 4);
   CHECK_INVARIANT(tmp.size() == 1, "");
   tmp = findAllPathsOfLengthN(mol, 5);
-  CHECK_INVARIANT(tmp.size() == 0, "");
+  CHECK_INVARIANT(tmp.empty(), "");
   tmp = findAllPathsOfLengthN(mol, 6);
-  CHECK_INVARIANT(tmp.size() == 0, "");
+  CHECK_INVARIANT(tmp.empty(), "");
 
   //
   //  Retrieve using atoms, which gives the results shifted by
@@ -211,7 +215,7 @@ void testPaths() {
   tmp = findAllPathsOfLengthN(mol, 5, false);
   CHECK_INVARIANT(tmp.size() == 1, "");
   tmp = findAllPathsOfLengthN(mol, 6, false);
-  CHECK_INVARIANT(tmp.size() == 0, "");
+  CHECK_INVARIANT(tmp.empty(), "");
 
   //
   //  try m->n
@@ -222,8 +226,8 @@ void testPaths() {
   CHECK_INVARIANT(pths[2].size() == 5, "");
   CHECK_INVARIANT(pths[3].size() == 4, "");
   CHECK_INVARIANT(pths[4].size() == 1, "");
-  CHECK_INVARIANT(pths[5].size() == 0, "");
-  CHECK_INVARIANT(pths[6].size() == 0, "");
+  CHECK_INVARIANT(pths[5].empty(), "");
+  CHECK_INVARIANT(pths[6].empty(), "");
 
   pths = findAllPathsOfLengthsMtoN(mol, 1, 6, false);
   CHECK_INVARIANT(pths[1].size() == 6, "");
@@ -231,13 +235,13 @@ void testPaths() {
   CHECK_INVARIANT(pths[3].size() == 5, "");
   CHECK_INVARIANT(pths[4].size() == 4, "");
   CHECK_INVARIANT(pths[5].size() == 1, "");
-  CHECK_INVARIANT(pths[6].size() == 0, "");
+  CHECK_INVARIANT(pths[6].empty(), "");
 
   //
   //  add an atom, close the ring and re-check a couple indices:
   //   (leaves us with CC1CCCCC1)
   //
-  mol.addAtom(new Atom(6));
+  mol.addAtom(new Atom(6), updateLabel, takeOwnership);
   mol.addBond(5, 6, Bond::SINGLE);
   mol.addBond(0, 6, Bond::SINGLE);
   tmp = findAllPathsOfLengthN(mol, 4);
@@ -252,10 +256,12 @@ void testPaths2() {
   std::cout << "-----------------------\n Path retrieval2" << std::endl;
   // build: CCC(C)CC
   RWMol mol;
-  mol.addAtom(new Atom(6));
-  mol.addAtom(new Atom(6));
-  mol.addAtom(new Atom(6));
-  mol.addAtom(new Atom(6));
+  bool updateLabel = true;
+  bool takeOwnership = true;
+  mol.addAtom(new Atom(6), updateLabel, takeOwnership);
+  mol.addAtom(new Atom(6), updateLabel, takeOwnership);
+  mol.addAtom(new Atom(6), updateLabel, takeOwnership);
+  mol.addAtom(new Atom(6), updateLabel, takeOwnership);
   mol.addBond(0, 1, Bond::SINGLE);
   mol.addBond(1, 2, Bond::SINGLE);
   mol.addBond(2, 3, Bond::SINGLE);
@@ -277,12 +283,14 @@ void testUniqueSubgraphs() {
             << std::endl;
   // build: CCC(C)CC
   RWMol mol;
-  mol.addAtom(new Atom(6));
-  mol.addAtom(new Atom(6));
-  mol.addAtom(new Atom(6));
-  mol.addAtom(new Atom(6));
-  mol.addAtom(new Atom(6));
-  mol.addAtom(new Atom(6));
+  bool updateLabel = true;
+  bool takeOwnership = true;
+  mol.addAtom(new Atom(6), updateLabel, takeOwnership);
+  mol.addAtom(new Atom(6), updateLabel, takeOwnership);
+  mol.addAtom(new Atom(6), updateLabel, takeOwnership);
+  mol.addAtom(new Atom(6), updateLabel, takeOwnership);
+  mol.addAtom(new Atom(6), updateLabel, takeOwnership);
+  mol.addAtom(new Atom(6), updateLabel, takeOwnership);
   mol.addBond(0, 1, Bond::SINGLE);
   mol.addBond(1, 2, Bond::SINGLE);
   mol.addBond(2, 3, Bond::SINGLE);
@@ -291,7 +299,6 @@ void testUniqueSubgraphs() {
 
   PATH_LIST tmp;
   PATH_LIST::iterator i;
-  PATH_TYPE::iterator j;
 
   tmp = findAllSubgraphsOfLengthN(mol, 1);
   CHECK_INVARIANT(tmp.size() == 5, "");
@@ -317,12 +324,12 @@ void testUniqueSubgraphs() {
   CHECK_INVARIANT(tmp.size() == 1, "");
 
   tmp = findAllSubgraphsOfLengthN(mol, 6);
-  CHECK_INVARIANT(tmp.size() == 0, "");
+  CHECK_INVARIANT(tmp.empty(), "");
   tmp = findUniqueSubgraphsOfLengthN(mol, 6);
-  CHECK_INVARIANT(tmp.size() == 0, "");
+  CHECK_INVARIANT(tmp.empty(), "");
 
   // add an H and make sure things don't change:
-  mol.addAtom(new Atom(1));
+  mol.addAtom(new Atom(1), updateLabel, takeOwnership);
   mol.addBond(5, 6, Bond::SINGLE);
 
   tmp = findAllSubgraphsOfLengthN(mol, 2);
@@ -346,9 +353,9 @@ void testUniqueSubgraphs() {
   CHECK_INVARIANT(tmp.size() == 1, "");
 
   tmp = findAllSubgraphsOfLengthN(mol, 6);
-  CHECK_INVARIANT(tmp.size() == 0, "");
+  CHECK_INVARIANT(tmp.empty(), "");
   tmp = findUniqueSubgraphsOfLengthN(mol, 6);
-  CHECK_INVARIANT(tmp.size() == 0, "");
+  CHECK_INVARIANT(tmp.empty(), "");
 
   std::cout << "Finished" << std::endl;
 }
@@ -429,7 +436,7 @@ void testRootedSubgraphs() {
 
     // edge case:
     tmp = findAllSubgraphsOfLengthN(*mol, 1, false, 10);
-    TEST_ASSERT(tmp.size() == 0);
+    TEST_ASSERT(tmp.empty());
 
     delete mol;
   }
@@ -458,7 +465,7 @@ void testRootedSubgraphs() {
 
     // edge case:
     tmp = findAllSubgraphsOfLengthN(*mol, 1, false, 10);
-    TEST_ASSERT(tmp.size() == 0);
+    TEST_ASSERT(tmp.empty());
 
     delete mol;
   }
@@ -471,7 +478,7 @@ void testRootedSubgraphs() {
     tmpm = findAllSubgraphsOfLengthsMtoN(*mol, 1, 2, false, 0);
     TEST_ASSERT(tmpm[1].size() == 1);
     TEST_ASSERT(tmpm[2].size() == 2);
-    TEST_ASSERT(tmpm[3].size() == 0);
+    TEST_ASSERT(tmpm[3].empty());
     tmpm = findAllSubgraphsOfLengthsMtoN(*mol, 1, 3, false, 0);
     TEST_ASSERT(tmpm[1].size() == 1);
     TEST_ASSERT(tmpm[2].size() == 2);
@@ -486,7 +493,7 @@ void testRootedSubgraphs() {
     tmpm = findAllSubgraphsOfLengthsMtoN(*mol, 1, 2, false, 3);
     TEST_ASSERT(tmpm[1].size() == 1);
     TEST_ASSERT(tmpm[2].size() == 2);
-    TEST_ASSERT(tmpm[3].size() == 0);
+    TEST_ASSERT(tmpm[3].empty());
     tmpm = findAllSubgraphsOfLengthsMtoN(*mol, 1, 3, false, 3);
     TEST_ASSERT(tmpm[1].size() == 1);
     TEST_ASSERT(tmpm[2].size() == 2);
@@ -515,7 +522,7 @@ void testRootedPaths() {
 
     // edge case:
     tmp = findAllPathsOfLengthN(*mol, 1, true, false, 10);
-    TEST_ASSERT(tmp.size() == 0);
+    TEST_ASSERT(tmp.empty());
 
     // atom paths:
     tmp = findAllPathsOfLengthN(*mol, 1, false, false, 0);
@@ -546,7 +553,7 @@ void testRootedPaths() {
 
     // edge case:
     tmp = findAllPathsOfLengthN(*mol, 1, true, false, 10);
-    TEST_ASSERT(tmp.size() == 0);
+    TEST_ASSERT(tmp.empty());
 
     // atom paths:
     tmp = findAllPathsOfLengthN(*mol, 1, false, false, 3);
@@ -569,7 +576,7 @@ void testRootedPaths() {
     tmpm = findAllPathsOfLengthsMtoN(*mol, 1, 2, false, false, 0);
     TEST_ASSERT(tmpm[1].size() == 1);
     TEST_ASSERT(tmpm[2].size() == 1);
-    TEST_ASSERT(tmpm[3].size() == 0);
+    TEST_ASSERT(tmpm[3].empty());
     tmpm = findAllPathsOfLengthsMtoN(*mol, 1, 3, false, false, 0);
     TEST_ASSERT(tmpm[1].size() == 1);
     TEST_ASSERT(tmpm[2].size() == 1);
@@ -584,7 +591,7 @@ void testRootedPaths() {
     tmpm = findAllPathsOfLengthsMtoN(*mol, 1, 2, false, false, 3);
     TEST_ASSERT(tmpm[1].size() == 1);
     TEST_ASSERT(tmpm[2].size() == 1);
-    TEST_ASSERT(tmpm[3].size() == 0);
+    TEST_ASSERT(tmpm[3].empty());
     tmpm = findAllPathsOfLengthsMtoN(*mol, 1, 3, false, false, 3);
     TEST_ASSERT(tmpm[1].size() == 1);
     TEST_ASSERT(tmpm[2].size() == 1);

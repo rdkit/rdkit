@@ -34,12 +34,11 @@
 
 using namespace RDKit;
 
-void testMols(std::vector<ROMol *> &mols, FragFPGenerator &fpGen,
+void testMols(std::vector<std::unique_ptr<ROMol>> &mols, FragFPGenerator &fpGen,
               FragCatalog &fcat) {
-  std::vector<ROMol *>::iterator mi;
   int nDone = 0;
-  for (mi = mols.begin(); mi != mols.end(); mi++) {
-    ExplicitBitVect *fp = fpGen.getFPForMol(*(*mi), fcat);
+  for (auto&& mi : mols) {
+    ExplicitBitVect *fp = fpGen.getFPForMol(*mi, fcat);
     switch (nDone) {
       case 0:
         TEST_ASSERT(fp->getNumOnBits() == 3);
@@ -84,6 +83,7 @@ void testMols(std::vector<ROMol *> &mols, FragFPGenerator &fpGen,
         TEST_ASSERT((*fp)[10]);
         break;
     }
+    delete fp;
     nDone += 1;
   }
 }
@@ -100,11 +100,11 @@ void test1() {
   FragCatalog fcat(fparams);
   FragCatGenerator catGen;
 
-  std::vector<ROMol *> mols;
+  std::vector<std::unique_ptr<ROMol>> mols;
   unsigned int nDone = 0;
   ROMol *m = suppl.next();
   while (m) {
-    mols.push_back(m);
+    mols.push_back(std::unique_ptr<ROMol>(m));
     nDone += 1;
     catGen.addFragsFromMol(*m, &fcat);
     try {
@@ -146,6 +146,7 @@ void test1() {
   TEST_ASSERT(fpEntry->getBitId() == fpEntry2->getBitId());
   TEST_ASSERT(fpEntry2->match(fpEntry, 1e-8));
   TEST_ASSERT(fpEntry->match(fpEntry2, 1e-8));
+  delete fpEntry2;
 
   // test catalogs' initFromString:
   FragCatalog fcat2;
@@ -205,6 +206,8 @@ void test1() {
   BOOST_LOG(rdInfoLog) << "---- Done" << std::endl;
 
   delete tmpMol;
+  delete fparams;
+  delete fcat3;
 }
 
 void testIssue294() {
@@ -220,10 +223,10 @@ void testIssue294() {
   FragCatalog fcat(fparams);
   FragCatGenerator catGen;
 
-  std::vector<ROMol *> mols;
+  std::vector<std::unique_ptr<ROMol>> mols;
   ROMol *m = suppl.next();
   while (m) {
-    mols.push_back(m);
+    mols.push_back(std::unique_ptr<ROMol>(m));
     catGen.addFragsFromMol(*m, &fcat);
     try {
       m = suppl.next();
@@ -235,15 +238,13 @@ void testIssue294() {
   TEST_ASSERT(nents == 21);
   FragFPGenerator fpGen;
 
-  m = mols[0];
-
   for (unsigned int i = 0; i < 200; i++) {
-    for (std::vector<ROMol *>::const_iterator mi = mols.begin();
-         mi != mols.end(); mi++) {
-      ExplicitBitVect *fp = fpGen.getFPForMol(*(*mi), fcat);
+    for (auto&& mi : mols) {
+      ExplicitBitVect *fp = fpGen.getFPForMol(*mi, fcat);
       delete fp;
     }
   }
+  delete fparams;
   BOOST_LOG(rdInfoLog) << "---- Done" << std::endl;
 }
 

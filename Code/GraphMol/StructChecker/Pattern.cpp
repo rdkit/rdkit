@@ -86,11 +86,11 @@ bool LigandMatches(const Atom &a, const Bond &b, const Ligand &l,
 }
 
 static void applyAtomSymbolList(RWMol &mol, const std::string symbol,
-                                Atom &atom) {
+                                Atom *&atom) {
   // replace mol atom with Ligrad.AtomSymbol
   // single atom symbol:
   if (std::string::npos == symbol.find(',')) {
-    atom.setAtomicNum(getAtomicNumber(symbol));
+    atom->setAtomicNum(getAtomicNumber(symbol));
     return;
   }
   // comma separated list of atom symbols:
@@ -103,8 +103,8 @@ static void applyAtomSymbolList(RWMol &mol, const std::string symbol,
   char *tokp;
   strcpy(buf, atsym);
   tokp = strtok_r(buf, ",", &context);
-  atom.setAtomicNum(getAtomicNumber(tokp));
-  QueryAtom a(atom);
+  atom->setAtomicNum(getAtomicNumber(tokp));
+  QueryAtom a(*atom);
   a.setQuery(makeAtomNumQuery(getAtomicNumber(tokp)));
   //  QueryAtom a(atom);  // copy all mol's atom properties to keep its
   for (tokp = strtok_r((char *)nullptr, ",", &context); tokp;
@@ -112,7 +112,9 @@ static void applyAtomSymbolList(RWMol &mol, const std::string symbol,
     a.expandQuery(makeAtomNumQuery(getAtomicNumber(tokp)),
                   Queries::COMPOSITE_OR);
   }
-  mol.replaceAtom(atom.getIdx(), &a);
+  unsigned int idx = atom->getIdx();
+  mol.replaceAtom(idx, &a);
+  atom = mol.getAtomWithIdx(idx);
 }
 
 struct AtomNeighbor {
@@ -226,7 +228,7 @@ bool TransformAugmentedAtoms(
         // change central atom
         Atom *a = mol.getAtomWithIdx(j);
         if (aa1.AtomSymbol != aa2.AtomSymbol)
-          applyAtomSymbolList(mol, aa2.AtomSymbol, *a);
+          applyAtomSymbolList(mol, aa2.AtomSymbol, a);
         if (a->getFormalCharge() != aa2.Charge) a->setFormalCharge(aa2.Charge);
         if (a->getNumRadicalElectrons() != aa2.Radical)
           a->setNumRadicalElectrons(aa2.Radical);
@@ -237,7 +239,7 @@ bool TransformAugmentedAtoms(
           {
             // AVALON pattern.c:154
             if (aa1.Ligands[l].AtomSymbol != ligand.AtomSymbol)
-              applyAtomSymbolList(mol, ligand.AtomSymbol, *al);
+              applyAtomSymbolList(mol, ligand.AtomSymbol, al);
             //            }
           }
           if (al->getFormalCharge() != ligand.Charge)

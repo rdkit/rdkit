@@ -28,19 +28,16 @@ typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
 namespace ForceFields {
 namespace MMFF {
 
-class MMFFAromCollection *MMFFAromCollection::ds_instance = nullptr;
+class std::unique_ptr<MMFFAromCollection> MMFFAromCollection::ds_instance = nullptr;
 
 extern const boost::uint8_t defaultMMFFArom[];
 
 MMFFAromCollection *MMFFAromCollection::getMMFFArom(
     const boost::uint8_t *mmffArom) {
-  if (!ds_instance) {
-    ds_instance = new MMFFAromCollection(mmffArom);
-  } else if (mmffArom) {
-    delete ds_instance;
-    ds_instance = new MMFFAromCollection(mmffArom);
+  if (!ds_instance || mmffArom) {
+    ds_instance.reset(new MMFFAromCollection(mmffArom));
   }
-  return ds_instance;
+  return ds_instance.get();
 }
 
 MMFFAromCollection::MMFFAromCollection(const boost::uint8_t *mmffArom) {
@@ -55,18 +52,15 @@ MMFFAromCollection::MMFFAromCollection(const boost::uint8_t *mmffArom) {
 const boost::uint8_t defaultMMFFArom[] = {37, 38, 39, 44, 58, 59, 63, 64, 65,
                                           66, 69, 76, 78, 79, 80, 81, 82};
 
-class MMFFDefCollection *MMFFDefCollection::ds_instance = nullptr;
+class std::unique_ptr<MMFFDefCollection> MMFFDefCollection::ds_instance = nullptr;
 
 extern const std::string defaultMMFFDef;
 
 MMFFDefCollection *MMFFDefCollection::getMMFFDef(const std::string &mmffDef) {
-  if (!ds_instance) {
-    ds_instance = new MMFFDefCollection(mmffDef);
-  } else if (!mmffDef.empty()) {
-    delete ds_instance;
-    ds_instance = new MMFFDefCollection(mmffDef);
+  if (!ds_instance || !mmffDef.empty()) {
+    ds_instance.reset(new MMFFDefCollection(mmffDef));
   }
-  return ds_instance;
+  return ds_instance.get();
 }
 
 MMFFDefCollection::MMFFDefCollection(std::string mmffDef) {
@@ -449,19 +443,16 @@ const std::string defaultMMFFDef =
     "MG+2	99	99	99	99	99	DIPOSITIVE	"
     "MAGNESIUM	CATION\n";
 
-class MMFFPropCollection *MMFFPropCollection::ds_instance = nullptr;
+class std::unique_ptr<MMFFPropCollection> MMFFPropCollection::ds_instance = nullptr;
 
 extern const std::string defaultMMFFProp;
 
 MMFFPropCollection *MMFFPropCollection::getMMFFProp(
     const std::string &mmffProp) {
-  if (!ds_instance) {
-    ds_instance = new MMFFPropCollection(mmffProp);
-  } else if (!mmffProp.empty()) {
-    delete ds_instance;
-    ds_instance = new MMFFPropCollection(mmffProp);
+  if (!ds_instance || !mmffProp.empty()) {
+    ds_instance.reset(new MMFFPropCollection(mmffProp));
   }
-  return ds_instance;
+  return ds_instance.get();
 }
 
 MMFFPropCollection::MMFFPropCollection(std::string mmffProp) {
@@ -621,19 +612,16 @@ const std::string defaultMMFFProp =
     "98	29	0	0	0	0	0	0	0\n"
     "99	12	0	0	0	0	0	0	0\n";
 
-class MMFFPBCICollection *MMFFPBCICollection::ds_instance = nullptr;
+class std::unique_ptr<MMFFPBCICollection> MMFFPBCICollection::ds_instance = nullptr;
 
 extern const std::string defaultMMFFPBCI;
 
 MMFFPBCICollection *MMFFPBCICollection::getMMFFPBCI(
     const std::string &mmffPBCI) {
-  if (!ds_instance) {
-    ds_instance = new MMFFPBCICollection(mmffPBCI);
-  } else if (!mmffPBCI.empty()) {
-    delete ds_instance;
-    ds_instance = new MMFFPBCICollection(mmffPBCI);
+  if (!ds_instance || !mmffPBCI.empty()) {
+    ds_instance.reset(new MMFFPBCICollection(mmffPBCI));
   }
-  return ds_instance;
+  return ds_instance.get();
 }
 
 MMFFPBCICollection::MMFFPBCICollection(std::string mmffPBCI) {
@@ -780,18 +768,15 @@ const std::string defaultMMFFPBCI =
     "0	98	2.000	0.000	Ionic	charge\n"
     "0	99	2.000	0.000	Ionic	charge\n";
 
-class MMFFChgCollection *MMFFChgCollection::ds_instance = nullptr;
+class std::unique_ptr<MMFFChgCollection> MMFFChgCollection::ds_instance = nullptr;
 
 extern const std::string defaultMMFFChg;
 
 MMFFChgCollection *MMFFChgCollection::getMMFFChg(const std::string &mmffChg) {
-  if (!ds_instance) {
-    ds_instance = new MMFFChgCollection(mmffChg);
-  } else if (!mmffChg.empty()) {
-    delete ds_instance;
-    ds_instance = new MMFFChgCollection(mmffChg);
+  if (!ds_instance || !mmffChg.empty()) {
+    ds_instance.reset(new MMFFChgCollection(mmffChg));
   }
-  return ds_instance;
+  return ds_instance.get();
 }
 
 MMFFChgCollection::MMFFChgCollection(std::string mmffChg) {
@@ -1352,19 +1337,16 @@ const std::string defaultMMFFChg =
     "0	79	81	-0.0430	E94\n"
     "0	80	81	-0.4000	#C94\n";
 
-class MMFFBondCollection *MMFFBondCollection::ds_instance = nullptr;
+class std::unique_ptr<MMFFBondCollection> MMFFBondCollection::ds_instance = nullptr;
 
 extern const std::string defaultMMFFBond;
 
 MMFFBondCollection *MMFFBondCollection::getMMFFBond(
     const std::string &mmffBond) {
-  if (!ds_instance) {
-    ds_instance = new MMFFBondCollection(mmffBond);
-  } else if (!mmffBond.empty()) {
-    delete ds_instance;
-    ds_instance = new MMFFBondCollection(mmffBond);
+  if (!ds_instance || !mmffBond.empty()) {
+    ds_instance.reset(new MMFFBondCollection(mmffBond));
   }
-  return ds_instance;
+  return ds_instance.get();
 }
 
 MMFFBondCollection::MMFFBondCollection(std::string mmffBond) {
@@ -1923,19 +1905,16 @@ const std::string defaultMMFFBond =
     "0	79	81	4.305	1.356	E94\n"
     "0	80	81	8.237	1.335	C94\n";
 
-class MMFFBndkCollection *MMFFBndkCollection::ds_instance = nullptr;
+class std::unique_ptr<MMFFBndkCollection> MMFFBndkCollection::ds_instance = nullptr;
 
 extern const std::string defaultMMFFBndk;
 
 MMFFBndkCollection *MMFFBndkCollection::getMMFFBndk(
     const std::string &mmffBndk) {
-  if (!ds_instance) {
-    ds_instance = new MMFFBndkCollection(mmffBndk);
-  } else if (!mmffBndk.empty()) {
-    delete ds_instance;
-    ds_instance = new MMFFBndkCollection(mmffBndk);
+  if (!ds_instance || !mmffBndk.empty()) {
+    ds_instance.reset(new MMFFBndkCollection(mmffBndk));
   }
-  return ds_instance;
+  return ds_instance.get();
 }
 
 MMFFBndkCollection::MMFFBndkCollection(std::string mmffBndk) {
@@ -2048,21 +2027,18 @@ const std::string defaultMMFFBndk =
     "35	35	2.28	2.4	E94\n"
     "53	53	2.67	1.6	E94\n";
 
-class MMFFHerschbachLaurieCollection
-    *MMFFHerschbachLaurieCollection::ds_instance = nullptr;
+class std::unique_ptr<MMFFHerschbachLaurieCollection>
+    MMFFHerschbachLaurieCollection::ds_instance = nullptr;
 
 extern const std::string defaultMMFFHerschbachLaurie;
 
 MMFFHerschbachLaurieCollection *
 MMFFHerschbachLaurieCollection::getMMFFHerschbachLaurie(
     const std::string &mmffHerschbachLaurie) {
-  if (!ds_instance) {
-    ds_instance = new MMFFHerschbachLaurieCollection(mmffHerschbachLaurie);
-  } else if (!mmffHerschbachLaurie.empty()) {
-    delete ds_instance;
-    ds_instance = new MMFFHerschbachLaurieCollection(mmffHerschbachLaurie);
+  if (!ds_instance || !mmffHerschbachLaurie.empty()) {
+    ds_instance.reset(new MMFFHerschbachLaurieCollection(mmffHerschbachLaurie));
   }
-  return ds_instance;
+  return ds_instance.get();
 }
 
 MMFFHerschbachLaurieCollection::MMFFHerschbachLaurieCollection(
@@ -2139,20 +2115,17 @@ const std::string defaultMMFFHerschbachLaurie =
     "4	4	2.85	1.62	1.62\n"
     "4	5	2.76	1.25	1.51\n";
 
-class MMFFCovRadPauEleCollection *MMFFCovRadPauEleCollection::ds_instance =
+class std::unique_ptr<MMFFCovRadPauEleCollection> MMFFCovRadPauEleCollection::ds_instance =
     nullptr;
 
 extern const std::string defaultMMFFCovRadPauEle;
 
 MMFFCovRadPauEleCollection *MMFFCovRadPauEleCollection::getMMFFCovRadPauEle(
     const std::string &mmffCovRadPauEle) {
-  if (!ds_instance) {
-    ds_instance = new MMFFCovRadPauEleCollection(mmffCovRadPauEle);
-  } else if (!mmffCovRadPauEle.empty()) {
-    delete ds_instance;
-    ds_instance = new MMFFCovRadPauEleCollection(mmffCovRadPauEle);
+  if (!ds_instance || !mmffCovRadPauEle.empty()) {
+    ds_instance.reset(new MMFFCovRadPauEleCollection(mmffCovRadPauEle));
   }
-  return ds_instance;
+  return ds_instance.get();
 }
 
 MMFFCovRadPauEleCollection::MMFFCovRadPauEleCollection(
@@ -2211,19 +2184,16 @@ const std::string defaultMMFFCovRadPauEle =
     "35	1.15	2.74\n"
     "53	1.33	2.21\n";
 
-class MMFFAngleCollection *MMFFAngleCollection::ds_instance = nullptr;
+class std::unique_ptr<MMFFAngleCollection> MMFFAngleCollection::ds_instance = nullptr;
 
 extern const std::string defaultMMFFAngleData[];
 
 MMFFAngleCollection *MMFFAngleCollection::getMMFFAngle(
     const std::string &mmffAngle) {
-  if (!ds_instance) {
-    ds_instance = new MMFFAngleCollection(mmffAngle);
-  } else if (!mmffAngle.empty()) {
-    delete ds_instance;
-    ds_instance = new MMFFAngleCollection(mmffAngle);
+  if (!ds_instance || !mmffAngle.empty()) {
+    ds_instance.reset(new MMFFAngleCollection(mmffAngle));
   }
-  return ds_instance;
+  return ds_instance.get();
 }
 
 MMFFAngleCollection::MMFFAngleCollection(std::string mmffAngle) {
@@ -4645,19 +4615,16 @@ const std::string defaultMMFFAngleData[] = {
     "0	64	82	65	1.281	112.955	E94\n",
     "EOS"};
 
-class MMFFStbnCollection *MMFFStbnCollection::ds_instance = nullptr;
+class std::unique_ptr<MMFFStbnCollection> MMFFStbnCollection::ds_instance = nullptr;
 
 extern const std::string defaultMMFFStbn;
 
 MMFFStbnCollection *MMFFStbnCollection::getMMFFStbn(
     const std::string &mmffStbn) {
-  if (!ds_instance) {
-    ds_instance = new MMFFStbnCollection(mmffStbn);
-  } else if (!mmffStbn.empty()) {
-    delete ds_instance;
-    ds_instance = new MMFFStbnCollection(mmffStbn);
+  if (!ds_instance || !mmffStbn.empty()) {
+    ds_instance.reset(new MMFFStbnCollection(mmffStbn));
   }
-  return ds_instance;
+  return ds_instance.get();
 }
 
 MMFFStbnCollection::MMFFStbnCollection(std::string mmffStbn) {
@@ -5008,19 +4975,16 @@ const std::string defaultMMFFStbn =
     "0	36	81	80	0.018	0.422	C94\n"
     "0	78	81	80	0.366	0.419	C94\n";
 
-class MMFFDfsbCollection *MMFFDfsbCollection::ds_instance = nullptr;
+class std::unique_ptr<MMFFDfsbCollection> MMFFDfsbCollection::ds_instance = nullptr;
 
 extern const std::string defaultMMFFDfsb;
 
 MMFFDfsbCollection *MMFFDfsbCollection::getMMFFDfsb(
     const std::string &mmffDfsb) {
-  if (!ds_instance) {
-    ds_instance = new MMFFDfsbCollection(mmffDfsb);
-  } else if (!mmffDfsb.empty()) {
-    delete ds_instance;
-    ds_instance = new MMFFDfsbCollection(mmffDfsb);
+  if (!ds_instance || !mmffDfsb.empty()) {
+    ds_instance.reset(new MMFFDfsbCollection(mmffDfsb));
   }
-  return ds_instance;
+  return ds_instance.get();
 }
 
 MMFFDfsbCollection::MMFFDfsbCollection(std::string mmffDfsb) {
@@ -5091,7 +5055,7 @@ const std::string defaultMMFFDfsb =
     "3	2	4	0.25	0.25\n"
     "4	2	4	0.25	0.25\n";
 
-class MMFFOopCollection *MMFFOopCollection::ds_instance[2] = {nullptr, nullptr};
+class std::unique_ptr<MMFFOopCollection> MMFFOopCollection::ds_instance[2] = {nullptr, nullptr};
 
 extern const std::string defaultMMFFOop;
 extern const std::string defaultMMFFsOop;
@@ -5099,13 +5063,10 @@ extern const std::string defaultMMFFsOop;
 MMFFOopCollection *MMFFOopCollection::getMMFFOop(const bool isMMFFs,
                                                  const std::string &mmffOop) {
   unsigned int i = (isMMFFs ? 1 : 0);
-  if (!ds_instance[i]) {
-    ds_instance[i] = new MMFFOopCollection(isMMFFs, mmffOop);
-  } else if (!mmffOop.empty()) {
-    delete ds_instance[i];
-    ds_instance[i] = new MMFFOopCollection(isMMFFs, mmffOop);
+  if (!ds_instance[i] || !mmffOop.empty()) {
+    ds_instance[i] = std::unique_ptr<MMFFOopCollection>(new MMFFOopCollection(isMMFFs, mmffOop));
   }
-  return ds_instance[i];
+  return ds_instance[i].get();
 }
 
 MMFFOopCollection::MMFFOopCollection(const bool isMMFFs, std::string mmffOop) {
@@ -5417,7 +5378,7 @@ const std::string defaultMMFFsOop =
     "36	81	78	80	0.016	C94\n"
     "0	82	0	0	0.000	*-82-*-*	E94	DEF\n";
 
-class MMFFTorCollection *MMFFTorCollection::ds_instance[2] = {nullptr, nullptr};
+class std::unique_ptr<MMFFTorCollection> MMFFTorCollection::ds_instance[2] = {nullptr, nullptr};
 
 extern const std::string defaultMMFFTor;
 extern const std::string defaultMMFFsTor;
@@ -5425,13 +5386,10 @@ extern const std::string defaultMMFFsTor;
 MMFFTorCollection *MMFFTorCollection::getMMFFTor(const bool isMMFFs,
                                                  const std::string &mmffTor) {
   unsigned int i = (isMMFFs ? 1 : 0);
-  if (!ds_instance[i]) {
-    ds_instance[i] = new MMFFTorCollection(isMMFFs, mmffTor);
-  } else if (!mmffTor.empty()) {
-    delete ds_instance[i];
-    ds_instance[i] = new MMFFTorCollection(isMMFFs, mmffTor);
+  if (!ds_instance[i] || !mmffTor.empty()) {
+    ds_instance[i] = std::unique_ptr<MMFFTorCollection>(new MMFFTorCollection(isMMFFs, mmffTor));
   }
-  return ds_instance[i];
+  return ds_instance[i].get();
 }
 
 MMFFTorCollection::MMFFTorCollection(const bool isMMFFs, std::string mmffTor) {
@@ -8429,18 +8387,15 @@ const std::string defaultMMFFsTor =
     "0	0	80	81	0	0.000	4.000	0.000	C94	"
     "0:*-80-81-*	Def\n";
 
-class MMFFVdWCollection *MMFFVdWCollection::ds_instance = nullptr;
+class std::unique_ptr<MMFFVdWCollection> MMFFVdWCollection::ds_instance = nullptr;
 
 extern const std::string defaultMMFFVdW;
 
 MMFFVdWCollection *MMFFVdWCollection::getMMFFVdW(const std::string &mmffVdW) {
-  if (!ds_instance) {
-    ds_instance = new MMFFVdWCollection(mmffVdW);
-  } else if (!mmffVdW.empty()) {
-    delete ds_instance;
-    ds_instance = new MMFFVdWCollection(mmffVdW);
+  if (!ds_instance || !mmffVdW.empty()) {
+    ds_instance.reset(new MMFFVdWCollection(mmffVdW));
   }
-  return ds_instance;
+  return ds_instance.get();
 }
 
 MMFFVdWCollection::MMFFVdWCollection(std::string mmffVdW) {

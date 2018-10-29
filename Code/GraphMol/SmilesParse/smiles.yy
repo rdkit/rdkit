@@ -22,7 +22,6 @@
 
 extern int yysmiles_lex(YYSTYPE *,void *,int &);
 
-
 using namespace RDKit;
 namespace {
  void yyErrorCleanup(std::vector<RDKit::RWMol *> *molList){
@@ -96,21 +95,37 @@ yysmiles_error( const char *input,
 %token ATOM_OPEN_TOKEN ATOM_CLOSE_TOKEN
 %token EOS_TOKEN
 
+%destructor { delete $$; } AROMATIC_ATOM_TOKEN ATOM_TOKEN ORGANIC_ATOM_TOKEN
+%destructor { delete $$; } <bond>
+
 %start meta_start
 
 %%
 
-meta_start: START_MOL mol {
+/* --------------------------------------------------------------- */
+meta_start:
+START_MOL mol {
 // the molList has already been updated, no need to do anything
 }
-| START_ATOM atomd {
+| START_ATOM atomd EOS_TOKEN {
   lastAtom = $2;
+  YYACCEPT;
+}
+| START_ATOM bad_atom_def {
+  YYABORT;
+}
+| START_BOND bondd EOS_TOKEN {
+  lastBond = $2;
+  YYACCEPT;
 }
 | START_BOND bondd {
-  lastBond = $2;
+  delete $2;
+  YYABORT;
+}
+| START_BOND {
+  YYABORT;
 }
 | meta_start error EOS_TOKEN{
-  yyclearin;
   yyerrok;
   yyErrorCleanup(molList);
   YYABORT;
@@ -119,13 +134,21 @@ meta_start: START_MOL mol {
   YYACCEPT;
 }
 | error EOS_TOKEN {
-  yyclearin;
   yyerrok;
   yyErrorCleanup(molList);
   YYABORT;
 }
 ;
 
+bad_atom_def:
+ATOM_OPEN_TOKEN bad_atom_def
+| ATOM_CLOSE_TOKEN bad_atom_def
+| COLON_TOKEN bad_atom_def
+| charge_element {
+  delete $1;
+  YYABORT;
+}
+;
 
 /* --------------------------------------------------------------- */
 // FIX: mol MINUS DIGIT
@@ -135,8 +158,8 @@ mol: atomd {
   (*molList)[ sz ] = new RWMol();
   RDKit::RWMol *curMol = (*molList)[ sz ];
   $1->setProp(RDKit::common_properties::_SmilesStart,1);
-  curMol->addAtom($1);
-  delete $1;
+  curMol->addAtom($1, true, true);
+  //delete $1;
   $$ = sz;
 }
 
@@ -290,8 +313,6 @@ bondd:      BOND_TOKEN
           }
 ;
 
-
-
 /* --------------------------------------------------------------- */
 atomd:	simple_atom
 | ATOM_OPEN_TOKEN charge_element COLON_TOKEN number ATOM_CLOSE_TOKEN
@@ -300,7 +321,6 @@ atomd:	simple_atom
   $$->setNoImplicit(true);
   $$->setProp(RDKit::common_properties::molAtomMapNumber,$4);
 }
-
 | ATOM_OPEN_TOKEN charge_element ATOM_CLOSE_TOKEN
 {
   $$ = $2;
@@ -316,7 +336,7 @@ charge_element:	h_element
 | h_element MINUS_TOKEN { $1->setFormalCharge(-1); }
 | h_element MINUS_TOKEN MINUS_TOKEN { $1->setFormalCharge(-2); }
 | h_element MINUS_TOKEN number { $1->setFormalCharge(-$3); }
-		;
+;
 
 /* --------------------------------------------------------------- */
 h_element:      H_TOKEN { $$ = new Atom(1); }
@@ -346,7 +366,7 @@ element:	simple_atom
 		;
 
 /* --------------------------------------------------------------- */
-simple_atom:      ORGANIC_ATOM_TOKEN
+simple_atom:       ORGANIC_ATOM_TOKEN
                 | AROMATIC_ATOM_TOKEN
                 ;
 

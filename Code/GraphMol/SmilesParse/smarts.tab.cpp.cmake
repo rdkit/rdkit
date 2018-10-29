@@ -90,17 +90,6 @@
 #include "smarts.tab.hpp"
 
 extern int yysmarts_lex(YYSTYPE *,void *, int &);
-
-void
-yysmarts_error( const char *input,
-                std::vector<RDKit::RWMol *> *ms,
-                RDKit::Atom* &lastAtom,
-                RDKit::Bond* &lastBond,
-		void *scanner,int start_token, const char * msg )
-{
-  throw RDKit::SmilesParseException(msg);
-}
-
 using namespace RDKit;
 namespace {
  void yyErrorCleanup(std::vector<RDKit::RWMol *> *molList){
@@ -111,6 +100,17 @@ namespace {
   molList->clear();
   molList->resize(0);
  }
+}
+
+void
+yysmarts_error( const char *input,
+                std::vector<RDKit::RWMol *> *ms,
+                RDKit::Atom* &lastAtom,
+                RDKit::Bond* &lastBond,
+		void *scanner,int start_token, const char * msg )
+{
+  yyErrorCleanup(ms);
+  throw RDKit::SmilesParseException(msg);
 }
 
 #line 117 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp" /* yacc.c:339  */

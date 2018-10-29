@@ -138,6 +138,9 @@ void testAtomPairArgs() {
   TEST_ASSERT(fp->getVal(AtomPair::getAtomPairCode(c1, c2, 1, true)) == 2);
   TEST_ASSERT(fp->getVal(AtomPair::getAtomPairCode(c1, c3, 2, true)) == 1);
 
+  delete fp;
+  delete atomPairGenerator;
+
   atomPairGenerator = AtomPair::getAtomPairGenerator<std::uint32_t>(
       1, 30, false, true, nullptr, false);
   fp = atomPairGenerator->getSparseCountFingerprint(*mol);
@@ -218,11 +221,10 @@ void testAtomPairNonSparseBitvector() {
     fp2 = atomPairGenerator->getFingerprint(*mol);
 
     std::map<std::uint32_t, int> nz = fp1->getNonzeroElements();
-    for (std::map<std::uint32_t, int>::iterator it = nz.begin(); it != nz.end();
-         it++) {
-      for (unsigned int i = 0; i < defaultCountBounds.size(); i++) {
-        bool isSet = fp2->getBit(it->first * defaultCountBounds.size() + i);
-        TEST_ASSERT(isSet == (it->second >= defaultCountBounds[i]));
+    for (const auto& it : nz) {
+      for (unsigned int i = 0; i < defaultCountBounds.size(); ++i) {
+        bool isSet = static_cast<bool>(fp2->getBit(it.first * defaultCountBounds.size() + i));
+        TEST_ASSERT(isSet == (it.second >= static_cast<long>(defaultCountBounds[i])));
       }
     }
 
@@ -235,11 +237,10 @@ void testAtomPairNonSparseBitvector() {
     fp2 = atomPairGenerator->getFingerprint(*mol);
 
     nz = fp1->getNonzeroElements();
-    for (std::map<std::uint32_t, int>::iterator it = nz.begin(); it != nz.end();
-         it++) {
-      for (unsigned int i = 0; i < defaultCountBounds.size(); i++) {
-        bool isSet = fp2->getBit(it->first * defaultCountBounds.size() + i);
-        TEST_ASSERT(isSet == (it->second >= defaultCountBounds[i]));
+    for (const auto& it : nz) {
+      for (unsigned int i = 0; i < defaultCountBounds.size(); ++i) {
+        bool isSet = static_cast<bool>(fp2->getBit(it.first * defaultCountBounds.size() + i));
+        TEST_ASSERT(isSet == (it.second >= static_cast<long>(defaultCountBounds[i])));
       }
     }
 
@@ -1008,6 +1009,8 @@ void testMorganFPFeatureInvs() {
     delete mol;
     delete invGen;
     delete invars;
+    delete patterns[0];
+    delete patterns[1];
   }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
@@ -1103,6 +1106,7 @@ void testMorganFPOptions() {
 
     delete m1;
     delete m2;
+    delete m3;
     delete generator;
     delete generatorChirality;
   }
@@ -1485,6 +1489,7 @@ void testRDKFPUnfolded() {
     TEST_ASSERT(iter != fp1->getNonzeroElements().end() && iter->second == 2);
 
     delete m1;
+    delete fp1;
     delete generator;
   }
   {
@@ -1500,6 +1505,7 @@ void testRDKFPUnfolded() {
     TEST_ASSERT(fp1->getNonzeroElements().size() == 0);
 
     delete m1;
+    delete fp1;
     delete generator;
   }
   // additional outputs are not fully functional yet
@@ -2385,7 +2391,7 @@ void testBulkFP() {
       compareRes.push_back(it.first->getSparseCountFingerprint(*m));
     }
 
-    for (int i = 0; i < results->size(); i++) {
+    for (unsigned long i = 0; i < results->size(); ++i) {
       TEST_ASSERT(*((*results)[i]) == *compareRes[i]);
 
       delete (*results)[i];
@@ -2395,7 +2401,8 @@ void testBulkFP() {
     delete results;
   }
 
-  BOOST_FOREACH (auto m, molVect) { delete m; }
+  BOOST_FOREACH (auto&& m, molVect) { delete m; }
+  BOOST_FOREACH (auto&& t, testPairs) { delete t.first; }
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }

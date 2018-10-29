@@ -22,307 +22,299 @@
 
 namespace {
 struct Patterns {
-  RDKit::ROMol *bit_8;
-  RDKit::ROMol *bit_11;
-  RDKit::ROMol *bit_13;
-  RDKit::ROMol *bit_14;
-  RDKit::ROMol *bit_15;
-  RDKit::ROMol *bit_16;
-  RDKit::ROMol *bit_17;
-  RDKit::ROMol *bit_19;
-  RDKit::ROMol *bit_20;
-  RDKit::ROMol *bit_21;
-  RDKit::ROMol *bit_22;
-  RDKit::ROMol *bit_23;
-  RDKit::ROMol *bit_24;
-  RDKit::ROMol *bit_25;
-  RDKit::ROMol *bit_26;
-  RDKit::ROMol *bit_28;
-  RDKit::ROMol *bit_30;
-  RDKit::ROMol *bit_31;
-  RDKit::ROMol *bit_32;
-  RDKit::ROMol *bit_33;
-  RDKit::ROMol *bit_34;
-  RDKit::ROMol *bit_36;
-  RDKit::ROMol *bit_37;
-  RDKit::ROMol *bit_38;
-  RDKit::ROMol *bit_39;
-  RDKit::ROMol *bit_40;
-  RDKit::ROMol *bit_41;
-  RDKit::ROMol *bit_43;
-  RDKit::ROMol *bit_44;
-  RDKit::ROMol *bit_45;
-  RDKit::ROMol *bit_47;
-  RDKit::ROMol *bit_48;
-  RDKit::ROMol *bit_49;
-  RDKit::ROMol *bit_50;
-  RDKit::ROMol *bit_51;
-  RDKit::ROMol *bit_52;
-  RDKit::ROMol *bit_53;
-  RDKit::ROMol *bit_54;
-  RDKit::ROMol *bit_55;
-  RDKit::ROMol *bit_56;
-  RDKit::ROMol *bit_57;
-  RDKit::ROMol *bit_58;
-  RDKit::ROMol *bit_59;
-  RDKit::ROMol *bit_60;
-  RDKit::ROMol *bit_61;
-  RDKit::ROMol *bit_62;
-  RDKit::ROMol *bit_63;
-  RDKit::ROMol *bit_64;
-  RDKit::ROMol *bit_65;
-  RDKit::ROMol *bit_66;
-  RDKit::ROMol *bit_67;
-  RDKit::ROMol *bit_68;
-  RDKit::ROMol *bit_69;
-  RDKit::ROMol *bit_70;
-  RDKit::ROMol *bit_71;
-  RDKit::ROMol *bit_72;
-  RDKit::ROMol *bit_73;
-  RDKit::ROMol *bit_74;
-  RDKit::ROMol *bit_75;
-  RDKit::ROMol *bit_76;
-  RDKit::ROMol *bit_77;
-  RDKit::ROMol *bit_78;
-  RDKit::ROMol *bit_79;
-  RDKit::ROMol *bit_80;
-  RDKit::ROMol *bit_81;
-  RDKit::ROMol *bit_82;
-  RDKit::ROMol *bit_83;
-  RDKit::ROMol *bit_84;
-  RDKit::ROMol *bit_85;
-  RDKit::ROMol *bit_86;
-  RDKit::ROMol *bit_87;
-  RDKit::ROMol *bit_89;
-  RDKit::ROMol *bit_90;
-  RDKit::ROMol *bit_91;
-  RDKit::ROMol *bit_92;
-  RDKit::ROMol *bit_93;
-  RDKit::ROMol *bit_94;
-  RDKit::ROMol *bit_95;
-  RDKit::ROMol *bit_96;
-  RDKit::ROMol *bit_97;
-  RDKit::ROMol *bit_98;
-  RDKit::ROMol *bit_99;
-  RDKit::ROMol *bit_100;
-  RDKit::ROMol *bit_101;
-  RDKit::ROMol *bit_102;
-  RDKit::ROMol *bit_104;
-  RDKit::ROMol *bit_105;
-  RDKit::ROMol *bit_106;
-  RDKit::ROMol *bit_107;
-  RDKit::ROMol *bit_108;
-  RDKit::ROMol *bit_109;
-  RDKit::ROMol *bit_110;
-  RDKit::ROMol *bit_111;
-  RDKit::ROMol *bit_112;
-  RDKit::ROMol *bit_113;
-  RDKit::ROMol *bit_114;
-  RDKit::ROMol *bit_115;
-  RDKit::ROMol *bit_116;
-  RDKit::ROMol *bit_117;
-  RDKit::ROMol *bit_118;
-  RDKit::ROMol *bit_119;
-  RDKit::ROMol *bit_120;
-  RDKit::ROMol *bit_121;
-  RDKit::ROMol *bit_122;
-  RDKit::ROMol *bit_123;
-  RDKit::ROMol *bit_124;
-  RDKit::ROMol *bit_126;
-  RDKit::ROMol *bit_127;
-  RDKit::ROMol *bit_128;
-  RDKit::ROMol *bit_129;
-  RDKit::ROMol *bit_131;
-  RDKit::ROMol *bit_132;
-  RDKit::ROMol *bit_133;
-  RDKit::ROMol *bit_135;
-  RDKit::ROMol *bit_136;
-  RDKit::ROMol *bit_137;
-  RDKit::ROMol *bit_138;
-  RDKit::ROMol *bit_139;
-  RDKit::ROMol *bit_140;
-  RDKit::ROMol *bit_141;
-  RDKit::ROMol *bit_142;
-  RDKit::ROMol *bit_144;
-  RDKit::ROMol *bit_145;
-  RDKit::ROMol *bit_147;
-  RDKit::ROMol *bit_148;
-  RDKit::ROMol *bit_149;
-  RDKit::ROMol *bit_150;
-  RDKit::ROMol *bit_151;
-  RDKit::ROMol *bit_152;
-  RDKit::ROMol *bit_154;
-  RDKit::ROMol *bit_155;
-  RDKit::ROMol *bit_156;
-  RDKit::ROMol *bit_157;
-  RDKit::ROMol *bit_158;
-  RDKit::ROMol *bit_162;
-  RDKit::ROMol *bit_165;
-  Patterns()
-      : bit_8(RDKit::SmartsToMol("[!#6!#1]1~*~*~*~1")),
-        bit_11(RDKit::SmartsToMol("*1~*~*~*~1")),
-        bit_13(RDKit::SmartsToMol("[#8]~[#7](~[#6])~[#6]")),
-        bit_14(RDKit::SmartsToMol("[#16]-[#16]")),
-        bit_15(RDKit::SmartsToMol("[#8]~[#6](~[#8])~[#8]")),
-        bit_16(RDKit::SmartsToMol("[!#6!#1]1~*~*~1")),
-        bit_17(RDKit::SmartsToMol("[#6]#[#6]")),
-        bit_19(RDKit::SmartsToMol("*1~*~*~*~*~*~*~1")),
-        bit_20(RDKit::SmartsToMol("[#14]")),
-        bit_21(RDKit::SmartsToMol("[#6]=[#6](~[!#6!#1])~[!#6!#1]")),
-        bit_22(RDKit::SmartsToMol("*1~*~*~1")),
-        bit_23(RDKit::SmartsToMol("[#7]~[#6](~[#8])~[#8]")),
-        bit_24(RDKit::SmartsToMol("[#7]-[#8]")),
-        bit_25(RDKit::SmartsToMol("[#7]~[#6](~[#7])~[#7]")),
-        bit_26(RDKit::SmartsToMol("[#6]=@[#6](@*)@*")),
-        bit_28(RDKit::SmartsToMol("[!#6!#1]~[CH2]~[!#6!#1]")),
-        bit_30(RDKit::SmartsToMol("[#6]~[!#6!#1](~[#6])(~[#6])~*")),
-        bit_31(RDKit::SmartsToMol("[!#6!#1]~[F,Cl,Br,I]")),
-        bit_32(RDKit::SmartsToMol("[#6]~[#16]~[#7]")),
-        bit_33(RDKit::SmartsToMol("[#7]~[#16]")),
-        bit_34(RDKit::SmartsToMol("[CH2]=*")),
-        bit_36(RDKit::SmartsToMol("[#16R]")),
-        bit_37(RDKit::SmartsToMol("[#7]~[#6](~[#8])~[#7]")),
-        bit_38(RDKit::SmartsToMol("[#7]~[#6](~[#6])~[#7]")),
-        bit_39(RDKit::SmartsToMol("[#8]~[#16](~[#8])~[#8]")),
-        bit_40(RDKit::SmartsToMol("[#16]-[#8]")),
-        bit_41(RDKit::SmartsToMol("[#6]#[#7]")),
-        bit_43(RDKit::SmartsToMol("[!#6!#1!H0]~*~[!#6!#1!H0]")),
-        bit_44(RDKit::SmartsToMol(
-            "[!#1;!#6;!#7;!#8;!#9;!#14;!#15;!#16;!#17;!#35;!#53]")),
-        bit_45(RDKit::SmartsToMol("[#6]=[#6]~[#7]")),
-        bit_47(RDKit::SmartsToMol("[#16]~*~[#7]")),
-        bit_48(RDKit::SmartsToMol("[#8]~[!#6!#1](~[#8])~[#8]")),
-        bit_49(RDKit::SmartsToMol("[!+0]")),
-        bit_50(RDKit::SmartsToMol("[#6]=[#6](~[#6])~[#6]")),
-        bit_51(RDKit::SmartsToMol("[#6]~[#16]~[#8]")),
-        bit_52(RDKit::SmartsToMol("[#7]~[#7]")),
-        bit_53(RDKit::SmartsToMol("[!#6!#1!H0]~*~*~*~[!#6!#1!H0]")),
-        bit_54(RDKit::SmartsToMol("[!#6!#1!H0]~*~*~[!#6!#1!H0]")),
-        bit_55(RDKit::SmartsToMol("[#8]~[#16]~[#8]")),
-        bit_56(RDKit::SmartsToMol("[#8]~[#7](~[#8])~[#6]")),
-        bit_57(RDKit::SmartsToMol("[#8R]")),
-        bit_58(RDKit::SmartsToMol("[!#6!#1]~[#16]~[!#6!#1]")),
-        bit_59(RDKit::SmartsToMol("[#16]!:*:*")),
-        bit_60(RDKit::SmartsToMol("[#16]=[#8]")),
-        bit_61(RDKit::SmartsToMol("*~[#16](~*)~*")),
-        bit_62(RDKit::SmartsToMol("*@*!@*@*")),
-        bit_63(RDKit::SmartsToMol("[#7]=[#8]")),
-        bit_64(RDKit::SmartsToMol("*@*!@[#16]")),
-        bit_65(RDKit::SmartsToMol("c:n")),
-        bit_66(RDKit::SmartsToMol("[#6]~[#6](~[#6])(~[#6])~*")),
-        bit_67(RDKit::SmartsToMol("[!#6!#1]~[#16]")),
-        bit_68(RDKit::SmartsToMol("[!#6!#1!H0]~[!#6!#1!H0]")),
-        bit_69(RDKit::SmartsToMol("[!#6!#1]~[!#6!#1!H0]")),
-        bit_70(RDKit::SmartsToMol("[!#6!#1]~[#7]~[!#6!#1]")),
-        bit_71(RDKit::SmartsToMol("[#7]~[#8]")),
-        bit_72(RDKit::SmartsToMol("[#8]~*~*~[#8]")),
-        bit_73(RDKit::SmartsToMol("[#16]=*")),
-        bit_74(RDKit::SmartsToMol("[CH3]~*~[CH3]")),
-        bit_75(RDKit::SmartsToMol("*!@[#7]@*")),
-        bit_76(RDKit::SmartsToMol("[#6]=[#6](~*)~*")),
-        bit_77(RDKit::SmartsToMol("[#7]~*~[#7]")),
-        bit_78(RDKit::SmartsToMol("[#6]=[#7]")),
-        bit_79(RDKit::SmartsToMol("[#7]~*~*~[#7]")),
-        bit_80(RDKit::SmartsToMol("[#7]~*~*~*~[#7]")),
-        bit_81(RDKit::SmartsToMol("[#16]~*(~*)~*")),
-        bit_82(RDKit::SmartsToMol("*~[CH2]~[!#6!#1!H0]")),
-        bit_83(RDKit::SmartsToMol("[!#6!#1]1~*~*~*~*~1")),
-        bit_84(RDKit::SmartsToMol("[NH2]")),
-        bit_85(RDKit::SmartsToMol("[#6]~[#7](~[#6])~[#6]")),
-        bit_86(RDKit::SmartsToMol("[C;H2,H3][!#6!#1][C;H2,H3]")),
-        bit_87(RDKit::SmartsToMol("[F,Cl,Br,I]!@*@*")),
-        bit_89(RDKit::SmartsToMol("[#8]~*~*~*~[#8]")),
-        bit_90(RDKit::SmartsToMol(
-            "[$([!#6!#1!H0]~*~*~[CH2]~*),$([!#6!#1!H0R]1@[R]@[R]@[CH2R]1),$([!#"
-            "6!#1!H0]~[R]1@[R]@[CH2R]1)]")),
-        bit_91(RDKit::SmartsToMol(
-            "[$([!#6!#1!H0]~*~*~*~[CH2]~*),$([!#6!#1!H0R]1@[R]@[R]@[R]@[CH2R]1)"
-            ",$([!#6!#1!H0]~[R]1@[R]@[R]@[CH2R]1),$([!#6!#1!H0]~*~[R]1@[R]@["
-            "CH2R]1)]")),
-        bit_92(RDKit::SmartsToMol("[#8]~[#6](~[#7])~[#6]")),
-        bit_93(RDKit::SmartsToMol("[!#6!#1]~[CH3]")),
-        bit_94(RDKit::SmartsToMol("[!#6!#1]~[#7]")),
-        bit_95(RDKit::SmartsToMol("[#7]~*~*~[#8]")),
-        bit_96(RDKit::SmartsToMol("*1~*~*~*~*~1")),
-        bit_97(RDKit::SmartsToMol("[#7]~*~*~*~[#8]")),
-        bit_98(RDKit::SmartsToMol("[!#6!#1]1~*~*~*~*~*~1")),
-        bit_99(RDKit::SmartsToMol("[#6]=[#6]")),
-        bit_100(RDKit::SmartsToMol("*~[CH2]~[#7]")),
-        bit_101(RDKit::SmartsToMol(
-            "[$([R]1@[R]@[R]@[R]@[R]@[R]@[R]@[R]@1),$([R]1@[R]@[R]@[R]@[R]@[R]@"
-            "[R]@[R]@[R]@1),$([R]1@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@1),$([R]"
-            "1@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@1),$([R]1@[R]@[R]@[R]@["
-            "R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@1),$([R]1@[R]@[R]@[R]@[R]@[R]@[R]@["
-            "R]@[R]@[R]@[R]@[R]@[R]@1),$([R]1@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@["
-            "R]@[R]@[R]@[R]@[R]@1)]")),
-        bit_102(RDKit::SmartsToMol("[!#6!#1]~[#8]")),
-        bit_104(RDKit::SmartsToMol("[!#6!#1!H0]~*~[CH2]~*")),
-        bit_105(RDKit::SmartsToMol("*@*(@*)@*")),
-        bit_106(RDKit::SmartsToMol("[!#6!#1]~*(~[!#6!#1])~[!#6!#1]")),
-        bit_107(RDKit::SmartsToMol("[F,Cl,Br,I]~*(~*)~*")),
-        bit_108(RDKit::SmartsToMol("[CH3]~*~*~*~[CH2]~*")),
-        bit_109(RDKit::SmartsToMol("*~[CH2]~[#8]")),
-        bit_110(RDKit::SmartsToMol("[#7]~[#6]~[#8]")),
-        bit_111(RDKit::SmartsToMol("[#7]~*~[CH2]~*")),
-        bit_112(RDKit::SmartsToMol("*~*(~*)(~*)~*")),
-        bit_113(RDKit::SmartsToMol("[#8]!:*:*")),
-        bit_114(RDKit::SmartsToMol("[CH3]~[CH2]~*")),
-        bit_115(RDKit::SmartsToMol("[CH3]~*~[CH2]~*")),
-        bit_116(
-            RDKit::SmartsToMol("[$([CH3]~*~*~[CH2]~*),$([CH3]~*1~*~[CH2]1)]")),
-        bit_117(RDKit::SmartsToMol("[#7]~*~[#8]")),
-        bit_118(RDKit::SmartsToMol("[$(*~[CH2]~[CH2]~*),$(*1~[CH2]~[CH2]1)]")),
-        bit_119(RDKit::SmartsToMol("[#7]=*")),
-        bit_120(RDKit::SmartsToMol("[!#6R]")),
-        bit_121(RDKit::SmartsToMol("[#7R]")),
-        bit_122(RDKit::SmartsToMol("*~[#7](~*)~*")),
-        bit_123(RDKit::SmartsToMol("[#8]~[#6]~[#8]")),
-        bit_124(RDKit::SmartsToMol("[!#6!#1]~[!#6!#1]")),
-        bit_126(RDKit::SmartsToMol("*!@[#8]!@*")),
-        bit_127(RDKit::SmartsToMol("*@*!@[#8]")),
-        bit_128(RDKit::SmartsToMol(
-            "[$(*~[CH2]~*~*~*~[CH2]~*),$([R]1@[CH2R]@[R]@[R]@[R]@[CH2R]1),$(*~["
-            "CH2]~[R]1@[R]@[R]@[CH2R]1),$(*~[CH2]~*~[R]1@[R]@[CH2R]1)]")),
-        bit_129(RDKit::SmartsToMol(
-            "[$(*~[CH2]~*~*~[CH2]~*),$([R]1@[CH2]@[R]@[R]@[CH2R]1),$(*~[CH2]~["
-            "R]1@[R]@[CH2R]1)]")),
-        bit_131(RDKit::SmartsToMol("[!#6!#1!H0]")),
-        bit_132(RDKit::SmartsToMol("[#8]~*~[CH2]~*")),
-        bit_133(RDKit::SmartsToMol("*@*!@[#7]")),
-        bit_135(RDKit::SmartsToMol("[#7]!:*:*")),
-        bit_136(RDKit::SmartsToMol("[#8]=*")),
-        bit_137(RDKit::SmartsToMol("[!C!cR]")),
-        bit_138(RDKit::SmartsToMol("[!#6!#1]~[CH2]~*")),
-        bit_139(RDKit::SmartsToMol("[O!H0]")),
-        bit_140(RDKit::SmartsToMol("[#8]")),
-        bit_141(RDKit::SmartsToMol("[CH3]")),
-        bit_142(RDKit::SmartsToMol("[#7]")),
-        bit_144(RDKit::SmartsToMol("*!:*:*!:*")),
-        bit_145(RDKit::SmartsToMol("*1~*~*~*~*~*~1")),
-        bit_147(
-            RDKit::SmartsToMol("[$(*~[CH2]~[CH2]~*),$([R]1@[CH2R]@[CH2R]1)]")),
-        bit_148(RDKit::SmartsToMol("*~[!#6!#1](~*)~*")),
-        bit_149(RDKit::SmartsToMol("[C;H3,H4]")),
-        bit_150(RDKit::SmartsToMol("*!@*@*!@*")),
-        bit_151(RDKit::SmartsToMol("[#7!H0]")),
-        bit_152(RDKit::SmartsToMol("[#8]~[#6](~[#6])~[#6]")),
-        bit_154(RDKit::SmartsToMol("[#6]=[#8]")),
-        bit_155(RDKit::SmartsToMol("*!@[CH2]!@*")),
-        bit_156(RDKit::SmartsToMol("[#7]~*(~*)~*")),
-        bit_157(RDKit::SmartsToMol("[#6]-[#8]")),
-        bit_158(RDKit::SmartsToMol("[#6]-[#7]")),
-        bit_162(RDKit::SmartsToMol("a")),
-        bit_165(RDKit::SmartsToMol("[R]")) {}
+  std::unique_ptr<RDKit::ROMol> bit_8 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[!#6!#1]1~*~*~*~1"));
+  std::unique_ptr<RDKit::ROMol> bit_11 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("*1~*~*~*~1"));
+  std::unique_ptr<RDKit::ROMol> bit_13 = std::unique_ptr<RDKit::ROMol>(
+      RDKit::SmartsToMol("[#8]~[#7](~[#6])~[#6]"));
+  std::unique_ptr<RDKit::ROMol> bit_14 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#16]-[#16]"));
+  std::unique_ptr<RDKit::ROMol> bit_15 = std::unique_ptr<RDKit::ROMol>(
+      RDKit::SmartsToMol("[#8]~[#6](~[#8])~[#8]"));
+  std::unique_ptr<RDKit::ROMol> bit_16 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[!#6!#1]1~*~*~1"));
+  std::unique_ptr<RDKit::ROMol> bit_17 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#6]#[#6]"));
+  std::unique_ptr<RDKit::ROMol> bit_19 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("*1~*~*~*~*~*~*~1"));
+  std::unique_ptr<RDKit::ROMol> bit_20 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#14]"));
+  std::unique_ptr<RDKit::ROMol> bit_21 = std::unique_ptr<RDKit::ROMol>(
+      RDKit::SmartsToMol("[#6]=[#6](~[!#6!#1])~[!#6!#1]"));
+  std::unique_ptr<RDKit::ROMol> bit_22 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("*1~*~*~1"));
+  std::unique_ptr<RDKit::ROMol> bit_23 = std::unique_ptr<RDKit::ROMol>(
+      RDKit::SmartsToMol("[#7]~[#6](~[#8])~[#8]"));
+  std::unique_ptr<RDKit::ROMol> bit_24 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#7]-[#8]"));
+  std::unique_ptr<RDKit::ROMol> bit_25 = std::unique_ptr<RDKit::ROMol>(
+      RDKit::SmartsToMol("[#7]~[#6](~[#7])~[#7]"));
+  std::unique_ptr<RDKit::ROMol> bit_26 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#6]=@[#6](@*)@*"));
+  std::unique_ptr<RDKit::ROMol> bit_28 = std::unique_ptr<RDKit::ROMol>(
+      RDKit::SmartsToMol("[!#6!#1]~[CH2]~[!#6!#1]"));
+  std::unique_ptr<RDKit::ROMol> bit_30 = std::unique_ptr<RDKit::ROMol>(
+      RDKit::SmartsToMol("[#6]~[!#6!#1](~[#6])(~[#6])~*"));
+  std::unique_ptr<RDKit::ROMol> bit_31 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[!#6!#1]~[F,Cl,Br,I]"));
+  std::unique_ptr<RDKit::ROMol> bit_32 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#6]~[#16]~[#7]"));
+  std::unique_ptr<RDKit::ROMol> bit_33 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#7]~[#16]"));
+  std::unique_ptr<RDKit::ROMol> bit_34 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[CH2]=*"));
+  std::unique_ptr<RDKit::ROMol> bit_36 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#16R]"));
+  std::unique_ptr<RDKit::ROMol> bit_37 = std::unique_ptr<RDKit::ROMol>(
+      RDKit::SmartsToMol("[#7]~[#6](~[#8])~[#7]"));
+  std::unique_ptr<RDKit::ROMol> bit_38 = std::unique_ptr<RDKit::ROMol>(
+      RDKit::SmartsToMol("[#7]~[#6](~[#6])~[#7]"));
+  std::unique_ptr<RDKit::ROMol> bit_39 = std::unique_ptr<RDKit::ROMol>(
+      RDKit::SmartsToMol("[#8]~[#16](~[#8])~[#8]"));
+  std::unique_ptr<RDKit::ROMol> bit_40 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#16]-[#8]"));
+  std::unique_ptr<RDKit::ROMol> bit_41 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#6]#[#7]"));
+  std::unique_ptr<RDKit::ROMol> bit_43 = std::unique_ptr<RDKit::ROMol>(
+      RDKit::SmartsToMol("[!#6!#1!H0]~*~[!#6!#1!H0]"));
+  std::unique_ptr<RDKit::ROMol> bit_44 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol(
+          "[!#1;!#6;!#7;!#8;!#9;!#14;!#15;!#16;!#17;!#35;!#53]"));
+  std::unique_ptr<RDKit::ROMol> bit_45 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#6]=[#6]~[#7]"));
+  std::unique_ptr<RDKit::ROMol> bit_47 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#16]~*~[#7]"));
+  std::unique_ptr<RDKit::ROMol> bit_48 = std::unique_ptr<RDKit::ROMol>(
+      RDKit::SmartsToMol("[#8]~[!#6!#1](~[#8])~[#8]"));
+  std::unique_ptr<RDKit::ROMol> bit_49 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[!+0]"));
+  std::unique_ptr<RDKit::ROMol> bit_50 = std::unique_ptr<RDKit::ROMol>(
+      RDKit::SmartsToMol("[#6]=[#6](~[#6])~[#6]"));
+  std::unique_ptr<RDKit::ROMol> bit_51 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#6]~[#16]~[#8]"));
+  std::unique_ptr<RDKit::ROMol> bit_52 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#7]~[#7]"));
+  std::unique_ptr<RDKit::ROMol> bit_53 = std::unique_ptr<RDKit::ROMol>(
+      RDKit::SmartsToMol("[!#6!#1!H0]~*~*~*~[!#6!#1!H0]"));
+  std::unique_ptr<RDKit::ROMol> bit_54 = std::unique_ptr<RDKit::ROMol>(
+      RDKit::SmartsToMol("[!#6!#1!H0]~*~*~[!#6!#1!H0]"));
+  std::unique_ptr<RDKit::ROMol> bit_55 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#8]~[#16]~[#8]"));
+  std::unique_ptr<RDKit::ROMol> bit_56 = std::unique_ptr<RDKit::ROMol>(
+      RDKit::SmartsToMol("[#8]~[#7](~[#8])~[#6]"));
+  std::unique_ptr<RDKit::ROMol> bit_57 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#8R]"));
+  std::unique_ptr<RDKit::ROMol> bit_58 = std::unique_ptr<RDKit::ROMol>(
+      RDKit::SmartsToMol("[!#6!#1]~[#16]~[!#6!#1]"));
+  std::unique_ptr<RDKit::ROMol> bit_59 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#16]!:*:*"));
+  std::unique_ptr<RDKit::ROMol> bit_60 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#16]=[#8]"));
+  std::unique_ptr<RDKit::ROMol> bit_61 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("*~[#16](~*)~*"));
+  std::unique_ptr<RDKit::ROMol> bit_62 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("*@*!@*@*"));
+  std::unique_ptr<RDKit::ROMol> bit_63 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#7]=[#8]"));
+  std::unique_ptr<RDKit::ROMol> bit_64 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("*@*!@[#16]"));
+  std::unique_ptr<RDKit::ROMol> bit_65 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("c:n"));
+  std::unique_ptr<RDKit::ROMol> bit_66 = std::unique_ptr<RDKit::ROMol>(
+      RDKit::SmartsToMol("[#6]~[#6](~[#6])(~[#6])~*"));
+  std::unique_ptr<RDKit::ROMol> bit_67 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[!#6!#1]~[#16]"));
+  std::unique_ptr<RDKit::ROMol> bit_68 = std::unique_ptr<RDKit::ROMol>(
+      RDKit::SmartsToMol("[!#6!#1!H0]~[!#6!#1!H0]"));
+  std::unique_ptr<RDKit::ROMol> bit_69 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[!#6!#1]~[!#6!#1!H0]"));
+  std::unique_ptr<RDKit::ROMol> bit_70 = std::unique_ptr<RDKit::ROMol>(
+      RDKit::SmartsToMol("[!#6!#1]~[#7]~[!#6!#1]"));
+  std::unique_ptr<RDKit::ROMol> bit_71 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#7]~[#8]"));
+  std::unique_ptr<RDKit::ROMol> bit_72 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#8]~*~*~[#8]"));
+  std::unique_ptr<RDKit::ROMol> bit_73 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#16]=*"));
+  std::unique_ptr<RDKit::ROMol> bit_74 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[CH3]~*~[CH3]"));
+  std::unique_ptr<RDKit::ROMol> bit_75 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("*!@[#7]@*"));
+  std::unique_ptr<RDKit::ROMol> bit_76 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#6]=[#6](~*)~*"));
+  std::unique_ptr<RDKit::ROMol> bit_77 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#7]~*~[#7]"));
+  std::unique_ptr<RDKit::ROMol> bit_78 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#6]=[#7]"));
+  std::unique_ptr<RDKit::ROMol> bit_79 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#7]~*~*~[#7]"));
+  std::unique_ptr<RDKit::ROMol> bit_80 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#7]~*~*~*~[#7]"));
+  std::unique_ptr<RDKit::ROMol> bit_81 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#16]~*(~*)~*"));
+  std::unique_ptr<RDKit::ROMol> bit_82 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("*~[CH2]~[!#6!#1!H0]"));
+  std::unique_ptr<RDKit::ROMol> bit_83 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[!#6!#1]1~*~*~*~*~1"));
+  std::unique_ptr<RDKit::ROMol> bit_84 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[NH2]"));
+  std::unique_ptr<RDKit::ROMol> bit_85 = std::unique_ptr<RDKit::ROMol>(
+      RDKit::SmartsToMol("[#6]~[#7](~[#6])~[#6]"));
+  std::unique_ptr<RDKit::ROMol> bit_86 = std::unique_ptr<RDKit::ROMol>(
+      RDKit::SmartsToMol("[C;H2,H3][!#6!#1][C;H2,H3]"));
+  std::unique_ptr<RDKit::ROMol> bit_87 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[F,Cl,Br,I]!@*@*"));
+  std::unique_ptr<RDKit::ROMol> bit_89 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#8]~*~*~*~[#8]"));
+  std::unique_ptr<RDKit::ROMol> bit_90 = std::unique_ptr<RDKit::ROMol>(
+      RDKit::SmartsToMol("[$([!#6!#1!H0]~*~*~[CH2]~*),$([!#6!#1!H0R]1@[R]@[R]@["
+                         "CH2R]1),$([!#6!#1!H0]~[R]1@[R]@[CH2R]1)]"));
+  std::unique_ptr<RDKit::ROMol> bit_91 = std::unique_ptr<
+      RDKit::ROMol>(RDKit::SmartsToMol(
+      "[$([!#6!#1!H0]~*~*~*~[CH2]~*),$([!#6!#1!H0R]1@[R]@[R]@[R]@[CH2R]1),$([!#"
+      "6!#1!H0]~[R]1@[R]@[R]@[CH2R]1),$([!#6!#1!H0]~*~[R]1@[R]@[CH2R]1)]"));
+  std::unique_ptr<RDKit::ROMol> bit_92 = std::unique_ptr<RDKit::ROMol>(
+      RDKit::SmartsToMol("[#8]~[#6](~[#7])~[#6]"));
+  std::unique_ptr<RDKit::ROMol> bit_93 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[!#6!#1]~[CH3]"));
+  std::unique_ptr<RDKit::ROMol> bit_94 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[!#6!#1]~[#7]"));
+  std::unique_ptr<RDKit::ROMol> bit_95 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#7]~*~*~[#8]"));
+  std::unique_ptr<RDKit::ROMol> bit_96 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("*1~*~*~*~*~1"));
+  std::unique_ptr<RDKit::ROMol> bit_97 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#7]~*~*~*~[#8]"));
+  std::unique_ptr<RDKit::ROMol> bit_98 = std::unique_ptr<RDKit::ROMol>(
+      RDKit::SmartsToMol("[!#6!#1]1~*~*~*~*~*~1"));
+  std::unique_ptr<RDKit::ROMol> bit_99 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#6]=[#6]"));
+  std::unique_ptr<RDKit::ROMol> bit_100 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("*~[CH2]~[#7]"));
+  std::unique_ptr<RDKit::ROMol> bit_101 = std::unique_ptr<
+      RDKit::ROMol>(RDKit::SmartsToMol(
+      "[$([R]1@[R]@[R]@[R]@[R]@[R]@[R]@[R]@1),$([R]1@[R]@[R]@[R]@[R]@[R]@[R]@["
+      "R]@[R]@1),$([R]1@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@1),$([R]1@[R]@[R]@["
+      "R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@1),$([R]1@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]"
+      "@[R]@[R]@[R]@1),$([R]1@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@"
+      "1),$([R]1@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@1)]"));
+  std::unique_ptr<RDKit::ROMol> bit_102 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[!#6!#1]~[#8]"));
+  std::unique_ptr<RDKit::ROMol> bit_104 = std::unique_ptr<RDKit::ROMol>(
+      RDKit::SmartsToMol("[!#6!#1!H0]~*~[CH2]~*"));
+  std::unique_ptr<RDKit::ROMol> bit_105 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("*@*(@*)@*"));
+  std::unique_ptr<RDKit::ROMol> bit_106 = std::unique_ptr<RDKit::ROMol>(
+      RDKit::SmartsToMol("[!#6!#1]~*(~[!#6!#1])~[!#6!#1]"));
+  std::unique_ptr<RDKit::ROMol> bit_107 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[F,Cl,Br,I]~*(~*)~*"));
+  std::unique_ptr<RDKit::ROMol> bit_108 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[CH3]~*~*~*~[CH2]~*"));
+  std::unique_ptr<RDKit::ROMol> bit_109 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("*~[CH2]~[#8]"));
+  std::unique_ptr<RDKit::ROMol> bit_110 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#7]~[#6]~[#8]"));
+  std::unique_ptr<RDKit::ROMol> bit_111 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#7]~*~[CH2]~*"));
+  std::unique_ptr<RDKit::ROMol> bit_112 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("*~*(~*)(~*)~*"));
+  std::unique_ptr<RDKit::ROMol> bit_113 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#8]!:*:*"));
+  std::unique_ptr<RDKit::ROMol> bit_114 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[CH3]~[CH2]~*"));
+  std::unique_ptr<RDKit::ROMol> bit_115 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[CH3]~*~[CH2]~*"));
+  std::unique_ptr<RDKit::ROMol> bit_116 = std::unique_ptr<RDKit::ROMol>(
+      RDKit::SmartsToMol("[$([CH3]~*~*~[CH2]~*),$([CH3]~*1~*~[CH2]1)]"));
+  std::unique_ptr<RDKit::ROMol> bit_117 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#7]~*~[#8]"));
+  std::unique_ptr<RDKit::ROMol> bit_118 = std::unique_ptr<RDKit::ROMol>(
+      RDKit::SmartsToMol("[$(*~[CH2]~[CH2]~*),$(*1~[CH2]~[CH2]1)]"));
+  std::unique_ptr<RDKit::ROMol> bit_119 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#7]=*"));
+  std::unique_ptr<RDKit::ROMol> bit_120 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[!#6R]"));
+  std::unique_ptr<RDKit::ROMol> bit_121 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#7R]"));
+  std::unique_ptr<RDKit::ROMol> bit_122 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("*~[#7](~*)~*"));
+  std::unique_ptr<RDKit::ROMol> bit_123 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#8]~[#6]~[#8]"));
+  std::unique_ptr<RDKit::ROMol> bit_124 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[!#6!#1]~[!#6!#1]"));
+  std::unique_ptr<RDKit::ROMol> bit_126 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("*!@[#8]!@*"));
+  std::unique_ptr<RDKit::ROMol> bit_127 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("*@*!@[#8]"));
+  std::unique_ptr<RDKit::ROMol> bit_128 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol(
+          "[$(*~[CH2]~*~*~*~[CH2]~*),$([R]1@[CH2R]@[R]@[R]@[R]@[CH2R]1),$(*~["
+          "CH2]~[R]1@[R]@[R]@[CH2R]1),$(*~[CH2]~*~[R]1@[R]@[CH2R]1)]"));
+  std::unique_ptr<RDKit::ROMol> bit_129 = std::unique_ptr<RDKit::ROMol>(
+      RDKit::SmartsToMol("[$(*~[CH2]~*~*~[CH2]~*),$([R]1@[CH2]@[R]@[R]@[CH2R]1)"
+                         ",$(*~[CH2]~[R]1@[R]@[CH2R]1)]"));
+  std::unique_ptr<RDKit::ROMol> bit_131 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[!#6!#1!H0]"));
+  std::unique_ptr<RDKit::ROMol> bit_132 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#8]~*~[CH2]~*"));
+  std::unique_ptr<RDKit::ROMol> bit_133 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("*@*!@[#7]"));
+  std::unique_ptr<RDKit::ROMol> bit_135 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#7]!:*:*"));
+  std::unique_ptr<RDKit::ROMol> bit_136 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#8]=*"));
+  std::unique_ptr<RDKit::ROMol> bit_137 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[!C!cR]"));
+  std::unique_ptr<RDKit::ROMol> bit_138 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[!#6!#1]~[CH2]~*"));
+  std::unique_ptr<RDKit::ROMol> bit_139 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[O!H0]"));
+  std::unique_ptr<RDKit::ROMol> bit_140 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#8]"));
+  std::unique_ptr<RDKit::ROMol> bit_141 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[CH3]"));
+  std::unique_ptr<RDKit::ROMol> bit_142 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#7]"));
+  std::unique_ptr<RDKit::ROMol> bit_144 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("*!:*:*!:*"));
+  std::unique_ptr<RDKit::ROMol> bit_145 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("*1~*~*~*~*~*~1"));
+  std::unique_ptr<RDKit::ROMol> bit_147 = std::unique_ptr<RDKit::ROMol>(
+      RDKit::SmartsToMol("[$(*~[CH2]~[CH2]~*),$([R]1@[CH2R]@[CH2R]1)]"));
+  std::unique_ptr<RDKit::ROMol> bit_148 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("*~[!#6!#1](~*)~*"));
+  std::unique_ptr<RDKit::ROMol> bit_149 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[C;H3,H4]"));
+  std::unique_ptr<RDKit::ROMol> bit_150 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("*!@*@*!@*"));
+  std::unique_ptr<RDKit::ROMol> bit_151 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#7!H0]"));
+  std::unique_ptr<RDKit::ROMol> bit_152 = std::unique_ptr<RDKit::ROMol>(
+      RDKit::SmartsToMol("[#8]~[#6](~[#6])~[#6]"));
+  std::unique_ptr<RDKit::ROMol> bit_154 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#6]=[#8]"));
+  std::unique_ptr<RDKit::ROMol> bit_155 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("*!@[CH2]!@*"));
+  std::unique_ptr<RDKit::ROMol> bit_156 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#7]~*(~*)~*"));
+  std::unique_ptr<RDKit::ROMol> bit_157 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#6]-[#8]"));
+  std::unique_ptr<RDKit::ROMol> bit_158 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[#6]-[#7]"));
+  std::unique_ptr<RDKit::ROMol> bit_162 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("a"));
+  std::unique_ptr<RDKit::ROMol> bit_165 =
+      std::unique_ptr<RDKit::ROMol>(RDKit::SmartsToMol("[R]"));
 };
 
-boost::flyweight<std::vector<Patterns *>, boost::flyweights::no_tracking> gpats;
+boost::flyweight<std::unique_ptr<Patterns>, boost::flyweights::no_tracking>
+    gpats;
 void GenerateFP(const RDKit::ROMol &mol, ExplicitBitVect &fp) {
-  if (gpats.get().size() == 0) {
-    std::vector<Patterns *> ps;
-    ps.push_back(new Patterns());
-    gpats = ps;
+  if (!gpats.get()) {
+    gpats = std::unique_ptr<Patterns>(new Patterns());
   }
-  const Patterns &pats = *(gpats.get().front());
+  const Patterns &pats = *(gpats.get());
   PRECONDITION(fp.size() == 167, "bad fingerprint");
   fp.clearBits();
 
@@ -651,7 +643,7 @@ void GenerateFP(const RDKit::ROMol &mol, ExplicitBitVect &fp) {
   std::vector<int> mapping;
   if (RDKit::MolOps::getMolFrags(mol, mapping) > 1) fp.setBit(166);
 }
-}  // end of local anonymous namespace
+}  // namespace
 
 namespace RDKit {
 namespace MACCSFingerprints {
@@ -660,5 +652,5 @@ ExplicitBitVect *getFingerprintAsBitVect(const ROMol &mol) {
   GenerateFP(mol, *fp);
   return fp;
 }
-}
-}
+}  // namespace MACCSFingerprints
+}  // namespace RDKit

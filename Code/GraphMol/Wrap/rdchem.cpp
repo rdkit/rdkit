@@ -106,8 +106,7 @@ void WrapLogs() {
   static PySysErrWrite error("RDKit ERROR: ");
   static PySysErrWrite info("RDKit INFO: ");
   static PySysErrWrite warning("RDKit WARNING: ");
-  if (rdDebugLog == nullptr || rdInfoLog == nullptr || rdErrorLog == nullptr ||
-      rdWarningLog == nullptr) {
+  if (!rdDebugLog || !rdInfoLog || !rdErrorLog || !rdWarningLog) {
     RDLog::InitLogs();
   }
   if (rdDebugLog != nullptr) rdDebugLog->SetTee(debug);

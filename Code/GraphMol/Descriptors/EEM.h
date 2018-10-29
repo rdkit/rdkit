@@ -34,6 +34,23 @@
 namespace RDKit {
 class ROMol;
 namespace Descriptors {
+
+	namespace {
+		class EEM_arrays {
+		public:
+			unsigned int n;
+			unsigned int *Atomindex;
+			unsigned int *EEMatomtype;
+
+            EEM_arrays() = delete;
+            EEM_arrays(const EEM_arrays&) = delete;
+            void operator=(const EEM_arrays&) = delete;
+
+			EEM_arrays(const ROMol &mol, unsigned int n);
+			~EEM_arrays();
+		};
+	}
+
 const std::string EEMVersion = "1.0.0";
 	void RDKIT_DESCRIPTORS_EXPORT EEM(ROMol &mol, std::vector<double> &res, int confId);
 }

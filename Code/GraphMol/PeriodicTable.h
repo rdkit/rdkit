@@ -313,7 +313,7 @@ class RDKIT_GRAPHMOL_EXPORT PeriodicTable {
   PeriodicTable &operator=(const PeriodicTable &);
   static void initInstance();
 
-  static class PeriodicTable *ds_instance;
+  static class std::unique_ptr<PeriodicTable> ds_instance;
 
   std::vector<atomicData> byanum;
   STR_UINT_MAP byname;

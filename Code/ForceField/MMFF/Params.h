@@ -13,6 +13,7 @@
 #ifndef __RD_MMFFPARAMS_H__
 #define __RD_MMFFPARAMS_H__
 
+#include <memory>
 #include <RDGeneral/Invariant.h>
 #include <cmath>
 #include <string>
@@ -190,7 +191,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFAromCollection {
  private:
   //! to force this to be a singleton, the constructor must be private
   MMFFAromCollection(const boost::uint8_t mmffArom[]);
-  static class MMFFAromCollection *ds_instance;  //!< the singleton
+  static class std::unique_ptr<MMFFAromCollection> ds_instance;  //!< the singleton
   std::vector<boost::uint8_t> d_params;          //!< the aromatic type vector
 };
 
@@ -235,7 +236,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFDefCollection {
  private:
   //! to force this to be a singleton, the constructor must be private
   MMFFDefCollection(std::string mmffDef);
-  static class MMFFDefCollection *ds_instance;  //!< the singleton
+  static class std::unique_ptr<MMFFDefCollection> ds_instance;  //!< the singleton
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int, MMFFDef> d_params;  //!< the parameter map
 #else
@@ -287,7 +288,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFPropCollection {
  private:
   //! to force this to be a singleton, the constructor must be private
   MMFFPropCollection(std::string mmffProp);
-  static class MMFFPropCollection *ds_instance;  //!< the singleton
+  static class std::unique_ptr<MMFFPropCollection> ds_instance;  //!< the singleton
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int, MMFFProp> d_params;  //!< the parameter map
 #else
@@ -336,7 +337,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFPBCICollection {
  private:
   //! to force this to be a singleton, the constructor must be private
   MMFFPBCICollection(std::string mmffPBCI);
-  static class MMFFPBCICollection *ds_instance;  //!< the singleton
+  static class std::unique_ptr<MMFFPBCICollection> ds_instance;  //!< the singleton
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int, MMFFPBCI> d_params;  //!< the parameter map
 #else
@@ -420,7 +421,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFChgCollection {
  private:
   //! to force this to be a singleton, the constructor must be private
   MMFFChgCollection(std::string mmffChg);
-  static class MMFFChgCollection *ds_instance;  //!< the singleton
+  static class std::unique_ptr<MMFFChgCollection> ds_instance;  //!< the singleton
 //!< the parameter 3D-map
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<
@@ -515,7 +516,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFBondCollection {
  private:
   //! to force this to be a singleton, the constructor must be private
   MMFFBondCollection(std::string mmffBond);
-  static class MMFFBondCollection *ds_instance;  //!< the singleton
+  static class std::unique_ptr<MMFFBondCollection> ds_instance;  //!< the singleton
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<
       const unsigned int,
@@ -594,7 +595,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFBndkCollection {
  private:
   //! to force this to be a singleton, the constructor must be private
   MMFFBndkCollection(std::string mmffBndk);
-  static class MMFFBndkCollection *ds_instance;  //!< the singleton
+  static class std::unique_ptr<MMFFBndkCollection> ds_instance;  //!< the singleton
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int, std::map<const unsigned int, MMFFBond> >
       d_params;  //!< the parameter 2D-map
@@ -673,7 +674,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFHerschbachLaurieCollection {
  private:
   //! to force this to be a singleton, the constructor must be private
   MMFFHerschbachLaurieCollection(std::string mmffHerschbachLaurie);
-  static class MMFFHerschbachLaurieCollection *ds_instance;  //!< the singleton
+  static class std::unique_ptr<MMFFHerschbachLaurieCollection> ds_instance;  //!< the singleton
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int,
            std::map<const unsigned int, MMFFHerschbachLaurie> >
@@ -733,7 +734,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFCovRadPauEleCollection {
  private:
   //! to force this to be a singleton, the constructor must be private
   MMFFCovRadPauEleCollection(std::string mmffCovRadPauEle);
-  static class MMFFCovRadPauEleCollection *ds_instance;  //!< the singleton
+  static class std::unique_ptr<MMFFCovRadPauEleCollection> ds_instance;  //!< the singleton
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int, MMFFCovRadPauEle>
       d_params;  //!< the parameter map
@@ -860,7 +861,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFAngleCollection {
  private:
   //! to force this to be a singleton, the constructor must be private
   MMFFAngleCollection(std::string mmffAngle);
-  static class MMFFAngleCollection *ds_instance;  //!< the singleton
+  static class std::unique_ptr<MMFFAngleCollection> ds_instance;  //!< the singleton
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int,
            std::map<const unsigned int,
@@ -979,7 +980,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFStbnCollection {
  private:
   //! to force this to be a singleton, the constructor must be private
   MMFFStbnCollection(std::string mmffStbn);
-  static class MMFFStbnCollection *ds_instance;  //!< the singleton
+  static class std::unique_ptr<MMFFStbnCollection> ds_instance;  //!< the singleton
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int,
            std::map<const unsigned int,
@@ -1057,7 +1058,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFDfsbCollection {
  private:
   //! to force this to be a singleton, the constructor must be private
   MMFFDfsbCollection(std::string mmffDfsb);
-  static class MMFFDfsbCollection *ds_instance;  //!< the singleton
+  static class std::unique_ptr<MMFFDfsbCollection> ds_instance;  //!< the singleton
   std::map<
       const unsigned int,
       std::map<const unsigned int, std::map<const unsigned int, MMFFStbn> > >
@@ -1177,7 +1178,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFOopCollection {
  private:
   //! to force this to be a singleton, the constructor must be private
   MMFFOopCollection(const bool isMMFFs, std::string mmffOop);
-  static class MMFFOopCollection *ds_instance[2];  //!< the singleton
+  static class std::unique_ptr<MMFFOopCollection> ds_instance[2];  //!< the singleton
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int,
            std::map<const unsigned int,
@@ -1362,7 +1363,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFTorCollection {
  private:
   //! to force this to be a singleton, the constructor must be private
   MMFFTorCollection(const bool isMMFFs, std::string mmffTor);
-  static class MMFFTorCollection *ds_instance[2];  //!< the singleton
+  static class std::unique_ptr<MMFFTorCollection> ds_instance[2];  //!< the singleton
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int,
            std::map<const unsigned int,
@@ -1431,7 +1432,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFVdWCollection {
  private:
   //! to force this to be a singleton, the constructor must be private
   MMFFVdWCollection(std::string mmffVdW);
-  static class MMFFVdWCollection *ds_instance;  //!< the singleton
+  static class std::unique_ptr<MMFFVdWCollection> ds_instance;  //!< the singleton
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int, MMFFVdW> d_params;  //!< the parameter map
 #else

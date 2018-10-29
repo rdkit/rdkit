@@ -171,10 +171,10 @@ void test1() {
     RWMol* mol = SmilesToMol(smol);
     TEST_ASSERT(mol);
     unsigned flags = chk.checkMolStructure(*mol);
-    delete mol;
     BOOST_LOG(rdInfoLog) << StructChecker::StructureFlagsToString(flags)
                          << "\n";
     BOOST_LOG(rdInfoLog) << MolToSmarts(*mol) << "\n";
+    delete mol;
     TEST_ASSERT(true);
   }
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -198,10 +198,10 @@ void test2() {
     RWMol* mol = SmilesToMol(smol);
     TEST_ASSERT(mol);
     unsigned flags = chk.checkMolStructure(*mol);
-    delete mol;
     BOOST_LOG(rdInfoLog) << StructChecker::StructureFlagsToString(flags)
                          << "\n";
     BOOST_LOG(rdInfoLog) << MolToSmarts(*mol) << "\n";
+    delete mol;
     TEST_ASSERT(true);
   }
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -470,7 +470,10 @@ void testCheckAtomFiles() {
       "Substance_310925001_310950000-021442.sdf",
   };
   unsigned ref[] = {
-      (StructChecker::ATOM_CHECK_FAILED | StructChecker::TRANSFORMED), 0, 0, 0,
+      (StructChecker::ATOM_CHECK_FAILED | StructChecker::TRANSFORMED),
+      0,
+      0,
+      0,
   };
   StructCheckerOptions options;
   doLoadOptionsFromFiles(options);

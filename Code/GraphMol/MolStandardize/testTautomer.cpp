@@ -22,11 +22,11 @@ void testEnumerator() {
   std::string rdbase = getenv("RDBASE");
   std::string tautomerFile =
       rdbase + "/Data/MolStandardize/tautomerTransforms.in";
-  auto *tautparams = new TautomerCatalogParams(tautomerFile);
+  auto tautparams = std::unique_ptr<TautomerCatalogParams>(new TautomerCatalogParams(tautomerFile));
   unsigned int ntautomers = tautparams->getNumTautomers();
   TEST_ASSERT(ntautomers == 34);
 
-  TautomerCatalog tautcat(tautparams);
+  TautomerCatalog tautcat(tautparams.get());
   TautomerEnumerator te;
 
   // Enumerate 1,3 keto/enol tautomer.

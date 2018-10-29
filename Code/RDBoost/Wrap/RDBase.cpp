@@ -55,7 +55,7 @@ void LogMessage(std::string spec, std::string msg) {
   }
 #else
   //  FIX: get this more general
-  boost::logging::rdLogger *dest;
+  std::shared_ptr<boost::logging::rdLogger> dest = nullptr;
   if (spec == "rdApp.error") {
     dest = rdErrorLog;
   } else if (spec == "rdApp.warning") {

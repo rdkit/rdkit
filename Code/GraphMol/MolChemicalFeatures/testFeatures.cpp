@@ -703,6 +703,7 @@ void testIssue347() {
   TEST_ASSERT(featSPtr->getFamily() == "LumpedHydrophobe");
   TEST_ASSERT(featSPtr->getType() == "CTriplet");
 
+  delete factory;
   // now reverse the order and we should get two matches:
   fdef =
       "DefineFeature CPair [C][C]\n"
@@ -741,7 +742,8 @@ void testIssue347() {
   TEST_ASSERT(featSPtr->getFamily() == "LumpedHydrophobe");
   TEST_ASSERT(featSPtr->getType() == "CTriplet");
 
-  delete (factory);
+  delete factory;
+  delete testMol;
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
@@ -843,6 +845,10 @@ void testGithub252() {
   } catch (const Invar::Invariant &i) {
     ok = true;
   }
+
+  delete factory;
+  delete testMol;
+
   TEST_ASSERT(ok);
   BOOST_LOG(rdErrorLog) << "   Done" << std::endl;
 }

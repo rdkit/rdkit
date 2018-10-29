@@ -131,6 +131,7 @@ void testUFFTyper1() {
   TEST_ASSERT(key == "Rb");
   key = UFF::Tools::getAtomLabel(mol->getAtomWithIdx(4));
   TEST_ASSERT(key == "Cs");
+  delete mol;
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
@@ -163,6 +164,7 @@ void testUFFTyper2() {
        it != types.end(); it++) {
     TEST_ASSERT((*it));
   }
+  delete mol2;
 
   // connected with sf.net bug 2094445
   mol = SmilesToMol("[SiH2]=C");
@@ -171,6 +173,7 @@ void testUFFTyper2() {
   TEST_ASSERT(key == "Si3");
   key = UFF::Tools::getAtomLabel(mol->getAtomWithIdx(1));
   TEST_ASSERT(key == "C_2");
+  delete mol;
 
   mol = SmilesToMol("[AlH]=C");
   TEST_ASSERT(mol);
@@ -178,6 +181,7 @@ void testUFFTyper2() {
   TEST_ASSERT(key == "Al3");
   key = UFF::Tools::getAtomLabel(mol->getAtomWithIdx(1));
   TEST_ASSERT(key == "C_2");
+  delete mol;
 
   mol = SmilesToMol("[Mg]=C");
   TEST_ASSERT(mol);
@@ -185,6 +189,7 @@ void testUFFTyper2() {
   TEST_ASSERT(key == "Mg3+2");
   key = UFF::Tools::getAtomLabel(mol->getAtomWithIdx(1));
   TEST_ASSERT(key == "C_2");
+  delete mol;
 
   mol = SmilesToMol("[SiH3][Si]([SiH3])=C");
   TEST_ASSERT(mol);
@@ -196,6 +201,7 @@ void testUFFTyper2() {
   TEST_ASSERT(key == "Si3");
   key = UFF::Tools::getAtomLabel(mol->getAtomWithIdx(3));
   TEST_ASSERT(key == "C_2");
+  delete mol;
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
@@ -608,6 +614,7 @@ void testUFFBatch() {
     delete mol;
     mol = suppl.next();
   }
+  delete mol;
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
@@ -1102,7 +1109,9 @@ void testGitHubIssue62() {
     SmilesMolSupplier smiSupplier(pathName + "/Issue62.smi");
     SDWriter *sdfWriter = new SDWriter(pathName + "/Issue62.sdf");
     for (unsigned int i = 0; i < smiSupplier.length(); ++i) {
-      ROMol *mol = MolOps::addHs(*(smiSupplier[i]));
+      auto *tmp = smiSupplier[i];
+      ROMol *mol = MolOps::addHs(*tmp);
+      delete tmp;
       TEST_ASSERT(mol);
       std::string molName = "";
       if (mol->hasProp(common_properties::_Name)) {
@@ -1118,8 +1127,11 @@ void testGitHubIssue62() {
       double e = field->calcEnergy();
       BOOST_LOG(rdErrorLog) << molName << " " << e << std::endl;
       TEST_ASSERT(fabs(e - energyValues[i]) < 1.);
+      delete field;
+      delete mol;
     }
     sdfWriter->close();
+    delete sdfWriter;
     BOOST_LOG(rdErrorLog) << "  done" << std::endl;
   }
 }
@@ -1131,6 +1143,7 @@ void testUFFParamGetters() {
     ROMol *mol = SmilesToMol("c1ccccc1CCNN");
     TEST_ASSERT(mol);
     ROMol *molH = MolOps::addHs(*mol);
+    delete mol;
     TEST_ASSERT(molH);
     ForceFields::UFF::UFFBond uffBondStretchParams;
     TEST_ASSERT(
@@ -1161,6 +1174,7 @@ void testUFFParamGetters() {
     TEST_ASSERT(UFF::getUFFVdWParams(*molH, 0, 9, uffVdWParams));
     TEST_ASSERT(((int)boost::math::round(uffVdWParams.x_ij * 1000) == 3754) &&
                 ((int)boost::math::round(uffVdWParams.D_ij * 1000) == 85));
+    delete molH;
   }
 }
 
@@ -1192,7 +1206,7 @@ void runblock_uff(const std::vector<ROMol *> &mols,
     }
   }
 }
-}
+}  // namespace
 #include <thread>
 #include <future>
 void testUFFMultiThread() {
@@ -1314,6 +1328,7 @@ void testGitHubIssue613() {
     TEST_ASSERT(ap);
     TEST_ASSERT(ap->r1 == types[0]->r1);
     TEST_ASSERT(ap->theta0 == types[0]->theta0);
+    delete mol;
   }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }

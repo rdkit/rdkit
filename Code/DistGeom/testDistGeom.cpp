@@ -118,6 +118,9 @@ void testIssue216() {
       CHECK_INVARIANT(RDKit::feq(ptj.length(), 1.0, 0.02), "");
     }
   }
+  for (int i = 0; i < 4; i++) {
+    delete pos[i];
+  }
 }
 int main() {
   std::cout << "***********************************************************\n";

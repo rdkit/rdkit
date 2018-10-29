@@ -1,5 +1,6 @@
 %{
 
+  // $Id$
   //
   //  Copyright (C) 2003-2018 Greg Landrum and Rational Discovery LLC
   //
@@ -20,16 +21,6 @@
 
 extern int yysmarts_lex(YYSTYPE *,void *, int &);
 
-void
-yysmarts_error( const char *input,
-                std::vector<RDKit::RWMol *> *ms,
-                RDKit::Atom* &lastAtom,
-                RDKit::Bond* &lastBond,
-		void *scanner,int start_token, const char * msg )
-{
-  throw RDKit::SmilesParseException(msg);
-}
-
 using namespace RDKit;
 namespace {
  void yyErrorCleanup(std::vector<RDKit::RWMol *> *molList){
@@ -41,6 +32,17 @@ namespace {
   molList->resize(0);
  }
 }
+void
+yysmarts_error( const char *input,
+                std::vector<RDKit::RWMol *> *ms,
+                RDKit::Atom* &lastAtom,
+                RDKit::Bond* &lastBond,
+		void *scanner,int start_token, const char * msg )
+{
+  yyErrorCleanup(ms);
+  throw RDKit::SmilesParseException(msg);
+}
+
 %}
 
 %define api.pure full
@@ -93,22 +95,43 @@ namespace {
 %left AND_TOKEN
 %right NOT_TOKEN
 
+%destructor { delete $$; } ATOM_TOKEN
+%destructor { delete $$; } SIMPLE_ATOM_QUERY_TOKEN COMPLEX_ATOM_QUERY_TOKEN
+%destructor { delete $$; } RINGSIZE_ATOM_QUERY_TOKEN RINGBOND_ATOM_QUERY_TOKEN IMPLICIT_H_ATOM_QUERY_TOKEN
+%destructor { delete $$; } HYB_TOKEN HETERONEIGHBOR_ATOM_QUERY_TOKEN ALIPHATIC ALIPHATICHETERONEIGHBOR_ATOM_QUERY_TOKEN
+%destructor { delete $$; } bond_expr
+
 %start meta_start
 
 %%
 
 /* --------------------------------------------------------------- */
-meta_start: START_MOL mol {
+meta_start:
+START_MOL mol {
 // the molList has already been updated, no need to do anything
 }
-| START_ATOM atomd {
+| START_ATOM atomd EOS_TOKEN {
   lastAtom = $2;
+  YYACCEPT;
+}
+| START_ATOM bad_atom_def {
+  YYABORT;
+}
+| START_ATOM {
+  YYABORT;
+}
+| START_BOND bond_expr EOS_TOKEN {
+  lastBond = $2;
+  YYACCEPT;
 }
 | START_BOND bond_expr {
-  lastBond = $2;
+  delete $2;
+  YYABORT;
+}
+| START_BOND {
+  YYABORT;
 }
 | meta_start error EOS_TOKEN{
-  yyclearin;
   yyerrok;
   yyErrorCleanup(molList);
   YYABORT;
@@ -117,9 +140,18 @@ meta_start: START_MOL mol {
   YYACCEPT;
 }
 | error EOS_TOKEN {
-  yyclearin;
   yyerrok;
   yyErrorCleanup(molList);
+  YYABORT;
+}
+;
+
+bad_atom_def:
+ATOM_OPEN_TOKEN bad_atom_def
+| ATOM_CLOSE_TOKEN bad_atom_def
+| COLON_TOKEN bad_atom_def
+| atom_expr {
+  delete $1;
   YYABORT;
 }
 ;
@@ -245,7 +277,6 @@ mol: atomd {
     molList->resize( sz-1 );
   }
 }
-
 ;
 
 /* --------------------------------------------------------------- */

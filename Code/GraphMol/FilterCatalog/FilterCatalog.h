@@ -83,7 +83,7 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalogParams : public RDCatalog::Catalog
   //! Returns the existing list of FilterCatalogs to be used.
   const std::vector<FilterCatalogs> &getCatalogs() const { return d_catalogs; }
   //! Fill a catalog with the appropriate entries
-  virtual void fillCatalog(FilterCatalog &catalog);
+  virtual void fillCatalog(FilterCatalog &catalog) const;
 
   //! serializes (pickles) to a stream
   virtual void toStream(std::ostream &ss) const;
@@ -129,11 +129,12 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalog : public FCatalog {
 
   FilterCatalog(FilterCatalogParams::FilterCatalogs catalogs)
       : FCatalog(), d_entries() {
-    setCatalogParams(new paramType_t(catalogs));
+    paramType_t temp_params(catalogs);
+    setCatalogParams(&temp_params);
   }
 
   FilterCatalog(const FilterCatalogParams &params) : FCatalog(), d_entries() {
-    setCatalogParams(new paramType_t(params));
+    setCatalogParams(&params);
   }
 
   FilterCatalog(const FilterCatalog &rhs)
@@ -206,7 +207,7 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalog : public FCatalog {
     \param params  The new FilterCatalogParams specifying the new state of the
     catalog
   */
-  virtual void setCatalogParams(FilterCatalogParams *params);
+  virtual void setCatalogParams(const FilterCatalogParams *params);
 
   //------------------------------------
   //! Returns true if the molecule matches any entry in the catalog
