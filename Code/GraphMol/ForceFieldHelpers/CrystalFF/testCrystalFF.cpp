@@ -1,4 +1,3 @@
-// $Id$
 //
 // Copyright (C)  2015 Sereina Riniker
 //
@@ -123,31 +122,25 @@ void testTorsionPrefs() {
   mol = SmilesToMol("CCCC");
   TEST_ASSERT(mol);
 
-  std::vector<std::vector<int> > expTorsionAtoms;
-  std::vector<std::pair<std::vector<int>, std::vector<double> > >
-      expTorsionAngles;
-  std::vector<std::vector<int> > improperAtoms;
-
-  ForceFields::CrystalFF::getExperimentalTorsions(
-      *mol, expTorsionAtoms, expTorsionAngles, improperAtoms, true, false,
-      1, false);
-  TEST_ASSERT(expTorsionAtoms.size() == 1);
-  TEST_ASSERT(expTorsionAngles.size() == 1);
-  TEST_ASSERT(expTorsionAtoms[0][0] == 0);
-  TEST_ASSERT(expTorsionAtoms[0][3] == 3);
-  TEST_ASSERT(expTorsionAngles[0].first.size() == 6);
-  TEST_ASSERT(expTorsionAngles[0].second.size() == 6);
+  ForceFields::CrystalFF::CrystalFFDetails details;
+  ForceFields::CrystalFF::getExperimentalTorsions(*mol, details, true, false, 1,
+                                                  false);
+  TEST_ASSERT(details.expTorsionAtoms.size() == 1);
+  TEST_ASSERT(details.expTorsionAngles.size() == 1);
+  TEST_ASSERT(details.expTorsionAtoms[0][0] == 0);
+  TEST_ASSERT(details.expTorsionAtoms[0][3] == 3);
+  TEST_ASSERT(details.expTorsionAngles[0].first.size() == 6);
+  TEST_ASSERT(details.expTorsionAngles[0].second.size() == 6);
 
   delete mol;
   mol = SmilesToMol("CCCCC");
   TEST_ASSERT(mol);
 
-  ForceFields::CrystalFF::getExperimentalTorsions(
-      *mol, expTorsionAtoms, expTorsionAngles, improperAtoms, true, false,
-      1, false);
+  ForceFields::CrystalFF::getExperimentalTorsions(*mol, details, true, false, 1,
+                                                  false);
+  TEST_ASSERT(details.expTorsionAtoms.size() == 2);
+  TEST_ASSERT(details.expTorsionAngles.size() == 2);
   delete mol;
-  TEST_ASSERT(expTorsionAtoms.size() == 2);
-  TEST_ASSERT(expTorsionAngles.size() == 2);
 }
 
 int main() {
