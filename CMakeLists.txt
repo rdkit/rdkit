@@ -93,7 +93,7 @@ set(RDK_PYTHON_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/rdkit")
 set(RDKit_Year "2019")
 set(RDKit_Month "03")
 set(RDKit_Revision "1")
-set(RDKit_RevisionModifier "dev1")
+set(RDKit_RevisionModifier "b1")
 set(RDKit_ABI "1")
 
 # we need an integer version of the month later, so remove the zero padding
@@ -480,6 +480,9 @@ endif(RDK_BUILD_PYTHON_WRAPPERS)
 if(RDK_BUILD_CONTRIB)
   add_subdirectory(Contrib)
 endif(RDK_BUILD_CONTRIB)
+
+# Testing setup
+CONFIGURE_FILE(CTestCustom.ctest.in ${RDKit_BINARY_DIR}/CTestCustom.ctest)
 
 # Packaging
 SET(CPACK_GENERATOR "TGZ;DEB;RPM")

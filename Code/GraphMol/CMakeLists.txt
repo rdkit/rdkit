@@ -8,7 +8,7 @@ rdkit_library(GraphMol
               MolDiscriminators.cpp ConjugHybrid.cpp AddHs.cpp
               Matrices.cpp Chirality.cpp RingInfo.cpp Conformer.cpp
               Renumber.cpp AdjustQuery.cpp Resonance.cpp StereoGroup.cpp
-              new_canon.cpp
+              new_canon.cpp Sgroup.cpp
               SHARED
               LINK_LIBRARIES RDGeometryLib RDGeneral
                  ${RDKit_THREAD_LIBS})
@@ -39,6 +39,7 @@ rdkit_headers(Atom.h
               ROMol.h
               RWMol.h
               SanitException.h
+              Sgroup.h
               StereoGroup.h
               MonomerInfo.h
               new_canon.h
@@ -136,6 +137,8 @@ rdkit_test(resMolSupplierTest resMolSupplierTest.cpp
 
 rdkit_test(molBundleTest testMolBundle.cpp
           LINK_LIBRARIES SmilesParse GraphMol RDGeometryLib RDGeneral SubstructMatch FileParsers)
+
+rdkit_test(testSGroup testSGroup.cpp LINK_LIBRARIES FileParsers GraphMol)
 
 rdkit_test(test-valgrind test-valgrind.cpp LINK_LIBRARIES SmilesParse GraphMol RDGeneral)
 

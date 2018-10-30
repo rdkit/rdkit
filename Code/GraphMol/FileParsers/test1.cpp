@@ -5256,7 +5256,6 @@ void RunTests() {
   testIssue3375684();
   testChiralPhosphorous();
   testIssue3392107();
-  testIssue3432136();
   testIssue3477283();
   testIssue3484552();
   testIssue3514824();

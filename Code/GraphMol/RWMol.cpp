@@ -77,6 +77,9 @@ void RWMol::insertMol(const ROMol &other) {
     ++firstB;
   }
 
+  // SGroups do not tolerate modification of the molecule, so drop them
+  clearSGroups();
+
   // add atom to any conformers as well, if we have any
   if (other.getNumConformers() && !getNumConformers()) {
     for (auto cfi = other.beginConformers(); cfi != other.endConformers();
@@ -119,6 +122,10 @@ unsigned int RWMol::addAtom(bool updateLabel) {
     clearAtomBookmark(ci_RIGHTMOST_ATOM);
     setAtomBookmark(atom_p, ci_RIGHTMOST_ATOM);
   }
+
+  // SGroups do not tolerate modification of the molecule, so drop them
+  clearSGroups();
+
   // add atom to any conformers as well, if we have any
   for (auto cfi = this->beginConformers(); cfi != this->endConformers();
        ++cfi) {
@@ -143,13 +150,17 @@ void RWMol::replaceAtom(unsigned int idx, Atom *atom_pin, bool updateLabel,
   delete d_graph[vd];
   d_graph[vd] = atom_p;
   // FIX: do something about bookmarks
+
+  // SGroups do not tolerate modification of the molecule, so drop them
+  clearSGroups();
 };
 
 void RWMol::replaceBond(unsigned int idx, Bond *bond_pin, bool preserveProps) {
   PRECONDITION(bond_pin, "bad bond passed to replaceBond");
   URANGE_CHECK(idx, getNumBonds());
   BOND_ITER_PAIR bIter = getEdges();
-  for (unsigned int i = 0; i < idx; i++) ++bIter.first;
+  for (unsigned int i = 0; i < idx; i++)
+    ++bIter.first;
   Bond *obond = d_graph[*(bIter.first)];
   Bond *bond_p = bond_pin->copy();
   bond_p->setOwningMol(this);
@@ -164,6 +175,9 @@ void RWMol::replaceBond(unsigned int idx, Bond *bond_pin, bool preserveProps) {
   delete d_graph[*(bIter.first)];
   d_graph[*(bIter.first)] = bond_p;
   // FIX: do something about bookmarks
+
+  // SGroups do not tolerate modification of the molecule, so drop them
+  clearSGroups();
 };
 
 Atom *RWMol::getActiveAtom() {
@@ -243,9 +257,11 @@ void RWMol::removeAtom(Atom *atom) {
   while (beg != end) {
     Bond *bond = d_graph[*beg++];
     unsigned int tmpIdx = bond->getBeginAtomIdx();
-    if (tmpIdx > idx) bond->setBeginAtomIdx(tmpIdx - 1);
+    if (tmpIdx > idx)
+      bond->setBeginAtomIdx(tmpIdx - 1);
     tmpIdx = bond->getEndAtomIdx();
-    if (tmpIdx > idx) bond->setEndAtomIdx(tmpIdx - 1);
+    if (tmpIdx > idx)
+      bond->setEndAtomIdx(tmpIdx - 1);
     bond->setIdx(nBonds++);
     for (auto bsi = bond->getStereoAtoms().begin();
          bsi != bond->getStereoAtoms().end(); ++bsi) {
@@ -257,6 +273,9 @@ void RWMol::removeAtom(Atom *atom) {
       }
     }
   }
+
+  // SGroups do not tolerate modification of the molecule, so drop them
+  clearSGroups();
 
   // Remove any stereo group which includes the atom being deleted
   removeGroupsWithAtom(atom, d_stereo_groups);
@@ -314,7 +333,10 @@ unsigned int RWMol::addBond(unsigned int atomIdx1, unsigned int atomIdx2,
     dp_ringInfo->reset();
   }
 
-  return numBonds;  // res;
+  // SGroups do not tolerate modification of the molecule, so drop them
+  clearSGroups();
+
+  return numBonds; // res;
 }
 
 unsigned int RWMol::addBond(Atom *atom1, Atom *atom2, Bond::BondType bondType) {
@@ -326,7 +348,8 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
   URANGE_CHECK(aid1, getNumAtoms());
   URANGE_CHECK(aid2, getNumAtoms());
   Bond *bnd = getBondBetweenAtoms(aid1, aid2);
-  if (!bnd) return;
+  if (!bnd)
+    return;
   unsigned int idx = bnd->getIdx();
 
   // remove any bookmarks which point to this bond:
@@ -351,9 +374,11 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
   while (a1 != a2) {
     unsigned int oIdx = rdcast<unsigned int>(*a1);
     ++a1;
-    if (oIdx == aid2) continue;
+    if (oIdx == aid2)
+      continue;
     Bond *obnd = getBondBetweenAtoms(aid1, oIdx);
-    if (!obnd) continue;
+    if (!obnd)
+      continue;
     if (std::find(obnd->getStereoAtoms().begin(), obnd->getStereoAtoms().end(),
                   aid2) != obnd->getStereoAtoms().end())
       obnd->getStereoAtoms().clear();
@@ -362,9 +387,11 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
   while (a1 != a2) {
     unsigned int oIdx = rdcast<unsigned int>(*a1);
     ++a1;
-    if (oIdx == aid1) continue;
+    if (oIdx == aid1)
+      continue;
     Bond *obnd = getBondBetweenAtoms(aid2, oIdx);
-    if (!obnd) continue;
+    if (!obnd)
+      continue;
     if (std::find(obnd->getStereoAtoms().begin(), obnd->getStereoAtoms().end(),
                   aid1) != obnd->getStereoAtoms().end())
       obnd->getStereoAtoms().clear();
@@ -373,6 +400,9 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
   // reset our ring info structure, because it is pretty likely
   // to be wrong now:
   dp_ringInfo->reset();
+
+  // SGroups do not tolerate modification of the molecule, so drop them
+  clearSGroups();
 
   // loop over all bonds with higher indices and update their indices
   ROMol::EDGE_ITER firstB, lastB;
@@ -399,6 +429,10 @@ Bond *RWMol::createPartialBond(unsigned int atomIdx1, Bond::BondType bondType) {
   auto *b = new Bond(bondType);
   b->setOwningMol(this);
   b->setBeginAtomIdx(atomIdx1);
+
+  // SGroups do not tolerate modification of the molecule, so drop them
+  clearSGroups();
+
   return b;
 }
 
@@ -411,7 +445,11 @@ unsigned int RWMol::finishPartialBond(unsigned int atomIdx2, int bondBookmark,
   if (bondType == Bond::UNSPECIFIED) {
     bondType = bsp->getBondType();
   }
+
+  // SGroups do not tolerate modification of the molecule, so drop them
+  clearSGroups();
+
   return addBond(bsp->getBeginAtomIdx(), atomIdx2, bondType);
 }
 
-}  // namespace RDKit
+} // namespace RDKit

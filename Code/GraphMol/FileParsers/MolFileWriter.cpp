@@ -11,22 +11,27 @@
 //     V3000 mol block writer contributed by Jan Holst Jensen
 //
 #include "FileParsers.h"
+#include "MolSGroupWriting.h"
 #include "MolFileStereochem.h"
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitQueries.h>
 #include <RDGeneral/Ranking.h>
 #include <RDGeneral/LocaleSwitcher.h>
+
 #include <vector>
 #include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <iomanip>
 #include <cstdio>
+
 #include <boost/format.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/BadFileException.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/Depictor/RDDepictor.h>
+
+using namespace RDKit::SGroupWriting;
 
 namespace RDKit {
 
@@ -573,8 +578,8 @@ void GetMolFileAtomProperties(const Atom *atom, const Conformer *conf,
   }
 }
 
-const std::string GetMolFileAtomLine(const Atom *atom,
-                                     const Conformer *conf = nullptr) {
+const std::string GetMolFileAtomLines(const Atom *atom,
+                                      const Conformer *conf = nullptr) {
   PRECONDITION(atom, "");
   std::string res;
   int totValence, atomMapNumber;
@@ -806,9 +811,9 @@ void GetMolFileBondStereoInfo(const Bond *bond, const INT_MAP_INT &wedgeBonds,
   }
 }
 
-const std::string GetMolFileBondLine(const Bond *bond,
-                                     const INT_MAP_INT &wedgeBonds,
-                                     const Conformer *conf) {
+const std::string GetMolFileBondLines(const Bond *bond,
+                                      const INT_MAP_INT &wedgeBonds,
+                                      const Conformer *conf) {
   PRECONDITION(bond, "");
 
   int dirCode;
@@ -838,8 +843,8 @@ const std::string GetMolFileBondLine(const Bond *bond,
   return ss.str();
 }
 
-const std::string GetV3000MolFileAtomLine(const Atom *atom,
-                                          const Conformer *conf = nullptr) {
+const std::string GetV3000MolFileAtomLines(const Atom *atom,
+                                           const Conformer *conf = nullptr) {
   PRECONDITION(atom, "");
   int totValence, atomMapNumber;
   unsigned int parityFlag;
@@ -977,9 +982,9 @@ int BondStereoCodeV2000ToV3000(int dirCode) {
   }
 }
 
-const std::string GetV3000MolFileBondLine(const Bond *bond,
-                                          const INT_MAP_INT &wedgeBonds,
-                                          const Conformer *conf) {
+const std::string GetV3000MolFileBondLines(const Bond *bond,
+                                           const INT_MAP_INT &wedgeBonds,
+                                           const Conformer *conf) {
   PRECONDITION(bond, "");
 
   int dirCode;
@@ -1032,7 +1037,7 @@ void appendEnhancedStereoGroups(std::string &res, const RWMol &tmol) {
           break;
       }
       res += " ATOMS=(";
-      auto& atoms = group.getAtoms();
+      auto &atoms = group.getAtoms();
       res += boost::lexical_cast<std::string>(atoms.size());
       for (auto &&atom : atoms) {
         res += ' ';
@@ -1053,13 +1058,14 @@ void appendEnhancedStereoGroups(std::string &res, const RWMol &tmol) {
 std::string outputMolToMolBlock(const RWMol &tmol, int confId,
                                 bool forceV3000) {
   std::string res;
-
   bool isV3000;
-  unsigned int nAtoms, nBonds, nLists, chiralFlag, nsText, nRxnComponents;
+  unsigned int nAtoms, nBonds, nLists, nSGroups, chiralFlag, nsText,
+      nRxnComponents;
   unsigned int nReactants, nProducts, nIntermediates;
   nAtoms = tmol.getNumAtoms();
   nBonds = tmol.getNumBonds();
   nLists = 0;
+  nSGroups = tmol.getNumSGroups();
 
   chiralFlag = 0;
   nsText = 0;
@@ -1131,7 +1137,7 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
     ss << std::setw(3) << nAtoms;
     ss << std::setw(3) << nBonds;
     ss << std::setw(3) << nLists;
-    ss << std::setw(3) << 0;
+    ss << std::setw(3) << nSGroups;
     ss << std::setw(3) << chiralFlag;
     ss << std::setw(3) << nsText;
     ss << std::setw(3) << nRxnComponents;
@@ -1146,14 +1152,14 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
     // V2000 output.
     for (ROMol::ConstAtomIterator atomIt = tmol.beginAtoms();
          atomIt != tmol.endAtoms(); ++atomIt) {
-      res += GetMolFileAtomLine(*atomIt, conf);
+      res += GetMolFileAtomLines(*atomIt, conf);
       res += "\n";
     }
 
     INT_MAP_INT wedgeBonds = pickBondsToWedge(tmol);
     for (ROMol::ConstBondIterator bondIt = tmol.beginBonds();
          bondIt != tmol.endBonds(); ++bondIt) {
-      res += GetMolFileBondLine(*bondIt, wedgeBonds, conf);
+      res += GetMolFileBondLines(*bondIt, wedgeBonds, conf);
       res += "\n";
     }
 
@@ -1163,23 +1169,24 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
     res += GetMolFileAliasInfo(tmol);
     res += GetMolFileZBOInfo(tmol);
 
+    res += GetMolFileSGroupInfo(tmol);
+
     // FIX: R-group logic, SGroups and 3D features etc.
   } else {
     // V3000 output.
     res += "M  V30 BEGIN CTAB\n";
     std::stringstream ss;
-    //                                           numSgroups (not implemented)
-    //                                           | num3DConstraints (not
-    //                                           +---------+ |   implemented)
-    //                                                     | |
-    ss << "M  V30 COUNTS " << nAtoms << " " << nBonds << " 0 0 " << chiralFlag
-       << "\n";
+    ss << "M  V30 COUNTS " << nAtoms << " " << nBonds << " " << nSGroups
+       << " 0 " << chiralFlag << "\n";
+    //      |
+    //      num3DConstraints (not implemented)
+
     res += ss.str();
 
     res += "M  V30 BEGIN ATOM\n";
     for (ROMol::ConstAtomIterator atomIt = tmol.beginAtoms();
          atomIt != tmol.endAtoms(); ++atomIt) {
-      res += GetV3000MolFileAtomLine(*atomIt, conf);
+      res += GetV3000MolFileAtomLines(*atomIt, conf);
       res += "\n";
     }
     res += "M  V30 END ATOM\n";
@@ -1189,11 +1196,22 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
       INT_MAP_INT wedgeBonds = pickBondsToWedge(tmol);
       for (ROMol::ConstBondIterator bondIt = tmol.beginBonds();
            bondIt != tmol.endBonds(); ++bondIt) {
-        res += GetV3000MolFileBondLine(*bondIt, wedgeBonds, conf);
+        res += GetV3000MolFileBondLines(*bondIt, wedgeBonds, conf);
         res += "\n";
       }
       res += "M  V30 END BOND\n";
     }
+
+    if (tmol.getNumSGroups()) {
+      res += "M  V30 BEGIN SGROUP\n";
+      for (ROMol::ConstSGroupIterator sGroupIt = tmol.beginSGroups();
+           sGroupIt != tmol.endSGroups(); ++sGroupIt) {
+        unsigned int idx = 1 + (sGroupIt - tmol.beginSGroups());
+        res += GetV3000MolFileSGroupLines(idx, *sGroupIt);
+      }
+      res += "M  V30 END SGROUP\n";
+    }
+
     appendEnhancedStereoGroups(res, tmol);
 
     res += "M  V30 END CTAB\n";

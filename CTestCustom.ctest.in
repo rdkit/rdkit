@@ -1,0 +1,5 @@
+# Require us to have the $RDBASE env var set
+IF(NOT DEFINED ENV{RDBASE})
+  MESSAGE(FATAL_ERROR "\n\nPlease set your RDBASE env variable before running the tests.\n\n")
+ENDIF(NOT DEFINED ENV{RDBASE})
+

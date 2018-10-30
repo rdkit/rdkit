@@ -34,6 +34,7 @@
 #include "Atom.h"
 #include "Bond.h"
 #include "Conformer.h"
+#include "Sgroup.h"
 #include "StereoGroup.h"
 
 namespace RDKit {
@@ -231,6 +232,10 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   typedef CONF_SPTR_LIST_I ConformerIterator;
   typedef CONF_SPTR_LIST_CI ConstConformerIterator;
 
+  typedef std::vector<SGROUP_SPTR> SGROUP_SPTR_VECT;
+  typedef SGROUP_SPTR_VECT::iterator SGroupIterator;
+  typedef SGROUP_SPTR_VECT::const_iterator ConstSGroupIterator;
+
   //@}
   //! \endcond
 
@@ -367,12 +372,15 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   };
   //! returns the first Atom associated with the \c bookmark provided
   Atom *getAtomWithBookmark(int mark);
+  //! returns the Atom associated with the \c bookmark provided
+  //! a check is made to ensure it is the only atom with that bookmark
+  Atom *getUniqueAtomWithBookmark(int mark);
   //! returns all Atoms associated with the \c bookmark provided
   ATOM_PTR_LIST &getAllAtomsWithBookmark(int mark);
   //! removes a \c bookmark from our collection
-  void clearAtomBookmark(const int mark);
+  void clearAtomBookmark(int mark);
   //! removes a particular Atom from the list associated with the \c bookmark
-  void clearAtomBookmark(const int mark, const Atom *atom);
+  void clearAtomBookmark(int mark, const Atom *atom);
 
   //! blows out all atomic \c bookmarks
   void clearAllAtomBookmarks() { d_atomBookmarks.clear(); };
@@ -387,6 +395,9 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   };
   //! returns the first Bond associated with the \c bookmark provided
   Bond *getBondWithBookmark(int mark);
+  //! returns the Bond associated with the \c bookmark provided
+  //! a check is made to ensure it is the only bond with that bookmark
+  Bond *getUniqueBondWithBookmark(int mark);
   //! returns all bonds associated with the \c bookmark provided
   BOND_PTR_LIST &getAllBondsWithBookmark(int mark);
   //! removes a \c bookmark from our collection
@@ -435,6 +446,38 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   inline unsigned int getNumConformers() const {
     return rdcast<unsigned int>(d_confs.size());
   }
+
+  //! \name SGroups
+  //@{
+
+  //! return the sgroup at specified index
+  SGroup *getSGroup(unsigned int idx);
+
+  //! Clear all the SGroups on the molecule
+  void clearSGroups() { d_sgroups.clear(); }
+
+  //! Add a new SGroup
+  /*!
+    \param sgroup - SGroup to be added to the molecule; this molecule takes
+    ownership of the sgroup
+  */
+  unsigned int addSGroup(SGroup *sgroup);
+
+  inline unsigned int getNumSGroups() const {
+    return rdcast<unsigned int>(d_sgroups.size());
+  }
+
+  //! Check if an ID is free and can be assinged
+  /*!
+    \return if the ID is free
+  */
+  bool isSGroupIdFree(unsigned int id) const;
+
+  //! Get the smallest yet unassigned ID.
+  /*!
+    \return the smallest available ID.
+  */
+  unsigned int getNextFreeSGroupId() const;
 
   //@}
 
@@ -616,6 +659,10 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
 
   inline ConstConformerIterator endConformers() const { return d_confs.end(); }
 
+  inline ConstSGroupIterator beginSGroups() const { return d_sgroups.begin(); }
+
+  inline ConstSGroupIterator endSGroups() const { return d_sgroups.end(); }
+
   //@}
 
   //! \name Properties
@@ -663,6 +710,7 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   BOND_BOOKMARK_MAP d_bondBookmarks;
   RingInfo *dp_ringInfo;
   CONF_SPTR_LIST d_confs;
+  SGROUP_SPTR_VECT d_sgroups;
   std::vector<StereoGroup> d_stereo_groups;
 
   ROMol &operator=(

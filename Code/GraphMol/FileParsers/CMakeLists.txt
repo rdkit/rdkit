@@ -17,8 +17,9 @@ if(RDK_USE_BOOST_REGEX)
 endif()
 
 rdkit_library(FileParsers
-              Mol2FileParser.cpp
-              MolFileParser.cpp MolFileStereochem.cpp MolFileWriter.cpp
+              Mol2FileParser.cpp MolFileParser.cpp
+              MolSGroupParsing.cpp MolSGroupWriting.cpp
+              MolFileStereochem.cpp MolFileWriter.cpp
               ForwardSDMolSupplier.cpp SDMolSupplier.cpp SDWriter.cpp
               SmilesMolSupplier.cpp SmilesWriter.cpp
               TDTMolSupplier.cpp TDTWriter.cpp

@@ -104,6 +104,17 @@ void ROMol::initFromOther(const ROMol &other, bool quickCopy, int confId) {
       }
     }
 
+    // copy sgroups
+    for (auto sgi = other.beginSGroups(); sgi != other.endSGroups(); ++sgi) {
+      auto sgroup = new SGroup(*(*sgi));
+      this->addSGroup(sgroup);
+    }
+    // Once all SGroups have been copied, update pointers to objects of the new
+    // molecule
+    for (auto sgi = beginSGroups(); sgi != endSGroups(); ++sgi) {
+      (*sgi)->updateOwningMol(this);
+    }
+
     dp_props = other.dp_props;
 
     // Bookmarks should be copied as well:
@@ -185,7 +196,7 @@ const Atom *ROMol::getAtomWithIdx(unsigned int idx) const {
 }
 
 // returns the first inserted atom with the given bookmark
-Atom *ROMol::getAtomWithBookmark(const int mark) {
+Atom *ROMol::getAtomWithBookmark(int mark) {
   PRECONDITION(d_atomBookmarks.count(mark) != 0, "atom bookmark not found");
   PRECONDITION(d_atomBookmarks[mark].begin() != d_atomBookmarks[mark].end(),
                "atom bookmark not found");
@@ -194,13 +205,20 @@ Atom *ROMol::getAtomWithBookmark(const int mark) {
 };
 
 // returns all atoms with the given bookmark
-ROMol::ATOM_PTR_LIST &ROMol::getAllAtomsWithBookmark(const int mark) {
+ROMol::ATOM_PTR_LIST &ROMol::getAllAtomsWithBookmark(int mark) {
   PRECONDITION(d_atomBookmarks.count(mark) != 0, "atom bookmark not found");
   return d_atomBookmarks[mark];
 };
 
+// returns the unique atom with the given bookmark
+Atom *ROMol::getUniqueAtomWithBookmark(int mark) {
+  PRECONDITION(d_atomBookmarks.count(mark) == 1,
+               "multiple atoms with same bookmark");
+  return getAtomWithBookmark(mark);
+}
+
 // returns the first inserted bond with the given bookmark
-Bond *ROMol::getBondWithBookmark(const int mark) {
+Bond *ROMol::getBondWithBookmark(int mark) {
   PRECONDITION(d_bondBookmarks.count(mark) != 0, "bond bookmark not found");
   PRECONDITION(d_bondBookmarks[mark].begin() != d_bondBookmarks[mark].end(),
                "bond bookmark not found");
@@ -208,14 +226,21 @@ Bond *ROMol::getBondWithBookmark(const int mark) {
 };
 
 // returns all bonds with the given bookmark
-ROMol::BOND_PTR_LIST &ROMol::getAllBondsWithBookmark(const int mark) {
+ROMol::BOND_PTR_LIST &ROMol::getAllBondsWithBookmark(int mark) {
   PRECONDITION(d_bondBookmarks.count(mark) != 0, "bond bookmark not found");
   return d_bondBookmarks[mark];
 };
 
-void ROMol::clearAtomBookmark(const int mark) { d_atomBookmarks.erase(mark); }
+// returns the unique bond with the given bookmark
+Bond *ROMol::getUniqueBondWithBookmark(int mark) {
+  PRECONDITION(d_bondBookmarks.count(mark) == 1,
+               "multiple bons with same bookmark");
+  return getBondWithBookmark(mark);
+}
 
-void ROMol::clearAtomBookmark(const int mark, const Atom *atom) {
+void ROMol::clearAtomBookmark(int mark) { d_atomBookmarks.erase(mark); }
+
+void ROMol::clearAtomBookmark(int mark, const Atom *atom) {
   if (d_atomBookmarks.count(mark) != 0) {
     ATOM_PTR_LIST *entry = &d_atomBookmarks[mark];
     unsigned int tgtIdx = atom->getIdx();
@@ -231,8 +256,8 @@ void ROMol::clearAtomBookmark(const int mark, const Atom *atom) {
   }
 }
 
-void ROMol::clearBondBookmark(const int mark) { d_bondBookmarks.erase(mark); }
-void ROMol::clearBondBookmark(const int mark, const Bond *bond) {
+void ROMol::clearBondBookmark(int mark) { d_bondBookmarks.erase(mark); }
+void ROMol::clearBondBookmark(int mark, const Bond *bond) {
   if (d_bondBookmarks.count(mark) != 0) {
     BOND_PTR_LIST *entry = &d_bondBookmarks[mark];
     unsigned int tgtIdx = bond->getIdx();
@@ -540,7 +565,7 @@ const Conformer &ROMol::getConformer(int id) const {
       return *(*ci);
     }
   }
-  // we did not find a coformation with the specified ID
+  // we did not find a conformation with the specified ID
   std::string mesg = "Can't find conformation with ID: ";
   mesg += id;
   throw ConformerException(mesg);
@@ -561,7 +586,7 @@ Conformer &ROMol::getConformer(int id) {
       return *(*ci);
     }
   }
-  // we did not find a coformation with the specified ID
+  // we did not find a conformation with the specified ID
   std::string mesg = "Can't find conformation with ID: ";
   mesg += id;
   throw ConformerException(mesg);
@@ -591,6 +616,47 @@ unsigned int ROMol::addConformer(Conformer *conf, bool assignId) {
   CONFORMER_SPTR nConf(conf);
   d_confs.push_back(nConf);
   return conf->getId();
+}
+
+SGroup *ROMol::getSGroup(unsigned int idx) {
+  // make sure we have more than one sgroup
+  if (d_sgroups.empty()) {
+    throw SGroupException("No SGroups available on the molecule");
+  }
+
+  return d_sgroups.at(idx).get();
+}
+
+unsigned int ROMol::addSGroup(SGroup *sgroup) {
+  sgroup->setOwningMol(this);
+  SGROUP_SPTR nSGroup(sgroup);
+  unsigned int id = d_sgroups.size();
+  d_sgroups.push_back(nSGroup);
+  return id;
+}
+
+bool ROMol::isSGroupIdFree(unsigned int id) const {
+  for (const auto &sgroup : d_sgroups) {
+    if (id == sgroup->getId()) {
+      return false;
+    }
+  }
+  return true;
+}
+
+unsigned int ROMol::getNextFreeSGroupId() const {
+  std::set<unsigned int> ids;
+  for (const auto &sgroup : d_sgroups) {
+    ids.insert(sgroup->getId());
+  }
+  unsigned int nexId = 1;  // smallest possible ID
+  for (const auto &id : ids) {
+    if (id > nexId) {
+      break;
+    }
+    ++nexId;
+  }
+  return nexId;
 }
 
 }  // namespace RDKit
