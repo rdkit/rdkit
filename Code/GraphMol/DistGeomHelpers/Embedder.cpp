@@ -326,7 +326,7 @@ bool generateInitialCoords(RDGeom::PointPtrVect *positions,
 }
 bool firstMinimization(RDGeom::PointPtrVect *positions,
                        const detail::EmbedArgs &eargs) {
-  bool gotCoords = false;
+  bool gotCoords = true;
   std::unique_ptr<ForceFields::ForceField> field(DistGeom::constructForceField(
       *eargs.mmat, *positions, *eargs.chiralCenters, 1.0, 0.1, nullptr,
       eargs.basinThresh));
