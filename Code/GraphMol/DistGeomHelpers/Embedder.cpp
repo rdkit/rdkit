@@ -150,6 +150,8 @@ struct EmbedArgs {
   std::vector<Conformer *> *confs;
   unsigned int fragIdx;
   DistGeom::BoundsMatPtr mmat;
+  DistGeom::VECT_CHIRALSET const *chiralCenters;
+  DistGeom::VECT_CHIRALSET const *tetrahedralCarbons;
   bool useRandomCoords;
   double boxSizeMult;
   bool randNegEig;
@@ -158,18 +160,10 @@ struct EmbedArgs {
   double basinThresh;
   int seed;
   unsigned int maxIterations;
-  DistGeom::VECT_CHIRALSET const *chiralCenters;
-  DistGeom::VECT_CHIRALSET const *tetrahedralCarbons;
   bool enforceChirality;
   bool useExpTorsionAnglePrefs;
   bool useBasicKnowledge;
-  std::vector<std::pair<int, int>> *bonds;
-  std::vector<std::vector<int>> *angles;
-  std::vector<std::vector<int>> *expTorsionAtoms;
-  std::vector<std::pair<std::vector<int>, std::vector<double>>>
-      *expTorsionAngles;
-  std::vector<std::vector<int>> *improperAtoms;
-  std::vector<int> *atomNums;
+  ForceFields::CrystalFF::CrystalFFDetails *etkdgDetails;
 };
 }  // namespace detail
 
@@ -435,6 +429,7 @@ bool minimizeFourthDimension(RDGeom::PointPtrVect *positions,
 // the minimization using experimental torsion angle preferences
 bool minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
                              const detail::EmbedArgs &eargs) {
+  PRECONDITION(eargs.etkdgDetails, "bogus etkdgDetails pointer");
   bool planar = true;
 
   // convert to 3D positions and create coordMap
@@ -448,13 +443,15 @@ bool minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
   std::unique_ptr<ForceFields::ForceField> field;
   if (eargs.useBasicKnowledge) {  // ETKDG or KDG
     field.reset(DistGeom::construct3DForceField(
-        *eargs.mmat, positions3D, *eargs.bonds, *eargs.angles,
-        *eargs.expTorsionAtoms, *eargs.expTorsionAngles, *eargs.improperAtoms,
-        *eargs.atomNums));
+        *eargs.mmat, positions3D, eargs.etkdgDetails->bonds,
+        eargs.etkdgDetails->angles, eargs.etkdgDetails->expTorsionAtoms,
+        eargs.etkdgDetails->expTorsionAngles, eargs.etkdgDetails->improperAtoms,
+        eargs.etkdgDetails->atomNums));
   } else {  // plain ETDG
     field.reset(DistGeom::constructPlain3DForceField(
-        *eargs.mmat, positions3D, *eargs.bonds, *eargs.angles,
-        *eargs.expTorsionAtoms, *eargs.expTorsionAngles, *eargs.atomNums));
+        *eargs.mmat, positions3D, eargs.etkdgDetails->bonds,
+        eargs.etkdgDetails->angles, eargs.etkdgDetails->expTorsionAtoms,
+        eargs.etkdgDetails->expTorsionAngles, eargs.etkdgDetails->atomNums));
   }
 
   // minimize!
@@ -472,15 +469,16 @@ bool minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
     // create a force field with only the impropers
     std::unique_ptr<ForceFields::ForceField> field2(
         DistGeom::construct3DImproperForceField(
-            *eargs.mmat, positions3D, *eargs.improperAtoms, *eargs.atomNums));
+            *eargs.mmat, positions3D, eargs.etkdgDetails->improperAtoms,
+            eargs.etkdgDetails->atomNums));
     field2->initialize();
     // check if the energy is low enough
     double planarityTolerance = 0.7;
     if (field2->calcEnergy() >
-        eargs.improperAtoms->size() * planarityTolerance) {
+        eargs.etkdgDetails->improperAtoms.size() * planarityTolerance) {
 #ifdef DEBUG_EMBEDDING
       std::cerr << "   planar fail: " << field2->calcEnergy() << " "
-                << eargs.improperAtoms->size() * planarityTolerance
+                << eargs.etkdgDetails->improperAtoms.size() * planarityTolerance
                 << std::endl;
 #endif
       planar = false;
@@ -817,7 +815,8 @@ void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs) {
   for (size_t ci = 0; ci < eargs->confs->size(); ci++) {
     if (rdcast<int>(ci % numThreads) != threadId) continue;
     if (!(*eargs->confsOk)[ci]) {
-      // if one of the fragments here has already failed, there's no
+      // we call this function for each fragment in a molecule,
+      // if one of the fragments has already failed, there's no
       // sense in embedding this one
       continue;
     }
@@ -852,15 +851,7 @@ void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs) {
     CHECK_INVARIANT(new_seed >= -1,
                     "Something went wrong calculating a new seed");
 
-    bool gotCoords = EmbeddingOps::embedPoints(&positions, *eargs, new_seed); /*
-          &positions, eargs->mmat, eargs->useRandomCoords, eargs->boxSizeMult,
-          eargs->randNegEig, eargs->numZeroFail, eargs->optimizerForceTol,
-          eargs->basinThresh, new_seed, eargs->maxIterations,
-          eargs->chiralCenters, eargs->tetrahedralCarbons,
-          eargs->enforceChirality, eargs->useExpTorsionAnglePrefs,
-          eargs->useBasicKnowledge, *eargs->bonds, *eargs->angles,
-          *eargs->expTorsionAtoms, *eargs->expTorsionAngles,
-          *eargs->improperAtoms, *eargs->atomNums);*/
+    bool gotCoords = EmbeddingOps::embedPoints(&positions, *eargs, new_seed);
 
     if (gotCoords) {
       Conformer *conf = (*eargs->confs)[ci];
@@ -959,6 +950,8 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
                                &confs,
                                fragIdx,
                                mmat,
+                               &chiralCenters,
+                               &tetrahedralCarbons,
                                params.useRandomCoords,
                                params.boxSizeMult,
                                params.randNegEig,
@@ -967,17 +960,10 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
                                params.basinThresh,
                                params.randomSeed,
                                params.maxIterations,
-                               &chiralCenters,
-                               &tetrahedralCarbons,
                                params.enforceChirality,
                                params.useExpTorsionAnglePrefs,
                                params.useBasicKnowledge,
-                               &etkdgDetails.bonds,
-                               &etkdgDetails.angles,
-                               &etkdgDetails.expTorsionAtoms,
-                               &etkdgDetails.expTorsionAngles,
-                               &etkdgDetails.improperAtoms,
-                               &etkdgDetails.atomNums};
+                               &etkdgDetails};
     if (numThreads == 1) {
       detail::embedHelper_(0, 1, &eargs);
     }
