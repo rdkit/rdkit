@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2018 Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef _RD_BOUNDS_MATRIX_BUILDER_H_
-#define _RD_BOUNDS_MATRIX_BUILDER_H_
+#ifndef RD_BOUNDS_MATRIX_BUILDER_H
+#define RD_BOUNDS_MATRIX_BUILDER_H
 
 #include <DistGeom/BoundsMatrix.h>
 
@@ -23,10 +23,14 @@ namespace DGeomHelpers {
   \param defaultMax  default value for the upper distance bounds
 
 */
-RDKIT_DISTGEOMHELPERS_EXPORT void initBoundsMat(DistGeom::BoundsMatrix *mmat, double defaultMin = 0.0,
-                   double defaultMax = 1000.0);
-RDKIT_DISTGEOMHELPERS_EXPORT void initBoundsMat(DistGeom::BoundsMatPtr mmat, double defaultMin = 0.0,
-                   double defaultMax = 1000.0);
+RDKIT_DISTGEOMHELPERS_EXPORT void initBoundsMat(DistGeom::BoundsMatrix *mmat,
+                                                double defaultMin = 0.0,
+                                                double defaultMax = 1000.0);
+/*! \overload
+ */
+RDKIT_DISTGEOMHELPERS_EXPORT void initBoundsMat(DistGeom::BoundsMatPtr mmat,
+                                                double defaultMin = 0.0,
+                                                double defaultMax = 1000.0);
 
 //! Set upper and lower distance bounds between atoms in a molecule based on
 // topology
@@ -53,14 +57,18 @@ RDKIT_DISTGEOMHELPERS_EXPORT void initBoundsMat(DistGeom::BoundsMatPtr mmat, dou
   fail triangle smoothing. In these cases it is recommended to back out and
   recompute the bounds matrix with no 1-5 bounds and with vdW scaling.
 */
-RDKIT_DISTGEOMHELPERS_EXPORT void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
-                    bool set15bounds = true, bool scaleVDW = false);
+RDKIT_DISTGEOMHELPERS_EXPORT void setTopolBounds(const ROMol &mol,
+                                                 DistGeom::BoundsMatPtr mmat,
+                                                 bool set15bounds = true,
+                                                 bool scaleVDW = false);
 
-/*! Overload for experimental torsion angle preferences */
-RDKIT_DISTGEOMHELPERS_EXPORT void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
-                    std::vector<std::pair<int, int> > &bonds,
-                    std::vector<std::vector<int> > &angles,
-                    bool set15bounds = true, bool scaleVDW = false);
-}
-}
+/*! \overload for experimental torsion angle preferences
+ */
+RDKIT_DISTGEOMHELPERS_EXPORT void setTopolBounds(
+    const ROMol &mol, DistGeom::BoundsMatPtr mmat,
+    std::vector<std::pair<int, int>> &bonds,
+    std::vector<std::vector<int>> &angles, bool set15bounds = true,
+    bool scaleVDW = false);
+}  // namespace DGeomHelpers
+}  // namespace RDKit
 #endif
