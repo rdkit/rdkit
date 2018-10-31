@@ -8,7 +8,8 @@ IF(NOT CMAKE_BUILD_TYPE)
       FORCE)
 ENDIF(NOT CMAKE_BUILD_TYPE)
 
-enable_testing()
+# Enable CTest
+include(CTest)
 
 set(CMAKE_MODULE_PATH
     ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/Code/cmake/Modules/")
@@ -481,7 +482,8 @@ if(RDK_BUILD_CONTRIB)
   add_subdirectory(Contrib)
 endif(RDK_BUILD_CONTRIB)
 
-# Testing setup
+# Memory testing setup
+FIND_PROGRAM(MEMORYCHECK_COMMAND valgrind)
 CONFIGURE_FILE(CTestCustom.ctest.in ${RDKit_BINARY_DIR}/CTestCustom.ctest)
 
 # Packaging
