@@ -82,6 +82,7 @@ __pycache__/
 /Code/GraphMol/FileParsers/test_data/outNCI_few.tdt
 /Code/GraphMol/FileParsers/test_data/outNCI_first_200.props.sdf
 /Code/GraphMol/FileParsers/test_data/outSmiles.csv
+/Code/GraphMol/FileParsers/test_data/testSGroupsSample_V?000.mol
 
 /Code/GraphMol/ForceFieldHelpers/UFF/test_data/Issue62.sdf
 
