@@ -511,84 +511,6 @@ void testModifyMol() {
   }
 }
 
-void testSamples() {
-  chdir(
-      "/home/rodrigue/Documents/cases/SHARED-5945/Sgroup_examples/V2000/"
-      "samples");
-
-  {
-    std::vector<std::string> fNames = {{"Sgroups_Abbreviations.mol",
-                                        "Sgroups_AnyPol_01.mol",
-                                        "Sgroups_Component_01.mol",
-                                        "Sgroups_Copolymer_01.mol",
-                                        "Sgroups_Copolymer_alt_01.mol",
-                                        "Sgroups_Copolymer_blk_01.mol",
-                                        "Sgroups_Copolymer_ran_01.mol",
-                                        "Sgroups_crosslink_01.mol",
-                                        "Sgroups_Data_01.mol",
-                                        "Sgroups_Formulation_01.mol",
-                                        "Sgroups_Generic_01.mol",
-                                        "Sgroups_grf_01.mol",
-                                        "Sgroups_Link_01.mol",
-                                        "Sgroups_mer_01.mol",
-                                        "Sgroups_Mixture_02.mol",
-                                        "Sgroups_Mixture_False.mol",
-                                        "Sgroups_modification_01.mol",
-                                        "Sgroups_Monomer_01.mol",
-                                        "Sgroups_MultipleGroup_01.mol",
-                                        "Sgroups_SRU_01.mol",
-                                        "Sgroups_SRU_02.mol"}};
-
-    for (const auto &fName : fNames) {
-      std::cout << "Processing " << fName << std::endl;
-      auto mol = std::unique_ptr<RWMol>(MolFileToMol(fName));
-      auto writer = SDWriter("../outputs/" + fName);
-      writer.setForceV3000(false);
-      writer.write(*mol);
-      writer.close();
-    }
-  }
-
-  chdir(
-      "/home/rodrigue/Documents/cases/SHARED-5945/Sgroup_examples/V3000/"
-      "samples");
-
-  {
-    std::vector<std::string> fNames = {{"Sgroups_Abbreviations.mol",
-                                        "Sgroups_AnyPol_01.mol",
-                                        "Sgroups_Component_01.mol",
-                                        "Sgroups_Copolymer_01.mol",
-                                        "Sgroups_Copolymer_alt_01.mol",
-                                        "Sgroups_Copolymer_blk_01.mol",
-                                        "Sgroups_Copolymer_ran_01.mol",
-                                        "Sgroups_crosslink_01.mol",
-                                        "Sgroups_Data_01.mol",
-                                        "Sgroups_Formulation_01.mol",
-                                        "Sgroups_Formulation_False.mol",
-                                        "Sgroups_Generic_01.mol",
-                                        "Sgroups_grf_01.mol",
-                                        "Sgroups_Link_01.mol",
-                                        "Sgroups_mer_01.mol",
-                                        "Sgroups_Mixture_02.mol",
-                                        "Sgroups_Mixture_02_with_Data.mol",
-                                        "Sgroups_Mixture_False.mol",
-                                        "Sgroups_modification_01.mol",
-                                        "Sgroups_Monomer_01.mol",
-                                        "Sgroups_MultipleGroup_01.mol",
-                                        "Sgroups_SRU_01.mol",
-                                        "Sgroups_SRU_02.mol"}};
-
-    for (const auto &fName : fNames) {
-      std::cout << "Processing " << fName << std::endl;
-      auto mol = std::unique_ptr<RWMol>(MolFileToMol(fName));
-      auto writer = SDWriter("../outputs/" + fName);
-      writer.setForceV3000(true);
-      writer.write(*mol);
-      writer.close();
-    }
-  }
-}
-
 int main() {
   std::string rdbase = std::string(getenv("RDBASE"));
   if (rdbase.empty()) {
@@ -604,7 +526,6 @@ int main() {
   testSGroupsRoundTrip(rdbase, true);   // test V3000
   testPickleSGroups();
   testModifyMol();
-  // testSamples();
 
   return 0;
 }
