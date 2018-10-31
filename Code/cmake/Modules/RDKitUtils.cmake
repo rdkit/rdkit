@@ -8,6 +8,7 @@ ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 set(RDKit_VERSION "${RDKit_VERSION}.${RDKit_Revision}${RDKit_RevisionModifier}")
 set(RDKit_RELEASENAME "${RDKit_Year}.${RDKit_Month}.${RDKit_Revision}${RDKit_RevisionModifier}")
 
+
 set(compilerID "${CMAKE_CXX_COMPILER_ID}")
 set(systemAttribute "")
 if(MINGW)
@@ -23,6 +24,7 @@ else()
 endif()
 set(RDKit_BUILDNAME "${CMAKE_SYSTEM_NAME}|${CMAKE_SYSTEM_VERSION}|${systemAttribute}|${compilerID}|${bit3264}")
 set(RDKit_EXPORTED_TARGETS rdkit-targets)
+
 
 macro(rdkit_library)
   PARSE_ARGUMENTS(RDKLIB
@@ -180,6 +182,7 @@ macro(add_pytest)
   if(RDK_BUILD_PYTHON_WRAPPERS)
     add_test(${PYTEST_NAME}  ${PYTHON_EXECUTABLE}
              ${PYTEST_SOURCES})
+    SET(RDKIT_PYTEST_CACHE "${PYTEST_NAME};${RDKIT_PYTEST_CACHE}" CACHE INTERNAL "Global list of python tests")
   endif(RDK_BUILD_PYTHON_WRAPPERS)
 endmacro(add_pytest)
 
