@@ -112,13 +112,35 @@ void testConformerCopying() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testGithub2144() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Github #2144: no "
+                          "RWMol(RWMol) copy constructor"
+                       << std::endl;
+
+  {
+    auto mol1 = "C1CCCCC1"_smiles;
+    TEST_ASSERT(mol1);
+    RWMol mol2(*mol1);
+    TEST_ASSERT(mol2.getNumBonds() == mol1->getNumBonds())
+    TEST_ASSERT(mol2.getNumAtoms() == mol1->getNumAtoms())
+    RWMol mol3(mol2);
+    TEST_ASSERT(mol2.getNumBonds() == mol3.getNumBonds())
+    TEST_ASSERT(mol2.getNumAtoms() == mol3.getNumAtoms())
+  }
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 // -------------------------------------------------------------------
 int main() {
-#if 0
+  RDLog::InitLogs();
+
+#if 1
   test1();
   test2();
 #endif
   testQueryCopying();
   testConformerCopying();
+  testGithub2144();
   return 0;
 }

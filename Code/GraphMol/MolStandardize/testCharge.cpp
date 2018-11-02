@@ -153,8 +153,30 @@ void testChargeParent() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+
+void testGithub2144() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github #2144: Error when calling ChargeParent twice"
+                       << std::endl;
+
+{
+  // Test neutralization of ionized acids and bases.
+  auto m1 = "c1ccccn1"_smiles;
+  TEST_ASSERT(m1);
+  std::unique_ptr<RWMol> res1(MolStandardize::chargeParent(*m1));
+  TEST_ASSERT(res1);
+  TEST_ASSERT(MolToSmiles(*res1) == MolToSmiles(*m1));
+
+  std::unique_ptr<RWMol> res2(MolStandardize::chargeParent(*res1));
+  TEST_ASSERT(res2);
+  TEST_ASSERT(MolToSmiles(*res2) == MolToSmiles(*m1));
+
+} 
+ BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main() {
   testReionizer();
   testChargeParent();
+  testGithub2144();
   return 0;
 }

@@ -46,6 +46,7 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
       : ROMol(other, quickCopy, confId) {
     d_partialBonds.clear();
   };
+  RWMol(const RWMol &other) : ROMol(other) {};
   RWMol &operator=(const RWMol &);
 
   //! insert the atoms and bonds from \c other into this molecule
