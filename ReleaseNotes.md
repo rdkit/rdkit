@@ -1,3 +1,11 @@
+# Release_2019.03.1
+(Changes relative to Release_2018.09.1)
+
+## Deprecations
+- As of the 2019.03 release the RDKit no longer supports Python 2. Please read
+this rdkit-discuss post to learn what your options are if you need to keep
+using Python 2: https://www.mail-archive.com/rdkit-discuss@lists.sourceforge.net/msg08354.html
+
 # Release_2018.09.1
 (Changes relative to Release_2018.03.1)
 
@@ -13,10 +21,10 @@
     - `RDK_CAIRO_BUILD` -> `RDK_BUILD_CAIRO_SUPPORT`
 
 ## Documentation updates
-We have moved to using Sphinx's autodoc to create the Python API documentation. 
-`epydoc`, the tool we used to use, is no longer actively developed and only supports 
+We have moved to using Sphinx's autodoc to create the Python API documentation.
+`epydoc`, the tool we used to use, is no longer actively developed and only supports
 Python2. There will undoubtedly be problems associated with the change; if you notice
-anything missing in the documetation or something that's really badly formatted, 
+anything missing in the documetation or something that's really badly formatted,
 please either let us know or submit a PR with a fix.
 
 ## Backwards incompatible changes
@@ -37,11 +45,11 @@ functions less error prone (github #1679).
   bits. Morgan and RDKit fingerprints are currently supported.
 
 ## Acknowledgements:
-Boran Adas, Francois Berenger, Thomas Blaschke,  Brian Cole, Andrew Dalke, Guillaume Godin, 
-Brice Hoff, Brian Kelley, Karl Leswing, Susan Leung, Pat Lorton, Josh Meyers, Hirotomo Moriwaki, 
-Dan Nealschneider, Noel O'Boyle, Pavel Raiskup, Sereina Riniker, Ricardo Rodriguez Schmidt, 
-Stephen Roughley, Roger Sayle, Takayuki Serizawa, Rim Shayakhmetov, Gregory Simm, Jon Sorenson, 
-Matt Swain, Kiran Telukunta, Paulo Tosco, Alain Vaucher, Maciej Wójcikowski, '0xDECAFC0FFEE', 
+Boran Adas, Francois Berenger, Thomas Blaschke,  Brian Cole, Andrew Dalke, Guillaume Godin,
+Brice Hoff, Brian Kelley, Karl Leswing, Susan Leung, Pat Lorton, Josh Meyers, Hirotomo Moriwaki,
+Dan Nealschneider, Noel O'Boyle, Pavel Raiskup, Sereina Riniker, Ricardo Rodriguez Schmidt,
+Stephen Roughley, Roger Sayle, Takayuki Serizawa, Rim Shayakhmetov, Gregory Simm, Jon Sorenson,
+Matt Swain, Kiran Telukunta, Paulo Tosco, Alain Vaucher, Maciej Wójcikowski, '0xDECAFC0FFEE',
 'jaechanglim', 'paconius'
 
 ## Contrib updates:
@@ -210,7 +218,7 @@ Matt Swain, Kiran Telukunta, Paulo Tosco, Alain Vaucher, Maciej Wójcikowski, '0
  (github issue #1929 from JoshuaMeyers)
   - Aromaticity failure in 7-ring with charged radical carbon
  (github issue #1936 from bp-kelley)
-  - Fix embarassing bug, check the counter each iteration 
+  - Fix embarassing bug, check the counter each iteration
  (github pull #1939 from bp-kelley)
   - RuntimeError when importing rdkit.Chem.Descriptors with Python 3.7
  (github issue #1948 from drkeoni)
