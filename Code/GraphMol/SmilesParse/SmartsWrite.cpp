@@ -16,6 +16,7 @@
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/Canon.h>
 #include <GraphMol/new_canon.h>
+#include <RDGeneral/Exceptions.h>
 #include <RDGeneral/RDLog.h>
 
 namespace RDKit {
@@ -24,48 +25,50 @@ using namespace Canon;
 // local utility namespace
 namespace {
 
+enum class QueryBoolFeatures {
+  HAS_AND = 0x1,
+  HAS_LOWAND = 0x2,
+  HAS_OR = 0x4,
+  HAS_RECURSION = 0x8
+};
+
 std::string _recurseGetSmarts(const QueryAtom *qatom,
                               const QueryAtom::QUERYATOM_QUERY *node,
-                              bool negate);
+                              bool negate, unsigned int &features);
 std::string _recurseBondSmarts(const Bond *bond,
                                const QueryBond::QUERYBOND_QUERY *node,
-                               bool negate, int atomToLeftIdx);
+                               bool negate, int atomToLeftIdx,
+                               unsigned int &features);
 
-bool _checkForOrAndLowAnd(std::string smarts) {
-  size_t orLoc, andLoc;
-  // if we're a pure recursive smarts, we don't need to worry about this
-  if (smarts[0] == '$' && smarts[smarts.size() - 1] == ')') return false;
-  orLoc = smarts.find(",");
-  andLoc = smarts.find(";");
-  if ((orLoc != std::string::npos) && (andLoc != std::string::npos)) {
-    return true;
-  } else {
-    return false;
-  }
-}
-
-std::string _combineChildSmarts(std::string cs1, std::string cs2,
-                                std::string descrip) {
+std::string _combineChildSmarts(std::string cs1, unsigned int features1,
+                                std::string cs2, unsigned int features2,
+                                std::string descrip, unsigned int &features) {
   std::string res = "";
   if ((descrip.find("Or") > 0) && (descrip.find("Or") < descrip.length())) {
     // if either of child smarts already have a "," and ";" we can't have one
     // more OR here
-    if (_checkForOrAndLowAnd(cs1) || _checkForOrAndLowAnd(cs2)) {
-      throw "This is a non-smartable query - OR above and below AND in the binary tree";
+    if ((features1 & static_cast<unsigned int>(QueryBoolFeatures::HAS_LOWAND) &&
+         features1 & static_cast<unsigned int>(QueryBoolFeatures::HAS_OR)) ||
+        (features2 & static_cast<unsigned int>(QueryBoolFeatures::HAS_LOWAND) &&
+         features2 & static_cast<unsigned int>(QueryBoolFeatures::HAS_OR))) {
+      throw ValueErrorException(
+          "This is a non-smartable query - OR above and below AND in the "
+          "binary tree");
     }
     res += cs1;
     res += ",";
     res += cs2;
+    features |= static_cast<unsigned int>(QueryBoolFeatures::HAS_OR);
   } else if ((descrip.find("And") > 0) &&
              (descrip.find("And") < descrip.length())) {
-    size_t orLoc1, orLoc2;
     std::string symb;
-    orLoc1 = cs1.find(',');
-    orLoc2 = cs2.find(',');
-    if ((orLoc1 != std::string::npos) || (orLoc2 != std::string::npos)) {
+    if (features1 & static_cast<unsigned int>(QueryBoolFeatures::HAS_OR) ||
+        features2 & static_cast<unsigned int>(QueryBoolFeatures::HAS_OR)) {
       symb = ";";
+      features |= static_cast<unsigned int>(QueryBoolFeatures::HAS_LOWAND);
     } else {
       symb = "&";
+      features |= static_cast<unsigned int>(QueryBoolFeatures::HAS_AND);
     }
     res += cs1;
     res += symb;
@@ -73,10 +76,13 @@ std::string _combineChildSmarts(std::string cs1, std::string cs2,
   } else {
     std::stringstream err;
     err << "Don't know how to combine using " << descrip;
-    throw err.str();
+    throw ValueErrorException(err.str());
   }
+  features |= features1;
+  features |= features2;
+
   return res;
-}
+}  // namespace
 
 template <typename T>
 void describeQuery(const T *query, std::string leader = "\t") {
@@ -409,7 +415,7 @@ std::string getBondSmartsSimple(const Bond *bond,
 
 std::string _recurseGetSmarts(const QueryAtom *qatom,
                               const QueryAtom::QUERYATOM_QUERY *node,
-                              bool negate) {
+                              bool negate, unsigned int &features) {
   PRECONDITION(node, "bad node");
   // the algorithm goes something like this
   // - recursively get the smarts for the child queries
@@ -437,6 +443,8 @@ std::string _recurseGetSmarts(const QueryAtom *qatom,
 
   const QueryAtom::QUERYATOM_QUERY *child1;
   const QueryAtom::QUERYATOM_QUERY *child2;
+  unsigned int child1Features = 0;
+  unsigned int child2Features = 0;
   QueryAtom::QUERYATOM_QUERY::CHILD_VECT_CI chi;
   chi = node->beginChildren();
   child1 = chi->get();
@@ -483,6 +491,7 @@ std::string _recurseGetSmarts(const QueryAtom *qatom,
   // deal with the first child
   if (dsc1 == "RecursiveStructure") {
     csmarts1 = getRecursiveStructureQuerySmarts(child1);
+    features |= static_cast<unsigned int>(QueryBoolFeatures::HAS_RECURSION);
   } else if ((dsc1 != "AtomOr") && (dsc1 != "AtomAnd")) {
     // child 1 is a simple node
     const ATOM_EQUALS_QUERY *tchild =
@@ -495,12 +504,13 @@ std::string _recurseGetSmarts(const QueryAtom *qatom,
   } else {
     // child 1 is composite node - recurse
     bool nneg = (negate) ^ (child1->getNegation());
-    csmarts1 = _recurseGetSmarts(qatom, child1, nneg);
+    csmarts1 = _recurseGetSmarts(qatom, child1, nneg, child1Features);
   }
 
   // deal with the second child
   if (dsc2 == "RecursiveStructure") {
     csmarts2 = getRecursiveStructureQuerySmarts(child2);
+    features |= static_cast<unsigned int>(QueryBoolFeatures::HAS_RECURSION);
   } else if ((dsc2 != "AtomOr") && (dsc2 != "AtomAnd")) {
     // child 2 is a simple node
     const ATOM_EQUALS_QUERY *tchild =
@@ -512,7 +522,7 @@ std::string _recurseGetSmarts(const QueryAtom *qatom,
     }
   } else {
     bool nneg = (negate) ^ (child2->getNegation());
-    csmarts2 = _recurseGetSmarts(qatom, child2, nneg);
+    csmarts2 = _recurseGetSmarts(qatom, child2, nneg, child2Features);
   }
 
   // ok if we have a negation and we have an OR , we have to change to
@@ -526,13 +536,15 @@ std::string _recurseGetSmarts(const QueryAtom *qatom,
     }
   }
 
-  res += _combineChildSmarts(csmarts1, csmarts2, descrip);
+  res += _combineChildSmarts(csmarts1, child1Features, csmarts2, child2Features,
+                             descrip, features);
   return res;
 }
 
 std::string _recurseBondSmarts(const Bond *bond,
                                const QueryBond::QUERYBOND_QUERY *node,
-                               bool negate, int atomToLeftIdx) {
+                               bool negate, int atomToLeftIdx,
+                               unsigned int &features) {
   // the algorithm goes something like this
   // - recursively get the smarts for the child query bonds
   // - combine the child smarts using the following rules:
@@ -560,6 +572,8 @@ std::string _recurseBondSmarts(const Bond *bond,
 
   const QueryBond::QUERYBOND_QUERY *child1;
   const QueryBond::QUERYBOND_QUERY *child2;
+  unsigned int child1Features = 0;
+  unsigned int child2Features = 0;
   QueryBond::QUERYBOND_QUERY::CHILD_VECT_CI chi;
 
   chi = node->beginChildren();
@@ -589,7 +603,8 @@ std::string _recurseBondSmarts(const Bond *bond,
   } else {
     // child1 is a composite node recurse further
     bool nneg = (negate) ^ (child1->getNegation());
-    csmarts1 = _recurseBondSmarts(bond, child1, nneg, atomToLeftIdx);
+    csmarts1 =
+        _recurseBondSmarts(bond, child1, nneg, atomToLeftIdx, child1Features);
   }
 
   // now deal with the second child
@@ -605,7 +620,8 @@ std::string _recurseBondSmarts(const Bond *bond,
   } else {
     // child two is a composite node - recurse
     bool nneg = (negate) ^ (child2->getNegation());
-    csmarts1 = _recurseBondSmarts(bond, child2, nneg, atomToLeftIdx);
+    csmarts1 =
+        _recurseBondSmarts(bond, child2, nneg, atomToLeftIdx, child2Features);
   }
 
   // ok if we have a negation and we have to change the underlying logic,
@@ -618,7 +634,8 @@ std::string _recurseBondSmarts(const Bond *bond,
       descrip = "BondOr";
     }
   }
-  res += _combineChildSmarts(csmarts1, csmarts2, descrip);
+  res += _combineChildSmarts(csmarts1, child1Features, csmarts2, child2Features,
+                             descrip, features);
   return res;
 }
 
@@ -780,9 +797,9 @@ std::string GetAtomSmarts(const QueryAtom *qatom) {
     return res;
   }
   QueryAtom::QUERYATOM_QUERY *query = qatom->getQuery();
-  // describeQuery(query);
-
   PRECONDITION(query, "atom has no query");
+  // describeQuery(query);
+  unsigned int queryFeatures = 0;
   std::string descrip = qatom->getQuery()->getDescription();
   if (descrip == "") {
     // we have simple atom - just generate the smiles and return
@@ -795,7 +812,7 @@ std::string GetAtomSmarts(const QueryAtom *qatom) {
   } else if ((descrip == "AtomOr") || (descrip == "AtomAnd")) {
     // we have a composite query
     needParen = true;
-    res = _recurseGetSmarts(qatom, query, query->getNegation());
+    res = _recurseGetSmarts(qatom, query, query->getNegation(), queryFeatures);
     if (res.length() == 1) {  // single atom symbol we don't need parens
       needParen = false;
     }
@@ -844,11 +861,13 @@ std::string GetBondSmarts(const QueryBond *bond, int atomToLeftIdx) {
   }
   const QueryBond::QUERYBOND_QUERY *query = bond->getQuery();
   PRECONDITION(query, "bond has no query");
-  std::string descrip = query->getDescription();
 
+  unsigned int queryFeatures = 0;
+  std::string descrip = query->getDescription();
   if ((descrip == "BondAnd") || (descrip == "BondOr")) {
     // composite query
-    res = _recurseBondSmarts(bond, query, query->getNegation(), atomToLeftIdx);
+    res = _recurseBondSmarts(bond, query, query->getNegation(), atomToLeftIdx,
+                             queryFeatures);
   } else {
     // simple query
     if (query->getNegation()) {
