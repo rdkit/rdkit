@@ -57,7 +57,7 @@ void testBagofBonds(){
 
     std::map<std::string, unsigned int> Global = RDKit::Descriptors::BagOfBondsMap(strVec);
   
-    std::string pathName = "/Users/tgg/Github/rdkit"; //getenv("RDBASE");
+    std::string pathName = getenv("RDBASE");
     //std::cout << pathName << ",";
 
     std::string fName =
@@ -132,7 +132,7 @@ void testBagofBonds(){
 void testCoulombMat1(){
     std::cout << "===================== Testing CoulombMat GLobal =======================\n";
  
-    std::string pathName = "/Users/tgg/Github/rdkit"; //getenv("RDBASE");
+    std::string pathName = getenv("RDBASE");
 
     // CM test 1
     std::string fNameCM =
@@ -191,7 +191,7 @@ void testCoulombMat1(){
 void testCoulombMat2(){
     std::cout << "===================== Testing CoulombMat Local 1 =======================\n";
  
-    std::string pathName = "/Users/tgg/Github/rdkit"; //getenv("RDBASE");
+    std::string pathName = getenv("RDBASE");
 
     ///////////////////////
     // TEST 1 LOCAL
@@ -248,7 +248,7 @@ void testCoulombMat2(){
 void testCoulombMat3(){
     std::cout << "===================== Testing CoulombMat Local 2 =======================\n";
  
-    std::string pathName = "/Users/tgg/Github/rdkit"; //getenv("RDBASE");
+    std::string pathName = getenv("RDBASE");
 
     //////////////
     // TEST 2 LOCAL decaying
@@ -305,7 +305,7 @@ void testCoulombMat3(){
 void testCoulombMat4(){
     std::cout << "===================== Testing CoulombMat Local 3 =======================\n";
  
-    std::string pathName = "/Users/tgg/Github/rdkit"; //getenv("RDBASE");
+    std::string pathName = getenv("RDBASE");
 
     //////////////
     // TEST 3 LOCAL decaying 
@@ -361,7 +361,7 @@ void testCoulombMat4(){
 void testCoulombMat5(){
     std::cout << "===================== Testing CoulombMat Local 4 =======================\n";
  
-    std::string pathName = "/Users/tgg/Github/rdkit"; //getenv("RDBASE");
+    std::string pathName = getenv("RDBASE");
 
     //////////////
     // TEST 4 LOCAL decaying & reduced
