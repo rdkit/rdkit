@@ -28,9 +28,9 @@ void test1() {
 void test2() {
   auto *mol = new RWMol();
 
-  mol->addAtom(new Atom(6));
-  mol->addAtom(new Atom(6));
-  mol->addAtom(new Atom(8));
+  mol->addAtom(new Atom(6), false, true);
+  mol->addAtom(new Atom(6), false, true);
+  mol->addAtom(new Atom(8), false, true);
   mol->addBond(0, 1, Bond::SINGLE);
   mol->addBond(1, 2, Bond::SINGLE);
   mol->setAtomBookmark(mol->getAtomWithIdx(1), 1);
@@ -45,6 +45,8 @@ void test2() {
   CHECK_INVARIANT(mol2->getAtomWithBookmark(1)->getIdx() == 1, "");
   CHECK_INVARIANT(mol2->hasBondBookmark(2), "");
   CHECK_INVARIANT(mol2->getBondWithBookmark(2)->getIdx() == 0, "");
+  delete mol;
+  delete mol2;
 }
 
 void testQueryCopying() {
