@@ -90,6 +90,8 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   std::vector<std::vector<int>> atomRegions;  // regions
   DrawColour
       symbolColour;  // color to be used for the symbols and arrows in reactions
+  int bondLineWidth;  // if positive, this overrides the default line width
+                      // when drawing bonds
   std::vector<DrawColour> highlightColourPalette;  // defining 10 default colors
   // for highlighting atoms and bonds
   // or reactants in a reactions
@@ -113,7 +115,8 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
         multipleBondOffset(0.15),
         padding(0.05),
         additionalAtomLabelPadding(0.0),
-        symbolColour(0, 0, 0) {
+        symbolColour(0, 0, 0),
+        bondLineWidth(-1) {
     highlightColourPalette.push_back(
         DrawColour(1., 1., .67));                              // popcorn yellow
     highlightColourPalette.push_back(DrawColour(1., .8, .6));  // sand
