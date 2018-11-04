@@ -86,8 +86,8 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   double additionalAtomLabelPadding;  // additional padding to leave around atom
                                       // labels. Expressed as a fraction of the
                                       // font size.
-  std::map<int, std::string> atomLabels;       // replacement labels for atoms
-  std::vector<std::vector<int> > atomRegions;  // regions
+  std::map<int, std::string> atomLabels;      // replacement labels for atoms
+  std::vector<std::vector<int>> atomRegions;  // regions
   DrawColour
       symbolColour;  // color to be used for the symbols and arrows in reactions
   std::vector<DrawColour> highlightColourPalette;  // defining 10 default colors
@@ -150,7 +150,21 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
     sizes of the panels individual molecules are drawn in when
     \c drawMolecules() is called.
   */
-  MolDraw2D(int width, int height, int panelWidth = -1, int panelHeight = -1);
+  MolDraw2D(int width, int height, int panelWidth, int panelHeight)
+      : needs_scale_(true),
+        width_(width),
+        height_(height),
+        panel_width_(panelWidth > 0 ? panelWidth : width),
+        panel_height_(panelHeight > 0 ? panelHeight : height),
+        scale_(1.0),
+        x_trans_(0.0),
+        y_trans_(0.0),
+        x_offset_(0),
+        y_offset_(0),
+        font_size_(0.5),
+        curr_width_(2),
+        fill_polys_(true),
+        activeMolIdx_(-1) {}
 
   virtual ~MolDraw2D() {}
 
@@ -231,11 +245,11 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   virtual void drawMolecules(
       const std::vector<ROMol *> &mols,
       const std::vector<std::string> *legends = NULL,
-      const std::vector<std::vector<int> > *highlight_atoms = NULL,
-      const std::vector<std::vector<int> > *highlight_bonds = NULL,
-      const std::vector<std::map<int, DrawColour> > *highlight_atom_maps = NULL,
-      const std::vector<std::map<int, DrawColour> > *highlight_bond_maps = NULL,
-      const std::vector<std::map<int, double> > *highlight_radii = NULL,
+      const std::vector<std::vector<int>> *highlight_atoms = NULL,
+      const std::vector<std::vector<int>> *highlight_bonds = NULL,
+      const std::vector<std::map<int, DrawColour>> *highlight_atom_maps = NULL,
+      const std::vector<std::map<int, DrawColour>> *highlight_bond_maps = NULL,
+      const std::vector<std::map<int, double>> *highlight_radii = NULL,
       const std::vector<int> *confIds = NULL);
 
   //! draw a ChemicalReaction
@@ -388,7 +402,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
     return at_cds_[activeMolIdx_];
   };
   //! returns the atomic symbols of the current molecule
-  const std::vector<std::pair<std::string, OrientType> > &atomSyms() const {
+  const std::vector<std::pair<std::string, OrientType>> &atomSyms() const {
     PRECONDITION(activeMolIdx_ >= 0, "no index");
     return atom_syms_[activeMolIdx_];
   };
@@ -411,9 +425,9 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   DashPattern curr_dash_;
   MolDrawOptions options_;
 
-  std::vector<std::vector<Point2D> > at_cds_;  // from mol
-  std::vector<std::vector<int> > atomic_nums_;
-  std::vector<std::vector<std::pair<std::string, OrientType> > > atom_syms_;
+  std::vector<std::vector<Point2D>> at_cds_;  // from mol
+  std::vector<std::vector<int>> atomic_nums_;
+  std::vector<std::vector<std::pair<std::string, OrientType>>> atom_syms_;
   Point2D bbox_[2];
 
   // draw the char, with the bottom left hand corner at cds
@@ -431,8 +445,8 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
 
   virtual void drawLine(const Point2D &cds1, const Point2D &cds2,
                         const DrawColour &col1, const DrawColour &col2);
-  void drawBond(const ROMol &mol, const Bond* bond, int at1_idx,
-                int at2_idx, const std::vector<int> *highlight_atoms = NULL,
+  void drawBond(const ROMol &mol, const Bond *bond, int at1_idx, int at2_idx,
+                const std::vector<int> *highlight_atoms = NULL,
                 const std::map<int, DrawColour> *highlight_atom_map = NULL,
                 const std::vector<int> *highlight_bonds = NULL,
                 const std::map<int, DrawColour> *highlight_bond_map = NULL);
@@ -445,12 +459,12 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   // cds1 and cds2 are 2 atoms in a ring.  Returns the perpendicular pointing
   // into
   // the ring.
-  Point2D bondInsideRing(const ROMol &mol, const Bond* bond,
+  Point2D bondInsideRing(const ROMol &mol, const Bond *bond,
                          const Point2D &cds1, const Point2D &cds2);
   // cds1 and cds2 are 2 atoms in a chain double bond.  Returns the
   // perpendicular
   // pointing into the inside of the bond
-  Point2D bondInsideDoubleBond(const ROMol &mol, const Bond* bond);
+  Point2D bondInsideDoubleBond(const ROMol &mol, const Bond *bond);
   // calculate normalised perpendicular to vector between two coords, such
   // that
   // it's inside the angle made between (1 and 2) and (2 and 3).
@@ -480,6 +494,6 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   // calculate normalised perpendicular to vector between two coords
   Point2D calcPerpendicular(const Point2D &cds1, const Point2D &cds2);
 };
-}
+}  // namespace RDKit
 
 #endif  // RDKITMOLDRAW2D_H

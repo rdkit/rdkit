@@ -49,21 +49,6 @@ void getBondHighlightsForAtoms(const ROMol &mol,
 }  // namespace
 
 // ****************************************************************************
-MolDraw2D::MolDraw2D(int width, int height, int panelWidth, int panelHeight)
-    : needs_scale_(true),
-      width_(width),
-      height_(height),
-      panel_width_(panelWidth > 0 ? panelWidth : width),
-      panel_height_(panelHeight > 0 ? panelHeight : height),
-      scale_(1.0),
-      x_trans_(0.0),
-      y_trans_(0.0),
-      x_offset_(0),
-      y_offset_(0),
-      font_size_(0.5),
-      curr_width_(2),
-      fill_polys_(true),
-      activeMolIdx_(-1) {}
 
 // ****************************************************************************
 void MolDraw2D::drawMolecule(const ROMol &mol,
