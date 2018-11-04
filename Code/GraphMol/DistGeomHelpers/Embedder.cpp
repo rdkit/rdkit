@@ -353,6 +353,7 @@ bool firstMinimization(RDGeom::PointPtrVect *positions,
 bool checkTetrahedralCenters(const RDGeom::PointPtrVect *positions,
                              const detail::EmbedArgs &eargs,
                              const EmbedParameters &embedParams) {
+  RDUNUSED_PARAM(embedParams);
   // for each of the atoms in the "tetrahedralCarbons" list, make sure
   // that there is a minimum volume around them and that they are inside
   // that volume. (this is part of github #971)
@@ -378,6 +379,7 @@ bool checkTetrahedralCenters(const RDGeom::PointPtrVect *positions,
 bool checkChiralCenters(const RDGeom::PointPtrVect *positions,
                         const detail::EmbedArgs &eargs,
                         const EmbedParameters &embedParams) {
+  RDUNUSED_PARAM(embedParams);
   // check the chiral volume:
   for (const auto chiralSet : *eargs.chiralCenters) {
     double vol = DistGeom::ChiralViolationContrib::calcChiralVolume(
@@ -495,6 +497,7 @@ bool minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
 bool finalChiralChecks(RDGeom::PointPtrVect *positions,
                        const detail::EmbedArgs &eargs,
                        const EmbedParameters &embedParams) {
+  RDUNUSED_PARAM(embedParams);
   // "distance matrix" chirality test
   std::set<int> atoms;
   for (const auto chiralSet : *eargs.chiralCenters) {
@@ -859,6 +862,7 @@ void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs,
     bool gotCoords =
         EmbeddingOps::embedPoints(&positions, *eargs, *params, new_seed);
 
+    // copy the coordinates into the correct conformer
     if (gotCoords) {
       Conformer *conf = (*eargs->confs)[ci];
       unsigned int fragAtomIdx = 0;
@@ -892,6 +896,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
         "torsion-angle preferences (ETversion) supported");
   }
 
+  // initialize the conformers we're going to be creating:
   if (params.clearConfs) {
     res.clear();
     mol.clearConformers();
@@ -923,8 +928,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     unsigned int nAtoms = piece->getNumAtoms();
 
     // create and initialize the distance bounds matrix
-    auto *mat = new DistGeom::BoundsMatrix(nAtoms);
-    DistGeom::BoundsMatPtr mmat(mat);
+    DistGeom::BoundsMatPtr mmat(new DistGeom::BoundsMatrix(nAtoms));
     initBoundsMat(mmat);
 
     ForceFields::CrystalFF::CrystalFFDetails etkdgDetails;
@@ -950,6 +954,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     }
     int numThreads = getNumThreadsToUse(params.numThreads);
 
+    // do the embedding, using multiple threads if requested
     detail::EmbedArgs eargs = {
         &confsOk, fourD,          &fragMapping,        &confs,       fragIdx,
         mmat,     &chiralCenters, &tetrahedralCarbons, &etkdgDetails};
