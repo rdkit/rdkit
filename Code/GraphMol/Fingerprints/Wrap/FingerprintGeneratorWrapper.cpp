@@ -187,7 +187,7 @@ const std::vector<const ROMol *> convertPyArgumentsForBulk(
     unsigned int len =
         python::extract<unsigned int>(py_molVect.attr("__len__")());
     if (len) {
-      for (int i = 0; i < len; i++) {
+      for (unsigned int i = 0; i < len; i++) {
         molVect.push_back(python::extract<const ROMol *>(py_molVect[i]));
       }
     }
