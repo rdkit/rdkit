@@ -53,8 +53,12 @@ class TestCase(unittest.TestCase):
                           '1oir_conf.mol')
     m2 = Chem.MolFromMolFile(fileN2)
 
+    self.assertTrue(feq(rdshp.ShapeTanimotoDist(m, m), 0.0))
+    self.assertTrue(feq(rdshp.ShapeTverskyIndex(m, m, 1.0, 1.0), 1.0))
+
     rmsd = rdMolAlign.AlignMol(m, m2)
     self.assertTrue(feq(rdshp.ShapeTanimotoDist(m, m2), 0.2813))
+    self.assertTrue(feq(rdshp.ShapeTverskyIndex(m, m2, 1.0, 1.0), 0.7187))
 
     dist = rdshp.ShapeTanimotoDist(mol1=m, mol2=m2, confId1=0, confId2=0, gridSpacing=0.25,
                                    stepSize=0.125)
