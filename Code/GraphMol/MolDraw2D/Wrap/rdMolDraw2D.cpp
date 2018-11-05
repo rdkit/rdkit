@@ -415,6 +415,10 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
            "returns the offset (in drawing coordinates) for the drawing")
       .def("SetScale", &RDKit::MolDraw2D::setScale,
            "uses the values provided to set the drawing scaling")
+      .def("SetLineWidth", &RDKit::MolDraw2D::setLineWidth,
+           "set the line width being used")
+      .def("LineWidth", &RDKit::MolDraw2D::lineWidth,
+           "returns the line width being used")
       .def("DrawString", &RDKit::MolDraw2D::drawString,
            (python::arg("self"), python::arg("string"), python::arg("pos")),
            "add text to the canvas")

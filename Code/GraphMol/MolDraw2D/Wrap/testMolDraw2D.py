@@ -294,6 +294,25 @@ M  END""")
     d.FinishDrawing()
     d.GetDrawingText()
 
+  def testSetLineWidth(self):
+    " this was github #2149 "
+    m = Chem.MolFromSmiles('CC')
+    dm = Draw.PrepareMolForDrawing(m)
+    d = Draw.MolDraw2DSVG(300, 300)
+    d.DrawMolecule(dm)
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    self.assertTrue(txt.find("stroke-width:2px") >= 0)
+    self.assertTrue(txt.find("stroke-width:4px") == -1)
+    d = Draw.MolDraw2DSVG(300, 300)
+    d.SetLineWidth(4)
+    d.DrawMolecule(dm)
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    self.assertTrue(txt.find("stroke-width:2px") == -1)
+    self.assertTrue(txt.find("stroke-width:4px") >= 0)
+ 
+
 
 if __name__ == "__main__":
   unittest.main()
