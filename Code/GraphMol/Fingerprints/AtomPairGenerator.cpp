@@ -83,7 +83,7 @@ template <typename OutputType>
 OutputType AtomPairAtomEnv<OutputType>::getBitId(
     FingerprintArguments<OutputType> *arguments,
     const std::vector<std::uint32_t> *atomInvariants,
-    const std::vector<std::uint32_t> *bondInvariants,
+    const std::vector<std::uint32_t> *, // bondInvariants
     const AdditionalOutput *additionalOutput, const bool hashResults) const {
   PRECONDITION((atomInvariants->size() >= d_atomIdFirst) &&
                    (atomInvariants->size() >= d_atomIdSecond),
@@ -135,9 +135,10 @@ AtomPairEnvGenerator<OutputType>::getEnvironments(
     const std::vector<std::uint32_t> *fromAtoms,
     const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
     const AdditionalOutput *additionalOutput,
-    const std::vector<std::uint32_t> *atomInvariants,
-    const std::vector<std::uint32_t> *bondInvariants,
-    const bool hashResults) const {
+    const std::vector<std::uint32_t> *, // atomInvariants
+    const std::vector<std::uint32_t> *, // bondInvariants,
+    const bool // hashResults
+) const {
   const unsigned int atomCount = mol.getNumAtoms();
   PRECONDITION(!additionalOutput || !additionalOutput->atomToBits ||
                    additionalOutput->atomToBits->size() == atomCount,
