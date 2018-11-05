@@ -282,6 +282,12 @@ void setBgColour(RDKit::MolDrawOptions &self, python::tuple tpl) {
 void setHighlightColour(RDKit::MolDrawOptions &self, python::tuple tpl) {
   self.highlightColour = pyTupleToDrawColour(tpl);
 }
+python::object getSymbolColour(const RDKit::MolDrawOptions &self) {
+  return colourToPyTuple(self.symbolColour);
+}
+void setSymbolColour(RDKit::MolDrawOptions &self, python::tuple tpl) {
+  self.symbolColour = pyTupleToDrawColour(tpl);
+}
 void useDefaultAtomPalette(RDKit::MolDrawOptions &self) {
   assignDefaultPalette(self.atomColourPalette);
 }
@@ -317,9 +323,6 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def_readwrite("dummiesAreAttachments",
                      &RDKit::MolDrawOptions::dummiesAreAttachments)
       .def_readwrite("circleAtoms", &RDKit::MolDrawOptions::circleAtoms)
-      //.def_readwrite("highlightColour",
-      //&RDKit::MolDrawOptions::highlightColour,
-      //               "the highlight colour")
       .def("getBackgroundColour", &RDKit::getBgColour,
            "method returning the background colour")
       .def("getHighlightColour", &RDKit::getHighlightColour,
@@ -328,6 +331,10 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
            "method for setting the background colour")
       .def("setHighlightColour", &RDKit::setHighlightColour,
            "method for setting the highlight colour")
+      .def("getSymbolColour", &RDKit::getSymbolColour,
+           "method returning the symbol colour")
+      .def("setSymbolColour", &RDKit::setSymbolColour,
+           "method for setting the symbol colour")
       .def("useDefaultAtomPalette", &RDKit::useDefaultAtomPalette,
            "use the default colour palette for atoms and bonds")
       .def("useBWAtomPalette", &RDKit::useBWAtomPalette,
@@ -362,6 +369,9 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
           "offset (in Angstroms) for the extra lines in a multiple bond")
       .def_readwrite("padding", &RDKit::MolDrawOptions::padding,
                      "fraction of empty space to leave around molecule")
+      .def_readwrite(
+          "bondLineWidth", &RDKit::MolDrawOptions::bondLineWidth,
+          "if positive, this overrides the default line width for bonds")
       .def_readwrite("additionalAtomLabelPadding",
                      &RDKit::MolDrawOptions::additionalAtomLabelPadding,
                      "additional padding to leave around atom labels. "
