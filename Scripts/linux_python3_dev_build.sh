@@ -18,7 +18,6 @@ export RDBASE=`pwd`
 echo $RDBASE
 export PYTHONPATH=${RDBASE}
 export LD_LIBRARY_PATH=${RDBASE}/lib
-export DYLD_FALLBACK_LIBRARY_PATH=${RDBASE}/lib
 
 export PYTHON=`which python`
 echo $PYTHON
