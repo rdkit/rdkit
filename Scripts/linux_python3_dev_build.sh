@@ -23,7 +23,8 @@ echo $PY_SP_DIR
 
 PYTHON_VERSION=`$PYTHON -c 'import sys; print("%d.%d" % (sys.version_info[0], sys.version_info[1]))'`
 # some system-wide dependencies that may be needed
-sudo apt install gcc make python${PYTHON_VERSION}-dev
+PKGS="gcc make python${PYTHON_VERSION}-dev"
+dpkg-query -l $PKGS > /dev/null || sudo apt install $PKGS
 
 conda install -y \
       cmake cairo numpy pillow pandas eigen pkg-config \
