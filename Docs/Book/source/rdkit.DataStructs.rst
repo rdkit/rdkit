@@ -13,6 +13,7 @@ Submodules
    rdkit.DataStructs.LazySignature
    rdkit.DataStructs.TopNContainer
    rdkit.DataStructs.VectCollection
+   rdkit.DataStructs.cDataStructs
 
 Module contents
 ---------------
