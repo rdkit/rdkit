@@ -9,6 +9,7 @@ Submodules
    rdkit.ML.InfoTheory.BitClusterer
    rdkit.ML.InfoTheory.BitRank
    rdkit.ML.InfoTheory.entropy
+   rdkit.ML.InfoTheory.rdInfoTheory
 
 Module contents
 ---------------

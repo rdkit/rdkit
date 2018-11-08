@@ -49,7 +49,7 @@ apidocs:
 	mkdir -p $(BUILDDIR)/html/cppapi
 	cp -r $(CPPAPIDOCSHOME)/*  $(BUILDDIR)/html/cppapi
 
-html: apidocs $(RSTS_FROM_MD)
+html: $(RSTS_FROM_MD) apidocs 
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."

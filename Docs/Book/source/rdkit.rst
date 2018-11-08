@@ -25,6 +25,7 @@ Submodules
 
 .. toctree::
 
+   rdkit.rdBase
    rdkit.RDConfig
    rdkit.RDLogger
    rdkit.RDPaths
