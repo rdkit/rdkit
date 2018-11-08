@@ -13,7 +13,7 @@ Submodules
    rdkit.ML.Cluster.Murtagh
    rdkit.ML.Cluster.Resemblance
    rdkit.ML.Cluster.Standardize
-   rdkit.ML.Cluster.murtagh_test
+   rdkit.ML.Cluster.Clustering
 
 Module contents
 ---------------
