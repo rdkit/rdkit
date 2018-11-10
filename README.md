@@ -85,6 +85,8 @@ Installation instructions are available in [Docs/Book/Install.md](https://github
 - [Vernalis KNIME nodes](https://www.knime.com/book/vernalis-nodes-for-knime-trusted-extension)
 - [Erlwood KNIME nodes](https://www.knime.com/community/erlwood)
 - [AZOrange](https://github.com/AZcompTox/AZOrange)
+- [stk](https://github.com/lukasturcani/stk) ([docs](https://lukasturcani.github.io/stk/docs/build/html/), [paper](https://onlinelibrary.wiley.com/doi/10.1002/jcc.25377)) -
+a Python library for building, manipulating, analyzing and automatic design of molecules.
 
 ## License
 
