@@ -61,6 +61,8 @@ Installation instructions are available in [Docs/Book/Install.md](https://github
 
 ## Projects using RDKit
 
+- [stk](https://github.com/lukasturcani/stk) ([docs](https://lukasturcani.github.io/stk/docs/build/html/), [paper](https://onlinelibrary.wiley.com/doi/10.1002/jcc.25377)) -
+a Python library for building, manipulating, analyzing and automatic design of molecules.
 - [gpusimilarity](https://github.com/schrodinger/gpusimilarity) - A Cuda/Thrust implementation of fingerprint similarity searching
 - [Samson Connect](https://www.samson-connect.net) - Software for adaptive modeling and simulation of nanosystems
 - [mol_frame](https://github.com/apahl/mol_frame) - Chemical Structure Handling for Dask and Pandas DataFrames
