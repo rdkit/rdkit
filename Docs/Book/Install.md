@@ -20,7 +20,7 @@ Creating a new conda environment with the RDKit installed requires one single co
 
 Finally, the new environment must be activated so that the corresponding python interpreter becomes available in the same shell:
 
-    $ source activate my-rdkit-env
+    $ conda activate my-rdkit-env
 
 If for some reason this does not work, try:
 
