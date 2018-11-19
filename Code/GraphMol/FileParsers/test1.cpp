@@ -5210,7 +5210,7 @@ void testGithub2000() {
 }
 
 void RunTests() {
-#if 0
+#if 1
   test1();
   test2();
   test4();
