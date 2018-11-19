@@ -39,7 +39,6 @@ class RDKIT_GRAPHMOL_EXPORT SGroupException : public std::runtime_error {
 
 class RDKIT_GRAPHMOL_EXPORT SGroup {
  public:
-  friend class ROMol;
 
   enum class BondType {
     XBOND,  // External
@@ -151,19 +150,18 @@ class RDKIT_GRAPHMOL_EXPORT SGroup {
     return d_prop;
   }
 
- protected:
   //! Set owning moelcule
   //! This only updates atoms and bonds; parent sgroup has to be updated
   //! independently, since parent might not exist at the time this is called.
   void setOwningMol(ROMol *mol);
 
- private:
   //! Update pointers (atoms, patoms, bonds, parent SGroup) with the ones
   //! at matching indexes in other_mol. Must be called only after all of
   //! these objects exist in other_mol!
   void updateOwningMol(ROMol *other_mol);
 
-  /* ID of the group. If not 0, must be unique */
+ private:
+	 /* ID of the group. If not 0, must be unique */
   unsigned int d_id = 0;
   unsigned int d_compno = 0;
 
@@ -191,8 +189,22 @@ bool SGroupSubTypeOK(std::string typ);
 
 bool SGroupConnectTypeOK(std::string typ);
 
+unsigned int getMolNumSGroups(const ROMol &mol);
+
 std::vector<boost::shared_ptr<SGroup>> *getMolSGroups(ROMol &mol);
 const std::vector<boost::shared_ptr<SGroup>> *getMolSGroups(const ROMol &mol);
+
+//! return the sgroup at specified index
+SGroup *getMolSGroup(ROMol &mol, unsigned int idx);
+const SGroup *getMolSGroup(const ROMol &mol, unsigned int idx);
+
+  //! Add a new SGroup
+  /*!
+    \param sgroup - SGroup to be added to the molecule; this molecule takes
+    ownership of the sgroup
+  */
+  unsigned int addMolSGroup(ROMol &mol,SGroup *sgroup);
+  
 
 }  // namespace RDKit
 

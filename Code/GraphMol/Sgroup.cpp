@@ -51,13 +51,39 @@ bool SGroup::hasProp(const std::string &prop) const {
   return d_prop.find(prop) != d_prop.end();
 }
 
+namespace {
+  bool isSGroupIdFree(const ROMol &mol,unsigned int id){
+    auto sgroups = getMolSGroups(mol);
+    CHECK_INVARIANT(sgroups,"no sgroups on molecule owning an sgroup");
+	auto match_sgroup = [&](const SGROUP_SPTR &sg) { return id == sg->getId(); };
+    return std::find_if(sgroups->begin(),sgroups->end(),match_sgroup) == sgroups->end();
+  }
+
+unsigned int getNextFreeSGroupId(const ROMol &mol) {
+  std::set<unsigned int> ids;
+  CHECK_INVARIANT(getMolSGroups(mol),"no sgroups on molecule");
+  for (const auto &sgroup : *getMolSGroups(mol)) {
+    ids.insert(sgroup->getId());
+  }
+  unsigned int nexId = 1;  // smallest possible ID
+  for (const auto &id : ids) {
+    if (id > nexId) {
+      break;
+    }
+    ++nexId;
+  }
+  return nexId;
+}
+
+}
+
 void SGroup::setId(unsigned int id) {
   PRECONDITION(dp_mol, "SGroup is not owned by any molecule");
 
   if (id == 0) {
-    d_id = dp_mol->getNextFreeSGroupId();
+    d_id = getNextFreeSGroupId(*dp_mol);
     return;
-  } else if (!dp_mol->isSGroupIdFree(id)) {
+  } else if (!isSGroupIdFree(*dp_mol,id)) {
     std::ostringstream errout;
     errout << "ID " << id
            << " is already assigned to a SGroup on the same molecule";
@@ -219,7 +245,7 @@ void SGroup::updateOwningMol(ROMol *other_mol) {
 
   if (d_parent) {
     auto parent_idx = d_parent->getIndexInMol();
-    d_parent = other_mol->getSGroup(parent_idx);
+    d_parent = getMolSGroup(*other_mol,parent_idx);
   }
 }
 
@@ -267,12 +293,45 @@ bool SGroupConnectTypeOK(std::string typ) {
          sGroupConnectTypes.end();
 }
 
+unsigned int getMolNumSGroups(const ROMol &mol) {
+  if(!getMolSGroups(mol)) return 0;
+  return rdcast<unsigned int>(getMolSGroups(mol)->size());
+}
+
 std::vector<boost::shared_ptr<SGroup>> *getMolSGroups(ROMol &mol) {
 	return &mol.d_sgroups;
 }
 const std::vector<boost::shared_ptr<SGroup>> *getMolSGroups(const ROMol &mol) {
 	return &mol.d_sgroups;
 }
+
+SGroup *getMolSGroup(ROMol &mol,unsigned int idx) {
+  // make sure we have more than one sgroup
+  auto sgroups = getMolSGroups(mol);
+  if (!sgroups || sgroups->empty()){
+    throw SGroupException("No SGroups available on the molecule");
+  }
+  return sgroups->at(idx).get();
+}
+const SGroup *getMolSGroup(const ROMol &mol,unsigned int idx) {
+  // make sure we have more than one sgroup
+  auto sgroups = getMolSGroups(mol);
+  if (!sgroups || sgroups->empty()){
+    throw SGroupException("No SGroups available on the molecule");
+  }
+  return sgroups->at(idx).get();
+}
+
+unsigned int addMolSGroup(ROMol &mol, SGroup *sgroup) {
+  sgroup->setOwningMol(&mol);
+  SGROUP_SPTR nSGroup(sgroup);
+  auto sgroups = getMolSGroups(mol);
+  CHECK_INVARIANT(sgroups,"no s group container for molecule");
+  unsigned int id = sgroups->size();
+  sgroups->push_back(nSGroup);
+  return id;
+}
+
 
 }  // namespace RDKit
 

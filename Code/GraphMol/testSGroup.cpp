@@ -147,8 +147,8 @@ std::shared_ptr<RWMol> buildSampleMolecule() {
   }
 
   // Set a parent with higher index
-  auto sg0 = m->getSGroup(0);
-  auto sg2 = m->getSGroup(2);
+  auto sg0 = getMolSGroup(*m,0);
+  auto sg2 = getMolSGroup(*m,2);
   sg0->setParent(sg2);
 
   return m;
@@ -158,11 +158,11 @@ void checkSampleMolecule(RWMol *mol) {
   // Test a molecule created by buildSampleMolecule (or a copy)
 
   TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getNumSGroups() == 3);
+  TEST_ASSERT(getMolNumSGroups(*mol) == 3);
 
   {
     // First SGroup
-    auto sg = mol->getSGroup(0);
+    auto sg = getMolSGroup(*mol,0);
     TEST_ASSERT(sg->getType() == "MUL");
 
     TEST_ASSERT(sg->getProp("SUBTYPE") == "BLO");
@@ -216,12 +216,12 @@ void checkSampleMolecule(RWMol *mol) {
     TEST_ASSERT(sg->getProp("BRKTYP") == "PAREN");
 
     auto parent = sg->getParent();
-    TEST_ASSERT(parent == mol->getSGroup(2));
+    TEST_ASSERT(parent == getMolSGroup(*mol,2));
   }
 
   {
     // Second SGroup
-    auto sg = mol->getSGroup(1);
+    auto sg = getMolSGroup(*mol,1);
     TEST_ASSERT(sg->getType() == "SUP");
 
     std::vector<unsigned int> atoms_reference = {4, 5, 6};
@@ -264,7 +264,7 @@ void checkSampleMolecule(RWMol *mol) {
 
   {
     // Third SGroup
-    auto sg = mol->getSGroup(2);
+    auto sg = getMolSGroup(*mol,2);
     TEST_ASSERT(sg->getType() == "DAT");
 
     TEST_ASSERT(sg->getProp("FIELDNAME") == "SAMPLE FIELD NAME");
@@ -299,9 +299,9 @@ void testCreateSGroups() {
 
   sg = nullptr;
 
-  TEST_ASSERT(m.getNumSGroups() == 2);
-  TEST_ASSERT(m.getSGroup(0)->getType() == "DAT");
-  TEST_ASSERT(m.getSGroup(1)->getType() == "SUP");
+  TEST_ASSERT(getMolNumSGroups(m) == 2);
+  TEST_ASSERT(getMolSGroup(m,0)->getType() == "DAT");
+  TEST_ASSERT(getMolSGroup(m,1)->getType() == "SUP");
 }
 
 void testParseSGroups(const std::string &rdbase) {
@@ -314,9 +314,9 @@ void testParseSGroups(const std::string &rdbase) {
     auto m = std::unique_ptr<RWMol>(MolFileToMol(fName));
 
     TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumSGroups() == 1);
+    TEST_ASSERT(getMolNumSGroups(*m) == 1);
 
-    auto sgroup = m->getSGroup(0);
+    auto sgroup = getMolSGroup(*m,0);
 
     TEST_ASSERT(sgroup->getType() == "MON");
 
@@ -343,9 +343,9 @@ void testParseSGroups(const std::string &rdbase) {
     auto m = std::unique_ptr<RWMol>(MolFileToMol(fName));
 
     TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumSGroups() == 1);
+    TEST_ASSERT(getMolNumSGroups(*m) == 1);
 
-    auto sgroup = m->getSGroup(0);
+    auto sgroup = getMolSGroup(*m,0);
 
     TEST_ASSERT(sgroup->getType() == "MON");
 
@@ -365,9 +365,9 @@ void testParseSGroups(const std::string &rdbase) {
     auto m = std::unique_ptr<RWMol>(MolFileToMol(fName));
 
     TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumSGroups() == 1);
+    TEST_ASSERT(getMolNumSGroups(*m) == 1);
 
-    auto sgroup = m->getSGroup(0);
+    auto sgroup = getMolSGroup(*m,0);
 
     TEST_ASSERT(sgroup->getType() == "SUP");
     TEST_ASSERT(sgroup->getProp("CLASS") == "DEMOCLASS");
@@ -391,9 +391,9 @@ void testParseSGroups(const std::string &rdbase) {
     auto m = std::unique_ptr<RWMol>(MolFileToMol(fName));
 
     TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumSGroups() == 1);
+    TEST_ASSERT(getMolNumSGroups(*m) == 1);
 
-    auto sgroup = m->getSGroup(0);
+    auto sgroup = getMolSGroup(*m,0);
 
     TEST_ASSERT(sgroup->getType() == "SUP");
 
@@ -420,7 +420,7 @@ void testSGroupsRoundTrip(const std::string &rdbase, bool forceV3000) {
   {
     auto sampleMol = buildSampleMolecule();
 
-    TEST_ASSERT(sampleMol->getNumSGroups() == 3);
+    TEST_ASSERT(getMolNumSGroups(*sampleMol) == 3);
 
     auto writer = SDWriter(fName);
     writer.setForceV3000(forceV3000);
@@ -456,60 +456,60 @@ void testModifyMol() {
   auto mol_copy = mol;
 
   {  // insertion will drop SGroups
-    TEST_ASSERT(mol_copy.getNumSGroups() == 3);
+    TEST_ASSERT(getMolNumSGroups(mol_copy) == 3);
     mol_copy.insertMol(mol);
-    TEST_ASSERT(mol_copy.getNumSGroups() == 0);
+    TEST_ASSERT(getMolNumSGroups(mol_copy) == 0);
   }
   {
     // adding an atom will drop SGroups
     mol_copy = mol;
-    TEST_ASSERT(mol_copy.getNumSGroups() == 3);
+    TEST_ASSERT(getMolNumSGroups(mol_copy) == 3);
     mol_copy.addAtom();
-    TEST_ASSERT(mol_copy.getNumSGroups() == 0);
+    TEST_ASSERT(getMolNumSGroups(mol_copy) == 0);
   }
   {
     // replacing an atom will drop SGroups
     mol_copy = mol;
     auto new_atom = Atom();
-    TEST_ASSERT(mol_copy.getNumSGroups() == 3);
+    TEST_ASSERT(getMolNumSGroups(mol_copy) == 3);
     mol_copy.replaceAtom(1, &new_atom);
-    TEST_ASSERT(mol_copy.getNumSGroups() == 0);
+    TEST_ASSERT(getMolNumSGroups(mol_copy) == 0);
   }
   {
     // replacing a new bond will drop SGroups
     mol_copy = mol;
     auto new_bond = Bond(Bond::SINGLE);
-    TEST_ASSERT(mol_copy.getNumSGroups() == 3);
+    TEST_ASSERT(getMolNumSGroups(mol_copy) == 3);
     mol_copy.replaceBond(1, &new_bond);
-    TEST_ASSERT(mol_copy.getNumSGroups() == 0);
+    TEST_ASSERT(getMolNumSGroups(mol_copy) == 0);
   }
   {
     // removing an atom will drop SGroups
     mol_copy = mol;
-    TEST_ASSERT(mol_copy.getNumSGroups() == 3);
+    TEST_ASSERT(getMolNumSGroups(mol_copy) == 3);
     mol_copy.removeAtom(1);
-    TEST_ASSERT(mol_copy.getNumSGroups() == 0);
+    TEST_ASSERT(getMolNumSGroups(mol_copy) == 0);
   }
   {
     // creating a new bond between existing atoms will drop SGroups
     mol_copy = mol;
-    TEST_ASSERT(mol_copy.getNumSGroups() == 3);
+    TEST_ASSERT(getMolNumSGroups(mol_copy) == 3);
     mol_copy.addBond(1, 3, Bond::SINGLE);
-    TEST_ASSERT(mol_copy.getNumSGroups() == 0);
+    TEST_ASSERT(getMolNumSGroups(mol_copy) == 0);
   }
   {
     // removing a bond will drop SGroups
     mol_copy = mol;
-    TEST_ASSERT(mol_copy.getNumSGroups() == 3);
+    TEST_ASSERT(getMolNumSGroups(mol_copy) == 3);
     mol_copy.removeBond(1, 2);
-    TEST_ASSERT(mol_copy.getNumSGroups() == 0);
+    TEST_ASSERT(getMolNumSGroups(mol_copy) == 0);
   }
   {
     // creating a partial bond will drop SGroups
     mol_copy = mol;
-    TEST_ASSERT(mol_copy.getNumSGroups() == 3);
+    TEST_ASSERT(getMolNumSGroups(mol_copy) == 3);
     mol_copy.createPartialBond(1, Bond::SINGLE);
-    TEST_ASSERT(mol_copy.getNumSGroups() == 0);
+    TEST_ASSERT(getMolNumSGroups(mol_copy) == 0);
   }
 }
 

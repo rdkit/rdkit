@@ -877,7 +877,7 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
   // Write SGroups (if present)
   //
   // -------------------
-  auto numSGroups = mol->getNumSGroups();
+  auto numSGroups = getMolNumSGroups(*mol);
   if (numSGroups > 0) {
 	  streamWrite(ss, BEGINSGROUP);
 

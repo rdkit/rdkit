@@ -443,40 +443,6 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
     return rdcast<unsigned int>(d_confs.size());
   }
 
-  //! \name SGroups
-  //@{
-
-  //! return the sgroup at specified index
-  SGroup *getSGroup(unsigned int idx);
-
-  //! Clear all the SGroups on the molecule
-  void clearSGroups() { d_sgroups.clear(); }
-
-  //! Add a new SGroup
-  /*!
-    \param sgroup - SGroup to be added to the molecule; this molecule takes
-    ownership of the sgroup
-  */
-  unsigned int addSGroup(SGroup *sgroup);
-
-  inline unsigned int getNumSGroups() const {
-    return rdcast<unsigned int>(d_sgroups.size());
-  }
-
-  //! Check if an ID is free and can be assinged
-  /*!
-    \return if the ID is free
-  */
-  bool isSGroupIdFree(unsigned int id) const;
-
-  //! Get the smallest yet unassigned ID.
-  /*!
-    \return the smallest available ID.
-  */
-  unsigned int getNextFreeSGroupId() const;
-
-  //@}
-
   //! \name Topology
   //@{
 
@@ -696,6 +662,13 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
     return d_stereo_groups;
   }
 
+  //! Add a new SGroup
+  /*!
+    \param sgroup - SGroup to be added to the molecule; this molecule takes
+    ownership of the sgroup
+  */
+  unsigned int addSGroup(SGroup *sgroup);
+
  private:
   MolGraph d_graph;
   ATOM_BOOKMARK_MAP d_atomBookmarks;
@@ -705,6 +678,8 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   std::vector<boost::shared_ptr<SGroup>> d_sgroups;
   friend std::vector<boost::shared_ptr<SGroup>> *getMolSGroups(ROMol &);
   friend const std::vector<boost::shared_ptr<SGroup>> *getMolSGroups(const ROMol &);
+  //! Clear all the SGroups on the molecule
+  void clearSGroups() { d_sgroups.clear(); }
   std::vector<StereoGroup> d_stereo_groups;
 
   ROMol &operator=(
