@@ -232,10 +232,6 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   typedef CONF_SPTR_LIST_I ConformerIterator;
   typedef CONF_SPTR_LIST_CI ConstConformerIterator;
 
-  typedef std::vector<boost::shared_ptr<SGroup>> SGROUP_SPTR_VECT;
-  typedef SGROUP_SPTR_VECT::iterator SGroupIterator;
-  typedef SGROUP_SPTR_VECT::const_iterator ConstSGroupIterator;
-
   //@}
   //! \endcond
 
@@ -658,10 +654,6 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   }
 
   inline ConstConformerIterator endConformers() const { return d_confs.end(); }
-
-  inline ConstSGroupIterator beginSGroups() const { return d_sgroups.begin(); }
-
-  inline ConstSGroupIterator endSGroups() const { return d_sgroups.end(); }
 
   //@}
 

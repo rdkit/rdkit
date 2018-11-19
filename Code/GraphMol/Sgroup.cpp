@@ -75,18 +75,19 @@ unsigned int SGroup::getIndexInMol() const {
   }
 
   auto match_sgroup = [&](const SGROUP_SPTR &sg) { return this == sg.get(); };
+  auto sgroups = getMolSGroups(*dp_mol);
+  TEST_ASSERT(sgroups);
+	  auto sgroupItr =
+      std::find_if(sgroups->begin(), sgroups->end(), match_sgroup);
 
-  auto sgroupItr =
-      std::find_if(dp_mol->beginSGroups(), dp_mol->endSGroups(), match_sgroup);
-
-  if (sgroupItr == dp_mol->endSGroups()) {
+  if (sgroupItr == sgroups->end()) {
     std::ostringstream errout;
     errout << "Unable to find own index in owning mol SGroup collection"
            << std::endl;
     throw SGroupException(errout.str());
   }
 
-  return sgroupItr - dp_mol->beginSGroups();
+  return sgroupItr - sgroups->begin();
 }
 
 void SGroup::addAtomWithIdx(unsigned int idx) {

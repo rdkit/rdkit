@@ -107,16 +107,15 @@ void ROMol::initFromOther(const ROMol &other, bool quickCopy, int confId) {
     }
 
     // copy sgroups
-    for (auto sgi = other.beginSGroups(); sgi != other.endSGroups(); ++sgi) {
-      auto sgroup = new SGroup(*(*sgi));
-      this->addSGroup(sgroup);
-    }
-    // Once all SGroups have been copied, update pointers to objects of the new
-    // molecule
-    for (auto sgi = beginSGroups(); sgi != endSGroups(); ++sgi) {
-      (*sgi)->updateOwningMol(this);
-    }
-
+	if(getMolSGroups(other)){
+		for (auto sg : *getMolSGroups(other)) {
+			this->addSGroup(new SGroup(*sg));
+		}
+		for (auto sg : *getMolSGroups(*this)) {
+			sg->updateOwningMol(this);
+		}
+	}
+ 
     dp_props = other.dp_props;
 
     // Bookmarks should be copied as well:

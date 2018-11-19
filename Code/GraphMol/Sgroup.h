@@ -78,7 +78,7 @@ class RDKIT_GRAPHMOL_EXPORT SGroup {
   SGroup(const SGroup &other) = default;
 
   //! Destructor
-  ~SGroup(){};
+  ~SGroup() {};
 
   //! Get the molecule that owns this conformation
   ROMol &getOwningMol() const { return *dp_mol; }

@@ -22,22 +22,23 @@ std::string BuildV2000STYLines(const ROMol &mol) {
   std::ostringstream ret;
   std::ostringstream temp;
 
-  unsigned int count = 0;
-  for (auto sGroupItr = mol.beginSGroups(); sGroupItr != mol.endSGroups();
-       ++sGroupItr) {
-    unsigned int idx = 1 + (sGroupItr - mol.beginSGroups());
-    temp << FormatV2000IntField(idx)
-         << FormatV2000StringField((*sGroupItr)->getType(), 3, true, true);
-    if (++count == 8) {
-      ret << "M  STY" << FormatV2000NumEntriesField(8) << temp.str()
-          << std::endl;
-      temp.str("");
-      count = 0;
-    }
-  }
-  if (count) {
-    ret << "M  STY" << FormatV2000NumEntriesField(count) << temp.str()
-        << std::endl;
+  if (getMolSGroups(mol)) {
+	  unsigned int count = 0;
+	  unsigned int idx = 0;
+	  for (auto sgroup : *getMolSGroups(mol) ) {
+		  temp << FormatV2000IntField(++idx)
+			  << FormatV2000StringField(sgroup->getType(), 3, true, true);
+		  if (++count == 8) {
+			  ret << "M  STY" << FormatV2000NumEntriesField(8) << temp.str()
+				  << std::endl;
+			  temp.str("");
+			  count = 0;
+		  }
+	  }
+	  if (count) {
+		  ret << "M  STY" << FormatV2000NumEntriesField(count) << temp.str()
+			  << std::endl;
+	  }
   }
   return ret.str();
 }
@@ -50,78 +51,81 @@ std::string BuildV2000StringPropLines(const unsigned int entriesPerLine,
   std::ostringstream ret;
   std::ostringstream temp;
 
-  unsigned int count = 0;
-  for (auto sGroupItr = mol.beginSGroups(); sGroupItr != mol.endSGroups();
-       ++sGroupItr) {
-    unsigned int idx = (sGroupItr - mol.beginSGroups()) + 1;
-    if ((*sGroupItr)->hasProp(propName)) {  // Write field only if defined
-      temp << FormatV2000IntField(idx)
-           << FormatV2000StringField((*sGroupItr)->getProp(propName),
-                                     fieldWitdh, true, true);
-      if (++count == entriesPerLine) {
-        ret << "M  " << propCode << FormatV2000NumEntriesField(entriesPerLine)
-            << temp.str() << std::endl;
-        temp.str("");
-        count = 0;
-      }
-    }
-  }
-  if (count) {
-    ret << "M  " << propCode << FormatV2000NumEntriesField(count) << temp.str()
-        << std::endl;
+  if (getMolSGroups(mol)) {
+	  unsigned int count = 0;
+	  unsigned int idx = 0;
+	  for (auto sgroup : *getMolSGroups(mol)) {
+		  if (sgroup->hasProp(propName)) {  // Write field only if defined
+			  temp << FormatV2000IntField(++idx)
+				  << FormatV2000StringField(sgroup->getProp(propName),
+					  fieldWitdh, true, true);
+			  if (++count == entriesPerLine) {
+				  ret << "M  " << propCode << FormatV2000NumEntriesField(entriesPerLine)
+					  << temp.str() << std::endl;
+				  temp.str("");
+				  count = 0;
+			  }
+		  }
+	  }
+    if (count) {
+		ret << "M  " << propCode << FormatV2000NumEntriesField(count) << temp.str()
+			<< std::endl;
+	 }
   }
   return ret.str();
 }
 
 std::string BuildV2000SLBLines(const ROMol &mol) {
-  std::ostringstream ret;
-  std::ostringstream temp;
+	std::ostringstream ret;
+	std::ostringstream temp;
 
-  unsigned int count = 0;
-  for (auto sGroupItr = mol.beginSGroups(); sGroupItr != mol.endSGroups();
-       ++sGroupItr) {
-    unsigned int idx = (sGroupItr - mol.beginSGroups()) + 1;
-    unsigned int id = (*sGroupItr)->getId();
-    if (id > 0) {  // Write field only if specific id was assigned
-      temp << FormatV2000IntField(idx) << FormatV2000IntField(id);
-      if (++count == 8) {
-        ret << "M  SLB" << FormatV2000NumEntriesField(8) << temp.str()
-            << std::endl;
-        temp.str("");
-        count = 0;
-      }
-    }
-  }
-  if (count) {
-    ret << "M  SLB" << FormatV2000NumEntriesField(count) << temp.str()
-        << std::endl;
-  }
-  return ret.str();
+	if (getMolSGroups(mol)) {
+		unsigned int count = 0;
+		unsigned int idx = 0;
+		for (auto sgroup : *getMolSGroups(mol)) {
+			unsigned int id = sgroup->getId();
+			if (id > 0) {  // Write field only if specific id was assigned
+				temp << FormatV2000IntField(++idx) << FormatV2000IntField(id);
+				if (++count == 8) {
+					ret << "M  SLB" << FormatV2000NumEntriesField(8) << temp.str()
+						<< std::endl;
+					temp.str("");
+					count = 0;
+				}
+			}
+		}
+	if (count) {
+		ret << "M  SLB" << FormatV2000NumEntriesField(count) << temp.str()
+			<< std::endl;
+	}
+	}
+	return ret.str();
 }
 
 std::string BuildV2000SDSLines(const ROMol &mol) {
   std::ostringstream ret;
   std::ostringstream temp;
 
-  unsigned int count = 0;
-  for (auto sGroupItr = mol.beginSGroups(); sGroupItr != mol.endSGroups();
-       ++sGroupItr) {
-    unsigned int idx = (sGroupItr - mol.beginSGroups()) + 1;
-    // Write field only if defined
-    if ((*sGroupItr)->hasProp("ESTATE") &&
-        (*sGroupItr)->getProp("ESTATE") == "E") {
-      temp << FormatV2000IntField(idx);
-      if (++count == 15) {
-        ret << "M  SDS EXP" << FormatV2000NumEntriesField(15) << temp.str()
-            << std::endl;
-        temp.str("");
-        count = 0;
-      }
-    }
-  }
-  if (count) {
-    ret << "M  SDS EXP" << FormatV2000NumEntriesField(count) << temp.str()
-        << std::endl;
+  if (getMolSGroups(mol)) {
+	  unsigned int count = 0;
+	  unsigned int idx = 0;
+	  for (auto sgroup : *getMolSGroups(mol)) {
+		  // Write field only if defined
+		  if (sgroup->hasProp("ESTATE") &&
+			  sgroup->getProp("ESTATE") == "E") {
+			  temp << FormatV2000IntField(++idx);
+			  if (++count == 15) {
+				  ret << "M  SDS EXP" << FormatV2000NumEntriesField(15) << temp.str()
+					  << std::endl;
+				  temp.str("");
+				  count = 0;
+			  }
+		  }
+	  }
+	  if (count) {
+		  ret << "M  SDS EXP" << FormatV2000NumEntriesField(count) << temp.str()
+			  << std::endl;
+	  }
   }
   return ret.str();
 }
@@ -129,25 +133,26 @@ std::string BuildV2000SDSLines(const ROMol &mol) {
 std::string BuildV2000SPLLines(const ROMol &mol) {
   std::ostringstream ret;
   std::ostringstream temp;
-  unsigned int count = 0;
-  for (auto sGroupItr = mol.beginSGroups(); sGroupItr != mol.endSGroups();
-       ++sGroupItr) {
-    unsigned int idx = (sGroupItr - mol.beginSGroups()) + 1;
-    auto parent = (*sGroupItr)->getParent();
-    if (parent) {  // Write field only if a parent is defined
-      unsigned int parentIdx = 1 + parent->getIndexInMol();
-      temp << FormatV2000IntField(idx) << FormatV2000IntField(parentIdx);
-      if (++count == 8) {
-        ret << "M  SPL" << FormatV2000NumEntriesField(8) << temp.str()
-            << std::endl;
-        temp.str("");
-        count = 0;
-      }
-    }
-  }
-  if (count) {
-    ret << "M  SPL" << FormatV2000NumEntriesField(count) << temp.str()
-        << std::endl;
+  if (getMolSGroups(mol)) {
+	  unsigned int count = 0;
+	  unsigned int idx = 0;
+	  for (auto sgroup : *getMolSGroups(mol)) {
+		  auto parent = sgroup->getParent();
+		  if (parent) {  // Write field only if a parent is defined
+			  unsigned int parentIdx = 1 + parent->getIndexInMol();
+			  temp << FormatV2000IntField(++idx) << FormatV2000IntField(parentIdx);
+			  if (++count == 8) {
+				  ret << "M  SPL" << FormatV2000NumEntriesField(8) << temp.str()
+					  << std::endl;
+				  temp.str("");
+				  count = 0;
+			  }
+		  }
+	  }
+	  if (count) {
+		  ret << "M  SPL" << FormatV2000NumEntriesField(count) << temp.str()
+			  << std::endl;
+	  }
   }
   return ret.str();
 }
@@ -155,24 +160,25 @@ std::string BuildV2000SPLLines(const ROMol &mol) {
 std::string BuildV2000SNCLines(const ROMol &mol) {
   std::ostringstream ret;
   std::ostringstream temp;
-  unsigned int count = 0;
-  for (auto sGroupItr = mol.beginSGroups(); sGroupItr != mol.endSGroups();
-       ++sGroupItr) {
-    unsigned int idx = (sGroupItr - mol.beginSGroups()) + 1;
-    unsigned int compno = (*sGroupItr)->getCompNo();
-    if (compno > 0) {  // Write field only if compno is set
-      temp << FormatV2000IntField(idx) << FormatV2000IntField(compno);
-      if (++count == 8) {
-        ret << "M  SNC" << FormatV2000NumEntriesField(8) << temp.str()
-            << std::endl;
-        temp.str("");
-        count = 0;
-      }
-    }
-  }
-  if (count) {
-    ret << "M  SNC" << FormatV2000NumEntriesField(count) << temp.str()
-        << std::endl;
+  if (getMolSGroups(mol)) {
+	  unsigned int count = 0;
+	  unsigned int idx = 0;
+	  for (auto sgroup : *getMolSGroups(mol)) {
+		  unsigned int compno = sgroup->getCompNo();
+		  if (compno > 0) {  // Write field only if compno is set
+			  temp << FormatV2000IntField(++idx) << FormatV2000IntField(compno);
+			  if (++count == 8) {
+				  ret << "M  SNC" << FormatV2000NumEntriesField(8) << temp.str()
+					  << std::endl;
+				  temp.str("");
+				  count = 0;
+			  }
+		  }
+	  }
+	  if (count) {
+		  ret << "M  SNC" << FormatV2000NumEntriesField(count) << temp.str()
+			  << std::endl;
+	  }
   }
   return ret.str();
 }
@@ -181,33 +187,36 @@ std::string BuildV2000SBTLines(const ROMol &mol) {
   std::ostringstream ret;
   std::ostringstream temp;
 
-  unsigned int count = 0;
-  for (auto sGroupItr = mol.beginSGroups(); sGroupItr != mol.endSGroups();
-       ++sGroupItr) {
-    unsigned int idx = (sGroupItr - mol.beginSGroups()) + 1;
-    if ((*sGroupItr)->hasProp("BRKTYP")) {
-      std::string bracketType = (*sGroupItr)->getProp("BRKTYP");
-      if (bracketType == "BRACKET") {
-        temp << FormatV2000IntField(idx) << FormatV2000IntField(0);
-      } else if (bracketType == "PAREN") {
-        temp << FormatV2000IntField(idx) << FormatV2000IntField(1);
-      } else {
-        std::ostringstream errout;
-        errout << "Invalid BRKTYP value '" << bracketType << "' for SGroup "
-               << idx;
-        throw SGroupException(errout.str());
-      }
-      if (++count == 8) {
-        ret << "M  SBT" << FormatV2000NumEntriesField(8) << temp.str()
-            << std::endl;
-        temp.str("");
-        count = 0;
-      }
-    }
-  }
-  if (count) {
-    ret << "M  SBT" << FormatV2000NumEntriesField(count) << temp.str()
-        << std::endl;
+  if (getMolSGroups(mol)) {
+	  unsigned int count = 0;
+	  unsigned int idx = 0;
+	  for (auto sgroup : *getMolSGroups(mol)) {
+		  if (sgroup->hasProp("BRKTYP")) {
+			  std::string bracketType = sgroup->getProp("BRKTYP");
+			  if (bracketType == "BRACKET") {
+				  temp << FormatV2000IntField(++idx) << FormatV2000IntField(0);
+			  }
+			  else if (bracketType == "PAREN") {
+				  temp << FormatV2000IntField(++idx) << FormatV2000IntField(1);
+			  }
+			  else {
+				  std::ostringstream errout;
+				  errout << "Invalid BRKTYP value '" << bracketType << "' for SGroup "
+					  << ++idx;
+				  throw SGroupException(errout.str());
+			  }
+			  if (++count == 8) {
+				  ret << "M  SBT" << FormatV2000NumEntriesField(8) << temp.str()
+					  << std::endl;
+				  temp.str("");
+				  count = 0;
+			  }
+		  }
+	  }
+	  if (count) {
+		  ret << "M  SBT" << FormatV2000NumEntriesField(count) << temp.str()
+			  << std::endl;
+	  }
   }
   return ret.str();
 }
@@ -428,31 +437,33 @@ const std::string GetMolFileSGroupInfo(const RWMol &mol) {
   ret << BuildV2000SBTLines(mol);
 
   // single group per line properties
-  for (auto sGroupItr = mol.beginSGroups(); sGroupItr != mol.endSGroups();
-       ++sGroupItr) {
-    unsigned int idx = 1 + (sGroupItr - mol.beginSGroups());
-    ret << BuildV2000IdxVectorDataLines(15, idx, "SAL",
-                                        (*sGroupItr)->getAtoms());
-    ret << BuildV2000IdxVectorDataLines(15, idx, "SPA",
-                                        (*sGroupItr)->getPAtoms());
-    ret << BuildV2000IdxVectorDataLines(15, idx, "SBL",
-                                        (*sGroupItr)->getBonds());
-    // Write CRS line -- CRS still not supported
-    ret << BuildV2000SDILine(idx, sGroupItr->get());
+  if (getMolSGroups(mol)) {
+	  unsigned int count = 0;
+	  unsigned int idx = 0;
+	  for (auto sgroup : *getMolSGroups(mol)) {
+		  ++idx;
+		  ret << BuildV2000IdxVectorDataLines(15, idx, "SAL",
+			  sgroup->getAtoms());
+		  ret << BuildV2000IdxVectorDataLines(15, idx, "SPA",
+			  sgroup->getPAtoms());
+		  ret << BuildV2000IdxVectorDataLines(15, idx, "SBL",
+			  sgroup->getBonds());
+		  // Write CRS line -- CRS still not supported
+		  ret << BuildV2000SDILine(idx, sgroup.get());
 
-    ret << BuildV2000SMTLine(idx, sGroupItr->get());
-    ret << BuildV2000SBVLine(idx, sGroupItr->get());
+		  ret << BuildV2000SMTLine(idx, sgroup.get());
+		  ret << BuildV2000SBVLine(idx, sgroup.get());
 
-    ret << BuildV2000SDTLine(idx, sGroupItr->get());
-    ret << BuildV2000SDDLine(idx, sGroupItr->get());
-    // SCD/SED must come after SDT
-    ret << BuildV2000SCDSEDLines(idx, sGroupItr->get());
+		  ret << BuildV2000SDTLine(idx, sgroup.get());
+		  ret << BuildV2000SDDLine(idx, sgroup.get());
+		  // SCD/SED must come after SDT
+		  ret << BuildV2000SCDSEDLines(idx, sgroup.get());
 
-    ret << BuildV2000PXALine(idx, sGroupItr->get());
-    ret << BuildV2000SAPLines(idx, sGroupItr->get());
-    ret << BuildV2000SCLLine(idx, sGroupItr->get());
+		  ret << BuildV2000PXALine(idx, sgroup.get());
+		  ret << BuildV2000SAPLines(idx, sgroup.get());
+		  ret << BuildV2000SCLLine(idx, sgroup.get());
+	  }
   }
-
   return ret.str();
 }
 

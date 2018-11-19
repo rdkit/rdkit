@@ -879,30 +879,30 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
   // -------------------
   auto numSGroups = mol->getNumSGroups();
   if (numSGroups > 0) {
-    streamWrite(ss, BEGINSGROUP);
+	  streamWrite(ss, BEGINSGROUP);
 
-    tmpInt = static_cast<int32_t>(numSGroups);
-    streamWrite(ss, tmpInt);
+	  tmpInt = static_cast<int32_t>(numSGroups);
+	  streamWrite(ss, tmpInt);
 
-    // Pickle Sgroups
-    for (auto sgroup_itr = mol->beginSGroups(); sgroup_itr != mol->endSGroups();
-         ++sgroup_itr) {
-      _pickleSGroup<T>(ss, sgroup_itr->get(), atomIdxMap, bondIdxMap);
-    }
+	  // Pickle Sgroups
+	  if (getMolSGroups(*mol)) {
+		  for (auto sgroup : *getMolSGroups(*mol)) {
+			  _pickleSGroup<T>(ss, sgroup.get(), atomIdxMap, bondIdxMap);
+		  }
 
-    // Pickle Sgroup parentships
-    for (auto sgroup_itr = mol->beginSGroups(); sgroup_itr != mol->endSGroups();
-         ++sgroup_itr) {
-      auto parent = (*sgroup_itr)->getParent();
-      if (parent) {
-        tmpInt = static_cast<signed int>(parent->getIndexInMol());
-      } else {
-        tmpInt = -1;
-      }
-      streamWrite(ss, tmpInt);
-    }
+		  // Pickle Sgroup parentships
+		  for (auto sgroup : *getMolSGroups(*mol)) {
+			  auto parent = sgroup->getParent();
+			  if (parent) {
+				  tmpInt = static_cast<signed int>(parent->getIndexInMol());
+			  }
+			  else {
+				  tmpInt = -1;
+			  }
+			  streamWrite(ss, tmpInt);
+		  }
+	  }
   }
-
   // Write Stereo Groups
   {
     auto &stereo_groups = mol->getStereoGroups();

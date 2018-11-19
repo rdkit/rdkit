@@ -427,7 +427,7 @@ void testSGroupsRoundTrip(const std::string &rdbase, bool forceV3000) {
     writer.write(*sampleMol);
     writer.close();
   }
-  auto roundtripMol = std::shared_ptr<RWMol>(MolFileToMol(fName));
+  std::unique_ptr<RWMol> roundtripMol(MolFileToMol(fName));
   checkSampleMolecule(roundtripMol.get());
 }
 
