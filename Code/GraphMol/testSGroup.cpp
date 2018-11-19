@@ -13,11 +13,13 @@
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
+#include <GraphMol/Sgroup.h>
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
 #include "GraphMol/FileParsers/FileParsers.h"
 #include "GraphMol/FileParsers/MolSupplier.h"
 #include "GraphMol/FileParsers/MolWriters.h"
+
 
 #include <memory>
 #include <cstdlib>

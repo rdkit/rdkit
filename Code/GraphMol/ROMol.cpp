@@ -21,6 +21,8 @@
 #include "QueryBond.h"
 #include "MolPickler.h"
 #include "Conformer.h"
+#include "Sgroup.h"
+
 
 namespace RDKit {
 class QueryAtom;

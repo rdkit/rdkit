@@ -266,6 +266,13 @@ bool SGroupConnectTypeOK(std::string typ) {
          sGroupConnectTypes.end();
 }
 
+std::vector<boost::shared_ptr<SGroup>> *getMolSGroups(ROMol &mol) {
+	return &mol.d_sgroups;
+}
+const std::vector<boost::shared_ptr<SGroup>> *getMolSGroups(const ROMol &mol) {
+	return &mol.d_sgroups;
+}
+
 }  // namespace RDKit
 
 // TO DO: finish this!

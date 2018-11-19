@@ -22,6 +22,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/StereoGroup.h>
+#include <GraphMol/Sgroup.h>
 #include <RDGeneral/StreamOps.h>
 #include <RDGeneral/RDLog.h>
 

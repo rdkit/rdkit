@@ -191,6 +191,9 @@ bool SGroupSubTypeOK(std::string typ);
 
 bool SGroupConnectTypeOK(std::string typ);
 
+std::vector<boost::shared_ptr<SGroup>> *getMolSGroups(ROMol &mol);
+const std::vector<boost::shared_ptr<SGroup>> *getMolSGroups(const ROMol &mol);
+
 }  // namespace RDKit
 
 //! allows SGroup objects to be dumped to streams

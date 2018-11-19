@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2015 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2018 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -34,10 +34,10 @@
 #include "Atom.h"
 #include "Bond.h"
 #include "Conformer.h"
-#include "Sgroup.h"
 #include "StereoGroup.h"
 
 namespace RDKit {
+class SGroup;
 class Atom;
 class Bond;
 //! This is the BGL type used to store the topology:
@@ -232,7 +232,7 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   typedef CONF_SPTR_LIST_I ConformerIterator;
   typedef CONF_SPTR_LIST_CI ConstConformerIterator;
 
-  typedef std::vector<SGROUP_SPTR> SGROUP_SPTR_VECT;
+  typedef std::vector<boost::shared_ptr<SGroup>> SGROUP_SPTR_VECT;
   typedef SGROUP_SPTR_VECT::iterator SGroupIterator;
   typedef SGROUP_SPTR_VECT::const_iterator ConstSGroupIterator;
 
@@ -710,7 +710,9 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   BOND_BOOKMARK_MAP d_bondBookmarks;
   RingInfo *dp_ringInfo;
   CONF_SPTR_LIST d_confs;
-  SGROUP_SPTR_VECT d_sgroups;
+  std::vector<boost::shared_ptr<SGroup>> d_sgroups;
+  friend std::vector<boost::shared_ptr<SGroup>> *getMolSGroups(ROMol &);
+  friend const std::vector<boost::shared_ptr<SGroup>> *getMolSGroups(const ROMol &);
   std::vector<StereoGroup> d_stereo_groups;
 
   ROMol &operator=(
