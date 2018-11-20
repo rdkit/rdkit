@@ -662,13 +662,6 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
     return d_stereo_groups;
   }
 
-  //! Add a new SGroup
-  /*!
-    \param sgroup - SGroup to be added to the molecule; this molecule takes
-    ownership of the sgroup
-  */
-  unsigned int addSGroup(SGroup *sgroup);
-
  private:
   MolGraph d_graph;
   ATOM_BOOKMARK_MAP d_atomBookmarks;

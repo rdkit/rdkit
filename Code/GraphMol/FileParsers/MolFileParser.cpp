@@ -1683,7 +1683,7 @@ bool ParseMolBlockProperties(std::istream *inStream, unsigned int &line,
   if (tempStr[0] == 'M' && tempStr.substr(0, 6) == "M  END") {
     // All went well, add SGroups to Mol
     for (const auto &sgroup : sGroupMap) {
-      mol->addSGroup(sgroup.second);
+      addMolSGroup(*mol,sgroup.second);
     }
 
     fileComplete = true;

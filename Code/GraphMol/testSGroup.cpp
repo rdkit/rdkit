@@ -72,7 +72,7 @@ std::shared_ptr<RWMol> buildSampleMolecule() {
   //// First SGroup ////
   {
     SGroup *sg = new SGroup(m.get(), "MUL");
-    m->addSGroup(sg);
+    addMolSGroup(*m,sg);
 
     sg->setProp("SUBTYPE", "BLO");
     sg->setProp("MULT", "n");
@@ -109,7 +109,7 @@ std::shared_ptr<RWMol> buildSampleMolecule() {
   //// Second SGroup ////
   {
     SGroup *sg = new SGroup(m.get(), "SUP");
-    m->addSGroup(sg);
+    addMolSGroup(*m,sg);
 
     // Add some atoms and bonds
     for (unsigned i = 3; i < 6; ++i) {
@@ -130,7 +130,7 @@ std::shared_ptr<RWMol> buildSampleMolecule() {
   //// Third SGroup ////
   {
     SGroup *sg = new SGroup(m.get(), "DAT");
-    m->addSGroup(sg);
+    addMolSGroup(*m,sg);
 
     sg->setProp("FIELDNAME", "SAMPLE FIELD NAME");  // 30 char max
     // Field Type is ignored in V3000
@@ -292,10 +292,10 @@ void testCreateSGroups() {
   RWMol m;
 
   SGroup *sg = new SGroup(&m, "DAT");
-  m.addSGroup(sg);
+  addMolSGroup(m,sg);
 
   sg = new SGroup(&m, "SUP");
-  m.addSGroup(sg);
+  addMolSGroup(m,sg);
 
   sg = nullptr;
 

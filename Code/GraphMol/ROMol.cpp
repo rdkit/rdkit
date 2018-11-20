@@ -109,7 +109,7 @@ void ROMol::initFromOther(const ROMol &other, bool quickCopy, int confId) {
     // copy sgroups
 	if(getMolSGroups(other)){
 		for (auto sg : *getMolSGroups(other)) {
-			this->addSGroup(new SGroup(*sg));
+			addMolSGroup(*this,new SGroup(*sg));
 		}
 		for (auto sg : *getMolSGroups(*this)) {
 			sg->updateOwningMol(this);
@@ -617,14 +617,6 @@ unsigned int ROMol::addConformer(Conformer *conf, bool assignId) {
   CONFORMER_SPTR nConf(conf);
   d_confs.push_back(nConf);
   return conf->getId();
-}
-
-unsigned int ROMol::addSGroup(SGroup *sgroup) {
-	sgroup->setOwningMol(this);
-	SGROUP_SPTR nSGroup(sgroup);
-	unsigned int id = d_sgroups.size();
-	d_sgroups.push_back(nSGroup);
-	return id;
 }
 
 

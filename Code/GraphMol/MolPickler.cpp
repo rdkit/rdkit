@@ -1054,7 +1054,7 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
       if (tmpInt != -1) {
         sgroup->setParent(sgroups[tmpInt]);
       }
-      mol->addSGroup(sgroup);
+      addMolSGroup(*mol,sgroup);
     }
 
     streamRead(ss, tag, version);
