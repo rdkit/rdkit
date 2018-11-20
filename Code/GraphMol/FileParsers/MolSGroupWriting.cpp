@@ -22,10 +22,10 @@ std::string BuildV2000STYLines(const ROMol &mol) {
   std::ostringstream ret;
   std::ostringstream temp;
 
-  if (getMolSGroups(mol)) {
+  if (getSGroups(mol)) {
 	  unsigned int count = 0;
 	  unsigned int idx = 0;
-	  for (auto sgroup : *getMolSGroups(mol) ) {
+	  for (auto sgroup : *getSGroups(mol) ) {
 		  temp << FormatV2000IntField(++idx)
 			  << FormatV2000StringField(sgroup->getType(), 3, true, true);
 		  if (++count == 8) {
@@ -51,10 +51,10 @@ std::string BuildV2000StringPropLines(const unsigned int entriesPerLine,
   std::ostringstream ret;
   std::ostringstream temp;
 
-  if (getMolSGroups(mol)) {
+  if (getSGroups(mol)) {
 	  unsigned int count = 0;
 	  unsigned int idx = 0;
-	  for (auto sgroup : *getMolSGroups(mol)) {
+	  for (auto sgroup : *getSGroups(mol)) {
 		  if (sgroup->hasProp(propName)) {  // Write field only if defined
 			  temp << FormatV2000IntField(++idx)
 				  << FormatV2000StringField(sgroup->getProp(propName),
@@ -79,10 +79,10 @@ std::string BuildV2000SLBLines(const ROMol &mol) {
 	std::ostringstream ret;
 	std::ostringstream temp;
 
-	if (getMolSGroups(mol)) {
+	if (getSGroups(mol)) {
 		unsigned int count = 0;
 		unsigned int idx = 0;
-		for (auto sgroup : *getMolSGroups(mol)) {
+		for (auto sgroup : *getSGroups(mol)) {
 			unsigned int id = sgroup->getId();
 			if (id > 0) {  // Write field only if specific id was assigned
 				temp << FormatV2000IntField(++idx) << FormatV2000IntField(id);
@@ -106,10 +106,10 @@ std::string BuildV2000SDSLines(const ROMol &mol) {
   std::ostringstream ret;
   std::ostringstream temp;
 
-  if (getMolSGroups(mol)) {
+  if (getSGroups(mol)) {
 	  unsigned int count = 0;
 	  unsigned int idx = 0;
-	  for (auto sgroup : *getMolSGroups(mol)) {
+	  for (auto sgroup : *getSGroups(mol)) {
 		  // Write field only if defined
 		  if (sgroup->hasProp("ESTATE") &&
 			  sgroup->getProp("ESTATE") == "E") {
@@ -133,10 +133,10 @@ std::string BuildV2000SDSLines(const ROMol &mol) {
 std::string BuildV2000SPLLines(const ROMol &mol) {
   std::ostringstream ret;
   std::ostringstream temp;
-  if (getMolSGroups(mol)) {
+  if (getSGroups(mol)) {
 	  unsigned int count = 0;
 	  unsigned int idx = 0;
-	  for (auto sgroup : *getMolSGroups(mol)) {
+	  for (auto sgroup : *getSGroups(mol)) {
 		  auto parent = sgroup->getParent();
 		  if (parent) {  // Write field only if a parent is defined
 			  unsigned int parentIdx = 1 + parent->getIndexInMol();
@@ -160,10 +160,10 @@ std::string BuildV2000SPLLines(const ROMol &mol) {
 std::string BuildV2000SNCLines(const ROMol &mol) {
   std::ostringstream ret;
   std::ostringstream temp;
-  if (getMolSGroups(mol)) {
+  if (getSGroups(mol)) {
 	  unsigned int count = 0;
 	  unsigned int idx = 0;
-	  for (auto sgroup : *getMolSGroups(mol)) {
+	  for (auto sgroup : *getSGroups(mol)) {
 		  unsigned int compno = sgroup->getCompNo();
 		  if (compno > 0) {  // Write field only if compno is set
 			  temp << FormatV2000IntField(++idx) << FormatV2000IntField(compno);
@@ -187,10 +187,10 @@ std::string BuildV2000SBTLines(const ROMol &mol) {
   std::ostringstream ret;
   std::ostringstream temp;
 
-  if (getMolSGroups(mol)) {
+  if (getSGroups(mol)) {
 	  unsigned int count = 0;
 	  unsigned int idx = 0;
-	  for (auto sgroup : *getMolSGroups(mol)) {
+	  for (auto sgroup : *getSGroups(mol)) {
 		  if (sgroup->hasProp("BRKTYP")) {
 			  std::string bracketType = sgroup->getProp("BRKTYP");
 			  if (bracketType == "BRACKET") {
@@ -437,10 +437,10 @@ const std::string GetMolFileSGroupInfo(const RWMol &mol) {
   ret << BuildV2000SBTLines(mol);
 
   // single group per line properties
-  if (getMolSGroups(mol)) {
+  if (getSGroups(mol)) {
 	  unsigned int count = 0;
 	  unsigned int idx = 0;
-	  for (auto sgroup : *getMolSGroups(mol)) {
+	  for (auto sgroup : *getSGroups(mol)) {
 		  ++idx;
 		  ret << BuildV2000IdxVectorDataLines(15, idx, "SAL",
 			  sgroup->getAtoms());

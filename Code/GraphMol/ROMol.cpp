@@ -107,11 +107,11 @@ void ROMol::initFromOther(const ROMol &other, bool quickCopy, int confId) {
     }
 
     // copy sgroups
-	if(getMolSGroups(other)){
-		for (auto sg : *getMolSGroups(other)) {
-			addMolSGroup(*this,new SGroup(*sg));
+	if(getSGroups(other)){
+		for (auto sg : *getSGroups(other)) {
+			addSGroup(*this,new SGroup(*sg));
 		}
-		for (auto sg : *getMolSGroups(*this)) {
+		for (auto sg : *getSGroups(*this)) {
 			sg->updateOwningMol(this);
 		}
 	}

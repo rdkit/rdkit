@@ -189,22 +189,24 @@ bool SGroupSubTypeOK(std::string typ);
 
 bool SGroupConnectTypeOK(std::string typ);
 
-unsigned int getMolNumSGroups(const ROMol &mol);
+//! \name SGroups and molecules
+//@{
+unsigned int getNumSGroups(const ROMol &mol);
 
-std::vector<boost::shared_ptr<SGroup>> *getMolSGroups(ROMol &mol);
-const std::vector<boost::shared_ptr<SGroup>> *getMolSGroups(const ROMol &mol);
+std::vector<boost::shared_ptr<SGroup>> *getSGroups(ROMol &mol);
+const std::vector<boost::shared_ptr<SGroup>> *getSGroups(const ROMol &mol);
 
 //! return the sgroup at specified index
-SGroup *getMolSGroup(ROMol &mol, unsigned int idx);
-const SGroup *getMolSGroup(const ROMol &mol, unsigned int idx);
+SGroup *getSGroup(ROMol &mol, unsigned int idx);
+const SGroup *getSGroup(const ROMol &mol, unsigned int idx);
 
   //! Add a new SGroup
   /*!
     \param sgroup - SGroup to be added to the molecule; this molecule takes
     ownership of the sgroup
   */
-  unsigned int addMolSGroup(ROMol &mol,SGroup *sgroup);
-  
+  unsigned int addSGroup(ROMol &mol,SGroup *sgroup);
+//@}  
 
 }  // namespace RDKit
 

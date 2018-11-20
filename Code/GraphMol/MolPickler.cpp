@@ -877,7 +877,7 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
   // Write SGroups (if present)
   //
   // -------------------
-  auto numSGroups = getMolNumSGroups(*mol);
+  auto numSGroups = getNumSGroups(*mol);
   if (numSGroups > 0) {
 	  streamWrite(ss, BEGINSGROUP);
 
@@ -885,13 +885,13 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
 	  streamWrite(ss, tmpInt);
 
 	  // Pickle Sgroups
-	  if (getMolSGroups(*mol)) {
-		  for (auto sgroup : *getMolSGroups(*mol)) {
+	  if (getSGroups(*mol)) {
+		  for (auto sgroup : *getSGroups(*mol)) {
 			  _pickleSGroup<T>(ss, sgroup.get(), atomIdxMap, bondIdxMap);
 		  }
 
 		  // Pickle Sgroup parentships
-		  for (auto sgroup : *getMolSGroups(*mol)) {
+		  for (auto sgroup : *getSGroups(*mol)) {
 			  auto parent = sgroup->getParent();
 			  if (parent) {
 				  tmpInt = static_cast<signed int>(parent->getIndexInMol());
@@ -1054,7 +1054,7 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
       if (tmpInt != -1) {
         sgroup->setParent(sgroups[tmpInt]);
       }
-      addMolSGroup(*mol,sgroup);
+      addSGroup(*mol,sgroup);
     }
 
     streamRead(ss, tag, version);

@@ -1066,7 +1066,7 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
   nAtoms = tmol.getNumAtoms();
   nBonds = tmol.getNumBonds();
   nLists = 0;
-  nSGroups = getMolNumSGroups(tmol);
+  nSGroups = getNumSGroups(tmol);
 
   chiralFlag = 0;
   nsText = 0;
@@ -1203,10 +1203,10 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
       res += "M  V30 END BOND\n";
     }
 
-    if (getMolNumSGroups(tmol)) {
+    if (getNumSGroups(tmol)) {
       res += "M  V30 BEGIN SGROUP\n";
       unsigned int idx=0;
-      for(const auto sgrp : *getMolSGroups(tmol)){
+      for(const auto sgrp : *getSGroups(tmol)){
         res += GetV3000MolFileSGroupLines(++idx, sgrp);
       }
       res += "M  V30 END SGROUP\n";

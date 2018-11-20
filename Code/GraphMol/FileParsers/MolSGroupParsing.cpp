@@ -866,7 +866,7 @@ void ParseV3000SGroupsBlock(std::istream *inStream, unsigned int &line,
 
   // SGroups successfully parsed, now add them to the moleculse
   for (const auto &sg : sGroupMap) {
-    addMolSGroup(*mol,sg.second);
+    addSGroup(*mol,sg.second);
   }
 }
 

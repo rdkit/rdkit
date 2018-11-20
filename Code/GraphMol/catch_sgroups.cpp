@@ -67,7 +67,7 @@ std::shared_ptr<RWMol> buildSampleMolecule() {
   //// First SGroup ////
   {
     SGroup *sg = new SGroup(m.get(), "MUL");
-    addMolSGroup(*m,sg);
+    addSGroup(*m,sg);
 
     sg->setProp("SUBTYPE", "BLO");
     sg->setProp("MULT", "n");
@@ -104,7 +104,7 @@ std::shared_ptr<RWMol> buildSampleMolecule() {
   //// Second SGroup ////
   {
     SGroup *sg = new SGroup(m.get(), "SUP");
-    addMolSGroup(*m,sg);
+    addSGroup(*m,sg);
 
     // Add some atoms and bonds
     for (unsigned i = 3; i < 6; ++i) {
@@ -125,7 +125,7 @@ std::shared_ptr<RWMol> buildSampleMolecule() {
   //// Third SGroup ////
   {
     SGroup *sg = new SGroup(m.get(), "DAT");
-    addMolSGroup(*m,sg);
+    addSGroup(*m,sg);
 
     sg->setProp("FIELDNAME", "SAMPLE FIELD NAME");  // 30 char max
     // Field Type is ignored in V3000
@@ -142,8 +142,8 @@ std::shared_ptr<RWMol> buildSampleMolecule() {
   }
 
   // Set a parent with higher index
-  auto sg0 = getMolSGroup(*m,0);
-  auto sg2 = getMolSGroup(*m,2);
+  auto sg0 = getSGroup(*m,0);
+  auto sg2 = getSGroup(*m,2);
   sg0->setParent(sg2);
 
   return m;
@@ -156,26 +156,26 @@ TEST_CASE("Basic Sgroup creation", "[Sgroups]") {
   RWMol m;
 
   SGroup *sg = new SGroup(&m, "DAT");
-  addMolSGroup(m,sg);
+  addSGroup(m,sg);
 
   sg = new SGroup(&m, "SUP");
-  addMolSGroup(m,sg);
+  addSGroup(m,sg);
 
   sg = nullptr;
 
-  REQUIRE(getMolNumSGroups(m) == 2);
-  CHECK(getMolSGroup(m,0)->getType() == "DAT");
-  CHECK(getMolSGroup(m,1)->getType() == "SUP");
+  REQUIRE(getNumSGroups(m) == 2);
+  CHECK(getSGroup(m,0)->getType() == "DAT");
+  CHECK(getSGroup(m,1)->getType() == "SUP");
 }
 
 
 TEST_CASE("Build and test sample molecule", "[Sgroups]") {
   auto mol = buildSampleMolecule();
   REQUIRE(mol);
-  CHECK(getMolNumSGroups(*mol) == 3);
+  CHECK(getNumSGroups(*mol) == 3);
   
   SECTION("first sgroup"){
-    auto sg = getMolSGroup(*mol,0);
+    auto sg = getSGroup(*mol,0);
     CHECK(sg->getType() == "MUL");
 
     CHECK(sg->getProp("SUBTYPE") == "BLO");
@@ -229,11 +229,11 @@ TEST_CASE("Build and test sample molecule", "[Sgroups]") {
     CHECK(sg->getProp("BRKTYP") == "PAREN");
 
     auto parent = sg->getParent();
-    CHECK(parent == getMolSGroup(*mol,2));
+    CHECK(parent == getSGroup(*mol,2));
   }
 
   SECTION("second sgroup"){
-    auto sg = getMolSGroup(*mol,1);
+    auto sg = getSGroup(*mol,1);
     CHECK(sg->getType() == "SUP");
 
     std::vector<unsigned int> atoms_reference = {4, 5, 6};
@@ -275,7 +275,7 @@ TEST_CASE("Build and test sample molecule", "[Sgroups]") {
   }
 
   SECTION("third sgroup"){
-    auto sg = getMolSGroup(*mol,2);
+    auto sg = getSGroup(*mol,2);
     CHECK(sg->getType() == "DAT");
 
     CHECK(sg->getProp("FIELDNAME") == "SAMPLE FIELD NAME");

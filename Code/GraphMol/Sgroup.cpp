@@ -53,7 +53,7 @@ bool SGroup::hasProp(const std::string &prop) const {
 
 namespace {
   bool isSGroupIdFree(const ROMol &mol,unsigned int id){
-    auto sgroups = getMolSGroups(mol);
+    auto sgroups = getSGroups(mol);
     CHECK_INVARIANT(sgroups,"no sgroups on molecule owning an sgroup");
 	auto match_sgroup = [&](const SGROUP_SPTR &sg) { return id == sg->getId(); };
     return std::find_if(sgroups->begin(),sgroups->end(),match_sgroup) == sgroups->end();
@@ -61,8 +61,8 @@ namespace {
 
 unsigned int getNextFreeSGroupId(const ROMol &mol) {
   std::set<unsigned int> ids;
-  CHECK_INVARIANT(getMolSGroups(mol),"no sgroups on molecule");
-  for (const auto &sgroup : *getMolSGroups(mol)) {
+  CHECK_INVARIANT(getSGroups(mol),"no sgroups on molecule");
+  for (const auto &sgroup : *getSGroups(mol)) {
     ids.insert(sgroup->getId());
   }
   unsigned int nexId = 1;  // smallest possible ID
@@ -101,7 +101,7 @@ unsigned int SGroup::getIndexInMol() const {
   }
 
   auto match_sgroup = [&](const SGROUP_SPTR &sg) { return this == sg.get(); };
-  auto sgroups = getMolSGroups(*dp_mol);
+  auto sgroups = getSGroups(*dp_mol);
   TEST_ASSERT(sgroups);
 	  auto sgroupItr =
       std::find_if(sgroups->begin(), sgroups->end(), match_sgroup);
@@ -245,7 +245,7 @@ void SGroup::updateOwningMol(ROMol *other_mol) {
 
   if (d_parent) {
     auto parent_idx = d_parent->getIndexInMol();
-    d_parent = getMolSGroup(*other_mol,parent_idx);
+    d_parent = getSGroup(*other_mol,parent_idx);
   }
 }
 
@@ -293,39 +293,39 @@ bool SGroupConnectTypeOK(std::string typ) {
          sGroupConnectTypes.end();
 }
 
-unsigned int getMolNumSGroups(const ROMol &mol) {
-  if(!getMolSGroups(mol)) return 0;
-  return rdcast<unsigned int>(getMolSGroups(mol)->size());
+unsigned int getNumSGroups(const ROMol &mol) {
+  if(!getSGroups(mol)) return 0;
+  return rdcast<unsigned int>(getSGroups(mol)->size());
 }
 
-std::vector<boost::shared_ptr<SGroup>> *getMolSGroups(ROMol &mol) {
+std::vector<boost::shared_ptr<SGroup>> *getSGroups(ROMol &mol) {
 	return &mol.d_sgroups;
 }
-const std::vector<boost::shared_ptr<SGroup>> *getMolSGroups(const ROMol &mol) {
+const std::vector<boost::shared_ptr<SGroup>> *getSGroups(const ROMol &mol) {
 	return &mol.d_sgroups;
 }
 
-SGroup *getMolSGroup(ROMol &mol,unsigned int idx) {
+SGroup *getSGroup(ROMol &mol,unsigned int idx) {
   // make sure we have more than one sgroup
-  auto sgroups = getMolSGroups(mol);
+  auto sgroups = getSGroups(mol);
   if (!sgroups || sgroups->empty()){
     throw SGroupException("No SGroups available on the molecule");
   }
   return sgroups->at(idx).get();
 }
-const SGroup *getMolSGroup(const ROMol &mol,unsigned int idx) {
+const SGroup *getSGroup(const ROMol &mol,unsigned int idx) {
   // make sure we have more than one sgroup
-  auto sgroups = getMolSGroups(mol);
+  auto sgroups = getSGroups(mol);
   if (!sgroups || sgroups->empty()){
     throw SGroupException("No SGroups available on the molecule");
   }
   return sgroups->at(idx).get();
 }
 
-unsigned int addMolSGroup(ROMol &mol, SGroup *sgroup) {
+unsigned int addSGroup(ROMol &mol, SGroup *sgroup) {
   sgroup->setOwningMol(&mol);
   SGROUP_SPTR nSGroup(sgroup);
-  auto sgroups = getMolSGroups(mol);
+  auto sgroups = getSGroups(mol);
   CHECK_INVARIANT(sgroups,"no s group container for molecule");
   unsigned int id = sgroups->size();
   sgroups->push_back(nSGroup);

@@ -669,8 +669,8 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   RingInfo *dp_ringInfo;
   CONF_SPTR_LIST d_confs;
   std::vector<boost::shared_ptr<SGroup>> d_sgroups;
-  friend std::vector<boost::shared_ptr<SGroup>> *getMolSGroups(ROMol &);
-  friend const std::vector<boost::shared_ptr<SGroup>> *getMolSGroups(const ROMol &);
+  friend std::vector<boost::shared_ptr<SGroup>> *getSGroups(ROMol &);
+  friend const std::vector<boost::shared_ptr<SGroup>> *getSGroups(const ROMol &);
   //! Clear all the SGroups on the molecule
   void clearSGroups() { d_sgroups.clear(); }
   std::vector<StereoGroup> d_stereo_groups;
