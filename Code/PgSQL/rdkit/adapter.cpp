@@ -688,7 +688,14 @@ extern "C" CROMol MolAdjustQueryProperties(CROMol i, const char *params) {
 
 extern "C" char *MolGetSVG(CROMol i, unsigned int w, unsigned int h,
                            const char *legend, const char *params) {
-  RWMol *im = (RWMol *)i;
+  // SVG routines need an RWMol since they change the
+  // molecule as they prepare it for drawing. We don't
+  // want a plain SQL function (mol_to_svg) to have
+  // unexpected side effects, so take a copy and render
+  // (and change) that.
+  const ROMol *input_mol = (ROMol *)i;
+  RWMol input_copy = *input_mol;
+  RWMol *im = &input_copy;
 
   MolDraw2DUtils::prepareMolForDrawing(*im);
   std::string slegend(legend ? legend : "");
