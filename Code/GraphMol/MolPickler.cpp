@@ -879,29 +879,28 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
   // -------------------
   auto numSGroups = getNumSGroups(*mol);
   if (numSGroups > 0) {
-	  streamWrite(ss, BEGINSGROUP);
+    streamWrite(ss, BEGINSGROUP);
 
-	  tmpInt = static_cast<int32_t>(numSGroups);
-	  streamWrite(ss, tmpInt);
+    tmpInt = static_cast<int32_t>(numSGroups);
+    streamWrite(ss, tmpInt);
 
-	  // Pickle Sgroups
-	  if (getSGroups(*mol)) {
-		  for (auto sgroup : *getSGroups(*mol)) {
-			  _pickleSGroup<T>(ss, sgroup.get(), atomIdxMap, bondIdxMap);
-		  }
+    // Pickle Sgroups
+    if (getSGroups(*mol)) {
+      for (auto sgroup : *getSGroups(*mol)) {
+        _pickleSGroup<T>(ss, sgroup.get(), atomIdxMap, bondIdxMap);
+      }
 
-		  // Pickle Sgroup parentships
-		  for (auto sgroup : *getSGroups(*mol)) {
-			  auto parent = sgroup->getParent();
-			  if (parent) {
-				  tmpInt = static_cast<signed int>(parent->getIndexInMol());
-			  }
-			  else {
-				  tmpInt = -1;
-			  }
-			  streamWrite(ss, tmpInt);
-		  }
-	  }
+      // Pickle Sgroup parentships
+      for (auto sgroup : *getSGroups(*mol)) {
+        auto parent = sgroup->getParent();
+        if (parent) {
+          tmpInt = static_cast<signed int>(parent->getIndexInMol());
+        } else {
+          tmpInt = -1;
+        }
+        streamWrite(ss, tmpInt);
+      }
+    }
   }
   // Write Stereo Groups
   {
@@ -1054,7 +1053,7 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
       if (tmpInt != -1) {
         sgroup->setParent(sgroups[tmpInt]);
       }
-      addSGroup(*mol,sgroup);
+      addSGroup(*mol, sgroup);
     }
 
     streamRead(ss, tag, version);

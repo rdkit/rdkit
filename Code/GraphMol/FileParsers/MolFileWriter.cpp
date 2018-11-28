@@ -1205,8 +1205,8 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
 
     if (getNumSGroups(tmol)) {
       res += "M  V30 BEGIN SGROUP\n";
-      unsigned int idx=0;
-      for(const auto sgrp : *getSGroups(tmol)){
+      unsigned int idx = 0;
+      for (const auto sgrp : *getSGroups(tmol)) {
         res += GetV3000MolFileSGroupLines(++idx, sgrp);
       }
       res += "M  V30 END SGROUP\n";

@@ -20,7 +20,6 @@
 #include "GraphMol/FileParsers/MolSupplier.h"
 #include "GraphMol/FileParsers/MolWriters.h"
 
-
 #include <memory>
 #include <cstdlib>
 
@@ -72,7 +71,7 @@ std::shared_ptr<RWMol> buildSampleMolecule() {
   //// First SGroup ////
   {
     SGroup *sg = new SGroup(m.get(), "MUL");
-    addSGroup(*m,sg);
+    addSGroup(*m, sg);
 
     sg->setProp("SUBTYPE", "BLO");
     sg->setProp("MULT", "n");
@@ -109,7 +108,7 @@ std::shared_ptr<RWMol> buildSampleMolecule() {
   //// Second SGroup ////
   {
     SGroup *sg = new SGroup(m.get(), "SUP");
-    addSGroup(*m,sg);
+    addSGroup(*m, sg);
 
     // Add some atoms and bonds
     for (unsigned i = 3; i < 6; ++i) {
@@ -130,7 +129,7 @@ std::shared_ptr<RWMol> buildSampleMolecule() {
   //// Third SGroup ////
   {
     SGroup *sg = new SGroup(m.get(), "DAT");
-    addSGroup(*m,sg);
+    addSGroup(*m, sg);
 
     sg->setProp("FIELDNAME", "SAMPLE FIELD NAME");  // 30 char max
     // Field Type is ignored in V3000
@@ -147,8 +146,8 @@ std::shared_ptr<RWMol> buildSampleMolecule() {
   }
 
   // Set a parent with higher index
-  auto sg0 = getSGroup(*m,0);
-  auto sg2 = getSGroup(*m,2);
+  auto sg0 = getSGroup(*m, 0);
+  auto sg2 = getSGroup(*m, 2);
   sg0->setParent(sg2);
 
   return m;
@@ -162,7 +161,7 @@ void checkSampleMolecule(RWMol *mol) {
 
   {
     // First SGroup
-    auto sg = getSGroup(*mol,0);
+    auto sg = getSGroup(*mol, 0);
     TEST_ASSERT(sg->getType() == "MUL");
 
     TEST_ASSERT(sg->getProp("SUBTYPE") == "BLO");
@@ -216,12 +215,12 @@ void checkSampleMolecule(RWMol *mol) {
     TEST_ASSERT(sg->getProp("BRKTYP") == "PAREN");
 
     auto parent = sg->getParent();
-    TEST_ASSERT(parent == getSGroup(*mol,2));
+    TEST_ASSERT(parent == getSGroup(*mol, 2));
   }
 
   {
     // Second SGroup
-    auto sg = getSGroup(*mol,1);
+    auto sg = getSGroup(*mol, 1);
     TEST_ASSERT(sg->getType() == "SUP");
 
     std::vector<unsigned int> atoms_reference = {4, 5, 6};
@@ -264,7 +263,7 @@ void checkSampleMolecule(RWMol *mol) {
 
   {
     // Third SGroup
-    auto sg = getSGroup(*mol,2);
+    auto sg = getSGroup(*mol, 2);
     TEST_ASSERT(sg->getType() == "DAT");
 
     TEST_ASSERT(sg->getProp("FIELDNAME") == "SAMPLE FIELD NAME");
@@ -292,16 +291,16 @@ void testCreateSGroups() {
   RWMol m;
 
   SGroup *sg = new SGroup(&m, "DAT");
-  addSGroup(m,sg);
+  addSGroup(m, sg);
 
   sg = new SGroup(&m, "SUP");
-  addSGroup(m,sg);
+  addSGroup(m, sg);
 
   sg = nullptr;
 
   TEST_ASSERT(getNumSGroups(m) == 2);
-  TEST_ASSERT(getSGroup(m,0)->getType() == "DAT");
-  TEST_ASSERT(getSGroup(m,1)->getType() == "SUP");
+  TEST_ASSERT(getSGroup(m, 0)->getType() == "DAT");
+  TEST_ASSERT(getSGroup(m, 1)->getType() == "SUP");
 }
 
 void testParseSGroups(const std::string &rdbase) {
@@ -316,7 +315,7 @@ void testParseSGroups(const std::string &rdbase) {
     TEST_ASSERT(m);
     TEST_ASSERT(getNumSGroups(*m) == 1);
 
-    auto sgroup = getSGroup(*m,0);
+    auto sgroup = getSGroup(*m, 0);
 
     TEST_ASSERT(sgroup->getType() == "MON");
 
@@ -345,7 +344,7 @@ void testParseSGroups(const std::string &rdbase) {
     TEST_ASSERT(m);
     TEST_ASSERT(getNumSGroups(*m) == 1);
 
-    auto sgroup = getSGroup(*m,0);
+    auto sgroup = getSGroup(*m, 0);
 
     TEST_ASSERT(sgroup->getType() == "MON");
 
@@ -367,7 +366,7 @@ void testParseSGroups(const std::string &rdbase) {
     TEST_ASSERT(m);
     TEST_ASSERT(getNumSGroups(*m) == 1);
 
-    auto sgroup = getSGroup(*m,0);
+    auto sgroup = getSGroup(*m, 0);
 
     TEST_ASSERT(sgroup->getType() == "SUP");
     TEST_ASSERT(sgroup->getProp("CLASS") == "DEMOCLASS");
@@ -393,7 +392,7 @@ void testParseSGroups(const std::string &rdbase) {
     TEST_ASSERT(m);
     TEST_ASSERT(getNumSGroups(*m) == 1);
 
-    auto sgroup = getSGroup(*m,0);
+    auto sgroup = getSGroup(*m, 0);
 
     TEST_ASSERT(sgroup->getType() == "SUP");
 

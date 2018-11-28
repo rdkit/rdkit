@@ -4471,8 +4471,7 @@ void testRCSBSdf() {
 
 void testParseCHG() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing PDB charge parsing"
-                       << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing PDB charge parsing" << std::endl;
   // BAD PDB Ligand with CHG line too long (>8) and right and mid-justified
   // symbols
   const std::string molblock_chg =
@@ -4620,8 +4619,7 @@ void testParseCHG() {
 
 void testMDLAtomProps() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing MDL atom properties"
-                       << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing MDL atom properties" << std::endl;
   std::string smi = "CC";
   ROMOL_SPTR mol(SmilesToMol(smi, false, false));
   setAtomAlias(mol->getAtomWithIdx(0), "foo");
@@ -4641,8 +4639,7 @@ void testMDLAtomProps() {
 
 void testSupplementalSmilesLabel() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing supplemental SMILES labels"
-                       << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing supplemental SMILES labels" << std::endl;
   std::string smi = "C";
   ROMOL_SPTR mol(SmilesToMol(smi, false, false));
   setSupplementalSmilesLabel(mol->getAtomWithIdx(0), "xxx");

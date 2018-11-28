@@ -160,8 +160,7 @@ void RWMol::replaceBond(unsigned int idx, Bond *bond_pin, bool preserveProps) {
   PRECONDITION(bond_pin, "bad bond passed to replaceBond");
   URANGE_CHECK(idx, getNumBonds());
   BOND_ITER_PAIR bIter = getEdges();
-  for (unsigned int i = 0; i < idx; i++)
-    ++bIter.first;
+  for (unsigned int i = 0; i < idx; i++) ++bIter.first;
   Bond *obond = d_graph[*(bIter.first)];
   Bond *bond_p = bond_pin->copy();
   bond_p->setOwningMol(this);
@@ -258,11 +257,9 @@ void RWMol::removeAtom(Atom *atom) {
   while (beg != end) {
     Bond *bond = d_graph[*beg++];
     unsigned int tmpIdx = bond->getBeginAtomIdx();
-    if (tmpIdx > idx)
-      bond->setBeginAtomIdx(tmpIdx - 1);
+    if (tmpIdx > idx) bond->setBeginAtomIdx(tmpIdx - 1);
     tmpIdx = bond->getEndAtomIdx();
-    if (tmpIdx > idx)
-      bond->setEndAtomIdx(tmpIdx - 1);
+    if (tmpIdx > idx) bond->setEndAtomIdx(tmpIdx - 1);
     bond->setIdx(nBonds++);
     for (auto bsi = bond->getStereoAtoms().begin();
          bsi != bond->getStereoAtoms().end(); ++bsi) {
@@ -337,7 +334,7 @@ unsigned int RWMol::addBond(unsigned int atomIdx1, unsigned int atomIdx2,
   // SGroups do not tolerate modification of the molecule, so drop them
   clearSGroups();
 
-  return numBonds; // res;
+  return numBonds;  // res;
 }
 
 unsigned int RWMol::addBond(Atom *atom1, Atom *atom2, Bond::BondType bondType) {
@@ -349,8 +346,7 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
   URANGE_CHECK(aid1, getNumAtoms());
   URANGE_CHECK(aid2, getNumAtoms());
   Bond *bnd = getBondBetweenAtoms(aid1, aid2);
-  if (!bnd)
-    return;
+  if (!bnd) return;
   unsigned int idx = bnd->getIdx();
 
   // remove any bookmarks which point to this bond:
@@ -375,11 +371,9 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
   while (a1 != a2) {
     unsigned int oIdx = rdcast<unsigned int>(*a1);
     ++a1;
-    if (oIdx == aid2)
-      continue;
+    if (oIdx == aid2) continue;
     Bond *obnd = getBondBetweenAtoms(aid1, oIdx);
-    if (!obnd)
-      continue;
+    if (!obnd) continue;
     if (std::find(obnd->getStereoAtoms().begin(), obnd->getStereoAtoms().end(),
                   aid2) != obnd->getStereoAtoms().end())
       obnd->getStereoAtoms().clear();
@@ -388,11 +382,9 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
   while (a1 != a2) {
     unsigned int oIdx = rdcast<unsigned int>(*a1);
     ++a1;
-    if (oIdx == aid1)
-      continue;
+    if (oIdx == aid1) continue;
     Bond *obnd = getBondBetweenAtoms(aid2, oIdx);
-    if (!obnd)
-      continue;
+    if (!obnd) continue;
     if (std::find(obnd->getStereoAtoms().begin(), obnd->getStereoAtoms().end(),
                   aid1) != obnd->getStereoAtoms().end())
       obnd->getStereoAtoms().clear();
@@ -453,4 +445,4 @@ unsigned int RWMol::finishPartialBond(unsigned int atomIdx2, int bondBookmark,
   return addBond(bsp->getBeginAtomIdx(), atomIdx2, bondType);
 }
 
-} // namespace RDKit
+}  // namespace RDKit

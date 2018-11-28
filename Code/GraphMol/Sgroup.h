@@ -39,7 +39,6 @@ class RDKIT_GRAPHMOL_EXPORT SGroupException : public std::runtime_error {
 
 class RDKIT_GRAPHMOL_EXPORT SGroup {
  public:
-
   enum class BondType {
     XBOND,  // External
     CBOND,  // Internal
@@ -77,7 +76,7 @@ class RDKIT_GRAPHMOL_EXPORT SGroup {
   SGroup(const SGroup &other) = default;
 
   //! Destructor
-  ~SGroup() {};
+  ~SGroup(){};
 
   //! Get the molecule that owns this conformation
   ROMol &getOwningMol() const { return *dp_mol; }
@@ -161,7 +160,7 @@ class RDKIT_GRAPHMOL_EXPORT SGroup {
   void updateOwningMol(ROMol *other_mol);
 
  private:
-	 /* ID of the group. If not 0, must be unique */
+  /* ID of the group. If not 0, must be unique */
   unsigned int d_id = 0;
   unsigned int d_compno = 0;
 
@@ -200,13 +199,13 @@ const std::vector<boost::shared_ptr<SGroup>> *getSGroups(const ROMol &mol);
 SGroup *getSGroup(ROMol &mol, unsigned int idx);
 const SGroup *getSGroup(const ROMol &mol, unsigned int idx);
 
-  //! Add a new SGroup
-  /*!
-    \param sgroup - SGroup to be added to the molecule; this molecule takes
-    ownership of the sgroup
-  */
-  unsigned int addSGroup(ROMol &mol,SGroup *sgroup);
-//@}  
+//! Add a new SGroup
+/*!
+  \param sgroup - SGroup to be added to the molecule; this molecule takes
+  ownership of the sgroup
+*/
+unsigned int addSGroup(ROMol &mol, SGroup *sgroup);
+//@}
 
 }  // namespace RDKit
 
