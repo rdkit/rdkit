@@ -49,21 +49,6 @@ void getBondHighlightsForAtoms(const ROMol &mol,
 }  // namespace
 
 // ****************************************************************************
-MolDraw2D::MolDraw2D(int width, int height, int panelWidth, int panelHeight)
-    : needs_scale_(true),
-      width_(width),
-      height_(height),
-      panel_width_(panelWidth > 0 ? panelWidth : width),
-      panel_height_(panelHeight > 0 ? panelHeight : height),
-      scale_(1.0),
-      x_trans_(0.0),
-      y_trans_(0.0),
-      x_offset_(0),
-      y_offset_(0),
-      font_size_(0.5),
-      curr_width_(2),
-      fill_polys_(true),
-      activeMolIdx_(-1) {}
 
 // ****************************************************************************
 void MolDraw2D::drawMolecule(const ROMol &mol,
@@ -181,6 +166,10 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
   atom_syms_.push_back(std::vector<std::pair<std::string, OrientType>>());
   activeMolIdx_++;
 
+  int origWidth = curr_width_;
+  if (drawOptions().bondLineWidth >= 0)
+    curr_width_ = drawOptions().bondLineWidth;
+
   if (!activeMolIdx_) {  // on the first pass we need to do some work
     if (drawOptions().clearBackground) {
       clearDrawing();
@@ -191,7 +180,8 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
       calculateScale();
       needs_scale_ = false;
     }
-    // make sure the font doesn't end up too large (the constants are empirical)
+    // make sure the font doesn't end up too large (the constants are
+    // empirical)
     if (scale_ <= 40.) {
       setFontSize(font_size_);
     } else {
@@ -322,6 +312,8 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
   if (drawOptions().flagCloseContactsDist >= 0) {
     highlightCloseContacts();
   }
+
+  curr_width_ = origWidth;
 
   // {
   //   Point2D p1(x_min_, y_min_), p2(x_min_ + x_range_, y_min_ + y_range_);

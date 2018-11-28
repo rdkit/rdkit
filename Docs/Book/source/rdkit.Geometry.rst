@@ -1,6 +1,13 @@
 rdkit.Geometry package
 ======================
 
+Submodules
+----------
+
+.. toctree::
+
+   rdkit.Geometry.rdGeometry
+
 Module contents
 ---------------
 

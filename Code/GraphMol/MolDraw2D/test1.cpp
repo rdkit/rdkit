@@ -614,7 +614,7 @@ void testMultiThreaded() {
   for (auto &fut : tg) {
     fut.get();
   }
-  for (auto&& mol : mols) {
+  for (auto &&mol : mols) {
     delete mol;
   }
   std::cerr << " Done" << std::endl;
@@ -2119,7 +2119,7 @@ void test15ContinuousHighlightingWithGrid() {
       TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:8px;") !=
                   std::string::npos);
     }
-    for (auto&& mol : mols) {
+    for (auto &&mol : mols) {
       delete mol;
     }
   }
@@ -2260,6 +2260,43 @@ M  END)molb";
   std::cerr << " Done" << std::endl;
 }
 
+void testGithub2151() {
+  std::cout << " ----------------- Testing Github2151: MolDraw2D: line width "
+               "should be controlled by MolDrawOptions"
+            << std::endl;
+  {
+    auto m1 = "C[C@H](F)c1ccc(C#N)cc1"_smiles;
+    TEST_ASSERT(m1);
+    MolDraw2DUtils::prepareMolForDrawing(*m1);
+    {
+      MolDraw2DSVG drawer(200, 200);
+      drawer.drawMolecule(*m1);
+      drawer.addMoleculeMetadata(*m1);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testGithub2151_1.svg");
+      outs << text;
+      outs.flush();
+      TEST_ASSERT(text.find("stroke-width:2px") != std::string::npos);
+      TEST_ASSERT(text.find("stroke-width:4px") == std::string::npos);
+    }
+    {
+      MolDraw2DSVG drawer(200, 200);
+      drawer.drawOptions().bondLineWidth = 4;
+      drawer.drawMolecule(*m1);
+      drawer.addMoleculeMetadata(*m1);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testGithub2151_2.svg");
+      outs << text;
+      outs.flush();
+      TEST_ASSERT(text.find("stroke-width:2px") == std::string::npos);
+      TEST_ASSERT(text.find("stroke-width:4px") != std::string::npos);
+    }
+  }
+  std::cerr << " Done" << std::endl;
+}
+
 int main() {
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   RDDepict::preferCoordGen = false;
@@ -2302,4 +2339,5 @@ int main() {
 #endif
   test16MoleculeMetadata();
   testGithub2063();
+  testGithub2151();
 }

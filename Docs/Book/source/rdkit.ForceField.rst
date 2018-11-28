@@ -1,6 +1,14 @@
 rdkit.ForceField package
 ========================
 
+ Submodules
+----------
+
+.. toctree::
+
+  rdkit.ForceField.rdForceField
+
+
 Module contents
 ---------------
 

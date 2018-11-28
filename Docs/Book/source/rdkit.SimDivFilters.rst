@@ -7,6 +7,7 @@ Submodules
 .. toctree::
 
    rdkit.SimDivFilters.SimilarityPickers
+   rdkit.SimDivFilters.rdSimDivPickers
 
 Module contents
 ---------------
