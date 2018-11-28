@@ -23,7 +23,6 @@
 #include "Conformer.h"
 #include "Sgroup.h"
 
-
 namespace RDKit {
 class QueryAtom;
 class QueryBond;
@@ -106,16 +105,17 @@ void ROMol::initFromOther(const ROMol &other, bool quickCopy, int confId) {
       }
     }
 
-    // copy sgroups
-	if(getSGroups(other)){
-		for (auto sg : *getSGroups(other)) {
-			addSGroup(*this,new SGroup(*sg));
-		}
-		for (auto sg : *getSGroups(*this)) {
-			sg->updateOwningMol(this);
-		}
-	}
- 
+    // Copy sgroups - updates need to happen in a separate loop, because a
+    // SGroup may be child of another one that gets initialized after it.
+    if (getSGroups(other)) {
+      for (auto sg : *getSGroups(other)) {
+        addSGroup(*this, new SGroup(*sg));
+      }
+      for (auto sg : *getSGroups(*this)) {
+        sg->updateOwningMol(this);
+      }
+    }
+
     dp_props = other.dp_props;
 
     // Bookmarks should be copied as well:
@@ -618,6 +618,5 @@ unsigned int ROMol::addConformer(Conformer *conf, bool assignId) {
   d_confs.push_back(nConf);
   return conf->getId();
 }
-
 
 }  // namespace RDKit
