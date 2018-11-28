@@ -18,6 +18,7 @@
 #include "Bond.h"
 #include "BondIterators.h"
 #include "RingInfo.h"
+#include "Sgroup.h"
 
 namespace RDKit {
 void RWMol::destroy() {

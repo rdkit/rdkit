@@ -12,6 +12,7 @@
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/MonomerInfo.h>
 #include <GraphMol/StereoGroup.h>
+#include <GraphMol/Sgroup.h>
 #include <RDGeneral/utils.h>
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/StreamOps.h>
@@ -876,32 +877,32 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
   // Write SGroups (if present)
   //
   // -------------------
-  auto numSGroups = mol->getNumSGroups();
+  auto numSGroups = getNumSGroups(*mol);
   if (numSGroups > 0) {
-    streamWrite(ss, BEGINSGROUP);
+	  streamWrite(ss, BEGINSGROUP);
 
-    tmpInt = static_cast<int32_t>(numSGroups);
-    streamWrite(ss, tmpInt);
+	  tmpInt = static_cast<int32_t>(numSGroups);
+	  streamWrite(ss, tmpInt);
 
-    // Pickle Sgroups
-    for (auto sgroup_itr = mol->beginSGroups(); sgroup_itr != mol->endSGroups();
-         ++sgroup_itr) {
-      _pickleSGroup<T>(ss, sgroup_itr->get(), atomIdxMap, bondIdxMap);
-    }
+	  // Pickle Sgroups
+	  if (getSGroups(*mol)) {
+		  for (auto sgroup : *getSGroups(*mol)) {
+			  _pickleSGroup<T>(ss, sgroup.get(), atomIdxMap, bondIdxMap);
+		  }
 
-    // Pickle Sgroup parentships
-    for (auto sgroup_itr = mol->beginSGroups(); sgroup_itr != mol->endSGroups();
-         ++sgroup_itr) {
-      auto parent = (*sgroup_itr)->getParent();
-      if (parent) {
-        tmpInt = static_cast<signed int>(parent->getIndexInMol());
-      } else {
-        tmpInt = -1;
-      }
-      streamWrite(ss, tmpInt);
-    }
+		  // Pickle Sgroup parentships
+		  for (auto sgroup : *getSGroups(*mol)) {
+			  auto parent = sgroup->getParent();
+			  if (parent) {
+				  tmpInt = static_cast<signed int>(parent->getIndexInMol());
+			  }
+			  else {
+				  tmpInt = -1;
+			  }
+			  streamWrite(ss, tmpInt);
+		  }
+	  }
   }
-
   // Write Stereo Groups
   {
     auto &stereo_groups = mol->getStereoGroups();
@@ -1053,7 +1054,7 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
       if (tmpInt != -1) {
         sgroup->setParent(sgroups[tmpInt]);
       }
-      mol->addSGroup(sgroup);
+      addSGroup(*mol,sgroup);
     }
 
     streamRead(ss, tag, version);

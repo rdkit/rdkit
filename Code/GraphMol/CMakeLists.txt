@@ -144,3 +144,6 @@ rdkit_test(test-valgrind test-valgrind.cpp LINK_LIBRARIES SmilesParse GraphMol R
 
 rdkit_catch_test(graphmolTestsCatch catch_tests.cpp
            LINK_LIBRARIES SubstructMatch FileParsers SmilesParse GraphMol RDGeometryLib RDGeneral)
+
+rdkit_catch_test(graphmolSGroupCatch catch_sgroups.cpp
+           LINK_LIBRARIES SmilesParse GraphMol RDGeometryLib RDGeneral)

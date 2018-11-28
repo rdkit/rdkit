@@ -13,11 +13,13 @@
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
+#include <GraphMol/Sgroup.h>
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
 #include "GraphMol/FileParsers/FileParsers.h"
 #include "GraphMol/FileParsers/MolSupplier.h"
 #include "GraphMol/FileParsers/MolWriters.h"
+
 
 #include <memory>
 #include <cstdlib>
@@ -70,7 +72,7 @@ std::shared_ptr<RWMol> buildSampleMolecule() {
   //// First SGroup ////
   {
     SGroup *sg = new SGroup(m.get(), "MUL");
-    m->addSGroup(sg);
+    addSGroup(*m,sg);
 
     sg->setProp("SUBTYPE", "BLO");
     sg->setProp("MULT", "n");
@@ -107,7 +109,7 @@ std::shared_ptr<RWMol> buildSampleMolecule() {
   //// Second SGroup ////
   {
     SGroup *sg = new SGroup(m.get(), "SUP");
-    m->addSGroup(sg);
+    addSGroup(*m,sg);
 
     // Add some atoms and bonds
     for (unsigned i = 3; i < 6; ++i) {
@@ -128,7 +130,7 @@ std::shared_ptr<RWMol> buildSampleMolecule() {
   //// Third SGroup ////
   {
     SGroup *sg = new SGroup(m.get(), "DAT");
-    m->addSGroup(sg);
+    addSGroup(*m,sg);
 
     sg->setProp("FIELDNAME", "SAMPLE FIELD NAME");  // 30 char max
     // Field Type is ignored in V3000
@@ -145,8 +147,8 @@ std::shared_ptr<RWMol> buildSampleMolecule() {
   }
 
   // Set a parent with higher index
-  auto sg0 = m->getSGroup(0);
-  auto sg2 = m->getSGroup(2);
+  auto sg0 = getSGroup(*m,0);
+  auto sg2 = getSGroup(*m,2);
   sg0->setParent(sg2);
 
   return m;
@@ -156,11 +158,11 @@ void checkSampleMolecule(RWMol *mol) {
   // Test a molecule created by buildSampleMolecule (or a copy)
 
   TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getNumSGroups() == 3);
+  TEST_ASSERT(getNumSGroups(*mol) == 3);
 
   {
     // First SGroup
-    auto sg = mol->getSGroup(0);
+    auto sg = getSGroup(*mol,0);
     TEST_ASSERT(sg->getType() == "MUL");
 
     TEST_ASSERT(sg->getProp("SUBTYPE") == "BLO");
@@ -214,12 +216,12 @@ void checkSampleMolecule(RWMol *mol) {
     TEST_ASSERT(sg->getProp("BRKTYP") == "PAREN");
 
     auto parent = sg->getParent();
-    TEST_ASSERT(parent == mol->getSGroup(2));
+    TEST_ASSERT(parent == getSGroup(*mol,2));
   }
 
   {
     // Second SGroup
-    auto sg = mol->getSGroup(1);
+    auto sg = getSGroup(*mol,1);
     TEST_ASSERT(sg->getType() == "SUP");
 
     std::vector<unsigned int> atoms_reference = {4, 5, 6};
@@ -262,7 +264,7 @@ void checkSampleMolecule(RWMol *mol) {
 
   {
     // Third SGroup
-    auto sg = mol->getSGroup(2);
+    auto sg = getSGroup(*mol,2);
     TEST_ASSERT(sg->getType() == "DAT");
 
     TEST_ASSERT(sg->getProp("FIELDNAME") == "SAMPLE FIELD NAME");
@@ -290,16 +292,16 @@ void testCreateSGroups() {
   RWMol m;
 
   SGroup *sg = new SGroup(&m, "DAT");
-  m.addSGroup(sg);
+  addSGroup(m,sg);
 
   sg = new SGroup(&m, "SUP");
-  m.addSGroup(sg);
+  addSGroup(m,sg);
 
   sg = nullptr;
 
-  TEST_ASSERT(m.getNumSGroups() == 2);
-  TEST_ASSERT(m.getSGroup(0)->getType() == "DAT");
-  TEST_ASSERT(m.getSGroup(1)->getType() == "SUP");
+  TEST_ASSERT(getNumSGroups(m) == 2);
+  TEST_ASSERT(getSGroup(m,0)->getType() == "DAT");
+  TEST_ASSERT(getSGroup(m,1)->getType() == "SUP");
 }
 
 void testParseSGroups(const std::string &rdbase) {
@@ -312,9 +314,9 @@ void testParseSGroups(const std::string &rdbase) {
     auto m = std::unique_ptr<RWMol>(MolFileToMol(fName));
 
     TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumSGroups() == 1);
+    TEST_ASSERT(getNumSGroups(*m) == 1);
 
-    auto sgroup = m->getSGroup(0);
+    auto sgroup = getSGroup(*m,0);
 
     TEST_ASSERT(sgroup->getType() == "MON");
 
@@ -341,9 +343,9 @@ void testParseSGroups(const std::string &rdbase) {
     auto m = std::unique_ptr<RWMol>(MolFileToMol(fName));
 
     TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumSGroups() == 1);
+    TEST_ASSERT(getNumSGroups(*m) == 1);
 
-    auto sgroup = m->getSGroup(0);
+    auto sgroup = getSGroup(*m,0);
 
     TEST_ASSERT(sgroup->getType() == "MON");
 
@@ -363,9 +365,9 @@ void testParseSGroups(const std::string &rdbase) {
     auto m = std::unique_ptr<RWMol>(MolFileToMol(fName));
 
     TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumSGroups() == 1);
+    TEST_ASSERT(getNumSGroups(*m) == 1);
 
-    auto sgroup = m->getSGroup(0);
+    auto sgroup = getSGroup(*m,0);
 
     TEST_ASSERT(sgroup->getType() == "SUP");
     TEST_ASSERT(sgroup->getProp("CLASS") == "DEMOCLASS");
@@ -389,9 +391,9 @@ void testParseSGroups(const std::string &rdbase) {
     auto m = std::unique_ptr<RWMol>(MolFileToMol(fName));
 
     TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumSGroups() == 1);
+    TEST_ASSERT(getNumSGroups(*m) == 1);
 
-    auto sgroup = m->getSGroup(0);
+    auto sgroup = getSGroup(*m,0);
 
     TEST_ASSERT(sgroup->getType() == "SUP");
 
@@ -418,14 +420,14 @@ void testSGroupsRoundTrip(const std::string &rdbase, bool forceV3000) {
   {
     auto sampleMol = buildSampleMolecule();
 
-    TEST_ASSERT(sampleMol->getNumSGroups() == 3);
+    TEST_ASSERT(getNumSGroups(*sampleMol) == 3);
 
     auto writer = SDWriter(fName);
     writer.setForceV3000(forceV3000);
     writer.write(*sampleMol);
     writer.close();
   }
-  auto roundtripMol = std::shared_ptr<RWMol>(MolFileToMol(fName));
+  std::unique_ptr<RWMol> roundtripMol(MolFileToMol(fName));
   checkSampleMolecule(roundtripMol.get());
 }
 
@@ -454,60 +456,60 @@ void testModifyMol() {
   auto mol_copy = mol;
 
   {  // insertion will drop SGroups
-    TEST_ASSERT(mol_copy.getNumSGroups() == 3);
+    TEST_ASSERT(getNumSGroups(mol_copy) == 3);
     mol_copy.insertMol(mol);
-    TEST_ASSERT(mol_copy.getNumSGroups() == 0);
+    TEST_ASSERT(getNumSGroups(mol_copy) == 0);
   }
   {
     // adding an atom will drop SGroups
     mol_copy = mol;
-    TEST_ASSERT(mol_copy.getNumSGroups() == 3);
+    TEST_ASSERT(getNumSGroups(mol_copy) == 3);
     mol_copy.addAtom();
-    TEST_ASSERT(mol_copy.getNumSGroups() == 0);
+    TEST_ASSERT(getNumSGroups(mol_copy) == 0);
   }
   {
     // replacing an atom will drop SGroups
     mol_copy = mol;
     auto new_atom = Atom();
-    TEST_ASSERT(mol_copy.getNumSGroups() == 3);
+    TEST_ASSERT(getNumSGroups(mol_copy) == 3);
     mol_copy.replaceAtom(1, &new_atom);
-    TEST_ASSERT(mol_copy.getNumSGroups() == 0);
+    TEST_ASSERT(getNumSGroups(mol_copy) == 0);
   }
   {
     // replacing a new bond will drop SGroups
     mol_copy = mol;
     auto new_bond = Bond(Bond::SINGLE);
-    TEST_ASSERT(mol_copy.getNumSGroups() == 3);
+    TEST_ASSERT(getNumSGroups(mol_copy) == 3);
     mol_copy.replaceBond(1, &new_bond);
-    TEST_ASSERT(mol_copy.getNumSGroups() == 0);
+    TEST_ASSERT(getNumSGroups(mol_copy) == 0);
   }
   {
     // removing an atom will drop SGroups
     mol_copy = mol;
-    TEST_ASSERT(mol_copy.getNumSGroups() == 3);
+    TEST_ASSERT(getNumSGroups(mol_copy) == 3);
     mol_copy.removeAtom(1);
-    TEST_ASSERT(mol_copy.getNumSGroups() == 0);
+    TEST_ASSERT(getNumSGroups(mol_copy) == 0);
   }
   {
     // creating a new bond between existing atoms will drop SGroups
     mol_copy = mol;
-    TEST_ASSERT(mol_copy.getNumSGroups() == 3);
+    TEST_ASSERT(getNumSGroups(mol_copy) == 3);
     mol_copy.addBond(1, 3, Bond::SINGLE);
-    TEST_ASSERT(mol_copy.getNumSGroups() == 0);
+    TEST_ASSERT(getNumSGroups(mol_copy) == 0);
   }
   {
     // removing a bond will drop SGroups
     mol_copy = mol;
-    TEST_ASSERT(mol_copy.getNumSGroups() == 3);
+    TEST_ASSERT(getNumSGroups(mol_copy) == 3);
     mol_copy.removeBond(1, 2);
-    TEST_ASSERT(mol_copy.getNumSGroups() == 0);
+    TEST_ASSERT(getNumSGroups(mol_copy) == 0);
   }
   {
     // creating a partial bond will drop SGroups
     mol_copy = mol;
-    TEST_ASSERT(mol_copy.getNumSGroups() == 3);
+    TEST_ASSERT(getNumSGroups(mol_copy) == 3);
     mol_copy.createPartialBond(1, Bond::SINGLE);
-    TEST_ASSERT(mol_copy.getNumSGroups() == 0);
+    TEST_ASSERT(getNumSGroups(mol_copy) == 0);
   }
 }
 

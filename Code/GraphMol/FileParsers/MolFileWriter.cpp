@@ -15,6 +15,7 @@
 #include "MolFileStereochem.h"
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitQueries.h>
+#include <GraphMol/Sgroup.h>
 #include <RDGeneral/Ranking.h>
 #include <RDGeneral/LocaleSwitcher.h>
 
@@ -1065,7 +1066,7 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
   nAtoms = tmol.getNumAtoms();
   nBonds = tmol.getNumBonds();
   nLists = 0;
-  nSGroups = tmol.getNumSGroups();
+  nSGroups = getNumSGroups(tmol);
 
   chiralFlag = 0;
   nsText = 0;
@@ -1202,12 +1203,11 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
       res += "M  V30 END BOND\n";
     }
 
-    if (tmol.getNumSGroups()) {
+    if (getNumSGroups(tmol)) {
       res += "M  V30 BEGIN SGROUP\n";
-      for (ROMol::ConstSGroupIterator sGroupIt = tmol.beginSGroups();
-           sGroupIt != tmol.endSGroups(); ++sGroupIt) {
-        unsigned int idx = 1 + (sGroupIt - tmol.beginSGroups());
-        res += GetV3000MolFileSGroupLines(idx, *sGroupIt);
+      unsigned int idx=0;
+      for(const auto sgrp : *getSGroups(tmol)){
+        res += GetV3000MolFileSGroupLines(++idx, sgrp);
       }
       res += "M  V30 END SGROUP\n";
     }

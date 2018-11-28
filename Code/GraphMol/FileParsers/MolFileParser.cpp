@@ -22,6 +22,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/StereoGroup.h>
+#include <GraphMol/Sgroup.h>
 #include <RDGeneral/StreamOps.h>
 #include <RDGeneral/RDLog.h>
 
@@ -1682,7 +1683,7 @@ bool ParseMolBlockProperties(std::istream *inStream, unsigned int &line,
   if (tempStr[0] == 'M' && tempStr.substr(0, 6) == "M  END") {
     // All went well, add SGroups to Mol
     for (const auto &sgroup : sGroupMap) {
-      mol->addSGroup(sgroup.second);
+      addSGroup(*mol,sgroup.second);
     }
 
     fileComplete = true;

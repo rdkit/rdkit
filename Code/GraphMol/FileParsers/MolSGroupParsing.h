@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #pragma once
+#include <GraphMol/Sgroup.h>
 
 namespace RDKit {
 

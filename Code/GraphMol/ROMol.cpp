@@ -21,6 +21,8 @@
 #include "QueryBond.h"
 #include "MolPickler.h"
 #include "Conformer.h"
+#include "Sgroup.h"
+
 
 namespace RDKit {
 class QueryAtom;
@@ -105,16 +107,15 @@ void ROMol::initFromOther(const ROMol &other, bool quickCopy, int confId) {
     }
 
     // copy sgroups
-    for (auto sgi = other.beginSGroups(); sgi != other.endSGroups(); ++sgi) {
-      auto sgroup = new SGroup(*(*sgi));
-      this->addSGroup(sgroup);
-    }
-    // Once all SGroups have been copied, update pointers to objects of the new
-    // molecule
-    for (auto sgi = beginSGroups(); sgi != endSGroups(); ++sgi) {
-      (*sgi)->updateOwningMol(this);
-    }
-
+	if(getSGroups(other)){
+		for (auto sg : *getSGroups(other)) {
+			addSGroup(*this,new SGroup(*sg));
+		}
+		for (auto sg : *getSGroups(*this)) {
+			sg->updateOwningMol(this);
+		}
+	}
+ 
     dp_props = other.dp_props;
 
     // Bookmarks should be copied as well:
@@ -618,45 +619,5 @@ unsigned int ROMol::addConformer(Conformer *conf, bool assignId) {
   return conf->getId();
 }
 
-SGroup *ROMol::getSGroup(unsigned int idx) {
-  // make sure we have more than one sgroup
-  if (d_sgroups.empty()) {
-    throw SGroupException("No SGroups available on the molecule");
-  }
-
-  return d_sgroups.at(idx).get();
-}
-
-unsigned int ROMol::addSGroup(SGroup *sgroup) {
-  sgroup->setOwningMol(this);
-  SGROUP_SPTR nSGroup(sgroup);
-  unsigned int id = d_sgroups.size();
-  d_sgroups.push_back(nSGroup);
-  return id;
-}
-
-bool ROMol::isSGroupIdFree(unsigned int id) const {
-  for (const auto &sgroup : d_sgroups) {
-    if (id == sgroup->getId()) {
-      return false;
-    }
-  }
-  return true;
-}
-
-unsigned int ROMol::getNextFreeSGroupId() const {
-  std::set<unsigned int> ids;
-  for (const auto &sgroup : d_sgroups) {
-    ids.insert(sgroup->getId());
-  }
-  unsigned int nexId = 1;  // smallest possible ID
-  for (const auto &id : ids) {
-    if (id > nexId) {
-      break;
-    }
-    ++nexId;
-  }
-  return nexId;
-}
 
 }  // namespace RDKit

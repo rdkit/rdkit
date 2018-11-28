@@ -11,6 +11,7 @@
 #pragma once
 
 #include <boost/algorithm/string/trim.hpp>
+#include <GraphMol/Sgroup.h>
 
 namespace RDKit {
 namespace SGroupWriting {
