@@ -16,8 +16,7 @@
 #include <GraphMol/MolOps.h>
 #include <GraphMol/RWMol.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
-#include <CoordGen/maeparser/Reader.hpp>
-
+#include <maeparser/Reader.hpp>
 
 namespace RDKit {
 

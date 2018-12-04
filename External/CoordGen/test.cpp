@@ -18,7 +18,7 @@
 
 #include <RDGeneral/RDLog.h>
 
-#include "coordgenlibs/sketcherMinimizer.h"
+#include "coordgen/sketcherMinimizer.h"
 #include <CoordGen/CoordGen.h>
 
 using namespace RDKit;

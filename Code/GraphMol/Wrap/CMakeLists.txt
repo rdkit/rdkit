@@ -24,8 +24,7 @@ rdkit_python_extension(rdqueries
 
 if(RDK_BUILD_COORDGEN_SUPPORT)
     set (maesupplier MaeMolSupplier.cpp)
-else()
-    set (maesupplier "")
+    include_directories(${maeparser_INCLUDE_DIRS})
 endif()
 
 if(RDK_BUILD_COMPRESSED_SUPPLIERS)

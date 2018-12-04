@@ -3,11 +3,8 @@ remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
 add_definitions(-DRDKIT_FILEPARSERS_BUILD)
 
 if(RDK_BUILD_COORDGEN_SUPPORT)
+    include_directories(${maeparser_INCLUDE_DIRS})
     set (maesupplier MaeMolSupplier.cpp)
-    set (maeparser_var maeparser)
-else()
-    set (maesupplier "")
-    set (maeparser_var "")
 endif()
 
 if(RDK_USE_BOOST_REGEX)
@@ -28,7 +25,7 @@ rdkit_library(FileParsers
               ProximityBonds.cpp
               SequenceParsers.cpp SequenceWriters.cpp
               SVGParser.cpp
-              LINK_LIBRARIES Depictor SmilesParse GraphMol ${maeparser_var} ${regex_lib})
+              LINK_LIBRARIES Depictor SmilesParse GraphMol ${RDK_COORDGEN_LIBS} ${regex_lib})
 
 rdkit_headers(FileParsers.h
               FileParserUtils.h
