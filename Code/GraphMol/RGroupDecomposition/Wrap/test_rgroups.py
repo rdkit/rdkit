@@ -41,7 +41,7 @@ from rdkit.Chem.rdRGroupDecomposition import RGroupDecompose, RGroupDecompositio
 from collections import OrderedDict
 
 class TestCase(unittest.TestCase) :
-    def atest_multicores(self):
+    def test_multicores(self):
         cores_smi_easy = OrderedDict()
         cores_smi_hard = OrderedDict()
 
@@ -162,9 +162,21 @@ C1CCO[C@@](S)(P)1
                 Chem.MolFromSmiles("CC")]
 
         res, unmatched = RGroupDecompose(cores, mols)
-        self.assertEquals(len(res), 1)
-        self.assertEquals(unmatched, [0,1,2,4])
-        
+        self.assertEqual(len(res), 1)
+        self.assertEqual(unmatched, [0,1,2,4])
+
+    def test_match_only_at_rgroups(self):
+        smiles = ['c1ccccc1']#, 'c1(Cl)ccccc1', 'c1(Cl)cc(Br)ccc1']
+        mols = [Chem.MolFromSmiles(smi) for smi in smiles]
+
+        core1 = Chem.MolFromSmiles("c1([*:5])cc([*:6])ccc1")
+        params = RGroupDecompositionParameters()
+        params.onlyMatchAtRGroups=True
+        rg = RGroupDecomposition(core1, params)
+        for smi,m in zip(smiles,mols):
+            self.assertTrue(rg.Add(m)!=-1, smi)
+
+
 
 if __name__ == '__main__':
   unittest.main()
