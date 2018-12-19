@@ -39,7 +39,7 @@ install:
  #- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then conda install -q -c rdkit boost=1.63; fi
  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then conda install -q py-boost=1.67.0 libboost=1.67.0 ; fi
  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then conda install -q py-boost=1.65.1 libboost=1.65.1 ; fi
- #- conda install -q numpy pillow pandas cmake eigen py-boost=1.65.1 libboost=1.65.1 # matplotlib
+ - conda install -q numpy pillow pandas cmake eigen # matplotlib
 
 before_script:
  # RDKit
