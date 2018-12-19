@@ -15,7 +15,6 @@ addons:
       apt:
         packages:
          - swig
-         - libboost-all-dev
 
 before_install:
  # download and install miniconda
@@ -38,8 +37,8 @@ install:
  # (don't install conda compiler tools on linux -- this is gcc 4.8 right now)
  #- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then conda install gcc_linux-64 gcc_linux-64 ; fi
  #- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then conda install -q -c rdkit boost=1.63; fi
- - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then conda install -q py-boost=1.65.1 libboost=1.65.1 ; fi
- - conda install -q numpy pillow pandas cmake eigen # matplotlib
+ #- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then conda install -q py-boost=1.65.1 libboost=1.65.1 ; fi
+ - conda install -q numpy pillow pandas cmake eigen py-boost=1.65.1 libboost=1.65.1 # matplotlib
 
 before_script:
  # RDKit
@@ -64,9 +63,7 @@ script:
   - cd build
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then  export CXX="g++" ; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then  export CC="gcc" ; fi
-  #- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then  export REGEX_EXTRA="-DRDK_USE_BOOST_REGEX=ON" ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cmake $REGEX_EXTRA -D PYTHON_EXECUTABLE=$PYTHON -D RDK_BUILD_AVALON_SUPPORT=ON -D RDK_BUILD_INCHI_SUPPORT=ON -DRDK_BUILD_THREADSAFE_SSS=on -DRDK_TEST_MULTITHREADED=on -DRDK_INSTALL_STATIC_LIBS=OFF -DRDK_BUILD_SWIG_WRAPPERS=OFF -DRDK_SWIG_STATIC=OFF -DRDK_BUILD_PYTHON_WRAPPERS=ON -DRDK_BUILD_FREESASA_SUPPORT=ON .. ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; cmake $REGEX_EXTRA -D PYTHON_EXECUTABLE=$PYTHON -D BOOST_ROOT=$PY_PREFIX -D Boost_NO_SYSTEM_PATHS=ON -D RDK_BUILD_AVALON_SUPPORT=ON -D RDK_BUILD_INCHI_SUPPORT=ON -DRDK_BUILD_THREADSAFE_SSS=on -DRDK_TEST_MULTITHREADED=on -DRDK_INSTALL_STATIC_LIBS=OFF -DRDK_BUILD_SWIG_WRAPPERS=OFF -DRDK_SWIG_STATIC=OFF -DRDK_BUILD_PYTHON_WRAPPERS=ON -DRDK_BUILD_FREESASA_SUPPORT=ON .. ; fi
+  - cmake $REGEX_EXTRA -D PYTHON_EXECUTABLE=$PYTHON -D BOOST_ROOT=$PY_PREFIX -D Boost_NO_SYSTEM_PATHS=ON -D RDK_BUILD_AVALON_SUPPORT=ON -D RDK_BUILD_INCHI_SUPPORT=ON -DRDK_BUILD_THREADSAFE_SSS=on -DRDK_TEST_MULTITHREADED=on -DRDK_INSTALL_STATIC_LIBS=OFF -DRDK_BUILD_SWIG_WRAPPERS=OFF -DRDK_SWIG_STATIC=OFF -DRDK_BUILD_PYTHON_WRAPPERS=ON -DRDK_BUILD_FREESASA_SUPPORT=ON .. ; fi
   - make -j2 install
   - ls "$PY_PREFIX/lib"
   - LD_LIBRARY_PATH="$PY_PREFIX/lib:$PREFIX/lib;$SRC_DIR/lib;$LD_LIBRARY_PATH" ctest -j2 --output-on-failure
