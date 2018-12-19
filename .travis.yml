@@ -37,8 +37,9 @@ install:
  # (don't install conda compiler tools on linux -- this is gcc 4.8 right now)
  #- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then conda install gcc_linux-64 gcc_linux-64 ; fi
  #- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then conda install -q -c rdkit boost=1.63; fi
- #- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then conda install -q py-boost=1.65.1 libboost=1.65.1 ; fi
- - conda install -q numpy pillow pandas cmake eigen py-boost=1.65.1 libboost=1.65.1 # matplotlib
+ - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then conda install -q py-boost=1.67.0 libboost=1.67.0 ; fi
+ - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then conda install -q py-boost=1.65.1 libboost=1.65.1 ; fi
+ #- conda install -q numpy pillow pandas cmake eigen py-boost=1.65.1 libboost=1.65.1 # matplotlib
 
 before_script:
  # RDKit
