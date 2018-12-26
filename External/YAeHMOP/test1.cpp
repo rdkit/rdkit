@@ -16,3 +16,12 @@ TEST_CASE("basics", "[basics]") {
   EHTTools::stub();
   REQUIRE(1);
 }
+
+TEST_CASE("methanol", "[basics]") {
+  std::string pathName = getenv("RDBASE");
+  pathName += "/External/YAeHMOP/test_data/";
+  std::unique_ptr<RWMol> mol(MolFileToMol(pathName + "methanol.mol",false));
+  REQUIRE(mol);
+  REQUIRE(mol->getNumAtoms()==6);
+  REQUIRE(EHTTools::runMol(*mol));
+}
