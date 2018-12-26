@@ -210,7 +210,7 @@ class RDKIT_FILEPARSERS_EXPORT TDTWriter : public MolWriter {
   TDTWriter(const std::string &fileName);
   TDTWriter(std::ostream *outStream, bool takeOwnership = false);
 
-  ~TDTWriter();
+  ~TDTWriter() throw();
 
   //! \brief set a vector of property names that are need to be
   //! written out for each molecule
