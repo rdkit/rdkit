@@ -1,4 +1,4 @@
-#  Copyright (c) 2017, Novartis Institutes for BioMedical Research Inc.
+#  Copyright (c) 2018, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -164,6 +164,33 @@ C1CCO[C@@](S)(P)1
         res, unmatched = RGroupDecompose(cores, mols)
         self.assertEqual(len(res), 1)
         self.assertEqual(unmatched, [0,1,2,4])
+
+    def test_userlabels(self):
+        smis = ["C(Cl)N(N)O(O)"]
+        mols = [Chem.MolFromSmiles(smi) for smi in smis]
+        smarts = 'C([*:1])N([*:5])O([*:6])'
+        rg = RGroupDecomposition(core)
+        for m in mols:
+            rg.Add(m)
+        rg.Process()
+        self.assertEqual(rg.GetRGroupsAsColumns(asSmiles=True),
+                         {'Core': ['C(N(O[*:6])[*:5])[*:4]'],
+                          'R1': ['Cl[*:1]'],
+                          'R5': ['[H]N([H])[*:5]'],
+                          'R6': ['[H]O[*:6]']})
+
+        smarts = 'C([*:4])N([*:5])O([*:6])'
+
+        core = Chem.MolFromSmarts(smarts)
+        rg = RGroupDecomposition(core)
+        for m in mols:
+            rg.Add(m)
+        rg.Process()
+        self.assertEqual(rg.GetRGroupsAsColumns(asSmiles=True),
+                         {'Core': ['C(N(O[*:6])[*:5])[*:4]'],
+                          'R4': ['Cl[*:4]'],
+                          'R5': ['[H]N([H])[*:5]'],
+                          'R6': ['[H]O[*:6]']})
 
     def test_match_only_at_rgroups(self):
         smiles = ['c1ccccc1']#, 'c1(Cl)ccccc1', 'c1(Cl)cc(Br)ccc1']

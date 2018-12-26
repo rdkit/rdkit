@@ -574,13 +574,14 @@ struct RGroupDecompData {
       auto atm = atoms.find(userLabel);
       if (atm == atoms.end()) continue;  // label not used in the rgroup
       Atom *atom = atm->second;
-      mappings[userLabel] = ++count;
-
+      mappings[userLabel] = userLabel;
+      if(count < userLabel)
+        count = userLabel;
       if (atom->getAtomicNum() == 0) {  // add to existing dummy/rlabel
-        setRlabel(atom, count);
+        setRlabel(atom, userLabel);
       } else {  // adds new rlabel
         auto *newAt = new Atom(0);
-        setRlabel(newAt, count);
+        setRlabel(newAt, userLabel);
         atomsToAdd.push_back(std::make_pair(atom, newAt));
       }
     }
