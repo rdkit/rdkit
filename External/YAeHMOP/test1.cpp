@@ -1,17 +1,18 @@
 //
 // Copyright (C) 2018 Greg Landrum
 //
-#include "EHTTools.h"
+#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do
+                           // this in one cpp file per test
+#include "catch.hpp"
+
 #include <GraphMol/RDKitBase.h>
+#include "EHTTools.h"
 
-
-#include <string>
+#include <GraphMol/FileParsers/FileParsers.h>
 
 using namespace RDKit;
 
-
-int main() {
-  RDLog::InitLogs();
+TEST_CASE("basics", "[basics]") {
   EHTTools::stub();
-  return 0;
+  REQUIRE(1);
 }

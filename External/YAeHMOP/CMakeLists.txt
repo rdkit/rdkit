@@ -23,7 +23,7 @@ include_directories(${YAEHMOP_INCLUDE_PATH})
 add_definitions(-DRDKIT_AVALONLIB_BUILD)
 rdkit_library(EHTLib EHTTools.cpp SHARED LINK_LIBRARIES ${YAEHMOP_LIB} GraphMol DataStructs RDGeometryLib RDGeneral )
 rdkit_headers(EHTTools.h DEST GraphMol)
-rdkit_test(testEHTLib1 test1.cpp
+rdkit_catch_test(testEHTLib1 test1.cpp
            LINK_LIBRARIES EHTLib ${YAEHMOP_LIB}
 	   FileParsers SmilesParse GraphMol DataStructs RDGeometryLib RDGeneral)
 
