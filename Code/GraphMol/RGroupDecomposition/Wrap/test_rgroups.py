@@ -169,12 +169,13 @@ C1CCO[C@@](S)(P)1
         smis = ["C(Cl)N(N)O(O)"]
         mols = [Chem.MolFromSmiles(smi) for smi in smis]
         smarts = 'C([*:1])N([*:5])O([*:6])'
+        core = Chem.MolFromSmarts(smarts)
         rg = RGroupDecomposition(core)
         for m in mols:
             rg.Add(m)
         rg.Process()
         self.assertEqual(rg.GetRGroupsAsColumns(asSmiles=True),
-                         {'Core': ['C(N(O[*:6])[*:5])[*:4]'],
+                         {'Core': ['C(N(O[*:6])[*:5])[*:1]'],
                           'R1': ['Cl[*:1]'],
                           'R5': ['[H]N([H])[*:5]'],
                           'R6': ['[H]O[*:6]']})
