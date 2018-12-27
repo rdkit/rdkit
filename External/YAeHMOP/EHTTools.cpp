@@ -14,19 +14,19 @@ namespace RDKit {
 namespace EHTTools {
 
 bool runMol(const ROMol &mol, int confId){
-  char err_string[240];
-
+ 
   // -----------------------------
   // ----- BOILERPLATE -----------
   // -----------------------------
-  FILE *nullfile = fopen("nul","w");
+  FILE *nullfile = fopen("nul", "w");
 
   status_file = nullfile;
   output_file = nullfile;
-
-  unit_cell = (cell_type *)calloc(1,sizeof(cell_type));
-  details = (detail_type *)calloc(1,sizeof(detail_type));
-  if(!unit_cell || !details) fatal("Can't allocate initial memory.");
+  
+  auto uc_ptr = std::unique_ptr<cell_type, void(*)(void*)>((cell_type *)calloc(1,sizeof(cell_type)),free);
+  auto details_ptr = std::unique_ptr<detail_type, void(*)(void *)>((detail_type *)calloc(1, sizeof(detail_type)), free);
+  unit_cell = uc_ptr.get();
+  details = details_ptr.get();
   FILE *dest=nullfile;
 
   /*******
@@ -57,14 +57,14 @@ bool runMol(const ROMol &mol, int confId){
   unit_cell->equiv_atoms = 0;
 
 
-  safe_strcpy(details->title,"test job");
+  safe_strcpy(details->title,"RDKit job");
 
 
   // molecular calculation
   details->Execution_Mode = MOLECULAR;
   details->num_KPOINTS = 1;
-  details->K_POINTS = (k_point_type *)calloc(1,sizeof(k_point_type));
-  if( !details->K_POINTS ) fatal("Can't allocate the single k point.");
+  std::unique_ptr<k_point_type> kpt_ptr(new k_point_type);
+  details->K_POINTS = kpt_ptr.get();
   details->K_POINTS[0].weight = 1.0;
   details->avg_props = 0;
   details->use_symmetry = 1;
@@ -79,11 +79,8 @@ bool runMol(const ROMol &mol, int confId){
   // ---------------------------------
 
   unit_cell->num_atoms = mol.getNumAtoms();
-  unit_cell->atoms = (atom_type *)calloc(unit_cell->num_atoms,sizeof(atom_type));
-  if(!unit_cell->atoms){
-    sprintf(err_string,"Can't allocate memory for: %d atoms.",unit_cell->num_atoms);
-    fatal("Can't allocate memory for the atoms.");
-  }
+  auto at_ptr = std::unique_ptr<atom_type, void(*)(void *)>((atom_type *)calloc(unit_cell->num_atoms, sizeof(atom_type)), free);
+  unit_cell->atoms = at_ptr.get();
   const Conformer &conf = mol.getConformer(confId);
   for(unsigned int i=0;i<mol.getNumAtoms();++i){
     safe_strcpy(unit_cell->atoms[i].symb,"H");
@@ -118,15 +115,14 @@ bool runMol(const ROMol &mol, int confId){
   }
 
   for(int i=0;i<unit_cell->num_atoms;i++){
-  for(int j=0;j<i;j++){
-   printf(">>>> ROP %d-%d: %.2f\n",i+1,j+1,properties.ROP_mat[i*(i+1)/2 + j]);
+    for(int j=0;j<i;j++){
+    printf(">>>> ROP %d-%d: %.2f\n",i+1,j+1,properties.ROP_mat[i*(i+1)/2 + j]);
+    }
   }
-}
+  
+  free(nullfile);
 
-  free(unit_cell);
-  free(details);
   return true;
-
 }
 
 void stub() {
