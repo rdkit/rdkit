@@ -2,6 +2,7 @@
 Importing pandasTools enables several features that allow for using RDKit molecules as columns of a
 Pandas dataframe.
 If the dataframe is containing a molecule format in a column (e.g. smiles), like in this example:
+
 >>> from rdkit.Chem import PandasTools
 >>> import pandas as pd
 >>> import os
@@ -74,6 +75,7 @@ Molecule                  200  non-null values
 dtypes: object(20)>
 
 Conversion to html is quite easy:
+
 >>> htm = frame.to_html() # doctest: +ELLIPSIS
 *...*
 >>> str(htm[:36])
@@ -81,6 +83,7 @@ Conversion to html is quite easy:
 
 In order to support rendering the molecules as images in the HTML export of the dataframe,
 the __str__ method is monkey-patched to return a base64 encoded PNG:
+
 >>> molX = Chem.MolFromSmiles('Fc1cNc2ccccc12')
 >>> print(molX) # doctest: +SKIP
 <img src="data:image/png;base64,..." alt="Mol"/>
@@ -98,6 +101,7 @@ from __future__ import print_function
 from base64 import b64encode
 import sys
 import types
+import logging
 
 import numpy as np
 from rdkit import Chem
@@ -109,6 +113,8 @@ from rdkit.Chem import SDWriter
 from rdkit.Chem import rdchem
 from rdkit.Chem.Scaffolds import MurckoScaffold
 from rdkit.six import BytesIO, string_types, PY3
+
+log = logging.getLogger(__name__)
 
 try:
   import pandas as pd
@@ -350,7 +356,11 @@ def LoadSDF(filename, idName='ID', molColName='ROMol', includeFingerprints=False
     if mol.HasProp('_Name'):
       row[idName] = mol.GetProp('_Name')
     if smilesName is not None:
-      row[smilesName] = Chem.MolToSmiles(mol, isomericSmiles=isomericSmiles)
+      try:
+        row[smilesName] = Chem.MolToSmiles(mol, isomericSmiles=isomericSmiles)
+      except:
+        log.warning('No valid smiles could be generated for molecule %s', i)
+        row[smilesName] = None
     if molColName is not None and not includeFingerprints:
       row[molColName] = mol
     elif molColName is not None:
