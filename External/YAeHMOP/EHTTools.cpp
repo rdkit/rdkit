@@ -150,6 +150,10 @@ bool runMol(const ROMol &mol, int confId){
     }
   }
   
+  free(unit_cell->atoms);
+  free(details->K_POINTS);
+  free(details_ptr);
+  free(uc_ptr);
   return true;
 }
 
