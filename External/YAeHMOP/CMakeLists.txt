@@ -1,11 +1,16 @@
 if(RDK_BUILD_YAEHMOP_SUPPORT)
 
+if(MSVC)
 set(YAEHMOP_DIR "c:/Users/glandrum/Code/yaehmop/tightbind/")
+set(YAEHMOP_LIB "${YAEHMOP_DIR}/build/Release/yaehmop_eht.lib")
+else(MSVC)
+set(YAEHMOP_DIR "/mnt/c/Users/glandrum/Code/yaehmop/tightbind/")
+set(YAEHMOP_LIB "${YAEHMOP_DIR}/build_lin/libyaehmop_eht.a")
+endif(MSVC)
 #find_library(YAEHMOP_LIB yaehmop_eht PATHS ${YAEHMOP_DIR} ${YAEHMOP_DIR}/build/Release)
 #if(NOT YAEHMOP_LIB)
 #message(FATAL_ERROR "YAeHMOP library not found")
 #endif(NOT YAEHMOP_LIB)
-set(YAEHMOP_LIB "${YAEHMOP_DIR}/build/Release/yaehmop_eht.lib")
 set(YAEHMOP_INCLUDE_PATH ${YAEHMOP_DIR})
 
 if(NOT DEFINED YAEHMOP_DIR)
