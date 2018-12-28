@@ -38,7 +38,7 @@ TEST_CASE("benzene", "[basics]") {
   std::cerr<<"back"<<std::endl;
 }
 #endif
-#if 0
+#if 1
 TEST_CASE("phenol", "[basics]") {
   std::string pathName = getenv("RDBASE");
   pathName += "/External/YAeHMOP/test_data/";

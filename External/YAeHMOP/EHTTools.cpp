@@ -25,22 +25,16 @@ bool runMol(const ROMol &mol, int confId){
   // -----------------------------
   // ----- BOILERPLATE -----------
   // -----------------------------
-#if 0
-  auto nullfile = std::unique_ptr<FILE, void(*)(void*)>(fopen("nul", "w"),free);
-  status_file = nullfile.get();
-  output_file = nullfile.get();
-  FILE *dest=nullfile.get();
-  
-  auto uc_ptr = std::unique_ptr<cell_type, void(*)(void*)>((cell_type *)calloc(1,sizeof(cell_type)),free);
-  auto details_ptr = std::unique_ptr<detail_type, void(*)(void *)>((detail_type *)calloc(1, sizeof(detail_type)), free);
-  unit_cell = uc_ptr.get();
-  details = details_ptr.get();
-#else
   FILE *nullfile = fopen("nul", "w");
   status_file = nullfile;
   output_file = nullfile;
   FILE *dest=fopen("run.out","w+");
-  
+#if 1
+  auto uc_ptr = std::unique_ptr<cell_type, void(*)(void*)>((cell_type *)calloc(1,sizeof(cell_type)),free);
+  auto details_ptr = std::unique_ptr<detail_type, void(*)(void *)>((detail_type *)calloc(1, sizeof(detail_type)), free);
+  unit_cell = uc_ptr.get();
+  details = details_ptr.get();
+#else  
   cell_type *uc_ptr = (cell_type *)calloc(1,sizeof(cell_type));
   detail_type *details_ptr = (detail_type *)calloc(1, sizeof(detail_type));
   unit_cell = uc_ptr;
@@ -76,13 +70,13 @@ bool runMol(const ROMol &mol, int confId){
   unit_cell->equiv_atoms = 0;
 
 
-  safe_strcpy(details->title,"RDKit job");
+  safe_strcpy(details->title,(char *)"RDKit job");
 
 
   // molecular calculation
   details->Execution_Mode = MOLECULAR;
   details->num_KPOINTS = 1;
-#if 0
+#if 1
   auto kpt_ptr = std::unique_ptr<k_point_type, void(*)(void *)>((k_point_type *)calloc(1, sizeof(k_point_type)), free);
   details->K_POINTS = kpt_ptr.get();
  #else
@@ -105,7 +99,7 @@ bool runMol(const ROMol &mol, int confId){
   unit_cell->num_atoms = mol.getNumAtoms();
   unit_cell->num_raw_atoms = unit_cell->num_atoms;
 
-#if 0
+#if 1
   auto at_ptr = std::unique_ptr<atom_type, void(*)(void *)>((atom_type *)calloc(unit_cell->num_atoms, sizeof(atom_type)), free);
   unit_cell->atoms = at_ptr.get();
 #else
@@ -150,10 +144,14 @@ bool runMol(const ROMol &mol, int confId){
     }
   }
   
+#if 0
   free(unit_cell->atoms);
   free(details->K_POINTS);
   free(details_ptr);
   free(uc_ptr);
+#endif
+  fclose(nullfile);
+  fclose(dest);
   return true;
 }
 
