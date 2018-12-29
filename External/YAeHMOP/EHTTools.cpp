@@ -14,6 +14,9 @@ extern "C" {
 
 namespace RDKit {
 namespace EHTTools {
+const std::string _EHTCharge = "_EHTCharge";
+const std::string _EHTMullikenOP = "_EHTMullikenOP";
+
 
 // we should only call into the C code, which uses tons of globals, from one thread
 // at a time. This mutex enforces that.
@@ -134,15 +137,22 @@ bool runMol(const ROMol &mol, int confId){
   // ---------------------------------
 
   //pull properties
-  for(int i=0;i<unit_cell->num_atoms;i++){
-   printf(">>>> Atom %d: %.2f\n",i+1,properties.net_chgs[i]);
+  for(auto &atom : mol.atoms() ){
+    atom->setProp(_EHTCharge,properties.net_chgs[atom->getIdx()],true);
+    std::cerr<<">>>> Atom "<<atom->getIdx()<<": "<<atom->getProp<double>(_EHTCharge)<<std::endl;
   }
 
+
+  size_t sz = mol.getNumAtoms()*mol.getNumAtoms();
+  auto ropMat = new double[sz];
+  memcpy(ropMat,properties.ROP_mat,sz*sizeof(double));
+  boost::shared_array<double> sptr(ropMat);
   for(int i=0;i<unit_cell->num_atoms;i++){
     for(int j=0;j<i;j++){
-    printf(">>>> ROP %d-%d: %.2f\n",i+1,j+1,properties.ROP_mat[i*(i+1)/2 + j]);
+    printf(">>>> ROP %d-%d: %.2lf\n",i+1,j+1,ropMat[i*(i+1)/2 + j]);
     }
   }
+  mol.setProp(_EHTMullikenOP,sptr,true);
   
 #if 0
   free(unit_cell->atoms);
