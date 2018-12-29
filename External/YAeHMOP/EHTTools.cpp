@@ -85,7 +85,7 @@ bool runMol(const ROMol &mol, int confId){
   details->K_POINTS[0].weight = 1.0;
   details->avg_props = 0;
   details->use_symmetry = 1;
-  details->find_princ_axes = 1;
+  details->find_princ_axes = 0;
   details->net_chg_PRT=1;
   details->ROP_mat_PRT=1;
 
