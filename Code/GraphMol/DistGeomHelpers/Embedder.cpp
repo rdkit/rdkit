@@ -441,15 +441,10 @@ bool minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
   std::unique_ptr<ForceFields::ForceField> field;
   if (embedParams.useBasicKnowledge) {  // ETKDG or KDG
     field.reset(DistGeom::construct3DForceField(
-        *eargs.mmat, positions3D, eargs.etkdgDetails->bonds,
-        eargs.etkdgDetails->angles, eargs.etkdgDetails->expTorsionAtoms,
-        eargs.etkdgDetails->expTorsionAngles, eargs.etkdgDetails->improperAtoms,
-        eargs.etkdgDetails->atomNums));
+        *eargs.mmat, positions3D, *eargs.etkdgDetails));
   } else {  // plain ETDG
     field.reset(DistGeom::constructPlain3DForceField(
-        *eargs.mmat, positions3D, eargs.etkdgDetails->bonds,
-        eargs.etkdgDetails->angles, eargs.etkdgDetails->expTorsionAtoms,
-        eargs.etkdgDetails->expTorsionAngles, eargs.etkdgDetails->atomNums));
+        *eargs.mmat, positions3D, *eargs.etkdgDetails));
   }
 
   // minimize!

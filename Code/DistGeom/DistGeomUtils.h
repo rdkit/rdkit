@@ -20,6 +20,9 @@
 
 namespace ForceFields {
 class ForceField;
+namespace CrystalFF {
+    struct CrystalFFDetails;
+}
 }
 
 namespace DistGeom {
@@ -124,30 +127,14 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructForceField(
   \param mmat            Distance bounds matrix
   \param positions       A vector of pointers to 3D Points to write out the
   resulting coordinates
-  \param bonds           A list of 1-2 partners (bonds)
-  \param angles          A list of 1-3 partners (angles)
-  \param expTorsionAtoms A list of groups of 4 atom indices for experimental
-  torsions
-  \param expTorsionAngles A list of corresponding torsion angle-potential
-  parameters
-  \param improperAtoms   A list of groups of 4 atom indices for inversion terms
-  \param atomNums        A list of atomic numbers for all atoms in the molecule
+  \param etkdgDetails    Contains information about the ETKDG force field
 
-  \return a pointer to a ForceField suitable for imposing experimental torsion
-  angle preferences
-    <b>NOTE:</b> the caller is responsible for deleting this force field.
+  <b>NOTE:</b> the caller is responsible for deleting this force field.
 
 */
 RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *construct3DForceField(
     const BoundsMatrix &mmat, RDGeom::Point3DPtrVect &positions,
-    const std::vector<std::pair<int, int> > &bonds,
-    const std::vector<std::vector<int> > &angles,
-    const std::vector<std::vector<int> > &expTorsionAtoms,
-    const std::vector<std::pair<std::vector<int>, std::vector<double> > > &
-        expTorsionAngles,
-    const std::vector<std::vector<int> > &improperAtoms,
-    const std::vector<int> &atomNums);
-
+    const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails);
 //! Force field with experimental torsion angle preferences and 1-2/1-3 distance
 //constraints
 /*!
@@ -155,27 +142,14 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *construct3DForceField(
   \param mmat            Distance bounds matrix
   \param positions       A vector of pointers to 3D Points to write out the
   resulting coordinates
-  \param bonds           A list of 1-2 partners (bonds)
-  \param angles          A list of 1-3 partners (angles)
-  \param expTorsionAtoms A list of groups of 4 atom indices for experimental
-  torsions
-  \param expTorsionAngles A list of corresponding torsion angle-potential
-  parameters
-  \param atomNums        A list of atomic numbers for all atoms in the molecule
+  \param etkdgDetails    Contains information about the ETKDG force field
 
-  \return a pointer to a ForceField suitable for imposing experimental torsion
-  angle preferences
-    <b>NOTE:</b> the caller is responsible for deleting this force field.
+  <b>NOTE:</b> the caller is responsible for deleting this force field.
 
 */
 RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructPlain3DForceField(
     const BoundsMatrix &mmat, RDGeom::Point3DPtrVect &positions,
-    const std::vector<std::pair<int, int> > &bonds,
-    const std::vector<std::vector<int> > &angles,
-    const std::vector<std::vector<int> > &expTorsionAtoms,
-    const std::vector<std::pair<std::vector<int>, std::vector<double> > > &
-        expTorsionAngles,
-    const std::vector<int> &atomNums);
+    const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails);
 
 //! Force field with only improper terms
 /*!
