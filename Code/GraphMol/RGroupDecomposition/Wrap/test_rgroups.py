@@ -1,4 +1,4 @@
-#  Copyright (c) 2017, Novartis Institutes for BioMedical Research Inc.
+#  Copyright (c) 2018, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -41,7 +41,7 @@ from rdkit.Chem.rdRGroupDecomposition import RGroupDecompose, RGroupDecompositio
 from collections import OrderedDict
 
 class TestCase(unittest.TestCase) :
-    def atest_multicores(self):
+    def test_multicores(self):
         cores_smi_easy = OrderedDict()
         cores_smi_hard = OrderedDict()
 
@@ -162,9 +162,49 @@ C1CCO[C@@](S)(P)1
                 Chem.MolFromSmiles("CC")]
 
         res, unmatched = RGroupDecompose(cores, mols)
-        self.assertEquals(len(res), 1)
-        self.assertEquals(unmatched, [0,1,2,4])
-        
+        self.assertEqual(len(res), 1)
+        self.assertEqual(unmatched, [0,1,2,4])
+
+    def test_userlabels(self):
+        smis = ["C(Cl)N(N)O(O)"]
+        mols = [Chem.MolFromSmiles(smi) for smi in smis]
+        smarts = 'C([*:1])N([*:5])O([*:6])'
+        core = Chem.MolFromSmarts(smarts)
+        rg = RGroupDecomposition(core)
+        for m in mols:
+            rg.Add(m)
+        rg.Process()
+        self.assertEqual(rg.GetRGroupsAsColumns(asSmiles=True),
+                         {'Core': ['C(N(O[*:6])[*:5])[*:1]'],
+                          'R1': ['Cl[*:1]'],
+                          'R5': ['[H]N([H])[*:5]'],
+                          'R6': ['[H]O[*:6]']})
+
+        smarts = 'C([*:4])N([*:5])O([*:6])'
+
+        core = Chem.MolFromSmarts(smarts)
+        rg = RGroupDecomposition(core)
+        for m in mols:
+            rg.Add(m)
+        rg.Process()
+        self.assertEqual(rg.GetRGroupsAsColumns(asSmiles=True),
+                         {'Core': ['C(N(O[*:6])[*:5])[*:4]'],
+                          'R4': ['Cl[*:4]'],
+                          'R5': ['[H]N([H])[*:5]'],
+                          'R6': ['[H]O[*:6]']})
+
+    def test_match_only_at_rgroups(self):
+        smiles = ['c1ccccc1']#, 'c1(Cl)ccccc1', 'c1(Cl)cc(Br)ccc1']
+        mols = [Chem.MolFromSmiles(smi) for smi in smiles]
+
+        core1 = Chem.MolFromSmiles("c1([*:5])cc([*:6])ccc1")
+        params = RGroupDecompositionParameters()
+        params.onlyMatchAtRGroups=True
+        rg = RGroupDecomposition(core1, params)
+        for smi,m in zip(smiles,mols):
+            self.assertTrue(rg.Add(m)!=-1, smi)
+
+
 
 if __name__ == '__main__':
   unittest.main()

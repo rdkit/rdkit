@@ -38,6 +38,7 @@
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/FMCS/FMCS.h>
 #include <boost/scoped_ptr.hpp>
+#include <boost/dynamic_bitset.hpp>
 #include <set>
 #include <utility>
 #include <vector>
@@ -170,9 +171,6 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
   MolOps::AdjustQueryParameters adjustParams;
   adjustParams.makeDummiesQueries = true;
   adjustParams.adjustDegree = false;
-  adjustParams.adjustHeavyDegree = onlyMatchAtRGroups;
-  // if (onlyMatchAtRGroups)
-  //   adjustParams.adjustDegreeFlags |= MolOps::ADJUST_IGNOREHS;
   adjustQueryProperties(core, &adjustParams);
 
   for (auto &it : atomToLabel)
@@ -577,13 +575,14 @@ struct RGroupDecompData {
       auto atm = atoms.find(userLabel);
       if (atm == atoms.end()) continue;  // label not used in the rgroup
       Atom *atom = atm->second;
-      mappings[userLabel] = ++count;
-
+      mappings[userLabel] = userLabel;
+      if(count < userLabel)
+        count = userLabel;
       if (atom->getAtomicNum() == 0) {  // add to existing dummy/rlabel
-        setRlabel(atom, count);
+        setRlabel(atom, userLabel);
       } else {  // adds new rlabel
         auto *newAt = new Atom(0);
-        setRlabel(newAt, count);
+        setRlabel(newAt, userLabel);
         atomsToAdd.push_back(std::make_pair(atom, newAt));
       }
     }
@@ -639,8 +638,6 @@ struct RGroupDecompData {
     }
 
     mol.setProp(done, true);
-    // std::cerr << "==> relabelling: " << mol.getProp<int>("idx") << " <++idx"
-    // << std::endl;
 
     std::vector<std::pair<Atom *, Atom *>> atomsToAdd;  // adds -R if necessary
 
@@ -823,6 +820,52 @@ int RGroupDecomposition::add(const ROMol &inmol) {
                      useChirality);
     }
 
+    if (data->params.onlyMatchAtRGroups) {
+      // First find all the core atoms that have user
+      //  label and but their indices into core_atoms_with_user_labels
+      std::set<int> core_atoms_with_user_labels;
+
+      for(auto atom : coreIt->second.atoms()) {
+        if(atom->hasProp(RLABEL)) {
+          core_atoms_with_user_labels.insert(atom->getIdx());
+        }
+      }
+
+      std::vector<MatchVectType> tmatches_filtered;
+      for(auto &mv : tmatches) {
+        bool passes_filter = true;
+        boost::dynamic_bitset<> target_match_indices(mol.getNumAtoms());
+        for(auto &match : mv) {
+          target_match_indices[match.second] = 1;
+        }
+        
+        for(auto &match : mv) {
+          const Atom* atm= mol.getAtomWithIdx(match.second);
+          // is this a labelled rgroup or not?
+          if(core_atoms_with_user_labels.find(match.first) ==
+             core_atoms_with_user_labels.end()) {
+
+            // nope... if any neighbor is not part of the substructure
+            //  make sure we are a hydrogen, otherwise, skip the match
+            for (const auto &nbri : boost::make_iterator_range(mol.getAtomNeighbors(atm))) {
+              const auto &nbr = mol[nbri];
+              if(nbr->getAtomicNum() != 1 && !target_match_indices[nbr->getIdx()]) {
+                passes_filter=false;
+                break;
+              }
+            }
+          }
+          if(!passes_filter)
+            break;
+        }
+
+        if (passes_filter) {
+          tmatches_filtered.push_back( mv );
+        } 
+      }
+      tmatches = tmatches_filtered;
+    }
+    
     if (!tmatches.size()) {
       continue;
     } else {
