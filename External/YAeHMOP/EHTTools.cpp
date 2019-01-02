@@ -16,6 +16,7 @@ namespace RDKit {
 namespace EHTTools {
 const std::string _EHTCharge = "_EHTCharge";
 const std::string _EHTMullikenOP = "_EHTMullikenOP";
+const std::string _EHTChargeMatrix = "_EHTChargeMatrix";
 
 
 // we should only call into the C code, which uses tons of globals, from one thread
@@ -32,18 +33,9 @@ bool runMol(const ROMol &mol, int confId){
   status_file = nullfile;
   output_file = nullfile;
   FILE *dest=fopen("run.out","w+");
-#if 1
-  auto uc_ptr = std::unique_ptr<cell_type, void(*)(void*)>((cell_type *)calloc(1,sizeof(cell_type)),free);
-  auto details_ptr = std::unique_ptr<detail_type, void(*)(void *)>((detail_type *)calloc(1, sizeof(detail_type)), free);
-  unit_cell = uc_ptr.get();
-  details = details_ptr.get();
-#else  
-  cell_type *uc_ptr = (cell_type *)calloc(1,sizeof(cell_type));
-  detail_type *details_ptr = (detail_type *)calloc(1, sizeof(detail_type));
-  unit_cell = uc_ptr;
-  details = details_ptr;
 
-#endif
+  unit_cell = (cell_type *)calloc(1,sizeof(cell_type));
+  details = (detail_type *)calloc(1, sizeof(detail_type));
 
   /*******
     initialize some variables
@@ -79,19 +71,14 @@ bool runMol(const ROMol &mol, int confId){
   // molecular calculation
   details->Execution_Mode = MOLECULAR;
   details->num_KPOINTS = 1;
-#if 1
-  auto kpt_ptr = std::unique_ptr<k_point_type, void(*)(void *)>((k_point_type *)calloc(1, sizeof(k_point_type)), free);
-  details->K_POINTS = kpt_ptr.get();
- #else
   details->K_POINTS = (k_point_type *)calloc(1, sizeof(k_point_type));
- #endif
   details->K_POINTS[0].weight = 1.0;
   details->avg_props = 0;
   details->use_symmetry = 1;
   details->find_princ_axes = 0;
   details->net_chg_PRT=1;
   details->ROP_mat_PRT=1;
-
+  details->Rchg_mat_PRT=1;
 
   unit_cell->using_Zmat = 0;
   unit_cell->using_xtal_coords = 0;
@@ -102,12 +89,8 @@ bool runMol(const ROMol &mol, int confId){
   unit_cell->num_atoms = mol.getNumAtoms();
   unit_cell->num_raw_atoms = unit_cell->num_atoms;
 
-#if 1
-  auto at_ptr = std::unique_ptr<atom_type, void(*)(void *)>((atom_type *)calloc(unit_cell->num_atoms, sizeof(atom_type)), free);
-  unit_cell->atoms = at_ptr.get();
-#else
   unit_cell->atoms = (atom_type *)calloc(unit_cell->num_atoms, sizeof(atom_type));
-#endif
+
   const Conformer &conf = mol.getConformer(confId);
   for(unsigned int i=0;i<mol.getNumAtoms();++i){
     safe_strcpy(unit_cell->atoms[i].symb,(char *)mol.getAtomWithIdx(i)->getSymbol().c_str());
@@ -127,10 +110,6 @@ bool runMol(const ROMol &mol, int confId){
   charge_to_num_electrons(unit_cell);
   build_orbital_lookup_table(unit_cell,&num_orbs,&orbital_lookup_table);
 
-
-  /* install the sig_int handler */
-  //signal(SIGINT,handle_sigint);
-
   run_eht(dest);
   // ---------------------------------
   // ----- END BOILERPLATE -----------
@@ -139,27 +118,20 @@ bool runMol(const ROMol &mol, int confId){
   //pull properties
   for(auto &atom : mol.atoms() ){
     atom->setProp(_EHTCharge,properties.net_chgs[atom->getIdx()],true);
-    std::cerr<<">>>> Atom "<<atom->getIdx()<<": "<<atom->getProp<double>(_EHTCharge)<<std::endl;
   }
-
 
   size_t sz = mol.getNumAtoms()*mol.getNumAtoms();
   auto ropMat = new double[sz];
   memcpy(ropMat,properties.ROP_mat,sz*sizeof(double));
   boost::shared_array<double> sptr(ropMat);
-  for(int i=0;i<unit_cell->num_atoms;i++){
-    for(int j=0;j<i;j++){
-    printf(">>>> ROP %d-%d: %.2lf\n",i+1,j+1,ropMat[i*(i+1)/2 + j]);
-    }
-  }
   mol.setProp(_EHTMullikenOP,sptr,true);
-  
-#if 0
-  free(unit_cell->atoms);
-  free(details->K_POINTS);
-  free(details_ptr);
-  free(uc_ptr);
-#endif
+  auto rchgMat = new double[sz];
+  memcpy(rchgMat,properties.Rchg_mat,sz*sizeof(double));
+  boost::shared_array<double> sptr2(rchgMat);
+  mol.setProp(_EHTChargeMatrix,sptr2,true);
+
+  cleanup_memory();
+
   fclose(nullfile);
   fclose(dest);
   return true;

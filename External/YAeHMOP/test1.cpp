@@ -33,9 +33,13 @@ TEST_CASE("benzene", "[basics]") {
   std::unique_ptr<RWMol> mol(MolFileToMol(pathName + "benzene.mol",sanitize,removeHs));
   REQUIRE(mol);
   REQUIRE(mol->getNumAtoms()==12);
-  std::cerr<<"RUNNING"<<std::endl;
   REQUIRE(EHTTools::runMol(*mol));
-  std::cerr<<"back"<<std::endl;
+  for(unsigned int i=0;i<6;++i){
+    CHECK(mol->getAtomWithIdx(i)->getProp<double>(EHTTools::_EHTCharge) == Approx(-0.026).margin(0.001));
+  }
+  for(unsigned int i=6;i<12;++i){
+    CHECK(mol->getAtomWithIdx(i)->getProp<double>(EHTTools::_EHTCharge) == Approx(0.026).margin(0.001));
+  }
 }
 #endif
 #if 1

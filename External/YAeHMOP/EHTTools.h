@@ -11,6 +11,7 @@ class ROMol;
 namespace EHTTools {
 extern const std::string _EHTCharge;  // used to hold partial charges
 extern const std::string _EHTMullikenOP; // used to hold overlap populations
+extern const std::string _EHTChargeMatrix; // used to hold charge matrix
 
 bool runMol(const ROMol &mol, int confId=-1);
 
