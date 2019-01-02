@@ -38,6 +38,7 @@
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/FMCS/FMCS.h>
 #include <boost/scoped_ptr.hpp>
+#include <boost/dynamic_bitset.hpp>
 #include <set>
 #include <utility>
 #include <vector>
@@ -825,8 +826,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
       std::set<int> core_atoms_with_user_labels;
 
       for(auto atom : coreIt->second.atoms()) {
-        int label;
-        if(atom->getPropIfPresent(RLABEL, label)) {
+        if(atom->hasProp(RLABEL)) {
           core_atoms_with_user_labels.insert(atom->getIdx());
         }
       }
@@ -834,9 +834,9 @@ int RGroupDecomposition::add(const ROMol &inmol) {
       std::vector<MatchVectType> tmatches_filtered;
       for(auto &mv : tmatches) {
         bool passes_filter = true;
-        std::set<int> target_match_indices;
+        boost::dynamic_bitset<> target_match_indices(mol.getNumAtoms());
         for(auto &match : mv) {
-          target_match_indices.insert(match.second);
+          target_match_indices[match.second] = 1;
         }
         
         for(auto &match : mv) {
@@ -849,8 +849,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
             //  make sure we are a hydrogen, otherwise, skip the match
             for (const auto &nbri : boost::make_iterator_range(mol.getAtomNeighbors(atm))) {
               const auto &nbr = mol[nbri];
-              if(nbr->getAtomicNum() != 1 &&
-                 target_match_indices.find(nbr->getIdx()) == target_match_indices.end()) {
+              if(nbr->getAtomicNum() != 1 && !target_match_indices[nbr->getIdx()]) {
                 passes_filter=false;
                 break;
               }
@@ -860,8 +859,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
             break;
         }
 
-        if (passes_filter)
-        {
+        if (passes_filter) {
           tmatches_filtered.push_back( mv );
         } 
       }
