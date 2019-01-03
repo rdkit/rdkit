@@ -134,8 +134,6 @@ try:
           file=sys.stderr)
     pd = None
   else:
-    # do not allow pandas to truncate text since PNG byte strings are lengthy
-    pd.set_option("display.max_colwidth", -1)
     # saves the default pandas rendering to allow restoration
     defPandasRendering = pd.core.frame.DataFrame.to_html
 except ImportError:
@@ -171,7 +169,9 @@ def patchPandasHTMLrepr(self, **kwargs):
   # set escape to False if not set
   kwargs['escape'] = kwargs.get('escape') or False
 
-  return defPandasRendering(self, **kwargs)
+  # do not allow pandas to truncate text since PNG byte strings are lengthy
+  with pd.option_context('display.max_colwidth', -1):
+    return defPandasRendering(self, **kwargs)
 
 
 def patchPandasHeadMethod(self, n=5):
