@@ -35,6 +35,7 @@ class TestPandasTools(unittest.TestCase):
   def setUp(self):
     PandasTools.InstallPandasTools()
     PandasTools.ChangeMoleculeRendering(renderer='PNG')
+    PandasTools.pd.set_option('display.max_columns', None)
     self._molRepresentation = PandasTools.molRepresentation
     self._highlightSubstructures = PandasTools.highlightSubstructures
 
