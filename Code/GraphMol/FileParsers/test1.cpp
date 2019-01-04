@@ -1606,7 +1606,7 @@ void testMolFileQueryToSmarts() {
   m = MolFileToMol(fName);
   TEST_ASSERT(m);
   sma = MolToSmarts(*m, true);
-  TEST_ASSERT(sma == "[#6;$(*=,:,#*)]~[#8]")
+  TEST_ASSERT(sma == "[#6&$(*=,:,#*)]~[#8]")
 
   delete m;
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
@@ -4042,15 +4042,7 @@ void testGithub1023() {
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 119);
     TEST_ASSERT(m->getNumBonds() == 399);
-    bool ok = false;
-    try {
-      // the "molecule" isn't something we can properly handle. Expect a
-      // ValueErrorException
-      MolOps::findSSSR(*m);  // this was seg faulting
-    } catch (const ValueErrorException &e) {
-      ok = true;
-    }
-    TEST_ASSERT(ok);
+    MolOps::findSSSR(*m);  // this was seg faulting
   }
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
@@ -5210,7 +5202,7 @@ void testGithub2000() {
 }
 
 void RunTests() {
-#if 0
+#if 1
   test1();
   test2();
   test4();
