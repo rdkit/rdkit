@@ -134,16 +134,6 @@ try:
           file=sys.stderr)
     pd = None
   else:
-    if 'display.width' in pd.core.config._registered_options:
-      pd.set_option('display.width', 1000000000)
-    if 'display.max_rows' in pd.core.config._registered_options:
-      pd.set_option('display.max_rows', 1000000000)
-    elif 'display.height' in pd.core.config._registered_options:
-      pd.set_option('display.height', 1000000000)
-    if 'display.max_colwidth' in pd.core.config._registered_options:
-      pd.set_option('display.max_colwidth', 1000000000)
-    if 'display.max_columns' in pd.core.config._registered_options:
-      pd.set_option('display.max_columns', 20)
     # saves the default pandas rendering to allow restoration
     defPandasRendering = pd.core.frame.DataFrame.to_html
 except ImportError:
@@ -176,13 +166,12 @@ def patchPandasHTMLrepr(self, **kwargs):
   '''
   Patched default escaping of HTML control characters to allow molecule image rendering dataframes
   '''
-  formatter = fmt.DataFrameFormatter(
-    self, buf=None, columns=None, col_space=None, colSpace=None, header=True, index=True,
-    na_rep='NaN', formatters=None, float_format=None, sparsify=None, index_names=True, justify=None,
-    force_unicode=None, bold_rows=True, classes=None, escape=False)
-  formatter.to_html()
-  html = formatter.buf.getvalue()
-  return html
+  # set escape to False if not set
+  kwargs['escape'] = kwargs.get('escape') or False
+
+  # do not allow pandas to truncate text since PNG byte strings are lengthy
+  with pd.option_context('display.max_colwidth', -1):
+    return defPandasRendering(self, **kwargs)
 
 
 def patchPandasHeadMethod(self, n=5):
@@ -196,12 +185,7 @@ def patchPandasHeadMethod(self, n=5):
 
 def _get_image(x):
   """displayhook function for PNG data"""
-  s = b64encode(x).decode('ascii')
-  pd.set_option('display.max_columns', len(s) + 1000)
-  pd.set_option('display.max_rows', len(s) + 1000)
-  if len(s) + 100 > pd.get_option("display.max_colwidth"):
-    pd.set_option("display.max_colwidth", len(s) + 1000)
-  return s
+  return b64encode(x).decode('ascii')
 
 
 def _get_svg_image(mol, size=(200, 200), highlightAtoms=[]):
