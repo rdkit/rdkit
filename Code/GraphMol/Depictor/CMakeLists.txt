@@ -1,6 +1,18 @@
 
 remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
 add_definitions(-DRDKIT_DEPICTOR_BUILD)
+
+if(RDK_BUILD_COORDGEN_SUPPORT)
+
+    if(MSVC AND (NOT RDK_INSTALL_DLLS_MSVC))
+      add_definitions(-DSTATIC_COORDGEN)
+    else(MSVC AND (NOT RDK_INSTALL_DLLS_MSVC))
+      add_definitions(-DIN_COORDGEN)
+    endif(MSVC AND (NOT RDK_INSTALL_DLLS_MSVC))
+
+    include_directories(${coordgen_INCLUDE_DIRS})
+endif()
+
 rdkit_library(Depictor
               RDDepictor.cpp EmbeddedFrag.cpp DepictUtils.cpp
               LINK_LIBRARIES ${RDK_COORDGEN_LIBS} SubstructMatch GraphMol)

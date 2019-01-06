@@ -46,9 +46,10 @@ __pycache__/
 /Data/templates.mae
 
 /External/catch/catch/
-/External/CoordGen/coordgenlibs/
+/External/CoordGen/coordgen/
 /External/CoordGen/maeparser/
-/External/CoordGen/master.tar.gz
+/External/CoordGen/maeparser-v*.tar.gz
+/External/CoordGen/coordgenlibs-v*.tar.gz
 /External/FreeSASA/freesasa-2.0.1/
 /External/FreeSASA/master.tar.gz
 /External/INCHI-API/INCHI-1-SRC.zip
