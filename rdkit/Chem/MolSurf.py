@@ -22,7 +22,6 @@ import numpy
 from rdkit import Chem
 from rdkit.Chem import Crippen
 from rdkit.Chem import rdPartialCharges, rdMolDescriptors
-from rdkit.Chem.PeriodicTable import numTable
 
 
 ptable = Chem.GetPeriodicTable()
