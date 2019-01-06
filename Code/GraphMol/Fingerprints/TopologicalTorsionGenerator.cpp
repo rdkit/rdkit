@@ -41,10 +41,12 @@ std::string TopologicalTorsionArguments<OutputType>::infoString() const {
 };
 template <typename OutputType>
 OutputType TopologicalTorsionAtomEnv<OutputType>::getBitId(
-    FingerprintArguments<OutputType> *arguments,
-    const std::vector<std::uint32_t> *atomInvariants,
-    const std::vector<std::uint32_t> *bondInvariants,
-    const AdditionalOutput *additionalOutput, const bool hashResults) const {
+    FingerprintArguments<OutputType> *, // arguments
+    const std::vector<std::uint32_t> *, // atomInvariants
+    const std::vector<std::uint32_t> *, // bondInvariants
+    const AdditionalOutput *, // additionalOutput
+    const bool // hashResults
+) const {
   return d_bitId;
 };
 
@@ -58,10 +60,11 @@ std::vector<AtomEnvironment<OutputType> *>
 TopologicalTorsionEnvGenerator<OutputType>::getEnvironments(
     const ROMol &mol, FingerprintArguments<OutputType> *arguments,
     const std::vector<std::uint32_t> *fromAtoms,
-    const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
-    const AdditionalOutput *additionalOutput,
+    const std::vector<std::uint32_t> *ignoreAtoms,
+    const int, // confId
+    const AdditionalOutput *, // additionalOutput
     const std::vector<std::uint32_t> *atomInvariants,
-    const std::vector<std::uint32_t> *bondInvariants,
+    const std::vector<std::uint32_t> *, // bondInvariants
     const bool hashResults) const {
   TopologicalTorsionArguments<OutputType> *topologicalTorsionArguments =
       dynamic_cast<TopologicalTorsionArguments<OutputType> *>(arguments);

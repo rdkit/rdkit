@@ -23,7 +23,6 @@ FingerprintGenerator<OutputType> *getTopologicalTorsionFPGenerator(
     const bool countSimulation, python::object &py_countBounds,
     const std::uint32_t fpSize, python::object &py_atomInvGen) {
   AtomInvariantsGenerator *atomInvariantsGenerator = nullptr;
-  BondInvariantsGenerator *bondInvariantsGenerator = nullptr;
 
   python::extract<AtomInvariantsGenerator *> atomInvGen(py_atomInvGen);
   if (atomInvGen.check() && atomInvGen()) {
