@@ -74,9 +74,9 @@ def _pyLabuteHelper(mol, includeHs=1, force=0):
   rads = numpy.zeros(nAts + 1, 'd')
 
   # 0 contains the H information
-  rads[0] = ptable.GetRvdw(1)
+  rads[0] = ptable.GetRb0(1)
   for i in range(nAts):
-    rads[i + 1] = ptable.GetRvdw(mol.GetAtomWithIdx(i).GetAtomicNum())
+    rads[i + 1] = ptable.GetRb0(mol.GetAtomWithIdx(i).GetAtomicNum())
 
   # start with explicit bonds
   for bond in mol.GetBonds():
