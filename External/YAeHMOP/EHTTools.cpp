@@ -8,8 +8,7 @@
 
 
 extern "C" {
-//#include "local.h"
-#include <bind.h>
+#include <yaehmop/bind.h>
 }
 
 namespace RDKit {
