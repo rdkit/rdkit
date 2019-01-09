@@ -18,13 +18,11 @@ from rdkit import Chem
 from rdkit.Chem import Graphs
 from rdkit.Chem import rdchem
 from rdkit.Chem import rdMolDescriptors
-# FIX: remove this dependency here and below
-from rdkit.Chem import pyPeriodicTable as PeriodicTable
 import numpy
 import math
 from rdkit.ML.InfoTheory import entropy
 
-periodicTable = rdchem.GetPeriodicTable()
+ptable = Chem.GetPeriodicTable()
 
 _log2val = math.log(2)
 
@@ -59,6 +57,17 @@ def _GetCountDict(arr):
     res[v] = res.get(v, 0) + 1
   return res
 
+# WARNING: this data should probably go somewhere else...
+hallKierAlphas = {'Br': [None, None, 0.48],
+                  'C': [-0.22, -0.13, 0.0],
+                  'Cl': [None, None, 0.29],
+                  'F': [None, None, -0.07],
+                  'H': [0.0, 0.0, 0.0],
+                  'I': [None, None, 0.73],
+                  'N': [-0.29, -0.2, -0.04],
+                  'O': [None, -0.2, -0.04],
+                  'P': [None, 0.3, 0.43],
+                  'S': [None, 0.22, 0.35]}
 
 def _pyHallKierAlpha(m):
   """ calculate the Hall-Kier alpha value for a molecule
@@ -67,13 +76,13 @@ def _pyHallKierAlpha(m):
 
   """
   alphaSum = 0.0
-  rC = PeriodicTable.nameTable['C'][5]
+  rC = ptable.GetRb0(6)
   for atom in m.GetAtoms():
     atNum = atom.GetAtomicNum()
     if not atNum:
       continue
     symb = atom.GetSymbol()
-    alphaV = PeriodicTable.hallKierAlphas.get(symb, None)
+    alphaV = hallKierAlphas.get(symb, None)
     if alphaV is not None:
       hyb = atom.GetHybridization() - 2
       if (hyb < len(alphaV)):
@@ -83,7 +92,7 @@ def _pyHallKierAlpha(m):
       else:
         alpha = alphaV[-1]
     else:
-      rA = PeriodicTable.nameTable[symb][5]
+      rA = ptable.GetRb0(atNum)
       alpha = rA / rC - 1
     # print(atom.GetIdx(), atom.GetSymbol(), alpha)
     alphaSum += alpha
@@ -219,18 +228,18 @@ Chi1.version = "1.0.0"
 
 
 def _nVal(atom):
-  return periodicTable.GetNOuterElecs(atom.GetAtomicNum()) - atom.GetTotalNumHs()
+  return ptable.GetNOuterElecs(atom.GetAtomicNum()) - atom.GetTotalNumHs()
 
 
 def _hkDeltas(mol, skipHs=1):
-  global periodicTable
+  global ptable
   res = []
   if hasattr(mol, '_hkDeltas') and mol._hkDeltas is not None:
     return mol._hkDeltas
   for atom in mol.GetAtoms():
     n = atom.GetAtomicNum()
     if n > 1:
-      nV = periodicTable.GetNOuterElecs(n)
+      nV = ptable.GetNOuterElecs(n)
       nHs = atom.GetTotalNumHs()
       if n <= 10:
         # first row
