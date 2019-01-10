@@ -20,7 +20,7 @@ RDKitがとっている方法は次のようなものです。
 
 例えば、ここで二つの6員環の連結に使われている結合はRDKitでは芳香族であるとは見なされません。
 
-.. image:: images/picture_9.png
+.. image:: ../images/picture_9.png
 
 .. code:: python
 
@@ -71,11 +71,11 @@ RDKit芳香族性モデル
 
 芳香族性に縮合多環系を使う場合、個々の環は非芳香族性なのに、環全体としては芳香族といった状況となることがあります。例を挙げるとアズレンです：
 
-.. image:: images/picture_8.png
+.. image:: ../images/picture_8.png
 
 縮合多環系と環外二重結合の影響を示す極端な例をあげます：
 
-.. image:: images/picture_7.png
+.. image:: ../images/picture_7.png
 
 .. code:: python
 
@@ -89,7 +89,7 @@ RDKit芳香族性モデル
 
 特別な場合をあげると、ラジカルのヘテロ原子は芳香族性の候補と見なされません。
 
-.. image:: images/picture_10.png
+.. image:: ../images/picture_10.png
 
 .. code:: python
 
@@ -103,7 +103,7 @@ RDKit芳香族性モデル
 
 ラジカルをもつ電荷を帯びた炭素も芳香族とは見なされません:
 
-.. image:: images/picture_12.png
+.. image:: ../images/picture_12.png
 
 .. code:: python
 
@@ -119,7 +119,7 @@ RDKit芳香族性モデル
 
 ですが、ラジカルをもつ電気的に中性な炭素は、芳香族と見なされます:
 
-.. image:: images/picture_11.png
+.. image:: ../images/picture_11.png
 
 .. code:: python
 
@@ -599,7 +599,7 @@ RDKitの体系ではファーマコフォアフィンガープリントのビッ
 
 .. _ph4_figure :
 
-.. figure:: images/picture_10.jpg
+.. figure:: ../images/picture_10.jpg
    :scale: 50 %
    :alt: Alternate Text
 

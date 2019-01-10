@@ -148,7 +148,7 @@ Contribディレクトリ
 に所属しています。
 
 この文書はCreative Commons Attribution-ShareAlike 4.0
-Licenseのもとでライセンスされています。このライセンスを見るためにはhttp://creativecommons.org/licenses/by-sa/4.0/
+Licenseのもとでライセンスされています。このライセンスを見るためには http://creativecommons.org/licenses/by-sa/4.0/
 にアクセスするか、Creative Commons, 543 Howard Street, 5th Floor, San
 Francisco, California, 94105, USA.　に手紙を送ってください。
 
