@@ -222,7 +222,7 @@ Datum mol_inchi(PG_FUNCTION_ARGS) {
       searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                      PG_GETARG_DATUM(0), NULL, &mol, NULL);
   str = MolInchi(mol, opts);
-  if (!str || *str == 0) {
+  if (*str == 0) {
     free((void *)str);
     PG_RETURN_NULL();
   }
@@ -244,7 +244,7 @@ Datum mol_inchikey(PG_FUNCTION_ARGS) {
       searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                      PG_GETARG_DATUM(0), NULL, &mol, NULL);
   str = MolInchiKey(mol, opts);
-  if (!str || *str == 0) {
+  if (*str == 0) {
     free((void *)str);
     PG_RETURN_NULL();
   }
