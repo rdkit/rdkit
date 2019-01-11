@@ -24,14 +24,17 @@ class AtomPropSDMolSupplier(Chem.SDMolSupplier):
     ...   2  3  1  0
     ...   3  1  1  0
     ... M  END
-    ... >  <AtomDProp_PartialCharge>  (1) 
+    ... >  <atom.dprop.PartialCharge>  (1) 
     ... 0.008 -0.314 0.008
     ... 
-    ... >  <AtomIProp_NumHeavyNeighbors>  (1) 
+    ... >  <atom.iprop.NumHeavyNeighbors>  (1) 
     ... 2 2 2
     ... 
-    ... >  <AtomProp_AtomLabel>  (1) 
+    ... >  <atom.prop.AtomLabel>  (1) 
     ... C1 N2 C3
+    ... 
+    ... >  <atom.bprop.IsCarbon>  (1) 
+    ... 1 0 1
     ... 
     ... $$$$
     ... '''
@@ -46,6 +49,8 @@ class AtomPropSDMolSupplier(Chem.SDMolSupplier):
     2
     >>> m.GetAtomWithIdx(2).GetProp('AtomLabel')
     'C3'
+    >>> m.GetAtomWithIdx(1).GetBoolProp('IsCarbon')
+    0
 
     """
 
@@ -67,9 +72,10 @@ class AtomPropSDMolSupplier(Chem.SDMolSupplier):
         res = Chem.SDMolSupplier.__next__(self)
         if res is None:
             return res
-        self._setVals(res, 'AtomProp_', str, 'SetProp')
-        self._setVals(res, 'AtomIProp_', int, 'SetIntProp')
-        self._setVals(res, 'AtomDProp_', float, 'SetDoubleProp')
+        self._setVals(res, 'atom.prop.', str, 'SetProp')
+        self._setVals(res, 'atom.iprop.', int, 'SetIntProp')
+        self._setVals(res, 'atom.dprop.', float, 'SetDoubleProp')
+        self._setVals(res, 'atom.bprop.', int, 'SetBoolProp')
         return res
 
 
@@ -80,8 +86,11 @@ def CreateAtomProp(mol, storeName, propVals=None, propName=None, propType=str):
     >>> for i,at in enumerate(m.GetAtoms()):
     ...   at.SetProp('textvalue',f'atom_{i+1}')
     >>> CreateAtomProp(m,'atomtextvalue',propName='textvalue')
+    >>> for i,at in enumerate(m.GetAtoms()):
+    ...   at.SetBoolProp('IsCarbon',at.GetAtomicNum()==6)
+    >>> CreateAtomProp(m,'IsCarbon',propName='IsCarbon', propType=bool)
     >>> m.GetPropsAsDict()
-    {'AtomProp_atomtextvalue': 'atom_1 atom_2 atom_3 atom_4'}
+    {'atom.prop.atomtextvalue': 'atom_1 atom_2 atom_3 atom_4', 'atom.bprop.IsCarbon': '1 0 1 1'}
     >>> from io import StringIO
     >>> sio = StringIO()
     >>> w = Chem.SDWriter(sio)
@@ -95,18 +104,21 @@ def CreateAtomProp(mol, storeName, propVals=None, propName=None, propType=str):
     'atom_1'
     >>> newmol.GetAtomWithIdx(2).GetProp("atomtextvalue")
     'atom_3'
+    >>> newmol.GetAtomWithIdx(0).GetBoolProp("IsCarbon")
+    1
 
     '''
     if propVals is None and propName is None:
         raise ValueError("must provide at least propName or propVals")
     if propType == str:
-        finalPropName = f"AtomProp_{storeName}"
+        finalPropName = f"atom.prop.{storeName}"
     elif propType == int:
-        finalPropName = f"AtomIProp_{storeName}"
+        finalPropName = f"atom.iprop.{storeName}"
     elif propType == float:
-        finalPropName = f"AtomDProp_{storeName}"
+        finalPropName = f"atom.dprop.{storeName}"
+    elif propType == bool:
+        finalPropName = f"atom.bprop.{storeName}"
     else:
-        0
         raise ValueError('bad propType')
     if propName:
         # we are eventually always going to want a string value, so just use GetProp here
