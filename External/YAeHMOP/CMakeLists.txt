@@ -24,6 +24,7 @@ link_directories(${PROJECT_BINARY_DIR}/lib)
 
 add_definitions(-DRDKIT_AVALONLIB_BUILD)
 rdkit_library(EHTLib EHTTools.cpp SHARED LINK_LIBRARIES yaehmop_eht GraphMol DataStructs RDGeometryLib RDGeneral )
+add_dependencies(EHTLib yaehmop_project)
 rdkit_headers(EHTTools.h DEST GraphMol)
 rdkit_catch_test(testEHTLib1 test1.cpp
            LINK_LIBRARIES EHTLib yaehmop_eht 
