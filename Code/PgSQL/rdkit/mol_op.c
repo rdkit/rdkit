@@ -222,9 +222,15 @@ Datum mol_inchi(PG_FUNCTION_ARGS) {
       searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                      PG_GETARG_DATUM(0), NULL, &mol, NULL);
   str = MolInchi(mol, opts);
-  res = pnstrdup(str, strlen(str));
-  free((void *)str);
-  PG_RETURN_CSTRING(res);
+  if (*str == 0) {
+    free((void *)str);
+    PG_RETURN_NULL();
+  }
+  else {
+    res = pnstrdup(str, strlen(str));
+    free((void *)str);
+    PG_RETURN_CSTRING(res);
+  }
 }
 
 PGDLLEXPORT Datum mol_inchikey(PG_FUNCTION_ARGS);
@@ -238,9 +244,15 @@ Datum mol_inchikey(PG_FUNCTION_ARGS) {
       searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                      PG_GETARG_DATUM(0), NULL, &mol, NULL);
   str = MolInchiKey(mol, opts);
-  res = pnstrdup(str, strlen(str));
-  free((void *)str);
-  PG_RETURN_CSTRING(res);
+  if (*str == 0) {
+    free((void *)str);
+    PG_RETURN_NULL();
+  }
+  else {
+    res = pnstrdup(str, strlen(str));
+    free((void *)str);
+    PG_RETURN_CSTRING(res);
+  }
 }
 PGDLLEXPORT Datum mol_murckoscaffold(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(mol_murckoscaffold);

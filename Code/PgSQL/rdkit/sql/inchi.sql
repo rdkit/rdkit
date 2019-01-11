@@ -12,3 +12,7 @@ select mol_inchi('CC1=NC=CN1'::mol);
 select mol_inchikey('CC1=NC=CN1'::mol);
 select mol_inchi('CC1=NC=CN1'::mol,'/FixedH');
 select mol_inchikey('CC1=NC=CN1'::mol,'/FixedH');
+
+-- Non-InChI-able molecules should return NULL.
+select coalesce(mol_inchi('CC*'), '<NULL>');
+select coalesce(mol_inchikey('CC*'), '<NULL>');
