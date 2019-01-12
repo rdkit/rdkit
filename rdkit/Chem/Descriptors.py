@@ -7,7 +7,7 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from collections.abc import Callable  # this won't work in python2, but we don't support that any more
+from collections import abc  # this won't work in python2, but we don't support that any more
 
 from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors as _rdMolDescriptors
@@ -19,7 +19,7 @@ from rdkit.Chem.QED import qed
 
 
 def _isCallable(thing):
-    return isinstance(thing, Callable) or \
+    return isinstance(thing, abc.Callable) or \
                 hasattr(thing, '__call__')
 
 
