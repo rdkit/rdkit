@@ -98,7 +98,7 @@ class AtomPropSDMolSupplier(Chem.SDMolSupplier):
         return res
 
 
-def CreateAtomListProp(mol, storeName, propVals=None, propName=None, propType=str):
+def CreateAtomListProp(mol, storeName, propVals=None, propName=None, propType=str, defaultVal=None):
     '''
 
     >>> m = Chem.MolFromSmiles('C1OC1C')
@@ -126,6 +126,22 @@ def CreateAtomListProp(mol, storeName, propVals=None, propName=None, propType=st
     >>> newmol.GetAtomWithIdx(0).GetBoolProp("IsCarbon")
     1
 
+
+    by default missing property values produce a KeyError:
+    >>> m = Chem.MolFromSmiles('C1OC1')
+    >>> m.GetAtomWithIdx(0).SetProp('foo','bar')
+    >>> m.GetAtomWithIdx(2).SetProp('foo','baz')
+    >>> CreateAtomListProp(m,'foo',propName='foo')
+    Traceback (most recent call last):
+        ...
+    KeyError: 'foo'
+
+    But we can provide a default value to handle that:
+    >>> CreateAtomListProp(m,'foo',propName='foo',defaultVal='n/a')
+    >>> m.GetPropsAsDict()
+    {'atom.prop.foo': 'bar n/a baz'}
+
+
     '''
     if propVals is None and propName is None:
         raise ValueError("must provide at least propName or propVals")
@@ -141,7 +157,12 @@ def CreateAtomListProp(mol, storeName, propVals=None, propName=None, propType=st
         raise ValueError('bad propType')
     if propName:
         # we are eventually always going to want a string value, so just use GetProp here
-        propVals = [x.GetProp(propName) for x in mol.GetAtoms()]
+        if defaultVal is None:
+            propVals = [x.GetProp(propName) for x in mol.GetAtoms()]
+        else:
+            propVals = [x.GetProp(propName) if x.HasProp(propName)
+                        else str(defaultVal) for x in mol.GetAtoms()]
+
     if len(propVals) != mol.GetNumAtoms():
         raise ValueError("propVals should be the same length as the number of atoms")
     mol.SetProp(finalPropName, ' '.join(propVals))
