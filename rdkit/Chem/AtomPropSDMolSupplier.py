@@ -87,16 +87,29 @@ class AtomPropSDMolSupplier(Chem.SDMolSupplier):
     >>> m.GetAtomWithIdx(1).GetBoolProp('IsCarbon')
     0
 
+    >>> m2 = suppl[0]
+    >>> m2.GetNumAtoms()
+    3
+    >>> m2.GetAtomWithIdx(0).GetDoubleProp('PartialCharge')
+    0.008
+
     """
 
-    def __next__(self):
-        res = Chem.SDMolSupplier.__next__(self)
+    def _updateItem(self, res):
         if res is not None:
             ApplyMolListPropsToAtoms(res, 'atom.prop.', str)
             ApplyMolListPropsToAtoms(res, 'atom.iprop.', int)
             ApplyMolListPropsToAtoms(res, 'atom.dprop.', float)
             ApplyMolListPropsToAtoms(res, 'atom.bprop.', bool)
         return res
+
+    def __next__(self):
+        res = Chem.SDMolSupplier.__next__(self)
+        return self._updateItem(res)
+
+    def __getitem__(self, which):
+        res = Chem.SDMolSupplier.__getitem__(self, which)
+        return self._updateItem(res)
 
 
 def CreateAtomListProp(mol, storeName, propVals=None, propName=None, propType=str,
