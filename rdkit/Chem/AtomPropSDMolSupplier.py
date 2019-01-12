@@ -10,6 +10,40 @@ from rdkit import Chem
 import warnings
 
 
+def ApplyMolListPropsToAtoms(mol, prefix, propType):
+    """
+    >>> m = Chem.MolFromSmiles("COC")
+    >>> m.SetProp("atom.iprop.foo","1 6 9")
+    >>> ApplyMolListPropsToAtoms(m,"atom.iprop.",int)
+    >>> m.GetAtomWithIdx(1).GetIntProp("foo")
+    6
+    """
+    if propType == str:
+        setFn = "SetProp"
+    elif propType == int:
+        setFn = "SetIntProp"
+    elif propType == float:
+        setFn = "SetDoubleProp"
+    elif propType == bool:
+        # we need to convert the string "0" or "1" to an int and then SetBoolProp
+        propType = int
+        setFn = "SetBoolProp"
+    else:
+        raise ValueError('bad propType')
+    pns = (pn for pn in mol.GetPropNames() if pn.find(prefix) == 0)
+    for pn in pns:
+        pval = mol.GetProp(pn)
+        splitV = pval.split(' ')
+        if len(splitV) != mol.GetNumAtoms():
+            warnings.warn(f"property value {pn} has a value list of the wrong length. Ignoring it")
+            continue
+        apn = pn.replace(prefix, '')
+        for i, sv in enumerate(splitV):
+            sv = propType(sv)
+            setter = getattr(mol.GetAtomWithIdx(i), setFn)
+            setter(apn, sv)
+
+
 class AtomPropSDMolSupplier(Chem.SDMolSupplier):
     """
 
@@ -54,41 +88,26 @@ class AtomPropSDMolSupplier(Chem.SDMolSupplier):
 
     """
 
-    def _setVals(self, res, prefix, convert, setFn):
-        pns = (pn for pn in res.GetPropNames() if pn.find(prefix) == 0)
-        for pn in pns:
-            pval = res.GetProp(pn)
-            splitV = pval.split(' ')
-            if len(splitV) != res.GetNumAtoms():
-                warnings.warn(f"property value {pn} has a value list of the wrong length")
-                continue
-            apn = pn.replace(prefix, '')
-            for i, sv in enumerate(splitV):
-                sv = convert(sv)
-                setter = getattr(res.GetAtomWithIdx(i), setFn)
-                setter(apn, sv)
-
     def __next__(self):
         res = Chem.SDMolSupplier.__next__(self)
-        if res is None:
-            return res
-        self._setVals(res, 'atom.prop.', str, 'SetProp')
-        self._setVals(res, 'atom.iprop.', int, 'SetIntProp')
-        self._setVals(res, 'atom.dprop.', float, 'SetDoubleProp')
-        self._setVals(res, 'atom.bprop.', int, 'SetBoolProp')
+        if res is not None:
+            ApplyMolListPropsToAtoms(res, 'atom.prop.', str)
+            ApplyMolListPropsToAtoms(res, 'atom.iprop.', int)
+            ApplyMolListPropsToAtoms(res, 'atom.dprop.', float)
+            ApplyMolListPropsToAtoms(res, 'atom.bprop.', bool)
         return res
 
 
-def CreateAtomProp(mol, storeName, propVals=None, propName=None, propType=str):
+def CreateAtomListProp(mol, storeName, propVals=None, propName=None, propType=str):
     '''
 
     >>> m = Chem.MolFromSmiles('C1OC1C')
     >>> for i,at in enumerate(m.GetAtoms()):
     ...   at.SetProp('textvalue',f'atom_{i+1}')
-    >>> CreateAtomProp(m,'atomtextvalue',propName='textvalue')
+    >>> CreateAtomListProp(m,'atomtextvalue',propName='textvalue')
     >>> for i,at in enumerate(m.GetAtoms()):
     ...   at.SetBoolProp('IsCarbon',at.GetAtomicNum()==6)
-    >>> CreateAtomProp(m,'IsCarbon',propName='IsCarbon', propType=bool)
+    >>> CreateAtomListProp(m,'IsCarbon',propName='IsCarbon', propType=bool)
     >>> m.GetPropsAsDict()
     {'atom.prop.atomtextvalue': 'atom_1 atom_2 atom_3 atom_4', 'atom.bprop.IsCarbon': '1 0 1 1'}
     >>> from io import StringIO
