@@ -8,6 +8,7 @@
 #
 from rdkit import Chem
 import warnings
+import textwrap
 
 
 def ApplyMolListPropsToAtoms(mol, prefix, propType):
@@ -25,7 +26,7 @@ def ApplyMolListPropsToAtoms(mol, prefix, propType):
     elif propType == float:
         setFn = "SetDoubleProp"
     elif propType == bool:
-        # we need to convert the string "0" or "1" to an int and then SetBoolProp
+        # we need to convert the string "0" or "1" to an int and then use SetBoolProp
         propType = int
         setFn = "SetBoolProp"
     else:
@@ -33,7 +34,7 @@ def ApplyMolListPropsToAtoms(mol, prefix, propType):
     pns = (pn for pn in mol.GetPropNames() if pn.find(prefix) == 0)
     for pn in pns:
         pval = mol.GetProp(pn)
-        splitV = pval.split(' ')
+        splitV = pval.replace('\n', ' ').split(' ')
         if len(splitV) != mol.GetNumAtoms():
             warnings.warn(f"property value {pn} has a value list of the wrong length. Ignoring it")
             continue
@@ -98,7 +99,8 @@ class AtomPropSDMolSupplier(Chem.SDMolSupplier):
         return res
 
 
-def CreateAtomListProp(mol, storeName, propVals=None, propName=None, propType=str, defaultVal=None):
+def CreateAtomListProp(mol, storeName, propVals=None, propName=None, propType=str,
+                       defaultVal=None, lineLen=200):
     '''
 
     >>> m = Chem.MolFromSmiles('C1OC1C')
@@ -142,6 +144,18 @@ def CreateAtomListProp(mol, storeName, propVals=None, propName=None, propType=st
     {'atom.prop.foo': 'bar n/a baz'}
 
 
+    we also deal properly with long lines:
+    >>> m = Chem.MolFromSmiles('C1CC1'*10)
+    >>> CreateAtomListProp(m,'long',propVals=[f'atom-{x}' for x in range(m.GetNumAtoms())])
+    >>> txt = m.GetProp('atom.prop.long')
+    >>> len(txt) > 200   # this is the max length for an SD file
+    True
+    >>> txt.count('\\n')
+    1
+    >>> ApplyMolListPropsToAtoms(m,"atom.prop.",str)
+    >>> len([x.GetProp('long') for x in m.GetAtoms()])
+    30
+
     '''
     if propVals is None and propName is None:
         raise ValueError("must provide at least propName or propVals")
@@ -165,7 +179,10 @@ def CreateAtomListProp(mol, storeName, propVals=None, propName=None, propType=st
 
     if len(propVals) != mol.GetNumAtoms():
         raise ValueError("propVals should be the same length as the number of atoms")
-    mol.SetProp(finalPropName, ' '.join(propVals))
+    txt = ' '.join(propVals)
+    if lineLen is not None:
+        txt = textwrap.fill(txt, width=lineLen)
+    mol.SetProp(finalPropName, txt)
 
 
 # ------------------------------------
