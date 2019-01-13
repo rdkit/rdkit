@@ -19,11 +19,16 @@ ExternalProject_Add(yaehmop_project
   PREFIX ${CMAKE_CURRENT_SOURCE_DIR}
   SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/yaehmop"
   SOURCE_SUBDIR "tightbind"
-  CMAKE_ARGS -DUSE_BLAS_LAPACK=OFF -DCMAKE_INSTALL_PREFIX=${PROJECT_BINARY_DIR} -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
+  CMAKE_ARGS -DBUILD_STATIC=ON -DUSE_BLAS_LAPACK=OFF -DCMAKE_INSTALL_PREFIX=${PROJECT_BINARY_DIR} -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
   TEST_COMMAND "")
 
 include_directories(${PROJECT_BINARY_DIR}/include)
 link_directories(${PROJECT_BINARY_DIR}/lib)
+
+set(EHT_PARAM_FILE ${CMAKE_CURRENT_SOURCE_DIR}/yaehmop/tightbind/eht_parms.dat )
+install(FILES ${EHT_PARAM_FILE}
+        DESTINATION ${RDKit_ShareDir}/Data
+        COMPONENT data)
 
 message("include_dirs: ${PROJECT_BINARY_DIR}/include")
 message("link_dirs: ${PROJECT_BINARY_DIR}/lib")
