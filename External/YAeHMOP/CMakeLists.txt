@@ -12,12 +12,18 @@ ExternalProject_Add(yaehmop_project
   PREFIX ${CMAKE_CURRENT_SOURCE_DIR}
   SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/yaehmop"
   SOURCE_SUBDIR "tightbind"
-  CMAKE_ARGS -DUSE_BLAS_LAPACK=OFF -DCMAKE_INSTALL_PREFIX=${PROJECT_BINARY_DIR}
+  CMAKE_ARGS -DUSE_BLAS_LAPACK=OFF -DCMAKE_INSTALL_PREFIX=${PROJECT_BINARY_DIR} -DCMAKE_C_FLAGS="-fPIC"
   TEST_COMMAND "")
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
+#add_library(yaehmop_eht STATIC IMPORTED)
+#add_dependencies(yaehmop_eht yaehmop_project)
+set(yaehmop_LIBRARIES "${CMAKE_STATIC_LIBRARY_PREFIX}yaehmop_eht${CMAKE_STATIC_LIBRARY_SUFFIX}")
+include_directories(${PROJECT_BINARY_DIR}/include)
 link_directories(${PROJECT_BINARY_DIR}/lib)
+
+message("include_dirs: ${PROJECT_BINARY_DIR}/include")
+message("link_dirs: ${PROJECT_BINARY_DIR}/lib")
+
 
 #install(TARGETS yaehmop_eht DESTINATION ${RDKit_LibDir})
 
