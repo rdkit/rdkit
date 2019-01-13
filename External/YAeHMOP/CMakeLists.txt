@@ -41,4 +41,6 @@ rdkit_catch_test(testEHTLib1 test1.cpp
            LINK_LIBRARIES EHTLib yaehmop_eht 
 	   FileParsers SmilesParse GraphMol DataStructs RDGeometryLib RDGeneral)
 
+add_subdirectory(Wrap)
+
 endif(RDK_BUILD_YAEHMOP_SUPPORT)
