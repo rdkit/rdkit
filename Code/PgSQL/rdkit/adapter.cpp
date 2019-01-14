@@ -693,11 +693,9 @@ extern "C" char *MolGetSVG(CROMol i, unsigned int w, unsigned int h,
   // want a plain SQL function (mol_to_svg) to have
   // unexpected side effects, so take a copy and render
   // (and change) that.
-  const ROMol *input_mol = (ROMol *)i;
-  RWMol input_copy = *input_mol;
-  RWMol *im = &input_copy;
+  RWMol input_copy(*(ROMol *)i);
 
-  MolDraw2DUtils::prepareMolForDrawing(*im);
+  MolDraw2DUtils::prepareMolForDrawing(input_copy);
   std::string slegend(legend ? legend : "");
   MolDraw2DSVG drawer(w, h);
   if (params && strlen(params)) {
@@ -708,7 +706,7 @@ extern "C" char *MolGetSVG(CROMol i, unsigned int w, unsigned int h,
            "adjustQueryProperties: Invalid argument \'params\' ignored");
     }
   }
-  drawer.drawMolecule(*im, legend);
+  drawer.drawMolecule(input_copy, legend);
   drawer.finishDrawing();
   std::string txt = drawer.getDrawingText();
   return strdup(txt.c_str());
