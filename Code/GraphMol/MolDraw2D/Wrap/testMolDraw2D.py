@@ -312,6 +312,13 @@ M  END""")
     self.assertTrue(txt.find("stroke-width:2px") == -1)
     self.assertTrue(txt.find("stroke-width:4px") >= 0)
  
+  def testPrepareAndDrawMolecule(self):
+    m = Chem.MolFromSmiles("C1N[C@@H]2OCC12")
+    d = Draw.MolDraw2DSVG(300, 300)
+    rdMolDraw2D.PrepareAndDrawMolecule(d,m)
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    self.assertTrue(txt.find("<tspan>H</tspan>")>0)
 
 
 if __name__ == "__main__":

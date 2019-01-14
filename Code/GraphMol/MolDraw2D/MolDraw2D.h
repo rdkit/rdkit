@@ -194,30 +194,30 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
       const ROMol &mol, const std::string &legend,
       const std::vector<int> *highlight_atoms,
       const std::vector<int> *highlight_bonds,
-      const std::map<int, DrawColour> *highlight_atom_map = NULL,
-      const std::map<int, DrawColour> *highlight_bond_map = NULL,
-      const std::map<int, double> *highlight_radii = NULL, int confId = -1);
+      const std::map<int, DrawColour> *highlight_atom_map = nullptr,
+      const std::map<int, DrawColour> *highlight_bond_map = nullptr,
+      const std::map<int, double> *highlight_radii = nullptr, int confId = -1);
 
   //! \overload
   virtual void drawMolecule(
-      const ROMol &mol, const std::vector<int> *highlight_atoms = NULL,
-      const std::map<int, DrawColour> *highlight_map = NULL,
-      const std::map<int, double> *highlight_radii = NULL, int confId = -1);
+      const ROMol &mol, const std::vector<int> *highlight_atoms = nullptr,
+      const std::map<int, DrawColour> *highlight_map = nullptr,
+      const std::map<int, double> *highlight_radii = nullptr, int confId = -1);
 
   //! \overload
   virtual void drawMolecule(
       const ROMol &mol, const std::string &legend,
-      const std::vector<int> *highlight_atoms = NULL,
-      const std::map<int, DrawColour> *highlight_map = NULL,
-      const std::map<int, double> *highlight_radii = NULL, int confId = -1);
+      const std::vector<int> *highlight_atoms = nullptr,
+      const std::map<int, DrawColour> *highlight_map = nullptr,
+      const std::map<int, double> *highlight_radii = nullptr, int confId = -1);
 
   //! \overload
   virtual void drawMolecule(
       const ROMol &mol, const std::vector<int> *highlight_atoms,
       const std::vector<int> *highlight_bonds,
-      const std::map<int, DrawColour> *highlight_atom_map = NULL,
-      const std::map<int, DrawColour> *highlight_bond_map = NULL,
-      const std::map<int, double> *highlight_radii = NULL, int confId = -1);
+      const std::map<int, DrawColour> *highlight_atom_map = nullptr,
+      const std::map<int, DrawColour> *highlight_bond_map = nullptr,
+      const std::map<int, double> *highlight_radii = nullptr, int confId = -1);
 
   //! draw multiple molecules in a grid
   /*!
@@ -247,13 +247,15 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   */
   virtual void drawMolecules(
       const std::vector<ROMol *> &mols,
-      const std::vector<std::string> *legends = NULL,
-      const std::vector<std::vector<int>> *highlight_atoms = NULL,
-      const std::vector<std::vector<int>> *highlight_bonds = NULL,
-      const std::vector<std::map<int, DrawColour>> *highlight_atom_maps = NULL,
-      const std::vector<std::map<int, DrawColour>> *highlight_bond_maps = NULL,
-      const std::vector<std::map<int, double>> *highlight_radii = NULL,
-      const std::vector<int> *confIds = NULL);
+      const std::vector<std::string> *legends = nullptr,
+      const std::vector<std::vector<int>> *highlight_atoms = nullptr,
+      const std::vector<std::vector<int>> *highlight_bonds = nullptr,
+      const std::vector<std::map<int, DrawColour>> *highlight_atom_maps =
+          nullptr,
+      const std::vector<std::map<int, DrawColour>> *highlight_bond_maps =
+          nullptr,
+      const std::vector<std::map<int, double>> *highlight_radii = nullptr,
+      const std::vector<int> *confIds = nullptr);
 
   //! draw a ChemicalReaction
   /*!
@@ -269,8 +271,8 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   */
   virtual void drawReaction(
       const ChemicalReaction &rxn, bool highlightByReactant = false,
-      const std::vector<DrawColour> *highlightColorsReactants = NULL,
-      const std::vector<int> *confIds = NULL);
+      const std::vector<DrawColour> *highlightColorsReactants = nullptr,
+      const std::vector<int> *confIds = nullptr);
 
   //! \name Transformations
   //@{
@@ -438,9 +440,9 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
 
   // return a DrawColour based on the contents of highlight_atoms or
   // highlight_map, falling back to atomic number by default
-  DrawColour getColour(int atom_idx,
-                       const std::vector<int> *highlight_atoms = NULL,
-                       const std::map<int, DrawColour> *highlight_map = NULL);
+  DrawColour getColour(
+      int atom_idx, const std::vector<int> *highlight_atoms = nullptr,
+      const std::map<int, DrawColour> *highlight_map = nullptr);
   DrawColour getColourByAtomicNum(int atomic_num);
 
   void extractAtomCoords(const ROMol &mol, int confId, bool updateBBox);
@@ -449,16 +451,16 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   virtual void drawLine(const Point2D &cds1, const Point2D &cds2,
                         const DrawColour &col1, const DrawColour &col2);
   void drawBond(const ROMol &mol, const Bond *bond, int at1_idx, int at2_idx,
-                const std::vector<int> *highlight_atoms = NULL,
-                const std::map<int, DrawColour> *highlight_atom_map = NULL,
-                const std::vector<int> *highlight_bonds = NULL,
-                const std::map<int, DrawColour> *highlight_bond_map = NULL);
+                const std::vector<int> *highlight_atoms = nullptr,
+                const std::map<int, DrawColour> *highlight_atom_map = nullptr,
+                const std::vector<int> *highlight_bonds = nullptr,
+                const std::map<int, DrawColour> *highlight_bond_map = nullptr);
   void drawWedgedBond(const Point2D &cds1, const Point2D &cds2,
                       bool draw_dashed, const DrawColour &col1,
                       const DrawColour &col2);
   void drawAtomLabel(int atom_num,
-                     const std::vector<int> *highlight_atoms = NULL,
-                     const std::map<int, DrawColour> *highlight_map = NULL);
+                     const std::vector<int> *highlight_atoms = nullptr,
+                     const std::map<int, DrawColour> *highlight_map = nullptr);
   // cds1 and cds2 are 2 atoms in a ring.  Returns the perpendicular pointing
   // into
   // the ring.
