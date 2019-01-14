@@ -129,6 +129,31 @@ void drawMoleculeHelper2(MolDraw2D &self, const ROMol &mol,
   delete hbm;
   delete har;
 }
+
+void prepareAndDrawMoleculeHelper(MolDraw2D &drawer, const ROMol &mol,
+                         std::string legend,
+                         python::object highlight_atoms,
+                         python::object highlight_bonds,
+                         python::object highlight_atom_map,
+                         python::object highlight_bond_map,
+                         python::object highlight_atom_radii, int confId) {
+  std::unique_ptr<std::vector<int>> highlightAtoms =
+      pythonObjectToVect(highlight_atoms, static_cast<int>(mol.getNumAtoms()));
+  std::unique_ptr<std::vector<int>> highlightBonds =
+      pythonObjectToVect(highlight_bonds, static_cast<int>(mol.getNumBonds()));
+  // FIX: support these
+  ColourPalette *ham = pyDictToColourMap(highlight_atom_map);
+  ColourPalette *hbm = pyDictToColourMap(highlight_bond_map);
+  std::map<int, double> *har = pyDictToDoubleMap(highlight_atom_radii);
+  MolDraw2DUtils::prepareAndDrawMolecule(drawer, mol, legend, highlightAtoms.get(), 
+                                         highlightBonds.get(), ham, hbm, har, confId);
+
+  delete ham;
+  delete hbm;
+  delete har;
+}
+
+
 void drawMoleculesHelper2(MolDraw2D &self, python::object pmols,
                           python::object highlight_atoms,
                           python::object highlight_bonds,
@@ -492,4 +517,16 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
        python::arg("forceCoords") = false),
       docString.c_str(),
       python::return_value_policy<python::manage_new_object>());
+  python::def(
+          "PrepareAndDrawMolecule", &RDKit::prepareAndDrawMoleculeHelper,
+          (python::arg("drawer"), python::arg("mol"),python::arg("legend") = "",
+           python::arg("highlightAtoms") = python::object(), 
+           python::arg("highlightBonds") = python::object(),
+           python::arg("highlightAtomColors") = python::object(),
+           python::arg("highlightBondColors") = python::object(),
+           python::arg("highlightAtomRadii") = python::object(),
+           python::arg("confId") = -1),
+          "Preps a molecule for drawing and actually draws it\n");
+
+
 }

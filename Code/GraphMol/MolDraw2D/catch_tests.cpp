@@ -32,6 +32,5 @@ TEST_CASE("prepareAndDrawMolecule", "[drawing]") {
     drawer.finishDrawing();
     std::string text = drawer.getDrawingText();
     CHECK(text.find("<tspan>H</tspan>")!=std::string::npos);
-    std::cerr << text << std::endl;
   }
 }
