@@ -79,7 +79,7 @@ void prepareAndDrawMolecule(MolDraw2D &drawer, const ROMol &mol,
                             int confId) {
   RWMol cpy(mol);
   prepareMolForDrawing(cpy);
-  drawer.drawMolecule(mol, legend, highlight_atoms, highlight_bonds,
+  drawer.drawMolecule(cpy, legend, highlight_atoms, highlight_bonds,
                       highlight_atom_map, highlight_bond_map, highlight_radii,
                       confId);
 }

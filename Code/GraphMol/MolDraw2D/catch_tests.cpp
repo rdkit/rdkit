@@ -22,7 +22,7 @@ using namespace RDKit;
 
 TEST_CASE("prepareAndDrawMolecule", "[drawing]") {
   SECTION("basics") {
-    auto m1 = "C[C@H](F)Cl"_smiles;
+    auto m1 = "C1N[C@@H]2OCC12"_smiles;
     REQUIRE(m1);
 
     // we will be able to recognize that the prep worked because there
@@ -31,6 +31,7 @@ TEST_CASE("prepareAndDrawMolecule", "[drawing]") {
     MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1);
     drawer.finishDrawing();
     std::string text = drawer.getDrawingText();
+    CHECK(text.find("<tspan>H</tspan>")!=std::string::npos);
     std::cerr << text << std::endl;
   }
 }
