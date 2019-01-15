@@ -55,3 +55,20 @@ SELECT mol_to_svg('CCO'::mol) svg;
 SELECT mol_to_svg('CCO'::mol,'legend') svg;
 SELECT mol_to_svg('CCO'::mol,'legend',250,200,
   '{"atomLabels":{"1":"foo"},"legendColour":[0.5,0.5,0.5]}') svg;
+
+-- GitHub Issue 2174 - mol_to_svg() should not change input mol.
+/**
+  Check that mol_to_svg() does not change the_mol.
+  In previous versions, the atom+bond count would
+  change from '10 11' in "before_mol" to '11 12'
+  in "after_mol", due to mol_to_svg()'s call to
+  MolDraw2DUtils::prepareMolForDrawing().
+**/
+with t as (
+  select 'C[C@H]1CC[C@H]2CCCCC12'::mol as the_mol
+)
+select
+    substring(mol_to_ctab(the_mol)::text, 1, 65) as before_mol
+  , substring(mol_to_svg(the_mol)::text, 1, 20) as the_svg
+  , substring(mol_to_ctab(the_mol)::text, 1, 65) as after_mol
+  from t;
