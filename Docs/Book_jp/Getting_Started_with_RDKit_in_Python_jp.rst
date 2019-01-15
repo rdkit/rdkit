@@ -758,7 +758,7 @@ RDKitには分子から画像を生成するための機能がいくつか組み
 このような画像を生成します。
 
 +-------------------------------------+-------------------------------------+
-| .. image:: ../images/cdk2_mol1.png  | .. image:: ../images/cdk2_mol2.png  |
+| .. image:: ../Book/images/cdk2_mol1.png  | .. image:: ../Book/images/cdk2_mol2.png  |
 +-------------------------------------+-------------------------------------+
 
 分子のセットからグリッドレイアウトの画像を作ることもできます:
@@ -775,7 +775,7 @@ RDKitには分子から画像を生成するための機能がいくつか組み
 
 結果はこのようになります:
 
-.. image:: ../images/cdk2_molgrid.png
+.. image:: ../Book/images/cdk2_molgrid.png
 
 もちろん共通骨格でアラインメントを取ればより見やすくなります。このように簡単にできます：
 
@@ -793,7 +793,7 @@ RDKitには分子から画像を生成するための機能がいくつか組み
 
 この様な結果が返ってきます。:
 
-.. image:: ../images/cdk2_molgrid_aligned.png
+.. image:: ../Book/images/cdk2_molgrid_aligned.png
 
 .. _back-to-ref_6:
 
@@ -1504,7 +1504,7 @@ MorganフィンガープリントとRDKitフィンガープリントに対して
 このようなイメージができます：
 
 +--------------------------------------+--------------------------------------+
-| .. image:: ../images/mfp2_bit872.svg | .. image:: ../images/rdk_bit1553.svg |
+| .. image:: ../Book/images/mfp2_bit872.svg | .. image:: ../Book/images/rdk_bit1553.svg |
 +--------------------------------------+--------------------------------------+
 |         Morgan bit                   |            RDKit bit                 |
 +--------------------------------------+--------------------------------------+
@@ -1529,7 +1529,7 @@ RDKitビットのデフォルトのハイライトの色は以下を示します
 このようなイメージができます：
 
 +----------------------------------------+
-| .. image:: ../images/rdk_bit1553_2.svg |
+| .. image:: ../Book/images/rdk_bit1553_2.svg |
 +----------------------------------------+
 |            RDKit bit                   |
 +----------------------------------------+
@@ -1623,7 +1623,7 @@ Morganフィンガープリントにはデフォルトのビットベクトル(b
 
 このような図が生成されます:
 
-.. image:: ../images/similarity_map_fp1.png
+.. image:: ../Book/images/similarity_map_fp1.png
 
 Morganフィンガープリントのタイプをデフォルトのビットベクトルからカウント(count)タイプに変更し、半径を2から1へ、
 類似度指標をDiceからTanimoto類似度へと変更した場合、以下のようになります：
@@ -1635,7 +1635,7 @@ Morganフィンガープリントのタイプをデフォルトのビットベ�
 
 このような図が生成されます:
 
-.. image:: ../images/similarity_map_fp2.png
+.. image:: ../Book/images/similarity_map_fp2.png
 
 簡易関数のGetSimilarityMapForFingerprintには原子の重みの正規化が含まれており、重みの絶対値の最大が1となるよう正規化されます。
 したがって、この関数はマップを作成するときにみつかった、最大の重みを出力します。
@@ -1658,7 +1658,7 @@ Morganフィンガープリントのタイプをデフォルトのビットベ�
 
 このような図が生成されます:
 
-.. image:: ../images/similarity_map_fp3.png
+.. image:: ../Book/images/similarity_map_fp3.png
 
 訳注) 上記セクションの構造式が気になったら\ :ref:`こちら <jp-notes_18>`\ へ
 
@@ -1713,7 +1713,7 @@ Gasteiger部分電荷は（異なるカラースキームを使って）次の�
 
 このような図が生成されます:
 
-.. image:: ../images/similarity_map_charges.png
+.. image:: ../Book/images/similarity_map_charges.png
 
 logPへのCrippen寄与を可視化するには次のようにします:
 
@@ -1725,7 +1725,7 @@ logPへのCrippen寄与を可視化するには次のようにします:
 
 このような図が生成されます:
 
-.. image:: ../images/similarity_map_crippen.png
+.. image:: ../Book/images/similarity_map_crippen.png
 
 .. _back-to-ref_20:
 
@@ -2433,7 +2433,7 @@ RDKitのdocistringにはたくさんのドキュメントが含まれており�
 コマンドの補完やツールチップを使うことができる環境で作業する場合、利用可能なメソッドをとても簡単に確認することができます。
 Jupyter notebookをつかった使用例のスクリーンショットはこのようになります:
 
-.. image:: ../images/picture_6.png
+.. image:: ../Book/images/picture_6.png
 
 発展的なトピック/警告
 ***************************************************
@@ -2801,7 +2801,7 @@ libraries.” Biotechnology and Bioengineering 61, 47-54
 ************************************************
 [`License <https://www.rdkit.org/docs/Overview.html#license>`__]
 
-.. image:: ../images/picture_5.png
+.. image:: ../Book/images/picture_5.png
 
 この文書の著作権は copyright (C) 2013-2018 by Greg Landrumに所属しています。
 

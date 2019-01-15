@@ -23,7 +23,7 @@ RDKitクックブック
 
 最も簡単な方法は、保持してほしい芳香族性のセットと合わせてSMILESで分子を提供することです。例えばインドールの場合を考えましょう:
 
-.. image:: ../images/indole1.png
+.. image:: ../Book/images/indole1.png
 
 デフォルトではRDKitはどちらの環構造も芳香族であると認識します:
 
@@ -499,7 +499,7 @@ scikit-learn バージョン0.13での出力結果は:
 
 これで、次の結果が返ってきます:
 
-.. image:: ../images/similarity_map_rf.png
+.. image:: ../Book/images/similarity_map_rf.png
 
 カスタムMCSアトムタイプを使う方法
 **************************************
