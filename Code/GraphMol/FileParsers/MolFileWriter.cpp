@@ -38,6 +38,8 @@ namespace RDKit {
 //*************************************
 
 namespace {
+const std::string writeAtomList = "_writeAtomList";
+
 int getQueryBondTopology(const Bond *bond) {
   PRECONDITION(bond, "no bond");
   PRECONDITION(bond->hasQuery(), "no query");
@@ -262,9 +264,12 @@ bool hasListQuery(const Atom *atom) {
 const std::string GetMolFileQueryInfo(const RWMol &mol) {
   std::stringstream ss;
   boost::dynamic_bitset<> listQs(mol.getNumAtoms());
-  for (ROMol::ConstAtomIterator atomIt = mol.beginAtoms();
-       atomIt != mol.endAtoms(); ++atomIt) {
-    if (hasListQuery(*atomIt)) listQs.set((*atomIt)->getIdx());
+  for (const auto atom : mol.atoms()) {
+    if (hasListQuery(atom) &&
+        (!atom->hasProp(writeAtomList) || atom->getProp<bool>(writeAtomList))) {
+      listQs.set(atom->getIdx());
+      if (atom->hasProp(writeAtomList)) atom->clearProp(writeAtomList);
+    }
   }
   for (ROMol::ConstAtomIterator atomIt = mol.beginAtoms();
        atomIt != mol.endAtoms(); ++atomIt) {
@@ -427,9 +432,11 @@ const std::string AtomGetMolFileSymbol(const Atom *atom, bool padWithSpaces) {
                      (*++(atom->getQuery()->beginChildren())).get())
                          ->getVal() == 1) {
         res = "Q";
+        atom->setProp(writeAtomList, false, true);
       } else if (hasComplexQuery(atom)) {
         if (hasListQuery(atom)) {
           res = "L";
+          atom->setProp(writeAtomList, true, true);
         } else {
           res = "*";
         }
