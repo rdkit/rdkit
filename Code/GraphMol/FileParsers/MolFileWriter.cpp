@@ -271,30 +271,28 @@ const std::string GetMolFileQueryInfo(const RWMol &mol) {
       if (atom->hasProp(writeAtomList)) atom->clearProp(writeAtomList);
     }
   }
-  for (ROMol::ConstAtomIterator atomIt = mol.beginAtoms();
-       atomIt != mol.endAtoms(); ++atomIt) {
+  for (const auto atom : mol.atoms()) {
     bool wrote_query = false;
-    if (!listQs[(*atomIt)->getIdx()] && hasComplexQuery(*atomIt)) {
+    if (!listQs[atom->getIdx()] && hasComplexQuery(atom)) {
       std::string sma =
-          SmartsWrite::GetAtomSmarts(static_cast<const QueryAtom *>(*atomIt));
-      ss << "V  " << std::setw(3) << (*atomIt)->getIdx() + 1 << " " << sma
+          SmartsWrite::GetAtomSmarts(static_cast<const QueryAtom *>(atom));
+      ss << "V  " << std::setw(3) << atom->getIdx() + 1 << " " << sma
          << std::endl;
       wrote_query = true;
     }
     std::string molFileValue;
-    if (!wrote_query && (*atomIt)->getPropIfPresent(
-                            common_properties::molFileValue, molFileValue))
-      ss << "V  " << std::setw(3) << (*atomIt)->getIdx() + 1 << " "
-         << molFileValue << std::endl;
+    if (!wrote_query &&
+        atom->getPropIfPresent(common_properties::molFileValue, molFileValue))
+      ss << "V  " << std::setw(3) << atom->getIdx() + 1 << " " << molFileValue
+         << std::endl;
   }
-  for (ROMol::ConstAtomIterator atomIt = mol.beginAtoms();
-       atomIt != mol.endAtoms(); ++atomIt) {
-    if (listQs[(*atomIt)->getIdx()]) {
+  for (const auto atom : mol.atoms()) {
+    if (listQs[atom->getIdx()]) {
       INT_VECT vals;
-      getListQueryVals((*atomIt)->getQuery(), vals);
-      ss << "M  ALS " << std::setw(3) << (*atomIt)->getIdx() + 1 << " ";
+      getListQueryVals(atom->getQuery(), vals);
+      ss << "M  ALS " << std::setw(3) << atom->getIdx() + 1 << " ";
       ss << std::setw(2) << vals.size();
-      if ((*atomIt)->getQuery()->getNegation()) {
+      if (atom->getQuery()->getNegation()) {
         ss << " T ";
       } else {
         ss << " F ";
@@ -1039,7 +1037,7 @@ void appendEnhancedStereoGroups(std::string &res, const RWMol &tmol) {
           break;
       }
       res += " ATOMS=(";
-      auto& atoms = group.getAtoms();
+      auto &atoms = group.getAtoms();
       res += boost::lexical_cast<std::string>(atoms.size());
       for (auto &&atom : atoms) {
         res += ' ';
