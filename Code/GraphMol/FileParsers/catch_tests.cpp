@@ -15,6 +15,8 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmartsWrite.h>
 
 using namespace RDKit;
 
@@ -96,5 +98,83 @@ TEST_CASE(
     CHECK(mol->getBondWithIdx(0)->getProp<std::string>(
               common_properties::_MolFileBondAttach) == "ANY");
     CHECK(mol->getBondWithIdx(1)->getBondType() == Bond::AROMATIC);
+  }
+}
+
+TEST_CASE("Github #2225: failure round-tripping mol block with Q atoms",
+          "[bug,writer]") {
+  std::string rdbase = getenv("RDBASE");
+  SECTION("basics") {
+    std::string fName =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/github2225_1.mol";
+    std::unique_ptr<RWMol> mol(MolFileToMol(fName));
+    REQUIRE(mol);
+    REQUIRE(mol->getNumAtoms() == 7);
+    REQUIRE(!mol->getAtomWithIdx(0)->hasQuery());
+    REQUIRE(mol->getAtomWithIdx(6)->hasQuery());
+    auto outBlock = MolToMolBlock(*mol);
+    REQUIRE(outBlock.find(" Q ") != std::string::npos);
+    REQUIRE(outBlock.find(" ALS ") == std::string::npos);
+    std::unique_ptr<RWMol> mol2(MolBlockToMol(outBlock));
+    REQUIRE(mol2);
+    REQUIRE(mol2->getNumAtoms() == 7);
+    REQUIRE(!mol2->getAtomWithIdx(0)->hasQuery());
+    REQUIRE(mol2->getAtomWithIdx(6)->hasQuery());
+    auto outBlock2 = MolToMolBlock(*mol2);
+    REQUIRE(outBlock2.find(" Q ") != std::string::npos);
+    REQUIRE(outBlock2.find(" ALS ") == std::string::npos);
+  }
+  SECTION("check that SMARTS still works") {
+    std::unique_ptr<RWMol> mol(SmartsToMol("C[#8,#7]"));
+    REQUIRE(mol);
+    REQUIRE(mol->getNumAtoms() == 2);
+    auto outBlock = MolToMolBlock(*mol);
+    REQUIRE(outBlock.find(" Q ") == std::string::npos);
+    REQUIRE(outBlock.find(" ALS ") != std::string::npos);
+    std::unique_ptr<RWMol> mol2(MolBlockToMol(outBlock));
+    REQUIRE(mol2);
+    auto smarts = MolToSmarts(*mol2);
+    REQUIRE(smarts == "[#6][#8,#7]");
+  }
+  SECTION("basics with v3K") {
+    std::string fName =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/github2225_2.mol";
+    std::unique_ptr<RWMol> mol(MolFileToMol(fName));
+    REQUIRE(mol);
+    REQUIRE(mol->getNumAtoms() == 7);
+    REQUIRE(!mol->getAtomWithIdx(0)->hasQuery());
+    REQUIRE(mol->getAtomWithIdx(6)->hasQuery());
+
+    bool includeStereo = true;
+    int confId = -1;
+    bool kekulize = true;
+    bool forceV3000 = true;
+    auto outBlock = MolToMolBlock(*mol,includeStereo,confId,kekulize,forceV3000);
+    REQUIRE(outBlock.find(" Q ") != std::string::npos);
+    REQUIRE(outBlock.find(" ALS ") == std::string::npos);
+    std::unique_ptr<RWMol> mol2(MolBlockToMol(outBlock));
+    REQUIRE(mol2);
+    REQUIRE(mol2->getNumAtoms() == 7);
+    REQUIRE(!mol2->getAtomWithIdx(0)->hasQuery());
+    REQUIRE(mol2->getAtomWithIdx(6)->hasQuery());
+    auto outBlock2 = MolToMolBlock(*mol2,includeStereo,confId,kekulize,forceV3000);
+    REQUIRE(outBlock2.find(" Q ") != std::string::npos);
+    REQUIRE(outBlock2.find(" ALS ") == std::string::npos);
+  }
+  SECTION("check that SMARTS still works with v3K output") {
+    std::unique_ptr<RWMol> mol(SmartsToMol("C[#8,#7]"));
+    REQUIRE(mol);
+    REQUIRE(mol->getNumAtoms() == 2);
+    bool includeStereo = true;
+    int confId = -1;
+    bool kekulize = true;
+    bool forceV3000 = true;
+    auto outBlock = MolToMolBlock(*mol,includeStereo,confId,kekulize,forceV3000);
+    REQUIRE(outBlock.find(" Q ") == std::string::npos);
+    REQUIRE(outBlock.find(" [O,N] ") != std::string::npos);
+    std::unique_ptr<RWMol> mol2(MolBlockToMol(outBlock));
+    REQUIRE(mol2);
+    auto smarts = MolToSmarts(*mol2);
+    REQUIRE(smarts == "[#6][#8,#7]");
   }
 }

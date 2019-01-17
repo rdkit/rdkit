@@ -1203,13 +1203,14 @@ void testAtomListLineRoundTrip() {
   TEST_ASSERT(m->getNumAtoms() == 9);
 
   std::string molblock = MolToMolBlock(*m);
+  TEST_ASSERT(molblock.find(" ALS ") != std::string::npos);
   std::istringstream inStream2(molblock);
   RWMol *m2 =
       MolDataStreamToMol(inStream2, line, sanitize, removeHs, strictParsing);
   TEST_ASSERT(m2);
   TEST_ASSERT(desc == qhelper(m2->getAtomWithIdx(3)->getQuery()));
   Atom *cl(new Atom(17));
-  Atom *o(new Atom(17));
+  Atom *o(new Atom(8));
   TEST_ASSERT(dynamic_cast<QueryAtom *>(m->getAtomWithIdx(3))->Match(cl));
   TEST_ASSERT(dynamic_cast<QueryAtom *>(m->getAtomWithIdx(3))->Match(o));
   TEST_ASSERT(dynamic_cast<QueryAtom *>(m2->getAtomWithIdx(3))->Match(cl));
@@ -1505,7 +1506,6 @@ int main() {
   testIssue1993296();
   testIssue2381580();
   testIssue2840217();
-#endif
   testPeriodicTable();
   testAddAtomWithConf();
   testIssue267();
@@ -1513,7 +1513,6 @@ int main() {
   testClearMol();
   testAtomResidues();
   testNeedsUpdatePropertyCache();
-  testAtomListLineRoundTrip();
   testGithub608();
   testGithub381();
   testGithub1041();
@@ -1522,6 +1521,8 @@ int main() {
   testRanges();
   testGithub1642();
   testGithub1843();
+#endif
+  testAtomListLineRoundTrip();
 
   return 0;
 }
