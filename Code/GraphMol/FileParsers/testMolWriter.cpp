@@ -1139,7 +1139,9 @@ void testGithub187() {
 
     // try the v3000 version:
     mb = MolToMolBlock(*m, true, -1, true, true);
-    TEST_ASSERT(mb.find("V30 1 \"NOT [C,H]\" 0") != std::string::npos);
+    std::cerr<<mb<<std::endl;
+    TEST_ASSERT(mb.find("V30 1 \"NOT [C,H]\" 0") == std::string::npos);
+    TEST_ASSERT(mb.find("1 Q 0") != std::string::npos);
 
     delete m;
   }
