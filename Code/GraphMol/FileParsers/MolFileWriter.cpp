@@ -38,7 +38,6 @@ namespace RDKit {
 //*************************************
 
 namespace {
-const std::string writeAtomList = "_writeAtomList";
 
 int getQueryBondTopology(const Bond *bond) {
   PRECONDITION(bond, "no bond");
@@ -261,14 +260,12 @@ bool hasListQuery(const Atom *atom) {
   return res;
 }
 
-const std::string GetMolFileQueryInfo(const RWMol &mol) {
+const std::string GetMolFileQueryInfo(const RWMol &mol, const boost::dynamic_bitset<> &queryListAtoms) {
   std::stringstream ss;
   boost::dynamic_bitset<> listQs(mol.getNumAtoms());
   for (const auto atom : mol.atoms()) {
-    if (hasListQuery(atom) &&
-        (!atom->hasProp(writeAtomList) || atom->getProp<bool>(writeAtomList))) {
+    if (hasListQuery(atom) && !queryListAtoms[atom->getIdx()] ){
       listQs.set(atom->getIdx());
-      if (atom->hasProp(writeAtomList)) atom->clearProp(writeAtomList);
     }
   }
   for (const auto atom : mol.atoms()) {
@@ -399,7 +396,7 @@ const std::string GetMolFileZBOInfo(const RWMol &mol) {
   return res.str();
 }
 
-const std::string AtomGetMolFileSymbol(const Atom *atom, bool padWithSpaces) {
+const std::string AtomGetMolFileSymbol(const Atom *atom, bool padWithSpaces, boost::dynamic_bitset<> &queryListAtoms) {
   PRECONDITION(atom, "");
 
   std::string res;
@@ -430,11 +427,10 @@ const std::string AtomGetMolFileSymbol(const Atom *atom, bool padWithSpaces) {
                      (*++(atom->getQuery()->beginChildren())).get())
                          ->getVal() == 1) {
         res = "Q";
-        atom->setProp(writeAtomList, false, true);
+        queryListAtoms.set(atom->getIdx());
       } else if (hasComplexQuery(atom)) {
         if (hasListQuery(atom)) {
           res = "L";
-          atom->setProp(writeAtomList, true, true);
         } else {
           res = "*";
         }
@@ -579,7 +575,8 @@ void GetMolFileAtomProperties(const Atom *atom, const Conformer *conf,
 }
 
 const std::string GetMolFileAtomLine(const Atom *atom,
-                                     const Conformer *conf = nullptr) {
+                                     const Conformer *conf,
+                                     boost::dynamic_bitset<> &queryListAtoms) {
   PRECONDITION(atom, "");
   std::string res;
   int totValence, atomMapNumber;
@@ -603,7 +600,7 @@ const std::string GetMolFileAtomLine(const Atom *atom,
   atom->getPropIfPresent(common_properties::molRxnComponent,
                          rxnComponentNumber);
 
-  std::string symbol = AtomGetMolFileSymbol(atom, true);
+  std::string symbol = AtomGetMolFileSymbol(atom, true, queryListAtoms);
 #if 0
   const boost::format fmter(
       "%10.4f%10.4f%10.4f %3s%2d%3d%3d%3d%3d%3d  0%3d%3d%3d%3d%3d");
@@ -844,7 +841,8 @@ const std::string GetMolFileBondLine(const Bond *bond,
 }
 
 const std::string GetV3000MolFileAtomLine(const Atom *atom,
-                                          const Conformer *conf = nullptr) {
+                                          const Conformer *conf,
+                                          boost::dynamic_bitset<> &queryListAtoms) {
   PRECONDITION(atom, "");
   int totValence, atomMapNumber;
   unsigned int parityFlag;
@@ -855,8 +853,8 @@ const std::string GetV3000MolFileAtomLine(const Atom *atom,
   std::stringstream ss;
   ss << "M  V30 " << atom->getIdx() + 1;
 
-  std::string symbol = AtomGetMolFileSymbol(atom, false);
-  if (!hasListQuery(atom)) {
+  std::string symbol = AtomGetMolFileSymbol(atom, false, queryListAtoms);
+  if (!hasListQuery(atom) || queryListAtoms[atom->getIdx()]) {
     ss << " " << symbol;
   } else {
     INT_VECT vals;
@@ -1147,11 +1145,12 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
   }
   res += ss.str();
 
+  boost::dynamic_bitset<> queryListAtoms(tmol.getNumAtoms());
   if (!isV3000) {
     // V2000 output.
     for (ROMol::ConstAtomIterator atomIt = tmol.beginAtoms();
          atomIt != tmol.endAtoms(); ++atomIt) {
-      res += GetMolFileAtomLine(*atomIt, conf);
+      res += GetMolFileAtomLine(*atomIt, conf, queryListAtoms);
       res += "\n";
     }
 
@@ -1164,7 +1163,7 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
 
     res += GetMolFileChargeInfo(tmol);
     res += GetMolFileRGroupInfo(tmol);
-    res += GetMolFileQueryInfo(tmol);
+    res += GetMolFileQueryInfo(tmol,queryListAtoms);
     res += GetMolFileAliasInfo(tmol);
     res += GetMolFileZBOInfo(tmol);
 
@@ -1184,7 +1183,7 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
     res += "M  V30 BEGIN ATOM\n";
     for (ROMol::ConstAtomIterator atomIt = tmol.beginAtoms();
          atomIt != tmol.endAtoms(); ++atomIt) {
-      res += GetV3000MolFileAtomLine(*atomIt, conf);
+      res += GetV3000MolFileAtomLine(*atomIt, conf, queryListAtoms);
       res += "\n";
     }
     res += "M  V30 END ATOM\n";
