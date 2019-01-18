@@ -26,8 +26,7 @@
 using namespace RDKit;
 
 /* Auxiliary functions */
-template <class T>
-void testIdxVector(const std::vector<T> &groupVector,
+void testIdxVector(const std::vector<unsigned int> &groupVector,
                    const std::vector<unsigned int> &reference) {
   size_t vecSize = reference.size();
   TEST_ASSERT(groupVector.size() == vecSize);
@@ -35,7 +34,7 @@ void testIdxVector(const std::vector<T> &groupVector,
   auto sgItr = groupVector.begin();
   for (auto refItr = reference.begin(); refItr != reference.end();
        ++sgItr, ++refItr) {
-    TEST_ASSERT(1 + (*sgItr)->getIdx() == *refItr);
+    TEST_ASSERT(1 + *sgItr == *refItr);
   }
 }
 
@@ -52,228 +51,224 @@ void testBrackets(
   }
 }
 
-std::shared_ptr<RWMol> buildSampleMolecule() {
+RWMol buildSampleMolecule() {
   // This builds a RDKit::RWMol with all implemented SGroup features in order to
   // test them. SGroups and features probably do not make any sense.
 
   //// Initialize Molecule ////
-  auto m = std::make_shared<RWMol>();
+  RWMol mol;
 
   // Add some atoms and bonds
   for (unsigned i = 0; i < 6; ++i) {
-    m->addAtom(new Atom(6), false, true);
+    mol.addAtom(new Atom(6), false, true);
 
     if (i > 0) {
-      m->addBond(i - 1, i, Bond::SINGLE);
+      mol.addBond(i - 1, i, Bond::SINGLE);
     }
   }
 
   //// First SGroup ////
   {
-    SGroup *sg = new SGroup(m.get(), "MUL");
-    addSGroup(*m, sg);
+    SGroup sg(&mol, "MUL");
 
-    sg->setProp("SUBTYPE", "BLO");
-    sg->setProp("MULT", "n");
-    sg->setProp("CONNECT", "HH");
+    sg.setProp("SUBTYPE", "BLO");
+    sg.setProp("MULT", "n");
+    sg.setProp("CONNECT", "HH");
 
     // Add some atoms and bonds
     for (unsigned i = 0; i < 3; ++i) {
-      sg->addAtomWithIdx(i);
-      sg->addPAtomWithIdx(i);
-      sg->addBondWithIdx(i);  // add 2 CBONDs + 1 XBOND
+      sg.addAtomWithIdx(i);
+      sg.addParentAtomWithIdx(i);
+      sg.addBondWithIdx(i);  // add 2 CBONDs + 1 XBOND
     }
 
-    sg->setCompNo(7);
-    sg->setProp("ESTATE", "E");
+    sg.setProp("COMPNO", 7u);
+    sg.setProp("ESTATE", "E");
 
     SGroup::Bracket bracket1 = {{RDGeom::Point3D(1., 3., 0.),
                                  RDGeom::Point3D(5., 7., 0.),
                                  RDGeom::Point3D(0., 0., 0.)}};
-    sg->addBracket(bracket1);
+    sg.addBracket(bracket1);
 
     SGroup::Bracket bracket2 = {{RDGeom::Point3D(2., 4., 0.),
                                  RDGeom::Point3D(6., 8., 0.),
                                  RDGeom::Point3D(0., 0., 0.)}};
-    sg->addBracket(bracket2);
-    sg->addCState(m->getBondWithIdx(2),
-                  nullptr);  // Vector should not be parsed (not a SUP group)
+    sg.addBracket(bracket2);
 
-    sg->setProp("CLASS", "TEST CLASS");
+    // Vector should not be parsed (not a SUP group)
+    sg.addCState(2, RDGeom::Point3D());
 
-    sg->addAttachPoint(m->getAtomWithIdx(0), m->getAtomWithIdx(0), "XX");
+    sg.setProp("CLASS", "TEST CLASS");
 
-    sg->setProp("BRKTYP", "PAREN");
+    sg.addAttachPoint(0, 0, "XX");
+
+    sg.setProp("BRKTYP", "PAREN");
+
+    addSGroup(mol, sg);
   }
   //// Second SGroup ////
   {
-    SGroup *sg = new SGroup(m.get(), "SUP");
-    addSGroup(*m, sg);
+    SGroup sg(&mol, "SUP");
 
     // Add some atoms and bonds
     for (unsigned i = 3; i < 6; ++i) {
-      sg->addAtomWithIdx(i);
-      sg->addPAtomWithIdx(i);
-      sg->addBondWithIdx(i - 1);  // add 1 XBOND + 2 CBONDs
+      sg.addAtomWithIdx(i);
+      sg.addParentAtomWithIdx(i);
+      sg.addBondWithIdx(i - 1);  // add 1 XBOND + 2 CBONDs
     }
 
-    sg->setProp("LABEL", "TEST LABEL");
+    sg.setProp("LABEL", "TEST LABEL");
 
     // V2000 has only x and y coords; z value restricted to 0.
-    auto *vector = new RDGeom::Point3D(3., 4., 0.);
-    sg->addCState(m->getBondWithIdx(2),
-                  vector);  // Vector should be parsed now!
+    RDGeom::Point3D vector(3., 4., 0.);
+    sg.addCState(2, vector);  // Vector should be parsed now!
 
-    sg->addAttachPoint(m->getAtomWithIdx(3), nullptr, "YY");
+    sg.addAttachPoint(3, -1, "YY");
+
+    addSGroup(mol, sg);
   }
   //// Third SGroup ////
   {
-    SGroup *sg = new SGroup(m.get(), "DAT");
-    addSGroup(*m, sg);
+    SGroup sg(&mol, "DAT");
 
-    sg->setProp("FIELDNAME", "SAMPLE FIELD NAME");  // 30 char max
+    sg.setProp("FIELDNAME", "SAMPLE FIELD NAME");  // 30 char max
     // Field Type is ignored in V3000
-    sg->setProp("FIELDINFO", "SAMPLE FIELD INFO");  // 20 char max
-    sg->setProp("QUERYTYPE", "PQ");                 // 2 char max
-    sg->setProp("QUERYOP", "SAMPLE QUERY OP");  // 15 char max (rest of line)
+    sg.setProp("FIELDINFO", "SAMPLE FIELD INFO");  // 20 char max
+    sg.setProp("QUERYTYPE", "PQ");                 // 2 char max
+    sg.setProp("QUERYOP", "SAMPLE QUERY OP");      // 15 char max (rest of line)
 
     // This should be properly formatted, but format is not checked
-    sg->setProp("FIELDDISP", "SAMPLE FIELD DISP");
+    sg.setProp("FIELDDISP", "SAMPLE FIELD DISP");
 
-    sg->addDataField("SAMPLE DATA FIELD 1");
-    sg->addDataField("SAMPLE DATA FIELD 2");
-    sg->addDataField("SAMPLE DATA FIELD 3");
+    STR_VECT dataFields = {"SAMPLE DATA FIELD 1", "SAMPLE DATA FIELD 2",
+                           "SAMPLE DATA FIELD 3"};
+    sg.setProp("DATAFIELDS", dataFields);
+
+    addSGroup(mol, sg);
   }
 
   // Set a parent with higher index
-  auto sg0 = getSGroup(*m, 0);
-  auto sg2 = getSGroup(*m, 2);
-  sg0->setParent(sg2);
+  const auto &sgroups = getSGroups(mol);
+  sgroups.at(0).setProp<unsigned int>("PARENT", 2);
 
-  return m;
+  return mol;
 }
 
-void checkSampleMolecule(RWMol *mol) {
+void checkSampleMolecule(const RWMol &mol) {
   // Test a molecule created by buildSampleMolecule (or a copy)
 
-  TEST_ASSERT(mol);
-  TEST_ASSERT(getNumSGroups(*mol) == 3);
+  const auto &sgroups = getSGroups(mol);
+  TEST_ASSERT(sgroups.size() == 3);
 
   {
     // First SGroup
-    auto sg = getSGroup(*mol, 0);
-    TEST_ASSERT(sg->getType() == "MUL");
+    const auto &sg = sgroups.at(0);
+    TEST_ASSERT(sg.getProp<std::string>("TYPE") == "MUL");
 
-    TEST_ASSERT(sg->getProp("SUBTYPE") == "BLO");
-    TEST_ASSERT(sg->getProp("MULT") == "n");
-    TEST_ASSERT(sg->getProp("CONNECT") == "HH");
+    TEST_ASSERT(sg.getProp<std::string>("SUBTYPE") == "BLO");
+    TEST_ASSERT(sg.getProp<std::string>("MULT") == "n");
+    TEST_ASSERT(sg.getProp<std::string>("CONNECT") == "HH");
 
     std::vector<unsigned int> atoms_reference = {1, 2, 3};
-    auto atoms = sg->getAtoms();
+    auto atoms = sg.getAtoms();
     testIdxVector(atoms, atoms_reference);
 
     std::vector<unsigned int> patoms_reference = {1, 2, 3};
-    testIdxVector(sg->getPAtoms(), patoms_reference);
+    testIdxVector(sg.getParentAtoms(), patoms_reference);
 
     std::vector<unsigned int> bonds_reference = {1, 2, 3};
-    auto bonds = sg->getBonds();
+    auto bonds = sg.getBonds();
 
     // bonds are not sorted in V3000; sort them here
-    auto cmpOutputIdx = [](Bond *a, Bond *b) {
-      return a->getIdx() < b->getIdx();
-    };
-    std::sort(bonds.begin(), bonds.end(), cmpOutputIdx);
+    std::sort(bonds.begin(), bonds.end());
 
     testIdxVector(bonds, bonds_reference);
 
-    TEST_ASSERT(sg->getBondType(bonds[0]) == SGroup::BondType::CBOND);
-    TEST_ASSERT(sg->getBondType(bonds[1]) == SGroup::BondType::CBOND);
-    TEST_ASSERT(sg->getBondType(bonds[2]) == SGroup::BondType::XBOND);
+    TEST_ASSERT(sg.getBondType(bonds[0]) == SGroup::BondType::CBOND);
+    TEST_ASSERT(sg.getBondType(bonds[1]) == SGroup::BondType::CBOND);
+    TEST_ASSERT(sg.getBondType(bonds[2]) == SGroup::BondType::XBOND);
 
-    TEST_ASSERT(sg->getCompNo() == 7);
-    TEST_ASSERT(sg->getProp("ESTATE") == "E");
+    TEST_ASSERT(sg.getProp<unsigned int>("COMPNO") == 7);
+    TEST_ASSERT(sg.getProp<std::string>("ESTATE") == "E");
 
     std::vector<std::array<std::array<double, 3>, 3>> brackets_reference = {{
         {{{{1., 3., 0.}}, {{5., 7., 0.}}, {{0., 0., 0.}}}},
         {{{{2., 4., 0.}}, {{6., 8., 0.}}, {{0., 0., 0.}}}},
     }};
-    testBrackets(sg->getBrackets(), brackets_reference);
+    testBrackets(sg.getBrackets(), brackets_reference);
 
-    auto cstates = sg->getCStates();
+    auto cstates = sg.getCStates();
     TEST_ASSERT(cstates.size() == 1);
-    TEST_ASSERT(cstates[0].bond == bonds[2]);
-    TEST_ASSERT(cstates[0].vector == nullptr);
+    TEST_ASSERT(cstates[0].bondIdx == bonds[2]);
+    TEST_ASSERT(cstates[0].vector.x == 0.);
+    TEST_ASSERT(cstates[0].vector.y == 0.);
+    TEST_ASSERT(cstates[0].vector.z == 0.);
 
-    TEST_ASSERT(sg->getProp("CLASS") == "TEST CLASS");
+    TEST_ASSERT(sg.getProp<std::string>("CLASS") == "TEST CLASS");
 
-    auto ap = sg->getAttachPoints();
+    auto ap = sg.getAttachPoints();
     TEST_ASSERT(ap.size() == 1);
-    TEST_ASSERT(ap[0].aAtom == atoms[0]);
-    TEST_ASSERT(ap[0].lvAtom == atoms[0]);
+    TEST_ASSERT(ap[0].aIdx == atoms[0]);
+    TEST_ASSERT(ap[0].lvIdx == static_cast<int>(atoms[0]));
     TEST_ASSERT(ap[0].id == "XX");
 
-    TEST_ASSERT(sg->getProp("BRKTYP") == "PAREN");
+    TEST_ASSERT(sg.getProp<std::string>("BRKTYP") == "PAREN");
 
-    auto parent = sg->getParent();
-    TEST_ASSERT(parent == getSGroup(*mol, 2));
+    TEST_ASSERT(sg.getProp<unsigned int>("PARENT") == 2u);
   }
 
   {
     // Second SGroup
-    auto sg = getSGroup(*mol, 1);
-    TEST_ASSERT(sg->getType() == "SUP");
+    const auto &sg = sgroups.at(1);
+    TEST_ASSERT(sg.getProp<std::string>("TYPE") == "SUP");
 
     std::vector<unsigned int> atoms_reference = {4, 5, 6};
-    auto atoms = sg->getAtoms();
+    auto atoms = sg.getAtoms();
     testIdxVector(atoms, atoms_reference);
 
     std::vector<unsigned int> patoms_reference = {4, 5, 6};
-    testIdxVector(sg->getPAtoms(), patoms_reference);
+    testIdxVector(sg.getParentAtoms(), patoms_reference);
 
     std::vector<unsigned int> bonds_reference = {3, 4, 5};
-    auto bonds = sg->getBonds();
+    auto bonds = sg.getBonds();
 
     // bonds are not sorted in V3000; sort them here
-    auto cmpOutputIdx = [](Bond *a, Bond *b) {
-      return a->getIdx() < b->getIdx();
-    };
-    std::sort(bonds.begin(), bonds.end(), cmpOutputIdx);
+    std::sort(bonds.begin(), bonds.end());
 
     testIdxVector(bonds, bonds_reference);
-    TEST_ASSERT(sg->getBondType(bonds[0]) == SGroup::BondType::XBOND);
-    TEST_ASSERT(sg->getBondType(bonds[1]) == SGroup::BondType::CBOND);
-    TEST_ASSERT(sg->getBondType(bonds[2]) == SGroup::BondType::CBOND);
+    TEST_ASSERT(sg.getBondType(bonds[0]) == SGroup::BondType::XBOND);
+    TEST_ASSERT(sg.getBondType(bonds[1]) == SGroup::BondType::CBOND);
+    TEST_ASSERT(sg.getBondType(bonds[2]) == SGroup::BondType::CBOND);
 
-    TEST_ASSERT(sg->getProp("LABEL") == "TEST LABEL");
+    TEST_ASSERT(sg.getProp<std::string>("LABEL") == "TEST LABEL");
 
-    auto cstates = sg->getCStates();
+    auto cstates = sg.getCStates();
     TEST_ASSERT(cstates.size() == 1);
-    TEST_ASSERT(cstates[0].bond == bonds[0]);
-    TEST_ASSERT(cstates[0].vector != nullptr);
-    TEST_ASSERT(cstates[0].vector->x == 3.);
-    TEST_ASSERT(cstates[0].vector->y == 4.);
-    TEST_ASSERT(cstates[0].vector->z == 0.);
+    TEST_ASSERT(cstates[0].bondIdx == bonds[0]);
+    TEST_ASSERT(cstates[0].vector.x == 3.);
+    TEST_ASSERT(cstates[0].vector.y == 4.);
+    TEST_ASSERT(cstates[0].vector.z == 0.);
 
-    auto ap = sg->getAttachPoints();
+    auto ap = sg.getAttachPoints();
     TEST_ASSERT(ap.size() == 1);
-    TEST_ASSERT(ap[0].aAtom == atoms[0]);
-    TEST_ASSERT(ap[0].lvAtom == nullptr);
+    TEST_ASSERT(ap[0].aIdx == atoms[0]);
+    TEST_ASSERT(ap[0].lvIdx == -1);
     TEST_ASSERT(ap[0].id == "YY");
   }
 
   {
     // Third SGroup
-    auto sg = getSGroup(*mol, 2);
-    TEST_ASSERT(sg->getType() == "DAT");
+    const auto &sg = sgroups.at(2);
+    TEST_ASSERT(sg.getProp<std::string>("TYPE") == "DAT");
 
-    TEST_ASSERT(sg->getProp("FIELDNAME") == "SAMPLE FIELD NAME");
-    TEST_ASSERT(sg->getProp("FIELDINFO") == "SAMPLE FIELD INFO");
-    TEST_ASSERT(sg->getProp("QUERYTYPE") == "PQ");
-    TEST_ASSERT(sg->getProp("QUERYOP") == "SAMPLE QUERY OP");
+    TEST_ASSERT(sg.getProp<std::string>("FIELDNAME") == "SAMPLE FIELD NAME");
+    TEST_ASSERT(sg.getProp<std::string>("FIELDINFO") == "SAMPLE FIELD INFO");
+    TEST_ASSERT(sg.getProp<std::string>("QUERYTYPE") == "PQ");
+    TEST_ASSERT(sg.getProp<std::string>("QUERYOP") == "SAMPLE QUERY OP");
 
-    TEST_ASSERT(sg->getProp("FIELDDISP") == "SAMPLE FIELD DISP");
+    TEST_ASSERT(sg.getProp<std::string>("FIELDDISP") == "SAMPLE FIELD DISP");
 
-    auto dataFields = sg->getDataFields();
+    auto dataFields = sg.getProp<STR_VECT>("DATAFIELDS");
     TEST_ASSERT(dataFields.size() == 3);
     TEST_ASSERT(dataFields[0] == "SAMPLE DATA FIELD 1");
     TEST_ASSERT(dataFields[1] == "SAMPLE DATA FIELD 2");
@@ -288,19 +283,19 @@ void testCreateSGroups() {
                        << std::endl;
 
   // Create two SGroups and add them to a molecule
-  RWMol m;
+  RWMol mol;
 
-  SGroup *sg = new SGroup(&m, "DAT");
-  addSGroup(m, sg);
+  {
+    SGroup sg0(&mol, "DAT");
+    SGroup sg1(&mol, "SUP");
+    addSGroup(mol, sg0);
+    addSGroup(mol, sg1);
+  }
 
-  sg = new SGroup(&m, "SUP");
-  addSGroup(m, sg);
-
-  sg = nullptr;
-
-  TEST_ASSERT(getNumSGroups(m) == 2);
-  TEST_ASSERT(getSGroup(m, 0)->getType() == "DAT");
-  TEST_ASSERT(getSGroup(m, 1)->getType() == "SUP");
+  const auto &sgroups = getSGroups(mol);
+  TEST_ASSERT(sgroups.size() == 2);
+  TEST_ASSERT(sgroups.at(0).getProp<std::string>("TYPE") == "DAT");
+  TEST_ASSERT(sgroups.at(1).getProp<std::string>("TYPE") == "SUP");
 }
 
 void testParseSGroups(const std::string &rdbase) {
@@ -310,28 +305,29 @@ void testParseSGroups(const std::string &rdbase) {
     std::string fName =
         rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3432136_1.mol";
 
-    auto m = std::unique_ptr<RWMol>(MolFileToMol(fName));
+    std::unique_ptr<RWMol> mol(MolFileToMol(fName));
+    TEST_ASSERT(mol);
 
-    TEST_ASSERT(m);
-    TEST_ASSERT(getNumSGroups(*m) == 1);
+    const auto &sgroups = getSGroups(*mol);
+    TEST_ASSERT(sgroups.size() == 1);
 
-    auto sgroup = getSGroup(*m, 0);
+    const auto &sgroup = sgroups.at(0);
 
-    TEST_ASSERT(sgroup->getType() == "MON");
+    TEST_ASSERT(sgroup.getProp<std::string>("TYPE") == "MON");
 
     std::vector<unsigned int> atoms_reference = {2, 3, 4, 1, 5};
 
-    testIdxVector(sgroup->getAtoms(), atoms_reference);
+    testIdxVector(sgroup.getAtoms(), atoms_reference);
 
     std::vector<unsigned int> bonds_reference =
         {};  // No bonds defined in this mol
-    testIdxVector(sgroup->getBonds(), bonds_reference);
+    testIdxVector(sgroup.getBonds(), bonds_reference);
 
     std::vector<std::array<std::array<double, 3>, 3>> brackets_reference = {{
         {{{{-3.9679, -0.1670, 0.}}, {{-3.9679, 2.1705, 0.}}, {{0., 0., 0.}}}},
         {{{{-0.7244, 2.1705, 0.}}, {{-0.7244, -0.1670, 0.}}, {{0., 0., 0.}}}},
     }};
-    testBrackets(sgroup->getBrackets(), brackets_reference);
+    testBrackets(sgroup.getBrackets(), brackets_reference);
   }
 
   BOOST_LOG(rdInfoLog) << " ----------> Parsing Issue3432136_1.v3k.mol (V3000) "
@@ -339,21 +335,22 @@ void testParseSGroups(const std::string &rdbase) {
   {
     std::string fName =
         rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3432136_1.v3k.mol";
-    auto m = std::unique_ptr<RWMol>(MolFileToMol(fName));
+    std::unique_ptr<RWMol> mol(MolFileToMol(fName));
+    TEST_ASSERT(mol);
 
-    TEST_ASSERT(m);
-    TEST_ASSERT(getNumSGroups(*m) == 1);
+    const auto &sgroups = getSGroups(*mol);
+    TEST_ASSERT(sgroups.size() == 1);
 
-    auto sgroup = getSGroup(*m, 0);
+    const auto sgroup = sgroups.at(0);
 
-    TEST_ASSERT(sgroup->getType() == "MON");
+    TEST_ASSERT(sgroup.getProp<std::string>("TYPE") == "MON");
 
     std::vector<unsigned int> atoms_reference = {2, 3, 4, 1, 5};
-    testIdxVector(sgroup->getAtoms(), atoms_reference);
+    testIdxVector(sgroup.getAtoms(), atoms_reference);
 
     std::vector<unsigned int> bonds_reference =
         {};  // No bonds defined in this mol
-    testIdxVector(sgroup->getBonds(), bonds_reference);
+    testIdxVector(sgroup.getBonds(), bonds_reference);
   }
 
   BOOST_LOG(rdInfoLog) << " ----------> Parsing Issue3432136_2.v3k.mol (V3000) "
@@ -361,25 +358,26 @@ void testParseSGroups(const std::string &rdbase) {
   {
     std::string fName =
         rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3432136_2.v3k.mol";
-    auto m = std::unique_ptr<RWMol>(MolFileToMol(fName));
+    std::unique_ptr<RWMol> mol(MolFileToMol(fName));
+    TEST_ASSERT(mol);
 
-    TEST_ASSERT(m);
-    TEST_ASSERT(getNumSGroups(*m) == 1);
+    const auto &sgroups = getSGroups(*mol);
+    TEST_ASSERT(sgroups.size() == 1);
 
-    auto sgroup = getSGroup(*m, 0);
+    const auto sgroup = sgroups.at(0);
 
-    TEST_ASSERT(sgroup->getType() == "SUP");
-    TEST_ASSERT(sgroup->getProp("CLASS") == "DEMOCLASS");
-    TEST_ASSERT(sgroup->getProp("LABEL") == "abbrev");
+    TEST_ASSERT(sgroup.getProp<std::string>("TYPE") == "SUP");
+    TEST_ASSERT(sgroup.getProp<std::string>("CLASS") == "DEMOCLASS");
+    TEST_ASSERT(sgroup.getProp<std::string>("LABEL") == "abbrev");
 
     std::vector<unsigned int> atoms_reference = {6, 7, 8, 9, 11, 12};
-    testIdxVector(sgroup->getAtoms(), atoms_reference);
+    testIdxVector(sgroup.getAtoms(), atoms_reference);
 
     std::vector<unsigned int> bonds_reference = {5};
-    testIdxVector(sgroup->getBonds(), bonds_reference);
+    testIdxVector(sgroup.getBonds(), bonds_reference);
 
-    auto *bond = sgroup->getBonds()[0];
-    TEST_ASSERT(sgroup->getBondType(bond) == SGroup::BondType::XBOND);
+    auto bond = sgroup.getBonds()[0];
+    TEST_ASSERT(sgroup.getBondType(bond) == SGroup::BondType::XBOND);
   }
 
   BOOST_LOG(rdInfoLog) << " ----------> Parsing Issue3432136_2.mol (V2000) "
@@ -387,23 +385,24 @@ void testParseSGroups(const std::string &rdbase) {
   {
     std::string fName =
         rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3432136_2.mol";
-    auto m = std::unique_ptr<RWMol>(MolFileToMol(fName));
+    std::unique_ptr<RWMol> mol(MolFileToMol(fName));
+    TEST_ASSERT(mol);
 
-    TEST_ASSERT(m);
-    TEST_ASSERT(getNumSGroups(*m) == 1);
+    const auto &sgroups = getSGroups(*mol);
+    TEST_ASSERT(sgroups.size() == 1);
 
-    auto sgroup = getSGroup(*m, 0);
+    const auto sgroup = sgroups.at(0);
 
-    TEST_ASSERT(sgroup->getType() == "SUP");
+    TEST_ASSERT(sgroup.getProp<std::string>("TYPE") == "SUP");
 
     std::vector<unsigned int> atoms_reference = {6, 7, 8, 9, 11, 12};
-    testIdxVector(sgroup->getAtoms(), atoms_reference);
+    testIdxVector(sgroup.getAtoms(), atoms_reference);
 
     std::vector<unsigned int> bonds_reference = {5};
-    testIdxVector(sgroup->getBonds(), bonds_reference);
+    testIdxVector(sgroup.getBonds(), bonds_reference);
 
-    auto *bond = sgroup->getBonds()[0];
-    TEST_ASSERT(sgroup->getBondType(bond) == SGroup::BondType::XBOND);
+    auto bond = sgroup.getBonds()[0];
+    TEST_ASSERT(sgroup.getBondType(bond) == SGroup::BondType::XBOND);
   }
 }
 
@@ -419,15 +418,17 @@ void testSGroupsRoundTrip(const std::string &rdbase, bool forceV3000) {
   {
     auto sampleMol = buildSampleMolecule();
 
-    TEST_ASSERT(getNumSGroups(*sampleMol) == 3);
+    const auto &sgroups = getSGroups(sampleMol);
+    TEST_ASSERT(sgroups.size() == 3);
 
     auto writer = SDWriter(fName);
     writer.setForceV3000(forceV3000);
-    writer.write(*sampleMol);
+    writer.write(sampleMol);
     writer.close();
   }
+
   std::unique_ptr<RWMol> roundtripMol(MolFileToMol(fName));
-  checkSampleMolecule(roundtripMol.get());
+  checkSampleMolecule(*roundtripMol);
 }
 
 void testPickleSGroups() {
@@ -440,75 +441,109 @@ void testPickleSGroups() {
   {
     auto sampleMol = buildSampleMolecule();
 
-    MolPickler::pickleMol(*sampleMol, pkl);
+    MolPickler::pickleMol(sampleMol, pkl);
   }
 
-  auto roundtripMol = std::shared_ptr<RWMol>(new RWMol(pkl));
-  checkSampleMolecule(roundtripMol.get());
+  RWMol roundtripMol(pkl);
+  checkSampleMolecule(roundtripMol);
 }
 
 void testModifyMol() {
   BOOST_LOG(rdInfoLog) << " ----------> Test dropping SGroups on modification"
                        << std::endl;
 
-  auto mol = *(buildSampleMolecule());
+  auto mol = buildSampleMolecule();
   auto mol_copy = mol;
 
+  const auto &sgroups = getSGroups(mol);
+  TEST_ASSERT(sgroups.size() == 3);
+
   {  // insertion will drop SGroups
-    TEST_ASSERT(getNumSGroups(mol_copy) == 3);
+    const auto &sgroups = getSGroups(mol_copy);
+    TEST_ASSERT(sgroups.size() == 3);
+
     mol_copy.insertMol(mol);
-    TEST_ASSERT(getNumSGroups(mol_copy) == 0);
+
+    TEST_ASSERT(sgroups.size() == 0);
   }
   {
     // adding an atom will drop SGroups
     mol_copy = mol;
-    TEST_ASSERT(getNumSGroups(mol_copy) == 3);
+
+    const auto &sgroups = getSGroups(mol_copy);
+    TEST_ASSERT(sgroups.size() == 3);
+
     mol_copy.addAtom();
-    TEST_ASSERT(getNumSGroups(mol_copy) == 0);
+
+    TEST_ASSERT(sgroups.size() == 0);
   }
   {
     // replacing an atom will drop SGroups
     mol_copy = mol;
+
+    const auto &sgroups = getSGroups(mol_copy);
+    TEST_ASSERT(sgroups.size() == 3);
+
     auto new_atom = Atom();
-    TEST_ASSERT(getNumSGroups(mol_copy) == 3);
     mol_copy.replaceAtom(1, &new_atom);
-    TEST_ASSERT(getNumSGroups(mol_copy) == 0);
+
+    TEST_ASSERT(sgroups.size() == 0);
   }
   {
     // replacing a new bond will drop SGroups
     mol_copy = mol;
+
+    const auto &sgroups = getSGroups(mol_copy);
+    TEST_ASSERT(sgroups.size() == 3);
+
     auto new_bond = Bond(Bond::SINGLE);
-    TEST_ASSERT(getNumSGroups(mol_copy) == 3);
     mol_copy.replaceBond(1, &new_bond);
-    TEST_ASSERT(getNumSGroups(mol_copy) == 0);
+
+    TEST_ASSERT(sgroups.size() == 0);
   }
   {
     // removing an atom will drop SGroups
     mol_copy = mol;
-    TEST_ASSERT(getNumSGroups(mol_copy) == 3);
+
+    const auto &sgroups = getSGroups(mol_copy);
+    TEST_ASSERT(sgroups.size() == 3);
+
     mol_copy.removeAtom(1);
-    TEST_ASSERT(getNumSGroups(mol_copy) == 0);
+
+    TEST_ASSERT(sgroups.size() == 0);
   }
   {
     // creating a new bond between existing atoms will drop SGroups
     mol_copy = mol;
-    TEST_ASSERT(getNumSGroups(mol_copy) == 3);
+
+    const auto &sgroups = getSGroups(mol_copy);
+    TEST_ASSERT(sgroups.size() == 3);
+
     mol_copy.addBond(1, 3, Bond::SINGLE);
-    TEST_ASSERT(getNumSGroups(mol_copy) == 0);
+
+    TEST_ASSERT(sgroups.size() == 0);
   }
   {
     // removing a bond will drop SGroups
     mol_copy = mol;
-    TEST_ASSERT(getNumSGroups(mol_copy) == 3);
+
+    const auto &sgroups = getSGroups(mol_copy);
+    TEST_ASSERT(sgroups.size() == 3);
+
     mol_copy.removeBond(1, 2);
-    TEST_ASSERT(getNumSGroups(mol_copy) == 0);
+
+    TEST_ASSERT(sgroups.size() == 0);
   }
   {
     // creating a partial bond will drop SGroups
     mol_copy = mol;
-    TEST_ASSERT(getNumSGroups(mol_copy) == 3);
+
+    const auto &sgroups = getSGroups(mol_copy);
+    TEST_ASSERT(sgroups.size() == 3);
+
     mol_copy.createPartialBond(1, Bond::SINGLE);
-    TEST_ASSERT(getNumSGroups(mol_copy) == 0);
+
+    TEST_ASSERT(sgroups.size() == 0);
   }
 }
 

@@ -105,15 +105,9 @@ void ROMol::initFromOther(const ROMol &other, bool quickCopy, int confId) {
       }
     }
 
-    // Copy sgroups - updates need to happen in a separate loop, because a
-    // SGroup may be child of another one that gets initialized after it.
-    if (getSGroups(other)) {
-      for (auto sg : *getSGroups(other)) {
-        addSGroup(*this, new SGroup(*sg));
-      }
-      for (auto sg : *getSGroups(*this)) {
-        sg->updateOwningMol(this);
-      }
+    // Copy sgroups
+    for (const auto &sg : getSGroups(other)) {
+      addSGroup(*this, sg);
     }
 
     dp_props = other.dp_props;
@@ -239,7 +233,7 @@ Bond *ROMol::getUniqueBondWithBookmark(int mark) {
   return getBondWithBookmark(mark);
 }
 
-void ROMol::clearAtomBookmark(int mark) { d_atomBookmarks.erase(mark); }
+void ROMol::clearAtomBookmark(const int mark) { d_atomBookmarks.erase(mark); }
 
 void ROMol::clearAtomBookmark(int mark, const Atom *atom) {
   if (d_atomBookmarks.count(mark) != 0) {

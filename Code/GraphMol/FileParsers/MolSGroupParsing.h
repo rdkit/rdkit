@@ -13,7 +13,8 @@
 namespace RDKit {
 
 namespace SGroupParsing {
-typedef std::map<int, SGroup *> IDX_TO_SGROUP_MAP;
+typedef std::map<int, SGroup> IDX_TO_SGROUP_MAP;
+typedef std::map<int, STR_VECT> IDX_TO_STR_VECT_MAP;
 
 /* ------------------ V2000 Utils  ------------------ */
 
@@ -56,7 +57,8 @@ void ParseSGroupV2000SDTLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
 void ParseSGroupV2000SDDLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
                              const std::string &text, unsigned int line);
 
-void ParseSGroupV2000SCDSEDLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
+void ParseSGroupV2000SCDSEDLine(IDX_TO_SGROUP_MAP &sGroupMap,
+                                IDX_TO_STR_VECT_MAP &dataFieldsMap, RWMol *mol,
                                 const std::string &text, unsigned int line,
                                 bool strictParsing, unsigned int &counter,
                                 unsigned int &lastDataSGroup,

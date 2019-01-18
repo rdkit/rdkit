@@ -15,7 +15,7 @@
 
 namespace RDKit {
 namespace SGroupWriting {
-typedef std::unordered_map<int, SGroup *> IDX_TO_SGROUP_MAP;
+typedef std::unordered_map<int, SGroup> IDX_TO_SGROUP_MAP;
 
 /* ------------------ Inlined Formatters ------------------ */
 
@@ -116,14 +116,14 @@ std::string BuildV3000IdxVectorDataBlock(const std::string &key,
 
 /* Classify bonds between XBONDS and CBOfindP work on a copy of
  * bonds vector to prevent reordering of original vector */
-std::string BuildV3000BondsBlock(const SGROUP_SPTR &sgroup);
+std::string BuildV3000BondsBlock(const SGroup &sgroup);
 
 std::string FormatV3000StringPropertyBlock(const std::string &prop,
-                                           const SGROUP_SPTR &sgroup);
+                                           const SGroup &sgroup);
 
-std::string FormatV3000ParentBlock(const SGROUP_SPTR &sgroup);
+std::string FormatV3000ParentBlock(const SGroup &sgroup);
 
-std::string FormatV3000CompNoBlock(const SGROUP_SPTR &sgroup);
+std::string FormatV3000CompNoBlock(const SGroup &sgroup);
 
 std::string FormatV3000BracketBlock(
     const std::vector<SGroup::Bracket> brackets);
@@ -131,6 +131,6 @@ std::string FormatV3000BracketBlock(
 std::string FormatV3000CStateBlock(const std::vector<SGroup::CState> &cstates);
 
 const std::string GetV3000MolFileSGroupLines(const unsigned int idx,
-                                             const SGROUP_SPTR &sgroup);
+                                             const SGroup &sgroup);
 }  // namespace SGroupWriting
 }  // namespace RDKit

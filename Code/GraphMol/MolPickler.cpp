@@ -18,7 +18,6 @@
 #include <RDGeneral/StreamOps.h>
 #include <RDGeneral/types.h>
 #include <Query/QueryObjects.h>
-#include <unordered_map>
 #include <boost/cstdint.hpp>
 #include <boost/algorithm/string.hpp>
 
@@ -877,29 +876,15 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
   // Write SGroups (if present)
   //
   // -------------------
-  auto numSGroups = getNumSGroups(*mol);
-  if (numSGroups > 0) {
+  const auto &sgroups = getSGroups(*mol);
+  if (!sgroups.empty()) {
     streamWrite(ss, BEGINSGROUP);
 
-    tmpInt = static_cast<int32_t>(numSGroups);
+    tmpInt = static_cast<int32_t>(sgroups.size());
     streamWrite(ss, tmpInt);
 
-    // Pickle Sgroups
-    if (getSGroups(*mol)) {
-      for (auto sgroup : *getSGroups(*mol)) {
-        _pickleSGroup<T>(ss, sgroup.get(), atomIdxMap, bondIdxMap);
-      }
-
-      // Pickle Sgroup parentships
-      for (auto sgroup : *getSGroups(*mol)) {
-        auto parent = sgroup->getParent();
-        if (parent) {
-          tmpInt = static_cast<signed int>(parent->getIndexInMol());
-        } else {
-          tmpInt = -1;
-        }
-        streamWrite(ss, tmpInt);
-      }
+    for (const auto &sgroup : sgroups) {
+      _pickleSGroup<T>(ss, sgroup, atomIdxMap, bondIdxMap);
     }
   }
   // Write Stereo Groups
@@ -1039,20 +1024,10 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
 
   if (tag == BEGINSGROUP) {
     streamRead(ss, tmpInt, version);
-    std::vector<SGroup *> sgroups;
-    sgroups.reserve(tmpInt);
 
     // Create SGroups
     for (int i = 0; i < tmpInt; ++i) {
-      sgroups.push_back(_getSGroupFromPickle<T>(ss, mol, version));
-    }
-
-    // Set parentships & owning mol
-    for (auto &sgroup : sgroups) {
-      streamRead(ss, tmpInt, version);
-      if (tmpInt != -1) {
-        sgroup->setParent(sgroups[tmpInt]);
-      }
+      auto sgroup = _getSGroupFromPickle<T>(ss, mol, version);
       addSGroup(*mol, sgroup);
     }
 
@@ -1796,40 +1771,35 @@ void MolPickler::_addRingInfoFromPickle(std::istream &ss, ROMol *mol,
 //--------------------------------------
 
 template <typename T>
-void MolPickler::_pickleSGroup(std::ostream &ss, const SGroup *sgroup,
+void MolPickler::_pickleSGroup(std::ostream &ss, const SGroup &sgroup,
                                std::map<int, int> &atomIdxMap,
                                std::map<int, int> &bondIdxMap) {
-  auto sGroupType = static_cast<const std::string>(sgroup->getType());
-  streamWrite(ss, sGroupType);
+  T tmpT;
 
-  T tmpT = static_cast<T>(sgroup->getId());
-  streamWrite(ss, tmpT);
+  streamWriteProps(ss, sgroup);
 
-  tmpT = static_cast<T>(sgroup->getCompNo());
-  streamWrite(ss, tmpT);
-
-  const auto atoms = sgroup->getAtoms();
+  const auto &atoms = sgroup.getAtoms();
   streamWrite(ss, static_cast<T>(atoms.size()));
   for (const auto &atom : atoms) {
-    tmpT = static_cast<T>(atomIdxMap[atom->getIdx()]);
+    tmpT = static_cast<T>(atomIdxMap[atom]);
     streamWrite(ss, tmpT);
   }
 
-  const auto p_atoms = sgroup->getPAtoms();
+  const auto &p_atoms = sgroup.getParentAtoms();
   streamWrite(ss, static_cast<T>(p_atoms.size()));
   for (const auto &p_atom : p_atoms) {
-    tmpT = static_cast<T>(atomIdxMap[p_atom->getIdx()]);
+    tmpT = static_cast<T>(atomIdxMap[p_atom]);
     streamWrite(ss, tmpT);
   }
 
-  const auto bonds = sgroup->getBonds();
+  const auto &bonds = sgroup.getBonds();
   streamWrite(ss, static_cast<T>(bonds.size()));
   for (const auto &bond : bonds) {
-    tmpT = static_cast<T>(bondIdxMap[bond->getIdx()]);
+    tmpT = static_cast<T>(bondIdxMap[bond]);
     streamWrite(ss, tmpT);
   }
 
-  const auto brackets = sgroup->getBrackets();
+  const auto &brackets = sgroup.getBrackets();
   streamWrite(ss, static_cast<T>(brackets.size()));
   for (const auto &bracket : brackets) {
     // 3 point per bracket; 3rd point and all z are zeros,
@@ -1845,52 +1815,36 @@ void MolPickler::_pickleSGroup(std::ostream &ss, const SGroup *sgroup,
     }
   }
 
-  const auto cstates = sgroup->getCStates();
+  const auto &cstates = sgroup.getCStates();
   streamWrite(ss, static_cast<T>(cstates.size()));
   for (const auto &cstate : cstates) {
     // Bond
-    tmpT = static_cast<T>(bondIdxMap[cstate.bond->getIdx()]);
+    tmpT = static_cast<T>(bondIdxMap[cstate.bondIdx]);
     streamWrite(ss, tmpT);
 
     // Vector -- existence depends on SGroup type
-    if (sGroupType == "SUP" && cstate.vector) {
+    if ("SUP" == sgroup.getProp<std::string>("TYPE")) {
       float tmpFloat;
-      tmpFloat = static_cast<float>(cstate.vector->x);
+      tmpFloat = static_cast<float>(cstate.vector.x);
       streamWrite(ss, tmpFloat);
-      tmpFloat = static_cast<float>(cstate.vector->y);
+      tmpFloat = static_cast<float>(cstate.vector.y);
       streamWrite(ss, tmpFloat);
-      tmpFloat = static_cast<float>(cstate.vector->z);
+      tmpFloat = static_cast<float>(cstate.vector.z);
       streamWrite(ss, tmpFloat);
     }
   }
 
-  const auto strProps = sgroup->getProps();
-  streamWrite(ss, static_cast<T>(strProps.size()));
-  for (const auto &strProp : strProps) {
-    auto tmpS = static_cast<const std::string>(strProp.first);
-    streamWrite(ss, tmpS);
-    tmpS = static_cast<const std::string>(strProp.second);
-    streamWrite(ss, tmpS);
-  }
-
-  const auto dataFields = sgroup->getDataFields();
-  streamWrite(ss, static_cast<T>(dataFields.size()));
-  for (const auto &dataField : dataFields) {
-    streamWrite(ss, dataField);
-  }
-
-  const auto attachPoints = sgroup->getAttachPoints();
+  const auto &attachPoints = sgroup.getAttachPoints();
   streamWrite(ss, static_cast<T>(attachPoints.size()));
   for (const auto &attachPoint : attachPoints) {
-    // aAtom -- always present
-    tmpT = static_cast<T>(atomIdxMap[attachPoint.aAtom->getIdx()]);
+    // aIdx -- always present
+    tmpT = static_cast<T>(atomIdxMap[attachPoint.aIdx]);
     streamWrite(ss, tmpT);
 
-    // lvAtom -- may be nullptr
-    signed int tmpInt = -1;
-    if (attachPoint.lvAtom) {
-      tmpInt =
-          static_cast<signed int>(atomIdxMap[attachPoint.lvAtom->getIdx()]);
+    // lvIdx -- may be -1 if not used (0 in spec)
+    auto tmpInt = -1;
+    if (attachPoint.lvIdx != -1) {
+      tmpInt = static_cast<signed int>(atomIdxMap[attachPoint.lvIdx]);
     }
     streamWrite(ss, tmpInt);
 
@@ -1898,48 +1852,39 @@ void MolPickler::_pickleSGroup(std::ostream &ss, const SGroup *sgroup,
     auto tmpS = static_cast<const std::string>(attachPoint.id);
     streamWrite(ss, tmpS);
   }
-
-  // Skip parentships; these will be pickled in a second pass
 }
 
 template <typename T>
-SGroup *MolPickler::_getSGroupFromPickle(std::istream &ss, ROMol *mol,
-                                         int version) {
+SGroup MolPickler::_getSGroupFromPickle(std::istream &ss, ROMol *mol,
+                                        int version) {
   T tmpT;
   T numItems;
   float tmpFloat;
   int tmpInt = -1;
   std::string tmpS;
 
-  streamRead(ss, tmpS, version);
-  SGroup *sgroup = new SGroup(mol, tmpS);
+  // temporarily accept empty TYPE
+  SGroup sgroup(mol, "");
 
-  streamRead(ss, tmpT, version);
-  if (tmpT > 0) {
-    sgroup->setId(tmpT);
-  }
+  // Read RDProps, overriding ID, TYPE and COMPNO
+  streamReadProps(ss, sgroup);
 
-  streamRead(ss, tmpT, version);
-  if (tmpT > 0) {
-    sgroup->setCompNo(tmpT);
+  streamRead(ss, numItems, version);
+  for (int i = 0; i < numItems; ++i) {
+    streamRead(ss, tmpT, version);
+    sgroup.addAtomWithIdx(tmpT);
   }
 
   streamRead(ss, numItems, version);
   for (int i = 0; i < numItems; ++i) {
     streamRead(ss, tmpT, version);
-    sgroup->addAtomWithIdx(tmpT);
+    sgroup.addParentAtomWithIdx(tmpT);
   }
 
   streamRead(ss, numItems, version);
   for (int i = 0; i < numItems; ++i) {
     streamRead(ss, tmpT, version);
-    sgroup->addPAtomWithIdx(tmpT);
-  }
-
-  streamRead(ss, numItems, version);
-  for (int i = 0; i < numItems; ++i) {
-    streamRead(ss, tmpT, version);
-    sgroup->addBondWithIdx(tmpT);
+    sgroup.addBondWithIdx(tmpT);
   }
 
   streamRead(ss, numItems, version);
@@ -1954,62 +1899,38 @@ SGroup *MolPickler::_getSGroupFromPickle(std::istream &ss, ROMol *mol,
       double z = static_cast<double>(tmpFloat);
       bracket[j] = RDGeom::Point3D(x, y, z);
     }
-    sgroup->addBracket(bracket);
+    sgroup.addBracket(bracket);
   }
 
   streamRead(ss, numItems, version);
   for (int i = 0; i < numItems; ++i) {
     streamRead(ss, tmpT, version);
-    RDGeom::Point3D *vector = nullptr;
+    RDGeom::Point3D vector;
 
-    if (sgroup->getType() == "SUP") {
+    if ("SUP" == sgroup.getProp<std::string>("TYPE")) {
       streamRead(ss, tmpFloat, version);
-      double x = static_cast<double>(tmpFloat);
+      vector.x = static_cast<double>(tmpFloat);
       streamRead(ss, tmpFloat, version);
-      double y = static_cast<double>(tmpFloat);
+      vector.y = static_cast<double>(tmpFloat);
       streamRead(ss, tmpFloat, version);
-      double z = static_cast<double>(tmpFloat);
-      vector = new RDGeom::Point3D(x, y, z);
+      vector.z = static_cast<double>(tmpFloat);
     }
 
-    Bond *bond = mol->getBondWithIdx(tmpT);
-    sgroup->addCState(bond, vector);
-  }
-
-  streamRead(ss, numItems, version);
-  for (int i = 0; i < numItems; ++i) {
-    std::string propKey;
-    std::string propValue;
-
-    streamRead(ss, propKey, version);
-    streamRead(ss, propValue, version);
-
-    sgroup->setProp(propKey, propValue);
-  }
-
-  streamRead(ss, numItems, version);
-  for (int i = 0; i < numItems; ++i) {
-    std::string dataField;
-    streamRead(ss, dataField, version);
-
-    sgroup->addDataField(dataField);
+    sgroup.addCState(tmpT, vector);
   }
 
   streamRead(ss, numItems, version);
   for (int i = 0; i < numItems; ++i) {
     streamRead(ss, tmpT, version);
-    Atom *aAtom = mol->getAtomWithIdx(tmpT);
+    unsigned int aIdx = tmpT;
 
-    Atom *lvAtom = nullptr;
     streamRead(ss, tmpInt, version);
-    if (tmpInt != -1) {
-      lvAtom = mol->getAtomWithIdx(tmpT);
-    }
+    int lvIdx = tmpInt;
 
     std::string id;
     streamRead(ss, id, version);
 
-    sgroup->addAttachPoint(aAtom, lvAtom, id);
+    sgroup.addAttachPoint(aIdx, lvIdx, id);
   }
 
   return sgroup;

@@ -266,12 +266,11 @@ bool hasListQuery(const Atom *atom) {
   return res;
 }
 
-const std::string GetMolFileQueryInfo(
-    const RWMol &mol, const boost::dynamic_bitset<> &queryListAtoms) {
+const std::string GetMolFileQueryInfo(const RWMol &mol, const boost::dynamic_bitset<> &queryListAtoms) {
   std::stringstream ss;
   boost::dynamic_bitset<> listQs(mol.getNumAtoms());
   for (const auto atom : mol.atoms()) {
-    if (hasListQuery(atom) && !queryListAtoms[atom->getIdx()]) {
+    if (hasListQuery(atom) && !queryListAtoms[atom->getIdx()] ){
       listQs.set(atom->getIdx());
     }
   }
@@ -403,9 +402,7 @@ const std::string GetMolFileZBOInfo(const RWMol &mol) {
   return res.str();
 }
 
-const std::string AtomGetMolFileSymbol(
-    const Atom *atom, bool padWithSpaces,
-    boost::dynamic_bitset<> &queryListAtoms) {
+const std::string AtomGetMolFileSymbol(const Atom *atom, bool padWithSpaces, boost::dynamic_bitset<> &queryListAtoms) {
   PRECONDITION(atom, "");
 
   std::string res;
@@ -583,7 +580,8 @@ void GetMolFileAtomProperties(const Atom *atom, const Conformer *conf,
   }
 }
 
-const std::string GetMolFileAtomLine(const Atom *atom, const Conformer *conf,
+const std::string GetMolFileAtomLine(const Atom *atom,
+                                     const Conformer *conf,
                                      boost::dynamic_bitset<> &queryListAtoms) {
   PRECONDITION(atom, "");
   std::string res;
@@ -816,9 +814,9 @@ void GetMolFileBondStereoInfo(const Bond *bond, const INT_MAP_INT &wedgeBonds,
   }
 }
 
-const std::string GetMolFileBondLines(const Bond *bond,
-                                      const INT_MAP_INT &wedgeBonds,
-                                      const Conformer *conf) {
+const std::string GetMolFileBondLine(const Bond *bond,
+                                     const INT_MAP_INT &wedgeBonds,
+                                     const Conformer *conf) {
   PRECONDITION(bond, "");
 
   int dirCode;
@@ -848,9 +846,9 @@ const std::string GetMolFileBondLines(const Bond *bond,
   return ss.str();
 }
 
-const std::string GetV3000MolFileAtomLine(
-    const Atom *atom, const Conformer *conf,
-    boost::dynamic_bitset<> &queryListAtoms) {
+const std::string GetV3000MolFileAtomLine(const Atom *atom,
+                                          const Conformer *conf,
+                                          boost::dynamic_bitset<> &queryListAtoms) {
   PRECONDITION(atom, "");
   int totValence, atomMapNumber;
   unsigned int parityFlag;
@@ -988,9 +986,9 @@ int BondStereoCodeV2000ToV3000(int dirCode) {
   }
 }
 
-const std::string GetV3000MolFileBondLines(const Bond *bond,
-                                           const INT_MAP_INT &wedgeBonds,
-                                           const Conformer *conf) {
+const std::string GetV3000MolFileBondLine(const Bond *bond,
+                                          const INT_MAP_INT &wedgeBonds,
+                                          const Conformer *conf) {
   PRECONDITION(bond, "");
 
   int dirCode;
@@ -1065,13 +1063,14 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
                                 bool forceV3000) {
   std::string res;
   bool isV3000;
-  unsigned int nAtoms, nBonds, nLists, nSGroups, chiralFlag, nsText,
-      nRxnComponents;
+  unsigned int nAtoms, nBonds, nLists, chiralFlag, nsText, nRxnComponents;
   unsigned int nReactants, nProducts, nIntermediates;
   nAtoms = tmol.getNumAtoms();
   nBonds = tmol.getNumBonds();
   nLists = 0;
-  nSGroups = getNumSGroups(tmol);
+
+  const auto &sgroups = getSGroups(tmol);
+  unsigned int nSGroups = sgroups.size();
 
   chiralFlag = 0;
   nsText = 0;
@@ -1118,11 +1117,8 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
   }
   res += "\n";
 
-  if (forceV3000)
-    isV3000 = true;
-  else
-    isV3000 =
-        (nAtoms > 999) || (nBonds > 999) || !tmol.getStereoGroups().empty();
+  isV3000 = forceV3000 || nAtoms > 999 || nBonds > 999 || nSGroups > 999 ||
+            !tmol.getStereoGroups().empty();
 
   // the counts line:
   std::stringstream ss;
@@ -1166,13 +1162,13 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
     INT_MAP_INT wedgeBonds = pickBondsToWedge(tmol);
     for (ROMol::ConstBondIterator bondIt = tmol.beginBonds();
          bondIt != tmol.endBonds(); ++bondIt) {
-      res += GetMolFileBondLines(*bondIt, wedgeBonds, conf);
+      res += GetMolFileBondLine(*bondIt, wedgeBonds, conf);
       res += "\n";
     }
 
     res += GetMolFileChargeInfo(tmol);
     res += GetMolFileRGroupInfo(tmol);
-    res += GetMolFileQueryInfo(tmol, queryListAtoms);
+    res += GetMolFileQueryInfo(tmol,queryListAtoms);
     res += GetMolFileAliasInfo(tmol);
     res += GetMolFileZBOInfo(tmol);
 
@@ -1203,17 +1199,17 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
       INT_MAP_INT wedgeBonds = pickBondsToWedge(tmol);
       for (ROMol::ConstBondIterator bondIt = tmol.beginBonds();
            bondIt != tmol.endBonds(); ++bondIt) {
-        res += GetV3000MolFileBondLines(*bondIt, wedgeBonds, conf);
+        res += GetV3000MolFileBondLine(*bondIt, wedgeBonds, conf);
         res += "\n";
       }
       res += "M  V30 END BOND\n";
     }
 
-    if (getNumSGroups(tmol)) {
+    if (nSGroups > 0) {
       res += "M  V30 BEGIN SGROUP\n";
       unsigned int idx = 0;
-      for (const auto sgrp : *getSGroups(tmol)) {
-        res += GetV3000MolFileSGroupLines(++idx, sgrp);
+      for (const auto &sgroup : sgroups) {
+        res += GetV3000MolFileSGroupLines(++idx, sgroup);
       }
       res += "M  V30 END SGROUP\n";
     }

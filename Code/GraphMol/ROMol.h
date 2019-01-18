@@ -34,6 +34,7 @@
 #include "Atom.h"
 #include "Bond.h"
 #include "Conformer.h"
+#include "Sgroup.h"
 #include "StereoGroup.h"
 
 namespace RDKit {
@@ -668,11 +669,9 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   BOND_BOOKMARK_MAP d_bondBookmarks;
   RingInfo *dp_ringInfo;
   CONF_SPTR_LIST d_confs;
-  std::vector<boost::shared_ptr<SGroup>> d_sgroups;
-  friend std::vector<boost::shared_ptr<SGroup>> *getSGroups(ROMol &);
-  friend const std::vector<boost::shared_ptr<SGroup>> *getSGroups(
-      const ROMol &);
-  //! Clear all the SGroups on the molecule
+  std::vector<SGroup> d_sgroups;
+  friend std::vector<SGroup> &getSGroups(ROMol &);
+  friend const std::vector<SGroup> &getSGroups(const ROMol &);
   void clearSGroups() { d_sgroups.clear(); }
   std::vector<StereoGroup> d_stereo_groups;
 

@@ -21,6 +21,7 @@
 
 #include <Geometry/point.h>
 #include <RDGeneral/types.h>
+#include <RDGeneral/RDProps.h>
 #include <boost/smart_ptr.hpp>
 
 namespace RDKit {
@@ -37,43 +38,53 @@ class RDKIT_GRAPHMOL_EXPORT SGroupException : public std::runtime_error {
   SGroupException(const std::string &msg) : std::runtime_error(msg){};
 };
 
-class RDKIT_GRAPHMOL_EXPORT SGroup {
+//! The class for representing SGroups
+/*!
+  <b>Notes:</b>
+  - Implementation is based on 2010 MDL SD specification:
+    http://infochim.u-strasbg.fr/recherche/Download/Fragmentor/MDL_SDF.pdf
+  - See SGroups.md for further, more comprehensive notes.
+
+*/
+
+class RDKIT_GRAPHMOL_EXPORT SGroup : public RDProps {
  public:
+  //! Bond type (see V3000 spec)
   enum class BondType {
-    XBOND,  // External
-    CBOND,  // Internal
+    XBOND,  // External/Crossing bond
+    CBOND,  // Internal/Contained bond
   };
 
   typedef std::array<RDGeom::Point3D, 3> Bracket;
 
+  //! Data structure for SAP lines (see V3000 spec)
+  //! lvIdx may not be set; this signaled with value -1
   struct AttachPoint {
-    Atom *aAtom;
-    Atom *lvAtom;
+    unsigned int aIdx;
+    int lvIdx;
     std::string id;
   };
 
+  //! See specification for V3000 CSTATE
+  //! vector may or not be considered, depending on TYPE
   struct CState {
-    Bond *bond;
-    boost::shared_ptr<RDGeom::Point3D> vector;
+    unsigned int bondIdx;
+    RDGeom::Point3D vector;
   };
-
-  typedef std::vector<Atom *> ATOM_PTR_VECT;
-  typedef ATOM_PTR_VECT::iterator ATOM_PTR_VECT_I;
-  typedef ATOM_PTR_VECT::const_iterator ATOM_PTR_VECT_CI;
-  typedef std::vector<Bond *> BOND_PTR_VECT;
-  typedef BOND_PTR_VECT::iterator BOND_PTR_VECT_I;
-  typedef BOND_PTR_VECT::const_iterator BOND_PTR_VECT_CI;
 
   //! No default constructor
   SGroup() = delete;
 
-  //! Constructor. Ownsership is only set on this side of the
-  //! relationship: mol->addSGroup(sgroup) still needs to be
-  //! called to get ownership on the other side.
-  SGroup(ROMol *owning_mol, const std::string &_type);
+  //! Main Constructor. Ownsership is only set on this side of the relationship:
+  //! mol->addSGroup(sgroup) still needs to be called to get ownership on the
+  //! other side.
+  SGroup(ROMol *owning_mol, const std::string &type);
 
-  //! Copy Constructor: initialize from a second sgroup.
   SGroup(const SGroup &other) = default;
+  SGroup(SGroup &&other) = default;
+
+  SGroup &operator=(const SGroup &other) = default;
+  SGroup &operator=(SGroup &&other) = default;
 
   //! Destructor
   ~SGroup(){};
@@ -81,130 +92,84 @@ class RDKIT_GRAPHMOL_EXPORT SGroup {
   //! Get the molecule that owns this conformation
   ROMol &getOwningMol() const { return *dp_mol; }
 
-  //! get the ID of this sgroup
-  inline unsigned int getId() const { return d_id; }
-
-  //! get the COMPNO of this sgroup
-  inline unsigned int getCompNo() const { return d_compno; }
-
   //! get the index of this sgroup in dp_mol's sgroups vector
   //! (do not mistake this by the ID!)
   unsigned int getIndexInMol() const;
 
-  //! get the type of the SGroup
-  inline const std::string &getType() const { return d_type; }
-
-  //! check if SGroup has the given property set
-  bool hasProp(const std::string &prop) const;
-
-  //! get string properties
-  const std::string &getProp(const std::string &prop) const;
-
-  //! get parent SGroup
-  inline SGroup *getParent() const { return d_parent; }
-
-  //! set the ID of this sgroup
-  void setId(unsigned int id);
-
-  //! set the COMPNO of this sgroup
-  void setCompNo(unsigned int compno) { d_compno = compno; }
-
-  //! set the type of the SGroup
-  inline void setType(const std::string &type) { d_type = type; }
-
-  //! set string properties
-  inline void setProp(const std::string &prop, const std::string &value) {
-    d_prop[prop] = value;
-  };
-
-  //! set the parent SGroup
-  inline void setParent(SGroup *parent) { d_parent = parent; }
-
   /* Atom and Bond methods */
   void addAtomWithIdx(unsigned int idx);
-  void addPAtomWithIdx(unsigned int idx);
+  void addParentAtomWithIdx(unsigned int idx);
   void addBondWithIdx(unsigned int idx);
   void addAtomWithBookmark(int mark);
-  void addPAtomWithBookmark(int mark);
+  void addParentAtomWithBookmark(int mark);
   void addBondWithBookmark(int mark);
+
   void addBracket(const Bracket &bracket);
-  void addCState(Bond *bond, RDGeom::Point3D *vector);
-  void addAttachPoint(Atom *aAtomPtr, Atom *lvAtomPtr, std::string idStr);
-  void addDataField(const std::string &data);
+  void addCState(unsigned int bondIdx, const RDGeom::Point3D &vector);
+  void addAttachPoint(unsigned int aIdx, int lvIdx, const std::string &idStr);
 
-  BondType getBondType(Bond *bond) const;
+  BondType getBondType(unsigned int bondIdx) const;
 
-  inline const ATOM_PTR_VECT &getAtoms() const { return d_atoms; };
-  inline const ATOM_PTR_VECT &getPAtoms() const { return d_patoms; };
-  inline const BOND_PTR_VECT &getBonds() const { return d_bonds; };
-  inline const std::vector<Bracket> &getBrackets() const { return d_brackets; }
-  inline const std::vector<CState> &getCStates() const { return d_cstates; }
-  inline const std::vector<std::string> &getDataFields() const {
-    return d_dataFields;
-  }
-  inline const std::vector<AttachPoint> &getAttachPoints() const {
-    return d_saps;
-  }
-  inline const std::unordered_map<std::string, std::string> &getProps() const {
-    return d_prop;
-  }
+  const std::vector<unsigned int> &getAtoms() const { return d_atoms; }
+  const std::vector<unsigned int> &getParentAtoms() const { return d_patoms; }
+  const std::vector<unsigned int> &getBonds() const { return d_bonds; }
+
+  const std::vector<Bracket> &getBrackets() const { return d_brackets; }
+  const std::vector<CState> &getCStates() const { return d_cstates; }
+  const std::vector<AttachPoint> &getAttachPoints() const { return d_saps; }
 
   //! Set owning moelcule
   //! This only updates atoms and bonds; parent sgroup has to be updated
   //! independently, since parent might not exist at the time this is called.
   void setOwningMol(ROMol *mol);
 
-  //! Update pointers (atoms, patoms, bonds, parent SGroup) with the ones
-  //! at matching indexes in other_mol. Must be called only after all of
-  //! these objects exist in other_mol!
-  void updateOwningMol(ROMol *other_mol);
-
  private:
-  /* ID of the group. If not 0, must be unique */
-  unsigned int d_id = 0;
-  unsigned int d_compno = 0;
-
-  std::string d_type;       // type of the sgroup
   ROMol *dp_mol = nullptr;  // owning molecule
-  SGroup *d_parent = nullptr;
 
-  ATOM_PTR_VECT d_atoms;
-  ATOM_PTR_VECT d_patoms;
-  BOND_PTR_VECT d_bonds;
+  std::vector<unsigned int> d_atoms;
+  std::vector<unsigned int> d_patoms;
+  std::vector<unsigned int> d_bonds;
+
   std::vector<Bracket> d_brackets;
   std::vector<CState> d_cstates;
-  std::vector<std::string> d_dataFields;
   std::vector<AttachPoint> d_saps;
-
-  std::unordered_map<std::string, std::string>
-      d_prop;  // Storage for string properties
 };
 
-typedef boost::shared_ptr<SGroup> SGROUP_SPTR;
+namespace SGroupChecks {
 
-bool SGroupTypeOK(std::string typ);
+const std::vector<std::string> sGroupTypes = {
+    // polymer sgroups:
+    "SRU", "MON", "COP", "CRO", "GRA", "MOD", "MER", "ANY",
+    // formulations/mixtures:
+    "COM", "MIX", "FOR",
+    // other
+    "SUP", "MUL", "DAT", "GEN"};
 
-bool SGroupSubTypeOK(std::string typ);
+const std::vector<std::string> sGroupSubtypes = {"ALT", "RAN", "BLO"};
+const std::vector<std::string> sGroupConnectTypes = {"HH", "HT", "EU"};
 
-bool SGroupConnectTypeOK(std::string typ);
+bool isValidType(const std::string &type);
+
+bool isValidSubType(const std::string &type);
+
+bool isValidConnectType(const std::string &type);
+
+bool isSGroupIdFree(const ROMol &mol, unsigned int id);
+
+}  // namespace SGroupChecks
 
 //! \name SGroups and molecules
 //@{
-unsigned int getNumSGroups(const ROMol &mol);
 
-std::vector<boost::shared_ptr<SGroup>> *getSGroups(ROMol &mol);
-const std::vector<boost::shared_ptr<SGroup>> *getSGroups(const ROMol &mol);
+std::vector<SGroup> &getSGroups(ROMol &mol);
+const std::vector<SGroup> &getSGroups(const ROMol &mol);
 
-//! return the sgroup at specified index
-SGroup *getSGroup(ROMol &mol, unsigned int idx);
-const SGroup *getSGroup(const ROMol &mol, unsigned int idx);
-
-//! Add a new SGroup
+//! Add a new SGroup. A copy is added, so we can be sure that no other
+//! references to the SGroup exist.
 /*!
-  \param sgroup - SGroup to be added to the molecule; this molecule takes
-  ownership of the sgroup
+  \param sgroup - SGroup to be added to the molecule.
 */
-unsigned int addSGroup(ROMol &mol, SGroup *sgroup);
+unsigned int addSGroup(ROMol &mol, SGroup sgroup);
 //@}
 
 }  // namespace RDKit

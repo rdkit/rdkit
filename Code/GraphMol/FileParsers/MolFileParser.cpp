@@ -1493,7 +1493,7 @@ void ParseMolBlockAtoms(std::istream *inStream, unsigned int &line,
   PRECONDITION(inStream, "bad stream");
   PRECONDITION(mol, "bad molecule");
   PRECONDITION(conf, "bad conformer");
-  for (unsigned int i = 0; i < nAtoms;) {
+  for (unsigned int i = 1; i <= nAtoms; ++i) {
     ++line;
     std::string tempStr = getLine(inStream);
     if (inStream->eof()) {
@@ -1503,7 +1503,6 @@ void ParseMolBlockAtoms(std::istream *inStream, unsigned int &line,
     Atom *atom = ParseMolFileAtomLine(tempStr, pos, line);
     unsigned int aid = mol->addAtom(atom, false, true);
     conf->setAtomPos(aid, pos);
-    ++i;
     mol->setAtomBookmark(atom, i);
   }
 }
@@ -1514,7 +1513,7 @@ void ParseMolBlockBonds(std::istream *inStream, unsigned int &line,
                         bool &chiralityPossible) {
   PRECONDITION(inStream, "bad stream");
   PRECONDITION(mol, "bad molecule");
-  for (unsigned int i = 0; i < nBonds;) {
+  for (unsigned int i = 1; i <= nBonds; ++i) {
     ++line;
     std::string tempStr = getLine(inStream);
     if (inStream->eof()) {
@@ -1534,7 +1533,6 @@ void ParseMolBlockBonds(std::istream *inStream, unsigned int &line,
       chiralityPossible = true;
     }
     mol->addBond(bond, true);
-    ++i;
     mol->setBondBookmark(bond, i);
   }
 }
@@ -1568,6 +1566,7 @@ bool ParseMolBlockProperties(std::istream *inStream, unsigned int &line,
   }
 
   IDX_TO_SGROUP_MAP sGroupMap;
+  IDX_TO_STR_VECT_MAP dataFieldsMap;
   bool fileComplete = false;
   bool firstChargeLine = true;
   unsigned int SCDcounter = 0;
@@ -1651,8 +1650,9 @@ bool ParseMolBlockProperties(std::istream *inStream, unsigned int &line,
     } else if (lineBeg == "M  SDD") {
       ParseSGroupV2000SDDLine(sGroupMap, mol, tempStr, line);
     } else if (lineBeg == "M  SCD" || lineBeg == "M  SED") {
-      ParseSGroupV2000SCDSEDLine(sGroupMap, mol, tempStr, line, strictParsing,
-                                 SCDcounter, lastDataSGroup, currentDataField);
+      ParseSGroupV2000SCDSEDLine(sGroupMap, dataFieldsMap, mol, tempStr, line,
+                                 strictParsing, SCDcounter, lastDataSGroup,
+                                 currentDataField);
     } else if (lineBeg == "M  SPL") {
       ParseSGroupV2000SPLLine(sGroupMap, mol, tempStr, line);
     } else if (lineBeg == "M  SNC") {
@@ -1681,8 +1681,9 @@ bool ParseMolBlockProperties(std::istream *inStream, unsigned int &line,
     lineBeg = tempStr.substr(0, 6);
   }
   if (tempStr[0] == 'M' && tempStr.substr(0, 6) == "M  END") {
-    // All went well, add SGroups to Mol
+    // All went well, make final updates to SGroups, and add them to Mol
     for (const auto &sgroup : sGroupMap) {
+      sgroup.second.setProp("DATAFIELDS", dataFieldsMap[sgroup.first]);
       addSGroup(*mol, sgroup.second);
     }
 

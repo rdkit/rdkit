@@ -17,12 +17,12 @@
 #include <GraphMol/Sgroup.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include "GraphMol/FileParsers/FileParsers.h"
 
 using namespace RDKit;
 
 /* Auxiliary functions */
-template <class T>
-void testIdxVector(const std::vector<T> &groupVector,
+void testIdxVector(const std::vector<unsigned int> &groupVector,
                    const std::vector<unsigned int> &reference) {
   size_t vecSize = reference.size();
   CHECK(groupVector.size() == vecSize);
@@ -30,7 +30,7 @@ void testIdxVector(const std::vector<T> &groupVector,
   auto sgItr = groupVector.begin();
   for (auto refItr = reference.begin(); refItr != reference.end();
        ++sgItr, ++refItr) {
-    CHECK(1 + (*sgItr)->getIdx() == *refItr);
+    CHECK(1 + *sgItr == *refItr);
   }
 }
 
@@ -47,243 +47,240 @@ void testBrackets(
   }
 }
 
-std::shared_ptr<RWMol> buildSampleMolecule() {
+RWMol buildSampleMolecule() {
   // This builds a RDKit::RWMol with all implemented SGroup features in order to
   // test them. SGroups and features probably do not make any sense.
 
   //// Initialize Molecule ////
-  auto m = std::make_shared<RWMol>();
+  RWMol mol;
 
   // Add some atoms and bonds
   for (unsigned i = 0; i < 6; ++i) {
-    m->addAtom(new Atom(6), false, true);
+    mol.addAtom(new Atom(6), false, true);
 
     if (i > 0) {
-      m->addBond(i - 1, i, Bond::SINGLE);
+      mol.addBond(i - 1, i, Bond::SINGLE);
     }
   }
 
   //// First SGroup ////
   {
-    SGroup *sg = new SGroup(m.get(), "MUL");
-    addSGroup(*m, sg);
+    SGroup sg(&mol, "MUL");
 
-    sg->setProp("SUBTYPE", "BLO");
-    sg->setProp("MULT", "n");
-    sg->setProp("CONNECT", "HH");
+    sg.setProp("SUBTYPE", "BLO");
+    sg.setProp("MULT", "n");
+    sg.setProp("CONNECT", "HH");
 
     // Add some atoms and bonds
     for (unsigned i = 0; i < 3; ++i) {
-      sg->addAtomWithIdx(i);
-      sg->addPAtomWithIdx(i);
-      sg->addBondWithIdx(i);  // add 2 CBONDs + 1 XBOND
+      sg.addAtomWithIdx(i);
+      sg.addParentAtomWithIdx(i);
+      sg.addBondWithIdx(i);  // add 2 CBONDs + 1 XBOND
     }
 
-    sg->setCompNo(7);
-    sg->setProp("ESTATE", "E");
+    sg.setProp("COMPNO", 7u);
+    sg.setProp("ESTATE", "E");
 
     SGroup::Bracket bracket1 = {{RDGeom::Point3D(1., 3., 0.),
                                  RDGeom::Point3D(5., 7., 0.),
                                  RDGeom::Point3D(0., 0., 0.)}};
-    sg->addBracket(bracket1);
+    sg.addBracket(bracket1);
 
     SGroup::Bracket bracket2 = {{RDGeom::Point3D(2., 4., 0.),
                                  RDGeom::Point3D(6., 8., 0.),
                                  RDGeom::Point3D(0., 0., 0.)}};
-    sg->addBracket(bracket2);
-    sg->addCState(m->getBondWithIdx(2),
-                  nullptr);  // Vector should not be parsed (not a SUP group)
+    sg.addBracket(bracket2);
 
-    sg->setProp("CLASS", "TEST CLASS");
+    // Vector should not be parsed (not a SUP group)
+    sg.addCState(2, RDGeom::Point3D());
 
-    sg->addAttachPoint(m->getAtomWithIdx(0), m->getAtomWithIdx(0), "XX");
+    sg.setProp("CLASS", "TEST CLASS");
 
-    sg->setProp("BRKTYP", "PAREN");
+    sg.addAttachPoint(0, 0, "XX");
+
+    sg.setProp("BRKTYP", "PAREN");
+
+    addSGroup(mol, sg);
   }
   //// Second SGroup ////
   {
-    SGroup *sg = new SGroup(m.get(), "SUP");
-    addSGroup(*m, sg);
+    SGroup sg(&mol, "SUP");
 
     // Add some atoms and bonds
     for (unsigned i = 3; i < 6; ++i) {
-      sg->addAtomWithIdx(i);
-      sg->addPAtomWithIdx(i);
-      sg->addBondWithIdx(i - 1);  // add 1 XBOND + 2 CBONDs
+      sg.addAtomWithIdx(i);
+      sg.addParentAtomWithIdx(i);
+      sg.addBondWithIdx(i - 1);  // add 1 XBOND + 2 CBONDs
     }
 
-    sg->setProp("LABEL", "TEST LABEL");
+    sg.setProp("LABEL", "TEST LABEL");
 
     // V2000 has only x and y coords; z value restricted to 0.
-    auto *vector = new RDGeom::Point3D(3., 4., 0.);
-    sg->addCState(m->getBondWithIdx(2),
-                  vector);  // Vector should be parsed now!
+    RDGeom::Point3D vector(3., 4., 0.);
+    sg.addCState(2, vector);  // Vector should be parsed now!
 
-    sg->addAttachPoint(m->getAtomWithIdx(3), nullptr, "YY");
+    sg.addAttachPoint(3, -1, "YY");
+
+    addSGroup(mol, sg);
   }
   //// Third SGroup ////
   {
-    SGroup *sg = new SGroup(m.get(), "DAT");
-    addSGroup(*m, sg);
+    SGroup sg(&mol, "DAT");
 
-    sg->setProp("FIELDNAME", "SAMPLE FIELD NAME");  // 30 char max
+    sg.setProp("FIELDNAME", "SAMPLE FIELD NAME");  // 30 char max
     // Field Type is ignored in V3000
-    sg->setProp("FIELDINFO", "SAMPLE FIELD INFO");  // 20 char max
-    sg->setProp("QUERYTYPE", "PQ");                 // 2 char max
-    sg->setProp("QUERYOP", "SAMPLE QUERY OP");  // 15 char max (rest of line)
+    sg.setProp("FIELDINFO", "SAMPLE FIELD INFO");  // 20 char max
+    sg.setProp("QUERYTYPE", "PQ");                 // 2 char max
+    sg.setProp("QUERYOP", "SAMPLE QUERY OP");      // 15 char max (rest of line)
 
     // This should be properly formatted, but format is not checked
-    sg->setProp("FIELDDISP", "SAMPLE FIELD DISP");
+    sg.setProp("FIELDDISP", "SAMPLE FIELD DISP");
 
-    sg->addDataField("SAMPLE DATA FIELD 1");
-    sg->addDataField("SAMPLE DATA FIELD 2");
-    sg->addDataField("SAMPLE DATA FIELD 3");
+    STR_VECT dataFields = {"SAMPLE DATA FIELD 1", "SAMPLE DATA FIELD 2",
+                           "SAMPLE DATA FIELD 3"};
+    sg.setProp("DATAFIELDS", dataFields);
+
+    addSGroup(mol, sg);
   }
 
   // Set a parent with higher index
-  auto sg0 = getSGroup(*m, 0);
-  auto sg2 = getSGroup(*m, 2);
-  sg0->setParent(sg2);
+  const auto &sgroups = getSGroups(mol);
+  sgroups.at(0).setProp<unsigned int>("PARENT", 2);
 
-  return m;
+  return mol;
 }
 
 /* End Auxiliary functions */
 
 TEST_CASE("Basic Sgroup creation", "[Sgroups]") {
   // Create two SGroups and add them to a molecule
-  RWMol m;
+  RWMol mol;
 
-  SGroup *sg = new SGroup(&m, "DAT");
-  addSGroup(m, sg);
+  {
+    SGroup sg0(&mol, "DAT");
+    SGroup sg1(&mol, "SUP");
+    addSGroup(mol, sg0);
+    addSGroup(mol, sg1);
+  }
 
-  sg = new SGroup(&m, "SUP");
-  addSGroup(m, sg);
-
-  sg = nullptr;
-
-  REQUIRE(getNumSGroups(m) == 2);
-  CHECK(getSGroup(m, 0)->getType() == "DAT");
-  CHECK(getSGroup(m, 1)->getType() == "SUP");
+  const auto &sgroups = getSGroups(mol);
+  REQUIRE(sgroups.size() == 2);
+  CHECK(sgroups.at(0).getProp<std::string>("TYPE") == "DAT");
+  CHECK(sgroups.at(1).getProp<std::string>("TYPE") == "SUP");
 }
 
 TEST_CASE("Build and test sample molecule", "[Sgroups]") {
   auto mol = buildSampleMolecule();
-  REQUIRE(mol);
-  CHECK(getNumSGroups(*mol) == 3);
+
+  const auto &sgroups = getSGroups(mol);
+  CHECK(sgroups.size() == 3);
 
   SECTION("first sgroup") {
-    auto sg = getSGroup(*mol, 0);
-    CHECK(sg->getType() == "MUL");
+    const auto &sg = sgroups.at(0);
+    CHECK(sg.getProp<std::string>("TYPE") == "MUL");
 
-    CHECK(sg->getProp("SUBTYPE") == "BLO");
-    CHECK(sg->getProp("MULT") == "n");
-    CHECK(sg->getProp("CONNECT") == "HH");
+    CHECK(sg.getProp<std::string>("SUBTYPE") == "BLO");
+    CHECK(sg.getProp<std::string>("MULT") == "n");
+    CHECK(sg.getProp<std::string>("CONNECT") == "HH");
 
     std::vector<unsigned int> atoms_reference = {1, 2, 3};
-    auto atoms = sg->getAtoms();
+    auto atoms = sg.getAtoms();
     testIdxVector(atoms, atoms_reference);
 
     std::vector<unsigned int> patoms_reference = {1, 2, 3};
-    testIdxVector(sg->getPAtoms(), patoms_reference);
+    testIdxVector(sg.getParentAtoms(), patoms_reference);
 
     std::vector<unsigned int> bonds_reference = {1, 2, 3};
-    auto bonds = sg->getBonds();
+    auto bonds = sg.getBonds();
 
     // bonds are not sorted in V3000; sort them here
-    auto cmpOutputIdx = [](Bond *a, Bond *b) {
-      return a->getIdx() < b->getIdx();
-    };
-    std::sort(bonds.begin(), bonds.end(), cmpOutputIdx);
+    std::sort(bonds.begin(), bonds.end());
 
     testIdxVector(bonds, bonds_reference);
 
-    CHECK(sg->getBondType(bonds[0]) == SGroup::BondType::CBOND);
-    CHECK(sg->getBondType(bonds[1]) == SGroup::BondType::CBOND);
-    CHECK(sg->getBondType(bonds[2]) == SGroup::BondType::XBOND);
+    CHECK(sg.getBondType(bonds[0]) == SGroup::BondType::CBOND);
+    CHECK(sg.getBondType(bonds[1]) == SGroup::BondType::CBOND);
+    CHECK(sg.getBondType(bonds[2]) == SGroup::BondType::XBOND);
 
-    CHECK(sg->getCompNo() == 7);
-    CHECK(sg->getProp("ESTATE") == "E");
+    CHECK(sg.getProp<unsigned int>("COMPNO") == 7u);
+    CHECK(sg.getProp<std::string>("ESTATE") == "E");
 
     std::vector<std::array<std::array<double, 3>, 3>> brackets_reference = {{
         {{{{1., 3., 0.}}, {{5., 7., 0.}}, {{0., 0., 0.}}}},
         {{{{2., 4., 0.}}, {{6., 8., 0.}}, {{0., 0., 0.}}}},
     }};
-    testBrackets(sg->getBrackets(), brackets_reference);
+    testBrackets(sg.getBrackets(), brackets_reference);
 
-    auto cstates = sg->getCStates();
+    auto cstates = sg.getCStates();
     CHECK(cstates.size() == 1);
-    CHECK(cstates[0].bond == bonds[2]);
-    CHECK(cstates[0].vector == nullptr);
+    CHECK(cstates[0].bondIdx == bonds[2]);
+    CHECK(cstates[0].vector.x == 0.);
+    CHECK(cstates[0].vector.y == 0.);
+    CHECK(cstates[0].vector.z == 0.);
 
-    CHECK(sg->getProp("CLASS") == "TEST CLASS");
+    CHECK(sg.getProp<std::string>("CLASS") == "TEST CLASS");
 
-    auto ap = sg->getAttachPoints();
+    auto ap = sg.getAttachPoints();
     CHECK(ap.size() == 1);
-    CHECK(ap[0].aAtom == atoms[0]);
-    CHECK(ap[0].lvAtom == atoms[0]);
+    CHECK(ap[0].aIdx == atoms[0]);
+    CHECK(ap[0].lvIdx == static_cast<int>(atoms[0]));
     CHECK(ap[0].id == "XX");
 
-    CHECK(sg->getProp("BRKTYP") == "PAREN");
+    CHECK(sg.getProp<std::string>("BRKTYP") == "PAREN");
 
-    auto parent = sg->getParent();
-    CHECK(parent == getSGroup(*mol, 2));
+    CHECK(sg.getProp<unsigned int>("PARENT") == 2u);
   }
 
   SECTION("second sgroup") {
-    auto sg = getSGroup(*mol, 1);
-    CHECK(sg->getType() == "SUP");
+    const auto &sg = sgroups.at(1);
+    CHECK(sg.getProp<std::string>("TYPE") == "SUP");
 
     std::vector<unsigned int> atoms_reference = {4, 5, 6};
-    auto atoms = sg->getAtoms();
+    auto atoms = sg.getAtoms();
     testIdxVector(atoms, atoms_reference);
 
     std::vector<unsigned int> patoms_reference = {4, 5, 6};
-    testIdxVector(sg->getPAtoms(), patoms_reference);
+    testIdxVector(sg.getParentAtoms(), patoms_reference);
 
     std::vector<unsigned int> bonds_reference = {3, 4, 5};
-    auto bonds = sg->getBonds();
+    auto bonds = sg.getBonds();
 
     // bonds are not sorted in V3000; sort them here
-    auto cmpOutputIdx = [](Bond *a, Bond *b) {
-      return a->getIdx() < b->getIdx();
-    };
-    std::sort(bonds.begin(), bonds.end(), cmpOutputIdx);
+    std::sort(bonds.begin(), bonds.end());
 
     testIdxVector(bonds, bonds_reference);
-    CHECK(sg->getBondType(bonds[0]) == SGroup::BondType::XBOND);
-    CHECK(sg->getBondType(bonds[1]) == SGroup::BondType::CBOND);
-    CHECK(sg->getBondType(bonds[2]) == SGroup::BondType::CBOND);
+    CHECK(sg.getBondType(bonds[0]) == SGroup::BondType::XBOND);
+    CHECK(sg.getBondType(bonds[1]) == SGroup::BondType::CBOND);
+    CHECK(sg.getBondType(bonds[2]) == SGroup::BondType::CBOND);
 
-    CHECK(sg->getProp("LABEL") == "TEST LABEL");
+    CHECK(sg.getProp<std::string>("LABEL") == "TEST LABEL");
 
-    auto cstates = sg->getCStates();
+    auto cstates = sg.getCStates();
     CHECK(cstates.size() == 1);
-    CHECK(cstates[0].bond == bonds[0]);
-    CHECK(cstates[0].vector != nullptr);
-    CHECK(cstates[0].vector->x == 3.);
-    CHECK(cstates[0].vector->y == 4.);
-    CHECK(cstates[0].vector->z == 0.);
+    CHECK(cstates[0].bondIdx == bonds[0]);
+    CHECK(cstates[0].vector.x == 3.);
+    CHECK(cstates[0].vector.y == 4.);
+    CHECK(cstates[0].vector.z == 0.);
 
-    auto ap = sg->getAttachPoints();
+    auto ap = sg.getAttachPoints();
     CHECK(ap.size() == 1);
-    CHECK(ap[0].aAtom == atoms[0]);
-    CHECK(ap[0].lvAtom == nullptr);
+    CHECK(ap[0].aIdx == atoms[0]);
+    CHECK(ap[0].lvIdx == -1);
     CHECK(ap[0].id == "YY");
   }
 
   SECTION("third sgroup") {
-    auto sg = getSGroup(*mol, 2);
-    CHECK(sg->getType() == "DAT");
+    const auto &sg = sgroups.at(2);
+    CHECK(sg.getProp<std::string>("TYPE") == "DAT");
 
-    CHECK(sg->getProp("FIELDNAME") == "SAMPLE FIELD NAME");
-    CHECK(sg->getProp("FIELDINFO") == "SAMPLE FIELD INFO");
-    CHECK(sg->getProp("QUERYTYPE") == "PQ");
-    CHECK(sg->getProp("QUERYOP") == "SAMPLE QUERY OP");
+    CHECK(sg.getProp<std::string>("FIELDNAME") == "SAMPLE FIELD NAME");
+    CHECK(sg.getProp<std::string>("FIELDINFO") == "SAMPLE FIELD INFO");
+    CHECK(sg.getProp<std::string>("QUERYTYPE") == "PQ");
+    CHECK(sg.getProp<std::string>("QUERYOP") == "SAMPLE QUERY OP");
 
-    CHECK(sg->getProp("FIELDDISP") == "SAMPLE FIELD DISP");
+    CHECK(sg.getProp<std::string>("FIELDDISP") == "SAMPLE FIELD DISP");
 
-    auto dataFields = sg->getDataFields();
+    auto dataFields = sg.getProp<STR_VECT>("DATAFIELDS");
     CHECK(dataFields.size() == 3);
     CHECK(dataFields[0] == "SAMPLE DATA FIELD 1");
     CHECK(dataFields[1] == "SAMPLE DATA FIELD 2");
