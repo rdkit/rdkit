@@ -31,7 +31,7 @@
 //
 #include "EvenSamplePairs.h"
 #include <boost/format.hpp>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 
 namespace RDKit {
 

@@ -118,13 +118,13 @@ void test2FPBReaderTanimoto() {
     fps.init();
     TEST_ASSERT(fps.length() == 100);
     {
-      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(0);
+      boost::shared_array<std::uint8_t> bytes = fps.getBytes(0);
       TEST_ASSERT(bytes);
       TEST_ASSERT(feq(fps.getTanimoto(0, bytes), 1.0));
       TEST_ASSERT(feq(fps.getTanimoto(1, bytes), 0.3703));
     }
     {
-      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(1);
+      boost::shared_array<std::uint8_t> bytes = fps.getBytes(1);
       TEST_ASSERT(bytes);
       TEST_ASSERT(feq(fps.getTanimoto(1, bytes), 1.0));
       TEST_ASSERT(feq(fps.getTanimoto(0, bytes), 0.3703));
@@ -147,7 +147,7 @@ void test3FPBReaderTanimotoNeighbors() {
     fps.init();
     TEST_ASSERT(fps.length() == 100);
     {
-      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(0);
+      boost::shared_array<std::uint8_t> bytes = fps.getBytes(0);
       TEST_ASSERT(bytes);
       std::vector<std::pair<double, unsigned int> > nbrs =
           fps.getTanimotoNeighbors(bytes);
@@ -156,7 +156,7 @@ void test3FPBReaderTanimotoNeighbors() {
       TEST_ASSERT(nbrs[0].second == 0);
     }
     {  // with a threshold
-      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(0);
+      boost::shared_array<std::uint8_t> bytes = fps.getBytes(0);
       TEST_ASSERT(bytes);
       std::vector<std::pair<double, unsigned int> > nbrs =
           fps.getTanimotoNeighbors(bytes, 0.30);
@@ -167,7 +167,7 @@ void test3FPBReaderTanimotoNeighbors() {
       TEST_ASSERT(nbrs[1].second == 1);
     }
     {  // with a threshold, no screen
-      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(0);
+      boost::shared_array<std::uint8_t> bytes = fps.getBytes(0);
       TEST_ASSERT(bytes);
       std::vector<std::pair<double, unsigned int> > nbrs =
           fps.getTanimotoNeighbors(bytes, 0.30, false);
@@ -178,7 +178,7 @@ void test3FPBReaderTanimotoNeighbors() {
       TEST_ASSERT(nbrs[1].second == 1);
     }
     {  // with a threshold
-      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(95);
+      boost::shared_array<std::uint8_t> bytes = fps.getBytes(95);
       TEST_ASSERT(bytes);
       std::vector<std::pair<double, unsigned int> > nbrs =
           fps.getTanimotoNeighbors(bytes, 0.30);
@@ -273,7 +273,7 @@ void test5LazyFPBReaderTanimoto() {
     fps.init();
     TEST_ASSERT(fps.length() == 100);
     {
-      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(0);
+      boost::shared_array<std::uint8_t> bytes = fps.getBytes(0);
       TEST_ASSERT(bytes);
       TEST_ASSERT(feq(fps.getTanimoto(0, bytes), 1.0));
       TEST_ASSERT(feq(fps.getTanimoto(1, bytes), 0.3703));
@@ -285,7 +285,7 @@ void test5LazyFPBReaderTanimoto() {
       TEST_ASSERT(feq(fps.getTanimoto(1, *ebv.get()), 0.3703));
     }
     {
-      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(1);
+      boost::shared_array<std::uint8_t> bytes = fps.getBytes(1);
       TEST_ASSERT(bytes);
       TEST_ASSERT(feq(fps.getTanimoto(1, bytes), 1.0));
       TEST_ASSERT(feq(fps.getTanimoto(0, bytes), 0.3703));
@@ -308,7 +308,7 @@ void test6LazyFPBReaderTanimotoNeighbors() {
     fps.init();
     TEST_ASSERT(fps.length() == 100);
     {
-      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(0);
+      boost::shared_array<std::uint8_t> bytes = fps.getBytes(0);
       TEST_ASSERT(bytes);
       std::vector<std::pair<double, unsigned int> > nbrs =
           fps.getTanimotoNeighbors(bytes);
@@ -317,7 +317,7 @@ void test6LazyFPBReaderTanimotoNeighbors() {
       TEST_ASSERT(nbrs[0].second == 0);
     }
     {  // with a threshold
-      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(0);
+      boost::shared_array<std::uint8_t> bytes = fps.getBytes(0);
       TEST_ASSERT(bytes);
       std::vector<std::pair<double, unsigned int> > nbrs =
           fps.getTanimotoNeighbors(bytes, 0.30);
@@ -328,7 +328,7 @@ void test6LazyFPBReaderTanimotoNeighbors() {
       TEST_ASSERT(nbrs[1].second == 1);
     }
     {  // with a threshold
-      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(95);
+      boost::shared_array<std::uint8_t> bytes = fps.getBytes(95);
       TEST_ASSERT(bytes);
       std::vector<std::pair<double, unsigned int> > nbrs =
           fps.getTanimotoNeighbors(bytes, 0.30);
@@ -358,9 +358,9 @@ void test6LazyFPBReaderTanimotoNeighbors() {
 // make it worth adding a detail header)
 namespace RDKit {
 namespace detail {
-boost::dynamic_bitset<> *bytesToBitset(const boost::uint8_t *fpData,
-                                       boost::uint32_t nBits);
-boost::uint8_t *bitsetToBytes(const boost::dynamic_bitset<> &bitset);
+boost::dynamic_bitset<> *bytesToBitset(const std::uint8_t *fpData,
+                                       std::uint32_t nBits);
+std::uint8_t *bitsetToBytes(const boost::dynamic_bitset<> &bitset);
 }
 }
 void test7BitsetDetails() {
@@ -375,7 +375,7 @@ void test7BitsetDetails() {
     fps.init();
     TEST_ASSERT(fps.length() == 100);
     {
-      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(0);
+      boost::shared_array<std::uint8_t> bytes = fps.getBytes(0);
       TEST_ASSERT(bytes);
 
       // -------------------
@@ -394,7 +394,7 @@ void test7BitsetDetails() {
 
       // -------------------
       // and now go the other way
-      boost::uint8_t *newBytes = RDKit::detail::bitsetToBytes(*dbs);
+      std::uint8_t *newBytes = RDKit::detail::bitsetToBytes(*dbs);
       TEST_ASSERT(newBytes);
       for (unsigned int i = 0; i < fps.nBits() / 8; ++i) {
         TEST_ASSERT(newBytes[i] == bytes[i]);
@@ -419,14 +419,14 @@ void test8FPBReaderContains() {
     fps.init();
     TEST_ASSERT(fps.length() == 100);
     {
-      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(0);
+      boost::shared_array<std::uint8_t> bytes = fps.getBytes(0);
       TEST_ASSERT(bytes);
       std::vector<unsigned int> nbrs = fps.getContainingNeighbors(bytes);
       TEST_ASSERT(nbrs.size() == 1);
       TEST_ASSERT(nbrs[0] == 0);
     }
     {
-      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(1);
+      boost::shared_array<std::uint8_t> bytes = fps.getBytes(1);
       TEST_ASSERT(bytes);
       std::vector<unsigned int> nbrs = fps.getContainingNeighbors(bytes);
       TEST_ASSERT(nbrs.size() == 4);
@@ -436,7 +436,7 @@ void test8FPBReaderContains() {
       TEST_ASSERT(nbrs[3] == 4);
     }
     {
-      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(16);
+      boost::shared_array<std::uint8_t> bytes = fps.getBytes(16);
       TEST_ASSERT(bytes);
       std::vector<unsigned int> nbrs = fps.getContainingNeighbors(bytes);
       TEST_ASSERT(nbrs.size() == 2);
@@ -444,7 +444,7 @@ void test8FPBReaderContains() {
       TEST_ASSERT(nbrs[1] == 17);
     }
     {
-      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(87);
+      boost::shared_array<std::uint8_t> bytes = fps.getBytes(87);
       TEST_ASSERT(bytes);
       std::vector<unsigned int> nbrs = fps.getContainingNeighbors(bytes);
       TEST_ASSERT(nbrs.size() == 4);
@@ -478,13 +478,13 @@ void test9FPBReaderTversky() {
     fps.init();
     TEST_ASSERT(fps.length() == 100);
     {
-      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(0);
+      boost::shared_array<std::uint8_t> bytes = fps.getBytes(0);
       TEST_ASSERT(bytes);
       TEST_ASSERT(feq(fps.getTversky(0, bytes, 1., 1.), 1.0));
       TEST_ASSERT(feq(fps.getTversky(1, bytes, 1., 1.), 0.3703));
     }
     {
-      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(1);
+      boost::shared_array<std::uint8_t> bytes = fps.getBytes(1);
       TEST_ASSERT(bytes);
       TEST_ASSERT(feq(fps.getTversky(1, bytes, 1., 1.), 1.0));
       TEST_ASSERT(feq(fps.getTversky(0, bytes, 1., 1.), 0.3703));
@@ -507,7 +507,7 @@ void test10FPBReaderTverskyNeighbors() {
     fps.init();
     TEST_ASSERT(fps.length() == 100);
     {
-      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(0);
+      boost::shared_array<std::uint8_t> bytes = fps.getBytes(0);
       TEST_ASSERT(bytes);
       std::vector<std::pair<double, unsigned int> > nbrs =
           fps.getTverskyNeighbors(bytes, 1., 1.);
@@ -516,7 +516,7 @@ void test10FPBReaderTverskyNeighbors() {
       TEST_ASSERT(nbrs[0].second == 0);
     }
     {  // with a threshold
-      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(0);
+      boost::shared_array<std::uint8_t> bytes = fps.getBytes(0);
       TEST_ASSERT(bytes);
       std::vector<std::pair<double, unsigned int> > nbrs =
           fps.getTverskyNeighbors(bytes, 1., 1., 0.3);
@@ -527,7 +527,7 @@ void test10FPBReaderTverskyNeighbors() {
       TEST_ASSERT(nbrs[1].second == 1);
     }
     {  // with a threshold, asymmetric
-      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(0);
+      boost::shared_array<std::uint8_t> bytes = fps.getBytes(0);
       TEST_ASSERT(bytes);
       std::vector<std::pair<double, unsigned int> > nbrs =
           fps.getTverskyNeighbors(bytes, 1., 0.5, 0.3);
@@ -538,7 +538,7 @@ void test10FPBReaderTverskyNeighbors() {
       TEST_ASSERT(nbrs[1].second == 1);
     }
     {  // with a threshold,  no screen
-      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(0);
+      boost::shared_array<std::uint8_t> bytes = fps.getBytes(0);
       TEST_ASSERT(bytes);
       std::vector<std::pair<double, unsigned int> > nbrs =
           fps.getTverskyNeighbors(bytes, 1., 1., 0.3, false);
@@ -549,7 +549,7 @@ void test10FPBReaderTverskyNeighbors() {
       TEST_ASSERT(nbrs[1].second == 1);
     }
     {  // with a threshold, asymmetric, no screen
-      boost::shared_array<boost::uint8_t> bytes = fps.getBytes(0);
+      boost::shared_array<std::uint8_t> bytes = fps.getBytes(0);
       TEST_ASSERT(bytes);
       std::vector<std::pair<double, unsigned int> > nbrs =
           fps.getTverskyNeighbors(bytes, 1., 0.5, 0.3, false);

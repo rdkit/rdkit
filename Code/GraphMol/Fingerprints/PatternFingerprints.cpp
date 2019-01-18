@@ -20,7 +20,7 @@
 #include <RDGeneral/Invariant.h>
 #include <boost/random.hpp>
 #include <limits.h>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 #include <RDGeneral/hash/hash.hpp>
 #include <RDGeneral/types.h>
 #include <algorithm>
@@ -225,7 +225,7 @@ ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
     //   time for 10K molecules w/ uniquify: 5.24s
     //   time for 10K molecules w/o uniquify: 4.87s
     SubstructMatch(mol, *patt, matches, false);
-    boost::uint32_t mIdx = pIdx + patt->getNumAtoms() + patt->getNumBonds();
+    std::uint32_t mIdx = pIdx + patt->getNumAtoms() + patt->getNumBonds();
     BOOST_FOREACH (MatchVectType &mv, matches) {
 #ifdef VERBOSE_FINGERPRINTING
       std::cerr << "\nPatt: " << pIdx << " | ";
@@ -238,7 +238,7 @@ ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
 #endif
 
       bool isQuery = false;
-      boost::uint32_t bitId = pIdx;
+      std::uint32_t bitId = pIdx;
       std::vector<unsigned int> amap(mv.size(), 0);
       BOOST_FOREACH (MatchVectType::value_type &p, mv) {
 #ifdef VERBOSE_FINGERPRINTING
@@ -279,18 +279,18 @@ ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
         // if(!mbond->getIsAromatic() && mbond->getBondType()!=Bond::SINGLE &&
         //   mbond->getBondType()!=Bond::AROMATIC){
         if (!mbond->getIsAromatic()) {
-          gboost::hash_combine(bitId, (boost::uint32_t)mbond->getBondType());
+          gboost::hash_combine(bitId, (std::uint32_t)mbond->getBondType());
 #ifdef VERBOSE_FINGERPRINTING
           std::cerr << mbond->getBondType() << " ";
 #endif
         } else {
-          gboost::hash_combine(bitId, (boost::uint32_t)Bond::AROMATIC);
+          gboost::hash_combine(bitId, (std::uint32_t)Bond::AROMATIC);
 #ifdef VERBOSE_FINGERPRINTING
           std::cerr << Bond::AROMATIC << " ";
 #endif
         }
         //} else {
-        //  gboost::hash_combine(bitId,(boost::uint32_t)Bond::SINGLE);
+        //  gboost::hash_combine(bitId,(std::uint32_t)Bond::SINGLE);
         //          }
       }
       if (!isQuery) {

@@ -14,7 +14,7 @@
 #include <boost/format.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #include <boost/crc.hpp>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 #include "../Descriptors/MolDescriptors.h"
 
 #include "MolHash.h"
@@ -25,30 +25,30 @@ struct MolFragment  // Reference to a fragment of source molecule
     {
   std::vector<const Atom *> Atoms;
   std::vector<const Bond *> Bonds;
-  std::vector<boost::uint32_t> AtomsIdx;
-  std::vector<boost::uint32_t> BondsIdx;
-  std::map<boost::uint32_t, boost::uint32_t> MolAtomIdxMap;  // Full Molecule to
+  std::vector<std::uint32_t> AtomsIdx;
+  std::vector<std::uint32_t> BondsIdx;
+  std::map<std::uint32_t, std::uint32_t> MolAtomIdxMap;  // Full Molecule to
                                                              // fragment indeces
                                                              // backward
                                                              // conversion map
  public:
-  boost::uint32_t getNumAtoms() const { return AtomsIdx.size(); }
-  boost::uint32_t getNumBonds() const { return BondsIdx.size(); }
+  std::uint32_t getNumAtoms() const { return AtomsIdx.size(); }
+  std::uint32_t getNumBonds() const { return BondsIdx.size(); }
 };
 
 // INTERNAL FUNCTIONS:
 static HashCodeType computeMorganCodeHash(
-    const MolFragment &mol, const std::vector<boost::uint32_t> &atomLabels,
-    const std::vector<boost::uint32_t> &bondLabels);
+    const MolFragment &mol, const std::vector<std::uint32_t> &atomLabels,
+    const std::vector<std::uint32_t> &bondLabels);
 static void prepareMolFragment(MolFragment &m, const ROMol &mol,
                                const std::vector<unsigned> *atomsToUse,
                                const std::vector<unsigned> *bondsToUse);
-static void prepareLabels(std::vector<boost::uint32_t> &atomLabels,
-                          std::vector<boost::uint32_t> &bondLabels,
+static void prepareLabels(std::vector<std::uint32_t> &atomLabels,
+                          std::vector<std::uint32_t> &bondLabels,
                           const ROMol &mol, const MolFragment &m,
-                          const std::vector<boost::uint32_t> *atomCodes,
-                          const std::vector<boost::uint32_t> *bondCodes);
-static boost::uint32_t computeCRC32(const void *data, size_t size) {
+                          const std::vector<std::uint32_t> *atomCodes,
+                          const std::vector<std::uint32_t> *bondCodes);
+static std::uint32_t computeCRC32(const void *data, size_t size) {
   boost::crc_32_type crc;
   crc.process_bytes(data, size);
   return crc.checksum();
@@ -60,9 +60,9 @@ static boost::uint32_t computeCRC32(const void *data, size_t size) {
 void fillAtomBondCodes(
     const ROMol &mol, boost::uint64_t flags  // CodeFlags constants combination
     ,
-    std::vector<boost::uint32_t> *atomCodes  // NULL is allowed
+    std::vector<std::uint32_t> *atomCodes  // NULL is allowed
     ,
-    std::vector<boost::uint32_t> *bondCodes)  // NULL is allowed
+    std::vector<std::uint32_t> *bondCodes)  // NULL is allowed
 {
   if (atomCodes) {
     unsigned n = mol.getNumAtoms();
@@ -179,13 +179,13 @@ void fillAtomBondCodes(
 HashCodeType generateMoleculeHashCode(
     const ROMol &mol, const std::vector<unsigned> *atomsToUse,
     const std::vector<unsigned> *bondsToUse,
-    const std::vector<boost::uint32_t> *atomCodes,
-    const std::vector<boost::uint32_t> *bondCodes) {
+    const std::vector<std::uint32_t> *atomCodes,
+    const std::vector<std::uint32_t> *bondCodes) {
   MolFragment m;
   prepareMolFragment(m, mol, atomsToUse, bondsToUse);
   if (0 == m.getNumAtoms() || 0 == m.getNumBonds()) return 0;
-  std::vector<boost::uint32_t> atomLabels;
-  std::vector<boost::uint32_t> bondLabels;
+  std::vector<std::uint32_t> atomLabels;
+  std::vector<std::uint32_t> bondLabels;
   prepareLabels(atomLabels, bondLabels, mol, m, atomCodes, bondCodes);
   return computeMorganCodeHash(m, atomLabels, bondLabels);
 }
@@ -207,10 +207,10 @@ void generateMoleculeHashSet(const ROMol &mol, HashSet &res,
   res.FormulaCRC32 = computeCRC32(formula.c_str(), formula.length());
 
   boost::uint64_t flags = 0;  // CodeFlags constants combination
-  std::vector<boost::uint32_t> atomCodes;
-  std::vector<boost::uint32_t> bondCodes;
-  std::vector<boost::uint32_t> atomLabels;
-  std::vector<boost::uint32_t> bondLabels;
+  std::vector<std::uint32_t> atomCodes;
+  std::vector<std::uint32_t> bondCodes;
+  std::vector<std::uint32_t> atomLabels;
+  std::vector<std::uint32_t> bondLabels;
 
   //        flags = CF_ATOM_ALL &(~(CF_BOND_CHIRALITY | CF_ATOM_CHIRALITY |
   //        CF_ISOTOPE));
@@ -269,8 +269,8 @@ std::string generateMoleculeHashSet(const ROMol &mol,
 // INTERNAL FUNCTIONS:
 //=============================================================================
 static HashCodeType computeMorganCodeHash(
-    const MolFragment &mol, const std::vector<boost::uint32_t> &atomLabels,
-    const std::vector<boost::uint32_t> &bondLabels) {
+    const MolFragment &mol, const std::vector<std::uint32_t> &atomLabels,
+    const std::vector<std::uint32_t> &bondLabels) {
   size_t nv = mol.getNumAtoms();
   size_t ne = mol.getNumBonds();
   std::vector<HashCodeType> currCodes(nv);
@@ -289,8 +289,8 @@ static HashCodeType computeMorganCodeHash(
       unsigned order = bondLabels[mol.BondsIdx[molBondIdx]];
       unsigned atom1 = mol.MolAtomIdxMap.find(bond->getBeginAtomIdx())->second;
       unsigned atom2 = mol.MolAtomIdxMap.find(bond->getEndAtomIdx())->second;
-      boost::uint32_t v1 = prevCodes[atom1];
-      boost::uint32_t v2 = prevCodes[atom2];
+      std::uint32_t v1 = prevCodes[atom1];
+      std::uint32_t v2 = prevCodes[atom2];
 
       currCodes[atom1] += v2 * v2 + (v2 + 23) * (order + 1721);
       currCodes[atom2] += v1 * v1 + (v1 + 23) * (order + 1721);
@@ -402,11 +402,11 @@ static void prepareMolFragment(MolFragment &m, const ROMol &mol,
   }
 }
 //=============================================================================
-static void prepareLabels(std::vector<boost::uint32_t> &atomLabels,
-                          std::vector<boost::uint32_t> &bondLabels,
+static void prepareLabels(std::vector<std::uint32_t> &atomLabels,
+                          std::vector<std::uint32_t> &bondLabels,
                           const ROMol &mol, const MolFragment &m,
-                          const std::vector<boost::uint32_t> *atomCodes,
-                          const std::vector<boost::uint32_t> *bondCodes) {
+                          const std::vector<std::uint32_t> *atomCodes,
+                          const std::vector<std::uint32_t> *bondCodes) {
   RDUNUSED_PARAM(mol);
   unsigned n;
   n = m.getNumAtoms();

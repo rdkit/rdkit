@@ -181,7 +181,7 @@ double calcBitmapTanimotoSml(CBfp a, CBfp b);
 double calcBitmapDiceSml(CBfp a, CBfp b);
 double calcBitmapTverskySml(CBfp a, CBfp b, float ca, float cb);
 
-/* SparseIntVect<boost::int32_t> */
+/* SparseIntVect<std::int32_t> */
 typedef void *CSfp;
 void freeCSfp(CSfp data);
 

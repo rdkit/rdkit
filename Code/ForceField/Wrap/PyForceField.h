@@ -121,7 +121,7 @@ class PyMMFFMolProperties {
                                  const unsigned int idx3,
                                  const unsigned int idx4);
   PyObject *getMMFFVdWParams(const unsigned int idx1, const unsigned int idx2);
-  void setMMFFDielectricModel(boost::uint8_t dielModel) {
+  void setMMFFDielectricModel(std::uint8_t dielModel) {
     mmffMolProperties->setMMFFDielectricModel(dielModel);
   };
   void setMMFFDielectricConstant(double dielConst) {

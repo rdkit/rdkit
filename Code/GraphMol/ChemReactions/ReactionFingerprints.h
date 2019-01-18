@@ -142,7 +142,7 @@ RDKIT_CHEMREACTIONS_EXPORT ExplicitBitVect *StructuralFingerprintChemReaction(
   <b>Notes:</b>
     - the caller is responsible for <tt>delete</tt>ing the result
 */
-RDKIT_CHEMREACTIONS_EXPORT SparseIntVect<boost::uint32_t> *DifferenceFingerprintChemReaction(
+RDKIT_CHEMREACTIONS_EXPORT SparseIntVect<std::uint32_t> *DifferenceFingerprintChemReaction(
     const ChemicalReaction &rxn,
     const ReactionFingerprintParams &params = DefaultDifferenceFPParams);
 }

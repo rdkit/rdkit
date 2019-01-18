@@ -12,7 +12,7 @@
 #define _RD_REDUCEDGRAPHS_H_
 
 #include <vector>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 #include <boost/dynamic_bitset.hpp>
 #include <Numerics/Vector.h>
 

@@ -14,7 +14,7 @@
 #include <GraphMol/ROMol.h>
 #include <GraphMol/RingInfo.h>
 #include <RDGeneral/BoostStartInclude.h>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 #include <boost/foreach.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/BoostEndInclude.h>

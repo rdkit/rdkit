@@ -11,7 +11,7 @@
 
 #include "new_canon.h"
 #include <GraphMol/RDKitBase.h>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 #include <boost/foreach.hpp>
 #include <cstring>
 #include <iostream>

@@ -12,11 +12,11 @@
 #include "FragCatalogUtils.h"
 #include <GraphMol/RDKitBase.h>
 #include <sstream>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 
 namespace RDKit {
-using boost::int32_t;
-using boost::uint32_t;
+using std::int32_t;
+using std::uint32_t;
 
 FragCatParams::FragCatParams(unsigned int lLen, unsigned int uLen,
                              const std::string &fgroupFile, double tol) {

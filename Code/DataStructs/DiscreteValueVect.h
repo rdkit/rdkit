@@ -14,16 +14,16 @@
 #include <boost/smart_ptr.hpp>
 #include <string>
 #include <cstring>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 
 namespace RDKit {
-// we require 32bit unsigneds using the boost::uint32_t type:
+// we require 32bit unsigneds using the std::uint32_t type:
 const unsigned int BITS_PER_INT = 32;
 
 //! a class for efficiently storing vectors of discrete values
 class RDKIT_DATASTRUCTS_EXPORT DiscreteValueVect {
  public:
-  typedef boost::shared_array<boost::uint32_t> DATA_SPTR;
+  typedef boost::shared_array<std::uint32_t> DATA_SPTR;
 
   //! used to define the possible range of the values
   typedef enum {
@@ -41,8 +41,8 @@ class RDKIT_DATASTRUCTS_EXPORT DiscreteValueVect {
     d_valsPerInt = BITS_PER_INT / d_bitsPerVal;
     d_numInts = (length + d_valsPerInt - 1) / d_valsPerInt;
     d_mask = ((1 << d_bitsPerVal) - 1);
-    boost::uint32_t *data = new boost::uint32_t[d_numInts];
-    memset(static_cast<void *>(data), 0, d_numInts * sizeof(boost::uint32_t));
+    std::uint32_t *data = new std::uint32_t[d_numInts];
+    memset(static_cast<void *>(data), 0, d_numInts * sizeof(std::uint32_t));
     d_data.reset(data);
   }
 
@@ -82,7 +82,7 @@ class RDKIT_DATASTRUCTS_EXPORT DiscreteValueVect {
   unsigned int size() const { return getLength(); };
 
   //! return a pointer to our raw data storage
-  const boost::uint32_t *getData() const;
+  const std::uint32_t *getData() const;
 
   //! return the number of bits used to store each value
   unsigned int getNumBitsPerVal() const { return d_bitsPerVal; }

@@ -104,19 +104,19 @@ unsigned int twoBitCellPos(unsigned int nAtoms, int i, int j) {
   return i * (nAtoms - 1) + i * (1 - i) / 2 + j;
 }
 
-void setTwoBitCell(boost::shared_array<boost::uint8_t> &res, unsigned int pos,
-                   boost::uint8_t value) {
+void setTwoBitCell(boost::shared_array<std::uint8_t> &res, unsigned int pos,
+                   std::uint8_t value) {
   unsigned int twoBitPos = pos / 4;
   unsigned int shift = 2 * (pos % 4);
-  boost::uint8_t twoBitMask = 3 << shift;
+  std::uint8_t twoBitMask = 3 << shift;
   res[twoBitPos] = ((res[twoBitPos] & (~twoBitMask)) | (value << shift));
 }
 
-boost::uint8_t getTwoBitCell(boost::shared_array<boost::uint8_t> &res,
+std::uint8_t getTwoBitCell(boost::shared_array<std::uint8_t> &res,
                              unsigned int pos) {
   unsigned int twoBitPos = pos / 4;
   unsigned int shift = 2 * (pos % 4);
-  boost::uint8_t twoBitMask = 3 << shift;
+  std::uint8_t twoBitMask = 3 << shift;
 
   return ((res[twoBitPos] & twoBitMask) >> shift);
 }
@@ -133,13 +133,13 @@ boost::uint8_t getTwoBitCell(boost::shared_array<boost::uint8_t> &res,
 //  on the result
 //
 // ------------------------------------------------------------------------
-boost::shared_array<boost::uint8_t> buildNeighborMatrix(const ROMol &mol) {
-  const boost::uint8_t RELATION_1_X_INIT = RELATION_1_X | (RELATION_1_X << 2) |
+boost::shared_array<std::uint8_t> buildNeighborMatrix(const ROMol &mol) {
+  const std::uint8_t RELATION_1_X_INIT = RELATION_1_X | (RELATION_1_X << 2) |
                                            (RELATION_1_X << 4) |
                                            (RELATION_1_X << 6);
   unsigned int nAtoms = mol.getNumAtoms();
   unsigned nTwoBitCells = (nAtoms * (nAtoms + 1) - 1) / 8 + 1;
-  boost::shared_array<boost::uint8_t> res(new boost::uint8_t[nTwoBitCells]);
+  boost::shared_array<std::uint8_t> res(new std::uint8_t[nTwoBitCells]);
   std::memset(res.get(), RELATION_1_X_INIT, nTwoBitCells);
   for (ROMol::ConstBondIterator bondi = mol.beginBonds();
        bondi != mol.endBonds(); ++bondi) {
@@ -772,7 +772,7 @@ void addTorsions(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
 // ------------------------------------------------------------------------
 void addVdW(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
             ForceFields::ForceField *field,
-            boost::shared_array<boost::uint8_t> neighborMatrix,
+            boost::shared_array<std::uint8_t> neighborMatrix,
             double nonBondedThresh, bool ignoreInterfragInteractions) {
   PRECONDITION(field, "bad ForceField");
   PRECONDITION(mmffMolProperties, "bad MMFFMolProperties");
@@ -857,7 +857,7 @@ void addVdW(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
 // ------------------------------------------------------------------------
 void addEle(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
             ForceFields::ForceField *field,
-            boost::shared_array<boost::uint8_t> neighborMatrix,
+            boost::shared_array<std::uint8_t> neighborMatrix,
             double nonBondedThresh, bool ignoreInterfragInteractions) {
   PRECONDITION(field, "bad ForceField");
   PRECONDITION(mmffMolProperties, "bad MMFFMolProperties");
@@ -884,13 +884,13 @@ void addEle(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
   }
   const Conformer &conf = mol.getConformer(confId);
   double dielConst = mmffMolProperties->getMMFFDielectricConstant();
-  boost::uint8_t dielModel = mmffMolProperties->getMMFFDielectricModel();
+  std::uint8_t dielModel = mmffMolProperties->getMMFFDielectricModel();
   for (unsigned int i = 0; i < nAtoms; ++i) {
     for (unsigned int j = i + 1; j < nAtoms; ++j) {
       if (ignoreInterfragInteractions && (fragMapping[i] != fragMapping[j])) {
         continue;
       }
-      boost::uint8_t cell =
+      std::uint8_t cell =
           getTwoBitCell(neighborMatrix, twoBitCellPos(nAtoms, i, j));
       bool is1_4 = (cell == RELATION_1_4);
       if (cell >= RELATION_1_4) {
@@ -995,7 +995,7 @@ ForceFields::ForceField *constructForceField(
   }
   if (mmffMolProperties->getMMFFVdWTerm() ||
       mmffMolProperties->getMMFFEleTerm()) {
-    boost::shared_array<boost::uint8_t> neighborMat =
+    boost::shared_array<std::uint8_t> neighborMat =
         Tools::buildNeighborMatrix(mol);
     if (mmffMolProperties->getMMFFVdWTerm()) {
       Tools::addVdW(mol, confId, mmffMolProperties, res, neighborMat,

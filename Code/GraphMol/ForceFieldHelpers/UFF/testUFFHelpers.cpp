@@ -216,7 +216,7 @@ void testUFFBuilder1() {
   UFF::AtomicParamVect types;
   bool foundAll;
   ForceFields::ForceField *field;
-  boost::shared_array<boost::uint8_t> nbrMat;
+  boost::shared_array<std::uint8_t> nbrMat;
 
   mol = SmilesToMol("CC(O)C");
   auto *conf = new Conformer(mol->getNumAtoms());
@@ -479,7 +479,7 @@ void testUFFBuilder2() {
 
     UFF::AtomicParamVect types;
     bool foundAll;
-    boost::shared_array<boost::uint8_t> nbrMat;
+    boost::shared_array<std::uint8_t> nbrMat;
     boost::tie(types, foundAll) = UFF::getAtomTypes(*mol);
 
     ForceFields::ForceField *field;
@@ -923,7 +923,7 @@ void testSFIssue1653802() {
 
   UFF::AtomicParamVect types;
   bool foundAll;
-  boost::shared_array<boost::uint8_t> nbrMat;
+  boost::shared_array<std::uint8_t> nbrMat;
   boost::tie(types, foundAll) = UFF::getAtomTypes(*mol);
   TEST_ASSERT(foundAll);
   TEST_ASSERT(types.size() == mol->getNumAtoms());

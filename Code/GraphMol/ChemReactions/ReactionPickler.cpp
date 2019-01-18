@@ -17,9 +17,9 @@
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/StreamOps.h>
 #include <RDGeneral/types.h>
-#include <boost/cstdint.hpp>
-using boost::int32_t;
-using boost::uint32_t;
+#include <cstdint>
+using std::int32_t;
+using std::uint32_t;
 
 namespace RDKit {
 const int32_t ReactionPickler::versionMajor = 2;

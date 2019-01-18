@@ -75,12 +75,12 @@ TopologicalTorsionEnvGenerator<OutputType>::getEnvironments(
   boost::dynamic_bitset<> *fromAtomsBV = nullptr;
   if (fromAtoms) {
     fromAtomsBV = new boost::dynamic_bitset<>(mol.getNumAtoms());
-    BOOST_FOREACH (boost::uint32_t fAt, *fromAtoms) { fromAtomsBV->set(fAt); }
+    BOOST_FOREACH (std::uint32_t fAt, *fromAtoms) { fromAtomsBV->set(fAt); }
   }
   boost::dynamic_bitset<> *ignoreAtomsBV = nullptr;
   if (ignoreAtoms) {
     ignoreAtomsBV = new boost::dynamic_bitset<>(mol.getNumAtoms());
-    BOOST_FOREACH (boost::uint32_t fAt, *ignoreAtoms) {
+    BOOST_FOREACH (std::uint32_t fAt, *ignoreAtoms) {
       ignoreAtomsBV->set(fAt);
     }
   }
@@ -93,11 +93,11 @@ TopologicalTorsionEnvGenerator<OutputType>::getEnvironments(
     if (fromAtomsBV) {
       keepIt = false;
     }
-    std::vector<boost::uint32_t> pathCodes;
+    std::vector<std::uint32_t> pathCodes;
     const PATH_TYPE &path = *pathIt;
     if (fromAtomsBV) {
-      if (fromAtomsBV->test(static_cast<boost::uint32_t>(path.front())) ||
-          fromAtomsBV->test(static_cast<boost::uint32_t>(path.back()))) {
+      if (fromAtomsBV->test(static_cast<std::uint32_t>(path.front())) ||
+          fromAtomsBV->test(static_cast<std::uint32_t>(path.back()))) {
         keepIt = true;
       }
     }

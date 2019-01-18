@@ -25,7 +25,7 @@
 #ifdef WIN32
 #include <ios>
 #endif
-#include <boost/cstdint.hpp>
+#include <cstdint>
 
 namespace RDKit {
 class ROMol;
@@ -61,10 +61,10 @@ typedef enum {
 //! handles pickling (serializing) molecules
 class RDKIT_GRAPHMOL_EXPORT MolPickler {
  public:
-  static const boost::int32_t versionMajor;  //!< mark the pickle major version
-  static const boost::int32_t versionMinor;  //!< mark the pickle minor version
-  static const boost::int32_t versionPatch;  //!< mark the pickle patch version
-  static const boost::int32_t endianId;  //! mark the endian-ness of the pickle
+  static const std::int32_t versionMajor;  //!< mark the pickle major version
+  static const std::int32_t versionMinor;  //!< mark the pickle minor version
+  static const std::int32_t versionPatch;  //!< mark the pickle patch version
+  static const std::int32_t endianId;  //! mark the endian-ness of the pickle
 
   //! the pickle format is tagged using these tags:
   //! NOTE: if you add to this list, be sure to put new entries AT THE BOTTOM,
@@ -174,7 +174,7 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
 
  private:
   //! Pickle nonquery atom data
-  static boost::int32_t _pickleAtomData(std::ostream &tss, const Atom *atom);
+  static std::int32_t _pickleAtomData(std::ostream &tss, const Atom *atom);
   //! depickle nonquery atom data
   static void _unpickleAtomData(std::istream &tss, Atom *atom, int version);
 

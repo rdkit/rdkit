@@ -36,7 +36,7 @@
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/random.hpp>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 #include <RDGeneral/BoostEndInclude.h>
 #include <limits.h>
 #include <RDGeneral/types.h>
