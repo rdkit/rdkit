@@ -56,16 +56,16 @@ class RDKIT_CHEMREACTIONS_EXPORT EvenSamplePairsStrategy : public EnumerationStr
   boost::uint64_t m_numPermutationsProcessed;
 
   std::vector<boost::int64_t> used_count;
-  std::vector<std::vector<size_t> > var_used;
-  std::vector<std::vector<size_t> > pair_used;
-  std::vector<std::vector<size_t> > pair_counts;
-  std::set<size_t> selected;
+  std::vector<std::vector<boost::uint64_t> > var_used;
+  std::vector<std::vector<boost::uint64_t> > pair_used;
+  std::vector<std::vector<boost::uint64_t> > pair_counts;
+  std::set<boost::uint64_t> selected;
 
-  size_t seed;     // last seed for permutation (starts at 0)
-  size_t M, a, b;  // random number stuff
-  size_t nslack, min_nslack;
-  size_t rejected_period, rejected_unique;
-  size_t rejected_slack_condition, rejected_bb_sampling_condition;
+  boost::uint64_t seed;     // last seed for permutation (starts at 0)
+  boost::uint64_t M, a, b;  // random number stuff
+  boost::uint64_t nslack, min_nslack;
+  boost::uint64_t rejected_period, rejected_unique;
+  boost::uint64_t rejected_slack_condition, rejected_bb_sampling_condition;
 
  public:
   EvenSamplePairsStrategy()
@@ -120,7 +120,7 @@ class RDKIT_CHEMREACTIONS_EXPORT EvenSamplePairsStrategy : public EnumerationStr
 
     EvenSamplePairsStrategy rgroups;
     rgroups.initialize(rxn, bbs);
-    for(size_t i=0; i<num_samples && rgroups; ++i) {
+    for(boost::uint64_t i=0; i<num_samples && rgroups; ++i) {
       MOL_SPTR_VECT rvect = getReactantsFromRGroups(bbs, rgroups.next());
       std::vector<MOL_SPTR_VECT> lprops = rxn.RunReactants(rvect);
       ...
@@ -151,7 +151,7 @@ class RDKIT_CHEMREACTIONS_EXPORT EvenSamplePairsStrategy : public EnumerationStr
   friend class boost::serialization::access;
 
   // decode a packed integer into an RGroup selection
-  const EnumerationTypes::RGROUPS &decode(size_t seed) {
+  const EnumerationTypes::RGROUPS &decode(boost::uint64_t seed) {
     for (boost::int64_t j = m_permutationSizes.size() - 1; j >= 0; j--) {
       m_permutation[j] = seed % m_permutationSizes[j];
       seed /= m_permutationSizes[j];
@@ -159,7 +159,7 @@ class RDKIT_CHEMREACTIONS_EXPORT EvenSamplePairsStrategy : public EnumerationStr
     return m_permutation;
   }
 
-  bool try_add(size_t seed);
+  bool try_add(boost::uint64_t seed);
 
  public:
 #ifdef RDK_USE_BOOST_SERIALIZATION
