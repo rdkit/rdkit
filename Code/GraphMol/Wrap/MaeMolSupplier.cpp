@@ -20,7 +20,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <RDBoost/python_streambuf.h>
 #include <RDBoost/iterator_next.h>
-#include <CoordGen/maeparser/Reader.hpp>
+#include <maeparser/Reader.hpp>
 
 #include "MolSupplier.h"
 

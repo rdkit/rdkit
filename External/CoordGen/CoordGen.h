@@ -13,7 +13,7 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <cstdlib>
 
-#include "coordgenlibs/sketcherMinimizer.h"
+#include "coordgen/sketcherMinimizer.h"
 
 namespace RDKit {
 namespace CoordGen {

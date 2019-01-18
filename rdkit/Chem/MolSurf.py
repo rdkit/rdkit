@@ -22,10 +22,9 @@ import numpy
 from rdkit import Chem
 from rdkit.Chem import Crippen
 from rdkit.Chem import rdPartialCharges, rdMolDescriptors
-from rdkit.Chem.PeriodicTable import numTable
 
 
-radCol = 5
+ptable = Chem.GetPeriodicTable()
 bondScaleFacts = [.1, 0, .2, .3]  # aromatic,single,double,triple
 
 
@@ -75,9 +74,9 @@ def _pyLabuteHelper(mol, includeHs=1, force=0):
   rads = numpy.zeros(nAts + 1, 'd')
 
   # 0 contains the H information
-  rads[0] = numTable[1][radCol]
+  rads[0] = ptable.GetRb0(1)
   for i in range(nAts):
-    rads[i + 1] = numTable[mol.GetAtomWithIdx(i).GetAtomicNum()][radCol]
+    rads[i + 1] = ptable.GetRb0(mol.GetAtomWithIdx(i).GetAtomicNum())
 
   # start with explicit bonds
   for bond in mol.GetBonds():

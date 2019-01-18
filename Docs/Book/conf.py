@@ -11,7 +11,9 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys, os
+from recommonmark.parser import CommonMarkParser
+import sys
+import os
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -25,14 +27,13 @@ sys.path.insert(0, os.path.abspath('exts'))
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest'] #, 'extapi']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest']  # , 'extapi']
 #autosummary_generate = True
-doctest_test_doctest_blocks=""
+doctest_test_doctest_blocks = ""
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
-from recommonmark.parser import CommonMarkParser
 source_parsers = {'.md': CommonMarkParser}
 
 # The suffix of source filenames.
@@ -69,7 +70,7 @@ release = '2019.03.1'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['_build','GettingStartedInC++*','C++Examples']
+exclude_patterns = ['_build', 'GettingStartedInC++*', 'C++Examples']
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 #default_role = None
@@ -138,7 +139,8 @@ html_static_path = ['_static']
 # defined by theme itself.  Builtin themes are using these templates by
 # default: ``['localtoc.html', 'relations.html', 'sourcelink.html',
 # 'searchbox.html']``.
-html_sidebars = {'**': ['globaltoc.html', 'relations.html', 'searchbox.html']}
+html_sidebars = {  # '**': ['globaltoc.html', 'relations.html', 'searchbox.html'],
+    'Translation_into_Japanese/**': ['localtoc.html', 'relations.html', 'searchbox.html']}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.

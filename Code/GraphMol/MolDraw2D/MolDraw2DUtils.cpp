@@ -7,8 +7,8 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
+#include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 
 #include <GraphMol/RWMol.h>
 #include <GraphMol/MolOps.h>
@@ -69,6 +69,21 @@ void prepareMolForDrawing(RWMol &mol, bool kekulize, bool addChiralHs,
   }
 }
 
+void prepareAndDrawMolecule(MolDraw2D &drawer, const ROMol &mol,
+                            const std::string &legend,
+                            const std::vector<int> *highlight_atoms,
+                            const std::vector<int> *highlight_bonds,
+                            const std::map<int, DrawColour> *highlight_atom_map,
+                            const std::map<int, DrawColour> *highlight_bond_map,
+                            const std::map<int, double> *highlight_radii,
+                            int confId) {
+  RWMol cpy(mol);
+  prepareMolForDrawing(cpy);
+  drawer.drawMolecule(cpy, legend, highlight_atoms, highlight_bonds,
+                      highlight_atom_map, highlight_bond_map, highlight_radii,
+                      confId);
+}
+
 void updateDrawerParamsFromJSON(MolDraw2D &drawer, const char *json) {
   PRECONDITION(json, "no parameter string");
   updateDrawerParamsFromJSON(drawer, std::string(json));
@@ -119,5 +134,5 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
   }
 }
 
-}  // end of MolDraw2DUtils namespace
-}  // end of RDKit namespace
+}  // namespace MolDraw2DUtils
+}  // namespace RDKit

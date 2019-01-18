@@ -46,6 +46,12 @@ rdkit_test(moldraw2DTest1 test1.cpp LINK_LIBRARIES
   RDGeometryLib
   MolDraw2D ${RDKit_THREAD_LIBS} )
 
+rdkit_catch_test(moldraw2DTestCatch catch_tests.cpp LINK_LIBRARIES
+  ChemReactions FileParsers SmilesParse Depictor RDGeometryLib
+  RDGeneral SubstructMatch Subgraphs GraphMol MolTransforms EigenSolvers
+  RDGeometryLib
+  MolDraw2D ${RDKit_THREAD_LIBS} )
+
 rdkit_test(moldraw2DRxnTest1 rxn_test1.cpp LINK_LIBRARIES
     ChemReactions FileParsers SmilesParse Depictor RDGeometryLib
     RDGeneral SubstructMatch Subgraphs GraphMol MolTransforms EigenSolvers

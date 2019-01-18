@@ -1606,7 +1606,7 @@ void testMolFileQueryToSmarts() {
   m = MolFileToMol(fName);
   TEST_ASSERT(m);
   sma = MolToSmarts(*m, true);
-  TEST_ASSERT(sma == "[#6;$(*=,:,#*)]~[#8]")
+  TEST_ASSERT(sma == "[#6&$(*=,:,#*)]~[#8]")
 
   delete m;
   BOOST_LOG(rdInfoLog) << "done" << std::endl;

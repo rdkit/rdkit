@@ -96,7 +96,8 @@ At this point, you should be able to clone the RDKit repository to the desired b
 		-DRDK_INSTALL_INTREE=ON \
 		-DRDK_INSTALL_STATIC_LIBS=OFF \
 		-DRDK_BUILD_CPP_TESTS=ON \
-		-DPYTHON_NUMPY_INCLUDE_PATH="$CONDA_PREFIX/lib/python3.6/site-packages/numpy/core/include"
+		-DPYTHON_NUMPY_INCLUDE_PATH="$CONDA_PREFIX/lib/python3.6/site-packages/numpy/core/include" \
+		-DBOOST_ROOT="$CONDA_PREFIX"
 
 And finally, `make`, `make install` and `ctest`
 

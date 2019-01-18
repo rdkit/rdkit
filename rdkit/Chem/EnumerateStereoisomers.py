@@ -113,21 +113,21 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
     ...     print(smi)
     ...
     F[C@@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2
-    F[C@@]12C[C@@]1(Cl)C[C@@H](/C=C\Br)O2
+    F[C@@]12C[C@@]1(Cl)C[C@@H](/C=C\\Br)O2
     F[C@@]12C[C@@]1(Cl)C[C@H](/C=C/Br)O2
-    F[C@@]12C[C@@]1(Cl)C[C@H](/C=C\Br)O2
+    F[C@@]12C[C@@]1(Cl)C[C@H](/C=C\\Br)O2
     F[C@@]12C[C@]1(Cl)C[C@@H](/C=C/Br)O2
-    F[C@@]12C[C@]1(Cl)C[C@@H](/C=C\Br)O2
+    F[C@@]12C[C@]1(Cl)C[C@@H](/C=C\\Br)O2
     F[C@@]12C[C@]1(Cl)C[C@H](/C=C/Br)O2
-    F[C@@]12C[C@]1(Cl)C[C@H](/C=C\Br)O2
+    F[C@@]12C[C@]1(Cl)C[C@H](/C=C\\Br)O2
     F[C@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2
-    F[C@]12C[C@@]1(Cl)C[C@@H](/C=C\Br)O2
+    F[C@]12C[C@@]1(Cl)C[C@@H](/C=C\\Br)O2
     F[C@]12C[C@@]1(Cl)C[C@H](/C=C/Br)O2
-    F[C@]12C[C@@]1(Cl)C[C@H](/C=C\Br)O2
+    F[C@]12C[C@@]1(Cl)C[C@H](/C=C\\Br)O2
     F[C@]12C[C@]1(Cl)C[C@@H](/C=C/Br)O2
-    F[C@]12C[C@]1(Cl)C[C@@H](/C=C\Br)O2
+    F[C@]12C[C@]1(Cl)C[C@@H](/C=C\\Br)O2
     F[C@]12C[C@]1(Cl)C[C@H](/C=C/Br)O2
-    F[C@]12C[C@]1(Cl)C[C@H](/C=C\Br)O2
+    F[C@]12C[C@]1(Cl)C[C@H](/C=C\\Br)O2
 
     Because the molecule is constrained, not all of those isomers can
     actually exist. We can check that:
@@ -139,13 +139,13 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
     ...     print(smi)
     ...
     F[C@@]12C[C@]1(Cl)C[C@@H](/C=C/Br)O2
-    F[C@@]12C[C@]1(Cl)C[C@@H](/C=C\Br)O2
+    F[C@@]12C[C@]1(Cl)C[C@@H](/C=C\\Br)O2
     F[C@@]12C[C@]1(Cl)C[C@H](/C=C/Br)O2
-    F[C@@]12C[C@]1(Cl)C[C@H](/C=C\Br)O2
+    F[C@@]12C[C@]1(Cl)C[C@H](/C=C\\Br)O2
     F[C@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2
-    F[C@]12C[C@@]1(Cl)C[C@@H](/C=C\Br)O2
+    F[C@]12C[C@@]1(Cl)C[C@@H](/C=C\\Br)O2
     F[C@]12C[C@@]1(Cl)C[C@H](/C=C/Br)O2
-    F[C@]12C[C@@]1(Cl)C[C@H](/C=C\Br)O2
+    F[C@]12C[C@@]1(Cl)C[C@H](/C=C\\Br)O2
 
     Or we can force the output to only give us unique isomers:
     >>> m = Chem.MolFromSmiles('FC(Cl)C=CC=CC(F)Cl')
@@ -157,15 +157,15 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
     ...     print(smi)
     ...
     F[C@@H](Cl)/C=C/C=C/[C@@H](F)Cl
-    F[C@@H](Cl)/C=C\C=C/[C@@H](F)Cl
-    F[C@@H](Cl)/C=C\C=C\[C@@H](F)Cl
-    F[C@@H](Cl)/C=C\C=C\[C@H](F)Cl
+    F[C@@H](Cl)/C=C\\C=C/[C@@H](F)Cl
+    F[C@@H](Cl)/C=C\\C=C\\[C@@H](F)Cl
+    F[C@@H](Cl)/C=C\\C=C\\[C@H](F)Cl
     F[C@H](Cl)/C=C/C=C/[C@@H](F)Cl
     F[C@H](Cl)/C=C/C=C/[C@H](F)Cl
-    F[C@H](Cl)/C=C\C=C/[C@@H](F)Cl
-    F[C@H](Cl)/C=C\C=C/[C@H](F)Cl
-    F[C@H](Cl)/C=C\C=C\[C@@H](F)Cl
-    F[C@H](Cl)/C=C\C=C\[C@H](F)Cl
+    F[C@H](Cl)/C=C\\C=C/[C@@H](F)Cl
+    F[C@H](Cl)/C=C\\C=C/[C@H](F)Cl
+    F[C@H](Cl)/C=C\\C=C\\[C@@H](F)Cl
+    F[C@H](Cl)/C=C\\C=C\\[C@H](F)Cl
 
     By default the code only expands unspecified stereocenters:
     >>> m = Chem.MolFromSmiles('BrC=C[C@H]1OC(C2)(F)C2(Cl)C1')
@@ -176,13 +176,13 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
     ...     print(smi)
     ...
     F[C@@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2
-    F[C@@]12C[C@@]1(Cl)C[C@@H](/C=C\Br)O2
+    F[C@@]12C[C@@]1(Cl)C[C@@H](/C=C\\Br)O2
     F[C@@]12C[C@]1(Cl)C[C@@H](/C=C/Br)O2
-    F[C@@]12C[C@]1(Cl)C[C@@H](/C=C\Br)O2
+    F[C@@]12C[C@]1(Cl)C[C@@H](/C=C\\Br)O2
     F[C@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2
-    F[C@]12C[C@@]1(Cl)C[C@@H](/C=C\Br)O2
+    F[C@]12C[C@@]1(Cl)C[C@@H](/C=C\\Br)O2
     F[C@]12C[C@]1(Cl)C[C@@H](/C=C/Br)O2
-    F[C@]12C[C@]1(Cl)C[C@@H](/C=C\Br)O2
+    F[C@]12C[C@]1(Cl)C[C@@H](/C=C\\Br)O2
 
     But we can change that behavior:
     >>> opts = StereoEnumerationOptions(onlyUnassigned=False)
