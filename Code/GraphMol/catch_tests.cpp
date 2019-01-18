@@ -109,12 +109,31 @@ TEST_CASE("github #299", "[bug, molops, SSSR]"){
 }
 
 TEST_CASE("github #2224", "[bug, molops, removeHs, query]"){
-  SECTION("basics"){
+  SECTION("the original report"){
     std::string pathName = getenv("RDBASE");
     pathName += "/Code/GraphMol/test_data/";
     std::unique_ptr<RWMol> mol(MolFileToMol(pathName + "github2224_1.mol"));
     REQUIRE(mol);
     REQUIRE(mol->getNumAtoms()==7);
+  }
+  SECTION("basics") {
+  SmilesParserParams ps;
+    ps.removeHs = false;
+    ps.sanitize = true;
+    std::unique_ptr<ROMol> mol(SmilesToMol("C[H]", ps));
+    REQUIRE(mol);
+    REQUIRE(mol->getNumAtoms()==2);
+    { // The H without a query is removed
+      std::unique_ptr<ROMol> m2(MolOps::removeHs(*mol));
+      CHECK(m2->getNumAtoms()==1);
+    }
+    { // but if we add a query feature it's not removed
+      RWMol m2(*mol);
+      m2.replaceAtom(1,new QueryAtom(1));
+      m2.getAtomWithIdx(1)->setAtomicNum(1);
+      MolOps::removeHs(m2);
+      CHECK(m2.getNumAtoms()==2);
+    }
   }
 }
 
