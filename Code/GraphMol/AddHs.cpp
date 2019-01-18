@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2018 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2019 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -567,7 +567,7 @@ void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
         BOOST_LOG(rdWarningLog)
             << "WARNING: not removing hydrogen atom without neighbors"
             << std::endl;
-      } else {
+      } else if (!atom->hasQuery()) {
         if (atom->hasProp(common_properties::isImplicit)) {
           removeIt = true;
           if (atom->getDegree() == 1) {

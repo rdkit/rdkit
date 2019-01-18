@@ -107,3 +107,14 @@ TEST_CASE("github #299", "[bug, molops, SSSR]"){
 
   }
 }
+
+TEST_CASE("github #2224", "[bug, molops, removeHs, query]"){
+  SECTION("basics"){
+    std::string pathName = getenv("RDBASE");
+    pathName += "/Code/GraphMol/test_data/";
+    std::unique_ptr<RWMol> mol(MolFileToMol(pathName + "github2224_1.mol"));
+    REQUIRE(mol);
+    REQUIRE(mol->getNumAtoms()==7);
+  }
+}
+
