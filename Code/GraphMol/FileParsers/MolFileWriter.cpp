@@ -11,22 +11,28 @@
 //     V3000 mol block writer contributed by Jan Holst Jensen
 //
 #include "FileParsers.h"
+#include "MolSGroupWriting.h"
 #include "MolFileStereochem.h"
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitQueries.h>
+#include <GraphMol/Sgroup.h>
 #include <RDGeneral/Ranking.h>
 #include <RDGeneral/LocaleSwitcher.h>
+
 #include <vector>
 #include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <iomanip>
 #include <cstdio>
+
 #include <boost/format.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/BadFileException.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/Depictor/RDDepictor.h>
+
+using namespace RDKit::SGroupWriting;
 
 namespace RDKit {
 
@@ -1056,13 +1062,15 @@ void appendEnhancedStereoGroups(std::string &res, const RWMol &tmol) {
 std::string outputMolToMolBlock(const RWMol &tmol, int confId,
                                 bool forceV3000) {
   std::string res;
-
   bool isV3000;
   unsigned int nAtoms, nBonds, nLists, chiralFlag, nsText, nRxnComponents;
   unsigned int nReactants, nProducts, nIntermediates;
   nAtoms = tmol.getNumAtoms();
   nBonds = tmol.getNumBonds();
   nLists = 0;
+
+  const auto &sgroups = getSGroups(tmol);
+  unsigned int nSGroups = sgroups.size();
 
   chiralFlag = 0;
   nsText = 0;
@@ -1109,11 +1117,8 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
   }
   res += "\n";
 
-  if (forceV3000)
-    isV3000 = true;
-  else
-    isV3000 =
-        (nAtoms > 999) || (nBonds > 999) || !tmol.getStereoGroups().empty();
+  isV3000 = forceV3000 || nAtoms > 999 || nBonds > 999 || nSGroups > 999 ||
+            !tmol.getStereoGroups().empty();
 
   // the counts line:
   std::stringstream ss;
@@ -1134,7 +1139,7 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
     ss << std::setw(3) << nAtoms;
     ss << std::setw(3) << nBonds;
     ss << std::setw(3) << nLists;
-    ss << std::setw(3) << 0;
+    ss << std::setw(3) << nSGroups;
     ss << std::setw(3) << chiralFlag;
     ss << std::setw(3) << nsText;
     ss << std::setw(3) << nRxnComponents;
@@ -1167,17 +1172,18 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
     res += GetMolFileAliasInfo(tmol);
     res += GetMolFileZBOInfo(tmol);
 
+    res += GetMolFileSGroupInfo(tmol);
+
     // FIX: R-group logic, SGroups and 3D features etc.
   } else {
     // V3000 output.
     res += "M  V30 BEGIN CTAB\n";
     std::stringstream ss;
-    //                                           numSgroups (not implemented)
-    //                                           | num3DConstraints (not
-    //                                           +---------+ |   implemented)
-    //                                                     | |
-    ss << "M  V30 COUNTS " << nAtoms << " " << nBonds << " 0 0 " << chiralFlag
-       << "\n";
+    ss << "M  V30 COUNTS " << nAtoms << " " << nBonds << " " << nSGroups
+       << " 0 " << chiralFlag << "\n";
+    //      |
+    //      num3DConstraints (not implemented)
+
     res += ss.str();
 
     res += "M  V30 BEGIN ATOM\n";
@@ -1198,6 +1204,16 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
       }
       res += "M  V30 END BOND\n";
     }
+
+    if (nSGroups > 0) {
+      res += "M  V30 BEGIN SGROUP\n";
+      unsigned int idx = 0;
+      for (const auto &sgroup : sgroups) {
+        res += GetV3000MolFileSGroupLines(++idx, sgroup);
+      }
+      res += "M  V30 END SGROUP\n";
+    }
+
     appendEnhancedStereoGroups(res, tmol);
 
     res += "M  V30 END CTAB\n";
