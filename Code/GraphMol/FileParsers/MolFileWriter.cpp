@@ -56,12 +56,15 @@ int getQueryBondTopology(const Bond *bond) {
       qry->endChildren() - qry->beginChildren() == 2) {
     auto child1 = qry->beginChildren();
     auto child2 = child1 + 1;
-    if ((*child1)->getDescription() == "BondOr" &&
-        (*child2)->getDescription() == "BondInRing") {
-      qry = child2->get();
-    } else if ((*child1)->getDescription() == "BondInRing" &&
-               (*child2)->getDescription() == "BondOr") {
-      qry = child1->get();
+    if (((*child1)->getDescription() == "BondInRing") !=
+        ((*child2)->getDescription() == "BondInRing")) {
+      if ((*child1)->getDescription() != "BondInRing") {
+        std::swap(child1, child2);
+      }
+      if ((*child2)->getDescription() == "BondOr" ||
+          (*child2)->getDescription() == "BondOrder") {
+        qry = child1->get();
+      }
     }
   }
   if (qry->getDescription() == "BondInRing") {
@@ -80,7 +83,7 @@ int getQueryBondSymbol(const Bond *bond) {
   int res = 8;
 
   Bond::QUERYBOND_QUERY *qry = bond->getQuery();
-  if (qry->getDescription() == "BondOrder") {
+  if (qry->getDescription() == "BondOrder" || getQueryBondTopology(bond)) {
     // trap the simple bond-order query
     res = 0;
   } else {
@@ -266,11 +269,12 @@ bool hasListQuery(const Atom *atom) {
   return res;
 }
 
-const std::string GetMolFileQueryInfo(const RWMol &mol, const boost::dynamic_bitset<> &queryListAtoms) {
+const std::string GetMolFileQueryInfo(
+    const RWMol &mol, const boost::dynamic_bitset<> &queryListAtoms) {
   std::stringstream ss;
   boost::dynamic_bitset<> listQs(mol.getNumAtoms());
   for (const auto atom : mol.atoms()) {
-    if (hasListQuery(atom) && !queryListAtoms[atom->getIdx()] ){
+    if (hasListQuery(atom) && !queryListAtoms[atom->getIdx()]) {
       listQs.set(atom->getIdx());
     }
   }
@@ -402,7 +406,9 @@ const std::string GetMolFileZBOInfo(const RWMol &mol) {
   return res.str();
 }
 
-const std::string AtomGetMolFileSymbol(const Atom *atom, bool padWithSpaces, boost::dynamic_bitset<> &queryListAtoms) {
+const std::string AtomGetMolFileSymbol(
+    const Atom *atom, bool padWithSpaces,
+    boost::dynamic_bitset<> &queryListAtoms) {
   PRECONDITION(atom, "");
 
   std::string res;
@@ -580,8 +586,7 @@ void GetMolFileAtomProperties(const Atom *atom, const Conformer *conf,
   }
 }
 
-const std::string GetMolFileAtomLine(const Atom *atom,
-                                     const Conformer *conf,
+const std::string GetMolFileAtomLine(const Atom *atom, const Conformer *conf,
                                      boost::dynamic_bitset<> &queryListAtoms) {
   PRECONDITION(atom, "");
   std::string res;
@@ -846,9 +851,9 @@ const std::string GetMolFileBondLine(const Bond *bond,
   return ss.str();
 }
 
-const std::string GetV3000MolFileAtomLine(const Atom *atom,
-                                          const Conformer *conf,
-                                          boost::dynamic_bitset<> &queryListAtoms) {
+const std::string GetV3000MolFileAtomLine(
+    const Atom *atom, const Conformer *conf,
+    boost::dynamic_bitset<> &queryListAtoms) {
   PRECONDITION(atom, "");
   int totValence, atomMapNumber;
   unsigned int parityFlag;
@@ -1168,7 +1173,7 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
 
     res += GetMolFileChargeInfo(tmol);
     res += GetMolFileRGroupInfo(tmol);
-    res += GetMolFileQueryInfo(tmol,queryListAtoms);
+    res += GetMolFileQueryInfo(tmol, queryListAtoms);
     res += GetMolFileAliasInfo(tmol);
     res += GetMolFileZBOInfo(tmol);
 
