@@ -484,7 +484,7 @@ endif(RDK_BUILD_CONTRIB)
 
 # Memory testing setup
 FIND_PROGRAM(MEMORYCHECK_COMMAND valgrind)
-CONFIGURE_FILE(CTestCustom.ctest.in ${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.ctest)
+CONFIGURE_FILE(CTestCustom.ctest.in ${RDKit_BINARY_DIR}/CTestCustom.ctest)
 
 # Packaging
 SET(CPACK_GENERATOR "TGZ;DEB;RPM")

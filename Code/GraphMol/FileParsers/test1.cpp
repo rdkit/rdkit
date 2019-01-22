@@ -4466,9 +4466,12 @@ void testRCSBSdf() {
   RWMol *mol = MolFileToMol(pathName + "s58_rcsb.mol");
   TEST_ASSERT(mol);
   delete mol;
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testParseCHG() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing PDB charge parsing" << std::endl;
   // BAD PDB Ligand with CHG line too long (>8) and right and mid-justified
   // symbols
   const std::string molblock_chg =
@@ -4611,9 +4614,12 @@ void testParseCHG() {
   TEST_ASSERT(positions.size() == 3);  // 24/3 == 8
 
   delete m;
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testMDLAtomProps() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing MDL atom properties" << std::endl;
   std::string smi = "CC";
   ROMOL_SPTR mol(SmilesToMol(smi, false, false));
   setAtomAlias(mol->getAtomWithIdx(0), "foo");
@@ -4628,15 +4634,19 @@ void testMDLAtomProps() {
     TEST_ASSERT(0);
   } catch (...) {
   }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testSupplementalSmilesLabel() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing supplemental SMILES labels" << std::endl;
   std::string smi = "C";
   ROMOL_SPTR mol(SmilesToMol(smi, false, false));
   setSupplementalSmilesLabel(mol->getAtomWithIdx(0), "xxx");
   smi = MolToSmiles(*mol.get());
   TEST_ASSERT(smi == "Cxxx");
   TEST_ASSERT(getSupplementalSmilesLabel(mol->getAtomWithIdx(0)) == "xxx");
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testGithub1034() {
@@ -5248,7 +5258,6 @@ void RunTests() {
   testIssue3375684();
   testChiralPhosphorous();
   testIssue3392107();
-  testIssue3432136();
   testIssue3477283();
   testIssue3484552();
   testIssue3514824();

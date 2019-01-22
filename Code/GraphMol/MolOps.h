@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2019 Greg Landrum and Rational Discovery LLC
 //  Copyright (c) 2014, Novartis Institutes for BioMedical Research Inc.
 //
 //   @@ All Rights Reserved @@
@@ -216,6 +216,8 @@ RDKIT_GRAPHMOL_EXPORT void addHs(RWMol &mol, bool explicitOnly = false,
        - Hs that are part of the definition of double bond Stereochemistry
          will not be removed
        - Hs that are not connected to anything else will not be removed
+       - Hs that have a query defined (i.e. hasQuery() returns true) will not 
+         be removed
 
        - the caller is responsible for <tt>delete</tt>ing the pointer this
    returns.
