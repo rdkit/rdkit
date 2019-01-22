@@ -18,7 +18,7 @@
 #include <sstream>
 #include <RDGeneral/Exceptions.h>
 #include <RDGeneral/StreamOps.h>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 
 const int ci_SPARSEINTVECT_VERSION =
     0x0001;  //!< version number to use in pickles
@@ -324,7 +324,7 @@ class SparseIntVect {
   std::string toString() const {
     std::stringstream ss(std::ios_base::binary | std::ios_base::out |
                          std::ios_base::in);
-    boost::uint32_t tInt;
+    std::uint32_t tInt;
     tInt = ci_SPARSEINTVECT_VERSION;
     streamWrite(ss, tInt);
     tInt = sizeof(IndexType);
@@ -336,7 +336,7 @@ class SparseIntVect {
     typename StorageType::const_iterator iter = d_data.begin();
     while (iter != d_data.end()) {
       streamWrite(ss, iter->first);
-      boost::int32_t tInt = iter->second;
+      std::int32_t tInt = iter->second;
       streamWrite(ss, tInt);
       ++iter;
     }
@@ -357,10 +357,10 @@ class SparseIntVect {
                          std::ios_base::in);
     ss.write(pkl, len);
 
-    boost::uint32_t vers;
+    std::uint32_t vers;
     streamRead(ss, vers);
     if (vers == 0x0001) {
-      boost::uint32_t tInt;
+      std::uint32_t tInt;
       streamRead(ss, tInt);
       if (tInt > sizeof(IndexType)) {
         throw ValueErrorException(
@@ -370,8 +370,8 @@ class SparseIntVect {
         case sizeof(char):
           readVals<unsigned char>(ss);
           break;
-        case sizeof(boost::int32_t):
-          readVals<boost::uint32_t>(ss);
+        case sizeof(std::int32_t):
+          readVals<std::uint32_t>(ss);
           break;
         case sizeof(boost::int64_t):
           readVals<boost::uint64_t>(ss);
@@ -393,7 +393,7 @@ class SparseIntVect {
     streamRead(ss, nEntries);
     for (T i = 0; i < nEntries; ++i) {
       streamRead(ss, tVal);
-      boost::int32_t val;
+      std::int32_t val;
       streamRead(ss, val);
       d_data[tVal] = val;
     }

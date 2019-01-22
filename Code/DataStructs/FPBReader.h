@@ -25,7 +25,7 @@
 #include <RDGeneral/BadFileException.h>
 #include <DataStructs/ExplicitBitVect.h>
 
-#include <boost/cstdint.hpp>
+#include <cstdint>
 #include <boost/shared_ptr.hpp>
 #include <boost/shared_array.hpp>
 
@@ -126,7 +126,7 @@ class RDKIT_DATASTRUCTS_EXPORT FPBReader {
   //! returns the requested fingerprint as an \c ExplicitBitVect
   boost::shared_ptr<ExplicitBitVect> getFP(unsigned int idx) const;
   //! returns the requested fingerprint as an array of bytes
-  boost::shared_array<boost::uint8_t> getBytes(unsigned int idx) const;
+  boost::shared_array<std::uint8_t> getBytes(unsigned int idx) const;
 
   //! returns the id of the requested fingerprint
   std::string getId(unsigned int idx) const;
@@ -148,10 +148,10 @@ class RDKIT_DATASTRUCTS_EXPORT FPBReader {
 
   //! returns the tanimoto similarity between the specified fingerprint and the
   //! provided fingerprint
-  double getTanimoto(unsigned int idx, const boost::uint8_t *bv) const;
+  double getTanimoto(unsigned int idx, const std::uint8_t *bv) const;
   //! \overload
   double getTanimoto(unsigned int idx,
-                     boost::shared_array<boost::uint8_t> bv) const {
+                     boost::shared_array<std::uint8_t> bv) const {
     return getTanimoto(idx, bv.get());
   };
   //! \overload
@@ -170,11 +170,11 @@ class RDKIT_DATASTRUCTS_EXPORT FPBReader {
 
   */
   std::vector<std::pair<double, unsigned int> > getTanimotoNeighbors(
-      const boost::uint8_t *bv, double threshold = 0.7,
+      const std::uint8_t *bv, double threshold = 0.7,
       bool usePopcountScreen = true) const;
   //! \overload
   std::vector<std::pair<double, unsigned int> > getTanimotoNeighbors(
-      boost::shared_array<boost::uint8_t> bv, double threshold = 0.7,
+      boost::shared_array<std::uint8_t> bv, double threshold = 0.7,
       bool usePopcountScreen = true) const {
     return getTanimotoNeighbors(bv.get(), threshold, usePopcountScreen);
   };
@@ -193,10 +193,10 @@ class RDKIT_DATASTRUCTS_EXPORT FPBReader {
     \param cb the Tversky a coefficient
 
    */
-  double getTversky(unsigned int idx, const boost::uint8_t *bv, double ca,
+  double getTversky(unsigned int idx, const std::uint8_t *bv, double ca,
                     double cb) const;
   //! \overload
-  double getTversky(unsigned int idx, boost::shared_array<boost::uint8_t> bv,
+  double getTversky(unsigned int idx, boost::shared_array<std::uint8_t> bv,
                     double ca, double cb) const {
     return getTversky(idx, bv.get(), ca, cb);
   };
@@ -219,11 +219,11 @@ class RDKIT_DATASTRUCTS_EXPORT FPBReader {
 
   */
   std::vector<std::pair<double, unsigned int> > getTverskyNeighbors(
-      const boost::uint8_t *bv, double ca, double cb, double threshold = 0.7,
+      const std::uint8_t *bv, double ca, double cb, double threshold = 0.7,
       bool usePopcountScreen = true) const;
   //! \overload
   std::vector<std::pair<double, unsigned int> > getTverskyNeighbors(
-      boost::shared_array<boost::uint8_t> bv, double ca, double cb,
+      boost::shared_array<std::uint8_t> bv, double ca, double cb,
       double threshold = 0.7, bool usePopcountScreen = true) const {
     return getTverskyNeighbors(bv.get(), ca, cb, threshold, usePopcountScreen);
   };
@@ -237,10 +237,10 @@ class RDKIT_DATASTRUCTS_EXPORT FPBReader {
    molecule)
    */
   std::vector<unsigned int> getContainingNeighbors(
-      const boost::uint8_t *bv) const;
+      const std::uint8_t *bv) const;
   //! \overload
   std::vector<unsigned int> getContainingNeighbors(
-      boost::shared_array<boost::uint8_t> bv) const {
+      boost::shared_array<std::uint8_t> bv) const {
     return getContainingNeighbors(bv.get());
   };
   //! \overload

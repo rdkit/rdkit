@@ -22,7 +22,7 @@
 #include <memory>
 
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 #include "list_indexing_suite.hpp"
 #include <RDGeneral/BoostEndInclude.h>
 

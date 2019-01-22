@@ -611,15 +611,15 @@ ExplicitBitVect *wrapRDKFingerprintMol(
       pythonObjectToVect<unsigned int>(atomInvariants);
   std::unique_ptr<std::vector<unsigned int>> lFromAtoms =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
-  std::vector<std::vector<boost::uint32_t>> *lAtomBits = nullptr;
-  std::map<boost::uint32_t, std::vector<std::vector<int>>> *lBitInfo = nullptr;
+  std::vector<std::vector<std::uint32_t>> *lAtomBits = nullptr;
+  std::map<std::uint32_t, std::vector<std::vector<int>>> *lBitInfo = nullptr;
   // if(!(atomBits.is_none())){
   if (atomBits != python::object()) {
     lAtomBits =
-        new std::vector<std::vector<boost::uint32_t>>(mol.getNumAtoms());
+        new std::vector<std::vector<std::uint32_t>>(mol.getNumAtoms());
   }
   if (bitInfo != python::object()) {
-    lBitInfo = new std::map<boost::uint32_t, std::vector<std::vector<int>>>;
+    lBitInfo = new std::map<std::uint32_t, std::vector<std::vector<int>>>;
   }
   ExplicitBitVect *res;
   res = RDKit::RDKFingerprintMol(mol, minPath, maxPath, fpSize, nBitsPerHash,
@@ -631,7 +631,7 @@ ExplicitBitVect *wrapRDKFingerprintMol(
     python::list &pyl = static_cast<python::list &>(atomBits);
     for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
       python::list tmp;
-      BOOST_FOREACH (boost::uint32_t v, (*lAtomBits)[i]) { tmp.append(v); }
+      BOOST_FOREACH (std::uint32_t v, (*lAtomBits)[i]) { tmp.append(v); }
       pyl.append(tmp);
     }
     delete lAtomBits;

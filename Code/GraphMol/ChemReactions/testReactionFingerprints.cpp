@@ -579,9 +579,9 @@ void testDifferenceFingerprintsReaction() {
     TEST_ASSERT(rxn1);
     TEST_ASSERT(rxn2);
 
-    SparseIntVect<boost::uint32_t> *rxn1FP =
+    SparseIntVect<std::uint32_t> *rxn1FP =
         DifferenceFingerprintChemReaction(*rxn1);
-    SparseIntVect<boost::uint32_t> *rxn2FP =
+    SparseIntVect<std::uint32_t> *rxn2FP =
         DifferenceFingerprintChemReaction(*rxn2);
 
     TEST_ASSERT(TanimotoSimilarity(*rxn1FP, *rxn2FP) == 0.0);
@@ -604,9 +604,9 @@ void testDifferenceFingerprintsReaction() {
     TEST_ASSERT(rxn1);
     TEST_ASSERT(rxn2);
 
-    SparseIntVect<boost::uint32_t> *rxn1FP =
+    SparseIntVect<std::uint32_t> *rxn1FP =
         DifferenceFingerprintChemReaction(*rxn1);
-    SparseIntVect<boost::uint32_t> *rxn2FP =
+    SparseIntVect<std::uint32_t> *rxn2FP =
         DifferenceFingerprintChemReaction(*rxn2);
 
     TEST_ASSERT(TanimotoSimilarity(*rxn1FP, *rxn2FP) > 0.0);
@@ -628,9 +628,9 @@ void testDifferenceFingerprintsReaction() {
     TEST_ASSERT(rxn1);
     TEST_ASSERT(rxn2);
 
-    SparseIntVect<boost::uint32_t> *rxn1FP =
+    SparseIntVect<std::uint32_t> *rxn1FP =
         DifferenceFingerprintChemReaction(*rxn1);
-    SparseIntVect<boost::uint32_t> *rxn2FP =
+    SparseIntVect<std::uint32_t> *rxn2FP =
         DifferenceFingerprintChemReaction(*rxn2);
 
     TEST_ASSERT(TanimotoSimilarity(*rxn1FP, *rxn2FP) > 0.0);
@@ -655,9 +655,9 @@ void testDifferenceFingerprintsReaction() {
     ReactionFingerprintParams params;
     params.fpType = MorganFP;
 
-    SparseIntVect<boost::uint32_t> *rxn1FP =
+    SparseIntVect<std::uint32_t> *rxn1FP =
         DifferenceFingerprintChemReaction(*rxn1, params);
-    SparseIntVect<boost::uint32_t> *rxn2FP =
+    SparseIntVect<std::uint32_t> *rxn2FP =
         DifferenceFingerprintChemReaction(*rxn2, params);
 
     TEST_ASSERT(TanimotoSimilarity(*rxn1FP, *rxn2FP) > 0.0);
@@ -682,9 +682,9 @@ void testDifferenceFingerprintsReaction() {
     ReactionFingerprintParams params;
     params.fpType = TopologicalTorsion;
 
-    SparseIntVect<boost::uint32_t> *rxn1FP =
+    SparseIntVect<std::uint32_t> *rxn1FP =
         DifferenceFingerprintChemReaction(*rxn1, params);
-    SparseIntVect<boost::uint32_t> *rxn2FP =
+    SparseIntVect<std::uint32_t> *rxn2FP =
         DifferenceFingerprintChemReaction(*rxn2, params);
 
     TEST_ASSERT(TanimotoSimilarity(*rxn1FP, *rxn2FP) > 0.0);

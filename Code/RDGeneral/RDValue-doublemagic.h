@@ -32,7 +32,7 @@
 #ifndef RDKIT_RDVALUE_PTRMAGIC_H
 #define RDKIT_RDVALUE_PTRMAGIC_H
 
-#include <boost/cstdint.hpp>
+#include <cstdint>
 #include <cassert>
 #include <boost/any.hpp>
 #include "Invariant.h"

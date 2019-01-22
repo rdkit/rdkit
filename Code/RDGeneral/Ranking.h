@@ -22,7 +22,7 @@
 #include <functional> 
 #include <algorithm>
 #include <boost/foreach.hpp>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 
 namespace Rankers {
 //! functor for implementing > on two std::pairs.  The first entries are

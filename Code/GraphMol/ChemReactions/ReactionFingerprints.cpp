@@ -44,30 +44,30 @@
 
 namespace {
 
-RDKit::SparseIntVect<boost::uint32_t> *generateFingerprint(
+RDKit::SparseIntVect<std::uint32_t> *generateFingerprint(
     RDKit::ROMol &mol, unsigned int fpSize, RDKit::FingerprintType t) {
   mol.updatePropertyCache(false);
-  RDKit::SparseIntVect<boost::uint32_t> *res;
+  RDKit::SparseIntVect<std::uint32_t> *res;
   switch (t) {
     case RDKit::AtomPairFP: {
-      RDKit::SparseIntVect<boost::int32_t> *tmp1 =
+      RDKit::SparseIntVect<std::int32_t> *tmp1 =
           RDKit::AtomPairs::getHashedAtomPairFingerprint(mol, fpSize);
-      res = new RDKit::SparseIntVect<boost::uint32_t>(fpSize);
+      res = new RDKit::SparseIntVect<std::uint32_t>(fpSize);
       BOOST_FOREACH (
-          RDKit::SparseIntVect<boost::int32_t>::StorageType::value_type val,
+          RDKit::SparseIntVect<std::int32_t>::StorageType::value_type val,
           tmp1->getNonzeroElements()) {
-        res->setVal(static_cast<boost::uint32_t>(val.first), val.second);
+        res->setVal(static_cast<std::uint32_t>(val.first), val.second);
       }
       delete tmp1;
     } break;
     case RDKit::TopologicalTorsion: {
       RDKit::SparseIntVect<boost::int64_t> *tmp2 =
           RDKit::AtomPairs::getHashedTopologicalTorsionFingerprint(mol, fpSize);
-      res = new RDKit::SparseIntVect<boost::uint32_t>(fpSize);
+      res = new RDKit::SparseIntVect<std::uint32_t>(fpSize);
       BOOST_FOREACH (
           RDKit::SparseIntVect<boost::int64_t>::StorageType::value_type val,
           tmp2->getNonzeroElements()) {
-        res->setVal(static_cast<boost::uint32_t>(val.first), val.second);
+        res->setVal(static_cast<std::uint32_t>(val.first), val.second);
       }
       delete tmp2;
     } break;
@@ -129,16 +129,16 @@ const ReactionFingerprintParams DefaultStructuralFPParams(true, 0.2, 1, 1, 4096,
 const ReactionFingerprintParams DefaultDifferenceFPParams(true, 0.0, 10, 1,
                                                             2048, AtomPairFP);
 
-SparseIntVect<boost::uint32_t> *generateFingerprintChemReactionAsCountVect(
+SparseIntVect<std::uint32_t> *generateFingerprintChemReactionAsCountVect(
     const ChemicalReaction &rxn, unsigned int fpSize, FingerprintType t,
     ReactionMoleculeType mt) {
   PRECONDITION(fpSize != 0, "fpSize==0");
 
-  auto *result = new SparseIntVect<boost::uint32_t>(fpSize);
+  auto *result = new SparseIntVect<std::uint32_t>(fpSize);
   auto begin = getStartIterator(rxn, mt);
   auto end = getEndIterator(rxn, mt);
   for (; begin != end; ++begin) {
-    SparseIntVect<boost::uint32_t> *tmp =
+    SparseIntVect<std::uint32_t> *tmp =
         generateFingerprint(**begin, fpSize, t);
     (*result) += *tmp;
     delete tmp;
@@ -198,21 +198,21 @@ ExplicitBitVect *StructuralFingerprintChemReaction(
   return res;
 }
 
-SparseIntVect<boost::uint32_t> *DifferenceFingerprintChemReaction(
+SparseIntVect<std::uint32_t> *DifferenceFingerprintChemReaction(
     const ChemicalReaction &rxn, const ReactionFingerprintParams &params) {
   PRECONDITION(params.fpSize != 0, "fpSize==0");
   PRECONDITION(params.fpType > 0 && params.fpType < 4,
                "Fingerprinttype not supported");
 
-  SparseIntVect<boost::uint32_t> *reactantFP =
+  SparseIntVect<std::uint32_t> *reactantFP =
       generateFingerprintChemReactionAsCountVect(rxn, params.fpSize,
                                                  params.fpType, Reactant);
-  SparseIntVect<boost::uint32_t> *productFP =
+  SparseIntVect<std::uint32_t> *productFP =
       generateFingerprintChemReactionAsCountVect(rxn, params.fpSize,
                                                  params.fpType, Product);
-  auto *res = new SparseIntVect<boost::uint32_t>;
+  auto *res = new SparseIntVect<std::uint32_t>;
   if (params.includeAgents) {
-    SparseIntVect<boost::uint32_t> *agentFP =
+    SparseIntVect<std::uint32_t> *agentFP =
         generateFingerprintChemReactionAsCountVect(rxn, params.fpSize,
                                                    params.fpType, Agent);
     (*productFP) *= params.nonAgentWeight;

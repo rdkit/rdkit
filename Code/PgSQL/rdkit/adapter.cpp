@@ -114,7 +114,7 @@ static string StringData;
  * Real sparse vector
  */
 
-typedef SparseIntVect<boost::uint32_t> SparseFP;
+typedef SparseIntVect<std::uint32_t> SparseFP;
 
 /*******************************************
  *        ROMol transformation             *
@@ -1009,78 +1009,78 @@ extern "C" double calcSparseStringDiceSml(const char *a, unsigned int sza,
   const unsigned char *t1 = (const unsigned char *)a;
   const unsigned char *t2 = (const unsigned char *)b;
 
-  boost::uint32_t tmp;
-  tmp = *(reinterpret_cast<const boost::uint32_t *>(t1));
-  t1 += sizeof(boost::uint32_t);
-  if (tmp != (boost::uint32_t)ci_SPARSEINTVECT_VERSION) {
+  std::uint32_t tmp;
+  tmp = *(reinterpret_cast<const std::uint32_t *>(t1));
+  t1 += sizeof(std::uint32_t);
+  if (tmp != (std::uint32_t)ci_SPARSEINTVECT_VERSION) {
     elog(ERROR, "calcSparseStringDiceSml: could not convert argument 1");
   }
-  tmp = *(reinterpret_cast<const boost::uint32_t *>(t2));
-  t2 += sizeof(boost::uint32_t);
-  if (tmp != (boost::uint32_t)ci_SPARSEINTVECT_VERSION) {
+  tmp = *(reinterpret_cast<const std::uint32_t *>(t2));
+  t2 += sizeof(std::uint32_t);
+  if (tmp != (std::uint32_t)ci_SPARSEINTVECT_VERSION) {
     elog(ERROR, "calcSparseStringDiceSml: could not convert argument 2");
   }
 
   // check the element size:
-  tmp = *(reinterpret_cast<const boost::uint32_t *>(t1));
-  t1 += sizeof(boost::uint32_t);
-  if (tmp != sizeof(boost::uint32_t)) {
+  tmp = *(reinterpret_cast<const std::uint32_t *>(t1));
+  t1 += sizeof(std::uint32_t);
+  if (tmp != sizeof(std::uint32_t)) {
     elog(ERROR,
          "calcSparseStringDiceSml: could not convert argument 1 -> uint32_t");
   }
-  tmp = *(reinterpret_cast<const boost::uint32_t *>(t2));
-  t2 += sizeof(boost::uint32_t);
-  if (tmp != sizeof(boost::uint32_t)) {
+  tmp = *(reinterpret_cast<const std::uint32_t *>(t2));
+  t2 += sizeof(std::uint32_t);
+  if (tmp != sizeof(std::uint32_t)) {
     elog(ERROR,
          "calcSparseStringDiceSml: could not convert argument 2 -> uint32_t");
   }
 
   double res = 0.;
   // start reading:
-  boost::uint32_t len1, len2;
-  len1 = *(reinterpret_cast<const boost::uint32_t *>(t1));
-  t1 += sizeof(boost::uint32_t);
-  len2 = *(reinterpret_cast<const boost::uint32_t *>(t2));
-  t2 += sizeof(boost::uint32_t);
+  std::uint32_t len1, len2;
+  len1 = *(reinterpret_cast<const std::uint32_t *>(t1));
+  t1 += sizeof(std::uint32_t);
+  len2 = *(reinterpret_cast<const std::uint32_t *>(t2));
+  t2 += sizeof(std::uint32_t);
   if (len1 != len2) {
     elog(ERROR, "attempt to compare fingerprints of different length");
   }
 
-  boost::uint32_t nElem1, nElem2;
-  nElem1 = *(reinterpret_cast<const boost::uint32_t *>(t1));
-  t1 += sizeof(boost::uint32_t);
-  nElem2 = *(reinterpret_cast<const boost::uint32_t *>(t2));
-  t2 += sizeof(boost::uint32_t);
+  std::uint32_t nElem1, nElem2;
+  nElem1 = *(reinterpret_cast<const std::uint32_t *>(t1));
+  t1 += sizeof(std::uint32_t);
+  nElem2 = *(reinterpret_cast<const std::uint32_t *>(t2));
+  t2 += sizeof(std::uint32_t);
 
   if (!nElem1 || !nElem2) {
     return 0.0;
   }
 
   double v1Sum = 0, v2Sum = 0, numer = 0;
-  boost::uint32_t idx1 = 0;
-  boost::int32_t v1;
-  boost::uint32_t idx2 = 0;
-  boost::int32_t v2;
-  idx1 = *(reinterpret_cast<const boost::uint32_t *>(t1));
-  t1 += sizeof(boost::uint32_t);
-  v1 = *(reinterpret_cast<const boost::int32_t *>(t1));
-  t1 += sizeof(boost::int32_t);
+  std::uint32_t idx1 = 0;
+  std::int32_t v1;
+  std::uint32_t idx2 = 0;
+  std::int32_t v2;
+  idx1 = *(reinterpret_cast<const std::uint32_t *>(t1));
+  t1 += sizeof(std::uint32_t);
+  v1 = *(reinterpret_cast<const std::int32_t *>(t1));
+  t1 += sizeof(std::int32_t);
   nElem1--;
   v1Sum += v1;
 
-  idx2 = *(reinterpret_cast<const boost::uint32_t *>(t2));
-  t2 += sizeof(boost::uint32_t);
-  v2 = *(reinterpret_cast<const boost::int32_t *>(t2));
-  t2 += sizeof(boost::int32_t);
+  idx2 = *(reinterpret_cast<const std::uint32_t *>(t2));
+  t2 += sizeof(std::uint32_t);
+  v2 = *(reinterpret_cast<const std::int32_t *>(t2));
+  t2 += sizeof(std::int32_t);
   nElem2--;
   v2Sum += v2;
 
   while (1) {
     while (nElem2 && idx2 < idx1) {
-      idx2 = *(reinterpret_cast<const boost::uint32_t *>(t2));
-      t2 += sizeof(boost::uint32_t);
-      v2 = *(reinterpret_cast<const boost::int32_t *>(t2));
-      t2 += sizeof(boost::int32_t);
+      idx2 = *(reinterpret_cast<const std::uint32_t *>(t2));
+      t2 += sizeof(std::uint32_t);
+      v2 = *(reinterpret_cast<const std::int32_t *>(t2));
+      t2 += sizeof(std::int32_t);
       nElem2--;
       v2Sum += v2;
     }
@@ -1089,10 +1089,10 @@ extern "C" double calcSparseStringDiceSml(const char *a, unsigned int sza,
       numer += std::min(v1, v2);
     }
     if (nElem1) {
-      idx1 = *(reinterpret_cast<const boost::uint32_t *>(t1));
-      t1 += sizeof(boost::uint32_t);
-      v1 = *(reinterpret_cast<const boost::int32_t *>(t1));
-      t1 += sizeof(boost::int32_t);
+      idx1 = *(reinterpret_cast<const std::uint32_t *>(t1));
+      t1 += sizeof(std::uint32_t);
+      v1 = *(reinterpret_cast<const std::int32_t *>(t1));
+      t1 += sizeof(std::int32_t);
       nElem1--;
       v1Sum += v1;
     } else {
@@ -1100,10 +1100,10 @@ extern "C" double calcSparseStringDiceSml(const char *a, unsigned int sza,
     }
   }
   while (nElem2) {
-    idx2 = *(reinterpret_cast<const boost::uint32_t *>(t2));
-    t2 += sizeof(boost::uint32_t);
-    v2 = *(reinterpret_cast<const boost::int32_t *>(t2));
-    t2 += sizeof(boost::int32_t);
+    idx2 = *(reinterpret_cast<const std::uint32_t *>(t2));
+    t2 += sizeof(std::uint32_t);
+    v2 = *(reinterpret_cast<const std::int32_t *>(t2));
+    t2 += sizeof(std::int32_t);
     nElem2--;
     v2Sum += v2;
   }
@@ -1121,35 +1121,35 @@ extern "C" bool calcSparseStringAllValsGT(const char *a, unsigned int sza,
                                           int tgt) {
   const unsigned char *t1 = (const unsigned char *)a;
 
-  boost::uint32_t tmp;
-  tmp = *(reinterpret_cast<const boost::uint32_t *>(t1));
-  t1 += sizeof(boost::uint32_t);
-  if (tmp != (boost::uint32_t)ci_SPARSEINTVECT_VERSION) {
+  std::uint32_t tmp;
+  tmp = *(reinterpret_cast<const std::uint32_t *>(t1));
+  t1 += sizeof(std::uint32_t);
+  if (tmp != (std::uint32_t)ci_SPARSEINTVECT_VERSION) {
     elog(ERROR, "calcSparseStringAllValsGT: could not convert argument 1");
   }
   // check the element size:
-  tmp = *(reinterpret_cast<const boost::uint32_t *>(t1));
-  t1 += sizeof(boost::uint32_t);
-  if (tmp != sizeof(boost::uint32_t)) {
+  tmp = *(reinterpret_cast<const std::uint32_t *>(t1));
+  t1 += sizeof(std::uint32_t);
+  if (tmp != sizeof(std::uint32_t)) {
     elog(ERROR,
          "calcSparseStringAllValsGT: could not convert argument 1 -> "
          "uint32_t");
   }
 
-  // boost::uint32_t len1;
-  // len1 = *(reinterpret_cast<const boost::uint32_t *>(t1));
-  t1 += sizeof(boost::uint32_t);
+  // std::uint32_t len1;
+  // len1 = *(reinterpret_cast<const std::uint32_t *>(t1));
+  t1 += sizeof(std::uint32_t);
 
-  boost::uint32_t nElem1;
-  nElem1 = *(reinterpret_cast<const boost::uint32_t *>(t1));
-  t1 += sizeof(boost::uint32_t);
+  std::uint32_t nElem1;
+  nElem1 = *(reinterpret_cast<const std::uint32_t *>(t1));
+  t1 += sizeof(std::uint32_t);
 
   while (nElem1) {
     --nElem1;
     // skip the index:
-    t1 += sizeof(boost::uint32_t);
-    boost::int32_t v1 = *(reinterpret_cast<const boost::int32_t *>(t1));
-    t1 += sizeof(boost::int32_t);
+    t1 += sizeof(std::uint32_t);
+    std::int32_t v1 = *(reinterpret_cast<const std::int32_t *>(t1));
+    t1 += sizeof(std::int32_t);
 
     if (v1 <= tgt) return false;
   }
@@ -1159,35 +1159,35 @@ extern "C" bool calcSparseStringAllValsLT(const char *a, unsigned int sza,
                                           int tgt) {
   const unsigned char *t1 = (const unsigned char *)a;
 
-  boost::uint32_t tmp;
-  tmp = *(reinterpret_cast<const boost::uint32_t *>(t1));
-  t1 += sizeof(boost::uint32_t);
-  if (tmp != (boost::uint32_t)ci_SPARSEINTVECT_VERSION) {
+  std::uint32_t tmp;
+  tmp = *(reinterpret_cast<const std::uint32_t *>(t1));
+  t1 += sizeof(std::uint32_t);
+  if (tmp != (std::uint32_t)ci_SPARSEINTVECT_VERSION) {
     elog(ERROR, "calcSparseStringAllValsGT: could not convert argument 1");
   }
   // check the element size:
-  tmp = *(reinterpret_cast<const boost::uint32_t *>(t1));
-  t1 += sizeof(boost::uint32_t);
-  if (tmp != sizeof(boost::uint32_t)) {
+  tmp = *(reinterpret_cast<const std::uint32_t *>(t1));
+  t1 += sizeof(std::uint32_t);
+  if (tmp != sizeof(std::uint32_t)) {
     elog(ERROR,
          "calcSparseStringAllValsGT: could not convert argument 1 -> "
          "uint32_t");
   }
 
-  // boost::uint32_t len1;
-  // len1 = *(reinterpret_cast<const boost::uint32_t *>(t1));
-  t1 += sizeof(boost::uint32_t);
+  // std::uint32_t len1;
+  // len1 = *(reinterpret_cast<const std::uint32_t *>(t1));
+  t1 += sizeof(std::uint32_t);
 
-  boost::uint32_t nElem1;
-  nElem1 = *(reinterpret_cast<const boost::uint32_t *>(t1));
-  t1 += sizeof(boost::uint32_t);
+  std::uint32_t nElem1;
+  nElem1 = *(reinterpret_cast<const std::uint32_t *>(t1));
+  t1 += sizeof(std::uint32_t);
 
   while (nElem1) {
     --nElem1;
     // skip the index:
-    t1 += sizeof(boost::uint32_t);
-    boost::int32_t v1 = *(reinterpret_cast<const boost::int32_t *>(t1));
-    t1 += sizeof(boost::int32_t);
+    t1 += sizeof(std::uint32_t);
+    std::int32_t v1 = *(reinterpret_cast<const std::int32_t *>(t1));
+    t1 += sizeof(std::int32_t);
 
     if (v1 >= tgt) return false;
   }
@@ -1264,7 +1264,7 @@ extern "C" CBfp makeRDKitBFP(CROMol data) {
 extern "C" CSfp makeMorganSFP(CROMol data, int radius) {
   ROMol *mol = (ROMol *)data;
   SparseFP *res = nullptr;
-  std::vector<boost::uint32_t> invars(mol->getNumAtoms());
+  std::vector<std::uint32_t> invars(mol->getNumAtoms());
   try {
     RDKit::MorganFingerprints::getConnectivityInvariants(*mol, invars, true);
     res = (SparseFP *)RDKit::MorganFingerprints::getFingerprint(*mol, radius,
@@ -1279,7 +1279,7 @@ extern "C" CSfp makeMorganSFP(CROMol data, int radius) {
 extern "C" CBfp makeMorganBFP(CROMol data, int radius) {
   ROMol *mol = (ROMol *)data;
   ExplicitBitVect *res = nullptr;
-  std::vector<boost::uint32_t> invars(mol->getNumAtoms());
+  std::vector<std::uint32_t> invars(mol->getNumAtoms());
   try {
     RDKit::MorganFingerprints::getConnectivityInvariants(*mol, invars, true);
     res = RDKit::MorganFingerprints::getFingerprintAsBitVect(
@@ -1300,7 +1300,7 @@ extern "C" CBfp makeMorganBFP(CROMol data, int radius) {
 extern "C" CSfp makeFeatMorganSFP(CROMol data, int radius) {
   ROMol *mol = (ROMol *)data;
   SparseFP *res = nullptr;
-  std::vector<boost::uint32_t> invars(mol->getNumAtoms());
+  std::vector<std::uint32_t> invars(mol->getNumAtoms());
   try {
     RDKit::MorganFingerprints::getFeatureInvariants(*mol, invars);
     res = (SparseFP *)RDKit::MorganFingerprints::getFingerprint(*mol, radius,
@@ -1315,7 +1315,7 @@ extern "C" CSfp makeFeatMorganSFP(CROMol data, int radius) {
 extern "C" CBfp makeFeatMorganBFP(CROMol data, int radius) {
   ROMol *mol = (ROMol *)data;
   ExplicitBitVect *res = nullptr;
-  std::vector<boost::uint32_t> invars(mol->getNumAtoms());
+  std::vector<std::uint32_t> invars(mol->getNumAtoms());
   try {
     RDKit::MorganFingerprints::getFeatureInvariants(*mol, invars);
     res = RDKit::MorganFingerprints::getFingerprintAsBitVect(
@@ -1338,10 +1338,10 @@ extern "C" CSfp makeAtomPairSFP(CROMol data) {
   SparseFP *res = nullptr;
 #ifdef UNHASHED_PAIR_FPS
   try {
-    SparseIntVect<boost::int32_t> *afp =
+    SparseIntVect<std::int32_t> *afp =
         RDKit::AtomPairs::getAtomPairFingerprint(*mol);
     res = new SparseFP(1 << RDKit::AtomPairs::numAtomPairFingerprintBits);
-    for (SparseIntVect<boost::int32_t>::StorageType::const_iterator iter =
+    for (SparseIntVect<std::int32_t>::StorageType::const_iterator iter =
              afp->getNonzeroElements().begin();
          iter != afp->getNonzeroElements().end(); ++iter) {
       res->setVal(iter->first, iter->second);
@@ -1352,7 +1352,7 @@ extern "C" CSfp makeAtomPairSFP(CROMol data) {
   }
 #else
   try {
-    SparseIntVect<boost::int32_t> *afp =
+    SparseIntVect<std::int32_t> *afp =
         RDKit::AtomPairs::getHashedAtomPairFingerprint(
             *mol, getHashedAtomPairFpSize());
     res = new SparseFP(getHashedAtomPairFpSize());
@@ -1375,8 +1375,8 @@ extern "C" CSfp makeTopologicalTorsionSFP(CROMol data) {
   try {
     SparseIntVect<boost::int64_t> *afp =
         RDKit::AtomPairs::getHashedTopologicalTorsionFingerprint(
-            *mol, boost::integer_traits<boost::uint32_t>::const_max);
-    res = new SparseFP(boost::integer_traits<boost::uint32_t>::const_max);
+            *mol, boost::integer_traits<std::uint32_t>::const_max);
+    res = new SparseFP(boost::integer_traits<std::uint32_t>::const_max);
     for (SparseIntVect<boost::int64_t>::StorageType::const_iterator iter =
              afp->getNonzeroElements().begin();
          iter != afp->getNonzeroElements().end(); ++iter) {

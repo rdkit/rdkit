@@ -18,15 +18,16 @@
 #include <RDGeneral/StreamOps.h>
 #include <RDGeneral/types.h>
 #include <Query/QueryObjects.h>
-#include <boost/cstdint.hpp>
+#include <map>
+#include <cstdint>
 #include <boost/algorithm/string.hpp>
 
 #ifdef RDK_THREADSAFE_SSS
 #include <mutex>
 #endif
 
-using boost::int32_t;
-using boost::uint32_t;
+using std::int32_t;
+using std::uint32_t;
 namespace RDKit {
 
 const int32_t MolPickler::versionMajor = 10;

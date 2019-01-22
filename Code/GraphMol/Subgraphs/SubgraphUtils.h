@@ -13,19 +13,19 @@
 
 #include "Subgraphs.h"
 #include <boost/tuple/tuple.hpp>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 
 namespace RDKit {
 class ROMol;
 
 namespace Subgraphs {
 //! used to return path discriminators (three unsigned ints):
-typedef boost::tuples::tuple<boost::uint32_t, boost::uint32_t, boost::uint32_t>
+typedef boost::tuples::tuple<std::uint32_t, std::uint32_t, std::uint32_t>
     DiscrimTuple;
 
 RDKIT_SUBGRAPHS_EXPORT DiscrimTuple calcPathDiscriminators(
     const ROMol &mol, const PATH_TYPE &path, bool useBO = true,
-    std::vector<boost::uint32_t> *extraInvars = 0);
+    std::vector<std::uint32_t> *extraInvars = 0);
 RDKIT_SUBGRAPHS_EXPORT PATH_LIST uniquifyPaths(const ROMol &mol, const PATH_LIST &allPathsb,
                         bool useBO = true);
 

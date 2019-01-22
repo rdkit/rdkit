@@ -14,19 +14,19 @@
 #include <vector>
 #include <string>
 #include <stdexcept>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 #include "../RDKitBase.h"
 
 namespace RDKit {
 namespace MolHash {
-typedef boost::uint32_t HashCodeType;
+typedef std::uint32_t HashCodeType;
 
 RDKIT_MOLHASH_EXPORT HashCodeType generateMoleculeHashCode(
     const ROMol &mol, const std::vector<unsigned> *atomsToUse = 0,
     const std::vector<unsigned> *bondsToUse =
         0,  // ?? listed bonds between/to/from excluded atom(s) ??
-    const std::vector<boost::uint32_t> *atomCodes = 0,
-    const std::vector<boost::uint32_t> *bondCodes = 0);
+    const std::vector<std::uint32_t> *atomCodes = 0,
+    const std::vector<std::uint32_t> *bondCodes = 0);
 
 enum CodeFlags  // bitwise flags to combine and compute atom/bond codes
 { CF_NO_LABELS = 0x0000,
@@ -52,17 +52,17 @@ enum CodeFlags  // bitwise flags to combine and compute atom/bond codes
 RDKIT_MOLHASH_EXPORT void fillAtomBondCodes(
     const ROMol &mol, boost::uint64_t flags  // CodeFlags constants combination
     ,
-    std::vector<boost::uint32_t> *atomCodes  // NULL is allowed
+    std::vector<std::uint32_t> *atomCodes  // NULL is allowed
     ,
-    std::vector<boost::uint32_t> *bondCodes);  // NULL is allowed
+    std::vector<std::uint32_t> *bondCodes);  // NULL is allowed
 
 #pragma pack(push, 1)
 struct RDKIT_MOLHASH_EXPORT HashSet {
-  boost::uint16_t Version;
-  boost::uint16_t Reserved;
-  boost::uint16_t NumAtoms;
-  boost::uint16_t NumBonds;
-  boost::uint32_t FormulaCRC32;
+  std::uint16_t Version;
+  std::uint16_t Reserved;
+  std::uint16_t NumAtoms;
+  std::uint16_t NumBonds;
+  std::uint32_t FormulaCRC32;
   HashCodeType NonChiralAtomsHash;
   HashCodeType NonChiralBondsHash;
   HashCodeType ChiralAtomsHash;

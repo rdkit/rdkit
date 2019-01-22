@@ -15,7 +15,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <DataStructs/SparseIntVect.h>
 #include <DataStructs/BitVects.h>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 
 #include <vector>
 #include <map>
@@ -109,7 +109,7 @@ RDKIT_FINGERPRINTS_EXPORT extern std::vector<std::string> defaultFeatureSmarts;
              a ring will be used in the invariant list.
 */
 RDKIT_FINGERPRINTS_EXPORT void getConnectivityInvariants(
-    const ROMol &mol, std::vector<boost::uint32_t> &invars,
+    const ROMol &mol, std::vector<std::uint32_t> &invars,
     bool includeRingMembership = true);
 const std::string morganConnectivityInvariantVersion = "1.0.0";
 
@@ -127,7 +127,7 @@ const std::string morganConnectivityInvariantVersion = "1.0.0";
 
 */
 RDKIT_FINGERPRINTS_EXPORT void getFeatureInvariants(
-    const ROMol &mol, std::vector<boost::uint32_t> &invars,
+    const ROMol &mol, std::vector<std::uint32_t> &invars,
     std::vector<const ROMol *> *patterns = 0);
 const std::string morganFeatureInvariantVersion = "0.1.0";
 
@@ -136,11 +136,11 @@ const std::string morganFeatureInvariantVersion = "0.1.0";
 namespace RDKitFPUtils {
 
 RDKIT_FINGERPRINTS_EXPORT void buildDefaultRDKitFingerprintAtomInvariants(
-    const ROMol &mol, std::vector<boost::uint32_t> &lAtomInvariants);
+    const ROMol &mol, std::vector<std::uint32_t> &lAtomInvariants);
 
 RDKIT_FINGERPRINTS_EXPORT void enumerateAllPaths(
     const ROMol &mol, std::map<int, std::list<std::vector<int>>> &allPaths,
-    const std::vector<boost::uint32_t> *fromAtoms, bool branchedPaths,
+    const std::vector<std::uint32_t> *fromAtoms, bool branchedPaths,
     bool useHs, unsigned int minPath, unsigned int maxPath);
 
 RDKIT_FINGERPRINTS_EXPORT void identifyQueryBonds(
@@ -151,7 +151,7 @@ RDKIT_FINGERPRINTS_EXPORT std::vector<unsigned int> generateBondHashes(
     const ROMol &mol, boost::dynamic_bitset<> &atomsInPath,
     const std::vector<const Bond *> &bondCache,
     const std::vector<short> &isQueryBond, const std::vector<int> &path,
-    bool useBondOrder, const std::vector<boost::uint32_t> *atomInvariants);
+    bool useBondOrder, const std::vector<std::uint32_t> *atomInvariants);
 
 }  // namespace RDKitFPUtils
 

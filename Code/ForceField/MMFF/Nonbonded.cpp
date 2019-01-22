@@ -79,7 +79,7 @@ void scaleVdWParams(double &R_star_ij, double &wellDepth,
 }
 
 double calcEleEnergy(unsigned int idx1, unsigned int idx2, double dist,
-                     double chargeTerm, boost::uint8_t dielModel, bool is1_4) {
+                     double chargeTerm, std::uint8_t dielModel, bool is1_4) {
   RDUNUSED_PARAM(idx1);
   RDUNUSED_PARAM(idx2);
   double corr_dist = dist + 0.05;
@@ -150,7 +150,7 @@ void VdWContrib::getGrad(double *pos, double *grad) const {
 }
 
 EleContrib::EleContrib(ForceField *owner, unsigned int idx1, unsigned int idx2,
-                       double chargeTerm, boost::uint8_t dielModel,
+                       double chargeTerm, std::uint8_t dielModel,
                        bool is1_4) {
   PRECONDITION(owner, "bad owner");
   URANGE_CHECK(idx1, owner->positions().size());

@@ -57,7 +57,7 @@ class RDKIT_FORCEFIELD_EXPORT EleContrib : public ForceFieldContrib {
 
   */
   EleContrib(ForceField *owner, unsigned int idx1, unsigned int idx2,
-             double chargeTerm, boost::uint8_t dielModel, bool is1_4);
+             double chargeTerm, std::uint8_t dielModel, bool is1_4);
   double getEnergy(double *pos) const;
   void getGrad(double *pos, double *grad) const;
 
@@ -66,7 +66,7 @@ class RDKIT_FORCEFIELD_EXPORT EleContrib : public ForceFieldContrib {
  private:
   int d_at1Idx, d_at2Idx;
   double d_chargeTerm;  //!< q1 * q2 / D
-  boost::uint8_t
+  std::uint8_t
       d_dielModel;  //!< dielectric model (1: constant; 2: distance-dependent)
   bool d_is1_4;     //!< flag set for atoms in a 1,4 relationship
 };
@@ -92,7 +92,7 @@ RDKIT_FORCEFIELD_EXPORT double calcVdWEnergy(const double dist, const double R_s
                      const double wellDepth);
 //! calculates and returns the electrostatic MMFF energy
 RDKIT_FORCEFIELD_EXPORT double calcEleEnergy(unsigned int idx1, unsigned int idx2, double dist,
-                     double chargeTerm, boost::uint8_t dielModel, bool is1_4);
+                     double chargeTerm, std::uint8_t dielModel, bool is1_4);
 }
 }
 }

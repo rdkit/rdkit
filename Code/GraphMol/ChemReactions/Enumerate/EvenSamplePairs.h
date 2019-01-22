@@ -38,7 +38,7 @@
 #ifdef RDK_USE_BOOST_SERIALIZATION
 #include <boost/serialization/set.hpp>
 #endif
-#include <boost/cstdint.hpp>
+#include <cstdint>
 
 namespace RDKit {
 //! EvenSamplePairsStrategy

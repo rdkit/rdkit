@@ -18,7 +18,7 @@
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string.hpp>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 #include <vector>
 #include <algorithm>
 #include <GraphMol/SmilesParse/SmilesParse.h>

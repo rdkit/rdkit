@@ -503,7 +503,7 @@ void dfsFindCycles(ROMol &mol, int atomIdx, int inBondIdx,
                     MAX_NATOMS;
           } else {
             const std::string &symb = (*bondSymbols)[theBond->getIdx()];
-            boost::uint32_t hsh = gboost::hash_range(symb.begin(), symb.end());
+            std::uint32_t hsh = gboost::hash_range(symb.begin(), symb.end());
             rank += (hsh % MAX_NATOMS) * MAX_NATOMS;
           }
         } else if (theBond->getOwningMol().getRingInfo()->numBondRings(
@@ -513,7 +513,7 @@ void dfsFindCycles(ROMol &mol, int atomIdx, int inBondIdx,
                     MAX_NATOMS * MAX_NATOMS;
           } else {
             const std::string &symb = (*bondSymbols)[theBond->getIdx()];
-            boost::uint32_t hsh = gboost::hash_range(symb.begin(), symb.end());
+            std::uint32_t hsh = gboost::hash_range(symb.begin(), symb.end());
             rank += (hsh % MAX_NATOMS) * MAX_NATOMS * MAX_NATOMS;
           }
         }
@@ -686,7 +686,7 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
                     MAX_NATOMS * MAX_NATOMS;
           } else {
             const std::string &symb = (*bondSymbols)[theBond->getIdx()];
-            boost::uint32_t hsh = gboost::hash_range(symb.begin(), symb.end());
+            std::uint32_t hsh = gboost::hash_range(symb.begin(), symb.end());
             rank += (hsh % MAX_NATOMS) * MAX_NATOMS * MAX_NATOMS;
           }
         }

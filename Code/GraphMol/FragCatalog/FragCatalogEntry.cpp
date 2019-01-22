@@ -20,7 +20,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <fstream>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 #include <RDGeneral/hash/hash.hpp>
 
 namespace RDKit {
@@ -162,12 +162,12 @@ Subgraphs::DiscrimTuple FragCatalogEntry::getDiscrims() const {
 
     // create invariant additions to reflect the functional groups attached to
     // the atoms
-    std::vector<boost::uint32_t> funcGpInvars;
+    std::vector<std::uint32_t> funcGpInvars;
     gboost::hash<INT_VECT> vectHasher;
     for (ROMol::AtomIterator atomIt = dp_mol->beginAtoms();
          atomIt != dp_mol->endAtoms(); ++atomIt) {
       unsigned int aid = (*atomIt)->getIdx();
-      boost::uint32_t invar = 0;
+      std::uint32_t invar = 0;
       auto mapPos = d_aToFmap.find(aid);
       if (mapPos != d_aToFmap.end()) {
         INT_VECT fGroups = mapPos->second;
@@ -189,7 +189,7 @@ Subgraphs::DiscrimTuple FragCatalogEntry::getDiscrims() const {
 void FragCatalogEntry::toStream(std::ostream &ss) const {
   MolPickler::pickleMol(*dp_mol, ss);
 
-  boost::int32_t tmpInt;
+  std::int32_t tmpInt;
   tmpInt = getBitId();
   streamWrite(ss, tmpInt);
 
@@ -227,7 +227,7 @@ void FragCatalogEntry::initFromStream(std::istream &ss) {
   dp_mol = new ROMol();
   MolPickler::molFromPickle(ss, *dp_mol);
 
-  boost::int32_t tmpInt;
+  std::int32_t tmpInt;
   // the bitId:
   streamRead(ss, tmpInt);
   setBitId(tmpInt);
@@ -246,7 +246,7 @@ void FragCatalogEntry::initFromStream(std::istream &ss) {
   // now the map:
   streamRead(ss, tmpInt);
   for (int i = 0; i < tmpInt; i++) {
-    boost::int32_t key, value, size;
+    std::int32_t key, value, size;
     streamRead(ss, key);
     streamRead(ss, size);
     INT_VECT tmpVect;

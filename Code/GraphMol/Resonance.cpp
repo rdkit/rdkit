@@ -116,7 +116,7 @@ class ConjElectrons {
   unsigned int d_numFormalCharges;
   int d_totalFormalCharge;
   int d_allowedChgLeftOfN;
-  boost::uint8_t d_flags;
+  std::uint8_t d_flags;
   CEMetrics d_ceMetrics;
   ConjBondMap d_conjBondMap;
   ConjAtomMap d_conjAtomMap;
@@ -152,7 +152,7 @@ class AtomElectrons {
   AtomElectrons(ConjElectrons *parent, const Atom *a);
   AtomElectrons(ConjElectrons *parent, const AtomElectrons &ae);
   ~AtomElectrons(){};
-  boost::uint8_t findAllowedBonds(unsigned int bi);
+  std::uint8_t findAllowedBonds(unsigned int bi);
   bool hasOctet() const { return ((d_nb + d_tv * 2) == 8); };
   bool isLastBond() const { return (d_flags & LAST_BOND); };
   void setLastBond() { d_flags |= LAST_BOND; };
@@ -180,14 +180,14 @@ class AtomElectrons {
   bool isNbrCharged(unsigned int bo, unsigned int oeConstraint = 0);
 
  private:
-  boost::uint8_t d_nb;
-  boost::uint8_t d_tv;
-  boost::int8_t d_fc;
-  boost::uint8_t d_flags;
+  std::uint8_t d_nb;
+  std::uint8_t d_tv;
+  std::int8_t d_fc;
+  std::uint8_t d_flags;
   const Atom *d_atom;
   ConjElectrons *d_parent;
   AtomElectrons &operator=(const AtomElectrons &);
-  boost::uint8_t canAddBondWithOrder(unsigned int bo);
+  std::uint8_t canAddBondWithOrder(unsigned int bo);
   void allConjBondsDefinitiveBut(unsigned int bi);
 };
 
@@ -209,8 +209,8 @@ class BondElectrons {
   const Bond *bond() { return d_bond; };
 
  private:
-  boost::uint8_t d_bo;
-  boost::uint8_t d_flags;
+  std::uint8_t d_bo;
+  std::uint8_t d_flags;
   const Bond *d_bond;
   ConjElectrons *d_parent;
   BondElectrons &operator=(const BondElectrons &);
@@ -262,7 +262,7 @@ void fixExplicitImplicitHs(ROMol &mol) {
 // object constructor
 AtomElectrons::AtomElectrons(ConjElectrons *parent, const Atom *a)
     : d_nb(0),
-      d_tv(static_cast<boost::uint8_t>(a->getTotalDegree())),
+      d_tv(static_cast<std::uint8_t>(a->getTotalDegree())),
       d_fc(0),
       d_flags(0),
       d_atom(a),
@@ -287,7 +287,7 @@ void AtomElectrons::initTvNbFcFromAtom() {
   d_nb = oe() - d_tv - d_fc;
 }
 
-boost::uint8_t AtomElectrons::findAllowedBonds(unsigned int bi) {
+std::uint8_t AtomElectrons::findAllowedBonds(unsigned int bi) {
   // AtomElectrons::findAllowedBonds returns a 6-bit result
   // encoded as follows:
   // +-------------------------------------+
@@ -301,7 +301,7 @@ boost::uint8_t AtomElectrons::findAllowedBonds(unsigned int bi) {
   // +-------------------------------------+
 
   allConjBondsDefinitiveBut(bi);
-  boost::uint8_t res = 0;
+  std::uint8_t res = 0;
   for (unsigned int i = 0; i < 3; ++i) {
     res |= (canAddBondWithOrder(i + 1) << (i * 2));
   }
@@ -334,8 +334,8 @@ bool AtomElectrons::isNbrCharged(unsigned int bo, unsigned int oeConstraint) {
 // returns a 2-bit value, where the least significant bit is true
 // if the atom can add a bond with order bo, and the most significant
 // bit is true if the atom needs be charged
-boost::uint8_t AtomElectrons::canAddBondWithOrder(unsigned int bo) {
-  boost::uint8_t canAdd = !isDefinitive();
+std::uint8_t AtomElectrons::canAddBondWithOrder(unsigned int bo) {
+  std::uint8_t canAdd = !isDefinitive();
   if (canAdd) canAdd = (d_tv <= (5 - bo));
   // if canAdd is true, loop over neighboring conjugated bonds
   // and check their definitive flag; if all neighbors are
@@ -532,7 +532,7 @@ ConjElectrons::~ConjElectrons() {
 // return true if the FP did not already exist in the map, false
 // if they did (so the ConjElectrons object can be deleted)
 bool ConjElectrons::storeFP(CEMap &ceMap, unsigned int flags) {
-  boost::uint8_t byte;
+  std::uint8_t byte;
   ConjFP fp;
   unsigned int fpSize = 0;
   if (flags & FP_ATOMS) fpSize += rdcast<unsigned int>(d_conjAtomMap.size());
@@ -562,7 +562,7 @@ bool ConjElectrons::storeFP(CEMap &ceMap, unsigned int flags) {
         byte = 0;
         i = 0;
       }
-      byte |= (static_cast<boost::uint8_t>(it->second->order()) << (i * 2));
+      byte |= (static_cast<std::uint8_t>(it->second->order()) << (i * 2));
       ++i;
     }
     if (i) fp.push_back(byte);
@@ -1377,7 +1377,7 @@ void ResonanceMolSupplier::buildCEMap(CEMap &ceMap, unsigned int conjGrpIdx) {
       // if no neighbors were found, move on to the next atom index
       // in the stack
       if (!be) continue;
-      boost::uint8_t allowedBondsPerAtom[2];
+      std::uint8_t allowedBondsPerAtom[2];
       // loop over the two atoms that need be bonded
       for (unsigned int i = 0; i < 2; ++i) {
         // for each atom, find which bond orders are allowed
@@ -1391,7 +1391,7 @@ void ResonanceMolSupplier::buildCEMap(CEMap &ceMap, unsigned int conjGrpIdx) {
           ce->pushToBeginStack(ai[i]);
       }
       // logical AND between allowed bond masks for the two atoms
-      boost::uint8_t allowedBonds =
+      std::uint8_t allowedBonds =
           allowedBondsPerAtom[BEGIN_POS] & allowedBondsPerAtom[END_POS];
       bool isAnyBondAllowed = false;
       bool needToFork = false;
@@ -1401,8 +1401,8 @@ void ResonanceMolSupplier::buildCEMap(CEMap &ceMap, unsigned int conjGrpIdx) {
       for (unsigned int i = 0; i < 3; ++i) {
         unsigned int t = i * 2;
         ConjElectrons *ceToSet = nullptr;
-        boost::uint8_t orderMask = (1 << t);
-        boost::uint8_t chgMask = (1 << (t + 1));
+        std::uint8_t orderMask = (1 << t);
+        std::uint8_t chgMask = (1 << (t + 1));
         unsigned int bo = i + 1;
         // if the currently available electrons are enough for this
         // bond type and both atoms can accept this bond type

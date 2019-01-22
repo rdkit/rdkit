@@ -35,7 +35,7 @@ void testMMFFTyper1() {
   BOOST_LOG(rdErrorLog) << "    Test MMFF atom types." << std::endl;
 
   {
-    boost::uint8_t type;
+    std::uint8_t type;
     ROMol *mol = SmilesToMol("[SiH3]CC(=O)NC");
     TEST_ASSERT(mol);
     MMFF::MMFFMolProperties mmffMolProperties(*mol);
@@ -55,7 +55,7 @@ void testMMFFTyper1() {
   }
 
   {
-    boost::uint8_t type;
+    std::uint8_t type;
     ROMol *mol = SmilesToMol("CC(=O)C");
     TEST_ASSERT(mol);
     MMFF::MMFFMolProperties mmffMolProperties(*mol);
@@ -73,7 +73,7 @@ void testMMFFTyper1() {
   }
 
   {
-    boost::uint8_t type;
+    std::uint8_t type;
     ROMol *mol = SmilesToMol("C(=O)S");
     TEST_ASSERT(mol);
     MMFF::MMFFMolProperties mmffMolProperties(*mol);
@@ -88,7 +88,7 @@ void testMMFFTyper1() {
     delete mol;
   }
   {
-    boost::uint8_t type;
+    std::uint8_t type;
     ROMol *mol = SmilesToMol("SCS(=O)S(=O)(=O)O");
     TEST_ASSERT(mol);
     MMFF::MMFFMolProperties mmffMolProperties(*mol);
@@ -105,7 +105,7 @@ void testMMFFTyper1() {
     delete mol;
   }
   {
-    boost::uint8_t type;
+    std::uint8_t type;
     ROMol *mol = SmilesToMol("PCP(O)CP(=O)(=O)");
     TEST_ASSERT(mol);
     MMFF::MMFFMolProperties mmffMolProperties(*mol);
@@ -122,7 +122,7 @@ void testMMFFTyper1() {
     delete mol;
   }
   {
-    boost::uint8_t type;
+    std::uint8_t type;
     ROMol *mol = SmilesToMol("C(F)(Cl)(Br)I");
     TEST_ASSERT(mol);
     MMFF::MMFFMolProperties mmffMolProperties(*mol);
@@ -151,7 +151,7 @@ void testMMFFBuilder1() {
   ROMol *mol, *mol2;
 
   ForceFields::ForceField *field;
-  boost::shared_array<boost::uint8_t> nbrMat;
+  boost::shared_array<std::uint8_t> nbrMat;
 
   mol = SmilesToMol("CC(O)C");
   auto *conf = new Conformer(mol->getNumAtoms());
@@ -650,7 +650,7 @@ void testSFIssue1653802() {
       new MMFF::MMFFMolProperties(*mol);
   TEST_ASSERT(mmffMolProperties);
 
-  boost::shared_array<boost::uint8_t> nbrMat;
+  boost::shared_array<std::uint8_t> nbrMat;
   field = new ForceFields::ForceField();
   // add the atomic positions:
   for (unsigned int i = 0; i < mol->getNumAtoms(); ++i) {

@@ -329,9 +329,9 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
   // void setOwningMol(ROMol &other) {setOwningMol(&other);};
   bool df_isAromatic;
   bool df_isConjugated;
-  boost::uint8_t d_bondType;
-  boost::uint8_t d_dirTag;
-  boost::uint8_t d_stereo;
+  std::uint8_t d_bondType;
+  std::uint8_t d_dirTag;
+  std::uint8_t d_stereo;
   atomindex_t d_index;
   atomindex_t d_beginAtomIdx, d_endAtomIdx;
   ROMol *dp_mol;

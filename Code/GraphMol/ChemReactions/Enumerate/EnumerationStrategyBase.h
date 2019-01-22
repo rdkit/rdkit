@@ -37,7 +37,7 @@
 #include "../Reaction.h"
 #include <vector>
 #include <RDGeneral/BoostStartInclude.h>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 #ifdef RDK_USE_BOOST_SERIALIZATION
 #include <boost/serialization/assume_abstract.hpp>
 #include <boost/serialization/vector.hpp>

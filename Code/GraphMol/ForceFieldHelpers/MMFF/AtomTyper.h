@@ -17,7 +17,7 @@
 #include <string>
 #include <iostream>
 #include <ForceField/MMFF/Params.h>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 
 namespace RDKit {
 class ROMol;
@@ -33,7 +33,7 @@ class RDKIT_FORCEFIELDHELPERS_EXPORT MMFFAtomProperties {
   MMFFAtomProperties()
       : mmffAtomType(0), mmffFormalCharge(0.0), mmffPartialCharge(0.0){};
   ~MMFFAtomProperties(){};
-  boost::uint8_t mmffAtomType;
+  std::uint8_t mmffAtomType;
   double mmffFormalCharge;
   double mmffPartialCharge;
 };
@@ -48,7 +48,7 @@ enum {
 class RDKIT_FORCEFIELDHELPERS_EXPORT MMFFMolProperties {
  public:
   MMFFMolProperties(ROMol &mol, const std::string &mmffVariant = "MMFF94",
-                    boost::uint8_t verbosity = MMFF_VERBOSITY_NONE,
+                    std::uint8_t verbosity = MMFF_VERBOSITY_NONE,
                     std::ostream &oStream = std::cout);
   ~MMFFMolProperties(){};
   unsigned int getMMFFBondType(const Bond *bond);
@@ -63,7 +63,7 @@ class RDKIT_FORCEFIELDHELPERS_EXPORT MMFFMolProperties {
       const ROMol &mol, unsigned int idx2, unsigned int idx3);
   const ForceFields::MMFF::MMFFBond *getMMFFBondStretchEmpiricalRuleParams(
       const ROMol &mol, const Bond *bond);
-  boost::uint8_t getMMFFAtomType(const unsigned int idx) {
+  std::uint8_t getMMFFAtomType(const unsigned int idx) {
     URANGE_CHECK(idx, this->d_MMFFAtomPropertiesPtrVect.size());
 
     return this->d_MMFFAtomPropertiesPtrVect[idx]->mmffAtomType;
@@ -109,14 +109,14 @@ class RDKIT_FORCEFIELDHELPERS_EXPORT MMFFMolProperties {
     this->d_dielConst = dielConst;
   };
   double getMMFFDielectricConstant() { return this->d_dielConst; };
-  void setMMFFDielectricModel(boost::uint8_t dielModel) {
+  void setMMFFDielectricModel(std::uint8_t dielModel) {
     this->d_dielModel = dielModel;
   };
-  boost::uint8_t getMMFFDielectricModel() { return this->d_dielModel; };
-  void setMMFFVerbosity(boost::uint8_t verbosity) {
+  std::uint8_t getMMFFDielectricModel() { return this->d_dielModel; };
+  void setMMFFVerbosity(std::uint8_t verbosity) {
     this->d_verbosity = verbosity;
   };
-  boost::uint8_t getMMFFVerbosity() { return this->d_verbosity; };
+  std::uint8_t getMMFFVerbosity() { return this->d_verbosity; };
   void setMMFFOStream(std::ostream *oStream) { this->d_oStream = oStream; };
   std::ostream &getMMFFOStream() { return *(this->d_oStream); };
   bool isValid() { return d_valid; };
@@ -168,9 +168,9 @@ class RDKIT_FORCEFIELDHELPERS_EXPORT MMFFMolProperties {
   bool d_vdWTerm;
   bool d_eleTerm;
   double d_dielConst;          //!< the dielectric constant
-  boost::uint8_t d_dielModel;  //!< the dielectric model (1 = constant, 2 =
+  std::uint8_t d_dielModel;  //!< the dielectric model (1 = constant, 2 =
   // distance-dependent)
-  boost::uint8_t d_verbosity;
+  std::uint8_t d_verbosity;
   std::ostream *d_oStream;
   std::vector<MMFFAtomPropertiesPtr> d_MMFFAtomPropertiesPtrVect;
 };

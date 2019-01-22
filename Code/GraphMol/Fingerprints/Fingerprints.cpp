@@ -20,7 +20,7 @@
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/random.hpp>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 #include <RDGeneral/BoostEndInclude.h>
 #include <limits.h>
 #include <RDGeneral/hash/hash.hpp>
@@ -41,13 +41,13 @@ namespace detail {}  // namespace detail
 }  // namespace Fingerprints
 namespace {
 /*
-boost::uint32_t hashBond(const Bond *bnd,const std::vector<boost::uint32_t>
+std::uint32_t hashBond(const Bond *bnd,const std::vector<std::uint32_t>
 &atomInvariants,
-              const std::vector<boost::uint32_t> &atomDegrees,boost::uint32_t
+              const std::vector<std::uint32_t> &atomDegrees,std::uint32_t
 bondDegree,
               bool useBondOrder){
 PRECONDITION(bnd,"bad bond");
-boost::uint32_t res;
+std::uint32_t res;
 if(useBondOrder) {
 if(bnd->getIsAromatic()){
   res = Bond::AROMATIC;
@@ -57,10 +57,10 @@ if(bnd->getIsAromatic()){
 } else {
 res = 1;
 }
-boost::uint32_t iv1=atomInvariants[bnd->getBeginAtomIdx()];
-boost::uint32_t iv2=atomInvariants[bnd->getEndAtomIdx()];
-boost::uint32_t deg1=atomDegrees[bnd->getBeginAtomIdx()];
-boost::uint32_t deg2=atomDegrees[bnd->getEndAtomIdx()];
+std::uint32_t iv1=atomInvariants[bnd->getBeginAtomIdx()];
+std::uint32_t iv2=atomInvariants[bnd->getEndAtomIdx()];
+std::uint32_t deg1=atomDegrees[bnd->getBeginAtomIdx()];
+std::uint32_t deg2=atomDegrees[bnd->getEndAtomIdx()];
 
 if(iv1>iv2){
 std::swap(iv1,iv2);
@@ -79,12 +79,12 @@ res = (res%8) | (iv1%128)<<3 | (iv2%128)<<10 | (deg1%8)<<17 | (deg2%8)<<20 |
 return res;
 }
 
-boost::uint32_t canonicalPathHash(const PATH_TYPE &path,
+std::uint32_t canonicalPathHash(const PATH_TYPE &path,
                        const ROMol &mol,
                        const std::vector<const Bond *> &bondCache,
-                       const std::vector<boost::uint32_t> &bondHashes){
+                       const std::vector<std::uint32_t> &bondHashes){
 std::deque< std::pair<unsigned int,boost::dynamic_bitset<> > > stack;
-boost::uint32_t best;
+std::uint32_t best;
 //std::cerr<<" hash: ";
 //std::copy(path.begin(),path.end(),std::ostream_iterator<int>(std::cerr,", "));
 
@@ -111,10 +111,10 @@ if(i==0){
 }
 //std::cerr<<std::endl;
 
-boost::uint32_t res=best;
+std::uint32_t res=best;
 //std::cerr<<"  best: "<<best<<std::endl;
 if(path.size()==1) return res;
-best = std::numeric_limits<boost::uint32_t>::max();
+best = std::numeric_limits<std::uint32_t>::max();
 std::deque< std::pair<unsigned int,boost::dynamic_bitset<> > > newStack;
 while(!stack.empty()){
 // assumption: each element of the stack corresponds to
@@ -162,7 +162,7 @@ if(stack.empty()){
   //std::cerr<<" nres: "<<res<<std::endl;
   //stack=newStack;
   std::swap(stack,newStack);
-  best = std::numeric_limits<boost::uint32_t>::max();
+  best = std::numeric_limits<std::uint32_t>::max();
   newStack.clear();
 }
 }
@@ -178,10 +178,10 @@ ExplicitBitVect *RDKFingerprintMol(
     const ROMol &mol, unsigned int minPath, unsigned int maxPath,
     unsigned int fpSize, unsigned int nBitsPerHash, bool useHs,
     double tgtDensity, unsigned int minSize, bool branchedPaths,
-    bool useBondOrder, std::vector<boost::uint32_t> *atomInvariants,
-    const std::vector<boost::uint32_t> *fromAtoms,
-    std::vector<std::vector<boost::uint32_t>> *atomBits,
-    std::map<boost::uint32_t, std::vector<std::vector<int>>> *bitInfo) {
+    bool useBondOrder, std::vector<std::uint32_t> *atomInvariants,
+    const std::vector<std::uint32_t> *fromAtoms,
+    std::vector<std::vector<std::uint32_t>> *atomBits,
+    std::map<std::uint32_t, std::vector<std::vector<int>>> *bitInfo) {
   PRECONDITION(minPath != 0, "minPath==0");
   PRECONDITION(maxPath >= minPath, "maxPath<minPath");
   PRECONDITION(fpSize != 0, "fpSize==0");
@@ -195,7 +195,7 @@ ExplicitBitVect *RDKFingerprintMol(
   // The standard parameters (used to create boost::mt19937)
   // result in an RNG that's much too computationally intensive
   // to seed.
-  typedef boost::random::mersenne_twister<boost::uint32_t, 32, 4, 2, 31,
+  typedef boost::random::mersenne_twister<std::uint32_t, 32, 4, 2, 31,
                                           0x9908b0df, 11, 7, 0x9d2c5680, 15,
                                           0xefc60000, 18, 3346425566U>
       rng_type;
@@ -213,7 +213,7 @@ ExplicitBitVect *RDKFingerprintMol(
   source_type randomSource(generator, dist);
 
   // build default atom invariants if need be:
-  std::vector<boost::uint32_t> lAtomInvariants;
+  std::vector<std::uint32_t> lAtomInvariants;
   if (!atomInvariants) {
     RDKitFPUtils::buildDefaultRDKitFingerprintAtomInvariants(mol,
                                                              lAtomInvariants);
@@ -247,7 +247,7 @@ ExplicitBitVect *RDKFingerprintMol(
 #endif
 
 #ifdef REPORT_FP_STATS
-  std::map<boost::uint32_t, std::set<std::string>> bitSmiles;
+  std::map<std::uint32_t, std::set<std::string>> bitSmiles;
 #endif
   boost::dynamic_bitset<> atomsInPath(mol.getNumAtoms());
   for (INT_PATH_LIST_MAP_CI paths = allPaths.begin(); paths != allPaths.end();
@@ -442,7 +442,7 @@ ExplicitBitVect *LayeredFingerprintMol(
     const ROMol &mol, unsigned int layerFlags, unsigned int minPath,
     unsigned int maxPath, unsigned int fpSize,
     std::vector<unsigned int> *atomCounts, ExplicitBitVect *setOnlyBits,
-    bool branchedPaths, const std::vector<boost::uint32_t> *fromAtoms) {
+    bool branchedPaths, const std::vector<std::uint32_t> *fromAtoms) {
   PRECONDITION(minPath != 0, "minPath==0");
   PRECONDITION(maxPath >= minPath, "maxPath<minPath");
   PRECONDITION(fpSize != 0, "fpSize==0");
@@ -497,7 +497,7 @@ ExplicitBitVect *LayeredFingerprintMol(
       allPaths = findAllPathsOfLengthsMtoN(mol, minPath, maxPath, false);
     }
   } else {
-    BOOST_FOREACH (boost::uint32_t aidx, *fromAtoms) {
+    BOOST_FOREACH (std::uint32_t aidx, *fromAtoms) {
       INT_PATH_LIST_MAP tPaths;
       if (branchedPaths) {
         tPaths =
@@ -705,8 +705,8 @@ ExplicitBitVect *LayeredFingerprintMol(
 SparseIntVect<boost::uint64_t> *getUnfoldedRDKFingerprintMol(
     const ROMol &mol, unsigned int minPath, unsigned int maxPath, bool useHs,
     bool branchedPaths, bool useBondOrder,
-    std::vector<boost::uint32_t> *atomInvariants,
-    const std::vector<boost::uint32_t> *fromAtoms,
+    std::vector<std::uint32_t> *atomInvariants,
+    const std::vector<std::uint32_t> *fromAtoms,
     std::vector<std::vector<boost::uint64_t>> *atomBits,
     std::map<boost::uint64_t, std::vector<std::vector<int>>> *bitInfo) {
   PRECONDITION(minPath != 0, "minPath==0");
@@ -717,7 +717,7 @@ SparseIntVect<boost::uint64_t> *getUnfoldedRDKFingerprintMol(
                "bad atomBits size");
 
   // build default atom invariants if need be:
-  std::vector<boost::uint32_t> lAtomInvariants;
+  std::vector<std::uint32_t> lAtomInvariants;
   if (!atomInvariants) {
     RDKitFPUtils::buildDefaultRDKitFingerprintAtomInvariants(mol,
                                                              lAtomInvariants);

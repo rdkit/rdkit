@@ -40,7 +40,7 @@
 #include <vector>
 
 #include <RDGeneral/BoostStartInclude.h>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 #include <boost/any.hpp>
 #include <boost/utility.hpp>
 #include <boost/lexical_cast.hpp>
