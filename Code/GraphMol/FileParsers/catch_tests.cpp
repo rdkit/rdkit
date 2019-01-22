@@ -149,7 +149,8 @@ TEST_CASE("Github #2225: failure round-tripping mol block with Q atoms",
     int confId = -1;
     bool kekulize = true;
     bool forceV3000 = true;
-    auto outBlock = MolToMolBlock(*mol,includeStereo,confId,kekulize,forceV3000);
+    auto outBlock =
+        MolToMolBlock(*mol, includeStereo, confId, kekulize, forceV3000);
     REQUIRE(outBlock.find(" Q ") != std::string::npos);
     REQUIRE(outBlock.find(" ALS ") == std::string::npos);
     std::unique_ptr<RWMol> mol2(MolBlockToMol(outBlock));
@@ -157,7 +158,8 @@ TEST_CASE("Github #2225: failure round-tripping mol block with Q atoms",
     REQUIRE(mol2->getNumAtoms() == 7);
     REQUIRE(!mol2->getAtomWithIdx(0)->hasQuery());
     REQUIRE(mol2->getAtomWithIdx(6)->hasQuery());
-    auto outBlock2 = MolToMolBlock(*mol2,includeStereo,confId,kekulize,forceV3000);
+    auto outBlock2 =
+        MolToMolBlock(*mol2, includeStereo, confId, kekulize, forceV3000);
     REQUIRE(outBlock2.find(" Q ") != std::string::npos);
     REQUIRE(outBlock2.find(" ALS ") == std::string::npos);
   }
@@ -169,12 +171,48 @@ TEST_CASE("Github #2225: failure round-tripping mol block with Q atoms",
     int confId = -1;
     bool kekulize = true;
     bool forceV3000 = true;
-    auto outBlock = MolToMolBlock(*mol,includeStereo,confId,kekulize,forceV3000);
+    auto outBlock =
+        MolToMolBlock(*mol, includeStereo, confId, kekulize, forceV3000);
     REQUIRE(outBlock.find(" Q ") == std::string::npos);
     REQUIRE(outBlock.find(" [O,N] ") != std::string::npos);
     std::unique_ptr<RWMol> mol2(MolBlockToMol(outBlock));
     REQUIRE(mol2);
     auto smarts = MolToSmarts(*mol2);
     REQUIRE(smarts == "[#6][#8,#7]");
+  }
+}
+TEST_CASE(
+    "Github #2229: problem round-tripping mol files with bond topology info",
+    "[bug,writer]") {
+  std::string rdbase = getenv("RDBASE");
+  std::string fName =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/github2229_1.mol";
+  std::unique_ptr<RWMol> mol(MolFileToMol(fName));
+  REQUIRE(mol);
+  REQUIRE(mol->getNumBonds() == 9);
+  REQUIRE(!mol->getBondWithIdx(0)->hasQuery());
+  REQUIRE(mol->getBondWithIdx(7)->hasQuery());
+  SECTION("basics") {
+    auto outBlock = MolToMolBlock(*mol);
+    REQUIRE(outBlock.find(" 7  8  1  0  0  2") != std::string::npos);
+    std::unique_ptr<RWMol> mol2(MolBlockToMol(outBlock));
+    REQUIRE(mol2);
+    REQUIRE(mol2->getNumBonds() == 9);
+    REQUIRE(!mol2->getBondWithIdx(0)->hasQuery());
+    REQUIRE(mol2->getBondWithIdx(7)->hasQuery());
+  }
+  SECTION("basics with v3k") {
+    bool includeStereo = true;
+    int confId = -1;
+    bool kekulize = true;
+    bool forceV3000 = true;
+    auto outBlock =
+        MolToMolBlock(*mol, includeStereo, confId, kekulize, forceV3000);
+    REQUIRE(outBlock.find("1 7 8 TOPO=2") != std::string::npos);
+    std::unique_ptr<RWMol> mol2(MolBlockToMol(outBlock));
+    REQUIRE(mol2);
+    REQUIRE(mol2->getNumBonds() == 9);
+    REQUIRE(!mol2->getBondWithIdx(0)->hasQuery());
+    REQUIRE(mol2->getBondWithIdx(7)->hasQuery());
   }
 }
