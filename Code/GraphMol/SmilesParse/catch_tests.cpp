@@ -6,6 +6,7 @@
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/SmilesParse/SmartsWrite.h>
 
 using namespace RDKit;
 
@@ -131,6 +132,13 @@ TEST_CASE(
       REQUIRE(static_cast<QueryAtom *>(mol->getAtomWithIdx(0))
                   ->getQuery()
                   ->getDescription() == "AtomType");
+    }
+  }
+  SECTION("#2237") {
+    for (const auto sma : smarts) {
+      std::unique_ptr<ROMol> mol(SmartsToMol(sma));
+      REQUIRE(mol);
+      REQUIRE(MolToSmarts(*mol) == sma);
     }
   }
 }
