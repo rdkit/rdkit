@@ -3,6 +3,7 @@
 #include "catch.hpp"
 
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/QueryAtom.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 
@@ -109,4 +110,27 @@ TEST_CASE("Smarts literals", "[Smarts]") {
   REQUIRE(!fail1);
   auto mol2 = "c1cccn1"_smarts;
   REQUIRE(mol2);
+}
+
+TEST_CASE(
+    "github #2197 and #2237: handling of aromatic main group atoms in SMARTS",
+    "[Smarts]") {
+  std::vector<std::string> smarts = {
+      "[si]1ccccc1",
+      "[as]1ccccc1",
+      "[se]1ccccc1",
+      "[te]1ccccc1",
+
+  };
+  SECTION("#2197") {
+    for (const auto sma : smarts) {
+      std::unique_ptr<ROMol> mol(SmartsToMol(sma));
+      REQUIRE(mol);
+      CHECK(6 == mol->getNumAtoms());
+      REQUIRE(mol->getAtomWithIdx(0)->hasQuery());
+      REQUIRE(static_cast<QueryAtom *>(mol->getAtomWithIdx(0))
+                  ->getQuery()
+                  ->getDescription() == "AtomType");
+    }
+  }
 }
