@@ -49,6 +49,9 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
   RWMol(const RWMol &other) : ROMol(other){};
   RWMol &operator=(const RWMol &);
 
+  //! construct a molecule from a pickle string
+  RWMol(const std::string &binStr) : ROMol(binStr){}
+
   //! insert the atoms and bonds from \c other into this molecule
   void insertMol(const ROMol &other);
 
