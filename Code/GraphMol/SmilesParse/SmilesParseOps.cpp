@@ -424,6 +424,36 @@ Bond::BondType GetUnspecifiedBondType(const RWMol *mol, const Atom *atom1,
   }
   return res;
 }
+void SetUnspecifiedBondTypes(RWMol *mol) {
+  PRECONDITION(mol, "no molecule");
+  for (auto bond : mol->bonds()) {
+    if (bond->hasProp(RDKit::common_properties::_unspecifiedOrder)) {
+      bond->setBondType(GetUnspecifiedBondType(mol, bond->getBeginAtom(),
+                                               bond->getEndAtom()));
+    }
+  }
+}
+
+namespace {
+void swapBondDirIfNeeded(Bond *bond1, const Bond *bond2) {
+  if (bond1->getBondDir() == Bond::NONE && bond2->getBondDir() != Bond::NONE) {
+    bond1->setBondDir(bond2->getBondDir());
+    if (bond1->getBeginAtom() != bond2->getBeginAtom()) {
+      switch (bond1->getBondDir()) {
+        case Bond::ENDDOWNRIGHT:
+          bond1->setBondDir(Bond::ENDUPRIGHT);
+          break;
+        case Bond::ENDUPRIGHT:
+          bond1->setBondDir(Bond::ENDDOWNRIGHT);
+          break;
+        default:
+          break;
+      }
+    }
+  }
+}
+}  // namespace
+
 void CloseMolRings(RWMol *mol, bool toleratePartials) {
   //  Here's what we want to do here:
   //    loop through the molecule's atom bookmarks
@@ -472,9 +502,9 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
                           "Missing bond bookmark");
 
           // now use the info from the partial bond:
-          // The partial bond itself will have a proper order and directionality
-          // (with a minor caveat documented below) and will have its beginning
-          // atom set already:
+          // The partial bond itself will have a proper order and
+          // directionality (with a minor caveat documented below) and will
+          // have its beginning atom set already:
           RWMol::BOND_PTR_LIST bonds =
               mol->getAllBondsWithBookmark(bookmarkIt->first);
           auto bondIt = bonds.begin();
@@ -498,20 +528,31 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
           Bond *matchedBond;
 
           // figure out which (if either) bond has a specified type, we'll
-          // keep that one.  We also need to update the end atom index to match
-          // FIX: daylight barfs when you give it multiple specs for the closure
+          // keep that one.  We also need to update the end atom index to
+          // match FIX: daylight barfs when you give it multiple specs for the
+          // closure
           //   bond, we'll just take the first one and ignore others
           //   NOTE: we used to do this the other way (take the last
           //   specification),
           //   but that turned out to be troublesome in odd cases like
           //   C1CC11CC1.
+          std::cerr << ">-------------" << std::endl;
+          std::cerr << atom1->getIdx() << "-" << atom2->getIdx() << ": "
+                    << bond1->getBondType() << "("
+                    << bond1->hasProp(common_properties::_unspecifiedOrder)
+                    << "):" << bond1->getBondDir() << " "
+                    << bond2->getBondType() << "("
+                    << bond2->hasProp(common_properties::_unspecifiedOrder)
+                    << "):" << bond2->getBondDir() << std::endl;
           if (!bond1->hasProp(common_properties::_unspecifiedOrder)) {
             matchedBond = bond1;
             matchedBond->setEndAtomIdx(atom2->getIdx());
+            swapBondDirIfNeeded(bond1, bond2);
             delete bond2;
           } else {
             matchedBond = bond2;
             matchedBond->setEndAtomIdx(atom1->getIdx());
+            swapBondDirIfNeeded(bond2, bond1);
             delete bond1;
           }
           if (matchedBond->getBondType() == Bond::UNSPECIFIED &&
@@ -523,7 +564,8 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
           if (matchedBond->getBondType() == Bond::AROMATIC) {
             matchedBond->setIsAromatic(true);
           }
-
+          std::cerr << "     " << matchedBond->getBondType() << std::endl;
+          std::cerr << "<-------------" << std::endl;
 #if 0
             //
             //  In cases like this: Cl\C=C1.F/1, we need to
