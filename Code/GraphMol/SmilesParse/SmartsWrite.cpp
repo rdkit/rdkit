@@ -272,6 +272,7 @@ std::string getAtomSmartsSimple(const QueryAtom *qatom,
     std::string symbol = PeriodicTable::getTable()->getElementSymbol(atNum);
     if (isAromatic) symbol[0] += ('a' - 'A');
     res << symbol;
+    if (!SmilesWrite::inOrganicSubset(atNum)) needParen = true;
   } else {
     BOOST_LOG(rdWarningLog)
         << "Cannot write SMARTS for query type : " << descrip

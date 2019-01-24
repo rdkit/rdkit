@@ -305,6 +305,10 @@ p			{  yylval->ival = 15;  return AROMATIC_ATOM_TOKEN;  }
 
 s			{  yylval->ival = 16;  return AROMATIC_ATOM_TOKEN;  }
 
+<IN_ATOM_STATE>si	{  yylval->ival = 14;  return AROMATIC_ATOM_TOKEN;  }
+
+<IN_ATOM_STATE>as	{  yylval->ival = 33;  return AROMATIC_ATOM_TOKEN;  }
+
 <IN_ATOM_STATE>se	{  yylval->ival = 34;  return AROMATIC_ATOM_TOKEN;  }
 
 <IN_ATOM_STATE>te	{  yylval->ival = 52;  return AROMATIC_ATOM_TOKEN;  }
