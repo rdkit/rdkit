@@ -441,10 +441,18 @@ class TestCase(unittest.TestCase):
     m = Chem.MolFromSmiles('C1=CN=CC=C1')
     pkl = cPickle.dumps(m)
     m2 = cPickle.loads(pkl)
+    self.assertTrue(type(m2) == Chem.Mol)
     smi1 = Chem.MolToSmiles(m)
     smi2 = Chem.MolToSmiles(m2)
     self.assertTrue(smi1 == smi2)
 
+    pkl = cPickle.dumps(Chem.RWMol(m))
+    m2 = cPickle.loads(pkl)
+    self.assertTrue(type(m2) == Chem.RWMol)
+    smi1 = Chem.MolToSmiles(m)
+    smi2 = Chem.MolToSmiles(m2)
+    self.assertTrue(smi1 == smi2)
+    
   def test16Props(self):
     m = Chem.MolFromSmiles('C1=CN=CC=C1')
     self.assertTrue(not m.HasProp('prop1'))
