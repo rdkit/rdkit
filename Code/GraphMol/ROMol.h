@@ -670,8 +670,9 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   RingInfo *dp_ringInfo;
   CONF_SPTR_LIST d_confs;
   std::vector<SGroup> d_sgroups;
-  friend std::vector<SGroup> &getSGroups(ROMol &);
-  friend const std::vector<SGroup> &getSGroups(const ROMol &);
+  friend RDKIT_GRAPHMOL_EXPORT std::vector<SGroup> &getSGroups(ROMol &);
+  friend RDKIT_GRAPHMOL_EXPORT const std::vector<SGroup> &getSGroups(
+      const ROMol &);
   void clearSGroups() { d_sgroups.clear(); }
   std::vector<StereoGroup> d_stereo_groups;
 

@@ -148,28 +148,28 @@ const std::vector<std::string> sGroupTypes = {
 const std::vector<std::string> sGroupSubtypes = {"ALT", "RAN", "BLO"};
 const std::vector<std::string> sGroupConnectTypes = {"HH", "HT", "EU"};
 
-bool isValidType(const std::string &type);
+RDKIT_GRAPHMOL_EXPORT bool isValidType(const std::string &type);
 
-bool isValidSubType(const std::string &type);
+RDKIT_GRAPHMOL_EXPORT bool isValidSubType(const std::string &type);
 
-bool isValidConnectType(const std::string &type);
+RDKIT_GRAPHMOL_EXPORT bool isValidConnectType(const std::string &type);
 
-bool isSGroupIdFree(const ROMol &mol, unsigned int id);
+RDKIT_GRAPHMOL_EXPORT bool isSGroupIdFree(const ROMol &mol, unsigned int id);
 
 }  // namespace SGroupChecks
 
 //! \name SGroups and molecules
 //@{
 
-std::vector<SGroup> &getSGroups(ROMol &mol);
-const std::vector<SGroup> &getSGroups(const ROMol &mol);
+RDKIT_GRAPHMOL_EXPORT std::vector<SGroup> &getSGroups(ROMol &mol);
+RDKIT_GRAPHMOL_EXPORT const std::vector<SGroup> &getSGroups(const ROMol &mol);
 
 //! Add a new SGroup. A copy is added, so we can be sure that no other
 //! references to the SGroup exist.
 /*!
   \param sgroup - SGroup to be added to the molecule.
 */
-unsigned int addSGroup(ROMol &mol, SGroup sgroup);
+RDKIT_GRAPHMOL_EXPORT unsigned int addSGroup(ROMol &mol, SGroup sgroup);
 //@}
 
 }  // namespace RDKit
