@@ -1,3 +1,14 @@
+//
+//
+//  Copyright (C) 2018-2019 Greg Landrum and T5 Informatics GmbH
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
+
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do
                            // this in one cpp file
 #include "catch.hpp"
@@ -169,4 +180,16 @@ TEST_CASE("Github #2148", "[bug, Smiles, Smarts]") {
       }
     }
   }
+
+  SECTION("Writing SMILES") {
+    auto mol = "C/C=c1/ncc(=C)cc1"_smiles;
+    REQUIRE(mol);
+    REQUIRE(mol->getBondBetweenAtoms(1, 2));
+    CHECK(mol->getBondBetweenAtoms(1, 2)->getBondType() == Bond::DOUBLE);
+    CHECK(mol->getBondBetweenAtoms(1, 2)->getStereo() == Bond::STEREOE);
+    auto smi = MolToSmiles(*mol);
+    CHECK(smi=="C=c1cc/c(=C\\C)nc1");    
+  }
+
+
 }
