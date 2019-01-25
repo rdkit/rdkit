@@ -137,3 +137,16 @@ TEST_CASE("github #2224", "[bug, molops, removeHs, query]"){
   }
 }
 
+TEST_CASE("github #2244", "[bug, molops, stereo]"){
+  SECTION("the original report"){
+    auto mol = "CC=CC=CC"_smiles;
+    REQUIRE(mol);
+    MolOps::findPotentialStereoBonds(*mol,true);
+    CHECK(mol->getBondWithIdx(1)->getStereo()==Bond::STEREOANY);
+    CHECK(mol->getBondWithIdx(3)->getStereo()==Bond::STEREOANY);
+    mol->getBondWithIdx(3)->setStereo(Bond::STEREONONE);
+    MolOps::findPotentialStereoBonds(*mol,true);
+    CHECK(mol->getBondWithIdx(1)->getStereo()==Bond::STEREOANY);
+    CHECK(mol->getBondWithIdx(3)->getStereo()==Bond::STEREOANY);
+  }
+}

@@ -1198,7 +1198,7 @@ void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
         // if the bond is flagged as EITHERDOUBLE, we ignore it:
         if (dblBond->getBondDir() == Bond::EITHERDOUBLE ||
             dblBond->getStereo() == Bond::STEREOANY) {
-          break;
+          continue;
         }
         // proceed only if we either want to clean the stereocode on this bond
         // or if none is set on it yet
