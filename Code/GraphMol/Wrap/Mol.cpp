@@ -658,6 +658,7 @@ struct mol_wrapper {
         "RWMol", rwmolClassDoc.c_str(),
         python::init<const ROMol &>("Construct from a Mol"))
         .def(python::init<>())
+        .def(python::init<const std::string &>())
         .def(python::init<const ROMol &, bool>())
         .def(python::init<const ROMol &, bool, int>())
         .def("__copy__", &generic__copy__<ReadWriteMol>)
@@ -690,7 +691,12 @@ struct mol_wrapper {
              "explicit set on the new bond")
         .def("GetMol", &ReadWriteMol::GetMol,
              "Returns a Mol (a normal molecule)",
-             python::return_value_policy<python::manage_new_object>());
+             python::return_value_policy<python::manage_new_object>())
+
+        // enable pickle support
+        .def_pickle(mol_pickle_suite())
+        ;
+
   };
 };
 }  // end of namespace
