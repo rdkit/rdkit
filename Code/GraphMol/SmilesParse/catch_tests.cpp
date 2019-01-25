@@ -147,7 +147,6 @@ TEST_CASE("Github #2148", "[bug, Smiles, Smarts]") {
   SECTION("SMILES") {
     auto mol = "C(=C\\F)\\4.O=C1C=4CCc2ccccc21"_smiles;
     REQUIRE(mol);
-    mol->debugMol(std::cerr);
     REQUIRE(mol->getBondBetweenAtoms(0, 5));
     CHECK(mol->getBondBetweenAtoms(0, 5)->getBondType() == Bond::DOUBLE);
   }

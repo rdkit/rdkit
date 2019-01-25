@@ -430,6 +430,11 @@ void SetUnspecifiedBondTypes(RWMol *mol) {
     if (bond->hasProp(RDKit::common_properties::_unspecifiedOrder)) {
       bond->setBondType(GetUnspecifiedBondType(mol, bond->getBeginAtom(),
                                                bond->getEndAtom()));
+      if (bond->getBondType() == Bond::AROMATIC) {
+        bond->setIsAromatic(true);
+      } else {
+        bond->setIsAromatic(false);
+      }
     }
   }
 }
@@ -536,14 +541,14 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
           //   specification),
           //   but that turned out to be troublesome in odd cases like
           //   C1CC11CC1.
-          std::cerr << ">-------------" << std::endl;
-          std::cerr << atom1->getIdx() << "-" << atom2->getIdx() << ": "
-                    << bond1->getBondType() << "("
-                    << bond1->hasProp(common_properties::_unspecifiedOrder)
-                    << "):" << bond1->getBondDir() << " "
-                    << bond2->getBondType() << "("
-                    << bond2->hasProp(common_properties::_unspecifiedOrder)
-                    << "):" << bond2->getBondDir() << std::endl;
+          // std::cerr << ">-------------" << std::endl;
+          // std::cerr << atom1->getIdx() << "-" << atom2->getIdx() << ": "
+          //           << bond1->getBondType() << "("
+          //           << bond1->hasProp(common_properties::_unspecifiedOrder)
+          //           << "):" << bond1->getBondDir() << " "
+          //           << bond2->getBondType() << "("
+          //           << bond2->hasProp(common_properties::_unspecifiedOrder)
+          //           << "):" << bond2->getBondDir() << std::endl;
           if (!bond1->hasProp(common_properties::_unspecifiedOrder)) {
             matchedBond = bond1;
             matchedBond->setEndAtomIdx(atom2->getIdx());
@@ -564,8 +569,12 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
           if (matchedBond->getBondType() == Bond::AROMATIC) {
             matchedBond->setIsAromatic(true);
           }
-          std::cerr << "     " << matchedBond->getBondType() << std::endl;
-          std::cerr << "<-------------" << std::endl;
+
+          // std::cerr << "     " <<
+          // matchedBond->getBeginAtomIdx()<<"-"<<matchedBond->getEndAtomIdx()<<":
+          // "<<matchedBond->getBondType() << " a:
+          // "<<matchedBond->getIsAromatic()<<std::endl; std::cerr <<
+          // "<-------------" << std::endl;
 #if 0
             //
             //  In cases like this: Cl\C=C1.F/1, we need to
