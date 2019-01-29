@@ -228,7 +228,7 @@ ForceFields::ForceField *constructForceField(
 
   // finally the contribution from the fourth dimension if we need to
   if ((field->dimension() == 4) && (weightFourthDim > 1.e-8)) {
-    for (unsigned int i = 1; i < N; i++) {
+    for (unsigned int i = 0; i < N; i++) {
       auto *contrib = new FourthDimContrib(field, i, weightFourthDim);
       field->contribs().push_back(ForceFields::ContribPtr(contrib));
     }
