@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2018 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2019 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-// define DEBUG_EMBEDDING 1
+//#define DEBUG_EMBEDDING 1
 #include "Embedder.h"
 #include <DistGeom/BoundsMatrix.h>
 #include <DistGeom/DistGeomUtils.h>
@@ -306,6 +306,19 @@ bool generateInitialCoords(RDGeom::PointPtrVect *positions,
       boxSize = -1 * embedParams.boxSizeMult;
     }
     gotCoords = DistGeom::computeRandomCoords(*positions, boxSize, *rng);
+    if (embedParams.useRandomCoords && embedParams.coordMap != nullptr) {
+      for (const auto v : *embedParams.coordMap) {
+        auto p = positions->at(v.first);
+        for (unsigned int ci = 0; ci < v.second.dimension(); ++ci) {
+          (*p)[ci] = v.second[ci];
+        }
+        // zero out any higher dimensional components:
+        for (unsigned int ci = v.second.dimension(); ci < p->dimension();
+             ++ci) {
+          (*p)[ci] = 0.0;
+        }
+      }
+    }
   }
   return gotCoords;
 }
@@ -313,9 +326,20 @@ bool firstMinimization(RDGeom::PointPtrVect *positions,
                        const detail::EmbedArgs &eargs,
                        const EmbedParameters &embedParams) {
   bool gotCoords = true;
+  boost::dynamic_bitset<> fixedPts(positions->size());
+  if (embedParams.useRandomCoords && embedParams.coordMap != nullptr) {
+    for (const auto v : *embedParams.coordMap) {
+      fixedPts.set(v.first);
+    }
+  }
   std::unique_ptr<ForceFields::ForceField> field(DistGeom::constructForceField(
       *eargs.mmat, *positions, *eargs.chiralCenters, 1.0, 0.1, nullptr,
-      embedParams.basinThresh));
+      embedParams.basinThresh, &fixedPts));
+  if (embedParams.useRandomCoords && embedParams.coordMap != nullptr) {
+    for (const auto v : *embedParams.coordMap) {
+      field->fixedPoints().push_back(v.first);
+    }
+  }
   unsigned int nPasses = 0;
   field->initialize();
   if (field->calcEnergy() > ERROR_TOL) {
@@ -329,7 +353,7 @@ bool firstMinimization(RDGeom::PointPtrVect *positions,
   double local_e = field->calcEnergy(&e_contribs);
 
 #ifdef DEBUG_EMBEDDING
-  std::cerr << " Energy : " << local_e / positions.size() << " "
+  std::cerr << " Energy : " << local_e / positions->size() << " "
             << *(std::max_element(e_contribs.begin(), e_contribs.end()))
             << std::endl;
 #endif
@@ -364,7 +388,7 @@ bool checkTetrahedralCenters(const RDGeom::PointPtrVect *positions,
     if (!_volumeTest(tetSet, *positions) ||
         !_centerInVolume(tetSet, *positions, TETRAHEDRAL_CENTERINVOLUME_TOL)) {
 #ifdef DEBUG_EMBEDDING
-      std::cerr << " fail2! (" << tetSet->d_idx0 << ") iter: " << iter
+      std::cerr << " fail2! (" << tetSet->d_idx0 << ") iter: "  //<< iter
                 << " vol: " << _volumeTest(tetSet, *positions, true)
                 << " center: "
                 << _centerInVolume(tetSet, *positions,
@@ -390,8 +414,8 @@ bool checkChiralCenters(const RDGeom::PointPtrVect *positions,
     if ((lb > 0 && vol < lb && (lb - vol) / lb > .2) ||
         (ub < 0 && vol > ub && (vol - ub) / ub > .2)) {
 #ifdef DEBUG_EMBEDDING
-      std::cerr << " fail! (" << chiralSet->d_idx0 << ") iter: " << iter << " "
-                << vol << " " << lb << "-" << ub << std::endl;
+      std::cerr << " fail! (" << chiralSet->d_idx0 << ") iter: "
+                << " " << vol << " " << lb << "-" << ub << std::endl;
 #endif
       return false;
     }
@@ -409,6 +433,12 @@ bool minimizeFourthDimension(RDGeom::PointPtrVect *positions,
   std::unique_ptr<ForceFields::ForceField> field2(DistGeom::constructForceField(
       *eargs.mmat, *positions, *eargs.chiralCenters, 0.2, 1.0, nullptr,
       embedParams.basinThresh));
+  if (embedParams.useRandomCoords && embedParams.coordMap != nullptr) {
+    for (const auto v : *embedParams.coordMap) {
+      field2->fixedPoints().push_back(v.first);
+    }
+  }
+
   field2->initialize();
   // std::cerr<<"FIELD2 E: "<<field2->calcEnergy()<<std::endl;
   if (field2->calcEnergy() > ERROR_TOL) {
@@ -440,11 +470,16 @@ bool minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
   // create the force field
   std::unique_ptr<ForceFields::ForceField> field;
   if (embedParams.useBasicKnowledge) {  // ETKDG or KDG
-    field.reset(DistGeom::construct3DForceField(
-        *eargs.mmat, positions3D, *eargs.etkdgDetails));
+    field.reset(DistGeom::construct3DForceField(*eargs.mmat, positions3D,
+                                                *eargs.etkdgDetails));
   } else {  // plain ETDG
-    field.reset(DistGeom::constructPlain3DForceField(
-        *eargs.mmat, positions3D, *eargs.etkdgDetails));
+    field.reset(DistGeom::constructPlain3DForceField(*eargs.mmat, positions3D,
+                                                     *eargs.etkdgDetails));
+  }
+  if (embedParams.useRandomCoords && embedParams.coordMap != nullptr) {
+    for (const auto v : *embedParams.coordMap) {
+      field->fixedPoints().push_back(v.first);
+    }
   }
 
   // minimize!
@@ -464,6 +499,12 @@ bool minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
         DistGeom::construct3DImproperForceField(
             *eargs.mmat, positions3D, eargs.etkdgDetails->improperAtoms,
             eargs.etkdgDetails->atomNums));
+    if (embedParams.useRandomCoords && embedParams.coordMap != nullptr) {
+      for (const auto v : *embedParams.coordMap) {
+        field2->fixedPoints().push_back(v.first);
+      }
+    }
+
     field2->initialize();
     // check if the energy is low enough
     double planarityTolerance = 0.7;
@@ -508,7 +549,7 @@ bool finalChiralChecks(RDGeom::PointPtrVect *positions,
   if (atomsToCheck.size() > 0) {
     if (!_boundsFulfilled(atomsToCheck, *eargs.mmat, *positions)) {
 #ifdef DEBUG_EMBEDDING
-      std::cerr << " fail3a! (" << atomsToCheck[0] << ") iter: " << iter
+      std::cerr << " fail3a! (" << atomsToCheck[0] << ") iter: "  //<< iter
                 << std::endl;
 #endif
       return false;
@@ -521,7 +562,7 @@ bool finalChiralChecks(RDGeom::PointPtrVect *positions,
     // by the other four points. That is also a fail.
     if (!_centerInVolume(chiralSet, *positions)) {
 #ifdef DEBUG_EMBEDDING
-      std::cerr << " fail3b! (" << chiralSet->d_idx0 << ") iter: " << iter
+      std::cerr << " fail3b! (" << chiralSet->d_idx0 << ") iter: "  //<< iter
                 << std::endl;
 #endif
       return false;

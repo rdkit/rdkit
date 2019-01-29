@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2019 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -182,7 +181,8 @@ bool computeRandomCoords(RDGeom::PointPtrVect &positions, double boxSize,
 ForceFields::ForceField *constructForceField(
     const BoundsMatrix &mmat, RDGeom::PointPtrVect &positions,
     const VECT_CHIRALSET &csets, double weightChiral, double weightFourthDim,
-    std::map<std::pair<int, int>, double> *extraWeights, double basinSizeTol) {
+    std::map<std::pair<int, int>, double> *extraWeights, double basinSizeTol,
+    boost::dynamic_bitset<> *fixedPts) {
   unsigned int N = mmat.numRows();
   CHECK_INVARIANT(N == positions.size(), "");
   auto *field = new ForceFields::ForceField(positions[0]->dimension());
@@ -192,6 +192,9 @@ ForceFields::ForceField *constructForceField(
 
   for (unsigned int i = 1; i < N; i++) {
     for (unsigned int j = 0; j < i; j++) {
+      if (fixedPts != nullptr && (*fixedPts)[i] && (*fixedPts)[j]) {
+        continue;
+      }
       double w = 1.0;
       double l = mmat.getLowerBound(i, j);
       double u = mmat.getUpperBound(i, j);
@@ -238,7 +241,9 @@ ForceFields::ForceField *construct3DForceField(
     const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails) {
   unsigned int N = mmat.numRows();
   CHECK_INVARIANT(N == positions.size(), "");
-  CHECK_INVARIANT(etkdgDetails.expTorsionAtoms.size() == etkdgDetails.expTorsionAngles.size(), "");
+  CHECK_INVARIANT(etkdgDetails.expTorsionAtoms.size() ==
+                      etkdgDetails.expTorsionAngles.size(),
+                  "");
   auto *field = new ForceFields::ForceField(positions[0]->dimension());
   for (unsigned int i = 0; i < N; ++i) {
     field->positions().push_back(positions[i]);
@@ -291,8 +296,8 @@ ForceFields::ForceField *construct3DForceField(
       }
       auto *contrib = new ForceFields::UFF::InversionContrib(
           field, improperAtom[n[0]], improperAtom[n[1]], improperAtom[n[2]],
-          improperAtom[n[3]], improperAtom[4], static_cast<bool>(improperAtom[5]),
-          oobForceScalingFactor);
+          improperAtom[n[3]], improperAtom[4],
+          static_cast<bool>(improperAtom[5]), oobForceScalingFactor);
       field->contribs().push_back(ForceFields::ContribPtr(contrib));
     }
   }
@@ -360,7 +365,9 @@ ForceFields::ForceField *constructPlain3DForceField(
     const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails) {
   unsigned int N = mmat.numRows();
   CHECK_INVARIANT(N == positions.size(), "");
-  CHECK_INVARIANT(etkdgDetails.expTorsionAtoms.size() == etkdgDetails.expTorsionAngles.size(), "");
+  CHECK_INVARIANT(etkdgDetails.expTorsionAtoms.size() ==
+                      etkdgDetails.expTorsionAngles.size(),
+                  "");
   auto *field = new ForceFields::ForceField(positions[0]->dimension());
   for (unsigned int i = 0; i < N; ++i) {
     field->positions().push_back(positions[i]);
@@ -438,7 +445,7 @@ ForceFields::ForceField *constructPlain3DForceField(
 
 ForceFields::ForceField *construct3DImproperForceField(
     const BoundsMatrix &mmat, RDGeom::Point3DPtrVect &positions,
-    const std::vector<std::vector<int> > &improperAtoms,
+    const std::vector<std::vector<int>> &improperAtoms,
     const std::vector<int> &atomNums) {
   (void)atomNums;
   unsigned int N = mmat.numRows();
@@ -475,13 +482,13 @@ ForceFields::ForceField *construct3DImproperForceField(
       }
       auto *contrib = new ForceFields::UFF::InversionContrib(
           field, improperAtom[n[0]], improperAtom[n[1]], improperAtom[n[2]],
-          improperAtom[n[3]], improperAtom[4], static_cast<bool>(improperAtom[5]),
-          oobForceScalingFactor);
+          improperAtom[n[3]], improperAtom[4],
+          static_cast<bool>(improperAtom[5]), oobForceScalingFactor);
       field->contribs().push_back(ForceFields::ContribPtr(contrib));
     }
   }
 
   return field;
 
-} // construct3DImproperForceField
-}
+}  // construct3DImproperForceField
+}  // namespace DistGeom
