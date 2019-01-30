@@ -6,6 +6,11 @@
 this rdkit-discuss post to learn what your options are if you need to keep
 using Python 2: https://www.mail-archive.com/rdkit-discuss@lists.sourceforge.net/msg08354.html
 
+## Backwards incompatible changes
+- The fix for github #2245 means that the default behavior of the MaxMinPicker is now truly random. 
+  If you would like to reproduce the previous behavior, provide a seed value of 42.
+
+
 # Release_2018.09.1
 (Changes relative to Release_2018.03.1)
 
