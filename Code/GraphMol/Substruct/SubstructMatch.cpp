@@ -48,8 +48,7 @@ typedef struct {
 } ResSubstructMatchHelperArgs_;
 
 void MatchSubqueries(const ROMol &mol, QueryAtom::QUERYATOM_QUERY *q,
-                     bool useChirality, SUBQUERY_MAP &subqueryMap,
-                     bool useQueryQueryMatches,
+                     const SubstructMatchParameters &params, SUBQUERY_MAP &subqueryMap,
                      std::vector<RecursiveStructureQuery *> &locked);
 
 bool matchCompare(const std::pair<int, int> &a, const std::pair<int, int> &b);
@@ -210,15 +209,13 @@ class MolMatchFinalCheckFunctor {
 
 class AtomLabelFunctor {
  public:
-  AtomLabelFunctor(const ROMol &query, const ROMol &mol, bool useChirality,
-                   bool useQueryQueryMatches)
+  AtomLabelFunctor(const ROMol &query, const ROMol &mol, const SubstructMatchParameters &ps)
       : d_query(query),
         d_mol(mol),
-        df_useChirality(useChirality),
-        df_useQueryQueryMatches(useQueryQueryMatches){};
+        d_params(ps) {};
   bool operator()(unsigned int i, unsigned int j) const {
     bool res = false;
-    if (df_useChirality) {
+    if (d_params.useChirality) {
       const Atom *qAt = d_query.getAtomWithIdx(i);
       if (qAt->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
           qAt->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW) {
@@ -228,15 +225,14 @@ class AtomLabelFunctor {
           return false;
       }
     }
-    res = atomCompat(d_query[i], d_mol[j], df_useQueryQueryMatches);
+    res = atomCompat(d_query[i], d_mol[j], d_params.useQueryQueryMatches);
     return res;
   }
 
  private:
   const ROMol &d_query;
   const ROMol &d_mol;
-  bool df_useChirality;
-  bool df_useQueryQueryMatches;
+  const SubstructMatchParameters &d_params;
 };
 class BondLabelFunctor {
  public:
@@ -360,14 +356,13 @@ std::vector<MatchVectType> SubstructMatch(const ROMol &mol, const ROMol &query,
     for (atIt = query.beginAtoms(); atIt != query.endAtoms(); atIt++) {
       if ((*atIt)->getQuery()) {
         // std::cerr<<"recurse from atom "<<(*atIt)->getIdx()<<std::endl;
-        detail::MatchSubqueries(mol, (*atIt)->getQuery(), params.useChirality,
-                                subqueryMap, params.useQueryQueryMatches, locked);
+        detail::MatchSubqueries(mol, (*atIt)->getQuery(), params, subqueryMap, 
+                                 locked);
       }
     }
   }
 
-  detail::AtomLabelFunctor atomLabeler(query, mol, params.useChirality,
-                                       params.useQueryQueryMatches);
+  detail::AtomLabelFunctor atomLabeler(query, mol, params);
   detail::BondLabelFunctor bondLabeler(query, mol, params.useChirality,
                                        params.useQueryQueryMatches);
   detail::MolMatchFinalCheckFunctor matchChecker(query, mol, params.useChirality);
@@ -509,23 +504,21 @@ unsigned int SubstructMatch(ResonanceMolSupplier &resMolSupplier,
 
 namespace detail {
 unsigned int RecursiveMatcher(const ROMol &mol, const ROMol &query,
-                              std::vector<int> &matches, bool useChirality,
-                              SUBQUERY_MAP &subqueryMap,
-                              bool useQueryQueryMatches,
+                              std::vector<int> &matches,
+                              SUBQUERY_MAP &subqueryMap,const SubstructMatchParameters &params,
                               std::vector<RecursiveStructureQuery *> &locked) {
   ROMol::ConstAtomIterator atIt;
   for (atIt = query.beginAtoms(); atIt != query.endAtoms(); atIt++) {
     if ((*atIt)->getQuery()) {
-      MatchSubqueries(mol, (*atIt)->getQuery(), useChirality, subqueryMap,
-                      useQueryQueryMatches, locked);
+      MatchSubqueries(mol, (*atIt)->getQuery(), params, subqueryMap,
+                      locked);
     }
   }
 
-  detail::AtomLabelFunctor atomLabeler(query, mol, useChirality,
-                                       useQueryQueryMatches);
-  detail::BondLabelFunctor bondLabeler(query, mol, useChirality,
-                                       useQueryQueryMatches);
-  detail::MolMatchFinalCheckFunctor matchChecker(query, mol, useChirality);
+  detail::AtomLabelFunctor atomLabeler(query, mol, params);
+  detail::BondLabelFunctor bondLabeler(query, mol, params.useChirality,
+                                       params.useQueryQueryMatches);
+  detail::MolMatchFinalCheckFunctor matchChecker(query, mol, params.useChirality);
 
   matches.clear();
   matches.resize(0);
@@ -568,8 +561,7 @@ unsigned int RecursiveMatcher(const ROMol &mol, const ROMol &query,
 }
 
 void MatchSubqueries(const ROMol &mol, QueryAtom::QUERYATOM_QUERY *query,
-                     bool useChirality, SUBQUERY_MAP &subqueryMap,
-                     bool useQueryQueryMatches,
+                     const SubstructMatchParameters &params, SUBQUERY_MAP &subqueryMap,
                      std::vector<RecursiveStructureQuery *> &locked) {
   PRECONDITION(query, "bad query");
   // std::cout << "*-*-* MS: " << (int)query << std::endl;
@@ -603,8 +595,8 @@ void MatchSubqueries(const ROMol &mol, QueryAtom::QUERYATOM_QUERY *query,
       if (queryMol) {
         std::vector<int> matchStarts;
         unsigned int res =
-            RecursiveMatcher(mol, *queryMol, matchStarts, useChirality,
-                             subqueryMap, useQueryQueryMatches, locked);
+            RecursiveMatcher(mol, *queryMol, matchStarts, 
+                             subqueryMap, params, locked);
         if (res) {
           for (int &matchStart : matchStarts) {
             rsq->insert(matchStart);
@@ -627,8 +619,8 @@ void MatchSubqueries(const ROMol &mol, QueryAtom::QUERYATOM_QUERY *query,
   // std::endl;
   for (childIt = query->beginChildren(); childIt != query->endChildren();
        childIt++) {
-    MatchSubqueries(mol, childIt->get(), useChirality, subqueryMap,
-                    useQueryQueryMatches, locked);
+    MatchSubqueries(mol, childIt->get(), params, subqueryMap,
+                    locked);
   }
   // std::cout << "<<- back " << (int)query << std::endl;
 }

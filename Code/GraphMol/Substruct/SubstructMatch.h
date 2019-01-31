@@ -32,6 +32,7 @@ struct RDKIT_SUBSTRUCTMATCH_EXPORT SubstructMatchParameters {
     bool uniquify;
     unsigned int maxMatches;
     unsigned int numThreads;
+    
     SubstructMatchParameters() :
     recursionPossible(true),
     useChirality(false),
