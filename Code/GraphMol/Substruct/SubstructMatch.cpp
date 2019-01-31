@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2018 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2019 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -293,64 +293,6 @@ void ResSubstructMatchHelper_(const ResSubstructMatchHelperArgs_ &args,
 };
 }
 
-// ----------------------------------------------
-//
-// find one match
-//
-bool SubstructMatch(const ROMol &mol, const ROMol &query,
-                    MatchVectType &matchVect, bool recursionPossible,
-                    bool useChirality, bool useQueryQueryMatches) {
-  // std::cerr<<"begin match"<<std::endl;
-  std::vector<RecursiveStructureQuery *> locked;
-#ifdef RDK_THREADSAFE_SSS
-  locked.reserve(query.getNumAtoms());
-#endif
-  if (recursionPossible) {
-    ROMol::ConstAtomIterator atIt;
-    detail::SUBQUERY_MAP subqueryMap;
-    for (atIt = query.beginAtoms(); atIt != query.endAtoms(); atIt++) {
-      if ((*atIt)->getQuery()) {
-        detail::MatchSubqueries(mol, (*atIt)->getQuery(), useChirality,
-                                subqueryMap, useQueryQueryMatches, locked);
-      }
-    }
-  }
-  // std::cerr<<"main matching"<<std::endl;
-
-  matchVect.clear();
-  matchVect.resize(0);
-
-  detail::MolMatchFinalCheckFunctor matchChecker(query, mol, useChirality);
-  detail::AtomLabelFunctor atomLabeler(query, mol, useChirality,
-                                       useQueryQueryMatches);
-  detail::BondLabelFunctor bondLabeler(query, mol, useChirality,
-                                       useQueryQueryMatches);
-
-  detail::ssPairType match;
-#if 0
-    bool res=boost::ullmann(query.getTopology(),mol.getTopology(),
-                            atomLabeler,bondLabeler,match);
-#else
-  bool res = boost::vf2(query.getTopology(), mol.getTopology(), atomLabeler,
-                        bondLabeler, matchChecker, match);
-#endif
-  if (res) {
-    matchVect.resize(query.getNumAtoms());
-    for (detail::ssPairType::const_iterator iter = match.begin();
-         iter != match.end(); ++iter) {
-      matchVect[iter->first] = std::pair<int, int>(iter->first, iter->second);
-    }
-  }
-
-#ifdef RDK_THREADSAFE_SSS
-  if (recursionPossible) {
-    BOOST_FOREACH (RecursiveStructureQuery *v, locked)
-      v->d_mutex.unlock();
-  }
-#endif
-  return res;
-}
-
 bool SubstructMatch(const MolBundle &bundle, const ROMol &query,
                     MatchVectType &matchVect, bool recursionPossible,
                     bool useChirality, bool useQueryQueryMatches) {
@@ -406,38 +348,29 @@ bool SubstructMatch(ResonanceMolSupplier &resMolSupplier, const ROMol &query,
 // ----------------------------------------------
 //
 // find all matches
-//
-//  NOTE: this blows out the contents of matches
-//
-unsigned int SubstructMatch(const ROMol &mol, const ROMol &query,
-                            std::vector<MatchVectType> &matches, bool uniquify,
-                            bool recursionPossible, bool useChirality,
-                            bool useQueryQueryMatches,
-                            unsigned int maxMatches) {
+std::vector<MatchVectType> SubstructMatch(const ROMol &mol, const ROMol &query,
+                        const SubstructMatchParameters &params){
   std::vector<RecursiveStructureQuery *> locked;
 #ifdef RDK_THREADSAFE_SSS
   locked.reserve(query.getNumAtoms());
 #endif
-  if (recursionPossible) {
+  if (params.recursionPossible) {
     detail::SUBQUERY_MAP subqueryMap;
     ROMol::ConstAtomIterator atIt;
     for (atIt = query.beginAtoms(); atIt != query.endAtoms(); atIt++) {
       if ((*atIt)->getQuery()) {
         // std::cerr<<"recurse from atom "<<(*atIt)->getIdx()<<std::endl;
-        detail::MatchSubqueries(mol, (*atIt)->getQuery(), useChirality,
-                                subqueryMap, useQueryQueryMatches, locked);
+        detail::MatchSubqueries(mol, (*atIt)->getQuery(), params.useChirality,
+                                subqueryMap, params.useQueryQueryMatches, locked);
       }
     }
   }
 
-  matches.clear();
-  matches.resize(0);
-
-  detail::AtomLabelFunctor atomLabeler(query, mol, useChirality,
-                                       useQueryQueryMatches);
-  detail::BondLabelFunctor bondLabeler(query, mol, useChirality,
-                                       useQueryQueryMatches);
-  detail::MolMatchFinalCheckFunctor matchChecker(query, mol, useChirality);
+  detail::AtomLabelFunctor atomLabeler(query, mol, params.useChirality,
+                                       params.useQueryQueryMatches);
+  detail::BondLabelFunctor bondLabeler(query, mol, params.useChirality,
+                                       params.useQueryQueryMatches);
+  detail::MolMatchFinalCheckFunctor matchChecker(query, mol, params.useChirality);
 
   std::list<detail::ssPairType> pms;
 #if 0
@@ -446,9 +379,9 @@ unsigned int SubstructMatch(const ROMol &mol, const ROMol &query,
 #else
   bool found =
       boost::vf2_all(query.getTopology(), mol.getTopology(), atomLabeler,
-                     bondLabeler, matchChecker, pms, maxMatches);
+                     bondLabeler, matchChecker, pms, params.maxMatches);
 #endif
-  unsigned int res = 0;
+  std::vector<MatchVectType> matches;
   if (found) {
     unsigned int nQueryAtoms = query.getNumAtoms();
     matches.reserve(pms.size());
@@ -461,19 +394,18 @@ unsigned int SubstructMatch(const ROMol &mol, const ROMol &query,
       }
       matches.push_back(matchVect);
     }
-    if (uniquify) {
+    if (params.uniquify) {
       removeDuplicates(matches, mol.getNumAtoms());
     }
-    res = matches.size();
   }
 
 #ifdef RDK_THREADSAFE_SSS
-  if (recursionPossible) {
+  if (params.recursionPossible) {
     BOOST_FOREACH (RecursiveStructureQuery *v, locked)
       v->d_mutex.unlock();
   }
 #endif
-  return res;
+  return matches;
 }
 
 unsigned int SubstructMatch(const MolBundle &mol, const ROMol &query,
