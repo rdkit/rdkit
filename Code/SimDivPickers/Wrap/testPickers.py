@@ -129,7 +129,7 @@ class TestCase(unittest.TestCase):
     picker = rdSimDivPickers.MaxMinPicker()
     mm2 = picker.LazyBitVectorPick(vs, len(vs), N)
     self.assertEqual(len(mm2), N)
-    self.assertEqual(tuple(mm2), tuple(mm1))
+    self.assertNotEqual(tuple(mm2), tuple(mm1))
     picker = None
 
     ds = []
@@ -161,18 +161,18 @@ class TestCase(unittest.TestCase):
       return d
 
     picker = rdSimDivPickers.MaxMinPicker()
-    mm1 = picker.LazyPick(func, len(vs), N)
+    mm1 = picker.LazyPick(func, len(vs), N, seed=42)
     self.assertEqual(len(mm1), N)
 
-    mm2 = picker.LazyPick(func, len(vs), N, useCache=False)
+    mm2 = picker.LazyPick(func, len(vs), N, useCache=False, seed=42)
     self.assertEqual(len(mm2), N)
     self.assertEqual(list(mm1), list(mm2))
 
-    mm2 = picker.LazyBitVectorPick(vs, len(vs), N)
+    mm2 = picker.LazyBitVectorPick(vs, len(vs), N, seed=42)
     self.assertEqual(len(mm2), N)
     self.assertEqual(list(mm1), list(mm2))
 
-    mm2 = picker.LazyBitVectorPick(vs, len(vs), N, useCache=False)
+    mm2 = picker.LazyBitVectorPick(vs, len(vs), N, useCache=False, seed=42)
     self.assertEqual(len(mm2), N)
     self.assertEqual(list(mm1), list(mm2))
 
@@ -214,11 +214,11 @@ class TestCase(unittest.TestCase):
     N = 5
     fps = [DataStructs.CreateFromBitString(x) for x in fps]
     picker = rdSimDivPickers.MaxMinPicker()
-    mm1 = picker.LazyBitVectorPick(fps, len(fps), N)
+    mm1 = picker.LazyBitVectorPick(fps, len(fps), N, seed=42)
     self.assertEqual(len(mm1), N)
     self.assertEqual(list(mm1), [37, 1, 43, 38, 16])
 
-    mm2 = picker.LazyBitVectorPick(fps, len(fps), N, useCache=False)
+    mm2 = picker.LazyBitVectorPick(fps, len(fps), N, useCache=False, seed=42)
     self.assertEqual(len(mm2), N)
     self.assertEqual(list(mm1), list(mm2))
 
@@ -231,11 +231,11 @@ class TestCase(unittest.TestCase):
           fp = DataStructs.CreateFromFPSText(line.strip())
           fps.append(fp)
     mmp =rdSimDivPickers.MaxMinPicker()
-    ids=list(mmp.LazyBitVectorPick(fps,len(fps),20))
+    ids=list(mmp.LazyBitVectorPick(fps,len(fps),20,seed=42))
     self.assertEqual(ids,[374,720,690,339,875,842,404,725,120,385,115,868,630,\
                           881,516,497,412,718,869,407])
 
-    ids=list(mmp.LazyBitVectorPick(fps,len(fps),20,firstPicks=[374,720,690,339,875]))
+    ids=list(mmp.LazyBitVectorPick(fps,len(fps),20,firstPicks=[374,720,690,339,875],seed=42))
     self.assertEqual(ids,[374,720,690,339,875,842,404,725,120,385,115,868,630,\
                           881,516,497,412,718,869,407])
 
@@ -249,13 +249,13 @@ class TestCase(unittest.TestCase):
           fp = DataStructs.CreateFromFPSText(line.strip())
           fps.append(fp)
     mmp =rdSimDivPickers.MaxMinPicker()
-    ids,threshold=mmp.LazyBitVectorPickWithThreshold(fps,len(fps),20,-1.0)
+    ids,threshold=mmp.LazyBitVectorPickWithThreshold(fps,len(fps),20,-1.0,seed=42)
     self.assertEqual(list(ids),[374,720,690,339,875,842,404,725,120,385,115,868,630,\
                           881,516,497,412,718,869,407])
 
     self.assertAlmostEqual(threshold,0.8977,4)
 
-    ids,threshold=mmp.LazyBitVectorPickWithThreshold(fps,len(fps),20,0.91)
+    ids,threshold=mmp.LazyBitVectorPickWithThreshold(fps,len(fps),20,0.91,seed=42)
     self.assertEqual(list(ids),[374,720,690,339,875,842,404,725,120,385,115,868,630])
     self.assertTrue(threshold>=0.91)
 

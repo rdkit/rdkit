@@ -20,6 +20,7 @@
 #include <cstdlib>
 #include "DistPicker.h"
 #include <boost/random.hpp>
+#include <random>
 
 namespace RDPickers {
 
@@ -34,7 +35,7 @@ class RDKIT_SIMDIVPICKERS_EXPORT distmatFunctor {
  private:
   const double *dp_distMat;
 };
-}
+}  // namespace
 
 /*! \brief Implements the MaxMin algorithm for picking a subset of item from a
  *pool
@@ -66,7 +67,9 @@ class RDKIT_SIMDIVPICKERS_EXPORT MaxMinPicker : public DistPicker {
    *              poolSize*(poolSize-1)
    *   \param pickSize - the number items to pick from pool (<= poolSize)
    *   \param firstPicks - (optional)the first items in the pick list
-   *   \param seed - (optional) seed for the random number generator
+   *   \param seed - (optional) seed for the random number generator. 
+   *                 If this is <0 the generator will be seeded with a
+   *                 random number.
    */
   template <typename T>
   RDKit::INT_VECT lazyPick(T &func, unsigned int poolSize,
@@ -117,7 +120,9 @@ class RDKIT_SIMDIVPICKERS_EXPORT MaxMinPicker : public DistPicker {
    *   \param pickSize - the number items to pick from pool (<= poolSize)
    *   \param firstPicks - indices of the items used to seed the pick set.
    *   \param seed - (optional) seed for the random number generator
-  */
+   *                 If this is <0 the generator will be seeded with a
+   *                 random number.
+   */
   RDKit::INT_VECT pick(const double *distMat, unsigned int poolSize,
                        unsigned int pickSize, RDKit::INT_VECT firstPicks,
                        int seed = -1) const {
@@ -175,11 +180,14 @@ RDKit::INT_VECT MaxMinPicker::lazyPick(T &func, unsigned int poolSize,
     typedef boost::mt19937 rng_type;
     typedef boost::uniform_int<> distrib_type;
     typedef boost::variate_generator<rng_type &, distrib_type> source_type;
-    rng_type generator(42u);
+    rng_type generator;
     distrib_type dist(0, poolSize - 1);
+    if (seed >= 0) {
+      generator.seed(static_cast<rng_type::result_type>(seed));
+    } else {
+      generator.seed(std::random_device()());
+    }
     source_type randomSource(generator, dist);
-    if (seed > 0) generator.seed(static_cast<rng_type::result_type>(seed));
-
     pick = randomSource();
     // add the pick to the picks
     picks.push_back(pick);
@@ -290,11 +298,12 @@ RDKit::INT_VECT MaxMinPicker::lazyPick(T &func, unsigned int poolSize,
 template <typename T>
 RDKit::INT_VECT MaxMinPicker::lazyPick(T &func, unsigned int poolSize,
                                        unsigned int pickSize) const {
-  RDKit::INT_LIST firstPicks;
+  RDKit::INT_VECT firstPicks;
   double threshold = -1.0;
-  return MaxMinPicker::lazyPick(func, poolSize, pickSize, firstPicks, -1,
+  int seed = -1;
+  return MaxMinPicker::lazyPick(func, poolSize, pickSize, firstPicks, seed,
                                 threshold);
 }
-};
+};  // namespace RDPickers
 
 #endif
