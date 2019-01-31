@@ -69,12 +69,12 @@ typedef std::list<
 class MolMatchFinalCheckFunctor {
  public:
   MolMatchFinalCheckFunctor(const ROMol &query, const ROMol &mol,
-                            bool useChirality)
-      : d_query(query), d_mol(mol), df_useChirality(useChirality){};
+                            const SubstructMatchParameters &ps)
+      : d_query(query), d_mol(mol), d_params(ps){};
   bool operator()(const boost::detail::node_id c1[],
                   const boost::detail::node_id c2[]) const {
     // std::cerr << "  check! " << df_useChirality << std::endl;
-    if (!df_useChirality) return true;
+    if (!d_params.useChirality) return true;
     // for (unsigned int i = 0; i < d_query.getNumAtoms(); ++i) {
     //   std::cerr << "    " << c1[i] << " " << c2[i] << std::endl;
     // }
@@ -204,7 +204,7 @@ class MolMatchFinalCheckFunctor {
  private:
   const ROMol &d_query;
   const ROMol &d_mol;
-  bool df_useChirality;
+  const SubstructMatchParameters &d_params;
 };
 
 class AtomLabelFunctor {
@@ -236,14 +236,11 @@ class AtomLabelFunctor {
 };
 class BondLabelFunctor {
  public:
-  BondLabelFunctor(const ROMol &query, const ROMol &mol, bool useChirality,
-                   bool useQueryQueryMatches)
-      : d_query(query), d_mol(mol), df_useChirality(useChirality) {
-    RDUNUSED_PARAM(useQueryQueryMatches);
-  };
+  BondLabelFunctor(const ROMol &query, const ROMol &mol, const SubstructMatchParameters &ps)
+      : d_query(query), d_mol(mol), d_params(ps) {};
   bool operator()(MolGraph::edge_descriptor i,
                   MolGraph::edge_descriptor j) const {
-    if (df_useChirality) {
+    if (d_params.useChirality) {
       const Bond *qBnd = d_query[i];
       if (qBnd->getBondType() == Bond::DOUBLE &&
           qBnd->getStereo() > Bond::STEREOANY) {
@@ -260,8 +257,7 @@ class BondLabelFunctor {
  private:
   const ROMol &d_query;
   const ROMol &d_mol;
-  bool df_useChirality;
-  // bool df_useQueryQueryMatches;
+  const SubstructMatchParameters &d_params;
 };
 void mergeMatchVect(std::vector<MatchVectType> &matches,
                     const std::vector<MatchVectType> &matchesTmp,
@@ -363,9 +359,8 @@ std::vector<MatchVectType> SubstructMatch(const ROMol &mol, const ROMol &query,
   }
 
   detail::AtomLabelFunctor atomLabeler(query, mol, params);
-  detail::BondLabelFunctor bondLabeler(query, mol, params.useChirality,
-                                       params.useQueryQueryMatches);
-  detail::MolMatchFinalCheckFunctor matchChecker(query, mol, params.useChirality);
+  detail::BondLabelFunctor bondLabeler(query, mol, params);
+  detail::MolMatchFinalCheckFunctor matchChecker(query, mol, params);
 
   std::list<detail::ssPairType> pms;
 #if 0
@@ -516,9 +511,8 @@ unsigned int RecursiveMatcher(const ROMol &mol, const ROMol &query,
   }
 
   detail::AtomLabelFunctor atomLabeler(query, mol, params);
-  detail::BondLabelFunctor bondLabeler(query, mol, params.useChirality,
-                                       params.useQueryQueryMatches);
-  detail::MolMatchFinalCheckFunctor matchChecker(query, mol, params.useChirality);
+  detail::BondLabelFunctor bondLabeler(query, mol, params);
+  detail::MolMatchFinalCheckFunctor matchChecker(query, mol, params);
 
   matches.clear();
   matches.resize(0);
