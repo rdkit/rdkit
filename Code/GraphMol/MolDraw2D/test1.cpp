@@ -1245,9 +1245,10 @@ M  END";
     std::ofstream outs("test983_1.svg");
     outs << text;
     outs.flush();
-    TEST_ASSERT(text.find("<path d='M 130.309,117.496 194.727,89.1159 "
-                          "187.092,75.893 130.309,117.496' "
-                          "style='fill:#000000") != std::string::npos);
+    TEST_ASSERT(
+        text.find("<path class='bond-1' d='M 130.309,117.496 194.727,89.1159 "
+                  "187.092,75.893 130.309,117.496' "
+                  "style='fill:#000000") != std::string::npos);
     delete m;
   }
   {
@@ -1296,9 +1297,10 @@ M  END";
     std::ofstream outs("test983_2.svg");
     outs << text;
     outs.flush();
-    TEST_ASSERT(text.find("<path d='M 107.911,115.963 80.5887,91.4454 "
-                          "75.9452,97.9126 107.911,115.963' "
-                          "style='fill:#000000;") != std::string::npos);
+    TEST_ASSERT(
+        text.find("<path class='bond-3' d='M 107.911,115.963 80.5887,91.4454 "
+                  "75.9452,97.9126 107.911,115.963' "
+                  "style='fill:#000000;") != std::string::npos);
 
     MolDraw2DUtils::prepareMolForDrawing(*m);
     TEST_ASSERT(m->getBondBetweenAtoms(2, 1)->getBondType() == Bond::SINGLE);
@@ -2222,10 +2224,14 @@ M  END)molb";
     std::ofstream outs("testGithub2063_1.svg");
     outs << text;
     outs.flush();
-    TEST_ASSERT(text.find("<path d='M 65.8823,110.884 134.118,89.1159'") !=
-                std::string::npos);
-    TEST_ASSERT(text.find("<path d='M 69.6998,117.496 9.09091,82.5044'") !=
-                std::string::npos);
+    TEST_ASSERT(
+        text.find(
+            "<path class='bond-0' d='M 65.8823,110.884 134.118,89.1159'") !=
+        std::string::npos);
+    TEST_ASSERT(
+        text.find(
+            "<path class='bond-1' d='M 69.6998,117.496 9.09091,82.5044'") !=
+        std::string::npos);
   }
   {
     std::string molb = R"molb(crossed bond
@@ -2252,10 +2258,14 @@ M  END)molb";
     std::ofstream outs("testGithub2063_2.svg");
     outs << text;
     outs.flush();
-    TEST_ASSERT(text.find("<path d='M 65.8823,110.884 134.118,89.1159'") !=
-                std::string::npos);
-    TEST_ASSERT(text.find("<path d='M 69.6998,117.496 9.09091,82.5044'") !=
-                std::string::npos);
+    TEST_ASSERT(
+        text.find(
+            "<path class='bond-0' d='M 65.8823,110.884 134.118,89.1159'") !=
+        std::string::npos);
+    TEST_ASSERT(
+        text.find(
+            "<path class='bond-1' d='M 69.6998,117.496 9.09091,82.5044'") !=
+        std::string::npos);
   }
   std::cerr << " Done" << std::endl;
 }

@@ -450,11 +450,6 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
 
   virtual void drawLine(const Point2D &cds1, const Point2D &cds2,
                         const DrawColour &col1, const DrawColour &col2);
-  void drawBond(const ROMol &mol, const Bond *bond, int at1_idx, int at2_idx,
-                const std::vector<int> *highlight_atoms = nullptr,
-                const std::map<int, DrawColour> *highlight_atom_map = nullptr,
-                const std::vector<int> *highlight_bonds = nullptr,
-                const std::map<int, DrawColour> *highlight_bond_map = nullptr);
   void drawWedgedBond(const Point2D &cds1, const Point2D &cds2,
                       bool draw_dashed, const DrawColour &col1,
                       const DrawColour &col2);
@@ -495,6 +490,12 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
       const std::map<int, double> *highlight_radii);
 
   virtual void highlightCloseContacts();
+  virtual void drawBond(
+      const ROMol &mol, const Bond *bond, int at1_idx, int at2_idx,
+      const std::vector<int> *highlight_atoms = nullptr,
+      const std::map<int, DrawColour> *highlight_atom_map = nullptr,
+      const std::vector<int> *highlight_bonds = nullptr,
+      const std::map<int, DrawColour> *highlight_bond_map = nullptr);
 
   // calculate normalised perpendicular to vector between two coords
   Point2D calcPerpendicular(const Point2D &cds1, const Point2D &cds2);

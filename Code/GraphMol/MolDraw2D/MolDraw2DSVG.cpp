@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2015 Greg Landrum
+//  Copyright (C) 2015-2019 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -92,6 +92,9 @@ void MolDraw2DSVG::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
   std::string col = DrawColourToSVG(colour());
   unsigned int width = lineWidth();
   d_os << "<path ";
+  if (d_activeClass != "") {
+    d_os << "class='" << d_activeClass << "' ";
+  }
   d_os << "d='M" << c1.x << "," << c1.y;
   for (unsigned int i = 0; i < nSegments; ++i) {
     Point2D startpt = cds1 + delta * i;
@@ -111,6 +114,21 @@ void MolDraw2DSVG::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
   d_os << " />\n";
 }
 
+void MolDraw2DSVG::drawBond(
+    const ROMol &mol, const Bond *bond, int at1_idx, int at2_idx,
+    const std::vector<int> *highlight_atoms,
+    const std::map<int, DrawColour> *highlight_atom_map,
+    const std::vector<int> *highlight_bonds,
+    const std::map<int, DrawColour> *highlight_bond_map) {
+  PRECONDITION(bond, "bad bond");
+  std::string o_class = d_activeClass;
+  if (d_activeClass != "") d_activeClass += " ";
+  d_activeClass += boost::str(boost::format("bond-%d") % bond->getIdx());
+  MolDraw2D::drawBond(mol, bond, at1_idx, at2_idx, highlight_atoms,
+                      highlight_atom_map, highlight_bonds, highlight_bond_map);
+  d_activeClass = o_class;
+};
+
 // ****************************************************************************
 void MolDraw2DSVG::drawLine(const Point2D &cds1, const Point2D &cds2) {
   Point2D c1 = getDrawCoords(cds1);
@@ -128,6 +146,9 @@ void MolDraw2DSVG::drawLine(const Point2D &cds1, const Point2D &cds2) {
     dashString = dss.str();
   }
   d_os << "<path ";
+  if (d_activeClass != "") {
+    d_os << "class='" << d_activeClass << "' ";
+  }
   d_os << "d='M " << c1.x << "," << c1.y << " " << c2.x << "," << c2.y << "' ";
   d_os << "style='fill:none;fill-rule:evenodd;stroke:" << col
        << ";stroke-width:" << width
@@ -162,6 +183,9 @@ void MolDraw2DSVG::drawPolygon(const std::vector<Point2D> &cds) {
   unsigned int width = lineWidth();
   std::string dashString = "";
   d_os << "<path ";
+  if (d_activeClass != "") {
+    d_os << "class='" << d_activeClass << "' ";
+  }
   d_os << "d='M";
   Point2D c0 = getDrawCoords(cds[0]);
   d_os << " " << c0.x << "," << c0.y;
@@ -201,6 +225,9 @@ void MolDraw2DSVG::drawEllipse(const Point2D &cds1, const Point2D &cds2) {
        << " rx='" << w / 2 << "'"
        << " ry='" << h / 2 << "'";
 
+  if (d_activeClass != "") {
+    d_os << " class='" << d_activeClass << "'";
+  }
   d_os << " style='";
   if (fillPolys())
     d_os << "fill:" << col << ";fill-rule:evenodd;";
@@ -313,9 +340,11 @@ void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds) {
 
   d_os << "<text";
   d_os << " x='" << draw_coords.x;
-
   d_os << "' y='" << draw_coords.y << "'";
 
+  if (d_activeClass != "") {
+    d_os << " class='" << d_activeClass << "'";
+  }
   d_os << " style='font-size:" << fontSz
        << "px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;"
           "font-family:sans-serif;text-anchor:start;"
