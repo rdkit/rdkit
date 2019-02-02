@@ -31,6 +31,29 @@ TEST_CASE("prepareAndDrawMolecule", "[drawing]") {
     MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1);
     drawer.finishDrawing();
     std::string text = drawer.getDrawingText();
-    CHECK(text.find("<tspan>H</tspan>")!=std::string::npos);
+    CHECK(text.find("<tspan>H</tspan>") != std::string::npos);
+  }
+}
+
+TEST_CASE("tag atoms in SVG", "[drawing, SVG]") {
+  SECTION("basics") {
+    auto m1 = "C1N[C@@H]2OCC12"_smiles;
+    REQUIRE(m1);
+
+    MolDraw2DSVG drawer(200, 200);
+    MolDraw2DUtils::prepareMolForDrawing(*m1);
+    drawer.drawMolecule(*m1);
+    std::map<std::string, std::string> actions;
+    actions["onclick"] = "alert";
+    double radius = 0.2;
+    drawer.tagAtoms(*m1, radius, actions);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("testAtomTags_1.svg");
+    outs << text;
+    outs.flush();
+
+    CHECK(text.find("<circle") != std::string::npos);
+    CHECK(text.find("onclick") != std::string::npos);
   }
 }

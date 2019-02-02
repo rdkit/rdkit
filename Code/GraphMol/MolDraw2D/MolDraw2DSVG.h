@@ -67,7 +67,8 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
   // this only makes sense if the object was initialized without a stream
   std::string getDrawingText() const { return d_ss.str(); };
 
-  void tagAtoms(const ROMol &mol);
+  void tagAtoms(const ROMol &mol, double radius = 0.2,
+                const std::map<std::string, std::string> &events = {});
 
   void addMoleculeMetadata(const ROMol &mol, int confId = -1) const;
   void addMoleculeMetadata(const std::vector<ROMol *> &mols,

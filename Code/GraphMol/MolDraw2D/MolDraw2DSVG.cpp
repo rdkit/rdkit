@@ -421,24 +421,29 @@ void MolDraw2DSVG::addMoleculeMetadata(const std::vector<ROMol *> &mols,
   }
 };
 
-void MolDraw2DSVG::tagAtoms(const ROMol &mol) {
+void MolDraw2DSVG::tagAtoms(const ROMol &mol, double radius,
+                            const std::map<std::string, std::string> &events) {
   PRECONDITION(d_os, "no output stream");
-  ROMol::VERTEX_ITER this_at, end_at;
-  boost::tie(this_at, end_at) = mol.getVertices();
-  while (this_at != end_at) {
-    int this_idx = mol[*this_at]->getIdx();
-    ++this_at;
-    Point2D pos = getDrawCoords(atomCoords()[this_idx]);
-    std::string lbl = atomSyms()[this_idx].first;
-
-    d_os << "<rdkit:atom"
-         << " idx=\"" << this_idx + 1 << "\"";
-    if (lbl != "") {
-      d_os << " label=\"" << lbl << "\"";
+  for (const auto &at : mol.atoms()) {
+    auto this_idx = at->getIdx();
+    auto pos = getDrawCoords(atomCoords()[this_idx]);
+    d_os << "<circle "
+         << " cx='" << pos.x << "'"
+         << " cy='" << pos.y << "'"
+         << " r='" << (scale() * radius) << "'";
+    d_os << " class='atom-selector atom-" << this_idx;
+    if (d_activeClass != "") {
+      d_os << " " << d_activeClass;
     }
-    d_os << " x=\"" << pos.x << "\""
-         << " y=\"" << pos.y << "\""
-         << " />" << std::endl;
+    d_os << "'";
+    d_os << " style='fill:#fff;stroke:#fff;stroke-width:1px;fill-opacity:0;"
+            "stroke-opacity:0' ";
+    for (const auto &event : events) {
+      d_os << " " << event.first << "='" << event.second << "(" << this_idx
+           << ");"
+           << "'";
+    }
+    d_os << "/>\n";
   }
 }
 }  // namespace RDKit

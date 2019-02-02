@@ -27,6 +27,21 @@ namespace python = boost::python;
 
 namespace RDKit {
 namespace {
+void tagAtomHelper(MolDraw2DSVG &self, const ROMol &mol, double radius,
+                   python::object pyo) {
+  std::map<std::string, std::string> events;
+  if (pyo) {
+    python::dict tDict = python::extract<python::dict>(pyo);
+    python::list keys = tDict.keys();
+    python::list vals = tDict.values();
+    for (unsigned int i = 0;
+         i < python::extract<unsigned int>(keys.attr("__len__")()); ++i) {
+      events[python::extract<std::string>(keys[i])] =
+          python::extract<std::string>(vals[i]);
+    }
+  }
+  self.tagAtoms(mol, radius, events);
+}
 void pyDictToColourMap(python::object pyo, ColourPalette &res) {
   python::dict tDict = python::extract<python::dict>(pyo);
   for (unsigned int i = 0;
@@ -130,13 +145,11 @@ void drawMoleculeHelper2(MolDraw2D &self, const ROMol &mol,
   delete har;
 }
 
-void prepareAndDrawMoleculeHelper(MolDraw2D &drawer, const ROMol &mol,
-                         std::string legend,
-                         python::object highlight_atoms,
-                         python::object highlight_bonds,
-                         python::object highlight_atom_map,
-                         python::object highlight_bond_map,
-                         python::object highlight_atom_radii, int confId) {
+void prepareAndDrawMoleculeHelper(
+    MolDraw2D &drawer, const ROMol &mol, std::string legend,
+    python::object highlight_atoms, python::object highlight_bonds,
+    python::object highlight_atom_map, python::object highlight_bond_map,
+    python::object highlight_atom_radii, int confId) {
   std::unique_ptr<std::vector<int>> highlightAtoms =
       pythonObjectToVect(highlight_atoms, static_cast<int>(mol.getNumAtoms()));
   std::unique_ptr<std::vector<int>> highlightBonds =
@@ -145,14 +158,14 @@ void prepareAndDrawMoleculeHelper(MolDraw2D &drawer, const ROMol &mol,
   ColourPalette *ham = pyDictToColourMap(highlight_atom_map);
   ColourPalette *hbm = pyDictToColourMap(highlight_bond_map);
   std::map<int, double> *har = pyDictToDoubleMap(highlight_atom_radii);
-  MolDraw2DUtils::prepareAndDrawMolecule(drawer, mol, legend, highlightAtoms.get(), 
-                                         highlightBonds.get(), ham, hbm, har, confId);
+  MolDraw2DUtils::prepareAndDrawMolecule(
+      drawer, mol, legend, highlightAtoms.get(), highlightBonds.get(), ham, hbm,
+      har, confId);
 
   delete ham;
   delete hbm;
   delete har;
 }
-
 
 void drawMoleculesHelper2(MolDraw2D &self, python::object pmols,
                           python::object highlight_atoms,
@@ -485,6 +498,10 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def("AddMoleculeMetadata", RDKit::addMoleculeMetadata,
            (python::arg("mol"), python::arg("confId") = -1),
            "add RDKit-specific information to the bottom of the drawing")
+      .def("TagAtoms", RDKit::tagAtomHelper,
+           (python::arg("mol"), python::arg("radius") = 0.2,
+            python::arg("events") = python::object()),
+           "allow atom selection in the SVG")
       .def("GetDrawingText", &RDKit::MolDraw2DSVG::getDrawingText,
            "return the SVG");
 
@@ -518,15 +535,13 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       docString.c_str(),
       python::return_value_policy<python::manage_new_object>());
   python::def(
-          "PrepareAndDrawMolecule", &RDKit::prepareAndDrawMoleculeHelper,
-          (python::arg("drawer"), python::arg("mol"),python::arg("legend") = "",
-           python::arg("highlightAtoms") = python::object(), 
-           python::arg("highlightBonds") = python::object(),
-           python::arg("highlightAtomColors") = python::object(),
-           python::arg("highlightBondColors") = python::object(),
-           python::arg("highlightAtomRadii") = python::object(),
-           python::arg("confId") = -1),
-          "Preps a molecule for drawing and actually draws it\n");
-
-
+      "PrepareAndDrawMolecule", &RDKit::prepareAndDrawMoleculeHelper,
+      (python::arg("drawer"), python::arg("mol"), python::arg("legend") = "",
+       python::arg("highlightAtoms") = python::object(),
+       python::arg("highlightBonds") = python::object(),
+       python::arg("highlightAtomColors") = python::object(),
+       python::arg("highlightBondColors") = python::object(),
+       python::arg("highlightAtomRadii") = python::object(),
+       python::arg("confId") = -1),
+      "Preps a molecule for drawing and actually draws it\n");
 }
