@@ -57,6 +57,8 @@ void MolDraw2DSVG::initDrawing() {
         xmlns:xlink='http://www.w3.org/1999/xlink'\n          \
         xml:space='preserve'\n";
   d_os << "width='" << width() << "px' height='" << height() << "px' >\n";
+  d_os << "<!-- END OF HEADER -->\n";
+
   // d_os<<"<g transform='translate("<<width()*.05<<","<<height()*.05<<")
   // scale(.85,.85)'>";
 }
