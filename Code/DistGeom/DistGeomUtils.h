@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2007 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2019 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -17,13 +17,14 @@
 #include <Geometry/point.h>
 #include "ChiralSet.h"
 #include <RDGeneral/utils.h>
+#include <boost/dynamic_bitset.hpp>
 
 namespace ForceFields {
 class ForceField;
 namespace CrystalFF {
-    struct CrystalFFDetails;
+struct CrystalFFDetails;
 }
-}
+}  // namespace ForceFields
 
 namespace DistGeom {
 
@@ -36,12 +37,13 @@ namespace DistGeom {
 
   \return the largest element of the distance matrix
  */
-RDKIT_DISTGEOMETRY_EXPORT double pickRandomDistMat(const BoundsMatrix &mmat,
-                         RDNumeric::SymmMatrix<double> &distmat, int seed = -1);
+RDKIT_DISTGEOMETRY_EXPORT double pickRandomDistMat(
+    const BoundsMatrix &mmat, RDNumeric::SymmMatrix<double> &distmat,
+    int seed = -1);
 //! \overload
-RDKIT_DISTGEOMETRY_EXPORT double pickRandomDistMat(const BoundsMatrix &mmat,
-                         RDNumeric::SymmMatrix<double> &distmat,
-                         RDKit::double_source_type &rng);
+RDKIT_DISTGEOMETRY_EXPORT double pickRandomDistMat(
+    const BoundsMatrix &mmat, RDNumeric::SymmMatrix<double> &distmat,
+    RDKit::double_source_type &rng);
 
 //! Compute an initial embedded in 3D based on a distance matrix
 /*!
@@ -62,16 +64,15 @@ RDKIT_DISTGEOMETRY_EXPORT double pickRandomDistMat(const BoundsMatrix &mmat,
 
   \return true if the embedding was successful
 */
-RDKIT_DISTGEOMETRY_EXPORT bool computeInitialCoords(const RDNumeric::SymmMatrix<double> &distmat,
-                          RDGeom::PointPtrVect &positions,
-                          bool randNegEig = false, unsigned int numZeroFail = 2,
-                          int seed = -1);
+RDKIT_DISTGEOMETRY_EXPORT bool computeInitialCoords(
+    const RDNumeric::SymmMatrix<double> &distmat,
+    RDGeom::PointPtrVect &positions, bool randNegEig = false,
+    unsigned int numZeroFail = 2, int seed = -1);
 //! \overload
-RDKIT_DISTGEOMETRY_EXPORT bool computeInitialCoords(const RDNumeric::SymmMatrix<double> &distmat,
-                          RDGeom::PointPtrVect &positions,
-                          RDKit::double_source_type &rng,
-                          bool randNegEig = false,
-                          unsigned int numZeroFail = 2);
+RDKIT_DISTGEOMETRY_EXPORT bool computeInitialCoords(
+    const RDNumeric::SymmMatrix<double> &distmat,
+    RDGeom::PointPtrVect &positions, RDKit::double_source_type &rng,
+    bool randNegEig = false, unsigned int numZeroFail = 2);
 
 //! places atoms randomly in a box
 /*!
@@ -82,11 +83,12 @@ RDKIT_DISTGEOMETRY_EXPORT bool computeInitialCoords(const RDNumeric::SymmMatrix<
 
   \return true if the coordinate generation was successful
 */
-RDKIT_DISTGEOMETRY_EXPORT bool computeRandomCoords(RDGeom::PointPtrVect &positions, double boxSize,
-                         int seed = -1);
+RDKIT_DISTGEOMETRY_EXPORT bool computeRandomCoords(
+    RDGeom::PointPtrVect &positions, double boxSize, int seed = -1);
 //! \overload
-RDKIT_DISTGEOMETRY_EXPORT bool computeRandomCoords(RDGeom::PointPtrVect &positions, double boxSize,
-                         RDKit::double_source_type &rng);
+RDKIT_DISTGEOMETRY_EXPORT bool computeRandomCoords(
+    RDGeom::PointPtrVect &positions, double boxSize,
+    RDKit::double_source_type &rng);
 
 //! Setup the error function for violation of distance bounds as a forcefield
 /*!
@@ -118,10 +120,10 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructForceField(
     const VECT_CHIRALSET &csets, double weightChiral = 1.0,
     double weightFourthDim = 0.1,
     std::map<std::pair<int, int>, double> *extraWeights = 0,
-    double basinSizeTol = 5.0);
+    double basinSizeTol = 5.0, boost::dynamic_bitset<> *fixedPts = nullptr);
 
 //! Force field with experimental torsion angle preferences and 1-2/1-3 distance
-//constraints
+// constraints
 /*!
 
   \param mmat            Distance bounds matrix
@@ -136,7 +138,7 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *construct3DForceField(
     const BoundsMatrix &mmat, RDGeom::Point3DPtrVect &positions,
     const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails);
 //! Force field with experimental torsion angle preferences and 1-2/1-3 distance
-//constraints
+// constraints
 /*!
 
   \param mmat            Distance bounds matrix
@@ -155,19 +157,21 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructPlain3DForceField(
 /*!
 
   \param mmat            Distance bounds matrix
-  \param positions       A vector of pointers to 3D Points to write out the resulting coordinates
-  \param improperAtoms   A list of groups of 4 atom indices for inversion terms
-  \param atomNums        A list of atomic numbers for all atoms in the molecule
+  \param positions       A vector of pointers to 3D Points to write out the
+  resulting coordinates \param improperAtoms   A list of groups of 4 atom
+  indices for inversion terms \param atomNums        A list of atomic numbers
+  for all atoms in the molecule
 
   \return a pointer to a ForceField with improper terms
     <b>NOTE:</b> the caller is responsible for deleting this force field.
 
 */
-RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *construct3DImproperForceField(
+RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *
+construct3DImproperForceField(
     const BoundsMatrix &mmat, RDGeom::Point3DPtrVect &positions,
-    const std::vector<std::vector<int> > &improperAtoms,
+    const std::vector<std::vector<int>> &improperAtoms,
     const std::vector<int> &atomNums);
 
-}
+}  // namespace DistGeom
 
 #endif
