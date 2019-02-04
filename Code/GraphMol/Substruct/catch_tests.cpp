@@ -64,11 +64,10 @@ TEST_CASE("substructure parameters", "[substruct]") {
   }
 
   SECTION("conjugated matching aromaticity bulk") {
-    std::vector<matchCase> examples = {
-        {std::string("c1ccccc1"), std::string("C1CCCCC1"), 0},
-        {std::string("C1CCCCC1"), std::string("c1ccccc1"), 0},
-        {std::string("O=C1C=CC(=O)C=C1"), std::string("c1ccccc1"), 1},
-    };
+    std::vector<matchCase> examples;
+    examples.push_back(std::make_tuple(std::string("c1ccccc1"), std::string("C1CCCCC1"), 0));
+    examples.push_back(std::make_tuple(std::string("C1CCCCC1"), std::string("c1ccccc1"), 0));
+    examples.push_back(std::make_tuple(std::string("O=C1C=CC(=O)C=C1"), std::string("c1ccccc1"), 1));
     SubstructMatchParameters ps;
     ps.aromaticMatchesConjugated = true;
     for (const auto &example : examples) {
