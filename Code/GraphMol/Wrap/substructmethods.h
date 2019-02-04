@@ -65,5 +65,47 @@ PyObject *GetSubstructMatches(T1 &mol, T2 &query, bool uniquify = true,
   }
   return res;
 }
-}  // end of RDKit namespace
+
+template <typename T1, typename T2>
+bool helpHasSubstructMatch(T1 &mol, T2 &query,
+                           const SubstructMatchParameters &params) {
+  NOGIL gil;
+  std::vector<MatchVectType> res;
+  SubstructMatchParameters ps = params;
+  ps.maxMatches = 1;
+  res = SubstructMatch(mol, query, ps);
+  return res.size() != 0;
+}
+
+template <typename T1, typename T2>
+PyObject *helpGetSubstructMatch(T1 &mol, T2 &query,
+                                const SubstructMatchParameters &params) {
+  std::vector<MatchVectType> matches;
+  {
+    NOGIL gil;
+    SubstructMatchParameters ps = params;
+    ps.maxMatches = 1;
+    matches = SubstructMatch(mol, query, ps);
+  }
+  MatchVectType match;
+  if (matches.size()) match = matches[0];
+  return convertMatches(match);
+}
+
+template <typename T1, typename T2>
+PyObject *helpGetSubstructMatches(T1 &mol, T2 &query,
+                                  const SubstructMatchParameters &params) {
+  std::vector<MatchVectType> matches;
+  {
+    NOGIL gil;
+    matches = SubstructMatch(mol, query, params);
+  }
+  PyObject *res = PyTuple_New(matches.size());
+  for (int idx = 0; idx < matches.size(); idx++) {
+    PyTuple_SetItem(res, idx, convertMatches(matches[idx]));
+  }
+  return res;
+}
+
+}  // namespace RDKit
 #endif

@@ -5007,6 +5007,57 @@ M  END
     self.assertEqual(stereo_atoms[1].GetIdx(), 4)
     self.assertEqual(stereo_atoms[1].GetOwningMol().GetNumAtoms(),8)
 
+  def testSubstructParameters(self):
+    m = Chem.MolFromSmiles('C[C@](F)(Cl)OCC')
+    p1 = Chem.MolFromSmiles('C[C@](F)(Cl)O')
+    p2 = Chem.MolFromSmiles('C[C@@](F)(Cl)O')
+    p3 = Chem.MolFromSmiles('CC(F)(Cl)O')
+
+    ps = Chem.SubstructMatchParameters()
+    self.assertTrue(m.HasSubstructMatch(p1,ps))
+    self.assertTrue(m.HasSubstructMatch(p2,ps))
+    self.assertTrue(m.HasSubstructMatch(p3,ps))
+    self.assertEqual(m.GetSubstructMatch(p1,ps),(0,1,2,3,4))
+    self.assertEqual(m.GetSubstructMatch(p2,ps),(0,1,2,3,4))
+    self.assertEqual(m.GetSubstructMatch(p3,ps),(0,1,2,3,4))
+    self.assertEqual(m.GetSubstructMatches(p1,ps),((0,1,2,3,4),))
+    self.assertEqual(m.GetSubstructMatches(p2,ps),((0,1,2,3,4),))
+    self.assertEqual(m.GetSubstructMatches(p3,ps),((0,1,2,3,4),))
+    ps.useChirality = True
+    self.assertTrue(m.HasSubstructMatch(p1,ps))
+    self.assertFalse(m.HasSubstructMatch(p2,ps))
+    self.assertTrue(m.HasSubstructMatch(p3,ps))
+    self.assertEqual(m.GetSubstructMatch(p1,ps),(0,1,2,3,4))
+    self.assertEqual(m.GetSubstructMatch(p2,ps),())
+    self.assertEqual(m.GetSubstructMatch(p3,ps),(0,1,2,3,4))
+    self.assertEqual(m.GetSubstructMatches(p1,ps),((0,1,2,3,4),))
+    self.assertEqual(m.GetSubstructMatches(p2,ps),())
+    self.assertEqual(m.GetSubstructMatches(p3,ps),((0,1,2,3,4),))
+
+  def testSubstructParametersBundles(self):
+    b = Chem.MolBundle()
+    smis = ('C[C@](F)(Cl)O', 'C[C@](Br)(Cl)O', 'C[C@](I)(Cl)O')
+    for smi in smis:
+      b.AddMol(Chem.MolFromSmiles(smi))
+    self.assertEqual(len(b), 3)
+    self.assertEqual(b.Size(), 3)
+    ps = Chem.SubstructMatchParameters()
+    ps.useChirality = True
+    self.assertTrue(Chem.MolFromSmiles('C[C@](F)(Cl)OCC').HasSubstructMatch(b,ps))
+    self.assertFalse(Chem.MolFromSmiles('C[C@@](F)(Cl)OCC').HasSubstructMatch(b,ps))
+    self.assertTrue(Chem.MolFromSmiles('C[C@](I)(Cl)OCC').HasSubstructMatch(b,ps))
+    self.assertFalse(Chem.MolFromSmiles('C[C@@](I)(Cl)OCC').HasSubstructMatch(b,ps))
+
+    self.assertEqual(Chem.MolFromSmiles('C[C@](F)(Cl)OCC').GetSubstructMatch(b,ps),(0,1,2,3,4))
+    self.assertEqual(Chem.MolFromSmiles('C[C@@](F)(Cl)OCC').GetSubstructMatch(b,ps),())
+    self.assertEqual(Chem.MolFromSmiles('C[C@](I)(Cl)OCC').GetSubstructMatch(b,ps),(0,1,2,3,4))
+    self.assertEqual(Chem.MolFromSmiles('C[C@@](I)(Cl)OCC').GetSubstructMatch(b,ps),())
+
+    self.assertEqual(Chem.MolFromSmiles('C[C@](F)(Cl)OCC').GetSubstructMatches(b,ps),((0,1,2,3,4),))
+    self.assertEqual(Chem.MolFromSmiles('C[C@@](F)(Cl)OCC').GetSubstructMatches(b,ps),())
+    self.assertEqual(Chem.MolFromSmiles('C[C@](I)(Cl)OCC').GetSubstructMatches(b,ps),((0,1,2,3,4),))
+    self.assertEqual(Chem.MolFromSmiles('C[C@@](I)(Cl)OCC').GetSubstructMatches(b,ps),())
+
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
