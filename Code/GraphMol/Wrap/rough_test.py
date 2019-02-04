@@ -5058,6 +5058,32 @@ M  END
     self.assertEqual(Chem.MolFromSmiles('C[C@](I)(Cl)OCC').GetSubstructMatches(b,ps),((0,1,2,3,4),))
     self.assertEqual(Chem.MolFromSmiles('C[C@@](I)(Cl)OCC').GetSubstructMatches(b,ps),())
 
+def testSubstructParametersBundles2(self):
+    b1 = Chem.MolBundle()
+    smis = ('C[C@](F)(Cl)O', 'C[C@](Br)(Cl)O', 'C[C@](I)(Cl)O')
+    for smi in smis:
+      b.AddMol(Chem.MolFromSmiles(smi))
+    self.assertEqual(len(b), 3)
+    b2 = Chem.MolBundle()
+    smis = ('C[C@@](F)(Cl)O', 'C[C@@](Br)(Cl)O', 'C[C@@](I)(Cl)O')
+    for smi in smis:
+      b2.AddMol(Chem.MolFromSmiles(smi))
+    self.assertEqual(len(b2), 3)
+    ps = Chem.SubstructMatchParameters()
+    ps.useChirality = True
+    self.assertTrue(b.HasSubstructMatch(b,ps))
+    self.assertFalse(b.HasSubstructMatch(b2,ps))
+    self.assertFalse(b2.HasSubstructMatch(b,ps))
+
+    self.assertEqual(b.GetSubstructMatch(b,ps),(0,1,2,3,4))
+    self.assertEqual(b.GetSubstructMatch(b2,ps),())
+    self.assertEqual(b2.GetSubstructMatch(b,ps),())
+
+    self.assertEqual(b.GetSubstructMatches(b,ps),((0,1,2,3,4),))
+    self.assertEqual(b.GetSubstructMatches(b2,ps),())
+    self.assertEqual(b2.GetSubstructMatches(b,ps),())
+
+
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
