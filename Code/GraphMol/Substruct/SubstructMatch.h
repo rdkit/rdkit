@@ -62,7 +62,7 @@ struct RDKIT_SUBSTRUCTMATCH_EXPORT SubstructMatchParameters {
 */
 RDKIT_SUBSTRUCTMATCH_EXPORT std::vector<MatchVectType> SubstructMatch(
     const ROMol &mol, const ROMol &query,
-    const SubstructMatchParameters &params);
+    const SubstructMatchParameters &params=SubstructMatchParameters());
 
 //! Find all substructure matches for a query in a ResonanceMolSupplier object
 /*!
@@ -75,17 +75,17 @@ RDKIT_SUBSTRUCTMATCH_EXPORT std::vector<MatchVectType> SubstructMatch(
 */
 RDKIT_SUBSTRUCTMATCH_EXPORT std::vector<MatchVectType> SubstructMatch(
     ResonanceMolSupplier &resMolSuppl, const ROMol &query,
-    const SubstructMatchParameters &params);
+    const SubstructMatchParameters &params=SubstructMatchParameters());
 
 RDKIT_SUBSTRUCTMATCH_EXPORT std::vector<MatchVectType> SubstructMatch(
     const MolBundle &bundle, const ROMol &query,
-    const SubstructMatchParameters &params);
+    const SubstructMatchParameters &params=SubstructMatchParameters());
 RDKIT_SUBSTRUCTMATCH_EXPORT std::vector<MatchVectType> SubstructMatch(
     const ROMol &mol, const MolBundle &query,
-    const SubstructMatchParameters &params);
+    const SubstructMatchParameters &params=SubstructMatchParameters());
 RDKIT_SUBSTRUCTMATCH_EXPORT std::vector<MatchVectType> SubstructMatch(
     const MolBundle &bundle, const MolBundle &query,
-    const SubstructMatchParameters &params);
+    const SubstructMatchParameters &params=SubstructMatchParameters());
 
 //! Find a substructure match for a query
 /*!

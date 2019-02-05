@@ -79,4 +79,14 @@ TEST_CASE("substructure parameters", "[substruct]") {
       CHECK(SubstructMatch(*m1, *m2, ps).size() == std::get<2>(example));
     }
   }
+  SECTION("looping") {
+    auto mol1 = "CC(=O)C(=O)C(=O)"_smiles;
+    auto mol2 = "C=O"_smiles;
+    REQUIRE(mol1);
+    REQUIRE(mol2);
+    for( auto match : SubstructMatch(*mol1,*mol2)){
+      CHECK(match.size()==2);
+    }
+  }
+
 }
