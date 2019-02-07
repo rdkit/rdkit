@@ -262,6 +262,15 @@ class TestCase(unittest.TestCase):
     self.assertEqual(m.GetNumConformers(), 1)
     self.assertTrue(m.GetConformer(0).Is3D() == False)
 
+  def testGitHub1062(self):
+    s1 = 'C/C=C\C'
+    m1 = Chem.MolFromSmiles(s1)
+    pyAvalonTools.Generate2DCoords(m1)
+    mb = Chem.MolToMolBlock(m1)
+    m2 = Chem.MolFromMolBlock(mb)
+    s2 = Chem.MolToSmiles(m2)
+    self.assertEqual(s1, s2)
+
   def testRDK151(self):
     smi = "C[C@H](F)Cl"
     m = Chem.MolFromSmiles(smi)
@@ -301,7 +310,7 @@ class TestCase(unittest.TestCase):
       (err, fixed_mol) = pyAvalonTools.CheckMoleculeString(atom_clash, False)
       log =  pyAvalonTools.GetCheckMolLog()
       self.assertTrue("of average bond length from bond" in log)
-      
+
       # make sure that the log is cleared for the next molecule
       (err, fixed_mol) = pyAvalonTools.CheckMoleculeString("c1ccccc1", True)
       log =  pyAvalonTools.GetCheckMolLog()
@@ -309,7 +318,7 @@ class TestCase(unittest.TestCase):
 
     finally:
       pyAvalonTools.CloseCheckMolFiles()
-    
+
 
   #   def testIsotopeBug(self):
   #     mb="""D isotope problem.mol

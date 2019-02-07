@@ -85,7 +85,7 @@ namespace AvalonTools {
 
       MyFree(fingerprint);
     };
-  
+
     void reaccsToCounts(struct reaccs_molecule_t *molPtr,SparseIntVect<boost::uint32_t> &res,
                         unsigned int bitFlags=32767U,bool isQuery=false,
                         unsigned int nBytes=64){
@@ -99,7 +99,7 @@ namespace AvalonTools {
       }
       MyFree((char *)fingerprint);
     };
-  
+
     void reaccsToFingerprint(struct reaccs_molecule_t *molPtr,ExplicitBitVect &res,
                              unsigned int bitFlags=32767U,bool isQuery=false,
                              bool resetVect=true,unsigned int nBytes=64){
@@ -123,7 +123,7 @@ namespace AvalonTools {
       }
       MyFree(fingerprint);
     };
-  
+
     struct reaccs_molecule_t *reaccsGetCoords(struct reaccs_molecule_t *molPtr){
       PRECONDITION(molPtr,"bad molecule");
 
@@ -170,7 +170,7 @@ namespace AvalonTools {
     } else {
       std::string rdMB=MolToMolBlock(mol);
       res = getCanonSmiles(rdMB,false,flags);
-      
+
     }
     return res;
   }
@@ -215,7 +215,8 @@ namespace AvalonTools {
   }
 
   unsigned int set2DCoords(ROMol &mol,bool clearConfs){
-    struct reaccs_molecule_t *mp=molToReaccs(mol);
+    auto smiles = MolToSmiles(mol);
+    struct reaccs_molecule_t *mp=stringToReaccs(smiles,true);
     struct reaccs_molecule_t *mp2=reaccsGetCoords(mp);
     TEST_ASSERT(mp2->n_atoms==mol.getNumAtoms());
 
@@ -252,7 +253,7 @@ namespace AvalonTools {
       FreeMolecule(mp);
       FreeMolecule(mp2);
       MyFree(molB);
-    } 
+    }
     return res;
   }
 
@@ -338,7 +339,7 @@ namespace AvalonTools {
     }
     return res;
   }
-  
+
   /**
    * Wrapper around struchk.CheckMol
    * The molecule to check is passed in as a string. isSmiles
@@ -349,7 +350,7 @@ namespace AvalonTools {
    **/
   int checkMolString(const std::string &data, const bool isSmiles,
 		     struct reaccs_molecule_t **mp) {
-	// clean msg list from previous call (if no previous call, freemsglist does nothing)	
+	// clean msg list from previous call (if no previous call, freemsglist does nothing)
     FreeMsgList();
 
     int errs = 0;
@@ -388,7 +389,7 @@ namespace AvalonTools {
   }
 
   RDKit::ROMOL_SPTR checkMol(int &errs, RDKit::ROMol& inMol) {
-	// clean msg list from previous call (if no previous call, freemsglist does nothing)	
+	// clean msg list from previous call (if no previous call, freemsglist does nothing)
     FreeMsgList();
 
     struct reaccs_molecule_t *mp;
