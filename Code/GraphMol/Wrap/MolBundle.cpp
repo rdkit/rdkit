@@ -187,6 +187,102 @@ struct molbundle_wrap {
              "         in the query. For example, the first index is for the "
              "atom in\n"
              "         this molecule that matches the first atom in the "
+             "query.\n")
+
+        // ------------------------------------------------
+        .def("HasSubstructMatch",
+             (bool (*)(const MolBundle &m, const ROMol &query, const SubstructMatchParameters &))helpHasSubstructMatch,
+             (python::arg("self"), python::arg("query"),
+              python::arg("params")),
+             "Queries whether or not any molecule in the bundle contains a "
+             "particular substructure.\n\n"
+             "  ARGUMENTS:\n"
+             "    - query: a Molecule\n\n"
+             "    - params: parameters controlling the substructure match\n\n"
+             "matching\n\n"
+             "    - useQueryQueryMatches: use query-query matching logic\n\n"
+             "  RETURNS: True or False\n")
+        .def("GetSubstructMatch",
+             (PyObject * (*)(const MolBundle &m, const ROMol &query, const SubstructMatchParameters &))helpGetSubstructMatch,
+             (python::arg("self"), python::arg("query"),
+              python::arg("params")),
+             "Returns the indices of the atoms from the first molecule in a "
+             "bundle that matches a substructure query.\n\n"
+             "  ARGUMENTS:\n"
+             "    - query: a Molecule\n\n"
+             "    - params: parameters controlling the substructure match\n\n"
+             "  RETURNS: a tuple of integers\n\n"
+             "  NOTES:\n"
+             "     - only a single match is returned\n"
+             "     - the ordering of the indices corresponds to the atom "
+             "ordering\n"
+             "         in the query. For example, the first index is for the "
+             "atom in\n"
+             "         this molecule that matches the first atom in the "
+             "query.\n")
+        .def("GetSubstructMatches",
+             (PyObject * (*)(const MolBundle &m, const ROMol &query, const SubstructMatchParameters &))helpGetSubstructMatches,
+             (python::arg("self"), python::arg("query"),
+              python::arg("params")),
+             "Returns tuple of all indices of the atoms from the first "
+             "molecule in a bundle that matches a substructure query.\n\n"
+             "  ARGUMENTS:\n"
+             "    - query: a molecule.\n"
+             "    - params: parameters controlling the substructure match\n\n"
+             "  RETURNS: a tuple of tuples of integers\n\n"
+             "  NOTE:\n"
+             "     - the ordering of the indices corresponds to the atom "
+             "ordering\n"
+             "         in the query. For example, the first index is for the "
+             "atom in\n"
+             "         this molecule that matches the first atom in the "
+             "query.\n")
+        .def("HasSubstructMatch",
+             (bool (*)(const MolBundle &m, const MolBundle &query, const SubstructMatchParameters &))helpHasSubstructMatch,
+             (python::arg("self"), python::arg("query"),
+              python::arg("params")),
+             "Queries whether or not any molecule in the first bundle matches "
+             "any molecule in the second bundle.\n\n"
+             "  ARGUMENTS:\n"
+             "    - query: a MolBundle\n\n"
+             "    - params: parameters controlling the substructure match\n\n"
+             "  RETURNS: True or False\n")
+        .def("GetSubstructMatch",
+             (PyObject * (*)(const MolBundle &m, const MolBundle &query, const SubstructMatchParameters &))helpGetSubstructMatch,
+             (python::arg("self"), python::arg("query"),
+              python::arg("params")),
+             "Returns the indices of the atoms from the first molecule in a "
+             "bundle that matches a substructure query from a bundle.\n\n"
+             "  ARGUMENTS:\n"
+             "    - query: a MolBundle\n\n"
+             "    - params: parameters controlling the substructure match\n\n"
+             "  RETURNS: a tuple of integers\n\n"
+             "  NOTES:\n"
+             "     - only a single match is returned\n"
+             "     - the ordering of the indices corresponds to the atom "
+             "ordering\n"
+             "         in the query. For example, the first index is for the "
+             "atom in\n"
+             "         this molecule that matches the first atom in the "
+             "query.\n")
+
+        .def("GetSubstructMatches",
+             (PyObject * (*)(const MolBundle &m, const MolBundle &query, const SubstructMatchParameters &))helpGetSubstructMatches,
+             (python::arg("self"), python::arg("query"),
+              python::arg("params")),
+             "Returns tuple of all indices of the atoms from the first "
+             "molecule in a bundle that matches a substructure query from the "
+             "second bundle.\n\n"
+             "  ARGUMENTS:\n"
+             "    - query: a MolBundle.\n"
+             "    - params: parameters controlling the substructure match\n\n"
+             "  RETURNS: a tuple of tuples of integers\n\n"
+             "  NOTE:\n"
+             "     - the ordering of the indices corresponds to the atom "
+             "ordering\n"
+             "         in the query. For example, the first index is for the "
+             "atom in\n"
+             "         this molecule that matches the first atom in the "
              "query.\n");
   };
 };
