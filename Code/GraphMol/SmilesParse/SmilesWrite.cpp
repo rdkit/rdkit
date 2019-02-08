@@ -543,6 +543,15 @@ std::string MolToSmiles(const ROMol &mol, bool doIsomericSmiles, bool doKekule,
   return result;
 }  // end of MolToSmiles()
 
+
+std::string MolToCXSmiles(const ROMol &mol, bool doIsomericSmiles, bool doKekule,
+                        int rootedAtAtom, bool canonical, bool allBondsExplicit,
+                        bool allHsExplicit, bool doRandom) {
+  std::string res = MolToSmiles(mol,doIsomericSmiles,doKekule,rootedAtAtom,canonical,allBondsExplicit,allHsExplicit,doRandom);
+  res += " " + SmilesWrite::getCXExtensions(mol);
+  return res;
+}
+
 std::string MolFragmentToSmiles(const ROMol &mol,
                                 const std::vector<int> &atomsToUse,
                                 const std::vector<int> *bondsToUse,

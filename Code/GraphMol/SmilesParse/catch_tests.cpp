@@ -142,3 +142,34 @@ TEST_CASE(
     }
   }
 }
+
+TEST_CASE(
+    "github #2257: writing cxsmiles",
+    "[smiles,cxsmiles]") {
+SECTION("atom labels"){
+  auto mol = "CCC |$R1;;R2$|"_smiles;
+  REQUIRE(mol);
+  CHECK(mol->getAtomWithIdx(0)->getProp<std::string>(
+                    common_properties::atomLabel) == "R1");
+  CHECK(mol->getAtomWithIdx(2)->getProp<std::string>(
+                    common_properties::atomLabel) == "R2");
+  auto smi = MolToCXSmiles(*mol);
+  CHECK(smi=="CCC |$R1;;R2$|");
+
+}
+SECTION("atom ordering"){
+  auto mol = "OC(F)C |$R1;;R2;R3$|"_smiles;
+  REQUIRE(mol);
+  CHECK(mol->getAtomWithIdx(0)->getProp<std::string>(
+                    common_properties::atomLabel) == "R1");
+  CHECK(mol->getAtomWithIdx(2)->getProp<std::string>(
+                    common_properties::atomLabel) == "R2");
+  CHECK(mol->getAtomWithIdx(3)->getProp<std::string>(
+                    common_properties::atomLabel) == "R3");
+  auto smi = MolToCXSmiles(*mol);
+  CHECK(smi=="CC(O)F |$R3;;R1;R2$|");
+
+}
+}
+
+    
