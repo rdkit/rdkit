@@ -547,8 +547,11 @@ std::string MolToSmiles(const ROMol &mol, bool doIsomericSmiles, bool doKekule,
 std::string MolToCXSmiles(const ROMol &mol, bool doIsomericSmiles, bool doKekule,
                         int rootedAtAtom, bool canonical, bool allBondsExplicit,
                         bool allHsExplicit, bool doRandom) {
-  std::string res = MolToSmiles(mol,doIsomericSmiles,doKekule,rootedAtAtom,canonical,allBondsExplicit,allHsExplicit,doRandom);
-  res += " " + SmilesWrite::getCXExtensions(mol);
+  auto res = MolToSmiles(mol,doIsomericSmiles,doKekule,rootedAtAtom,canonical,allBondsExplicit,allHsExplicit,doRandom);
+  auto cxext = SmilesWrite::getCXExtensions(mol);
+  if(cxext.length()){
+    res += " " + cxext;
+  }
   return res;
 }
 

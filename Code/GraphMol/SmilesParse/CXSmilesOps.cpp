@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2016 Greg Landrum
+//  Copyright (C) 2016-2019 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -11,6 +11,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/format.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
@@ -373,31 +374,92 @@ void parseCXExtensions(RDKit::RWMol &mol, const std::string &extText,
 }  // end of namespace SmilesParseOps
 namespace RDKit {
 	namespace SmilesWrite {
-		std::string getCXExtensions(const RDKit::ROMol &mol) {
-			std::string res = "";
-			// we will need atom ordering. Get that now:
-			std::vector<unsigned int> atomOrder = mol.getProp<std::vector<unsigned int>>(common_properties::_smilesAtomOutputOrder);
-		//	std::vector<unsigned int> atomOrder(mol.getNumAtoms());
-			bool needLabels = false;
-			for (const auto at : mol.atoms()) {
-				if (at->hasProp(common_properties::atomLabel)) needLabels = true;
-      //  atomOrder[iatomOrder[at->getIdx()]] = at->getIdx();
-			}
-
-			if (needLabels) {
-				res += "|$";
+    namespace {
+      std::string quote_string(const std::string &txt){
+        // FIX
+        return txt;
+      }
+      std::string get_value_block(const ROMol &mol, const std::vector<unsigned int> &atomOrder, const std::string &prop) {
+        std::string res = "";
 				bool first = true;
 				for (auto idx : atomOrder) {
 					if (!first) res += ";";
 					else first = false;
 					std::string lbl;
-					if (mol.getAtomWithIdx(idx)->getPropIfPresent(common_properties::atomLabel, lbl)) {
+					if (mol.getAtomWithIdx(idx)->getPropIfPresent(prop, lbl)) {
 						res += lbl;
 					}
 				}
-				res += "$|";
+        return res;
+      }
+      std::string get_radical_block(const ROMol &mol, const std::vector<unsigned int> &atomOrder) {
+        std::string res = "";
+				std::map<unsigned int,std::vector<unsigned int>> rads;
+				for (unsigned int i=0;i<mol.getNumAtoms();++i) {
+          auto idx = atomOrder[i];
+          auto nrad = mol.getAtomWithIdx(idx)->getNumRadicalElectrons();
+          if(nrad){
+            rads[nrad].push_back(i); 
+          }
+        }
+        if(rads.size()){
+          for(const auto pr : rads) {
+            switch(pr.first){
+              case 1:
+              res += "^1:";break;
+              case 2:
+              res += "^2:";break;
+              case 3:
+              res += "^5:";break;
+              default:
+              BOOST_LOG(rdWarningLog) << "unsupported number of radical electrons " << pr.first <<std::endl;
+            }
+            for( auto aidx : pr.second){
+              res += boost::str(boost::format("%d,") % aidx);
+            }      
+          }
+				}
+        return res;
+      }
+      std::string get_dative_block(const ROMol &mol, const std::vector<unsigned int> &atomOrder) {
+        std::string res = "";
+        for(const auto bond : mol.bonds() ){
+          if(bond->getBondType() == Bond::DATIVE){
+              if(!res.size()) res += "C:";
+              auto startidx = std::find(atomOrder.begin(),atomOrder.end(),bond->getBeginAtomIdx()) - atomOrder.begin();
+              auto endidx = std::find(atomOrder.begin(),atomOrder.end(),bond->getEndAtomIdx()) - atomOrder.begin();
+              res += boost::str(boost::format("%d.%d,")%startidx%endidx);
+          }
+        }
+        return res;
+      }
+     
+    }
+		std::string getCXExtensions(const ROMol &mol) {
+			std::string res = "|";
+			// we will need atom ordering. Get that now:
+			std::vector<unsigned int> atomOrder = mol.getProp<std::vector<unsigned int>>(common_properties::_smilesAtomOutputOrder);
+			bool needLabels = false;
+      bool needValues = false;
+			for (const auto at : mol.atoms()) {
+				if (at->hasProp(common_properties::atomLabel)) needLabels = true;
+        if (at->hasProp(common_properties::molFileValue)) needValues = true;
 			}
 
+			if (needLabels) {
+				res += "$" + get_value_block(mol,atomOrder,common_properties::atomLabel) + "$";
+			}
+			if (needValues) {
+				res += "$_AV:" + get_value_block(mol,atomOrder,common_properties::molFileValue) + "$";
+			}
+      res += get_radical_block(mol,atomOrder);
+      res += get_dative_block(mol,atomOrder);
+      if(res.back() == ',') res.erase(res.size()-1);
+      if(res.size()>1){
+        res += "|";
+      } else {
+        res = "";
+      }
 			return res;
 		}
 	}
