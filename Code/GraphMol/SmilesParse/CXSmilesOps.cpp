@@ -269,7 +269,7 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol) {
       } else {
         if (!parse_atom_labels(first, last, mol)) return false;
       }
-    } else if (length > 9 && std::string(first, first + 9) == "atomProp:") {
+    } else if (length > 9 && std::string(first, first + 9) == "atomprop:") {
       first += 9;
       if (!parse_atom_props(first, last, mol)) return false;
     } else if (*first == 'C') {

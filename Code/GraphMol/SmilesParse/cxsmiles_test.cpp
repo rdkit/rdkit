@@ -332,7 +332,7 @@ void testAtomProps() {
   {  // testing atom properties
     std::string smiles =
         "C1CN1 "
-        "|atomProp:0.prop2.val2:0.prop1.val1:1.prop2.v2&#38;4:1.prop1.v1;2;3|";
+        "|atomprop:0.prop2.val2:0.prop1.val1:1.prop2.v2&#38;4:1.prop1.v1;2;3|";
     SmilesParserParams params;
     params.allowCXSMILES = true;
     ROMol *m = SmilesToMol(smiles, params);
@@ -354,7 +354,7 @@ void testAtomProps() {
   {  // testing atom properties + values
     std::string smiles =
         "C1CN1 "
-        "|atomProp:0.prop2.val2:1.prop1.v1;2;3,$_AV:value 2;&#59;value1;$|";
+        "|atomprop:0.prop2.val2:1.prop1.v1;2;3,$_AV:value 2;&#59;value1;$|";
     SmilesParserParams params;
     params.allowCXSMILES = true;
     ROMol *m = SmilesToMol(smiles, params);
