@@ -143,74 +143,64 @@ TEST_CASE(
   }
 }
 
-TEST_CASE(
-    "github #2257: writing cxsmiles",
-    "[smiles,cxsmiles]") {
-SECTION("basics"){
-  auto mol = "OCC"_smiles;
-  REQUIRE(mol);
-  auto smi = MolToCXSmiles(*mol);
-  CHECK(smi=="CCO");
+TEST_CASE("github #2257: writing cxsmiles", "[smiles,cxsmiles]") {
+  SECTION("basics") {
+    auto mol = "OCC"_smiles;
+    REQUIRE(mol);
+    auto smi = MolToCXSmiles(*mol);
+    CHECK(smi == "CCO");
+  }
+  SECTION("atom labels") {
+    auto mol = "CCC |$R1;;R2$|"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(0)->getProp<std::string>(
+              common_properties::atomLabel) == "R1");
+    CHECK(mol->getAtomWithIdx(2)->getProp<std::string>(
+              common_properties::atomLabel) == "R2");
+    auto smi = MolToCXSmiles(*mol);
+    CHECK(smi == "CCC |$R1;;R2$|");
+  }
+  SECTION("atom ordering") {
+    auto mol = "OC(F)C |$R1;;R2;R3$|"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(0)->getProp<std::string>(
+              common_properties::atomLabel) == "R1");
+    CHECK(mol->getAtomWithIdx(2)->getProp<std::string>(
+              common_properties::atomLabel) == "R2");
+    CHECK(mol->getAtomWithIdx(3)->getProp<std::string>(
+              common_properties::atomLabel) == "R3");
+    auto smi = MolToCXSmiles(*mol);
+    CHECK(smi == "CC(O)F |$R3;;R1;R2$|");
+  }
+  SECTION("atom values") {
+    auto mol = "COCC |$_AV:;bar;;foo$|"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(3)->getProp<std::string>(
+              common_properties::molFileValue) == "foo");
+    CHECK(mol->getAtomWithIdx(1)->getProp<std::string>(
+              common_properties::molFileValue) == "bar");
+    auto smi = MolToCXSmiles(*mol);
+    CHECK(smi == "CCOC |$_AV:foo;;bar;$|");
+  }
 
-}
-SECTION("atom labels"){
-  auto mol = "CCC |$R1;;R2$|"_smiles;
-  REQUIRE(mol);
-  CHECK(mol->getAtomWithIdx(0)->getProp<std::string>(
-                    common_properties::atomLabel) == "R1");
-  CHECK(mol->getAtomWithIdx(2)->getProp<std::string>(
-                    common_properties::atomLabel) == "R2");
-  auto smi = MolToCXSmiles(*mol);
-  CHECK(smi=="CCC |$R1;;R2$|");
+  SECTION("radicals") {
+    auto mol = "[Fe]N([O])[O] |^1:2,3|"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(1)->getNumRadicalElectrons() == 0);
+    CHECK(mol->getAtomWithIdx(2)->getNumRadicalElectrons() == 1);
+    CHECK(mol->getAtomWithIdx(3)->getNumRadicalElectrons() == 1);
 
-}
-SECTION("atom ordering"){
-  auto mol = "OC(F)C |$R1;;R2;R3$|"_smiles;
-  REQUIRE(mol);
-  CHECK(mol->getAtomWithIdx(0)->getProp<std::string>(
-                    common_properties::atomLabel) == "R1");
-  CHECK(mol->getAtomWithIdx(2)->getProp<std::string>(
-                    common_properties::atomLabel) == "R2");
-  CHECK(mol->getAtomWithIdx(3)->getProp<std::string>(
-                    common_properties::atomLabel) == "R3");
-  auto smi = MolToCXSmiles(*mol);
-  CHECK(smi=="CC(O)F |$R3;;R1;R2$|");
+    auto smi = MolToCXSmiles(*mol);
+    CHECK(smi == "[O]N([O])[Fe] |^1:0,2|");
+  }
+  SECTION("radicals2") {
+    auto mol = "[CH]C[CH2] |^1:2,^2:0|"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(1)->getNumRadicalElectrons() == 0);
+    CHECK(mol->getAtomWithIdx(2)->getNumRadicalElectrons() == 1);
+    CHECK(mol->getAtomWithIdx(0)->getNumRadicalElectrons() == 2);
 
+    auto smi = MolToCXSmiles(*mol);
+    CHECK(smi == "[CH]C[CH2] |^1:2,^2:0|");
+  }
 }
-SECTION("atom values"){
-  auto mol = "COCC |$_AV:;bar;;foo$|"_smiles;
-  REQUIRE(mol);
-  CHECK(mol->getAtomWithIdx(3)->getProp<std::string>(
-                    common_properties::molFileValue) == "foo");
-  CHECK(mol->getAtomWithIdx(1)->getProp<std::string>(
-                    common_properties::molFileValue) == "bar");
-  auto smi = MolToCXSmiles(*mol);
-  CHECK(smi=="CCOC |$_AV:foo;;bar;$|");
-}
-
-SECTION("radicals and coordinate bonds"){
-  auto mol = "[Fe]N([O])[O] |^1:2,3,C:1.0|"_smiles;
-  REQUIRE(mol);
-  CHECK(mol->getAtomWithIdx(1)->getNumRadicalElectrons() == 0);
-  CHECK(mol->getAtomWithIdx(2)->getNumRadicalElectrons() == 1);
-  CHECK(mol->getAtomWithIdx(3)->getNumRadicalElectrons() == 1);
-  CHECK(mol->getBondBetweenAtoms(0, 1));
-  CHECK(mol->getBondBetweenAtoms(0, 1)->getBondType() == Bond::DATIVE);
-  CHECK(mol->getBondBetweenAtoms(0, 1)->getBeginAtomIdx() == 1);
-
-  auto smi = MolToCXSmiles(*mol);
-  CHECK(smi=="[O]N([O])->[Fe] |^1:0,2,C:1.2|");
-}
-SECTION("radicals and coordinate bonds"){
-  auto mol = "[CH]C[CH2] |^1:2,^2:0|"_smiles;
-  REQUIRE(mol);
-  CHECK(mol->getAtomWithIdx(1)->getNumRadicalElectrons() == 0);
-  CHECK(mol->getAtomWithIdx(2)->getNumRadicalElectrons() == 1);
-  CHECK(mol->getAtomWithIdx(0)->getNumRadicalElectrons() == 2);
-
-  auto smi = MolToCXSmiles(*mol);
-  CHECK(smi=="[CH]C[CH2] |^1:2,^2:0|");
-}
-}
-
-    

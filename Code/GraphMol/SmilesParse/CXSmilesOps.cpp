@@ -246,8 +246,8 @@ bool parse_radicals(Iterator &first, Iterator last, RDKit::RWMol &mol) {
         if (!processRadicalSection(first, last, mol, 3)) return false;
         break;
       default:
-        BOOST_LOG(rdWarningLog) << "Radical specification " << *first
-                                << " ignored.";
+        BOOST_LOG(rdWarningLog)
+            << "Radical specification " << *first << " ignored.";
     }
   }
   return true;
@@ -257,210 +257,194 @@ template <typename Iterator>
 bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol) {
   if (first >= last || *first != '|') return false;
   ++first;
-while (first < last && *first != '|') {
-	typename Iterator::difference_type length = std::distance(first, last);
-	if (*first == '(') {
-		if (!parse_coords(first, last, mol)) return false;
-	}
-	else if (*first == '$') {
-		if (length > 4 && *(first + 1) == '_' && *(first + 2) == 'A' &&
-			*(first + 3) == 'V' && *(first + 4) == ':') {
-			first += 4;
-			if (!parse_atom_values(first, last, mol)) return false;
-		}
-		else {
-			if (!parse_atom_labels(first, last, mol)) return false;
-		}
-	}
-	else if (length > 9 && std::string(first, first + 9) == "atomProp:") {
-		first += 9;
-		if (!parse_atom_props(first, last, mol)) return false;
-	}
-	else if (*first == 'C') {
-		if (!parse_coordinate_bonds(first, last, mol)) return false;
-	}
-	else if (*first == '^') {
-		if (!parse_radicals(first, last, mol)) return false;
-	}
-	else {
-		++first;
-	}
-	// if(first < last && *first != '|') ++first;
-}
-if (first >= last || *first != '|') return false;
-++first;  // step past the last '|'
-return true;
+  while (first < last && *first != '|') {
+    typename Iterator::difference_type length = std::distance(first, last);
+    if (*first == '(') {
+      if (!parse_coords(first, last, mol)) return false;
+    } else if (*first == '$') {
+      if (length > 4 && *(first + 1) == '_' && *(first + 2) == 'A' &&
+          *(first + 3) == 'V' && *(first + 4) == ':') {
+        first += 4;
+        if (!parse_atom_values(first, last, mol)) return false;
+      } else {
+        if (!parse_atom_labels(first, last, mol)) return false;
+      }
+    } else if (length > 9 && std::string(first, first + 9) == "atomProp:") {
+      first += 9;
+      if (!parse_atom_props(first, last, mol)) return false;
+    } else if (*first == 'C') {
+      if (!parse_coordinate_bonds(first, last, mol)) return false;
+    } else if (*first == '^') {
+      if (!parse_radicals(first, last, mol)) return false;
+    } else {
+      ++first;
+    }
+    // if(first < last && *first != '|') ++first;
+  }
+  if (first >= last || *first != '|') return false;
+  ++first;  // step past the last '|'
+  return true;
 }
 }  // end of namespace parser
 
 namespace {
-	template <typename Q>
-	void addquery(Q *qry, std::string symbol, RDKit::RWMol &mol, unsigned int idx) {
-		PRECONDITION(qry, "bad query");
-		auto *qa = new QueryAtom(0);
-		qa->setQuery(qry);
-		qa->setNoImplicit(true);
-		mol.replaceAtom(idx, qa);
-		if (symbol != "")
-			mol.getAtomWithIdx(idx)->setProp(RDKit::common_properties::atomLabel,
-				symbol);
-		delete qa;
-	}
-	void processCXSmilesLabels(RDKit::RWMol &mol) {
-		for (RDKit::ROMol::AtomIterator atIt = mol.beginAtoms();
-			atIt != mol.endAtoms(); ++atIt) {
-			std::string symb = "";
-			if ((*atIt)->getPropIfPresent(RDKit::common_properties::atomLabel, symb)) {
-				if (symb.size() > 3 && symb[0] == '_' && symb[1] == 'A' &&
-					symb[2] == 'P') {
-					unsigned int mapNum =
-						boost::lexical_cast<unsigned int>(symb.substr(3, symb.size() - 3));
-					(*atIt)->setAtomMapNum(mapNum);
-				}
-				else if (symb == "star_e") {
-					/* according to the MDL spec, these match anything, but in MARVIN they
-					are "unspecified end groups" for polymers */
-					addquery(makeAtomNullQuery(), symb, mol, (*atIt)->getIdx());
-				}
-				else if (symb == "Q_e") {
-					addquery(makeQAtomQuery(), symb, mol, (*atIt)->getIdx());
-				}
-				else if (symb == "QH_p") {
-					addquery(makeQHAtomQuery(), symb, mol, (*atIt)->getIdx());
-				}
-				else if (symb == "AH_p") {  // this seems wrong...
-			   /* According to the MARVIN Sketch, AH is "any atom, including H" -
-			   this would be "*" in SMILES - and "A" is "any atom except H".
-			   The CXSMILES docs say that "A" can be represented normally in SMILES
-			   and that "AH" needs to be written out as AH_p. I'm going to assume that
-			   this is a Marvin internal thing and just parse it as they describe it.
-			   This means that "*" in the SMILES itself needs to be treated
-			   differently, which we do below. */
-					addquery(makeAHAtomQuery(), symb, mol, (*atIt)->getIdx());
-				}
-				else if (symb == "X_p") {
-					addquery(makeXAtomQuery(), symb, mol, (*atIt)->getIdx());
-				}
-				else if (symb == "XH_p") {
-					addquery(makeXHAtomQuery(), symb, mol, (*atIt)->getIdx());
-				}
-				else if (symb == "M_p") {
-					addquery(makeMAtomQuery(), symb, mol, (*atIt)->getIdx());
-				}
-				else if (symb == "MH_p") {
-					addquery(makeMHAtomQuery(), symb, mol, (*atIt)->getIdx());
-				}
-			}
-			else if ((*atIt)->getAtomicNum() == 0 && (*atIt)->getSymbol() == "*") {
-				addquery(makeAAtomQuery(), "", mol, (*atIt)->getIdx());
-			}
-		}
-	}
+template <typename Q>
+void addquery(Q *qry, std::string symbol, RDKit::RWMol &mol, unsigned int idx) {
+  PRECONDITION(qry, "bad query");
+  auto *qa = new QueryAtom(0);
+  qa->setQuery(qry);
+  qa->setNoImplicit(true);
+  mol.replaceAtom(idx, qa);
+  if (symbol != "")
+    mol.getAtomWithIdx(idx)->setProp(RDKit::common_properties::atomLabel,
+                                     symbol);
+  delete qa;
+}
+void processCXSmilesLabels(RDKit::RWMol &mol) {
+  for (RDKit::ROMol::AtomIterator atIt = mol.beginAtoms();
+       atIt != mol.endAtoms(); ++atIt) {
+    std::string symb = "";
+    if ((*atIt)->getPropIfPresent(RDKit::common_properties::atomLabel, symb)) {
+      if (symb.size() > 3 && symb[0] == '_' && symb[1] == 'A' &&
+          symb[2] == 'P') {
+        unsigned int mapNum =
+            boost::lexical_cast<unsigned int>(symb.substr(3, symb.size() - 3));
+        (*atIt)->setAtomMapNum(mapNum);
+      } else if (symb == "star_e") {
+        /* according to the MDL spec, these match anything, but in MARVIN they
+        are "unspecified end groups" for polymers */
+        addquery(makeAtomNullQuery(), symb, mol, (*atIt)->getIdx());
+      } else if (symb == "Q_e") {
+        addquery(makeQAtomQuery(), symb, mol, (*atIt)->getIdx());
+      } else if (symb == "QH_p") {
+        addquery(makeQHAtomQuery(), symb, mol, (*atIt)->getIdx());
+      } else if (symb == "AH_p") {  // this seems wrong...
+        /* According to the MARVIN Sketch, AH is "any atom, including H" -
+        this would be "*" in SMILES - and "A" is "any atom except H".
+        The CXSMILES docs say that "A" can be represented normally in SMILES
+        and that "AH" needs to be written out as AH_p. I'm going to assume that
+        this is a Marvin internal thing and just parse it as they describe it.
+        This means that "*" in the SMILES itself needs to be treated
+        differently, which we do below. */
+        addquery(makeAHAtomQuery(), symb, mol, (*atIt)->getIdx());
+      } else if (symb == "X_p") {
+        addquery(makeXAtomQuery(), symb, mol, (*atIt)->getIdx());
+      } else if (symb == "XH_p") {
+        addquery(makeXHAtomQuery(), symb, mol, (*atIt)->getIdx());
+      } else if (symb == "M_p") {
+        addquery(makeMAtomQuery(), symb, mol, (*atIt)->getIdx());
+      } else if (symb == "MH_p") {
+        addquery(makeMHAtomQuery(), symb, mol, (*atIt)->getIdx());
+      }
+    } else if ((*atIt)->getAtomicNum() == 0 && (*atIt)->getSymbol() == "*") {
+      addquery(makeAAtomQuery(), "", mol, (*atIt)->getIdx());
+    }
+  }
+}
 
 }  // end of anonymous namespace
 
 void parseCXExtensions(RDKit::RWMol &mol, const std::string &extText,
-	std::string::const_iterator &first) {
-	// std::cerr << "parseCXNExtensions: " << extText << std::endl;
-	if (!extText.size() || extText[0] != '|') return;
-	first = extText.begin();
-	bool ok = parser::parse_it(first, extText.end(), mol);
-	if (!ok)
-		throw RDKit::SmilesParseException("failure parsing CXSMILES extensions");
-	if (ok) {
-		processCXSmilesLabels(mol);
-	}
+                       std::string::const_iterator &first) {
+  // std::cerr << "parseCXNExtensions: " << extText << std::endl;
+  if (!extText.size() || extText[0] != '|') return;
+  first = extText.begin();
+  bool ok = parser::parse_it(first, extText.end(), mol);
+  if (!ok)
+    throw RDKit::SmilesParseException("failure parsing CXSMILES extensions");
+  if (ok) {
+    processCXSmilesLabels(mol);
+  }
 }
 }  // end of namespace SmilesParseOps
 namespace RDKit {
-	namespace SmilesWrite {
-    namespace {
-      std::string quote_string(const std::string &txt){
-        // FIX
-        return txt;
-      }
-      std::string get_value_block(const ROMol &mol, const std::vector<unsigned int> &atomOrder, const std::string &prop) {
-        std::string res = "";
-				bool first = true;
-				for (auto idx : atomOrder) {
-					if (!first) res += ";";
-					else first = false;
-					std::string lbl;
-					if (mol.getAtomWithIdx(idx)->getPropIfPresent(prop, lbl)) {
-						res += lbl;
-					}
-				}
-        return res;
-      }
-      std::string get_radical_block(const ROMol &mol, const std::vector<unsigned int> &atomOrder) {
-        std::string res = "";
-				std::map<unsigned int,std::vector<unsigned int>> rads;
-				for (unsigned int i=0;i<mol.getNumAtoms();++i) {
-          auto idx = atomOrder[i];
-          auto nrad = mol.getAtomWithIdx(idx)->getNumRadicalElectrons();
-          if(nrad){
-            rads[nrad].push_back(i); 
-          }
-        }
-        if(rads.size()){
-          for(const auto pr : rads) {
-            switch(pr.first){
-              case 1:
-              res += "^1:";break;
-              case 2:
-              res += "^2:";break;
-              case 3:
-              res += "^5:";break;
-              default:
-              BOOST_LOG(rdWarningLog) << "unsupported number of radical electrons " << pr.first <<std::endl;
-            }
-            for( auto aidx : pr.second){
-              res += boost::str(boost::format("%d,") % aidx);
-            }      
-          }
-				}
-        return res;
-      }
-      std::string get_dative_block(const ROMol &mol, const std::vector<unsigned int> &atomOrder) {
-        std::string res = "";
-        for(const auto bond : mol.bonds() ){
-          if(bond->getBondType() == Bond::DATIVE){
-              if(!res.size()) res += "C:";
-              auto startidx = std::find(atomOrder.begin(),atomOrder.end(),bond->getBeginAtomIdx()) - atomOrder.begin();
-              auto endidx = std::find(atomOrder.begin(),atomOrder.end(),bond->getEndAtomIdx()) - atomOrder.begin();
-              res += boost::str(boost::format("%d.%d,")%startidx%endidx);
-          }
-        }
-        return res;
-      }
-     
-    }
-		std::string getCXExtensions(const ROMol &mol) {
-			std::string res = "|";
-			// we will need atom ordering. Get that now:
-			std::vector<unsigned int> atomOrder = mol.getProp<std::vector<unsigned int>>(common_properties::_smilesAtomOutputOrder);
-			bool needLabels = false;
-      bool needValues = false;
-			for (const auto at : mol.atoms()) {
-				if (at->hasProp(common_properties::atomLabel)) needLabels = true;
-        if (at->hasProp(common_properties::molFileValue)) needValues = true;
-			}
-
-			if (needLabels) {
-				res += "$" + get_value_block(mol,atomOrder,common_properties::atomLabel) + "$";
-			}
-			if (needValues) {
-				res += "$_AV:" + get_value_block(mol,atomOrder,common_properties::molFileValue) + "$";
-			}
-      res += get_radical_block(mol,atomOrder);
-      res += get_dative_block(mol,atomOrder);
-      if(res.back() == ',') res.erase(res.size()-1);
-      if(res.size()>1){
-        res += "|";
-      } else {
-        res = "";
-      }
-			return res;
-		}
-	}
+namespace SmilesWrite {
+namespace {
+std::string quote_string(const std::string &txt) {
+  // FIX
+  return txt;
 }
+std::string get_value_block(const ROMol &mol,
+                            const std::vector<unsigned int> &atomOrder,
+                            const std::string &prop) {
+  std::string res = "";
+  bool first = true;
+  for (auto idx : atomOrder) {
+    if (!first)
+      res += ";";
+    else
+      first = false;
+    std::string lbl;
+    if (mol.getAtomWithIdx(idx)->getPropIfPresent(prop, lbl)) {
+      res += lbl;
+    }
+  }
+  return res;
+}
+std::string get_radical_block(const ROMol &mol,
+                              const std::vector<unsigned int> &atomOrder) {
+  std::string res = "";
+  std::map<unsigned int, std::vector<unsigned int>> rads;
+  for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+    auto idx = atomOrder[i];
+    auto nrad = mol.getAtomWithIdx(idx)->getNumRadicalElectrons();
+    if (nrad) {
+      rads[nrad].push_back(i);
+    }
+  }
+  if (rads.size()) {
+    for (const auto pr : rads) {
+      switch (pr.first) {
+        case 1:
+          res += "^1:";
+          break;
+        case 2:
+          res += "^2:";
+          break;
+        case 3:
+          res += "^5:";
+          break;
+        default:
+          BOOST_LOG(rdWarningLog) << "unsupported number of radical electrons "
+                                  << pr.first << std::endl;
+      }
+      for (auto aidx : pr.second) {
+        res += boost::str(boost::format("%d,") % aidx);
+      }
+    }
+  }
+  return res;
+}
+}  // namespace
+std::string getCXExtensions(const ROMol &mol) {
+  std::string res = "|";
+  // we will need atom ordering. Get that now:
+  std::vector<unsigned int> atomOrder = mol.getProp<std::vector<unsigned int>>(
+      common_properties::_smilesAtomOutputOrder);
+  bool needLabels = false;
+  bool needValues = false;
+  for (const auto at : mol.atoms()) {
+    if (at->hasProp(common_properties::atomLabel)) needLabels = true;
+    if (at->hasProp(common_properties::molFileValue)) needValues = true;
+  }
+
+  if (needLabels) {
+    res += "$" + get_value_block(mol, atomOrder, common_properties::atomLabel) +
+           "$";
+  }
+  if (needValues) {
+    res += "$_AV:" +
+           get_value_block(mol, atomOrder, common_properties::molFileValue) +
+           "$";
+  }
+  res += get_radical_block(mol, atomOrder);
+  if (res.back() == ',') res.erase(res.size() - 1);
+  if (res.size() > 1) {
+    res += "|";
+  } else {
+    res = "";
+  }
+  return res;
+}
+}  // namespace SmilesWrite
+}  // namespace RDKit

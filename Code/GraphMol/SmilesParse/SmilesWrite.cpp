@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2016 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2019 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -293,7 +293,8 @@ std::string FragmentSmilesConstruct(
   std::list<unsigned int> ringClosuresToErase;
 
   Canon::canonicalizeFragment(mol, atomIdx, colors, ranks, molStack,
-                              bondsInPlay, bondSymbols, doIsomericSmiles, doRandom);
+                              bondsInPlay, bondSymbols, doIsomericSmiles,
+                              doRandom);
   Bond *bond = nullptr;
   BOOST_FOREACH (Canon::MolStackElem mSE, molStack) {
     switch (mSE.type) {
@@ -425,18 +426,17 @@ std::string MolToSmiles(const ROMol &mol, bool doIsomericSmiles, bool doKekule,
       tmol->debugMol(std::cout);
       std::cout << "----------------------------" << std::endl;
 #endif
-    
+
     // adding randomness without setting the rootedAtAtom
-    if (doRandom ) {
+    if (doRandom) {
       if (rootedAtAtom == -1) {
-        rootedAtAtom = std::rand() % mol.getNumAtoms(); 
+        rootedAtAtom = std::rand() % mol.getNumAtoms();
         // need to find an atom id between 0 and mol.getNumAtoms() exclusively
-        PRECONDITION(rootedAtAtom < 0 ||
-                   static_cast<unsigned int>(rootedAtAtom) < mol.getNumAtoms(),
-               "rootedAtomAtom must be less than the number of atoms");
+        PRECONDITION(rootedAtAtom < 0 || static_cast<unsigned int>(
+                                             rootedAtAtom) < mol.getNumAtoms(),
+                     "rootedAtomAtom must be less than the number of atoms");
       }
     }
-
 
     std::string res;
     unsigned int nAtoms = tmol->getNumAtoms();
@@ -491,7 +491,8 @@ std::string MolToSmiles(const ROMol &mol, bool doIsomericSmiles, bool doKekule,
 
       subSmi = SmilesWrite::FragmentSmilesConstruct(
           *tmol, nextAtomIdx, colors, ranks, doKekule, canonical,
-          doIsomericSmiles, allBondsExplicit, allHsExplicit, doRandom ,  atomOrdering);
+          doIsomericSmiles, allBondsExplicit, allHsExplicit, doRandom,
+          atomOrdering);
 
       res += subSmi;
       colorIt = std::find(colors.begin(), colors.end(), Canon::WHITE_NODE);
@@ -543,13 +544,14 @@ std::string MolToSmiles(const ROMol &mol, bool doIsomericSmiles, bool doKekule,
   return result;
 }  // end of MolToSmiles()
 
-
-std::string MolToCXSmiles(const ROMol &mol, bool doIsomericSmiles, bool doKekule,
-                        int rootedAtAtom, bool canonical, bool allBondsExplicit,
-                        bool allHsExplicit, bool doRandom) {
-  auto res = MolToSmiles(mol,doIsomericSmiles,doKekule,rootedAtAtom,canonical,allBondsExplicit,allHsExplicit,doRandom);
+std::string MolToCXSmiles(const ROMol &mol, bool doIsomericSmiles,
+                          bool doKekule, int rootedAtAtom, bool canonical,
+                          bool allBondsExplicit, bool allHsExplicit,
+                          bool doRandom) {
+  auto res = MolToSmiles(mol, doIsomericSmiles, doKekule, rootedAtAtom,
+                         canonical, allBondsExplicit, allHsExplicit, doRandom);
   auto cxext = SmilesWrite::getCXExtensions(mol);
-  if(cxext.length()){
+  if (cxext.length()) {
     res += " " + cxext;
   }
   return res;
