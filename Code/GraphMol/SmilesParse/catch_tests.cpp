@@ -203,4 +203,20 @@ TEST_CASE("github #2257: writing cxsmiles", "[smiles,cxsmiles]") {
     auto smi = MolToCXSmiles(*mol);
     CHECK(smi == "[CH]C[CH2] |^1:2,^2:0|");
   }
+  SECTION("coordinates") {
+    auto mol = "OC |(0,.75,;0,-.75,)|"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getNumConformers() == 1);
+
+    auto smi = MolToCXSmiles(*mol);
+    CHECK(smi == "CO |(0,-0.75,;0,0.75,)|");
+  }
+  SECTION("coordinates3d") {
+    auto mol = "OC |(0,.75,0.1;0,-.75,-0.1)|"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getNumConformers() == 1);
+
+    auto smi = MolToCXSmiles(*mol);
+    CHECK(smi == "CO |(0,-0.75,-0.1;0,0.75,0.1)|");
+  }
 }

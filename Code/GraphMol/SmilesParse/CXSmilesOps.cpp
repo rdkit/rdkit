@@ -415,6 +415,26 @@ std::string get_radical_block(const ROMol &mol,
   }
   return res;
 }
+std::string get_coords_block(const ROMol &mol,
+                             const std::vector<unsigned int> &atomOrder) {
+  std::string res = "";
+  const auto &conf = mol.getConformer();
+  bool first = true;
+  for (auto idx : atomOrder) {
+    const auto &pt = conf.getAtomPos(idx);
+    if (!first) {
+      res += ";";
+    } else {
+      first = false;
+    }
+    res += boost::str(boost::format("%g,%g,") % pt.x % pt.y);
+    if (conf.is3D()) {
+      auto zc = boost::str(boost::format("%g") % pt.z);
+      if (zc != "0") res += zc;
+    }
+  }
+  return res;
+}
 }  // namespace
 std::string getCXExtensions(const ROMol &mol) {
   std::string res = "|";
@@ -427,7 +447,9 @@ std::string getCXExtensions(const ROMol &mol) {
     if (at->hasProp(common_properties::atomLabel)) needLabels = true;
     if (at->hasProp(common_properties::molFileValue)) needValues = true;
   }
-
+  if (mol.getNumConformers()) {
+    res += "(" + get_coords_block(mol, atomOrder) + ")";
+  }
   if (needLabels) {
     res += "$" + get_value_block(mol, atomOrder, common_properties::atomLabel) +
            "$";
