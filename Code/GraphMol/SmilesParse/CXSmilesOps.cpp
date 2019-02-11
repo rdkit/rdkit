@@ -269,7 +269,7 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol) {
       } else {
         if (!parse_atom_labels(first, last, mol)) return false;
       }
-    } else if (length > 9 && std::string(first, first + 9) == "atomprop:") {
+    } else if (length > 9 && std::string(first, first + 9) == "atomProp:") {
       first += 9;
       if (!parse_atom_props(first, last, mol)) return false;
     } else if (*first == 'C') {
@@ -435,6 +435,27 @@ std::string get_coords_block(const ROMol &mol,
   }
   return res;
 }
+
+std::string get_atom_props_block(const ROMol &mol,
+                                 const std::vector<unsigned int> &atomOrder) {
+  std::vector<std::string> skip = {common_properties::atomLabel,
+                                   common_properties::molFileValue};
+  std::string res = "";
+  unsigned int which = 0;
+  for (auto idx : atomOrder) {
+    const auto atom = mol.getAtomWithIdx(idx);
+    bool includePrivate = false, includeComputed = false;
+    for (const auto &pn : atom->getPropList(includePrivate, includeComputed)) {
+      if (std::find(skip.begin(), skip.end(), pn) == skip.end()) {
+        if (res.size() == 0) res += "atomProp";
+        res += boost::str(boost::format(":%d.%s.%s") % which % pn %
+                          (atom->getProp<std::string>(pn)));
+      }
+    }
+    ++which;
+  }
+  return res;
+}
 }  // namespace
 std::string getCXExtensions(const ROMol &mol) {
   std::string res = "|";
@@ -451,16 +472,27 @@ std::string getCXExtensions(const ROMol &mol) {
     res += "(" + get_coords_block(mol, atomOrder) + ")";
   }
   if (needLabels) {
+    if (res.size() > 1) res += ",";
     res += "$" + get_value_block(mol, atomOrder, common_properties::atomLabel) +
            "$";
   }
   if (needValues) {
+    if (res.size() > 1) res += ",";
     res += "$_AV:" +
            get_value_block(mol, atomOrder, common_properties::molFileValue) +
            "$";
   }
-  res += get_radical_block(mol, atomOrder);
-  if (res.back() == ',') res.erase(res.size() - 1);
+  auto radblock = get_radical_block(mol, atomOrder);
+  if (radblock.size()) {
+    if (res.size() > 1) res += ",";
+    res += radblock;
+    if (res.back() == ',') res.erase(res.size() - 1);
+  }
+  auto atomblock = get_atom_props_block(mol, atomOrder);
+  if (atomblock.size()) {
+    if (res.size() > 1) res += ",";
+    res += atomblock;
+  }
   if (res.size() > 1) {
     res += "|";
   } else {

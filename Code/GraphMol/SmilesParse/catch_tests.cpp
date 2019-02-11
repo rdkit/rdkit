@@ -219,4 +219,27 @@ TEST_CASE("github #2257: writing cxsmiles", "[smiles,cxsmiles]") {
     auto smi = MolToCXSmiles(*mol);
     CHECK(smi == "CO |(0,-0.75,-0.1;0,0.75,0.1)|");
   }
+  SECTION("atom props") {
+    auto mol = "N1CC1C |atomProp:0.p2.v2:0.p1.v1:1.p2.v2:1.p1.v1;2;3|"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 4);
+    CHECK(mol->getAtomWithIdx(0)->hasProp("p1"));
+    CHECK(mol->getAtomWithIdx(0)->getProp<std::string>("p1") == "v1");
+    CHECK(mol->getAtomWithIdx(0)->hasProp("p2"));
+    CHECK(mol->getAtomWithIdx(0)->getProp<std::string>("p2") == "v2");
+    CHECK(mol->getAtomWithIdx(1)->hasProp("p2"));
+    CHECK(mol->getAtomWithIdx(1)->getProp<std::string>("p2") == "v2");
+    CHECK(mol->getAtomWithIdx(1)->hasProp("p1"));
+    CHECK(mol->getAtomWithIdx(1)->getProp<std::string>("p1") == "v1;2;3");
+
+    auto smi = MolToCXSmiles(*mol);
+    CHECK(smi == "CC1CN1 |atomProp:2.p2.v2:2.p1.v1;2;3:3.p2.v2:3.p1.v1|");
+  }
+  SECTION("atom props and values") {
+    //"CN |$_AV:atomv0;atomv1$,atomProp:0.p2.v2:1.p2.v1|";
+    auto mol = "CN |atomProp:0.p2.v2:1.p1.v1,$_AV:val1;val2$|"_smiles;
+    REQUIRE(mol);
+    auto smi = MolToCXSmiles(*mol);
+    CHECK(smi == "CN |$_AV:val1;val2$,atomProp:0.p2.v2:1.p1.v1|");
+  }
 }
