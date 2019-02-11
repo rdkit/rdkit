@@ -216,3 +216,58 @@ TEST_CASE(
     REQUIRE(mol2->getBondWithIdx(7)->hasQuery());
   }
 }
+TEST_CASE("preserve mol file properties on bonds", "[parser,ctab]") {
+  SECTION("basics") {
+    std::string molblock = R"CTAB(
+  Mrv1810 02111915042D          
+
+  4  3  0  0  0  0            999 V2000
+   -1.5625    1.6071    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8480    2.0196    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2770    2.0196    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5625    0.7821    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  3  1  0  0  0  0
+  1  2  6  0  0  0  0
+  1  4  1  1  0  0  0
+M  END
+      )CTAB";
+    std::unique_ptr<ROMol> mol(MolBlockToMol(molblock));
+    REQUIRE(mol);
+    CHECK(mol->getBondWithIdx(1)->getProp<unsigned int>(
+              common_properties::_MolFileBondType) == 6);
+    CHECK(mol->getBondWithIdx(2)->getProp<unsigned int>(
+              common_properties::_MolFileBondType) == 1);
+    CHECK(mol->getBondWithIdx(2)->getProp<unsigned int>(
+              common_properties::_MolFileBondStereo) == 1);
+  }
+  SECTION("basics-v3k") {
+    std::string molblock = R"CTAB(
+  Mrv1810 02111915102D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -2.9167 3 0 0
+M  V30 2 C -1.583 3.77 0 0
+M  V30 3 C -4.2503 3.77 0 0
+M  V30 4 C -2.9167 1.46 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 3
+M  V30 2 6 1 2
+M  V30 3 1 1 4 CFG=1
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB";
+    std::unique_ptr<ROMol> mol(MolBlockToMol(molblock));
+    REQUIRE(mol);
+    CHECK(mol->getBondWithIdx(1)->getProp<unsigned int>(
+              common_properties::_MolFileBondType) == 6);
+    CHECK(mol->getBondWithIdx(2)->getProp<unsigned int>(
+              common_properties::_MolFileBondType) == 1);
+    CHECK(mol->getBondWithIdx(2)->getProp<unsigned int>(
+              common_properties::_MolFileBondCfg) == 1);
+  }
+}

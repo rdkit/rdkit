@@ -167,6 +167,12 @@ RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileAtomQuery;   // int
 RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileBondQuery;   // int
 RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileBondEndPts;  // string
 RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileBondAttach;  // string
+RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileBondType;    // unsigned int
+RDKIT_RDGENERAL_EXPORT extern const std::string
+    _MolFileBondStereo;  // unsigned int
+RDKIT_RDGENERAL_EXPORT extern const std::string
+    _MolFileBondCfg;  // unsigned int
+
 RDKIT_RDGENERAL_EXPORT extern const std::string
     MRV_SMA;  // smarts string from Marvin
 RDKIT_RDGENERAL_EXPORT extern const std::string dummyLabel;  // atom string
