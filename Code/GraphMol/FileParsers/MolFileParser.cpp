@@ -1326,7 +1326,7 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
 }
 
 Bond *ParseMolFileBondLine(const std::string &text, unsigned int line) {
-  int idx1, idx2, bType, stereo;
+  unsigned int idx1, idx2, bType, stereo;
   int spos = 0;
 
   if (text.size() < 9) {
@@ -1423,6 +1423,7 @@ Bond *ParseMolFileBondLine(const std::string &text, unsigned int line) {
   res->setBeginAtomIdx(idx1);
   res->setEndAtomIdx(idx2);
   res->setBondType(type);
+  res->setProp(common_properties::_MolFileBondType, bType);
 
   if (text.size() >= 12 && text.substr(9, 3) != "  0") {
     try {
@@ -1445,6 +1446,7 @@ Bond *ParseMolFileBondLine(const std::string &text, unsigned int line) {
           res->setBondDir(Bond::UNKNOWN);
           break;
       }
+      res->setProp(common_properties::_MolFileBondStereo, stereo);
     } catch (boost::bad_lexical_cast &) {
       ;
     }
@@ -2173,6 +2175,7 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
         }
         break;
     }
+    bond->setProp(common_properties::_MolFileBondType, bType);
 
     // additional bond properties:
     unsigned int lPos = 4;
@@ -2209,6 +2212,7 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
             errout << "bad bond CFG " << val << "' on line " << line;
             throw FileParseException(errout.str());
         }
+        bond->setProp(common_properties::_MolFileBondCfg, cfg);
       } else if (prop == "TOPO") {
         if (val != "0") {
           if (!bond->hasQuery()) {
