@@ -67,6 +67,8 @@ namespace RDKit {
    */
   RDKIT_RDINCHILIB_EXPORT std::string MolToInchi(const ROMol& mol, ExtraInchiReturnValues& rv,
                          const char *options=NULL);
+  RDKIT_RDINCHILIB_EXPORT std::string MolBlockToInchi(const std::string & mol, ExtraInchiReturnValues& rv,
+                         const char *options=NULL);
   /*! Get the InChI Key for an input InChI string
    * \param inchi The input InChI string, which can be standard or not.
    */
