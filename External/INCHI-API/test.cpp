@@ -668,6 +668,45 @@ M  END
 }
 
 
+{
+  std::string molb=R"MOL(
+  Mrv1824 02121905282D          
+
+ 10 11  0  0  0  0            999 V2000
+   -4.6875   -1.1393    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.4020   -1.5518    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.4020   -2.3768    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.6875   -2.7893    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.9730   -2.3768    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.9730   -1.5518    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.2586   -2.7893    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.5441   -1.5518    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.5441   -2.3768    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9608   -0.9684    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  1  6  1  0  0  0  0
+  7  9  1  0  0  0  0
+  6  8  1  0  0  0  0
+  7  5  1  0  0  0  0
+  8 10  1  0  0  0  0
+  8  9  2  0  0  0  0
+M  END
+    )MOL";
+    {
+        ExtraInchiReturnValues tmp;
+        std::string inchi = MolBlockToInchi(molb, tmp);
+        TEST_ASSERT(inchi=="InChI=1S/C8H8N2/c1-6-7-4-2-3-5-8(7)10-9-6/h2-5H,1H3,(H,9,10)");
+    }
+    {
+        ExtraInchiReturnValues tmp;
+        std::string inchi = MolBlockToInchi(molb, tmp, "/FixedH");
+        TEST_ASSERT(inchi=="InChI=1/C8H8N2/c1-6-7-4-2-3-5-8(7)10-9-6/h2-5H,1H3,(H,9,10)/f/h10H");
+    }
+}
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
@@ -677,7 +716,7 @@ M  END
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 int main() {
   RDLog::InitLogs();
-#if 0
+#if 1
   testGithubIssue3();
   testGithubIssue8();
   testGithubIssue40();
