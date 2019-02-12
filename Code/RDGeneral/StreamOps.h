@@ -259,10 +259,9 @@ inline void streamRead(std::istream &ss, std::string &what, int version) {
   RDUNUSED_PARAM(version);
   unsigned int l;
   ss.read((char *)&l, sizeof(l));
-  char *buff = new char[l + 1];
+  char *buff = new char[l];
   ss.read(buff, sizeof(char) * l);
-  buff[l] = 0;
-  what = buff;
+  what = std::string(buff, l);
   delete[] buff;
 };
 
