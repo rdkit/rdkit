@@ -46,7 +46,7 @@ from rdkit.Chem import MolFromMolBlock, MolToMolBlock
 from rdkit.Chem import INCHI_AVAILABLE
 if INCHI_AVAILABLE:
   from rdkit.Chem import InchiReadWriteError
-  from rdkit.Chem import MolToInchi, MolFromInchi, InchiToInchiKey, MolToInchiKey
+  from rdkit.Chem import MolToInchi, MolBlockToInchi, MolFromInchi, InchiToInchiKey, MolToInchiKey
 
 COLOR_RED = '\033[31m'
 COLOR_GREEN = '\033[32m'
@@ -272,6 +272,27 @@ class TestCase(unittest.TestCase):
     k1 = InchiToInchiKey(inchi)
     k2 = MolToInchiKey(m)
     self.assertEqual(k1, k2)
+
+  def test5MolBlockToInchi(self):
+    mb = """
+  Mrv1824 02111920092D          
+
+  6  6  0  0  0  0            999 V2000
+   -5.5134    3.5259    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.2279    3.1134    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.2279    2.2884    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.5134    1.8759    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.7989    2.2884    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.7989    3.1134    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  1  0  0  0  0
+  1  6  1  0  0  0  0
+  2  3  2  0  0  0  0
+M  END"""
+    inchi = MolBlockToInchi(mb)
+    self.assertEqual(inchi,"InChI=1S/C5H8O/c1-2-4-6-5-3-1/h1-2H,3-5H2")
 
 
 if __name__ == '__main__':  # pragma: nocover

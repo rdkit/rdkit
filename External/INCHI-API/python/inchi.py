@@ -1,4 +1,3 @@
-# $Id$
 #
 #  Copyright (c) 2011, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.
@@ -123,6 +122,37 @@ def MolToInchiAndAuxInfo(mol, options="", logLevel=None, treatWarningAsError=Fal
     raise InchiReadWriteError(inchi, aux, message)
   return inchi, aux
 
+def MolBlockToInchiAndAuxInfo(molblock, options="", logLevel=None, treatWarningAsError=False):
+  """Returns the standard InChI string and InChI auxInfo for a mol block
+
+    Keyword arguments:
+    logLevel -- the log level used for logging logs and messages from InChI
+    API. set to None to diable the logging completely
+    treatWarningAsError -- set to True to raise an exception in case of a
+    molecule that generates warning in calling InChI API. The resultant InChI
+    string and AuxInfo string as well as the error message are encoded in the
+    exception.
+
+    Returns:
+    a tuple of the standard InChI string and the auxInfo string returned by
+    InChI API, in that order, for the input molecule
+    """
+  inchi, retcode, message, logs, aux = rdinchi.MolBlockToInchi(molblock, options)
+  if logLevel is not None:
+    if logLevel not in logLevelToLogFunctionLookup:
+      raise ValueError("Unsupported log level: %d" % logLevel)
+    log = logLevelToLogFunctionLookup[logLevel]
+    if retcode == 0:
+      log(message)
+  if retcode != 0:
+    if retcode == 1:
+      logger.warning(message)
+    else:
+      logger.error(message)
+
+  if treatWarningAsError and retcode != 0:
+    raise InchiReadWriteError(inchi, aux, message)
+  return inchi, aux
 
 def MolToInchi(mol, options="", logLevel=None, treatWarningAsError=False):
   """Returns the standard InChI string for a molecule
@@ -152,6 +182,33 @@ def MolToInchi(mol, options="", logLevel=None, treatWarningAsError=False):
     raise InchiReadWriteError(inchi, message)
   return inchi
 
+def MolBlockToInchi(molblock, options="", logLevel=None, treatWarningAsError=False):
+  """Returns the standard InChI string for a mol block
+
+    Keyword arguments:
+    logLevel -- the log level used for logging logs and messages from InChI
+    API. set to None to diable the logging completely
+    treatWarningAsError -- set to True to raise an exception in case of a
+    molecule that generates warning in calling InChI API. The resultant InChI
+    string and AuxInfo string as well as the error message are encoded in the
+    exception.
+
+    Returns:
+    the standard InChI string returned by InChI API for the input molecule
+    """
+  if options.find('AuxNone') == -1:
+    if options:
+      options += " /AuxNone"
+    else:
+      options += "/AuxNone"
+
+  try:
+    inchi, aux = MolBlockToInchiAndAuxInfo(molblock, options, logLevel=logLevel,
+                                      treatWarningAsError=treatWarningAsError)
+  except InchiReadWriteError as inst:
+    inchi, aux, message = inst.args
+    raise InchiReadWriteError(inchi, message)
+  return inchi
 
 def InchiToInchiKey(inchi):
   """Return the InChI key for the given InChI string. Return None on error"""
@@ -173,5 +230,5 @@ def MolToInchiKey(mol, options=""):
 
 
 
-__all__ = ['MolToInchiAndAuxInfo', 'MolToInchi', 'MolFromInchi', 'InchiReadWriteError',
+__all__ = ['MolToInchiAndAuxInfo', 'MolToInchi', 'MolBlockToInchiAndAuxInfo', 'MolBlockToInchi', 'MolFromInchi', 'InchiReadWriteError',
            'InchiToInchiKey', 'MolToInchiKey', 'INCHI_AVAILABLE']
