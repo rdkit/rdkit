@@ -156,18 +156,15 @@ std::vector<T> makeVec() {
 
 template<class T>
 void testProp(T val) {
-  std::string pklName = getenv("RDBASE");
-  pklName += "/Code/GraphMol/test_data/prop.pkl";
+  std::stringstream ss;
   
   {
-    std::ofstream ss(pklName.c_str(), std::ios_base::binary);
     RDProps p;
     p.setProp<T>("foo", val);
     TEST_ASSERT(streamWriteProps(ss, p));
   }
   
   {
-    std::ifstream ss(pklName.c_str(), std::ios_base::binary);
     RDProps p2;
     streamReadProps(ss, p2);
     TEST_ASSERT(p2.getProp<T>("foo") == val);
@@ -216,24 +213,20 @@ void testPropertyPickler() {
 
 void testPickleBinaryString() {
   BOOST_LOG(rdErrorLog) << "Pickle Binary String" << std::endl;
-  std::string pklName = getenv("RDBASE");
-  pklName += "/Code/GraphMol/test_data/propbinary.pkl";
-
   char buf[10];
   for(int i=0;i<10;++i) {
     buf[i] = (char)i;
   }
   std::string str(buf, 10);
+  std::stringstream ss;
   
   {
-    std::ofstream ss(pklName.c_str(), std::ios_base::binary);
     RDProps p;
     p.setProp<std::string>("foo", str);
     TEST_ASSERT(streamWriteProps(ss, p));
   }
   
   {
-    std::ifstream ss(pklName.c_str(), std::ios_base::binary);
     RDProps p2;
     streamReadProps(ss, p2);
     TEST_ASSERT(p2.getProp<std::string>("foo") == str);
