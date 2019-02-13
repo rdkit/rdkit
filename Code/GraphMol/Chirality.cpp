@@ -665,6 +665,11 @@ std::pair<bool, bool> isAtomPotentialChiralCenter(
                (atom->getExplicitValence() == 3 &&
                 atom->getFormalCharge() == 1))) {
             legalCenter = true;
+          } else if (atom->getAtomicNum() == 7 &&
+                     mol.getRingInfo()->isAtomInRingOfSize(atom->getIdx(), 3)) {
+            // N in a three-membered ring is another one of the InChI special
+            // cases
+            legalCenter = true;
           }
         }
       }
