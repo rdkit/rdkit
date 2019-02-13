@@ -67,6 +67,21 @@ namespace RDKit {
    */
   RDKIT_RDINCHILIB_EXPORT std::string MolToInchi(const ROMol& mol, ExtraInchiReturnValues& rv,
                          const char *options=NULL);
+  /*! Get the InChI string for a given mol block
+   * \param mol The input mol block
+   * \param rv An ExtraInchiReturnValues struct instance that is used to receive
+   * extra return values such as InChI Auxiliary Information and error messages
+   * from InChI API.
+   * \param options An null-terminated character string of space-deliminated
+   * InChI options that is passed to InChI API as is (except that / is naively
+   * converted to - to non-Windows platforms and - is converted to / on Windows)
+   * Available options are explained in the InChI technical FAQ:
+   * http://www.inchi-trust.org/fileadmin/user_upload/html/inchifaq/inchi-faq.html#15.14
+   * and the User Guide:
+   * http://www.inchi-trust.org/fileadmin/user_upload/software/inchi-v1.04/InChI_UserGuide.pdf
+   */
+  RDKIT_RDINCHILIB_EXPORT std::string MolBlockToInchi(const std::string & mol, ExtraInchiReturnValues& rv,
+                         const char *options=NULL);
   /*! Get the InChI Key for an input InChI string
    * \param inchi The input InChI string, which can be standard or not.
    */

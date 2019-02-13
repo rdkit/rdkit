@@ -1960,6 +1960,41 @@ std::string MolToInchi(const ROMol& mol, ExtraInchiReturnValues& rv,
   return inchi;
 }
 
+std::string MolBlockToInchi(const std::string &molBlock, ExtraInchiReturnValues& rv,
+                       const char* options) {
+ 
+ // create output
+  inchi_Output output;
+  memset((void *)&output, 0, sizeof(output));
+  // call DLL
+  std::string inchi;
+  {
+#if RDK_TEST_MULTITHREADED
+    std::lock_guard<std::mutex> lock(inchiMutex);
+#endif
+    char *_options = nullptr;
+    if (options) {
+      _options = new char[strlen(options) + 1];
+      fixOptionSymbol(options, _options);
+      options = _options;
+    }
+    int retcode = MakeINCHIFromMolfileText( molBlock.c_str(), (char *)options, &output );
+
+    // generate output
+    rv.returnCode = retcode;
+    if (output.szInChI) inchi = std::string(output.szInChI);
+    if (output.szMessage) rv.messagePtr = std::string(output.szMessage);
+    if (output.szLog) rv.logPtr = std::string(output.szLog);
+    if (output.szAuxInfo) rv.auxInfoPtr = std::string(output.szAuxInfo);
+
+    // clean up
+    FreeINCHI(&output);
+    delete [] _options;
+  }
+  return inchi;
+}
+
+
 std::string InchiToInchiKey(const std::string& inchi) {
   char inchiKey[29];
   char xtra1[65], xtra2[65];
