@@ -18,8 +18,18 @@ def ApplyMolListPropsToAtoms(mol, prefix, propType):
     >>> ApplyMolListPropsToAtoms(m,"atom.iprop.",int)
     >>> m.GetAtomWithIdx(1).GetIntProp("foo")
     6
+
+    by default 'n/a' indicates a missing value:
     >>> m = Chem.MolFromSmiles("COC")
-    >>> m.SetProp("atom.iprop.foo","1  9")
+    >>> m.SetProp("atom.iprop.foo","1 n/a 9")
+    >>> ApplyMolListPropsToAtoms(m,"atom.iprop.",int)
+    >>> m.GetAtomWithIdx(1).HasProp("foo")
+    0
+
+    but we can change that by setting a missingvalue property:
+    >>> m = Chem.MolFromSmiles("COC")
+    >>> m.SetProp("atom.iprop.missingvalue","?")
+    >>> m.SetProp("atom.iprop.foo","1 ? 9")
     >>> ApplyMolListPropsToAtoms(m,"atom.iprop.",int)
     >>> m.GetAtomWithIdx(1).HasProp("foo")
     0
@@ -36,16 +46,22 @@ def ApplyMolListPropsToAtoms(mol, prefix, propType):
         setFn = "SetBoolProp"
     else:
         raise ValueError('bad propType')
-    pns = (pn for pn in mol.GetPropNames() if pn.find(prefix) == 0)
-    for pn in pns:
+    pns = [pn for pn in mol.GetPropNames() if pn.find(prefix) == 0]
+    apns = [pn.replace(prefix, '') for pn in pns]
+    missingvalue = 'n/a'
+    if 'missingvalue' in apns:
+        missingvalue = mol.GetProp(prefix + 'missingvalue')
+
+    for pn, apn in zip(pns, apns):
+        if apn == 'missingvalue':
+            continue
         pval = mol.GetProp(pn)
         splitV = pval.replace('\n', ' ').split(' ')
         if len(splitV) != mol.GetNumAtoms():
             warnings.warn(f"property value {pn} has a value list of the wrong length. Ignoring it")
             continue
-        apn = pn.replace(prefix, '')
         for i, sv in enumerate(splitV):
-            if sv != '':
+            if sv != missingvalue:
                 sv = propType(sv)
                 setter = getattr(mol.GetAtomWithIdx(i), setFn)
                 setter(apn, sv)
@@ -78,7 +94,13 @@ class AtomPropSDMolSupplier(Chem.SDMolSupplier):
     ... 1 0 1
     ... 
     ... >  <atom.prop.PartiallyMissing>  (1) 
-    ... one  three
+    ... one n/a three
+    ... 
+    ... >  <atom.iprop.missingvalue> (1)
+    ... ?
+    ...
+    ... >  <atom.iprop.PartiallyMissingInt>  (1) 
+    ... 2 2 ?
     ... 
     ... $$$$
     ... '''
@@ -98,6 +120,10 @@ class AtomPropSDMolSupplier(Chem.SDMolSupplier):
     >>> m.GetAtomWithIdx(0).HasProp('PartiallyMissing')
     1
     >>> m.GetAtomWithIdx(1).HasProp('PartiallyMissing')
+    0
+    >>> m.GetAtomWithIdx(1).HasProp('PartiallyMissingInt')
+    1
+    >>> m.GetAtomWithIdx(2).HasProp('PartiallyMissingInt')
     0
 
     >>> m2 = suppl[0]
@@ -168,11 +194,6 @@ def CreateAtomListProp(mol, storeName, propVals=None, propName=None, propType=st
     >>> CreateAtomListProp(m,'foo',propName='foo',defaultVal='n/a')
     >>> m.GetPropsAsDict()
     {'atom.prop.foo': 'bar n/a baz'}
-
-    we can also leave missing values blank:
-    >>> CreateAtomListProp(m,'foo',propName='foo',defaultVal='')
-    >>> m.GetPropsAsDict()
-    {'atom.prop.foo': 'bar  baz'}
 
     we deal properly with long lines:
     >>> m = Chem.MolFromSmiles('C1CC1'*10)
