@@ -2079,11 +2079,17 @@ void ParseV3000AtomBlock(std::istream *inStream, unsigned int &line,
     throw FileParseException(errout.str());
   }
 
+  bool nonzeroZ = hasNonZeroZCoords(*conf);
   if (mol->hasProp(common_properties::_3DConf)) {
     conf->set3D(true);
     mol->clearProp(common_properties::_3DConf);
+    if (!nonzeroZ) {
+      BOOST_LOG(rdWarningLog)
+          << "Warning: molecule is tagged as 3D, but all Z coords are zero"
+          << std::endl;
+    }
   } else {
-    conf->set3D(hasNonZeroZCoords(*conf));
+    conf->set3D(nonzeroZ);
   }
 }
 void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
@@ -2427,11 +2433,17 @@ bool ParseV2000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
   } else {
     ParseMolBlockAtoms(inStream, line, nAtoms, mol, conf);
 
+    bool nonzeroZ = hasNonZeroZCoords(*conf);
     if (mol->hasProp(common_properties::_3DConf)) {
       conf->set3D(true);
       mol->clearProp(common_properties::_3DConf);
-    } else {  // default is 2D
-      conf->set3D(hasNonZeroZCoords(*conf));
+      if (!nonzeroZ) {
+        BOOST_LOG(rdWarningLog)
+            << "Warning: molecule is tagged as 3D, but all Z coords are zero"
+            << std::endl;
+      }
+    } else {
+      conf->set3D(nonzeroZ);
     }
   }
   mol->addConformer(conf, true);
@@ -2694,7 +2706,6 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
         } else {
           MolOps::sanitizeMol(*res);
         }
-
         // now that atom stereochem has been perceived, the wedging
         // information is no longer needed, so we clear
         // single bond dir flags:
