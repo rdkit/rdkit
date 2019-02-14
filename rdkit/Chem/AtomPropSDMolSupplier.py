@@ -18,6 +18,11 @@ def ApplyMolListPropsToAtoms(mol, prefix, propType):
     >>> ApplyMolListPropsToAtoms(m,"atom.iprop.",int)
     >>> m.GetAtomWithIdx(1).GetIntProp("foo")
     6
+    >>> m = Chem.MolFromSmiles("COC")
+    >>> m.SetProp("atom.iprop.foo","1  9")
+    >>> ApplyMolListPropsToAtoms(m,"atom.iprop.",int)
+    >>> m.GetAtomWithIdx(1).HasProp("foo")
+    0
     """
     if propType == str:
         setFn = "SetProp"
@@ -40,9 +45,10 @@ def ApplyMolListPropsToAtoms(mol, prefix, propType):
             continue
         apn = pn.replace(prefix, '')
         for i, sv in enumerate(splitV):
-            sv = propType(sv)
-            setter = getattr(mol.GetAtomWithIdx(i), setFn)
-            setter(apn, sv)
+            if sv != '':
+                sv = propType(sv)
+                setter = getattr(mol.GetAtomWithIdx(i), setFn)
+                setter(apn, sv)
 
 
 class AtomPropSDMolSupplier(Chem.SDMolSupplier):
@@ -71,6 +77,9 @@ class AtomPropSDMolSupplier(Chem.SDMolSupplier):
     ... >  <atom.bprop.IsCarbon>  (1) 
     ... 1 0 1
     ... 
+    ... >  <atom.prop.PartiallyMissing>  (1) 
+    ... one  three
+    ... 
     ... $$$$
     ... '''
     >>> suppl = AtomPropSDMolSupplier()
@@ -85,6 +94,10 @@ class AtomPropSDMolSupplier(Chem.SDMolSupplier):
     >>> m.GetAtomWithIdx(2).GetProp('AtomLabel')
     'C3'
     >>> m.GetAtomWithIdx(1).GetBoolProp('IsCarbon')
+    0
+    >>> m.GetAtomWithIdx(0).HasProp('PartiallyMissing')
+    1
+    >>> m.GetAtomWithIdx(1).HasProp('PartiallyMissing')
     0
 
     >>> m2 = suppl[0]
@@ -156,8 +169,12 @@ def CreateAtomListProp(mol, storeName, propVals=None, propName=None, propType=st
     >>> m.GetPropsAsDict()
     {'atom.prop.foo': 'bar n/a baz'}
 
+    we can also leave missing values blank:
+    >>> CreateAtomListProp(m,'foo',propName='foo',defaultVal='')
+    >>> m.GetPropsAsDict()
+    {'atom.prop.foo': 'bar  baz'}
 
-    we also deal properly with long lines:
+    we deal properly with long lines:
     >>> m = Chem.MolFromSmiles('C1CC1'*10)
     >>> CreateAtomListProp(m,'long',propVals=[f'atom-{x}' for x in range(m.GetNumAtoms())])
     >>> txt = m.GetProp('atom.prop.long')
