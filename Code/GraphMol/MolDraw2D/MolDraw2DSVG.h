@@ -67,7 +67,8 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
   // this only makes sense if the object was initialized without a stream
   std::string getDrawingText() const { return d_ss.str(); };
 
-  void tagAtoms(const ROMol &mol);
+  void tagAtoms(const ROMol &mol, double radius = 0.2,
+                const std::map<std::string, std::string> &events = {});
 
   void addMoleculeMetadata(const ROMol &mol, int confId = -1) const;
   void addMoleculeMetadata(const std::vector<ROMol *> &mols,
@@ -76,9 +77,18 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
  private:
   std::ostream &d_os;
   std::stringstream d_ss;
+  std::string d_activeClass;
 
   void drawChar(char c, const Point2D &cds);
   void initDrawing();
+
+ protected:
+  void drawBond(
+      const ROMol &mol, const Bond *bond, int at1_idx, int at2_idx,
+      const std::vector<int> *highlight_atoms = nullptr,
+      const std::map<int, DrawColour> *highlight_atom_map = nullptr,
+      const std::vector<int> *highlight_bonds = nullptr,
+      const std::map<int, DrawColour> *highlight_bond_map = nullptr) override;
 };
 }  // namespace RDKit
 #endif  // MOLDRAW2DSVG_H
