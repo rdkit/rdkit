@@ -376,7 +376,7 @@ std::string get_value_block(const ROMol &mol,
       first = false;
     std::string lbl;
     if (mol.getAtomWithIdx(idx)->getPropIfPresent(prop, lbl)) {
-      res += lbl;
+      res += quote_string(lbl);
     }
   }
   return res;
@@ -448,8 +448,9 @@ std::string get_atom_props_block(const ROMol &mol,
     for (const auto &pn : atom->getPropList(includePrivate, includeComputed)) {
       if (std::find(skip.begin(), skip.end(), pn) == skip.end()) {
         if (res.size() == 0) res += "atomProp";
-        res += boost::str(boost::format(":%d.%s.%s") % which % pn %
-                          (atom->getProp<std::string>(pn)));
+        res +=
+            boost::str(boost::format(":%d.%s.%s") % which % quote_string(pn) %
+                       quote_string(atom->getProp<std::string>(pn)));
       }
     }
     ++which;
@@ -460,8 +461,9 @@ std::string get_atom_props_block(const ROMol &mol,
 std::string getCXExtensions(const ROMol &mol) {
   std::string res = "|";
   // we will need atom ordering. Get that now:
-  std::vector<unsigned int> atomOrder = mol.getProp<std::vector<unsigned int>>(
-      common_properties::_smilesAtomOutputOrder);
+  const std::vector<unsigned int> &atomOrder =
+      mol.getProp<std::vector<unsigned int>>(
+          common_properties::_smilesAtomOutputOrder);
   bool needLabels = false;
   bool needValues = false;
   for (const auto at : mol.atoms()) {
