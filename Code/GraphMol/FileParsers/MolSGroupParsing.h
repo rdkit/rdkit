@@ -70,10 +70,6 @@ void ParseSGroupV2000SPLLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
 void ParseSGroupV2000SNCLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
                              const std::string &text, unsigned int line);
 
-// PXA does not have a V3000 equivalent
-void ParseSGroupV2000PXALine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
-                             const std::string &text, unsigned int line);
-
 void ParseSGroupV2000SAPLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
                              const std::string &text, unsigned int line);
 

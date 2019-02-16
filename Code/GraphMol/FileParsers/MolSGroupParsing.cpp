@@ -526,29 +526,6 @@ void ParseSGroupV2000SNCLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
   }
 }
 
-// PXA does not have a V3000 equivalent
-void ParseSGroupV2000PXALine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
-                             const std::string &text, unsigned int line) {
-  PRECONDITION(mol, "bad mol");
-  PRECONDITION(text.substr(0, 6) == "M  PXA", "bad PXA line");
-
-  unsigned int pos = 6;
-
-  unsigned int sgIdx = ParseSGroupIntField(text, line, pos);
-  if (sGroupMap.find(sgIdx) == sGroupMap.end()) {
-    BOOST_LOG(rdWarningLog) << "SGroup " << sgIdx << " referenced on line "
-                            << line << " not found." << std::endl;
-    return;
-  }
-  if (sGroupMap.find(sgIdx) == sGroupMap.end()) {
-    BOOST_LOG(rdWarningLog) << "SGroup " << sgIdx << " referenced on line "
-                            << line << " not found." << std::endl;
-    return;
-  }
-  ++pos;
-  sGroupMap.at(sgIdx).setProp("PXA", text.substr(pos, text.length() - pos));
-}
-
 void ParseSGroupV2000SAPLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
                              const std::string &text, unsigned int line) {
   PRECONDITION(mol, "bad mol");
@@ -594,11 +571,6 @@ void ParseSGroupV2000SCLLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
   unsigned int pos = 6;
 
   unsigned int sgIdx = ParseSGroupIntField(text, line, pos);
-  if (sGroupMap.find(sgIdx) == sGroupMap.end()) {
-    BOOST_LOG(rdWarningLog) << "SGroup " << sgIdx << " referenced on line "
-                            << line << " not found." << std::endl;
-    return;
-  }
   if (sGroupMap.find(sgIdx) == sGroupMap.end()) {
     BOOST_LOG(rdWarningLog) << "SGroup " << sgIdx << " referenced on line "
                             << line << " not found." << std::endl;

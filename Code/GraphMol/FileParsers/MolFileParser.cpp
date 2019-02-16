@@ -393,6 +393,24 @@ void ParseRadicalLine(RWMol *mol, const std::string &text, bool firstCall,
   }
 }
 
+void ParsePXALine(RWMol *mol, const std::string &text, unsigned int line) {
+  PRECONDITION(mol, "bad mol");
+  PRECONDITION(text.substr(0, 6) == "M  PXA", "bad PXA line");
+  unsigned int pos = 7;
+  try {
+    unsigned int atIdx =
+        FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(pos, 3));
+    pos += 3;
+    mol->getAtomWithIdx(atIdx - 1)->setProp(
+        "_MolFile_PXA", text.substr(pos, text.length() - pos));
+  } catch (boost::bad_lexical_cast &) {
+    std::ostringstream errout;
+    errout << "Cannot convert " << text.substr(pos, 3) << " to int on line "
+           << line;
+    throw FileParseException(errout.str());
+  }
+}
+
 void ParseIsotopeLine(RWMol *mol, const std::string &text, unsigned int line) {
   PRECONDITION(mol, "bad mol");
   PRECONDITION(text.substr(0, 6) == std::string("M  ISO"), "bad isotope line");
@@ -1621,6 +1639,8 @@ bool ParseMolBlockProperties(std::istream *inStream, unsigned int &line,
     } else if (lineBeg == "M  RAD") {
       ParseRadicalLine(mol, tempStr, firstChargeLine, line);
       firstChargeLine = false;
+    } else if (lineBeg == "M  PXA") {
+      ParsePXALine(mol, tempStr, line);
 
       /* SGroup parsing start */
     } else if (lineBeg == "M  STY") {
@@ -1659,8 +1679,6 @@ bool ParseMolBlockProperties(std::istream *inStream, unsigned int &line,
       ParseSGroupV2000SPLLine(sGroupMap, mol, tempStr, line);
     } else if (lineBeg == "M  SNC") {
       ParseSGroupV2000SNCLine(sGroupMap, mol, tempStr, line);
-    } else if (lineBeg == "M  PXA") {
-      ParseSGroupV2000PXALine(sGroupMap, mol, tempStr, line);
     } else if (lineBeg == "M  SAP") {
       ParseSGroupV2000SAPLine(sGroupMap, mol, tempStr, line);
     } else if (lineBeg == "M  SCL") {

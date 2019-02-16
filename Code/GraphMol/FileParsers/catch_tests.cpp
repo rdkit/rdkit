@@ -272,7 +272,7 @@ M  END
   }
 }
 TEST_CASE("github #2277 : Failure when parsing mol block with M PXA",
-          "[parser,sgroups]") {
+          "[parser,ctab]") {
   SECTION("basics, make sure we can parse the original data") {
     std::string molblock = R"CTAB(
   Mrv1810 02151911552D          
@@ -308,5 +308,7 @@ M  END
 )CTAB";
     std::unique_ptr<ROMol> mol(MolBlockToMol(molblock));
     REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(10)->hasProp("_MolFile_PXA"));
+    CHECK(!mol->getAtomWithIdx(11)->hasProp("_MolFile_PXA"));
   }
 }
