@@ -96,8 +96,6 @@ std::string BuildV2000SDDLine(const int idx, const SGroup *sgroup);
 
 std::string BuildV2000SCDSEDLines(const int idx, const SGroup *sgroup);
 
-std::string BuildV2000PXALine(const int idx, const SGroup *sgroup);
-
 std::string BuildV2000SAPLines(const int idx, const SGroup *sgroup);
 
 std::string BuildV2000SCLLine(const int idx, const SGroup *sgroup);

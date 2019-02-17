@@ -369,19 +369,6 @@ std::string BuildV2000SCDSEDLines(const int idx, const SGroup &sgroup) {
   return ret.str();
 }
 
-std::string BuildV2000PXALine(const int idx, const SGroup &sgroup) {
-  std::ostringstream ret;
-
-  std::string pxaValue;
-  if (sgroup.getPropIfPresent("PXA", pxaValue)) {
-    ret << "M  PXA" << FormatV2000IntField(idx);
-    ret << FormatV2000StringField(pxaValue, 69, false, true);
-    ret << std::endl;
-  }
-
-  return ret.str();
-}
-
 std::string BuildV2000SAPLines(const int idx, const SGroup &sgroup) {
   std::ostringstream ret;
   std::ostringstream temp;
@@ -459,7 +446,6 @@ const std::string GetMolFileSGroupInfo(const RWMol &mol) {
     // SCD/SED must come after SDT
     ret << BuildV2000SCDSEDLines(idx, sgroup);
 
-    ret << BuildV2000PXALine(idx, sgroup);
     ret << BuildV2000SAPLines(idx, sgroup);
     ret << BuildV2000SCLLine(idx, sgroup);
   }
