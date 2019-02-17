@@ -444,7 +444,6 @@ bool atomIsCandidateForRingStereochem(const ROMol &mol, const Atom *atom) {
         }
         ++beg;
       }
-
       unsigned int rank1 = 0, rank2 = 0;
       switch (nonRingNbrs.size()) {
         case 2:
@@ -460,7 +459,7 @@ bool atomIsCandidateForRingStereochem(const ROMol &mol, const Atom *atom) {
           }
           break;
         case 1:
-          if (ringNbrs.size() == 2) res = true;
+          if (ringNbrs.size() >= 2) res = true;
           break;
         case 0:
           if (ringNbrs.size() == 4 && nbrRanks.size() == 3) {
@@ -664,6 +663,11 @@ std::pair<bool, bool> isAtomPotentialChiralCenter(
               (atom->getExplicitValence() == 4 ||
                (atom->getExplicitValence() == 3 &&
                 atom->getFormalCharge() == 1))) {
+            legalCenter = true;
+          } else if (atom->getAtomicNum() == 7 &&
+                     mol.getRingInfo()->isAtomInRingOfSize(atom->getIdx(), 3)) {
+            // N in a three-membered ring is another one of the InChI special
+            // cases
             legalCenter = true;
           }
         }
@@ -1164,9 +1168,9 @@ void assignStereochemistry(ROMol &mol, bool cleanIt, bool force,
   mol.setProp(common_properties::_StereochemDone, 1, true);
 
 #if 0
-      std::cerr<<"---\n";
-      mol.debugMol(std::cerr);
-      std::cerr<<"<<<<<<<<<<<<<<<<\n";
+  std::cerr << "---\n";
+  mol.debugMol(std::cerr);
+  std::cerr << "<<<<<<<<<<<<<<<<\n";
 #endif
 }
 
