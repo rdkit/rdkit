@@ -374,6 +374,7 @@ RWMol *SmilesToMol(const std::string &smiles,
   if (res && params.allowCXSMILES && !cxPart.empty()) {
     std::string::const_iterator pos = cxPart.cbegin();
     SmilesParseOps::parseCXExtensions(*res, cxPart, pos);
+    res->setProp("_CXSMILES_Data", cxPart.substr(0, pos - cxPart.cbegin()));
     if (params.parseName && pos != cxPart.cend()) {
       std::string nmpart(pos, cxPart.cend());
       name = boost::trim_copy(nmpart);
