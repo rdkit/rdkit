@@ -4440,6 +4440,7 @@ CAS<~>
     self.assertEqual(m.GetAtomWithIdx(0).GetProp('atomLabel'), "foo")
     self.assertTrue(m.HasProp('_Name'))
     self.assertEqual(m.GetProp('_Name'), "ourname")
+    self.assertEqual(m.GetProp("_CXSMILES_Data"), "|$foo;;bar$|")
 
   def testPickleProps(self):
     from rdkit.six.moves import cPickle
