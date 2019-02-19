@@ -236,9 +236,10 @@ void ParseSGroupV2000SCNLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
   unsigned int nent = ParseSGroupIntField(text, line, pos, true);
 
   for (unsigned int ie = 0; ie < nent; ++ie) {
-    if (text.size() < pos + 8) {
+    if (text.size() < pos + 7) {
       std::ostringstream errout;
       errout << "SGroup SCN line too short: '" << text << "' on line " << line;
+      errout << "\n needed: " << pos + 7 << " found: " << text.size();
       throw FileParseException(errout.str());
     }
 
