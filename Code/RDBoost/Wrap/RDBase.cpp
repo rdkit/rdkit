@@ -1,6 +1,5 @@
-// $Id$
-//
-// Copyright (c) 2004-2011 greg Landrum and Rational Discovery LLC
+
+// Copyright (c) 2004-2019 greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -15,6 +14,7 @@
 #include <RDBoost/python_streambuf.h>
 #include <RDGeneral/versions.h>
 #include <RDGeneral/Invariant.h>
+#include <cstdlib>
 
 #include <RDGeneral/RDLog.h>
 #if 0
@@ -93,12 +93,14 @@ struct python_ostream_wrapper {
   static void wrap() {
     using namespace boost::python;
     class_<std::ostream, boost::noncopyable>("std_ostream", no_init);
-    class_<wt, boost::noncopyable, bases<std::ostream> >("ostream", no_init)
+    class_<wt, boost::noncopyable, bases<std::ostream>>("ostream", no_init)
         .def(init<object&, std::size_t>(
             (arg("python_file_obj"), arg("buffer_size") = 0)));
   }
 };
-}
+
+void seedRNG(unsigned int seed) { std::srand(seed); }
+}  // namespace
 
 BOOST_PYTHON_MODULE(rdBase) {
   python::scope().attr("__doc__") =
@@ -109,19 +111,19 @@ BOOST_PYTHON_MODULE(rdBase) {
   RegisterVectorConverter<unsigned>();
   RegisterVectorConverter<double>();
   RegisterVectorConverter<std::string>(1);
-  RegisterVectorConverter<std::vector<int> >();
-  RegisterVectorConverter<std::vector<unsigned> >();
-  RegisterVectorConverter<std::vector<double> >();
+  RegisterVectorConverter<std::vector<int>>();
+  RegisterVectorConverter<std::vector<unsigned>>();
+  RegisterVectorConverter<std::vector<double>>();
 
   RegisterListConverter<int>();
-  RegisterListConverter<std::vector<int> >();
+  RegisterListConverter<std::vector<int>>();
 
   python::register_exception_translator<IndexErrorException>(
       &translate_index_error);
   python::register_exception_translator<ValueErrorException>(
       &translate_value_error);
 
-#if INVARIANT_EXCEPTION_METHOD  
+#if INVARIANT_EXCEPTION_METHOD
   python::register_exception_translator<Invar::Invariant>(
       &translate_invariant_error);
 #endif
@@ -140,6 +142,10 @@ BOOST_PYTHON_MODULE(rdBase) {
               (python::arg("spec"), python::arg("filename"),
                python::arg("delay") = 100));
   python::def("LogMessage", LogMessage);
+
+  python::def("SeedRandomNumberGenerator", seedRNG,
+              "provides a seed to the standard C random number generator",
+              (python::arg("seed")));
 
   python_streambuf_wrapper::wrap();
   python_ostream_wrapper::wrap();
