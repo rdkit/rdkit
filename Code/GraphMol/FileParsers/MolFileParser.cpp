@@ -2540,9 +2540,9 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
   // this needs to go into a try block because if the lexical_cast throws an
   // exception we want to catch and delete mol before leaving this function
   try {
-    nAtoms = FileParserUtils::toInt(tempStr.substr(spos, 3));
+    nAtoms = FileParserUtils::toInt(tempStr.substr(spos, 3), true);
     spos = 3;
-    nBonds = FileParserUtils::toInt(tempStr.substr(spos, 3));
+    nBonds = FileParserUtils::toInt(tempStr.substr(spos, 3), true);
     spos = 6;
   } catch (boost::bad_lexical_cast &) {
     if (res) {
@@ -2557,31 +2557,31 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
   try {
     spos = 6;
     if (tempStr.size() >= 9)
-      nLists = FileParserUtils::toInt(tempStr.substr(spos, 3));
+      nLists = FileParserUtils::toInt(tempStr.substr(spos, 3), true);
 
     spos = 12;
     if (tempStr.size() >= spos + 3)
-      chiralFlag = FileParserUtils::toInt(tempStr.substr(spos, 3));
+      chiralFlag = FileParserUtils::toInt(tempStr.substr(spos, 3), true);
 
     spos = 15;
     if (tempStr.size() >= spos + 3)
-      nsText = FileParserUtils::toInt(tempStr.substr(spos, 3));
+      nsText = FileParserUtils::toInt(tempStr.substr(spos, 3), true);
 
     spos = 18;
     if (tempStr.size() >= spos + 3)
-      nRxnComponents = FileParserUtils::toInt(tempStr.substr(spos, 3));
+      nRxnComponents = FileParserUtils::toInt(tempStr.substr(spos, 3), true);
 
     spos = 21;
     if (tempStr.size() >= spos + 3)
-      nReactants = FileParserUtils::toInt(tempStr.substr(spos, 3));
+      nReactants = FileParserUtils::toInt(tempStr.substr(spos, 3), true);
 
     spos = 24;
     if (tempStr.size() >= spos + 3)
-      nProducts = FileParserUtils::toInt(tempStr.substr(spos, 3));
+      nProducts = FileParserUtils::toInt(tempStr.substr(spos, 3), true);
 
     spos = 27;
     if (tempStr.size() >= spos + 3)
-      nIntermediates = FileParserUtils::toInt(tempStr.substr(spos, 3));
+      nIntermediates = FileParserUtils::toInt(tempStr.substr(spos, 3), true);
 
   } catch (boost::bad_lexical_cast &) {
     // some SD files (such as some from NCI) lack all the extra information
