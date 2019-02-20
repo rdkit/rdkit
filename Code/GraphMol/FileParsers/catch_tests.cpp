@@ -426,7 +426,7 @@ M  END)CTAB";
   }
 }
 
-TEST_CASE("parsing of SCN lines", "[bug]") {
+TEST_CASE("parsing of SCN lines", "[bug, sgroups]") {
   SECTION("basics") {
     std::string molblock = R"CTAB(
   MJ171200
@@ -611,5 +611,109 @@ M  END
 )CTAB";
     std::unique_ptr<ROMol> mol(MolBlockToMol(molblock));
     REQUIRE(mol);
+  }
+}
+
+TEST_CASE("A couple more S group problems", "[bug, sgroups]") {
+  std::string molblock = R"CTAB(CHEMBL3666739
+      SciTegic05171617282D
+
+ 35 40  0  0  0  0            999 V2000
+   -3.6559    5.8551    0.0000 O   0  0
+   -2.6152    5.2576    0.0000 C   0  0
+   -2.6120    3.7568    0.0000 N   0  0
+   -3.9097    3.0028    0.0000 C   0  0
+   -5.2093    3.7519    0.0000 C   0  0
+   -6.5078    3.0010    0.0000 C   0  0
+   -6.5067    1.5010    0.0000 C   0  0
+   -5.2071    0.7519    0.0000 C   0  0
+   -3.9086    1.5029    0.0000 C   0  0
+   -2.6111    0.7486    0.0000 C   0  0
+   -2.6111   -0.7486    0.0000 N   0  0
+   -1.2964   -1.4973    0.0000 C   0  0
+   -1.2907   -2.9981    0.0000 N   0  0
+   -2.5870   -3.7544    0.0000 C   0  0
+   -2.5748   -5.2506    0.0000 C   0  0
+   -3.8815   -6.0264    0.0000 C   0  0
+   -5.1819   -5.2707    0.0000 C   0  0
+   -6.6004   -5.7374    0.0000 N   0  0
+   -7.4849   -4.5227    0.0000 N   0  0
+   -6.6189   -3.3309    0.0000 C   0  0
+   -5.1934   -3.7757    0.0000 C   0  0
+   -3.9049   -3.0000    0.0000 C   0  0
+    0.0000   -0.7486    0.0000 C   0  0
+    1.2964   -1.4973    0.0000 C   0  0
+    2.5929   -0.7486    0.0000 C   0  0
+    2.5929    0.7486    0.0000 C   0  0
+    1.2964    1.4973    0.0000 C   0  0
+    0.0000    0.7486    0.0000 C   0  0
+   -1.2964    1.4973    0.0000 N   0  0
+   -1.3175    6.0116    0.0000 C   0  0
+   -1.3185    7.5117    0.0000 C   0  0
+   -0.0200    8.2626    0.0000 C   0  0
+    1.2795    7.5135    0.0000 N   0  0
+    1.2806    6.0135    0.0000 C   0  0
+   -0.0178    5.2626    0.0000 C   0  0
+  1  2  2  0
+  2  3  1  0
+  3  4  1  0
+  4  5  2  0
+  5  6  1  0
+  6  7  2  0
+  7  8  1  0
+  8  9  2  0
+  4  9  1  0
+  9 10  1  0
+ 10 11  2  0
+ 11 12  1  0
+ 12 13  1  0
+ 13 14  1  0
+ 14 15  2  0
+ 15 16  1  0
+ 16 17  2  0
+ 17 18  1  0
+ 18 19  1  0
+ 19 20  2  0
+ 20 21  1  0
+ 17 21  1  0
+ 21 22  2  0
+ 14 22  1  0
+ 12 23  2  0
+ 23 24  1  0
+ 24 25  2  0
+ 25 26  1  0
+ 26 27  2  0
+ 27 28  1  0
+ 23 28  1  0
+ 28 29  2  0
+ 10 29  1  0
+  2 30  1  0
+ 30 31  2  0
+ 31 32  1  0
+ 32 33  2  0
+ 33 34  1  0
+ 34 35  2  0
+ 30 35  1  0
+M  STY  1   1 DAT
+M  SLB  1   1   1
+M  SAL   1  1  33
+M  SDT   1 MRV_IMPLICIT_H
+M  SDD   1     0.5304   -0.4125    DR    ALL  0       0
+M  SED   1 IMPL_H1
+M  END
+)CTAB";
+  SECTION("spaces in count lines") {
+    std::unique_ptr<ROMol> mol(MolBlockToMol(molblock));
+    REQUIRE(mol);
+  }
+  SECTION("short SDT lines") {
+    std::unique_ptr<ROMol> mol(MolBlockToMol(molblock));
+    REQUIRE(mol);
+    const auto &sgroups = getSGroups(*mol);
+    CHECK(sgroups.size() == 1);
+    CHECK(sgroups[0].hasProp("TYPE"));
+    CHECK(sgroups[0].getProp<std::string>("TYPE") == "DAT");
+    CHECK(sgroups[0].hasProp("FIELDNAME"));
+    CHECK(sgroups[0].getProp<std::string>("FIELDNAME") == "MRV_IMPLICIT_H");
   }
 }

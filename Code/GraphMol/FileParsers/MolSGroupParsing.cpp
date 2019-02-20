@@ -31,6 +31,10 @@ unsigned int ParseSGroupIntField(const std::string &text, unsigned int line,
     errout << "Cannot convert '" << text.substr(pos, len) << "' to int on line "
            << line;
     throw FileParseException(errout.str());
+  } catch (const std::out_of_range &) {
+    std::ostringstream errout;
+    errout << "SGroup line too short: '" << text << "' on line " << line;
+    throw FileParseException(errout.str());
   }
   pos += len;
   return fieldValue;
@@ -46,6 +50,10 @@ double ParseSGroupDoubleField(const std::string &text, unsigned int line,
     std::ostringstream errout;
     errout << "Cannot convert '" << text.substr(pos, len)
            << "' to double on line " << line;
+    throw FileParseException(errout.str());
+  } catch (const std::out_of_range &) {
+    std::ostringstream errout;
+    errout << "SGroup line too short: '" << text << "' on line " << line;
     throw FileParseException(errout.str());
   }
   pos += len;
@@ -206,6 +214,11 @@ void ParseSGroupV2000SMTLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
   auto &sgroup = sGroupMap.at(sgIdx);
   ++pos;
 
+  if (pos >= text.length()) {
+    std::ostringstream errout;
+    errout << "SGroup line too short: '" << text << "' on line " << line;
+    throw FileParseException(errout.str());
+  }
   std::string label = text.substr(pos, text.length() - pos);
 
   if (sgroup.getProp<std::string>("TYPE") ==
@@ -356,26 +369,39 @@ void ParseSGroupV2000SDTLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
     return;
   }
 
-  std::string fieldName = text.substr(++pos, 30);
-  boost::trim_right(fieldName);
-  pos += 30;
-  std::string fieldType = text.substr(pos, 2);
-  boost::trim_right(fieldType);
-  pos += 2;
-  std::string fieldInfo = text.substr(pos, 20);
-  boost::trim_right(fieldInfo);
-  pos += 20;
-  std::string queryType = text.substr(pos, 2);
-  boost::trim_right(queryType);
-  pos += 2;
-  std::string queryOp = text.substr(pos, text.length() - pos);
-  boost::trim_right(queryOp);
+  std::string fieldName;
+  std::string fieldType;
+  std::string fieldInfo;
+  std::string queryType;
+  std::string queryOp;
 
-  sgroup.setProp("FIELDNAME", fieldName);
-  sgroup.setProp("FIELDTYPE", fieldType);
-  sgroup.setProp("FIELDINFO", fieldInfo);
-  sgroup.setProp("QUERYTYPE", queryType);
-  sgroup.setProp("QUERYOP", queryOp);
+  try {
+    fieldName = text.substr(++pos, 30);
+    boost::trim_right(fieldName);
+    pos += 30;
+    fieldType = text.substr(pos, 2);
+    boost::trim_right(fieldType);
+    pos += 2;
+    fieldInfo = text.substr(pos, 20);
+    boost::trim_right(fieldInfo);
+    pos += 20;
+    queryType = text.substr(pos, 2);
+    boost::trim_right(queryType);
+    pos += 2;
+    queryOp = text.substr(pos, text.length() - pos);
+    boost::trim_right(queryOp);
+  } catch (const std::out_of_range &) {
+    // all kinds of wild things out there... this insulates us from them without
+    // making the code super complicated
+  }
+
+  if (fieldName.size()) {
+    sgroup.setProp("FIELDNAME", fieldName);
+    sgroup.setProp("FIELDTYPE", fieldType);
+    sgroup.setProp("FIELDINFO", fieldInfo);
+    sgroup.setProp("QUERYTYPE", queryType);
+    sgroup.setProp("QUERYOP", queryOp);
+  }
 }
 
 void ParseSGroupV2000SDDLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
@@ -393,8 +419,10 @@ void ParseSGroupV2000SDDLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
 
   // Store the rest of the line as is.
   ++pos;
-  sGroupMap.at(sgIdx).setProp("FIELDDISP",
-                              text.substr(pos, text.length() - pos));
+  if (pos < text.length()) {
+    sGroupMap.at(sgIdx).setProp("FIELDDISP",
+                                text.substr(pos, text.length() - pos));
+  }
 }
 
 void ParseSGroupV2000SCDSEDLine(IDX_TO_SGROUP_MAP &sGroupMap,
@@ -447,15 +475,17 @@ void ParseSGroupV2000SCDSEDLine(IDX_TO_SGROUP_MAP &sGroupMap,
     }
   }
 
-  currentDataField << text.substr(++pos, 69);
+  if (pos + 1 < text.length()) {
+    currentDataField << text.substr(++pos, 69);
 
-  if (type == "SED") {
-    std::string trimmedData = boost::trim_right_copy(currentDataField.str());
-    dataFieldsMap[sgIdx].push_back(trimmedData.substr(0, 200));
-    currentDataField.str("");
-    counter = 0;
-  } else {
-    ++counter;
+    if (type == "SED") {
+      std::string trimmedData = boost::trim_right_copy(currentDataField.str());
+      dataFieldsMap[sgIdx].push_back(trimmedData.substr(0, 200));
+      currentDataField.str("");
+      counter = 0;
+    } else {
+      ++counter;
+    }
   }
 }
 
@@ -576,6 +606,11 @@ void ParseSGroupV2000SCLLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
     BOOST_LOG(rdWarningLog) << "SGroup " << sgIdx << " referenced on line "
                             << line << " not found." << std::endl;
     return;
+  }
+  if (pos + 1 >= text.length()) {
+    std::ostringstream errout;
+    errout << "SGroup SCL line too short: '" << text << "' on line " << line;
+    throw FileParseException(errout.str());
   }
 
   ++pos;
@@ -829,7 +864,7 @@ void ParseV3000SGroupsBlock(std::istream *inStream, unsigned int &line,
   tempStr = FileParserUtils::getV3000Line(inStream, line);
 
   // Store defaults
-  if (tempStr.substr(0, 7) == "DEFAULT") {
+  if (tempStr.substr(0, 7) == "DEFAULT" && tempStr.length() > 8) {
     defaultString = tempStr.substr(7);
     defaultLineNum = line;
     boost::trim_right(defaultString);
