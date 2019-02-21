@@ -6056,10 +6056,14 @@ void testPotentialStereoBonds() {
       << std::endl;
 
   {  // starting point: full sanitization
+    auto m1 = "BrC(=NN=c1nn[nH][nH]1)c1ccncc1"_smiles;
+    TEST_ASSERT(m1);
     std::string smiles =
         "Br/C(=N\\N=c1/nn[nH][nH]1)c1ccncc1";  // possible problem reported by
                                                // Steve Roughley
     ROMol *m = SmilesToMol(smiles);
+    // m->updatePropertyCache(false);
+    // m->debugMol(std::cerr);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 15);
     TEST_ASSERT(m->getBondWithIdx(1)->getBondType() == Bond::DOUBLE);
@@ -7640,7 +7644,6 @@ int main() {
   testGithubIssue607();
   testAdjustQueryProperties();
   testGithubIssue1204();
-  testPotentialStereoBonds();
   testSetBondStereo();
 
   testBondSetStereoAtoms();
@@ -7656,6 +7659,9 @@ int main() {
   testGithub1928();
   testGithub1990();
 #endif
+
   testGithub2352();
+  testPotentialStereoBonds();
+
   return 0;
 }

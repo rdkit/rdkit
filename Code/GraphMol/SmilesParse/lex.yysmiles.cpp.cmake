@@ -2111,89 +2111,91 @@ YY_RULE_SETUP
 case 168:
 YY_RULE_SETUP
 #line 335 "smiles.ll"
-{ yylval->bond = new Bond(Bond::SINGLE);
+{ yylval->bond = new Bond(Bond::UNSPECIFIED);
+	yylval->bond->setProp(RDKit::common_properties::_unspecifiedOrder,1);
 	yylval->bond->setBondDir(Bond::ENDDOWNRIGHT);
 	return BOND_TOKEN;  }
 	YY_BREAK
 case 169:
 YY_RULE_SETUP
-#line 339 "smiles.ll"
-{ yylval->bond = new Bond(Bond::SINGLE);
+#line 340 "smiles.ll"
+{ yylval->bond = new Bond(Bond::UNSPECIFIED);
+	yylval->bond->setProp(RDKit::common_properties::_unspecifiedOrder,1);
 	yylval->bond->setBondDir(Bond::ENDUPRIGHT);
 	return BOND_TOKEN;  }
 	YY_BREAK
 case 170:
 YY_RULE_SETUP
-#line 343 "smiles.ll"
+#line 345 "smiles.ll"
 { return MINUS_TOKEN; }
 	YY_BREAK
 case 171:
 YY_RULE_SETUP
-#line 345 "smiles.ll"
+#line 347 "smiles.ll"
 { return PLUS_TOKEN; }
 	YY_BREAK
 case 172:
 YY_RULE_SETUP
-#line 347 "smiles.ll"
+#line 349 "smiles.ll"
 { return GROUP_OPEN_TOKEN; }
 	YY_BREAK
 case 173:
 YY_RULE_SETUP
-#line 348 "smiles.ll"
+#line 350 "smiles.ll"
 { return GROUP_CLOSE_TOKEN; }
 	YY_BREAK
 case 174:
 YY_RULE_SETUP
-#line 351 "smiles.ll"
+#line 353 "smiles.ll"
 { BEGIN IN_ATOM_STATE; return ATOM_OPEN_TOKEN; }
 	YY_BREAK
 case 175:
 YY_RULE_SETUP
-#line 352 "smiles.ll"
+#line 354 "smiles.ll"
 { BEGIN INITIAL; return ATOM_CLOSE_TOKEN; }
 	YY_BREAK
 case 176:
 YY_RULE_SETUP
-#line 354 "smiles.ll"
+#line 356 "smiles.ll"
 { return SEPARATOR_TOKEN; }
 	YY_BREAK
 case 177:
 YY_RULE_SETUP
-#line 356 "smiles.ll"
+#line 358 "smiles.ll"
 { return PERCENT_TOKEN; }
 	YY_BREAK
 case 178:
 YY_RULE_SETUP
-#line 358 "smiles.ll"
+#line 360 "smiles.ll"
 { yylval->ival = 0; return ZERO_TOKEN; }
 	YY_BREAK
 case 179:
 YY_RULE_SETUP
-#line 359 "smiles.ll"
+#line 361 "smiles.ll"
 { yylval->ival = atoi( yytext ); return NONZERO_DIGIT_TOKEN; }
 	YY_BREAK
 case 180:
 /* rule 180 can match eol */
 YY_RULE_SETUP
-#line 363 "smiles.ll"
+#line 365 "smiles.ll"
 return 0;
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(IN_ATOM_STATE):
-#line 365 "smiles.ll"
+#line 367 "smiles.ll"
 { return EOS_TOKEN; }
 	YY_BREAK
 case 181:
 YY_RULE_SETUP
-#line 366 "smiles.ll"
+#line 368 "smiles.ll"
 return yytext[0];
 	YY_BREAK
 case 182:
 YY_RULE_SETUP
-#line 368 "smiles.ll"
+#line 370 "smiles.ll"
 ECHO;
 	YY_BREAK
-#line 2197 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmiles.cpp"
+#line 2199 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmiles.cpp"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -3372,7 +3374,7 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 368 "smiles.ll"
+#line 370 "smiles.ll"
 
 
 #undef yysmiles_wrap

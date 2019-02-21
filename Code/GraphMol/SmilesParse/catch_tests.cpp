@@ -1,3 +1,14 @@
+//
+//
+//  Copyright (C) 2018-2019 Greg Landrum and T5 Informatics GmbH
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
+
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do
                            // this in one cpp file
 #include "catch.hpp"
@@ -141,4 +152,44 @@ TEST_CASE(
       REQUIRE(MolToSmarts(*mol) == sma);
     }
   }
+}
+
+TEST_CASE("Github #2148", "[bug, Smiles, Smarts]") {
+  SECTION("SMILES") {
+    auto mol = "C(=C\\F)\\4.O=C1C=4CCc2ccccc21"_smiles;
+    REQUIRE(mol);
+    REQUIRE(mol->getBondBetweenAtoms(0, 5));
+    CHECK(mol->getBondBetweenAtoms(0, 5)->getBondType() == Bond::DOUBLE);
+  }
+  SECTION("SMILES edges") {
+    auto m1 = "C/C=C/C"_smiles;
+    REQUIRE(m1);
+    CHECK(m1->getBondBetweenAtoms(2, 1)->getBondType() == Bond::DOUBLE);
+    CHECK(m1->getBondBetweenAtoms(2, 1)->getStereo() != Bond::STEREONONE);
+
+    {
+      std::vector<std::string> smis = {"C1=C/C.C/1", "C/1=C/C.C1",
+                                       "C-1=C/C.C/1", "C/1=C/C.C-1"};
+      for (auto smi : smis) {
+        std::unique_ptr<RWMol> mol(SmilesToMol(smi));
+        REQUIRE(mol);
+        CHECK(mol->getBondBetweenAtoms(0, 3)->getBondType() == Bond::SINGLE);
+        CHECK(mol->getBondBetweenAtoms(0, 3)->getBondDir() != Bond::NONE);
+        CHECK(mol->getBondBetweenAtoms(0, 1)->getBondType() == Bond::DOUBLE);
+        CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() != Bond::STEREONONE);
+      }
+    }
+  }
+
+  SECTION("Writing SMILES") {
+    auto mol = "C/C=c1/ncc(=C)cc1"_smiles;
+    REQUIRE(mol);
+    REQUIRE(mol->getBondBetweenAtoms(1, 2));
+    CHECK(mol->getBondBetweenAtoms(1, 2)->getBondType() == Bond::DOUBLE);
+    CHECK(mol->getBondBetweenAtoms(1, 2)->getStereo() == Bond::STEREOE);
+    auto smi = MolToSmiles(*mol);
+    CHECK(smi=="C=c1cc/c(=C\\C)nc1");    
+  }
+
+
 }
