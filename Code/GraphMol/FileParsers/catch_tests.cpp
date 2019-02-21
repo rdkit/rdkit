@@ -216,3 +216,165 @@ TEST_CASE(
     REQUIRE(mol2->getBondWithIdx(7)->hasQuery());
   }
 }
+TEST_CASE("preserve mol file properties on bonds", "[parser,ctab]") {
+  SECTION("basics") {
+    std::string molblock = R"CTAB(
+  Mrv1810 02111915042D          
+
+  4  3  0  0  0  0            999 V2000
+   -1.5625    1.6071    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8480    2.0196    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2770    2.0196    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5625    0.7821    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  3  1  0  0  0  0
+  1  2  6  0  0  0  0
+  1  4  1  1  0  0  0
+M  END
+      )CTAB";
+    std::unique_ptr<ROMol> mol(MolBlockToMol(molblock));
+    REQUIRE(mol);
+    CHECK(mol->getBondWithIdx(1)->getProp<unsigned int>(
+              common_properties::_MolFileBondType) == 6);
+    CHECK(mol->getBondWithIdx(2)->getProp<unsigned int>(
+              common_properties::_MolFileBondType) == 1);
+    CHECK(mol->getBondWithIdx(2)->getProp<unsigned int>(
+              common_properties::_MolFileBondStereo) == 1);
+  }
+  SECTION("basics-v3k") {
+    std::string molblock = R"CTAB(
+  Mrv1810 02111915102D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -2.9167 3 0 0
+M  V30 2 C -1.583 3.77 0 0
+M  V30 3 C -4.2503 3.77 0 0
+M  V30 4 C -2.9167 1.46 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 3
+M  V30 2 6 1 2
+M  V30 3 1 1 4 CFG=1
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB";
+    std::unique_ptr<ROMol> mol(MolBlockToMol(molblock));
+    REQUIRE(mol);
+    CHECK(mol->getBondWithIdx(1)->getProp<unsigned int>(
+              common_properties::_MolFileBondType) == 6);
+    CHECK(mol->getBondWithIdx(2)->getProp<unsigned int>(
+              common_properties::_MolFileBondType) == 1);
+    CHECK(mol->getBondWithIdx(2)->getProp<unsigned int>(
+              common_properties::_MolFileBondCfg) == 1);
+  }
+}
+
+TEST_CASE(
+    "github #2266: missing stereo in adamantyl-like cages with "
+    "exocyclic bonds",
+    "[bug]") {
+  SECTION("basics") {
+    std::string molblock = R"CTAB(
+        SciTegic12231509382D
+
+ 14 16  0  0  0  0            999 V2000
+    1.5584   -5.7422    0.0000 C   0  0
+    2.2043   -5.0535    0.0000 C   0  0  2  0  0  0
+    2.3688   -5.5155    0.0000 C   0  0  1  0  0  0
+    2.9210   -5.3181    0.0000 C   0  0
+    3.1270   -5.8206    0.0000 C   0  0
+    3.6744   -5.1312    0.0000 C   0  0  2  0  0  0
+    2.3619   -4.6609    0.0000 C   0  0
+    2.9268   -3.9939    0.0000 C   0  0  2  0  0  0
+    2.1999   -4.2522    0.0000 C   0  0
+    3.6803   -4.3062    0.0000 C   0  0
+    2.9436   -3.1692    0.0000 N   0  0
+    4.4569   -5.4095    0.0000 H   0  0
+    2.3246   -6.3425    0.0000 H   0  0
+    1.4365   -4.7500    0.0000 H   0  0
+  1  2  1  0
+  1  3  1  0
+  2  4  1  0
+  3  5  1  0
+  4  6  1  0
+  5  6  1  0
+  7  8  1  0
+  3  7  1  0
+  2  9  1  0
+  6 10  1  0
+ 10  8  1  0
+  8  9  1  0
+  8 11  1  1
+  6 12  1  6
+  3 13  1  1
+  2 14  1  6
+M  END)CTAB";
+    {
+      std::unique_ptr<ROMol> mol(MolBlockToMol(molblock));
+      REQUIRE(mol);
+      CHECK(mol->getNumAtoms() == 11);
+      CHECK(mol->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+      CHECK(mol->getAtomWithIdx(2)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+      CHECK(mol->getAtomWithIdx(5)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    }
+    {
+      bool sanitize = true;
+      bool removeHs = false;
+      std::unique_ptr<ROMol> mol(MolBlockToMol(molblock, sanitize, removeHs));
+      REQUIRE(mol);
+      CHECK(mol->getNumAtoms() == 14);
+
+      CHECK(mol->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+      CHECK(mol->getAtomWithIdx(2)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+      CHECK(mol->getAtomWithIdx(5)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    }
+  }
+  SECTION("with F") {
+    std::string molblock = R"CTAB(
+        SciTegic12231509382D
+
+ 14 16  0  0  0  0            999 V2000
+    1.5584   -5.7422    0.0000 C   0  0
+    2.2043   -5.0535    0.0000 C   0  0  2  0  0  0
+    2.3688   -5.5155    0.0000 C   0  0  1  0  0  0
+    2.9210   -5.3181    0.0000 C   0  0
+    3.1270   -5.8206    0.0000 C   0  0
+    3.6744   -5.1312    0.0000 C   0  0  2  0  0  0
+    2.3619   -4.6609    0.0000 C   0  0
+    2.9268   -3.9939    0.0000 C   0  0  2  0  0  0
+    2.1999   -4.2522    0.0000 C   0  0
+    3.6803   -4.3062    0.0000 C   0  0
+    2.9436   -3.1692    0.0000 N   0  0
+    4.4569   -5.4095    0.0000 F   0  0
+    2.3246   -6.3425    0.0000 F   0  0
+    1.4365   -4.7500    0.0000 F   0  0
+  1  2  1  0
+  1  3  1  0
+  2  4  1  0
+  3  5  1  0
+  4  6  1  0
+  5  6  1  0
+  7  8  1  0
+  3  7  1  0
+  2  9  1  0
+  6 10  1  0
+ 10  8  1  0
+  8  9  1  0
+  8 11  1  1
+  6 12  1  6
+  3 13  1  1
+  2 14  1  6
+M  END)CTAB";
+    {
+      std::unique_ptr<ROMol> mol(MolBlockToMol(molblock));
+      REQUIRE(mol);
+      CHECK(mol->getNumAtoms() == 14);
+      CHECK(mol->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+      CHECK(mol->getAtomWithIdx(2)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+      CHECK(mol->getAtomWithIdx(5)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    }
+  }
+}

@@ -320,6 +320,18 @@ M  END""")
     txt = d.GetDrawingText()
     self.assertTrue(txt.find("<tspan>H</tspan>")>0)
 
+  def testAtomTagging(self):
+    m = Chem.MolFromSmiles("C1N[C@@H]2OCC12")
+    d = Draw.MolDraw2DSVG(300, 300)
+    dm = Draw.PrepareMolForDrawing(m)
+    rdMolDraw2D.PrepareAndDrawMolecule(d,dm)
+    d.TagAtoms(dm,events={'onclick':'alert'})
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    self.assertTrue(txt.find("<circle")>0)
+    self.assertTrue(txt.find("onclick=") > 0)
+
+
 
 if __name__ == "__main__":
   unittest.main()

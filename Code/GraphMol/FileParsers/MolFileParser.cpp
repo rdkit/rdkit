@@ -1326,7 +1326,7 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
 }
 
 Bond *ParseMolFileBondLine(const std::string &text, unsigned int line) {
-  int idx1, idx2, bType, stereo;
+  unsigned int idx1, idx2, bType, stereo;
   int spos = 0;
 
   if (text.size() < 9) {
@@ -1423,6 +1423,7 @@ Bond *ParseMolFileBondLine(const std::string &text, unsigned int line) {
   res->setBeginAtomIdx(idx1);
   res->setEndAtomIdx(idx2);
   res->setBondType(type);
+  res->setProp(common_properties::_MolFileBondType, bType);
 
   if (text.size() >= 12 && text.substr(9, 3) != "  0") {
     try {
@@ -1445,6 +1446,7 @@ Bond *ParseMolFileBondLine(const std::string &text, unsigned int line) {
           res->setBondDir(Bond::UNKNOWN);
           break;
       }
+      res->setProp(common_properties::_MolFileBondStereo, stereo);
     } catch (boost::bad_lexical_cast &) {
       ;
     }
@@ -2077,11 +2079,17 @@ void ParseV3000AtomBlock(std::istream *inStream, unsigned int &line,
     throw FileParseException(errout.str());
   }
 
+  bool nonzeroZ = hasNonZeroZCoords(*conf);
   if (mol->hasProp(common_properties::_3DConf)) {
     conf->set3D(true);
     mol->clearProp(common_properties::_3DConf);
+    if (!nonzeroZ) {
+      BOOST_LOG(rdWarningLog)
+          << "Warning: molecule is tagged as 3D, but all Z coords are zero"
+          << std::endl;
+    }
   } else {
-    conf->set3D(hasNonZeroZCoords(*conf));
+    conf->set3D(nonzeroZ);
   }
 }
 void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
@@ -2173,6 +2181,7 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
         }
         break;
     }
+    bond->setProp(common_properties::_MolFileBondType, bType);
 
     // additional bond properties:
     unsigned int lPos = 4;
@@ -2209,6 +2218,7 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
             errout << "bad bond CFG " << val << "' on line " << line;
             throw FileParseException(errout.str());
         }
+        bond->setProp(common_properties::_MolFileBondCfg, cfg);
       } else if (prop == "TOPO") {
         if (val != "0") {
           if (!bond->hasQuery()) {
@@ -2423,11 +2433,17 @@ bool ParseV2000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
   } else {
     ParseMolBlockAtoms(inStream, line, nAtoms, mol, conf);
 
+    bool nonzeroZ = hasNonZeroZCoords(*conf);
     if (mol->hasProp(common_properties::_3DConf)) {
       conf->set3D(true);
       mol->clearProp(common_properties::_3DConf);
-    } else {  // default is 2D
-      conf->set3D(hasNonZeroZCoords(*conf));
+      if (!nonzeroZ) {
+        BOOST_LOG(rdWarningLog)
+            << "Warning: molecule is tagged as 3D, but all Z coords are zero"
+            << std::endl;
+      }
+    } else {
+      conf->set3D(nonzeroZ);
     }
   }
   mol->addConformer(conf, true);
@@ -2690,7 +2706,6 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
         } else {
           MolOps::sanitizeMol(*res);
         }
-
         // now that atom stereochem has been perceived, the wedging
         // information is no longer needed, so we clear
         // single bond dir flags:

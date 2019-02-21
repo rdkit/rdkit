@@ -15,7 +15,7 @@
 namespace RDKit {
 class RWMol;
 class Atom;
-}
+}  // namespace RDKit
 namespace SmilesParseOps {
 void CheckRingClosureBranchStatus(RDKit::Atom *atom, RDKit::RWMol *mp);
 void ReportParseError(const char *message, bool throwIt = true);
@@ -28,12 +28,13 @@ RDKit::Bond::BondType GetUnspecifiedBondType(const RDKit::RWMol *mol,
                                              const RDKit::Atom *atom1,
                                              const RDKit::Atom *atom2);
 void CloseMolRings(RDKit::RWMol *mol, bool toleratePartials);
+void SetUnspecifiedBondTypes(RDKit::RWMol *mol);
 void AdjustAtomChiralityFlags(RDKit::RWMol *mol);
 void CleanupAfterParsing(RDKit::RWMol *mol);
 void parseCXExtensions(RDKit::RWMol &mol, const std::string &extText,
                        std::string::const_iterator &pos);
 //! removes formal charge, isotope, etc. Primarily useful for QueryAtoms
 void ClearAtomChemicalProps(RDKit::Atom *atom);
-};
+};  // namespace SmilesParseOps
 
 #endif

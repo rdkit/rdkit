@@ -1014,7 +1014,7 @@ void testRingStereochemistry() {
     m = SmilesToMol(smi);
     std::string smi2 = MolToSmiles(*m, true);
     BOOST_LOG(rdInfoLog) << " : " << smi2 << " " << smi1 << std::endl;
-    TEST_ASSERT(smi2 == smi1);
+    TEST_ASSERT(smi2 != smi1);
     delete m;
   }
 
@@ -2658,7 +2658,7 @@ void stereochemTester(RWMol *m, std::string expectedCIP,
                   common_properties::_CIPCode) == expectedCIP);
   TEST_ASSERT(m->getBondWithIdx(3)->getStereo() == expectedStereo);
 }
-}
+}  // namespace
 void testAssignStereochemistryFrom3D() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing assignStereochemistryFrom3D" << std::endl;
@@ -2697,11 +2697,13 @@ void testAssignStereochemistryFrom3D() {
 
 void testDoubleBondStereoInRings() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing double bond stereochemistry in rings" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing double bond stereochemistry in rings"
+                       << std::endl;
   std::string pathName = getenv("RDBASE");
   pathName += "/Code/GraphMol/test_data/";
   {
-    RWMol *m = MolFileToMol(pathName + "cyclohexene_3D.mol", true, false); // don't remove Hs
+    RWMol *m = MolFileToMol(pathName + "cyclohexene_3D.mol", true,
+                            false);  // don't remove Hs
     MolOps::detectBondStereochemistry(*m);
     MolOps::assignChiralTypesFrom3D(*m);
     MolOps::assignStereochemistry(*m, true, true);
@@ -2711,7 +2713,8 @@ void testDoubleBondStereoInRings() {
     delete m;
   }
   {
-    RWMol *m = MolFileToMol(pathName + "CHEMBL501674_3D.mol", true, false); // don't remove Hs
+    RWMol *m = MolFileToMol(pathName + "CHEMBL501674_3D.mol", true,
+                            false);  // don't remove Hs
     MolOps::detectBondStereochemistry(*m);
     MolOps::assignChiralTypesFrom3D(*m);
     MolOps::assignStereochemistry(*m, true, true);
@@ -2724,7 +2727,7 @@ void testDoubleBondStereoInRings() {
     delete m;
   }
   {
-    RWMol *m = MolFileToMol(pathName + "CHEMBL501674.mol"); // don't remove Hs
+    RWMol *m = MolFileToMol(pathName + "CHEMBL501674.mol");  // don't remove Hs
     const Bond *b = m->getBondBetweenAtoms(6, 7);
     TEST_ASSERT(b);
     TEST_ASSERT(b->getStereo() == Bond::STEREOE);
@@ -2734,7 +2737,7 @@ void testDoubleBondStereoInRings() {
     delete m;
   }
   {
-    RWMol *m = MolFileToMol(pathName + "CHEMBL501674.mol"); // don't remove Hs
+    RWMol *m = MolFileToMol(pathName + "CHEMBL501674.mol");  // don't remove Hs
     std::string smi = MolToSmiles(*m, true);
     unsigned int nTrans = 0;
     size_t pos = 0;
@@ -2761,8 +2764,12 @@ void testIssue1735() {
 }
 
 void testStereoGroupUpdating() {
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Are stereo groups updated when atoms and bonds are deleted?" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------------------------------------------"
+      << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Are stereo groups updated when atoms and bonds are deleted?"
+      << std::endl;
 
   std::string rdbase = getenv("RDBASE");
   std::string fName =
@@ -2777,10 +2784,9 @@ void testStereoGroupUpdating() {
   TEST_ASSERT(m->getStereoGroups().size() == 0u);
 }
 
-
 int main() {
   RDLog::InitLogs();
-// boost::logging::enable_logs("rdApp.debug");
+  // boost::logging::enable_logs("rdApp.debug");
 
 #if 1
   testSmiles1();
@@ -2803,7 +2809,7 @@ int main() {
   testGithub553();
   testGithub803();
   testGithub1294();
-  #endif
+#endif
   testGithub1423();
   testAssignStereochemistryFrom3D();
   testDoubleBondStereoInRings();

@@ -389,7 +389,8 @@ void findAtomNeighborDirHelper(const ROMol &mol, const Atom *atom,
 // will be returned
 void findAtomNeighborsHelper(const ROMol &mol, const Atom *atom,
                              const Bond *refBond, UINT_VECT &neighbors,
-                             bool checkDir = false) {
+                             bool checkDir = false,
+                             bool includeAromatic = false) {
   PRECONDITION(atom, "bad atom");
   PRECONDITION(refBond, "bad bond");
   neighbors.clear();
@@ -398,7 +399,8 @@ void findAtomNeighborsHelper(const ROMol &mol, const Atom *atom,
   while (beg != end) {
     const Bond *bond = mol[*beg];
     Bond::BondDir dir = bond->getBondDir();
-    if (bond->getBondType() == Bond::SINGLE &&
+    if ((bond->getBondType() == Bond::SINGLE ||
+         (includeAromatic && bond->getBondType() == Bond::AROMATIC)) &&
         bond->getIdx() != refBond->getIdx()) {
       if (checkDir) {
         if ((dir != Bond::ENDDOWNRIGHT) && (dir != Bond::ENDUPRIGHT)) {
@@ -444,7 +446,6 @@ bool atomIsCandidateForRingStereochem(const ROMol &mol, const Atom *atom) {
         }
         ++beg;
       }
-
       unsigned int rank1 = 0, rank2 = 0;
       switch (nonRingNbrs.size()) {
         case 2:
@@ -460,7 +461,7 @@ bool atomIsCandidateForRingStereochem(const ROMol &mol, const Atom *atom) {
           }
           break;
         case 1:
-          if (ringNbrs.size() == 2) res = true;
+          if (ringNbrs.size() >= 2) res = true;
           break;
         case 0:
           if (ringNbrs.size() == 4 && nbrRanks.size() == 3) {
@@ -664,6 +665,11 @@ std::pair<bool, bool> isAtomPotentialChiralCenter(
               (atom->getExplicitValence() == 4 ||
                (atom->getExplicitValence() == 3 &&
                 atom->getFormalCharge() == 1))) {
+            legalCenter = true;
+          } else if (atom->getAtomicNum() == 7 &&
+                     mol.getRingInfo()->isAtomInRingOfSize(atom->getIdx(), 3)) {
+            // N in a three-membered ring is another one of the InChI special
+            // cases
             legalCenter = true;
           }
         }
@@ -1164,9 +1170,9 @@ void assignStereochemistry(ROMol &mol, bool cleanIt, bool force,
   mol.setProp(common_properties::_StereochemDone, 1, true);
 
 #if 0
-      std::cerr<<"---\n";
-      mol.debugMol(std::cerr);
-      std::cerr<<"<<<<<<<<<<<<<<<<\n";
+  std::cerr << "---\n";
+  mol.debugMol(std::cerr);
+  std::cerr << "<<<<<<<<<<<<<<<<\n";
 #endif
 }
 
@@ -1198,7 +1204,7 @@ void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
         // if the bond is flagged as EITHERDOUBLE, we ignore it:
         if (dblBond->getBondDir() == Bond::EITHERDOUBLE ||
             dblBond->getStereo() == Bond::STEREOANY) {
-          break;
+          continue;
         }
         // proceed only if we either want to clean the stereocode on this bond
         // or if none is set on it yet
@@ -1225,10 +1231,14 @@ void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
             }
             // find the neighbors for the begin atom and the endAtom
             UINT_VECT begAtomNeighbors, endAtomNeighbors;
+            bool checkDir = false;
+            bool includeAromatic = true;
             Chirality::findAtomNeighborsHelper(mol, begAtom, dblBond,
-                                               begAtomNeighbors);
+                                               begAtomNeighbors, checkDir,
+                                               includeAromatic);
             Chirality::findAtomNeighborsHelper(mol, endAtom, dblBond,
-                                               endAtomNeighbors);
+                                               endAtomNeighbors, checkDir,
+                                               includeAromatic);
             if (begAtomNeighbors.size() > 0 && endAtomNeighbors.size() > 0) {
               if ((begAtomNeighbors.size() == 2) &&
                   (endAtomNeighbors.size() == 2)) {
