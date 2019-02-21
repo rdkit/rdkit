@@ -31,6 +31,10 @@ unsigned int ParseSGroupIntField(const std::string &text, unsigned int line,
     errout << "Cannot convert '" << text.substr(pos, len) << "' to int on line "
            << line;
     throw FileParseException(errout.str());
+  } catch (const std::out_of_range &) {
+    std::ostringstream errout;
+    errout << "SGroup line too short: '" << text << "' on line " << line;
+    throw FileParseException(errout.str());
   }
   pos += len;
   return fieldValue;
@@ -46,6 +50,10 @@ double ParseSGroupDoubleField(const std::string &text, unsigned int line,
     std::ostringstream errout;
     errout << "Cannot convert '" << text.substr(pos, len)
            << "' to double on line " << line;
+    throw FileParseException(errout.str());
+  } catch (const std::out_of_range &) {
+    std::ostringstream errout;
+    errout << "SGroup line too short: '" << text << "' on line " << line;
     throw FileParseException(errout.str());
   }
   pos += len;
@@ -105,6 +113,11 @@ void ParseSGroupV2000VectorDataLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
 
   unsigned int pos = 6;
   unsigned int sgIdx = ParseSGroupIntField(text, line, pos);
+  if (sGroupMap.find(sgIdx) == sGroupMap.end()) {
+    BOOST_LOG(rdWarningLog) << "SGroup " << sgIdx << " referenced on line "
+                            << line << " not found." << std::endl;
+    return;
+  }
   unsigned int nent = ParseSGroupIntField(text, line, pos, true);
 
   for (unsigned int i = 0; i < nent; ++i) {
@@ -126,6 +139,11 @@ void ParseSGroupV2000SDILine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
 
   unsigned int pos = 6;
   unsigned int sgIdx = ParseSGroupIntField(text, line, pos);
+  if (sGroupMap.find(sgIdx) == sGroupMap.end()) {
+    BOOST_LOG(rdWarningLog) << "SGroup " << sgIdx << " referenced on line "
+                            << line << " not found." << std::endl;
+    return;
+  }
 
   unsigned int nCoords = ParseSGroupIntField(text, line, pos, true);
   if (nCoords != 4) {
@@ -161,6 +179,11 @@ void ParseSGroupV2000SSTLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
     }
 
     unsigned int sgIdx = ParseSGroupIntField(text, line, pos);
+    if (sGroupMap.find(sgIdx) == sGroupMap.end()) {
+      BOOST_LOG(rdWarningLog) << "SGroup " << sgIdx << " referenced on line "
+                              << line << " not found." << std::endl;
+      return;
+    }
 
     std::string subType = text.substr(++pos, 3);
 
@@ -183,9 +206,19 @@ void ParseSGroupV2000SMTLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
 
   unsigned int pos = 6;
   unsigned int sgIdx = ParseSGroupIntField(text, line, pos);
+  if (sGroupMap.find(sgIdx) == sGroupMap.end()) {
+    BOOST_LOG(rdWarningLog) << "SGroup " << sgIdx << " referenced on line "
+                            << line << " not found." << std::endl;
+    return;
+  }
   auto &sgroup = sGroupMap.at(sgIdx);
   ++pos;
 
+  if (pos >= text.length()) {
+    std::ostringstream errout;
+    errout << "SGroup line too short: '" << text << "' on line " << line;
+    throw FileParseException(errout.str());
+  }
   std::string label = text.substr(pos, text.length() - pos);
 
   if (sgroup.getProp<std::string>("TYPE") ==
@@ -214,6 +247,11 @@ void ParseSGroupV2000SLBLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
     }
 
     unsigned int sgIdx = ParseSGroupIntField(text, line, pos);
+    if (sGroupMap.find(sgIdx) == sGroupMap.end()) {
+      BOOST_LOG(rdWarningLog) << "SGroup " << sgIdx << " referenced on line "
+                              << line << " not found." << std::endl;
+      return;
+    }
     unsigned int id = ParseSGroupIntField(text, line, pos);
 
     if (id != 0 && !SGroupChecks::isSGroupIdFree(*mol, id)) {
@@ -236,13 +274,19 @@ void ParseSGroupV2000SCNLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
   unsigned int nent = ParseSGroupIntField(text, line, pos, true);
 
   for (unsigned int ie = 0; ie < nent; ++ie) {
-    if (text.size() < pos + 8) {
+    if (text.size() < pos + 7) {
       std::ostringstream errout;
       errout << "SGroup SCN line too short: '" << text << "' on line " << line;
+      errout << "\n needed: " << pos + 7 << " found: " << text.size();
       throw FileParseException(errout.str());
     }
 
     unsigned int sgIdx = ParseSGroupIntField(text, line, pos);
+    if (sGroupMap.find(sgIdx) == sGroupMap.end()) {
+      BOOST_LOG(rdWarningLog) << "SGroup " << sgIdx << " referenced on line "
+                              << line << " not found." << std::endl;
+      return;
+    }
 
     std::string connect = text.substr(++pos, 2);
 
@@ -273,6 +317,11 @@ void ParseSGroupV2000SDSLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
       throw FileParseException(errout.str());
     }
     unsigned int sgIdx = ParseSGroupIntField(text, line, pos);
+    if (sGroupMap.find(sgIdx) == sGroupMap.end()) {
+      BOOST_LOG(rdWarningLog) << "SGroup " << sgIdx << " referenced on line "
+                              << line << " not found." << std::endl;
+      return;
+    }
 
     sGroupMap.at(sgIdx).setProp("ESTATE", "E");
   }
@@ -286,6 +335,11 @@ void ParseSGroupV2000SBVLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
   unsigned int pos = 6;
 
   unsigned int sgIdx = ParseSGroupIntField(text, line, pos);
+  if (sGroupMap.find(sgIdx) == sGroupMap.end()) {
+    BOOST_LOG(rdWarningLog) << "SGroup " << sgIdx << " referenced on line "
+                            << line << " not found." << std::endl;
+    return;
+  }
   auto &sgroup = sGroupMap.at(sgIdx);
 
   unsigned int bondMark = ParseSGroupIntField(text, line, pos);
@@ -309,27 +363,45 @@ void ParseSGroupV2000SDTLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
   unsigned int pos = 6;
   unsigned int sgIdx = ParseSGroupIntField(text, line, pos);
   auto &sgroup = sGroupMap.at(sgIdx);
+  if (sGroupMap.find(sgIdx) == sGroupMap.end()) {
+    BOOST_LOG(rdWarningLog) << "SGroup " << sgIdx << " referenced on line "
+                            << line << " not found." << std::endl;
+    return;
+  }
 
-  std::string fieldName = text.substr(++pos, 30);
-  boost::trim_right(fieldName);
-  pos += 30;
-  std::string fieldType = text.substr(pos, 2);
-  boost::trim_right(fieldType);
-  pos += 2;
-  std::string fieldInfo = text.substr(pos, 20);
-  boost::trim_right(fieldInfo);
-  pos += 20;
-  std::string queryType = text.substr(pos, 2);
-  boost::trim_right(queryType);
-  pos += 2;
-  std::string queryOp = text.substr(pos, text.length() - pos);
-  boost::trim_right(queryOp);
+  std::string fieldName;
+  std::string fieldType;
+  std::string fieldInfo;
+  std::string queryType;
+  std::string queryOp;
 
-  sgroup.setProp("FIELDNAME", fieldName);
-  sgroup.setProp("FIELDTYPE", fieldType);
-  sgroup.setProp("FIELDINFO", fieldInfo);
-  sgroup.setProp("QUERYTYPE", queryType);
-  sgroup.setProp("QUERYOP", queryOp);
+  try {
+    fieldName = text.substr(++pos, 30);
+    boost::trim_right(fieldName);
+    pos += 30;
+    fieldType = text.substr(pos, 2);
+    boost::trim_right(fieldType);
+    pos += 2;
+    fieldInfo = text.substr(pos, 20);
+    boost::trim_right(fieldInfo);
+    pos += 20;
+    queryType = text.substr(pos, 2);
+    boost::trim_right(queryType);
+    pos += 2;
+    queryOp = text.substr(pos, text.length() - pos);
+    boost::trim_right(queryOp);
+  } catch (const std::out_of_range &) {
+    // all kinds of wild things out there... this insulates us from them without
+    // making the code super complicated
+  }
+
+  if (fieldName.size()) {
+    sgroup.setProp("FIELDNAME", fieldName);
+    sgroup.setProp("FIELDTYPE", fieldType);
+    sgroup.setProp("FIELDINFO", fieldInfo);
+    sgroup.setProp("QUERYTYPE", queryType);
+    sgroup.setProp("QUERYOP", queryOp);
+  }
 }
 
 void ParseSGroupV2000SDDLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
@@ -339,11 +411,18 @@ void ParseSGroupV2000SDDLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
 
   unsigned int pos = 6;
   unsigned int sgIdx = ParseSGroupIntField(text, line, pos);
+  if (sGroupMap.find(sgIdx) == sGroupMap.end()) {
+    BOOST_LOG(rdWarningLog) << "SGroup " << sgIdx << " referenced on line "
+                            << line << " not found." << std::endl;
+    return;
+  }
 
   // Store the rest of the line as is.
   ++pos;
-  sGroupMap.at(sgIdx).setProp("FIELDDISP",
-                              text.substr(pos, text.length() - pos));
+  if (pos < text.length()) {
+    sGroupMap.at(sgIdx).setProp("FIELDDISP",
+                                text.substr(pos, text.length() - pos));
+  }
 }
 
 void ParseSGroupV2000SCDSEDLine(IDX_TO_SGROUP_MAP &sGroupMap,
@@ -359,6 +438,11 @@ void ParseSGroupV2000SCDSEDLine(IDX_TO_SGROUP_MAP &sGroupMap,
   pos += 3;
 
   unsigned int sgIdx = ParseSGroupIntField(text, line, pos);
+  if (sGroupMap.find(sgIdx) == sGroupMap.end()) {
+    BOOST_LOG(rdWarningLog) << "SGroup " << sgIdx << " referenced on line "
+                            << line << " not found." << std::endl;
+    return;
+  }
 
   if (lastDataSGroup != 0 && lastDataSGroup != sgIdx) {
     std::ostringstream errout;
@@ -391,15 +475,17 @@ void ParseSGroupV2000SCDSEDLine(IDX_TO_SGROUP_MAP &sGroupMap,
     }
   }
 
-  currentDataField << text.substr(++pos, 69);
+  if (pos + 1 < text.length()) {
+    currentDataField << text.substr(++pos, 69);
 
-  if (type == "SED") {
-    std::string trimmedData = boost::trim_right_copy(currentDataField.str());
-    dataFieldsMap[sgIdx].push_back(trimmedData.substr(0, 200));
-    currentDataField.str("");
-    counter = 0;
-  } else {
-    ++counter;
+    if (type == "SED") {
+      std::string trimmedData = boost::trim_right_copy(currentDataField.str());
+      dataFieldsMap[sgIdx].push_back(trimmedData.substr(0, 200));
+      currentDataField.str("");
+      counter = 0;
+    } else {
+      ++counter;
+    }
   }
 }
 
@@ -419,6 +505,11 @@ void ParseSGroupV2000SPLLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
     }
 
     unsigned int sgIdx = ParseSGroupIntField(text, line, pos);
+    if (sGroupMap.find(sgIdx) == sGroupMap.end()) {
+      BOOST_LOG(rdWarningLog) << "SGroup " << sgIdx << " referenced on line "
+                              << line << " not found." << std::endl;
+      return;
+    }
     unsigned int parentIdx = ParseSGroupIntField(text, line, pos);
 
     // both parentIdx and size are offset by +1, so it's fine
@@ -449,6 +540,11 @@ void ParseSGroupV2000SNCLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
     }
 
     unsigned int sgIdx = ParseSGroupIntField(text, line, pos);
+    if (sGroupMap.find(sgIdx) == sGroupMap.end()) {
+      BOOST_LOG(rdWarningLog) << "SGroup " << sgIdx << " referenced on line "
+                              << line << " not found." << std::endl;
+      return;
+    }
 
     unsigned int compno = ParseSGroupIntField(text, line, pos);
     if (compno > 256u) {
@@ -461,20 +557,6 @@ void ParseSGroupV2000SNCLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
   }
 }
 
-// PXA does not have a V3000 equivalent
-void ParseSGroupV2000PXALine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
-                             const std::string &text, unsigned int line) {
-  PRECONDITION(mol, "bad mol");
-  PRECONDITION(text.substr(0, 6) == "M  PXA", "bad PXA line");
-
-  unsigned int pos = 6;
-
-  unsigned int sgIdx = ParseSGroupIntField(text, line, pos);
-
-  ++pos;
-  sGroupMap.at(sgIdx).setProp("PXA", text.substr(pos, text.length() - pos));
-}
-
 void ParseSGroupV2000SAPLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
                              const std::string &text, unsigned int line) {
   PRECONDITION(mol, "bad mol");
@@ -483,6 +565,11 @@ void ParseSGroupV2000SAPLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
   unsigned int pos = 6;
 
   unsigned int sgIdx = ParseSGroupIntField(text, line, pos);
+  if (sGroupMap.find(sgIdx) == sGroupMap.end()) {
+    BOOST_LOG(rdWarningLog) << "SGroup " << sgIdx << " referenced on line "
+                            << line << " not found." << std::endl;
+    return;
+  }
 
   unsigned int nent = ParseSGroupIntField(text, line, pos, true);
 
@@ -515,6 +602,16 @@ void ParseSGroupV2000SCLLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
   unsigned int pos = 6;
 
   unsigned int sgIdx = ParseSGroupIntField(text, line, pos);
+  if (sGroupMap.find(sgIdx) == sGroupMap.end()) {
+    BOOST_LOG(rdWarningLog) << "SGroup " << sgIdx << " referenced on line "
+                            << line << " not found." << std::endl;
+    return;
+  }
+  if (pos + 1 >= text.length()) {
+    std::ostringstream errout;
+    errout << "SGroup SCL line too short: '" << text << "' on line " << line;
+    throw FileParseException(errout.str());
+  }
 
   ++pos;
   sGroupMap.at(sgIdx).setProp("CLASS", text.substr(pos, text.length() - pos));
@@ -536,6 +633,11 @@ void ParseSGroupV2000SBTLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
     }
 
     unsigned int sgIdx = ParseSGroupIntField(text, line, pos);
+    if (sGroupMap.find(sgIdx) == sGroupMap.end()) {
+      BOOST_LOG(rdWarningLog) << "SGroup " << sgIdx << " referenced on line "
+                              << line << " not found." << std::endl;
+      return;
+    }
     unsigned int bracketType = ParseSGroupIntField(text, line, pos);
 
     auto &sgroup = sGroupMap.at(sgIdx);
@@ -762,7 +864,7 @@ void ParseV3000SGroupsBlock(std::istream *inStream, unsigned int &line,
   tempStr = FileParserUtils::getV3000Line(inStream, line);
 
   // Store defaults
-  if (tempStr.substr(0, 7) == "DEFAULT") {
+  if (tempStr.substr(0, 7) == "DEFAULT" && tempStr.length() > 8) {
     defaultString = tempStr.substr(7);
     defaultLineNum = line;
     boost::trim_right(defaultString);

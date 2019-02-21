@@ -235,7 +235,7 @@ void ParseOldAtomList(RWMol *mol, const std::string &text, unsigned int line) {
           1;
   } catch (boost::bad_lexical_cast &) {
     std::ostringstream errout;
-    errout << "Cannot convert " << text.substr(0, 3) << " to int on line "
+    errout << "Cannot convert '" << text.substr(0, 3) << "' to int on line "
            << line;
     throw FileParseException(errout.str());
   }
@@ -255,8 +255,8 @@ void ParseOldAtomList(RWMol *mol, const std::string &text, unsigned int line) {
       break;
     default:
       std::ostringstream errout;
-      errout << "Unrecognized atom-list query modifier: " << text[14]
-             << " on line " << line;
+      errout << "Unrecognized atom-list query modifier: '" << text[14]
+             << "' on line " << line;
       throw FileParseException(errout.str());
   }
 
@@ -265,7 +265,7 @@ void ParseOldAtomList(RWMol *mol, const std::string &text, unsigned int line) {
     nQueries = FileParserUtils::toInt(text.substr(9, 1));
   } catch (boost::bad_lexical_cast &) {
     std::ostringstream errout;
-    errout << "Cannot convert " << text.substr(9, 1) << " to int on line "
+    errout << "Cannot convert '" << text.substr(9, 1) << "' to int on line "
            << line;
     throw FileParseException(errout.str());
   }
@@ -278,7 +278,7 @@ void ParseOldAtomList(RWMol *mol, const std::string &text, unsigned int line) {
       atNum = FileParserUtils::toInt(text.substr(pos, 3));
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "Cannot convert " << text.substr(pos, 3) << " to int on line "
+      errout << "Cannot convert '" << text.substr(pos, 3) << "' to int on line "
              << line;
       throw FileParseException(errout.str());
     }
@@ -313,7 +313,7 @@ void ParseChargeLine(RWMol *mol, const std::string &text, bool firstCall,
     nent = FileParserUtils::toInt(text.substr(6, 3));
   } catch (boost::bad_lexical_cast &) {
     std::ostringstream errout;
-    errout << "Cannot convert " << text.substr(6, 3) << " to int on line "
+    errout << "Cannot convert '" << text.substr(6, 3) << "' to int on line "
            << line;
     throw FileParseException(errout.str());
   }
@@ -328,7 +328,7 @@ void ParseChargeLine(RWMol *mol, const std::string &text, bool firstCall,
       mol->getAtomWithIdx(aid - 1)->setFormalCharge(chg);
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "Cannot convert " << text.substr(spos, 4) << " to int on line "
+      errout << "Cannot convert '" << text.substr(spos, 4) << "' to int on line "
              << line;
       throw FileParseException(errout.str());
     }
@@ -354,7 +354,7 @@ void ParseRadicalLine(RWMol *mol, const std::string &text, bool firstCall,
     nent = FileParserUtils::toInt(text.substr(6, 3));
   } catch (boost::bad_lexical_cast &) {
     std::ostringstream errout;
-    errout << "Cannot convert " << text.substr(6, 3) << " to int on line "
+    errout << "Cannot convert '" << text.substr(6, 3) << "' to int on line "
            << line;
     throw FileParseException(errout.str());
   }
@@ -386,10 +386,28 @@ void ParseRadicalLine(RWMol *mol, const std::string &text, bool firstCall,
       }
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "Cannot convert " << text.substr(spos, 4) << " to int on line "
+      errout << "Cannot convert '" << text.substr(spos, 4) << "' to int on line "
              << line;
       throw FileParseException(errout.str());
     }
+  }
+}
+
+void ParsePXALine(RWMol *mol, const std::string &text, unsigned int line) {
+  PRECONDITION(mol, "bad mol");
+  PRECONDITION(text.substr(0, 6) == "M  PXA", "bad PXA line");
+  unsigned int pos = 7;
+  try {
+    unsigned int atIdx =
+        FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(pos, 3));
+    pos += 3;
+    mol->getAtomWithIdx(atIdx - 1)->setProp(
+        "_MolFile_PXA", text.substr(pos, text.length() - pos));
+  } catch (boost::bad_lexical_cast &) {
+    std::ostringstream errout;
+    errout << "Cannot convert '" << text.substr(pos, 3) << "' to int on line "
+           << line;
+    throw FileParseException(errout.str());
   }
 }
 
@@ -402,7 +420,7 @@ void ParseIsotopeLine(RWMol *mol, const std::string &text, unsigned int line) {
     nent = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(6, 3));
   } catch (boost::bad_lexical_cast &) {
     std::ostringstream errout;
-    errout << "Cannot convert " << text.substr(6, 3) << " to int on line "
+    errout << "Cannot convert '" << text.substr(6, 3) << "' to int on line "
            << line;
     throw FileParseException(errout.str());
   }
@@ -427,7 +445,7 @@ void ParseIsotopeLine(RWMol *mol, const std::string &text, unsigned int line) {
       }
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "Cannot convert " << text.substr(spos, 4) << " to int on line "
+      errout << "Cannot convert '" << text.substr(spos, 4) << "' to int on line "
              << line;
       throw FileParseException(errout.str());
     }
@@ -444,7 +462,7 @@ void ParseSubstitutionCountLine(RWMol *mol, const std::string &text,
     nent = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(6, 3));
   } catch (boost::bad_lexical_cast &) {
     std::ostringstream errout;
-    errout << "Cannot convert " << text.substr(6, 3) << " to int on line "
+    errout << "Cannot convert '" << text.substr(6, 3) << "' to int on line "
            << line;
     throw FileParseException(errout.str());
   }
@@ -496,7 +514,7 @@ void ParseSubstitutionCountLine(RWMol *mol, const std::string &text,
       }
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "Cannot convert " << text.substr(spos, 4) << " to int on line "
+      errout << "Cannot convert '" << text.substr(spos, 4) << "' to int on line "
              << line;
       throw FileParseException(errout.str());
     }
@@ -513,7 +531,7 @@ void ParseUnsaturationLine(RWMol *mol, const std::string &text,
     nent = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(6, 3));
   } catch (boost::bad_lexical_cast &) {
     std::ostringstream errout;
-    errout << "Cannot convert " << text.substr(6, 3) << " to int on line "
+    errout << "Cannot convert '" << text.substr(6, 3) << "' to int on line "
            << line;
     throw FileParseException(errout.str());
   }
@@ -548,7 +566,7 @@ void ParseUnsaturationLine(RWMol *mol, const std::string &text,
       }
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "Cannot convert " << text.substr(spos, 4) << " to int on line "
+      errout << "Cannot convert '" << text.substr(spos, 4) << "' to int on line "
              << line;
       throw FileParseException(errout.str());
     }
@@ -565,7 +583,7 @@ void ParseRingBondCountLine(RWMol *mol, const std::string &text,
     nent = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(6, 3));
   } catch (boost::bad_lexical_cast &) {
     std::ostringstream errout;
-    errout << "Cannot convert " << text.substr(6, 3) << " to int on line "
+    errout << "Cannot convert '" << text.substr(6, 3) << "' to int on line "
            << line;
     throw FileParseException(errout.str());
   }
@@ -617,7 +635,7 @@ void ParseRingBondCountLine(RWMol *mol, const std::string &text,
       }
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "Cannot convert " << text.substr(spos, 4) << " to int on line "
+      errout << "Cannot convert '" << text.substr(spos, 4) << "' to int on line "
              << line;
       throw FileParseException(errout.str());
     }
@@ -635,7 +653,7 @@ void ParseZCHLine(RWMol *mol, const std::string &text, unsigned int line) {
     nent = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(6, 3));
   } catch (boost::bad_lexical_cast &) {
     std::ostringstream errout;
-    errout << "Cannot convert " << text.substr(6, 3) << " to int on line "
+    errout << "Cannot convert '" << text.substr(6, 3) << "' to int on line "
            << line;
     throw FileParseException(errout.str());
   }
@@ -668,7 +686,7 @@ void ParseZCHLine(RWMol *mol, const std::string &text, unsigned int line) {
       }
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "Cannot convert " << text.substr(spos, 4) << " to int on line "
+      errout << "Cannot convert '" << text.substr(spos, 4) << "' to int on line "
              << line;
       throw FileParseException(errout.str());
     }
@@ -686,7 +704,7 @@ void ParseHYDLine(RWMol *mol, const std::string &text, unsigned int line) {
     nent = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(6, 3));
   } catch (boost::bad_lexical_cast &) {
     std::ostringstream errout;
-    errout << "Cannot convert " << text.substr(6, 3) << " to int on line "
+    errout << "Cannot convert '" << text.substr(6, 3) << "' to int on line "
            << line;
     throw FileParseException(errout.str());
   }
@@ -722,7 +740,7 @@ void ParseHYDLine(RWMol *mol, const std::string &text, unsigned int line) {
       }
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "Cannot convert " << text.substr(spos, 4) << " to int on line "
+      errout << "Cannot convert '" << text.substr(spos, 4) << "' to int on line "
              << line;
       throw FileParseException(errout.str());
     }
@@ -740,7 +758,7 @@ void ParseZBOLine(RWMol *mol, const std::string &text, unsigned int line) {
     nent = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(6, 3));
   } catch (boost::bad_lexical_cast &) {
     std::ostringstream errout;
-    errout << "Cannot convert " << text.substr(6, 3) << " to int on line "
+    errout << "Cannot convert '" << text.substr(6, 3) << "' to int on line "
            << line;
     throw FileParseException(errout.str());
   }
@@ -778,7 +796,7 @@ void ParseZBOLine(RWMol *mol, const std::string &text, unsigned int line) {
       }
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "Cannot convert " << text.substr(spos, 4) << " to int on line "
+      errout << "Cannot convert '" << text.substr(spos, 4) << "' to int on line "
              << line;
       throw FileParseException(errout.str());
     }
@@ -803,7 +821,7 @@ void ParseMarvinSmartsLine(RWMol *mol, const std::string &text,
     idx = FileParserUtils::stripSpacesAndCast<unsigned int>(idxTxt) - 1;
   } catch (boost::bad_lexical_cast &) {
     std::ostringstream errout;
-    errout << "Cannot convert " << idxTxt << " to an atom index on line "
+    errout << "Cannot convert '" << idxTxt << "' to an atom index on line "
            << line;
     throw FileParseException(errout.str());
   }
@@ -855,7 +873,7 @@ void ParseNewAtomList(RWMol *mol, const std::string &text, unsigned int line) {
           1;
   } catch (boost::bad_lexical_cast &) {
     std::ostringstream errout;
-    errout << "Cannot convert " << text.substr(7, 3) << " to int on line "
+    errout << "Cannot convert '" << text.substr(7, 3) << "' to int on line "
            << line;
     throw FileParseException(errout.str());
   }
@@ -867,7 +885,7 @@ void ParseNewAtomList(RWMol *mol, const std::string &text, unsigned int line) {
     nQueries = FileParserUtils::toInt(text.substr(10, 3));
   } catch (boost::bad_lexical_cast &) {
     std::ostringstream errout;
-    errout << "Cannot convert " << text.substr(10, 3) << " to int on line "
+    errout << "Cannot convert '" << text.substr(10, 3) << "' to int on line "
            << line;
     throw FileParseException(errout.str());
   }
@@ -915,8 +933,8 @@ void ParseNewAtomList(RWMol *mol, const std::string &text, unsigned int line) {
       break;
     default:
       std::ostringstream errout;
-      errout << "Unrecognized atom-list query modifier: " << text[14]
-             << " on line " << line;
+      errout << "Unrecognized atom-list query modifier: '" << text[14]
+             << "' on line " << line;
       delete a;
       throw FileParseException(errout.str());
   }
@@ -931,7 +949,7 @@ void ParseV3000RGroups(RWMol *mol, Atom *&atom, const std::string &text,
   PRECONDITION(atom, "bad atom");
   if (text[0] != '(' || text[text.size() - 1] != ')') {
     std::ostringstream errout;
-    errout << "Bad RGROUPS specification " << text << " on line " << line
+    errout << "Bad RGROUPS specification '" << text << "' on line " << line
            << ". Missing parens.";
     throw FileParseException(errout.str());
   }
@@ -940,7 +958,7 @@ void ParseV3000RGroups(RWMol *mol, Atom *&atom, const std::string &text,
   boost::split(splitToken, resid, boost::is_any_of(std::string(" ")));
   if (splitToken.size() < 1) {
     std::ostringstream errout;
-    errout << "Bad RGROUPS specification " << text << " on line " << line
+    errout << "Bad RGROUPS specification '" << text << "' on line " << line
            << ". Missing values.";
     throw FileParseException(errout.str());
   }
@@ -949,12 +967,12 @@ void ParseV3000RGroups(RWMol *mol, Atom *&atom, const std::string &text,
     nRs = FileParserUtils::stripSpacesAndCast<unsigned int>(splitToken[0]);
   } catch (boost::bad_lexical_cast &) {
     std::ostringstream errout;
-    errout << "Cannot convert " << splitToken[0] << " to int on line" << line;
+    errout << "Cannot convert '" << splitToken[0] << "' to int on line" << line;
     throw FileParseException(errout.str());
   }
   if (splitToken.size() < nRs + 1) {
     std::ostringstream errout;
-    errout << "Bad RGROUPS specification " << text << " on line " << line
+    errout << "Bad RGROUPS specification '" << text << "' on line " << line
            << ". Not enough values.";
     throw FileParseException(errout.str());
   }
@@ -965,7 +983,7 @@ void ParseV3000RGroups(RWMol *mol, Atom *&atom, const std::string &text,
           FileParserUtils::stripSpacesAndCast<unsigned int>(splitToken[i + 1]);
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "Cannot convert " << splitToken[i + 1] << " to int on line"
+      errout << "Cannot convert '" << splitToken[i + 1] << "' to int on line"
              << line;
       throw FileParseException(errout.str());
     }
@@ -988,7 +1006,7 @@ void ParseRGroupLabels(RWMol *mol, const std::string &text, unsigned int line) {
     nLabels = FileParserUtils::toInt(text.substr(6, 3));
   } catch (boost::bad_lexical_cast &) {
     std::ostringstream errout;
-    errout << "Cannot convert " << text.substr(6, 3) << " to int on line "
+    errout << "Cannot convert '" << text.substr(6, 3) << "' to int on line "
            << line;
     throw FileParseException(errout.str());
   }
@@ -1001,7 +1019,7 @@ void ParseRGroupLabels(RWMol *mol, const std::string &text, unsigned int line) {
           text.substr(pos, 3));
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "Cannot convert " << text.substr(pos, 3) << " to int on line "
+      errout << "Cannot convert '" << text.substr(pos, 3) << "' to int on line "
              << line;
       throw FileParseException(errout.str());
     }
@@ -1011,8 +1029,8 @@ void ParseRGroupLabels(RWMol *mol, const std::string &text, unsigned int line) {
           text.substr(pos + 4, 3));
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "Cannot convert " << text.substr(pos + 4, 3)
-             << " to int on line " << line;
+      errout << "Cannot convert '" << text.substr(pos + 4, 3)
+             << "' to int on line " << line;
       throw FileParseException(errout.str());
     }
     atIdx -= 1;
@@ -1053,7 +1071,7 @@ void ParseAtomAlias(RWMol *mol, std::string text, const std::string &nextLine,
           1;
   } catch (boost::bad_lexical_cast &) {
     std::ostringstream errout;
-    errout << "Cannot convert " << text.substr(3, 3) << " to int on line "
+    errout << "Cannot convert '" << text.substr(3, 3) << "' to int on line "
            << line;
     throw FileParseException(errout.str());
   }
@@ -1072,7 +1090,7 @@ void ParseAtomValue(RWMol *mol, std::string text, unsigned int line) {
           1;
   } catch (boost::bad_lexical_cast &) {
     std::ostringstream errout;
-    errout << "Cannot convert " << text.substr(3, 3) << " to int on line"
+    errout << "Cannot convert '" << text.substr(3, 3) << "' to int on line"
            << line;
     throw FileParseException(errout.str());
   }
@@ -1112,7 +1130,7 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
       massDiff = FileParserUtils::toInt(text.substr(34, 2), true);
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "Cannot convert " << text.substr(34, 2) << " to into on line "
+      errout << "Cannot convert '" << text.substr(34, 2) << "' to into on line "
              << line;
       throw FileParseException(errout.str());
     }
@@ -1123,7 +1141,7 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
       chg = FileParserUtils::toInt(text.substr(36, 3), true);
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "Cannot convert " << text.substr(36, 3) << " to int on line "
+      errout << "Cannot convert '" << text.substr(36, 3) << "' to int on line "
              << line;
       throw FileParseException(errout.str());
     }
@@ -1134,7 +1152,7 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
       hCount = FileParserUtils::toInt(text.substr(42, 3), true);
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "Cannot convert " << text.substr(42, 3) << " to int on line "
+      errout << "Cannot convert '" << text.substr(42, 3) << "' to int on line "
              << line;
       throw FileParseException(errout.str());
     }
@@ -1214,7 +1232,7 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
       parity = FileParserUtils::toInt(text.substr(39, 3), true);
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "Cannot convert " << text.substr(39, 3) << " to int on line "
+      errout << "Cannot convert '" << text.substr(39, 3) << "' to int on line "
              << line;
       delete res;
       throw FileParseException(errout.str());
@@ -1228,7 +1246,7 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
       stereoCare = FileParserUtils::toInt(text.substr(45, 3), true);
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "Cannot convert " << text.substr(45, 3) << " to int on line "
+      errout << "Cannot convert '" << text.substr(45, 3) << "' to int on line "
              << line;
       delete res;
       throw FileParseException(errout.str());
@@ -1241,7 +1259,7 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
       totValence = FileParserUtils::toInt(text.substr(48, 3), true);
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "Cannot convert " << text.substr(48, 3) << " to int on line "
+      errout << "Cannot convert '" << text.substr(48, 3) << "' to int on line "
              << line;
       delete res;
       throw FileParseException(errout.str());
@@ -1257,7 +1275,7 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
       rxnRole = FileParserUtils::toInt(text.substr(54, 3), true);
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "Cannot convert " << text.substr(54, 3) << " to int on line "
+      errout << "Cannot convert '" << text.substr(54, 3) << "' to int on line "
              << line;
       delete res;
       throw FileParseException(errout.str());
@@ -1273,7 +1291,7 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
       rxnComponent = FileParserUtils::toInt(text.substr(57, 3), true);
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "Cannot convert " << text.substr(57, 3) << " to int on line "
+      errout << "Cannot convert '" << text.substr(57, 3) << "' to int on line "
              << line;
       delete res;
       throw FileParseException(errout.str());
@@ -1289,7 +1307,7 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
       atomMapNumber = FileParserUtils::toInt(text.substr(60, 3), true);
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "Cannot convert " << text.substr(60, 3) << " to int on line "
+      errout << "Cannot convert '" << text.substr(60, 3) << "' to int on line "
              << line;
       delete res;
       throw FileParseException(errout.str());
@@ -1302,7 +1320,7 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
       inversionFlag = FileParserUtils::toInt(text.substr(63, 3), true);
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "Cannot convert " << text.substr(63, 3) << " to int on line "
+      errout << "Cannot convert '" << text.substr(63, 3) << "' to int on line "
              << line;
       delete res;
       throw FileParseException(errout.str());
@@ -1315,7 +1333,7 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
       exactChangeFlag = FileParserUtils::toInt(text.substr(66, 3), true);
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "Cannot convert " << text.substr(66, 3) << " to int on line "
+      errout << "Cannot convert '" << text.substr(66, 3) << "' to int on line "
              << line;
       delete res;
       throw FileParseException(errout.str());
@@ -1343,7 +1361,7 @@ Bond *ParseMolFileBondLine(const std::string &text, unsigned int line) {
     bType = FileParserUtils::toInt(text.substr(spos, 3));
   } catch (boost::bad_lexical_cast &) {
     std::ostringstream errout;
-    errout << "Cannot convert " << text.substr(spos, 3) << " to int on line "
+    errout << "Cannot convert '" << text.substr(spos, 3) << "' to int on line "
            << line;
     throw FileParseException(errout.str());
   }
@@ -1621,6 +1639,8 @@ bool ParseMolBlockProperties(std::istream *inStream, unsigned int &line,
     } else if (lineBeg == "M  RAD") {
       ParseRadicalLine(mol, tempStr, firstChargeLine, line);
       firstChargeLine = false;
+    } else if (lineBeg == "M  PXA") {
+      ParsePXALine(mol, tempStr, line);
 
       /* SGroup parsing start */
     } else if (lineBeg == "M  STY") {
@@ -1659,8 +1679,6 @@ bool ParseMolBlockProperties(std::istream *inStream, unsigned int &line,
       ParseSGroupV2000SPLLine(sGroupMap, mol, tempStr, line);
     } else if (lineBeg == "M  SNC") {
       ParseSGroupV2000SNCLine(sGroupMap, mol, tempStr, line);
-    } else if (lineBeg == "M  PXA") {
-      ParseSGroupV2000PXALine(sGroupMap, mol, tempStr, line);
     } else if (lineBeg == "M  SAP") {
       ParseSGroupV2000SAPLine(sGroupMap, mol, tempStr, line);
     } else if (lineBeg == "M  SCL") {
@@ -1821,7 +1839,7 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
   while (token != tokens.end()) {
     std::string prop, val;
     if (!splitAssignToken(*token, prop, val)) {
-      errout << "Invalid atom property: " << *token << " for atom "
+      errout << "Invalid atom property: '" << *token << "' for atom "
              << atom->getIdx() + 1 << " on line " << line << std::endl;
       throw FileParseException(errout.str());
     }
@@ -2359,7 +2377,7 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
 
   if (n3DConstraints) {
     BOOST_LOG(rdWarningLog)
-        << "3d constraint information in mol block igored at line " << line
+        << "3D constraint information in mol block igored at line " << line
         << std::endl;
     tempStr = getV3000Line(inStream, line);
     boost::to_upper(tempStr);
@@ -2393,7 +2411,7 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
     } else {
       // skip blocks we don't know how to read
       BOOST_LOG(rdWarningLog)
-          << "skipping block at line " << line << ": " << tempStr << std::endl;
+          << "skipping block at line " << line << ": '" << tempStr <<"'"<< std::endl;
       while (tempStr.length() < 3 || tempStr.substr(0, 3) != "END") {
         tempStr = getV3000Line(inStream, line);
       }
@@ -2522,9 +2540,9 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
   // this needs to go into a try block because if the lexical_cast throws an
   // exception we want to catch and delete mol before leaving this function
   try {
-    nAtoms = FileParserUtils::toInt(tempStr.substr(spos, 3));
+    nAtoms = FileParserUtils::toInt(tempStr.substr(spos, 3), true);
     spos = 3;
-    nBonds = FileParserUtils::toInt(tempStr.substr(spos, 3));
+    nBonds = FileParserUtils::toInt(tempStr.substr(spos, 3), true);
     spos = 6;
   } catch (boost::bad_lexical_cast &) {
     if (res) {
@@ -2532,38 +2550,38 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
       res = nullptr;
     }
     std::ostringstream errout;
-    errout << "Cannot convert " << tempStr.substr(spos, 3) << " to int on line "
+    errout << "Cannot convert '" << tempStr.substr(spos, 3) << "' to int on line "
            << line;
     throw FileParseException(errout.str());
   }
   try {
     spos = 6;
     if (tempStr.size() >= 9)
-      nLists = FileParserUtils::toInt(tempStr.substr(spos, 3));
+      nLists = FileParserUtils::toInt(tempStr.substr(spos, 3), true);
 
     spos = 12;
     if (tempStr.size() >= spos + 3)
-      chiralFlag = FileParserUtils::toInt(tempStr.substr(spos, 3));
+      chiralFlag = FileParserUtils::toInt(tempStr.substr(spos, 3), true);
 
     spos = 15;
     if (tempStr.size() >= spos + 3)
-      nsText = FileParserUtils::toInt(tempStr.substr(spos, 3));
+      nsText = FileParserUtils::toInt(tempStr.substr(spos, 3), true);
 
     spos = 18;
     if (tempStr.size() >= spos + 3)
-      nRxnComponents = FileParserUtils::toInt(tempStr.substr(spos, 3));
+      nRxnComponents = FileParserUtils::toInt(tempStr.substr(spos, 3), true);
 
     spos = 21;
     if (tempStr.size() >= spos + 3)
-      nReactants = FileParserUtils::toInt(tempStr.substr(spos, 3));
+      nReactants = FileParserUtils::toInt(tempStr.substr(spos, 3), true);
 
     spos = 24;
     if (tempStr.size() >= spos + 3)
-      nProducts = FileParserUtils::toInt(tempStr.substr(spos, 3));
+      nProducts = FileParserUtils::toInt(tempStr.substr(spos, 3), true);
 
     spos = 27;
     if (tempStr.size() >= spos + 3)
-      nIntermediates = FileParserUtils::toInt(tempStr.substr(spos, 3));
+      nIntermediates = FileParserUtils::toInt(tempStr.substr(spos, 3), true);
 
   } catch (boost::bad_lexical_cast &) {
     // some SD files (such as some from NCI) lack all the extra information
@@ -2632,8 +2650,8 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
     delete conf;
     res = nullptr;
     conf = nullptr;
-    BOOST_LOG(rdErrorLog) << " Unhandled CTAB feature: " << e.message()
-                          << ". Molecule skipped." << std::endl;
+    BOOST_LOG(rdErrorLog) << " Unhandled CTAB feature: '" << e.message()
+                          << "'. Molecule skipped." << std::endl;
 
     if (!inStream->eof()) tempStr = getLine(inStream);
     ++line;
