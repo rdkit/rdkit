@@ -1,3 +1,42 @@
+# Release_2018.09.2
+(Changes relative to Release_2018.09.1)
+
+## Acknowledgements:
+Brian Cole, Jan Holst Jensen, Brian Kelley, Petr Kubat, Takayuki Serizawa, 
+Matt Swain, Riccardo Vianello, 'paconius'
+
+## Bug Fixes:
+  - PgSQL: fix boolean definitions for Postgresql 11
+ (github #2129 from pkubatrh)
+  - update fingerprint tutorial notebook
+ (github #2130 from greglandrum)
+  - Fix typo in RecapHierarchyNode destructor
+ (github #2137 from iwatobipen)
+  - SMARTS roundtrip failure
+ (github #2142 from mcs07)
+  - Error thrown in rdMolStandardize.ChargeParent
+ (github #2144 from paconius)
+  - MolDraw2D: line width not in python wrapper
+ (github #2149 from greglandrum)
+  - Missing Python API Documentation
+ (github #2158 from greglandrum)
+  - PgSQL: mol_to_svg() changes input molecule.
+ (github #2174 from janholstjensen)
+  - Inconsistent treatment of `[as]` in SMILES and SMARTS
+ (github #2197 from greglandrum)
+  - Fix TautomerTransform in operator=
+ (github #2203 from bp-kelley)
+  - Silencing some Python 3 warning messages
+ (github #2223 from coleb)
+  - removeHs shouldn't remove atom lists
+ (github #2224 from rvianello)
+  - failure round-tripping mol block with Q atom
+ (github #2225 from rvianello)
+  - problem round-tripping mol files that include bond topology info
+ (github #2229 from rvianello)
+  - aromatic main-group atoms written to SMARTS incorrectly
+ (github #2237 from greglandrum)
+
 # Release_2018.09.1
 (Changes relative to Release_2018.03.1)
 
