@@ -389,7 +389,8 @@ void findAtomNeighborDirHelper(const ROMol &mol, const Atom *atom,
 // will be returned
 void findAtomNeighborsHelper(const ROMol &mol, const Atom *atom,
                              const Bond *refBond, UINT_VECT &neighbors,
-                             bool checkDir = false) {
+                             bool checkDir = false,
+                             bool includeAromatic = false) {
   PRECONDITION(atom, "bad atom");
   PRECONDITION(refBond, "bad bond");
   neighbors.clear();
@@ -398,7 +399,8 @@ void findAtomNeighborsHelper(const ROMol &mol, const Atom *atom,
   while (beg != end) {
     const Bond *bond = mol[*beg];
     Bond::BondDir dir = bond->getBondDir();
-    if (bond->getBondType() == Bond::SINGLE &&
+    if ((bond->getBondType() == Bond::SINGLE ||
+         (includeAromatic && bond->getBondType() == Bond::AROMATIC)) &&
         bond->getIdx() != refBond->getIdx()) {
       if (checkDir) {
         if ((dir != Bond::ENDDOWNRIGHT) && (dir != Bond::ENDUPRIGHT)) {
@@ -1202,7 +1204,7 @@ void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
         // if the bond is flagged as EITHERDOUBLE, we ignore it:
         if (dblBond->getBondDir() == Bond::EITHERDOUBLE ||
             dblBond->getStereo() == Bond::STEREOANY) {
-          break;
+          continue;
         }
         // proceed only if we either want to clean the stereocode on this bond
         // or if none is set on it yet
@@ -1229,10 +1231,14 @@ void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
             }
             // find the neighbors for the begin atom and the endAtom
             UINT_VECT begAtomNeighbors, endAtomNeighbors;
+            bool checkDir = false;
+            bool includeAromatic = true;
             Chirality::findAtomNeighborsHelper(mol, begAtom, dblBond,
-                                               begAtomNeighbors);
+                                               begAtomNeighbors, checkDir,
+                                               includeAromatic);
             Chirality::findAtomNeighborsHelper(mol, endAtom, dblBond,
-                                               endAtomNeighbors);
+                                               endAtomNeighbors, checkDir,
+                                               includeAromatic);
             if (begAtomNeighbors.size() > 0 && endAtomNeighbors.size() > 0) {
               if ((begAtomNeighbors.size() == 2) &&
                   (endAtomNeighbors.size() == 2)) {

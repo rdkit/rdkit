@@ -238,6 +238,7 @@ RWMol *toMol(const std::string &inp,
     if (!molVect.empty()) {
       res = molVect[0];
       SmilesParseOps::CloseMolRings(res, false);
+      SmilesParseOps::SetUnspecifiedBondTypes(res);
       SmilesParseOps::AdjustAtomChiralityFlags(res);
       // No sense leaving this bookmark intact:
       if (res->hasAtomBookmark(ci_RIGHTMOST_ATOM)) {

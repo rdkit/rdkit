@@ -223,7 +223,6 @@ mol: atomd {
   atom->getPropIfPresent(RDKit::common_properties::_RingClosures,tmp);
   tmp.push_back(-($2+1));
   atom->setProp(RDKit::common_properties::_RingClosures,tmp);
-
 }
 
 | mol BOND_TOKEN ring_number {
@@ -231,6 +230,9 @@ mol: atomd {
   Atom *atom=mp->getActiveAtom();
   Bond *newB = mp->createPartialBond(atom->getIdx(),
 				     $2->getBondType());
+  if($2->hasProp(RDKit::common_properties::_unspecifiedOrder)){
+    newB->setProp(RDKit::common_properties::_unspecifiedOrder,1);
+  }
   newB->setBondDir($2->getBondDir());
   mp->setAtomBookmark(atom,$3);
   mp->setBondBookmark(newB,$3);
