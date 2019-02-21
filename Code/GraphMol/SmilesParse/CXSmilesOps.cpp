@@ -184,8 +184,8 @@ bool parse_coordinate_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol) {
     if (read_int_pair(first, last, aidx, bidx)) {
       Bond *bnd = mol.getBondWithIdx(bidx);
       if (bnd->getBeginAtomIdx() != aidx && bnd->getEndAtomIdx() != aidx) {
-        std::cerr << "BOND NOT FOUND! " << bidx << " involving atom " << aidx
-                  << std::endl;
+        BOOST_LOG(rdWarningLog) << "BOND NOT FOUND! " << bidx
+                                << " involving atom " << aidx << std::endl;
         return false;
       }
       bnd->setBondType(Bond::DATIVE);
@@ -279,7 +279,8 @@ bool parse_enhanced_stereo(Iterator &first, Iterator last, RDKit::RWMol &mol) {
     if (read_int(first, last, aidx)) {
       Atom *atom = mol.getAtomWithIdx(aidx);
       if (!atom) {
-        std::cerr << "Atom " << aidx << " not found!" << std::endl;
+        BOOST_LOG(rdWarningLog)
+            << "Atom " << aidx << " not found!" << std::endl;
         return false;
       }
       atoms.push_back(atom);
@@ -394,7 +395,7 @@ void processCXSmilesLabels(RDKit::RWMol &mol) {
 
 void parseCXExtensions(RDKit::RWMol &mol, const std::string &extText,
                        std::string::const_iterator &first) {
-  // std::cerr << "parseCXNExtensions: " << extText << std::endl;
+  // BOOST_LOG(rdWarningLog) << "parseCXNExtensions: " << extText << std::endl;
   if (extText.empty() || extText[0] != '|') return;
   first = extText.begin();
   bool ok = parser::parse_it(first, extText.end(), mol);
