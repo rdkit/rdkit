@@ -191,6 +191,7 @@ void testCXSmilesAndName() {
     TEST_ASSERT(m->getNumAtoms() == 3);
     TEST_ASSERT(m->getAtomWithIdx(0)->getProp<std::string>(
                     common_properties::atomLabel) == "foo");
+    TEST_ASSERT(m->getProp<std::string>("_CXSMILES_Data") == "|$foo;;bar$|");
     TEST_ASSERT(!m->hasProp("_Name"));
     delete m;
   }
@@ -205,6 +206,7 @@ void testCXSmilesAndName() {
     TEST_ASSERT(m->getNumAtoms() == 3);
     TEST_ASSERT(m->getAtomWithIdx(0)->getProp<std::string>(
                     common_properties::atomLabel) == "foo");
+    TEST_ASSERT(m->getProp<std::string>("_CXSMILES_Data") == "|$foo;;bar$|");
     TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) == "ourname");
     delete m;
   }
