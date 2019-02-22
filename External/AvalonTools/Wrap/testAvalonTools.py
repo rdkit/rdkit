@@ -263,13 +263,28 @@ class TestCase(unittest.TestCase):
     self.assertTrue(m.GetConformer(0).Is3D() == False)
 
   def testGitHub1062(self):
-    s1 = 'C/C=C\C'
-    m1 = Chem.MolFromSmiles(s1)
+    s0 = 'C/C=C\C'
+    m1 = Chem.MolFromSmiles(s0)
+    s1 = Chem.MolToSmiles(m1)
     pyAvalonTools.Generate2DCoords(m1)
     mb = Chem.MolToMolBlock(m1)
     m2 = Chem.MolFromMolBlock(mb)
     s2 = Chem.MolToSmiles(m2)
     self.assertEqual(s1, s2)
+
+    # repeat the test with an input smiles that is not canonical
+    # to verify that the implementation is not sensitive to the
+    # ordering of atoms
+    s0 = 'C/C=C(F)\C'
+    m1 = Chem.MolFromSmiles(s0)
+    s1 = Chem.MolToSmiles(m1)
+    self.assertNotEqual(s1, s0)
+    pyAvalonTools.Generate2DCoords(m1)
+    mb = Chem.MolToMolBlock(m1)
+    m2 = Chem.MolFromMolBlock(mb)
+    s2 = Chem.MolToSmiles(m2)
+    self.assertEqual(s1, s2)
+
 
   def testRDK151(self):
     smi = "C[C@H](F)Cl"

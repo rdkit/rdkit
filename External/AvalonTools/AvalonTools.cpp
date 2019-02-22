@@ -222,8 +222,16 @@ namespace AvalonTools {
 
     auto *conf = new RDKit::Conformer(mol.getNumAtoms());
     conf->set3D(false);
+
+    // Atoms in the intermediate smiles representation may be ordered
+    // differently compared to the original input molecule.
+    // Make sure that output coordinates are assigned in the correct order.
+    std::vector<unsigned int> atomOrdering;
+    mol.getProp(common_properties::_smilesAtomOutputOrder, atomOrdering);
     for(unsigned int i=0;i<mol.getNumAtoms();++i){
-      RDGeom::Point3D loc(mp2->atom_array[i].x,mp2->atom_array[i].y,mp2->atom_array[i].z);
+      auto x = mp2->atom_array[atomOrdering[i]].x;
+      auto y = mp2->atom_array[atomOrdering[i]].y;
+      RDGeom::Point3D loc(x,y,0.);
       conf->setAtomPos(i,loc);
     }
 
