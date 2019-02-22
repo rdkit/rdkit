@@ -154,6 +154,108 @@ TEST_CASE(
   }
 }
 
+
+TEST_CASE("github #2257: writing cxsmiles", "[smiles,cxsmiles]") {
+  SECTION("basics") {
+    auto mol = "OCC"_smiles;
+    REQUIRE(mol);
+    auto smi = MolToCXSmiles(*mol);
+    CHECK(smi == "CCO");
+  }
+  SECTION("atom labels") {
+    auto mol = "CCC |$R1;;R2$|"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(0)->getProp<std::string>(
+              common_properties::atomLabel) == "R1");
+    CHECK(mol->getAtomWithIdx(2)->getProp<std::string>(
+              common_properties::atomLabel) == "R2");
+    auto smi = MolToCXSmiles(*mol);
+    CHECK(smi == "CCC |$R1;;R2$|");
+  }
+  SECTION("atom ordering") {
+    auto mol = "OC(F)C |$R1;;R2;R3$|"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(0)->getProp<std::string>(
+              common_properties::atomLabel) == "R1");
+    CHECK(mol->getAtomWithIdx(2)->getProp<std::string>(
+              common_properties::atomLabel) == "R2");
+    CHECK(mol->getAtomWithIdx(3)->getProp<std::string>(
+              common_properties::atomLabel) == "R3");
+    auto smi = MolToCXSmiles(*mol);
+    CHECK(smi == "CC(O)F |$R3;;R1;R2$|");
+  }
+  SECTION("atom values") {
+    auto mol = "COCC |$_AV:;bar;;foo$|"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(3)->getProp<std::string>(
+              common_properties::molFileValue) == "foo");
+    CHECK(mol->getAtomWithIdx(1)->getProp<std::string>(
+              common_properties::molFileValue) == "bar");
+    auto smi = MolToCXSmiles(*mol);
+    CHECK(smi == "CCOC |$_AV:foo;;bar;$|");
+  }
+
+  SECTION("radicals") {
+    auto mol = "[Fe]N([O])[O] |^1:2,3|"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(1)->getNumRadicalElectrons() == 0);
+    CHECK(mol->getAtomWithIdx(2)->getNumRadicalElectrons() == 1);
+    CHECK(mol->getAtomWithIdx(3)->getNumRadicalElectrons() == 1);
+
+    auto smi = MolToCXSmiles(*mol);
+    CHECK(smi == "[O]N([O])[Fe] |^1:0,2|");
+  }
+  SECTION("radicals2") {
+    auto mol = "[CH]C[CH2] |^1:2,^2:0|"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(1)->getNumRadicalElectrons() == 0);
+    CHECK(mol->getAtomWithIdx(2)->getNumRadicalElectrons() == 1);
+    CHECK(mol->getAtomWithIdx(0)->getNumRadicalElectrons() == 2);
+
+    auto smi = MolToCXSmiles(*mol);
+    CHECK(smi == "[CH]C[CH2] |^1:2,^2:0|");
+  }
+  SECTION("coordinates") {
+    auto mol = "OC |(0,.75,;0,-.75,)|"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getNumConformers() == 1);
+
+    auto smi = MolToCXSmiles(*mol);
+    CHECK(smi == "CO |(0,-0.75,;0,0.75,)|");
+  }
+  SECTION("coordinates3d") {
+    auto mol = "OC |(0,.75,0.1;0,-.75,-0.1)|"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getNumConformers() == 1);
+
+    auto smi = MolToCXSmiles(*mol);
+    CHECK(smi == "CO |(0,-0.75,-0.1;0,0.75,0.1)|");
+  }
+  SECTION("atom props") {
+    auto mol = "N1CC1C |atomProp:0.p2.v2:0.p1.v1:1.p2.v2:1.p1.v1;2;3|"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 4);
+    CHECK(mol->getAtomWithIdx(0)->hasProp("p1"));
+    CHECK(mol->getAtomWithIdx(0)->getProp<std::string>("p1") == "v1");
+    CHECK(mol->getAtomWithIdx(0)->hasProp("p2"));
+    CHECK(mol->getAtomWithIdx(0)->getProp<std::string>("p2") == "v2");
+    CHECK(mol->getAtomWithIdx(1)->hasProp("p2"));
+    CHECK(mol->getAtomWithIdx(1)->getProp<std::string>("p2") == "v2");
+    CHECK(mol->getAtomWithIdx(1)->hasProp("p1"));
+    CHECK(mol->getAtomWithIdx(1)->getProp<std::string>("p1") == "v1;2;3");
+
+    auto smi = MolToCXSmiles(*mol);
+    CHECK(smi == "CC1CN1 |atomProp:2.p2.v2:2.p1.v1;2;3:3.p2.v2:3.p1.v1|");
+  }
+  SECTION("atom props and values") {
+    //"CN |$_AV:atomv0;atomv1$,atomProp:0.p2.v2:1.p2.v1|";
+    auto mol = "CN |atomProp:0.p2.v2:1.p1.v1,$_AV:val1;val2$|"_smiles;
+    REQUIRE(mol);
+    auto smi = MolToCXSmiles(*mol);
+    CHECK(smi == "CN |$_AV:val1;val2$,atomProp:0.p2.v2:1.p1.v1|");
+  }
+}
+
 TEST_CASE("Github #2148", "[bug, Smiles, Smarts]") {
   SECTION("SMILES") {
     auto mol = "C(=C\\F)\\4.O=C1C=4CCc2ccccc21"_smiles;
@@ -190,6 +292,4 @@ TEST_CASE("Github #2148", "[bug, Smiles, Smarts]") {
     auto smi = MolToSmiles(*mol);
     CHECK(smi=="C=c1cc/c(=C\\C)nc1");    
   }
-
-
 }
