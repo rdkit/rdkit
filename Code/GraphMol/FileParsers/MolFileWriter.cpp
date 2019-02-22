@@ -346,6 +346,17 @@ const std::string GetMolFileAliasInfo(const RWMol &mol) {
   return ss.str();
 }
 
+const std::string GetMolFilePXAInfo(const RWMol &mol) {
+  std::string res;
+  for (const auto atom : mol.atoms()) {
+    if (atom->hasProp("_MolFile_PXA")) {
+      res +=
+          boost::str(boost::format("M  PXA % 3d%s\n") % (atom->getIdx() + 1) %
+                     atom->getProp<std::string>("_MolFile_PXA"));
+    }
+  }
+  return res;
+}
 const std::string GetMolFileZBOInfo(const RWMol &mol) {
   std::stringstream res;
   std::stringstream ss;
@@ -1177,6 +1188,7 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
     res += GetMolFileAliasInfo(tmol);
     res += GetMolFileZBOInfo(tmol);
 
+    res += GetMolFilePXAInfo(tmol);
     res += GetMolFileSGroupInfo(tmol);
 
     // FIX: R-group logic, SGroups and 3D features etc.
