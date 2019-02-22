@@ -205,16 +205,27 @@ M  END
   }
 }
 
-TEST_CASE("github #2244", "[bug, molops, stereo]"){
-  SECTION("the original report"){
+TEST_CASE("github #2244", "[bug, molops, stereo]") {
+  SECTION("the original report") {
     auto mol = "CC=CC=CC"_smiles;
     REQUIRE(mol);
-    MolOps::findPotentialStereoBonds(*mol,true);
-    CHECK(mol->getBondWithIdx(1)->getStereo()==Bond::STEREOANY);
-    CHECK(mol->getBondWithIdx(3)->getStereo()==Bond::STEREOANY);
+    MolOps::findPotentialStereoBonds(*mol, true);
+    CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOANY);
+    CHECK(mol->getBondWithIdx(3)->getStereo() == Bond::STEREOANY);
     mol->getBondWithIdx(3)->setStereo(Bond::STEREONONE);
-    MolOps::findPotentialStereoBonds(*mol,true);
-    CHECK(mol->getBondWithIdx(1)->getStereo()==Bond::STEREOANY);
-    CHECK(mol->getBondWithIdx(3)->getStereo()==Bond::STEREOANY);
+    MolOps::findPotentialStereoBonds(*mol, true);
+    CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOANY);
+    CHECK(mol->getBondWithIdx(3)->getStereo() == Bond::STEREOANY);
+  }
+}
+
+TEST_CASE(
+    "github #2258: heterocycles with exocyclic bonds not failing valence check",
+    "[bug, molops]") {
+  SECTION("the original report") {
+    std::vector<std::string> smiles = {"C=n1ccnc1", "C#n1ccnc1"};
+    for (auto smi : smiles) {
+      CHECK_THROWS_AS(SmilesToMol(smi), MolSanitizeException);
+    }
   }
 }
