@@ -30,7 +30,7 @@ using namespace RDKit;
 
 namespace RDKit {
 void tossit() { throw IndexErrorException(1); }
-}
+}  // namespace RDKit
 
 void rdExceptionTranslator(RDKit::ConformerException const &x) {
   RDUNUSED_PARAM(x);
@@ -54,6 +54,7 @@ void wrap_EditableMol();
 void wrap_monomerinfo();
 void wrap_resmolsupplier();
 void wrap_molbundle();
+void wrap_sgroup();
 
 struct PySysErrWrite : std::ostream, std::streambuf {
   std::string prefix;
@@ -187,6 +188,7 @@ BOOST_PYTHON_MODULE(rdchem) {
   wrap_monomerinfo();
   wrap_resmolsupplier();
   wrap_molbundle();
+  wrap_sgroup();
 
   //*********************************************
   //

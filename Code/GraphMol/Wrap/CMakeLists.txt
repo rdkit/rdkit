@@ -2,7 +2,7 @@ remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
 rdkit_python_extension(rdchem
                        rdchem.cpp Table.cpp Atom.cpp Bond.cpp Mol.cpp
                        Conformer.cpp RingInfo.cpp EditableMol.cpp MonomerInfo.cpp
-                       ResonanceMolSupplier.cpp MolBundle.cpp StereoGroup.cpp
+                       ResonanceMolSupplier.cpp MolBundle.cpp StereoGroup.cpp Sgroup.cpp
                        DEST Chem
                        LINK_LIBRARIES
                        SmilesParse ChemTransforms SubstructMatch GraphMol RDGeometryLib RDGeneral RDBoost)
@@ -68,6 +68,9 @@ add_pytest(pyTestConformerWrap
 
 add_pytest(pyTestTrajectory
          ${CMAKE_CURRENT_SOURCE_DIR}/testTrajectory.py)
+
+add_pytest(pyTestSGroups
+         ${CMAKE_CURRENT_SOURCE_DIR}/testSGroups.py)
 
 if (RDK_TEST_MULTITHREADED)
   add_pytest(pyTestThreads
