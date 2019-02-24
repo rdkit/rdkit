@@ -58,15 +58,23 @@ struct sgroup_wrap {
         .def("GetProp",
              (std::string(RDProps::*)(const std::string &) const) &
                  SGroup::getProp<std::string>,
-             "returns whether or not a particular property exists");
-    // .def("GetProp", &SGroup::getProp,
-    //      "Returns the value of the property.\n\n"
-    //      "  ARGUMENTS:\n"
-    //      "    - key: the name of the property to return (a string).\n\n"
-    //      "  RETURNS: a string\n\n"
-    //      "  NOTE:\n"
-    //      "    - If the property has not been set, a KeyError exception "
-    //      "will be raised.\n");
+             "returns the value of a particular property")
+        .def("GetIntProp",
+             (int (RDProps::*)(const std::string &) const) &
+                 SGroup::getProp<int>,
+             "returns the value of a particular property")
+        .def("GetUnsignedProp",
+             (unsigned int (RDProps::*)(const std::string &) const) &
+                 SGroup::getProp<unsigned int>,
+             "returns the value of a particular property")
+        .def("GetDoubleProp",
+             (double (RDProps::*)(const std::string &) const) &
+                 SGroup::getProp<double>,
+             "returns the value of a particular property")
+        .def("GetBoolProp",
+             (bool (RDProps::*)(const std::string &) const) &
+                 SGroup::getProp<bool>,
+             "returns the value of a particular property");
     python::def("GetMolSGroups", &getMolSGroups,
                 "returns the SGroups for a molecule (if any)");
     // FIX: needs something tying the lifetime to the mol
