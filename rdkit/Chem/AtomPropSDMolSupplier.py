@@ -11,7 +11,7 @@ import warnings
 import textwrap
 
 
-def ApplyMolListPropsToAtoms(mol, prefix, propType):
+def ApplyMolListPropsToAtoms(mol, prefix, propType, missingvalue="n/a"):
     """
     >>> m = Chem.MolFromSmiles("COC")
     >>> m.SetProp("atom.iprop.foo","1 6 9")
@@ -26,10 +26,10 @@ def ApplyMolListPropsToAtoms(mol, prefix, propType):
     >>> m.GetAtomWithIdx(1).HasProp("foo")
     0
 
-    but we can change that by setting a missingvalue property:
+    but we can change that by providing an alternate missing value in square brackets
+    as the first element of the propery list:
     >>> m = Chem.MolFromSmiles("COC")
-    >>> m.SetProp("atom.iprop.missingvalue","?")
-    >>> m.SetProp("atom.iprop.foo","1 ? 9")
+    >>> m.SetProp("atom.iprop.foo","[?] 1 ? 9")
     >>> ApplyMolListPropsToAtoms(m,"atom.iprop.",int)
     >>> m.GetAtomWithIdx(1).HasProp("foo")
     0
@@ -48,20 +48,20 @@ def ApplyMolListPropsToAtoms(mol, prefix, propType):
         raise ValueError('bad propType')
     pns = [pn for pn in mol.GetPropNames() if pn.find(prefix) == 0]
     apns = [pn.replace(prefix, '') for pn in pns]
-    missingvalue = 'n/a'
-    if 'missingvalue' in apns:
-        missingvalue = mol.GetProp(prefix + 'missingvalue')
-
+ 
     for pn, apn in zip(pns, apns):
-        if apn == 'missingvalue':
-            continue
         pval = mol.GetProp(pn)
-        splitV = pval.replace('\n', ' ').split(' ')
+        splitV = [x for x in pval.replace('\n', ' ').split(' ') if x != '']
+        if len(splitV)> mol.GetNumAtoms() and splitV[0][0]=='[':
+            tmp = splitV.pop(0)
+            lmv = tmp[1:tmp.find(']')]
+        else:
+            lmv = missingvalue
         if len(splitV) != mol.GetNumAtoms():
             warnings.warn(f"property value {pn} has a value list of the wrong length. Ignoring it")
             continue
         for i, sv in enumerate(splitV):
-            if sv != missingvalue:
+            if sv != lmv:
                 sv = propType(sv)
                 setter = getattr(mol.GetAtomWithIdx(i), setFn)
                 setter(apn, sv)
@@ -96,11 +96,8 @@ class AtomPropSDMolSupplier(Chem.SDMolSupplier):
     ... >  <atom.prop.PartiallyMissing>  (1) 
     ... one n/a three
     ... 
-    ... >  <atom.iprop.missingvalue> (1)
-    ... ?
-    ...
     ... >  <atom.iprop.PartiallyMissingInt>  (1) 
-    ... 2 2 ?
+    ... [?] 2 2 ?
     ... 
     ... $$$$
     ... '''
