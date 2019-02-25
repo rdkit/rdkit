@@ -679,7 +679,6 @@ public:
   }
 };
 
-
 void testCustomProps() {
   Foo f(1,2.f);
   Dict d;
@@ -796,5 +795,6 @@ int main() {
 #endif
   testConstReturns();
   testUpdate();
+  testCustomProps();
   return 0;
 }
