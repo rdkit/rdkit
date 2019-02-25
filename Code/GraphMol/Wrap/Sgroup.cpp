@@ -16,16 +16,18 @@
 // ours
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Sgroup.h>
+#include "props.hpp"
 
 namespace python = boost::python;
 
 namespace RDKit {
 
 namespace {
-python::tuple getMolSGroups(const ROMol &mol) {
+python::tuple getMolSGroups(ROMol &mol) {
   python::list res;
-  for (const auto &sg : getSGroups(mol)) {
-    res.append(sg);
+  std::vector<SGroup> &sgs = getSGroups(mol);
+  for (auto &sg : sgs ) {
+    res.append(&sg);
   }
   return python::tuple(res);
 }
@@ -74,6 +76,25 @@ struct sgroup_wrap {
         .def("GetBoolProp",
              (bool (RDProps::*)(const std::string &) const) &
                  SGroup::getProp<bool>,
+             "returns the value of a particular property")
+        .def("SetProp",
+             MolSetProp<SGroup, std::string>,
+             "returns the value of a particular property")
+        .def("SetIntProp",
+             (int (RDProps::*)(const std::string &, int) const) &
+                 SGroup::setProp<int>,
+             "returns the value of a particular property")
+        .def("SetUnsignedProp",
+             (unsigned int (RDProps::*)(const std::string &, unsigned int) const) &
+                 SGroup::setProp<unsigned int>,
+             "returns the value of a particular property")
+        .def("SetDoubleProp",
+             (double (RDProps::*)(const std::string &, double) const) &
+                 SGroup::setProp<double>,
+             "returns the value of a particular property")
+        .def("SetBoolProp",
+             (bool (RDProps::*)(const std::string &, bool) const) &
+                 SGroup::setProp<bool>,
              "returns the value of a particular property");
     python::def("GetMolSGroups", &getMolSGroups,
                 "returns the SGroups for a molecule (if any)");

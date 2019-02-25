@@ -16,7 +16,7 @@ import unittest
 
 
 class TestCase(unittest.TestCase):
-    def testBasics(self):
+    def setUp(self):
         mb = """
   ACCLDraw04231812452D
 
@@ -59,15 +59,40 @@ M  SDT   2 Stereo
 M  SDD   2     0.0000    0.0000    DR    ALL  1       6
 M  SED   2 E/Z unknown
 M  END"""
-        m = Chem.MolFromMolBlock(mb)
-        self.assertTrue(m is not None)
-        sgs = Chem.GetMolSGroups(m)
+        self.m1 = Chem.MolFromMolBlock(mb)
+
+    def testBasics(self):
+        self.assertTrue(self.m1 is not None)
+        sgs = Chem.GetMolSGroups(self.m1)
         self.assertEqual(len(sgs), 2)
         self.assertTrue(sgs[0].HasProp("TYPE"))
         self.assertTrue(sgs[1].HasProp("TYPE"))
         self.assertEqual(sgs[0].GetProp("TYPE"), "DAT")
         self.assertEqual(sgs[1].GetProp("TYPE"), "DAT")
+        
+        self.assertTrue(sgs[0].HasProp("FIELDNAME"))
+        self.assertEqual(sgs[0].GetProp("FIELDNAME"),"pH")
+        
+        
+        
+    def testWriting(self):
+        self.assertTrue(self.m1 is not None)
+        sgs = Chem.GetMolSGroups(self.m1)
+        self.assertEqual(len(sgs), 2)
+        self.assertTrue(sgs[0].HasProp("TYPE"))
+        self.assertEqual(sgs[0].GetProp("TYPE"), "DAT")
+        sgs[0].SetProp("TYPE","DDD",False)
+        sgs[0].SetProp("FIELDNAME","pKa", False)
 
+        sgs2 = Chem.GetMolSGroups(self.m1)
+        self.assertEqual(len(sgs2), 2)
+        self.assertTrue(sgs2[0].HasProp("TYPE"))
+        self.assertEqual(sgs2[0].GetProp("TYPE"), "DDD")
+
+
+        mb = Chem.MolToMolBlock(self.m1)
+        print(mb)
+        self.assertTrue(mb.find('1 pKa') >0)
 
 if __name__ == '__main__':
     print("Testing SGroups wrapper")
