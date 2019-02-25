@@ -12,6 +12,7 @@
 
 #include <RDGeneral/test.h>
 #include "types.h"
+#include "StreamOps.h"
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDAny.h>
 #include <RDGeneral/Dict.h>
@@ -27,6 +28,8 @@ using namespace std;
 struct Foo {
   int bar;
   float baz;
+  Foo() : bar(0), baz(0.f) {}
+  Foo(int bar, float baz) : bar(bar), baz(baz) {}
   ~Foo() { std::cerr << "deleted!" << std::endl; }
 };
 
@@ -344,7 +347,7 @@ void testRDAny() {
     mptr anym = rdany_cast<mptr>(mv);
     TEST_ASSERT(anym->find(0) != anym->end());
 
-    RDAny any3(boost::shared_ptr<Foo>(new Foo));
+    RDAny any3(boost::shared_ptr<Foo>(new Foo(1,2.f)));
     TEST_ASSERT(any3.m_value.getTag() == RDTypeTag::AnyTag);
   }
 }
@@ -632,6 +635,72 @@ void testUpdate() {
     }
   }
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+}
+
+class FooHandler : public CustomPropHandler {
+public:
+  virtual const char *getPropName() const { return "Foo"; }
+  virtual bool canSerialize(const RDValue &value) const {
+    try {
+      // this is expensive, but hopefully it won't be called too often....
+      rdvalue_cast<const Foo&>(value);
+      return true;
+    } catch ( boost::bad_any_cast & ) {
+      return false;
+    }
+
+  }
+  
+  virtual bool read(std::istream &ss, RDValue &value) const {
+    int version = 0;
+    streamRead(ss, version);
+    Foo f;
+    streamRead(ss, f.bar);
+    streamRead(ss, f.baz);
+    value = f;
+    return true;
+  }
+  
+  virtual bool write(std::ostream &ss, const RDValue &value) const {
+    try{
+      const Foo &f = rdvalue_cast<const Foo&>(value);
+      const int version = 0;
+      streamWrite(ss, version);
+      streamWrite(ss, f.bar);
+      streamWrite(ss, f.baz);
+    } catch ( boost::bad_any_cast & ) {
+      return false;
+    }
+    return true;
+  }
+  
+  virtual CustomPropHandler* clone() const {
+    return new FooHandler;
+  }
+};
+
+
+void testCustomProps() {
+  Foo f(1,2.f);
+  Dict d;
+  d.setVal<Foo>("foo", f);
+  RDValue &value = d.getData()[0].val;
+  FooHandler foo_handler;
+  std::vector<CustomPropHandler*> handlers = {&foo_handler,
+                                              foo_handler.clone()};
+  for(auto handler: handlers)
+  {
+    TEST_ASSERT(handler->canSerialize(value));
+    RDValue bad_value = 1;
+    TEST_ASSERT(!handler->canSerialize(bad_value));
+    std::stringstream ss;
+    TEST_ASSERT(handler->write(ss, value));
+    RDValue newValue;
+    TEST_ASSERT(handler->read(ss, newValue));
+    TEST_ASSERT(from_rdvalue<const Foo&>(newValue).bar == f.bar);
+    TEST_ASSERT(from_rdvalue<const Foo&>(newValue).baz == f.baz);
+  }
+  delete handlers[1];
 }
 
 int main() {

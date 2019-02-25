@@ -312,10 +312,24 @@ namespace DTags {
   const unsigned char VecBoolTag = 9;
   const unsigned char VecFloatTag = 10;
   const unsigned char VecDoubleTag = 11;
+
+  const unsigned char CustomTag = 0xFE;  // custom data
   const unsigned char EndTag = 0xFF;
 }
 
-inline bool isSerializable(const Dict::Pair &pair) {
+class CustomPropHandler {
+public:
+  virtual ~CustomPropHandler() {};
+  virtual const char *getPropName() const = 0;
+  virtual bool canSerialize(const RDValue &value) const = 0;
+  virtual bool read(std::istream &ss, RDValue &value) const = 0;
+  virtual bool write(std::ostream &ss, const RDValue &value) const = 0;
+  virtual CustomPropHandler* clone() const=0;
+};
+
+typedef std::vector<std::shared_ptr<const CustomPropHandler>> CustomPropHandlerVec;
+    
+inline bool isSerializable(const Dict::Pair &pair, const CustomPropHandlerVec &handlers = {}) {
   switch (pair.val.getTag()) {
     case RDTypeTag::StringTag:
     case RDTypeTag::IntTag:
@@ -329,14 +343,20 @@ inline bool isSerializable(const Dict::Pair &pair) {
     case RDTypeTag::VecUnsignedIntTag:
     case RDTypeTag::VecFloatTag:
     case RDTypeTag::VecDoubleTag:
-
       return true;
+    case RDTypeTag::AnyTag:
+      for(auto &handler: handlers) {
+        if(handler->canSerialize(pair.val)) {
+          return true;
+        }
+      }
     default:
       return false;
   }
 }
 
-inline bool streamWriteProp(std::ostream &ss, const Dict::Pair &pair) {
+inline bool streamWriteProp(std::ostream &ss, const Dict::Pair &pair,
+                            const CustomPropHandlerVec &handlers = {}) {
   if (!isSerializable(pair)) return false;
 
   streamWrite(ss, pair.key);
@@ -387,6 +407,18 @@ inline bool streamWriteProp(std::ostream &ss, const Dict::Pair &pair) {
       streamWriteVec(ss, rdvalue_cast<std::vector<unsigned int>>(pair.val));
       break;
     default:
+      for(auto &handler: handlers) {
+        if(handler->canSerialize(pair.val)) {
+          // The form of a custom tag is
+          //  CustomTag
+          //  customPropName (must be unique)
+          //  custom serialization
+          streamWrite(ss, DTags::CustomTag);
+          streamWrite(ss, handler->getPropName());
+          handler->write(ss, pair.val);
+        }
+      }
+      
       std::cerr << "Failed to write " << pair.key << std::endl;
       return false;
   }
@@ -394,7 +426,8 @@ inline bool streamWriteProp(std::ostream &ss, const Dict::Pair &pair) {
 }
 
 inline bool streamWriteProps(std::ostream &ss, const RDProps &props,
-                             bool savePrivate=false, bool saveComputed=false) {
+                             bool savePrivate=false, bool saveComputed=false,
+                             const CustomPropHandlerVec &handlers = {}) {
   STR_VECT propsToSave = props.getPropList(savePrivate, saveComputed);
   std::set<std::string> propnames(propsToSave.begin(), propsToSave.end());
   
@@ -418,7 +451,7 @@ inline bool streamWriteProps(std::ostream &ss, const RDProps &props,
       if (isSerializable(*it)) {
         // note - not all properties are serializable, this may be
         //  a null op
-        if (streamWriteProp(ss, *it)) {
+        if (streamWriteProp(ss, *it, handlers)) {
           writtenCount++;
         }
       }
@@ -456,7 +489,9 @@ inline void readRDStringVecValue(std::istream &ss, RDValue &value) {
   value = v;
 }
 
-inline bool streamReadProp(std::istream &ss, Dict::Pair &pair, bool& dictHasNonPOD) {
+inline bool streamReadProp(std::istream &ss, Dict::Pair &pair,
+                           bool& dictHasNonPOD,
+                           const CustomPropHandlerVec &handlers = {}) {
   int version=0;
   streamRead(ss, pair.key, version);
 
@@ -493,6 +528,22 @@ inline bool streamReadProp(std::istream &ss, Dict::Pair &pair, bool& dictHasNonP
       readRDVecValue<double>(ss, pair.val);
       dictHasNonPOD = true;
       break;
+    case DTags::CustomTag:
+      {
+        std::string propType;
+        int version=0;
+        streamRead(ss, propType, version);
+
+        for(auto &handler: handlers) {
+          if(handler->getPropName() == propType) {
+            handler->read(ss, pair.val);
+            dictHasNonPOD = true;
+            return true;
+          }
+        }
+        std::cerr << "Failed to read (unhandled custom type) " << pair.key << std::endl;
+        return false;
+      }
 
     default:
       return false;
@@ -500,7 +551,8 @@ inline bool streamReadProp(std::istream &ss, Dict::Pair &pair, bool& dictHasNonP
   return true;
 }
 
-inline unsigned int streamReadProps(std::istream &ss, RDProps &props) {
+inline unsigned int streamReadProps(std::istream &ss, RDProps &props,
+                                    const CustomPropHandlerVec &handlers = {}) {
   unsigned int count;
   streamRead(ss, count);
 
@@ -508,7 +560,8 @@ inline unsigned int streamReadProps(std::istream &ss, RDProps &props) {
   dict.reset(); // Clear data before repopulating
   dict.getData().resize(count);
   for(unsigned index = 0; index<count; ++index) {
-    CHECK_INVARIANT(streamReadProp(ss, dict.getData()[index], dict.getNonPODStatus()),
+    CHECK_INVARIANT(streamReadProp(ss, dict.getData()[index], dict.getNonPODStatus(),
+                                   handlers),
                     "Corrupted property serialization detected");
   }
 

@@ -16,6 +16,7 @@ rdkit_headers(base64.h
               BitVects.h
               BitVectUtils.h
               DatastructsException.h
+              DatastructsStreamOps.h
               DiscreteDistMat.h
               DiscreteValueVect.h
               ExplicitBitVect.h
