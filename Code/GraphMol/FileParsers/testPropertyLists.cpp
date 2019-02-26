@@ -15,6 +15,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/FileParserUtils.h>
+#include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 
 using namespace RDKit;
@@ -127,4 +128,55 @@ TEST_CASE("processMolPropertyLists", "[atom_list_properties]") {
       CHECK(m->getAtomWithIdx(1)->getProp<std::string>("foo3")=="1");
       CHECK(m->getAtomWithIdx(1)->getProp<bool>("foo4")==false);
   }
+}
+
+TEST_CASE("basic SDF handling", "[SDF,atom_list_properties]") {
+        std::string sdf=R"SDF(
+     RDKit  2D
+
+  3  3  0  0  0  0  0  0  0  0999 V2000
+    0.8660    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4330    0.7500    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4330   -0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  3  1  1  0
+M  END
+>  <atom.dprop.PartialCharge>  (1) 
+0.008 -0.314 0.008
+
+>  <atom.iprop.NumHeavyNeighbors>  (1) 
+2 2 2
+
+>  <atom.prop.AtomLabel>  (1) 
+C1 N2 C3
+
+>  <atom.bprop.IsCarbon>  (1) 
+1 0 1
+
+>  <atom.prop.PartiallyMissing>  (1) 
+one n/a three
+
+>  <atom.iprop.PartiallyMissingInt>  (1) 
+[?] 2 2 ?
+
+$$$$
+)SDF";
+    SECTION("no processing"){
+        RDKit::SDMolSupplier suppl;
+        suppl.setData(sdf);
+        std::unique_ptr<RDKit::ROMol> m(suppl[0]);
+        REQUIRE(m);
+        CHECK(m->hasProp("atom.prop.AtomLabel"));
+        CHECK(!m->getAtomWithIdx(0)->hasProp("AtomLabel")); 
+    }
+    SECTION("with processing"){
+        RDKit::SDMolSupplier suppl;
+        suppl.setData(sdf);
+        suppl.setProcessPropertyLists(true);
+        std::unique_ptr<RDKit::ROMol> m(suppl[0]);
+        REQUIRE(m);
+        CHECK(m->hasProp("atom.prop.AtomLabel"));
+        CHECK(m->getAtomWithIdx(0)->hasProp("AtomLabel")); 
+    }
 }

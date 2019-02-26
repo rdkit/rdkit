@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2009-2017 Greg Landrum
+//  Copyright (C) 2009-2019 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -18,6 +18,7 @@
 
 #include "MolSupplier.h"
 #include "FileParsers.h"
+#include "FileParserUtils.h"
 
 #include <fstream>
 #include <iostream>
@@ -52,6 +53,7 @@ void ForwardSDMolSupplier::init() {
   df_owner = false;
   df_end = false;
   d_line = 0;
+  df_processPropertyLists = false;
 }
 
 void ForwardSDMolSupplier::reset() {
@@ -129,6 +131,9 @@ void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
             stmp = strip(tempStr);
           }
           mol->setProp(dlabel, prop);
+          if(df_processPropertyLists){
+            FileParserUtils::processMolPropertyLists(*mol);
+          }
         }
       } else {
         if (df_strictParsing) {
