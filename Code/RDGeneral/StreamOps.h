@@ -416,12 +416,12 @@ inline bool streamWriteProp(std::ostream &ss, const Dict::Pair &pair,
           //  customPropName (must be unique)
           //  custom serialization
           streamWrite(ss, DTags::CustomTag);
-          streamWrite(ss, handler->getPropName());
+          streamWrite(ss, std::string(handler->getPropName()));
           handler->write(ss, pair.val);
+          return true;
         }
       }
       
-      std::cerr << "Failed to write " << pair.key << std::endl;
       return false;
   }
   return true;
@@ -537,15 +537,13 @@ inline bool streamReadProp(std::istream &ss, Dict::Pair &pair,
         std::string propType;
         int version=0;
         streamRead(ss, propType, version);
-
         for(auto &handler: handlers) {
-          if(handler->getPropName() == propType) {
+          if(propType == handler->getPropName()) {
             handler->read(ss, pair.val);
             dictHasNonPOD = true;
             return true;
           }
         }
-        std::cerr << "Failed to read (unhandled custom type) " << pair.key << std::endl;
         return false;
       }
 
