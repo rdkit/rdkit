@@ -357,8 +357,10 @@ inline bool isSerializable(const Dict::Pair &pair, const CustomPropHandlerVec &h
 
 inline bool streamWriteProp(std::ostream &ss, const Dict::Pair &pair,
                             const CustomPropHandlerVec &handlers = {}) {
-  if (!isSerializable(pair)) return false;
-
+  if (!isSerializable(pair, handlers)) {
+    return false;
+  }
+  
   streamWrite(ss, pair.key);
   switch (pair.val.getTag()) {
     case RDTypeTag::StringTag:
@@ -436,8 +438,10 @@ inline bool streamWriteProps(std::ostream &ss, const RDProps &props,
   for(Dict::DataType::const_iterator it = dict.getData().begin();
       it != dict.getData().end();
       ++it) {
-    if(isSerializable(*it) && propnames.find(it->key) != propnames.end()) {
-      count ++;
+    if(propnames.find(it->key) != propnames.end()) {
+      if (isSerializable(*it, handlers)) {
+        count ++;
+      }
     }
   }
 
@@ -448,7 +452,7 @@ inline bool streamWriteProps(std::ostream &ss, const RDProps &props,
       it != dict.getData().end();
       ++it) {
     if (propnames.find(it->key) != propnames.end()) {
-      if (isSerializable(*it)) {
+      if (isSerializable(*it, handlers)) {
         // note - not all properties are serializable, this may be
         //  a null op
         if (streamWriteProp(ss, *it, handlers)) {
