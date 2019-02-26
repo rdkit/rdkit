@@ -9,6 +9,7 @@
 //
 #include <RDGeneral/test.h>
 #include <RDGeneral/utils.h>
+#include <DataStructs/ExplicitBitVect.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/MolPickler.h>
@@ -1362,6 +1363,34 @@ void testEnhancedStereoChemistry() {
   }
 }
 
+void testCustomPickler() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG(rdInfoLog) << "Testing custom pickler (bitvector)"
+                       << std::endl;  
+  const bool bitsSet = false;
+  ExplicitBitVect bv(1024, bitsSet);
+  bv.setBit(100);
+  RWMol m;
+  m.addAtom(new Atom(6), false, true);
+
+  m.getAtomWithIdx(0)->setProp<ExplicitBitVect>("bv", bv);
+
+  TEST_ASSERT(
+      m.getAtomWithIdx(0)->getProp<ExplicitBitVect>("bv").getBit(100) == true);
+  TEST_ASSERT(
+      m.getAtomWithIdx(0)->getProp<ExplicitBitVect>("bv").getBit(101) == false);
+  
+  std::string pkl;
+  MolPickler::pickleMol(m, pkl, PicklerOps::AllProps);
+  std::unique_ptr<RWMol> roundTripped(new RWMol(pkl));
+  
+  TEST_ASSERT(roundTripped->getAtomWithIdx(0)->hasProp("bv"));
+  TEST_ASSERT(
+      roundTripped->getAtomWithIdx(0)->getProp<ExplicitBitVect>("bv").getBit(100) == true);
+  TEST_ASSERT(
+      roundTripped->getAtomWithIdx(0)->getProp<ExplicitBitVect>("bv").getBit(101) == false);
+}
+
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
   bool doLong = false;
@@ -1398,4 +1427,5 @@ int main(int argc, char *argv[]) {
   testGithub1710();
   testGithub1999();
   testEnhancedStereoChemistry();
+  testCustomPickler();
 }

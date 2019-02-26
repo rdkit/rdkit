@@ -16,6 +16,7 @@
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/Bond.h>
 #include <GraphMol/QueryBond.h>
+#include <RDGeneral/StreamOps.h>
 #include <boost/utility/binary.hpp>
 // Std stuff
 #include <iostream>
@@ -138,6 +139,9 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
 
   static unsigned int getDefaultPickleProperties();
   static void setDefaultPickleProperties(unsigned int);
+
+  static const CustomPropHandlerVec &getCustomPropHandlers();
+  static void addCustomPropHandler(const CustomPropHandler &handler);
 
   //! pickles a molecule and sends the results to stream \c ss
   static void pickleMol(const ROMol *mol, std::ostream &ss);
