@@ -123,7 +123,12 @@ struct forwardsdmolsup_wrap {
         .def("atEnd", &ForwardSDMolSupplier::atEnd,
              "Returns whether or not we have hit EOF.\n")
         .def("__iter__", &FwdMolSupplIter,
-             python::return_internal_reference<1>());
+             python::return_internal_reference<1>())
+        .def("GetProcessPropertyLists", &ForwardSDMolSupplier::getProcessPropertyLists, 
+        "returns whether or not any property lists that are present will be processed when reading molecules")
+        .def("SetProcessPropertyLists", &ForwardSDMolSupplier::setProcessPropertyLists, 
+        "sets whether or not any property lists that are present will be processed when reading molecules")
+        ;
   };
 };
 }

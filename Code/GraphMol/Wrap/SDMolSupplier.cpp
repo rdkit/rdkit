@@ -106,7 +106,12 @@ struct sdmolsup_wrap {
              "returns the text for an item",
              (python::arg("self"), python::arg("index")))
         .def("atEnd", &SDMolSupplier::atEnd,
-             "Returns whether or not we have hit EOF.\n");
+             "Returns whether or not we have hit EOF.\n")
+        .def("GetProcessPropertyLists", &SDMolSupplier::getProcessPropertyLists, 
+        "returns whether or not any property lists that are present will be processed when reading molecules")
+        .def("SetProcessPropertyLists", &SDMolSupplier::setProcessPropertyLists, 
+        "sets whether or not any property lists that are present will be processed when reading molecules")
+;
   };
 };
 }
