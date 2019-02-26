@@ -26,7 +26,7 @@ TEST_CASE("Property list conversion", "[atom_list_properties]") {
       m->setProp("atom.iprop.foo1","1   6 9");
       m->setProp("atom.iprop.foo2","3 n/a   9");
       m->setProp("atom.iprop.foo3","[?]  5 1 ?");
-      FileParserUtils::applyMolListPropsToAtoms<int>(*m,"atom.iprop.");
+      FileParserUtils::applyMolListPropsToAtoms<std::int64_t>(*m,"atom.iprop.");
       CHECK(m->getAtomWithIdx(0)->hasProp("foo1"));
       CHECK(m->getAtomWithIdx(1)->hasProp("foo1"));
       CHECK(m->getAtomWithIdx(2)->hasProp("foo1"));
@@ -36,9 +36,9 @@ TEST_CASE("Property list conversion", "[atom_list_properties]") {
       CHECK(m->getAtomWithIdx(0)->hasProp("foo3"));
       CHECK(m->getAtomWithIdx(1)->hasProp("foo3"));
       CHECK(!m->getAtomWithIdx(2)->hasProp("foo3"));
-      CHECK(m->getAtomWithIdx(1)->getProp<int>("foo1")==6);
-      CHECK(m->getAtomWithIdx(2)->getProp<int>("foo2")==9);
-      CHECK(m->getAtomWithIdx(1)->getProp<int>("foo3")==1);
+      CHECK(m->getAtomWithIdx(1)->getProp<std::int64_t>("foo1")==6);
+      CHECK(m->getAtomWithIdx(2)->getProp<std::int64_t>("foo2")==9);
+      CHECK(m->getAtomWithIdx(1)->getProp<std::int64_t>("foo3")==1);
   }
   SECTION("basics: dprops") {
       auto m = "COC"_smiles;
@@ -100,6 +100,31 @@ TEST_CASE("Property list conversion", "[atom_list_properties]") {
       CHECK(m->getAtomWithIdx(2)->getProp<bool>("foo2")==true);
       CHECK(m->getAtomWithIdx(1)->getProp<bool>("foo3")==true);
   }
-  
-
+}
+TEST_CASE("processMolPropertyLists", "[atom_list_properties]") {
+  SECTION("basics") {
+      auto m = "COC"_smiles;
+      REQUIRE(m);
+      m->setProp("atom.iprop.foo1","1   6 9");
+      m->setProp("atom.dprop.foo2","3 n/a   9");
+      m->setProp("atom.prop.foo3","[?]  5 1 ?");
+      m->setProp("atom.bprop.foo4","1 0 0");
+      FileParserUtils::processMolPropertyLists(*m);
+      CHECK(m->getAtomWithIdx(0)->hasProp("foo1"));
+      CHECK(m->getAtomWithIdx(1)->hasProp("foo1"));
+      CHECK(m->getAtomWithIdx(2)->hasProp("foo1"));
+      CHECK(m->getAtomWithIdx(0)->hasProp("foo2"));
+      CHECK(!m->getAtomWithIdx(1)->hasProp("foo2"));
+      CHECK(m->getAtomWithIdx(2)->hasProp("foo2"));
+      CHECK(m->getAtomWithIdx(0)->hasProp("foo3"));
+      CHECK(m->getAtomWithIdx(1)->hasProp("foo3"));
+      CHECK(!m->getAtomWithIdx(2)->hasProp("foo3"));
+      CHECK(m->getAtomWithIdx(0)->hasProp("foo4"));
+      CHECK(m->getAtomWithIdx(1)->hasProp("foo4"));
+      CHECK(m->getAtomWithIdx(2)->hasProp("foo4"));
+      CHECK(m->getAtomWithIdx(1)->getProp<std::int64_t>("foo1")==6);
+      CHECK(m->getAtomWithIdx(2)->getProp<double>("foo2")==9);
+      CHECK(m->getAtomWithIdx(1)->getProp<std::string>("foo3")=="1");
+      CHECK(m->getAtomWithIdx(1)->getProp<bool>("foo4")==false);
+  }
 }
