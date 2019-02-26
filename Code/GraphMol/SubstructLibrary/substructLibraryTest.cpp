@@ -1,12 +1,32 @@
+//  Copyright (c) 2017-2019, Novartis Institutes for BioMedical Research Inc.
+//  All rights reserved.
 //
-//  Copyright (C) 2017 Greg Landrum and Rational Discovery LLC
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
 //
-//   @@ All Rights Reserved @@
-//  This file is part of the RDKit.
-//  The contents are covered by the terms of the BSD license
-//  which is included in the file license.txt, found at the root
-//  of the RDKit source tree.
+//     * Redistributions of source code must retain the above copyright
+//       notice, this list of conditions and the following disclaimer.
+//     * Redistributions in binary form must reproduce the above
+//       copyright notice, this list of conditions and the following
+//       disclaimer in the documentation and/or other materials provided
+//       with the distribution.
+//     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+//       nor the names of its contributors may be used to endorse or promote
+//       products derived from this software without specific prior written
+//       permission.
 //
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
 // std bits
@@ -28,7 +48,8 @@
 using namespace RDKit;
 
 namespace {
-void runTest(SubstructLibrary &ssslib, const ROMol &pattern, int nThreads) {
+boost::dynamic_bitset<> runTest(SubstructLibrary &ssslib, const ROMol &pattern,
+                                 int nThreads) {
   std::vector<unsigned int> libMatches = ssslib.getMatches(pattern, nThreads);
   boost::dynamic_bitset<> hasMatch(ssslib.size());
   BOOST_FOREACH (unsigned int idx, libMatches) { hasMatch[idx] = 1; }
@@ -40,7 +61,29 @@ void runTest(SubstructLibrary &ssslib, const ROMol &pattern, int nThreads) {
     //           << " " << matched << std::endl;
     TEST_ASSERT(hasMatch[i] == matched);
   }
+  return hasMatch;
 };
+
+void runTest(SubstructLibrary &ssslib,
+             const ROMol &pattern,
+             int nThreads,
+             const boost::dynamic_bitset<> &hasMatch
+             ) {
+  std::vector<unsigned int> libMatches = ssslib.getMatches(pattern, nThreads);
+  boost::dynamic_bitset<> hasMatch2(ssslib.size());
+  BOOST_FOREACH (unsigned int idx, libMatches) { hasMatch2[idx] = 1; }
+  TEST_ASSERT(hasMatch == hasMatch2);
+  
+  for (unsigned int i = 0; i < ssslib.size(); ++i) {
+    MatchVectType match;
+    bool matched = SubstructMatch(*ssslib.getMol(i), pattern, match);
+    // std::cerr << MolToSmiles(*ssslib.getMol(i), true) << " " << hasMatch[i]
+    //           << " " << matched << std::endl;
+    TEST_ASSERT(hasMatch[i] == matched);
+  }
+};
+
+
 }  // namespace
 
 void test1() {
@@ -63,22 +106,47 @@ void test1() {
     delete mol;
   }
 
-  {
+  std::vector<SubstructLibrary*> libs;
+  libs.push_back(&ssslib);
+
+#ifdef RDK_USE_BOOST_SERIALIZATION  
+  std::string pickle = ssslib.Serialize();
+  SubstructLibrary serialized;
+  serialized.initFromString(pickle);
+  TEST_ASSERT(serialized.size() == ssslib.size());
+  libs.push_back(&serialized);
+#endif
+
+  boost::dynamic_bitset<> hasMatch;
+  
+  int i=0;
+  for(auto lib: libs) {
     ROMol *query = SmartsToMol("[#6;$([#6]([#6])[!#6])]");
-    runTest(ssslib, *query, 1);
+    if (i == 0)
+      hasMatch = runTest(*lib, *query, 1);
+    else
+      runTest(*lib, *query, 1, hasMatch);
+    
 #ifdef RDK_TEST_MULTITHREADED
-    runTest(ssslib, *query, -1);
+    runTest(*lib, *query, -1, hasMatch);
 #endif
     delete query;
+    ++i;
   }
 
-  {
+  i = 0;
+  for(auto lib: libs) {
     ROMol *query = SmartsToMol("[$([O,S]-[!$(*=O)])]");
-    runTest(ssslib, *query, 1);
+    if (i == 0)
+      hasMatch = runTest(*lib, *query, 1);
+    else
+      runTest(*lib, *query, 1, hasMatch);
+
 #ifdef RDK_TEST_MULTITHREADED
-    runTest(ssslib, *query, -1);
+    runTest(*lib, *query, -1, hasMatch);
 #endif
     delete query;
+    ++i;
   }
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
@@ -109,11 +177,26 @@ void test2() {
     delete mol;
   }
 
-  {
+  std::vector<SubstructLibrary*> libs;
+  libs.push_back(&ssslib);
+
+#ifdef RDK_USE_BOOST_SERIALIZATION  
+  std::string pickle = ssslib.Serialize();
+  SubstructLibrary serialized;
+  serialized.initFromString(pickle);
+  TEST_ASSERT(serialized.size() == ssslib.size());
+
+  try { serialized.getFingerprints(); }
+  catch(...) { TEST_ASSERT(0); }
+  
+  libs.push_back(&serialized);
+#endif
+
+  for(auto lib: libs) {  
     ROMol *query = SmartsToMol("[#6]([#6])[!#6]");
-    runTest(ssslib, *query, 1);
+    runTest(*lib, *query, 1);
 #ifdef RDK_TEST_MULTITHREADED
-    runTest(ssslib, *query, -1);
+    runTest(*lib, *query, -1);
 #endif
     delete query;
   }
@@ -141,20 +224,34 @@ void test3() {
     delete m4;
   }
 
-  ROMol *query = SmartsToMol("C-1-C-C-O-C(-[O])(-[N])1");
-  std::vector<unsigned int> res = ssslib.getMatches(*query, true, false);
-  TEST_ASSERT(res.size() == 40);
+  std::vector<SubstructLibrary*> libs;
+  libs.push_back(&ssslib);
 
-  delete query;
-  query = SmartsToMol("C-1-C-C-O-[C@@](-[O])(-[N])1");
+#ifdef RDK_USE_BOOST_SERIALIZATION  
+  std::string pickle = ssslib.Serialize();
+  SubstructLibrary serialized;
+  serialized.initFromString(pickle);
+  TEST_ASSERT(serialized.size() == ssslib.size());
+  libs.push_back(&serialized);
+#endif
 
-  res = ssslib.getMatches(*query, true, true);
-  TEST_ASSERT(res.size() == 20);
 
-  res = ssslib.getMatches(*query, true, false);
-  TEST_ASSERT(res.size() == 40);
+  for(auto lib: libs) {  
+    ROMol *query = SmartsToMol("C-1-C-C-O-C(-[O])(-[N])1");
+    std::vector<unsigned int> res = lib->getMatches(*query, true, false);
+    TEST_ASSERT(res.size() == 40);
 
-  delete query;
+    delete query;
+    query = SmartsToMol("C-1-C-C-O-[C@@](-[O])(-[N])1");
+
+    res = lib->getMatches(*query, true, true);
+    TEST_ASSERT(res.size() == 20);
+
+    res = lib->getMatches(*query, true, false);
+    TEST_ASSERT(res.size() == 40);
+
+    delete query;
+  }
   BOOST_LOG(rdErrorLog) << "    Done (stereo options)" << std::endl;
 }
 
@@ -173,20 +270,34 @@ void test4() {
     holder->addSmiles("C1CCO[C@](O)(N)1");
   }
 
-  ROMol *query = SmartsToMol("C-1-C-C-O-C(-[O])(-[N])1");
-  std::vector<unsigned int> res = ssslib.getMatches(*query, true, false);
-  TEST_ASSERT(res.size() == 40);
+  std::vector<SubstructLibrary*> libs;
+  libs.push_back(&ssslib);
 
-  delete query;
-  query = SmartsToMol("C-1-C-C-O-[C@@](-[O])(-[N])1");
+#ifdef RDK_USE_BOOST_SERIALIZATION  
+  std::string pickle = ssslib.Serialize();
+  SubstructLibrary serialized;
+  serialized.initFromString(pickle);
+  TEST_ASSERT(serialized.size() == ssslib.size());
+  libs.push_back(&serialized);
+#endif
 
-  res = ssslib.getMatches(*query, true, true);
-  TEST_ASSERT(res.size() == 20);
+  for(auto lib: libs) {
+    ROMol *query = SmartsToMol("C-1-C-C-O-C(-[O])(-[N])1");
 
-  res = ssslib.getMatches(*query, true, false);
-  TEST_ASSERT(res.size() == 40);
-
-  delete query;
+    std::vector<unsigned int> res = lib->getMatches(*query, true, false);
+    TEST_ASSERT(res.size() == 40);
+    
+    delete query;
+    query = SmartsToMol("C-1-C-C-O-[C@@](-[O])(-[N])1");
+    
+    res = lib->getMatches(*query, true, true);
+    TEST_ASSERT(res.size() == 20);
+    
+    res = lib->getMatches(*query, true, false);
+    TEST_ASSERT(res.size() == 40);
+    delete query;
+  }
+  
   BOOST_LOG(rdErrorLog) << "    Done (trusted smiles)" << std::endl;
 }
 

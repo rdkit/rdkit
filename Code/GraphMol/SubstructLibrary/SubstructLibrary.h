@@ -1,4 +1,4 @@
-//  Copyright (c) 2017, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2017-2019, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,6 +40,15 @@
 #include <DataStructs/ExplicitBitVect.h>
 #include <DataStructs/BitOps.h>
 
+#ifdef RDK_USE_BOOST_SERIALIZATION
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/shared_ptr.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+#endif
+
 namespace RDKit {
 
 //! Base class API for holding molecules to substructure search.
@@ -61,7 +70,22 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT MolHolderBase {
 
   //! Get the current library size
   virtual unsigned int size() const = 0;
-};
+ private:
+#ifdef RDK_USE_BOOST_SERIALIZATION
+  friend class boost::serialization::access;
+  template <class Archive>
+  void serialize(Archive &ar, const unsigned int version) {
+    RDUNUSED_PARAM(version);
+    RDUNUSED_PARAM(ar);
+  }
+#endif
+  };
+
+#ifdef RDK_USE_BOOST_SERIALIZATION
+BOOST_SERIALIZATION_ASSUME_ABSTRACT(MolHolderBase)
+#endif
+
+
 
 //! Concrete class that holds molecules in memory
 /*!
@@ -87,6 +111,37 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT MolHolder : public MolHolderBase {
   virtual unsigned int size() const {
     return rdcast<unsigned int>(mols.size());
   }
+private:
+#ifdef RDK_USE_BOOST_SERIALIZATION
+  friend class boost::serialization::access;
+  template <class Archive>
+  void save(Archive &ar, const unsigned int version) const {
+    RDUNUSED_PARAM(version);
+    ar &boost::serialization::base_object<MolHolderBase>(*this);
+
+    std::vector<std::string> pickles;
+    for(auto &mol: mols) {
+      std::string pkl;
+      MolPickler::pickleMol(*mol.get(), pkl);
+      pickles.push_back(pkl);
+    }
+    ar &pickles;
+  }
+  
+  template <class Archive>
+  void load(Archive &ar, const unsigned int version) {
+    RDUNUSED_PARAM(version);
+    mols.clear();
+
+    ar &boost::serialization::base_object<MolHolderBase>(*this);
+    std::vector<std::string> pickles;
+    ar &pickles;
+    for(auto &pkl: pickles) {
+      mols.push_back(boost::make_shared<ROMol>(pkl));
+    }
+  }
+  BOOST_SERIALIZATION_SPLIT_MEMBER();
+#endif  
 };
 
 //! Concrete class that holds binary cached molecules in memory
@@ -126,6 +181,18 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedMolHolder : public MolHolderBase {
   virtual unsigned int size() const {
     return rdcast<unsigned int>(mols.size());
   }
+private:  
+#ifdef RDK_USE_BOOST_SERIALIZATION
+  friend class boost::serialization::access;
+  template <class Archive>
+  void serialize(Archive &ar, const unsigned int version) {
+    RDUNUSED_PARAM(version);
+    ar &boost::serialization::base_object<MolHolderBase>(*this);
+
+    ar &mols;
+  }
+#endif
+  
 };
 
 //! Concrete class that holds smiles strings in memory
@@ -166,6 +233,17 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedSmilesMolHolder : public MolHolderBase
   virtual unsigned int size() const {
     return rdcast<unsigned int>(mols.size());
   }
+private:  
+#ifdef RDK_USE_BOOST_SERIALIZATION
+  friend class boost::serialization::access;
+  template <class Archive>
+  void serialize(Archive &ar, const unsigned int version) {
+    RDUNUSED_PARAM(version);
+    ar &boost::serialization::base_object<MolHolderBase>(*this);
+
+    ar &mols;
+  }
+#endif  
 };
 
 //! Concrete class that holds trusted smiles strings in memory
@@ -212,6 +290,17 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedTrustedSmilesMolHolder : public MolHol
   virtual unsigned int size() const {
     return rdcast<unsigned int>(mols.size());
   }
+private:  
+#ifdef RDK_USE_BOOST_SERIALIZATION
+  friend class boost::serialization::access;
+  template <class Archive>
+  void serialize(Archive &ar, const unsigned int version) {
+    RDUNUSED_PARAM(version);
+    ar &boost::serialization::base_object<MolHolderBase>(*this);
+
+    ar &mols;
+  }
+#endif  
 };
 
 //! Base FPI for the fingerprinter used to rule out impossible matches
@@ -252,7 +341,39 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT FPHolderBase {
   //! make the query vector
   //!  Caller owns the vector!
   virtual ExplicitBitVect *makeFingerprint(const ROMol &m) const = 0;
+private:
+#ifdef RDK_USE_BOOST_SERIALIZATION
+  friend class boost::serialization::access;
+  template <class Archive>
+  void save(Archive &ar, const unsigned int version) const {
+    RDUNUSED_PARAM(version);
+    std::vector<std::string> pickles;
+    for(auto &fp: fps) {
+      pickles.push_back(fp->toString());
+    }
+    ar &pickles;
+  }
+  
+  template <class Archive>
+  void load(Archive &ar, const unsigned int version) {
+    RDUNUSED_PARAM(version);
+    std::vector<std::string> pickles;
+    ar &pickles;
+    for (size_t i = 0; i < fps.size(); ++i) delete fps[i];
+    fps.clear();
+    
+    for(auto &pkl: pickles) {
+      fps.push_back( new ExplicitBitVect(pkl) );
+    }
+  }
+  BOOST_SERIALIZATION_SPLIT_MEMBER();
+#endif  
+  
 };
+
+#ifdef RDK_USE_BOOST_SERIALIZATION
+BOOST_SERIALIZATION_ASSUME_ABSTRACT(FPHolderBase)
+#endif
 
 //! Uses the pattern fingerprinter to rule out matches
 class RDKIT_SUBSTRUCTLIBRARY_EXPORT PatternHolder : public FPHolderBase {
@@ -261,7 +382,28 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT PatternHolder : public FPHolderBase {
   virtual ExplicitBitVect *makeFingerprint(const ROMol &m) const {
     return PatternFingerprintMol(m, 2048);
   }
+private:
+#ifdef RDK_USE_BOOST_SERIALIZATION
+  friend class boost::serialization::access;
+  template <class Archive>
+  void serialize(Archive &ar, const unsigned int version) {
+    RDUNUSED_PARAM(version);
+    ar &boost::serialization::base_object<FPHolderBase>(*this);
+  }
+#endif
 };
+
+#ifdef RDK_USE_BOOST_SERIALIZATION
+// Register all known filter matcher types for serialization
+template <class Archive>
+void registerSubstructLibraryTypes(Archive &ar) {
+  ar.register_type(static_cast<MolHolder *>(NULL));
+  ar.register_type(static_cast<CachedMolHolder *>(NULL));
+  ar.register_type(static_cast<CachedSmilesMolHolder *>(NULL));
+  ar.register_type(static_cast<CachedTrustedSmilesMolHolder *>(NULL));
+  ar.register_type(static_cast<PatternHolder *>(NULL));
+}
+#endif
 
 //! Substructure Search a library of molecules
 /*!  This class allows for multithreaded substructure searches os
@@ -350,7 +492,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
       : molholder(new MolHolder),
         fpholder(),
         mols(molholder.get()),
-        fps(NULL) {}
+        fps(nullptr) {}
 
   SubstructLibrary(boost::shared_ptr<MolHolderBase> molecules)
       : molholder(molecules), fpholder(), mols(molholder.get()), fps(0) {}
@@ -362,6 +504,12 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
         mols(molholder.get()),
         fps(fpholder.get()) {}
 
+  SubstructLibrary(const std::string &pickle)
+      : molholder(new MolHolder), fpholder(), mols(molholder.get()),
+        fps(nullptr) {
+          initFromString(pickle);
+  }
+  
   //! Get the underlying molecule holder implementation
   MolHolderBase &getMolHolder() {
     PRECONDITION(mols, "Molecule holder NULL in SubstructLibrary");
@@ -532,7 +680,53 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
     PRECONDITION(mols, "molholder is null in SubstructLibrary");
     return rdcast<unsigned int>(molholder->size());
   }
+
+  //! serializes (pickles) to a stream
+  void toStream(std::ostream &ss) const;
+  //! returns a string with a serialized (pickled) representation
+  std::string Serialize() const;
+  //! initializes from a stream pickle
+  void initFromStream(std::istream &ss);
+  //! initializes from a string pickle
+  void initFromString(const std::string &text);
+private:
+#ifdef RDK_USE_BOOST_SERIALIZATION
+  friend class boost::serialization::access;
+  template <class Archive>
+  void save(Archive &ar, const unsigned int version) const {
+    RDUNUSED_PARAM(version);
+    registerSubstructLibraryTypes(ar);
+    ar & molholder;
+    ar & fpholder; // might be null?
+  }
+  
+  template <class Archive>
+  void load(Archive &ar, const unsigned int version) {
+    RDUNUSED_PARAM(version);
+    registerSubstructLibraryTypes(ar);
+    ar & molholder;
+    ar & fpholder;
+    mols = nullptr;
+    fps = nullptr;
+    if (molholder) {
+      mols = molholder.get();
+    }
+    if (fpholder) {
+      fps = fpholder.get();
+    }
+  }
+  BOOST_SERIALIZATION_SPLIT_MEMBER();
+  
+#endif  
 };
 }
+
+#ifdef RDK_USE_BOOST_SERIALIZATION
+BOOST_CLASS_VERSION(RDKit::MolHolder, 1);
+BOOST_CLASS_VERSION(RDKit::CachedMolHolder, 1);
+BOOST_CLASS_VERSION(RDKit::CachedSmilesMolHolder, 1);
+BOOST_CLASS_VERSION(RDKit::CachedTrustedSmilesMolHolder, 1);
+BOOST_CLASS_VERSION(RDKit::PatternHolder, 1);
+#endif
 
 #endif
