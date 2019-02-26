@@ -254,6 +254,26 @@ TEST_CASE("github #2257: writing cxsmiles", "[smiles,cxsmiles]") {
     auto smi = MolToCXSmiles(*mol);
     CHECK(smi == "CN |$_AV:val1;val2$,atomProp:0.p2.v2:1.p1.v1|");
   }
+  SECTION("enhanced stereo 1") {
+    auto mol = "C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:4,5|"_smiles;
+    REQUIRE(mol);
+    auto smi = MolToCXSmiles(*mol);
+    CHECK(smi == "C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:4,5|");
+  }
+
+  SECTION("enhanced stereo 2") {
+    auto mol = "C[C@H](O)[C@H](CC)F |o1:1,3|"_smiles;
+    REQUIRE(mol);
+    auto smi = MolToCXSmiles(*mol);
+    CHECK(smi == "CC[C@H](F)[C@H](C)O |o1:2,4|");
+  }
+
+  SECTION("enhanced stereo 3") {
+    auto mol = "C[C@@H]1N[C@H](C)[C@@H]([C@H](C)[C@@H]1C)C1[C@@H](C)O[C@@H](C)[C@@H](C)[C@H]1C |a:5,o1:1,8,o2:14,16,&1:11,18,&2:3,6,r|"_smiles;
+    REQUIRE(mol);
+    auto smi = MolToCXSmiles(*mol);
+    CHECK(smi == "C[C@@H]1N[C@H](C)[C@H](C2[C@@H](C)O[C@@H](C)[C@@H](C)[C@H]2C)[C@H](C)[C@@H]1C |a:5,o1:1,18,o2:10,12,&1:3,16,&2:7,14|");
+  }
 }
 
 TEST_CASE("Github #2148", "[bug, Smiles, Smarts]") {

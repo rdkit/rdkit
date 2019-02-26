@@ -414,6 +414,70 @@ std::string quote_string(const std::string &txt) {
   // FIX
   return txt;
 }
+
+std::string get_enhanced_stereo_block(const ROMol &mol,
+                            const std::vector<unsigned int> &atomOrder){
+  std::string res = "";
+  // we need a map from original atom idx to output idx:
+  std::vector<unsigned int> revOrder(mol.getNumAtoms());
+  for(unsigned i=0;i<mol.getNumAtoms();++i){
+    revOrder[atomOrder[i]] = i; 
+  }
+  std::vector<unsigned int> absAts;
+  std::vector<std::vector<unsigned int>> orGps;
+  std::vector<std::vector<unsigned int>> andGps;
+
+  // we want this to be canonical (future proofing)
+  for(const auto &sg : mol.getStereoGroups()) {
+    std::vector<unsigned int> aids;
+    aids.reserve(sg.getAtoms().size());
+    for(const auto at : sg.getAtoms()){
+      aids.push_back(revOrder[at->getIdx()]);
+    }  
+    std::sort(aids.begin(),aids.end());
+    switch(sg.getGroupType()){
+    case StereoGroupType::STEREO_ABSOLUTE:
+      absAts.push_back(aids[0]);
+      break;
+    case StereoGroupType::STEREO_OR:
+      orGps.push_back(aids);
+      break;
+    case StereoGroupType::STEREO_AND:
+      andGps.push_back(aids);
+      break;  
+    }
+  }
+  if(!absAts.empty()){
+    res += "a:";
+    std::sort(absAts.begin(),absAts.end());
+    for(auto aid : absAts){
+      res += boost::str(boost::format("%d,")%aid);
+    }
+  }
+  if(!orGps.empty()){
+    std::sort(orGps.begin(),orGps.end());
+    unsigned int gIdx=1;
+    for(const auto &gp : orGps){
+      res+= boost::str(boost::format("o%d:")%(gIdx++));
+      for(auto aid : gp){
+        res += boost::str(boost::format("%d,")%aid);        
+      }
+    }
+  }
+  if(!andGps.empty()){
+    std::sort(andGps.begin(),andGps.end());
+    unsigned int gIdx=1;
+    for(const auto &gp : andGps){
+      res+= boost::str(boost::format("&%d:")%(gIdx++));
+      for(auto aid : gp){
+        res += boost::str(boost::format("%d,")%aid);        
+      }
+    }
+  }
+  if(!res.empty() && res.back()==',') res.pop_back();
+  return res;
+}
+
 std::string get_value_block(const ROMol &mol,
                             const std::vector<unsigned int> &atomOrder,
                             const std::string &prop) {
@@ -545,6 +609,9 @@ std::string getCXExtensions(const ROMol &mol) {
     if (res.size() > 1) res += ",";
     res += atomblock;
   }
+  
+  res += get_enhanced_stereo_block(mol,atomOrder);     
+
   if (res.size() > 1) {
     res += "|";
   } else {
