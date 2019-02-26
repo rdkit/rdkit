@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2010-2019 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef _RD_FILEPARSERUTILS_H
-#define _RD_FILEPARSERUTILS_H
+#ifndef RD_FILEPARSERUTILS_H
+#define RD_FILEPARSERUTILS_H
 
 #include <string>
 #include <iostream>
@@ -51,7 +51,52 @@ RDKIT_FILEPARSERS_EXPORT bool ParseV2000CTAB(std::istream *inStream, unsigned in
                     bool strictParsing = true);
 
 RDKIT_FILEPARSERS_EXPORT Atom *replaceAtomWithQueryAtom(RWMol *mol, Atom *atom);
+
+template <typename T>
+void applyMolListPropsToAtoms(ROMol &mol, const std::string &prefix,const std::string &missingValueMarker="n/a"){
+  for(auto pn : mol.getPropList()) {
+    if(pn.find(prefix) == 0 && pn.size()>prefix.size()){
+      std::string strVect = mol.getProp<std::string>(pn);
+      std::vector<std::string> tokens;
+      boost::split(tokens, strVect, boost::is_any_of(" \t\n"),
+                    boost::token_compress_on);
+      if(tokens.size()<mol.getNumAtoms()) {
+        BOOST_LOG(rdWarningLog)<<"Property list "<<pn<<" too short, only "<<tokens.size()<<" elements found. Ignoring it."<<std::endl;
+        continue;
+      }
+      std::string mv = missingValueMarker;
+      size_t first_token = 0;
+      if(tokens.size() == mol.getNumAtoms()+1 && tokens[0].front() == '[' && tokens[0].back()==']'){
+        mv = tokens[0].substr(1);
+        mv.pop_back();
+        first_token = 1;
+      }
+      std::string atompn = pn.substr(prefix.size());
+      for(size_t i=first_token; i<tokens.size(); ++i){
+        if(tokens[i] != mv){
+          T apv;
+          try{
+            apv = boost::lexical_cast<T>(tokens[i]);
+          } catch (const boost::bad_lexical_cast &){
+            BOOST_LOG(rdWarningLog)<<"Value "<<tokens[i]<<" for property "<<pn<<" of atom "<<i<<" can not be parsed. Ignoring it."<<std::endl;
+          }
+		      unsigned int atomid = i - first_token;
+          mol.getAtomWithIdx(atomid)->setProp(atompn,apv);
+        }
+      }
+    }
+  }
 }
+inline void processMolPropertyLists(ROMol &mol,const std::string &missingValueMarker="n/a"){
+  applyMolListPropsToAtoms<std::string>(mol,"atom.prop.",missingValueMarker);
+  applyMolListPropsToAtoms<std::int64_t>(mol,"atom.iprop.",missingValueMarker);
+  applyMolListPropsToAtoms<double>(mol,"atom.dprop.",missingValueMarker);
+  applyMolListPropsToAtoms<bool>(mol,"atom.bprop.",missingValueMarker);
+  
 }
+
+
+} // namespace FileParserUtils
+} // namespace RDKit
 
 #endif
