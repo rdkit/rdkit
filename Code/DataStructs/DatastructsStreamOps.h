@@ -37,7 +37,7 @@
 namespace RDKit {
 class DataStructsExplicitBitVecPropHandler : public CustomPropHandler {
 public:
-  const char *getPropName() const { return "DataStructsExplicitBitVecPropHandler"; }
+  const char *getPropName() const { return "ExplicitBVProp"; }
   bool canSerialize(const RDValue &value) const {
     try {
       // this is expensive, but hopefully it won't be called too often....
