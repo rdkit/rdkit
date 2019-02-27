@@ -1,3 +1,7 @@
+
+
+
+
 if(RDK_USE_BOOST_SERIALIZATION AND Boost_SERIALIZATION_LIBRARY)
     set(SUBSTRUCTLIBRARY_USE_BOOST_SERIALIZATION "yes")
     set(RDKit_SERIALIZATION_LIBS ${Boost_SERIALIZATION_LIBRARY})
@@ -6,7 +10,8 @@ else()
     set(RDKit_SERIALIZATION_LIBS )
 endif()
 
-configure_file(SubstructLibraryDefs.h.in SubstructLibraryDefs.h @ONLY)
+configure_file(SubstructLibraryDefs.h.in "${CMAKE_CURRENT_SOURCE_DIR}/SubstructLibraryDefs.h" @ONLY)
+
 
 if(RDK_BUILD_THREADSAFE_SSS)
 
