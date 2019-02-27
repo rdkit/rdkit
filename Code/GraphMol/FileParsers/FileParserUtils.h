@@ -16,6 +16,7 @@
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/format.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
 namespace RDKit {
@@ -105,6 +106,48 @@ inline void processMolPropertyLists(
   applyMolListPropsToAtoms<double>(mol, "atom.dprop.", missingValueMarker);
   applyMolListPropsToAtoms<bool>(mol, "atom.bprop.", missingValueMarker);
 }
+
+template <typename T>
+std::string getAtomPropertyList(ROMol &mol, const std::string &atomPropName, 
+      std::string missingValueMarker = ""){
+    std::string propVal;
+    if(!missingValueMarker.empty()){
+      propVal += boost::str(boost::format("[%s] ")%missingValueMarker);
+    } else {
+      missingValueMarker = "n/a";
+    }
+    for(const auto & atom : mol.atoms()) {
+      std::string apVal=missingValueMarker;
+      if(atom->hasProp(atomPropName)) {
+        T tVal = atom->getProp<T>(atomPropName);
+        apVal = boost::lexical_cast<std::string>(tVal);
+        // seems like this should work, but it doesn't: atom->getProp(atomPropName,apVal);        
+      }
+      propVal += apVal + " ";
+    }
+    // remove the trailing space:
+    if(!propVal.empty()) propVal.pop_back();
+    return propVal;
+}
+inline void createAtomIntPropertyList(ROMol &mol, const std::string &atomPropName, const std::string &missingValueMarker=""){
+  std::string molPropName = "atom.iprop."+atomPropName;
+  mol.setProp(molPropName,getAtomPropertyList<boost::int64_t>(mol,atomPropName,missingValueMarker));
+}
+inline void createAtomDoublePropertyList(ROMol &mol, const std::string &atomPropName, const std::string &missingValueMarker=""){
+  std::string molPropName = "atom.dprop."+atomPropName;
+  mol.setProp(molPropName,getAtomPropertyList<double>(mol,atomPropName,missingValueMarker));
+}
+inline void createAtomBoolPropertyList(ROMol &mol, const std::string &atomPropName, const std::string &missingValueMarker=""){
+  std::string molPropName = "atom.bprop."+atomPropName;
+  mol.setProp(molPropName,getAtomPropertyList<bool>(mol,atomPropName,missingValueMarker));
+}
+inline void createAtomStringPropertyList(ROMol &mol, const std::string &atomPropName, const std::string &missingValueMarker=""){
+  std::string molPropName = "atom.prop."+atomPropName;
+  mol.setProp(molPropName,getAtomPropertyList<std::string>(mol,atomPropName,missingValueMarker));
+}
+
+
+
 
 }  // namespace FileParserUtils
 }  // namespace RDKit

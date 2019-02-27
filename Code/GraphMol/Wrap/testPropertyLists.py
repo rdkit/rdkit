@@ -68,6 +68,44 @@ $$$$"""
         self.assertTrue(m.HasProp("atom.prop.AtomLabel"))
         self.assertTrue(m.GetAtomWithIdx(0).HasProp("AtomLabel"))
 
+    def testCreateLists(self):
+        suppl = Chem.SDMolSupplier()
+        suppl.SetData(self.sdf)
+        suppl.SetProcessPropertyLists(True)
+        m = suppl[0]
+        self.assertTrue(m.GetAtomWithIdx(0).HasProp("NumHeavyNeighbors"))
+        m.ClearProp("atom.iprop.NumHeavyNeighbors")
+        self.assertFalse(m.HasProp("atom.iprop.NumHeavyNeighbors"))
+        Chem.CreateAtomIntPropertyList(m,"NumHeavyNeighbors")
+        self.assertTrue(m.HasProp("atom.iprop.NumHeavyNeighbors"))
+
+        self.assertTrue(m.GetAtomWithIdx(0).HasProp("PartialCharge"))
+        m.ClearProp("atom.dprop.PartialCharge")
+        self.assertFalse(m.HasProp("atom.dprop.PartialCharge"))
+        Chem.CreateAtomDoublePropertyList(m,"PartialCharge")
+        self.assertTrue(m.HasProp("atom.dprop.PartialCharge"))
+
+        self.assertTrue(m.GetAtomWithIdx(0).HasProp("IsCarbon"))
+        m.ClearProp("atom.bprop.IsCarbon")
+        self.assertFalse(m.HasProp("atom.bprop.IsCarbon"))
+        Chem.CreateAtomBoolPropertyList(m,"IsCarbon")
+        self.assertTrue(m.HasProp("atom.bprop.IsCarbon"))
+
+        self.assertTrue(m.GetAtomWithIdx(0).HasProp("PartiallyMissing"))
+        m.ClearProp("atom.prop.PartiallyMissing")
+        self.assertFalse(m.HasProp("atom.prop.PartiallyMissing"))
+        Chem.CreateAtomStringPropertyList(m,"PartiallyMissing")
+        self.assertTrue(m.HasProp("atom.prop.PartiallyMissing"))
+        self.assertEqual(m.GetProp("atom.prop.PartiallyMissing"),"one n/a three")
+        Chem.CreateAtomStringPropertyList(m,"PartiallyMissing",missingValueMarker="?")
+        self.assertTrue(m.HasProp("atom.prop.PartiallyMissing"))
+        self.assertEqual(m.GetProp("atom.prop.PartiallyMissing"),"[?] one ? three")
+        
+
+
+
+ 
+
 
 if __name__ == '__main__':
   unittest.main()

@@ -180,3 +180,37 @@ $$$$
         CHECK(m->getAtomWithIdx(0)->hasProp("AtomLabel")); 
     }
 }
+
+TEST_CASE("createAtomPropertyLists", "[atom_list_properties]") {
+  SECTION("basics") {
+      auto m = "COC"_smiles;
+      REQUIRE(m);
+      m->getAtomWithIdx(0)->setProp<std::int64_t>("foo1",1);
+      m->getAtomWithIdx(2)->setProp<std::int64_t>("foo1",9);
+      FileParserUtils::createAtomIntPropertyList(*m,"foo1");
+      REQUIRE(m->hasProp("atom.iprop.foo1"));
+      CHECK(m->getProp<std::string>("atom.iprop.foo1")=="1 n/a 9");
+      
+      m->getAtomWithIdx(0)->setProp<double>("foo2",1);
+      m->getAtomWithIdx(1)->setProp<double>("foo2",4);
+      m->getAtomWithIdx(2)->setProp<double>("foo2",9);
+      FileParserUtils::createAtomDoublePropertyList(*m,"foo2");
+      REQUIRE(m->hasProp("atom.dprop.foo2"));
+      CHECK(m->getProp<std::string>("atom.dprop.foo2")=="1 4 9");
+      
+      m->getAtomWithIdx(0)->setProp<std::string>("foo3","1");
+      m->getAtomWithIdx(1)->setProp<std::string>("foo3","4");
+      FileParserUtils::createAtomStringPropertyList(*m,"foo3","?");
+      REQUIRE(m->hasProp("atom.prop.foo3"));
+      CHECK(m->getProp<std::string>("atom.prop.foo3")=="[?] 1 4 ?");
+
+      m->getAtomWithIdx(0)->setProp<bool>("foo4",1);
+      m->getAtomWithIdx(1)->setProp<bool>("foo4",0);
+      m->getAtomWithIdx(2)->setProp<bool>("foo4",0);
+      FileParserUtils::createAtomBoolPropertyList(*m,"foo4");
+      REQUIRE(m->hasProp("atom.bprop.foo4"));
+      CHECK(m->getProp<std::string>("atom.bprop.foo4")=="1 0 0");
+      
+
+  }
+}
