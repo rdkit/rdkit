@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2011  Greg Landrum
+//  Copyright (C) 2011-2019  Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -74,7 +73,7 @@ class LocalForwardSDMolSupplier : public RDKit::ForwardSDMolSupplier {
 LocalForwardSDMolSupplier *FwdMolSupplIter(LocalForwardSDMolSupplier *self) {
   return self;
 }
-}
+}  // namespace
 
 namespace RDKit {
 
@@ -124,13 +123,16 @@ struct forwardsdmolsup_wrap {
              "Returns whether or not we have hit EOF.\n")
         .def("__iter__", &FwdMolSupplIter,
              python::return_internal_reference<1>())
-        .def("GetProcessPropertyLists", &ForwardSDMolSupplier::getProcessPropertyLists, 
-        "returns whether or not any property lists that are present will be processed when reading molecules")
-        .def("SetProcessPropertyLists", &ForwardSDMolSupplier::setProcessPropertyLists, 
-        "sets whether or not any property lists that are present will be processed when reading molecules")
-        ;
+        .def("GetProcessPropertyLists",
+             &ForwardSDMolSupplier::getProcessPropertyLists,
+             "returns whether or not any property lists that are present will "
+             "be processed when reading molecules")
+        .def("SetProcessPropertyLists",
+             &ForwardSDMolSupplier::setProcessPropertyLists,
+             "sets whether or not any property lists that are present will be "
+             "processed when reading molecules");
   };
 };
-}
+}  // namespace RDKit
 
 void wrap_forwardsdsupplier() { RDKit::forwardsdmolsup_wrap::wrap(); }

@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2003-2010  Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2019  Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -83,11 +82,12 @@ struct sdmolsup_wrap {
              python::arg("strictParsing") = true)))
         .def("__iter__", (SDMolSupplier * (*)(SDMolSupplier *)) & MolSupplIter,
              python::return_internal_reference<1>())
-        .def(NEXT_METHOD, (ROMol * (*)(SDMolSupplier *)) &
-                              MolSupplNextAcceptNullLastMolecule,
-             "Returns the next molecule in the file.  Raises _StopIteration_ "
-             "on EOF.\n",
-             python::return_value_policy<python::manage_new_object>())
+        .def(
+            NEXT_METHOD,
+            (ROMol * (*)(SDMolSupplier *)) & MolSupplNextAcceptNullLastMolecule,
+            "Returns the next molecule in the file.  Raises _StopIteration_ "
+            "on EOF.\n",
+            python::return_value_policy<python::manage_new_object>())
         .def("__getitem__",
              (ROMol * (*)(SDMolSupplier *, int)) & MolSupplGetItem,
              python::return_value_policy<python::manage_new_object>())
@@ -107,13 +107,14 @@ struct sdmolsup_wrap {
              (python::arg("self"), python::arg("index")))
         .def("atEnd", &SDMolSupplier::atEnd,
              "Returns whether or not we have hit EOF.\n")
-        .def("GetProcessPropertyLists", &SDMolSupplier::getProcessPropertyLists, 
-        "returns whether or not any property lists that are present will be processed when reading molecules")
-        .def("SetProcessPropertyLists", &SDMolSupplier::setProcessPropertyLists, 
-        "sets whether or not any property lists that are present will be processed when reading molecules")
-;
+        .def("GetProcessPropertyLists", &SDMolSupplier::getProcessPropertyLists,
+             "returns whether or not any property lists that are present will "
+             "be processed when reading molecules")
+        .def("SetProcessPropertyLists", &SDMolSupplier::setProcessPropertyLists,
+             "sets whether or not any property lists that are present will be "
+             "processed when reading molecules");
   };
 };
-}
+}  // namespace RDKit
 
 void wrap_sdsupplier() { RDKit::sdmolsup_wrap::wrap(); }

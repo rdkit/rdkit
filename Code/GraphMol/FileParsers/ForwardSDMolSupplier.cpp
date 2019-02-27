@@ -131,7 +131,7 @@ void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
             stmp = strip(tempStr);
           }
           mol->setProp(dlabel, prop);
-          if(df_processPropertyLists){
+          if (df_processPropertyLists) {
             FileParserUtils::processMolPropertyLists(*mol);
           }
         }
@@ -147,10 +147,10 @@ void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
           throw FileParseException("Problems encountered parsing data fields");
         } else {
           if (!warningIssued) {
-            if (hasProp){
-              BOOST_LOG(rdWarningLog) << "Property <" << dlabel
-                                      << "> will be truncated after "
-                                      << "the first blank line" << std::endl;
+            if (hasProp) {
+              BOOST_LOG(rdWarningLog)
+                  << "Property <" << dlabel << "> will be truncated after "
+                  << "the first blank line" << std::endl;
             } else {
               BOOST_LOG(rdWarningLog)
                   << "Spurious data before the first property will be "
@@ -289,4 +289,4 @@ bool ForwardSDMolSupplier::atEnd() {
   PRECONDITION(dp_inStream, "no stream");
   return df_end;
 }
-}
+}  // namespace RDKit
