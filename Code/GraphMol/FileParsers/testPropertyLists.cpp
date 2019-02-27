@@ -210,7 +210,24 @@ TEST_CASE("createAtomPropertyLists", "[atom_list_properties]") {
       FileParserUtils::createAtomBoolPropertyList(*m,"foo4");
       REQUIRE(m->hasProp("atom.bprop.foo4"));
       CHECK(m->getProp<std::string>("atom.bprop.foo4")=="1 0 0");
-      
-
   }
+  SECTION("long lines") {
+      auto m = "COC"_smiles;
+      REQUIRE(m);
+      m->getAtomWithIdx(0)->setProp<std::string>("foo1",std::string(80,'a'));
+      m->getAtomWithIdx(1)->setProp<std::string>("foo1",std::string(80,'b'));
+      m->getAtomWithIdx(2)->setProp<std::string>("foo1",std::string(80,'c'));
+      FileParserUtils::createAtomStringPropertyList(*m,"foo1");
+      REQUIRE(m->hasProp("atom.prop.foo1"));
+      std::string ps = m->getProp<std::string>("atom.prop.foo1");
+      CHECK(ps.length()>240);
+      CHECK(ps.find("\n")!=std::string::npos);
+      for( auto &atom : m->atoms()){
+        atom->clearProp("foo1");
+      }
+      FileParserUtils::applyMolListPropsToAtoms<std::string>(*m,"atom.prop.");
+      CHECK(m->getAtomWithIdx(0)->getProp<std::string>("foo1") == std::string(80,'a'));
+      CHECK(m->getAtomWithIdx(1)->getProp<std::string>("foo1") == std::string(80,'b'));
+      CHECK(m->getAtomWithIdx(2)->getProp<std::string>("foo1") == std::string(80,'c'));
+  } 
 }
