@@ -417,7 +417,7 @@ std::string quote_string(const std::string &txt) {
 
 std::string get_enhanced_stereo_block(const ROMol &mol,
                             const std::vector<unsigned int> &atomOrder){
-  std::string res = "";
+  std::stringstream res;
   // we need a map from original atom idx to output idx:
   std::vector<unsigned int> revOrder(mol.getNumAtoms());
   for(unsigned i=0;i<mol.getNumAtoms();++i){
@@ -434,33 +434,34 @@ std::string get_enhanced_stereo_block(const ROMol &mol,
     for(const auto at : sg.getAtoms()){
       aids.push_back(revOrder[at->getIdx()]);
     }  
-    std::sort(aids.begin(),aids.end());
     switch(sg.getGroupType()){
     case StereoGroupType::STEREO_ABSOLUTE:
-      absAts.push_back(aids[0]);
+      absAts.insert(absAts.end(),aids.begin(),aids.end());
       break;
     case StereoGroupType::STEREO_OR:
+      std::sort(aids.begin(),aids.end());
       orGps.push_back(aids);
       break;
     case StereoGroupType::STEREO_AND:
+      std::sort(aids.begin(),aids.end());
       andGps.push_back(aids);
       break;  
     }
   }
   if(!absAts.empty()){
-    res += "a:";
+    res << "a:";
     std::sort(absAts.begin(),absAts.end());
     for(auto aid : absAts){
-      res += boost::str(boost::format("%d,")%aid);
+      res << aid << ",";
     }
   }
   if(!orGps.empty()){
     std::sort(orGps.begin(),orGps.end());
     unsigned int gIdx=1;
     for(const auto &gp : orGps){
-      res+= boost::str(boost::format("o%d:")%(gIdx++));
+      res << "o"<<gIdx++<<":";
       for(auto aid : gp){
-        res += boost::str(boost::format("%d,")%aid);        
+        res<<aid<<",";
       }
     }
   }
@@ -468,14 +469,15 @@ std::string get_enhanced_stereo_block(const ROMol &mol,
     std::sort(andGps.begin(),andGps.end());
     unsigned int gIdx=1;
     for(const auto &gp : andGps){
-      res+= boost::str(boost::format("&%d:")%(gIdx++));
+      res << "&"<<gIdx++<<":";
       for(auto aid : gp){
-        res += boost::str(boost::format("%d,")%aid);        
+        res<<aid<<",";
       }
     }
   }
-  if(!res.empty() && res.back()==',') res.pop_back();
-  return res;
+  std::string resStr = res.str();
+  if(!resStr.empty() && resStr.back()==',') resStr.pop_back();
+  return resStr;
 }
 
 std::string get_value_block(const ROMol &mol,

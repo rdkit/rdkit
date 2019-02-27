@@ -274,6 +274,14 @@ TEST_CASE("github #2257: writing cxsmiles", "[smiles,cxsmiles]") {
     auto smi = MolToCXSmiles(*mol);
     CHECK(smi == "C[C@@H]1N[C@H](C)[C@H](C2[C@@H](C)O[C@@H](C)[C@@H](C)[C@H]2C)[C@H](C)[C@@H]1C |a:5,o1:1,18,o2:10,12,&1:3,16,&2:7,14|");
   }
+
+  SECTION("enhanced stereo 4") {
+    auto mol = "C[C@@H]1CCO[C@H](C)C1 |a:1,5,r|"_smiles;
+    REQUIRE(mol);
+    auto smi = MolToCXSmiles(*mol);
+    CHECK(smi == "C[C@@H]1CCO[C@H](C)C1 |a:1,5|");
+  }
+
 }
 
 TEST_CASE("Github #2148", "[bug, Smiles, Smarts]") {
