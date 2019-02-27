@@ -3,25 +3,13 @@
 
 
 if(RDK_USE_BOOST_SERIALIZATION AND Boost_SERIALIZATION_LIBRARY)
-    set(SUBSTRUCTLIBRARY_USE_BOOST_SERIALIZATION "yes")
     set(RDKit_SERIALIZATION_LIBS ${Boost_SERIALIZATION_LIBRARY})
 else()
     message("== Making SubstructLibrary without boost Serialization support")
     set(RDKit_SERIALIZATION_LIBS )
 endif()
 
-configure_file(SubstructLibraryDefs.h.in "${CMAKE_CURRENT_SOURCE_DIR}/SubstructLibraryDefs.h" @ONLY)
-
-
 if(RDK_BUILD_THREADSAFE_SSS)
-
-if(RDK_USE_BOOST_SERIALIZATION AND Boost_SERIALIZATION_LIBRARY)
-    ADD_DEFINITIONS("-DRDK_USE_BOOST_SERIALIZATION")
-    set(RDKit_SERIALIZATION_LIBS ${Boost_SERIALIZATION_LIBRARY})
-else()
-    message("== Building SubstructLibrary without boost Serialization support")
-    set(RDKit_SERIALIZATION_LIBS )
-endif()
 
 remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
 add_definitions(-DRDKIT_SUBSTRUCTLIBRARY_BUILD)
@@ -31,7 +19,6 @@ rdkit_library(SubstructLibrary
               GraphMol RDGeometryLib Catalogs RDGeneral DataStructs ${RDKit_SERIALIZATION_LIBS})
 
 rdkit_headers(SubstructLibrary.h
-              SubstructLibraryDefs.h
               DEST GraphMol/SubstructLibrary)
 
 add_subdirectory(Wrap)

@@ -29,7 +29,6 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 #include "SubstructLibrary.h"
-#include "SubstructLibraryDefs.h"
 #include <RDGeneral/RDThreads.h>
 #ifdef RDK_THREADSAFE_SSS
 #include <thread>
@@ -42,7 +41,7 @@
 namespace RDKit {
 
 bool SubstructLibraryCanSerialize() {
-#ifdef SUBSTRUCTLIBRARY_USE_BOOST_SERIALIZATION
+#ifdef RDK_USE_BOOST_SERIALIZATION
   return true;
 #else
   return false;
@@ -277,7 +276,7 @@ bool SubstructLibrary::hasMatch(const ROMol &query, unsigned int startIdx,
 }
 
 void SubstructLibrary::toStream(std::ostream &ss) const {
-#ifndef SUBSTRUCTLIBRARY_USE_BOOST_SERIALIZATION
+#ifndef RDK_USE_BOOST_SERIALIZATION
   PRECONDITION(0, "Boost SERIALIZATION is not enabled")
 #else
   boost::archive::text_oarchive ar(ss);
@@ -292,7 +291,7 @@ std::string SubstructLibrary::Serialize() const {
 }
 
 void SubstructLibrary::initFromStream(std::istream &ss) {
-#ifndef SUBSTRUCTLIBRARY_USE_BOOST_SERIALIZATION
+#ifndef RDK_USE_BOOST_SERIALIZATION
   PRECONDITION(0, "Boost SERIALIZATION is not enabled")
 #else
   boost::archive::text_iarchive ar(ss);
