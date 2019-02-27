@@ -19,6 +19,7 @@ rdkit_library(SubstructLibrary
               GraphMol RDGeometryLib Catalogs RDGeneral DataStructs ${RDKit_SERIALIZATION_LIBS})
 
 rdkit_headers(SubstructLibrary.h
+              SubstructLibrarySerialization.h
               DEST GraphMol/SubstructLibrary)
 
 add_subdirectory(Wrap)
