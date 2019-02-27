@@ -31,7 +31,6 @@
 #include <RDGeneral/export.h>
 #ifndef RDKIT_SUBSTRUCT_LIBRARY
 #define RDKIT_SUBSTRUCT_LIBRARY
-
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -40,7 +39,9 @@
 #include <DataStructs/ExplicitBitVect.h>
 #include <DataStructs/BitOps.h>
 
-#ifdef RDK_USE_BOOST_SERIALIZATION
+#include "SubstructLibraryDefs.h"
+
+#ifdef SUBSTRUCTLIBRARY_USE_BOOST_SERIALIZATION
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
@@ -51,6 +52,8 @@
 
 namespace RDKit {
 
+bool SubstructLibraryCanSerialize();
+  
 //! Base class API for holding molecules to substructure search.
 /*!
   This is an API that hides the implementation details used for
@@ -71,7 +74,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT MolHolderBase {
   //! Get the current library size
   virtual unsigned int size() const = 0;
  private:
-#ifdef RDK_USE_BOOST_SERIALIZATION
+#ifdef SUBSTRUCTLIBRARY_USE_BOOST_SERIALIZATION
   friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive &ar, const unsigned int version) {
@@ -81,7 +84,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT MolHolderBase {
 #endif
   };
 
-#ifdef RDK_USE_BOOST_SERIALIZATION
+#ifdef SUBSTRUCTLIBRARY_USE_BOOST_SERIALIZATION
 BOOST_SERIALIZATION_ASSUME_ABSTRACT(MolHolderBase)
 #endif
 
@@ -112,7 +115,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT MolHolder : public MolHolderBase {
     return rdcast<unsigned int>(mols.size());
   }
 private:
-#ifdef RDK_USE_BOOST_SERIALIZATION
+#ifdef SUBSTRUCTLIBRARY_USE_BOOST_SERIALIZATION
   friend class boost::serialization::access;
   template <class Archive>
   void save(Archive &ar, const unsigned int version) const {
@@ -182,7 +185,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedMolHolder : public MolHolderBase {
     return rdcast<unsigned int>(mols.size());
   }
 private:  
-#ifdef RDK_USE_BOOST_SERIALIZATION
+#ifdef SUBSTRUCTLIBRARY_USE_BOOST_SERIALIZATION
   friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive &ar, const unsigned int version) {
@@ -234,7 +237,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedSmilesMolHolder : public MolHolderBase
     return rdcast<unsigned int>(mols.size());
   }
 private:  
-#ifdef RDK_USE_BOOST_SERIALIZATION
+#ifdef SUBSTRUCTLIBRARY_USE_BOOST_SERIALIZATION
   friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive &ar, const unsigned int version) {
@@ -291,7 +294,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedTrustedSmilesMolHolder : public MolHol
     return rdcast<unsigned int>(mols.size());
   }
 private:  
-#ifdef RDK_USE_BOOST_SERIALIZATION
+#ifdef SUBSTRUCTLIBRARY_USE_BOOST_SERIALIZATION
   friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive &ar, const unsigned int version) {
@@ -342,7 +345,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT FPHolderBase {
   //!  Caller owns the vector!
   virtual ExplicitBitVect *makeFingerprint(const ROMol &m) const = 0;
 private:
-#ifdef RDK_USE_BOOST_SERIALIZATION
+#ifdef SUBSTRUCTLIBRARY_USE_BOOST_SERIALIZATION
   friend class boost::serialization::access;
   template <class Archive>
   void save(Archive &ar, const unsigned int version) const {
@@ -371,7 +374,7 @@ private:
   
 };
 
-#ifdef RDK_USE_BOOST_SERIALIZATION
+#ifdef SUBSTRUCTLIBRARY_USE_BOOST_SERIALIZATION
 BOOST_SERIALIZATION_ASSUME_ABSTRACT(FPHolderBase)
 #endif
 
@@ -383,7 +386,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT PatternHolder : public FPHolderBase {
     return PatternFingerprintMol(m, 2048);
   }
 private:
-#ifdef RDK_USE_BOOST_SERIALIZATION
+#ifdef SUBSTRUCTLIBRARY_USE_BOOST_SERIALIZATION
   friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive &ar, const unsigned int version) {
@@ -393,7 +396,7 @@ private:
 #endif
 };
 
-#ifdef RDK_USE_BOOST_SERIALIZATION
+#ifdef SUBSTRUCTLIBRARY_USE_BOOST_SERIALIZATION
 // Register all known filter matcher types for serialization
 template <class Archive>
 void registerSubstructLibraryTypes(Archive &ar) {
@@ -690,7 +693,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
   //! initializes from a string pickle
   void initFromString(const std::string &text);
 private:
-#ifdef RDK_USE_BOOST_SERIALIZATION
+#ifdef SUBSTRUCTLIBRARY_USE_BOOST_SERIALIZATION
   friend class boost::serialization::access;
   template <class Archive>
   void save(Archive &ar, const unsigned int version) const {
@@ -721,7 +724,7 @@ private:
 };
 }
 
-#ifdef RDK_USE_BOOST_SERIALIZATION
+#ifdef SUBSTRUCTLIBRARY_USE_BOOST_SERIALIZATION
 BOOST_CLASS_VERSION(RDKit::MolHolder, 1);
 BOOST_CLASS_VERSION(RDKit::CachedMolHolder, 1);
 BOOST_CLASS_VERSION(RDKit::CachedSmilesMolHolder, 1);

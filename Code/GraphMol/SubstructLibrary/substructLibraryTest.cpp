@@ -109,7 +109,7 @@ void test1() {
   std::vector<SubstructLibrary*> libs;
   libs.push_back(&ssslib);
 
-#ifdef RDK_USE_BOOST_SERIALIZATION  
+#ifdef SUBSTRUCTLIBRARY_USE_BOOST_SERIALIZATION  
   std::string pickle = ssslib.Serialize();
   SubstructLibrary serialized;
   serialized.initFromString(pickle);
@@ -180,7 +180,7 @@ void test2() {
   std::vector<SubstructLibrary*> libs;
   libs.push_back(&ssslib);
 
-#ifdef RDK_USE_BOOST_SERIALIZATION  
+#ifdef SUBSTRUCTLIBRARY_USE_BOOST_SERIALIZATION  
   std::string pickle = ssslib.Serialize();
   SubstructLibrary serialized;
   serialized.initFromString(pickle);
@@ -227,7 +227,7 @@ void test3() {
   std::vector<SubstructLibrary*> libs;
   libs.push_back(&ssslib);
 
-#ifdef RDK_USE_BOOST_SERIALIZATION  
+#ifdef SUBSTRUCTLIBRARY_USE_BOOST_SERIALIZATION  
   std::string pickle = ssslib.Serialize();
   SubstructLibrary serialized;
   serialized.initFromString(pickle);
@@ -273,7 +273,7 @@ void test4() {
   std::vector<SubstructLibrary*> libs;
   libs.push_back(&ssslib);
 
-#ifdef RDK_USE_BOOST_SERIALIZATION  
+#ifdef SUBSTRUCTLIBRARY_USE_BOOST_SERIALIZATION  
   std::string pickle = ssslib.Serialize();
   SubstructLibrary serialized;
   serialized.initFromString(pickle);
