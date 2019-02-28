@@ -5,8 +5,6 @@ from rdkit import Chem
 from rdkit.Chem import MCS, FragmentMatcher, MACCSkeys, Descriptors, TemplateAlign
 from rdkit.Chem import Recap, BRICS, AllChem, PropertyMol, SaltRemover, EnumerateHeterocycles, EnumerateStereoisomers
 from rdkit.Chem import rdDepictor
-from rdkit.Chem import AtomPropSDMolSupplier
-
 
 def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
     """ Add the Doctests from the module """
@@ -22,7 +20,6 @@ def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
     tests.addTests(doctest.DocTestSuite(PropertyMol, optionflags=doctest.ELLIPSIS))
     tests.addTests(doctest.DocTestSuite(SaltRemover, optionflags=doctest.ELLIPSIS))
     tests.addTests(doctest.DocTestSuite(Chem, optionflags=doctest.ELLIPSIS))
-    tests.addTests(doctest.DocTestSuite(AtomPropSDMolSupplier, optionflags=doctest.ELLIPSIS))
     # Tests which have a dependency on using the RDKit coordinate generator
     rdDepictor.SetPreferCoordGen(False)
     tests.addTests(doctest.DocTestSuite(TemplateAlign, optionflags=doctest.ELLIPSIS))
