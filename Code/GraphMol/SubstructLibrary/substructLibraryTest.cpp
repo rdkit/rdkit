@@ -360,6 +360,7 @@ void docTest() {
 }
 
 int main() {
+  RDLog::InitLogs();
 #if 1
   test1();
   test2();

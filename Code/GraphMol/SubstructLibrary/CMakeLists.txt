@@ -4,8 +4,10 @@
 
 if(RDK_USE_BOOST_SERIALIZATION AND Boost_SERIALIZATION_LIBRARY)
     set(RDKit_SERIALIZATION_LIBS ${Boost_SERIALIZATION_LIBRARY})
+    add_definitions(-DRDK_USE_BOOST_SERIALIZATION)
 else()
     message("== Making SubstructLibrary without boost Serialization support")
+    remove_definitions(-DRDK_USE_BOOST_SERIALIZATION)
     set(RDKit_SERIALIZATION_LIBS )
 endif()
 
@@ -27,6 +29,6 @@ add_subdirectory(Wrap)
 rdkit_test(substructLibraryTest substructLibraryTest.cpp
            LINK_LIBRARIES SubstructLibrary Fingerprints
            SubstructMatch FileParsers SmilesParse GraphMol RDGeometryLib RDGeneral DataStructs
-           ${RDKit_SERIALIZATION_LIBRARY})
+           ${RDKit_SERIALIZATION_LIBS})
 
 endif(RDK_BUILD_THREADSAFE_SSS)

@@ -38,7 +38,6 @@
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <DataStructs/ExplicitBitVect.h>
 #include <DataStructs/BitOps.h>
-#include <RDGeneral/RDConfig.h>
 
 namespace RDKit {
 

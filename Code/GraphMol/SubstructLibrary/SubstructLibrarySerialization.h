@@ -31,6 +31,8 @@
 // n.b. must be included at the END of SubstructLibrary.h
 #ifndef RDK_SUBSTRUCT_LIBRARY_SERIALIZATION
 #define RDK_SUBSTRUCT_LIBRARY_SERIALIZATION
+
+#ifdef RDK_USE_BOOST_SERIALIZATION
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
@@ -38,7 +40,7 @@
 #include <boost/serialization/shared_ptr.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
-#ifdef RDK_USE_BOOST_SERIALIZATION
+
 
 BOOST_SERIALIZATION_ASSUME_ABSTRACT(RDKit::MolHolderBase)
 BOOST_SERIALIZATION_ASSUME_ABSTRACT(RDKit::FPHolderBase)
@@ -184,5 +186,4 @@ BOOST_SERIALIZATION_SPLIT_FREE(RDKit::FPHolderBase);
 BOOST_SERIALIZATION_SPLIT_FREE(RDKit::SubstructLibrary);
 
 #endif
-
 #endif
