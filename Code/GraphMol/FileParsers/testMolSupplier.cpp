@@ -2337,6 +2337,36 @@ void testGitHub88() {
   delete nmol;
 }
 
+void testGitHub2285() {
+  std::string rdbase = getenv("RDBASE");
+  std::string fname =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/github2285.sdf";
+
+  std::vector<std::string> smiles;
+  {
+    SDMolSupplier sdsup(fname);
+    while(!sdsup.atEnd()) {
+      ROMol *nmol = sdsup.next();
+      TEST_ASSERT(nmol);
+      smiles.push_back(MolToSmiles(*nmol));
+      delete nmol;
+    }
+  }
+  {
+    SDMolSupplier sdsup(fname, true, false);
+    int i = 0;
+    while(!sdsup.atEnd()) {
+      ROMol *nmol = sdsup.next();
+      TEST_ASSERT(nmol);
+      ROMol *m = MolOps::removeHs(*nmol);
+      TEST_ASSERT(MolToSmiles(*m) == smiles[i++]);
+      delete nmol;
+      delete m;
+    }
+    TEST_ASSERT(i>0);
+  }
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -2509,6 +2539,11 @@ int main() {
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
   testGitHub88();
   BOOST_LOG(rdErrorLog) << "Finished: testGitHub88()\n";
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  testGitHub2285();
+  BOOST_LOG(rdErrorLog) << "Finished: testGitHub2285()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
   return 0;
