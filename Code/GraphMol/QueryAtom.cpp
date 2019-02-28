@@ -67,9 +67,9 @@ bool queriesMatch(QueryAtom::QUERYATOM_QUERY const *q1,
   PRECONDITION(q1, "no q1");
   PRECONDITION(q2, "no q2");
 
-  static const unsigned int nQueries = 18;
+  static const unsigned int nQueries = 19;
   static std::string equalityQueries[nQueries] = {
-      "AtomRingBondCount", "AtomRingSize", "AtomMinRingSize",
+      "AtomType", "AtomRingBondCount", "AtomRingSize", "AtomMinRingSize",
       "AtomImplicitValence", "AtomExplicitValence", "AtomTotalValence",
       "AtomAtomicNum", "AtomExplicitDegree", "AtomTotalDegree", "AtomHCount",
       "AtomIsAromatic", "AtomIsAliphatic", "AtomUnsaturated", "AtomMass",
