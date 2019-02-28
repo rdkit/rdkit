@@ -2176,13 +2176,13 @@ int testForwardSDSupplier() {
   }
   // looks good, now do a supplier:
   {
-    io::filtering_istream strm;
+    auto *strm = new io::filtering_istream();
     // the stream must be opened in binary mode otherwise it won't work on
     // Windows
     std::ifstream is(maefname2.c_str(), std::ios_base::binary);
-    strm.push(io::gzip_decompressor());
-    strm.push(is);
-    MaeMolSupplier maesup(&strm, false);
+    strm->push(io::gzip_decompressor());
+    strm->push(is);
+    MaeMolSupplier maesup(strm);
     unsigned int i = 0;
     std::shared_ptr<ROMol> nmol;
     while (!maesup.atEnd()) {

@@ -35,42 +35,43 @@ class LocalMaeMolSupplier : public RDKit::MaeMolSupplier {
     // FIX: minor leak here
     auto *sb = new streambuf(input);
     dp_inStream = new streambuf::istream(*sb);
+    dp_sInStream.reset(dp_inStream);
     df_owner = true;
     df_sanitize = sanitize;
     df_removeHs = removeHs;
-    d_reader.reset(new schrodinger::mae::Reader(*dp_inStream));
+    d_reader.reset(new schrodinger::mae::Reader(dp_sInStream));
     d_next_struct = d_reader->next("f_m_ct");
     POSTCONDITION(dp_inStream, "bad instream");
   }
   LocalMaeMolSupplier(streambuf &input, bool sanitize, bool removeHs) {
     dp_inStream = new streambuf::istream(input);
+    dp_sInStream.reset(dp_inStream);
     df_owner = true;
     df_sanitize = sanitize;
     df_removeHs = removeHs;
-    d_reader.reset(new schrodinger::mae::Reader(*dp_inStream));
+    d_reader.reset(new schrodinger::mae::Reader(dp_sInStream));
     d_next_struct = d_reader->next("f_m_ct");
     POSTCONDITION(dp_inStream, "bad instream");
   }
 
   LocalMaeMolSupplier(const std::string &fname, bool sanitize = true,
-          bool removeHs = true)
-    {
-        df_owner = true;
-        auto *ifs = new std::ifstream(fname.c_str(), std::ios_base::binary);
-        if (!ifs || !(*ifs) || ifs->bad()) {
-            std::ostringstream errout;
-            errout << "Bad input file " << fname;
-            throw RDKit::BadFileException(errout.str());
-        }
-        dp_inStream = (std::istream *)ifs;
-        df_sanitize = sanitize;
-        df_removeHs = removeHs;
+                      bool removeHs = true) {
+    df_owner = true;
+    auto *ifs = new std::ifstream(fname.c_str(), std::ios_base::binary);
+    if (!ifs || !(*ifs) || ifs->bad()) {
+      std::ostringstream errout;
+      errout << "Bad input file " << fname;
+      throw RDKit::BadFileException(errout.str());
+    }
+    dp_inStream = (std::istream *)ifs;
+    dp_sInStream.reset(dp_inStream);
+    df_sanitize = sanitize;
+    df_removeHs = removeHs;
 
-        d_reader.reset(new schrodinger::mae::Reader(*ifs));
-        d_next_struct = d_reader->next("f_m_ct");
-        POSTCONDITION(dp_inStream, "bad instream");
-    };
-
+    d_reader.reset(new schrodinger::mae::Reader(dp_sInStream));
+    d_next_struct = d_reader->next("f_m_ct");
+    POSTCONDITION(dp_inStream, "bad instream");
+  };
 };
 
 LocalMaeMolSupplier *FwdMolSupplIter(LocalMaeMolSupplier *self) {

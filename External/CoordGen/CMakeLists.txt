@@ -18,8 +18,8 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
     endif()
 
     if(NOT EXISTS "${MAEPARSER_DIR}/MaeParser.hpp")
-        set(RELEASE_NO "1.0.1")
-        set(MD5 "1292494df756e95fd1cce722286f28fe")
+        set(RELEASE_NO "1.1")
+        set(MD5 "336235a4c46de5e520826c2f9de9c07b")
         downloadAndCheckMD5("https://github.com/schrodinger/maeparser/archive/v${RELEASE_NO}.tar.gz"
               "${CMAKE_CURRENT_SOURCE_DIR}/maeparser-v${RELEASE_NO}.tar.gz" ${MD5})
         execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf
@@ -35,7 +35,7 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
     set(maeparser_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
         CACHE STRING "MaeParser Include Dir" FORCE)
     file(GLOB MAESOURCES "${MAEPARSER_DIR}/*.cpp")
-    rdkit_library(maeparser ${MAESOURCES} SHARED )
+    rdkit_library(maeparser ${MAESOURCES} SHARED)
     install(TARGETS maeparser DESTINATION ${RDKit_LibDir})
     set(maeparser_LIBRARIES maeparser)
 
@@ -49,8 +49,8 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
     endif()
 
     if(NOT EXISTS "${COORDGEN_DIR}/sketcherMinimizer.h")
-        set(RELEASE_NO "1.2")
-        set(MD5 "cc132a4655e194143d760239f69dd265")
+        set(RELEASE_NO "1.2.1")
+        set(MD5 "f7faf4878bd7cfcfb500fa6c664fb036")
         downloadAndCheckMD5("https://github.com/schrodinger/coordgenlibs/archive/v${RELEASE_NO}.tar.gz"
               "${CMAKE_CURRENT_SOURCE_DIR}/coordgenlibs-${RELEASE_NO}.tar.gz" ${MD5})
         execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf
@@ -79,8 +79,14 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
           DESTINATION ${RDKit_ShareDir}/Data
           COMPONENT data)
 
+  find_package(Boost 1.56.0 COMPONENTS system iostreams REQUIRED)
+  set (link_iostreams ${Boost_LIBRARIES})
+  if (NOT Boost_USE_STATIC_LIBS)
+    add_definitions("-DBOOST_IOSTREAMS_DYN_LINK")
+  endif()
+
   set(RDK_COORDGEN_LIBS MolAlign ${coordgen_LIBRARIES} ${maeparser_LIBRARIES}
-      CACHE STRING "the external libraries" FORCE)
+      ${link_iostreams} CACHE STRING "the external libraries" FORCE)
   rdkit_headers(CoordGen.h DEST GraphMol)
 
   if(RDK_BUILD_PYTHON_WRAPPERS)

@@ -111,7 +111,7 @@ void test1() {
 }
 
 namespace {
-bool compareConfs(const ROMol* m, const ROMol* templ, const MatchVectType& mv,
+bool compareConfs(const ROMol* m, ROMol* templ, const MatchVectType& mv,
                   bool alignFirst = false, int molConfId = -1,
                   int templateConfId = -1, double postol = 1e-2,
                   double rmstol = 0.1) {
@@ -120,9 +120,8 @@ bool compareConfs(const ROMol* m, const ROMol* templ, const MatchVectType& mv,
   TEST_ASSERT(m->getNumAtoms() >= templ->getNumAtoms());
 
   if (alignFirst) {
-    RDGeom::Transform3D trans;
-    double rmsd = MolAlign::getAlignmentTransform(*templ, *m, trans, molConfId,
-                                                  templateConfId, &mv);
+    double rmsd =
+        MolAlign::alignMol(*templ, *m, molConfId, templateConfId, &mv);
     if (rmsd > rmstol) return false;
   }
 
@@ -335,7 +334,9 @@ void test2() {
     TEST_ASSERT(m->getNumConformers() == 1);
     mb = MolToMolBlock(*m);
     std::cerr << mb << std::endl;
-    TEST_ASSERT(!compareConfs(m, core, mv, true));
+    // This is a rigid core: if we provide the matching substructure,
+    // and do alignment, the conformations will still match.
+    TEST_ASSERT(!compareConfs(m, core, mv, false));
 
     {
       CoordGen::CoordGenParams params;
@@ -372,7 +373,10 @@ void test2() {
     TEST_ASSERT(m->getNumConformers() == 1);
     mb = MolToMolBlock(*m);
     std::cerr << mb << std::endl;
-    TEST_ASSERT(!compareConfs(m, core, mv, true));
+    // This mol is just slightly bigger than the core, providing
+    // the matching substructure and doing alignment will cause
+    // the conformations to match.
+    TEST_ASSERT(!compareConfs(m, core, mv, false));
 
     {
       CoordGen::CoordGenParams params;

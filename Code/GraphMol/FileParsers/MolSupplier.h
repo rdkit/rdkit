@@ -364,15 +364,23 @@ class RDKIT_FILEPARSERS_EXPORT PDBMolSupplier : public MolSupplier {
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
 //! lazy file parser for MAE files
 class RDKIT_FILEPARSERS_EXPORT MaeMolSupplier : public MolSupplier {
+  /**
+   * Due to maeparser's shared_ptr<istream> Reader interface, MaeMolSupplier
+   * always requires taking ownership of the istream ptr, as the shared ptr will
+   * always clear it upon destruction.
+   */
+
  public:
   MaeMolSupplier() { init(); };
+
   explicit MaeMolSupplier(std::istream *inStream, bool takeOwnership = true,
                           bool sanitize = true, bool removeHs = true);
+
   explicit MaeMolSupplier(const std::string &fname, bool sanitize = true,
                           bool removeHs = true);
 
-  virtual ~MaeMolSupplier() {
-    if (df_owner && dp_inStream) delete dp_inStream;
+  virtual ~MaeMolSupplier(){
+      // The dp_sInStream shared_ptr will take care of cleaning up.
   };
 
   virtual void init();
@@ -384,6 +392,7 @@ class RDKIT_FILEPARSERS_EXPORT MaeMolSupplier : public MolSupplier {
   bool df_sanitize, df_removeHs;
   std::shared_ptr<schrodinger::mae::Reader> d_reader;
   std::shared_ptr<schrodinger::mae::Block> d_next_struct;
+  std::shared_ptr<std::istream> dp_sInStream;
 };
 #endif  // RDK_BUILD_COORDGEN_SUPPORT
 }  // namespace RDKit

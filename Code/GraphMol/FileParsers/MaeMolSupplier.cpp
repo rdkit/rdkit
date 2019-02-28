@@ -25,16 +25,19 @@ using RDKit::MolInterchange::bolookup;
 MaeMolSupplier::MaeMolSupplier(std::istream *inStream, bool takeOwnership,
                                bool sanitize, bool removeHs) {
   PRECONDITION(inStream, "bad stream");
+  PRECONDITION(takeOwnership, "takeOwnership is required for MaeMolSupplier");
   dp_inStream = inStream;
-  df_owner = takeOwnership;
+  dp_sInStream.reset(dp_inStream);
+  df_owner = takeOwnership;  // always true
   df_sanitize = sanitize;
   df_removeHs = removeHs;
 
-  d_reader.reset(new schrodinger::mae::Reader(*inStream));
+  d_reader.reset(new schrodinger::mae::Reader(dp_sInStream));
   d_next_struct = d_reader->next("f_m_ct");
 }
 
-MaeMolSupplier::MaeMolSupplier(const std::string &fileName, bool sanitize, bool removeHs) {
+MaeMolSupplier::MaeMolSupplier(const std::string &fileName, bool sanitize,
+                               bool removeHs) {
   df_owner = true;
   auto *ifs = new std::ifstream(fileName.c_str(), std::ios_base::binary);
   if (!ifs || !(*ifs) || ifs->bad()) {
@@ -42,11 +45,12 @@ MaeMolSupplier::MaeMolSupplier(const std::string &fileName, bool sanitize, bool 
     errout << "Bad input file " << fileName;
     throw BadFileException(errout.str());
   }
-  dp_inStream = static_cast<std::istream*>(ifs);
+  dp_inStream = static_cast<std::istream *>(ifs);
+  dp_sInStream.reset(dp_inStream);
   df_sanitize = sanitize;
   df_removeHs = removeHs;
 
-  d_reader.reset(new schrodinger::mae::Reader(*ifs));
+  d_reader.reset(new schrodinger::mae::Reader(dp_sInStream));
   d_next_struct = d_reader->next("f_m_ct");
 }
 
@@ -67,7 +71,7 @@ ROMol *MaeMolSupplier::next() {
   // Atom data is in the m_atom indexed block
   {
     const auto atom_data = current_struct->getIndexedBlock("m_atom");
-    // All atoms are gauranteed to have these three field names:
+    // All atoms are guaranteed to have these three field names:
     const auto atomic_numbers = atom_data->getIntProperty("i_m_atomic_number");
     const auto xs = atom_data->getRealProperty("r_m_x_coord");
     const auto ys = atom_data->getRealProperty("r_m_y_coord");
@@ -101,7 +105,7 @@ ROMol *MaeMolSupplier::next() {
   // Bond data is in the m_bond indexed block
   {
     const auto bond_data = current_struct->getIndexedBlock("m_bond");
-    // All bonds are gauranteed to have these three field names:
+    // All bonds are guaranteed to have these three field names:
     auto from_atoms = bond_data->getIntProperty("i_m_from");
     auto to_atoms = bond_data->getIntProperty("i_m_to");
     auto orders = bond_data->getIntProperty("i_m_order");
