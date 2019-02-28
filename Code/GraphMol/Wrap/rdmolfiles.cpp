@@ -1185,16 +1185,16 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
               docString.c_str());
 
   python::def("CreateAtomIntPropertyList", FileParserUtils::createAtomIntPropertyList,
-  (python::arg("mol"),python::arg("propName"),python::arg("missingValueMarker")=""),
+  (python::arg("mol"),python::arg("propName"),python::arg("missingValueMarker")="",python::arg("lineSize")=190),
   "creates a list property on the molecule from individual atom property values");
   python::def("CreateAtomDoublePropertyList", FileParserUtils::createAtomDoublePropertyList,
-  (python::arg("mol"),python::arg("propName"),python::arg("missingValueMarker")=""),
+  (python::arg("mol"),python::arg("propName"),python::arg("missingValueMarker")="",python::arg("lineSize")=190),
   "creates a list property on the molecule from individual atom property values");
   python::def("CreateAtomBoolPropertyList", FileParserUtils::createAtomBoolPropertyList,
-  (python::arg("mol"),python::arg("propName"),python::arg("missingValueMarker")=""),
+  (python::arg("mol"),python::arg("propName"),python::arg("missingValueMarker")="",python::arg("lineSize")=190),
   "creates a list property on the molecule from individual atom property values");
   python::def("CreateAtomStringPropertyList", FileParserUtils::createAtomStringPropertyList,
-  (python::arg("mol"),python::arg("propName"),python::arg("missingValueMarker")=""),
+  (python::arg("mol"),python::arg("propName"),python::arg("missingValueMarker")="",python::arg("lineSize")=190),
   "creates a list property on the molecule from individual atom property values");
 
 /********************************************************

@@ -143,15 +143,15 @@ inline void createAtomIntPropertyList(ROMol &mol, const std::string &atomPropNam
   std::string molPropName = "atom.iprop."+atomPropName;
   mol.setProp(molPropName,getAtomPropertyList<boost::int64_t>(mol,atomPropName,missingValueMarker,lineSize));
 }
-inline void createAtomDoublePropertyList(ROMol &mol, const std::string &atomPropName, const std::string &missingValueMarker="", unsigned int lineSize=200){
+inline void createAtomDoublePropertyList(ROMol &mol, const std::string &atomPropName, const std::string &missingValueMarker="", unsigned int lineSize=190){
   std::string molPropName = "atom.dprop."+atomPropName;
   mol.setProp(molPropName,getAtomPropertyList<double>(mol,atomPropName,missingValueMarker,lineSize));
 }
-inline void createAtomBoolPropertyList(ROMol &mol, const std::string &atomPropName, const std::string &missingValueMarker="", unsigned int lineSize=200){
+inline void createAtomBoolPropertyList(ROMol &mol, const std::string &atomPropName, const std::string &missingValueMarker="", unsigned int lineSize=190){
   std::string molPropName = "atom.bprop."+atomPropName;
   mol.setProp(molPropName,getAtomPropertyList<bool>(mol,atomPropName,missingValueMarker,lineSize));
 }
-inline void createAtomStringPropertyList(ROMol &mol, const std::string &atomPropName, const std::string &missingValueMarker="", unsigned int lineSize=200){
+inline void createAtomStringPropertyList(ROMol &mol, const std::string &atomPropName, const std::string &missingValueMarker="", unsigned int lineSize=190){
   std::string molPropName = "atom.prop."+atomPropName;
   mol.setProp(molPropName,getAtomPropertyList<std::string>(mol,atomPropName,missingValueMarker,lineSize));
 }
