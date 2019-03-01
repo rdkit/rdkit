@@ -59,27 +59,32 @@ void save(Archive &ar, const RDKit::MolHolder& molholder,
           const unsigned int version) {
   RDUNUSED_PARAM(version);
   ar &boost::serialization::base_object<RDKit::MolHolderBase>(molholder);
+
+  std::int64_t pkl_count = molholder.getMols().size();
+  ar & pkl_count;
   
-  std::vector<std::string> pickles;
   for(auto &mol: molholder.getMols()) {
     std::string pkl;
     RDKit::MolPickler::pickleMol(*mol.get(), pkl);
-    pickles.push_back(pkl);
+    ar << pkl;
   }
-  ar &pickles;
 }
   
 template <class Archive>
 void load(Archive &ar, RDKit::MolHolder& molholder,
           const unsigned int version) {
   RDUNUSED_PARAM(version);
+  ar &boost::serialization::base_object<RDKit::MolHolderBase>(molholder);
+  
   std::vector<boost::shared_ptr<RDKit::ROMol>> &mols = molholder.getMols();
   mols.clear();
   
-  ar &boost::serialization::base_object<RDKit::MolHolderBase>(molholder);
-  std::vector<std::string> pickles;
-  ar &pickles;
-  for(auto &pkl: pickles) {
+  std::int64_t pkl_count = -1;
+  ar & pkl_count;
+
+  for(std::int64_t i = 0; i<pkl_count; ++i) {
+    std::string pkl;
+    ar >> pkl;
     mols.push_back(boost::make_shared<RDKit::ROMol>(pkl));
   }
 }
