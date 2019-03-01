@@ -84,28 +84,30 @@ void load(Archive &ar, RDKit::MolHolder& molholder,
   }
 }
 
-template <class Archive>
-void serialize(Archive &ar, RDKit::CachedMolHolder &molholder,
-               const unsigned int version) {
+template<class Archive, class MolHolder>
+void serialize_strings(Archive &ar, MolHolder &molholder,
+                       const unsigned int version) {
   RDUNUSED_PARAM(version);
   ar &boost::serialization::base_object<RDKit::MolHolderBase>(molholder);
   ar &molholder.getMols();
+}
+
+template <class Archive>
+void serialize(Archive &ar, RDKit::CachedMolHolder &molholder,
+               const unsigned int version) {
+  serialize_strings(ar, molholder, version);
 }
 
 template <class Archive>
 void serialize(Archive &ar, RDKit::CachedSmilesMolHolder &molholder,
                const unsigned int version) {
-  RDUNUSED_PARAM(version);
-  ar &boost::serialization::base_object<RDKit::MolHolderBase>(molholder);
-  ar &molholder.getMols();
+  serialize_strings(ar, molholder, version);  
 }
 
 template <class Archive>
 void serialize(Archive &ar, RDKit::CachedTrustedSmilesMolHolder &molholder,
                const unsigned int version) {
-  RDUNUSED_PARAM(version);
-  ar &boost::serialization::base_object<RDKit::MolHolderBase>(molholder);
-  ar &molholder.getMols();
+  serialize_strings(ar, molholder, version);
 }
 
 template <class Archive>
