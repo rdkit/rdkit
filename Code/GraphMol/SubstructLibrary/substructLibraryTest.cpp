@@ -186,6 +186,10 @@ void test2() {
   serialized.initFromString(pickle);
   TEST_ASSERT(serialized.size() == ssslib.size());
 
+  // check to see if we are still the right base type
+  MolHolderBase *_holder = serialized.getMolHolder().get();
+  TEST_ASSERT(_holder != nullptr);
+  TEST_ASSERT(dynamic_cast<MolHolder*>(_holder) != nullptr);
   try { serialized.getFingerprints(); }
   catch(...) { TEST_ASSERT(0); }
   
@@ -233,6 +237,10 @@ void test3() {
   serialized.initFromString(pickle);
   TEST_ASSERT(serialized.size() == ssslib.size());
   libs.push_back(&serialized);
+  // check to see if we are still the right base type
+  MolHolderBase *_holder = serialized.getMolHolder().get();
+  TEST_ASSERT(_holder != nullptr);
+  TEST_ASSERT(dynamic_cast<MolHolder*>(_holder) != nullptr);  
 #endif
 
 
@@ -279,6 +287,10 @@ void test4() {
   serialized.initFromString(pickle);
   TEST_ASSERT(serialized.size() == ssslib.size());
   libs.push_back(&serialized);
+  // check to see if we are still the right base type
+  MolHolderBase *_holder = serialized.getMolHolder().get();
+  TEST_ASSERT(_holder != nullptr);
+  TEST_ASSERT(dynamic_cast<CachedSmilesMolHolder*>(_holder) != nullptr);
 #endif
 
   for(auto lib: libs) {
