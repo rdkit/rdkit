@@ -373,6 +373,9 @@ class RDKIT_FILEPARSERS_EXPORT MaeMolSupplier : public MolSupplier {
  public:
   MaeMolSupplier() { init(); };
 
+  explicit MaeMolSupplier(std::shared_ptr<std::istream> inStream,
+                          bool sanitize = true, bool removeHs = true);
+
   explicit MaeMolSupplier(std::istream *inStream, bool takeOwnership = true,
                           bool sanitize = true, bool removeHs = true);
 

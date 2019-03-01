@@ -2176,7 +2176,7 @@ int testForwardSDSupplier() {
   }
   // looks good, now do a supplier:
   {
-    auto *strm = new io::filtering_istream();
+    auto strm = std::make_shared<io::filtering_istream>();
     // the stream must be opened in binary mode otherwise it won't work on
     // Windows
     std::ifstream is(maefname2.c_str(), std::ios_base::binary);

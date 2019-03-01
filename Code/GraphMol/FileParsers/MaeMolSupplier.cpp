@@ -22,6 +22,19 @@ namespace RDKit {
 
 using RDKit::MolInterchange::bolookup;
 
+MaeMolSupplier::MaeMolSupplier(std::shared_ptr<std::istream> inStream,
+                               bool sanitize, bool removeHs) {
+  PRECONDITION(inStream, "bad stream");
+  dp_sInStream = inStream;
+  dp_inStream = inStream.get();
+  df_owner = true;
+  df_sanitize = sanitize;
+  df_removeHs = removeHs;
+
+  d_reader.reset(new schrodinger::mae::Reader(dp_sInStream));
+  d_next_struct = d_reader->next("f_m_ct");
+}
+
 MaeMolSupplier::MaeMolSupplier(std::istream *inStream, bool takeOwnership,
                                bool sanitize, bool removeHs) {
   PRECONDITION(inStream, "bad stream");
