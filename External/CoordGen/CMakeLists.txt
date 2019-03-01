@@ -35,7 +35,14 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
     set(maeparser_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
         CACHE STRING "MaeParser Include Dir" FORCE)
     file(GLOB MAESOURCES "${MAEPARSER_DIR}/*.cpp")
-    rdkit_library(maeparser ${MAESOURCES} SHARED)
+
+    find_package(Boost 1.56.0 COMPONENTS system iostreams REQUIRED)
+    set (link_iostreams ${Boost_LIBRARIES})
+    if (NOT Boost_USE_STATIC_LIBS)
+      add_definitions("-DBOOST_IOSTREAMS_DYN_LINK")
+    endif()
+
+    rdkit_library(maeparser ${MAESOURCES} LINK_LIBRARIES ${Boost_LIBRARIES} SHARED)
     install(TARGETS maeparser DESTINATION ${RDKit_LibDir})
     set(maeparser_LIBRARIES maeparser)
 
@@ -79,14 +86,8 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
           DESTINATION ${RDKit_ShareDir}/Data
           COMPONENT data)
 
-  find_package(Boost 1.56.0 COMPONENTS system iostreams REQUIRED)
-  set (link_iostreams ${Boost_LIBRARIES})
-  if (NOT Boost_USE_STATIC_LIBS)
-    add_definitions("-DBOOST_IOSTREAMS_DYN_LINK")
-  endif()
-
   set(RDK_COORDGEN_LIBS MolAlign ${coordgen_LIBRARIES} ${maeparser_LIBRARIES}
-      ${link_iostreams} CACHE STRING "the external libraries" FORCE)
+      CACHE STRING "the external libraries" FORCE)
   rdkit_headers(CoordGen.h DEST GraphMol)
 
   if(RDK_BUILD_PYTHON_WRAPPERS)
