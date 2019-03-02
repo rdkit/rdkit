@@ -1,4 +1,4 @@
-//  Copyright (c) 2017, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2017-2019, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,15 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 
 namespace RDKit {
+
+bool SubstructLibraryCanSerialize() {
+#ifdef RDK_USE_BOOST_SERIALIZATION
+  return true;
+#else
+  return false;
+#endif
+}
+
 
 struct Bits {
   const ExplicitBitVect *queryBits;
@@ -265,4 +274,34 @@ bool SubstructLibrary::hasMatch(const ROMol &query, unsigned int startIdx,
                     useQueryQueryMatches, numThreads, maxResults)
              .size() > 0;
 }
+
+void SubstructLibrary::toStream(std::ostream &ss) const {
+#ifndef RDK_USE_BOOST_SERIALIZATION
+  PRECONDITION(0, "Boost SERIALIZATION is not enabled")
+#else
+  boost::archive::text_oarchive ar(ss);
+  ar << *this;
+#endif  
+}
+
+std::string SubstructLibrary::Serialize() const {
+  std::stringstream ss;
+  toStream(ss);
+  return ss.str();
+}
+
+void SubstructLibrary::initFromStream(std::istream &ss) {
+#ifndef RDK_USE_BOOST_SERIALIZATION
+  PRECONDITION(0, "Boost SERIALIZATION is not enabled")
+#else
+  boost::archive::text_iarchive ar(ss);
+  ar >> *this;
+#endif  
+}
+
+void SubstructLibrary::initFromString(const std::string &text) {
+  std::stringstream ss(text);
+  initFromStream(ss);
+}
+
 }

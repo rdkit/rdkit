@@ -1,4 +1,4 @@
-//  Copyright (c) 2017, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2017-2019, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -28,10 +28,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
+#ifndef RDK_SUBSTRUCT_LIBRARY
+#define RDK_SUBSTRUCT_LIBRARY
 #include <RDGeneral/export.h>
-#ifndef RDKIT_SUBSTRUCT_LIBRARY
-#define RDKIT_SUBSTRUCT_LIBRARY
-
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -42,6 +41,8 @@
 
 namespace RDKit {
 
+bool SubstructLibraryCanSerialize();
+  
 //! Base class API for holding molecules to substructure search.
 /*!
   This is an API that hides the implementation details used for
@@ -87,6 +88,9 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT MolHolder : public MolHolderBase {
   virtual unsigned int size() const {
     return rdcast<unsigned int>(mols.size());
   }
+
+  std::vector<boost::shared_ptr<ROMol>> & getMols() { return mols; }
+  const std::vector<boost::shared_ptr<ROMol>> & getMols() const { return mols; }
 };
 
 //! Concrete class that holds binary cached molecules in memory
@@ -126,6 +130,9 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedMolHolder : public MolHolderBase {
   virtual unsigned int size() const {
     return rdcast<unsigned int>(mols.size());
   }
+
+  std::vector<std::string> &getMols() { return mols; }
+  const std::vector<std::string> &getMols() const { return mols; }
 };
 
 //! Concrete class that holds smiles strings in memory
@@ -166,6 +173,9 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedSmilesMolHolder : public MolHolderBase
   virtual unsigned int size() const {
     return rdcast<unsigned int>(mols.size());
   }
+  
+  std::vector<std::string> &getMols() { return mols; }
+  const std::vector<std::string> &getMols() const { return mols; }
 };
 
 //! Concrete class that holds trusted smiles strings in memory
@@ -212,6 +222,9 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedTrustedSmilesMolHolder : public MolHol
   virtual unsigned int size() const {
     return rdcast<unsigned int>(mols.size());
   }
+
+  std::vector<std::string> &getMols() { return mols; }
+  const std::vector<std::string> &getMols() const { return mols; }
 };
 
 //! Base FPI for the fingerprinter used to rule out impossible matches
@@ -252,6 +265,9 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT FPHolderBase {
   //! make the query vector
   //!  Caller owns the vector!
   virtual ExplicitBitVect *makeFingerprint(const ROMol &m) const = 0;
+
+  std::vector<ExplicitBitVect *> &getFingerprints() { return fps; }
+  const std::vector<ExplicitBitVect *> &getFingerprints() const { return fps; }
 };
 
 //! Uses the pattern fingerprinter to rule out matches
@@ -350,7 +366,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
       : molholder(new MolHolder),
         fpholder(),
         mols(molholder.get()),
-        fps(NULL) {}
+        fps(nullptr) {}
 
   SubstructLibrary(boost::shared_ptr<MolHolderBase> molecules)
       : molholder(molecules), fpholder(), mols(molholder.get()), fps(0) {}
@@ -362,12 +378,31 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
         mols(molholder.get()),
         fps(fpholder.get()) {}
 
-  //! Get the underlying molecule holder implementation
-  MolHolderBase &getMolHolder() {
-    PRECONDITION(mols, "Molecule holder NULL in SubstructLibrary");
-    return *mols;
+  SubstructLibrary(const std::string &pickle)
+      : molholder(new MolHolder), fpholder(), mols(molholder.get()),
+        fps(nullptr) {
+          initFromString(pickle);
   }
 
+  //! Get the underlying molecule holder implementation
+  boost::shared_ptr<MolHolderBase> &getMolHolder() {
+    return molholder;
+  }
+
+  const boost::shared_ptr<MolHolderBase> &getMolHolder() const {
+    return molholder;
+  }
+
+  //! Get the underlying molecule holder implementation
+  boost::shared_ptr<FPHolderBase> &getFpHolder() {
+    return fpholder;
+  }
+
+  //! Get the underlying molecule holder implementation
+  const boost::shared_ptr<FPHolderBase> &getFpHolder() const {
+    return fpholder;
+  }
+  
   const MolHolderBase &getMolecules() const {
     PRECONDITION(mols, "Molecule holder NULL in SubstructLibrary");
     return *mols;
@@ -532,7 +567,24 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
     PRECONDITION(mols, "molholder is null in SubstructLibrary");
     return rdcast<unsigned int>(molholder->size());
   }
+
+
+  //! access required for serialization
+  void resetHolders() {
+    mols = molholder.get();
+    fps = fpholder.get();
+  }
+  
+  //! serializes (pickles) to a stream
+  void toStream(std::ostream &ss) const;
+  //! returns a string with a serialized (pickled) representation
+  std::string Serialize() const;
+  //! initializes from a stream pickle
+  void initFromStream(std::istream &ss);
+  //! initializes from a string pickle
+  void initFromString(const std::string &text);
 };
 }
 
+#include "SubstructLibrarySerialization.h"
 #endif
