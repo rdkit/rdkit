@@ -75,9 +75,11 @@ void applyMolListPropsToAtoms(ROMol &mol, const std::string &prefix,
       size_t first_token = 0;
       if (tokens.size() == mol.getNumAtoms() + 1 && tokens[0].front() == '[' &&
           tokens[0].back() == ']') {
-        mv = tokens[0].substr(1);
-        mv.pop_back();
+        mv = std::string(tokens[0].begin()+1,tokens[0].end()-1);
         first_token = 1;
+      }
+      if(mv.empty()){
+        BOOST_LOG(rdWarningLog)<<"Missing value marker for property "<<pn<<" is empty."<<std::endl;
       }
       std::string atompn = pn.substr(prefix.size());
       for (size_t i = first_token; i < tokens.size(); ++i) {

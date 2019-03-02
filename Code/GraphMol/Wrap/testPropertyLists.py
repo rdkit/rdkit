@@ -43,14 +43,14 @@ $$$$"""
     def testForwardSupplier(self):
         sio = BytesIO(self.sdf)
         suppl = Chem.ForwardSDMolSupplier(sio)
+        suppl.SetProcessPropertyLists(False)
         m = next(suppl)
-        self.assertFalse(suppl.GetProcessPropertyLists())
         self.assertTrue(m.HasProp("atom.prop.AtomLabel"))
         self.assertFalse(m.GetAtomWithIdx(0).HasProp("AtomLabel"))
 
         sio = BytesIO(self.sdf)
         suppl = Chem.ForwardSDMolSupplier(sio)
-        suppl.SetProcessPropertyLists(True)
+        self.assertTrue(suppl.GetProcessPropertyLists())
         m = next(suppl)
         self.assertTrue(m.HasProp("atom.prop.AtomLabel"))
         self.assertTrue(m.GetAtomWithIdx(0).HasProp("AtomLabel"))
@@ -58,6 +58,7 @@ $$$$"""
     def testSupplier(self):
         suppl = Chem.SDMolSupplier()
         suppl.SetData(self.sdf)
+        suppl.SetProcessPropertyLists(False)
         m = suppl[0]
         self.assertFalse(suppl.GetProcessPropertyLists())
         self.assertTrue(m.HasProp("atom.prop.AtomLabel"))
@@ -71,7 +72,6 @@ $$$$"""
     def testCreateLists(self):
         suppl = Chem.SDMolSupplier()
         suppl.SetData(self.sdf)
-        suppl.SetProcessPropertyLists(True)
         m = suppl[0]
         self.assertTrue(m.GetAtomWithIdx(0).HasProp("NumHeavyNeighbors"))
         m.ClearProp("atom.iprop.NumHeavyNeighbors")

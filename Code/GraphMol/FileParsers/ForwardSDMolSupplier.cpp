@@ -53,7 +53,7 @@ void ForwardSDMolSupplier::init() {
   df_owner = false;
   df_end = false;
   d_line = 0;
-  df_processPropertyLists = false;
+  df_processPropertyLists = true;
 }
 
 void ForwardSDMolSupplier::reset() {

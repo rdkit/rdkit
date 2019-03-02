@@ -27,6 +27,7 @@ TEST_CASE("Property list conversion", "[atom_list_properties]") {
       m->setProp("atom.iprop.foo1","1   6 9");
       m->setProp("atom.iprop.foo2","3 n/a   9");
       m->setProp("atom.iprop.foo3","[?]  5 1 ?");
+      m->setProp("atom.iprop.foo4","[foo] 3 foo   9");
       FileParserUtils::applyMolListPropsToAtoms<std::int64_t>(*m,"atom.iprop.");
       CHECK(m->getAtomWithIdx(0)->hasProp("foo1"));
       CHECK(m->getAtomWithIdx(1)->hasProp("foo1"));
@@ -37,6 +38,9 @@ TEST_CASE("Property list conversion", "[atom_list_properties]") {
       CHECK(m->getAtomWithIdx(0)->hasProp("foo3"));
       CHECK(m->getAtomWithIdx(1)->hasProp("foo3"));
       CHECK(!m->getAtomWithIdx(2)->hasProp("foo3"));
+      CHECK(m->getAtomWithIdx(0)->hasProp("foo4"));
+      CHECK(!m->getAtomWithIdx(1)->hasProp("foo4"));
+      CHECK(m->getAtomWithIdx(2)->hasProp("foo4"));
       CHECK(m->getAtomWithIdx(1)->getProp<std::int64_t>("foo1")==6);
       CHECK(m->getAtomWithIdx(2)->getProp<std::int64_t>("foo2")==9);
       CHECK(m->getAtomWithIdx(1)->getProp<std::int64_t>("foo3")==1);
@@ -165,6 +169,7 @@ $$$$
     SECTION("no processing"){
         RDKit::SDMolSupplier suppl;
         suppl.setData(sdf);
+        suppl.setProcessPropertyLists(false);
         std::unique_ptr<RDKit::ROMol> m(suppl[0]);
         REQUIRE(m);
         CHECK(m->hasProp("atom.prop.AtomLabel"));
@@ -173,7 +178,6 @@ $$$$
     SECTION("with processing"){
         RDKit::SDMolSupplier suppl;
         suppl.setData(sdf);
-        suppl.setProcessPropertyLists(true);
         std::unique_ptr<RDKit::ROMol> m(suppl[0]);
         REQUIRE(m);
         CHECK(m->hasProp("atom.prop.AtomLabel"));
