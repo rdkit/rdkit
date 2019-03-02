@@ -2231,6 +2231,7 @@ void testIssue3525673() {
 
   nmol = reader.next();
   TEST_ASSERT(nmol);
+  delete nmol;
 
   nmol = reader.next();
   TEST_ASSERT(nmol);
@@ -2239,9 +2240,11 @@ void testIssue3525673() {
 
   nmol = reader.next();
   TEST_ASSERT(nmol);
+  delete nmol;
 
   nmol = reader.next();
   TEST_ASSERT(nmol);
+  delete nmol;
 
   nmol = reader.next();
   TEST_ASSERT(nmol);
@@ -2250,6 +2253,7 @@ void testIssue3525673() {
 
   nmol = reader.next();
   TEST_ASSERT(nmol);
+  delete nmol;
 
   nmol = reader.next();
   TEST_ASSERT(!nmol);  // broken due to 'foo' in counts line!
@@ -2261,6 +2265,7 @@ void testIssue3525673() {
 
   nmol = reader.next();
   TEST_ASSERT(nmol);
+  delete nmol;
 }
 
 void testBlankLinesInProps() {

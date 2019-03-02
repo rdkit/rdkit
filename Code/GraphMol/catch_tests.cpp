@@ -133,10 +133,12 @@ TEST_CASE("github #2224", "[bug, molops, removeHs, query]") {
     }
     {  // but if we add a query feature it's not removed
       RWMol m2(*mol);
-      m2.replaceAtom(1, new QueryAtom(1));
+      auto *qa = new QueryAtom(1);
+      m2.replaceAtom(1, qa);
       m2.getAtomWithIdx(1)->setAtomicNum(1);
       MolOps::removeHs(m2);
       CHECK(m2.getNumAtoms() == 2);
+      delete qa;
     }
   }
 }
