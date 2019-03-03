@@ -73,3 +73,6 @@ if (RDK_TEST_MULTITHREADED)
   add_pytest(pyTestThreads
            ${CMAKE_CURRENT_SOURCE_DIR}/testThreads.py)
 endif (RDK_TEST_MULTITHREADED)
+
+add_pytest(pyTestPropertyLists
+         ${CMAKE_CURRENT_SOURCE_DIR}/testPropertyLists.py)

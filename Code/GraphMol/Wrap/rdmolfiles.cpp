@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2016 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2019 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -22,6 +22,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/FileParsers/FileParserUtils.h>
 #include <GraphMol/FileParsers/SequenceParsers.h>
 #include <GraphMol/FileParsers/SequenceWriters.h>
 #include <RDGeneral/BadFileException.h>
@@ -1182,6 +1183,19 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
                python::arg("bondsToUse") = 0, python::arg("atomSymbols") = 0,
                python::arg("bondSymbols") = 0, python::arg("breakTies") = true),
               docString.c_str());
+
+  python::def("CreateAtomIntPropertyList", FileParserUtils::createAtomIntPropertyList,
+  (python::arg("mol"),python::arg("propName"),python::arg("missingValueMarker")="",python::arg("lineSize")=190),
+  "creates a list property on the molecule from individual atom property values");
+  python::def("CreateAtomDoublePropertyList", FileParserUtils::createAtomDoublePropertyList,
+  (python::arg("mol"),python::arg("propName"),python::arg("missingValueMarker")="",python::arg("lineSize")=190),
+  "creates a list property on the molecule from individual atom property values");
+  python::def("CreateAtomBoolPropertyList", FileParserUtils::createAtomBoolPropertyList,
+  (python::arg("mol"),python::arg("propName"),python::arg("missingValueMarker")="",python::arg("lineSize")=190),
+  "creates a list property on the molecule from individual atom property values");
+  python::def("CreateAtomStringPropertyList", FileParserUtils::createAtomStringPropertyList,
+  (python::arg("mol"),python::arg("propName"),python::arg("missingValueMarker")="",python::arg("lineSize")=190),
+  "creates a list property on the molecule from individual atom property values");
 
 /********************************************************
  * MolSupplier stuff

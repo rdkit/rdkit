@@ -155,7 +155,6 @@ TEST_CASE(
   }
 }
 
-
 TEST_CASE("github #2257: writing cxsmiles", "[smiles,cxsmiles]") {
   SECTION("basics") {
     auto mol = "OCC"_smiles;
@@ -291,7 +290,7 @@ TEST_CASE("Github #2148", "[bug, Smiles, Smarts]") {
     CHECK(mol->getBondBetweenAtoms(1, 2)->getBondType() == Bond::DOUBLE);
     CHECK(mol->getBondBetweenAtoms(1, 2)->getStereo() == Bond::STEREOE);
     auto smi = MolToSmiles(*mol);
-    CHECK(smi=="C=c1cc/c(=C\\C)nc1");    
+    CHECK(smi == "C=c1cc/c(=C\\C)nc1");
   }
 }
 

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2013 greg landrum, Rational Discovery LLC
+//  Copyright (C) 2002-2019 greg landrum, Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef _RD_MOLSUPPLIER_H
-#define _RD_MOLSUPPLIER_H
+#ifndef RD_MOLSUPPLIER_H
+#define RD_MOLSUPPLIER_H
 
 #include <RDGeneral/types.h>
 
@@ -106,6 +106,13 @@ class RDKIT_FILEPARSERS_EXPORT ForwardSDMolSupplier : public MolSupplier {
   virtual ROMol *next();
   virtual bool atEnd();
 
+  void setProcessPropertyLists(bool val) {
+    df_processPropertyLists = val;
+  }
+  bool getProcessPropertyLists() const {
+    return df_processPropertyLists;
+  }
+
  protected:
   virtual void checkForEnd();
   ROMol *_next();
@@ -113,6 +120,7 @@ class RDKIT_FILEPARSERS_EXPORT ForwardSDMolSupplier : public MolSupplier {
   bool df_end;
   int d_line;  // line number we are currently on
   bool df_sanitize, df_removeHs, df_strictParsing;
+  bool df_processPropertyLists;
 };
 
 // \brief a lazy supplier from an SD file
