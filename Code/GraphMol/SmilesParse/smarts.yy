@@ -40,9 +40,8 @@ yysmarts_error( const char *input,
 		void *scanner,int start_token, const char * msg )
 {
   yyErrorCleanup(ms);
-  throw RDKit::SmilesParseException(msg);
+  BOOST_LOG(rdErrorLog) << "SMARTS Parse Error: " << msg << " while parsing: " << input << std::endl;
 }
-
 %}
 
 %define api.pure full
@@ -95,11 +94,8 @@ yysmarts_error( const char *input,
 %left AND_TOKEN
 %right NOT_TOKEN
 
-%destructor { delete $$; } ATOM_TOKEN
-%destructor { delete $$; } SIMPLE_ATOM_QUERY_TOKEN COMPLEX_ATOM_QUERY_TOKEN
-%destructor { delete $$; } RINGSIZE_ATOM_QUERY_TOKEN RINGBOND_ATOM_QUERY_TOKEN IMPLICIT_H_ATOM_QUERY_TOKEN
-%destructor { delete $$; } HYB_TOKEN HETERONEIGHBOR_ATOM_QUERY_TOKEN ALIPHATIC ALIPHATICHETERONEIGHBOR_ATOM_QUERY_TOKEN
-%destructor { delete $$; } bond_expr
+%destructor { delete $$; } <atom>
+%destructor { delete $$; } <bond>
 
 %start meta_start
 
