@@ -264,10 +264,17 @@ Heteroatom neighbor queries
   >>> Chem.MolFromSmiles('O=C(O)c1nc(O)ccn1').GetSubstructMatches(Chem.MolFromSmarts('[Z1]'))
   ((5,),)
 
-- **Range queries**: Ranges of values can be provided for many query types that expect numeric values. Some examples:
-   - ``D{2-4}`` matches atoms that have between 2 and 4 (inclusive) explicit connections.
-   - ``D{-3}`` matches atoms that have less than or equal to 3 explicit connections.
-   - ``D{2-}`` matches atoms that have at least 2 explicit connections.
+
+Range queries
+-------------
+Ranges of values can be provided for many query types that expect numeric values. 
+The query types that currently support range queries are: 
+    ``D``, ``h``, ``r``, ``R``, ``v``, ``x``, ``X``, ``z``, ``Z``
+  
+Here are some examples:
+  - ``D{2-4}`` matches atoms that have between 2 and 4 (inclusive) explicit connections.
+  - ``D{-3}`` matches atoms that have less than or equal to 3 explicit connections.
+  - ``D{2-}`` matches atoms that have at least 2 explicit connections.
 
 .. doctest::
 
@@ -300,7 +307,6 @@ are in rings.
 
 Chemical Reaction Handling
 **************************
-
 
 Reaction SMARTS
 ===============
@@ -1007,6 +1013,7 @@ the RDKit we added the option to include S and P contributions:
   92.5
   >>> Descriptors.TPSA(Chem.MolFromSmiles('Cc1ccccc1N1C(=O)c2cc(S(N)(=O)=O)c(Cl)cc2NC1C'), includeSandP=True)
   100.88
+
 
 
 .. rubric:: Footnotes
