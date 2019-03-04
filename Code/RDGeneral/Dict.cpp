@@ -28,9 +28,8 @@ void Dict::getVal(const std::string &what, std::string &res) const {
       rdvalue_tostring(i.val, res);
       return;
     }
-
   }
-  throw KeyErrorException(what);    
+  throw KeyErrorException(what);
 }
 
 bool Dict::getValIfPresent(const std::string &what, std::string &res) const {
@@ -53,4 +52,4 @@ bool Dict::getValIfPresent(const std::string &what, std::string &res) const {
   return false;
 }
 
-}
+}  // namespace RDKit

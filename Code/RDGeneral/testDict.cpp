@@ -392,6 +392,17 @@ void testStringVals() {
     TEST_ASSERT(feq(dv, 1.3));
   }
 
+  {
+    Dict d;
+    int iv = 1;
+    d.setVal("foo", iv);
+    std::string sv;
+    d.getVal("foo", sv);
+    TEST_ASSERT(sv == "1");
+    sv = d.getVal<std::string>("foo");
+    TEST_ASSERT(sv == "1");
+  }
+
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
 
