@@ -551,12 +551,30 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
           //           << "):" << bond2->getBondDir() << std::endl;
           if (!bond1->hasProp(common_properties::_unspecifiedOrder)) {
             matchedBond = bond1;
-            matchedBond->setEndAtomIdx(atom2->getIdx());
+            if (matchedBond->getBondType() == Bond::DATIVEL) {
+              matchedBond->setBeginAtomIdx(atom2->getIdx());
+              matchedBond->setEndAtomIdx(atom1->getIdx());
+              matchedBond->setBondType(Bond::DATIVE);
+            } else if (matchedBond->getBondType() == Bond::DATIVER) {
+              matchedBond->setEndAtomIdx(atom2->getIdx());
+              matchedBond->setBondType(Bond::DATIVE);
+            } else {
+              matchedBond->setEndAtomIdx(atom2->getIdx());
+            }
             swapBondDirIfNeeded(bond1, bond2);
             delete bond2;
           } else {
             matchedBond = bond2;
-            matchedBond->setEndAtomIdx(atom1->getIdx());
+            if (matchedBond->getBondType() == Bond::DATIVEL) {
+              matchedBond->setBeginAtomIdx(atom1->getIdx());
+              matchedBond->setEndAtomIdx(atom2->getIdx());
+              matchedBond->setBondType(Bond::DATIVE);
+            } else if (matchedBond->getBondType() == Bond::DATIVER) {
+              matchedBond->setEndAtomIdx(atom1->getIdx());
+              matchedBond->setBondType(Bond::DATIVE);
+            } else {
+              matchedBond->setEndAtomIdx(atom1->getIdx());
+            }
             swapBondDirIfNeeded(bond2, bond1);
             delete bond1;
           }
