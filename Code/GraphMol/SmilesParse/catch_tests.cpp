@@ -201,17 +201,62 @@ TEST_CASE("Github #2298", "[bug, Smarts, substructure]") {
   SECTION("basics") {
     auto m1 = "[#6]"_smarts;
     REQUIRE(m1);
-    CHECK(SubstructMatch(*m1,*m1, ps).size()==1);
+    CHECK(SubstructMatch(*m1, *m1, ps).size() == 1);
     auto m2 = "[C]"_smarts;
     REQUIRE(m2);
-    CHECK(SubstructMatch(*m2,*m2, ps).size()==1);
+    CHECK(SubstructMatch(*m2, *m2, ps).size() == 1);
     auto m3 = "[C]"_smarts;
     REQUIRE(m3);
-    CHECK(SubstructMatch(*m3,*m3, ps).size()==1);
+    CHECK(SubstructMatch(*m3, *m3, ps).size() == 1);
   }
   SECTION("a bit more complex") {
     auto m1 = "[CH0+2]"_smarts;
     REQUIRE(m1);
-    CHECK(SubstructMatch(*m1,*m1, ps).size()==1);
+    CHECK(SubstructMatch(*m1, *m1, ps).size() == 1);
+  }
+}
+
+TEST_CASE("dative ring closures", "[bug, smiles]") {
+  SECTION("first closure1") {
+    auto m1 = "N->1CCN->[Pt]1"_smiles;
+    REQUIRE(m1);
+    REQUIRE(m1->getBondBetweenAtoms(0, 4));
+    CHECK(m1->getBondBetweenAtoms(0, 4)->getBondType() == Bond::DATIVE);
+    CHECK(m1->getBondBetweenAtoms(0, 4)->getBeginAtomIdx() == 0);
+  }
+  SECTION("first closure2") {
+    auto m1 = "[Pt]<-1CCCN1"_smiles;
+    REQUIRE(m1);
+    REQUIRE(m1->getBondBetweenAtoms(0, 4));
+    CHECK(m1->getBondBetweenAtoms(0, 4)->getBondType() == Bond::DATIVE);
+    CHECK(m1->getBondBetweenAtoms(0, 4)->getBeginAtomIdx() == 4);
+  }
+  SECTION("second closure1") {
+    auto m1 = "N1CCN->[Pt]<-1"_smiles;
+    REQUIRE(m1);
+    REQUIRE(m1->getBondBetweenAtoms(0, 4));
+    CHECK(m1->getBondBetweenAtoms(0, 4)->getBondType() == Bond::DATIVE);
+    CHECK(m1->getBondBetweenAtoms(0, 4)->getBeginAtomIdx() == 0);
+  }
+  SECTION("second closure2") {
+    auto m1 = "[Pt]1CCCN->1"_smiles;
+    REQUIRE(m1);
+    REQUIRE(m1->getBondBetweenAtoms(0, 4));
+    CHECK(m1->getBondBetweenAtoms(0, 4)->getBondType() == Bond::DATIVE);
+    CHECK(m1->getBondBetweenAtoms(0, 4)->getBeginAtomIdx() == 4);
+  }
+  SECTION("branch1") {
+    auto m1 = "N(->[Pt])C"_smiles;
+    REQUIRE(m1);
+    REQUIRE(m1->getBondBetweenAtoms(0, 1));
+    CHECK(m1->getBondBetweenAtoms(0, 1)->getBondType() == Bond::DATIVE);
+    CHECK(m1->getBondBetweenAtoms(0, 1)->getBeginAtomIdx() == 0);
+  }
+  SECTION("branch2") {
+    auto m1 = "N(->[Pt])C"_smiles;
+    REQUIRE(m1);
+    REQUIRE(m1->getBondBetweenAtoms(0, 1));
+    CHECK(m1->getBondBetweenAtoms(0, 1)->getBondType() == Bond::DATIVE);
+    CHECK(m1->getBondBetweenAtoms(0, 1)->getBeginAtomIdx() == 0);
   }
 }
