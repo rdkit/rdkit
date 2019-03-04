@@ -166,10 +166,44 @@ The RDKit covers all of the standard features of Daylight SMILES [#smiles]_ as w
 
 Here's the (likely partial) list of extensions:
 
-- **Aromaticity**: ``te`` (aromatic Te) is accepted
-- **Dative bonds**: ``<-`` and ``->`` create a dative bond between the atoms, direction does matter.
-- **Specifying atoms by atomic number**: the ``[#6]`` construct from SMARTS is supported in SMILES.
 
+Aromaticity
+-----------
+
+ ``te`` (aromatic Te) is accepted
+
+
+Dative bonds
+------------
+
+``<-`` and ``->`` create a dative bond between the atoms, direction does matter.
+
+Here's an example of a bipy-copper complex:
+
+.. doctest::
+
+  >>> bipycu = Chem.MolFromSmiles('c1cccn->2c1-c1n->3cccc1.[Pt]23(Cl)Cl')                                                     
+  >>> bipycu.GetBondBetweenAtoms(4,12).GetBondType()                                                                          
+  rdkit.Chem.rdchem.BondType.DATIVE
+  >>> Chem.MolToSmiles(bipycu)                                                                                                
+  'Cl[Pt]1(Cl)<-n2ccccc2-c2ccccn->12'
+
+Dative bonds have the special characteristic that they don't affect the valence on the start atom, but do affect 
+the end atom. So in this case, the N atoms involved in the dative bond have the valence of 3 that we expect from bipy, 
+while the Cu has a valence of 4:
+
+.. doctest::
+
+  >>> bipycu.GetAtomWithIdx(4).GetTotalValence()                                                                         
+  3
+  >>> bipycu.GetAtomWithIdx(12).GetTotalValence()                                                                        
+  4
+
+
+Specifying atoms by atomic number
+---------------------------------
+
+The ``[#6]`` construct from SMARTS is supported in SMILES.
 
 SMARTS Support and Extensions
 =============================
@@ -185,7 +219,10 @@ Here's the (hopefully complete) list of SMARTS features that are *not* supported
 
 Here's the (likely partial) list of extensions:
 
-- **Hybridization queries**:
+
+Hybridization queries
+---------------------
+
    - ``^0`` matches S hybridized atoms
    - ``^1`` matches SP hybridized atoms
    - ``^2`` matches SP2 hybridized atoms
@@ -198,7 +235,11 @@ Here's the (likely partial) list of extensions:
   >> Chem.MolFromSmiles('CC=CF').GetSubstructMatches(Chem.MolFromSmarts('[^2]'))
   ((1,), (2,))
 
-- **Dative bonds**: ``<-`` and ``->`` match the corresponding dative bonds, direction does matter.
+
+Dative bonds
+------------
+
+``<-`` and ``->`` match the corresponding dative bonds, direction does matter.
 
 .. doctest::
 
@@ -207,7 +248,10 @@ Here's the (likely partial) list of extensions:
   >>> Chem.MolFromSmiles('C1=CC=CC=N1->[Fe]').GetSubstructMatches(Chem.MolFromSmarts('*<-[#7]'))
   ((6, 5),)
 
-- **Heteroatom neighbor queries**:
+
+Heteroatom neighbor queries
+---------------------------
+
    - the atom query ``z`` matches atoms that have the specified number of heteroatom (i.e. not C or H) neighbors. For example, ``z2`` would match the second C in ``CC(=O)O``.
    - the atom query ``Z`` matches atoms that have the specified number of aliphatic heteroatom (i.e. not C or H) neighbors.
 
@@ -247,6 +291,11 @@ For example, the SSSR for cubane only contains 5 rings, even though there are â€
 This is the approach that we took with the RDKit.
 
 Because it is sometimes useful to be able to count how many SSSR rings are present in the molecule, there is a GetSSSR function, but this only returns the SSSR count, not the potentially non-unique set of rings.
+
+For situations where you just care about knowing whether or not atoms/bonds are in rings, the RDKit provides the function 
+:py:func:`rdkit.Chem.rdmolops.FastFindRings`. This does a depth-first traversal of the molecule graph and identifies atoms and bonds that
+are in rings.
+
 
 
 Chemical Reaction Handling
@@ -973,7 +1022,7 @@ License
 
 .. image:: images/picture_5.png
 
-This document is copyright (C) 2007-2018 by Greg Landrum
+This document is copyright (C) 2007-2019 by Greg Landrum
 
 This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 License.
 To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/4.0/ or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.
