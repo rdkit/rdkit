@@ -1,3 +1,6 @@
+
+
+
 //  $Id$
 //
 //   Copyright (C) 2002-2008 Greg Landrum and Rational Discovery LLC
@@ -19,19 +22,18 @@
 #include "MolSupplier.h"
 #include "MolWriters.h"
 #include "FileParsers.h"
+#include "FileParserUtils.h"
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/RDLog.h>
+#include <RDBoostStreams/streams.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Depictor/RDDepictor.h>
 
-#ifdef TEST_GZIP_SD
 #include <boost/iostreams/device/file.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
-#include <boost/iostreams/filter/gzip.hpp>
 namespace io = boost::iostreams;
-#endif
 
 using namespace RDKit;
 
@@ -2075,7 +2077,7 @@ int testForwardSDSupplier() {
     }
     TEST_ASSERT(i == 16);
   }
-#ifdef TEST_GZIP_SD
+
   // make sure the boost::iostreams are working
   {
     io::filtering_istream strm;
@@ -2093,13 +2095,7 @@ int testForwardSDSupplier() {
     TEST_ASSERT(i == 998);
   }
   {
-    io::filtering_istream strm;
-    // the stream must be opened in binary mode otherwise it won't work on
-    // Windows
-    std::ifstream is(fname2.c_str(), std::ios_base::binary);
-    strm.push(io::gzip_decompressor());
-    strm.push(is);
-
+    gzstream strm(fname2);
     unsigned int i = 0;
     while (!strm.eof()) {
       std::string line;
@@ -2113,12 +2109,7 @@ int testForwardSDSupplier() {
   }
   // looks good, now do a supplier:
   {
-    io::filtering_istream strm;
-    // the stream must be opened in binary mode otherwise it won't work on
-    // Windows
-    std::ifstream is(fname2.c_str(), std::ios_base::binary);
-    strm.push(io::gzip_decompressor());
-    strm.push(is);
+    gzstream strm(fname2);
 
     ForwardSDMolSupplier sdsup(&strm, false);
     unsigned int i = 0;
@@ -2156,12 +2147,7 @@ int testForwardSDSupplier() {
     TEST_ASSERT(i == 1663);
   }
   {
-    io::filtering_istream strm;
-    // the stream must be opened in binary mode otherwise it won't work on
-    // Windows
-    std::ifstream is(maefname2.c_str(), std::ios_base::binary);
-    strm.push(io::gzip_decompressor());
-    strm.push(is);
+    gzstream strm(maefname2);
 
     unsigned int i = 0;
     while (!strm.eof()) {
@@ -2176,12 +2162,8 @@ int testForwardSDSupplier() {
   }
   // looks good, now do a supplier:
   {
-    io::filtering_istream strm;
-    // the stream must be opened in binary mode otherwise it won't work on
-    // Windows
-    std::ifstream is(maefname2.c_str(), std::ios_base::binary);
-    strm.push(io::gzip_decompressor());
-    strm.push(is);
+    gzstream strm(maefname2);
+
     MaeMolSupplier maesup(&strm, false);
     unsigned int i = 0;
     std::shared_ptr<ROMol> nmol;
@@ -2195,7 +2177,7 @@ int testForwardSDSupplier() {
   }
 #endif // RDK_BUILD_COORDGEN_SUPPORT
 
-#endif
+
   return 1;
 }
 
