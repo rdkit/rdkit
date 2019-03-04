@@ -1015,6 +1015,79 @@ the RDKit we added the option to include S and P contributions:
   100.88
 
 
+Atom Properties and SDF files
+*****************************
+
+*Note* This section describes functionality added in the `2019.03.1` release of the RDKit.
+
+By default the :py:class:rdkit.Chem.rdmolfiles.SDMolSupplier and :py:class:rdkit.Chem.rdmolfiles.ForwardSDMolSupplier classes 
+(``RDKit::SDMolSupplier`` and ``RDKit::ForwardMolSupplier`` in C++) can now recognize some molecular properties as property lists
+and them into atomic properties. Properties with names that start with ``atom.prop``, ``atom.iprop``, ``atom.dprop``, or ``atom.bprop`` 
+are converted to atomic properties of type string, int (64 bit), double, or bool respectively.
+
+Here's a sample block from an SDF that demonstrates all of the features, they are explained below::
+
+  property_example
+      RDKit  2D
+
+    3  3  0  0  0  0  0  0  0  0999 V2000
+      0.8660    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    -0.4330    0.7500    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    -0.4330   -0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1  2  1  0
+    2  3  1  0
+    3  1  1  0
+  M  END
+  >  <atom.dprop.PartialCharge>  (1) 
+  0.008 -0.314 0.008
+
+  >  <atom.iprop.NumHeavyNeighbors>  (1) 
+  2 2 2
+
+  >  <atom.prop.AtomLabel>  (1) 
+  C1 N2 C3
+
+  >  <atom.bprop.IsCarbon>  (1) 
+  1 0 1
+
+  >  <atom.prop.PartiallyMissing>  (1) 
+  one n/a three
+
+  >  <atom.iprop.PartiallyMissingInt>  (1) 
+  [?] 2 2 ?
+
+  $$$$
+
+Every atom property list should contain a number of space-delimited elements equal to the number of atoms. 
+Missing values are, by default, indicated with the string ``n/a``. The missing value marker can be changed by beginning
+the property list with a value in square brackets. So, for example, the property ``PartiallyMissing`` is set to "one" 
+for atom 0, "three" for atom 2, and is not set for atom 1. Similarly the property ``PartiallyMissingInt`` is set to 2 for atom 0, 2 for atom 1,
+and is not set for atom 2.
+
+This behavior is enabled by default and can be turned on/off with the ``SetPropertyLists()`` method.
+
+If you have atom properties that you would like to have written to SDF files, you can use the functions
+:py:func:rdkit.Chem.rdmolfiles.CreateAtomStringPropertyList, :py:func:rdkit.Chem.rdmolfiles.CreateAtomIntPropertyList, 
+:py:func:rdkit.Chem.rdmolfiles.CreateAtomDoublePropertyList, or :py:func:rdkit.Chem.rdmolfiles.CreateAtomBoolPropertyList :
+
+.. doctest::
+
+  >>> m = Chem.MolFromSmiles('CO')
+  >>> m.GetAtomWithIdx(0).SetDoubleProp('foo',3.14)                                                                      
+  >>> Chem.CreateAtomDoublePropertyList(m,'foo')                                                                         
+  >>> m.GetProp('atom.dprop.foo')                                                                                        
+  '3.1400000000000001 n/a'
+  >>> print(Chem.MolToMolBlock(m))     # doctest: +NORMALIZE_WHITESPACE                                                                                  
+  <BLANKLINE>
+        RDKit          2D
+  <BLANKLINE>
+    2  1  0  0  0  0  0  0  0  0999 V2000
+      0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+      1.2990    0.7500    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1  2  1  0
+  M  END
+  <BLANKLINE>
+
 
 .. rubric:: Footnotes
 
