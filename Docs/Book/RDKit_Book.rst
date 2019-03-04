@@ -205,6 +205,33 @@ Specifying atoms by atomic number
 
 The ``[#6]`` construct from SMARTS is supported in SMILES.
 
+
+CXSMILES extensions
+-------------------
+
+The RDKit supports parsing and writing a subset of the extended SMILES functionality introduced by ChemAxon [#cxsmiles]_CIPCode
+
+The features which are parsed include:
+
+- atomic coordinates
+- atomic values
+- atomic labels
+- atomic properties
+- coordinate bonds (these are translated into double bonds)
+- radicals
+- enhanced stereo (these are converted into ``StereoGroups``)
+
+The features which are written by :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmiles` 
+(note the specialized writer function) include:
+
+- atomic coordinates
+- atomic values
+- atomic labels
+- atomic properties
+- radicals
+- enhanced stereo
+ 
+
 SMARTS Support and Extensions
 =============================
 
@@ -1020,7 +1047,7 @@ Atom Properties and SDF files
 
 *Note* This section describes functionality added in the `2019.03.1` release of the RDKit.
 
-By default the :py:class:rdkit.Chem.rdmolfiles.SDMolSupplier and :py:class:rdkit.Chem.rdmolfiles.ForwardSDMolSupplier classes 
+By default the :py:class:`rdkit.Chem.rdmolfiles.SDMolSupplier` and :py:class:`rdkit.Chem.rdmolfiles.ForwardSDMolSupplier` classes 
 (``RDKit::SDMolSupplier`` and ``RDKit::ForwardMolSupplier`` in C++) can now recognize some molecular properties as property lists
 and them into atomic properties. Properties with names that start with ``atom.prop``, ``atom.iprop``, ``atom.dprop``, or ``atom.bprop`` 
 are converted to atomic properties of type string, int (64 bit), double, or bool respectively.
@@ -1064,11 +1091,12 @@ the property list with a value in square brackets. So, for example, the property
 for atom 0, "three" for atom 2, and is not set for atom 1. Similarly the property ``PartiallyMissingInt`` is set to 2 for atom 0, 2 for atom 1,
 and is not set for atom 2.
 
-This behavior is enabled by default and can be turned on/off with the ``SetPropertyLists()`` method.
+This behavior is enabled by default and can be turned on/off with the 
+:py:class:`rdkit.Chem.rdmolfiles.SetProcessPropertyLists` method.
 
 If you have atom properties that you would like to have written to SDF files, you can use the functions
-:py:func:rdkit.Chem.rdmolfiles.CreateAtomStringPropertyList, :py:func:rdkit.Chem.rdmolfiles.CreateAtomIntPropertyList, 
-:py:func:rdkit.Chem.rdmolfiles.CreateAtomDoublePropertyList, or :py:func:rdkit.Chem.rdmolfiles.CreateAtomBoolPropertyList :
+:py:func:`rdkit.Chem.rdmolfiles.CreateAtomStringPropertyList`, :py:func:`rdkit.Chem.rdmolfiles.CreateAtomIntPropertyList`, 
+:py:func:`rdkit.Chem.rdmolfiles.CreateAtomDoublePropertyList`, or :py:func:`rdkit.Chem.rdmolfiles.CreateAtomBoolPropertyList` :
 
 .. doctest::
 
@@ -1094,6 +1122,7 @@ If you have atom properties that you would like to have written to SDF files, yo
 .. [#smirks] http://www.daylight.com/dayhtml/doc/theory/theory.smirks.html
 .. [#smiles] http://www.daylight.com/dayhtml/doc/theory/theory.smiles.html
 .. [#smarts] http://www.daylight.com/dayhtml/doc/theory/theory.smarts.html
+.. [#cxsmiles] https://docs.chemaxon.com/display/docs/ChemAxon+Extended+SMILES+and+SMARTS+-+CXSMILES+and+CXSMARTS
 .. [#intramolRxn] Thanks to James Davidson for this example.
 .. [#chiralRxn] Thanks to JP Ebejer and Paul Finn for this example.
 
