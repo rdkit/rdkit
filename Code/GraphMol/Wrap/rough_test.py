@@ -4442,6 +4442,23 @@ CAS<~>
     self.assertEqual(m.GetProp('_Name'), "ourname")
     self.assertEqual(m.GetProp("_CXSMILES_Data"), "|$foo;;bar$|")
 
+  def testWriteCXSmiles(self):
+    smi = "CCC |$foo;;bar$|"
+    ps = Chem.SmilesParserParams()
+    ps.allowCXSMILES = True
+    m = Chem.MolFromSmiles(smi, ps)
+    self.assertTrue(m is not None)
+    self.assertTrue(m.GetAtomWithIdx(0).HasProp('atomLabel'))
+    self.assertEqual(m.GetAtomWithIdx(0).GetProp('atomLabel'), "foo")
+    self.assertEqual(Chem.MolToCXSmiles(m),'CCC |$foo;;bar$|')
+
+    smi = "Cl.CCC |$;foo;;bar$|"
+    m = Chem.MolFromSmiles(smi, ps)
+    self.assertTrue(m is not None)
+    self.assertTrue(m.GetAtomWithIdx(1).HasProp('atomLabel'))
+    self.assertEqual(m.GetAtomWithIdx(1).GetProp('atomLabel'), "foo")
+    self.assertEqual(Chem.MolFragmentToCXSmiles(m,atomsToUse=(1,2,3)), 'CCC |$foo;;bar$|')
+
   def testPickleProps(self):
     from rdkit.six.moves import cPickle
     m = Chem.MolFromSmiles('C1=CN=CC=C1')
