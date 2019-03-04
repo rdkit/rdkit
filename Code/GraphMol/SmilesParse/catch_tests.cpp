@@ -254,6 +254,40 @@ TEST_CASE("github #2257: writing cxsmiles", "[smiles,cxsmiles]") {
     auto smi = MolToCXSmiles(*mol);
     CHECK(smi == "CN |$_AV:val1;val2$,atomProp:0.p2.v2:1.p1.v1|");
   }
+
+  SECTION("mol fragments1") {
+    auto mol = "Cl.OC |(1,0,0;0,.75,0.1;0,-.75,-0.1)|"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getNumConformers() == 1);
+
+    std::vector<int> atomsToUse = {1, 2};
+    auto smi = MolFragmentToCXSmiles(*mol, atomsToUse);
+    CHECK(smi == "CO |(0,-0.75,-0.1;0,0.75,0.1)|");
+  }
+  SECTION("mol fragments2") {
+    auto mol = "Cl.N1CC1C |atomProp:1.p2.v2:1.p1.v1:2.p2.v2:2.p1.v1|"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 5);
+    CHECK(!mol->getAtomWithIdx(0)->hasProp("p1"));
+    CHECK(mol->getAtomWithIdx(1)->hasProp("p1"));
+    CHECK(mol->getAtomWithIdx(1)->getProp<std::string>("p1") == "v1");
+
+    std::vector<int> atomsToUse = {1, 2, 3, 4};
+    auto smi = MolFragmentToCXSmiles(*mol, atomsToUse);
+    CHECK(smi == "CC1CN1 |atomProp:2.p2.v2:2.p1.v1:3.p2.v2:3.p1.v1|");
+  }
+
+  SECTION("mol fragments3") {
+    auto mol = "Cl.[CH]C[CH2] |^1:3,^2:1|"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(2)->getNumRadicalElectrons() == 0);
+    CHECK(mol->getAtomWithIdx(3)->getNumRadicalElectrons() == 1);
+    CHECK(mol->getAtomWithIdx(1)->getNumRadicalElectrons() == 2);
+
+    std::vector<int> atomsToUse = {1, 2, 3};
+    auto smi = MolFragmentToCXSmiles(*mol, atomsToUse);
+    CHECK(smi == "[CH]C[CH2] |^1:2,^2:0|");
+  }
 }
 
 TEST_CASE("Github #2148", "[bug, Smiles, Smarts]") {
