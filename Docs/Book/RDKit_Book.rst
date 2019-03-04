@@ -230,7 +230,18 @@ The features which are written by :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmiles`
 - atomic properties
 - radicals
 - enhanced stereo
- 
+
+.. doctest::
+
+  >>> m = Chem.MolFromSmiles('OC')                                                                                       
+  >>> m.GetAtomWithIdx(0).SetProp('p1','2')                                                                              
+  >>> m.GetAtomWithIdx(1).SetProp('p1','5')                                                                              
+  >>> m.GetAtomWithIdx(1).SetProp('p2','A1')                                                                             
+  >>> m.GetAtomWithIdx(0).SetProp('atomLabel','O1')                                                                      
+  >>> m.GetAtomWithIdx(1).SetProp('atomLabel','C2') 
+  >>> Chem.MolToCXSmiles(m)                                                                                              
+  'CO |$C2;O1$,atomProp:0.p1.5:0.p2.A1:1.p1.2|'
+
 
 SMARTS Support and Extensions
 =============================
