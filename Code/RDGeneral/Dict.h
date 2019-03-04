@@ -331,16 +331,7 @@ class RDKIT_RDGENERAL_EXPORT Dict {
 };
 
 template <>
-inline std::string Dict::getVal<std::string>(const std::string &what) const {
-  for (auto &data : _data) {
-    if (data.key == what) {
-      std::string res;
-      rdvalue_tostring(data.val, res);
-      return res;
-    }
-  }
-  throw KeyErrorException(what);
-}
+std::string Dict::getVal<std::string>(const std::string &what) const;
 
 }  // namespace RDKit
 #endif

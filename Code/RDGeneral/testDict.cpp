@@ -428,6 +428,8 @@ void testVectToString() {
     std::string sv;
     d.getVal("foo", sv);
     TEST_ASSERT(sv == "[1,0,]");
+    sv = d.getVal<std::string>("foo");
+    TEST_ASSERT(sv == "[1,0,]");
   }
   {
     Dict d;
@@ -437,7 +439,8 @@ void testVectToString() {
     d.setVal("foo", v);
     std::string sv;
     d.getVal("foo", sv);
-    std::cerr << sv << std::endl;
+    TEST_ASSERT(sv == "[1.2,0,]");
+    sv = d.getVal<std::string>("foo");
     TEST_ASSERT(sv == "[1.2,0,]");
   }
   {
@@ -448,7 +451,8 @@ void testVectToString() {
     d.setVal("foo", v);
     std::string sv;
     d.getVal("foo", sv);
-    std::cerr << sv << std::endl;
+    TEST_ASSERT(sv == "[10001,0,]");
+    sv = d.getVal<std::string>("foo");
     TEST_ASSERT(sv == "[10001,0,]");
   }
 
