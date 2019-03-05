@@ -7,7 +7,7 @@
 it's intended to be shallow, but broad
 
 """
-from __future__ import print_function
+
 import os, sys, tempfile, gzip, gc
 import unittest, doctest
 from rdkit import RDConfig, rdBase

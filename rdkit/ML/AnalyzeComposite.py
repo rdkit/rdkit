@@ -26,7 +26,7 @@ Usage:  AnalyzeComposite [optional args] <models>
 
       -v: be verbose whilst screening
 """
-from __future__ import print_function
+
 
 import sys
 

@@ -14,7 +14,7 @@ lie.
     [0.9,1.,1.1,2.,2.2] -> [0,1,1,2,2]
 
 """
-from __future__ import print_function
+
 import numpy
 from rdkit.ML.InfoTheory import entropy
 from rdkit.six.moves import zip, map, range

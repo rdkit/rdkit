@@ -13,7 +13,7 @@
 """  EState fingerprinting
 
 """
-from __future__ import print_function
+
 import numpy
 from rdkit.Chem.EState import EStateIndices
 from rdkit.Chem.EState import AtomTypes

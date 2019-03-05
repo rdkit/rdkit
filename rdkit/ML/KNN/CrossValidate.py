@@ -6,7 +6,7 @@
 and evaluation of individual models
 
 """
-from __future__ import print_function
+
 
 from rdkit.ML.Data import SplitData
 from rdkit.ML.KNN import DistFunctions

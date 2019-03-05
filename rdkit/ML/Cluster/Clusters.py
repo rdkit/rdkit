@@ -11,7 +11,7 @@
 """ contains the Cluster class for representing hierarchical cluster trees
 
 """
-from __future__ import print_function
+
 
 from rdkit.six import cmp
 

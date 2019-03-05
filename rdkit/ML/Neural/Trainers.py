@@ -8,7 +8,7 @@
     Dan W. Patterson, Prentice Hall, 1996
 
 """
-from __future__ import print_function
+
 
 import numpy
 

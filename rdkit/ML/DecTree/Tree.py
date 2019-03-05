@@ -4,7 +4,7 @@
 """ Implements a class used to represent N-ary trees
 
 """
-from __future__ import print_function
+
 
 from rdkit.six.moves import cPickle
 

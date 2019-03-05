@@ -2,7 +2,7 @@
 #  Copyright (C) 2000  greg Landrum
 #
 """ unit testing code for trees and decision trees (not learning/xvalidation) """
-from __future__ import print_function
+
 
 import copy
 import os

@@ -10,7 +10,7 @@
 """ defines class _DbConnect_, for abstracting connections to databases
 
 """
-from __future__ import print_function
+
 
 from rdkit.Dbase import DbUtils, DbInfo, DbModule
 

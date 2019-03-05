@@ -13,7 +13,7 @@
 validation values are from the paper (JCICS _31_ 76-81 (1991))
 
 """
-from __future__ import print_function
+
 
 import unittest
 

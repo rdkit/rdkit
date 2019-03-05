@@ -2,7 +2,7 @@
 
 This module puts the various PIDDLE backends through their paces.
 """
-from __future__ import print_function
+
 
 from rdkit.sping import pagesizes
 from rdkit.sping.pid import *

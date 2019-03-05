@@ -32,7 +32,7 @@
 """ Implementation of the BRICS algorithm from Degen et al. ChemMedChem *3* 1503-7 (2008)
 
 """
-from __future__ import print_function
+
 import sys, re, random
 from rdkit import Chem
 from rdkit.Chem import rdChemReactions as Reactions

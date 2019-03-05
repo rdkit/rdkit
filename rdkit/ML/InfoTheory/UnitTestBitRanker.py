@@ -2,7 +2,7 @@
 This test currently fails. The database is not available.
 
 """
-from __future__ import print_function
+
 
 import os
 import unittest

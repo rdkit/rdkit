@@ -2,7 +2,7 @@
 # Copyright (C) 2003 Rational Discovery LLC
 # All rights are reserved.
 #
-from __future__ import print_function
+
 # from elementtree.ElementTree import ElementTree, Element, SubElement
 import time
 from xml.etree.ElementTree import ElementTree, Element, SubElement

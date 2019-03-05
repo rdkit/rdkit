@@ -66,7 +66,7 @@ Optional Arguments:
 """
 # from rdkit.Dbase.DbConnection import DbConnect
 
-from __future__ import print_function
+
 
 import sys
 

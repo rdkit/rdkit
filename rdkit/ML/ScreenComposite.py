@@ -108,7 +108,7 @@ a file containing a pickled composite model and _filename_ is a QDAT file.
 
 
 """
-from __future__ import print_function
+
 
 import os
 import sys

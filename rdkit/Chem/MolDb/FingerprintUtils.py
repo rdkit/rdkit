@@ -3,7 +3,7 @@
 # Copyright (C) 2009 Greg Landrum
 #  All Rights Reserved
 #
-from __future__ import print_function
+
 from rdkit.six.moves import cPickle
 from rdkit.six import iterkeys
 from rdkit import DataStructs, Chem

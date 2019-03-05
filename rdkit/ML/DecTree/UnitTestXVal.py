@@ -2,7 +2,7 @@
 #  Copyright (C) 2000  greg Landrum
 #
 """ unit testing code for cross validation """
-from __future__ import print_function
+
 
 import os
 import unittest

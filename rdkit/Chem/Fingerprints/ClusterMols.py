@@ -17,7 +17,7 @@ Sample Usage:
     --actTable="dop_test" --actName="moa_quant"
 
 """
-from __future__ import print_function
+
 
 import numpy
 

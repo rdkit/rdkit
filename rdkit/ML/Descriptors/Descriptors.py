@@ -4,7 +4,7 @@
 """ Various bits and pieces for calculating descriptors
 
 """
-from __future__ import print_function
+
 from rdkit.six.moves import cPickle
 
 

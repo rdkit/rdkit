@@ -2,7 +2,7 @@
 #  Copyright (C) 2001,2003  greg Landrum and Rational Discovery LLC
 #
 """ unit tests for the QuantTree implementation """
-from __future__ import print_function
+
 
 import io
 import unittest

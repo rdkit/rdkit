@@ -7,7 +7,7 @@ voting on a data set
   Uses *Numeric* and *PIL*
 
 """
-from __future__ import print_function
+
 
 from PIL import Image, ImageDraw
 import numpy

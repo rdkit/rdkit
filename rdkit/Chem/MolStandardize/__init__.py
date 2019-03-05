@@ -11,9 +11,7 @@ Note that the C++ reimplementation of this is available in the module rdkit.Chem
 :license: MIT, see LICENSE file for more details.
 """
 
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import division
+
 import logging
 
 from .standardize import Standardizer, standardize_smiles, enumerate_tautomers_smiles, canonicalize_tautomer_smiles

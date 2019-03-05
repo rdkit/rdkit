@@ -96,7 +96,7 @@ This can be reverted using the ChangeMoleculeRendering method
 <img src="data:image/png;base64,..." alt="Mol"/>
 
 '''
-from __future__ import print_function
+
 
 from base64 import b64encode
 import sys

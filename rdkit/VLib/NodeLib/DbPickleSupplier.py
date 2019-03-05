@@ -3,7 +3,7 @@
 #  Copyright (C) 2004 Rational Discovery LLC
 #     All Rights Reserved
 #
-from __future__ import print_function
+
 from rdkit import RDConfig
 import sys, os.path
 from rdkit.VLib.Supply import SupplyNode

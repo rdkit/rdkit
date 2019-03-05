@@ -92,7 +92,7 @@
   - -V: print the version number and exit
 
 """
-from __future__ import print_function
+
 
 import sys
 import time

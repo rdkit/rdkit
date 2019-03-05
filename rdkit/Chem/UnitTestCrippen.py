@@ -11,7 +11,7 @@
 """unit testing code for the Crippen clogp and MR calculators
 
 """
-from __future__ import print_function
+
 import unittest, sys, os
 import io
 

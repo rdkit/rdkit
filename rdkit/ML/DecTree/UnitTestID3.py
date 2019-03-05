@@ -2,7 +2,7 @@
 #  Copyright (C) 2000  greg Landrum
 #
 """ unit tests for the ID3 implementation """
-from __future__ import print_function
+
 
 import io
 import unittest

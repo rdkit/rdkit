@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from __future__ import print_function
+
 from rdkit import RDConfig
 import os, sys
 from rdkit import Chem

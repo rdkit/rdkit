@@ -46,7 +46,7 @@ Credits:
         disclaimers: * NO WARRANTIES * USE AT YOUR OWN RISK *    
     
 '''
-from __future__ import print_function
+
 import htmllib, formatter, string
 from types import *
 import piddle

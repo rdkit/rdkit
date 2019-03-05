@@ -22,7 +22,7 @@ Other compatibility notes:
 
 
 """
-from __future__ import print_function
+
 import numpy
 from rdkit.six.moves import cPickle
 from rdkit.ML.Data import DataUtils

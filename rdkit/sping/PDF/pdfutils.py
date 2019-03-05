@@ -1,6 +1,6 @@
 # pdfutils.py - everything to do with images, streams,
 # compression, and some constants
-from __future__ import print_function
+
 import os
 from io import StringIO
 from rdkit.six import string_types

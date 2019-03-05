@@ -13,7 +13,7 @@ self.pdf which offers numerous lower-level drawing routines.
 # except drawFigure, which doesn't behave like PostScript
 # paths so I left it unchanged.
 
-from __future__ import print_function
+
 #standard python library modules
 from . import pdfmetrics
 import glob

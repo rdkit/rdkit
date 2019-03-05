@@ -1,6 +1,6 @@
 # coding=utf-8
 # Copyright (c) 2014 Merck KGaA
-from __future__ import print_function
+
 import os, re, gzip, json, requests, sys, optparse, csv
 from rdkit import Chem
 from rdkit.Chem import AllChem

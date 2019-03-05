@@ -29,7 +29,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Created by Greg Landrum and Anna Vulpetti, March 2009
-from __future__ import print_function
+
 from rdkit.ML.Cluster import Butina
 from rdkit import DataStructs
 import sys, cPickle

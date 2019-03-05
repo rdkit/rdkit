@@ -6,7 +6,7 @@
 **NOTE** This code should be obsolete now that ML.Composite.Composite is up and running.
 
 """
-from __future__ import print_function
+
 
 import numpy
 

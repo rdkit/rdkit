@@ -10,7 +10,7 @@
 """ General descriptor testing code
 
 """
-from __future__ import print_function
+
 
 import io
 import os.path

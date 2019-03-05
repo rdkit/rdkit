@@ -62,7 +62,7 @@
  - --nBits=-1: specify the maximum number of bits to show details for
 
 """
-from __future__ import print_function
+
 
 import os
 import sys

@@ -13,7 +13,7 @@
  When possible, it's probably preferable to use a _DbConnection.DbConnect_ object
 
 """
-from __future__ import print_function
+
 
 import sys
 

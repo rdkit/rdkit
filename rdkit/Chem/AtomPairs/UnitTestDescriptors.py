@@ -8,7 +8,7 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from __future__ import print_function
+
 import unittest
 import doctest
 import os

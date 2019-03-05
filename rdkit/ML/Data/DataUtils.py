@@ -49,7 +49,7 @@
     4) A python list of lists with the data points
 
 """
-from __future__ import print_function
+
 
 import csv
 import random
