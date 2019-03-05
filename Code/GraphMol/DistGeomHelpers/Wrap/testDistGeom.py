@@ -5,7 +5,7 @@ import math
 import numpy
 
 import pickle
-from rdkit.six import next
+
 from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdkit.Chem import rdDistGeom, ChemicalForceFields, rdMolAlign

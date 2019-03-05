@@ -238,7 +238,7 @@ import sys
 
 try:
   from rdkit import Chem
-  from rdkit.six import next
+  
 except ImportError:
   sys.stderr.write("Please install RDKit from http://www.rdkit.org/\n")
   raise
