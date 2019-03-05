@@ -171,6 +171,9 @@ public class SuppliersTests extends GraphMolTest {
         @Test
         public void test11GZstream() {
           // NCI_aids_few.sdf.gz
+          File base = getRdBase();
+          File gzpath  = new File(base, "Code" + File.separator + "GraphMol" + File.separator +
+                                  "FileParsers" + File.separator + "test_data");
           File fileN = new File(baseTestPath, "NCI_aids_few.sdf.gz");
           assertTrue(fileN.exists());
           gzstream stream = new gzstream(fileN.getPath());
