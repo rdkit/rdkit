@@ -37,7 +37,6 @@ import sys, re, random
 from rdkit import Chem
 from rdkit.Chem import rdChemReactions as Reactions
 from rdkit.six import iteritems, iterkeys, next
-from rdkit.six.moves import range
 
 # These are the definitions that will be applied to fragment molecules:
 environs = {
