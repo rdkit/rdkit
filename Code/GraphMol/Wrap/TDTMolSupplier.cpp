@@ -27,26 +27,26 @@ std::string tdtMolSupplierClassDoc =
 \n \
   Usage examples:\n \
 \n \
-    1) Lazy evaluation: the molecules are not constructed until we ask for them:\n \
-       >>> suppl = TDTMolSupplier('in.smi')\n \
-       >>> for mol in suppl:\n \
-       ...    mol.GetNumAtoms()\n \
+    1) Lazy evaluation: the molecules are not constructed until we ask for them:\n\n\
+       >>> suppl = TDTMolSupplier('in.smi')\n\
+       >>> for mol in suppl:\n\
+       ...    mol.GetNumAtoms()\n\
 \n \
-    2) Lazy evaluation 2:\n \
-       >>> suppl = TDTMolSupplier('in.smi')\n \
-       >>> mol1 = suppl.next()\n \
-       >>> mol2 = suppl.next()\n \
-       >>> suppl.reset()\n \
-       >>> mol3 = suppl.next()\n \
-       # mol3 and mol1 are the same: \
-       >>> MolToSmiles(mol3)==MolToSmiles(mol1)\n \
+    2) Lazy evaluation 2:\n\n\
+       >>> suppl = TDTMolSupplier('in.smi')\n\
+       >>> mol1 = suppl.next()\n\
+       >>> mol2 = suppl.next()\n\
+       >>> suppl.reset()\n\
+       >>> mol3 = suppl.next()\n\n\
+       # mol3 and mol1 are the same:\
+       >>> MolToSmiles(mol3)==MolToSmiles(mol1)\n\ 
 \n \
-    3) Random Access:  all molecules are constructed as soon as we ask for the\n \
-       length:\n \
-       >>> suppl = TDTMolSupplier('in.smi')\n \
-       >>> nMols = len(suppl)\n \
-       >>> for i in range(nMols):\n \
-       ...   suppl[i].GetNumAtoms()\n \
+    3) Random Access:  all molecules are constructed as soon as we ask for the\n\
+       length:\n\n\
+       >>> suppl = TDTMolSupplier('in.smi')\n\
+       >>> nMols = len(suppl)\n\
+       >>> for i in range(nMols):\n\
+       ...   suppl[i].GetNumAtoms()\n\
 \n \
   Properties in the file are used to set properties on each molecule.\n\
   The properties are accessible using the mol.GetProp(propName) method.\n\
@@ -81,6 +81,6 @@ struct tdtmolsup_wrap {
              (python::arg("self"), python::arg("index")));
   };
 };
-}
+}  // namespace RDKit
 
 void wrap_tdtsupplier() { RDKit::tdtmolsup_wrap::wrap(); }

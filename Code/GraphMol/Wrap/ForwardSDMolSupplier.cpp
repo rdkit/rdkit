@@ -82,12 +82,12 @@ std::string fsdMolSupplierClassDoc =
 \n\
   Usage examples:\n\
 \n\
-    1) Lazy evaluation: the molecules are not constructed until we ask for them:\n\
+    1) Lazy evaluation: the molecules are not constructed until we ask for them:\n\n\
        >>> suppl = ForwardSDMolSupplier(file('in.sdf'))\n\
        >>> for mol in suppl:\n\
        ...    if mol is not None: mol.GetNumAtoms()\n\
 \n\
-    2) we can also read from compressed files: \n\
+    2) we can also read from compressed files: \n\n\
        >>> import gzip\n\
        >>> suppl = ForwardSDMolSupplier(gzip.open('in.sdf.gz'))\n\
        >>> for mol in suppl:\n \
