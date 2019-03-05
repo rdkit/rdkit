@@ -1213,6 +1213,12 @@ Here are some illustrations of what the various combinations mean:
 ====================  ==========   ==============
 
 
+Representation
+==============
+
+Stored as a vector of :py:class:`rdkit.Chem.rdchem.StereoGroup` objects on a molecule. Each ``StereoGroup`` keeps track of its type 
+and the set of atoms that make it up.
+
 
 Use cases
 =========
@@ -1220,14 +1226,18 @@ Use cases
 The initial target is to not lose data on an ``V3k mol -> RDKit -> V3k mol`` round trip. Manipulation,
 depiction, and searching is a secondary goal.
 
-Representation
-==============
+It is currently possible to enumerate the elements of a ``StereoGroup`` using the function py:func:`rdkit.Chem.EnumerateStereoisomers.EumerateStereoisomers`.
 
-Stored as a vector of ``StereoGroup`` objects.
+.. doctest ::
 
-A ``StereoGroup`` contains an enum with the type as well as pointers to the atoms involved. We will need to 
-adjust this when atoms are removed or replaced. ``StereoGroups`` are not exposed to Python, as the implementation is still tentative.
-
+  >>> m = Chem.MolFromSmiles('C[C@H](F)C[C@H](O)Cl |&1:1|')                                                              
+  >>> m.GetStereoGroups()[0].GetGroupType()                                                                              
+  rdkit.Chem.rdchem.StereoGroupType.STEREO_AND
+  >>> [x.GetIdx() for x in m.GetStereoGroups()[0].GetAtoms()]                                                            
+  [1]
+  >>> from rdkit.Chem.EnumerateStereoisomers import EnumerateStereoisomers                                               
+  >>> [Chem.MolToSmiles(x) for x in EnumerateStereoisomers(m)]                                                           
+  ['C[C@@H](F)C[C@H](O)Cl', 'C[C@H](F)C[C@H](O)Cl']
 
 
 .. rubric:: Footnotes
