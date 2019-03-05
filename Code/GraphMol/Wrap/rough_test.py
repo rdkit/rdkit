@@ -2913,7 +2913,7 @@ CAS<~>
     self.assertEqual(i, 16)
 
   def test71StreamSmilesWriter(self):
-    from rdkit.six.moves import StringIO
+    from io import StringIO
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'esters.sdf')
     suppl = Chem.ForwardSDMolSupplier(fileN)
@@ -2934,7 +2934,7 @@ CAS<~>
     self.assertEqual(txt.count('\n'), 7)
 
   def test72StreamTDTWriter(self):
-    from rdkit.six.moves import StringIO
+    from io import StringIO
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'esters.sdf')
     suppl = Chem.ForwardSDMolSupplier(fileN)
