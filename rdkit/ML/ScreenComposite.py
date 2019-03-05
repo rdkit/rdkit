@@ -121,7 +121,6 @@ from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.ML import CompositeRun
 from rdkit.ML.Data import DataUtils, SplitData
 import pickle
-from rdkit.six.moves import input
 
 
 try:

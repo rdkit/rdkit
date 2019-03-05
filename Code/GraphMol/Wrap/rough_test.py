@@ -14,14 +14,14 @@ from rdkit import RDConfig, rdBase
 from rdkit import DataStructs
 from rdkit import Chem
 from rdkit import six
-from rdkit.six import exec_
 
 from rdkit import __version__
 
 # Boost functions are NOT found by doctest, this "fixes" them
 #  by adding the doctests to a fake module
-import imp
-TestReplaceCore = imp.new_module("TestReplaceCore")
+import importlib
+spec = importlib.util.spec_from_loader("TestReplaceCore", loader=None)
+TestReplaceCore = importlib.util.module_from_spec(spec)
 code = """
 from rdkit.Chem import ReplaceCore
 def ReplaceCore(*a, **kw):
@@ -29,7 +29,7 @@ def ReplaceCore(*a, **kw):
     '''
     return Chem.ReplaceCore(*a, **kw)
 """ % "\n".join([x.lstrip() for x in Chem.ReplaceCore.__doc__.split("\n")])
-exec_(code, TestReplaceCore.__dict__)
+exec(code, TestReplaceCore.__dict__)
 
 
 def load_tests(loader, tests, ignore):

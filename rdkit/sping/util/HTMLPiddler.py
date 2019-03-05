@@ -52,7 +52,6 @@ import formatter
 import string
 from types import *
 import piddle
-from rdkit.six.moves import input
 
 TRACE = 0
 
