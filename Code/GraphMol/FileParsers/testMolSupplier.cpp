@@ -26,7 +26,7 @@
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/RDLog.h>
-#include <RDBoostStreams/streams.h>
+#include <RDStreams/streams.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Depictor/RDDepictor.h>
