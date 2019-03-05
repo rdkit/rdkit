@@ -78,7 +78,7 @@ from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.ML import CompositeRun
 from rdkit.ML.Data import DataUtils, SplitData, Stats
 from rdkit.six import PY3
-from rdkit.six.moves import cPickle
+import pickle
 from rdkit.six.moves import input
 
 
@@ -390,7 +390,7 @@ if __name__ == '__main__':
       message(' Building model %d' % len(models))
       blob = blob[0]
       try:
-        models.append(cPickle.loads(str(blob)))
+        models.append(pickle.loads(str(blob)))
       except Exception:
         import traceback
         traceback.print_exc()
@@ -405,7 +405,7 @@ if __name__ == '__main__':
   else:
     for modelName in extras:
       try:
-        model = cPickle.load(open(modelName, 'rb'))
+        model = pickle.load(open(modelName, 'rb'))
       except Exception:
         import traceback
         print('problems with model %s:' % modelName)

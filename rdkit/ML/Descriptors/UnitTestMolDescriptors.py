@@ -14,7 +14,7 @@ from rdkit import RDConfig
 from rdkit.ML.Descriptors import MoleculeDescriptors, Descriptors
 from rdkit.TestRunner import redirect_stdout
 from rdkit.six import BytesIO, StringIO
-from rdkit.six.moves import cPickle
+import pickle
 
 
 class TestCase(unittest.TestCase):
@@ -46,7 +46,7 @@ class TestCase(unittest.TestCase):
       buf = inTF.read().replace('\r\n', '\n').encode('utf-8')
       inTF.close()
     inF = BytesIO(buf)
-    calc = cPickle.load(inF)
+    calc = pickle.load(inF)
     self.assertEqual(calc.GetDescriptorNames(), tuple(self.descs))
     self.assertEqual(calc.GetDescriptorVersions(), tuple(self.vers))
     self._testVals(calc, self.testD)

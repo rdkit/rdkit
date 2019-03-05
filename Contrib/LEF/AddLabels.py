@@ -32,7 +32,7 @@
 
 from rdkit import Chem
 from rdkit.Chem import BRICS
-import sys, cPickle, re
+import sys, pickle, re
 
 inF = file(sys.argv[1], 'r')
 inLs = inF.readlines()

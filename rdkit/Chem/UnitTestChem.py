@@ -11,7 +11,7 @@
 
 """
 import unittest, os
-from rdkit.six.moves import cPickle
+import pickle
 from rdkit import RDConfig
 from rdkit import Chem
 
@@ -80,9 +80,9 @@ class TestCase(unittest.TestCase):
       smis.append(line.split('\t')[0])
     for smi in smis:
       m = Chem.MolFromSmiles(smi)
-      newM1 = cPickle.loads(cPickle.dumps(m))
+      newM1 = pickle.loads(pickle.dumps(m))
       newSmi1 = Chem.MolToSmiles(newM1)
-      newM2 = cPickle.loads(cPickle.dumps(newM1))
+      newM2 = pickle.loads(pickle.dumps(newM1))
       newSmi2 = Chem.MolToSmiles(newM2)
       assert newM1.GetNumAtoms() == m.GetNumAtoms(), 'num atoms comparison failed'
       assert newM2.GetNumAtoms() == m.GetNumAtoms(), 'num atoms comparison failed'
@@ -95,7 +95,7 @@ class TestCase(unittest.TestCase):
     " testing single molecule pickle "
     m = Chem.MolFromSmiles('CCOC')
     outS = Chem.MolToSmiles(m)
-    m2 = cPickle.loads(cPickle.dumps(m))
+    m2 = pickle.loads(pickle.dumps(m))
     outS2 = Chem.MolToSmiles(m2)
     assert outS == outS2, "bad pickle: %s != %s" % (outS, outS2)
 
@@ -104,8 +104,8 @@ class TestCase(unittest.TestCase):
     smis = self.bigSmiList
     for smi in smis:
       m = Chem.MolFromSmiles(smi)
-      newM1 = cPickle.loads(cPickle.dumps(m))
-      newM2 = cPickle.loads(cPickle.dumps(newM1))
+      newM1 = pickle.loads(pickle.dumps(m))
+      newM2 = pickle.loads(pickle.dumps(newM1))
       oldSmi = Chem.MolToSmiles(newM1)
       newSmi = Chem.MolToSmiles(newM2)
       assert newM1.GetNumAtoms() == m.GetNumAtoms(), 'num atoms comparison failed'
@@ -119,10 +119,10 @@ class TestCase(unittest.TestCase):
     f = None
     self.m = Chem.MolFromSmiles('CC(=O)CC')
     outF = open(self.fName, 'wb+')
-    cPickle.dump(self.m, outF)
+    pickle.dump(self.m, outF)
     outF.close()
     inF = open(self.fName, 'rb')
-    m2 = cPickle.load(inF)
+    m2 = pickle.load(inF)
     inF.close()
     try:
       os.unlink(self.fName)

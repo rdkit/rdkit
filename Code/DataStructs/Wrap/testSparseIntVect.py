@@ -7,7 +7,7 @@
 import os, sys
 import io
 import unittest
-from rdkit.six.moves import cPickle
+import pickle
 from rdkit import RDConfig
 from rdkit import DataStructs as ds
 
@@ -80,20 +80,20 @@ class TestCase(unittest.TestCase):
     v1[1 << 35] = 3
     self.assertTrue(v1 == v1)
 
-    v2 = cPickle.loads(cPickle.dumps(v1))
+    v2 = pickle.loads(pickle.dumps(v1))
     self.assertTrue(v2 == v1)
 
     v3 = ds.LongSparseIntVect(v2.ToBinary())
     self.assertTrue(v2 == v3)
     self.assertTrue(v1 == v3)
 
-    #cPickle.dump(v1,file('lsiv.pkl','wb+'))
+    #pickle.dump(v1,file('lsiv.pkl','wb+'))
     with open(os.path.join(RDConfig.RDBaseDir, 'Code/DataStructs/Wrap/testData/lsiv.pkl'),
               'r') as tf:
       buf = tf.read().replace('\r\n', '\n').encode('utf-8')
       tf.close()
     with io.BytesIO(buf) as f:
-      v3 = cPickle.load(f)
+      v3 = pickle.load(f)
       self.assertTrue(v3 == v1)
 
   def test3Pickle2(self):
@@ -108,20 +108,20 @@ class TestCase(unittest.TestCase):
     v1[1 << 12] = 3
     self.assertTrue(v1 == v1)
 
-    v2 = cPickle.loads(cPickle.dumps(v1))
+    v2 = pickle.loads(pickle.dumps(v1))
     self.assertTrue(v2 == v1)
 
     v3 = ds.IntSparseIntVect(v2.ToBinary())
     self.assertTrue(v2 == v3)
     self.assertTrue(v1 == v3)
 
-    #cPickle.dump(v1,file('isiv.pkl','wb+'))
+    #pickle.dump(v1,file('isiv.pkl','wb+'))
     with open(os.path.join(RDConfig.RDBaseDir, 'Code/DataStructs/Wrap/testData/isiv.pkl'),
               'r') as tf:
       buf = tf.read().replace('\r\n', '\n').encode('utf-8')
       tf.close()
     with io.BytesIO(buf) as f:
-      v3 = cPickle.load(f)
+      v3 = pickle.load(f)
       self.assertTrue(v3 == v1)
 
   def test4Update(self):

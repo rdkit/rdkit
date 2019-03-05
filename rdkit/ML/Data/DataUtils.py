@@ -60,7 +60,7 @@ import numpy
 from rdkit.DataStructs import BitUtils
 from rdkit.ML.Data import MLData
 from rdkit.six import integer_types
-from rdkit.six.moves import cPickle
+import pickle
 from rdkit.utils import fileutils
 
 
@@ -326,10 +326,10 @@ def WritePickledData(outName, data):
   ptNames = data.GetPtNames()
   examples = data.GetAllData()
   with open(outName, 'wb+') as outFile:
-    cPickle.dump(varNames, outFile)
-    cPickle.dump(qBounds, outFile)
-    cPickle.dump(ptNames, outFile)
-    cPickle.dump(examples, outFile)
+    pickle.dump(varNames, outFile)
+    pickle.dump(qBounds, outFile)
+    pickle.dump(ptNames, outFile)
+    pickle.dump(examples, outFile)
 
 
 def TakeEnsemble(vect, ensembleIds, isDataVect=False):
@@ -389,12 +389,12 @@ def DBToData(dbName, tableName, user='sysdba', password='masterkey', dupCol=-1, 
     ptNames[i] = tmp.pop(0)
     if pickleCol >= 0:
       if not pickleClass or not classWorks:
-        tmp[pickleCol] = cPickle.loads(str(tmp[pickleCol]))
+        tmp[pickleCol] = pickle.loads(str(tmp[pickleCol]))
       else:
         try:
           tmp[pickleCol] = pickleClass(str(tmp[pickleCol]))
         except Exception:
-          tmp[pickleCol] = cPickle.loads(str(tmp[pickleCol]))
+          tmp[pickleCol] = pickle.loads(str(tmp[pickleCol]))
           classWorks = False
       if ensembleIds:
         tmp[pickleCol] = BitUtils.ConstructEnsembleBV(tmp[pickleCol], ensembleIds)

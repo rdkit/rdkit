@@ -16,7 +16,7 @@ import os
 import unittest
 
 from rdkit.DataStructs import cDataStructs
-from rdkit.six.moves import cPickle
+import pickle
 
 klass = cDataStructs.SparseBitVect
 
@@ -248,10 +248,10 @@ class VectTests(object):
     v1[3] = 1
     pklName = 'foo.pkl'
     outF = open(pklName, 'wb+')
-    cPickle.dump(v1, outF)
+    pickle.dump(v1, outF)
     outF.close()
     inF = open(pklName, 'rb')
-    v2 = cPickle.load(inF)
+    v2 = pickle.load(inF)
     inF.close()
     os.unlink(pklName)
     assert tuple(v1.GetOnBits()) == tuple(v2.GetOnBits()), 'pkl failed'

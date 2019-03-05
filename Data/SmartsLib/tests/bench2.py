@@ -2,7 +2,7 @@
 from rdkit import Chem
 from rdkit import RDConfig
 import time, sys, gzip
-from rdkit.six.moves import cPickle
+import pickle
 from rdkit.RDLogger import logger
 logger = logger()
 
@@ -21,11 +21,11 @@ for line in file(RDConfig.RDDataDir + '/SmartsLib/RLewis_smarts.txt', 'r').readl
   qs.append(p)
 
 logger.info('reading target counts')
-refFps = cPickle.loads(gzip.open('fps.1000.counts.pkl.gz', 'rb').read())
+refFps = pickle.loads(gzip.open('fps.1000.counts.pkl.gz', 'rb').read())
 
 fps = []
 logger.info('reading mols:')
-ms = cPickle.loads(gzip.open('mols.1000.pkl.gz', 'rb').read())
+ms = pickle.loads(gzip.open('mols.1000.pkl.gz', 'rb').read())
 t1 = time.time()
 nFail = 0
 for i, m in enumerate(ms):
@@ -44,7 +44,7 @@ for i, m in enumerate(ms):
 t2 = time.time()
 print('%.2f' % (t2 - t1))
 
-#cPickle.dump(fps,file('fps.1000.counts.pkl','wb+'))
+#pickle.dump(fps,file('fps.1000.counts.pkl','wb+'))
 nFail = 0
 for i, fp in enumerate(fps):
   if fp != refFps[i]:

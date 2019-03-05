@@ -11,7 +11,7 @@ import unittest
 from rdkit import RDConfig
 from rdkit.ML.Data import MLData, DataUtils
 from rdkit.six import StringIO
-from rdkit.six.moves import cPickle
+import pickle
 
 
 class TestCase(unittest.TestCase):
@@ -46,10 +46,10 @@ class TestCase(unittest.TestCase):
     self.setUpQuantLoad()
     DataUtils.WritePickledData(RDConfig.RDCodeDir + '/ML/Data/test_data/testquant.qdat.pkl', self.d)
     with open(RDConfig.RDCodeDir + '/ML/Data/test_data/testquant.qdat.pkl', 'rb') as f:
-      vNames = cPickle.load(f)
-      qBounds = cPickle.load(f)
-      ptNames = cPickle.load(f)
-      examples = cPickle.load(f)
+      vNames = pickle.load(f)
+      qBounds = pickle.load(f)
+      ptNames = pickle.load(f)
+      examples = pickle.load(f)
     d = MLData.MLQuantDataSet(examples, varNames=vNames, qBounds=qBounds, ptNames=ptNames)
     assert self.d.GetNPts() == d.GetNPts(), 'nPts wrong'
     assert self.d.GetNVars() == d.GetNVars(), 'nVars wrong'
@@ -92,10 +92,10 @@ class TestCase(unittest.TestCase):
     DataUtils.WritePickledData(RDConfig.RDCodeDir + '/ML/Data/test_data/testgeneral.dat.pkl',
                                self.d)
     with open(RDConfig.RDCodeDir + '/ML/Data/test_data/testgeneral.dat.pkl', 'rb') as f:
-      vNames = cPickle.load(f)
-      qBounds = cPickle.load(f)
-      ptNames = cPickle.load(f)
-      examples = cPickle.load(f)
+      vNames = pickle.load(f)
+      qBounds = pickle.load(f)
+      ptNames = pickle.load(f)
+      examples = pickle.load(f)
     d = MLData.MLDataSet(examples, varNames=vNames, qBounds=qBounds, ptNames=ptNames)
     assert self.d.GetNPts() == d.GetNPts(), 'nPts wrong'
     assert self.d.GetNVars() == d.GetNVars(), 'nVars wrong'

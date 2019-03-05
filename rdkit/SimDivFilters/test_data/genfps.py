@@ -4,7 +4,7 @@ from rdkit import Chem
 from rdkit import RDConfig
 from rdkit.Dbase import DbModule
 from rdkit.Dbase.DbConnection import DbConnect
-from six.moves import cPickle
+from six.moves import pickle
 
 
 if RDConfig.usePgSQL:
@@ -21,6 +21,6 @@ for smi, ID in d:
   print(repr(ID), repr(smi))
   mol = Chem.MolFromSmiles(smi)
   fp = Chem.RDKFingerprint(mol)
-  pkl = cPickle.dumps(fp)
+  pkl = pickle.dumps(fp)
   conn.InsertData(fpTblName, (ID, DbModule.binaryHolder(pkl)))
 conn.Commit()

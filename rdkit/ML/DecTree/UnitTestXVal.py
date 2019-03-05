@@ -13,7 +13,7 @@ from rdkit.ML.DecTree import CrossValidate
 from rdkit.ML.DecTree import randomtest
 from rdkit.TestRunner import redirect_stdout
 from rdkit.six import BytesIO, StringIO
-from rdkit.six.moves import cPickle
+import pickle
 
 
 class XValTestCase(unittest.TestCase):
@@ -48,7 +48,7 @@ class XValTestCase(unittest.TestCase):
       buf = inTFile.read().replace('\r\n', '\n').encode('utf-8')
       inTFile.close()
     inFile = BytesIO(buf)
-    oTree = cPickle.load(inFile)
+    oTree = pickle.load(inFile)
 
     assert oTree == tree, 'Random CrossValidation test failed'
 

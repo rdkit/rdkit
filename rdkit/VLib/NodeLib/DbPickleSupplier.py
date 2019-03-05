@@ -7,7 +7,7 @@
 from rdkit import RDConfig
 import sys, os.path
 from rdkit.VLib.Supply import SupplyNode
-from rdkit.six.moves import cPickle
+import pickle
 
 if RDConfig.usePgSQL:
   from pyPgSQL import PgSQL as sql
@@ -81,7 +81,7 @@ if RDConfig.usePgSQL:
         self._first = 0
       if self._depickle:
         if not self._klass:
-          fp = cPickle.loads(val)
+          fp = pickle.loads(val)
         else:
           fp = self._klass(val)
         fields = list(t)
@@ -149,7 +149,7 @@ if RDConfig.usePgSQL:
         t = [self.res.getvalue(self.idx - 1, x) for x in range(self.res.nfields)]
       if self._depickle:
         try:
-          fp = cPickle.loads(val)
+          fp = pickle.loads(val)
         except Exception:
           import logging
           del t[self._pickleCol]

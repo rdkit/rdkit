@@ -1,6 +1,6 @@
-from cPickle import load as _load
-from cPickle import loads as _loads
-from cPickle import *
+from pickle import load as _load
+from pickle import loads as _loads
+from pickle import *
 
 
 def load(f, **kwargs):

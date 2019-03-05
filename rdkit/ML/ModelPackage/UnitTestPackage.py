@@ -17,7 +17,7 @@ from rdkit.ML.Descriptors.MoleculeDescriptors import MolecularDescriptorCalculat
 from rdkit.ML.ModelPackage import Packager, PackageUtils
 from rdkit.ML.ModelPackage.Packager import ModelPackage
 from rdkit.six import BytesIO
-from rdkit.six.moves import cPickle
+import pickle
 
 
 def feq(a, b, tol=1e-4):
@@ -40,7 +40,7 @@ class TestCase(unittest.TestCase):
       buf = pkgTF.read().replace('\r\n', '\n').encode('utf-8')
       pkgTF.close()
     io = BytesIO(buf)
-    pkg = cPickle.load(io)
+    pkg = pickle.load(io)
     return pkg
 
   def _verify(self, pkg, testD):
@@ -67,9 +67,9 @@ class TestCase(unittest.TestCase):
     with open(os.path.join(self.dataDir, 'Jan9_build3_calc.dsc'), 'r') as calcTF:
       buf = calcTF.read().replace('\r\n', '\n').encode('utf-8')
       calcTF.close()
-    calc = cPickle.load(BytesIO(buf))
+    calc = pickle.load(BytesIO(buf))
     with open(os.path.join(self.dataDir, 'Jan9_build3_model.pkl'), 'rb') as modelF:
-      model = cPickle.load(modelF)
+      model = pickle.load(modelF)
     pkg = Packager.ModelPackage(descCalc=calc, model=model)
     self._verify(pkg, self.testD)
 

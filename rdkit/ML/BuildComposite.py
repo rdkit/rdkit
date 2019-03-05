@@ -212,7 +212,7 @@ from rdkit.ML import ScreenComposite
 from rdkit.ML.Composite import Composite, BayesComposite
 from rdkit.ML.Data import DataUtils, SplitData
 from rdkit.utils import listutils
-from rdkit.six.moves import cPickle
+import pickle
 
 # # from ML.SVM import SVMClassificationModel as SVM
 _runDetails = CompositeRun.CompositeRun()
@@ -463,8 +463,8 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
 
   if details.pickleDataFileName != '':
     pickleDataFile = open(details.pickleDataFileName, 'wb+')
-    cPickle.dump(trainExamples, pickleDataFile)
-    cPickle.dump(testExamples, pickleDataFile)
+    pickle.dump(trainExamples, pickleDataFile)
+    pickle.dump(testExamples, pickleDataFile)
     pickleDataFile.close()
 
   if details.bayesModel:
@@ -636,7 +636,7 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
   composite.ClearModelExamples()
   if saveIt:
     composite.Pickle(details.outName)
-  details.model = DbModule.binaryHolder(cPickle.dumps(composite))
+  details.model = DbModule.binaryHolder(pickle.dumps(composite))
 
   badExamples = []
   if not details.detailedRes and (not hasattr(details, 'noScreen') or not details.noScreen):

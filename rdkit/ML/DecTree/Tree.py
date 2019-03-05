@@ -6,7 +6,7 @@
 """
 
 
-from rdkit.six.moves import cPickle
+import pickle
 
 
 # FIX: the TreeNode class has not been updated to new-style classes
@@ -247,7 +247,7 @@ class TreeNode:
 
     """
     with open(fileName, 'wb+') as pFile:
-      cPickle.dump(self, pFile)
+      pickle.dump(self, pFile)
 
   def __str__(self):
     """ returns a string representation of the tree

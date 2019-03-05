@@ -4,7 +4,7 @@ import os, copy
 import math
 import numpy
 
-from rdkit.six.moves import cPickle as pickle
+import pickle
 from rdkit.six import next
 from rdkit import Chem
 from rdkit.Chem import AllChem

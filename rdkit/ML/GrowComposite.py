@@ -104,7 +104,7 @@ from rdkit.ML import CompositeRun
 from rdkit.ML import ScreenComposite, BuildComposite
 from rdkit.ML.Composite import AdjustComposite
 from rdkit.ML.Data import DataUtils, SplitData
-from rdkit.six.moves import cPickle
+import pickle
 
 _runDetails = CompositeRun.CompositeRun()
 
@@ -274,9 +274,9 @@ def GetComposites(details):
     mdls = conn.GetData(fields='MODEL', where="where note='%s'" % (details.inNote))
     for row in mdls:
       rawD = row[0]
-      res.append(cPickle.loads(str(rawD)))
+      res.append(pickle.loads(str(rawD)))
   elif details.composFileName:
-    res.append(cPickle.load(open(details.composFileName, 'rb')))
+    res.append(pickle.load(open(details.composFileName, 'rb')))
   return res
 
 
@@ -550,7 +550,7 @@ if __name__ == '__main__':
           message('WARNING: updating results table with models having different weights')
         # save the composite
         for i in range(len(composites)):
-          _runDetails.model = cPickle.dumps(composites[i])
+          _runDetails.model = pickle.dumps(composites[i])
           _runDetails.Store(db=_runDetails.dbName, table=_runDetails.persistTblName)
   elif nModels == 1:
     composite = GrowIt(_runDetails, initModels[0], setDescNames=1)
@@ -576,7 +576,7 @@ if __name__ == '__main__':
       if (len(composites)) > 1:
         message('WARNING: updating results table with models having different weights')
       for i in range(len(composites)):
-        _runDetails.model = cPickle.dumps(composites[i])
+        _runDetails.model = pickle.dumps(composites[i])
         _runDetails.Store(db=_runDetails.dbName, table=_runDetails.persistTblName)
   else:
     message("No models found")

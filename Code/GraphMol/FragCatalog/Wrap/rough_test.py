@@ -9,7 +9,7 @@ it's intended to be shallow, but broad
 
 """
 import unittest, os
-from rdkit.six.moves import cPickle
+import pickle
 from rdkit import RDConfig
 from rdkit.RDLogger import logger
 logger = logger()
@@ -105,8 +105,8 @@ class TestCase(unittest.TestCase):
       smiles.append(Chem.MolToSmiles(mol))
     self.assertEqual(fcat.GetNumEntries(), 21)
     self.assertEqual(fcat.GetFPLength(), 21)
-    pkl = cPickle.dumps(fcat)
-    fcat2 = cPickle.loads(pkl)
+    pkl = pickle.dumps(fcat)
+    fcat2 = pickle.loads(pkl)
     self.assertEqual(fcat2.GetNumEntries(), 21)
     self.assertEqual(fcat2.GetFPLength(), 21)
     fpgen = FragmentCatalog.FragFPGenerator()

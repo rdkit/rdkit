@@ -39,7 +39,7 @@ import unittest
 from rdkit import RDConfig
 from rdkit.Chem import rdDepictor
 from rdkit import RDLogger
-from rdkit.six.moves.cPickle import loads
+from rdkit.six.moves.pickle import loads
 from rdkit.Chem import ForwardSDMolSupplier, SanitizeMol
 from rdkit.Chem import MolFromSmiles, MolToSmiles
 from rdkit.Chem import MolFromMolBlock, MolToMolBlock

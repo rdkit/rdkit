@@ -12,7 +12,7 @@ from rdkit import RDConfig
 from rdkit.ML.DecTree import Tree
 from rdkit.TestRunner import redirect_stdout
 from rdkit.six import StringIO
-from rdkit.six.moves import cPickle
+import pickle
 
 
 class TreeTestCase(unittest.TestCase):
@@ -95,8 +95,8 @@ class TreeTestCase(unittest.TestCase):
   def test6PickleEquals(self):
     # " testing pickled tree equals "
     self._readyTree()
-    pkl = cPickle.dumps(self.baseTree)
-    oTree = cPickle.loads(pkl)
+    pkl = pickle.dumps(self.baseTree)
+    oTree = pickle.loads(pkl)
 
     assert oTree == self.baseTree, 'Pickle inequality test failed'
     self.assertEqual(oTree.__cmp__(self.baseTree), 0)

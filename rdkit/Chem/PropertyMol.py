@@ -9,14 +9,14 @@ class PropertyMol(Chem.Mol):
   """ allows rdkit molecules to be pickled with their properties saved.
 
    >>> import os
-   >>> from rdkit.six.moves import cPickle
+   >>> import pickle
    >>> from rdkit import RDConfig
    >>> m = Chem.MolFromMolFile(os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data/benzene.mol'))
    >>> m.GetProp('_Name')
    'benzene.mol'
 
    by default pickling removes properties:
-   >>> m2 = cPickle.loads(cPickle.dumps(m))
+   >>> m2 = pickle.loads(pickle.dumps(m))
    >>> m2.HasProp('_Name')
    0
 
@@ -28,7 +28,7 @@ class PropertyMol(Chem.Mol):
    >>> pm.HasProp('MyProp')
    1
 
-   >>> pm2 = cPickle.loads(cPickle.dumps(pm))
+   >>> pm2 = pickle.loads(pickle.dumps(pm))
    >>> Chem.MolToSmiles(pm2)
    'c1ccccc1'
    >>> pm2.GetProp('_Name')
@@ -68,7 +68,7 @@ class PropertyMol(Chem.Mol):
    to an SD file include properties:
    >>> fn = tempfile.mktemp('.sdf')
    >>> w = Chem.SDWriter(fn)
-   >>> pm = cPickle.loads(cPickle.dumps(pm))
+   >>> pm = pickle.loads(pickle.dumps(pm))
    >>> w.write(pm)
    >>> w=None
    >>> txt = open(fn,'r').read()

@@ -23,7 +23,7 @@ from rdkit.Chem import ChemicalFeatures, rdDistGeom
 from rdkit.Chem.Pharm3D import EmbedLib
 from rdkit.Chem.Pharm3D import Pharmacophore
 from rdkit.six import PY3
-from rdkit.six.moves import cPickle
+import pickle
 
 
 def feq(n1, n2, tol=1e-5):
@@ -90,11 +90,11 @@ class TestCase(unittest.TestCase):
     nHits = 0
     while 1:
       try:
-        tpl = cPickle.load(inF, encoding='latin1')
+        tpl = pickle.load(inF, encoding='latin1')
         if PY3:
           tpl = tpl[0], tpl[1].encode('latin1'), tpl[2]
         # tpl=tpl[0],tpl[1],numpy.array(tpl[2])
-        # cPickle.dump(tpl,outF)
+        # pickle.dump(tpl,outF)
       except Exception:
         break
       if self._matchMol(tpl, self.pcophore, self.featFactory, 0):
@@ -110,7 +110,7 @@ class TestCase(unittest.TestCase):
     nHits = 0
     while 1:
       try:
-        tpl = cPickle.load(inF, encoding='latin1')
+        tpl = pickle.load(inF, encoding='latin1')
         if PY3:
           tpl = tpl[0], tpl[1].encode('latin1'), tpl[2]
       except Exception:
@@ -133,7 +133,7 @@ class TestCase(unittest.TestCase):
     nHits = 0
     while 1:
       try:
-        name, molPkl, _ = cPickle.load(inF, encoding='latin1')
+        name, molPkl, _ = pickle.load(inF, encoding='latin1')
         if PY3:
           molPkl = bytes(molPkl, encoding='latin1')
       except Exception:
@@ -196,7 +196,7 @@ class TestCase(unittest.TestCase):
 
     while 1:
       try:
-        _, molPkl, boundsMat = cPickle.load(inF, encoding='latin1')
+        _, molPkl, boundsMat = pickle.load(inF, encoding='latin1')
         if PY3:
           molPkl = bytes(molPkl, encoding='latin1')
       except Exception:
@@ -230,10 +230,10 @@ class TestCase(unittest.TestCase):
       buf = inTF.read().replace('\r\n', '\n').encode('utf-8')
       inTF.close()
     with io.BytesIO(buf) as inF:
-      pcop = cPickle.load(inF, encoding='latin1')
+      pcop = pickle.load(inF, encoding='latin1')
     # pcop._boundsMat=numpy.array(pcop._boundsMat)
     # pcop._boundsMat2D=numpy.array(pcop._boundsMat2D)
-    # cPickle.dump(pcop,file(os.path.join(self.dataDir,
+    # pickle.dump(pcop,file(os.path.join(self.dataDir,
     #                                    'Issue268_Pcop.new.pkl'),'wb+'))
     _, mList1 = EmbedLib.MatchFeatsToMol(m1, featFactory, pcop.getFeatures())
     _, mList2 = EmbedLib.MatchFeatsToMol(m2, featFactory, pcop.getFeatures())

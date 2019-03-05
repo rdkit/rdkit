@@ -14,7 +14,7 @@
 from rdkit import DataStructs
 from rdkit import six
 from rdkit.VLib.Node import VLibNode
-from rdkit.six.moves import cPickle
+import pickle
 
 
 class DbFpSupplier(VLibNode):
@@ -56,7 +56,7 @@ class DbFpSupplier(VLibNode):
     self._numProcessed += 1
     try:
       if self._usePickles:
-        newFp = cPickle.loads(pkl, encoding='bytes')
+        newFp = pickle.loads(pkl, encoding='bytes')
       else:
         newFp = DataStructs.ExplicitBitVect(pkl)
     except Exception:

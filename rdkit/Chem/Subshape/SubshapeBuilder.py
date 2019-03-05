@@ -11,7 +11,7 @@ from rdkit import Chem, Geometry
 from rdkit.Chem import AllChem
 from rdkit.Chem.Subshape import BuilderUtils
 from rdkit.Chem.Subshape import SubshapeObjects
-from rdkit.six.moves import cPickle
+import pickle
 
 
 class SubshapeCombineOperations(object):
@@ -88,7 +88,7 @@ class SubshapeBuilder(object):
 
 if __name__ == '__main__':  # pragma: nocover
   from rdkit.Chem.PyMol import MolViewer
-  from rdkit.six.moves import cPickle
+  import pickle
   import tempfile
 
   # cmpd = Chem.MolFromSmiles('CCCc1cc(C(=O)O)ccc1')
@@ -116,7 +116,7 @@ if __name__ == '__main__':  # pragma: nocover
   v.server.resetCGO('*')
 
   with open('subshape.pkl', 'w+') as f:
-    cPickle.dump(shape, f)
+    pickle.dump(shape, f)
   for i, pt in enumerate(shape.skelPts):
     v.server.sphere(tuple(pt.location), .5, (1, 0, 1), 'Pt-%d' % i)
     if not hasattr(pt, 'shapeDirs'):

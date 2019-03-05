@@ -5,7 +5,7 @@
 
 """
 
-from rdkit.six.moves import cPickle
+import pickle
 
 
 class DescriptorCalculator:
@@ -60,7 +60,7 @@ class DescriptorCalculator:
     except Exception:
       print('cannot open output file %s for writing' % (fileName))
       return
-    cPickle.dump(self, f)
+    pickle.dump(self, f)
     f.close()
 
   def CalcDescriptors(self, what, *args, **kwargs):

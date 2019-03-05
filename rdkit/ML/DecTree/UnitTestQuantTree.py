@@ -13,7 +13,7 @@ from rdkit.ML.DecTree.QuantTree import QuantTreeNode
 from rdkit.TestRunner import redirect_stdout
 from rdkit.six import StringIO
 from rdkit.six import cmp
-from rdkit.six.moves import cPickle
+import pickle
 
 
 class TestCase(unittest.TestCase):
@@ -70,7 +70,7 @@ class TestCase(unittest.TestCase):
       buf = inTFile.read().replace('\r\n', '\n').encode('utf-8')
       inTFile.close()
     with io.BytesIO(buf) as inFile:
-      t2 = cPickle.load(inFile)
+      t2 = pickle.load(inFile)
     assert self.t1 == t2, 'Incorrect tree generated. '
 
     self.assertIn('Var: 2 []', str(self.t1))
@@ -83,7 +83,7 @@ class TestCase(unittest.TestCase):
       buf = inTFile.read().replace('\r\n', '\n').encode('utf-8')
       inTFile.close()
     with io.BytesIO(buf) as inFile:
-      t2 = cPickle.load(inFile)
+      t2 = pickle.load(inFile)
     assert self.t2 == t2, 'Incorrect tree generated.'
 
   def test3Classify(self):
@@ -106,7 +106,7 @@ class TestCase(unittest.TestCase):
       buf = inTFile.read().replace('\r\n', '\n').encode('utf-8')
       inTFile.close()
     with io.BytesIO(buf) as inFile:
-      t2 = cPickle.load(inFile)
+      t2 = pickle.load(inFile)
     assert self.t1 == t2, 'Incorrect tree generated.'
     for i in range(len(self.examples1)):
       self.assertEqual(
@@ -157,13 +157,13 @@ class TestCase(unittest.TestCase):
       buf = t1TFile.read().replace('\r\n', '\n').encode('utf-8')
       t1TFile.close()
     with io.BytesIO(buf) as t1File:
-      t1 = cPickle.load(t1File)
+      t1 = pickle.load(t1File)
     with open(os.path.join(RDConfig.RDCodeDir, 'ML', 'DecTree', 'test_data', 'CmpTree2.pkl'),
               'r') as t2TFile:
       buf = t2TFile.read().replace('\r\n', '\n').encode('utf-8')
       t2TFile.close()
     with io.BytesIO(buf) as t2File:
-      t2 = cPickle.load(t2File)
+      t2 = pickle.load(t2File)
     assert cmp(t1, t2), 'equality failed'
 
   def test7Recycle(self):

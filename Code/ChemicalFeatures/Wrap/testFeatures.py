@@ -8,7 +8,7 @@
 import os, sys
 import io
 import unittest
-from rdkit.six.moves import cPickle
+import pickle
 from rdkit import RDConfig
 from rdkit import Chem
 from rdkit.Chem import ChemicalFeatures
@@ -77,8 +77,8 @@ class TestCase(unittest.TestCase):
   def testPickle(self):
     ffeat = ChemicalFeatures.FreeChemicalFeature("HBondDonor", "HBondDonor1",
                                                  geom.Point3D(1.0, 2.0, 3.0), 123)
-    pkl = cPickle.dumps(ffeat)
-    ffeat2 = cPickle.loads(pkl, encoding='bytes')
+    pkl = pickle.dumps(ffeat)
+    ffeat2 = pickle.loads(pkl, encoding='bytes')
     self.assertTrue(ffeat2.GetId() == ffeat.GetId())
     self.assertTrue(ffeat2.GetFamily() == ffeat.GetFamily())
     self.assertTrue(ffeat2.GetType() == ffeat.GetType())
@@ -90,7 +90,7 @@ class TestCase(unittest.TestCase):
     buf = inTF.read().replace('\r\n', '\n').encode('utf-8')
     inTF.close()
     inF = io.BytesIO(buf)
-    ffeat2 = cPickle.load(inF, encoding='bytes')
+    ffeat2 = pickle.load(inF, encoding='bytes')
     # this version (1.0) does not have an id in the byte stream
     self.assertTrue(ffeat2.GetFamily() == ffeat.GetFamily())
     self.assertTrue(ffeat2.GetType() == ffeat.GetType())
@@ -100,13 +100,13 @@ class TestCase(unittest.TestCase):
 
     # uncomment the following to generate (overrwrite) new version of pickled
     # data file
-    #cPickle.dump(ffeat,file(os.path.join(RDConfig.RDBaseDir, 'Code/ChemicalFeatures/Wrap/testData/featv2.pkl'),'wb+'))
+    #pickle.dump(ffeat,file(os.path.join(RDConfig.RDBaseDir, 'Code/ChemicalFeatures/Wrap/testData/featv2.pkl'),'wb+'))
     inTF = open(
       os.path.join(RDConfig.RDBaseDir, 'Code/ChemicalFeatures/Wrap/testData/featv2.pkl'), 'r')
     buf = inTF.read().replace('\r\n', '\n').encode('utf-8')
     inTF.close()
     inF = io.BytesIO(buf)
-    ffeat2 = cPickle.load(inF, encoding='bytes')
+    ffeat2 = pickle.load(inF, encoding='bytes')
     self.assertTrue(ffeat2.GetId() == ffeat.GetId())
     self.assertTrue(ffeat2.GetFamily() == ffeat.GetFamily())
     self.assertTrue(ffeat2.GetType() == ffeat.GetType())

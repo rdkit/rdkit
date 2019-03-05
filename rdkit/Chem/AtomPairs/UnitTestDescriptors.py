@@ -13,7 +13,7 @@ import unittest
 import doctest
 import os
 import gzip
-from rdkit.six.moves import cPickle
+import pickle
 from rdkit import Chem
 from rdkit import RDConfig
 from rdkit.Chem.AtomPairs import Pairs, Torsions, Utils, Sheridan
@@ -33,11 +33,11 @@ class TestCase(unittest.TestCase):
   def setUp(self):
     self.testDataPath = os.path.join(RDConfig.RDCodeDir, 'Chem', 'AtomPairs', 'test_data')
     inF = gzip.open(os.path.join(self.testDataPath, 'mols1000.pkl.gz'), 'rb')
-    self.mols = cPickle.load(inF, encoding='bytes')
+    self.mols = pickle.load(inF, encoding='bytes')
 
   def testPairsRegression(self):
     inF = gzip.open(os.path.join(self.testDataPath, 'mols1000.aps.pkl.gz'), 'rb')
-    atomPairs = cPickle.load(inF, encoding='bytes')
+    atomPairs = pickle.load(inF, encoding='bytes')
     for i, m in enumerate(self.mols):
       ap = Pairs.GetAtomPairFingerprint(m)
       if ap != atomPairs[i]:  # pragma: nocover
@@ -47,7 +47,7 @@ class TestCase(unittest.TestCase):
 
   def testTorsionsRegression(self):
     inF = gzip.open(os.path.join(self.testDataPath, 'mols1000.tts.pkl.gz'), 'rb')
-    torsions = cPickle.load(inF, encoding='bytes')
+    torsions = pickle.load(inF, encoding='bytes')
     for i, m in enumerate(self.mols):
       tt = Torsions.GetTopologicalTorsionFingerprintAsIntVect(m)
       if tt != torsions[i]:  # pragma: nocover

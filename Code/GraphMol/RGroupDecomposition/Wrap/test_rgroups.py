@@ -33,7 +33,7 @@
 import unittest
 import os,sys, copy
 
-from rdkit.six.moves import cPickle
+import pickle
 
 from rdkit import rdBase
 from rdkit import Chem

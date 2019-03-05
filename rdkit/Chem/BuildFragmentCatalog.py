@@ -74,7 +74,7 @@ from rdkit.Chem import FragmentCatalog
 from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.ML import InfoTheory
 from rdkit.six import next
-from rdkit.six.moves import cPickle
+import pickle
 
 
 def message(msg, dest=sys.stdout):
@@ -572,13 +572,13 @@ if __name__ == '__main__':
     message("\tThat took %.2f seconds.\n" % (t2 - t1))
     if details.catalogName:
       message("Dumping catalog data\n")
-      cPickle.dump(cat, open(details.catalogName, 'wb+'))
+      pickle.dump(cat, open(details.catalogName, 'wb+'))
   elif details.catalogName:
     message("Loading catalog\n")
-    cat = cPickle.load(open(details.catalogName, 'rb'))
+    cat = pickle.load(open(details.catalogName, 'rb'))
     if details.onBitsName:
       try:
-        obls = cPickle.load(open(details.onBitsName, 'rb'))
+        obls = pickle.load(open(details.onBitsName, 'rb'))
       except Exception:
         obls = None
       else:
@@ -597,18 +597,18 @@ if __name__ == '__main__':
       scores, obls = ScoreMolecules(suppl, cat, maxPts=details.numMols, actName=details.actCol,
                                     nActs=details.nActs)
       if details.scoresName:
-        cPickle.dump(scores, open(details.scoresName, 'wb+'))
+        pickle.dump(scores, open(details.scoresName, 'wb+'))
       if details.onBitsName:
-        cPickle.dump(obls, open(details.onBitsName, 'wb+'))
+        pickle.dump(obls, open(details.onBitsName, 'wb+'))
     else:
       scores = ScoreFromLists(obls, suppl, cat, maxPts=details.numMols, actName=details.actCol,
                               nActs=details.nActs)
   elif details.scoresName:
-    scores = cPickle.load(open(details.scoresName, 'rb'))
+    scores = pickle.load(open(details.scoresName, 'rb'))
 
   if details.fpName and os.path.exists(details.fpName) and not details.doSigs:
     message("Reading fingerprints from file.\n")
-    fps = cPickle.load(open(details.fpName, 'rb'))
+    fps = pickle.load(open(details.fpName, 'rb'))
   else:
     fps = []
   gains = None
@@ -631,7 +631,7 @@ if __name__ == '__main__':
       if details.fpName:
         message("Writing fingerprint file.\n")
         tmpF = open(details.fpName, 'wb+')
-        cPickle.dump(fps, tmpF, 1)
+        pickle.dump(fps, tmpF, 1)
         tmpF.close()
     else:
       gains = CalcGainsFromFps(suppl, fps, topN=details.topN, actName=details.actCol,

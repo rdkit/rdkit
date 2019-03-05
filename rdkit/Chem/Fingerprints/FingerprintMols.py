@@ -30,7 +30,7 @@ from rdkit import Chem
 from rdkit import DataStructs
 from rdkit.Chem import MACCSkeys
 from rdkit.ML.Cluster import Murtagh
-from rdkit.six.moves import cPickle
+import pickle
 
 
 def error(msg):
@@ -230,7 +230,7 @@ def FingerprintsFromDetails(details, reportFreq=10):
     if details.outFileName:
       outF = open(details.outFileName, 'wb+')
       for i in range(len(fps)):
-        cPickle.dump(fps[i], outF)
+        pickle.dump(fps[i], outF)
       outF.close()
     dbName = details.outDbName or details.dbName
     if details.outTableName and dbName:

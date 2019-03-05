@@ -3,7 +3,7 @@
 #  Copyright (C) 2006  Greg Landrum
 #
 import unittest, os, sys
-from rdkit.six.moves import cPickle
+import pickle
 from rdkit import RDConfig
 from rdkit import Chem
 from rdkit import DataStructs
@@ -42,12 +42,12 @@ class TestCase(unittest.TestCase):
     cat.AddEdge(0, 2)
     cat.AddEdge(1, 2)
 
-    d = cPickle.dumps(cat)
+    d = pickle.dumps(cat)
     es = None
     entry = None
     cat = None
 
-    cat = cPickle.loads(d)
+    cat = pickle.loads(d)
     self.assertTrue(cat.GetNumEntries() == 3)
     cat = None
 

@@ -147,10 +147,10 @@ class TestCase(unittest.TestCase):
     self.assertEqual(r, 0)
 
   def test4(self):
-    from rdkit.six.moves import cPickle
+    import pickle
     gz = gzip.open(
       os.path.join(RDConfig.RDCodeDir, 'ML', 'DecTree', 'test_data', 'cdk2-few.pkl.gz'), 'rb')
-    examples = cPickle.load(gz, encoding='Latin1')
+    examples = pickle.load(gz, encoding='Latin1')
     t = BuildSigTree(examples, 2, maxDepth=3)
     self.assertEqual(t.GetLabel(), 2181)
     self.assertEqual(t.GetChildren()[0].GetLabel(), 2861)

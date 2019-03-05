@@ -4,7 +4,7 @@
 #  All Rights Reserved
 #
 
-from rdkit.six.moves import cPickle
+import pickle
 from rdkit.six import iterkeys
 from rdkit import DataStructs, Chem
 from rdkit import Chem
@@ -127,5 +127,5 @@ def DepickleFP(pkl, similarityMethod):
   except Exception:
     import traceback
     traceback.print_exc()
-    fp = cPickle.loads(pkl)
+    fp = pickle.loads(pkl)
   return fp

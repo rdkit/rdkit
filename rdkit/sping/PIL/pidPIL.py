@@ -45,10 +45,10 @@ else:
 # load font metrics
 try:
   f = open(os.path.join(_fontprefix, 'metrics.dat'), 'rb')
-  from rdkit.six.moves import cPickle
-  _widthmaps = cPickle.load(f)
-  _ascents = cPickle.load(f)
-  _descents = cPickle.load(f)
+  import pickle
+  _widthmaps = pickle.load(f)
+  _ascents = pickle.load(f)
+  _descents = pickle.load(f)
   f.close()
 except Exception:
   print("Warning: unable to load font metrics from dir {0}".format(_fontprefix))

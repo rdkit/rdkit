@@ -34,7 +34,7 @@
 from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdkit.Chem.AtomPairs import Pairs, Torsions
-import sys, cPickle
+import sys, pickle
 
 # maxPathLength is the maximum path length in atoms
 # maxPathLength=6 corresponds to F-FP-5
@@ -92,8 +92,8 @@ if __name__ == '__main__':
     nm = mol.GetProp(nameField)
     fps.append([nm, smi, fp] + queryMatches)
   colNames = ['name', 'smiles', 'fp'] + [x for x, y in extraQueries]
-  cPickle.dump(colNames, outF)
-  cPickle.dump(fps, outF)
+  pickle.dump(colNames, outF)
+  pickle.dump(fps, outF)
 
   print('name1 smiles1 name2 smiles2 name12 smiles12 environment_id ' + ' '.join(
     [x for x, y in extraQueries]))

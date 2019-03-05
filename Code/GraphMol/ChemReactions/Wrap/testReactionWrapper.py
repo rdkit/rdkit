@@ -34,7 +34,7 @@
 import unittest, doctest
 import os, sys
 from rdkit.six import exec_
-from rdkit.six.moves import cPickle
+import pickle
 
 from rdkit import rdBase
 from rdkit import Chem
@@ -386,8 +386,8 @@ M  END
     # reaction parser which now allows using parenthesis in products
     # as well. original smiles: '[C:1]1[O:2][N:3]1>>[C:1]1[O:2].[N:3]1'
     rxn = rdChemReactions.ReactionFromSmarts('[C:1]1[O:2][N:3]1>>([C:1]1[O:2].[N:3]1)')
-    pkl = cPickle.dumps(rxn)
-    rxn = cPickle.loads(pkl)
+    pkl = pickle.dumps(rxn)
+    rxn = pickle.loads(pkl)
     mol = Chem.MolFromSmiles('C1ON1')
     products = rxn.RunReactants([mol])
     self.assertEqual(len(products), 1)
