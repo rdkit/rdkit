@@ -1116,16 +1116,26 @@ If you have atom properties that you would like to have written to SDF files, yo
   >>> Chem.CreateAtomDoublePropertyList(m,'foo')                                                                         
   >>> m.GetProp('atom.dprop.foo')                                                                                        
   '3.1400000000000001 n/a'
-  >>> print(Chem.MolToMolBlock(m))     # doctest: +NORMALIZE_WHITESPACE                                                                                  
+  >>> from io import StringIO                                                                                            
+  >>> sio = StringIO()                                                                                                   
+  >>> w = Chem.SDWriter(sio)                                                                                             
+  >>> w.write(m)                                                                                                         
+  >>> w=None                                                                                                             
+  >>> print(sio.getvalue())   # doctest: +NORMALIZE_WHITESPACE                                                                                     
   <BLANKLINE>
-        RDKit          2D
+       RDKit          2D
   <BLANKLINE>
     2  1  0  0  0  0  0  0  0  0999 V2000
       0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
       1.2990    0.7500    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
     1  2  1  0
   M  END
+  >  <atom.dprop.foo>  (1) 
+  3.1400000000000001 n/a
   <BLANKLINE>
+  $$$$
+  <BLANKLINE>
+
 
 
 .. rubric:: Footnotes
