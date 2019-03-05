@@ -16,11 +16,13 @@ class PropertyMol(Chem.Mol):
    'benzene.mol'
 
    by default pickling removes properties:
+
    >>> m2 = cPickle.loads(cPickle.dumps(m))
    >>> m2.HasProp('_Name')
    0
 
    Property mols solve this:
+
    >>> pm = PropertyMol(m)
    >>> pm.GetProp('_Name')
    'benzene.mol'
@@ -42,15 +44,18 @@ class PropertyMol(Chem.Mol):
 
    Property mols are a bit more permissive about the types
    of property values:
+
    >>> pm.SetProp('IntVal',1)
 
    That wouldn't work with a standard mol
 
    but the Property mols still convert all values to strings before storing:
+
    >>> pm.GetProp('IntVal')
    '1'
 
    This is a test for sf.net issue 2880943: make sure properties end up in SD files:
+
    >>> import tempfile,os
    >>> fn = tempfile.mktemp('.sdf')
    >>> w = Chem.SDWriter(fn)
@@ -66,6 +71,7 @@ class PropertyMol(Chem.Mol):
 
    The next level of that bug: does writing a *depickled* propertymol
    to an SD file include properties:
+
    >>> fn = tempfile.mktemp('.sdf')
    >>> w = Chem.SDWriter(fn)
    >>> pm = cPickle.loads(cPickle.dumps(pm))

@@ -86,6 +86,7 @@ class ForwardDbFpSupplier(DbFpSupplier):
   >>> suppl = ForwardDbFpSupplier(conn.GetData())
 
   we can loop over the supplied fingerprints:
+
   >>> fps = []
   >>> for fp in suppl:
   ...   fps.append(fp)
@@ -121,6 +122,7 @@ class ForwardDbFpSupplier(DbFpSupplier):
 
 class RandomAccessDbFpSupplier(DbFpSupplier):
   """ DbFp supplier supporting random access:
+
   >>> import os.path
   >>> from rdkit import RDConfig
   >>> from rdkit.Dbase.DbConnection import DbConnect
@@ -131,6 +133,7 @@ class RandomAccessDbFpSupplier(DbFpSupplier):
   12
 
   we can pull individual fingerprints:
+
   >>> fp = suppl[5]
   >>> fp.GetNumBits()
   128
@@ -138,6 +141,7 @@ class RandomAccessDbFpSupplier(DbFpSupplier):
   54
 
   a standard loop over the fingerprints:
+
   >>> fps = []
   >>> for fp in suppl:
   ...   fps.append(fp)
@@ -145,6 +149,7 @@ class RandomAccessDbFpSupplier(DbFpSupplier):
   12
 
   or we can use an indexed loop:
+
   >>> fps = [None]*len(suppl)
   >>> for i in range(len(suppl)):
   ...   fps[i] = suppl[i]

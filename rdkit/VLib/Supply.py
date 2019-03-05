@@ -14,6 +14,7 @@ class SupplyNode(VLibNode):
     1) no parents
 
   Usage Example:
+
     >>> supplier = SupplyNode(contents=[1,2,3])
     >>> supplier.next()
     1

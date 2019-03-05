@@ -366,10 +366,12 @@ def OrderTriangle(featIndices, dists):
     put the distances for a triangle into canonical order
 
     It's easy if the features are all different:
+
     >>> OrderTriangle([0,2,4],[1,2,3])
     ([0, 2, 4], [1, 2, 3])
 
     It's trickiest if they are all the same:
+
     >>> OrderTriangle([0,0,0],[1,2,3])
     ([0, 0, 0], [3, 2, 1])
     >>> OrderTriangle([0,0,0],[2,1,3])

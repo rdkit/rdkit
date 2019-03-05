@@ -18,6 +18,7 @@ class TransformNode(VLibNode):
     - inputs (parents) can be stepped through in lockstep
 
   Usage Example:
+
     >>> from rdkit.VLib.Supply import SupplyNode
     >>> def func(a,b):
     ...   return a+b
@@ -35,6 +36,7 @@ class TransformNode(VLibNode):
     [2, 4, 6, 4]
 
     If we don't provide a function, just return the inputs:
+
     >>> tform = TransformNode()
     >>> suppl1 = SupplyNode(contents=[1,2,3,3])
     >>> suppl2 = SupplyNode(contents=[1,2,3,1])

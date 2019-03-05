@@ -135,6 +135,7 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
     If m has stereogroups, they will be expanded
 
     A small example with 3 chiral atoms and 1 chiral bond (16 theoretical stereoisomers):
+
     >>> from rdkit import Chem
     >>> from rdkit.Chem.EnumerateStereoisomers import EnumerateStereoisomers, StereoEnumerationOptions
     >>> m = Chem.MolFromSmiles('BrC=CC1OC(C2)(F)C2(Cl)C1')
@@ -163,6 +164,7 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
 
     Because the molecule is constrained, not all of those isomers can
     actually exist. We can check that:
+
     >>> opts = StereoEnumerationOptions(tryEmbedding=True)
     >>> isomers = tuple(EnumerateStereoisomers(m, options=opts))
     >>> len(isomers)
@@ -180,6 +182,7 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
     F[C@]12C[C@@]1(Cl)C[C@H](/C=C\\Br)O2
 
     Or we can force the output to only give us unique isomers:
+
     >>> m = Chem.MolFromSmiles('FC(Cl)C=CC=CC(F)Cl')
     >>> opts = StereoEnumerationOptions(unique=True)
     >>> isomers = tuple(EnumerateStereoisomers(m, options=opts))
@@ -200,6 +203,7 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
     F[C@H](Cl)/C=C\\C=C\\[C@H](F)Cl
 
     By default the code only expands unspecified stereocenters:
+
     >>> m = Chem.MolFromSmiles('BrC=C[C@H]1OC(C2)(F)C2(Cl)C1')
     >>> isomers = tuple(EnumerateStereoisomers(m))
     >>> len(isomers)
@@ -217,6 +221,7 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
     F[C@]12C[C@]1(Cl)C[C@@H](/C=C\\Br)O2
 
     But we can change that behavior:
+
     >>> opts = StereoEnumerationOptions(onlyUnassigned=False)
     >>> isomers = tuple(EnumerateStereoisomers(m, options=opts))
     >>> len(isomers)
@@ -224,6 +229,7 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
 
     Since the result is a generator, we can allow exploring at least parts of very
     large result sets:
+
     >>> m = Chem.MolFromSmiles('Br' + '[CH](Cl)' * 20 + 'F')
     >>> opts = StereoEnumerationOptions(maxIsomers=0)
     >>> isomers = EnumerateStereoisomers(m, options=opts)
@@ -236,6 +242,7 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
     F[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H](Cl)[C@@H](Cl)Br
 
     Or randomly sample a small subset:
+    
     >>> m = Chem.MolFromSmiles('Br' + '[CH](Cl)' * 20 + 'F')
     >>> opts = StereoEnumerationOptions(maxIsomers=3)
     >>> isomers = EnumerateStereoisomers(m, options=opts)

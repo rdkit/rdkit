@@ -21,6 +21,7 @@ class OutputNode(VLibNode):
 
 
   Usage Example:
+
     >>> from rdkit.VLib.Supply import SupplyNode
     >>> supplier = SupplyNode(contents=[1,2,3])
     >>> from rdkit.six import StringIO

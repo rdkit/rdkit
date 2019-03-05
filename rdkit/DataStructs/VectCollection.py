@@ -45,6 +45,7 @@ class VectCollection(object):
 
   keys must be unique, so adding a duplicate replaces the
   previous values:
+
   >>> bv1 = DataStructs.ExplicitBitVect(10)
   >>> bv1.SetBitsFromList((7,9))
   >>> vc.AddVect(1,bv1)
@@ -58,6 +59,7 @@ class VectCollection(object):
   1
 
   we can also query the children:
+
   >>> vc.NumChildren()
   2
   >>> cs = vc.GetChildren()
@@ -73,6 +75,7 @@ class VectCollection(object):
   [6, 8]
 
   attach/detach operations:
+
   >>> bv1 = DataStructs.ExplicitBitVect(10)
   >>> bv1.SetBitsFromList((5,6))
   >>> vc.AddVect(3,bv1)
@@ -102,6 +105,7 @@ class VectCollection(object):
 
 
   to copy VectCollections, use the copy module:
+
   >>> bv1 = DataStructs.ExplicitBitVect(10)
   >>> bv1.SetBitsFromList((5,6))
   >>> vc.AddVect(3,bv1)
@@ -115,6 +119,7 @@ class VectCollection(object):
   [5, 6, 7, 9]
 
   The Uniquify() method can be used to remove duplicate vectors:
+
   >>> vc = VectCollection()
   >>> bv1 = DataStructs.ExplicitBitVect(10)
   >>> bv1.SetBitsFromList((7,9))
