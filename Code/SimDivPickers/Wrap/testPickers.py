@@ -104,10 +104,10 @@ class TestCase(unittest.TestCase):
 
   def testNonUniqueCrash(self):
     from rdkit import DataStructs
-    sz = 10
-    nbits = 20
+    sz = 300
+    nbits = 40
     nBitsToSet = int(nbits * .3)
-    N = 12
+    N = 8
     vs = []
     for i in range(sz):
       bv = DataStructs.ExplicitBitVect(nbits)
@@ -129,7 +129,14 @@ class TestCase(unittest.TestCase):
     picker = rdSimDivPickers.MaxMinPicker()
     mm2 = picker.LazyBitVectorPick(vs, len(vs), N)
     self.assertEqual(len(mm2), N)
-    self.assertNotEqual(tuple(mm2), tuple(mm1))
+
+    picker = rdSimDivPickers.MaxMinPicker()
+    mm3 = picker.LazyBitVectorPick(vs, len(vs), N)
+    self.assertEqual(len(mm3), N)
+
+    # we get the occasional dupe randomly,
+    # make sure we don't get three dupes in a row
+    self.assertTrue(tuple(mm2)!=tuple(mm1)) or  (tuple(mm3) != tuple(mm1))
     picker = None
 
     ds = []
