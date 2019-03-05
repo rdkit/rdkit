@@ -25,7 +25,7 @@ set(swigRDKitLibList "${swigRDKitLibList}"
   "Subgraphs;GraphMol;DataStructs;Trajectory;Descriptors;"
   "PartialCharges;MolTransforms;DistGeomHelpers;DistGeometry;"
   "ForceFieldHelpers;ForceField;EigenSolvers;Optimizer;MolAlign;"
-  "Alignment;SimDivPickers;RDGeometryLib;RDGeneral;"
+  "Alignment;SimDivPickers;RDGeometryLib;RDStreams;RDGeneral;"
 )
 #if(RDK_BUILD_COORDGEN_SUPPORT)
 #  set(swigRDKitLibList "${swigRDKitLibList};${RDK_COORDGEN_LIBS}")
