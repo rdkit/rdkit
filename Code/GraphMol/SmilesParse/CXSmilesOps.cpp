@@ -435,7 +435,7 @@ std::string get_radical_block(const ROMol &mol,
                               const std::vector<unsigned int> &atomOrder) {
   std::string res = "";
   std::map<unsigned int, std::vector<unsigned int>> rads;
-  for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+  for (unsigned int i = 0; i < atomOrder.size(); ++i) {
     auto idx = atomOrder[i];
     auto nrad = mol.getAtomWithIdx(idx)->getNumRadicalElectrons();
     if (nrad) {
@@ -516,7 +516,8 @@ std::string getCXExtensions(const ROMol &mol) {
           common_properties::_smilesAtomOutputOrder);
   bool needLabels = false;
   bool needValues = false;
-  for (const auto at : mol.atoms()) {
+  for (auto idx : atomOrder) {
+    const auto at = mol.getAtomWithIdx(idx);
     if (at->hasProp(common_properties::atomLabel)) needLabels = true;
     if (at->hasProp(common_properties::molFileValue)) needValues = true;
   }
