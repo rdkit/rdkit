@@ -13,7 +13,6 @@ import unittest, doctest
 from rdkit import RDConfig, rdBase
 from rdkit import DataStructs
 from rdkit import Chem
-from rdkit import six
 
 from rdkit import __version__
 
@@ -887,7 +886,7 @@ class TestCase(unittest.TestCase):
         # test parsed charges on one of the molecules
         for id in chgs192.keys():
           self.assertTrue(mol.GetAtomWithIdx(id).GetFormalCharge() == chgs192[id])
-    self.assertRaises(StopIteration, lambda: six.next(sdSup))
+    self.assertRaises(StopIteration, lambda: next(sdSup))
     sdSup.reset()
 
     ns = [mol.GetProp("_Name") for mol in sdSup]
@@ -906,36 +905,36 @@ class TestCase(unittest.TestCase):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'withHs.sdf')
     sdSup = Chem.SDMolSupplier(fileN)
-    m = six.next(sdSup)
+    m = next(sdSup)
     self.assertTrue(m)
     self.assertTrue(m.GetNumAtoms() == 23)
-    m = six.next(sdSup)
+    m = next(sdSup)
     self.assertTrue(m)
     self.assertTrue(m.GetNumAtoms() == 28)
 
     sdSup = Chem.SDMolSupplier(fileN, removeHs=False)
-    m = six.next(sdSup)
+    m = next(sdSup)
     self.assertTrue(m)
     self.assertTrue(m.GetNumAtoms() == 39)
-    m = six.next(sdSup)
+    m = next(sdSup)
     self.assertTrue(m)
     self.assertTrue(m.GetNumAtoms() == 30)
 
     with open(fileN, 'rb') as dFile:
       d = dFile.read()
     sdSup.SetData(d)
-    m = six.next(sdSup)
+    m = next(sdSup)
     self.assertTrue(m)
     self.assertTrue(m.GetNumAtoms() == 23)
-    m = six.next(sdSup)
+    m = next(sdSup)
     self.assertTrue(m)
     self.assertTrue(m.GetNumAtoms() == 28)
 
     sdSup.SetData(d, removeHs=False)
-    m = six.next(sdSup)
+    m = next(sdSup)
     self.assertTrue(m)
     self.assertTrue(m.GetNumAtoms() == 39)
-    m = six.next(sdSup)
+    m = next(sdSup)
     self.assertTrue(m)
     self.assertTrue(m.GetNumAtoms() == 30)
 
@@ -1155,7 +1154,7 @@ mol-4,CCOC
     smis = ['CC', 'CCC', 'CCOC', 'CCCCOC']
     inD = '\n'.join(smis)
     smiSup.SetData(inD, delimiter=",", smilesColumn=0, nameColumn=-1, titleLine=0)
-    m = six.next(smiSup)
+    m = next(smiSup)
     m = smiSup[3]
     self.assertTrue(len(smiSup) == 4)
 
@@ -2722,7 +2721,7 @@ CAS<~>
 
     i = 0
     while not suppl.atEnd():
-      mol = six.next(suppl)
+      mol = next(suppl)
       self.assertTrue(mol)
       self.assertTrue(mol.GetProp("_Name") == molNames[i])
       i += 1
@@ -2734,7 +2733,7 @@ CAS<~>
     inf = None
     i = 0
     while not suppl.atEnd():
-      mol = six.next(suppl)
+      mol = next(suppl)
       self.assertTrue(mol)
       self.assertTrue(mol.GetProp("_Name") == molNames[i])
       i += 1
@@ -2757,7 +2756,7 @@ CAS<~>
 
     i = 0
     while not suppl.atEnd():
-      mol = six.next(suppl)
+      mol = next(suppl)
       self.assertTrue(mol)
       self.assertTrue(mol.GetProp("_Name") == molNames[i])
       i += 1
@@ -2769,7 +2768,7 @@ CAS<~>
     inf = None
     i = 0
     while not suppl.atEnd():
-      mol = six.next(suppl)
+      mol = next(suppl)
       self.assertTrue(mol)
       self.assertTrue(mol.GetProp("_Name") == molNames[i])
       i += 1
@@ -2791,7 +2790,7 @@ CAS<~>
 
     i = 0
     while not suppl.atEnd():
-      mol = six.next(suppl)
+      mol = next(suppl)
       self.assertTrue(mol)
       self.assertTrue(mol.GetProp("_Name") == molNames[i])
       i += 1
@@ -2821,14 +2820,9 @@ CAS<~>
   def test67StreamSupplierStringIO(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'NCI_aids_few.sdf.gz')
-    if six.PY3:
-      from io import BytesIO
-      sio = BytesIO(gzip.open(fileN).read())
-    else:
-      import StringIO
-      sio = StringIO.StringIO(gzip.open(fileN).read())
+    from io import BytesIO
+    sio = BytesIO(gzip.open(fileN).read())
     suppl = Chem.ForwardSDMolSupplier(sio)
-
     molNames = [
       "48", "78", "128", "163", "164", "170", "180", "186", "192", "203", "210", "211", "213",
       "220", "229", "256"
@@ -2875,10 +2869,7 @@ CAS<~>
     self.assertEqual(i, 16)
 
   def test70StreamSDWriter(self):
-    if six.PY3:
-      from io import BytesIO, StringIO
-    else:
-      from StringIO import StringIO
+    from io import BytesIO, StringIO
 
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'NCI_aids_few.sdf.gz')
@@ -2899,11 +2890,8 @@ CAS<~>
     self.assertEqual(i, 16)
     w.flush()
     w = None
-    if six.PY3:
-      txt = osio.getvalue().encode()
-      isio = BytesIO(txt)
-    else:
-      isio = StringIO(osio.getvalue())
+    txt = osio.getvalue().encode()
+    isio = BytesIO(txt)
     suppl = Chem.ForwardSDMolSupplier(isio)
     i = 0
     for mol in suppl:
@@ -2997,7 +2985,7 @@ CAS<~>
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'NCI_aids_few.sdf')
     sdSup = Chem.SDMolSupplier(fileN)
-    mol = six.next(sdSup)
+    mol = next(sdSup)
     nats = mol.GetNumAtoms()
     conf = mol.GetConformer()
     mol = None
@@ -3837,10 +3825,10 @@ CAS<~>
       resMol = resMolSuppl[i]
       self.assertEqual(getTotalFormalCharge(resMol), totalFormalCharge)
     while (not resMolSuppl.atEnd()):
-      resMol = six.next(resMolSuppl)
+      resMol = next(resMolSuppl)
       self.assertEqual(getTotalFormalCharge(resMol), totalFormalCharge)
     resMolSuppl.reset()
-    cmpFormalChargeBondOrder(self, resMolSuppl[0], six.next(resMolSuppl))
+    cmpFormalChargeBondOrder(self, resMolSuppl[0], next(resMolSuppl))
 
     resMolSuppl = Chem.ResonanceMolSupplier(mol,
       Chem.ALLOW_INCOMPLETE_OCTETS \
@@ -4238,17 +4226,18 @@ CAS<~>
   # this test should probably always be last since it wraps
   #  the logging stream
   def testLogging(self):
+    from io import StringIO
     err = sys.stderr
     try:
       loggers = [("RDKit ERROR", "1", Chem.LogErrorMsg), ("RDKit WARNING", "2", Chem.LogWarningMsg)]
       for msg, v, log in loggers:
-        sys.stderr = six.StringIO()
+        sys.stderr = StringIO()
         log(v)
         self.assertEqual(sys.stderr.getvalue(), "")
 
       Chem.WrapLogs()
       for msg, v, log in loggers:
-        sys.stderr = six.StringIO()
+        sys.stderr = StringIO()
         log(v)
         s = sys.stderr.getvalue()
         self.assertTrue(msg in s)

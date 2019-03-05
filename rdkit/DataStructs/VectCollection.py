@@ -11,7 +11,6 @@
 
 import copy
 import struct
-from rdkit import six
 from rdkit import DataStructs
 
 
@@ -242,7 +241,7 @@ class VectCollection(object):
         return pkl
 
     def __setstate__(self, pkl):
-        if six.PY3 and isinstance(pkl, str):
+        if isinstance(pkl, str):
             pkl = bytes(pkl, encoding='Latin1')
 
         self.__vects = {}

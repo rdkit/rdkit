@@ -1,7 +1,7 @@
-from rdkit import six
 import random
 from rdkit import Chem
 from rdkit.Chem.rdDistGeom import EmbedMolecule
+
 
 class StereoEnumerationOptions(object):
     """
@@ -24,9 +24,11 @@ class StereoEnumerationOptions(object):
           - onlyStereoGroups: Only find stereoisomers that differ at the
             StereoGroups associated with the molecule.
     """
-    __slots__ = ('tryEmbedding', 'onlyUnassigned', 'onlyStereoGroups', 'maxIsomers', 'rand', 'unique')
-    def __init__(self, tryEmbedding = False, onlyUnassigned = True,
-                 maxIsomers = 1024, rand = None, unique = True,
+    __slots__ = ('tryEmbedding', 'onlyUnassigned',
+                 'onlyStereoGroups', 'maxIsomers', 'rand', 'unique')
+
+    def __init__(self, tryEmbedding=False, onlyUnassigned=True,
+                 maxIsomers=1024, rand=None, unique=True,
                  onlyStereoGroups=False):
         self.tryEmbedding = tryEmbedding
         self.onlyUnassigned = onlyUnassigned
@@ -34,6 +36,7 @@ class StereoEnumerationOptions(object):
         self.maxIsomers = maxIsomers
         self.rand = rand
         self.unique = unique
+
 
 class _BondFlipper(object):
     def __init__(self, bond):
@@ -44,6 +47,7 @@ class _BondFlipper(object):
             self.bond.SetStereo(Chem.BondStereo.STEREOCIS)
         else:
             self.bond.SetStereo(Chem.BondStereo.STEREOTRANS)
+
 
 class _AtomFlipper(object):
     def __init__(self, atom):
@@ -80,31 +84,33 @@ def _getFlippers(mol, options):
         for atom in mol.GetAtoms():
             if atom.HasProp("_ChiralityPossible"):
                 if (not options.onlyUnassigned or
-                    atom.GetChiralTag() == Chem.ChiralType.CHI_UNSPECIFIED):
+                        atom.GetChiralTag() == Chem.ChiralType.CHI_UNSPECIFIED):
                     flippers.append(_AtomFlipper(atom))
 
         for bond in mol.GetBonds():
             bstereo = bond.GetStereo()
             if bstereo != Chem.BondStereo.STEREONONE:
                 if (not options.onlyUnassigned or
-                    bstereo == Chem.BondStereo.STEREOANY):
+                        bstereo == Chem.BondStereo.STEREOANY):
                     flippers.append(_BondFlipper(bond))
 
     if options.onlyUnassigned:
         # otherwise these will be counted twice
         for group in mol.GetStereoGroups():
-            if group.GetGroupType() !=  Chem.StereoGroupType.STEREO_ABSOLUTE:
+            if group.GetGroupType() != Chem.StereoGroupType.STEREO_ABSOLUTE:
                 flippers.append(_StereoGroupFlipper(group))
 
     return flippers
+
 
 class _RangeBitsGenerator(object):
     def __init__(self, nCenters):
         self.nCenters = nCenters
 
     def __iter__(self):
-        for val in six.moves.range(2**self.nCenters):
+        for val in range(2**self.nCenters):
             yield val
+
 
 class _UniqueRandomBitsGenerator(object):
     def __init__(self, nCenters, maxIsomers, rand):
@@ -124,6 +130,7 @@ class _UniqueRandomBitsGenerator(object):
 
             self.already_seen.add(bits)
             yield bits
+
 
 def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False):
     """ returns a generator that yields possible stereoisomers for a molecule

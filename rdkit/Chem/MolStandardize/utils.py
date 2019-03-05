@@ -13,8 +13,6 @@ This module contains miscellaneous utility functions.
 import functools
 from itertools import tee
 
-import six
-
 
 def memoized_property(fget):
     """Decorator to create memoized properties."""
@@ -32,4 +30,4 @@ def pairwise(iterable):
     """Utility function to iterate in a pairwise fashion."""
     a, b = tee(iterable)
     next(b, None)
-    return six.moves.zip(a, b)
+    return zip(a, b)

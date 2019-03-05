@@ -3,7 +3,6 @@
 #  Copyright (C) 2003 Rational Discovery LLC
 #     All Rights Reserved
 #
-from rdkit import six
 from rdkit.VLib.Node import VLibNode
 
 
@@ -57,8 +56,7 @@ class OutputNode(VLibNode):
         return args
 
 
-if six.PY3:
-    OutputNode.__next__ = OutputNode.next
+OutputNode.__next__ = OutputNode.next
 
 
 # ------------------------------------
