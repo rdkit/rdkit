@@ -41,7 +41,6 @@ from rdkit.sping.pid import *
 from io import StringIO
 from . import psmetrics  # for font info
 import math
-from rdkit.six import string_types
 
 
 class PostScriptLevelException(ValueError):
@@ -343,7 +342,7 @@ translate
   def _findFont(self, font):
 
     requested = font.face or "Serif"  # Serif is the default
-    if isinstance(requested, string_types):
+    if isinstance(requested, str):
       requested = [requested]
 
     # once again, fall back to default, redundant, no?

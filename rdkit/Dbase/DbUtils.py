@@ -20,7 +20,7 @@ import sys
 from rdkit.Dbase import DbInfo
 from rdkit.Dbase import DbModule
 from rdkit.Dbase.DbResultSet import DbResultSet, RandomAccessDbResultSet
-from rdkit.six import string_types, StringIO
+from io import StringIO
 
 
 def _take(fromL, what):
@@ -229,7 +229,7 @@ def TypeFinder(data, nRows, nCols, nullMarker=None):
                     raise UnicodeError(msg)
             else:
                 typeHere[1] = max(typeHere[1], len(str(d)))
-            if isinstance(d, string_types):
+            if isinstance(d, str):
                 if nullMarker is None or d != nullMarker:
                     l = max(len(d), typeHere[1])
                     typeHere = [str, l]
@@ -241,7 +241,7 @@ def TypeFinder(data, nRows, nCols, nullMarker=None):
                 else:
                     if fD == d:
                         locType = int
-                if not isinstance(typeHere[0], string_types) and priorities[locType] > priorities[typeHere[0]]:
+                if not isinstance(typeHere[0], str) and priorities[locType] > priorities[typeHere[0]]:
                     typeHere[0] = locType
         res[col] = typeHere
     return res
