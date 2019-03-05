@@ -307,7 +307,7 @@ Range queries
 -------------
 Ranges of values can be provided for many query types that expect numeric values. 
 The query types that currently support range queries are: 
-    ``D``, ``h``, ``r``, ``R``, ``v``, ``x``, ``X``, ``z``, ``Z``
+``D``, ``h``, ``r``, ``R``, ``v``, ``x``, ``X``, ``z``, ``Z``
   
 Here are some examples:
   - ``D{2-4}`` matches atoms that have between 2 and 4 (inclusive) explicit connections.
@@ -1135,6 +1135,98 @@ If you have atom properties that you would like to have written to SDF files, yo
   <BLANKLINE>
   $$$$
   <BLANKLINE>
+
+Support for Enhanced Stereochemistry
+************************************
+
+Overview
+========
+
+We are going to follow, at least for the initial implementation, the enhanced stereo representation 
+used in V3k mol files: groups of atoms with specified stereochemistry with an ``ABS``, ``AND``, or ``OR`` 
+marker indicating what is known. The general idea is that ``AND`` indicates mixtures and ``OR`` indicates unknown single substances.
+
+Here are some illustrations of what the various combinations mean:
+
+.. |and1_and2_base|  image:: ../Code/images/enhanced_stereo_and1_and2_base.png
+   :scale: 100%
+   :align: middle
+.. |and1_and2_expand|  image:: ../Code/images/enhanced_stereo_and1_and2_expand.png
+   :scale: 100%
+   :align: middle
+.. |and1_cis_base|  image:: ../Code/images/enhanced_stereo_and1_cis_base.png
+   :scale: 100%
+   :align: middle
+.. |and1_cis_expand|  image:: ../Code/images/enhanced_stereo_and1_cis_expand.png
+   :scale: 100%
+   :align: middle
+.. |and1_trans_base|  image:: ../Code/images/enhanced_stereo_and1_trans_base.png
+   :scale: 100%
+   :align: middle
+.. |and1_trans_expand|  image:: ../Code/images/enhanced_stereo_and1_trans_expand.png
+   :scale: 100%
+   :align: middle
+.. |or1_or2_base|  image:: ../Code/images/enhanced_stereo_or1_or2_base.png
+   :scale: 100%
+   :align: middle
+.. |or1_or2_expand|  image:: ../Code/images/enhanced_stereo_and1_and2_expand.png
+   :scale: 100%
+   :align: middle
+.. |or1_cis_base|  image:: ../Code/images/enhanced_stereo_or1_cis_base.png
+   :scale: 100%
+   :align: middle
+.. |or1_cis_expand|  image:: ../Code/images/enhanced_stereo_and1_cis_expand.png
+   :scale: 100%
+   :align: middle
+.. |or1_trans_base|  image:: ../Code/images/enhanced_stereo_or1_trans_base.png
+   :scale: 100%
+   :align: middle
+.. |or1_trans_expand|  image:: ../Code/images/enhanced_stereo_and1_trans_expand.png
+   :scale: 100%
+   :align: middle
+.. |abs_and_base|  image:: ../Code/images/enhanced_stereo_abs_and_base.png
+   :scale: 100%
+   :align: middle
+.. |abs_and_expand|  image:: ../Code/images/enhanced_stereo_abs_and_expand.png
+   :scale: 100%
+   :align: middle
+.. |abs_or_base|  image:: ../Code/images/enhanced_stereo_abs_or_base.png
+   :scale: 100%
+   :align: middle
+.. |abs_or_expand|  image:: ../Code/images/enhanced_stereo_abs_and_expand.png
+   :scale: 100%
+   :align: middle
+
+
+
+====================  ==========   ==============
+  What's drawn         Mixture?     What it means 
+====================  ==========   ==============
+|and1_and2_base|      mixture      |and1_and2_expand| 
+|and1_cis_base|       mixture      |and1_cis_expand| 
+|and1_trans_base|     mixture      |and1_trans_expand| 
+|or1_or2_base|        single       |or1_or2_expand| 
+|or1_cis_base|        single       |or1_cis_expand| 
+|or1_trans_base|      single       |or1_trans_expand| 
+|abs_and_base|        mixture      |abs_and_expand| 
+|abs_or_base|         single       |abs_or_expand| 
+====================  ==========   ==============
+
+
+
+Use cases
+=========
+
+The initial target is to not lose data on an ``V3k mol -> RDKit -> V3k mol`` round trip. Manipulation,
+depiction, and searching is a secondary goal.
+
+Representation
+==============
+
+Stored as a vector of ``StereoGroup`` objects.
+
+A ``StereoGroup`` contains an enum with the type as well as pointers to the atoms involved. We will need to 
+adjust this when atoms are removed or replaced. ``StereoGroups`` are not exposed to Python, as the implementation is still tentative.
 
 
 
