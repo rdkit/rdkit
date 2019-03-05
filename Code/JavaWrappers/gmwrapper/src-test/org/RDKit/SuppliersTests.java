@@ -173,7 +173,7 @@ public class SuppliersTests extends GraphMolTest {
           // NCI_aids_few.sdf.gz
           File fileN = new File(baseTestPath, "NCI_aids_few.sdf.gz");
           assertTrue(fileN.exists());
-          stream = new gzstream(fileN.getPath());
+          gzstream stream = new gzstream(fileN.getPath());
           ForwardSDMolSupplier suppl = new ForwardSDMolSupplier(stream);
           assertFalse(suppl.atEnd());
           ArrayList<ROMol> ms = new ArrayList<ROMol>();
