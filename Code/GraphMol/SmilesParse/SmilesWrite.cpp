@@ -717,4 +717,22 @@ std::string MolFragmentToSmiles(const ROMol &mol,
   mol.setProp(common_properties::_smilesAtomOutputOrder, atomOrdering, true);
   return res;
 }  // end of MolFragmentToSmiles()
+
+std::string MolFragmentToCXSmiles(const ROMol &mol,
+                                  const std::vector<int> &atomsToUse,
+                                  const std::vector<int> *bondsToUse,
+                                  const std::vector<std::string> *atomSymbols,
+                                  const std::vector<std::string> *bondSymbols,
+                                  bool doIsomericSmiles, bool doKekule,
+                                  int rootedAtAtom, bool canonical,
+                                  bool allBondsExplicit, bool allHsExplicit) {
+  auto res = MolFragmentToSmiles(
+      mol, atomsToUse, bondsToUse, atomSymbols, bondSymbols, doIsomericSmiles,
+      doKekule, rootedAtAtom, canonical, allBondsExplicit, allHsExplicit);
+  auto cxext = SmilesWrite::getCXExtensions(mol);
+  if (cxext.length()) {
+    res += " " + cxext;
+  }
+  return res;
+}
 }  // namespace RDKit

@@ -11,7 +11,8 @@ class StereoEnumerationOptions(object):
             just a heuristic that could result in stereoisomers being lost.
 
           - onlyUnassigned: if set (the default), stereocenters which have specified stereochemistry
-            will not be perturbed
+            will not be perturbed unless they are part of a relative stereo
+            group.
 
           - maxIsomers: the maximum number of isomers to yield, if the
             number of possible isomers is greater than maxIsomers, a
@@ -19,12 +20,17 @@ class StereoEnumerationOptions(object):
             yielded. Since every additional stereo center doubles the
             number of results (and execution time) it's important to
             keep an eye on this.
+
+          - onlyStereoGroups: Only find stereoisomers that differ at the
+            StereoGroups associated with the molecule.
     """
-    __slots__ = ('tryEmbedding', 'onlyUnassigned', 'maxIsomers', 'rand', 'unique')
+    __slots__ = ('tryEmbedding', 'onlyUnassigned', 'onlyStereoGroups', 'maxIsomers', 'rand', 'unique')
     def __init__(self, tryEmbedding = False, onlyUnassigned = True,
-                 maxIsomers = 1024, rand = None, unique = True):
+                 maxIsomers = 1024, rand = None, unique = True,
+                 onlyStereoGroups=False):
         self.tryEmbedding = tryEmbedding
         self.onlyUnassigned = onlyUnassigned
+        self.onlyStereoGroups = onlyStereoGroups
         self.maxIsomers = maxIsomers
         self.rand = rand
         self.unique = unique
@@ -49,22 +55,46 @@ class _AtomFlipper(object):
         else:
             self.atom.SetChiralTag(Chem.ChiralType.CHI_TETRAHEDRAL_CCW)
 
+
+class _StereoGroupFlipper(object):
+    def __init__(self, group):
+        self._original_parities = [(a, a.GetChiralTag()) for a in group.GetAtoms()]
+
+    def flip(self, flag):
+        if flag:
+            for a, original_parity in self._original_parities:
+                a.SetChiralTag(original_parity)
+        else:
+            for a, original_parity in self._original_parities:
+                if original_parity == Chem.ChiralType.CHI_TETRAHEDRAL_CW:
+                    a.SetChiralTag(Chem.ChiralType.CHI_TETRAHEDRAL_CCW)
+                elif original_parity == Chem.ChiralType.CHI_TETRAHEDRAL_CCW:
+                    a.SetChiralTag(Chem.ChiralType.CHI_TETRAHEDRAL_CW)
+
+
 def _getFlippers(mol, options):
     Chem.FindPotentialStereoBonds(mol)
 
     flippers = []
-    for atom in mol.GetAtoms():
-        if atom.HasProp("_ChiralityPossible"):
-            if (not options.onlyUnassigned or
-                atom.GetChiralTag() == Chem.ChiralType.CHI_UNSPECIFIED):
-                flippers.append(_AtomFlipper(atom))
+    if not options.onlyStereoGroups:
+        for atom in mol.GetAtoms():
+            if atom.HasProp("_ChiralityPossible"):
+                if (not options.onlyUnassigned or
+                    atom.GetChiralTag() == Chem.ChiralType.CHI_UNSPECIFIED):
+                    flippers.append(_AtomFlipper(atom))
 
-    for bond in mol.GetBonds():
-        bstereo = bond.GetStereo()
-        if bstereo != Chem.BondStereo.STEREONONE:
-            if (not options.onlyUnassigned or
-                bstereo == Chem.BondStereo.STEREOANY):
-                flippers.append(_BondFlipper(bond))
+        for bond in mol.GetBonds():
+            bstereo = bond.GetStereo()
+            if bstereo != Chem.BondStereo.STEREONONE:
+                if (not options.onlyUnassigned or
+                    bstereo == Chem.BondStereo.STEREOANY):
+                    flippers.append(_BondFlipper(bond))
+
+    if options.onlyUnassigned:
+        # otherwise these will be counted twice
+        for group in mol.GetStereoGroups():
+            if group.GetGroupType() !=  Chem.StereoGroupType.STEREO_ABSOLUTE:
+                flippers.append(_StereoGroupFlipper(group))
 
     return flippers
 
@@ -101,6 +131,8 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
     Arguments:
       - m: the molecule to work with
       - verbose: toggles how verbose the output is
+
+    If m has stereogroups, they will be expanded
 
     A small example with 3 chiral atoms and 1 chiral bond (16 theoretical stereoisomers):
     >>> from rdkit import Chem
@@ -221,8 +253,7 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
         yield tm
         return
 
-    if (options.maxIsomers == 0 or
-        2**nCenters <= options.maxIsomers):
+    if (options.maxIsomers == 0 or 2**nCenters <= options.maxIsomers):
         bitsource = _RangeBitsGenerator(nCenters)
     else:
         if options.rand is None:

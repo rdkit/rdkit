@@ -67,3 +67,5 @@ rdkit_test(testExtendedStereoParsing testExtendedStereoParsing.cpp
            LINK_LIBRARIES FileParsers Depictor GraphMol RDGeneral RDGeometryLib )
 
 rdkit_catch_test(fileParsersCatchTest catch_tests.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )
+
+rdkit_catch_test(testPropertyLists testPropertyLists.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )
