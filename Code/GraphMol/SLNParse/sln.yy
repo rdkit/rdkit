@@ -58,6 +58,8 @@ yysln_error( const char *input,
              std::vector<RDKit::RWMol *> *ms,bool doQ,
 	     void *scanner,const char * msg )
 {
+  RDUNUSED_PARAM(doQ);
+  RDUNUSED_PARAM(scanner);
   BOOST_LOG(rdErrorLog)<<"SLN Parse Error: "<<msg<<" while parsing: "<<input<<std::endl;
 }
 
