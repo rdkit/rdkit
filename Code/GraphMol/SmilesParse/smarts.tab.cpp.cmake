@@ -109,6 +109,7 @@ yysmarts_error( const char *input,
                 RDKit::Bond* &lastBond,
 		void *scanner,int start_token, const char * msg )
 {
+  RDUNUSED_PARAM(input);
   RDUNUSED_PARAM(lastAtom);
   RDUNUSED_PARAM(lastBond);
   RDUNUSED_PARAM(scanner);
