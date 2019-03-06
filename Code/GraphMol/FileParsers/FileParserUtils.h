@@ -92,6 +92,7 @@ void applyMolListPropsToAtoms(ROMol &mol, const std::string &prefix,
                 << "Value " << tokens[i] << " for property " << pn
                 << " of atom " << i << " can not be parsed. Ignoring it."
                 << std::endl;
+                continue;
           }
           unsigned int atomid = i - first_token;
           mol.getAtomWithIdx(atomid)->setProp(atompn, apv);
