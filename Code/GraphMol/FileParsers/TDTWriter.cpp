@@ -58,7 +58,7 @@ TDTWriter::TDTWriter(std::ostream *outStream, bool takeOwnership) {
   df_writeNames = true;
 }
 
-TDTWriter::~TDTWriter() throw() {
+TDTWriter::~TDTWriter() {
   // close the writer if it's still open:
   if (dp_ostream != nullptr) close();
 }
