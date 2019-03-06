@@ -132,7 +132,8 @@ void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
           }
           mol->setProp(dlabel, prop);
           if (df_processPropertyLists) {
-            FileParserUtils::processMolPropertyLists(*mol);
+            // apply this as an atom property list if that's appropriate
+            FileParserUtils::processMolPropertyList(*mol, dlabel);
           }
         }
       } else {
