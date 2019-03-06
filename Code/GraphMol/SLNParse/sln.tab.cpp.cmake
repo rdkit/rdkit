@@ -133,9 +133,9 @@ yysln_error( const char *input,
 {
   BOOST_LOG(rdErrorLog)<<"SLN Parse Error: "<<msg<<" while parsing: "<<input<<std::endl;
 
-  for(auto iter = ms->begin(); iter != ms->end(); ++iter) {
-    SLNParse::CleanupAfterParse(*iter);
-    delete *iter;
+  for(auto& m : *ms) {
+    SLNParse::CleanupAfterParse(m);
+    delete m;
   }
   ms->clear();
   ms->resize(0);
