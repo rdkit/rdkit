@@ -419,7 +419,7 @@ std::string get_enhanced_stereo_block(
     const ROMol &mol, const std::vector<unsigned int> &atomOrder) {
   std::stringstream res;
   // we need a map from original atom idx to output idx:
-  std::vector<unsigned int> revOrder(atomOrder.size());
+  std::vector<unsigned int> revOrder(mol.getNumAtoms());
   for (unsigned i = 0; i < atomOrder.size(); ++i) {
     revOrder[atomOrder[i]] = i;
   }
