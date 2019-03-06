@@ -257,7 +257,7 @@ void testAtomProps() {
   TEST_ASSERT(a1->hasProp("dprop"));
   try {
     a1->getProp<int>("dprop");
-  } catch (const boost::bad_any_cast &e) {
+  } catch (const boost::bad_any_cast &) {
     ok = true;
   }
   TEST_ASSERT(ok);
@@ -266,7 +266,7 @@ void testAtomProps() {
   ok = false;
   try {
     a1->getProp<double>("iprop");
-  } catch (const boost::bad_any_cast &e) {
+  } catch (const boost::bad_any_cast &) {
     ok = true;
   }
   TEST_ASSERT(ok);
@@ -671,7 +671,7 @@ void testIssue2381580() {
     bool ok = false;
     try {
       MolOps::sanitizeMol(*m);
-    } catch (MolSanitizeException &e) {
+    } catch (MolSanitizeException &) {
       ok = true;
     }
     TEST_ASSERT(ok);
@@ -693,7 +693,7 @@ void testIssue2381580() {
     bool ok = false;
     try {
       MolOps::sanitizeMol(*m);
-    } catch (MolSanitizeException &e) {
+    } catch (MolSanitizeException &) {
       ok = true;
     }
     TEST_ASSERT(ok);
@@ -1330,7 +1330,7 @@ void testGithub1041() {
     bool ok = false;
     try {
       at.getOwningMol();
-    } catch (const Invar::Invariant &err) {
+    } catch (const Invar::Invariant &) {
       ok = true;
     }
     TEST_ASSERT(ok);
@@ -1340,7 +1340,7 @@ void testGithub1041() {
     bool ok = false;
     try {
       b.getOwningMol();
-    } catch (const Invar::Invariant &err) {
+    } catch (const Invar::Invariant &) {
       ok = true;
     }
     TEST_ASSERT(ok);

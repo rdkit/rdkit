@@ -2742,7 +2742,7 @@ void test3DAtomPairs() {
       fp = AtomPairs::getHashedAtomPairFingerprint(
           *mol, 2048, 1, AtomPairs::maxPathLen - 1, nullptr, nullptr, nullptr,
           false, false);
-    } catch (ConformerException &e) {
+    } catch (ConformerException &) {
       ok = true;
     }
     TEST_ASSERT(ok);

@@ -1988,7 +1988,7 @@ void testUSRDescriptor() {
   bool ok = false;
   try {
     USR(*mol, descriptor);
-  } catch (ConformerException &e) {
+  } catch (ConformerException &) {
     ok = true;
   }
   delete mol;
@@ -1999,7 +1999,7 @@ void testUSRDescriptor() {
   ok = false;
   try {
     USR(*mol, descriptor);
-  } catch (ValueErrorException &e) {
+  } catch (ValueErrorException &) {
     ok = true;
   }
   delete mol;
@@ -2053,7 +2053,7 @@ void testUSRCATDescriptor() {
   bool ok = false;
   try {
     USR(*mol, descriptor);
-  } catch (ConformerException &e) {
+  } catch (ConformerException &) {
     ok = true;
   }
   TEST_ASSERT(ok);
@@ -2063,7 +2063,7 @@ void testUSRCATDescriptor() {
   ok = false;
   try {
     USR(*mol, descriptor);
-  } catch (ValueErrorException &e) {
+  } catch (ValueErrorException &) {
     ok = true;
   }
   TEST_ASSERT(ok);

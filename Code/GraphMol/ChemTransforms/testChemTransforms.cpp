@@ -1320,7 +1320,7 @@ void testAddRecursiveQueries() {
     bool ok = false;
     try {
       addRecursiveQueries(*mol1, mp, "replaceme");
-    } catch (KeyErrorException &e) {
+    } catch (KeyErrorException &) {
       ok = true;
     }
     TEST_ASSERT(ok);

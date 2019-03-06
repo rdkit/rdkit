@@ -309,7 +309,7 @@ void testRDAny() {
 #ifndef UNSAFE_RDVALUE
       PRECONDITION(0, "Should throw bad cast");
 #endif
-    } catch (boost::bad_any_cast &e) {
+    } catch (boost::bad_any_cast &) {
     }
 
     TEST_ASSERT((*rdany_cast<std::vector<int> *>(vv))[0] == 100);
