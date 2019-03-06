@@ -18,7 +18,7 @@ from rdkit import __version__
 
 # Boost functions are NOT found by doctest, this "fixes" them
 #  by adding the doctests to a fake module
-import importlib
+import importlib.util
 spec = importlib.util.spec_from_loader("TestReplaceCore", loader=None)
 TestReplaceCore = importlib.util.module_from_spec(spec)
 code = """

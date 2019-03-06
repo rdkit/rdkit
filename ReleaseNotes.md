@@ -1,8 +1,8 @@
 # Release_2019.03.1
 (Changes relative to Release_2018.09.1)
 
-## Deprecations
-- As of the 2019.03 release the RDKit no longer supports Python 2. Please read
+## REALLY IMPORTANT ANNOUNCEMENT
+- As of this realease (2019.03.1) the RDKit no longer supports Python 2. Please read
 this rdkit-discuss post to learn what your options are if you need to keep
 using Python 2: https://www.mail-archive.com/rdkit-discuss@lists.sourceforge.net/msg08354.html
 

@@ -31,7 +31,7 @@
 #
 
 
-import importlib
+import importlib.util
 import unittest
 import doctest
 import os
