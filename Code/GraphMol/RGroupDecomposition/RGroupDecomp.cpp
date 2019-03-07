@@ -215,6 +215,8 @@ struct RGroupData {
 
     mols.push_back(newMol);
     std::string smi = MolToSmiles(*newMol, true);
+    // REVIEW: we probably shouldn't be using a set here... the merging of duplicates is likely not
+    // what we want
     smilesSet.insert(smi);
     if (!combinedMol.get()) {
       combinedMol = boost::shared_ptr<RWMol>(new RWMol(*mols[0].get()));
@@ -256,7 +258,7 @@ struct RGroupData {
       const {  // compute the canonical smiles for the attachments
     std::string s;
     for (const auto &it : smilesSet) {
-      s += it;
+      s += "."+it;
     }
     return s;
   }
@@ -382,15 +384,15 @@ double score(const std::vector<size_t> &permutation,
                 << permutation.size() << std::endl;
 #endif
 
-      // if the rgroup is a hydrogens, only consider if the group is all
+      // if the rgroup is hydrogens, only consider if the group is all
       //  hydrogen, otherwise score based on the non hydrogens
       if (onlyH[it->first]) {
-        if (static_cast<size_t>(it->second) == permutation.size())
+        if (static_cast<size_t>(it->second) == permutation.size()) {
           equivalentRGroupCount.push_back(static_cast<float>(it->second));
-        else
-          equivalentRGroupCount.push_back(
-              0.0);  // it->second * 1.0/permutation.size()); // massively
-                     // downweight hydrogens
+        } else { 
+          // hydrogens in a mixed group don't contribute to the score
+          equivalentRGroupCount.push_back(0.0);  
+        }
       } else {
         equivalentRGroupCount.push_back(static_cast<float>(it->second));
       }
