@@ -3206,7 +3206,7 @@ CAS<~>
     a_copy = copy.copy(a)
     m = None
     a = None
-    new_m = Chem.EditableMol()
+    new_m = Chem.RWMol()
     new_m.AddAtom(a_copy)
     # This will not match if the owning mol is unset for a_copy,
     # or if there has been a clean up.
