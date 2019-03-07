@@ -14,12 +14,8 @@
 #include <boost/cstdint.hpp>
 
 namespace AvalonTools {
-static int avalonSSSBits = 0x007FFF;
-static int avalonSimilarityBits = 0xF07FFF;
-
-namespace {
-void rdunused_var() { RDUNUSED_PARAM(avalonSimilarityBits); }
-}  // namespace
+const int avalonSSSBits = 0x007FFF;
+const int avalonSimilarityBits = 0xF07FFF;
 
 RDKIT_AVALONLIB_EXPORT std::string getCanonSmiles(RDKit::ROMol &mol,
                                                   int flags = -1);
