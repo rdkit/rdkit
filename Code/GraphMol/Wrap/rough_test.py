@@ -3198,6 +3198,20 @@ CAS<~>
     self.assertEqual(atom.GetPDBResidueInfo().GetResidueName(), 'HOH')
     self.assertEqual(atom.GetDegree(), 0)
 
+  def test85AtomCopying(self):
+    """Can a copied atom be added to a molecule?"""
+    import copy
+    m = Chem.MolFromSmiles('C1CC1')
+    a = m.GetAtomWithIdx(0)
+    a_copy = copy.copy(a)
+    m = None
+    a = None
+    new_m = Chem.EditableMol()
+    new_m.AddAtom(a_copy)
+    # This will not match if the owning mol is unset for a_copy,
+    # or if there has been a clean up.
+    assert new_m.GetAtomWithIdx(0).GetIdx() == 0
+
   def test85MolCopying(self):
     m = Chem.MolFromSmiles('C1CC1[C@H](F)Cl')
     m.SetProp('foo', 'bar')

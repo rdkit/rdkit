@@ -146,6 +146,12 @@ struct atom_wrapper {
             "Constructor, takes either an int (atomic number) or a string "
             "(atomic symbol).\n"))
 
+        .def("__copy__", &Atom::copy, 
+            python::return_value_policy<
+                 python::manage_new_object,
+                 python::with_custodian_and_ward_postcall<0, 1>>(),
+             "Create a copy of the atom")
+
         .def("GetAtomicNum", &Atom::getAtomicNum, "Returns the atomic number.")
 
         .def("SetAtomicNum", &Atom::setAtomicNum,
