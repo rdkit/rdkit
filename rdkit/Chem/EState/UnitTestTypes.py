@@ -13,7 +13,7 @@
 validation values are from the paper (JCICS _35_ 1039-1045 (1995))
 
 """
-from __future__ import print_function
+
 import unittest
 from rdkit import Chem
 from rdkit.Chem.EState import AtomTypes

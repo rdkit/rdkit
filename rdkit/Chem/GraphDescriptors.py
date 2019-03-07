@@ -13,7 +13,7 @@
 
 
 """
-from __future__ import print_function
+
 from rdkit import Chem
 from rdkit.Chem import Graphs
 from rdkit.Chem import rdchem

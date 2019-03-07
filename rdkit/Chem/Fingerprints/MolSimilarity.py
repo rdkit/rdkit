@@ -26,7 +26,7 @@ from rdkit.Chem.Fingerprints import FingerprintMols, DbFpSupplier
 from rdkit.DataStructs.TopNContainer import TopNContainer
 from rdkit.Dbase import DbModule
 from rdkit.Dbase.DbConnection import DbConnect
-from rdkit.six.moves import cPickle
+import pickle
 
 try:
   from rdkit.VLib.NodeLib.DbPickleSupplier import _lazyDataSeq as _dataSeq
@@ -146,7 +146,7 @@ def GetFingerprints(details):
     done = 0
     while not done:
       try:
-        ID, fp = cPickle.load(inF)
+        ID, fp = pickle.load(inF)
       except Exception:
         done = 1
       else:

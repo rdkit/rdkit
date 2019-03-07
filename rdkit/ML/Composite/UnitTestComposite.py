@@ -8,7 +8,7 @@
 """
 import unittest
 import io
-from rdkit.six.moves import cPickle
+import pickle
 from rdkit.ML.Composite import Composite
 from rdkit.ML.DecTree.DecTree import DecTreeNode as Node
 from rdkit import RDConfig
@@ -21,7 +21,7 @@ class TestCase(unittest.TestCase):
       buf = pklTF.read().replace('\r\n', '\n').encode('utf-8')
       pklTF.close()
     with io.BytesIO(buf) as pklF:
-      self.examples = cPickle.load(pklF)
+      self.examples = pickle.load(pklF)
     self.varNames = ['composition', 'max_atomic', 'has3d', 'has4d', 'has5d', 'elconc', 'atvol',
                      'isferro']
     self.qBounds = [[], [1.89, 3.53], [], [], [], [0.55, 0.73], [11.81, 14.52], []]
@@ -48,7 +48,7 @@ class TestCase(unittest.TestCase):
       buf = pklTF.read().replace('\r\n', '\n').encode('utf-8')
       pklTF.close()
     with io.BytesIO(buf) as pklF:
-      self.refCompos = cPickle.load(pklF)
+      self.refCompos = pickle.load(pklF)
 
     composite = Composite.Composite()
     composite._varNames = self.varNames
@@ -67,7 +67,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(composite.errList, sorted(composite.errList))
 
     # with open(RDConfig.RDCodeDir+'/ML/Composite/test_data/composite_base.pkl','wb') as pklF:
-    #   cPickle.dump(composite,pklF)
+    #   pickle.dump(composite,pklF)
 
     self.treeComposite = composite
     self.assertEqual(len(composite), len(self.refCompos))

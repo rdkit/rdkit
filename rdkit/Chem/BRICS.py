@@ -32,12 +32,10 @@
 """ Implementation of the BRICS algorithm from Degen et al. ChemMedChem *3* 1503-7 (2008)
 
 """
-from __future__ import print_function
+
 import sys, re, random
 from rdkit import Chem
 from rdkit.Chem import rdChemReactions as Reactions
-from rdkit.six import iteritems, iterkeys, next
-from rdkit.six.moves import range
 
 # These are the definitions that will be applied to fragment molecules:
 environs = {
@@ -208,7 +206,7 @@ for gp in smartsGps:
       raise
 
 environMatchers = {}
-for env, sma in iteritems(environs):
+for env, sma in environs.items():
   environMatchers[env] = Chem.MolFromSmarts(sma)
 
 bondMatchers = []
@@ -286,7 +284,7 @@ def FindBRICSBonds(mol, randomizeOrder=False, silent=True):
     random.shuffle(indices, random=random.random)
 
   envMatches = {}
-  for env, patt in iteritems(environMatchers):
+  for env, patt in environMatchers.items():
     envMatches[env] = mol.HasSubstructMatch(patt)
   for gpIdx in indices:
     if randomizeOrder:
@@ -454,7 +452,7 @@ def BRICSDecompose(mol, allNodes=None, minFragmentSize=1, onlyUseReactions=None,
     newPool = {}
     while activePool:
       matched = False
-      nSmi = next(iterkeys(activePool))
+      nSmi = next(iter(activePool))
       mol = activePool.pop(nSmi)
       for rxnIdx, reaction in enumerate(reactionGp):
         if onlyUseReactions and (gpIdx, rxnIdx) not in onlyUseReactions:

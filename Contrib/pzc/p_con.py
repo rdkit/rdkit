@@ -1,6 +1,6 @@
 # coding=utf-8
 # Copyright (c) 2014 Merck KGaA
-from __future__ import print_function
+
 import os, re, gzip, json, requests, sys, optparse, csv
 from rdkit import Chem
 from rdkit.Chem import AllChem
@@ -16,7 +16,7 @@ from sklearn.cross_validation import train_test_split
 from sklearn.metrics import roc_curve, auc
 from sklearn.metrics import precision_score, recall_score
 from sklearn import preprocessing
-import cPickle
+import pickle
 from pickle import Unpickler
 import numpy as np
 import math
@@ -1207,8 +1207,8 @@ table th[class*="col-"] {
     return
 
   def save_model(self, outfile, model_number=0):
-    """save Model to file using cPickle.dump"""
-    cPickle.dump(self.model[model_number], file(outfile, "wb+"))
+    """save Model to file using pickle.dump"""
+    pickle.dump(self.model[model_number], file(outfile, "wb+"))
     return
 
   def load_models(self, model_files):

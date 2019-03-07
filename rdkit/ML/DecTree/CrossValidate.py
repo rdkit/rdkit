@@ -8,7 +8,7 @@ cross validation == evaluating the accuracy of a tree.
 
 
 """
-from __future__ import print_function
+
 
 import numpy
 

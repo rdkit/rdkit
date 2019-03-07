@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 import unittest
 import doctest
 from rdkit import Chem

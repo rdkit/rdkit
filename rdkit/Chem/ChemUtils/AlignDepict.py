@@ -2,7 +2,7 @@
 #  Copyright (C) 2006 Greg Landrum
 #  This file is part of RDKit and covered by $RDBASE/license.txt
 #
-from __future__ import print_function
+
 
 import argparse
 import sys

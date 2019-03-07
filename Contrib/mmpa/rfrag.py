@@ -32,7 +32,7 @@
 #
 # Modifications and optimizations by Greg Landrum, July 2015
 #
-from __future__ import print_function
+
 import sys
 import re
 from rdkit import Chem

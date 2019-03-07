@@ -31,7 +31,7 @@
 #
 #  Created by Greg Landrum, July 2007
 #
-from __future__ import print_function
+
 _version = "0.14.0"
 _description = """
      The sd filename argument can be either an SD file or an MDL mol 

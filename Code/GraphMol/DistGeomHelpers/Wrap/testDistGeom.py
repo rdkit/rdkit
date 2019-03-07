@@ -1,11 +1,11 @@
-from __future__ import print_function
+
 import unittest
 import os, copy
 import math
 import numpy
 
-from rdkit.six.moves import cPickle as pickle
-from rdkit.six import next
+import pickle
+
 from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdkit.Chem import rdDistGeom, ChemicalForceFields, rdMolAlign

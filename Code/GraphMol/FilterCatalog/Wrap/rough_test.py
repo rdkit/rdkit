@@ -34,7 +34,7 @@
 it is intended to be shallow but broad.
 """
 
-from __future__ import print_function
+
 import doctest, unittest, os
 import pickle
 from rdkit import RDConfig

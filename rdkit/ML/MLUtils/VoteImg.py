@@ -7,7 +7,7 @@ voting on a data set
   Uses *Numeric* and *PIL*
 
 """
-from __future__ import print_function
+
 
 from PIL import Image, ImageDraw
 import numpy
@@ -178,7 +178,7 @@ def Usage():
 if __name__ == '__main__':
   import sys
   import getopt
-  from rdkit.six.moves import cPickle
+  import pickle
   from rdkit.ML.Data import DataUtils
 
   args, extra = getopt.getopt(sys.argv[1:], 'o:bthx:y:d:')
@@ -208,7 +208,7 @@ if __name__ == '__main__':
     else:
       Usage()
   modelFile = open(extra[0], 'rb')
-  model = cPickle.load(modelFile)
+  model = pickle.load(modelFile)
 
   fName = extra[1]
   if dbName == '':

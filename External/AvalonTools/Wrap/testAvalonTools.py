@@ -2,7 +2,7 @@
 #
 # Created by Greg Landrum, July 2008
 #
-from __future__ import print_function
+
 from rdkit import RDConfig
 import os, sys
 import unittest

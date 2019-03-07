@@ -238,8 +238,7 @@ import sys
 
 try:
   from rdkit import Chem
-  from rdkit.six import next
-  from rdkit.six.moves import range
+  
 except ImportError:
   sys.stderr.write("Please install RDKit from http://www.rdkit.org/\n")
   raise
@@ -2374,7 +2373,7 @@ def make_fragment_sdf(mcs, mol, subgraph, args):
     output_tag = args.save_atom_class_tag
     atom_classes = get_selected_atom_classes(mol, subgraph.atom_indices)
     if atom_classes is not None:
-      fragment.SetProp(output_tag, " ".join(map(str, atom_classes)))
+      fragment.SetProp(output_tag, " ".join(str(x) for x in atom_classes))
 
   _save_other_tags(fragment, fragment, mcs, mol, subgraph, args)
 

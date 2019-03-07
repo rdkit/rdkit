@@ -2,7 +2,7 @@
 #  Copyright (C) 2000  greg Landrum
 #
 """ unit tests for the ID3 implementation """
-from __future__ import print_function
+
 
 import io
 import unittest
@@ -10,7 +10,7 @@ import unittest
 from rdkit import RDConfig
 from rdkit.ML.Data import MLData
 from rdkit.ML.DecTree import ID3
-from rdkit.six.moves import cPickle
+import pickle
 
 
 class ID3TestCase(unittest.TestCase):
@@ -37,7 +37,7 @@ class ID3TestCase(unittest.TestCase):
       buf = inTFile.read().replace('\r\n', '\n').encode('utf-8')
       inTFile.close()
     with io.BytesIO(buf) as inFile:
-      t2 = cPickle.load(inFile)
+      t2 = pickle.load(inFile)
     assert self.t1 == t2, 'Incorrect tree generated.'
 
   def _setupMultiTree(self):
@@ -57,7 +57,7 @@ class ID3TestCase(unittest.TestCase):
       buf = inTFile.read().replace('\r\n', '\n').encode('utf-8')
       inTFile.close()
     with io.BytesIO(buf) as inFile:
-      t2 = cPickle.load(inFile)
+      t2 = pickle.load(inFile)
     assert self.t1 == t2, 'Incorrect tree generated.'
 
   def testClassify(self):
@@ -106,7 +106,7 @@ class ID3TestCase(unittest.TestCase):
       buf = inTFile.read().replace('\r\n', '\n').encode('utf-8')
       inTFile.close()
     with io.BytesIO(buf) as inFile:
-      t2 = cPickle.load(inFile)
+      t2 = pickle.load(inFile)
     assert self.t1 == t2, 'Incorrect tree generated.'
 
   def _setupPyMultiTree(self):
@@ -130,7 +130,7 @@ class ID3TestCase(unittest.TestCase):
       buf = inTFile.read().replace('\r\n', '\n').encode('utf-8')
       inTFile.close()
     with io.BytesIO(buf) as inFile:
-      t2 = cPickle.load(inFile)
+      t2 = pickle.load(inFile)
     assert self.t1 == t2, 'Incorrect tree generated.'
 
   def testPyClassify(self):

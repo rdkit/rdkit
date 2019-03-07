@@ -108,7 +108,7 @@ a file containing a pickled composite model and _filename_ is a QDAT file.
 
 
 """
-from __future__ import print_function
+
 
 import os
 import sys
@@ -120,8 +120,7 @@ from rdkit.Dbase import DbModule
 from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.ML import CompositeRun
 from rdkit.ML.Data import DataUtils, SplitData
-from rdkit.six.moves import cPickle
-from rdkit.six.moves import input
+import pickle
 
 
 try:
@@ -1323,7 +1322,7 @@ if __name__ == '__main__':
     for blob in blobs:
       blob = blob[0]
       try:
-        models.append(cPickle.loads(str(blob)))
+        models.append(pickle.loads(str(blob)))
       except Exception:
         import traceback
         traceback.print_exc()
@@ -1332,7 +1331,7 @@ if __name__ == '__main__':
   else:
     message('-> Loading model')
     modelFile = open(extras[0], 'rb')
-    models.append(cPickle.load(modelFile))
+    models.append(pickle.load(modelFile))
   if not len(models):
     error('No composite models found')
     sys.exit(-1)

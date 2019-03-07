@@ -16,7 +16,7 @@ relevant... but tests are tests
 """
 from rdkit import RDConfig
 import unittest, os
-from rdkit.six.moves import cPickle
+import pickle
 from rdkit import Chem
 from rdkit.Chem import AllChem
 
