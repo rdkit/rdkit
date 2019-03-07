@@ -157,11 +157,13 @@ def GetConformerRMSMatrix(mol, atomIds=None, prealigned=False):
                   first conformer
 
   Note that the returned RMS matrix is symmetrical, i.e. it is the
-  lower half of the matrix, e.g. for 5 conformers:
-  rmsmatrix = [ a,
-                b, c,
-                d, e, f,
-                g, h, i, j]
+  lower half of the matrix, e.g. for 5 conformers::
+
+    rmsmatrix = [ a,
+                  b, c,
+                  d, e, f,
+                  g, h, i, j]
+
   where a is the RMS between conformers 0 and 1, b is the RMS between
   conformers 0 and 2, etc.
   This way it can be directly used as distance matrix in e.g. Butina
