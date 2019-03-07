@@ -326,7 +326,7 @@ double score(const std::vector<size_t> &permutation,
 #ifdef DEBUG
   std::cerr << "---------------------------------------------------"
             << std::endl;
-  std::cerr << "Scoring permutation " << std::endl;
+  std::cerr << "Scoring permutation " << " num matches: " << matches.size() << std::endl;
 #endif
 
   for (int l : labels) {
@@ -335,16 +335,24 @@ double score(const std::vector<size_t> &permutation,
 #endif
     std::map<std::string, int> matchSet;
     std::map<std::set<int>, int> linkerMatchSet;
+    std::map<std::string, int> onlyH;
 
     for (size_t m = 0; m < permutation.size(); ++m) {  // for each molecule
       auto rg = matches[m][permutation[m]].rgroups.find(l);
       if (rg != matches[m][permutation[m]].rgroups.end()) {
 #ifdef DEBUG
-        std::cerr << " RGroup: " << rg->second->smiles;
+std::cerr<<"  combined: "<<MolToSmiles(*rg->second->combinedMol)<<std::endl;
+        std::cerr << " RGroup: " << rg->second->smiles<<" "<<rg->second->smiles.find_first_not_of("0123456789[]*H:.");
 #endif
         matchSet[rg->second->smiles]+=1;
+        // detect whether or not this is an H
+        if(rg->second->smiles.find_first_not_of("0123456789[]*H:.") >= rg->second->smiles.length() ){
+          onlyH[rg->second->smiles] = 0;
+        } else {
+          onlyH[rg->second->smiles] = 1;
+        }
 #ifdef DEBUG
-        std::cerr << " score: " << matchSet[rg->second->smiles] << std::endl;
+        std::cerr << " "<< rg->second->combinedMol->getNumAtoms(false)<<" isH: "<< onlyH[rg->second->smiles]<<" score: " << matchSet[rg->second->smiles] << std::endl;
 #endif
         // XXX Use fragment counts to see if we are linking cycles?
         if (rg->second->smiles.find(".") == std::string::npos &&
@@ -363,14 +371,17 @@ double score(const std::vector<size_t> &permutation,
 
     for (std::map<std::string, int>::const_iterator it = matchSet.begin();
          it != matchSet.end(); ++it) {
+#ifdef DEBUG
+          std::cerr << " equiv: " << it->first << " " << it->second << " " << permutation.size()<< std::endl;
+#endif
       
       // if the rgroup is a hydrogens, only consider if the group is all
       //  hydrogen, otherwise score based on the non hydrogens
-      if(it->first.find("[H]") != std::string::npos) {
+      if(onlyH[it->first]) {
         if(static_cast<size_t>(it->second) == permutation.size())
           equivalentRGroupCount.push_back(static_cast<float>(it->second));
         else
-          equivalentRGroupCount.push_back(it->second * 1.0/permutation.size()); // massively downweight hydrogens
+          equivalentRGroupCount.push_back(0.0); //it->second * 1.0/permutation.size()); // massively downweight hydrogens
       } else {
         equivalentRGroupCount.push_back(static_cast<float>(it->second));
       }
@@ -383,8 +394,12 @@ double score(const std::vector<size_t> &permutation,
     //  each smaller set gets penalized (i+1) below
     //  1.0 is the perfect score
     for (size_t i = 0; i < equivalentRGroupCount.size(); ++i) {
-      tempScore *=
-          equivalentRGroupCount[i] / ((i + 1) * (double)matches.size());
+      auto lscore = equivalentRGroupCount[i] / ((i + 1) * (double)matches.size());
+      if(lscore>0)
+        tempScore *= lscore*lscore;
+#ifdef DEBUG
+          std::cerr << "    lscore^2 " << i << ": " << lscore*lscore << std::endl;
+#endif
     }
 
     // overweight linkers with the same attachments points....
@@ -409,7 +424,7 @@ double score(const std::vector<size_t> &permutation,
       increment = tempScore;
     }
 
-    score *= increment * linkerIncrement;
+    score += increment * linkerIncrement;
 #ifdef DEBUG
     std::cerr << "Increment: " << increment
               << " Linker_Increment: " << linkerIncrement << std::endl;
