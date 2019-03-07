@@ -42,32 +42,32 @@ std::string sdMolSupplierClassDoc =
 \n \
   Usage examples:\n \
 \n \
-    1) Lazy evaluation: the molecules are not constructed until we ask for them:\n \
-       >>> suppl = SDMolSupplier('in.sdf')\n \
-       >>> for mol in suppl:\n \
-       ...    mol.GetNumAtoms()\n \
+    1) Lazy evaluation: the molecules are not constructed until we ask for them:\n\n\
+       >>> suppl = SDMolSupplier('in.sdf')\n\
+       >>> for mol in suppl:\n\
+       ...    mol.GetNumAtoms()\n\
 \n \
-    2) Lazy evaluation 2:\n \
-       >>> suppl = SDMolSupplier('in.sdf')\n \
-       >>> mol1 = suppl.next()\n \
-       >>> mol2 = suppl.next()\n \
-       >>> suppl.reset()\n \
-       >>> mol3 = suppl.next()\n \
-       # mol3 and mol1 are the same: \n \
-       >>> MolToSmiles(mol3)==MolToSmiles(mol1)\n \
+    2) Lazy evaluation 2:\n\n\
+       >>> suppl = SDMolSupplier('in.sdf')\n\
+       >>> mol1 = suppl.next()\n\
+       >>> mol2 = suppl.next()\n\
+       >>> suppl.reset()\n\
+       >>> mol3 = suppl.next()\n\n\
+       # mol3 and mol1 are the same:\n\n\
+       >>> MolToSmiles(mol3)==MolToSmiles(mol1)\n\
 \n \
-    3) Random Access:\n \
-       >>> suppl = SDMolSupplier('in.sdf')\n \
-       >>> mol1 = suppl[0] \n \
-       >>> mol2 = suppl[1] \n \
+    3) Random Access:\n\n\
+       >>> suppl = SDMolSupplier('in.sdf')\n\
+       >>> mol1 = suppl[0] \n\
+       >>> mol2 = suppl[1] \n\
        NOTE: this will generate an IndexError if the supplier doesn't have that many\n \
        molecules.\n \
 \n \
-    4) Random Access 2:  looping over all molecules \n \
-       >>> suppl = SDMolSupplier('in.sdf')\n \
-       >>> nMols = len(suppl)\n \
-       >>> for i in range(nMols):\n \
-       ...   suppl[i].GetNumAtoms()\n \
+    4) Random Access 2:  looping over all molecules \n\n\
+       >>> suppl = SDMolSupplier('in.sdf')\n\
+       >>> nMols = len(suppl)\n\
+       >>> for i in range(nMols):\n\
+       ...   suppl[i].GetNumAtoms()\n\
 \n \
   Properties in the SD file are used to set properties on each molecule.\n\
   The properties are accessible using the mol.GetProp(propName) method.\n\

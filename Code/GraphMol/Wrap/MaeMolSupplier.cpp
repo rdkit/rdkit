@@ -74,10 +74,8 @@ class LocalMaeMolSupplier : public RDKit::MaeMolSupplier {
   };
 };
 
-LocalMaeMolSupplier *FwdMolSupplIter(LocalMaeMolSupplier *self) {
-  return self;
-}
-}
+LocalMaeMolSupplier *FwdMolSupplIter(LocalMaeMolSupplier *self) { return self; }
+}  // namespace
 
 namespace RDKit {
 
@@ -86,12 +84,12 @@ std::string maeMolSupplierClassDoc =
 \n\
   Usage examples:\n\
 \n\
-    1) Lazy evaluation: the molecules are not constructed until we ask for them:\n\
+    1) Lazy evaluation: the molecules are not constructed until we ask for them:\n\n\
        >>> suppl = MaeMolSupplier(file('in.mae'))\n\
        >>> for mol in suppl:\n\
        ...    if mol is not None: mol.GetNumAtoms()\n\
 \n\
-    2) we can also read from compressed files: \n\
+    2) we can also read from compressed files: \n\n\
        >>> import gzip\n\
        >>> suppl = MaeMolSupplier(gzip.open('in.maegz'))\n\
        >>> for mol in suppl:\n \
@@ -106,18 +104,16 @@ struct maemolsup_wrap {
         "MaeMolSupplier", maeMolSupplierClassDoc.c_str(), python::no_init)
         .def(python::init<python::object &, bool, bool>(
             (python::arg("fileobj"), python::arg("sanitize") = true,
-             python::arg("removeHs") = true
-                 ))[python::with_custodian_and_ward_postcall<0, 2>()])
+             python::arg("removeHs") =
+                 true))[python::with_custodian_and_ward_postcall<0, 2>()])
         .def(python::init<streambuf &, bool, bool>(
             (python::arg("streambuf"), python::arg("sanitize") = true,
-             python::arg("removeHs") = true
-                 ))[python::with_custodian_and_ward_postcall<0, 2>()])
+             python::arg("removeHs") =
+                 true))[python::with_custodian_and_ward_postcall<0, 2>()])
         .def(python::init<std::string, bool, bool>(
             (python::arg("filename"), python::arg("sanitize") = true,
-             python::arg("removeHs") = true
-             )))
-        .def(NEXT_METHOD,
-             (ROMol * (*)(LocalMaeMolSupplier *)) & MolSupplNext,
+             python::arg("removeHs") = true)))
+        .def(NEXT_METHOD, (ROMol * (*)(LocalMaeMolSupplier *)) & MolSupplNext,
              "Returns the next molecule in the file.  Raises _StopIteration_ "
              "on EOF.\n",
              python::return_value_policy<python::manage_new_object>())
@@ -127,6 +123,6 @@ struct maemolsup_wrap {
              python::return_internal_reference<1>());
   };
 };
-}
+}  // namespace RDKit
 
 void wrap_maesupplier() { RDKit::maemolsup_wrap::wrap(); }

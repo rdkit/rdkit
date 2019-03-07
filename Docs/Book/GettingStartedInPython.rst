@@ -1,7 +1,12 @@
 Getting Started with the RDKit in Python
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+Important note
+**************
 
+Beginning with the 2019.03 release, the RDKit is no longer supporting Python 2.
+If you need to continue using Python 2, please stick with a release from the 2018.09
+release cycle.
 
 What is this?
 *************
@@ -2726,8 +2731,8 @@ List of Available Descriptors
 |TPSA                                                 |*J. Med. Chem.*                                             | C++      |
 |                                                     |**43**:3714\-7,                                             |          |
 |                                                     |(2000)                                                      |          |
-|                                                     | See the section in the RDKit book describing differences   |          |
-|                                                     |   to the original publication.                             |          |
+|                                                     |See the section in the RDKit book describing differences    |          |
+|                                                     |to the original publication.                                |          |
 +-----------------------------------------------------+------------------------------------------------------------+----------+
 |LabuteASA                                            |*J. Mol. Graph. Mod.*                                       | C++      |
 |                                                     |**18**:464\-77 (2000)                                       |          |
