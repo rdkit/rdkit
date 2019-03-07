@@ -72,14 +72,17 @@ def ReplaceGroup(match, bounds, slop=0.01, useDirs=False, dirLength=defaultFeatL
    >>> bm,idx = ReplaceGroup(match,boundsMat,slop=0.0)
 
    the index is at the end:
+
    >>> idx == 3
    True
 
    and the matrix is one bigger:
+
    >>> bm.shape == (4, 4)
    True
 
    but the original bounds mat is not altered:
+
    >>> boundsMat.shape == (3, 3)
    True
 
@@ -88,12 +91,14 @@ def ReplaceGroup(match, bounds, slop=0.01, useDirs=False, dirLength=defaultFeatL
    feature form a regular polygon, are listed in order
    (i.e. pt 0 is a neighbor to pt 1 and pt N-1)
    and that the replacement point goes at the center:
+
    >>> print(', '.join(['%.3f'%x for x in bm[-1]]))
    0.577, 0.577, 0.577, 0.000
    >>> print(', '.join(['%.3f'%x for x in bm[:,-1]]))
    1.155, 1.155, 1.155, 0.000
 
    The slop argument (default = 0.01) is fractional:
+
    >>> bm,idx = ReplaceGroup(match,boundsMat)
    >>> print(', '.join(['%.3f'%x for x in bm[-1]]))
    0.572, 0.572, 0.572, 0.000
@@ -211,10 +216,12 @@ def AddExcludedVolumes(bm, excludedVolumes, smoothIt=True):
    >>> bm = AddExcludedVolumes(boundsMat,(ev1,))
 
    the results matrix is one bigger:
+
    >>> bm.shape == (4, 4)
    True
 
    and the original bounds mat is not altered:
+
    >>> boundsMat.shape == (3, 3)
    True
 
@@ -286,10 +293,12 @@ def UpdatePharmacophoreBounds(bm, atomMatch, pcophore, useDirs=False, dirLength=
 
      In this case, there are no multi-atom features, so the result matrix
      is the same as the input:
+
      >>> bm is boundsMat
      True
 
      this means, of course, that the input boundsMat is altered:
+
      >>> print(', '.join(['%.3f'%x for x in boundsMat[0]]))
      0.000, 2.000, 3.000
      >>> print(', '.join(['%.3f'%x for x in boundsMat[1]]))
@@ -360,6 +369,7 @@ def EmbedPharmacophore(mol, atomMatch, pcophore, randomSeed=-1, count=10, smooth
     0
 
     Set up a case that can't succeed:
+
     >>> pcophore=Pharmacophore.Pharmacophore(feats)
     >>> pcophore.setLowerBound(0,1, 2.0)
     >>> pcophore.setUpperBound(0,1, 2.1)
@@ -447,6 +457,7 @@ def isNaN(v):
   We can't actually test this from Python (which traps
   zero division errors), but it would work something like
   this if we could:
+
   >>> isNaN(0)
   False
 
@@ -496,13 +507,16 @@ def OptimizeMol(mol, bm, atomMatches=None, excludedVolumes=None, forceConstant=1
     >>> testM = embeds[0]
 
     Do the optimization:
+
     >>> e1,e2 = OptimizeMol(testM,bm,atomMatches=atomMatch)
 
     Optimizing should have lowered the energy:
+
     >>> e2 < e1
     True
 
     Check the constrained distance:
+
     >>> conf = testM.GetConformer(0)
     >>> p0 = conf.GetAtomPosition(0)
     >>> p3 = conf.GetAtomPosition(3)
@@ -516,6 +530,7 @@ def OptimizeMol(mol, bm, atomMatches=None, excludedVolumes=None, forceConstant=1
     argument) we're not guaranteed to get the same results, particularly in a case
     like the current one where the pharmcophore brings the atoms uncomfortably
     close together:
+
     >>> testM = embeds[1]
     >>> e1,e2 = OptimizeMol(testM,bm)
     >>> e2 < e1
@@ -715,10 +730,12 @@ def MatchPharmacophoreToMol(mol, featFactory, pcophore):
     True
 
     Two feature types:
+
     >>> len(mList)
     2
 
     The first feature type, Acceptor, has two matches:
+
     >>> len(mList[0])
     2
     >>> mList[0][0].GetAtomIds()
@@ -727,6 +744,7 @@ def MatchPharmacophoreToMol(mol, featFactory, pcophore):
     (3,)
 
     The first feature type, Donor, has a single match:
+
     >>> len(mList[1])
     1
     >>> mList[1][0].GetAtomIds()
@@ -794,10 +812,12 @@ def MatchFeatsToMol(mol, featFactory, features):
     True
 
     Two feature types:
+
     >>> len(mList)
     2
 
     The first feature type, Acceptor, has two matches:
+
     >>> len(mList[0])
     2
     >>> mList[0][0].GetAtomIds()
@@ -806,6 +826,7 @@ def MatchFeatsToMol(mol, featFactory, features):
     (3,)
 
     The first feature type, Donor, has a single match:
+
     >>> len(mList[1])
     1
     >>> mList[1][0].GetAtomIds()
@@ -869,6 +890,7 @@ def DownsampleBoundsMatrix(bm, indices, maxThresh=4.0):
    True
 
    we don't touch the input matrix:
+
    >>> boundsMat.shape == (3, 3)
    True
 
@@ -878,6 +900,7 @@ def DownsampleBoundsMatrix(bm, indices, maxThresh=4.0):
    2.000, 0.000
 
    if the threshold is high enough, we don't do anything:
+
    >>> boundsMat = numpy.array([[0.0,4.0,3.0],[2.0,0.0,3.0],[2.0,2.0,0.0]])
    >>> bm = DownsampleBoundsMatrix(boundsMat,(0,),5.0)
    >>> bm.shape == (3, 3)
@@ -885,6 +908,7 @@ def DownsampleBoundsMatrix(bm, indices, maxThresh=4.0):
 
    If there's a max value that's close enough to *any* of the indices
    we pass in, we'll keep it:
+
    >>> boundsMat = numpy.array([[0.0,4.0,3.0],[2.0,0.0,3.0],[2.0,2.0,0.0]])
    >>> bm = DownsampleBoundsMatrix(boundsMat,(0,1),3.5)
    >>> bm.shape == (3, 3)
@@ -948,6 +972,7 @@ def CoarseScreenPharmacophore(atomMatch, bounds, pcophore, verbose=False):
   False
 
   # we ignore the point locations here and just use their definitions:
+
   >>> feats = [
   ...   ChemicalFeatures.FreeChemicalFeature('HBondAcceptor', 'HAcceptor1',
   ...                                        Geometry.Point3D(0.0, 0.0, 0.0)),
@@ -1194,6 +1219,7 @@ def ComputeChiralVolume(mol, centerIdx, confId=-1):
     >>> dataDir = os.path.join(RDConfig.RDCodeDir,'Chem/Pharm3D/test_data')
 
     R configuration atoms give negative volumes:
+
     >>> mol = Chem.MolFromMolFile(os.path.join(dataDir,'mol-r.mol'))
     >>> Chem.AssignStereochemistry(mol)
     >>> mol.GetAtomWithIdx(1).GetProp('_CIPCode')
@@ -1202,6 +1228,7 @@ def ComputeChiralVolume(mol, centerIdx, confId=-1):
     True
 
     S configuration atoms give positive volumes:
+
     >>> mol = Chem.MolFromMolFile(os.path.join(dataDir,'mol-s.mol'))
     >>> Chem.AssignStereochemistry(mol)
     >>> mol.GetAtomWithIdx(1).GetProp('_CIPCode')
@@ -1210,10 +1237,12 @@ def ComputeChiralVolume(mol, centerIdx, confId=-1):
     True
 
     Non-chiral (or non-specified) atoms give zero volume:
+
     >>> ComputeChiralVolume(mol,0) == 0.0
     True
 
     We also work on 3-coordinate atoms (with implicit Hs):
+
     >>> mol = Chem.MolFromMolFile(os.path.join(dataDir,'mol-r-3.mol'))
     >>> Chem.AssignStereochemistry(mol)
     >>> mol.GetAtomWithIdx(1).GetProp('_CIPCode')
