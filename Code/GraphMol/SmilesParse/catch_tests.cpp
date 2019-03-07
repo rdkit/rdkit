@@ -18,6 +18,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
 
 using namespace RDKit;
 
@@ -154,7 +155,6 @@ TEST_CASE(
   }
 }
 
-
 TEST_CASE("github #2257: writing cxsmiles", "[smiles,cxsmiles]") {
   SECTION("basics") {
     auto mol = "OCC"_smiles;
@@ -254,6 +254,40 @@ TEST_CASE("github #2257: writing cxsmiles", "[smiles,cxsmiles]") {
     auto smi = MolToCXSmiles(*mol);
     CHECK(smi == "CN |$_AV:val1;val2$,atomProp:0.p2.v2:1.p1.v1|");
   }
+
+  SECTION("mol fragments1") {
+    auto mol = "Cl.OC |(1,0,0;0,.75,0.1;0,-.75,-0.1)|"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getNumConformers() == 1);
+
+    std::vector<int> atomsToUse = {1, 2};
+    auto smi = MolFragmentToCXSmiles(*mol, atomsToUse);
+    CHECK(smi == "CO |(0,-0.75,-0.1;0,0.75,0.1)|");
+  }
+  SECTION("mol fragments2") {
+    auto mol = "Cl.N1CC1C |atomProp:1.p2.v1:1.p1.v1:2.p2.v2:2.p1.v2|"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 5);
+    CHECK(!mol->getAtomWithIdx(0)->hasProp("p1"));
+    CHECK(mol->getAtomWithIdx(1)->hasProp("p1"));
+    CHECK(mol->getAtomWithIdx(1)->getProp<std::string>("p1") == "v1");
+
+    std::vector<int> atomsToUse = {1, 2, 3, 4};
+    auto smi = MolFragmentToCXSmiles(*mol, atomsToUse);
+    CHECK(smi == "CC1CN1 |atomProp:2.p2.v2:2.p1.v2:3.p2.v1:3.p1.v1|");
+  }
+
+  SECTION("mol fragments3") {
+    auto mol = "Cl.[CH]C[CH2] |^1:3,^2:1|"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(2)->getNumRadicalElectrons() == 0);
+    CHECK(mol->getAtomWithIdx(3)->getNumRadicalElectrons() == 1);
+    CHECK(mol->getAtomWithIdx(1)->getNumRadicalElectrons() == 2);
+
+    std::vector<int> atomsToUse = {1, 2, 3};
+    auto smi = MolFragmentToCXSmiles(*mol, atomsToUse);
+    CHECK(smi == "[CH]C[CH2] |^1:2,^2:0|");
+  }
 }
 
 TEST_CASE("Github #2148", "[bug, Smiles, Smarts]") {
@@ -290,6 +324,72 @@ TEST_CASE("Github #2148", "[bug, Smiles, Smarts]") {
     CHECK(mol->getBondBetweenAtoms(1, 2)->getBondType() == Bond::DOUBLE);
     CHECK(mol->getBondBetweenAtoms(1, 2)->getStereo() == Bond::STEREOE);
     auto smi = MolToSmiles(*mol);
-    CHECK(smi=="C=c1cc/c(=C\\C)nc1");    
+    CHECK(smi == "C=c1cc/c(=C\\C)nc1");
+  }
+}
+
+TEST_CASE("Github #2298", "[bug, Smarts, substructure]") {
+  SubstructMatchParameters ps;
+  ps.useQueryQueryMatches = true;
+  SECTION("basics") {
+    auto m1 = "[#6]"_smarts;
+    REQUIRE(m1);
+    CHECK(SubstructMatch(*m1, *m1, ps).size() == 1);
+    auto m2 = "[C]"_smarts;
+    REQUIRE(m2);
+    CHECK(SubstructMatch(*m2, *m2, ps).size() == 1);
+    auto m3 = "[C]"_smarts;
+    REQUIRE(m3);
+    CHECK(SubstructMatch(*m3, *m3, ps).size() == 1);
+  }
+  SECTION("a bit more complex") {
+    auto m1 = "[CH0+2]"_smarts;
+    REQUIRE(m1);
+    CHECK(SubstructMatch(*m1, *m1, ps).size() == 1);
+  }
+}
+
+TEST_CASE("dative ring closures", "[bug, smiles]") {
+  SECTION("first closure1") {
+    auto m1 = "N->1CCN->[Pt]1"_smiles;
+    REQUIRE(m1);
+    REQUIRE(m1->getBondBetweenAtoms(0, 4));
+    CHECK(m1->getBondBetweenAtoms(0, 4)->getBondType() == Bond::DATIVE);
+    CHECK(m1->getBondBetweenAtoms(0, 4)->getBeginAtomIdx() == 0);
+  }
+  SECTION("first closure2") {
+    auto m1 = "[Pt]<-1CCCN1"_smiles;
+    REQUIRE(m1);
+    REQUIRE(m1->getBondBetweenAtoms(0, 4));
+    CHECK(m1->getBondBetweenAtoms(0, 4)->getBondType() == Bond::DATIVE);
+    CHECK(m1->getBondBetweenAtoms(0, 4)->getBeginAtomIdx() == 4);
+  }
+  SECTION("second closure1") {
+    auto m1 = "N1CCN->[Pt]<-1"_smiles;
+    REQUIRE(m1);
+    REQUIRE(m1->getBondBetweenAtoms(0, 4));
+    CHECK(m1->getBondBetweenAtoms(0, 4)->getBondType() == Bond::DATIVE);
+    CHECK(m1->getBondBetweenAtoms(0, 4)->getBeginAtomIdx() == 0);
+  }
+  SECTION("second closure2") {
+    auto m1 = "[Pt]1CCCN->1"_smiles;
+    REQUIRE(m1);
+    REQUIRE(m1->getBondBetweenAtoms(0, 4));
+    CHECK(m1->getBondBetweenAtoms(0, 4)->getBondType() == Bond::DATIVE);
+    CHECK(m1->getBondBetweenAtoms(0, 4)->getBeginAtomIdx() == 4);
+  }
+  SECTION("branch1") {
+    auto m1 = "N(->[Pt])C"_smiles;
+    REQUIRE(m1);
+    REQUIRE(m1->getBondBetweenAtoms(0, 1));
+    CHECK(m1->getBondBetweenAtoms(0, 1)->getBondType() == Bond::DATIVE);
+    CHECK(m1->getBondBetweenAtoms(0, 1)->getBeginAtomIdx() == 0);
+  }
+  SECTION("branch2") {
+    auto m1 = "N(->[Pt])C"_smiles;
+    REQUIRE(m1);
+    REQUIRE(m1->getBondBetweenAtoms(0, 1));
+    CHECK(m1->getBondBetweenAtoms(0, 1)->getBondType() == Bond::DATIVE);
+    CHECK(m1->getBondBetweenAtoms(0, 1)->getBeginAtomIdx() == 0);
   }
 }

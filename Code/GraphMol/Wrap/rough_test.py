@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2003-2017  Greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2003-2019  Greg Landrum and Rational Discovery LLC
 #         All Rights Reserved
 #
 """ This is a rough coverage test of the python wrapper
@@ -4456,6 +4456,23 @@ CAS<~>
     self.assertEqual(m.GetProp('_Name'), "ourname")
     self.assertEqual(m.GetProp("_CXSMILES_Data"), "|$foo;;bar$|")
 
+  def testWriteCXSmiles(self):
+    smi = "CCC |$foo;;bar$|"
+    ps = Chem.SmilesParserParams()
+    ps.allowCXSMILES = True
+    m = Chem.MolFromSmiles(smi, ps)
+    self.assertTrue(m is not None)
+    self.assertTrue(m.GetAtomWithIdx(0).HasProp('atomLabel'))
+    self.assertEqual(m.GetAtomWithIdx(0).GetProp('atomLabel'), "foo")
+    self.assertEqual(Chem.MolToCXSmiles(m),'CCC |$foo;;bar$|')
+
+    smi = "Cl.CCC |$;foo;;bar$|"
+    m = Chem.MolFromSmiles(smi, ps)
+    self.assertTrue(m is not None)
+    self.assertTrue(m.GetAtomWithIdx(1).HasProp('atomLabel'))
+    self.assertEqual(m.GetAtomWithIdx(1).GetProp('atomLabel'), "foo")
+    self.assertEqual(Chem.MolFragmentToCXSmiles(m,atomsToUse=(1,2,3)), 'CCC |$foo;;bar$|')
+
   def testPickleProps(self):
     from rdkit.six.moves import cPickle
     m = Chem.MolFromSmiles('C1=CN=CC=C1')
@@ -5073,8 +5090,8 @@ M  END
     self.assertEqual(Chem.MolFromSmiles('C[C@](I)(Cl)OCC').GetSubstructMatches(b,ps),((0,1,2,3,4),))
     self.assertEqual(Chem.MolFromSmiles('C[C@@](I)(Cl)OCC').GetSubstructMatches(b,ps),())
 
-def testSubstructParametersBundles2(self):
-    b1 = Chem.MolBundle()
+  def testSubstructParametersBundles2(self):
+    b = Chem.MolBundle()
     smis = ('C[C@](F)(Cl)O', 'C[C@](Br)(Cl)O', 'C[C@](I)(Cl)O')
     for smi in smis:
       b.AddMol(Chem.MolFromSmiles(smi))
@@ -5099,7 +5116,17 @@ def testSubstructParametersBundles2(self):
     self.assertEqual(b2.GetSubstructMatches(b,ps),())
 
 
+  def testGithub2285(self):
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'github2285.sdf')
 
+    supp = Chem.ForwardSDMolSupplier(fileN, removeHs=False)
+    if hasattr(supp, "__next__"):
+      self.assertTrue(supp.__next__() is not None)
+    else:
+      self.assertTrue(supp.next() is not None)
+
+      
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()

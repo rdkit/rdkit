@@ -2176,13 +2176,13 @@ int testForwardSDSupplier() {
   }
   // looks good, now do a supplier:
   {
-    io::filtering_istream strm;
+    auto strm = std::make_shared<io::filtering_istream>();
     // the stream must be opened in binary mode otherwise it won't work on
     // Windows
     std::ifstream is(maefname2.c_str(), std::ios_base::binary);
-    strm.push(io::gzip_decompressor());
-    strm.push(is);
-    MaeMolSupplier maesup(&strm, false);
+    strm->push(io::gzip_decompressor());
+    strm->push(is);
+    MaeMolSupplier maesup(strm);
     unsigned int i = 0;
     std::shared_ptr<ROMol> nmol;
     while (!maesup.atEnd()) {
@@ -2335,6 +2335,36 @@ void testGitHub88() {
   nmol->getProp("prop1", pval);
   TEST_ASSERT(pval == "4");
   delete nmol;
+}
+
+void testGitHub2285() {
+  std::string rdbase = getenv("RDBASE");
+  std::string fname =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/github2285.sdf";
+
+  std::vector<std::string> smiles;
+  {
+    SDMolSupplier sdsup(fname);
+    while(!sdsup.atEnd()) {
+      ROMol *nmol = sdsup.next();
+      TEST_ASSERT(nmol);
+      smiles.push_back(MolToSmiles(*nmol));
+      delete nmol;
+    }
+  }
+  {
+    SDMolSupplier sdsup(fname, true, false);
+    int i = 0;
+    while(!sdsup.atEnd()) {
+      ROMol *nmol = sdsup.next();
+      TEST_ASSERT(nmol);
+      ROMol *m = MolOps::removeHs(*nmol);
+      TEST_ASSERT(MolToSmiles(*m) == smiles[i++]);
+      delete nmol;
+      delete m;
+    }
+    TEST_ASSERT(i>0);
+  }
 }
 
 int main() {
@@ -2509,6 +2539,11 @@ int main() {
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
   testGitHub88();
   BOOST_LOG(rdErrorLog) << "Finished: testGitHub88()\n";
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  testGitHub2285();
+  BOOST_LOG(rdErrorLog) << "Finished: testGitHub2285()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
   return 0;
