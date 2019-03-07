@@ -50,32 +50,32 @@ std::string resonanceMolSupplierClassDoc =
   Usage examples:\n \
 \n \
     1) Lazy evaluation: the resonance structures are not constructed\n \
-       until we ask for them:\n \
-       >>> suppl = ResonanceMolSupplier(mol)\n \
-       >>> for resMol in suppl:\n \
-       ...    resMol.GetNumAtoms()\n \
+       until we ask for them:\n\n\
+       >>> suppl = ResonanceMolSupplier(mol)\n\
+       >>> for resMol in suppl:\n\
+       ...    resMol.GetNumAtoms()\n\
 \n \
-    2) Lazy evaluation 2:\n \
-       >>> suppl = ResonanceMolSupplier(mol)\n \
-       >>> resMol1 = suppl.next()\n \
-       >>> resMol2 = suppl.next()\n \
-       >>> suppl.reset()\n \
-       >>> resMol3 = suppl.next()\n \
-       # resMol3 and resMol1 are the same: \n \
-       >>> MolToSmiles(resMol3)==MolToSmiles(resMol1)\n \
+    2) Lazy evaluation 2:\n\n\
+       >>> suppl = ResonanceMolSupplier(mol)\n\
+       >>> resMol1 = suppl.next()\n\
+       >>> resMol2 = suppl.next()\n\
+       >>> suppl.reset()\n\
+       >>> resMol3 = suppl.next()\n\
+       # resMol3 and resMol1 are the same: \n\
+       >>> MolToSmiles(resMol3)==MolToSmiles(resMol1)\n\
 \n \
-    3) Random Access:\n \
-       >>> suppl = ResonanceMolSupplier(mol)\n \
-       >>> resMol1 = suppl[0] \n \
-       >>> resMol2 = suppl[1] \n \
+    3) Random Access:\n\n\
+       >>> suppl = ResonanceMolSupplier(mol)\n\
+       >>> resMol1 = suppl[0] \n\
+       >>> resMol2 = suppl[1] \n\n\
        NOTE: this will generate an IndexError if the supplier doesn't have that many\n \
        molecules.\n \
 \n \
-    4) Random Access 2: looping over all resonance structures\n \
-       >>> suppl = ResonanceMolSupplier(mol)\n \
-       >>> nResMols = len(suppl)\n \
-       >>> for i in range(nResMols):\n \
-       ...   suppl[i].GetNumAtoms()\n \
+    4) Random Access 2: looping over all resonance structures\n\
+       >>> suppl = ResonanceMolSupplier(mol)\n\
+       >>> nResMols = len(suppl)\n\
+       >>> for i in range(nResMols):\n\
+       ...   suppl[i].GetNumAtoms()\n\
 \n";
 struct resmolsup_wrap {
   static void wrap() {
@@ -95,11 +95,13 @@ struct resmolsup_wrap {
         python::init<ROMol &, unsigned int, unsigned int>(
             (python::arg("mol"), python::arg("flags") = 0,
              python::arg("maxStructs") = 1000)))
-        .def("__iter__", (ResonanceMolSupplier * (*)(ResonanceMolSupplier *)) &
-                             MolSupplIter,
-             python::return_internal_reference<1>())
-        .def(NEXT_METHOD, (ROMol * (*)(ResonanceMolSupplier *)) &
-                              MolSupplNextAcceptNullLastMolecule,
+        .def(
+            "__iter__",
+            (ResonanceMolSupplier * (*)(ResonanceMolSupplier *)) & MolSupplIter,
+            python::return_internal_reference<1>())
+        .def(NEXT_METHOD,
+             (ROMol * (*)(ResonanceMolSupplier *)) &
+                 MolSupplNextAcceptNullLastMolecule,
              "Returns the next resonance structure in the supplier. Raises "
              "_StopIteration_ on end.\n",
              python::return_value_policy<python::manage_new_object>())
@@ -126,8 +128,9 @@ struct resmolsup_wrap {
                  ResonanceMolSupplier::getAtomConjGrpIdx,
              "Given an atom index, it returns the index of the conjugated group"
              "the atom belongs to, or -1 if it is not conjugated\n")
-        .def("SetNumThreads", (void (ResonanceMolSupplier::*)(unsigned int)) &
-                                  ResonanceMolSupplier::setNumThreads,
+        .def("SetNumThreads",
+             (void (ResonanceMolSupplier::*)(unsigned int)) &
+                 ResonanceMolSupplier::setNumThreads,
              "Sets the number of threads to be used to enumerate resonance\n"
              "structures (defaults to 1; 0 selects the number of concurrent\n"
              "threads supported by the hardware; negative values are added\n"
@@ -141,7 +144,7 @@ struct resmolsup_wrap {
              "happened\n")
         .def("GetSubstructMatch",
              (PyObject * (*)(ResonanceMolSupplier & m, const ROMol &query, bool,
-                             bool))GetSubstructMatch,
+                             bool)) GetSubstructMatch,
              (python::arg("self"), python::arg("query"),
               python::arg("useChirality") = false,
               python::arg("useQueryQueryMatches") = false),
@@ -207,6 +210,6 @@ struct resmolsup_wrap {
              "query.\n");
   };
 };
-}
+}  // namespace RDKit
 
 void wrap_resmolsupplier() { RDKit::resmolsup_wrap::wrap(); }

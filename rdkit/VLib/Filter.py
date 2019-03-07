@@ -20,6 +20,7 @@ class FilterNode(VLibNode):
       - we return a tuple if there's more than one input
 
     Usage Example:
+
       >>> from rdkit.VLib.Supply import SupplyNode
       >>> def func(a,b):
       ...   return a+b < 5
@@ -38,6 +39,7 @@ class FilterNode(VLibNode):
       >>> filt.Destroy()
 
       Negation is also possible:
+
       >>> filt = FilterNode(func=func,negate=1)
       >>> suppl1 = SupplyNode(contents=[1,2,3,3])
       >>> suppl2 = SupplyNode(contents=[1,2,3,1])
@@ -49,6 +51,7 @@ class FilterNode(VLibNode):
       >>> filt.Destroy()
 
       With no function, just return the inputs:
+
       >>> filt = FilterNode()
       >>> suppl1 = SupplyNode(contents=[1,2,3,3])
       >>> filt.AddParent(suppl1)
@@ -56,8 +59,6 @@ class FilterNode(VLibNode):
       >>> v
       [1, 2, 3, 3]
       >>> filt.Destroy()
-
-
 
     """
 

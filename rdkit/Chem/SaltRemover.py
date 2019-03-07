@@ -157,12 +157,14 @@ class SaltRemover(object):
         4
 
         Notice that all salts are removed:
+
         >>> mol = Chem.MolFromSmiles('CN(C)C.Cl.Cl.Br')
         >>> res = remover.StripMol(mol)
         >>> res.GetNumAtoms()
         4
 
         Matching (e.g. "salt-like") atoms in the molecule are unchanged:
+
         >>> mol = Chem.MolFromSmiles('CN(Br)Cl')
         >>> res = remover.StripMol(mol)
         >>> res.GetNumAtoms()
@@ -174,6 +176,7 @@ class SaltRemover(object):
         4
 
         Charged salts are handled reasonably:
+
         >>> mol = Chem.MolFromSmiles('C[NH+](C)(C).[Cl-]')
         >>> res = remover.StripMol(mol)
         >>> res.GetNumAtoms()
@@ -181,6 +184,7 @@ class SaltRemover(object):
 
 
         Watch out for this case (everything removed):
+
         >>> remover = SaltRemover()
         >>> len(remover.salts)>1
         True
@@ -190,12 +194,14 @@ class SaltRemover(object):
         0
 
         dontRemoveEverything helps with this by leaving the last salt:
+
         >>> res = remover.StripMol(mol,dontRemoveEverything=True)
         >>> res.GetNumAtoms()
         4
 
         but in cases where the last salts are the same, it can't choose
         between them, so it returns all of them:
+
         >>> mol = Chem.MolFromSmiles('Cl.Cl')
         >>> res = remover.StripMol(mol,dontRemoveEverything=True)
         >>> res.GetNumAtoms()
@@ -232,6 +238,7 @@ class SaltRemover(object):
         '[Cl,Br]'
 
         Multiple occurrences of 'Cl' and without tuple destructuring
+        
         >>> mol = Chem.MolFromSmiles('CN(C)C.Cl.Cl')
         >>> tup = remover.StripMolWithDeleted(mol)
 
