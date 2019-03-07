@@ -9,9 +9,7 @@ This module contains tools for disconnecting metal atoms that are defined as cov
 :license: MIT, see LICENSE file for more details.
 """
 
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import division
+
 import logging
 
 from rdkit import Chem
@@ -30,8 +28,10 @@ class MetalDisconnector(object):
         log.debug('Initializing MetalDisconnector')
         # Initialize SMARTS to identify relevant substructures
         # TODO: Use atomic numbers instead of element symbols in SMARTS to allow for isotopes?
-        self._metal_nof = Chem.MolFromSmarts('[Li,Na,K,Rb,Cs,Fr,Be,Mg,Ca,Sr,Ba,Ra,Sc,Ti,V,Cr,Mn,Fe,Co,Ni,Cu,Zn,Al,Ga,Y,Zr,Nb,Mo,Tc,Ru,Rh,Pd,Ag,Cd,In,Sn,Hf,Ta,W,Re,Os,Ir,Pt,Au,Hg,Tl,Pb,Bi]~[N,O,F]')
-        self._metal_non = Chem.MolFromSmarts('[Al,Sc,Ti,V,Cr,Mn,Fe,Co,Ni,Cu,Zn,Y,Zr,Nb,Mo,Tc,Ru,Rh,Pd,Ag,Cd,Hf,Ta,W,Re,Os,Ir,Pt,Au]~[B,C,Si,P,As,Sb,S,Se,Te,Cl,Br,I,At]')
+        self._metal_nof = Chem.MolFromSmarts(
+            '[Li,Na,K,Rb,Cs,Fr,Be,Mg,Ca,Sr,Ba,Ra,Sc,Ti,V,Cr,Mn,Fe,Co,Ni,Cu,Zn,Al,Ga,Y,Zr,Nb,Mo,Tc,Ru,Rh,Pd,Ag,Cd,In,Sn,Hf,Ta,W,Re,Os,Ir,Pt,Au,Hg,Tl,Pb,Bi]~[N,O,F]')
+        self._metal_non = Chem.MolFromSmarts(
+            '[Al,Sc,Ti,V,Cr,Mn,Fe,Co,Ni,Cu,Zn,Y,Zr,Nb,Mo,Tc,Ru,Rh,Pd,Ag,Cd,Hf,Ta,W,Re,Os,Ir,Pt,Au]~[B,C,Si,P,As,Sb,S,Se,Te,Cl,Br,I,At]')
 
     def __call__(self, mol):
         """Calling a MetalDisconnector instance like a function is the same as calling its disconnect(mol) method."""
@@ -69,6 +69,7 @@ class MetalDisconnector(object):
                 atom1.SetFormalCharge(atom1.GetFormalCharge() + chg)
                 atom2 = mol.GetAtomWithIdx(j)
                 atom2.SetFormalCharge(atom2.GetFormalCharge() - chg)
-                log.info('Removed covalent bond between %s and %s', atom1.GetSymbol(), atom2.GetSymbol())
+                log.info('Removed covalent bond between %s and %s',
+                         atom1.GetSymbol(), atom2.GetSymbol())
         Chem.SanitizeMol(mol)
         return mol

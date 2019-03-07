@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 from rdkit.SimDivFilters import rdSimDivPickers as rdsimdiv
 import numpy
 from rdkit import RDRandom

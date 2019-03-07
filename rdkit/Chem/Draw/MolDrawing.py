@@ -12,8 +12,9 @@ from rdkit import Chem
 import numpy
 import math
 import copy
-from rdkit.six import cmp
 import functools
+def cmp(t1, t2):
+    return (t1 < t2) * -1 or (t1 > t2) * 1
 
 periodicTable = Chem.GetPeriodicTable()
 

@@ -30,7 +30,7 @@ Rev history:
 May 2011 (gl): Update some definitions based on feedback from Andrew Dalke
 
 """
-from __future__ import print_function
+
 from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors
 from rdkit import DataStructs

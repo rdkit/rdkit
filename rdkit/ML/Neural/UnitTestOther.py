@@ -6,7 +6,7 @@
    this basically works out **all** of the network code
 
 """
-from __future__ import print_function
+
 
 import unittest
 

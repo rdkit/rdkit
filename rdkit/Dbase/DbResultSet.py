@@ -8,7 +8,7 @@
   this uses the Python iterator interface, so you'll need python 2.2 or above.
 
 """
-from __future__ import print_function
+
 import sys
 from rdkit.Dbase import DbInfo
 

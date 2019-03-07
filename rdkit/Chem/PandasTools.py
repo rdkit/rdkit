@@ -96,7 +96,7 @@ This can be reverted using the ChangeMoleculeRendering method
 <img src="data:image/png;base64,..." alt="Mol"/>
 
 '''
-from __future__ import print_function
+
 
 from base64 import b64encode
 import sys
@@ -112,50 +112,50 @@ from rdkit.Chem.Draw import rdMolDraw2D
 from rdkit.Chem import SDWriter
 from rdkit.Chem import rdchem
 from rdkit.Chem.Scaffolds import MurckoScaffold
-from rdkit.six import BytesIO, string_types, PY3
+from io import BytesIO
 
 log = logging.getLogger(__name__)
 
 try:
-  import pandas as pd
+    import pandas as pd
 
-  def _getPandasVersion():
-    """ Get the pandas version as a tuple """
-    import re
-    try:
-      v = pd.__version__
-    except AttributeError:
-      v = pd.version.version
-    v = re.split(r'[^0-9,.]', v)[0].split('.')
-    return tuple(int(vi) for vi in v)
+    def _getPandasVersion():
+        """ Get the pandas version as a tuple """
+        import re
+        try:
+            v = pd.__version__
+        except AttributeError:
+            v = pd.version.version
+        v = re.split(r'[^0-9,.]', v)[0].split('.')
+        return tuple(int(vi) for vi in v)
 
-  if _getPandasVersion() < (0, 10):
-    print("Pandas version {0} not compatible with tests".format(_getPandasVersion()),
-          file=sys.stderr)
-    pd = None
-  else:
-    # saves the default pandas rendering to allow restoration
-    defPandasRendering = pd.core.frame.DataFrame.to_html
+    if _getPandasVersion() < (0, 10):
+        print("Pandas version {0} not compatible with tests".format(_getPandasVersion()),
+              file=sys.stderr)
+        pd = None
+    else:
+        # saves the default pandas rendering to allow restoration
+        defPandasRendering = pd.core.frame.DataFrame.to_html
 except ImportError:
-  import traceback
-  traceback.print_exc()
-  pd = None
+    import traceback
+    traceback.print_exc()
+    pd = None
 
 except Exception as e:
-  import traceback
-  traceback.print_exc()
-  pd = None
+    import traceback
+    traceback.print_exc()
+    pd = None
 
 if pd:
-  try:
-    from pandas.io.formats import format as fmt
-  except:
     try:
-      from pandas.formats import format as fmt
-    except ImportError:
-      from pandas.core import format as fmt  # older versions
+        from pandas.io.formats import format as fmt
+    except:
+        try:
+            from pandas.formats import format as fmt
+        except ImportError:
+            from pandas.core import format as fmt  # older versions
 else:
-  fmt = 'Pandas not available'
+    fmt = 'Pandas not available'
 
 highlightSubstructures = True
 molRepresentation = 'png'  # supports also SVG
@@ -163,409 +163,409 @@ molSize = (200, 200)
 
 
 def patchPandasHTMLrepr(self, **kwargs):
-  '''
-  Patched default escaping of HTML control characters to allow molecule image rendering dataframes
-  '''
-  # set escape to False if not set
-  kwargs['escape'] = kwargs.get('escape') or False
+    '''
+    Patched default escaping of HTML control characters to allow molecule image rendering dataframes
+    '''
+    # set escape to False if not set
+    kwargs['escape'] = kwargs.get('escape') or False
 
-  # do not allow pandas to truncate text since PNG byte strings are lengthy
-  with pd.option_context('display.max_colwidth', -1):
-    return defPandasRendering(self, **kwargs)
+    # do not allow pandas to truncate text since PNG byte strings are lengthy
+    with pd.option_context('display.max_colwidth', -1):
+        return defPandasRendering(self, **kwargs)
 
 
 def patchPandasHeadMethod(self, n=5):
-  '''Ensure inheritance of patched to_html in "head" subframe
-  '''
-  df = self[:n]
-  df.to_html = types.MethodType(patchPandasHTMLrepr, df)
-  df.head = types.MethodType(patchPandasHeadMethod, df)
-  return df
+    '''Ensure inheritance of patched to_html in "head" subframe
+    '''
+    df = self[:n]
+    df.to_html = types.MethodType(patchPandasHTMLrepr, df)
+    df.head = types.MethodType(patchPandasHeadMethod, df)
+    return df
 
 
 def _get_image(x):
-  """displayhook function for PNG data"""
-  return b64encode(x).decode('ascii')
+    """displayhook function for PNG data"""
+    return b64encode(x).decode('ascii')
 
 
 def _get_svg_image(mol, size=(200, 200), highlightAtoms=[]):
-  """ mol rendered as SVG """
-  from IPython.display import SVG
-  from rdkit.Chem import rdDepictor
-  from rdkit.Chem.Draw import rdMolDraw2D
-  try:
-    # If no coordinates, calculate 2D
-    mol.GetConformer(-1)
-  except ValueError:
-    rdDepictor.Compute2DCoords(mol)
-  drawer = rdMolDraw2D.MolDraw2DSVG(*size)
-  drawer.DrawMolecule(mol, highlightAtoms=highlightAtoms)
-  drawer.FinishDrawing()
-  svg = drawer.GetDrawingText()
-  return SVG(svg).data  # IPython's SVG clears the svg text
+    """ mol rendered as SVG """
+    from IPython.display import SVG
+    from rdkit.Chem import rdDepictor
+    from rdkit.Chem.Draw import rdMolDraw2D
+    try:
+        # If no coordinates, calculate 2D
+        mol.GetConformer(-1)
+    except ValueError:
+        rdDepictor.Compute2DCoords(mol)
+    drawer = rdMolDraw2D.MolDraw2DSVG(*size)
+    drawer.DrawMolecule(mol, highlightAtoms=highlightAtoms)
+    drawer.FinishDrawing()
+    svg = drawer.GetDrawingText()
+    return SVG(svg).data  # IPython's SVG clears the svg text
 
 
 try:
-  from rdkit.Avalon import pyAvalonTools as pyAvalonTools
-  # Calculate the Avalon fingerprint
-  _fingerprinter = lambda x, y: pyAvalonTools.GetAvalonFP(x, isQuery=y, bitFlags=pyAvalonTools.avalonSSSBits)
+    from rdkit.Avalon import pyAvalonTools as pyAvalonTools
+    # Calculate the Avalon fingerprint
+
+    def _fingerprinter(x, y): return pyAvalonTools.GetAvalonFP(
+        x, isQuery=y, bitFlags=pyAvalonTools.avalonSSSBits)
 except ImportError:
-  # Calculate fingerprint using SMARTS patterns
-  _fingerprinter = lambda x, y: Chem.PatternFingerprint(x, fpSize=2048)
+    # Calculate fingerprint using SMARTS patterns
+    def _fingerprinter(x, y): return Chem.PatternFingerprint(x, fpSize=2048)
 
 
 def _molge(x, y):
-  """Allows for substructure check using the >= operator (X has substructure Y -> X >= Y) by
-  monkey-patching the __ge__ function
-  This has the effect that the pandas/numpy rowfilter can be used for substructure filtering
-  (filtered = dframe[dframe['RDKitColumn'] >= SubstructureMolecule])
-  """
-  if x is None or y is None:
-    return False
-  if hasattr(x, '_substructfp'):
-    if not hasattr(y, '_substructfp'):
-      y._substructfp = _fingerprinter(y, True)
-    if not DataStructs.AllProbeBitsMatch(y._substructfp, x._substructfp):
-      return False
-  match = x.GetSubstructMatch(y)
-  x.__sssAtoms = []
-  if match:
-    if highlightSubstructures:
-      x.__sssAtoms = list(match)
-    return True
-  else:
-    return False
+    """Allows for substructure check using the >= operator (X has substructure Y -> X >= Y) by
+    monkey-patching the __ge__ function
+    This has the effect that the pandas/numpy rowfilter can be used for substructure filtering
+    (filtered = dframe[dframe['RDKitColumn'] >= SubstructureMolecule])
+    """
+    if x is None or y is None:
+        return False
+    if hasattr(x, '_substructfp'):
+        if not hasattr(y, '_substructfp'):
+            y._substructfp = _fingerprinter(y, True)
+        if not DataStructs.AllProbeBitsMatch(y._substructfp, x._substructfp):
+            return False
+    match = x.GetSubstructMatch(y)
+    x.__sssAtoms = []
+    if match:
+        if highlightSubstructures:
+            x.__sssAtoms = list(match)
+        return True
+    else:
+        return False
 
 
 def PrintAsBase64PNGString(x, renderer=None):
-  '''returns the molecules as base64 encoded PNG image
-  '''
-  if highlightSubstructures and hasattr(x, '__sssAtoms'):
-    highlightAtoms = x.__sssAtoms
-  else:
-    highlightAtoms = []
-  if molRepresentation.lower() == 'svg':
-    from IPython.display import SVG
-    svg = Draw._moltoSVG(x, molSize, highlightAtoms, "", True)
-    return SVG(svg).data
-  else:
-    data = Draw._moltoimg(x, molSize, highlightAtoms, "", returnPNG=True, kekulize=True)
-    return '<img src="data:image/png;base64,%s" alt="Mol"/>' % _get_image(data)
+    '''returns the molecules as base64 encoded PNG image
+    '''
+    if highlightSubstructures and hasattr(x, '__sssAtoms'):
+        highlightAtoms = x.__sssAtoms
+    else:
+        highlightAtoms = []
+    if molRepresentation.lower() == 'svg':
+        from IPython.display import SVG
+        svg = Draw._moltoSVG(x, molSize, highlightAtoms, "", True)
+        return SVG(svg).data
+    else:
+        data = Draw._moltoimg(x, molSize, highlightAtoms, "", returnPNG=True, kekulize=True)
+        return '<img src="data:image/png;base64,%s" alt="Mol"/>' % _get_image(data)
 
 
 def PrintDefaultMolRep(x):
-  return str(x.__repr__())
+    return str(x.__repr__())
 
 
 def _MolPlusFingerprint(m):
-  '''Precomputes fingerprints and stores results in molecule objects to accelerate
-     substructure matching
-  '''
-  if m is not None:
-    m._substructfp = _fingerprinter(m, False)
-  return m
+    '''Precomputes fingerprints and stores results in molecule objects to accelerate
+       substructure matching
+    '''
+    if m is not None:
+        m._substructfp = _fingerprinter(m, False)
+    return m
 
 
 def RenderImagesInAllDataFrames(images=True):
-  '''Changes the default dataframe rendering to not escape HTML characters, thus allowing
-  rendered images in all dataframes.
-  IMPORTANT: THIS IS A GLOBAL CHANGE THAT WILL AFFECT TO COMPLETE PYTHON SESSION. If you want
-  to change the rendering only for a single dataframe use the "ChangeMoleculeRendering" method
-  instead.
-  '''
-  if images:
-    pd.core.frame.DataFrame.to_html = patchPandasHTMLrepr
-  else:
-    pd.core.frame.DataFrame.to_html = defPandasRendering
+    '''Changes the default dataframe rendering to not escape HTML characters, thus allowing
+    rendered images in all dataframes.
+    IMPORTANT: THIS IS A GLOBAL CHANGE THAT WILL AFFECT TO COMPLETE PYTHON SESSION. If you want
+    to change the rendering only for a single dataframe use the "ChangeMoleculeRendering" method
+    instead.
+    '''
+    if images:
+        pd.core.frame.DataFrame.to_html = patchPandasHTMLrepr
+    else:
+        pd.core.frame.DataFrame.to_html = defPandasRendering
 
 
 def AddMoleculeColumnToFrame(frame, smilesCol='Smiles', molCol='ROMol', includeFingerprints=False):
-  '''Converts the molecules contains in "smilesCol" to RDKit molecules and appends them to the
-  dataframe "frame" using the specified column name.
-  If desired, a fingerprint can be computed and stored with the molecule objects to accelerate
-  substructure matching
-  '''
-  if not includeFingerprints:
-    frame[molCol] = frame[smilesCol].map(Chem.MolFromSmiles)
-  else:
-    frame[molCol] = frame[smilesCol].map(
-      lambda smiles: _MolPlusFingerprint(Chem.MolFromSmiles(smiles)))
-  RenderImagesInAllDataFrames(images=True)
+    '''Converts the molecules contains in "smilesCol" to RDKit molecules and appends them to the
+    dataframe "frame" using the specified column name.
+    If desired, a fingerprint can be computed and stored with the molecule objects to accelerate
+    substructure matching
+    '''
+    if not includeFingerprints:
+        frame[molCol] = frame[smilesCol].map(Chem.MolFromSmiles)
+    else:
+        frame[molCol] = frame[smilesCol].map(
+          lambda smiles: _MolPlusFingerprint(Chem.MolFromSmiles(smiles)))
+    RenderImagesInAllDataFrames(images=True)
 
 
 def ChangeMoleculeRendering(frame=None, renderer='PNG'):
-  '''Allows to change the rendering of the molecules between base64 PNG images and string
-  representations.
-  This serves two purposes: First it allows to avoid the generation of images if this is
-  not desired and, secondly, it allows to enable image rendering for newly created dataframe
-  that already contains molecules, without having to rerun the time-consuming
-  AddMoleculeColumnToFrame. Note: this behaviour is, because some pandas methods, e.g. head()
-  returns a new dataframe instance that uses the default pandas rendering (thus not drawing
-  images for molecules) instead of the monkey-patched one.
-  '''
-  if renderer == 'String':
-    Chem.Mol.__str__ = PrintDefaultMolRep
-  else:
-    Chem.Mol.__str__ = PrintAsBase64PNGString
-  if frame is not None:
-    frame.to_html = types.MethodType(patchPandasHTMLrepr, frame)
+    '''Allows to change the rendering of the molecules between base64 PNG images and string
+    representations.
+    This serves two purposes: First it allows to avoid the generation of images if this is
+    not desired and, secondly, it allows to enable image rendering for newly created dataframe
+    that already contains molecules, without having to rerun the time-consuming
+    AddMoleculeColumnToFrame. Note: this behaviour is, because some pandas methods, e.g. head()
+    returns a new dataframe instance that uses the default pandas rendering (thus not drawing
+    images for molecules) instead of the monkey-patched one.
+    '''
+    if renderer == 'String':
+        Chem.Mol.__str__ = PrintDefaultMolRep
+    else:
+        Chem.Mol.__str__ = PrintAsBase64PNGString
+    if frame is not None:
+        frame.to_html = types.MethodType(patchPandasHTMLrepr, frame)
 
 
 def LoadSDF(filename, idName='ID', molColName='ROMol', includeFingerprints=False,
             isomericSmiles=False, smilesName=None, embedProps=False):
-  '''Read file in SDF format and return as Pandas data frame.
-  If embedProps=True all properties also get embedded in Mol objects in the molecule column.
-  If molColName=None molecules would not be present in resulting DataFrame (only properties
-  would be read).
-  '''
-  if isinstance(filename, string_types):
-    if filename.lower()[-3:] == ".gz":
-      import gzip
-      f = gzip.open(filename, "rb")
+    '''Read file in SDF format and return as Pandas data frame.
+    If embedProps=True all properties also get embedded in Mol objects in the molecule column.
+    If molColName=None molecules would not be present in resulting DataFrame (only properties
+    would be read).
+    '''
+    if isinstance(filename, str):
+        if filename.lower()[-3:] == ".gz":
+            import gzip
+            f = gzip.open(filename, "rb")
+        else:
+            f = open(filename, 'rb')
+        close = f.close
     else:
-      f = open(filename, 'rb')
-    close = f.close
-  else:
-    f = filename
-    close = None  # don't close an open file that was passed in
-  records = []
-  indices = []
-  for i, mol in enumerate(Chem.ForwardSDMolSupplier(f, sanitize=(molColName is not None))):
-    if mol is None:
-      continue
-    row = dict((k, mol.GetProp(k)) for k in mol.GetPropNames())
-    if molColName is not None and not embedProps:
-      for prop in mol.GetPropNames():
-        mol.ClearProp(prop)
-    if mol.HasProp('_Name'):
-      row[idName] = mol.GetProp('_Name')
-    if smilesName is not None:
-      try:
-        row[smilesName] = Chem.MolToSmiles(mol, isomericSmiles=isomericSmiles)
-      except:
-        log.warning('No valid smiles could be generated for molecule %s', i)
-        row[smilesName] = None
-    if molColName is not None and not includeFingerprints:
-      row[molColName] = mol
-    elif molColName is not None:
-      row[molColName] = _MolPlusFingerprint(mol)
-    records.append(row)
-    indices.append(i)
+        f = filename
+        close = None  # don't close an open file that was passed in
+    records = []
+    indices = []
+    for i, mol in enumerate(Chem.ForwardSDMolSupplier(f, sanitize=(molColName is not None))):
+        if mol is None:
+            continue
+        row = dict((k, mol.GetProp(k)) for k in mol.GetPropNames())
+        if molColName is not None and not embedProps:
+            for prop in mol.GetPropNames():
+                mol.ClearProp(prop)
+        if mol.HasProp('_Name'):
+            row[idName] = mol.GetProp('_Name')
+        if smilesName is not None:
+            try:
+                row[smilesName] = Chem.MolToSmiles(mol, isomericSmiles=isomericSmiles)
+            except:
+                log.warning('No valid smiles could be generated for molecule %s', i)
+                row[smilesName] = None
+        if molColName is not None and not includeFingerprints:
+            row[molColName] = mol
+        elif molColName is not None:
+            row[molColName] = _MolPlusFingerprint(mol)
+        records.append(row)
+        indices.append(i)
 
-  if close is not None:
-    close()
-  RenderImagesInAllDataFrames(images=True)
-  return pd.DataFrame(records, index=indices)
+    if close is not None:
+        close()
+    RenderImagesInAllDataFrames(images=True)
+    return pd.DataFrame(records, index=indices)
 
 
 def WriteSDF(df, out, molColName='ROMol', idName=None, properties=None, allNumeric=False):
-  '''Write an SD file for the molecules in the dataframe. Dataframe columns can be exported as
-  SDF tags if specified in the "properties" list. "properties=list(df.columns)" would export
-  all columns.
-  The "allNumeric" flag allows to automatically include all numeric columns in the output.
-  User has to make sure that correct data type is assigned to column.
-  "idName" can be used to select a column to serve as molecule title. It can be set to
-  "RowID" to use the dataframe row key as title.
-  '''
-  close = None
-  if isinstance(out, string_types):
-    if out.lower()[-3:] == ".gz":
-      import gzip
-      if PY3:
-        out = gzip.open(out, "wt")
-      else:
-        out = gzip.open(out, "wb")
-      close = out.close
+    '''Write an SD file for the molecules in the dataframe. Dataframe columns can be exported as
+    SDF tags if specified in the "properties" list. "properties=list(df.columns)" would export
+    all columns.
+    The "allNumeric" flag allows to automatically include all numeric columns in the output.
+    User has to make sure that correct data type is assigned to column.
+    "idName" can be used to select a column to serve as molecule title. It can be set to
+    "RowID" to use the dataframe row key as title.
+    '''
+    close = None
+    if isinstance(out, str):
+        if out.lower()[-3:] == ".gz":
+            import gzip
+            out = gzip.open(out, "wt")
+            close = out.close
 
-  writer = SDWriter(out)
-  if properties is None:
-    properties = []
-  else:
-    properties = list(properties)
-  if allNumeric:
-    properties.extend([
-      dt for dt in df.dtypes.keys()
-      if (np.issubdtype(df.dtypes[dt], float) or np.issubdtype(df.dtypes[dt], int))
-    ])
+    writer = SDWriter(out)
+    if properties is None:
+        properties = []
+    else:
+        properties = list(properties)
+    if allNumeric:
+        properties.extend([
+          dt for dt in df.dtypes.keys()
+          if (np.issubdtype(df.dtypes[dt], float) or np.issubdtype(df.dtypes[dt], int))
+        ])
 
-  if molColName in properties:
-    properties.remove(molColName)
-  if idName in properties:
-    properties.remove(idName)
-  writer.SetProps(properties)
-  for row in df.iterrows():
-    # make a local copy I can modify
-    mol = Chem.Mol(row[1][molColName])
+    if molColName in properties:
+        properties.remove(molColName)
+    if idName in properties:
+        properties.remove(idName)
+    writer.SetProps(properties)
+    for row in df.iterrows():
+        # make a local copy I can modify
+        mol = Chem.Mol(row[1][molColName])
 
-    if idName is not None:
-      if idName == 'RowID':
-        mol.SetProp('_Name', str(row[0]))
-      else:
-        mol.SetProp('_Name', str(row[1][idName]))
-    for p in properties:
-      cell_value = row[1][p]
-      # Make sure float does not get formatted in E notation
-      if np.issubdtype(type(cell_value), float):
-        s = '{:f}'.format(cell_value).rstrip("0")  # "f" will show 7.0 as 7.00000
-        if s[-1] == ".":
-          s += "0"  # put the "0" back on if it's something like "7."
-        mol.SetProp(p, s)
-      else:
-        mol.SetProp(p, str(cell_value))
-    writer.write(mol)
-  writer.close()
-  if close is not None:
-    close()
+        if idName is not None:
+            if idName == 'RowID':
+                mol.SetProp('_Name', str(row[0]))
+            else:
+                mol.SetProp('_Name', str(row[1][idName]))
+        for p in properties:
+            cell_value = row[1][p]
+            # Make sure float does not get formatted in E notation
+            if np.issubdtype(type(cell_value), float):
+                s = '{:f}'.format(cell_value).rstrip("0")  # "f" will show 7.0 as 7.00000
+                if s[-1] == ".":
+                    s += "0"  # put the "0" back on if it's something like "7."
+                mol.SetProp(p, s)
+            else:
+                mol.SetProp(p, str(cell_value))
+        writer.write(mol)
+    writer.close()
+    if close is not None:
+        close()
 
 
 _saltRemover = None
 
 
 def RemoveSaltsFromFrame(frame, molCol='ROMol'):
-  '''
-  Removes salts from mols in pandas DataFrame's ROMol column
-  '''
-  global _saltRemover
-  if _saltRemover is None:
-    from rdkit.Chem import SaltRemover
-    _saltRemover = SaltRemover.SaltRemover()
-  frame[molCol] = frame.apply(lambda x: _saltRemover.StripMol(x[molCol]), axis=1)
+    '''
+    Removes salts from mols in pandas DataFrame's ROMol column
+    '''
+    global _saltRemover
+    if _saltRemover is None:
+        from rdkit.Chem import SaltRemover
+        _saltRemover = SaltRemover.SaltRemover()
+    frame[molCol] = frame.apply(lambda x: _saltRemover.StripMol(x[molCol]), axis=1)
 
 
 def SaveSMILESFromFrame(frame, outFile, molCol='ROMol', NamesCol='', isomericSmiles=False):
-  '''
-  Saves smi file. SMILES are generated from column with RDKit molecules. Column
-  with names is optional.
-  '''
-  w = Chem.SmilesWriter(outFile, isomericSmiles=isomericSmiles)
-  if NamesCol != '':
-    for m, n in zip(frame[molCol], (str(c) for c in frame[NamesCol])):
-      m.SetProp('_Name', n)
-      w.write(m)
-    w.close()
-  else:
-    for m in frame[molCol]:
-      w.write(m)
-    w.close()
+    '''
+    Saves smi file. SMILES are generated from column with RDKit molecules. Column
+    with names is optional.
+    '''
+    w = Chem.SmilesWriter(outFile, isomericSmiles=isomericSmiles)
+    if NamesCol != '':
+        for m, n in zip(frame[molCol], (str(c) for c in frame[NamesCol])):
+            m.SetProp('_Name', n)
+            w.write(m)
+        w.close()
+    else:
+        for m in frame[molCol]:
+            w.write(m)
+        w.close()
 
 
 def SaveXlsxFromFrame(frame, outFile, molCol='ROMol', size=(300, 300)):
-  """
-    Saves pandas DataFrame as a xlsx file with embedded images.
-    It maps numpy data types to excel cell types:
-    int, float -> number
-    datetime -> datetime
-    object -> string (limited to 32k character - xlsx limitations)
-
-    Cells with compound images are a bit larger than images due to excel.
-    Column width weirdness explained (from xlsxwriter docs):
-    The width corresponds to the column width value that is specified in Excel.
-    It is approximately equal to the length of a string in the default font of Calibri 11.
-    Unfortunately, there is no way to specify "AutoFit" for a column in the Excel file format.
-    This feature is only available at runtime from within Excel.
     """
+      Saves pandas DataFrame as a xlsx file with embedded images.
+      It maps numpy data types to excel cell types:
+      int, float -> number
+      datetime -> datetime
+      object -> string (limited to 32k character - xlsx limitations)
 
-  import xlsxwriter  # don't want to make this a RDKit dependency
+      Cells with compound images are a bit larger than images due to excel.
+      Column width weirdness explained (from xlsxwriter docs):
+      The width corresponds to the column width value that is specified in Excel.
+      It is approximately equal to the length of a string in the default font of Calibri 11.
+      Unfortunately, there is no way to specify "AutoFit" for a column in the Excel file format.
+      This feature is only available at runtime from within Excel.
+      """
 
-  cols = list(frame.columns)
-  cols.remove(molCol)
-  dataTypes = dict(frame.dtypes)
+    import xlsxwriter  # don't want to make this a RDKit dependency
 
-  workbook = xlsxwriter.Workbook(outFile)  # New workbook
-  worksheet = workbook.add_worksheet()  # New work sheet
-  worksheet.set_column('A:A', size[0] / 6.)  # column width
+    cols = list(frame.columns)
+    cols.remove(molCol)
+    dataTypes = dict(frame.dtypes)
 
-  # Write first row with column names
-  c2 = 1
-  for x in cols:
-    worksheet.write_string(0, c2, x)
-    c2 += 1
+    workbook = xlsxwriter.Workbook(outFile)  # New workbook
+    worksheet = workbook.add_worksheet()  # New work sheet
+    worksheet.set_column('A:A', size[0] / 6.)  # column width
 
-  c = 1
-  for _, row in frame.iterrows():
-    image_data = BytesIO()
-    img = Draw.MolToImage(row[molCol], size=size)
-    img.save(image_data, format='PNG')
-
-    worksheet.set_row(c, height=size[1])  # looks like height is not in px?
-    worksheet.insert_image(c, 0, "f", {'image_data': image_data})
-
+    # Write first row with column names
     c2 = 1
     for x in cols:
-      if str(dataTypes[x]) == "object":
-        worksheet.write_string(c, c2, str(row[x])[:32000])  # string length is limited in xlsx
-      elif ('float' in str(dataTypes[x])) or ('int' in str(dataTypes[x])):
-        if (row[x] != np.nan) or (row[x] != np.inf):
-          worksheet.write_number(c, c2, row[x])
-      elif 'datetime' in str(dataTypes[x]):
-        worksheet.write_datetime(c, c2, row[x])
-      c2 += 1
-    c += 1
+        worksheet.write_string(0, c2, x)
+        c2 += 1
 
-  workbook.close()
-  image_data.close()
+    c = 1
+    for _, row in frame.iterrows():
+        image_data = BytesIO()
+        img = Draw.MolToImage(row[molCol], size=size)
+        img.save(image_data, format='PNG')
+
+        worksheet.set_row(c, height=size[1])  # looks like height is not in px?
+        worksheet.insert_image(c, 0, "f", {'image_data': image_data})
+
+        c2 = 1
+        for x in cols:
+            if str(dataTypes[x]) == "object":
+                # string length is limited in xlsx
+                worksheet.write_string(c, c2, str(row[x])[:32000])
+            elif ('float' in str(dataTypes[x])) or ('int' in str(dataTypes[x])):
+                if (row[x] != np.nan) or (row[x] != np.inf):
+                    worksheet.write_number(c, c2, row[x])
+            elif 'datetime' in str(dataTypes[x]):
+                worksheet.write_datetime(c, c2, row[x])
+            c2 += 1
+        c += 1
+
+    workbook.close()
+    image_data.close()
 
 
 def FrameToGridImage(frame, column='ROMol', legendsCol=None, **kwargs):
-  '''
-  Draw grid image of mols in pandas DataFrame.
-  '''
-  if legendsCol:
-    if legendsCol == frame.index.name:
-      kwargs['legends'] = [str(c) for c in frame.index]
-    else:
-      kwargs['legends'] = [str(c) for c in frame[legendsCol]]
-  return Draw.MolsToGridImage(frame[column], **kwargs)
+    '''
+    Draw grid image of mols in pandas DataFrame.
+    '''
+    if legendsCol:
+        if legendsCol == frame.index.name:
+            kwargs['legends'] = [str(c) for c in frame.index]
+        else:
+            kwargs['legends'] = [str(c) for c in frame[legendsCol]]
+    return Draw.MolsToGridImage(frame[column], **kwargs)
 
 
 def AddMurckoToFrame(frame, molCol='ROMol', MurckoCol='Murcko_SMILES', Generic=False):
-  '''
-  Adds column with SMILES of Murcko scaffolds to pandas DataFrame.
+    '''
+    Adds column with SMILES of Murcko scaffolds to pandas DataFrame.
 
-  Generic set to true results in SMILES of generic framework.
-  '''
-  if Generic:
-    func = lambda x: Chem.MolToSmiles(MurckoScaffold.MakeScaffoldGeneric(
-      MurckoScaffold.GetScaffoldForMol(x[molCol])))
-  else:
-    func = lambda x: Chem.MolToSmiles(MurckoScaffold.GetScaffoldForMol(x[molCol]))
-  frame[MurckoCol] = frame.apply(func, axis=1)
+    Generic set to true results in SMILES of generic framework.
+    '''
+    if Generic:
+        def func(x): return Chem.MolToSmiles(MurckoScaffold.MakeScaffoldGeneric(
+          MurckoScaffold.GetScaffoldForMol(x[molCol])))
+    else:
+        def func(x): return Chem.MolToSmiles(MurckoScaffold.GetScaffoldForMol(x[molCol]))
+    frame[MurckoCol] = frame.apply(func, axis=1)
 
 
 def AlignMol(mol, scaffold):
-  """
-  Aligns mol (RDKit mol object) to scaffold (SMILES string)
-  """
-  scaffold = Chem.MolFromSmiles(scaffold)
-  AllChem.Compute2DCoords(scaffold)
-  AllChem.GenerateDepictionMatching2DStructure(mol, scaffold)
-  return mol
+    """
+    Aligns mol (RDKit mol object) to scaffold (SMILES string)
+    """
+    scaffold = Chem.MolFromSmiles(scaffold)
+    AllChem.Compute2DCoords(scaffold)
+    AllChem.GenerateDepictionMatching2DStructure(mol, scaffold)
+    return mol
 
 
 def AlignToScaffold(frame, molCol='ROMol', scaffoldCol='Murcko_SMILES'):
-  '''
-  Aligns molecules in molCol to scaffolds in scaffoldCol
-  '''
-  frame[molCol] = frame.apply(lambda x: AlignMol(x[molCol], x[scaffoldCol]), axis=1)
+    '''
+    Aligns molecules in molCol to scaffolds in scaffoldCol
+    '''
+    frame[molCol] = frame.apply(lambda x: AlignMol(x[molCol], x[scaffoldCol]), axis=1)
 
 
 # ==========================================================================================
 # Monkey patching RDkit functionality
 def InstallPandasTools():
-  """ Monkey patch a few RDkit methods of Chem.Mol """
-  global _originalSettings
-  if len(_originalSettings) == 0:
-    _originalSettings['Chem.Mol.__ge__'] = Chem.Mol.__ge__
-    _originalSettings['Chem.Mol.__str__'] = Chem.Mol.__str__
-  rdchem.Mol.__ge__ = _molge
-  rdchem.Mol.__str__ = PrintAsBase64PNGString
+    """ Monkey patch a few RDkit methods of Chem.Mol """
+    global _originalSettings
+    if len(_originalSettings) == 0:
+        _originalSettings['Chem.Mol.__ge__'] = Chem.Mol.__ge__
+        _originalSettings['Chem.Mol.__str__'] = Chem.Mol.__str__
+    rdchem.Mol.__ge__ = _molge
+    rdchem.Mol.__str__ = PrintAsBase64PNGString
 
 
 def UninstallPandasTools():
-  """ Monkey patch a few RDkit methods of Chem.Mol """
-  global _originalSettings
-  Chem.Mol.__ge__ = _originalSettings['Chem.Mol.__ge__']
-  Chem.Mol.__str__ = _originalSettings['Chem.Mol.__str__']
+    """ Monkey patch a few RDkit methods of Chem.Mol """
+    global _originalSettings
+    Chem.Mol.__ge__ = _originalSettings['Chem.Mol.__ge__']
+    Chem.Mol.__str__ = _originalSettings['Chem.Mol.__str__']
 
 
 _originalSettings = {}
@@ -577,37 +577,37 @@ InstallPandasTools()
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-  import doctest
-  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS + doctest.NORMALIZE_WHITESPACE,
-                              verbose=verbose)
-  if (failed):
-    sys.exit(failed)
+    import doctest
+    failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS + doctest.NORMALIZE_WHITESPACE,
+                                verbose=verbose)
+    if (failed):
+        sys.exit(failed)
 
 
 if __name__ == '__main__':  # pragma: nocover
-  import unittest
-  try:
-    import xlsxwriter
-  except ImportError:
-    xlsxwriter = None
+    import unittest
+    try:
+        import xlsxwriter
+    except ImportError:
+        xlsxwriter = None
 
-  class TestCase(unittest.TestCase):
+    class TestCase(unittest.TestCase):
 
-    @unittest.skipIf(xlsxwriter is None, 'xlsxwriter not installed')
-    def testGithub1507(self):
-      import os
-      from rdkit import RDConfig
-      sdfFile = os.path.join(RDConfig.RDDataDir, 'NCI/first_200.props.sdf')
-      frame = LoadSDF(sdfFile)
-      SaveXlsxFromFrame(frame, 'foo.xlsx')
+        @unittest.skipIf(xlsxwriter is None, 'xlsxwriter not installed')
+        def testGithub1507(self):
+            import os
+            from rdkit import RDConfig
+            sdfFile = os.path.join(RDConfig.RDDataDir, 'NCI/first_200.props.sdf')
+            frame = LoadSDF(sdfFile)
+            SaveXlsxFromFrame(frame, 'foo.xlsx')
 
-  if pd is None:
-    print("pandas installation not found, skipping tests", file=sys.stderr)
-  elif _getPandasVersion() < (0, 10):
-    print("pandas installation >=0.10 not found, skipping tests", file=sys.stderr)
-  else:
-    _runDoctests()
-    unittest.main()
+    if pd is None:
+        print("pandas installation not found, skipping tests", file=sys.stderr)
+    elif _getPandasVersion() < (0, 10):
+        print("pandas installation >=0.10 not found, skipping tests", file=sys.stderr)
+    else:
+        _runDoctests()
+        unittest.main()
 
 # $Id$
 #

@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 from Tkinter import *
 from sping.TK import TKCanvas
 from sping import colors

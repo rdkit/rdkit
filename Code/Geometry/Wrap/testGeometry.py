@@ -1,10 +1,10 @@
-from __future__ import print_function
+
 import os, sys
 import unittest
 import copy
 import math
 
-from rdkit.six.moves import cPickle
+import pickle
 
 from rdkit import RDConfig
 from rdkit import DataStructs
@@ -204,8 +204,8 @@ class TestCase(unittest.TestCase):
     pt.Normalize()
     self.assertTrue(feq(pt.Length(), 1.0))
 
-    pkl = cPickle.dumps(pt)
-    pt2 = cPickle.loads(pkl)
+    pkl = pickle.dumps(pt)
+    pt2 = pickle.loads(pkl)
     self.assertTrue(len(pt) == len(pt2))
     for i in range(len(pt)):
       self.assertTrue(feq(pt2[i], pt[i]))
@@ -276,13 +276,13 @@ class TestCase(unittest.TestCase):
 
   def testPointPickles(self):
     pt = geom.Point3D(2.0, -3.0, 1.0)
-    pt2 = cPickle.loads(cPickle.dumps(pt))
+    pt2 = pickle.loads(pickle.dumps(pt))
     self.assertTrue(feq(pt.x, pt2.x, 1e-6))
     self.assertTrue(feq(pt.y, pt2.y, 1e-6))
     self.assertTrue(feq(pt.z, pt2.z, 1e-6))
 
     pt = geom.Point2D(2.0, -4.0)
-    pt2 = cPickle.loads(cPickle.dumps(pt))
+    pt2 = pickle.loads(pickle.dumps(pt))
     self.assertTrue(feq(pt.x, pt2.x, 1e-6))
     self.assertTrue(feq(pt.y, pt2.y, 1e-6))
 
@@ -298,7 +298,7 @@ class TestCase(unittest.TestCase):
 
     self.assertTrue(geom.TanimotoDistance(grd, grd) == 0.0)
 
-    grd2 = cPickle.loads(cPickle.dumps(grd))
+    grd2 = pickle.loads(pickle.dumps(grd))
     self.assertTrue(grd2.GetNumX() == 20)
     self.assertTrue(grd2.GetNumY() == 18)
     self.assertTrue(grd2.GetNumZ() == 16)

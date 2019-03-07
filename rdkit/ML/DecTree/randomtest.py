@@ -26,12 +26,12 @@ def GenRandomExamples(nVars=10, randScale=0.3, bitProb=0.5, nExamples=500, seed=
 
 
 if __name__ == '__main__':  # pragma: nocover
-  from rdkit.six.moves import cPickle
+  import pickle
   examples, attrs, nPossibleVals = GenRandomExamples()
   outF = open('random.dat.pkl', 'wb+')
-  cPickle.dump(examples, outF)
-  cPickle.dump(attrs, outF)
-  cPickle.dump(nPossibleVals, outF)
+  pickle.dump(examples, outF)
+  pickle.dump(attrs, outF)
+  pickle.dump(nPossibleVals, outF)
 
   tree = ID3.ID3Boot(examples, attrs, nPossibleVals)
   tree.Pickle('save.pkl')

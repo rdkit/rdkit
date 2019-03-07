@@ -11,7 +11,7 @@
 """ tools for interacting with chemdraw
 
 """
-from __future__ import print_function
+
 
 import tempfile, os, time
 try:

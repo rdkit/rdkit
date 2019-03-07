@@ -31,7 +31,7 @@
 # Created by Sereina Riniker, Aug 2013
 """ unit testing code for molecule drawing
 """
-from __future__ import print_function
+
 import sys
 import unittest
 import os

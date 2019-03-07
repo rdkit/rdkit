@@ -2,7 +2,7 @@
 #  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 #    All Rights Reserved
 #
-from __future__ import print_function
+
 
 import random
 

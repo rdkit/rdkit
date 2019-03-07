@@ -3,7 +3,7 @@
 #  Created by Greg Landrum August, 2006
 #
 #
-from __future__ import print_function
+
 from rdkit import RDLogger as logging
 logger = logging.logger()
 logger.setLevel(logging.INFO)

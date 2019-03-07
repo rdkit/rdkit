@@ -10,7 +10,7 @@
 """
 unit testing code for calculations in rdkit.Chem.MolSurf
 """
-from __future__ import print_function
+
 
 from collections import namedtuple
 import os.path

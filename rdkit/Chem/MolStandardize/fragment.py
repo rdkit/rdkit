@@ -11,9 +11,7 @@ This module contains tools for dealing with molecules with more than one covalen
 :license: MIT, see LICENSE file for more details.
 """
 
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import division
+
 import logging
 
 from rdkit import Chem
@@ -51,7 +49,7 @@ class FragmentPattern(object):
 #: The default list of :class:`FragmentPatterns <molvs.fragment.FragmentPattern>` to be used by
 #: :class:`~molvs.fragment.FragmentRemover`.
 REMOVE_FRAGMENTS = (
-	FragmentPattern('hydrogen', '[H]'),
+        FragmentPattern('hydrogen', '[H]'),
     FragmentPattern('fluorine', '[F]'),
     FragmentPattern('chlorine', '[Cl]'),
     FragmentPattern('bromine', '[Br]'),
@@ -76,7 +74,8 @@ REMOVE_FRAGMENTS = (
     FragmentPattern('hexafluorophosphate', '[P](-[#9])(-[#9])(-[#9])(-[#9])(-[#9])-[#9]'),
     FragmentPattern('sulfate', '[S](=[#8])(=[#8])(-[#8])-[#8]'),
     FragmentPattern('methyl sulfonate', '[#6]-[S](=[#8])(=[#8])(-[#8])'),
-    FragmentPattern('trifluoromethanesulfonic acid', '[#8]-[S](=[#8])(=[#8])-[#6](-[#9])(-[#9])-[#9]'),
+    FragmentPattern('trifluoromethanesulfonic acid',
+                    '[#8]-[S](=[#8])(=[#8])-[#6](-[#9])(-[#9])-[#9]'),
     FragmentPattern('trifluoroacetic acid', '[#9]-[#6](-[#9])(-[#9])-[#6](=[#8])-[#8]'),
     FragmentPattern('1,2-dichloroethane', '[Cl]-[#6]-[#6]-[Cl]'),
     FragmentPattern('1,2-dimethoxyethane', '[#6]-[#8]-[#6]-[#6]-[#8]-[#6]'),
@@ -241,5 +240,6 @@ class LargestFragmentChooser(object):
                 continue
             # Otherwise this is the largest so far
             log.debug('New largest fragment: %s (%s)', smiles, atoms)
-            largest = {'smiles': smiles, 'fragment': f, 'atoms': atoms, 'weight': weight, 'organic': organic}
+            largest = {'smiles': smiles, 'fragment': f,
+                'atoms': atoms, 'weight': weight, 'organic': organic}
         return largest['fragment']

@@ -2,7 +2,7 @@
 #  Copyright (C) 2001  greg Landrum
 #
 
-from __future__ import print_function
+
 
 from rdkit.Dbase import DbConnection
 from rdkit.ML.Data import Quantize

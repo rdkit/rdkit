@@ -9,9 +9,7 @@ This module contains all the built-in :class:`Validations <molvs.validations.Val
 :license: MIT, see LICENSE file for more details.
 """
 
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import division
+
 import logging
 
 from rdkit import Chem
@@ -165,12 +163,11 @@ class IsotopeValidation(Validation):
 VALIDATIONS = (
     IsNoneValidation,
     NoAtomValidation,
-    #DichloroethaneValidation,
+    # DichloroethaneValidation,
     FragmentValidation,
     NeutralValidation,
     IsotopeValidation,
 )
-
 
 
 # - WARN/ERROR: Are all atoms defined/real - no query atoms or invalid elements, r-group things
@@ -201,8 +198,6 @@ VALIDATIONS = (
 # Web services (needs to be optional)
 # Info - Could not match to ChemSpider ID, PubChem CID
 # UniChem from EBI could be useful here, otherwise use each API directly
-
-
 
 
 # Allow definition of MolSchema to set custom validations on e.g.

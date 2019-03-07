@@ -5,7 +5,7 @@
 #   __ native drawEllipse
 #   __ native drawArc    
 #   __ drawImage support (work on Pyart side of things)
-from __future__ import print_function
+
 import pyart
 from rdkit.sping.pid import *
 from rdkit.sping.PDF import pdfmetrics

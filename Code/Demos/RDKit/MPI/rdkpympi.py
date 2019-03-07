@@ -7,7 +7,7 @@
 #
 # run this with : mpirun -n 4 python rdkpympi.py
 #
-from __future__ import print_function
+
 from boost import mpi
 from rdkit import Chem
 from rdkit.Chem import AllChem

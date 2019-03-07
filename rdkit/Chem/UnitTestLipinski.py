@@ -12,7 +12,7 @@
   This provides a workout for the SMARTS matcher
 
 """
-from __future__ import print_function
+
 
 import os
 import unittest

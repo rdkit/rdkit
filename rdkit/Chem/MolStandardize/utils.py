@@ -9,13 +9,9 @@ This module contains miscellaneous utility functions.
 :license: MIT, see LICENSE file for more details.
 """
 
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import division
+
 import functools
 from itertools import tee
-
-import six
 
 
 def memoized_property(fget):
@@ -34,4 +30,4 @@ def pairwise(iterable):
     """Utility function to iterate in a pairwise fashion."""
     a, b = tee(iterable)
     next(b, None)
-    return six.moves.zip(a, b)
+    return zip(a, b)

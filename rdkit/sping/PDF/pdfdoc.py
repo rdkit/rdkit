@@ -13,7 +13,7 @@ piddlePDF calls pdfgen and offers a high-level interface.
 
 (C) Copyright Andy Robinson 1998-1999
 """
-from __future__ import print_function
+
 import os
 import sys
 import time
@@ -167,7 +167,7 @@ class PDFDocument:
     i = 1
     self.xref = []
     f.write("%PDF-1.2" + LINEEND)  # for CID support
-    f.write("%�춾" + LINEEND)
+    f.write("%�춾" + LINEEND)
     for obj in self.objects:
       pos = f.tell()
       self.xref.append(pos)
@@ -192,7 +192,7 @@ class PDFDocument:
   def printPDF(self):
     "prints it to standard output.  Logs positions for doing trailer"
     print("%PDF-1.0")
-    print("%�춾")
+    print("%�춾")
     i = 1
     self.xref = []
     for obj in self.objects:

@@ -16,7 +16,7 @@ Code factoring and pil image support by Jeffrey Kunce
 
 see also piddleWxDcDemo.py
 '''
-from __future__ import print_function
+
 from wxPython.wx import *
 from rdkit.sping import pid as sping_pid
 

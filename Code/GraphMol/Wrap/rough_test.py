@@ -7,21 +7,20 @@
 it's intended to be shallow, but broad
 
 """
-from __future__ import print_function
+
 import os, sys, tempfile, gzip, gc
 import unittest, doctest
 from rdkit import RDConfig, rdBase
 from rdkit import DataStructs
 from rdkit import Chem
-from rdkit import six
-from rdkit.six import exec_
 
 from rdkit import __version__
 
 # Boost functions are NOT found by doctest, this "fixes" them
 #  by adding the doctests to a fake module
-import imp
-TestReplaceCore = imp.new_module("TestReplaceCore")
+import importlib.util
+spec = importlib.util.spec_from_loader("TestReplaceCore", loader=None)
+TestReplaceCore = importlib.util.module_from_spec(spec)
 code = """
 from rdkit.Chem import ReplaceCore
 def ReplaceCore(*a, **kw):
@@ -29,7 +28,7 @@ def ReplaceCore(*a, **kw):
     '''
     return Chem.ReplaceCore(*a, **kw)
 """ % "\n".join([x.lstrip() for x in Chem.ReplaceCore.__doc__.split("\n")])
-exec_(code, TestReplaceCore.__dict__)
+exec(code, TestReplaceCore.__dict__)
 
 
 def load_tests(loader, tests, ignore):
@@ -437,17 +436,17 @@ class TestCase(unittest.TestCase):
     self.assertTrue(len(bs) == 3)
 
   def test16Pickle(self):
-    from rdkit.six.moves import cPickle
+    import pickle
     m = Chem.MolFromSmiles('C1=CN=CC=C1')
-    pkl = cPickle.dumps(m)
-    m2 = cPickle.loads(pkl)
+    pkl = pickle.dumps(m)
+    m2 = pickle.loads(pkl)
     self.assertTrue(type(m2) == Chem.Mol)
     smi1 = Chem.MolToSmiles(m)
     smi2 = Chem.MolToSmiles(m2)
     self.assertTrue(smi1 == smi2)
 
-    pkl = cPickle.dumps(Chem.RWMol(m))
-    m2 = cPickle.loads(pkl)
+    pkl = pickle.dumps(Chem.RWMol(m))
+    m2 = pickle.loads(pkl)
     self.assertTrue(type(m2) == Chem.RWMol)
     smi1 = Chem.MolToSmiles(m)
     smi2 = Chem.MolToSmiles(m2)
@@ -887,7 +886,7 @@ class TestCase(unittest.TestCase):
         # test parsed charges on one of the molecules
         for id in chgs192.keys():
           self.assertTrue(mol.GetAtomWithIdx(id).GetFormalCharge() == chgs192[id])
-    self.assertRaises(StopIteration, lambda: six.next(sdSup))
+    self.assertRaises(StopIteration, lambda: next(sdSup))
     sdSup.reset()
 
     ns = [mol.GetProp("_Name") for mol in sdSup]
@@ -906,36 +905,36 @@ class TestCase(unittest.TestCase):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'withHs.sdf')
     sdSup = Chem.SDMolSupplier(fileN)
-    m = six.next(sdSup)
+    m = next(sdSup)
     self.assertTrue(m)
     self.assertTrue(m.GetNumAtoms() == 23)
-    m = six.next(sdSup)
+    m = next(sdSup)
     self.assertTrue(m)
     self.assertTrue(m.GetNumAtoms() == 28)
 
     sdSup = Chem.SDMolSupplier(fileN, removeHs=False)
-    m = six.next(sdSup)
+    m = next(sdSup)
     self.assertTrue(m)
     self.assertTrue(m.GetNumAtoms() == 39)
-    m = six.next(sdSup)
+    m = next(sdSup)
     self.assertTrue(m)
     self.assertTrue(m.GetNumAtoms() == 30)
 
     with open(fileN, 'rb') as dFile:
       d = dFile.read()
     sdSup.SetData(d)
-    m = six.next(sdSup)
+    m = next(sdSup)
     self.assertTrue(m)
     self.assertTrue(m.GetNumAtoms() == 23)
-    m = six.next(sdSup)
+    m = next(sdSup)
     self.assertTrue(m)
     self.assertTrue(m.GetNumAtoms() == 28)
 
     sdSup.SetData(d, removeHs=False)
-    m = six.next(sdSup)
+    m = next(sdSup)
     self.assertTrue(m)
     self.assertTrue(m.GetNumAtoms() == 39)
-    m = six.next(sdSup)
+    m = next(sdSup)
     self.assertTrue(m)
     self.assertTrue(m.GetNumAtoms() == 30)
 
@@ -1155,7 +1154,7 @@ mol-4,CCOC
     smis = ['CC', 'CCC', 'CCOC', 'CCCCOC']
     inD = '\n'.join(smis)
     smiSup.SetData(inD, delimiter=",", smilesColumn=0, nameColumn=-1, titleLine=0)
-    m = six.next(smiSup)
+    m = next(smiSup)
     m = smiSup[3]
     self.assertTrue(len(smiSup) == 4)
 
@@ -2722,7 +2721,7 @@ CAS<~>
 
     i = 0
     while not suppl.atEnd():
-      mol = six.next(suppl)
+      mol = next(suppl)
       self.assertTrue(mol)
       self.assertTrue(mol.GetProp("_Name") == molNames[i])
       i += 1
@@ -2734,7 +2733,7 @@ CAS<~>
     inf = None
     i = 0
     while not suppl.atEnd():
-      mol = six.next(suppl)
+      mol = next(suppl)
       self.assertTrue(mol)
       self.assertTrue(mol.GetProp("_Name") == molNames[i])
       i += 1
@@ -2757,7 +2756,7 @@ CAS<~>
 
     i = 0
     while not suppl.atEnd():
-      mol = six.next(suppl)
+      mol = next(suppl)
       self.assertTrue(mol)
       self.assertTrue(mol.GetProp("_Name") == molNames[i])
       i += 1
@@ -2769,7 +2768,7 @@ CAS<~>
     inf = None
     i = 0
     while not suppl.atEnd():
-      mol = six.next(suppl)
+      mol = next(suppl)
       self.assertTrue(mol)
       self.assertTrue(mol.GetProp("_Name") == molNames[i])
       i += 1
@@ -2791,7 +2790,7 @@ CAS<~>
 
     i = 0
     while not suppl.atEnd():
-      mol = six.next(suppl)
+      mol = next(suppl)
       self.assertTrue(mol)
       self.assertTrue(mol.GetProp("_Name") == molNames[i])
       i += 1
@@ -2821,14 +2820,9 @@ CAS<~>
   def test67StreamSupplierStringIO(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'NCI_aids_few.sdf.gz')
-    if six.PY3:
-      from io import BytesIO
-      sio = BytesIO(gzip.open(fileN).read())
-    else:
-      import StringIO
-      sio = StringIO.StringIO(gzip.open(fileN).read())
+    from io import BytesIO
+    sio = BytesIO(gzip.open(fileN).read())
     suppl = Chem.ForwardSDMolSupplier(sio)
-
     molNames = [
       "48", "78", "128", "163", "164", "170", "180", "186", "192", "203", "210", "211", "213",
       "220", "229", "256"
@@ -2875,10 +2869,7 @@ CAS<~>
     self.assertEqual(i, 16)
 
   def test70StreamSDWriter(self):
-    if six.PY3:
-      from io import BytesIO, StringIO
-    else:
-      from StringIO import StringIO
+    from io import BytesIO, StringIO
 
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'NCI_aids_few.sdf.gz')
@@ -2899,11 +2890,8 @@ CAS<~>
     self.assertEqual(i, 16)
     w.flush()
     w = None
-    if six.PY3:
-      txt = osio.getvalue().encode()
-      isio = BytesIO(txt)
-    else:
-      isio = StringIO(osio.getvalue())
+    txt = osio.getvalue().encode()
+    isio = BytesIO(txt)
     suppl = Chem.ForwardSDMolSupplier(isio)
     i = 0
     for mol in suppl:
@@ -2913,7 +2901,7 @@ CAS<~>
     self.assertEqual(i, 16)
 
   def test71StreamSmilesWriter(self):
-    from rdkit.six.moves import StringIO
+    from io import StringIO
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'esters.sdf')
     suppl = Chem.ForwardSDMolSupplier(fileN)
@@ -2934,7 +2922,7 @@ CAS<~>
     self.assertEqual(txt.count('\n'), 7)
 
   def test72StreamTDTWriter(self):
-    from rdkit.six.moves import StringIO
+    from io import StringIO
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'esters.sdf')
     suppl = Chem.ForwardSDMolSupplier(fileN)
@@ -2997,7 +2985,7 @@ CAS<~>
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'NCI_aids_few.sdf')
     sdSup = Chem.SDMolSupplier(fileN)
-    mol = six.next(sdSup)
+    mol = next(sdSup)
     nats = mol.GetNumAtoms()
     conf = mol.GetConformer()
     mol = None
@@ -3837,10 +3825,10 @@ CAS<~>
       resMol = resMolSuppl[i]
       self.assertEqual(getTotalFormalCharge(resMol), totalFormalCharge)
     while (not resMolSuppl.atEnd()):
-      resMol = six.next(resMolSuppl)
+      resMol = next(resMolSuppl)
       self.assertEqual(getTotalFormalCharge(resMol), totalFormalCharge)
     resMolSuppl.reset()
-    cmpFormalChargeBondOrder(self, resMolSuppl[0], six.next(resMolSuppl))
+    cmpFormalChargeBondOrder(self, resMolSuppl[0], next(resMolSuppl))
 
     resMolSuppl = Chem.ResonanceMolSupplier(mol,
       Chem.ALLOW_INCOMPLETE_OCTETS \
@@ -4238,17 +4226,18 @@ CAS<~>
   # this test should probably always be last since it wraps
   #  the logging stream
   def testLogging(self):
+    from io import StringIO
     err = sys.stderr
     try:
       loggers = [("RDKit ERROR", "1", Chem.LogErrorMsg), ("RDKit WARNING", "2", Chem.LogWarningMsg)]
       for msg, v, log in loggers:
-        sys.stderr = six.StringIO()
+        sys.stderr = StringIO()
         log(v)
         self.assertEqual(sys.stderr.getvalue(), "")
 
       Chem.WrapLogs()
       for msg, v, log in loggers:
-        sys.stderr = six.StringIO()
+        sys.stderr = StringIO()
         log(v)
         s = sys.stderr.getvalue()
         self.assertTrue(msg in s)
@@ -4460,7 +4449,7 @@ CAS<~>
     self.assertEqual(Chem.MolFragmentToCXSmiles(m,atomsToUse=(1,2,3)), 'CCC |$foo;;bar$|')
 
   def testPickleProps(self):
-    from rdkit.six.moves import cPickle
+    import pickle
     m = Chem.MolFromSmiles('C1=CN=CC=C1')
     m.SetProp("_Name", "Name")
     for atom in m.GetAtoms():
@@ -4468,8 +4457,8 @@ CAS<~>
       atom.SetProp("foo", "baz" + str(atom.GetIdx()))
 
     Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.AllProps)
-    pkl = cPickle.dumps(m)
-    m2 = cPickle.loads(pkl)
+    pkl = pickle.dumps(m)
+    m2 = pickle.loads(pkl)
     smi1 = Chem.MolToSmiles(m)
     smi2 = Chem.MolToSmiles(m2)
     self.assertTrue(smi1 == smi2)
@@ -4479,8 +4468,8 @@ CAS<~>
       self.assertEqual(atom.GetProp("foo"), "baz" + str(atom.GetIdx()))
 
     Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.AtomProps)
-    pkl = cPickle.dumps(m)
-    m2 = cPickle.loads(pkl)
+    pkl = pickle.dumps(m)
+    m2 = pickle.loads(pkl)
     smi1 = Chem.MolToSmiles(m)
     smi2 = Chem.MolToSmiles(m2)
     self.assertTrue(smi1 == smi2)
@@ -4490,8 +4479,8 @@ CAS<~>
       self.assertEqual(atom.GetProp("foo"), "baz" + str(atom.GetIdx()))
 
     Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.NoProps)
-    pkl = cPickle.dumps(m)
-    m2 = cPickle.loads(pkl)
+    pkl = pickle.dumps(m)
+    m2 = pickle.loads(pkl)
     smi1 = Chem.MolToSmiles(m)
     smi2 = Chem.MolToSmiles(m2)
     self.assertTrue(smi1 == smi2)
@@ -4502,8 +4491,8 @@ CAS<~>
 
     Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.MolProps
                                     | Chem.PropertyPickleOptions.PrivateProps)
-    pkl = cPickle.dumps(m)
-    m2 = cPickle.loads(pkl)
+    pkl = pickle.dumps(m)
+    m2 = pickle.loads(pkl)
     smi1 = Chem.MolToSmiles(m)
     smi2 = Chem.MolToSmiles(m2)
     self.assertTrue(smi1 == smi2)
@@ -4603,9 +4592,9 @@ M  END
 
   def testOldPropPickles(self):
     data = 'crdkit.Chem.rdchem\nMol\np0\n(S\'\\xef\\xbe\\xad\\xde\\x00\\x00\\x00\\x00\\x08\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00)\\x00\\x00\\x00-\\x00\\x00\\x00\\x80\\x01\\x06\\x00`\\x00\\x00\\x00\\x01\\x03\\x07\\x00`\\x00\\x00\\x00\\x02\\x01\\x06 4\\x00\\x00\\x00\\x01\\x01\\x04\\x06\\x00`\\x00\\x00\\x00\\x01\\x03\\x06\\x00(\\x00\\x00\\x00\\x03\\x04\\x08\\x00(\\x00\\x00\\x00\\x03\\x02\\x07\\x00h\\x00\\x00\\x00\\x03\\x02\\x01\\x06 4\\x00\\x00\\x00\\x02\\x01\\x04\\x06\\x00(\\x00\\x00\\x00\\x03\\x04\\x08\\x00(\\x00\\x00\\x00\\x03\\x02\\x07\\x00(\\x00\\x00\\x00\\x03\\x03\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06 4\\x00\\x00\\x00\\x01\\x01\\x04\\x08\\x00(\\x00\\x00\\x00\\x03\\x02\\x06@(\\x00\\x00\\x00\\x03\\x04\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06 4\\x00\\x00\\x00\\x01\\x01\\x04\\x06\\x00(\\x00\\x00\\x00\\x03\\x04\\x08\\x00(\\x00\\x00\\x00\\x03\\x02\\x07\\x00h\\x00\\x00\\x00\\x03\\x02\\x01\\x06 4\\x00\\x00\\x00\\x02\\x01\\x04\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06@(\\x00\\x00\\x00\\x03\\x04\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@(\\x00\\x00\\x00\\x03\\x04\\x06\\x00`\\x00\\x00\\x00\\x03\\x01\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x0b\\x00\\x01\\x00\\x01\\x02\\x00\\x02\\x03\\x00\\x02\\x04\\x00\\x04\\x05(\\x02\\x04\\x06 \\x06\\x07\\x00\\x07\\x08\\x00\\x08\\t(\\x02\\x08\\n \\n\\x0b\\x00\\x0b\\x0c\\x00\\x0c\\r\\x00\\r\\x0e \\x0e\\x0fh\\x0c\\x0f\\x10h\\x0c\\x10\\x11h\\x0c\\x11\\x12h\\x0c\\x12\\x13h\\x0c\\x0c\\x14\\x00\\x14\\x15\\x00\\x15\\x16\\x00\\x16\\x17(\\x02\\x16\\x18 \\x18\\x19\\x00\\x19\\x1a\\x00\\x1a\\x1b\\x00\\x1b\\x1c\\x00\\x1c\\x1d\\x00\\x1d\\x1eh\\x0c\\x1e\\x1fh\\x0c\\x1f h\\x0c !h\\x0c!"h\\x0c\\x07#\\x00#$\\x00$%\\x00%&\\x00&\\\'\\x00\\\'(\\x00\\x15\\n\\x00"\\x19\\x00(#\\x00\\x13\\x0eh\\x0c"\\x1dh\\x0c\\x14\\x05\\x05\\x0b\\n\\x15\\x14\\x0c\\x06\\x0f\\x10\\x11\\x12\\x13\\x0e\\x06\\x1a\\x1b\\x1c\\x1d"\\x19\\x06\\x1e\\x1f !"\\x1d\\x06$%&\\\'(#\\x17\\x00\\x00\\x00\\x00\\x12\\x03\\x00\\x00\\x00\\x07\\x00\\x00\\x00numArom\\x01\\x02\\x00\\x00\\x00\\x0f\\x00\\x00\\x00_StereochemDone\\x01\\x01\\x00\\x00\\x00\\x03\\x00\\x00\\x00foo\\x00\\x03\\x00\\x00\\x00bar\\x13:\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x12\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x000\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x1d\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x001\\x04\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x15\\x00\\x00\\x00\\x12\\x00\\x00\\x00_ChiralityPossible\\x01\\x01\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPCode\\x00\\x01\\x00\\x00\\x00S\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x002\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x00\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x003\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x1a\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x004\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02"\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x005\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x1f\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x006\\x04\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x16\\x00\\x00\\x00\\x12\\x00\\x00\\x00_ChiralityPossible\\x01\\x01\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPCode\\x00\\x01\\x00\\x00\\x00S\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x007\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x1c\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x008\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02$\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x009\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02 \\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0010\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x13\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0011\\x04\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x18\\x00\\x00\\x00\\x12\\x00\\x00\\x00_ChiralityPossible\\x01\\x01\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPCode\\x00\\x01\\x00\\x00\\x00S\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0012\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02!\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0013\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x19\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0014\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x0f\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0015\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x0b\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0016\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x08\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0017\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x0b\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0018\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x0f\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0019\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x07\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0020\\x04\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x17\\x00\\x00\\x00\\x12\\x00\\x00\\x00_ChiralityPossible\\x01\\x01\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPCode\\x00\\x01\\x00\\x00\\x00S\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0021\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x1b\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0022\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02#\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0023\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x1e\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0024\\x04\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x14\\x00\\x00\\x00\\x12\\x00\\x00\\x00_ChiralityPossible\\x01\\x01\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPCode\\x00\\x01\\x00\\x00\\x00R\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0025\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x06\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0026\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x03\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0027\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x05\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0028\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x10\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0029\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x0c\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0030\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\t\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0031\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\n\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0032\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\r\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0033\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x11\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0034\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x0e\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0035\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x04\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0036\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x02\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0037\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x01\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0038\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x02\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0039\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x04\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0040\\x13\\x16\'\np1\ntp2\nRp3\n.'
-    from rdkit.six.moves import cPickle
+    import pickle
     # bonds were broken in v1
-    m2 = cPickle.loads(data.encode("utf-8"), encoding='bytes')
+    m2 = pickle.loads(data.encode("utf-8"), encoding='bytes')
 
     self.assertEqual(m2.GetProp("foo"), "bar")
     for atom in m2.GetAtoms():

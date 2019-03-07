@@ -4,7 +4,7 @@
 """ unit testing code for SLT Risk functions
 
 """
-from __future__ import print_function
+
 import unittest
 from rdkit.ML.SLT import Risk
 import math
