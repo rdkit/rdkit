@@ -352,7 +352,7 @@ static bool ReadAAPairs(
   }
   unsigned n = 0;
   int num_scan = fscanf(fp, "%d", &n);
-  RDUNUSED_PARAM(num_scan);
+  TEST_ASSERT(num_scan == 1);
 
   char buffer[80];
 
