@@ -1630,7 +1630,7 @@ void testMissingFiles() {
   ok = false;
   try {
     m = MolFileToMol(fName);
-  } catch (BadFileException &e) {
+  } catch (BadFileException &) {
     ok = true;
   }
   TEST_ASSERT(ok);
@@ -1638,7 +1638,7 @@ void testMissingFiles() {
   ok = false;
   try {
     m = TPLFileToMol(fName);
-  } catch (BadFileException &e) {
+  } catch (BadFileException &) {
     ok = true;
   }
   TEST_ASSERT(ok);
@@ -3584,7 +3584,7 @@ void testGithub88() {
     bool ok = false;
     try {
       MolFileToMol(fName);
-    } catch (FileParseException &e) {
+    } catch (FileParseException &) {
       ok = true;
     }
     TEST_ASSERT(ok);
@@ -5142,7 +5142,7 @@ void testGithub1689() {
     bool ok = false;
     try {
       MolBlockToMol(molb, sanitize, removeHs, strictParsing);
-    } catch (FileParseException &e) {
+    } catch (FileParseException &) {
       ok = true;
     }
     TEST_ASSERT(ok);
@@ -5242,7 +5242,7 @@ void testGithub2000() {
     bool ok = false;
     try {
       std::unique_ptr<RWMol> m1(MolFileToMol(fName));
-    } catch (FileParseException &e) {
+    } catch (FileParseException &) {
       ok = true;
     }
     TEST_ASSERT(ok);

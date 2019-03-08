@@ -2589,7 +2589,8 @@ YY_BUFFER_STATE yysln__scan_bytes  (yyconst char * yybytes, yy_size_t  _yybytes_
 
 static void yy_fatal_error (yyconst char* msg , yyscan_t yyscanner)
 {
-    	(void) fprintf( stderr, "%s\n", msg );
+    RDUNUSED_PARAM(yyscanner);
+  	(void) fprintf( stderr, "%s\n", msg );
 	exit( YY_EXIT_FAILURE );
 }
 
@@ -2921,6 +2922,7 @@ static int yy_flex_strlen (yyconst char * s , yyscan_t yyscanner)
 
 void *yysln_alloc (yy_size_t  size , yyscan_t yyscanner)
 {
+    RDUNUSED_PARAM(yyscanner);
 	return (void *) malloc( size );
 }
 
@@ -2933,11 +2935,13 @@ void *yysln_realloc  (void * ptr, yy_size_t  size , yyscan_t yyscanner)
 	 * any pointer type to void*, and deal with argument conversions
 	 * as though doing an assignment.
 	 */
+    RDUNUSED_PARAM(yyscanner);
 	return (void *) realloc( (char *) ptr, size );
 }
 
 void yysln_free (void * ptr , yyscan_t yyscanner)
 {
+    RDUNUSED_PARAM(yyscanner);
 	free( (char *) ptr );	/* see yysln_realloc() for (char *) cast */
 }
 

@@ -101,7 +101,7 @@ PyObject *helpGetSubstructMatches(T1 &mol, T2 &query,
     matches = SubstructMatch(mol, query, params);
   }
   PyObject *res = PyTuple_New(matches.size());
-  for (int idx = 0; idx < matches.size(); idx++) {
+  for (size_t idx = 0; idx < matches.size(); idx++) {
     PyTuple_SetItem(res, idx, convertMatches(matches[idx]));
   }
   return res;

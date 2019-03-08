@@ -93,17 +93,18 @@ ROMol *MaeMolSupplier::next() {
     std::shared_ptr<schrodinger::mae::IndexedIntProperty> atomic_charges;
     try {
       atomic_charges = atom_data->getIntProperty("i_m_formal_charge");
-    } catch(std::out_of_range& e) { }
+    } catch (std::out_of_range &) {
+    }
 
     // atomic numbers, and x, y, and z coordinates
     auto conf = new RDKit::Conformer(size);
     conf->set3D(true);
     conf->setId(0);
-    for (size_t i=0; i<size; ++i) {
+    for (size_t i = 0; i < size; ++i) {
       Atom *atom = new Atom(atomic_numbers->at(i));
       mol->addAtom(atom, true, true);
-      if(atomic_charges) {
-          atom->setFormalCharge(atomic_charges->at(i));
+      if (atomic_charges) {
+        atom->setFormalCharge(atomic_charges->at(i));
       }
 
       RDGeom::Point3D pos;
@@ -124,12 +125,12 @@ ROMol *MaeMolSupplier::next() {
     auto orders = bond_data->getIntProperty("i_m_order");
     const auto size = from_atoms->size();
 
-    for (size_t i=0; i<size; ++i) {
+    for (size_t i = 0; i < size; ++i) {
       // Maestro atoms are 1 indexed!
       const auto from_atom = from_atoms->at(i) - 1;
       const auto to_atom = to_atoms->at(i) - 1;
       const auto order = bolookup.find(orders->at(i))->second;
-      if(from_atom > to_atom) continue; // Maestro files double-list bonds
+      if (from_atom > to_atom) continue;  // Maestro files double-list bonds
 
       auto bond = new Bond(order);
       bond->setOwningMol(mol);
@@ -157,7 +158,5 @@ ROMol *MaeMolSupplier::next() {
   return (ROMol *)mol;
 }
 
-bool MaeMolSupplier::atEnd() {
-  return d_next_struct == nullptr;
-}
-}
+bool MaeMolSupplier::atEnd() { return d_next_struct == nullptr; }
+}  // namespace RDKit

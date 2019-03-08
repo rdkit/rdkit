@@ -119,7 +119,7 @@ inline std::unique_ptr<RDKit::RWMol> operator"" _smiles(const char *text,
   RWMol *ptr = nullptr;
   try {
     ptr = SmilesToMol(smi);
-  } catch (const RDKit::MolSanitizeException &e) {
+  } catch (const RDKit::MolSanitizeException &) {
     ptr = nullptr;
   }
   return std::unique_ptr<RWMol>(ptr);
@@ -130,7 +130,7 @@ inline std::unique_ptr<RDKit::RWMol> operator"" _smarts(const char *text,
   RWMol *ptr = nullptr;
   try {
     ptr = SmartsToMol(smi);
-  } catch (const RDKit::MolSanitizeException &e) {
+  } catch (const RDKit::MolSanitizeException &) {
     ptr = nullptr;
   }
   return std::unique_ptr<RWMol>(ptr);

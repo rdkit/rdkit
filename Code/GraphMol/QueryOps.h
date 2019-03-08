@@ -121,7 +121,7 @@ static inline int makeAtomType(int atomic_num, bool aromatic) {
   return atomic_num + 1000 * static_cast<int>(aromatic);
 }
 static inline void parseAtomType(int val, int &atomic_num, bool &aromatic) {
-  if(val>1000) {
+  if (val > 1000) {
     aromatic = true;
     atomic_num = val - 1000;
   } else {
@@ -129,13 +129,13 @@ static inline void parseAtomType(int val, int &atomic_num, bool &aromatic) {
     atomic_num = val;
   }
 }
-static inline bool getAtomTypeIsAromatic(int val){
-    if(val>1000) return true;
-    return false;
+static inline bool getAtomTypeIsAromatic(int val) {
+  if (val > 1000) return true;
+  return false;
 }
-static inline int getAtomTypeAtomicNum(int val){
-    if(val>1000) return val-1000;
-    return val;
+static inline int getAtomTypeAtomicNum(int val) {
+  if (val > 1000) return val - 1000;
+  return val;
 }
 
 static inline int queryAtomType(Atom const *at) {
@@ -231,8 +231,8 @@ static inline int queryBondOrder(Bond const *bond) {
   return static_cast<int>(bond->getBondType());
 };
 static inline int queryBondIsSingleOrAromatic(Bond const *bond) {
-  return static_cast<int>(bond->getBondType()==Bond::SINGLE ||
-      bond->getBondType()==Bond::AROMATIC);
+  return static_cast<int>(bond->getBondType() == Bond::SINGLE ||
+                          bond->getBondType() == Bond::AROMATIC);
 };
 static inline int queryBondDir(Bond const *bond) {
   return static_cast<int>(bond->getBondDir());
@@ -821,7 +821,7 @@ class HasPropWithValueQuery
       try {
         T atom_val = what->template getProp<T>(propname);
         res = Queries::queryCmp(atom_val, this->val, this->tolerance) == 0;
-      } catch (KeyErrorException &e) {
+      } catch (KeyErrorException &) {
         res = false;
       } catch (boost::bad_any_cast &) {
         res = false;

@@ -110,6 +110,11 @@ yysmarts_error( const char *input,
                 RDKit::Bond* &lastBond,
 		void *scanner,int start_token, const char * msg )
 {
+  RDUNUSED_PARAM(input);
+  RDUNUSED_PARAM(lastAtom);
+  RDUNUSED_PARAM(lastBond);
+  RDUNUSED_PARAM(scanner);
+  RDUNUSED_PARAM(start_token);
   yyErrorCleanup(ms);
   BOOST_LOG(rdErrorLog) << "SMARTS Parse Error: " << msg << " while parsing: " << input << std::endl;
 }

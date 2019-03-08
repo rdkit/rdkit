@@ -2517,7 +2517,7 @@ void testSFIssue1836576() {
   ok = false;
   try {
     MolOps::sanitizeMol(*m, opThatFailed);
-  } catch (MolSanitizeException &vee) {
+  } catch (MolSanitizeException &) {
     ok = true;
   }
   TEST_ASSERT(ok);
@@ -2873,7 +2873,7 @@ void testSFIssue1942657() {
   smi = "C[C](C)(C)(C)C";
   try {
     m = SmilesToMol(smi);
-  } catch (MolSanitizeException &e) {
+  } catch (MolSanitizeException &) {
     m = nullptr;
   }
   TEST_ASSERT(!m);
@@ -2881,7 +2881,7 @@ void testSFIssue1942657() {
   smi = "C[CH](C)(C)C";
   try {
     m = SmilesToMol(smi);
-  } catch (MolSanitizeException &e) {
+  } catch (MolSanitizeException &) {
     m = nullptr;
   }
   TEST_ASSERT(!m);
@@ -2889,7 +2889,7 @@ void testSFIssue1942657() {
   smi = "C[C](=C)(C)C";
   try {
     m = SmilesToMol(smi);
-  } catch (MolSanitizeException &e) {
+  } catch (MolSanitizeException &) {
     m = nullptr;
   }
   TEST_ASSERT(!m);
@@ -2897,7 +2897,7 @@ void testSFIssue1942657() {
   smi = "C[Si](=C)(=C)=C";
   try {
     m = SmilesToMol(smi);
-  } catch (MolSanitizeException &e) {
+  } catch (MolSanitizeException &) {
     m = nullptr;
   }
   TEST_ASSERT(!m);
@@ -3333,7 +3333,7 @@ void testSanitizeNonringAromatics() {
     bool ok = false;
     try {
       MolOps::Kekulize(*m);
-    } catch (MolSanitizeException &vee) {
+    } catch (MolSanitizeException &) {
       ok = true;
     }
     TEST_ASSERT(ok);
@@ -3347,7 +3347,7 @@ void testSanitizeNonringAromatics() {
     unsigned int opThatFailed;
     try {
       MolOps::sanitizeMol(*m, opThatFailed);
-    } catch (MolSanitizeException &vee) {
+    } catch (MolSanitizeException &) {
       ok = true;
     }
     TEST_ASSERT(ok);
@@ -4949,7 +4949,7 @@ void testGithubIssue418() {
     bool ok = false;
     try {
       SmilesToMol(smiles);
-    } catch (MolSanitizeException &e) {
+    } catch (MolSanitizeException &) {
       ok = true;
     }
     TEST_ASSERT(ok);
@@ -6678,7 +6678,7 @@ void testKekulizeErrorReporting() {
     ROMol *m;
     try {
       m = SmilesToMol(smi);
-    } catch (MolSanitizeException &e) {
+    } catch (MolSanitizeException &) {
       m = nullptr;
     }
     TEST_ASSERT(m == nullptr);
@@ -6691,7 +6691,7 @@ void testKekulizeErrorReporting() {
     ROMol *m;
     try {
       m = SmilesToMol(smi);
-    } catch (MolSanitizeException &e) {
+    } catch (MolSanitizeException &) {
       m = nullptr;
     }
     TEST_ASSERT(m == nullptr);
@@ -6704,7 +6704,7 @@ void testKekulizeErrorReporting() {
     ROMol *m;
     try {
       m = SmilesToMol(smi);
-    } catch (MolSanitizeException &e) {
+    } catch (MolSanitizeException &) {
       m = nullptr;
     }
     TEST_ASSERT(m == nullptr);

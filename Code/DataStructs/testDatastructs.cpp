@@ -521,31 +521,31 @@ void test6SparseIntVect() {
   try {
     iVect.setVal(-1, 13);
     TEST_ASSERT(0);
-  } catch (IndexErrorException &dexp) {
+  } catch (IndexErrorException &) {
     ;
   }
   try {
     iVect.setVal(255, 42);
     TEST_ASSERT(0);
-  } catch (IndexErrorException &dexp) {
+  } catch (IndexErrorException &) {
     ;
   }
   try {
     iVect.getVal(-1);
     TEST_ASSERT(0);
-  } catch (IndexErrorException &dexp) {
+  } catch (IndexErrorException &) {
     ;
   }
   try {
     iVect.getVal(255);
     TEST_ASSERT(0);
-  } catch (IndexErrorException &dexp) {
+  } catch (IndexErrorException &) {
     ;
   }
   try {
     iVect[-1];
     TEST_ASSERT(0);
-  } catch (IndexErrorException &dexp) {
+  } catch (IndexErrorException &) {
     ;
   }
 
@@ -607,7 +607,7 @@ void test6SparseIntVect() {
     try {
       iV1 &= iVect;
       TEST_ASSERT(0);
-    } catch (ValueErrorException &dexp) {
+    } catch (ValueErrorException &) {
       ;
     }
   }
@@ -672,7 +672,7 @@ void test6SparseIntVect() {
     try {
       iV2 &= iVect;
       TEST_ASSERT(0);
-    } catch (ValueErrorException &dexp) {
+    } catch (ValueErrorException &) {
       ;
     }
   }
@@ -705,7 +705,7 @@ void test6SparseIntVect() {
     try {
       iV1 |= iVect;
       TEST_ASSERT(0);
-    } catch (ValueErrorException &dexp) {
+    } catch (ValueErrorException &) {
       ;
     }
   }
@@ -971,7 +971,7 @@ void test7SparseIntVectPickles() {
     try {
       iV2.fromString(pkl);
       TEST_ASSERT(0);
-    } catch (ValueErrorException &dexp) {
+    } catch (ValueErrorException &) {
       ;
     }
   }

@@ -230,7 +230,7 @@ void testGetSetDihedralThroughTripleBond() {
   bool exceptionRaised = false;
   try {
     setDihedralDeg(conf, 6, 0, 3, 9, 0.0);
-  } catch (ValueErrorException &e) {
+  } catch (ValueErrorException &) {
     exceptionRaised = true;
   }
   TEST_ASSERT(exceptionRaised);
