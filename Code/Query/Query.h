@@ -46,7 +46,8 @@ template <class MatchFuncArgType, class DataFuncArgType = MatchFuncArgType,
 class Query {
  public:
   typedef boost::shared_ptr<
-      Query<MatchFuncArgType, DataFuncArgType, needsConversion> > CHILD_TYPE;
+      Query<MatchFuncArgType, DataFuncArgType, needsConversion>>
+      CHILD_TYPE;
   typedef std::vector<CHILD_TYPE> CHILD_VECT;
   typedef typename CHILD_VECT::iterator CHILD_VECT_I;
   typedef typename CHILD_VECT::const_iterator CHILD_VECT_CI;
@@ -140,16 +141,19 @@ class Query {
   };
 
  protected:
+  MatchFuncArgType d_val = 0;
+  MatchFuncArgType d_tol = 0;
   std::string d_description;
   CHILD_VECT d_children;
   bool df_negate;
   bool (*d_matchFunc)(MatchFuncArgType);
-  
- // MSVC complains at compile time when TypeConvert(MatchFuncArgType what, Int2Type<false>)
- // attempts to pass what (which is of type MatchFuncArgType) as parameter of d_dataFunc()
- // (which should be of type DataFuncArgType). The union is but a trick to avoid
- // silly casts and keep MSVC happy when building DLLs
- union {
+
+  // MSVC complains at compile time when TypeConvert(MatchFuncArgType what,
+  // Int2Type<false>) attempts to pass what (which is of type MatchFuncArgType)
+  // as parameter of d_dataFunc() (which should be of type DataFuncArgType). The
+  // union is but a trick to avoid silly casts and keep MSVC happy when building
+  // DLLs
+  union {
     MatchFuncArgType (*d_dataFunc)(DataFuncArgType);
     MatchFuncArgType (*d_dataFuncSameType)(MatchFuncArgType);
   };
@@ -158,7 +162,8 @@ class Query {
   MatchFuncArgType TypeConvert(MatchFuncArgType what,
                                Int2Type<false> /*d*/) const {
     MatchFuncArgType mfArg;
-    if (this->d_dataFuncSameType != NULL && std::is_same<MatchFuncArgType, DataFuncArgType>::value) {
+    if (this->d_dataFuncSameType != NULL &&
+        std::is_same<MatchFuncArgType, DataFuncArgType>::value) {
       mfArg = this->d_dataFuncSameType(what);
     } else {
       mfArg = what;
@@ -166,7 +171,7 @@ class Query {
     return mfArg;
   }
   //! calls our \c dataFunc (which must be set) on \c what and returns the
-  //result
+  // result
   MatchFuncArgType TypeConvert(DataFuncArgType what,
                                Int2Type<true> /*d*/) const {
     PRECONDITION(this->d_dataFunc, "no data function");
@@ -194,5 +199,5 @@ int queryCmp(const T1 v1, const T2 v2, const T1 tol) {
     return 1;
   }
 };
-}
+}  // namespace Queries
 #endif

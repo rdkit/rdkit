@@ -23,15 +23,20 @@ template <typename MatchFuncArgType,
 class EqualityQuery
     : public Query<MatchFuncArgType, DataFuncArgType, needsConversion> {
  public:
-  EqualityQuery() : d_tol(0) { this->df_negate = false; };
+  EqualityQuery() {
+    this->df_negate = false;
+  };
 
   //! constructs with our target value
-  explicit EqualityQuery(MatchFuncArgType v) : d_val(v), d_tol(0) {
+  explicit EqualityQuery(MatchFuncArgType v) {
+    this->d_val = v;
     this->df_negate = false;
   };
 
   //! constructs with our target value and a tolerance
-  EqualityQuery(MatchFuncArgType v, MatchFuncArgType t) : d_val(v), d_tol(t) {
+  EqualityQuery(MatchFuncArgType v, MatchFuncArgType t) {
+    this->d_val = v;
+    this->d_tol = t;
     this->df_negate = false;
   };
 
@@ -86,10 +91,6 @@ class EqualityQuery
     res << "val";
     return res.str();
   }
-
- protected:
-  MatchFuncArgType d_val;
-  MatchFuncArgType d_tol;
 };
-}
+}  // namespace Queries
 #endif
