@@ -36,11 +36,15 @@
 %{
 #include <GraphMol/SubstructLibrary/SubstructLibrary.h>
 %}
+%shared_ptr(RDKit::MolHolderBase)
+%shared_ptr(RDKit::MolHolder)
+%shared_ptr(RDKit::CachedMolHolder)
+%shared_ptr(RDKit::CachedSmilesMolHolder)
+%shared_ptr(RDKit::CachedTrustedSmilesMolHolder)
+%shared_ptr(RDKit::FPHolderBase)
+%shared_ptr(RDKit::PatternHolder)
 
 %template(UChar_Vect) std::vector<unsigned char>;
-
-%include <GraphMol/SubstructLibrary/SubstructLibrary.h>
-
 
 %typemap(javacode) RDKit::SubstructLibrary %{
      public static SubstructLibrary Deserialize(byte[] b) {
@@ -78,7 +82,7 @@
 }
 #endif
 
-
+%include <GraphMol/SubstructLibrary/SubstructLibrary.h>
 
 %pragma(java) modulecode=%{
    public static SubstructLibrary SubstructLibraryDeserialize(byte[] b) {
