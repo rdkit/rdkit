@@ -142,6 +142,7 @@ struct atom_wrapper {
     python::class_<Atom, Atom*>("Atom", atomClassDoc.c_str(),
                          python::init<std::string>())
 
+        .def(python::init<const Atom &>())
         .def(python::init<unsigned int>(
             "Constructor, takes either an int (atomic number) or a string "
             "(atomic symbol).\n"))
