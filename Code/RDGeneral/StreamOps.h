@@ -19,18 +19,20 @@
 #include <sstream>
 #include <iostream>
 #include <boost/cstdint.hpp>
-#include <boost/detail/endian.hpp>
+#include <boost/predef.h>
 
 namespace RDKit {
-// this code block for handling endian problems is from :
+// this code block for handling endian problems is adapted from :
 // http://stackoverflow.com/questions/105252/how-do-i-convert-between-big-endian-and-little-endian-values-in-c
 enum EEndian {
   LITTLE_ENDIAN_ORDER,
   BIG_ENDIAN_ORDER,
-#if defined(BOOST_LITTLE_ENDIAN)
+#if defined(BOOST_ENDIAN_LITTLE_BYTE) or defined(BOOST_ENDIAN_LITTLE_WORD)
   HOST_ENDIAN_ORDER = LITTLE_ENDIAN_ORDER
-#elif defined(BOOST_BIG_ENDIAN)
+#elif defined(BOOST_ENDIAN_BIG_BYTE)
   HOST_ENDIAN_ORDER = BIG_ENDIAN_ORDER
+#elif defined(BOOST_ENDIAN_BIG_WORD)
+#error "Cannot compile on word-swapped big-endian systems"
 #else
 #error "Failed to determine the system endian value"
 #endif
@@ -40,8 +42,7 @@ enum EEndian {
 // parameter (could sizeof be used?).
 template <class T, unsigned int size>
 inline T SwapBytes(T value) {
-  if (size < 2)
-    return value;
+  if (size < 2) return value;
 
   union {
     T value;
