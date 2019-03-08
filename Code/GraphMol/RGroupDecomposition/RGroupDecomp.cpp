@@ -258,7 +258,8 @@ struct RGroupData {
       const {  // compute the canonical smiles for the attachments
     std::string s;
     for (const auto &it : smilesSet) {
-      s += "."+it;
+      if(s.length()) s += ".";
+      s += it;
     }
     return s;
   }
