@@ -82,20 +82,24 @@ ROMol *FragmentRemover::remove(const ROMol &mol) {
                              SubstructMatch(*frag.first, *fgci).size() > 0;
                     }),
                 frags.end());
+    if (this->LEAVE_LAST && !this->SKIP_IF_ALL_MATCH && frags.empty()) {
+      // All the remaining fragments match this pattern - leave them all
+      frags = tfrags;
+      break;
+    }
     if (frags.size() != oCount) {
       BOOST_LOG(rdInfoLog) << "Removed fragment: "
                            << fgci->getProp<std::string>(
                                   common_properties::_Name)
                            << "\n";
     }
-    if (this->LEAVE_LAST && !this->SKIP_IF_ALL_MATCH && frags.empty()) {
-      // All the remaining fragments match this pattern - leave them all
-      frags = tfrags;
-      break;
-    }
   }
   if (frags.empty()) {
-    if (this->SKIP_IF_ALL_MATCH) return new ROMol(mol);
+    if (this->SKIP_IF_ALL_MATCH) {
+      BOOST_LOG(rdInfoLog)
+          << "All fragments matched; original molecule returned." << std::endl;
+      return new ROMol(mol);
+    }
     return new ROMol();
   }
 
