@@ -13,6 +13,7 @@
 */
 
 #include <string>
+#include <memory>
 
 namespace RDKit {
 class ROMol;
@@ -21,9 +22,19 @@ extern const std::string _EHTCharge;        // used to hold partial charges
 extern const std::string _EHTMullikenOP;    // used to hold overlap populations
 extern const std::string _EHTChargeMatrix;  // used to hold charge matrix
 
+struct EHTResults {
+  std::unique_ptr<double[]> overlapPopulationMatrix;
+  std::unique_ptr<double[]> reducedOverlapPopulationMatrix;
+  std::unique_ptr<double[]> chargeMatrix;
+  std::unique_ptr<double[]> reducedChargeMatrix;
+  std::unique_ptr<double[]> atomicCharges;
+  double fermiEnergy;
+  double totalEnergy;
+};
+
 //! Runs an extended Hueckel calculation for a molecule
-//!   The results are stored as molecular properties
-bool runMol(const ROMol &mol, int confId = -1);
+//!   The results are returned in the EHTResults structure
+bool runMol(const ROMol &mol, EHTResults &results, int confId = -1);
 
 }  // namespace EHTTools
 }  // namespace RDKit

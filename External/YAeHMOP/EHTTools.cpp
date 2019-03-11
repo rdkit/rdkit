@@ -21,7 +21,7 @@ const std::string _EHTChargeMatrix = "_EHTChargeMatrix";
 // thread at a time. This mutex enforces that.
 std::mutex yaehmop_mutex;
 
-bool runMol(const ROMol &mol, int confId) {
+bool runMol(const ROMol &mol, EHTResults &results, int confId) {
   std::lock_guard<std::mutex> lock(yaehmop_mutex);
 
   // -----------------------------
@@ -35,32 +35,8 @@ bool runMol(const ROMol &mol, int confId) {
   unit_cell = (cell_type *)calloc(1, sizeof(cell_type));
   details = (detail_type *)calloc(1, sizeof(detail_type));
 
-  /*******
-    initialize some variables
-    ********/
-  details->walsh_details.num_steps = 1;
-  details->walsh_details.num_vars = 0;
-  details->use_symmetry = 0;
-  details->find_princ_axes = 0;
-  details->vary_zeta = 0;
-  details->avg_props = 0;
-  details->just_geom = 0;
-  details->dump_overlap = 0;
-  details->dump_hamil = 0;
-  details->sparsify_value = 0.0;
-  details->Execution_Mode = FAT;
-  details->the_const = THE_CONST;
-  details->weighted_Hij = 1;
-  details->eval_electrostat = 0;
-  details->close_nn_contact = NN_DISTANCE;
-  details->symm_tol = 0.01;
-  details->muller_mix = MULLER_MIX_DEF;
-  details->muller_E_tol = MULLER_E_TOL_DEF;
-  details->muller_Z_tol = MULLER_Z_TOL_DEF;
-  details->num_moments = 4;
-  details->line_width = 80;
-  details->k_offset = K_OFFSET;
-  unit_cell->equiv_atoms = 0;
+  set_details_defaults(details);
+  set_cell_defaults(unit_cell);
 
   safe_strcpy(details->title, (char *)"RDKit job");
 
@@ -131,6 +107,10 @@ bool runMol(const ROMol &mol, int confId) {
   // ---------------------------------
 
   // pull properties
+  res.atomicCharges = std::make_unique(new double[mol.getNumAtoms()]);
+  for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+    res.atomicCharges[i] = properties.net_chgs[i];
+  }
   for (auto &atom : mol.atoms()) {
     atom->setProp(_EHTCharge, properties.net_chgs[atom->getIdx()], true);
   }
