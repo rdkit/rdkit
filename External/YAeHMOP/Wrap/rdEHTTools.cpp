@@ -25,47 +25,80 @@ namespace RDKit {
 
 namespace {
 
-PyObject *getMatrixProp(ROMol &mol, std::string propName) {
-  if (!mol.hasProp(propName)) {
-    throw ValueErrorException("eHT calculation not yet run");
-  }
+// from: https://stackoverflow.com/a/35960614
+/// @brief Transfer ownership to a Python object.  If the transfer fails,
+///        then object will be destroyed and an exception is thrown.
+template <typename T>
+boost::python::object transfer_to_python(T *t) {
+  // Transfer ownership to a smart pointer, allowing for proper cleanup
+  // incase Boost.Python throws.
+  std::unique_ptr<T> ptr(t);
 
-  int nats = mol.getNumAtoms();
+  // Use the manage_new_object generator to transfer ownership to Python.
+  namespace python = boost::python;
+  typename python::manage_new_object::apply<T *>::type converter;
+
+  // Transfer ownership to the Python handler and release ownership
+  // from C++.
+  python::handle<> handle(converter(*ptr));
+  ptr.release();
+
+  return python::object(handle);
+}
+
+PyObject *getMatrixProp(const double *mat, unsigned int sz) {
+  if (!mat) throw_value_error("matrix has not be initialized");
   npy_intp dims[2];
-  dims[0] = nats;
-  dims[1] = nats;
-  double *mat = mol.getProp<boost::shared_array<double>>(propName).get();
-  CHECK_INVARIANT(mat, "invalid matrix");
+  dims[0] = sz;
+  dims[1] = sz;
 
   PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
 
-  memcpy(PyArray_DATA(res), static_cast<void *>(mat),
-         nats * nats * sizeof(double));
+  memcpy(PyArray_DATA(res), static_cast<const void *>(mat),
+         sz * sz * sizeof(double));
 
   return PyArray_Return(res);
 }
-PyObject *getVectorProp(ROMol &mol, std::string propName) {}
-PyObject *getChargeMatrix(ROMol &mol) {
-  return getMatrixProp(mol, EHTTools::_EHTChargeMatrix);
-}
-
-PyObject *getOPMatrix(ROMol &mol) {
-  std::string propName = EHTTools::_EHTMullikenOP;
-  if (!mol.hasProp(propName)) {
-    throw ValueErrorException("eHT calculation not yet run");
-  }
-
-  int nats = mol.getNumAtoms();
+PyObject *getSymmMatrixProp(const double *mat, unsigned int sz) {
+  if (!mat) throw_value_error("matrix has not be initialized");
   npy_intp dims[1];
-  dims[0] = nats * (nats + 1) / 2;
-  double *mat = mol.getProp<boost::shared_array<double>>(propName).get();
-  CHECK_INVARIANT(mat, "invalid matrix");
+  dims[0] = sz * (sz + 1) / 2;
 
   PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(1, dims, NPY_DOUBLE);
 
-  memcpy(PyArray_DATA(res), static_cast<void *>(mat), dims[0] * sizeof(double));
+  memcpy(PyArray_DATA(res), static_cast<const void *>(mat),
+         dims[0] * sizeof(double));
 
   return PyArray_Return(res);
+}
+PyObject *getVectorProp(const double *mat, unsigned int sz) {
+  if (!mat) throw_value_error("vector has not be initialized");
+  npy_intp dims[1];
+  dims[0] = sz;
+
+  PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(1, dims, NPY_DOUBLE);
+
+  memcpy(PyArray_DATA(res), static_cast<const void *>(mat),
+         sz * sizeof(double));
+
+  return PyArray_Return(res);
+}
+PyObject *getChargeMatrix(EHTTools::EHTResults &self) {
+  return getMatrixProp(self.reducedChargeMatrix.get(), self.numAtoms);
+}
+
+PyObject *getOPMatrix(EHTTools::EHTResults &self) {
+  return getSymmMatrixProp(self.reducedOverlapPopulationMatrix.get(),
+                           self.numAtoms);
+}
+
+PyObject *getCharges(EHTTools::EHTResults &self) {
+  return getVectorProp(self.atomicCharges.get(), self.numAtoms);
+}
+python::tuple runCalc(const RDKit::ROMol &mol, int confId) {
+  auto eRes = new RDKit::EHTTools::EHTResults();
+  bool ok = RDKit::EHTTools::runMol(mol, *eRes, confId);
+  return python::make_tuple(ok, transfer_to_python(eRes));
 }
 
 }  // end of anonymous namespace
@@ -74,6 +107,15 @@ struct EHT_wrapper {
   static void wrap() {
     std::string docString = "";
 
+    python::class_<RDKit::EHTTools::EHTResults, boost::noncopyable>(
+        "EHTResults", docString.c_str(), python::no_init)
+        .def("GetReducedChargeMatrix", getChargeMatrix,
+             "returns the reduced charge matrix")
+        .def("GetReducedOverlapPopulationMatrix", getOPMatrix,
+             "returns the reduced overlap population matrix")
+        .def("GetAtomicCharges", getCharges,
+             "returns the calculated atomic charges");
+
     docString =
         R"DOC(Runs an extended Hueckel calculation for a molecule.
 The molecule should have at least one conformation
@@ -81,27 +123,13 @@ The molecule should have at least one conformation
 ARGUMENTS:
    - mol: molecule to use
    - confId: (optional) conformation to use
+
+RETURNS: a 2-tuple:
+   - a boolean indicating whether or not the calculation succeeded
+   - an EHTResults object with the results
 )DOC";
-    python::def("RunMol", RDKit::EHTTools::runMol,
+    python::def("RunMol", runCalc,
                 (python::arg("mol"), python::arg("confId") = -1),
-                docString.c_str());
-    docString =
-        R"DOC(Returns the extended Hueckel charge matrix for a molecule.
-Note that you have to call RunMol() first.
-
-ARGUMENTS:
-   - mol: molecule to use
-)DOC";
-    python::def("GetChargeMatrix", getChargeMatrix, (python::arg("mol")),
-                docString.c_str());
-    docString =
-        R"DOC(Returns the extended Hueckel overlap population matrix for a molecule.
-Note that you have to call RunMol() first.
-
-ARGUMENTS:
-   - mol: molecule to use
-)DOC";
-    python::def("GetOverlapPopulationMatrix", getOPMatrix, (python::arg("mol")),
                 docString.c_str());
   }
 };

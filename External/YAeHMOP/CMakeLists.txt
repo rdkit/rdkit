@@ -14,6 +14,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
 endif()
 
+include_directories( ${RDKit_ExternalDir}/YAeHMOP )
+
 ExternalProject_Add(yaehmop_project
   GIT_REPOSITORY https://github.com/greglandrum/yaehmop.git
   GIT_TAG master

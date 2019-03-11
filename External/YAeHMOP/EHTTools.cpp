@@ -107,23 +107,19 @@ bool runMol(const ROMol &mol, EHTResults &results, int confId) {
   // ---------------------------------
 
   // pull properties
-  res.atomicCharges = std::make_unique(new double[mol.getNumAtoms()]);
-  for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-    res.atomicCharges[i] = properties.net_chgs[i];
-  }
-  for (auto &atom : mol.atoms()) {
-    atom->setProp(_EHTCharge, properties.net_chgs[atom->getIdx()], true);
-  }
-
+  results.numAtoms = mol.getNumAtoms();
+  results.numOrbitals = num_orbs;
+  results.atomicCharges = std::make_unique<double[]>(mol.getNumAtoms());
+  std::memcpy(static_cast<void *>(results.atomicCharges.get()),
+              static_cast<void *>(properties.net_chgs),
+              mol.getNumAtoms() * sizeof(double));
   size_t sz = mol.getNumAtoms() * mol.getNumAtoms();
-  auto ropMat = new double[sz];
-  memcpy(ropMat, properties.ROP_mat, sz * sizeof(double));
-  boost::shared_array<double> sptr(ropMat);
-  mol.setProp(_EHTMullikenOP, sptr, true);
-  auto rchgMat = new double[sz];
-  memcpy(rchgMat, properties.Rchg_mat, sz * sizeof(double));
-  boost::shared_array<double> sptr2(rchgMat);
-  mol.setProp(_EHTChargeMatrix, sptr2, true);
+  results.reducedOverlapPopulationMatrix = std::make_unique<double[]>(sz);
+  memcpy(static_cast<void *>(results.reducedOverlapPopulationMatrix.get()),
+         static_cast<void *>(properties.ROP_mat), sz * sizeof(double));
+  results.reducedChargeMatrix = std::make_unique<double[]>(sz);
+  memcpy(static_cast<void *>(results.reducedChargeMatrix.get()),
+         static_cast<void *>(properties.Rchg_mat), sz * sizeof(double));
 
   cleanup_memory();
 

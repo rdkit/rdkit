@@ -22,16 +22,19 @@ class TestCase(unittest.TestCase):
         mol = Chem.MolFromMolFile(os.path.join(
             RDConfig.RDBaseDir, "External", "YAeHMOP", "test_data", "benzene.mol"), removeHs=False)
         self.assertEqual(mol.GetNumAtoms(), 12)
-        self.assertTrue(rdEHTTools.RunMol(mol))
-        self.assertAlmostEqual(mol.GetAtomWithIdx(1).GetDoubleProp("_EHTCharge"), -0.026, places=3)
-        self.assertAlmostEqual(mol.GetAtomWithIdx(7).GetDoubleProp("_EHTCharge"), 0.026, places=3)
+        ok, res = rdEHTTools.RunMol(mol)
+        self.assertTrue(ok)
+        chgs = res.GetAtomicCharges()
+        self.assertAlmostEqual(chgs[1], -0.026, places=3)
+        self.assertAlmostEqual(chgs[7], 0.026, places=3)
 
     def test2(self):
         mol = Chem.MolFromMolFile(os.path.join(
             RDConfig.RDBaseDir, "External", "YAeHMOP", "test_data", "benzene.mol"), removeHs=False)
         self.assertEqual(mol.GetNumAtoms(), 12)
-        self.assertTrue(rdEHTTools.RunMol(mol))
-        cm = rdEHTTools.GetChargeMatrix(mol)
+        ok, res = rdEHTTools.RunMol(mol)
+        self.assertTrue(ok)
+        cm = res.GetReducedChargeMatrix()
         self.assertEqual(cm.shape, (12, 12))
         self.assertAlmostEqual(cm[0][0], 0.161, places=3)
         self.assertAlmostEqual(cm[1][0], 0.118, places=3)
@@ -41,8 +44,9 @@ class TestCase(unittest.TestCase):
         mol = Chem.MolFromMolFile(os.path.join(
             RDConfig.RDBaseDir, "External", "YAeHMOP", "test_data", "benzene.mol"), removeHs=False)
         self.assertEqual(mol.GetNumAtoms(), 12)
-        self.assertTrue(rdEHTTools.RunMol(mol))
-        opm = rdEHTTools.GetOverlapPopulationMatrix(mol)
+        ok, res = rdEHTTools.RunMol(mol)
+        self.assertTrue(ok)
+        opm = res.GetReducedOverlapPopulationMatrix()
         self.assertEqual(opm.shape, (int(12 * 13 / 2),))
         self.assertAlmostEqual(opm[0], 2.7035, 3)
         self.assertAlmostEqual(opm[2], 2.7035, 3)

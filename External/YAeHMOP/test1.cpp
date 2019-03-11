@@ -18,10 +18,12 @@ TEST_CASE("methanol", "[basics]") {
   pathName += "/External/YAeHMOP/test_data/";
   bool sanitize = true;
   bool removeHs = false;
-  std::unique_ptr<RWMol> mol(MolFileToMol(pathName + "methanol.mol",sanitize,removeHs));
+  std::unique_ptr<RWMol> mol(
+      MolFileToMol(pathName + "methanol.mol", sanitize, removeHs));
   REQUIRE(mol);
-  REQUIRE(mol->getNumAtoms()==6);
-  REQUIRE(EHTTools::runMol(*mol));
+  REQUIRE(mol->getNumAtoms() == 6);
+  EHTTools::EHTResults res;
+  REQUIRE(EHTTools::runMol(*mol, res));
 }
 #endif
 #if 1
@@ -30,15 +32,17 @@ TEST_CASE("benzene", "[basics]") {
   pathName += "/External/YAeHMOP/test_data/";
   bool sanitize = true;
   bool removeHs = false;
-  std::unique_ptr<RWMol> mol(MolFileToMol(pathName + "benzene.mol",sanitize,removeHs));
+  std::unique_ptr<RWMol> mol(
+      MolFileToMol(pathName + "benzene.mol", sanitize, removeHs));
   REQUIRE(mol);
-  REQUIRE(mol->getNumAtoms()==12);
-  REQUIRE(EHTTools::runMol(*mol));
-  for(unsigned int i=0;i<6;++i){
-    CHECK(mol->getAtomWithIdx(i)->getProp<double>(EHTTools::_EHTCharge) == Approx(-0.026).margin(0.001));
+  REQUIRE(mol->getNumAtoms() == 12);
+  EHTTools::EHTResults res;
+  REQUIRE(EHTTools::runMol(*mol, res));
+  for (unsigned int i = 0; i < 6; ++i) {
+    CHECK(res.atomicCharges[i] == Approx(-0.026).margin(0.001));
   }
-  for(unsigned int i=6;i<12;++i){
-    CHECK(mol->getAtomWithIdx(i)->getProp<double>(EHTTools::_EHTCharge) == Approx(0.026).margin(0.001));
+  for (unsigned int i = 6; i < 12; ++i) {
+    CHECK(res.atomicCharges[i] == Approx(0.026).margin(0.001));
   }
 }
 #endif
@@ -48,9 +52,11 @@ TEST_CASE("phenol", "[basics]") {
   pathName += "/External/YAeHMOP/test_data/";
   bool sanitize = true;
   bool removeHs = false;
-  std::unique_ptr<RWMol> mol(MolFileToMol(pathName + "phenol.mol",sanitize,removeHs));
+  std::unique_ptr<RWMol> mol(
+      MolFileToMol(pathName + "phenol.mol", sanitize, removeHs));
   REQUIRE(mol);
-  REQUIRE(mol->getNumAtoms()==13);
-  REQUIRE(EHTTools::runMol(*mol));
+  REQUIRE(mol->getNumAtoms() == 13);
+  EHTTools::EHTResults res;
+  REQUIRE(EHTTools::runMol(*mol, res));
 }
 #endif

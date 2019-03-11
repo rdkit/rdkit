@@ -18,11 +18,10 @@
 namespace RDKit {
 class ROMol;
 namespace EHTTools {
-extern const std::string _EHTCharge;        // used to hold partial charges
-extern const std::string _EHTMullikenOP;    // used to hold overlap populations
-extern const std::string _EHTChargeMatrix;  // used to hold charge matrix
 
 struct EHTResults {
+  unsigned int numAtoms;
+  unsigned int numOrbitals;
   std::unique_ptr<double[]> overlapPopulationMatrix;
   std::unique_ptr<double[]> reducedOverlapPopulationMatrix;
   std::unique_ptr<double[]> chargeMatrix;
@@ -30,6 +29,9 @@ struct EHTResults {
   std::unique_ptr<double[]> atomicCharges;
   double fermiEnergy;
   double totalEnergy;
+  EHTResults() = default;
+  EHTResults(const EHTResults &) = delete;
+  EHTResults &operator=(const EHTResults &) = delete;
 };
 
 //! Runs an extended Hueckel calculation for a molecule
