@@ -45,7 +45,7 @@ bool runMol(const ROMol &mol, EHTResults &results, int confId) {
   details->num_KPOINTS = 1;
   details->K_POINTS = (k_point_type *)calloc(1, sizeof(k_point_type));
   details->K_POINTS[0].weight = 1.0;
-  details->avg_props = 0;
+  details->avg_props = 1;
   details->use_symmetry = 1;
   details->find_princ_axes = 0;
   details->net_chg_PRT = 1;
@@ -109,17 +109,21 @@ bool runMol(const ROMol &mol, EHTResults &results, int confId) {
   // pull properties
   results.numAtoms = mol.getNumAtoms();
   results.numOrbitals = num_orbs;
+  results.fermiEnergy = properties.Fermi_E;
+  results.totalEnergy = properties.total_E;
   results.atomicCharges = std::make_unique<double[]>(mol.getNumAtoms());
   std::memcpy(static_cast<void *>(results.atomicCharges.get()),
               static_cast<void *>(properties.net_chgs),
               mol.getNumAtoms() * sizeof(double));
   size_t sz = mol.getNumAtoms() * mol.getNumAtoms();
-  results.reducedOverlapPopulationMatrix = std::make_unique<double[]>(sz);
-  memcpy(static_cast<void *>(results.reducedOverlapPopulationMatrix.get()),
-         static_cast<void *>(properties.ROP_mat), sz * sizeof(double));
   results.reducedChargeMatrix = std::make_unique<double[]>(sz);
   memcpy(static_cast<void *>(results.reducedChargeMatrix.get()),
          static_cast<void *>(properties.Rchg_mat), sz * sizeof(double));
+
+  sz = mol.getNumAtoms() * (mol.getNumAtoms() + 1) / 2;
+  results.reducedOverlapPopulationMatrix = std::make_unique<double[]>(sz);
+  memcpy(static_cast<void *>(results.reducedOverlapPopulationMatrix.get()),
+         static_cast<void *>(properties.ROP_mat), sz * sizeof(double));
 
   cleanup_memory();
 

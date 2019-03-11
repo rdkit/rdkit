@@ -44,6 +44,8 @@ TEST_CASE("benzene", "[basics]") {
   for (unsigned int i = 6; i < 12; ++i) {
     CHECK(res.atomicCharges[i] == Approx(0.026).margin(0.001));
   }
+  CHECK(res.totalEnergy == Approx(-535.026).margin(0.001));
+  CHECK(res.fermiEnergy == Approx(-12.804).margin(0.001));
 }
 #endif
 #if 1

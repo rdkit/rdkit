@@ -52,6 +52,15 @@ class TestCase(unittest.TestCase):
         self.assertAlmostEqual(opm[2], 2.7035, 3)
         self.assertAlmostEqual(opm[3], -0.0785, 3)
 
+    def test1(self):
+        mol = Chem.MolFromMolFile(os.path.join(
+            RDConfig.RDBaseDir, "External", "YAeHMOP", "test_data", "benzene.mol"), removeHs=False)
+        self.assertEqual(mol.GetNumAtoms(), 12)
+        ok, res = rdEHTTools.RunMol(mol)
+        self.assertTrue(ok)
+        self.assertAlmostEqual(res.fermiEnergy, -12.804, places=3)
+        self.assertAlmostEqual(res.totalEnergy, -535.026, places=3)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -109,6 +109,8 @@ struct EHT_wrapper {
 
     python::class_<RDKit::EHTTools::EHTResults, boost::noncopyable>(
         "EHTResults", docString.c_str(), python::no_init)
+        .def_readonly("fermiEnergy", &RDKit::EHTTools::EHTResults::fermiEnergy)
+        .def_readonly("totalEnergy", &RDKit::EHTTools::EHTResults::totalEnergy)
         .def("GetReducedChargeMatrix", getChargeMatrix,
              "returns the reduced charge matrix")
         .def("GetReducedOverlapPopulationMatrix", getOPMatrix,
