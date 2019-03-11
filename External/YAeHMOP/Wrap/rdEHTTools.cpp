@@ -12,7 +12,7 @@
 #include <boost/python/list.hpp>
 #include <RDGeneral/Exceptions.h>
 #include <GraphMol/RDKitBase.h>
-#include <YAeHMOP/EHTTools.h>
+#include "EHTTools.h"
 
 #include <RDBoost/boost_numpy.h>
 #include <RDBoost/PySequenceHolder.h>
@@ -75,29 +75,32 @@ struct EHT_wrapper {
     std::string docString = "";
 
     docString =
-        "Runs the extended Hueckel calculation.\n"
-        "ARGUMENTS:\n"
-        "   - mol: molecule to use\n"
-        "   - confId: (optional) conformation to use\n"
-        "\n";
+        R"DOC(Runs an extended Hueckel calculation for a molecule.
+The molecule should have at least one conformation
+
+ARGUMENTS:
+   - mol: molecule to use
+   - confId: (optional) conformation to use
+)DOC";
     python::def("RunMol", RDKit::EHTTools::runMol,
                 (python::arg("mol"), python::arg("confId") = -1),
                 docString.c_str());
     docString =
-        "Returns the extended Hueckel charge matrix for a molecule.\n"
-        "Note that you have to call RunMol() first."
-        "ARGUMENTS:\n"
-        "   - mol: molecule to use\n"
-        "\n";
+        R"DOC(Returns the extended Hueckel charge matrix for a molecule.
+Note that you have to call RunMol() first.
+
+ARGUMENTS:
+   - mol: molecule to use
+)DOC";
     python::def("GetChargeMatrix", getChargeMatrix, (python::arg("mol")),
                 docString.c_str());
     docString =
-        "Returns the extended Hueckel overlap population matrix for a "
-        "molecule.\n"
-        "Note that you have to call RunMol() first."
-        "ARGUMENTS:\n"
-        "   - mol: molecule to use\n"
-        "\n";
+        R"DOC(Returns the extended Hueckel overlap population matrix for a molecule.
+Note that you have to call RunMol() first.
+
+ARGUMENTS:
+   - mol: molecule to use
+)DOC";
     python::def("GetOverlapPopulationMatrix", getOPMatrix, (python::arg("mol")),
                 docString.c_str());
   }
@@ -106,7 +109,9 @@ struct EHT_wrapper {
 }  // end of namespace RDKit
 BOOST_PYTHON_MODULE(rdEHTTools) {
   python::scope().attr("__doc__") =
-      "Module containing interface to the YAeHMOP extended Hueckel library.";
+      R"DOC(Module containing interface to the YAeHMOP extended Hueckel library.
+Please note that this interface should still be considered experimental and may
+change from one release to the next.)DOC";
   rdkit_import_array();
 
   RDKit::EHT_wrapper::wrap();

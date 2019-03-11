@@ -1,3 +1,5 @@
+include_directories( ${RDKit_ExternalDir}/YAeHMOP )
+
 rdkit_python_extension(rdEHTTools
                        rdEHTTools.cpp
                        DEST Chem
