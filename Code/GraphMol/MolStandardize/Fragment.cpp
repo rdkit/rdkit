@@ -34,8 +34,15 @@ FragmentRemover::FragmentRemover() {
 // overloaded constructor
 FragmentRemover::FragmentRemover(const std::string fragmentFile,
                                  bool leave_last, bool skip_if_all_match) {
-  FragmentCatalogParams fparams(fragmentFile);
+  std::string fname = !fragmentFile.empty()
+                          ? fragmentFile
+                          : defaultCleanupParameters.fragmentFile;
+  FragmentCatalogParams fparams(fname);
   this->d_fcat = new FragmentCatalog(&fparams);
+  if (!this->d_fcat) {
+    throw ValueErrorException(
+        "could not open fragment catalog parameter file " + fname);
+  }
   this->LEAVE_LAST = leave_last;
   this->SKIP_IF_ALL_MATCH = skip_if_all_match;
 }
@@ -81,13 +88,12 @@ ROMol *FragmentRemover::remove(const ROMol &mol) {
                                   common_properties::_Name)
                            << "\n";
     }
-    if (this->LEAVE_LAST && frags.empty()) {
+    if (this->LEAVE_LAST && !this->SKIP_IF_ALL_MATCH && frags.empty()) {
       // All the remaining fragments match this pattern - leave them all
       frags = tfrags;
       break;
     }
   }
-
   if (frags.empty()) {
     if (this->SKIP_IF_ALL_MATCH) return new ROMol(mol);
     return new ROMol();
