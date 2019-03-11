@@ -14,68 +14,100 @@ typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
 #include <RDGeneral/types.h>
 
 namespace RDKit {
 namespace MolStandardize {
 
-//constructor
-FragmentRemover::FragmentRemover(){
-	BOOST_LOG(rdInfoLog) << "Initializing FragmentRemover\n" ;
+// constructor
+FragmentRemover::FragmentRemover() {
+  BOOST_LOG(rdInfoLog) << "Initializing FragmentRemover\n";
   FragmentCatalogParams fparams(defaultCleanupParameters.fragmentFile);
-//  unsigned int numfg = fparams->getNumFuncGroups();
-//  TEST_ASSERT(fparams->getNumFuncGroups() == 61);
+  //  unsigned int numfg = fparams->getNumFuncGroups();
+  //  TEST_ASSERT(fparams->getNumFuncGroups() == 61);
   this->d_fcat = new FragmentCatalog(&fparams);
-	this->LEAVE_LAST = true; 
+  this->LEAVE_LAST = true;
+  this->SKIP_IF_ALL_MATCH = false;
 }
 
-//overloaded constructor
-FragmentRemover::FragmentRemover(const std::string fragmentFile, const bool leave_last){
+// overloaded constructor
+FragmentRemover::FragmentRemover(const std::string fragmentFile,
+                                 bool leave_last, bool skip_if_all_match) {
   FragmentCatalogParams fparams(fragmentFile);
   this->d_fcat = new FragmentCatalog(&fparams);
-	this->LEAVE_LAST = leave_last; 
+  this->LEAVE_LAST = leave_last;
+  this->SKIP_IF_ALL_MATCH = skip_if_all_match;
 }
 
-//Destructor
-FragmentRemover::~FragmentRemover(){
-	delete d_fcat;
-};
+// Destructor
+FragmentRemover::~FragmentRemover() { delete d_fcat; };
 
 ROMol *FragmentRemover::remove(const ROMol &mol) {
-	BOOST_LOG(rdInfoLog) << "Running FragmentRemover\n" ;
+  BOOST_LOG(rdInfoLog) << "Running FragmentRemover\n";
   PRECONDITION(this->d_fcat, "");
   const FragmentCatalogParams *fparams = this->d_fcat->getCatalogParams();
 
   PRECONDITION(fparams, "");
 
   const std::vector<std::shared_ptr<ROMol>> &fgrps = fparams->getFuncGroups();
-  auto *removed = new ROMol(mol);
+  bool sanitizeFrags = true;
+  // provides the list of atom numbers in each fragment
+  std::vector<std::vector<int>> atomFragMapping;
+
+  // track original fragment index with the fragment itself
+  std::vector<std::pair<boost::shared_ptr<ROMol>, unsigned int>> frags;
+  for (const auto frag :
+       MolOps::getMolFrags(mol, sanitizeFrags, nullptr, &atomFragMapping)) {
+    frags.push_back(std::make_pair(frag, frags.size()));
+  }
 
   for (auto &fgci : fgrps) {
-    std::vector<boost::shared_ptr<ROMol>> frags = MolOps::getMolFrags(*removed);
-    // If nothing is left or leave_last and only one fragment, end here
-    if (removed->getNumAtoms() == 0 ||
-        (this->LEAVE_LAST && frags.size() <= 1)) {
-      break;
+    size_t oCount = frags.size();
+    if (!oCount) break;
+    auto tfrags = frags;
+    // remove any fragments that this
+    frags.erase(std::remove_if(
+                    frags.begin(), frags.end(),
+                    [&fgci](const std::pair<boost::shared_ptr<ROMol>,
+                                            unsigned int> &frag) -> bool {
+                      return fgci->getNumAtoms() == frag.first->getNumAtoms() &&
+                             SubstructMatch(*frag.first, *fgci).size() > 0;
+                    }),
+                frags.end());
+    if (frags.size() != oCount) {
+      BOOST_LOG(rdInfoLog) << "Removed fragment: "
+                           << fgci->getProp<std::string>(
+                                  common_properties::_Name)
+                           << "\n";
     }
-
-    std::string fname;
-    fgci->getProp(common_properties::_Name, fname);
-    ROMol *tmp = RDKit::deleteSubstructs(*removed, *fgci, true);
-
-    if (tmp->getNumAtoms() != removed->getNumAtoms()) {
-      BOOST_LOG(rdInfoLog) << "Removed fragment: " << fname << "\n";
-    }
-
-    if (this->LEAVE_LAST && tmp->getNumAtoms() == 0) {
+    if (this->LEAVE_LAST && frags.empty()) {
       // All the remaining fragments match this pattern - leave them all
-			delete tmp;
+      frags = tfrags;
       break;
     }
-		delete removed;
-    removed = tmp;
   }
-  return removed;
+
+  if (frags.empty()) {
+    if (this->SKIP_IF_ALL_MATCH) return new ROMol(mol);
+    return new ROMol();
+  }
+
+  boost::dynamic_bitset<> atomsToRemove(mol.getNumAtoms());
+  atomsToRemove.set();
+  // loop over remaining fragments and track atoms that need to be removed
+  for (const auto frag : frags) {
+    unsigned int fragIdx = frag.second;
+    for (auto atomIdx : atomFragMapping[fragIdx]) {
+      atomsToRemove.set(atomIdx, false);
+    }
+  }
+  // remove the atoms that need to go
+  auto *removed = new RWMol(mol);
+  for (int i = mol.getNumAtoms() - 1; i >= 0; --i) {
+    if (atomsToRemove[i]) removed->removeAtom(i);
+  }
+  return static_cast<ROMol *>(removed);
 }
 
 bool isOrganic(const ROMol &frag) {
@@ -90,19 +122,19 @@ bool isOrganic(const ROMol &frag) {
 
 LargestFragmentChooser::LargestFragmentChooser(
     const LargestFragmentChooser &other) {
-	BOOST_LOG(rdInfoLog) << "Initializing LargestFragmentChooser\n";
+  BOOST_LOG(rdInfoLog) << "Initializing LargestFragmentChooser\n";
   PREFER_ORGANIC = other.PREFER_ORGANIC;
 }
 
 ROMol *LargestFragmentChooser::choose(const ROMol &mol) {
-	BOOST_LOG(rdInfoLog) << "Running LargestFragmentChooser\n";
+  BOOST_LOG(rdInfoLog) << "Running LargestFragmentChooser\n";
 
   std::vector<boost::shared_ptr<ROMol>> frags = MolOps::getMolFrags(mol);
   LargestFragmentChooser::Largest l;
 
   for (const auto &frag : frags) {
     std::string smiles = MolToSmiles(*frag);
-		BOOST_LOG(rdInfoLog) << "Fragment: " << smiles << "\n";
+    BOOST_LOG(rdInfoLog) << "Fragment: " << smiles << "\n";
     bool organic = isOrganic(*frag);
     if (this->PREFER_ORGANIC) {
       // Skip this fragment if not organic and we already have an organic
@@ -133,8 +165,8 @@ ROMol *LargestFragmentChooser::choose(const ROMol &mol) {
         (weight == l.Weight) && (smiles > l.Smiles))
       continue;
 
-		BOOST_LOG(rdInfoLog) << "New largest fragment: " << smiles << " (" <<
-				numatoms << ")\n";
+    BOOST_LOG(rdInfoLog) << "New largest fragment: " << smiles << " ("
+                         << numatoms << ")\n";
     // Otherwise this is the largest so far
     l.Smiles = smiles;
     l.Fragment = frag;
