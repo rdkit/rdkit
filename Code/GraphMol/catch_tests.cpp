@@ -231,3 +231,26 @@ TEST_CASE(
     }
   }
 }
+
+TEST_CASE("github #908: AddHs() using 3D coordinates with 2D conformations",
+          "[bug, molops]") {
+  SECTION("basics: single atom mols") {
+    std::vector<std::string> smiles = {"Cl", "O", "N", "C"};
+    for (auto smi : smiles) {
+      // std::cerr << smi << std::endl;
+      std::unique_ptr<RWMol> mol(SmilesToMol(smi));
+      REQUIRE(mol);
+      auto conf = new Conformer(1);
+      conf->set3D(false);
+      conf->setAtomPos(0, RDGeom::Point3D(0, 0, 0));
+      mol->addConformer(conf, true);
+      bool explicitOnly = false;
+      bool addCoords = true;
+      MolOps::addHs(*mol, explicitOnly, addCoords);
+      for (size_t i = 0; i < mol->getNumAtoms(); ++i) {
+        // std::cerr << "   " << i << " " << conf->getAtomPos(i) << std::endl;
+        CHECK(conf->getAtomPos(i).z == 0.0);
+      }
+    }
+  }
+}
