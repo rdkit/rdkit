@@ -169,6 +169,11 @@
   JCALL4(SetByteArrayRegion, jenv, $result, 0, $1.size(), (const jbyte*)$1.c_str());
 }
 #endif
+
+#ifdef SWIGCSHARP
+%typemap(csbase) RDKit::FilterCatalogParams::FilterCatalogs "uint"
+#endif
+  
 %include <GraphMol/FilterCatalog/FilterMatcherBase.h>
 %include <GraphMol/FilterCatalog/FilterCatalogEntry.h>
 %include <GraphMol/FilterCatalog/FilterCatalog.h>
