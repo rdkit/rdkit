@@ -69,8 +69,8 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
   std::string getDrawingText() const { return d_ss.str(); };
 
   using MolDraw2D::tagAtoms;  // Avoid overload warning.
-
-  void tagAtoms(const ROMol &mol, double radius = 0.2,
+  void tagAtoms(const ROMol &mol) { tagAtoms(mol, 0.2); }
+  void tagAtoms(const ROMol &mol, double radius,
                 const std::map<std::string, std::string> &events = {});
 
   void addMoleculeMetadata(const ROMol &mol, int confId = -1) const;
