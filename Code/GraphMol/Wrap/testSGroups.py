@@ -75,24 +75,24 @@ M  END"""
         
         
         
-    def testWriting(self):
-        self.assertTrue(self.m1 is not None)
-        sgs = Chem.GetMolSGroups(self.m1)
-        self.assertEqual(len(sgs), 2)
-        self.assertTrue(sgs[0].HasProp("TYPE"))
-        self.assertEqual(sgs[0].GetProp("TYPE"), "DAT")
-        sgs[0].SetProp("TYPE","DDD",False)
-        sgs[0].SetProp("FIELDNAME","pKa", False)
+    # def testWriting(self):
+    #     self.assertTrue(self.m1 is not None)
+    #     sgs = Chem.GetMolSGroups(self.m1)
+    #     self.assertEqual(len(sgs), 2)
+    #     self.assertTrue(sgs[0].HasProp("TYPE"))
+    #     self.assertEqual(sgs[0].GetProp("TYPE"), "DAT")
+    #     sgs[0].SetProp("TYPE","DDD",False)
+    #     sgs[0].SetProp("FIELDNAME","pKa", False)
 
-        sgs2 = Chem.GetMolSGroups(self.m1)
-        self.assertEqual(len(sgs2), 2)
-        self.assertTrue(sgs2[0].HasProp("TYPE"))
-        self.assertEqual(sgs2[0].GetProp("TYPE"), "DDD")
+    #     sgs2 = Chem.GetMolSGroups(self.m1)
+    #     self.assertEqual(len(sgs2), 2)
+    #     self.assertTrue(sgs2[0].HasProp("TYPE"))
+    #     self.assertEqual(sgs2[0].GetProp("TYPE"), "DDD")
 
 
-        mb = Chem.MolToMolBlock(self.m1)
-        print(mb)
-        self.assertTrue(mb.find('1 pKa') >0)
+    #     mb = Chem.MolToMolBlock(self.m1)
+    #     print(mb)
+    #     self.assertTrue(mb.find('1 pKa') >0)
 
 if __name__ == '__main__':
     print("Testing SGroups wrapper")

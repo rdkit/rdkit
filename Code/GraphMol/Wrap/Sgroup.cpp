@@ -77,6 +77,7 @@ struct sgroup_wrap {
              (bool (RDProps::*)(const std::string &) const) &
                  SGroup::getProp<bool>,
              "returns the value of a particular property")
+#if 0
         .def("SetProp",
              MolSetProp<SGroup, std::string>,
              "returns the value of a particular property")
@@ -95,7 +96,9 @@ struct sgroup_wrap {
         .def("SetBoolProp",
              (bool (RDProps::*)(const std::string &, bool) const) &
                  SGroup::setProp<bool>,
-             "returns the value of a particular property");
+             "returns the value of a particular property")
+#endif
+             ;
     python::def("GetMolSGroups", &getMolSGroups,
                 "returns the SGroups for a molecule (if any)");
     // FIX: needs something tying the lifetime to the mol
