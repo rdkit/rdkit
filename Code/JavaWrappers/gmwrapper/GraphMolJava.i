@@ -225,6 +225,7 @@ typedef unsigned long long int	uintmax_t;
 %include "../Trajectory.i"
 %include "../MolStandardize.i"
 %include "../SubstructLibrary.i"
+%include "../RGroupDecomposition.i"
 
 // Create a class to throw various sorts of errors for testing.  Required for unit tests in ErrorHandlingTests.java
 #ifdef INCLUDE_ERROR_GENERATOR
