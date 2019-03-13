@@ -81,6 +81,15 @@ struct sgroup_wrap {
              (bool (RDProps::*)(const std::string &) const) &
                  SGroup::getProp<bool>,
              "returns the value of a particular property")
+        .def("GetPropNames", &SGroup::getPropList,
+             (python::arg("self"), python::arg("includePrivate") = false,
+              python::arg("includeComputed") = false),
+             "Returns a list of the properties set on the SGroup.\n\n")
+        .def("GetPropsAsDict", GetPropsAsDict<SGroup>,
+             (python::arg("self"), python::arg("includePrivate") = true,
+              python::arg("includeComputed") = true),
+             "Returns a dictionary of the properties set on the SGroup.\n"
+             " n.b. some properties cannot be converted to python types.\n")
 #if 0
         .def("SetProp",
              MolSetProp<SGroup, std::string>,

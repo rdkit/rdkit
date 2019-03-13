@@ -73,6 +73,14 @@ M  END"""
         self.assertTrue(sgs[0].HasProp("FIELDNAME"))
         self.assertEqual(sgs[0].GetProp("FIELDNAME"), "pH")
 
+        self.assertEqual(sorted(sgs[0].GetPropNames()), [
+                         'DATAFIELDS', 'FIELDDISP', 'FIELDINFO', 'FIELDNAME', 'FIELDTYPE', 'ID', 'QUERYOP', 'QUERYTYPE', 'TYPE'])
+        dd = sgs[0].GetPropsAsDict()
+        self.assertTrue("TYPE" in dd)
+        self.assertEqual(dd["TYPE"], "DAT")
+        self.assertTrue("FIELDNAME" in dd)
+        self.assertEqual(dd["FIELDNAME"], "pH")
+
         Chem.ClearMolSGroups(self.m1)
         self.assertEqual(len(Chem.GetMolSGroups(self.m1)), 0)
 
@@ -89,6 +97,7 @@ M  END"""
     #     self.assertEqual(len(sgs2), 2)
     #     self.assertTrue(sgs2[0].HasProp("TYPE"))
     #     self.assertEqual(sgs2[0].GetProp("TYPE"), "DDD")
+
 
     #     mb = Chem.MolToMolBlock(self.m1)
     #     print(mb)
