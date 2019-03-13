@@ -69,12 +69,13 @@ M  END"""
         self.assertTrue(sgs[1].HasProp("TYPE"))
         self.assertEqual(sgs[0].GetProp("TYPE"), "DAT")
         self.assertEqual(sgs[1].GetProp("TYPE"), "DAT")
-        
+
         self.assertTrue(sgs[0].HasProp("FIELDNAME"))
-        self.assertEqual(sgs[0].GetProp("FIELDNAME"),"pH")
-        
-        
-        
+        self.assertEqual(sgs[0].GetProp("FIELDNAME"), "pH")
+
+        Chem.ClearMolSGroups(self.m1)
+        self.assertEqual(len(Chem.GetMolSGroups(self.m1)), 0)
+
     # def testWriting(self):
     #     self.assertTrue(self.m1 is not None)
     #     sgs = Chem.GetMolSGroups(self.m1)
@@ -89,11 +90,9 @@ M  END"""
     #     self.assertTrue(sgs2[0].HasProp("TYPE"))
     #     self.assertEqual(sgs2[0].GetProp("TYPE"), "DDD")
 
-
     #     mb = Chem.MolToMolBlock(self.m1)
     #     print(mb)
     #     self.assertTrue(mb.find('1 pKa') >0)
-
 if __name__ == '__main__':
     print("Testing SGroups wrapper")
     unittest.main()

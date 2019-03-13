@@ -26,10 +26,14 @@ namespace {
 python::tuple getMolSGroups(ROMol &mol) {
   python::list res;
   std::vector<SGroup> &sgs = getSGroups(mol);
-  for (auto &sg : sgs ) {
+  for (auto &sg : sgs) {
     res.append(&sg);
   }
   return python::tuple(res);
+}
+void clearMolSGroups(ROMol &mol) {
+  std::vector<SGroup> &sgs = getSGroups(mol);
+  sgs.clear();
 }
 }  // namespace
 
@@ -98,9 +102,11 @@ struct sgroup_wrap {
                  SGroup::setProp<bool>,
              "returns the value of a particular property")
 #endif
-             ;
+        ;
     python::def("GetMolSGroups", &getMolSGroups,
                 "returns the SGroups for a molecule (if any)");
+    python::def("ClearMolSGroups", &clearMolSGroups,
+                "removes all SGroups from a molecule (if any)");
     // FIX: needs something tying the lifetime to the mol
   }
 };
