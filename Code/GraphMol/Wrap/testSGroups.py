@@ -84,6 +84,20 @@ M  END"""
         Chem.ClearMolSGroups(self.m1)
         self.assertEqual(len(Chem.GetMolSGroups(self.m1)), 0)
 
+    def testLifetime(self):
+        self.assertTrue(self.m1 is not None)
+        mcpy = Chem.Mol(self.m1)
+        smi = Chem.MolToSmiles(mcpy)
+        sgs = Chem.GetMolSGroups(mcpy)
+        self.assertEqual(len(sgs), 2)
+        mcpy = None
+        parent = sgs[0].GetOwningMol()
+        self.assertEqual(smi, Chem.MolToSmiles(parent))
+        sgl = list(sgs)
+        sgs = None
+        parent = sgl[0].GetOwningMol()
+        self.assertEqual(smi, Chem.MolToSmiles(parent))
+
 
 if __name__ == '__main__':
     print("Testing SGroups wrapper")

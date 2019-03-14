@@ -23,14 +23,7 @@ namespace python = boost::python;
 namespace RDKit {
 
 namespace {
-python::tuple getMolSGroups(ROMol &mol) {
-  python::list res;
-  std::vector<SGroup> &sgs = getSGroups(mol);
-  for (auto &sg : sgs) {
-    res.append(&sg);
-  }
-  return python::tuple(res);
-}
+std::vector<SGroup> getMolSGroups(ROMol &mol) { return getSGroups(mol); }
 void clearMolSGroups(ROMol &mol) {
   std::vector<SGroup> &sgs = getSGroups(mol);
   sgs.clear();
@@ -42,6 +35,18 @@ std::string sGroupClassDoc =
 
 struct sgroup_wrap {
   static void wrap() {
+    // register the vector_indexing_suite for SGroups
+    // if it hasn't already been done.
+    // logic from https://stackoverflow.com/a/13017303
+    boost::python::type_info info =
+        boost::python::type_id<std::vector<RDKit::SGroup>>();
+    const boost::python::converter::registration *reg =
+        boost::python::converter::registry::query(info);
+    if (reg == NULL || (*reg).m_to_python == NULL) {
+      python::class_<std::vector<RDKit::SGroup>>("SGroup_VECT")
+          .def(python::vector_indexing_suite<std::vector<RDKit::SGroup>>());
+    }
+
     python::class_<SGroup, boost::shared_ptr<SGroup>>(
         "SGroup", sGroupClassDoc.c_str(), python::no_init)
         .def("GetOwningMol", &SGroup::getOwningMol,
@@ -91,7 +96,8 @@ struct sgroup_wrap {
              "Returns a dictionary of the properties set on the SGroup.\n"
              " n.b. some properties cannot be converted to python types.\n");
     python::def("GetMolSGroups", &getMolSGroups,
-                "returns the SGroups for a molecule (if any)");
+                "returns the SGroups for a molecule (if any)",
+                python::with_custodian_and_ward_postcall<0, 1>());
     python::def("ClearMolSGroups", &clearMolSGroups,
                 "removes all SGroups from a molecule (if any)");
     // FIX: needs something tying the lifetime to the mol
