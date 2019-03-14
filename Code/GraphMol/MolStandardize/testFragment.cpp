@@ -197,6 +197,8 @@ void test_largest_fragment() {
 }
 
 int main() {
+  // may want to enable this for debugging
+  // RDLog::InitLogs();
   test2();
   test_largest_fragment();
   return 0;
