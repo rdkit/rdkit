@@ -32,6 +32,333 @@ bool shouldDetectDoubleBondStereo(const Bond *bond) {
   return (!ri->numBondRings(bond->getIdx()) ||
           ri->minBondRingSize(bond->getIdx()) > 7);
 }
+
+// ----------------------------------- -----------------------------------
+// This algorithm is identical to that used in the CombiCode Mol file
+//  parser (also developed by RD).
+//
+//
+// SUMMARY:
+//   Derive a chiral code for an atom that has a wedged (or dashed) bond
+//   drawn to it.
+//
+// RETURNS:
+//   The chiral type
+//
+// CAVEATS:
+//   This is careful to ensure that the central atom has 4 neighbors and
+//   only single bonds to it, but that's about it.
+//
+// NOTE: this isn't careful at all about checking to make sure that
+// things actually *should* be chiral. e.g. if the file has a
+// 3-coordinate N with a wedged bond, it will make some erroneous
+// assumptions about the chirality.
+//
+// ----------------------------------- -----------------------------------
+
+Atom::ChiralType atomChiralTypeFromBondDir(const ROMol &mol, const Bond *bond,
+                                           const Conformer *conf) {
+  PRECONDITION(bond, "no bond");
+  PRECONDITION(conf, "no conformer");
+  Bond::BondDir bondDir = bond->getBondDir();
+  PRECONDITION(bondDir == Bond::BEGINWEDGE || bondDir == Bond::BEGINDASH,
+               "bad bond direction");
+
+  // NOTE that according to the CT file spec, wedging assigns chirality
+  // to the atom at the point of the wedge, (atom 1 in the bond).
+  const Atom *atom = bond->getBeginAtom();
+  PRECONDITION(atom, "no atom");
+
+  // we can't do anything with atoms that have more than 4 neighbors:
+  if (atom->getDegree() > 4) {
+    return Atom::CHI_UNSPECIFIED;
+  }
+  const Atom *bondAtom = bond->getEndAtom();
+
+  Atom::ChiralType res = Atom::CHI_UNSPECIFIED;
+
+  INT_LIST neighborBondIndices;
+  RDGeom::Point3D centerLoc, tmpPt;
+  centerLoc = conf->getAtomPos(atom->getIdx());
+  tmpPt = conf->getAtomPos(bondAtom->getIdx());
+  centerLoc.z = 0.0;
+  tmpPt.z = 0.0;
+
+  RDGeom::Point3D refVect = centerLoc.directionVector(tmpPt);
+
+  //----------------------------------------------------------
+  //
+  //  start by ensuring that all the bonds to neighboring atoms
+  //  are single bonds and collecting a list of neighbor indices:
+  //
+  //----------------------------------------------------------
+  bool hSeen = false;
+
+  neighborBondIndices.push_back(bond->getIdx());
+  if (bondAtom->getAtomicNum() == 1 && bondAtom->getIsotope() == 0)
+    hSeen = true;
+
+  bool allSingle = true;
+  ROMol::OEDGE_ITER beg, end;
+  boost::tie(beg, end) = mol.getAtomBonds(atom);
+  while (beg != end) {
+    const Bond *nbrBond = mol[*beg];
+    if (nbrBond->getBondType() != Bond::SINGLE) {
+      allSingle = false;
+      // break;
+    }
+    if (nbrBond != bond) {
+      if ((nbrBond->getOtherAtom(atom)->getAtomicNum() == 1 &&
+           nbrBond->getOtherAtom(atom)->getIsotope() == 0))
+        hSeen = true;
+      neighborBondIndices.push_back(nbrBond->getIdx());
+    }
+    ++beg;
+  }
+  size_t nNbrs = neighborBondIndices.size();
+
+  //----------------------------------------------------------
+  //
+  //  Return now if there aren't at least 3 non-H bonds to the atom.
+  //  (we can implicitly add a single H to 3 coordinate atoms, but
+  //  we're horked otherwise).
+  //
+  //----------------------------------------------------------
+  if (nNbrs < 3 || (hSeen && nNbrs < 4)) {
+    return Atom::CHI_UNSPECIFIED;
+  }
+
+  //----------------------------------------------------------
+  //
+  //  Continue if there are all single bonds or if we're considering
+  //  4-coordinate P or S
+  //
+  //----------------------------------------------------------
+  if (allSingle || atom->getAtomicNum() == 15 || atom->getAtomicNum() == 16) {
+    //------------------------------------------------------------
+    //
+    //  Here we need to figure out the rotation direction between
+    //  the neighbor bonds and the wedged bond:
+    //
+    //------------------------------------------------------------
+    bool isCCW = true;
+    double angle0, angle1, angle2;
+    const Bond *bond1, *bond2, *bond3;
+    RDGeom::Point3D atomVect0, atomVect1, atomVect2;
+    INT_LIST::const_iterator bondIter = neighborBondIndices.begin();
+    ++bondIter;
+    bond1 = mol.getBondWithIdx(*bondIter);
+    int oaid = bond1->getOtherAtom(atom)->getIdx();
+    tmpPt = conf->getAtomPos(oaid);
+    tmpPt.z = 0;
+    atomVect0 = centerLoc.directionVector(tmpPt);
+    angle0 = refVect.signedAngleTo(atomVect0);
+    if (angle0 < 0) angle0 += 2. * M_PI;
+
+    ++bondIter;
+    bond2 = mol.getBondWithIdx(*bondIter);
+    oaid = bond2->getOtherAtom(atom)->getIdx();
+    tmpPt = conf->getAtomPos(oaid);
+    tmpPt.z = 0;
+    atomVect1 = centerLoc.directionVector(tmpPt);
+    angle1 = refVect.signedAngleTo(atomVect1);
+    if (angle1 < 0) angle1 += 2. * M_PI;
+
+    // We proceed differently for 3 and 4 coordinate atoms:
+    double firstAngle, secondAngle;
+    if (nNbrs == 4) {
+      bool flipIt = false;
+      // grab the angle to the last neighbor:
+      ++bondIter;
+      bond3 = mol.getBondWithIdx(*bondIter);
+      oaid = bond3->getOtherAtom(atom)->getIdx();
+      tmpPt = conf->getAtomPos(oaid);
+      tmpPt.z = 0;
+      atomVect2 = centerLoc.directionVector(tmpPt);
+      angle2 = refVect.signedAngleTo(atomVect2);
+      if (angle2 < 0) angle2 += 2. * M_PI;
+
+      // find the lowest and second-lowest angle and keep track of
+      // whether or not we have to do a non-cyclic permutation to
+      // get there:
+      if (angle0 < angle1) {
+        if (angle1 < angle2) {
+          // order is angle0 -> angle1 -> angle2
+          firstAngle = angle0;
+          secondAngle = angle1;
+        } else if (angle0 < angle2) {
+          // order is angle0 -> angle2 -> angle1
+          firstAngle = angle0;
+          secondAngle = angle2;
+          flipIt = true;
+        } else {
+          // order is angle2 -> angle0 -> angle1
+          firstAngle = angle2;
+          secondAngle = angle0;
+        }
+      } else if (angle0 < angle2) {
+        // order is angle1 -> angle0 -> angle2
+        firstAngle = angle1;
+        secondAngle = angle0;
+        flipIt = true;
+      } else {
+        if (angle1 < angle2) {
+          // order is angle1 -> angle2 -> angle0
+          firstAngle = angle1;
+          secondAngle = angle2;
+        } else {
+          // order is angle2 -> angle1 -> angle0
+          firstAngle = angle2;
+          secondAngle = angle1;
+          flipIt = true;
+        }
+      }
+      if (flipIt) {
+        isCCW = !isCCW;
+      }
+    } else {
+      // it's three coordinate.  Things are a bit different here
+      // because we have to at least kind of figure out where the
+      // hydrogen might be.
+
+      // before getting started with that, use some of the inchi rules
+      // for contradictory stereochemistry
+      // (Table 10 in the InChi v1 technical manual)
+
+      angle2 = atomVect0.signedAngleTo(atomVect1);
+      if (angle2 < 0) angle2 += 2. * M_PI;
+
+      //  this one is never allowed:
+      //     0   2
+      //      \ /
+      //       C
+      //       *
+      //       1
+      if (angle0 < (M_PI - 1e-3) && angle1 < (M_PI - 1e-3) &&
+          angle2 < (M_PI - 1e-3)) {
+        if ((bond1->getBondDir() != Bond::NONE &&
+             bond1->getBeginAtomIdx() == bond->getBeginAtomIdx() &&
+             (bond1->getBondDir() != bond->getBondDir() ||
+              (bond2->getBondDir() != Bond::NONE &&
+               bond2->getBeginAtomIdx() == bond->getBeginAtomIdx() &&
+               bond2->getBondDir() != bond1->getBondDir()))) ||
+            (bond2->getBondDir() != Bond::NONE &&
+             bond2->getBeginAtomIdx() == bond->getBeginAtomIdx() &&
+             bond2->getBondDir() != bond->getBondDir())) {
+          BOOST_LOG(rdWarningLog)
+              << "Warning: conflicting stereochemistry at atom "
+              << bond->getBeginAtomIdx() << " ignored."
+              << std::endl;  // by rule 1." << std::endl;
+          return Atom::CHI_UNSPECIFIED;
+        }
+      }
+      if (bond1->getBondDir() != Bond::NONE &&
+          bond1->getBeginAtomIdx() == bond->getBeginAtomIdx()) {
+        if (!(bond2->getBondDir() != Bond::NONE &&
+              bond2->getBeginAtomIdx() == bond->getBeginAtomIdx())) {
+          BOOST_LOG(rdWarningLog)
+              << "Warning: conflicting stereochemistry at atom "
+              << bond->getBeginAtomIdx() << " ignored."
+              << std::endl;  // by rule 2a." << std::endl;
+        }
+        if (bond1->getBondDir() != bond->getBondDir()) {
+          // bond1 has a spec and does not match the bond0 spec.
+          // the only cases this is allowed are:
+          //      1        0 1 2
+          //      *         \*/
+          //  0 - C - 2      C
+          //    and
+          //      1        2 1 0
+          //      *         \*/
+          //  2 - C - 0      C
+          //
+          if ((angle0 > M_PI && angle0 < angle1) ||
+              (angle0 < M_PI && angle0 > angle1)) {
+            BOOST_LOG(rdWarningLog)
+                << "Warning: conflicting stereochemistry at atom "
+                << bond->getBeginAtomIdx() << " ignored."
+                << std::endl;  // by rule 2b." << std::endl;
+            return Atom::CHI_UNSPECIFIED;
+          }
+        } else {
+          // bond1 matches, what about bond2 ?
+          if (bond2->getBondDir() != bond->getBondDir()) {
+            // the only cases this is allowed are:
+            //      2        0 2 1
+            //      *         \*/
+            //  0 - C - 1      C
+            //    and
+            //      2        1 2 0
+            //      *         \*/
+            //  1 - C - 0      C
+            //
+            if ((angle1 > M_PI && angle1 < angle0) ||
+                (angle1 < M_PI && angle1 > angle0)) {
+              BOOST_LOG(rdWarningLog)
+                  << "Warning: conflicting stereochemistry at atom "
+                  << bond->getBeginAtomIdx() << " ignored."
+                  << std::endl;  // by rule 2c." << std::endl;
+              return Atom::CHI_UNSPECIFIED;
+            }
+          }
+        }
+      } else if (bond2->getBondDir() != Bond::NONE &&
+                 bond2->getBeginAtomIdx() == bond->getBeginAtomIdx() &&
+                 bond2->getBondDir() != bond->getBondDir()) {
+        // bond2 has a spec and does not match the bond0 spec, but bond1
+        // is not set: this is never allowed.
+        BOOST_LOG(rdWarningLog)
+            << "Warning: conflicting stereochemistry at atom "
+            << bond->getBeginAtomIdx() << " ignored."
+            << std::endl;  // by rule 3." << std::endl;
+        return Atom::CHI_UNSPECIFIED;
+      }
+
+      if (angle0 < angle1) {
+        firstAngle = angle0;
+        secondAngle = angle1;
+        isCCW = true;
+      } else {
+        firstAngle = angle1;
+        secondAngle = angle0;
+        isCCW = false;
+      }
+      if (secondAngle - firstAngle >= (M_PI - 1e-4)) {
+        // it's a situation like one of these:
+        //
+        //      0        1 0 2
+        //      *         \*/
+        //  1 - C - 2      C
+        //
+        // In each of these cases, the implicit H is between atoms 1
+        // and 2, so we need to flip the rotation direction (go
+        // around the back).
+        isCCW = !isCCW;
+      }
+    }
+    // reverse the rotation direction if the reference is wedged down:
+    if (bondDir == Bond::BEGINDASH) {
+      isCCW = !isCCW;
+    }
+
+    // ----------------
+    //
+    // We now have the rotation direction using mol-file order.
+    // We need to convert that into the appropriate label for the
+    // central atom
+    //
+    // ----------------
+    int nSwaps = atom->getPerturbationOrder(neighborBondIndices);
+    if (nSwaps % 2) isCCW = !isCCW;
+    if (isCCW)
+      res = Atom::CHI_TETRAHEDRAL_CCW;
+    else
+      res = Atom::CHI_TETRAHEDRAL_CW;
+  }
+
+  return res;
+}
+
 }  // end of anonymous namespace
 
 namespace Chirality {
@@ -1896,6 +2223,40 @@ void assignStereochemistryFrom3D(ROMol &mol, int confId,
   bool flagPossibleStereoCenters = true;
   assignStereochemistry(mol, replaceExistingTags, force,
                         flagPossibleStereoCenters);
+}
+
+void assignChiralTypesFromBondDirs(ROMol &mol, const int confId,
+                                   const bool replaceExistingTags) {
+  if (!mol.getNumConformers()) return;
+  auto conf = mol.getConformer(confId);
+
+  for (auto& bond: mol.bonds()) {
+    const Bond::BondDir dir = bond->getBondDir();
+    if (dir != Bond::UNKNOWN) {
+
+      // the bond is marked as chiral:
+      if (dir == Bond::BEGINWEDGE || dir == Bond::BEGINDASH) {
+        Atom *atom = bond->getBeginAtom();
+        if (!replaceExistingTags && atom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
+          continue;
+        }
+        if (atom->getImplicitValence() == -1) {
+          atom->calcExplicitValence(false);
+          atom->calcImplicitValence(false);
+        }
+        Atom::ChiralType code = atomChiralTypeFromBondDir(mol, bond, &conf);
+        atom->setChiralTag(code);
+        // within the RD representation, if a three-coordinate atom
+        // is chiral and has an implicit H, that H needs to be made explicit:
+        if (atom->getDegree() == 3 && !atom->getNumExplicitHs() &&
+            atom->getNumImplicitHs() == 1) {
+          atom->setNumExplicitHs(1);
+          // recalculated number of implicit Hs:
+          atom->updatePropertyCache();
+        }
+      }
+    }
+  }
 }
 
 void removeStereochemistry(ROMol &mol) {
