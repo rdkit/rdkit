@@ -41,14 +41,6 @@ rdkit_test(fileParsersTest1 test1.cpp
 	   SubstructMatch GraphMol RDGeneral RDGeometryLib ${maeparser_var})
 
 
-    find_package(Boost 1.56.0 COMPONENTS system iostreams REQUIRED)
-    set (link_iostreams ${Boost_LIBRARIES})
-    add_definitions("-DTEST_GZIP_SD")
-    if (NOT Boost_USE_STATIC_LIBS)
-      add_definitions("-DBOOST_IOSTREAMS_DYN_LINK")
-    endif()
-
-
 find_package(Boost 1.56.0 COMPONENTS system iostreams REQUIRED)
 set (link_iostreams ${Boost_LIBRARIES})
 if (NOT Boost_USE_STATIC_LIBS)
