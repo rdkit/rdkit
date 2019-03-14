@@ -221,6 +221,11 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   if (PYTHONINTERP_FOUND AND NOT Python_ADDITIONAL_VERSIONS)
     set(Python_ADDITIONAL_VERSIONS "${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}")
   endif (PYTHONINTERP_FOUND AND NOT Python_ADDITIONAL_VERSIONS)
+
+  if(PYTHON_VERSION_MAJOR EQUAL 2)
+    message(FATAL_ERROR "ERROR: The RDKit no longer supports Python 2.\nIf you have Python 3 installed, you can tell cmake where to find it using the -DPYTHON_EXECUTABLE argument.")
+  endif()
+
   find_package(PythonLibs)
   target_include_directories(rdkit_base INTERFACE ${PYTHON_INCLUDE_DIR})
   find_package(NumPy REQUIRED)
