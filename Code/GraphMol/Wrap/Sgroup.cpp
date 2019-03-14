@@ -89,29 +89,7 @@ struct sgroup_wrap {
              (python::arg("self"), python::arg("includePrivate") = true,
               python::arg("includeComputed") = true),
              "Returns a dictionary of the properties set on the SGroup.\n"
-             " n.b. some properties cannot be converted to python types.\n")
-#if 0
-        .def("SetProp",
-             MolSetProp<SGroup, std::string>,
-             "returns the value of a particular property")
-        .def("SetIntProp",
-             (int (RDProps::*)(const std::string &, int) const) &
-                 SGroup::setProp<int>,
-             "returns the value of a particular property")
-        .def("SetUnsignedProp",
-             (unsigned int (RDProps::*)(const std::string &, unsigned int) const) &
-                 SGroup::setProp<unsigned int>,
-             "returns the value of a particular property")
-        .def("SetDoubleProp",
-             (double (RDProps::*)(const std::string &, double) const) &
-                 SGroup::setProp<double>,
-             "returns the value of a particular property")
-        .def("SetBoolProp",
-             (bool (RDProps::*)(const std::string &, bool) const) &
-                 SGroup::setProp<bool>,
-             "returns the value of a particular property")
-#endif
-        ;
+             " n.b. some properties cannot be converted to python types.\n");
     python::def("GetMolSGroups", &getMolSGroups,
                 "returns the SGroups for a molecule (if any)");
     python::def("ClearMolSGroups", &clearMolSGroups,
