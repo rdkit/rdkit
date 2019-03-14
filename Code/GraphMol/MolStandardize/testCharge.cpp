@@ -13,6 +13,7 @@
 #include "Charge.h"
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/FileParsers/FileParsers.h>
 
 using namespace RDKit;
 using namespace MolStandardize;
@@ -173,10 +174,57 @@ void testGithub2144() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testGithub2346() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github #2346: "
+                          "uncharger behaves differently on molecules "
+                          "constructed from mol blocks and SMILES"
+                       << std::endl;
+
+  {
+    auto m1 = "[NH3+]CC[O-]"_smiles;
+    TEST_ASSERT(m1);
+    MolStandardize::Uncharger uncharger;
+
+    std::unique_ptr<ROMol> res1(uncharger.uncharge(*m1));
+    TEST_ASSERT(res1);
+    TEST_ASSERT(res1->getAtomWithIdx(0)->getFormalCharge() == 0);
+    TEST_ASSERT(res1->getAtomWithIdx(1)->getFormalCharge() == 0);
+
+    std::unique_ptr<ROMol> m2(MolBlockToMol(MolToMolBlock(*m1)));
+    TEST_ASSERT(m2);
+    std::unique_ptr<ROMol> res2(uncharger.uncharge(*m2));
+    TEST_ASSERT(res2);
+    TEST_ASSERT(res2->getAtomWithIdx(0)->getFormalCharge() == 0);
+    TEST_ASSERT(res2->getAtomWithIdx(1)->getFormalCharge() == 0);
+  }
+  {
+    auto m1 = "[O-]C(=O)C([O-])C(=O)[O-]"_smiles;
+    TEST_ASSERT(m1);
+    MolStandardize::Uncharger uncharger;
+
+    std::unique_ptr<ROMol> res1(uncharger.uncharge(*m1));
+    TEST_ASSERT(res1);
+    for (auto &atom : res1->atoms()) {
+      TEST_ASSERT(atom->getFormalCharge() == 0);
+    }
+
+    std::unique_ptr<ROMol> m2(MolBlockToMol(MolToMolBlock(*m1)));
+    TEST_ASSERT(m2);
+    std::unique_ptr<ROMol> res2(uncharger.uncharge(*m2));
+    TEST_ASSERT(res2);
+    for (auto &atom : res2->atoms()) {
+      TEST_ASSERT(atom->getFormalCharge() == 0);
+    }
+  }
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
   testReionizer();
   testChargeParent();
   testGithub2144();
+  testGithub2346();
   return 0;
 }
