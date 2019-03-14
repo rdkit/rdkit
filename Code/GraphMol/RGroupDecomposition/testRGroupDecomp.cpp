@@ -388,7 +388,8 @@ void testGitHubIssue1705() {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "test preferring grouping non hydrogens over hydrogens if possible" << std::endl;
-
+#if 1
+{
   RWMol *core = SmilesToMol("Oc1ccccc1");
   RGroupDecompositionParameters params;
 
@@ -411,7 +412,71 @@ void testGitHubIssue1705() {
     }
   }
   delete core;
-  TEST_ASSERT(ss.str() == "Rgroup===Core\nOc1ccc([*:2])cc1[*:1]\nOc1ccc([*:2])cc1[*:1]\nOc1ccc([*:2])cc1[*:1]\nOc1ccc([*:2])cc1[*:1]\nOc1ccc([*:2])cc1[*:1]\nRgroup===R1\n[H][*:1]\nF[*:1]\nF[*:1]\nF[*:1]\nCl[*:1]\nRgroup===R2\n[H][*:2]\n[H][*:2]\n[H][*:2]\n[H]N([H])[*:2]\n[H][*:2]\n");
+  //std::cerr<<ss.str()<<std::endl;
+
+  TEST_ASSERT(ss.str() == R"RES(Rgroup===Core
+Oc1ccc([*:1])cc1[*:2]
+Oc1ccc([*:1])cc1[*:2]
+Oc1ccc([*:1])cc1[*:2]
+Oc1ccc([*:1])cc1[*:2]
+Oc1ccc([*:1])cc1[*:2]
+Rgroup===R1
+[H][*:1]
+[H][*:1]
+[H][*:1]
+[H]N([H])[*:1]
+[H][*:1]
+Rgroup===R2
+[H][*:2]
+F[*:2]
+F[*:2]
+F[*:2]
+Cl[*:2]
+)RES");
+}
+#endif
+//std::cerr<<"n\n\n\n\n\n--------------------------------------------------------------\n\n\n\n\n";
+{
+  RWMol *core = SmilesToMol("Cc1ccccc1");
+  RGroupDecompositionParameters params;
+
+  RGroupDecomposition decomp(*core, params);
+  std::vector<std::string> smilesData = {"c1ccccc1C","Fc1ccccc1C","c1cccc(F)c1C","Fc1cccc(F)c1C"};
+  for (const auto &smi : smilesData) {
+    ROMol *mol = SmilesToMol(smi);
+    int res = decomp.add(*mol);
+    delete mol;
+  }
+
+  decomp.process();
+  std::stringstream ss;
+  RGroupColumns groups = decomp.getRGroupsAsColumns();
+  for (auto &column : groups) {
+    ss << "Rgroup===" << column.first << std::endl;
+    for (auto &rgroup : column.second ) {
+      ss << MolToSmiles(*rgroup) << std::endl;
+    }
+  }
+  delete core;
+  //std::cerr<<ss.str()<<std::endl;
+  TEST_ASSERT(ss.str() == R"RES(Rgroup===Core
+Cc1c([*:1])cccc1[*:2]
+Cc1c([*:1])cccc1[*:2]
+Cc1c([*:1])cccc1[*:2]
+Cc1c([*:1])cccc1[*:2]
+Rgroup===R1
+[H][*:1]
+F[*:1]
+F[*:1]
+F[*:1]
+Rgroup===R2
+[H][*:2]
+[H][*:2]
+[H][*:2]
+F[*:2]
+)RES");
+}
+
 }
 
 void testMatchOnlyAtRgroupHs() {
@@ -456,15 +521,15 @@ int main() {
   testSymmetryMatching();
   testRGroupOnlyMatching();
   testRingMatching();
-  testRingMatching2();
   testRingMatching3();
   testMultiCore();
-#endif
   testGithub1550();
   testRemoveHs();
 
-  testGitHubIssue1705();
   testMatchOnlyAtRgroupHs();
+#endif
+  testRingMatching2();
+  testGitHubIssue1705();
   
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";

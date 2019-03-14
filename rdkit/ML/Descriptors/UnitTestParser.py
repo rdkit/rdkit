@@ -4,7 +4,7 @@
 """ unit testing code for compound descriptors
 
 """
-from __future__ import print_function
+
 
 import unittest
 

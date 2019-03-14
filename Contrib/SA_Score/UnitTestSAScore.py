@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 from rdkit import RDConfig
 from rdkit import Chem
 import unittest, os.path

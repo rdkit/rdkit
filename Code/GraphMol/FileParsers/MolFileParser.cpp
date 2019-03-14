@@ -1202,7 +1202,12 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
   } else {
     if (symb.size() == 2 && symb[1] >= 'A' && symb[1] <= 'Z')
       symb[1] = static_cast<char>(tolower(symb[1]));
-    res->setAtomicNum(PeriodicTable::getTable()->getAtomicNumber(symb));
+    try {
+      res->setAtomicNum(PeriodicTable::getTable()->getAtomicNumber(symb));
+    } catch (const Invar::Invariant &e) {
+      delete res;
+      throw FileParseException(e.getMessage());
+    }
   }
 
   // res->setPos(pX,pY,pZ);

@@ -10,7 +10,7 @@
 """  Functionality for SATIS typing atoms
 
 """
-from __future__ import print_function
+
 
 import itertools
 

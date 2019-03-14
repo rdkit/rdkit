@@ -1227,8 +1227,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
   chemistry of the molecular graph.  Any atom with the same rank (symmetry class) is\n\
   indistinguishable.  For example:\n\
 \n\
-    > mol = MolFromSmiles('C1NCN1')\n\
-    > list(CanonicalRankAtoms(mol, breakTies=False))\n\
+    >>> mol = MolFromSmiles('C1NCN1')\n\
+    >>> list(CanonicalRankAtoms(mol, breakTies=False))\n\
     [0,1,0,1]\n\
 \n\
   In this case the carbons have the same symmetry class and the nitrogens have the same\n\
@@ -1255,10 +1255,10 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       "Returns the canonical atom ranking for each atom of a molecule fragment\n\
   See help(CanonicalRankAtoms) for more information.\n\
 \n\
-   > mol = MolFromSmiles('C1NCN1.C1NCN1')\n\
-   > list(CanonicalRankAtomsInFragment(mol, atomsToUse=range(0,4), breakTies=False))\n\
+   >>> mol = MolFromSmiles('C1NCN1.C1NCN1')\n\
+   >>> list(CanonicalRankAtomsInFragment(mol, atomsToUse=range(0,4), breakTies=False))\n\
    [0,1,0,1,-1,-1,-1,-1]\n\
-   > list(CanonicalRankAtomsInFragment(mol, atomsToUse=range(4,8), breakTies=False))\n\
+   >>> list(CanonicalRankAtomsInFragment(mol, atomsToUse=range(4,8), breakTies=False))\n\
    [-1,-1,-1,-1,0,1,0,1]\n\
 \n\
   ARGUMENTS:\n\

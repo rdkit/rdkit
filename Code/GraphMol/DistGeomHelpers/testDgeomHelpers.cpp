@@ -1394,7 +1394,7 @@ void testGithub256() {
     try {
       DGeomHelpers::EmbedMolecule(*mol);
       ok = false;
-    } catch (const ValueErrorException &e) {
+    } catch (const ValueErrorException &) {
       ok = true;
     }
     TEST_ASSERT(ok);

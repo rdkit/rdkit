@@ -13,7 +13,7 @@
 - stereo chemistry parsing consistency
 """
 import unittest, os
-from rdkit.six.moves import cPickle
+import pickle
 from rdkit import Chem
 
 

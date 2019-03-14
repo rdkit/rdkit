@@ -44,7 +44,7 @@ Here's the general flow of things:
 
 """
 
-from __future__ import print_function
+
 
 # The wildcard import is required to make functions available for the eval statement
 from math import *

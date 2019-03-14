@@ -2396,7 +2396,7 @@ unsigned int sanitizeMMFFMol(RWMol &mol) {
     if (!(mol.hasProp(common_properties::_MMFFSanitized))) {
       mol.setProp(common_properties::_MMFFSanitized, 1, true);
     }
-  } catch (MolSanitizeException &e) {
+  } catch (MolSanitizeException &) {
   }
 
   return error;

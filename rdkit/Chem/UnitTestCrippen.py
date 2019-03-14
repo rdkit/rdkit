@@ -11,14 +11,14 @@
 """unit testing code for the Crippen clogp and MR calculators
 
 """
-from __future__ import print_function
+
 import unittest, sys, os
 import io
 
 import numpy
 
 from rdkit import RDConfig
-from rdkit.six.moves import cPickle
+import pickle
 from rdkit import Chem
 from rdkit.Chem import Crippen
 
@@ -95,7 +95,7 @@ class TestCase(unittest.TestCase):
   def _writeDetailFile(self, inF, outF):
     while 1:
       try:
-        smi, refContribs = cPickle.load(inF)
+        smi, refContribs = pickle.load(inF)
       except EOFError:
         break
       else:
@@ -104,7 +104,7 @@ class TestCase(unittest.TestCase):
           mol = Chem.AddHs(mol, 1)
           smi2 = Chem.MolToSmiles(mol)
           contribs = Crippen._GetAtomContribs(mol)
-          cPickle.dump((smi, contribs), outF)
+          pickle.dump((smi, contribs), outF)
         else:
           print('Problems with SMILES:', smi)
 
@@ -116,7 +116,7 @@ class TestCase(unittest.TestCase):
       if verbose:
         print('---------------')
       try:
-        smi, refContribs = cPickle.load(inF)
+        smi, refContribs = pickle.load(inF)
       except EOFError:
         done = 1
       else:

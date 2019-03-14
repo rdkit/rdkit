@@ -10,7 +10,7 @@
 """ General descriptor testing code
 
 """
-from __future__ import print_function
+
 
 import io
 import os.path
@@ -24,7 +24,7 @@ from rdkit.Chem import AllChem
 from rdkit.Chem import Descriptors
 from rdkit.Chem import Lipinski
 from rdkit.Chem import rdMolDescriptors
-from rdkit.six.moves import cPickle
+import pickle
 
 
 def load_tests(loader, tests, ignore):
@@ -96,7 +96,7 @@ class TestCase(unittest.TestCase):
       intf.close()
     with io.BytesIO(buf) as inf:
       pkl = inf.read()
-    refData = cPickle.loads(pkl, encoding='bytes')
+    refData = pickle.loads(pkl, encoding='bytes')
     fn = os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', 'aromat_regress.txt')
     ms = [x for x in Chem.SmilesMolSupplier(fn, delimiter='\t')]
     refData2 = []

@@ -224,6 +224,8 @@ typedef unsigned long long int	uintmax_t;
 %include "../FilterCatalog.i"
 %include "../Trajectory.i"
 %include "../MolStandardize.i"
+%include "../SubstructLibrary.i"
+%include "../RGroupDecomposition.i"
 %include "../Streams.i"
 
 // Create a class to throw various sorts of errors for testing.  Required for unit tests in ErrorHandlingTests.java

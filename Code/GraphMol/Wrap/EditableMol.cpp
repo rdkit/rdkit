@@ -82,7 +82,7 @@ struct EditableMol_wrapper {
    This class can be used to add/remove bonds and atoms to\n\
    a molecule.\n\
    In order to use it, you need to first construct an EditableMol\n\
-   from a standard Mol:\n\
+   from a standard Mol:\n\n\
    >>> m = Chem.MolFromSmiles('CCC')\n\
    >>> em = Chem.EditableMol(m)\n\
    >>> em.AddAtom(Chem.Atom(8))\n\

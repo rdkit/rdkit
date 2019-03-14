@@ -2,7 +2,7 @@
 # Copyright (C) 2007-2008 by Greg Landrum
 #  All rights reserved
 #
-from __future__ import print_function
+
 
 import numpy
 
@@ -334,14 +334,14 @@ class SubshapeAligner(object):
 
 
 if __name__ == '__main__':  # pragma: nocover
-  from rdkit.six.moves import cPickle
+  import pickle
   from rdkit.Chem.PyMol import MolViewer
   with open('target.pkl', 'rb') as f:
-    tgtMol, tgtShape = cPickle.load(f)
+    tgtMol, tgtShape = pickle.load(f)
   with open('query.pkl', 'rb') as f:
-    queryMol, queryShape = cPickle.load(f)
+    queryMol, queryShape = pickle.load(f)
   with open('builder.pkl', 'rb') as f:
-    builder = cPickle.load(f)
+    builder = pickle.load(f)
   aligner = SubshapeAligner()
   algs = aligner.GetSubshapeAlignments(tgtMol, tgtShape, queryMol, queryShape, builder)
   print(len(algs))

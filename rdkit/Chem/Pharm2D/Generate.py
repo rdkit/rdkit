@@ -32,7 +32,7 @@
   numbering
 
 """
-from __future__ import print_function
+
 
 from rdkit.Chem.Pharm2D import Utils, SigFactory
 from rdkit.RDLogger import logger

@@ -63,7 +63,7 @@ struct corrmat_wrap {
     std::string docString =
         "A class to generate a pariwise correlation matrix between a list of "
         "bits\n"
-        "The mode of operation for this class is something like this\n"
+        "The mode of operation for this class is something like this\n\n"
         "   >>> cmg = BitCorrMatGenerator() \n"
         "   >>> cmg.SetBitList(blist) \n"
         "   >>> for fp in fpList:  \n"
@@ -90,6 +90,6 @@ struct corrmat_wrap {
              "from a bunch of fingerprints\n");
   };
 };
-}
+}  // namespace RDInfoTheory
 
 void wrap_corrmatgen() { RDInfoTheory::corrmat_wrap::wrap(); }

@@ -84,7 +84,8 @@ class RDKIT_MOLSTANDARDIZE_EXPORT MolVSValidations {
 
 //! The NoAtomValidation class throws an error if no atoms are present in the
 // molecule.
-class RDKIT_MOLSTANDARDIZE_EXPORT NoAtomValidation : public MolVSValidations {
+class RDKIT_MOLSTANDARDIZE_EXPORT NoAtomValidation final
+    : public MolVSValidations {
  public:
   void run(const ROMol &mol, bool reportAllFailures,
            std::vector<ValidationErrorInfo> &errors) const override;
@@ -96,7 +97,8 @@ class RDKIT_MOLSTANDARDIZE_EXPORT NoAtomValidation : public MolVSValidations {
 };
 
 //! The FragmentValidation class logs if certain fragments are present.
-class RDKIT_MOLSTANDARDIZE_EXPORT FragmentValidation : public MolVSValidations {
+class RDKIT_MOLSTANDARDIZE_EXPORT FragmentValidation final
+    : public MolVSValidations {
  public:
   void run(const ROMol &mol, bool reportAllFailures,
            std::vector<ValidationErrorInfo> &errors) const override;
@@ -108,7 +110,8 @@ class RDKIT_MOLSTANDARDIZE_EXPORT FragmentValidation : public MolVSValidations {
 };
 
 //! The NeutralValidation class logs if not an overall neutral system.
-class RDKIT_MOLSTANDARDIZE_EXPORT NeutralValidation : public MolVSValidations {
+class RDKIT_MOLSTANDARDIZE_EXPORT NeutralValidation final
+    : public MolVSValidations {
  public:
   void run(const ROMol &mol, bool reportAllFailures,
            std::vector<ValidationErrorInfo> &errors) const override;
@@ -120,7 +123,8 @@ class RDKIT_MOLSTANDARDIZE_EXPORT NeutralValidation : public MolVSValidations {
 };
 
 //! The IsotopeValidation class logs if molecule contains isotopes.
-class RDKIT_MOLSTANDARDIZE_EXPORT IsotopeValidation : public MolVSValidations {
+class RDKIT_MOLSTANDARDIZE_EXPORT IsotopeValidation final
+    : public MolVSValidations {
  public:
   void run(const ROMol &mol, bool reportAllFailures,
            std::vector<ValidationErrorInfo> &errors) const override;

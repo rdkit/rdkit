@@ -7,7 +7,7 @@ This is, perhaps, a little misleading.  For the purposes of this module,
 cross validation == evaluating the accuracy of a net.
 
 """
-from __future__ import print_function
+
 from rdkit.ML.Neural import Network, Trainers
 from rdkit.ML.Data import SplitData
 import math

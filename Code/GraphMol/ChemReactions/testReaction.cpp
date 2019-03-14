@@ -2914,7 +2914,7 @@ void test28RxnDepictor() {
       TEST_ASSERT((*templIt)->getNumConformers() == 1);
       TEST_ASSERT(!(*templIt)->getConformer().is3D());
     }
-  delete rxn;
+    delete rxn;
   }
   {  // make sure the depiction doesn't screw up the reaction itself
     std::string rdbase = getenv("RDBASE");
@@ -3575,7 +3575,7 @@ void test35ParensInReactants1() {
     ChemicalReaction *rxn = nullptr;
     try {
       rxn = RxnSmartsToChemicalReaction(smi);
-    } catch (const ChemicalReactionParserException &e) {
+    } catch (const ChemicalReactionParserException &) {
       rxn = nullptr;
     }
     TEST_ASSERT(!rxn);
@@ -3587,7 +3587,7 @@ void test35ParensInReactants1() {
     try {
       rxn = RxnSmartsToChemicalReaction(smi);
       TEST_ASSERT(!rxn);
-    } catch (const ChemicalReactionParserException &e) {
+    } catch (const ChemicalReactionParserException &) {
       ;
     }
     delete rxn;
@@ -3598,7 +3598,7 @@ void test35ParensInReactants1() {
     try {
       rxn = RxnSmartsToChemicalReaction(smi);
       TEST_ASSERT(!rxn);
-    } catch (const ChemicalReactionParserException &e) {
+    } catch (const ChemicalReactionParserException &) {
       ;
     }
     delete rxn;
@@ -3609,7 +3609,7 @@ void test35ParensInReactants1() {
     try {
       rxn = RxnSmartsToChemicalReaction(smi);
       TEST_ASSERT(!rxn);
-    } catch (const ChemicalReactionParserException &e) {
+    } catch (const ChemicalReactionParserException &) {
       ;
     }
     delete rxn;
@@ -3725,7 +3725,7 @@ void test38AddRecursiveQueriesToReaction() {
     bool ok = false;
     try {
       addRecursiveQueriesToReaction(rxn, mp, "replaceme");
-    } catch (ChemicalReactionException &e) {
+    } catch (ChemicalReactionException &) {
       ok = true;
     }
     TEST_ASSERT(ok);
@@ -4686,7 +4686,7 @@ void test48ParensInProducts1() {
     try {
       rxn = RxnSmartsToChemicalReaction(smi);
       TEST_ASSERT(!rxn);
-    } catch (const ChemicalReactionParserException &e) {
+    } catch (const ChemicalReactionParserException &) {
       ;
     }
     delete rxn;
@@ -4697,7 +4697,7 @@ void test48ParensInProducts1() {
     try {
       rxn = RxnSmartsToChemicalReaction(smi);
       TEST_ASSERT(!rxn);
-    } catch (const ChemicalReactionParserException &e) {
+    } catch (const ChemicalReactionParserException &) {
       ;
     }
     delete rxn;
@@ -4708,7 +4708,7 @@ void test48ParensInProducts1() {
     try {
       rxn = RxnSmartsToChemicalReaction(smi);
       TEST_ASSERT(!rxn);
-    } catch (const ChemicalReactionParserException &e) {
+    } catch (const ChemicalReactionParserException &) {
       ;
     }
     delete rxn;
@@ -4719,7 +4719,7 @@ void test48ParensInProducts1() {
     try {
       rxn = RxnSmartsToChemicalReaction(smi);
       TEST_ASSERT(!rxn);
-    } catch (const ChemicalReactionParserException &e) {
+    } catch (const ChemicalReactionParserException &) {
       ;
     }
     delete rxn;

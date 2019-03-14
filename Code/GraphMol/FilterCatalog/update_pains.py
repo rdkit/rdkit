@@ -1,5 +1,5 @@
 # must be run from this directory
-from __future__ import print_function
+
 import csv, os, sys
 py3 = sys.version_info[0] == 3
 

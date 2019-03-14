@@ -139,12 +139,19 @@ Note that, though it is possible to create one, having an Atom on its own\n\
 (i.e not associated with a molecule) is not particularly useful.\n";
 struct atom_wrapper {
   static void wrap() {
-    python::class_<Atom, Atom*>("Atom", atomClassDoc.c_str(),
-                         python::init<std::string>())
+    python::class_<Atom, Atom *>("Atom", atomClassDoc.c_str(),
+                                 python::init<std::string>())
 
+        .def(python::init<const Atom &>())
         .def(python::init<unsigned int>(
             "Constructor, takes either an int (atomic number) or a string "
             "(atomic symbol).\n"))
+
+        .def("__copy__", &Atom::copy, 
+            python::return_value_policy<
+                 python::manage_new_object,
+                 python::with_custodian_and_ward_postcall<0, 1>>(),
+             "Create a copy of the atom")
 
         .def("GetAtomicNum", &Atom::getAtomicNum, "Returns the atomic number.")
 
@@ -424,8 +431,7 @@ These cannot currently be constructed directly from Python\n";
               python::arg("how") = Queries::COMPOSITE_AND,
               python::arg("maintainOrder") = true),
              "combines the query from other with ours")
-        .def("SetQuery", setQuery,
-             (python::arg("self"), python::arg("other")),
+        .def("SetQuery", setQuery, (python::arg("self"), python::arg("other")),
              "Replace our query with a copy of the other query");
 
     python::def(
@@ -457,7 +463,7 @@ These cannot currently be constructed directly from Python\n";
         "SetSupplementalSmilesLabel", setSupplementalSmilesLabel,
         (python::arg("atom"), python::arg("label")),
         "Sets a supplemental label on an atom that is written to the smiles "
-        "string.\n"
+        "string.\n\n"
         ">>> m = Chem.MolFromSmiles(\"C\")\n"
         ">>> Chem.SetSupplementalSmilesLabel(m.GetAtomWithIdx(0), '<xxx>')\n"
         ">>> Chem.MolToSmiles(m)\n"

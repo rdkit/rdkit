@@ -351,7 +351,8 @@ static bool ReadAAPairs(
     return false;
   }
   unsigned n = 0;
-  fscanf(fp, "%d", &n);
+  int num_scan = fscanf(fp, "%d", &n);
+  TEST_ASSERT(num_scan == 1);
 
   char buffer[80];
 

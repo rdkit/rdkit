@@ -13,7 +13,7 @@ descriptors.
   The MOE-like VSA descriptors are also calculated here
 
 """
-from __future__ import print_function
+
 
 import bisect
 

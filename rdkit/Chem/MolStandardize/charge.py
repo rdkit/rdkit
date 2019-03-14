@@ -11,9 +11,7 @@ which attempts to neutralize ionized acids and bases on a molecule.
 :license: MIT, see LICENSE file for more details.
 """
 
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import division
+
 import copy
 import logging
 
@@ -177,7 +175,8 @@ class Reionizer(object):
         for cc in self.charge_corrections:
             for match in mol.GetSubstructMatches(cc.smarts):
                 atom = mol.GetAtomWithIdx(match[0])
-                log.info('Applying charge correction %s (%s %+d)', cc.name, atom.GetSymbol(), cc.charge)
+                log.info('Applying charge correction %s (%s %+d)',
+                         cc.name, atom.GetSymbol(), cc.charge)
                 atom.SetFormalCharge(cc.charge)
 
         current_charge = Chem.GetFormalCharge(mol)
@@ -189,7 +188,8 @@ class Reionizer(object):
                 ppos, poccur = self._strongest_protonated(mol)
                 if ppos is None:
                     break
-                log.info('Ionizing %s to balance previous charge corrections', self.acid_base_pairs[ppos].name)
+                log.info('Ionizing %s to balance previous charge corrections',
+                         self.acid_base_pairs[ppos].name)
                 patom = mol.GetAtomWithIdx(poccur[-1])
                 patom.SetFormalCharge(patom.GetFormalCharge() - 1)
                 if patom.GetNumExplicitHs() > 0:
@@ -210,11 +210,13 @@ class Reionizer(object):
 
                 key = tuple(sorted([poccur[-1], ioccur[-1]]))
                 if key in already_moved:
-                    log.warning('Aborting reionization to avoid infinite loop due to it being ambiguous where to put a Hydrogen')
+                    log.warning(
+                        'Aborting reionization to avoid infinite loop due to it being ambiguous where to put a Hydrogen')
                     break
                 already_moved.add(key)
 
-                log.info('Moved proton from %s to %s', self.acid_base_pairs[ppos].name, self.acid_base_pairs[ipos].name)
+                log.info('Moved proton from %s to %s',
+                         self.acid_base_pairs[ppos].name, self.acid_base_pairs[ipos].name)
 
                 # Remove hydrogen from strongest protonated
                 patom = mol.GetAtomWithIdx(poccur[-1])

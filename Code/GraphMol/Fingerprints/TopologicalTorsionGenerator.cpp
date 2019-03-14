@@ -22,9 +22,9 @@ TopologicalTorsionArguments<OutputType>::TopologicalTorsionArguments(
     const bool includeChirality, const uint32_t torsionAtomCount,
     const bool countSimulation, const std::vector<std::uint32_t> countBounds,
     const std::uint32_t fpSize)
-    : df_includeChirality(includeChirality),
-      d_torsionAtomCount(torsionAtomCount),
-      FingerprintArguments<OutputType>(countSimulation, countBounds, fpSize){};
+    : FingerprintArguments<OutputType>(countSimulation, countBounds, fpSize),
+      df_includeChirality(includeChirality),
+      d_torsionAtomCount(torsionAtomCount) {};
 
 template <typename OutputType>
 OutputType TopologicalTorsionArguments<OutputType>::getResultSize() const {

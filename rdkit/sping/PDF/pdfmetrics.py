@@ -23,7 +23,7 @@ Postscript font names within this module, but have not yet done so.
 
 13th June 1999
 """
-from __future__ import print_function
+
 import os
 
 StandardEnglishFonts = [

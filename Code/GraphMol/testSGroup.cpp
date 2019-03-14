@@ -541,9 +541,10 @@ void testModifyMol() {
     const auto &sgroups = getSGroups(mol_copy);
     TEST_ASSERT(sgroups.size() == 3);
 
-    mol_copy.createPartialBond(1, Bond::SINGLE);
+    auto *b = mol_copy.createPartialBond(1, Bond::SINGLE);
 
     TEST_ASSERT(sgroups.size() == 0);
+	delete b;
   }
 }
 

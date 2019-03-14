@@ -11,7 +11,7 @@
 """unit testing code for graph-theoretical descriptors
 
 """
-from __future__ import print_function
+
 
 import os.path
 import unittest

@@ -133,10 +133,12 @@ TEST_CASE("github #2224", "[bug, molops, removeHs, query]") {
     }
     {  // but if we add a query feature it's not removed
       RWMol m2(*mol);
-      m2.replaceAtom(1, new QueryAtom(1));
+      auto *qa = new QueryAtom(1);
+      m2.replaceAtom(1, qa);
       m2.getAtomWithIdx(1)->setAtomicNum(1);
       MolOps::removeHs(m2);
       CHECK(m2.getNumAtoms() == 2);
+      delete qa;
     }
   }
 }
@@ -226,6 +228,29 @@ TEST_CASE(
     std::vector<std::string> smiles = {"C=n1ccnc1", "C#n1ccnc1"};
     for (auto smi : smiles) {
       CHECK_THROWS_AS(SmilesToMol(smi), MolSanitizeException);
+    }
+  }
+}
+
+TEST_CASE("github #908: AddHs() using 3D coordinates with 2D conformations",
+          "[bug, molops]") {
+  SECTION("basics: single atom mols") {
+    std::vector<std::string> smiles = {"Cl", "O", "N", "C"};
+    for (auto smi : smiles) {
+      // std::cerr << smi << std::endl;
+      std::unique_ptr<RWMol> mol(SmilesToMol(smi));
+      REQUIRE(mol);
+      auto conf = new Conformer(1);
+      conf->set3D(false);
+      conf->setAtomPos(0, RDGeom::Point3D(0, 0, 0));
+      mol->addConformer(conf, true);
+      bool explicitOnly = false;
+      bool addCoords = true;
+      MolOps::addHs(*mol, explicitOnly, addCoords);
+      for (size_t i = 0; i < mol->getNumAtoms(); ++i) {
+        // std::cerr << "   " << i << " " << conf->getAtomPos(i) << std::endl;
+        CHECK(conf->getAtomPos(i).z == 0.0);
+      }
     }
   }
 }

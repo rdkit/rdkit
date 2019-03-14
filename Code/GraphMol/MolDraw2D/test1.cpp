@@ -1787,7 +1787,7 @@ void testGithub1035() {
     bool ok = false;
     try {
       drawer.drawMolecule(*m1, &highlights);
-    } catch (const ValueErrorException &e) {
+    } catch (const ValueErrorException &) {
       ok = true;
     }
     TEST_ASSERT(ok);
@@ -1798,7 +1798,7 @@ void testGithub1035() {
     bool ok = false;
     try {
       drawer.drawMolecule(*m1, &highlights);
-    } catch (const ValueErrorException &e) {
+    } catch (const ValueErrorException &) {
       ok = true;
     }
     TEST_ASSERT(ok);
@@ -1809,7 +1809,7 @@ void testGithub1035() {
     bool ok = false;
     try {
       drawer.drawMolecule(*m1, &highlights);
-    } catch (const ValueErrorException &e) {
+    } catch (const ValueErrorException &) {
       ok = true;
     }
     TEST_ASSERT(ok);
