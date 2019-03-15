@@ -95,7 +95,7 @@ RWMol *chargeParent(const RWMol &mol, const CleanupParameters &params,
   // if fragment...
   ROMol nm(*fragparent);
 
-  Uncharger uncharger;
+  Uncharger uncharger(params.doCanonical);
   ROMOL_SPTR uncharged(uncharger.uncharge(nm));
   RWMol *omol = cleanup(static_cast<RWMol>(*uncharged), params);
   return omol;

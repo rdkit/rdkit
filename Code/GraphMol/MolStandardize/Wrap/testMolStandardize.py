@@ -88,6 +88,15 @@ class TestCase(unittest.TestCase):
         nm3 = uncharger.uncharge(mol3)
         self.assertEqual(Chem.MolToSmiles(nm3), "O=C(O)c1ccccc1")
 
+        # test canonical Uncharger
+        uncharger = rdMolStandardize.Uncharger(canonicalOrder=False)
+        mol3 = Chem.MolFromSmiles("C[N+](C)(C)CC(C(=O)[O-])CC(=O)[O-]")
+        nm3 = uncharger.uncharge(mol3)
+        self.assertEqual(Chem.MolToSmiles(nm3), "C[N+](C)(C)CC(CC(=O)[O-])C(=O)O")
+        uncharger = rdMolStandardize.Uncharger(canonicalOrder=True)
+        nm3 = uncharger.uncharge(mol3)
+        self.assertEqual(Chem.MolToSmiles(nm3), "C[N+](C)(C)CC(CC(=O)O)C(=O)[O-]")
+
     def test7Fragment(self):
         fragremover = rdMolStandardize.FragmentRemover()
         mol = Chem.MolFromSmiles("CN(C)C.Cl.Cl.Br")

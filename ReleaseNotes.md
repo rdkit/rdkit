@@ -9,7 +9,9 @@ using Python 2: https://www.mail-archive.com/rdkit-discuss@lists.sourceforge.net
 ## Backwards incompatible changes
 - The fix for github #2245 means that the default behavior of the MaxMinPicker is now truly random. 
   If you would like to reproduce the previous behavior, provide a seed value of 42.
-
+- The uncharging method in the MolStandardizer now attempts to generate canonical results for a given 
+  molecule. This may result in different output for some molecules.
+  
 
 # Release_2018.09.1
 (Changes relative to Release_2018.03.1)

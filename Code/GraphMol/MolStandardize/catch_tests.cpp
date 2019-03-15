@@ -75,6 +75,19 @@ TEST_CASE("symmetry in the uncharger") {
       REQUIRE(outm);
       CHECK(MolToSmiles(*outm) == "C[N+](C)(C)CC(CC(=O)O)C(=O)[O-]");
     }
+    {
+      MolStandardize::CleanupParameters params;
+      std::unique_ptr<ROMol> outm(MolStandardize::chargeParent(*m, params));
+      REQUIRE(outm);
+      CHECK(MolToSmiles(*outm) == "C[N+](C)(C)CC(CC(=O)O)C(=O)[O-]");
+    }
+    {
+      MolStandardize::CleanupParameters params;
+      params.doCanonical = false;
+      std::unique_ptr<ROMol> outm(MolStandardize::chargeParent(*m, params));
+      REQUIRE(outm);
+      CHECK(MolToSmiles(*outm) == "C[N+](C)(C)CC(CC(=O)[O-])C(=O)O");
+    }
   }
 }
 
