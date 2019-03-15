@@ -48,15 +48,7 @@ bool SubstructLibraryCanSerialize() {
 #endif
 }
 
-
-struct Bits {
-  const ExplicitBitVect *queryBits;
-  const FPHolderBase *fps;
-  bool recursionPossible;
-  bool useChirality;
-  bool useQueryQueryMatches;
-
-  Bits(const FPHolderBase *fps, const ROMol &m, bool recursionPossible,
+Bits::Bits(const FPHolderBase *fps, const ROMol &m, bool recursionPossible,
        bool useChirality, bool useQueryQueryMatches)
       : fps(fps),
         recursionPossible(recursionPossible),
@@ -68,13 +60,12 @@ struct Bits {
       queryBits = nullptr;
   }
 
-  bool check(unsigned int idx) const {
+bool Bits::check(unsigned int idx) const {
     if (fps) {
       return fps->passesFilter(idx, *queryBits);
     }
     return true;
   }
-};
 
 unsigned int SubstructLibrary::addMol(const ROMol &m) {
   unsigned int size = mols->addMol(m);

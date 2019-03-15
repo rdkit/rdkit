@@ -225,6 +225,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedTrustedSmilesMolHolder : public MolHol
 
   std::vector<std::string> &getMols() { return mols; }
   const std::vector<std::string> &getMols() const { return mols; }
+  template <typename Key, typename MolHolder, typename FpHolder> friend class EditableSubstructLibrary;
 };
 
 //! Base FPI for the fingerprinter used to rule out impossible matches
@@ -268,6 +269,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT FPHolderBase {
 
   std::vector<ExplicitBitVect *> &getFingerprints() { return fps; }
   const std::vector<ExplicitBitVect *> &getFingerprints() const { return fps; }
+  template <typename Key, typename MolHolder, typename FpHolder> friend class EditableSubstructLibrary;
 };
 
 //! Uses the pattern fingerprinter to rule out matches
@@ -584,6 +586,22 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
   //! initializes from a string pickle
   void initFromString(const std::string &text);
 };
+
+struct Bits {
+  const ExplicitBitVect *queryBits;
+  const FPHolderBase *fps;
+  bool recursionPossible;
+  bool useChirality;
+  bool useQueryQueryMatches;
+
+  Bits(const FPHolderBase *fps, const ROMol &m, bool recursionPossible,
+       bool useChirality, bool useQueryQueryMatches);
+
+  bool check(unsigned int idx) const;
+
+};
+
+
 }
 
 #include "SubstructLibrarySerialization.h"
