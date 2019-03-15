@@ -101,12 +101,16 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Reionizer {
 class RDKIT_MOLSTANDARDIZE_EXPORT Uncharger {
  public:
   Uncharger();
+  Uncharger(bool canonicalOrdering) : Uncharger() {
+    df_canonicalOrdering = canonicalOrdering;
+  };
   Uncharger(const Uncharger &other);
   ~Uncharger();
 
   ROMol *uncharge(const ROMol &mol);
 
  private:
+  bool df_canonicalOrdering = false;
   std::shared_ptr<ROMol> pos_h;
   std::shared_ptr<ROMol> pos_quat;
   std::shared_ptr<ROMol> neg;
