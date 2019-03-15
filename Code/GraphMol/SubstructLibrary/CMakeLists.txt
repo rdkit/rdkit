@@ -7,7 +7,7 @@ add_definitions(-DRDKIT_SUBSTRUCTLIBRARY_BUILD -DBOOST_SYSTEM_NO_DEPRECATED)
 rdkit_library(SubstructLibrary
               SubstructLibrary.cpp
               EditableSubstructLibrary
-              EditableSubstructLibrary.cpp
+              EditableSubstructLibraryTrustedSmilesWithPattern.cpp
               ChunkedHitlist
               LINK_LIBRARIES Fingerprints SubstructMatch SmilesParse
               GraphMol RDGeometryLib Catalogs RDGeneral DataStructs)

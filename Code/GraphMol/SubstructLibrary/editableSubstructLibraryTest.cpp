@@ -1,6 +1,6 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
-#include <GraphMol/SubstructLibrary/EditableSubstructLibrary.h>
+#include <GraphMol/SubstructLibrary/EditableSubstructLibraryTrustedSmilesWithPattern.h>
 
 #include <GraphMol/Substruct/SubstructMatch.h>
 
