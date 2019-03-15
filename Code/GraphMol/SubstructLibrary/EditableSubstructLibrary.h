@@ -24,7 +24,8 @@
 namespace RDKit {
 
 template <typename Key, typename MolHolder, typename FpHolder>
-class EditableSubstructLibrary : boost::noncopyable {
+//class EditableSubstructLibrary : boost::noncopyable {
+class EditableSubstructLibrary {
   template <typename T>
   struct KeyType {};
 
@@ -274,23 +275,5 @@ class EditableSubstructLibrary : boost::noncopyable {
   unsigned int idToIndex(const Key &id) const { return ids.right.at(id); }
 };
 
-//class RDKIT_SUBSTRUCTLIBRARY_EXPORT EditableSubstructLibraryTrustedSmilesWithPattern
-class EditableSubstructLibraryTrustedSmilesWithPattern
-    : public EditableSubstructLibrary<std::string, CachedTrustedSmilesMolHolder,
-                                      PatternHolder> {
- public:
-  EditableSubstructLibraryTrustedSmilesWithPattern()
-      : EditableSubstructLibrary() {}
-
-  int addSmiles(const std::string &smi, const std::string &fp);
-
-  int addSmiles(const std::vector<std::string> smilesVector,
-                const std::vector<std::string> fpVector);
-
-  ExplicitBitVect * makeFingerprint(const std::string &smiles) const;
-  
-  };
-
 }  // namespace RDKit
-
 #endif  // RDKIT_EDITABLESUBSTRUCTLIBRARY_H
