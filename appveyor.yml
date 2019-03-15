@@ -4,8 +4,8 @@ environment:
   P: "c:/projects/libs"
   RDBASE: "c:/projects/RDKit"
   PATH: "%RDBASE%/lib;%PATH%"
-  BOOST_ROOT: c:/Libraries/boost_1_67_0
-  BOOST_LIBRARYDIR: c:/Libraries/boost_1_67_0/lib64-msvc-14.0
+  BOOST_ROOT: c:/Libraries/boost_1_69_0
+  BOOST_LIBRARYDIR: c:/Libraries/boost_1_69_0/lib64-msvc-14.1
 
 image: Visual Studio 2017
 
