@@ -31,7 +31,9 @@
 */
 %include "boost_tuple.i"
 %include "std_vector.i"
+%include "std_map.i"
 %include "std_pair.i"
+%include "boost_tuple.i"
 %{
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
@@ -43,9 +45,13 @@
 %}
 
 %template(Int_String_Map) std::map< int, std::string >;
-%template(ColourPalette) std::map< int, RDKit::DrawColour >;
-%template(Int_Double_Map) std::map< int, double >;
 %template(DrawColour) boost::tuple<float,float,float>;
+
+#ifdef SWIGJAVA
+%template(ColourPalette) std::map< int, RDKit::DrawColour >;
+#endif
+
+%template(Int_Double_Map) std::map< int, double >;
 %template(Float_Pair) std::pair<float,float>;
 %template(Float_Pair_Vect) std::vector< std::pair<float,float> >;
 

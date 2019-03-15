@@ -38,7 +38,10 @@ struct fragment_wrapper {
 
     python::class_<MolStandardize::FragmentRemover, boost::noncopyable>(
         "FragmentRemover", python::init<>())
-        .def(python::init<std::string, bool>())
+        .def(python::init<std::string, bool, bool>(
+            (python::arg("fragmentFilename") = "",
+            python::arg("leave_last") = true,
+            python::arg("skip_if_all_match") = false)))
         .def("remove", &removeHelper, (python::arg("self"), python::arg("mol")),
              "", python::return_value_policy<python::manage_new_object>());
 
