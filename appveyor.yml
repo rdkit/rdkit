@@ -1,11 +1,11 @@
-version: 2018.03.1.dev{build}
+version: 2019.03.1.dev{build}
 
 environment:
   P: "c:/projects/libs"
   RDBASE: "c:/projects/RDKit"
   PATH: "%RDBASE%/lib;%PATH%"
   BOOST_ROOT: c:/Libraries/boost_1_69_0
-  BOOST_LIBRARYDIR: c:/Libraries/boost_1_69_0/lib64-msvc-14.0
+  BOOST_LIBRARYDIR: c:/Libraries/boost_1_69_0/lib64-msvc-14.1
 
 image: Visual Studio 2017
 
@@ -22,6 +22,7 @@ branches:
 
 # scripts that are called at very beginning, before repo cloning
 init:
+  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
   - git config --global core.autocrlf input
   - cmake -version
 
@@ -46,7 +47,7 @@ before_build:
   - mkdir c:\projects\RDKit\build
   - cd c:\projects\RDKit\build
   - call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat" amd64
-  - cmake -G "Visual Studio 15 2017 Win64" -DCMAKE_INSTALL_PREFIX=%P% -DRDK_USE_BOOST_SERIALIZATION=OFF -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_BUILD_SWIG_WRAPPERS=OFF -DBOOST_ROOT="%BOOST_ROOT%" -DBOOST_LIBRARYDIR="%BOOST_LIBRARYDIR%" ..
+  - cmake -G "Visual Studio 15 2017 Win64" -DCMAKE_INSTALL_PREFIX=%P% -DRDK_USE_BOOST_SERIALIZATION=ON -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_BUILD_SWIG_WRAPPERS=OFF -DBOOST_ROOT="%BOOST_ROOT%" -DBOOST_LIBRARYDIR="%BOOST_LIBRARYDIR%" -DBoost_USE_STATIC_LIBS=ON -DBoost_USE_MULTITHREADED=ON ..
 
 test_script:
   - cd c:\projects\RDKit\build
