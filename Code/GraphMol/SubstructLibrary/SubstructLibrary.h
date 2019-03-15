@@ -212,6 +212,8 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedTrustedSmilesMolHolder : public MolHol
   virtual unsigned int size() const {
     return rdcast<unsigned int>(mols.size());
   }
+
+  template <typename Key, typename MolHolder, typename FpHolder> friend class EditableSubstructLibrary;
 };
 
 //! Base FPI for the fingerprinter used to rule out impossible matches
@@ -252,6 +254,8 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT FPHolderBase {
   //! make the query vector
   //!  Caller owns the vector!
   virtual ExplicitBitVect *makeFingerprint(const ROMol &m) const = 0;
+
+  template <typename Key, typename MolHolder, typename FpHolder> friend class EditableSubstructLibrary;
 };
 
 //! Uses the pattern fingerprinter to rule out matches
@@ -533,6 +537,22 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
     return rdcast<unsigned int>(molholder->size());
   }
 };
+
+struct Bits {
+  const ExplicitBitVect *queryBits;
+  const FPHolderBase *fps;
+  bool recursionPossible;
+  bool useChirality;
+  bool useQueryQueryMatches;
+
+  Bits(const FPHolderBase *fps, const ROMol &m, bool recursionPossible,
+       bool useChirality, bool useQueryQueryMatches);
+
+  bool check(unsigned int idx) const;
+
+};
+
+
 }
 
 #endif
