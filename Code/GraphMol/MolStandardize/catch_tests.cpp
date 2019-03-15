@@ -91,21 +91,39 @@ TEST_CASE("symmetry in the uncharger") {
   }
 }
 
-// TEST_CASE("uncharger bug with duplicates") {
-//   SECTION("case 1") {
-//     auto m = "[NH3+]CC([O-])C[O-]"_smiles;
-//     REQUIRE(m);
-//     MolStandardize::Uncharger uncharger;
-//     std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
-//     REQUIRE(outm);
-//     CHECK(MolToSmiles(*outm) == "NCC(O)CO");
-//   }
-//   SECTION("case 2") {
-//     auto m = "CC([O-])C[O-].[Na+]"_smiles;
-//     REQUIRE(m);
-//     MolStandardize::Uncharger uncharger;
-//     std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
-//     REQUIRE(outm);
-//     CHECK(MolToSmiles(*outm) == "CC(O)C[O-].[Na+]");
-//   }
-// }
+TEST_CASE("uncharger bug with duplicates") {
+  SECTION("case 1") {
+    auto m = "[NH3+]CC([O-])C[O-]"_smiles;
+    REQUIRE(m);
+    MolStandardize::Uncharger uncharger;
+    std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
+    REQUIRE(outm);
+    CHECK(MolToSmiles(*outm) == "NCC(O)CO");
+  }
+  SECTION("case 2") {
+    auto m = "CC([O-])C[O-].[Na+]"_smiles;
+    REQUIRE(m);
+    MolStandardize::Uncharger uncharger;
+    std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
+    REQUIRE(outm);
+    CHECK(MolToSmiles(*outm) == "CC([O-])CO.[Na+]");
+  }
+  SECTION("acids + others 1") {
+    auto m = "C[N+](C)(C)CC(C[O-])CC(=O)[O-]"_smiles;
+    REQUIRE(m);
+    bool doCanonical = false;
+    MolStandardize::Uncharger uncharger(doCanonical);
+    std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
+    REQUIRE(outm);
+    CHECK(MolToSmiles(*outm) == "C[N+](C)(C)CC(C[O-])CC(=O)O");
+  }
+  SECTION("acids + others 2") {
+    auto m = "C[N+](C)(C)CC(CC(=O)[O-])C[O-]"_smiles;
+    REQUIRE(m);
+    bool doCanonical = false;
+    MolStandardize::Uncharger uncharger(doCanonical);
+    std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
+    REQUIRE(outm);
+    CHECK(MolToSmiles(*outm) == "C[N+](C)(C)CC(C[O-])CC(=O)O");
+  }
+}

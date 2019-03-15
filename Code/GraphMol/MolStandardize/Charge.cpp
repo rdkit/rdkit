@@ -315,6 +315,25 @@ ROMol *Uncharger::uncharge(const ROMol &mol) {
         BOOST_LOG(rdInfoLog) << "Removed negative charge.\n";
       }
     }
+
+    // now do the other negative groups if we still have charges left:
+    if (n_matched > 0 && neg_surplus > 0) {
+      unsigned int midx = 0;
+      // zwitterion with more negative charges than quaternary positive centres
+      while (neg_surplus > 0 && n_matched > 0) {
+        // Add hydrogen to first negative atom, increase formal charge
+        // Until quaternary positive == negative total or no more negative atoms
+        Atom *atom = omol->getAtomWithIdx(n_atoms[midx++].second);
+        // skip ahead if we already neutralized this
+        if (atom->getFormalCharge() >= 0) continue;
+        atom->setNoImplicit(true);
+        atom->setNumExplicitHs(atom->getNumExplicitHs() + 1);
+        atom->setFormalCharge(atom->getFormalCharge() + 1);
+        --neg_surplus;
+        BOOST_LOG(rdInfoLog) << "Removed negative charge.\n";
+      }
+    }
+
   } else {
     for (const auto &pair : n_atoms) {
       auto idx = pair.second;
