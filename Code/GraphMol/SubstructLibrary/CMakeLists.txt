@@ -34,7 +34,7 @@ add_subdirectory(Wrap)
 rdkit_test(substructLibraryTest substructLibraryTest.cpp
            LINK_LIBRARIES SubstructLibrary Fingerprints
            SubstructMatch FileParsers SmilesParse GraphMol RDGeometryLib RDGeneral DataStructs
-           
+           ${Boost_SERIALIZATION_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY})
 
 rdkit_test(editableSubstructLibraryTest editableSubstructLibraryTest.cpp
            LINK_LIBRARIES SubstructLibrary Fingerprints
