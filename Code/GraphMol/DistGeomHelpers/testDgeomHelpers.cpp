@@ -32,7 +32,6 @@
 #include <RDGeneral/FileParseException.h>
 #include <ForceField/ForceField.h>
 #include <GraphMol/MolAlign/AlignMolecules.h>
-#include <GraphMol/MolPickler.h>
 #include <math.h>
 #include <RDGeneral/Exceptions.h>
 
@@ -2041,25 +2040,6 @@ void testGithub1990() {
   }
 }
 
-void testGithub2352() {
-  {  // we saw the problem here (though it came from something in MolOps)
-    auto mol1 = "CCCCCC"_smiles;
-    TEST_ASSERT(mol1);
-
-    MolPickler::setDefaultPickleProperties(PicklerOps::AllProps);
-    std::string pkl;
-    MolPickler::pickleMol(*mol1, pkl);
-
-    std::unique_ptr<RWMol> mol2(new RWMol(pkl));
-    TEST_ASSERT(mol2);
-    int cid = DGeomHelpers::EmbedMolecule(*mol2);
-    TEST_ASSERT(cid >= 0);
-    for (auto atom : mol2->atoms()) {
-      atom->clearComputedProps();
-    }
-    mol2->clearComputedProps();
-  }
-}
 int main() {
   RDLog::InitLogs();
   BOOST_LOG(rdInfoLog)
@@ -2236,15 +2216,11 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t Deterministic with large random seeds\n";
   testGithubPullRequest1635();
+#endif
 
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t Github #1990: seg fault after RemoveHs\n";
   testGithub1990();
-#endif
-
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t Github #2352: \n";
-  testGithub2352();
 
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";

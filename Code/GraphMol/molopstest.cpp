@@ -21,6 +21,7 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/MolPickler.h>
 
 #include <iostream>
 #include <map>
@@ -2506,7 +2507,7 @@ void testSFIssue1836576() {
   TEST_ASSERT(ok);
   TEST_ASSERT(opThatFailed == MolOps::SANITIZE_PROPERTIES);
   delete m;
-  
+
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
@@ -7514,6 +7515,35 @@ void testGithub1990() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testGithub2352() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Github #2352"
+                       << std::endl;
+  {
+    auto mol1 = "CCCCCC"_smiles;
+    TEST_ASSERT(mol1);
+
+    MolPickler::setDefaultPickleProperties(PicklerOps::AllProps);
+    std::string pkl;
+    MolPickler::pickleMol(*mol1, pkl);
+
+    std::unique_ptr<RWMol> mol2(new RWMol(pkl));
+    TEST_ASSERT(mol2);
+    {
+      INT_VECT fragMapping;
+      std::vector<ROMOL_SPTR> molFrags =
+          MolOps::getMolFrags(*mol2, true, &fragMapping);
+      for (auto frag : molFrags) {
+        double *distMatrix = MolOps::getDistanceMat(*frag);
+        TEST_ASSERT(distMatrix != nullptr);
+      }
+    }
+    for (auto atom : mol2->atoms()) {
+      atom->clearComputedProps();
+    }
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
   // boost::logging::enable_logs("rdApp.debug");
@@ -7624,7 +7654,8 @@ int main() {
   testGithub1810();
   testGithub1936();
   testGithub1928();
-#endif
   testGithub1990();
+#endif
+  testGithub2352();
   return 0;
 }
