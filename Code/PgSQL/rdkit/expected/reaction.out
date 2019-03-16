@@ -929,15 +929,16 @@ SELECT reaction_to_svg('[C:1][O:2].[C:3][C:4]>>[C:1][O:2][C:3][C:4]'::reaction) 
                        xmlns:xlink='http://www.w3.org/1999/xlink'                                                                                                                                     +
                    xml:space='preserve'                                                                                                                                                               +
  width='400px' height='200px' >                                                                                                                                                                       +
+ <!-- END OF HEADER -->                                                                                                                                                                               +
  <rect style='opacity:1.0;fill:#FFFFFF;stroke:none' width='400' height='200' x='0' y='0'> </rect>                                                                                                     +
- <path d='M 47.583,100 53.3461,100' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                                 +
- <path d='M 53.3461,100 59.1092,100' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                                +
- <path d='M 121.036,100 132.915,100' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                                +
- <path d='M 288.928,98.6943 293.434,96.7767' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                        +
- <path d='M 293.434,96.7767 297.94,94.8591' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                         +
- <path d='M 315.069,95.7853 320.672,100' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                            +
- <path d='M 320.672,100 326.276,104.215' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                            +
- <path d='M 343.052,105.291 352.417,101.306' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                        +
+ <path class='bond-0' d='M 47.583,100 53.3461,100' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                  +
+ <path class='bond-0' d='M 53.3461,100 59.1092,100' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                 +
+ <path class='bond-1' d='M 121.036,100 132.915,100' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                 +
+ <path class='bond-2' d='M 288.928,98.6943 293.434,96.7767' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />         +
+ <path class='bond-2' d='M 293.434,96.7767 297.94,94.8591' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />          +
+ <path class='bond-3' d='M 315.069,95.7853 320.672,100' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />             +
+ <path class='bond-3' d='M 320.672,100 326.276,104.215' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />             +
+ <path class='bond-4' d='M 343.052,105.291 352.417,101.306' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />         +
  <text x='27.9822' y='105.247' style='font-size:10px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#000000' ><tspan>C:1</tspan></text>+
  <text x='59.1092' y='105.247' style='font-size:10px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#FF0000' ><tspan>O:2</tspan></text>+
  <text x='101.435' y='105.247' style='font-size:10px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#000000' ><tspan>C:3</tspan></text>+
@@ -964,6 +965,7 @@ SELECT reaction_to_svg('[C:1][O:2].[C:3][C:4]>>[C:1][O:2][C:3][C:4]'::reaction, 
                        xmlns:xlink='http://www.w3.org/1999/xlink'                                                                                                                                   +
                    xml:space='preserve'                                                                                                                                                             +
  width='400px' height='200px' >                                                                                                                                                                     +
+ <!-- END OF HEADER -->                                                                                                                                                                             +
  <rect style='opacity:1.0;fill:#FFFFFF;stroke:none' width='400' height='200' x='0' y='0'> </rect>                                                                                                   +
  <path d='M 18.1818,100 53.4652,100' style='fill:none;fill-rule:evenodd;stroke:#FFFFAA;stroke-width:15px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                             +
  <path d='M 100.51,100 135.793,100' style='fill:none;fill-rule:evenodd;stroke:#FFCC99;stroke-width:15px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                              +
@@ -977,14 +979,14 @@ SELECT reaction_to_svg('[C:1][O:2].[C:3][C:4]>>[C:1][O:2][C:3][C:4]'::reaction, 
  <ellipse cx='321.154' cy='89.3955' rx='9.40892' ry='9.40892' style='fill:#FFFFAA;fill-rule:evenodd;stroke:#FFFFAA;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />  +
  <ellipse cx='349.352' cy='110.604' rx='9.40892' ry='9.40892' style='fill:#FFCC99;fill-rule:evenodd;stroke:#FFCC99;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />  +
  <ellipse cx='381.818' cy='96.7892' rx='9.40892' ry='9.40892' style='fill:#FFCC99;fill-rule:evenodd;stroke:#FFCC99;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />  +
- <path d='M 18.1818,100 33.0774,100' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                              +
- <path d='M 33.0774,100 47.973,100' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                               +
- <path d='M 100.51,100 135.793,100' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                               +
- <path d='M 288.688,103.211 302.175,97.4717' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                      +
- <path d='M 302.175,97.4717 315.662,91.7326' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                      +
- <path d='M 326.647,93.5266 337.999,102.066' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                      +
- <path d='M 337.999,102.066 349.352,110.604' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                      +
- <path d='M 349.352,110.604 381.818,96.7892' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                      +
+ <path class='bond-0' d='M 18.1818,100 33.0774,100' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />               +
+ <path class='bond-0' d='M 33.0774,100 47.973,100' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                +
+ <path class='bond-1' d='M 100.51,100 135.793,100' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                +
+ <path class='bond-2' d='M 288.688,103.211 302.175,97.4717' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />       +
+ <path class='bond-2' d='M 302.175,97.4717 315.662,91.7326' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />       +
+ <path class='bond-3' d='M 326.647,93.5266 337.999,102.066' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />       +
+ <path class='bond-3' d='M 337.999,102.066 349.352,110.604' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />       +
+ <path class='bond-4' d='M 349.352,110.604 381.818,96.7892' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />       +
  <text x='47.973' y='105.881' style='font-size:11px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#FF0000' ><tspan>O</tspan></text> +
  <text x='315.662' y='95.2761' style='font-size:11px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#FF0000' ><tspan>O</tspan></text>+
  <text x='68.5746' y='112' style='font-size:24px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#000000' ><tspan>+</tspan></text>    +
