@@ -548,6 +548,28 @@ void testModifyMol() {
   }
 }
 
+void testSGroupChanges(const std::string &rdbase) {
+  BOOST_LOG(rdInfoLog) << " ----------> Test SGroup property changes"
+                       << std::endl;
+
+  std::string fName =
+      rdbase +
+      "/Code/GraphMol/FileParsers/sgroup_test_data/Sgroups_Data_01.mol";
+  std::unique_ptr<ROMol> mol(MolFileToMol(fName));
+  TEST_ASSERT(mol);
+  auto &sgroups1 = getSGroups(*mol);
+  TEST_ASSERT(sgroups1.size() == 2);
+
+  TEST_ASSERT(sgroups1[0].hasProp("FIELDNAME"));
+  TEST_ASSERT(sgroups1[0].getProp<std::string>("FIELDNAME") == "pH");
+  sgroups1[0].setProp("FIELDNAME", "pKa");
+
+  const auto &sgroups2 = getSGroups(*mol);
+  TEST_ASSERT(sgroups2.size() == 2);
+  TEST_ASSERT(sgroups2[0].hasProp("FIELDNAME"));
+  TEST_ASSERT(sgroups2[0].getProp<std::string>("FIELDNAME") == "pKa");
+}
+
 int main() {
   std::string rdbase = std::string(getenv("RDBASE"));
   if (rdbase.empty()) {
@@ -563,6 +585,6 @@ int main() {
   testSGroupsRoundTrip(rdbase, true);   // test V3000
   testPickleSGroups();
   testModifyMol();
-
+  testSGroupChanges(rdbase);
   return 0;
 }
