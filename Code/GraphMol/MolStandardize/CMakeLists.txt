@@ -61,6 +61,9 @@ rdkit_test(molStandardizeSmallTest test2.cpp LINK_LIBRARIES MolStandardize
 rdkit_test(molFragmentTest testFragment.cpp LINK_LIBRARIES MolStandardize
 	Catalogs SmilesParse RDGeneral GraphMol SubstructMatch FileParsers
 	ChemTransforms Descriptors)
+rdkit_catch_test(molStandardizeCatchTest catch_tests.cpp LINK_LIBRARIES MolStandardize
+	Catalogs SmilesParse RDGeneral GraphMol SubstructMatch FileParsers
+	ChemTransforms Descriptors)
 
 #find_package(Boost 1.56.0 COMPONENTS system iostreams REQUIRED)
 #if (NOT Boost_USE_STATIC_LIBS)

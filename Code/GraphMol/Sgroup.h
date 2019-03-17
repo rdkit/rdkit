@@ -63,6 +63,9 @@ class RDKIT_GRAPHMOL_EXPORT SGroup : public RDProps {
     unsigned int aIdx;
     int lvIdx;
     std::string id;
+    bool operator==(const AttachPoint &other) const {
+      return aIdx == other.aIdx && lvIdx == other.lvIdx && id == other.id;
+    }
   };
 
   //! See specification for V3000 CSTATE
@@ -70,6 +73,10 @@ class RDKIT_GRAPHMOL_EXPORT SGroup : public RDProps {
   struct CState {
     unsigned int bondIdx;
     RDGeom::Point3D vector;
+    bool operator==(const CState &other) const {
+      // note that we ignore coordinates for this
+      return bondIdx == other.bondIdx;
+    }
   };
 
   //! No default constructor
@@ -118,10 +125,17 @@ class RDKIT_GRAPHMOL_EXPORT SGroup : public RDProps {
   const std::vector<CState> &getCStates() const { return d_cstates; }
   const std::vector<AttachPoint> &getAttachPoints() const { return d_saps; }
 
-  //! Set owning moelcule
+  //! Set owning molecule
   //! This only updates atoms and bonds; parent sgroup has to be updated
   //! independently, since parent might not exist at the time this is called.
   void setOwningMol(ROMol *mol);
+
+  bool operator==(const SGroup &other) const {
+    // we ignore brackets and cstates, which involve coordinates
+    return dp_mol == other.dp_mol && d_atoms == other.d_atoms &&
+           d_patoms == other.d_patoms && d_bonds == other.d_bonds &&
+           d_saps == other.d_saps;
+  }
 
  private:
   ROMol *dp_mol = nullptr;  // owning molecule
