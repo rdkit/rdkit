@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/test.h>
 #include "MolStandardize.h"
 #include <GraphMol/MolStandardize/AcidBaseCatalog/AcidBaseCatalogParams.h>
 #include <GraphMol/MolStandardize/AcidBaseCatalog/AcidBaseCatalogUtils.h>

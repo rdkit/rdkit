@@ -41,7 +41,7 @@
 
 namespace RDKit {
 
-bool SubstructLibraryCanSerialize();
+RDKIT_SUBSTRUCTLIBRARY_EXPORT bool SubstructLibraryCanSerialize();
   
 //! Base class API for holding molecules to substructure search.
 /*!
