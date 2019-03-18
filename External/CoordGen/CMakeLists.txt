@@ -56,8 +56,8 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
     endif()
 
     if(NOT EXISTS "${COORDGEN_DIR}/sketcherMinimizer.h")
-        set(RELEASE_NO "1.2.1")
-        set(MD5 "f7faf4878bd7cfcfb500fa6c664fb036")
+        set(RELEASE_NO "1.2.2")
+        set(MD5 "647f2dae95728cad4d5446ac9fc67554")
         downloadAndCheckMD5("https://github.com/schrodinger/coordgenlibs/archive/v${RELEASE_NO}.tar.gz"
               "${CMAKE_CURRENT_SOURCE_DIR}/coordgenlibs-${RELEASE_NO}.tar.gz" ${MD5})
         execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf
@@ -74,7 +74,7 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
     file(GLOB CGSOURCES "${COORDGEN_DIR}/*.cpp")
     # when we're doing static linkage of boost, at least on windows, we need
     # to also link against zlib (due to iostreams)
-    find_package(zlib)
+    find_package(ZLIB)
     rdkit_library(coordgen ${CGSOURCES} SHARED LINK_LIBRARIES maeparser ${ZLIB_LIBRARIES})
     install(TARGETS coordgen DESTINATION ${RDKit_LibDir})
     set(coordgen_LIBRARIES coordgen )
