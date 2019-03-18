@@ -16,6 +16,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <iostream>
+#include "SmilesWrite.h"
 #include "SmilesParse.h"
 #include "SmilesParseOps.h"
 
