@@ -26,7 +26,7 @@ set(swigRDKitLibList "${swigRDKitLibList}"
   "Subgraphs;GraphMol;DataStructs;Trajectory;Descriptors;"
   "PartialCharges;MolTransforms;DistGeomHelpers;DistGeometry;"
   "ForceFieldHelpers;ForceField;EigenSolvers;Optimizer;MolAlign;"
-  "Alignment;SimDivPickers;RDGeometryLib;RDGeneral;"
+  "Alignment;SimDivPickers;RDGeometryLib;RDStreams;RDGeneral;"
 )
 #if(RDK_BUILD_COORDGEN_SUPPORT)
 #  set(swigRDKitLibList "${swigRDKitLibList};${RDK_COORDGEN_LIBS}")
@@ -37,15 +37,21 @@ foreach(swigRDKitLib ${swigRDKitLibList})
 endforeach()
 set(swigRDKitLibs "${swigRDKitLibs}${Boost_SERIALIZATION_LIBRARY};")
 
-if(RDK_BUILD_COORDGEN_SUPPORT)
+
+if(WIN32)
+  find_package(Boost 1.56.0 COMPONENTS system iostreams zlib REQUIRED)
+  set(swigRDKitLibs "${swigRDKitLibs}${Boost_IOSTREAMS_LIBRARY};${Boost_ZLIB_LIBRARY};${Boost_SYSTEM_LIBRARY};")
+else()
   find_package(Boost 1.56.0 COMPONENTS system iostreams REQUIRED)
   set(swigRDKitLibs "${swigRDKitLibs}${Boost_IOSTREAMS_LIBRARY};${Boost_SYSTEM_LIBRARY};")
-endif(RDK_BUILD_COORDGEN_SUPPORT)
+endif()
+
+
 
 set(RDKit_Wrapper_Libs ${swigRDKitLibs})
 
 message("SUFFIX: ${swigRDKitLibSuffix}")
-message("LIBS: ${RDKit_Wrapper_Libs}")
+message("JAVA_LIBS: ${RDKit_Wrapper_Libs}")
 
 
 if(RDK_BUILD_SWIG_JAVA_WRAPPER)
