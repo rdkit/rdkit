@@ -24,7 +24,7 @@ class ChunkedHitlist: boost::noncopyable {
   std::condition_variable cv;
   std::atomic<bool> finished{false};
   const unsigned int maxHits;
-  unsigned int noHits;
+  unsigned int noHits = 0;
 
   bool returnNext() const {
     bool f = finished.load();
@@ -33,6 +33,9 @@ class ChunkedHitlist: boost::noncopyable {
 
   std::vector<T> getChunk() {
     std::vector<T> rtn;
+    if (maxHits > 0 && noHits >= maxHits) {
+      return rtn;
+    }
     rtn.reserve(chunkSize);
     while (!queue.empty()) {
       T elem = queue.front();
@@ -47,7 +50,6 @@ class ChunkedHitlist: boost::noncopyable {
         break;
       }
     }
-    //std::cerr << "thread " << std::this_thread::get_id() << " got chunk of size " << rtn.size() << std::endl;
     return rtn;
   }
 
@@ -60,8 +62,9 @@ class ChunkedHitlist: boost::noncopyable {
   void push(const T &item) {
     std::lock_guard<std::mutex> lock(mutex);
     queue.push(item);
-    if (queue.size() >= chunkSize) cv.notify_one();
-    //std::cerr << "thread " << std::this_thread::get_id() << " pushed item onto queue " << std::endl;
+    if (queue.size() >= chunkSize) {
+      cv.notify_one();
+    }
   }
 
   const std::vector<T> next() {
