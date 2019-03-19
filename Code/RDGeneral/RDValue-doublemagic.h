@@ -321,31 +321,41 @@ inline void copy_rdvalue(RDValue &dest,
 // rdvalue_is<T>
 
 template<class T>
-inline bool rdvalue_is(RDValue v) {
-  return v.getTag() == RDTypeTag::GetTag<typename boost::remove_reference<T>::type>();
+inline bool rdvalue_is(const RDValue_cast_t) {
+  const short tag = RDTypeTag::GetTag<
+      typename boost::remove_reference<T>::type>();
+  if (v.getTag() == tag)
+    return true;
+
+  // If we are an Any tag, check the any type info
+  if(v.getTag() == RDTypeTag::AnyTag) {
+    return v.value.a->type() == typeid(T);
+  }
+
+  return false;
 }
 
 template<>
-inline bool rdvalue_is<double>(RDValue v) {
+inline bool rdvalue_is<double>(const RDValue_cast_t) {
   return v.otherBits < RDTypeTag::MaxDouble ||
       (v.otherBits & RDTypeTag::NaN) == RDTypeTag::NaN;
 }
 
 template<>
-inline bool rdvalue_is<const double &>(RDValue v) {
+inline bool rdvalue_is<const double &>(const RDValue_cast_t) {
   return rdvalue_is<double>(v);
 }
 
 /*
 template<>
-inline bool rdvalue_is<bool>(RDValue v) {
+inline bool rdvalue_is<bool>(const RDValue_cast_t) {
   return (v.getTag() == RDTypeTag::IntTag &&
           (static_cast<int32_t>(v.otherBits & ~RDTypeTag::IntTag) == 1 ||
            static_cast<int32_t>(v.otherBits & ~RDTypeTag::IntTag) == 0 ));
 }
 
 template<>
-inline bool rdvalue_is<const bool&>(RDValue v) {
+inline bool rdvalue_is<const bool&>(const RDValue_cast_t) {
   return rdvalue_is<bool>(v);
 }
 */
@@ -360,7 +370,7 @@ inline bool rdvalue_is<const bool&>(RDValue v) {
  typedef RDValue RDValue_cast_t;
 // Get stuff stored in boost any
 template<class T>
-inline T rdvalue_cast(RDValue v) {
+inline T rdvalue_cast(RDValue_cast_t v) {
   // Disable reference and pointer casts to POD data.
   BOOST_STATIC_ASSERT( !(
       (boost::is_pointer<T>::value && (
@@ -379,13 +389,13 @@ inline T rdvalue_cast(RDValue v) {
 
 // POD casts
 template<>
-inline double rdvalue_cast<double>(RDValue v) {
+inline double rdvalue_cast<double>(RDValue_cast_t v) {
   if (rdvalue_is<double>(v)) return v.doubleBits;
   throw boost::bad_any_cast();
 }
 
 template<>
-inline float rdvalue_cast<float>(RDValue v) {
+inline float rdvalue_cast<float>(RDValue_cast_t v) {
   if (rdvalue_is<float>(v)) {
     float f;
     memcpy(&f, ((char*)&v.otherBits), sizeof(float));
@@ -397,20 +407,20 @@ inline float rdvalue_cast<float>(RDValue v) {
 // n.b. with const expressions, could use ~RDTagTypes::GetTag<T>()
 //  and enable_if
 template<>
-inline int rdvalue_cast<int>(RDValue v) {
+inline int rdvalue_cast<int>(RDValue_cast_t v) {
   if (rdvalue_is<int>(v)) return static_cast<int32_t>(v.otherBits &
                                                       ~RDTypeTag::IntTag);
   throw boost::bad_any_cast();
 }
 template<>
-inline unsigned int rdvalue_cast<unsigned int>(RDValue v) {
+inline unsigned int rdvalue_cast<unsigned int>(RDValue_cast_t v) {
   if (rdvalue_is<unsigned int>(v)) return static_cast<uint32_t>(
           v.otherBits & ~RDTypeTag::UnsignedIntTag);
   throw boost::bad_any_cast();
 }
 
 template<>
-inline bool rdvalue_cast<bool>(RDValue v) {
+inline bool rdvalue_cast<bool>(RDValue_cast_t v) {
   if (rdvalue_is<bool>(v)) return static_cast<bool>(
           v.otherBits & ~RDTypeTag::BoolTag);
   throw boost::bad_any_cast();
