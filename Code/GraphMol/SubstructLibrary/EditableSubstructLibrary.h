@@ -21,11 +21,13 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include "ChunkedHitlist.h"
 
+#include <chrono>
+#include <thread>
+
 namespace RDKit {
 
 template <typename Key, typename MolHolder, typename FpHolder>
-//class EditableSubstructLibrary : boost::noncopyable {
-class EditableSubstructLibrary {
+class EditableSubstructLibrary : boost::noncopyable {
   template <typename T>
   struct KeyType {};
 
@@ -49,7 +51,10 @@ class EditableSubstructLibrary {
       if (SubstructMatch(*mol, query, matchVect, bits.recursionPossible,
                          bits.useChirality, bits.useQueryQueryMatches)) {
         hitlist.push(indexToId(idx));
-        if (hitlist.isFinished()) break;
+        //std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        if (hitlist.isFinished()) {
+          break;
+        }
       }
     }
   }
@@ -75,8 +80,7 @@ class EditableSubstructLibrary {
     for (int thread_group_idx = 0; thread_group_idx < numThreads;
          ++thread_group_idx) {
       thread_group.emplace_back(
-          // need to use boost::ref otherwise things are passed by value
-          std::async(std::launch::async, [this, &query, &bits, &hitlist,
+          std::async(std::launch::async, [this, &query, &bits, hitlist,
                                           thread_group_idx, numThreads] {
             hitlistSubSearcher(query, bits, *hitlist, thread_group_idx,
                                numThreads);
@@ -254,11 +258,19 @@ class EditableSubstructLibrary {
       unsigned int maxResults = 0) {
     auto hitlist =
         boost::make_shared<ChunkedHitlist<Key>>(chunkSize, maxResults);
-    std::async([this, &query, &hitlist, recursionPossible, useChirality,
+
+    // std::async will block as the (unassigned) returned future will wait on its destructor,
+    // so use thread then detach
+
+    // The hitlist shared pointer is passed by value.  I thought that passing a 
+    // const reference would be fine and it doesn't seem to cause a problem in c++,
+    // but creates error in Java.  Not sure why that is.
+    auto thread = std::thread([this, &query, hitlist, recursionPossible, useChirality,
                 useQueryQueryMatches, numThreads] {
       internalHitlistMatches(query, hitlist, recursionPossible, useChirality,
                              useQueryQueryMatches, numThreads);
     });
+    thread.detach();
     return hitlist;
   }
 

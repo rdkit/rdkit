@@ -42,4 +42,12 @@ int EditableSubstructLibraryTrustedSmilesWithPattern::addSmiles(
     mol->updatePropertyCache();
     return fpHolder->makeFingerprint(*mol);
   }
-}  // namespace RDKit
+
+  std::string EditableSubstructLibraryTrustedSmilesWithPattern::makeStringFingerprint(const std::string &smiles) const {
+    auto fp = makeFingerprint(smiles);
+    auto stringFp = fp->toString();
+    delete fp;
+    return stringFp;
+  }
+  
+  }  // namespace RDKit

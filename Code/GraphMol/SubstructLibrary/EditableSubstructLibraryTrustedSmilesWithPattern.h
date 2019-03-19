@@ -21,7 +21,9 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT EditableSubstructLibraryTrustedSmilesWithPat
                 const std::vector<std::string> fpVector);
 
   ExplicitBitVect * makeFingerprint(const std::string &smiles) const;
-  
+
+  std::string makeStringFingerprint(const std::string &smiles) const;  
+
   };
 
 }  // namespace RDKit

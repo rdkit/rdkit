@@ -267,11 +267,8 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT FPHolderBase {
   //!  Caller owns the vector!
   virtual ExplicitBitVect *makeFingerprint(const ROMol &m) const = 0;
 
-<<<<<<< HEAD
   std::vector<ExplicitBitVect *> &getFingerprints() { return fps; }
   const std::vector<ExplicitBitVect *> &getFingerprints() const { return fps; }
-=======
->>>>>>> 53839ee9f46e29fe2f6bbb3ebba0ce5787b61c3d
   template <typename Key, typename MolHolder, typename FpHolder> friend class EditableSubstructLibrary;
 };
 

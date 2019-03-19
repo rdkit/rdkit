@@ -43,7 +43,8 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
   find_package(Boost 1.56.0 COMPONENTS system iostreams REQUIRED)
   set(swigRDKitLibs "${swigRDKitLibs}${Boost_IOSTREAMS_LIBRARY};${Boost_SYSTEM_LIBRARY};")
 endif(RDK_BUILD_COORDGEN_SUPPORT)
-#set(swigRDKitLibs "${swigRDKitLibs}${Boost_SERIALIZATION_LIBRARY};${Boost_SYSTEM_LIBRARY};${Boost_THREAD_LIBRARY}")
+
+set(swigRDKitLibs "${swigRDKitLibs}${Boost_SYSTEM_LIBRARY};${Boost_THREAD_LIBRARY};")
 
 set(RDKit_Wrapper_Libs ${swigRDKitLibs})
 
