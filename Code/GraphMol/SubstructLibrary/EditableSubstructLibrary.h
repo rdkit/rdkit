@@ -284,7 +284,10 @@ class EditableSubstructLibrary : boost::noncopyable {
     return ids.left.at(index);
   }
 
-  unsigned int idToIndex(const Key &id) const { return ids.right.at(id); }
+  unsigned int idToIndex(const Key &id) const { 
+    return ids.right.at(id); 
+  }
+
 };
 
 }  // namespace RDKit
