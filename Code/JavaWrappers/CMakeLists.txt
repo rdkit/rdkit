@@ -53,6 +53,10 @@ if(RDK_BUILD_THREADSAFE_SSS)
   set(swigRDKitLibs "${swigRDKitLibs}${Boost_SYSTEM_LIBRARY};${Boost_THREAD_LIBRARY};")
 endif(RDK_BUILD_THREADSAFE_SSS)
 
+if(RDK_BUILD_THREADSAFE_SSS)
+  set(swigRDKitLibs "${swigRDKitLibs}${Boost_SYSTEM_LIBRARY};${Boost_THREAD_LIBRARY};")
+endif(RDK_BUILD_THREADSAFE_SSS)
+
 set(RDKit_Wrapper_Libs ${swigRDKitLibs})
 
 message("SUFFIX: ${swigRDKitLibSuffix}")
