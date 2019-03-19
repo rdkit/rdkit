@@ -641,16 +641,8 @@ class FooHandler : public CustomPropHandler {
 public:
   virtual const char *getPropName() const { return "Foo"; }
   virtual bool canSerialize(const RDValue &value) const {
-    try {
-      // this is expensive, but hopefully it won't be called too often....
-      rdvalue_cast<const Foo&>(value);
-      return true;
-    } catch ( boost::bad_any_cast & ) {
-      return false;
-    }
-
+    return rdvalue_is<Foo>(value);
   }
-  
   virtual bool read(std::istream &ss, RDValue &value) const {
     int version = 0;
     streamRead(ss, version);
