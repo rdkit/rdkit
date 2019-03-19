@@ -69,7 +69,7 @@ void runTest(SubstructLibrary &ssslib,
              int nThreads,
              const boost::dynamic_bitset<> &hasMatch
              ) {
-  std::vector<unsigned int> libMatches = ssslib.getMatches(pattern, nThreads);
+  std::vector<unsigned int> libMatches = ssslib.getMatches(pattern, true, true, false, nThreads);
   boost::dynamic_bitset<> hasMatch2(ssslib.size());
   BOOST_FOREACH (unsigned int idx, libMatches) { hasMatch2[idx] = 1; }
   TEST_ASSERT(hasMatch == hasMatch2);

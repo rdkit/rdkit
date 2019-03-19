@@ -345,6 +345,11 @@ ADD_TEST(JavaSubstructLibraryTests
 	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 	org.RDKit.SubstructLibraryTests)
 
+ADD_TEST(JavaEditableSubstructLibraryTests
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
+	org.RDKit.EditableSubstructLibraryTests)
+
 ADD_TEST(JavaRGroupDecompositionTests
     java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
 	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"

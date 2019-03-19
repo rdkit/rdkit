@@ -25,7 +25,7 @@ int EditableSubstructLibraryTrustedSmilesWithPattern::addSmiles(
       throw std::invalid_argument("No structure name in smiles " + smiStr);
     }
     auto smi = smiStr.substr(0, spacePos);
-    auto name = smiStr.substr(spacePos);
+    auto name = smiStr.substr(spacePos+1);
     checkIdNotPresent(name);
     ids.insert(idInfo(ids.size(), name));
     molHolder->addSmiles(smi);
