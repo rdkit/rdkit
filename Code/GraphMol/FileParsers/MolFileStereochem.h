@@ -14,6 +14,7 @@
 #include <GraphMol/RDKitBase.h>
 
 namespace RDKit {
+//! deprecated, please use MolOps::assignChiralTypesFromBondDirs instead
 RDKIT_FILEPARSERS_EXPORT void DetectAtomStereoChemistry(RWMol &mol, const Conformer *conf);
 //! deprecated, please use MolOps::detectBondStereoChemistry instead
 RDKIT_FILEPARSERS_EXPORT void DetectBondStereoChemistry(ROMol &mol, const Conformer *conf);

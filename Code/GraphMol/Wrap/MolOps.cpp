@@ -1577,6 +1577,21 @@ struct molops_wrapper {
 
     // ------------------------------------------------------------------------
     docString =
+        "Uses bond directions to assign ChiralTypes to a molecule's atoms.\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use\n\
+    - confId: (optional) the conformation to use \n\
+    - replaceExistingTags: (optional) replace any existing information about stereochemistry\n\
+\n";
+    python::def("AssignChiralTypesFromBondDirs",
+                MolOps::assignChiralTypesFromBondDirs,
+                (python::arg("mol"), python::arg("confId") = -1,
+                 python::arg("replaceExistingTags") = true),
+                docString.c_str());
+    // ------------------------------------------------------------------------
+    docString =
         "Uses a conformer (should be 3D) to assign ChiralTypes to a molecule's atoms\n\
         and stereo flags to its bonds\n\
 \n\

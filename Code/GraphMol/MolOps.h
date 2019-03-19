@@ -847,6 +847,18 @@ RDKIT_GRAPHMOL_EXPORT void assignChiralTypesFrom3D(
 RDKIT_GRAPHMOL_EXPORT void assignStereochemistryFrom3D(
     ROMol &mol, int confId = -1, bool replaceExistingTags = true);
 
+//! \brief Use bond directions to assign ChiralTypes to a molecule's atoms and
+//! stereo flags to its bonds
+/*!
+
+  \param mol                  the molecule of interest
+  \param confId               the conformer to use
+  \param replaceExistingTags  if this flag is true, any existing info about
+                              stereochemistry will be replaced
+*/
+RDKIT_GRAPHMOL_EXPORT void assignChiralTypesFromBondDirs(
+    ROMol &mol, int confId = -1, bool replaceExistingTags = true);
+
 //! \brief Uses a conformer to assign directionality to the single bonds
 //!   around double bonds
 /*!

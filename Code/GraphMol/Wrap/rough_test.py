@@ -13,6 +13,7 @@ import unittest, doctest
 from rdkit import RDConfig, rdBase
 from rdkit import DataStructs
 from rdkit import Chem
+import rdkit.Chem.rdDepictor
 
 from rdkit import __version__
 
@@ -4916,6 +4917,21 @@ width='200px' height='200px' >
 
     with self.assertRaises(RuntimeError):
       mol = Chem.MolFromRDKitSVG("bad svg")
+
+  def testAssignChiralTypesFromBondDirs(self):
+    """
+    Just check to see that AssignChiralTypesFromBondDirs is wrapped.
+    Critical tests of the underlying C++ function already exist
+    in SD file reader tests.
+    """
+    mol = Chem.MolFromSmiles('C(F)(Cl)Br')
+    rdkit.Chem.rdDepictor.Compute2DCoords(mol)
+    atom0 = mol.GetAtomWithIdx(0)
+    self.assertEqual(atom0.GetChiralTag(), Chem.rdchem.ChiralType.CHI_UNSPECIFIED)
+    bond = mol.GetBondBetweenAtoms(0, 1)
+    bond.SetBondDir(Chem.rdchem.BondDir.BEGINWEDGE)
+    Chem.AssignChiralTypesFromBondDirs(mol)
+    self.assertEqual(atom0.GetChiralTag(), Chem.rdchem.ChiralType.CHI_TETRAHEDRAL_CCW)
 
   def testAssignStereochemistryFrom3D(self):
     def _stereoTester(mol,expectedCIP,expectedStereo):
