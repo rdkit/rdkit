@@ -2245,9 +2245,6 @@ void assignChiralTypesFromBondDirs(ROMol &mol, const int confId,
           atom->calcImplicitValence(false);
         }
         Atom::ChiralType code = atomChiralTypeFromBondDir(mol, bond, &conf);
-        if (code != Atom::CHI_UNSPECIFIED) {
-          std::cerr << "setting Chiraltypoe to " << code << "\n";
-        }
         atom->setChiralTag(code);
         // within the RD representation, if a three-coordinate atom
         // is chiral and has an implicit H, that H needs to be made explicit:
