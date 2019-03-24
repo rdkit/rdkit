@@ -51,6 +51,7 @@ option(RDK_BUILD_DESCRIPTORS3D "Build the 3D descriptors calculators, requires E
 option(RDK_BUILD_FREESASA_SUPPORT "build the rdkit freesasa wrapper" OFF )
 option(RDK_BUILD_COORDGEN_SUPPORT "build the rdkit coordgen wrapper" ON )
 option(RDK_BUILD_MOLINTERCHANGE_SUPPORT "build in support for CommonChem molecule interchange" ON )
+option(RDK_BUILD_YAEHMOP_SUPPORT "build support for the YAeHMOP wrapper" ON)
 option(RDK_INSTALL_DEV_COMPONENT "install libraries and headers" ON)
 option(RDK_USE_BOOST_REGEX "use boost::regex instead of std::regex (needed for systems with g++-4.8)" OFF)
 if(NOT MSVC)
