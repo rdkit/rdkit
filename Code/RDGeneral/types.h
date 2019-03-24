@@ -161,7 +161,7 @@ RDKIT_RDGENERAL_EXPORT extern const std::string molParity;           // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molRxnComponent;     // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molRxnRole;          // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molTotValence;       // int
-RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileRLabel;      // int
+RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileRLabel;      // unsigned int
 RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileChiralFlag;  // int
 RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileAtomQuery;   // int
 RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileBondQuery;   // int
