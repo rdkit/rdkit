@@ -1,3 +1,31 @@
+# Release_2018.09.3
+(Changes relative to Release_2018.09.2)
+
+## Acknowledgements:
+Michael Banck, Brian Cole, Brian Kelley, Adam Moyer
+
+## Bug Fixes:
+  - SMILES parsing inconsistency based on input order
+ (github #2148 from coleb)
+  - RGroupDecomposition fixes, keep userLabels more robust onlyMatchAtRGroups
+ (github #2202 from bp-kelley)
+  - testEnumeration hangs/takes where long on 32bit architectures
+ (github #2209 from mbanck)
+  - findPotentialStereoBonds() stopping too early
+ (github #2244 from greglandrum)
+  - query-query matching failing for atoms constructed from SMARTS
+ (github #2299 from greglandrum)
+  - SMILES parsing fails for dative ring closures
+ (github #2303 from greglandrum)
+  - Missing Dict.h overload: std::string Dict::getVal<std::string>
+ (github #2308 from greglandrum)
+  - fixes #908
+ (github #2328 from greglandrum)
+  - uncharger behaves differently on molecules constructed from mol blocks and SMILES
+ (github #2346 from greglandrum)
+  - Memory Error When Writing ToBinary With "AllProps"
+ (github #2352 from atom-moyer)
+
 # Release_2018.09.2
 (Changes relative to Release_2018.09.1)
 
