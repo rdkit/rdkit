@@ -195,27 +195,6 @@ TEST_CASE("Github #2148", "[bug, Smiles, Smarts]") {
 
 }
 
-TEST_CASE("Github #2298", "[bug, Smarts, substructure]") {
-  SubstructMatchParameters ps;
-  ps.useQueryQueryMatches = true;
-  SECTION("basics") {
-    auto m1 = "[#6]"_smarts;
-    REQUIRE(m1);
-    CHECK(SubstructMatch(*m1, *m1, ps).size() == 1);
-    auto m2 = "[C]"_smarts;
-    REQUIRE(m2);
-    CHECK(SubstructMatch(*m2, *m2, ps).size() == 1);
-    auto m3 = "[C]"_smarts;
-    REQUIRE(m3);
-    CHECK(SubstructMatch(*m3, *m3, ps).size() == 1);
-  }
-  SECTION("a bit more complex") {
-    auto m1 = "[CH0+2]"_smarts;
-    REQUIRE(m1);
-    CHECK(SubstructMatch(*m1, *m1, ps).size() == 1);
-  }
-}
-
 TEST_CASE("dative ring closures", "[bug, smiles]") {
   SECTION("first closure1") {
     auto m1 = "N->1CCN->[Pt]1"_smiles;
