@@ -335,13 +335,30 @@ inline void copy_rdvalue(RDValue &dest, const RDValue &src) {
   }
 }
 
+#ifdef RDK_32BIT_BUILD
+// avoid register pressure and spilling on 32 bit systems
+typedef const RDValue &RDValue_cast_t;
+#else
+typedef RDValue RDValue_cast_t;
+#endif
+
+
 /////////////////////////////////////////////////////////////////////////////////////
 // rdvalue_is<T>
 
 template <class T>
-inline bool rdvalue_is(RDValue v) {
-  return v.getTag() ==
-         RDTypeTag::GetTag<typename boost::remove_reference<T>::type>();
+inline bool rdvalue_is(RDValue_cast_t v) {
+  const short tag = RDTypeTag::GetTag<
+      typename boost::remove_reference<T>::type>();
+  if (v.getTag() == tag)
+    return true;
+
+  // If we are an Any tag, check the any type info
+  if(v.getTag() == RDTypeTag::AnyTag) {
+    return v.value.a->type() == typeid(T);
+  }
+
+  return false;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -350,13 +367,6 @@ inline bool rdvalue_is(RDValue v) {
 //  POD types do not support reference semantics.  Other types do.
 // rdvalue_cast<const std::vector<double> &>(RDValue);  // ok
 // rdvalue_cast<const float &>(RDValue); // bad_any_cast
-
-#ifdef RDK_32BIT_BUILD
-// avoid register pressure and spilling on 32 bit systems
-typedef const RDValue &RDValue_cast_t;
-#else
-typedef RDValue RDValue_cast_t;
-#endif
 
 // Get stuff stored in boost any
 template <class T>

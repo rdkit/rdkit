@@ -17,6 +17,7 @@
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/StreamOps.h>
 #include <RDGeneral/types.h>
+#include <DataStructs/DatastructsStreamOps.h>
 #include <Query/QueryObjects.h>
 #include <map>
 #include <cstdint>
@@ -59,6 +60,7 @@ void streamRead(std::istream &ss, MolPickler::Tags &tag, int version) {
 
 namespace {
 static unsigned int defaultProperties = PicklerOps::NoProps;
+static CustomPropHandlerVec defaultPropHandlers = {};
 
 #ifdef RDK_THREADSAFE_SSS
 std::mutex &propmutex_get() {
@@ -93,6 +95,28 @@ void MolPickler::setDefaultPickleProperties(unsigned int props) {
   std::lock_guard<std::mutex> lock(GetPropMutex());
 #endif
   defaultProperties = props;
+}
+
+const CustomPropHandlerVec &MolPickler::getCustomPropHandlers() {
+#ifdef RDK_THREADSAFE_SSS
+  std::lock_guard<std::mutex> lock(GetPropMutex());
+#endif
+  if (defaultPropHandlers.size() == 0) {
+    // initialize handlers
+    defaultPropHandlers.push_back(std::make_shared<DataStructsExplicitBitVecPropHandler>());
+  }
+  return defaultPropHandlers;
+}
+
+void MolPickler::addCustomPropHandler(const CustomPropHandler &handler) {
+#ifdef RDK_THREADSAFE_SSS
+  std::lock_guard<std::mutex> lock(GetPropMutex());
+#endif
+  if (defaultPropHandlers.size() == 0) {
+    // initialize handlers
+    defaultPropHandlers.push_back(std::make_shared<DataStructsExplicitBitVecPropHandler>());
+  }
+  defaultPropHandlers.push_back(std::shared_ptr<CustomPropHandler>(handler.clone()));
 }
 
 namespace {
@@ -1868,7 +1892,7 @@ SGroup MolPickler::_getSGroupFromPickle(std::istream &ss, ROMol *mol,
   SGroup sgroup(mol, "");
 
   // Read RDProps, overriding ID, TYPE and COMPNO
-  streamReadProps(ss, sgroup);
+  streamReadProps(ss, sgroup, MolPickler::getCustomPropHandlers());
 
   streamRead(ss, numItems, version);
   for (int i = 0; i < numItems; ++i) {
@@ -1988,13 +2012,16 @@ void MolPickler::_pickleProperties(std::ostream &ss, const RDProps &props,
                                    unsigned int pickleFlags) {
   if (!pickleFlags) return;
 
-  streamWriteProps(ss, props, pickleFlags & PicklerOps::PrivateProps,
-                   pickleFlags & PicklerOps::ComputedProps);
+  streamWriteProps(ss, props,
+                   pickleFlags & PicklerOps::PrivateProps,
+                   pickleFlags & PicklerOps::ComputedProps,
+                   MolPickler::getCustomPropHandlers()
+                   );
 }
 
 //! unpickle standard properties
 void MolPickler::_unpickleProperties(std::istream &ss, RDProps &props) {
-  streamReadProps(ss, props);
+  streamReadProps(ss, props, MolPickler::getCustomPropHandlers());
 }
 
 //--------------------------------------
