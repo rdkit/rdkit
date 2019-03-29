@@ -732,13 +732,14 @@ void checkAndCorrectChiralityOfMatchingAtomsInProduct(
   }
 }
 
+// Check the chirality of atoms not directly involved in the reaction
 void checkAndCorrectChiralityOfProduct(
     const std::vector<const Atom *> &chiralAtomsToCheck, RWMOL_SPTR product,
     ReactantProductAtomMapping *mapping) {
   for (auto reactantAtom : chiralAtomsToCheck) {
     CHECK_INVARIANT(reactantAtom->getChiralTag() != Atom::CHI_UNSPECIFIED,
                     "missing atom chirality.");
-    unsigned int reactAtomDegree =
+    const auto reactAtomDegree =
         reactantAtom->getOwningMol().getAtomDegree(reactantAtom);
     for (unsigned i = 0;
          i < mapping->reactProdAtomMap[reactantAtom->getIdx()].size(); i++) {
@@ -753,12 +754,9 @@ void checkAndCorrectChiralityOfProduct(
         // If the number of bonds to the atom has changed in the course of the
         // reaction we're lost, so remove chirality.
         //  A word of explanation here: the atoms in the chiralAtomsToCheck set
-        //  are
-        //  not explicitly mapped atoms of the reaction, so we really have no
-        //  idea what
-        //  to do with this case. At the moment I'm not even really sure how
-        //  this
-        //  could happen, but better safe than sorry.
+        //  are not explicitly mapped atoms of the reaction, so we really have no
+        //  idea what to do with this case. At the moment I'm not even really sure how
+        //  this could happen, but better safe than sorry.
         productAtom->setChiralTag(Atom::CHI_UNSPECIFIED);
       } else if (reactantAtom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
                  reactantAtom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW) {
@@ -792,6 +790,68 @@ void checkAndCorrectChiralityOfProduct(
       }
     }
   }  // end of loop over chiralAtomsToCheck
+}
+
+//
+// Can this sterogroup safely be copied to the product?
+// * All atoms in the stereo group are in the product
+// * If reactant atoms are duplicated in the product, they must have the same
+//   number of duplicates so that it is 
+// 
+
+static bool areAllAtomsMapped(const std::vector<Atom*>& atoms,
+                                           const RWMol& product,
+                                           const ReactantProductAtomMapping& mapping)
+{
+  for (auto&& reactantAtom: atoms) {
+    auto productAtoms = mapping.reactProdAtomMap.find(reactantAtom->getIdx());
+    // some atom isn't mapped
+    if (productAtoms == mapping.reactProdAtomMap.end()) {
+      return false;
+    }
+    // Do all atoms have a chiral tag? (chirality not destroyed by the reaction)
+    for (auto product_atom_index: productAtoms->second) {
+      auto productAtom = product.getAtomWithIdx(product_atom_index);
+      if (productAtom->getChiralTag() == Atom::CHI_UNSPECIFIED) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+// Copy enhanced stereo groups from one reactant to the product
+void copyEnhancedStereoGroups(const ROMol &reactant,
+                              RWMOL_SPTR product,
+                              const ReactantProductAtomMapping& mapping)
+{
+  std::vector<StereoGroup> new_stereo_groups;
+  for (const auto& sg: reactant.getStereoGroups()) {
+
+    // Make sure that all atoms in the stereo group are in the product with
+    // chirality preserved
+    if (!areAllAtomsMapped(sg.getAtoms(), *product, mapping)) {
+      continue;
+    }
+
+    std::vector<Atom *> atoms;
+    for (auto &&reactantAtom : sg.getAtoms()) {
+      for (auto&& productAtomIdx: mapping.reactProdAtomMap.at(reactantAtom->getIdx())) {
+        atoms.push_back(product->getAtomWithIdx(productAtomIdx));
+      }    
+    }
+    if (!atoms.empty()) {
+      new_stereo_groups.emplace_back(sg.getGroupType(), std::move(atoms));
+    }
+
+  }
+
+  if (!new_stereo_groups.empty()) {
+    auto& existing_sg = product->getStereoGroups();
+    new_stereo_groups.insert(new_stereo_groups.end(), existing_sg.begin(), existing_sg.end());
+    product->setStereoGroups(std::move(new_stereo_groups));
+  }
 }
 
 void generateProductConformers(Conformer *productConf, const ROMol &reactant,
@@ -884,6 +944,8 @@ void addReactantAtomsAndBonds(const ChemicalReaction &rxn, RWMOL_SPTR product,
   // been disturbed
   checkAndCorrectChiralityOfProduct(chiralAtomsToCheck, product, mapping);
 
+  copyEnhancedStereoGroups(*reactant, product, *mapping);
+
   // ---------- ---------- ---------- ---------- ---------- ----------
   // finally we may need to set the coordinates in the product conformer:
   if (productConf) {
@@ -902,7 +964,7 @@ MOL_SPTR_VECT generateOneProductSet(
   // if any of the reactants have a conformer, we'll go ahead and
   // generate conformers for the products:
   bool doConfs = false;
-  BOOST_FOREACH (ROMOL_SPTR reactant, reactants) {
+  for (auto& reactant: reactants) {
     if (reactant->getNumConformers()) {
       doConfs = true;
       break;
