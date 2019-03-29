@@ -144,7 +144,9 @@ BOOST_PYTHON_MODULE(rdBase) {
   python::def("LogMessage", LogMessage);
 
   python::def("SeedRandomNumberGenerator", seedRNG,
-              "provides a seed to the standard C random number generator",
+              "Provides a seed to the standard C random number generator\n"
+              "This does not affect pure Python code, but is relevant to some "
+              "of the RDKit C++ components.",
               (python::arg("seed")));
 
   python_streambuf_wrapper::wrap();
