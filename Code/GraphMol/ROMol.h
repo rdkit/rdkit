@@ -34,11 +34,11 @@
 #include "Atom.h"
 #include "Bond.h"
 #include "Conformer.h"
-#include "Sgroup.h"
+#include "SubstanceGroup.h"
 #include "StereoGroup.h"
 
 namespace RDKit {
-class SGroup;
+class SubstanceGroup;
 class Atom;
 class Bond;
 //! This is the BGL type used to store the topology:
@@ -669,11 +669,12 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   BOND_BOOKMARK_MAP d_bondBookmarks;
   RingInfo *dp_ringInfo;
   CONF_SPTR_LIST d_confs;
-  std::vector<SGroup> d_sgroups;
-  friend RDKIT_GRAPHMOL_EXPORT std::vector<SGroup> &getSGroups(ROMol &);
-  friend RDKIT_GRAPHMOL_EXPORT const std::vector<SGroup> &getSGroups(
-      const ROMol &);
-  void clearSGroups() { d_sgroups.clear(); }
+  std::vector<SubstanceGroup> d_sgroups;
+  friend RDKIT_GRAPHMOL_EXPORT std::vector<SubstanceGroup> &getSubstanceGroups(
+      ROMol &);
+  friend RDKIT_GRAPHMOL_EXPORT const std::vector<SubstanceGroup>
+      &getSubstanceGroups(const ROMol &);
+  void clearSubstanceGroups() { d_sgroups.clear(); }
   std::vector<StereoGroup> d_stereo_groups;
 
   ROMol &operator=(

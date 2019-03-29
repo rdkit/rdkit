@@ -21,7 +21,7 @@
 #include "QueryBond.h"
 #include "MolPickler.h"
 #include "Conformer.h"
-#include "Sgroup.h"
+#include "SubstanceGroup.h"
 
 namespace RDKit {
 class QueryAtom;
@@ -106,8 +106,8 @@ void ROMol::initFromOther(const ROMol &other, bool quickCopy, int confId) {
     }
 
     // Copy sgroups
-    for (const auto &sg : getSGroups(other)) {
-      addSGroup(*this, sg);
+    for (const auto &sg : getSubstanceGroups(other)) {
+      addSubstanceGroup(*this, sg);
     }
 
     dp_props = other.dp_props;

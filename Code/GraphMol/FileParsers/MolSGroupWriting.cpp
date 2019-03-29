@@ -24,7 +24,7 @@ std::string BuildV2000STYLines(const ROMol &mol) {
 
   unsigned int count = 0;
 
-  const auto &sgroups = getSGroups(mol);
+  const auto &sgroups = getSubstanceGroups(mol);
   for (auto sg = sgroups.begin(); sg != sgroups.end(); ++sg) {
     temp << FormatV2000IntField(1 + (sg - sgroups.begin()))
          << FormatV2000StringField(sg->getProp<std::string>("TYPE"), 3, true,
@@ -53,7 +53,7 @@ std::string BuildV2000StringPropLines(const unsigned int entriesPerLine,
   std::ostringstream temp;
 
   unsigned int count = 0;
-  const auto &sgroups = getSGroups(mol);
+  const auto &sgroups = getSubstanceGroups(mol);
   for (auto sg = sgroups.begin(); sg != sgroups.end(); ++sg) {
     std::string propValue;
     // Write field only if defined
@@ -81,7 +81,7 @@ std::string BuildV2000SLBLines(const ROMol &mol) {
   std::ostringstream temp;
 
   unsigned int count = 0;
-  const auto &sgroups = getSGroups(mol);
+  const auto &sgroups = getSubstanceGroups(mol);
   for (auto sg = sgroups.begin(); sg != sgroups.end(); ++sg) {
     unsigned int id;
     // Write value if assigned, else 0
@@ -109,7 +109,7 @@ std::string BuildV2000SDSLines(const ROMol &mol) {
   std::ostringstream temp;
 
   unsigned int count = 0;
-  const auto &sgroups = getSGroups(mol);
+  const auto &sgroups = getSubstanceGroups(mol);
   for (auto sg = sgroups.begin(); sg != sgroups.end(); ++sg) {
     // Write field only if defined
     std::string eState;
@@ -136,7 +136,7 @@ std::string BuildV2000SPLLines(const ROMol &mol) {
   std::ostringstream temp;
 
   unsigned int count = 0;
-  const auto &sgroups = getSGroups(mol);
+  const auto &sgroups = getSubstanceGroups(mol);
   for (auto sg = sgroups.begin(); sg != sgroups.end(); ++sg) {
     // Write field only if a parent is defined
     unsigned int parentIdx = -1;
@@ -164,7 +164,7 @@ std::string BuildV2000SNCLines(const ROMol &mol) {
   std::ostringstream temp;
 
   unsigned int count = 0;
-  const auto &sgroups = getSGroups(mol);
+  const auto &sgroups = getSubstanceGroups(mol);
   for (auto sg = sgroups.begin(); sg != sgroups.end(); ++sg) {
     unsigned int compno;
     // Write field only if compno is set
@@ -192,7 +192,7 @@ std::string BuildV2000SBTLines(const ROMol &mol) {
   std::ostringstream temp;
 
   unsigned int count = 0;
-  const auto &sgroups = getSGroups(mol);
+  const auto &sgroups = getSubstanceGroups(mol);
   for (auto sg = sgroups.begin(); sg != sgroups.end(); ++sg) {
     std::string bracketType;
     if (sg->getPropIfPresent("BRKTYP", bracketType)) {
@@ -205,7 +205,7 @@ std::string BuildV2000SBTLines(const ROMol &mol) {
         std::ostringstream errout;
         errout << "Invalid BRKTYP value '" << bracketType << "' for SGroup "
                << idx;
-        throw SGroupException(errout.str());
+        throw SubstanceGroupException(errout.str());
       }
       if (++count == 8) {
         ret << "M  SBT" << FormatV2000NumEntriesField(8) << temp.str()
@@ -249,7 +249,7 @@ std::string BuildV2000IdxVectorDataLines(const unsigned int entriesPerLine,
   return ret.str();
 }
 
-std::string BuildV2000SMTLine(const int idx, const SGroup &sgroup) {
+std::string BuildV2000SMTLine(const int idx, const SubstanceGroup &sgroup) {
   std::ostringstream ret;
 
   std::string smtValue;
@@ -262,10 +262,10 @@ std::string BuildV2000SMTLine(const int idx, const SGroup &sgroup) {
   return ret.str();
 }
 
-std::string BuildV2000SDILine(const int idx, const SGroup &sgroup) {
+std::string BuildV2000SDILine(const int idx, const SubstanceGroup &sgroup) {
   std::ostringstream ret;
 
-  const std::vector<SGroup::Bracket> brackets = sgroup.getBrackets();
+  const std::vector<SubstanceGroup::Bracket> brackets = sgroup.getBrackets();
 
   for (const auto &bracket : brackets) {
     ret << "M  SDI" << FormatV2000IntField(idx)
@@ -281,7 +281,7 @@ std::string BuildV2000SDILine(const int idx, const SGroup &sgroup) {
   return ret.str();
 }
 
-std::string BuildV2000SBVLine(const int idx, const SGroup &sgroup) {
+std::string BuildV2000SBVLine(const int idx, const SubstanceGroup &sgroup) {
   std::ostringstream ret;
 
   for (const auto &cstate : sgroup.getCStates()) {
@@ -297,7 +297,7 @@ std::string BuildV2000SBVLine(const int idx, const SGroup &sgroup) {
   return ret.str();
 }
 
-std::string BuildV2000SDTLine(const int idx, const SGroup &sgroup) {
+std::string BuildV2000SDTLine(const int idx, const SubstanceGroup &sgroup) {
   std::ostringstream ret;
 
   std::string sdtValue;
@@ -327,7 +327,7 @@ std::string BuildV2000SDTLine(const int idx, const SGroup &sgroup) {
   return ret.str();
 }
 
-std::string BuildV2000SDDLine(const int idx, const SGroup &sgroup) {
+std::string BuildV2000SDDLine(const int idx, const SubstanceGroup &sgroup) {
   std::ostringstream ret;
 
   std::string sddValue;
@@ -340,7 +340,7 @@ std::string BuildV2000SDDLine(const int idx, const SGroup &sgroup) {
   return ret.str();
 }
 
-std::string BuildV2000SCDSEDLines(const int idx, const SGroup &sgroup) {
+std::string BuildV2000SCDSEDLines(const int idx, const SubstanceGroup &sgroup) {
   std::ostringstream ret;
 
   STR_VECT dataFields;
@@ -351,7 +351,7 @@ std::string BuildV2000SCDSEDLines(const int idx, const SGroup &sgroup) {
         std::ostringstream errout;
         errout << "Data field '" << data << "' in SGroup " << idx
                << " is longer than limit of 200 characters.";
-        throw SGroupException(errout.str());
+        throw SubstanceGroupException(errout.str());
       }
       unsigned int start = 0;
       unsigned int end = 69;
@@ -369,11 +369,12 @@ std::string BuildV2000SCDSEDLines(const int idx, const SGroup &sgroup) {
   return ret.str();
 }
 
-std::string BuildV2000SAPLines(const int idx, const SGroup &sgroup) {
+std::string BuildV2000SAPLines(const int idx, const SubstanceGroup &sgroup) {
   std::ostringstream ret;
   std::ostringstream temp;
 
-  const std::vector<SGroup::AttachPoint> saps = sgroup.getAttachPoints();
+  const std::vector<SubstanceGroup::AttachPoint> saps =
+      sgroup.getAttachPoints();
 
   unsigned int count = 0;
   unsigned int entriesPerLine = 6;
@@ -398,7 +399,7 @@ std::string BuildV2000SAPLines(const int idx, const SGroup &sgroup) {
   return ret.str();
 }
 
-std::string BuildV2000SCLLine(const int idx, const SGroup &sgroup) {
+std::string BuildV2000SCLLine(const int idx, const SubstanceGroup &sgroup) {
   std::ostringstream ret;
 
   std::string sclValue;
@@ -426,7 +427,7 @@ const std::string GetMolFileSGroupInfo(const RWMol &mol) {
 
   // single group per line properties
   unsigned int idx = 0;
-  for (const auto &sgroup : getSGroups(mol)) {
+  for (const auto &sgroup : getSubstanceGroups(mol)) {
     ++idx;
     ret << BuildV2000IdxVectorDataLines(15, idx, "SAL", sgroup.getAtoms());
 
@@ -477,11 +478,11 @@ std::string BuildV3000IdxVectorDataBlock(const std::string &key,
   return ret.str();
 }
 
-std::string BuildV3000BondsBlock(const SGroup &sgroup) {
+std::string BuildV3000BondsBlock(const SubstanceGroup &sgroup) {
   std::ostringstream ret;
 
   auto isXBond = [&sgroup](unsigned int bondIdx) {
-    return SGroup::BondType::XBOND == sgroup.getBondType(bondIdx);
+    return SubstanceGroup::BondType::XBOND == sgroup.getBondType(bondIdx);
   };
 
   auto bonds = sgroup.getBonds();
@@ -494,7 +495,7 @@ std::string BuildV3000BondsBlock(const SGroup &sgroup) {
 }
 
 std::string FormatV3000StringPropertyBlock(const std::string &prop,
-                                           const SGroup &sgroup) {
+                                           const SubstanceGroup &sgroup) {
   std::ostringstream ret;
 
   std::string propValue;
@@ -517,7 +518,7 @@ std::string FormatV3000StringPropertyBlock(const std::string &prop,
   return ret.str();
 }
 
-std::string FormatV3000ParentBlock(const SGroup &sgroup) {
+std::string FormatV3000ParentBlock(const SubstanceGroup &sgroup) {
   std::ostringstream ret;
 
   unsigned int parentIdx = -1;
@@ -528,7 +529,7 @@ std::string FormatV3000ParentBlock(const SGroup &sgroup) {
   return ret.str();
 }
 
-std::string FormatV3000CompNoBlock(const SGroup &sgroup) {
+std::string FormatV3000CompNoBlock(const SubstanceGroup &sgroup) {
   std::ostringstream ret;
 
   unsigned int compno;
@@ -541,7 +542,7 @@ std::string FormatV3000CompNoBlock(const SGroup &sgroup) {
 }
 
 std::string FormatV3000BracketBlock(
-    const std::vector<SGroup::Bracket> brackets) {
+    const std::vector<SubstanceGroup::Bracket> brackets) {
   std::ostringstream ret;
 
   for (const auto &bracket : brackets) {
@@ -558,7 +559,7 @@ std::string FormatV3000BracketBlock(
   return ret.str();
 }
 
-std::string FormatV3000FieldDataBlock(const SGroup &sgroup) {
+std::string FormatV3000FieldDataBlock(const SubstanceGroup &sgroup) {
   std::ostringstream ret;
 
   STR_VECT dataFields;
@@ -571,7 +572,7 @@ std::string FormatV3000FieldDataBlock(const SGroup &sgroup) {
   return ret.str();
 }
 
-std::string FormatV3000CStateBlock(const SGroup &sgroup) {
+std::string FormatV3000CStateBlock(const SubstanceGroup &sgroup) {
   std::ostringstream ret;
 
   for (const auto &cstate : sgroup.getCStates()) {
@@ -592,7 +593,7 @@ std::string FormatV3000CStateBlock(const SGroup &sgroup) {
 }
 
 std::string FormatV3000AttachPointBlock(
-    const std::vector<SGroup::AttachPoint> &saps) {
+    const std::vector<SubstanceGroup::AttachPoint> &saps) {
   std::ostringstream ret;
 
   for (const auto &sap : saps) {
@@ -613,7 +614,7 @@ std::string FormatV3000AttachPointBlock(
 
 //! Write a SGroup line. The order of the labels is defined in the spec.
 const std::string GetV3000MolFileSGroupLines(const unsigned int idx,
-                                             const SGroup &sgroup) {
+                                             const SubstanceGroup &sgroup) {
   std::ostringstream os;
 
   unsigned int id = 0;

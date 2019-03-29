@@ -22,7 +22,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/StereoGroup.h>
-#include <GraphMol/Sgroup.h>
+#include <GraphMol/SubstanceGroup.h>
 #include <RDGeneral/StreamOps.h>
 #include <RDGeneral/RDLog.h>
 
@@ -328,8 +328,8 @@ void ParseChargeLine(RWMol *mol, const std::string &text, bool firstCall,
       mol->getAtomWithIdx(aid - 1)->setFormalCharge(chg);
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "Cannot convert '" << text.substr(spos, 4) << "' to int on line "
-             << line;
+      errout << "Cannot convert '" << text.substr(spos, 4)
+             << "' to int on line " << line;
       throw FileParseException(errout.str());
     }
   }
@@ -386,8 +386,8 @@ void ParseRadicalLine(RWMol *mol, const std::string &text, bool firstCall,
       }
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "Cannot convert '" << text.substr(spos, 4) << "' to int on line "
-             << line;
+      errout << "Cannot convert '" << text.substr(spos, 4)
+             << "' to int on line " << line;
       throw FileParseException(errout.str());
     }
   }
@@ -445,8 +445,8 @@ void ParseIsotopeLine(RWMol *mol, const std::string &text, unsigned int line) {
       }
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "Cannot convert '" << text.substr(spos, 4) << "' to int on line "
-             << line;
+      errout << "Cannot convert '" << text.substr(spos, 4)
+             << "' to int on line " << line;
       throw FileParseException(errout.str());
     }
   }
@@ -514,8 +514,8 @@ void ParseSubstitutionCountLine(RWMol *mol, const std::string &text,
       }
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "Cannot convert '" << text.substr(spos, 4) << "' to int on line "
-             << line;
+      errout << "Cannot convert '" << text.substr(spos, 4)
+             << "' to int on line " << line;
       throw FileParseException(errout.str());
     }
   }
@@ -566,8 +566,8 @@ void ParseUnsaturationLine(RWMol *mol, const std::string &text,
       }
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "Cannot convert '" << text.substr(spos, 4) << "' to int on line "
-             << line;
+      errout << "Cannot convert '" << text.substr(spos, 4)
+             << "' to int on line " << line;
       throw FileParseException(errout.str());
     }
   }
@@ -635,8 +635,8 @@ void ParseRingBondCountLine(RWMol *mol, const std::string &text,
       }
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "Cannot convert '" << text.substr(spos, 4) << "' to int on line "
-             << line;
+      errout << "Cannot convert '" << text.substr(spos, 4)
+             << "' to int on line " << line;
       throw FileParseException(errout.str());
     }
   }
@@ -686,8 +686,8 @@ void ParseZCHLine(RWMol *mol, const std::string &text, unsigned int line) {
       }
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "Cannot convert '" << text.substr(spos, 4) << "' to int on line "
-             << line;
+      errout << "Cannot convert '" << text.substr(spos, 4)
+             << "' to int on line " << line;
       throw FileParseException(errout.str());
     }
   }
@@ -740,8 +740,8 @@ void ParseHYDLine(RWMol *mol, const std::string &text, unsigned int line) {
       }
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "Cannot convert '" << text.substr(spos, 4) << "' to int on line "
-             << line;
+      errout << "Cannot convert '" << text.substr(spos, 4)
+             << "' to int on line " << line;
       throw FileParseException(errout.str());
     }
   }
@@ -796,8 +796,8 @@ void ParseZBOLine(RWMol *mol, const std::string &text, unsigned int line) {
       }
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "Cannot convert '" << text.substr(spos, 4) << "' to int on line "
-             << line;
+      errout << "Cannot convert '" << text.substr(spos, 4)
+             << "' to int on line " << line;
       throw FileParseException(errout.str());
     }
   }
@@ -1709,7 +1709,7 @@ bool ParseMolBlockProperties(std::istream *inStream, unsigned int &line,
     // All went well, make final updates to SGroups, and add them to Mol
     for (const auto &sgroup : sGroupMap) {
       sgroup.second.setProp("DATAFIELDS", dataFieldsMap[sgroup.first]);
-      addSGroup(*mol, sgroup.second);
+      addSubstanceGroup(*mol, sgroup.second);
     }
 
     fileComplete = true;
@@ -2415,8 +2415,8 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
       tempStr = parseEnhancedStereo(inStream, line, mol);
     } else {
       // skip blocks we don't know how to read
-      BOOST_LOG(rdWarningLog)
-          << "skipping block at line " << line << ": '" << tempStr <<"'"<< std::endl;
+      BOOST_LOG(rdWarningLog) << "skipping block at line " << line << ": '"
+                              << tempStr << "'" << std::endl;
       while (tempStr.length() < 3 || tempStr.substr(0, 3) != "END") {
         tempStr = getV3000Line(inStream, line);
       }
@@ -2555,8 +2555,8 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
       res = nullptr;
     }
     std::ostringstream errout;
-    errout << "Cannot convert '" << tempStr.substr(spos, 3) << "' to int on line "
-           << line;
+    errout << "Cannot convert '" << tempStr.substr(spos, 3)
+           << "' to int on line " << line;
     throw FileParseException(errout.str());
   }
   try {

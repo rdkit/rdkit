@@ -709,7 +709,7 @@ M  END
   SECTION("short SDT lines") {
     std::unique_ptr<ROMol> mol(MolBlockToMol(molblock));
     REQUIRE(mol);
-    const auto &sgroups = getSGroups(*mol);
+    const auto &sgroups = getSubstanceGroups(*mol);
     CHECK(sgroups.size() == 1);
     CHECK(sgroups[0].hasProp("TYPE"));
     CHECK(sgroups[0].getProp<std::string>("TYPE") == "DAT");

@@ -8,12 +8,12 @@
 //  of the RDKit source tree.
 //
 #pragma once
-#include <GraphMol/Sgroup.h>
+#include <GraphMol/SubstanceGroup.h>
 
 namespace RDKit {
 
 namespace SGroupParsing {
-typedef std::map<int, SGroup> IDX_TO_SGROUP_MAP;
+typedef std::map<int, SubstanceGroup> IDX_TO_SGROUP_MAP;
 typedef std::map<int, STR_VECT> IDX_TO_STR_VECT_MAP;
 
 /* ------------------ V2000 Utils  ------------------ */
@@ -85,9 +85,10 @@ template <class T>
 std::vector<T> ParseV3000Array(std::stringstream &stream);
 
 void ParseV3000CStateLabel(unsigned int line, const std::string &type,
-                           SGroup *sgroup, std::stringstream &stream);
+                           SubstanceGroup *sgroup, std::stringstream &stream);
 
-void ParseV3000SAPLabel(RWMol *mol, SGroup *sgroup, std::stringstream &stream);
+void ParseV3000SAPLabel(RWMol *mol, SubstanceGroup *sgroup,
+                        std::stringstream &stream);
 
 std::string ParseV3000StringPropLabel(std::stringstream &stream);
 

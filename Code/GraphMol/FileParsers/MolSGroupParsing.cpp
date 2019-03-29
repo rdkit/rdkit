@@ -78,8 +78,8 @@ void ParseSGroupV2000STYLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
     int nbr = ParseSGroupIntField(text, line, pos);
 
     std::string typ = text.substr(pos + 1, 3);
-    if (SGroupChecks::isValidType(typ)) {
-      sGroupMap.emplace(nbr, SGroup(mol, typ));
+    if (SubstanceGroupChecks::isValidType(typ)) {
+      sGroupMap.emplace(nbr, SubstanceGroup(mol, typ));
     } else {
       std::ostringstream errout;
       errout << "S group " << typ << " on line " << line;
@@ -96,14 +96,14 @@ void ParseSGroupV2000VectorDataLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
 
   std::string typ = text.substr(3, 3);
 
-  void (SGroup::*sGroupAddIndexedElement)(const int) = nullptr;
+  void (SubstanceGroup::*sGroupAddIndexedElement)(const int) = nullptr;
 
   if (typ == "SAL") {
-    sGroupAddIndexedElement = &SGroup::addAtomWithBookmark;
+    sGroupAddIndexedElement = &SubstanceGroup::addAtomWithBookmark;
   } else if (typ == "SBL") {
-    sGroupAddIndexedElement = &SGroup::addBondWithBookmark;
+    sGroupAddIndexedElement = &SubstanceGroup::addBondWithBookmark;
   } else if (typ == "SPA") {
-    sGroupAddIndexedElement = &SGroup::addParentAtomWithBookmark;
+    sGroupAddIndexedElement = &SubstanceGroup::addParentAtomWithBookmark;
   } else {
     std::ostringstream errout;
     errout << "Unsupported SGroup line '" << typ
@@ -152,7 +152,7 @@ void ParseSGroupV2000SDILine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
     throw FileParseException(errout.str());
   }
 
-  SGroup::Bracket bracket;
+  SubstanceGroup::Bracket bracket;
   for (unsigned int i = 0; i < 2; ++i) {
     double x = ParseSGroupDoubleField(text, line, pos);
     double y = ParseSGroupDoubleField(text, line, pos);
@@ -187,7 +187,7 @@ void ParseSGroupV2000SSTLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
 
     std::string subType = text.substr(++pos, 3);
 
-    if (!SGroupChecks::isValidSubType(subType)) {
+    if (!SubstanceGroupChecks::isValidSubType(subType)) {
       std::ostringstream errout;
       errout << "Unsupported SGroup subtype '" << subType << "' on line "
              << line;
@@ -254,7 +254,7 @@ void ParseSGroupV2000SLBLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
     }
     unsigned int id = ParseSGroupIntField(text, line, pos);
 
-    if (id != 0 && !SGroupChecks::isSGroupIdFree(*mol, id)) {
+    if (id != 0 && !SubstanceGroupChecks::isSubstanceGroupIdFree(*mol, id)) {
       std::ostringstream errout;
       errout << "SGroup ID '" << id
              << "' is assigned to more than onge SGroup, on line " << line;
@@ -290,7 +290,7 @@ void ParseSGroupV2000SCNLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
 
     std::string connect = text.substr(++pos, 2);
 
-    if (!SGroupChecks::isValidConnectType(connect)) {
+    if (!SubstanceGroupChecks::isValidConnectType(connect)) {
       std::ostringstream errout;
       errout << "Unsupported SGroup connection type '" << connect
              << "' on line " << line;
@@ -673,7 +673,7 @@ std::vector<T> ParseV3000Array(std::stringstream &stream) {
   return values;
 }
 
-void ParseV3000CStateLabel(RWMol *mol, SGroup &sgroup,
+void ParseV3000CStateLabel(RWMol *mol, SubstanceGroup &sgroup,
                            std::stringstream &stream, unsigned int line) {
   stream.get();  // discard parentheses
 
@@ -700,7 +700,8 @@ void ParseV3000CStateLabel(RWMol *mol, SGroup &sgroup,
   stream.get();  // discard final parentheses
 }
 
-void ParseV3000SAPLabel(RWMol *mol, SGroup &sgroup, std::stringstream &stream) {
+void ParseV3000SAPLabel(RWMol *mol, SubstanceGroup &sgroup,
+                        std::stringstream &stream) {
   stream.get();  // discard parentheses
 
   unsigned int count;
@@ -749,8 +750,8 @@ std::string ParseV3000StringPropLabel(std::stringstream &stream) {
 
 void ParseV3000ParseLabel(const std::string &label,
                           std::stringstream &lineStream, STR_VECT &dataFields,
-                          unsigned int &line, SGroup &sgroup, size_t nSgroups,
-                          RWMol *mol, bool &strictParsing) {
+                          unsigned int &line, SubstanceGroup &sgroup,
+                          size_t nSgroups, RWMol *mol, bool &strictParsing) {
   // TODO: remove this once we find out how to handle XBHEAD & XBCORR
   if (label == "XBHEAD" || label == "XBCORR") {
     std::ostringstream errout;
@@ -779,7 +780,7 @@ void ParseV3000ParseLabel(const std::string &label,
       throw FileParseException(errout.str());
     }
 
-    SGroup::Bracket bracket;
+    SubstanceGroup::Bracket bracket;
     for (unsigned int i = 0; i < 3; ++i) {
       bracket[i] = RDGeom::Point3D(*(coords.begin() + (3 * i)),
                                    *(coords.begin() + (3 * i) + 1),
@@ -824,13 +825,13 @@ void ParseV3000ParseLabel(const std::string &label,
     // Parse string props
     auto strValue = ParseV3000StringPropLabel(lineStream);
 
-    if (label == "SUBTYPE" && !SGroupChecks::isValidSubType(strValue)) {
+    if (label == "SUBTYPE" && !SubstanceGroupChecks::isValidSubType(strValue)) {
       std::ostringstream errout;
       errout << "Unsupported SGroup subtype '" << strValue << "' on line "
              << line;
       throw FileParseException(errout.str());
     } else if (label == "CONNECT" &&
-               !SGroupChecks::isValidConnectType(strValue)) {
+               !SubstanceGroupChecks::isValidConnectType(strValue)) {
       std::ostringstream errout;
       errout << "Unsupported SGroup connection type '" << strValue
              << "' on line " << line;
@@ -884,17 +885,17 @@ void ParseV3000SGroupsBlock(std::istream *inStream, unsigned int &line,
 
     std::set<std::string> parsedLabels;
 
-    if (strictParsing && !SGroupChecks::isValidType(type)) {
+    if (strictParsing && !SubstanceGroupChecks::isValidType(type)) {
       std::ostringstream errout;
       errout << "Unsupported SGroup type '" << type << "' on line " << line;
       throw MolFileUnhandledFeatureException(errout.str());
     }
 
-    SGroup sgroup(mol, type);
+    SubstanceGroup sgroup(mol, type);
     STR_VECT dataFields;
 
     if (externalId > 0) {
-      if (!SGroupChecks::isSGroupIdFree(*mol, externalId)) {
+      if (!SubstanceGroupChecks::isSubstanceGroupIdFree(*mol, externalId)) {
         std::ostringstream errout;
         errout << "Existing SGroup ID '" << externalId
                << "' assigned to a second SGroup on line " << line;
@@ -982,7 +983,7 @@ void ParseV3000SGroupsBlock(std::istream *inStream, unsigned int &line,
 
   // SGroups successfully parsed, now add them to the molecule sorted by index
   for (const auto &sg : sGroupMap) {
-    addSGroup(*mol, sg.second);
+    addSubstanceGroup(*mol, sg.second);
   }
 }
 
