@@ -11,18 +11,14 @@
                            // this in one cpp file
 #include "catch.hpp"
 
-#include <GraphMol/MolStandardize/FragmentCatalog/FragmentCatalogParams.h>
-#include <GraphMol/MolStandardize/FragmentCatalog/FragmentCatalogUtils.h>
-#include <GraphMol/MolStandardize/Fragment.h>
-#include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
-#include <RDGeneral/FileParseException.h>
-#include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/MolStandardize/MolStandardize.h>
+#include <GraphMol/MolStandardize/Fragment.h>
+#include <GraphMol/MolStandardize/Charge.h>
 
 #include <iostream>
 #include <fstream>
@@ -58,5 +54,76 @@ TEST_CASE("SKIP_IF_ALL_MATCH") {
     std::unique_ptr<ROMol> outm(fragRemover.remove(*m));
     REQUIRE(outm);
     CHECK(MolToSmiles(*outm) == "[Cl-].[Cl-].[Na+].[Na+]");
+  }
+}
+
+TEST_CASE("symmetry in the uncharger") {
+  SECTION("case 1") {
+    auto m = "C[N+](C)(C)CC(C(=O)[O-])CC(=O)[O-]"_smiles;
+    REQUIRE(m);
+    {
+      bool canonicalOrdering = false;
+      MolStandardize::Uncharger uncharger(canonicalOrdering);
+      std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
+      REQUIRE(outm);
+      CHECK(MolToSmiles(*outm) == "C[N+](C)(C)CC(CC(=O)[O-])C(=O)O");
+    }
+    {
+      bool canonicalOrdering = true;
+      MolStandardize::Uncharger uncharger(canonicalOrdering);
+      std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
+      REQUIRE(outm);
+      CHECK(MolToSmiles(*outm) == "C[N+](C)(C)CC(CC(=O)O)C(=O)[O-]");
+    }
+    {
+      MolStandardize::CleanupParameters params;
+      std::unique_ptr<ROMol> outm(MolStandardize::chargeParent(*m, params));
+      REQUIRE(outm);
+      CHECK(MolToSmiles(*outm) == "C[N+](C)(C)CC(CC(=O)O)C(=O)[O-]");
+    }
+    {
+      MolStandardize::CleanupParameters params;
+      params.doCanonical = false;
+      std::unique_ptr<ROMol> outm(MolStandardize::chargeParent(*m, params));
+      REQUIRE(outm);
+      CHECK(MolToSmiles(*outm) == "C[N+](C)(C)CC(CC(=O)[O-])C(=O)O");
+    }
+  }
+}
+
+TEST_CASE("uncharger bug with duplicates") {
+  SECTION("case 1") {
+    auto m = "[NH3+]CC([O-])C[O-]"_smiles;
+    REQUIRE(m);
+    MolStandardize::Uncharger uncharger;
+    std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
+    REQUIRE(outm);
+    CHECK(MolToSmiles(*outm) == "NCC(O)CO");
+  }
+  SECTION("case 2") {
+    auto m = "CC([O-])C[O-].[Na+]"_smiles;
+    REQUIRE(m);
+    MolStandardize::Uncharger uncharger;
+    std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
+    REQUIRE(outm);
+    CHECK(MolToSmiles(*outm) == "CC([O-])CO.[Na+]");
+  }
+  SECTION("acids + others 1") {
+    auto m = "C[N+](C)(C)CC(C[O-])CC(=O)[O-]"_smiles;
+    REQUIRE(m);
+    bool doCanonical = false;
+    MolStandardize::Uncharger uncharger(doCanonical);
+    std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
+    REQUIRE(outm);
+    CHECK(MolToSmiles(*outm) == "C[N+](C)(C)CC(C[O-])CC(=O)O");
+  }
+  SECTION("acids + others 2") {
+    auto m = "C[N+](C)(C)CC(CC(=O)[O-])C[O-]"_smiles;
+    REQUIRE(m);
+    bool doCanonical = false;
+    MolStandardize::Uncharger uncharger(doCanonical);
+    std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
+    REQUIRE(outm);
+    CHECK(MolToSmiles(*outm) == "C[N+](C)(C)CC(C[O-])CC(=O)O");
   }
 }

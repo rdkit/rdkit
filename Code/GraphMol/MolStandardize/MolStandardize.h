@@ -52,6 +52,8 @@ struct RDKIT_MOLSTANDARDIZE_EXPORT CleanupParameters {
                        // 1000).
   bool preferOrganic;  // Whether to prioritize organic fragments when choosing
                        // fragment parent (default False).
+  bool doCanonical;    // whether or not to apply normalizations in a canonical
+                       // order
 
   CleanupParameters()
       :  // TODO
@@ -65,7 +67,8 @@ struct RDKIT_MOLSTANDARDIZE_EXPORT CleanupParameters {
         // TautomerScores()
         maxRestarts(200),
         maxTautomers(1000),
-        preferOrganic(false) {}
+        preferOrganic(false),
+        doCanonical(true) {}
 };
 
 RDKIT_MOLSTANDARDIZE_EXPORT extern const CleanupParameters

@@ -108,7 +108,13 @@ BOOST_PYTHON_MODULE(rdMolStandardize) {
       .def_readwrite("preferOrganic",
                      &RDKit::MolStandardize::CleanupParameters::preferOrganic,
                      "prefer organic fragments to inorganic ones when deciding "
-                     "what to keep");
+                     "what to keep")
+      .def_readwrite("doCanonical",
+                     &RDKit::MolStandardize::CleanupParameters::doCanonical,
+                     "apply atom-order dependent normalizations (like "
+                     "uncharging) in a canonical order")
+
+      ;
 
   docString = "Standardizes a molecule";
   python::def("Cleanup", cleanupHelper,
