@@ -387,34 +387,37 @@ void testRemoveHs() {
 void testGitHubIssue1705() {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "test preferring grouping non hydrogens over hydrogens if possible" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "test preferring grouping non hydrogens over hydrogens if possible"
+      << std::endl;
 #if 1
-{
-  RWMol *core = SmilesToMol("Oc1ccccc1");
-  RGroupDecompositionParameters params;
+  {
+    RWMol *core = SmilesToMol("Oc1ccccc1");
+    RGroupDecompositionParameters params;
 
-  RGroupDecomposition decomp(*core, params);
-  const char *smilesData[5] = {"Oc1ccccc1","Oc1c(F)cccc1","Oc1ccccc1F","Oc1c(F)cc(N)cc1","Oc1ccccc1Cl"};
-  for (int i = 0; i < 5; ++i) {
-    ROMol *mol = SmilesToMol(smilesData[i]);
-    int res = decomp.add(*mol);
-    delete mol;
-    TEST_ASSERT(res == i);
-  }
-
-  decomp.process();
-  std::stringstream ss;
-  RGroupColumns groups = decomp.getRGroupsAsColumns();
-  for (auto &column : groups) {
-    ss << "Rgroup===" << column.first << std::endl;
-    for (auto &rgroup : column.second ) {
-      ss << MolToSmiles(*rgroup) << std::endl;
+    RGroupDecomposition decomp(*core, params);
+    const char *smilesData[5] = {"Oc1ccccc1", "Oc1c(F)cccc1", "Oc1ccccc1F",
+                                 "Oc1c(F)cc(N)cc1", "Oc1ccccc1Cl"};
+    for (int i = 0; i < 5; ++i) {
+      ROMol *mol = SmilesToMol(smilesData[i]);
+      int res = decomp.add(*mol);
+      delete mol;
+      TEST_ASSERT(res == i);
     }
-  }
-  delete core;
-  //std::cerr<<ss.str()<<std::endl;
 
-  TEST_ASSERT(ss.str() == R"RES(Rgroup===Core
+    decomp.process();
+    std::stringstream ss;
+    RGroupColumns groups = decomp.getRGroupsAsColumns();
+    for (auto &column : groups) {
+      ss << "Rgroup===" << column.first << std::endl;
+      for (auto &rgroup : column.second) {
+        ss << MolToSmiles(*rgroup) << std::endl;
+      }
+    }
+    delete core;
+    // std::cerr<<ss.str()<<std::endl;
+
+    TEST_ASSERT(ss.str() == R"RES(Rgroup===Core
 Oc1ccc([*:1])cc1[*:2]
 Oc1ccc([*:1])cc1[*:2]
 Oc1ccc([*:1])cc1[*:2]
@@ -433,33 +436,34 @@ F[*:2]
 F[*:2]
 Cl[*:2]
 )RES");
-}
+  }
 #endif
-//std::cerr<<"n\n\n\n\n\n--------------------------------------------------------------\n\n\n\n\n";
-{
-  RWMol *core = SmilesToMol("Cc1ccccc1");
-  RGroupDecompositionParameters params;
+  // std::cerr<<"n\n\n\n\n\n--------------------------------------------------------------\n\n\n\n\n";
+  {
+    RWMol *core = SmilesToMol("Cc1ccccc1");
+    RGroupDecompositionParameters params;
 
-  RGroupDecomposition decomp(*core, params);
-  std::vector<std::string> smilesData = {"c1ccccc1C","Fc1ccccc1C","c1cccc(F)c1C","Fc1cccc(F)c1C"};
-  for (const auto &smi : smilesData) {
-    ROMol *mol = SmilesToMol(smi);
-    int res = decomp.add(*mol);
-    delete mol;
-  }
-
-  decomp.process();
-  std::stringstream ss;
-  RGroupColumns groups = decomp.getRGroupsAsColumns();
-  for (auto &column : groups) {
-    ss << "Rgroup===" << column.first << std::endl;
-    for (auto &rgroup : column.second ) {
-      ss << MolToSmiles(*rgroup) << std::endl;
+    RGroupDecomposition decomp(*core, params);
+    std::vector<std::string> smilesData = {"c1ccccc1C", "Fc1ccccc1C",
+                                           "c1cccc(F)c1C", "Fc1cccc(F)c1C"};
+    for (const auto &smi : smilesData) {
+      ROMol *mol = SmilesToMol(smi);
+      int res = decomp.add(*mol);
+      delete mol;
     }
-  }
-  delete core;
-  //std::cerr<<ss.str()<<std::endl;
-  TEST_ASSERT(ss.str() == R"RES(Rgroup===Core
+
+    decomp.process();
+    std::stringstream ss;
+    RGroupColumns groups = decomp.getRGroupsAsColumns();
+    for (auto &column : groups) {
+      ss << "Rgroup===" << column.first << std::endl;
+      for (auto &rgroup : column.second) {
+        ss << MolToSmiles(*rgroup) << std::endl;
+      }
+    }
+    delete core;
+    // std::cerr<<ss.str()<<std::endl;
+    TEST_ASSERT(ss.str() == R"RES(Rgroup===Core
 Cc1c([*:1])cccc1[*:2]
 Cc1c([*:1])cccc1[*:2]
 Cc1c([*:1])cccc1[*:2]
@@ -475,20 +479,20 @@ Rgroup===R2
 [H][*:2]
 F[*:2]
 )RES");
-}
-
+  }
 }
 
 void testMatchOnlyAtRgroupHs() {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "test matching only rgroups but allows Hs" << std::endl;
+  BOOST_LOG(rdInfoLog) << "test matching only rgroups but allows Hs"
+                       << std::endl;
 
   RWMol *core = SmilesToMol("*OCC");
   RGroupDecompositionParameters params;
   params.onlyMatchAtRGroups = true;
   RGroupDecomposition decomp(*core, params);
-  const char *smilesData[2] = {"OCC","COCC"};
+  const char *smilesData[2] = {"OCC", "COCC"};
   for (int i = 0; i < 2; ++i) {
     ROMol *mol = SmilesToMol(smilesData[i]);
     decomp.add(*mol);
@@ -500,14 +504,69 @@ void testMatchOnlyAtRgroupHs() {
   RGroupColumns groups = decomp.getRGroupsAsColumns();
   for (auto &column : groups) {
     ss << "Rgroup===" << column.first << std::endl;
-    for (auto &rgroup : column.second ) {
+    for (auto &rgroup : column.second) {
       ss << MolToSmiles(*rgroup) << std::endl;
     }
   }
   std::cerr << ss.str() << std::endl;
 
   delete core;
-  TEST_ASSERT(ss.str() == "Rgroup===Core\nCCO[*:1]\nCCO[*:1]\nRgroup===R1\n[H][*:1]\n[H]C([H])([H])[*:1]\n");
+  TEST_ASSERT(ss.str() ==
+              "Rgroup===Core\nCCO[*:1]\nCCO[*:1]\nRgroup===R1\n[H][*:1]\n[H]C(["
+              "H])([H])[*:1]\n");
+}
+
+void testGithub2332() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "test github #2332: RGroupDecomposition: addHs() "
+                          "call should set coords "
+                       << std::endl;
+  auto core = "*OCC"_smiles;
+  RGroupDecompositionParameters params;
+  params.onlyMatchAtRGroups = true;
+  RGroupDecomposition decomp(*core, params);
+  std::string chains[2] = {
+      R"CTAB(
+  Mrv1810 03291913362D          
+
+  4  3  0  0  0  0            999 V2000
+    2.0625   -0.7145    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+    1.2375   -0.7145    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8250    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+M  END
+)CTAB",
+      R"CTAB(
+  Mrv1810 03291913362D          
+
+  3  2  0  0  0  0            999 V2000
+    1.2375   -0.7145    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8250    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+M  END
+)CTAB"};
+  for (int i = 0; i < 2; ++i) {
+    ROMol *mol = MolBlockToMol(chains[i]);
+    decomp.add(*mol);
+    delete mol;
+  }
+  decomp.process();
+
+  std::stringstream ss;
+  RGroupColumns groups = decomp.getRGroupsAsColumns();
+  auto &r1 = groups["R1"];
+  TEST_ASSERT(r1.size() == 2);
+  TEST_ASSERT(r1[1]->getAtomWithIdx(0)->getAtomicNum() == 1);
+  auto conf = r1[1]->getConformer();
+  TEST_ASSERT(!feq(conf.getAtomPos(0).x, 0.0));
+  TEST_ASSERT(!feq(conf.getAtomPos(0).y, 0.0));
+  TEST_ASSERT(feq(conf.getAtomPos(0).z, 0.0));
 }
 
 int main() {
@@ -530,7 +589,8 @@ int main() {
 #endif
   testRingMatching2();
   testGitHubIssue1705();
-  
+  testGithub2332();
+
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;
