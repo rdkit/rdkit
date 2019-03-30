@@ -39,7 +39,11 @@ namespace MolStandardize {
 */
 struct RDKIT_MOLSTANDARDIZE_EXPORT CleanupParameters {
   // TODO reveal all parameters
-  std::string rdbase = std::getenv("RDBASE");
+ private:
+  const char *rdbase_cstr = std::getenv("RDBASE");
+
+ public:
+  std::string rdbase = rdbase_cstr != nullptr ? rdbase_cstr : "";
   std::string normalizations;
   std::string acidbaseFile;
   std::string fragmentFile;
