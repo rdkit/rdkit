@@ -215,8 +215,8 @@ struct RGroupData {
 
     mols.push_back(newMol);
     std::string smi = MolToSmiles(*newMol, true);
-    // REVIEW: we probably shouldn't be using a set here... the merging of duplicates is likely not
-    // what we want
+    // REVIEW: we probably shouldn't be using a set here... the merging of
+    // duplicates is likely not what we want
     smilesSet.insert(smi);
     if (!combinedMol.get()) {
       combinedMol = boost::shared_ptr<RWMol>(new RWMol(*mols[0].get()));
@@ -258,7 +258,7 @@ struct RGroupData {
       const {  // compute the canonical smiles for the attachments
     std::string s;
     for (const auto &it : smilesSet) {
-      if(s.length()) s += ".";
+      if (s.length()) s += ".";
       s += it;
     }
     return s;
@@ -390,9 +390,9 @@ double score(const std::vector<size_t> &permutation,
       if (onlyH[it->first]) {
         if (static_cast<size_t>(it->second) == permutation.size()) {
           equivalentRGroupCount.push_back(static_cast<float>(it->second));
-        } else { 
+        } else {
           // hydrogens in a mixed group don't contribute to the score
-          equivalentRGroupCount.push_back(0.0);  
+          equivalentRGroupCount.push_back(0.0);
         }
       } else {
         equivalentRGroupCount.push_back(static_cast<float>(it->second));
@@ -829,7 +829,9 @@ int RGroupDecomposition::add(const ROMol &inmol) {
   // get the sidechains if possible
   //  Add hs for better symmeterization
   RWMol mol(inmol);
-  MolOps::addHs(mol);
+  bool explicitOnly = false;
+  bool addCoords = true;
+  MolOps::addHs(mol, explicitOnly, addCoords);
 
   int core_idx = 0;
   const RWMol *core = nullptr;
