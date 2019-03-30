@@ -15,7 +15,7 @@
 #include "MolFileStereochem.h"
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitQueries.h>
-#include <GraphMol/Sgroup.h>
+#include <GraphMol/SubstanceGroup.h>
 #include <RDGeneral/Ranking.h>
 #include <RDGeneral/LocaleSwitcher.h>
 
@@ -1085,7 +1085,7 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
   nBonds = tmol.getNumBonds();
   nLists = 0;
 
-  const auto &sgroups = getSGroups(tmol);
+  const auto &sgroups = getSubstanceGroups(tmol);
   unsigned int nSGroups = sgroups.size();
 
   chiralFlag = 0;

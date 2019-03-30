@@ -12,7 +12,7 @@
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/MonomerInfo.h>
 #include <GraphMol/StereoGroup.h>
-#include <GraphMol/Sgroup.h>
+#include <GraphMol/SubstanceGroup.h>
 #include <RDGeneral/utils.h>
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/StreamOps.h>
@@ -898,10 +898,10 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
 
   // -------------------
   //
-  // Write SGroups (if present)
+  // Write SubstanceGroups (if present)
   //
   // -------------------
-  const auto &sgroups = getSGroups(*mol);
+  const auto &sgroups = getSubstanceGroups(*mol);
   if (!sgroups.empty()) {
     streamWrite(ss, BEGINSGROUP);
 
@@ -909,7 +909,7 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
     streamWrite(ss, tmpInt);
 
     for (const auto &sgroup : sgroups) {
-      _pickleSGroup<T>(ss, sgroup, atomIdxMap, bondIdxMap);
+      _pickleSubstanceGroup<T>(ss, sgroup, atomIdxMap, bondIdxMap);
     }
   }
   // Write Stereo Groups
@@ -1043,17 +1043,17 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
 
   // -------------------
   //
-  // Read SGroups (if needed)
+  // Read SubstanceGroups (if needed)
   //
   // -------------------
 
   if (tag == BEGINSGROUP) {
     streamRead(ss, tmpInt, version);
 
-    // Create SGroups
+    // Create SubstanceGroups
     for (int i = 0; i < tmpInt; ++i) {
-      auto sgroup = _getSGroupFromPickle<T>(ss, mol, version);
-      addSGroup(*mol, sgroup);
+      auto sgroup = _getSubstanceGroupFromPickle<T>(ss, mol, version);
+      addSubstanceGroup(*mol, sgroup);
     }
 
     streamRead(ss, tag, version);
@@ -1791,14 +1791,15 @@ void MolPickler::_addRingInfoFromPickle(std::istream &ss, ROMol *mol,
 
 //--------------------------------------
 //
-//            SGroups
+//            SubstanceGroups
 //
 //--------------------------------------
 
 template <typename T>
-void MolPickler::_pickleSGroup(std::ostream &ss, const SGroup &sgroup,
-                               std::map<int, int> &atomIdxMap,
-                               std::map<int, int> &bondIdxMap) {
+void MolPickler::_pickleSubstanceGroup(std::ostream &ss,
+                                       const SubstanceGroup &sgroup,
+                                       std::map<int, int> &atomIdxMap,
+                                       std::map<int, int> &bondIdxMap) {
   T tmpT;
 
   streamWriteProps(ss, sgroup);
@@ -1847,7 +1848,7 @@ void MolPickler::_pickleSGroup(std::ostream &ss, const SGroup &sgroup,
     tmpT = static_cast<T>(bondIdxMap[cstate.bondIdx]);
     streamWrite(ss, tmpT);
 
-    // Vector -- existence depends on SGroup type
+    // Vector -- existence depends on SubstanceGroup type
     if ("SUP" == sgroup.getProp<std::string>("TYPE")) {
       float tmpFloat;
       tmpFloat = static_cast<float>(cstate.vector.x);
@@ -1880,8 +1881,9 @@ void MolPickler::_pickleSGroup(std::ostream &ss, const SGroup &sgroup,
 }
 
 template <typename T>
-SGroup MolPickler::_getSGroupFromPickle(std::istream &ss, ROMol *mol,
-                                        int version) {
+SubstanceGroup MolPickler::_getSubstanceGroupFromPickle(std::istream &ss,
+                                                        ROMol *mol,
+                                                        int version) {
   T tmpT;
   T numItems;
   float tmpFloat;
@@ -1889,7 +1891,7 @@ SGroup MolPickler::_getSGroupFromPickle(std::istream &ss, ROMol *mol,
   std::string tmpS;
 
   // temporarily accept empty TYPE
-  SGroup sgroup(mol, "");
+  SubstanceGroup sgroup(mol, "");
 
   // Read RDProps, overriding ID, TYPE and COMPNO
   streamReadProps(ss, sgroup, MolPickler::getCustomPropHandlers());
@@ -1914,7 +1916,7 @@ SGroup MolPickler::_getSGroupFromPickle(std::istream &ss, ROMol *mol,
 
   streamRead(ss, numItems, version);
   for (int i = 0; i < numItems; ++i) {
-    SGroup::Bracket bracket;
+    SubstanceGroup::Bracket bracket;
     for (auto j = 0; j < 3; ++j) {
       streamRead(ss, tmpFloat, version);
       double x = static_cast<double>(tmpFloat);

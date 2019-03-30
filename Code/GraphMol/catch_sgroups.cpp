@@ -14,7 +14,7 @@
 #include "catch.hpp"
 
 #include <GraphMol/RDKitBase.h>
-#include <GraphMol/Sgroup.h>
+#include <GraphMol/SubstanceGroup.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include "GraphMol/FileParsers/FileParsers.h"
@@ -35,7 +35,7 @@ void testIdxVector(const std::vector<unsigned int> &groupVector,
 }
 
 void testBrackets(
-    const std::vector<SGroup::Bracket> &brackets,
+    const std::vector<SubstanceGroup::Bracket> &brackets,
     const std::vector<std::array<std::array<double, 3>, 3>> &reference) {
   CHECK(brackets.size() == 2);
   for (int i = 0; i < 2; ++i) {
@@ -48,8 +48,9 @@ void testBrackets(
 }
 
 RWMol buildSampleMolecule() {
-  // This builds a RDKit::RWMol with all implemented SGroup features in order to
-  // test them. SGroups and features probably do not make any sense.
+  // This builds a RDKit::RWMol with all implemented SubstanceGroup features in
+  // order to test them. SubstanceGroups and features probably do not make any
+  // sense.
 
   //// Initialize Molecule ////
   RWMol mol;
@@ -63,9 +64,9 @@ RWMol buildSampleMolecule() {
     }
   }
 
-  //// First SGroup ////
+  //// First SubstanceGroup ////
   {
-    SGroup sg(&mol, "MUL");
+    SubstanceGroup sg(&mol, "MUL");
 
     sg.setProp("SUBTYPE", "BLO");
     sg.setProp("MULT", "n");
@@ -81,14 +82,14 @@ RWMol buildSampleMolecule() {
     sg.setProp("COMPNO", 7u);
     sg.setProp("ESTATE", "E");
 
-    SGroup::Bracket bracket1 = {{RDGeom::Point3D(1., 3., 0.),
-                                 RDGeom::Point3D(5., 7., 0.),
-                                 RDGeom::Point3D(0., 0., 0.)}};
+    SubstanceGroup::Bracket bracket1 = {{RDGeom::Point3D(1., 3., 0.),
+                                         RDGeom::Point3D(5., 7., 0.),
+                                         RDGeom::Point3D(0., 0., 0.)}};
     sg.addBracket(bracket1);
 
-    SGroup::Bracket bracket2 = {{RDGeom::Point3D(2., 4., 0.),
-                                 RDGeom::Point3D(6., 8., 0.),
-                                 RDGeom::Point3D(0., 0., 0.)}};
+    SubstanceGroup::Bracket bracket2 = {{RDGeom::Point3D(2., 4., 0.),
+                                         RDGeom::Point3D(6., 8., 0.),
+                                         RDGeom::Point3D(0., 0., 0.)}};
     sg.addBracket(bracket2);
 
     // Vector should not be parsed (not a SUP group)
@@ -100,11 +101,11 @@ RWMol buildSampleMolecule() {
 
     sg.setProp("BRKTYP", "PAREN");
 
-    addSGroup(mol, sg);
+    addSubstanceGroup(mol, sg);
   }
-  //// Second SGroup ////
+  //// Second SubstanceGroup ////
   {
-    SGroup sg(&mol, "SUP");
+    SubstanceGroup sg(&mol, "SUP");
 
     // Add some atoms and bonds
     for (unsigned i = 3; i < 6; ++i) {
@@ -121,11 +122,11 @@ RWMol buildSampleMolecule() {
 
     sg.addAttachPoint(3, -1, "YY");
 
-    addSGroup(mol, sg);
+    addSubstanceGroup(mol, sg);
   }
-  //// Third SGroup ////
+  //// Third SubstanceGroup ////
   {
-    SGroup sg(&mol, "DAT");
+    SubstanceGroup sg(&mol, "DAT");
 
     sg.setProp("FIELDNAME", "SAMPLE FIELD NAME");  // 30 char max
     // Field Type is ignored in V3000
@@ -140,11 +141,11 @@ RWMol buildSampleMolecule() {
                            "SAMPLE DATA FIELD 3"};
     sg.setProp("DATAFIELDS", dataFields);
 
-    addSGroup(mol, sg);
+    addSubstanceGroup(mol, sg);
   }
 
   // Set a parent with higher index
-  const auto &sgroups = getSGroups(mol);
+  const auto &sgroups = getSubstanceGroups(mol);
   sgroups.at(0).setProp<unsigned int>("PARENT", 2);
 
   return mol;
@@ -153,17 +154,17 @@ RWMol buildSampleMolecule() {
 /* End Auxiliary functions */
 
 TEST_CASE("Basic Sgroup creation", "[Sgroups]") {
-  // Create two SGroups and add them to a molecule
+  // Create two SubstanceGroups and add them to a molecule
   RWMol mol;
 
   {
-    SGroup sg0(&mol, "DAT");
-    SGroup sg1(&mol, "SUP");
-    addSGroup(mol, sg0);
-    addSGroup(mol, sg1);
+    SubstanceGroup sg0(&mol, "DAT");
+    SubstanceGroup sg1(&mol, "SUP");
+    addSubstanceGroup(mol, sg0);
+    addSubstanceGroup(mol, sg1);
   }
 
-  const auto &sgroups = getSGroups(mol);
+  const auto &sgroups = getSubstanceGroups(mol);
   REQUIRE(sgroups.size() == 2);
   CHECK(sgroups.at(0).getProp<std::string>("TYPE") == "DAT");
   CHECK(sgroups.at(1).getProp<std::string>("TYPE") == "SUP");
@@ -172,7 +173,7 @@ TEST_CASE("Basic Sgroup creation", "[Sgroups]") {
 TEST_CASE("Build and test sample molecule", "[Sgroups]") {
   auto mol = buildSampleMolecule();
 
-  const auto &sgroups = getSGroups(mol);
+  const auto &sgroups = getSubstanceGroups(mol);
   CHECK(sgroups.size() == 3);
 
   SECTION("first sgroup") {
@@ -198,9 +199,9 @@ TEST_CASE("Build and test sample molecule", "[Sgroups]") {
 
     testIdxVector(bonds, bonds_reference);
 
-    CHECK(sg.getBondType(bonds[0]) == SGroup::BondType::CBOND);
-    CHECK(sg.getBondType(bonds[1]) == SGroup::BondType::CBOND);
-    CHECK(sg.getBondType(bonds[2]) == SGroup::BondType::XBOND);
+    CHECK(sg.getBondType(bonds[0]) == SubstanceGroup::BondType::CBOND);
+    CHECK(sg.getBondType(bonds[1]) == SubstanceGroup::BondType::CBOND);
+    CHECK(sg.getBondType(bonds[2]) == SubstanceGroup::BondType::XBOND);
 
     CHECK(sg.getProp<unsigned int>("COMPNO") == 7u);
     CHECK(sg.getProp<std::string>("ESTATE") == "E");
@@ -249,9 +250,9 @@ TEST_CASE("Build and test sample molecule", "[Sgroups]") {
     std::sort(bonds.begin(), bonds.end());
 
     testIdxVector(bonds, bonds_reference);
-    CHECK(sg.getBondType(bonds[0]) == SGroup::BondType::XBOND);
-    CHECK(sg.getBondType(bonds[1]) == SGroup::BondType::CBOND);
-    CHECK(sg.getBondType(bonds[2]) == SGroup::BondType::CBOND);
+    CHECK(sg.getBondType(bonds[0]) == SubstanceGroup::BondType::XBOND);
+    CHECK(sg.getBondType(bonds[1]) == SubstanceGroup::BondType::CBOND);
+    CHECK(sg.getBondType(bonds[2]) == SubstanceGroup::BondType::CBOND);
 
     CHECK(sg.getProp<std::string>("LABEL") == "TEST LABEL");
 

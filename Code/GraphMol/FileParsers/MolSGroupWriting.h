@@ -11,11 +11,11 @@
 #pragma once
 
 #include <boost/algorithm/string/trim.hpp>
-#include <GraphMol/Sgroup.h>
+#include <GraphMol/SubstanceGroup.h>
 
 namespace RDKit {
 namespace SGroupWriting {
-typedef std::unordered_map<int, SGroup> IDX_TO_SGROUP_MAP;
+typedef std::unordered_map<int, SubstanceGroup> IDX_TO_SGROUP_MAP;
 
 /* ------------------ Inlined Formatters ------------------ */
 
@@ -84,21 +84,21 @@ std::string BuildV2000IdxVectorDataLines(const unsigned int entriesPerLine,
                                          const std::string &code,
                                          const T &dataVector);
 
-std::string BuildV2000SMTLine(const int idx, const SGroup *sgroup);
+std::string BuildV2000SMTLine(const int idx, const SubstanceGroup *sgroup);
 
-std::string BuildV2000SDILine(const int idx, const SGroup *sgroup);
+std::string BuildV2000SDILine(const int idx, const SubstanceGroup *sgroup);
 
-std::string BuildV2000SBVLine(const int idx, const SGroup *sgroup);
+std::string BuildV2000SBVLine(const int idx, const SubstanceGroup *sgroup);
 
-std::string BuildV2000SDTLine(const int idx, const SGroup *sgroup);
+std::string BuildV2000SDTLine(const int idx, const SubstanceGroup *sgroup);
 
-std::string BuildV2000SDDLine(const int idx, const SGroup *sgroup);
+std::string BuildV2000SDDLine(const int idx, const SubstanceGroup *sgroup);
 
-std::string BuildV2000SCDSEDLines(const int idx, const SGroup *sgroup);
+std::string BuildV2000SCDSEDLines(const int idx, const SubstanceGroup *sgroup);
 
-std::string BuildV2000SAPLines(const int idx, const SGroup *sgroup);
+std::string BuildV2000SAPLines(const int idx, const SubstanceGroup *sgroup);
 
-std::string BuildV2000SCLLine(const int idx, const SGroup *sgroup);
+std::string BuildV2000SCLLine(const int idx, const SubstanceGroup *sgroup);
 const std::string GetMolFileSGroupInfo(const RWMol &mol);
 
 /* ------------------ V3000 Utils  ------------------ */
@@ -114,21 +114,22 @@ std::string BuildV3000IdxVectorDataBlock(const std::string &key,
 
 /* Classify bonds between XBONDS and CBOfindP work on a copy of
  * bonds vector to prevent reordering of original vector */
-std::string BuildV3000BondsBlock(const SGroup &sgroup);
+std::string BuildV3000BondsBlock(const SubstanceGroup &sgroup);
 
 std::string FormatV3000StringPropertyBlock(const std::string &prop,
-                                           const SGroup &sgroup);
+                                           const SubstanceGroup &sgroup);
 
-std::string FormatV3000ParentBlock(const SGroup &sgroup);
+std::string FormatV3000ParentBlock(const SubstanceGroup &sgroup);
 
-std::string FormatV3000CompNoBlock(const SGroup &sgroup);
+std::string FormatV3000CompNoBlock(const SubstanceGroup &sgroup);
 
 std::string FormatV3000BracketBlock(
-    const std::vector<SGroup::Bracket> brackets);
+    const std::vector<SubstanceGroup::Bracket> brackets);
 
-std::string FormatV3000CStateBlock(const std::vector<SGroup::CState> &cstates);
+std::string FormatV3000CStateBlock(
+    const std::vector<SubstanceGroup::CState> &cstates);
 
 const std::string GetV3000MolFileSGroupLines(const unsigned int idx,
-                                             const SGroup &sgroup);
+                                             const SubstanceGroup &sgroup);
 }  // namespace SGroupWriting
 }  // namespace RDKit

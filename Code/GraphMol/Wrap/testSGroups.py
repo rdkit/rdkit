@@ -63,7 +63,7 @@ M  END"""
 
     def testBasics(self):
         self.assertTrue(self.m1 is not None)
-        sgs = Chem.GetMolSGroups(self.m1)
+        sgs = Chem.GetMolSubstanceGroups(self.m1)
         self.assertEqual(len(sgs), 2)
         self.assertTrue(sgs[0].HasProp("TYPE"))
         self.assertTrue(sgs[1].HasProp("TYPE"))
@@ -81,14 +81,14 @@ M  END"""
         self.assertTrue("FIELDNAME" in dd)
         self.assertEqual(dd["FIELDNAME"], "pH")
 
-        Chem.ClearMolSGroups(self.m1)
-        self.assertEqual(len(Chem.GetMolSGroups(self.m1)), 0)
+        Chem.ClearMolSubstanceGroups(self.m1)
+        self.assertEqual(len(Chem.GetMolSubstanceGroups(self.m1)), 0)
 
     def testLifetime(self):
         self.assertTrue(self.m1 is not None)
         mcpy = Chem.Mol(self.m1)
         smi = Chem.MolToSmiles(mcpy)
-        sgs = Chem.GetMolSGroups(mcpy)
+        sgs = Chem.GetMolSubstanceGroups(mcpy)
         self.assertEqual(len(sgs), 2)
         mcpy = None
         parent = sgs[0].GetOwningMol()
@@ -100,5 +100,5 @@ M  END"""
 
 
 if __name__ == '__main__':
-    print("Testing SGroups wrapper")
+    print("Testing SubstanceGroups wrapper")
     unittest.main()

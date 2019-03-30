@@ -8,9 +8,9 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-/*! \file Sgroup.h
+/*! \file SubstanceGroup.h
 
-  \brief Defines the SGroup class
+  \brief Defines the SubstanceGroup class
 
 */
 #include <RDGeneral/export.h>
@@ -30,24 +30,26 @@ class Bond;
 class Atom;
 
 //! used to indicate errors from incorrect sgroup access
-class RDKIT_GRAPHMOL_EXPORT SGroupException : public std::runtime_error {
+class RDKIT_GRAPHMOL_EXPORT SubstanceGroupException
+    : public std::runtime_error {
  public:
   //! construct with an error message
-  SGroupException(const char *msg) : std::runtime_error(msg){};
+  SubstanceGroupException(const char *msg) : std::runtime_error(msg){};
   //! construct with an error message
-  SGroupException(const std::string &msg) : std::runtime_error(msg){};
+  SubstanceGroupException(const std::string &msg) : std::runtime_error(msg){};
 };
 
-//! The class for representing SGroups
+//! The class for representing SubstanceGroups
 /*!
   <b>Notes:</b>
+  - These are inspired by the SGroups in the MDL formats
   - Implementation is based on 2010 MDL SD specification:
     http://infochim.u-strasbg.fr/recherche/Download/Fragmentor/MDL_SDF.pdf
   - See SGroups.md for further, more comprehensive notes.
 
 */
 
-class RDKIT_GRAPHMOL_EXPORT SGroup : public RDProps {
+class RDKIT_GRAPHMOL_EXPORT SubstanceGroup : public RDProps {
  public:
   //! Bond type (see V3000 spec)
   enum class BondType {
@@ -80,21 +82,21 @@ class RDKIT_GRAPHMOL_EXPORT SGroup : public RDProps {
   };
 
   //! No default constructor
-  SGroup() = delete;
+  SubstanceGroup() = delete;
 
   //! Main Constructor. Ownsership is only set on this side of the relationship:
-  //! mol->addSGroup(sgroup) still needs to be called to get ownership on the
-  //! other side.
-  SGroup(ROMol *owning_mol, const std::string &type);
+  //! mol->addSubstanceGroup(sgroup) still needs to be called to get ownership
+  //! on the other side.
+  SubstanceGroup(ROMol *owning_mol, const std::string &type);
 
-  SGroup(const SGroup &other) = default;
-  SGroup(SGroup &&other) = default;
+  SubstanceGroup(const SubstanceGroup &other) = default;
+  SubstanceGroup(SubstanceGroup &&other) = default;
 
-  SGroup &operator=(const SGroup &other) = default;
-  SGroup &operator=(SGroup &&other) = default;
+  SubstanceGroup &operator=(const SubstanceGroup &other) = default;
+  SubstanceGroup &operator=(SubstanceGroup &&other) = default;
 
   //! Destructor
-  ~SGroup(){};
+  ~SubstanceGroup(){};
 
   //! Get the molecule that owns this conformation
   ROMol &getOwningMol() const { return *dp_mol; }
@@ -130,7 +132,7 @@ class RDKIT_GRAPHMOL_EXPORT SGroup : public RDProps {
   //! independently, since parent might not exist at the time this is called.
   void setOwningMol(ROMol *mol);
 
-  bool operator==(const SGroup &other) const {
+  bool operator==(const SubstanceGroup &other) const {
     // we ignore brackets and cstates, which involve coordinates
     return dp_mol == other.dp_mol && d_atoms == other.d_atoms &&
            d_patoms == other.d_patoms && d_bonds == other.d_bonds &&
@@ -149,7 +151,7 @@ class RDKIT_GRAPHMOL_EXPORT SGroup : public RDProps {
   std::vector<AttachPoint> d_saps;
 };
 
-namespace SGroupChecks {
+namespace SubstanceGroupChecks {
 
 const std::vector<std::string> sGroupTypes = {
     // polymer sgroups:
@@ -168,27 +170,31 @@ RDKIT_GRAPHMOL_EXPORT bool isValidSubType(const std::string &type);
 
 RDKIT_GRAPHMOL_EXPORT bool isValidConnectType(const std::string &type);
 
-RDKIT_GRAPHMOL_EXPORT bool isSGroupIdFree(const ROMol &mol, unsigned int id);
+RDKIT_GRAPHMOL_EXPORT bool isSubstanceGroupIdFree(const ROMol &mol,
+                                                  unsigned int id);
 
-}  // namespace SGroupChecks
+}  // namespace SubstanceGroupChecks
 
-//! \name SGroups and molecules
+//! \name SubstanceGroups and molecules
 //@{
 
-RDKIT_GRAPHMOL_EXPORT std::vector<SGroup> &getSGroups(ROMol &mol);
-RDKIT_GRAPHMOL_EXPORT const std::vector<SGroup> &getSGroups(const ROMol &mol);
+RDKIT_GRAPHMOL_EXPORT std::vector<SubstanceGroup> &getSubstanceGroups(
+    ROMol &mol);
+RDKIT_GRAPHMOL_EXPORT const std::vector<SubstanceGroup> &getSubstanceGroups(
+    const ROMol &mol);
 
-//! Add a new SGroup. A copy is added, so we can be sure that no other
-//! references to the SGroup exist.
+//! Add a new SubstanceGroup. A copy is added, so we can be sure that no other
+//! references to the SubstanceGroup exist.
 /*!
-  \param sgroup - SGroup to be added to the molecule.
+  \param sgroup - SubstanceGroup to be added to the molecule.
 */
-RDKIT_GRAPHMOL_EXPORT unsigned int addSGroup(ROMol &mol, SGroup sgroup);
+RDKIT_GRAPHMOL_EXPORT unsigned int addSubstanceGroup(ROMol &mol,
+                                                     SubstanceGroup sgroup);
 //@}
 
 }  // namespace RDKit
 
-//! allows SGroup objects to be dumped to streams
+//! allows SubstanceGroup objects to be dumped to streams
 RDKIT_GRAPHMOL_EXPORT std::ostream &operator<<(std::ostream &target,
-                                               const RDKit::SGroup &sg);
+                                               const RDKit::SubstanceGroup &sg);
 #endif

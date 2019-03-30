@@ -8,7 +8,7 @@ rdkit_library(GraphMol
               MolDiscriminators.cpp ConjugHybrid.cpp AddHs.cpp
               Matrices.cpp Chirality.cpp RingInfo.cpp Conformer.cpp
               Renumber.cpp AdjustQuery.cpp Resonance.cpp StereoGroup.cpp
-              new_canon.cpp Sgroup.cpp
+              new_canon.cpp SubstanceGroup.cpp
               SHARED
               LINK_LIBRARIES RDGeometryLib RDGeneral
                  ${RDKit_THREAD_LIBS})
@@ -39,7 +39,7 @@ rdkit_headers(Atom.h
               ROMol.h
               RWMol.h
               SanitException.h
-              Sgroup.h
+              SubstanceGroup.h
               StereoGroup.h
               MonomerInfo.h
               new_canon.h

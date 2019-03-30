@@ -204,9 +204,9 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
   static void _pickleSSSR(std::ostream &ss, const RingInfo *ringInfo,
                           std::map<int, int> &atomIdxMap);
 
-  //! do the actual work of pickling a SGroup
+  //! do the actual work of pickling a SubstanceGroup
   template <typename T>
-  static void _pickleSGroup(std::ostream &ss, const SGroup &sgroup,
+  static void _pickleSubstanceGroup(std::ostream &ss, const SubstanceGroup &sgroup,
                             std::map<int, int> &atomIdxMap,
                             std::map<int, int> &bondIdxMap);
 
@@ -243,9 +243,9 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
   static void _addRingInfoFromPickle(std::istream &ss, ROMol *mol, int version,
                                      bool directMap = false);
 
-  //! extract a SGroup from a pickle
+  //! extract a SubstanceGroup from a pickle
   template <typename T>
-  static SGroup _getSGroupFromPickle(std::istream &ss, ROMol *mol, int version);
+  static SubstanceGroup _getSubstanceGroupFromPickle(std::istream &ss, ROMol *mol, int version);
 
   template <typename T>
   static void _depickleStereo(std::istream &ss, ROMol *mol, int version);

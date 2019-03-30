@@ -15,7 +15,7 @@
 
 // ours
 #include <GraphMol/RDKitBase.h>
-#include <GraphMol/Sgroup.h>
+#include <GraphMol/SubstanceGroup.h>
 #include "props.hpp"
 
 namespace python = boost::python;
@@ -23,9 +23,11 @@ namespace python = boost::python;
 namespace RDKit {
 
 namespace {
-std::vector<SGroup> getMolSGroups(ROMol &mol) { return getSGroups(mol); }
-void clearMolSGroups(ROMol &mol) {
-  std::vector<SGroup> &sgs = getSGroups(mol);
+std::vector<SubstanceGroup> getMolSubstanceGroups(ROMol &mol) {
+  return getSubstanceGroups(mol);
+}
+void clearMolSubstanceGroups(ROMol &mol) {
+  std::vector<SubstanceGroup> &sgs = getSubstanceGroups(mol);
   sgs.clear();
 }
 }  // namespace
@@ -35,71 +37,78 @@ std::string sGroupClassDoc =
 
 struct sgroup_wrap {
   static void wrap() {
-    // register the vector_indexing_suite for SGroups
+    // register the vector_indexing_suite for SubstanceGroups
     // if it hasn't already been done.
     // logic from https://stackoverflow.com/a/13017303
     boost::python::type_info info =
-        boost::python::type_id<std::vector<RDKit::SGroup>>();
+        boost::python::type_id<std::vector<RDKit::SubstanceGroup>>();
     const boost::python::converter::registration *reg =
         boost::python::converter::registry::query(info);
     if (reg == NULL || (*reg).m_to_python == NULL) {
-      python::class_<std::vector<RDKit::SGroup>>("SGroup_VECT")
-          .def(python::vector_indexing_suite<std::vector<RDKit::SGroup>>());
+      python::class_<std::vector<RDKit::SubstanceGroup>>("SubstanceGroup_VECT")
+          .def(python::vector_indexing_suite<
+               std::vector<RDKit::SubstanceGroup>>());
     }
 
-    python::class_<SGroup, boost::shared_ptr<SGroup>>(
-        "SGroup", sGroupClassDoc.c_str(), python::no_init)
-        .def("GetOwningMol", &SGroup::getOwningMol,
-             "returns the molecule owning this SGroup",
+    python::class_<SubstanceGroup, boost::shared_ptr<SubstanceGroup>>(
+        "SubstanceGroup", sGroupClassDoc.c_str(), python::no_init)
+        .def("GetOwningMol", &SubstanceGroup::getOwningMol,
+             "returns the molecule owning this SubstanceGroup",
              python::return_internal_reference<>())
-        .def("GetIndexInMol", &SGroup::getIndexInMol,
-             "returns the index of this SGroup in the owning molecule's list.")
-        .def("GetAtoms", &SGroup::getAtoms,
-             "returns a list of the indices of the atoms in this SGroup",
+        .def("GetIndexInMol", &SubstanceGroup::getIndexInMol,
+             "returns the index of this SubstanceGroup in the owning "
+             "molecule's list.")
+        .def(
+            "GetAtoms", &SubstanceGroup::getAtoms,
+            "returns a list of the indices of the atoms in this SubstanceGroup",
+            python::return_value_policy<python::copy_const_reference>())
+        .def("GetParentAtoms", &SubstanceGroup::getParentAtoms,
+             "returns a list of the indices of the parent atoms in this "
+             "SubstanceGroup",
              python::return_value_policy<python::copy_const_reference>())
-        .def("GetParentAtoms", &SGroup::getParentAtoms,
-             "returns a list of the indices of the parent atoms in this SGroup",
-             python::return_value_policy<python::copy_const_reference>())
-        .def("GetBonds", &SGroup::getBonds,
-             "returns a list of the indices of the bonds in this SGroup",
-             python::return_value_policy<python::copy_const_reference>())
+        .def(
+            "GetBonds", &SubstanceGroup::getBonds,
+            "returns a list of the indices of the bonds in this SubstanceGroup",
+            python::return_value_policy<python::copy_const_reference>())
         .def("HasProp",
-             (bool (RDProps::*)(const std::string &) const) & SGroup::hasProp,
+             (bool (RDProps::*)(const std::string &) const) &
+                 SubstanceGroup::hasProp,
              "returns whether or not a particular property exists")
         .def("GetProp",
              (std::string(RDProps::*)(const std::string &) const) &
-                 SGroup::getProp<std::string>,
+                 SubstanceGroup::getProp<std::string>,
              "returns the value of a particular property")
         .def("GetIntProp",
              (int (RDProps::*)(const std::string &) const) &
-                 SGroup::getProp<int>,
+                 SubstanceGroup::getProp<int>,
              "returns the value of a particular property")
         .def("GetUnsignedProp",
              (unsigned int (RDProps::*)(const std::string &) const) &
-                 SGroup::getProp<unsigned int>,
+                 SubstanceGroup::getProp<unsigned int>,
              "returns the value of a particular property")
         .def("GetDoubleProp",
              (double (RDProps::*)(const std::string &) const) &
-                 SGroup::getProp<double>,
+                 SubstanceGroup::getProp<double>,
              "returns the value of a particular property")
         .def("GetBoolProp",
              (bool (RDProps::*)(const std::string &) const) &
-                 SGroup::getProp<bool>,
+                 SubstanceGroup::getProp<bool>,
              "returns the value of a particular property")
-        .def("GetPropNames", &SGroup::getPropList,
+        .def("GetPropNames", &SubstanceGroup::getPropList,
              (python::arg("self"), python::arg("includePrivate") = false,
               python::arg("includeComputed") = false),
-             "Returns a list of the properties set on the SGroup.\n\n")
-        .def("GetPropsAsDict", GetPropsAsDict<SGroup>,
+             "Returns a list of the properties set on the SubstanceGroup.\n\n")
+        .def("GetPropsAsDict", GetPropsAsDict<SubstanceGroup>,
              (python::arg("self"), python::arg("includePrivate") = true,
               python::arg("includeComputed") = true),
-             "Returns a dictionary of the properties set on the SGroup.\n"
+             "Returns a dictionary of the properties set on the "
+             "SubstanceGroup.\n"
              " n.b. some properties cannot be converted to python types.\n");
-    python::def("GetMolSGroups", &getMolSGroups,
-                "returns the SGroups for a molecule (if any)",
+    python::def("GetMolSubstanceGroups", &getMolSubstanceGroups,
+                "returns the SubstanceGroups for a molecule (if any)",
                 python::with_custodian_and_ward_postcall<0, 1>());
-    python::def("ClearMolSGroups", &clearMolSGroups,
-                "removes all SGroups from a molecule (if any)");
+    python::def("ClearMolSubstanceGroups", &clearMolSubstanceGroups,
+                "removes all SubstanceGroups from a molecule (if any)");
     // FIX: needs something tying the lifetime to the mol
   }
 };
