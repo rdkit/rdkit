@@ -36,13 +36,23 @@ A `StereoGroup` contains an enum with the type as well as pointers to the atoms 
 
 ## Enumeration
 
-The existing stereoisomer enumeration code needs to be updated to handle enhanced stereo groups correctly. This is the key piece for canonicalization and substructure searching.
+The Python-only function `rdkit.Chem.EnumerateStereoisomers.EnumerateStereoisomers` can be used to enumerate
+all stereoisomers represented by the StereoGroups. It is possible to enumerate _only_ the Stereo Groups,
+ignoring other unspecified centers. 
 
-We probably need to add an option to allow enumeration only of stereo groups (to ignore unspecified centers).
+## Reactions
+
+The reaction runner is aware of stereo groups associated with a Mol. Stereo Groups are copied from reactants to products if:
+
+* All atoms in the Stereo Group are copied to the same product
+* All atoms in the Stereo Group have a defined stereochemistry in the product
+* No atom in the Stereo Group had its stereochemistry defined by the reaction
+
+If an atom from a reactant StereoGroup appears multiple times in the product, all copies of that atom are put in the same product StereoGroup.
 
 ## Searching
 
-This will be handled by searching in MolBundle objects produced by the enumeration code.
+This will be handled by searching in MolBundle objects produced by the enumeration code. Substructure searching and canonicalization do not yet support stereo groups.
 
 ## Depiction
 

@@ -466,8 +466,7 @@ void setReactantAtomPropertiesToProduct(Atom *productAtom,
   // One might be tempted to copy over the reactant atom's chirality into the
   // product atom if chirality is not specified on the product. This would be a
   // very bad idea because the order of bonds will almost certainly change on
-  // the
-  // atom and the chirality is referenced to bond order.
+  // the atom and the chirality is referenced to bond order.
 
   // --------- --------- --------- --------- --------- ---------
   // While we're here, set the stereochemistry
@@ -669,8 +668,7 @@ void checkAndCorrectChiralityOfMatchingAtomsInProduct(
       continue;
     }
     // we can only do something sensible here if we have the same number of
-    // bonds
-    // in the reactants and the products:
+    // bonds in the reactants and the products:
     if (reactantAtom.getDegree() != productAtom->getDegree()) {
       continue;
     }
@@ -793,15 +791,13 @@ void checkAndCorrectChiralityOfProduct(
 }
 
 //
-// Can this sterogroup safely be copied to the product?
-// * All atoms in the stereo group are in the product
-// * If reactant atoms are duplicated in the product, they must have the same
-//   number of duplicates so that it is 
-// 
-
-static bool areAllAtomsMapped(const std::vector<Atom*>& atoms,
-                                           const RWMol& product,
-                                           const ReactantProductAtomMapping& mapping)
+// Can this StereoGroup safely be copied to the product?
+// * All atoms in the stereo group are in the same product
+// * All atoms in the stereo group have a defined stereochemistry in the product
+// * No product stereochemistry is defined exclusively by the product template.
+static bool isChiralityPreservedForAllAtoms(const std::vector<Atom*>& atoms,
+                                            const RWMol& product,
+                                            const ReactantProductAtomMapping& mapping)
 {
   for (auto&& reactantAtom: atoms) {
     auto productAtoms = mapping.reactProdAtomMap.find(reactantAtom->getIdx());
@@ -815,14 +811,19 @@ static bool areAllAtomsMapped(const std::vector<Atom*>& atoms,
       if (productAtom->getChiralTag() == Atom::CHI_UNSPECIFIED) {
         return false;
       }
+      int flagVal = 0;
+      productAtom->getPropIfPresent(common_properties::molInversionFlag, flagVal);
+      if (flagVal == 4) {
+        return false;
+      }
     }
   }
 
   return true;
 }
 
-// Copy enhanced stereo groups from one reactant to the product
-void copyEnhancedStereoGroups(const ROMol &reactant,
+// Copy relative stereo groups from one reactant to the product
+void copyRelativeStereoGroups(const ROMol &reactant,
                               RWMOL_SPTR product,
                               const ReactantProductAtomMapping& mapping)
 {
@@ -831,7 +832,7 @@ void copyEnhancedStereoGroups(const ROMol &reactant,
 
     // Make sure that all atoms in the stereo group are in the product with
     // chirality preserved
-    if (!areAllAtomsMapped(sg.getAtoms(), *product, mapping)) {
+    if (!isChiralityPreservedForAllAtoms(sg.getAtoms(), *product, mapping)) {
       continue;
     }
 
@@ -940,11 +941,13 @@ void addReactantAtomsAndBonds(const ChemicalReaction &rxn, RWMOL_SPTR product,
   // ---------- ---------- ---------- ---------- ---------- ----------
   // now we need to loop over atoms from the reactants that were chiral but not
   // directly involved in the reaction in order to make sure their chirality
-  // hasn't
-  // been disturbed
+  // hasn't been disturbed
   checkAndCorrectChiralityOfProduct(chiralAtomsToCheck, product, mapping);
 
-  copyEnhancedStereoGroups(*reactant, product, *mapping);
+  // ---------- ---------- ---------- ---------- ---------- ----------
+  // Copy relative StereoGroup data from reactant to product if it is
+  // still valid. Uses ChiralTag checks above.
+  copyRelativeStereoGroups(*reactant, product, *mapping);
 
   // ---------- ---------- ---------- ---------- ---------- ----------
   // finally we may need to set the coordinates in the product conformer:
