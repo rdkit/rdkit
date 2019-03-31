@@ -55,7 +55,7 @@ macro(rdkit_library)
       add_library(${RDKLIB_NAME}_static ${RDKLIB_SOURCES})
 
       foreach(linkLib ${RDKLIB_LINK_LIBRARIES})
-        if(${linkLib} MATCHES "^(Boost)|(Thread)|(boost)|^(optimized)|^(debug)")
+        if(${linkLib} MATCHES "^(Boost)|(Thread)|(boost)|^(optimized)|^(debug)|(libz)")
           set(rdk_static_link_libraries "${rdk_static_link_libraries}${linkLib};")
         else()
           set(rdk_static_link_libraries "${rdk_static_link_libraries}${linkLib}_static;")
