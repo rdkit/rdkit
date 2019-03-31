@@ -12,6 +12,213 @@ using Python 2: https://www.mail-archive.com/rdkit-discuss@lists.sourceforge.net
 - The uncharging method in the MolStandardizer now attempts to generate canonical results for a given 
   molecule. This may result in different output for some molecules.
   
+## Highlights:
+
+
+## Acknowledgements:
+Michael Banck, Francois Berenger, Thomas Blaschke, Brian Cole, Andrew Dalke, Guillaume Godin, 
+Jan Holst Jensen, Sunhwan Jo, Brian Kelley, Petr Kubat, Karl Leswing, Susan Leung, John Mayfield, 
+Adam Moyer, Dan Nealschneider, Noel O'Boyle, Stephen Roughley, Takayuki Serizawa, Gianluca Sforna, 
+Ricardo Rodriguez Schmidt, Matt Swain, Paolo Tosco, Ricardo Vianello, 'msteijaert', 'paconius', 
+'sirbiscuit' 
+
+
+## Bug Fixes:
+  - PgSQL: fix boolean definitions for Postgresql 11
+ (github pull #2129 from pkubatrh)
+  - update fingerprint tutorial notebook
+ (github pull #2130 from greglandrum)
+  - Fix typo in RecapHierarchyNode destructor
+ (github pull #2137 from iwatobipen)
+  - SMARTS roundtrip failure
+ (github issue #2142 from mcs07)
+  - Error thrown in rdMolStandardize.ChargeParent
+ (github issue #2144 from paconius)
+  - SMILES parsing inconsistency based on input order
+ (github issue #2148 from coleb)
+  - MolDraw2D: line width not in python wrapper
+ (github issue #2149 from greglandrum)
+  - Missing Python API Documentation
+ (github issue #2158 from greglandrum)
+  - PgSQL: mol_to_svg() changes input molecule.
+ (github issue #2174 from janholstjensen)
+  - Remove Unicode From AcidBasePair Name
+ (github pull #2185 from lilleswing)
+  - Inconsistent treatment of `[as]` in SMILES and SMARTS
+ (github issue #2197 from greglandrum)
+  - RGroupDecomposition fixes, keep userLabels more robust onlyMatchAtRGroups
+ (github pull #2202 from bp-kelley)
+  - Fix TautomerTransform in operator=
+ (github pull #2203 from bp-kelley)
+  - testEnumeration hangs/takes where long on 32bit architectures
+ (github issue #2209 from mbanck)
+  - Silencing some Python 3 warning messages
+ (github pull #2223 from coleb)
+  - removeHs shouldn't remove atom lists
+ (github issue #2224 from rvianello)
+  - failure round-tripping mol block with Q atom
+ (github issue #2225 from rvianello)
+  - problem round-tripping mol files that include bond topology info
+ (github issue #2229 from rvianello)
+  - aromatic main-group atoms written to SMARTS incorrectly
+ (github issue #2237 from greglandrum)
+  - findPotentialStereoBonds() stopping too early
+ (github issue #2244 from greglandrum)
+  - MinMax Diversity picker seeding shows deterministic / non-random behaviour
+ (github issue #2245 from sroughley)
+  - Fix to serialize binary strings
+ (github pull #2264 from bp-kelley)
+  - Recognize N in three-membered rings as potentially chiral
+ (github issue #2268 from greglandrum)
+  - Failure when parsing mol block with M  PXA
+ (github issue #2277 from greglandrum)
+  - query-query matching failing for atoms constructed from SMARTS
+ (github issue #2299 from greglandrum)
+  - SMILES parsing fails for dative ring closures
+ (github issue #2303 from greglandrum)
+  - Missing Dict.h overload: std::string Dict::getVal<std::string>
+ (github issue #2308 from greglandrum)
+  - fix a problem with the random pickers test
+ (github pull #2310 from greglandrum)
+  - fixes #908
+ (github pull #2328 from greglandrum)
+  - change to make the SWIG builds work on windows
+ (github pull #2340 from greglandrum)
+  - uncharger behaves differently on molecules constructed from mol blocks and SMILES
+ (github issue #2346 from greglandrum)
+  - Memory Error When Writing ToBinary With "AllProps"
+ (github issue #2352 from atom-moyer)
+  - Seg fault on init if RDBASE is not set
+ (github issue #2368 from greglandrum)
+
+## New Features and Enhancements:
+  - Allow access to Enhanced Stereochemistry information from Python
+ (github issue #2108 from d-b-w)
+  - Adopt EnumerateStereoisomers to use extended stereo
+ (github issue #2109 from greglandrum)
+  - Enable ctest -T memcheck
+ (github pull #2113 from ricrogz)
+  - Support for parsing/writing SGroups in SD Mol files
+ (github pull #2138 from ricrogz)
+   - Rename the #define _DEBUG to MMPA_DEBUG in mmpa.cpp
+ (github pull #2140 from baoilleach)
+  - MolDraw2D: line width should be controlled by MolDrawOptions
+ (github issue #2151 from greglandrum)
+  - Some refactoring of the distance geometry code
+ (github pull #2153 from greglandrum)
+  - Less warnings
+ (github pull #2155 from UnixJunkie)
+  - ShapeTverskyIndex python function
+ (github pull #2156 from susanhleung)
+  - Skip compound if smiles conversion fails
+ (github pull #2168 from msteijaert)
+  - Fix #2176: InChI functions should return NULL on un-InChI-able input molecules.
+ (github pull #2177 from janholstjensen)
+  - Update installation instructions for Linux
+ (github pull #2181 from sirbiscuit)
+  - Update CMake rules to find external coorgen & maeparser libs
+ (github pull #2184 from ricrogz)
+  - Update to use the travis Xenial environment
+ (github pull #2200 from greglandrum)
+  - Do not allow PandasTools to overwrite pandas settings
+ (github pull #2206 from sirbiscuit)
+  - re-enable (and update) the file parser tests
+ (github pull #2208 from greglandrum)
+  - Added documentation files written in Japanese into Book directory
+ (github pull #2210 from magattaca)
+  - Add C++ convenience function for drawing ROMols
+ (github issue #2220 from greglandrum)
+  - Change boost int types to std types
+ (github pull #2233 from bp-kelley)
+  - Added exports for SGroup functions
+ (github pull #2242 from ricrogz)
+  - Use coordMap when starting embedding from random coords
+ (github issue #2246 from greglandrum)
+  - Improve interactivity of output SVG
+ (github pull #2253 from greglandrum)
+  - Add options for substructure searching
+ (github pull #2254 from greglandrum)
+  - keep extra information about bonds from Mol files
+ (github pull #2260 from greglandrum)
+  - Allow converting mol blocks directly to InChI
+ (github pull #2262 from greglandrum)
+  - Patch/pains updates
+ (github pull #2272 from johnmay)
+  - add warning for 2D conformations flagged as 3D
+ (github pull #2273 from greglandrum)
+  - Store extra CXSMILES data as a property
+ (github pull #2281 from ricrogz)
+  - Parse enhanced stereo information from CXSMILES
+ (github pull #2282 from ricrogz)
+  - Robustify parsing of CTABs and SGROUPs
+ (github pull #2283 from greglandrum)
+  - Write enhanced stereo to cxsmiles
+ (github pull #2290 from greglandrum)
+  - Allow custom type-handlers in the RDProps interface
+ (github pull #2293 from bp-kelley)
+  - Add serialization to SubstructLibrary
+ (github pull #2295 from bp-kelley)
+  - support reading/writing atom props from SD files
+ (github pull #2297 from greglandrum)
+  - Add test for issue #2285, fix molbundle test
+ (github pull #2301 from bp-kelley)
+  - Update maeparser & coordgen libraries
+ (github pull #2302 from ricrogz)
+  - Mem errors clean up
+ (github pull #2305 from ricrogz)
+  - Add definition of MolFragmentToCXSmiles
+ (github pull #2307 from greglandrum)
+  - Doc update
+ (github pull #2312 from greglandrum)
+  - Adds gzstream stream, exposes to swig
+ (github pull #2314 from bp-kelley)
+  - Remove a bunch of Python2-related warts
+ (github pull #2315 from greglandrum)
+  - some much-needed optimization work on the new property lists
+ (github pull #2317 from greglandrum)
+  - Build warnings revisited
+ (github pull #2318 from ricrogz)
+  - change bogus "3D" to "2D" in a test file
+ (github pull #2319 from greglandrum)
+  - Allow copying atoms in Python
+ (github pull #2322 from d-b-w)
+  - fixes an r-group symmetrization problem
+ (github pull #2324 from greglandrum)
+  - simple docstring fix
+ (github pull #2326 from sunhwan)
+  - allow using system's catch2 for tests
+ (github pull #2327 from giallu)
+  - Python wrap DetectAtomStereoChemistry from MolFileStereochem.h
+ (github issue #2329 from d-b-w)
+  - switch to using cmake to handle the C++ spec
+ (github pull #2334 from greglandrum)
+  - WIP: optional integration with YAeHMOP
+ (github pull #2335 from greglandrum)
+  - Exposes substructlibrary to swig
+ (github pull #2337 from bp-kelley)
+  - Add a skip_all_if_match option to the FragmentRemover
+ (github pull #2338 from greglandrum)
+  - Dev/general csharp fixes
+ (github pull #2341 from bp-kelley)
+  - Add a read-only Python wrapper for SGroups
+ (github pull #2343 from greglandrum)
+  - Expose RGroupDecomposition to SWIG
+ (github pull #2345 from greglandrum)
+  - update debian build script to python3
+ (github pull #2350 from UnixJunkie)
+  - add GetStereoIsomerCount() function to EnumerateStereoisomers
+ (github pull #2354 from greglandrum)
+  - Update coordgenlibs to v1.2.2
+ (github pull #2355 from ricrogz)
+  - Small fixes to get DLLs to build on Windows
+ (github pull #2356 from ptosco)
+  - Boost deprecation warning
+ (github pull #2357 from d-b-w)
+  - Removes an extra debugging cerr statment
+ (github pull #2360 from d-b-w)
+  - improvements to the Uncharge functionality
+ (github pull #2374 from greglandrum)
+
 
 # Release_2018.09.1
 (Changes relative to Release_2018.03.1)
