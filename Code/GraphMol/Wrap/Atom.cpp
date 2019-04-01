@@ -347,6 +347,22 @@ struct atom_wrapper {
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n")
 
+        .def("SetExplicitBitVectProp", AtomSetProp<ExplicitBitVect>,
+             (python::arg("self"), python::arg("key"), python::arg("val")),
+             "Sets an atomic property\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to be set (an ExplicitBitVect).\n"
+             "    - value: the property value (an ExplicitBitVect).\n\n")
+
+        .def("GetExplicitBitVectProp", GetProp<Atom, ExplicitBitVect>,
+             "Returns the value of the property.\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to return (a ExplicitBitVect).\n\n"
+             "  RETURNS: an ExplicitBitVect \n\n"
+             "  NOTE:\n"
+             "    - If the property has not been set, a KeyError exception "
+             "will be raised.\n")
+        
         .def("HasProp", AtomHasProp,
              "Queries a Atom to see if a particular property has been "
              "assigned.\n\n"

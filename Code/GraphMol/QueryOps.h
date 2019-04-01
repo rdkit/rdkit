@@ -19,6 +19,8 @@
 #include <GraphMol/RDKitBase.h>
 #include <Query/QueryObjects.h>
 #include <Query/Query.h>
+#include <DataStructs/BitVects.h>
+#include <DataStructs/BitOps.h>
 
 #ifdef RDK_THREADSAFE_SSS
 #include <mutex>
@@ -922,10 +924,84 @@ class HasPropWithValueQuery<TargetPtr, std::string>
   }
 };
 
+template <class TargetPtr>
+class HasPropWithValueQuery<TargetPtr, ExplicitBitVect>
+    : public Queries::EqualityQuery<int, TargetPtr, true> {
+  std::string propname;
+  ExplicitBitVect val;
+  float tol;
+
+ public:
+  HasPropWithValueQuery()
+      : Queries::EqualityQuery<int, TargetPtr, true>(), propname(), val(), tol(1.0) {
+    this->setDescription("HasPropWithValue");
+    this->setDataFunc(0);
+  };
+  
+  explicit HasPropWithValueQuery(const std::string &prop,
+                                 const ExplicitBitVect &v,
+                                 float tol = 1.0)
+      : Queries::EqualityQuery<int, TargetPtr, true>(), propname(prop), val(v), tol(tol) {
+    this->setDescription("HasPropWithValue");
+    this->setDataFunc(0);
+  };
+
+  virtual bool Match(const TargetPtr what) const {
+    bool res = what->hasProp(propname);
+    if (res) {
+      try {
+        const ExplicitBitVect &bv = what->template getProp<const ExplicitBitVect&>(propname);
+        const double tani = TanimotoSimilarity(val, bv);
+        res = (1.0 - tani) <= tol;
+      } catch (KeyErrorException) {
+        res = false;
+      } catch (boost::bad_any_cast) {
+        res = false;
+      }
+#ifdef __GNUC__
+#if (__GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 2))
+      catch (...) {
+        // catch all -- this is currently necessary to
+        //  trap some bugs in boost+gcc configurations
+        //  Normally, this is not the correct thing to
+        //  do, but the only exception above is due
+        //  to the boost any_cast which is trapped
+        //  by the Boost python wrapper when it shouldn't
+        //  be.
+        res = false;
+      }
+#endif
+#endif
+    }
+    if (this->getNegation()) {
+      res = !res;
+    }
+    return res;
+  }
+
+  //! returns a copy of this query
+  Queries::Query<int, TargetPtr, true> *copy() const {
+    HasPropWithValueQuery<TargetPtr, ExplicitBitVect> *res =
+        new HasPropWithValueQuery<TargetPtr, ExplicitBitVect>(this->propname,
+                                                              this->val,
+                                                              this->tol);
+    res->setNegation(this->getNegation());
+    res->d_description = this->d_description;
+    return res;
+  }
+};
+
 template <class Target, class T>
 Queries::EqualityQuery<int, const Target *, true> *makePropQuery(
     const std::string &propname, const T &val, const T &tolerance = T()) {
   return new HasPropWithValueQuery<const Target *, T>(propname, val, tolerance);
+}
+
+template <class Target>
+Queries::EqualityQuery<int, const Target *, true> *makePropQuery(
+    const std::string &propname, const ExplicitBitVect &val, float tolerance=0.0) {
+  return new HasPropWithValueQuery<const Target *, ExplicitBitVect>(propname, val,
+                                                                    tolerance);
 }
 
 RDKIT_GRAPHMOL_EXPORT bool isComplexQuery(const Bond *b);

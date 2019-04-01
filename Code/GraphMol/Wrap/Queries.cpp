@@ -114,6 +114,15 @@ Ret *PropQueryWithTol(const std::string &propname, const T &v, bool negate,
   return res;
 }
 
+template <class Ob, class Ret>
+Ret *PropQueryWithTol(const std::string &propname, const ExplicitBitVect &v,
+                      bool negate, float tol = 0.0) {
+  auto *res = new Ret();
+  res->setQuery(makePropQuery<Ob>(propname, v, tol));
+  if (negate) res->getQuery()->setNegation(true);
+  return res;
+}
+
 struct queries_wrapper {
   static void wrap() {
 #define QADEF1(_funcname_)                                                     \
@@ -214,6 +223,16 @@ struct queries_wrapper {
                 "value +- tolerance",
                 python::return_value_policy<python::manage_new_object>());
 
+    python::def("HasBitVectPropWithValueQueryAtom",
+                PropQueryWithTol<Atom, QueryAtom>,
+                (python::arg("propname"), python::arg("val"),
+                 python::arg("negate") = false, python::arg("tolerance") = 0),
+                "Returns a QueryAtom that matches when the propery 'propname' "
+                "has the specified explicit bit vector"
+                " value.  Tolerance here is allowed difference in Tanimoto",
+                python::return_value_policy<python::manage_new_object>());
+
+    
     /////////////////////////////////////////////////////////////////////////////////////
     //  Bond Queries
     python::def("HasPropQueryBond", HasPropQueryBond,
