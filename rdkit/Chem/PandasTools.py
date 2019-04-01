@@ -384,7 +384,7 @@ def WriteSDF(df, out, molColName='ROMol', idName=None, properties=None, allNumer
     if allNumeric:
         properties.extend([
           dt for dt in df.dtypes.keys()
-          if (np.issubdtype(df.dtypes[dt], float) or np.issubdtype(df.dtypes[dt], int))
+          if (np.issubdtype(df.dtypes[dt], np.floating) or np.issubdtype(df.dtypes[dt], np.integer))
         ])
 
     if molColName in properties:
@@ -404,7 +404,7 @@ def WriteSDF(df, out, molColName='ROMol', idName=None, properties=None, allNumer
         for p in properties:
             cell_value = row[1][p]
             # Make sure float does not get formatted in E notation
-            if np.issubdtype(type(cell_value), float):
+            if np.issubdtype(type(cell_value), np.floating):
                 s = '{:f}'.format(cell_value).rstrip("0")  # "f" will show 7.0 as 7.00000
                 if s[-1] == ".":
                     s += "0"  # put the "0" back on if it's something like "7."
@@ -515,7 +515,7 @@ def FrameToGridImage(frame, column='ROMol', legendsCol=None, **kwargs):
             kwargs['legends'] = [str(c) for c in frame.index]
         else:
             kwargs['legends'] = [str(c) for c in frame[legendsCol]]
-    return Draw.MolsToGridImage(frame[column], **kwargs)
+    return Draw.MolsToGridImage(list(frame[column]), **kwargs)
 
 
 def AddMurckoToFrame(frame, molCol='ROMol', MurckoCol='Murcko_SMILES', Generic=False):
