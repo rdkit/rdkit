@@ -104,7 +104,7 @@ RWMol *chargeParent(const RWMol &mol, const CleanupParameters &params,
 void superParent(RWMol &mol, const CleanupParameters &params) {
   RDUNUSED_PARAM(mol);
   RDUNUSED_PARAM(params);
-  UNDER_CONSTRUCTION("Not yet implmented");
+  UNDER_CONSTRUCTION("Not yet implemented");
 }
 
 RWMol *normalize(const RWMol *mol, const CleanupParameters &params) {

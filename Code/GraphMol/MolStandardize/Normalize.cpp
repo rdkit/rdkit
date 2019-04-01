@@ -57,10 +57,12 @@ ROMol *Normalizer::normalize(const ROMol &mol) {
   PRECONDITION(tparams, "");
   const std::vector<std::shared_ptr<ChemicalReaction>> &transforms =
       tparams->getTransformations();
-
-  std::vector<boost::shared_ptr<ROMol>> frags = MolOps::getMolFrags(mol);
+  bool sanitizeFrags = false;
+  std::vector<boost::shared_ptr<ROMol>> frags =
+      MolOps::getMolFrags(mol, sanitizeFrags);
   std::vector<ROMOL_SPTR> nfrags;  //( frags.size() );
   for (const auto &frag : frags) {
+    frag->updatePropertyCache(false);
     ROMOL_SPTR nfrag(this->normalizeFragment(*frag, transforms));
     nfrags.push_back(nfrag);
   }
@@ -134,8 +136,10 @@ boost::shared_ptr<ROMol> Normalizer::applyTransform(
         // std::endl;
         unsigned int failed;
         try {
-          MolOps::sanitizeMol(*static_cast<RWMol *>(pdt[0].get()), failed);
-          Normalizer::Product np(MolToSmiles(*pdt[0]), pdt[0]);
+          RWMol tmol(*static_cast<RWMol *>(pdt[0].get()));
+          MolOps::sanitizeMol(tmol, failed);
+          pdt[0]->updatePropertyCache(false);
+          Normalizer::Product np(MolToSmiles(tmol), pdt[0]);
           pdts.push_back(np);
         } catch (MolSanitizeException &) {
           BOOST_LOG(rdInfoLog) << "FAILED sanitizeMol.\n";
