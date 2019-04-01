@@ -64,6 +64,10 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Reionizer {
   // corrections
   Reionizer(const std::string acidbaseFile,
             const std::vector<ChargeCorrection> ccs);
+  //! construct a Reionizer with a particular acidbaseFile and charge
+  // corrections
+  Reionizer(std::istream &acidbaseStream,
+            const std::vector<ChargeCorrection> ccs);
   //! making Reionizer objects non-copyable
   Reionizer(const Reionizer &other) = delete;
   Reionizer &operator=(Reionizer const &) = delete;

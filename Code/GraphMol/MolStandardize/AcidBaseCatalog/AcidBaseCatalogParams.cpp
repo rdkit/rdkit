@@ -20,6 +20,11 @@ AcidBaseCatalogParams::AcidBaseCatalogParams(const std::string &acidBaseFile) {
   d_pairs = readPairs(acidBaseFile);
 }
 
+AcidBaseCatalogParams::AcidBaseCatalogParams(std::istream &acidBaseFile) {
+  d_pairs.clear();
+  d_pairs = readPairs(acidBaseFile);
+}
+
 AcidBaseCatalogParams::AcidBaseCatalogParams(
     const AcidBaseCatalogParams &other) {
   d_typeStr = other.d_typeStr;

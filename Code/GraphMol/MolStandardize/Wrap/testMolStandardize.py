@@ -201,6 +201,22 @@ chlorine	[Cl]
         nm = fragremover.remove(mol)
         self.assertEqual(Chem.MolToSmiles(nm), "Br.CN(C)C")
 
+    def test12ChargeParams(self):
+        params = """// The default list of AcidBasePairs, sorted from strongest to weakest.
+// This list is derived from the Food and Drug: Administration Substance
+// Registration System Standard Operating Procedure guide.
+//
+//	Name	Acid	Base
+-SO2H	[!O][SD3](=O)[OH]	[!O][SD3](=O)[O-]
+-SO3H	[!O]S(=O)(=O)[OH]	[!O]S(=O)(=O)[O-]
+"""
+        mol = Chem.MolFromSmiles("C1=C(C=CC(=C1)[S]([O-])=O)[S](O)(=O)=O")
+        # instantiate with default acid base pair library
+        reionizer = rdMolStandardize.ReionizerFromData(params, [])
+        print("done")
+        nm = reionizer.reionize(mol)
+        self.assertEqual(Chem.MolToSmiles(nm), "O=S([O-])c1ccc(S(=O)(=O)O)cc1")
+
 
 if __name__ == "__main__":
     unittest.main()

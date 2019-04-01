@@ -31,6 +31,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT AcidBaseCatalogParams
   }
 
   AcidBaseCatalogParams(const std::string &acidBaseFile);
+  AcidBaseCatalogParams(std::istream &acidBaseFile);
   // copy constructor
   AcidBaseCatalogParams(const AcidBaseCatalogParams &other);
 
