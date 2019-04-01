@@ -19,7 +19,7 @@ using Python 2: https://www.mail-archive.com/rdkit-discuss@lists.sourceforge.net
   EnumerateStereoisomers takes advantage of it, and it can be read from and written to CXSmiles
 
 ## Acknowledgements:
-Michael Banck, Francois Berenger, Thomas Blaschke, Brian Cole, Andrew Dalke, Guillaume Godin, 
+Michael Banck, Francois Berenger, Thomas Blaschke, Brian Cole, Andrew Dalke, Bakary N'tji Diallo, Guillaume Godin, 
 Jan Holst Jensen, Sunhwan Jo, Brian Kelley, Petr Kubat, Karl Leswing, Susan Leung, John Mayfield, 
 Adam Moyer, Dan Nealschneider, Noel O'Boyle, Stephen Roughley, Takayuki Serizawa, Gianluca Sforna, 
 Ricardo Rodriguez Schmidt, Matt Swain, Paolo Tosco, Ricardo Vianello, 'magattaca', 'msteijaert', 'paconius', 'sirbiscuit' 
@@ -91,6 +91,8 @@ Ricardo Rodriguez Schmidt, Matt Swain, Paolo Tosco, Ricardo Vianello, 'magattaca
  (github issue #2352 from atom-moyer)
   - Seg fault on init if RDBASE is not set
  (github issue #2368 from greglandrum)
+  - PandasTools.FrameToGridImage() fails with SVG output
+ (github issue #2380 from greglandrum)
 
 ## New Features and Enhancements:
   - Allow access to Enhanced Stereochemistry information from Python
