@@ -191,6 +191,16 @@ Pyridine oxide to n+O-	[n:1]=[O:2]>>[n+:1][O-:2]
         self.assertEqual(Chem.MolToSmiles(mol1), "[N-]=[N+]=NCC[N+](=O)[O-]")
         self.assertEqual(Chem.MolToSmiles(mol2), "N#N=NCC[N+](=O)[O-]")
 
+    def test11FragmentParams(self):
+        data = """//   Name	SMARTS
+fluorine	[F]
+chlorine	[Cl]
+        """
+        fragremover = rdMolStandardize.FragmentRemoverFromData(data)
+        mol = Chem.MolFromSmiles("CN(C)C.Cl.Cl.Br")
+        nm = fragremover.remove(mol)
+        self.assertEqual(Chem.MolToSmiles(nm), "Br.CN(C)C")
+
 
 if __name__ == "__main__":
     unittest.main()

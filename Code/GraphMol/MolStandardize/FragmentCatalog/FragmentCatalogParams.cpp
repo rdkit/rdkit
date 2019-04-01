@@ -20,6 +20,11 @@ FragmentCatalogParams::FragmentCatalogParams(const std::string &fgroupFile) {
   d_funcGroups = readFuncGroups(fgroupFile);
 }
 
+FragmentCatalogParams::FragmentCatalogParams(std::istream &fgroupStream) {
+  d_funcGroups.clear();
+  d_funcGroups = readFuncGroups(fgroupStream);
+}
+
 FragmentCatalogParams::FragmentCatalogParams(
     const FragmentCatalogParams &other) {
   d_typeStr = other.d_typeStr;
