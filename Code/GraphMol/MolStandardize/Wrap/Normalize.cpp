@@ -11,6 +11,7 @@
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolStandardize/Normalize.h>
+#include <sstream>
 
 namespace python = boost::python;
 using namespace RDKit;
@@ -21,6 +22,11 @@ ROMol *normalizeHelper(MolStandardize::Normalizer &self, const ROMol &mol) {
   return self.normalize(mol);
 }
 
+MolStandardize::Normalizer *normalizerFromParams(
+    const std::string &data, const MolStandardize::CleanupParameters &params) {
+  std::istringstream sstr(data);
+  return new MolStandardize::Normalizer(sstr, params.maxRestarts);
+}
 }  // namespace
 
 struct normalize_wrapper {
@@ -37,6 +43,10 @@ struct normalize_wrapper {
         .def("normalize", &normalizeHelper,
              (python::arg("self"), python::arg("mol")), "",
              python::return_value_policy<python::manage_new_object>());
+    python::def("NormalizerFromData", &normalizerFromParams,
+                (python::arg("paramData")),
+                "creates a normalizer from a string containing parameter data",
+                python::return_value_policy<python::manage_new_object>());
   }
 };
 

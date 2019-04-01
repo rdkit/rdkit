@@ -32,6 +32,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TransformCatalogParams
   }
 
   TransformCatalogParams(const std::string &transformFile);
+  TransformCatalogParams(std::istream &transformStream);
   // copy constructor
   TransformCatalogParams(const TransformCatalogParams &other);
 

@@ -21,6 +21,11 @@ TransformCatalogParams::TransformCatalogParams(
   d_transformations = readTransformations(transformFile);
 }
 
+TransformCatalogParams::TransformCatalogParams(std::istream &transformStream) {
+  d_transformations.clear();
+  d_transformations = readTransformations(transformStream);
+}
+
 TransformCatalogParams::TransformCatalogParams(
     const TransformCatalogParams &other) {
   d_typeStr = other.d_typeStr;

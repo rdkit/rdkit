@@ -173,6 +173,24 @@ class TestCase(unittest.TestCase):
         self.assertEqual
         ("""INFO: [FragmentValidation] 1,2-dichloroethane is present""", msg6[0])
 
+    def test10NormalizeParams(self):
+        data = """//	Name	SMIRKS
+Nitro to N+(O-)=O	[N,P,As,Sb;X3:1](=[O,S,Se,Te:2])=[O,S,Se,Te:3]>>[*+1:1]([*-1:2])=[*:3]
+Sulfone to S(=O)(=O)	[S+2:1]([O-:2])([O-:3])>>[S+0:1](=[O-0:2])(=[O-0:3])
+Pyridine oxide to n+O-	[n:1]=[O:2]>>[n+:1][O-:2]
+// Azide to N=N+=N-	[*,H:1][N:2]=[N:3]#[N:4]>>[*,H:1][N:2]=[N+:3]=[N-:4]
+"""
+        normalizer1 = rdMolStandardize.Normalizer()
+        params = rdMolStandardize.CleanupParameters()
+        normalizer2 = rdMolStandardize.NormalizerFromData(data, params)
+
+        imol = Chem.MolFromSmiles("O=N(=O)CCN=N#N", sanitize=False)
+        mol1 = normalizer1.normalize(imol)
+        mol2 = normalizer2.normalize(imol)
+        self.assertEqual(Chem.MolToSmiles(imol), "N#N=NCCN(=O)=O")
+        self.assertEqual(Chem.MolToSmiles(mol1), "[N-]=[N+]=NCC[N+](=O)[O-]")
+        self.assertEqual(Chem.MolToSmiles(mol2), "N#N=NCC[N+](=O)[O-]")
+
 
 if __name__ == "__main__":
     unittest.main()
