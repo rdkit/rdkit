@@ -13,15 +13,16 @@ using Python 2: https://www.mail-archive.com/rdkit-discuss@lists.sourceforge.net
   molecule. This may result in different output for some molecules.
   
 ## Highlights:
-
+- There's now a Japanese translation of large parts of the RDKit documentation
+- SGroup data can now be read from and written to Mol/SDF files
+- The enhanced stereo handling has been improved: the information is now accessible from Python,
+  EnumerateStereoisomers takes advantage of it, and it can be read from and written to CXSmiles
 
 ## Acknowledgements:
 Michael Banck, Francois Berenger, Thomas Blaschke, Brian Cole, Andrew Dalke, Guillaume Godin, 
 Jan Holst Jensen, Sunhwan Jo, Brian Kelley, Petr Kubat, Karl Leswing, Susan Leung, John Mayfield, 
 Adam Moyer, Dan Nealschneider, Noel O'Boyle, Stephen Roughley, Takayuki Serizawa, Gianluca Sforna, 
-Ricardo Rodriguez Schmidt, Matt Swain, Paolo Tosco, Ricardo Vianello, 'msteijaert', 'paconius', 
-'sirbiscuit' 
-
+Ricardo Rodriguez Schmidt, Matt Swain, Paolo Tosco, Ricardo Vianello, 'magattaca', 'msteijaert', 'paconius', 'sirbiscuit' 
 
 ## Bug Fixes:
   - PgSQL: fix boolean definitions for Postgresql 11
