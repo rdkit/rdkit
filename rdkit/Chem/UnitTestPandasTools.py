@@ -178,6 +178,13 @@ class TestPandasTools(unittest.TestCase):
         self.assertFalse(molge(mol1, mol3))
         self.assertEqual(mol1.__dict__['__sssAtoms'], [])
 
+    @unittest.skipIf(IPython is None, 'Package IPython required for testing')
+    def test_github2380(self):
+        from rdkit.Chem.Draw import IPythonConsole
+        IPythonConsole.ipython_useSVG = True
+        df = PandasTools.LoadSDF(getStreamIO(methane + peroxide))
+        _ = PandasTools.FrameToGridImage(df)
+
 
 @unittest.skipIf(PandasTools.pd is None, 'Pandas not installed, skipping')
 class TestLoadSDF(unittest.TestCase):

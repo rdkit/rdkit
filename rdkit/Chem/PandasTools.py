@@ -515,7 +515,7 @@ def FrameToGridImage(frame, column='ROMol', legendsCol=None, **kwargs):
             kwargs['legends'] = [str(c) for c in frame.index]
         else:
             kwargs['legends'] = [str(c) for c in frame[legendsCol]]
-    return Draw.MolsToGridImage(frame[column], **kwargs)
+    return Draw.MolsToGridImage(list(frame[column]), **kwargs)
 
 
 def AddMurckoToFrame(frame, molCol='ROMol', MurckoCol='Murcko_SMILES', Generic=False):
