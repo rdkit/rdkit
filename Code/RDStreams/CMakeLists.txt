@@ -5,8 +5,10 @@ if (NOT Boost_USE_STATIC_LIBS)
 endif()
 
 if (WIN32)
-  find_package(Boost 1.58.0 COMPONENTS zlib REQUIRED)
-  set(zlib_lib Boost::zlib)
+  find_package(Boost 1.58.0 COMPONENTS zlib)
+  if(Boost_zlib_FOUND)
+    set(zlib_lib Boost::zlib)
+  endif()
 endif()
 
 add_definitions(-DRDKIT_RDSTREAMS_BUILD)
