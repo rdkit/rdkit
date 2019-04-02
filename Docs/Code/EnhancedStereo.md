@@ -42,13 +42,10 @@ ignoring other unspecified centers.
 
 ## Reactions
 
-The reaction runner is aware of stereo groups associated with a Mol. Stereo Groups are copied from reactants to products if:
-
-* All atoms in the Stereo Group are copied to the same product
-* All atoms in the Stereo Group have a defined stereochemistry in the product
-* No atom in the Stereo Group had its stereochemistry defined by the reaction
-
-If an atom from a reactant StereoGroup appears multiple times in the product, all copies of that atom are put in the same product StereoGroup.
+The reaction runner is aware of stereo groups associated with a Mol. Atoms in a Stereo Group are copied to
+all products in which they appear, unless the reaction created or destroyed stereochemistry at that atom.
+If an atom from a reactant StereoGroup appears multiple times in the product, all copies of that atom are
+put in the same product StereoGroup.
 
 ## Searching
 

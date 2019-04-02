@@ -397,13 +397,13 @@ void checkProductChirality(Atom::ChiralType reactantChirality,
 
   switch (flagVal) {
     case 0:
+      // reaction doesn't have anything to say about the chirality
       // FIX: should we clear the chirality or leave it alone? for now we leave
       // it alone
-      // productAtom->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
       productAtom->setChiralTag(reactantChirality);
       break;
     case 1:
-      // inversion
+      // reaction inverts chirality
       if (reactantChirality != Atom::CHI_TETRAHEDRAL_CW &&
           reactantChirality != Atom::CHI_TETRAHEDRAL_CCW) {
         BOOST_LOG(rdWarningLog)
@@ -414,14 +414,17 @@ void checkProductChirality(Atom::ChiralType reactantChirality,
       }
       break;
     case 2:
+      // reaction retains chirality:
       // retention: just set to the reactant
       productAtom->setChiralTag(reactantChirality);
       break;
     case 3:
+      // reaction destroys chirality:
       // remove stereo
       productAtom->setChiralTag(Atom::CHI_UNSPECIFIED);
       break;
     case 4:
+      // reaction creates chirality.
       // set stereo, so leave it the way it was in the product template
       break;
     default:
@@ -790,39 +793,11 @@ void checkAndCorrectChiralityOfProduct(
   }  // end of loop over chiralAtomsToCheck
 }
 
-//
-// Can this StereoGroup safely be copied to the product?
-// * All atoms in the stereo group are in the same product
-// * All atoms in the stereo group have a defined stereochemistry in the product
-// * No product stereochemistry is defined exclusively by the product template.
-static bool isChiralityPreservedForAllAtoms(const std::vector<Atom*>& atoms,
-                                            const RWMol& product,
-                                            const ReactantProductAtomMapping& mapping)
-{
-  for (auto&& reactantAtom: atoms) {
-    auto productAtoms = mapping.reactProdAtomMap.find(reactantAtom->getIdx());
-    // some atom isn't mapped
-    if (productAtoms == mapping.reactProdAtomMap.end()) {
-      return false;
-    }
-    // Do all atoms have a chiral tag? (chirality not destroyed by the reaction)
-    for (auto product_atom_index: productAtoms->second) {
-      auto productAtom = product.getAtomWithIdx(product_atom_index);
-      if (productAtom->getChiralTag() == Atom::CHI_UNSPECIFIED) {
-        return false;
-      }
-      int flagVal = 0;
-      productAtom->getPropIfPresent(common_properties::molInversionFlag, flagVal);
-      if (flagVal == 4) {
-        return false;
-      }
-    }
-  }
 
-  return true;
-}
-
+///
 // Copy relative stereo groups from one reactant to the product
+// stereo groups are copied if any atoms are in the product with
+// the stereochemical information from the reactant preserved.
 void copyRelativeStereoGroups(const ROMol &reactant,
                               RWMOL_SPTR product,
                               const ReactantProductAtomMapping& mapping)
@@ -830,22 +805,32 @@ void copyRelativeStereoGroups(const ROMol &reactant,
   std::vector<StereoGroup> new_stereo_groups;
   for (const auto& sg: reactant.getStereoGroups()) {
 
-    // Make sure that all atoms in the stereo group are in the product with
-    // chirality preserved
-    if (!isChiralityPreservedForAllAtoms(sg.getAtoms(), *product, mapping)) {
-      continue;
-    }
-
     std::vector<Atom *> atoms;
     for (auto &&reactantAtom : sg.getAtoms()) {
-      for (auto&& productAtomIdx: mapping.reactProdAtomMap.at(reactantAtom->getIdx())) {
-        atoms.push_back(product->getAtomWithIdx(productAtomIdx));
-      }    
+      auto productAtoms = mapping.reactProdAtomMap.find(reactantAtom->getIdx());
+      if (productAtoms == mapping.reactProdAtomMap.end()) {
+        continue;
+      }
+
+      for (auto&& productAtomIdx: productAtoms->second) {
+        auto productAtom = product->getAtomWithIdx(productAtomIdx);
+
+        // If chirality destroyed by the reaction, skip the atom
+        if (productAtom->getChiralTag() == Atom::CHI_UNSPECIFIED) {
+          continue;
+        }
+        // If chirality defined explicitly by the reaction, skip the atom
+        int flagVal = 0;
+        productAtom->getPropIfPresent(common_properties::molInversionFlag, flagVal);
+        if (flagVal == 4) {
+          continue;
+        }
+        atoms.push_back(productAtom);
+      }
     }
     if (!atoms.empty()) {
       new_stereo_groups.emplace_back(sg.getGroupType(), std::move(atoms));
     }
-
   }
 
   if (!new_stereo_groups.empty()) {
