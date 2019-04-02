@@ -933,14 +933,14 @@ class HasPropWithValueQuery<TargetPtr, ExplicitBitVect>
 
  public:
   HasPropWithValueQuery()
-      : Queries::EqualityQuery<int, TargetPtr, true>(), propname(), val(), tol(1.0) {
+      : Queries::EqualityQuery<int, TargetPtr, true>(), propname(), val(), tol(0.0) {
     this->setDescription("HasPropWithValue");
     this->setDataFunc(0);
   };
   
   explicit HasPropWithValueQuery(const std::string &prop,
                                  const ExplicitBitVect &v,
-                                 float tol = 1.0)
+                                 float tol = 0.0)
       : Queries::EqualityQuery<int, TargetPtr, true>(), propname(prop), val(v), tol(tol) {
     this->setDescription("HasPropWithValue");
     this->setDataFunc(0);

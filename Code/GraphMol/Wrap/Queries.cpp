@@ -229,7 +229,7 @@ struct queries_wrapper {
                  python::arg("negate") = false, python::arg("tolerance") = 0),
                 "Returns a QueryAtom that matches when the propery 'propname' "
                 "has the specified explicit bit vector"
-                " value.  Tolerance here is allowed difference in Tanimoto",
+                " value.  The Tolerance is the allowed Tanimoto difference",
                 python::return_value_policy<python::manage_new_object>());
 
     
