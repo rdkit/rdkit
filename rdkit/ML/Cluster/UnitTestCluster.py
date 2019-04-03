@@ -89,7 +89,7 @@ class TestCase(unittest.TestCase):
             else:
                 ClusterUtils.SplitIntoNClusters(c5, n, breadthFirst=False)
 
-    @unittest.skipIf(Murtagh.Cluster is None, "Murtagh clustering not available")
+    @unittest.skipIf(Murtagh.MurtaghCluster is None, "Murtagh clustering not available")
     def testMurtaghUPGMA(self):
         if Murtagh is None:
             return
