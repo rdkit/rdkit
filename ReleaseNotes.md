@@ -27,8 +27,9 @@ Michael Banck, Francois Berenger, Thomas Blaschke, Brian Cole, Andrew Dalke,
 Bakary N'tji Diallo, Guillaume Godin, Jan Holst Jensen, Sunhwan Jo, Brian
 Kelley, Petr Kubat, Karl Leswing, Susan Leung, John Mayfield, Adam Moyer, Dan
 Nealschneider, Noel O'Boyle, Stephen Roughley, Takayuki Serizawa, Gianluca
-Sforna, Ricardo Rodriguez Schmidt, Matt Swain, Paolo Tosco, Ricardo Vianello,
-'John-Videogames', 'magattaca', 'msteijaert', 'paconius', 'sirbiscuit' 
+Sforna, Ricardo Rodriguez Schmidt, Gianluca Sforna, Matt Swain, Paolo Tosco,
+Ricardo Vianello, 'John-Videogames', 'magattaca', 'msteijaert', 'paconius',
+'sirbiscuit' 
 
 ## Bug Fixes:
   - PgSQL: fix boolean definitions for Postgresql 11
@@ -87,6 +88,8 @@ Sforna, Ricardo Rodriguez Schmidt, Matt Swain, Paolo Tosco, Ricardo Vianello,
  (github issue #2308 from greglandrum)
   - fix a problem with the random pickers test
  (github pull #2310 from greglandrum)
+  - Some tests still failing on less common platforms.
+ (github issue #2311 from giallu)
   - AddHs() using 3D coordinates with 2D conformations
  (github pull #2328 from greglandrum)
   - change to make the SWIG builds work on windows
