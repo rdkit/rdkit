@@ -51,7 +51,7 @@ def _LookupDist(dists, i, j, n):
         return 0.0
     if i > j:
         i, j = j, i
-    return dists[j * (j - 1) / 2 + i]
+    return dists[j * (j - 1) // 2 + i]
 
 
 def _ToClusters(data, nPts, ia, ib, crit, isDistData=0):
@@ -95,7 +95,7 @@ def ClusterData(data, nPts, method, isDistData=0):
             distance matrix.  The distance matrix should be stored
             symmetrically so that _LookupDist (above) can retrieve
             the results:
-              for i<j: d_ij = dists[j*(j-1)/2 + i]
+              for i<j: d_ij = dists[j*(j-1)//2 + i]
 
 
       **Returns**
