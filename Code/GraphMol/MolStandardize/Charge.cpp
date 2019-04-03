@@ -45,6 +45,13 @@ Reionizer::Reionizer(const std::string acidbaseFile,
   this->d_ccs = ccs;
 }
 
+Reionizer::Reionizer(std::istream &acidbaseStream,
+                     const std::vector<ChargeCorrection> ccs) {
+  AcidBaseCatalogParams abparams(acidbaseStream);
+  this->d_abcat = new AcidBaseCatalog(&abparams);
+  this->d_ccs = ccs;
+}
+
 Reionizer::~Reionizer() { delete d_abcat; }
 
 // Reionizer::Reionizer(const AcidBaseCatalog *abcat, const

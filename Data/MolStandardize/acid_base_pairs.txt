@@ -4,7 +4,7 @@
 //
 //	Name	Acid	Base
 -OSO3H	OS(=O)(=O)[OH]	OS(=O)(=O)[O-]
-–SO3H	[!O]S(=O)(=O)[OH]	[!O]S(=O)(=O)[O-]
+-SO3H	[!O]S(=O)(=O)[OH]	[!O]S(=O)(=O)[O-]
 -OSO2H	O[SD3](=O)[OH]	O[SD3](=O)[O-]
 -SO2H	[!O][SD3](=O)[OH]	[!O][SD3](=O)[O-]
 -OPO3H2	OP(=O)([OH])[OH]	OP(=O)([OH])[O-]

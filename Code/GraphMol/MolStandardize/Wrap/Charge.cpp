@@ -25,6 +25,21 @@ ROMol *reionizeHelper(MolStandardize::Reionizer &self, const ROMol &mol) {
   return self.reionize(mol);
 }
 
+MolStandardize::Reionizer *reionizerFromData(const std::string &data,
+                                             python::object chargeCorrections) {
+  std::istringstream sstr(data);
+  auto corrections =
+      pythonObjectToVect<MolStandardize::ChargeCorrection>(chargeCorrections);
+  MolStandardize::Reionizer *res;
+  if (corrections) {
+    res = new MolStandardize::Reionizer(sstr, *corrections);
+  } else {
+    res = new MolStandardize::Reionizer(
+        sstr, std::vector<MolStandardize::ChargeCorrection>());
+  }
+  return res;
+}
+
 }  // namespace
 
 struct charge_wrapper {
@@ -51,6 +66,12 @@ struct charge_wrapper {
              (python::arg("self"), python::arg("mol")), "",
              python::return_value_policy<python::manage_new_object>());
 
+    python::def("ReionizerFromData", &reionizerFromData,
+                (python::arg("paramData"),
+                 python::arg("chargeCorrections") = python::list()),
+                "creates a reionizer from a string containing parameter data "
+                "and a list of charge corrections",
+                python::return_value_policy<python::manage_new_object>());
     python::class_<MolStandardize::Uncharger, boost::noncopyable>(
         "Uncharger", python::init<bool>((python::arg("self"),
                                          python::arg("canonicalOrder") = true)))
