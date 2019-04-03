@@ -2,27 +2,33 @@
 (Changes relative to Release_2018.09.1)
 
 ## REALLY IMPORTANT ANNOUNCEMENT
-- As of this realease (2019.03.1) the RDKit no longer supports Python 2. Please read
-this rdkit-discuss post to learn what your options are if you need to keep
-using Python 2: https://www.mail-archive.com/rdkit-discuss@lists.sourceforge.net/msg08354.html
+- As of this realease (2019.03.1) the RDKit no longer supports Python 2. Please
+  read this rdkit-discuss post to learn what your options are if you need to
+  keep using Python 2:
+  https://www.mail-archive.com/rdkit-discuss@lists.sourceforge.net/msg08354.html
 
 ## Backwards incompatible changes
-- The fix for github #2245 means that the default behavior of the MaxMinPicker is now truly random. 
-  If you would like to reproduce the previous behavior, provide a seed value of 42.
-- The uncharging method in the MolStandardizer now attempts to generate canonical results for a given 
-  molecule. This may result in different output for some molecules.
+- The fix for github #2245 means that the default behavior of the MaxMinPicker
+  is now truly random. If you would like to reproduce the previous behavior,
+  provide a seed value of 42.
+- The uncharging method in the MolStandardizer now attempts to generate
+  canonical results for a given molecule. This may result in different output
+  for some molecules.
   
 ## Highlights:
 - There's now a Japanese translation of large parts of the RDKit documentation
 - SGroup data can now be read from and written to Mol/SDF files
-- The enhanced stereo handling has been improved: the information is now accessible from Python,
-  EnumerateStereoisomers takes advantage of it, and it can be read from and written to CXSmiles
+- The enhanced stereo handling has been improved: the information is now
+  accessible from Python, EnumerateStereoisomers takes advantage of it, and it
+  can be read from and written to CXSmiles
 
 ## Acknowledgements:
-Michael Banck, Francois Berenger, Thomas Blaschke, Brian Cole, Andrew Dalke, Bakary N'tji Diallo, Guillaume Godin, 
-Jan Holst Jensen, Sunhwan Jo, Brian Kelley, Petr Kubat, Karl Leswing, Susan Leung, John Mayfield, 
-Adam Moyer, Dan Nealschneider, Noel O'Boyle, Stephen Roughley, Takayuki Serizawa, Gianluca Sforna, 
-Ricardo Rodriguez Schmidt, Matt Swain, Paolo Tosco, Ricardo Vianello, 'magattaca', 'msteijaert', 'paconius', 'sirbiscuit' 
+Michael Banck, Francois Berenger, Thomas Blaschke, Brian Cole, Andrew Dalke,
+Bakary N'tji Diallo, Guillaume Godin, Jan Holst Jensen, Sunhwan Jo, Brian
+Kelley, Petr Kubat, Karl Leswing, Susan Leung, John Mayfield, Adam Moyer, Dan
+Nealschneider, Noel O'Boyle, Stephen Roughley, Takayuki Serizawa, Gianluca
+Sforna, Ricardo Rodriguez Schmidt, Matt Swain, Paolo Tosco, Ricardo Vianello,
+'John-Videogames', 'magattaca', 'msteijaert', 'paconius', 'sirbiscuit' 
 
 ## Bug Fixes:
   - PgSQL: fix boolean definitions for Postgresql 11
@@ -81,7 +87,7 @@ Ricardo Rodriguez Schmidt, Matt Swain, Paolo Tosco, Ricardo Vianello, 'magattaca
  (github issue #2308 from greglandrum)
   - fix a problem with the random pickers test
  (github pull #2310 from greglandrum)
-  - fixes #908
+  - AddHs() using 3D coordinates with 2D conformations
  (github pull #2328 from greglandrum)
   - change to make the SWIG builds work on windows
  (github pull #2340 from greglandrum)
@@ -93,6 +99,8 @@ Ricardo Rodriguez Schmidt, Matt Swain, Paolo Tosco, Ricardo Vianello, 'magattaca
  (github issue #2368 from greglandrum)
   - PandasTools.FrameToGridImage() fails with SVG output
  (github issue #2380 from greglandrum)
+  - ClusterMols.GetDistanceMatrix throws a type error in Python 3
+ (github issue #2387 from John-Videogames)
 
 ## New Features and Enhancements:
   - Allow access to Enhanced Stereochemistry information from Python
@@ -221,6 +229,10 @@ Ricardo Rodriguez Schmidt, Matt Swain, Paolo Tosco, Ricardo Vianello, 'magattaca
  (github pull #2360 from d-b-w)
   - improvements to the Uncharge functionality
  (github pull #2374 from greglandrum)
+  - Add ExplicitBitVect prop and query
+ (github pull #2384 from bp-kelley)
+  - Allow components of the MolStandardize code to be initialized from streams
+ (github pull #2385 from greglandrum)
 
 
 # Release_2018.09.1
