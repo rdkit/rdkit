@@ -24,9 +24,9 @@
 
 ## Acknowledgements:
 Michael Banck, Francois Berenger, Thomas Blaschke, Brian Cole, Andrew Dalke,
-Bakary N'tji Diallo, Guillaume Godin, Jan Holst Jensen, Sunhwan Jo, Brian
-Kelley, Petr Kubat, Karl Leswing, Susan Leung, John Mayfield, Adam Moyer, Dan
-Nealschneider, Noel O'Boyle, Stephen Roughley, Takayuki Serizawa, Gianluca
+Bakary N'tji Diallo, Guillaume Godin, Anne Hersey, Jan Holst Jensen, Sunhwan Jo,
+Brian Kelley, Petr Kubat, Karl Leswing, Susan Leung, John Mayfield, Adam Moyer,
+Dan Nealschneider, Noel O'Boyle, Stephen Roughley, Takayuki Serizawa, Gianluca
 Sforna, Ricardo Rodriguez Schmidt, Matt Swain, Paolo Tosco, Ricardo Vianello,
 'John-Videogames', 'magattaca', 'msteijaert', 'paconius', 'sirbiscuit' 
 
@@ -101,6 +101,8 @@ Sforna, Ricardo Rodriguez Schmidt, Matt Swain, Paolo Tosco, Ricardo Vianello,
  (github issue #2380 from greglandrum)
   - ClusterMols.GetDistanceMatrix throws a type error in Python 3
  (github issue #2387 from John-Videogames)
+  - Uncharging logic reversed 
+ (github issue #2392 from Anne Hersey)
 
 ## New Features and Enhancements:
   - Allow access to Enhanced Stereochemistry information from Python
