@@ -53,7 +53,11 @@ TEST_CASE("Github #1632", "[Reaction,PDB,bug]") {
   }
 }
 
-// static void clearAtomProps()
+static void clearAtomMappingProps(ROMol& mol) {
+    for (auto&& a : mol.atoms()) {
+      a->clear();
+    }
+}
 
 TEST_CASE("Github #2366 Enhanced Stereo", "[Reaction,StereoGroup,bug]") {
   SECTION("Reaction Preserves Stereo") {
@@ -71,10 +75,7 @@ TEST_CASE("Github #2366 Enhanced Stereo", "[Reaction,StereoGroup,bug]") {
     REQUIRE(prods[0].size() == 1);
     auto p = prods[0][0];
 
-    // clear mapping properties
-    for (auto&& a : p->atoms()) {
-      a->clear();
-    }
+    clearAtomMappingProps(*p);
     CHECK(MolToCXSmiles(*p) == "F[C@H](Cl)Br |o1:1|");
   }
   SECTION("Reaction destroys one center in StereoGroup") {
@@ -91,9 +92,8 @@ TEST_CASE("Github #2366 Enhanced Stereo", "[Reaction,StereoGroup,bug]") {
     REQUIRE(prods.size() == 1);
     REQUIRE(prods[0].size() == 1);
     auto p = prods[0][0];
-    for (auto&& a : p->atoms()) {
-      a->clear();
-    }
+
+    clearAtomMappingProps(*p);
     CHECK(MolToCXSmiles(*p) == "FC(Cl)[C@@H](Cl)Br |&1:3|");
   }
   SECTION("Reaction splits StereoGroup") {
@@ -110,14 +110,9 @@ TEST_CASE("Github #2366 Enhanced Stereo", "[Reaction,StereoGroup,bug]") {
     REQUIRE(prods.size() == 1);
     REQUIRE(prods[0].size() == 2);
     auto p0 = prods[0][0];
-    for (auto&& a : p0->atoms()) {
-      a->clear();
-    }
-    auto p1 = prods[0][1];
-    for (auto&& a : p1->atoms()) {
-      a->clear();
-    }
 
+    clearAtomMappingProps(*p0);
+    clearAtomMappingProps(*p1);
     CHECK(MolToCXSmiles(*p0) == "O[C@@H](F)Cl |&1:1|");
     CHECK(MolToCXSmiles(*p1) == "O[C@@H](Cl)Br |&1:1|");
   }
@@ -137,9 +132,8 @@ TEST_CASE("Github #2366 Enhanced Stereo", "[Reaction,StereoGroup,bug]") {
     REQUIRE(prods.size() == 1);
     REQUIRE(prods[0].size() == 1);
     auto p0 = prods[0][0];
-    for (auto&& a : p0->atoms()) {
-      a->clear();
-    }
+
+    clearAtomMappingProps(*p0);
     CHECK(MolToCXSmiles(*p0) == "F[C@@H](Cl)[C@H](Cl)Br |&1:1,&2:3|");
   }
 }
