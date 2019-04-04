@@ -32,7 +32,7 @@ depiction, and searching is a secondary goal.
 
 Stored as a vector of `StereoGroup` objects.
 
-A `StereoGroup` contains an enum with the type as well as pointers to the atoms involved. We will need to adjust this when atoms are removed or replaced. `StereoGroup`s are not exposed to Python, as the implementation is still tentative.
+A `StereoGroup` contains an enum with the type as well as pointers to the atoms involved. We will need to adjust this when atoms are removed or replaced.
 
 ## Enumeration
 
