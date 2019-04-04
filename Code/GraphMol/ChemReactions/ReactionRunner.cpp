@@ -129,13 +129,12 @@ bool getReactantMatches(const MOL_SPTR_VECT &reactants,
 bool recurseOverReactantCombinations(
     const VectVectMatchVectType &matchesByReactant,
     VectVectMatchVectType &matchesPerProduct, unsigned int level,
-    VectMatchVectType combination,
-    unsigned int maxProducts) {
+    VectMatchVectType combination, unsigned int maxProducts) {
   unsigned int nReactants = matchesByReactant.size();
   URANGE_CHECK(level, nReactants);
   PRECONDITION(combination.size() == nReactants, "bad combination size");
 
-  if(maxProducts && matchesPerProduct.size() >= maxProducts) {
+  if (maxProducts && matchesPerProduct.size() >= maxProducts) {
     return false;
   }
 
@@ -146,15 +145,15 @@ bool recurseOverReactantCombinations(
     prod[level] = *reactIt;
     if (level == nReactants - 1) {
       // this is the bottom of the recursion:
-      if(maxProducts && matchesPerProduct.size() >= maxProducts) {
+      if (maxProducts && matchesPerProduct.size() >= maxProducts) {
         keepGoing = false;
         break;
       }
       matchesPerProduct.push_back(prod);
 
     } else {
-      keepGoing = recurseOverReactantCombinations(matchesByReactant, matchesPerProduct,
-                                                  level + 1, prod, maxProducts);
+      keepGoing = recurseOverReactantCombinations(
+          matchesByReactant, matchesPerProduct, level + 1, prod, maxProducts);
     }
   }
   return keepGoing;
@@ -184,16 +183,15 @@ void updateImplicitAtomProperties(Atom *prodAtom, const Atom *reactAtom) {
 
 void generateReactantCombinations(
     const VectVectMatchVectType &matchesByReactant,
-    VectVectMatchVectType &matchesPerProduct,
-    unsigned int maxProducts) {
+    VectVectMatchVectType &matchesPerProduct, unsigned int maxProducts) {
   matchesPerProduct.clear();
   VectMatchVectType tmp;
   tmp.clear();
   tmp.resize(matchesByReactant.size());
-  if (!recurseOverReactantCombinations(matchesByReactant, matchesPerProduct, 0, tmp, maxProducts)) {
-    BOOST_LOG(rdWarningLog)
-        << "Maximum product count hit " << maxProducts << ", stopping reaction early...\n";
-
+  if (!recurseOverReactantCombinations(matchesByReactant, matchesPerProduct, 0,
+                                       tmp, maxProducts)) {
+    BOOST_LOG(rdWarningLog) << "Maximum product count hit " << maxProducts
+                            << ", stopping reaction early...\n";
   }
 }  // end of generateReactantCombinations()
 
@@ -755,9 +753,9 @@ void checkAndCorrectChiralityOfProduct(
         // If the number of bonds to the atom has changed in the course of the
         // reaction we're lost, so remove chirality.
         //  A word of explanation here: the atoms in the chiralAtomsToCheck set
-        //  are not explicitly mapped atoms of the reaction, so we really have no
-        //  idea what to do with this case. At the moment I'm not even really sure how
-        //  this could happen, but better safe than sorry.
+        //  are not explicitly mapped atoms of the reaction, so we really have
+        //  no idea what to do with this case. At the moment I'm not even really
+        //  sure how this could happen, but better safe than sorry.
         productAtom->setChiralTag(Atom::CHI_UNSPECIFIED);
       } else if (reactantAtom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
                  reactantAtom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW) {
@@ -793,18 +791,14 @@ void checkAndCorrectChiralityOfProduct(
   }  // end of loop over chiralAtomsToCheck
 }
 
-
 ///
-// Copy relative stereo groups from one reactant to the product
+// Copy enhanced stereo groups from one reactant to the product
 // stereo groups are copied if any atoms are in the product with
 // the stereochemical information from the reactant preserved.
-void copyRelativeStereoGroups(const ROMol &reactant,
-                              RWMOL_SPTR product,
-                              const ReactantProductAtomMapping& mapping)
-{
+void copyEnhancedStereoGroups(const ROMol &reactant, RWMOL_SPTR product,
+                              const ReactantProductAtomMapping &mapping) {
   std::vector<StereoGroup> new_stereo_groups;
-  for (const auto& sg: reactant.getStereoGroups()) {
-
+  for (const auto &sg : reactant.getStereoGroups()) {
     std::vector<Atom *> atoms;
     for (auto &&reactantAtom : sg.getAtoms()) {
       auto productAtoms = mapping.reactProdAtomMap.find(reactantAtom->getIdx());
@@ -812,7 +806,7 @@ void copyRelativeStereoGroups(const ROMol &reactant,
         continue;
       }
 
-      for (auto&& productAtomIdx: productAtoms->second) {
+      for (auto &&productAtomIdx : productAtoms->second) {
         auto productAtom = product->getAtomWithIdx(productAtomIdx);
 
         // If chirality destroyed by the reaction, skip the atom
@@ -821,7 +815,8 @@ void copyRelativeStereoGroups(const ROMol &reactant,
         }
         // If chirality defined explicitly by the reaction, skip the atom
         int flagVal = 0;
-        productAtom->getPropIfPresent(common_properties::molInversionFlag, flagVal);
+        productAtom->getPropIfPresent(common_properties::molInversionFlag,
+                                      flagVal);
         if (flagVal == 4) {
           continue;
         }
@@ -834,8 +829,9 @@ void copyRelativeStereoGroups(const ROMol &reactant,
   }
 
   if (!new_stereo_groups.empty()) {
-    auto& existing_sg = product->getStereoGroups();
-    new_stereo_groups.insert(new_stereo_groups.end(), existing_sg.begin(), existing_sg.end());
+    auto &existing_sg = product->getStereoGroups();
+    new_stereo_groups.insert(new_stereo_groups.end(), existing_sg.begin(),
+                             existing_sg.end());
     product->setStereoGroups(std::move(new_stereo_groups));
   }
 }
@@ -930,9 +926,9 @@ void addReactantAtomsAndBonds(const ChemicalReaction &rxn, RWMOL_SPTR product,
   checkAndCorrectChiralityOfProduct(chiralAtomsToCheck, product, mapping);
 
   // ---------- ---------- ---------- ---------- ---------- ----------
-  // Copy relative StereoGroup data from reactant to product if it is
+  // Copy enhanced StereoGroup data from reactant to product if it is
   // still valid. Uses ChiralTag checks above.
-  copyRelativeStereoGroups(*reactant, product, *mapping);
+  copyEnhancedStereoGroups(*reactant, product, *mapping);
 
   // ---------- ---------- ---------- ---------- ---------- ----------
   // finally we may need to set the coordinates in the product conformer:
@@ -952,7 +948,7 @@ MOL_SPTR_VECT generateOneProductSet(
   // if any of the reactants have a conformer, we'll go ahead and
   // generate conformers for the products:
   bool doConfs = false;
-  for (auto& reactant: reactants) {
+  for (auto &reactant : reactants) {
     if (reactant->getNumConformers()) {
       doConfs = true;
       break;
@@ -1025,9 +1021,8 @@ std::vector<MOL_SPTR_VECT> run_Reactants(const ChemicalReaction &rxn,
   // we now have matches for each reactant, so we can start creating products:
   // start by doing the combinatorics on the matches:
   VectVectMatchVectType reactantMatchesPerProduct;
-  ReactionRunnerUtils::generateReactantCombinations(matchesByReactant,
-                                                    reactantMatchesPerProduct,
-                                                    maxProducts);
+  ReactionRunnerUtils::generateReactantCombinations(
+      matchesByReactant, reactantMatchesPerProduct, maxProducts);
   productMols.resize(reactantMatchesPerProduct.size());
 
   for (unsigned int productId = 0; productId != productMols.size();
