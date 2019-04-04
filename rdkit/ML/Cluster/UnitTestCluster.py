@@ -22,10 +22,7 @@ from rdkit.TestRunner import redirect_stdout
 from io import StringIO
 
 
-try:
-    from rdkit.ML.Cluster import Murtagh
-except ImportError:
-    Murtagh = None
+from rdkit.ML.Cluster import Murtagh
 
 
 class TestCase(unittest.TestCase):
@@ -92,6 +89,7 @@ class TestCase(unittest.TestCase):
             else:
                 ClusterUtils.SplitIntoNClusters(c5, n, breadthFirst=False)
 
+    @unittest.skipIf(Murtagh.MurtaghCluster is None, "Murtagh clustering not available")
     def testMurtaghUPGMA(self):
         if Murtagh is None:
             return

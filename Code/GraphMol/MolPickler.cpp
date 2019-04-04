@@ -1510,7 +1510,10 @@ Atom *MolPickler::_addAtomFromPickle(std::istream &ss, ROMol *mol,
         }
         int tmpInt;
         streamRead(ss, tmpChar, version);
-        if (tmpChar < 0 && version > 9000) {
+        // the test for tmpChar below seems redundant, but on at least
+        // the POWER8 architecture it seems that chars may be unsigned
+        // by default.
+        if ((tmpChar < 0 || tmpChar > 127) && version > 9000) {
           streamRead(ss, tmpInt, version);
         } else {
           tmpInt = tmpChar;

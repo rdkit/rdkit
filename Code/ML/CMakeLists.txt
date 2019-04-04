@@ -1,5 +1,5 @@
 if(RDK_BIG_ENDIAN)
-  message("Skipping build of clustering and cmim libraries on big endian system")
+  message("Skipping build of clustering library on big endian system")
 else(RDK_BIG_ENDIAN)
   add_subdirectory(Cluster)
 endif(RDK_BIG_ENDIAN)
