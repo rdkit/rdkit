@@ -110,6 +110,7 @@ TEST_CASE("Github #2366 Enhanced Stereo", "[Reaction,StereoGroup,bug]") {
     REQUIRE(prods.size() == 1);
     REQUIRE(prods[0].size() == 2);
     auto p0 = prods[0][0];
+    auto p1 = prods[0][1];
 
     clearAtomMappingProps(*p0);
     clearAtomMappingProps(*p1);
