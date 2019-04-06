@@ -325,7 +325,8 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol) {
       if (!parse_coordinate_bonds(first, last, mol)) return false;
     } else if (*first == '^') {
       if (!parse_radicals(first, last, mol)) return false;
-    } else if (*first == 'a' || *first == 'o' || *first == '&') {
+    } else if (*first == 'a' || *first == 'o' ||
+               (*first == '&' && first + 1 < last && first[1] != '#')) {
       if (!parse_enhanced_stereo(first, last, mol)) return false;
     } else {
       ++first;
