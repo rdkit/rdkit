@@ -389,6 +389,10 @@ void testMMFFBuilder2() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+#ifdef RDK_TEST_MULTITHREADED
+// we do the equivalent tests below
+void testMMFFBatch() {}
+#else
 void testMMFFBatch() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog)
@@ -433,7 +437,7 @@ void testMMFFBatch() {
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
-
+#endif
 void testIssue239() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Testing Issue239." << std::endl;
@@ -856,12 +860,12 @@ namespace {
 void runblock_mmff(const std::vector<ROMol *> &mols,
                    const std::vector<double> &energies, unsigned int count,
                    unsigned int idx) {
-  for (unsigned int rep = 0; rep < 500; ++rep) {
+  for (unsigned int rep = 0; rep < 100; ++rep) {
     for (unsigned int i = 0; i < mols.size(); ++i) {
       if (i % count != idx) continue;
       ROMol *mol = mols[i];
       ForceFields::ForceField *field = nullptr;
-      if (!(rep % 100)) {
+      if (!(rep % 20)) {
         BOOST_LOG(rdErrorLog) << "Rep: " << rep << " Mol:" << i << std::endl;
       }
       try {
@@ -949,7 +953,7 @@ void testMMFFMultiThread2() {
   ROMol *m = suppl[4];
   TEST_ASSERT(m);
   auto *om = new ROMol(*m);
-  for (unsigned int i = 0; i < 1000; ++i) {
+  for (unsigned int i = 0; i < 200; ++i) {
     m->addConformer(new Conformer(m->getConformer()), true);
   }
   std::vector<std::pair<int, double>> res;
