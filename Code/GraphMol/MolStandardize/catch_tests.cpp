@@ -108,22 +108,22 @@ TEST_CASE("uncharger bug with duplicates") {
     REQUIRE(outm);
     CHECK(MolToSmiles(*outm) == "CC([O-])CO.[Na+]");
   }
-  SECTION("acids + others 1") {
+  SECTION("acids + others 1, github #2392") {
     auto m = "C[N+](C)(C)CC(C[O-])CC(=O)[O-]"_smiles;
     REQUIRE(m);
     bool doCanonical = false;
     MolStandardize::Uncharger uncharger(doCanonical);
     std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
     REQUIRE(outm);
-    CHECK(MolToSmiles(*outm) == "C[N+](C)(C)CC(C[O-])CC(=O)O");
+    CHECK(MolToSmiles(*outm) == "C[N+](C)(C)CC(CO)CC(=O)[O-]");
   }
-  SECTION("acids + others 2") {
+  SECTION("acids + others 2, github #2392") {
     auto m = "C[N+](C)(C)CC(CC(=O)[O-])C[O-]"_smiles;
     REQUIRE(m);
     bool doCanonical = false;
     MolStandardize::Uncharger uncharger(doCanonical);
     std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
     REQUIRE(outm);
-    CHECK(MolToSmiles(*outm) == "C[N+](C)(C)CC(C[O-])CC(=O)O");
+    CHECK(MolToSmiles(*outm) == "C[N+](C)(C)CC(CO)CC(=O)[O-]");
   }
 }
