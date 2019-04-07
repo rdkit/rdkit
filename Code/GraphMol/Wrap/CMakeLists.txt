@@ -29,6 +29,9 @@ endif()
 
 if(RDK_BUILD_COMPRESSED_SUPPLIERS)
 find_package(Boost 1.56.0 COMPONENTS iostreams REQUIRED)
+if (NOT Boost_USE_STATIC_LIBS)
+   add_definitions("-DBOOST_IOSTREAMS_DYN_LINK")
+endif()
 set(rdmolfiles_sources rdmolfiles.cpp
                        ForwardSDMolSupplier.cpp ${maesupplier}
                        SDMolSupplier.cpp TDTMolSupplier.cpp
@@ -54,7 +57,7 @@ rdkit_python_extension(rdmolfiles
 rdkit_python_extension(rdtrajectory
                        Trajectory.cpp rdTrajectory.cpp
                        DEST Chem
-                       LINK_LIBRARIES Trajectory RDGeometryLib RDGeneral GraphMol)
+                       LINK_LIBRARIES Trajectory RDGeometryLib RDGeneral RDBoost GraphMol)
 
 if(RDK_BUILD_COMPRESSED_SUPPLIERS)
   set_target_properties(rdmolfiles PROPERTIES DEFINE_SYMBOL SUPPORT_COMPRESSED_SUPPLIERS )
