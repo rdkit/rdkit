@@ -129,13 +129,12 @@ bool getReactantMatches(const MOL_SPTR_VECT &reactants,
 bool recurseOverReactantCombinations(
     const VectVectMatchVectType &matchesByReactant,
     VectVectMatchVectType &matchesPerProduct, unsigned int level,
-    VectMatchVectType combination,
-    unsigned int maxProducts) {
+    VectMatchVectType combination, unsigned int maxProducts) {
   unsigned int nReactants = matchesByReactant.size();
   URANGE_CHECK(level, nReactants);
   PRECONDITION(combination.size() == nReactants, "bad combination size");
 
-  if(maxProducts && matchesPerProduct.size() >= maxProducts) {
+  if (maxProducts && matchesPerProduct.size() >= maxProducts) {
     return false;
   }
 
@@ -146,15 +145,15 @@ bool recurseOverReactantCombinations(
     prod[level] = *reactIt;
     if (level == nReactants - 1) {
       // this is the bottom of the recursion:
-      if(maxProducts && matchesPerProduct.size() >= maxProducts) {
+      if (maxProducts && matchesPerProduct.size() >= maxProducts) {
         keepGoing = false;
         break;
       }
       matchesPerProduct.push_back(prod);
 
     } else {
-      keepGoing = recurseOverReactantCombinations(matchesByReactant, matchesPerProduct,
-                                                  level + 1, prod, maxProducts);
+      keepGoing = recurseOverReactantCombinations(
+          matchesByReactant, matchesPerProduct, level + 1, prod, maxProducts);
     }
   }
   return keepGoing;
@@ -184,16 +183,15 @@ void updateImplicitAtomProperties(Atom *prodAtom, const Atom *reactAtom) {
 
 void generateReactantCombinations(
     const VectVectMatchVectType &matchesByReactant,
-    VectVectMatchVectType &matchesPerProduct,
-    unsigned int maxProducts) {
+    VectVectMatchVectType &matchesPerProduct, unsigned int maxProducts) {
   matchesPerProduct.clear();
   VectMatchVectType tmp;
   tmp.clear();
   tmp.resize(matchesByReactant.size());
-  if (!recurseOverReactantCombinations(matchesByReactant, matchesPerProduct, 0, tmp, maxProducts)) {
-    BOOST_LOG(rdWarningLog)
-        << "Maximum product count hit " << maxProducts << ", stopping reaction early...\n";
-
+  if (!recurseOverReactantCombinations(matchesByReactant, matchesPerProduct, 0,
+                                       tmp, maxProducts)) {
+    BOOST_LOG(rdWarningLog) << "Maximum product count hit " << maxProducts
+                            << ", stopping reaction early...\n";
   }
 }  // end of generateReactantCombinations()
 
@@ -397,13 +395,13 @@ void checkProductChirality(Atom::ChiralType reactantChirality,
 
   switch (flagVal) {
     case 0:
+      // reaction doesn't have anything to say about the chirality
       // FIX: should we clear the chirality or leave it alone? for now we leave
       // it alone
-      // productAtom->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
       productAtom->setChiralTag(reactantChirality);
       break;
     case 1:
-      // inversion
+      // reaction inverts chirality
       if (reactantChirality != Atom::CHI_TETRAHEDRAL_CW &&
           reactantChirality != Atom::CHI_TETRAHEDRAL_CCW) {
         BOOST_LOG(rdWarningLog)
@@ -414,14 +412,17 @@ void checkProductChirality(Atom::ChiralType reactantChirality,
       }
       break;
     case 2:
+      // reaction retains chirality:
       // retention: just set to the reactant
       productAtom->setChiralTag(reactantChirality);
       break;
     case 3:
+      // reaction destroys chirality:
       // remove stereo
       productAtom->setChiralTag(Atom::CHI_UNSPECIFIED);
       break;
     case 4:
+      // reaction creates chirality.
       // set stereo, so leave it the way it was in the product template
       break;
     default:
@@ -466,8 +467,7 @@ void setReactantAtomPropertiesToProduct(Atom *productAtom,
   // One might be tempted to copy over the reactant atom's chirality into the
   // product atom if chirality is not specified on the product. This would be a
   // very bad idea because the order of bonds will almost certainly change on
-  // the
-  // atom and the chirality is referenced to bond order.
+  // the atom and the chirality is referenced to bond order.
 
   // --------- --------- --------- --------- --------- ---------
   // While we're here, set the stereochemistry
@@ -669,8 +669,7 @@ void checkAndCorrectChiralityOfMatchingAtomsInProduct(
       continue;
     }
     // we can only do something sensible here if we have the same number of
-    // bonds
-    // in the reactants and the products:
+    // bonds in the reactants and the products:
     if (reactantAtom.getDegree() != productAtom->getDegree()) {
       continue;
     }
@@ -732,13 +731,14 @@ void checkAndCorrectChiralityOfMatchingAtomsInProduct(
   }
 }
 
+// Check the chirality of atoms not directly involved in the reaction
 void checkAndCorrectChiralityOfProduct(
     const std::vector<const Atom *> &chiralAtomsToCheck, RWMOL_SPTR product,
     ReactantProductAtomMapping *mapping) {
   for (auto reactantAtom : chiralAtomsToCheck) {
     CHECK_INVARIANT(reactantAtom->getChiralTag() != Atom::CHI_UNSPECIFIED,
                     "missing atom chirality.");
-    unsigned int reactAtomDegree =
+    const auto reactAtomDegree =
         reactantAtom->getOwningMol().getAtomDegree(reactantAtom);
     for (unsigned i = 0;
          i < mapping->reactProdAtomMap[reactantAtom->getIdx()].size(); i++) {
@@ -753,12 +753,9 @@ void checkAndCorrectChiralityOfProduct(
         // If the number of bonds to the atom has changed in the course of the
         // reaction we're lost, so remove chirality.
         //  A word of explanation here: the atoms in the chiralAtomsToCheck set
-        //  are
-        //  not explicitly mapped atoms of the reaction, so we really have no
-        //  idea what
-        //  to do with this case. At the moment I'm not even really sure how
-        //  this
-        //  could happen, but better safe than sorry.
+        //  are not explicitly mapped atoms of the reaction, so we really have
+        //  no idea what to do with this case. At the moment I'm not even really
+        //  sure how this could happen, but better safe than sorry.
         productAtom->setChiralTag(Atom::CHI_UNSPECIFIED);
       } else if (reactantAtom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
                  reactantAtom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW) {
@@ -792,6 +789,51 @@ void checkAndCorrectChiralityOfProduct(
       }
     }
   }  // end of loop over chiralAtomsToCheck
+}
+
+///
+// Copy enhanced stereo groups from one reactant to the product
+// stereo groups are copied if any atoms are in the product with
+// the stereochemical information from the reactant preserved.
+void copyEnhancedStereoGroups(const ROMol &reactant, RWMOL_SPTR product,
+                              const ReactantProductAtomMapping &mapping) {
+  std::vector<StereoGroup> new_stereo_groups;
+  for (const auto &sg : reactant.getStereoGroups()) {
+    std::vector<Atom *> atoms;
+    for (auto &&reactantAtom : sg.getAtoms()) {
+      auto productAtoms = mapping.reactProdAtomMap.find(reactantAtom->getIdx());
+      if (productAtoms == mapping.reactProdAtomMap.end()) {
+        continue;
+      }
+
+      for (auto &&productAtomIdx : productAtoms->second) {
+        auto productAtom = product->getAtomWithIdx(productAtomIdx);
+
+        // If chirality destroyed by the reaction, skip the atom
+        if (productAtom->getChiralTag() == Atom::CHI_UNSPECIFIED) {
+          continue;
+        }
+        // If chirality defined explicitly by the reaction, skip the atom
+        int flagVal = 0;
+        productAtom->getPropIfPresent(common_properties::molInversionFlag,
+                                      flagVal);
+        if (flagVal == 4) {
+          continue;
+        }
+        atoms.push_back(productAtom);
+      }
+    }
+    if (!atoms.empty()) {
+      new_stereo_groups.emplace_back(sg.getGroupType(), std::move(atoms));
+    }
+  }
+
+  if (!new_stereo_groups.empty()) {
+    auto &existing_sg = product->getStereoGroups();
+    new_stereo_groups.insert(new_stereo_groups.end(), existing_sg.begin(),
+                             existing_sg.end());
+    product->setStereoGroups(std::move(new_stereo_groups));
+  }
 }
 
 void generateProductConformers(Conformer *productConf, const ROMol &reactant,
@@ -880,9 +922,13 @@ void addReactantAtomsAndBonds(const ChemicalReaction &rxn, RWMOL_SPTR product,
   // ---------- ---------- ---------- ---------- ---------- ----------
   // now we need to loop over atoms from the reactants that were chiral but not
   // directly involved in the reaction in order to make sure their chirality
-  // hasn't
-  // been disturbed
+  // hasn't been disturbed
   checkAndCorrectChiralityOfProduct(chiralAtomsToCheck, product, mapping);
+
+  // ---------- ---------- ---------- ---------- ---------- ----------
+  // Copy enhanced StereoGroup data from reactant to product if it is
+  // still valid. Uses ChiralTag checks above.
+  copyEnhancedStereoGroups(*reactant, product, *mapping);
 
   // ---------- ---------- ---------- ---------- ---------- ----------
   // finally we may need to set the coordinates in the product conformer:
@@ -902,7 +948,7 @@ MOL_SPTR_VECT generateOneProductSet(
   // if any of the reactants have a conformer, we'll go ahead and
   // generate conformers for the products:
   bool doConfs = false;
-  BOOST_FOREACH (ROMOL_SPTR reactant, reactants) {
+  for (auto &reactant : reactants) {
     if (reactant->getNumConformers()) {
       doConfs = true;
       break;
@@ -975,9 +1021,8 @@ std::vector<MOL_SPTR_VECT> run_Reactants(const ChemicalReaction &rxn,
   // we now have matches for each reactant, so we can start creating products:
   // start by doing the combinatorics on the matches:
   VectVectMatchVectType reactantMatchesPerProduct;
-  ReactionRunnerUtils::generateReactantCombinations(matchesByReactant,
-                                                    reactantMatchesPerProduct,
-                                                    maxProducts);
+  ReactionRunnerUtils::generateReactantCombinations(
+      matchesByReactant, reactantMatchesPerProduct, maxProducts);
   productMols.resize(reactantMatchesPerProduct.size());
 
   for (unsigned int productId = 0; productId != productMols.size();

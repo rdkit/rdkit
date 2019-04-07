@@ -717,5 +717,183 @@ M  END
         self.assertEqual(len(prods), 1)
 
 
+def _getProductCXSMILES(product):
+  """
+  Clear properties.
+
+  Mapping properties show up in CXSMILES make validation less readable.
+  """
+  for a in product.GetAtoms():
+    for k in a.GetPropsAsDict():
+      a.ClearProp(k)
+  return Chem.MolToCXSmiles(product)
+
+
+def _reactAndSummarize(rxn_smarts, *smiles):
+  """
+  Run a reaction and combine the products in a single string.  
+
+  Makes errors readable ish
+  """
+  rxn = rdChemReactions.ReactionFromSmarts(rxn_smarts)
+  mols = [Chem.MolFromSmiles(s) for s in smiles]
+  products = []
+  for prods in rxn.RunReactants(mols):
+    products.append(' + '.join(map(_getProductCXSMILES, prods)))
+  products = ' OR '.join(products)
+  return products
+
+
+class StereoGroupTests(unittest.TestCase):
+
+  def test_reaction_preserves_stereo(self):
+    """
+    StereoGroup atoms are in the reaction, but the reaction doesn't affect
+    the chirality at the stereo centers
+    -> preserve stereo group
+    """
+    reaction = '[C@:1]>>[C@:1]'
+    reactants = ['F[C@H](Cl)Br |o1:1|', 'F[C@@H](Cl)Br |&1:1|', 'FC(Cl)Br']
+    for reactant in reactants:
+      products = _reactAndSummarize(reaction, reactant)
+      self.assertEqual(products, reactant)
+
+  def test_reaction_ignores_stereo(self):
+    """
+    StereoGroup atoms are in the reaction, but the reaction doesn't specify the
+    chirality at the stereo centers
+    -> preserve stereo group
+    """
+    reaction = '[C:1]>>[C:1]'
+    reactants = ['F[C@H](Cl)Br |o1:1|', 'F[C@@H](Cl)Br |&1:1|', 'FC(Cl)Br']
+    for reactant in reactants:
+      products = _reactAndSummarize(reaction, reactant)
+      self.assertEqual(products, reactant)
+
+  def test_reaction_inverts_stereo(self):
+    """
+    StereoGroup atoms are in the reaction, and the reaction inverts the specified
+    chirality at the stereo centers.
+    -> preserve stereo group
+    """
+    reaction = '[C@:1]>>[C@@:1]'
+
+    products = _reactAndSummarize(reaction, 'F[C@H](Cl)Br |o1:1|')
+    self.assertEqual(products, 'F[C@@H](Cl)Br |o1:1|')
+    products = _reactAndSummarize(reaction, 'F[C@@H](Cl)Br |&1:1|')
+    self.assertEqual(products, 'F[C@H](Cl)Br |&1:1|')
+    products = _reactAndSummarize(reaction, 'FC(Cl)Br')
+    self.assertEqual(products, 'FC(Cl)Br')
+
+  def test_reaction_destroys_stereo(self):
+    """
+    StereoGroup atoms are in the reaction, and the reaction destroys the specified
+    chirality at the stereo centers
+    -> invalidate stereo center, preserve the rest of the stereo group.
+    """
+    reaction = '[C@:1]>>[C:1]'
+    products = _reactAndSummarize(reaction, 'F[C@H](Cl)Br |o1:1|')
+    self.assertEqual(products, 'FC(Cl)Br')
+    products = _reactAndSummarize(reaction, 'F[C@@H](Cl)Br |&1:1|')
+    self.assertEqual(products, 'FC(Cl)Br')
+    products = _reactAndSummarize(reaction, 'FC(Cl)Br')
+    self.assertEqual(products, 'FC(Cl)Br')
+
+    reaction = '[C@:1]F>>[C:1]F'
+    # Reaction destroys stereo (but preserves unaffected group
+    products = _reactAndSummarize(reaction,
+                                  'F[C@H](Cl)[C@@H](Cl)Br |o1:1,&2:3|')
+    self.assertEqual(products, 'FC(Cl)[C@@H](Cl)Br |&1:3|')
+    # Reaction destroys stereo (but preserves the rest of the group
+    products = _reactAndSummarize(reaction, 'F[C@H](Cl)[C@@H](Cl)Br |&1:1,3|')
+    self.assertEqual(products, 'FC(Cl)[C@@H](Cl)Br |&1:3|')
+
+  def test_reaction_defines_stereo(self):
+    """
+    StereoGroup atoms are in the reaction, and the reaction creates the specified
+    chirality at the stereo centers
+    -> remove the stereo center from 
+    -> invalidate stereo group
+    """
+    products = _reactAndSummarize('[C:1]>>[C@@:1]', 'F[C@H](Cl)Br |o1:1|')
+    self.assertEqual(products, 'F[C@@H](Cl)Br')
+    products = _reactAndSummarize('[C:1]>>[C@@:1]', 'F[C@@H](Cl)Br |&1:1|')
+    self.assertEqual(products, 'F[C@@H](Cl)Br')
+    products = _reactAndSummarize('[C:1]>>[C@@:1]', 'FC(Cl)Br')
+    self.assertEqual(products, 'F[C@@H](Cl)Br')
+
+    # Remove group with defined stereo
+    products = _reactAndSummarize('[C:1]F>>[C@@:1]F',
+                                  'F[C@H](Cl)[C@@H](Cl)Br |o1:1,&2:3|')
+    self.assertEqual(products, 'F[C@@H](Cl)[C@@H](Cl)Br |&1:3|')
+
+    # Remove atoms with defined stereo from group
+    products = _reactAndSummarize('[C:1]F>>[C@@:1]F',
+                                  'F[C@H](Cl)[C@@H](Cl)Br |o1:1,3|')
+    self.assertEqual(products, 'F[C@@H](Cl)[C@@H](Cl)Br |o1:3|')
+
+  def test_stereogroup_is_spectator_to_reaction(self):
+    """
+    StereoGroup atoms are not in the reaction
+    -> stereo group is unaffected
+    """
+    # 5a. Reaction preserves unrelated stereo
+    products = _reactAndSummarize('[C@:1]F>>[C@:1]F',
+                                  'F[C@H](Cl)[C@@H](Cl)Br |o1:3|')
+    self.assertEqual(products, 'F[C@H](Cl)[C@@H](Cl)Br |o1:3|')
+    # 5b. Reaction ignores unrelated stereo'
+    products = _reactAndSummarize('[C:1]F>>[C:1]F',
+                                  'F[C@H](Cl)[C@@H](Cl)Br |o1:3|')
+    self.assertEqual(products, 'F[C@H](Cl)[C@@H](Cl)Br |o1:3|')
+    # 5c. Reaction inverts unrelated stereo'
+    products = _reactAndSummarize('[C@:1]F>>[C@@:1]F',
+                                  'F[C@H](Cl)[C@@H](Cl)Br |o1:3|')
+    self.assertEqual(products, 'F[C@@H](Cl)[C@@H](Cl)Br |o1:3|')
+    # 5d. Reaction destroys unrelated stereo' 1:3|
+    products = _reactAndSummarize('[C@:1]F>>[C:1]F',
+                                  'F[C@H](Cl)[C@@H](Cl)Br |o1:3|')
+    self.assertEqual(products, 'FC(Cl)[C@@H](Cl)Br |o1:3|')
+    # 5e. Reaction assigns unrelated stereo'
+    products = _reactAndSummarize('[C:1]F>>[C@@:1]F',
+                                  'F[C@H](Cl)[C@@H](Cl)Br |o1:3|')
+    self.assertEqual(products, 'F[C@@H](Cl)[C@@H](Cl)Br |o1:3|')
+
+  def test_reaction_splits_stereogroup(self):
+    """
+    StereoGroup atoms are split into two products by the reaction
+    -> Should the group be invalidated or trimmed?
+    """
+    products = _reactAndSummarize('[C:1]OO[C:2]>>[C:2]O.O[C:1]',
+                                  'F[C@H](Cl)OO[C@@H](Cl)Br |o1:1,5|')
+    # Two product sets, each with two mols:
+    self.assertEqual(products.count('|o1:1|'), 4)
+
+  def test_reaction_copies_stereogroup(self):
+    """
+    If multiple copies of an atom in StereoGroup show up in the product, they
+    should all be part of the same product StereoGroup.
+    """
+    # Stereogroup atoms are in the reaction with multiple copies in the product
+    products = _reactAndSummarize('[O:1].[C:2]=O>>[O:1][C:2][O:1]',
+                                  'Cl[C@@H](Br)C[C@H](Br)CCO |&1:1,4|',
+                                  'CC(=O)C')
+    # stereogroup manually checked, product SMILES assumed correct.
+    self.assertEqual(
+        products,
+        'CC(C)(OCC[C@@H](Br)C[C@@H](Cl)Br)OCC[C@@H](Br)C[C@@H](Cl)Br |&1:6,9,15,18|'
+    )
+
+    # Stereogroup atoms are not in the reaction, but have multiple copies in the
+    # product.
+    products = _reactAndSummarize('[O:1].[C:2]=O>>[O:1][C:2][O:1]',
+                                  'Cl[C@@H](Br)C[C@H](Br)CCO |&1:1,4|',
+                                  'CC(=O)C')
+    # stereogroup manually checked, product SMILES assumed correct.
+    self.assertEqual(
+        products,
+        'CC(C)(OCC[C@@H](Br)C[C@@H](Cl)Br)OCC[C@@H](Br)C[C@@H](Cl)Br |&1:6,9,15,18|'
+    )
+
+
 if __name__ == '__main__':
     unittest.main(verbosity=True)
