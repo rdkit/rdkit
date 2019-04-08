@@ -104,7 +104,7 @@ Ricardo Vianello, 'John-Videogames', 'magattaca', 'msteijaert', 'paconius',
  (github issue #2380 from greglandrum)
   - ClusterMols.GetDistanceMatrix throws a type error in Python 3
  (github issue #2387 from John-Videogames)
-  - Uncharging logic reversed 
+  - Uncharging logic reversed: protonate non-acids first 
  (github issue #2392 from Anne Hersey)
 
 ## New Features and Enhancements:
@@ -232,6 +232,8 @@ Ricardo Vianello, 'John-Videogames', 'magattaca', 'msteijaert', 'paconius',
  (github pull #2357 from d-b-w)
   - Removes an extra debugging cerr statment
  (github pull #2360 from d-b-w)
+  - Preserve enhanced stereo in reactions 
+ (github pull #2366 from d-b-w)
   - improvements to the Uncharge functionality
  (github pull #2374 from greglandrum)
   - Add ExplicitBitVect prop and query
