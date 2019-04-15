@@ -41,7 +41,7 @@ steps:
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
     cd build
-    make install
+    make -j $( $(number_of_cores) ) install
   displayName: Build
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh

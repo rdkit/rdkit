@@ -39,7 +39,7 @@ steps:
 - script: |
     call activate rdkit_build
     cd build
-    cmake --build . --config Release --target install
+    cmake --build . --config Release --target install -j $(number_of_cores)
   displayName: Build
 - script: |
     call activate rdkit_build
