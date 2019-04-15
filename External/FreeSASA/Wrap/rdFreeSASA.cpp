@@ -106,15 +106,19 @@ struct freesasa_wrapper {
         python::init<>("Constructor takes no arguments"))
         .def(python::init<FreeSASA::SASAOpts::Algorithm,
                           FreeSASA::SASAOpts::Classifier>())
+        .def(python::init<FreeSASA::SASAOpts::Algorithm,
+                          FreeSASA::SASAOpts::Classifier,double>())
         .def_readwrite("algorithm", &FreeSASA::SASAOpts::algorithm)
-        .def_readwrite("classifier", &FreeSASA::SASAOpts::classifier);
+        .def_readwrite("classifier", &FreeSASA::SASAOpts::classifier)
+        .def_readwrite("probeRadius", &FreeSASA::SASAOpts::probeRadius)
+        ;
 
     docString =
         "Classify the atoms in the molecule returning their radii if "
         "possible.\n"
         "ARGUMENTS:\n"
         "   - mol: molecule to classify\n"
-        "   - options: FreeSASA options class specifying the classsification "
+        "   - options: FreeSASA options class specifying the classification "
         "method.\n"
         "               Current classifiers are Protor, NACCESS and OONS\n"
         "               classification is stored as atom property 'SASAClass' "
