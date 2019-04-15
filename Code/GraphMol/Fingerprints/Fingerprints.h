@@ -57,8 +57,8 @@ RDKIT_FINGERPRINTS_EXPORT ExplicitBitVect *RDKFingerprintMol(
     bool branchedPaths = true, bool useBondOrder = true,
     std::vector<std::uint32_t> *atomInvariants = 0,
     const std::vector<std::uint32_t> *fromAtoms = 0,
-    std::vector<std::vector<std::uint32_t> > *atomBits = 0,
-    std::map<std::uint32_t,std::vector<std::vector<int> > > *bitInfo=0);
+    std::vector<std::vector<std::uint32_t>> *atomBits = 0,
+    std::map<std::uint32_t, std::vector<std::vector<int>>> *bitInfo = 0);
 const std::string RDKFingerprintMolVersion = "2.0.0";
 
 //! \brief Generates a topological (Daylight like) fingerprint for a molecule
@@ -146,17 +146,15 @@ RDKIT_FINGERPRINTS_EXPORT ExplicitBitVect *PatternFingerprintMol(
     std::vector<unsigned int> *atomCounts = 0,
     ExplicitBitVect *setOnlyBits = 0);
 
-RDKIT_FINGERPRINTS_EXPORT SparseIntVect<boost::uint64_t> *getUnfoldedRDKFingerprintMol(const ROMol &mol,unsigned int minPath=1,
-      unsigned int maxPath=7,
-      bool useHs=true,
-      bool branchedPaths=true,
-      bool useBondOrder=true,
-      std::vector<std::uint32_t> *atomInvariants=0,
-      const std::vector<std::uint32_t> *fromAtoms=0,
-      std::vector<std::vector<boost::uint64_t> > *atomBits=0,
-      std::map<boost::uint64_t,std::vector<std::vector<int> > > *bitInfo=0);
+RDKIT_FINGERPRINTS_EXPORT SparseIntVect<boost::uint64_t>
+    *getUnfoldedRDKFingerprintMol(
+        const ROMol &mol, unsigned int minPath = 1, unsigned int maxPath = 7,
+        bool useHs = true, bool branchedPaths = true, bool useBondOrder = true,
+        std::vector<std::uint32_t> *atomInvariants = 0,
+        const std::vector<std::uint32_t> *fromAtoms = 0,
+        std::vector<std::vector<boost::uint64_t>> *atomBits = 0,
+        std::map<boost::uint64_t, std::vector<std::vector<int>>> *bitInfo = 0);
 
-}
-
+}  // namespace RDKit
 
 #endif

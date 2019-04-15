@@ -52,7 +52,8 @@
 namespace RDKit {
 typedef std::map<std::string, std::string> STRING_PROPS;
 
-class RDKIT_FILTERCATALOG_EXPORT FilterCatalogEntry : public RDCatalog::CatalogEntry {
+class RDKIT_FILTERCATALOG_EXPORT FilterCatalogEntry
+    : public RDCatalog::CatalogEntry {
  private:
   boost::shared_ptr<FilterMatcherBase> d_matcher;
   Dict d_props;
@@ -265,7 +266,7 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalogEntry : public RDCatalog::CatalogE
   BOOST_SERIALIZATION_SPLIT_MEMBER();
 #endif
 };
-}
+}  // namespace RDKit
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
 BOOST_CLASS_VERSION(RDKit::FilterCatalogEntry, 1);

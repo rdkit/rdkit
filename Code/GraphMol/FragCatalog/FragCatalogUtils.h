@@ -23,7 +23,8 @@ namespace RDKit {
 // each functional groups is read in as a molecule with queryatoms and
 // querybonds
 RDKIT_FRAGCATALOG_EXPORT MOL_SPTR_VECT readFuncGroups(std::string fileName);
-RDKIT_FRAGCATALOG_EXPORT MOL_SPTR_VECT readFuncGroups(std::istream &inStream, int nToRead = -1);
+RDKIT_FRAGCATALOG_EXPORT MOL_SPTR_VECT readFuncGroups(std::istream &inStream,
+                                                      int nToRead = -1);
 
 // REVIEW: should this return a vector of pairs or a map?
 // mark the functional groups of interest on the molecule
@@ -39,8 +40,8 @@ RDKIT_FRAGCATALOG_EXPORT MOL_SPTR_VECT readFuncGroups(std::istream &inStream, in
 //            the connection bond is included. these need to be chopped from
 //            the molecule later
 
-RDKIT_FRAGCATALOG_EXPORT MatchVectType findFuncGroupsOnMol(const ROMol &mol, const FragCatParams *params,
-                                  INT_VECT &fgBonds);
+RDKIT_FRAGCATALOG_EXPORT MatchVectType findFuncGroupsOnMol(
+    const ROMol &mol, const FragCatParams *params, INT_VECT &fgBonds);
 
 // This functions is called before either adding the fragments from a molecule
 // to a fragment catalog or generating the fincgerprint for this molecule
@@ -53,8 +54,9 @@ RDKIT_FRAGCATALOG_EXPORT MatchVectType findFuncGroupsOnMol(const ROMol &mol, con
 // - return coreMol to the caller of this function and the enter the atom ids to
 // func
 //   group ids mapping into aToFmap argument
-RDKIT_FRAGCATALOG_EXPORT ROMol *prepareMol(const ROMol &mol, const FragCatParams *fparams,
-                  MatchVectType &aToFmap);
-}
+RDKIT_FRAGCATALOG_EXPORT ROMol *prepareMol(const ROMol &mol,
+                                           const FragCatParams *fparams,
+                                           MatchVectType &aToFmap);
+}  // namespace RDKit
 
 #endif

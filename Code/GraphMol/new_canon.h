@@ -98,9 +98,7 @@ class RDKIT_GRAPHMOL_EXPORT canon_atom {
         nbrIds(NULL),
         p_symbol(NULL){};
 
-  ~canon_atom() {
-      free(nbrIds);
-  }
+  ~canon_atom() { free(nbrIds); }
 };
 
 RDKIT_GRAPHMOL_EXPORT void updateAtomNeighborIndex(

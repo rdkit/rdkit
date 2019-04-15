@@ -14,5 +14,5 @@
 namespace RDKit {
 const int NUM_PRIMES_AVAIL = 1000;
 extern int firstThousandPrimes[NUM_PRIMES_AVAIL];
-}
+}  // namespace RDKit
 #endif

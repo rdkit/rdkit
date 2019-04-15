@@ -85,5 +85,5 @@ ROMol *MolSupplGetItem(T *suppl, int idx) {
   }
   return res;
 }
-}
+}  // namespace RDKit
 #endif

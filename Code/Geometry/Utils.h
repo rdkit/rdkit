@@ -80,11 +80,11 @@ inline double compute14DistCis(double d1, double d2, double d3, double ang12,
 }
 
 /*! \brief Compute the 14 distances give the 12 distance and bond angle
-*  for trans configuration
-*
-*  This is simply a special case of the above function compute14Dist3D;
-*  with torsion angle set to 180. However, this function should be speedier
-*/
+ *  for trans configuration
+ *
+ *  This is simply a special case of the above function compute14Dist3D;
+ *  with torsion angle set to 180. However, this function should be speedier
+ */
 inline double compute14DistTrans(double d1, double d2, double d3, double ang12,
                                  double ang23) {
   double dx = d2 - d3 * cos(ang23) - d1 * cos(ang12);
@@ -92,6 +92,6 @@ inline double compute14DistTrans(double d1, double d2, double d3, double ang12,
   double res = dx * dx + dy * dy;
   return sqrt(res);
 }
-}
+}  // namespace RDGeom
 
 #endif

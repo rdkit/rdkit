@@ -21,7 +21,8 @@
    <b>Note:</b> The caller is responsible for calling \c delete[] on the
      char array returned by this function.
  */
-RDKIT_DATASTRUCTS_EXPORT char *Base64Encode(const unsigned char *, const unsigned int);
+RDKIT_DATASTRUCTS_EXPORT char *Base64Encode(const unsigned char *,
+                                            const unsigned int);
 
 //! return the base64 encoding of an array of chars
 /*!

@@ -20,7 +20,7 @@
 namespace RDKit {
 class ROMol;
 class Bond;
-}
+}  // namespace RDKit
 
 namespace RDDepict {
 typedef boost::shared_array<double> DOUBLE_SMART_PTR;
@@ -553,6 +553,6 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   // pointer to the owning molecule
   const RDKit::ROMol *dp_mol;
 };
-}
+}  // namespace RDDepict
 
 #endif

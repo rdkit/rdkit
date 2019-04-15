@@ -40,15 +40,17 @@ namespace common_properties {
 namespace Atom {
 RDKIT_FREESASALIB_EXPORT extern const std::string
     SASA;  // Solvent Accessible Surface Area for atom- double
-RDKIT_FREESASALIB_EXPORT extern const std::string SASAClass;      // Class type, 0,1,2... etc
-RDKIT_FREESASALIB_EXPORT extern const std::string SASAClassName;  // Class name, Polar, APolar etc...
-}
+RDKIT_FREESASALIB_EXPORT extern const std::string
+    SASAClass;  // Class type, 0,1,2... etc
+RDKIT_FREESASALIB_EXPORT extern const std::string
+    SASAClassName;  // Class name, Polar, APolar etc...
+}  // namespace Atom
 namespace Molecule {
 RDKIT_FREESASALIB_EXPORT extern const std::string
     SASA;  // Total Solvent Accessible Surface area for molecule;
 }
-}
-}
+}  // namespace common_properties
+}  // namespace RDKit
 
 namespace FreeSASA {
 struct RDKIT_FREESASALIB_EXPORT SASAOpts {
@@ -78,8 +80,9 @@ struct RDKIT_FREESASALIB_EXPORT SASAOpts {
   atom with index idx
     \return false if no atoms could be classified
 */
-RDKIT_FREESASALIB_EXPORT bool classifyAtoms(RDKit::ROMol &mol, std::vector<double> &radii,
-                   const FreeSASA::SASAOpts &opts = SASAOpts());
+RDKIT_FREESASALIB_EXPORT bool classifyAtoms(
+    RDKit::ROMol &mol, std::vector<double> &radii,
+    const FreeSASA::SASAOpts &opts = SASAOpts());
 
 //! calculate the Solvent Accessible Surface Area using the FreeSASA library.
 /*!
@@ -102,9 +105,11 @@ RDKIT_FREESASALIB_EXPORT bool classifyAtoms(RDKit::ROMol &mol, std::vector<doubl
   \param opts     SASAOpts class specifying options.
   \return the requested solvent accessible surface area
 */
-RDKIT_FREESASALIB_EXPORT double calcSASA(const RDKit::ROMol &mol, const std::vector<double> &radii,
-                int confIdx = -1, const RDKit::QueryAtom *query = NULL,
-                const SASAOpts &opts = SASAOpts());
+RDKIT_FREESASALIB_EXPORT double calcSASA(const RDKit::ROMol &mol,
+                                         const std::vector<double> &radii,
+                                         int confIdx = -1,
+                                         const RDKit::QueryAtom *query = NULL,
+                                         const SASAOpts &opts = SASAOpts());
 
 //! Make a query atom returning the FreeSASA supplied apolar atom classification
 /*!
@@ -121,6 +126,6 @@ RDKIT_FREESASALIB_EXPORT const RDKit::QueryAtom *makeFreeSasaAPolarAtomQuery();
     \return QueryAtom pointer
 */
 RDKIT_FREESASALIB_EXPORT const RDKit::QueryAtom *makeFreeSasaPolarAtomQuery();
-}
+}  // namespace FreeSASA
 
 #endif

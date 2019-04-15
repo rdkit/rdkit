@@ -131,9 +131,9 @@ class RDKIT_GRAPHMOL_EXPORT AtomPDBResidueInfo : public AtomMonomerInfo {
   unsigned int d_secondaryStructure;
   unsigned int d_segmentNumber;
 };
-};
+};  // namespace RDKit
 //! allows AtomPDBResidueInfo objects to be dumped to streams
-RDKIT_GRAPHMOL_EXPORT std::ostream &operator<<(std::ostream &target,
-                         const RDKit::AtomPDBResidueInfo &apri);
+RDKIT_GRAPHMOL_EXPORT std::ostream &operator<<(
+    std::ostream &target, const RDKit::AtomPDBResidueInfo &apri);
 
 #endif

@@ -30,5 +30,6 @@ RDKIT_DATASTRUCTS_EXPORT void FromBitString(T &sbv, const std::string &s);
   <b>Note:</b> the caller is responsible for <tt>delete</tt>ing this.
 
  */
-RDKIT_DATASTRUCTS_EXPORT ExplicitBitVect *convertToExplicit(const SparseBitVect *sbv);
+RDKIT_DATASTRUCTS_EXPORT ExplicitBitVect *convertToExplicit(
+    const SparseBitVect *sbv);
 #endif

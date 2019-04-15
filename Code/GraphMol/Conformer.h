@@ -81,17 +81,17 @@ class RDKIT_GRAPHMOL_EXPORT Conformer {
   //! Get the position of the specified atom
   const RDGeom::Point3D &getAtomPos(unsigned int atomId) const;
   //! overload
-  template<class U>
+  template <class U>
   const RDGeom::Point3D &getAtomPos(U atomId) const {
-      return getAtomPos(rdcast<unsigned int>(atomId));
+    return getAtomPos(rdcast<unsigned int>(atomId));
   }
 
   //! Get the position of the specified atom
   RDGeom::Point3D &getAtomPos(unsigned int atomId);
   //! overload
-  template<class U>
+  template <class U>
   RDGeom::Point3D &getAtomPos(U atomId) {
-      return getAtomPos(rdcast<unsigned int>(atomId));
+    return getAtomPos(rdcast<unsigned int>(atomId));
   }
 
   //! Set the position of the specified atom
@@ -103,9 +103,9 @@ class RDKIT_GRAPHMOL_EXPORT Conformer {
     d_positions[atomId] = position;
   }
   //! overload
-  template<class U>
+  template <class U>
   void setAtomPos(U atomId, const RDGeom::Point3D &position) {
-      return setAtomPos(rdcast<unsigned int>(atomId), position);
+    return setAtomPos(rdcast<unsigned int>(atomId), position);
   }
   //! get the ID of this conformer
   inline unsigned int getId() const { return d_id; }
@@ -114,10 +114,11 @@ class RDKIT_GRAPHMOL_EXPORT Conformer {
   inline void setId(unsigned int id) { d_id = id; }
 
   //! Get the number of atoms
-  inline unsigned int getNumAtoms() const { return rdcast<unsigned int>(d_positions.size()); }
+  inline unsigned int getNumAtoms() const {
+    return rdcast<unsigned int>(d_positions.size());
+  }
   inline bool is3D() const { return df_is3D; }
   inline void set3D(bool v) { df_is3D = v; }
-
 
  protected:
   //! Set owning moelcule
@@ -140,14 +141,12 @@ typedef boost::shared_ptr<Conformer> CONFORMER_SPTR;
   \param conf  Conformer object to analyze
 */
 inline bool hasNonZeroZCoords(const Conformer &conf) {
-  for(auto p: conf.getPositions()) {
-    if (p.z != 0.0)
-      return true;
+  for (auto p : conf.getPositions()) {
+    if (p.z != 0.0) return true;
   }
   return false;
-
 }
 
-}
+}  // namespace RDKit
 
 #endif

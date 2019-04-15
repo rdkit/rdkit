@@ -96,5 +96,5 @@ struct TargetMatch {
     Empty = false;
   }
 };
-}
-}
+}  // namespace FMCS
+}  // namespace RDKit

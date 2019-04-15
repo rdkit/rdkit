@@ -54,7 +54,6 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerTransform {
       Charges = other.Charges;
     }
     return *this;
-
   };
 
   ~TautomerTransform() { delete Mol; }

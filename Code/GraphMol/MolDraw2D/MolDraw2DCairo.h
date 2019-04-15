@@ -86,5 +86,5 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DCairo : public MolDraw2D {
 
   void initDrawing();
 };
-}
+}  // namespace RDKit
 #endif  // MOLDRAW2DCAIRO_H

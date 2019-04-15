@@ -24,4 +24,4 @@ class GenericRDKitException : public std::exception {
  private:
   std::string _value;
 };
-}
+}  // namespace RDKit

@@ -22,15 +22,17 @@ namespace RDKit {
 class ROMol;
 class Atom;
 class Conformer;
-}
+}  // namespace RDKit
 
 namespace RDGeom {
 class Transform3D;
 }
 
 namespace MolTransforms {
-RDKIT_MOLTRANSFORMS_EXPORT void transformMolsAtoms(RDKit::ROMol *mol, RDGeom::Transform3D &tform);
-RDKIT_MOLTRANSFORMS_EXPORT void transformAtom(RDKit::Atom *atom, RDGeom::Transform3D &tform);
+RDKIT_MOLTRANSFORMS_EXPORT void transformMolsAtoms(RDKit::ROMol *mol,
+                                                   RDGeom::Transform3D &tform);
+RDKIT_MOLTRANSFORMS_EXPORT void transformAtom(RDKit::Atom *atom,
+                                              RDGeom::Transform3D &tform);
 
 //! Compute the centroid of a conformer
 /*!
@@ -40,8 +42,8 @@ RDKIT_MOLTRANSFORMS_EXPORT void transformAtom(RDKit::Atom *atom, RDGeom::Transfo
   \param conf     Conformer of interest
   \param ignoreHs If true, ignore hydrogen atoms
 */
-RDKIT_MOLTRANSFORMS_EXPORT RDGeom::Point3D computeCentroid(const RDKit::Conformer &conf,
-                                bool ignoreHs = true);
+RDKIT_MOLTRANSFORMS_EXPORT RDGeom::Point3D computeCentroid(
+    const RDKit::Conformer &conf, bool ignoreHs = true);
 
 #ifdef RDK_HAS_EIGEN3
 //! Compute principal axes and moments of inertia for a conformer
@@ -62,11 +64,10 @@ RDKIT_MOLTRANSFORMS_EXPORT RDGeom::Point3D computeCentroid(const RDKit::Conforme
 
   \returns whether or not the calculation was successful
 */
-RDKIT_MOLTRANSFORMS_EXPORT bool computePrincipalAxesAndMoments(const RDKit::Conformer &conf,
-                                    Eigen::Matrix3d &axes,
-                                    Eigen::Vector3d &moments,
-                                    bool ignoreHs = false, bool force = false,
-                                    const std::vector<double> *weights = NULL);
+RDKIT_MOLTRANSFORMS_EXPORT bool computePrincipalAxesAndMoments(
+    const RDKit::Conformer &conf, Eigen::Matrix3d &axes,
+    Eigen::Vector3d &moments, bool ignoreHs = false, bool force = false,
+    const std::vector<double> *weights = NULL);
 //! Compute principal axes and moments from the gyration matrix of a conformer
 /*!
 
@@ -85,7 +86,8 @@ RDKIT_MOLTRANSFORMS_EXPORT bool computePrincipalAxesAndMoments(const RDKit::Conf
 
   \returns whether or not the calculation was successful
 */
-RDKIT_MOLTRANSFORMS_EXPORT bool computePrincipalAxesAndMomentsFromGyrationMatrix(
+RDKIT_MOLTRANSFORMS_EXPORT bool
+computePrincipalAxesAndMomentsFromGyrationMatrix(
     const RDKit::Conformer &conf, Eigen::Matrix3d &axes,
     Eigen::Vector3d &moments, bool ignoreHs = false, bool force = false,
     const std::vector<double> *weights = NULL);
@@ -112,8 +114,8 @@ RDKIT_MOLTRANSFORMS_EXPORT RDGeom::Transform3D *computeCanonicalTransform(
     bool normalizeCovar = false, bool ignoreHs = true);
 
 //! Transform the conformation using the specified transformation
-RDKIT_MOLTRANSFORMS_EXPORT void transformConformer(RDKit::Conformer &conf,
-                        const RDGeom::Transform3D &trans);
+RDKIT_MOLTRANSFORMS_EXPORT void transformConformer(
+    RDKit::Conformer &conf, const RDGeom::Transform3D &trans);
 
 //! Canonicalize the orientation of a conformer so that its principal axes
 //! around the specified center point coincide with the x, y, z axes
@@ -128,9 +130,9 @@ RDKIT_MOLTRANSFORMS_EXPORT void transformConformer(RDKit::Conformer &conf,
   \param ignoreHs       If true, ignore hydrogen atoms
 
 */
-RDKIT_MOLTRANSFORMS_EXPORT void canonicalizeConformer(RDKit::Conformer &conf,
-                           const RDGeom::Point3D *center = 0,
-                           bool normalizeCovar = false, bool ignoreHs = true);
+RDKIT_MOLTRANSFORMS_EXPORT void canonicalizeConformer(
+    RDKit::Conformer &conf, const RDGeom::Point3D *center = 0,
+    bool normalizeCovar = false, bool ignoreHs = true);
 
 //! Canonicalize all the conformations in a molecule
 /*!
@@ -139,21 +141,27 @@ RDKIT_MOLTRANSFORMS_EXPORT void canonicalizeConformer(RDKit::Conformer &conf,
   of atoms
   \param ignoreHs       If true, ignore hydrogens
 */
-RDKIT_MOLTRANSFORMS_EXPORT void canonicalizeMol(RDKit::ROMol &mol, bool normalizeCovar = false,
-                     bool ignoreHs = true);
+RDKIT_MOLTRANSFORMS_EXPORT void canonicalizeMol(RDKit::ROMol &mol,
+                                                bool normalizeCovar = false,
+                                                bool ignoreHs = true);
 
 //! Get the bond length between the specified atoms i, j
-RDKIT_MOLTRANSFORMS_EXPORT double getBondLength(const RDKit::Conformer &conf, unsigned int iAtomId,
-                     unsigned int jAtomId);
+RDKIT_MOLTRANSFORMS_EXPORT double getBondLength(const RDKit::Conformer &conf,
+                                                unsigned int iAtomId,
+                                                unsigned int jAtomId);
 
 //! Set the bond length between the specified atoms i, j
 //! (all atoms bonded to atom j are moved)
-RDKIT_MOLTRANSFORMS_EXPORT void setBondLength(RDKit::Conformer &conf, unsigned int iAtomId,
-                   unsigned int jAtomId, double value);
+RDKIT_MOLTRANSFORMS_EXPORT void setBondLength(RDKit::Conformer &conf,
+                                              unsigned int iAtomId,
+                                              unsigned int jAtomId,
+                                              double value);
 
 //! Get the angle in radians among the specified atoms i, j, k
-RDKIT_MOLTRANSFORMS_EXPORT double getAngleRad(const RDKit::Conformer &conf, unsigned int iAtomId,
-                   unsigned int jAtomId, unsigned int kAtomId);
+RDKIT_MOLTRANSFORMS_EXPORT double getAngleRad(const RDKit::Conformer &conf,
+                                              unsigned int iAtomId,
+                                              unsigned int jAtomId,
+                                              unsigned int kAtomId);
 
 //! Get the angle in degrees among the specified atoms i, j, k
 inline double getAngleDeg(const RDKit::Conformer &conf, unsigned int iAtomId,
@@ -163,8 +171,10 @@ inline double getAngleDeg(const RDKit::Conformer &conf, unsigned int iAtomId,
 
 //! Set the angle in radians among the specified atoms i, j, k
 //! (all atoms bonded to atom k are moved)
-RDKIT_MOLTRANSFORMS_EXPORT void setAngleRad(RDKit::Conformer &conf, unsigned int iAtomId,
-                 unsigned int jAtomId, unsigned int kAtomId, double value);
+RDKIT_MOLTRANSFORMS_EXPORT void setAngleRad(RDKit::Conformer &conf,
+                                            unsigned int iAtomId,
+                                            unsigned int jAtomId,
+                                            unsigned int kAtomId, double value);
 
 //! Set the angle in degrees among the specified atoms i, j, k
 //! (all atoms bonded to atom k are moved)
@@ -175,9 +185,11 @@ inline void setAngleDeg(RDKit::Conformer &conf, unsigned int iAtomId,
 }
 
 //! Get the dihedral angle in radians among the specified atoms i, j, k, l
-RDKIT_MOLTRANSFORMS_EXPORT double getDihedralRad(const RDKit::Conformer &conf, unsigned int iAtomId,
-                      unsigned int jAtomId, unsigned int kAtomId,
-                      unsigned int lAtomId);
+RDKIT_MOLTRANSFORMS_EXPORT double getDihedralRad(const RDKit::Conformer &conf,
+                                                 unsigned int iAtomId,
+                                                 unsigned int jAtomId,
+                                                 unsigned int kAtomId,
+                                                 unsigned int lAtomId);
 
 //! Get the dihedral angle in degrees among the specified atoms i, j, k, l
 inline double getDihedralDeg(const RDKit::Conformer &conf, unsigned int iAtomId,
@@ -189,9 +201,9 @@ inline double getDihedralDeg(const RDKit::Conformer &conf, unsigned int iAtomId,
 
 //! Set the dihedral angle in radians among the specified atoms i, j, k, l
 //! (all atoms bonded to atom l are moved)
-RDKIT_MOLTRANSFORMS_EXPORT void setDihedralRad(RDKit::Conformer &conf, unsigned int iAtomId,
-                    unsigned int jAtomId, unsigned int kAtomId,
-                    unsigned int lAtomId, double value);
+RDKIT_MOLTRANSFORMS_EXPORT void setDihedralRad(
+    RDKit::Conformer &conf, unsigned int iAtomId, unsigned int jAtomId,
+    unsigned int kAtomId, unsigned int lAtomId, double value);
 
 //! Set the dihedral angle in degrees among the specified atoms i, j, k, l
 //! (all atoms bonded to atom l are moved)
@@ -200,5 +212,5 @@ inline void setDihedralDeg(RDKit::Conformer &conf, unsigned int iAtomId,
                            unsigned int lAtomId, double value) {
   setDihedralRad(conf, iAtomId, jAtomId, kAtomId, lAtomId, value / 180. * M_PI);
 }
-}
+}  // namespace MolTransforms
 #endif

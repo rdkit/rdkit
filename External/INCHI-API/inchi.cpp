@@ -517,7 +517,7 @@ bool _Valence5NCleanUp5(RWMol& mol, Atom* atom, int atomicNum) {
   PRECONDITION(
       atomicNum == 8 || atomicNum == 16 || atomicNum == 9 || atomicNum == 17,
       "this cleanup looks for O or S or Cl or F");
-  std::stack<Bond *> stackCharged, stackUncharged, *stack;
+  std::stack<Bond*> stackCharged, stackUncharged, *stack;
   // try search for valence-5 N connected to O or S, determined by the
   // <atomicNum> parameter with alternating
   // bonds if there is a charged Oxygen and an uncharged one both
@@ -1164,7 +1164,7 @@ void cleanUp(RWMol& mol) {
     }  // end the switch block
   }    // end the for loop that iterates over atoms
 }  // end cleanUp
-}  // end inner namespace
+}  // namespace
 
 #if RDK_TEST_MULTITHREADED
 std::mutex inchiMutex;
@@ -1536,15 +1536,15 @@ RWMol* InchiToMol(const std::string& inchi, ExtraInchiReturnValues& rv,
                                       << std::endl;
               break;
             default:
-              BOOST_LOG(rdWarningLog) << "Unrecognized stereo0D type ("
-                                      << (int)stereo0DPtr->type
-                                      << ") is ignored!" << std::endl;
+              BOOST_LOG(rdWarningLog)
+                  << "Unrecognized stereo0D type (" << (int)stereo0DPtr->type
+                  << ") is ignored!" << std::endl;
           }  // end switch stereotype
         }    // end for loop over all stereo0D entries
         // set the bond directions
         if (!assignBondDirs(*m, zBondPairs, eBondPairs)) {
-          BOOST_LOG(rdWarningLog) << "Cannot assign bond directions!"
-                                  << std::endl;
+          BOOST_LOG(rdWarningLog)
+              << "Cannot assign bond directions!" << std::endl;
           ;
         }
       }  // end if (if stereo0D presents)
@@ -1768,9 +1768,9 @@ std::string MolToInchi(const ROMol& mol, ExtraInchiReturnValues& rv,
             stereo0D.parity = INCHI_PARITY_ODD;
             pushIt = true;
           } else {
-            BOOST_LOG(rdWarningLog) << "unrecognized chirality tag ("
-                                    << chiralTag << ") on atom " << i
-                                    << " is ignored." << std::endl;
+            BOOST_LOG(rdWarningLog)
+                << "unrecognized chirality tag (" << chiralTag << ") on atom "
+                << i << " is ignored." << std::endl;
           }
         }
         if (pushIt) {
@@ -1960,25 +1960,25 @@ std::string MolToInchi(const ROMol& mol, ExtraInchiReturnValues& rv,
   return inchi;
 }
 
-std::string MolBlockToInchi(const std::string &molBlock, ExtraInchiReturnValues& rv,
-                       const char* options) {
- 
- // create output
+std::string MolBlockToInchi(const std::string& molBlock,
+                            ExtraInchiReturnValues& rv, const char* options) {
+  // create output
   inchi_Output output;
-  memset((void *)&output, 0, sizeof(output));
+  memset((void*)&output, 0, sizeof(output));
   // call DLL
   std::string inchi;
   {
 #if RDK_TEST_MULTITHREADED
     std::lock_guard<std::mutex> lock(inchiMutex);
 #endif
-    char *_options = nullptr;
+    char* _options = nullptr;
     if (options) {
       _options = new char[strlen(options) + 1];
       fixOptionSymbol(options, _options);
       options = _options;
     }
-    int retcode = MakeINCHIFromMolfileText( molBlock.c_str(), (char *)options, &output );
+    int retcode =
+        MakeINCHIFromMolfileText(molBlock.c_str(), (char*)options, &output);
 
     // generate output
     rv.returnCode = retcode;
@@ -1989,11 +1989,10 @@ std::string MolBlockToInchi(const std::string &molBlock, ExtraInchiReturnValues&
 
     // clean up
     FreeINCHI(&output);
-    delete [] _options;
+    delete[] _options;
   }
   return inchi;
 }
-
 
 std::string InchiToInchiKey(const std::string& inchi) {
   char inchiKey[29];
@@ -2031,4 +2030,4 @@ std::string InchiToInchiKey(const std::string& inchi) {
   BOOST_LOG(rdErrorLog) << error << " in generating InChI Key" << std::endl;
   return std::string();
 }
-}
+}  // namespace RDKit

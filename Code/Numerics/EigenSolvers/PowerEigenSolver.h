@@ -19,7 +19,7 @@
 namespace RDNumeric {
 namespace EigenSolvers {
 //! Compute the \c numEig largest eigenvalues and, optionally,  the
-//corresponding
+// corresponding
 //! eigenvectors.
 /*!
 
@@ -53,16 +53,18 @@ We use the iterative power method, which works like this:
 
 
 */
-bool RDKIT_EIGENSOLVERS_EXPORT powerEigenSolver(unsigned int numEig, DoubleSymmMatrix &mat,
-                      DoubleVector &eigenValues, DoubleMatrix *eigenVectors = 0,
-                      int seed = -1);
+bool RDKIT_EIGENSOLVERS_EXPORT powerEigenSolver(unsigned int numEig,
+                                                DoubleSymmMatrix &mat,
+                                                DoubleVector &eigenValues,
+                                                DoubleMatrix *eigenVectors = 0,
+                                                int seed = -1);
 //! \overload
 static inline bool powerEigenSolver(unsigned int numEig, DoubleSymmMatrix &mat,
                                     DoubleVector &eigenValues,
                                     DoubleMatrix &eigenVectors, int seed = -1) {
   return powerEigenSolver(numEig, mat, eigenValues, &eigenVectors, seed);
 }
-};
-};
+};  // namespace EigenSolvers
+};  // namespace RDNumeric
 
 #endif

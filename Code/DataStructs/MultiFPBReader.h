@@ -185,15 +185,15 @@ class RDKIT_DATASTRUCTS_EXPORT MultiFPBReader {
   /*! (i.e. where all the bits set in the query are also set in the db
    molecule)
    */
-  std::vector<std::pair<unsigned int, unsigned int> > getContainingNeighbors(
+  std::vector<std::pair<unsigned int, unsigned int>> getContainingNeighbors(
       const std::uint8_t *bv, int numThreads = 1) const;
   //! \overload
-  std::vector<std::pair<unsigned int, unsigned int> > getContainingNeighbors(
+  std::vector<std::pair<unsigned int, unsigned int>> getContainingNeighbors(
       boost::shared_array<std::uint8_t> bv, int numThreads = 1) const {
     return getContainingNeighbors(bv.get(), numThreads);
   };
   //! \overload
-  std::vector<std::pair<unsigned int, unsigned int> > getContainingNeighbors(
+  std::vector<std::pair<unsigned int, unsigned int>> getContainingNeighbors(
       const ExplicitBitVect &ebv, int numThreads = 1) const;
 
  private:
@@ -207,5 +207,5 @@ class RDKIT_DATASTRUCTS_EXPORT MultiFPBReader {
   MultiFPBReader(const MultiFPBReader &);
   MultiFPBReader &operator=(const MultiFPBReader &);
 };
-}
+}  // namespace RDKit
 #endif

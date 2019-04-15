@@ -20,7 +20,7 @@
 
 #if defined(_MSC_VER)
 #pragma warning(push, 1)
-#pragma warning(disable: 4800)
+#pragma warning(disable : 4800)
 #endif
 namespace RDKit {
 template <typename CompareFunc>
@@ -147,7 +147,7 @@ void hanoisort(int *base, int nel, int *count, int *changed,
     memmove(base, temp, nel * sizeof(int));
   free(temp);
 }
-}
+}  // namespace RDKit
 
 #if defined(_MSC_VER)
 #pragma warning(pop)

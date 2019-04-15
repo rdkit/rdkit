@@ -167,8 +167,9 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
 };
 
 //*! Embed multiple conformations for a molecule
-RDKIT_DISTGEOMHELPERS_EXPORT void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
-                        const EmbedParameters &params);
+RDKIT_DISTGEOMHELPERS_EXPORT void EmbedMultipleConfs(
+    ROMol &mol, INT_VECT &res, unsigned int numConfs,
+    const EmbedParameters &params);
 inline INT_VECT EmbedMultipleConfs(ROMol &mol, unsigned int numConfs,
                                    const EmbedParameters &params) {
   INT_VECT res;
@@ -400,7 +401,7 @@ RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters ETDG;
 RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters ETKDG;
 //! Parameters corresponding to Sereina Riniker's ETKDG approach - version 2
 RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters ETKDGv2;
-}
-}
+}  // namespace DGeomHelpers
+}  // namespace RDKit
 
 #endif

@@ -1,16 +1,16 @@
 //
 //  Copyright (c) 2016, Riccardo Vianello
 //  All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
-// met: 
+// met:
 //
-//     * Redistributions of source code must retain the above copyright 
+//     * Redistributions of source code must retain the above copyright
 //       notice, this list of conditions and the following disclaimer.
 //     * Redistributions in binary form must reproduce the above
-//       copyright notice, this list of conditions and the following 
-//       disclaimer in the documentation and/or other materials provided 
+//       copyright notice, this list of conditions and the following
+//       disclaimer in the documentation and/or other materials provided
 //       with the distribution.
 //     * Neither the name of the authors nor the names of their contributors
 //       may be used to endorse or promote products derived from this software
@@ -37,27 +37,26 @@
 extern "C" {
 #endif
 
-  void bitstringUnion(int length, uint8 *bstr1, uint8 *bstr2);
-  void bitstringIntersection(int length, uint8 *bstr1, uint8 *bstr2);
+void bitstringUnion(int length, uint8 *bstr1, uint8 *bstr2);
+void bitstringIntersection(int length, uint8 *bstr1, uint8 *bstr2);
 
-  int bitstringWeight(int length, uint8 *bstr);
-  int bitstringIntersectionWeight(int length, uint8 *bstr1, uint8 *bstr2);
-  int bitstringDifferenceWeight(int length, uint8 *bstr1, uint8 *bstr2);
-  
-  int bitstringHemDistance(int length, uint8 *bstr1, uint8 *bstr2);
-  double bitstringTanimotoSimilarity(int length, uint8 *bstr1, uint8 *bstr2);
-  double bitstringTanimotoDistance(int length, uint8 *bstr1, uint8 *bstr2);
+int bitstringWeight(int length, uint8 *bstr);
+int bitstringIntersectionWeight(int length, uint8 *bstr1, uint8 *bstr2);
+int bitstringDifferenceWeight(int length, uint8 *bstr1, uint8 *bstr2);
 
-  bool bitstringContains(int length, uint8 *bstr1, uint8 *bstr2);
-  bool bitstringIntersects(int length, uint8 *bstr1, uint8 *bstr2);
-  bool bitstringAllTrue(int length, uint8 *bstr);
+int bitstringHemDistance(int length, uint8 *bstr1, uint8 *bstr2);
+double bitstringTanimotoSimilarity(int length, uint8 *bstr1, uint8 *bstr2);
+double bitstringTanimotoDistance(int length, uint8 *bstr1, uint8 *bstr2);
 
-  void bitstringSimpleSubset(int length,
-			     uint8 *bstr, int sub_weight, uint8 *sub_bstr);
-  void bitstringRandomSubset(int length, 
-			     int weight, uint8 *bstr,
-			     int sub_weight, uint8 *sub_bstr);
-  
+bool bitstringContains(int length, uint8 *bstr1, uint8 *bstr2);
+bool bitstringIntersects(int length, uint8 *bstr1, uint8 *bstr2);
+bool bitstringAllTrue(int length, uint8 *bstr);
+
+void bitstringSimpleSubset(int length, uint8 *bstr, int sub_weight,
+                           uint8 *sub_bstr);
+void bitstringRandomSubset(int length, int weight, uint8 *bstr, int sub_weight,
+                           uint8 *sub_bstr);
+
 #ifdef __cplusplus
 } /* extern "C" { */
 #endif

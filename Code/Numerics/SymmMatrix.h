@@ -339,7 +339,7 @@ Vector<TYPE> &multiply(const SymmMatrix<TYPE> &A, const Vector<TYPE> &x,
 typedef SymmMatrix<double> DoubleSymmMatrix;
 typedef SymmMatrix<int> IntSymmMatrix;
 typedef SymmMatrix<unsigned int> UintSymmMatrix;
-}
+}  // namespace RDNumeric
 
 //! ostream operator for Matrix's
 template <class TYPE>

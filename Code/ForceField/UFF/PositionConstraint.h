@@ -20,7 +20,8 @@ namespace ForceFields {
 namespace UFF {
 
 //! A position constraint of the type 0.5k * deltaX^2
-class RDKIT_FORCEFIELD_EXPORT PositionConstraintContrib : public ForceFieldContrib {
+class RDKIT_FORCEFIELD_EXPORT PositionConstraintContrib
+    : public ForceFieldContrib {
  public:
   PositionConstraintContrib() : d_atIdx(-1){};
   //! Constructor
@@ -49,6 +50,6 @@ class RDKIT_FORCEFIELD_EXPORT PositionConstraintContrib : public ForceFieldContr
   RDGeom::Point3D d_pos0;  //!< reference position
   double d_forceConstant;  //!< force constant of the bond
 };
-}
-}
+}  // namespace UFF
+}  // namespace ForceFields
 #endif

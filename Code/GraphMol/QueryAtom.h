@@ -93,7 +93,7 @@ inline std::string qhelper(Atom::QUERYATOM_QUERY *q, unsigned int depth) {
   }
   return res;
 }
-}  // end of detail namespace
+}  // namespace detail
 inline std::string describeQuery(const Atom *atom) {
   PRECONDITION(atom, "bad atom");
   std::string res = "";
@@ -103,6 +103,6 @@ inline std::string describeQuery(const Atom *atom) {
   return res;
 }
 
-};  // end o' namespace
+};  // namespace RDKit
 
 #endif

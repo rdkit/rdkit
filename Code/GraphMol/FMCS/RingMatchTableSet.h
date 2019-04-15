@@ -55,8 +55,8 @@ class RDKIT_FMCS_EXPORT RingMatchTableSet {
   };
 
  private:
-  std::vector<std::vector<size_t> >* QueryBondRingsIndeces;
-  std::map<const ROMol*, std::vector<std::vector<size_t> > >
+  std::vector<std::vector<size_t>>* QueryBondRingsIndeces;
+  std::map<const ROMol*, std::vector<std::vector<size_t>>>
       TargetBondRingsIndecesSet;  // by target molecules
 
   std::map<const ROMol*, RingMatchTable> MatchMatrixSet;  // by target molecules
@@ -80,15 +80,15 @@ class RDKIT_FMCS_EXPORT RingMatchTableSet {
   }
 
   inline bool isTargetBondInRing(const ROMol* target, unsigned bi) const {
-    std::map<const ROMol*, std::vector<std::vector<size_t> > >::const_iterator
-        i = TargetBondRingsIndecesSet.find(target);
+    std::map<const ROMol*, std::vector<std::vector<size_t>>>::const_iterator i =
+        TargetBondRingsIndecesSet.find(target);
     if (TargetBondRingsIndecesSet.end() == i) throw - 1;  // never
     return i->second[bi].empty();
   }
   inline const std::vector<size_t>& getTargetBondRings(const ROMol* target,
                                                        unsigned bi) const {
-    std::map<const ROMol*, std::vector<std::vector<size_t> > >::const_iterator
-        i = TargetBondRingsIndecesSet.find(target);
+    std::map<const ROMol*, std::vector<std::vector<size_t>>>::const_iterator i =
+        TargetBondRingsIndecesSet.find(target);
     if (TargetBondRingsIndecesSet.end() == i) throw - 1;  // never
     return i->second[bi];
   }
@@ -119,7 +119,7 @@ class RDKIT_FMCS_EXPORT RingMatchTableSet {
         (*QueryBondRingsIndeces)[*bi].push_back(ri);
   }
   inline void addTargetBondRingsIndeces(const ROMol* mol2) {
-    std::vector<std::vector<size_t> >& m = TargetBondRingsIndecesSet[mol2];
+    std::vector<std::vector<size_t>>& m = TargetBondRingsIndecesSet[mol2];
     m.resize(mol2->getNumBonds());
 
     size_t ri = 0;
@@ -229,5 +229,5 @@ class RDKIT_FMCS_EXPORT RingMatchTableSet {
     return m;
   }
 };
-}
+}  // namespace FMCS
 }  // namespace RDKit

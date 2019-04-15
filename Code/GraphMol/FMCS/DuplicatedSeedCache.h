@@ -94,5 +94,5 @@ class DuplicatedSeedCache {
     return Index.size();  // for statistics only
   }
 };
-}
-}
+}  // namespace FMCS
+}  // namespace RDKit

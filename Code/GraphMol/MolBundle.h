@@ -85,5 +85,5 @@ class MolBundle : public RDProps {
   std::vector<boost::shared_ptr<ROMol>> d_mols;
 };
 
-};  // end of RDKit namespace
+};  // namespace RDKit
 #endif

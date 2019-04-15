@@ -19,7 +19,8 @@ namespace ForceFields {
 namespace UFF {
 
 //! A distance range constraint modelled after a BondStretchContrib
-class RDKIT_FORCEFIELD_EXPORT DistanceConstraintContrib : public ForceFieldContrib {
+class RDKIT_FORCEFIELD_EXPORT DistanceConstraintContrib
+    : public ForceFieldContrib {
  public:
   DistanceConstraintContrib() : d_end1Idx(-1), d_end2Idx(-1){};
   //! Constructor
@@ -55,6 +56,6 @@ class RDKIT_FORCEFIELD_EXPORT DistanceConstraintContrib : public ForceFieldContr
   double d_minLen, d_maxLen;  //!< rest length of the bond
   double d_forceConstant;     //!< force constant of the bond
 };
-}
-}
+}  // namespace UFF
+}  // namespace ForceFields
 #endif

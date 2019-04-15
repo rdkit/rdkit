@@ -132,13 +132,13 @@ class RDKIT_DATASTRUCTS_EXPORT DiscreteValueVect {
   void initFromText(const char *pkl, const unsigned int len);
 };
 
-RDKIT_DATASTRUCTS_EXPORT unsigned int computeL1Norm(const DiscreteValueVect &v1,
-                           const DiscreteValueVect &v2);
+RDKIT_DATASTRUCTS_EXPORT unsigned int computeL1Norm(
+    const DiscreteValueVect &v1, const DiscreteValueVect &v2);
 
-RDKIT_DATASTRUCTS_EXPORT DiscreteValueVect operator+(const DiscreteValueVect &p1,
-                            const DiscreteValueVect &p2);
-RDKIT_DATASTRUCTS_EXPORT DiscreteValueVect operator-(const DiscreteValueVect &p1,
-                            const DiscreteValueVect &p2);
-}
+RDKIT_DATASTRUCTS_EXPORT DiscreteValueVect
+operator+(const DiscreteValueVect &p1, const DiscreteValueVect &p2);
+RDKIT_DATASTRUCTS_EXPORT DiscreteValueVect
+operator-(const DiscreteValueVect &p1, const DiscreteValueVect &p2);
+}  // namespace RDKit
 
 #endif

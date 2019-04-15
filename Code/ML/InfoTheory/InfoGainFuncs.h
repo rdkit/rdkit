@@ -135,5 +135,5 @@ double InfoEntropyGain(T *dMat, long int dim1, long int dim2) {
   delete[] variableRes;
   return gain;
 }
-}
+}  // namespace RDInfoTheory
 #endif

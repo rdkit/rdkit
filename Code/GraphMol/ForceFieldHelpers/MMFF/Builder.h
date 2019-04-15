@@ -81,7 +81,8 @@ RDKIT_FORCEFIELDHELPERS_EXPORT ForceFields::ForceField *constructForceField(
     bool ignoreInterfragInteractions = true);
 
 namespace Tools {
-class RDKIT_FORCEFIELDHELPERS_EXPORT DefaultTorsionBondSmarts : private boost::noncopyable {
+class RDKIT_FORCEFIELDHELPERS_EXPORT DefaultTorsionBondSmarts
+    : private boost::noncopyable {
  public:
   static const std::string &string() { return ds_string; }
   static const ROMol *query();
@@ -98,36 +99,43 @@ class RDKIT_FORCEFIELDHELPERS_EXPORT DefaultTorsionBondSmarts : private boost::n
 
 enum { RELATION_1_2 = 0, RELATION_1_3 = 1, RELATION_1_4 = 2, RELATION_1_X = 3 };
 // these functions are primarily exposed so they can be tested.
-RDKIT_FORCEFIELDHELPERS_EXPORT unsigned int twoBitCellPos(unsigned int nAtoms, int i, int j);
-RDKIT_FORCEFIELDHELPERS_EXPORT void setTwoBitCell(boost::shared_array<std::uint8_t> &res, unsigned int pos,
-                   std::uint8_t value);
-RDKIT_FORCEFIELDHELPERS_EXPORT std::uint8_t getTwoBitCell(boost::shared_array<std::uint8_t> &res,
-                             unsigned int pos);
-RDKIT_FORCEFIELDHELPERS_EXPORT boost::shared_array<std::uint8_t> buildNeighborMatrix(const ROMol &mol);
-RDKIT_FORCEFIELDHELPERS_EXPORT void addBonds(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
-              ForceFields::ForceField *field);
-RDKIT_FORCEFIELDHELPERS_EXPORT void addAngles(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
-               ForceFields::ForceField *field);
-RDKIT_FORCEFIELDHELPERS_EXPORT void addStretchBend(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
-                    ForceFields::ForceField *field);
-RDKIT_FORCEFIELDHELPERS_EXPORT void addOop(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
-            ForceFields::ForceField *field);
+RDKIT_FORCEFIELDHELPERS_EXPORT unsigned int twoBitCellPos(unsigned int nAtoms,
+                                                          int i, int j);
+RDKIT_FORCEFIELDHELPERS_EXPORT void setTwoBitCell(
+    boost::shared_array<std::uint8_t> &res, unsigned int pos,
+    std::uint8_t value);
+RDKIT_FORCEFIELDHELPERS_EXPORT std::uint8_t getTwoBitCell(
+    boost::shared_array<std::uint8_t> &res, unsigned int pos);
+RDKIT_FORCEFIELDHELPERS_EXPORT boost::shared_array<std::uint8_t>
+buildNeighborMatrix(const ROMol &mol);
+RDKIT_FORCEFIELDHELPERS_EXPORT void addBonds(
+    const ROMol &mol, MMFFMolProperties *mmffMolProperties,
+    ForceFields::ForceField *field);
+RDKIT_FORCEFIELDHELPERS_EXPORT void addAngles(
+    const ROMol &mol, MMFFMolProperties *mmffMolProperties,
+    ForceFields::ForceField *field);
+RDKIT_FORCEFIELDHELPERS_EXPORT void addStretchBend(
+    const ROMol &mol, MMFFMolProperties *mmffMolProperties,
+    ForceFields::ForceField *field);
+RDKIT_FORCEFIELDHELPERS_EXPORT void addOop(const ROMol &mol,
+                                           MMFFMolProperties *mmffMolProperties,
+                                           ForceFields::ForceField *field);
 RDKIT_FORCEFIELDHELPERS_EXPORT void addTorsions(
     const ROMol &mol, MMFFMolProperties *mmffMolProperties,
     ForceFields::ForceField *field,
     const std::string &torsionBondSmarts = DefaultTorsionBondSmarts::string());
-RDKIT_FORCEFIELDHELPERS_EXPORT void addVdW(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
-            ForceFields::ForceField *field,
-            boost::shared_array<std::uint8_t> neighborMatrix,
-            double nonBondedThresh = 100.0,
-            bool ignoreInterfragInteractions = true);
-RDKIT_FORCEFIELDHELPERS_EXPORT void addEle(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
-            ForceFields::ForceField *field,
-            boost::shared_array<std::uint8_t> neighborMatrix,
-            double nonBondedThresh = 100.0,
-            bool ignoreInterfragInteractions = true);
-}
-}
-}
+RDKIT_FORCEFIELDHELPERS_EXPORT void addVdW(
+    const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
+    ForceFields::ForceField *field,
+    boost::shared_array<std::uint8_t> neighborMatrix,
+    double nonBondedThresh = 100.0, bool ignoreInterfragInteractions = true);
+RDKIT_FORCEFIELDHELPERS_EXPORT void addEle(
+    const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
+    ForceFields::ForceField *field,
+    boost::shared_array<std::uint8_t> neighborMatrix,
+    double nonBondedThresh = 100.0, bool ignoreInterfragInteractions = true);
+}  // namespace Tools
+}  // namespace MMFF
+}  // namespace RDKit
 
 #endif

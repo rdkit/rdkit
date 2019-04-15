@@ -58,7 +58,7 @@ class RDKIT_GRAPHMOL_EXPORT atomicData {
   double MostCommonIsotopeMass() const { return commonIsotopeMass; }
 
   // maps isotope number -> mass
-  std::map<unsigned int, std::pair<double, double> >
+  std::map<unsigned int, std::pair<double, double>>
       d_isotopeInfoMap;  // available isotopes
  private:
   int anum;                // atomic number
@@ -72,5 +72,5 @@ class RDKIT_GRAPHMOL_EXPORT atomicData {
   int commonIsotope;         // most comon isotope
   double commonIsotopeMass;  // most comon isotope
 };
-};
+};  // namespace RDKit
 #endif

@@ -48,9 +48,9 @@ const int char_widths[] = {
     0,   0,    834};
 
 RDKIT_MOLDRAW2D_EXPORT void arcPoints(const Point2D &cds1, const Point2D &cds2,
-               std::vector<Point2D> &res, float startAng = 0,
-               float extent = 360);
-}
-}
+                                      std::vector<Point2D> &res,
+                                      float startAng = 0, float extent = 360);
+}  // namespace MolDraw2D_detail
+}  // namespace RDKit
 
 #endif

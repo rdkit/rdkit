@@ -15,8 +15,9 @@
 namespace RDKit {
 namespace FMCS {
 template <typename T>
-class RDKIT_FMCS_EXPORT TArray2D {  // for scalar value types ! including bool with special STL
-                  // implementation (no reference to item - bitset used)
+class RDKIT_FMCS_EXPORT
+    TArray2D {  // for scalar value types ! including bool with special STL
+                // implementation (no reference to item - bitset used)
   size_t XSize;
   size_t YSize;
   std::vector<T> Data;
@@ -45,5 +46,5 @@ class RDKIT_FMCS_EXPORT TArray2D {  // for scalar value types ! including bool w
 };
 
 typedef TArray2D<bool> MatchTable;  // row is index in QueryMolecule
-}
-}
+}  // namespace FMCS
+}  // namespace RDKit

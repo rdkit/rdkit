@@ -122,23 +122,23 @@ inline short GetTag<std::string>() {
   return StringTag;
 }
 template <>
-inline short GetTag<std::vector<double> >() {
+inline short GetTag<std::vector<double>>() {
   return VecDoubleTag;
 }
 template <>
-inline short GetTag<std::vector<float> >() {
+inline short GetTag<std::vector<float>>() {
   return VecFloatTag;
 }
 template <>
-inline short GetTag<std::vector<int> >() {
+inline short GetTag<std::vector<int>>() {
   return VecIntTag;
 }
 template <>
-inline short GetTag<std::vector<unsigned int> >() {
+inline short GetTag<std::vector<unsigned int>>() {
   return VecUnsignedIntTag;
 }
 template <>
-inline short GetTag<std::vector<std::string> >() {
+inline short GetTag<std::vector<std::string>>() {
   return VecStringTag;
 }
 template <>
@@ -190,29 +190,29 @@ inline std::string *valuePtrCast<std::string>(Value value) {
   return value.s;
 }
 template <>
-inline std::vector<double> *valuePtrCast<std::vector<double> >(Value value) {
+inline std::vector<double> *valuePtrCast<std::vector<double>>(Value value) {
   return value.vd;
 }
 template <>
-inline std::vector<float> *valuePtrCast<std::vector<float> >(Value value) {
+inline std::vector<float> *valuePtrCast<std::vector<float>>(Value value) {
   return value.vf;
 }
 template <>
-inline std::vector<int> *valuePtrCast<std::vector<int> >(Value value) {
+inline std::vector<int> *valuePtrCast<std::vector<int>>(Value value) {
   return value.vi;
 }
 template <>
-inline std::vector<unsigned int> *valuePtrCast<std::vector<unsigned int> >(
+inline std::vector<unsigned int> *valuePtrCast<std::vector<unsigned int>>(
     Value value) {
   return value.vu;
 }
 template <>
-inline std::vector<std::string> *valuePtrCast<std::vector<std::string> >(
+inline std::vector<std::string> *valuePtrCast<std::vector<std::string>>(
     Value value) {
   return value.vs;
 }
-}
-}
+}  // namespace detail
+}  // namespace RDTypeTag
 
 struct RDValue {
   RDTypeTag::detail::Value value;
@@ -342,19 +342,17 @@ typedef const RDValue &RDValue_cast_t;
 typedef RDValue RDValue_cast_t;
 #endif
 
-
 /////////////////////////////////////////////////////////////////////////////////////
 // rdvalue_is<T>
 
 template <class T>
 inline bool rdvalue_is(RDValue_cast_t v) {
-  const short tag = RDTypeTag::GetTag<
-      typename boost::remove_reference<T>::type>();
-  if (v.getTag() == tag)
-    return true;
+  const short tag =
+      RDTypeTag::GetTag<typename boost::remove_reference<T>::type>();
+  if (v.getTag() == tag) return true;
 
   // If we are an Any tag, check the any type info
-  if(v.getTag() == RDTypeTag::AnyTag) {
+  if (v.getTag() == RDTypeTag::AnyTag) {
     return v.value.a->type() == typeid(T);
   }
 
@@ -418,5 +416,5 @@ inline bool rdvalue_cast<bool>(RDValue_cast_t v) {
   throw boost::bad_any_cast();
 }
 
-}  // namespace rdkit
+}  // namespace RDKit
 #endif

@@ -24,7 +24,8 @@
 
 namespace RDKit {
 
-class RDKIT_FRAGCATALOG_EXPORT FragCatalogEntry : public RDCatalog::CatalogEntry {
+class RDKIT_FRAGCATALOG_EXPORT FragCatalogEntry
+    : public RDCatalog::CatalogEntry {
  public:
   FragCatalogEntry() : dp_mol(0), d_descrip(""), d_order(0) {
     dp_props = new Dict();
@@ -128,6 +129,6 @@ class RDKIT_FRAGCATALOG_EXPORT FragCatalogEntry : public RDCatalog::CatalogEntry
   // group ID
   INT_INT_VECT_MAP d_aToFmap;
 };
-}
+}  // namespace RDKit
 
 #endif

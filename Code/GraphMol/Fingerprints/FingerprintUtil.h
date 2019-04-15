@@ -140,8 +140,8 @@ RDKIT_FINGERPRINTS_EXPORT void buildDefaultRDKitFingerprintAtomInvariants(
 
 RDKIT_FINGERPRINTS_EXPORT void enumerateAllPaths(
     const ROMol &mol, std::map<int, std::list<std::vector<int>>> &allPaths,
-    const std::vector<std::uint32_t> *fromAtoms, bool branchedPaths,
-    bool useHs, unsigned int minPath, unsigned int maxPath);
+    const std::vector<std::uint32_t> *fromAtoms, bool branchedPaths, bool useHs,
+    unsigned int minPath, unsigned int maxPath);
 
 RDKIT_FINGERPRINTS_EXPORT void identifyQueryBonds(
     const ROMol &mol, std::vector<const Bond *> &bondCache,
