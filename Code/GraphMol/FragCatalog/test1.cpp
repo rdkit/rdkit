@@ -37,7 +37,7 @@ using namespace RDKit;
 void testMols(std::vector<std::unique_ptr<ROMol>> &mols, FragFPGenerator &fpGen,
               FragCatalog &fcat) {
   int nDone = 0;
-  for (auto&& mi : mols) {
+  for (auto &&mi : mols) {
     ExplicitBitVect *fp = fpGen.getFPForMol(*mi, fcat);
     switch (nDone) {
       case 0:
@@ -239,7 +239,7 @@ void testIssue294() {
   FragFPGenerator fpGen;
 
   for (unsigned int i = 0; i < 200; i++) {
-    for (auto&& mi : mols) {
+    for (auto &&mi : mols) {
       ExplicitBitVect *fp = fpGen.getFPForMol(*mi, fcat);
       delete fp;
     }
@@ -248,9 +248,58 @@ void testIssue294() {
   BOOST_LOG(rdInfoLog) << "---- Done" << std::endl;
 }
 
+void testWhiteSpaceInSmarts() {
+  BOOST_LOG(rdInfoLog) << "----- Test Whitespace in SMARTS Fragment string."
+                       << std::endl;
+
+  std::vector<std::string> data({
+      "          ",    // whitespace only
+      "          \n",  // whitespace plus new line
+      " //   initial space plus comment\nfluorine\t[F]\n"
+  });
+
+  std::vector<size_t> reference_sizes({0, 0, 1});
+
+  auto reference = reference_sizes.cbegin();
+  for (const auto &smarts : data) {
+    std::istringstream input(smarts);
+    auto groups = readFuncGroups(input);
+    TEST_ASSERT(groups.size() == *reference);
+    ++reference;
+  }
+  BOOST_LOG(rdInfoLog) << "---- Done" << std::endl;
+}
+
+void testFragmentWithoutSmarts() {
+  BOOST_LOG(rdInfoLog) << "----- Test Fragment string without SMARTS."
+                       << std::endl;
+
+  std::vector<std::string> data({
+      "//   Name	SMARTS\nnonsense\n",
+      "//   Name	SMARTS\nnonsense no new line",
+      "//   Name	SMARTS\nnonsense with tab\t\n"
+  });
+
+  for (const auto &smarts : data) {
+    bool ok = false;
+    std::istringstream input(smarts);
+    RDKit::MOL_SPTR_VECT groups;
+    try {
+      groups = readFuncGroups(input);
+    } catch (const Invar::Invariant &) {
+      ok = true;
+    }
+    TEST_ASSERT(ok);
+    TEST_ASSERT(groups.empty());
+  }
+  BOOST_LOG(rdInfoLog) << "---- Done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
   test1();
   testIssue294();
+  testWhiteSpaceInSmarts();
+  testFragmentWithoutSmarts();
   return 0;
 }
