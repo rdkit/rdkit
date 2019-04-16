@@ -36,24 +36,31 @@ std::uint32_t computeRingInvariant(INT_VECT ring, unsigned int nAtoms) {
   return res;
 }
 
+void convertToBonds(const INT_VECT &ring, INT_VECT &bondRing,
+                    const ROMol &mol) {
+  const unsigned int rsiz = rdcast<unsigned int>(ring.size());
+  bondRing.resize(rsiz);
+  for (unsigned int i = 0; i < (rsiz - 1); i++) {
+    const Bond *bnd = mol.getBondBetweenAtoms(ring[i], ring[i + 1]);
+    if (!bnd) throw ValueErrorException("expected bond not found");
+    bondRing[i] = bnd->getIdx();
+  }
+  // bond from last to first atom
+  const Bond *bnd = mol.getBondBetweenAtoms(ring[rsiz - 1], ring[0]);
+  if (!bnd) throw ValueErrorException("expected bond not found");
+
+  bondRing[rsiz - 1] = bnd->getIdx();
+}
+
 void convertToBonds(const VECT_INT_VECT &res, VECT_INT_VECT &brings,
                     const ROMol &mol) {
   for (const auto &ring : res) {
-    unsigned int rsiz = rdcast<unsigned int>(ring.size());
-    INT_VECT bring(rsiz);
-    for (unsigned int i = 0; i < (rsiz - 1); i++) {
-      const Bond *bnd = mol.getBondBetweenAtoms(ring[i], ring[i + 1]);
-      if (!bnd) throw ValueErrorException("expected bond not found");
-      bring[i] = bnd->getIdx();
-    }
-    // bond from last to first atom
-    const Bond *bnd = mol.getBondBetweenAtoms(ring[rsiz - 1], ring[0]);
-    if (!bnd) throw ValueErrorException("expected bond not found");
-
-    bring[rsiz - 1] = bnd->getIdx();
+    INT_VECT bring;
+    convertToBonds(ring, bring, mol);
     brings.push_back(bring);
   }
 }
+
 
 }  // end of namespace RingUtils
 
@@ -66,18 +73,7 @@ void trimBonds(unsigned int cand, const ROMol &tMol, INT_SET &changed,
                INT_VECT &atomDegrees, boost::dynamic_bitset<> &activeBonds);
 void storeRingInfo(const ROMol &mol, const INT_VECT &ring) {
   INT_VECT bondIndices;
-  INT_VECT_CI lastRai;
-  for (auto rai = ring.begin(); rai != ring.end(); rai++) {
-    if (rai != ring.begin()) {
-      const Bond *bnd = mol.getBondBetweenAtoms(*rai, *lastRai);
-      if (!bnd) throw ValueErrorException("expected bond not found");
-      bondIndices.push_back(bnd->getIdx());
-    }
-    lastRai = rai;
-  }
-  const Bond *bnd = mol.getBondBetweenAtoms(*lastRai, *(ring.begin()));
-  if (!bnd) throw ValueErrorException("expected bond not found");
-  bondIndices.push_back(bnd->getIdx());
+  RingUtils::convertToBonds(ring, bondIndices, mol);
   mol.getRingInfo()->addRing(ring, bondIndices);
 }
 
@@ -1096,17 +1092,6 @@ int symmetrizeSSSR(ROMol &mol) {
   return symmetrizeSSSR(mol, tmp);
 };
 
-static bool shareABond(INT_VECT& ring0, INT_VECT& ring1)
-{
-  for (auto& b: ring0) {
-    auto position = std::find(ring1.begin(), ring1.end(), b);
-    if (position != ring1.end()) {
-      return true;
-    }
-  }
-  return false;
-}
-
 int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res) {
   res.clear();
   res.resize(0);
@@ -1135,9 +1120,8 @@ int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res) {
       mol.getProp<VECT_INT_VECT>(common_properties::extraRings);
 
   // convert the rings to bond ids
-  VECT_INT_VECT bondsssrs, bondextras;
+  VECT_INT_VECT bondsssrs;
   RingUtils::convertToBonds(sssrs, bondsssrs, mol);
-  RingUtils::convertToBonds(extras, bondextras, mol);
 
   //
   // For each "extra" ring, figure out if it could replace a single
@@ -1147,9 +1131,9 @@ int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res) {
   // * The replacement doesn't remove any bonds from the union of the bonds
   //   in the SSSR.
   //
-  // The trick is that we count how many times each bond is covered by the
-  // existing SSSR, and then decrement that count for the removed ring and
-  // increment it for the added ring.
+  // The latter can be checked by determining if the SSSR ring is the unique
+  // provider of any ring bond. If it is, the replacement ring must also
+  // provide that bond.
   //
   // May miss extra rings that would need to swap two (or three...) rings
   // to be included.
@@ -1162,44 +1146,35 @@ int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res) {
     }
   }
 
-  std::unordered_map<int, int> activeBondCounts;
-  auto extraAtomRing = extras.begin();
-  for (auto& extraBondRing: bondextras) {
-    bool foundAMatch = false;
+  INT_VECT extraRing;
+  for (auto& extraAtomRing: extras) {
+    RingUtils::convertToBonds(extraAtomRing, extraRing, mol);
     for (auto& ring: bondsssrs) {
-      if (ring.size() != extraBondRing.size()) {
-        continue;
-      } else if (!shareABond(extraBondRing, ring)) {
+      if (ring.size() != extraRing.size()) {
         continue;
       }
 
-      // Remove the SSSR ring bonds and add the
-      // extra ring bonds. If any bonds are missing (count = 0),
-      // the extra ring is not a replacement.
-      activeBondCounts.clear();
-      for (auto& bondID: ring) {
-        activeBondCounts[bondID] = bondCounts[bondID] - 1;
-      }
-
-      for (auto& bondID: extraBondRing) {
-        activeBondCounts[bondID] += 1;
-      }
-
+      // If `ring` is the only provider of some bond, extraRing must also
+      // provide that bond.
+      bool shareABond = false;
       bool foundAMatch = true;
-      for (auto& bondIDAndCount: activeBondCounts) {
-        if (bondIDAndCount.second < 1) {
-          foundAMatch = false;
-          break;
+      for (auto& bondID: ring) {
+        auto position = find(extraRing.begin(), extraRing.end(), bondID);
+        if (position != extraRing.end()) {
+            shareABond = true;
+        } else if (bondCounts[bondID] == 1) {
+            // 1 means only `ring` provided this bond.
+            foundAMatch = false;
+            break;
         }
       }
 
-      if (foundAMatch) {
-        res.push_back(*extraAtomRing);
-        FindRings::storeRingInfo(mol, *extraAtomRing);
+      if (shareABond && foundAMatch) {
+        res.push_back(extraAtomRing);
+        FindRings::storeRingInfo(mol, extraAtomRing);
         break;
       }
     }
-    ++extraAtomRing;
   }
 
   if (mol.hasProp(common_properties::extraRings)) {
