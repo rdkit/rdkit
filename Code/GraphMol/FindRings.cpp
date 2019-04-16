@@ -276,8 +276,7 @@ void removeExtraRings(VECT_INT_VECT &res, unsigned int nexpt,
     }
   }
   // remove the extra rings from res and store them on the molecule in case we
-  // wish
-  // symmetrize the SSSRs later
+  // wish symmetrize the SSSRs later
   VECT_INT_VECT extras;
   VECT_INT_VECT temp = res;
   res.resize(0);
@@ -597,14 +596,13 @@ void trimBonds(unsigned int cand, const ROMol &tMol, INT_SET &changed,
 
 /*******************************************************************************
  * SUMMARY:
- *  this again is a modified version of the BFS algorihtm  in Figueras paper to
- *find
- *  the smallest ring with a specified root atom.
+ *  this again is a modified version of the BFS algorithm in Figueras paper to
+ *  find the smallest ring with a specified root atom.
  *    JCICS, Vol. 30, No. 5, 1996, 986-991
- *  The follwing are changes from the original algorithm
+ *  The following are changes from the original algorithm
  *   - find all smallest rings around a node not just one
  *   - once can provided a list of node IDs that should not be include in the
- *discovered rings
+ *     discovered rings
  *
  * ARGUMENTS:
  *  mol - molecule of interest
@@ -1098,6 +1096,17 @@ int symmetrizeSSSR(ROMol &mol) {
   return symmetrizeSSSR(mol, tmp);
 };
 
+static bool shareABond(INT_VECT& ring0, INT_VECT& ring1)
+{
+  for (auto& b: ring0) {
+    auto position = std::find(ring1.begin(), ring1.end(), b);
+    if (position != ring1.end()) {
+      return true;
+    }
+  }
+  return false;
+}
+
 int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res) {
   res.clear();
   res.resize(0);
@@ -1105,8 +1114,7 @@ int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res) {
   VECT_INT_VECT sssrs;
 
   // FIX: need to set flag here the symmetrization has been done in order to
-  // avoid
-  //    repeating this work
+  // avoid repeating this work
   if (!mol.getRingInfo()->isInitialized()) {
     nsssr = findSSSR(mol, sssrs);
   } else {
@@ -1114,96 +1122,86 @@ int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res) {
     nsssr = rdcast<unsigned int>(sssrs.size());
   }
 
-  VECT_INT_VECT_CI srci;
-  INT_VECT copr;
-  for (srci = sssrs.begin(); srci != sssrs.end(); srci++) {
-    copr = (*srci);
-    res.push_back(copr);
+  for (const auto& r: sssrs) {
+    res.emplace_back(r);
   }
 
   // now check if there are any extra rings on the molecule
   if (!mol.hasProp(common_properties::extraRings)) {
-    // no extra rings nothign to be done
+    // no extra rings nothing to be done
     return rdcast<int>(res.size());
   }
   const VECT_INT_VECT &extras =
       mol.getProp<VECT_INT_VECT>(common_properties::extraRings);
 
-  // std::cerr<<" extras "<<extras.size()<<std::endl;
   // convert the rings to bond ids
-  VECT_INT_VECT bsrs, bextra;
-  RingUtils::convertToBonds(sssrs, bsrs, mol);
-  RingUtils::convertToBonds(extras, bextra, mol);
-  INT_VECT munion, nunion, symids;
-  Union(bsrs, munion);
-  INT_VECT sr, exr;
-  INT_VECT_CI eri;
-  unsigned int eid, srid, ssiz;
-  unsigned int next = rdcast<unsigned int>(bextra.size());
-  // now the trick is the following
-  // we will replace each ring of size ssiz from the SSSR with
-  // one of the same size rings in the extras. Compute the union of of the new
-  // set
-  // if all the union elements of the new set if same as munion we found a
-  // symmetric ring
-  for (srid = 0; srid < nsssr; srid++) {
-    sr = bsrs[srid];
-#if 0
-        std::cerr<<"  consider: "<<srid<<std::endl;
-        std::copy(sssrs[srid].begin(),sssrs[srid].end(),std::ostream_iterator<int>(std::cerr," "));
-        std::cerr<<"  | ";
-        std::copy(sr.begin(),sr.end(),std::ostream_iterator<int>(std::cerr," "));
-        std::cerr<<std::endl;
-        std::cerr<<"------"<<std::endl;
-#endif
-    ssiz = rdcast<unsigned int>(sr.size());
-    INT_VECT exrid;
-    exrid.push_back(srid);
-    Union(bsrs, nunion, &exrid);
-    for (eid = 0; eid < next; eid++) {
-      // if we already added this ring continue
-      // FIX: if the ring has already been added,it probably shouldn't be
-      // in the list at all?  Is this perhaps the most efficient way?
-      if (std::find(symids.begin(), symids.end(), static_cast<int>(eid)) !=
-          symids.end()) {
-        continue;
-      }
-      exr = bextra[eid];
-#if 0
-          std::cerr<<"      "<<eid<<": ";
-          std::copy(extras[eid].begin(),extras[eid].end(),std::ostream_iterator<int>(std::cerr," "));
-          std::cerr<<"  | ";
-          std::copy(exr.begin(),exr.end(),std::ostream_iterator<int>(std::cerr," "));
-          std::cerr<<std::endl;
-#endif
-      if (ssiz == exr.size()) {
-        // std::cerr<<"        possible"<<std::endl;
-        INT_VECT eunion;
-        Union(nunion, exr, eunion);
-#if 0
-            std::cerr<<"           munion: ";
-            std::copy(munion.begin(),munion.end(),std::ostream_iterator<int>(std::cerr," "));
-            std::cerr<<std::endl;
-            std::cerr<<"           eunion: ";
-            std::copy(eunion.begin(),eunion.end(),std::ostream_iterator<int>(std::cerr," "));
-            std::cerr<<std::endl;
-#endif
-        // now check if the eunion is same as the original union from the SSSRs
-        if (eunion.size() == munion.size()) {
-          // we found a symmetric ring
-          symids.push_back(eid);
-          // std::cerr<<"        keep!"<<std::endl;
-        }
-      }
+  VECT_INT_VECT bondsssrs, bondextras;
+  RingUtils::convertToBonds(sssrs, bondsssrs, mol);
+  RingUtils::convertToBonds(extras, bondextras, mol);
+
+  //
+  // For each "extra" ring, figure out if it could replace a single
+  // ring in the SSSR. A ring could be swapped out if:
+  //
+  // * They are the same size
+  // * The replacement doesn't remove any bonds from the union of the bonds
+  //   in the SSSR.
+  //
+  // The trick is that we count how many times each bond is covered by the
+  // existing SSSR, and then decrement that count for the removed ring and
+  // increment it for the added ring.
+  //
+  // May miss extra rings that would need to swap two (or three...) rings
+  // to be included.
+
+  // counts of each bond
+  std::unordered_map<int, int> bondCounts;
+  for (const auto& r: bondsssrs) {
+    for (const auto& b: r) {
+      bondCounts[b] += 1;
     }
   }
 
-  // add the symmetric rings
-  for (eri = symids.begin(); eri != symids.end(); eri++) {
-    exr = extras[*eri];
-    res.push_back(exr);
-    FindRings::storeRingInfo(mol, exr);
+  std::unordered_map<int, int> activeBondCounts;
+  auto extraAtomRing = extras.begin();
+  for (auto& extraBondRing: bondextras) {
+    bool foundAMatch = false;
+    for (auto& ring: bondsssrs) {
+      if (ring.size() != extraBondRing.size()) {
+        continue;
+      } else if (!shareABond(extraBondRing, ring)) {
+        continue;
+      }
+
+      // Remove the SSSR ring bonds and add the
+      // extra ring bonds. If any bonds are missing (count = 0),
+      // the extra ring is not a replacement.
+      activeBondCounts.clear();
+      for (auto& bondID: ring) {
+        activeBondCounts[bondID] = bondCounts[bondID] - 1;
+      }
+
+      for (auto& bondID: extraBondRing) {
+        activeBondCounts[bondID] += 1;
+      }
+
+      bool foundAMatch = true;
+      for (auto& bondIDAndCount: activeBondCounts) {
+        if (bondIDAndCount.second < 1) {
+          foundAMatch = false;
+          break;
+        }
+      }
+
+      if (foundAMatch) {
+        res.push_back(*extraAtomRing);
+        FindRings::storeRingInfo(mol, *extraAtomRing);
+        break;
+      }
+    }
+    ++extraAtomRing;
   }
+
   if (mol.hasProp(common_properties::extraRings)) {
     mol.clearProp(common_properties::extraRings);
   }
