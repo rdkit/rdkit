@@ -1,5 +1,6 @@
 # RDKit
-[![Build status](https://travis-ci.com/rdkit/rdkit.svg)](https://travis-ci.com/rdkit/rdkit)
+[![Travis build status](https://travis-ci.com/rdkit/rdkit.svg)](https://travis-ci.com/rdkit/rdkit)
+[![Azure build status](https://rdkit-builds.visualstudio.com/RDKit/_apis/build/status/RDKit-CI)](https://rdkit-builds.visualstudio.com/RDKit/_build/latest?definitionId=1)
 [![Documentation Status](https://readthedocs.org/projects/rdkit/badge/?version=latest)](http://rdkit.readthedocs.org/en/latest/)
 [![DOI](https://zenodo.org/badge/10009991.svg)](https://zenodo.org/badge/latestdoi/10009991)
 
