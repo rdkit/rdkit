@@ -70,7 +70,7 @@ ROMol *FragmentRemover::remove(const ROMol &mol) {
   PRECONDITION(fparams, "");
 
   const std::vector<std::shared_ptr<ROMol>> &fgrps = fparams->getFuncGroups();
-  bool sanitizeFrags = true;
+  bool sanitizeFrags = false;
   // provides the list of atom numbers in each fragment
   std::vector<std::vector<int>> atomFragMapping;
 
