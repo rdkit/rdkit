@@ -81,6 +81,6 @@ class RDKIT_PARTIALCHARGES_EXPORT GasteigerParams {
 
   static class GasteigerParams *ds_instance;
 };
-};
+};  // namespace RDKit
 
 #endif

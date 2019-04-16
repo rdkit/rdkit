@@ -16,7 +16,7 @@
 namespace RDGeom {
 class Point3D;
 class Transform3D;
-}
+}  // namespace RDGeom
 
 namespace RDKit {
 class ROMol;
@@ -27,10 +27,9 @@ namespace MolShapes {
 //! Compute the size of the box that can fit the conformation, and offset of the
 // box
 //! from the origin
-RDKIT_SHAPEHELPERS_EXPORT void computeConfDimsAndOffset(const Conformer &conf, RDGeom::Point3D &dims,
-                              RDGeom::Point3D &offSet,
-                              const RDGeom::Transform3D *trans = 0,
-                              double padding = 2.5);
+RDKIT_SHAPEHELPERS_EXPORT void computeConfDimsAndOffset(
+    const Conformer &conf, RDGeom::Point3D &dims, RDGeom::Point3D &offSet,
+    const RDGeom::Transform3D *trans = 0, double padding = 2.5);
 
 //! Compute the a box that will fit the confomer
 /*!
@@ -41,16 +40,16 @@ RDKIT_SHAPEHELPERS_EXPORT void computeConfDimsAndOffset(const Conformer &conf, R
   coordinates
   \param padding         Padding added on the sides around the conformer
 */
-RDKIT_SHAPEHELPERS_EXPORT void computeConfBox(const Conformer &conf, RDGeom::Point3D &leftBottom,
-                    RDGeom::Point3D &rightTop,
-                    const RDGeom::Transform3D *trans = 0, double padding = 2.5);
+RDKIT_SHAPEHELPERS_EXPORT void computeConfBox(
+    const Conformer &conf, RDGeom::Point3D &leftBottom,
+    RDGeom::Point3D &rightTop, const RDGeom::Transform3D *trans = 0,
+    double padding = 2.5);
 
 //! Compute the union of two boxes
-RDKIT_SHAPEHELPERS_EXPORT void computeUnionBox(const RDGeom::Point3D &leftBottom1,
-                     const RDGeom::Point3D &rightTop1,
-                     const RDGeom::Point3D &leftBottom2,
-                     const RDGeom::Point3D &rightTop2,
-                     RDGeom::Point3D &uLeftBottom, RDGeom::Point3D &uRightTop);
+RDKIT_SHAPEHELPERS_EXPORT void computeUnionBox(
+    const RDGeom::Point3D &leftBottom1, const RDGeom::Point3D &rightTop1,
+    const RDGeom::Point3D &leftBottom2, const RDGeom::Point3D &rightTop2,
+    RDGeom::Point3D &uLeftBottom, RDGeom::Point3D &uRightTop);
 
 //! Compute dimensions of a conformer
 /*!
@@ -59,10 +58,9 @@ RDKIT_SHAPEHELPERS_EXPORT void computeUnionBox(const RDGeom::Point3D &leftBottom
   \param center   Optionally specify the center
   \param ignoreHs if true, ignore the hydrogen atoms in computing the centroid
 */
-RDKIT_SHAPEHELPERS_EXPORT std::vector<double> getConfDimensions(const Conformer &conf,
-                                      double padding = 2.5,
-                                      const RDGeom::Point3D *center = 0,
-                                      bool ignoreHs = true);
+RDKIT_SHAPEHELPERS_EXPORT std::vector<double> getConfDimensions(
+    const Conformer &conf, double padding = 2.5,
+    const RDGeom::Point3D *center = 0, bool ignoreHs = true);
 
 //! Compute the shape tversky index between two molecule based on a
 // predefined alignment
@@ -94,12 +92,13 @@ RDKIT_SHAPEHELPERS_EXPORT std::vector<double> getConfDimensions(const Conformer 
   process
  */
 
-RDKIT_SHAPEHELPERS_EXPORT double tverskyIndex(const ROMol &mol1, const ROMol &mol2, double alpha, double beta, int confId1 = -1,
-                        int confId2 = -1, double gridSpacing = 0.5,
-                        DiscreteValueVect::DiscreteValueType bitsPerPoint =
-                            DiscreteValueVect::TWOBITVALUE,
-                        double vdwScale = 0.8, double stepSize = 0.25,
-                        int maxLayers = -1, bool ignoreHs = true);
+RDKIT_SHAPEHELPERS_EXPORT double tverskyIndex(
+    const ROMol &mol1, const ROMol &mol2, double alpha, double beta,
+    int confId1 = -1, int confId2 = -1, double gridSpacing = 0.5,
+    DiscreteValueVect::DiscreteValueType bitsPerPoint =
+        DiscreteValueVect::TWOBITVALUE,
+    double vdwScale = 0.8, double stepSize = 0.25, int maxLayers = -1,
+    bool ignoreHs = true);
 
 //! Compute the shape tversky index between two conformers based on a
 // predefined alignment
@@ -127,13 +126,13 @@ RDKIT_SHAPEHELPERS_EXPORT double tverskyIndex(const ROMol &mol1, const ROMol &mo
   process
  */
 
-RDKIT_SHAPEHELPERS_EXPORT double tverskyIndex(const Conformer &conf1, const Conformer &conf2, double alpha, double beta,
-                        double gridSpacing = 0.5,
-                        DiscreteValueVect::DiscreteValueType bitsPerPoint =
-                            DiscreteValueVect::TWOBITVALUE,
-                        double vdwScale = 0.8, double stepSize = 0.25,
-                        int maxLayers = -1, bool ignoreHs = true);
-
+RDKIT_SHAPEHELPERS_EXPORT double tverskyIndex(
+    const Conformer &conf1, const Conformer &conf2, double alpha, double beta,
+    double gridSpacing = 0.5,
+    DiscreteValueVect::DiscreteValueType bitsPerPoint =
+        DiscreteValueVect::TWOBITVALUE,
+    double vdwScale = 0.8, double stepSize = 0.25, int maxLayers = -1,
+    bool ignoreHs = true);
 
 //! Compute the shape tanimoto distance between two molecule based on a
 // predefined alignment
@@ -163,12 +162,13 @@ RDKIT_SHAPEHELPERS_EXPORT double tverskyIndex(const Conformer &conf1, const Conf
   process
  */
 
-RDKIT_SHAPEHELPERS_EXPORT double tanimotoDistance(const ROMol &mol1, const ROMol &mol2, int confId1 = -1,
-                        int confId2 = -1, double gridSpacing = 0.5,
-                        DiscreteValueVect::DiscreteValueType bitsPerPoint =
-                            DiscreteValueVect::TWOBITVALUE,
-                        double vdwScale = 0.8, double stepSize = 0.25,
-                        int maxLayers = -1, bool ignoreHs = true);
+RDKIT_SHAPEHELPERS_EXPORT double tanimotoDistance(
+    const ROMol &mol1, const ROMol &mol2, int confId1 = -1, int confId2 = -1,
+    double gridSpacing = 0.5,
+    DiscreteValueVect::DiscreteValueType bitsPerPoint =
+        DiscreteValueVect::TWOBITVALUE,
+    double vdwScale = 0.8, double stepSize = 0.25, int maxLayers = -1,
+    bool ignoreHs = true);
 
 //! Compute the shape tanimoto distance between two conformers based on a
 // predefined alignment
@@ -193,12 +193,12 @@ RDKIT_SHAPEHELPERS_EXPORT double tanimotoDistance(const ROMol &mol1, const ROMol
   process
  */
 
-RDKIT_SHAPEHELPERS_EXPORT double tanimotoDistance(const Conformer &conf1, const Conformer &conf2,
-                        double gridSpacing = 0.5,
-                        DiscreteValueVect::DiscreteValueType bitsPerPoint =
-                            DiscreteValueVect::TWOBITVALUE,
-                        double vdwScale = 0.8, double stepSize = 0.25,
-                        int maxLayers = -1, bool ignoreHs = true);
+RDKIT_SHAPEHELPERS_EXPORT double tanimotoDistance(
+    const Conformer &conf1, const Conformer &conf2, double gridSpacing = 0.5,
+    DiscreteValueVect::DiscreteValueType bitsPerPoint =
+        DiscreteValueVect::TWOBITVALUE,
+    double vdwScale = 0.8, double stepSize = 0.25, int maxLayers = -1,
+    bool ignoreHs = true);
 
 //! Compute the shape protrusion distance between two molecule based on a
 // predefined alignment
@@ -232,13 +232,13 @@ RDKIT_SHAPEHELPERS_EXPORT double tanimotoDistance(const Conformer &conf1, const 
   one.
  */
 
-RDKIT_SHAPEHELPERS_EXPORT double protrudeDistance(const ROMol &mol1, const ROMol &mol2, int confId1 = -1,
-                        int confId2 = -1, double gridSpacing = 0.5,
-                        DiscreteValueVect::DiscreteValueType bitsPerPoint =
-                            DiscreteValueVect::TWOBITVALUE,
-                        double vdwScale = 0.8, double stepSize = 0.25,
-                        int maxLayers = -1, bool ignoreHs = true,
-                        bool allowReordering = true);
+RDKIT_SHAPEHELPERS_EXPORT double protrudeDistance(
+    const ROMol &mol1, const ROMol &mol2, int confId1 = -1, int confId2 = -1,
+    double gridSpacing = 0.5,
+    DiscreteValueVect::DiscreteValueType bitsPerPoint =
+        DiscreteValueVect::TWOBITVALUE,
+    double vdwScale = 0.8, double stepSize = 0.25, int maxLayers = -1,
+    bool ignoreHs = true, bool allowReordering = true);
 
 //! Compute the shape protrusion distance between two conformers based on a
 // predefined alignment
@@ -267,14 +267,13 @@ RDKIT_SHAPEHELPERS_EXPORT double protrudeDistance(const ROMol &mol1, const ROMol
   one.
  */
 
-RDKIT_SHAPEHELPERS_EXPORT double protrudeDistance(const Conformer &conf1, const Conformer &conf2,
-                        double gridSpacing = 0.5,
-                        DiscreteValueVect::DiscreteValueType bitsPerPoint =
-                            DiscreteValueVect::TWOBITVALUE,
-                        double vdwScale = 0.8, double stepSize = 0.25,
-                        int maxLayers = -1, bool ignoreHs = true,
-                        bool allowReordering = true);
-}
-}
+RDKIT_SHAPEHELPERS_EXPORT double protrudeDistance(
+    const Conformer &conf1, const Conformer &conf2, double gridSpacing = 0.5,
+    DiscreteValueVect::DiscreteValueType bitsPerPoint =
+        DiscreteValueVect::TWOBITVALUE,
+    double vdwScale = 0.8, double stepSize = 0.25, int maxLayers = -1,
+    bool ignoreHs = true, bool allowReordering = true);
+}  // namespace MolShapes
+}  // namespace RDKit
 
 #endif

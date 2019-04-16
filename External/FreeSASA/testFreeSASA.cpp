@@ -376,7 +376,6 @@ void testPDB() {
     TEST_ASSERT(radii[idx] == ExpectedProtor1d3z[idx].radius);
   }
 
-
   {
     FreeSASA::SASAOpts opts;
     opts.algorithm = FreeSASA::SASAOpts::ShrakeRupley;

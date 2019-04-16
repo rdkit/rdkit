@@ -104,6 +104,6 @@ class RDKIT_SIMDIVPICKERS_EXPORT HierarchicalClusterPicker : public DistPicker {
  private:
   ClusterMethod d_method;
 };
-};
+};  // namespace RDPickers
 
 #endif

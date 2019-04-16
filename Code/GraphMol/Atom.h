@@ -422,10 +422,12 @@ RDKIT_GRAPHMOL_EXPORT std::string getAtomValue(const Atom *atom);
 
 //! Sets the supplemental label that will follow the atom when writing
 //   smiles strings.
-RDKIT_GRAPHMOL_EXPORT void setSupplementalSmilesLabel(Atom *atom, const std::string &label);
+RDKIT_GRAPHMOL_EXPORT void setSupplementalSmilesLabel(Atom *atom,
+                                                      const std::string &label);
 RDKIT_GRAPHMOL_EXPORT std::string getSupplementalSmilesLabel(const Atom *atom);
-};
+};  // namespace RDKit
 //! allows Atom objects to be dumped to streams
-RDKIT_GRAPHMOL_EXPORT std::ostream &operator<<(std::ostream &target, const RDKit::Atom &at);
+RDKIT_GRAPHMOL_EXPORT std::ostream &operator<<(std::ostream &target,
+                                               const RDKit::Atom &at);
 
 #endif

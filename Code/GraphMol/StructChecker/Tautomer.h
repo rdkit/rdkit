@@ -23,5 +23,5 @@ class RDKIT_STRUCTCHECKER_EXPORT StructCheckTautomer {
       : Mol(mol), Options(options) {}
   bool applyTautomer(unsigned it);
 };
-};
-}
+};  // namespace StructureCheck
+}  // namespace RDKit

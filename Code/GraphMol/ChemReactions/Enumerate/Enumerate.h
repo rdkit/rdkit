@@ -43,7 +43,6 @@ future releases.
 
 */
 
-
 namespace RDKit {
 
 //! This is a class for providing enumeration options that control
@@ -58,29 +57,24 @@ namespace RDKit {
      pass chemical sanitization.  Note that if the product template itself\n\
      does not pass sanitization, then none of the products will.
 */
-struct RDKIT_CHEMREACTIONS_EXPORT EnumerationParams
-{
+struct RDKIT_CHEMREACTIONS_EXPORT EnumerationParams {
   int reagentMaxMatchCount;
   bool sanePartialProducts;
- EnumerationParams() :
-  reagentMaxMatchCount(INT_MAX), sanePartialProducts(false) {
- }
+  EnumerationParams()
+      : reagentMaxMatchCount(INT_MAX), sanePartialProducts(false) {}
 
- EnumerationParams(const EnumerationParams &rhs) :
-    reagentMaxMatchCount(rhs.reagentMaxMatchCount),
-    sanePartialProducts(rhs.sanePartialProducts) {
-  }
+  EnumerationParams(const EnumerationParams &rhs)
+      : reagentMaxMatchCount(rhs.reagentMaxMatchCount),
+        sanePartialProducts(rhs.sanePartialProducts) {}
 };
-
 
 //!  Helper function, remove reagents that are incompatible
 //    with the reaction.
 //  rxn must be sanitized, initialized and preprocessed.
 //   this happens automatically in EnumerateLibrary
 RDKIT_CHEMREACTIONS_EXPORT EnumerationTypes::BBS removeNonmatchingReagents(
-    const ChemicalReaction &rxn,
-    EnumerationTypes::BBS bbs,
-    const EnumerationParams &params=EnumerationParams());
+    const ChemicalReaction &rxn, EnumerationTypes::BBS bbs,
+    const EnumerationParams &params = EnumerationParams());
 
 //! This is a class for running reactions on sets of reagents.
 /*!
@@ -115,8 +109,8 @@ RDKIT_CHEMREACTIONS_EXPORT EnumerationTypes::BBS removeNonmatchingReagents(
    \endverbatim
  */
 
-
-class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibrary : public EnumerateLibraryBase {
+class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibrary
+    : public EnumerateLibraryBase {
   EnumerationTypes::BBS m_bbs;
 
  public:
@@ -127,11 +121,11 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibrary : public EnumerateLibraryBase 
 
   EnumerateLibrary(const ChemicalReaction &rxn,
                    const EnumerationTypes::BBS &reagents,
-                   const EnumerationParams & params = EnumerationParams());
+                   const EnumerationParams &params = EnumerationParams());
   EnumerateLibrary(const ChemicalReaction &rxn,
                    const EnumerationTypes::BBS &reagents,
                    const EnumerationStrategyBase &enumerator,
-                   const EnumerationParams & params = EnumerationParams());
+                   const EnumerationParams &params = EnumerationParams());
   EnumerateLibrary(const EnumerateLibrary &rhs);
 
   //! Return the reagents used in the library
@@ -190,5 +184,5 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibrary : public EnumerateLibraryBase 
 
 RDKIT_CHEMREACTIONS_EXPORT bool EnumerateLibraryCanSerialize();
 
-}
+}  // namespace RDKit
 #endif

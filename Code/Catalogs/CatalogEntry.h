@@ -41,8 +41,8 @@ class RDKIT_CATALOGS_EXPORT CatalogEntry {
 
  private:
   int d_bitId;  //!< our bit Id. This needs to be signed so that we can mark
-                //uninitialized entries.
+                // uninitialized entries.
 };
-}
+}  // namespace RDCatalog
 
 #endif

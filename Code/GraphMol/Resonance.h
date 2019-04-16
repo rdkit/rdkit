@@ -37,7 +37,7 @@ class RDKIT_GRAPHMOL_EXPORT ResonanceMolSupplier {
      *  than the the most octet-complete structure */
     ALLOW_INCOMPLETE_OCTETS = (1 << 0),
     /*! include resonance structures featuring charge separation also
-    *   when uncharged resonance structures exist */
+     *   when uncharged resonance structures exist */
     ALLOW_CHARGE_SEPARATION = (1 << 1),
     /*! enumerate all possible degenerate Kekule resonance structures
      *  (the default is to include just one) */
@@ -156,5 +156,5 @@ class RDKIT_GRAPHMOL_EXPORT ResonanceMolSupplier {
   ROMol *assignBondsFormalCharges(std::vector<unsigned int> &c) const;
   static bool cePermCompare(const CEPerm *a, const CEPerm *b);
 };
-}
+}  // namespace RDKit
 #endif

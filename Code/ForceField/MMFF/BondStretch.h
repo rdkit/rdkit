@@ -52,13 +52,16 @@ class RDKIT_FORCEFIELD_EXPORT BondStretchContrib : public ForceFieldContrib {
 
 namespace Utils {
 //! returns the MMFF rest length for a bond
-RDKIT_FORCEFIELD_EXPORT double calcBondRestLength(const MMFFBond *mmffBondParams);
+RDKIT_FORCEFIELD_EXPORT double calcBondRestLength(
+    const MMFFBond *mmffBondParams);
 //! returns the MMFF force constant for a bond
-RDKIT_FORCEFIELD_EXPORT double calcBondForceConstant(const MMFFBond *mmffBondParams);
+RDKIT_FORCEFIELD_EXPORT double calcBondForceConstant(
+    const MMFFBond *mmffBondParams);
 //! calculates and returns the bond stretching MMFF energy
-RDKIT_FORCEFIELD_EXPORT double calcBondStretchEnergy(const double r0, const double kb,
-                             const double distance);
-}
-}
-}
+RDKIT_FORCEFIELD_EXPORT double calcBondStretchEnergy(const double r0,
+                                                     const double kb,
+                                                     const double distance);
+}  // namespace Utils
+}  // namespace MMFF
+}  // namespace ForceFields
 #endif

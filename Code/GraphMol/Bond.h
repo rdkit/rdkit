@@ -339,9 +339,10 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
 
   void initBond();
 };
-};
+};  // namespace RDKit
 
 //! allows Bond objects to be dumped to streams
-RDKIT_GRAPHMOL_EXPORT extern std::ostream &operator<<(std::ostream &target, const RDKit::Bond &b);
+RDKIT_GRAPHMOL_EXPORT extern std::ostream &operator<<(std::ostream &target,
+                                                      const RDKit::Bond &b);
 
 #endif

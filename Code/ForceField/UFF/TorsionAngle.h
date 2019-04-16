@@ -95,15 +95,19 @@ class RDKIT_FORCEFIELD_EXPORT TorsionAngleContrib : public ForceFieldContrib {
 
 namespace Utils {
 //! calculates and returns the cosine of a torsion angle
-RDKIT_FORCEFIELD_EXPORT double calculateCosTorsion(const RDGeom::Point3D &p1, const RDGeom::Point3D &p2,
-                           const RDGeom::Point3D &p3,
-                           const RDGeom::Point3D &p4);
-RDKIT_FORCEFIELD_EXPORT void calcTorsionGrad(RDGeom::Point3D *r, RDGeom::Point3D *t, double *d,
-                     double **g, double &sinTerm, double &cosPhi);
-RDKIT_FORCEFIELD_EXPORT double equation17(double bondOrder23, const AtomicParams *at2Params,
-                  const AtomicParams *at3Params);
+RDKIT_FORCEFIELD_EXPORT double calculateCosTorsion(const RDGeom::Point3D &p1,
+                                                   const RDGeom::Point3D &p2,
+                                                   const RDGeom::Point3D &p3,
+                                                   const RDGeom::Point3D &p4);
+RDKIT_FORCEFIELD_EXPORT void calcTorsionGrad(RDGeom::Point3D *r,
+                                             RDGeom::Point3D *t, double *d,
+                                             double **g, double &sinTerm,
+                                             double &cosPhi);
+RDKIT_FORCEFIELD_EXPORT double equation17(double bondOrder23,
+                                          const AtomicParams *at2Params,
+                                          const AtomicParams *at3Params);
 RDKIT_FORCEFIELD_EXPORT bool isInGroup6(int num);
-}
-}
-}
+}  // namespace Utils
+}  // namespace UFF
+}  // namespace ForceFields
 #endif

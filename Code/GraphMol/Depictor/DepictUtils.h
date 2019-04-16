@@ -67,10 +67,11 @@ typedef std::list<PAIR_D_I_I> LIST_PAIR_DII;
 
   where A is the angle between a and b
  */
-RDKIT_DEPICTOR_EXPORT RDGeom::INT_POINT2D_MAP embedRing(const RDKit::INT_VECT &ring);
+RDKIT_DEPICTOR_EXPORT RDGeom::INT_POINT2D_MAP embedRing(
+    const RDKit::INT_VECT &ring);
 
 RDKIT_DEPICTOR_EXPORT void transformPoints(RDGeom::INT_POINT2D_MAP &nringCor,
-                     const RDGeom::Transform2D &trans);
+                                           const RDGeom::Transform2D &trans);
 
 //! Find a point that bisects the angle at rcr
 /*!
@@ -78,9 +79,9 @@ RDKIT_DEPICTOR_EXPORT void transformPoints(RDGeom::INT_POINT2D_MAP &nringCor,
   angle
   'ang' at rcr
 */
-RDKIT_DEPICTOR_EXPORT RDGeom::Point2D computeBisectPoint(const RDGeom::Point2D &rcr, double ang,
-                                   const RDGeom::Point2D &nb1,
-                                   const RDGeom::Point2D &nb2);
+RDKIT_DEPICTOR_EXPORT RDGeom::Point2D computeBisectPoint(
+    const RDGeom::Point2D &rcr, double ang, const RDGeom::Point2D &nb1,
+    const RDGeom::Point2D &nb2);
 
 //! Reflect a set of point through a the line joining two point
 /*!
@@ -93,11 +94,12 @@ RDKIT_DEPICTOR_EXPORT RDGeom::Point2D computeBisectPoint(const RDGeom::Point2D &
   \param loc2           the second point of the line to be used as a mirror
  */
 RDKIT_DEPICTOR_EXPORT void reflectPoints(RDGeom::INT_POINT2D_MAP &coordMap,
-                   const RDGeom::Point2D &loc1, const RDGeom::Point2D &loc2);
+                                         const RDGeom::Point2D &loc1,
+                                         const RDGeom::Point2D &loc2);
 
 RDKIT_DEPICTOR_EXPORT RDGeom::Point2D reflectPoint(const RDGeom::Point2D &point,
-                             const RDGeom::Point2D &loc1,
-                             const RDGeom::Point2D &loc2);
+                                                   const RDGeom::Point2D &loc1,
+                                                   const RDGeom::Point2D &loc2);
 
 //! Set the neighbors yet to added to aid such that the atoms with the most subs
 // fall on opposite sides
@@ -132,8 +134,9 @@ RDKIT_DEPICTOR_EXPORT RDGeom::Point2D reflectPoint(const RDGeom::Point2D &point,
 </pre>
   And the correct ordering of the neighbors is B,D,C
 */
-RDKIT_DEPICTOR_EXPORT RDKit::INT_VECT setNbrOrder(unsigned int aid, const RDKit::INT_VECT &nbrs,
-                            const RDKit::ROMol &mol);
+RDKIT_DEPICTOR_EXPORT RDKit::INT_VECT setNbrOrder(unsigned int aid,
+                                                  const RDKit::INT_VECT &nbrs,
+                                                  const RDKit::ROMol &mol);
 
 //! \brief From a given set of rings find the ring the largest common elements
 // with other rings
@@ -152,9 +155,9 @@ RDKIT_DEPICTOR_EXPORT RDKit::INT_VECT setNbrOrder(unsigned int aid, const RDKit:
 
   \return list of atom ids that are common
 */
-RDKIT_DEPICTOR_EXPORT RDKit::INT_VECT findNextRingToEmbed(const RDKit::INT_VECT &doneRings,
-                                    const RDKit::VECT_INT_VECT &fusedRings,
-                                    int &nextId);
+RDKIT_DEPICTOR_EXPORT RDKit::INT_VECT findNextRingToEmbed(
+    const RDKit::INT_VECT &doneRings, const RDKit::VECT_INT_VECT &fusedRings,
+    int &nextId);
 
 typedef std::pair<int, int> INT_PAIR;
 typedef std::vector<INT_PAIR> INT_PAIR_VECT;
@@ -169,8 +172,9 @@ typedef std::pair<double, INT_PAIR> DOUBLE_INT_PAIR;
   \param ascending  sort to an ascending order or a descending order
 */
 template <class T>
-RDKIT_DEPICTOR_EXPORT T rankAtomsByRank(const RDKit::ROMol &mol, const T &commAtms,
-                  bool ascending = true);
+RDKIT_DEPICTOR_EXPORT T rankAtomsByRank(const RDKit::ROMol &mol,
+                                        const T &commAtms,
+                                        bool ascending = true);
 
 //! computes a subangle for an atom of given hybridization and degree
 /*!
@@ -283,8 +287,8 @@ inline double computeAngle(const RDGeom::Point2D &center,
 
   \return the index of the ring with the least number of substitutions
 */
-RDKIT_DEPICTOR_EXPORT int pickFirstRingToEmbed(const RDKit::ROMol &mol,
-                         const RDKit::VECT_INT_VECT &fusedRings);
+RDKIT_DEPICTOR_EXPORT int pickFirstRingToEmbed(
+    const RDKit::ROMol &mol, const RDKit::VECT_INT_VECT &fusedRings);
 
 //! \brief find the rotatable bonds on the shortest path between two atoms
 //!   we will ignore ring atoms, and double bonds which are marked cis/trans
@@ -299,8 +303,9 @@ RDKIT_DEPICTOR_EXPORT int pickFirstRingToEmbed(const RDKit::ROMol &mol,
 
   \return a set of the indices of the rotatable bonds
 */
-RDKIT_DEPICTOR_EXPORT RDKit::INT_VECT getRotatableBonds(const RDKit::ROMol &mol, unsigned int aid1,
-                                  unsigned int aid2);
+RDKIT_DEPICTOR_EXPORT RDKit::INT_VECT getRotatableBonds(const RDKit::ROMol &mol,
+                                                        unsigned int aid1,
+                                                        unsigned int aid2);
 
 //! \brief find all the rotatable bonds in a molecule
 //!   we will ignore ring atoms, and double bonds which are marked cis/trans
@@ -313,11 +318,14 @@ RDKIT_DEPICTOR_EXPORT RDKit::INT_VECT getRotatableBonds(const RDKit::ROMol &mol,
 
   \return a set of the indices of the rotatable bonds
 */
-RDKIT_DEPICTOR_EXPORT RDKit::INT_VECT getAllRotatableBonds(const RDKit::ROMol &mol);
+RDKIT_DEPICTOR_EXPORT RDKit::INT_VECT getAllRotatableBonds(
+    const RDKit::ROMol &mol);
 
 //! Get the ids of the atoms and bonds that are connected to aid
-RDKIT_DEPICTOR_EXPORT void getNbrAtomAndBondIds(unsigned int aid, const RDKit::ROMol *mol,
-                          RDKit::INT_VECT &aids, RDKit::INT_VECT &bids);
+RDKIT_DEPICTOR_EXPORT void getNbrAtomAndBondIds(unsigned int aid,
+                                                const RDKit::ROMol *mol,
+                                                RDKit::INT_VECT &aids,
+                                                RDKit::INT_VECT &bids);
 
 //! Find pairs of bonds that can be permuted at a non-ring degree 4 atom
 /*!
@@ -343,9 +351,9 @@ RDKIT_DEPICTOR_EXPORT void getNbrAtomAndBondIds(unsigned int aid, const RDKit::R
   the neighbors
    \param nbrLocs - locations of the neighbors
 */
-RDKIT_DEPICTOR_EXPORT INT_PAIR_VECT findBondsPairsToPermuteDeg4(const RDGeom::Point2D &center,
-                                          const RDKit::INT_VECT &nbrBids,
-                                          const VECT_C_POINT &nbrLocs);
+RDKIT_DEPICTOR_EXPORT INT_PAIR_VECT findBondsPairsToPermuteDeg4(
+    const RDGeom::Point2D &center, const RDKit::INT_VECT &nbrBids,
+    const VECT_C_POINT &nbrLocs);
 
 //! returns the rank of the atom for determining draw order
 inline int getAtomDepictRank(const RDKit::Atom *at) {
@@ -356,6 +364,6 @@ inline int getAtomDepictRank(const RDKit::Atom *at) {
   int deg = at->getDegree();
   return maxDeg * anum + deg;
 }
-}
+}  // namespace RDDepict
 
 #endif

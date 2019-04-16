@@ -24,7 +24,6 @@ namespace SmilesWrite {
 //! \brief returns the cxsmiles data for a molecule
 RDKIT_SMILESPARSE_EXPORT std::string getCXExtensions(const ROMol &mol);
 
-
 //! \brief returns true if the atom number is in the SMILES organic subset
 RDKIT_SMILESPARSE_EXPORT bool inOrganicSubset(int atomicNumber);
 
@@ -109,7 +108,6 @@ RDKIT_SMILESPARSE_EXPORT std::string MolFragmentToSmiles(
     bool doIsomericSmiles = true, bool doKekule = false, int rootedAtAtom = -1,
     bool canonical = true, bool allBondsExplicit = false,
     bool allHsExplicit = false);
-
 
 //! \brief returns canonical CXSMILES for a molecule
 /*!

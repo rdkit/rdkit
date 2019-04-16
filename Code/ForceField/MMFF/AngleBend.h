@@ -53,18 +53,26 @@ class RDKIT_FORCEFIELD_EXPORT AngleBendContrib : public ForceFieldContrib {
 };
 namespace Utils {
 //! returns the MMFF rest value for an angle
-RDKIT_FORCEFIELD_EXPORT double calcAngleRestValue(const MMFFAngle *mmffAngleParams);
+RDKIT_FORCEFIELD_EXPORT double calcAngleRestValue(
+    const MMFFAngle *mmffAngleParams);
 //! returns the MMFF force constant for an angle
-RDKIT_FORCEFIELD_EXPORT double calcAngleForceConstant(const MMFFAngle *mmffAngleParams);
+RDKIT_FORCEFIELD_EXPORT double calcAngleForceConstant(
+    const MMFFAngle *mmffAngleParams);
 //! calculates and returns the cosine of the angle between points p1, p2, p3
-RDKIT_FORCEFIELD_EXPORT double calcCosTheta(RDGeom::Point3D p1, RDGeom::Point3D p2, RDGeom::Point3D p3,
-                    double dist1, double dist2);
+RDKIT_FORCEFIELD_EXPORT double calcCosTheta(RDGeom::Point3D p1,
+                                            RDGeom::Point3D p2,
+                                            RDGeom::Point3D p3, double dist1,
+                                            double dist2);
 //! calculates and returns the angle bending MMFF energy
-RDKIT_FORCEFIELD_EXPORT double calcAngleBendEnergy(const double theta0, const double ka, bool isLinear,
-                           const double cosTheta);
-RDKIT_FORCEFIELD_EXPORT void calcAngleBendGrad(RDGeom::Point3D *r, double *dist, double **g,
-                       double &dE_dTheta, double &cosTheta, double &sinTheta);
-}
-}
-}
+RDKIT_FORCEFIELD_EXPORT double calcAngleBendEnergy(const double theta0,
+                                                   const double ka,
+                                                   bool isLinear,
+                                                   const double cosTheta);
+RDKIT_FORCEFIELD_EXPORT void calcAngleBendGrad(RDGeom::Point3D *r, double *dist,
+                                               double **g, double &dE_dTheta,
+                                               double &cosTheta,
+                                               double &sinTheta);
+}  // namespace Utils
+}  // namespace MMFF
+}  // namespace ForceFields
 #endif

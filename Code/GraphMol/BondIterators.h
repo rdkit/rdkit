@@ -70,6 +70,6 @@ class RDKIT_GRAPHMOL_EXPORT ConstBondIterator_ {
   ROMol::EDGE_ITER _beg, _end, _pos;
   ROMol const *_mol;
 };
-}
+}  // namespace RDKit
 
 #endif

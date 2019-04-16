@@ -73,27 +73,32 @@ class RDKIT_FORCEFIELD_EXPORT EleContrib : public ForceFieldContrib {
 
 namespace Utils {
 //! calculates and returns the unscaled minimum distance (R*ij) for a MMFF VdW
-//contact
-RDKIT_FORCEFIELD_EXPORT double calcUnscaledVdWMinimum(MMFFVdWCollection *mmffVdW,
-                              const MMFFVdW *mmffVdWParamsAtom1,
-                              const MMFFVdW *mmffVdWParamsAtom2);
+// contact
+RDKIT_FORCEFIELD_EXPORT double calcUnscaledVdWMinimum(
+    MMFFVdWCollection *mmffVdW, const MMFFVdW *mmffVdWParamsAtom1,
+    const MMFFVdW *mmffVdWParamsAtom2);
 //! calculates and returns the unscaled well depth (epsilon) for a MMFF VdW
-//contact
-RDKIT_FORCEFIELD_EXPORT double calcUnscaledVdWWellDepth(double R_star_ij,
-                                const MMFFVdW *mmffVdWParamsIAtom,
-                                const MMFFVdW *mmffVdWParamsJAtom);
+// contact
+RDKIT_FORCEFIELD_EXPORT double calcUnscaledVdWWellDepth(
+    double R_star_ij, const MMFFVdW *mmffVdWParamsIAtom,
+    const MMFFVdW *mmffVdWParamsJAtom);
 //! scales the VdW parameters
-RDKIT_FORCEFIELD_EXPORT void scaleVdWParams(double &R_star_ij, double &wellDepth,
-                    MMFFVdWCollection *mmffVdW,
-                    const MMFFVdW *mmffVdWParamsIAtom,
-                    const MMFFVdW *mmffVdWParamsJAtom);
+RDKIT_FORCEFIELD_EXPORT void scaleVdWParams(double &R_star_ij,
+                                            double &wellDepth,
+                                            MMFFVdWCollection *mmffVdW,
+                                            const MMFFVdW *mmffVdWParamsIAtom,
+                                            const MMFFVdW *mmffVdWParamsJAtom);
 //! calculates and returns the Van der Waals MMFF energy
-RDKIT_FORCEFIELD_EXPORT double calcVdWEnergy(const double dist, const double R_star_ij,
-                     const double wellDepth);
+RDKIT_FORCEFIELD_EXPORT double calcVdWEnergy(const double dist,
+                                             const double R_star_ij,
+                                             const double wellDepth);
 //! calculates and returns the electrostatic MMFF energy
-RDKIT_FORCEFIELD_EXPORT double calcEleEnergy(unsigned int idx1, unsigned int idx2, double dist,
-                     double chargeTerm, std::uint8_t dielModel, bool is1_4);
-}
-}
-}
+RDKIT_FORCEFIELD_EXPORT double calcEleEnergy(unsigned int idx1,
+                                             unsigned int idx2, double dist,
+                                             double chargeTerm,
+                                             std::uint8_t dielModel,
+                                             bool is1_4);
+}  // namespace Utils
+}  // namespace MMFF
+}  // namespace ForceFields
 #endif

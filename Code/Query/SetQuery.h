@@ -80,5 +80,5 @@ class SetQuery
  protected:
   CONTAINER_TYPE d_set;
 };
-}
+}  // namespace Queries
 #endif

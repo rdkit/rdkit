@@ -43,52 +43,48 @@
 
 namespace RDKit {
 namespace Descriptors {
-  struct RDKIT_DESCRIPTORS_EXPORT PropertyFunctor {
-    // Registry of property functions
-    //  See REGISTER_DESCRIPTOR
-    std::string propName;
-    std::string propVersion;
-    double (*d_dataFunc)(const ROMol&);
-    
-    PropertyFunctor(const std::string &name, const std::string &version,
-                    double (*func)(const ROMol&)=NULL) :
-       propName(name), propVersion(version), d_dataFunc(func) {
-    }
-    virtual ~PropertyFunctor() {};
-    
-    //! Compute the value of the property
-    virtual double operator()(const RDKit::ROMol &) const = 0;
-    
-    //! Return the name of the property
-    const std::string getName() const { return propName; }
-    //! Return the properties version
-    const std::string getVersion() const { return propVersion; }
-    
+struct RDKIT_DESCRIPTORS_EXPORT PropertyFunctor {
+  // Registry of property functions
+  //  See REGISTER_DESCRIPTOR
+  std::string propName;
+  std::string propVersion;
+  double (*d_dataFunc)(const ROMol &);
+
+  PropertyFunctor(const std::string &name, const std::string &version,
+                  double (*func)(const ROMol &) = NULL)
+      : propName(name), propVersion(version), d_dataFunc(func) {}
+  virtual ~PropertyFunctor(){};
+
+  //! Compute the value of the property
+  virtual double operator()(const RDKit::ROMol &) const = 0;
+
+  //! Return the name of the property
+  const std::string getName() const { return propName; }
+  //! Return the properties version
+  const std::string getVersion() const { return propVersion; }
 };
 
-  
 //! Holds a collection of properties for computation purposes
 class RDKIT_DESCRIPTORS_EXPORT Properties {
-protected:
-  std::vector<boost::shared_ptr<PropertyFunctor> > m_properties;
-  
-public:
+ protected:
+  std::vector<boost::shared_ptr<PropertyFunctor>> m_properties;
+
+ public:
   Properties();
   Properties(const std::vector<std::string> &propNames);
-  
+
   std::vector<std::string> getPropertyNames() const;
-  std::vector<double>      computeProperties(const RDKit::ROMol &mol, bool annotate=false) const;
-  void                     annotateProperties(RDKit::ROMol& mol) const;
-  
+  std::vector<double> computeProperties(const RDKit::ROMol &mol,
+                                        bool annotate = false) const;
+  void annotateProperties(RDKit::ROMol &mol) const;
+
   //! Register a property function - takes ownership
   static int registerProperty(PropertyFunctor *ptr);
-  static boost::shared_ptr<PropertyFunctor> getProperty(const std::string &name);
+  static boost::shared_ptr<PropertyFunctor> getProperty(
+      const std::string &name);
   static std::vector<std::string> getAvailableProperties();
-  static std::vector<boost::shared_ptr<PropertyFunctor> > registry;
-    
-  
+  static std::vector<boost::shared_ptr<PropertyFunctor>> registry;
 };
-
 
 typedef Queries::Query<bool, const ROMol &, true> PROP_BOOL_QUERY;
 typedef Queries::AndQuery<int, const ROMol &, true> PROP_AND_QUERY;
@@ -102,26 +98,23 @@ typedef Queries::GreaterQuery<double, const ROMol &, true> PROP_GREATER_QUERY;
 typedef Queries::GreaterEqualQuery<double, const ROMol &, true>
     PROP_GREATEREQUAL_QUERY;
 
-
 typedef Queries::LessQuery<double, const ROMol &, true> PROP_LESS_QUERY;
 
-typedef Queries::LessEqualQuery<double, const ROMol &, true> PROP_LESSEQUAL_QUERY;
+typedef Queries::LessEqualQuery<double, const ROMol &, true>
+    PROP_LESSEQUAL_QUERY;
 
 typedef Queries::RangeQuery<double, const ROMol &, true> PROP_RANGE_QUERY;
 
-
-template<class T>
-T* makePropertyQuery(const std::string &name, double what) {
+template <class T>
+T *makePropertyQuery(const std::string &name, double what) {
   T *t = new T(what);
-  t->setDataFunc( Properties::getProperty(name)->d_dataFunc );
+  t->setDataFunc(Properties::getProperty(name)->d_dataFunc);
   return t;
 }
 
+RDKIT_DESCRIPTORS_EXPORT PROP_RANGE_QUERY *makePropertyRangeQuery(
+    const std::string &name, double min, double max);
 
-RDKIT_DESCRIPTORS_EXPORT PROP_RANGE_QUERY *makePropertyRangeQuery(const std::string &name,
-                                         double min,
-                                         double max);
-
-}
-}
+}  // namespace Descriptors
+}  // namespace RDKit
 #endif

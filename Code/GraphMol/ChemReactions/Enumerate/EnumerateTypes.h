@@ -54,6 +54,6 @@ typedef std::vector<MOL_SPTR_VECT> BBS;
 //!   building_blocks.push_back( BBS[1][groups[1] );
 //!    rxn.runReactants( building_blocks );
 typedef std::vector<boost::uint64_t> RGROUPS;
-}
-}
+}  // namespace EnumerationTypes
+}  // namespace RDKit
 #endif

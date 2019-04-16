@@ -34,6 +34,6 @@ class RDKIT_GRAPHMOL_EXPORT MolSanitizeException : public std::exception {
  private:
   std::string _msg;
 };
-}
+}  // namespace RDKit
 
 #endif

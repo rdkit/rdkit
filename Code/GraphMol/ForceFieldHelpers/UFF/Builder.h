@@ -25,7 +25,7 @@ class ForceField;
 namespace UFF {
 class AtomicParams;
 }
-}
+}  // namespace ForceFields
 
 namespace RDKit {
 class ROMol;
@@ -77,7 +77,8 @@ RDKIT_FORCEFIELDHELPERS_EXPORT ForceFields::ForceField *constructForceField(
     int confId = -1, bool ignoreInterfragInteractions = true);
 
 namespace Tools {
-class RDKIT_FORCEFIELDHELPERS_EXPORT DefaultTorsionBondSmarts : private boost::noncopyable {
+class RDKIT_FORCEFIELDHELPERS_EXPORT DefaultTorsionBondSmarts
+    : private boost::noncopyable {
  public:
   static const std::string &string() { return ds_string; }
   static const ROMol *query();
@@ -94,29 +95,35 @@ class RDKIT_FORCEFIELDHELPERS_EXPORT DefaultTorsionBondSmarts : private boost::n
 
 enum { RELATION_1_2 = 0, RELATION_1_3 = 1, RELATION_1_4 = 2, RELATION_1_X = 3 };
 // these functions are primarily exposed so they can be tested.
-RDKIT_FORCEFIELDHELPERS_EXPORT unsigned int twoBitCellPos(unsigned int nAtoms, int i, int j);
-RDKIT_FORCEFIELDHELPERS_EXPORT void setTwoBitCell(boost::shared_array<std::uint8_t> &res, unsigned int pos,
-                   std::uint8_t value);
-RDKIT_FORCEFIELDHELPERS_EXPORT std::uint8_t getTwoBitCell(boost::shared_array<std::uint8_t> &res,
-                             unsigned int pos);
-RDKIT_FORCEFIELDHELPERS_EXPORT boost::shared_array<std::uint8_t> buildNeighborMatrix(const ROMol &mol);
-RDKIT_FORCEFIELDHELPERS_EXPORT void addBonds(const ROMol &mol, const AtomicParamVect &params,
-              ForceFields::ForceField *field);
-RDKIT_FORCEFIELDHELPERS_EXPORT void addAngles(const ROMol &mol, const AtomicParamVect &params,
-               ForceFields::ForceField *field);
-RDKIT_FORCEFIELDHELPERS_EXPORT void addNonbonded(const ROMol &mol, int confId, const AtomicParamVect &params,
-                  ForceFields::ForceField *field,
-                  boost::shared_array<std::uint8_t> neighborMatrix,
-                  double vdwThresh = 100.0,
-                  bool ignoreInterfragInteractions = true);
+RDKIT_FORCEFIELDHELPERS_EXPORT unsigned int twoBitCellPos(unsigned int nAtoms,
+                                                          int i, int j);
+RDKIT_FORCEFIELDHELPERS_EXPORT void setTwoBitCell(
+    boost::shared_array<std::uint8_t> &res, unsigned int pos,
+    std::uint8_t value);
+RDKIT_FORCEFIELDHELPERS_EXPORT std::uint8_t getTwoBitCell(
+    boost::shared_array<std::uint8_t> &res, unsigned int pos);
+RDKIT_FORCEFIELDHELPERS_EXPORT boost::shared_array<std::uint8_t>
+buildNeighborMatrix(const ROMol &mol);
+RDKIT_FORCEFIELDHELPERS_EXPORT void addBonds(const ROMol &mol,
+                                             const AtomicParamVect &params,
+                                             ForceFields::ForceField *field);
+RDKIT_FORCEFIELDHELPERS_EXPORT void addAngles(const ROMol &mol,
+                                              const AtomicParamVect &params,
+                                              ForceFields::ForceField *field);
+RDKIT_FORCEFIELDHELPERS_EXPORT void addNonbonded(
+    const ROMol &mol, int confId, const AtomicParamVect &params,
+    ForceFields::ForceField *field,
+    boost::shared_array<std::uint8_t> neighborMatrix, double vdwThresh = 100.0,
+    bool ignoreInterfragInteractions = true);
 RDKIT_FORCEFIELDHELPERS_EXPORT void addTorsions(
     const ROMol &mol, const AtomicParamVect &params,
     ForceFields::ForceField *field,
     const std::string &torsionBondSmarts = DefaultTorsionBondSmarts::string());
-RDKIT_FORCEFIELDHELPERS_EXPORT void addInversions(const ROMol &mol, const AtomicParamVect &params,
-                   ForceFields::ForceField *field);
-}
-}
-}
+RDKIT_FORCEFIELDHELPERS_EXPORT void addInversions(
+    const ROMol &mol, const AtomicParamVect &params,
+    ForceFields::ForceField *field);
+}  // namespace Tools
+}  // namespace UFF
+}  // namespace RDKit
 
 #endif

@@ -53,25 +53,26 @@ static JSONParseParameters defaultJSONParseParameters;
  *   \param inStream - stream containing the data
  *   \param params   - parsing options
  */
-RDKIT_MOLINTERCHANGE_EXPORT std::vector<boost::shared_ptr<ROMol>> JSONDataStreamToMols(
-    std::istream *inStream,
-    const JSONParseParameters &params = defaultJSONParseParameters);
+RDKIT_MOLINTERCHANGE_EXPORT std::vector<boost::shared_ptr<ROMol>>
+JSONDataStreamToMols(std::istream *inStream, const JSONParseParameters &params =
+                                                 defaultJSONParseParameters);
 
 // \brief construct molecules from MolJSON data
 /*!
  *   \param jsonBlock - string containing the mol block
  *   \param params   - parsing options
  */
-RDKIT_MOLINTERCHANGE_EXPORT std::vector<boost::shared_ptr<ROMol>> JSONDataToMols(
-    const std::string &jsonBlock,
-    const JSONParseParameters &params = defaultJSONParseParameters);
+RDKIT_MOLINTERCHANGE_EXPORT std::vector<boost::shared_ptr<ROMol>>
+JSONDataToMols(const std::string &jsonBlock,
+               const JSONParseParameters &params = defaultJSONParseParameters);
 
 // \brief returns MolJSON for a set of molecules
 /*!
  *   \param mols  - the molecules to work with
  */
 template <typename T>
-RDKIT_MOLINTERCHANGE_EXPORT std::string MolsToJSONData(const std::vector<T> &mols);
+RDKIT_MOLINTERCHANGE_EXPORT std::string MolsToJSONData(
+    const std::vector<T> &mols);
 
 // \brief returns MolJSON for a molecule
 /*!

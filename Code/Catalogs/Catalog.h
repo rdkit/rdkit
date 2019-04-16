@@ -149,7 +149,8 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
       boost::vecS,  // FIX: should be using setS for edges so that parallel
                     // edges are never added (page 225 BGL book)
       // but that seems result in compile errors
-      boost::bidirectionalS, EntryProperty> CatalogGraph;
+      boost::bidirectionalS, EntryProperty>
+      CatalogGraph;
 
   typedef boost::graph_traits<CatalogGraph> CAT_GRAPH_TRAITS;
   typedef typename CAT_GRAPH_TRAITS::vertex_iterator VER_ITER;
@@ -281,7 +282,9 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
   }
 
   //------------------------------------
-  unsigned int getNumEntries() const { return static_cast<unsigned int>(boost::num_vertices(d_graph)); }
+  unsigned int getNumEntries() const {
+    return static_cast<unsigned int>(boost::num_vertices(d_graph));
+  }
 
   //------------------------------------
   //! fills the contents of this object from a string containing a \c pickle
@@ -311,7 +314,8 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
       fpl++;
       this->setFPLength(fpl);
     }
-    unsigned int eid = static_cast<unsigned int>(boost::add_vertex(EntryProperty(entry), d_graph));
+    unsigned int eid = static_cast<unsigned int>(
+        boost::add_vertex(EntryProperty(entry), d_graph));
     orderType etype = entry->getOrder();
     // REVIEW: this initialization is not required: the STL map, in
     // theory, will create a new object when operator[] is called
@@ -474,6 +478,6 @@ class LinearCatalog : public Catalog<entryType, orderType> {
  private:
   std::vector<entryType *> d_vector;
 };
-}
+}  // namespace RDCatalog
 
 #endif

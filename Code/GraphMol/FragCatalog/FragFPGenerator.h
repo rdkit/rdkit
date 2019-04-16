@@ -21,7 +21,7 @@ namespace RDKit {
 class ROMol;
 typedef RDCatalog::HierarchCatalog<FragCatalogEntry, FragCatParams, int>
     FragCatalog;
-typedef std::vector<std::pair<int, int> > MatchVectType;
+typedef std::vector<std::pair<int, int>> MatchVectType;
 
 class RDKIT_FRAGCATALOG_EXPORT FragFPGenerator {
  public:
@@ -33,6 +33,6 @@ class RDKIT_FRAGCATALOG_EXPORT FragFPGenerator {
   void computeFP(const ROMol &mol, const FragCatalog &fcat,
                  const MatchVectType &aidToFid, ExplicitBitVect *fp);
 };
-}
+}  // namespace RDKit
 
 #endif

@@ -49,5 +49,5 @@ class AndQuery
     return res;
   };
 };
-}
+}  // namespace Queries
 #endif

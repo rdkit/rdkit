@@ -19,7 +19,8 @@ namespace ChemicalFeatures {
 //------------------------------------------------------
 //! Class for chemical features that do not orignate from molecules
 //  e.g. pharamcophores, site-maps etc.
-class RDKIT_CHEMICALFEATURES_EXPORT FreeChemicalFeature : public ChemicalFeature {
+class RDKIT_CHEMICALFEATURES_EXPORT FreeChemicalFeature
+    : public ChemicalFeature {
  public:
   //! start with everything specified
   FreeChemicalFeature(const std::string &family, std::string type,
@@ -89,6 +90,6 @@ class RDKIT_CHEMICALFEATURES_EXPORT FreeChemicalFeature : public ChemicalFeature
   std::string d_type;
   RDGeom::Point3D d_position;
 };
-}
+}  // namespace ChemicalFeatures
 
 #endif

@@ -568,9 +568,7 @@ void testGithubIssue1572() {
 
 void testMolBlockToInchi() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
-      << "testing mol block to InChI"
-      << std::endl;
+  BOOST_LOG(rdInfoLog) << "testing mol block to InChI" << std::endl;
 
   {
     std::string molb = R"MOL(
@@ -593,10 +591,10 @@ M  END
     )MOL";
     ExtraInchiReturnValues tmp;
     std::string inchi = MolBlockToInchi(molb, tmp);
-    TEST_ASSERT(inchi=="InChI=1S/C5H8O/c1-2-4-6-5-3-1/h1-2H,3-5H2");
+    TEST_ASSERT(inchi == "InChI=1S/C5H8O/c1-2-4-6-5-3-1/h1-2H,3-5H2");
   }
-{
-  std::string molb=R"MOL(BDBM163075
+  {
+    std::string molb = R"MOL(BDBM163075
      RDKit          2D
 
  27 30  0  0  0  0  0  0  0  0999 V2000
@@ -663,13 +661,16 @@ M  END
 
     ExtraInchiReturnValues tmp;
     std::string inchi = MolBlockToInchi(molb, tmp);
-    TEST_ASSERT(inchi=="InChI=1S/C23H23N3O/c1-2-27-15-9-14-20-22(24-17-19-12-7-4-8-13-19)25-21(26-23(20)27)16-18-10-5-3-6-11-18/h3-15H,2,16-17H2,1H3,(H,24,25,26)");
-	TEST_ASSERT(tmp.messagePtr == "Charges were rearranged; Accepted unusual valence(s): O(4)");
-}
+    TEST_ASSERT(inchi ==
+                "InChI=1S/C23H23N3O/"
+                "c1-2-27-15-9-14-20-22(24-17-19-12-7-4-8-13-19)25-21(26-23(20)"
+                "27)16-18-10-5-3-6-11-18/h3-15H,2,16-17H2,1H3,(H,24,25,26)");
+    TEST_ASSERT(tmp.messagePtr ==
+                "Charges were rearranged; Accepted unusual valence(s): O(4)");
+  }
 
-
-{
-  std::string molb=R"MOL(
+  {
+    std::string molb = R"MOL(
   Mrv1824 02121905282D          
 
  10 11  0  0  0  0            999 V2000
@@ -697,19 +698,22 @@ M  END
 M  END
     )MOL";
     {
-        ExtraInchiReturnValues tmp;
-        std::string inchi = MolBlockToInchi(molb, tmp);
-        TEST_ASSERT(inchi=="InChI=1S/C8H8N2/c1-6-7-4-2-3-5-8(7)10-9-6/h2-5H,1H3,(H,9,10)");
+      ExtraInchiReturnValues tmp;
+      std::string inchi = MolBlockToInchi(molb, tmp);
+      TEST_ASSERT(
+          inchi ==
+          "InChI=1S/C8H8N2/c1-6-7-4-2-3-5-8(7)10-9-6/h2-5H,1H3,(H,9,10)");
     }
     {
-        ExtraInchiReturnValues tmp;
-        std::string inchi = MolBlockToInchi(molb, tmp, "/FixedH");
-        TEST_ASSERT(inchi=="InChI=1/C8H8N2/c1-6-7-4-2-3-5-8(7)10-9-6/h2-5H,1H3,(H,9,10)/f/h10H");
+      ExtraInchiReturnValues tmp;
+      std::string inchi = MolBlockToInchi(molb, tmp, "/FixedH");
+      TEST_ASSERT(
+          inchi ==
+          "InChI=1/C8H8N2/c1-6-7-4-2-3-5-8(7)10-9-6/h2-5H,1H3,(H,9,10)/f/h10H");
     }
-}
+  }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
-
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //

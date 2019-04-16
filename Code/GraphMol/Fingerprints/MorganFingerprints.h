@@ -103,8 +103,8 @@ const std::string morganFingerprintVersion = "1.0.0";
 RDKIT_FINGERPRINTS_EXPORT SparseIntVect<std::uint32_t> *getFingerprint(
     const ROMol &mol, unsigned int radius,
     std::vector<std::uint32_t> *invariants = 0,
-    const std::vector<std::uint32_t> *fromAtoms = 0,
-    bool useChirality = false, bool useBondTypes = true, bool useCounts = true,
+    const std::vector<std::uint32_t> *fromAtoms = 0, bool useChirality = false,
+    bool useBondTypes = true, bool useCounts = true,
     bool onlyNonzeroInvariants = false, BitInfoMap *atomsSettingBits = 0);
 
 //! returns the Morgan fingerprint for a molecule
@@ -152,9 +152,9 @@ RDKIT_FINGERPRINTS_EXPORT SparseIntVect<std::uint32_t> *getFingerprint(
 RDKIT_FINGERPRINTS_EXPORT SparseIntVect<std::uint32_t> *getHashedFingerprint(
     const ROMol &mol, unsigned int radius, unsigned int nBits = 2048,
     std::vector<std::uint32_t> *invariants = 0,
-    const std::vector<std::uint32_t> *fromAtoms = 0,
-    bool useChirality = false, bool useBondTypes = true,
-    bool onlyNonzeroInvariants = false, BitInfoMap *atomsSettingBits = 0);
+    const std::vector<std::uint32_t> *fromAtoms = 0, bool useChirality = false,
+    bool useBondTypes = true, bool onlyNonzeroInvariants = false,
+    BitInfoMap *atomsSettingBits = 0);
 
 //! returns the Morgan fingerprint for a molecule as a bit vector
 /*!
@@ -191,9 +191,9 @@ RDKIT_FINGERPRINTS_EXPORT SparseIntVect<std::uint32_t> *getHashedFingerprint(
 RDKIT_FINGERPRINTS_EXPORT ExplicitBitVect *getFingerprintAsBitVect(
     const ROMol &mol, unsigned int radius, unsigned int nBits,
     std::vector<std::uint32_t> *invariants = 0,
-    const std::vector<std::uint32_t> *fromAtoms = 0,
-    bool useChirality = false, bool useBondTypes = true,
-    bool onlyNonzeroInvariants = false, BitInfoMap *atomsSettingBits = 0);
+    const std::vector<std::uint32_t> *fromAtoms = 0, bool useChirality = false,
+    bool useBondTypes = true, bool onlyNonzeroInvariants = false,
+    BitInfoMap *atomsSettingBits = 0);
 
 }  // end of namespace MorganFingerprints
 }  // namespace RDKit

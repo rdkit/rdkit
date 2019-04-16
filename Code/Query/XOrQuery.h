@@ -55,5 +55,5 @@ class XOrQuery
     return res;
   };
 };
-}
+}  // namespace Queries
 #endif

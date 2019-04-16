@@ -16,7 +16,7 @@
 #include <vector>
 
 namespace RDKit {
-typedef std::vector<std::pair<int, int> > MatchVectType;
+typedef std::vector<std::pair<int, int>> MatchVectType;
 
 class Conformer;
 class ROMol;
@@ -63,11 +63,11 @@ class RDKIT_MOLALIGN_EXPORT MolAlignException : public std::exception {
   <b>Returns</b>
   RMSD value
 */
-RDKIT_MOLALIGN_EXPORT double getAlignmentTransform(const ROMol &prbMol, const ROMol &refMol,
-                             RDGeom::Transform3D &trans, int prbCid = -1,
-                             int refCid = -1, const MatchVectType *atomMap = 0,
-                             const RDNumeric::DoubleVector *weights = 0,
-                             bool reflect = false, unsigned int maxIters = 50);
+RDKIT_MOLALIGN_EXPORT double getAlignmentTransform(
+    const ROMol &prbMol, const ROMol &refMol, RDGeom::Transform3D &trans,
+    int prbCid = -1, int refCid = -1, const MatchVectType *atomMap = 0,
+    const RDNumeric::DoubleVector *weights = 0, bool reflect = false,
+    unsigned int maxIters = 50);
 
 //! Optimally (minimum RMSD) align a molecule to another molecule
 /*!
@@ -96,10 +96,11 @@ RDKIT_MOLALIGN_EXPORT double getAlignmentTransform(const ROMol &prbMol, const RO
   <b>Returns</b>
   RMSD value
 */
-RDKIT_MOLALIGN_EXPORT double alignMol(ROMol &prbMol, const ROMol &refMol, int prbCid = -1,
-                int refCid = -1, const MatchVectType *atomMap = 0,
-                const RDNumeric::DoubleVector *weights = 0,
-                bool reflect = false, unsigned int maxIters = 50);
+RDKIT_MOLALIGN_EXPORT double alignMol(
+    ROMol &prbMol, const ROMol &refMol, int prbCid = -1, int refCid = -1,
+    const MatchVectType *atomMap = 0,
+    const RDNumeric::DoubleVector *weights = 0, bool reflect = false,
+    unsigned int maxIters = 50);
 
 //! Returns the optimal RMS for aligning two molecules, taking
 //  symmetry into account. As a side-effect, the probe molecule is
@@ -146,12 +147,11 @@ RDKIT_MOLALIGN_EXPORT double getBestRMS(
                    between the reference conformation and the other aligned
                    conformations
 */
-RDKIT_MOLALIGN_EXPORT void alignMolConformers(ROMol &mol,
-                        const std::vector<unsigned int> *atomIds = 0,
-                        const std::vector<unsigned int> *confIds = 0,
-                        const RDNumeric::DoubleVector *weights = 0,
-                        bool reflect = false, unsigned int maxIters = 50,
-                        std::vector<double> *RMSlist = 0);
-}
-}
+RDKIT_MOLALIGN_EXPORT void alignMolConformers(
+    ROMol &mol, const std::vector<unsigned int> *atomIds = 0,
+    const std::vector<unsigned int> *confIds = 0,
+    const RDNumeric::DoubleVector *weights = 0, bool reflect = false,
+    unsigned int maxIters = 50, std::vector<double> *RMSlist = 0);
+}  // namespace MolAlign
+}  // namespace RDKit
 #endif

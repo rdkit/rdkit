@@ -56,5 +56,5 @@ class RDKIT_FMCS_EXPORT SeedSet {  // sorted by amount of bonds
     return val;
   }
 };
-}
-}
+}  // namespace FMCS
+}  // namespace RDKit

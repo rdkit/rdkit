@@ -43,6 +43,6 @@ static const std::map<Bond::BondStereo, std::string> inv_stereolookup = {
     {Bond::STEREONONE, "unspecified"}, {Bond::STEREOCIS, "cis"},
     {Bond::STEREOTRANS, "trans"},      {Bond::STEREOZ, "cis"},
     {Bond::STEREOE, "trans"},          {Bond::STEREOANY, "either"}};
-}
-}
+}  // namespace MolInterchange
+}  // namespace RDKit
 #endif

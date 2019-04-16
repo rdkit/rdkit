@@ -74,15 +74,16 @@ struct RDKIT_MOLHASH_EXPORT HashSet {
 };
 #pragma pack(pop)
 
-RDKIT_MOLHASH_EXPORT void generateMoleculeHashSet(const ROMol &mol, HashSet &res,
-                             const std::vector<unsigned> *atomsToUse = 0,
-                             const std::vector<unsigned> *bondsToUse = 0);
+RDKIT_MOLHASH_EXPORT void generateMoleculeHashSet(
+    const ROMol &mol, HashSet &res, const std::vector<unsigned> *atomsToUse = 0,
+    const std::vector<unsigned> *bondsToUse = 0);
 
 RDKIT_MOLHASH_EXPORT std::string generateMoleculeHashSet(
     const ROMol &mol, const std::vector<unsigned> *atomsToUse = 0,
     const std::vector<unsigned> *bondsToUse = 0);
 
-RDKIT_MOLHASH_EXPORT std::string encode(const void *bin,
-                   size_t size);  // binary data to Base64 encoded string
-}
-}
+RDKIT_MOLHASH_EXPORT std::string encode(
+    const void *bin,
+    size_t size);  // binary data to Base64 encoded string
+}  // namespace MolHash
+}  // namespace RDKit

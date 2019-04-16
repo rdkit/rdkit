@@ -49,13 +49,17 @@ and the angle formed by atom1-atom2-atom3
 
 namespace Utils {
 //! calculates and returns the Wilson angle (in degrees)
-RDKIT_FORCEFIELD_EXPORT double calcOopChi(const RDGeom::Point3D &iPoint, const RDGeom::Point3D &jPoint,
-                  const RDGeom::Point3D &kPoint, const RDGeom::Point3D &lPoint);
+RDKIT_FORCEFIELD_EXPORT double calcOopChi(const RDGeom::Point3D &iPoint,
+                                          const RDGeom::Point3D &jPoint,
+                                          const RDGeom::Point3D &kPoint,
+                                          const RDGeom::Point3D &lPoint);
 //! returns the out-of-plane force constant koop
-RDKIT_FORCEFIELD_EXPORT double calcOopBendForceConstant(const MMFFOop *mmffOopParams);
+RDKIT_FORCEFIELD_EXPORT double calcOopBendForceConstant(
+    const MMFFOop *mmffOopParams);
 //! calculates and returns the out-of-plane MMFF energy
-RDKIT_FORCEFIELD_EXPORT double calcOopBendEnergy(const double chi, const double koop);
-}
-}
-}
+RDKIT_FORCEFIELD_EXPORT double calcOopBendEnergy(const double chi,
+                                                 const double koop);
+}  // namespace Utils
+}  // namespace MMFF
+}  // namespace ForceFields
 #endif

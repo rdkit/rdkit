@@ -18,7 +18,8 @@ namespace FMCS {
 typedef unsigned AtomIdx_t;
 typedef unsigned BondIdx_t;
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS,
-                              AtomIdx_t, BondIdx_t> Graph_t;
+                              AtomIdx_t, BondIdx_t>
+    Graph_t;
 
 class RDKIT_FMCS_EXPORT Graph : public Graph_t {
  public:
@@ -36,5 +37,5 @@ class RDKIT_FMCS_EXPORT Graph : public Graph_t {
     (*this)[which] = bond;
   }
 };
-}
-}
+}  // namespace FMCS
+}  // namespace RDKit

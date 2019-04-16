@@ -43,7 +43,8 @@ namespace RDKit {
 class ReactionPickler;
 
 //! used to indicate an error in the chemical reaction engine
-class RDKIT_CHEMREACTIONS_EXPORT ChemicalReactionException : public std::exception {
+class RDKIT_CHEMREACTIONS_EXPORT ChemicalReactionException
+    : public std::exception {
  public:
   //! construct with an error message
   explicit ChemicalReactionException(const char *msg) : _msg(msg){};
@@ -218,8 +219,8 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction : public RDProps {
     map multiple times onto its reactant. This leads to multiple possible result
     sets.
   */
-  std::vector<MOL_SPTR_VECT> runReactants(const MOL_SPTR_VECT reactants,
-                                          unsigned int numProducts=1000) const;
+  std::vector<MOL_SPTR_VECT> runReactants(
+      const MOL_SPTR_VECT reactants, unsigned int numProducts = 1000) const;
 
   //! Runs a single reactant against a single reactant template
   /*!
@@ -353,31 +354,33 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction : public RDProps {
 //! the \c which argument is used to return which of the reactants
 //! the molecule matches. If there's no match, it is equal to the number
 //! of reactants on return
-RDKIT_CHEMREACTIONS_EXPORT bool isMoleculeReactantOfReaction(const ChemicalReaction &rxn, const ROMol &mol,
-                                  unsigned int &which);
+RDKIT_CHEMREACTIONS_EXPORT bool isMoleculeReactantOfReaction(
+    const ChemicalReaction &rxn, const ROMol &mol, unsigned int &which);
 //! \overload
-RDKIT_CHEMREACTIONS_EXPORT bool isMoleculeReactantOfReaction(const ChemicalReaction &rxn,
-                                  const ROMol &mol);
+RDKIT_CHEMREACTIONS_EXPORT bool isMoleculeReactantOfReaction(
+    const ChemicalReaction &rxn, const ROMol &mol);
 
 //! tests whether or not the molecule has a substructure match
 //! to any of the reaction's products
 //! the \c which argument is used to return which of the products
 //! the molecule matches. If there's no match, it is equal to the number
 //! of products on return
-RDKIT_CHEMREACTIONS_EXPORT bool isMoleculeProductOfReaction(const ChemicalReaction &rxn, const ROMol &mol,
-                                 unsigned int &which);
+RDKIT_CHEMREACTIONS_EXPORT bool isMoleculeProductOfReaction(
+    const ChemicalReaction &rxn, const ROMol &mol, unsigned int &which);
 //! \overload
-RDKIT_CHEMREACTIONS_EXPORT bool isMoleculeProductOfReaction(const ChemicalReaction &rxn, const ROMol &mol);
+RDKIT_CHEMREACTIONS_EXPORT bool isMoleculeProductOfReaction(
+    const ChemicalReaction &rxn, const ROMol &mol);
 
 //! tests whether or not the molecule has a substructure match
 //! to any of the reaction's agents
 //! the \c which argument is used to return which of the agents
 //! the molecule matches. If there's no match, it is equal to the number
 //! of agents on return
-RDKIT_CHEMREACTIONS_EXPORT bool isMoleculeAgentOfReaction(const ChemicalReaction &rxn, const ROMol &mol,
-                               unsigned int &which);
+RDKIT_CHEMREACTIONS_EXPORT bool isMoleculeAgentOfReaction(
+    const ChemicalReaction &rxn, const ROMol &mol, unsigned int &which);
 //! \overload
-RDKIT_CHEMREACTIONS_EXPORT bool isMoleculeAgentOfReaction(const ChemicalReaction &rxn, const ROMol &mol);
+RDKIT_CHEMREACTIONS_EXPORT bool isMoleculeAgentOfReaction(
+    const ChemicalReaction &rxn, const ROMol &mol);
 
 //! returns indices of the atoms in each reactant that are changed
 //! in the reaction
@@ -406,8 +409,8 @@ RDKIT_CHEMREACTIONS_EXPORT bool isMoleculeAgentOfReaction(const ChemicalReaction
      When coming from RXN: the atomic number of the atom in the rxn file sets
         the value.
  */
-RDKIT_CHEMREACTIONS_EXPORT VECT_INT_VECT getReactingAtoms(const ChemicalReaction &rxn,
-                               bool mappedAtomsOnly = false);
+RDKIT_CHEMREACTIONS_EXPORT VECT_INT_VECT
+getReactingAtoms(const ChemicalReaction &rxn, bool mappedAtomsOnly = false);
 
 //! add the recursive queries to the reactants of a reaction
 /*!
@@ -436,7 +439,7 @@ RDKIT_CHEMREACTIONS_EXPORT void addRecursiveQueriesToReaction(
     std::vector<std::vector<std::pair<unsigned int, std::string>>>
         *reactantLabels = NULL);
 
-}  // end of RDKit namespace
+}  // namespace RDKit
 
 namespace RDDepict {
 //! \brief Generate 2D coordinates (a depiction) for a reaction
@@ -467,13 +470,12 @@ namespace RDDepict {
   for the other parameters see the documentation for compute2DCoords()
 
 */
-RDKIT_CHEMREACTIONS_EXPORT void compute2DCoordsForReaction(RDKit::ChemicalReaction &rxn,
-                                double spacing = 2.0, bool updateProps = true,
-                                bool canonOrient = false,
-                                unsigned int nFlipsPerSample = 0,
-                                unsigned int nSamples = 0, int sampleSeed = 0,
-                                bool permuteDeg4Nodes = false);
+RDKIT_CHEMREACTIONS_EXPORT void compute2DCoordsForReaction(
+    RDKit::ChemicalReaction &rxn, double spacing = 2.0, bool updateProps = true,
+    bool canonOrient = false, unsigned int nFlipsPerSample = 0,
+    unsigned int nSamples = 0, int sampleSeed = 0,
+    bool permuteDeg4Nodes = false);
 
-}  // end of RDDepict namespace
+}  // namespace RDDepict
 
 #endif

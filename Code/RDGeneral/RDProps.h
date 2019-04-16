@@ -157,5 +157,5 @@ class RDProps {
     dp_props.update(source.getDict(), preserveExisting);
   }
 };
-}
+}  // namespace RDKit
 #endif

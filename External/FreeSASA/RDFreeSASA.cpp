@@ -60,18 +60,14 @@ const std::string SASA =
 namespace FreeSASA {
 using namespace RDKit;
 
-SASAOpts::SASAOpts() :
-    algorithm(SASAOpts::LeeRichards),
-    classifier(SASAOpts::Protor),
-    probeRadius(FREESASA_DEF_PROBE_RADIUS) {}
-SASAOpts::SASAOpts(SASAOpts::Algorithm alg, SASAOpts::Classifier cls) :
-    algorithm(alg),
-    classifier(cls),
-    probeRadius(FREESASA_DEF_PROBE_RADIUS) {}
-SASAOpts::SASAOpts(SASAOpts::Algorithm alg, SASAOpts::Classifier cls, double pr) :
-    algorithm(alg),
-    classifier(cls),
-    probeRadius(pr) {}
+SASAOpts::SASAOpts()
+    : algorithm(SASAOpts::LeeRichards),
+      classifier(SASAOpts::Protor),
+      probeRadius(FREESASA_DEF_PROBE_RADIUS) {}
+SASAOpts::SASAOpts(SASAOpts::Algorithm alg, SASAOpts::Classifier cls)
+    : algorithm(alg), classifier(cls), probeRadius(FREESASA_DEF_PROBE_RADIUS) {}
+SASAOpts::SASAOpts(SASAOpts::Algorithm alg, SASAOpts::Classifier cls, double pr)
+    : algorithm(alg), classifier(cls), probeRadius(pr) {}
 
 bool classifyAtoms(ROMol &mol, std::vector<double> &radii,
                    const SASAOpts &opts) {

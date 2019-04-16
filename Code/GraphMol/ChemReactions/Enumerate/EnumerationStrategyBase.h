@@ -53,7 +53,8 @@
 namespace RDKit {
 
 //! class for flagging enumeration strategy errors
-class RDKIT_CHEMREACTIONS_EXPORT EnumerationStrategyException : public std::exception {
+class RDKIT_CHEMREACTIONS_EXPORT EnumerationStrategyException
+    : public std::exception {
  public:
   EnumerationStrategyException(const char *msg) : _msg(msg){};
   EnumerationStrategyException(const std::string &msg) : _msg(msg){};
@@ -71,7 +72,7 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerationStrategyException : public std::exce
  */
 template <class T>
 EnumerationTypes::RGROUPS getSizesFromBBs(
-    const std::vector<std::vector<T> > &bbs) {
+    const std::vector<std::vector<T>> &bbs) {
   EnumerationTypes::RGROUPS sizes;
   for (size_t i = 0; i < bbs.size(); ++i) sizes.push_back(bbs[i].size());
   return sizes;
@@ -88,8 +89,9 @@ RDKIT_CHEMREACTIONS_EXPORT EnumerationTypes::RGROUPS getSizesFromReactants(
 //!  Helper function for enumeration, bbs are stored in a
 //!   std::vector< std::vector<boost:shared_ptr<ROMol> >
 //
-RDKIT_CHEMREACTIONS_EXPORT MOL_SPTR_VECT getReactantsFromRGroups(const std::vector<MOL_SPTR_VECT> &bbs,
-                                      const EnumerationTypes::RGROUPS &rgroups);
+RDKIT_CHEMREACTIONS_EXPORT MOL_SPTR_VECT
+getReactantsFromRGroups(const std::vector<MOL_SPTR_VECT> &bbs,
+                        const EnumerationTypes::RGROUPS &rgroups);
 
 //! computeNumProducts
 //!  Returns the number of possible product combination from
@@ -98,7 +100,8 @@ RDKIT_CHEMREACTIONS_EXPORT MOL_SPTR_VECT getReactantsFromRGroups(const std::vect
 //!   number will not fit into the machines integer type.
 //!   n.b. An overflow simply means there are a lot of products
 //!     not that they cannot be enumerated
-RDKIT_CHEMREACTIONS_EXPORT boost::uint64_t computeNumProducts(const EnumerationTypes::RGROUPS &sizes);
+RDKIT_CHEMREACTIONS_EXPORT boost::uint64_t computeNumProducts(
+    const EnumerationTypes::RGROUPS &sizes);
 
 //! Base Class for enumeration strageties
 //!  Usage:
@@ -204,7 +207,7 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerationStrategyBase {
 #ifdef RDK_USE_BOOST_SERIALIZATION
 BOOST_SERIALIZATION_ASSUME_ABSTRACT(EnumerationStrategyBase)
 #endif
-}
+}  // namespace RDKit
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
 BOOST_CLASS_VERSION(RDKit::EnumerationStrategyBase, 1)

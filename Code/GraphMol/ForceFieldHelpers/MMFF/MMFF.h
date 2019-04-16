@@ -78,7 +78,7 @@ void MMFFOptimizeMoleculeConfsHelper_(ForceFields::ForceField ff, ROMol *mol,
     (*res)[i] = std::make_pair(needsMore, e);
   }
 }
-}  // end of detail namespace
+}  // namespace detail
 #endif
 //! Convenience function for optimizing all of a molecule's conformations using
 // MMFF
@@ -146,6 +146,6 @@ void MMFFOptimizeMoleculeConfs(ROMol &mol,
     }
   }
 }
-}  // end of namespace UFF
+}  // namespace MMFF
 }  // end of namespace RDKit
 #endif

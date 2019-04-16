@@ -13,7 +13,8 @@ class ChiralSet;
 
 //! A term to capture the violation of chirality at an atom center
 //!
-class RDKIT_DISTGEOMETRY_EXPORT ChiralViolationContrib : public ForceFields::ForceFieldContrib {
+class RDKIT_DISTGEOMETRY_EXPORT ChiralViolationContrib
+    : public ForceFields::ForceFieldContrib {
  public:
   ChiralViolationContrib()
       : d_idx1(0),
@@ -40,7 +41,7 @@ class RDKIT_DISTGEOMETRY_EXPORT ChiralViolationContrib : public ForceFields::For
   double getEnergy(double *pos) const;
 
   //! calculate the contribution of this contrib to the gradient at a given
-  //state
+  // state
   void getGrad(double *pos, double *grad) const;
   virtual ChiralViolationContrib *copy() const {
     return new ChiralViolationContrib(*this);
@@ -97,6 +98,6 @@ class RDKIT_DISTGEOMETRY_EXPORT ChiralViolationContrib : public ForceFields::For
   double d_volUpper;
   double d_weight;
 };
-}
+}  // namespace DistGeom
 
 #endif

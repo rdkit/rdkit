@@ -15,12 +15,13 @@
 
 namespace RDKit {
 class ROMol;
-RDKIT_PARTIALCHARGES_EXPORT void computeGasteigerCharges(const ROMol *mol, int nIter = 12,
-                             bool throwOnParamFailure = false);
-RDKIT_PARTIALCHARGES_EXPORT void computeGasteigerCharges(const ROMol &mol, int nIter = 12,
-                             bool throwOnParamFailure = false);
-RDKIT_PARTIALCHARGES_EXPORT void computeGasteigerCharges(const ROMol &mol, std::vector<double> &charges,
-                             int nIter = 12, bool throwOnParamFailure = false);
-}
+RDKIT_PARTIALCHARGES_EXPORT void computeGasteigerCharges(
+    const ROMol *mol, int nIter = 12, bool throwOnParamFailure = false);
+RDKIT_PARTIALCHARGES_EXPORT void computeGasteigerCharges(
+    const ROMol &mol, int nIter = 12, bool throwOnParamFailure = false);
+RDKIT_PARTIALCHARGES_EXPORT void computeGasteigerCharges(
+    const ROMol &mol, std::vector<double> &charges, int nIter = 12,
+    bool throwOnParamFailure = false);
+}  // namespace RDKit
 
 #endif

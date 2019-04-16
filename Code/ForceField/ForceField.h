@@ -229,5 +229,5 @@ class RDKIT_FORCEFIELD_EXPORT ForceField {
   //! initializes our internal distance matrix
   void initDistanceMatrix();
 };
-}
+}  // namespace ForceFields
 #endif

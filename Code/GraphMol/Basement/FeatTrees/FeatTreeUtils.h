@@ -34,6 +34,6 @@ void addBondsFromNonringAtoms(const ROMol &mol, FeatTreeGraph &featGraph,
                               std::vector<unsigned int> &atomIndices);
 void addZeroNodes(FeatTreeGraph &featGraph);
 void replaceCycles(FeatTreeGraph &featGraph);
-}
-}
+}  // namespace FeatTrees
+}  // namespace RDKit
 #endif

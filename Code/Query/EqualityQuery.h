@@ -23,9 +23,7 @@ template <typename MatchFuncArgType,
 class EqualityQuery
     : public Query<MatchFuncArgType, DataFuncArgType, needsConversion> {
  public:
-  EqualityQuery() {
-    this->df_negate = false;
-  };
+  EqualityQuery() { this->df_negate = false; };
 
   //! constructs with our target value
   explicit EqualityQuery(MatchFuncArgType v) {

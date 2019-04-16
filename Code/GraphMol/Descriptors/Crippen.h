@@ -47,10 +47,11 @@ const std::string crippenVersion = "1.2.0";
                           number of atoms
 
 */
-RDKIT_DESCRIPTORS_EXPORT void getCrippenAtomContribs(const ROMol &mol, std::vector<double> &logpContribs,
-                            std::vector<double> &mrContribs, bool force = false,
-                            std::vector<unsigned int> *atomTypes = 0,
-                            std::vector<std::string> *atomTypeLabels = 0);
+RDKIT_DESCRIPTORS_EXPORT void getCrippenAtomContribs(
+    const ROMol &mol, std::vector<double> &logpContribs,
+    std::vector<double> &mrContribs, bool force = false,
+    std::vector<unsigned int> *atomTypes = 0,
+    std::vector<std::string> *atomTypeLabels = 0);
 
 //! generate Wildman-Crippen LogP and MR estimates for a molecule
 /*!
@@ -68,8 +69,10 @@ RDKIT_DESCRIPTORS_EXPORT void getCrippenAtomContribs(const ROMol &mol, std::vect
                     pulled from the cache
 
 */
-RDKIT_DESCRIPTORS_EXPORT void calcCrippenDescriptors(const ROMol &mol, double &logp, double &mr,
-                            bool includeHs = true, bool force = false);
+RDKIT_DESCRIPTORS_EXPORT void calcCrippenDescriptors(const ROMol &mol,
+                                                     double &logp, double &mr,
+                                                     bool includeHs = true,
+                                                     bool force = false);
 
 //! a class used to store Crippen parameters
 class RDKIT_DESCRIPTORS_EXPORT CrippenParams {
@@ -98,7 +101,6 @@ const std::string CrippenMRVersion = crippenVersion;
     \param mol        the molecule of interest
  */
 RDKIT_DESCRIPTORS_EXPORT double calcMR(const ROMol &mol);
-
 
 //! singleton class for retrieving Crippen parameters
 /*!
@@ -130,6 +132,6 @@ class RDKIT_DESCRIPTORS_EXPORT CrippenParamCollection {
   ParamsVect d_params;  //!< the parameters
 };
 }  // end of namespace Descriptors
-}
+}  // namespace RDKit
 
 #endif

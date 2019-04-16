@@ -273,5 +273,5 @@ class RDKIT_INFOTHEORY_EXPORT InfoBitRanker {
       d_biasList;  // if we want a bias towards certain classes in ranking bits
   ExplicitBitVect *dp_maskBits;  // allows only certain bits to be considered
 };
-}
+}  // namespace RDInfoTheory
 #endif

@@ -70,13 +70,11 @@ class RDKIT_DEPICTOR_EXPORT DepictException : public std::exception {
   2D coordinates
 
 */
-RDKIT_DEPICTOR_EXPORT unsigned int compute2DCoords(RDKit::ROMol &mol,
-                             const RDGeom::INT_POINT2D_MAP *coordMap = 0,
-                             bool canonOrient = false, bool clearConfs = true,
-                             unsigned int nFlipsPerSample = 0,
-                             unsigned int nSamples = 0, int sampleSeed = 0,
-                             bool permuteDeg4Nodes = false,
-                             bool forceRDKit = false);
+RDKIT_DEPICTOR_EXPORT unsigned int compute2DCoords(
+    RDKit::ROMol &mol, const RDGeom::INT_POINT2D_MAP *coordMap = 0,
+    bool canonOrient = false, bool clearConfs = true,
+    unsigned int nFlipsPerSample = 0, unsigned int nSamples = 0,
+    int sampleSeed = 0, bool permuteDeg4Nodes = false, bool forceRDKit = false);
 
 //! \brief Compute the 2D coordinates such the interatom distances
 //   mimic those in a distance matrix
@@ -186,12 +184,10 @@ RDKIT_DEPICTOR_EXPORT void generateDepictionMatching2DStructure(
                          for molecules that don't match the reference or the
                          referencePattern; if false, throws a DepictException.
 */
-RDKIT_DEPICTOR_EXPORT void generateDepictionMatching3DStructure(RDKit::ROMol &mol,
-                                          const RDKit::ROMol &reference,
-                                          int confId = -1,
-                                          RDKit::ROMol *referencePattern = 0,
-                                          bool acceptFailure = false,
-                                          bool forceRDKit = false);
-};
+RDKIT_DEPICTOR_EXPORT void generateDepictionMatching3DStructure(
+    RDKit::ROMol &mol, const RDKit::ROMol &reference, int confId = -1,
+    RDKit::ROMol *referencePattern = 0, bool acceptFailure = false,
+    bool forceRDKit = false);
+};  // namespace RDDepict
 
 #endif

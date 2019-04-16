@@ -35,7 +35,6 @@
 #define RDKIT_FUNCTIONAL_GROUP_HIERARCHY_H
 #include "FilterCatalog.h"
 
-
 namespace RDKit {
 //! Return the functional group hierarchy as a FilterCatalog
 RDKIT_FILTERCATALOG_EXPORT const FilterCatalog &GetFunctionalGroupHierarchy();
@@ -45,9 +44,9 @@ RDKIT_FILTERCATALOG_EXPORT const FilterCatalog &GetFunctionalGroupHierarchy();
 /*
     /param normalized If set to true, return the flattened hierarchy
                       with lower case labels.  [default false]
-*/                      
-RDKIT_FILTERCATALOG_EXPORT const std::map<std::string, ROMOL_SPTR> &GetFlattenedFunctionalGroupHierarchy(
-    bool normalized=false);
-}
+*/
+RDKIT_FILTERCATALOG_EXPORT const std::map<std::string, ROMOL_SPTR>
+    &GetFlattenedFunctionalGroupHierarchy(bool normalized = false);
+}  // namespace RDKit
 
 #endif
