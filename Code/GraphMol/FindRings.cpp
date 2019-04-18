@@ -1139,7 +1139,7 @@ int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res) {
   // to be included.
 
   // counts of each bond
-  std::unordered_map<int, int> bondCounts;
+  std::vector<int> bondCounts(mol.getNumBonds(), 0);
   for (const auto& r: bondsssrs) {
     for (const auto& b: r) {
       bondCounts[b] += 1;
@@ -1156,20 +1156,24 @@ int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res) {
 
       // If `ring` is the only provider of some bond, extraRing must also
       // provide that bond.
-      bool shareABond = false;
-      bool foundAMatch = true;
+      bool shareBond = false;
+      bool replacesAllUniqueBonds = true;
       for (auto& bondID: ring) {
-        auto position = find(extraRing.begin(), extraRing.end(), bondID);
-        if (position != extraRing.end()) {
-            shareABond = true;
-        } else if (bondCounts[bondID] == 1) {
-            // 1 means only `ring` provided this bond.
-            foundAMatch = false;
-            break;
+        const int bondCount = bondCounts[bondID];
+        if (bondCount == 1 || !shareBond) {
+          auto position = find(extraRing.begin(), extraRing.end(), bondID);
+          if (position != extraRing.end()) {
+            shareBond = true;
+          } else if (bondCount == 1) {
+            // 1 means `ring` is the only ring in the SSSR to provide this
+            // bond, and extraRing did not provide it (so extraRing is not an
+            // acceptable substitution in the SSSR for ring)
+            replacesAllUniqueBonds = false;
+          }
         }
       }
 
-      if (shareABond && foundAMatch) {
+      if (shareBond && replacesAllUniqueBonds) {
         res.push_back(extraAtomRing);
         FindRings::storeRingInfo(mol, extraAtomRing);
         break;
