@@ -40,56 +40,55 @@
 #include <boost/serialization/shared_ptr.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
-
-
 BOOST_SERIALIZATION_ASSUME_ABSTRACT(RDKit::MolHolderBase)
 BOOST_SERIALIZATION_ASSUME_ABSTRACT(RDKit::FPHolderBase)
 
 namespace boost {
 namespace serialization {
-  
+
 template <class Archive>
-void serialize(Archive &ar, RDKit::MolHolderBase &, const unsigned int version) {
+void serialize(Archive &ar, RDKit::MolHolderBase &,
+               const unsigned int version) {
   RDUNUSED_PARAM(version);
   RDUNUSED_PARAM(ar);
 }
 
 template <class Archive>
-void save(Archive &ar, const RDKit::MolHolder& molholder,
+void save(Archive &ar, const RDKit::MolHolder &molholder,
           const unsigned int version) {
   RDUNUSED_PARAM(version);
   ar &boost::serialization::base_object<RDKit::MolHolderBase>(molholder);
 
   std::int64_t pkl_count = molholder.getMols().size();
-  ar & pkl_count;
-  
-  for(auto &mol: molholder.getMols()) {
+  ar &pkl_count;
+
+  for (auto &mol : molholder.getMols()) {
     std::string pkl;
     RDKit::MolPickler::pickleMol(*mol.get(), pkl);
     ar << pkl;
   }
 }
-  
+
 template <class Archive>
-void load(Archive &ar, RDKit::MolHolder& molholder,
+void load(Archive &ar, RDKit::MolHolder &molholder,
           const unsigned int version) {
   RDUNUSED_PARAM(version);
   ar &boost::serialization::base_object<RDKit::MolHolderBase>(molholder);
-  
+
   std::vector<boost::shared_ptr<RDKit::ROMol>> &mols = molholder.getMols();
   mols.clear();
-  
-  std::int64_t pkl_count = -1;
-  ar & pkl_count;
 
-  for(std::int64_t i = 0; i<pkl_count; ++i) {
+  std::int64_t pkl_count = -1;
+  ar &pkl_count;
+
+  for (std::int64_t i = 0; i < pkl_count; ++i) {
     std::string pkl;
     ar >> pkl;
     mols.push_back(boost::make_shared<RDKit::ROMol>(pkl));
   }
 }
 
-template<class Archive, class MolHolder>
+template <class Archive, class MolHolder>
 void serialize_strings(Archive &ar, MolHolder &molholder,
                        const unsigned int version) {
   RDUNUSED_PARAM(version);
@@ -106,7 +105,7 @@ void serialize(Archive &ar, RDKit::CachedMolHolder &molholder,
 template <class Archive>
 void serialize(Archive &ar, RDKit::CachedSmilesMolHolder &molholder,
                const unsigned int version) {
-  serialize_strings(ar, molholder, version);  
+  serialize_strings(ar, molholder, version);
 }
 
 template <class Archive>
@@ -120,25 +119,25 @@ void save(Archive &ar, const RDKit::FPHolderBase &fpholder,
           const unsigned int version) {
   RDUNUSED_PARAM(version);
   std::vector<std::string> pickles;
-  for(auto &fp: fpholder.getFingerprints()) {
+  for (auto &fp : fpholder.getFingerprints()) {
     pickles.push_back(fp->toString());
   }
   ar &pickles;
 }
-  
+
 template <class Archive>
 void load(Archive &ar, RDKit::FPHolderBase &fpholder,
           const unsigned int version) {
   RDUNUSED_PARAM(version);
   std::vector<std::string> pickles;
   std::vector<ExplicitBitVect *> &fps = fpholder.getFingerprints();
-  
+
   ar &pickles;
   for (size_t i = 0; i < fps.size(); ++i) delete fps[i];
   fps.clear();
-  
-  for(auto &pkl: pickles) {
-    fps.push_back( new ExplicitBitVect(pkl) );
+
+  for (auto &pkl : pickles) {
+    fps.push_back(new ExplicitBitVect(pkl));
   }
 }
 
@@ -158,14 +157,13 @@ void registerSubstructLibraryTypes(Archive &ar) {
   ar.register_type(static_cast<RDKit::PatternHolder *>(NULL));
 }
 
-
 template <class Archive>
 void save(Archive &ar, const RDKit::SubstructLibrary &slib,
           const unsigned int version) {
   RDUNUSED_PARAM(version);
   registerSubstructLibraryTypes(ar);
-  ar & slib.getMolHolder();
-  ar & slib.getFpHolder();
+  ar &slib.getMolHolder();
+  ar &slib.getFpHolder();
 }
 
 template <class Archive>
@@ -173,13 +171,13 @@ void load(Archive &ar, RDKit::SubstructLibrary &slib,
           const unsigned int version) {
   RDUNUSED_PARAM(version);
   registerSubstructLibraryTypes(ar);
-  ar & slib.getMolHolder();
-  ar & slib.getFpHolder();
+  ar &slib.getMolHolder();
+  ar &slib.getFpHolder();
   slib.resetHolders();
 }
 
-} // end namespace serialization
-} // end namespace boost
+}  // end namespace serialization
+}  // end namespace boost
 
 BOOST_CLASS_VERSION(RDKit::MolHolder, 1);
 BOOST_CLASS_VERSION(RDKit::CachedMolHolder, 1);

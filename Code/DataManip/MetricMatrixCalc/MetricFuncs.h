@@ -49,6 +49,6 @@ double TanimotoSimilarityMetric(const T1 &bv1, const T2 &bv2,
   return SimilarityWrapper(
       bv1, bv2, (double (*)(const T1 &, const T2 &))TanimotoSimilarity);
 };
-}
+}  // namespace RDDataManip
 
 #endif

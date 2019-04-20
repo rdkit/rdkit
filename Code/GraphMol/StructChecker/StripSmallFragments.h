@@ -13,9 +13,10 @@
 
 namespace RDKit {
 namespace StructureCheck {
-RDKIT_STRUCTCHECKER_EXPORT bool StripSmallFragments(RWMol &mol, bool verbose=false);
+RDKIT_STRUCTCHECKER_EXPORT bool StripSmallFragments(RWMol &mol,
+                                                    bool verbose = false);
 RDKIT_STRUCTCHECKER_EXPORT void AddMWMF(
     RWMol &mol,
     bool pre);  // set mol formula & mass properties "MW_PRE" or "MW_POST"
-}
-}
+}  // namespace StructureCheck
+}  // namespace RDKit

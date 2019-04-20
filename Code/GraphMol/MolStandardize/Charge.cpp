@@ -308,13 +308,18 @@ ROMol *Uncharger::uncharge(const ROMol &mol) {
   if (needsNeutralization) {
     // Surplus negative charges more than non-neutralizable positive charges
     int neg_surplus = n_matched - q_matched;
-    if (a_matched > 0 && neg_surplus > 0) {
+    if (n_matched > 0 && neg_surplus > 0) {
+      boost::dynamic_bitset<> nonAcids(omol->getNumAtoms());
+      nonAcids.set();
+      for (const auto pr : a_atoms) nonAcids.reset(pr.second);
       unsigned int midx = 0;
       // zwitterion with more negative charges than quaternary positive centres
-      while (neg_surplus > 0 && a_matched > 0 && midx < a_atoms.size()) {
+      while (neg_surplus > 0 && n_matched > 0 && midx < n_atoms.size()) {
+        unsigned int idx = n_atoms[midx++].second;
+        if (!nonAcids[idx]) continue;
+        Atom *atom = omol->getAtomWithIdx(idx);
         // Add hydrogen to first negative acid atom, increase formal charge
         // Until quaternary positive == negative total or no more negative acid
-        Atom *atom = omol->getAtomWithIdx(a_atoms[midx++].second);
         atom->setNoImplicit(true);
         atom->setNumExplicitHs(atom->getNumExplicitHs() + 1);
         atom->setFormalCharge(atom->getFormalCharge() + 1);
@@ -324,13 +329,13 @@ ROMol *Uncharger::uncharge(const ROMol &mol) {
     }
 
     // now do the other negative groups if we still have charges left:
-    if (n_matched > 0 && neg_surplus > 0) {
+    if (a_matched > 0 && neg_surplus > 0) {
       unsigned int midx = 0;
       // zwitterion with more negative charges than quaternary positive centres
-      while (neg_surplus > 0 && n_matched > 0 && midx < n_atoms.size()) {
-        // Add hydrogen to first negative atom, increase formal charge
+      while (neg_surplus > 0 && a_matched > 0 && midx < a_atoms.size()) {
+        // Add hydrogen to first negative acidic atom, increase formal charge
         // Until quaternary positive == negative total or no more negative atoms
-        Atom *atom = omol->getAtomWithIdx(n_atoms[midx++].second);
+        Atom *atom = omol->getAtomWithIdx(a_atoms[midx++].second);
         // skip ahead if we already neutralized this
         if (atom->getFormalCharge() >= 0) continue;
         atom->setNoImplicit(true);

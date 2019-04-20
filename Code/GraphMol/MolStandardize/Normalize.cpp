@@ -138,7 +138,6 @@ boost::shared_ptr<ROMol> Normalizer::applyTransform(
     std::vector<Normalizer::Product> pdts;
     for (auto &m : mols) {
       std::vector<MOL_SPTR_VECT> products = transform.runReactants({m});
-
       for (auto &pdt : products) {
         // shared_ptr<ROMol> p0( new RWMol(*pdt[0]) );
         //				std::cout << MolToSmiles(*p0) <<
@@ -146,8 +145,15 @@ boost::shared_ptr<ROMol> Normalizer::applyTransform(
         unsigned int failed;
         try {
           RWMol tmol(*static_cast<RWMol *>(pdt[0].get()));
-          MolOps::sanitizeMol(tmol, failed);
+          // we'll allow atoms with a valence that's too high to make it
+          // through, but we should fail if we just created something that
+          // can't, for example, be kekulized.
+          unsigned int sanitizeOps = MolOps::SANITIZE_ALL ^
+                                     MolOps::SANITIZE_CLEANUP ^
+                                     MolOps::SANITIZE_PROPERTIES;
+          MolOps::sanitizeMol(tmol, failed, sanitizeOps);
           pdt[0]->updatePropertyCache(false);
+          // REVIEW: is it actually important that we use canonical SMILES here?
           Normalizer::Product np(MolToSmiles(tmol), pdt[0]);
           pdts.push_back(np);
         } catch (MolSanitizeException &) {
@@ -158,9 +164,7 @@ boost::shared_ptr<ROMol> Normalizer::applyTransform(
     if (pdts.size() != 0) {
       std::sort(pdts.begin(), pdts.end());
       mols.clear();
-      for (const auto &pdt : pdts) {
-        mols.push_back(pdt.Mol);
-      }
+      mols.push_back(pdts[0].Mol);
     } else {
       if (i > 0) {
         return mols[0];

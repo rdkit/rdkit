@@ -52,20 +52,20 @@ class RDKIT_CHEMREACTIONS_EXPORT RxnSanitizeException : public std::exception {
   std::string _msg;
 };
 
-
 namespace RxnOps {
 //! Any dummy atom with a map but no RGroup label, should be an RGroup
 //!  in RDKit's view of a reaction.
 //!  See if these atoms can be salvaged into RGroups.
 RDKIT_CHEMREACTIONS_EXPORT void fixRGroups(ChemicalReaction &rxn);
 
-//! If atom maps are not defined on rgroups, attempt to deduce them from the RGroup
+//! If atom maps are not defined on rgroups, attempt to deduce them from the
+//! RGroup
 //!  labels, or add new ones if possible.
 RDKIT_CHEMREACTIONS_EXPORT void fixAtomMaps(ChemicalReaction &rxn);
 
-
 //! Adjusts the reactant templates to properly match reagents
-RDKIT_CHEMREACTIONS_EXPORT void adjustTemplates(ChemicalReaction &rxn, const MolOps::AdjustQueryParameters &params);
+RDKIT_CHEMREACTIONS_EXPORT void adjustTemplates(
+    ChemicalReaction &rxn, const MolOps::AdjustQueryParameters &params);
 
 //! merge query Hs if appropriate
 RDKIT_CHEMREACTIONS_EXPORT void fixHs(ChemicalReaction &rxn);
@@ -86,8 +86,9 @@ inline const MolOps::AdjustQueryParameters DefaultRxnAdjustParams() {
 //  -- deprecated - renamed MatchOnlyAtRgroupsAdjustParams
 //  -- this doesn't match sciquest style searching
 inline const MolOps::AdjustQueryParameters ChemDrawRxnAdjustParams() {
-  BOOST_LOG(rdWarningLog) <<
-      " deprecated -- please use MatchOnlyAtRgroupsAdjustParams instead" << std::endl;
+  BOOST_LOG(rdWarningLog)
+      << " deprecated -- please use MatchOnlyAtRgroupsAdjustParams instead"
+      << std::endl;
   MolOps::AdjustQueryParameters params;
   params.adjustDegree = true;
   params.adjustDegreeFlags = MolOps::ADJUST_IGNOREDUMMIES;
@@ -144,7 +145,7 @@ typedef enum {
 
    <b>Notes:</b>
     - This attempts to fix known issues with certain reaction drawers.
-       HOWEVER, if any flag is returned in operationsPerformed, 
+       HOWEVER, if any flag is returned in operationsPerformed,
        the reaction may still be suspect to its validity.
     - Aromaticity can be tricky when starting with Kekule structures that
       have query features, aromaticity works well for non-query rings, however
@@ -152,15 +153,16 @@ typedef enum {
       aromatic) may not have enough information.
 */
 
-RDKIT_CHEMREACTIONS_EXPORT void sanitizeRxn(ChemicalReaction &rxn,
-                 unsigned int &operationsThatFailed,
-                 unsigned int sanitizeOps = SANITIZE_ALL,
-                 const MolOps::AdjustQueryParameters &params = DefaultRxnAdjustParams());
+RDKIT_CHEMREACTIONS_EXPORT void sanitizeRxn(
+    ChemicalReaction &rxn, unsigned int &operationsThatFailed,
+    unsigned int sanitizeOps = SANITIZE_ALL,
+    const MolOps::AdjustQueryParameters &params = DefaultRxnAdjustParams());
 //! \overload
-RDKIT_CHEMREACTIONS_EXPORT void sanitizeRxn(ChemicalReaction &rxn,
-                 const MolOps::AdjustQueryParameters &params = DefaultRxnAdjustParams());
+RDKIT_CHEMREACTIONS_EXPORT void sanitizeRxn(
+    ChemicalReaction &rxn,
+    const MolOps::AdjustQueryParameters &params = DefaultRxnAdjustParams());
 
-}
-}
+}  // namespace RxnOps
+}  // namespace RDKit
 
 #endif

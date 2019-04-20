@@ -24,13 +24,14 @@ class Point3D;
 namespace ForceFields {
 class ForceField;
 class ForceFieldContrib;
-}
+}  // namespace ForceFields
 
 namespace ForceFields {
 namespace CrystalFF {
 
 //! the torsion term for multiplicity m = 1 - 6
-class RDKIT_FORCEFIELDHELPERS_EXPORT TorsionAngleContribM6 : public ForceFields::ForceFieldContrib {
+class RDKIT_FORCEFIELDHELPERS_EXPORT TorsionAngleContribM6
+    : public ForceFields::ForceFieldContrib {
  public:
   TorsionAngleContribM6()
       : d_at1Idx(-1), d_at2Idx(-1), d_at3Idx(-1), d_at4Idx(-1){};
@@ -64,8 +65,9 @@ class RDKIT_FORCEFIELDHELPERS_EXPORT TorsionAngleContribM6 : public ForceFields:
 };
 
 //! calculates and returns the torsional energy
-RDKIT_FORCEFIELDHELPERS_EXPORT double calcTorsionEnergyM6(const std::vector<double> &V,
-                           const std::vector<int> &signs, const double cosPhi);
-}
-}
+RDKIT_FORCEFIELDHELPERS_EXPORT double calcTorsionEnergyM6(
+    const std::vector<double> &V, const std::vector<int> &signs,
+    const double cosPhi);
+}  // namespace CrystalFF
+}  // namespace ForceFields
 #endif

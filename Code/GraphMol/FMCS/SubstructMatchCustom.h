@@ -16,8 +16,9 @@
 
 namespace RDKit {
 namespace FMCS {
-typedef std::vector<std::pair<FMCS::Graph::vertex_descriptor,
-                              FMCS::Graph::vertex_descriptor> > match_V_t;
+typedef std::vector<
+    std::pair<FMCS::Graph::vertex_descriptor, FMCS::Graph::vertex_descriptor>>
+    match_V_t;
 const unsigned int NotSet = (unsigned int)-1;
 
 RDKIT_FMCS_EXPORT bool SubstructMatchCustomTable(
@@ -38,5 +39,5 @@ RDKIT_FMCS_EXPORT bool SubstructMatchCustom(
     MCSFinalMatchCheckFunction finalCompare,
     const MCSAtomCompareParameters& acp, const MCSBondCompareParameters& bcp,
     void* user_data, match_V_t* match = 0);
-}
-}
+}  // namespace FMCS
+}  // namespace RDKit

@@ -37,6 +37,6 @@ class RDKIT_CATALOGS_EXPORT CatalogParams {
  protected:
   std::string d_typeStr;  //!< our type string
 };
-}
+}  // namespace RDCatalog
 
 #endif

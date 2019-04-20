@@ -191,8 +191,9 @@ class RDKIT_FORCEFIELD_EXPORT MMFFAromCollection {
  private:
   //! to force this to be a singleton, the constructor must be private
   MMFFAromCollection(const std::uint8_t mmffArom[]);
-  static class std::unique_ptr<MMFFAromCollection> ds_instance;  //!< the singleton
-  std::vector<std::uint8_t> d_params;          //!< the aromatic type vector
+  static class std::unique_ptr<MMFFAromCollection>
+      ds_instance;                     //!< the singleton
+  std::vector<std::uint8_t> d_params;  //!< the aromatic type vector
 };
 
 class RDKIT_FORCEFIELD_EXPORT MMFFDefCollection {
@@ -236,7 +237,8 @@ class RDKIT_FORCEFIELD_EXPORT MMFFDefCollection {
  private:
   //! to force this to be a singleton, the constructor must be private
   MMFFDefCollection(std::string mmffDef);
-  static class std::unique_ptr<MMFFDefCollection> ds_instance;  //!< the singleton
+  static class std::unique_ptr<MMFFDefCollection>
+      ds_instance;  //!< the singleton
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int, MMFFDef> d_params;  //!< the parameter map
 #else
@@ -276,8 +278,9 @@ class RDKIT_FORCEFIELD_EXPORT MMFFPropCollection {
     return ((res != d_params.end()) ? &((*res).second) : NULL);
 #else
     std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator> bounds =
-        std::equal_range(d_iAtomType.begin(), d_iAtomType.end(), atomType);
+              std::vector<std::uint8_t>::const_iterator>
+        bounds =
+            std::equal_range(d_iAtomType.begin(), d_iAtomType.end(), atomType);
 
     return ((bounds.first != bounds.second)
                 ? &d_params[bounds.first - d_iAtomType.begin()]
@@ -288,7 +291,8 @@ class RDKIT_FORCEFIELD_EXPORT MMFFPropCollection {
  private:
   //! to force this to be a singleton, the constructor must be private
   MMFFPropCollection(std::string mmffProp);
-  static class std::unique_ptr<MMFFPropCollection> ds_instance;  //!< the singleton
+  static class std::unique_ptr<MMFFPropCollection>
+      ds_instance;  //!< the singleton
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int, MMFFProp> d_params;  //!< the parameter map
 #else
@@ -337,7 +341,8 @@ class RDKIT_FORCEFIELD_EXPORT MMFFPBCICollection {
  private:
   //! to force this to be a singleton, the constructor must be private
   MMFFPBCICollection(std::string mmffPBCI);
-  static class std::unique_ptr<MMFFPBCICollection> ds_instance;  //!< the singleton
+  static class std::unique_ptr<MMFFPBCICollection>
+      ds_instance;  //!< the singleton
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int, MMFFPBCI> d_params;  //!< the parameter map
 #else
@@ -383,7 +388,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFChgCollection {
     }
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
     std::map<const unsigned int,
-             std::map<const unsigned int, MMFFChg> >::const_iterator res1;
+             std::map<const unsigned int, MMFFChg>>::const_iterator res1;
     std::map<const unsigned int, MMFFChg>::const_iterator res2;
     res1 = d_params[bondType].find(canIAtomType);
     if (res1 != d_params[bondType].end()) {
@@ -394,7 +399,8 @@ class RDKIT_FORCEFIELD_EXPORT MMFFChgCollection {
     }
 #else
     std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator> bounds;
+              std::vector<std::uint8_t>::const_iterator>
+        bounds;
 
     bounds =
         std::equal_range(d_iAtomType.begin(), d_iAtomType.end(), canIAtomType);
@@ -421,15 +427,15 @@ class RDKIT_FORCEFIELD_EXPORT MMFFChgCollection {
  private:
   //! to force this to be a singleton, the constructor must be private
   MMFFChgCollection(std::string mmffChg);
-  static class std::unique_ptr<MMFFChgCollection> ds_instance;  //!< the singleton
+  static class std::unique_ptr<MMFFChgCollection>
+      ds_instance;  //!< the singleton
 //!< the parameter 3D-map
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
-  std::map<
-      const unsigned int,
-      std::map<const unsigned int, std::map<const unsigned int, MMFFChg> > >
+  std::map<const unsigned int,
+           std::map<const unsigned int, std::map<const unsigned int, MMFFChg>>>
       d_params;  //!< the parameter 3D-map
 #else
-  std::vector<MMFFChg> d_params;            //! the parameter vector
+  std::vector<MMFFChg> d_params;          //! the parameter vector
   std::vector<std::uint8_t> d_iAtomType;  //! atom type vector for atom i
   std::vector<std::uint8_t> d_jAtomType;  //! atom type vector for atom j
   std::vector<std::uint8_t> d_bondType;   //! bond type vector for bond i-j
@@ -473,10 +479,10 @@ class RDKIT_FORCEFIELD_EXPORT MMFFBondCollection {
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
     std::map<const unsigned int,
              std::map<const unsigned int,
-                      std::map<const unsigned int, MMFFBond> > >::const_iterator
+                      std::map<const unsigned int, MMFFBond>>>::const_iterator
         res1;
     std::map<const unsigned int,
-             std::map<const unsigned int, MMFFBond> >::const_iterator res2;
+             std::map<const unsigned int, MMFFBond>>::const_iterator res2;
     std::map<const unsigned int, MMFFBond>::const_iterator res3;
     res1 = d_params.find(bondType);
     if (res1 != d_params.end()) {
@@ -490,7 +496,8 @@ class RDKIT_FORCEFIELD_EXPORT MMFFBondCollection {
     }
 #else
     std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator> bounds;
+              std::vector<std::uint8_t>::const_iterator>
+        bounds;
     bounds =
         std::equal_range(d_iAtomType.begin(), d_iAtomType.end(), canAtomType);
     if (bounds.first != bounds.second) {
@@ -516,14 +523,14 @@ class RDKIT_FORCEFIELD_EXPORT MMFFBondCollection {
  private:
   //! to force this to be a singleton, the constructor must be private
   MMFFBondCollection(std::string mmffBond);
-  static class std::unique_ptr<MMFFBondCollection> ds_instance;  //!< the singleton
+  static class std::unique_ptr<MMFFBondCollection>
+      ds_instance;  //!< the singleton
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
-  std::map<
-      const unsigned int,
-      std::map<const unsigned int, std::map<const unsigned int, MMFFBond> > >
+  std::map<const unsigned int,
+           std::map<const unsigned int, std::map<const unsigned int, MMFFBond>>>
       d_params;  //!< the parameter 3D-map
 #else
-  std::vector<MMFFBond> d_params;           //!< the parameter vector
+  std::vector<MMFFBond> d_params;         //!< the parameter vector
   std::vector<std::uint8_t> d_iAtomType;  //! atom type vector for atom i
   std::vector<std::uint8_t> d_jAtomType;  //! atom type vector for atom j
   std::vector<std::uint8_t> d_bondType;   //! bond type vector for bond i-j
@@ -564,7 +571,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFBndkCollection {
     }
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
     std::map<const unsigned int,
-             std::map<const unsigned int, MMFFBond> >::const_iterator res1;
+             std::map<const unsigned int, MMFFBond>>::const_iterator res1;
     std::map<const unsigned int, MMFFBond>::const_iterator res2;
     res1 = d_params.find(canAtomicNum);
     if (res1 != d_params.end()) {
@@ -575,7 +582,8 @@ class RDKIT_FORCEFIELD_EXPORT MMFFBndkCollection {
     }
 #else
     std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator> bounds;
+              std::vector<std::uint8_t>::const_iterator>
+        bounds;
     bounds = std::equal_range(d_iAtomicNum.begin(), d_iAtomicNum.end(),
                               canAtomicNum);
     if (bounds.first != bounds.second) {
@@ -595,12 +603,13 @@ class RDKIT_FORCEFIELD_EXPORT MMFFBndkCollection {
  private:
   //! to force this to be a singleton, the constructor must be private
   MMFFBndkCollection(std::string mmffBndk);
-  static class std::unique_ptr<MMFFBndkCollection> ds_instance;  //!< the singleton
+  static class std::unique_ptr<MMFFBndkCollection>
+      ds_instance;  //!< the singleton
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
-  std::map<const unsigned int, std::map<const unsigned int, MMFFBond> >
+  std::map<const unsigned int, std::map<const unsigned int, MMFFBond>>
       d_params;  //!< the parameter 2D-map
 #else
-  std::vector<MMFFBond> d_params;            //!< the parameter vector
+  std::vector<MMFFBond> d_params;          //!< the parameter vector
   std::vector<std::uint8_t> d_iAtomicNum;  //! atomic number vector for atom i
   std::vector<std::uint8_t> d_jAtomicNum;  //! atomic number vector for atom j
 #endif
@@ -644,8 +653,8 @@ class RDKIT_FORCEFIELD_EXPORT MMFFHerschbachLaurieCollection {
     }
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
     std::map<const unsigned int,
-             std::map<const unsigned int,
-                      MMFFHerschbachLaurie> >::const_iterator res1;
+             std::map<const unsigned int, MMFFHerschbachLaurie>>::const_iterator
+        res1;
     std::map<const unsigned int, MMFFHerschbachLaurie>::const_iterator res2;
     res1 = d_params.find(canIRow);
     if (res1 != d_params.end()) {
@@ -656,7 +665,8 @@ class RDKIT_FORCEFIELD_EXPORT MMFFHerschbachLaurieCollection {
     }
 #else
     std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator> bounds;
+              std::vector<std::uint8_t>::const_iterator>
+        bounds;
     bounds = std::equal_range(d_iRow.begin(), d_iRow.end(), canIRow);
     if (bounds.first != bounds.second) {
       bounds = std::equal_range(
@@ -674,10 +684,11 @@ class RDKIT_FORCEFIELD_EXPORT MMFFHerschbachLaurieCollection {
  private:
   //! to force this to be a singleton, the constructor must be private
   MMFFHerschbachLaurieCollection(std::string mmffHerschbachLaurie);
-  static class std::unique_ptr<MMFFHerschbachLaurieCollection> ds_instance;  //!< the singleton
+  static class std::unique_ptr<MMFFHerschbachLaurieCollection>
+      ds_instance;  //!< the singleton
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int,
-           std::map<const unsigned int, MMFFHerschbachLaurie> >
+           std::map<const unsigned int, MMFFHerschbachLaurie>>
       d_params;  //!< the parameter 2D-map
 #else
   std::vector<MMFFHerschbachLaurie> d_params;  //!< the parameter vector
@@ -722,8 +733,9 @@ class RDKIT_FORCEFIELD_EXPORT MMFFCovRadPauEleCollection {
     return ((res != d_params.end()) ? &((*res).second) : NULL);
 #else
     std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator> bounds =
-        std::equal_range(d_atomicNum.begin(), d_atomicNum.end(), atomicNum);
+              std::vector<std::uint8_t>::const_iterator>
+        bounds =
+            std::equal_range(d_atomicNum.begin(), d_atomicNum.end(), atomicNum);
 
     return ((bounds.first != bounds.second)
                 ? &d_params[bounds.first - d_atomicNum.begin()]
@@ -734,13 +746,14 @@ class RDKIT_FORCEFIELD_EXPORT MMFFCovRadPauEleCollection {
  private:
   //! to force this to be a singleton, the constructor must be private
   MMFFCovRadPauEleCollection(std::string mmffCovRadPauEle);
-  static class std::unique_ptr<MMFFCovRadPauEleCollection> ds_instance;  //!< the singleton
+  static class std::unique_ptr<MMFFCovRadPauEleCollection>
+      ds_instance;  //!< the singleton
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int, MMFFCovRadPauEle>
       d_params;  //!< the parameter map
 #else
-  std::vector<MMFFCovRadPauEle> d_params;   //!< the parameter vector
-  std::vector<std::uint8_t> d_atomicNum;  //!< the atomic number vector
+  std::vector<MMFFCovRadPauEle> d_params;  //!< the parameter vector
+  std::vector<std::uint8_t> d_atomicNum;   //!< the atomic number vector
 #endif
 };
 
@@ -784,14 +797,14 @@ class RDKIT_FORCEFIELD_EXPORT MMFFAngleCollection {
     std::map<const unsigned int,
              std::map<const unsigned int,
                       std::map<const unsigned int,
-                               std::map<const unsigned int, MMFFAngle> > > >::
+                               std::map<const unsigned int, MMFFAngle>>>>::
         const_iterator res1;
     std::map<const unsigned int,
              std::map<const unsigned int,
-                      std::map<const unsigned int, MMFFAngle> > >::
-        const_iterator res2;
+                      std::map<const unsigned int, MMFFAngle>>>::const_iterator
+        res2;
     std::map<const unsigned int,
-             std::map<const unsigned int, MMFFAngle> >::const_iterator res3;
+             std::map<const unsigned int, MMFFAngle>>::const_iterator res3;
     std::map<const unsigned int, MMFFAngle>::const_iterator res4;
     while ((iter < 4) && (!mmffAngleParams)) {
       unsigned int canIAtomType = (*mmffDef)(iAtomType)->eqLevel[iter];
@@ -818,10 +831,12 @@ class RDKIT_FORCEFIELD_EXPORT MMFFAngleCollection {
     }
 #else
     std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator> jBounds =
-        std::equal_range(d_jAtomType.begin(), d_jAtomType.end(), jAtomType);
+              std::vector<std::uint8_t>::const_iterator>
+        jBounds =
+            std::equal_range(d_jAtomType.begin(), d_jAtomType.end(), jAtomType);
     std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator> bounds;
+              std::vector<std::uint8_t>::const_iterator>
+        bounds;
     if (jBounds.first != jBounds.second) {
       while ((iter < 4) && (!mmffAngleParams)) {
         unsigned int canIAtomType = (*mmffDef)(iAtomType)->eqLevel[iter];
@@ -861,20 +876,20 @@ class RDKIT_FORCEFIELD_EXPORT MMFFAngleCollection {
  private:
   //! to force this to be a singleton, the constructor must be private
   MMFFAngleCollection(std::string mmffAngle);
-  static class std::unique_ptr<MMFFAngleCollection> ds_instance;  //!< the singleton
+  static class std::unique_ptr<MMFFAngleCollection>
+      ds_instance;  //!< the singleton
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int,
            std::map<const unsigned int,
                     std::map<const unsigned int,
-                             std::map<const unsigned int, MMFFAngle> > > >
+                             std::map<const unsigned int, MMFFAngle>>>>
       d_params;  //!< the parameter 4D-map
 #else
-  std::vector<MMFFAngle> d_params;          //!< the parameter vector
+  std::vector<MMFFAngle> d_params;        //!< the parameter vector
   std::vector<std::uint8_t> d_iAtomType;  //! atom type vector for atom i
   std::vector<std::uint8_t> d_jAtomType;  //! atom type vector for atom j
   std::vector<std::uint8_t> d_kAtomType;  //! atom type vector for atom k
-  std::vector<std::uint8_t>
-      d_angleType;  //! angle type vector for angle i-j-k
+  std::vector<std::uint8_t> d_angleType;  //! angle type vector for angle i-j-k
 #endif
 };
 
@@ -922,14 +937,14 @@ class RDKIT_FORCEFIELD_EXPORT MMFFStbnCollection {
     std::map<const unsigned int,
              std::map<const unsigned int,
                       std::map<const unsigned int,
-                               std::map<const unsigned int, MMFFStbn> > > >::
+                               std::map<const unsigned int, MMFFStbn>>>>::
         const_iterator res1;
     std::map<const unsigned int,
              std::map<const unsigned int,
-                      std::map<const unsigned int, MMFFStbn> > >::const_iterator
+                      std::map<const unsigned int, MMFFStbn>>>::const_iterator
         res2;
     std::map<const unsigned int,
-             std::map<const unsigned int, MMFFStbn> >::const_iterator res3;
+             std::map<const unsigned int, MMFFStbn>>::const_iterator res3;
     std::map<const unsigned int, MMFFStbn>::const_iterator res4;
     res1 = d_params.find(canStretchBendType);
     if (res1 != d_params.end()) {
@@ -946,10 +961,12 @@ class RDKIT_FORCEFIELD_EXPORT MMFFStbnCollection {
     }
 #else
     std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator> jBounds =
-        std::equal_range(d_jAtomType.begin(), d_jAtomType.end(), jAtomType);
+              std::vector<std::uint8_t>::const_iterator>
+        jBounds =
+            std::equal_range(d_jAtomType.begin(), d_jAtomType.end(), jAtomType);
     std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator> bounds;
+              std::vector<std::uint8_t>::const_iterator>
+        bounds;
     if (jBounds.first != jBounds.second) {
       bounds = std::equal_range(
           d_iAtomType.begin() + (jBounds.first - d_jAtomType.begin()),
@@ -980,15 +997,16 @@ class RDKIT_FORCEFIELD_EXPORT MMFFStbnCollection {
  private:
   //! to force this to be a singleton, the constructor must be private
   MMFFStbnCollection(std::string mmffStbn);
-  static class std::unique_ptr<MMFFStbnCollection> ds_instance;  //!< the singleton
+  static class std::unique_ptr<MMFFStbnCollection>
+      ds_instance;  //!< the singleton
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int,
            std::map<const unsigned int,
                     std::map<const unsigned int,
-                             std::map<const unsigned int, MMFFStbn> > > >
+                             std::map<const unsigned int, MMFFStbn>>>>
       d_params;  //!< the parameter 4D-map
 #else
-  std::vector<MMFFStbn> d_params;           //!< the parameter vector
+  std::vector<MMFFStbn> d_params;         //!< the parameter vector
   std::vector<std::uint8_t> d_iAtomType;  //! atom type vector for atom i
   std::vector<std::uint8_t> d_jAtomType;  //! atom type vector for atom j
   std::vector<std::uint8_t> d_kAtomType;  //! atom type vector for atom k
@@ -1027,10 +1045,10 @@ class RDKIT_FORCEFIELD_EXPORT MMFFDfsbCollection {
       const unsigned int periodicTableRow3) {
     std::map<const unsigned int,
              std::map<const unsigned int,
-                      std::map<const unsigned int, MMFFStbn> > >::const_iterator
+                      std::map<const unsigned int, MMFFStbn>>>::const_iterator
         res1;
     std::map<const unsigned int,
-             std::map<const unsigned int, MMFFStbn> >::const_iterator res2;
+             std::map<const unsigned int, MMFFStbn>>::const_iterator res2;
     std::map<const unsigned int, MMFFStbn>::const_iterator res3;
     const MMFFStbn *mmffDfsbParams = NULL;
     bool swap = false;
@@ -1058,10 +1076,10 @@ class RDKIT_FORCEFIELD_EXPORT MMFFDfsbCollection {
  private:
   //! to force this to be a singleton, the constructor must be private
   MMFFDfsbCollection(std::string mmffDfsb);
-  static class std::unique_ptr<MMFFDfsbCollection> ds_instance;  //!< the singleton
-  std::map<
-      const unsigned int,
-      std::map<const unsigned int, std::map<const unsigned int, MMFFStbn> > >
+  static class std::unique_ptr<MMFFDfsbCollection>
+      ds_instance;  //!< the singleton
+  std::map<const unsigned int,
+           std::map<const unsigned int, std::map<const unsigned int, MMFFStbn>>>
       d_params;  //!< the parameter 3D-map
 };
 
@@ -1106,14 +1124,14 @@ class RDKIT_FORCEFIELD_EXPORT MMFFOopCollection {
     std::map<const unsigned int,
              std::map<const unsigned int,
                       std::map<const unsigned int,
-                               std::map<const unsigned int, MMFFOop> > > >::
+                               std::map<const unsigned int, MMFFOop>>>>::
         const_iterator res1;
     std::map<const unsigned int,
              std::map<const unsigned int,
-                      std::map<const unsigned int, MMFFOop> > >::const_iterator
+                      std::map<const unsigned int, MMFFOop>>>::const_iterator
         res2;
     std::map<const unsigned int,
-             std::map<const unsigned int, MMFFOop> >::const_iterator res3;
+             std::map<const unsigned int, MMFFOop>>::const_iterator res3;
     std::map<const unsigned int, MMFFOop>::const_iterator res4;
     while ((iter < 4) && (!mmffOopParams)) {
       canIKLAtomType[0] = (*mmffDef)(iAtomType)->eqLevel[iter];
@@ -1138,10 +1156,12 @@ class RDKIT_FORCEFIELD_EXPORT MMFFOopCollection {
     }
 #else
     std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator> jBounds =
-        std::equal_range(d_jAtomType.begin(), d_jAtomType.end(), jAtomType);
+              std::vector<std::uint8_t>::const_iterator>
+        jBounds =
+            std::equal_range(d_jAtomType.begin(), d_jAtomType.end(), jAtomType);
     std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator> bounds;
+              std::vector<std::uint8_t>::const_iterator>
+        bounds;
     if (jBounds.first != jBounds.second) {
       while ((iter < 4) && (!mmffOopParams)) {
         canIKLAtomType[0] = (*mmffDef)(iAtomType)->eqLevel[iter];
@@ -1178,15 +1198,16 @@ class RDKIT_FORCEFIELD_EXPORT MMFFOopCollection {
  private:
   //! to force this to be a singleton, the constructor must be private
   MMFFOopCollection(const bool isMMFFs, std::string mmffOop);
-  static class std::unique_ptr<MMFFOopCollection> ds_instance[2];  //!< the singleton
+  static class std::unique_ptr<MMFFOopCollection>
+      ds_instance[2];  //!< the singleton
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int,
            std::map<const unsigned int,
                     std::map<const unsigned int,
-                             std::map<const unsigned int, MMFFOop> > > >
+                             std::map<const unsigned int, MMFFOop>>>>
       d_params;  //!< the parameter 4D-map
 #else
-  std::vector<MMFFOop> d_params;            //!< the parameter vector
+  std::vector<MMFFOop> d_params;          //!< the parameter vector
   std::vector<std::uint8_t> d_iAtomType;  //! atom type vector for atom i
   std::vector<std::uint8_t> d_jAtomType;  //! atom type vector for atom j
   std::vector<std::uint8_t> d_kAtomType;  //! atom type vector for atom k
@@ -1237,29 +1258,30 @@ class RDKIT_FORCEFIELD_EXPORT MMFFTorCollection {
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
     std::map<
         const unsigned int,
-        std::map<
-            const unsigned int,
-            std::map<const unsigned int,
-                     std::map<const unsigned int,
-                              std::map<const unsigned int, MMFFTor> > > > >::
+        std::map<const unsigned int,
+                 std::map<const unsigned int,
+                          std::map<const unsigned int,
+                                   std::map<const unsigned int, MMFFTor>>>>>::
         const_iterator res1;
     std::map<const unsigned int,
              std::map<const unsigned int,
                       std::map<const unsigned int,
-                               std::map<const unsigned int, MMFFTor> > > >::
+                               std::map<const unsigned int, MMFFTor>>>>::
         const_iterator res2;
     std::map<const unsigned int,
              std::map<const unsigned int,
-                      std::map<const unsigned int, MMFFTor> > >::const_iterator
+                      std::map<const unsigned int, MMFFTor>>>::const_iterator
         res3;
     std::map<const unsigned int,
-             std::map<const unsigned int, MMFFTor> >::const_iterator res4;
+             std::map<const unsigned int, MMFFTor>>::const_iterator res4;
     std::map<const unsigned int, MMFFTor>::const_iterator res5;
 #else
     std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator> jBounds;
+              std::vector<std::uint8_t>::const_iterator>
+        jBounds;
     std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator> bounds;
+              std::vector<std::uint8_t>::const_iterator>
+        bounds;
 #endif
 
     while (((iter < maxIter) && ((!mmffTorParams) || (maxIter == 4))) ||
@@ -1363,17 +1385,19 @@ class RDKIT_FORCEFIELD_EXPORT MMFFTorCollection {
  private:
   //! to force this to be a singleton, the constructor must be private
   MMFFTorCollection(const bool isMMFFs, std::string mmffTor);
-  static class std::unique_ptr<MMFFTorCollection> ds_instance[2];  //!< the singleton
+  static class std::unique_ptr<MMFFTorCollection>
+      ds_instance[2];  //!< the singleton
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
-  std::map<const unsigned int,
-           std::map<const unsigned int,
-                    std::map<const unsigned int,
-                             std::map<const unsigned int,
-                                      std::map<const unsigned int,
-                                               MMFFTor> > > > >
+  std::map<
+      const unsigned int,
+      std::map<
+          const unsigned int,
+          std::map<const unsigned int,
+                   std::map<const unsigned int, std::map<const unsigned int,
+                                                         MMFFTor>>>>>
       d_params;  //!< the parameter 5D-map
 #else
-  std::vector<MMFFTor> d_params;            //!< the parameter vector
+  std::vector<MMFFTor> d_params;          //!< the parameter vector
   std::vector<std::uint8_t> d_iAtomType;  //! atom type vector for atom i
   std::vector<std::uint8_t> d_jAtomType;  //! atom type vector for atom j
   std::vector<std::uint8_t> d_kAtomType;  //! atom type vector for atom k
@@ -1420,8 +1444,9 @@ class RDKIT_FORCEFIELD_EXPORT MMFFVdWCollection {
     return (res != d_params.end() ? &((*res).second) : NULL);
 #else
     std::pair<std::vector<std::uint8_t>::const_iterator,
-              std::vector<std::uint8_t>::const_iterator> bounds =
-        std::equal_range(d_atomType.begin(), d_atomType.end(), atomType);
+              std::vector<std::uint8_t>::const_iterator>
+        bounds =
+            std::equal_range(d_atomType.begin(), d_atomType.end(), atomType);
 
     return ((bounds.first != bounds.second)
                 ? &d_params[bounds.first - d_atomType.begin()]
@@ -1432,15 +1457,16 @@ class RDKIT_FORCEFIELD_EXPORT MMFFVdWCollection {
  private:
   //! to force this to be a singleton, the constructor must be private
   MMFFVdWCollection(std::string mmffVdW);
-  static class std::unique_ptr<MMFFVdWCollection> ds_instance;  //!< the singleton
+  static class std::unique_ptr<MMFFVdWCollection>
+      ds_instance;  //!< the singleton
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int, MMFFVdW> d_params;  //!< the parameter map
 #else
-  std::vector<MMFFVdW> d_params;           //!< the parameter vector
+  std::vector<MMFFVdW> d_params;         //!< the parameter vector
   std::vector<std::uint8_t> d_atomType;  //! atom type vector
 #endif
 };
-}
-}
+}  // namespace MMFF
+}  // namespace ForceFields
 
 #endif

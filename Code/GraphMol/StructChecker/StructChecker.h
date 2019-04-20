@@ -134,7 +134,7 @@ struct RDKIT_STRUCTCHECKER_EXPORT StructCheckerOptions {
   bool Verbose;
 
   // Internal data for struchk
-  std::vector<std::pair<AugmentedAtom, AugmentedAtom> > AugmentedAtomPairs;
+  std::vector<std::pair<AugmentedAtom, AugmentedAtom>> AugmentedAtomPairs;
   std::vector<AugmentedAtom> AcidicAtoms;
   std::vector<AugmentedAtom> GoodAtoms;
   std::vector<ROMOL_SPTR> Patterns;
@@ -149,10 +149,10 @@ struct RDKIT_STRUCTCHECKER_EXPORT StructCheckerOptions {
   std::vector<IncEntry> ChargeIncTable;
   // std::map AtomSymbol(or AtomicNumber) -> IncEntry
   /* [ReadTransformation() ]
-  * The alpha, beta coefficients of the transfomation function used
-  * to stretch the preliminary pKa values to the actual predictions.
-  * The function is pKa = 7 + (pKa'-7)*beta + ((pKa'-7)*alpha)^3.
-  */
+   * The alpha, beta coefficients of the transfomation function used
+   * to stretch the preliminary pKa values to the actual predictions.
+   * The function is pKa = 7 + (pKa'-7)*beta + ((pKa'-7)*alpha)^3.
+   */
 
   double Alpha, Beta;
   std::vector<PathEntry> AlphaPathTable, BetaPathTable;
@@ -164,7 +164,7 @@ struct RDKIT_STRUCTCHECKER_EXPORT StructCheckerOptions {
 
   bool loadAugmentedAtomTranslations(const std::string &path);
   void setAugmentedAtomTranslations(
-      const std::vector<std::pair<AugmentedAtom, AugmentedAtom> > &aaPairs);
+      const std::vector<std::pair<AugmentedAtom, AugmentedAtom>> &aaPairs);
 
   bool loadAcidicAugmentedAtoms(const std::string &path);
   void setAcidicAugmentedAtoms(const std::vector<AugmentedAtom> &acidicAtoms);
@@ -197,7 +197,8 @@ struct RDKIT_STRUCTCHECKER_EXPORT StructCheckerOptions {
   bool loadChargeDataTables(const std::string &path);  // file path
 };
 
-RDKIT_STRUCTCHECKER_EXPORT bool parseOptionsJSON(const std::string &json, StructCheckerOptions &op);
+RDKIT_STRUCTCHECKER_EXPORT bool parseOptionsJSON(const std::string &json,
+                                                 StructCheckerOptions &op);
 
 RDKIT_STRUCTCHECKER_EXPORT bool loadOptionsFromFiles(
     StructCheckerOptions &op,
@@ -295,6 +296,6 @@ class RDKIT_STRUCTCHECKER_EXPORT StructChecker {
   // internal implementation:
  private:
 };
-}
-}
+}  // namespace StructureCheck
+}  // namespace RDKit
 #endif

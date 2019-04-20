@@ -1,3 +1,15 @@
+# Release_2019.09.1
+(Changes relative to Release_2019.03.1)
+
+## Highlights:
+
+## Acknowledgements:
+
+## Bug Fixes:
+
+## New Features and Enhancements:
+
+
 # Release_2019.03.1
 (Changes relative to Release_2018.09.1)
 
@@ -24,11 +36,12 @@
 
 ## Acknowledgements:
 Michael Banck, Francois Berenger, Thomas Blaschke, Brian Cole, Andrew Dalke,
-Bakary N'tji Diallo, Guillaume Godin, Jan Holst Jensen, Sunhwan Jo, Brian
-Kelley, Petr Kubat, Karl Leswing, Susan Leung, John Mayfield, Adam Moyer, Dan
-Nealschneider, Noel O'Boyle, Stephen Roughley, Takayuki Serizawa, Gianluca
-Sforna, Ricardo Rodriguez Schmidt, Matt Swain, Paolo Tosco, Ricardo Vianello,
-'John-Videogames', 'magattaca', 'msteijaert', 'paconius', 'sirbiscuit' 
+Bakary N'tji Diallo, Guillaume Godin, Anne Hersey, Jan Holst Jensen, Sunhwan Jo,
+Brian Kelley, Petr Kubat, Karl Leswing, Susan Leung, John Mayfield, Adam Moyer,
+Dan Nealschneider, Noel O'Boyle, Stephen Roughley, Takayuki Serizawa, Gianluca
+Sforna, Ricardo Rodriguez Schmidt, Gianluca Sforna, Matt Swain, Paolo Tosco, 
+Ricardo Vianello, 'John-Videogames', 'magattaca', 'msteijaert', 'paconius', 
+'sirbiscuit' 
 
 ## Bug Fixes:
   - PgSQL: fix boolean definitions for Postgresql 11
@@ -87,6 +100,8 @@ Sforna, Ricardo Rodriguez Schmidt, Matt Swain, Paolo Tosco, Ricardo Vianello,
  (github issue #2308 from greglandrum)
   - fix a problem with the random pickers test
  (github pull #2310 from greglandrum)
+  - Some tests still failing on less common platforms.
+ (github issue #2311 from giallu)
   - AddHs() using 3D coordinates with 2D conformations
  (github pull #2328 from greglandrum)
   - change to make the SWIG builds work on windows
@@ -101,6 +116,8 @@ Sforna, Ricardo Rodriguez Schmidt, Matt Swain, Paolo Tosco, Ricardo Vianello,
  (github issue #2380 from greglandrum)
   - ClusterMols.GetDistanceMatrix throws a type error in Python 3
  (github issue #2387 from John-Videogames)
+  - Uncharging logic reversed: protonate non-acids first 
+ (github issue #2392 from Anne Hersey)
 
 ## New Features and Enhancements:
   - Allow access to Enhanced Stereochemistry information from Python
@@ -227,6 +244,8 @@ Sforna, Ricardo Rodriguez Schmidt, Matt Swain, Paolo Tosco, Ricardo Vianello,
  (github pull #2357 from d-b-w)
   - Removes an extra debugging cerr statment
  (github pull #2360 from d-b-w)
+  - Preserve enhanced stereo in reactions 
+ (github pull #2366 from d-b-w)
   - improvements to the Uncharge functionality
  (github pull #2374 from greglandrum)
   - Add ExplicitBitVect prop and query

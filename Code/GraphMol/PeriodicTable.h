@@ -232,9 +232,9 @@ class RDKIT_GRAPHMOL_EXPORT PeriodicTable {
   //! isotope is unknown.
   double getMassForIsotope(UINT atomicNumber, UINT isotope) const {
     PRECONDITION(atomicNumber < byanum.size(), "Atomic number not found");
-    const std::map<unsigned int, std::pair<double, double> > &m =
+    const std::map<unsigned int, std::pair<double, double>> &m =
         byanum[atomicNumber].d_isotopeInfoMap;
-    std::map<unsigned int, std::pair<double, double> >::const_iterator item =
+    std::map<unsigned int, std::pair<double, double>>::const_iterator item =
         m.find(isotope);
     if (item == m.end()) {
       return 0.0;
@@ -257,9 +257,9 @@ class RDKIT_GRAPHMOL_EXPORT PeriodicTable {
   //! isotope is unknown.
   double getAbundanceForIsotope(UINT atomicNumber, UINT isotope) const {
     PRECONDITION(atomicNumber < byanum.size(), "Atomic number not found");
-    const std::map<unsigned int, std::pair<double, double> > &m =
+    const std::map<unsigned int, std::pair<double, double>> &m =
         byanum[atomicNumber].d_isotopeInfoMap;
-    std::map<unsigned int, std::pair<double, double> >::const_iterator item =
+    std::map<unsigned int, std::pair<double, double>>::const_iterator item =
         m.find(isotope);
     if (item == m.end()) {
       return 0.0;
@@ -318,6 +318,6 @@ class RDKIT_GRAPHMOL_EXPORT PeriodicTable {
   std::vector<atomicData> byanum;
   STR_UINT_MAP byname;
 };
-};
+};  // namespace RDKit
 
 #endif

@@ -33,6 +33,6 @@ class BadFileException : public std::runtime_error {
  private:
   std::string _msg;
 };
-}
+}  // namespace RDKit
 
 #endif

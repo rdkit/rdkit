@@ -73,5 +73,5 @@ class GreaterQuery
     return res.str();
   };
 };
-}
+}  // namespace Queries
 #endif

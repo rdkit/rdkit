@@ -378,6 +378,15 @@ class TestCase(unittest.TestCase) :
             opts.algorithm = alg
             sasa = rdFreeSASA.CalcSASA(mol, radii=radii, opts=opts)
             self.assertTrue( abs(sasa-res) < 1e-5 )
+        leeRichards = 5009.93014166
+        shrakerupley = 4977.7709106
+        opts = rdFreeSASA.SASAOpts()
+        opts.probeRadius = 2.0
+        for alg, res in ( (rdFreeSASA.ShrakeRupley, shrakerupley),
+                          (rdFreeSASA.LeeRichards, leeRichards)):
+            opts.algorithm = alg
+            sasa = rdFreeSASA.CalcSASA(mol, radii=radii, opts=opts)
+            self.assertTrue( abs(sasa-res) < 1e-5 )
 
 
 if __name__ == '__main__':

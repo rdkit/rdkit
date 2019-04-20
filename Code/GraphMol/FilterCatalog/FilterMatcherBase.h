@@ -65,12 +65,11 @@ struct RDKIT_FILTERCATALOG_EXPORT FilterMatch {
     return (filterMatch.get() == rhs.filterMatch.get() &&
             atomPairs == rhs.atomPairs);
   }
-  
+
   bool operator!=(const FilterMatch &rhs) const {
     return !(filterMatch.get() == rhs.filterMatch.get() &&
              atomPairs == rhs.atomPairs);
   }
-
 };
 
 RDKIT_FILTERCATALOG_EXPORT extern const char *DEFAULT_FILTERMATCHERBASE_NAME;
@@ -121,10 +120,12 @@ class RDKIT_FILTERCATALOG_EXPORT FilterMatcherBase
   //  Clones the current FilterMatcherBase into one that
   //   can be passed around safely.
   virtual boost::shared_ptr<FilterMatcherBase> Clone() const {
-    BOOST_LOG(rdWarningLog) << "FilterMatcherBase::Clone is deprecated, use copy instead" << std::endl;
+    BOOST_LOG(rdWarningLog)
+        << "FilterMatcherBase::Clone is deprecated, use copy instead"
+        << std::endl;
     return copy();
   }
-  
+
   //------------------------------------
   //! copy
   //  copies the current FilterMatcherBase into one that
@@ -145,5 +146,5 @@ class RDKIT_FILTERCATALOG_EXPORT FilterMatcherBase
 #ifdef RDK_USE_BOOST_SERIALIZATION
 BOOST_SERIALIZATION_ASSUME_ABSTRACT(FilterMatcherBase)
 #endif
-}
+}  // namespace RDKit
 #endif

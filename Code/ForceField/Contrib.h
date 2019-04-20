@@ -35,6 +35,6 @@ class RDKIT_FORCEFIELD_EXPORT ForceFieldContrib {
  protected:
   ForceField *dp_forceField;  //!< our owning ForceField
 };
-}
+}  // namespace ForceFields
 
 #endif

@@ -21,7 +21,8 @@ namespace FMCS {
 class MaximumCommonSubgraph;
 struct TargetMatch;
 
-struct RDKIT_FMCS_EXPORT MolFragment {  // Reference to a fragment of source molecule
+struct RDKIT_FMCS_EXPORT
+    MolFragment {  // Reference to a fragment of source molecule
   std::vector<const Atom*> Atoms;
   std::vector<const Bond*> Bonds;
   std::vector<unsigned> AtomsIdx;
@@ -139,5 +140,5 @@ class RDKIT_FMCS_EXPORT Seed {
   unsigned addBond(const Bond* bond);
   void fillNewBonds(const ROMol& qmol);
 };
-}
-}
+}  // namespace FMCS
+}  // namespace RDKit

@@ -26,9 +26,11 @@ namespace DistGeom {
   \param tol   a tolerance (percent) for errors in the smoothing process
 
 */
-RDKIT_DISTGEOMETRY_EXPORT bool triangleSmoothBounds(BoundsMatrix *boundsMat, double tol = 0.);
+RDKIT_DISTGEOMETRY_EXPORT bool triangleSmoothBounds(BoundsMatrix *boundsMat,
+                                                    double tol = 0.);
 //! \overload
-RDKIT_DISTGEOMETRY_EXPORT bool triangleSmoothBounds(BoundsMatPtr boundsMat, double tol = 0.);
-}
+RDKIT_DISTGEOMETRY_EXPORT bool triangleSmoothBounds(BoundsMatPtr boundsMat,
+                                                    double tol = 0.);
+}  // namespace DistGeom
 
 #endif

@@ -104,7 +104,7 @@ inline std::string qhelper(Bond::QUERYBOND_QUERY *q, unsigned int depth) {
   }
   return res;
 }
-}  // end of detail namespace
+}  // namespace detail
 inline std::string describeQuery(const Bond *bond) {
   PRECONDITION(bond, "bad bond");
   std::string res = "";
@@ -113,6 +113,6 @@ inline std::string describeQuery(const Bond *bond) {
   }
   return res;
 }
-};
+};  // namespace RDKit
 
 #endif

@@ -331,7 +331,8 @@ class RDKIT_RDGENERAL_EXPORT Dict {
 };
 
 template <>
-RDKIT_RDGENERAL_EXPORT std::string Dict::getVal<std::string>(const std::string &what) const;
+RDKIT_RDGENERAL_EXPORT std::string Dict::getVal<std::string>(
+    const std::string &what) const;
 
 }  // namespace RDKit
 #endif

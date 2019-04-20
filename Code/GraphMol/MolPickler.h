@@ -206,9 +206,10 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
 
   //! do the actual work of pickling a SubstanceGroup
   template <typename T>
-  static void _pickleSubstanceGroup(std::ostream &ss, const SubstanceGroup &sgroup,
-                            std::map<int, int> &atomIdxMap,
-                            std::map<int, int> &bondIdxMap);
+  static void _pickleSubstanceGroup(std::ostream &ss,
+                                    const SubstanceGroup &sgroup,
+                                    std::map<int, int> &atomIdxMap,
+                                    std::map<int, int> &bondIdxMap);
 
   //! do the actual work of pickling Stereo Group data
   template <typename T>
@@ -245,7 +246,8 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
 
   //! extract a SubstanceGroup from a pickle
   template <typename T>
-  static SubstanceGroup _getSubstanceGroupFromPickle(std::istream &ss, ROMol *mol, int version);
+  static SubstanceGroup _getSubstanceGroupFromPickle(std::istream &ss,
+                                                     ROMol *mol, int version);
 
   template <typename T>
   static void _depickleStereo(std::istream &ss, ROMol *mol, int version);

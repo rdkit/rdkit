@@ -33,6 +33,6 @@ class ChemicalFeature {
   // returns the position of the feature
   virtual RDGeom::Point3D getPos() const = 0;
 };
-}
+}  // namespace ChemicalFeatures
 
 #endif

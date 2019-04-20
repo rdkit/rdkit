@@ -35,5 +35,5 @@ RWMOL_SPTR_VECT enumerateLibrary(RWMol *mol, VECT_RWMOL_SPTR_VECT &sidechains,
 RWMOL_SPTR_VECT enumFromFiles(const char *templateName,
                               std::vector<const char *> &sidechainName);
 
-}  // end of TemplateEnum namespace
+}  // namespace TemplateEnum
 #endif

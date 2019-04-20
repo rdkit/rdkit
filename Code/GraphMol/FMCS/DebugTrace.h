@@ -154,5 +154,5 @@ struct ExecStatistics {
         DupCacheFoundMatch(0) {}
 };
 #endif
-}
-}
+}  // namespace FMCS
+}  // namespace RDKit

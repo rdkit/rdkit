@@ -24,7 +24,7 @@ class MolChemicalFeatureDef;
 
 class RDKIT_MOLCHEMICALFEATURES_EXPORT MolChemicalFeatureDef {
  public:
-  typedef std::list<boost::shared_ptr<MolChemicalFeatureDef> > CollectionType;
+  typedef std::list<boost::shared_ptr<MolChemicalFeatureDef>> CollectionType;
 
   MolChemicalFeatureDef() : d_family(""), d_type(""), d_smarts(""){};
   MolChemicalFeatureDef(const std::string &smarts, std::string family,
@@ -64,5 +64,5 @@ class RDKIT_MOLCHEMICALFEATURES_EXPORT MolChemicalFeatureDef {
   boost::shared_ptr<ROMol> dp_pattern;
   std::vector<double> d_weights;
 };
-}
+}  // namespace RDKit
 #endif

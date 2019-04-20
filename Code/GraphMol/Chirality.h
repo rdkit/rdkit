@@ -31,8 +31,9 @@ namespace Chirality {
        CIP ranking.
 
 */
-RDKIT_GRAPHMOL_EXPORT void assignAtomCIPRanks(const ROMol &mol, UINT_VECT &ranks);
-}
-}
+RDKIT_GRAPHMOL_EXPORT void assignAtomCIPRanks(const ROMol &mol,
+                                              UINT_VECT &ranks);
+}  // namespace Chirality
+}  // namespace RDKit
 /// @endcond
 #endif

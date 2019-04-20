@@ -67,7 +67,7 @@ class RDKIT_SIMDIVPICKERS_EXPORT MaxMinPicker : public DistPicker {
    *              poolSize*(poolSize-1)
    *   \param pickSize - the number items to pick from pool (<= poolSize)
    *   \param firstPicks - (optional)the first items in the pick list
-   *   \param seed - (optional) seed for the random number generator. 
+   *   \param seed - (optional) seed for the random number generator.
    *                 If this is <0 the generator will be seeded with a
    *                 random number.
    */

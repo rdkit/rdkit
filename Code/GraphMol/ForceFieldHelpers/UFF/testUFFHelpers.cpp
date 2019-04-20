@@ -572,6 +572,9 @@ void testUFFBuilder2() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+#ifdef RDK_TEST_MULTITHREADED
+void testUFFBatch() {}
+#else
 void testUFFBatch() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog)
@@ -618,6 +621,7 @@ void testUFFBatch() {
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
+#endif
 
 void testUFFBuilderSpecialCases() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
@@ -1183,7 +1187,7 @@ namespace {
 void runblock_uff(const std::vector<ROMol *> &mols,
                   const std::vector<double> &energies, unsigned int count,
                   unsigned int idx) {
-  for (unsigned int rep = 0; rep < 1000; ++rep) {
+  for (unsigned int rep = 0; rep < 200; ++rep) {
     for (unsigned int i = 0; i < mols.size(); ++i) {
       if (i % count != idx) continue;
       ROMol *mol = mols[i];
@@ -1276,7 +1280,7 @@ void testUFFMultiThread2() {
   ROMol *m = suppl[4];
   TEST_ASSERT(m);
   auto *om = new ROMol(*m);
-  for (unsigned int i = 0; i < 1000; ++i) {
+  for (unsigned int i = 0; i < 200; ++i) {
     m->addConformer(new Conformer(m->getConformer()), true);
   }
   std::vector<std::pair<int, double>> res;

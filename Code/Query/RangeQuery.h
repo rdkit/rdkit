@@ -117,5 +117,5 @@ class RangeQuery
   MatchFuncArgType d_tol;
   bool df_upperOpen, df_lowerOpen;
 };
-}
+}  // namespace Queries
 #endif

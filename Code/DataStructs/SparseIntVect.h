@@ -464,7 +464,7 @@ void calcVectParams(const SparseIntVect<IndexType> &v1,
     }
   }
 }
-}
+}  // namespace
 
 template <typename IndexType>
 double DiceSimilarity(const SparseIntVect<IndexType> &v1,
@@ -543,6 +543,6 @@ double TanimotoSimilarity(const SparseIntVect<IndexType> &v1,
                           bool returnDistance = false, double bounds = 0.0) {
   return TverskySimilarity(v1, v2, 1.0, 1.0, returnDistance, bounds);
 }
-}
+}  // namespace RDKit
 
 #endif

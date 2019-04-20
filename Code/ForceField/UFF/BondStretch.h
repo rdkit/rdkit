@@ -59,8 +59,9 @@ namespace Utils {
   \return the rest length
 
 */
-RDKIT_FORCEFIELD_EXPORT double calcBondRestLength(double bondOrder, const AtomicParams *end1Params,
-                          const AtomicParams *end2Params);
+RDKIT_FORCEFIELD_EXPORT double calcBondRestLength(
+    double bondOrder, const AtomicParams *end1Params,
+    const AtomicParams *end2Params);
 
 //! calculates and returns the UFF force constant for a bond
 /*!
@@ -72,9 +73,10 @@ RDKIT_FORCEFIELD_EXPORT double calcBondRestLength(double bondOrder, const Atomic
   \return the force constant
 
 */
-RDKIT_FORCEFIELD_EXPORT double calcBondForceConstant(double restLength, const AtomicParams *end1Params,
-                             const AtomicParams *end2Params);
-}
-}
-}
+RDKIT_FORCEFIELD_EXPORT double calcBondForceConstant(
+    double restLength, const AtomicParams *end1Params,
+    const AtomicParams *end2Params);
+}  // namespace Utils
+}  // namespace UFF
+}  // namespace ForceFields
 #endif

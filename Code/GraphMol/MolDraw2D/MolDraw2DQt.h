@@ -47,5 +47,5 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DQt : public MolDraw2D {
  private:
   QPainter &qp_;
 };
-}
+}  // namespace RDKit
 #endif  // MOLDRAW2DQT_H

@@ -19,7 +19,8 @@ namespace RDGeom {
 class Point3D;
 const unsigned int DIM_3D = 4;
 
-class RDKIT_RDGEOMETRYLIB_EXPORT Transform3D : public RDNumeric::SquareMatrix<double> {
+class RDKIT_RDGEOMETRYLIB_EXPORT Transform3D
+    : public RDNumeric::SquareMatrix<double> {
  public:
   //!  Constructor
   /*!
@@ -76,7 +77,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Transform3D : public RDNumeric::SquareMatrix<do
 
  private:
 };
-}
+}  // namespace RDGeom
 
 /*! \brief Combine two transforms and return the results as a new transform
  *
@@ -85,13 +86,13 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Transform3D : public RDNumeric::SquareMatrix<do
  * The resulting transform t3 has the folliwng effect
  *  t3(point) = t1(t2(point))
  */
-RDKIT_RDGEOMETRYLIB_EXPORT RDGeom::Transform3D operator*(const RDGeom::Transform3D &t1,
-                              const RDGeom::Transform3D &t2);
+RDKIT_RDGEOMETRYLIB_EXPORT RDGeom::Transform3D operator*(
+    const RDGeom::Transform3D &t1, const RDGeom::Transform3D &t2);
 
 /*! \brief Transform a point:
  *
  */
-RDKIT_RDGEOMETRYLIB_EXPORT RDGeom::Point3D operator*(const RDGeom::Transform3D &t,
-                          const RDGeom::Point3D &pt);
+RDKIT_RDGEOMETRYLIB_EXPORT RDGeom::Point3D operator*(
+    const RDGeom::Transform3D &t, const RDGeom::Point3D &pt);
 
 #endif

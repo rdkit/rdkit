@@ -77,7 +77,7 @@ class RDKIT_RDGENERAL_EXPORT Invariant : public std::runtime_error {
   int getLine() const { return line_d; }
 
   std::string toString() const;
-  std::string toUserString() const; // strips build info, adds version
+  std::string toUserString() const;  // strips build info, adds version
 
  private:
   std::string mess_d, expr_d, prefix_d;
@@ -86,7 +86,8 @@ class RDKIT_RDGENERAL_EXPORT Invariant : public std::runtime_error {
 
   int line_d;
 };
-RDKIT_RDGENERAL_EXPORT std::ostream& operator<<(std::ostream& s, const Invariant& inv);
+RDKIT_RDGENERAL_EXPORT std::ostream& operator<<(std::ostream& s,
+                                                const Invariant& inv);
 }  // end of namespace Invar
 
 #define ASSERT_INVARIANT(expr, mess) assert(expr)
@@ -192,6 +193,6 @@ RDKIT_RDGENERAL_EXPORT std::ostream& operator<<(std::ostream& s, const Invariant
 
 // Silence warnings for unused params while
 //   still indicating that they are unused
-#define RDUNUSED_PARAM(x) (void) x;
+#define RDUNUSED_PARAM(x) (void)x;
 
 #endif

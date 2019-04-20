@@ -72,7 +72,8 @@ const std::string chi4vVersion = "1.2.0";
   \param force         forces the value to be recalculated instead
                        of pulled from the cache
 */
-RDKIT_DESCRIPTORS_EXPORT double calcChiNv(const ROMol &mol, unsigned int n, bool force = false);
+RDKIT_DESCRIPTORS_EXPORT double calcChiNv(const ROMol &mol, unsigned int n,
+                                          bool force = false);
 const std::string chiNvVersion = "1.2.0";
 
 //! Similar to Hall Kier ChiXv, but uses nVal instead of valence
@@ -128,7 +129,8 @@ const std::string chi4nVersion = "1.2.0";
   \param force         forces the value to be recalculated instead
                        of pulled from the cache
 */
-RDKIT_DESCRIPTORS_EXPORT double calcChiNn(const ROMol &mol, unsigned int n, bool force = false);
+RDKIT_DESCRIPTORS_EXPORT double calcChiNn(const ROMol &mol, unsigned int n,
+                                          bool force = false);
 const std::string chiNnVersion = "1.2.0";
 
 //! calculate the Hall-Kier alpha value for a molecule
@@ -141,8 +143,8 @@ const std::string chiNnVersion = "1.2.0";
                        neccessarily sum to the full value.
                        Note: this can be a time-consuming calculation.
 */
-RDKIT_DESCRIPTORS_EXPORT double calcHallKierAlpha(const ROMol &mol,
-                         std::vector<double> *atomContribs = 0);
+RDKIT_DESCRIPTORS_EXPORT double calcHallKierAlpha(
+    const ROMol &mol, std::vector<double> *atomContribs = 0);
 const std::string hallKierAlphaVersion = "1.2.0";
 
 //! calculate the Hall-Kier kappa1 value for a molecule
@@ -171,10 +173,11 @@ RDKIT_DESCRIPTORS_EXPORT double calcKappa3(const ROMol &mol);
 const std::string kappa3Version = "1.1.0";
 
 namespace detail {
-RDKIT_DESCRIPTORS_EXPORT void hkDeltas(const ROMol &mol, std::vector<double> &deltas, bool force);
+RDKIT_DESCRIPTORS_EXPORT void hkDeltas(const ROMol &mol,
+                                       std::vector<double> &deltas, bool force);
 }
 
 }  // end of namespace Descriptors
-}
+}  // namespace RDKit
 
 #endif

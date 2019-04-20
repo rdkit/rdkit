@@ -1,0 +1,38 @@
+trigger:
+- master
+
+jobs:
+- job: Ubuntu_16_04_x64
+  timeoutInMinutes: 90
+  pool:
+    vmImage: ubuntu-16.04
+  variables:
+    compiler: gxx_linux-64=7.2.0
+    boost_version: 1.67.0
+    number_of_cores: nproc
+    python_name: python37
+  steps:
+  - template: .azure-pipelines/linux_build.yml
+- job: macOS_10_13_x64
+  timeoutInMinutes: 90
+  pool:
+    vmImage: macos-10.13
+  variables:
+    compiler: clangxx_osx-64
+    boost_version: 1.67.0
+    number_of_cores: sysctl -n hw.ncpu
+    python_name: python37
+    target_platform: 10.9
+  steps:
+  - template: .azure-pipelines/mac_build.yml
+- job: Windows_VS2017_x64
+  timeoutInMinutes: 90
+  pool:
+    vmImage: vs2017-win2016
+  variables:
+    compiler: vs2017_win-64
+    boost_version: 1.67.0
+    number_of_cores: '%NUMBER_OF_PROCESSORS%'
+    python_name: python37
+  steps:
+  - template: .azure-pipelines/vs_build.yml

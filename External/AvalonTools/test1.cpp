@@ -166,11 +166,11 @@ void testGitHub1062() {
                        << std::endl;
   {
     std::string s0 = "C/C=C\\C";
-    ROMol * m1 = SmilesToMol(s0);
+    ROMol *m1 = SmilesToMol(s0);
     auto s1 = MolToSmiles(*m1);
     AvalonTools::set2DCoords(*m1);
     std::string mb = MolToMolBlock(*m1);
-    ROMol * m2 = MolBlockToMol(mb);
+    ROMol *m2 = MolBlockToMol(mb);
     std::string s2 = MolToSmiles(*m2);
     delete m1;
     delete m2;
@@ -181,12 +181,12 @@ void testGitHub1062() {
     // to verify that the implementation is not sensitive to the
     // ordering of atoms
     std::string s0 = "C/C=C(F)\\C";
-    ROMol * m1 = SmilesToMol(s0);
+    ROMol *m1 = SmilesToMol(s0);
     auto s1 = MolToSmiles(*m1);
     TEST_ASSERT(s1 != s0);
     AvalonTools::set2DCoords(*m1);
     std::string mb = MolToMolBlock(*m1);
-    ROMol * m2 = MolBlockToMol(mb);
+    ROMol *m2 = MolBlockToMol(mb);
     std::string s2 = MolToSmiles(*m2);
     delete m1;
     delete m2;

@@ -52,13 +52,14 @@ namespace RDKit {
       See EnumeartionStrategyBase for more details.
 */
 
-class RDKIT_CHEMREACTIONS_EXPORT EvenSamplePairsStrategy : public EnumerationStrategyBase {
+class RDKIT_CHEMREACTIONS_EXPORT EvenSamplePairsStrategy
+    : public EnumerationStrategyBase {
   boost::uint64_t m_numPermutationsProcessed;
 
   std::vector<boost::int64_t> used_count;
-  std::vector<std::vector<boost::uint64_t> > var_used;
-  std::vector<std::vector<boost::uint64_t> > pair_used;
-  std::vector<std::vector<boost::uint64_t> > pair_counts;
+  std::vector<std::vector<boost::uint64_t>> var_used;
+  std::vector<std::vector<boost::uint64_t>> pair_used;
+  std::vector<std::vector<boost::uint64_t>> pair_counts;
   std::set<boost::uint64_t> selected;
 
   boost::uint64_t seed;     // last seed for permutation (starts at 0)
@@ -189,7 +190,7 @@ class RDKIT_CHEMREACTIONS_EXPORT EvenSamplePairsStrategy : public EnumerationStr
   }
 #endif
 };
-}
+}  // namespace RDKit
 
 BOOST_CLASS_VERSION(RDKit::EvenSamplePairsStrategy, 1)
 

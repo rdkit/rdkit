@@ -933,15 +933,20 @@ class HasPropWithValueQuery<TargetPtr, ExplicitBitVect>
 
  public:
   HasPropWithValueQuery()
-      : Queries::EqualityQuery<int, TargetPtr, true>(), propname(), val(), tol(0.0) {
+      : Queries::EqualityQuery<int, TargetPtr, true>(),
+        propname(),
+        val(),
+        tol(0.0) {
     this->setDescription("HasPropWithValue");
     this->setDataFunc(0);
   };
-  
+
   explicit HasPropWithValueQuery(const std::string &prop,
-                                 const ExplicitBitVect &v,
-                                 float tol = 0.0)
-      : Queries::EqualityQuery<int, TargetPtr, true>(), propname(prop), val(v), tol(tol) {
+                                 const ExplicitBitVect &v, float tol = 0.0)
+      : Queries::EqualityQuery<int, TargetPtr, true>(),
+        propname(prop),
+        val(v),
+        tol(tol) {
     this->setDescription("HasPropWithValue");
     this->setDataFunc(0);
   };
@@ -950,7 +955,8 @@ class HasPropWithValueQuery<TargetPtr, ExplicitBitVect>
     bool res = what->hasProp(propname);
     if (res) {
       try {
-        const ExplicitBitVect &bv = what->template getProp<const ExplicitBitVect&>(propname);
+        const ExplicitBitVect &bv =
+            what->template getProp<const ExplicitBitVect &>(propname);
         const double tani = TanimotoSimilarity(val, bv);
         res = (1.0 - tani) <= tol;
       } catch (KeyErrorException) {
@@ -982,9 +988,8 @@ class HasPropWithValueQuery<TargetPtr, ExplicitBitVect>
   //! returns a copy of this query
   Queries::Query<int, TargetPtr, true> *copy() const {
     HasPropWithValueQuery<TargetPtr, ExplicitBitVect> *res =
-        new HasPropWithValueQuery<TargetPtr, ExplicitBitVect>(this->propname,
-                                                              this->val,
-                                                              this->tol);
+        new HasPropWithValueQuery<TargetPtr, ExplicitBitVect>(
+            this->propname, this->val, this->tol);
     res->setNegation(this->getNegation());
     res->d_description = this->d_description;
     return res;
@@ -999,9 +1004,10 @@ Queries::EqualityQuery<int, const Target *, true> *makePropQuery(
 
 template <class Target>
 Queries::EqualityQuery<int, const Target *, true> *makePropQuery(
-    const std::string &propname, const ExplicitBitVect &val, float tolerance=0.0) {
-  return new HasPropWithValueQuery<const Target *, ExplicitBitVect>(propname, val,
-                                                                    tolerance);
+    const std::string &propname, const ExplicitBitVect &val,
+    float tolerance = 0.0) {
+  return new HasPropWithValueQuery<const Target *, ExplicitBitVect>(
+      propname, val, tolerance);
 }
 
 RDKIT_GRAPHMOL_EXPORT bool isComplexQuery(const Bond *b);

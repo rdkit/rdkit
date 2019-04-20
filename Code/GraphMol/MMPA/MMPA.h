@@ -33,10 +33,10 @@ namespace MMPA {
  \return true if the molecule was fragmented, false otherwise.
 */
 
-RDKIT_MMPA_EXPORT bool fragmentMol(const ROMol& mol,
-                 std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> >& result,
-                 unsigned int maxCuts = 3, unsigned int maxCutBonds = 20,
-                 const std::string& pattern = "[#6+0;!$(*=,#[!#6])]!@!=!#[*]");
+RDKIT_MMPA_EXPORT bool fragmentMol(
+    const ROMol& mol, std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>>& result,
+    unsigned int maxCuts = 3, unsigned int maxCutBonds = 20,
+    const std::string& pattern = "[#6+0;!$(*=,#[!#6])]!@!=!#[*]");
 
 //! fragments a Molecule for processing with the Matched Molecular Pairs
 //!  MMPA algorithm (Hussain et al)
@@ -45,7 +45,7 @@ RDKIT_MMPA_EXPORT bool fragmentMol(const ROMol& mol,
   \param result        Vector of Core and Sidechain results from the various
  cuts
   \param minCuts        Minimum number of times to cut the molecule to generate
-                        fragments.  
+                        fragments.
   \param maxCuts        Maximum number of times to cut the molecule to generate
                         fragments.
   \param maxCutBonds  Set the bond limit for determining which molecules
@@ -54,12 +54,10 @@ RDKIT_MMPA_EXPORT bool fragmentMol(const ROMol& mol,
 
  \return true if the molecule was fragmented, false otherwise.
 */
-RDKIT_MMPA_EXPORT bool fragmentMol(const ROMol& mol,
-                 std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> >& result,
-                 unsigned int minCuts,
-                 unsigned int maxCuts,
-                 unsigned int maxCutBonds,
-                 const std::string& pattern = "[#6+0;!$(*=,#[!#6])]!@!=!#[*]");
+RDKIT_MMPA_EXPORT bool fragmentMol(
+    const ROMol& mol, std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>>& result,
+    unsigned int minCuts, unsigned int maxCuts, unsigned int maxCutBonds,
+    const std::string& pattern = "[#6+0;!$(*=,#[!#6])]!@!=!#[*]");
 
 //! fragments a Molecule for processing with the Matched Molecular Pairs
 //!  MMPA algorithm (Hussain et al)
@@ -69,16 +67,15 @@ RDKIT_MMPA_EXPORT bool fragmentMol(const ROMol& mol,
                         cuts
   \param bondsToCut      Vector of bond indices to use as cut points
   \param minCuts        Minimum number of times to cut the molecule to generate
-                        fragments.  
+                        fragments.
   \param maxCuts        Maximum number of times to cut the molecule to generate
                         fragments.
  \return true if the molecule was fragmented, false otherwise.
 */
-RDKIT_MMPA_EXPORT bool fragmentMol(const ROMol& mol,
-                 std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> >& result,
-                 const std::vector<unsigned int>& bondsToCut,
-                 unsigned int minCuts = 1,
-                 unsigned int maxCuts = 3);
+RDKIT_MMPA_EXPORT bool fragmentMol(
+    const ROMol& mol, std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>>& result,
+    const std::vector<unsigned int>& bondsToCut, unsigned int minCuts = 1,
+    unsigned int maxCuts = 3);
 
-}
+}  // namespace MMPA
 }  // namespace RDKit

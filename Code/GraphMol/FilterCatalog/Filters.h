@@ -58,6 +58,6 @@ const FilterProperty_t *GetFilterProperties(
 FilterCatalogEntry *MakeFilterCatalogEntry(const FilterData_t &,
                                            unsigned int num_props = 0,
                                            const FilterProperty_t *props = 0);
-}
+}  // namespace RDKit
 
 #endif

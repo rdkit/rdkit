@@ -19,14 +19,14 @@
 #define RD_RANKING_H
 
 #include <vector>
-#include <functional> 
+#include <functional>
 #include <algorithm>
 #include <boost/foreach.hpp>
 #include <cstdint>
 
 namespace Rankers {
 //! functor for implementing > on two std::pairs.  The first entries are
-//compared.
+// compared.
 template <typename T1, typename T2>
 struct pairGreater
     : public std::binary_function<std::pair<T1, T2>, std::pair<T1, T2>, bool> {
@@ -37,7 +37,7 @@ struct pairGreater
 };
 
 //! function for implementing < on two std::pairs.  The first entries are
-//compared.
+// compared.
 template <typename T1, typename T2>
 struct pairLess
     : public std::binary_function<std::pair<T1, T2>, std::pair<T1, T2>, bool> {
@@ -69,7 +69,7 @@ void rankVect(const std::vector<T1> &vect, T2 &res) {
 
   std::vector<unsigned int> indices(nEntries);
   for (unsigned int i = 0; i < nEntries; ++i) indices[i] = i;
-  std::sort(indices.begin(), indices.end(), argless<std::vector<T1> >(vect));
+  std::sort(indices.begin(), indices.end(), argless<std::vector<T1>>(vect));
 
   int currRank = 0;
   T1 lastV = vect[indices[0]];
@@ -83,5 +83,5 @@ void rankVect(const std::vector<T1> &vect, T2 &res) {
     }
   }
 }
-}
+}  // namespace Rankers
 #endif

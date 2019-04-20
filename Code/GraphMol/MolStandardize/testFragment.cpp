@@ -196,10 +196,59 @@ void test_largest_fragment() {
   //
 }
 
+void testWhiteSpaceInSmarts() {
+  BOOST_LOG(rdInfoLog) << "----- Test Whitespace in SMARTS Fragment string."
+                       << std::endl;
+
+  std::vector<std::string> data({
+      "          ",    // whitespace only
+      "          \n",  // whitespace plus new line
+      " //   initial space plus comment\nfluorine\t[F]\n"
+  });
+
+  std::vector<size_t> reference_sizes({0, 0, 1});
+
+  auto reference = reference_sizes.cbegin();
+  for (const auto& smarts : data) {
+    std::istringstream input(smarts);
+    auto groups = readFuncGroups(input);
+    TEST_ASSERT(groups.size() == *reference);
+    ++reference;
+  }
+  BOOST_LOG(rdInfoLog) << "---- Done" << std::endl;
+}
+
+void testFragmentWithoutSmarts() {
+  BOOST_LOG(rdInfoLog) << "----- Test Fragment string without SMARTS."
+                       << std::endl;
+
+  std::vector<std::string> data({
+      "//   Name	SMARTS\nnonsense\n",
+      "//   Name	SMARTS\nnonsense no new line",
+      "//   Name	SMARTS\nnonsense with tab\t\n"
+  });
+
+  for (const auto& smarts : data) {
+    bool ok = false;
+    std::istringstream input(smarts);
+    std::vector<std::shared_ptr<RDKit::ROMol>> groups;
+    try {
+      groups = readFuncGroups(input);
+    } catch (const Invar::Invariant&) {
+      ok = true;
+    }
+    TEST_ASSERT(ok);
+    TEST_ASSERT(groups.empty());
+  }
+  BOOST_LOG(rdInfoLog) << "---- Done" << std::endl;
+}
+
 int main() {
   // may want to enable this for debugging
   // RDLog::InitLogs();
   test2();
   test_largest_fragment();
+  testWhiteSpaceInSmarts();
+  testFragmentWithoutSmarts();
   return 0;
 }

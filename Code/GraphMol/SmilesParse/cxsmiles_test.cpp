@@ -479,6 +479,23 @@ void testEnhancedStereo() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testHTMLCharCodes() {
+  BOOST_LOG(rdInfoLog) << "Testing CXSMILES with HTML char codes" << std::endl;
+
+  {
+    std::string smiles = R"(CCCC* |$;;;;_AP1$,Sg:n:2:2&#44;6-7:ht|)";
+    SmilesParserParams params;
+    params.allowCXSMILES = true;
+
+    ROMol *m = SmilesToMol(smiles, params);
+    TEST_ASSERT(m);
+
+    TEST_ASSERT(m->getNumAtoms() == 5);
+
+    delete m;
+  }
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -495,4 +512,5 @@ int main(int argc, char *argv[]) {
   testAtomProps();
   testGithub1968();
   testEnhancedStereo();
+  testHTMLCharCodes();
 }

@@ -62,10 +62,11 @@ namespace RDKit {
 
   See EnumerationStrategyBase for more details and usage.
 */
-class RDKIT_CHEMREACTIONS_EXPORT RandomSampleStrategy : public EnumerationStrategyBase {
+class RDKIT_CHEMREACTIONS_EXPORT RandomSampleStrategy
+    : public EnumerationStrategyBase {
   boost::uint64_t m_numPermutationsProcessed;
   boost::minstd_rand m_rng;
-  std::vector<boost::random::uniform_int_distribution<> > m_distributions;
+  std::vector<boost::random::uniform_int_distribution<>> m_distributions;
 
  public:
   RandomSampleStrategy()
@@ -81,7 +82,8 @@ class RDKIT_CHEMREACTIONS_EXPORT RandomSampleStrategy : public EnumerationStrate
 
   using EnumerationStrategyBase::initialize;
 
-  virtual void initializeStrategy(const ChemicalReaction &, const EnumerationTypes::BBS &) {
+  virtual void initializeStrategy(const ChemicalReaction &,
+                                  const EnumerationTypes::BBS &) {
     m_distributions.clear();
     for (size_t i = 0; i < m_permutationSizes.size(); ++i) {
       m_distributions.push_back(boost::random::uniform_int_distribution<>(
@@ -105,7 +107,8 @@ class RDKIT_CHEMREACTIONS_EXPORT RandomSampleStrategy : public EnumerationStrate
   }
 
   virtual boost::uint64_t getPermutationIdx() const {
-    return m_numPermutationsProcessed; }
+    return m_numPermutationsProcessed;
+  }
 
   virtual operator bool() const { return true; }
 
@@ -114,7 +117,7 @@ class RDKIT_CHEMREACTIONS_EXPORT RandomSampleStrategy : public EnumerationStrate
   }
 
  private:
-#ifdef RDK_USE_BOOST_SERIALIZATION    
+#ifdef RDK_USE_BOOST_SERIALIZATION
   friend class boost::serialization::access;
 
   template <class Archive>
@@ -152,11 +155,11 @@ class RDKIT_CHEMREACTIONS_EXPORT RandomSampleStrategy : public EnumerationStrate
   void serialize(Archive &ar, const unsigned int file_version) {
     boost::serialization::split_member(ar, *this, file_version);
   }
-#endif  
+#endif
 };
-}
+}  // namespace RDKit
 
-#ifdef RDK_USE_BOOST_SERIALIZATION        
+#ifdef RDK_USE_BOOST_SERIALIZATION
 BOOST_CLASS_VERSION(RDKit::RandomSampleStrategy, 1)
 #endif
 

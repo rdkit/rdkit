@@ -419,7 +419,8 @@ defition is handled. A consistent example, esterification of secondary
 alcohols, is used throughout [#chiralRxn]_.
 
 If no chiral information is present in the reaction definition, the
-stereochemistry of the reactants is preserved:
+stereochemistry of the reactants is preserved, as is membership in
+enhanced stereo groups:
 
 .. doctest::
 
@@ -1223,21 +1224,37 @@ and the set of atoms that make it up.
 Use cases
 =========
 
-The initial target is to not lose data on an ``V3k mol -> RDKit -> V3k mol`` round trip. Manipulation,
-depiction, and searching is a secondary goal.
+The initial target is to not lose data on an ``V3k mol -> RDKit -> V3k mol`` round trip. Manipulation, depiction, and searching are future goals.
 
-It is currently possible to enumerate the elements of a ``StereoGroup`` using the function py:func:`rdkit.Chem.EnumerateStereoisomers.EumerateStereoisomers`.
+It is possible to enumerate the elements of a ``StereoGroup`` using the function :py:func:`rdkit.Chem.EnumerateStereoisomers.EumerateStereoisomers`, which also
+preserves membership in the original ``StereoGroup``.
 
 .. doctest ::
 
-  >>> m = Chem.MolFromSmiles('C[C@H](F)C[C@H](O)Cl |&1:1|')                                                              
-  >>> m.GetStereoGroups()[0].GetGroupType()                                                                              
+  >>> m = Chem.MolFromSmiles('C[C@H](F)C[C@H](O)Cl |&1:1|')
+  >>> m.GetStereoGroups()[0].GetGroupType()
   rdkit.Chem.rdchem.StereoGroupType.STEREO_AND
-  >>> [x.GetIdx() for x in m.GetStereoGroups()[0].GetAtoms()]                                                            
+  >>> [x.GetIdx() for x in m.GetStereoGroups()[0].GetAtoms()]
   [1]
-  >>> from rdkit.Chem.EnumerateStereoisomers import EnumerateStereoisomers                                               
-  >>> [Chem.MolToSmiles(x) for x in EnumerateStereoisomers(m)]                                                           
-  ['C[C@@H](F)C[C@H](O)Cl', 'C[C@H](F)C[C@H](O)Cl']
+  >>> from rdkit.Chem.EnumerateStereoisomers import EnumerateStereoisomers
+  >>> [Chem.MolToCXSmiles(x) for x in EnumerateStereoisomers(m)]
+  ['C[C@@H](F)C[C@H](O)Cl |&1:1|', 'C[C@H](F)C[C@H](O)Cl |&1:1|']
+
+Reactions also preserve ``StereoGroup``s. Product atoms are included in the ``StereoGroup`` as long as the reaction doesn't create or destroy chirality at the atom.
+
+.. doctest ::
+
+  >>> def clearAllAtomProps(mol):
+  ...  """So that atom mapping isn't shown"""
+  ...  for atom in mol.GetAtoms():
+  ...   for key in atom.GetPropsAsDict():
+  ...    atom.ClearProp(key)
+  ...
+  >>> rxn = AllChem.ReactionFromSmarts('[C:1]F >> [C:1]Br')
+  >>> ps=rxn.RunReactants([m])
+  >>> clearAllAtomProps(ps[0][0])
+  >>> Chem.MolToCXSmiles(ps[0][0])
+  'C[C@H](Br)C[C@H](O)Cl |&1:1|'
 
 
 .. rubric:: Footnotes

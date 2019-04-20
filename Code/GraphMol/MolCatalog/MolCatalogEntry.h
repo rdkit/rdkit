@@ -102,6 +102,6 @@ class RDKIT_MOLCATALOG_EXPORT MolCatalogEntry : public RDCatalog::CatalogEntry {
   unsigned int d_order;
   std::string d_descrip;
 };
-}
+}  // namespace RDKit
 
 #endif

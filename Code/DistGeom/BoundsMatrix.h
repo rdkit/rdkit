@@ -24,7 +24,8 @@ namespace DistGeom {
   with lower distance bounds on the lower traingle and upper bounds in the upper
   triangle
 */
-class RDKIT_DISTGEOMETRY_EXPORT BoundsMatrix : public RDNumeric::SquareMatrix<double> {
+class RDKIT_DISTGEOMETRY_EXPORT BoundsMatrix
+    : public RDNumeric::SquareMatrix<double> {
  public:
   typedef boost::shared_array<double> DATA_SPTR;
 
@@ -115,6 +116,6 @@ class RDKIT_DISTGEOMETRY_EXPORT BoundsMatrix : public RDNumeric::SquareMatrix<do
 };
 
 typedef boost::shared_ptr<BoundsMatrix> BoundsMatPtr;
-}
+}  // namespace DistGeom
 
 #endif

@@ -202,6 +202,6 @@ class RDKIT_GRAPHMOL_EXPORT MatchingAtomIterator_ {
   int _findPrev(int from);
 };
 
-} /* end o namespace */
+}  // namespace RDKit
 
 #endif

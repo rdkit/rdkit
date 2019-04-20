@@ -19,7 +19,8 @@ namespace ForceFields {
 namespace UFF {
 
 //! An angle range constraint modelled after a AngleBendContrib
-class RDKIT_FORCEFIELD_EXPORT AngleConstraintContrib : public ForceFieldContrib {
+class RDKIT_FORCEFIELD_EXPORT AngleConstraintContrib
+    : public ForceFieldContrib {
  public:
   AngleConstraintContrib() : d_at1Idx(-1), d_at2Idx(-1), d_at3Idx(-1){};
   //! Constructor
@@ -55,6 +56,6 @@ class RDKIT_FORCEFIELD_EXPORT AngleConstraintContrib : public ForceFieldContrib 
   double d_minAngleDeg, d_maxAngleDeg;  //!< rest amplitudes of the angle
   double d_forceConstant;  //!< force constant of the angle constraint
 };
-}
-}
+}  // namespace UFF
+}  // namespace ForceFields
 #endif

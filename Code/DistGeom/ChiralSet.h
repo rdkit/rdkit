@@ -53,6 +53,6 @@ class RDKIT_DISTGEOMETRY_EXPORT ChiralSet {
 
 typedef boost::shared_ptr<ChiralSet> ChiralSetPtr;
 typedef std::vector<ChiralSetPtr> VECT_CHIRALSET;
-}
+}  // namespace DistGeom
 
 #endif

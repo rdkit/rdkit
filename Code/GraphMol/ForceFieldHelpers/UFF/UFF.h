@@ -67,7 +67,7 @@ void UFFOptimizeMoleculeConfsHelper_(ForceFields::ForceField ff, ROMol *mol,
     (*res)[i] = std::make_pair(needsMore, e);
   }
 }
-}  // end of detail namespace
+}  // namespace detail
 #endif
 //! Convenience function for optimizing all of a molecule's conformations using
 // UFF

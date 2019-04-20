@@ -41,7 +41,8 @@ namespace RDKit {
 class ChemicalReaction;
 
 //! used to indicate an error in parsing reaction data
-class RDKIT_CHEMREACTIONS_EXPORT ChemicalReactionParserException : public std::exception {
+class RDKIT_CHEMREACTIONS_EXPORT ChemicalReactionParserException
+    : public std::exception {
  public:
   //! construct with an error message
   explicit ChemicalReactionParserException(const char *msg) : _msg(msg){};
@@ -57,12 +58,14 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReactionParserException : public std::e
 };
 
 //! Parse a text block in MDL rxn format into a ChemicalReaction
-RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *RxnBlockToChemicalReaction(const std::string &rxnBlock);
+RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *RxnBlockToChemicalReaction(
+    const std::string &rxnBlock);
 //! Parse a file in MDL rxn format into a ChemicalReaction
-RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *RxnFileToChemicalReaction(const std::string &fileName);
+RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *RxnFileToChemicalReaction(
+    const std::string &fileName);
 //! Parse a text stream in MDL rxn format into a ChemicalReaction
-RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *RxnDataStreamToChemicalReaction(std::istream &rxnStream,
-                                                  unsigned int &line);
+RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *RxnDataStreamToChemicalReaction(
+    std::istream &rxnStream, unsigned int &line);
 
 //! Parse a string containing "Reaction SMARTS" into a ChemicalReaction
 /*!
@@ -91,14 +94,16 @@ RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *RxnSmartsToChemicalReaction(
 
    \param mol           ROMol with RXN roles set
  */
-RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *RxnMolToChemicalReaction(const ROMol &mol);
+RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *RxnMolToChemicalReaction(
+    const ROMol &mol);
 
 //! returns the reaction SMARTS for a reaction
-RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToRxnSmarts(const ChemicalReaction &rxn);
+RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToRxnSmarts(
+    const ChemicalReaction &rxn);
 
 //! returns the reaction SMILES for a reaction
-RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToRxnSmiles(const ChemicalReaction &rxn,
-                                        bool canonical = true);
+RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToRxnSmiles(
+    const ChemicalReaction &rxn, bool canonical = true);
 
 //! returns an RXN block for a reaction
 /*!
@@ -107,12 +112,13 @@ RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToRxnSmiles(const Chemica
                          otherwise they were included in the reactants block
    (default)
  */
-RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToRxnBlock(const ChemicalReaction &rxn,
-                                       bool separateAgents = false);
+RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToRxnBlock(
+    const ChemicalReaction &rxn, bool separateAgents = false);
 
 //! returns a ROMol with RXN roles used to describe the reaction
-RDKIT_CHEMREACTIONS_EXPORT ROMol *ChemicalReactionToRxnMol(const ChemicalReaction &rxn);
+RDKIT_CHEMREACTIONS_EXPORT ROMol *ChemicalReactionToRxnMol(
+    const ChemicalReaction &rxn);
 
-};  // end of RDKit namespace
+};  // namespace RDKit
 
 #endif
