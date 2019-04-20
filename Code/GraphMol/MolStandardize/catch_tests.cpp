@@ -127,3 +127,20 @@ TEST_CASE("uncharger bug with duplicates") {
     CHECK(MolToSmiles(*outm) == "C[N+](C)(C)CC(CO)CC(=O)[O-]");
   }
 }
+
+TEST_CASE(
+    "github #2411: MolStandardize: FragmentRemover should not sanitize "
+    "fragments ") {
+  SECTION("demo") {
+    std::string smi = "CN(C)(C)C.Cl";
+    bool debugParse = false;
+    bool sanitize = false;
+    std::unique_ptr<ROMol> m(SmilesToMol(smi, debugParse, sanitize));
+    REQUIRE(m);
+
+    MolStandardize::FragmentRemover fragRemover;
+    std::unique_ptr<ROMol> outm(fragRemover.remove(*m));
+    REQUIRE(outm);
+    CHECK(MolToSmiles(*outm) == "CN(C)(C)C");
+  }
+}
