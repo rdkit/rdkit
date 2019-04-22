@@ -11,6 +11,7 @@
 #ifndef RD_MMFFCONVENIENCE_H
 #define RD_MMFFCONVENIENCE_H
 #include <ForceField/ForceField.h>
+#include <GraphMol/ForceFieldHelpers/FFConvenience.h>
 #include <RDGeneral/RDThreads.h>
 #include "AtomTyper.h"
 #include "Builder.h"
@@ -45,41 +46,17 @@ std::pair<int, double> MMFFOptimizeMolecule(
     ROMol &mol, int maxIters = 1000, std::string mmffVariant = "MMFF94",
     double nonBondedThresh = 10.0, int confId = -1,
     bool ignoreInterfragInteractions = true) {
-  int res = -1;
-  double e = -1;
+  std::pair<int, double> res = std::make_pair(-1, -1);
   MMFF::MMFFMolProperties mmffMolProperties(mol, mmffVariant);
   if (mmffMolProperties.isValid()) {
     ForceFields::ForceField *ff = MMFF::constructForceField(
         mol, nonBondedThresh, confId, ignoreInterfragInteractions);
-    ff->initialize();
-    res = ff->minimize(maxIters);
-    e = ff->calcEnergy();
+    res = ForceFieldsHelper::OptimizeMolecule(*ff, maxIters);
     delete ff;
   }
-  return std::make_pair(res, e);
+  return res;
 }
-#ifdef RDK_THREADSAFE_SSS
-namespace detail {
-void MMFFOptimizeMoleculeConfsHelper_(ForceFields::ForceField ff, ROMol *mol,
-                                      std::vector<std::pair<int, double>> *res,
-                                      unsigned int threadIdx,
-                                      unsigned int numThreads, int maxIters) {
-  unsigned int i = 0;
-  ff.positions().resize(mol->getNumAtoms());
-  for (ROMol::ConformerIterator cit = mol->beginConformers();
-       cit != mol->endConformers(); ++cit, ++i) {
-    if (i % numThreads != threadIdx) continue;
-    for (unsigned int aidx = 0; aidx < mol->getNumAtoms(); ++aidx) {
-      ff.positions()[aidx] = &(*cit)->getAtomPos(aidx);
-    }
-    ff.initialize();
-    int needsMore = ff.minimize(maxIters);
-    double e = ff.calcEnergy();
-    (*res)[i] = std::make_pair(needsMore, e);
-  }
-}
-}  // namespace detail
-#endif
+
 //! Convenience function for optimizing all of a molecule's conformations using
 // MMFF
 /*
@@ -108,37 +85,11 @@ void MMFFOptimizeMoleculeConfs(ROMol &mol,
                                std::string mmffVariant = "MMFF94",
                                double nonBondedThresh = 10.0,
                                bool ignoreInterfragInteractions = true) {
-  res.resize(mol.getNumConformers());
-  numThreads = getNumThreadsToUse(numThreads);
   MMFF::MMFFMolProperties mmffMolProperties(mol, mmffVariant);
   if (mmffMolProperties.isValid()) {
     ForceFields::ForceField *ff = MMFF::constructForceField(
-        mol, nonBondedThresh, -1, ignoreInterfragInteractions);
-    if (numThreads == 1) {
-      unsigned int i = 0;
-      for (ROMol::ConformerIterator cit = mol.beginConformers();
-           cit != mol.endConformers(); ++cit, ++i) {
-        for (unsigned int aidx = 0; aidx < mol.getNumAtoms(); ++aidx) {
-          ff->positions()[aidx] = &(*cit)->getAtomPos(aidx);
-        }
-        ff->initialize();
-        int needsMore = ff->minimize(maxIters);
-        double e = ff->calcEnergy();
-        res[i] = std::make_pair(needsMore, e);
-      }
-    }
-#ifdef RDK_THREADSAFE_SSS
-    else {
-      std::vector<std::thread> tg;
-      for (int ti = 0; ti < numThreads; ++ti) {
-        tg.emplace_back(std::thread(detail::MMFFOptimizeMoleculeConfsHelper_,
-                                    *ff, &mol, &res, ti, numThreads, maxIters));
-      }
-      for (auto &thread : tg) {
-        if (thread.joinable()) thread.join();
-      }
-    }
-#endif
+        mol, &mmffMolProperties, nonBondedThresh, -1, ignoreInterfragInteractions);
+    ForceFieldsHelper::OptimizeMoleculeConfs(mol, *ff, res, numThreads, maxIters);
     delete ff;
   } else {
     for (unsigned int i = 0; i < mol.getNumConformers(); ++i) {
