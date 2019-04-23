@@ -1171,6 +1171,60 @@ void testGithub2034() {
     TEST_ASSERT(res.NumAtoms == 3);
     TEST_ASSERT(res.NumBonds == 3);
   }
+  BOOST_LOG(rdInfoLog) << "============================================"
+                       << std::endl;
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+void testGithub945() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github #945: MCS returning partial rings "
+                          "with completeRingsOnly=True"
+                       << std::endl;
+  {
+    std::vector<ROMOL_SPTR> mols;
+    const char* smi[] = {"c1cc2ccccc2s1", "c1cc2c(cccc2o1)"};
+
+    for (auto& i : smi) {
+      auto m = SmilesToMol(getSmilesOnly(i));
+      TEST_ASSERT(m);
+
+      mols.push_back(ROMOL_SPTR(m));
+    }
+    MCSParameters p;
+    p.Verbose = true;
+    p.BondCompareParameters.CompleteRingsOnly = true;
+    //          p.Verbose = true;
+    MCSResult res = findMCS(mols, &p);
+    std::cerr << "MCS: " << res.SmartsString << " " << res.NumAtoms
+              << " atoms, " << res.NumBonds << " bonds\n"
+              << std::endl;
+
+    TEST_ASSERT(res.NumAtoms == 6);
+    TEST_ASSERT(res.NumBonds == 6);
+  }
+  {
+    std::vector<ROMOL_SPTR> mols;
+    const char* smi[] = {"c1cc2ccc(C)cc2s1", "c1cc2c(cccc2s1)C"};
+
+    for (auto& i : smi) {
+      auto m = SmilesToMol(getSmilesOnly(i));
+      TEST_ASSERT(m);
+
+      mols.push_back(ROMOL_SPTR(m));
+    }
+    MCSParameters p;
+    p.Verbose = true;
+    p.BondCompareParameters.CompleteRingsOnly = true;
+    //          p.Verbose = true;
+    MCSResult res = findMCS(mols, &p);
+    std::cerr << "MCS: " << res.SmartsString << " " << res.NumAtoms
+              << " atoms, " << res.NumBonds << " bonds\n"
+              << std::endl;
+
+    TEST_ASSERT(res.NumAtoms == 9);
+    TEST_ASSERT(res.NumBonds == 10);
+  }
 
   BOOST_LOG(rdInfoLog) << "============================================"
                        << std::endl;
@@ -1200,6 +1254,7 @@ int main(int argc, const char* argv[]) {
   T0 = nanoClock();
   t0 = nanoClock();
 
+#if 0
   testJSONParameters();
 
   test1Basics();
@@ -1236,6 +1291,8 @@ int main(int argc, const char* argv[]) {
 
   testFormalChargeMatch();
   testGithub2034();
+#endif
+  testGithub945();
 
   unsigned long long t1 = nanoClock();
   double sec = double(t1 - T0) / 1000000.;
