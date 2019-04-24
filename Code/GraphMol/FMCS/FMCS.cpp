@@ -285,31 +285,9 @@ static bool checkRingMatch(const MCSBondCompareParameters& p, const ROMol& mol1,
   bool bond2inRing = !ringsIdx2.empty();
 
   if (bond1inRing != bond2inRing) return false;
-  if ((!bond1inRing))  // the same: && (! bond2inRing))  // both bonds are NOT
-                       // in rings
-    return true;
-  // both bonds are in rings
-  if (p.CompleteRingsOnly) {
-    const RingInfo::VECT_INT_VECT& r1 = mol1.getRingInfo()->bondRings();
-    const RingInfo::VECT_INT_VECT& r2 = mol2.getRingInfo()->bondRings();
-    // for each query ring contains bond1
-    for (unsigned long r1i : ringsIdx1) {
-      const INT_VECT& br1 = r1[r1i];  // ring contains bond1
-      // check all target rings contained bond2
-      for (unsigned long r2i : ringsIdx2) {
-        const INT_VECT& br2 = r2[r2i];  // ring contains bond2
-        if (br1.size() != br2.size())   // rings are different
-          continue;
-        // compare rings as substructures
-        if (ringMatchMatrixSet->isEqual(&br1, &br2,
-                                        &mol2))  // EQUAL Rings found
-          return true;
-      }
-    }
-    // all rings are different
-    return false;
-  } else
-    return true;  // bond1inRing && bond2inRing;   // both bonds are in rings
+
+  // both bonds are either in rings or not:
+  return true;
 }
 
 bool MCSBondCompareAny(const MCSBondCompareParameters& p, const ROMol& mol1,
