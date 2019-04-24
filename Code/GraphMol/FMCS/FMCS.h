@@ -19,29 +19,16 @@ namespace RDKit {
 struct MCSParameters;
 
 struct RDKIT_FMCS_EXPORT MCSAtomCompareParameters {
-  bool MatchValences;
-  bool MatchChiralTag;
-  bool MatchFormalCharge;
-  bool RingMatchesRingOnly;
-
- public:
-  MCSAtomCompareParameters()
-      : MatchValences(false),
-        MatchChiralTag(false),
-        MatchFormalCharge(false),
-        RingMatchesRingOnly(false) {}
+  bool MatchValences = false;
+  bool MatchChiralTag = false;
+  bool MatchFormalCharge = false;
+  bool RingMatchesRingOnly = false;
 };
 
 struct RDKIT_FMCS_EXPORT MCSBondCompareParameters {
-  bool RingMatchesRingOnly;
-  bool CompleteRingsOnly;
-  bool MatchStereo;
-
- public:
-  MCSBondCompareParameters()
-      : RingMatchesRingOnly(false),
-        CompleteRingsOnly(false),
-        MatchStereo(false) {}
+  bool RingMatchesRingOnly = false;
+  bool CompleteRingsOnly = false;
+  bool MatchStereo = false;
 };
 
 typedef bool (*MCSFinalMatchCheckFunction)(
@@ -99,34 +86,21 @@ RDKIT_FMCS_EXPORT bool MCSProgressCallbackTimeout(const MCSProgressData& stat,
                                                   void* userData);
 
 struct RDKIT_FMCS_EXPORT MCSParameters {
-  bool MaximizeBonds;
-  double Threshold;
-  unsigned Timeout;  // in seconds
-  bool Verbose;
+  bool MaximizeBonds = true;
+  double Threshold = 1.0;  // match all molecules
+  unsigned Timeout = -1;   // in seconds
+  bool Verbose = false;
   MCSAtomCompareParameters AtomCompareParameters;
   MCSBondCompareParameters BondCompareParameters;
-  MCSAtomCompareFunction AtomTyper;
-  MCSBondCompareFunction BondTyper;
-  void* CompareFunctionsUserData;
-  MCSProgressCallback ProgressCallback;  // return false to interrupt execution
-  void* ProgressCallbackUserData;
-  MCSFinalMatchCheckFunction
-      FinalMatchChecker;    // FinalChiralityCheckFunction() to check chirality
-  std::string InitialSeed;  // user defined or empty string (default)
- public:
-  MCSParameters()
-      : MaximizeBonds(true),
-        Threshold(1.0)  // match to all
-        ,
-        Timeout(-1),
-        Verbose(false),
-        AtomTyper(MCSAtomCompareElements),
-        BondTyper(MCSBondCompareOrder),
-        CompareFunctionsUserData(0),
-        ProgressCallback(0),
-        ProgressCallbackUserData(0),
-        FinalMatchChecker(0),
-        InitialSeed("") {}
+  MCSAtomCompareFunction AtomTyper = MCSAtomCompareElements;
+  MCSBondCompareFunction BondTyper = MCSBondCompareOrder;
+  void* CompareFunctionsUserData = nullptr;
+  MCSProgressCallback ProgressCallback =
+      nullptr;  // return false to interrupt execution
+  void* ProgressCallbackUserData = nullptr;
+  MCSFinalMatchCheckFunction FinalMatchChecker =
+      nullptr;  // FinalChiralityCheckFunction() to check chirality
+  std::string InitialSeed = "";  // user defined or empty string (default)
 };
 
 struct RDKIT_FMCS_EXPORT MCSResult {
