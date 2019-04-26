@@ -1428,9 +1428,7 @@ void assignStereochemistry(ROMol &mol, bool cleanIt, bool force,
     boost::dynamic_bitset<> possibleSpecialCases(mol.getNumAtoms());
     Chirality::findChiralAtomSpecialCases(mol, possibleSpecialCases);
 
-    for (ROMol::AtomIterator atIt = mol.beginAtoms(); atIt != mol.endAtoms();
-         ++atIt) {
-      Atom *atom = *atIt;
+    for (auto atom : mol.atoms()) {
       if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
           !atom->hasProp(common_properties::_CIPCode) &&
           (!possibleSpecialCases[atom->getIdx()] ||
@@ -1450,15 +1448,47 @@ void assignStereochemistry(ROMol &mol, bool cleanIt, bool force,
         }
       }
     }
-    for (ROMol::BondIterator bondIt = mol.beginBonds();
-         bondIt != mol.endBonds(); ++bondIt) {
+    for (auto bond : mol.bonds()) {
       // wedged bonds to atoms that have no stereochem
       // should be removed. (github issue 87)
-      if (((*bondIt)->getBondDir() == Bond::BEGINWEDGE ||
-           (*bondIt)->getBondDir() == Bond::BEGINDASH) &&
-          (*bondIt)->getBeginAtom()->getChiralTag() == Atom::CHI_UNSPECIFIED &&
-          (*bondIt)->getEndAtom()->getChiralTag() == Atom::CHI_UNSPECIFIED) {
-        (*bondIt)->setBondDir(Bond::NONE);
+      if ((bond->getBondDir() == Bond::BEGINWEDGE ||
+           bond->getBondDir() == Bond::BEGINDASH) &&
+          bond->getBeginAtom()->getChiralTag() == Atom::CHI_UNSPECIFIED &&
+          bond->getEndAtom()->getChiralTag() == Atom::CHI_UNSPECIFIED) {
+        bond->setBondDir(Bond::NONE);
+      }
+
+      // check for directionality on single bonds around
+      // double bonds without stereo. This was github #2422
+      if (bond->getBondType() == Bond::DOUBLE &&
+          (bond->getStereo() == Bond::STEREOANY ||
+           bond->getStereo() == Bond::STEREONONE)) {
+        std::vector<Atom *> batoms = {bond->getBeginAtom(), bond->getEndAtom()};
+        for (auto batom : batoms) {
+          for (const auto &nbri :
+               boost::make_iterator_range(mol.getAtomBonds(batom))) {
+            auto nbrBndI = mol[nbri];
+            if ((nbrBndI->getBondDir() == Bond::ENDDOWNRIGHT ||
+                 nbrBndI->getBondDir() == Bond::ENDUPRIGHT) &&
+                (nbrBndI->getBondType() == Bond::SINGLE ||
+                 nbrBndI->getBondType() == Bond::AROMATIC)) {
+              // direction is set, and we know it's not because of our
+              // bond. What about other neighbors?
+              bool okToClear = true;
+              for (const auto &nbrj : boost::make_iterator_range(
+                       mol.getAtomBonds(nbrBndI->getOtherAtom(batom)))) {
+                auto nbrBndJ = mol[nbrj];
+                if (nbrBndJ->getBondType() == Bond::DOUBLE &&
+                    nbrBndJ->getStereo() != Bond::STEREOANY &&
+                    nbrBndJ->getStereo() != Bond::STEREONONE) {
+                  okToClear = false;
+                  break;
+                }
+              }
+              if (okToClear) nbrBndI->setBondDir(Bond::NONE);
+            }
+          }
+        }
       }
 #if 0
       // make sure CIS/TRANS assignments are actually stereo bonds
