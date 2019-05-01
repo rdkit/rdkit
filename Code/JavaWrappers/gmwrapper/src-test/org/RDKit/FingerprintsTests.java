@@ -39,6 +39,7 @@ import org.junit.Test;
 public class FingerprintsTests extends GraphMolTest {
 
 	public void compareVectors(Int_Vect v1, Int_Vect v2) {
+		assertEquals(v1.size(), v2.size());
 		for (int i = 0; i < v1.size(); i++) {
 			assertEquals(v1.get(i),v2.get(i));
 		}
@@ -137,6 +138,18 @@ public class FingerprintsTests extends GraphMolTest {
 		assertTrue(RDKFuncs.AllProbeBitsMatch(fp2,fp1));
 	}
 }
+
+    @Test
+    public void testToByteArray() {
+        String smiles = "Cc2nc1ccccc1o2";
+        ROMol mol = RWMol.MolFromSmiles(smiles);
+        ExplicitBitVect fp1 = RDKFuncs.PatternFingerprintMol(mol, 2048);
+        byte[] fpBytes = fp1.toByteArray();
+        ExplicitBitVect fp2 = ExplicitBitVect.fromByteArray(fpBytes);
+        Int_Vect fp1Bits = fp1.getOnBits();
+        Int_Vect fp2Bits = fp2.getOnBits();
+        compareVectors(fp1Bits, fp2Bits);
+    }
 
 	public static void main(String args[]) {
 		org.junit.runner.JUnitCore.main("org.RDKit.FingerprintsTests");
