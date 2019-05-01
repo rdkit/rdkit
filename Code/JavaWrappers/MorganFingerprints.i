@@ -62,5 +62,9 @@ SWIG_STD_VECTOR_SPECIALIZE_MINIMUM(UInt_Pair_Vect, std::vector< std::pair<unsign
 %template(TanimotoSimilaritySIVu32) RDKit::TanimotoSimilarity<boost::uint32_t>;
 %template(TanimotoSimilaritySIVi32) RDKit::TanimotoSimilarity<boost::int32_t>;
 %template(TanimotoSimilaritySIVi64) RDKit::TanimotoSimilarity<boost::int64_t>;
+%template(TverskySimilarity) RDKit::TverskySimilarity<boost::uint32_t>;
+%template(TverskySimilarity) RDKit::TverskySimilarity<boost::int32_t>;
+%template(TverskySimilarity) RDKit::TverskySimilarity<boost::int64_t>;
+
 
 %include "MorganFingerprints.h"
