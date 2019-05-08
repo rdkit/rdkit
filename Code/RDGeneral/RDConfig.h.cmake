@@ -10,6 +10,7 @@
 
 // RDKit configuration options
 #cmakedefine RDK_USE_BOOST_SERIALIZATION
+#cmakedefine RDK_USE_BOOST_IOSTREAMS
 
 #cmakedefine RDK_OPTIMIZE_NATIVE
 #ifdef RDK_OPTIMIZE_NATIVE
