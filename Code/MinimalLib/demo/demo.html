@@ -1,0 +1,24 @@
+<!doctype html>
+<html>
+  <script>
+    var Module = {
+      onRuntimeInitialized: function() {
+    console.log('version: ' + Module.version());
+    var m1 = Module.get_mol("c1ccccc1O");
+    console.log('smile: ' + m1.get_smiles());
+    m1.delete();
+    var m2 = Module.get_mol("CC(=O)Oc1ccccc1C(=O)O");
+    draw(m2);
+    m2.delete()
+      }
+    };
+    function draw(mol) {
+    var svg = mol.get_svg();
+    var ob = document.getElementById("drawing");
+    ob.outerHTML = "<div id='drawing'>"+svg+"</div>";
+    }
+  </script>
+  <script src="./RDKit_minimal.js"></script>
+<div id="drawing"></div>
+</html>
+
