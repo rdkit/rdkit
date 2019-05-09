@@ -135,6 +135,7 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
     BEGINQUERYATOMDATA,
     BEGINSGROUP,
     BEGINSTEREOGROUP,
+    BEGINCONFPROPS,    
   } Tags;
 
   static unsigned int getDefaultPickleProperties();
