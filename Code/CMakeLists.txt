@@ -33,3 +33,5 @@ endif()
 if(RDK_BUILD_PGSQL)
   add_subdirectory(PgSQL/rdkit)
 endif(RDK_BUILD_PGSQL)
+
+add_subdirectory(MinimalLib)
