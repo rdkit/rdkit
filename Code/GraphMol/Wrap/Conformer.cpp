@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2004-2008 Rational Discovery LLC
+//  Copyright (C) 2004-2019 Greg Ladrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -13,6 +12,8 @@
 #include <RDBoost/python.h>
 #include <string>
 #include "rdchem.h"
+#include "props.hpp"
+
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/types.h>
 #include <Geometry/point.h>
@@ -83,7 +84,7 @@ struct conformer_wrapper {
         .def("SetId", &Conformer::setId, "Set the ID of the conformer\n")
 
         .def("GetAtomPosition", GetAtomPos, "Get the posistion of an atom\n")
-	.def("GetPositions", GetPos, "Get positions of all the atoms\n")
+        .def("GetPositions", GetPos, "Get positions of all the atoms\n")
         .def("SetAtomPosition", SetAtomPos,
              "Set the position of the specified atom\n")
         .def("SetAtomPosition", (void (Conformer::*)(unsigned int, const RDGeom::Point3D&)) &
@@ -92,7 +93,139 @@ struct conformer_wrapper {
 
         .def("Set3D", &Conformer::set3D, "Set the 3D flag of the conformer\n")
         .def("Is3D", &Conformer::is3D,
-             "returns the 3D flag of the conformer\n");
+             "returns the 3D flag of the conformer\n")
+
+        // properties
+        .def("SetProp", MolSetProp<Conformer, std::string>,
+             (python::arg("self"), python::arg("key"), python::arg("val"),
+              python::arg("computed") = false),
+             "Sets a molecular property\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to be set (a string).\n"
+             "    - value: the property value (a string).\n"
+             "    - computed: (optional) marks the property as being "
+             "computed.\n"
+             "                Defaults to False.\n\n")
+        .def("SetDoubleProp", MolSetProp<Conformer, double>,
+             (python::arg("self"), python::arg("key"), python::arg("val"),
+              python::arg("computed") = false),
+             "Sets a double valued molecular property\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to be set (a string).\n"
+             "    - value: the property value as a double.\n"
+             "    - computed: (optional) marks the property as being "
+             "computed.\n"
+             "                Defaults to 0.\n\n")
+        .def("SetIntProp", MolSetProp<Conformer, int>,
+             (python::arg("self"), python::arg("key"), python::arg("val"),
+              python::arg("computed") = false),
+             "Sets an integer valued molecular property\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to be set (an unsigned "
+             "number).\n"
+             "    - value: the property value as an integer.\n"
+             "    - computed: (optional) marks the property as being "
+             "computed.\n"
+             "                Defaults to False.\n\n")
+        .def("SetUnsignedProp", MolSetProp<Conformer, unsigned int>,
+             (python::arg("self"), python::arg("key"), python::arg("val"),
+              python::arg("computed") = false),
+             "Sets an unsigned integer valued molecular property\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to be set (a string).\n"
+             "    - value: the property value as an unsigned integer.\n"
+             "    - computed: (optional) marks the property as being "
+             "computed.\n"
+             "                Defaults to False.\n\n")
+        .def("SetBoolProp", MolSetProp<Conformer, bool>,
+             (python::arg("self"), python::arg("key"), python::arg("val"),
+              python::arg("computed") = false),
+             "Sets a boolean valued molecular property\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to be set (a string).\n"
+             "    - value: the property value as a bool.\n"
+             "    - computed: (optional) marks the property as being "
+             "computed.\n"
+             "                Defaults to False.\n\n")
+        .def("HasProp", MolHasProp<Conformer>,
+             "Queries a conformer to see if a particular property has been "
+             "assigned.\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to check for (a string).\n")
+        .def("GetProp", GetProp<Conformer, std::string>,
+             "Returns the value of the property.\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to return (a string).\n\n"
+             "  RETURNS: a string\n\n"
+             "  NOTE:\n"
+             "    - If the property has not been set, a KeyError exception "
+             "will be raised.\n")
+        .def("GetDoubleProp", GetProp<Conformer, double>,
+             "Returns the double value of the property if possible.\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to return (a string).\n\n"
+             "  RETURNS: a double\n\n"
+             "  NOTE:\n"
+             "    - If the property has not been set, a KeyError exception "
+             "will be raised.\n")
+        .def("GetIntProp", GetProp<Conformer, int>,
+             "Returns the integer value of the property if possible.\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to return (a string).\n\n"
+             "  RETURNS: an integer\n\n"
+             "  NOTE:\n"
+             "    - If the property has not been set, a KeyError exception "
+             "will be raised.\n")
+        .def("GetUnsignedProp", GetProp<Conformer, unsigned int>,
+             "Returns the unsigned int value of the property if possible.\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to return (a string).\n\n"
+             "  RETURNS: an unsigned integer\n\n"
+             "  NOTE:\n"
+             "    - If the property has not been set, a KeyError exception "
+             "will be raised.\n")
+        .def("GetBoolProp", GetProp<Conformer, bool>,
+             "Returns the Bool value of the property if possible.\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to return (a string).\n\n"
+             "  RETURNS: a bool\n\n"
+             "  NOTE:\n"
+             "    - If the property has not been set, a KeyError exception "
+             "will be raised.\n")
+        .def("ClearProp", MolClearProp<Conformer>,
+             "Removes a property from the conformer.\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to clear (a string).\n")
+
+        .def("ClearComputedProps", MolClearComputedProps<Conformer>,
+             "Removes all computed properties from the conformer.\n\n")
+        .def("GetPropNames", &Conformer::getPropList,
+             (python::arg("self"), python::arg("includePrivate") = false,
+              python::arg("includeComputed") = false),
+             "Returns a tuple with all property names for this conformer.\n\n"
+             "  ARGUMENTS:\n"
+             "    - includePrivate: (optional) toggles inclusion of private "
+             "properties in the result set.\n"
+             "                      Defaults to 0.\n"
+             "    - includeComputed: (optional) toggles inclusion of computed "
+             "properties in the result set.\n"
+             "                      Defaults to 0.\n\n"
+             "  RETURNS: a tuple of strings\n")
+
+        .def("GetPropsAsDict", GetPropsAsDict<Conformer>,
+             (python::arg("self"), python::arg("includePrivate") = false,
+              python::arg("includeComputed") = false),
+             "Returns a dictionary populated with the conformer's properties.\n"
+             " n.b. Some properties are not able to be converted to python "
+             "types.\n\n"
+             "  ARGUMENTS:\n"
+             "    - includePrivate: (optional) toggles inclusion of private "
+             "properties in the result set.\n"
+             "                      Defaults to False.\n"
+             "    - includeComputed: (optional) toggles inclusion of computed "
+             "properties in the result set.\n"
+             "                      Defaults to False.\n\n"
+             "  RETURNS: a dictionary\n");
   };
 };
 }

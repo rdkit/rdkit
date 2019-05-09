@@ -319,3 +319,21 @@ M  END
       CHECK(nmb.find("2  4  2  0") != std::string::npos);
   }
 }
+TEST_CASE(
+    "github #2423: Incorrect assignment of explicit Hs to Al+3 read from mol "
+    "block",
+    "[bug, molops]") {
+  SECTION("basics: single atom mols") {
+    std::string mb = R"CTAB(2300
+  -OEChem-01301907122D
+
+  1  0  0     0  0  0  0  0  0999 V2000
+  -66.7000  999.0000    0.0000 Al  0  1  0  0  0  0  0  0  0  0  0  0
+M  CHG  1   1   3
+M  END)CTAB";
+    std::unique_ptr<ROMol> mol(MolBlockToMol(mb));
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(0)->getFormalCharge() == 3);
+    CHECK(mol->getAtomWithIdx(0)->getTotalNumHs() == 0);
+  }
+}

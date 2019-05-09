@@ -14,6 +14,8 @@
 #include <Geometry/point.h>
 #include <RDGeneral/types.h>
 #include <boost/smart_ptr.hpp>
+#include <RDGeneral/RDProps.h>
+
 
 namespace RDKit {
 class ROMol;
@@ -39,7 +41,7 @@ class RDKIT_GRAPHMOL_EXPORT ConformerException : public std::exception {
   - a pointer to the owing molecule
   - a vector of 3D points (positions of atoms)
 */
-class RDKIT_GRAPHMOL_EXPORT Conformer {
+class RDKIT_GRAPHMOL_EXPORT Conformer : public RDProps {
  public:
   friend class ROMol;
 

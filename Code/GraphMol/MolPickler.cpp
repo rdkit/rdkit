@@ -32,7 +32,7 @@ using std::uint32_t;
 namespace RDKit {
 
 const int32_t MolPickler::versionMajor = 10;
-const int32_t MolPickler::versionMinor = 0;
+const int32_t MolPickler::versionMinor = 1;
 const int32_t MolPickler::versionPatch = 0;
 const int32_t MolPickler::endianId = 0xDEADBEEF;
 
@@ -928,10 +928,17 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
     tmpInt = static_cast<int32_t>(mol->getNumConformers());
     streamWrite(ss, tmpInt);
 
-    ROMol::ConstConformerIterator ci;
-    for (ci = mol->beginConformers(); ci != mol->endConformers(); ++ci) {
+    for (auto ci = mol->beginConformers(); ci != mol->endConformers(); ++ci) {
       const Conformer *conf = ci->get();
       _pickleConformer<T>(ss, conf);
+    }
+
+    if (propertyFlags & PicklerOps::MolProps) {
+      streamWrite(ss, BEGINCONFPROPS);
+      for (auto ci = mol->beginConformers(); ci != mol->endConformers(); ++ci) {
+        const Conformer *conf = ci->get();
+        _pickleProperties(ss, *conf, propertyFlags);
+      }
     }
   }
 
@@ -1067,12 +1074,19 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
   if (tag == BEGINCONFS) {
     // read in the conformation
     streamRead(ss, tmpInt, version);
-    int i;
-    for (i = 0; i < tmpInt; i++) {
+    std::vector<unsigned int> cids(tmpInt);
+    for (auto i = 0; i < tmpInt; i++) {
       Conformer *conf = _conformerFromPickle<T>(ss, version);
       mol->addConformer(conf);
+      cids[i] = conf->getId();
     }
     streamRead(ss, tag, version);
+    if(tag==BEGINCONFPROPS){
+      for (auto cid : cids) {
+        _unpickleProperties(ss, mol->getConformer(cid));
+      }
+      streamRead(ss, tag, version);
+    }
   }
 
   while (tag != ENDMOL) {
