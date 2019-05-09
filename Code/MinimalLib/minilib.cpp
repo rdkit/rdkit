@@ -8,10 +8,9 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <emscripten/bind.h>
 #include <string>
 #include <iostream>
-
+#include "minilib.h"
 #if 1
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -28,10 +27,4 @@ std::string canon_smiles(const std::string &input) {
 int ping() {
   std::cerr << "alive" << std::endl;
   return 1;
-}
-
-using namespace emscripten;
-EMSCRIPTEN_BINDINGS(RDKit_minimal) {
-  function("ping", &ping);
-  function("canon_smiles", &canon_smiles);
 }

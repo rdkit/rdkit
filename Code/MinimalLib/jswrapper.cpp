@@ -8,7 +8,11 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <string>
+#include <emscripten/bind.h>
+#include "minilib.h"
 
-std::string canon_smiles(const std::string &input);
-int ping();
+using namespace emscripten;
+EMSCRIPTEN_BINDINGS(RDKit_minimal) {
+  function("ping", &ping);
+  function("canon_smiles", &canon_smiles);
+}
