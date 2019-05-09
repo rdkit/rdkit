@@ -9,11 +9,27 @@
 //  of the RDKit source tree.
 //
 #include <string>
+#include <GraphMol/RDKitBase.h>
+
+class JSMol {
+ public:
+  JSMol() : d_mol(nullptr){};
+  JSMol(RDKit::ROMol *mol) : d_mol(mol){};
+  std::string get_smiles() const;
+  std::string get_molblock() const;
+  std::string get_inchi() const;
+  std::string get_svg() const;
+  std::vector<unsigned int> get_substruct_match(const JSMol &q) const;
+
+ private:
+  std::unique_ptr<RDKit::ROMol> d_mol;
+};
 
 std::string get_smiles(const std::string &input);
 std::string get_inchi(const std::string &input);
 std::string get_inchikey_for_inchi(const std::string &input);
 std::string get_svg(const std::string &input);
-std::string get_pkl(const std::string &input);
+JSMol *get_mol(const std::string &input);
+JSMol *get_qmol(const std::string &input);
 std::string version();
 int ping();

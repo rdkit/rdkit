@@ -21,28 +21,21 @@
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
 #include <INCHI-API/inchi.h>
 
 using namespace RDKit;
 
 namespace {
-std::unique_ptr<ROMol> mol_from_input(const std::string &input) {
+ROMol *mol_from_input(const std::string &input) {
   RWMol *res = nullptr;
-#if 0
-  try {  // pickle?
-    res = new RWMol(ROMol(input));
-  } catch (MolPicklerException &) {
-    res = nullptr;
-  }
-#endif
-  if (!res) {
+  if (input.find("M  END") != std::string::npos) {
+    bool sanitize = false;
+    res = MolBlockToMol(input, sanitize);
+  } else {
     SmilesParserParams ps;
     ps.sanitize = false;
     res = SmilesToMol(input, ps);
-  }
-  if (!res) {
-    bool sanitize = false;
-    res = MolBlockToMol(input, sanitize);
   }
   if (res) {
     try {
@@ -53,44 +46,91 @@ std::unique_ptr<ROMol> mol_from_input(const std::string &input) {
       res = nullptr;
     }
   }
-  return std::unique_ptr<ROMol>(res);
-}
-}  // namespace
-
-std::string get_smiles(const std::string &input) {
-  std::unique_ptr<ROMol> mol = mol_from_input(input);
-  if (!mol) return "";
-  return MolToSmiles(*mol);
+  return res;
 }
 
-std::string get_svg(const std::string &input) {
-  std::unique_ptr<ROMol> mol = mol_from_input(input);
-  if (!mol) return "";
+ROMol *qmol_from_input(const std::string &input) {
+  RWMol *res = nullptr;
+  if (input.find("M  END") != std::string::npos) {
+    bool sanitize = false;
+    res = MolBlockToMol(input, sanitize);
+  } else {
+    res = SmartsToMol(input);
+  }
+  return res;
+}
 
+std::string smiles_(const ROMol &m) { return MolToSmiles(m); }
+std::string molblock_(const ROMol &m) { return MolToMolBlock(m); }
+std::string inchi_(const ROMol &m) {
+  ExtraInchiReturnValues rv;
+  return MolToInchi(m, rv);
+}
+std::string svg_(const ROMol &m) {
   MolDraw2DSVG drawer(250, 200);
-  MolDraw2DUtils::prepareAndDrawMolecule(drawer, *mol);
+  MolDraw2DUtils::prepareAndDrawMolecule(drawer, m);
   drawer.finishDrawing();
 
   return drawer.getDrawingText();
 }
+}  // namespace
+
+std::string JSMol::get_smiles() const {
+  if (!d_mol) return "";
+  return smiles_(*d_mol);
+}
+std::string JSMol::get_svg() const {
+  if (!d_mol) return "";
+  return svg_(*d_mol);
+}
+std::string JSMol::get_inchi() const {
+  if (!d_mol) return "";
+  return inchi_(*d_mol);
+}
+std::string JSMol::get_molblock() const {
+  if (!d_mol) return "";
+  return molblock_(*d_mol);
+}
+std::vector<unsigned int> JSMol::get_substruct_match(const JSMol &q) const {
+  std::vector<unsigned int> res;
+  MatchVectType match;
+  if (SubstructMatch(*d_mol, *(q.d_mol), match)) {
+    for (const auto &pr : match) {
+      res.push_back(pr.second);
+    }
+  }
+  return res;
+}
+
+std::string get_smiles(const std::string &input) {
+  std::unique_ptr<ROMol> mol(mol_from_input(input));
+  if (!mol) return "";
+  return smiles_(*mol);
+}
+std::string get_svg(const std::string &input) {
+  std::unique_ptr<ROMol> mol(mol_from_input(input));
+  if (!mol) return "";
+  return svg_(*mol);
+}
 
 std::string get_inchi(const std::string &input) {
-  std::unique_ptr<ROMol> mol = mol_from_input(input);
+  std::unique_ptr<ROMol> mol(mol_from_input(input));
   if (!mol) return "";
-  ExtraInchiReturnValues rv;
-  return MolToInchi(*mol, rv);
+  return inchi_(*mol);
 }
 
 std::string get_inchikey_for_inchi(const std::string &input) {
   return InchiToInchiKey(input);
 }
 
-std::string get_pkl(const std::string &input) {
-  std::unique_ptr<ROMol> mol = mol_from_input(input);
-  if (!mol) return "";
-  std::string res;
-  MolPickler::pickleMol(*mol, res);
-  return res;
+JSMol *get_mol(const std::string &input) {
+  ROMol *mol = mol_from_input(input);
+  return new JSMol(mol);
+}
+
+JSMol *get_qmol(const std::string &input) {
+  ROMol *mol = qmol_from_input(input);
+  return new JSMol(mol);
 }
 
 std::string version() { return std::string(rdkitVersion); }

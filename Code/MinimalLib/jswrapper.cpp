@@ -13,12 +13,21 @@
 
 using namespace emscripten;
 EMSCRIPTEN_BINDINGS(RDKit_minimal) {
+  register_vector<unsigned int>("VectorUInt");
+
+  class_<JSMol>("Mol")
+      .function("get_smiles", &JSMol::get_smiles)
+      .function("get_molblock", &JSMol::get_molblock)
+      .function("get_inchi", &JSMol::get_inchi)
+      .function("get_svg", &JSMol::get_svg)
+      .function("get_substruct_match", &JSMol::get_substruct_match);
+
   function("ping", &ping);
   function("version", &version);
   function("get_smiles", &get_smiles);
   function("get_inchi", &get_inchi);
   function("get_inchikey_for_inchi", &get_inchikey_for_inchi);
   function("get_svg", &get_svg);
-
-  // function("get_pkl", &get_pkl);
+  function("get_mol", &get_mol, allow_raw_pointers());
+  function("get_qmol", &get_qmol, allow_raw_pointers());
 }
