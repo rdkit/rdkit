@@ -1391,6 +1391,55 @@ void testCustomPickler() {
       roundTripped->getAtomWithIdx(0)->getProp<ExplicitBitVect>("bv").getBit(101) == false);
 }
 
+
+void testGithub2441() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog)
+      << "Testing Github2441: Add RDProps interface to Conformers." << std::endl;
+
+  auto m1 = "CC"_smiles;
+  TEST_ASSERT(m1);
+
+  auto *conf = new Conformer(2);
+  conf->setId(23);
+  conf->setProp("foo",1);
+  m1->addConformer(conf);
+  conf = new Conformer(2);
+  conf->setId(12);
+  conf->setProp("foo",2);
+  conf->setProp("bar",23);
+  m1->addConformer(conf);
+
+  std::string pickle;
+  MolPickler::pickleMol(*m1, pickle);
+  {
+    std::unique_ptr<ROMol> m2(new ROMol());
+    MolPickler::molFromPickle(pickle, *m2);
+    TEST_ASSERT(m2->getConformer().getId() == 23);
+    TEST_ASSERT(m2->getConformer(12).getId() == 12);
+    TEST_ASSERT(!m2->getConformer().hasProp("foo"));
+  }
+
+  unsigned int pparms = PicklerOps::AllProps;
+  
+  MolPickler::pickleMol(*m1, pickle, pparms);
+  {
+    std::unique_ptr<ROMol> m2(new ROMol());
+    MolPickler::molFromPickle(pickle, *m2);
+    TEST_ASSERT(m2->getConformer().getId() == 23);
+    TEST_ASSERT(m2->getConformer(12).getId() == 12);
+    TEST_ASSERT(m2->getConformer().hasProp("foo"));
+    TEST_ASSERT(m2->getConformer().getProp<int>("foo")==1);
+    TEST_ASSERT(m2->getConformer(12).getProp<int>("foo")==2);
+    TEST_ASSERT(!m2->getConformer().hasProp("bar"));
+    TEST_ASSERT(m2->getConformer(12).getProp<int>("bar")==23);
+    
+  }
+
+  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+}
+
+
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
   bool doLong = false;
@@ -1413,7 +1462,6 @@ int main(int argc, char *argv[]) {
   testQueries();
   testRadicals();
   testPickleProps();
-#endif
   testIssue2788233();
   testIssue3202580();
   testIssue3316407();
@@ -1428,4 +1476,6 @@ int main(int argc, char *argv[]) {
   testGithub1999();
   testEnhancedStereoChemistry();
   testCustomPickler();
+#endif
+  testGithub2441();
 }
