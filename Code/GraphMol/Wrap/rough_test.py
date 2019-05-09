@@ -5201,6 +5201,23 @@ M  END
     res = m.GetSubstructMatches(sma)
     self.assertEqual(res, ((0,),(1,)))
         
+  def testGithub2441(self):
+    m = Chem.MolFromSmiles("CC")
+    conf = Chem.Conformer(2)
+    m.AddConformer(conf,assignId=False)
+    m.GetConformer().SetIntProp("foo",1)
+    m.GetConformer().SetProp("bar","foo")
+    self.assertTrue(m.GetConformer().HasProp("foo"))
+    self.assertFalse(m.GetConformer().HasProp("food"))
+    d = m.GetConformer().GetPropsAsDict()
+    self.assertTrue('foo' in d)
+    self.assertTrue('bar' in d)
+    self.assertEqual(d['bar'],'foo')
+    self.assertEqual(m.GetConformer().GetProp("bar"),"foo")
+    self.assertEqual(m.GetConformer().GetIntProp("foo"),1)
+
+    
+
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()
