@@ -14,5 +14,11 @@
 using namespace emscripten;
 EMSCRIPTEN_BINDINGS(RDKit_minimal) {
   function("ping", &ping);
-  function("canon_smiles", &canon_smiles);
+  function("version", &version);
+  function("get_smiles", &get_smiles);
+  function("get_inchi", &get_inchi);
+  function("get_inchikey_for_inchi", &get_inchikey_for_inchi);
+  function("get_svg", &get_svg);
+
+  // function("get_pkl", &get_pkl);
 }

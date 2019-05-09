@@ -10,5 +10,10 @@
 //
 #include <string>
 
-std::string canon_smiles(const std::string &input);
+std::string get_smiles(const std::string &input);
+std::string get_inchi(const std::string &input);
+std::string get_inchikey_for_inchi(const std::string &input);
+std::string get_svg(const std::string &input);
+std::string get_pkl(const std::string &input);
+std::string version();
 int ping();
