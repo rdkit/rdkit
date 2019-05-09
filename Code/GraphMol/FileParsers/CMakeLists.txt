@@ -2,6 +2,7 @@
 remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
 add_definitions(-DRDKIT_FILEPARSERS_BUILD)
 
+if(RDK_USE_BOOST_IOSTREAMS)
 if(WIN32)
   find_package(Boost 1.56.0 COMPONENTS system iostreams REQUIRED)
   find_package(Boost 1.56.0 COMPONENTS zlib)
@@ -16,6 +17,8 @@ else()
      add_definitions("-DBOOST_IOSTREAMS_DYN_LINK")
   endif()
 endif()
+ADD_DEFINITIONS("-DRDK_USE_BOOST_IOSTREAMS")
+endif(RDK_USE_BOOST_IOSTREAMS)
 
 if(RDK_BUILD_COORDGEN_SUPPORT)
     include_directories(${maeparser_INCLUDE_DIRS})
