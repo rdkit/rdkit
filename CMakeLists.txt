@@ -54,6 +54,7 @@ option(RDK_BUILD_MOLINTERCHANGE_SUPPORT "build in support for CommonChem molecul
 option(RDK_BUILD_YAEHMOP_SUPPORT "build support for the YAeHMOP wrapper" OFF)
 option(RDK_INSTALL_DEV_COMPONENT "install libraries and headers" ON)
 option(RDK_USE_BOOST_REGEX "use boost::regex instead of std::regex (needed for systems with g++-4.8)" OFF)
+option(RDK_USE_BOOST_IOSTREAMS "use boost::iostreams" ON)
 if(NOT MSVC)
   if(RDK_OPTIMIZE_NATIVE)
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mpopcnt")
