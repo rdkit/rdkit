@@ -1,4 +1,5 @@
 if(RDK_USE_BOOST_IOSTREAMS)
+ADD_DEFINITIONS("-DRDK_USE_BOOST_IOSTREAMS")
 
 find_package(Boost 1.56.0 COMPONENTS system iostreams REQUIRED)
 set (link_iostreams ${Boost_LIBRARIES})

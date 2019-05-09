@@ -38,6 +38,7 @@ endforeach()
 set(swigRDKitLibs "${swigRDKitLibs}${Boost_SERIALIZATION_LIBRARY};")
 
 if(RDK_USE_BOOST_IOSTREAMS)
+ADD_DEFINITIONS("-DRDK_USE_BOOST_IOSTREAMS")
 if(WIN32)
   find_package(Boost 1.56.0 COMPONENTS system iostreams REQUIRED)  
   set(swigRDKitLibs "${swigRDKitLibs}${Boost_IOSTREAMS_LIBRARY};${Boost_SYSTEM_LIBRARY};")
