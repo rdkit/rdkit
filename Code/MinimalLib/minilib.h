@@ -29,10 +29,7 @@ class JSMol {
   std::unique_ptr<RDKit::ROMol> d_mol;
 };
 
-std::string get_smiles(const std::string &input);
-std::string get_inchi(const std::string &input);
 std::string get_inchikey_for_inchi(const std::string &input);
-std::string get_svg(const std::string &input);
 JSMol *get_mol(const std::string &input);
 JSMol *get_qmol(const std::string &input);
 std::string version();

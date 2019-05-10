@@ -26,10 +26,7 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("get_descriptors", &JSMol::get_descriptors);
 
   function("version", &version);
-  function("get_smiles", &get_smiles);
-  function("get_inchi", &get_inchi);
   function("get_inchikey_for_inchi", &get_inchikey_for_inchi);
-  function("get_svg", &get_svg);
   function("get_mol", &get_mol, allow_raw_pointers());
   function("get_qmol", &get_qmol, allow_raw_pointers());
 }
