@@ -30,7 +30,10 @@
       ob.outerHTML = "<div id='can_smiles'>" + mol.get_smiles() + "</div>";
       var descrs = JSON.parse(mol.get_descriptors());
       var db = document.getElementById("descrs");
-      db.outerHTML = "<div id='descrs'>" + descrs.amw + "</div>";
+      db.outerHTML = "<div id='descrs'>" +
+        "<b>AMW:</b> " + descrs.amw +
+        "<br /><b>MolLogP:</b> " + descrs.CrippenClogP +
+        "</div>";
     }
     mol.delete();
   }
