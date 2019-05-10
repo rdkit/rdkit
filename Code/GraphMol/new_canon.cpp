@@ -64,12 +64,9 @@ void compareRingAtomsConcerningNumNeighbors(Canon::canon_atom *atoms,
                                             unsigned int nAtoms,
                                             const ROMol &mol) {
   RingInfo *ringInfo = mol.getRingInfo();
-  if (!ringInfo->isInitialized()) {
-    ringInfo->initialize();
-  }
   for (unsigned idx = 0; idx < nAtoms; ++idx) {
     const Canon::canon_atom &a = atoms[idx];
-    if (ringInfo->numAtomRings(a.atom->getIdx()) < 1) {
+    if (!ringInfo->isInitialized() || ringInfo->numAtomRings(a.atom->getIdx()) < 1) {
       continue;
     }
     std::deque<int> neighbors;
@@ -94,7 +91,7 @@ void compareRingAtomsConcerningNumNeighbors(Canon::canon_atom *atoms,
         int nidx = neighbors.front();
         neighbors.pop_front();
         const Canon::canon_atom &atom = atoms[nidx];
-        if (ringInfo->numAtomRings(atom.atom->getIdx()) < 1) {
+        if (!ringInfo->isInitialized() || ringInfo->numAtomRings(atom.atom->getIdx()) < 1) {
           continue;
         }
         lastLevelNbrs[nidx] = 1;
@@ -234,16 +231,13 @@ void rankWithFunctor(T &ftor, bool breakTies, int *order,
   unsigned ringAtoms = 0;
   bool branchingRingAtom = false;
   RingInfo *ringInfo = mol.getRingInfo();
-  if (!ringInfo->isInitialized()) {
-    ringInfo->initialize();
-  }
   for (unsigned i = 0; i < nAts; ++i) {
-    if (ringInfo->numAtomRings(order[i])) {
+    if (ringInfo->isInitialized() && ringInfo->numAtomRings(order[i])) {
       if (count[order[i]] > 2) {
         symRingAtoms += count[order[i]];
       }
       ringAtoms++;
-      if (ringInfo->numAtomRings(order[i]) > 1 && count[order[i]] > 1) {
+      if (ringInfo->isInitialized() && ringInfo->numAtomRings(order[i]) > 1 && count[order[i]] > 1) {
         branchingRingAtom = true;
       }
     }

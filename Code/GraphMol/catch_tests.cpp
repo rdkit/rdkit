@@ -3,6 +3,7 @@
 #include "catch.hpp"
 
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/new_canon.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/FileParsers/FileParsers.h>
@@ -11,7 +12,7 @@
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 
 using namespace RDKit;
-
+#if 1
 TEST_CASE("SMILES Parsing works", "[molops]") {
   std::unique_ptr<RWMol> mol(SmilesToMol("C1CC1"));
   REQUIRE(mol);
@@ -255,6 +256,69 @@ TEST_CASE("github #908: AddHs() using 3D coordinates with 2D conformations",
   }
 }
 
+#endif
+TEST_CASE("github #2437: Canon::rankMolAtoms results in crossed double bonds in rings",
+          "[bug, molops]") {
+  SECTION("underlying problem") {
+    std::string molb=R"CTAB(testmol
+  Mrv1824 05081910082D          
+
+  4  4  0  0  0  0            999 V2000
+    6.9312   -8.6277    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.9312   -9.4527    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.7562   -8.6277    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.7562   -9.4527    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  1  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  2  4  2  0  0  0  0
+M  END
+    )CTAB";
+    bool sanitize=false;
+    bool removeHs=false;
+    std::unique_ptr<RWMol> mol(MolBlockToMol(molb,sanitize,removeHs));
+    REQUIRE(mol);
+    mol->updatePropertyCache();
+    CHECK(mol->getBondWithIdx(3)->getBondType()==Bond::BondType::DOUBLE);
+    CHECK(mol->getBondWithIdx(3)->getBondDir()==Bond::BondDir::NONE);
+    std::vector<unsigned int> ranks;
+    CHECK(!mol->getRingInfo()->isInitialized());
+    Canon::rankMolAtoms(*mol,ranks);
+    CHECK(!mol->getRingInfo()->isInitialized());
+  }
+
+  SECTION("as discovered") {
+      std::string molb = R"CTAB(testmol
+  Mrv1824 05081910082D          
+
+  4  4  0  0  0  0            999 V2000
+    6.9312   -8.6277    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.9312   -9.4527    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.7562   -8.6277    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.7562   -9.4527    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  1  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  2  4  2  0  0  0  0
+M  END
+    )CTAB";
+      bool sanitize = false;
+      bool removeHs = false;
+      std::unique_ptr<RWMol> mol(MolBlockToMol(molb, sanitize, removeHs));
+      REQUIRE(mol);
+      mol->updatePropertyCache();
+      CHECK(mol->getBondWithIdx(3)->getBondType() == Bond::BondType::DOUBLE);
+      CHECK(mol->getBondWithIdx(3)->getBondDir() == Bond::BondDir::NONE);
+      auto nmb = MolToMolBlock(*mol);
+      CHECK(nmb.find("2  4  2  3") == std::string::npos);
+      CHECK(nmb.find("2  4  2  0") != std::string::npos);
+      std::vector<unsigned int> ranks;
+      Canon::rankMolAtoms(*mol, ranks);
+      nmb = MolToMolBlock(*mol);
+      CHECK(nmb.find("2  4  2  3") == std::string::npos);
+      CHECK(nmb.find("2  4  2  0") != std::string::npos);
+  }
+}
 TEST_CASE(
     "github #2423: Incorrect assignment of explicit Hs to Al+3 read from mol "
     "block",
