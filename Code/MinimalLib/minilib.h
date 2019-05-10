@@ -19,7 +19,11 @@ class JSMol {
   std::string get_molblock() const;
   std::string get_inchi() const;
   std::string get_svg() const;
+  std::string get_svg_with_highlights(
+      const std::vector<unsigned int> atomIds) const;
   std::vector<unsigned int> get_substruct_match(const JSMol &q) const;
+  std::string get_descriptors() const;
+  bool is_valid() const { return d_mol.get() != nullptr; };
 
  private:
   std::unique_ptr<RDKit::ROMol> d_mol;
@@ -32,4 +36,3 @@ std::string get_svg(const std::string &input);
 JSMol *get_mol(const std::string &input);
 JSMol *get_qmol(const std::string &input);
 std::string version();
-int ping();

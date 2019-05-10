@@ -22,7 +22,15 @@
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/Descriptors/Property.h>
+
 #include <INCHI-API/inchi.h>
+
+#include <rapidjson/document.h>
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
+
+namespace rj = rapidjson;
 
 using namespace RDKit;
 
@@ -66,10 +74,20 @@ std::string inchi_(const ROMol &m) {
   ExtraInchiReturnValues rv;
   return MolToInchi(m, rv);
 }
-std::string svg_(const ROMol &m) {
+std::string svg_(const ROMol &m,
+                 const std::vector<unsigned int> *atomIds = nullptr) {
   MolDraw2DSVG drawer(250, 200);
-  MolDraw2DUtils::prepareAndDrawMolecule(drawer, m);
+  std::vector<int> *highlight_atoms = nullptr;
+  if (atomIds) {
+    highlight_atoms = new std::vector<int>;
+    highlight_atoms->reserve(atomIds->size());
+    for (auto ai : *atomIds) {
+      highlight_atoms->push_back(ai);
+    }
+  }
+  MolDraw2DUtils::prepareAndDrawMolecule(drawer, m, "", highlight_atoms);
   drawer.finishDrawing();
+  delete highlight_atoms;
 
   return drawer.getDrawingText();
 }
@@ -82,6 +100,11 @@ std::string JSMol::get_smiles() const {
 std::string JSMol::get_svg() const {
   if (!d_mol) return "";
   return svg_(*d_mol);
+}
+std::string JSMol::get_svg_with_highlights(
+    const std::vector<unsigned int> atomIds) const {
+  if (!d_mol) return "";
+  return svg_(*d_mol, &atomIds);
 }
 std::string JSMol::get_inchi() const {
   if (!d_mol) return "";
@@ -100,6 +123,26 @@ std::vector<unsigned int> JSMol::get_substruct_match(const JSMol &q) const {
     }
   }
   return res;
+}
+std::string JSMol::get_descriptors() const {
+  if (!d_mol) return "{}";
+  rj::Document doc;
+  doc.SetObject();
+
+  Descriptors::Properties props;
+  std::vector<std::string> dns = props.getPropertyNames();
+  std::vector<double> dvs = props.computeProperties(*d_mol);
+  for (size_t i = 0; i < dns.size(); ++i) {
+    rj::Value v(dvs[i]);
+    const auto srt = rj::StringRef(dns[i].c_str());
+    doc.AddMember(srt, v, doc.GetAllocator());
+  }
+
+  rj::StringBuffer buffer;
+  rj::Writer<rj::StringBuffer> writer(buffer);
+  writer.SetMaxDecimalPlaces(5);
+  doc.Accept(writer);
+  return buffer.GetString();
 }
 
 std::string get_smiles(const std::string &input) {
@@ -134,8 +177,3 @@ JSMol *get_qmol(const std::string &input) {
 }
 
 std::string version() { return std::string(rdkitVersion); }
-
-int ping() {
-  std::cerr << "alive" << std::endl;
-  return 1;
-}

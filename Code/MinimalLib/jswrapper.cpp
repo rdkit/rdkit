@@ -16,13 +16,15 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
   register_vector<unsigned int>("VectorUInt");
 
   class_<JSMol>("Mol")
+      .function("is_valid", &JSMol::is_valid)
       .function("get_smiles", &JSMol::get_smiles)
       .function("get_molblock", &JSMol::get_molblock)
       .function("get_inchi", &JSMol::get_inchi)
       .function("get_svg", &JSMol::get_svg)
-      .function("get_substruct_match", &JSMol::get_substruct_match);
+      .function("get_svg_with_highlights", &JSMol::get_svg_with_highlights)
+      .function("get_substruct_match", &JSMol::get_substruct_match)
+      .function("get_descriptors", &JSMol::get_descriptors);
 
-  function("ping", &ping);
   function("version", &version);
   function("get_smiles", &get_smiles);
   function("get_inchi", &get_inchi);
