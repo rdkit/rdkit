@@ -23,7 +23,12 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("get_svg", &JSMol::get_svg)
       .function("get_svg_with_highlights", &JSMol::get_svg_with_highlights)
       .function("get_substruct_match", &JSMol::get_substruct_match)
-      .function("get_descriptors", &JSMol::get_descriptors);
+      .function("get_descriptors", &JSMol::get_descriptors)
+      .function("get_morgan_fp",
+                select_overload<std::string() const>(&JSMol::get_morgan_fp))
+      .function("get_morgan_fp",
+                select_overload<std::string(unsigned int, unsigned int) const>(
+                    &JSMol::get_morgan_fp));
 
   function("version", &version);
   function("get_inchikey_for_inchi", &get_inchikey_for_inchi);

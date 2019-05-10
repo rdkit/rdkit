@@ -24,6 +24,8 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/Descriptors/Property.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
+#include <GraphMol/Fingerprints/MorganFingerprints.h>
+#include <DataStructs/BitOps.h>
 
 #include <INCHI-API/inchi.h>
 
@@ -144,6 +146,15 @@ std::string JSMol::get_descriptors() const {
   writer.SetMaxDecimalPlaces(5);
   doc.Accept(writer);
   return buffer.GetString();
+}
+
+std::string JSMol::get_morgan_fp(unsigned int radius,
+                                 unsigned int fplen) const {
+  if (!d_mol) return "";
+  auto fp = MorganFingerprints::getFingerprintAsBitVect(*d_mol, radius, fplen);
+  std::string res = BitVectToText(*fp);
+  delete fp;
+  return res;
 }
 
 std::string get_inchikey_for_inchi(const std::string &input) {
