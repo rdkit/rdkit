@@ -23,6 +23,7 @@
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/Descriptors/Property.h>
+#include <GraphMol/Descriptors/MolDescriptors.h>
 
 #include <INCHI-API/inchi.h>
 
@@ -136,6 +137,11 @@ std::string JSMol::get_descriptors() const {
     rj::Value v(dvs[i]);
     const auto srt = rj::StringRef(dns[i].c_str());
     doc.AddMember(srt, v, doc.GetAllocator());
+  }
+
+  if (std::find(dns.begin(), dns.end(), std::string("amw")) == dns.end()) {
+    rj::Value v(Descriptors::calcAMW(*d_mol));
+    doc.AddMember("amw", v, doc.GetAllocator());
   }
 
   rj::StringBuffer buffer;
