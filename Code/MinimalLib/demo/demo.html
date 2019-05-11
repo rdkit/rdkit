@@ -33,6 +33,7 @@
       db.outerHTML = "<div id='descrs'>" +
         "<b>AMW:</b> " + descrs.amw +
         "<br /><b>MolLogP:</b> " + descrs.CrippenClogP +
+        "<br /><b>MFP2:</b> " + mol.get_morgan_fp(2, 128) +
         "</div>";
     }
     mol.delete();
