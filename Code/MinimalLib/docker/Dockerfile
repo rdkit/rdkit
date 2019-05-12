@@ -1,0 +1,64 @@
+FROM debian:buster
+MAINTAINER Greg Landrum <greg.landrum@t5informatics.com>
+
+RUN apt-get update && apt-get upgrade -y && apt install -y \
+  curl \
+  wget \
+  cmake \
+  python \
+  g++ \
+  libeigen3-dev \
+  git \
+  nodejs
+
+ENV LANG C
+
+WORKDIR /opt
+RUN wget -q https://dl.bintray.com/boostorg/release/1.67.0/source/boost_1_67_0.tar.gz && \
+  tar xzf boost_1_67_0.tar.gz 
+WORKDIR /opt/boost_1_67_0
+RUN ./bootstrap.sh --prefix=/opt/boost --with-libraries=system && \
+  ./b2 install
+
+
+WORKDIR /opt
+RUN git clone https://github.com/emscripten-core/emsdk.git
+
+WORKDIR /opt/emsdk
+RUN ./emsdk update-tags && \
+  ./emsdk install latest && \
+  ./emsdk activate latest
+
+#RUN source ./emsdk_env.sh
+
+RUN mkdir /src
+WORKDIR /src
+ENV RDBASE=/src/rdkit
+ARG RDKIT_BRANCH
+RUN git clone https://github.com/greglandrum/rdkit.git
+WORKDIR $RDBASE
+RUN git checkout $RDKIT_BRANCH
+
+RUN mkdir build
+WORKDIR build
+
+RUN echo "source /opt/emsdk/emsdk_env.sh" >> ~/.bashrc
+SHELL ["/bin/bash", "-c", "-l"]
+RUN emconfigure cmake -DBoost_INCLUDE_DIR=/opt/boost/include -DRDK_BUILD_MINIMAL_LIB=ON \
+  -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_BUILD_CPP_TESTS=OFF -DRDK_BUILD_INCHI_SUPPORT=ON \
+  -DRDK_USE_BOOST_SERIALIZATION=OFF -DRDK_OPTIMIZE_NATIVE=OFF -DRDK_BUILD_THREADSAFE_SSS=OFF \
+  -DRDK_BUILD_DESCRIPTORS3D=OFF -DRDK_TEST_MULTITHREADED=OFF -DRDK_BUILD_COORDGEN_SUPPORT=OFF \
+  -DRDK_BUILD_SLN_SUPPORT=OFF -DRDK_USE_BOOST_IOSTREAMS=OFF -DCMAKE_CXX_FLAGS="-s DISABLE_EXCEPTION_CATCHING=0" \
+  -DCMAKE_C_FLAGS="-DCOMPILE_ANSI_ONLY"  ..
+
+# "patch" to make the InChI code work with emscripten:
+RUN cp /src/rdkit/External/INCHI-API/src/INCHI_BASE/src/util.c /src/rdkit/External/INCHI-API/src/INCHI_BASE/src/util.c.bak && \
+  sed 's/&& defined(__APPLE__)//' /src/rdkit/External/INCHI-API/src/INCHI_BASE/src/util.c.bak > /src/rdkit/External/INCHI-API/src/INCHI_BASE/src/util.c
+
+# build and "install"
+RUN make -j2 RDKit_minimal && \
+  cp Code/MinimalLib/RDKit_minimal.* ../Code/MinimalLib/demo/
+
+# run the tests
+WORKDIR /src/rdkit/Code/MinimalLib/tests
+RUN nodejs tests.js
