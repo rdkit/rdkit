@@ -32,8 +32,7 @@ namespace RDKit {
 
 namespace {
 
-// This is a macro to allow its use for C++ constants
-#define BCNAM(A, B, C) (((A) << 16) | ((B) << 8) | (C))
+constexpr int BCNAM(char A, char B, char C) { return (A << 16) | (B << 8) | C; }
 
 Atom *PDBAtomFromSymbol(const char *symb) {
   PRECONDITION(symb, "bad char ptr");

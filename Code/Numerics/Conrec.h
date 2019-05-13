@@ -43,9 +43,6 @@ inline void Contour(const double *d, size_t ilb, size_t iub, size_t jlb,
   PRECONDITION(iub > ilb, "bad bounds");
   PRECONDITION(jub > jlb, "bad bounds");
 
-#define xsect(p1, p2) (h[p2] * xh[p1] - h[p1] * xh[p2]) / (h[p2] - h[p1])
-#define ysect(p1, p2) (h[p2] * yh[p1] - h[p1] * yh[p2]) / (h[p2] - h[p1])
-
   int m1, m2, m3, case_value;
   double dmin, dmax, x1 = 0, x2 = 0, y1 = 0, y2 = 0;
   int i, j, m;
@@ -59,6 +56,13 @@ inline void Contour(const double *d, size_t ilb, size_t iub, size_t jlb,
                          {{9, 6, 7}, {5, 2, 0}, {8, 0, 0}}};
   double temp1, temp2;
   size_t ny = jub - jlb + 1;
+
+  auto xsect = [&](int p1, int p2) {
+    return (h[p2] * xh[p1] - h[p1] * xh[p2]) / (h[p2] - h[p1]);
+  };
+  auto ysect = [&](int p1, int p2) {
+    return (h[p2] * yh[p1] - h[p1] * yh[p2]) / (h[p2] - h[p1]);
+  };
 
   for (j = (jub - 1); j >= (int)jlb; j--) {
     for (i = ilb; i <= (int)iub - 1; i++) {
