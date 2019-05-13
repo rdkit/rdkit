@@ -210,6 +210,8 @@ latex_documents = [('index', 'RDKit.tex', u'RDKit Documentation', u'Greg Landrum
 # If false, no module index is generated.
 #latex_domain_indices = True
 
+autoclass_content = "both"
+
 # -- Options for manual page output --------------------------------------------
 
 # One entry per manual page. List of tuples
