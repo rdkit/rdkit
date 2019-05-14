@@ -56,10 +56,34 @@ const std::string RLABEL = "tempRlabel";
 const std::string SIDECHAIN_RLABELS = "sideChainRlabels";
 const std::string done = "RLABEL_PROCESSED";
 
+// Various places where rgroups can be labeled
+//  the order of precedence
+const std::string RGROUP_LABELS = "RGroupLabels";
+const std::string ISOTOPE_LABELS = "IsotopeLabels";
+const std::string ATOMMAP_LABELS = "AtomMapLabels";
+const std::string INDEX_LABELS = "IndexLabels";
+
+
+  /*
+void clearInputLabel(Atom *atom, unsigned int labels) {
+  atom->setIsotope(0);
+  atom->setAtomMapNum(0);
+  if (atom->hasProp(common_properties::_MolFileRLabel)) {
+    atom->clearProp(common_properties::_MolFileRLabel);
+  }
+  
+}
+  */
 bool setLabel(Atom *atom, int label, std::set<int> &labels, int &maxLabel,
               bool relabel, const std::string &type) {
-  if (type == "IsotopeLabels") {
+  if (type == ISOTOPE_LABELS) {
     atom->setIsotope(0);
+  } else if (type == ATOMMAP_LABELS) {
+    atom->setAtomMapNum(0);
+  } else if (type == RGROUP_LABELS) {
+    if (atom->hasProp(common_properties::_MolFileRLabel)) {
+      atom->clearProp(common_properties::_MolFileRLabel);
+    }
   }
 
   if (label) {
@@ -141,21 +165,30 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
 
     if (atom->hasProp(RLABEL)) found = true;
 
+    if (!found && (labels & MolFileGroupLabels)) {
+      int rgroup;
+      if (atom->getPropIfPresent(rgroup, common_properties::_MolFileRLabel)) {
+	if (setLabel(atom, rgroup, foundLabels, maxLabel,
+		     relabel, RGROUP_LABELS))
+	  found = true;
+      }	
+    }
+    
     if (!found && (labels & IsotopeLabels)) {
       if (setLabel(atom, rdcast<int>(atom->getIsotope()), foundLabels, maxLabel,
-                   relabel, "IsotopeLabels"))
+                   relabel, ISOTOPE_LABELS))
         found = true;
     }
 
     if (!found && (labels & AtomMapLabels)) {
       if (setLabel(atom, rdcast<int>(atom->getAtomMapNum()), foundLabels,
-                   maxLabel, relabel, "AtomMapLabels"))
+                   maxLabel, relabel, ATOMMAP_LABELS))
         found = true;
     }
 
     if (!found && (labels & AtomIndexLabels)) {
       if (setLabel(atom, indexOffset - atom->getIdx(), foundLabels, maxLabel,
-                   relabel, "IndexLabels"))
+                   relabel, INDEX_LABELS))
         nextOffset++;
       found = true;
     }
@@ -635,7 +668,7 @@ struct RGroupDecompData {
       if (atm == atoms.end()) continue;  // label not used in the rgroup
       Atom *atom = atm->second;
 
-      for (size_t i = 0; i < extraAtomRLabel.second.size(); ++i) {
+     for (size_t i = 0; i < extraAtomRLabel.second.size(); ++i) {
         extraAtomRLabel.second[i] = ++count;
         // Is this necessary?
         PRECONDITION(
