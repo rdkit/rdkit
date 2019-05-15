@@ -682,7 +682,8 @@ void MolDraw2D::drawMolecules(
       continue;
     }
     tmols.push_back(*(mols[i]));
-    MolDraw2DUtils::prepareMolForDrawing(tmols[i]);
+    if (drawOptions().prepareMolsBeforeDrawing)
+      MolDraw2DUtils::prepareMolForDrawing(tmols[i]);
     Conformer &conf = tmols[i].getConformer(confIds ? (*confIds)[i] : -1);
     RDGeom::Point3D centroid = MolTransforms::computeCentroid(conf, false);
     for (unsigned int j = 0; j < conf.getNumAtoms(); ++j) {

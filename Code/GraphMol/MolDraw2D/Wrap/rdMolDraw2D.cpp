@@ -410,6 +410,10 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def_readwrite(
           "bondLineWidth", &RDKit::MolDrawOptions::bondLineWidth,
           "if positive, this overrides the default line width for bonds")
+      .def_readwrite("prepareMolsBeforeDrawing",
+                     &RDKit::MolDrawOptions::prepareMolsBeforeDrawing,
+                     "call prepareMolForDrawing() on each molecule passed to "
+                     "DrawMolecules()")
       .def_readwrite("additionalAtomLabelPadding",
                      &RDKit::MolDrawOptions::additionalAtomLabelPadding,
                      "additional padding to leave around atom labels. "
