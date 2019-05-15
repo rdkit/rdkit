@@ -30,7 +30,9 @@ typedef enum {
   AtomMapLabels = 0x02,
   AtomIndexLabels = 0x04,
   RelabelDuplicateLabels = 0x08,
-  AutoDetect = 0x0F,
+  MDLRGroupLabels = 0x10,
+  DummyAtomLabels = 0x11,  // These are rgroups but will get relabelled
+  AutoDetect = 0xFF,
 } RGroupLabels;
 
 typedef enum {
@@ -78,6 +80,11 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
         removeAllHydrogenRGroups(removeHydrogenOnlyGroups),
         removeHydrogensPostMatch(removeHydrogensPostMatch),
         indexOffset(-1) {}
+
+  // Determine how to assign the rroup labels from the given core 
+  unsigned int autoGetLabels(const RWMol &);
+
+  // Prepare the core for substructure searching and rgroup assignment
   bool prepareCore(RWMol &, const RWMol *alignCore);
 
  private:
@@ -116,19 +123,17 @@ class RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecomposition {
   RGroupColumns getRGroupsAsColumns() const;
 };
 
-RDKIT_RGROUPDECOMPOSITION_EXPORT unsigned int RGroupDecompose(const std::vector<ROMOL_SPTR> &cores,
-                             const std::vector<ROMOL_SPTR> &mols,
-                             RGroupRows &rows,
-                             std::vector<unsigned int> *unmatched = 0,
-                             const RGroupDecompositionParameters &options =
-                                 RGroupDecompositionParameters());
+RDKIT_RGROUPDECOMPOSITION_EXPORT unsigned int RGroupDecompose(
+    const std::vector<ROMOL_SPTR> &cores, const std::vector<ROMOL_SPTR> &mols,
+    RGroupRows &rows, std::vector<unsigned int> *unmatched = 0,
+    const RGroupDecompositionParameters &options =
+        RGroupDecompositionParameters());
 
-RDKIT_RGROUPDECOMPOSITION_EXPORT unsigned int RGroupDecompose(const std::vector<ROMOL_SPTR> &cores,
-                             const std::vector<ROMOL_SPTR> &mols,
-                             RGroupColumns &columns,
-                             std::vector<unsigned int> *unmatched = 0,
-                             const RGroupDecompositionParameters &options =
-                                 RGroupDecompositionParameters());
-}
+RDKIT_RGROUPDECOMPOSITION_EXPORT unsigned int RGroupDecompose(
+    const std::vector<ROMOL_SPTR> &cores, const std::vector<ROMOL_SPTR> &mols,
+    RGroupColumns &columns, std::vector<unsigned int> *unmatched = 0,
+    const RGroupDecompositionParameters &options =
+        RGroupDecompositionParameters());
+}  // namespace RDKit
 
 #endif

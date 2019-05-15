@@ -55,7 +55,7 @@ void CHECK_RGROUP(RGroupRows::const_iterator &it, std::string expected,
   }
   std::string result = str.str();
 
-  if (expected != result) {
+  if (1 || expected != result) {
     std::cerr << "Expected: " << expected << std::endl;
     std::cerr << "Got:      " << result << std::endl;
   }
@@ -387,43 +387,112 @@ void testRemoveHs() {
 void testGitHubIssue1705() {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "test preferring grouping non hydrogens over hydrogens if possible" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "test preferring grouping non hydrogens over hydrogens if possible"
+      << std::endl;
+#if 1
+  {
+    RWMol *core = SmilesToMol("Oc1ccccc1");
+    RGroupDecompositionParameters params;
 
-  RWMol *core = SmilesToMol("Oc1ccccc1");
-  RGroupDecompositionParameters params;
-
-  RGroupDecomposition decomp(*core, params);
-  const char *smilesData[5] = {"Oc1ccccc1","Oc1c(F)cccc1","Oc1ccccc1F","Oc1c(F)cc(N)cc1","Oc1ccccc1Cl"};
-  for (int i = 0; i < 5; ++i) {
-    ROMol *mol = SmilesToMol(smilesData[i]);
-    int res = decomp.add(*mol);
-    delete mol;
-    TEST_ASSERT(res == i);
-  }
-
-  decomp.process();
-  std::stringstream ss;
-  RGroupColumns groups = decomp.getRGroupsAsColumns();
-  for (auto &column : groups) {
-    ss << "Rgroup===" << column.first << std::endl;
-    for (auto &rgroup : column.second ) {
-      ss << MolToSmiles(*rgroup) << std::endl;
+    RGroupDecomposition decomp(*core, params);
+    const char *smilesData[5] = {"Oc1ccccc1", "Oc1c(F)cccc1", "Oc1ccccc1F",
+                                 "Oc1c(F)cc(N)cc1", "Oc1ccccc1Cl"};
+    for (int i = 0; i < 5; ++i) {
+      ROMol *mol = SmilesToMol(smilesData[i]);
+      int res = decomp.add(*mol);
+      delete mol;
+      TEST_ASSERT(res == i);
     }
+
+    decomp.process();
+    std::stringstream ss;
+    RGroupColumns groups = decomp.getRGroupsAsColumns();
+    for (auto &column : groups) {
+      ss << "Rgroup===" << column.first << std::endl;
+      for (auto &rgroup : column.second) {
+        ss << MolToSmiles(*rgroup) << std::endl;
+      }
+    }
+    delete core;
+    // std::cerr<<ss.str()<<std::endl;
+
+    TEST_ASSERT(ss.str() == R"RES(Rgroup===Core
+Oc1ccc([*:1])cc1[*:2]
+Oc1ccc([*:1])cc1[*:2]
+Oc1ccc([*:1])cc1[*:2]
+Oc1ccc([*:1])cc1[*:2]
+Oc1ccc([*:1])cc1[*:2]
+Rgroup===R1
+[H][*:1]
+[H][*:1]
+[H][*:1]
+[H]N([H])[*:1]
+[H][*:1]
+Rgroup===R2
+[H][*:2]
+F[*:2]
+F[*:2]
+F[*:2]
+Cl[*:2]
+)RES");
   }
-  delete core;
-  TEST_ASSERT(ss.str() == "Rgroup===Core\nOc1ccc([*:2])cc1[*:1]\nOc1ccc([*:2])cc1[*:1]\nOc1ccc([*:2])cc1[*:1]\nOc1ccc([*:2])cc1[*:1]\nOc1ccc([*:2])cc1[*:1]\nRgroup===R1\n[H][*:1]\nF[*:1]\nF[*:1]\nF[*:1]\nCl[*:1]\nRgroup===R2\n[H][*:2]\n[H][*:2]\n[H][*:2]\n[H]N([H])[*:2]\n[H][*:2]\n");
+#endif
+  // std::cerr<<"n\n\n\n\n\n--------------------------------------------------------------\n\n\n\n\n";
+  {
+    RWMol *core = SmilesToMol("Cc1ccccc1");
+    RGroupDecompositionParameters params;
+
+    RGroupDecomposition decomp(*core, params);
+    std::vector<std::string> smilesData = {"c1ccccc1C", "Fc1ccccc1C",
+                                           "c1cccc(F)c1C", "Fc1cccc(F)c1C"};
+    for (const auto &smi : smilesData) {
+      ROMol *mol = SmilesToMol(smi);
+      decomp.add(*mol);
+      delete mol;
+    }
+
+    decomp.process();
+    std::stringstream ss;
+    RGroupColumns groups = decomp.getRGroupsAsColumns();
+    for (auto &column : groups) {
+      ss << "Rgroup===" << column.first << std::endl;
+      for (auto &rgroup : column.second) {
+        ss << MolToSmiles(*rgroup) << std::endl;
+      }
+    }
+    delete core;
+    // std::cerr<<ss.str()<<std::endl;
+    TEST_ASSERT(ss.str() == R"RES(Rgroup===Core
+Cc1c([*:1])cccc1[*:2]
+Cc1c([*:1])cccc1[*:2]
+Cc1c([*:1])cccc1[*:2]
+Cc1c([*:1])cccc1[*:2]
+Rgroup===R1
+[H][*:1]
+F[*:1]
+F[*:1]
+F[*:1]
+Rgroup===R2
+[H][*:2]
+[H][*:2]
+[H][*:2]
+F[*:2]
+)RES");
+  }
 }
 
 void testMatchOnlyAtRgroupHs() {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "test matching only rgroups but allows Hs" << std::endl;
+  BOOST_LOG(rdInfoLog) << "test matching only rgroups but allows Hs"
+                       << std::endl;
 
   RWMol *core = SmilesToMol("*OCC");
   RGroupDecompositionParameters params;
   params.onlyMatchAtRGroups = true;
   RGroupDecomposition decomp(*core, params);
-  const char *smilesData[2] = {"OCC","COCC"};
+  const char *smilesData[2] = {"OCC", "COCC"};
   for (int i = 0; i < 2; ++i) {
     ROMol *mol = SmilesToMol(smilesData[i]);
     decomp.add(*mol);
@@ -435,14 +504,327 @@ void testMatchOnlyAtRgroupHs() {
   RGroupColumns groups = decomp.getRGroupsAsColumns();
   for (auto &column : groups) {
     ss << "Rgroup===" << column.first << std::endl;
-    for (auto &rgroup : column.second ) {
+    for (auto &rgroup : column.second) {
       ss << MolToSmiles(*rgroup) << std::endl;
     }
   }
   std::cerr << ss.str() << std::endl;
 
   delete core;
-  TEST_ASSERT(ss.str() == "Rgroup===Core\nCCO[*:1]\nCCO[*:1]\nRgroup===R1\n[H][*:1]\n[H]C([H])([H])[*:1]\n");
+  TEST_ASSERT(ss.str() ==
+              "Rgroup===Core\nCCO[*:1]\nCCO[*:1]\nRgroup===R1\n[H][*:1]\n[H]C(["
+              "H])([H])[*:1]\n");
+}
+
+void testGithub2332() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "test github #2332: RGroupDecomposition: addHs() "
+                          "call should set coords "
+                       << std::endl;
+  auto core = "*OCC"_smiles;
+  RGroupDecompositionParameters params;
+  params.onlyMatchAtRGroups = true;
+  RGroupDecomposition decomp(*core, params);
+  std::string chains[2] = {
+      R"CTAB(
+  Mrv1810 03291913362D          
+
+  4  3  0  0  0  0            999 V2000
+    2.0625   -0.7145    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+    1.2375   -0.7145    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8250    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+M  END
+)CTAB",
+      R"CTAB(
+  Mrv1810 03291913362D          
+
+  3  2  0  0  0  0            999 V2000
+    1.2375   -0.7145    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8250    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+M  END
+)CTAB"};
+  for (int i = 0; i < 2; ++i) {
+    ROMol *mol = MolBlockToMol(chains[i]);
+    decomp.add(*mol);
+    delete mol;
+  }
+  decomp.process();
+
+  std::stringstream ss;
+  RGroupColumns groups = decomp.getRGroupsAsColumns();
+  auto &r1 = groups["R1"];
+  TEST_ASSERT(r1.size() == 2);
+  TEST_ASSERT(r1[1]->getAtomWithIdx(0)->getAtomicNum() == 1);
+  auto conf = r1[1]->getConformer();
+  TEST_ASSERT(!feq(conf.getAtomPos(0).x, 0.0));
+  TEST_ASSERT(!feq(conf.getAtomPos(0).y, 0.0));
+  TEST_ASSERT(feq(conf.getAtomPos(0).z, 0.0));
+}
+
+void testSDFGRoupMultiCore() {
+  std::string sdcores = R"CTAB(
+  Mrv1813 05061918272D          
+
+ 13 14  0  0  0  0            999 V2000
+   -1.1505    0.0026    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.1505   -0.8225    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4360   -1.2350    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2784   -0.8225    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2784    0.0026    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4360    0.4151    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9354    0.2575    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4202   -0.4099    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9354   -1.0775    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+    0.9907   -1.2333    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4360    1.2373    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2784    1.6497    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+   -3.2452   -0.4098    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  6  1  1  0  0  0  0
+  1  7  1  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  9  2  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  4 10  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6 11  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8 13  1  0  0  0  0
+  8  9  1  0  0  0  0
+ 11 12  1  0  0  0  0
+M  RGP  3  10   1  12   2  13   3
+M  END
+$$$$
+
+  Mrv1813 05061918272D          
+
+ 13 14  0  0  0  0            999 V2000
+    6.9524    0.1684    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.9524   -0.6567    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.6668   -1.0692    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.3813   -0.6567    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.3813    0.1684    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    7.6668    0.5809    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.1674    0.4233    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+    5.6827   -0.2441    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.1674   -0.9117    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+    9.0935   -1.0675    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+    7.6668    1.4031    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    8.3813    1.8155    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+    4.8576   -0.2440    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  6  1  1  0  0  0  0
+  1  7  1  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  9  2  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  4 10  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6 11  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8 13  1  0  0  0  0
+  8  9  1  0  0  0  0
+ 11 12  1  0  0  0  0
+M  RGP  3  10   1  12   2  13   3
+M  END
+$$$$)CTAB";
+  std::string sdmols = R"CTAB(
+  Mrv1813 05061918322D          
+
+ 15 17  0  0  0  0            999 V2000
+    0.1742    0.6899    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8886    0.2774    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8886   -0.5476    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1742   -0.9601    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1742   -1.7851    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8886   -2.1976    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8886   -3.0226    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1742   -3.4351    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5403   -3.0226    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3249   -3.2775    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.8099   -2.6101    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3249   -1.9426    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5403   -2.1976    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5403   -0.5476    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5403    0.2774    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  1 15  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  4 14  1  0  0  0  0
+  5  6  1  0  0  0  0
+  5 13  1  0  0  0  0
+  6  7  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8  9  1  0  0  0  0
+  9 10  1  0  0  0  0
+  9 13  1  0  0  0  0
+ 10 11  1  0  0  0  0
+ 11 12  1  0  0  0  0
+ 12 13  1  0  0  0  0
+ 14 15  1  0  0  0  0
+M  END
+$$$$
+
+  Mrv1813 05061918322D          
+
+ 14 15  0  0  0  0            999 V2000
+    6.4368    0.3002    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.7223   -0.1123    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    5.7223   -0.9373    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.4368   -1.3498    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    6.4368   -2.1748    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.7223   -2.5873    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    5.0078   -2.1748    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.2232   -2.4297    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0
+    3.7383   -1.7623    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.2232   -1.0949    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.9683   -0.3102    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.1613   -0.1387    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.5203    0.3029    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.0078   -1.3498    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  3 14  1  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  1  0  0  0  0
+  7  8  1  0  0  0  0
+  7 14  1  0  0  0  0
+  8  9  1  0  0  0  0
+  9 10  1  0  0  0  0
+ 10 11  1  0  0  0  0
+ 10 14  1  0  0  0  0
+ 11 13  1  0  0  0  0
+ 11 12  1  0  0  0  0
+M  END
+$$$$
+
+  Mrv1813 05061918322D          
+
+ 14 15  0  0  0  0            999 V2000
+    0.8289   -7.9643    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1144   -8.3768    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1144   -9.2018    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8289   -9.6143    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8289  -10.4393    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1144  -10.8518    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6000  -10.4393    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3847  -10.6942    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.8696  -10.0268    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3847   -9.3593    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6396   -8.5747    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4466   -8.4032    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0876   -7.9616    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6000   -9.6143    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  3 14  1  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  1  0  0  0  0
+  7  8  1  0  0  0  0
+  7 14  1  0  0  0  0
+  8  9  1  0  0  0  0
+  9 10  1  0  0  0  0
+ 10 11  1  0  0  0  0
+ 10 14  1  0  0  0  0
+ 11 13  1  0  0  0  0
+ 11 12  1  0  0  0  0
+M  END
+$$$$
+
+  Mrv1813 05061918322D          
+
+ 12 13  0  0  0  0            999 V2000
+    5.3295   -8.1871    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.5844   -7.4025    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    5.0995   -6.7351    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.5844   -6.0676    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    6.3690   -6.3226    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.0835   -5.9101    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.0835   -5.0851    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    7.7980   -6.3226    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    7.7980   -7.1476    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.5124   -7.5601    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    7.0835   -7.5601    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.3690   -7.1476    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  2 12  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  5 12  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  1  0  0  0  0
+  6  8  1  0  0  0  0
+  8  9  1  0  0  0  0
+  9 10  1  0  0  0  0
+  9 11  1  0  0  0  0
+ 11 12  1  0  0  0  0
+M  END
+$$$$)CTAB";
+
+  RGroupDecompositionParameters params;
+  params.onlyMatchAtRGroups = true;
+  params.removeHydrogensPostMatch = true;
+  std::vector<ROMOL_SPTR>  cores;
+
+  {
+    SDMolSupplier sdsup;
+    sdsup.setData(sdcores);
+    while(!sdsup.atEnd()) {
+      cores.push_back(ROMOL_SPTR(sdsup.next()));
+    }
+  }
+  
+  RGroupDecomposition decomp(cores, params);
+
+  {
+    SDMolSupplier sdsup;
+    sdsup.setData(sdmols);
+    
+	int idx = 0;
+    while(!sdsup.atEnd()) {
+      ROMol *mol = sdsup.next();
+      TEST_ASSERT(mol);
+      int addedIndex = decomp.add(*mol);
+	  if (!addedIndex)
+		  std::cerr << "Could not add index: " << idx << std::endl;
+	  ++idx;
+	  //TEST_ASSERT(addedIndex >= 0);
+      delete mol;
+    }
+  }
+  
+  decomp.process();
+  RGroupRows rows = decomp.getRGroupsAsRows();
+
+  // All Cl's should be labeled with the same rgroup
+  int i = 0;
+  const char * expected[5] = {
+	  "Core:*C1[*:1]C2C(N[*:2])NC([*:5])NC2[*:3]1 R1:CC(C)C([*:1])[*:1] R2:C[*:2] R3:S([*:3])[*:3] R5:[H][*:5]",
+	  "Core:*C1[*:1]C2C(N[*:2])NC([*:5])CC2[*:3]1 R1:CC(C)C([*:1])[*:1] R2:C[*:2] R3:S([*:3])[*:3] R5:[H][*:5]",
+	  "Core:*C1[*:1]C2C(N[*:2])NC([*:5])CC2[*:3]1 R1:N([*:1])[*:1] R2:[H][*:2] R3:CN([*:3])[*:3] R5:O[*:5]"
+  };
+  for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
+       ++it, ++i) {
+	  std::cerr << "*******" << i << std::endl;
+    CHECK_RGROUP(it, expected[i], true);
+  }
 }
 
 int main() {
@@ -456,15 +838,17 @@ int main() {
   testSymmetryMatching();
   testRGroupOnlyMatching();
   testRingMatching();
-  testRingMatching2();
   testRingMatching3();
   testMultiCore();
-#endif
   testGithub1550();
   testRemoveHs();
 
-  testGitHubIssue1705();
   testMatchOnlyAtRgroupHs();
+#endif
+  testRingMatching2();
+  testGitHubIssue1705();
+  testGithub2332();
+  testSDFGRoupMultiCore();
   
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
