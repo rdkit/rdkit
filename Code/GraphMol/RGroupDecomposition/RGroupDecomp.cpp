@@ -64,6 +64,19 @@ const std::string ATOMMAP_LABELS = "AtomMapLabels";
 const std::string INDEX_LABELS = "IndexLabels";
 const std::string DUMMY_LABELS = "DummyLabels";
 
+std::map<int, Atom*> getRlabels(const RWMol &mol) {
+	std::map<int, Atom *> atoms;
+
+	for(auto atom : mol.atoms()) {
+		if (atom->hasProp(RLABEL)) {
+			int rlabel = atom->getProp<int>(RLABEL);  // user label
+			PRECONDITION(atoms.find(rlabel) == atoms.end(),
+				"Duplicate labels in rgroup core!");
+			atoms[rlabel] = atom;
+		}
+	}
+	return atoms;
+}
 
 void clearInputLabels(Atom *atom) {
   //atom->setIsotope(0); Don't want to clear deuterium and things like that if they aren't labels
@@ -138,6 +151,17 @@ unsigned int RGroupDecompositionParameters::autoGetLabels(const RWMol &core) {
 bool RGroupDecompositionParameters::prepareCore(RWMol &core,
                                                 const RWMol *alignCore) {
   const bool relabel = labels & RelabelDuplicateLabels;
+  unsigned int autoLabels = labels;
+  if (labels == AutoDetect) {
+	  autoLabels = autoGetLabels(core);
+	  if (!autoLabels) {
+		  BOOST_LOG(rdWarningLog) <<
+			  "RGroupDecomposition auto detect found no rgroups and onlyMatAtRgroups is set to true" <<
+			  std::endl;
+		  return false;
+	  }
+  }
+
   if (alignCore && (alignment & MCS)) {
     std::vector<ROMOL_SPTR> mols;
     mols.push_back(ROMOL_SPTR(new ROMol(core)));
@@ -175,6 +199,7 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
 			if (alignCoreAtm->hasProp(RLABEL)) {
 				int rlabel = alignCoreAtm->getProp<int>(RLABEL);
 				coreAtm->setProp(RLABEL, rlabel);
+				// DEBUG -- getRlabels(core);
 			}
           }
         }
@@ -189,22 +214,14 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
   int nextOffset = 0;
   std::map<int, int> atomToLabel;
 
-  unsigned int autoLabels = labels;
-  if (labels == AutoDetect) {
-	  autoLabels = autoGetLabels(core);
-	  if (!autoLabels) {
-		  BOOST_LOG(rdWarningLog) <<
-			  "RGroupDecomposition auto detect found no rgroups and onlyMatAtRgroups is set to true" <<
-			  std::endl;
-		  return false;
-	  }
-  }
-  for (RWMol::AtomIterator atIt = core.beginAtoms(); atIt != core.endAtoms();
-       ++atIt) {
-    Atom *atom = *atIt;
+  for (auto atom : core.atoms()) {
     bool found = false;
 
-    if (atom->hasProp(RLABEL)) found = true;
+	if (atom->hasProp(RLABEL)) {
+		if (setLabel(atom, atom->getProp<int>(RLABEL), foundLabels, maxLabel,
+			relabel, "RLABEL"))
+			found = true;
+	}
 
     if (!found && (autoLabels & MDLRGroupLabels)) {
       unsigned int rgroup;
@@ -255,9 +272,10 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
   adjustParams.makeDummiesQueries = true;
   adjustParams.adjustDegree = false;
   adjustQueryProperties(core, &adjustParams);
-
-  for (auto &it : atomToLabel)
-    core.getAtomWithIdx(it.first)->setProp(RLABEL, it.second);
+  for (auto &it : atomToLabel) {
+	  core.getAtomWithIdx(it.first)->setProp(RLABEL, it.second);
+	  // DEBUG -- getRlabels(core);
+  }
   return true;
 }
 
@@ -588,6 +606,7 @@ struct RGroupDecompData {
   void setRlabel(Atom *atom, int rlabel) {
     // XXX Fix me - use parameters to decide what to do.  Currenty does
     // everything
+	  PRECONDITION(rlabel != 0, "RLabels must be >0");
     if (params.rgroupLabelling & AtomMap) atom->setAtomMapNum(rlabel);
 
     if (params.rgroupLabelling & MDLRGroup) {
@@ -657,7 +676,7 @@ struct RGroupDecompData {
     //  Some indices are attached to multiple bonds,
     //   these rlabels should be incrementally added last
     int count = 0;
-    std::map<int, Atom *> atoms;
+	std::map<int, Atom *> atoms = getRlabels(mol);
 
     // a core only has one labelled index
     //  a secondary structure extraAtomRLabels contains the number
@@ -667,28 +686,16 @@ struct RGroupDecompData {
     //  core that takes the place of numBondsToRlabel
 
     std::map<int, std::vector<int>> bondsToCore;
-
-    for (RWMol::AtomIterator atIt = mol.beginAtoms(); atIt != mol.endAtoms();
-         ++atIt) {
-      Atom *atom = *atIt;
-
-      if (atom->hasProp(RLABEL)) {
-        int rlabel = (*atIt)->getProp<int>(RLABEL);  // user label
-        PRECONDITION(atoms.find(rlabel) == atoms.end(),
-                     "Duplicate labels in rgroup core!");
-        atoms[rlabel] = *atIt;
-      }
-    }
-
     std::vector<std::pair<Atom *, Atom *>> atomsToAdd;  // adds -R if necessary
 
     // Deal with user supplied labels
-    for (int userLabel : userLabels) {
-      auto atm = atoms.find(userLabel);
-      if (atm == atoms.end()) continue;  // label not used in the rgroup
-      Atom *atom = atm->second;
-      mappings[userLabel] = userLabel;
+    for (auto rlabels : atoms) {
+		int userLabel = rlabels.first;
+		if (userLabel <= 0) continue;
+		Atom * atom = rlabels.second;
       if (count < userLabel) count = userLabel;
+      mappings[userLabel] = userLabel;
+   
       if (atom->getAtomicNum() == 0) {  // add to existing dummy/rlabel
         setRlabel(atom, userLabel);
       } else {  // adds new rlabel
