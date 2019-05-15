@@ -1,3 +1,34 @@
+# Release_2019.03.2
+(Changes relative to Release_2019.03.1)
+
+## Acknowledgements:
+Thomas Duigou, Paula Junge, Eisuke Kawashima, Brian Kelley, 'c56pony'
+
+
+## Bug Fixes:
+  - MCS returning partial rings with completeRingsOnly=True 
+ (github #945 from greglandrum)
+  - VSA_EState {1, ..., 10} calculated by rdkit doesn't seem correct.
+ (github #2372 from c56pony)
+  - MolStandardize: FragmentRemover should not sanitize fragments
+ (github #2411 from greglandrum)
+  - MolStandardize: combinatorial explosion in Normalizer
+ (github #2414 from greglandrum)
+  - MCS code doesn't return envelope MCS if CompleteRingsOnly is true
+ (github #2420 from greglandrum)
+  - RemoveHs() does not remove all hydrogens.
+ (github #2422 from paulaju)
+  - Incorrect assignment of explicit Hs to Al+3 read from mol block
+ (github #2423 from greglandrum)
+  - Improve installation guide [ci skip]
+ (github #2424 from e-kwsm)
+  - Cannot set maxProducts > 1000 in RunReactants
+ (github #2427 from tduigou)
+  - Canon::rankMolAtoms results in crossed double bonds in rings
+ (github #2437 from greglandrum)
+  - make boost::iostreams optional
+ (github #2440 from greglandrum)
+
 # Release_2019.03.1
 (Changes relative to Release_2018.09.1)
 
