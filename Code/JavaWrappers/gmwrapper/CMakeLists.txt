@@ -84,6 +84,10 @@ endif()
 if(RDK_BUILD_AVALON_SUPPORT)
   SET(CMAKE_SWIG_FLAGS "-DRDK_BUILD_AVALON_SUPPORT" ${CMAKE_SWIG_FLAGS} )
 endif()
+if(RDK_USE_BOOST_IOSTREAMS)
+  SET(CMAKE_SWIG_FLAGS "-DRDK_USE_BOOST_IOSTREAMS" ${CMAKE_SWIG_FLAGS} )
+endif()
+
 
 
 # enable this line to build the ErrorGenerator class for testing handling of C++ errors in the JNI layer
