@@ -30,6 +30,7 @@ typedef enum {
   AtomMapLabels = 0x02,
   AtomIndexLabels = 0x04,
   RelabelDuplicateLabels = 0x08,
+  MDLRGroupLabels = 0x10,
   AutoDetect = 0x0F,
 } RGroupLabels;
 

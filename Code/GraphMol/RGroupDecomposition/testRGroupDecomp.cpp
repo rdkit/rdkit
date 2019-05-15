@@ -84,7 +84,7 @@ void testSymmetryMatching() {
   BOOST_LOG(rdInfoLog) << "test rgroup decomp symmetry matching" << std::endl;
 
   RWMol *core = SmilesToMol("c1ccccc1");
-  RGroupDecomRGposition decomp(*core);
+  RGroupDecomposition decomp(*core);
   for (int i = 0; i < 5; ++i) {
     ROMol *mol = SmilesToMol(symdata[i]);
     int res = decomp.add(*mol);
@@ -448,7 +448,7 @@ Cl[*:2]
                                            "c1cccc(F)c1C", "Fc1cccc(F)c1C"};
     for (const auto &smi : smilesData) {
       ROMol *mol = SmilesToMol(smi);
-      int res = decomp.add(*mol);
+      decomp.add(*mol);
       delete mol;
     }
 
@@ -778,23 +778,45 @@ $$$$
 M  END
 $$$$)CTAB";
 
-  SDMolSupplier sdsup;
-  sdsup.setData(sdcores);
+  RGroupDecompositionParameters params;
+  params.onlyMatchAtRGroups = true;
+  params.removeHydrogensPostMatch = true;
   std::vector<ROMOL_SPTR>  cores;
-  while(!sdsup.atEnd()) {
-    cores.push_back(ROMOL_SPTR(sdsup.next()));
-  }
 
-  RGroupDecomposition decomp(cores);
+  {
+    SDMolSupplier sdsup;
+    sdsup.setData(sdcores);
+    while(!sdsup.atEnd()) {
+      cores.push_back(ROMOL_SPTR(sdsup.next()));
+    }
+  }
+  
+  RGroupDecomposition decomp(cores, params);
+
+  {
+    SDMolSupplier sdsup;
+    sdsup.setData(sdmols);
     
-  sdsup.setData(sdmols);
-  std::vector<std::unique_ptr<ROMol>>  mols;
-  while(!sdsup.atEnd()) {
-    mols.push_back(std::unique_ptr<ROMol>(sdsup.next()));
+    
+    while(!sdsup.atEnd()) {
+      ROMol *mol = sdsup.next();
+      TEST_ASSERT(mol);
+      decomp.add(*mol);
+      delete mol;
+    }
+  }
+  
+  decomp.process();
+  RGroupRows rows = decomp.getRGroupsAsRows();
+
+  // All Cl's should be labeled with the same rgroup
+  int i = 0;
+  for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
+       ++it, ++i) {
+    CHECK_RGROUP(it, "", false);
   }
 
-  
-  
+  TEST_ASSERT(0); // make log
 }
 
 int main() {
@@ -804,7 +826,7 @@ int main() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
-#if 1
+#if 0
   testSymmetryMatching();
   testRGroupOnlyMatching();
   testRingMatching();
@@ -815,9 +837,9 @@ int main() {
 
   testMatchOnlyAtRgroupHs();
 #endif
-  testRingMatching2();
-  testGitHubIssue1705();
-  testGithub2332();
+  //testRingMatching2();
+  //testGitHubIssue1705();
+  //testGithub2332();
   testSDFGRoupMultiCore();
   
   BOOST_LOG(rdInfoLog)

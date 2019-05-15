@@ -64,8 +64,8 @@ const std::string ATOMMAP_LABELS = "AtomMapLabels";
 const std::string INDEX_LABELS = "IndexLabels";
 
 
-  /*
-void clearInputLabel(Atom *atom, unsigned int labels) {
+
+void clearInputLabels(Atom *atom) {
   atom->setIsotope(0);
   atom->setAtomMapNum(0);
   if (atom->hasProp(common_properties::_MolFileRLabel)) {
@@ -73,9 +73,18 @@ void clearInputLabel(Atom *atom, unsigned int labels) {
   }
   
 }
-  */
+
 bool setLabel(Atom *atom, int label, std::set<int> &labels, int &maxLabel,
               bool relabel, const std::string &type) {
+  std::cerr << "Setting label " << label << " of type " << type <<
+    " maxLabel " << maxLabel;
+		    std::cerr   << "labels: ";
+		       
+		       for(auto i: labels) {
+			 std::cerr << " " << i;
+		       }
+					     
+					     std::cerr << std::endl;
   if (type == ISOTOPE_LABELS) {
     atom->setIsotope(0);
   } else if (type == ATOMMAP_LABELS) {
@@ -117,6 +126,7 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
                                                 const RWMol *alignCore) {
   const bool relabel = labels & RelabelDuplicateLabels;
   if (alignCore && (alignment & MCS)) {
+    std::cerr << "aligning core" << std::endl;
     std::vector<ROMOL_SPTR> mols;
     mols.push_back(ROMOL_SPTR(new ROMol(core)));
     mols.push_back(ROMOL_SPTR(new ROMol(*alignCore)));
@@ -157,7 +167,7 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
   int maxLabel = 0;
   int nextOffset = 0;
   std::map<int, int> atomToLabel;
-
+  bool anyfound = false;
   for (RWMol::AtomIterator atIt = core.beginAtoms(); atIt != core.endAtoms();
        ++atIt) {
     Atom *atom = *atIt;
@@ -165,9 +175,9 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
 
     if (atom->hasProp(RLABEL)) found = true;
 
-    if (!found && (labels & MolFileGroupLabels)) {
+    if (!found && (labels & MDLRGroupLabels)) {
       int rgroup;
-      if (atom->getPropIfPresent(rgroup, common_properties::_MolFileRLabel)) {
+      if (atom->getPropIfPresent<int>(common_properties::_MolFileRLabel, rgroup)) {
 	if (setLabel(atom, rgroup, foundLabels, maxLabel,
 		     relabel, RGROUP_LABELS))
 	  found = true;
@@ -193,12 +203,15 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
       found = true;
     }
 
+    if(found) anyfound = true;
+    clearInputLabels(atom);
+    
     int rlabel;
     if (atom->getPropIfPresent(RLABEL, rlabel)) {
       atomToLabel[atom->getIdx()] = rlabel;
     }
   }
-
+  std::cerr << "ANYFOUND " << (int) anyfound << std::endl;
   indexOffset -= nextOffset;
 
   MolOps::AdjustQueryParameters adjustParams;
