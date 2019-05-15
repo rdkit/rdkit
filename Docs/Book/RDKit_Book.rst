@@ -324,6 +324,65 @@ Here are some examples:
   ((0,), (2,), (3,), (4,), (5,))
 
 
+SMARTS Reference
+----------------
+
+*Note* that the text versions of the tables below include some backslash characters to
+escape special characters. This is a wart from the documentation system we are using.
+Please ignore those characters.
+
+**Atoms**
+
+=========  =========================================  ===============  ======  =========
+Primitive                  Property                   "Default value"  Range?    Notes
+=========  =========================================  ===============  ======  =========
+a          "aromatic atom"
+A          "aliphatic atom"
+D          "explicit degree"                          1                Y
+h          "number of implicit hs"                    >0               Y
+H          "total number of Hs"                       1
+r          "in SSSR ring of size"                     >0               Y
+R          "number of SSSR rings"                     >0               Y
+v          "total valence"                            1                Y
+x          "number of ring bonds"                     >0               Y
+X          "total degree"                             1                Y
+z          "number of heteroatom neighbors"           >0               Y       extension
+Z          "number of alphatic heteroatom neighbors"  >0               Y       extension
+\*         "any atom"
+\+         "positive charge"                          1
+++         "+2 charge"
+\-         "negative charge"                          1
+\--        "-2 charge"
+^0         "S hybridized"                             n/a              N       extension
+^1         "SP hybridized"                            n/a              N       extension
+^2         "SP2 hybridized"                           n/a              N       extension
+^3         "SP3 hybridized"                           n/a              N       extension
+^4         "SP3D hybridized"                          n/a              N       extension
+^5         "SP3D2 hybridized"                         n/a              N       extension
+=========  =========================================  ===============  ======  =========
+
+
+
+**Bonds**
+
+=========  ====================  ===================
+Primitive        Property               Notes
+=========  ====================  ===================
+""         "single or aromatic"  "unspecified bonds"
+\-         single
+=          double
+#          triple
+:          aromatic
+~          "any bond"
+@          "ring bond"
+/          "directional"
+\\         "directional"
+->         "dative right"        extension
+<-         "dative left"         extension
+=========  ====================  ===================
+
+
+
 
 Ring Finding and SSSR
 =====================
