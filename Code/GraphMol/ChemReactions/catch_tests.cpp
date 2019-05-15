@@ -54,9 +54,9 @@ TEST_CASE("Github #1632", "[Reaction,PDB,bug]") {
 }
 
 static void clearAtomMappingProps(ROMol& mol) {
-    for (auto&& a : mol.atoms()) {
-      a->clear();
-    }
+  for (auto&& a : mol.atoms()) {
+    a->clear();
+  }
 }
 
 TEST_CASE("Github #2366 Enhanced Stereo", "[Reaction,StereoGroup,bug]") {
@@ -136,5 +136,35 @@ TEST_CASE("Github #2366 Enhanced Stereo", "[Reaction,StereoGroup,bug]") {
 
     clearAtomMappingProps(*p0);
     CHECK(MolToCXSmiles(*p0) == "F[C@@H](Cl)[C@H](Cl)Br |&1:1,&2:3|");
+  }
+}
+
+TEST_CASE("Github #2427 cannot set maxProducts>1000 in runReactants",
+          "[Reaction,bug]") {
+  SECTION("Basics") {
+    std::string smi = "[C]";
+    for (unsigned int i = 0; i < 49; ++i) {
+      smi += ".[C]";
+    }
+    ROMOL_SPTR mol(SmilesToMol(smi));
+    REQUIRE(mol);
+    unique_ptr<ChemicalReaction> rxn(
+        RxnSmartsToChemicalReaction("([#6:1].[#6:2])>>[#6:1]-[#6:2]"));
+    REQUIRE(rxn);
+
+    MOL_SPTR_VECT reactants = {mol};
+
+    rxn->initReactantMatchers();
+    // by default we only get 1000 products:
+    {
+      auto prods = rxn->runReactants(reactants);
+      CHECK(prods.size() == 1000);
+      CHECK(prods[0].size() == 1);
+    }
+    {
+      auto prods = rxn->runReactants(reactants, 2000);
+      CHECK(prods.size() == 2000);
+      CHECK(prods[0].size() == 1);
+    }
   }
 }
