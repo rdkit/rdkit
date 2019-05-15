@@ -62,6 +62,7 @@ const unsigned int MatchAll = UINT_MAX;
 bool getReactantMatches(const MOL_SPTR_VECT &reactants,
                         const ChemicalReaction &rxn,
                         VectVectMatchVectType &matchesByReactant,
+                        unsigned int maxMatches,
                         unsigned int matchSingleReactant = MatchAll) {
   PRECONDITION(reactants.size() == rxn.getNumReactantTemplates(),
                "reactant size mismatch");
@@ -74,7 +75,6 @@ bool getReactantMatches(const MOL_SPTR_VECT &reactants,
   for (auto iter = rxn.beginReactantTemplates();
        iter != rxn.endReactantTemplates(); ++iter, i++) {
     if (matchSingleReactant == MatchAll || matchSingleReactant == i) {
-      std::vector<MatchVectType> matchesHere;
       // NOTE that we are *not* uniquifying the results.
       //   This is because we need multiple matches in reactions. For example,
       //   The ring-closure coded as:
@@ -95,13 +95,15 @@ bool getReactantMatches(const MOL_SPTR_VECT &reactants,
       //   safer to just
       //   produce everything and let the client deal with uniquifying their
       //   results.
-      int matchCount = SubstructMatch(*(reactants[i]), *iter->get(),
-                                      matchesHere, false, true, false);
-      BOOST_FOREACH (const MatchVectType &match, matchesHere) {
+      SubstructMatchParameters ssps;
+      ssps.uniquify = false;
+      ssps.maxMatches = maxMatches;
+      auto matchesHere = SubstructMatch(*(reactants[i]), *iter->get(), ssps);
+      auto matchCount = matchesHere.size();
+      for (const auto &match : matchesHere) {
         bool keep = true;
-        int pIdx, mIdx;
-        BOOST_FOREACH (boost::tie(pIdx, mIdx), match) {
-          if (reactants[i]->getAtomWithIdx(mIdx)->hasProp(
+        for (const auto &pr : match) {
+          if (reactants[i]->getAtomWithIdx(pr.second)->hasProp(
                   common_properties::_protected)) {
             keep = false;
             break;
@@ -1012,8 +1014,8 @@ std::vector<MOL_SPTR_VECT> run_Reactants(const ChemicalReaction &rxn,
 
   // find the matches for each reactant:
   VectVectMatchVectType matchesByReactant;
-  if (!ReactionRunnerUtils::getReactantMatches(reactants, rxn,
-                                               matchesByReactant)) {
+  if (!ReactionRunnerUtils::getReactantMatches(
+          reactants, rxn, matchesByReactant, maxProducts)) {
     // some reactants didn't find a match, return an empty product list:
     return productMols;
   }
@@ -1068,7 +1070,7 @@ std::vector<MOL_SPTR_VECT> run_Reactant(const ChemicalReaction &rxn,
   }
 
   if (!ReactionRunnerUtils::getReactantMatches(
-          reactants, rxn, matchesByReactant, reactantIdx)) {
+          reactants, rxn, matchesByReactant, 1000, reactantIdx)) {
     return productMols;
   }
 
