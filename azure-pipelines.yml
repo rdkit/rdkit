@@ -1,5 +1,6 @@
 trigger:
 - master
+- dev/*
 
 jobs:
 - job: Ubuntu_16_04_x64
