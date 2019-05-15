@@ -62,11 +62,11 @@ const std::string RGROUP_LABELS = "RGroupLabels";
 const std::string ISOTOPE_LABELS = "IsotopeLabels";
 const std::string ATOMMAP_LABELS = "AtomMapLabels";
 const std::string INDEX_LABELS = "IndexLabels";
-
+const std::string DUMMY_LABELS = "DummyLabels";
 
 
 void clearInputLabels(Atom *atom) {
-  atom->setIsotope(0);
+  //atom->setIsotope(0); Don't want to clear deuterium and things like that if they aren't labels
   atom->setAtomMapNum(0);
   if (atom->hasProp(common_properties::_MolFileRLabel)) {
     atom->clearProp(common_properties::_MolFileRLabel);
@@ -76,15 +76,6 @@ void clearInputLabels(Atom *atom) {
 
 bool setLabel(Atom *atom, int label, std::set<int> &labels, int &maxLabel,
               bool relabel, const std::string &type) {
-  std::cerr << "Setting label " << label << " of type " << type <<
-    " maxLabel " << maxLabel;
-		    std::cerr   << "labels: ";
-		       
-		       for(auto i: labels) {
-			 std::cerr << " " << i;
-		       }
-					     
-					     std::cerr << std::endl;
   if (type == ISOTOPE_LABELS) {
     atom->setIsotope(0);
   } else if (type == ATOMMAP_LABELS) {
@@ -92,6 +83,7 @@ bool setLabel(Atom *atom, int label, std::set<int> &labels, int &maxLabel,
   } else if (type == RGROUP_LABELS) {
     if (atom->hasProp(common_properties::_MolFileRLabel)) {
       atom->clearProp(common_properties::_MolFileRLabel);
+	  atom->setIsotope(0);
     }
   }
 
@@ -122,11 +114,31 @@ bool hasDummy(const RWMol &core) {
 }
 }  // namespace
 
+unsigned int RGroupDecompositionParameters::autoGetLabels(const RWMol &core) {
+	unsigned int autoLabels = 0;
+	if (!onlyMatchAtRGroups) autoLabels = AtomIndexLabels;
+	bool hasMDLRGroup = false;
+	bool hasAtomMapNum = false;
+	bool hasIsotopes = false;
+	bool hasDummies = false;
+	for (auto atm : core.atoms()) {
+		if (atm->getIsotope()) hasIsotopes = true;
+		if (atm->getAtomMapNum()) hasAtomMapNum = true;
+		if (atm->hasProp(common_properties::_MolFileRLabel)) hasMDLRGroup = true;
+		if (atm->getAtomicNum() == 0) hasDummies = true;
+	}
+
+	if (hasMDLRGroup) return autoLabels | MDLRGroupLabels;
+	else if (hasAtomMapNum) return autoLabels | AtomMapLabels;
+	else if (hasIsotopes) return autoLabels | IsotopeLabels;
+	else if (hasDummies) return autoLabels | DummyAtomLabels;
+		
+ 	return autoLabels;
+}
 bool RGroupDecompositionParameters::prepareCore(RWMol &core,
                                                 const RWMol *alignCore) {
   const bool relabel = labels & RelabelDuplicateLabels;
   if (alignCore && (alignment & MCS)) {
-    std::cerr << "aligning core" << std::endl;
     std::vector<ROMOL_SPTR> mols;
     mols.push_back(ROMOL_SPTR(new ROMol(core)));
     mols.push_back(ROMOL_SPTR(new ROMol(*alignCore)));
@@ -150,11 +162,20 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
             int alignCoreAtomIdx = match2[i].second;
             CHECK_INVARIANT(queryAtomIdx1 == queryAtomIdx2,
                             "query atoms aren't the same");
-            const Atom *coreAtm = core.getAtomWithIdx(coreAtomIdx);
+                  Atom *coreAtm = core.getAtomWithIdx(coreAtomIdx);
             const Atom *alignCoreAtm =
                 alignCore->getAtomWithIdx(alignCoreAtomIdx);
-            int rlabel = alignCoreAtm->getProp<int>(RLABEL);
-            coreAtm->setProp(RLABEL, rlabel);
+
+			// clear up input rlabels
+			coreAtm->setAtomMapNum(0);
+			if (coreAtm->hasProp(common_properties::_MolFileRLabel)) {
+				coreAtm->clearProp(common_properties::_MolFileRLabel);
+				coreAtm->setIsotope(0);
+			}
+			if (alignCoreAtm->hasProp(RLABEL)) {
+				int rlabel = alignCoreAtm->getProp<int>(RLABEL);
+				coreAtm->setProp(RLABEL, rlabel);
+			}
           }
         }
         delete m;
@@ -167,7 +188,17 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
   int maxLabel = 0;
   int nextOffset = 0;
   std::map<int, int> atomToLabel;
-  bool anyfound = false;
+
+  unsigned int autoLabels = labels;
+  if (labels == AutoDetect) {
+	  autoLabels = autoGetLabels(core);
+	  if (!autoLabels) {
+		  BOOST_LOG(rdWarningLog) <<
+			  "RGroupDecomposition auto detect found no rgroups and onlyMatAtRgroups is set to true" <<
+			  std::endl;
+		  return false;
+	  }
+  }
   for (RWMol::AtomIterator atIt = core.beginAtoms(); atIt != core.endAtoms();
        ++atIt) {
     Atom *atom = *atIt;
@@ -175,35 +206,42 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
 
     if (atom->hasProp(RLABEL)) found = true;
 
-    if (!found && (labels & MDLRGroupLabels)) {
-      int rgroup;
-      if (atom->getPropIfPresent<int>(common_properties::_MolFileRLabel, rgroup)) {
-	if (setLabel(atom, rgroup, foundLabels, maxLabel,
-		     relabel, RGROUP_LABELS))
-	  found = true;
+    if (!found && (autoLabels & MDLRGroupLabels)) {
+      unsigned int rgroup;
+      if (atom->getPropIfPresent<unsigned int>(common_properties::_MolFileRLabel, rgroup)) {
+	     if (setLabel(atom, rdcast<int>(rgroup), foundLabels, maxLabel,
+		              relabel, RGROUP_LABELS))
+	     found = true;
       }	
     }
     
-    if (!found && (labels & IsotopeLabels)) {
+    if (!found && (autoLabels & IsotopeLabels) && atom->getIsotope() > 0) {
       if (setLabel(atom, rdcast<int>(atom->getIsotope()), foundLabels, maxLabel,
                    relabel, ISOTOPE_LABELS))
         found = true;
     }
 
-    if (!found && (labels & AtomMapLabels)) {
+    if (!found && (autoLabels & AtomMapLabels) && atom->getAtomMapNum() > 0) {
       if (setLabel(atom, rdcast<int>(atom->getAtomMapNum()), foundLabels,
                    maxLabel, relabel, ATOMMAP_LABELS))
         found = true;
     }
 
-    if (!found && (labels & AtomIndexLabels)) {
+	if (!found && (autoLabels & DummyAtomLabels) && atom->getAtomicNum() == 0) {
+		const bool forceRelabellingWithDummies = true;
+		int defaultDummyStartLabel = 1;
+		if (setLabel(atom, defaultDummyStartLabel, foundLabels,
+			maxLabel, forceRelabellingWithDummies, DUMMY_LABELS))
+			found = true;
+	}
+
+    if (!found && (autoLabels & AtomIndexLabels)) {
       if (setLabel(atom, indexOffset - atom->getIdx(), foundLabels, maxLabel,
                    relabel, INDEX_LABELS))
         nextOffset++;
       found = true;
     }
 
-    if(found) anyfound = true;
     clearInputLabels(atom);
     
     int rlabel;
@@ -211,7 +249,6 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
       atomToLabel[atom->getIdx()] = rlabel;
     }
   }
-  std::cerr << "ANYFOUND " << (int) anyfound << std::endl;
   indexOffset -= nextOffset;
 
   MolOps::AdjustQueryParameters adjustParams;
@@ -542,7 +579,7 @@ struct RGroupDecompData {
     size_t idx = 0;
     for (auto coreIt = cores.begin(); coreIt != cores.end(); ++coreIt, ++idx) {
       RWMol *alignCore = coreIt->first ? &cores[0] : nullptr;
-      params.prepareCore(coreIt->second, alignCore);
+	  PRECONDITION(params.prepareCore(coreIt->second, alignCore), "Could not prepare at least one core");
       labelledCores[coreIt->first] =
           boost::shared_ptr<RWMol>(new RWMol(coreIt->second));
     }
@@ -559,7 +596,9 @@ struct RGroupDecompData {
       setAtomRLabel(atom, rlabel);
     }
 
-    if (params.rgroupLabelling & Isotope) atom->setIsotope(rlabel);
+	if (params.rgroupLabelling & Isotope) {
+		atom->setIsotope(rlabel);
+	}
   }
 
   void prune() {  // prune all but the current "best" permutation of matches

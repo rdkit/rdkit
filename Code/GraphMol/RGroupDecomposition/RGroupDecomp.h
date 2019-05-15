@@ -31,7 +31,8 @@ typedef enum {
   AtomIndexLabels = 0x04,
   RelabelDuplicateLabels = 0x08,
   MDLRGroupLabels = 0x10,
-  AutoDetect = 0x0F,
+  DummyAtomLabels = 0x11,  // These are rgroups but will get relabelled
+  AutoDetect = 0xFF,
 } RGroupLabels;
 
 typedef enum {
@@ -79,6 +80,11 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
         removeAllHydrogenRGroups(removeHydrogenOnlyGroups),
         removeHydrogensPostMatch(removeHydrogensPostMatch),
         indexOffset(-1) {}
+
+  // Determine how to assign the rroup labels from the given core 
+  unsigned int autoGetLabels(const RWMol &);
+
+  // Prepare the core for substructure searching and rgroup assignment
   bool prepareCore(RWMol &, const RWMol *alignCore);
 
  private:

@@ -55,7 +55,7 @@ void CHECK_RGROUP(RGroupRows::const_iterator &it, std::string expected,
   }
   std::string result = str.str();
 
-  if (expected != result) {
+  if (1 || expected != result) {
     std::cerr << "Expected: " << expected << std::endl;
     std::cerr << "Got:      " << result << std::endl;
   }
@@ -797,11 +797,15 @@ $$$$)CTAB";
     SDMolSupplier sdsup;
     sdsup.setData(sdmols);
     
-    
+	int idx = 0;
     while(!sdsup.atEnd()) {
       ROMol *mol = sdsup.next();
       TEST_ASSERT(mol);
-      decomp.add(*mol);
+      int addedIndex = decomp.add(*mol);
+	  if (!addedIndex)
+		  std::cerr << "Could not add index: " << idx << std::endl;
+	  ++idx;
+	  //TEST_ASSERT(addedIndex >= 0);
       delete mol;
     }
   }
@@ -811,12 +815,16 @@ $$$$)CTAB";
 
   // All Cl's should be labeled with the same rgroup
   int i = 0;
+  const char * expected[5] = {
+	  "Core:*C1[*:1]C2C(N[*:2])NC([*:5])NC2[*:3]1 R1:CC(C)C([*:1])[*:1] R2:C[*:2] R3:S([*:3])[*:3] R5:[H][*:5]",
+	  "Core:*C1[*:1]C2C(N[*:2])NC([*:5])CC2[*:3]1 R1:CC(C)C([*:1])[*:1] R2:C[*:2] R3:S([*:3])[*:3] R5:[H][*:5]",
+	  "Core:*C1[*:1]C2C(N[*:2])NC([*:5])CC2[*:3]1 R1:N([*:1])[*:1] R2:[H][*:2] R3:CN([*:3])[*:3] R5:O[*:5]"
+  };
   for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
        ++it, ++i) {
-    CHECK_RGROUP(it, "", false);
+	  std::cerr << "*******" << i << std::endl;
+    CHECK_RGROUP(it, expected[i], true);
   }
-
-  TEST_ASSERT(0); // make log
 }
 
 int main() {
@@ -826,7 +834,7 @@ int main() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
-#if 0
+#if 1
   testSymmetryMatching();
   testRGroupOnlyMatching();
   testRingMatching();
@@ -837,9 +845,9 @@ int main() {
 
   testMatchOnlyAtRgroupHs();
 #endif
-  //testRingMatching2();
-  //testGitHubIssue1705();
-  //testGithub2332();
+  testRingMatching2();
+  testGitHubIssue1705();
+  testGithub2332();
   testSDFGRoupMultiCore();
   
   BOOST_LOG(rdInfoLog)
