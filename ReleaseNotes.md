@@ -4,7 +4,6 @@
 ## Acknowledgements:
 Thomas Duigou, Paula Junge, Eisuke Kawashima, Brian Kelley, 'c56pony'
 
-
 ## Bug Fixes:
   - MCS returning partial rings with completeRingsOnly=True 
  (github #945 from greglandrum)
@@ -28,6 +27,7 @@ Thomas Duigou, Paula Junge, Eisuke Kawashima, Brian Kelley, 'c56pony'
  (github #2437 from greglandrum)
   - make boost::iostreams optional
  (github #2440 from greglandrum)
+  - Small corrections to build system to enable static linking for java builds
 
 # Release_2019.03.1
 (Changes relative to Release_2018.09.1)
