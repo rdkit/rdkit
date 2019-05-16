@@ -22,12 +22,12 @@
 #include <RDGeneral/Dict.h>
 
 namespace RDKit {
-namespace {
+
 // Determine whether or not a molecule is to the left of Carbon
 bool isEarlyAtom(int atomicNum) {
   return (4 - PeriodicTable::getTable()->getNouterElecs(atomicNum)) > 0;
 }
-}  // namespace
+
 Atom::Atom() : RDProps() {
   d_atomicNum = 0;
   initAtom();
