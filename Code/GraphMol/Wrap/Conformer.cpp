@@ -76,6 +76,8 @@ struct conformer_wrapper {
         .def("GetNumAtoms", &Conformer::getNumAtoms,
              "Get the number of atoms in the conformer\n")
 
+        .def("HasOwningMol", &Conformer::hasOwningMol,
+             "Returns whether or not this instance belongs to a molecule.\n")
         .def("GetOwningMol", &Conformer::getOwningMol,
              "Get the owning molecule\n",
              python::return_value_policy<python::reference_existing_object>())

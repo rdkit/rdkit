@@ -98,7 +98,10 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroup : public RDProps {
   //! Destructor
   ~SubstanceGroup(){};
 
-  //! Get the molecule that owns this conformation
+  //! returns whether or not this belongs to a molecule
+  bool hasOwningMol() const { return dp_mol != nullptr; };
+
+  //! Get the molecule that owns this instance
   ROMol &getOwningMol() const { return *dp_mol; }
 
   //! get the index of this sgroup in dp_mol's sgroups vector
