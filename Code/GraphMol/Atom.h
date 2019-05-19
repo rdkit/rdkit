@@ -119,6 +119,9 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   //! returns our symbol (determined by our atomic number)
   std::string getSymbol() const;
 
+  //! returns whether or not this Atom belongs to a molecule
+  bool hasOwningMol() const { return dp_mol != nullptr; };
+
   //! returns a reference to the ROMol that owns this Atom
   ROMol &getOwningMol() const {
     PRECONDITION(dp_mol, "no owner");

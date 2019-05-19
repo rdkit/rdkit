@@ -15,6 +15,7 @@
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryAtom.h>
+#include <GraphMol/QueryBond.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
@@ -269,10 +270,13 @@ TEST_CASE("github #2257: writing cxsmiles", "[smiles,cxsmiles]") {
   }
 
   SECTION("enhanced stereo 3") {
-    auto mol = "C[C@@H]1N[C@H](C)[C@@H]([C@H](C)[C@@H]1C)C1[C@@H](C)O[C@@H](C)[C@@H](C)[C@H]1C |a:5,o1:1,8,o2:14,16,&1:11,18,&2:3,6,r|"_smiles;
+    auto mol =
+        "C[C@@H]1N[C@H](C)[C@@H]([C@H](C)[C@@H]1C)C1[C@@H](C)O[C@@H](C)[C@@H](C)[C@H]1C |a:5,o1:1,8,o2:14,16,&1:11,18,&2:3,6,r|"_smiles;
     REQUIRE(mol);
     auto smi = MolToCXSmiles(*mol);
-    CHECK(smi == "C[C@@H]1N[C@H](C)[C@H](C2[C@@H](C)O[C@@H](C)[C@@H](C)[C@H]2C)[C@H](C)[C@@H]1C |a:5,o1:1,18,o2:10,12,&1:3,16,&2:7,14|");
+    CHECK(smi ==
+          "C[C@@H]1N[C@H](C)[C@H](C2[C@@H](C)O[C@@H](C)[C@@H](C)[C@H]2C)[C@H]("
+          "C)[C@@H]1C |a:5,o1:1,18,o2:10,12,&1:3,16,&2:7,14|");
   }
 
   SECTION("enhanced stereo 4") {
@@ -418,5 +422,19 @@ TEST_CASE("dative ring closures", "[bug, smiles]") {
     REQUIRE(m1->getBondBetweenAtoms(0, 1));
     CHECK(m1->getBondBetweenAtoms(0, 1)->getBondType() == Bond::DATIVE);
     CHECK(m1->getBondBetweenAtoms(0, 1)->getBeginAtomIdx() == 0);
+  }
+}
+
+TEST_CASE("github#2450: getAtomSmarts() fails for free atoms", "[bug]") {
+  SECTION("original report") {
+    std::unique_ptr<QueryAtom> qat(new QueryAtom());
+    qat->setQuery(makeAtomNumQuery(6));
+    auto smarts = SmartsWrite::GetAtomSmarts(qat.get());
+    CHECK(smarts == "[#6]");
+  }
+  SECTION("query bonds") {
+    std::unique_ptr<QueryBond> qbnd(new QueryBond(Bond::AROMATIC));
+    auto smarts = SmartsWrite::GetBondSmarts(qbnd.get());
+    CHECK(smarts == ":");
   }
 }
