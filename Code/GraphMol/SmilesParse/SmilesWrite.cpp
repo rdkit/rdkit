@@ -62,7 +62,8 @@ std::string GetAtomSmiles(const Atom *atom, bool doKekule, const Bond *bondIn,
   // check for atomic stereochemistry
   std::string atString = "";
   if (isomericSmiles ||
-      atom->getOwningMol().hasProp(common_properties::_doIsoSmiles)) {
+      (atom->hasOwningMol() &&
+       atom->getOwningMol().hasProp(common_properties::_doIsoSmiles))) {
     if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
         !atom->hasProp(common_properties::_brokenChirality)) {
       switch (atom->getChiralTag()) {
@@ -108,8 +109,9 @@ std::string GetAtomSmiles(const Atom *atom, bool doKekule, const Bond *bondIn,
     if (fc || nonStandard ||
         atom->hasProp(common_properties::molAtomMapNumber)) {
       needsBracket = true;
-    } else if ((isomericSmiles || atom->getOwningMol().hasProp(
-                                      common_properties::_doIsoSmiles)) &&
+    } else if ((isomericSmiles || (atom->hasOwningMol() &&
+                                   atom->getOwningMol().hasProp(
+                                       common_properties::_doIsoSmiles))) &&
                (isotope || atString != "")) {
       needsBracket = true;
     }
@@ -118,8 +120,9 @@ std::string GetAtomSmiles(const Atom *atom, bool doKekule, const Bond *bondIn,
   }
   if (needsBracket) res += "[";
 
-  if (isotope && (isomericSmiles || atom->getOwningMol().hasProp(
-                                        common_properties::_doIsoSmiles))) {
+  if (isotope && (isomericSmiles || (atom->hasOwningMol() &&
+                                     atom->getOwningMol().hasProp(
+                                         common_properties::_doIsoSmiles)))) {
     res += std::to_string(isotope);
   }
   // this was originally only done for the organic subset,
@@ -176,13 +179,16 @@ std::string GetBondSmiles(const Bond *bond, int atomToLeftIdx, bool doKekule,
   if (!doKekule && (bond->getBondType() == Bond::SINGLE ||
                     bond->getBondType() == Bond::DOUBLE ||
                     bond->getBondType() == Bond::AROMATIC)) {
-    Atom *a1, *a2;
-    a1 = bond->getOwningMol().getAtomWithIdx(atomToLeftIdx);
-    a2 = bond->getOwningMol().getAtomWithIdx(
-        bond->getOtherAtomIdx(atomToLeftIdx));
-    if ((a1->getIsAromatic() && a2->getIsAromatic()) &&
-        (a1->getAtomicNum() || a2->getAtomicNum()))
-      aromatic = true;
+    if (bond->hasOwningMol()) {
+      auto a1 = bond->getOwningMol().getAtomWithIdx(atomToLeftIdx);
+      auto a2 = bond->getOwningMol().getAtomWithIdx(
+          bond->getOtherAtomIdx(atomToLeftIdx));
+      if ((a1->getIsAromatic() && a2->getIsAromatic()) &&
+          (a1->getAtomicNum() || a2->getAtomicNum()))
+        aromatic = true;
+    } else {
+      aromatic = false;
+    }
   }
 
   Bond::BondDir dir = bond->getBondDir();
@@ -201,12 +207,14 @@ std::string GetBondSmiles(const Bond *bond, int atomToLeftIdx, bool doKekule,
         switch (dir) {
           case Bond::ENDDOWNRIGHT:
             if (allBondsExplicit ||
-                bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))
+                (bond->hasOwningMol() &&
+                 bond->getOwningMol().hasProp(common_properties::_doIsoSmiles)))
               res = "\\";
             break;
           case Bond::ENDUPRIGHT:
             if (allBondsExplicit ||
-                bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))
+                (bond->hasOwningMol() &&
+                 bond->getOwningMol().hasProp(common_properties::_doIsoSmiles)))
               res = "/";
             break;
           default:
@@ -238,12 +246,14 @@ std::string GetBondSmiles(const Bond *bond, int atomToLeftIdx, bool doKekule,
         switch (dir) {
           case Bond::ENDDOWNRIGHT:
             if (allBondsExplicit ||
-                bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))
+                (bond->hasOwningMol() &&
+                 bond->getOwningMol().hasProp(common_properties::_doIsoSmiles)))
               res = "\\";
             break;
           case Bond::ENDUPRIGHT:
             if (allBondsExplicit ||
-                bond->getOwningMol().hasProp(common_properties::_doIsoSmiles))
+                (bond->hasOwningMol() &&
+                 bond->getOwningMol().hasProp(common_properties::_doIsoSmiles)))
               res = "/";
             break;
           default:
