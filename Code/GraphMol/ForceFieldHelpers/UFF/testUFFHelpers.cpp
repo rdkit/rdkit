@@ -21,6 +21,7 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/FileParsers/MolWriters.h>
 
+#include <GraphMol/ForceFieldHelpers/FFConvenience.h>
 #include <GraphMol/ForceFieldHelpers/UFF/AtomTyper.h>
 #include <GraphMol/ForceFieldHelpers/UFF/Builder.h>
 #include <GraphMol/ForceFieldHelpers/UFF/UFF.h>
@@ -1307,6 +1308,53 @@ void testUFFMultiThread2() {
   delete om;
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
+
+void testUFFMultiThread3() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test UFF multithreading3" << std::endl;
+
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/GraphMol/ForceFieldHelpers/UFF/test_data";
+  SDMolSupplier suppl(pathName + "/bulk.sdf");
+  ROMol *m = suppl[4];
+  TEST_ASSERT(m);
+  auto *om = new ROMol(*m);
+  for (unsigned int i = 0; i < 200; ++i) {
+    m->addConformer(new Conformer(m->getConformer()), true);
+  }
+  std::vector<std::pair<int, double>> res;
+
+  ForceFields::ForceField *omField = UFF::constructForceField(*om);
+  TEST_ASSERT(omField);
+  omField->initialize();
+  ForceFields::ForceField *mField = UFF::constructForceField(*m);
+  TEST_ASSERT(mField);
+  mField->initialize();
+
+  ForceFieldsHelper::OptimizeMolecule(*omField);
+  ForceFieldsHelper::OptimizeMoleculeConfs(*m, *mField, res, 0);
+  for (unsigned int i = 1; i < res.size(); ++i) {
+    TEST_ASSERT(!res[i].first);
+    TEST_ASSERT(feq(res[i].second, res[0].second, .00001));
+  }
+  for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
+    RDGeom::Point3D p0 = om->getConformer().getAtomPos(i);
+    RDGeom::Point3D np0 = m->getConformer().getAtomPos(i);
+    TEST_ASSERT(feq(p0.x, np0.x));
+    TEST_ASSERT(feq(p0.y, np0.y));
+    TEST_ASSERT(feq(p0.z, np0.z));
+    np0 =
+        m->getConformer(11).getAtomPos(i);  // pick some random other conformer
+    TEST_ASSERT(feq(p0.x, np0.x));
+    TEST_ASSERT(feq(p0.y, np0.y));
+    TEST_ASSERT(feq(p0.z, np0.z));
+  }
+  delete m;
+  delete om;
+  delete mField;
+  delete omField;
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
 #endif
 
 void testGitHubIssue613() {
@@ -1361,6 +1409,7 @@ int main() {
 #ifdef RDK_TEST_MULTITHREADED
   testUFFMultiThread();
   testUFFMultiThread2();
+  testUFFMultiThread3();
 #endif
   testGitHubIssue62();
 #endif
