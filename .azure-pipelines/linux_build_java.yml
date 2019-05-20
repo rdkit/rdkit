@@ -15,6 +15,8 @@ steps:
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
+    export CXX=/usr/bin/g++
+    export CC=/usr/bin/gcc
     mkdir build && cd build && \
     cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
