@@ -44,7 +44,7 @@ steps:
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
     cd build
-    make -j $( $(number_of_cores) ) install
+    VERBOSE=1 make -j $( $(number_of_cores) ) RDGeneral_static
   displayName: Build
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
