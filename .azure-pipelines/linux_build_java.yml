@@ -37,7 +37,7 @@ steps:
   displayName: Configure build (Run CMake)
 - bash: |
     cd build
-    VERBOSE=1 make -j $( $(number_of_cores) ) RDGeneral_static
+    VERBOSE=1 make -j $( $(number_of_cores) ) install
   displayName: Build
 - bash: |
     export RDBASE=`pwd`
