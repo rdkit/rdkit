@@ -1,6 +1,6 @@
 steps:
 - bash: |
-    sudo apt-get install -y software-properties-common
+    sudo apt-get install -y software-properties-common zlib1g zlib1g-dev
     sudo add-apt-repository -y ppa:csaba-kertesz/random
     sudo apt-get update
     sudo apt-get install -y boost1.58
@@ -18,6 +18,7 @@ steps:
     mkdir build && cd build && \
     cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
+    -DBOOST_LIBRARYDIR=/usr/lib/x86_64-linux-gnu \
     -DBOOST_ROOT=/usr \
     -DRDK_INSTALL_INTREE=ON \
     -DRDK_INSTALL_STATIC_LIBS=ON \
