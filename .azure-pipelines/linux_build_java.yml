@@ -1,6 +1,6 @@
 steps:
 - bash: |
-    sudo apt-get install -y software-properties-common zlib1g zlib1g-dev
+    sudo apt-get install -y software-properties-common zlib1g zlib1g-dev swig
     sudo add-apt-repository -y ppa:csaba-kertesz/random
     sudo apt-get update
     sudo apt-get install -y boost1.58
@@ -9,14 +9,17 @@ steps:
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
     conda info -a
-    conda create --name rdkit_build $(compiler) cmake \
-        cairo eigen swig
+    conda create --name rdkit_build $(compiler) eigen
+    cd /opt
+    wget -q https://cmake.org/files/v3.12/cmake-3.12.0-Linux-x86_64.tar.gz
+    tar xzf cmake-3.12.0-Linux-x86_64.tar.gz
   displayName: Setup build environment
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
     export CXX=/usr/bin/g++
     export CC=/usr/bin/gcc
+    export PATH=/opt/cmake-3.12.0-Linux-x86_64/bin:$PATH
     mkdir build && cd build && \
     cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
