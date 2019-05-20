@@ -4,19 +4,11 @@ steps:
     sudo add-apt-repository -y ppa:csaba-kertesz/random
     sudo apt-get update
     sudo apt-get install -y boost1.58
-    source ${CONDA}/etc/profile.d/conda.sh
-    sudo chown -R ${USER} ${CONDA}
-    conda config --set always_yes yes --set changeps1 no
-    conda update -q conda
-    conda info -a
-    conda create --name rdkit_build $(compiler) eigen
     cd /opt
     wget -q https://cmake.org/files/v3.12/cmake-3.12.0-Linux-x86_64.tar.gz
     tar xzf cmake-3.12.0-Linux-x86_64.tar.gz
   displayName: Setup build environment
 - bash: |
-    source ${CONDA}/etc/profile.d/conda.sh
-    conda activate rdkit_build
     export CXX=/usr/bin/g++
     export CC=/usr/bin/gcc
     export PATH=/opt/cmake-3.12.0-Linux-x86_64/bin:$PATH
@@ -41,19 +33,13 @@ steps:
     -DRDK_BUILD_THREADSAFE_SSS=ON \
     -DRDK_TEST_MULTITHREADED=ON \
     -DBoost_NO_SYSTEM_PATHS=ON \
-    -DBoost_USE_STATIC_LIBS=ON \
-    -DCMAKE_INCLUDE_PATH="${CONDA_PREFIX}/include" \
-    -DCMAKE_LIBRARY_PATH="${CONDA_PREFIX}/lib"
+    -DBoost_USE_STATIC_LIBS=ON"
   displayName: Configure build (Run CMake)
 - bash: |
-    source ${CONDA}/etc/profile.d/conda.sh
-    conda activate rdkit_build
     cd build
     VERBOSE=1 make -j $( $(number_of_cores) ) RDGeneral_static
   displayName: Build
 - bash: |
-    source ${CONDA}/etc/profile.d/conda.sh
-    conda activate rdkit_build
     export RDBASE=`pwd`
     export PYTHONPATH=${RDBASE}:${PYTHONPATH}
     export LD_LIBRARY_PATH=${RDBASE}/lib:${LD_LIBRARY_PATH}
