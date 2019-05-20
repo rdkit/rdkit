@@ -1,13 +1,15 @@
 steps:
 - bash: |
+    sudo apt-get install -y software-properties-common
+    sudo add-apt-repository -y ppa:csaba-kertesz/random
+    sudo apt-get update
+    sudo apt-get install -y boost1.58
     source ${CONDA}/etc/profile.d/conda.sh
     sudo chown -R ${USER} ${CONDA}
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
     conda info -a
     conda create --name rdkit_build $(compiler) cmake \
-        boost-cpp=$(boost_version) boost=$(boost_version) \
-        py-boost=$(boost_version) libboost=$(boost_version) \
         cairo eigen swig
   displayName: Setup build environment
 - bash: |
@@ -31,7 +33,7 @@ steps:
     -DRDK_SWIG_STATIC=ON \
     -DRDK_BUILD_THREADSAFE_SSS=ON \
     -DRDK_TEST_MULTITHREADED=ON \
-    -DBoost_NO_SYSTEM_PATHS=ON \
+    -DBoost_NO_SYSTEM_PATHS=OFF \
     -DBoost_USE_STATIC_LIBS=ON \
     -DCMAKE_INCLUDE_PATH="${CONDA_PREFIX}/include" \
     -DCMAKE_LIBRARY_PATH="${CONDA_PREFIX}/lib"
