@@ -92,7 +92,7 @@ std::string maeMolSupplierClassDoc =
     2) we can also read from compressed files: \n\n\
        >>> import gzip\n\
        >>> suppl = MaeMolSupplier(gzip.open('in.maegz'))\n\
-       >>> for mol in suppl:\n \
+       >>> for mol in suppl:\n\
        ...   if mol is not None: print mol.GetNumAtoms()\n\
 \n\
   Properties in the Maestro file are used to set properties on each molecule.\n\

@@ -45,16 +45,16 @@ PyObject *GetResonanceSubstructMatches(
 }
 
 std::string resonanceMolSupplierClassDoc =
-    "A class which supplies resonance structures (as mols) from a mol.\n \
-\n \
-  Usage examples:\n \
-\n \
-    1) Lazy evaluation: the resonance structures are not constructed\n \
+    "A class which supplies resonance structures (as mols) from a mol.\n\
+\n\
+  Usage examples:\n\
+\n\
+    1) Lazy evaluation: the resonance structures are not constructed\n\
        until we ask for them:\n\n\
        >>> suppl = ResonanceMolSupplier(mol)\n\
        >>> for resMol in suppl:\n\
        ...    resMol.GetNumAtoms()\n\
-\n \
+\n\
     2) Lazy evaluation 2:\n\n\
        >>> suppl = ResonanceMolSupplier(mol)\n\
        >>> resMol1 = suppl.next()\n\
@@ -63,14 +63,14 @@ std::string resonanceMolSupplierClassDoc =
        >>> resMol3 = suppl.next()\n\
        # resMol3 and resMol1 are the same: \n\
        >>> MolToSmiles(resMol3)==MolToSmiles(resMol1)\n\
-\n \
+\n\
     3) Random Access:\n\n\
        >>> suppl = ResonanceMolSupplier(mol)\n\
        >>> resMol1 = suppl[0] \n\
        >>> resMol2 = suppl[1] \n\n\
-       NOTE: this will generate an IndexError if the supplier doesn't have that many\n \
-       molecules.\n \
-\n \
+       NOTE: this will generate an IndexError if the supplier doesn't have that many\n\
+       molecules.\n\
+\n\
     4) Random Access 2: looping over all resonance structures\n\
        >>> suppl = ResonanceMolSupplier(mol)\n\
        >>> nResMols = len(suppl)\n\

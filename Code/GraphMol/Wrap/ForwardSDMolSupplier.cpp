@@ -90,7 +90,7 @@ std::string fsdMolSupplierClassDoc =
     2) we can also read from compressed files: \n\n\
        >>> import gzip\n\
        >>> suppl = ForwardSDMolSupplier(gzip.open('in.sdf.gz'))\n\
-       >>> for mol in suppl:\n \
+       >>> for mol in suppl:\n\
        ...   if mol is not None: print mol.GetNumAtoms()\n\
 \n\
   Properties in the SD file are used to set properties on each molecule.\n\

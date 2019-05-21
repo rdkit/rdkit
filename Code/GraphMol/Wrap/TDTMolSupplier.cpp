@@ -23,15 +23,15 @@ namespace python = boost::python;
 namespace RDKit {
 
 std::string tdtMolSupplierClassDoc =
-    "A class which supplies molecules from a TDT file.\n \
-\n \
-  Usage examples:\n \
-\n \
+    "A class which supplies molecules from a TDT file.\n\
+\n\
+  Usage examples:\n\
+\n\
     1) Lazy evaluation: the molecules are not constructed until we ask for them:\n\n\
        >>> suppl = TDTMolSupplier('in.smi')\n\
        >>> for mol in suppl:\n\
        ...    mol.GetNumAtoms()\n\
-\n \
+\n\
     2) Lazy evaluation 2:\n\n\
        >>> suppl = TDTMolSupplier('in.smi')\n\
        >>> mol1 = suppl.next()\n\
@@ -40,14 +40,14 @@ std::string tdtMolSupplierClassDoc =
        >>> mol3 = suppl.next()\n\n\
        # mol3 and mol1 are the same:\
        >>> MolToSmiles(mol3)==MolToSmiles(mol1)\n\
-\n \
+\n\
     3) Random Access:  all molecules are constructed as soon as we ask for the\n\
        length:\n\n\
        >>> suppl = TDTMolSupplier('in.smi')\n\
        >>> nMols = len(suppl)\n\
        >>> for i in range(nMols):\n\
        ...   suppl[i].GetNumAtoms()\n\
-\n \
+\n\
   Properties in the file are used to set properties on each molecule.\n\
   The properties are accessible using the mol.GetProp(propName) method.\n\
 \n";

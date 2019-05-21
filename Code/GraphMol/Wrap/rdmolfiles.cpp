@@ -528,7 +528,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 
   docString =
       "Construct a molecule from a Tripos Mol2 file.\n\n\
-  NOTE:\n \
+  NOTE:\n\
     The parser expects the atom-typing scheme used by Corina.\n\
     Atom types from Tripos' dbtranslate are less supported.\n\
     Other atom typing schemes are unlikely to work.\n\
@@ -560,7 +560,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
               python::return_value_policy<python::manage_new_object>());
   docString =
       "Construct a molecule from a Tripos Mol2 block.\n\n\
-  NOTE:\n \
+  NOTE:\n\
     The parser expects the atom-typing scheme used by Corina.\n\
     Atom types from Tripos' dbtranslate are less supported.\n\
     Other atom typing schemes are unlikely to work.\n\
@@ -653,12 +653,12 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 \n\
     - mol: the molecule\n\
     - includeStereo: (optional) toggles inclusion of stereochemical\n\
-                     information in the output\n\
+      information in the output\n\
     - confId: (optional) selects which conformation to output (-1 = default)\n\
     - kekulize: (optional) triggers kekulization of the molecule before it's written,\n\
-                as suggested by the MDL spec.\n\
+      as suggested by the MDL spec.\n\
     - forceV3000 (optional) force generation a V3000 mol block (happens automatically with \n\
-                 more than 999 atoms or bonds)\n\
+      more than 999 atoms or bonds)\n\
 \n\
   RETURNS:\n\
 \n\
@@ -677,12 +677,12 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     - mol: the molecule\n\
     - filename: the file to write to\n\
     - includeStereo: (optional) toggles inclusion of stereochemical\n\
-                     information in the output\n\
+      information in the output\n\
     - confId: (optional) selects which conformation to output (-1 = default)\n\
     - kekulize: (optional) triggers kekulization of the molecule before it's written,\n\
-                as suggested by the MDL spec.\n\
+      as suggested by the MDL spec.\n\
     - forceV3000 (optional) force generation a V3000 mol block (happens automatically with \n\
-                 more than 999 atoms or bonds)\n\
+      more than 999 atoms or bonds)\n\
 \n\
   RETURNS:\n\
 \n\
@@ -749,9 +749,9 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
  \n\
    Examples of replacements: \n\
  \n\
-     CC{Q}C with {'{Q}':'OCCO'} -> CCOCCOC  \n\
-     C{A}C{Q}C with {'{Q}':'OCCO', '{A}':'C1(CC1)'} -> CC1(CC1)COCCOC  \n\
-     C{A}C{Q}C with {'{Q}':'{X}CC{X}', '{A}':'C1CC1', '{X}':'N'} -> CC1CC1CCNCCNC  \n\
+     CC{Q}C with {'{Q}':'OCCO'} -> CCOCCOC  \n\n\
+     C{A}C{Q}C with {'{Q}':'OCCO', '{A}':'C1(CC1)'} -> CC1(CC1)COCCOC  \n\n\
+     C{A}C{Q}C with {'{Q}':'{X}CC{X}', '{A}':'C1CC1', '{X}':'N'} -> CC1CC1CCNCCNC  \n\n\
 \n";
   python::def("MolFromSmiles", RDKit::MolFromSmiles,
               (python::arg("SMILES"), python::arg("sanitize") = true,
@@ -835,12 +835,12 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     - mol: the molecule\n\
     - atomsToUse : a list of atoms to include in the fragment\n\
     - bondsToUse : (optional) a list of bonds to include in the fragment\n\
-                   if not provided, all bonds between the atoms provided\n\
-                   will be included.\n\
+      if not provided, all bonds between the atoms provided\n\
+      will be included.\n\
     - atomSymbols : (optional) a list with the symbols to use for the atoms\n\
-                    in the SMILES. This should have be mol.GetNumAtoms() long.\n\
+      in the SMILES. This should have be mol.GetNumAtoms() long.\n\
     - bondSymbols : (optional) a list with the symbols to use for the bonds\n\
-                    in the SMILES. This should have be mol.GetNumBonds() long.\n\
+      in the SMILES. This should have be mol.GetNumBonds() long.\n\
     - isomericSmiles: (optional) include information about stereochemistry in\n\
       the SMILES.  Defaults to true.\n\
     - kekuleSmiles: (optional) use the Kekule form (no aromatic bonds) in\n\
@@ -907,12 +907,12 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     - mol: the molecule\n\
     - atomsToUse : a list of atoms to include in the fragment\n\
     - bondsToUse : (optional) a list of bonds to include in the fragment\n\
-                   if not provided, all bonds between the atoms provided\n\
-                   will be included.\n\
+      if not provided, all bonds between the atoms provided\n\
+      will be included.\n\
     - atomSymbols : (optional) a list with the symbols to use for the atoms\n\
-                    in the SMILES. This should have be mol.GetNumAtoms() long.\n\
+      in the SMILES. This should have be mol.GetNumAtoms() long.\n\
     - bondSymbols : (optional) a list with the symbols to use for the bonds\n\
-                    in the SMILES. This should have be mol.GetNumBonds() long.\n\
+      in the SMILES. This should have be mol.GetNumBonds() long.\n\
     - isomericSmiles: (optional) include information about stereochemistry in\n\
       the SMILES.  Defaults to true.\n\
     - kekuleSmiles: (optional) use the Kekule form (no aromatic bonds) in\n\
@@ -1060,12 +1060,12 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     - mol: the molecule\n\
     - confId: (optional) selects which conformation to output (-1 = default)\n\
     - flavor: (optional) \n\
-            flavor & 1 : Write MODEL/ENDMDL lines around each record \n\
-            flavor & 2 : Don't write any CONECT records \n\
-            flavor & 4 : Write CONECT records in both directions \n\
-            flavor & 8 : Don't use multiple CONECTs to encode bond order \n\
-            flavor & 16 : Write MASTER record \n\
-            flavor & 32 : Write TER record \n\
+            - flavor & 1 : Write MODEL/ENDMDL lines around each record \n\
+            - flavor & 2 : Don't write any CONECT records \n\
+            - flavor & 4 : Write CONECT records in both directions \n\
+            - flavor & 8 : Don't use multiple CONECTs to encode bond order \n\
+            - flavor & 16 : Write MASTER record \n\
+            - flavor & 32 : Write TER record \n\
 \n\
   RETURNS:\n\
 \n\
@@ -1083,12 +1083,12 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     - filename: name of the file to write\n\
     - confId: (optional) selects which conformation to output (-1 = default)\n\
     - flavor: (optional) \n\
-            flavor & 1 : Write MODEL/ENDMDL lines around each record \n\
-            flavor & 2 : Don't write any CONECT records \n\
-            flavor & 4 : Write CONECT records in both directions \n\
-            flavor & 8 : Don't use multiple CONECTs to encode bond order \n\
-            flavor & 16 : Write MASTER record \n\
-            flavor & 32 : Write TER record \n\
+            - flavor & 1 : Write MODEL/ENDMDL lines around each record \n\
+            - flavor & 2 : Don't write any CONECT records \n\
+            - flavor & 4 : Write CONECT records in both directions \n\
+            - flavor & 8 : Don't use multiple CONECTs to encode bond order \n\
+            - flavor & 16 : Write MASTER record \n\
+            - flavor & 32 : Write TER record \n\
 \n\
   RETURNS:\n\
 \n\
@@ -1109,16 +1109,16 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       Defaults to True.\n\
 \n\
     - flavor: (optional)\n\
-      0 Protein, L amino acids (default)\n\
-      1 Protein, D amino acids\n\
-      2 RNA, no cap\n\
-      3 RNA, 5' cap\n\
-      4 RNA, 3' cap\n\
-      5 RNA, both caps\n\
-      6 DNA, no cap\n\
-      7 DNA, 5' cap\n\
-      8 DNA, 3' cap\n\
-      9 DNA, both caps\n\
+        - 0 Protein, L amino acids (default)\n\
+        - 1 Protein, D amino acids\n\
+        - 2 RNA, no cap\n\
+        - 3 RNA, 5' cap\n\
+        - 4 RNA, 3' cap\n\
+        - 5 RNA, both caps\n\
+        - 6 DNA, no cap\n\
+        - 7 DNA, 5' cap\n\
+        - 8 DNA, 3' cap\n\
+        - 9 DNA, both caps\n\
 \n\
   RETURNS:\n\
 \n\
@@ -1154,16 +1154,16 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       Defaults to True.\n\
 \n\
 - flavor: (optional)\n\
-  0 Protein, L amino acids (default)\n\
-  1 Protein, D amino acids\n\
-  2 RNA, no cap\n\
-  3 RNA, 5' cap\n\
-  4 RNA, 3' cap\n\
-  5 RNA, both caps\n\
-  6 DNA, no cap\n\
-  7 DNA, 5' cap\n\
-  8 DNA, 3' cap\n\
-  9 DNA, both caps\n\
+    - 0 Protein, L amino acids (default)\n\
+    - 1 Protein, D amino acids\n\
+    - 2 RNA, no cap\n\
+    - 3 RNA, 5' cap\n\
+    - 4 RNA, 3' cap\n\
+    - 5 RNA, both caps\n\
+    - 6 DNA, no cap\n\
+    - 7 DNA, 5' cap\n\
+    - 8 DNA, 3' cap\n\
+    - 9 DNA, both caps\n\
   RETURNS:\n\
 \n\
     a Mol object, None on failure.\n\
@@ -1266,12 +1266,12 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     - mol: the molecule\n\
     - atomsToUse : a list of atoms to include in the fragment\n\
     - bondsToUse : (optional) a list of bonds to include in the fragment\n\
-                   if not provided, all bonds between the atoms provided\n\
-                   will be included.\n\
+      if not provided, all bonds between the atoms provided\n\
+      will be included.\n\
     - atomSymbols : (optional) a list with the symbols to use for the atoms\n\
-                    in the SMILES. This should have be mol.GetNumAtoms() long.\n\
+      in the SMILES. This should have be mol.GetNumAtoms() long.\n\
     - bondSymbols : (optional) a list with the symbols to use for the bonds\n\
-                    in the SMILES. This should have be mol.GetNumBonds() long.\n\
+      in the SMILES. This should have be mol.GetNumBonds() long.\n\
     - breakTies: (optional) force breaking of ranked ties\n\
 \n\
   RETURNS:\n\

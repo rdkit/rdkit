@@ -88,15 +88,15 @@ ForwardSDMolSupplier *createForwardSupplier(std::string filename, bool sanitize,
 }
 
 std::string csdMolSupplierClassDoc =
-    "A class which supplies molecules from an SD file.\n \
-\n \
-  Usage examples:\n \
-\n \
+    "A class which supplies molecules from an SD file.\n\
+\n\
+  Usage examples:\n\
+\n\
     1) Lazy evaluation: the molecules are not constructed until we ask for them:\n\n\
        >>> suppl = SDMolSupplier('in.smi')\n\
        >>> for mol in suppl:\n\
        ...    mol.GetNumAtoms()\n\
-\n \
+\n\
   Properties in the SD file are used to set properties on each molecule.\n\
   The properties are accessible using the mol.GetProp(propName) method.\n\
 \n";
