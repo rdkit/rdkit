@@ -74,7 +74,10 @@ class RDKIT_GRAPHMOL_EXPORT Conformer : public RDProps {
   bool hasOwningMol() const { return dp_mol != nullptr; };
 
   //! Get the molecule that owns this instance
-  ROMol &getOwningMol() const { return *dp_mol; }
+  ROMol &getOwningMol() const {     
+    PRECONDITION(dp_mol, "no owner");
+    return *dp_mol; 
+  }
 
   //! Get a const reference to the vector of atom positions
   const RDGeom::POINT3D_VECT &getPositions() const;
