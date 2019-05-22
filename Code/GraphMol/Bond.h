@@ -142,7 +142,10 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
   //! returns the status of our \c isConjugated flag
   bool getIsConjugated() const { return df_isConjugated; };
 
-  //! returns a reference to the ROMol that owns this Bond
+  //! returns whether or not this instance belongs to a molecule
+  bool hasOwningMol() const { return dp_mol != nullptr; };
+
+  //! returns a reference to the ROMol that owns this instance
   ROMol &getOwningMol() const {
     PRECONDITION(dp_mol, "no owner");
     return *dp_mol;

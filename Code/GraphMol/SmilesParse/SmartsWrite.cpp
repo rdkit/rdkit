@@ -302,7 +302,8 @@ std::string getAtomSmartsSimple(const QueryAtom *qatom,
   }
 
   // handle atomic stereochemistry
-  if (qatom->getOwningMol().hasProp(common_properties::_doIsoSmiles)) {
+  if (qatom->hasOwningMol() &&
+      qatom->getOwningMol().hasProp(common_properties::_doIsoSmiles)) {
     if (qatom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
         !qatom->hasProp(_qatomHasStereoSet) &&
         !qatom->hasProp(common_properties::_brokenChirality)) {
@@ -402,10 +403,11 @@ std::string getBondSmartsSimple(const Bond *bond,
     bool reverseDative =
         (atomToLeftIdx >= 0 &&
          bond->getBeginAtomIdx() == static_cast<unsigned int>(atomToLeftIdx));
-    res += getBasicBondRepr(
-        static_cast<Bond::BondType>(bquery->getVal()), bond->getBondDir(),
-        bond->getOwningMol().hasProp(common_properties::_doIsoSmiles),
-        reverseDative);
+    bool doIsoSmiles =
+        !bond->hasOwningMol() ||
+        bond->getOwningMol().hasProp(common_properties::_doIsoSmiles);
+    res += getBasicBondRepr(static_cast<Bond::BondType>(bquery->getVal()),
+                            bond->getBondDir(), doIsoSmiles, reverseDative);
   } else {
     std::stringstream msg;
     msg << "Canot write smarts for this query bond type : " << descrip;
@@ -715,7 +717,8 @@ std::string getNonQueryAtomSmarts(const QueryAtom *qatom) {
     res << qatom->getSymbol();
   }
 
-  if (qatom->getOwningMol().hasProp(common_properties::_doIsoSmiles)) {
+  if (qatom->hasOwningMol() &&
+      qatom->getOwningMol().hasProp(common_properties::_doIsoSmiles)) {
     if (qatom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
         !qatom->hasProp(_qatomHasStereoSet) &&
         !qatom->hasProp(common_properties::_brokenChirality)) {
@@ -774,10 +777,11 @@ std::string getNonQueryBondSmarts(const QueryBond *qbond, int atomToLeftIdx) {
     bool reverseDative =
         (atomToLeftIdx >= 0 &&
          qbond->getBeginAtomIdx() == static_cast<unsigned int>(atomToLeftIdx));
-    res = getBasicBondRepr(
-        qbond->getBondType(), qbond->getBondDir(),
-        qbond->getOwningMol().hasProp(common_properties::_doIsoSmiles),
-        reverseDative);
+    bool doIsoSmiles =
+        !qbond->hasOwningMol() ||
+        qbond->getOwningMol().hasProp(common_properties::_doIsoSmiles);
+    res = getBasicBondRepr(qbond->getBondType(), qbond->getBondDir(),
+                           doIsoSmiles, reverseDative);
   }
 
   return res;

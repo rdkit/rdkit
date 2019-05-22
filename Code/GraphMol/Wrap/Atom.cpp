@@ -147,8 +147,8 @@ struct atom_wrapper {
             "Constructor, takes either an int (atomic number) or a string "
             "(atomic symbol).\n"))
 
-        .def("__copy__", &Atom::copy, 
-            python::return_value_policy<
+        .def("__copy__", &Atom::copy,
+             python::return_value_policy<
                  python::manage_new_object,
                  python::with_custodian_and_ward_postcall<0, 1>>(),
              "Create a copy of the atom")
@@ -225,6 +225,8 @@ struct atom_wrapper {
         .def("GetHybridization", &Atom::getHybridization,
              "Returns the atom's hybridization.\n")
 
+        .def("HasOwningMol", &Atom::hasOwningMol,
+             "Returns whether or not this instance belongs to a molecule.\n")
         .def("GetOwningMol", &Atom::getOwningMol,
              "Returns the Mol that owns this atom.\n",
              python::return_internal_reference<>())
@@ -351,18 +353,20 @@ struct atom_wrapper {
              (python::arg("self"), python::arg("key"), python::arg("val")),
              "Sets an atomic property\n\n"
              "  ARGUMENTS:\n"
-             "    - key: the name of the property to be set (an ExplicitBitVect).\n"
+             "    - key: the name of the property to be set (an "
+             "ExplicitBitVect).\n"
              "    - value: the property value (an ExplicitBitVect).\n\n")
 
         .def("GetExplicitBitVectProp", GetProp<Atom, ExplicitBitVect>,
              "Returns the value of the property.\n\n"
              "  ARGUMENTS:\n"
-             "    - key: the name of the property to return (a ExplicitBitVect).\n\n"
+             "    - key: the name of the property to return (a "
+             "ExplicitBitVect).\n\n"
              "  RETURNS: an ExplicitBitVect \n\n"
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n")
-        
+
         .def("HasProp", AtomHasProp,
              "Queries a Atom to see if a particular property has been "
              "assigned.\n\n"
