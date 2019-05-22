@@ -42,9 +42,13 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
       add_definitions("-DBOOST_IOSTREAMS_DYN_LINK")
     endif()
 
-    rdkit_library(maeparser ${MAESOURCES} LINK_LIBRARIES ${Boost_LIBRARIES} SHARED)
+    # when we're doing static linkage of boost, at least on windows, we need
+    # to also link against zlib (due to iostreams)
+    find_package(ZLIB)
+
+    rdkit_library(maeparser ${MAESOURCES} LINK_LIBRARIES ${Boost_LIBRARIES} ${ZLIB_LIBRARIES} SHARED)
     install(TARGETS maeparser DESTINATION ${RDKit_LibDir})
-    set(maeparser_LIBRARIES maeparser)
+    set(maeparser_LIBRARIES maeparser ${ZLIB_LIBRARIES})
 
   endif(MAEPARSER_FORCE_BUILD OR (NOT maeparser_FOUND))
 
@@ -75,9 +79,9 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
     # when we're doing static linkage of boost, at least on windows, we need
     # to also link against zlib (due to iostreams)
     find_package(ZLIB)
-    rdkit_library(coordgen ${CGSOURCES} SHARED LINK_LIBRARIES maeparser ${ZLIB_LIBRARIES})
+    rdkit_library(coordgen ${CGSOURCES} SHARED LINK_LIBRARIES ${maeparser_LIBRARIES})
     install(TARGETS coordgen DESTINATION ${RDKit_LibDir})
-    set(coordgen_LIBRARIES coordgen )
+    set(coordgen_LIBRARIES coordgen)
     set(coordgen_TEMPLATE_FILE ${COORDGEN_DIR}/templates.mae )
 
   endif(COORDGEN_FORCE_BUILD OR (NOT coordgen_FOUND))

@@ -12,6 +12,13 @@ if (WIN32)
   if(Boost_zlib_FOUND)
     set(zlib_lib Boost::zlib)
   endif()
+else()
+  if(Boost_USE_STATIC_LIBS)
+    # when we're doing static linkage of boost, at least on windows, we need
+    # to also link against zlib (due to iostreams)
+    find_package(ZLIB)
+    set(zlib_lib ${ZLIB_LIBRARIES})
+  endif()
 endif()
 
 add_definitions(-DRDKIT_RDSTREAMS_BUILD)
@@ -19,5 +26,3 @@ endif(RDK_USE_BOOST_IOSTREAMS)
 rdkit_library(RDStreams streams.cpp
               LINK_LIBRARIES ${Boost_LIBRARIES} ${link_iostreams} ${zlib_lib}
               DEST RDStreams)
-
-
