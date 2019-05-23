@@ -134,25 +134,6 @@ public class PicklingTests extends GraphMolTest {
 		}
 	}
 
-	@Test
-	public void testDepicklerCrash() {
-		// this was github #2466
-		String smi = "CC";
-		ROMol m1 = RWMol.MolFromSmiles(smi);
-		m1.getAtomWithIdx(0).setAtomMapNum(-1,false);
-		m1.getAtomWithIdx(1).setAtomMapNum(-1,false);
-		
-		Int_Vect pickle = m1.ToBinary();
-		boolean ok=true;
-		ROMol m2;
-		try {
-			m2 = ROMol.MolFromBinary(pickle);
-			ok = false;
-		} catch(final MolPicklerException ex) {
-			ok = true;
-		}
-		assertTrue(ok);
-	}
 	public static void main(String args[]) {
 		org.junit.runner.JUnitCore.main("org.RDKit.PicklingTests");
 	}
