@@ -83,7 +83,7 @@ namespace {
     } else {
       counts[key] = 1;
     }
-    nHs += (*atomIt)->getTotalNumHs();
+    nHs += (*atom)->getTotalNumHs();
   }
 
    if (nHs) {
