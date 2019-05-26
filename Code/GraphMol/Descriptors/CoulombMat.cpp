@@ -48,17 +48,15 @@ std::unique_ptr<double[]> randnormal(const int nrolls) {
 
   std::normal_distribution<double> distribution(0.0,1.0);
   double *result = new double[nrolls];
-  //std::cout << "rand\n";
   for (int i=0; i<nrolls; ++i) {
     result[i]=distribution(mt);
-    //std::cout << result[i] << ",";
   }
-  //std::cout << "\n";
   return std::unique_ptr<double[]>(result);
 }
 
 VectorXd getUpperMat(MatrixXd mat) {
-
+  
+  PRECONDITION(mat.rows()!=mat.cols(), "Mat must be symetrical");
   VectorXd res(mat.rows()*(mat.cols()+1)/2);
   Index size = mat.rows();
   Index offset = 0;

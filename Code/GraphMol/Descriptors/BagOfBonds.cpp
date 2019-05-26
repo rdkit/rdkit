@@ -45,7 +45,10 @@ namespace Descriptors {
 namespace {
 
 
-VectorXd getUpperMat(MatrixXd mat) {
+  VectorXd getUpperMat(MatrixXd mat) {
+    // add precondition work on symetric matrix only ie mat.rows()==mat.cols()
+  PRECONDITION(mat.rows()!=mat.cols(), "Mat must be symetrical");
+
   VectorXd res(mat.rows()*(mat.cols()+1)/2);
   Index size = mat.rows();
   Index offset = 0;
@@ -57,18 +60,17 @@ VectorXd getUpperMat(MatrixXd mat) {
   return res;
 }
 
-std::list<std::pair<std::string, unsigned int> > EnumeratesAtomsPair(const RDKit::ROMol &mol, 
+ std::list<std::pair<std::string, unsigned int> > EnumeratesAtomsPair(const RDKit::ROMol &mol, 
     bool separateIsotopes, bool abbreviateHIsotopes) {
   std::map<std::string, unsigned int> counts;
   unsigned int nHs = 0;
   std::string key;
   const RDKit::PeriodicTable *table = RDKit::PeriodicTable::getTable();
-  for (RDKit::ROMol::ConstAtomIterator atomIt = mol.beginAtoms();
-       atomIt != mol.endAtoms(); ++atomIt) {
-    int atNum = (*atomIt)->getAtomicNum();
+  for(const auto atom : mol.atoms()) {
+    int atNum = (*atom)->getAtomicNum();
     key = table->getElementSymbol(atNum);
     if (separateIsotopes) {
-      unsigned int isotope = (*atomIt)->getIsotope();
+      unsigned int isotope = (*atom)->getIsotope();
       if (abbreviateHIsotopes && atNum == 1 && (isotope == 2 || isotope == 3)) {
         if (isotope == 2)
           key = "D";
@@ -84,7 +86,7 @@ std::list<std::pair<std::string, unsigned int> > EnumeratesAtomsPair(const RDKit
     nHs += (*atomIt)->getTotalNumHs();
   }
 
-  if (nHs) {
+   if (nHs) {
     key = "H";
     if (counts.find(key) != counts.end()) {
       counts[key] += nHs;
@@ -95,8 +97,7 @@ std::list<std::pair<std::string, unsigned int> > EnumeratesAtomsPair(const RDKit
 
   // create the Diagonal single atoms count
   std::list<std::pair<std::string, unsigned int> > ks;
-  for (std::map<std::string, unsigned int>::const_iterator countIt = counts.begin();
-       countIt != counts.end(); ++countIt) {
+  for(const auto &count : counts) {
     // store the diagonal (individual atoms)
     std::pair<std::string, unsigned int > key = std::make_pair(countIt->first, countIt->second);
     ks.push_back(key);
@@ -106,13 +107,13 @@ std::list<std::pair<std::string, unsigned int> > EnumeratesAtomsPair(const RDKit
   // enumerate Heterogenous Atom Pairs (simplely number product)
   // heterogens pairs
   for (unsigned int i = 0; i < nbElements - 1 ; i++) {
-      std::map<std::string, unsigned int>::const_iterator it1 = counts.begin();
+      auto it1 = counts.begin();
       std::advance(it1,i);
-      std::pair<std::string, unsigned int> Values1 = *it1;
+      auto Values1 = *it1;
       for (unsigned int j = i+1; j < nbElements ; j++) {
-        std::map<std::string, unsigned int>::const_iterator it2= counts.begin();
+        auto it2 = counts.begin();
         std::advance(it2,j);
-        std::pair<std::string, unsigned int> Values2 = *it2;
+        auto Values2 = *it2;
         std::string PairString;
         // sorting string order
         if (Values1.first > Values2.first) {
@@ -127,8 +128,7 @@ std::list<std::pair<std::string, unsigned int> > EnumeratesAtomsPair(const RDKit
       }
   }
 
-  for (std::map<std::string, unsigned int>::const_iterator countIt = counts.begin();
-       countIt != counts.end(); ++countIt) {
+  for(const auto &countIt : counts) {
     //"homologues":
     unsigned int nbElementAtom = countIt->second;
     unsigned int res =nbElementAtom*(nbElementAtom-1)/2;
@@ -140,10 +140,10 @@ std::list<std::pair<std::string, unsigned int> > EnumeratesAtomsPair(const RDKit
   }
   return ks;
 
-}
+ }
 
 
- BagMatrix getCoulombMatBags(Eigen::VectorXd numbers, int numatoms, Eigen::MatrixXd Distance3D,  std::vector<std::string > S, int alpha) {
+  BagMatrix getCoulombMatBags(Eigen::VectorXd numbers, int numatoms, Eigen::MatrixXd Distance3D,  std::vector<std::string > S, int alpha) {
   // 3D distance matrix
   Eigen::MatrixXd ProdV = numbers*numbers.transpose(); // outer products of vector ie (z[i] * z[j])
 
@@ -161,7 +161,7 @@ std::list<std::pair<std::string, unsigned int> > EnumeratesAtomsPair(const RDKit
     s1 = S[i];
     BagsCodes.push_back(s1); // adding the diagonal once!
 
-    for (unsigned int j = i+1; j< numatoms; j++ ){
+     for (unsigned int j = i+1; j< numatoms; j++ ){
       s2 = S[j];
       if (s1 > s2) {
         key = s2+s1;
@@ -177,22 +177,20 @@ std::list<std::pair<std::string, unsigned int> > EnumeratesAtomsPair(const RDKit
   return BagMatrix{RES , BagsCodes}; 
 }
 
-///// code to be expose to python directly not simple
+ ///// code to be expose to python directly not simple
 // we can parallelized cause we need the max value per key
  std::map<std::string, unsigned int> getBoBSizefromSmiles(std::vector<std::string> smiles) {
     //unsigned int idx = 0;
-    //std::vector< std::list < std::pair<std::string, unsigned int> > > myData(smiles.size());
     std::list<std::pair<std::string, unsigned int> > fulldata;
     std::map<std::string, unsigned int> Global;
     std::string key;
 
-    //while (idx < smiles.size()) {
     for (auto const& smi :  smiles) {
-      RDKit::ROMol *mol;
+      std::unique_ptr<RDKit::ROMol> *mol;
       mol = RDKit::SmilesToMol(smi);
       std::list<std::pair<std::string, unsigned int>> data = EnumeratesAtomsPair(*mol, false, false);
 
-      for (auto const& pair :  data) {
+       for (auto const& pair :  data) {
           key = pair.first;
           // don't need to find the value just if exists! count instead of find is faster
           if (Global.count(key) > 0) {
@@ -205,18 +203,18 @@ std::list<std::pair<std::string, unsigned int> > EnumeratesAtomsPair(const RDKit
           }
       }
 
-      //++idx;
+       //++idx;
       delete mol;
     }
 
 
-    return Global;
+     return Global;
 }
 
 void getBagOfBonds(const RDKit::ROMol &mol, std::vector<double> &res, double *dist3D, 
 unsigned int numAtoms, std::map<std::string, unsigned int> MaxBags, int alpha) {
 
-  // initialize the variables for the getCoulombMat
+   // initialize the variables for the getCoulombMat
   int numatoms= mol.getNumAtoms();
   double *z = new double[numatoms];
   std::vector<std::string > S;
@@ -225,14 +223,14 @@ unsigned int numAtoms, std::map<std::string, unsigned int> MaxBags, int alpha) {
       S.push_back(mol.getAtomWithIdx(i)->getSymbol());
   }
 
-  Eigen::VectorXd numbers = Map<VectorXd>(z, numatoms); // convert the number array to vector
-  
-  Eigen::MatrixXd Distance3D = Map<MatrixXd>(dist3D, numatoms, numatoms); // convert the result array to matrix (1 column)
+   Eigen::VectorXd numbers = Map<VectorXd>(z, numatoms); // convert the number array to vector
 
-  BagMatrix CMBags = getCoulombMatBags(numbers,  numatoms,  Distance3D, S ,alpha);
+   Eigen::MatrixXd Distance3D = Map<MatrixXd>(dist3D, numatoms, numatoms); // convert the result array to matrix (1 column)
+
+   BagMatrix CMBags = getCoulombMatBags(numbers,  numatoms,  Distance3D, S ,alpha);
   // return the BagTag and UCM values as "upper Diagonal elements" only
 
-  // extract the bag CM values index from BagMatrix into sorted vectors padded using MaxBags order & position index!
+   // extract the bag CM values index from BagMatrix into sorted vectors padded using MaxBags order & position index!
   std::string key;
   unsigned int sizemax;
   std::vector<double> val;
@@ -250,10 +248,10 @@ unsigned int numAtoms, std::map<std::string, unsigned int> MaxBags, int alpha) {
             i++;
          } 
 
-         sizemax = MBags->second;
+          sizemax = MBags->second;
          //std::cout << key << ": found :" << mybagarray.size() << ", max : " << sizemax << "\n";
 
-         std::vector<double> b;
+          std::vector<double> b;
          if (sizemax-mybagarray.size() > 0) {
            b.clear();
            b.resize(sizemax-mybagarray.size());
@@ -264,24 +262,24 @@ unsigned int numAtoms, std::map<std::string, unsigned int> MaxBags, int alpha) {
          }
          if (mybagarray.size() > 0 )
          {
-           // descending order
-           std::sort(mybagarray.begin(), mybagarray.end());
+            // descending order
+            std::sort(mybagarray.begin(), mybagarray.end());
 
-           std::reverse(mybagarray.begin(), mybagarray.end());
-       
-           mybagarray.insert(std::end(mybagarray), std::begin(b), std::end(b));
+            std::reverse(mybagarray.begin(), mybagarray.end());
+
+            mybagarray.insert(std::end(mybagarray), std::begin(b), std::end(b));
          }
          else {
            mybagarray = b;
          }
-        
-        val.insert(std::end(val), std::begin(mybagarray), std::end(mybagarray));
+
+         val.insert(std::end(val), std::begin(mybagarray), std::end(mybagarray));
   }
     res = val;
 }
 
 
-void getBoBVector(const ROMol &mol, std::vector<double> &res, int confId, unsigned int numAtoms, int alpha,
+ void getBoBVector(const ROMol &mol, std::vector<double> &res, int confId, unsigned int numAtoms, int alpha,
                std::map<std::string, unsigned int> MaxBags) {
     // 3D distance matrix
     double *dist3D = MolOps::get3DDistanceMat(mol, confId, false, true);
@@ -291,7 +289,7 @@ void getBoBVector(const ROMol &mol, std::vector<double> &res, int confId, unsign
 }
 }  // end of anonymous namespace
 
-void BagOfBondsVector(const ROMol &mol, std::vector<double> &res, int confId, int alpha,
+ void BagOfBondsVector(const ROMol &mol, std::vector<double> &res, int confId, int alpha,
     std::map<std::string, unsigned int> MaxBags) {
     PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers")
     unsigned int numAtoms = mol.getNumAtoms();
@@ -301,10 +299,10 @@ void BagOfBondsVector(const ROMol &mol, std::vector<double> &res, int confId, in
     getBoBVector(mol, res, confId, numAtoms, alpha, MaxBags);
 }
 
-std::map<std::string, unsigned int>  BagOfBondsMap(std::vector<std::string>  smiles) {
+ std::map<std::string, unsigned int>  BagOfBondsMap(const std::vector<std::string>  smiles) {
     std::map<std::string, unsigned int> res =  getBoBSizefromSmiles(smiles);
     return res;
 }
 
-}  // namespace Descriptors
-}  // namespace RDKit
+ }  // namespace Descriptors
+}  // namespace RDKit 
