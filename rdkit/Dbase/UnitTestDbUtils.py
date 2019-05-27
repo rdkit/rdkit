@@ -14,8 +14,7 @@
 import os
 import tempfile
 import unittest
-
-from six import StringIO
+from io import StringIO
 
 from rdkit import RDConfig
 from rdkit.Dbase import DbUtils
