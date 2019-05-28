@@ -39,7 +39,7 @@ void test1Encode() {
 
   // RDGeom::writeGridToFile(grd, "junk.grd");
   // MolToMolFile(m, "junk.mol", 0);
-  CHECK_INVARIANT(grd.getOccupancyVect()->getTotalVal() == 9250, "");
+  CHECK_INVARIANT(grd.getOccupancyVect()->getTotalVal() == 7405, "");
 }
 
 void test2Compare() {
@@ -68,9 +68,9 @@ void test2Compare() {
   double rmsd = MolAlign::alignMol(*m, *m2);
   CHECK_INVARIANT(rmsd >= 0.0, "");
   dist = MolShapes::tanimotoDistance(*m, *m2);
-  CHECK_INVARIANT(RDKit::feq(dist, 0.2813), "");
+  CHECK_INVARIANT(RDKit::feq(dist, 0.3146), "");
   dist = MolShapes::tverskyIndex(*m, *m2, 1.0, 1.0);
-  CHECK_INVARIANT(RDKit::feq(dist, 0.7187), "");
+  CHECK_INVARIANT(RDKit::feq(dist, 0.6854), "");
   delete m2;
 
   m2 = MolFileToMol(fname2);
@@ -84,7 +84,7 @@ void test2Compare() {
   rmsd = MolAlign::alignMol(*m2, *m, 0, 0, &atomMap);
   dist = MolShapes::tanimotoDistance(*m, *m2);
 
-  CHECK_INVARIANT(RDKit::feq(dist, 0.3244), "");
+  CHECK_INVARIANT(RDKit::feq(dist, 0.3593), "");
   delete m;
   delete m2;
 }
