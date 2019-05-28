@@ -42,6 +42,6 @@ RDKIT_FILEPARSERS_EXPORT std::string MolToFASTA(const ROMol &mol);
  *structures
  */
 RDKIT_FILEPARSERS_EXPORT std::string MolToHELM(const ROMol &mol);
-}
+}  // namespace RDKit
 
 #endif

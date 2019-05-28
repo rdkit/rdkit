@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 
 namespace RDKit {
-typedef boost::uint32_t atomindex_t;
+typedef std::uint32_t atomindex_t;
 }

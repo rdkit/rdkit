@@ -842,7 +842,7 @@ void testGithub252() {
   bool ok = false;
   try {
     featSPtr->getPos();
-  } catch (const Invar::Invariant &i) {
+  } catch (const Invar::Invariant &) {
     ok = true;
   }
 

@@ -103,5 +103,5 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2Dwx : public MolDraw2D {
  private:
   wxDC &m_dc;
 };
-}
+}  // namespace RDKit
 #endif  // MOLDRAW2DWX_H

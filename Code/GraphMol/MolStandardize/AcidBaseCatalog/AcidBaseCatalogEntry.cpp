@@ -22,7 +22,7 @@ namespace MolStandardize {
 void AcidBaseCatalogEntry::toStream(std::ostream &ss) const {
   //  ReactionPickler::pickleReaction(*dp_transform, ss);
 
-  boost::int32_t tmpInt;
+  std::int32_t tmpInt;
   tmpInt = getBitId();
   streamWrite(ss, tmpInt);
 
@@ -42,7 +42,7 @@ void AcidBaseCatalogEntry::initFromStream(std::istream &ss) {
   // the molecule TODO:
   //  ReactionPickler::reactionFromPickle(ss, *dp_transform);
 
-  boost::int32_t tmpInt;
+  std::int32_t tmpInt;
   // the bitId:
   streamRead(ss, tmpInt);
   setBitId(tmpInt);

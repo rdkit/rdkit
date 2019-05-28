@@ -10,7 +10,7 @@
 #define PY_ARRAY_UNIQUE_SYMBOL Py_Array_API_Clustering
 
 #include <RDBoost/Wrap.h>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 
 namespace python = boost::python;
 

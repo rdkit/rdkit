@@ -19,6 +19,8 @@
 #include <GraphMol/RDKitBase.h>
 #include <Query/QueryObjects.h>
 #include <Query/Query.h>
+#include <DataStructs/BitVects.h>
+#include <DataStructs/BitOps.h>
 
 #ifdef RDK_THREADSAFE_SSS
 #include <mutex>
@@ -121,7 +123,7 @@ static inline int makeAtomType(int atomic_num, bool aromatic) {
   return atomic_num + 1000 * static_cast<int>(aromatic);
 }
 static inline void parseAtomType(int val, int &atomic_num, bool &aromatic) {
-  if(val>1000) {
+  if (val > 1000) {
     aromatic = true;
     atomic_num = val - 1000;
   } else {
@@ -129,13 +131,13 @@ static inline void parseAtomType(int val, int &atomic_num, bool &aromatic) {
     atomic_num = val;
   }
 }
-static inline bool getAtomTypeIsAromatic(int val){
-    if(val>1000) return true;
-    return false;
+static inline bool getAtomTypeIsAromatic(int val) {
+  if (val > 1000) return true;
+  return false;
 }
-static inline int getAtomTypeAtomicNum(int val){
-    if(val>1000) return val-1000;
-    return val;
+static inline int getAtomTypeAtomicNum(int val) {
+  if (val > 1000) return val - 1000;
+  return val;
 }
 
 static inline int queryAtomType(Atom const *at) {
@@ -231,8 +233,8 @@ static inline int queryBondOrder(Bond const *bond) {
   return static_cast<int>(bond->getBondType());
 };
 static inline int queryBondIsSingleOrAromatic(Bond const *bond) {
-  return static_cast<int>(bond->getBondType()==Bond::SINGLE ||
-      bond->getBondType()==Bond::AROMATIC);
+  return static_cast<int>(bond->getBondType() == Bond::SINGLE ||
+                          bond->getBondType() == Bond::AROMATIC);
 };
 static inline int queryBondDir(Bond const *bond) {
   return static_cast<int>(bond->getBondDir());
@@ -821,7 +823,7 @@ class HasPropWithValueQuery
       try {
         T atom_val = what->template getProp<T>(propname);
         res = Queries::queryCmp(atom_val, this->val, this->tolerance) == 0;
-      } catch (KeyErrorException &e) {
+      } catch (KeyErrorException &) {
         res = false;
       } catch (boost::bad_any_cast &) {
         res = false;
@@ -922,10 +924,90 @@ class HasPropWithValueQuery<TargetPtr, std::string>
   }
 };
 
+template <class TargetPtr>
+class HasPropWithValueQuery<TargetPtr, ExplicitBitVect>
+    : public Queries::EqualityQuery<int, TargetPtr, true> {
+  std::string propname;
+  ExplicitBitVect val;
+  float tol;
+
+ public:
+  HasPropWithValueQuery()
+      : Queries::EqualityQuery<int, TargetPtr, true>(),
+        propname(),
+        val(),
+        tol(0.0) {
+    this->setDescription("HasPropWithValue");
+    this->setDataFunc(0);
+  };
+
+  explicit HasPropWithValueQuery(const std::string &prop,
+                                 const ExplicitBitVect &v, float tol = 0.0)
+      : Queries::EqualityQuery<int, TargetPtr, true>(),
+        propname(prop),
+        val(v),
+        tol(tol) {
+    this->setDescription("HasPropWithValue");
+    this->setDataFunc(0);
+  };
+
+  virtual bool Match(const TargetPtr what) const {
+    bool res = what->hasProp(propname);
+    if (res) {
+      try {
+        const ExplicitBitVect &bv =
+            what->template getProp<const ExplicitBitVect &>(propname);
+        const double tani = TanimotoSimilarity(val, bv);
+        res = (1.0 - tani) <= tol;
+      } catch (KeyErrorException) {
+        res = false;
+      } catch (boost::bad_any_cast) {
+        res = false;
+      }
+#ifdef __GNUC__
+#if (__GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 2))
+      catch (...) {
+        // catch all -- this is currently necessary to
+        //  trap some bugs in boost+gcc configurations
+        //  Normally, this is not the correct thing to
+        //  do, but the only exception above is due
+        //  to the boost any_cast which is trapped
+        //  by the Boost python wrapper when it shouldn't
+        //  be.
+        res = false;
+      }
+#endif
+#endif
+    }
+    if (this->getNegation()) {
+      res = !res;
+    }
+    return res;
+  }
+
+  //! returns a copy of this query
+  Queries::Query<int, TargetPtr, true> *copy() const {
+    HasPropWithValueQuery<TargetPtr, ExplicitBitVect> *res =
+        new HasPropWithValueQuery<TargetPtr, ExplicitBitVect>(
+            this->propname, this->val, this->tol);
+    res->setNegation(this->getNegation());
+    res->d_description = this->d_description;
+    return res;
+  }
+};
+
 template <class Target, class T>
 Queries::EqualityQuery<int, const Target *, true> *makePropQuery(
     const std::string &propname, const T &val, const T &tolerance = T()) {
   return new HasPropWithValueQuery<const Target *, T>(propname, val, tolerance);
+}
+
+template <class Target>
+Queries::EqualityQuery<int, const Target *, true> *makePropQuery(
+    const std::string &propname, const ExplicitBitVect &val,
+    float tolerance = 0.0) {
+  return new HasPropWithValueQuery<const Target *, ExplicitBitVect>(
+      propname, val, tolerance);
 }
 
 RDKIT_GRAPHMOL_EXPORT bool isComplexQuery(const Bond *b);

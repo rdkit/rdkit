@@ -21,6 +21,7 @@
 #include "QueryBond.h"
 #include "MolPickler.h"
 #include "Conformer.h"
+#include "SubstanceGroup.h"
 
 namespace RDKit {
 class QueryAtom;
@@ -104,6 +105,11 @@ void ROMol::initFromOther(const ROMol &other, bool quickCopy, int confId) {
       }
     }
 
+    // Copy sgroups
+    for (const auto &sg : getSubstanceGroups(other)) {
+      addSubstanceGroup(*this, sg);
+    }
+
     dp_props = other.dp_props;
 
     // Bookmarks should be copied as well:
@@ -185,7 +191,7 @@ const Atom *ROMol::getAtomWithIdx(unsigned int idx) const {
 }
 
 // returns the first inserted atom with the given bookmark
-Atom *ROMol::getAtomWithBookmark(const int mark) {
+Atom *ROMol::getAtomWithBookmark(int mark) {
   PRECONDITION(d_atomBookmarks.count(mark) != 0, "atom bookmark not found");
   PRECONDITION(d_atomBookmarks[mark].begin() != d_atomBookmarks[mark].end(),
                "atom bookmark not found");
@@ -194,13 +200,20 @@ Atom *ROMol::getAtomWithBookmark(const int mark) {
 };
 
 // returns all atoms with the given bookmark
-ROMol::ATOM_PTR_LIST &ROMol::getAllAtomsWithBookmark(const int mark) {
+ROMol::ATOM_PTR_LIST &ROMol::getAllAtomsWithBookmark(int mark) {
   PRECONDITION(d_atomBookmarks.count(mark) != 0, "atom bookmark not found");
   return d_atomBookmarks[mark];
 };
 
+// returns the unique atom with the given bookmark
+Atom *ROMol::getUniqueAtomWithBookmark(int mark) {
+  PRECONDITION(d_atomBookmarks.count(mark) == 1,
+               "multiple atoms with same bookmark");
+  return getAtomWithBookmark(mark);
+}
+
 // returns the first inserted bond with the given bookmark
-Bond *ROMol::getBondWithBookmark(const int mark) {
+Bond *ROMol::getBondWithBookmark(int mark) {
   PRECONDITION(d_bondBookmarks.count(mark) != 0, "bond bookmark not found");
   PRECONDITION(d_bondBookmarks[mark].begin() != d_bondBookmarks[mark].end(),
                "bond bookmark not found");
@@ -208,14 +221,21 @@ Bond *ROMol::getBondWithBookmark(const int mark) {
 };
 
 // returns all bonds with the given bookmark
-ROMol::BOND_PTR_LIST &ROMol::getAllBondsWithBookmark(const int mark) {
+ROMol::BOND_PTR_LIST &ROMol::getAllBondsWithBookmark(int mark) {
   PRECONDITION(d_bondBookmarks.count(mark) != 0, "bond bookmark not found");
   return d_bondBookmarks[mark];
 };
 
+// returns the unique bond with the given bookmark
+Bond *ROMol::getUniqueBondWithBookmark(int mark) {
+  PRECONDITION(d_bondBookmarks.count(mark) == 1,
+               "multiple bons with same bookmark");
+  return getBondWithBookmark(mark);
+}
+
 void ROMol::clearAtomBookmark(const int mark) { d_atomBookmarks.erase(mark); }
 
-void ROMol::clearAtomBookmark(const int mark, const Atom *atom) {
+void ROMol::clearAtomBookmark(int mark, const Atom *atom) {
   if (d_atomBookmarks.count(mark) != 0) {
     ATOM_PTR_LIST *entry = &d_atomBookmarks[mark];
     unsigned int tgtIdx = atom->getIdx();
@@ -231,8 +251,8 @@ void ROMol::clearAtomBookmark(const int mark, const Atom *atom) {
   }
 }
 
-void ROMol::clearBondBookmark(const int mark) { d_bondBookmarks.erase(mark); }
-void ROMol::clearBondBookmark(const int mark, const Bond *bond) {
+void ROMol::clearBondBookmark(int mark) { d_bondBookmarks.erase(mark); }
+void ROMol::clearBondBookmark(int mark, const Bond *bond) {
   if (d_bondBookmarks.count(mark) != 0) {
     BOND_PTR_LIST *entry = &d_bondBookmarks[mark];
     unsigned int tgtIdx = bond->getIdx();
@@ -540,7 +560,7 @@ const Conformer &ROMol::getConformer(int id) const {
       return *(*ci);
     }
   }
-  // we did not find a coformation with the specified ID
+  // we did not find a conformation with the specified ID
   std::string mesg = "Can't find conformation with ID: ";
   mesg += id;
   throw ConformerException(mesg);
@@ -561,7 +581,7 @@ Conformer &ROMol::getConformer(int id) {
       return *(*ci);
     }
   }
-  // we did not find a coformation with the specified ID
+  // we did not find a conformation with the specified ID
   std::string mesg = "Can't find conformation with ID: ";
   mesg += id;
   throw ConformerException(mesg);

@@ -10,7 +10,7 @@
 """ Descriptors derived from a molecule's 3D structure
 
 """
-from __future__ import print_function
+
 from rdkit.Chem import rdMolDescriptors
 
 

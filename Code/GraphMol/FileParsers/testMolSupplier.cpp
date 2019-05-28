@@ -19,19 +19,18 @@
 #include "MolSupplier.h"
 #include "MolWriters.h"
 #include "FileParsers.h"
+#include "FileParserUtils.h"
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/RDLog.h>
+#include <RDStreams/streams.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Depictor/RDDepictor.h>
 
-#ifdef TEST_GZIP_SD
 #include <boost/iostreams/device/file.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
-#include <boost/iostreams/filter/gzip.hpp>
 namespace io = boost::iostreams;
-#endif
 
 using namespace RDKit;
 
@@ -2085,7 +2084,7 @@ int testForwardSDSupplier() {
     }
     TEST_ASSERT(i == 16);
   }
-#ifdef TEST_GZIP_SD
+#ifdef RDK_USE_BOOST_IOSTREAMS
   // make sure the boost::iostreams are working
   {
     io::filtering_istream strm;
@@ -2101,13 +2100,7 @@ int testForwardSDSupplier() {
     TEST_ASSERT(i == 998);
   }
   {
-    io::filtering_istream strm;
-    // the stream must be opened in binary mode otherwise it won't work on
-    // Windows
-    std::ifstream is(fname2.c_str(), std::ios_base::binary);
-    strm.push(io::gzip_decompressor());
-    strm.push(is);
-
+    gzstream strm(fname2);
     unsigned int i = 0;
     while (!strm.eof()) {
       std::string line;
@@ -2119,12 +2112,7 @@ int testForwardSDSupplier() {
   }
   // looks good, now do a supplier:
   {
-    io::filtering_istream strm;
-    // the stream must be opened in binary mode otherwise it won't work on
-    // Windows
-    std::ifstream is(fname2.c_str(), std::ios_base::binary);
-    strm.push(io::gzip_decompressor());
-    strm.push(is);
+    gzstream strm(fname2);
 
     ForwardSDMolSupplier sdsup(&strm, false);
     unsigned int i = 0;
@@ -2139,6 +2127,7 @@ int testForwardSDSupplier() {
     }
     TEST_ASSERT(i == 16);
   }
+#endif
 
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   // Now test that Maestro parsing of gz files works
@@ -2160,12 +2149,7 @@ int testForwardSDSupplier() {
     TEST_ASSERT(i == 1663);
   }
   {
-    io::filtering_istream strm;
-    // the stream must be opened in binary mode otherwise it won't work on
-    // Windows
-    std::ifstream is(maefname2.c_str(), std::ios_base::binary);
-    strm.push(io::gzip_decompressor());
-    strm.push(is);
+    gzstream strm(maefname2);
 
     unsigned int i = 0;
     while (!strm.eof()) {
@@ -2178,13 +2162,9 @@ int testForwardSDSupplier() {
   }
   // looks good, now do a supplier:
   {
-    io::filtering_istream strm;
-    // the stream must be opened in binary mode otherwise it won't work on
-    // Windows
-    std::ifstream is(maefname2.c_str(), std::ios_base::binary);
-    strm.push(io::gzip_decompressor());
-    strm.push(is);
-    MaeMolSupplier maesup(&strm, false);
+    gzstream *strm = new gzstream(maefname2);
+
+    MaeMolSupplier maesup(strm);
     unsigned int i = 0;
     std::shared_ptr<ROMol> nmol;
     while (!maesup.atEnd()) {
@@ -2197,7 +2177,6 @@ int testForwardSDSupplier() {
   }
 #endif  // RDK_BUILD_COORDGEN_SUPPORT
 
-#endif
   return 1;
 }
 
@@ -2232,7 +2211,8 @@ void testIssue3525673() {
   ROMol *nmol;
 
   nmol = reader.next();
-  TEST_ASSERT(!nmol);
+  TEST_ASSERT(nmol);
+  delete nmol;
 
   nmol = reader.next();
   TEST_ASSERT(nmol);
@@ -2240,10 +2220,12 @@ void testIssue3525673() {
   delete nmol;
 
   nmol = reader.next();
-  TEST_ASSERT(!nmol);
+  TEST_ASSERT(nmol);
+  delete nmol;
 
   nmol = reader.next();
-  TEST_ASSERT(!nmol);
+  TEST_ASSERT(nmol);
+  delete nmol;
 
   nmol = reader.next();
   TEST_ASSERT(nmol);
@@ -2251,10 +2233,11 @@ void testIssue3525673() {
   delete nmol;
 
   nmol = reader.next();
-  TEST_ASSERT(!nmol);
+  TEST_ASSERT(nmol);
+  delete nmol;
 
   nmol = reader.next();
-  TEST_ASSERT(!nmol);
+  TEST_ASSERT(!nmol);  // broken due to 'foo' in counts line!
 
   nmol = reader.next();
   TEST_ASSERT(nmol);
@@ -2262,7 +2245,8 @@ void testIssue3525673() {
   delete nmol;
 
   nmol = reader.next();
-  TEST_ASSERT(!nmol);
+  TEST_ASSERT(nmol);
+  delete nmol;
 }
 
 void testBlankLinesInProps() {
@@ -2337,6 +2321,36 @@ void testGitHub88() {
   nmol->getProp("prop1", pval);
   TEST_ASSERT(pval == "4");
   delete nmol;
+}
+
+void testGitHub2285() {
+  std::string rdbase = getenv("RDBASE");
+  std::string fname =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/github2285.sdf";
+
+  std::vector<std::string> smiles;
+  {
+    SDMolSupplier sdsup(fname);
+    while (!sdsup.atEnd()) {
+      ROMol *nmol = sdsup.next();
+      TEST_ASSERT(nmol);
+      smiles.push_back(MolToSmiles(*nmol));
+      delete nmol;
+    }
+  }
+  {
+    SDMolSupplier sdsup(fname, true, false);
+    int i = 0;
+    while (!sdsup.atEnd()) {
+      ROMol *nmol = sdsup.next();
+      TEST_ASSERT(nmol);
+      ROMol *m = MolOps::removeHs(*nmol);
+      TEST_ASSERT(MolToSmiles(*m) == smiles[i++]);
+      delete nmol;
+      delete m;
+    }
+    TEST_ASSERT(i > 0);
+  }
 }
 
 int main() {
@@ -2511,6 +2525,11 @@ int main() {
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
   testGitHub88();
   BOOST_LOG(rdErrorLog) << "Finished: testGitHub88()\n";
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  testGitHub2285();
+  BOOST_LOG(rdErrorLog) << "Finished: testGitHub2285()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
   return 0;

@@ -7,6 +7,7 @@
 mkdir -p build
 cd build
 cmake \
+    -DPYTHON_EXECUTABLE=/usr/bin/python3 \
     -DRDK_INSTALL_INTREE=OFF \
     -DRDK_BUILD_INCHI_SUPPORT=ON \
     -DRDK_BUILD_AVALON_SUPPORT=ON \

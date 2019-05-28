@@ -11,9 +11,7 @@ standardization tasks.
 :license: MIT, see LICENSE file for more details.
 """
 
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import division
+
 import copy
 import logging
 
@@ -91,6 +89,7 @@ class Standardizer(object):
         :returns: The standardized molecule.
         :rtype: :rdkit:`Mol <Chem.rdchem.Mol-class.html>`
         """
+        mol_props = mol.GetPropsAsDict()
         mol = copy.deepcopy(mol)
         Chem.SanitizeMol(mol)
         mol = Chem.RemoveHs(mol)
@@ -98,6 +97,8 @@ class Standardizer(object):
         mol = self.normalize(mol)
         mol = self.reionize(mol)
         Chem.AssignStereochemistry(mol, force=True, cleanIt=True)
+        for k, v in mol_props.items():
+            mol.SetProp(k, v)
         # TODO: Check this removes symmetric stereocenters
         return mol
 

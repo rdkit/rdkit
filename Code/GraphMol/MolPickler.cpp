@@ -12,25 +12,27 @@
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/MonomerInfo.h>
 #include <GraphMol/StereoGroup.h>
+#include <GraphMol/SubstanceGroup.h>
 #include <RDGeneral/utils.h>
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/StreamOps.h>
 #include <RDGeneral/types.h>
+#include <DataStructs/DatastructsStreamOps.h>
 #include <Query/QueryObjects.h>
 #include <map>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 #include <boost/algorithm/string.hpp>
 
 #ifdef RDK_THREADSAFE_SSS
 #include <mutex>
 #endif
 
-using boost::int32_t;
-using boost::uint32_t;
+using std::int32_t;
+using std::uint32_t;
 namespace RDKit {
 
 const int32_t MolPickler::versionMajor = 10;
-const int32_t MolPickler::versionMinor = 0;
+const int32_t MolPickler::versionMinor = 1;
 const int32_t MolPickler::versionPatch = 0;
 const int32_t MolPickler::endianId = 0xDEADBEEF;
 
@@ -58,6 +60,7 @@ void streamRead(std::istream &ss, MolPickler::Tags &tag, int version) {
 
 namespace {
 static unsigned int defaultProperties = PicklerOps::NoProps;
+static CustomPropHandlerVec defaultPropHandlers = {};
 
 #ifdef RDK_THREADSAFE_SSS
 std::mutex &propmutex_get() {
@@ -92,6 +95,28 @@ void MolPickler::setDefaultPickleProperties(unsigned int props) {
   std::lock_guard<std::mutex> lock(GetPropMutex());
 #endif
   defaultProperties = props;
+}
+
+const CustomPropHandlerVec &MolPickler::getCustomPropHandlers() {
+#ifdef RDK_THREADSAFE_SSS
+  std::lock_guard<std::mutex> lock(GetPropMutex());
+#endif
+  if (defaultPropHandlers.size() == 0) {
+    // initialize handlers
+    defaultPropHandlers.push_back(std::make_shared<DataStructsExplicitBitVecPropHandler>());
+  }
+  return defaultPropHandlers;
+}
+
+void MolPickler::addCustomPropHandler(const CustomPropHandler &handler) {
+#ifdef RDK_THREADSAFE_SSS
+  std::lock_guard<std::mutex> lock(GetPropMutex());
+#endif
+  if (defaultPropHandlers.size() == 0) {
+    // initialize handlers
+    defaultPropHandlers.push_back(std::make_shared<DataStructsExplicitBitVecPropHandler>());
+  }
+  defaultPropHandlers.push_back(std::shared_ptr<CustomPropHandler>(handler.clone()));
 }
 
 namespace {
@@ -823,6 +848,7 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
   int32_t tmpInt;
   bool includeAtomCoords = true;
   std::map<int, int> atomIdxMap;
+  std::map<int, int> bondIdxMap;
 
   tmpInt = static_cast<int32_t>(mol->getNumAtoms());
   streamWrite(ss, tmpInt);
@@ -854,7 +880,9 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
   // -------------------
   streamWrite(ss, BEGINBOND);
   for (unsigned int i = 0; i < mol->getNumBonds(); i++) {
-    _pickleBond<T>(ss, mol->getBondWithIdx(i), atomIdxMap);
+    auto bond = mol->getBondWithIdx(i);
+    _pickleBond<T>(ss, bond, atomIdxMap);
+    bondIdxMap[bond->getIdx()] = i;
   }
 
   // -------------------
@@ -868,6 +896,22 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
     _pickleSSSR<T>(ss, ringInfo, atomIdxMap);
   }
 
+  // -------------------
+  //
+  // Write SubstanceGroups (if present)
+  //
+  // -------------------
+  const auto &sgroups = getSubstanceGroups(*mol);
+  if (!sgroups.empty()) {
+    streamWrite(ss, BEGINSGROUP);
+
+    tmpInt = static_cast<int32_t>(sgroups.size());
+    streamWrite(ss, tmpInt);
+
+    for (const auto &sgroup : sgroups) {
+      _pickleSubstanceGroup<T>(ss, sgroup, atomIdxMap, bondIdxMap);
+    }
+  }
   // Write Stereo Groups
   {
     auto &stereo_groups = mol->getStereoGroups();
@@ -884,10 +928,17 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
     tmpInt = static_cast<int32_t>(mol->getNumConformers());
     streamWrite(ss, tmpInt);
 
-    ROMol::ConstConformerIterator ci;
-    for (ci = mol->beginConformers(); ci != mol->endConformers(); ++ci) {
+    for (auto ci = mol->beginConformers(); ci != mol->endConformers(); ++ci) {
       const Conformer *conf = ci->get();
       _pickleConformer<T>(ss, conf);
+    }
+
+    if (propertyFlags & PicklerOps::MolProps) {
+      streamWrite(ss, BEGINCONFPROPS);
+      for (auto ci = mol->beginConformers(); ci != mol->endConformers(); ++ci) {
+        const Conformer *conf = ci->get();
+        _pickleProperties(ss, *conf, propertyFlags);
+      }
     }
   }
 
@@ -997,6 +1048,24 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
     streamRead(ss, tag, version);
   }
 
+  // -------------------
+  //
+  // Read SubstanceGroups (if needed)
+  //
+  // -------------------
+
+  if (tag == BEGINSGROUP) {
+    streamRead(ss, tmpInt, version);
+
+    // Create SubstanceGroups
+    for (int i = 0; i < tmpInt; ++i) {
+      auto sgroup = _getSubstanceGroupFromPickle<T>(ss, mol, version);
+      addSubstanceGroup(*mol, sgroup);
+    }
+
+    streamRead(ss, tag, version);
+  }
+
   if (tag == BEGINSTEREOGROUP) {
     _depickleStereo<T>(ss, mol, version);
     streamRead(ss, tag, version);
@@ -1005,12 +1074,19 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
   if (tag == BEGINCONFS) {
     // read in the conformation
     streamRead(ss, tmpInt, version);
-    int i;
-    for (i = 0; i < tmpInt; i++) {
+    std::vector<unsigned int> cids(tmpInt);
+    for (auto i = 0; i < tmpInt; i++) {
       Conformer *conf = _conformerFromPickle<T>(ss, version);
       mol->addConformer(conf);
+      cids[i] = conf->getId();
     }
     streamRead(ss, tag, version);
+    if(tag==BEGINCONFPROPS){
+      for (auto cid : cids) {
+        _unpickleProperties(ss, mol->getConformer(cid));
+      }
+      streamRead(ss, tag, version);
+    }
   }
 
   while (tag != ENDMOL) {
@@ -1448,7 +1524,10 @@ Atom *MolPickler::_addAtomFromPickle(std::istream &ss, ROMol *mol,
         }
         int tmpInt;
         streamRead(ss, tmpChar, version);
-        if (tmpChar < 0 && version > 9000) {
+        // the test for tmpChar below seems redundant, but on at least
+        // the POWER8 architecture it seems that chars may be unsigned
+        // by default.
+        if ((tmpChar < 0 || tmpChar > 127) && version > 9000) {
           streamRead(ss, tmpInt, version);
         } else {
           tmpInt = tmpChar;
@@ -1727,6 +1806,180 @@ void MolPickler::_addRingInfoFromPickle(std::istream &ss, ROMol *mol,
   }
 }
 
+//--------------------------------------
+//
+//            SubstanceGroups
+//
+//--------------------------------------
+
+template <typename T>
+void MolPickler::_pickleSubstanceGroup(std::ostream &ss,
+                                       const SubstanceGroup &sgroup,
+                                       std::map<int, int> &atomIdxMap,
+                                       std::map<int, int> &bondIdxMap) {
+  T tmpT;
+
+  streamWriteProps(ss, sgroup);
+
+  const auto &atoms = sgroup.getAtoms();
+  streamWrite(ss, static_cast<T>(atoms.size()));
+  for (const auto &atom : atoms) {
+    tmpT = static_cast<T>(atomIdxMap[atom]);
+    streamWrite(ss, tmpT);
+  }
+
+  const auto &p_atoms = sgroup.getParentAtoms();
+  streamWrite(ss, static_cast<T>(p_atoms.size()));
+  for (const auto &p_atom : p_atoms) {
+    tmpT = static_cast<T>(atomIdxMap[p_atom]);
+    streamWrite(ss, tmpT);
+  }
+
+  const auto &bonds = sgroup.getBonds();
+  streamWrite(ss, static_cast<T>(bonds.size()));
+  for (const auto &bond : bonds) {
+    tmpT = static_cast<T>(bondIdxMap[bond]);
+    streamWrite(ss, tmpT);
+  }
+
+  const auto &brackets = sgroup.getBrackets();
+  streamWrite(ss, static_cast<T>(brackets.size()));
+  for (const auto &bracket : brackets) {
+    // 3 point per bracket; 3rd point and all z are zeros,
+    // but this might change in the future.
+    for (const auto &pt : bracket) {
+      float tmpFloat;
+      tmpFloat = static_cast<float>(pt.x);
+      streamWrite(ss, tmpFloat);
+      tmpFloat = static_cast<float>(pt.y);
+      streamWrite(ss, tmpFloat);
+      tmpFloat = static_cast<float>(pt.z);
+      streamWrite(ss, tmpFloat);
+    }
+  }
+
+  const auto &cstates = sgroup.getCStates();
+  streamWrite(ss, static_cast<T>(cstates.size()));
+  for (const auto &cstate : cstates) {
+    // Bond
+    tmpT = static_cast<T>(bondIdxMap[cstate.bondIdx]);
+    streamWrite(ss, tmpT);
+
+    // Vector -- existence depends on SubstanceGroup type
+    if ("SUP" == sgroup.getProp<std::string>("TYPE")) {
+      float tmpFloat;
+      tmpFloat = static_cast<float>(cstate.vector.x);
+      streamWrite(ss, tmpFloat);
+      tmpFloat = static_cast<float>(cstate.vector.y);
+      streamWrite(ss, tmpFloat);
+      tmpFloat = static_cast<float>(cstate.vector.z);
+      streamWrite(ss, tmpFloat);
+    }
+  }
+
+  const auto &attachPoints = sgroup.getAttachPoints();
+  streamWrite(ss, static_cast<T>(attachPoints.size()));
+  for (const auto &attachPoint : attachPoints) {
+    // aIdx -- always present
+    tmpT = static_cast<T>(atomIdxMap[attachPoint.aIdx]);
+    streamWrite(ss, tmpT);
+
+    // lvIdx -- may be -1 if not used (0 in spec)
+    auto tmpInt = -1;
+    if (attachPoint.lvIdx != -1) {
+      tmpInt = static_cast<signed int>(atomIdxMap[attachPoint.lvIdx]);
+    }
+    streamWrite(ss, tmpInt);
+
+    // id -- may be blank
+    auto tmpS = static_cast<const std::string>(attachPoint.id);
+    streamWrite(ss, tmpS);
+  }
+}
+
+template <typename T>
+SubstanceGroup MolPickler::_getSubstanceGroupFromPickle(std::istream &ss,
+                                                        ROMol *mol,
+                                                        int version) {
+  T tmpT;
+  T numItems;
+  float tmpFloat;
+  int tmpInt = -1;
+  std::string tmpS;
+
+  // temporarily accept empty TYPE
+  SubstanceGroup sgroup(mol, "");
+
+  // Read RDProps, overriding ID, TYPE and COMPNO
+  streamReadProps(ss, sgroup, MolPickler::getCustomPropHandlers());
+
+  streamRead(ss, numItems, version);
+  for (int i = 0; i < numItems; ++i) {
+    streamRead(ss, tmpT, version);
+    sgroup.addAtomWithIdx(tmpT);
+  }
+
+  streamRead(ss, numItems, version);
+  for (int i = 0; i < numItems; ++i) {
+    streamRead(ss, tmpT, version);
+    sgroup.addParentAtomWithIdx(tmpT);
+  }
+
+  streamRead(ss, numItems, version);
+  for (int i = 0; i < numItems; ++i) {
+    streamRead(ss, tmpT, version);
+    sgroup.addBondWithIdx(tmpT);
+  }
+
+  streamRead(ss, numItems, version);
+  for (int i = 0; i < numItems; ++i) {
+    SubstanceGroup::Bracket bracket;
+    for (auto j = 0; j < 3; ++j) {
+      streamRead(ss, tmpFloat, version);
+      double x = static_cast<double>(tmpFloat);
+      streamRead(ss, tmpFloat, version);
+      double y = static_cast<double>(tmpFloat);
+      streamRead(ss, tmpFloat, version);
+      double z = static_cast<double>(tmpFloat);
+      bracket[j] = RDGeom::Point3D(x, y, z);
+    }
+    sgroup.addBracket(bracket);
+  }
+
+  streamRead(ss, numItems, version);
+  for (int i = 0; i < numItems; ++i) {
+    streamRead(ss, tmpT, version);
+    RDGeom::Point3D vector;
+
+    if ("SUP" == sgroup.getProp<std::string>("TYPE")) {
+      streamRead(ss, tmpFloat, version);
+      vector.x = static_cast<double>(tmpFloat);
+      streamRead(ss, tmpFloat, version);
+      vector.y = static_cast<double>(tmpFloat);
+      streamRead(ss, tmpFloat, version);
+      vector.z = static_cast<double>(tmpFloat);
+    }
+
+    sgroup.addCState(tmpT, vector);
+  }
+
+  streamRead(ss, numItems, version);
+  for (int i = 0; i < numItems; ++i) {
+    streamRead(ss, tmpT, version);
+    unsigned int aIdx = tmpT;
+
+    streamRead(ss, tmpInt, version);
+    int lvIdx = tmpInt;
+
+    std::string id;
+    streamRead(ss, id, version);
+
+    sgroup.addAttachPoint(aIdx, lvIdx, id);
+  }
+
+  return sgroup;
+}
+
 template <typename T>
 void MolPickler::_pickleStereo(std::ostream &ss,
                                const std::vector<StereoGroup> &groups,
@@ -1735,7 +1988,7 @@ void MolPickler::_pickleStereo(std::ostream &ss,
   streamWrite(ss, tmpT);
   for (auto &&group : groups) {
     streamWrite(ss, static_cast<T>(group.getGroupType()));
-    auto& atoms = group.getAtoms();
+    auto &atoms = group.getAtoms();
     streamWrite(ss, static_cast<T>(atoms.size()));
     for (auto &&atom : atoms) {
       tmpT = static_cast<T>(atomIdxMap[atom->getIdx()]);
@@ -1778,13 +2031,16 @@ void MolPickler::_pickleProperties(std::ostream &ss, const RDProps &props,
                                    unsigned int pickleFlags) {
   if (!pickleFlags) return;
 
-  streamWriteProps(ss, props, pickleFlags & PicklerOps::PrivateProps,
-                   pickleFlags & PicklerOps::ComputedProps);
+  streamWriteProps(ss, props,
+                   pickleFlags & PicklerOps::PrivateProps,
+                   pickleFlags & PicklerOps::ComputedProps,
+                   MolPickler::getCustomPropHandlers()
+                   );
 }
 
 //! unpickle standard properties
 void MolPickler::_unpickleProperties(std::istream &ss, RDProps &props) {
-  streamReadProps(ss, props);
+  streamReadProps(ss, props, MolPickler::getCustomPropHandlers());
 }
 
 //--------------------------------------
@@ -1915,9 +2171,8 @@ void MolPickler::_addAtomFromPickleV1(std::istream &ss, ROMol *mol) {
         break;
       case ATOM_MASS:
         streamRead(ss, dblVar, version);
-        // we don't need to set this anymore, but we do need to read it in order
-        // to
-        // maintain backwards compatibility
+        // we don't need to set this anymore, but we do need to read it in
+        // order to maintain backwards compatibility
         break;
       case ATOM_ISAROMATIC:
         streamRead(ss, charVar, version);

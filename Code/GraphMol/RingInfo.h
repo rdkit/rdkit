@@ -136,6 +136,6 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   DataType d_atomMembers, d_bondMembers;
   VECT_INT_VECT d_atomRings, d_bondRings;
 };
-}
+}  // namespace RDKit
 
 #endif

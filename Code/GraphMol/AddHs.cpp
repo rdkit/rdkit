@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2018 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2019 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -72,12 +72,16 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
       // --------------------------------------------------------------------------
       //   No other atoms present:
       // --------------------------------------------------------------------------
-      dirVect.z = 1;
       // loop over the conformations and set the coordinates
       for (auto cfi = mol->beginConformers(); cfi != mol->endConformers();
            cfi++) {
+        if ((*cfi)->is3D()) {
+          dirVect.z = 1;
+        } else {
+          dirVect.x = 1;
+        }
         heavyPos = (*cfi)->getAtomPos(heavyIdx);
-        hydPos = heavyPos + dirVect * bondLength;
+        hydPos = heavyPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
         (*cfi)->setAtomPos(hydIdx, hydPos);
       }
       break;
@@ -107,17 +111,19 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
         switch (heavyAtom->getHybridization()) {
           case Atom::SP3:
             // get a perpendicular to nbr1Vect:
-            perpVect = nbr1Vect.getPerpendicular();
+            if ((*cfi)->is3D())
+              perpVect = nbr1Vect.getPerpendicular();
+            else
+              perpVect.z = 1.0;
             // and move off it:
             tform.SetRotation((180 - 109.471) * M_PI / 180., perpVect);
             dirVect = tform * nbr1Vect;
-            hydPos = heavyPos + dirVect * bondLength;
+            hydPos = heavyPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
             (*cfi)->setAtomPos(hydIdx, hydPos);
             break;
           case Atom::SP2:
             // default position is to just take an arbitrary perpendicular:
             perpVect = nbr1Vect.getPerpendicular();
-
             if (nbr1->getDegree() > 1) {
               // can we use the neighboring atom to establish a perpendicular?
               nbrBond = mol->getBondBetweenAtoms(heavyIdx, nbr1->getIdx());
@@ -133,20 +139,20 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
             // rotate the nbr1Vect 60 degrees about perpVect and we're done:
             tform.SetRotation(60. * M_PI / 180., perpVect);
             dirVect = tform * nbr1Vect;
-            hydPos = heavyPos + dirVect * bondLength;
+            hydPos = heavyPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
             (*cfi)->setAtomPos(hydIdx, hydPos);
             break;
           case Atom::SP:
             // just lay the H along the vector:
             dirVect = nbr1Vect;
-            hydPos = heavyPos + dirVect * bondLength;
+            hydPos = heavyPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
             (*cfi)->setAtomPos(hydIdx, hydPos);
             break;
           default:
             // FIX: handle other hybridizations
             // for now, just lay the H along the vector:
             dirVect = nbr1Vect;
-            hydPos = heavyPos + dirVect * bondLength;
+            hydPos = heavyPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
             (*cfi)->setAtomPos(hydIdx, hydPos);
         }
       }
@@ -185,32 +191,38 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
         dirVect = nbr1Vect + nbr2Vect;
 
         dirVect.normalize();
-
-        switch (heavyAtom->getHybridization()) {
-          case Atom::SP3:
-            // get the perpendicular to the neighbors:
-            nbrPerp = nbr1Vect.crossProduct(nbr2Vect);
-            // and the perpendicular to that:
-            rotnAxis = nbrPerp.crossProduct(dirVect);
-            // and then rotate about that:
-            rotnAxis.normalize();
-            tform.SetRotation((109.471 / 2) * M_PI / 180., rotnAxis);
-            dirVect = tform * dirVect;
-            hydPos = heavyPos + dirVect * bondLength;
-            (*cfi)->setAtomPos(hydIdx, hydPos);
-            break;
-          case Atom::SP2:
-            // don't need to do anything here, the H atom goes right on the
-            // direction vector
-            hydPos = heavyPos + dirVect * bondLength;
-            (*cfi)->setAtomPos(hydIdx, hydPos);
-            break;
-          default:
-            // FIX: handle other hybridizations
-            // for now, just lay the H along the neighbor vector;
-            hydPos = heavyPos + dirVect * bondLength;
-            (*cfi)->setAtomPos(hydIdx, hydPos);
-            break;
+        if ((*cfi)->is3D()) {
+          switch (heavyAtom->getHybridization()) {
+            case Atom::SP3:
+              // get the perpendicular to the neighbors:
+              nbrPerp = nbr1Vect.crossProduct(nbr2Vect);
+              // and the perpendicular to that:
+              rotnAxis = nbrPerp.crossProduct(dirVect);
+              // and then rotate about that:
+              rotnAxis.normalize();
+              tform.SetRotation((109.471 / 2) * M_PI / 180., rotnAxis);
+              dirVect = tform * dirVect;
+              hydPos = heavyPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
+              (*cfi)->setAtomPos(hydIdx, hydPos);
+              break;
+            case Atom::SP2:
+              // don't need to do anything here, the H atom goes right on the
+              // direction vector
+              hydPos = heavyPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
+              (*cfi)->setAtomPos(hydIdx, hydPos);
+              break;
+            default:
+              // FIX: handle other hybridizations
+              // for now, just lay the H along the neighbor vector;
+              hydPos = heavyPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
+              (*cfi)->setAtomPos(hydIdx, hydPos);
+              break;
+          }
+        } else {
+          // don't need to do anything here, the H atom goes right on the
+          // direction vector
+          hydPos = heavyPos + dirVect;
+          (*cfi)->setAtomPos(hydIdx, hydPos);
         }
       }
       break;
@@ -279,8 +291,9 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
         // is going to be in a quasi-random (but almost definitely bad)
         // direction...
         // correct for this (issue 2951221):
-        if (fabs(nbr3Vect.dotProduct(nbr1Vect.crossProduct(nbr2Vect))) < 0.1) {
-          if ((*cfi)->is3D()) {
+        if ((*cfi)->is3D()) {
+          if (fabs(nbr3Vect.dotProduct(nbr1Vect.crossProduct(nbr2Vect))) <
+              0.1) {
             // compute the normal:
             dirVect = nbr1Vect.crossProduct(nbr2Vect);
             std::string cipCode;
@@ -300,26 +313,27 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
               }
             }
           } else {
-            // this was github #908
-            // We're in a 2D conformation, put the H between the two neighbors
-            // that have the widest angle between them:
-            double minDot = nbr1Vect.dotProduct(nbr2Vect);
-            dirVect = nbr1Vect + nbr2Vect;
-            if (nbr2Vect.dotProduct(nbr3Vect) < minDot) {
-              minDot = nbr2Vect.dotProduct(nbr3Vect);
-              dirVect = nbr2Vect + nbr3Vect;
-            }
-            if (nbr1Vect.dotProduct(nbr3Vect) < minDot) {
-              minDot = nbr1Vect.dotProduct(nbr3Vect);
-              dirVect = nbr1Vect + nbr3Vect;
-            }
-            dirVect *= -1;
+            dirVect = nbr1Vect + nbr2Vect + nbr3Vect;
           }
         } else {
-          dirVect = nbr1Vect + nbr2Vect + nbr3Vect;
+          // we're in flatland
+          // this was github #908
+          // We're in a 2D conformation, put the H between the two neighbors
+          // that have the widest angle between them:
+          double minDot = nbr1Vect.dotProduct(nbr2Vect);
+          dirVect = nbr1Vect + nbr2Vect;
+          if (nbr2Vect.dotProduct(nbr3Vect) < minDot) {
+            minDot = nbr2Vect.dotProduct(nbr3Vect);
+            dirVect = nbr2Vect + nbr3Vect;
+          }
+          if (nbr1Vect.dotProduct(nbr3Vect) < minDot) {
+            minDot = nbr1Vect.dotProduct(nbr3Vect);
+            dirVect = nbr1Vect + nbr3Vect;
+          }
+          dirVect *= -1;
         }
         dirVect.normalize();
-        hydPos = heavyPos + dirVect * bondLength;
+        hydPos = heavyPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
         (*cfi)->setAtomPos(hydIdx, hydPos);
       }
       break;
@@ -567,7 +581,7 @@ void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
         BOOST_LOG(rdWarningLog)
             << "WARNING: not removing hydrogen atom without neighbors"
             << std::endl;
-      } else {
+      } else if (!atom->hasQuery()) {
         if (atom->hasProp(common_properties::isImplicit)) {
           removeIt = true;
           if (atom->getDegree() == 1) {

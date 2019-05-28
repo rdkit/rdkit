@@ -56,9 +56,9 @@ namespace Utils {
 //! calculates and returns the cosine of the Y angle in an improper torsion
 //! (see UFF paper, equation 19)
 RDKIT_FORCEFIELD_EXPORT double calculateCosY(const RDGeom::Point3D &iPoint,
-                     const RDGeom::Point3D &jPoint,
-                     const RDGeom::Point3D &kPoint,
-                     const RDGeom::Point3D &lPoint);
+                                             const RDGeom::Point3D &jPoint,
+                                             const RDGeom::Point3D &kPoint,
+                                             const RDGeom::Point3D &lPoint);
 
 //! calculates and returns the UFF force constant for an improper torsion
 /*!
@@ -72,7 +72,7 @@ RDKIT_FORCEFIELD_EXPORT double calculateCosY(const RDGeom::Point3D &iPoint,
 */
 RDKIT_FORCEFIELD_EXPORT boost::tuple<double, double, double, double>
 calcInversionCoefficientsAndForceConstant(int at2AtomicNum, bool isCBoundToO);
-}
-}
-}
+}  // namespace Utils
+}  // namespace UFF
+}  // namespace ForceFields
 #endif

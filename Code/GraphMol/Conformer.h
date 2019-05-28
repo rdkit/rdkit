@@ -14,6 +14,7 @@
 #include <Geometry/point.h>
 #include <RDGeneral/types.h>
 #include <boost/smart_ptr.hpp>
+#include <RDGeneral/RDProps.h>
 
 namespace RDKit {
 class ROMol;
@@ -39,7 +40,7 @@ class RDKIT_GRAPHMOL_EXPORT ConformerException : public std::exception {
   - a pointer to the owing molecule
   - a vector of 3D points (positions of atoms)
 */
-class RDKIT_GRAPHMOL_EXPORT Conformer {
+class RDKIT_GRAPHMOL_EXPORT Conformer : public RDProps {
  public:
   friend class ROMol;
 
@@ -69,8 +70,14 @@ class RDKIT_GRAPHMOL_EXPORT Conformer {
   //! Reserve more space for atom position
   void reserve(unsigned int size) { d_positions.reserve(size); }
 
-  //! Get the molecule that oqns this conformation
-  ROMol &getOwningMol() const { return *dp_mol; }
+  //! returns whether or not this instance belongs to a molecule
+  bool hasOwningMol() const { return dp_mol != nullptr; };
+
+  //! Get the molecule that owns this instance
+  ROMol &getOwningMol() const {     
+    PRECONDITION(dp_mol, "no owner");
+    return *dp_mol; 
+  }
 
   //! Get a const reference to the vector of atom positions
   const RDGeom::POINT3D_VECT &getPositions() const;
@@ -81,17 +88,17 @@ class RDKIT_GRAPHMOL_EXPORT Conformer {
   //! Get the position of the specified atom
   const RDGeom::Point3D &getAtomPos(unsigned int atomId) const;
   //! overload
-  template<class U>
+  template <class U>
   const RDGeom::Point3D &getAtomPos(U atomId) const {
-      return getAtomPos(rdcast<unsigned int>(atomId));
+    return getAtomPos(rdcast<unsigned int>(atomId));
   }
 
   //! Get the position of the specified atom
   RDGeom::Point3D &getAtomPos(unsigned int atomId);
   //! overload
-  template<class U>
+  template <class U>
   RDGeom::Point3D &getAtomPos(U atomId) {
-      return getAtomPos(rdcast<unsigned int>(atomId));
+    return getAtomPos(rdcast<unsigned int>(atomId));
   }
 
   //! Set the position of the specified atom
@@ -103,9 +110,9 @@ class RDKIT_GRAPHMOL_EXPORT Conformer {
     d_positions[atomId] = position;
   }
   //! overload
-  template<class U>
+  template <class U>
   void setAtomPos(U atomId, const RDGeom::Point3D &position) {
-      return setAtomPos(rdcast<unsigned int>(atomId), position);
+    return setAtomPos(rdcast<unsigned int>(atomId), position);
   }
   //! get the ID of this conformer
   inline unsigned int getId() const { return d_id; }
@@ -114,10 +121,11 @@ class RDKIT_GRAPHMOL_EXPORT Conformer {
   inline void setId(unsigned int id) { d_id = id; }
 
   //! Get the number of atoms
-  inline unsigned int getNumAtoms() const { return rdcast<unsigned int>(d_positions.size()); }
+  inline unsigned int getNumAtoms() const {
+    return rdcast<unsigned int>(d_positions.size());
+  }
   inline bool is3D() const { return df_is3D; }
   inline void set3D(bool v) { df_is3D = v; }
-
 
  protected:
   //! Set owning moelcule
@@ -140,14 +148,12 @@ typedef boost::shared_ptr<Conformer> CONFORMER_SPTR;
   \param conf  Conformer object to analyze
 */
 inline bool hasNonZeroZCoords(const Conformer &conf) {
-  for(auto p: conf.getPositions()) {
-    if (p.z != 0.0)
-      return true;
+  for (auto p : conf.getPositions()) {
+    if (p.z != 0.0) return true;
   }
   return false;
-
 }
 
-}
+}  // namespace RDKit
 
 #endif

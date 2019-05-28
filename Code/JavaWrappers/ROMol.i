@@ -52,7 +52,6 @@
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
-#include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/MolPickler.h>
 #include <DistGeom/BoundsMatrix.h>
 #include <GraphMol/DistGeomHelpers/Embedder.h>
@@ -104,6 +103,9 @@
   }
 %}
 %include <GraphMol/ROMol.h>
+
+%ignore SubstructMatch;
+%include <GraphMol/Substruct/SubstructMatch.h>
 
 
 %newobject removeHs;
@@ -183,6 +185,24 @@ void setPreferCoordGen(bool);
   bool hasSubstructMatch(RDKit::ROMol &query,bool useChirality=false){
     RDKit::MatchVectType mv;
     return SubstructMatch(*($self),query,mv,true,useChirality);
+  };
+
+  bool hasSubstructMatch(RDKit::ROMol &query,RDKit::SubstructMatchParameters ps){
+    ps.maxMatches = 1;
+    std::vector<RDKit::MatchVectType> mv = SubstructMatch(*($self),query,ps);
+    return mv.size()>0;
+  };
+
+  std::vector<std::pair<int, int> > getSubstructMatch(RDKit::ROMol &query,RDKit::SubstructMatchParameters ps){
+    std::vector<RDKit::MatchVectType> mvs = SubstructMatch(*($self),query,ps);
+    RDKit::MatchVectType mv;
+    if(mvs.size()) mv = mvs[0];
+    return mv;
+  };
+
+  std::vector< std::vector<std::pair<int, int> > > getSubstructMatches(RDKit::ROMol &query,RDKit::SubstructMatchParameters ps){
+    std::vector<RDKit::MatchVectType> mvs = SubstructMatch(*($self),query,ps);
+    return mvs;
   };
 
   /* From MolOps, Substruct/SubstructMatch */

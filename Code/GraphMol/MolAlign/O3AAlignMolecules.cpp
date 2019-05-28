@@ -31,7 +31,7 @@
 
 namespace RDKit {
 namespace MolAlign {
-static boost::uint8_t mmffSimMatrix[99][99] = {
+static std::uint8_t mmffSimMatrix[99][99] = {
     {1,  3,  4, 3, 0, 4, 6,  7,  5,  6,  7,  4,  5,  7,  3,  5,  6,  7,  3, 2,
      0,  2,  0, 0, 6, 7, 0,  0,  0,  3,  0,  10, 0,  10, 10, 0,  3,  6,  7, 6,
      8,  7,  8, 4, 7, 6, 8,  7,  10, 0,  10, 0,  6,  10, 12, 14, 12, 10, 4, 4,
@@ -578,7 +578,7 @@ MolHistogram::MolHistogram(const ROMol &mol, const double *dmat,
 
 int o3aMMFFCostFunc(const unsigned int prbIdx, const unsigned int refIdx,
                     double hSum, void *data) {
-  boost::uint8_t mmffSim =
+  std::uint8_t mmffSim =
       mmffSimMatrix[(static_cast<MMFF::MMFFMolProperties *>(
                          (static_cast<O3AFuncData *>(data))->refProp))
                         ->getMMFFAtomType(refIdx) -
@@ -1084,7 +1084,7 @@ void SDM::fillFromDist(double threshold,
 
 double o3aMMFFWeightFunc(const unsigned int prbIdx, const unsigned int refIdx,
                          void *data) {
-  boost::uint8_t mmffSim =
+  std::uint8_t mmffSim =
       mmffSimMatrix[(static_cast<MMFF::MMFFMolProperties *>(
                          (static_cast<O3AFuncData *>(data))->refProp))
                         ->getMMFFAtomType(refIdx) -

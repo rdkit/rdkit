@@ -24,8 +24,9 @@ const std::string maccsFingerprintVersion = "2.0.0";
   responsible for calling delete on this.
 
 */
-RDKIT_FINGERPRINTS_EXPORT ExplicitBitVect *getFingerprintAsBitVect(const ROMol &mol);
-}
-}
+RDKIT_FINGERPRINTS_EXPORT ExplicitBitVect *getFingerprintAsBitVect(
+    const ROMol &mol);
+}  // namespace MACCSFingerprints
+}  // namespace RDKit
 
 #endif

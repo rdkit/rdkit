@@ -30,26 +30,26 @@ namespace MMFF {
 
 class std::unique_ptr<MMFFAromCollection> MMFFAromCollection::ds_instance = nullptr;
 
-extern const boost::uint8_t defaultMMFFArom[];
+extern const std::uint8_t defaultMMFFArom[];
 
 MMFFAromCollection *MMFFAromCollection::getMMFFArom(
-    const boost::uint8_t *mmffArom) {
+    const std::uint8_t *mmffArom) {
   if (!ds_instance || mmffArom) {
     ds_instance.reset(new MMFFAromCollection(mmffArom));
   }
   return ds_instance.get();
 }
 
-MMFFAromCollection::MMFFAromCollection(const boost::uint8_t *mmffArom) {
+MMFFAromCollection::MMFFAromCollection(const std::uint8_t *mmffArom) {
   if (!mmffArom) {
     mmffArom = defaultMMFFArom;
   }
-  for (unsigned int i = 0; i < sizeof(mmffArom) / sizeof(boost::uint8_t); ++i) {
+  for (unsigned int i = 0; i < sizeof(mmffArom) / sizeof(std::uint8_t); ++i) {
     d_params.push_back(mmffArom[i]);
   }
 }
 
-const boost::uint8_t defaultMMFFArom[] = {37, 38, 39, 44, 58, 59, 63, 64, 65,
+const std::uint8_t defaultMMFFArom[] = {37, 38, 39, 44, 58, 59, 63, 64, 65,
                                           66, 69, 76, 78, 79, 80, 81, 82};
 
 class std::unique_ptr<MMFFDefCollection> MMFFDefCollection::ds_instance = nullptr;
@@ -83,24 +83,24 @@ MMFFDefCollection::MMFFDefCollection(std::string mmffDef) {
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
       unsigned int atomType = boost::lexical_cast<unsigned int>(*token);
 #else
-      atomType = (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token));
+      atomType = (std::uint8_t)(boost::lexical_cast<unsigned int>(*token));
 #endif
       ++token;
       // Level 2 (currently = Level 1, see MMFF.I page 513)
       mmffDefObj.eqLevel[0] =
-          (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token));
+          (std::uint8_t)(boost::lexical_cast<unsigned int>(*token));
       ++token;
       // Level 3
       mmffDefObj.eqLevel[1] =
-          (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token));
+          (std::uint8_t)(boost::lexical_cast<unsigned int>(*token));
       ++token;
       // Level 4
       mmffDefObj.eqLevel[2] =
-          (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token));
+          (std::uint8_t)(boost::lexical_cast<unsigned int>(*token));
       ++token;
       // Level 5
       mmffDefObj.eqLevel[3] =
-          (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token));
+          (std::uint8_t)(boost::lexical_cast<unsigned int>(*token));
       ++token;
       if (atomType != oldAtomType) {
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
@@ -472,32 +472,32 @@ MMFFPropCollection::MMFFPropCollection(std::string mmffProp) {
       unsigned int atomType = boost::lexical_cast<unsigned int>(*token);
 #else
       d_iAtomType.push_back(
-          (boost::uint8_t)boost::lexical_cast<unsigned int>(*token));
+          (std::uint8_t)boost::lexical_cast<unsigned int>(*token));
 #endif
       ++token;
       mmffPropObj.atno =
-          (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token));
+          (std::uint8_t)(boost::lexical_cast<unsigned int>(*token));
       ++token;
       mmffPropObj.crd =
-          (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token));
+          (std::uint8_t)(boost::lexical_cast<unsigned int>(*token));
       ++token;
       mmffPropObj.val =
-          (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token));
+          (std::uint8_t)(boost::lexical_cast<unsigned int>(*token));
       ++token;
       mmffPropObj.pilp =
-          (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token));
+          (std::uint8_t)(boost::lexical_cast<unsigned int>(*token));
       ++token;
       mmffPropObj.mltb =
-          (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token));
+          (std::uint8_t)(boost::lexical_cast<unsigned int>(*token));
       ++token;
       mmffPropObj.arom =
-          (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token));
+          (std::uint8_t)(boost::lexical_cast<unsigned int>(*token));
       ++token;
       mmffPropObj.linh =
-          (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token));
+          (std::uint8_t)(boost::lexical_cast<unsigned int>(*token));
       ++token;
       mmffPropObj.sbmb =
-          (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token));
+          (std::uint8_t)(boost::lexical_cast<unsigned int>(*token));
       ++token;
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
       d_params[atomType] = mmffPropObj;
@@ -796,21 +796,21 @@ MMFFChgCollection::MMFFChgCollection(std::string mmffChg) {
       unsigned int bondType = boost::lexical_cast<unsigned int>(*token);
 #else
       d_bondType.push_back(
-          (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
+          (std::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
 #endif
       ++token;
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
       unsigned int iAtomType = boost::lexical_cast<unsigned int>(*token);
 #else
       d_iAtomType.push_back(
-          (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
+          (std::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
 #endif
       ++token;
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
       unsigned int jAtomType = boost::lexical_cast<unsigned int>(*token);
 #else
       d_jAtomType.push_back(
-          (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
+          (std::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
 #endif
       ++token;
       mmffChgObj.bci = boost::lexical_cast<double>(*token);
@@ -1366,21 +1366,21 @@ MMFFBondCollection::MMFFBondCollection(std::string mmffBond) {
       unsigned int bondType = boost::lexical_cast<unsigned int>(*token);
 #else
       d_bondType.push_back(
-          (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
+          (std::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
 #endif
       ++token;
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
       unsigned int atomType = boost::lexical_cast<unsigned int>(*token);
 #else
       d_iAtomType.push_back(
-          (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
+          (std::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
 #endif
       ++token;
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
       unsigned int jAtomType = boost::lexical_cast<unsigned int>(*token);
 #else
       d_jAtomType.push_back(
-          (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
+          (std::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
 #endif
       ++token;
       mmffBondObj.kb = boost::lexical_cast<double>(*token);
@@ -1934,14 +1934,14 @@ MMFFBndkCollection::MMFFBndkCollection(std::string mmffBndk) {
       unsigned int iAtomicNum = boost::lexical_cast<unsigned int>(*token);
 #else
       d_iAtomicNum.push_back(
-          (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
+          (std::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
 #endif
       ++token;
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
       unsigned int jAtomicNum = boost::lexical_cast<unsigned int>(*token);
 #else
       d_jAtomicNum.push_back(
-          (boost::uint8_t)boost::lexical_cast<unsigned int>(*token));
+          (std::uint8_t)boost::lexical_cast<unsigned int>(*token));
 #endif
       ++token;
       mmffBondObj.r0 = boost::lexical_cast<double>(*token);
@@ -2059,14 +2059,14 @@ MMFFHerschbachLaurieCollection::MMFFHerschbachLaurieCollection(
       unsigned int iRow = boost::lexical_cast<unsigned int>(*token);
 #else
       d_iRow.push_back(
-          (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
+          (std::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
 #endif
       ++token;
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
       unsigned int jRow = boost::lexical_cast<unsigned int>(*token);
 #else
       d_jRow.push_back(
-          (boost::uint8_t)boost::lexical_cast<unsigned int>(*token));
+          (std::uint8_t)boost::lexical_cast<unsigned int>(*token));
 #endif
       ++token;
       mmffHerschbachLaurieObj.a_ij = boost::lexical_cast<double>(*token);
@@ -2146,7 +2146,7 @@ MMFFCovRadPauEleCollection::MMFFCovRadPauEleCollection(
       unsigned int atomicNum = boost::lexical_cast<unsigned int>(*token);
 #else
       d_atomicNum.push_back(
-          (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
+          (std::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
 #endif
       ++token;
       mmffCovRadPauEleObj.r0 = boost::lexical_cast<double>(*token);
@@ -2218,28 +2218,28 @@ MMFFAngleCollection::MMFFAngleCollection(std::string mmffAngle) {
       unsigned int angleType = boost::lexical_cast<unsigned int>(*token);
 #else
       d_angleType.push_back(
-          (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
+          (std::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
 #endif
       ++token;
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
       unsigned int iAtomType = boost::lexical_cast<unsigned int>(*token);
 #else
       d_iAtomType.push_back(
-          (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
+          (std::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
 #endif
       ++token;
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
       unsigned int jAtomType = boost::lexical_cast<unsigned int>(*token);
 #else
       d_jAtomType.push_back(
-          (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
+          (std::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
 #endif
       ++token;
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
       unsigned int kAtomType = boost::lexical_cast<unsigned int>(*token);
 #else
       d_kAtomType.push_back(
-          (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
+          (std::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
 #endif
       ++token;
       mmffAngleObj.ka = boost::lexical_cast<double>(*token);
@@ -4644,28 +4644,28 @@ MMFFStbnCollection::MMFFStbnCollection(std::string mmffStbn) {
       unsigned int stretchBendType = boost::lexical_cast<unsigned int>(*token);
 #else
       d_stretchBendType.push_back(
-          (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
+          (std::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
 #endif
       ++token;
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
       unsigned int iAtomType = boost::lexical_cast<unsigned int>(*token);
 #else
       d_iAtomType.push_back(
-          (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
+          (std::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
 #endif
       ++token;
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
       unsigned int jAtomType = boost::lexical_cast<unsigned int>(*token);
 #else
       d_jAtomType.push_back(
-          (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
+          (std::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
 #endif
       ++token;
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
       unsigned int kAtomType = boost::lexical_cast<unsigned int>(*token);
 #else
       d_kAtomType.push_back(
-          (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
+          (std::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
 #endif
       ++token;
       mmffStbnObj.kbaIJK = boost::lexical_cast<double>(*token);
@@ -5086,28 +5086,28 @@ MMFFOopCollection::MMFFOopCollection(const bool isMMFFs, std::string mmffOop) {
       unsigned int iAtomType = boost::lexical_cast<unsigned int>(*token);
 #else
       d_iAtomType.push_back(
-          (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
+          (std::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
 #endif
       ++token;
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
       unsigned int jAtomType = boost::lexical_cast<unsigned int>(*token);
 #else
       d_jAtomType.push_back(
-          (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
+          (std::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
 #endif
       ++token;
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
       unsigned int kAtomType = boost::lexical_cast<unsigned int>(*token);
 #else
       d_kAtomType.push_back(
-          (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
+          (std::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
 #endif
       ++token;
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
       unsigned int lAtomType = boost::lexical_cast<unsigned int>(*token);
 #else
       d_lAtomType.push_back(
-          (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
+          (std::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
 #endif
       ++token;
       mmffOopObj.koop = boost::lexical_cast<double>(*token);
@@ -5409,35 +5409,35 @@ MMFFTorCollection::MMFFTorCollection(const bool isMMFFs, std::string mmffTor) {
       unsigned int torType = boost::lexical_cast<unsigned int>(*token);
 #else
       d_torType.push_back(
-          (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
+          (std::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
 #endif
       ++token;
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
       unsigned int iAtomType = boost::lexical_cast<unsigned int>(*token);
 #else
       d_iAtomType.push_back(
-          (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
+          (std::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
 #endif
       ++token;
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
       unsigned int jAtomType = boost::lexical_cast<unsigned int>(*token);
 #else
       d_jAtomType.push_back(
-          (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
+          (std::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
 #endif
       ++token;
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
       unsigned int kAtomType = boost::lexical_cast<unsigned int>(*token);
 #else
       d_kAtomType.push_back(
-          (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
+          (std::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
 #endif
       ++token;
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
       unsigned int lAtomType = boost::lexical_cast<unsigned int>(*token);
 #else
       d_lAtomType.push_back(
-          (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
+          (std::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
 #endif
       ++token;
       mmffTorObj.V1 = boost::lexical_cast<double>(*token);
@@ -8428,7 +8428,7 @@ MMFFVdWCollection::MMFFVdWCollection(std::string mmffVdW) {
         unsigned int atomType = boost::lexical_cast<unsigned int>(*token);
 #else
         d_atomType.push_back(
-            (boost::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
+            (std::uint8_t)(boost::lexical_cast<unsigned int>(*token)));
 #endif
         ++token;
         mmffVdWObj.alpha_i = boost::lexical_cast<double>(*token);

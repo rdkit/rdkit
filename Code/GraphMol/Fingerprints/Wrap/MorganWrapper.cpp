@@ -21,7 +21,8 @@ template <typename OutputType>
 FingerprintGenerator<OutputType> *getMorganGenerator(
     const unsigned int radius, const bool countSimulation,
     const bool includeChirality, const bool useBondTypes,
-    const bool onlyNonzeroInvariants, const bool includeRingMembership,
+    const bool onlyNonzeroInvariants,
+    const bool, // includeRingMembership
     python::object &py_countBounds, const std::uint32_t fpSize,
     python::object &py_atomInvGen, python::object &py_bondInvGen) {
   AtomInvariantsGenerator *atomInvariantsGenerator = nullptr;

@@ -10,7 +10,6 @@ from rdkit.Chem.Draw.MolDrawing import MolDrawing, DrawingOptions
 from rdkit.Chem.Draw.rdMolDraw2D import *
 from rdkit.Chem import rdDepictor
 from rdkit import Chem
-from rdkit.six import iteritems
 
 
 def _getCanvas():
@@ -255,7 +254,7 @@ def MolToMPL(mol, size=(300, 300), kekulize=True, wedgeBonds=True, imageType=Non
 
   drawer.AddMol(mol, **kwargs)
   omol._atomPs = drawer.atomPs[mol]
-  for k, v in iteritems(omol._atomPs):
+  for k, v in omol._atomPs.items():
     omol._atomPs[k] = canvas.rescalePt(v)
   canvas._figure.set_size_inches(float(size[0]) / 100, float(size[1]) / 100)
   return canvas._figure
@@ -424,6 +423,11 @@ def _MolsToGridImage(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
   else:
     fullSize = (molsPerRow * subImgSize[0], nRows * subImgSize[1])
     d2d = rdMolDraw2D.MolDraw2DCairo(fullSize[0], fullSize[1], subImgSize[0], subImgSize[1])
+    dops = d2d.drawOptions()
+    for k, v in list(kwargs.items()):
+      if hasattr(dops, k):
+        setattr(dops, k, v)
+        del kwargs[k]
     d2d.DrawMolecules(
       list(mols), legends=legends, highlightAtoms=highlightAtomLists,
       highlightBonds=highlightBondLists, **kwargs)
@@ -449,6 +453,11 @@ def _MolsToGridSVG(mols, molsPerRow=3, subImgSize=(200, 200), legends=None, high
   fullSize = (molsPerRow * subImgSize[0], nRows * subImgSize[1])
 
   d2d = rdMolDraw2D.MolDraw2DSVG(fullSize[0], fullSize[1], subImgSize[0], subImgSize[1])
+  dops = d2d.drawOptions()
+  for k,v in list(kwargs.items()):
+    if hasattr(dops,k):
+      setattr(dops,k,v)
+      del kwargs[k]
   d2d.DrawMolecules(mols, legends=legends, highlightAtoms=highlightAtomLists,
                     highlightBonds=highlightBondLists, **kwargs)
   d2d.FinishDrawing()

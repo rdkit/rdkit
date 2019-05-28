@@ -3,7 +3,7 @@ import numpy
 import os
 import io
 
-from rdkit.six.moves import cPickle
+import pickle
 
 from rdkit import RDConfig, RDRandom
 from rdkit.ML.InfoTheory import rdInfoTheory as rdit
@@ -147,7 +147,7 @@ class TestCase(unittest.TestCase):
       buf = inTF.read().replace('\r\n', '\n').encode('utf-8')
       inTF.close()
     with io.BytesIO(buf) as inF:
-      examples, avail, bias, nB, nPoss = cPickle.load(inF, encoding='bytes')
+      examples, avail, bias, nB, nPoss = pickle.load(inF, encoding='bytes')
     ranker = rdit.InfoBitRanker(nB, nPoss, rdit.InfoType.BIASENTROPY)
     ranker.SetMaskBits(avail)
     for ex in examples:

@@ -46,6 +46,15 @@ Normalizer::Normalizer(const std::string normalizeFile,
   this->MAX_RESTARTS = maxRestarts;
 }
 
+// overloaded constructor
+Normalizer::Normalizer(std::istream &normalizeStream,
+                       const unsigned int maxRestarts) {
+  BOOST_LOG(rdInfoLog) << "Initializing Normalizer\n";
+  TransformCatalogParams tparams(normalizeStream);
+  this->d_tcat = new TransformCatalog(&tparams);
+  this->MAX_RESTARTS = maxRestarts;
+}
+
 // destructor
 Normalizer::~Normalizer() { delete d_tcat; }
 
@@ -57,10 +66,12 @@ ROMol *Normalizer::normalize(const ROMol &mol) {
   PRECONDITION(tparams, "");
   const std::vector<std::shared_ptr<ChemicalReaction>> &transforms =
       tparams->getTransformations();
-
-  std::vector<boost::shared_ptr<ROMol>> frags = MolOps::getMolFrags(mol);
+  bool sanitizeFrags = false;
+  std::vector<boost::shared_ptr<ROMol>> frags =
+      MolOps::getMolFrags(mol, sanitizeFrags);
   std::vector<ROMOL_SPTR> nfrags;  //( frags.size() );
   for (const auto &frag : frags) {
+    frag->updatePropertyCache(false);
     ROMOL_SPTR nfrag(this->normalizeFragment(*frag, transforms));
     nfrags.push_back(nfrag);
   }
@@ -127,15 +138,23 @@ boost::shared_ptr<ROMol> Normalizer::applyTransform(
     std::vector<Normalizer::Product> pdts;
     for (auto &m : mols) {
       std::vector<MOL_SPTR_VECT> products = transform.runReactants({m});
-
       for (auto &pdt : products) {
         // shared_ptr<ROMol> p0( new RWMol(*pdt[0]) );
         //				std::cout << MolToSmiles(*p0) <<
         // std::endl;
         unsigned int failed;
         try {
-          MolOps::sanitizeMol(*static_cast<RWMol *>(pdt[0].get()), failed);
-          Normalizer::Product np(MolToSmiles(*pdt[0]), pdt[0]);
+          RWMol tmol(*static_cast<RWMol *>(pdt[0].get()));
+          // we'll allow atoms with a valence that's too high to make it
+          // through, but we should fail if we just created something that
+          // can't, for example, be kekulized.
+          unsigned int sanitizeOps = MolOps::SANITIZE_ALL ^
+                                     MolOps::SANITIZE_CLEANUP ^
+                                     MolOps::SANITIZE_PROPERTIES;
+          MolOps::sanitizeMol(tmol, failed, sanitizeOps);
+          pdt[0]->updatePropertyCache(false);
+          // REVIEW: is it actually important that we use canonical SMILES here?
+          Normalizer::Product np(MolToSmiles(tmol), pdt[0]);
           pdts.push_back(np);
         } catch (MolSanitizeException &) {
           BOOST_LOG(rdInfoLog) << "FAILED sanitizeMol.\n";
@@ -145,9 +164,7 @@ boost::shared_ptr<ROMol> Normalizer::applyTransform(
     if (pdts.size() != 0) {
       std::sort(pdts.begin(), pdts.end());
       mols.clear();
-      for (const auto &pdt : pdts) {
-        mols.push_back(pdt.Mol);
-      }
+      mols.push_back(pdts[0].Mol);
     } else {
       if (i > 0) {
         return mols[0];

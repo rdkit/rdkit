@@ -26,7 +26,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
 #ifndef EEMRDKIT_H_SEPT2017
 #define EEMRDKIT_H_SEPT2017
 
@@ -35,25 +34,26 @@ namespace RDKit {
 class ROMol;
 namespace Descriptors {
 
-	namespace {
-		class EEM_arrays {
-		public:
-			unsigned int n;
-			unsigned int *Atomindex;
-			unsigned int *EEMatomtype;
+namespace {
+class EEM_arrays {
+ public:
+  unsigned int n;
+  unsigned int *Atomindex;
+  unsigned int *EEMatomtype;
 
-            EEM_arrays() = delete;
-            EEM_arrays(const EEM_arrays&) = delete;
-            void operator=(const EEM_arrays&) = delete;
+  EEM_arrays() = delete;
+  EEM_arrays(const EEM_arrays &) = delete;
+  void operator=(const EEM_arrays &) = delete;
 
-			EEM_arrays(const ROMol &mol, unsigned int n);
-			~EEM_arrays();
-		};
-	}
+  EEM_arrays(const ROMol &mol, unsigned int n);
+  ~EEM_arrays();
+};
+}  // namespace
 
 const std::string EEMVersion = "1.0.0";
-	void RDKIT_DESCRIPTORS_EXPORT EEM(ROMol &mol, std::vector<double> &res, int confId);
-}
-}
+void RDKIT_DESCRIPTORS_EXPORT EEM(ROMol &mol, std::vector<double> &res,
+                                  int confId);
+}  // namespace Descriptors
+}  // namespace RDKit
 #endif
 #endif

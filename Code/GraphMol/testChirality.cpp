@@ -1014,7 +1014,7 @@ void testRingStereochemistry() {
     m = SmilesToMol(smi);
     std::string smi2 = MolToSmiles(*m, true);
     BOOST_LOG(rdInfoLog) << " : " << smi2 << " " << smi1 << std::endl;
-    TEST_ASSERT(smi2 == smi1);
+    TEST_ASSERT(smi2 != smi1);
     delete m;
   }
 
@@ -2658,7 +2658,7 @@ void stereochemTester(RWMol *m, std::string expectedCIP,
                   common_properties::_CIPCode) == expectedCIP);
   TEST_ASSERT(m->getBondWithIdx(3)->getStereo() == expectedStereo);
 }
-}
+}  // namespace
 void testAssignStereochemistryFrom3D() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing assignStereochemistryFrom3D" << std::endl;
@@ -2697,11 +2697,13 @@ void testAssignStereochemistryFrom3D() {
 
 void testDoubleBondStereoInRings() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing double bond stereochemistry in rings" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing double bond stereochemistry in rings"
+                       << std::endl;
   std::string pathName = getenv("RDBASE");
   pathName += "/Code/GraphMol/test_data/";
   {
-    RWMol *m = MolFileToMol(pathName + "cyclohexene_3D.mol", true, false); // don't remove Hs
+    RWMol *m = MolFileToMol(pathName + "cyclohexene_3D.mol", true,
+                            false);  // don't remove Hs
     MolOps::detectBondStereochemistry(*m);
     MolOps::assignChiralTypesFrom3D(*m);
     MolOps::assignStereochemistry(*m, true, true);
@@ -2711,7 +2713,8 @@ void testDoubleBondStereoInRings() {
     delete m;
   }
   {
-    RWMol *m = MolFileToMol(pathName + "CHEMBL501674_3D.mol", true, false); // don't remove Hs
+    RWMol *m = MolFileToMol(pathName + "CHEMBL501674_3D.mol", true,
+                            false);  // don't remove Hs
     MolOps::detectBondStereochemistry(*m);
     MolOps::assignChiralTypesFrom3D(*m);
     MolOps::assignStereochemistry(*m, true, true);
@@ -2724,7 +2727,7 @@ void testDoubleBondStereoInRings() {
     delete m;
   }
   {
-    RWMol *m = MolFileToMol(pathName + "CHEMBL501674.mol"); // don't remove Hs
+    RWMol *m = MolFileToMol(pathName + "CHEMBL501674.mol");  // don't remove Hs
     const Bond *b = m->getBondBetweenAtoms(6, 7);
     TEST_ASSERT(b);
     TEST_ASSERT(b->getStereo() == Bond::STEREOE);
@@ -2734,7 +2737,7 @@ void testDoubleBondStereoInRings() {
     delete m;
   }
   {
-    RWMol *m = MolFileToMol(pathName + "CHEMBL501674.mol"); // don't remove Hs
+    RWMol *m = MolFileToMol(pathName + "CHEMBL501674.mol");  // don't remove Hs
     std::string smi = MolToSmiles(*m, true);
     unsigned int nTrans = 0;
     size_t pos = 0;
@@ -2761,8 +2764,12 @@ void testIssue1735() {
 }
 
 void testStereoGroupUpdating() {
-  BOOST_LOG(rdInfoLog) << "-----------------------------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Are stereo groups updated when atoms and bonds are deleted?" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------------------------------------------"
+      << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Are stereo groups updated when atoms and bonds are deleted?"
+      << std::endl;
 
   std::string rdbase = getenv("RDBASE");
   std::string fName =
@@ -2777,10 +2784,126 @@ void testStereoGroupUpdating() {
   TEST_ASSERT(m->getStereoGroups().size() == 0u);
 }
 
+void testClearDirsOnDoubleBondsWithoutStereo() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------------------------------------------"
+      << std::endl;
+  BOOST_LOG(rdInfoLog) << "Github #2422: Are bond directions around double "
+                          "bonds without stereo cleared?"
+                       << std::endl;
+  {  // base example
+    std::string molb = R"CTAB(
+     RDKit          3D
+
+  9  8  0  0  0  0  0  0  0  0999 V2000
+   -1.0935    0.1248    0.0275 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2207   -0.5165   -0.1416 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3334    0.2056    0.0404 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.8920   -0.6460   -0.0055 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.1652    0.5837    1.0507 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2163    0.8670   -0.7758 H   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2887   -1.5731   -0.4133 H   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2967   -0.2900   -0.0902 H   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2275    1.2444    0.3077 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  2  0
+  1  4  1  0
+  1  5  1  0
+  1  6  1  0
+  2  7  1  0
+  3  8  1  0
+  3  9  1  0
+M  END)CTAB";
+    bool sanitize = true;
+    bool removeHs = false;
+    std::unique_ptr<RWMol> m(MolBlockToMol(molb, sanitize, removeHs));
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 9);
+    TEST_ASSERT(m->getBondBetweenAtoms(1, 2)->getStereo() == Bond::STEREONONE);
+    TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getBondDir() == Bond::NONE);
+    TEST_ASSERT(m->getBondBetweenAtoms(2, 7)->getBondDir() == Bond::NONE);
+    TEST_ASSERT(m->getBondBetweenAtoms(2, 8)->getBondDir() == Bond::NONE);
+
+    MolOps::removeHs(*m);
+    TEST_ASSERT(m->getNumAtoms() == 3);
+  }
+  {  // base example with the double bond reversed
+    std::string molb = R"CTAB(
+     RDKit          3D
+
+  9  8  0  0  0  0  0  0  0  0999 V2000
+   -1.0935    0.1248    0.0275 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2207   -0.5165   -0.1416 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3334    0.2056    0.0404 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.8920   -0.6460   -0.0055 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.1652    0.5837    1.0507 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2163    0.8670   -0.7758 H   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2887   -1.5731   -0.4133 H   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2967   -0.2900   -0.0902 H   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2275    1.2444    0.3077 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  3  2  2  0
+  1  4  1  0
+  1  5  1  0
+  1  6  1  0
+  2  7  1  0
+  3  8  1  0
+  3  9  1  0
+M  END)CTAB";
+    bool sanitize = true;
+    bool removeHs = false;
+    std::unique_ptr<RWMol> m(MolBlockToMol(molb, sanitize, removeHs));
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 9);
+    TEST_ASSERT(m->getBondBetweenAtoms(1, 2)->getStereo() == Bond::STEREONONE);
+    TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getBondDir() == Bond::NONE);
+    TEST_ASSERT(m->getBondBetweenAtoms(2, 7)->getBondDir() == Bond::NONE);
+    TEST_ASSERT(m->getBondBetweenAtoms(2, 8)->getBondDir() == Bond::NONE);
+
+    MolOps::removeHs(*m);
+    TEST_ASSERT(m->getNumAtoms() == 3);
+  }
+  {  // make sure it behaves if there really is double bond stereo
+    std::string molb = R"CTAB(
+     RDKit          3D
+
+  9  8  0  0  0  0  0  0  0  0999 V2000
+   -1.0935    0.1248    0.0275 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2207   -0.5165   -0.1416 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3334    0.2056    0.0404 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.8920   -0.6460   -0.0055 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.1652    0.5837    1.0507 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2163    0.8670   -0.7758 H   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2887   -1.5731   -0.4133 H   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2967   -0.2900   -0.0902 F   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2275    1.2444    0.3077 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  2  0
+  1  4  1  0
+  1  5  1  0
+  1  6  1  0
+  2  7  1  0
+  3  8  1  0
+  3  9  1  0
+M  END)CTAB";
+    bool sanitize = true;
+    bool removeHs = false;
+    std::unique_ptr<RWMol> m(MolBlockToMol(molb, sanitize, removeHs));
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 9);
+    TEST_ASSERT(m->getBondBetweenAtoms(1, 2)->getStereo() != Bond::STEREONONE);
+    TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getBondDir() != Bond::NONE);
+    TEST_ASSERT(m->getBondBetweenAtoms(2, 7)->getBondDir() != Bond::NONE);
+    TEST_ASSERT(m->getBondBetweenAtoms(2, 8)->getBondDir() != Bond::NONE);
+
+    MolOps::removeHs(*m);
+    TEST_ASSERT(m->getNumAtoms() == 4);
+  }
+}
 
 int main() {
   RDLog::InitLogs();
-// boost::logging::enable_logs("rdApp.debug");
+  // boost::logging::enable_logs("rdApp.debug");
 
 #if 1
   testSmiles1();
@@ -2803,11 +2926,12 @@ int main() {
   testGithub553();
   testGithub803();
   testGithub1294();
-  #endif
   testGithub1423();
   testAssignStereochemistryFrom3D();
   testDoubleBondStereoInRings();
   testIssue1735();
   testStereoGroupUpdating();
+#endif
+  testClearDirsOnDoubleBondsWithoutStereo();
   return 0;
 }

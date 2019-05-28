@@ -58,19 +58,19 @@ unsigned int twoBitCellPos(unsigned int nAtoms, int i, int j) {
   return i * (nAtoms - 1) + i * (1 - i) / 2 + j;
 }
 
-void setTwoBitCell(boost::shared_array<boost::uint8_t> &res, unsigned int pos,
-                   boost::uint8_t value) {
+void setTwoBitCell(boost::shared_array<std::uint8_t> &res, unsigned int pos,
+                   std::uint8_t value) {
   unsigned int twoBitPos = pos / 4;
   unsigned int shift = 2 * (pos % 4);
-  boost::uint8_t twoBitMask = 3 << shift;
+  std::uint8_t twoBitMask = 3 << shift;
   res[twoBitPos] = ((res[twoBitPos] & (~twoBitMask)) | (value << shift));
 }
 
-boost::uint8_t getTwoBitCell(boost::shared_array<boost::uint8_t> &res,
+std::uint8_t getTwoBitCell(boost::shared_array<std::uint8_t> &res,
                              unsigned int pos) {
   unsigned int twoBitPos = pos / 4;
   unsigned int shift = 2 * (pos % 4);
-  boost::uint8_t twoBitMask = 3 << shift;
+  std::uint8_t twoBitMask = 3 << shift;
 
   return ((res[twoBitPos] & twoBitMask) >> shift);
 }
@@ -87,13 +87,13 @@ boost::uint8_t getTwoBitCell(boost::shared_array<boost::uint8_t> &res,
 //  on the result
 //
 // ------------------------------------------------------------------------
-boost::shared_array<boost::uint8_t> buildNeighborMatrix(const ROMol &mol) {
-  const boost::uint8_t RELATION_1_X_INIT = RELATION_1_X | (RELATION_1_X << 2) |
+boost::shared_array<std::uint8_t> buildNeighborMatrix(const ROMol &mol) {
+  const std::uint8_t RELATION_1_X_INIT = RELATION_1_X | (RELATION_1_X << 2) |
                                            (RELATION_1_X << 4) |
                                            (RELATION_1_X << 6);
   unsigned int nAtoms = mol.getNumAtoms();
   unsigned nTwoBitCells = (nAtoms * (nAtoms + 1) - 1) / 8 + 1;
-  boost::shared_array<boost::uint8_t> res(new boost::uint8_t[nTwoBitCells]);
+  boost::shared_array<std::uint8_t> res(new std::uint8_t[nTwoBitCells]);
   std::memset(res.get(), RELATION_1_X_INIT, nTwoBitCells);
   for (ROMol::ConstBondIterator bondi = mol.beginBonds();
        bondi != mol.endBonds(); ++bondi) {
@@ -423,7 +423,7 @@ void addAngleSpecialCases(const ROMol &mol, int confId,
 // ------------------------------------------------------------------------
 void addNonbonded(const ROMol &mol, int confId, const AtomicParamVect &params,
                   ForceFields::ForceField *field,
-                  boost::shared_array<boost::uint8_t> neighborMatrix,
+                  boost::shared_array<std::uint8_t> neighborMatrix,
                   double vdwThresh, bool ignoreInterfragInteractions) {
   PRECONDITION(mol.getNumAtoms() == params.size(), "bad parameters");
   PRECONDITION(field, "bad forcefield");
@@ -694,7 +694,7 @@ ForceFields::ForceField *constructForceField(ROMol &mol,
   Tools::addBonds(mol, params, res);
   Tools::addAngles(mol, params, res);
   Tools::addAngleSpecialCases(mol, confId, params, res);
-  boost::shared_array<boost::uint8_t> neighborMat =
+  boost::shared_array<std::uint8_t> neighborMat =
       Tools::buildNeighborMatrix(mol);
   Tools::addNonbonded(mol, confId, params, res, neighborMat, vdwThresh,
                       ignoreInterfragInteractions);

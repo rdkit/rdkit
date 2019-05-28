@@ -105,7 +105,8 @@ class RDKIT_FINGERPRINTS_EXPORT TopologicalTorsionEnvGenerator
  fingerprints
  */
 template <typename OutputType>
-RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<OutputType> *getTopologicalTorsionGenerator(
+RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<OutputType> *
+getTopologicalTorsionGenerator(
     const bool includeChirality = false, const uint32_t torsionAtomCount = 4,
     AtomInvariantsGenerator *atomInvariantsGenerator = nullptr,
     const bool countSimulation = true,

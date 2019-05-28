@@ -126,11 +126,11 @@ PATH_TYPE bondListFromAtomList(const ROMol &mol, const PATH_TYPE &atomIds) {
   return bids;
 }
 
-using boost::uint32_t;
-using boost::int32_t;
+using std::uint32_t;
+using std::int32_t;
 DiscrimTuple calcPathDiscriminators(const ROMol &mol, const PATH_TYPE &path,
                                     bool useBO,
-                                    std::vector<boost::uint32_t> *extraInvars) {
+                                    std::vector<std::uint32_t> *extraInvars) {
   if (extraInvars)
     CHECK_INVARIANT(extraInvars->size() == mol.getNumAtoms(),
                     "bad extra invars");

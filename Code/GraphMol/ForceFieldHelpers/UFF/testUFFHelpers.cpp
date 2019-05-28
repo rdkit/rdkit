@@ -21,6 +21,7 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/FileParsers/MolWriters.h>
 
+#include <GraphMol/ForceFieldHelpers/FFConvenience.h>
 #include <GraphMol/ForceFieldHelpers/UFF/AtomTyper.h>
 #include <GraphMol/ForceFieldHelpers/UFF/Builder.h>
 #include <GraphMol/ForceFieldHelpers/UFF/UFF.h>
@@ -216,7 +217,7 @@ void testUFFBuilder1() {
   UFF::AtomicParamVect types;
   bool foundAll;
   ForceFields::ForceField *field;
-  boost::shared_array<boost::uint8_t> nbrMat;
+  boost::shared_array<std::uint8_t> nbrMat;
 
   mol = SmilesToMol("CC(O)C");
   auto *conf = new Conformer(mol->getNumAtoms());
@@ -479,7 +480,7 @@ void testUFFBuilder2() {
 
     UFF::AtomicParamVect types;
     bool foundAll;
-    boost::shared_array<boost::uint8_t> nbrMat;
+    boost::shared_array<std::uint8_t> nbrMat;
     boost::tie(types, foundAll) = UFF::getAtomTypes(*mol);
 
     ForceFields::ForceField *field;
@@ -572,6 +573,9 @@ void testUFFBuilder2() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+#ifdef RDK_TEST_MULTITHREADED
+void testUFFBatch() {}
+#else
 void testUFFBatch() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog)
@@ -618,6 +622,7 @@ void testUFFBatch() {
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
+#endif
 
 void testUFFBuilderSpecialCases() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
@@ -923,7 +928,7 @@ void testSFIssue1653802() {
 
   UFF::AtomicParamVect types;
   bool foundAll;
-  boost::shared_array<boost::uint8_t> nbrMat;
+  boost::shared_array<std::uint8_t> nbrMat;
   boost::tie(types, foundAll) = UFF::getAtomTypes(*mol);
   TEST_ASSERT(foundAll);
   TEST_ASSERT(types.size() == mol->getNumAtoms());
@@ -1183,7 +1188,7 @@ namespace {
 void runblock_uff(const std::vector<ROMol *> &mols,
                   const std::vector<double> &energies, unsigned int count,
                   unsigned int idx) {
-  for (unsigned int rep = 0; rep < 1000; ++rep) {
+  for (unsigned int rep = 0; rep < 200; ++rep) {
     for (unsigned int i = 0; i < mols.size(); ++i) {
       if (i % count != idx) continue;
       ROMol *mol = mols[i];
@@ -1276,7 +1281,7 @@ void testUFFMultiThread2() {
   ROMol *m = suppl[4];
   TEST_ASSERT(m);
   auto *om = new ROMol(*m);
-  for (unsigned int i = 0; i < 1000; ++i) {
+  for (unsigned int i = 0; i < 200; ++i) {
     m->addConformer(new Conformer(m->getConformer()), true);
   }
   std::vector<std::pair<int, double>> res;
@@ -1301,6 +1306,53 @@ void testUFFMultiThread2() {
   }
   delete m;
   delete om;
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+void testUFFMultiThread3() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test UFF multithreading3" << std::endl;
+
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/GraphMol/ForceFieldHelpers/UFF/test_data";
+  SDMolSupplier suppl(pathName + "/bulk.sdf");
+  ROMol *m = suppl[4];
+  TEST_ASSERT(m);
+  auto *om = new ROMol(*m);
+  for (unsigned int i = 0; i < 200; ++i) {
+    m->addConformer(new Conformer(m->getConformer()), true);
+  }
+  std::vector<std::pair<int, double>> res;
+
+  ForceFields::ForceField *omField = UFF::constructForceField(*om);
+  TEST_ASSERT(omField);
+  omField->initialize();
+  ForceFields::ForceField *mField = UFF::constructForceField(*m);
+  TEST_ASSERT(mField);
+  mField->initialize();
+
+  ForceFieldsHelper::OptimizeMolecule(*omField);
+  ForceFieldsHelper::OptimizeMoleculeConfs(*m, *mField, res, 0);
+  for (unsigned int i = 1; i < res.size(); ++i) {
+    TEST_ASSERT(!res[i].first);
+    TEST_ASSERT(feq(res[i].second, res[0].second, .00001));
+  }
+  for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
+    RDGeom::Point3D p0 = om->getConformer().getAtomPos(i);
+    RDGeom::Point3D np0 = m->getConformer().getAtomPos(i);
+    TEST_ASSERT(feq(p0.x, np0.x));
+    TEST_ASSERT(feq(p0.y, np0.y));
+    TEST_ASSERT(feq(p0.z, np0.z));
+    np0 =
+        m->getConformer(11).getAtomPos(i);  // pick some random other conformer
+    TEST_ASSERT(feq(p0.x, np0.x));
+    TEST_ASSERT(feq(p0.y, np0.y));
+    TEST_ASSERT(feq(p0.z, np0.z));
+  }
+  delete m;
+  delete om;
+  delete mField;
+  delete omField;
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 #endif
@@ -1357,6 +1409,7 @@ int main() {
 #ifdef RDK_TEST_MULTITHREADED
   testUFFMultiThread();
   testUFFMultiThread2();
+  testUFFMultiThread3();
 #endif
   testGitHubIssue62();
 #endif

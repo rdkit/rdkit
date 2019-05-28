@@ -29,10 +29,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Created by Greg Landrum and Anna Vulpetti, March 2009
-from __future__ import print_function
+
 from rdkit import Chem
 from rdkit.Chem import BRICS
-import sys, cPickle, re
+import sys, pickle, re
 
 inF = file(sys.argv[1], 'r')
 inLs = inF.readlines()

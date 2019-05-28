@@ -84,6 +84,10 @@ endif()
 if(RDK_BUILD_AVALON_SUPPORT)
   SET(CMAKE_SWIG_FLAGS "-DRDK_BUILD_AVALON_SUPPORT" ${CMAKE_SWIG_FLAGS} )
 endif()
+if(RDK_USE_BOOST_IOSTREAMS)
+  SET(CMAKE_SWIG_FLAGS "-DRDK_USE_BOOST_IOSTREAMS" ${CMAKE_SWIG_FLAGS} )
+endif()
+
 
 
 # enable this line to build the ErrorGenerator class for testing handling of C++ errors in the JNI layer
@@ -339,6 +343,16 @@ ADD_TEST(JavaFilterCatalogTests
     java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
 	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 	org.RDKit.FilterCatalogTests)
+
+ADD_TEST(JavaSubstructLibraryTests
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
+	org.RDKit.SubstructLibraryTests)
+
+ADD_TEST(JavaRGroupDecompositionTests
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
+	org.RDKit.RGroupDecompositionTests)
 
 ADD_TEST(JavaDiversityPickerTests
 	    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}

@@ -30,6 +30,6 @@ int Add2DCoordsToMol(ROMol& mol, bool useDLL = true);
 #else
 int Add2DCoordsToMol(ROMol &mol, bool useDLL = false);
 #endif
-}
+}  // namespace RDKit
 
 #endif

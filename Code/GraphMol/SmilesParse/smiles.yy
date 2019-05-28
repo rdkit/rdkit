@@ -41,8 +41,14 @@ yysmiles_error( const char *input,
                 std::list<unsigned int> *branchPoints,
 		void *scanner,int start_token, const char * msg )
 {
+  RDUNUSED_PARAM(input);
+  RDUNUSED_PARAM(lastAtom);
+  RDUNUSED_PARAM(lastBond);
+  RDUNUSED_PARAM(branchPoints);
+  RDUNUSED_PARAM(scanner);
+  RDUNUSED_PARAM(start_token);
   yyErrorCleanup(ms);
-  throw RDKit::SmilesParseException(msg);
+  BOOST_LOG(rdErrorLog) << "SMILES Parse Error: " << msg << " while parsing: " << input << std::endl;
 }
 
 void
@@ -51,8 +57,12 @@ yysmiles_error( const char *input,
                 std::list<unsigned int> *branchPoints,
 		void *scanner,int start_token, const char * msg )
 {
+  RDUNUSED_PARAM(input);
+  RDUNUSED_PARAM(branchPoints);
+  RDUNUSED_PARAM(scanner);
+  RDUNUSED_PARAM(start_token);
   yyErrorCleanup(ms);
-  throw RDKit::SmilesParseException(msg);
+  BOOST_LOG(rdErrorLog) << "SMILES Parse Error: " << msg << " while parsing: " << input << std::endl;
 }
 
 
@@ -95,7 +105,7 @@ yysmiles_error( const char *input,
 %token ATOM_OPEN_TOKEN ATOM_CLOSE_TOKEN
 %token EOS_TOKEN
 
-%destructor { delete $$; } AROMATIC_ATOM_TOKEN ATOM_TOKEN ORGANIC_ATOM_TOKEN
+%destructor { delete $$; } <atom>
 %destructor { delete $$; } <bond>
 
 %start meta_start
@@ -223,7 +233,6 @@ mol: atomd {
   atom->getPropIfPresent(RDKit::common_properties::_RingClosures,tmp);
   tmp.push_back(-($2+1));
   atom->setProp(RDKit::common_properties::_RingClosures,tmp);
-
 }
 
 | mol BOND_TOKEN ring_number {
@@ -231,6 +240,9 @@ mol: atomd {
   Atom *atom=mp->getActiveAtom();
   Bond *newB = mp->createPartialBond(atom->getIdx(),
 				     $2->getBondType());
+  if($2->hasProp(RDKit::common_properties::_unspecifiedOrder)){
+    newB->setProp(RDKit::common_properties::_unspecifiedOrder,1);
+  }
   newB->setBondDir($2->getBondDir());
   mp->setAtomBookmark(atom,$3);
   mp->setBondBookmark(newB,$3);

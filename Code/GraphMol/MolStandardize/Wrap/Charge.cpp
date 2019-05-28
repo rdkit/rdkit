@@ -18,51 +18,67 @@ using namespace RDKit;
 namespace {
 
 std::vector<MolStandardize::ChargeCorrection> defaultChargeCorrections() {
-	return MolStandardize::CHARGE_CORRECTIONS;
+  return MolStandardize::CHARGE_CORRECTIONS;
 }
 
 ROMol *reionizeHelper(MolStandardize::Reionizer &self, const ROMol &mol) {
-	return self.reionize(mol);
+  return self.reionize(mol);
 }
 
-} // namespace
+MolStandardize::Reionizer *reionizerFromData(const std::string &data,
+                                             python::object chargeCorrections) {
+  std::istringstream sstr(data);
+  auto corrections =
+      pythonObjectToVect<MolStandardize::ChargeCorrection>(chargeCorrections);
+  MolStandardize::Reionizer *res;
+  if (corrections) {
+    res = new MolStandardize::Reionizer(sstr, *corrections);
+  } else {
+    res = new MolStandardize::Reionizer(
+        sstr, std::vector<MolStandardize::ChargeCorrection>());
+  }
+  return res;
+}
 
-struct charge_wrapper{
-	static void wrap() {
-	python::scope().attr("__doc__") = 
-					"Module containing functions for charge corrections";
-	
-	std::string docString = "";
+}  // namespace
 
-	python::class_<MolStandardize::ChargeCorrection, boost::noncopyable>(
-				"ChargeCorrection", python::init<std::string, std::string, int>())
-					.def_readwrite("Name", &MolStandardize::ChargeCorrection::Name)
-					.def_readwrite("Smarts", &MolStandardize::ChargeCorrection::Smarts)
-					.def_readwrite("Charge", &MolStandardize::ChargeCorrection::Charge)
-					;
+struct charge_wrapper {
+  static void wrap() {
+    python::scope().attr("__doc__") =
+        "Module containing functions for charge corrections";
 
-	python::def("CHARGE_CORRECTIONS", defaultChargeCorrections);
+    std::string docString = "";
 
-	python::class_<MolStandardize::Reionizer, boost::noncopyable>(
-				"Reionizer", python::init<>()	)
-					.def(python::init<std::string>())
-					.def(python::init<std::string, std::vector<MolStandardize::ChargeCorrection>>())
-					.def("reionize", &reionizeHelper,
-							 (python::arg("self"), python::arg("mol")),
-							 "",
-							 python::return_value_policy<python::manage_new_object>())
-					;
+    python::class_<MolStandardize::ChargeCorrection, boost::noncopyable>(
+        "ChargeCorrection", python::init<std::string, std::string, int>())
+        .def_readwrite("Name", &MolStandardize::ChargeCorrection::Name)
+        .def_readwrite("Smarts", &MolStandardize::ChargeCorrection::Smarts)
+        .def_readwrite("Charge", &MolStandardize::ChargeCorrection::Charge);
 
-	python::class_<MolStandardize::Uncharger, boost::noncopyable>(
-				"Uncharger", python::init<>() )
-					.def("uncharge", &MolStandardize::Uncharger::uncharge,
-							(python::arg("self"), python::arg("mol")),
-							"",
-							python::return_value_policy<python::manage_new_object>())
-					;
+    python::def("CHARGE_CORRECTIONS", defaultChargeCorrections);
 
-	}
+    python::class_<MolStandardize::Reionizer, boost::noncopyable>(
+        "Reionizer", python::init<>())
+        .def(python::init<std::string>())
+        .def(python::init<std::string,
+                          std::vector<MolStandardize::ChargeCorrection>>())
+        .def("reionize", &reionizeHelper,
+             (python::arg("self"), python::arg("mol")), "",
+             python::return_value_policy<python::manage_new_object>());
+
+    python::def("ReionizerFromData", &reionizerFromData,
+                (python::arg("paramData"),
+                 python::arg("chargeCorrections") = python::list()),
+                "creates a reionizer from a string containing parameter data "
+                "and a list of charge corrections",
+                python::return_value_policy<python::manage_new_object>());
+    python::class_<MolStandardize::Uncharger, boost::noncopyable>(
+        "Uncharger", python::init<bool>((python::arg("self"),
+                                         python::arg("canonicalOrder") = true)))
+        .def("uncharge", &MolStandardize::Uncharger::uncharge,
+             (python::arg("self"), python::arg("mol")), "",
+             python::return_value_policy<python::manage_new_object>());
+  }
 };
 
 void wrap_charge() { charge_wrapper::wrap(); }
-

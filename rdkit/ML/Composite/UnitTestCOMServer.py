@@ -3,7 +3,7 @@
 #
 
 # unit testing code for the composite model COM server
-from __future__ import print_function
+
 from rdkit import RDConfig
 import unittest
 try:

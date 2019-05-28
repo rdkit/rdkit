@@ -88,10 +88,12 @@ RDKitFPArguments<OutputType>::RDKitFPArguments(
 
 template <typename OutputType>
 OutputType RDKitFPAtomEnv<OutputType>::getBitId(
-    FingerprintArguments<OutputType> *arguments,
-    const std::vector<std::uint32_t> *atomInvariants,
-    const std::vector<std::uint32_t> *bondInvariants,
-    const AdditionalOutput *additionalOutput, const bool hashResults) const {
+    FingerprintArguments<OutputType> *, // arguments
+    const std::vector<std::uint32_t> *, // atomInvariants
+    const std::vector<std::uint32_t> *, // bondInvariants
+    const AdditionalOutput *, // additionalOutput
+    const bool // hashResults
+) const {
   // todo set additional outputs
   return d_bitId;
 }
@@ -111,11 +113,13 @@ std::vector<AtomEnvironment<OutputType> *>
 RDKitFPEnvGenerator<OutputType>::getEnvironments(
     const ROMol &mol, FingerprintArguments<OutputType> *arguments,
     const std::vector<std::uint32_t> *fromAtoms,
-    const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
-    const AdditionalOutput *additionalOutput,
+    const std::vector<std::uint32_t> *, // ignoreAtoms
+    const int, // confId
+    const AdditionalOutput *, // additionalOutput
     const std::vector<std::uint32_t> *atomInvariants,
-    const std::vector<std::uint32_t> *bondInvariants,
-    const bool hashResults) const {
+    const std::vector<std::uint32_t> *, // bondInvariants
+    const bool // hashResults
+) const {
   PRECONDITION(!atomInvariants || atomInvariants->size() >= mol.getNumAtoms(),
                "bad atomInvariants size");
 

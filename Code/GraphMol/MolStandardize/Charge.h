@@ -64,6 +64,10 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Reionizer {
   // corrections
   Reionizer(const std::string acidbaseFile,
             const std::vector<ChargeCorrection> ccs);
+  //! construct a Reionizer with a particular acidbaseFile and charge
+  // corrections
+  Reionizer(std::istream &acidbaseStream,
+            const std::vector<ChargeCorrection> ccs);
   //! making Reionizer objects non-copyable
   Reionizer(const Reionizer &other) = delete;
   Reionizer &operator=(Reionizer const &) = delete;
@@ -101,12 +105,16 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Reionizer {
 class RDKIT_MOLSTANDARDIZE_EXPORT Uncharger {
  public:
   Uncharger();
+  Uncharger(bool canonicalOrdering) : Uncharger() {
+    df_canonicalOrdering = canonicalOrdering;
+  };
   Uncharger(const Uncharger &other);
   ~Uncharger();
 
   ROMol *uncharge(const ROMol &mol);
 
  private:
+  bool df_canonicalOrdering = true;
   std::shared_ptr<ROMol> pos_h;
   std::shared_ptr<ROMol> pos_quat;
   std::shared_ptr<ROMol> neg;

@@ -85,7 +85,7 @@ BOOST_PYTHON_MODULE(cDataStructs) {
                         python::object))convertToNumpyArray,
               (python::arg("bv"), python::arg("destArray")));
   python::def("ConvertToNumpyArray",
-              (void (*)(const RDKit::SparseIntVect<boost::int32_t> &,
+              (void (*)(const RDKit::SparseIntVect<std::int32_t> &,
                         python::object))convertToNumpyArray,
               (python::arg("bv"), python::arg("destArray")));
   python::def("ConvertToNumpyArray",
@@ -93,7 +93,7 @@ BOOST_PYTHON_MODULE(cDataStructs) {
                         python::object))convertToNumpyArray,
               (python::arg("bv"), python::arg("destArray")));
   python::def("ConvertToNumpyArray",
-              (void (*)(const RDKit::SparseIntVect<boost::uint32_t> &,
+              (void (*)(const RDKit::SparseIntVect<std::uint32_t> &,
                         python::object))convertToNumpyArray,
               (python::arg("bv"), python::arg("destArray")));
   python::def("ConvertToNumpyArray",

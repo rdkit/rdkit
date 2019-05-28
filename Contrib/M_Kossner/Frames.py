@@ -17,7 +17,7 @@
 #    - sd files containing all molecules belonging to one frame (1.sdf, 2.sdf etc)
 #    - frames.smi containing the (caninical) smiles and count of occurrence
 #
-from __future__ import print_function
+
 
 import os, sys
 from Chem import AllChem as Chem

@@ -1,6 +1,14 @@
 rdkit.DistanceGeometry package
 ==============================
 
+Submodules
+----------
+
+.. toctree::
+
+   rdkit.DistanceGeometry.DistGeom
+
+
 Module contents
 ---------------
 

@@ -120,7 +120,7 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibraryBase {
   //! get the next set of products as smiles
   //  This returns a vector of a vector strings.
   //  Each result vector corresponds for a product template.
-  virtual std::vector<std::vector<std::string> > nextSmiles();
+  virtual std::vector<std::vector<std::string>> nextSmiles();
 
   //! Get the current position into the reagent vectors
   //   Use getState/setState to save/restart the enumeration
@@ -196,5 +196,5 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibraryBase {
 #ifdef RDK_USE_BOOST_SERIALIZATION
 BOOST_SERIALIZATION_ASSUME_ABSTRACT(EnumerateLibraryBase)
 #endif
-}
+}  // namespace RDKit
 #endif

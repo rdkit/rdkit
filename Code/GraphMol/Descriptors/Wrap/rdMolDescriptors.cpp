@@ -177,37 +177,37 @@ python::list calcAUTOCORR2Ds(const RDKit::ROMol &mol,
 
 #endif
 
-RDKit::SparseIntVect<boost::int32_t> *GetAtomPairFingerprint(
+RDKit::SparseIntVect<std::int32_t> *GetAtomPairFingerprint(
     const RDKit::ROMol &mol, unsigned int minLength, unsigned int maxLength,
     python::object fromAtoms, python::object ignoreAtoms,
     python::object atomInvariants, bool includeChirality, bool use2D,
     int confId) {
-  std::unique_ptr<std::vector<boost::uint32_t>> fvect =
+  std::unique_ptr<std::vector<std::uint32_t>> fvect =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
-  std::unique_ptr<std::vector<boost::uint32_t>> ivect =
+  std::unique_ptr<std::vector<std::uint32_t>> ivect =
       pythonObjectToVect(ignoreAtoms, mol.getNumAtoms());
-  std::unique_ptr<std::vector<boost::uint32_t>> invvect = pythonObjectToVect(
+  std::unique_ptr<std::vector<std::uint32_t>> invvect = pythonObjectToVect(
       atomInvariants,
       static_cast<unsigned int>(1 << RDKit::AtomPairs::codeSize));
-  RDKit::SparseIntVect<boost::int32_t> *res;
+  RDKit::SparseIntVect<std::int32_t> *res;
   res = RDKit::AtomPairs::getAtomPairFingerprint(
       mol, minLength, maxLength, fvect.get(), ivect.get(), invvect.get(),
       includeChirality, use2D, confId);
   return res;
 }
-RDKit::SparseIntVect<boost::int32_t> *GetHashedAtomPairFingerprint(
+RDKit::SparseIntVect<std::int32_t> *GetHashedAtomPairFingerprint(
     const RDKit::ROMol &mol, unsigned int nBits, unsigned int minLength,
     unsigned int maxLength, python::object fromAtoms,
     python::object ignoreAtoms, python::object atomInvariants,
     bool includeChirality, bool use2D, int confId) {
-  std::unique_ptr<std::vector<boost::uint32_t>> fvect =
+  std::unique_ptr<std::vector<std::uint32_t>> fvect =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
-  std::unique_ptr<std::vector<boost::uint32_t>> ivect =
+  std::unique_ptr<std::vector<std::uint32_t>> ivect =
       pythonObjectToVect(ignoreAtoms, mol.getNumAtoms());
-  std::unique_ptr<std::vector<boost::uint32_t>> invvect = pythonObjectToVect(
+  std::unique_ptr<std::vector<std::uint32_t>> invvect = pythonObjectToVect(
       atomInvariants,
       static_cast<unsigned int>(1 << RDKit::AtomPairs::codeSize));
-  RDKit::SparseIntVect<boost::int32_t> *res;
+  RDKit::SparseIntVect<std::int32_t> *res;
   res = RDKit::AtomPairs::getHashedAtomPairFingerprint(
       mol, nBits, minLength, maxLength, fvect.get(), ivect.get(), invvect.get(),
       includeChirality, use2D, confId);
@@ -218,11 +218,11 @@ RDKit::SparseIntVect<boost::int64_t> *GetTopologicalTorsionFingerprint(
     const RDKit::ROMol &mol, unsigned int targetSize, python::object fromAtoms,
     python::object ignoreAtoms, python::object atomInvariants,
     bool includeChirality) {
-  std::unique_ptr<std::vector<boost::uint32_t>> fvect =
+  std::unique_ptr<std::vector<std::uint32_t>> fvect =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
-  std::unique_ptr<std::vector<boost::uint32_t>> ivect =
+  std::unique_ptr<std::vector<std::uint32_t>> ivect =
       pythonObjectToVect(ignoreAtoms, mol.getNumAtoms());
-  std::unique_ptr<std::vector<boost::uint32_t>> invvect = pythonObjectToVect(
+  std::unique_ptr<std::vector<std::uint32_t>> invvect = pythonObjectToVect(
       atomInvariants,
       static_cast<unsigned int>(1 << RDKit::AtomPairs::codeSize));
   if (targetSize * RDKit::AtomPairs::codeSize > 64) {
@@ -243,11 +243,11 @@ RDKit::SparseIntVect<boost::int64_t> *GetHashedTopologicalTorsionFingerprint(
     const RDKit::ROMol &mol, unsigned int nBits, unsigned int targetSize,
     python::object fromAtoms, python::object ignoreAtoms,
     python::object atomInvariants, bool includeChirality) {
-  std::unique_ptr<std::vector<boost::uint32_t>> fvect =
+  std::unique_ptr<std::vector<std::uint32_t>> fvect =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
-  std::unique_ptr<std::vector<boost::uint32_t>> ivect =
+  std::unique_ptr<std::vector<std::uint32_t>> ivect =
       pythonObjectToVect(ignoreAtoms, mol.getNumAtoms());
-  std::unique_ptr<std::vector<boost::uint32_t>> invvect = pythonObjectToVect(
+  std::unique_ptr<std::vector<std::uint32_t>> invvect = pythonObjectToVect(
       atomInvariants,
       static_cast<unsigned int>(1 << RDKit::AtomPairs::codeSize));
   RDKit::SparseIntVect<boost::int64_t> *res;
@@ -262,11 +262,11 @@ ExplicitBitVect *GetHashedTopologicalTorsionFingerprintAsBitVect(
     python::object fromAtoms, python::object ignoreAtoms,
     python::object atomInvariants, unsigned int nBitsPerEntry,
     bool includeChirality) {
-  std::unique_ptr<std::vector<boost::uint32_t>> fvect =
+  std::unique_ptr<std::vector<std::uint32_t>> fvect =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
-  std::unique_ptr<std::vector<boost::uint32_t>> ivect =
+  std::unique_ptr<std::vector<std::uint32_t>> ivect =
       pythonObjectToVect(ignoreAtoms, mol.getNumAtoms());
-  std::unique_ptr<std::vector<boost::uint32_t>> invvect = pythonObjectToVect(
+  std::unique_ptr<std::vector<std::uint32_t>> invvect = pythonObjectToVect(
       atomInvariants,
       static_cast<unsigned int>(1 << RDKit::AtomPairs::codeSize));
   ExplicitBitVect *res;
@@ -281,11 +281,11 @@ ExplicitBitVect *GetHashedAtomPairFingerprintAsBitVect(
     unsigned int maxLength, python::object fromAtoms,
     python::object ignoreAtoms, python::object atomInvariants,
     unsigned int nBitsPerEntry, bool includeChirality, bool use2D, int confId) {
-  std::unique_ptr<std::vector<boost::uint32_t>> fvect =
+  std::unique_ptr<std::vector<std::uint32_t>> fvect =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
-  std::unique_ptr<std::vector<boost::uint32_t>> ivect =
+  std::unique_ptr<std::vector<std::uint32_t>> ivect =
       pythonObjectToVect(ignoreAtoms, mol.getNumAtoms());
-  std::unique_ptr<std::vector<boost::uint32_t>> invvect = pythonObjectToVect(
+  std::unique_ptr<std::vector<std::uint32_t>> invvect = pythonObjectToVect(
       atomInvariants,
       static_cast<unsigned int>(1 << RDKit::AtomPairs::codeSize));
   ExplicitBitVect *res;
@@ -324,11 +324,11 @@ double hkAlphaHelper(const RDKit::ROMol &mol, python::object atomContribs) {
   return kappaHelper(RDKit::Descriptors::calcHallKierAlpha, mol, atomContribs);
 }
 
-RDKit::SparseIntVect<boost::uint32_t> *MorganFingerprintHelper(
+RDKit::SparseIntVect<std::uint32_t> *MorganFingerprintHelper(
     const RDKit::ROMol &mol, int radius, int nBits, python::object invariants,
     python::object fromAtoms, bool useChirality, bool useBondTypes,
     bool useFeatures, bool useCounts, python::object bitInfo) {
-  std::vector<boost::uint32_t> *invars = nullptr;
+  std::vector<std::uint32_t> *invars = nullptr;
   if (invariants) {
     unsigned int nInvar =
         python::extract<unsigned int>(invariants.attr("__len__")());
@@ -336,23 +336,23 @@ RDKit::SparseIntVect<boost::uint32_t> *MorganFingerprintHelper(
       if (nInvar != mol.getNumAtoms()) {
         throw_value_error("length of invariant vector != number of atoms");
       }
-      invars = new std::vector<boost::uint32_t>(mol.getNumAtoms());
+      invars = new std::vector<std::uint32_t>(mol.getNumAtoms());
       for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-        (*invars)[i] = python::extract<boost::uint32_t>(invariants[i]);
+        (*invars)[i] = python::extract<std::uint32_t>(invariants[i]);
       }
     }
   } else if (useFeatures) {
-    invars = new std::vector<boost::uint32_t>(mol.getNumAtoms());
+    invars = new std::vector<std::uint32_t>(mol.getNumAtoms());
     RDKit::MorganFingerprints::getFeatureInvariants(mol, *invars);
   }
-  std::vector<boost::uint32_t> *froms = nullptr;
+  std::vector<std::uint32_t> *froms = nullptr;
   if (fromAtoms) {
     unsigned int nFrom =
         python::extract<unsigned int>(fromAtoms.attr("__len__")());
     if (nFrom) {
-      froms = new std::vector<boost::uint32_t>();
+      froms = new std::vector<std::uint32_t>();
       for (unsigned int i = 0; i < nFrom; ++i) {
-        froms->push_back(python::extract<boost::uint32_t>(fromAtoms[i]));
+        froms->push_back(python::extract<std::uint32_t>(fromAtoms[i]));
       }
     }
   }
@@ -362,7 +362,7 @@ RDKit::SparseIntVect<boost::uint32_t> *MorganFingerprintHelper(
     python::dict typecheck = python::extract<python::dict>(bitInfo);
     bitInfoMap = new RDKit::MorganFingerprints::BitInfoMap();
   }
-  RDKit::SparseIntVect<boost::uint32_t> *res;
+  RDKit::SparseIntVect<std::uint32_t> *res;
   if (nBits < 0) {
     res = RDKit::MorganFingerprints::getFingerprint(
         mol, static_cast<unsigned int>(radius), invars, froms, useChirality,
@@ -378,7 +378,7 @@ RDKit::SparseIntVect<boost::uint32_t> *MorganFingerprintHelper(
     for (RDKit::MorganFingerprints::BitInfoMap::const_iterator iter =
              bitInfoMap->begin();
          iter != bitInfoMap->end(); ++iter) {
-      const std::vector<std::pair<boost::uint32_t, boost::uint32_t>> &v =
+      const std::vector<std::pair<std::uint32_t, std::uint32_t>> &v =
           iter->second;
       python::list localL;
       for (const auto &vIt : v) {
@@ -393,7 +393,7 @@ RDKit::SparseIntVect<boost::uint32_t> *MorganFingerprintHelper(
   return res;
 }
 }  // namespace
-RDKit::SparseIntVect<boost::uint32_t> *GetMorganFingerprint(
+RDKit::SparseIntVect<std::uint32_t> *GetMorganFingerprint(
     const RDKit::ROMol &mol, int radius, python::object invariants,
     python::object fromAtoms, bool useChirality, bool useBondTypes,
     bool useFeatures, bool useCounts, python::object bitInfo) {
@@ -401,7 +401,7 @@ RDKit::SparseIntVect<boost::uint32_t> *GetMorganFingerprint(
                                  useChirality, useBondTypes, useFeatures,
                                  useCounts, bitInfo);
 }
-RDKit::SparseIntVect<boost::uint32_t> *GetHashedMorganFingerprint(
+RDKit::SparseIntVect<std::uint32_t> *GetHashedMorganFingerprint(
     const RDKit::ROMol &mol, int radius, int nBits, python::object invariants,
     python::object fromAtoms, bool useChirality, bool useBondTypes,
     bool useFeatures, python::object bitInfo) {
@@ -414,7 +414,7 @@ ExplicitBitVect *GetMorganFingerprintBV(
     const RDKit::ROMol &mol, int radius, unsigned int nBits,
     python::object invariants, python::object fromAtoms, bool useChirality,
     bool useBondTypes, bool useFeatures, python::object bitInfo) {
-  std::vector<boost::uint32_t> *invars = nullptr;
+  std::vector<std::uint32_t> *invars = nullptr;
   if (invariants) {
     unsigned int nInvar =
         python::extract<unsigned int>(invariants.attr("__len__")());
@@ -422,17 +422,17 @@ ExplicitBitVect *GetMorganFingerprintBV(
       if (nInvar != mol.getNumAtoms()) {
         throw_value_error("length of invariant vector != number of atoms");
       }
-      invars = new std::vector<boost::uint32_t>(mol.getNumAtoms());
+      invars = new std::vector<std::uint32_t>(mol.getNumAtoms());
       for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-        (*invars)[i] = python::extract<boost::uint32_t>(invariants[i]);
+        (*invars)[i] = python::extract<std::uint32_t>(invariants[i]);
       }
     }
   } else if (useFeatures) {
-    invars = new std::vector<boost::uint32_t>(mol.getNumAtoms());
+    invars = new std::vector<std::uint32_t>(mol.getNumAtoms());
     RDKit::MorganFingerprints::getFeatureInvariants(mol, *invars);
   }
 
-  std::unique_ptr<std::vector<boost::uint32_t>> froms =
+  std::unique_ptr<std::vector<std::uint32_t>> froms =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
   RDKit::MorganFingerprints::BitInfoMap *bitInfoMap = 0;
   if (bitInfo != python::object()) {
@@ -449,7 +449,7 @@ ExplicitBitVect *GetMorganFingerprintBV(
     for (RDKit::MorganFingerprints::BitInfoMap::const_iterator iter =
              bitInfoMap->begin();
          iter != bitInfoMap->end(); ++iter) {
-      const std::vector<std::pair<boost::uint32_t, boost::uint32_t>> &v =
+      const std::vector<std::pair<std::uint32_t, std::uint32_t>> &v =
           iter->second;
       python::list localL;
       for (const auto &vIt : v) {
@@ -465,18 +465,18 @@ ExplicitBitVect *GetMorganFingerprintBV(
 
 python::list GetConnectivityInvariants(const RDKit::ROMol &mol,
                                        bool includeRingMembership) {
-  std::vector<boost::uint32_t> invars(mol.getNumAtoms());
+  std::vector<std::uint32_t> invars(mol.getNumAtoms());
   RDKit::MorganFingerprints::getConnectivityInvariants(mol, invars,
                                                        includeRingMembership);
   python::list res;
-  BOOST_FOREACH (boost::uint32_t iv, invars) { res.append(python::long_(iv)); }
+  BOOST_FOREACH (std::uint32_t iv, invars) { res.append(python::long_(iv)); }
   return res;
 }
 python::list GetFeatureInvariants(const RDKit::ROMol &mol) {
-  std::vector<boost::uint32_t> invars(mol.getNumAtoms());
+  std::vector<std::uint32_t> invars(mol.getNumAtoms());
   RDKit::MorganFingerprints::getFeatureInvariants(mol, invars);
   python::list res;
-  BOOST_FOREACH (boost::uint32_t iv, invars) { res.append(python::long_(iv)); }
+  BOOST_FOREACH (std::uint32_t iv, invars) { res.append(python::long_(iv)); }
   return res;
 }
 

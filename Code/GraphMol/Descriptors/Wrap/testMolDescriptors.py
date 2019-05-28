@@ -1,6 +1,6 @@
 # $Id$
 #
-from __future__ import print_function
+
 from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors as rdMD, Descriptors
 from rdkit.Chem import AllChem

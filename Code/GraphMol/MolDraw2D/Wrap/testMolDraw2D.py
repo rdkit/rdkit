@@ -294,6 +294,44 @@ M  END""")
     d.FinishDrawing()
     d.GetDrawingText()
 
+  def testSetLineWidth(self):
+    " this was github #2149 "
+    m = Chem.MolFromSmiles('CC')
+    dm = Draw.PrepareMolForDrawing(m)
+    d = Draw.MolDraw2DSVG(300, 300)
+    d.DrawMolecule(dm)
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    self.assertTrue(txt.find("stroke-width:2px") >= 0)
+    self.assertTrue(txt.find("stroke-width:4px") == -1)
+    d = Draw.MolDraw2DSVG(300, 300)
+    d.SetLineWidth(4)
+    d.DrawMolecule(dm)
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    self.assertTrue(txt.find("stroke-width:2px") == -1)
+    self.assertTrue(txt.find("stroke-width:4px") >= 0)
+ 
+  def testPrepareAndDrawMolecule(self):
+    m = Chem.MolFromSmiles("C1N[C@@H]2OCC12")
+    d = Draw.MolDraw2DSVG(300, 300)
+    rdMolDraw2D.PrepareAndDrawMolecule(d,m)
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    self.assertTrue(txt.find("<tspan>H</tspan>")>0)
+
+  def testAtomTagging(self):
+    m = Chem.MolFromSmiles("C1N[C@@H]2OCC12")
+    d = Draw.MolDraw2DSVG(300, 300)
+    dm = Draw.PrepareMolForDrawing(m)
+    rdMolDraw2D.PrepareAndDrawMolecule(d,dm)
+    d.TagAtoms(dm,events={'onclick':'alert'})
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    self.assertTrue(txt.find("<circle")>0)
+    self.assertTrue(txt.find("onclick=") > 0)
+
+
 
 if __name__ == "__main__":
   unittest.main()

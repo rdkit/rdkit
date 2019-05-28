@@ -83,7 +83,7 @@ class RDKIT_MOLALIGN_EXPORT O3AConstraintVect {
               d_compareO3AConstraint);
     ++d_count;
   }
-  std::vector<boost::shared_ptr<O3AConstraint> >::size_type size() {
+  std::vector<boost::shared_ptr<O3AConstraint>>::size_type size() {
     return d_o3aConstraintVect.size();
   }
   O3AConstraint *operator[](unsigned int i) {
@@ -92,7 +92,7 @@ class RDKIT_MOLALIGN_EXPORT O3AConstraintVect {
 
  private:
   unsigned int d_count;
-  std::vector<boost::shared_ptr<O3AConstraint> > d_o3aConstraintVect;
+  std::vector<boost::shared_ptr<O3AConstraint>> d_o3aConstraintVect;
   static bool d_compareO3AConstraint(boost::shared_ptr<O3AConstraint> a,
                                      boost::shared_ptr<O3AConstraint> b) {
     return (
@@ -247,7 +247,7 @@ class RDKIT_MOLALIGN_EXPORT SDM {
   const Conformer *d_prbConf;
   const Conformer *d_refConf;
   O3AConstraintVect *d_o3aConstraintVect;
-  std::vector<boost::shared_ptr<SDMElement> > d_SDMPtrVect;
+  std::vector<boost::shared_ptr<SDMElement>> d_SDMPtrVect;
   static bool compareSDMScore(boost::shared_ptr<SDMElement> a,
                               boost::shared_ptr<SDMElement> b) {
     return ((a->score != b->score)
@@ -318,28 +318,36 @@ class RDKIT_MOLALIGN_EXPORT O3A {
   double d_o3aScore;
 };
 
-RDKIT_MOLALIGN_EXPORT void randomTransform(ROMol &mol, const int cid = -1, const int seed = -1);
-RDKIT_MOLALIGN_EXPORT const RDGeom::POINT3D_VECT *reflect(const Conformer &conf);
-RDKIT_MOLALIGN_EXPORT int o3aMMFFCostFunc(const unsigned int prbIdx, const unsigned int refIdx,
-                    double hSum, void *data);
-RDKIT_MOLALIGN_EXPORT double o3aMMFFWeightFunc(const unsigned int prbIdx, const unsigned int refIdx,
-                         void *data);
-RDKIT_MOLALIGN_EXPORT double o3aMMFFScoringFunc(const unsigned int prbIdx, const unsigned int refIdx,
-                          void *data);
-RDKIT_MOLALIGN_EXPORT int o3aCrippenCostFunc(const unsigned int prbIdx, const unsigned int refIdx,
-                       double hSum, void *data);
+RDKIT_MOLALIGN_EXPORT void randomTransform(ROMol &mol, const int cid = -1,
+                                           const int seed = -1);
+RDKIT_MOLALIGN_EXPORT const RDGeom::POINT3D_VECT *reflect(
+    const Conformer &conf);
+RDKIT_MOLALIGN_EXPORT int o3aMMFFCostFunc(const unsigned int prbIdx,
+                                          const unsigned int refIdx,
+                                          double hSum, void *data);
+RDKIT_MOLALIGN_EXPORT double o3aMMFFWeightFunc(const unsigned int prbIdx,
+                                               const unsigned int refIdx,
+                                               void *data);
+RDKIT_MOLALIGN_EXPORT double o3aMMFFScoringFunc(const unsigned int prbIdx,
+                                                const unsigned int refIdx,
+                                                void *data);
+RDKIT_MOLALIGN_EXPORT int o3aCrippenCostFunc(const unsigned int prbIdx,
+                                             const unsigned int refIdx,
+                                             double hSum, void *data);
 RDKIT_MOLALIGN_EXPORT double o3aCrippenWeightFunc(const unsigned int prbIdx,
-                            const unsigned int refIdx, void *data);
+                                                  const unsigned int refIdx,
+                                                  void *data);
 RDKIT_MOLALIGN_EXPORT double o3aCrippenScoringFunc(const unsigned int prbIdx,
-                             const unsigned int refIdx, void *data);
+                                                   const unsigned int refIdx,
+                                                   void *data);
 
 RDKIT_MOLALIGN_EXPORT void getO3AForProbeConfs(
     ROMol &prbMol, const ROMol &refMol, void *prbProp, void *refProp,
-    std::vector<boost::shared_ptr<O3A> > &res, int numThreads = 1,
+    std::vector<boost::shared_ptr<O3A>> &res, int numThreads = 1,
     O3A::AtomTypeScheme atomTypes = O3A::MMFF94, const int refCid = -1,
     const bool reflect = false, const unsigned int maxIters = 50,
     unsigned int options = 0, const MatchVectType *constraintMap = NULL,
     const RDNumeric::DoubleVector *constraintWeights = NULL);
-}
-}
+}  // namespace MolAlign
+}  // namespace RDKit
 #endif

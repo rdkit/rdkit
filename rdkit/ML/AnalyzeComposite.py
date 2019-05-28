@@ -26,7 +26,7 @@ Usage:  AnalyzeComposite [optional args] <models>
 
       -v: be verbose whilst screening
 """
-from __future__ import print_function
+
 
 import sys
 
@@ -36,7 +36,7 @@ from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.ML import ScreenComposite
 from rdkit.ML.Data import Stats
 from rdkit.ML.DecTree import TreeUtils, Tree
-from rdkit.six.moves import cPickle
+import pickle
 
 
 __VERSION_STRING = "2.2.0"
@@ -303,7 +303,7 @@ if __name__ == "__main__":
   composites = []
   if db is None:
     for arg in extras:
-      composite = cPickle.load(open(arg, 'rb'))
+      composite = pickle.load(open(arg, 'rb'))
       composites.append(composite)
   else:
     tbl = extras[0]
@@ -317,7 +317,7 @@ if __name__ == "__main__":
       composites = []
       for pkl in pkls:
         pkl = str(pkl[0])
-        comp = cPickle.loads(pkl)
+        comp = pickle.loads(pkl)
         composites.append(comp)
 
   if len(composites):

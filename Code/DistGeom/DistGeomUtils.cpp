@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2019 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -23,6 +22,7 @@
 #include <ForceField/UFF/DistanceConstraint.h>
 #include <ForceField/UFF/AngleConstraint.h>
 #include <ForceField/UFF/Inversion.h>
+#include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionAngleM6.h>
 #include <boost/dynamic_bitset.hpp>
 
@@ -181,7 +181,8 @@ bool computeRandomCoords(RDGeom::PointPtrVect &positions, double boxSize,
 ForceFields::ForceField *constructForceField(
     const BoundsMatrix &mmat, RDGeom::PointPtrVect &positions,
     const VECT_CHIRALSET &csets, double weightChiral, double weightFourthDim,
-    std::map<std::pair<int, int>, double> *extraWeights, double basinSizeTol) {
+    std::map<std::pair<int, int>, double> *extraWeights, double basinSizeTol,
+    boost::dynamic_bitset<> *fixedPts) {
   unsigned int N = mmat.numRows();
   CHECK_INVARIANT(N == positions.size(), "");
   auto *field = new ForceFields::ForceField(positions[0]->dimension());
@@ -191,6 +192,9 @@ ForceFields::ForceField *constructForceField(
 
   for (unsigned int i = 1; i < N; i++) {
     for (unsigned int j = 0; j < i; j++) {
+      if (fixedPts != nullptr && (*fixedPts)[i] && (*fixedPts)[j]) {
+        continue;
+      }
       double w = 1.0;
       double l = mmat.getLowerBound(i, j);
       double u = mmat.getUpperBound(i, j);
@@ -224,7 +228,7 @@ ForceFields::ForceField *constructForceField(
 
   // finally the contribution from the fourth dimension if we need to
   if ((field->dimension() == 4) && (weightFourthDim > 1.e-8)) {
-    for (unsigned int i = 1; i < N; i++) {
+    for (unsigned int i = 0; i < N; i++) {
       auto *contrib = new FourthDimContrib(field, i, weightFourthDim);
       field->contribs().push_back(ForceFields::ContribPtr(contrib));
     }
@@ -234,17 +238,12 @@ ForceFields::ForceField *constructForceField(
 
 ForceFields::ForceField *construct3DForceField(
     const BoundsMatrix &mmat, RDGeom::Point3DPtrVect &positions,
-    const std::vector<std::pair<int, int> > &bonds,
-    const std::vector<std::vector<int> > &angles,
-    const std::vector<std::vector<int> > &expTorsionAtoms,
-    const std::vector<std::pair<std::vector<int>, std::vector<double> > > &
-        expTorsionAngles,
-    const std::vector<std::vector<int> > &improperAtoms,
-    const std::vector<int> &atomNums) {
-  (void)atomNums;
+    const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails) {
   unsigned int N = mmat.numRows();
   CHECK_INVARIANT(N == positions.size(), "");
-  CHECK_INVARIANT(expTorsionAtoms.size() == expTorsionAngles.size(), "");
+  CHECK_INVARIANT(etkdgDetails.expTorsionAtoms.size() ==
+                      etkdgDetails.expTorsionAngles.size(),
+                  "");
   auto *field = new ForceFields::ForceField(positions[0]->dimension());
   for (unsigned int i = 0; i < N; ++i) {
     field->positions().push_back(positions[i]);
@@ -254,25 +253,25 @@ ForceFields::ForceField *construct3DForceField(
   boost::dynamic_bitset<> atomPairs(N * N);
 
   // torsion constraints
-  for (unsigned int t = 0; t < expTorsionAtoms.size(); ++t) {
-    int i = expTorsionAtoms[t][0];
-    int j = expTorsionAtoms[t][1];
-    int k = expTorsionAtoms[t][2];
-    int l = expTorsionAtoms[t][3];
+  for (unsigned int t = 0; t < etkdgDetails.expTorsionAtoms.size(); ++t) {
+    int i = etkdgDetails.expTorsionAtoms[t][0];
+    int j = etkdgDetails.expTorsionAtoms[t][1];
+    int k = etkdgDetails.expTorsionAtoms[t][2];
+    int l = etkdgDetails.expTorsionAtoms[t][3];
     if (i < j)
       atomPairs[i * N + j] = 1;
     else
       atomPairs[j * N + i] = 1;
-    // expTorsionAngles[t][0] = (signs, V's)
+    // etkdgDetails.expTorsionAngles[t][0] = (signs, V's)
     auto *contrib = new ForceFields::CrystalFF::TorsionAngleContribM6(
-        field, i, j, k, l, expTorsionAngles[t].second,
-        expTorsionAngles[t].first);
+        field, i, j, k, l, etkdgDetails.expTorsionAngles[t].second,
+        etkdgDetails.expTorsionAngles[t].first);
     field->contribs().push_back(ForceFields::ContribPtr(contrib));
   }  // torsion constraints
 
   // improper torsions / out-of-plane bend / inversion
   double oobForceScalingFactor = 10.0;
-  for (const auto &improperAtom : improperAtoms) {
+  for (const auto &improperAtom : etkdgDetails.improperAtoms) {
     std::vector<int> n(4);
     for (unsigned int i = 0; i < 3; ++i) {
       n[1] = 1;
@@ -297,18 +296,17 @@ ForceFields::ForceField *construct3DForceField(
       }
       auto *contrib = new ForceFields::UFF::InversionContrib(
           field, improperAtom[n[0]], improperAtom[n[1]], improperAtom[n[2]],
-          improperAtom[n[3]], improperAtom[4], static_cast<bool>(improperAtom[5]),
-          oobForceScalingFactor);
+          improperAtom[n[3]], improperAtom[4],
+          static_cast<bool>(improperAtom[5]), oobForceScalingFactor);
       field->contribs().push_back(ForceFields::ContribPtr(contrib));
     }
   }
 
   double fdist = 100.0;  // force constant
   // 1,2 distance constraints
-  std::vector<std::pair<int, int> >::const_iterator bi;
-  for (bi = bonds.begin(); bi != bonds.end(); ++bi) {
-    unsigned int i = bi->first;
-    unsigned int j = bi->second;
+  for (const auto &bnd : etkdgDetails.bonds) {
+    unsigned int i = bnd.first;
+    unsigned int j = bnd.second;
     if (i < j)
       atomPairs[i * N + j] = 1;
     else
@@ -322,7 +320,7 @@ ForceFields::ForceField *construct3DForceField(
   }
 
   // 1,3 distance constraints
-  for (const auto &angle : angles) {
+  for (const auto &angle : etkdgDetails.angles) {
     unsigned int i = angle[0];
     unsigned int j = angle[1];
     unsigned int k = angle[2];
@@ -364,16 +362,12 @@ ForceFields::ForceField *construct3DForceField(
 
 ForceFields::ForceField *constructPlain3DForceField(
     const BoundsMatrix &mmat, RDGeom::Point3DPtrVect &positions,
-    const std::vector<std::pair<int, int> > &bonds,
-    const std::vector<std::vector<int> > &angles,
-    const std::vector<std::vector<int> > &expTorsionAtoms,
-    const std::vector<std::pair<std::vector<int>, std::vector<double> > > &
-        expTorsionAngles,
-    const std::vector<int> &atomNums) {
-  (void)atomNums;
+    const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails) {
   unsigned int N = mmat.numRows();
   CHECK_INVARIANT(N == positions.size(), "");
-  CHECK_INVARIANT(expTorsionAtoms.size() == expTorsionAngles.size(), "");
+  CHECK_INVARIANT(etkdgDetails.expTorsionAtoms.size() ==
+                      etkdgDetails.expTorsionAngles.size(),
+                  "");
   auto *field = new ForceFields::ForceField(positions[0]->dimension());
   for (unsigned int i = 0; i < N; ++i) {
     field->positions().push_back(positions[i]);
@@ -383,28 +377,27 @@ ForceFields::ForceField *constructPlain3DForceField(
   boost::dynamic_bitset<> atomPairs(N * N);
 
   // torsion constraints
-  for (unsigned int t = 0; t < expTorsionAtoms.size(); ++t) {
-    int i = expTorsionAtoms[t][0];
-    int j = expTorsionAtoms[t][1];
-    int k = expTorsionAtoms[t][2];
-    int l = expTorsionAtoms[t][3];
+  for (unsigned int t = 0; t < etkdgDetails.expTorsionAtoms.size(); ++t) {
+    int i = etkdgDetails.expTorsionAtoms[t][0];
+    int j = etkdgDetails.expTorsionAtoms[t][1];
+    int k = etkdgDetails.expTorsionAtoms[t][2];
+    int l = etkdgDetails.expTorsionAtoms[t][3];
     if (i < j)
       atomPairs[i * N + j] = 1;
     else
       atomPairs[j * N + i] = 1;
-    // expTorsionAngles[t][0] = (signs, V's)
+    // etkdgDetails.expTorsionAngles[t][0] = (signs, V's)
     auto *contrib = new ForceFields::CrystalFF::TorsionAngleContribM6(
-        field, i, j, k, l, expTorsionAngles[t].second,
-        expTorsionAngles[t].first);
+        field, i, j, k, l, etkdgDetails.expTorsionAngles[t].second,
+        etkdgDetails.expTorsionAngles[t].first);
     field->contribs().push_back(ForceFields::ContribPtr(contrib));
   }  // torsion constraints
 
   double fdist = 100.0;  // force constant
   // 1,2 distance constraints
-  std::vector<std::pair<int, int> >::const_iterator bi;
-  for (bi = bonds.begin(); bi != bonds.end(); ++bi) {
-    unsigned int i = bi->first;
-    unsigned int j = bi->second;
+  for (const auto &bnd : etkdgDetails.bonds) {
+    unsigned int i = bnd.first;
+    unsigned int j = bnd.second;
     if (i < j)
       atomPairs[i * N + j] = 1;
     else
@@ -418,9 +411,9 @@ ForceFields::ForceField *constructPlain3DForceField(
   }
 
   // 1,3 distance constraints
-  for (unsigned int a = 1; a < angles.size(); ++a) {
-    unsigned int i = angles[a][0];
-    unsigned int j = angles[a][2];
+  for (unsigned int a = 1; a < etkdgDetails.angles.size(); ++a) {
+    unsigned int i = etkdgDetails.angles[a][0];
+    unsigned int j = etkdgDetails.angles[a][2];
     if (i < j)
       atomPairs[i * N + j] = 1;
     else
@@ -452,7 +445,7 @@ ForceFields::ForceField *constructPlain3DForceField(
 
 ForceFields::ForceField *construct3DImproperForceField(
     const BoundsMatrix &mmat, RDGeom::Point3DPtrVect &positions,
-    const std::vector<std::vector<int> > &improperAtoms,
+    const std::vector<std::vector<int>> &improperAtoms,
     const std::vector<int> &atomNums) {
   (void)atomNums;
   unsigned int N = mmat.numRows();
@@ -489,13 +482,13 @@ ForceFields::ForceField *construct3DImproperForceField(
       }
       auto *contrib = new ForceFields::UFF::InversionContrib(
           field, improperAtom[n[0]], improperAtom[n[1]], improperAtom[n[2]],
-          improperAtom[n[3]], improperAtom[4], static_cast<bool>(improperAtom[5]),
-          oobForceScalingFactor);
+          improperAtom[n[3]], improperAtom[4],
+          static_cast<bool>(improperAtom[5]), oobForceScalingFactor);
       field->contribs().push_back(ForceFields::ContribPtr(contrib));
     }
   }
 
   return field;
 
-} // construct3DImproperForceField
-}
+}  // construct3DImproperForceField
+}  // namespace DistGeom

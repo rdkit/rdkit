@@ -59,7 +59,7 @@ void testGeneral(std::string rdbase) {
     try {
       RWMol *m = Mol2FileToMol(fName);
       delete m;
-    } catch (const BadFileException &e) {
+    } catch (const BadFileException &) {
       ok = true;
     }
     TEST_ASSERT(ok);
@@ -95,7 +95,7 @@ void testGeneral(std::string rdbase) {
     try {
       RWMol *m = Mol2FileToMol(fName);
       delete m;
-    } catch (const FileParseException &e) {
+    } catch (const FileParseException &) {
       ok = true;
     }
     TEST_ASSERT(ok);
@@ -107,7 +107,7 @@ void testGeneral(std::string rdbase) {
     try {
       RWMol *m = Mol2FileToMol(fName);
       delete m;
-    } catch (const FileParseException &e) {
+    } catch (const FileParseException &) {
       ok = true;
     }
     TEST_ASSERT(ok);

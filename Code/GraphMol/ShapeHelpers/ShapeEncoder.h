@@ -14,7 +14,7 @@
 namespace RDGeom {
 class UniformGrid3D;
 class Transform3D;
-}
+}  // namespace RDGeom
 
 namespace RDKit {
 class ROMol;
@@ -40,10 +40,10 @@ namespace MolShapes {
   \param ignoreHs  if true, ignore the hydrogen atoms in the shape encoding
   process
 */
-RDKIT_SHAPEHELPERS_EXPORT void EncodeShape(const ROMol &mol, RDGeom::UniformGrid3D &grid, int confId = -1,
-                 const RDGeom::Transform3D *trans = 0, double vdwScale = 0.8,
-                 double stepSize = 0.25, int maxLayers = -1,
-                 bool ignoreHs = true);
+RDKIT_SHAPEHELPERS_EXPORT void EncodeShape(
+    const ROMol &mol, RDGeom::UniformGrid3D &grid, int confId = -1,
+    const RDGeom::Transform3D *trans = 0, double vdwScale = 0.8,
+    double stepSize = 0.25, int maxLayers = -1, bool ignoreHs = true);
 
 //! Emcode the shape of a conformer on to a grid
 /*!
@@ -64,10 +64,10 @@ RDKIT_SHAPEHELPERS_EXPORT void EncodeShape(const ROMol &mol, RDGeom::UniformGrid
   \param ignoreHs  if true, ignore the hydrogen atoms in the shape encoding
   process
 */
-RDKIT_SHAPEHELPERS_EXPORT void EncodeShape(const Conformer &conf, RDGeom::UniformGrid3D &grid,
-                 const RDGeom::Transform3D *trans = 0, double vdwScale = 0.8,
-                 double stepSize = 0.25, int maxLayers = -1,
-                 bool ignoreHs = true);
-}
-}
+RDKIT_SHAPEHELPERS_EXPORT void EncodeShape(
+    const Conformer &conf, RDGeom::UniformGrid3D &grid,
+    const RDGeom::Transform3D *trans = 0, double vdwScale = 0.8,
+    double stepSize = 0.25, int maxLayers = -1, bool ignoreHs = true);
+}  // namespace MolShapes
+}  // namespace RDKit
 #endif

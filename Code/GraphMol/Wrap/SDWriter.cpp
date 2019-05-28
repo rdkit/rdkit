@@ -56,22 +56,22 @@ struct sdwriter_wrap {
 \n\
   Usage examples:\n\
 \n\
-    1) writing to a named file:\n\
+    1) writing to a named file:\n\n\
        >>> writer = SDWriter('out.sdf')\n\
        >>> for mol in list_of_mols:\n\
        ...    writer.write(mol)\n\
 \n\
-    2) writing to a file-like object: \n\
+    2) writing to a file-like object: \n\n\
        >>> import gzip\n\
        >>> outf=gzip.open('out.sdf.gz','w+')\n\
        >>> writer = SDWriter(outf)\n\
-       >>> for mol in list_of_mols:\n \
+       >>> for mol in list_of_mols:\n\
        ...   writer.write(mol)\n\
        >>> writer.close()\n\
        >>> outf.close()\n\
 \n\
   By default all non-private molecular properties are written to the SD file.\n\
-  This can be changed using the SetProps method:\n\
+  This can be changed using the SetProps method:\n\n\
        >>> writer = SDWriter('out.sdf')\n\
        >>> writer.SetProps(['prop1','prop2'])\n\
 \n";
@@ -89,8 +89,9 @@ struct sdwriter_wrap {
              "Sets the properties to be written to the output file\n\n"
              "  ARGUMENTS:\n\n"
              "    - props: a list or tuple of property names\n\n")
-        .def("write", WriteMolToSD, (python::arg("self"), python::arg("mol"),
-                                     python::arg("confId") = -1),
+        .def("write", WriteMolToSD,
+             (python::arg("self"), python::arg("mol"),
+              python::arg("confId") = -1),
              "Writes a molecule to the output file.\n\n"
              "  ARGUMENTS:\n\n"
              "    - mol: the Mol to be written\n"
@@ -122,6 +123,6 @@ struct sdwriter_wrap {
         .staticmethod("GetText");
   };
 };
-}
+}  // namespace RDKit
 
 void wrap_sdwriter() { RDKit::sdwriter_wrap::wrap(); }

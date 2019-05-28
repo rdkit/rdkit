@@ -24,5 +24,5 @@ struct Target {
   MatchTable AtomMatchTable;
   MatchTable BondMatchTable;
 };
-}
-}
+}  // namespace FMCS
+}  // namespace RDKit

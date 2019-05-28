@@ -46,9 +46,10 @@ __pycache__/
 /Data/templates.mae
 
 /External/catch/catch/
-/External/CoordGen/coordgenlibs/
+/External/CoordGen/coordgen/
 /External/CoordGen/maeparser/
-/External/CoordGen/master.tar.gz
+/External/CoordGen/maeparser-v*.tar.gz
+/External/CoordGen/coordgenlibs-v*.tar.gz
 /External/FreeSASA/freesasa-2.0.1/
 /External/FreeSASA/master.tar.gz
 /External/INCHI-API/INCHI-1-SRC.zip
@@ -82,6 +83,7 @@ __pycache__/
 /Code/GraphMol/FileParsers/test_data/outNCI_few.tdt
 /Code/GraphMol/FileParsers/test_data/outNCI_first_200.props.sdf
 /Code/GraphMol/FileParsers/test_data/outSmiles.csv
+/Code/GraphMol/FileParsers/test_data/testSGroupsSample_V?000.mol
 
 /Code/GraphMol/ForceFieldHelpers/UFF/test_data/Issue62.sdf
 

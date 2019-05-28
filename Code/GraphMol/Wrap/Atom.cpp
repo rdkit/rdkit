@@ -139,12 +139,19 @@ Note that, though it is possible to create one, having an Atom on its own\n\
 (i.e not associated with a molecule) is not particularly useful.\n";
 struct atom_wrapper {
   static void wrap() {
-    python::class_<Atom, Atom*>("Atom", atomClassDoc.c_str(),
-                         python::init<std::string>())
+    python::class_<Atom, Atom *>("Atom", atomClassDoc.c_str(),
+                                 python::init<std::string>())
 
+        .def(python::init<const Atom &>())
         .def(python::init<unsigned int>(
             "Constructor, takes either an int (atomic number) or a string "
             "(atomic symbol).\n"))
+
+        .def("__copy__", &Atom::copy,
+             python::return_value_policy<
+                 python::manage_new_object,
+                 python::with_custodian_and_ward_postcall<0, 1>>(),
+             "Create a copy of the atom")
 
         .def("GetAtomicNum", &Atom::getAtomicNum, "Returns the atomic number.")
 
@@ -218,6 +225,8 @@ struct atom_wrapper {
         .def("GetHybridization", &Atom::getHybridization,
              "Returns the atom's hybridization.\n")
 
+        .def("HasOwningMol", &Atom::hasOwningMol,
+             "Returns whether or not this instance belongs to a molecule.\n")
         .def("GetOwningMol", &Atom::getOwningMol,
              "Returns the Mol that owns this atom.\n",
              python::return_internal_reference<>())
@@ -340,6 +349,24 @@ struct atom_wrapper {
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n")
 
+        .def("SetExplicitBitVectProp", AtomSetProp<ExplicitBitVect>,
+             (python::arg("self"), python::arg("key"), python::arg("val")),
+             "Sets an atomic property\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to be set (an "
+             "ExplicitBitVect).\n"
+             "    - value: the property value (an ExplicitBitVect).\n\n")
+
+        .def("GetExplicitBitVectProp", GetProp<Atom, ExplicitBitVect>,
+             "Returns the value of the property.\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to return (a "
+             "ExplicitBitVect).\n\n"
+             "  RETURNS: an ExplicitBitVect \n\n"
+             "  NOTE:\n"
+             "    - If the property has not been set, a KeyError exception "
+             "will be raised.\n")
+
         .def("HasProp", AtomHasProp,
              "Queries a Atom to see if a particular property has been "
              "assigned.\n\n"
@@ -424,8 +451,7 @@ These cannot currently be constructed directly from Python\n";
               python::arg("how") = Queries::COMPOSITE_AND,
               python::arg("maintainOrder") = true),
              "combines the query from other with ours")
-        .def("SetQuery", setQuery,
-             (python::arg("self"), python::arg("other")),
+        .def("SetQuery", setQuery, (python::arg("self"), python::arg("other")),
              "Replace our query with a copy of the other query");
 
     python::def(
@@ -457,7 +483,7 @@ These cannot currently be constructed directly from Python\n";
         "SetSupplementalSmilesLabel", setSupplementalSmilesLabel,
         (python::arg("atom"), python::arg("label")),
         "Sets a supplemental label on an atom that is written to the smiles "
-        "string.\n"
+        "string.\n\n"
         ">>> m = Chem.MolFromSmiles(\"C\")\n"
         ">>> Chem.SetSupplementalSmilesLabel(m.GetAtomWithIdx(0), '<xxx>')\n"
         ">>> Chem.MolToSmiles(m)\n"

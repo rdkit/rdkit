@@ -16,6 +16,7 @@
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/Bond.h>
 #include <GraphMol/QueryBond.h>
+#include <RDGeneral/StreamOps.h>
 #include <boost/utility/binary.hpp>
 // Std stuff
 #include <iostream>
@@ -25,7 +26,7 @@
 #ifdef WIN32
 #include <ios>
 #endif
-#include <boost/cstdint.hpp>
+#include <cstdint>
 
 namespace RDKit {
 class ROMol;
@@ -61,10 +62,10 @@ typedef enum {
 //! handles pickling (serializing) molecules
 class RDKIT_GRAPHMOL_EXPORT MolPickler {
  public:
-  static const boost::int32_t versionMajor;  //!< mark the pickle major version
-  static const boost::int32_t versionMinor;  //!< mark the pickle minor version
-  static const boost::int32_t versionPatch;  //!< mark the pickle patch version
-  static const boost::int32_t endianId;  //! mark the endian-ness of the pickle
+  static const std::int32_t versionMajor;  //!< mark the pickle major version
+  static const std::int32_t versionMinor;  //!< mark the pickle minor version
+  static const std::int32_t versionPatch;  //!< mark the pickle patch version
+  static const std::int32_t endianId;  //! mark the endian-ness of the pickle
 
   //! the pickle format is tagged using these tags:
   //! NOTE: if you add to this list, be sure to put new entries AT THE BOTTOM,
@@ -132,11 +133,16 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
     BEGINATOMPROPS,
     BEGINBONDPROPS,
     BEGINQUERYATOMDATA,
+    BEGINSGROUP,
     BEGINSTEREOGROUP,
+    BEGINCONFPROPS,    
   } Tags;
 
   static unsigned int getDefaultPickleProperties();
   static void setDefaultPickleProperties(unsigned int);
+
+  static const CustomPropHandlerVec &getCustomPropHandlers();
+  static void addCustomPropHandler(const CustomPropHandler &handler);
 
   //! pickles a molecule and sends the results to stream \c ss
   static void pickleMol(const ROMol *mol, std::ostream &ss);
@@ -174,7 +180,7 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
 
  private:
   //! Pickle nonquery atom data
-  static boost::int32_t _pickleAtomData(std::ostream &tss, const Atom *atom);
+  static std::int32_t _pickleAtomData(std::ostream &tss, const Atom *atom);
   //! depickle nonquery atom data
   static void _unpickleAtomData(std::istream &tss, Atom *atom, int version);
 
@@ -198,6 +204,13 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
   template <typename T>
   static void _pickleSSSR(std::ostream &ss, const RingInfo *ringInfo,
                           std::map<int, int> &atomIdxMap);
+
+  //! do the actual work of pickling a SubstanceGroup
+  template <typename T>
+  static void _pickleSubstanceGroup(std::ostream &ss,
+                                    const SubstanceGroup &sgroup,
+                                    std::map<int, int> &atomIdxMap,
+                                    std::map<int, int> &bondIdxMap);
 
   //! do the actual work of pickling Stereo Group data
   template <typename T>
@@ -231,6 +244,11 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
   template <typename T>
   static void _addRingInfoFromPickle(std::istream &ss, ROMol *mol, int version,
                                      bool directMap = false);
+
+  //! extract a SubstanceGroup from a pickle
+  template <typename T>
+  static SubstanceGroup _getSubstanceGroupFromPickle(std::istream &ss,
+                                                     ROMol *mol, int version);
 
   template <typename T>
   static void _depickleStereo(std::istream &ss, ROMol *mol, int version);

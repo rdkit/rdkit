@@ -13,7 +13,7 @@
  
   RD Version: $Rev$            
 """
-from __future__ import print_function
+
 import SimpleXMLRPCServer
 import threading, sys, time, types, os, tempfile
 from pymol import cmd, cgo

@@ -74,7 +74,8 @@ void FragmentValidation::run(const ROMol &mol, bool reportAllFailures,
                              std::vector<ValidationErrorInfo> &errors) const {
   // REVIEW: reportAllFailures is not being used here. is that correct?
   RDUNUSED_PARAM(reportAllFailures);
-  std::string rdbase = getenv("RDBASE");
+  auto rdbase_cstr = getenv("RDBASE");
+  std::string rdbase = rdbase_cstr != nullptr ? rdbase_cstr : "";
   std::string fgrpFile = rdbase + "/Data/MolStandardize/fragmentPatterns.txt";
   std::shared_ptr<FragmentCatalogParams> fparams(
       new FragmentCatalogParams(fgrpFile));

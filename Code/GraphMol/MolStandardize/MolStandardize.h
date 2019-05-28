@@ -39,7 +39,11 @@ namespace MolStandardize {
 */
 struct RDKIT_MOLSTANDARDIZE_EXPORT CleanupParameters {
   // TODO reveal all parameters
-  std::string rdbase = std::getenv("RDBASE");
+ private:
+  const char *rdbase_cstr = std::getenv("RDBASE");
+
+ public:
+  std::string rdbase = rdbase_cstr != nullptr ? rdbase_cstr : "";
   std::string normalizations;
   std::string acidbaseFile;
   std::string fragmentFile;
@@ -52,6 +56,8 @@ struct RDKIT_MOLSTANDARDIZE_EXPORT CleanupParameters {
                        // 1000).
   bool preferOrganic;  // Whether to prioritize organic fragments when choosing
                        // fragment parent (default False).
+  bool doCanonical;    // whether or not to apply normalizations in a canonical
+                       // order
 
   CleanupParameters()
       :  // TODO
@@ -65,7 +71,8 @@ struct RDKIT_MOLSTANDARDIZE_EXPORT CleanupParameters {
         // TautomerScores()
         maxRestarts(200),
         maxTautomers(1000),
-        preferOrganic(false) {}
+        preferOrganic(false),
+        doCanonical(true) {}
 };
 
 RDKIT_MOLSTANDARDIZE_EXPORT extern const CleanupParameters

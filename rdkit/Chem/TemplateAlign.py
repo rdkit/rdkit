@@ -41,11 +41,13 @@ def AlignMolToTemplate2D(mol,
     >>> mc = mol.GetConformer(0)
 
     We start out with the molecules not aligned:
+
     >>> vs = [abs(pc.GetAtomPosition(i).x-mc.GetAtomPosition(i+1).x) for i in range(pc.GetNumAtoms())]
     >>> [x<1e-4 for x in vs]
     [False, False, False]
 
     But then we can replace the conformer of mol:
+
     >>> AlignMolToTemplate2D(mol,patt,clearConfs=True)
     0
     >>> mol.GetNumConformers()
@@ -58,6 +60,7 @@ def AlignMolToTemplate2D(mol,
 
     If we like, we can specify the atom map explicitly in order to align to the second
     matching ring in the probe molecule:
+
     >>> match = (5,6,7)
     >>> AlignMolToTemplate2D(mol,patt,clearConfs=True,match=match)
     0

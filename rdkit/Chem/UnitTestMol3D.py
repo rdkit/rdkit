@@ -326,5 +326,32 @@ class TestCase(unittest.TestCase):
                                   'F[C@@H](Cl)/C=C\\C=C\\[C@@H](F)Cl',
                                   'F[C@@H](Cl)/C=C\\C=C/[C@@H](F)Cl']))
 
+  def testEnumerateStereoisomersOnlyEnhancedStereo(self):
+    rdbase = os.environ["RDBASE"]
+    filename = os.path.join(rdbase, 'Code/GraphMol/FileParsers/test_data/two_centers_or.mol')
+    mol = Chem.MolFromMolFile(filename)
+    smiles = set(Chem.MolToSmiles(m) for m in AllChem.EnumerateStereoisomers(mol))
+    # switches the centers linked by an "OR", but not the absolute group
+    self.assertEqual(smiles, {r'C[C@@H](F)[C@@H](C)[C@@H](C)Br',
+                              r'C[C@H](F)[C@H](C)[C@@H](C)Br'})
+
+    original_smiles = Chem.MolToSmiles(mol)
+    self.assertIn(original_smiles, smiles)
+
+  def testNoExtrasIfEnumeratingAllWithEnhancedStereo(self):
+    """
+    If the onlyUnassigned option is False, make sure that enhanced stereo
+    groups aren't double-counted.
+    """
+    rdbase = os.environ["RDBASE"]
+    filename = os.path.join(rdbase, 'Code/GraphMol/FileParsers/test_data/two_centers_or.mol')
+    mol = Chem.MolFromMolFile(filename)
+
+    opts = AllChem.StereoEnumerationOptions(onlyUnassigned=False, unique=False)
+    smiles = [Chem.MolToSmiles(m) for m in AllChem.EnumerateStereoisomers(mol, opts)]
+    self.assertEqual(len(smiles), len(set(smiles)))
+    self.assertEqual(len(smiles), 2**3)
+
+
 if __name__ == '__main__':
   unittest.main()

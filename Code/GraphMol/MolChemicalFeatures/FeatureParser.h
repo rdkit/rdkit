@@ -19,7 +19,8 @@
 namespace RDKit {
 //! \brief class used to indicate errors in parsing feature definition
 //!   files.
-class RDKIT_MOLCHEMICALFEATURES_EXPORT FeatureFileParseException : public std::exception {
+class RDKIT_MOLCHEMICALFEATURES_EXPORT FeatureFileParseException
+    : public std::exception {
  public:
   FeatureFileParseException(unsigned int lineNo, std::string line,
                             std::string msg)
@@ -34,21 +35,23 @@ class RDKIT_MOLCHEMICALFEATURES_EXPORT FeatureFileParseException : public std::e
   std::string d_line, d_msg;
 };
 
-RDKIT_MOLCHEMICALFEATURES_EXPORT int parseFeatureData(const std::string &defnText,
-                     MolChemicalFeatureDef::CollectionType &featDefs);
-RDKIT_MOLCHEMICALFEATURES_EXPORT int parseFeatureData(std::istream &istream,
-                     MolChemicalFeatureDef::CollectionType &featDefs);
-RDKIT_MOLCHEMICALFEATURES_EXPORT int parseFeatureFile(const std::string &fileName,
-                     MolChemicalFeatureDef::CollectionType &featDefs);
+RDKIT_MOLCHEMICALFEATURES_EXPORT int parseFeatureData(
+    const std::string &defnText,
+    MolChemicalFeatureDef::CollectionType &featDefs);
+RDKIT_MOLCHEMICALFEATURES_EXPORT int parseFeatureData(
+    std::istream &istream, MolChemicalFeatureDef::CollectionType &featDefs);
+RDKIT_MOLCHEMICALFEATURES_EXPORT int parseFeatureFile(
+    const std::string &fileName,
+    MolChemicalFeatureDef::CollectionType &featDefs);
 
 namespace Local {
 // these functions are exposed only so they can be tested
-RDKIT_MOLCHEMICALFEATURES_EXPORT void parseAtomType(const std::string &inLine,
-                   std::map<std::string, std::string> &atomTypeDefs,
-                   const unsigned int &lineNo);
+RDKIT_MOLCHEMICALFEATURES_EXPORT void parseAtomType(
+    const std::string &inLine, std::map<std::string, std::string> &atomTypeDefs,
+    const unsigned int &lineNo);
 RDKIT_MOLCHEMICALFEATURES_EXPORT MolChemicalFeatureDef *parseFeatureDef(
     std::istream &inStream, const std::string &inLine, unsigned int &lineNo,
     const std::map<std::string, std::string> &atomTypeDefs);
-}
+}  // namespace Local
 }  // end of namespace RDKit
 #endif

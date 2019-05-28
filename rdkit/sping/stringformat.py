@@ -26,7 +26,7 @@ StringFormat XML characters
 
        Greek Letter Symbols as specified in MathML 
 """
-from __future__ import print_function
+
 
 #       How it works: Each tag grouping <b></b> sets a flag upon entry and 
 #       clears the flag upon exit.  Each call to handle_data creates a 

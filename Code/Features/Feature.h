@@ -92,5 +92,5 @@ class ImplicitFeature {
   // FIX: add something correct for directions
   std::vector<LOCTYPE> d_dirs;
 };
-}
+}  // namespace RDFeatures
 #endif

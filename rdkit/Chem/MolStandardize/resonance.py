@@ -9,10 +9,6 @@ Resonance (mesomeric) transformations.
 :license: MIT, see LICENSE file for more details.
 """
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
 import logging
 
 from rdkit import Chem
@@ -88,6 +84,6 @@ def enumerate_resonance_smiles(smiles):
     :rtype: set of strings.
     """
     mol = Chem.MolFromSmiles(smiles)
-    #Chem.SanitizeMol(mol)  # MolFromSmiles does Sanitize by default
+    # Chem.SanitizeMol(mol)  # MolFromSmiles does Sanitize by default
     mesomers = ResonanceEnumerator().enumerate(mol)
     return {Chem.MolToSmiles(m, isomericSmiles=True) for m in mesomers}

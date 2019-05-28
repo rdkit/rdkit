@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2016 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2019 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -22,6 +22,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/FileParsers/FileParserUtils.h>
 #include <GraphMol/FileParsers/SequenceParsers.h>
 #include <GraphMol/FileParsers/SequenceWriters.h>
 #include <RDGeneral/BadFileException.h>
@@ -244,6 +245,34 @@ ROMol *MolFromHELM(python::object seq, bool sanitize) {
   return static_cast<ROMol *>(newM);
 }
 
+struct smilesfrag_gen {
+  std::string operator()(const ROMol &mol, const std::vector<int> &atomsToUse,
+                         const std::vector<int> *bondsToUse,
+                         const std::vector<std::string> *atomSymbols,
+                         const std::vector<std::string> *bondSymbols,
+                         bool doIsomericSmiles, bool doKekule, int rootedAtAtom,
+                         bool canonical, bool allBondsExplicit,
+                         bool allHsExplicit) {
+    return MolFragmentToSmiles(
+        mol, atomsToUse, bondsToUse, atomSymbols, bondSymbols, doIsomericSmiles,
+        doKekule, rootedAtAtom, canonical, allBondsExplicit, allHsExplicit);
+  }
+};
+struct cxsmilesfrag_gen {
+  std::string operator()(const ROMol &mol, const std::vector<int> &atomsToUse,
+                         const std::vector<int> *bondsToUse,
+                         const std::vector<std::string> *atomSymbols,
+                         const std::vector<std::string> *bondSymbols,
+                         bool doIsomericSmiles, bool doKekule, int rootedAtAtom,
+                         bool canonical, bool allBondsExplicit,
+                         bool allHsExplicit) {
+    return MolFragmentToCXSmiles(
+        mol, atomsToUse, bondsToUse, atomSymbols, bondSymbols, doIsomericSmiles,
+        doKekule, rootedAtAtom, canonical, allBondsExplicit, allHsExplicit);
+  }
+};
+
+template <typename F>
 std::string MolFragmentToSmilesHelper(
     const ROMol &mol, python::object atomsToUse, python::object bondsToUse,
     python::object atomSymbols, python::object bondSymbols,
@@ -267,10 +296,10 @@ std::string MolFragmentToSmilesHelper(
     throw_value_error("length of bond symbol list != number of bonds");
   }
 
-  std::string res = MolFragmentToSmiles(
-      mol, *avect.get(), bvect.get(), asymbols.get(), bsymbols.get(),
-      doIsomericSmiles, doKekule, rootedAtAtom, canonical, allBondsExplicit,
-      allHsExplicit);
+  std::string res =
+      F()(mol, *avect.get(), bvect.get(), asymbols.get(), bsymbols.get(),
+          doIsomericSmiles, doKekule, rootedAtAtom, canonical, allBondsExplicit,
+          allHsExplicit);
   return res;
 }
 
@@ -499,7 +528,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 
   docString =
       "Construct a molecule from a Tripos Mol2 file.\n\n\
-  NOTE:\n \
+  NOTE:\n\
     The parser expects the atom-typing scheme used by Corina.\n\
     Atom types from Tripos' dbtranslate are less supported.\n\
     Other atom typing schemes are unlikely to work.\n\
@@ -531,7 +560,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
               python::return_value_policy<python::manage_new_object>());
   docString =
       "Construct a molecule from a Tripos Mol2 block.\n\n\
-  NOTE:\n \
+  NOTE:\n\
     The parser expects the atom-typing scheme used by Corina.\n\
     Atom types from Tripos' dbtranslate are less supported.\n\
     Other atom typing schemes are unlikely to work.\n\
@@ -624,12 +653,12 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 \n\
     - mol: the molecule\n\
     - includeStereo: (optional) toggles inclusion of stereochemical\n\
-                     information in the output\n\
+      information in the output\n\
     - confId: (optional) selects which conformation to output (-1 = default)\n\
     - kekulize: (optional) triggers kekulization of the molecule before it's written,\n\
-                as suggested by the MDL spec.\n\
+      as suggested by the MDL spec.\n\
     - forceV3000 (optional) force generation a V3000 mol block (happens automatically with \n\
-                 more than 999 atoms or bonds)\n\
+      more than 999 atoms or bonds)\n\
 \n\
   RETURNS:\n\
 \n\
@@ -648,12 +677,12 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     - mol: the molecule\n\
     - filename: the file to write to\n\
     - includeStereo: (optional) toggles inclusion of stereochemical\n\
-                     information in the output\n\
+      information in the output\n\
     - confId: (optional) selects which conformation to output (-1 = default)\n\
     - kekulize: (optional) triggers kekulization of the molecule before it's written,\n\
-                as suggested by the MDL spec.\n\
+      as suggested by the MDL spec.\n\
     - forceV3000 (optional) force generation a V3000 mol block (happens automatically with \n\
-                 more than 999 atoms or bonds)\n\
+      more than 999 atoms or bonds)\n\
 \n\
   RETURNS:\n\
 \n\
@@ -720,9 +749,9 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
  \n\
    Examples of replacements: \n\
  \n\
-     CC{Q}C with {'{Q}':'OCCO'} -> CCOCCOC  \n\
-     C{A}C{Q}C with {'{Q}':'OCCO', '{A}':'C1(CC1)'} -> CC1(CC1)COCCOC  \n\
-     C{A}C{Q}C with {'{Q}':'{X}CC{X}', '{A}':'C1CC1', '{X}':'N'} -> CC1CC1CCNCCNC  \n\
+     CC{Q}C with {'{Q}':'OCCO'} -> CCOCCOC  \n\n\
+     C{A}C{Q}C with {'{Q}':'OCCO', '{A}':'C1(CC1)'} -> CC1(CC1)COCCOC  \n\n\
+     C{A}C{Q}C with {'{Q}':'{X}CC{X}', '{A}':'C1CC1', '{X}':'N'} -> CC1CC1CCNCCNC  \n\n\
 \n";
   python::def("MolFromSmiles", RDKit::MolFromSmiles,
               (python::arg("SMILES"), python::arg("sanitize") = true,
@@ -806,12 +835,12 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     - mol: the molecule\n\
     - atomsToUse : a list of atoms to include in the fragment\n\
     - bondsToUse : (optional) a list of bonds to include in the fragment\n\
-                   if not provided, all bonds between the atoms provided\n\
-                   will be included.\n\
+      if not provided, all bonds between the atoms provided\n\
+      will be included.\n\
     - atomSymbols : (optional) a list with the symbols to use for the atoms\n\
-                    in the SMILES. This should have be mol.GetNumAtoms() long.\n\
+      in the SMILES. This should have be mol.GetNumAtoms() long.\n\
     - bondSymbols : (optional) a list with the symbols to use for the bonds\n\
-                    in the SMILES. This should have be mol.GetNumBonds() long.\n\
+      in the SMILES. This should have be mol.GetNumBonds() long.\n\
     - isomericSmiles: (optional) include information about stereochemistry in\n\
       the SMILES.  Defaults to true.\n\
     - kekuleSmiles: (optional) use the Kekule form (no aromatic bonds) in\n\
@@ -832,7 +861,79 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     a string\n\
 \n";
   python::def(
-      "MolFragmentToSmiles", MolFragmentToSmilesHelper,
+      "MolFragmentToSmiles", MolFragmentToSmilesHelper<smilesfrag_gen>,
+      (python::arg("mol"), python::arg("atomsToUse"),
+       python::arg("bondsToUse") = 0, python::arg("atomSymbols") = 0,
+       python::arg("bondSymbols") = 0, python::arg("isomericSmiles") = true,
+       python::arg("kekuleSmiles") = false, python::arg("rootedAtAtom") = -1,
+       python::arg("canonical") = true, python::arg("allBondsExplicit") = false,
+       python::arg("allHsExplicit") = false),
+      docString.c_str());
+
+  docString =
+      "Returns the CXSMILES string for a molecule\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule\n\
+    - isomericSmiles: (optional) include information about stereochemistry in\n\
+      the SMILES.  Defaults to true.\n\
+    - kekuleSmiles: (optional) use the Kekule form (no aromatic bonds) in\n\
+      the SMILES.  Defaults to false.\n\
+    - rootedAtAtom: (optional) if non-negative, this forces the SMILES \n\
+      to start at a particular atom. Defaults to -1.\n\
+    - canonical: (optional) if false no attempt will be made to canonicalize\n\
+      the molecule. Defaults to true.\n\
+    - allBondsExplicit: (optional) if true, all bond orders will be explicitly indicated\n\
+      in the output SMILES. Defaults to false.\n\
+    - allHsExplicit: (optional) if true, all H counts will be explicitly indicated\n\
+      in the output SMILES. Defaults to false.\n\
+\n\
+  RETURNS:\n\
+\n\
+    a string\n\
+\n";
+  python::def(
+      "MolToCXSmiles", RDKit::MolToCXSmiles,
+      (python::arg("mol"), python::arg("isomericSmiles") = true,
+       python::arg("kekuleSmiles") = false, python::arg("rootedAtAtom") = -1,
+       python::arg("canonical") = true, python::arg("allBondsExplicit") = false,
+       python::arg("allHsExplicit") = false, python::arg("doRandom") = false),
+      docString.c_str());
+
+  docString =
+      "Returns the CXSMILES string for a fragment of a molecule\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule\n\
+    - atomsToUse : a list of atoms to include in the fragment\n\
+    - bondsToUse : (optional) a list of bonds to include in the fragment\n\
+      if not provided, all bonds between the atoms provided\n\
+      will be included.\n\
+    - atomSymbols : (optional) a list with the symbols to use for the atoms\n\
+      in the SMILES. This should have be mol.GetNumAtoms() long.\n\
+    - bondSymbols : (optional) a list with the symbols to use for the bonds\n\
+      in the SMILES. This should have be mol.GetNumBonds() long.\n\
+    - isomericSmiles: (optional) include information about stereochemistry in\n\
+      the SMILES.  Defaults to true.\n\
+    - kekuleSmiles: (optional) use the Kekule form (no aromatic bonds) in\n\
+      the SMILES.  Defaults to false.\n\
+    - rootedAtAtom: (optional) if non-negative, this forces the SMILES \n\
+      to start at a particular atom. Defaults to -1.\n\
+    - canonical: (optional) if false no attempt will be made to canonicalize\n\
+      the molecule. Defaults to true.\n\
+    - allBondsExplicit: (optional) if true, all bond orders will be explicitly indicated\n\
+      in the output SMILES. Defaults to false.\n\
+    - allHsExplicit: (optional) if true, all H counts will be explicitly indicated\n\
+      in the output SMILES. Defaults to false.\n\
+    - doRandom: (optional) if true, randomized the DFS transversal graph,\n\
+      so we can generate random smiles. Defaults to false.\n\
+\n\
+  RETURNS:\n\
+\n\
+    a string\n\
+\n";
+  python::def(
+      "MolFragmentToCXSmiles", MolFragmentToSmilesHelper<cxsmilesfrag_gen>,
       (python::arg("mol"), python::arg("atomsToUse"),
        python::arg("bondsToUse") = 0, python::arg("atomSymbols") = 0,
        python::arg("bondSymbols") = 0, python::arg("isomericSmiles") = true,
@@ -959,12 +1060,12 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     - mol: the molecule\n\
     - confId: (optional) selects which conformation to output (-1 = default)\n\
     - flavor: (optional) \n\
-            flavor & 1 : Write MODEL/ENDMDL lines around each record \n\
-            flavor & 2 : Don't write any CONECT records \n\
-            flavor & 4 : Write CONECT records in both directions \n\
-            flavor & 8 : Don't use multiple CONECTs to encode bond order \n\
-            flavor & 16 : Write MASTER record \n\
-            flavor & 32 : Write TER record \n\
+            - flavor & 1 : Write MODEL/ENDMDL lines around each record \n\
+            - flavor & 2 : Don't write any CONECT records \n\
+            - flavor & 4 : Write CONECT records in both directions \n\
+            - flavor & 8 : Don't use multiple CONECTs to encode bond order \n\
+            - flavor & 16 : Write MASTER record \n\
+            - flavor & 32 : Write TER record \n\
 \n\
   RETURNS:\n\
 \n\
@@ -982,12 +1083,12 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     - filename: name of the file to write\n\
     - confId: (optional) selects which conformation to output (-1 = default)\n\
     - flavor: (optional) \n\
-            flavor & 1 : Write MODEL/ENDMDL lines around each record \n\
-            flavor & 2 : Don't write any CONECT records \n\
-            flavor & 4 : Write CONECT records in both directions \n\
-            flavor & 8 : Don't use multiple CONECTs to encode bond order \n\
-            flavor & 16 : Write MASTER record \n\
-            flavor & 32 : Write TER record \n\
+            - flavor & 1 : Write MODEL/ENDMDL lines around each record \n\
+            - flavor & 2 : Don't write any CONECT records \n\
+            - flavor & 4 : Write CONECT records in both directions \n\
+            - flavor & 8 : Don't use multiple CONECTs to encode bond order \n\
+            - flavor & 16 : Write MASTER record \n\
+            - flavor & 32 : Write TER record \n\
 \n\
   RETURNS:\n\
 \n\
@@ -1008,16 +1109,16 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       Defaults to True.\n\
 \n\
     - flavor: (optional)\n\
-      0 Protein, L amino acids (default)\n\
-      1 Protein, D amino acids\n\
-      2 RNA, no cap\n\
-      3 RNA, 5' cap\n\
-      4 RNA, 3' cap\n\
-      5 RNA, both caps\n\
-      6 DNA, no cap\n\
-      7 DNA, 5' cap\n\
-      8 DNA, 3' cap\n\
-      9 DNA, both caps\n\
+        - 0 Protein, L amino acids (default)\n\
+        - 1 Protein, D amino acids\n\
+        - 2 RNA, no cap\n\
+        - 3 RNA, 5' cap\n\
+        - 4 RNA, 3' cap\n\
+        - 5 RNA, both caps\n\
+        - 6 DNA, no cap\n\
+        - 7 DNA, 5' cap\n\
+        - 8 DNA, 3' cap\n\
+        - 9 DNA, both caps\n\
 \n\
   RETURNS:\n\
 \n\
@@ -1053,16 +1154,16 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       Defaults to True.\n\
 \n\
 - flavor: (optional)\n\
-  0 Protein, L amino acids (default)\n\
-  1 Protein, D amino acids\n\
-  2 RNA, no cap\n\
-  3 RNA, 5' cap\n\
-  4 RNA, 3' cap\n\
-  5 RNA, both caps\n\
-  6 DNA, no cap\n\
-  7 DNA, 5' cap\n\
-  8 DNA, 3' cap\n\
-  9 DNA, both caps\n\
+    - 0 Protein, L amino acids (default)\n\
+    - 1 Protein, D amino acids\n\
+    - 2 RNA, no cap\n\
+    - 3 RNA, 5' cap\n\
+    - 4 RNA, 3' cap\n\
+    - 5 RNA, both caps\n\
+    - 6 DNA, no cap\n\
+    - 7 DNA, 5' cap\n\
+    - 8 DNA, 3' cap\n\
+    - 9 DNA, both caps\n\
   RETURNS:\n\
 \n\
     a Mol object, None on failure.\n\
@@ -1126,8 +1227,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
   chemistry of the molecular graph.  Any atom with the same rank (symmetry class) is\n\
   indistinguishable.  For example:\n\
 \n\
-    > mol = MolFromSmiles('C1NCN1')\n\
-    > list(CanonicalRankAtoms(mol, breakTies=False))\n\
+    >>> mol = MolFromSmiles('C1NCN1')\n\
+    >>> list(CanonicalRankAtoms(mol, breakTies=False))\n\
     [0,1,0,1]\n\
 \n\
   In this case the carbons have the same symmetry class and the nitrogens have the same\n\
@@ -1154,10 +1255,10 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       "Returns the canonical atom ranking for each atom of a molecule fragment\n\
   See help(CanonicalRankAtoms) for more information.\n\
 \n\
-   > mol = MolFromSmiles('C1NCN1.C1NCN1')\n\
-   > list(CanonicalRankAtomsInFragment(mol, atomsToUse=range(0,4), breakTies=False))\n\
+   >>> mol = MolFromSmiles('C1NCN1.C1NCN1')\n\
+   >>> list(CanonicalRankAtomsInFragment(mol, atomsToUse=range(0,4), breakTies=False))\n\
    [0,1,0,1,-1,-1,-1,-1]\n\
-   > list(CanonicalRankAtomsInFragment(mol, atomsToUse=range(4,8), breakTies=False))\n\
+   >>> list(CanonicalRankAtomsInFragment(mol, atomsToUse=range(4,8), breakTies=False))\n\
    [-1,-1,-1,-1,0,1,0,1]\n\
 \n\
   ARGUMENTS:\n\
@@ -1165,12 +1266,12 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     - mol: the molecule\n\
     - atomsToUse : a list of atoms to include in the fragment\n\
     - bondsToUse : (optional) a list of bonds to include in the fragment\n\
-                   if not provided, all bonds between the atoms provided\n\
-                   will be included.\n\
+      if not provided, all bonds between the atoms provided\n\
+      will be included.\n\
     - atomSymbols : (optional) a list with the symbols to use for the atoms\n\
-                    in the SMILES. This should have be mol.GetNumAtoms() long.\n\
+      in the SMILES. This should have be mol.GetNumAtoms() long.\n\
     - bondSymbols : (optional) a list with the symbols to use for the bonds\n\
-                    in the SMILES. This should have be mol.GetNumBonds() long.\n\
+      in the SMILES. This should have be mol.GetNumBonds() long.\n\
     - breakTies: (optional) force breaking of ranked ties\n\
 \n\
   RETURNS:\n\
@@ -1182,6 +1283,33 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
                python::arg("bondsToUse") = 0, python::arg("atomSymbols") = 0,
                python::arg("bondSymbols") = 0, python::arg("breakTies") = true),
               docString.c_str());
+
+  python::def(
+      "CreateAtomIntPropertyList", FileParserUtils::createAtomIntPropertyList,
+      (python::arg("mol"), python::arg("propName"),
+       python::arg("missingValueMarker") = "", python::arg("lineSize") = 190),
+      "creates a list property on the molecule from individual atom property "
+      "values");
+  python::def(
+      "CreateAtomDoublePropertyList",
+      FileParserUtils::createAtomDoublePropertyList,
+      (python::arg("mol"), python::arg("propName"),
+       python::arg("missingValueMarker") = "", python::arg("lineSize") = 190),
+      "creates a list property on the molecule from individual atom property "
+      "values");
+  python::def(
+      "CreateAtomBoolPropertyList", FileParserUtils::createAtomBoolPropertyList,
+      (python::arg("mol"), python::arg("propName"),
+       python::arg("missingValueMarker") = "", python::arg("lineSize") = 190),
+      "creates a list property on the molecule from individual atom property "
+      "values");
+  python::def(
+      "CreateAtomStringPropertyList",
+      FileParserUtils::createAtomStringPropertyList,
+      (python::arg("mol"), python::arg("propName"),
+       python::arg("missingValueMarker") = "", python::arg("lineSize") = 190),
+      "creates a list property on the molecule from individual atom property "
+      "values");
 
 /********************************************************
  * MolSupplier stuff

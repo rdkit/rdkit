@@ -68,8 +68,8 @@ void test1() {
     ROMOL_SPTR mol = ROMOL_SPTR(SmilesToMol(i));
     std::vector<unsigned> atomsToUse;
     std::vector<unsigned> bondsToUse;
-    std::vector<boost::uint32_t> atomCodes(mol->getNumAtoms());
-    std::vector<boost::uint32_t> bondCodes(mol->getNumBonds());
+    std::vector<std::uint32_t> atomCodes(mol->getNumAtoms());
+    std::vector<std::uint32_t> bondCodes(mol->getNumBonds());
 
     unsigned n;
     n = mol->getNumAtoms();
@@ -124,8 +124,8 @@ void test2() {
 
   for (auto& i : smi) {
     ROMOL_SPTR mol = ROMOL_SPTR(SmilesToMol(i));
-    std::vector<boost::uint32_t> atomCodes(mol->getNumAtoms());
-    std::vector<boost::uint32_t> bondCodes(mol->getNumBonds());
+    std::vector<std::uint32_t> atomCodes(mol->getNumAtoms());
+    std::vector<std::uint32_t> bondCodes(mol->getNumBonds());
 
     fillAtomBondCodes(*mol, CF_ELEMENT | CF_CHARGE /*|CF_VALENCE*/
                                 | CF_ATOM_AROMATIC,
@@ -161,8 +161,8 @@ void test21() {
 
   for (auto& i : smi) {
     ROMOL_SPTR mol = ROMOL_SPTR(SmilesToMol(i));
-    std::vector<boost::uint32_t> atomCodes(mol->getNumAtoms());
-    std::vector<boost::uint32_t> bondCodes(mol->getNumBonds());
+    std::vector<std::uint32_t> atomCodes(mol->getNumAtoms());
+    std::vector<std::uint32_t> bondCodes(mol->getNumBonds());
 
     fillAtomBondCodes(*mol, CF_BOND_ALL & (~(CF_BOND_CHIRALITY)), &atomCodes,
                       &bondCodes);
@@ -194,8 +194,8 @@ void test3() {
 
   for (auto& i : smi) {
     ROMOL_SPTR mol = ROMOL_SPTR(SmilesToMol(i));
-    std::vector<boost::uint32_t> atomCodes(mol->getNumAtoms());
-    std::vector<boost::uint32_t> bondCodes(mol->getNumBonds());
+    std::vector<std::uint32_t> atomCodes(mol->getNumAtoms());
+    std::vector<std::uint32_t> bondCodes(mol->getNumBonds());
 
     fillAtomBondCodes(*mol, CF_BOND_CHIRALITY | CF_ATOM_CHIRALITY | CF_ISOTOPE,
                       &atomCodes, &bondCodes);
@@ -225,8 +225,8 @@ void test3a() {
     ROMOL_SPTR mol1 = ROMOL_SPTR(SmilesToMol(smi[0]));
     ROMOL_SPTR mol2 = ROMOL_SPTR(SmilesToMol(smi[1]));
 
-    std::vector<boost::uint32_t> atomCodes(mol1->getNumAtoms());
-    std::vector<boost::uint32_t> bondCodes(mol2->getNumBonds());
+    std::vector<std::uint32_t> atomCodes(mol1->getNumAtoms());
+    std::vector<std::uint32_t> bondCodes(mol2->getNumBonds());
 
     fillAtomBondCodes(*mol1, CF_BOND_CHIRALITY | CF_ATOM_CHIRALITY | CF_ISOTOPE,
                       &atomCodes, &bondCodes);
@@ -246,8 +246,8 @@ void test3a() {
     ROMOL_SPTR mol1 = ROMOL_SPTR(SmilesToMol(smi[0]));
     ROMOL_SPTR mol2 = ROMOL_SPTR(SmilesToMol(smi[1]));
 
-    std::vector<boost::uint32_t> atomCodes(mol1->getNumAtoms());
-    std::vector<boost::uint32_t> bondCodes(mol2->getNumBonds());
+    std::vector<std::uint32_t> atomCodes(mol1->getNumAtoms());
+    std::vector<std::uint32_t> bondCodes(mol2->getNumBonds());
 
     fillAtomBondCodes(*mol1, CF_BOND_CHIRALITY | CF_ATOM_CHIRALITY | CF_ISOTOPE,
                       &atomCodes, &bondCodes);
@@ -268,8 +268,8 @@ void test3a() {
     ROMOL_SPTR mol1 = ROMOL_SPTR(SmilesToMol(smi[0]));
     ROMOL_SPTR mol2 = ROMOL_SPTR(SmilesToMol(smi[1]));
 
-    std::vector<boost::uint32_t> atomCodes(mol1->getNumAtoms());
-    std::vector<boost::uint32_t> bondCodes(mol2->getNumBonds());
+    std::vector<std::uint32_t> atomCodes(mol1->getNumAtoms());
+    std::vector<std::uint32_t> bondCodes(mol2->getNumBonds());
 
     fillAtomBondCodes(*mol1, CF_BOND_CHIRALITY | CF_ATOM_CHIRALITY | CF_ISOTOPE,
                       &atomCodes, &bondCodes);
@@ -289,8 +289,8 @@ void test3a() {
     ROMOL_SPTR mol1 = ROMOL_SPTR(SmilesToMol(smi[0]));
     ROMOL_SPTR mol2 = ROMOL_SPTR(SmilesToMol(smi[1]));
 
-    std::vector<boost::uint32_t> atomCodes(mol1->getNumAtoms());
-    std::vector<boost::uint32_t> bondCodes(mol2->getNumBonds());
+    std::vector<std::uint32_t> atomCodes(mol1->getNumAtoms());
+    std::vector<std::uint32_t> bondCodes(mol2->getNumBonds());
 
     fillAtomBondCodes(*mol1, CF_BOND_CHIRALITY | CF_ATOM_CHIRALITY | CF_ISOTOPE,
                       &atomCodes, &bondCodes);
@@ -401,8 +401,8 @@ std::string getSmilesOnly(const char* smiles, std::string* id = nullptr) {
 }
 
 HashCodeType computeHash(const ROMol& mol, CodeFlags flags) {
-  std::vector<boost::uint32_t> atomCodes;
-  std::vector<boost::uint32_t> bondCodes;
+  std::vector<std::uint32_t> atomCodes;
+  std::vector<std::uint32_t> bondCodes;
 
   fillAtomBondCodes(mol, flags, &atomCodes, &bondCodes);
 
@@ -526,7 +526,7 @@ void testFileSMILES(const char* file, HashCodeType bitMask) {
   std::cout << "Test COMPLETED.\n";
 }
 
-void checkCollisions(const char* file, boost::uint32_t bits = 0) {
+void checkCollisions(const char* file, std::uint32_t bits = 0) {
   HashCodeType bitMask = 0;
   if (0 == bits || 8 * sizeof(HashCodeType) < bits)
     bits = 8 * sizeof(HashCodeType);

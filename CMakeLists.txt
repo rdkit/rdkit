@@ -11,6 +11,9 @@ ENDIF(NOT CMAKE_BUILD_TYPE)
 # Enable CTest
 include(CTest)
 
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 set(CMAKE_MODULE_PATH
     ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/Code/cmake/Modules/")
 
@@ -48,8 +51,10 @@ option(RDK_BUILD_DESCRIPTORS3D "Build the 3D descriptors calculators, requires E
 option(RDK_BUILD_FREESASA_SUPPORT "build the rdkit freesasa wrapper" OFF )
 option(RDK_BUILD_COORDGEN_SUPPORT "build the rdkit coordgen wrapper" ON )
 option(RDK_BUILD_MOLINTERCHANGE_SUPPORT "build in support for CommonChem molecule interchange" ON )
+option(RDK_BUILD_YAEHMOP_SUPPORT "build support for the YAeHMOP wrapper" OFF)
 option(RDK_INSTALL_DEV_COMPONENT "install libraries and headers" ON)
 option(RDK_USE_BOOST_REGEX "use boost::regex instead of std::regex (needed for systems with g++-4.8)" OFF)
+option(RDK_USE_BOOST_IOSTREAMS "use boost::iostreams" ON)
 if(NOT MSVC)
   if(RDK_OPTIMIZE_NATIVE)
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mpopcnt")
@@ -92,7 +97,7 @@ set(RDK_PYTHON_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/rdkit")
 #-------
 # Config variables:
 set(RDKit_Year "2019")
-set(RDKit_Month "03")
+set(RDKit_Month "09")
 set(RDKit_Revision "1")
 set(RDKit_RevisionModifier "dev1")
 set(RDKit_ABI "1")
@@ -218,6 +223,11 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   if (PYTHONINTERP_FOUND AND NOT Python_ADDITIONAL_VERSIONS)
     set(Python_ADDITIONAL_VERSIONS "${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}")
   endif (PYTHONINTERP_FOUND AND NOT Python_ADDITIONAL_VERSIONS)
+
+  if(PYTHON_VERSION_MAJOR EQUAL 2)
+    message(FATAL_ERROR "ERROR: The RDKit no longer supports Python 2.\nIf you have Python 3 installed, you can tell cmake where to find it using the -DPYTHON_EXECUTABLE argument.")
+  endif()
+
   find_package(PythonLibs)
   target_include_directories(rdkit_base INTERFACE ${PYTHON_INCLUDE_DIR})
   find_package(NumPy REQUIRED)
@@ -388,7 +398,7 @@ else(RDK_TEST_COVERAGE)
  if(CMAKE_COMPILER_IS_GNUCXX)
    # We don't on C_FLAGS warnings to keep Avalon compiling quiet
    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-deprecated -Wno-unused-function -fno-strict-aliasing")
-   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wno-deprecated -Wno-unused-function -fno-strict-aliasing -Wall -Wextra")
+   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated -Wno-unused-function -fno-strict-aliasing -Wall -Wextra")
   if (NOT CYGWIN)
     SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
@@ -397,7 +407,7 @@ else(RDK_TEST_COVERAGE)
  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
    # We don't on C_FLAGS warnings to keep Avalon compiling quiet
    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-array-bounds -fPIC -Wno-parentheses -Wno-logical-op-parentheses -Wno-format")
-   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -Wno-deprecated -Wno-unused-function -fno-strict-aliasing -Wno-format -Wno-logical-op-parentheses -fPIC")
+   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-deprecated -Wno-unused-function -fno-strict-aliasing -Wno-format -Wno-logical-op-parentheses -fPIC")
    if(APPLE)
      SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
    endif()
@@ -484,7 +494,7 @@ endif(RDK_BUILD_CONTRIB)
 
 # Memory testing setup
 FIND_PROGRAM(MEMORYCHECK_COMMAND valgrind)
-CONFIGURE_FILE(CTestCustom.ctest.in ${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.ctest)
+CONFIGURE_FILE(CTestCustom.ctest.in ${RDKit_BINARY_DIR}/CTestCustom.ctest)
 
 # Packaging
 SET(CPACK_GENERATOR "TGZ;DEB;RPM")

@@ -4,52 +4,50 @@
 #     All Rights Reserved
 #
 from rdkit import Chem
-from rdkit import six
 from rdkit.VLib.Supply import SupplyNode
 
 
 class SDSupplyNode(SupplyNode):
-  """ SD supplier
+    """ SD supplier
 
-  Sample Usage:
-    >>> import os
-    >>> from rdkit import RDConfig
-    >>> fileN = os.path.join(RDConfig.RDCodeDir,'VLib','NodeLib',\
-                             'test_data','NCI_aids.10.sdf')
-    >>> suppl = SDSupplyNode(fileN)
-    >>> ms = [x for x in suppl]
-    >>> len(ms)
-    10
-    >>> ms[0].GetProp("_Name")
-    '48'
-    >>> ms[1].GetProp("_Name")
-    '78'
-    >>> suppl.reset()
-    >>> suppl.next().GetProp("_Name")
-    '48'
-    >>> suppl.next().GetProp("_Name")
-    '78'
-
-  """
-
-  def __init__(self, fileName, **kwargs):
-    SupplyNode.__init__(self, **kwargs)
-    self._fileName = fileName
-    self._supplier = Chem.SDMolSupplier(self._fileName)
-
-  def reset(self):
-    SupplyNode.reset(self)
-    self._supplier.reset()
-
-  def next(self):
-    """
+    Sample Usage:
+      >>> import os
+      >>> from rdkit import RDConfig
+      >>> fileN = os.path.join(RDConfig.RDCodeDir,'VLib','NodeLib',\
+                               'test_data','NCI_aids.10.sdf')
+      >>> suppl = SDSupplyNode(fileN)
+      >>> ms = [x for x in suppl]
+      >>> len(ms)
+      10
+      >>> ms[0].GetProp("_Name")
+      '48'
+      >>> ms[1].GetProp("_Name")
+      '78'
+      >>> suppl.reset()
+      >>> suppl.next().GetProp("_Name")
+      '48'
+      >>> suppl.next().GetProp("_Name")
+      '78'
 
     """
-    return next(self._supplier)
+
+    def __init__(self, fileName, **kwargs):
+        SupplyNode.__init__(self, **kwargs)
+        self._fileName = fileName
+        self._supplier = Chem.SDMolSupplier(self._fileName)
+
+    def reset(self):
+        SupplyNode.reset(self)
+        self._supplier.reset()
+
+    def next(self):
+        """
+
+        """
+        return next(self._supplier)
 
 
-if six.PY3:
-  SDSupplyNode.__next__ = SDSupplyNode.next
+SDSupplyNode.__next__ = SDSupplyNode.next
 
 
 # ------------------------------------
@@ -57,11 +55,11 @@ if six.PY3:
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-  import sys
-  import doctest
-  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
-  sys.exit(failed)
+    import sys
+    import doctest
+    failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
+    sys.exit(failed)
 
 
 if __name__ == '__main__':  # pragma: nocover
-  _runDoctests()
+    _runDoctests()

@@ -20,7 +20,6 @@ tests = [
   ("python", "UnitTestFunctionalGroups.py", {}),
   ("python", "UnitTestCrippen.py", {}),
   ("python", "UnitTestPandasTools.py", {}),
-  ("python", "UnitTestPeriodicTable.py", {}),
   ("python", "UnitTestDocTestsChem.py", {}),
   ("python", "UnitTestFeatFinderCLI.py", {}),
   ("python", "UnitTestQED.py", {}),

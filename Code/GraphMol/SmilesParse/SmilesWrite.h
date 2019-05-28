@@ -20,6 +20,10 @@ class Atom;
 class Bond;
 class ROMol;
 namespace SmilesWrite {
+
+//! \brief returns the cxsmiles data for a molecule
+RDKIT_SMILESPARSE_EXPORT std::string getCXExtensions(const ROMol &mol);
+
 //! \brief returns true if the atom number is in the SMILES organic subset
 RDKIT_SMILESPARSE_EXPORT bool inOrganicSubset(int atomicNumber);
 
@@ -104,5 +108,57 @@ RDKIT_SMILESPARSE_EXPORT std::string MolFragmentToSmiles(
     bool doIsomericSmiles = true, bool doKekule = false, int rootedAtAtom = -1,
     bool canonical = true, bool allBondsExplicit = false,
     bool allHsExplicit = false);
+
+//! \brief returns canonical CXSMILES for a molecule
+/*!
+  \param mol : the molecule in question.
+  \param doIsomericSmiles : include stereochemistry and isotope information
+      in the SMILES
+  \param doKekule : do Kekule smiles (i.e. don't use aromatic bonds)
+  \param rootedAtAtom : make sure the SMILES starts at the specified atom.
+      The resulting SMILES is not, of course, canonical.
+  \param canonical : if false, no attempt will be made to canonicalize the
+  SMILES
+  \param allBondsExplicit : if true, symbols will be included for all bonds.
+  \param allHsExplicit : if true, hydrogen counts will be provided for every
+  atom.
+ */
+RDKIT_SMILESPARSE_EXPORT std::string MolToCXSmiles(
+    const ROMol &mol, bool doIsomericSmiles = true, bool doKekule = false,
+    int rootedAtAtom = -1, bool canonical = true, bool allBondsExplicit = false,
+    bool allHsExplicit = false, bool doRandom = false);
+
+//! \brief returns canonical CXSMILES for part of a molecule
+/*!
+  \param mol : the molecule in question.
+  \param atomsToUse : indices of the atoms in the fragment
+  \param bondsToUse : indices of the bonds in the fragment. If this is not
+  provided,
+                      all bonds between the atoms in atomsToUse will be included
+  \param atomSymbols : symbols to use for the atoms in the output SMILES
+  \param bondSymbols : sybmols to use for the bonds in the output SMILES
+  \param doIsomericSmiles : include stereochemistry and isotope information
+      in the SMILES
+  \param doKekule : do Kekule smiles (i.e. don't use aromatic bonds)
+  \param rootedAtAtom : make sure the SMILES starts at the specified atom.
+      The resulting SMILES is not, of course, canonical.
+  \param canonical : if false, no attempt will be made to canonicalize the
+  SMILES
+  \param allBondsExplicit : if true, symbols will be included for all bonds.
+  \param allHsExplicit : if true, hydrogen counts will be provided for every
+  atom.
+
+  \b NOTE: the bondSymbols are *not* currently used in the canonicalization.
+
+ */
+RDKIT_SMILESPARSE_EXPORT std::string MolFragmentToCXSmiles(
+    const ROMol &mol, const std::vector<int> &atomsToUse,
+    const std::vector<int> *bondsToUse = 0,
+    const std::vector<std::string> *atomSymbols = 0,
+    const std::vector<std::string> *bondSymbols = 0,
+    bool doIsomericSmiles = true, bool doKekule = false, int rootedAtAtom = -1,
+    bool canonical = true, bool allBondsExplicit = false,
+    bool allHsExplicit = false);
+
 }  // namespace RDKit
 #endif

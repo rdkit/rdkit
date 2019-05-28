@@ -21,7 +21,7 @@
 #include <RDGeneral/hash/hash_fwd.hpp>
 #include <RDGeneral/hash/detail/float_functions.hpp>
 #include <boost/integer/static_log2.hpp>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 #include <boost/limits.hpp>
 #include <boost/assert.hpp>
 
@@ -97,14 +97,14 @@ namespace gboost
 #if defined(GBOOST_HASH_USE_x86_BINARY_HASH)
         inline std::hash_result_t float_hash_impl(float v)
         {
-            boost::uint32_t* ptr = (boost::uint32_t*)&v;
+            std::uint32_t* ptr = (std::uint32_t*)&v;
             std::hash_result_t seed = *ptr;
             return seed;
         }
 
         inline std::hash_result_t float_hash_impl(double v)
         {
-            boost::uint32_t* ptr = (boost::uint32_t*)&v;
+            std::uint32_t* ptr = (std::uint32_t*)&v;
             std::hash_result_t seed = *ptr++;
             hash_float_combine(seed, *ptr);
             return seed;
@@ -112,10 +112,10 @@ namespace gboost
 
         inline std::hash_result_t float_hash_impl(long double v)
         {
-            boost::uint32_t* ptr = (boost::uint32_t*)&v;
+            std::uint32_t* ptr = (std::uint32_t*)&v;
             std::hash_result_t seed = *ptr++;
             hash_float_combine(seed, *ptr++);
-            hash_float_combine(seed, *(boost::uint16_t*)ptr);
+            hash_float_combine(seed, *(std::uint16_t*)ptr);
             return seed;
         }
 

@@ -29,7 +29,7 @@ inline unsigned int getNumThreadsToUse(int target) {
     return 1;
   }
 }
-}
+}  // namespace RDKit
 
 #else
 
@@ -38,7 +38,7 @@ inline unsigned int getNumThreadsToUse(int target) {
   RDUNUSED_PARAM(target);
   return 1;
 }
-}
+}  // namespace RDKit
 #endif
 
 #endif

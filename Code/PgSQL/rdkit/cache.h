@@ -38,25 +38,23 @@
 extern "C" {
 #endif
 
-
 /*
  *  Cache subsystem. Molecules and fingerprints I/O is extremely expensive.
  */
 struct MemoryContextData; /* forward declaration to prevent conflicts with C++
-                             */
-  
+                           */
+
 void *searchMolCache(void *cache, struct MemoryContextData *ctx, Datum a,
                      Mol **m, CROMol *mol, bytea **sign);
-  
-void *searchBfpCache(void *cache, struct MemoryContextData *ctx, Datum a,
-		     Bfp **f, CBfp *fp, BfpSignature **sign);
-  
-void *searchSfpCache(void *cache, struct MemoryContextData *ctx, Datum a,
-		     Sfp **f, CSfp *fp, bytea **sign);
 
-void *searchReactionCache(void *cache, struct MemoryContextData *ctx,
-			  Datum a, Reaction **r,
-			  CChemicalReaction *rxn, bytea **sign);
+void *searchBfpCache(void *cache, struct MemoryContextData *ctx, Datum a,
+                     Bfp **f, CBfp *fp, BfpSignature **sign);
+
+void *searchSfpCache(void *cache, struct MemoryContextData *ctx, Datum a,
+                     Sfp **f, CSfp *fp, bytea **sign);
+
+void *searchReactionCache(void *cache, struct MemoryContextData *ctx, Datum a,
+                          Reaction **r, CChemicalReaction *rxn, bytea **sign);
 
 #ifdef __cplusplus
 }

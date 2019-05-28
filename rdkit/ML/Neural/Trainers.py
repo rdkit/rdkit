@@ -8,7 +8,7 @@
     Dan W. Patterson, Prentice Hall, 1996
 
 """
-from __future__ import print_function
+
 
 import numpy
 
@@ -260,9 +260,9 @@ if __name__ == '__main__':  # pragma: nocover
   if 0:
     net = testXor()
     print('Xor:', net)
-    from rdkit.six.moves import cPickle
+    import pickle
     outF = open('xornet.pkl', 'wb+')
-    cPickle.dump(net, outF)
+    pickle.dump(net, outF)
     outF.close()
   else:
     # runProfile('testLinear')

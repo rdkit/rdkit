@@ -204,7 +204,7 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
         std::sort(nbrs.begin(), nbrs.end());
         // and now calculate the new invariant and test if the atom is newly
         // "chiral"
-        boost::uint32_t invar = layer;
+        std::uint32_t invar = layer;
         gboost::hash_combine(invar, (*invariants)[atomIdx]);
         bool looksChiral = (tAtom->getChiralTag() != Atom::CHI_UNSPECIFIED);
         for (std::vector<std::pair<int32_t, uint32_t>>::const_iterator it =

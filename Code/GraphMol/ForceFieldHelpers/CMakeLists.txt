@@ -6,6 +6,7 @@ rdkit_library(ForceFieldHelpers UFF/AtomTyper.cpp UFF/Builder.cpp
               MMFF/AtomTyper.cpp MMFF/Builder.cpp CrystalFF/TorsionAngleM6.cpp
               CrystalFF/TorsionPreferences.cpp
               LINK_LIBRARIES SmilesParse SubstructMatch ForceField)
+rdkit_headers(FFConvenience.h DEST GraphMol/ForceFieldHelpers)
 rdkit_headers(UFF/AtomTyper.h
               UFF/Builder.h UFF/UFF.h DEST GraphMol/ForceFieldHelpers/UFF)
 rdkit_headers(MMFF/AtomTyper.h

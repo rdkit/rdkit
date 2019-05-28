@@ -1,4 +1,4 @@
-//  Copyright (c) 2017, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2017-2019, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -175,6 +175,25 @@ const char *SubstructLibraryDoc =
     "11\n"
     "";
 
+python::object SubstructLibrary_Serialize(const SubstructLibrary &cat) {
+  std::string res = cat.Serialize();
+  python::object retval = python::object(
+      python::handle<>(PyBytes_FromStringAndSize(res.c_str(), res.length())));
+  return retval;
+}
+
+struct substructlibrary_pickle_suite : python::pickle_suite {
+  static python::tuple getinitargs(const SubstructLibrary &self) {
+    std::string res;
+    if (!SubstructLibraryCanSerialize()) {
+      throw_runtime_error("Pickling of FilterCatalog instances is not enabled");
+    }
+    res = self.Serialize();
+    return python::make_tuple(python::object(python::handle<>(
+        PyBytes_FromStringAndSize(res.c_str(), res.length()))));
+  };
+};
+
 struct substructlibrary_wrapper {
   static void wrap() {
     // n.b. there can only be one of these in all wrappings
@@ -253,7 +272,7 @@ struct substructlibrary_wrapper {
         .def(python::init<boost::shared_ptr<MolHolderBase>>())
         .def(python::init<boost::shared_ptr<MolHolderBase>,
                           boost::shared_ptr<FPHolderBase>>())
-
+        .def(python::init<std::string>())
         .def("AddMol", &SubstructLibrary::addMol, (python::arg("mol")),
              "Adds a molecule to the substruct library")
 
@@ -351,7 +370,15 @@ struct substructlibrary_wrapper {
 
         .def("__len__", &SubstructLibrary::size)
 
+        .def("Serialize", &SubstructLibrary_Serialize)
+        // enable pickle support
+        .def_pickle(substructlibrary_pickle_suite())
         ;
+
+    python::def("SubstructLibraryCanSerialize", SubstructLibraryCanSerialize,
+                "Returns True if the SubstructLibrary is serializable "
+                "(requires boost serialization");
+
   }
 };
 }

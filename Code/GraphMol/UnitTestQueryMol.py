@@ -2,7 +2,7 @@
 """basic unit testing code for query mols
 
 """
-from __future__ import print_function
+
 
 from rdkit import RDConfig
 import unittest, os, sys

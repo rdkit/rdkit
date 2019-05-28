@@ -24,7 +24,7 @@
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/Exceptions.h>
 #include <DataStructs/SparseIntVect.h>
-
+#include <DataStructs/DatastructsStreamOps.h>
 #include <stdlib.h>
 
 using namespace std;
@@ -521,31 +521,31 @@ void test6SparseIntVect() {
   try {
     iVect.setVal(-1, 13);
     TEST_ASSERT(0);
-  } catch (IndexErrorException &dexp) {
+  } catch (IndexErrorException &) {
     ;
   }
   try {
     iVect.setVal(255, 42);
     TEST_ASSERT(0);
-  } catch (IndexErrorException &dexp) {
+  } catch (IndexErrorException &) {
     ;
   }
   try {
     iVect.getVal(-1);
     TEST_ASSERT(0);
-  } catch (IndexErrorException &dexp) {
+  } catch (IndexErrorException &) {
     ;
   }
   try {
     iVect.getVal(255);
     TEST_ASSERT(0);
-  } catch (IndexErrorException &dexp) {
+  } catch (IndexErrorException &) {
     ;
   }
   try {
     iVect[-1];
     TEST_ASSERT(0);
-  } catch (IndexErrorException &dexp) {
+  } catch (IndexErrorException &) {
     ;
   }
 
@@ -607,7 +607,7 @@ void test6SparseIntVect() {
     try {
       iV1 &= iVect;
       TEST_ASSERT(0);
-    } catch (ValueErrorException &dexp) {
+    } catch (ValueErrorException &) {
       ;
     }
   }
@@ -672,7 +672,7 @@ void test6SparseIntVect() {
     try {
       iV2 &= iVect;
       TEST_ASSERT(0);
-    } catch (ValueErrorException &dexp) {
+    } catch (ValueErrorException &) {
       ;
     }
   }
@@ -705,7 +705,7 @@ void test6SparseIntVect() {
     try {
       iV1 |= iVect;
       TEST_ASSERT(0);
-    } catch (ValueErrorException &dexp) {
+    } catch (ValueErrorException &) {
       ;
     }
   }
@@ -971,7 +971,7 @@ void test7SparseIntVectPickles() {
     try {
       iV2.fromString(pkl);
       TEST_ASSERT(0);
-    } catch (ValueErrorException &dexp) {
+    } catch (ValueErrorException &) {
       ;
     }
   }
@@ -1399,6 +1399,37 @@ void test15BitmapOps() {
   }
 }
 
+void test16BitVectProps() {
+  ExplicitBitVect bv(32);
+  for(int i=0;i<32;i+=2){
+    bv.setBit(i);
+  }
+
+  ExplicitBitVect bv2(bv.toString());
+  TEST_ASSERT(bv == bv2);
+  
+  Dict d;
+  d.setVal<ExplicitBitVect>("exp", bv);
+  RDValue &value = d.getData()[0].val;
+  
+  DataStructsExplicitBitVecPropHandler bv_handler;
+  std::vector<CustomPropHandler*> handlers = {&bv_handler,
+                                              bv_handler.clone()};
+  for(auto handler: handlers)
+  {
+    TEST_ASSERT(handler->canSerialize(value));
+    RDValue bad_value = 1;
+    TEST_ASSERT(!handler->canSerialize(bad_value));
+    std::stringstream ss;
+    TEST_ASSERT(handler->write(ss, value));
+    RDValue newValue;
+    TEST_ASSERT(handler->read(ss, newValue));
+    TEST_ASSERT(from_rdvalue<ExplicitBitVect>(newValue) == bv);
+  }
+  delete handlers[1];
+}
+
+
 int main() {
   RDLog::InitLogs();
   try {
@@ -1498,5 +1529,9 @@ int main() {
                        << std::endl;
   test15BitmapOps();
 
+  BOOST_LOG(rdInfoLog) << " Test bitmaps as properties "
+                          "-------------------------------"
+                       << std::endl;
+  test16BitVectProps();
   return 0;
 }

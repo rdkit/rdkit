@@ -153,20 +153,27 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
     atomLabel;  // atom string from CXSMILES
 
 // MDL Style Properties (MolFileParser)
-RDKIT_RDGENERAL_EXPORT extern const std::string molAtomMapNumber;    // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molFileAlias;        // string
-RDKIT_RDGENERAL_EXPORT extern const std::string molFileValue;        // string
-RDKIT_RDGENERAL_EXPORT extern const std::string molInversionFlag;    // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molParity;           // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molRxnComponent;     // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molRxnRole;          // int
-RDKIT_RDGENERAL_EXPORT extern const std::string molTotValence;       // int
-RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileRLabel;      // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molAtomMapNumber;  // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molFileAlias;      // string
+RDKIT_RDGENERAL_EXPORT extern const std::string molFileValue;      // string
+RDKIT_RDGENERAL_EXPORT extern const std::string molInversionFlag;  // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molParity;         // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molRxnComponent;   // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molRxnRole;        // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molTotValence;     // int
+RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileRLabel;  // unsigned int
 RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileChiralFlag;  // int
 RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileAtomQuery;   // int
 RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileBondQuery;   // int
 RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileBondEndPts;  // string
 RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileBondAttach;  // string
+RDKIT_RDGENERAL_EXPORT extern const std::string
+    _MolFileBondType;  // unsigned int
+RDKIT_RDGENERAL_EXPORT extern const std::string
+    _MolFileBondStereo;  // unsigned int
+RDKIT_RDGENERAL_EXPORT extern const std::string
+    _MolFileBondCfg;  // unsigned int
+
 RDKIT_RDGENERAL_EXPORT extern const std::string
     MRV_SMA;  // smarts string from Marvin
 RDKIT_RDGENERAL_EXPORT extern const std::string dummyLabel;  // atom string

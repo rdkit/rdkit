@@ -97,5 +97,5 @@ class RDKIT_FMCS_EXPORT MaximumCommonSubgraph {
   bool match(Seed& seed);
   bool matchIncrementalFast(Seed& seed, unsigned itarget);
 };
-}
+}  // namespace FMCS
 }  // namespace RDKit

@@ -3,6 +3,7 @@
 #include "catch.hpp"
 
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/new_canon.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/FileParsers/FileParsers.h>
@@ -11,7 +12,7 @@
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 
 using namespace RDKit;
-
+#if 1
 TEST_CASE("SMILES Parsing works", "[molops]") {
   std::unique_ptr<RWMol> mol(SmilesToMol("C1CC1"));
   REQUIRE(mol);
@@ -74,36 +75,265 @@ TEST_CASE("Github #2086", "[bug, molops]") {
   }
 }
 
-TEST_CASE("github #299", "[bug, molops, SSSR]"){
-  SECTION("simplified"){
-    auto mol = "C13%13%14.C124%18.C25%13%15.C368%17.C4679.C75%10%17.C8%11%14%16.C9%11%12%18.C%10%12%15%16"_smiles;
+TEST_CASE("github #299", "[bug, molops, SSSR]") {
+  SECTION("simplified") {
+    auto mol =
+        "C13%13%14.C124%18.C25%13%15.C368%17.C4679.C75%10%17.C8%11%14%16.C9%11%12%18.C%10%12%15%16"_smiles;
     REQUIRE(mol);
-    REQUIRE(mol->getNumAtoms()==9);
+    REQUIRE(mol->getNumAtoms() == 9);
   }
 
-  SECTION("old example from molopstest"){
+  SECTION("old example from molopstest") {
     auto mol = "C123C45C11C44C55C22C33C14C523"_smiles;
     REQUIRE(mol);
-    REQUIRE(mol->getNumAtoms()==9);
+    REQUIRE(mol->getNumAtoms() == 9);
   }
 
-  SECTION("carborane"){
-    std::unique_ptr<RWMol> mol(SmilesToMol("[B]1234[B]567[B]118[B]229[B]33%10[B]454[B]656[B]711[B]822[C]933[B]%1045[C]6123",0,false));
+  SECTION("carborane") {
+    std::unique_ptr<RWMol> mol(
+        SmilesToMol("[B]1234[B]567[B]118[B]229[B]33%10[B]454[B]656[B]711[B]822["
+                    "C]933[B]%1045[C]6123",
+                    0, false));
     REQUIRE(mol);
-    CHECK(mol->getNumAtoms()==12);
+    CHECK(mol->getNumAtoms() == 12);
     mol->updatePropertyCache(false);
     MolOps::findSSSR(*mol);
     REQUIRE(mol->getRingInfo()->isInitialized());
   }
-  SECTION("original report from ChEbI"){
+  SECTION("original report from ChEbI") {
     std::string pathName = getenv("RDBASE");
     pathName += "/Code/GraphMol/test_data/";
-    std::unique_ptr<RWMol> mol(MolFileToMol(pathName + "ChEBI_50252.mol",false));
+    std::unique_ptr<RWMol> mol(
+        MolFileToMol(pathName + "ChEBI_50252.mol", false));
     REQUIRE(mol);
-    CHECK(mol->getNumAtoms()==80);
+    CHECK(mol->getNumAtoms() == 80);
     mol->updatePropertyCache(false);
     MolOps::findSSSR(*mol);
     REQUIRE(mol->getRingInfo()->isInitialized());
+  }
+}
 
+TEST_CASE("github #2224", "[bug, molops, removeHs, query]") {
+  SECTION("the original report") {
+    std::string pathName = getenv("RDBASE");
+    pathName += "/Code/GraphMol/test_data/";
+    std::unique_ptr<RWMol> mol(MolFileToMol(pathName + "github2224_1.mol"));
+    REQUIRE(mol);
+    REQUIRE(mol->getNumAtoms() == 7);
+  }
+  SECTION("basics") {
+    SmilesParserParams ps;
+    ps.removeHs = false;
+    ps.sanitize = true;
+    std::unique_ptr<ROMol> mol(SmilesToMol("C[H]", ps));
+    REQUIRE(mol);
+    REQUIRE(mol->getNumAtoms() == 2);
+    {  // The H without a query is removed
+      std::unique_ptr<ROMol> m2(MolOps::removeHs(*mol));
+      CHECK(m2->getNumAtoms() == 1);
+    }
+    {  // but if we add a query feature it's not removed
+      RWMol m2(*mol);
+      auto *qa = new QueryAtom(1);
+      m2.replaceAtom(1, qa);
+      m2.getAtomWithIdx(1)->setAtomicNum(1);
+      MolOps::removeHs(m2);
+      CHECK(m2.getNumAtoms() == 2);
+      delete qa;
+    }
+  }
+}
+
+TEST_CASE(
+    "github #2268: Recognize N in three-membered rings as potentially chiral",
+    "[bug,stereo]") {
+  SECTION("basics: N in a 3 ring") {
+    const auto mol = "C[N@]1CC1C"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+  }
+  SECTION("basics: N in a 4 ring") {
+    const auto mol = "C[N@]1CCC1C"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_UNSPECIFIED);
+  }
+  SECTION("the original molecule") {
+    std::string mb = R"CTAB(
+  Mrv1810 02131915062D          
+
+ 18 20  0  0  1  0            999 V2000
+   -0.7207   -1.3415    0.0000 N   0  0  1  0  0  0  0  0  0  0  0  0
+   -0.0583   -0.8416    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0
+   -0.0083   -1.7540    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3956   -0.8666    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0
+   -0.3250   -0.0667    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1955   -0.6499    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.1499   -0.0792    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6541   -0.4292    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.7830   -1.2291    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6081   -1.6623    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4080    0.1500    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3665   -0.8374    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6416    0.3958    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.1996    0.3708    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4121    1.1624    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3498    0.8207    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.0790   -0.4167    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.0665    0.4083    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  0  0  0  0
+  1  3  1  1  0  0  0
+  4  1  1  0  0  0  0
+  5  2  1  0  0  0  0
+  4  6  1  0  0  0  0
+  7  4  1  0  0  0  0
+  2  8  1  6  0  0  0
+  9  6  2  0  0  0  0
+  4 10  1  1  0  0  0
+ 11  6  1  0  0  0  0
+ 12  8  2  0  0  0  0
+ 13  8  1  0  0  0  0
+ 14 11  1  0  0  0  0
+ 15 14  1  0  0  0  0
+ 16 13  2  0  0  0  0
+ 17 12  1  0  0  0  0
+ 18 16  1  0  0  0  0
+  2  3  1  0  0  0  0
+  5  7  1  0  0  0  0
+ 17 18  2  0  0  0  0
+M  END
+)CTAB";
+    std::unique_ptr<ROMol> mol(MolBlockToMol(mb));
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(0)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+  }
+}
+
+TEST_CASE("github #2244", "[bug, molops, stereo]") {
+  SECTION("the original report") {
+    auto mol = "CC=CC=CC"_smiles;
+    REQUIRE(mol);
+    MolOps::findPotentialStereoBonds(*mol, true);
+    CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOANY);
+    CHECK(mol->getBondWithIdx(3)->getStereo() == Bond::STEREOANY);
+    mol->getBondWithIdx(3)->setStereo(Bond::STEREONONE);
+    MolOps::findPotentialStereoBonds(*mol, true);
+    CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOANY);
+    CHECK(mol->getBondWithIdx(3)->getStereo() == Bond::STEREOANY);
+  }
+}
+
+TEST_CASE(
+    "github #2258: heterocycles with exocyclic bonds not failing valence check",
+    "[bug, molops]") {
+  SECTION("the original report") {
+    std::vector<std::string> smiles = {"C=n1ccnc1", "C#n1ccnc1"};
+    for (auto smi : smiles) {
+      CHECK_THROWS_AS(SmilesToMol(smi), MolSanitizeException);
+    }
+  }
+}
+
+TEST_CASE("github #908: AddHs() using 3D coordinates with 2D conformations",
+          "[bug, molops]") {
+  SECTION("basics: single atom mols") {
+    std::vector<std::string> smiles = {"Cl", "O", "N", "C"};
+    for (auto smi : smiles) {
+      // std::cerr << smi << std::endl;
+      std::unique_ptr<RWMol> mol(SmilesToMol(smi));
+      REQUIRE(mol);
+      auto conf = new Conformer(1);
+      conf->set3D(false);
+      conf->setAtomPos(0, RDGeom::Point3D(0, 0, 0));
+      mol->addConformer(conf, true);
+      bool explicitOnly = false;
+      bool addCoords = true;
+      MolOps::addHs(*mol, explicitOnly, addCoords);
+      for (size_t i = 0; i < mol->getNumAtoms(); ++i) {
+        // std::cerr << "   " << i << " " << conf->getAtomPos(i) << std::endl;
+        CHECK(conf->getAtomPos(i).z == 0.0);
+      }
+    }
+  }
+}
+
+#endif
+TEST_CASE("github #2437: Canon::rankMolAtoms results in crossed double bonds in rings",
+          "[bug, molops]") {
+  SECTION("underlying problem") {
+    std::string molb=R"CTAB(testmol
+  Mrv1824 05081910082D          
+
+  4  4  0  0  0  0            999 V2000
+    6.9312   -8.6277    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.9312   -9.4527    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.7562   -8.6277    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.7562   -9.4527    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  1  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  2  4  2  0  0  0  0
+M  END
+    )CTAB";
+    bool sanitize=false;
+    bool removeHs=false;
+    std::unique_ptr<RWMol> mol(MolBlockToMol(molb,sanitize,removeHs));
+    REQUIRE(mol);
+    mol->updatePropertyCache();
+    CHECK(mol->getBondWithIdx(3)->getBondType()==Bond::BondType::DOUBLE);
+    CHECK(mol->getBondWithIdx(3)->getBondDir()==Bond::BondDir::NONE);
+    std::vector<unsigned int> ranks;
+    CHECK(!mol->getRingInfo()->isInitialized());
+    Canon::rankMolAtoms(*mol,ranks);
+    CHECK(!mol->getRingInfo()->isInitialized());
+  }
+
+  SECTION("as discovered") {
+      std::string molb = R"CTAB(testmol
+  Mrv1824 05081910082D          
+
+  4  4  0  0  0  0            999 V2000
+    6.9312   -8.6277    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.9312   -9.4527    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.7562   -8.6277    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.7562   -9.4527    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  1  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  2  4  2  0  0  0  0
+M  END
+    )CTAB";
+      bool sanitize = false;
+      bool removeHs = false;
+      std::unique_ptr<RWMol> mol(MolBlockToMol(molb, sanitize, removeHs));
+      REQUIRE(mol);
+      mol->updatePropertyCache();
+      CHECK(mol->getBondWithIdx(3)->getBondType() == Bond::BondType::DOUBLE);
+      CHECK(mol->getBondWithIdx(3)->getBondDir() == Bond::BondDir::NONE);
+      auto nmb = MolToMolBlock(*mol);
+      CHECK(nmb.find("2  4  2  3") == std::string::npos);
+      CHECK(nmb.find("2  4  2  0") != std::string::npos);
+      std::vector<unsigned int> ranks;
+      Canon::rankMolAtoms(*mol, ranks);
+      nmb = MolToMolBlock(*mol);
+      CHECK(nmb.find("2  4  2  3") == std::string::npos);
+      CHECK(nmb.find("2  4  2  0") != std::string::npos);
+  }
+}
+TEST_CASE(
+    "github #2423: Incorrect assignment of explicit Hs to Al+3 read from mol "
+    "block",
+    "[bug, molops]") {
+  SECTION("basics: single atom mols") {
+    std::string mb = R"CTAB(2300
+  -OEChem-01301907122D
+
+  1  0  0     0  0  0  0  0  0999 V2000
+  -66.7000  999.0000    0.0000 Al  0  1  0  0  0  0  0  0  0  0  0  0
+M  CHG  1   1   3
+M  END)CTAB";
+    std::unique_ptr<ROMol> mol(MolBlockToMol(mb));
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(0)->getFormalCharge() == 3);
+    CHECK(mol->getAtomWithIdx(0)->getTotalNumHs() == 0);
   }
 }

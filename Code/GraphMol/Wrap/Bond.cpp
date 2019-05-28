@@ -82,6 +82,8 @@ struct bond_wrapper {
   static void wrap() {
     python::class_<Bond>("Bond", bondClassDoc.c_str(), python::no_init)
 
+        .def("HasOwningMol", &Bond::hasOwningMol,
+             "Returns whether or not this instance belongs to a molecule.\n")
         .def("GetOwningMol", &Bond::getOwningMol,
              "Returns the Mol that owns this bond.\n",
              python::return_value_policy<python::reference_existing_object>())
@@ -325,5 +327,5 @@ These cannot currently be constructed directly from Python\n";
         "QueryBond", bondClassDoc.c_str(), python::no_init);
   };
 };
-}  // end of namespace
+}  // namespace RDKit
 void wrap_bond() { RDKit::bond_wrapper::wrap(); }

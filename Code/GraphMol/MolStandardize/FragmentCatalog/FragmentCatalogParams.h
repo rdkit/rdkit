@@ -31,6 +31,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT FragmentCatalogParams
   }
 
   FragmentCatalogParams(const std::string &fgroupFile);
+  FragmentCatalogParams(std::istream &fgroupStream);
   // copy constructor
   FragmentCatalogParams(const FragmentCatalogParams &other);
 

@@ -283,10 +283,11 @@ SELECT mol_to_svg('CCO'::mol) svg;
                        xmlns:xlink='http://www.w3.org/1999/xlink'                                                                                                                                   +
                    xml:space='preserve'                                                                                                                                                             +
  width='250px' height='200px' >                                                                                                                                                                     +
+ <!-- END OF HEADER -->                                                                                                                                                                             +
  <rect style='opacity:1.0;fill:#FFFFFF;stroke:none' width='250' height='200' x='0' y='0'> </rect>                                                                                                   +
- <path d='M 11.3636,124.362 95.7545,75.6385' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                      +
- <path d='M 95.7545,75.6385 131.455,96.25' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                        +
- <path d='M 131.455,96.25 167.155,116.862' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                        +
+ <path class='bond-0' d='M 11.3636,124.362 95.7545,75.6385' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />       +
+ <path class='bond-1' d='M 95.7545,75.6385 131.455,96.25' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />         +
+ <path class='bond-1' d='M 131.455,96.25 167.155,116.862' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />         +
  <text x='166.64' y='131.862' style='font-size:15px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#FF0000' ><tspan>OH</tspan></text>+
  </svg>                                                                                                                                                                                             +
  
@@ -302,10 +303,11 @@ SELECT mol_to_svg('CCO'::mol,'legend') svg;
                        xmlns:xlink='http://www.w3.org/1999/xlink'                                                                                                                                    +
                    xml:space='preserve'                                                                                                                                                              +
  width='250px' height='200px' >                                                                                                                                                                      +
+ <!-- END OF HEADER -->                                                                                                                                                                              +
  <rect style='opacity:1.0;fill:#FFFFFF;stroke:none' width='250' height='200' x='0' y='0'> </rect>                                                                                                    +
- <path d='M 11.3636,124.362 95.7545,75.6385' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                       +
- <path d='M 95.7545,75.6385 131.455,96.25' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                         +
- <path d='M 131.455,96.25 167.155,116.862' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                         +
+ <path class='bond-0' d='M 11.3636,124.362 95.7545,75.6385' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />        +
+ <path class='bond-1' d='M 95.7545,75.6385 131.455,96.25' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />          +
+ <path class='bond-1' d='M 131.455,96.25 167.155,116.862' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />          +
  <text x='166.64' y='131.862' style='font-size:15px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#FF0000' ><tspan>OH</tspan></text> +
  <text x='103.377' y='194' style='font-size:12px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#000000' ><tspan>legend</tspan></text>+
  </svg>                                                                                                                                                                                              +
@@ -323,14 +325,40 @@ SELECT mol_to_svg('CCO'::mol,'legend',250,200,
                        xmlns:xlink='http://www.w3.org/1999/xlink'                                                                                                                                     +
                    xml:space='preserve'                                                                                                                                                               +
  width='250px' height='200px' >                                                                                                                                                                       +
+ <!-- END OF HEADER -->                                                                                                                                                                               +
  <rect style='opacity:1.0;fill:#FFFFFF;stroke:none' width='250' height='200' x='0' y='0'> </rect>                                                                                                     +
- <path d='M 11.3636,124.362 83.2395,82.864' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                         +
- <path d='M 108.269,82.864 137.712,99.8628' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                         +
- <path d='M 137.712,99.8628 167.155,116.862' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                        +
+ <path class='bond-0' d='M 11.3636,124.362 83.2395,82.864' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />          +
+ <path class='bond-1' d='M 108.269,82.864 137.712,99.8628' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />          +
+ <path class='bond-1' d='M 137.712,99.8628 167.155,116.862' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />         +
  <text x='83.2395' y='83.1385' style='font-size:15px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#000000' ><tspan>foo</tspan></text>+
  <text x='166.64' y='131.862' style='font-size:15px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#FF0000' ><tspan>OH</tspan></text>  +
  <text x='103.377' y='194' style='font-size:12px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#7F7F7F' ><tspan>legend</tspan></text> +
  </svg>                                                                                                                                                                                               +
  
+(1 row)
+
+-- GitHub Issue 2174 - mol_to_svg() should not change input mol.
+/**
+  Check that mol_to_svg() does not change the_mol.
+  In previous versions, the atom+bond count would
+  change from '10 11' in "before_mol" to '11 12'
+  in "after_mol", due to mol_to_svg()'s call to
+  MolDraw2DUtils::prepareMolForDrawing().
+**/
+with t as (
+  select 'C[C@H]1CC[C@H]2CCCCC12'::mol as the_mol
+)
+select
+    substring(mol_to_ctab(the_mol)::text, 1, 65) as before_mol
+  , substring(mol_to_svg(the_mol)::text, 1, 20) as the_svg
+  , substring(mol_to_ctab(the_mol)::text, 1, 65) as after_mol
+  from t;
+               before_mol                |       the_svg        |                after_mol                
+-----------------------------------------+----------------------+-----------------------------------------
+                                        +| <?xml version='1.0'  |                                        +
+      RDKit          2D                 +|                      |      RDKit          2D                 +
+                                        +|                      |                                        +
+  10 11  0  0  0  0  0  0  0  0999 V2000+|                      |  10 11  0  0  0  0  0  0  0  0999 V2000+
+                                         |                      | 
 (1 row)
 

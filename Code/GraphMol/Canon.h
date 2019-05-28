@@ -110,14 +110,12 @@ typedef boost::tuple<int, int, Bond *> PossibleType;
       and the like are changed to fit the canonical traversal order
 
  */
-RDKIT_GRAPHMOL_EXPORT void canonicalizeFragment(ROMol &mol, int atomIdx,
-                          std::vector<AtomColors> &colors,
-                          const std::vector<unsigned int> &ranks,
-                          MolStack &molStack,
-                          const boost::dynamic_bitset<> *bondsInPlay = 0,
-                          const std::vector<std::string> *bondSymbols = 0,
-                          bool doIsomericSmiles = false,
-                          bool doRandom = false);
+RDKIT_GRAPHMOL_EXPORT void canonicalizeFragment(
+    ROMol &mol, int atomIdx, std::vector<AtomColors> &colors,
+    const std::vector<unsigned int> &ranks, MolStack &molStack,
+    const boost::dynamic_bitset<> *bondsInPlay = 0,
+    const std::vector<std::string> *bondSymbols = 0,
+    bool doIsomericSmiles = false, bool doRandom = false);
 
 }  // end of namespace Canon
 }  // end of namespace RDKit

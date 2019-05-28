@@ -50,7 +50,7 @@ struct RDKIT_CHEMTRANSFORMS_EXPORT FragmenterBondType {
 RDKIT_CHEMTRANSFORMS_EXPORT ROMol *fragmentOnBonds(
     const ROMol &mol, const std::vector<unsigned int> &bondIndices,
     bool addDummies = true,
-    const std::vector<std::pair<unsigned int, unsigned int> > *dummyLabels = 0,
+    const std::vector<std::pair<unsigned int, unsigned int>> *dummyLabels = 0,
     const std::vector<Bond::BondType> *bondTypes = 0,
     std::vector<unsigned int> *nCutsPerAtom = 0);
 //! \overload
@@ -62,9 +62,9 @@ RDKIT_CHEMTRANSFORMS_EXPORT void fragmentOnSomeBonds(
     const ROMol &mol, const std::vector<unsigned int> &bondIndices,
     std::vector<ROMOL_SPTR> &resMols, unsigned int maxToCut = 1,
     bool addDummies = true,
-    const std::vector<std::pair<unsigned int, unsigned int> > *dummyLabels = 0,
+    const std::vector<std::pair<unsigned int, unsigned int>> *dummyLabels = 0,
     const std::vector<Bond::BondType> *bondTypes = 0,
-    std::vector<std::vector<unsigned int> > *nCutsPerAtom = 0);
+    std::vector<std::vector<unsigned int>> *nCutsPerAtom = 0);
 
 //! \brief Fragments a molecule by breaking all BRICS bonds
 /*!
@@ -82,8 +82,9 @@ RDKIT_CHEMTRANSFORMS_EXPORT void constructFragmenterAtomTypes(
     const std::string &str, std::map<unsigned int, std::string> &defs,
     const std::string &comment = "//", bool validate = true,
     std::map<unsigned int, ROMOL_SPTR> *environs = 0);
-RDKIT_CHEMTRANSFORMS_EXPORT void constructBRICSAtomTypes(std::map<unsigned int, std::string> &defs,
-                             std::map<unsigned int, ROMOL_SPTR> *environs = 0);
+RDKIT_CHEMTRANSFORMS_EXPORT void constructBRICSAtomTypes(
+    std::map<unsigned int, std::string> &defs,
+    std::map<unsigned int, ROMOL_SPTR> *environs = 0);
 RDKIT_CHEMTRANSFORMS_EXPORT void constructFragmenterBondTypes(
     std::istream *inStream,
     const std::map<unsigned int, std::string> &atomTypes,
@@ -94,7 +95,8 @@ RDKIT_CHEMTRANSFORMS_EXPORT void constructFragmenterBondTypes(
     const std::map<unsigned int, std::string> &atomTypes,
     std::vector<FragmenterBondType> &defs, const std::string &comment = "//",
     bool validate = true, bool labelByConnector = true);
-RDKIT_CHEMTRANSFORMS_EXPORT void constructBRICSBondTypes(std::vector<FragmenterBondType> &defs);
-}
-}
+RDKIT_CHEMTRANSFORMS_EXPORT void constructBRICSBondTypes(
+    std::vector<FragmenterBondType> &defs);
+}  // namespace MolFragmenter
+}  // namespace RDKit
 #endif

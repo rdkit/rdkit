@@ -66,9 +66,9 @@ class RDKIT_FMCS_EXPORT SubstructureCache {
           const Bond* bond = seed.MoleculeFragment.Bonds[seedBondIdx];
           unsigned order =
               queryBondLabels[seed.MoleculeFragment.BondsIdx[seedBondIdx]];
-          unsigned atom1 =
-              seed.MoleculeFragment.SeedAtomIdxMap.find(bond->getBeginAtomIdx())
-                  ->second;
+          unsigned atom1 = seed.MoleculeFragment.SeedAtomIdxMap
+                               .find(bond->getBeginAtomIdx())
+                               ->second;
           unsigned atom2 =
               seed.MoleculeFragment.SeedAtomIdxMap.find(bond->getEndAtomIdx())
                   ->second;
@@ -144,9 +144,10 @@ class RDKIT_FMCS_EXPORT SubstructureCache {
     }
     entry->push_back(seed.Topology);
 
-    if (!NumericIndex.insert(std::pair<KeyNumericMetrics::TValue, size_t>(
-                                 key.NumericMetrics.Value,
-                                 ValueStorage.size() - 1)).second)
+    if (!NumericIndex
+             .insert(std::pair<KeyNumericMetrics::TValue, size_t>(
+                 key.NumericMetrics.Value, ValueStorage.size() - 1))
+             .second)
       return;  // not enought memory room to add the item, but it is just cache
   }
 
@@ -162,5 +163,5 @@ class RDKIT_FMCS_EXPORT SubstructureCache {
     return n;
   }
 };
-}
-}
+}  // namespace FMCS
+}  // namespace RDKit

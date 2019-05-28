@@ -23,7 +23,7 @@ namespace MolStandardize {
 void TransformCatalogEntry::toStream(std::ostream &ss) const {
   ReactionPickler::pickleReaction(*dp_transform, ss);
 
-  boost::int32_t tmpInt;
+  std::int32_t tmpInt;
   tmpInt = getBitId();
   streamWrite(ss, tmpInt);
 
@@ -44,7 +44,7 @@ void TransformCatalogEntry::initFromStream(std::istream &ss) {
   dp_transform = new ChemicalReaction();
   ReactionPickler::reactionFromPickle(ss, *dp_transform);
 
-  boost::int32_t tmpInt;
+  std::int32_t tmpInt;
   // the bitId:
   streamRead(ss, tmpInt);
   setBitId(tmpInt);

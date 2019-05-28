@@ -5,7 +5,7 @@
 namespace RDKit {
 class ROMol;
 class MolSupplier;
-}
+}  // namespace RDKit
 
 class RDMolSupplier : public IRDMolSupplier {
  public:

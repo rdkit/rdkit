@@ -84,6 +84,6 @@ class SquareMatrix : public Matrix<TYPE> {
   }
 };
 typedef SquareMatrix<double> DoubleSquareMatrix;
-}
+}  // namespace RDNumeric
 
 #endif

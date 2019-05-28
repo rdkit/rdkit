@@ -38,16 +38,17 @@ namespace Utils {
 // instead of whatever we started in.
 
 namespace detail {
-class LocaleSwitcherImpl; // concrete OS dependent implementation
+class LocaleSwitcherImpl;  // concrete OS dependent implementation
 }
 
 class RDKIT_RDGENERAL_EXPORT LocaleSwitcher {
   detail::LocaleSwitcherImpl *impl;
-public:
+
+ public:
   LocaleSwitcher();
   ~LocaleSwitcher();
 };
-}
-}
+}  // namespace Utils
+}  // namespace RDKit
 
 #endif

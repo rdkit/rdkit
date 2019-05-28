@@ -6,12 +6,12 @@
 **NOTE** This code should be obsolete now that ML.Composite.Composite is up and running.
 
 """
-from __future__ import print_function
+
 
 import numpy
 
 from rdkit.ML.DecTree import CrossValidate, PruneTree
-from rdkit.six.moves import cPickle
+import pickle
 
 
 class Forest(object):
@@ -139,7 +139,7 @@ class Forest(object):
 
     """
     pFile = open(fileName, 'wb+')
-    cPickle.dump(self, pFile, 1)
+    pickle.dump(self, pFile, 1)
     pFile.close()
 
   def AddTree(self, tree, error):

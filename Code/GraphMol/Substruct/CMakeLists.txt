@@ -12,3 +12,5 @@ rdkit_headers(SubstructMatch.h
 rdkit_test(testSubstructMatch test1.cpp LINK_LIBRARIES  FileParsers SmilesParse SubstructMatch
 GraphMol RDGeometryLib RDGeneral ${RDKit_THREAD_LIBS} )
 
+rdkit_catch_test(substructTestCatch catch_tests.cpp LINK_LIBRARIES FileParsers SmilesParse 
+SubstructMatch GraphMol RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS})

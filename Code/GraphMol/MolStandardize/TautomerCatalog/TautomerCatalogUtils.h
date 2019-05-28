@@ -48,12 +48,12 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerTransform {
   }
 
   TautomerTransform& operator=(const TautomerTransform& other) {
-    if (this == &other) {
-      return *this;
+    if (this != &other) {
+      Mol = new ROMol(*other.Mol);
+      BondTypes = other.BondTypes;
+      Charges = other.Charges;
     }
-    Mol = new ROMol(*other.Mol);
-    BondTypes = other.BondTypes;
-    Charges = other.Charges;
+    return *this;
   };
 
   ~TautomerTransform() { delete Mol; }

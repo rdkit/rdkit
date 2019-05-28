@@ -7,9 +7,11 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <numeric>
 #include "Charge.h"
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/new_canon.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <boost/range/adaptor/reversed.hpp>
@@ -25,29 +27,37 @@ std::vector<ChargeCorrection> CHARGE_CORRECTIONS = {
 
 // constructor
 Reionizer::Reionizer() {
-	AcidBaseCatalogParams abparams(defaultCleanupParameters.acidbaseFile);
-	this->d_abcat = new AcidBaseCatalog(&abparams);
-	this->d_ccs = CHARGE_CORRECTIONS;
+  AcidBaseCatalogParams abparams(defaultCleanupParameters.acidbaseFile);
+  this->d_abcat = new AcidBaseCatalog(&abparams);
+  this->d_ccs = CHARGE_CORRECTIONS;
 }
 
 Reionizer::Reionizer(const std::string acidbaseFile) {
-	AcidBaseCatalogParams abparams(acidbaseFile);
-	this->d_abcat = new AcidBaseCatalog(&abparams);
-	this->d_ccs = CHARGE_CORRECTIONS;
+  AcidBaseCatalogParams abparams(acidbaseFile);
+  this->d_abcat = new AcidBaseCatalog(&abparams);
+  this->d_ccs = CHARGE_CORRECTIONS;
 }
 
-Reionizer::Reionizer(const std::string acidbaseFile,	const std::vector<ChargeCorrection> ccs) {
-	AcidBaseCatalogParams abparams(acidbaseFile);
-	this->d_abcat = new AcidBaseCatalog(&abparams);
-	this->d_ccs = ccs;
+Reionizer::Reionizer(const std::string acidbaseFile,
+                     const std::vector<ChargeCorrection> ccs) {
+  AcidBaseCatalogParams abparams(acidbaseFile);
+  this->d_abcat = new AcidBaseCatalog(&abparams);
+  this->d_ccs = ccs;
 }
 
-Reionizer::~Reionizer() {
-	delete d_abcat;
+Reionizer::Reionizer(std::istream &acidbaseStream,
+                     const std::vector<ChargeCorrection> ccs) {
+  AcidBaseCatalogParams abparams(acidbaseStream);
+  this->d_abcat = new AcidBaseCatalog(&abparams);
+  this->d_ccs = ccs;
 }
 
-//Reionizer::Reionizer(const AcidBaseCatalog *abcat, const std::vector<ChargeCorrection> ccs = CHARGE_CORRECTIONS) 
-//	: d_abcat(abcat), d_css(css) {};
+Reionizer::~Reionizer() { delete d_abcat; }
+
+// Reionizer::Reionizer(const AcidBaseCatalog *abcat, const
+// std::vector<ChargeCorrection> ccs = CHARGE_CORRECTIONS) 	:
+// d_abcat(abcat),
+// d_css(css) {};
 
 ROMol *Reionizer::reionize(const ROMol &mol) {
   PRECONDITION(this->d_abcat, "");
@@ -69,8 +79,9 @@ ROMol *Reionizer::reionize(const ROMol &mol) {
         for (const auto &pair : match) {
           auto idx = pair.second;
           Atom *atom = omol->getAtomWithIdx(idx);
-          BOOST_LOG(rdInfoLog) << "Applying charge correction " << cc.Name << " "
-                    << atom->getSymbol() << " " << cc.Charge << "\n";
+          BOOST_LOG(rdInfoLog)
+              << "Applying charge correction " << cc.Name << " "
+              << atom->getSymbol() << " " << cc.Charge << "\n";
           atom->setFormalCharge(cc.Charge);
         }
       }
@@ -78,8 +89,8 @@ ROMol *Reionizer::reionize(const ROMol &mol) {
   }
   int current_charge = MolOps::getFormalCharge(*omol);
   int charge_diff = current_charge - start_charge;
-  //std::cout << "Current charge: " << current_charge << std::endl;
-  //std::cout << "Charge diff: " << charge_diff << std::endl;
+  // std::cout << "Current charge: " << current_charge << std::endl;
+  // std::cout << "Charge diff: " << charge_diff << std::endl;
 
   // If molecule is now neutral, assume everything is now fixed
   // But otherwise, if charge has become more positive,
@@ -100,7 +111,7 @@ ROMol *Reionizer::reionize(const ROMol &mol) {
         std::pair<ROMOL_SPTR, ROMOL_SPTR> abpair = abpairs[ppos];
         (abpair.first)->getProp(common_properties::_Name, abname);
         BOOST_LOG(rdInfoLog) << "Ionizing " << abname
-                  << " to balance previous charge corrections\n" ;
+                             << " to balance previous charge corrections\n";
         Atom *patom = omol->getAtomWithIdx(poccur.back());
         patom->setFormalCharge(patom->getFormalCharge() - 1);
 
@@ -114,8 +125,8 @@ ROMol *Reionizer::reionize(const ROMol &mol) {
     }
   }
 
-  //std::cout << MolToSmiles(*omol) << std::endl;
-  //std::cout << "Charge diff: " << charge_diff << std::endl;
+  // std::cout << MolToSmiles(*omol) << std::endl;
+  // std::cout << "Charge diff: " << charge_diff << std::endl;
 
   std::set<std::vector<unsigned int>> already_moved;
   while (true) {
@@ -131,7 +142,8 @@ ROMol *Reionizer::reionize(const ROMol &mol) {
       if (ppos < ipos) {
         if (poccur.back() == ioccur.back()) {
           // Bad! H wouldn't be moved, resulting in infinite loop.
-          BOOST_LOG(rdInfoLog) << "Aborted reionization due to unexpected situation\n";
+          BOOST_LOG(rdInfoLog)
+              << "Aborted reionization due to unexpected situation\n";
           break;
         }
 
@@ -139,7 +151,8 @@ ROMol *Reionizer::reionize(const ROMol &mol) {
         std::sort(key.begin(), key.end());
         const bool is_in = already_moved.find(key) != already_moved.end();
         if (is_in) {
-          BOOST_LOG(rdInfoLog) << "Aborting reionization to avoid infinite loop due \
+          BOOST_LOG(rdInfoLog)
+              << "Aborting reionization to avoid infinite loop due \
 								to it being ambiguous where to put a Hydrogen\n";
           break;
         }
@@ -151,8 +164,8 @@ ROMol *Reionizer::reionize(const ROMol &mol) {
         (prot_pair.first)->getProp(common_properties::_Name, prot_name);
         (ionized_pair.first)->getProp(common_properties::_Name, ionized_name);
 
-        BOOST_LOG(rdInfoLog) << "Moved proton from " << prot_name << " to " << ionized_name
-                  << "\n";
+        BOOST_LOG(rdInfoLog) << "Moved proton from " << prot_name << " to "
+                             << ionized_name << "\n";
         // Remove hydrogen from strongest protonated
         Atom *patom = omol->getAtomWithIdx(poccur.back());
         patom->setFormalCharge(patom->getFormalCharge() - 1);
@@ -254,7 +267,7 @@ Uncharger::Uncharger(const Uncharger &other) {
 Uncharger::~Uncharger(){};
 
 ROMol *Uncharger::uncharge(const ROMol &mol) {
-	BOOST_LOG(rdInfoLog) << "Running Uncharger\n";
+  BOOST_LOG(rdInfoLog) << "Running Uncharger\n";
   ROMol *omol = new ROMol(mol);
 
   std::vector<MatchVectType> p_matches;
@@ -268,43 +281,76 @@ ROMol *Uncharger::uncharge(const ROMol &mol) {
   unsigned int n_matched = SubstructMatch(*omol, *(this->neg), n_matches);
   unsigned int a_matched = SubstructMatch(*omol, *(this->neg_acid), a_matches);
 
-  // trying to understand how to use n_matches as a vector...
-  //	std::cout << "Size " << n_matches.size() << std::endl;
-  //	std::cout << n_matches[0][0].second << std::endl;
-  //	std::cout << n_matches[1][0].second << std::endl;
-  //	for (auto &i : n_matches) {
-  //		for (auto &j : i) {
-  //			std::cout << j.second << std::endl;
-  //		}
-  //	}
-  //
+  bool needsNeutralization =
+      (q_matched > 0 && (n_matched > 0 || a_matched > 0));
+  std::vector<std::pair<int, int>> a_atoms(a_matches.size());
+  std::vector<std::pair<int, int>> n_atoms(n_matches.size());
+  std::vector<unsigned int> atomRanks(omol->getNumAtoms());
+  if (df_canonicalOrdering && needsNeutralization) {
+    Canon::rankMolAtoms(*omol, atomRanks);
+  } else {
+    std::iota(atomRanks.begin(), atomRanks.end(), 0);
+  }
+  for (unsigned int i = 0; i < n_matches.size(); ++i) {
+    int aidx = n_matches[i][0].second;
+    n_atoms[i] = std::make_pair(atomRanks[aidx], aidx);
+  }
+  for (unsigned int i = 0; i < a_matches.size(); ++i) {
+    int aidx = a_matches[i][0].second;
+    a_atoms[i] = std::make_pair(atomRanks[aidx], aidx);
+  }
+  if (df_canonicalOrdering) {
+    std::sort(n_atoms.begin(), n_atoms.end());
+    std::sort(a_atoms.begin(), a_atoms.end());
+  }
 
   // Neutralize negative charges
-  if (q_matched > 0) {
+  if (needsNeutralization) {
     // Surplus negative charges more than non-neutralizable positive charges
     int neg_surplus = n_matched - q_matched;
-    if (a_matched > 0 && neg_surplus > 0) {
+    if (n_matched > 0 && neg_surplus > 0) {
+      boost::dynamic_bitset<> nonAcids(omol->getNumAtoms());
+      nonAcids.set();
+      for (const auto pr : a_atoms) nonAcids.reset(pr.second);
+      unsigned int midx = 0;
       // zwitterion with more negative charges than quaternary positive centres
-      while (neg_surplus > 0 && a_matched > 0) {
+      while (neg_surplus > 0 && n_matched > 0 && midx < n_atoms.size()) {
+        unsigned int idx = n_atoms[midx++].second;
+        if (!nonAcids[idx]) continue;
+        Atom *atom = omol->getAtomWithIdx(idx);
         // Add hydrogen to first negative acid atom, increase formal charge
         // Until quaternary positive == negative total or no more negative acid
-        Atom *atom = omol->getAtomWithIdx(a_matches[0][0].second);
-        a_matches.erase(a_matches.begin());
+        atom->setNoImplicit(true);
         atom->setNumExplicitHs(atom->getNumExplicitHs() + 1);
         atom->setFormalCharge(atom->getFormalCharge() + 1);
         --neg_surplus;
         BOOST_LOG(rdInfoLog) << "Removed negative charge.\n";
       }
     }
-  } else {
-    std::vector<unsigned int> n_idx_matches;
-    for (const auto &match : n_matches) {
-      for (const auto &pair : match) {
-        n_idx_matches.push_back(pair.second);
+
+    // now do the other negative groups if we still have charges left:
+    if (a_matched > 0 && neg_surplus > 0) {
+      unsigned int midx = 0;
+      // zwitterion with more negative charges than quaternary positive centres
+      while (neg_surplus > 0 && a_matched > 0 && midx < a_atoms.size()) {
+        // Add hydrogen to first negative acidic atom, increase formal charge
+        // Until quaternary positive == negative total or no more negative atoms
+        Atom *atom = omol->getAtomWithIdx(a_atoms[midx++].second);
+        // skip ahead if we already neutralized this
+        if (atom->getFormalCharge() >= 0) continue;
+        atom->setNoImplicit(true);
+        atom->setNumExplicitHs(atom->getNumExplicitHs() + 1);
+        atom->setFormalCharge(atom->getFormalCharge() + 1);
+        --neg_surplus;
+        BOOST_LOG(rdInfoLog) << "Removed negative charge.\n";
       }
     }
-    for (const auto &idx : n_idx_matches) {
+
+  } else {
+    for (const auto &pair : n_atoms) {
+      auto idx = pair.second;
       Atom *atom = omol->getAtomWithIdx(idx);
+      atom->setNoImplicit(true);
       while (atom->getFormalCharge() < 0) {
         atom->setNumExplicitHs(atom->getNumExplicitHs() + 1);
         atom->setFormalCharge(atom->getFormalCharge() + 1);
@@ -321,14 +367,19 @@ ROMol *Uncharger::uncharge(const ROMol &mol) {
   }
   for (const auto &idx : p_idx_matches) {
     Atom *atom = omol->getAtomWithIdx(idx);
+    if (!atom->getNumExplicitHs()) {
+      // atoms from places like Mol blocks are normally missing explicit Hs:
+      atom->setNumExplicitHs(atom->getTotalNumHs());
+    }
+    atom->setNoImplicit(true);
     while (atom->getFormalCharge() > 0 && atom->getNumExplicitHs() > 0) {
-      atom->setNumExplicitHs(atom->getNumExplicitHs() - 1);
+      atom->setNumExplicitHs(atom->getTotalNumHs() - 1);
       atom->setFormalCharge(atom->getFormalCharge() - 1);
       BOOST_LOG(rdInfoLog) << "Removed positive charge.\n";
     }
   }
   return omol;
-}
+}  // namespace MolStandardize
 
 }  // namespace MolStandardize
 }  // namespace RDKit

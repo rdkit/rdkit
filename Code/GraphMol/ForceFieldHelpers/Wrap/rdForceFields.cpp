@@ -15,6 +15,7 @@
 #include <ForceField/ForceField.h>
 #include <ForceField/Wrap/PyForceField.h>
 #include <ForceField/UFF/Params.h>
+#include <GraphMol/ForceFieldHelpers/FFConvenience.h>
 #include <GraphMol/ForceFieldHelpers/UFF/AtomTyper.h>
 #include <GraphMol/ForceFieldHelpers/UFF/Builder.h>
 #include <GraphMol/ForceFieldHelpers/UFF/UFF.h>
@@ -59,6 +60,24 @@ python::object MMFFConfsHelper(ROMol &mol, int numThreads, int maxIters,
     MMFF::MMFFOptimizeMoleculeConfs(mol, res, numThreads, maxIters, mmffVariant,
                                     nonBondedThresh,
                                     ignoreInterfragInteractions);
+  }
+  python::list pyres;
+  for (auto &itm : res) {
+    pyres.append(python::make_tuple(itm.first, itm.second));
+  }
+  return pyres;
+}
+
+int FFHelper(ForceFields::ForceField &ff, int maxIters) {
+  NOGIL gil;
+  return ForceFieldsHelper::OptimizeMolecule(ff, maxIters).first;
+}
+
+python::object FFConfsHelper(ROMol &mol, ForceFields::ForceField &ff, int numThreads, int maxIters) {
+  std::vector<std::pair<int, double>> res;
+  {
+    NOGIL gil;
+    ForceFieldsHelper::OptimizeMoleculeConfs(mol, ff, res, numThreads, maxIters);
   }
   python::list pyres;
   for (auto &itm : res) {
@@ -398,7 +417,7 @@ RETURNS: a list of (not_converged, energy) 2-tuples. \n\
       "MMFFOptimizeMoleculeConfs", RDKit::MMFFConfsHelper,
       (python::arg("self"), python::arg("numThreads") = 1,
        python::arg("maxIters") = 200, python::arg("mmffVariant") = "MMFF94",
-       python::arg("nonBondedThresh") = 10.0, python::arg("confId") = -1,
+       python::arg("nonBondedThresh") = 100.0, python::arg("confId") = -1,
        python::arg("ignoreInterfragInteractions") = true),
       docString.c_str());
 
@@ -433,4 +452,36 @@ RETURNS: a list of (not_converged, energy) 2-tuples. \n\
       "Retrieves UFF van der Waals parameters for atoms with indexes idx1, "
       "idx2 "
       "as a (x_ij, D_ij) tuple, or None if no parameters could be found");
+
+  docString =
+      "uses the supplied force field to optimize a molecule's structure\n\n\
+ \n\
+ ARGUMENTS:\n\n\
+    - ff : the force field\n\
+    - maxIters : the maximum number of iterations (defaults to 200)\n\
+\n\
+ RETURNS: 0 if the optimization converged, 1 if more iterations are required.\n\
+\n";
+  python::def("OptimizeMolecule", RDKit::FFHelper,
+              (python::arg("ff"), python::arg("maxIters") = 200),
+              docString.c_str());
+
+  docString =
+      "uses the supplied force field to optimize all of a molecule's conformations\n\n\
+ \n\
+ ARGUMENTS:\n\n\
+    - mol : the molecule of interest\n\
+    - ff : the force field\n\
+    - numThreads : the number of threads to use, only has an effect if the RDKit\n\
+                   was built with thread support (defaults to 1)\n\
+                   If set to zero, the max supported by the system will be used.\n\
+    - maxIters : the maximum number of iterations (defaults to 200)\n\
+\n\
+ RETURNS: a list of (not_converged, energy) 2-tuples. \n\
+     If not_converged is 0 the optimization converged for that conformer.\n\
+\n";
+  python::def("OptimizeMoleculeConfs", RDKit::FFConfsHelper,
+              (python::arg("mol"), python::arg("ff"),
+              python::arg("numThreads") = 1, python::arg("maxIters") = 200),
+              docString.c_str());
 }

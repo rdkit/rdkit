@@ -26,5 +26,5 @@ class RDKIT_DATASTRUCTS_EXPORT DiscreteDistMat {
   unsigned int d_fourBitTab[256 * 256];
 };
 extern DiscreteDistMat *getDiscreteDistMat();
-}
+}  // namespace RDKit
 #endif

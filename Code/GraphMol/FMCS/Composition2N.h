@@ -47,5 +47,5 @@ class Composition2N {  // generator of 2^N-1 possible bit combinations
   // unused:        bool nonZero() {return 0!=getBitSet();}
   bool isSet(unsigned bit) const { return 0 != (getBitSet() & (1uLL << bit)); }
 };
-}
-}
+}  // namespace FMCS
+}  // namespace RDKit

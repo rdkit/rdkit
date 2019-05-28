@@ -88,15 +88,15 @@ ForwardSDMolSupplier *createForwardSupplier(std::string filename, bool sanitize,
 }
 
 std::string csdMolSupplierClassDoc =
-    "A class which supplies molecules from an SD file.\n \
-\n \
-  Usage examples:\n \
-\n \
-    1) Lazy evaluation: the molecules are not constructed until we ask for them:\n \
-       >>> suppl = SDMolSupplier('in.smi')\n \
-       >>> for mol in suppl:\n \
-       ...    mol.GetNumAtoms()\n \
-\n \
+    "A class which supplies molecules from an SD file.\n\
+\n\
+  Usage examples:\n\
+\n\
+    1) Lazy evaluation: the molecules are not constructed until we ask for them:\n\n\
+       >>> suppl = SDMolSupplier('in.smi')\n\
+       >>> for mol in suppl:\n\
+       ...    mol.GetNumAtoms()\n\
+\n\
   Properties in the SD file are used to set properties on each molecule.\n\
   The properties are accessible using the mol.GetProp(propName) method.\n\
 \n";
@@ -105,9 +105,10 @@ struct compressedsdmolsup_wrap {
     python::class_<ForwardSDMolSupplier, boost::noncopyable>(
         "_CompressedSDMolSupplier", csdMolSupplierClassDoc.c_str(),
         python::no_init)
-        .def("__iter__", (ForwardSDMolSupplier * (*)(ForwardSDMolSupplier *)) &
-                             MolSupplIter,
-             python::return_internal_reference<1>())
+        .def(
+            "__iter__",
+            (ForwardSDMolSupplier * (*)(ForwardSDMolSupplier *)) & MolSupplIter,
+            python::return_internal_reference<1>())
         .def("next", (ROMol * (*)(ForwardSDMolSupplier *)) & MolSupplNext,
              "Returns the next molecule in the file.  Raises _StopIteration_ "
              "on EOF.\n",
@@ -118,6 +119,6 @@ struct compressedsdmolsup_wrap {
                 python::return_value_policy<python::manage_new_object>());
   };
 };
-}
+}  // namespace RDKit
 
 void wrap_compressedsdsupplier() { RDKit::compressedsdmolsup_wrap::wrap(); }

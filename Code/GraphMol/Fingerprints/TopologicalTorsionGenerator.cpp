@@ -22,9 +22,9 @@ TopologicalTorsionArguments<OutputType>::TopologicalTorsionArguments(
     const bool includeChirality, const uint32_t torsionAtomCount,
     const bool countSimulation, const std::vector<std::uint32_t> countBounds,
     const std::uint32_t fpSize)
-    : df_includeChirality(includeChirality),
-      d_torsionAtomCount(torsionAtomCount),
-      FingerprintArguments<OutputType>(countSimulation, countBounds, fpSize){};
+    : FingerprintArguments<OutputType>(countSimulation, countBounds, fpSize),
+      df_includeChirality(includeChirality),
+      d_torsionAtomCount(torsionAtomCount) {};
 
 template <typename OutputType>
 OutputType TopologicalTorsionArguments<OutputType>::getResultSize() const {
@@ -41,10 +41,12 @@ std::string TopologicalTorsionArguments<OutputType>::infoString() const {
 };
 template <typename OutputType>
 OutputType TopologicalTorsionAtomEnv<OutputType>::getBitId(
-    FingerprintArguments<OutputType> *arguments,
-    const std::vector<std::uint32_t> *atomInvariants,
-    const std::vector<std::uint32_t> *bondInvariants,
-    const AdditionalOutput *additionalOutput, const bool hashResults) const {
+    FingerprintArguments<OutputType> *, // arguments
+    const std::vector<std::uint32_t> *, // atomInvariants
+    const std::vector<std::uint32_t> *, // bondInvariants
+    const AdditionalOutput *, // additionalOutput
+    const bool // hashResults
+) const {
   return d_bitId;
 };
 
@@ -58,10 +60,11 @@ std::vector<AtomEnvironment<OutputType> *>
 TopologicalTorsionEnvGenerator<OutputType>::getEnvironments(
     const ROMol &mol, FingerprintArguments<OutputType> *arguments,
     const std::vector<std::uint32_t> *fromAtoms,
-    const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
-    const AdditionalOutput *additionalOutput,
+    const std::vector<std::uint32_t> *ignoreAtoms,
+    const int, // confId
+    const AdditionalOutput *, // additionalOutput
     const std::vector<std::uint32_t> *atomInvariants,
-    const std::vector<std::uint32_t> *bondInvariants,
+    const std::vector<std::uint32_t> *, // bondInvariants
     const bool hashResults) const {
   TopologicalTorsionArguments<OutputType> *topologicalTorsionArguments =
       dynamic_cast<TopologicalTorsionArguments<OutputType> *>(arguments);
@@ -72,12 +75,12 @@ TopologicalTorsionEnvGenerator<OutputType>::getEnvironments(
   boost::dynamic_bitset<> *fromAtomsBV = nullptr;
   if (fromAtoms) {
     fromAtomsBV = new boost::dynamic_bitset<>(mol.getNumAtoms());
-    BOOST_FOREACH (boost::uint32_t fAt, *fromAtoms) { fromAtomsBV->set(fAt); }
+    BOOST_FOREACH (std::uint32_t fAt, *fromAtoms) { fromAtomsBV->set(fAt); }
   }
   boost::dynamic_bitset<> *ignoreAtomsBV = nullptr;
   if (ignoreAtoms) {
     ignoreAtomsBV = new boost::dynamic_bitset<>(mol.getNumAtoms());
-    BOOST_FOREACH (boost::uint32_t fAt, *ignoreAtoms) {
+    BOOST_FOREACH (std::uint32_t fAt, *ignoreAtoms) {
       ignoreAtomsBV->set(fAt);
     }
   }
@@ -90,11 +93,11 @@ TopologicalTorsionEnvGenerator<OutputType>::getEnvironments(
     if (fromAtomsBV) {
       keepIt = false;
     }
-    std::vector<boost::uint32_t> pathCodes;
+    std::vector<std::uint32_t> pathCodes;
     const PATH_TYPE &path = *pathIt;
     if (fromAtomsBV) {
-      if (fromAtomsBV->test(static_cast<boost::uint32_t>(path.front())) ||
-          fromAtomsBV->test(static_cast<boost::uint32_t>(path.back()))) {
+      if (fromAtomsBV->test(static_cast<std::uint32_t>(path.front())) ||
+          fromAtomsBV->test(static_cast<std::uint32_t>(path.back()))) {
         keepIt = true;
       }
     }

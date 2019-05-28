@@ -14,7 +14,7 @@
 #include <GraphMol/ROMol.h>
 #include <GraphMol/RingInfo.h>
 #include <RDGeneral/BoostStartInclude.h>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 #include <boost/foreach.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/BoostEndInclude.h>
@@ -98,9 +98,7 @@ class RDKIT_GRAPHMOL_EXPORT canon_atom {
         nbrIds(NULL),
         p_symbol(NULL){};
 
-  ~canon_atom() {
-      free(nbrIds);
-  }
+  ~canon_atom() { free(nbrIds); }
 };
 
 RDKIT_GRAPHMOL_EXPORT void updateAtomNeighborIndex(

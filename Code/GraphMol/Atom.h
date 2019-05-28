@@ -119,7 +119,10 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   //! returns our symbol (determined by our atomic number)
   std::string getSymbol() const;
 
-  //! returns a reference to the ROMol that owns this Atom
+  //! returns whether or not this instance belongs to a molecule
+  bool hasOwningMol() const { return dp_mol != nullptr; };
+
+  //! returns a reference to the ROMol that owns this instance
   ROMol &getOwningMol() const {
     PRECONDITION(dp_mol, "no owner");
     return *dp_mol;
@@ -385,18 +388,18 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
 
   bool df_isAromatic;
   bool df_noImplicit;
-  boost::uint8_t d_numExplicitHs;
-  boost::int8_t d_formalCharge;
-  boost::uint8_t d_atomicNum;
+  std::uint8_t d_numExplicitHs;
+  std::int8_t d_formalCharge;
+  std::uint8_t d_atomicNum;
   // NOTE that these cannot be signed, they are calculated using
   // a lazy scheme and are initialized to -1 to indicate that the
   // calculation has not yet been done.
-  boost::int8_t d_implicitValence, d_explicitValence;
-  boost::uint8_t d_numRadicalElectrons;
-  boost::uint8_t d_chiralTag;
-  boost::uint8_t d_hybrid;
+  std::int8_t d_implicitValence, d_explicitValence;
+  std::uint8_t d_numRadicalElectrons;
+  std::uint8_t d_chiralTag;
+  std::uint8_t d_hybrid;
 
-  boost::uint16_t d_isotope;
+  std::uint16_t d_isotope;
   atomindex_t d_index;
 
   ROMol *dp_mol;
@@ -422,10 +425,12 @@ RDKIT_GRAPHMOL_EXPORT std::string getAtomValue(const Atom *atom);
 
 //! Sets the supplemental label that will follow the atom when writing
 //   smiles strings.
-RDKIT_GRAPHMOL_EXPORT void setSupplementalSmilesLabel(Atom *atom, const std::string &label);
+RDKIT_GRAPHMOL_EXPORT void setSupplementalSmilesLabel(Atom *atom,
+                                                      const std::string &label);
 RDKIT_GRAPHMOL_EXPORT std::string getSupplementalSmilesLabel(const Atom *atom);
-};
+};  // namespace RDKit
 //! allows Atom objects to be dumped to streams
-RDKIT_GRAPHMOL_EXPORT std::ostream &operator<<(std::ostream &target, const RDKit::Atom &at);
+RDKIT_GRAPHMOL_EXPORT std::ostream &operator<<(std::ostream &target,
+                                               const RDKit::Atom &at);
 
 #endif

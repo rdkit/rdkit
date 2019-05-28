@@ -19,8 +19,12 @@ typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
 namespace RDKit {
 namespace {
-ROMol *getSmarts(const std::string &tmpStr) {
+ROMol *getSmarts(std::string &&tmpStr) {
   ROMol *mol = nullptr;
+
+  // Remove whitespace
+  boost::trim(tmpStr);
+
   if (tmpStr.length() == 0) {
     // empty line
     return mol;
@@ -36,8 +40,10 @@ ROMol *getSmarts(const std::string &tmpStr) {
 
   // name of the functional groups
   std::string name = *token;
-  //  boost::erase_all(name, " ");
   ++token;
+
+  // There must be a SMARTS expression
+  CHECK_INVARIANT(token != tokens.end(), tmpStr);
 
   // grab the smarts:
   std::string smarts = *token;
@@ -68,20 +74,20 @@ std::vector<std::shared_ptr<ROMol>> readFuncGroups(std::string fileName) {
 
 std::vector<std::shared_ptr<ROMol>> readFuncGroups(std::istream &inStream,
                                                    int nToRead) {
-  std::vector<std::shared_ptr<ROMol>> funcGroups;
-  funcGroups.clear();
   if (inStream.bad()) {
     throw BadFileException("Bad stream contents.");
   }
+
   const int MAX_LINE_LEN = 512;
   char inLine[MAX_LINE_LEN];
-  std::string tmpstr;
   int nRead = 0;
+
+  std::vector<std::shared_ptr<ROMol>> funcGroups;
   while (!inStream.eof() && (nToRead < 0 || nRead < nToRead)) {
     inStream.getline(inLine, MAX_LINE_LEN, '\n');
-    tmpstr = inLine;
+    std::string tmpstr(inLine);
     // parse the molecule on this line (if there is one)
-    std::shared_ptr<ROMol> mol(getSmarts(tmpstr));
+    std::shared_ptr<ROMol> mol(getSmarts(std::move(tmpstr)));
     if (mol) {
       funcGroups.push_back(mol);
       nRead++;

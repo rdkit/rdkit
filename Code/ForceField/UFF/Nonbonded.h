@@ -66,8 +66,8 @@ namespace Utils {
   \return the position of the minimum
 
 */
-RDKIT_FORCEFIELD_EXPORT double calcNonbondedMinimum(const AtomicParams *at1Params,
-                            const AtomicParams *at2Params);
+RDKIT_FORCEFIELD_EXPORT double calcNonbondedMinimum(
+    const AtomicParams *at1Params, const AtomicParams *at2Params);
 
 //! calculates and returns the UFF well depth for a vdW contact
 /*!
@@ -78,9 +78,9 @@ RDKIT_FORCEFIELD_EXPORT double calcNonbondedMinimum(const AtomicParams *at1Param
   \return the depth of the well
 
 */
-RDKIT_FORCEFIELD_EXPORT double calcNonbondedDepth(const AtomicParams *at1Params,
-                          const AtomicParams *at2Params);
-}
-}
-}
+RDKIT_FORCEFIELD_EXPORT double calcNonbondedDepth(
+    const AtomicParams *at1Params, const AtomicParams *at2Params);
+}  // namespace Utils
+}  // namespace UFF
+}  // namespace ForceFields
 #endif

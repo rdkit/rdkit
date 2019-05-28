@@ -25,7 +25,8 @@ namespace RDKit {
 class ChemicalReaction;
 
 //! used to indicate exceptions whilst pickling (serializing) reactions
-class RDKIT_CHEMREACTIONS_EXPORT ReactionPicklerException : public std::exception {
+class RDKIT_CHEMREACTIONS_EXPORT ReactionPicklerException
+    : public std::exception {
  public:
   ReactionPicklerException(const char *msg) : _msg(msg){};
   ReactionPicklerException(const std::string msg) : _msg(msg){};
@@ -39,10 +40,10 @@ class RDKIT_CHEMREACTIONS_EXPORT ReactionPicklerException : public std::exceptio
 //! handles pickling (serializing) reactions
 class RDKIT_CHEMREACTIONS_EXPORT ReactionPickler {
  public:
-  static const boost::int32_t versionMajor; //!< mark the pickle version
-  static const boost::int32_t versionMinor; //!< mark the pickle version
-  static const boost::int32_t versionPatch; //!< mark the pickle version
-  static const boost::int32_t endianId;  //! mark the endian-ness of the pickle
+  static const std::int32_t versionMajor;  //!< mark the pickle version
+  static const std::int32_t versionMinor;  //!< mark the pickle version
+  static const std::int32_t versionPatch;  //!< mark the pickle version
+  static const std::int32_t endianId;  //! mark the endian-ness of the pickle
 
   //! the pickle format is tagged using these tags:
   //! NOTE: if you add to this list, be sure to put new entries AT THE BOTTOM,
@@ -113,6 +114,6 @@ class RDKIT_CHEMREACTIONS_EXPORT ReactionPickler {
   //! unpickle standard properties
   static void _unpickleProperties(std::istream &ss, RDProps &props);
 };
-};
+};  // namespace RDKit
 
 #endif

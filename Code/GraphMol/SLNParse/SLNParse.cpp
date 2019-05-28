@@ -54,8 +54,21 @@ int sln_parse(const std::string &inp, bool doQueries,
   TEST_ASSERT(!yysln_lex_init(&scanner));
   setup_sln_string(inp, scanner);
   yysln_set_extra((void *)doQueries, scanner);
-  int res = yysln_parse(inp.c_str(), &molVect, doQueries, scanner);
+  int res = 1;  // initialize with failed state
+  try {
+    res = yysln_parse(inp.c_str(), &molVect, doQueries, scanner);
+  } catch (...) {
+    yysln_lex_destroy(scanner);
+    throw;
+  }
   yysln_lex_destroy(scanner);
+
+  if (res == 1) {
+    std::stringstream errout;
+    errout << "Failed parsing SLN '" << inp << "'";
+    throw RDKit::SLNParseException(errout.str());
+  }
+
   return res;
 }
 
@@ -137,20 +150,19 @@ std::string replaceSLNMacroAtoms(std::string inp, int debugParse) {
 }
 
 RWMol *toMol(std::string inp, bool doQueries, int debugParse) {
-  RWMol *res;
   boost::trim_if(inp, boost::is_any_of(" \t\r\n"));
   inp = replaceSLNMacroAtoms(inp, debugParse);
   if (debugParse) {
     std::cerr << "****** PARSING SLN: ->" << inp << "<-" << std::endl;
   }
+
+  RWMol *res = nullptr;
   std::vector<RDKit::RWMol *> molVect;
   try {
     sln_parse(inp, doQueries, molVect);
-    if (molVect.size() <= 0) {
-      res = nullptr;
-    } else {
+    if (molVect.size() > 0) {
       res = molVect[0];
-      molVect[0] = nullptr;
+
       for (ROMol::BOND_BOOKMARK_MAP::const_iterator bmIt =
                res->getBondBookmarks()->begin();
            bmIt != res->getBondBookmarks()->end(); ++bmIt) {
@@ -162,7 +174,10 @@ RWMol *toMol(std::string inp, bool doQueries, int debugParse) {
           throw SLNParseException(err.str());
         }
       }
+
+      molVect[0] = nullptr;
     }
+
   } catch (SLNParseException &e) {
     BOOST_LOG(rdErrorLog) << e.message() << std::endl;
     res = nullptr;
@@ -176,12 +191,17 @@ RWMol *toMol(std::string inp, bool doQueries, int debugParse) {
     // since we'll be removing Hs later and that will break things:
     adjustAtomChiralities(res);
   }
+
   for (auto &iter : molVect) {
-    if (iter) delete iter;
+    if (iter) {
+      CleanupAfterParse(iter);
+      delete iter;
+    }
   }
+
   return res;
 };
-}  // end of SLNParse namespace
+}  // namespace SLNParse
 
 RWMol *SLNToMol(const std::string &sln, bool sanitize, int debugParse) {
   // FIX: figure out how to reset lexer state
@@ -220,4 +240,20 @@ RWMol *SLNQueryToMol(const std::string &sln, bool mergeHs, int debugParse) {
   }
   return res;
 };
+
+void SLNParse::CleanupAfterParse(RWMol *mol) {
+  PRECONDITION(mol, "no molecule");
+  // blow out any partial bonds:
+  RWMol::BOND_BOOKMARK_MAP *marks = mol->getBondBookmarks();
+  RWMol::BOND_BOOKMARK_MAP::iterator markI = marks->begin();
+  while (markI != marks->end()) {
+    RWMol::BOND_PTR_LIST &bonds = markI->second;
+    for (RWMol::BOND_PTR_LIST::iterator bondIt = bonds.begin();
+         bondIt != bonds.end(); ++bondIt) {
+      delete *bondIt;
+    }
+    ++markI;
+  }
 }
+
+}  // namespace RDKit

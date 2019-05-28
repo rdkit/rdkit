@@ -29,10 +29,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Created by Greg Landrum and Anna Vulpetti, March 2009
-from __future__ import print_function
+
 from rdkit.ML.Cluster import Butina
 from rdkit import DataStructs
-import sys, cPickle
+import sys, pickle
 
 # sims is the list of similarity thresholds used to generate clusters
 sims = [.9, .8, .7, .6]
@@ -42,8 +42,8 @@ uFps = []
 
 for fileN in sys.argv[1:]:
   inF = file(sys.argv[1], 'r')
-  cols = cPickle.load(inF)
-  fps = cPickle.load(inF)
+  cols = pickle.load(inF)
+  fps = pickle.load(inF)
 
   for row in fps:
     nm, smi, fp = row[:3]

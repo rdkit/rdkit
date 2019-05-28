@@ -227,9 +227,9 @@ SparseBitVect *FingerprintGenerator<OutputType>::getSparseFingerprint(
         // for every bound in the d_countBounds in dp_fingerprintArguments, set
         // a bit if the occurrence count is equal or higher than the bound for
         // that bit
-        if (val.second >= dp_fingerprintArguments->d_countBounds[i]) {
-          result->setBit(
-              val.first * dp_fingerprintArguments->d_countBounds.size() + i);
+        const auto& bounds_count = dp_fingerprintArguments->d_countBounds;
+        if (val.second >= static_cast<int>(bounds_count[i])) {
+          result->setBit(val.first * bounds_count.size() + i);
         }
       }
     } else {
@@ -290,9 +290,9 @@ ExplicitBitVect *FingerprintGenerator<OutputType>::getFingerprint(
         // for every bound in the d_countBounds in dp_fingerprintArguments, set
         // a bit if the occurrence count is equal or higher than the bound for
         // that bit
-        if (val.second >= dp_fingerprintArguments->d_countBounds[i]) {
-          result->setBit(
-              val.first * dp_fingerprintArguments->d_countBounds.size() + i);
+        const auto& bounds_count = dp_fingerprintArguments->d_countBounds;
+        if (val.second >= static_cast<int>(bounds_count[i])) {
+          result->setBit(val.first * bounds_count.size() + i);
         }
       }
     } else {

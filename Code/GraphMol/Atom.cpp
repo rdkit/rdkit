@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2001-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2019 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -28,7 +27,7 @@ namespace {
 bool isEarlyAtom(int atomicNum) {
   return (4 - PeriodicTable::getTable()->getNouterElecs(atomicNum)) > 0;
 }
-}
+}  // namespace
 Atom::Atom() : RDProps() {
   d_atomicNum = 0;
   initAtom();
@@ -213,7 +212,13 @@ int Atom::calcExplicitValence(bool strict) {
         pval = val;
       }
     }
-    accum = pval;
+    // if we're within 1.5 of the allowed valence, go ahead and take it.
+    // this reflects things like the N in c1cccn1C, which starts with
+    // accum of 4, but which can be kekulized to C1=CC=CN1C, where
+    // the valence is 3 or the bridging N in c1ccn2cncc2c1, which starts
+    // with a valence of 4.5, but can be happily kekulized down to a valence
+    // of 3
+    if (accum - pval <= 1.5) accum = pval;
   }
   // despite promising to not to blame it on him - this a trick Greg
   // came up with: if we have a bond order sum of x.5 (i.e. 1.5, 2.5
@@ -583,7 +588,7 @@ std::string getSupplementalSmilesLabel(const Atom *atom) {
   return label;
 }
 
-}  // end o' namespace RDKit
+}  // namespace RDKit
 
 std::ostream &operator<<(std::ostream &target, const RDKit::Atom &at) {
   target << at.getIdx() << " " << at.getAtomicNum() << " " << at.getSymbol();

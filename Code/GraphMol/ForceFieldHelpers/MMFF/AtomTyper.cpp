@@ -34,15 +34,15 @@ class RingMembership {
   void setIsInAromaticRing(bool isInAromaticRing) {
     d_isInAromaticRing = isInAromaticRing;
   }
-  const std::set<boost::uint32_t>& getRingIdxSet() const {
+  const std::set<std::uint32_t>& getRingIdxSet() const {
     return d_ringIdxSet;
   }
-  std::set<boost::uint32_t>& getRingIdxSet() {
+  std::set<std::uint32_t>& getRingIdxSet() {
     return d_ringIdxSet;
   }
  private:
   bool d_isInAromaticRing;
-  std::set<boost::uint32_t> d_ringIdxSet;
+  std::set<std::uint32_t> d_ringIdxSet;
 };
 
 class RingMembershipSize {
@@ -50,7 +50,7 @@ class RingMembershipSize {
  typedef std::map<unsigned int, RingMembershipMap> RingSizeMembershipMap;
 
  public:
-  static const boost::uint32_t IS_AROMATIC_BIT;
+  static const std::uint32_t IS_AROMATIC_BIT;
   RingMembershipSize(const ROMol &mol);
   bool isAtomInAromaticRingOfSize(const Atom *atom, const unsigned int ringSize) const;
   bool areAtomsInSameAromaticRing(const Atom *atom1, const Atom *atom2) const;
@@ -59,16 +59,16 @@ class RingMembershipSize {
   RingSizeMembershipMap d_ringSizeMembershipMap;
 };
 
-const boost::uint32_t RingMembershipSize::IS_AROMATIC_BIT = (1 << 31);
+const std::uint32_t RingMembershipSize::IS_AROMATIC_BIT = (1 << 31);
 
 RingMembershipSize::RingMembershipSize(const ROMol &mol) {
   static const unsigned int MAX_NUM_RINGS = (0xFFFFFFFF >> 1);
   const RingInfo *ringInfo = mol.getRingInfo();
   const VECT_INT_VECT &atomRings = ringInfo->atomRings();
   PRECONDITION(atomRings.size() < MAX_NUM_RINGS, "Too many rings");
-  for (boost::uint32_t ringIdx = 0; ringIdx < atomRings.size(); ++ringIdx) {
+  for (std::uint32_t ringIdx = 0; ringIdx < atomRings.size(); ++ringIdx) {
     unsigned int ringSize = atomRings[ringIdx].size();
-    boost::uint32_t ringIdxWithAromaticFlag = ringIdx;
+    std::uint32_t ringIdxWithAromaticFlag = ringIdx;
     bool ringIsAromatic = isRingAromatic(mol, atomRings[ringIdx]);
     if (ringIsAromatic) 
       ringIdxWithAromaticFlag |= IS_AROMATIC_BIT;
@@ -108,14 +108,14 @@ bool RingMembershipSize::areAtomsInSameAromaticRing(
 
   for (auto it = d_ringSizeMembershipMap.begin();
        !areInSameAromaticRing && (it != d_ringSizeMembershipMap.end()); ++it) {
-    std::vector<boost::uint32_t> intersectVect;
+    std::vector<std::uint32_t> intersectVect;
     auto it1 = it->second.find(atom1->getIdx());
     auto it2 = it->second.find(atom2->getIdx());
     if ((it1 != it->second.end()) && (it2 != it->second.end())) {
       std::set_intersection(it1->second.getRingIdxSet().begin(),
         it1->second.getRingIdxSet().end(), it2->second.getRingIdxSet().begin(),
         it2->second.getRingIdxSet().end(), std::back_inserter(intersectVect));
-      for (std::vector<boost::uint32_t>::const_iterator ivIt = intersectVect.begin();
+      for (std::vector<std::uint32_t>::const_iterator ivIt = intersectVect.begin();
         !areInSameAromaticRing && (ivIt != intersectVect.end()); ++ ivIt)
         areInSameAromaticRing = *ivIt & IS_AROMATIC_BIT;
     }
@@ -135,13 +135,13 @@ bool RingMembershipSize::areAtomsInSameRingOfSize(
     unsigned int idx1 = va_arg(atoms, const Atom *)->getIdx();
     auto it1 = it->second.find(idx1);
     if (it1 != it->second.end()) {
-      std::set<boost::uint32_t> commonSet = it1->second.getRingIdxSet();
+      std::set<std::uint32_t> commonSet = it1->second.getRingIdxSet();
       for (unsigned int i = 1; !commonSet.empty() && (i < numAtoms); ++i) {
         areInSameRingOfSize = false;
         unsigned int idx2 = va_arg(atoms, const Atom *)->getIdx();
         auto it2 = it->second.find(idx2);
         if (it2 == it->second.end()) break;
-        std::set<boost::uint32_t> intersect;
+        std::set<std::uint32_t> intersect;
         std::set_intersection(commonSet.begin(), commonSet.end(),
           it2->second.getRingIdxSet().begin(), it2->second.getRingIdxSet().end(),
           std::inserter(intersect, intersect.end()));
@@ -2396,7 +2396,7 @@ unsigned int sanitizeMMFFMol(RWMol &mol) {
     if (!(mol.hasProp(common_properties::_MMFFSanitized))) {
       mol.setProp(common_properties::_MMFFSanitized, 1, true);
     }
-  } catch (MolSanitizeException &e) {
+  } catch (MolSanitizeException &) {
   }
 
   return error;
@@ -2407,7 +2407,7 @@ unsigned int sanitizeMMFFMol(RWMol &mol) {
 // in case atom types are missing, d_valid is set to false,
 // charges are set to 0.0 and the force-field is unusable
 MMFFMolProperties::MMFFMolProperties(ROMol &mol, const std::string &mmffVariant,
-                                     boost::uint8_t verbosity,
+                                     std::uint8_t verbosity,
                                      std::ostream &oStream)
     : d_valid(true),
       d_mmffs(mmffVariant == "MMFF94s" ? true : false),
@@ -2440,7 +2440,7 @@ MMFFMolProperties::MMFFMolProperties(ROMol &mol, const std::string &mmffVariant,
         MMFFAtomPropertiesPtr(new MMFFAtomProperties());
   }
   unsigned int idx;
-  boost::uint8_t atomType = 1;
+  std::uint8_t atomType = 1;
 
   setMMFFAromaticity((RWMol &)mol);
   RingMembershipSize rmSize(mol);

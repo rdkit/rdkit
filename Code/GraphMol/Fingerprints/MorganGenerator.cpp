@@ -134,10 +134,12 @@ std::string MorganArguments<OutputType>::infoString() const {
 
 template <typename OutputType>
 OutputType MorganAtomEnv<OutputType>::getBitId(
-    FingerprintArguments<OutputType> *arguments,
-    const std::vector<std::uint32_t> *atomInvariants,
-    const std::vector<std::uint32_t> *bondInvariants,
-    const AdditionalOutput *additionalOutput, const bool hashResults) const {
+    FingerprintArguments<OutputType> *, // arguments
+    const std::vector<std::uint32_t> *, // atomInvariants
+    const std::vector<std::uint32_t> *, // bondInvariants
+    const AdditionalOutput *additionalOutput,
+    const bool // hashResults
+) const {
   if (additionalOutput) {
     // todo: set additional outputs
   }
@@ -156,11 +158,13 @@ std::vector<AtomEnvironment<OutputType> *>
 MorganEnvGenerator<OutputType>::getEnvironments(
     const ROMol &mol, FingerprintArguments<OutputType> *arguments,
     const std::vector<std::uint32_t> *fromAtoms,
-    const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
-    const AdditionalOutput *additionalOutput,
+    const std::vector<std::uint32_t> *, //ignoreAtoms
+    const int, // confId
+    const AdditionalOutput *, // additionalOutput
     const std::vector<std::uint32_t> *atomInvariants,
     const std::vector<std::uint32_t> *bondInvariants,
-    const bool hashResults) const {
+    const bool // hashResults
+) const {
   PRECONDITION(atomInvariants && (atomInvariants->size() >= mol.getNumAtoms()),
                "bad atom invariants size");
   PRECONDITION(bondInvariants && (bondInvariants->size() >= mol.getNumBonds()),
@@ -373,7 +377,8 @@ FingerprintGenerator<OutputType> *getMorganGenerator(
     AtomInvariantsGenerator *atomInvariantsGenerator,
     BondInvariantsGenerator *bondInvariantsGenerator,
     const std::uint32_t fpSize, const std::vector<std::uint32_t> countBounds,
-    const bool ownsAtomInvGen, const bool ownsBondInvGen) {
+    const bool ownsAtomInvGen, const bool // ownsBondInvGen
+) {
   AtomEnvironmentGenerator<OutputType> *morganEnvGenerator =
       new MorganEnvGenerator<OutputType>();
   FingerprintArguments<OutputType> *morganArguments =

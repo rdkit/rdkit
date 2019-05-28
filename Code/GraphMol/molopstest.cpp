@@ -228,7 +228,7 @@ void test3() {
   smi = "C(C1C2C3C41)(C2C35)C45";  // cubane
   // smi = "C1(C2C3C4C5C6C72)C3C4C5C6C71"; // from Figureras paper
   // smi = "C17C5C4C3C2C1C6C2C3C4C5C67";
-  // we cannot use the sanitzation code, because that finds *symmetric*
+  // we cannot use the sanitization code, because that finds *symmetric*
   // rings, which will break this case:
   m = SmilesToMol(smi, 0, 0);
   int bfs = MolOps::findSSSR(*m);
@@ -253,6 +253,35 @@ void test3() {
   BOOST_LOG(rdInfoLog) << smi << "\n";
 
   delete m;
+
+  // Figueras figure 4:
+  //  * The third ring is bigger, and shouldn't be accessed in symmetrizeSSSR
+  smi = "C12CC(CC2)CC1";
+  m = SmilesToMol(smi, 0, 0);
+  bfs = MolOps::findSSSR(*m);
+  TEST_ASSERT(bfs == 2);
+  bfrs.resize(0);
+  bfs = MolOps::symmetrizeSSSR(*m, bfrs);
+  TEST_ASSERT(bfs == 2);
+  delete m;
+
+
+  // Counterexamples in ring perception figure 4:
+  //  * The native Figueras algorithm cannot work on this molecule, it will
+  //    fail after finding one ring. Naive modified Figueras finds a 6 membered
+  //    ring, which is wrong.
+  smi = "C123C4C5C6(C3)C7C1C8C2C4C5C6C78";
+  m = SmilesToMol(smi, 0, 0);
+  bfs = MolOps::findSSSR(*m);
+  TEST_ASSERT(bfs == 7);
+  bfrs.resize(0);
+  bfs = MolOps::symmetrizeSSSR(*m, bfrs);
+  TEST_ASSERT(bfs == 8);
+  for (auto bring : bfrs) {
+    TEST_ASSERT(bring.size() < 6);
+  }
+  delete m;
+
 
   smi = "C1CC2C1CCC2";
   m = SmilesToMol(smi);
@@ -2517,7 +2546,7 @@ void testSFIssue1836576() {
   ok = false;
   try {
     MolOps::sanitizeMol(*m, opThatFailed);
-  } catch (MolSanitizeException &vee) {
+  } catch (MolSanitizeException &) {
     ok = true;
   }
   TEST_ASSERT(ok);
@@ -2873,7 +2902,7 @@ void testSFIssue1942657() {
   smi = "C[C](C)(C)(C)C";
   try {
     m = SmilesToMol(smi);
-  } catch (MolSanitizeException &e) {
+  } catch (MolSanitizeException &) {
     m = nullptr;
   }
   TEST_ASSERT(!m);
@@ -2881,7 +2910,7 @@ void testSFIssue1942657() {
   smi = "C[CH](C)(C)C";
   try {
     m = SmilesToMol(smi);
-  } catch (MolSanitizeException &e) {
+  } catch (MolSanitizeException &) {
     m = nullptr;
   }
   TEST_ASSERT(!m);
@@ -2889,7 +2918,7 @@ void testSFIssue1942657() {
   smi = "C[C](=C)(C)C";
   try {
     m = SmilesToMol(smi);
-  } catch (MolSanitizeException &e) {
+  } catch (MolSanitizeException &) {
     m = nullptr;
   }
   TEST_ASSERT(!m);
@@ -2897,7 +2926,7 @@ void testSFIssue1942657() {
   smi = "C[Si](=C)(=C)=C";
   try {
     m = SmilesToMol(smi);
-  } catch (MolSanitizeException &e) {
+  } catch (MolSanitizeException &) {
     m = nullptr;
   }
   TEST_ASSERT(!m);
@@ -3333,7 +3362,7 @@ void testSanitizeNonringAromatics() {
     bool ok = false;
     try {
       MolOps::Kekulize(*m);
-    } catch (MolSanitizeException &vee) {
+    } catch (MolSanitizeException &) {
       ok = true;
     }
     TEST_ASSERT(ok);
@@ -3347,7 +3376,7 @@ void testSanitizeNonringAromatics() {
     unsigned int opThatFailed;
     try {
       MolOps::sanitizeMol(*m, opThatFailed);
-    } catch (MolSanitizeException &vee) {
+    } catch (MolSanitizeException &) {
       ok = true;
     }
     TEST_ASSERT(ok);
@@ -4949,7 +4978,7 @@ void testGithubIssue418() {
     bool ok = false;
     try {
       SmilesToMol(smiles);
-    } catch (MolSanitizeException &e) {
+    } catch (MolSanitizeException &) {
       ok = true;
     }
     TEST_ASSERT(ok);
@@ -6086,10 +6115,14 @@ void testPotentialStereoBonds() {
       << std::endl;
 
   {  // starting point: full sanitization
+    auto m1 = "BrC(=NN=c1nn[nH][nH]1)c1ccncc1"_smiles;
+    TEST_ASSERT(m1);
     std::string smiles =
         "Br/C(=N\\N=c1/nn[nH][nH]1)c1ccncc1";  // possible problem reported by
                                                // Steve Roughley
     ROMol *m = SmilesToMol(smiles);
+    // m->updatePropertyCache(false);
+    // m->debugMol(std::cerr);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 15);
     TEST_ASSERT(m->getBondWithIdx(1)->getBondType() == Bond::DOUBLE);
@@ -6674,7 +6707,7 @@ void testKekulizeErrorReporting() {
     ROMol *m;
     try {
       m = SmilesToMol(smi);
-    } catch (MolSanitizeException &e) {
+    } catch (MolSanitizeException &) {
       m = nullptr;
     }
     TEST_ASSERT(m == nullptr);
@@ -6687,7 +6720,7 @@ void testKekulizeErrorReporting() {
     ROMol *m;
     try {
       m = SmilesToMol(smi);
-    } catch (MolSanitizeException &e) {
+    } catch (MolSanitizeException &) {
       m = nullptr;
     }
     TEST_ASSERT(m == nullptr);
@@ -6700,7 +6733,7 @@ void testKekulizeErrorReporting() {
     ROMol *m;
     try {
       m = SmilesToMol(smi);
-    } catch (MolSanitizeException &e) {
+    } catch (MolSanitizeException &) {
       m = nullptr;
     }
     TEST_ASSERT(m == nullptr);
@@ -7643,7 +7676,6 @@ int main() {
   testGithubIssue607();
   testAdjustQueryProperties();
   testGithubIssue1204();
-  testPotentialStereoBonds();
   testSetBondStereo();
 
   testBondSetStereoAtoms();
@@ -7657,7 +7689,8 @@ int main() {
   testGithub1810();
   testGithub1936();
   testGithub1928();
-#endif
   testGithub1990();
+#endif
+  testPotentialStereoBonds();
   return 0;
 }

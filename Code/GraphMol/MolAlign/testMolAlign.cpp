@@ -613,7 +613,7 @@ void runblock_o3a_mmff(ROMol *refMol, const std::vector<ROMol *> &mols,
                        const std::vector<double> &rmsds,
                        const std::vector<double> &scores, unsigned int count,
                        unsigned int idx) {
-  for (unsigned int rep = 0; rep < 30; ++rep) {
+  for (unsigned int rep = 0; rep < 10; ++rep) {
     MMFF::MMFFMolProperties refMP(*refMol);
     for (unsigned int i = 0; i < mols.size(); ++i) {
       if (i % count != idx) continue;
@@ -635,7 +635,7 @@ void runblock_o3a_crippen(ROMol *refMol, const std::vector<ROMol *> &mols,
                           const std::vector<double> &scores, unsigned int count,
                           unsigned int idx) {
   ROMol refMolCopy(*refMol);
-  for (unsigned int rep = 0; rep < 30; ++rep) {
+  for (unsigned int rep = 0; rep < 10; ++rep) {
     unsigned int refNAtoms = refMolCopy.getNumAtoms();
     std::vector<double> refLogpContribs(refNAtoms);
     std::vector<double> refMRContribs(refNAtoms);
@@ -868,7 +868,7 @@ void testO3AMultiThreadBug() {
     ROMol *mol = suppl.next();
     if (!mol) continue;
 
-    while (mol->getNumConformers() < 50) {
+    while (mol->getNumConformers() < 20) {
       auto *conf = new Conformer(mol->getConformer(0));
       mol->addConformer(conf, true);
     }
@@ -885,7 +885,7 @@ void testO3AMultiThreadBug() {
   {
     for (auto &mol : mols) {
       ROMol prbMol = *mol;
-      TEST_ASSERT(prbMol.getNumConformers() == 50);
+      TEST_ASSERT(prbMol.getNumConformers() == 20);
 
       MMFF::MMFFMolProperties prbMP(prbMol);
 
@@ -921,91 +921,85 @@ int main() {
   std::cout << "***********************************************************\n";
   std::cout << "Testing MolAlign\n";
 
-  #if 1
-    std::cout << "\t---------------------------------\n";
-    std::cout << "\t test1MolAlign \n\n";
-    test1MolAlign();
+#if 1
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t test1MolAlign \n\n";
+  test1MolAlign();
 
-    std::cout << "\t---------------------------------\n";
-    std::cout << "\t test1GetBestRMS \n\n";
-    test1GetBestRMS();
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t test1GetBestRMS \n\n";
+  test1GetBestRMS();
 
-    std::cout << "\t---------------------------------\n";
-    std::cout << "\t test1MolWithQueryAlign \n\n";
-    test1MolWithQueryAlign();
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t test1MolWithQueryAlign \n\n";
+  test1MolWithQueryAlign();
 
-    std::cout << "\t---------------------------------\n";
-    std::cout << "\t test2AtomMap \n\n";
-    test2AtomMap();
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t test2AtomMap \n\n";
+  test2AtomMap();
 
-    std::cout << "\t---------------------------------\n";
-    std::cout << "\t test3Weights \n\n";
-    test3Weights();
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t test3Weights \n\n";
+  test3Weights();
 
-    std::cout << "\t---------------------------------\n";
-    std::cout << "\t testIssue241 \n\n";
-    testIssue241();
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t testIssue241 \n\n";
+  testIssue241();
 
-    std::cout << "\t---------------------------------\n";
-    std::cout << "\t testMMFFO3A \n\n";
-    testMMFFO3A();
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t testMMFFO3A \n\n";
+  testMMFFO3A();
 
-    std::cout << "\t---------------------------------\n";
-    std::cout << "\t testMMFFO3A with pre-computed dmat and MolHistogram\n\n";
-    testMMFFO3AMolHist();
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t testMMFFO3A with pre-computed dmat and MolHistogram\n\n";
+  testMMFFO3AMolHist();
 
-    std::cout << "\t---------------------------------\n";
-    std::cout << "\t testMMFFO3A with constraints\n\n";
-    testMMFFO3AConstraints();
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t testMMFFO3A with constraints\n\n";
+  testMMFFO3AConstraints();
 
-    std::cout << "\t---------------------------------\n";
-    std::cout << "\t testMMFFO3A with variable weight constraints followed by "
-                 "local-only optimization\n\n";
-    testMMFFO3AConstraintsAndLocalOnly();
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t testMMFFO3A with variable weight constraints followed by "
+               "local-only optimization\n\n";
+  testMMFFO3AConstraintsAndLocalOnly();
 
-    std::cout << "\t---------------------------------\n";
-    std::cout << "\t testCrippenO3A \n\n";
-    testCrippenO3A();
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t testCrippenO3A \n\n";
+  testCrippenO3A();
 
-    std::cout << "\t---------------------------------\n";
+  std::cout << "\t---------------------------------\n";
   std::cout << "\t testCrippenO3A with pre-computed dmat and MolHistogram\n\n";
   testCrippenO3AMolHist();
 
-    std::cout << "\t---------------------------------\n";
-    std::cout << "\t testCrippenO3A with constraints\n\n";
-    testCrippenO3AConstraints();
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t testCrippenO3A with constraints\n\n";
+  testCrippenO3AConstraints();
 
-    std::cout << "\t---------------------------------\n";
+  std::cout << "\t---------------------------------\n";
   std::cout << "\t testCrippenO3A with variable weight constraints followed by "
                "local-only optimization\n\n";
   testCrippenO3AConstraintsAndLocalOnly();
 
-  #ifdef RDK_TEST_MULTITHREADED
-    std::cout << "\t---------------------------------\n";
-    std::cout << "\t testMMFFO3A multithreading\n\n";
-    testMMFFO3AMultiThread();
+#ifdef RDK_TEST_MULTITHREADED
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t testMMFFO3A multithreading\n\n";
+  testMMFFO3AMultiThread();
 
-    std::cout << "\t---------------------------------\n";
-    std::cout << "\t test O3A multithreading bug\n\n";
-    testO3AMultiThreadBug();
-  #endif
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t test O3A multithreading bug\n\n";
+  testO3AMultiThreadBug();
+#endif
 
-  #ifdef RDK_TEST_MULTITHREADED
-    std::cout << "\t---------------------------------\n";
-    std::cout << "\t testCrippenO3A multithreading\n\n";
-    testCrippenO3AMultiThread();
-  #endif
+#ifdef RDK_TEST_MULTITHREADED
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t testCrippenO3A multithreading\n\n";
+  testCrippenO3AMultiThread();
+#endif
 
-    std::cout << "\t---------------------------------\n";
-    std::cout << "\t test getO3AForProbeConfs\n\n";
-    testGetO3AForProbeConfs();
-  #endif
-
-  #ifdef RDK_TEST_MULTITHREADED
-    std::cout << "\t---------------------------------\n";
-    std::cout << "\t test O3A multithreading bug\n\n";
-    testO3AMultiThreadBug();
-  #endif
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t test getO3AForProbeConfs\n\n";
+  testGetO3AForProbeConfs();
+#endif
 
   std::cout << "***********************************************************\n";
 }

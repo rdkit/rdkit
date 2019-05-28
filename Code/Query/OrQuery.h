@@ -50,5 +50,5 @@ class OrQuery
     return res;
   };
 };
-}
+}  // namespace Queries
 #endif

@@ -18,6 +18,7 @@
 #include "../Substruct/SubstructMatch.h"
 #include "SubstructMatchCustom.h"
 #include "MaximumCommonSubgraph.h"
+#include <boost/graph/adjacency_list.hpp>
 
 namespace RDKit {
 namespace FMCS {
@@ -436,6 +437,79 @@ void MaximumCommonSubgraph::makeInitialSeeds() {
   }
 }
 
+namespace {
+
+void _DFS(const Graph& g, const boost::dynamic_bitset<>& ringBonds,
+          boost::dynamic_bitset<>& openBonds, unsigned vertex,
+          std::vector<unsigned> apath, std::vector<unsigned>& colors,
+          unsigned fromVertex) {
+  std::pair<Graph::out_edge_iterator, Graph::out_edge_iterator> bonds =
+      boost::out_edges(vertex, g);
+  colors[vertex] = 1;
+  while (bonds.first != bonds.second) {
+    unsigned bIdx = g[*(bonds.first)];
+    if (!ringBonds[bIdx]) {
+      ++bonds.first;
+      continue;
+    }
+    // find the other vertex:
+    unsigned oVertex = boost::source(*(bonds.first), g);
+    if (oVertex == vertex) oVertex = boost::target((*bonds.first), g);
+    ++bonds.first;
+
+    if (oVertex == fromVertex) continue;
+    if (colors[oVertex] == 1) {
+      // closing a cycle
+      for (auto ai = apath.rbegin(); ai != apath.rend() && *ai != oVertex;
+           ++ai) {
+        auto epair = boost::edge(*ai, *(ai + 1), g);
+        CHECK_INVARIANT(epair.second, "edge not found");
+        openBonds.reset(g[epair.first]);
+      }
+      auto epair = boost::edge(oVertex, *apath.rbegin(), g);
+      CHECK_INVARIANT(epair.second, "edge not found");
+      openBonds.reset(g[epair.first]);
+    } else if (colors[oVertex] == 0) {
+      std::vector<unsigned> napath = apath;
+      napath.push_back(oVertex);
+      _DFS(g, ringBonds, openBonds, oVertex, napath, colors, vertex);
+    }
+  }
+  colors[vertex] = 2;
+  return;
+}
+
+bool checkIfRingsAreClosed(const Seed& fs) {
+  if (!fs.MoleculeFragment.Bonds.size()) return true;
+
+  bool res = true;
+  const auto& om = fs.MoleculeFragment.Bonds[0]->getOwningMol();
+  const auto ri = om.getRingInfo();
+  boost::dynamic_bitset<> ringBonds(om.getNumBonds());
+  for (const auto bond : fs.MoleculeFragment.Bonds) {
+    if (ri->numBondRings(bond->getIdx())) ringBonds.set(bond->getIdx());
+  }
+  boost::dynamic_bitset<> openBonds = ringBonds;
+  if (openBonds.any()) {
+    std::vector<unsigned> colors(om.getNumAtoms());
+    for (unsigned bi = 0; bi < openBonds.size(); ++bi) {
+      if (!openBonds[bi]) continue;
+      std::pair<Graph::edge_iterator, Graph::edge_iterator> bonds =
+          boost::edges(fs.Topology);
+      while (bonds.first != bonds.second && fs.Topology[*(bonds.first)] != bi)
+        ++bonds.first;
+      CHECK_INVARIANT(bonds.first != bonds.second, "bond not found");
+      unsigned startVertex = boost::source(*(bonds.first), fs.Topology);
+      std::vector<unsigned> apath = {startVertex};
+      _DFS(fs.Topology, ringBonds, openBonds, startVertex, apath, colors,
+           om.getNumAtoms() + 1);
+    }
+    res = openBonds.none();
+  }
+  return res;
+}
+
+}  // namespace
 bool MaximumCommonSubgraph::growSeeds() {
   bool mcsFound = false;
   bool canceled = false;
@@ -456,15 +530,24 @@ bool MaximumCommonSubgraph::growSeeds() {
     {
       const Seed& fs = Seeds.front();
       // bigger substructure found
-      if (fs.CopyComplete)
+      if (fs.CopyComplete) {
+        bool possibleMCS = false;
         if ((!Parameters.MaximizeBonds &&
              (fs.getNumAtoms() > getMaxNumberAtoms() ||
               (fs.getNumAtoms() == getMaxNumberAtoms() &&
-               fs.getNumBonds() > getMaxNumberBonds()))) ||
-            (Parameters.MaximizeBonds &&
-             (fs.getNumBonds() > getMaxNumberBonds() ||
-              (fs.getNumBonds() == getMaxNumberBonds() &&
-               fs.getNumAtoms() > getMaxNumberAtoms())))) {
+               fs.getNumBonds() > getMaxNumberBonds())))) {
+          possibleMCS = true;
+        } else if (Parameters.MaximizeBonds &&
+                   (fs.getNumBonds() > getMaxNumberBonds() ||
+                    (fs.getNumBonds() == getMaxNumberBonds() &&
+                     fs.getNumAtoms() > getMaxNumberAtoms()))) {
+          possibleMCS = true;
+        }
+        // #945: test here to see if the MCS actually has all rings closed
+        if (possibleMCS && Parameters.BondCompareParameters.CompleteRingsOnly) {
+          possibleMCS = checkIfRingsAreClosed(fs);
+        }
+        if (possibleMCS) {
           mcsFound = true;
 #ifdef VERBOSE_STATISTICS_ON
           VerboseStatistics.MCSFoundStep = VerboseStatistics.TotalSteps;
@@ -484,6 +567,7 @@ bool MaximumCommonSubgraph::growSeeds() {
                    McsIdx.BondsIdx[0]);
           }
         }
+      }
     }
     if (NotSet == si->GrowingStage)  // finished
       Seeds.erase(si);
@@ -505,7 +589,7 @@ bool MaximumCommonSubgraph::growSeeds() {
     McsIdx.Targets = Targets;
   }
   return !canceled;
-}
+}  // namespace FMCS
 
 struct AtomMatch {  // for each seed atom (matched)
   unsigned QueryAtomIdx;

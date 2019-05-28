@@ -49,6 +49,6 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Grid3D {
 
   virtual const RDKit::DiscreteValueVect *getOccupancyVect() const = 0;
 };
-}
+}  // namespace RDGeom
 
 #endif

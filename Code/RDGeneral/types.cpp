@@ -42,6 +42,10 @@ const std::string _MolFileAtomQuery = "_MolFileAtomQuery";
 const std::string _MolFileBondQuery = "_MolFileBondQuery";
 const std::string _MolFileBondEndPts = "_MolFileBondEndPts";
 const std::string _MolFileBondAttach = "_MolFileBondAttach";
+const std::string _MolFileBondType = "_MolFileBondType";
+const std::string _MolFileBondStereo = "_MolFileBondStereo";
+const std::string _MolFileBondCfg = "_MolFileBondCfg";
+
 const std::string _Name = "_Name";
 const std::string _NeedsQueryScan = "_NeedsQueryScan";
 const std::string _QueryFormalCharge = "_QueryFormalCharge";

@@ -14,7 +14,7 @@
 #include <sstream>
 #include <locale>
 
-typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
 namespace RDKit {
 
@@ -37,7 +37,7 @@ const std::string periodicTableAtomData =
 10	Ne	1.12	0.7	1.54	20.18	8	20	19.99244018	0 \n \
 11	Na	0.97	1.54	2.4	22.99	1	23	22.98976928	1 \n \
 12	Mg	1.1	1.36	2.2	24.305	2	24	23.9850417	2 \n \
-13	Al	1.35	1.18	2.1	26.982	3	27	26.98153863	6 \n \
+13	Al	1.35	1.18	2.1	26.982	3	27	26.98153863	3	6 \n \
 14	Si	1.2	0.937	2.1	28.086	4	28	27.97692653	4	6 \n \
 15	P	0.75	0.89	1.95	30.974	5	31	30.97376163	3	5	7 \n \
 16	S	1.02	1.04	1.8	32.067	6	32	31.972071	2	4	6 \n \
@@ -3347,4 +3347,4 @@ const std::string isotopesAtomData[] = {
 118 Og  294  294.21392 0 \n \
 118 Og  295  295.21624 0 \n",
     "EOS"};
-}
+}  // namespace RDKit

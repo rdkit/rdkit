@@ -25,6 +25,13 @@ ROMol *chooseHelper(MolStandardize::LargestFragmentChooser &self,
                     const ROMol &mol) {
   return self.choose(mol);
 }
+MolStandardize::FragmentRemover *removerFromParams(const std::string &data,
+                                                   bool leave_last,
+                                                   bool skip_if_all_match) {
+  std::istringstream sstr(data);
+  return new MolStandardize::FragmentRemover(sstr, leave_last,
+                                             skip_if_all_match);
+}
 
 }  // namespace
 
@@ -38,9 +45,19 @@ struct fragment_wrapper {
 
     python::class_<MolStandardize::FragmentRemover, boost::noncopyable>(
         "FragmentRemover", python::init<>())
-        .def(python::init<std::string, bool>())
+        .def(python::init<std::string, bool, bool>(
+            (python::arg("fragmentFilename") = "",
+             python::arg("leave_last") = true,
+             python::arg("skip_if_all_match") = false)))
         .def("remove", &removeHelper, (python::arg("self"), python::arg("mol")),
              "", python::return_value_policy<python::manage_new_object>());
+
+    python::def(
+        "FragmentRemoverFromData", &removerFromParams,
+        (python::arg("fragmentData"), python::arg("leave_last") = true,
+         python::arg("skip_if_all_match") = false),
+        "creates a FragmentRemover from a string containing parameter data",
+        python::return_value_policy<python::manage_new_object>());
 
     python::class_<MolStandardize::LargestFragmentChooser, boost::noncopyable>(
         "LargestFragmentChooser",

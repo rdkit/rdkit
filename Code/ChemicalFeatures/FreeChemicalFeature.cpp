@@ -11,12 +11,12 @@
 #include "FreeChemicalFeature.h"
 #include <RDGeneral/StreamOps.h>
 #include <sstream>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 
 namespace ChemicalFeatures {
 using namespace RDKit;
-using boost::int32_t;
-using boost::uint32_t;
+using std::int32_t;
+using std::uint32_t;
 const int ci_FEAT_VERSION = 0x0020;  //!< version number to use in pickles
 
 std::string FreeChemicalFeature::toString() const {

@@ -3,7 +3,7 @@
 # Created by Greg Landrum Aug 2006
 #
 #
-from __future__ import print_function
+
 
 _version = "0.3.2"
 

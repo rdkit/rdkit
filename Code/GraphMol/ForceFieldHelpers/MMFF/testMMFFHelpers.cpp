@@ -20,6 +20,7 @@
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 
+#include <GraphMol/ForceFieldHelpers/FFConvenience.h>
 #include <GraphMol/ForceFieldHelpers/MMFF/AtomTyper.h>
 #include <GraphMol/ForceFieldHelpers/MMFF/Builder.h>
 #include <GraphMol/ForceFieldHelpers/MMFF/MMFF.h>
@@ -35,7 +36,7 @@ void testMMFFTyper1() {
   BOOST_LOG(rdErrorLog) << "    Test MMFF atom types." << std::endl;
 
   {
-    boost::uint8_t type;
+    std::uint8_t type;
     ROMol *mol = SmilesToMol("[SiH3]CC(=O)NC");
     TEST_ASSERT(mol);
     MMFF::MMFFMolProperties mmffMolProperties(*mol);
@@ -55,7 +56,7 @@ void testMMFFTyper1() {
   }
 
   {
-    boost::uint8_t type;
+    std::uint8_t type;
     ROMol *mol = SmilesToMol("CC(=O)C");
     TEST_ASSERT(mol);
     MMFF::MMFFMolProperties mmffMolProperties(*mol);
@@ -73,7 +74,7 @@ void testMMFFTyper1() {
   }
 
   {
-    boost::uint8_t type;
+    std::uint8_t type;
     ROMol *mol = SmilesToMol("C(=O)S");
     TEST_ASSERT(mol);
     MMFF::MMFFMolProperties mmffMolProperties(*mol);
@@ -88,7 +89,7 @@ void testMMFFTyper1() {
     delete mol;
   }
   {
-    boost::uint8_t type;
+    std::uint8_t type;
     ROMol *mol = SmilesToMol("SCS(=O)S(=O)(=O)O");
     TEST_ASSERT(mol);
     MMFF::MMFFMolProperties mmffMolProperties(*mol);
@@ -105,7 +106,7 @@ void testMMFFTyper1() {
     delete mol;
   }
   {
-    boost::uint8_t type;
+    std::uint8_t type;
     ROMol *mol = SmilesToMol("PCP(O)CP(=O)(=O)");
     TEST_ASSERT(mol);
     MMFF::MMFFMolProperties mmffMolProperties(*mol);
@@ -122,7 +123,7 @@ void testMMFFTyper1() {
     delete mol;
   }
   {
-    boost::uint8_t type;
+    std::uint8_t type;
     ROMol *mol = SmilesToMol("C(F)(Cl)(Br)I");
     TEST_ASSERT(mol);
     MMFF::MMFFMolProperties mmffMolProperties(*mol);
@@ -151,7 +152,7 @@ void testMMFFBuilder1() {
   ROMol *mol, *mol2;
 
   ForceFields::ForceField *field;
-  boost::shared_array<boost::uint8_t> nbrMat;
+  boost::shared_array<std::uint8_t> nbrMat;
 
   mol = SmilesToMol("CC(O)C");
   auto *conf = new Conformer(mol->getNumAtoms());
@@ -389,6 +390,10 @@ void testMMFFBuilder2() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+#ifdef RDK_TEST_MULTITHREADED
+// we do the equivalent tests below
+void testMMFFBatch() {}
+#else
 void testMMFFBatch() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog)
@@ -433,7 +438,7 @@ void testMMFFBatch() {
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
-
+#endif
 void testIssue239() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Testing Issue239." << std::endl;
@@ -650,7 +655,7 @@ void testSFIssue1653802() {
       new MMFF::MMFFMolProperties(*mol);
   TEST_ASSERT(mmffMolProperties);
 
-  boost::shared_array<boost::uint8_t> nbrMat;
+  boost::shared_array<std::uint8_t> nbrMat;
   field = new ForceFields::ForceField();
   // add the atomic positions:
   for (unsigned int i = 0; i < mol->getNumAtoms(); ++i) {
@@ -856,12 +861,12 @@ namespace {
 void runblock_mmff(const std::vector<ROMol *> &mols,
                    const std::vector<double> &energies, unsigned int count,
                    unsigned int idx) {
-  for (unsigned int rep = 0; rep < 500; ++rep) {
+  for (unsigned int rep = 0; rep < 100; ++rep) {
     for (unsigned int i = 0; i < mols.size(); ++i) {
       if (i % count != idx) continue;
       ROMol *mol = mols[i];
       ForceFields::ForceField *field = nullptr;
-      if (!(rep % 100)) {
+      if (!(rep % 20)) {
         BOOST_LOG(rdErrorLog) << "Rep: " << rep << " Mol:" << i << std::endl;
       }
       try {
@@ -949,7 +954,7 @@ void testMMFFMultiThread2() {
   ROMol *m = suppl[4];
   TEST_ASSERT(m);
   auto *om = new ROMol(*m);
-  for (unsigned int i = 0; i < 1000; ++i) {
+  for (unsigned int i = 0; i < 200; ++i) {
     m->addConformer(new Conformer(m->getConformer()), true);
   }
   std::vector<std::pair<int, double>> res;
@@ -977,6 +982,52 @@ void testMMFFMultiThread2() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testMMFFMultiThread3() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test MMFF multithreading3" << std::endl;
+
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/GraphMol/ForceFieldHelpers/UFF/test_data";
+  SDMolSupplier suppl(pathName + "/bulk.sdf");
+  ROMol *m = suppl[4];
+  TEST_ASSERT(m);
+  auto *om = new ROMol(*m);
+  for (unsigned int i = 0; i < 200; ++i) {
+    m->addConformer(new Conformer(m->getConformer()), true);
+  }
+  std::vector<std::pair<int, double>> res;
+
+  ForceFields::ForceField *omField = MMFF::constructForceField(*om);
+  TEST_ASSERT(omField);
+  omField->initialize();
+  ForceFields::ForceField *mField = MMFF::constructForceField(*m);
+  TEST_ASSERT(mField);
+  mField->initialize();
+
+  ForceFieldsHelper::OptimizeMolecule(*omField);
+  ForceFieldsHelper::OptimizeMoleculeConfs(*m, *mField, res, 0);
+  for (unsigned int i = 1; i < res.size(); ++i) {
+    TEST_ASSERT(!res[i].first);
+    TEST_ASSERT(feq(res[i].second, res[0].second, .00001));
+  }
+  for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
+    RDGeom::Point3D p0 = om->getConformer().getAtomPos(i);
+    RDGeom::Point3D np0 = m->getConformer().getAtomPos(i);
+    TEST_ASSERT(feq(p0.x, np0.x));
+    TEST_ASSERT(feq(p0.y, np0.y));
+    TEST_ASSERT(feq(p0.z, np0.z));
+    np0 =
+        m->getConformer(11).getAtomPos(i);  // pick some random other conformer
+    TEST_ASSERT(feq(p0.x, np0.x));
+    TEST_ASSERT(feq(p0.y, np0.y));
+    TEST_ASSERT(feq(p0.z, np0.z));
+  }
+  delete m;
+  delete om;
+  delete mField;
+  delete omField;
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
 #endif
 
 void testGithub224() {
@@ -1030,6 +1081,7 @@ int main() {
 #ifdef RDK_TEST_MULTITHREADED
   testMMFFMultiThread();
   testMMFFMultiThread2();
+  testMMFFMultiThread3();
 #endif
   testGithub162();
 #endif

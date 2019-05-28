@@ -166,9 +166,81 @@ The RDKit covers all of the standard features of Daylight SMILES [#smiles]_ as w
 
 Here's the (likely partial) list of extensions:
 
-- **Aromaticity**: ``te`` (aromatic Te) is accepted
-- **Dative bonds**: ``<-`` and ``->`` create a dative bond between the atoms, direction does matter.
-- **Specifying atoms by atomic number**: the ``[#6]`` construct from SMARTS is supported in SMILES.
+
+Aromaticity
+-----------
+
+ ``te`` (aromatic Te) is accepted
+
+
+Dative bonds
+------------
+
+``<-`` and ``->`` create a dative bond between the atoms, direction does matter.
+
+Here's an example of a bipy-copper complex:
+
+.. doctest::
+
+  >>> bipycu = Chem.MolFromSmiles('c1cccn->2c1-c1n->3cccc1.[Pt]23(Cl)Cl')                                                     
+  >>> bipycu.GetBondBetweenAtoms(4,12).GetBondType()                                                                          
+  rdkit.Chem.rdchem.BondType.DATIVE
+  >>> Chem.MolToSmiles(bipycu)                                                                                                
+  'Cl[Pt]1(Cl)<-n2ccccc2-c2ccccn->12'
+
+Dative bonds have the special characteristic that they don't affect the valence on the start atom, but do affect 
+the end atom. So in this case, the N atoms involved in the dative bond have the valence of 3 that we expect from bipy, 
+while the Cu has a valence of 4:
+
+.. doctest::
+
+  >>> bipycu.GetAtomWithIdx(4).GetTotalValence()                                                                         
+  3
+  >>> bipycu.GetAtomWithIdx(12).GetTotalValence()                                                                        
+  4
+
+
+Specifying atoms by atomic number
+---------------------------------
+
+The ``[#6]`` construct from SMARTS is supported in SMILES.
+
+
+CXSMILES extensions
+-------------------
+
+The RDKit supports parsing and writing a subset of the extended SMILES functionality introduced by ChemAxon [#cxsmiles]_CIPCode
+
+The features which are parsed include:
+
+- atomic coordinates
+- atomic values
+- atomic labels
+- atomic properties
+- coordinate bonds (these are translated into double bonds)
+- radicals
+- enhanced stereo (these are converted into ``StereoGroups``)
+
+The features which are written by :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmiles` 
+(note the specialized writer function) include:
+
+- atomic coordinates
+- atomic values
+- atomic labels
+- atomic properties
+- radicals
+- enhanced stereo
+
+.. doctest::
+
+  >>> m = Chem.MolFromSmiles('OC')                                                                                       
+  >>> m.GetAtomWithIdx(0).SetProp('p1','2')                                                                              
+  >>> m.GetAtomWithIdx(1).SetProp('p1','5')                                                                              
+  >>> m.GetAtomWithIdx(1).SetProp('p2','A1')                                                                             
+  >>> m.GetAtomWithIdx(0).SetProp('atomLabel','O1')                                                                      
+  >>> m.GetAtomWithIdx(1).SetProp('atomLabel','C2') 
+  >>> Chem.MolToCXSmiles(m)                                                                                              
+  'CO |$C2;O1$,atomProp:0.p1.5:0.p2.A1:1.p1.2|'
 
 
 SMARTS Support and Extensions
@@ -185,7 +257,10 @@ Here's the (hopefully complete) list of SMARTS features that are *not* supported
 
 Here's the (likely partial) list of extensions:
 
-- **Hybridization queries**:
+
+Hybridization queries
+---------------------
+
    - ``^0`` matches S hybridized atoms
    - ``^1`` matches SP hybridized atoms
    - ``^2`` matches SP2 hybridized atoms
@@ -198,7 +273,11 @@ Here's the (likely partial) list of extensions:
   >> Chem.MolFromSmiles('CC=CF').GetSubstructMatches(Chem.MolFromSmarts('[^2]'))
   ((1,), (2,))
 
-- **Dative bonds**: ``<-`` and ``->`` match the corresponding dative bonds, direction does matter.
+
+Dative bonds
+------------
+
+``<-`` and ``->`` match the corresponding dative bonds, direction does matter.
 
 .. doctest::
 
@@ -207,7 +286,10 @@ Here's the (likely partial) list of extensions:
   >>> Chem.MolFromSmiles('C1=CC=CC=N1->[Fe]').GetSubstructMatches(Chem.MolFromSmarts('*<-[#7]'))
   ((6, 5),)
 
-- **Heteroatom neighbor queries**:
+
+Heteroatom neighbor queries
+---------------------------
+
    - the atom query ``z`` matches atoms that have the specified number of heteroatom (i.e. not C or H) neighbors. For example, ``z2`` would match the second C in ``CC(=O)O``.
    - the atom query ``Z`` matches atoms that have the specified number of aliphatic heteroatom (i.e. not C or H) neighbors.
 
@@ -220,10 +302,17 @@ Here's the (likely partial) list of extensions:
   >>> Chem.MolFromSmiles('O=C(O)c1nc(O)ccn1').GetSubstructMatches(Chem.MolFromSmarts('[Z1]'))
   ((5,),)
 
-- **Range queries**: Ranges of values can be provided for many query types that expect numeric values. Some examples:
-   - ``D{2-4}`` matches atoms that have between 2 and 4 (inclusive) explicit connections.
-   - ``D{-3}`` matches atoms that have less than or equal to 3 explicit connections.
-   - ``D{2-}`` matches atoms that have at least 2 explicit connections.
+
+Range queries
+-------------
+Ranges of values can be provided for many query types that expect numeric values. 
+The query types that currently support range queries are: 
+``D``, ``h``, ``r``, ``R``, ``v``, ``x``, ``X``, ``z``, ``Z``
+  
+Here are some examples:
+  - ``D{2-4}`` matches atoms that have between 2 and 4 (inclusive) explicit connections.
+  - ``D{-3}`` matches atoms that have less than or equal to 3 explicit connections.
+  - ``D{2-}`` matches atoms that have at least 2 explicit connections.
 
 .. doctest::
 
@@ -233,6 +322,65 @@ Here's the (likely partial) list of extensions:
   ((1,), (3,))
   >>> Chem.MolFromSmiles('CC(=O)OC.C').GetSubstructMatches(Chem.MolFromSmarts('[D{-2}]'))
   ((0,), (2,), (3,), (4,), (5,))
+
+
+SMARTS Reference
+----------------
+
+*Note* that the text versions of the tables below include some backslash characters to
+escape special characters. This is a wart from the documentation system we are using.
+Please ignore those characters.
+
+**Atoms**
+
+=========  =========================================  ===============  ======  =========
+Primitive                  Property                   "Default value"  Range?    Notes
+=========  =========================================  ===============  ======  =========
+a          "aromatic atom"
+A          "aliphatic atom"
+D          "explicit degree"                          1                Y
+h          "number of implicit hs"                    >0               Y
+H          "total number of Hs"                       1
+r          "in SSSR ring of size"                     >0               Y
+R          "number of SSSR rings"                     >0               Y
+v          "total valence"                            1                Y
+x          "number of ring bonds"                     >0               Y
+X          "total degree"                             1                Y
+z          "number of heteroatom neighbors"           >0               Y       extension
+Z          "number of alphatic heteroatom neighbors"  >0               Y       extension
+\*         "any atom"
+\+         "positive charge"                          1
+++         "+2 charge"
+\-         "negative charge"                          1
+\--        "-2 charge"
+^0         "S hybridized"                             n/a              N       extension
+^1         "SP hybridized"                            n/a              N       extension
+^2         "SP2 hybridized"                           n/a              N       extension
+^3         "SP3 hybridized"                           n/a              N       extension
+^4         "SP3D hybridized"                          n/a              N       extension
+^5         "SP3D2 hybridized"                         n/a              N       extension
+=========  =========================================  ===============  ======  =========
+
+
+
+**Bonds**
+
+=========  ====================  ===================
+Primitive        Property               Notes
+=========  ====================  ===================
+""         "single or aromatic"  "unspecified bonds"
+\-         single
+=          double
+#          triple
+:          aromatic
+~          "any bond"
+@          "ring bond"
+/          "directional"
+\\         "directional"
+->         "dative right"        extension
+<-         "dative left"         extension
+=========  ====================  ===================
+
 
 
 
@@ -248,10 +396,14 @@ This is the approach that we took with the RDKit.
 
 Because it is sometimes useful to be able to count how many SSSR rings are present in the molecule, there is a GetSSSR function, but this only returns the SSSR count, not the potentially non-unique set of rings.
 
+For situations where you just care about knowing whether or not atoms/bonds are in rings, the RDKit provides the function 
+:py:func:`rdkit.Chem.rdmolops.FastFindRings`. This does a depth-first traversal of the molecule graph and identifies atoms and bonds that
+are in rings.
+
+
 
 Chemical Reaction Handling
 **************************
-
 
 Reaction SMARTS
 ===============
@@ -326,7 +478,8 @@ defition is handled. A consistent example, esterification of secondary
 alcohols, is used throughout [#chiralRxn]_.
 
 If no chiral information is present in the reaction definition, the
-stereochemistry of the reactants is preserved:
+stereochemistry of the reactants is preserved, as is membership in
+enhanced stereo groups:
 
 .. doctest::
 
@@ -960,11 +1113,215 @@ the RDKit we added the option to include S and P contributions:
   100.88
 
 
+Atom Properties and SDF files
+*****************************
+
+*Note* This section describes functionality added in the `2019.03.1` release of the RDKit.
+
+By default the :py:class:`rdkit.Chem.rdmolfiles.SDMolSupplier` and :py:class:`rdkit.Chem.rdmolfiles.ForwardSDMolSupplier` classes 
+(``RDKit::SDMolSupplier`` and ``RDKit::ForwardMolSupplier`` in C++) can now recognize some molecular properties as property lists
+and them into atomic properties. Properties with names that start with ``atom.prop``, ``atom.iprop``, ``atom.dprop``, or ``atom.bprop`` 
+are converted to atomic properties of type string, int (64 bit), double, or bool respectively.
+
+Here's a sample block from an SDF that demonstrates all of the features, they are explained below::
+
+  property_example
+      RDKit  2D
+
+    3  3  0  0  0  0  0  0  0  0999 V2000
+      0.8660    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    -0.4330    0.7500    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    -0.4330   -0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1  2  1  0
+    2  3  1  0
+    3  1  1  0
+  M  END
+  >  <atom.dprop.PartialCharge>  (1) 
+  0.008 -0.314 0.008
+
+  >  <atom.iprop.NumHeavyNeighbors>  (1) 
+  2 2 2
+
+  >  <atom.prop.AtomLabel>  (1) 
+  C1 N2 C3
+
+  >  <atom.bprop.IsCarbon>  (1) 
+  1 0 1
+
+  >  <atom.prop.PartiallyMissing>  (1) 
+  one n/a three
+
+  >  <atom.iprop.PartiallyMissingInt>  (1) 
+  [?] 2 2 ?
+
+  $$$$
+
+Every atom property list should contain a number of space-delimited elements equal to the number of atoms. 
+Missing values are, by default, indicated with the string ``n/a``. The missing value marker can be changed by beginning
+the property list with a value in square brackets. So, for example, the property ``PartiallyMissing`` is set to "one" 
+for atom 0, "three" for atom 2, and is not set for atom 1. Similarly the property ``PartiallyMissingInt`` is set to 2 for atom 0, 2 for atom 1,
+and is not set for atom 2.
+
+This behavior is enabled by default and can be turned on/off with the 
+:py:class:`rdkit.Chem.rdmolfiles.SetProcessPropertyLists` method.
+
+If you have atom properties that you would like to have written to SDF files, you can use the functions
+:py:func:`rdkit.Chem.rdmolfiles.CreateAtomStringPropertyList`, :py:func:`rdkit.Chem.rdmolfiles.CreateAtomIntPropertyList`, 
+:py:func:`rdkit.Chem.rdmolfiles.CreateAtomDoublePropertyList`, or :py:func:`rdkit.Chem.rdmolfiles.CreateAtomBoolPropertyList` :
+
+.. doctest::
+
+  >>> m = Chem.MolFromSmiles('CO')
+  >>> m.GetAtomWithIdx(0).SetDoubleProp('foo',3.14)                                                                      
+  >>> Chem.CreateAtomDoublePropertyList(m,'foo')                                                                         
+  >>> m.GetProp('atom.dprop.foo')                                                                                        
+  '3.1400000000000001 n/a'
+  >>> from io import StringIO                                                                                            
+  >>> sio = StringIO()                                                                                                   
+  >>> w = Chem.SDWriter(sio)                                                                                             
+  >>> w.write(m)                                                                                                         
+  >>> w=None                                                                                                             
+  >>> print(sio.getvalue())   # doctest: +NORMALIZE_WHITESPACE                                                                                     
+  <BLANKLINE>
+       RDKit          2D
+  <BLANKLINE>
+    2  1  0  0  0  0  0  0  0  0999 V2000
+      0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+      1.2990    0.7500    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1  2  1  0
+  M  END
+  >  <atom.dprop.foo>  (1) 
+  3.1400000000000001 n/a
+  <BLANKLINE>
+  $$$$
+  <BLANKLINE>
+
+Support for Enhanced Stereochemistry
+************************************
+
+Overview
+========
+
+We are going to follow, at least for the initial implementation, the enhanced stereo representation 
+used in V3k mol files: groups of atoms with specified stereochemistry with an ``ABS``, ``AND``, or ``OR`` 
+marker indicating what is known. The general idea is that ``AND`` indicates mixtures and ``OR`` indicates unknown single substances.
+
+Here are some illustrations of what the various combinations mean:
+
+.. |and1_and2_base|  image:: ../Code/images/enhanced_stereo_and1_and2_base.png
+   :scale: 100%
+   :align: middle
+.. |and1_and2_expand|  image:: ../Code/images/enhanced_stereo_and1_and2_expand.png
+   :scale: 100%
+   :align: middle
+.. |and1_cis_base|  image:: ../Code/images/enhanced_stereo_and1_cis_base.png
+   :scale: 100%
+   :align: middle
+.. |and1_cis_expand|  image:: ../Code/images/enhanced_stereo_and1_cis_expand.png
+   :scale: 100%
+   :align: middle
+.. |and1_trans_base|  image:: ../Code/images/enhanced_stereo_and1_trans_base.png
+   :scale: 100%
+   :align: middle
+.. |and1_trans_expand|  image:: ../Code/images/enhanced_stereo_and1_trans_expand.png
+   :scale: 100%
+   :align: middle
+.. |or1_or2_base|  image:: ../Code/images/enhanced_stereo_or1_or2_base.png
+   :scale: 100%
+   :align: middle
+.. |or1_or2_expand|  image:: ../Code/images/enhanced_stereo_and1_and2_expand.png
+   :scale: 100%
+   :align: middle
+.. |or1_cis_base|  image:: ../Code/images/enhanced_stereo_or1_cis_base.png
+   :scale: 100%
+   :align: middle
+.. |or1_cis_expand|  image:: ../Code/images/enhanced_stereo_and1_cis_expand.png
+   :scale: 100%
+   :align: middle
+.. |or1_trans_base|  image:: ../Code/images/enhanced_stereo_or1_trans_base.png
+   :scale: 100%
+   :align: middle
+.. |or1_trans_expand|  image:: ../Code/images/enhanced_stereo_and1_trans_expand.png
+   :scale: 100%
+   :align: middle
+.. |abs_and_base|  image:: ../Code/images/enhanced_stereo_abs_and_base.png
+   :scale: 100%
+   :align: middle
+.. |abs_and_expand|  image:: ../Code/images/enhanced_stereo_abs_and_expand.png
+   :scale: 100%
+   :align: middle
+.. |abs_or_base|  image:: ../Code/images/enhanced_stereo_abs_or_base.png
+   :scale: 100%
+   :align: middle
+.. |abs_or_expand|  image:: ../Code/images/enhanced_stereo_abs_and_expand.png
+   :scale: 100%
+   :align: middle
+
+
+
+====================  ==========   ==============
+  What's drawn         Mixture?     What it means 
+====================  ==========   ==============
+|and1_and2_base|      mixture      |and1_and2_expand| 
+|and1_cis_base|       mixture      |and1_cis_expand| 
+|and1_trans_base|     mixture      |and1_trans_expand| 
+|or1_or2_base|        single       |or1_or2_expand| 
+|or1_cis_base|        single       |or1_cis_expand| 
+|or1_trans_base|      single       |or1_trans_expand| 
+|abs_and_base|        mixture      |abs_and_expand| 
+|abs_or_base|         single       |abs_or_expand| 
+====================  ==========   ==============
+
+
+Representation
+==============
+
+Stored as a vector of :py:class:`rdkit.Chem.rdchem.StereoGroup` objects on a molecule. Each ``StereoGroup`` keeps track of its type 
+and the set of atoms that make it up.
+
+
+Use cases
+=========
+
+The initial target is to not lose data on an ``V3k mol -> RDKit -> V3k mol`` round trip. Manipulation, depiction, and searching are future goals.
+
+It is possible to enumerate the elements of a ``StereoGroup`` using the function :py:func:`rdkit.Chem.EnumerateStereoisomers.EumerateStereoisomers`, which also
+preserves membership in the original ``StereoGroup``.
+
+.. doctest ::
+
+  >>> m = Chem.MolFromSmiles('C[C@H](F)C[C@H](O)Cl |&1:1|')
+  >>> m.GetStereoGroups()[0].GetGroupType()
+  rdkit.Chem.rdchem.StereoGroupType.STEREO_AND
+  >>> [x.GetIdx() for x in m.GetStereoGroups()[0].GetAtoms()]
+  [1]
+  >>> from rdkit.Chem.EnumerateStereoisomers import EnumerateStereoisomers
+  >>> [Chem.MolToCXSmiles(x) for x in EnumerateStereoisomers(m)]
+  ['C[C@@H](F)C[C@H](O)Cl |&1:1|', 'C[C@H](F)C[C@H](O)Cl |&1:1|']
+
+Reactions also preserve ``StereoGroup``s. Product atoms are included in the ``StereoGroup`` as long as the reaction doesn't create or destroy chirality at the atom.
+
+.. doctest ::
+
+  >>> def clearAllAtomProps(mol):
+  ...  """So that atom mapping isn't shown"""
+  ...  for atom in mol.GetAtoms():
+  ...   for key in atom.GetPropsAsDict():
+  ...    atom.ClearProp(key)
+  ...
+  >>> rxn = AllChem.ReactionFromSmarts('[C:1]F >> [C:1]Br')
+  >>> ps=rxn.RunReactants([m])
+  >>> clearAllAtomProps(ps[0][0])
+  >>> Chem.MolToCXSmiles(ps[0][0])
+  'C[C@H](Br)C[C@H](O)Cl |&1:1|'
+
+
 .. rubric:: Footnotes
 
 .. [#smirks] http://www.daylight.com/dayhtml/doc/theory/theory.smirks.html
 .. [#smiles] http://www.daylight.com/dayhtml/doc/theory/theory.smiles.html
 .. [#smarts] http://www.daylight.com/dayhtml/doc/theory/theory.smarts.html
+.. [#cxsmiles] https://docs.chemaxon.com/display/docs/ChemAxon+Extended+SMILES+and+SMARTS+-+CXSMILES+and+CXSMARTS
 .. [#intramolRxn] Thanks to James Davidson for this example.
 .. [#chiralRxn] Thanks to JP Ebejer and Paul Finn for this example.
 
@@ -973,7 +1330,7 @@ License
 
 .. image:: images/picture_5.png
 
-This document is copyright (C) 2007-2018 by Greg Landrum
+This document is copyright (C) 2007-2019 by Greg Landrum
 
 This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 License.
 To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/4.0/ or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.

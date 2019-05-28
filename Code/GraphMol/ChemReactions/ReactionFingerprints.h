@@ -99,8 +99,10 @@ struct RDKIT_CHEMREACTIONS_EXPORT ReactionFingerprintParams {
   FingerprintType fpType;
 };
 
-RDKIT_CHEMREACTIONS_EXPORT extern const ReactionFingerprintParams DefaultStructuralFPParams;
-RDKIT_CHEMREACTIONS_EXPORT extern const ReactionFingerprintParams DefaultDifferenceFPParams;
+RDKIT_CHEMREACTIONS_EXPORT extern const ReactionFingerprintParams
+    DefaultStructuralFPParams;
+RDKIT_CHEMREACTIONS_EXPORT extern const ReactionFingerprintParams
+    DefaultDifferenceFPParams;
 
 //! Generates a structural fingerprint for a reaction
 //! to use in screening
@@ -142,9 +144,10 @@ RDKIT_CHEMREACTIONS_EXPORT ExplicitBitVect *StructuralFingerprintChemReaction(
   <b>Notes:</b>
     - the caller is responsible for <tt>delete</tt>ing the result
 */
-RDKIT_CHEMREACTIONS_EXPORT SparseIntVect<boost::uint32_t> *DifferenceFingerprintChemReaction(
-    const ChemicalReaction &rxn,
-    const ReactionFingerprintParams &params = DefaultDifferenceFPParams);
-}
+RDKIT_CHEMREACTIONS_EXPORT SparseIntVect<std::uint32_t>
+    *DifferenceFingerprintChemReaction(
+        const ChemicalReaction &rxn,
+        const ReactionFingerprintParams &params = DefaultDifferenceFPParams);
+}  // namespace RDKit
 
 #endif

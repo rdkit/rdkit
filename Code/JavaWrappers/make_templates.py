@@ -6,7 +6,7 @@
 becomes this
     %template(OnBitProjSimilarityEBV) OnBitProjSimilarity<ExplicitBitVect,ExplicitBitVect>;
 """
-from __future__ import print_function
+
 
 import re
 template_match = re.compile(r"""template\s*\<(.+)\>\s*.*\s+(\w+)\s*\(.*""")

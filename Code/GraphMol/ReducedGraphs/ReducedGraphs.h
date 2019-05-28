@@ -12,7 +12,7 @@
 #define _RD_REDUCEDGRAPHS_H_
 
 #include <vector>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 #include <boost/dynamic_bitset.hpp>
 #include <Numerics/Vector.h>
 
@@ -32,7 +32,7 @@ namespace ReducedGraphs {
 
 */
 RDKIT_REDUCEDGRAPHS_EXPORT ROMol *generateMolExtendedReducedGraph(
-    const ROMol &mol, std::vector<boost::dynamic_bitset<> > *atomTypes = 0);
+    const ROMol &mol, std::vector<boost::dynamic_bitset<>> *atomTypes = 0);
 //! \brief Generates a ErG fingerprint vector for a molecule that's already a
 // reduced graph
 /*!
@@ -51,8 +51,9 @@ RDKIT_REDUCEDGRAPHS_EXPORT ROMol *generateMolExtendedReducedGraph(
   - the caller is responsible for <tt>delete</tt>ing the result
 
 */
-RDKIT_REDUCEDGRAPHS_EXPORT RDNumeric::DoubleVector *generateErGFingerprintForReducedGraph(
-    const ROMol &mol, std::vector<boost::dynamic_bitset<> > *atomTypes = 0,
+RDKIT_REDUCEDGRAPHS_EXPORT RDNumeric::DoubleVector *
+generateErGFingerprintForReducedGraph(
+    const ROMol &mol, std::vector<boost::dynamic_bitset<>> *atomTypes = 0,
     double fuzzIncrement = 0.3, unsigned int minPath = 1,
     unsigned int maxPath = 15);
 
@@ -74,10 +75,10 @@ RDKIT_REDUCEDGRAPHS_EXPORT RDNumeric::DoubleVector *generateErGFingerprintForRed
 
 */
 RDKIT_REDUCEDGRAPHS_EXPORT RDNumeric::DoubleVector *getErGFingerprint(
-    const ROMol &mol, std::vector<boost::dynamic_bitset<> > *atomTypes = 0,
+    const ROMol &mol, std::vector<boost::dynamic_bitset<>> *atomTypes = 0,
     double fuzzIncrement = 0.3, unsigned int minPath = 1,
     unsigned int maxPath = 15);
-}  // end of ReducedGraphs namespace
-}  // end of RDKit namespace
+}  // namespace ReducedGraphs
+}  // namespace RDKit
 
 #endif

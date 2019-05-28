@@ -12,6 +12,7 @@
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <RDGeneral/Invariant.h>
 #include <DataStructs/ExplicitBitVect.h>
@@ -156,6 +157,41 @@ void test3() {
   }
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testGitHub1062() {
+  BOOST_LOG(rdInfoLog) << "testing GitHub issue #1062:  pyAvalonTools not "
+                          "preserving the stereochemistry of double bonds when "
+                          "computing 2D coordinates"
+                       << std::endl;
+  {
+    std::string s0 = "C/C=C\\C";
+    ROMol *m1 = SmilesToMol(s0);
+    auto s1 = MolToSmiles(*m1);
+    AvalonTools::set2DCoords(*m1);
+    std::string mb = MolToMolBlock(*m1);
+    ROMol *m2 = MolBlockToMol(mb);
+    std::string s2 = MolToSmiles(*m2);
+    delete m1;
+    delete m2;
+    TEST_ASSERT(s1 == s2);
+  }
+  {
+    // repeat the test with an input smiles that is not canonical
+    // to verify that the implementation is not sensitive to the
+    // ordering of atoms
+    std::string s0 = "C/C=C(F)\\C";
+    ROMol *m1 = SmilesToMol(s0);
+    auto s1 = MolToSmiles(*m1);
+    TEST_ASSERT(s1 != s0);
+    AvalonTools::set2DCoords(*m1);
+    std::string mb = MolToMolBlock(*m1);
+    ROMol *m2 = MolBlockToMol(mb);
+    std::string s2 = MolToSmiles(*m2);
+    delete m1;
+    delete m2;
+    TEST_ASSERT(s1 == s2);
+  }
 }
 
 void testRDK151() {
@@ -422,6 +458,7 @@ int main() {
   test1();
   test2();
   test3();
+  testGitHub1062();
   testRDK151();
   testSmilesFailures();
   testSubstructFps();

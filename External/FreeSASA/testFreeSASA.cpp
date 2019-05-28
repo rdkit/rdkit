@@ -28,6 +28,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
+#include <RDGeneral/test.h>
 #include "RDFreeSASA.h"
 
 #include <GraphMol/RDKitBase.h>
@@ -375,11 +376,19 @@ void testPDB() {
     TEST_ASSERT(radii[idx] == ExpectedProtor1d3z[idx].radius);
   }
 
-  FreeSASA::SASAOpts opts;
-  opts.algorithm = FreeSASA::SASAOpts::ShrakeRupley;
-
-  double sasa = FreeSASA::calcSASA(*m, radii, -1, nullptr, opts);
-  TEST_ASSERT(fabs(sasa - 5000.340175) < 1e-5);
+  {
+    FreeSASA::SASAOpts opts;
+    opts.algorithm = FreeSASA::SASAOpts::ShrakeRupley;
+    double sasa = FreeSASA::calcSASA(*m, radii, -1, nullptr, opts);
+    TEST_ASSERT(fabs(sasa - 5000.340175) < 1e-5);
+  }
+  {
+    FreeSASA::SASAOpts opts;
+    opts.algorithm = FreeSASA::SASAOpts::ShrakeRupley;
+    opts.probeRadius = 2.0;
+    double sasa = FreeSASA::calcSASA(*m, radii, -1, nullptr, opts);
+    TEST_ASSERT(fabs(sasa - 4977.770911) < 1e-5);
+  }
 
   delete m;
   {
@@ -389,22 +398,36 @@ void testPDB() {
   }
   ROMol *mnoh = MolOps::removeHs(*m);
   FreeSASA::classifyAtoms(*mnoh, radii);
-  sasa = FreeSASA::calcSASA(*mnoh, radii, -1, nullptr, opts);
-  TEST_ASSERT(fabs(sasa - 5000.340175) < 1e-5);
+  {
+    FreeSASA::SASAOpts opts;
+    opts.algorithm = FreeSASA::SASAOpts::ShrakeRupley;
+    double sasa = FreeSASA::calcSASA(*mnoh, radii, -1, nullptr, opts);
+    TEST_ASSERT(fabs(sasa - 5000.340175) < 1e-5);
+  }
+  {
+    FreeSASA::SASAOpts opts;
+    opts.algorithm = FreeSASA::SASAOpts::ShrakeRupley;
+    opts.probeRadius = 2.0;
+    double sasa = FreeSASA::calcSASA(*mnoh, radii, -1, nullptr, opts);
+    TEST_ASSERT(fabs(sasa - 4977.770911) < 1e-5);
+  }
 
   const QueryAtom *apolar = FreeSASA::makeFreeSasaAPolarAtomQuery();
   const QueryAtom *polar = FreeSASA::makeFreeSasaPolarAtomQuery();
-  double apolard = FreeSASA::calcSASA(*mnoh, radii, -1, apolar, opts);
-  double polard = FreeSASA::calcSASA(*mnoh, radii, -1, polar, opts);
-  std::cerr << " polar " << polard << std::endl;
-  std::cerr << " apolar " << apolard << std::endl;
+  {
+    FreeSASA::SASAOpts opts;
+    opts.algorithm = FreeSASA::SASAOpts::ShrakeRupley;
+    double apolard = FreeSASA::calcSASA(*mnoh, radii, -1, apolar, opts);
+    double polard = FreeSASA::calcSASA(*mnoh, radii, -1, polar, opts);
+    std::cerr << " polar " << polard << std::endl;
+    std::cerr << " apolar " << apolard << std::endl;
+    TEST_ASSERT(fabs(polard + apolard - 5000.340175) < 1e-5);
+  }
 
   delete polar;
   delete apolar;
   delete m;
   delete mnoh;
-
-  TEST_ASSERT(fabs(polard + apolard - 5000.340175) < 1e-5);
 
   BOOST_LOG(rdInfoLog) << "Done" << std::endl;
 }

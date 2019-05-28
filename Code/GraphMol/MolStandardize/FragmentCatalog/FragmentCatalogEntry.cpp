@@ -32,7 +32,7 @@ namespace MolStandardize {
 void FragmentCatalogEntry::toStream(std::ostream &ss) const {
   MolPickler::pickleMol(*dp_mol, ss);
 
-  boost::int32_t tmpInt;
+  std::int32_t tmpInt;
   tmpInt = getBitId();
   streamWrite(ss, tmpInt);
 
@@ -53,7 +53,7 @@ void FragmentCatalogEntry::initFromStream(std::istream &ss) {
   dp_mol = new ROMol();
   MolPickler::molFromPickle(ss, *dp_mol);
 
-  boost::int32_t tmpInt;
+  std::int32_t tmpInt;
   // the bitId:
   streamRead(ss, tmpInt);
   setBitId(tmpInt);

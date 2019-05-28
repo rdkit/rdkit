@@ -324,7 +324,7 @@ Vector<TYPE> &multiply(const Matrix<TYPE> &A, const Vector<TYPE> &x,
 };
 
 typedef Matrix<double> DoubleMatrix;
-};
+};  // namespace RDNumeric
 
 //! ostream operator for Matrix's
 template <class TYPE>
