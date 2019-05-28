@@ -76,9 +76,9 @@ public class DistanceGeometryTests extends GraphMolTest {
 						double d1 = pt1j.minus(pt1i).length();
 						double d2 = pt2j.minus(pt2i).length();
 						if(m.getBondBetweenAtoms(i,j) != null){
-							assertEquals(d1, d2, 0.06);
+							assertTrue(Math.abs(d1-d2)/d1<0.06);
                                                 } else {
-							assertEquals(d1, d2, 0.15);
+							assertTrue(Math.abs(d1-d2)/d1<0.12);
                                                 }
 					}
 				}
