@@ -84,12 +84,12 @@ def ComputeMolVolume(mol, confId=-1, gridSpacing=0.2, boxMargin=2.0):
     >>> AllChem.EmbedMolecule(mol)
     0
     >>> ComputeMolVolume(mol)
-    34...
+    28...
     >>> mol = Chem.AddHs(Chem.MolFromSmiles('O'))
     >>> AllChem.EmbedMolecule(mol)
     0
     >>> ComputeMolVolume(mol)
-    23...
+    20...
 
     """
     mol = rdchem.Mol(mol)
@@ -214,7 +214,7 @@ def EnumerateLibraryFromReaction(reaction, sidechainSets, returnReactants=False)
     >>> amines = (Chem.MolFromSmiles('N'+'C'*x) for x in range(10000))
 
     ... a set of 10000 acids
-    
+
     >>> acids = (Chem.MolFromSmiles('OC(=O)'+'C'*x) for x in range(10000))
 
     ... now the virtual library (1e8 compounds in principle):
@@ -360,7 +360,7 @@ def AssignBondOrdersFromTemplate(refmol, mol):
 
     An example, start by generating a template from a SMILES
     and read in the PDB structure of the molecule
-    
+
     >>> import os
     >>> from rdkit.Chem import AllChem
     >>> template = AllChem.MolFromSmiles("CN1C(=NC(C1=O)(c2ccccc2)c3ccccc3)N")
@@ -371,7 +371,7 @@ def AssignBondOrdersFromTemplate(refmol, mol):
     22
 
     Now assign the bond orders based on the template molecule
-    
+
     >>> newMol = AllChem.AssignBondOrdersFromTemplate(template, mol)
     >>> len([1 for b in newMol.GetBonds() if b.GetBondTypeAsDouble() == 1.0])
     8

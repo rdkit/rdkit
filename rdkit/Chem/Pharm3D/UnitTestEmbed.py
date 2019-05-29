@@ -122,9 +122,9 @@ class TestCase(unittest.TestCase):
 
     def test3Embed(self):
         testResults = {
-          'mol_197': (218.80, 35.75, 110.33, 11.58, 109.66, 11.09, 90.35, 2.95, 0.00),
-          'mol_223': (259.19, 6.27, 134.13, 1.12, 134.06, 1.12, 85.74, 0.61, 0.00),
-          'mol_269': (204.51, 7.89, 103.89, 1.20, 102.66, 1.20, 88.07, 1.21, 6.00),
+          'mol_197': (218.61, 36.02, 110.32, 11.58, 109.65, 11.09, 90.35, 2.95, 0.00),
+          'mol_223': (250.46, 7.24, 134.74, 1.55, 134.66, 1.55, 85.27, 0.61, 0.00),
+          'mol_269': (215.52, 6.07, 103.94, 0.21, 102.76, 0.27, 88.22, 0.36, 6.00),
         }
         inF = gzip.open(os.path.join(self.dataDir, 'cdk2-syn-clip100.pkl.gz'), 'rb')
         nDone = 0
@@ -154,8 +154,8 @@ class TestCase(unittest.TestCase):
                                                   randomSeed=23)
                         tgt = testResults[name]
                         self.assertEqual(len(tgt), len(stats))
-                        # print(name)
-                        # print(','.join(['%.2f' % x for x in stats]))
+                        print(name)
+                        print(','.join(['%.2f' % x for x in stats]))
                         # we'll use different tolerances for the different values:
                         self.assertTrue(feq(tgt[0], stats[0], 5.0), (tgt[0], stats[0]))
                         for i in range(2, len(tgt)):
