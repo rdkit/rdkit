@@ -1645,36 +1645,56 @@ void testGithub971() {
     int cid = DGeomHelpers::EmbedMolecule(*m, 0, 0xf00d);
     TEST_ASSERT(cid >= 0);
     MolOps::removeHs(*m);
-    std::string expectedMb =
-        "\n     RDKit          3D\n\n 19 21  0  0  0  0  0  0  0  0999 V2000\n "
-        "   1.1258   -1.3888    0.9306 C   0  0  0  0  0  0  0  0  0  0  0  "
-        "0\n    1.0779   -0.1065    0.1565 C   0  0  0  0  0  0  0  0  0  0  0 "
-        " 0\n    2.2519    0.2795   -0.3483 C   0  0  0  0  0  0  0  0  0  0  "
-        "0  0\n    3.5245   -0.0901    0.2817 C   0  0  0  0  0  0  0  0  0  0 "
-        " 0  0\n    4.2551    0.9456    0.8411 C   0  0  0  0  0  0  0  0  0  "
-        "0  0  0\n    5.6137    0.8099    1.0965 C   0  0  0  0  0  0  0  0  0 "
-        " 0  0  0\n    6.2293   -0.3871    0.7552 C   0  0  0  0  0  0  0  0  "
-        "0  0  0  0\n    5.4107   -1.4793    0.4938 C   0  0  0  0  0  0  0  0 "
-        " 0  0  0  0\n    4.2354   -1.1874   -0.1873 C   0  0  0  0  0  0  0  "
-        "0  0  0  0  0\n   -0.0943    0.0572   -0.7601 C   0  0  0  0  0  0  0 "
-        " 0  0  0  0  0\n   -1.3242    0.2903   -0.0524 N   0  0  0  0  0  0  "
-        "0  0  0  0  0  0\n   -2.1468    1.1490   -0.9044 C   0  0  0  0  0  0 "
-        " 0  0  0  0  0  0\n   -3.1678    1.9193   -0.1239 C   0  0  0  0  0  "
-        "0  0  0  0  0  0  0\n   -2.9879    1.6714    1.3508 C   0  0  0  0  0 "
-        " 0  0  0  0  0  0  0\n   -3.3579    0.3480    1.7662 N   0  0  0  0  "
-        "0  0  0  0  0  0  0  0\n   -3.4586   -0.6011    0.7007 C   0  0  0  0 "
-        " 0  0  0  0  0  0  0  0\n   -2.1733   -0.8977   -0.0058 C   0  0  0  "
-        "0  0  0  0  0  0  0  0  0\n   -2.5650   -1.1467   -1.4589 C   0  0  0 "
-        " 0  0  0  0  0  0  0  0  0\n   -2.7401    0.2591   -1.9624 C   0  0  "
-        "0  0  0  0  0  0  0  0  0  0\n  1  2  1  0\n  2  3  2  0\n  3  4  1  "
-        "0\n  4  5  2  0\n  5  6  1  0\n  6  7  2  0\n  7  8  1  0\n  8  9  2  "
-        "0\n  2 10  1  0\n 10 11  1  0\n 11 12  1  0\n 12 13  1  0\n 13 14  1  "
-        "0\n 14 15  1  0\n 15 16  1  0\n 16 17  1  0\n 17 18  1  0\n 18 19  1  "
-        "0\n  9  4  1  0\n 17 11  1  0\n 19 12  1  0\nM  CHG  1  15   1\nM  "
-        "END\n";
+    std::string expectedMb = R"CTAB(
+     RDKit          3D
+
+ 19 21  0  0  0  0  0  0  0  0999 V2000
+    1.1886   -1.4168    0.8579 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0673   -0.0768    0.1995 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2169    0.4750   -0.1935 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.5072    0.0051    0.3290 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.3384    0.9895    0.8425 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.6714    0.7376    1.1358 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.1353   -0.5269    0.8881 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.3159   -1.5094    0.3457 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.1414   -1.0880   -0.2477 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0961    0.0762   -0.7307 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3281    0.3264   -0.0331 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1244    1.2097   -0.8827 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.2111    1.8916   -0.0980 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9969    1.6208    1.3672 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.3806    0.2980    1.7743 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4530   -0.6563    0.7070 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1661   -0.8675   -0.0283 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.5534   -1.0960   -1.4823 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6831    0.3159   -1.9837 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  2  0
+  3  4  1  0
+  4  5  2  0
+  5  6  1  0
+  6  7  2  0
+  7  8  1  0
+  8  9  2  0
+  2 10  1  0
+ 10 11  1  0
+ 11 12  1  0
+ 12 13  1  0
+ 13 14  1  0
+ 14 15  1  0
+ 15 16  1  0
+ 16 17  1  0
+ 17 18  1  0
+ 18 19  1  0
+  9  4  1  0
+ 17 11  1  0
+ 19 12  1  0
+M  CHG  1  15   1
+M  END)CTAB";
     RWMol *expected = MolBlockToMol(expectedMb);
     unsigned int nat = expected->getNumAtoms();
     TEST_ASSERT(nat == m->getNumAtoms());
+
     compareConfs(m, expected, 0, 0);
     delete m;
     delete expected;
@@ -1695,7 +1715,10 @@ void testEmbedParameters() {
     TEST_ASSERT(ref->getNumAtoms() == mol->getNumAtoms());
     DGeomHelpers::EmbedParameters params;
     params.randomSeed = 42;
-    DGeomHelpers::EmbedMolecule(*mol, params);
+    TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
+    // std::cerr << MolToMolBlock(*ref) << std::endl;
+    // std::cerr << MolToMolBlock(*mol) << std::endl;
+    // std::cerr << fname << std::endl;
     compareConfs(ref, mol);
 
     delete ref;
@@ -1714,7 +1737,10 @@ void testEmbedParameters() {
     DGeomHelpers::EmbedParameters params;
     params.randomSeed = 42;
     params.useExpTorsionAnglePrefs = true;
-    DGeomHelpers::EmbedMolecule(*mol, params);
+    TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
+    // std::cerr << MolToMolBlock(*ref) << std::endl;
+    // std::cerr << MolToMolBlock(*mol) << std::endl;
+    // std::cerr << fname << std::endl;
     compareConfs(ref, mol);
 
     delete ref;
@@ -1734,7 +1760,10 @@ void testEmbedParameters() {
     params.randomSeed = 42;
     params.useExpTorsionAnglePrefs = true;
     params.useBasicKnowledge = true;
-    DGeomHelpers::EmbedMolecule(*mol, params);
+    TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
+    // std::cerr << MolToMolBlock(*ref) << std::endl;
+    // std::cerr << MolToMolBlock(*mol) << std::endl;
+    // std::cerr << fname << std::endl;
     compareConfs(ref, mol);
 
     delete ref;
@@ -1755,7 +1784,10 @@ void testEmbedParameters() {
     params.useExpTorsionAnglePrefs = true;
     params.useBasicKnowledge = true;
     params.ETversion = 2;
-    DGeomHelpers::EmbedMolecule(*mol, params);
+    TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
+    // std::cerr << MolToMolBlock(*ref) << std::endl;
+    // std::cerr << MolToMolBlock(*mol) << std::endl;
+    // std::cerr << fname << std::endl;
     compareConfs(ref, mol);
 
     delete ref;
@@ -1774,7 +1806,10 @@ void testEmbedParameters() {
     DGeomHelpers::EmbedParameters params;
     params.randomSeed = 42;
     params.useBasicKnowledge = true;
-    DGeomHelpers::EmbedMolecule(*mol, params);
+    TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
+    // std::cerr << MolToMolBlock(*ref) << std::endl;
+    // std::cerr << MolToMolBlock(*mol) << std::endl;
+    // std::cerr << fname << std::endl;
     compareConfs(ref, mol);
 
     delete ref;
@@ -1794,7 +1829,10 @@ void testEmbedParameters() {
     TEST_ASSERT(ref->getNumAtoms() == mol->getNumAtoms());
     DGeomHelpers::EmbedParameters params(DGeomHelpers::ETDG);
     params.randomSeed = 42;
-    DGeomHelpers::EmbedMolecule(*mol, params);
+    TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
+    // std::cerr << MolToMolBlock(*ref) << std::endl;
+    // std::cerr << MolToMolBlock(*mol) << std::endl;
+    // std::cerr << fname << std::endl;
     compareConfs(ref, mol);
 
     delete ref;
@@ -1812,7 +1850,10 @@ void testEmbedParameters() {
     TEST_ASSERT(ref->getNumAtoms() == mol->getNumAtoms());
     DGeomHelpers::EmbedParameters params(DGeomHelpers::ETKDG);
     params.randomSeed = 42;
-    DGeomHelpers::EmbedMolecule(*mol, params);
+    TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
+    // std::cerr << MolToMolBlock(*ref) << std::endl;
+    // std::cerr << MolToMolBlock(*mol) << std::endl;
+    // std::cerr << fname << std::endl;
     compareConfs(ref, mol);
 
     delete ref;
@@ -1830,7 +1871,10 @@ void testEmbedParameters() {
     TEST_ASSERT(ref->getNumAtoms() == mol->getNumAtoms());
     DGeomHelpers::EmbedParameters params(DGeomHelpers::KDG);
     params.randomSeed = 42;
-    DGeomHelpers::EmbedMolecule(*mol, params);
+    TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
+    // std::cerr << MolToMolBlock(*ref) << std::endl;
+    // std::cerr << MolToMolBlock(*mol) << std::endl;
+    // std::cerr << fname << std::endl;
     compareConfs(ref, mol);
 
     delete ref;

@@ -23,6 +23,18 @@ const double electronMass =
     0.00054857991;  // value from http://physics.nist.gov/cgi-bin/cuu/Value?me
 }
 
+// these data came from a variety of sources. If it's not explicitly listed
+// here, then it has likely been lost in antiquity. Columns:
+//  atomic number
+//  symbol
+//  rCov
+//  rB0
+//  rVdw (taken from BODR v10.1)
+//  atomic mass
+//  # outershell electrons
+//  most common isotope
+//  most common isotopic mass
+//  list of allowed valences, -1 for anything
 const std::string periodicTableAtomData =
     "0	*	0	0	0	0	0	0	0	-1 \n \
 1	H 	0.23	0.33	1.2	1.008	1	1	1.007825032	1 \n \
@@ -137,13 +149,13 @@ const std::string periodicTableAtomData =
 110	Ds	1.28	0	2.0	281	2	281	281.16206	-1 \n \
 111	Rg	1.21	0	2.0	281	2	281	281.16537	-1 \n \
 112	Cn	1.22	0	2.0	285	2	285	285.17411	-1 \n"
-  // The Blue Obelisk Data Repository has no VdW radii for those:
-  // Ds Rg Cn Uut Fl Mc Uup Lv Ts Og; we use 2.0 for all of them
-  // ---
-  // added from BODR 30.10.2016
-  // atomic mass data from NIST
-  // we leave Uut and Uup in here for backwards
-  // compatibility
+    // The Blue Obelisk Data Repository has no VdW radii for those:
+    // Ds Rg Cn Uut Fl Mc Uup Lv Ts Og; we use 2.0 for all of them
+    // ---
+    // added from BODR 30.10.2016
+    // atomic mass data from NIST
+    // we leave Uut and Uup in here for backwards
+    // compatibility
     "113	Nh	1.36	0	2.0	284	2	284	284.17873	-1 \n \
 113	Uut	1.36	0	2.0	284	2	284	284.17873	-1 \n \
 114	Fl	1.43	0	2.0	289	2	289	289.19042	-1 \n \
