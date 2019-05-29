@@ -1,6 +1,12 @@
 # Release_2019.09.1
 (Changes relative to Release_2019.03.1)
 
+## Important
+- The atomic van der Waals radii used by the RDKit were corrected/updated in #2154.
+  This leads to different results when generating conformations, molecular volumes,
+  and molecular shapes. 
+
+
 ## Highlights:
 
 ## Acknowledgements:
