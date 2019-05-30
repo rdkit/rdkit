@@ -107,6 +107,10 @@
 %ignore SubstructMatch;
 %include <GraphMol/Substruct/SubstructMatch.h>
 
+%ignore RDKit::MolPickler;
+%include <GraphMol/MolPickler.h>
+
+
 
 %newobject removeHs;
 %newobject addHs;
@@ -390,7 +394,13 @@ void setPreferCoordGen(bool);
     std::string sres;
     sres.resize(pkl.size());
     std::copy(pkl.begin(),pkl.end(),sres.begin());
-    RDKit::ROMol *res=new RDKit::ROMol(sres);
+    RDKit::ROMol *res;
+    try {
+      res = new RDKit::ROMol(sres);
+    } catch (const RDKit::MolPicklerException &e) {
+      res = nullptr;
+      throw;
+    }
     return RDKit::ROMOL_SPTR(res);
   }
 

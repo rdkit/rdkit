@@ -1379,11 +1379,11 @@ void testCustomPickler() {
       m.getAtomWithIdx(0)->getProp<ExplicitBitVect>("bv").getBit(100) == true);
   TEST_ASSERT(
       m.getAtomWithIdx(0)->getProp<ExplicitBitVect>("bv").getBit(101) == false);
-  
+
   std::string pkl;
   MolPickler::pickleMol(m, pkl, PicklerOps::AllProps);
   std::unique_ptr<RWMol> roundTripped(new RWMol(pkl));
-  
+
   TEST_ASSERT(roundTripped->getAtomWithIdx(0)->hasProp("bv"));
   TEST_ASSERT(
       roundTripped->getAtomWithIdx(0)->getProp<ExplicitBitVect>("bv").getBit(100) == true);
@@ -1402,12 +1402,12 @@ void testGithub2441() {
 
   auto *conf = new Conformer(2);
   conf->setId(23);
-  conf->setProp("foo",1);
+  conf->setProp("foo", 1);
   m1->addConformer(conf);
   conf = new Conformer(2);
   conf->setId(12);
-  conf->setProp("foo",2);
-  conf->setProp("bar",23);
+  conf->setProp("foo", 2);
+  conf->setProp("bar", 23);
   m1->addConformer(conf);
 
   std::string pickle;
@@ -1421,7 +1421,7 @@ void testGithub2441() {
   }
 
   unsigned int pparms = PicklerOps::AllProps;
-  
+
   MolPickler::pickleMol(*m1, pickle, pparms);
   {
     std::unique_ptr<ROMol> m2(new ROMol());
@@ -1429,16 +1429,37 @@ void testGithub2441() {
     TEST_ASSERT(m2->getConformer().getId() == 23);
     TEST_ASSERT(m2->getConformer(12).getId() == 12);
     TEST_ASSERT(m2->getConformer().hasProp("foo"));
-    TEST_ASSERT(m2->getConformer().getProp<int>("foo")==1);
-    TEST_ASSERT(m2->getConformer(12).getProp<int>("foo")==2);
+    TEST_ASSERT(m2->getConformer().getProp<int>("foo") == 1);
+    TEST_ASSERT(m2->getConformer(12).getProp<int>("foo") == 2);
     TEST_ASSERT(!m2->getConformer().hasProp("bar"));
-    TEST_ASSERT(m2->getConformer(12).getProp<int>("bar")==23);
+    TEST_ASSERT(m2->getConformer(12).getProp<int>("bar") == 23);
     
   }
 
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
 
+void testNegativeMaps() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog)
+      << "Testing Github #2465: Negative atom-map numbers cause "
+         "depickling to fail."
+      << std::endl;
+
+  auto m1 = "CC"_smiles;
+  TEST_ASSERT(m1);
+  m1->getAtomWithIdx(0)->setAtomMapNum(-1, false);
+  m1->getAtomWithIdx(1)->setAtomMapNum(-1, false);
+
+  std::string pickle;
+  MolPickler::pickleMol(*m1, pickle);
+  {
+    std::unique_ptr<ROMol> m2(new ROMol(pickle));
+    TEST_ASSERT(m2)
+  }
+
+  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+}
 
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
@@ -1476,6 +1497,7 @@ int main(int argc, char *argv[]) {
   testGithub1999();
   testEnhancedStereoChemistry();
   testCustomPickler();
-#endif
   testGithub2441();
+#endif
+  testNegativeMaps();
 }
