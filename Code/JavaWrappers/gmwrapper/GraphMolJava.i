@@ -131,6 +131,7 @@ typedef unsigned long long int	uintmax_t;
 %shared_ptr(RDKit::QueryOps)
 %shared_ptr(RDKit::MolSanitizeException)
 %shared_ptr(RDKit::SmilesParseException)
+%shared_ptr(RDKit::MolPicklerException)
 %shared_ptr(RDKit::RingInfo)
 %shared_ptr(RDKit::ChemicalReaction)
 %shared_ptr(ForceFields::ForceFieldContrib);

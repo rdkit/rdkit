@@ -1379,16 +1379,38 @@ void testCustomPickler() {
       m.getAtomWithIdx(0)->getProp<ExplicitBitVect>("bv").getBit(100) == true);
   TEST_ASSERT(
       m.getAtomWithIdx(0)->getProp<ExplicitBitVect>("bv").getBit(101) == false);
-  
+
   std::string pkl;
   MolPickler::pickleMol(m, pkl, PicklerOps::AllProps);
   std::unique_ptr<RWMol> roundTripped(new RWMol(pkl));
-  
+
   TEST_ASSERT(roundTripped->getAtomWithIdx(0)->hasProp("bv"));
   TEST_ASSERT(
       roundTripped->getAtomWithIdx(0)->getProp<ExplicitBitVect>("bv").getBit(100) == true);
   TEST_ASSERT(
       roundTripped->getAtomWithIdx(0)->getProp<ExplicitBitVect>("bv").getBit(101) == false);
+}
+
+void testNegativeMaps() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog)
+      << "Testing Github #2465: Negative atom-map numbers cause "
+         "depickling to fail."
+      << std::endl;
+
+  auto m1 = "CC"_smiles;
+  TEST_ASSERT(m1);
+  m1->getAtomWithIdx(0)->setAtomMapNum(-1, false);
+  m1->getAtomWithIdx(1)->setAtomMapNum(-1, false);
+
+  std::string pickle;
+  MolPickler::pickleMol(*m1, pickle);
+  {
+    std::unique_ptr<ROMol> m2(new ROMol(pickle));
+    TEST_ASSERT(m2)
+  }
+
+  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
 
 int main(int argc, char *argv[]) {
@@ -1428,4 +1450,6 @@ int main(int argc, char *argv[]) {
   testGithub1999();
   testEnhancedStereoChemistry();
   testCustomPickler();
+#endif
+  testNegativeMaps();
 }
