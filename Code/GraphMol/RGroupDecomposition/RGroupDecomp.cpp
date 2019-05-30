@@ -70,7 +70,7 @@ std::map<int, Atom*> getRlabels(const RWMol &mol) {
 	for(auto atom : mol.atoms()) {
 		if (atom->hasProp(RLABEL)) {
 			int rlabel = atom->getProp<int>(RLABEL);  // user label
-			PRECONDITION(atoms.find(rlabel) == atoms.end(),
+			CHECK_INVARIANT(atoms.find(rlabel) == atoms.end(),
 				"Duplicate labels in rgroup core!");
 			atoms[rlabel] = atom;
 		}
@@ -597,7 +597,7 @@ struct RGroupDecompData {
     size_t idx = 0;
     for (auto coreIt = cores.begin(); coreIt != cores.end(); ++coreIt, ++idx) {
       RWMol *alignCore = coreIt->first ? &cores[0] : nullptr;
-	  PRECONDITION(params.prepareCore(coreIt->second, alignCore), "Could not prepare at least one core");
+	  CHECK_INVARIANT(params.prepareCore(coreIt->second, alignCore), "Could not prepare at least one core");
       labelledCores[coreIt->first] =
           boost::shared_ptr<RWMol>(new RWMol(coreIt->second));
     }
@@ -636,8 +636,8 @@ struct RGroupDecompData {
 
     std::vector<RGroupMatch> result;  // std::map<int, RGroup> > result;
     for (size_t i = 0; i < permutation.size(); ++i) {
-      PRECONDITION(i < matches.size(), "Best Permutation mol idx out of range");
-      PRECONDITION(permutation[i] < matches[i].size(),
+      CHECK_INVARIANT(i < matches.size(), "Best Permutation mol idx out of range");
+      CHECK_INVARIANT(permutation[i] < matches[i].size(),
                    "Selected match at permutation out of range");
       result.push_back(matches[i][permutation[i]]);
     }
@@ -730,7 +730,7 @@ struct RGroupDecompData {
      for (size_t i = 0; i < extraAtomRLabel.second.size(); ++i) {
         extraAtomRLabel.second[i] = ++count;
         // Is this necessary?
-        PRECONDITION(
+        CHECK_INVARIANT(
             atom->getAtomicNum() > 1,
             "Multiple attachements to a dummy (or hydrogen) is weird.");
         auto *newAt = new Atom(0);
@@ -770,7 +770,7 @@ struct RGroupDecompData {
 
         for (int rlabel : rlabels) {
           auto label = mappings.find(rlabel);
-          PRECONDITION(label != mappings.end(), "Unprocessed mapping");
+          CHECK_INVARIANT(label != mappings.end(), "Unprocessed mapping");
 
           if (atom->getAtomicNum() == 0) {
             setRlabel(atom, label->second);
@@ -1169,7 +1169,7 @@ RGroupRows RGroupDecomposition::getRGroupsAsRows() const {
          rgroup != in_rgroups.end(); ++rgroup) {
       std::map<int, int>::const_iterator realLabel =
           data->finalRlabelMapping.find(rgroup->first);
-      PRECONDITION(realLabel != data->finalRlabelMapping.end(),
+      CHECK_INVARIANT(realLabel != data->finalRlabelMapping.end(),
                    "unprocessed rlabel, please call process() first.");
       out_rgroups[std::string("R") + std::to_string(realLabel->second)] =
           rgroup->second->combinedMol;
@@ -1192,9 +1192,9 @@ RGroupColumns RGroupDecomposition::getRGroupsAsColumns() const {
          rgroup != in_rgroups.end(); ++rgroup) {
       std::map<int, int>::const_iterator realLabel =
           data->finalRlabelMapping.find(rgroup->first);
-      PRECONDITION(realLabel != data->finalRlabelMapping.end(),
+      CHECK_INVARIANT(realLabel != data->finalRlabelMapping.end(),
                    "unprocessed rlabel, please call process() first.");
-      PRECONDITION(rgroup->second->combinedMol->hasProp(done),
+      CHECK_INVARIANT(rgroup->second->combinedMol->hasProp(done),
                    "Not done! Call process()");
 
       std::string r = std::string("R") + std::to_string(realLabel->second);

@@ -55,7 +55,7 @@ void CHECK_RGROUP(RGroupRows::const_iterator &it, std::string expected,
   }
   std::string result = str.str();
 
-  if (1 || expected != result) {
+  if (expected != result) {
     std::cerr << "Expected: " << expected << std::endl;
     std::cerr << "Got:      " << result << std::endl;
   }
