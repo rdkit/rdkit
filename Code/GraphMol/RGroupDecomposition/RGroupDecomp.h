@@ -81,7 +81,7 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
         removeHydrogensPostMatch(removeHydrogensPostMatch),
         indexOffset(-1) {}
 
-  // Determine how to assign the rroup labels from the given core 
+  // Determine how to assign the rgroup labels from the given core
   unsigned int autoGetLabels(const RWMol &);
 
   // Prepare the core for substructure searching and rgroup assignment

@@ -779,86 +779,92 @@ M  END
 $$$$)CTAB";
 
   {
-	  RGroupDecompositionParameters params;
-	  params.onlyMatchAtRGroups = true;
-	  params.removeHydrogensPostMatch = true;
-	  std::vector<ROMOL_SPTR>  cores;
+    RGroupDecompositionParameters params;
+    params.onlyMatchAtRGroups = true;
+    params.removeHydrogensPostMatch = true;
+    std::vector<ROMOL_SPTR> cores;
 
-	  {
-		  SDMolSupplier sdsup;
-		  sdsup.setData(sdcores);
-		  while (!sdsup.atEnd()) {
-			  cores.push_back(ROMOL_SPTR(sdsup.next()));
-		  }
-	  }
+    {
+      SDMolSupplier sdsup;
+      sdsup.setData(sdcores);
+      while (!sdsup.atEnd()) {
+        cores.push_back(ROMOL_SPTR(sdsup.next()));
+      }
+    }
 
-	  RGroupDecomposition decomp(cores, params);
+    RGroupDecomposition decomp(cores, params);
 
-	  {
-		  SDMolSupplier sdsup;
-		  sdsup.setData(sdmols);
+    {
+      SDMolSupplier sdsup;
+      sdsup.setData(sdmols);
 
-		  int idx = 0;
-		  while (!sdsup.atEnd()) {
-			  ROMol *mol = sdsup.next();
-			  TEST_ASSERT(mol);
-			  std::cerr << "adding: " << MolToSmiles(*mol) << std::endl;
-			  int addedIndex = decomp.add(*mol);
-			  TEST_ASSERT(addedIndex == -1);   // none should match
-			  ++idx;
-			  delete mol;
-		  }
-	  }
+      int idx = 0;
+      while (!sdsup.atEnd()) {
+        ROMol *mol = sdsup.next();
+        TEST_ASSERT(mol);
+        std::cerr << "adding: " << MolToSmiles(*mol) << std::endl;
+        int addedIndex = decomp.add(*mol);
+        TEST_ASSERT(addedIndex == -1);  // none should match
+        ++idx;
+        delete mol;
+      }
+    }
   }
   {
-	  RGroupDecompositionParameters params;
-	  params.onlyMatchAtRGroups = false;
-	  params.removeHydrogensPostMatch = true;
-	  std::vector<ROMOL_SPTR>  cores;
+    RGroupDecompositionParameters params;
+    params.onlyMatchAtRGroups = false;
+    params.removeHydrogensPostMatch = true;
+    std::vector<ROMOL_SPTR> cores;
 
-	  {
-		  SDMolSupplier sdsup;
-		  sdsup.setData(sdcores);
-		  while (!sdsup.atEnd()) {
-			  cores.push_back(ROMOL_SPTR(sdsup.next()));
-		  }
-	  }
+    {
+      SDMolSupplier sdsup;
+      sdsup.setData(sdcores);
+      while (!sdsup.atEnd()) {
+        cores.push_back(ROMOL_SPTR(sdsup.next()));
+      }
+    }
 
-	  RGroupDecomposition decomp(cores, params);
+    RGroupDecomposition decomp(cores, params);
 
-	  {
-		  SDMolSupplier sdsup;
-		  sdsup.setData(sdmols);
+    {
+      SDMolSupplier sdsup;
+      sdsup.setData(sdmols);
 
-		  int idx = 0;
-		  while (!sdsup.atEnd()) {
-			  ROMol *mol = sdsup.next();
-			  TEST_ASSERT(mol);
-			  std::cerr << "adding: " << MolToSmiles(*mol) << std::endl;
-			  int addedIndex = decomp.add(*mol);
-			  //TEST_ASSERT(addedIndex == -1);   // none should match
-			  ++idx;
-			  delete mol;
-		  }
-	  }
+      int idx = 0;
+      while (!sdsup.atEnd()) {
+        ROMol *mol = sdsup.next();
+        TEST_ASSERT(mol);
+        std::cerr << "adding: " << MolToSmiles(*mol) << std::endl;
+        int addedIndex = decomp.add(*mol);
+        // TEST_ASSERT(addedIndex == -1);   // none should match
+        ++idx;
+        delete mol;
+      }
+    }
 
-	  decomp.process();
-	  RGroupRows rows = decomp.getRGroupsAsRows();
+    decomp.process();
+    RGroupRows rows = decomp.getRGroupsAsRows();
 
-	  const char * expected[4] = { "Core:N1C(N([*:2])[*:4])C2C(N([*:7])C1[*:1])[*:5]C([*:3])[*:6]2 R1:[H][*:1] R2:C(CC[*:2])CC[*:5] R5:C(CC[*:2])CC[*:5] R6:N([*:6])[*:6] R7:[H][*:7]",
-		  "Core:N1C(N([*:2])[*:4])C2C(N([*:7])C1[*:1])[*:5]C([*:3])[*:6]2 R1:[H][*:1] R2:C[*:2] R5:[H][*:5] R6:S([*:6])[*:6] R7:[H][*:7]",
-		  "Core:N1C(N([*:2])[*:5])C2C(C([*:4])C1[*:1])[*:6]C([*:3])[*:7]2 R1:[H][*:1] R2:C[*:2] R4:[H][*:4].[H][*:4] R5:[H][*:5] R6:S([*:6])[*:6] R7:CC(C)C([*:7])[*:7]",
-		  "Core:N1C(N([*:2])[*:5])C2C(C([*:4])C1[*:1])[*:6]C([*:3])[*:7]2 R1:O[*:1] R2:[H][*:2] R4:[H][*:4].[H][*:4] R5:[H][*:5] R6:CN([*:6])[*:6] R7:N([*:7])[*:7]"
-	  };
+    const char *expected[4] = {
+        "Core:N1C(N([*:2])[*:4])C2C(N([*:7])C1[*:1])[*:5]C([*:3])[*:6]2 "
+        "R1:[H][*:1] R2:C(CC[*:2])CC[*:5] R5:C(CC[*:2])CC[*:5] "
+        "R6:N([*:6])[*:6] R7:[H][*:7]",
+        "Core:N1C(N([*:2])[*:4])C2C(N([*:7])C1[*:1])[*:5]C([*:3])[*:6]2 "
+        "R1:[H][*:1] R2:C[*:2] R5:[H][*:5] R6:S([*:6])[*:6] R7:[H][*:7]",
+        "Core:N1C(N([*:2])[*:5])C2C(C([*:4])C1[*:1])[*:6]C([*:3])[*:7]2 "
+        "R1:[H][*:1] R2:C[*:2] R4:[H][*:4].[H][*:4] R5:[H][*:5] "
+        "R6:S([*:6])[*:6] R7:CC(C)C([*:7])[*:7]",
+        "Core:N1C(N([*:2])[*:5])C2C(C([*:4])C1[*:1])[*:6]C([*:3])[*:7]2 "
+        "R1:O[*:1] R2:[H][*:2] R4:[H][*:4].[H][*:4] R5:[H][*:5] "
+        "R6:CN([*:6])[*:6] R7:N([*:7])[*:7]"};
 
-	  // All Cl's should be labeled with the same rgroup
-	  int i = 0;
-	  for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
-		  ++it, ++i) {
-		  CHECK_RGROUP(it, expected[i], true);
-	  }
+    // All Cl's should be labeled with the same rgroup
+    int i = 0;
+    for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
+         ++it, ++i) {
+      CHECK_RGROUP(it, expected[i], true);
+    }
   }
-
 }
 
 int main() {
@@ -883,7 +889,7 @@ int main() {
   testGitHubIssue1705();
   testGithub2332();
   testSDFGRoupMultiCoreNoneShouldMatch();
-  
+
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;
