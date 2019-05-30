@@ -1322,7 +1322,7 @@ void MolPickler::_pickleAtom(std::ostream &ss, const Atom *atom) {
   }
   if (getAtomMapNumber(atom, tmpInt)) {
     if (tmpInt >= 0 && tmpInt < 128) {
-      tmpChar = static_cast<char>(tmpInt % 128);
+      tmpChar = static_cast<char>(tmpInt);
       streamWrite(ss, ATOM_MAPNUMBER, tmpChar);
     } else {
       tmpChar = static_cast<char>(255);
