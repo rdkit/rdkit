@@ -839,20 +839,18 @@ void testNumHeteroatomNeighborQueries() {
   BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
 }
 
-
 void testAtomTypeQueries() {
-  BOOST_LOG(rdErrorLog)
-      << "---------------------- Test atom type queries"
-      << std::endl;
+  BOOST_LOG(rdErrorLog) << "---------------------- Test atom type queries"
+                        << std::endl;
 
   RWMol *m = SmilesToMol("CCc1ccccc1");
   {
     QueryAtom qA1;
-    qA1.setQuery(makeAtomTypeQuery(6,true));
+    qA1.setQuery(makeAtomTypeQuery(6, true));
     QueryAtom qA2;
-    qA2.setQuery(makeAtomTypeQuery(6,false));
+    qA2.setQuery(makeAtomTypeQuery(6, false));
     QueryAtom qA3;
-    qA3.setQuery(makeAtomTypeQuery(7,true));
+    qA3.setQuery(makeAtomTypeQuery(7, true));
     TEST_ASSERT(!qA1.Match(m->getAtomWithIdx(0)));
     TEST_ASSERT(qA2.Match(m->getAtomWithIdx(0)));
     TEST_ASSERT(!qA3.Match(m->getAtomWithIdx(0)));
@@ -862,6 +860,21 @@ void testAtomTypeQueries() {
   }
 
   delete m;
+  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
+}
+
+void testGithub2471() {
+  BOOST_LOG(rdErrorLog) << "---------------------- Test Github #2471: dummy "
+                           "atom queries are flagged as complex"
+                        << std::endl;
+
+  auto m = "[*;$(CC)][*]"_smarts;
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getAtomWithIdx(0)->hasQuery());
+  TEST_ASSERT(m->getAtomWithIdx(1)->hasQuery());
+  TEST_ASSERT(isComplexQuery(m->getAtomWithIdx(0)));
+  TEST_ASSERT(!isComplexQuery(m->getAtomWithIdx(1)));
+
   BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
 }
 
@@ -886,5 +899,6 @@ int main() {
   testExtraBondQueries();
   testNumHeteroatomNeighborQueries();
   testAtomTypeQueries();
+  testGithub2471();
   return 0;
 }
