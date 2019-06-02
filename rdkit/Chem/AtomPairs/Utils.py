@@ -167,7 +167,7 @@ def NumPiElectrons(atom):
             bond_order += bond.GetBondTypeAsDouble()
             pi_electrons = bond_order - len(atom.GetNeighbors())
 
-    return pi_electrons
+    return int(pi_electrons)
 
 
 def BitsInCommon(v1, v2):
