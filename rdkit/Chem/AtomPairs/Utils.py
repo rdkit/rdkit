@@ -105,7 +105,8 @@ GetAtomCode = rdMolDescriptors.GetAtomPairAtomCode
 
 
 def NumPiElectrons(atom):
-    """ Returns the number of electrons an atom is using for pi bonding
+    """
+    Returns the number of electrons an atom is using for pi bonding
 
     >>> m = Chem.MolFromSmiles('C=C')
     >>> NumPiElectrons(m.GetAtomWithIdx(0))
@@ -131,31 +132,42 @@ def NumPiElectrons(atom):
     >>> NumPiElectrons(m.GetAtomWithIdx(0))
     1
 
-    FIX: this behaves oddly in these cases:
+    This fixes the problem of S and P in old version:
 
-    >>> m = Chem.MolFromSmiles('S(=O)(=O)')
+    **Old version**
+    >>> m = Chem.MolFromSmiles('S(=O)(=O)(O)O')
+    >>> NumPiElectrons(m.GetAtomWithIdx(0))
+    0  # Wrong
+
+    >>> m = Chem.MolFromSmiles('P(=O)(O)(O)O')
+    >>> NumPiElectrons(m.GetAtomWithIdx(0))
+    0  # Wrong
+
+    **New version**
+    >>> m = Chem.MolFromSmiles('S(=O)(=O)(O)O')
     >>> NumPiElectrons(m.GetAtomWithIdx(0))
     2
 
-    >>> m = Chem.MolFromSmiles('S(=O)(=O)(O)O')
+    >>> m = Chem.MolFromSmiles('P(=O)(O)(O)O')
     >>> NumPiElectrons(m.GetAtomWithIdx(0))
-    0
-
-    In the second case, the S atom is tagged as sp3 hybridized.
+    1
 
     """
+    bond_order = 0
+    pi_electrons = 0
 
-    res = 0
-    if atom.GetIsAromatic():
-        res = 1
-    elif atom.GetHybridization() != Chem.HybridizationType.SP3:
-        # the number of pi electrons is just the number of
-        # unsaturations (valence - degree):
-        res = atom.GetExplicitValence() - atom.GetNumExplicitHs()
-        if res < atom.GetDegree():
-            raise ValueError("explicit valence exceeds atom degree")
-        res -= atom.GetDegree()
-    return res
+    for bond in atom.GetBonds():
+
+        # For aromatic atoms, pi-electrons = 1
+        if bond.GetBondTypeAsDouble() == 1.5:
+            pi_electrons = 1
+
+        # For other bonded atoms, pi-electrons = Sum of bond orders - Number of non-hydrogen neighbors
+        else:
+            bond_order += bond.GetBondTypeAsDouble()
+            pi_electrons = bond_order - len(atom.GetNeighbors())
+
+    return pi_electrons
 
 
 def BitsInCommon(v1, v2):
@@ -366,4 +378,7 @@ def _runDoctests(verbose=None):  # pragma: nocover
 
 
 if __name__ == '__main__':  # pragma: nocover
-    _runDoctests()
+    # _runDoctests()
+
+    mol = Chem.MolFromSmiles("S(=O)(=O)(O)O")
+    print(NumPiElectrons(mol.GetAtomWithIdx(0)))
