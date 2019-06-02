@@ -378,7 +378,7 @@ def _runDoctests(verbose=None):  # pragma: nocover
 
 
 if __name__ == '__main__':  # pragma: nocover
-    # _runDoctests()
+    _runDoctests()
 
-    mol = Chem.MolFromSmiles("S(=O)(=O)(O)O")
-    print(NumPiElectrons(mol.GetAtomWithIdx(0)))
+    # mol = Chem.MolFromSmiles("S(=O)(=O)(O)O")
+    # print(NumPiElectrons(mol.GetAtomWithIdx(0)))
