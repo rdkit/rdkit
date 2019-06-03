@@ -134,16 +134,6 @@ def NumPiElectrons(atom):
 
     This fixes the problem of S and P in old version:
 
-    **Old version**
-    >>> m = Chem.MolFromSmiles('S(=O)(=O)(O)O')
-    >>> NumPiElectrons(m.GetAtomWithIdx(0))
-    0  # Wrong
-
-    >>> m = Chem.MolFromSmiles('P(=O)(O)(O)O')
-    >>> NumPiElectrons(m.GetAtomWithIdx(0))
-    0  # Wrong
-
-    **New version**
     >>> m = Chem.MolFromSmiles('S(=O)(=O)(O)O')
     >>> NumPiElectrons(m.GetAtomWithIdx(0))
     2
