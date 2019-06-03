@@ -94,7 +94,10 @@ def _toJSON(mol):
     conf = mol.GetConformer()
     if not conf.Is3D():
         return None
-    return drawMol3D(mol).data
+    res = drawMol3D(mol)
+    if hasattr(res, 'data'):
+        return res.data
+    return ""
 
 
 def _toPNG(mol):
