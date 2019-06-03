@@ -398,7 +398,7 @@ RETURNS: a list of (not_converged, energy) 2-tuples. \n\
       "MMFFOptimizeMoleculeConfs", RDKit::MMFFConfsHelper,
       (python::arg("self"), python::arg("numThreads") = 1,
        python::arg("maxIters") = 200, python::arg("mmffVariant") = "MMFF94",
-       python::arg("nonBondedThresh") = 10.0, python::arg("confId") = -1,
+       python::arg("nonBondedThresh") = 100.0, python::arg("confId") = -1,
        python::arg("ignoreInterfragInteractions") = true),
       docString.c_str());
 
