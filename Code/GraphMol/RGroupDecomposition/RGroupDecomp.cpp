@@ -1190,8 +1190,16 @@ RGroupColumns RGroupDecomposition::getRGroupsAsColumns() const {
 
   RGroupColumns groups;
 
+  // collect the list of all possible RGroups:
+  std::map<int, size_t> rgrp_pos_map;
+  unsigned int ridx = 0;
+  for (const auto rl : data->finalRlabelMapping) {
+    rgrp_pos_map[rl.second] = ridx++;
+  }
+
   unsigned int molidx = 0;
   for (auto it = permutation.begin(); it != permutation.end(); ++it, ++molidx) {
+    boost::dynamic_bitset<> Rs_seen(rgrp_pos_map.size());
     R_DECOMP &in_rgroups = it->rgroups;
     groups["Core"].push_back(data->labelledCores[it->core_idx]);
 
@@ -1204,21 +1212,17 @@ RGroupColumns RGroupDecomposition::getRGroupsAsColumns() const {
       CHECK_INVARIANT(rgroup->second->combinedMol->hasProp(done),
                       "Not done! Call process()");
 
+      Rs_seen.set(rgrp_pos_map[realLabel->second]);
       std::string r = std::string("R") + std::to_string(realLabel->second);
       RGroupColumn &col = groups[r];
       if (molidx && col.size() < (size_t)(molidx - 1)) col.resize(molidx - 1);
       col.push_back(rgroup->second->combinedMol);
     }
-  }
-  // Now make all columns equal - this adds empty mols...
-  for (auto &group : groups) {
-    if (group.second.size() != molidx) {
-      group.second.resize(molidx);
-    }
-
-    for (size_t idx = 0; idx < group.second.size(); ++idx) {
-      if (!group.second[idx].get()) {
-        group.second[idx] = boost::make_shared<RWMol>();
+    // add empty entries to columns where this molecule didn't appear
+    for (const auto rpr : rgrp_pos_map) {
+      if (!Rs_seen[rpr.second]) {
+        std::string r = std::string("R") + std::to_string(rpr.first);
+        groups[r].push_back(boost::make_shared<RWMol>());
       }
     }
   }

@@ -867,6 +867,61 @@ $$$$)CTAB";
   }
 }
 
+void testRowColumnAlignmentProblem() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "test a problem with row-column alignment"
+                       << std::endl;
+  std::vector<std::string> csmiles = {"c1c([*:1])cncn1", "c1c([*:1])cccn1"};
+  std::vector<ROMOL_SPTR> cores;
+  for (auto smi : csmiles) {
+    cores.push_back(ROMOL_SPTR(SmilesToMol(smi)));
+  }
+
+  std::vector<std::string> msmiles = {"c1c(F)cccn1", "c1c(F)cncn1",
+                                      "c1c(Cl)cccn1"};
+  std::vector<std::unique_ptr<RWMol>> mols;
+  for (auto smi : msmiles) {
+    mols.emplace_back(SmilesToMol(smi));
+  }
+
+  {
+    RGroupDecomposition decomp(cores);
+    for (const auto &mol : mols) {
+      TEST_ASSERT(decomp.add(*mol) >= 0);
+    }
+    decomp.process();
+
+    auto rows = decomp.getRGroupsAsRows();
+    TEST_ASSERT(rows.size() == mols.size());
+    for (const auto row : rows) {
+      TEST_ASSERT(row.count("Core") == 1);
+      TEST_ASSERT(row.count("R1") == 1);
+    }
+    TEST_ASSERT(rows[0].count("R2") == 1);
+    TEST_ASSERT(rows[2].count("R2") == 1);
+    TEST_ASSERT(rows[1].count("R2") == 0);
+
+    auto cols = decomp.getRGroupsAsColumns();
+    auto &core = cols["Core"];
+    TEST_ASSERT(core.size() == 3);
+    auto &R1 = cols["R1"];
+    TEST_ASSERT(R1.size() == 3);
+    for (const auto rg : R1) {
+      TEST_ASSERT(rg);
+      TEST_ASSERT(rg->getNumAtoms());
+    }
+    auto &R2 = cols["R2"];
+    TEST_ASSERT(R2.size() == 3);
+    TEST_ASSERT(R2[0]);
+    TEST_ASSERT(R2[0]->getNumAtoms());
+    TEST_ASSERT(R2[2]);
+    TEST_ASSERT(R2[2]->getNumAtoms());
+    TEST_ASSERT(R2[1]);
+    TEST_ASSERT(R2[1]->getNumAtoms() == 0);
+  }
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -884,11 +939,12 @@ int main() {
   testRemoveHs();
 
   testMatchOnlyAtRgroupHs();
-#endif
   testRingMatching2();
   testGitHubIssue1705();
   testGithub2332();
   testSDFGRoupMultiCoreNoneShouldMatch();
+#endif
+  testRowColumnAlignmentProblem();
 
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
