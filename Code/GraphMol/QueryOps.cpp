@@ -508,9 +508,7 @@ RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *makeSingleOrAromaticBondQuery() {
   res->setDataFunc(queryBondIsSingleOrAromatic);
   res->setDescription("SingleOrAromaticBond");
   return res;
-
 };
-
 
 BOND_EQUALS_QUERY *makeBondDirEqualsQuery(Bond::BondDir what) {
   auto *res = new BOND_EQUALS_QUERY;
@@ -593,7 +591,7 @@ bool _complexQueryHelper(Atom::QUERYATOM_QUERY const *query, bool &hasAtNum) {
   if (query->getNegation()) return true;
   std::string descr = query->getDescription();
   // std::cerr<<" |"<<descr;
-  if (descr == "AtomAtomicNum" || descr=="AtomType") {
+  if (descr == "AtomAtomicNum" || descr == "AtomType") {
     hasAtNum = true;
     return false;
   }
@@ -614,7 +612,8 @@ bool isComplexQuery(const Atom *a) {
   if (a->getQuery()->getNegation()) return true;
   std::string descr = a->getQuery()->getDescription();
   // std::cerr<<" "<<descr;
-  if (descr == "AtomAtomicNum" || descr == "AtomType") return false;
+  if (descr == "AtomNull" || descr == "AtomAtomicNum" || descr == "AtomType")
+    return false;
   if (descr == "AtomOr" || descr == "AtomXor") return true;
   if (descr == "AtomAnd") {
     bool hasAtNum = false;
@@ -642,7 +641,8 @@ bool isAtomAromatic(const Atom *a) {
       res = false;
       if (a->getQuery()->getNegation()) res = !res;
     } else if (descr == "AtomType") {
-      res = getAtomTypeIsAromatic(static_cast<ATOM_EQUALS_QUERY *>(a->getQuery())->getVal());
+      res = getAtomTypeIsAromatic(
+          static_cast<ATOM_EQUALS_QUERY *>(a->getQuery())->getVal());
       if (a->getQuery()->getNegation()) res = !res;
     } else if (descr == "AtomAnd") {
       auto childIt = a->getQuery()->beginChildren();
