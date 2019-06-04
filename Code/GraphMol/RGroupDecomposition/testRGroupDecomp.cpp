@@ -448,7 +448,7 @@ Cl[*:2]
                                            "c1cccc(F)c1C", "Fc1cccc(F)c1C"};
     for (const auto &smi : smilesData) {
       ROMol *mol = SmilesToMol(smi);
-      int res = decomp.add(*mol);
+      decomp.add(*mol);
       delete mol;
     }
 
@@ -569,6 +569,359 @@ M  END
   TEST_ASSERT(feq(conf.getAtomPos(0).z, 0.0));
 }
 
+void testSDFGRoupMultiCoreNoneShouldMatch() {
+  std::string sdcores = R"CTAB(
+  Mrv1813 05061918272D          
+
+ 13 14  0  0  0  0            999 V2000
+   -1.1505    0.0026    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.1505   -0.8225    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4360   -1.2350    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2784   -0.8225    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2784    0.0026    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4360    0.4151    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9354    0.2575    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4202   -0.4099    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9354   -1.0775    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+    0.9907   -1.2333    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4360    1.2373    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2784    1.6497    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+   -3.2452   -0.4098    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  6  1  1  0  0  0  0
+  1  7  1  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  9  2  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  4 10  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6 11  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8 13  1  0  0  0  0
+  8  9  1  0  0  0  0
+ 11 12  1  0  0  0  0
+M  RGP  3  10   1  12   2  13   3
+M  END
+$$$$
+
+  Mrv1813 05061918272D          
+
+ 13 14  0  0  0  0            999 V2000
+    6.9524    0.1684    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.9524   -0.6567    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.6668   -1.0692    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.3813   -0.6567    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.3813    0.1684    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    7.6668    0.5809    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.1674    0.4233    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+    5.6827   -0.2441    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.1674   -0.9117    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+    9.0935   -1.0675    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+    7.6668    1.4031    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    8.3813    1.8155    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+    4.8576   -0.2440    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  6  1  1  0  0  0  0
+  1  7  1  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  9  2  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  4 10  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6 11  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8 13  1  0  0  0  0
+  8  9  1  0  0  0  0
+ 11 12  1  0  0  0  0
+M  RGP  3  10   1  12   2  13   3
+M  END
+$$$$)CTAB";
+  std::string sdmols = R"CTAB(
+  Mrv1813 05061918322D          
+
+ 15 17  0  0  0  0            999 V2000
+    0.1742    0.6899    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8886    0.2774    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8886   -0.5476    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1742   -0.9601    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1742   -1.7851    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8886   -2.1976    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8886   -3.0226    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1742   -3.4351    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5403   -3.0226    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3249   -3.2775    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.8099   -2.6101    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3249   -1.9426    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5403   -2.1976    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5403   -0.5476    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5403    0.2774    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  1 15  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  4 14  1  0  0  0  0
+  5  6  1  0  0  0  0
+  5 13  1  0  0  0  0
+  6  7  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8  9  1  0  0  0  0
+  9 10  1  0  0  0  0
+  9 13  1  0  0  0  0
+ 10 11  1  0  0  0  0
+ 11 12  1  0  0  0  0
+ 12 13  1  0  0  0  0
+ 14 15  1  0  0  0  0
+M  END
+$$$$
+
+  Mrv1813 05061918322D          
+
+ 14 15  0  0  0  0            999 V2000
+    6.4368    0.3002    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.7223   -0.1123    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    5.7223   -0.9373    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.4368   -1.3498    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    6.4368   -2.1748    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.7223   -2.5873    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    5.0078   -2.1748    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.2232   -2.4297    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0
+    3.7383   -1.7623    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.2232   -1.0949    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.9683   -0.3102    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.1613   -0.1387    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.5203    0.3029    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.0078   -1.3498    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  3 14  1  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  1  0  0  0  0
+  7  8  1  0  0  0  0
+  7 14  1  0  0  0  0
+  8  9  1  0  0  0  0
+  9 10  1  0  0  0  0
+ 10 11  1  0  0  0  0
+ 10 14  1  0  0  0  0
+ 11 13  1  0  0  0  0
+ 11 12  1  0  0  0  0
+M  END
+$$$$
+
+  Mrv1813 05061918322D          
+
+ 14 15  0  0  0  0            999 V2000
+    0.8289   -7.9643    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1144   -8.3768    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1144   -9.2018    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8289   -9.6143    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8289  -10.4393    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1144  -10.8518    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6000  -10.4393    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3847  -10.6942    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.8696  -10.0268    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3847   -9.3593    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6396   -8.5747    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4466   -8.4032    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0876   -7.9616    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6000   -9.6143    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  3 14  1  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  1  0  0  0  0
+  7  8  1  0  0  0  0
+  7 14  1  0  0  0  0
+  8  9  1  0  0  0  0
+  9 10  1  0  0  0  0
+ 10 11  1  0  0  0  0
+ 10 14  1  0  0  0  0
+ 11 13  1  0  0  0  0
+ 11 12  1  0  0  0  0
+M  END
+$$$$
+
+  Mrv1813 05061918322D          
+
+ 12 13  0  0  0  0            999 V2000
+    5.3295   -8.1871    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.5844   -7.4025    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    5.0995   -6.7351    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.5844   -6.0676    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    6.3690   -6.3226    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.0835   -5.9101    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.0835   -5.0851    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    7.7980   -6.3226    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    7.7980   -7.1476    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.5124   -7.5601    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    7.0835   -7.5601    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.3690   -7.1476    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  2 12  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  5 12  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  1  0  0  0  0
+  6  8  1  0  0  0  0
+  8  9  1  0  0  0  0
+  9 10  1  0  0  0  0
+  9 11  1  0  0  0  0
+ 11 12  1  0  0  0  0
+M  END
+$$$$)CTAB";
+
+  {
+    RGroupDecompositionParameters params;
+    params.onlyMatchAtRGroups = true;
+    params.removeHydrogensPostMatch = true;
+    std::vector<ROMOL_SPTR> cores;
+
+    {
+      SDMolSupplier sdsup;
+      sdsup.setData(sdcores);
+      while (!sdsup.atEnd()) {
+        cores.push_back(ROMOL_SPTR(sdsup.next()));
+      }
+    }
+
+    RGroupDecomposition decomp(cores, params);
+
+    {
+      SDMolSupplier sdsup;
+      sdsup.setData(sdmols);
+
+      int idx = 0;
+      while (!sdsup.atEnd()) {
+        ROMol *mol = sdsup.next();
+        TEST_ASSERT(mol);
+        std::cerr << "adding: " << MolToSmiles(*mol) << std::endl;
+        int addedIndex = decomp.add(*mol);
+        TEST_ASSERT(addedIndex == -1);  // none should match
+        ++idx;
+        delete mol;
+      }
+    }
+  }
+  {
+    RGroupDecompositionParameters params;
+    params.onlyMatchAtRGroups = false;
+    params.removeHydrogensPostMatch = true;
+    std::vector<ROMOL_SPTR> cores;
+
+    {
+      SDMolSupplier sdsup;
+      sdsup.setData(sdcores);
+      while (!sdsup.atEnd()) {
+        cores.push_back(ROMOL_SPTR(sdsup.next()));
+      }
+    }
+
+    RGroupDecomposition decomp(cores, params);
+
+    {
+      SDMolSupplier sdsup;
+      sdsup.setData(sdmols);
+
+      int idx = 0;
+      while (!sdsup.atEnd()) {
+        ROMol *mol = sdsup.next();
+        TEST_ASSERT(mol);
+        std::cerr << "adding: " << MolToSmiles(*mol) << std::endl;
+        int addedIndex = decomp.add(*mol);
+        // TEST_ASSERT(addedIndex == -1);   // none should match
+        ++idx;
+        delete mol;
+      }
+    }
+
+    decomp.process();
+    RGroupRows rows = decomp.getRGroupsAsRows();
+
+    const char *expected[4] = {
+        "Core:N1C(N([*:2])[*:4])C2C(N([*:7])C1[*:1])[*:5]C([*:3])[*:6]2 "
+        "R1:[H][*:1] R2:C(CC[*:2])CC[*:5] R5:C(CC[*:2])CC[*:5] "
+        "R6:N([*:6])[*:6] R7:[H][*:7]",
+        "Core:N1C(N([*:2])[*:4])C2C(N([*:7])C1[*:1])[*:5]C([*:3])[*:6]2 "
+        "R1:[H][*:1] R2:C[*:2] R5:[H][*:5] R6:S([*:6])[*:6] R7:[H][*:7]",
+        "Core:N1C(N([*:2])[*:5])C2C(C([*:4])C1[*:1])[*:6]C([*:3])[*:7]2 "
+        "R1:[H][*:1] R2:C[*:2] R4:[H][*:4].[H][*:4] R5:[H][*:5] "
+        "R6:S([*:6])[*:6] R7:CC(C)C([*:7])[*:7]",
+        "Core:N1C(N([*:2])[*:5])C2C(C([*:4])C1[*:1])[*:6]C([*:3])[*:7]2 "
+        "R1:O[*:1] R2:[H][*:2] R4:[H][*:4].[H][*:4] R5:[H][*:5] "
+        "R6:CN([*:6])[*:6] R7:N([*:7])[*:7]"};
+
+    // All Cl's should be labeled with the same rgroup
+    int i = 0;
+    for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
+         ++it, ++i) {
+      CHECK_RGROUP(it, expected[i], true);
+    }
+  }
+}
+
+void testRowColumnAlignmentProblem() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "test a problem with row-column alignment"
+                       << std::endl;
+  std::vector<std::string> csmiles = {"c1c([*:1])cncn1", "c1c([*:1])cccn1"};
+  std::vector<ROMOL_SPTR> cores;
+  for (auto smi : csmiles) {
+    cores.push_back(ROMOL_SPTR(SmilesToMol(smi)));
+  }
+
+  std::vector<std::string> msmiles = {"c1c(F)cccn1", "c1c(F)cncn1",
+                                      "c1c(Cl)cccn1"};
+  std::vector<std::unique_ptr<RWMol>> mols;
+  for (auto smi : msmiles) {
+    mols.emplace_back(SmilesToMol(smi));
+  }
+
+  {
+    RGroupDecomposition decomp(cores);
+    for (const auto &mol : mols) {
+      TEST_ASSERT(decomp.add(*mol) >= 0);
+    }
+    decomp.process();
+
+    auto rows = decomp.getRGroupsAsRows();
+    TEST_ASSERT(rows.size() == mols.size());
+    for (const auto row : rows) {
+      TEST_ASSERT(row.count("Core") == 1);
+      TEST_ASSERT(row.count("R1") == 1);
+    }
+    TEST_ASSERT(rows[0].count("R2") == 1);
+    TEST_ASSERT(rows[2].count("R2") == 1);
+    TEST_ASSERT(rows[1].count("R2") == 0);
+
+    auto cols = decomp.getRGroupsAsColumns();
+    auto &core = cols["Core"];
+    TEST_ASSERT(core.size() == 3);
+    auto &R1 = cols["R1"];
+    TEST_ASSERT(R1.size() == 3);
+    for (const auto rg : R1) {
+      TEST_ASSERT(rg);
+      TEST_ASSERT(rg->getNumAtoms());
+    }
+    auto &R2 = cols["R2"];
+    TEST_ASSERT(R2.size() == 3);
+    TEST_ASSERT(R2[0]);
+    TEST_ASSERT(R2[0]->getNumAtoms());
+    TEST_ASSERT(R2[2]);
+    TEST_ASSERT(R2[2]->getNumAtoms());
+    TEST_ASSERT(R2[1]);
+    TEST_ASSERT(R2[1]->getNumAtoms() == 0);
+  }
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -586,10 +939,12 @@ int main() {
   testRemoveHs();
 
   testMatchOnlyAtRgroupHs();
-#endif
   testRingMatching2();
   testGitHubIssue1705();
   testGithub2332();
+  testSDFGRoupMultiCoreNoneShouldMatch();
+#endif
+  testRowColumnAlignmentProblem();
 
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
