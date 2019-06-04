@@ -42,8 +42,8 @@
     var qmol = Module.get_qmol(text);
     var mol = Module.get_mol(document.getElementById("smiles_input").value);
     if (mol.is_valid() && qmol.is_valid()) {
-      match = mol.get_substruct_match(qmol);
-      if (match.size()) draw_with_highlights(mol, match);
+      match = JSON.parse(mol.get_substruct_match(qmol));
+      if (match.length) draw_with_highlights(mol, JSON.stringify({ atoms: match }));
     }
     mol.delete();
     qmol.delete();

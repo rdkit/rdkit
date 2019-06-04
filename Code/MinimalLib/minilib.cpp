@@ -98,9 +98,21 @@ std::string JSMol::get_svg() const {
   if (!d_mol) return "";
   return svg_(*d_mol);
 }
-std::string JSMol::get_svg_with_highlights(
-    const std::vector<unsigned int> atomIds) const {
+std::string JSMol::get_svg_with_highlights(const std::string &details) const {
   if (!d_mol) return "";
+
+  rj::Document doc;
+  doc.Parse(details.c_str());
+  if (!doc.IsObject()) return "Invalid JSON";
+
+  std::vector<unsigned int> atomIds;
+  if (!doc.HasMember("atoms") || !doc["atoms"].IsArray()) {
+    return "JSON doesn't contain 'atoms' field, or it is not an array";
+  }
+  for (const auto &molval : doc["atoms"].GetArray()) {
+    if (!molval.IsInt()) return ("Atom IDs should be integers");
+    atomIds.push_back(static_cast<unsigned int>(molval.GetInt()));
+  }
   return svg_(*d_mol, &atomIds);
 }
 std::string JSMol::get_inchi() const {
@@ -112,14 +124,24 @@ std::string JSMol::get_molblock() const {
   if (!d_mol) return "";
   return MolToMolBlock(*d_mol);
 }
-std::vector<unsigned int> JSMol::get_substruct_match(const JSMol &q) const {
-  std::vector<unsigned int> res;
+std::string JSMol::get_substruct_match(const JSMol &q) const {
+  std::string res = "{}";
+  if (!d_mol) return res;
+
   MatchVectType match;
   if (SubstructMatch(*d_mol, *(q.d_mol), match)) {
+    rj::Document doc;
+    doc.SetArray();
+    rj::Document::AllocatorType &allocator = doc.GetAllocator();
     for (const auto &pr : match) {
-      res.push_back(pr.second);
+      doc.PushBack(pr.second, allocator);
     }
+    rj::StringBuffer buffer;
+    rj::Writer<rj::StringBuffer> writer(buffer);
+    doc.Accept(writer);
+    res = buffer.GetString();
   }
+
   return res;
 }
 std::string JSMol::get_descriptors() const {

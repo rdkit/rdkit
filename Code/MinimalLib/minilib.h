@@ -19,9 +19,8 @@ class JSMol {
   std::string get_molblock() const;
   std::string get_inchi() const;
   std::string get_svg() const;
-  std::string get_svg_with_highlights(
-      const std::vector<unsigned int> atomIds) const;
-  std::vector<unsigned int> get_substruct_match(const JSMol &q) const;
+  std::string get_svg_with_highlights(const std::string &details) const;
+  std::string get_substruct_match(const JSMol &q) const;
   std::string get_descriptors() const;
   std::string get_morgan_fp(unsigned int radius, unsigned int len) const;
   std::string get_morgan_fp() const { return get_morgan_fp(2, 2048); };

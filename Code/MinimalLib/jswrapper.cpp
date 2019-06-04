@@ -13,9 +13,7 @@
 
 using namespace emscripten;
 EMSCRIPTEN_BINDINGS(RDKit_minimal) {
-  register_vector<unsigned int>("VectorUInt");
-
-  class_<JSMol>("Mol")
+   class_<JSMol>("Mol")
       .function("is_valid", &JSMol::is_valid)
       .function("get_smiles", &JSMol::get_smiles)
       .function("get_molblock", &JSMol::get_molblock)
