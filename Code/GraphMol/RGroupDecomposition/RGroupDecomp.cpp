@@ -280,6 +280,10 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
         found = true;
     }
 
+    // Unless there is an MCS match from above, we need to give different
+    //  RLABELS to each core so keep track of which labels
+    //  we have used (note that these are negative since they are
+    //  potential rgroups and haven't been assigned yet)
     if (!found && (autoLabels & AtomIndexLabels)) {
       if (setLabel(atom, indexOffset - atom->getIdx(), foundLabels, maxLabel,
                    relabel, Labelling::INDEX_LABELS))
