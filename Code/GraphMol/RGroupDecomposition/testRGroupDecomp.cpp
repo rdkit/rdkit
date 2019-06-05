@@ -56,8 +56,8 @@ void CHECK_RGROUP(RGroupRows::const_iterator &it, std::string expected,
   std::string result = str.str();
 
   if (expected != result) {
-    std::cerr << "Expected: " << expected << std::endl;
-    std::cerr << "Got:      " << result << std::endl;
+    std::cerr << "Expected: '" << expected << "'" << std::endl;
+    std::cerr << "Got:      '" << result << "'" << std::endl;
   }
 
   if (doassert) TEST_ASSERT(result == expected);
@@ -261,10 +261,10 @@ const char *coreSmi[] = {
 
     "C1CCOC(Cl)CC1", "C1CC(Cl)OCCC1", "C1CCOC(I)CC1", "C1CC(I)OCCC1"};
 
-const char *coreSmiRes[] = {"Core:C1CCC([*:2])N([*:1])CC1 R1:Cl[*:1].[H][*:1]",
-                            "Core:C1CCC([*:2])N([*:1])CC1 R1:Cl[*:1].[H][*:1]",
-                            "Core:C1CCC([*:2])N([*:1])CC1 R1:I[*:1].[H][*:1]",
-                            "Core:C1CCC([*:2])N([*:1])CC1 R1:I[*:1].[H][*:1]",
+const char *coreSmiRes[] = {"Core:C1CCNC([*:1])CC1 R1:Cl[*:1].[H][*:1]",
+                            "Core:C1CCNC([*:1])CC1 R1:Cl[*:1].[H][*:1]",
+                            "Core:C1CCNC([*:1])CC1 R1:I[*:1].[H][*:1]",
+                            "Core:C1CCNC([*:1])CC1 R1:I[*:1].[H][*:1]",
                             "Core:C1CCSC([*:1])CC1 R1:Cl[*:1].[H][*:1]",
                             "Core:C1CCSC([*:1])CC1 R1:Cl[*:1].[H][*:1]",
                             "Core:C1CCSC([*:1])CC1 R1:I[*:1].[H][*:1]",
@@ -835,8 +835,7 @@ $$$$)CTAB";
         ROMol *mol = sdsup.next();
         TEST_ASSERT(mol);
         std::cerr << "adding: " << MolToSmiles(*mol) << std::endl;
-        int addedIndex = decomp.add(*mol);
-        // TEST_ASSERT(addedIndex == -1);   // none should match
+        decomp.add(*mol);
         ++idx;
         delete mol;
       }
@@ -846,23 +845,17 @@ $$$$)CTAB";
     RGroupRows rows = decomp.getRGroupsAsRows();
 
     const char *expected[4] = {
-        "Core:N1C(N([*:2])[*:4])C2C(N([*:7])C1[*:1])[*:5]C([*:3])[*:6]2 "
-        "R1:[H][*:1] R2:C(CC[*:2])CC[*:5] R5:C(CC[*:2])CC[*:5] "
-        "R6:N([*:6])[*:6] R7:[H][*:7]",
-        "Core:N1C(N([*:2])[*:4])C2C(N([*:7])C1[*:1])[*:5]C([*:3])[*:6]2 "
-        "R1:[H][*:1] R2:C[*:2] R5:[H][*:5] R6:S([*:6])[*:6] R7:[H][*:7]",
-        "Core:N1C(N([*:2])[*:5])C2C(C([*:4])C1[*:1])[*:6]C([*:3])[*:7]2 "
-        "R1:[H][*:1] R2:C[*:2] R4:[H][*:4].[H][*:4] R5:[H][*:5] "
-        "R6:S([*:6])[*:6] R7:CC(C)C([*:7])[*:7]",
-        "Core:N1C(N([*:2])[*:5])C2C(C([*:4])C1[*:1])[*:6]C([*:3])[*:7]2 "
-        "R1:O[*:1] R2:[H][*:2] R4:[H][*:4].[H][*:4] R5:[H][*:5] "
-        "R6:CN([*:6])[*:6] R7:N([*:7])[*:7]"};
+      "Core:N1C(N([*:2])[*:4])C2C(NC1[*:1])[*:5]C([*:3])[*:6]2 R2:C(CC[*:2])CC[*:4] R4:C(CC[*:2])CC[*:4] R5:N([*:5])[*:5] R6:C([*:6])[*:6]",
+      "Core:N1C(N([*:2])[*:4])C2C(NC1[*:1])[*:5]C([*:3])[*:6]2 R2:C[*:2] R4:[H][*:4] R5:S([*:5])[*:5] R6:CC(C)C([*:6])[*:6]",
+      "Core:C1C([*:1])NC(N([*:2])[*:6])C2C1[*:5]C([*:3])[*:6]2 R2:C[*:2] R4:[H][*:4] R5:S([*:5])[*:5] R6:CC(C)C([*:6])[*:6]",
+      "Core:C1C([*:1])NC(N([*:2])[*:6])C2C1[*:5]C([*:3])[*:6]2 R2:[H][*:2] R4:[H][*:4] R5:CN([*:5])[*:5] R6:N([*:6])[*:6]"
+    };
 
-    // All Cl's should be labeled with the same rgroup
     int i = 0;
     for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
          ++it, ++i) {
-      CHECK_RGROUP(it, expected[i], true);
+      TEST_ASSERT(i<4);
+      CHECK_RGROUP(it, expected[i]);
     }
   }
 }
@@ -894,12 +887,17 @@ void testRowColumnAlignmentProblem() {
 
     auto rows = decomp.getRGroupsAsRows();
     TEST_ASSERT(rows.size() == mols.size());
+    // dump rgroups
+    for (RGroupRows::const_iterator it = rows.begin(); it != rows.end(); ++it) {
+      CHECK_RGROUP(it, "", false);
+    }
+
     for (const auto row : rows) {
       TEST_ASSERT(row.count("Core") == 1);
       TEST_ASSERT(row.count("R1") == 1);
     }
-    TEST_ASSERT(rows[0].count("R2") == 1);
-    TEST_ASSERT(rows[2].count("R2") == 1);
+    TEST_ASSERT(rows[0].count("R2") == 0);
+    TEST_ASSERT(rows[2].count("R2") == 0);
     TEST_ASSERT(rows[1].count("R2") == 0);
 
     auto cols = decomp.getRGroupsAsColumns();
@@ -912,13 +910,7 @@ void testRowColumnAlignmentProblem() {
       TEST_ASSERT(rg->getNumAtoms());
     }
     auto &R2 = cols["R2"];
-    TEST_ASSERT(R2.size() == 3);
-    TEST_ASSERT(R2[0]);
-    TEST_ASSERT(R2[0]->getNumAtoms());
-    TEST_ASSERT(R2[2]);
-    TEST_ASSERT(R2[2]->getNumAtoms());
-    TEST_ASSERT(R2[1]);
-    TEST_ASSERT(R2[1]->getNumAtoms() == 0);
+    TEST_ASSERT(R2.size() == 0);
   }
 }
 
