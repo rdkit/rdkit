@@ -5216,7 +5216,36 @@ M  END
     self.assertEqual(m.GetConformer().GetProp("bar"),"foo")
     self.assertEqual(m.GetConformer().GetIntProp("foo"),1)
 
-    
+  def testGithub2479(self):
+    # Chemistry failure in last entry
+    smi2='''c1ccccc  duff
+c1ccccc1 ok
+c1ccncc1 pyridine
+C(C garbage
+C1CC1 ok2
+C1C(Cl)C1 ok3
+CC(C)(C)(C)C duff2
+'''
+    suppl2 = Chem.SmilesMolSupplier()
+    suppl2.SetData(smi2, titleLine=False, nameColumn=1)
+    l = [x for x in suppl2]
+    self.assertEqual(len(l),7)
+
+    # SMILES failure in last entry
+    smi2='''c1ccccc  duff
+c1ccccc1 ok
+c1ccncc1 pyridine
+C(C garbage
+C1CC1 ok2
+C1C(Cl)C1 ok3
+C1C(Cl)CCCC duff2
+'''
+    suppl2 = Chem.SmilesMolSupplier()
+    suppl2.SetData(smi2, titleLine=False, nameColumn=1)
+    l = [x for x in suppl2]
+    self.assertEqual(len(l),7)
+      
+      
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:

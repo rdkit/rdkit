@@ -192,10 +192,16 @@ ROMol *ForwardSDMolSupplier::_next() {
     return res;
   }
 
+  df_eofHitOnRead = false;
   unsigned int line = d_line;
   try {
     res = MolDataStreamToMol(dp_inStream, line, df_sanitize, df_removeHs,
                              df_strictParsing);
+    // there's a special case when trying to read an empty string that
+    // we get an empty molecule after only reading a single line without any
+    // additional error state.
+    if (!res && dp_inStream->eof() && (line - d_line < 2))
+      df_eofHitOnRead = true;
     d_line = line;
     if (res) {
       this->readMolProps(res);
@@ -210,6 +216,7 @@ ROMol *ForwardSDMolSupplier::_next() {
       }
     }
   } catch (FileParseException &fe) {
+    if (dp_inStream->eof()) df_eofHitOnRead = true;
     if (d_line < static_cast<int>(line)) d_line = line;
     // we couldn't read a mol block or the data for the molecule. In this case
     // advance forward in the stream until we hit the next record and then

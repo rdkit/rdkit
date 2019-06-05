@@ -115,12 +115,15 @@ struct forwardsdmolsup_wrap {
              python::arg("removeHs") = true,
              python::arg("strictParsing") = true)))
         .def(NEXT_METHOD,
-             (ROMol * (*)(LocalForwardSDMolSupplier *)) & MolSupplNext,
+             (ROMol * (*)(LocalForwardSDMolSupplier *)) & MolForwardSupplNext,
              "Returns the next molecule in the file.  Raises _StopIteration_ "
              "on EOF.\n",
              python::return_value_policy<python::manage_new_object>())
         .def("atEnd", &ForwardSDMolSupplier::atEnd,
              "Returns whether or not we have hit EOF.\n")
+        .def("GetEOFHitOnRead", &ForwardSDMolSupplier::getEOFHitOnRead,
+             "Returns whether or EOF was hit while parsing the previous "
+             "entry.\n")
         .def("__iter__", &FwdMolSupplIter,
              python::return_internal_reference<1>())
         .def("GetProcessPropertyLists",
