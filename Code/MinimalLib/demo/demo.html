@@ -1,0 +1,64 @@
+<!doctype html>
+<html>
+<script>
+  var Module = {
+    onRuntimeInitialized: function () {
+      console.log('version: ' + Module.version());
+      var m1 = Module.get_mol("c1ccccc1O");
+      console.log('smile: ' + m1.get_smiles());
+      m1.delete();
+      callback("CC(=O)Oc1ccccc1C(=O)O");
+    }
+  };
+  function draw(mol) {
+    var svg = mol.get_svg();
+    if (svg == "") return;
+    var ob = document.getElementById("drawing");
+    ob.outerHTML = "<div id='drawing'>" + svg + "</div>";
+  }
+  function draw_with_highlights(mol, atomids) {
+    var svg = mol.get_svg_with_highlights(atomids);
+    if (svg == "") return;
+    var ob = document.getElementById("drawing");
+    ob.outerHTML = "<div id='drawing'>" + svg + "</div>";
+  }
+  function callback(text) {
+    var mol = Module.get_mol(text);
+    if (mol.is_valid()) {
+      draw(mol);
+      var ob = document.getElementById("can_smiles");
+      ob.outerHTML = "<div id='can_smiles'>" + mol.get_smiles() + "</div>";
+      var descrs = JSON.parse(mol.get_descriptors());
+      var db = document.getElementById("descrs");
+      db.outerHTML = "<div id='descrs'>" +
+        "<b>AMW:</b> " + descrs.amw +
+        "<br /><b>MolLogP:</b> " + descrs.CrippenClogP +
+        "<br /><b>MFP2:</b> " + mol.get_morgan_fp(2, 128) +
+        "</div>";
+    }
+    mol.delete();
+  }
+  function sma_callback(text) {
+    var qmol = Module.get_qmol(text);
+    var mol = Module.get_mol(document.getElementById("smiles_input").value);
+    if (mol.is_valid() && qmol.is_valid()) {
+      match = JSON.parse(mol.get_substruct_match(qmol));
+      if (match.length) draw_with_highlights(mol, JSON.stringify({ atoms: match }));
+    }
+    mol.delete();
+    qmol.delete();
+  }
+</script>
+<script src="./RDKit_minimal.js"></script>
+<div id="molecule">
+  <div id="drawing"></div>
+  <div id="can_smiles"></div>
+  <div id="descrs"></div>
+</div>
+<br>
+<br>
+SMILES: <input id="smiles_input" type="text" value="CC(=O)Oc1ccccc1C(=O)O" onkeyup="callback(this.value)">
+<br>
+SMARTS: <input id="smart_input" type="text" value="" onkeyup="sma_callback(this.value)">
+
+</html>
