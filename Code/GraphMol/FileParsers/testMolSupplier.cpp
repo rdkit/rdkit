@@ -2418,6 +2418,108 @@ $$$$
     TEST_ASSERT(suppl.atEnd());
     TEST_ASSERT(suppl.getEOFHitOnRead());
   }
+
+  // truncated file1
+  std::string sdf2 = R"SDF(
+  Mrv1810 06051911332D          
+
+  3  2  0  0  0  0            999 V2000
+  -13.3985    4.9850    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -12.7066    5.4343    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  -12.0654    4.9151    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+M  END
+$$$$
+
+  Mrv1810 06051911332D          
+
+  3  2  0  0  0  0            999 V2000
+  -10.3083    4.8496    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.6408    5.3345    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.0277    4.7825    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+M  END
+$$$$
+
+  Mrv1810 06051911332D          
+
+  3  2  0  0  0  0            999 V2000
+  -10.3083    4.8496    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.6
+)SDF";
+  {
+    std::stringstream iss(sdf2);
+    SDMolSupplier suppl(&iss, false);
+    std::unique_ptr<ROMol> mol1(suppl.next());
+    TEST_ASSERT(mol1);
+    std::unique_ptr<ROMol> mol2(suppl.next());
+    TEST_ASSERT(!mol2);
+    std::unique_ptr<ROMol> mol3(suppl.next());
+    TEST_ASSERT(!mol3);
+    TEST_ASSERT(suppl.atEnd());
+  }
+  {
+    std::stringstream iss(sdf2);
+    ForwardSDMolSupplier suppl(&iss, false);
+    std::unique_ptr<ROMol> mol1(suppl.next());
+    TEST_ASSERT(mol1);
+    std::unique_ptr<ROMol> mol2(suppl.next());
+    TEST_ASSERT(!mol2);
+    TEST_ASSERT(!suppl.atEnd());
+    TEST_ASSERT(!suppl.getEOFHitOnRead());
+    std::unique_ptr<ROMol> mol3(suppl.next());
+    TEST_ASSERT(!mol3);
+    TEST_ASSERT(suppl.atEnd());
+    TEST_ASSERT(!suppl.getEOFHitOnRead());
+  }
+  // truncated file2
+  std::string sdf3 = R"SDF(
+  Mrv1810 06051911332D          
+
+  3  2  0  0  0  0            999 V2000
+  -13.3985    4.9850    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -12.7066    5.4343    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  -12.0654    4.9151    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+M  END
+>  <pval>  (1) 
+[1,2,]
+
+$$$$
+
+  Mrv1810 06051911332D          
+
+  3  2  0  0  0  0            999 V2000
+  -10.3083    4.8496    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.6408    5.3345    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.0277    4.7825    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+M  END
+>  <pval>  (1) 
+[1,2,]
+)SDF";
+  {
+    std::stringstream iss(sdf3);
+    SDMolSupplier suppl(&iss, false);
+    std::unique_ptr<ROMol> mol1(suppl.next());
+    TEST_ASSERT(mol1);
+    std::unique_ptr<ROMol> mol2(suppl.next());
+    TEST_ASSERT(mol2);
+    TEST_ASSERT(suppl.atEnd());
+  }
+  {
+    std::stringstream iss(sdf3);
+    ForwardSDMolSupplier suppl(&iss, false);
+    std::unique_ptr<ROMol> mol1(suppl.next());
+    TEST_ASSERT(mol1);
+    std::unique_ptr<ROMol> mol2(suppl.next());
+    TEST_ASSERT(mol2);
+    TEST_ASSERT(suppl.atEnd());
+  }
 }
 
 int main() {

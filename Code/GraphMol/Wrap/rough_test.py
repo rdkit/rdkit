@@ -5245,8 +5245,91 @@ C1C(Cl)CCCC duff2
     l = [x for x in suppl2]
     self.assertEqual(len(l),7)
       
-      
+    sdf=b"""
+  Mrv1810 06051911332D          
 
+  3  2  0  0  0  0            999 V2000
+  -13.3985    4.9850    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -12.7066    5.4343    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  -12.0654    4.9151    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+M  END
+$$$$
+
+  Mrv1810 06051911332D          
+
+  3  2  0  0  0  0            999 V2000
+  -10.3083    4.8496    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.6408    5.3345    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.0277    4.7825    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+M  END
+$$$$
+
+  Mrv1810 06051911332D          
+
+  3  2  0  0  0  0            999 V2000
+  -10.3083    4.8496    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.6"""
+    suppl3 = Chem.SDMolSupplier()
+    suppl3.SetData(sdf)
+    l = [x for x in suppl3]
+    self.assertEqual(len(l),3)
+    self.assertTrue(l[1] is None)
+    self.assertTrue(l[2] is None)
+    
+    from io import BytesIO
+    sio = BytesIO(sdf)
+    suppl3 = Chem.ForwardSDMolSupplier(sio)
+    l = [x for x in suppl3]
+    self.assertEqual(len(l),3)
+    self.assertTrue(l[1] is None)
+    self.assertTrue(l[2] is None)
+      
+    sdf=b"""
+  Mrv1810 06051911332D          
+
+  3  2  0  0  0  0            999 V2000
+  -13.3985    4.9850    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -12.7066    5.4343    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  -12.0654    4.9151    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+M  END
+>  <pval>  (1) 
+[1,2,]
+
+$$$$
+
+  Mrv1810 06051911332D          
+
+  3  2  0  0  0  0            999 V2000
+  -10.3083    4.8496    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.6408    5.3345    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.0277    4.7825    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+M  END
+>  <pval>  (1) 
+[1,2,]
+"""
+    suppl3 = Chem.SDMolSupplier()
+    suppl3.SetData(sdf)
+    l = [x for x in suppl3]
+    self.assertEqual(len(l),2)
+    self.assertTrue(l[0] is not None)
+    self.assertTrue(l[1] is not None)
+    
+    from io import BytesIO
+    sio = BytesIO(sdf)
+    suppl3 = Chem.ForwardSDMolSupplier(sio)
+    l = [x for x in suppl3]
+    self.assertEqual(len(l),2)
+    self.assertTrue(l[0] is not None)
+    self.assertTrue(l[1] is not None)
+ 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()

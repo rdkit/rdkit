@@ -216,7 +216,6 @@ ROMol *ForwardSDMolSupplier::_next() {
       }
     }
   } catch (FileParseException &fe) {
-    if (dp_inStream->eof()) df_eofHitOnRead = true;
     if (d_line < static_cast<int>(line)) d_line = line;
     // we couldn't read a mol block or the data for the molecule. In this case
     // advance forward in the stream until we hit the next record and then
@@ -227,6 +226,8 @@ ROMol *ForwardSDMolSupplier::_next() {
         << "ERROR: moving to the begining of the next molecule\n";
 
     // FIX: report files missing the $$$$ marker
+    d_line++;
+    std::getline(*dp_inStream, tempStr);
     while (!(dp_inStream->eof()) &&
            (tempStr[0] != '$' || tempStr.substr(0, 4) != "$$$$")) {
       d_line++;
@@ -242,18 +243,25 @@ ROMol *ForwardSDMolSupplier::_next() {
         << std::endl;
     BOOST_LOG(rdErrorLog) << "ERROR: " << se.message() << "\n";
 
+    d_line++;
+    std::getline(*dp_inStream, tempStr);
+    if (dp_inStream->eof()) df_eofHitOnRead = true;
     while (!(dp_inStream->eof()) &&
            (tempStr[0] != '$' || tempStr.substr(0, 4) != "$$$$")) {
       d_line++;
       std::getline(*dp_inStream, tempStr);
     }
   } catch (...) {
+    if (dp_inStream->eof()) df_eofHitOnRead = true;
     if (d_line < static_cast<int>(line)) d_line = line;
 
     BOOST_LOG(rdErrorLog) << "Unexpected error hit on line " << d_line
                           << std::endl;
     BOOST_LOG(rdErrorLog)
         << "ERROR: moving to the begining of the next molecule\n";
+    d_line++;
+    std::getline(*dp_inStream, tempStr);
+    if (dp_inStream->eof()) df_eofHitOnRead = true;
     while (!(dp_inStream->eof()) &&
            (tempStr[0] != '$' || tempStr.substr(0, 4) != "$$$$")) {
       d_line++;
