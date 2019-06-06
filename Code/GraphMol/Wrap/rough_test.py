@@ -5230,6 +5230,7 @@ CC(C)(C)(C)C duff2
     suppl2.SetData(smi2, titleLine=False, nameColumn=1)
     l = [x for x in suppl2]
     self.assertEqual(len(l),7)
+    self.assertTrue(l[6] is None)
 
     # SMILES failure in last entry
     smi2='''c1ccccc  duff
@@ -5244,6 +5245,7 @@ C1C(Cl)CCCC duff2
     suppl2.SetData(smi2, titleLine=False, nameColumn=1)
     l = [x for x in suppl2]
     self.assertEqual(len(l),7)
+    self.assertTrue(l[6] is None)
       
     sdf=b"""
   Mrv1810 06051911332D          
