@@ -59,26 +59,32 @@ const std::string done = "RLABEL_PROCESSED";
 // Various places where rgroups can be labeled
 //  the order of precedence
 enum class Labelling {
-		      RGROUP_LABELS,
-		      ISOTOPE_LABELS,
-		      ATOMMAP_LABELS,
-		      INDEX_LABELS,
-		      DUMMY_LABELS,
-		      INTERNAL_LABELS
+  RGROUP_LABELS,
+  ISOTOPE_LABELS,
+  ATOMMAP_LABELS,
+  INDEX_LABELS,
+  DUMMY_LABELS,
+  INTERNAL_LABELS
 };
 
 std::string labellingToString(Labelling type) {
-  switch(type) {
-   case Labelling::RGROUP_LABELS: return "RGroupLabels";
-   case Labelling::ISOTOPE_LABELS: return "IsotopeLabels";
-   case Labelling::ATOMMAP_LABELS: return "AtomMapLabels";
-   case Labelling::INDEX_LABELS: return "IndexLabels";
-   case Labelling::DUMMY_LABELS: return "DummyLabels";
-   case Labelling::INTERNAL_LABELS: return "InternalLabels";
+  switch (type) {
+    case Labelling::RGROUP_LABELS:
+      return "RGroupLabels";
+    case Labelling::ISOTOPE_LABELS:
+      return "IsotopeLabels";
+    case Labelling::ATOMMAP_LABELS:
+      return "AtomMapLabels";
+    case Labelling::INDEX_LABELS:
+      return "IndexLabels";
+    case Labelling::DUMMY_LABELS:
+      return "DummyLabels";
+    case Labelling::INTERNAL_LABELS:
+      return "InternalLabels";
   }
   return "unknown";
 }
-  
+
 // Return the current set of rlabels for the molecule
 //  Negative RLabels are ones not assigned by the user and are
 //   either set to the index of the atom OR set to the index of
@@ -94,11 +100,11 @@ std::map<int, Atom *> getRlabels(const RWMol &mol) {
       CHECK_INVARIANT(atoms.find(rlabel) == atoms.end(),
                       "Duplicate labels in rgroup core!");
       atoms[rlabel] = atom;
-    } 
+    }
   }
   return atoms;
 }
-  
+
 void clearInputLabels(Atom *atom) {
   // atom->setIsotope(0); Don't want to clear deuterium and things like that if
   // they aren't labels
@@ -124,14 +130,14 @@ bool setLabel(Atom *atom, int label, std::set<int> &labels, int &maxLabel,
   if (label) {
     if (labels.find(label) != labels.end()) {
       if (relabel) {
-	if (type == Labelling::INTERNAL_LABELS)
-	  std::cerr << "WARNING:  relabelling existing label" << std::endl;
+        if (type == Labelling::INTERNAL_LABELS)
+          std::cerr << "WARNING:  relabelling existing label" << std::endl;
         label = maxLabel + 1;
-      }
-      else
+      } else
         // XXX FIX me - get label id
         throw ValueErrorException(
-	    std::string("Duplicate label in input, current type is:") + labellingToString(type));
+            std::string("Duplicate label in input, current type is:") +
+            labellingToString(type));
     }
 
     atom->setProp<int>(RLABEL, label);
@@ -640,7 +646,7 @@ struct RGroupDecompData {
     if (params.rgroupLabelling & AtomMap) {
       atom->setAtomMapNum(rlabel);
     }
-    
+
     if (params.rgroupLabelling & MDLRGroup) {
       std::string dLabel = "R" + std::to_string(rlabel);
       atom->setProp(common_properties::dummyLabel, dLabel);
@@ -648,7 +654,7 @@ struct RGroupDecompData {
     }
 
     if (params.rgroupLabelling & Isotope) {
-      atom->setIsotope(rlabel+1);
+      atom->setIsotope(rlabel + 1);
     }
   }
 
@@ -680,28 +686,30 @@ struct RGroupDecompData {
 
       // This logic is a bit tricky, find all labels that have common cores
       //  and analyze those sets independently.
-      //  i.e. if core 1 doesn't have R1 then don't analyze it in when looking at label 1
-      std::map<int, std::set<int>> labelCores; // map from label->cores
+      //  i.e. if core 1 doesn't have R1 then don't analyze it in when looking
+      //  at label 1
+      std::map<int, std::set<int>> labelCores;  // map from label->cores
       for (auto &position : results) {
-	int core_idx = position.core_idx;
-	if (labelCores.find(core_idx) == labelCores.end()) {
-	  auto core = cores.find(core_idx);
-	  if (core != cores.end())  {
-	    for (auto rlabels :  getRlabels(core->second)) {
-		int rlabel = rlabels.first;
-		labelCores[rlabel].insert(core_idx);
-	      }
-	  }
-	}
+        int core_idx = position.core_idx;
+        if (labelCores.find(core_idx) == labelCores.end()) {
+          auto core = cores.find(core_idx);
+          if (core != cores.end()) {
+            for (auto rlabels : getRlabels(core->second)) {
+              int rlabel = rlabels.first;
+              labelCores[rlabel].insert(core_idx);
+            }
+          }
+        }
       }
-	
+
       for (int label : labels) {
         bool allH = true;
         for (auto &position : results) {
           R_DECOMP::const_iterator rgroup = position.rgroups.find(label);
-	  bool labelHasCore = labelCores[label].find(position.core_idx) != labelCores[label].end();
-          if ( labelHasCore &&
-	      (rgroup == position.rgroups.end() || !rgroup->second->isHydrogen())) {
+          bool labelHasCore = labelCores[label].find(position.core_idx) !=
+                              labelCores[label].end();
+          if (labelHasCore && (rgroup == position.rgroups.end() ||
+                               !rgroup->second->isHydrogen())) {
             allH = false;
             break;
           }
@@ -717,9 +725,7 @@ struct RGroupDecompData {
     return results;
   }
 
-  void relabelCore(RWMol &core,
-		   std::map<int, int> &mappings,
-		   int &count,
+  void relabelCore(RWMol &core, std::map<int, int> &mappings, int &count,
                    const std::set<int> &indexLabels,
                    std::map<int, std::vector<int>> extraAtomRLabels) {
     // Now remap to proper rlabel ids
@@ -763,13 +769,13 @@ struct RGroupDecompData {
       if (atm == atoms.end()) continue;  // label not used in the rgroup
 
       Atom *atom = atm->second;
-      
+
       int rlabel;
       auto mapping = mappings.find(indexLabel);
-      if(mapping == mappings.end()) {
-	rlabel = mappings[indexLabel] = ++count;
+      if (mapping == mappings.end()) {
+        rlabel = mappings[indexLabel] = ++count;
       } else {
-	rlabel = mapping->second;
+        rlabel = mapping->second;
       }
 
       if (atom->getAtomicNum() == 0) {  // add to dummy
@@ -879,7 +885,7 @@ struct RGroupDecompData {
     for (auto &it : best) {
       for (auto rit = it.rgroups.begin(); rit != it.rgroups.end(); ++rit) {
         if (rit->first >= 0) userLabels.insert(rit->first);
-        if (rit->first < 0)  indexLabels.insert(rit->first);
+        if (rit->first < 0) indexLabels.insert(rit->first);
 
         std::map<int, int> rlabelsUsedInRGroup =
             rit->second->getNumBondsToRlabels();
@@ -896,15 +902,15 @@ struct RGroupDecompData {
     // Assign final RGroup labels to the cores and propogate these to
     //  the scaffold
     finalRlabelMapping.clear();
-    
+
     int count = 0;
     for (std::map<int, RWMol>::const_iterator coreIt = cores.begin();
          coreIt != cores.end(); ++coreIt) {
       boost::shared_ptr<RWMol> labelledCore(new RWMol(coreIt->second));
       labelledCores[coreIt->first] = labelledCore;
 
-      relabelCore(*labelledCore.get(), finalRlabelMapping, count,
-                  indexLabels, extraAtomRLabels);
+      relabelCore(*labelledCore.get(), finalRlabelMapping, count, indexLabels,
+                  extraAtomRLabels);
     }
 
     for (auto &it : best) {
