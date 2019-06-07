@@ -135,29 +135,41 @@ public class SmilesTests extends GraphMolTest {
             assertEquals("bad smiles: "+nsmi+"!="+expected,nsmi,expected);
 	}
 
-    	@Test
+        @Test
 	public void testRankAtoms(){
 	    //Need a molecule to canonicalise
-	    ROMol mRef = RDKFuncs.MolFromSmiles("C(CO)(C=C)CCC(CC)C#N");
-	    ROMol mTest = RDKFuncs.MolFromSmiles("C(CO)(C=C)CCC(CC)C#N");
-	    //assign the ranks in the reference
-	    mRef.MolToSmiles(true);
+	    // expected ordering here: [11, 8, 3, 5, 0, 9, 7, 10, 6, 1, 4, 2]
+	    ROMol m1 = RWMol.MolFromSmiles("C(CO)(C=C)CCC(CC)C#N");
 
-	    // And now using the new method
-	    UInt_Vect ranks = new UInt_Vect();
-	    mTest.rankMolAtoms(ranks);
-	    assertEquals("Wrong size ranks - " + ranks.size() + " != " + 
-	  		mTest.GetNumAtoms(), ranks.size(), mTest.GetNumAtoms());
+	    // same molecule, different atom ordering:
+	    // expected ordering here: [11, 5, 0, 8, 3, 9, 7, 10, 4, 2, 6, 1] 
+	    ROMol m2 = RWMol.MolFromSmiles("C(C=C)(CO)CCC(C#N)CC");
 
-	    // And now compare..
-	    for(int i=0; i<mRef.GetNumAtoms(); i++){
-		int refRank=Integer.parseInt(mRef.getAtomWithIdx(i).getProp("_canonicalRankingNumber"));
-		assertEquals("Error in ranking - got " + ranks.get(i) + 
-				" expected " + refRank, refRank,ranks.get(i));
+	    UInt_Vect ranks1 = new UInt_Vect();
+	    m1.rankMolAtoms(ranks1);
+	    assertEquals("Wrong size ranks - " + ranks1.size() + " != " + 
+	  		m1.getNumAtoms(), ranks1.size(), m1.getNumAtoms());
+
+	    UInt_Vect ranks2 = new UInt_Vect();
+	    m2.rankMolAtoms(ranks2);
+	    assertEquals("Wrong size ranks - " + ranks2.size() + " != " + 
+	  		m2.getNumAtoms(), ranks2.size(), m2.getNumAtoms());
+
+	    Match_Vect_Vect matches = m1.getSubstructMatches(m2);
+	    assertEquals("bad matches size: "+matches.size(),matches.size(),1);
+	    Match_Vect match = matches.get(0);
+	    assertEquals("bad match size: "+match.size(),match.size(),m1.getNumAtoms());
+	    for(int i=0;i<match.size();i++){
+	 	assertEquals("bad rank: "+match.get(i)+" "+ranks1+" "+ranks2,
+			ranks1.get(match.get(i).getSecond()),
+			ranks2.get(match.get(i).getFirst()));
 	    }
-	    mRef.delete();
-	    mTest.delete();
-	    ranks.delete();
+	    
+	    m1.delete();
+	    m2.delete();
+	    ranks1.delete();
+	    ranks2.delete();
+	    matches.delete();
 	}
 
 	public static void main(String args[]) {
