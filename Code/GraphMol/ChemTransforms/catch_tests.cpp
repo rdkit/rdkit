@@ -33,8 +33,7 @@ TEST_CASE("Github #1039", "[]") {
     REQUIRE(pieces->getBondBetweenAtoms(3, 6));
     REQUIRE(pieces->getBondBetweenAtoms(2, 7));
     CHECK(pieces->getBondBetweenAtoms(3, 6)->getBondType() == Bond::SINGLE);
-    CHECK(pieces->getBondBetweenAtoms(3, 6)->getBondDir() ==
-          Bond::ENDDOWNRIGHT);
+    CHECK(pieces->getBondBetweenAtoms(3, 6)->getBondDir() == Bond::ENDUPRIGHT);
     CHECK(pieces->getBondBetweenAtoms(2, 7)->getBondType() == Bond::SINGLE);
     CHECK(pieces->getBondBetweenAtoms(2, 7)->getBondDir() == Bond::ENDUPRIGHT);
     CHECK(MolToSmiles(*pieces) == "[2*]/C=C/C.[3*]/C=C/C");
@@ -47,7 +46,6 @@ TEST_CASE("Github #1039", "[]") {
     std::unique_ptr<ROMol> pieces(MolFragmenter::fragmentOnBonds(*m1, bonds));
     REQUIRE(pieces);
     CHECK(pieces->getNumAtoms() == 7);
-    pieces->debugMol(std::cerr);
     REQUIRE(pieces->getBondBetweenAtoms(0, 6));
     REQUIRE(pieces->getBondBetweenAtoms(1, 5));
     CHECK(pieces->getBondBetweenAtoms(0, 6)->getBondDir() == Bond::BEGINWEDGE);
