@@ -5331,7 +5331,34 @@ M  END
     self.assertEqual(len(l),2)
     self.assertTrue(l[0] is not None)
     self.assertTrue(l[1] is not None)
- 
+
+  def testXYZ(self):
+    conf = Chem.Conformer(5)
+    conf.SetAtomPosition(0, [0.000, 0.000, 0.000])
+    conf.SetAtomPosition(1, [-0.635, -0.635, 0.635])
+    conf.SetAtomPosition(2, [-0.635, 0.635, -0.635])
+    conf.SetAtomPosition(3, [0.635, -0.635, -0.635])
+    conf.SetAtomPosition(4, [0.635, 0.635, 0.635])
+
+    emol = Chem.EditableMol(Chem.Mol())
+    for z in [6, 1, 1, 1, 1]:
+      emol.AddAtom(Chem.Atom(z))
+    mol = emol.GetMol()
+    mol.SetProp('_Name', 'methane\nthis part should not be output')
+    mol.AddConformer(conf)
+
+    xyzblock_expected = """5
+methane
+C      0.000000    0.000000    0.000000
+H     -0.635000   -0.635000    0.635000
+H     -0.635000    0.635000   -0.635000
+H      0.635000   -0.635000   -0.635000
+H      0.635000    0.635000    0.635000
+"""
+
+    self.assertEqual(Chem.MolToXYZBlock(mol), xyzblock_expected)
+
+
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()

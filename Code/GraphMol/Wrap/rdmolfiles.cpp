@@ -695,6 +695,38 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
        python::arg("kekulize") = true, python::arg("forceV3000") = false),
       docString.c_str());
 
+  //
+
+  docString =
+      "Returns a XYZ block for a molecule\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule\n\
+    - confId: (optional) selects which conformation to output (-1 = default)\n\
+\n\
+  RETURNS:\n\
+\n\
+    a string\n\
+\n";
+  python::def("MolToXYZBlock", RDKit::MolToXYZBlock,
+              (python::arg("mol"), python::arg("confId") = -1),
+              docString.c_str());
+
+  docString =
+      "Writes a XYZ file for a molecule\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule\n\
+    - filename: the file to write to\n\
+    - confId: (optional) selects which conformation to output (-1 = default)\n\
+\n";
+  python::def(
+      "MolToXYZFile", RDKit::MolToXYZFile,
+      (python::arg("mol"), python::arg("filename"), python::arg("confId") = -1),
+      docString.c_str());
+
+  //
+
   python::class_<RDKit::SmilesParserParams, boost::noncopyable>(
       "SmilesParserParams", "Parameters controlling SMILES Parsing")
       .def_readwrite("maxIterations", &RDKit::SmilesParserParams::debugParse,
