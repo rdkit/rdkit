@@ -1,5 +1,4 @@
 /* 
- * $Id: SmilesTests.java 131 2011-01-20 22:01:29Z ebakke $
  *
  *  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
  *  All rights reserved.
@@ -136,29 +135,29 @@ public class SmilesTests extends GraphMolTest {
             assertEquals("bad smiles: "+nsmi+"!="+expected,nsmi,expected);
 	}
 
-    @Test
+    	@Test
 	public void testRankAtoms(){
-	//Need a molecule to canonicalise
-		ROMol mRef = RDKFuncs.MolFromSmiles("C(CO)(C=C)CCC(CC)C#N");
-		ROMol mTest = RDKFuncs.MolFromSmiles("C(CO)(C=C)CCC(CC)C#N");
-		//assign the ranks in the reference
-		mRef.MolToSmiles(true);
+	    //Need a molecule to canonicalise
+	    ROMol mRef = RDKFuncs.MolFromSmiles("C(CO)(C=C)CCC(CC)C#N");
+	    ROMol mTest = RDKFuncs.MolFromSmiles("C(CO)(C=C)CCC(CC)C#N");
+	    //assign the ranks in the reference
+	    mRef.MolToSmiles(true);
 
-		//And now using the new method
-		UInt_Vect ranks = new UInt_Vect();
-		mTest.rankMolAtoms(ranks);
-		assertEquals("Wrong size ranks - " + ranks.size() + " != " + 
-				mTest.GetNumAtoms(), ranks.size(), mTest.GetNumAtoms());
+	    // And now using the new method
+	    UInt_Vect ranks = new UInt_Vect();
+	    mTest.rankMolAtoms(ranks);
+	    assertEquals("Wrong size ranks - " + ranks.size() + " != " + 
+	  		mTest.GetNumAtoms(), ranks.size(), mTest.GetNumAtoms());
 
-		//Anf now compare..
-		for(int i=0; i<mRef.GetNumAtoms(); i++){
-			int refRank=Integer.parseInt(mRef.getAtomWithIdx(i).getProp("_canonicalRankingNumber"));
-			assertEquals("Error in ranking - got " + ranks.get(i) + 
-					" expected " + refRank, refRank,ranks.get(i));
-		}
-		mRef.delete();
-		mTest.delete();
-		ranks.delete();
+	    // And now compare..
+	    for(int i=0; i<mRef.GetNumAtoms(); i++){
+		int refRank=Integer.parseInt(mRef.getAtomWithIdx(i).getProp("_canonicalRankingNumber"));
+		assertEquals("Error in ranking - got " + ranks.get(i) + 
+				" expected " + refRank, refRank,ranks.get(i));
+	    }
+	    mRef.delete();
+	    mTest.delete();
+	    ranks.delete();
 	}
 
 	public static void main(String args[]) {
