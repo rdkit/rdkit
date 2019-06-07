@@ -60,6 +60,7 @@
 #include <GraphMol/MolAlign/O3AAlignMolecules.h>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/PartialCharges/GasteigerCharges.h>
+#include <GraphMol/new_canon.h>
 #include <sstream>
 %}
 
@@ -465,6 +466,13 @@ void setPreferCoordGen(bool);
                                std::vector<double> &charges,
                                int nIter=12,bool throwOnParamFailure=false){
     RDKit::computeGasteigerCharges(*mol,charges,nIter,throwOnParamFailure);
+  }
+
+  /* From new_canon.h*/
+  void rankMolAtoms(UINT_VECT &ranks,
+                  bool breakTies = true, bool includeChirality = true,
+                  bool includeIsotopes = true){
+	RDKit::Canon::rankMolAtoms(*($self), ranks, breakTies, includeChirality, includeIsotopes);
   }
 }
 
