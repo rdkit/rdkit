@@ -60,8 +60,8 @@ void constructFragmenterAtomTypes(
     boost::split(tokens, tempStr, boost::is_any_of(" \t"),
                  boost::token_compress_on);
     if (tokens.size() < 2) {
-      BOOST_LOG(rdWarningLog) << "line " << line << " is too short"
-                              << std::endl;
+      BOOST_LOG(rdWarningLog)
+          << "line " << line << " is too short" << std::endl;
       continue;
     }
     unsigned int idx = boost::lexical_cast<unsigned int>(tokens[0]);
@@ -149,20 +149,20 @@ void constructFragmenterBondTypes(
     boost::split(tokens, tempStr, boost::is_any_of(" \t"),
                  boost::token_compress_on);
     if (tokens.size() < 3) {
-      BOOST_LOG(rdWarningLog) << "line " << line << " is too short"
-                              << std::endl;
+      BOOST_LOG(rdWarningLog)
+          << "line " << line << " is too short" << std::endl;
       continue;
     }
     unsigned int idx1 = boost::lexical_cast<unsigned int>(tokens[0]);
     if (atomTypes.find(idx1) == atomTypes.end()) {
-      BOOST_LOG(rdWarningLog) << "atom type #" << idx1 << " not recognized."
-                              << std::endl;
+      BOOST_LOG(rdWarningLog)
+          << "atom type #" << idx1 << " not recognized." << std::endl;
       continue;
     }
     unsigned int idx2 = boost::lexical_cast<unsigned int>(tokens[1]);
     if (atomTypes.find(idx2) == atomTypes.end()) {
-      BOOST_LOG(rdWarningLog) << "atom type #" << idx2 << " not recognized."
-                              << std::endl;
+      BOOST_LOG(rdWarningLog)
+          << "atom type #" << idx2 << " not recognized." << std::endl;
       continue;
     }
     std::string sma1 = atomTypes.find(idx1)->second;
@@ -299,7 +299,7 @@ boost::uint64_t nextBitCombo(boost::uint64_t v) {
   boost::uint64_t t = (v | (v - 1)) + 1;
   return t | ((((t & -t) / (v & -v)) >> 1) - 1);
 }
-}
+}  // namespace
 
 void fragmentOnSomeBonds(
     const ROMol &mol, const std::vector<unsigned int> &bondIndices,
@@ -365,7 +365,7 @@ void checkChiralityPostMove(const ROMol &mol, const Atom *oAt, Atom *nAt,
   // we do this with a property.
   // this was github #1734
   if (nAt->getPropIfPresent(newBondOrder, incomingOrder)) {
-    for (int bidx: incomingOrder) {
+    for (int bidx : incomingOrder) {
       if (bidx != check_bond_index) {
         newOrder.push_back(bidx);
       }
@@ -393,7 +393,7 @@ void checkChiralityPostMove(const ROMol &mol, const Atom *oAt, Atom *nAt,
   nAt->setChiralTag(oAt->getChiralTag());
   if (nSwaps % 2) nAt->invertChirality();
 }
-}
+}  // namespace
 
 ROMol *fragmentOnBonds(
     const ROMol &mol, const std::vector<unsigned int> &bondIndices,
@@ -443,11 +443,17 @@ ROMol *fragmentOnBonds(
       }
       unsigned int idx1 = res->addAtom(at1, false, true);
       if (bondTypes) bT = (*bondTypes)[i];
-      bondidx = res->addBond(eidx, at1->getIdx(), bT) - 1;
-      res->getBondWithIdx(bondidx)->setBondDir(bD);
-      
+      bondidx = res->addBond(at1->getIdx(), eidx, bT) - 1;
+      // the dummy replaces the original start atom, so the
+      // direction will be ok as long as it's one of the
+      // states associated with double bond stereo
+      if (bD == Bond::ENDDOWNRIGHT || bD == Bond::ENDUPRIGHT)
+        res->getBondWithIdx(bondidx)->setBondDir(bD);
+
       unsigned int idx2 = res->addAtom(at2, false, true);
-      bondidx = res->addBond(at2->getIdx(), bidx, bT) - 1;
+      bondidx = res->addBond(bidx, at2->getIdx(), bT) - 1;
+      // this bond starts at the same atom, so its direction should always be
+      // correct:
       res->getBondWithIdx(bondidx)->setBondDir(bD);
 
       // figure out if we need to change the stereo tags on the atoms:

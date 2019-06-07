@@ -18,5 +18,5 @@ rdkit_test(testChemTransforms testChemTransforms.cpp
            LINK_LIBRARIES ChemTransforms FileParsers SmilesParse SubstructMatch
            GraphMol RDGeometryLib RDGeneral ${RDKit_THREAD_LIBS})
 
-
-
+rdkit_catch_test(chemTransformsTestCatch catch_tests.cpp LINK_LIBRARIES ChemTransforms FileParsers SmilesParse 
+    SubstructMatch GraphMol RDGeometryLib RDGeneral ${RDKit_THREAD_LIBS} )
