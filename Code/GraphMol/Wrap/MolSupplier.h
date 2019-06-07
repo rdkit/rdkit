@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2005-2008 Greg Landrumm and Rational Discovery LLC
+//  Copyright (C) 2005-2019 Greg Landrumm and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef _RD_WRAP_MOLSUPPLIER_H_
-#define _RD_WRAP_MOLSUPPLIER_H_
+#ifndef RD_WRAP_MOLSUPPLIER_H
+#define RD_WRAP_MOLSUPPLIER_H
 //! Template functions for wrapping suppliers as python iterators.
 
 #include <RDBoost/python.h>
@@ -26,6 +26,26 @@ T *MolSupplIter(T *suppl) {
 }
 
 template <typename T>
+ROMol *MolForwardSupplNext(T *suppl) {
+  ROMol *res = 0;
+  if (!suppl->atEnd()) {
+    try {
+      res = suppl->next();
+    } catch (...) {
+      res = 0;
+    }
+  } else {
+    PyErr_SetString(PyExc_StopIteration, "End of supplier hit");
+    throw boost::python::error_already_set();
+  }
+  if (suppl->atEnd() && suppl->getEOFHitOnRead()) {
+    PyErr_SetString(PyExc_StopIteration, "End of supplier hit");
+    throw boost::python::error_already_set();
+  }
+  return res;
+}
+
+template <typename T>
 ROMol *MolSupplNext(T *suppl) {
   ROMol *res = 0;
   if (!suppl->atEnd()) {
@@ -34,17 +54,13 @@ ROMol *MolSupplNext(T *suppl) {
     } catch (...) {
       res = 0;
     }
-  }
-  // FIX: there is an edge case here that we ought to catch:
-  //    suppliers where the last molecule has a chemistry problem
-  //    With the current behavior, those empty molecules will not
-  //    show up in the list
-  if (suppl->atEnd() && !res) {
+  } else {
     PyErr_SetString(PyExc_StopIteration, "End of supplier hit");
     throw boost::python::error_already_set();
   }
+
   return res;
-}
+}  // namespace RDKit
 
 template <typename T>
 ROMol *MolSupplNextAcceptNullLastMolecule(T *suppl) {

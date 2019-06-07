@@ -1,6 +1,5 @@
-//  $Id$
 //
-//   Copyright (C) 2002-2008 Greg Landrum and Rational Discovery LLC
+//   Copyright (C) 2002-2019 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -2353,6 +2352,176 @@ void testGitHub2285() {
   }
 }
 
+void testGitHub2479() {
+  std::string smiles1 = R"DATA(smiles id
+c1ccccc duff
+c1ccccc1 ok
+C(C garbage
+C1CC1 ok2
+CC(C)(C)(C)C duff2
+)DATA";
+  {
+    SmilesMolSupplier suppl;
+    suppl.setData(smiles1);
+    unsigned int cnt = 0;
+    while (!suppl.atEnd()) {
+      std::unique_ptr<ROMol> mol(suppl.next());
+      if (cnt % 2) TEST_ASSERT(mol);
+      ++cnt;
+    }
+    TEST_ASSERT(cnt == 5);
+  }
+
+  std::string sdf1 = R"SDF(
+  Mrv1810 06051911332D          
+
+  3  2  0  0  0  0            999 V2000
+  -13.3985    4.9850    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -12.7066    5.4343    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  -12.0654    4.9151    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+M  END
+$$$$
+
+  Mrv1810 06051911332D          
+
+  3  2  0  0  0  0            999 V2000
+  -10.3083    4.8496    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.6408    5.3345    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.0277    4.7825    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+M  END
+$$$$
+)SDF";
+  {
+    std::stringstream iss(sdf1);
+    SDMolSupplier suppl(&iss, false);
+    std::unique_ptr<ROMol> mol1(suppl.next());
+    TEST_ASSERT(mol1);
+    std::unique_ptr<ROMol> mol2(suppl.next());
+    TEST_ASSERT(!mol2);
+    TEST_ASSERT(suppl.atEnd());
+  }
+  {
+    std::stringstream iss(sdf1);
+    ForwardSDMolSupplier suppl(&iss, false);
+    std::unique_ptr<ROMol> mol1(suppl.next());
+    TEST_ASSERT(mol1);
+    std::unique_ptr<ROMol> mol2(suppl.next());
+    TEST_ASSERT(!mol2);
+    TEST_ASSERT(!suppl.atEnd());
+    TEST_ASSERT(!suppl.getEOFHitOnRead());
+    std::unique_ptr<ROMol> mol3(suppl.next());
+    TEST_ASSERT(!mol3);
+    TEST_ASSERT(suppl.atEnd());
+    TEST_ASSERT(suppl.getEOFHitOnRead());
+  }
+
+  // truncated file1
+  std::string sdf2 = R"SDF(
+  Mrv1810 06051911332D          
+
+  3  2  0  0  0  0            999 V2000
+  -13.3985    4.9850    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -12.7066    5.4343    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  -12.0654    4.9151    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+M  END
+$$$$
+
+  Mrv1810 06051911332D          
+
+  3  2  0  0  0  0            999 V2000
+  -10.3083    4.8496    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.6408    5.3345    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.0277    4.7825    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+M  END
+$$$$
+
+  Mrv1810 06051911332D          
+
+  3  2  0  0  0  0            999 V2000
+  -10.3083    4.8496    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.6
+)SDF";
+  {
+    std::stringstream iss(sdf2);
+    SDMolSupplier suppl(&iss, false);
+    std::unique_ptr<ROMol> mol1(suppl.next());
+    TEST_ASSERT(mol1);
+    std::unique_ptr<ROMol> mol2(suppl.next());
+    TEST_ASSERT(!mol2);
+    std::unique_ptr<ROMol> mol3(suppl.next());
+    TEST_ASSERT(!mol3);
+    TEST_ASSERT(suppl.atEnd());
+  }
+  {
+    std::stringstream iss(sdf2);
+    ForwardSDMolSupplier suppl(&iss, false);
+    std::unique_ptr<ROMol> mol1(suppl.next());
+    TEST_ASSERT(mol1);
+    std::unique_ptr<ROMol> mol2(suppl.next());
+    TEST_ASSERT(!mol2);
+    TEST_ASSERT(!suppl.atEnd());
+    TEST_ASSERT(!suppl.getEOFHitOnRead());
+    std::unique_ptr<ROMol> mol3(suppl.next());
+    TEST_ASSERT(!mol3);
+    TEST_ASSERT(suppl.atEnd());
+    TEST_ASSERT(!suppl.getEOFHitOnRead());
+  }
+  // truncated file2
+  std::string sdf3 = R"SDF(
+  Mrv1810 06051911332D          
+
+  3  2  0  0  0  0            999 V2000
+  -13.3985    4.9850    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -12.7066    5.4343    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  -12.0654    4.9151    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+M  END
+>  <pval>  (1) 
+[1,2,]
+
+$$$$
+
+  Mrv1810 06051911332D          
+
+  3  2  0  0  0  0            999 V2000
+  -10.3083    4.8496    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.6408    5.3345    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.0277    4.7825    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+M  END
+>  <pval>  (1) 
+[1,2,]
+)SDF";
+  {
+    std::stringstream iss(sdf3);
+    SDMolSupplier suppl(&iss, false);
+    std::unique_ptr<ROMol> mol1(suppl.next());
+    TEST_ASSERT(mol1);
+    std::unique_ptr<ROMol> mol2(suppl.next());
+    TEST_ASSERT(mol2);
+    TEST_ASSERT(suppl.atEnd());
+  }
+  {
+    std::stringstream iss(sdf3);
+    ForwardSDMolSupplier suppl(&iss, false);
+    std::unique_ptr<ROMol> mol1(suppl.next());
+    TEST_ASSERT(mol1);
+    std::unique_ptr<ROMol> mol2(suppl.next());
+    TEST_ASSERT(mol2);
+    TEST_ASSERT(suppl.atEnd());
+  }
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -2501,7 +2670,6 @@ int main() {
   testIssue3482695();
   BOOST_LOG(rdErrorLog) << "Finished: testIssue3482695()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-#endif
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
   testIssue3525673();
   BOOST_LOG(rdErrorLog) << "Finished: testIssue3525673()\n";
@@ -2530,6 +2698,12 @@ int main() {
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
   testGitHub2285();
   BOOST_LOG(rdErrorLog) << "Finished: testGitHub2285()\n";
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+#endif
+
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  testGitHub2479();
+  BOOST_LOG(rdErrorLog) << "Finished: testGitHub2479()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
   return 0;

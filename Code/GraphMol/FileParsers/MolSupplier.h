@@ -109,6 +109,8 @@ class RDKIT_FILEPARSERS_EXPORT ForwardSDMolSupplier : public MolSupplier {
   void setProcessPropertyLists(bool val) { df_processPropertyLists = val; }
   bool getProcessPropertyLists() const { return df_processPropertyLists; }
 
+  bool getEOFHitOnRead() const { return df_eofHitOnRead; }
+
  protected:
   virtual void checkForEnd();
   ROMol *_next();
@@ -117,6 +119,7 @@ class RDKIT_FILEPARSERS_EXPORT ForwardSDMolSupplier : public MolSupplier {
   int d_line;  // line number we are currently on
   bool df_sanitize, df_removeHs, df_strictParsing;
   bool df_processPropertyLists;
+  bool df_eofHitOnRead = false;
 };
 
 // \brief a lazy supplier from an SD file

@@ -16,7 +16,7 @@
 #include "FileParsers.h"
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <boost/tokenizer.hpp>
-typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
 #include <fstream>
 #include <iostream>
@@ -192,8 +192,8 @@ ROMol *SmilesMolSupplier::processLine(std::string inLine) {
       res->setProp(common_properties::_Name, mname);
     } else {
       if (d_name >= static_cast<int>(recs.size())) {
-        BOOST_LOG(rdWarningLog) << "WARNING: no name column found on line "
-                                << d_line << std::endl;
+        BOOST_LOG(rdWarningLog)
+            << "WARNING: no name column found on line " << d_line << std::endl;
       } else {
         res->setProp(common_properties::_Name, recs[d_name]);
       }
@@ -456,7 +456,6 @@ ROMol *SmilesMolSupplier::next() {
   std::string inLine = getLine(dp_inStream);
   // and process it:
   res = this->processLine(inLine);
-
   // if we don't already know the length of the supplier,
   // check if we can read another line:
   if (d_len < 0 && this->skipComments() < 0) {
@@ -533,4 +532,4 @@ unsigned int SmilesMolSupplier::length() {
 }
 
 bool SmilesMolSupplier::atEnd() { return df_end; }
-}
+}  // namespace RDKit
