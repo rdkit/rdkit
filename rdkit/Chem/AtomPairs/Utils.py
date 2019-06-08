@@ -143,19 +143,17 @@ def NumPiElectrons(atom):
     1
 
     """
-    bond_order = 0
-    pi_electrons = 0
-
-    for bond in atom.GetBonds():
-
-        # For aromatic atoms, pi-electrons = 1
-        if bond.GetBondTypeAsDouble() == 1.5:
-            pi_electrons = 1
-
-        # For other bonded atoms, pi-electrons = Sum of bond orders - Number of non-hydrogen neighbors
-        else:
+   
+    # For aromatic atoms, pi-electrons = 1
+    if atom.GetIsAromatic():
+        pi_electrons = 1
+    
+    # For other bonded atoms, pi-electrons = Sum of bond orders - Number of non-hydrogen neighbors
+    else:
+        bond_order = 0
+        for bond in atom.GetBonds():
             bond_order += bond.GetBondTypeAsDouble()
-            pi_electrons = bond_order - len(atom.GetNeighbors())
+        pi_electrons = bond_order - len(atom.GetNeighbors())
 
     return int(pi_electrons)
 
