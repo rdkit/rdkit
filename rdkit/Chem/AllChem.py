@@ -20,6 +20,7 @@ from rdkit import DataStructs
 from rdkit import ForceField
 from rdkit import RDConfig
 from rdkit import rdBase
+from rdkit import Chem
 from rdkit.Chem import *
 from rdkit.Chem.ChemicalFeatures import *
 from rdkit.Chem.rdChemReactions import *
