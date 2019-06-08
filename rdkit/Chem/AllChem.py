@@ -445,33 +445,43 @@ def GetNumOfUnsaturatedBonds(atom):
         The number of electrons an atom is using for pi bonding
         OR
         The Number of Unsaturated bonds, an atom has
+    
     >>> m = Chem.MolFromSmiles('C=C')
     >>> GetNumOfUnsaturatedBonds(m.GetAtomWithIdx(0))
     1
+    
     >>> m = Chem.MolFromSmiles('C#CC')
     >>> GetNumOfUnsaturatedBonds(m.GetAtomWithIdx(0))
     2
+    
     >>> GetNumOfUnsaturatedBonds(m.GetAtomWithIdx(1))
     2
+    
     >>> m = Chem.MolFromSmiles('O=C=CC')
     >>> GetNumOfUnsaturatedBonds(m.GetAtomWithIdx(0))
     1
+    
     >>> GetNumOfUnsaturatedBonds(m.GetAtomWithIdx(1))
     2
+    
     >>> GetNumOfUnsaturatedBonds(m.GetAtomWithIdx(2))
     1
+    
     >>> GetNumOfUnsaturatedBonds(m.GetAtomWithIdx(3))
     0
+    
     >>> m = Chem.MolFromSmiles('c1ccccc1')
     >>> GetNumOfUnsaturatedBonds(m.GetAtomWithIdx(0))
     1
-    This fixes the problem of S and P in old version:
+    
     >>> m = Chem.MolFromSmiles('S(=O)(=O)(O)O')
     >>> GetNumOfUnsaturatedBonds(m.GetAtomWithIdx(0))
     2
+    
     >>> m = Chem.MolFromSmiles('P(=O)(O)(O)O')
     >>> GetNumOfUnsaturatedBonds(m.GetAtomWithIdx(0))
     1
+    
     """
    
     # For aromatic atoms, num of unsaturated bonds = 1
