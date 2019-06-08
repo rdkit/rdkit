@@ -146,7 +146,9 @@ class MolDraw2D {
   virtual int panelHeight() const { return panel_height_; }
 
   double scale() const { return scale_; }
-  void calculateScale(int width, int height);
+  void calculateScale(int width, int height,
+                      const std::vector<int> *highlight_atoms = nullptr,
+                      const std::map<int, double> *highlight_radii = nullptr);
   void calculateScale() { calculateScale(panel_width_, panel_height_); };
   void setScale(int width, int height, const Point2D &minv,
                 const Point2D &maxv);
