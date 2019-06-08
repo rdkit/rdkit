@@ -105,19 +105,15 @@ GetAtomCode = rdMolDescriptors.GetAtomPairAtomCode
 
 
 def NumPiElectrons(atom):
-    """
-    Returns the number of electrons an atom is using for pi bonding
-
+    """ Returns the number of electrons an atom is using for pi bonding
     >>> m = Chem.MolFromSmiles('C=C')
     >>> NumPiElectrons(m.GetAtomWithIdx(0))
     1
-
     >>> m = Chem.MolFromSmiles('C#CC')
     >>> NumPiElectrons(m.GetAtomWithIdx(0))
     2
     >>> NumPiElectrons(m.GetAtomWithIdx(1))
     2
-
     >>> m = Chem.MolFromSmiles('O=C=CC')
     >>> NumPiElectrons(m.GetAtomWithIdx(0))
     1
@@ -127,35 +123,30 @@ def NumPiElectrons(atom):
     1
     >>> NumPiElectrons(m.GetAtomWithIdx(3))
     0
-
     >>> m = Chem.MolFromSmiles('c1ccccc1')
     >>> NumPiElectrons(m.GetAtomWithIdx(0))
     1
-
-    This fixes the problem of S and P in old version:
-
-    >>> m = Chem.MolFromSmiles('S(=O)(=O)(O)O')
+    FIX: this behaves oddly in these cases:
+    >>> m = Chem.MolFromSmiles('S(=O)(=O)')
     >>> NumPiElectrons(m.GetAtomWithIdx(0))
     2
-
-    >>> m = Chem.MolFromSmiles('P(=O)(O)(O)O')
+    >>> m = Chem.MolFromSmiles('S(=O)(=O)(O)O')
     >>> NumPiElectrons(m.GetAtomWithIdx(0))
-    1
-
+    0
+    In the second case, the S atom is tagged as sp3 hybridized.
     """
-   
-    # For aromatic atoms, pi-electrons = 1
-    if atom.GetIsAromatic():
-        pi_electrons = 1
-    
-    # For other bonded atoms, pi-electrons = Sum of bond orders - Number of non-hydrogen neighbors
-    else:
-        bond_order = 0
-        for bond in atom.GetBonds():
-            bond_order += bond.GetBondTypeAsDouble()
-        pi_electrons = bond_order - len(atom.GetNeighbors())
 
-    return int(pi_electrons)
+    res = 0
+    if atom.GetIsAromatic():
+        res = 1
+    elif atom.GetHybridization() != Chem.HybridizationType.SP3:
+        # the number of pi electrons is just the number of
+        # unsaturations (valence - degree):
+        res = atom.GetExplicitValence() - atom.GetNumExplicitHs()
+        if res < atom.GetDegree():
+            raise ValueError("explicit valence exceeds atom degree")
+        res -= atom.GetDegree()
+    return res
 
 
 def BitsInCommon(v1, v2):
