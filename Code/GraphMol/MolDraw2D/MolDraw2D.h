@@ -315,7 +315,9 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   double scale() const { return scale_; }
   //! calculates the drawing scale (conversion from molecular coords -> drawing
   // coords)
-  void calculateScale(int width, int height);
+  void calculateScale(int width, int height,
+                      const std::vector<int> *highlight_atoms = nullptr,
+                      const std::map<int, double> *highlight_radii = nullptr);
   //! \overload
   void calculateScale() { calculateScale(panel_width_, panel_height_); };
   //! explicitly sets the scaling factors for the drawing
