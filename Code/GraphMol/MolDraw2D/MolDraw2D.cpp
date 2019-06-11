@@ -177,7 +177,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
     extractAtomCoords(mol, confId, true);
     extractAtomSymbols(mol);
     if (needs_scale_) {
-      calculateScale();
+      calculateScale(panel_width_, panel_height_, highlight_atoms, highlight_radii);
       needs_scale_ = false;
     }
     // make sure the font doesn't end up too large (the constants are
@@ -858,7 +858,9 @@ void MolDraw2D::setScale(int width, int height, const Point2D &minv,
 }
 
 // ****************************************************************************
-void MolDraw2D::calculateScale(int width, int height) {
+void MolDraw2D::calculateScale(int width, int height,
+                               const std::vector<int> *highlight_atoms,
+                               const std::map<int, double> *highlight_radii) {
   PRECONDITION(width > 0, "bad width");
   PRECONDITION(height > 0, "bad height");
   PRECONDITION(activeMolIdx_ >= 0, "bad active mol");
@@ -890,6 +892,7 @@ void MolDraw2D::calculateScale(int width, int height) {
   // we may need to adjust the scale if there are atom symbols that go off
   // the edges, and we probably need to do it iteratively because
   // get_string_size uses the current value of scale_.
+  // We also need to adjust for highlighted atoms if there are any.
   while (scale_ > 1e-4) {
     for (int i = 0, is = atom_syms_[activeMolIdx_].size(); i < is; ++i) {
       if (!atom_syms_[activeMolIdx_][i].first.empty()) {
@@ -910,6 +913,23 @@ void MolDraw2D::calculateScale(int width, int height) {
         x_max = std::max(x_max, this_x_max);
         x_min_ = std::min(x_min_, this_x_min);
         y_max = std::max(y_max, this_y);
+      }
+      if(highlight_atoms) {
+          if(highlight_atoms->end() != find(highlight_atoms->begin(), highlight_atoms->end(), i)) {
+              double radius = 0.4;
+              if (highlight_radii &&
+                  highlight_radii->find(i) != highlight_radii->end()) {
+                  radius = highlight_radii->find(i)->second;
+              }
+              double this_x_min = at_cds_[activeMolIdx_][i].x - radius;
+              double this_x_max = at_cds_[activeMolIdx_][i].x + radius;
+              double this_y_min = at_cds_[activeMolIdx_][i].y - radius;
+              double this_y_max = at_cds_[activeMolIdx_][i].y + radius;
+              x_max = std::max(x_max, this_x_max);
+              x_min_ = std::min(x_min_, this_x_min);
+              y_max = std::max(y_max, this_y_max);
+              y_min_ = std::min(y_min_, this_y_min);
+          }
       }
     }
     double old_scale = scale_;
