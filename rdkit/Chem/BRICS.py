@@ -574,7 +574,8 @@ def BRICSBuild(fragments, onlyCompleteMols=True, seeds=None, uniquify=True, scra
                             yield p[0]
         if nextSteps and maxDepth > 0:
             for p in BRICSBuild(fragments, onlyCompleteMols=onlyCompleteMols, seeds=nextSteps,
-                                uniquify=uniquify, maxDepth=maxDepth - 1):
+                                uniquify=uniquify, maxDepth=maxDepth - 1,
+                                scrambleReagents=scrambleReagents):
                 if uniquify:
                     pSmi = Chem.MolToSmiles(p, True)
                     if pSmi in seen:
