@@ -790,6 +790,12 @@ if __name__ == '__main__':
             ms2 = [Chem.MolToSmiles(x) for x in ms2]
             self.assertEqual(ms, ms2)
 
+            ms2 = list(BRICSBuild(catalog, maxDepth=4, scrambleReagents=True))
+            for m in ms2:
+                Chem.SanitizeMol(m)
+            ms2 = [Chem.MolToSmiles(x) for x in ms2]
+            self.assertNotEqual(ms, ms2)
+
         def test9(self):
             m = Chem.MolFromSmiles('CCOc1ccccc1c1ncc(c2nc(NCCCC)ncn2)cc1')
             res = BRICSDecompose(m)
