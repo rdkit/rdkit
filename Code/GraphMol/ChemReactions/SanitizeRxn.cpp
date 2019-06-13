@@ -44,9 +44,7 @@ T getMaxProp(ChemicalReaction &rxn, const std::string &prop) {
   T max_atom = (T)0;
   for (auto it = rxn.beginReactantTemplates(); it != rxn.endReactantTemplates();
        ++it) {
-    for (ROMol::AtomIterator atIt = (*it)->beginAtoms();
-         atIt != (*it)->endAtoms(); ++atIt) {
-      Atom *atom = (*atIt);
+    for (auto atom : (*it)->atoms()) {
       T map;
       if (atom->getPropIfPresent<T>(prop, map)) {
         if (map > max_atom) max_atom = map;
@@ -56,9 +54,7 @@ T getMaxProp(ChemicalReaction &rxn, const std::string &prop) {
 
   for (auto it = rxn.beginAgentTemplates(); it != rxn.endAgentTemplates();
        ++it) {
-    for (ROMol::AtomIterator atIt = (*it)->beginAtoms();
-         atIt != (*it)->endAtoms(); ++atIt) {
-      Atom *atom = (*atIt);
+    for (auto atom : (*it)->atoms()) {
       T map;
       if (atom->getPropIfPresent<T>(prop, map)) {
         if (map > max_atom) max_atom = map;
@@ -68,9 +64,7 @@ T getMaxProp(ChemicalReaction &rxn, const std::string &prop) {
 
   for (auto it = rxn.beginProductTemplates(); it != rxn.endProductTemplates();
        ++it) {
-    for (ROMol::AtomIterator atIt = (*it)->beginAtoms();
-         atIt != (*it)->endAtoms(); ++atIt) {
-      Atom *atom = (*atIt);
+    for (auto atom : (*it)->atoms()) {
       T map;
       if (atom->getPropIfPresent<T>(prop, map)) {
         if (map > max_atom) max_atom = map;
@@ -159,7 +153,7 @@ std::string makeProductErrorMessage(const std::string &error,
       << " atom: " << at.atom->getIdx();
   return str.str();
 }
-}
+}  // namespace
 
 // if we have query atoms without rlabels, make proper rlabels if possible
 //  ensure that every rlabel in the reactant has one in the product
@@ -171,9 +165,7 @@ void fixRGroups(ChemicalReaction &rxn) {
   unsigned int templateIdx = 0;
   for (auto it = rxn.beginReactantTemplates(); it != rxn.endReactantTemplates();
        ++it, ++templateIdx) {
-    for (ROMol::AtomIterator atIt = (*it)->beginAtoms();
-         atIt != (*it)->endAtoms(); ++atIt) {
-      Atom *atom = (*atIt);
+    for (auto atom : (*it)->atoms()) {
       AtomInfo at(atom, templateIdx);
       if (at.NeedsRLabel()) reactantAtomsToFix.push_back(at);
     }
@@ -182,9 +174,7 @@ void fixRGroups(ChemicalReaction &rxn) {
   templateIdx = 0;
   for (auto it = rxn.beginProductTemplates(); it != rxn.endProductTemplates();
        ++it, ++templateIdx) {
-    for (ROMol::AtomIterator atIt = (*it)->beginAtoms();
-         atIt != (*it)->endAtoms(); ++atIt) {
-      Atom *atom = (*atIt);
+    for (auto atom : (*it)->atoms()) {
       AtomInfo at(atom, templateIdx);
       if (at.NeedsRLabel()) productAtomsToFix.push_back(at);
     }
@@ -249,9 +239,7 @@ void fixAtomMaps(ChemicalReaction &rxn) {
 
   for (auto it = rxn.beginReactantTemplates(); it != rxn.endReactantTemplates();
        ++it, ++templateIdx) {
-    for (ROMol::AtomIterator atIt = (*it)->beginAtoms();
-         atIt != (*it)->endAtoms(); ++atIt) {
-      Atom *atom = (*atIt);
+    for (auto atom : (*it)->atoms()) {
       AtomInfo at(atom, templateIdx);
       if (at.rlabel && !at.atomMap) {
         if (potential_mappings.find(at.rlabel) != potential_mappings.end()) {
@@ -269,9 +257,7 @@ void fixAtomMaps(ChemicalReaction &rxn) {
   templateIdx = 0;
   for (auto it = rxn.beginProductTemplates(); it != rxn.endProductTemplates();
        ++it, ++templateIdx) {
-    for (ROMol::AtomIterator atIt = (*it)->beginAtoms();
-         atIt != (*it)->endAtoms(); ++atIt) {
-      Atom *atom = (*atIt);
+    for (auto atom : (*it)->atoms()) {
       AtomInfo at(atom, templateIdx);
       if (at.rlabel) {
         if (!at.atomMap) {
@@ -292,7 +278,7 @@ void fixReactantTemplateAromaticity(ChemicalReaction &rxn) {
   unsigned int ops;
   for (auto it = rxn.beginReactantTemplates(); it != rxn.endReactantTemplates();
        ++it) {
-    RWMol * rw = dynamic_cast<RWMol*>(it->get());
+    RWMol *rw = dynamic_cast<RWMol *>(it->get());
     if (rw)
       sanitizeMol(*rw, ops, MolOps::SANITIZE_SETAROMATICITY);
     else
@@ -311,9 +297,7 @@ void fixHs(ChemicalReaction &rxn) {
     for (auto it = rxn.beginProductTemplates(); it != rxn.endProductTemplates();
          ++it) {
       int atomMap = 0;
-      for (ROMol::AtomIterator atIt = (*it)->beginAtoms();
-           atIt != (*it)->endAtoms(); ++atIt) {
-        Atom *atom = (*atIt);
+      for (auto atom : (*it)->atoms()) {
         if (atom->getAtomicNum() != 1) {  // hydrogen
           if (atom->getPropIfPresent(common_properties::molAtomMapNumber,
                                      atomMap)) {
@@ -328,9 +312,7 @@ void fixHs(ChemicalReaction &rxn) {
     for (auto it = rxn.beginReactantTemplates();
          it != rxn.endReactantTemplates(); ++it) {
       int atomMap = 0;
-      for (ROMol::AtomIterator atIt = (*it)->beginAtoms();
-           atIt != (*it)->endAtoms(); ++atIt) {
-        Atom *atom = (*atIt);
+      for (auto atom : (*it)->atoms()) {
         if (atom->getAtomicNum() == 1) {  // hydrogen
           if (atom->getPropIfPresent(common_properties::molAtomMapNumber,
                                      atomMap)) {
@@ -354,7 +336,7 @@ void fixHs(ChemicalReaction &rxn) {
   const bool mergeUnmappedOnly = true;
   for (auto it = rxn.beginReactantTemplates(); it != rxn.endReactantTemplates();
        ++it) {
-    RWMol * rw = dynamic_cast<RWMol*>(it->get());
+    RWMol *rw = dynamic_cast<RWMol *>(it->get());
     if (rw) {
       MolOps::mergeQueryHs(*rw, mergeUnmappedOnly);
     } else
@@ -370,7 +352,7 @@ void adjustTemplates(ChemicalReaction &rxn,
 
   for (auto it = rxn.beginReactantTemplates(); it != rxn.endReactantTemplates();
        ++it) {
-    RWMol * rw = dynamic_cast<RWMol*>(it->get());
+    RWMol *rw = dynamic_cast<RWMol *>(it->get());
     if (rw)
       adjustQueryProperties(*rw, &params);
     else
@@ -409,5 +391,5 @@ void sanitizeRxn(ChemicalReaction &rxn,
   unsigned int ops = 0;
   return sanitizeRxn(rxn, ops, SANITIZE_ALL, params);
 }
-}
-}
+}  // namespace RxnOps
+}  // namespace RDKit

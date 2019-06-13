@@ -976,7 +976,15 @@ Sample Usage:\n\
       RDKit::RxnOps::MatchOnlyAtRgroupsAdjustParams,
       "Only match at the specified rgroup locations in the reactant templates");
 
-  std::string docstring = "feed me";
+  docString =
+      R"DOC(Does some sanitization of the reactant and product templates of a reaction.
+
+  The operations carried out by default are:
+  1) fixRGroups(): sets R group labels on mapped dummy atoms when possible
+  2) fixAtomMaps(): attempts to set atom maps on unmapped R groups
+  3) adjustTemplate(): calls adjustQueryProperties() on all reactant templates
+  4) fixHs(): merges explicit Hs in the reactant templates that don't map to heavy atoms
+  )DOC";
   python::def("SanitizeRxn", RDKit::sanitizeReaction,
               (python::arg("rxn"),
                python::arg("sanitizeOps") =
