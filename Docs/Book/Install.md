@@ -10,7 +10,7 @@ Conda is an open-source, cross-platform, software package manager. It supports t
 
 ### How to get conda
 
-The easiest way to get Conda is having it installed as part of the [Anaconda Python distribution](https://conda.io/docs/user-guide/install/index.html). A possible (but a bit more complex to use) alternative is provided with the smaller and more self-contained [Miniconda](https://conda.io/miniconda.html). The conda source code repository is available on [github](https://github.com/conda) and additional documentation is provided by the project [website](https://conda.io/docs/).
+The easiest way to get Conda is having it installed as part of the [Anaconda Python distribution](https://conda.io/projects/conda/en/latest/user-guide/install/index.html). A possible (but a bit more complex to use) alternative is provided with the smaller and more self-contained [Miniconda](https://conda.io/miniconda.html). The conda source code repository is available on [github](https://github.com/conda) and additional documentation is provided by the project [website](https://conda.io/docs/).
 
 ### How to install RDKit with Conda
 
