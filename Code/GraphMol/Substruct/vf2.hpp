@@ -129,12 +129,12 @@ namespace boost{
 
       unsigned int core_len, orig_core_len;
       unsigned int added_node1;
-      unsigned int t1in_len;
-      unsigned int t2in_len; // Core nodes are also counted by these...
+      unsigned int t1_len;
+      unsigned int t2_len; // Core nodes are also counted by these...
       node_id *core_1;
       node_id *core_2;
-      node_id *in_1;
-      node_id *in_2;
+      node_id *term_1;
+      node_id *term_2;
 
       node_id *order;
 
@@ -155,24 +155,24 @@ namespace boost{
         }
 
         core_len=orig_core_len=0;
-        t1in_len=0;
-        t2in_len=0;
+        t1_len=0;
+        t2_len=0;
 
         added_node1=NULL_NODE;
 
         core_1=new node_id[n1];
         core_2=new node_id[n2];
-        in_1=new node_id[n1];
-        in_2=new node_id[n2];
+        term_1=new node_id[n1];
+        term_2=new node_id[n2];
         share_count = new long;
 
         for(unsigned int i=0; i<n1; i++){
           core_1[i]=NULL_NODE;
-          in_1[i]=0;
+          term_1[i]=0;
         }
         for(unsigned int i=0; i<n2; i++){
           core_2[i]=NULL_NODE;
-          in_2[i]=0;
+          term_2[i]=0;
         }
         vs_compared=0;
         //vs_compared = new int[n1*n2];
@@ -189,15 +189,15 @@ namespace boost{
       {
 
         core_len=orig_core_len=state.core_len;
-        t1in_len=state.t1in_len;
-        t2in_len=state.t2in_len;
+        t1_len=state.t1in_len;
+        t2_len=state.t2in_len;
 
         added_node1=NULL_NODE;
 
         core_1=state.core_1;
         core_2=state.core_2;
-        in_1=state.in_1;
-        in_2=state.in_2;
+        term_1=state.in_1;
+        term_2=state.in_2;
         share_count=state.share_count;
 
         ++(*share_count);
@@ -207,8 +207,8 @@ namespace boost{
         if (-- *share_count == 0) {
           delete [] core_1;
           delete [] core_2;
-          delete [] in_1;
-          delete [] in_2;
+          delete [] term_1;
+          delete [] term_2;
           delete share_count;
           delete [] order;
           //delete [] vs_compared;
@@ -221,7 +221,7 @@ namespace boost{
         return mc(c1,c2);
       };
       bool IsDead() { return n1>n2  || 
-          t1in_len>t2in_len;
+          t1_len>t2_len;
       };
       unsigned int CoreLen() { return core_len; }
       Graph *GetGraph1() { return g1; }
@@ -249,9 +249,9 @@ namespace boost{
     } 
     std::cerr<<std::endl;
 #endif
-        if (t1in_len>core_len && t2in_len>core_len) {
+        if (t1_len>core_len && t2_len>core_len) {
           while (prev_n1<n1 &&
-                 (core_1[prev_n1]!=NULL_NODE || in_1[prev_n1]==0) ) {
+                 (core_1[prev_n1]!=NULL_NODE || term_1[prev_n1]==0) ) {
             prev_n1++;    
             prev_n2=0;
           }
@@ -270,9 +270,9 @@ namespace boost{
           }
         }
 
-        if (t1in_len>core_len && t2in_len>core_len) {
+        if (t1_len>core_len && t2_len>core_len) {
           while (prev_n2<n2 &&
-                 (core_2[prev_n2]!=NULL_NODE || in_2[prev_n2]==0) ) {
+                 (core_2[prev_n2]!=NULL_NODE || term_2[prev_n2]==0) ) {
             prev_n2++;    
           }
         }
@@ -327,8 +327,8 @@ namespace boost{
               return false;
             }
           } else {
-            if (in_1[other1]) ++termin1;
-            if (!in_1[other1]) ++new1;
+            if (term_1[other1]) ++termin1;
+            if (!term_1[other1]) ++new1;
           }
           ++bNbrs;
         }
@@ -340,8 +340,8 @@ namespace boost{
           if (core_2[other2] != NULL_NODE) {
             // do nothing
           } else {
-            if (in_2[other2]) ++termin2;
-            if (!in_2[other2]) ++new2;
+            if (term_2[other2]) ++termin2;
+            if (!term_2[other2]) ++new2;
           }
           ++bNbrs;
         }
@@ -358,14 +358,14 @@ namespace boost{
         ++core_len;
         added_node1 = node1;
 
-        if (!in_1[node1]) {
-          in_1[node1] = core_len;
-          ++t1in_len;
+        if (!term_1[node1]) {
+          term_1[node1] = core_len;
+          ++t1_len;
         }
 
-        if (!in_2[node2]) {
-          in_2[node2] = core_len;
-          ++t2in_len;
+        if (!term_2[node2]) {
+          term_2[node2] = core_len;
+          ++t2_len;
         }
         
         core_1[node1] = node2;
@@ -376,9 +376,9 @@ namespace boost{
         boost::tie(bNbrs,eNbrs) = boost::out_edges(node1,*g1);
         while(bNbrs!=eNbrs){
           unsigned int other = getOtherIdx(*g1,*bNbrs,node1);
-          if (!in_1[other]) {
-            in_1[other] = core_len;
-            ++t1in_len;
+          if (!term_1[other]) {
+            term_1[other] = core_len;
+            ++t1_len;
           }
           ++bNbrs;
         }
@@ -387,9 +387,9 @@ namespace boost{
         boost::tie(bNbrs,eNbrs) = boost::out_edges(node2,*g2);
         while(bNbrs!=eNbrs){
           unsigned int other = getOtherIdx(*g2,*bNbrs,node2);
-          if (!in_2[other]) {
-            in_2[other] = core_len;
-            ++t2in_len;
+          if (!term_2[other]) {
+            term_2[other] = core_len;
+            ++t2_len;
           }
           ++bNbrs;
         }
@@ -414,23 +414,23 @@ namespace boost{
 
         if (orig_core_len < core_len) {
 
-          if (in_1[added_node1] == core_len) in_1[added_node1] = 0;
+          if (term_1[added_node1] == core_len) term_1[added_node1] = 0;
 
           typename Graph::out_edge_iterator bNbrs,eNbrs;
           boost::tie(bNbrs,eNbrs) = boost::out_edges(added_node1,*g1);
           while(bNbrs!=eNbrs){
             unsigned int other = getOtherIdx(*g1,*bNbrs,added_node1);
-            if (in_1[other] == core_len) in_1[other] = 0;
+            if (term_1[other] == core_len) term_1[other] = 0;
             ++bNbrs;
           }
 
           unsigned int node2 = core_1[added_node1];
-          if (in_2[node2] == core_len) in_2[node2] = 0;
+          if (term_2[node2] == core_len) term_2[node2] = 0;
 
           boost::tie(bNbrs,eNbrs) = boost::out_edges(node2,*g2);
           while(bNbrs!=eNbrs){
             unsigned int other = getOtherIdx(*g2,*bNbrs,node2);
-            if (in_2[other] == core_len) in_2[other] = 0;
+            if (term_2[other] == core_len) term_2[other] = 0;
             ++bNbrs;
           }
 
