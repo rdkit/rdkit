@@ -6853,7 +6853,7 @@ void testGithub1269() {
   }
 }
 
-void testGithub2868() {
+void testGithub1868() {
   ROMol *mol = nullptr;
   ChemicalReaction *rxn;
   MOL_SPTR_VECT reacts;

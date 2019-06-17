@@ -716,7 +716,7 @@ M  END
         prods = rxn.RunReactants([m], 1)
         self.assertEqual(len(prods), 1)
 
-    def testGitHub2868(self):
+    def testGitHub1868(self):
         fileN = os.path.join(self.dataDir, 'AmideBond.rxn')
         for i in range(100):
             _rxn = rdChemReactions.ReactionFromRxnFile(fileN)
