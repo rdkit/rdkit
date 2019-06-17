@@ -716,6 +716,13 @@ M  END
         prods = rxn.RunReactants([m], 1)
         self.assertEqual(len(prods), 1)
 
+    def testGitHub2868(self):
+        fileN = os.path.join(self.dataDir, 'AmideBond.rxn')
+        for i in range(100):
+            _rxn = rdChemReactions.ReactionFromRxnFile(fileN)
+            _rxn.Initialize()
+            _reacts = [Chem.MolToSmarts(r) for r in _rxn.GetReactants()]
+            _prods = [Chem.MolToSmarts(p) for p in _rxn.GetProducts()]
 
 def _getProductCXSMILES(product):
   """

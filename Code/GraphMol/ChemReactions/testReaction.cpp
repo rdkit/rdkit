@@ -6853,6 +6853,36 @@ void testGithub1269() {
   }
 }
 
+void testGithub2868() {
+  ROMol *mol = nullptr;
+  ChemicalReaction *rxn;
+  MOL_SPTR_VECT reacts;
+  std::vector<MOL_SPTR_VECT> prods;
+  std::string smi;
+
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing MDL parser" << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  std::string fName;
+
+  fName = rdbase + "/Code/GraphMol/ChemReactions/testData/AmideBond.rxn";
+
+  for(int i=0;i<1000;++i) {
+    rxn = RxnFileToChemicalReaction(fName);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates() == 2);
+    TEST_ASSERT(rxn->getNumProductTemplates() == 1);
+    
+    for(auto v : rxn->getReactants()) {
+      MolToSmiles(*v.get());
+    }
+    for(auto v : rxn->getProducts()) {
+      MolToSmiles(*v.get());
+    }
+  }
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -6940,7 +6970,7 @@ int main() {
   testGithub1869();
 #endif
   testGithub1269();
-
+  testGithub2868();
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
   return (0);
