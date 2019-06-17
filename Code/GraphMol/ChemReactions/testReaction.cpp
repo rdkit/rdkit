@@ -6970,7 +6970,7 @@ int main() {
   testGithub1869();
 #endif
   testGithub1269();
-  testGithub2868();
+  testGithub1868();
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
   return (0);
