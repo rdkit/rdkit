@@ -189,15 +189,15 @@ namespace boost{
       {
 
         core_len=orig_core_len=state.core_len;
-        t1_len=state.t1in_len;
-        t2_len=state.t2in_len;
+        t1_len=state.t1_len;
+        t2_len=state.t2_len;
 
         added_node1=NULL_NODE;
 
         core_1=state.core_1;
         core_2=state.core_2;
-        term_1=state.in_1;
-        term_2=state.in_2;
+        term_1=state.term_1;
+        term_2=state.term_2;
         share_count=state.share_count;
 
         ++(*share_count);
