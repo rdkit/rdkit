@@ -309,7 +309,7 @@ namespace boost{
         if(!vc(node1,node2)) return false;
 
         unsigned int other1, other2;
-        unsigned int termout1 = 0, termout2 = 0, termin1 = 0, termin2 = 0;
+        unsigned int term1 = 0, term2 = 0;
         unsigned int new1 = 0, new2 = 0;
 
         // Check the out edges of node1
@@ -327,7 +327,7 @@ namespace boost{
               return false;
             }
           } else {
-            if (term_1[other1]) ++termin1;
+            if (term_1[other1]) ++term1;
             if (!term_1[other1]) ++new1;
           }
           ++bNbrs;
@@ -340,14 +340,14 @@ namespace boost{
           if (core_2[other2] != NULL_NODE) {
             // do nothing
           } else {
-            if (term_2[other2]) ++termin2;
+            if (term_2[other2]) ++term2;
             if (!term_2[other2]) ++new2;
           }
           ++bNbrs;
         }
         //std::cerr<<(termin1 <= termin2 && termout1 <= termout2 && (termin1+termout1+new1)<=(termin2+termout2+new2))<<std::endl;
 
-        return termin1 <= termin2 && termout1 <= termout2 && (termin1+termout1+new1)<=(termin2+termout2+new2);
+        return term1 <= term2 && (term1+new1)<=(term2+new2);
       };
       void AddPair(node_id node1, node_id node2){
         assert(node1 < n1);
