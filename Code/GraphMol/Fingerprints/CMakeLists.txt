@@ -29,5 +29,7 @@ rdkit_test(testFingerprints test1.cpp LINK_LIBRARIES
 rdkit_test(testFingerprintGenerators testFingerprintGenerators.cpp LINK_LIBRARIES 
            Fingerprints SmilesParse GraphMol DataStructs FileParsers
            RDGeneral )
+rdkit_catch_test(fpTestCatch catch_tests.cpp LINK_LIBRARIES Fingerprints SmilesParse GraphMol DataStructs FileParsers
+           RDGeneral)
 
 add_subdirectory(Wrap)

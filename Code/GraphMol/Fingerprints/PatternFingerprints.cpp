@@ -198,12 +198,14 @@ ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
   boost::tie(firstA, lastA) = mol.getVertices();
   while (firstA != lastA) {
     const Atom *at = mol[*firstA];
-    if (isComplexQuery(at)) {
+    // isComplexQuery() no longer considers "AtomNull" to be complex, but for the purposes
+    // of the pattern FP, it definitely needs to be treated as a query feature.
+    if ( at->hasQuery() && (at->getQuery()->getDescription()=="AtomNull" || isComplexQuery(at))) {
       isQueryAtom.set(at->getIdx());
-      // std::cerr<<"   complex atom: "<<at->getIdx()<<std::endl;
     }
     ++firstA;
   }
+
   ROMol::EDGE_ITER firstB, lastB;
   boost::tie(firstB, lastB) = mol.getEdges();
   while (firstB != lastB) {
@@ -211,7 +213,6 @@ ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
     // if( isComplexQuery(bond) ){
     if (isPatternComplexQuery(bond)) {
       isQueryBond.set(bond->getIdx());
-      // std::cerr<<"   complex bond: "<<bond->getIdx()<<std::endl;
     }
     ++firstB;
   }
