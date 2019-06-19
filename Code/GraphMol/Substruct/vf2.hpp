@@ -307,6 +307,10 @@ namespace boost{
         //   //std::cerr<<"  short1"<<std::endl;
         //   return false;
         // }
+        
+        // O(1) check for adjacency list
+        if (boost::out_degree(node1,*g1)>boost::out_degree(node2,*g2))
+          return false;
         if(!vc(node1,node2)) return false;
 
         unsigned int other1, other2;
