@@ -18,6 +18,7 @@
 
 #ifndef __BGL_VF2_SUB_STATE_H__
 #define __BGL_VF2_SUB_STATE_H__
+#define RDK_VF2_PRUNING
 
 namespace boost{
   namespace detail {
@@ -309,8 +310,10 @@ namespace boost{
         if(!vc(node1,node2)) return false;
 
         unsigned int other1, other2;
+#ifdef RDK_VF2_PRUNING
         unsigned int term1 = 0, term2 = 0;
         unsigned int new1 = 0, new2 = 0;
+#endif
 
         // Check the out edges of node1
         typename Graph::out_edge_iterator bNbrs,eNbrs;
@@ -326,13 +329,17 @@ namespace boost{
               //std::cerr<<"  short2"<<std::endl;
               return false;
             }
-          } else {
+          }
+#ifdef RDK_VF2_PRUNING
+          else {
             if (term_1[other1]) ++term1;
             if (!term_1[other1]) ++new1;
           }
+#endif
           ++bNbrs;
         }
 
+#ifdef RDK_VF2_PRUNING
         // Check the out edges of node2
         boost::tie(bNbrs,eNbrs) = boost::out_edges(node2,*g2);
         while(bNbrs!=eNbrs){
@@ -347,7 +354,12 @@ namespace boost{
         }
         //std::cerr<<(termin1 <= termin2 && termout1 <= termout2 && (termin1+termout1+new1)<=(termin2+termout2+new2))<<std::endl;
 
+        // n.b. term1+new1 == boost::out_degree(node1) and
+        //      term2+new2 == boost::out_degree(node2)
         return term1 <= term2 && (term1+new1)<=(term2+new2);
+#else
+        return true;
+#endif
       };
       void AddPair(node_id node1, node_id node2){
         assert(node1 < n1);
@@ -588,3 +600,4 @@ namespace boost{
 } // end of namespace boost
 #endif
 
+#undef RDK_VF2_PRUNING
