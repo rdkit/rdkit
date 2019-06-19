@@ -1319,6 +1319,11 @@ Reactions also preserve ``StereoGroup``s. Product atoms are included in the ``St
 Additional Information About the Fingerprints
 *********************************************
 
+This section, which is not currently comprehensive, is intended to provide some documentation
+about the types of fingerprints available in the RDKit. We don't reproduce information that
+can be found in the literature, but try and capture the unpublished bits (of which there are
+quite a few).
+
 RDKit Fingerprints
 ==================
 
@@ -1356,7 +1361,7 @@ Pattern Fingerprints
 These fingerprints were designed to be used in substructure screening. These are, as far as I know, unique
 to the RDKit. The algorithm identifies features in the molecule by doing substructure searches using a small
 number (12 in the `2019.03` release of the RDKit) of very generic SMARTS patterns - like `[*]~[*]~[*](~[*])~[*]` or \
-`[R]~1[R]~[R]~[R]~1`, and then hashing each occurance of a pattern based on the atom and bond types involved.
+`[R]~1[R]~[R]~[R]~1`, and then hashing each occurence of a pattern based on the atom and bond types involved.
 The fact that particular pattern matched the molecule at all is also stored by hashing the pattern ID and size.
 If a particular feature contains either a query atom or a query bond (e.g. something generated from SMARTS),
 the only information that is hashed is the fact that the generic pattern matched.
@@ -1364,14 +1369,50 @@ the only information that is hashed is the fact that the generic pattern matched
 For the `2019.03` release, the atom types use just the atomic number of the atom and the bond types use the 
 bond type, or `AROMATIC` for aromatic bonds).
 
-
 **NOTE**: Because it plays an important role in substructure screenout, the internals of this fingerprint (the generic
 patterns used and/or the details of the hashing algorithm) may change from one release to the next. 
 
 Atom-Pair and Topological Torsion Fingerprints
 ==============================================
 
-These two related fingerprints are implemented based on the 
+These two related fingerprints are implemented based on the original papers: [atomPairFP] [ttFP]. 
+Atoms are typed based on atomic number, number of pi electrons, and the degree of the atom. 
+Optionally information about atomic chirality can also be integrated into the atom types.
+Both fingerprint types can be generated in explicit or sparse form and as bit or count vectors.
+These fingerprint types are different from the others in the RDKit in that bits in the sparse
+form of the fingerprint can be directly explained (i.e. the "hashing function" used is fully reversible).
+
+These fingerprints were originally "intended" to be used in count-vectors and they seem to work
+better that way. The default behavior of the explicit bit-vector forms of both fingerprints is to use a "count simulation" 
+procedure where multiple bits are set for a given feature if it occurs more than once. The default
+behavior is to use 4 fingerprint bits for each feature (so a 2048 bit fingerprint actually stores
+information about the same number of features as a 512 bit fingerprint that isn't using count 
+simulation). The bins correspond to counts of 1, 2, 4, and 8. As an example of how this works:
+if a feature occurs 5 times in a molecule, the bits corresponding to counts 1, 2, and 4 will
+be set.
+
+Morgan and Feature Morgan Fingerprints
+======================================
+
+These are implememented based on the original paper [morganFP]. The algorithm follows the description
+in the paper as closely as possible with the exception of the chemical feature definitions used for
+the "Feature Morgan" fingerprint - the RDKit implementation uses the feature types Donor, Acceptor, 
+Aromatic, Halogen, Basic, and Acidic with definitions adapted from those in the paper [gobbiFeats].
+It is possible to provide your own atom types.
+The fingerprints are available as either explicit or sparse count vectors or explicit bit vectors.
+
+Layered Fingerprints
+====================
+
+These are another "RDKit original" and were developed with the intention of using them as a substructure
+fingerprint. Since the pattern fingerprint is far simpler and has proven to be quite effective as
+a substructure fingerprint, the layered fingerprint hasn't received much attention. It may still
+be interesting for something, so we continue to include it.
+
+The idea of the fingerprint is generate features using the same subgraph (or path) enumeration 
+algorithm used in the RDKit fingerprint. After a subgraph has been generated, it is used to set
+multiple bits based on different atom type definitions.
+
 
 .. rubric:: Footnotes
 
@@ -1382,6 +1423,10 @@ These two related fingerprints are implemented based on the
 .. [#intramolRxn] Thanks to James Davidson for this example.
 .. [#chiralRxn] Thanks to JP Ebejer and Paul Finn for this example.
 .. [#daylightFP] http://www.daylight.com/dayhtml/doc/theory/theory.finger.html
+.. [#atompairFP] http://pubs.acs.org/doi/abs/10.1021/ci00046a002
+.. [#ttFP] http://pubs.acs.org/doi/abs/10.1021/ci00054a008
+.. [#morganFP] http://pubs.acs.org/doi/abs/10.1021/ci100050t
+.. [#gobbiFeats] Gobbi and Poppinger, Biotech. Bioeng. **61** 47-54 (1998)
 
 License
 *******
