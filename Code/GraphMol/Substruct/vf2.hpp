@@ -478,7 +478,7 @@ namespace boost{
       
       template <class DoubleBackInsertionSequence>
       bool MatchAll(node_id c1[], node_id c2[],
-                    DoubleBackInsertionSequence &res, unsigned int lim)
+                    DoubleBackInsertionSequence &res, unsigned int lim=0)
       {
         if (IsGoal()) {
           GetCoreSet(c1, c2);
@@ -488,7 +488,7 @@ namespace boost{
               newSeq.push_back(std::pair<int,int>(c1[i],c2[i]));
             }
             res.push_back(newSeq);
-            return res.size() >= lim;
+            return lim && res.size() >= lim;
           }
         }
         
@@ -533,7 +533,8 @@ namespace boost{
      * Visits all the matchings between two graphs,  starting
      * from state s.
      * Returns true if the caller must stop the visit.
-     * Stops when there are no more matches
+     * Stops when max_results is reached, set max_results to 0 to
+     * keep going until there are no more matches
      *
      ------------------------------------------------------------*/
     template <class SubState,class DoubleBackInsertionSequence>
