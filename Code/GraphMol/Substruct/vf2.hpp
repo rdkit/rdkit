@@ -455,7 +455,7 @@ namespace boost{
       };
       bool Match(node_id c1[], node_id c2[])
       {
-        if (IsGoal() ) {
+        if (IsGoal()) {
           GetCoreSet(c1, c2);
           if(MatchChecks(c1,c2))
             return true;
@@ -469,6 +469,37 @@ namespace boost{
           if (IsFeasiblePair(n1, n2)){
             AddPair(n1, n2);
             if (Match(c1, c2)) // recurse
+              return true;
+            BackTrack(n1, n2);
+          }
+        }
+        return false;
+      }
+      
+      template <class DoubleBackInsertionSequence>
+      bool MatchAll(node_id c1[], node_id c2[],
+                    DoubleBackInsertionSequence &res, unsigned int lim)
+      {
+        if (IsGoal()) {
+          GetCoreSet(c1, c2);
+          if(MatchChecks(c1,c2)) {
+            typename DoubleBackInsertionSequence::value_type newSeq;
+            for(unsigned int i=0;i<core_len;++i){
+              newSeq.push_back(std::pair<int,int>(c1[i],c2[i]));
+            }
+            res.push_back(newSeq);
+            return res.size() >= lim;
+          }
+        }
+        
+        if (IsDead())
+          return false;
+        node_id n1=NULL_NODE, n2=NULL_NODE;
+        
+        while (NextPair(&n1, &n2, n1, n2)) {
+          if (IsFeasiblePair(n1, n2)){
+            AddPair(n1, n2);
+            if (MatchAll(c1, c2, res, lim)) // recurse
               return true;
             BackTrack(n1, n2);
           }
@@ -490,7 +521,8 @@ namespace boost{
     bool match(int *pn, node_id c1[], node_id c2[], SubState &s)
     {
       if (s.Match(c1, c2)) {
-        *pn=s.CoreLen(); // preserve API: pn always set to num query atoms...
+        // not needed, pn = num query atoms (n1)...
+        *pn=s.CoreLen();
         return true;
       }
       return false;
@@ -507,32 +539,8 @@ namespace boost{
     template <class SubState,class DoubleBackInsertionSequence>
     bool match(node_id c1[], node_id c2[], SubState &s, DoubleBackInsertionSequence &res,
                unsigned int max_results) {
-      if (s.IsGoal()){
-        s.GetCoreSet(c1, c2);
-        if(s.MatchChecks(c1,c2)) {
-          typename DoubleBackInsertionSequence::value_type newSeq;
-          for(unsigned int i=0;i<s.CoreLen();++i){
-            newSeq.push_back(std::pair<int,int>(c1[i],c2[i]));
-          }
-          res.push_back(newSeq);
-          if(res.size()>=max_results) return true;
-        }
-        return false;
-      }
-
-      if (s.IsDead())
-        return false;
-
-      node_id n1=NULL_NODE, n2=NULL_NODE;
-      while (s.NextPair(&n1, &n2, n1, n2)) {
-        if (s.IsFeasiblePair(n1, n2)){
-          s.AddPair(n1, n2);
-          if (match(c1, c2,s,res,max_results))
-            return true;
-          s.BackTrack(n1, n2);
-        }
-      }
-      return false;
+      s.MatchAll(c1, c2, res, max_results);
+      return !res.empty();
     }
   }; //end of namespace detail
 
