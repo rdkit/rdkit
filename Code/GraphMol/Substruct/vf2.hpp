@@ -19,6 +19,7 @@
 #ifndef __BGL_VF2_SUB_STATE_H__
 #define __BGL_VF2_SUB_STATE_H__
 #define RDK_VF2_PRUNING
+#define RDK_ADJ_ITER typename Graph::adjacency_iterator
 
 namespace boost{
   namespace detail {
@@ -224,7 +225,9 @@ namespace boost{
       Graph *GetGraph2() { return g2; }
 
       bool NextPair(node_id *pn1, node_id *pn2,
-                    node_id prev_n1=NULL_NODE, node_id prev_n2=NULL_NODE){
+                    node_id prev_n1=NULL_NODE, node_id prev_n2=NULL_NODE,
+                    RDK_ADJ_ITER **n2iter_pbeg=(RDK_ADJ_ITER*)0,
+                    RDK_ADJ_ITER **n2iter_pend=(RDK_ADJ_ITER*)0){
         if (prev_n1==NULL_NODE)
           prev_n1=0;
         if (prev_n2==NULL_NODE)
@@ -251,6 +254,30 @@ namespace boost{
             prev_n1++;    
             prev_n2=0;
           }
+          
+          /* Initialize VF2 Plus neighbor iterator.
+           * The next query node (prev_n1) has been selected from the terminal
+           * set and is therefore adjacent to an already mapped atom (in
+           * core_1). Rather than select prev_n2 from all atoms (0...n2) we can
+           * select it from the neighbors of this mapped atom (0...deg(nbor))
+           * since it must also be adajcent to this mapped atom!
+           */
+          if (!n2iter_pbeg && !*n2iter_pbeg) {
+            *n2iter_pbeg = new RDK_ADJ_ITER;
+            *n2iter_pend = new RDK_ADJ_ITER;
+            
+            RDK_ADJ_ITER n1iter_beg, n1iter_end;
+            boost::tie(n1iter_beg, n1iter_end)
+              = boost::adjacent_vertices(prev_n1,*g1);
+            
+            while (n1iter_beg!=n1iter_end && core_1[*n1iter_beg]==NULL_NODE)
+              ++n1iter_beg;
+            
+            assert(n1iter_beg!=n1iter_end);
+            
+            boost::tie(**n2iter_pbeg, **n2iter_pend)
+              = boost::adjacent_vertices(core_1[*n1iter_beg],*g2);
+          }
         }
         else if (prev_n1==0 && order!=NULL) {
           unsigned int i=0;
@@ -266,7 +293,23 @@ namespace boost{
           }
         }
 
-        if (t1_len>core_len && t2_len>core_len) {
+        /* VF2 Plus iterator available? */
+        if (n2iter_pbeg && *n2iter_pbeg) {
+          RDK_ADJ_ITER n2iter_beg, n2iter_end;
+          n2iter_beg = **n2iter_pbeg;
+          n2iter_end = **n2iter_pend;
+          while (n2iter_beg < n2iter_end && core_2[*n2iter_beg]!=NULL_NODE) {
+            ++n2iter_beg;
+          }
+
+          if (n2iter_beg < n2iter_end)
+            prev_n2=*n2iter_beg;
+          else
+            prev_n2=n2;
+          
+          **n2iter_pbeg = ++n2iter_beg;
+        }
+        else if (t1_len>core_len && t2_len>core_len) {
           while (prev_n2<n2 &&
                  (core_2[prev_n2]!=NULL_NODE || term_2[prev_n2]==0) ) {
             prev_n2++;    
@@ -464,8 +507,10 @@ namespace boost{
         if (IsDead())
           return false;
         node_id n1=NULL_NODE, n2=NULL_NODE;
+        RDK_ADJ_ITER *iter_pbeg=(RDK_ADJ_ITER*)0,
+                     *iter_pend=(RDK_ADJ_ITER*)0;
       
-        while (NextPair(&n1, &n2, n1, n2)) {
+        while (NextPair(&n1, &n2, n1, n2, &iter_pbeg, &iter_pend)) {
           if (IsFeasiblePair(n1, n2)){
             AddPair(n1, n2);
             if (Match(c1, c2)) // recurse
@@ -473,6 +518,9 @@ namespace boost{
             BackTrack(n1, n2);
           }
         }
+        
+        delete iter_pbeg;
+        delete iter_pend;
         return false;
       }
       
@@ -495,8 +543,10 @@ namespace boost{
         if (IsDead())
           return false;
         node_id n1=NULL_NODE, n2=NULL_NODE;
+        RDK_ADJ_ITER *iter_pbeg=(RDK_ADJ_ITER*)0,
+                     *iter_pend=(RDK_ADJ_ITER*)0;
         
-        while (NextPair(&n1, &n2, n1, n2)) {
+        while (NextPair(&n1, &n2, n1, n2, &iter_pbeg, &iter_pend)) {
           if (IsFeasiblePair(n1, n2)){
             AddPair(n1, n2);
             if (MatchAll(c1, c2, res, lim)) // recurse
@@ -504,6 +554,10 @@ namespace boost{
             BackTrack(n1, n2);
           }
         }
+        
+        delete iter_pbeg;
+        delete iter_pend;
+        
         return false;
       }
     };
@@ -605,3 +659,4 @@ namespace boost{
 #endif
 
 #undef RDK_VF2_PRUNING
+#undef RDK_ADJ_ITER
