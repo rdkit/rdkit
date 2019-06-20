@@ -280,6 +280,10 @@ namespace boost{
           }
         }
         else if (prev_n1==0 && order!=NULL) {
+          // Optimisation: if the order vector is laid out in a DFS/BFS then this
+          // loop can be replaced with:
+          //   prev_n1=order[core_len];
+          // :)
           unsigned int i=0;
           while (i<n1 && core_1[prev_n1=order[i]] != NULL_NODE)
             i++;
