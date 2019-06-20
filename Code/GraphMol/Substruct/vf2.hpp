@@ -128,8 +128,7 @@ namespace boost{
       MatchChecking &mc;
       unsigned int n1, n2;
 
-      unsigned int core_len, orig_core_len;
-      unsigned int added_node1;
+      unsigned int core_len;
       unsigned int t1_len;
       unsigned int t2_len; // Core nodes are also counted by these...
       node_id *core_1;
@@ -155,11 +154,9 @@ namespace boost{
           order = NULL;
         }
 
-        core_len=orig_core_len=0;
+        core_len=0;
         t1_len=0;
         t2_len=0;
-
-        added_node1=NULL_NODE;
 
         core_1=new node_id[n1];
         core_2=new node_id[n2];
@@ -189,11 +186,9 @@ namespace boost{
         //es_compared(state.es_compared)
       {
 
-        core_len=orig_core_len=state.core_len;
+        core_len=state.core_len;
         t1_len=state.t1_len;
         t2_len=state.t2_len;
-
-        added_node1=NULL_NODE;
 
         core_1=state.core_1;
         core_2=state.core_2;
@@ -372,8 +367,6 @@ namespace boost{
         assert(core_len < n2);
 
         ++core_len;
-        added_node1 = node1;
-
         if (!term_1[node1]) {
           term_1[node1] = core_len;
           ++t1_len;
@@ -424,38 +417,41 @@ namespace boost{
       VF2SubState *Clone(){
         return new VF2SubState(*this);
       };
-      void BackTrack(){
-        assert(core_len - orig_core_len <= 1);
-        assert(added_node1 != NULL_NODE);
-
-        if (orig_core_len < core_len) {
-
-          if (term_1[added_node1] == core_len) term_1[added_node1] = 0;
+      void BackTrack(node_id added_node1, node_id node2){
+          if (term_1[added_node1] == core_len) {
+            term_1[added_node1] = 0;
+            --t1_len;
+          }
 
           typename Graph::out_edge_iterator bNbrs,eNbrs;
           boost::tie(bNbrs,eNbrs) = boost::out_edges(added_node1,*g1);
           while(bNbrs!=eNbrs){
             unsigned int other = getOtherIdx(*g1,*bNbrs,added_node1);
-            if (term_1[other] == core_len) term_1[other] = 0;
+            if (term_1[other] == core_len) {
+              term_1[other] = 0;
+              --t1_len;
+            }
             ++bNbrs;
           }
 
-          unsigned int node2 = core_1[added_node1];
-          if (term_2[node2] == core_len) term_2[node2] = 0;
+          if (term_2[node2] == core_len) {
+            term_2[node2] = 0;
+            --t2_len;
+          }
 
           boost::tie(bNbrs,eNbrs) = boost::out_edges(node2,*g2);
           while(bNbrs!=eNbrs){
             unsigned int other = getOtherIdx(*g2,*bNbrs,node2);
-            if (term_2[other] == core_len) term_2[other] = 0;
+            if (term_2[other] == core_len) {
+              term_2[other] = 0;
+              --t2_len;
+            }
             ++bNbrs;
           }
 
           core_1[added_node1] = NULL_NODE;
           core_2[node2] = NULL_NODE;
-
-          core_len = orig_core_len;
-          added_node1 = NULL_NODE;
-        }
+          --core_len;
       };
     };
 
@@ -487,11 +483,9 @@ namespace boost{
       while (!found && s.NextPair(&n1, &n2, n1, n2)) {
         //std::cerr<<"           "<<n1<<","<<n2<<std::endl;
         if (s.IsFeasiblePair(n1, n2)){
-          SubState *s1=s.Clone();
-          s1->AddPair(n1, n2);
-          found=match(pn, c1, c2, *s1);
-          s1->BackTrack();
-          delete s1;
+          s.AddPair(n1, n2);
+          found=match(pn, c1, c2, s);
+          s.BackTrack(n1, n2);
         }
       }
       //std::cerr<<"  < returning: "<<found<<" "<<*pn<<" "<<&s<<std::endl;
@@ -528,17 +522,10 @@ namespace boost{
       node_id n1=NULL_NODE, n2=NULL_NODE;
       while (s.NextPair(&n1, &n2, n1, n2)) {
         if (s.IsFeasiblePair(n1, n2)){
-          SubState *s1=s.Clone();
-          s1->AddPair(n1, n2);
-          if (match(c1, c2, *s1,res,max_results)){
-            s1->BackTrack(); 
-            delete s1;
+          s.AddPair(n1, n2);
+          if (match(c1, c2,s,res,max_results))
             return true;
-          }
-          else {
-            s1->BackTrack(); 
-            delete s1;
-          }
+          s.BackTrack(n1, n2);
         }
       }
       return false;
