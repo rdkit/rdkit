@@ -453,6 +453,28 @@ namespace boost{
         core_2[node2] = NULL_NODE;
         --core_len;
       };
+      bool Match(node_id c1[], node_id c2[])
+      {
+        if (IsGoal() ) {
+          GetCoreSet(c1, c2);
+          if(MatchChecks(c1,c2))
+            return true;
+        }
+        
+        if (IsDead())
+          return false;
+        node_id n1=NULL_NODE, n2=NULL_NODE;
+      
+        while (NextPair(&n1, &n2, n1, n2)) {
+          if (IsFeasiblePair(n1, n2)){
+            AddPair(n1, n2);
+            if (Match(c1, c2)) // recurse
+              return true;
+            BackTrack(n1, n2);
+          }
+        }
+        return false;
+      }
     };
 
     /*-------------------------------------------------------------
@@ -467,29 +489,11 @@ namespace boost{
     template <class SubState>
     bool match(int *pn, node_id c1[], node_id c2[], SubState &s)
     {
-      if (s.IsGoal() ) { 
-        s.GetCoreSet(c1, c2);
-        if(s.MatchChecks(c1,c2)) {
-          *pn=s.CoreLen();
-          return true;
-        }
+      if (s.Match(c1, c2)) {
+        *pn=s.CoreLen(); // preserve API: pn always set to num query atoms...
+        return true;
       }
-
-      if (s.IsDead())
-        return false;
-      //std::cerr<<"  > match: "<<*pn<<" "<<&s<<std::endl;
-      node_id n1=NULL_NODE, n2=NULL_NODE;
-      bool found=false;
-      while (!found && s.NextPair(&n1, &n2, n1, n2)) {
-        //std::cerr<<"           "<<n1<<","<<n2<<std::endl;
-        if (s.IsFeasiblePair(n1, n2)){
-          s.AddPair(n1, n2);
-          found=match(pn, c1, c2, s);
-          s.BackTrack(n1, n2);
-        }
-      }
-      //std::cerr<<"  < returning: "<<found<<" "<<*pn<<" "<<&s<<std::endl;
-      return found;
+      return false;
     }
 
     /*-------------------------------------------------------------
