@@ -6,6 +6,8 @@ namespace RDKit {
 
 StereoGroup::StereoGroup(StereoGroupType grouptype, std::vector<Atom *> &&atoms)
     : d_grouptype(grouptype), d_atoms(atoms) {}
+StereoGroup::StereoGroup(StereoGroupType grouptype, const std::vector<Atom *> & atoms)
+    : d_grouptype(grouptype), d_atoms(atoms) {}
 
 StereoGroupType StereoGroup::getGroupType() const {return d_grouptype;}
 

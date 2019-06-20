@@ -5051,6 +5051,34 @@ M  END
     self.assertEqual(stereo_atoms[1].GetIdx(), 4)
     self.assertEqual(stereo_atoms[1].GetOwningMol().GetNumAtoms(),8)
 
+  def testSetEnhancedStereoGroup(self):
+    m = Chem.MolFromSmiles('F[C@@H](Br)[C@H](F)Cl |o1:1|')
+    m2 = Chem.RWMol(m)
+
+    groups = m2.GetStereoGroups()
+    self.assertEqual(len(groups), 1)
+    # Can set the StereoGroups using an empty list
+    m2.SetStereoGroups([])
+    self.assertEqual(len(m2.GetStereoGroups()), 0)
+
+    # Can create a StereoGroup using a Python list
+    group1 = Chem.rdchem.StereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, [m.GetAtomWithIdx(1)])
+    # Can set the StereoGroups using a Python list
+    m2.SetStereoGroups([group1])
+    self.assertEqual(len(m2.GetStereoGroups()), 1)
+
+    # Can create a StereoGroup using a C++ vector<Atom>
+    atoms = Chem.rdchem.Atom_vect()
+    atoms.append(m.GetAtomWithIdx(1))
+    group2 = Chem.rdchem.StereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, atoms)
+
+    # Can create and append to a C++ StereoGroup vector
+    groups = Chem.rdchem.StereoGroup_vect()
+    groups.append(group1)
+    groups.append(group2)
+    # CANNOT set the StereoGroups using a C++ vector! This would fail:
+    # m2.SetStereoGroups(groups)
+
   def testSubstructParameters(self):
     m = Chem.MolFromSmiles('C[C@](F)(Cl)OCC')
     p1 = Chem.MolFromSmiles('C[C@](F)(Cl)O')

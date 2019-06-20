@@ -192,6 +192,11 @@ class ReadWriteMol : public RWMol {
     PRECONDITION(bond, "bad bond");
     replaceBond(idx, bond, preserveProps);
   };
+  void SetStereoGroups(python::list& stereo_groups) {
+    std::vector<StereoGroup> groups;
+    pythonObjectToVect<StereoGroup>(stereo_groups, groups);
+    setStereoGroups(std::move(groups));
+  }
   ROMol *GetMol() const {
     auto *res = new ROMol(*this);
     return res;
@@ -238,8 +243,7 @@ struct mol_wrapper {
         .export_values();
     ;
 
-    python::class_<std::vector<StereoGroup>>("StereoGroupVector")
-        .def(python::vector_indexing_suite<std::vector<StereoGroup>>());
+    RegisterVectorConverter<StereoGroup>("StereoGroup_vect");
 
     python::def("GetDefaultPickleProperties",
                 MolPickler::getDefaultPickleProperties,
@@ -788,6 +792,10 @@ struct mol_wrapper {
         .def("GetMol", &ReadWriteMol::GetMol,
              "Returns a Mol (a normal molecule)",
              python::return_value_policy<python::manage_new_object>())
+
+        .def("SetStereoGroups", &ReadWriteMol::SetStereoGroups,
+             (python::arg("stereo_groups")),
+             "Set the stereo groups")
 
         // enable pickle support
         .def_pickle(mol_pickle_suite());
