@@ -417,41 +417,41 @@ namespace boost{
       VF2SubState *Clone(){
         return new VF2SubState(*this);
       };
-      void BackTrack(node_id added_node1, node_id node2){
-          if (term_1[added_node1] == core_len) {
-            term_1[added_node1] = 0;
+      void BackTrack(node_id node1, node_id node2){
+        if (term_1[node1] == core_len) {
+          term_1[node1] = 0;
+          --t1_len;
+        }
+
+        typename Graph::out_edge_iterator bNbrs,eNbrs;
+        boost::tie(bNbrs,eNbrs) = boost::out_edges(node1,*g1);
+        while(bNbrs!=eNbrs){
+          unsigned int other = getOtherIdx(*g1,*bNbrs,node1);
+          if (term_1[other] == core_len) {
+            term_1[other] = 0;
             --t1_len;
           }
+          ++bNbrs;
+        }
 
-          typename Graph::out_edge_iterator bNbrs,eNbrs;
-          boost::tie(bNbrs,eNbrs) = boost::out_edges(added_node1,*g1);
-          while(bNbrs!=eNbrs){
-            unsigned int other = getOtherIdx(*g1,*bNbrs,added_node1);
-            if (term_1[other] == core_len) {
-              term_1[other] = 0;
-              --t1_len;
-            }
-            ++bNbrs;
-          }
+        if (term_2[node2] == core_len) {
+          term_2[node2] = 0;
+          --t2_len;
+        }
 
-          if (term_2[node2] == core_len) {
-            term_2[node2] = 0;
+        boost::tie(bNbrs,eNbrs) = boost::out_edges(node2,*g2);
+        while(bNbrs!=eNbrs){
+          unsigned int other = getOtherIdx(*g2,*bNbrs,node2);
+          if (term_2[other] == core_len) {
+            term_2[other] = 0;
             --t2_len;
           }
+          ++bNbrs;
+        }
 
-          boost::tie(bNbrs,eNbrs) = boost::out_edges(node2,*g2);
-          while(bNbrs!=eNbrs){
-            unsigned int other = getOtherIdx(*g2,*bNbrs,node2);
-            if (term_2[other] == core_len) {
-              term_2[other] = 0;
-              --t2_len;
-            }
-            ++bNbrs;
-          }
-
-          core_1[added_node1] = NULL_NODE;
-          core_2[node2] = NULL_NODE;
-          --core_len;
+        core_1[node1] = NULL_NODE;
+        core_2[node2] = NULL_NODE;
+        --core_len;
       };
     };
 
