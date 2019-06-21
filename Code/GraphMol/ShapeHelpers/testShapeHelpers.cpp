@@ -68,9 +68,9 @@ void test2Compare() {
   double rmsd = MolAlign::alignMol(*m, *m2);
   CHECK_INVARIANT(rmsd >= 0.0, "");
   dist = MolShapes::tanimotoDistance(*m, *m2);
-  CHECK_INVARIANT(RDKit::feq(dist, 0.3146), "");
+  CHECK_INVARIANT(RDKit::feq(dist, 0.31, 0.01), "");
   dist = MolShapes::tverskyIndex(*m, *m2, 1.0, 1.0);
-  CHECK_INVARIANT(RDKit::feq(dist, 0.6854), "");
+  CHECK_INVARIANT(RDKit::feq(dist, 0.68, 0.01), "");
   delete m2;
 
   m2 = MolFileToMol(fname2);
