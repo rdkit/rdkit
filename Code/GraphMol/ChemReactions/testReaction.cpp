@@ -6854,30 +6854,25 @@ void testGithub1269() {
 }
 
 void testGithub1868() {
-  ROMol *mol = nullptr;
-  ChemicalReaction *rxn;
-  MOL_SPTR_VECT reacts;
-  std::vector<MOL_SPTR_VECT> prods;
-  std::string smi;
-
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing MDL parser" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github #1868: Atom index out of range error"
+                       << std::endl;
 
   std::string rdbase = getenv("RDBASE");
   std::string fName;
 
-  fName = rdbase + "/Code/GraphMol/ChemReactions/testData/AmideBond.rxn";
+  fName = rdbase + "/Code/GraphMol/ChemReactions/testData/v3k.AmideBond.rxn";
 
-  for(int i=0;i<1000;++i) {
-    rxn = RxnFileToChemicalReaction(fName);
+  for (int i = 0; i < 1000; ++i) {
+    std::unique_ptr<ChemicalReaction> rxn(RxnFileToChemicalReaction(fName));
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxn->getNumReactantTemplates() == 2);
     TEST_ASSERT(rxn->getNumProductTemplates() == 1);
-    
-    for(auto v : rxn->getReactants()) {
+
+    for (auto v : rxn->getReactants()) {
       MolToSmiles(*v.get());
     }
-    for(auto v : rxn->getProducts()) {
+    for (auto v : rxn->getProducts()) {
       MolToSmiles(*v.get());
     }
   }
@@ -6968,8 +6963,8 @@ int main() {
   testReactionProperties();
   testGithub1950();
   testGithub1869();
-#endif
   testGithub1269();
+#endif
   testGithub1868();
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
