@@ -1,4 +1,3 @@
-#  $Id$
 #
 #  Copyright (c) 2007-2014, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.
@@ -717,7 +716,7 @@ M  END
         self.assertEqual(len(prods), 1)
 
     def testGitHub1868(self):
-        fileN = os.path.join(self.dataDir, 'AmideBond.rxn')
+        fileN = os.path.join(self.dataDir, 'v3k.AmideBond.rxn')
         for i in range(100):
             _rxn = rdChemReactions.ReactionFromRxnFile(fileN)
             _rxn.Initialize()
