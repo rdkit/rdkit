@@ -433,4 +433,8 @@ RDKIT_GRAPHMOL_EXPORT std::string getSupplementalSmilesLabel(const Atom *atom);
 RDKIT_GRAPHMOL_EXPORT std::ostream &operator<<(std::ostream &target,
                                                const RDKit::Atom &at);
 
+namespace RDKit {
+//! returns whether or not the atom is to the left of C
+RDKIT_GRAPHMOL_EXPORT bool isEarlyAtom(int atomicNum);
+}  // namespace RDKit
 #endif
