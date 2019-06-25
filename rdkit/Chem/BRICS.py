@@ -574,7 +574,8 @@ def BRICSBuild(fragments, onlyCompleteMols=True, seeds=None, uniquify=True, scra
                             yield p[0]
         if nextSteps and maxDepth > 0:
             for p in BRICSBuild(fragments, onlyCompleteMols=onlyCompleteMols, seeds=nextSteps,
-                                uniquify=uniquify, maxDepth=maxDepth - 1):
+                                uniquify=uniquify, maxDepth=maxDepth - 1,
+                                scrambleReagents=scrambleReagents):
                 if uniquify:
                     pSmi = Chem.MolToSmiles(p, True)
                     if pSmi in seen:
@@ -771,7 +772,7 @@ if __name__ == '__main__':
             catalog = BRICSDecompose(base)
             self.assertTrue(len(catalog) == 5, catalog)
             catalog = [Chem.MolFromSmiles(x) for x in catalog]
-            ms = list(BRICSBuild(catalog, maxDepth=4))
+            ms = list(BRICSBuild(catalog, maxDepth=4, scrambleReagents=False))
             for m in ms:
                 Chem.SanitizeMol(m)
             ms = [Chem.MolToSmiles(x) for x in ms]
@@ -782,6 +783,18 @@ if __name__ == '__main__':
             ts = [Chem.MolToSmiles(Chem.MolFromSmiles(x), True) for x in ts]
             for t in ts:
                 self.assertTrue(t in ms, (t, ms))
+
+            ms2 = list(BRICSBuild(catalog, maxDepth=4, scrambleReagents=False))
+            for m in ms2:
+                Chem.SanitizeMol(m)
+            ms2 = [Chem.MolToSmiles(x) for x in ms2]
+            self.assertEqual(ms, ms2)
+
+            ms2 = list(BRICSBuild(catalog, maxDepth=4, scrambleReagents=True))
+            for m in ms2:
+                Chem.SanitizeMol(m)
+            ms2 = [Chem.MolToSmiles(x) for x in ms2]
+            self.assertNotEqual(ms, ms2)
 
         def test9(self):
             m = Chem.MolFromSmiles('CCOc1ccccc1c1ncc(c2nc(NCCCC)ncn2)cc1')
