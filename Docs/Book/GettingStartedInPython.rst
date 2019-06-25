@@ -1227,10 +1227,9 @@ Topological Fingerprints
 .. doctest::
 
   >>> from rdkit import DataStructs
-  >>> from rdkit.Chem.Fingerprints import FingerprintMols
   >>> ms = [Chem.MolFromSmiles('CCOC'), Chem.MolFromSmiles('CCO'),
   ... Chem.MolFromSmiles('COC')]
-  >>> fps = [FingerprintMols.FingerprintMol(x) for x in ms]
+  >>> fps = [Chem.RDKFingerprint(x) for x in ms]
   >>> DataStructs.FingerprintSimilarity(fps[0],fps[1])
   0.6...
   >>> DataStructs.FingerprintSimilarity(fps[0],fps[2])
@@ -1238,10 +1237,7 @@ Topological Fingerprints
   >>> DataStructs.FingerprintSimilarity(fps[1],fps[2])
   0.25
 
-The fingerprinting algorithm used is similar to that used in the
-Daylight fingerprinter: it identifies and hashes topological paths
-(e.g. along bonds) in the molecule and then uses them to set bits in a
-fingerprint of user-specified lengths. After all paths have been identified, the fingerprint is typically folded down until a particular density of set bits is obtained.
+More details about the algorithm used for the RDKit fingerprint can be found in the "RDKit Book".
 
 The default set of parameters used by the fingerprinter is:
 - minimum path size: 1 bond
@@ -1249,11 +1245,10 @@ The default set of parameters used by the fingerprinter is:
 - fingerprint size: 2048 bits
 - number of bits set per hash: 2
 - minimum fingerprint size: 64 bits
-- target on-bit density 0.3
+- target on-bit density 0.0
 
-You can control these by calling
-:py:func:`rdkit.Chem.rdmolops.RDKFingerprint` directly; this will return
-an unfolded fingerprint that you can then fold to the desired density.
+You can control these when calling
+:py:func:`rdkit.Chem.rdmolops.RDKFingerprint`.
 The function
 :py:func:`rdkit.Chem.Fingerprints.FingerprintMols.FingerprintMol` (written
 in python) shows how this is done.
