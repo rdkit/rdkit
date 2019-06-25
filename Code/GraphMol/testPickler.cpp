@@ -1435,7 +1435,6 @@ int main(int argc, char *argv[]) {
   testQueries();
   testRadicals();
   testPickleProps();
-#endif
   testIssue2788233();
   testIssue3202580();
   testIssue3316407();
