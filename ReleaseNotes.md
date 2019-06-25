@@ -1,3 +1,44 @@
+# Release_2019.03.3
+(Changes relative to Release_2019.03.2)
+
+## Acknowledgements:
+David Cosgrove, Gareth Jones, Brian Kelley, Karl Leswing, Vincent Scalfani, 
+Riccardo Vianello
+
+## Bug Fixes:
+  - Chem.MolStandardize.standardize.Standardizer drops molecular properties
+ (github #2431 from lilleswing)
+  - Fix/rgroup sdf isotope
+ (github #2449 from bp-kelley)
+  - Uncharger incorrectly removing charge from boron anions
+ (github #2452 from greglandrum)
+  - Add java builds to azure devops
+ (github #2460 from greglandrum)
+  - Cart fixes
+ (github #2462 from jones-gareth)
+  - Negative atom map values cause depickling to fail
+ (github #2465 from greglandrum)
+  - Deserialization failures crash Java wrapper
+ (github #2466 from greglandrum)
+  - rdkit.six fix and cleanup
+ (github #2469 from rvianello)
+  - dummy atom queries are flagged as complex
+ (github #2471 from greglandrum)
+  - 3D structure display broken in jupyter notebook
+ (github #2473 from greglandrum)
+  - Inconsistent defaults for nonBondedThresh in MMFF optimization
+ (github #2475 from greglandrum)
+  - Fix/rgroup multiple labels
+ (github #2481 from bp-kelley)
+  - 2D Depiction clipped atom highlighting
+ (github #2486 from DavidACosgrove)
+  - BRICSBuild now passes scrambleReagents to children
+ (github #2488 from greglandrum)
+  - fixed the dead Conda installation document link
+ (github #2495 from vfscalfani)
+  - Pattern Fingerprint Issues
+ (github #2501 from jones-gareth)
+
 # Release_2019.03.2
 (Changes relative to Release_2019.03.1)
 
