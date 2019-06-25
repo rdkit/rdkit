@@ -144,3 +144,30 @@ TEST_CASE(
     CHECK(MolToSmiles(*outm) == "CN(C)(C)C");
   }
 }
+
+TEST_CASE(
+    "github #2452: incorrectly removing charge from boron anions"
+    "fragments ") {
+  SECTION("demo") {
+    auto m = "C[B-](C)(C)C"_smiles;
+    REQUIRE(m);
+    bool canonicalOrdering = true;
+
+    MolStandardize::Uncharger uncharger(canonicalOrdering);
+    std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
+    REQUIRE(outm);
+    CHECK(outm->getAtomWithIdx(1)->getFormalCharge() == -1);
+    CHECK(MolToSmiles(*outm) == "C[B-](C)(C)C");
+  }
+  SECTION("should be removed") {
+    auto m = "C[BH-](C)(C)"_smiles;
+    REQUIRE(m);
+    bool canonicalOrdering = true;
+
+    MolStandardize::Uncharger uncharger(canonicalOrdering);
+    std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
+    REQUIRE(outm);
+    CHECK(outm->getAtomWithIdx(1)->getFormalCharge() == 0);
+    CHECK(MolToSmiles(*outm) == "CB(C)C");
+  }
+}
