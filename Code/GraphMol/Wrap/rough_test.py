@@ -5052,32 +5052,42 @@ M  END
     self.assertEqual(stereo_atoms[1].GetOwningMol().GetNumAtoms(),8)
 
   def testSetEnhancedStereoGroup(self):
-    m = Chem.MolFromSmiles('F[C@@H](Br)[C@H](F)Cl |o1:1|')
-    m2 = Chem.RWMol(m)
+      m = Chem.MolFromSmiles('F[C@@H](Br)[C@H](F)Cl |o1:1|')
+      m2 = Chem.RWMol(m)
 
-    groups = m2.GetStereoGroups()
-    self.assertEqual(len(groups), 1)
-    # Can set the StereoGroups using an empty list
-    m2.SetStereoGroups([])
-    self.assertEqual(len(m2.GetStereoGroups()), 0)
+      groups = m2.GetStereoGroups()
+      self.assertEqual(len(groups), 1)
+      # Can set the StereoGroups using an empty list
+      m2.SetStereoGroups([])
+      self.assertEqual(len(m2.GetStereoGroups()), 0)
 
-    # Can create a StereoGroup using a Python list
-    group1 = Chem.rdchem.StereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, [m.GetAtomWithIdx(1)])
-    # Can set the StereoGroups using a Python list
-    m2.SetStereoGroups([group1])
-    self.assertEqual(len(m2.GetStereoGroups()), 1)
+      # Can create a StereoGroup using a Python list
+      group1 = Chem.rdchem.CreateStereoGroup(
+          m2, [1], Chem.rdchem.StereoGroupType.STEREO_OR)
+      # Can set the StereoGroups using a Python list
+      m2.SetStereoGroups([group1])
+      self.assertEqual(len(m2.GetStereoGroups()), 1)
 
-    # Can create a StereoGroup using a C++ vector<Atom>
-    atoms = Chem.rdchem.Atom_vect()
-    atoms.append(m.GetAtomWithIdx(1))
-    group2 = Chem.rdchem.StereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, atoms)
+  def testSetEnhancedStereoGroup2(self):
+      # make sure that the object returned by CreateStereoGroup()
+      # preserves the owning molecule:
+      m = Chem.RWMol(Chem.MolFromSmiles('F[C@@H](Br)[C@H](F)Cl'))
+      group1 = Chem.rdchem.CreateStereoGroup(
+          m, [1], Chem.rdchem.StereoGroupType.STEREO_OR)
+      m.SetStereoGroups([group1])
+      self.assertEqual(len(m.GetStereoGroups()), 1)
 
-    # Can create and append to a C++ StereoGroup vector
-    groups = Chem.rdchem.StereoGroup_vect()
-    groups.append(group1)
-    groups.append(group2)
-    # CANNOT set the StereoGroups using a C++ vector! This would fail:
-    # m2.SetStereoGroups(groups)
+      m = None
+      gc.collect()
+      stereo_atoms = group1.GetAtoms()
+      self.assertEqual(stereo_atoms[0].GetIdx(), 1)
+      self.assertEqual(stereo_atoms[0].GetOwningMol().GetNumAtoms(), 6)
+
+      # make sure we can't add StereoGroups constructed from one molecule
+      # to a different one:
+      m2 = Chem.RWMol(Chem.MolFromSmiles('F[C@@H](Br)[C@H](F)Cl'))
+      self.assertRaises(ValueError, lambda: m2.SetStereoGroups([group1]))
+
 
   def testSubstructParameters(self):
     m = Chem.MolFromSmiles('C[C@](F)(Cl)OCC')
