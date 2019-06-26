@@ -222,7 +222,7 @@ void addAngles(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
 
   std::ostream &oStream = mmffMolProperties->getMMFFOStream();
   unsigned int idx[3];
-  MMFFPropCollection *mmffProp = MMFFPropCollection::getMMFFProp();
+  const MMFFPropCollection *mmffProp = DefaultParameters::getMMFFProp();
   ROMol::ADJ_ITER nbr1Idx;
   ROMol::ADJ_ITER end1Nbrs;
   ROMol::ADJ_ITER nbr2Idx;
@@ -335,7 +335,7 @@ void addStretchBend(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
 
   std::ostream &oStream = mmffMolProperties->getMMFFOStream();
   unsigned int idx[3];
-  MMFFPropCollection *mmffProp = MMFFPropCollection::getMMFFProp();
+  const MMFFPropCollection *mmffProp = DefaultParameters::getMMFFProp();
   std::pair<bool, const MMFFStbn *> mmffStbnParams;
   ROMol::ADJ_ITER nbr1Idx;
   ROMol::ADJ_ITER end1Nbrs;

@@ -24,7 +24,88 @@
 namespace RDKit {
 namespace MMFF {
 using namespace ForceFields::MMFF;
+namespace DefaultParameters {
 
+MMFFPropCollection *getMMFFProp() {
+  static MMFFPropCollection *ds_instance(MMFFPropCollection::getMMFFProp());  
+  return ds_instance;
+}
+
+MMFFAromCollection *getMMFFArom() {
+  static MMFFAromCollection *ds_instance(MMFFAromCollection::getMMFFArom());  
+  return ds_instance;
+}
+
+MMFFBndkCollection *getMMFFBndk() {
+  static MMFFBndkCollection *ds_instance(MMFFBndkCollection::getMMFFBndk());  
+  return ds_instance;
+}
+
+MMFFBondCollection *getMMFFBond() {
+  static MMFFBondCollection *ds_instance(MMFFBondCollection::getMMFFBond());  
+  return ds_instance;
+}
+  
+MMFFChgCollection *getMMFFChg() {
+  static MMFFChgCollection *ds_instance(MMFFChgCollection::getMMFFChg());
+  return ds_instance;
+}
+  
+MMFFDefCollection *getMMFFDef() {
+  static MMFFDefCollection *ds_instance(MMFFDefCollection::getMMFFDef());
+  return ds_instance;
+}
+
+MMFFHerschbachLaurieCollection * getMMFFHerschbachLaurie() {
+  static MMFFHerschbachLaurieCollection *ds_instance(
+	     MMFFHerschbachLaurieCollection::getMMFFHerschbachLaurie());
+  return ds_instance;
+}
+
+MMFFPBCICollection *getMMFFPBCI() {
+  static MMFFPBCICollection *ds_instance(MMFFPBCICollection::getMMFFPBCI());
+  return ds_instance;
+}
+
+MMFFAngleCollection *getMMFFAngle() {
+  static MMFFAngleCollection *ds_instance(MMFFAngleCollection::getMMFFAngle());
+  return ds_instance;
+}
+
+  
+MMFFStbnCollection *getMMFFStbn() {
+  static MMFFStbnCollection *ds_instance(MMFFStbnCollection::getMMFFStbn());
+  return ds_instance;
+}
+
+MMFFDfsbCollection *getMMFFDfsb() {
+  static MMFFDfsbCollection *ds_instance(MMFFDfsbCollection::getMMFFDfsb());
+  return ds_instance;
+}
+
+MMFFCovRadPauEleCollection *getMMFFCovRadPauEle() {
+  static MMFFCovRadPauEleCollection *ds_instance(MMFFCovRadPauEleCollection::getMMFFCovRadPauEle());
+  return ds_instance;
+}
+
+MMFFTorCollection *getMMFFTor(const bool isMMFFs) {
+  static MMFFTorCollection *MMFF94(MMFFTorCollection::getMMFFTor(false, ""));
+  static MMFFTorCollection *MMFF94s(MMFFTorCollection::getMMFFTor(true, ""));
+  return (isMMFFs) ? MMFF94s : MMFF94;  
+}
+
+MMFFOopCollection *getMMFFOop(const bool isMMFFs) {
+  static MMFFOopCollection *MMFF94(MMFFOopCollection::getMMFFOop(false, ""));
+  static MMFFOopCollection *MMFF94s(MMFFOopCollection::getMMFFOop(true, ""));
+  return (isMMFFs) ? MMFF94s : MMFF94;  
+}
+
+MMFFVdWCollection *getMMFFVdW() {
+  static MMFFVdWCollection *ds_instance(MMFFVdWCollection::getMMFFVdW(""));
+  return ds_instance;
+}
+
+}
 class RingMembership {
  public:
   RingMembership() : d_isInAromaticRing(false) {};
@@ -2530,7 +2611,7 @@ unsigned int MMFFMolProperties::getMMFFBondType(const Bond *bond) {
   PRECONDITION(this->isValid(), "missing atom types - invalid force-field");
   PRECONDITION(bond, "invalid bond");
 
-  MMFFPropCollection *mmffProp = MMFFPropCollection::getMMFFProp();
+  const MMFFPropCollection *mmffProp = DefaultParameters::getMMFFProp();
   const ForceFields::MMFF::MMFFProp *mmffPropAtom1 =
       (*mmffProp)(this->getMMFFAtomType(bond->getBeginAtomIdx()));
   const ForceFields::MMFF::MMFFProp *mmffPropAtom2 =
@@ -2655,12 +2736,12 @@ MMFFMolProperties::getMMFFBondStretchEmpiricalRuleParams(const ROMol &mol,
   const MMFFHerschbachLaurie *mmffHerschbachLaurieParams;
   const MMFFProp *mmffAtomPropParams[2];
   const MMFFCovRadPauEle *mmffAtomCovRadPauEleParams[2];
-  MMFFBndkCollection *mmffBndk = MMFFBndkCollection::getMMFFBndk();
+  MMFFBndkCollection *mmffBndk = DefaultParameters::getMMFFBndk();
   MMFFHerschbachLaurieCollection *mmffHerschbachLaurie =
-      MMFFHerschbachLaurieCollection::getMMFFHerschbachLaurie();
-  MMFFCovRadPauEleCollection *mmffCovRadPauEle =
-      MMFFCovRadPauEleCollection::getMMFFCovRadPauEle();
-  MMFFPropCollection *mmffProp = MMFFPropCollection::getMMFFProp();
+      DefaultParameters::getMMFFHerschbachLaurie();
+  const MMFFCovRadPauEleCollection *mmffCovRadPauEle =
+      DefaultParameters::getMMFFCovRadPauEle();
+  const MMFFPropCollection *mmffProp = DefaultParameters::getMMFFProp();
 
   unsigned int atomicNum1 = bond->getBeginAtom()->getAtomicNum();
   unsigned int atomicNum2 = bond->getEndAtom()->getAtomicNum();
@@ -2955,8 +3036,8 @@ MMFFMolProperties::getMMFFTorsionEmpiricalRuleParams(const ROMol &mol,
                                                      unsigned int idx3) {
   PRECONDITION(this->isValid(), "missing atom types - invalid force-field");
 
-  MMFFPropCollection *mmffProp = MMFFPropCollection::getMMFFProp();
-  MMFFAromCollection *mmffArom = MMFFAromCollection::getMMFFArom();
+  const MMFFPropCollection *mmffProp = DefaultParameters::getMMFFProp();
+  const MMFFAromCollection *mmffArom = DefaultParameters::getMMFFArom();
   auto *mmffTorParams = new ForceFields::MMFF::MMFFTor();
   unsigned int jAtomType = this->getMMFFAtomType(idx2);
   unsigned int kAtomType = this->getMMFFAtomType(idx3);
@@ -3160,9 +3241,9 @@ void MMFFMolProperties::computeMMFFCharges(const ROMol &mol) {
   ROMol::ADJ_ITER endNbrs;
   ROMol::ADJ_ITER nbr2Idx;
   ROMol::ADJ_ITER end2Nbrs;
-  MMFFPropCollection *mmffProp = MMFFPropCollection::getMMFFProp();
-  MMFFPBCICollection *mmffPBCI = MMFFPBCICollection::getMMFFPBCI();
-  MMFFChgCollection *mmffChg = MMFFChgCollection::getMMFFChg();
+  const MMFFPropCollection *mmffProp = DefaultParameters::getMMFFProp();
+  const MMFFPBCICollection *mmffPBCI = DefaultParameters::getMMFFPBCI();
+  MMFFChgCollection *mmffChg = DefaultParameters::getMMFFChg();
 
   // We need to set formal charges upfront
   for (idx = 0; idx < mol.getNumAtoms(); ++idx) {
@@ -3564,7 +3645,7 @@ void MMFFMolProperties::computeMMFFCharges(const ROMol &mol) {
 bool MMFFMolProperties::getMMFFBondStretchParams(
     const ROMol &mol, const unsigned int idx1, const unsigned int idx2,
     unsigned int &bondType, MMFFBond &mmffBondStretchParams) {
-  MMFFBondCollection *mmffBond = MMFFBondCollection::getMMFFBond();
+  MMFFBondCollection *mmffBond = DefaultParameters::getMMFFBond();
   bool res = false;
   if (isValid()) {
     unsigned int iAtomType = getMMFFAtomType(idx1);
@@ -3600,8 +3681,8 @@ bool MMFFMolProperties::getMMFFAngleBendParams(const ROMol &mol,
   bool res = false;
   if (isValid() && mol.getBondBetweenAtoms(idx1, idx2) &&
       mol.getBondBetweenAtoms(idx2, idx3)) {
-    MMFFAngleCollection *mmffAngle = MMFFAngleCollection::getMMFFAngle();
-    MMFFPropCollection *mmffProp = MMFFPropCollection::getMMFFProp();
+    MMFFAngleCollection *mmffAngle = DefaultParameters::getMMFFAngle();
+    const MMFFPropCollection *mmffProp = DefaultParameters::getMMFFProp();
     unsigned int idx[3] = {idx1, idx2, idx3};
     MMFFBond mmffBondParams[2];
     unsigned int atomType[3];
@@ -3645,9 +3726,9 @@ bool MMFFMolProperties::getMMFFStretchBendParams(
     MMFFAngle &mmffAngleBendParams) {
   bool res = false;
   if (isValid()) {
-    MMFFPropCollection *mmffProp = MMFFPropCollection::getMMFFProp();
-    MMFFStbnCollection *mmffStbn = MMFFStbnCollection::getMMFFStbn();
-    MMFFDfsbCollection *mmffDfsb = MMFFDfsbCollection::getMMFFDfsb();
+    const MMFFPropCollection *mmffProp = DefaultParameters::getMMFFProp();
+    MMFFStbnCollection *mmffStbn = DefaultParameters::getMMFFStbn();
+    MMFFDfsbCollection *mmffDfsb = DefaultParameters::getMMFFDfsb();
     unsigned int idx[3] = {idx1, idx2, idx3};
     unsigned int atomType[3];
     unsigned int bondType[2];
@@ -3710,7 +3791,7 @@ bool MMFFMolProperties::getMMFFTorsionParams(
     unsigned int idx[4] = {idx1, idx2, idx3, idx4};
     unsigned int atomType[4];
     MMFFTorCollection *mmffTor =
-        MMFFTorCollection::getMMFFTor(getMMFFVariant() == "MMFF94s");
+        DefaultParameters::getMMFFTor(getMMFFVariant() == "MMFF94s");
     for (i = 0; i < 4; ++i) {
       atomType[i] = getMMFFAtomType(idx[i]);
     }
@@ -3755,7 +3836,7 @@ bool MMFFMolProperties::getMMFFOopBendParams(const ROMol &mol,
     unsigned int atomType[4];
 
     MMFFOopCollection *mmffOop =
-        MMFFOopCollection::getMMFFOop(getMMFFVariant() == "MMFF94s");
+        DefaultParameters::getMMFFOop(getMMFFVariant() == "MMFF94s");
     for (i = 0; i < 4; ++i) {
       atomType[i] = getMMFFAtomType(idx[i]);
     }
@@ -3775,7 +3856,7 @@ bool MMFFMolProperties::getMMFFVdWParams(const unsigned int idx1,
                                          MMFFVdWRijstarEps &mmffVdWParams) {
   bool res = false;
   if (isValid()) {
-    MMFFVdWCollection *mmffVdW = MMFFVdWCollection::getMMFFVdW();
+    MMFFVdWCollection *mmffVdW = DefaultParameters::getMMFFVdW();
     const unsigned int iAtomType = getMMFFAtomType(idx1);
     const unsigned int jAtomType = getMMFFAtomType(idx2);
     const MMFFVdW *mmffVdWParamsIAtom = (*mmffVdW)(iAtomType);

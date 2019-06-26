@@ -26,6 +26,22 @@ class Atom;
 class Bond;
 
 namespace MMFF {
+  
+namespace DefaultParameters {
+RDKIT_FORCEFIELDHELPERS_EXPORT ForceFields::MMFF::MMFFPropCollection *getMMFFProp();
+RDKIT_FORCEFIELDHELPERS_EXPORT ForceFields::MMFF::MMFFAromCollection *getMMFFArom();
+RDKIT_FORCEFIELDHELPERS_EXPORT ForceFields::MMFF::MMFFDefCollection *getMMFFDef();
+RDKIT_FORCEFIELDHELPERS_EXPORT ForceFields::MMFF::MMFFHerschbachLaurieCollection *
+  getMMFFHerschbachLaurie();
+RDKIT_FORCEFIELDHELPERS_EXPORT ForceFields::MMFF::MMFFPBCICollection *getMMFFPBCI();
+RDKIT_FORCEFIELDHELPERS_EXPORT ForceFields::MMFF::MMFFAngleCollection *getMMFFAngle();
+RDKIT_FORCEFIELDHELPERS_EXPORT ForceFields::MMFF::MMFFStbnCollection *getMMFFStbn();
+RDKIT_FORCEFIELDHELPERS_EXPORT ForceFields::MMFF::MMFFDfsbCollection *getMMFFDfsb();
+RDKIT_FORCEFIELDHELPERS_EXPORT ForceFields::MMFF::MMFFTorCollection *getMMFFTor(const bool isMMFFs);
+RDKIT_FORCEFIELDHELPERS_EXPORT ForceFields::MMFF::MMFFOopCollection *getMMFFOop(const bool isMMFFs);
+RDKIT_FORCEFIELDHELPERS_EXPORT ForceFields::MMFF::MMFFVdWCollection *getMMFFVdW();
+}
+ 
 class RingMembershipSize;
 using namespace ForceFields::MMFF;
 class RDKIT_FORCEFIELDHELPERS_EXPORT MMFFAtomProperties {
