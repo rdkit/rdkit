@@ -883,6 +883,22 @@ void runblock_mmff(const std::vector<ROMol *> &mols,
     }
   }
 }
+void runblock_checkmmff(const std::vector<ROMol *> &mols, unsigned int count,
+                        unsigned int idx) {
+  for (unsigned int rep = 0; rep < 100; ++rep) {
+    for (unsigned int i = 0; i < mols.size(); ++i) {
+      if (i % count != idx) continue;
+      ROMol *mol = mols[i];
+
+      if (!(rep % 20)) {
+        BOOST_LOG(rdErrorLog) << "Rep: " << rep << " Mol:" << i << std::endl;
+      }
+
+      RDKit::MMFF::MMFFMolProperties mmffMolProperties(*mol);
+      TEST_ASSERT(mmffMolProperties.isValid());
+    }
+  }
+}
 }  // namespace
 #include <thread>
 #include <future>
@@ -907,6 +923,22 @@ void testMMFFMultiThread() {
     mols.push_back(mol);
   }
 
+  {
+    std::vector<std::future<void>> tg;
+
+    std::cerr << "pre-processing" << std::endl;
+    unsigned int count = 4;
+    for (unsigned int i = 0; i < count; ++i) {
+      std::cerr << " launch :" << i << std::endl;
+      std::cerr.flush();
+      tg.emplace_back(std::async(std::launch::async, runblock_checkmmff, mols,
+                                 count, i));
+    }
+    for (auto &fut : tg) {
+      fut.get();
+    }
+  }
+
   std::cerr << "generating reference data" << std::endl;
   std::vector<double> energies(mols.size(), 0.0);
   for (unsigned int i = 0; i < mols.size(); ++i) {
@@ -925,20 +957,21 @@ void testMMFFMultiThread() {
     delete field;
   }
 
-  std::vector<std::future<void>> tg;
+  {
+    std::vector<std::future<void>> tg;
 
-  std::cerr << "processing" << std::endl;
-  unsigned int count = 4;
-  for (unsigned int i = 0; i < count; ++i) {
-    std::cerr << " launch :" << i << std::endl;
-    std::cerr.flush();
-    tg.emplace_back(std::async(std::launch::async, runblock_mmff, mols,
-                               energies, count, i));
+    std::cerr << "processing" << std::endl;
+    unsigned int count = 4;
+    for (unsigned int i = 0; i < count; ++i) {
+      std::cerr << " launch :" << i << std::endl;
+      std::cerr.flush();
+      tg.emplace_back(std::async(std::launch::async, runblock_mmff, mols,
+                                 energies, count, i));
+    }
+    for (auto &fut : tg) {
+      fut.get();
+    }
   }
-  for (auto &fut : tg) {
-    fut.get();
-  }
-
   BOOST_FOREACH (ROMol *mol, mols) { delete mol; }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
