@@ -35,7 +35,7 @@ using namespace RDKit;
 namespace {
 void runblock_mmff(const std::vector<ROMol *> &mols) {
     for (unsigned int i = 0; i < mols.size(); ++i) {
-      ROMol mol(*mols[i]);
+      ROMol *mol = mols[i];
       ForceFields::ForceField *field = MMFF::constructForceField(mol);
       TEST_ASSERT(field);
       field->initialize();
