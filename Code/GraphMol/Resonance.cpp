@@ -1189,26 +1189,37 @@ void ResonanceMolSupplier::mainLoop(unsigned int ti, unsigned int nt) {
 // index -1
 void ResonanceMolSupplier::assignConjGrpIdx() {
   unsigned int nb = d_mol->getNumBonds();
+  if (!nb) return;
+  std::stack<unsigned int> bondIndexStack;
   d_bondConjGrpIdx.resize(nb, -1);
   unsigned int na = d_mol->getNumAtoms();
   d_atomConjGrpIdx.resize(na, -1);
-  for (unsigned int i = 0; i < nb; ++i) {
-    const Bond *bi = d_mol->getBondWithIdx(i);
-    unsigned int biBeginIdx = bi->getBeginAtomIdx();
-    unsigned int biEndIdx = bi->getEndAtomIdx();
-    if (bi->getIsConjugated() && (d_bondConjGrpIdx[i] == -1)) {
-      // assign this conjugate bond to the matching group, if any
-      for (unsigned int j = 0; (d_bondConjGrpIdx[i] == -1) && (j < nb); ++j) {
-        if ((i == j) || (d_bondConjGrpIdx[j] == -1)) continue;
-        const Bond *bj = d_mol->getBondWithIdx(j);
-        if ((bj->getBeginAtomIdx() == biBeginIdx) ||
-            (bj->getBeginAtomIdx() == biEndIdx) ||
-            (bj->getEndAtomIdx() == biBeginIdx) ||
-            (bj->getEndAtomIdx() == biEndIdx))
-          d_bondConjGrpIdx[i] = d_bondConjGrpIdx[j];
+  for (d_nConjGrp = 0; true; ++d_nConjGrp) {
+    for (unsigned int i = 0; i < nb && bondIndexStack.empty(); ++i) {
+      const Bond *bi = d_mol->getBondWithIdx(i);
+      if (bi->getIsConjugated() && (d_bondConjGrpIdx[i] == -1))
+        bondIndexStack.push(i);
+    }
+    if (bondIndexStack.empty()) break;
+    while (!bondIndexStack.empty()) {
+      unsigned int i = bondIndexStack.top();
+      bondIndexStack.pop();
+      const Bond *bi = d_mol->getBondWithIdx(i);
+      for (const Atom *bondAtom: { bi->getBeginAtom(), bi->getEndAtom() }) {
+        // loop over neighbors of the bondAtom
+        unsigned int aiSelf = bondAtom->getIdx();
+        ROMol::ADJ_ITER nbrIdx, endNbrs;
+        boost::tie(nbrIdx, endNbrs) = d_mol->getAtomNeighbors(bondAtom);
+        for (; nbrIdx != endNbrs; ++nbrIdx) {
+          unsigned int aiNbr = (*d_mol)[*nbrIdx]->getIdx();
+          const Bond *bNbr = d_mol->getBondBetweenAtoms(aiSelf, aiNbr);
+          unsigned int biNbr = bNbr->getIdx();
+          if (bNbr->getIsConjugated() && (d_bondConjGrpIdx[biNbr] == -1)) {
+            d_bondConjGrpIdx[biNbr] = d_nConjGrp;
+            bondIndexStack.push(biNbr);
+          }
+        }
       }
-      // no existing group matches: create a new group
-      if (d_bondConjGrpIdx[i] == -1) d_bondConjGrpIdx[i] = d_nConjGrp++;
     }
   }
   for (unsigned int i = 0; i < nb; ++i) {
