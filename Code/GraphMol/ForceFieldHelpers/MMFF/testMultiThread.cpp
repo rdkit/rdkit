@@ -36,7 +36,7 @@ namespace {
 void runblock_mmff(const std::vector<ROMol *> &mols) {
     for (unsigned int i = 0; i < mols.size(); ++i) {
       ROMol *mol = mols[i];
-      ForceFields::ForceField *field = MMFF::constructForceField(mol);
+      ForceFields::ForceField *field = MMFF::constructForceField(*mol);
       TEST_ASSERT(field);
       field->initialize();
       field->minimize(1);
