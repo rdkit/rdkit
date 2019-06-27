@@ -35,8 +35,8 @@ using namespace RDKit;
 namespace {
 void runblock_mmff(const std::vector<ROMol *> &mols) {
     for (unsigned int i = 0; i < mols.size(); ++i) {
-      ROMol *mol = mols[i];
-      ForceFields::ForceField *field = MMFF::constructForceField(*mol);
+      ROMol mol(*mols[i]);
+      ForceFields::ForceField *field = MMFF::constructForceField(mol);
       TEST_ASSERT(field);
       field->initialize();
       field->minimize(1);
@@ -55,32 +55,40 @@ void testMMFFMultiThread() {
   std::string pathName = getenv("RDBASE");
   pathName += "/Code/GraphMol/ForceFieldHelpers/MMFF/test_data";
   SDMolSupplier suppl(pathName + "/bulk.sdf");
-  std::vector<ROMol *> mols;
+  unsigned int count = 8;
+  std::vector<std::vector<ROMol*>> mols;
+  for(unsigned int i=0;i<count;++i) mols.push_back(std::vector<ROMol*>());
+  
   while (!suppl.atEnd() && mols.size() < 100) {
     ROMol *mol = nullptr;
     try {
       mol = suppl.next();
+      for(unsigned int i=0;i<count;++i) {
+	if (i==0)
+	  mols[i].push_back(mol);
+	else
+	  mols[i].push_back(new ROMol(*mol));
+      }
     } catch (...) {
       continue;
     }
-    if (!mol) continue;
-    mols.push_back(mol);
   }
 
   std::vector<std::future<void>> tg;
 
   std::cerr << "processing" << std::endl;
-  unsigned int count = 8;
   for (unsigned int i = 0; i < count; ++i) {
     std::cerr << " launch :" << i << std::endl;
-    std::cerr.flush();
-    tg.emplace_back(std::async(std::launch::async, runblock_mmff, mols));
+    std::cerr.flush();    
+    tg.emplace_back(std::async(std::launch::async, runblock_mmff, mols[i]));
   }
   for (auto &fut : tg) {
     fut.get();
   }
-
-  BOOST_FOREACH (ROMol *mol, mols) { delete mol; }
+  std::cerr << "done" << std::endl;
+  for(unsigned int i=0; i<count; ++i)
+    BOOST_FOREACH (ROMol *mol, mols[i]) { delete mol; }
+  
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
