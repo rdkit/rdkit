@@ -50,12 +50,10 @@ void testMMFFMultiThread() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Test MMFF multithreading" << std::endl;
 
-  // ForceFields::ForceField *field;
-
   std::string pathName = getenv("RDBASE");
   pathName += "/Code/GraphMol/ForceFieldHelpers/MMFF/test_data";
   SDMolSupplier suppl(pathName + "/bulk.sdf");
-  unsigned int count = 8;
+  unsigned int count = 24;
   std::vector<std::vector<ROMol*>> mols;
   for(unsigned int i=0;i<count;++i) mols.push_back(std::vector<ROMol*>());
   
