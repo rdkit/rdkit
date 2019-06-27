@@ -270,7 +270,8 @@ void addAngles(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
           auto *contrib =
               new AngleBendContrib(field, idx[0], idx[1], idx[2],
                                    &mmffAngleParams, mmffPropParamsCentralAtom);
-          field->contribs().push_back(ForceFields::ContribPtr(contrib));
+	  auto sptr = ForceFields::ContribPtr(contrib);
+          field->contribs().push_back(sptr);
           if (mmffMolProperties->getMMFFVerbosity()) {
             unsigned int iAtomType = mmffMolProperties->getMMFFAtomType(idx[0]);
             unsigned int kAtomType = mmffMolProperties->getMMFFAtomType(idx[2]);

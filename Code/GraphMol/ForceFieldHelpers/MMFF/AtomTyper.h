@@ -28,18 +28,18 @@ class Bond;
 namespace MMFF {
   
 namespace DefaultParameters {
-RDKIT_FORCEFIELDHELPERS_EXPORT ForceFields::MMFF::MMFFPropCollection *getMMFFProp();
-RDKIT_FORCEFIELDHELPERS_EXPORT ForceFields::MMFF::MMFFAromCollection *getMMFFArom();
-RDKIT_FORCEFIELDHELPERS_EXPORT ForceFields::MMFF::MMFFDefCollection *getMMFFDef();
-RDKIT_FORCEFIELDHELPERS_EXPORT ForceFields::MMFF::MMFFHerschbachLaurieCollection *
+RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFPropCollection *getMMFFProp();
+RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFAromCollection *getMMFFArom();
+RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFDefCollection *getMMFFDef();
+RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFHerschbachLaurieCollection *
   getMMFFHerschbachLaurie();
-RDKIT_FORCEFIELDHELPERS_EXPORT ForceFields::MMFF::MMFFPBCICollection *getMMFFPBCI();
-RDKIT_FORCEFIELDHELPERS_EXPORT ForceFields::MMFF::MMFFAngleCollection *getMMFFAngle();
-RDKIT_FORCEFIELDHELPERS_EXPORT ForceFields::MMFF::MMFFStbnCollection *getMMFFStbn();
-RDKIT_FORCEFIELDHELPERS_EXPORT ForceFields::MMFF::MMFFDfsbCollection *getMMFFDfsb();
-RDKIT_FORCEFIELDHELPERS_EXPORT ForceFields::MMFF::MMFFTorCollection *getMMFFTor(const bool isMMFFs);
-RDKIT_FORCEFIELDHELPERS_EXPORT ForceFields::MMFF::MMFFOopCollection *getMMFFOop(const bool isMMFFs);
-RDKIT_FORCEFIELDHELPERS_EXPORT ForceFields::MMFF::MMFFVdWCollection *getMMFFVdW();
+RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFPBCICollection *getMMFFPBCI();
+RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFAngleCollection *getMMFFAngle();
+RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFStbnCollection *getMMFFStbn();
+RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFDfsbCollection *getMMFFDfsb();
+RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFTorCollection *getMMFFTor(const bool isMMFFs);
+RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFOopCollection *getMMFFOop(const bool isMMFFs);
+RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFVdWCollection *getMMFFVdW();
 }
  
 class RingMembershipSize;
@@ -139,7 +139,8 @@ class RDKIT_FORCEFIELDHELPERS_EXPORT MMFFMolProperties {
   bool getMMFFBondStretchParams(const ROMol &mol, const unsigned int idx1,
                                 const unsigned int idx2, unsigned int &bondType,
                                 MMFFBond &mmffBondStretchParams);
-  bool getMMFFAngleBendParams(const ROMol &mol, const unsigned int idx1,
+  bool getMMFFAngleBendParams(const ROMol &mol,
+			      const unsigned int idx1,
                               const unsigned int idx2, const unsigned int idx3,
                               unsigned int &angleType,
                               MMFFAngle &mmffAngleBendParams);
