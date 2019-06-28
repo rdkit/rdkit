@@ -18,4 +18,6 @@ rdkit_headers(BoundsMatrix.h
 rdkit_test(testDistGeom testDistGeom.cpp 
 LINK_LIBRARIES DistGeometry EigenSolvers ForceField ForceFieldHelpers Optimizer RDGeneral RDGeometryLib )
 
+if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
+endif()

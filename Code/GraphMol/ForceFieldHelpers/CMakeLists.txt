@@ -17,4 +17,6 @@ rdkit_headers(CrystalFF/TorsionAngleM6.h CrystalFF/TorsionPreferences.h
 add_subdirectory(MMFF)
 add_subdirectory(UFF)
 add_subdirectory(CrystalFF)
+if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
+endif()

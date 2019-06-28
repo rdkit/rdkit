@@ -60,4 +60,6 @@ rdkit_catch_test(rxnTestCatch catch_tests.cpp LINK_LIBRARIES ChemReactions ChemT
 Subgraphs DataStructs  FileParsers SmilesParse SubstructMatch
 GraphMol RDGeneral RDGeometryLib ${RDKit_SERIALIZATION_LIBS} )
 
+if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
+endif()

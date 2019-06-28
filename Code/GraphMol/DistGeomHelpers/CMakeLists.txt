@@ -13,4 +13,6 @@ rdkit_test(testDistGeomHelpers testDgeomHelpers.cpp
            DistGeomHelpers DistGeometry ForceFieldHelpers ForceField
 	   MolAlign MolTransforms  FileParsers SmilesParse SubstructMatch Optimizer EigenSolvers Alignment GraphMol RDGeometryLib RDGeneral ${RDKit_THREAD_LIBS} )
 
+if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
+endif()
