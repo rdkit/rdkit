@@ -40,7 +40,9 @@ rdkit_headers(FilterCatalogEntry.h
               FunctionalGroupHierarchy.h
               DEST GraphMol/FilterCatalog)
 
+if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
+endif()
 
 rdkit_test(filterCatalogTest filtercatalogtest.cpp
            LINK_LIBRARIES FilterCatalog

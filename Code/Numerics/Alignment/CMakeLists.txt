@@ -6,4 +6,6 @@ rdkit_headers(AlignPoints.h DEST Numerics/Alignment)
 
 rdkit_test(testAlignment testAlignment.cpp LINK_LIBRARIES Alignment RDGeometryLib RDGeneral )
 
+if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
+endif()

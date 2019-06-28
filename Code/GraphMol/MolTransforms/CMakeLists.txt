@@ -12,4 +12,6 @@ rdkit_test(testMolTransforms test1.cpp
            FileParsers SmilesParse
 	   EigenSolvers GraphMol RDGeometryLib RDGeneral )
 
+if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
+endif()
