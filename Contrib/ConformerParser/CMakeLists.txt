@@ -6,4 +6,6 @@ rdkit_test(testConformerParser test.cpp
 FileParsers SmilesParse
 GraphMol RDGeometryLib RDGeneral)
 
+if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
+endif()

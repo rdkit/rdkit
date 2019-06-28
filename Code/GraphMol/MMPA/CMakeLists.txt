@@ -17,4 +17,6 @@ rdkit_test(testMMPA MMPA_UnitTest.cpp LINK_LIBRARIES
   GraphMol RDGeneral RDGeometryLib SubstructMatch  ${RDKit_THREAD_LIBS})
 
 
+if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
+endif()

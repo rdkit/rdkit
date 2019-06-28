@@ -58,4 +58,6 @@ LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms PartialCharges
 endif(RDK_BUILD_DESCRIPTORS3D)
 
 
+if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
+endif()
