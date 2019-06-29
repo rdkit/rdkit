@@ -76,99 +76,35 @@ t2 = time.time()
 ts.append(t2 - t1)
 logger.info(f'Results{len(ts)}: {t2-t1 : .2f} seconds')
 
-
-logger.info('testing fraq queries')
-qs = frags
-qfps = fragsfps
-t1 = time.time()
-nPossible = 0
-nTested = 0
-nFound = 0
-nErrors = 0
-for i, fragfp in enumerate(qfps):
-    for j, mfp in enumerate(mfps):
-        nPossible += 1
-        if args.validateResults:
-            matched = mols[j].HasSubstructMatch(qs[i])
-            fpMatch = DataStructs.AllProbeBitsMatch(fragfp, mfp)
-            if fpMatch:
-                nTested += 1
-            if matched:
-                nFound += 1
-                if not fpMatch:
-                    nErrors += 1
-                    logger.error(f"ERROR: mol {j} query {i}")
-        else:
-            if DataStructs.AllProbeBitsMatch(fragfp, mfp):
-                nTested += 1
-                if mols[j].HasSubstructMatch(qs[i]):
+for nm, qs, qfps in [('frags', frags, fragsfps), ('leads', leads, leadsfps), ('pieces', pieces, piecesfps)]:
+    logger.info(f'testing {nm} queries')
+    t1 = time.time()
+    nPossible = 0
+    nTested = 0
+    nFound = 0
+    nErrors = 0
+    for i, fragfp in enumerate(qfps):
+        for j, mfp in enumerate(mfps):
+            nPossible += 1
+            if args.validateResults:
+                matched = mols[j].HasSubstructMatch(qs[i])
+                fpMatch = DataStructs.AllProbeBitsMatch(fragfp, mfp)
+                if fpMatch:
+                    nTested += 1
+                if matched:
                     nFound += 1
-t2 = time.time()
-ts.append(t2 - t1)
-logger.info(
-    f'Results{len(ts)}: {t2-t1 : .2f} seconds. {nTested} tested ({nTested/nPossible :.4f} of total), {nFound} found, {nFound/nTested : .2f} accuracy. {nErrors} errors.')
+                    if not fpMatch:
+                        nErrors += 1
+                        logger.error(f"ERROR: mol {j} query {i}")
+            else:
+                if DataStructs.AllProbeBitsMatch(fragfp, mfp):
+                    nTested += 1
+                    if mols[j].HasSubstructMatch(qs[i]):
+                        nFound += 1
+    t2 = time.time()
+    ts.append(t2 - t1)
+    logger.info(
+        f'Results{len(ts)}: {t2-t1 : .2f} seconds. {nTested} tested ({nTested/nPossible :.4f} of total), {nFound} found, {nFound/nTested : .2f} accuracy. {nErrors} errors.')
 
-logger.info('testing leads queries')
-qs = leads
-qfps = leadsfps
-t1 = time.time()
-nPossible = 0
-nTested = 0
-nFound = 0
-nErrors = 0
-for i, fragfp in enumerate(qfps):
-    for j, mfp in enumerate(mfps):
-        nPossible += 1
-        if args.validateResults:
-            matched = mols[j].HasSubstructMatch(qs[i])
-            fpMatch = DataStructs.AllProbeBitsMatch(fragfp, mfp)
-            if fpMatch:
-                nTested += 1
-            if matched:
-                nFound += 1
-                if not fpMatch:
-                    nErrors += 1
-                    logger.error(f"ERROR: mol {j} query {i}")
-        else:
-            if DataStructs.AllProbeBitsMatch(fragfp, mfp):
-                nTested += 1
-                if mols[j].HasSubstructMatch(qs[i]):
-                    nFound += 1
-t2 = time.time()
-ts.append(t2 - t1)
-logger.info(
-    f'Results{len(ts)}: {t2-t1 : .2f} seconds. {nTested} tested ({nTested/nPossible :.4f} of total), {nFound} found, {nFound/nTested : .2f} accuracy. {nErrors} errors.')
-
-
-logger.info('testing pieces queries')
-qs = pieces
-qfps = piecesfps
-t1 = time.time()
-nPossible = 0
-nTested = 0
-nFound = 0
-nErrors = 0
-for i, fragfp in enumerate(qfps):
-    for j, mfp in enumerate(mfps):
-        nPossible += 1
-        if args.validateResults:
-            matched = mols[j].HasSubstructMatch(qs[i])
-            fpMatch = DataStructs.AllProbeBitsMatch(fragfp, mfp)
-            if fpMatch:
-                nTested += 1
-            if matched:
-                nFound += 1
-                if not fpMatch:
-                    nErrors += 1
-                    logger.error(f"ERROR: mol {j} query {i}")
-        else:
-            if DataStructs.AllProbeBitsMatch(fragfp, mfp):
-                nTested += 1
-                if mols[j].HasSubstructMatch(qs[i]):
-                    nFound += 1
-t2 = time.time()
-ts.append(t2 - t1)
-logger.info(
-    f'Results{len(ts)}: {t2-t1 : .2f} seconds. {nTested} tested ({nTested/nPossible :.4f} of total), {nFound} found, {nFound/nTested : .2f} accuracy. {nErrors} errors.')
 
 print(f"| {rdkit.__version__} | {' | '.join(['%.1f' % x for x in ts])} |")
