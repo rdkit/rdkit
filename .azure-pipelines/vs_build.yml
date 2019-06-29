@@ -2,8 +2,10 @@ steps:
 - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
   displayName: Setup build environment
 - script: |
+    conda info -a
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
+    conda info -a
     conda create --name rdkit_build $(compiler) cmake ^
         boost-cpp=$(boost_version) boost=$(boost_version) ^
         py-boost=$(boost_version) libboost=$(boost_version) ^
