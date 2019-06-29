@@ -43,7 +43,7 @@ with gzip.open('../Data/chembl21_25K.pairs.txt.gz', 'rb') as inf:
             break
 t2 = time.time()
 ts.append(t2 - t1)
-logger.info(f'Results1: {t2-t1 : .2f} seconds, {len(mols)} mols')
+logger.info(f'Results{len(ts)}: {t2-t1 : .2f} seconds, {len(mols)} mols')
 
 
 logger.info('queries from smiles')
@@ -56,7 +56,7 @@ leads = [Chem.MolFromSmiles(x.split()[0]) for x in open('../Data/zinc.leads.500.
 pieces = [Chem.MolFromSmiles(x) for x in open('../Data/fragqueries.q.txt', 'r')]
 t2 = time.time()
 ts.append(t2 - t1)
-logger.info(f'Results2: {t2-t1 : .2f} seconds')
+logger.info(f'Results{len(ts)}: {t2-t1 : .2f} seconds')
 
 
 logger.info('generating pattern fingerprints for mols')
@@ -64,7 +64,7 @@ t1 = time.time()
 mfps = [Chem.PatternFingerprint(m) for m in mols]
 t2 = time.time()
 ts.append(t2 - t1)
-logger.info(f'Results3: {t2-t1 : .2f} seconds')
+logger.info(f'Results{len(ts)}: {t2-t1 : .2f} seconds')
 
 
 logger.info('generating pattern fingerprints for queries')
@@ -74,7 +74,7 @@ leadsfps = [Chem.PatternFingerprint(m, 2048) for m in leads]
 piecesfps = [Chem.PatternFingerprint(m, 2048) for m in pieces]
 t2 = time.time()
 ts.append(t2 - t1)
-logger.info(f'Results4: {t2-t1 : .2f} seconds')
+logger.info(f'Results{len(ts)}: {t2-t1 : .2f} seconds')
 
 
 logger.info('testing fraq queries')
