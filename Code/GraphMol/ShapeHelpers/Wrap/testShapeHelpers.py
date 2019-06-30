@@ -54,12 +54,12 @@ class TestCase(unittest.TestCase):
         self.assertAlmostEqual(rdshp.ShapeTverskyIndex(m, m, 1.0, 1.0), 1.0, 4)
 
         rmsd = rdMolAlign.AlignMol(m, m2)
-        self.assertAlmostEqual(rdshp.ShapeTanimotoDist(m, m2), 0.3146, 4)
-        self.assertAlmostEqual(rdshp.ShapeTverskyIndex(m, m2, 1.0, 1.0), 0.6854, 4)
+        self.assertAlmostEqual(rdshp.ShapeTanimotoDist(m, m2), 0.31, 2)
+        self.assertAlmostEqual(rdshp.ShapeTverskyIndex(m, m2, 1.0, 1.0), 0.686, 2)
 
         dist = rdshp.ShapeTanimotoDist(mol1=m, mol2=m2, confId1=0, confId2=0, gridSpacing=0.25,
                                        stepSize=0.125)
-        self.assertAlmostEqual(dist, 0.3389, 4)
+        self.assertAlmostEqual(dist, 0.339, 2)
 
         m = Chem.MolFromMolFile(fileN)
         cpt = rdmt.ComputeCentroid(m.GetConformer())
