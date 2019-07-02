@@ -51,7 +51,7 @@ RDKIT_RDBOOST_EXPORT void translate_invariant_error(Invar::Invariant const &e);
 //!    directly because this will catch the appropriate exception if
 //!    the specified converter has already been registered.
 template <typename T>
-void RegisterVectorConverter(const char* name, bool noproxy = false) {
+void RegisterVectorConverter(const char *name, bool noproxy = false) {
   if (noproxy) {
     python::class_<std::vector<T>>(name)
         .def(python::vector_indexing_suite<std::vector<T>, 1>());
