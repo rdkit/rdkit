@@ -1161,9 +1161,9 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
   if (symb == "L" || symb == "A" || symb == "Q" || symb == "*" ||
       symb == "LP" || symb == "R" || symb == "R#" ||
       (symb[0] == 'R' && symb >= "R0" && symb <= "R99")) {
-    if (symb == "A" || symb == "Q" || symb == "*") {
+    if (symb == "A" || symb == "Q" || symb == "*" || symb == "R") {
       auto *query = new QueryAtom(0);
-      if (symb == "*") {
+      if (symb == "*" || symb == "R") {
         // according to the MDL spec, these match anything
         query->setQuery(makeAtomNullQuery());
       } else if (symb == "Q") {
