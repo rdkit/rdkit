@@ -396,7 +396,7 @@ void AssignHsResidueInfo(RWMol &mol) {
           h_label = h_label.substr(3, 1) + h_label.substr(0, 3);
           AtomPDBResidueInfo *newInfo = new AtomPDBResidueInfo(
               h_label, max_serial, "", info->getResidueName(),
-              info->getResidueNumber(), info->getChainId(), "",
+              info->getResidueNumber(), info->getChainId(), "", 1.0, 0.0,
               info->getIsHeteroAtom());
           mol.getAtomWithIdx(*begin)->setMonomerInfo(newInfo);
 
@@ -880,23 +880,17 @@ void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly) {
       if (numHsToRemove) {
         //
         //  We have H neighbors:
-        //   If we have no H query already:
-        //        - add a generic H query
-        //      else:
-        //        - do nothing
+        //   Add the appropriate queries to compensate for their removal.
         //
         //  Examples:
         //    C[H] -> [C;!H0]
-        //    [C;H1][H] -> [C;H1]
-        //    [C;H2][H] -> [C;H2]
+        //    C([H])[H] -> [C;!H0;!H1]
         //
-        // FIX: this is going to behave oddly in the case of a contradictory
-        //  SMARTS like: [C;H0][H], where it will give the equivalent of:
-        //  [C;H0]  I think this is actually correct, but I can be persuaded
-        //  otherwise.
+        //  It would be more efficient to do this using range queries like:
+        //    C([H])[H] -> [C;H{2-}]
+        //  but that would produce non-standard SMARTS without the user
+        //  having started with a non-standard SMARTS.
         //
-        //  First we'll search for an H query:
-        bool hasHQuery = false;
         if (!atom->hasQuery()) {
           // it wasn't a query atom, we need to replace it so that we can add a
           // query:
@@ -908,12 +902,10 @@ void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly) {
           delete newAt;
           atom = mol.getAtomWithIdx(currIdx);
         }
-        if (!hasHQuery) {
-          for (unsigned int i = 0; i < numHsToRemove; ++i) {
-            ATOM_EQUALS_QUERY *tmp = makeAtomHCountQuery(i);
-            tmp->setNegation(true);
-            atom->expandQuery(tmp);
-          }
+        for (unsigned int i = 0; i < numHsToRemove; ++i) {
+          ATOM_EQUALS_QUERY *tmp = makeAtomHCountQuery(i);
+          tmp->setNegation(true);
+          atom->expandQuery(tmp);
         }
       }  // end of numHsToRemove test
 

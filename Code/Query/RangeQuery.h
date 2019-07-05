@@ -28,20 +28,12 @@ class RangeQuery
     : public Query<MatchFuncArgType, DataFuncArgType, needsConversion> {
  public:
   RangeQuery()
-      : d_upper(0),
-        d_lower(0),
-        d_tol(0),
-        df_upperOpen(true),
-        df_lowerOpen(true) {
+      : d_upper(0), d_lower(0), df_upperOpen(true), df_lowerOpen(true) {
     this->df_negate = false;
   };
   //! construct and set the lower and upper bounds
   RangeQuery(MatchFuncArgType lower, MatchFuncArgType upper)
-      : d_upper(upper),
-        d_lower(lower),
-        d_tol(0),
-        df_upperOpen(true),
-        df_lowerOpen(true) {
+      : d_upper(upper), d_lower(lower), df_upperOpen(true), df_lowerOpen(true) {
     this->df_negate = false;
   };
 
@@ -114,7 +106,6 @@ class RangeQuery
 
  protected:
   MatchFuncArgType d_upper, d_lower;
-  MatchFuncArgType d_tol;
   bool df_upperOpen, df_lowerOpen;
 };
 }  // namespace Queries

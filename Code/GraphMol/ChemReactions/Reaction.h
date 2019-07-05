@@ -140,7 +140,7 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction : public RDProps {
       ROMol *agent = new ROMol(**iter);
       m_agentTemplates.push_back(ROMOL_SPTR(agent));
     }
-    dp_props = other.dp_props;
+    d_props = other.d_props;
   }
   //! construct a reaction from a pickle string
   ChemicalReaction(const std::string &binStr);

@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2001-2008 Greg Landrum and Rational Discovery LLC
 //
@@ -83,7 +82,7 @@ int numBondsPlusLonePairs(Atom *at) {
   ROMol::OEDGE_ITER beg, end;
   boost::tie(beg, end) = at->getOwningMol().getAtomBonds(at);
   while (beg != end) {
-    Bond* bond = at->getOwningMol()[*beg];
+    Bond *bond = at->getOwningMol()[*beg];
     if (bond->getBondType() == Bond::ZERO) --deg;
     ++beg;
   }
@@ -107,7 +106,7 @@ int numBondsPlusLonePairs(Atom *at) {
     return deg + numLonePairs;
   }
 }
-}  // end of utility namespace
+}  // namespace
 
 namespace MolOps {
 bool atomHasConjugatedBond(const Atom *at) {

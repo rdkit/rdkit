@@ -213,7 +213,7 @@ class RDKIT_FORCEFIELD_EXPORT ForceField {
   RDGeom::PointPtrVect d_positions;  //!< pointers to the points we're using
   ContribPtrVect d_contribs;         //!< contributions to the energy
   INT_VECT d_fixedPoints;
-  unsigned int d_matSize;
+  unsigned int d_matSize = 0;
   //! scatter our positions into an array
   /*!
       \param pos     should be \c 3*this->numPoints() long;

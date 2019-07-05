@@ -89,7 +89,8 @@ class RDKIT_GRAPHMOL_EXPORT MolStackElem {
   }
   MolStackTypes type;  //!< stores the type of node
   MolStackUnion obj;   //!< holds our pointer (if appropriate)
-  int number;  //!< stores our number (relevant for bonds and ring closures)
+  int number =
+      -1;  //!< stores our number (relevant for bonds and ring closures)
 };
 typedef std::vector<MolStackElem> MolStack;
 

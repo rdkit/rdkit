@@ -103,7 +103,8 @@ const CustomPropHandlerVec &MolPickler::getCustomPropHandlers() {
 #endif
   if (defaultPropHandlers.size() == 0) {
     // initialize handlers
-    defaultPropHandlers.push_back(std::make_shared<DataStructsExplicitBitVecPropHandler>());
+    defaultPropHandlers.push_back(
+        std::make_shared<DataStructsExplicitBitVecPropHandler>());
   }
   return defaultPropHandlers;
 }
@@ -114,9 +115,11 @@ void MolPickler::addCustomPropHandler(const CustomPropHandler &handler) {
 #endif
   if (defaultPropHandlers.size() == 0) {
     // initialize handlers
-    defaultPropHandlers.push_back(std::make_shared<DataStructsExplicitBitVecPropHandler>());
+    defaultPropHandlers.push_back(
+        std::make_shared<DataStructsExplicitBitVecPropHandler>());
   }
-  defaultPropHandlers.push_back(std::shared_ptr<CustomPropHandler>(handler.clone()));
+  defaultPropHandlers.push_back(
+      std::shared_ptr<CustomPropHandler>(handler.clone()));
 }
 
 namespace {
@@ -264,8 +267,6 @@ void finalizeQueryFromDescription(Query<int, Atom const *, true> *query,
     delete tmpQuery;
   } else if (descr == "AtomMinRingSize") {
     query->setDataFunc(queryAtomMinRingSize);
-  } else if (descr == "AtomRingBondCount") {
-    query->setDataFunc(queryAtomRingBondCount);
   } else if (descr == "AtomImplicitValence") {
     query->setDataFunc(queryAtomImplicitValence);
   } else if (descr == "AtomTotalValence") {
@@ -386,6 +387,7 @@ Query<int, T const *, true> *buildBaseQuery(std::istream &ss, T const *owner,
       res = new EqualityQuery<int, T const *, true>();
       streamRead(ss, tag, version);
       if (tag != MolPickler::QUERY_VALUE) {
+        delete res;
         throw MolPicklerException(
             "Bad pickle format: QUERY_VALUE tag not found.");
       }
@@ -398,6 +400,7 @@ Query<int, T const *, true> *buildBaseQuery(std::istream &ss, T const *owner,
       res = new GreaterQuery<int, T const *, true>();
       streamRead(ss, tag, version);
       if (tag != MolPickler::QUERY_VALUE) {
+        delete res;
         throw MolPicklerException(
             "Bad pickle format: QUERY_VALUE tag not found.");
       }
@@ -410,6 +413,7 @@ Query<int, T const *, true> *buildBaseQuery(std::istream &ss, T const *owner,
       res = new GreaterEqualQuery<int, T const *, true>();
       streamRead(ss, tag, version);
       if (tag != MolPickler::QUERY_VALUE) {
+        delete res;
         throw MolPicklerException(
             "Bad pickle format: QUERY_VALUE tag not found.");
       }
@@ -422,6 +426,7 @@ Query<int, T const *, true> *buildBaseQuery(std::istream &ss, T const *owner,
       res = new LessQuery<int, T const *, true>();
       streamRead(ss, tag, version);
       if (tag != MolPickler::QUERY_VALUE) {
+        delete res;
         throw MolPicklerException(
             "Bad pickle format: QUERY_VALUE tag not found.");
       }
@@ -434,6 +439,7 @@ Query<int, T const *, true> *buildBaseQuery(std::istream &ss, T const *owner,
       res = new LessEqualQuery<int, T const *, true>();
       streamRead(ss, tag, version);
       if (tag != MolPickler::QUERY_VALUE) {
+        delete res;
         throw MolPicklerException(
             "Bad pickle format: QUERY_VALUE tag not found.");
       }
@@ -446,6 +452,7 @@ Query<int, T const *, true> *buildBaseQuery(std::istream &ss, T const *owner,
       res = new RangeQuery<int, T const *, true>();
       streamRead(ss, tag, version);
       if (tag != MolPickler::QUERY_VALUE) {
+        delete res;
         throw MolPicklerException(
             "Bad pickle format: QUERY_VALUE tag not found.");
       }
@@ -463,6 +470,7 @@ Query<int, T const *, true> *buildBaseQuery(std::istream &ss, T const *owner,
       res = new SetQuery<int, T const *, true>();
       streamRead(ss, tag, version);
       if (tag != MolPickler::QUERY_VALUE) {
+        delete res;
         throw MolPicklerException(
             "Bad pickle format: QUERY_VALUE tag not found.");
       }
@@ -846,7 +854,6 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
                          unsigned int propertyFlags) {
   PRECONDITION(mol, "empty molecule");
   int32_t tmpInt;
-  bool includeAtomCoords = true;
   std::map<int, int> atomIdxMap;
   std::map<int, int> bondIdxMap;
 
@@ -855,8 +862,7 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
   tmpInt = static_cast<int32_t>(mol->getNumBonds());
   streamWrite(ss, tmpInt);
 
-  char flag = 0;
-  if (includeAtomCoords) flag |= 0x1 << 7;
+  char flag = 0x1 << 7;
   streamWrite(ss, flag);
 
   // -------------------
@@ -921,24 +927,21 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
     }
   }
 
-  // pickle the conformations if necessary
+  // pickle the conformations
+  streamWrite(ss, BEGINCONFS);
+  tmpInt = static_cast<int32_t>(mol->getNumConformers());
+  streamWrite(ss, tmpInt);
 
-  if (includeAtomCoords) {
-    streamWrite(ss, BEGINCONFS);
-    tmpInt = static_cast<int32_t>(mol->getNumConformers());
-    streamWrite(ss, tmpInt);
+  for (auto ci = mol->beginConformers(); ci != mol->endConformers(); ++ci) {
+    const Conformer *conf = ci->get();
+    _pickleConformer<T>(ss, conf);
+  }
 
+  if (propertyFlags & PicklerOps::MolProps) {
+    streamWrite(ss, BEGINCONFPROPS);
     for (auto ci = mol->beginConformers(); ci != mol->endConformers(); ++ci) {
       const Conformer *conf = ci->get();
-      _pickleConformer<T>(ss, conf);
-    }
-
-    if (propertyFlags & PicklerOps::MolProps) {
-      streamWrite(ss, BEGINCONFPROPS);
-      for (auto ci = mol->beginConformers(); ci != mol->endConformers(); ++ci) {
-        const Conformer *conf = ci->get();
-        _pickleProperties(ss, *conf, propertyFlags);
-      }
+      _pickleProperties(ss, *conf, propertyFlags);
     }
   }
 
@@ -1081,7 +1084,7 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
       cids[i] = conf->getId();
     }
     streamRead(ss, tag, version);
-    if(tag==BEGINCONFPROPS){
+    if (tag == BEGINCONFPROPS) {
       for (auto cid : cids) {
         _unpickleProperties(ss, mol->getConformer(cid));
       }
@@ -1707,11 +1710,13 @@ Bond *MolPickler::_addBondFromPickle(std::istream &ss, ROMol *mol, int version,
     // we have a query:
     streamRead(ss, tag, version);
     if (tag != BEGINQUERY) {
+      delete bond;
       throw MolPicklerException("Bad pickle format: BEGINQUERY tag not found.");
     }
     static_cast<QueryBond *>(bond)->setQuery(unpickleQuery(ss, bond, version));
     streamRead(ss, tag, version);
     if (tag != ENDQUERY) {
+      delete bond;
       throw MolPicklerException("Bad pickle format: ENDQUERY tag not found.");
     }
   }
@@ -2031,11 +2036,9 @@ void MolPickler::_pickleProperties(std::ostream &ss, const RDProps &props,
                                    unsigned int pickleFlags) {
   if (!pickleFlags) return;
 
-  streamWriteProps(ss, props,
-                   pickleFlags & PicklerOps::PrivateProps,
+  streamWriteProps(ss, props, pickleFlags & PicklerOps::PrivateProps,
                    pickleFlags & PicklerOps::ComputedProps,
-                   MolPickler::getCustomPropHandlers()
-                   );
+                   MolPickler::getCustomPropHandlers());
 }
 
 //! unpickle standard properties

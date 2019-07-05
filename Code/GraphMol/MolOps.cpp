@@ -500,13 +500,11 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
           aids.push_back(ids[j]);
         }
         INT_VECT bids;
-        INT_VECT_CI lastRai;
-        for (INT_VECT_CI rai = aids.begin(); rai != aids.end(); rai++) {
-          if (rai != aids.begin()) {
-            const Bond *bnd = tmp->getBondBetweenAtoms(*rai, *lastRai);
-            if (!bnd) throw ValueErrorException("expected bond not found");
-            bids.push_back(bnd->getIdx());
-          }
+        INT_VECT_CI lastRai = aids.begin();
+        for (INT_VECT_CI rai = aids.begin() + 1; rai != aids.end(); ++rai) {
+          const Bond *bnd = tmp->getBondBetweenAtoms(*rai, *lastRai);
+          if (!bnd) throw ValueErrorException("expected bond not found");
+          bids.push_back(bnd->getIdx());
           lastRai = rai;
         }
         const Bond *bnd = tmp->getBondBetweenAtoms(*lastRai, *(aids.begin()));
@@ -647,15 +645,20 @@ std::map<T, boost::shared_ptr<ROMol>> getMolFragsWithQuery(
   }
   return res;
 }
-template RDKIT_GRAPHMOL_EXPORT std::map<std::string, boost::shared_ptr<ROMol>> getMolFragsWithQuery(
-    const ROMol &mol, std::string (*query)(const ROMol &, const Atom *),
-    bool sanitizeFrags, const std::vector<std::string> *, bool);
-template RDKIT_GRAPHMOL_EXPORT std::map<int, boost::shared_ptr<ROMol>> getMolFragsWithQuery(
-    const ROMol &mol, int (*query)(const ROMol &, const Atom *),
-    bool sanitizeFrags, const std::vector<int> *, bool);
-template RDKIT_GRAPHMOL_EXPORT std::map<unsigned int, boost::shared_ptr<ROMol>> getMolFragsWithQuery(
-    const ROMol &mol, unsigned int (*query)(const ROMol &, const Atom *),
-    bool sanitizeFrags, const std::vector<unsigned int> *, bool);
+template RDKIT_GRAPHMOL_EXPORT std::map<std::string, boost::shared_ptr<ROMol>>
+getMolFragsWithQuery(const ROMol &mol,
+                     std::string (*query)(const ROMol &, const Atom *),
+                     bool sanitizeFrags, const std::vector<std::string> *,
+                     bool);
+template RDKIT_GRAPHMOL_EXPORT std::map<int, boost::shared_ptr<ROMol>>
+getMolFragsWithQuery(const ROMol &mol,
+                     int (*query)(const ROMol &, const Atom *),
+                     bool sanitizeFrags, const std::vector<int> *, bool);
+template RDKIT_GRAPHMOL_EXPORT std::map<unsigned int, boost::shared_ptr<ROMol>>
+getMolFragsWithQuery(const ROMol &mol,
+                     unsigned int (*query)(const ROMol &, const Atom *),
+                     bool sanitizeFrags, const std::vector<unsigned int> *,
+                     bool);
 
 #if 0
     void findSpanningTree(const ROMol &mol,INT_VECT &mst){
