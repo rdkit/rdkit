@@ -2141,6 +2141,42 @@ void testGithub2246() {
   }
 }
 
+void testProvideBoundsMatrix() {
+  {  // make sure the mechanics work
+    auto m = "C1CCC1C"_smiles;
+    TEST_ASSERT(m);
+    auto nats = m->getNumAtoms();
+    DistGeom::BoundsMatPtr mat(new DistGeom::BoundsMatrix(nats));
+    DGeomHelpers::initBoundsMat(mat);
+    DGeomHelpers::setTopolBounds(*m, mat);
+
+    // pick some silly bounds, just to make sure this works:
+    mat->setUpperBound(3, 0, 1.21);
+    mat->setLowerBound(3, 0, 1.2);
+    mat->setUpperBound(3, 2, 1.21);
+    mat->setLowerBound(3, 2, 1.2);
+    mat->setUpperBound(3, 4, 1.21);
+    mat->setLowerBound(3, 4, 1.2);
+    DistGeom::triangleSmoothBounds(mat);
+
+    DGeomHelpers::EmbedParameters params;
+    params.useRandomCoords = true;
+    params.boundsMat = mat;
+    params.randomSeed = 0xf00d;
+    int cid = DGeomHelpers::EmbedMolecule(*m, params);
+    TEST_ASSERT(cid >= 0);
+
+    const auto conf = m->getConformer(cid);
+
+    TEST_ASSERT(
+        feq((conf.getAtomPos(3) - conf.getAtomPos(0)).length(), 1.2, 0.05));
+    TEST_ASSERT(
+        feq((conf.getAtomPos(3) - conf.getAtomPos(2)).length(), 1.2, 0.05));
+    TEST_ASSERT(
+        feq((conf.getAtomPos(3) - conf.getAtomPos(4)).length(), 1.2, 0.05));
+  }
+}
+
 int main() {
   RDLog::InitLogs();
   BOOST_LOG(rdInfoLog)
@@ -2321,12 +2357,17 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t Github #1990: seg fault after RemoveHs\n";
   testGithub1990();
-#endif
 
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t Github #2246: Use coordMap when starting "
                           "embedding from random coords\n";
   testGithub2246();
+#endif
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t Providing a distance bounds matrix.\n";
+  testProvideBoundsMatrix();
+
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
 

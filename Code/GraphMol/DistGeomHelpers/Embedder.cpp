@@ -739,6 +739,21 @@ void adjustBoundsMatFromCoordMap(
   }
 }
 
+void initETKDG(ROMol *mol, const EmbedParameters &params,
+               ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails) {
+  PRECONDITION(mol, "bad molecule");
+  unsigned int nAtoms = mol->getNumAtoms();
+  if (params.useExpTorsionAnglePrefs || params.useBasicKnowledge) {
+    ForceFields::CrystalFF::getExperimentalTorsions(
+        *mol, etkdgDetails, params.useExpTorsionAnglePrefs,
+        params.useBasicKnowledge, params.ETversion, params.verbose);
+    etkdgDetails.atomNums.resize(nAtoms);
+    for (unsigned int i = 0; i < nAtoms; ++i) {
+      etkdgDetails.atomNums[i] = mol->getAtomWithIdx(i)->getAtomicNum();
+    }
+  }
+}
+
 bool setupInitialBoundsMatrix(
     ROMol *mol, DistGeom::BoundsMatPtr mmat,
     const std::map<int, RDGeom::Point3D> *coordMap,
@@ -747,15 +762,8 @@ bool setupInitialBoundsMatrix(
   PRECONDITION(mol, "bad molecule");
   unsigned int nAtoms = mol->getNumAtoms();
   if (params.useExpTorsionAnglePrefs || params.useBasicKnowledge) {
-    ForceFields::CrystalFF::getExperimentalTorsions(
-        *mol, etkdgDetails, params.useExpTorsionAnglePrefs,
-        params.useBasicKnowledge, params.ETversion, params.verbose);
     setTopolBounds(*mol, mmat, etkdgDetails.bonds, etkdgDetails.angles, true,
                    false);
-    etkdgDetails.atomNums.resize(nAtoms);
-    for (unsigned int i = 0; i < nAtoms; ++i) {
-      etkdgDetails.atomNums[i] = (*mol).getAtomWithIdx(i)->getAtomicNum();
-    }
   } else {
     setTopolBounds(*mol, mmat, true, false);
   }
@@ -963,16 +971,24 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     ROMOL_SPTR piece = molFrags[fragIdx];
     unsigned int nAtoms = piece->getNumAtoms();
 
-    // create and initialize the distance bounds matrix
-    DistGeom::BoundsMatPtr mmat(new DistGeom::BoundsMatrix(nAtoms));
-    initBoundsMat(mmat);
-
     ForceFields::CrystalFF::CrystalFFDetails etkdgDetails;
-    if (!EmbeddingOps::setupInitialBoundsMatrix(piece.get(), mmat, coordMap,
-                                                params, etkdgDetails)) {
-      // return if we couldn't setup the bounds matrix
-      // possible causes include a triangle smoothing failure
-      return;
+    EmbeddingOps::initETKDG(piece.get(), params, etkdgDetails);
+
+    DistGeom::BoundsMatPtr mmat;
+    if (params.boundsMat == nullptr) {
+      // The user didn't provide one, so create and initialize the distance
+      // bounds matrix
+      mmat.reset(new DistGeom::BoundsMatrix(nAtoms));
+      initBoundsMat(mmat);
+      if (!EmbeddingOps::setupInitialBoundsMatrix(piece.get(), mmat, coordMap,
+                                                  params, etkdgDetails)) {
+        // return if we couldn't setup the bounds matrix
+        // possible causes include a triangle smoothing failure
+        return;
+      }
+    } else {
+      // just use what they gave us
+      mmat.reset(new DistGeom::BoundsMatrix(*params.boundsMat));
     }
 
     // find all the chiral centers in the molecule

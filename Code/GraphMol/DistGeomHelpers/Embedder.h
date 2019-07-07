@@ -15,6 +15,8 @@
 #include <map>
 #include <Geometry/point.h>
 #include <GraphMol/ROMol.h>
+#include <boost/shared_ptr.hpp>
+#include <DistGeom/BoundsMatrix.h>
 
 namespace RDKit {
 namespace DGeomHelpers {
@@ -116,6 +118,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   double pruneRmsThresh;
   bool onlyHeavyAtomsForRMS;
   unsigned int ETversion;
+  boost::shared_ptr<const DistGeom::BoundsMatrix> boundsMat;
   EmbedParameters()
       : maxIterations(0),
         numThreads(1),
@@ -135,7 +138,8 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
         basinThresh(5.0),
         pruneRmsThresh(-1.0),
         onlyHeavyAtomsForRMS(false),
-        ETversion(1){};
+        ETversion(1),
+        boundsMat(nullptr){};
   EmbedParameters(unsigned int maxIterations, int numThreads, int randomSeed,
                   bool clearConfs, bool useRandomCoords, double boxSizeMult,
                   bool randNegEig, unsigned int numZeroFail,
@@ -144,7 +148,8 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
                   bool enforceChirality, bool useExpTorsionAnglePrefs,
                   bool useBasicKnowledge, bool verbose, double basinThresh,
                   double pruneRmsThresh, bool onlyHeavyAtomsForRMS,
-                  unsigned int ETversion = 1)
+                  unsigned int ETversion = 1,
+                  const DistGeom::BoundsMatrix *boundsMat = nullptr)
       : maxIterations(maxIterations),
         numThreads(numThreads),
         randomSeed(randomSeed),
@@ -163,7 +168,8 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
         basinThresh(basinThresh),
         pruneRmsThresh(pruneRmsThresh),
         onlyHeavyAtomsForRMS(onlyHeavyAtomsForRMS),
-        ETversion(ETversion){};
+        ETversion(ETversion),
+        boundsMat(boundsMat){};
 };
 
 //*! Embed multiple conformations for a molecule
