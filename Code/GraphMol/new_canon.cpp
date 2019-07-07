@@ -21,6 +21,9 @@ namespace RDKit {
 namespace Canon {
 void CreateSinglePartition(unsigned int nAtoms, int *order, int *count,
                            canon_atom *atoms) {
+  PRECONDITION(count, "bad pointer");
+  PRECONDITION(atoms, "bad pointer");
+
   for (unsigned int i = 0; i < nAtoms; i++) {
     atoms[i].index = 0;
     order[i] = i;
@@ -31,6 +34,10 @@ void CreateSinglePartition(unsigned int nAtoms, int *order, int *count,
 
 void ActivatePartitions(unsigned int nAtoms, int *order, int *count,
                         int &activeset, int *next, int *changed) {
+  PRECONDITION(order, "bad pointer");
+  PRECONDITION(count, "bad pointer");
+  PRECONDITION(next, "bad pointer");
+  PRECONDITION(changed, "bad pointer");
   unsigned int i, j;
   activeset = -1;
   for (i = 0; i < nAtoms; i++) next[i] = -2;
@@ -63,10 +70,12 @@ void ActivatePartitions(unsigned int nAtoms, int *order, int *count,
 void compareRingAtomsConcerningNumNeighbors(Canon::canon_atom *atoms,
                                             unsigned int nAtoms,
                                             const ROMol &mol) {
+  PRECONDITION(atoms, "bad pointer");
   RingInfo *ringInfo = mol.getRingInfo();
   for (unsigned idx = 0; idx < nAtoms; ++idx) {
     const Canon::canon_atom &a = atoms[idx];
-    if (!ringInfo->isInitialized() || ringInfo->numAtomRings(a.atom->getIdx()) < 1) {
+    if (!ringInfo->isInitialized() ||
+        ringInfo->numAtomRings(a.atom->getIdx()) < 1) {
       continue;
     }
     std::deque<int> neighbors;
@@ -91,7 +100,8 @@ void compareRingAtomsConcerningNumNeighbors(Canon::canon_atom *atoms,
         int nidx = neighbors.front();
         neighbors.pop_front();
         const Canon::canon_atom &atom = atoms[nidx];
-        if (!ringInfo->isInitialized() || ringInfo->numAtomRings(atom.atom->getIdx()) < 1) {
+        if (!ringInfo->isInitialized() ||
+            ringInfo->numAtomRings(atom.atom->getIdx()) < 1) {
           continue;
         }
         lastLevelNbrs[nidx] = 1;
@@ -164,6 +174,7 @@ void rankWithFunctor(T &ftor, bool breakTies, int *order,
                      bool useSpecial = false, bool useChirality = false,
                      const boost::dynamic_bitset<> *atomsInPlay = nullptr,
                      const boost::dynamic_bitset<> *bondsInPlay = nullptr) {
+  PRECONDITION(order, "bad pointer");
   const ROMol &mol = *ftor.dp_mol;
   canon_atom *atoms = ftor.dp_atoms;
   unsigned int nAts = mol.getNumAtoms();
@@ -237,7 +248,8 @@ void rankWithFunctor(T &ftor, bool breakTies, int *order,
         symRingAtoms += count[order[i]];
       }
       ringAtoms++;
-      if (ringInfo->isInitialized() && ringInfo->numAtomRings(order[i]) > 1 && count[order[i]] > 1) {
+      if (ringInfo->isInitialized() && ringInfo->numAtomRings(order[i]) > 1 &&
+          count[order[i]] > 1) {
         branchingRingAtom = true;
       }
     }
@@ -283,10 +295,11 @@ void rankWithFunctor(T &ftor, bool breakTies, int *order,
 
 namespace {
 bool hasRingNbr(const ROMol &mol, const Atom *at) {
+  PRECONDITION(at, "bad pointer");
   ROMol::ADJ_ITER beg, end;
   boost::tie(beg, end) = mol.getAtomNeighbors(at);
   while (beg != end) {
-    const Atom* nbr = mol[*beg];
+    const Atom *nbr = mol[*beg];
     ++beg;
     if ((nbr->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
          nbr->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW) &&
@@ -298,12 +311,14 @@ bool hasRingNbr(const ROMol &mol, const Atom *at) {
 }
 
 void getNbrs(const ROMol &mol, const Atom *at, int *ids) {
+  PRECONDITION(at, "bad pointer");
+  PRECONDITION(ids, "bad pointer");
   ROMol::OEDGE_ITER beg, end;
   boost::tie(beg, end) = mol.getAtomBonds(at);
   unsigned int idx = 0;
 
   while (beg != end) {
-    const Bond* bond = (mol)[*beg];
+    const Bond *bond = (mol)[*beg];
     ++beg;
     unsigned int nbrIdx = bond->getOtherAtomIdx(at->getIdx());
     ids[idx] = nbrIdx;
@@ -313,6 +328,7 @@ void getNbrs(const ROMol &mol, const Atom *at, int *ids) {
 
 bondholder makeBondHolder(const Bond *bond, unsigned int otherIdx,
                           bool includeChirality) {
+  PRECONDITION(bond, "bad pointer");
   Bond::BondStereo stereo = Bond::STEREONONE;
   if (includeChirality) {
     stereo = bond->getStereo();
@@ -326,23 +342,25 @@ bondholder makeBondHolder(const Bond *bond, unsigned int otherIdx,
 }
 void getBonds(const ROMol &mol, const Atom *at, std::vector<bondholder> &nbrs,
               bool includeChirality) {
+  PRECONDITION(at, "bad pointer");
   ROMol::OEDGE_ITER beg, end;
   boost::tie(beg, end) = mol.getAtomBonds(at);
   while (beg != end) {
-    const Bond* bond = (mol)[*beg];
+    const Bond *bond = (mol)[*beg];
     ++beg;
-    nbrs.push_back(makeBondHolder(
-        bond, bond->getOtherAtomIdx(at->getIdx()), includeChirality));
+    nbrs.push_back(makeBondHolder(bond, bond->getOtherAtomIdx(at->getIdx()),
+                                  includeChirality));
   }
   std::sort(nbrs.begin(), nbrs.end(), bondholder::greater);
 }
 
 void getChiralBonds(const ROMol &mol, const Atom *at,
                     std::vector<bondholder> &nbrs) {
+  PRECONDITION(at, "bad pointer");
   ROMol::OEDGE_ITER beg, end;
   boost::tie(beg, end) = mol.getAtomBonds(at);
   while (beg != end) {
-    const Bond* bond = (mol)[*beg];
+    const Bond *bond = (mol)[*beg];
     ++beg;
     unsigned int nbrIdx = bond->getOtherAtomIdx(at->getIdx());
     const Atom *nbr = mol.getAtomWithIdx(nbrIdx);
@@ -509,6 +527,7 @@ void freeCanonAtoms(std::vector<Canon::canon_atom> &atoms) {
 }
 
 void updateAtomNeighborIndex(canon_atom *atoms, std::vector<bondholder> &nbrs) {
+  PRECONDITION(atoms, "bad pointer");
   for (auto &nbr : nbrs) {
     unsigned nbrIdx = nbr.nbrIdx;
     unsigned newSymClass = atoms[nbrIdx].index;
@@ -559,12 +578,11 @@ void updateAtomNeighborNumSwaps(
 }
 
 void rankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res,
-                  bool breakTies, bool includeChirality, bool includeIsotopes) { 
+                  bool breakTies, bool includeChirality, bool includeIsotopes) {
   res.resize(mol.getNumAtoms());
- 
-  if (!mol.getNumAtoms())
-    return;
-  
+
+  if (!mol.getNumAtoms()) return;
+
   std::vector<Canon::canon_atom> atoms(mol.getNumAtoms());
   initCanonAtoms(mol, atoms, includeChirality);
   AtomCompareFunctor ftor(&atoms.front(), mol);
@@ -594,10 +612,9 @@ void rankFragmentAtoms(const ROMol &mol, std::vector<unsigned int> &res,
                "bad atomSymbols size");
 
   res.resize(mol.getNumAtoms());
-  
-  if (!mol.getNumAtoms())
-    return;
-        
+
+  if (!mol.getNumAtoms()) return;
+
   std::vector<Canon::canon_atom> atoms(mol.getNumAtoms());
   initFragmentCanonAtoms(mol, atoms, includeChirality, atomSymbols, atomsInPlay,
                          bondsInPlay);
@@ -621,9 +638,8 @@ void rankFragmentAtoms(const ROMol &mol, std::vector<unsigned int> &res,
 void chiralRankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res) {
   res.resize(mol.getNumAtoms());
 
-  if(!mol.getNumAtoms())
-    return;
-  
+  if (!mol.getNumAtoms()) return;
+
   std::vector<Canon::canon_atom> atoms(mol.getNumAtoms());
   initChiralCanonAtoms(mol, atoms);
   ChiralAtomCompareFunctor ftor(&atoms.front(), mol);
@@ -637,5 +653,5 @@ void chiralRankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res) {
   free(order);
   freeCanonAtoms(atoms);
 }  // end of rankMolAtoms()
-}  // end of Canon namespace
-}  // end of RDKit namespace
+}  // namespace Canon
+}  // namespace RDKit
