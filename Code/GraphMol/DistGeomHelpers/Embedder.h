@@ -119,6 +119,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   bool onlyHeavyAtomsForRMS;
   unsigned int ETversion;
   boost::shared_ptr<const DistGeom::BoundsMatrix> boundsMat;
+  bool embedFragmentsSeparately;
   EmbedParameters()
       : maxIterations(0),
         numThreads(1),
@@ -139,7 +140,8 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
         pruneRmsThresh(-1.0),
         onlyHeavyAtomsForRMS(false),
         ETversion(1),
-        boundsMat(nullptr){};
+        boundsMat(nullptr),
+        embedFragmentsSeparately(true){};
   EmbedParameters(unsigned int maxIterations, int numThreads, int randomSeed,
                   bool clearConfs, bool useRandomCoords, double boxSizeMult,
                   bool randNegEig, unsigned int numZeroFail,
@@ -149,7 +151,8 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
                   bool useBasicKnowledge, bool verbose, double basinThresh,
                   double pruneRmsThresh, bool onlyHeavyAtomsForRMS,
                   unsigned int ETversion = 1,
-                  const DistGeom::BoundsMatrix *boundsMat = nullptr)
+                  const DistGeom::BoundsMatrix *boundsMat = nullptr,
+                  bool embedFragmentsSeparately = true)
       : maxIterations(maxIterations),
         numThreads(numThreads),
         randomSeed(randomSeed),
@@ -169,7 +172,8 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
         pruneRmsThresh(pruneRmsThresh),
         onlyHeavyAtomsForRMS(onlyHeavyAtomsForRMS),
         ETversion(ETversion),
-        boundsMat(boundsMat){};
+        boundsMat(boundsMat),
+        embedFragmentsSeparately(embedFragmentsSeparately){};
 };
 
 //*! Embed multiple conformations for a molecule

@@ -365,6 +365,10 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
           "onlyHeavyAtomsForRMS",
           &RDKit::DGeomHelpers::EmbedParameters::onlyHeavyAtomsForRMS,
           "Only consider heavy atoms when doing RMS filtering")
+      .def_readwrite(
+          "embedFragmentsSeparately",
+          &RDKit::DGeomHelpers::EmbedParameters::embedFragmentsSeparately,
+          "split the molecule into fragments and embed them separately")
       .def("SetBoundsMat", &RDKit::setBoundsMatrix,
            "set the distance-bounds matrix to be used (no triangle smoothing "
            "will be done on this) from a Numpy array");

@@ -954,8 +954,14 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
   confsOk.set();
 
   INT_VECT fragMapping;
-  std::vector<ROMOL_SPTR> molFrags =
-      MolOps::getMolFrags(mol, true, &fragMapping);
+  std::vector<ROMOL_SPTR> molFrags;
+  if (params.embedFragmentsSeparately) {
+    molFrags = MolOps::getMolFrags(mol, true, &fragMapping);
+  } else {
+    molFrags.push_back(ROMOL_SPTR(new ROMol(mol)));
+    fragMapping.resize(mol.getNumAtoms());
+    std::fill(fragMapping.begin(), fragMapping.end(), 0);
+  }
   const std::map<int, RDGeom::Point3D> *coordMap = params.coordMap;
   if (molFrags.size() > 1 && coordMap) {
     BOOST_LOG(rdWarningLog)

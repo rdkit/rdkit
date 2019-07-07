@@ -2177,6 +2177,26 @@ void testProvideBoundsMatrix() {
   }
 }
 
+void testDisableFragmentation() {
+  {  // make sure the mechanics work
+    auto m = "OO.OO"_smiles;
+    TEST_ASSERT(m);
+
+    DGeomHelpers::EmbedParameters params;
+    params.embedFragmentsSeparately = false;
+    params.randomSeed = 0xf00d;
+    int cid = DGeomHelpers::EmbedMolecule(*m, params);
+    TEST_ASSERT(cid >= 0);
+
+    const auto conf = m->getConformer(cid);
+
+    TEST_ASSERT((conf.getAtomPos(0) - conf.getAtomPos(2)).length() > 2.0);
+    TEST_ASSERT((conf.getAtomPos(0) - conf.getAtomPos(3)).length() > 2.0);
+    TEST_ASSERT((conf.getAtomPos(1) - conf.getAtomPos(2)).length() > 2.0);
+    TEST_ASSERT((conf.getAtomPos(1) - conf.getAtomPos(3)).length() > 2.0);
+  }
+}
+
 int main() {
   RDLog::InitLogs();
   BOOST_LOG(rdInfoLog)
@@ -2367,6 +2387,10 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t Providing a distance bounds matrix.\n";
   testProvideBoundsMatrix();
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t Disabling fragmentation.\n";
+  testDisableFragmentation();
 
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
