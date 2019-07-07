@@ -965,6 +965,15 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     coordMap = nullptr;
   }
 
+  if (molFrags.size() > 1 && params.boundsMat != nullptr) {
+    BOOST_LOG(rdWarningLog)
+        << "Conformer generation using a client-provided boundsMat "
+           "does not work with molecules that have multiple fragments. The "
+           "boundsMat will be ignored."
+        << std::endl;
+    coordMap = nullptr;
+  }
+
   // we will generate conformations for each fragment in the molecule
   // separately, so loop over them:
   for (unsigned int fragIdx = 0; fragIdx < molFrags.size(); ++fragIdx) {
@@ -975,7 +984,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     EmbeddingOps::initETKDG(piece.get(), params, etkdgDetails);
 
     DistGeom::BoundsMatPtr mmat;
-    if (params.boundsMat == nullptr) {
+    if (params.boundsMat == nullptr || molFrags.size() > 1) {
       // The user didn't provide one, so create and initialize the distance
       // bounds matrix
       mmat.reset(new DistGeom::BoundsMatrix(nAtoms));
@@ -988,6 +997,12 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
       }
     } else {
       // just use what they gave us
+      // first make sure it's the right size though:
+      if (params.boundsMat->numRows() != nAtoms) {
+        throw ValueErrorException(
+            "size of boundsMat provided does not match the number of atoms in "
+            "the molecule.");
+      }
       mmat.reset(new DistGeom::BoundsMatrix(*params.boundsMat));
     }
 
