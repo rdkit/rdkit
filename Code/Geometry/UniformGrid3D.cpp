@@ -31,6 +31,16 @@ UniformGrid3D::UniformGrid3D(const UniformGrid3D &other) : Grid3D(other) {
            other.dp_storage->getValueType(), other.d_offSet, data);
 }
 
+UniformGrid3D &UniformGrid3D::operator=(const UniformGrid3D &other) {
+  if (&other == this) return *this;
+  PRECONDITION(other.dp_storage, "cannot copy an unintialized grid");
+  delete dp_storage;
+  auto *data = new RDKit::DiscreteValueVect(*other.dp_storage);
+  initGrid(other.d_numX * other.d_spacing, other.d_numY * other.d_spacing,
+           other.d_numZ * other.d_spacing, other.d_spacing,
+           other.dp_storage->getValueType(), other.d_offSet, data);
+}
+
 void UniformGrid3D::initGrid(
     double dimX, double dimY, double dimZ, double spacing,
     RDKit::DiscreteValueVect::DiscreteValueType valType,
@@ -144,8 +154,8 @@ Point3D UniformGrid3D::getGridPointLoc(unsigned int pointId) const {
   }
   Point3D res;
   res.x = (pointId % d_numX) * d_spacing;
-  res.y = ((pointId % (d_numX * d_numY)) / d_numX) * d_spacing;
-  res.z = (pointId / (d_numX * d_numY)) * d_spacing;
+  res.y = ((double)(pointId % (d_numX * d_numY)) / d_numX) * d_spacing;
+  res.z = ((double)pointId / (d_numX * d_numY)) * d_spacing;
   res += d_offSet;  // d_origin;
   return res;
 }
@@ -195,7 +205,7 @@ void UniformGrid3D::setSphereOccupancy(const Point3D &center, double radius,
     nLayers = maxNumLayers;
     valStep = (maxVal + 1) / nLayers;
   }
-  double bgRad = radius / d_spacing;  // base radius in grid coords
+  double bgRad = radius / d_spacing;        // base radius in grid coords
   double gStepSize = stepSize / d_spacing;  // step size in grid coords
   double gRadius =
       bgRad + nLayers * gStepSize;  // largest radius in grid coords
@@ -414,4 +424,4 @@ void writeGridToFile(const UniformGrid3D &grid, const std::string &filename) {
   writeGridToStream(grid, *oStrm);
   delete ofStrm;
 }
-}
+}  // namespace RDGeom

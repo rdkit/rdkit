@@ -34,10 +34,10 @@ SDMolSupplier::SDMolSupplier(const std::string &fileName, bool sanitize,
   std::istream *tmpStream = nullptr;
   tmpStream = static_cast<std::istream *>(
       new std::ifstream(fileName.c_str(), std::ios_base::binary));
-  if (!tmpStream || (!(*tmpStream)) || (tmpStream->bad())) {
+  if ((!(*tmpStream)) || (tmpStream->bad())) {
     std::ostringstream errout;
     errout << "Bad input file " << fileName;
-    if (tmpStream) { delete tmpStream; }
+    delete tmpStream;
     throw BadFileException(errout.str());
   }
 
@@ -222,7 +222,8 @@ void SDMolSupplier::moveTo(unsigned int idx) {
     std::string tempStr;
     dp_inStream->seekg(d_molpos.back());
     d_last = rdcast<int>(d_molpos.size()) - 1;
-    while ((d_last < static_cast<int>(idx)) && (!dp_inStream->eof())) {
+    while (d_last < static_cast<int>(idx) && !dp_inStream->eof() &&
+           !dp_inStream->fail()) {
       d_line++;
       tempStr = getLine(dp_inStream);
 
@@ -262,7 +263,7 @@ unsigned int SDMolSupplier::length() {
     std::string tempStr;
     d_len = rdcast<int>(d_molpos.size());
     dp_inStream->seekg(d_molpos.back());
-    while (!dp_inStream->eof()) {
+    while (!dp_inStream->eof() && !dp_inStream->fail()) {
       std::getline(*dp_inStream, tempStr);
       if (tempStr.length() >= 4 && tempStr[0] == '$' && tempStr[1] == '$' &&
           tempStr[2] == '$' && tempStr[3] == '$') {
@@ -294,4 +295,4 @@ void SDMolSupplier::setStreamIndices(const std::vector<std::streampos> &locs) {
   this->reset();
   d_len = rdcast<int>(d_molpos.size());
 }
-}
+}  // namespace RDKit

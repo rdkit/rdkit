@@ -71,7 +71,7 @@ void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
   std::getline(*dp_inStream, tempStr);
 
   // FIX: report files missing the $$$$ marker
-  while (!(dp_inStream->eof()) &&
+  while (!dp_inStream->eof() && !dp_inStream->fail() &&
          (tempStr[0] != '$' || tempStr.substr(0, 4) != "$$$$")) {
     tempStr = strip(tempStr);
     if (tempStr != "") {
@@ -209,7 +209,7 @@ ROMol *ForwardSDMolSupplier::_next() {
       // FIX: report files missing the $$$$ marker
       std::getline(*dp_inStream, tempStr);
       ++d_line;
-      while (!(dp_inStream->eof()) &&
+      while (!dp_inStream->eof() && !dp_inStream->fail() &&
              (tempStr[0] != '$' || tempStr.substr(0, 4) != "$$$$")) {
         std::getline(*dp_inStream, tempStr);
         ++d_line;
@@ -228,7 +228,7 @@ ROMol *ForwardSDMolSupplier::_next() {
     // FIX: report files missing the $$$$ marker
     d_line++;
     std::getline(*dp_inStream, tempStr);
-    while (!(dp_inStream->eof()) &&
+    while (!dp_inStream->eof() && !dp_inStream->fail() &&
            (tempStr[0] != '$' || tempStr.substr(0, 4) != "$$$$")) {
       d_line++;
       std::getline(*dp_inStream, tempStr);
@@ -246,7 +246,7 @@ ROMol *ForwardSDMolSupplier::_next() {
     d_line++;
     std::getline(*dp_inStream, tempStr);
     if (dp_inStream->eof()) df_eofHitOnRead = true;
-    while (!(dp_inStream->eof()) &&
+    while (!dp_inStream->eof() && !dp_inStream->fail() &&
            (tempStr[0] != '$' || tempStr.substr(0, 4) != "$$$$")) {
       d_line++;
       std::getline(*dp_inStream, tempStr);
@@ -262,7 +262,7 @@ ROMol *ForwardSDMolSupplier::_next() {
     d_line++;
     std::getline(*dp_inStream, tempStr);
     if (dp_inStream->eof()) df_eofHitOnRead = true;
-    while (!(dp_inStream->eof()) &&
+    while (!dp_inStream->eof() && !dp_inStream->fail() &&
            (tempStr[0] != '$' || tempStr.substr(0, 4) != "$$$$")) {
       d_line++;
       std::getline(*dp_inStream, tempStr);

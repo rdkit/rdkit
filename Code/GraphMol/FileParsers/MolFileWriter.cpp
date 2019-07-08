@@ -1285,7 +1285,8 @@ void MolToMolFile(const ROMol &mol, const std::string &fName,
                   bool includeStereo, int confId, bool kekulize,
                   bool forceV3000) {
   auto *outStream = new std::ofstream(fName.c_str());
-  if (!outStream || !(*outStream) || outStream->bad()) {
+  if (!(*outStream) || outStream->bad()) {
+    delete outStream;
     std::ostringstream errout;
     errout << "Bad output file " << fName;
     throw BadFileException(errout.str());

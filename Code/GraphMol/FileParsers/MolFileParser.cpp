@@ -254,6 +254,7 @@ void ParseOldAtomList(RWMol *mol, const std::string &text, unsigned int line) {
       q->setNegation(false);
       break;
     default:
+      delete q;
       std::ostringstream errout;
       errout << "Unrecognized atom-list query modifier: '" << text[14]
              << "' on line " << line;
@@ -264,6 +265,7 @@ void ParseOldAtomList(RWMol *mol, const std::string &text, unsigned int line) {
   try {
     nQueries = FileParserUtils::toInt(text.substr(9, 1));
   } catch (boost::bad_lexical_cast &) {
+    delete q;
     std::ostringstream errout;
     errout << "Cannot convert '" << text.substr(9, 1) << "' to int on line "
            << line;
@@ -277,6 +279,7 @@ void ParseOldAtomList(RWMol *mol, const std::string &text, unsigned int line) {
     try {
       atNum = FileParserUtils::toInt(text.substr(pos, 3));
     } catch (boost::bad_lexical_cast &) {
+      delete q;
       std::ostringstream errout;
       errout << "Cannot convert '" << text.substr(pos, 3) << "' to int on line "
              << line;
@@ -668,7 +671,7 @@ void ParseZCHLine(RWMol *mol, const std::string &text, unsigned int line) {
       if (text.size() >= spos + 4 && text.substr(spos, 4) != "    ") {
         val = FileParserUtils::stripSpacesAndCast<int>(text.substr(spos, 4));
       }
-      if (!aid || aid > mol->getNumAtoms() || aid == 0) {
+      if (!aid || aid > mol->getNumAtoms()) {
         std::ostringstream errout;
         errout << "Bad ZCH specification on line " << line;
         throw FileParseException(errout.str());
@@ -719,7 +722,7 @@ void ParseHYDLine(RWMol *mol, const std::string &text, unsigned int line) {
       if (text.size() >= spos + 4 && text.substr(spos, 4) != "    ") {
         val = FileParserUtils::stripSpacesAndCast<int>(text.substr(spos, 4));
       }
-      if (!aid || aid > mol->getNumAtoms() || aid == 0) {
+      if (!aid || aid > mol->getNumAtoms()) {
         std::ostringstream errout;
         errout << "Bad HYD specification on line " << line;
         throw FileParseException(errout.str());
@@ -774,7 +777,7 @@ void ParseZBOLine(RWMol *mol, const std::string &text, unsigned int line) {
         order = FileParserUtils::stripSpacesAndCast<unsigned int>(
             text.substr(spos, 4));
       }
-      if (!bid || bid > mol->getNumBonds() || bid == 0) {
+      if (!bid || bid > mol->getNumBonds()) {
         std::ostringstream errout;
         errout << "Bad ZBO specification on line " << line;
         throw FileParseException(errout.str());
@@ -1598,7 +1601,7 @@ bool ParseMolBlockProperties(std::istream *inStream, unsigned int &line,
   unsigned int lastDataSGroup = 0;
   std::ostringstream currentDataField;
   std::string lineBeg = tempStr.substr(0, 6);
-  while (!inStream->eof() && lineBeg != "M  END" &&
+  while (!inStream->eof() && !inStream->fail() && lineBeg != "M  END" &&
          tempStr.substr(0, 4) != "$$$$") {
     if (tempStr[0] == 'A') {
       line++;
@@ -2054,6 +2057,7 @@ void ParseV3000AtomBlock(std::istream *inStream, unsigned int &line,
     RDGeom::Point3D pos;
     ++token;
     if (token == tokens.end()) {
+      delete atom;
       std::ostringstream errout;
       errout << "Bad atom line : '" << tempStr << "' on line " << line;
       throw FileParseException(errout.str());
@@ -2061,6 +2065,7 @@ void ParseV3000AtomBlock(std::istream *inStream, unsigned int &line,
     pos.x = atof(token->c_str());
     ++token;
     if (token == tokens.end()) {
+      delete atom;
       std::ostringstream errout;
       errout << "Bad atom line : '" << tempStr << "' on line " << line;
       throw FileParseException(errout.str());
@@ -2068,6 +2073,7 @@ void ParseV3000AtomBlock(std::istream *inStream, unsigned int &line,
     pos.y = atof(token->c_str());
     ++token;
     if (token == tokens.end()) {
+      delete atom;
       std::ostringstream errout;
       errout << "Bad atom line : '" << tempStr << "' on line " << line;
       throw FileParseException(errout.str());
@@ -2076,6 +2082,7 @@ void ParseV3000AtomBlock(std::istream *inStream, unsigned int &line,
     // the map number:
     ++token;
     if (token == tokens.end()) {
+      delete atom;
       std::ostringstream errout;
       errout << "Bad atom line : '" << tempStr << "' on line " << line;
       throw FileParseException(errout.str());
@@ -2660,8 +2667,8 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
 
     if (!inStream->eof()) tempStr = getLine(inStream);
     ++line;
-    while (!inStream->eof() && tempStr.substr(0, 6) != "M  END" &&
-           tempStr.substr(0, 4) != "$$$$") {
+    while (!inStream->eof() && !inStream->fail() &&
+           tempStr.substr(0, 6) != "M  END" && tempStr.substr(0, 4) != "$$$$") {
       tempStr = getLine(inStream);
       ++line;
     }
