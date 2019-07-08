@@ -120,6 +120,8 @@
 %newobject replaceSidechains;
 %newobject deleteSubstructs;
 %newobject getAtoms;
+%newobject getAtomNeighbors;
+%newobject getAtomBonds;
 
 %{
 #ifdef BUILD_COORDGEN_SUPPORT
@@ -381,6 +383,22 @@ void setPreferCoordGen(bool);
       atoms->push_back(a);
     }
     return atoms;
+  }
+
+  std::vector<RDKit::Atom*> *getAtomNeighbors(RDKit::Atom *at) {
+    std::vector<RDKit::Atom*> *atoms = new std::vector<RDKit::Atom*>;
+    for(const auto &nbri : boost::make_iterator_range(($self)->getAtomNeighbors(at))){
+      atoms->push_back((*($self))[nbri]);
+    }
+    return atoms;
+  }
+
+  std::vector<RDKit::Bond*> *getAtomBonds(RDKit::Atom *at) {
+    std::vector<RDKit::Bond*> *bonds = new std::vector<RDKit::Bond*>;
+    for(const auto &nbri : boost::make_iterator_range(($self)->getAtomBonds(at))){
+      bonds->push_back((*($self))[nbri]);
+    }
+    return bonds;
   }
 
   /* From MolPickler.h */
