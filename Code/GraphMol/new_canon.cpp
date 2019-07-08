@@ -21,6 +21,7 @@ namespace RDKit {
 namespace Canon {
 void CreateSinglePartition(unsigned int nAtoms, int *order, int *count,
                            canon_atom *atoms) {
+  PRECONDITION(order, "bad pointer");
   PRECONDITION(count, "bad pointer");
   PRECONDITION(atoms, "bad pointer");
 
@@ -84,14 +85,18 @@ void compareRingAtomsConcerningNumNeighbors(Canon::canon_atom *atoms,
     atoms[idx].neighborNum.reserve(1000);
     atoms[idx].revistedNeighbors.assign(1000, 0);
     char *visited = (char *)malloc(nAtoms * sizeof(char));
+    CHECK_INVARIANT(visited, "allocation failed");
     memset(visited, 0, nAtoms * sizeof(char));
     unsigned count = 1;
     std::vector<int> nextLevelNbrs;
     char *lastLevelNbrs = (char *)malloc(nAtoms * sizeof(char));
+    CHECK_INVARIANT(lastLevelNbrs, "allocation failed");
     memset(lastLevelNbrs, 0, nAtoms * sizeof(char));
     char *currentLevelNbrs = (char *)malloc(nAtoms * sizeof(char));
+    CHECK_INVARIANT(currentLevelNbrs, "allocation failed");
     memset(currentLevelNbrs, 0, nAtoms * sizeof(char));
     int *revisitedNeighbors = (int *)malloc(nAtoms * sizeof(int));
+    CHECK_INVARIANT(revisitedNeighbors, "allocation failed");
     memset(revisitedNeighbors, 0, nAtoms * sizeof(int));
     while (!neighbors.empty()) {
       unsigned int numLevelNbrs = 0;
@@ -179,10 +184,14 @@ void rankWithFunctor(T &ftor, bool breakTies, int *order,
   canon_atom *atoms = ftor.dp_atoms;
   unsigned int nAts = mol.getNumAtoms();
   int *count = (int *)malloc(nAts * sizeof(int));
+  CHECK_INVARIANT(count, "allocation failed");
   int activeset;
   int *next = (int *)malloc(nAts * sizeof(int));
+  CHECK_INVARIANT(next, "allocation failed");
   int *changed = (int *)malloc(nAts * sizeof(int));
+  CHECK_INVARIANT(changed, "allocation failed");
   char *touched = (char *)malloc(nAts * sizeof(char));
+  CHECK_INVARIANT(touched, "allocation failed");
   memset(touched, 0, nAts * sizeof(char));
   memset(changed, 1, nAts * sizeof(int));
   CreateSinglePartition(nAts, order, count, atoms);
@@ -591,6 +600,7 @@ void rankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res,
   ftor.df_useChiralityRings = includeChirality;
 
   int *order = (int *)malloc(mol.getNumAtoms() * sizeof(int));
+  PRECONDITION(order, "bad pointer");
   rankWithFunctor(ftor, breakTies, order, true, includeChirality);
 
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
@@ -624,7 +634,7 @@ void rankFragmentAtoms(const ROMol &mol, std::vector<unsigned int> &res,
   ftor.df_useChirality = includeChirality;
 
   int *order = (int *)malloc(mol.getNumAtoms() * sizeof(int));
-
+  PRECONDITION(order, "bad pointer");
   rankWithFunctor(ftor, breakTies, order, true, includeChirality, &atomsInPlay,
                   &bondsInPlay);
 
@@ -645,6 +655,7 @@ void chiralRankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res) {
   ChiralAtomCompareFunctor ftor(&atoms.front(), mol);
 
   int *order = (int *)malloc(mol.getNumAtoms() * sizeof(int));
+  PRECONDITION(order, "bad pointer");
   rankWithFunctor(ftor, false, order);
 
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {

@@ -524,31 +524,37 @@ Atom *ParseMol2FileAtomLine(const std::string atomLine, RDGeom::Point3D &pos) {
   // skip TriposAtomId
   ++itemIt;
   if (itemIt == tokens.end()) {
+    delete res;
     throw FileParseException("premature end of mol2 atom line");
   }
   // the sybyl atom name does not necessarily make sense - into atom property
   tAN = *itemIt;
   ++itemIt;
   if (itemIt == tokens.end()) {
+    delete res;
     throw FileParseException("premature end of mol2 atom line");
   }
   try {
     pos.x = boost::lexical_cast<double>(*itemIt);
     ++itemIt;
     if (itemIt == tokens.end()) {
+      delete res;
       throw FileParseException("premature end of mol2 atom line");
     }
     pos.y = boost::lexical_cast<double>(*itemIt);
     ++itemIt;
     if (itemIt == tokens.end()) {
+      delete res;
       throw FileParseException("premature end of mol2 atom line");
     }
     pos.z = boost::lexical_cast<double>(*itemIt);
     ++itemIt;
     if (itemIt == tokens.end()) {
+      delete res;
       throw FileParseException("premature end of mol2 atom line");
     }
   } catch (boost::bad_lexical_cast &) {
+    delete res;
     throw FileParseException("Cannot process mol2 coordinates.");
   }
   // now it becomes interesting - this is the SYBYL atom type. I put this into
