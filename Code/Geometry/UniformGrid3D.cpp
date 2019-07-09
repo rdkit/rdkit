@@ -154,6 +154,7 @@ Point3D UniformGrid3D::getGridPointLoc(unsigned int pointId) const {
   }
   Point3D res;
   res.x = (pointId % d_numX) * d_spacing;
+  // the rounding here is intentional, we want the coordinates of a grid point
   res.y = ((pointId % (d_numX * d_numY)) / d_numX) * d_spacing;
   res.z = (pointId / (d_numX * d_numY)) * d_spacing;
   res += d_offSet;  // d_origin;
