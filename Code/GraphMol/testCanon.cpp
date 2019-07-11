@@ -111,6 +111,7 @@ int main(int argc, char *argv[]) {
     fname = argv[1];
   } else {
     BOOST_LOG(rdErrorLog) << "Pass in the list of smiles\n";
+    return 0;
   }
 
   std::ifstream inStream(fname.c_str());
@@ -122,7 +123,7 @@ int main(int argc, char *argv[]) {
   tmpstr = inLine;
   // MolOps molop;
   int lineCount = 0;
-  while (tmpstr.size() > 0) {
+  while (!tmpstr.empty()) {
     lineCount++;
     if (!(lineCount % 100)) {
       BOOST_LOG(rdErrorLog) << "Doing: " << lineCount << std::endl;
