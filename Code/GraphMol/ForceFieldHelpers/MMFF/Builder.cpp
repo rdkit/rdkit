@@ -222,7 +222,7 @@ void addAngles(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
 
   std::ostream &oStream = mmffMolProperties->getMMFFOStream();
   unsigned int idx[3];
-  MMFFPropCollection *mmffProp = MMFFPropCollection::getMMFFProp();
+  const MMFFPropCollection *mmffProp = DefaultParameters::getMMFFProp();
   ROMol::ADJ_ITER nbr1Idx;
   ROMol::ADJ_ITER end1Nbrs;
   ROMol::ADJ_ITER nbr2Idx;
@@ -270,7 +270,8 @@ void addAngles(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
           auto *contrib =
               new AngleBendContrib(field, idx[0], idx[1], idx[2],
                                    &mmffAngleParams, mmffPropParamsCentralAtom);
-          field->contribs().push_back(ForceFields::ContribPtr(contrib));
+	  auto sptr = ForceFields::ContribPtr(contrib);
+          field->contribs().push_back(sptr);
           if (mmffMolProperties->getMMFFVerbosity()) {
             unsigned int iAtomType = mmffMolProperties->getMMFFAtomType(idx[0]);
             unsigned int kAtomType = mmffMolProperties->getMMFFAtomType(idx[2]);
@@ -335,7 +336,7 @@ void addStretchBend(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
 
   std::ostream &oStream = mmffMolProperties->getMMFFOStream();
   unsigned int idx[3];
-  MMFFPropCollection *mmffProp = MMFFPropCollection::getMMFFProp();
+  const MMFFPropCollection *mmffProp = DefaultParameters::getMMFFProp();
   std::pair<bool, const MMFFStbn *> mmffStbnParams;
   ROMol::ADJ_ITER nbr1Idx;
   ROMol::ADJ_ITER end1Nbrs;

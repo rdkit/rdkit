@@ -75,7 +75,7 @@ namespace Utils {
 //! calculates and returns the unscaled minimum distance (R*ij) for a MMFF VdW
 // contact
 RDKIT_FORCEFIELD_EXPORT double calcUnscaledVdWMinimum(
-    MMFFVdWCollection *mmffVdW, const MMFFVdW *mmffVdWParamsAtom1,
+    const MMFFVdWCollection *mmffVdW, const MMFFVdW *mmffVdWParamsAtom1,
     const MMFFVdW *mmffVdWParamsAtom2);
 //! calculates and returns the unscaled well depth (epsilon) for a MMFF VdW
 // contact
@@ -85,7 +85,7 @@ RDKIT_FORCEFIELD_EXPORT double calcUnscaledVdWWellDepth(
 //! scales the VdW parameters
 RDKIT_FORCEFIELD_EXPORT void scaleVdWParams(double &R_star_ij,
                                             double &wellDepth,
-                                            MMFFVdWCollection *mmffVdW,
+                                            const MMFFVdWCollection *mmffVdW,
                                             const MMFFVdW *mmffVdWParamsIAtom,
                                             const MMFFVdW *mmffVdWParamsJAtom);
 //! calculates and returns the Van der Waals MMFF energy

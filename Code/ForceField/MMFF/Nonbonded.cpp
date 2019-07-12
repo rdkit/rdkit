@@ -21,7 +21,7 @@
 namespace ForceFields {
 namespace MMFF {
 namespace Utils {
-double calcUnscaledVdWMinimum(MMFFVdWCollection *mmffVdW,
+double calcUnscaledVdWMinimum(const MMFFVdWCollection *mmffVdW,
                               const MMFFVdW *mmffVdWParamsIAtom,
                               const MMFFVdW *mmffVdWParamsJAtom) {
   double gamma_ij = (mmffVdWParamsIAtom->R_star - mmffVdWParamsJAtom->R_star) /
@@ -68,7 +68,7 @@ double calcVdWEnergy(const double dist, const double R_star_ij,
 }
 
 void scaleVdWParams(double &R_star_ij, double &wellDepth,
-                    MMFFVdWCollection *mmffVdW,
+                    const MMFFVdWCollection *mmffVdW,
                     const MMFFVdW *mmffVdWParamsIAtom,
                     const MMFFVdW *mmffVdWParamsJAtom) {
   if (((mmffVdWParamsIAtom->DA == 'D') && (mmffVdWParamsJAtom->DA == 'A')) ||
