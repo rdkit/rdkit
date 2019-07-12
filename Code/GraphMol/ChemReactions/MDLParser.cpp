@@ -203,13 +203,17 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
   for (unsigned int i = 0; i < nReacts; ++i) {
     RWMol *react;
     unsigned int natoms, nbonds;
-    bool chiralityPossible;
+    bool chiralityPossible = false;
+    bool sanitize = false;
+    bool removeHs = true;
     Conformer *conf = nullptr;
     react = new RWMol();
     try {
       FileParserUtils::ParseV3000CTAB(&inStream, line, react, conf,
                                       chiralityPossible, natoms, nbonds, true,
                                       false);
+      FileParserUtils::finishMolProcessing(react, chiralityPossible, sanitize,
+                                           removeHs);
     } catch (FileParseException &e) {
       std::ostringstream errout;
       errout << "Cannot parse reactant " << i << ". The error was:\n\t"
@@ -237,13 +241,17 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
   for (unsigned int i = 0; i < nProds; ++i) {
     RWMol *prod;
     unsigned int natoms, nbonds;
-    bool chiralityPossible;
+    bool chiralityPossible = false;
+    bool sanitize = false;
+    bool removeHs = true;
     Conformer *conf = nullptr;
     prod = new RWMol();
     try {
       FileParserUtils::ParseV3000CTAB(&inStream, line, prod, conf,
                                       chiralityPossible, natoms, nbonds, true,
                                       false);
+      FileParserUtils::finishMolProcessing(prod, chiralityPossible, sanitize,
+                                           removeHs);
     } catch (FileParseException &e) {
       std::ostringstream errout;
       errout << "Cannot parse product " << i << ". The error was:\n\t"
@@ -299,7 +307,7 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
     }
   }
 }
-}  // end of local namespace
+}  // namespace
 
 //! Parse a text stream in MDL rxn format into a ChemicalReaction
 ChemicalReaction *RxnDataStreamToChemicalReaction(std::istream &inStream,
@@ -375,4 +383,4 @@ ChemicalReaction *RxnFileToChemicalReaction(const std::string &fName) {
   }
   return res;
 };
-}
+}  // namespace RDKit

@@ -2479,6 +2479,75 @@ bool ParseV2000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
   return fileComplete;
 }
 
+void finishMolProcessing(RWMol *res, bool chiralityPossible, bool sanitize,
+                         bool removeHs) {
+  if (!res) return;
+  res->clearAllAtomBookmarks();
+  res->clearAllBondBookmarks();
+
+  // calculate explicit valence on each atom:
+  for (RWMol::AtomIterator atomIt = res->beginAtoms();
+       atomIt != res->endAtoms(); ++atomIt) {
+    (*atomIt)->calcExplicitValence(false);
+  }
+
+  // postprocess mol file flags
+  ProcessMolProps(res);
+
+  // update the chirality and stereo-chemistry
+  //
+  // NOTE: we detect the stereochemistry before sanitizing/removing
+  // hydrogens because the removal of H atoms may actually remove
+  // the wedged bond from the molecule.  This wipes out the only
+  // sign that chirality ever existed and makes us sad... so first
+  // perceive chirality, then remove the Hs and sanitize.
+  //
+  const Conformer &conf = res->getConformer();
+  if (chiralityPossible) {
+    if (!conf.is3D()) {
+      DetectAtomStereoChemistry(*res, &conf);
+    } else {
+      res->updatePropertyCache(false);
+      MolOps::assignChiralTypesFrom3D(*res, conf.getId(), true);
+    }
+  }
+
+  if (sanitize) {
+    try {
+      if (removeHs) {
+        MolOps::removeHs(*res, false, false);
+      } else {
+        MolOps::sanitizeMol(*res);
+      }
+      // now that atom stereochem has been perceived, the wedging
+      // information is no longer needed, so we clear
+      // single bond dir flags:
+      ClearSingleBondDirFlags(*res);
+
+      // unlike DetectAtomStereoChemistry we call detectBondStereochemistry
+      // here after sanitization because we need the ring information:
+      MolOps::detectBondStereochemistry(*res);
+    } catch (...) {
+      delete res;
+      res = nullptr;
+      throw;
+    }
+    MolOps::assignStereochemistry(*res, true, true, true);
+  } else {
+    // we still need to do something about double bond stereochemistry
+    // (was github issue 337)
+    // now that atom stereochem has been perceived, the wedging
+    // information is no longer needed, so we clear
+    // single bond dir flags:
+    ClearSingleBondDirFlags(*res);
+    MolOps::detectBondStereochemistry(*res);
+  }
+
+  if (res->hasProp(common_properties::_NeedsQueryScan)) {
+    res->clearProp(common_properties::_NeedsQueryScan);
+    completeMolQueries(res);
+  }
+}
 }  // namespace FileParserUtils
 
 //------------------------------------------------
@@ -2692,71 +2761,8 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
   }
 
   if (res) {
-    res->clearAllAtomBookmarks();
-    res->clearAllBondBookmarks();
-
-    // calculate explicit valence on each atom:
-    for (RWMol::AtomIterator atomIt = res->beginAtoms();
-         atomIt != res->endAtoms(); ++atomIt) {
-      (*atomIt)->calcExplicitValence(false);
-    }
-
-    // postprocess mol file flags
-    ProcessMolProps(res);
-
-    // update the chirality and stereo-chemistry
-    //
-    // NOTE: we detect the stereochemistry before sanitizing/removing
-    // hydrogens because the removal of H atoms may actually remove
-    // the wedged bond from the molecule.  This wipes out the only
-    // sign that chirality ever existed and makes us sad... so first
-    // perceive chirality, then remove the Hs and sanitize.
-    //
-    const Conformer &conf = res->getConformer();
-    if (chiralityPossible) {
-      if (!conf.is3D()) {
-        DetectAtomStereoChemistry(*res, &conf);
-      } else {
-        res->updatePropertyCache(false);
-        MolOps::assignChiralTypesFrom3D(*res, conf.getId(), true);
-      }
-    }
-
-    if (sanitize) {
-      try {
-        if (removeHs) {
-          MolOps::removeHs(*res, false, false);
-        } else {
-          MolOps::sanitizeMol(*res);
-        }
-        // now that atom stereochem has been perceived, the wedging
-        // information is no longer needed, so we clear
-        // single bond dir flags:
-        ClearSingleBondDirFlags(*res);
-
-        // unlike DetectAtomStereoChemistry we call detectBondStereochemistry
-        // here after sanitization because we need the ring information:
-        MolOps::detectBondStereochemistry(*res);
-      } catch (...) {
-        delete res;
-        res = nullptr;
-        throw;
-      }
-      MolOps::assignStereochemistry(*res, true, true, true);
-    } else {
-      // we still need to do something about double bond stereochemistry
-      // (was github issue 337)
-      // now that atom stereochem has been perceived, the wedging
-      // information is no longer needed, so we clear
-      // single bond dir flags:
-      ClearSingleBondDirFlags(*res);
-      MolOps::detectBondStereochemistry(*res);
-    }
-
-    if (res->hasProp(common_properties::_NeedsQueryScan)) {
-      res->clearProp(common_properties::_NeedsQueryScan);
-      completeMolQueries(res);
-    }
+    FileParserUtils::finishMolProcessing(res, chiralityPossible, sanitize,
+                                         removeHs);
   }
   return res;
 }
