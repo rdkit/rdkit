@@ -189,6 +189,13 @@ void setPreferCoordGen(bool);
     return RDKit::MolToHELM(*($self));
   }
 
+  std::string MolToXYZBlock(int confId=-1) {
+    return RDKit::MolToXYZBlock(*($self), confId);
+  }
+  void MolToXYZFile(std::string fName, int confId=-1) {
+    RDKit::MolToXYZFile(*($self), fName, confId);
+  }
+
   bool hasSubstructMatch(RDKit::ROMol &query,bool useChirality=false){
     RDKit::MatchVectType mv;
     return SubstructMatch(*($self),query,mv,true,useChirality);

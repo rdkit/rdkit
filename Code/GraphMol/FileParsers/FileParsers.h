@@ -130,6 +130,11 @@ RDKIT_FILEPARSERS_EXPORT void MolToMolFile(
     const ROMol &mol, const std::string &fName, bool includeStereo = true,
     int confId = -1, bool kekulize = true, bool forceV3000 = false);
 
+RDKIT_FILEPARSERS_EXPORT std::string MolToXYZBlock(const ROMol &mol, int confId = -1);
+
+RDKIT_FILEPARSERS_EXPORT void MolToXYZFile(
+    const ROMol &mol, const std::string &fName, int confId = -1);
+
 //-----
 //  TPL handling:
 //-----
