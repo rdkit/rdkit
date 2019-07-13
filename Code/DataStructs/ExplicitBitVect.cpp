@@ -52,6 +52,7 @@ ExplicitBitVect::ExplicitBitVect(const ExplicitBitVect &other)
 };
 
 ExplicitBitVect &ExplicitBitVect::operator=(const ExplicitBitVect &other) {
+  if (this == &other) return *this;
   d_size = other.d_size;
   delete dp_bits;
   dp_bits = new boost::dynamic_bitset<>(*(other.dp_bits));

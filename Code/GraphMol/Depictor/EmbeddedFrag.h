@@ -159,7 +159,7 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
 
  public:
   //! Default constructor
-  EmbeddedFrag() : d_done(false), dp_mol(0) {
+  EmbeddedFrag() {
     d_eatoms.clear();
     d_attachPts.clear();
   };
@@ -540,8 +540,8 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   // const RDKit::ROMol *mol);
 
   //! are we embedded with the final (molecule) coordinates
-  bool d_done;
-  double d_px, d_nx, d_py, d_ny;
+  bool d_done=false;
+  double d_px=0.0, d_nx=0.0, d_py=0.0, d_ny=0.0;
 
   //! a map that takes one from teh atom id to the embeddedatom object for that
   // atom.
@@ -551,7 +551,7 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   RDKit::INT_LIST d_attachPts;
 
   // pointer to the owning molecule
-  const RDKit::ROMol *dp_mol;
+  const RDKit::ROMol *dp_mol=nullptr;
 };
 }  // namespace RDDepict
 

@@ -81,7 +81,8 @@ void writeBond(const ROMol &mol, unsigned int bondId,
       break;
     default:
       BOOST_LOG(rdWarningLog) << "TPL files only support single, double, "
-                                 "aromatic, and triple bonds." << std::endl;
+                                 "aromatic, and triple bonds."
+                              << std::endl;
       BOOST_LOG(rdWarningLog) << "Bond of with type " << bond->getBondType()
                               << " written as single in output." << std::endl;
       bondLabel = "1.0";
@@ -99,7 +100,7 @@ void writeBond(const ROMol &mol, unsigned int bondId,
 
   dest << std::endl;
 }
-}
+}  // namespace TPLWriter
 
 std::string MolToTPLText(const ROMol &mol, const std::string &partialChargeProp,
                          bool writeFirstConfTwice) {
@@ -163,7 +164,8 @@ void MolToTPLFile(const ROMol &mol, const std::string &fName,
                   const std::string &partialChargeProp,
                   bool writeFirstConfTwice) {
   auto *outStream = new std::ofstream(fName.c_str());
-  if (!outStream || !(*outStream) || outStream->bad()) {
+  if (!(*outStream) || outStream->bad()) {
+    delete outStream;
     std::ostringstream errout;
     errout << "Bad output file " << fName;
     throw BadFileException(errout.str());
@@ -174,4 +176,4 @@ void MolToTPLFile(const ROMol &mol, const std::string &fName,
   *outStream << outString;
   delete outStream;
 }
-}
+}  // namespace RDKit

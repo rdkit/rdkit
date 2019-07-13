@@ -118,18 +118,18 @@ class RDKIT_GRAPHMOL_EXPORT AtomPDBResidueInfo : public AtomMonomerInfo {
   // (http://www.wwpdb.org/documentation/format33/sect9.html#ATOM) [9 Aug, 2013]
   // element and charge are not present since the atom itself stores that
   // information
-  unsigned int d_serialNumber;
-  std::string d_altLoc;
-  std::string d_residueName;
-  int d_residueNumber;
-  std::string d_chainId;
-  std::string d_insertionCode;
+  unsigned int d_serialNumber = 0;
+  std::string d_altLoc = "";
+  std::string d_residueName = "";
+  int d_residueNumber = 0;
+  std::string d_chainId = "";
+  std::string d_insertionCode = "";
   double d_occupancy = 1.0;
   double d_tempFactor = 0.0;
   // additional, non-PDB fields:
-  bool df_heteroAtom;  // is this from a HETATM record?
-  unsigned int d_secondaryStructure;
-  unsigned int d_segmentNumber;
+  bool df_heteroAtom = false;  // is this from a HETATM record?
+  unsigned int d_secondaryStructure = 0;
+  unsigned int d_segmentNumber = 0;
 };
 };  // namespace RDKit
 //! allows AtomPDBResidueInfo objects to be dumped to streams

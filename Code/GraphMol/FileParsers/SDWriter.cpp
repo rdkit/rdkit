@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
 //
@@ -26,7 +25,8 @@ SDWriter::SDWriter(const std::string &fileName) {
   if (fileName != "-") {
     auto *tmpStream = new std::ofstream(fileName.c_str());
     df_owner = true;
-    if (!tmpStream || !(*tmpStream) || (tmpStream->bad())) {
+    if (!(*tmpStream) || (tmpStream->bad())) {
+      delete tmpStream;
       std::ostringstream errout;
       errout << "Bad output file " << fileName;
       throw BadFileException(errout.str());

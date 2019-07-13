@@ -73,9 +73,9 @@ class RDKIT_FILEPARSERS_EXPORT MolSupplier {
 
  protected:
   // stream to read the molecules from:
-  std::istream *dp_inStream;
+  std::istream *dp_inStream = nullptr;
   // do we own dp_inStream?
-  bool df_owner;
+  bool df_owner = false;
 };
 
 // \brief a supplier from an SD file that only reads forward:
@@ -115,10 +115,10 @@ class RDKIT_FILEPARSERS_EXPORT ForwardSDMolSupplier : public MolSupplier {
   virtual void checkForEnd();
   ROMol *_next();
   virtual void readMolProps(ROMol *);
-  bool df_end;
-  int d_line;  // line number we are currently on
-  bool df_sanitize, df_removeHs, df_strictParsing;
-  bool df_processPropertyLists;
+  bool df_end = false;
+  int d_line = 0;  // line number we are currently on
+  bool df_sanitize = true, df_removeHs = true, df_strictParsing = true;
+  bool df_processPropertyLists = true;
   bool df_eofHitOnRead = false;
 };
 
@@ -190,8 +190,8 @@ class RDKIT_FILEPARSERS_EXPORT SDMolSupplier : public ForwardSDMolSupplier {
  private:
   void checkForEnd();
   void setDataCommon(const std::string &text, bool sanitize, bool removeHs);
-  int d_len;   // total number of mol blocks in the file (initialized to -1)
-  int d_last;  // the molecule we are ready to read
+  int d_len = 0;   // total number of mol blocks in the file (initialized to -1)
+  int d_last = 0;  // the molecule we are ready to read
   std::vector<std::streampos> d_molpos;
 };
 
@@ -263,19 +263,19 @@ class RDKIT_FILEPARSERS_EXPORT SmilesMolSupplier : public MolSupplier {
   long int skipComments();
   void checkForEnd();
 
-  bool df_end;  // have we reached the end of the file?
-  int d_len;    // total number of smiles in the file
-  int d_next;   // the  molecule we are ready to read
-  int d_line;   // line number we are currently on
+  bool df_end = false;  // have we reached the end of the file?
+  int d_len = 0;        // total number of smiles in the file
+  int d_next = 0;       // the  molecule we are ready to read
+  int d_line = 0;       // line number we are currently on
   std::vector<std::streampos>
       d_molpos;  // vector of positions in the file for molecules
   std::vector<int> d_lineNums;
-  std::string d_delim;  // the delimiter string
-  bool df_sanitize;     // sanitize molecules before returning them?
-  STR_VECT d_props;     // vector of property names
-  bool df_title;        // do we have a title line?
-  int d_smi;            // column id for the smile string
-  int d_name;           // column id for the name
+  std::string d_delim;      // the delimiter string
+  bool df_sanitize = true;  // sanitize molecules before returning them?
+  STR_VECT d_props;         // vector of property names
+  bool df_title = true;     // do we have a title line?
+  int d_smi = 0;            // column id for the smile string
+  int d_name = 1;           // column id for the name
 };
 
 //! lazy file parser for TDT files
@@ -332,16 +332,17 @@ class RDKIT_FILEPARSERS_EXPORT TDTMolSupplier : public MolSupplier {
   void checkForEnd();
   ROMol *parseMol(std::string inLine);
 
-  bool df_end;     // have we reached the end of the file?
-  int d_len;       // total number of mols in the file
-  int d_last;      // the molecule we are ready to read
-  int d_line;      // line number we are currently on
-  int d_confId2D;  // id to use for 2D conformers
-  int d_confId3D;  // id to use for 3D conformers
+  bool df_end = false;  // have we reached the end of the file?
+  int d_len = 0;        // total number of mols in the file
+  int d_last = 0;       // the molecule we are ready to read
+  int d_line = 0;       // line number we are currently on
+  int d_confId2D = -1;  // id to use for 2D conformers
+  int d_confId3D = 0;   // id to use for 3D conformers
   std::vector<std::streampos>
-      d_molpos;            // vector of positions in the file for molecules
-  bool df_sanitize;        // sanitize molecules before returning them?
-  std::string d_nameProp;  // local storage for the property providing mol names
+      d_molpos;             // vector of positions in the file for molecules
+  bool df_sanitize = true;  // sanitize molecules before returning them?
+  std::string d_nameProp =
+      "";  // local storage for the property providing mol names
 };
 
 //! lazy file parser for PDB files

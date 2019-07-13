@@ -1776,35 +1776,6 @@ void setBondDirRelativeToAtom(Bond *bond, Atom *atom, Bond::BondDir dir,
   // coordinates, the _UnknownStereo property is like extra metadata to be
   // used with the direction info.
   bond->setBondDir(dir);
-  return;
-  // std::cerr<<"\t\t\t\t -> dir "<<dir<<std::endl;
-  // check for other single bonds around the other atom who need their
-  // direction set and set it as demanded by the direction of this one:
-  ROMol::OEDGE_ITER beg, end;
-  boost::tie(beg, end) = oAtom->getOwningMol().getAtomBonds(oAtom);
-  while (beg != end) {
-    Bond *nbrBond = oAtom->getOwningMol()[*beg];
-    ++beg;
-    if (nbrBond != bond && nbrBond->getBondType() != Bond::DOUBLE &&
-        needsDir[nbrBond->getIdx()]) {
-      Bond::BondDir nbrDir = Bond::NONE;
-      if ((nbrBond->getBeginAtom() == oAtom && bond->getBeginAtom() == oAtom) ||
-          (nbrBond->getEndAtom() == oAtom && bond->getEndAtom() == oAtom)) {
-        // both bonds either start or end here; they *must* have different
-        // directions:
-        nbrDir =
-            (dir == Bond::ENDUPRIGHT ? Bond::ENDDOWNRIGHT : Bond::ENDUPRIGHT);
-      } else {
-        // one starts here, the other ends here, they need to have the same
-        // direction:
-        nbrDir = dir;
-      }
-      nbrBond->setBondDir(nbrDir);
-      needsDir[nbrBond->getIdx()] = 0;
-      // std::cerr << "\t\t\t\t update bond " << nbrBond->getIdx() << " to dir "
-      //           << nbrDir << std::endl;
-    }
-  }
 }
 
 bool isLinearArrangement(const RDGeom::Point3D &v1, const RDGeom::Point3D &v2,
@@ -2260,14 +2231,14 @@ void assignChiralTypesFromBondDirs(ROMol &mol, const int confId,
   if (!mol.getNumConformers()) return;
   auto conf = mol.getConformer(confId);
 
-  for (auto& bond: mol.bonds()) {
+  for (auto &bond : mol.bonds()) {
     const Bond::BondDir dir = bond->getBondDir();
     if (dir != Bond::UNKNOWN) {
-
       // the bond is marked as chiral:
       if (dir == Bond::BEGINWEDGE || dir == Bond::BEGINDASH) {
         Atom *atom = bond->getBeginAtom();
-        if (!replaceExistingTags && atom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
+        if (!replaceExistingTags &&
+            atom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
           continue;
         }
         if (atom->getImplicitValence() == -1) {

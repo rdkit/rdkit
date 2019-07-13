@@ -61,7 +61,6 @@ void convertToBonds(const VECT_INT_VECT &res, VECT_INT_VECT &brings,
   }
 }
 
-
 }  // end of namespace RingUtils
 
 namespace FindRings {
@@ -91,7 +90,7 @@ void markUselessD2s(unsigned int root, const ROMol &tMol,
   ROMol::OEDGE_ITER beg, end;
   boost::tie(beg, end) = tMol.getAtomBonds(tMol.getAtomWithIdx(root));
   while (beg != end) {
-    const Bond* bond = tMol[*beg];
+    const Bond *bond = tMol[*beg];
     ++beg;
     if (!activeBonds[bond->getIdx()]) continue;
     unsigned int oIdx = bond->getOtherAtomIdx(root);
@@ -448,7 +447,7 @@ void findRingsD3Node(const ROMol &tMol, VECT_INT_VECT &res,
     if (nsmall == 2) {
       // we found two rings find the third one
       // first find the neighbor that is common to the two ring we found so far
-      int f;
+      int f = -1;
 
       if ((std::find(srings[0].begin(), srings[0].end(), n1) !=
            srings[0].end()) &&
@@ -466,6 +465,7 @@ void findRingsD3Node(const ROMol &tMol, VECT_INT_VECT &res,
                   srings[1].end())) {
         f = n3;
       }
+      CHECK_INVARIANT(f >= 0, "third ring not found");
 
       // now find the smallest possible ring that does not contain f
       VECT_INT_VECT trings;
@@ -486,7 +486,7 @@ void findRingsD3Node(const ROMol &tMol, VECT_INT_VECT &res,
     if (nsmall == 1) {
       // we found 1 ring - we need to find two more that involve the 3rd
       // neighbor
-      int f1, f2;
+      int f1 = -1, f2 = -1;
       // Which of our three neighbors are in the small ring?
       //   these are f1 and f2
       if (std::find(srings[0].begin(), srings[0].end(), n1) ==
@@ -501,6 +501,8 @@ void findRingsD3Node(const ROMol &tMol, VECT_INT_VECT &res,
         f1 = n1;
         f2 = n2;
       }
+      CHECK_INVARIANT(f1 >= 0, "rings not found");
+      CHECK_INVARIANT(f2 >= 0, "rings not found");
 
       // now find two rings that include cand, one of these rings should include
       // f1
@@ -579,7 +581,7 @@ void trimBonds(unsigned int cand, const ROMol &tMol, INT_SET &changed,
   ROMol::OEDGE_ITER beg, end;
   boost::tie(beg, end) = tMol.getAtomBonds(tMol.getAtomWithIdx(cand));
   while (beg != end) {
-    const Bond* bond = tMol[*beg];
+    const Bond *bond = tMol[*beg];
     ++beg;
     if (!activeBonds[bond->getIdx()]) continue;
     unsigned int oIdx = bond->getOtherAtomIdx(cand);
@@ -655,7 +657,7 @@ int smallestRingsBfs(const ROMol &mol, int root, VECT_INT_VECT &rings,
     ROMol::OEDGE_ITER beg, end;
     boost::tie(beg, end) = mol.getAtomBonds(mol.getAtomWithIdx(curr));
     while (beg != end) {
-      const Bond* bond = mol[*beg];
+      const Bond *bond = mol[*beg];
       ++beg;
       if (!activeBonds[bond->getIdx()]) continue;
       int nbrIdx = bond->getOtherAtomIdx(curr);
@@ -822,7 +824,7 @@ bool findRingConnectingAtoms(const ROMol &tMol, const Bond *bond,
   return true;
 }
 
-}  // end of FindRings namespace
+}  // namespace FindRings
 
 namespace RDKit {
 namespace MolOps {
@@ -858,7 +860,7 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
   ROMol::EDGE_ITER firstB, lastB;
   boost::tie(firstB, lastB) = mol.getEdges();
   while (firstB != lastB) {
-    const Bond* bond = mol[*firstB];
+    const Bond *bond = mol[*firstB];
     if (bond->getBondType() == Bond::ZERO) activeBonds[bond->getIdx()] = 0;
     ++firstB;
   }
@@ -876,7 +878,7 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
     ROMol::OEDGE_ITER beg, end;
     boost::tie(beg, end) = mol.getAtomBonds(atom);
     while (beg != end) {
-      const Bond* bond = mol[*beg];
+      const Bond *bond = mol[*beg];
       if (bond->getBondType() == Bond::ZERO) atomDegrees[i]--;
       ++beg;
     }
@@ -1050,7 +1052,10 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
       }
       ssiz = rdcast<int>(fragRes.size());
       if (ssiz < nexpt) {
-        BOOST_LOG(rdWarningLog)<<"WARNING: could not find number of expected rings. Switching to an approximate ring finding algorithm."<<std::endl;
+        BOOST_LOG(rdWarningLog)
+            << "WARNING: could not find number of expected rings. Switching to "
+               "an approximate ring finding algorithm."
+            << std::endl;
         fastFindRings(mol);
         res.clear();
         res = mol.getRingInfo()->atomRings();
@@ -1107,7 +1112,7 @@ int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res) {
     nsssr = rdcast<unsigned int>(sssrs.size());
   }
 
-  for (const auto& r: sssrs) {
+  for (const auto &r : sssrs) {
     res.emplace_back(r);
   }
 
@@ -1140,16 +1145,16 @@ int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res) {
 
   // counts of each bond
   std::vector<int> bondCounts(mol.getNumBonds(), 0);
-  for (const auto& r: bondsssrs) {
-    for (const auto& b: r) {
+  for (const auto &r : bondsssrs) {
+    for (const auto &b : r) {
       bondCounts[b] += 1;
     }
   }
 
   INT_VECT extraRing;
-  for (auto& extraAtomRing: extras) {
+  for (auto &extraAtomRing : extras) {
     RingUtils::convertToBonds(extraAtomRing, extraRing, mol);
-    for (auto& ring: bondsssrs) {
+    for (auto &ring : bondsssrs) {
       if (ring.size() != extraRing.size()) {
         continue;
       }
@@ -1158,7 +1163,7 @@ int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res) {
       // provide that bond.
       bool shareBond = false;
       bool replacesAllUniqueBonds = true;
-      for (auto& bondID: ring) {
+      for (auto &bondID : ring) {
         const int bondCount = bondCounts[bondID];
         if (bondCount == 1 || !shareBond) {
           auto position = find(extraRing.begin(), extraRing.end(), bondID);
@@ -1264,6 +1269,6 @@ void fastFindRings(const ROMol &mol) {
   FindRings::storeRingsInfo(mol, res);
 }
 
-}  // end of MolOps namespace
+}  // namespace MolOps
 
-}  // end of RDKit namespace
+}  // namespace RDKit

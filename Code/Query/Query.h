@@ -128,11 +128,12 @@ class Query {
       const {
     Query<MatchFuncArgType, DataFuncArgType, needsConversion> *res =
         new Query<MatchFuncArgType, DataFuncArgType, needsConversion>();
-    typename Query<MatchFuncArgType, DataFuncArgType,
-                   needsConversion>::CHILD_VECT_CI iter;
-    for (iter = this->beginChildren(); iter != this->endChildren(); ++iter) {
+    for (auto iter = this->beginChildren(); iter != this->endChildren();
+         ++iter) {
       res->addChild(CHILD_TYPE(iter->get()->copy()));
     }
+    res->d_val = this->d_val;
+    res->d_tol = this->d_tol;
     res->df_negate = this->df_negate;
     res->d_matchFunc = this->d_matchFunc;
     res->d_dataFunc = this->d_dataFunc;

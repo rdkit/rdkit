@@ -217,7 +217,7 @@ inline std::vector<std::string> *valuePtrCast<std::vector<std::string>>(
 struct RDValue {
   RDTypeTag::detail::Value value;
   short type;
-  short reserved_tag;  // 16 bit alignment
+  short reserved_tag = 0;  // 16 bit alignment
 
   inline RDValue() : value(0.0), type(RDTypeTag::EmptyTag) {}
   // Pod Style (Direct storage)

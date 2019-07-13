@@ -101,11 +101,9 @@ void ParseTPLBondLine(std::string text, unsigned int lineNum, RWMol *mol) {
   unsigned int bondIdx = mol->addBond(idx1, idx2, bondOrder) - 1;
   std::string stereoFlag1 = "";
   std::string stereoFlag2 = "";
-  if (splitLine.size() > 4) {
-    stereoFlag1 = splitLine[4];
-    if (splitLine.size() > 5) {
-      stereoFlag2 = splitLine[5];
-    }
+  stereoFlag1 = splitLine[4];
+  if (splitLine.size() > 5) {
+    stereoFlag2 = splitLine[5];
   }
   mol->getBondWithIdx(bondIdx)->setProp("TPLBondDir1", stereoFlag1);
   mol->getBondWithIdx(bondIdx)->setProp("TPLBondDir2", stereoFlag2);
@@ -139,6 +137,7 @@ Conformer *ParseConfData(std::istream *inStream, unsigned int &line, RWMol *mol,
     line++;
     tempStr = getLine(inStream);
     if (inStream->eof()) {
+      delete conf;
       std::ostringstream errout;
       errout << "EOF hit while reading conformer  " << confId << std::endl;
       throw FileParseException(errout.str());
@@ -224,6 +223,7 @@ RWMol *TPLDataStreamToMol(std::istream *inStream, unsigned int &line,
     line++;
     tempStr = getLine(inStream);
     if (inStream->eof()) {
+      delete conf;
       throw FileParseException("EOF hit while reading atoms.");
     }
     ParseTPLAtomLine(tempStr, line, res, conf);
@@ -313,4 +313,4 @@ RWMol *TPLFileToMol(const std::string &fName, bool sanitize,
   }
 
 #endif
-}
+}  // namespace RDKit

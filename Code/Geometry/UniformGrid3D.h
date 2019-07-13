@@ -52,6 +52,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT UniformGrid3D : public Grid3D {
   UniformGrid3D(const std::string &pkl);
   //! construct from a text pickle
   UniformGrid3D(const char *pkl, unsigned int);
+  UniformGrid3D &operator=(const UniformGrid3D &other);
 
   ~UniformGrid3D();
 

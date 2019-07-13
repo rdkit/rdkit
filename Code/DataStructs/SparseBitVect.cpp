@@ -75,6 +75,7 @@ bool SparseBitVect::operator[](const unsigned int which) const {
 //
 // """ -------------------------------------------------------
 SparseBitVect &SparseBitVect::operator=(const SparseBitVect &other) {
+  if (this == &other) return *this;
   IntSet *bv = other.dp_bits;
   delete dp_bits;
   d_size = other.getNumBits();

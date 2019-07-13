@@ -578,8 +578,8 @@ bool isComplexQuery(const Bond *b) {
             static_cast<BOND_EQUALS_QUERY *>(child->get())->getVal() !=
                 Bond::AROMATIC)
           return true;
-        return false;
       }
+      return false;
     }
   }
 

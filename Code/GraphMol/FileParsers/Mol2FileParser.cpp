@@ -524,31 +524,37 @@ Atom *ParseMol2FileAtomLine(const std::string atomLine, RDGeom::Point3D &pos) {
   // skip TriposAtomId
   ++itemIt;
   if (itemIt == tokens.end()) {
+    delete res;
     throw FileParseException("premature end of mol2 atom line");
   }
   // the sybyl atom name does not necessarily make sense - into atom property
   tAN = *itemIt;
   ++itemIt;
   if (itemIt == tokens.end()) {
+    delete res;
     throw FileParseException("premature end of mol2 atom line");
   }
   try {
     pos.x = boost::lexical_cast<double>(*itemIt);
     ++itemIt;
     if (itemIt == tokens.end()) {
+      delete res;
       throw FileParseException("premature end of mol2 atom line");
     }
     pos.y = boost::lexical_cast<double>(*itemIt);
     ++itemIt;
     if (itemIt == tokens.end()) {
+      delete res;
       throw FileParseException("premature end of mol2 atom line");
     }
     pos.z = boost::lexical_cast<double>(*itemIt);
     ++itemIt;
     if (itemIt == tokens.end()) {
+      delete res;
       throw FileParseException("premature end of mol2 atom line");
     }
   } catch (boost::bad_lexical_cast &) {
+    delete res;
     throw FileParseException("Cannot process mol2 coordinates.");
   }
   // now it becomes interesting - this is the SYBYL atom type. I put this into
@@ -806,7 +812,7 @@ RWMol *Mol2DataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
   // molecule than to find a new one or an eof. Hence I have to read until I
   // find one of the two ...
   std::streampos molStart = 0, atomStart = 0, bondStart = 0, chargeStart = 0;
-  while (!inStream->eof()) {
+  while (!inStream->eof() && !inStream->fail()) {
     tempStr = getLine(inStream);
     if (inStream->eof()) {
       break;
@@ -862,9 +868,7 @@ RWMol *Mol2DataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
   tempStr = getLine(inStream);
   tokenizer tokens(tempStr, sep);
   if (tokens.begin() == tokens.end()) {
-    if (res) {
-      delete res;
-    }
+    delete res;
     throw FileParseException("Empty counts line");
   }
 
@@ -879,18 +883,14 @@ RWMol *Mol2DataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
       nBonds = boost::lexical_cast<unsigned int>(*itemIt);
     }
   } catch (boost::bad_lexical_cast &) {
-    if (res) {
-      delete res;
-    }
+    delete res;
     std::ostringstream errout;
     errout << "Cannot convert " << *itemIt << " to unsigned int";
     throw FileParseException(errout.str());
   }
 
   if (nAtoms == 0) {
-    if (res) {
-      delete res;
-    }
+    delete res;
     throw FileParseException("molecule has no atoms");
   }
   tempStr = getLine(inStream);  // mol_type - ignore
@@ -903,9 +903,7 @@ RWMol *Mol2DataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
   try {
     ParseMol2AtomBlock(inStream, res, nAtoms, idxCorresp);
   } catch (const FileParseException &e) {
-    if (res) {
-      delete res;
-    }
+    delete res;
     throw e;
   }
   if (nBonds) {
@@ -914,9 +912,7 @@ RWMol *Mol2DataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
     try {
       ParseMol2BondBlock(inStream, res, nBonds, idxCorresp);
     } catch (const FileParseException &e) {
-      if (res) {
-        delete res;
-      }
+      delete res;
       throw e;
     }
   }
@@ -943,9 +939,7 @@ RWMol *Mol2DataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
     try {
       readFormalChargesFromAttr(inStream, res);
     } catch (const FileParseException &e) {
-      if (res) {
-        delete res;
-      }
+      delete res;
       throw e;
     }
   }

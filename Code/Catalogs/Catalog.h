@@ -9,8 +9,8 @@
 //
 
 #include <RDGeneral/export.h>
-#ifndef __RD_CATALOG_H__
-#define __RD_CATALOG_H__
+#ifndef RD_CATALOG_H
+#define RD_CATALOG_H
 
 // Boost graph stuff
 #include <RDGeneral/BoostStartInclude.h>
@@ -456,28 +456,6 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
   }
 };
 
-//-----------------------------------------------------------------------------
-//! a linear Catalog (analogous to an std::vector)
-/*!
-  Here there is no particular hierarchy, simply a
-  collection of entries.
-*/
-template <class entryType, class orderType>
-class LinearCatalog : public Catalog<entryType, orderType> {
-  // here there is no particular hierarchy of entries
-  // we simply model it as a vector of entries
-  // FIX: for retrieval purposes a better model map be std::map
-
- public:
-  std::string Serialize();
-
-  unsigned int addEntry(entryType *entry, bool updateFPLength = true);
-
-  const entryType *getEntryWithIdx(unsigned int idx) const;
-
- private:
-  std::vector<entryType *> d_vector;
-};
 }  // namespace RDCatalog
 
 #endif

@@ -1034,7 +1034,7 @@ void EmbeddedFrag::mergeFragsWithComm(
     std::list<EmbeddedFrag> &efrags) {  //, const RDKit::ROMol *mol) {
   PRECONDITION(dp_mol, "");
   // first merge any fragments what share atoms in common
-  std::list<EmbeddedFrag>::iterator efri, nfri;
+  std::list<EmbeddedFrag>::iterator efri, nfri = efrags.end();
   while (1) {
     RDKit::INT_VECT commAtms;
     for (efri = efrags.begin(); efri != efrags.end(); efri++) {
@@ -1050,6 +1050,7 @@ void EmbeddedFrag::mergeFragsWithComm(
       break;
     }
 
+    CHECK_INVARIANT(nfri != efrags.end(), "iterator not initialized");
     this->mergeWithCommon((*nfri), commAtms);  //, mol);
     RDKit::INT_VECT_CI cai;
     for (cai = commAtms.begin(); cai != commAtms.end(); cai++) {
@@ -1175,7 +1176,7 @@ void EmbeddedFrag::canonicalizeOrientation() {
 
   // shift the center of the fragment to the origin and compute the covariance
   // matrix
-  for (auto &elem : d_eatoms ){
+  for (auto &elem : d_eatoms) {
     elem.second.loc -= cent;
     xx += (elem.second.loc.x) * (elem.second.loc.x);
     xy += (elem.second.loc.x) * (elem.second.loc.y);
@@ -1487,38 +1488,32 @@ void EmbeddedFrag::randomSampleFlipsAndPermutations(
 std::vector<PAIR_I_I> EmbeddedFrag::findCollisions(const double *dmat,
                                                    bool includeBonds) {
   // find a pair of atoms that are too close to each other
-  INT_EATOM_MAP_I efi, efj, tempi;
-  RDGeom::Point2D pti, ptj;
-  double d2;
   std::vector<PAIR_I_I> res;
-  for (efi = d_eatoms.begin(); efi != d_eatoms.end(); ++efi) {
+  for (auto efi = d_eatoms.begin(); efi != d_eatoms.end(); ++efi) {
     efi->second.d_density = 0.0;
   }
 
-  tempi = d_eatoms.begin();
+  auto tempi = d_eatoms.begin();
   ++tempi;
   double colThres2 = COLLISION_THRES * COLLISION_THRES;
   // if we a re dealing with non carbon atoms we will increase the collision
   // threshold.
   // This is because only hetero atoms are typically drawn in a depiction.
   double atomTypeFactor1, atomTypeFactor2;
-  for (efi = tempi; efi != d_eatoms.end(); efi++) {
-    pti = efi->second.loc;
+  for (auto efi = tempi; efi != d_eatoms.end(); ++efi) {
+    auto pti = efi->second.loc;
     atomTypeFactor1 = 1.0;
     if (dp_mol->getAtomWithIdx(efi->first)->getAtomicNum() != 6) {
       atomTypeFactor1 = HETEROATOM_COLL_SCALE;
     }
-    for (efj = d_eatoms.begin(); efj != efi; efj++) {
-      if (efj == efi) {
-        continue;
-      }
+    for (auto efj = d_eatoms.begin(); efj != efi; ++efj) {
       atomTypeFactor2 = 1.0;
       if (dp_mol->getAtomWithIdx(efj->first)->getAtomicNum() != 6) {
         atomTypeFactor2 = HETEROATOM_COLL_SCALE;
       }
-      ptj = efj->second.loc;
+      auto ptj = efj->second.loc;
       ptj -= pti;
-      d2 = ptj.lengthSq();
+      auto d2 = ptj.lengthSq();
       if (d2 > 1.0e-3) {
         efi->second.d_density += (1 / d2);
         efj->second.d_density += (1 / d2);
@@ -1537,41 +1532,36 @@ std::vector<PAIR_I_I> EmbeddedFrag::findCollisions(const double *dmat,
   }
   if (includeBonds) {
     // now find bond collisions
-    RDKit::ROMol::ConstBondIterator bi1, bi2;
-    unsigned int bid1, bid2;
-    unsigned int beg1, end1, beg2, end2;
-    RDGeom::Point2D avg1, avg2, v1, v2, v3;
     double BOND_THRES2 = BOND_THRES * BOND_THRES;
-    double valProd;
-    for (bi1 = dp_mol->beginBonds(); bi1 != dp_mol->endBonds(); bi1++) {
-      bid1 = (*bi1)->getIdx();
-      beg1 = (*bi1)->getBeginAtomIdx();
-      end1 = (*bi1)->getEndAtomIdx();
+    for (const auto b1 : dp_mol->bonds()) {
+      auto bid1 = b1->getIdx();
+      auto beg1 = b1->getBeginAtomIdx();
+      auto end1 = b1->getEndAtomIdx();
       if ((d_eatoms.find(beg1) != d_eatoms.end()) &&
           (d_eatoms.find(end1) != d_eatoms.end())) {
-        v1 = d_eatoms[end1].loc - d_eatoms[beg1].loc;
-        avg1 = d_eatoms[end1].loc + d_eatoms[beg1].loc;
+        auto v1 = d_eatoms[end1].loc - d_eatoms[beg1].loc;
+        auto avg1 = d_eatoms[end1].loc + d_eatoms[beg1].loc;
         avg1 *= 0.5;
-        for (bi2 = dp_mol->beginBonds(); bi2 != dp_mol->endBonds(); bi2++) {
-          bid2 = (*bi2)->getIdx();
+        for (const auto b2 : dp_mol->bonds()) {
+          auto bid2 = b2->getIdx();
           if (bid2 <= bid1) {
             continue;
           }
 
-          beg2 = (*bi2)->getBeginAtomIdx();
-          end2 = (*bi2)->getEndAtomIdx();
+          auto beg2 = b2->getBeginAtomIdx();
+          auto end2 = b2->getEndAtomIdx();
           if ((d_eatoms.find(beg2) != d_eatoms.end()) &&
               (d_eatoms.find(end2) != d_eatoms.end())) {
-            avg2 = d_eatoms[end2].loc + d_eatoms[beg2].loc;
+            auto avg2 = d_eatoms[end2].loc + d_eatoms[beg2].loc;
             avg2 *= 0.5;
             avg2 -= avg1;
             if (avg2.lengthSq() < 0.5 && avg2.lengthSq() < BOND_THRES2) {
-              v2 = d_eatoms[beg2].loc - d_eatoms[beg1].loc;
-              v3 = d_eatoms[end2].loc - d_eatoms[beg1].loc;
-              valProd = _crossVal(v1, v2) * _crossVal(v1, v3);
+              auto v2 = d_eatoms[beg2].loc - d_eatoms[beg1].loc;
+              auto v3 = d_eatoms[end2].loc - d_eatoms[beg1].loc;
+              auto valProd = _crossVal(v1, v2) * _crossVal(v1, v3);
               if (valProd < -1e-6) {
                 // we have a collision, find the closest two atoms
-                PAIR_I_I cAids =
+                auto cAids =
                     _findClosestPair(beg1, end1, beg2, end2, *dp_mol, dmat);
                 res.push_back(cAids);
               }
@@ -2036,4 +2026,4 @@ void EmbeddedFrag::removeCollisionsShortenBonds() {
     ++iter;
   }
 }
-}
+}  // namespace RDDepict
