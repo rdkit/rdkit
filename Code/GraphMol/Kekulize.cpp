@@ -224,7 +224,7 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
   //   earlier by picking a wrong candidate for double bond
   // - in this case back track to where we made the mistake
 
-  int curr;
+  int curr = -1;
   INT_DEQUE btmoves;
   unsigned int numBT = 0;  // number of back tracks so far
   while ((done.size() < allAtms.size()) || (astack.size() > 0)) {
@@ -240,6 +240,7 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
         }
       }
     }
+    CHECK_INVARIANT(curr >= 0, "staring point not found");
     done.push_back(curr);
 
     // loop over the neighbors if we can add double bonds or
@@ -483,7 +484,7 @@ void kekulizeFused(RWMol &mol, const VECT_INT_VECT &arings,
     throw MolSanitizeException(msg);
   }
 }
-}  // end of utility namespace
+}  // namespace
 
 namespace MolOps {
 void Kekulize(RWMol &mol, bool markAtomsBonds, unsigned int maxBackTracks) {

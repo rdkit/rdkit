@@ -291,7 +291,8 @@ PDBWriter::PDBWriter(const std::string &fileName, unsigned int flavor) {
   if (fileName != "-") {
     auto *tmpStream = new std::ofstream(fileName.c_str());
     df_owner = true;
-    if (!tmpStream || !(*tmpStream) || (tmpStream->bad())) {
+    if (!(*tmpStream) || (tmpStream->bad())) {
+      delete tmpStream;
       std::ostringstream errout;
       errout << "Bad output file " << fileName;
       throw BadFileException(errout.str());

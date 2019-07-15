@@ -45,7 +45,6 @@ void Transform2D::SetTranslation(const Point2D &pt) {
   data[i] = pt.y;
   i += DIM_2D;
   data[i] = 1.0;
-  i += DIM_2D;
 }
 
 void Transform2D::SetTransform(const Point2D &pt, double angle) {
@@ -113,7 +112,7 @@ void Transform2D::SetTransform(const Point2D &ref1, const Point2D &ref2,
   data[DIM_2D - 1] = ref1.x - npt1.x;
   data[2 * DIM_2D - 1] = ref1.y - npt1.y;
 }
-}
+}  // namespace RDGeom
 
 RDGeom::Transform2D operator*(const RDGeom::Transform2D &t1,
                               const RDGeom::Transform2D &t2) {

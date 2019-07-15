@@ -433,6 +433,8 @@ class RDKIT_RDGEOMETRYLIB_EXPORT PointND : public Point {
   unsigned int dimension() const { return dp_storage.get()->size(); }
 
   PointND &operator=(const PointND &other) {
+    if (this == &other) return *this;
+
     RDNumeric::Vector<double> *nvec =
         new RDNumeric::Vector<double>(*other.getStorage());
     dp_storage.reset(nvec);

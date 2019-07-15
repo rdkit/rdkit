@@ -255,9 +255,6 @@ std::string getAtomSmartsSimple(const QueryAtom *qatom,
   } else if (descrip == "AtomIsotope") {
     res << query->getVal() << "*";
     needParen = true;
-  } else if (descrip == "AtomHasRingBond") {
-    res << "x";
-    needParen = true;
   } else if (descrip == "AtomRingBondCount") {
     res << "x";
     hasVal = true;

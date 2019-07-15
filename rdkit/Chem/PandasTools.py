@@ -74,6 +74,12 @@ SMILES                    200  non-null values
 Molecule                  200  non-null values
 dtypes: object(20)>
 
+The standard ForwardSDMolSupplier keywords are also available:
+
+>>> sdfFile = os.path.join(RDConfig.RDDataDir,'NCI/first_200.props.sdf')
+>>> frame = PandasTools.LoadSDF(sdfFile,smilesName='SMILES',molColName='Molecule',
+...            includeFingerprints=True, removeHs=False, strictParsing=True)
+
 Conversion to html is quite easy:
 
 >>> htm = frame.to_html() # doctest: +ELLIPSIS
@@ -314,7 +320,7 @@ def ChangeMoleculeRendering(frame=None, renderer='PNG'):
 
 
 def LoadSDF(filename, idName='ID', molColName='ROMol', includeFingerprints=False,
-            isomericSmiles=False, smilesName=None, embedProps=False):
+            isomericSmiles=True, smilesName=None, embedProps=False, removeHs=True, strictParsing=True):
     '''Read file in SDF format and return as Pandas data frame.
     If embedProps=True all properties also get embedded in Mol objects in the molecule column.
     If molColName=None molecules would not be present in resulting DataFrame (only properties
@@ -332,7 +338,8 @@ def LoadSDF(filename, idName='ID', molColName='ROMol', includeFingerprints=False
         close = None  # don't close an open file that was passed in
     records = []
     indices = []
-    for i, mol in enumerate(Chem.ForwardSDMolSupplier(f, sanitize=(molColName is not None))):
+    for i, mol in enumerate(Chem.ForwardSDMolSupplier(f, sanitize=(molColName is not None),
+                                                      removeHs=removeHs, strictParsing=strictParsing)):
         if mol is None:
             continue
         row = dict((k, mol.GetProp(k)) for k in mol.GetPropNames())

@@ -30,7 +30,7 @@ QueryBond &QueryBond::operator=(const QueryBond &other) {
   dp_mol = nullptr;
   d_bondType = other.d_bondType;
   dp_query = other.dp_query->copy();
-  dp_props = other.dp_props;
+  d_props = other.d_props;
   return *this;
 }
 
@@ -185,7 +185,7 @@ bool queriesMatch(QueryBond::QUERYBOND_QUERY const *q1,
   }
   return res;
 }
-}  // end of local namespace
+}  // namespace
 
 bool QueryBond::Match(Bond const *what) const {
   PRECONDITION(what, "bad query bond");
@@ -202,4 +202,4 @@ bool QueryBond::QueryMatch(QueryBond const *what) const {
   }
 }
 
-}  // end o' namespace
+}  // namespace RDKit

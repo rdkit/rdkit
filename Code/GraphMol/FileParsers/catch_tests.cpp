@@ -738,3 +738,35 @@ M  END
     CHECK(at->getQuery()->getDescription() == "AtomNull");
   }
 }
+
+TEST_CASE("XYZ", "[XYZ,writer]"){
+  SECTION("basics") {
+    std::unique_ptr<RWMol> mol{new RWMol{}};
+    mol->setProp(common_properties::_Name, "methane\nthis part should not be output");
+
+    for (unsigned z : {6, 1, 1, 1, 1}) {
+      auto* a = new Atom{z};
+      mol->addAtom(a, false, true);
+    }
+
+    auto* conf = new Conformer{5};
+    conf->setId(0);
+    conf->setAtomPos(0, RDGeom::Point3D{0.000, 0.000, 0.000});
+    conf->setAtomPos(1, RDGeom::Point3D{-0.635, -0.635, 0.635});
+    conf->setAtomPos(2, RDGeom::Point3D{-0.635, 0.635, -0.635});
+    conf->setAtomPos(3, RDGeom::Point3D{0.635, -0.635, -0.635});
+    conf->setAtomPos(4, RDGeom::Point3D{0.635, 0.635, 0.635});
+    mol->addConformer(conf);
+
+    const std::string xyzblock = MolToXYZBlock(*mol);
+    std::string xyzblock_expected = R"XYZ(5
+methane
+C      0.000000    0.000000    0.000000
+H     -0.635000   -0.635000    0.635000
+H     -0.635000    0.635000   -0.635000
+H      0.635000   -0.635000   -0.635000
+H      0.635000    0.635000    0.635000
+)XYZ";
+    CHECK(xyzblock == xyzblock_expected);
+  }
+}

@@ -22,7 +22,6 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <RDGeneral/LocaleSwitcher.h>
 
-
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -30,7 +29,7 @@
 
 namespace RDKit {
 namespace TDTParseUtils {
-typedef boost::tokenizer<boost::escaped_list_separator<char> > CommaTokenizer;
+typedef boost::tokenizer<boost::escaped_list_separator<char>> CommaTokenizer;
 
 /*
  * if inStream is valid, we'll allow the numbers to be broken across multiple
@@ -86,7 +85,7 @@ TDTMolSupplier::TDTMolSupplier(const std::string &fileName,
   std::istream *tmpStream = nullptr;
   tmpStream = static_cast<std::istream *>(
       new std::ifstream(fileName.c_str(), std::ios_base::binary));
-  if (!tmpStream || (!(*tmpStream)) || (tmpStream->bad())) {
+  if (!(*tmpStream) || tmpStream->bad()) {
     std::ostringstream errout;
     errout << "Bad input file " << fileName;
     delete tmpStream;
@@ -221,7 +220,8 @@ ROMol *TDTMolSupplier::parseMol(std::string inLine) {
     //   Process the properties:
     d_line++;
     std::getline(*dp_inStream, inLine);
-    while (!dp_inStream->eof() && inLine.find("|") != 0) {
+    while (!dp_inStream->eof() && !dp_inStream->fail() &&
+           inLine.find("|") != 0) {
       endP = inLine.find("<");
       std::string propName = inLine.substr(0, endP);
       boost::trim_if(propName, boost::is_any_of(" \t"));
@@ -303,7 +303,8 @@ ROMol *TDTMolSupplier::next() {
   std::string tempp;
   d_line++;
   std::getline(*dp_inStream, tempp);
-  while (tempp.find("$SMI<") != 0 && !dp_inStream->eof()) {
+  while (tempp.find("$SMI<") != 0 && !dp_inStream->eof() &&
+         !dp_inStream->fail()) {
     d_line++;
     std::getline(*dp_inStream, tempp);
   }
@@ -317,7 +318,8 @@ ROMol *TDTMolSupplier::next() {
           << "ERROR: Could not sanitize molecule ending on line " << d_line
           << std::endl;
       BOOST_LOG(rdErrorLog) << "ERROR: " << se.message() << "\n";
-      while (!(dp_inStream->eof()) && tempStr.find("|") != 0) {
+      while (!dp_inStream->eof() && !dp_inStream->fail() &&
+             tempStr.find("|") != 0) {
         d_line++;
         std::getline(*dp_inStream, tempStr);
       }
@@ -371,7 +373,8 @@ void TDTMolSupplier::moveTo(unsigned int idx) {
     std::string tempStr;
     d_last = d_molpos.size() - 1;
     dp_inStream->seekg(d_molpos.back());
-    while ((d_last < static_cast<int>(idx)) && (!dp_inStream->eof())) {
+    while (d_last < static_cast<int>(idx) && !dp_inStream->eof() &&
+           !dp_inStream->fail()) {
       d_line++;
       std::getline(*dp_inStream, tempStr);
 
@@ -425,4 +428,4 @@ bool TDTMolSupplier::atEnd() {
   PRECONDITION(dp_inStream, "no stream");
   return df_end;
 }
-}
+}  // namespace RDKit

@@ -113,9 +113,6 @@ rdkit_test(graphmolMolOpsTest molopstest.cpp
            LINK_LIBRARIES SubstructMatch FileParsers
 	   SmilesParse GraphMol RDGeometryLib RDGeneral)
 
-rdkit_test(graphmoltestCanon testCanon.cpp
-           LINK_LIBRARIES SubstructMatch SmilesParse GraphMol RDGeometryLib RDGeneral)
-
 rdkit_test(graphmoltestChirality testChirality.cpp
            LINK_LIBRARIES SmilesParse FileParsers
 	   GraphMol RDGeometryLib RDGeneral)

@@ -116,7 +116,7 @@ PointND operator+(const PointND& p1, const PointND& p2) {
   if (p1.dimension() < p2.dimension()) {
     dim = p1.dimension();
   } else {
-    dim = p1.dimension();
+    dim = p2.dimension();
   }
   PointND res(dim);
   for (unsigned int i = 0; i < dim; ++i) {
@@ -129,7 +129,7 @@ PointND operator-(const PointND& p1, const PointND& p2) {
   if (p1.dimension() < p2.dimension()) {
     dim = p1.dimension();
   } else {
-    dim = p1.dimension();
+    dim = p2.dimension();
   }
   PointND res(dim);
   for (unsigned int i = 0; i < dim; ++i) {
@@ -153,4 +153,4 @@ PointND operator/(const PointND& p1, double v) {
   }
   return res;
 }
-}
+}  // namespace RDGeom

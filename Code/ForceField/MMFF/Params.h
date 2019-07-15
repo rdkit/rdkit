@@ -157,26 +157,6 @@ class RDKIT_FORCEFIELD_EXPORT MMFFVdWRijstarEps {
 
 class RDKIT_FORCEFIELD_EXPORT MMFFAromCollection {
  public:
-  //! gets a pointer to the singleton MMFFAromCollection
-  /*!
-    \param mmffArom (optional) a string with parameter data. See
-     below for more information about this argument
-
-    \return a pointer to the singleton MMFFAromCollection
-
-    <b>Notes:</b>
-      - do <b>not</b> delete the pointer returned here
-      - if the singleton MMFFAromCollection has already been instantiated and
-        \c mmffArom is empty, the singleton will be returned.
-      - if \c mmffArom is empty and the singleton MMFFAromCollection has
-        not yet been instantiated, the default MMFFArom parameters (from
-    Params.cpp)
-        will be used.
-      - if \c mmffArom is supplied, a new singleton will be instantiated.
-        The current instantiation (if there is one) will be deleted.
-  */
-  static MMFFAromCollection *getMMFFArom(
-      const std::uint8_t *aromatic_types = NULL);
   //! Looks up the parameters for a particular key and returns them.
   /*!
     \return a pointer to the MMFFArom object, NULL on failure.
@@ -188,35 +168,12 @@ class RDKIT_FORCEFIELD_EXPORT MMFFAromCollection {
                 : false);
   }
 
- private:
-  //! to force this to be a singleton, the constructor must be private
-  MMFFAromCollection(const std::uint8_t mmffArom[]);
-  static class std::unique_ptr<MMFFAromCollection>
-      ds_instance;                     //!< the singleton
+  MMFFAromCollection(const std::uint8_t mmffArom[]=nullptr);
   std::vector<std::uint8_t> d_params;  //!< the aromatic type vector
 };
 
 class RDKIT_FORCEFIELD_EXPORT MMFFDefCollection {
  public:
-  //! gets a pointer to the singleton MMFFDefCollection
-  /*!
-    \param mmffDef (optional) a string with parameter data. See
-     below for more information about this argument
-
-    \return a pointer to the singleton MMFFDefCollection
-
-    <b>Notes:</b>
-      - do <b>not</b> delete the pointer returned here
-      - if the singleton MMFFDefCollection has already been instantiated and
-        \c mmffDef is empty, the singleton will be returned.
-      - if \c mmffDef is empty and the singleton MMFFDefCollection has
-        not yet been instantiated, the default MMFFDef parameters (from
-    Params.cpp)
-        will be used.
-      - if \c mmffDef is supplied, a new singleton will be instantiated.
-        The current instantiation (if there is one) will be deleted.
-  */
-  static MMFFDefCollection *getMMFFDef(const std::string &mmffDef = "");
   //! Looks up the parameters for a particular key and returns them.
   /*!
     \return a pointer to the MMFFDef object, NULL on failure.
@@ -234,11 +191,8 @@ class RDKIT_FORCEFIELD_EXPORT MMFFDefCollection {
 #endif
   }
 
- private:
-  //! to force this to be a singleton, the constructor must be private
-  MMFFDefCollection(std::string mmffDef);
-  static class std::unique_ptr<MMFFDefCollection>
-      ds_instance;  //!< the singleton
+  MMFFDefCollection(std::string mmffDef="");
+
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int, MMFFDef> d_params;  //!< the parameter map
 #else
@@ -248,24 +202,6 @@ class RDKIT_FORCEFIELD_EXPORT MMFFDefCollection {
 
 class RDKIT_FORCEFIELD_EXPORT MMFFPropCollection {
  public:
-  //! gets a pointer to the singleton MMFFPropCollection
-  /*!
-    \param mmffProp (optional) a string with parameter data. See
-     below for more information about this argument
-
-    \return a pointer to the singleton MMFFPropCollection
-
-    <b>Notes:</b>
-      - do <b>not</b> delete the pointer returned here
-      - if the singleton MMFFPropCollection has already been instantiated and
-        \c mmffProp is empty, the singleton will be returned.
-      - if \c mmffProp is empty and the singleton MMFFPropCollection has
-        not yet been instantiated, the default parameters (from Params.cpp)
-        will be used.
-      - if \c mmffProp is supplied, a new singleton will be instantiated.
-        The current instantiation (if there is one) will be deleted.
-  */
-  static MMFFPropCollection *getMMFFProp(const std::string &mmffProp = "");
   //! Looks up the parameters for a particular key and returns them.
   /*!
     \return a pointer to the MMFFProp object, NULL on failure.
@@ -288,11 +224,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFPropCollection {
 #endif
   }
 
- private:
-  //! to force this to be a singleton, the constructor must be private
-  MMFFPropCollection(std::string mmffProp);
-  static class std::unique_ptr<MMFFPropCollection>
-      ds_instance;  //!< the singleton
+  MMFFPropCollection(std::string mmffProp="");
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int, MMFFProp> d_params;  //!< the parameter map
 #else
@@ -303,24 +235,6 @@ class RDKIT_FORCEFIELD_EXPORT MMFFPropCollection {
 
 class RDKIT_FORCEFIELD_EXPORT MMFFPBCICollection {
  public:
-  //! gets a pointer to the singleton MMFFPBCICollection
-  /*!
-    \param mmffPBCI (optional) a string with parameter data. See
-     below for more information about this argument
-
-    \return a pointer to the singleton MMFFPBCICollection
-
-    <b>Notes:</b>
-      - do <b>not</b> delete the pointer returned here
-      - if the singleton MMFFPBCICollection has already been instantiated and
-        \c mmffPBCI is empty, the singleton will be returned.
-      - if \c mmffPBCI is empty and the singleton MMFFPBCICollection has
-        not yet been instantiated, the default parameters (from Params.cpp)
-        will be used.
-      - if \c mmffPBCI is supplied, a new singleton will be instantiated.
-        The current instantiation (if there is one) will be deleted.
-  */
-  static MMFFPBCICollection *getMMFFPBCI(const std::string &mmffPBCI = "");
   //! Looks up the parameters for a particular key and returns them.
   /*!
     \return a pointer to the MMFFPBCI object, NULL on failure.
@@ -338,11 +252,8 @@ class RDKIT_FORCEFIELD_EXPORT MMFFPBCICollection {
 #endif
   }
 
- private:
-  //! to force this to be a singleton, the constructor must be private
-  MMFFPBCICollection(std::string mmffPBCI);
-  static class std::unique_ptr<MMFFPBCICollection>
-      ds_instance;  //!< the singleton
+  MMFFPBCICollection(std::string mmffPBCI="");
+
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int, MMFFPBCI> d_params;  //!< the parameter map
 #else
@@ -352,31 +263,13 @@ class RDKIT_FORCEFIELD_EXPORT MMFFPBCICollection {
 
 class RDKIT_FORCEFIELD_EXPORT MMFFChgCollection {
  public:
-  //! gets a pointer to the singleton MMFFChgCollection
-  /*!
-    \param mmffChg (optional) a string with parameter data. See
-     below for more information about this argument
-
-    \return a pointer to the singleton MMFFChgCollection
-
-    <b>Notes:</b>
-      - do <b>not</b> delete the pointer returned here
-      - if the singleton MMFFChgCollection has already been instantiated and
-        \c mmffChg is empty, the singleton will be returned.
-      - if \c mmffChg is empty and the singleton MMFFChgCollection has
-        not yet been instantiated, the default parameters (from Params.cpp)
-        will be used.
-      - if \c mmffChg is supplied, a new singleton will be instantiated.
-        The current instantiation (if there is one) will be deleted.
-  */
-  static MMFFChgCollection *getMMFFChg(const std::string &mmffChg = "");
   //! Looks up the parameters for a particular key and returns them.
   /*!
     \return a pointer to the MMFFChg object, NULL on failure.
   */
   const std::pair<int, const MMFFChg *> getMMFFChgParams(
       const unsigned int bondType, const unsigned int iAtomType,
-      const unsigned int jAtomType) {
+      const unsigned int jAtomType) const {
     int sign = -1;
     const MMFFChg *mmffChgParams = NULL;
     unsigned int canIAtomType = iAtomType;
@@ -424,11 +317,8 @@ class RDKIT_FORCEFIELD_EXPORT MMFFChgCollection {
     return std::make_pair(sign, mmffChgParams);
   }
 
- private:
-  //! to force this to be a singleton, the constructor must be private
-  MMFFChgCollection(std::string mmffChg);
-  static class std::unique_ptr<MMFFChgCollection>
-      ds_instance;  //!< the singleton
+  MMFFChgCollection(std::string mmffChg="");
+
 //!< the parameter 3D-map
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int,
@@ -444,31 +334,13 @@ class RDKIT_FORCEFIELD_EXPORT MMFFChgCollection {
 
 class RDKIT_FORCEFIELD_EXPORT MMFFBondCollection {
  public:
-  //! gets a pointer to the singleton MMFFBondCollection
-  /*!
-    \param mmffBond (optional) a string with parameter data. See
-     below for more information about this argument
-
-    \return a pointer to the singleton MMFFBondCollection
-
-    <b>Notes:</b>
-      - do <b>not</b> delete the pointer returned here
-      - if the singleton MMFFBondCollection has already been instantiated and
-        \c mmffBond is empty, the singleton will be returned.
-      - if \c mmffBond is empty and the singleton MMFFBondCollection has
-        not yet been instantiated, the default parameters (from Params.cpp)
-        will be used.
-      - if \c mmffBond is supplied, a new singleton will be instantiated.
-        The current instantiation (if there is one) will be deleted.
-  */
-  static MMFFBondCollection *getMMFFBond(const std::string &mmffBond = "");
   //! Looks up the parameters for a particular key and returns them.
   /*!
     \return a pointer to the MMFFBond object, NULL on failure.
   */
   const MMFFBond *operator()(const unsigned int bondType,
                              const unsigned int atomType,
-                             const unsigned int nbrAtomType) {
+                             const unsigned int nbrAtomType) const {
     const MMFFBond *mmffBondParams = NULL;
     unsigned int canAtomType = atomType;
     unsigned int canNbrAtomType = nbrAtomType;
@@ -520,11 +392,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFBondCollection {
     return mmffBondParams;
   }
 
- private:
-  //! to force this to be a singleton, the constructor must be private
-  MMFFBondCollection(std::string mmffBond);
-  static class std::unique_ptr<MMFFBondCollection>
-      ds_instance;  //!< the singleton
+  MMFFBondCollection(std::string mmffBond="");
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int,
            std::map<const unsigned int, std::map<const unsigned int, MMFFBond>>>
@@ -539,29 +407,11 @@ class RDKIT_FORCEFIELD_EXPORT MMFFBondCollection {
 
 class RDKIT_FORCEFIELD_EXPORT MMFFBndkCollection {
  public:
-  //! gets a pointer to the singleton MMFFBndkCollection
-  /*!
-    \param mmffBndk (optional) a string with parameter data. See
-     below for more information about this argument
-
-    \return a pointer to the singleton MMFFBndkCollection
-
-    <b>Notes:</b>
-      - do <b>not</b> delete the pointer returned here
-      - if the singleton MMFFBndkCollection has already been instantiated and
-        \c mmffBndk is empty, the singleton will be returned.
-      - if \c mmffBndk is empty and the singleton MMFFBndkCollection has
-        not yet been instantiated, the default parameters (from Params.cpp)
-        will be used.
-      - if \c mmffBndk is supplied, a new singleton will be instantiated.
-        The current instantiation (if there is one) will be deleted.
-  */
-  static MMFFBndkCollection *getMMFFBndk(const std::string &mmffBndk = "");
   //! Looks up the parameters for a particular key and returns them.
   /*!
     \return a pointer to the MMFFBndk object, NULL on failure.
   */
-  const MMFFBond *operator()(const int atomicNum, const int nbrAtomicNum) {
+  const MMFFBond *operator()(const int atomicNum, const int nbrAtomicNum) const {
     const MMFFBond *mmffBndkParams = NULL;
     unsigned int canAtomicNum = atomicNum;
     unsigned int canNbrAtomicNum = nbrAtomicNum;
@@ -600,11 +450,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFBndkCollection {
     return mmffBndkParams;
   }
 
- private:
-  //! to force this to be a singleton, the constructor must be private
-  MMFFBndkCollection(std::string mmffBndk);
-  static class std::unique_ptr<MMFFBndkCollection>
-      ds_instance;  //!< the singleton
+  MMFFBndkCollection(std::string mmffBndk="");
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int, std::map<const unsigned int, MMFFBond>>
       d_params;  //!< the parameter 2D-map
@@ -617,33 +463,11 @@ class RDKIT_FORCEFIELD_EXPORT MMFFBndkCollection {
 
 class RDKIT_FORCEFIELD_EXPORT MMFFHerschbachLaurieCollection {
  public:
-  //! gets a pointer to the singleton MMFFHerschbachLaurieCollection
-  /*!
-    \param mmffHerschbachLaurie (optional) a string with parameter data. See
-     below for more information about this argument
-
-    \return a pointer to the singleton MMFFHerschbachLaurieCollection
-
-    <b>Notes:</b>
-      - do <b>not</b> delete the pointer returned here
-      - if the singleton MMFFHerschbachLaurieCollection has already been
-    instantiated and
-        \c mmffHerschbachLaurie is empty, the singleton will be returned.
-      - if \c mmffHerschbachLaurie is empty and the singleton
-    MMFFHerschbachLaurieCollection has
-        not yet been instantiated, the default parameters (from Params.cpp)
-        will be used.
-      - if \c mmffHerschbachLaurie is supplied, a new singleton will be
-    instantiated.
-        The current instantiation (if there is one) will be deleted.
-  */
-  static MMFFHerschbachLaurieCollection *getMMFFHerschbachLaurie(
-      const std::string &mmffHerschbachLaurie = "");
   //! Looks up the parameters for a particular key and returns them.
   /*!
     \return a pointer to the MMFFHerschbachLaurie object, NULL on failure.
   */
-  const MMFFHerschbachLaurie *operator()(const int iRow, const int jRow) {
+  const MMFFHerschbachLaurie *operator()(const int iRow, const int jRow) const {
     const MMFFHerschbachLaurie *mmffHerschbachLaurieParams = NULL;
     unsigned int canIRow = iRow;
     unsigned int canJRow = jRow;
@@ -681,11 +505,8 @@ class RDKIT_FORCEFIELD_EXPORT MMFFHerschbachLaurieCollection {
     return mmffHerschbachLaurieParams;
   }
 
- private:
-  //! to force this to be a singleton, the constructor must be private
-  MMFFHerschbachLaurieCollection(std::string mmffHerschbachLaurie);
-  static class std::unique_ptr<MMFFHerschbachLaurieCollection>
-      ds_instance;  //!< the singleton
+  MMFFHerschbachLaurieCollection(std::string mmffHerschbachLaurie="");
+
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int,
            std::map<const unsigned int, MMFFHerschbachLaurie>>
@@ -699,28 +520,6 @@ class RDKIT_FORCEFIELD_EXPORT MMFFHerschbachLaurieCollection {
 
 class RDKIT_FORCEFIELD_EXPORT MMFFCovRadPauEleCollection {
  public:
-  //! gets a pointer to the singleton MMFFCovRadPauEleCollection
-  /*!
-    \param mmffCovRadPauEle (optional) a string with parameter data. See
-     below for more information about this argument
-
-    \return a pointer to the singleton MMFFCovRadPauEleCollection
-
-    <b>Notes:</b>
-      - do <b>not</b> delete the pointer returned here
-      - if the singleton MMFFCovRadPauEleCollection has already been
-    instantiated and
-        \c mmffCovRadPauEle is empty, the singleton will be returned.
-      - if \c mmffCovRadPauEle is empty and the singleton
-    MMFFCovRadPauEleCollection has
-        not yet been instantiated, the default parameters (from Params.cpp)
-        will be used.
-      - if \c mmffCovRadPauEle is supplied, a new singleton will be
-    instantiated.
-        The current instantiation (if there is one) will be deleted.
-  */
-  static MMFFCovRadPauEleCollection *getMMFFCovRadPauEle(
-      const std::string &mmffCovRadPauEle = "");
   //! Looks up the parameters for a particular key and returns them.
   /*!
     \return a pointer to the MMFFCovRadPauEle object, NULL on failure.
@@ -743,11 +542,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFCovRadPauEleCollection {
 #endif
   }
 
- private:
-  //! to force this to be a singleton, the constructor must be private
-  MMFFCovRadPauEleCollection(std::string mmffCovRadPauEle);
-  static class std::unique_ptr<MMFFCovRadPauEleCollection>
-      ds_instance;  //!< the singleton
+  MMFFCovRadPauEleCollection(std::string mmffCovRadPauEle="");
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int, MMFFCovRadPauEle>
       d_params;  //!< the parameter map
@@ -759,36 +554,18 @@ class RDKIT_FORCEFIELD_EXPORT MMFFCovRadPauEleCollection {
 
 class RDKIT_FORCEFIELD_EXPORT MMFFAngleCollection {
  public:
-  //! gets a pointer to the singleton MMFFAngleCollection
-  /*!
-    \param mmffAngle (optional) a string with parameter data. See
-     below for more information about this argument
-
-    \return a pointer to the singleton MMFFAngleCollection
-
-    <b>Notes:</b>
-      - do <b>not</b> delete the pointer returned here
-      - if the singleton MMFFAngleCollection has already been instantiated and
-        \c mmffAngle is empty, the singleton will be returned.
-      - if \c mmffAngle is empty and the singleton MMFFAngleCollection has
-        not yet been instantiated, the default parameters (from Params.cpp)
-        will be used.
-      - if \c mmffAngle is supplied, a new singleton will be instantiated.
-        The current instantiation (if there is one) will be deleted.
-  */
-  static MMFFAngleCollection *getMMFFAngle(const std::string &mmffAngle = "");
   //! Looks up the parameters for a particular key and returns them.
   /*!
     \return a pointer to the MMFFAngle object, NULL on failure.
   */
-  const MMFFAngle *operator()(const unsigned int angleType,
+  const MMFFAngle *operator()(const MMFFDefCollection *mmffDef,
+			      const unsigned int angleType,
                               const unsigned int iAtomType,
                               const unsigned int jAtomType,
-                              const unsigned int kAtomType) {
-    MMFFDefCollection *mmffDef = MMFFDefCollection::getMMFFDef();
+                              const unsigned int kAtomType) const {
     const MMFFAngle *mmffAngleParams = NULL;
     unsigned int iter = 0;
-
+ 
 // For bending of the i-j-k angle, a five-stage process based
 // in the level combinations 1-1-1,2-2-2,3-2-3,4-2-4, and
 // 5-2-5 is used. (MMFF.I, note 68, page 519)
@@ -873,11 +650,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFAngleCollection {
     return mmffAngleParams;
   }
 
- private:
-  //! to force this to be a singleton, the constructor must be private
-  MMFFAngleCollection(std::string mmffAngle);
-  static class std::unique_ptr<MMFFAngleCollection>
-      ds_instance;  //!< the singleton
+  MMFFAngleCollection(std::string mmffAngle="");
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int,
            std::map<const unsigned int,
@@ -895,24 +668,6 @@ class RDKIT_FORCEFIELD_EXPORT MMFFAngleCollection {
 
 class RDKIT_FORCEFIELD_EXPORT MMFFStbnCollection {
  public:
-  //! gets a pointer to the singleton MMFFStbnCollection
-  /*!
-    \param mmffStbn (optional) a string with parameter data. See
-     below for more information about this argument
-
-    \return a pointer to the singleton MMFFStbnCollection
-
-    <b>Notes:</b>
-      - do <b>not</b> delete the pointer returned here
-      - if the singleton MMFFStbnCollection has already been instantiated and
-        \c mmffStbn is empty, the singleton will be returned.
-      - if \c mmffStbn is empty and the singleton MMFFStbnCollection has
-        not yet been instantiated, the default parameters (from Params.cpp)
-        will be used.
-      - if \c mmffStbn is supplied, a new singleton will be instantiated.
-        The current instantiation (if there is one) will be deleted.
-  */
-  static MMFFStbnCollection *getMMFFStbn(const std::string &mmffStbn = "");
   //! Looks up the parameters for a particular key and returns them.
   /*!
     \return a pointer to the MMFFStbn object, NULL on failure.
@@ -920,7 +675,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFStbnCollection {
   const std::pair<bool, const MMFFStbn *> getMMFFStbnParams(
       const unsigned int stretchBendType, const unsigned int bondType1,
       const unsigned int bondType2, const unsigned int iAtomType,
-      const unsigned int jAtomType, const unsigned int kAtomType) {
+      const unsigned int jAtomType, const unsigned int kAtomType) const {
     const MMFFStbn *mmffStbnParams = NULL;
     bool swap = false;
     unsigned int canIAtomType = iAtomType;
@@ -994,11 +749,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFStbnCollection {
     return std::make_pair(swap, mmffStbnParams);
   }
 
- private:
-  //! to force this to be a singleton, the constructor must be private
-  MMFFStbnCollection(std::string mmffStbn);
-  static class std::unique_ptr<MMFFStbnCollection>
-      ds_instance;  //!< the singleton
+  MMFFStbnCollection(std::string mmffStbn="");
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int,
            std::map<const unsigned int,
@@ -1017,24 +768,6 @@ class RDKIT_FORCEFIELD_EXPORT MMFFStbnCollection {
 
 class RDKIT_FORCEFIELD_EXPORT MMFFDfsbCollection {
  public:
-  //! gets a pointer to the singleton MMFFDfsbCollection
-  /*!
-    \param mmffDfsb (optional) a string with parameter data. See
-     below for more information about this argument
-
-    \return a pointer to the singleton MMFFDfsbCollection
-
-    <b>Notes:</b>
-      - do <b>not</b> delete the pointer returned here
-      - if the singleton MMFFDfsbCollection has already been instantiated and
-        \c mmffDfsb is empty, the singleton will be returned.
-      - if \c mmffDfsb is empty and the singleton MMFFDfsbCollection has
-        not yet been instantiated, the default parameters (from Params.cpp)
-        will be used.
-      - if \c mmffDfsb is supplied, a new singleton will be instantiated.
-        The current instantiation (if there is one) will be deleted.
-  */
-  static MMFFDfsbCollection *getMMFFDfsb(const std::string &mmffDfsb = "");
   //! Looks up the parameters for a particular key and returns them.
   /*!
     \return a pointer to the MMFFStbn object, NULL on failure.
@@ -1042,7 +775,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFDfsbCollection {
   const std::pair<bool, const MMFFStbn *> getMMFFDfsbParams(
       const unsigned int periodicTableRow1,
       const unsigned int periodicTableRow2,
-      const unsigned int periodicTableRow3) {
+      const unsigned int periodicTableRow3) const {
     std::map<const unsigned int,
              std::map<const unsigned int,
                       std::map<const unsigned int, MMFFStbn>>>::const_iterator
@@ -1073,11 +806,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFDfsbCollection {
     return std::make_pair(swap, mmffDfsbParams);
   }
 
- private:
-  //! to force this to be a singleton, the constructor must be private
-  MMFFDfsbCollection(std::string mmffDfsb);
-  static class std::unique_ptr<MMFFDfsbCollection>
-      ds_instance;  //!< the singleton
+  MMFFDfsbCollection(std::string mmffDfsb="");
   std::map<const unsigned int,
            std::map<const unsigned int, std::map<const unsigned int, MMFFStbn>>>
       d_params;  //!< the parameter 3D-map
@@ -1085,34 +814,15 @@ class RDKIT_FORCEFIELD_EXPORT MMFFDfsbCollection {
 
 class RDKIT_FORCEFIELD_EXPORT MMFFOopCollection {
  public:
-  //! gets a pointer to the singleton MMFFOopCollection
-  /*!
-    \param mmffOop (optional) a string with parameter data. See
-     below for more information about this argument
-
-    \return a pointer to the singleton MMFFOopCollection
-
-    <b>Notes:</b>
-      - do <b>not</b> delete the pointer returned here
-      - if the singleton MMFFOopCollection has already been instantiated and
-        \c mmffOop is empty, the singleton will be returned.
-      - if \c mmffOop is empty and the singleton MMFFOopCollection has
-        not yet been instantiated, the default parameters (from Params.cpp)
-        will be used.
-      - if \c mmffOop is supplied, a new singleton will be instantiated.
-        The current instantiation (if there is one) will be deleted.
-  */
-  static MMFFOopCollection *getMMFFOop(const bool isMMFFs = false,
-                                       const std::string &mmffOop = "");
   //! Looks up the parameters for a particular key and returns them.
   /*!
     \return a pointer to the MMFFOop object, NULL on failure.
   */
-  const MMFFOop *operator()(const unsigned int iAtomType,
+  const MMFFOop *operator()(const MMFFDefCollection *mmffDef,
+			    const unsigned int iAtomType,
                             const unsigned int jAtomType,
                             const unsigned int kAtomType,
-                            const unsigned int lAtomType) {
-    MMFFDefCollection *mmffDef = MMFFDefCollection::getMMFFDef();
+                            const unsigned int lAtomType) const {
     const MMFFOop *mmffOopParams = NULL;
     unsigned int iter = 0;
     std::vector<unsigned int> canIKLAtomType(3);
@@ -1195,11 +905,8 @@ class RDKIT_FORCEFIELD_EXPORT MMFFOopCollection {
     return mmffOopParams;
   }
 
- private:
-  //! to force this to be a singleton, the constructor must be private
-  MMFFOopCollection(const bool isMMFFs, std::string mmffOop);
-  static class std::unique_ptr<MMFFOopCollection>
-      ds_instance[2];  //!< the singleton
+  MMFFOopCollection(const bool isMMFFs, std::string mmffOop="");
+
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int,
            std::map<const unsigned int,
@@ -1217,34 +924,15 @@ class RDKIT_FORCEFIELD_EXPORT MMFFOopCollection {
 
 class RDKIT_FORCEFIELD_EXPORT MMFFTorCollection {
  public:
-  //! gets a pointer to the singleton MMFFTorCollection
-  /*!
-    \param mmffTor (optional) a string with parameter data. See
-     below for more information about this argument
-
-    \return a pointer to the singleton MMFFTorCollection
-
-    <b>Notes:</b>
-      - do <b>not</b> delete the pointer returned here
-      - if the singleton MMFFTorCollection has already been instantiated and
-        \c mmffTor is empty, the singleton will be returned.
-      - if \c mmffTor is empty and the singleton MMFFTorCollection has
-        not yet been instantiated, the default parameters (from Params.cpp)
-        will be used.
-      - if \c mmffTor is supplied, a new singleton will be instantiated.
-        The current instantiation (if there is one) will be deleted.
-  */
-  static MMFFTorCollection *getMMFFTor(const bool isMMFFs,
-                                       const std::string &mmffTor = "");
   //! Looks up the parameters for a particular key and returns them.
   /*!
     \return a pointer to the MMFFTor object, NULL on failure.
   */
   const std::pair<const unsigned int, const MMFFTor *> getMMFFTorParams(
+      const MMFFDefCollection *mmffDef,									
       const std::pair<unsigned int, unsigned int> torType,
       const unsigned int iAtomType, const unsigned int jAtomType,
-      const unsigned int kAtomType, const unsigned int lAtomType) {
-    MMFFDefCollection *mmffDef = MMFFDefCollection::getMMFFDef();
+      const unsigned int kAtomType, const unsigned int lAtomType) const {
     const MMFFTor *mmffTorParams = NULL;
     unsigned int iter = 0;
     unsigned int iWildCard = 0;
@@ -1382,11 +1070,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFTorCollection {
     return std::make_pair(canTorType, mmffTorParams);
   }
 
- private:
-  //! to force this to be a singleton, the constructor must be private
-  MMFFTorCollection(const bool isMMFFs, std::string mmffTor);
-  static class std::unique_ptr<MMFFTorCollection>
-      ds_instance[2];  //!< the singleton
+  MMFFTorCollection(const bool isMMFFs, std::string mmffTor="");
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<
       const unsigned int,
@@ -1410,28 +1094,11 @@ class RDKIT_FORCEFIELD_EXPORT MMFFTorCollection {
 class RDKIT_FORCEFIELD_EXPORT MMFFVdWCollection {
  public:
   //! gets a pointer to the singleton MMFFVdWCollection
-  /*!
-    \param mmffVdW (optional) a string with parameter data. See
-     below for more information about this argument
-
-    \return a pointer to the singleton MMFFVdWCollection
-
-    <b>Notes:</b>
-      - do <b>not</b> delete the pointer returned here
-      - if the singleton MMFFVdWCollection has already been instantiated and
-        \c mmffVdW is empty, the singleton will be returned.
-      - if \c mmffVdW is empty and the singleton MMFFVdWCollection has
-        not yet been instantiated, the default parameters (from Params.cpp)
-        will be used.
-      - if \c mmffVdW is supplied, a new singleton will be instantiated.
-        The current instantiation (if there is one) will be deleted.
-  */
   double power;
   double B;
   double Beta;
   double DARAD;
   double DAEPS;
-  static MMFFVdWCollection *getMMFFVdW(const std::string &mmffVdW = "");
   //! Looks up the parameters for a particular key and returns them.
   /*!
     \return a pointer to the MMFFVdW object, NULL on failure.
@@ -1454,11 +1121,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFVdWCollection {
 #endif
   }
 
- private:
-  //! to force this to be a singleton, the constructor must be private
-  MMFFVdWCollection(std::string mmffVdW);
-  static class std::unique_ptr<MMFFVdWCollection>
-      ds_instance;  //!< the singleton
+  MMFFVdWCollection(std::string mmffVdW="");
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int, MMFFVdW> d_params;  //!< the parameter map
 #else

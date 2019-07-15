@@ -32,6 +32,9 @@
 - The uncharging method in the MolStandardizer now attempts to generate
   canonical results for a given molecule. This may result in different output
   for some molecules.
+- When loading SDF files in using PandasTools.LoadSDF, we now default to 
+  producing isometric smiles in pandas tables.  To reproduce the original
+  behavior, use isomericSmiles=False in the call to the function.
   
 ## Highlights:
 - There's now a Japanese translation of large parts of the RDKit documentation

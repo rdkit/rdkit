@@ -153,6 +153,10 @@ class TestCase(unittest.TestCase):
           # http://chemistrycompass.com/chemsearch/58909/
           mol = Chem.MolFromSmiles("O=C(Cn1cnc2c1c(=O)n(C)c(=O)n2C)N/N=C/c1c(O)ccc2c1cccc2")
           entry = catalog.GetFirstMatch(mol)
+          prop_list = entry.GetPropList()
+          self.assertTrue("Reference" in prop_list)
+          self.assertTrue("Scope" in prop_list)
+          self.assertTrue("FilterSet" in prop_list)
           for key in entry.GetPropList():
             if key == "Reference":
               self.assertEquals(
@@ -163,6 +167,8 @@ class TestCase(unittest.TestCase):
                 "doi:10.1021/jm901137j.")
             elif key == "Scope":
               self.assertEquals(entry.GetProp(key), "PAINS filters (family A)")
+            elif key == "FilterSet":
+              self.assertEquals(entry.GetProp(key), "PAINS_A")
 
           self.assertEqual(entry.GetDescription(), "hzone_phenol_A(479)")
           result = catalog.GetMatches(mol)

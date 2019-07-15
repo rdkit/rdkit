@@ -43,10 +43,11 @@ Atom::Atom(const std::string &what) : RDProps() {
   initAtom();
 };
 
-Atom::Atom(const Atom &other) : RDProps(other) {
+void Atom::initFromOther(const Atom &other) {
+  RDProps::operator=(other);
   // NOTE: we do *not* copy ownership!
-  d_atomicNum = other.d_atomicNum;
   dp_mol = nullptr;
+  d_atomicNum = other.d_atomicNum;
   d_index = 0;
   d_formalCharge = other.d_formalCharge;
   df_noImplicit = other.df_noImplicit;
@@ -65,6 +66,15 @@ Atom::Atom(const Atom &other) : RDProps(other) {
     dp_monomerInfo = nullptr;
   }
 }
+
+Atom::Atom(const Atom &other) : RDProps() { initFromOther(other); }
+
+Atom &Atom::operator=(const Atom &other) {
+  if (this == &other) return *this;
+  initFromOther(other);
+  return *this;
+}
+
 void Atom::initAtom() {
   df_isAromatic = false;
   df_noImplicit = false;

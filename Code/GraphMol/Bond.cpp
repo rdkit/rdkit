@@ -42,11 +42,13 @@ Bond::Bond(const Bond &other) : RDProps(other) {
 Bond::~Bond() { delete dp_stereoAtoms; }
 
 Bond &Bond::operator=(const Bond &other) {
+  if (this == &other) return *this;
   dp_mol = other.dp_mol;
   d_bondType = other.d_bondType;
   d_beginAtomIdx = other.d_beginAtomIdx;
   d_endAtomIdx = other.d_endAtomIdx;
   d_dirTag = other.d_dirTag;
+  delete dp_stereoAtoms;
   if (other.dp_stereoAtoms) {
     dp_stereoAtoms = new INT_VECT(*other.dp_stereoAtoms);
   } else {
@@ -55,7 +57,7 @@ Bond &Bond::operator=(const Bond &other) {
   df_isAromatic = other.df_isAromatic;
   df_isConjugated = other.df_isConjugated;
   d_index = other.d_index;
-  dp_props = other.dp_props;
+  d_props = other.d_props;
 
   return *this;
 }
@@ -117,9 +119,8 @@ Atom *Bond::getOtherAtom(Atom const *what) const {
 double Bond::getBondTypeAsDouble() const {
   switch (getBondType()) {
     case UNSPECIFIED:
-      return 0;
-      break;
     case IONIC:
+    case ZERO:
       return 0;
       break;
     case SINGLE:
@@ -164,9 +165,6 @@ double Bond::getBondTypeAsDouble() const {
     case DATIVE:
       return 1.0;
       break;  // FIX: again probably wrong
-    case ZERO:
-      return 0;
-      break;
     default:
       UNDER_CONSTRUCTION("Bad bond type");
   }
@@ -175,9 +173,8 @@ double Bond::getBondTypeAsDouble() const {
 double Bond::getValenceContrib(const Atom *atom) const {
   switch (getBondType()) {
     case UNSPECIFIED:
-      return 0;
-      break;
     case IONIC:
+    case ZERO:
       return 0;
       break;
     case SINGLE:
@@ -227,9 +224,6 @@ double Bond::getValenceContrib(const Atom *atom) const {
         return 1.0;
       else
         return 0.0;
-      break;
-    case ZERO:
-      return 0;
       break;
     default:
       UNDER_CONSTRUCTION("Bad bond type");
@@ -297,7 +291,7 @@ void Bond::setStereoAtoms(unsigned int bgnIdx, unsigned int endIdx) {
   atoms.push_back(endIdx);
 };
 
-};  // end o' namespace
+};  // namespace RDKit
 
 std::ostream &operator<<(std::ostream &target, const RDKit::Bond &bond) {
   target << bond.getIdx() << " ";
