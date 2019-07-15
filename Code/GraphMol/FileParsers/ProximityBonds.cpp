@@ -82,7 +82,7 @@ bool IsBlacklistedPair(Atom *beg_atom, Atom *end_atom) {
     if (IsBlacklistedAtom(beg_atom) || IsBlacklistedAtom(end_atom)) return true;
     // Dont make bonds to waters
     if (beg_info->getResidueName() == "HOH" ||
-        beg_info->getResidueName() == "HOH")
+        end_info->getResidueName() == "HOH")
       return true;
   }
   return false;
@@ -162,6 +162,7 @@ static void ConnectTheDots_Large(RWMol *mol, unsigned int flags) {
   unsigned int count = mol->getNumAtoms();
   ProximityEntry *tmp =
       (ProximityEntry *)malloc(count * sizeof(ProximityEntry));
+      CHECK_INVARIANT(tmp,"bad allocation");
   PeriodicTable *table = PeriodicTable::getTable();
   Conformer *conf = &mol->getConformer();
 

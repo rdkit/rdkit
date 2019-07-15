@@ -192,6 +192,19 @@ class ReadWriteMol : public RWMol {
     PRECONDITION(bond, "bad bond");
     replaceBond(idx, bond, preserveProps);
   };
+  void SetStereoGroups(python::list &stereo_groups) {
+    std::vector<StereoGroup> groups;
+    pythonObjectToVect<StereoGroup>(stereo_groups, groups);
+    for (const auto group : groups) {
+      for (const auto atom : group.getAtoms()) {
+        if (!atom) throw_value_error("NULL atom in StereoGroup");
+        if (&atom->getOwningMol() != this)
+          throw_value_error(
+              "atom in StereoGroup does not belong to this molecule.");
+      }
+    }
+    setStereoGroups(std::move(groups));
+  }
   ROMol *GetMol() const {
     auto *res = new ROMol(*this);
     return res;
@@ -238,8 +251,7 @@ struct mol_wrapper {
         .export_values();
     ;
 
-    python::class_<std::vector<StereoGroup>>("StereoGroupVector")
-        .def(python::vector_indexing_suite<std::vector<StereoGroup>>());
+    RegisterVectorConverter<StereoGroup>("StereoGroup_vect");
 
     python::def("GetDefaultPickleProperties",
                 MolPickler::getDefaultPickleProperties,
@@ -528,7 +540,9 @@ struct mol_wrapper {
              (python::arg("self"), python::arg("query"),
               python::arg("params") = true))
         .def("GetSubstructMatch",
-             (PyObject * (*)(const ROMol &m, const MolBundle &query, const SubstructMatchParameters &))helpGetSubstructMatch,
+             (PyObject * (*)(const ROMol &m, const MolBundle &query,
+                             const SubstructMatchParameters &))
+                 helpGetSubstructMatch,
              (python::arg("self"), python::arg("query"), python::arg("params")))
         .def("GetSubstructMatches",
              (PyObject * (*)(const ROMol &m, const MolBundle &query,
@@ -788,6 +802,9 @@ struct mol_wrapper {
         .def("GetMol", &ReadWriteMol::GetMol,
              "Returns a Mol (a normal molecule)",
              python::return_value_policy<python::manage_new_object>())
+
+        .def("SetStereoGroups", &ReadWriteMol::SetStereoGroups,
+             (python::arg("stereo_groups")), "Set the stereo groups")
 
         // enable pickle support
         .def_pickle(mol_pickle_suite());

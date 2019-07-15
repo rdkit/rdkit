@@ -18,6 +18,8 @@
 
 #ifndef __BGL_VF2_SUB_STATE_H__
 #define __BGL_VF2_SUB_STATE_H__
+//#define RDK_VF2_PRUNING
+#define RDK_ADJ_ITER typename Graph::adjacency_iterator
 
 namespace boost{
   namespace detail {
@@ -27,6 +29,16 @@ namespace boost{
       node_id id;
       node_id in;
       node_id out;
+    };
+    
+    template <class Graph>
+    struct Pair {
+      node_id n1, n2;
+      bool hasiter;
+      RDK_ADJ_ITER nbrbeg, nbrend;
+      
+      Pair() : n1(NULL_NODE), n2(NULL_NODE), hasiter(false) {
+      }
     };
 
     /**
@@ -127,17 +139,13 @@ namespace boost{
       MatchChecking &mc;
       unsigned int n1, n2;
 
-      unsigned int core_len, orig_core_len;
-      unsigned int added_node1;
-      unsigned int t1both_len, t2both_len;
-      unsigned int t1in_len, t1out_len; 
-      unsigned int t2in_len, t2out_len; // Core nodes are also counted by these...
+      unsigned int core_len;
+      unsigned int t1_len;
+      unsigned int t2_len; // Core nodes are also counted by these...
       node_id *core_1;
       node_id *core_2;
-      node_id *in_1;
-      node_id *in_2;
-      node_id *out_1;
-      node_id *out_2;
+      node_id *term_1;
+      node_id *term_2;
 
       node_id *order;
 
@@ -157,29 +165,23 @@ namespace boost{
           order = NULL;
         }
 
-        core_len=orig_core_len=0;
-        t1both_len=t1in_len=t1out_len=0;
-        t2both_len=t2in_len=t2out_len=0;
-
-        added_node1=NULL_NODE;
+        core_len=0;
+        t1_len=0;
+        t2_len=0;
 
         core_1=new node_id[n1];
         core_2=new node_id[n2];
-        in_1=new node_id[n1];
-        in_2=new node_id[n2];
-        out_1=new node_id[n1];
-        out_2=new node_id[n2];
+        term_1=new node_id[n1];
+        term_2=new node_id[n2];
         share_count = new long;
 
         for(unsigned int i=0; i<n1; i++){
           core_1[i]=NULL_NODE;
-          in_1[i]=0;
-          out_1[i]=0;
+          term_1[i]=0;
         }
         for(unsigned int i=0; i<n2; i++){
           core_2[i]=NULL_NODE;
-          in_2[i]=0;
-          out_2[i]=0;
+          term_2[i]=0;
         }
         vs_compared=0;
         //vs_compared = new int[n1*n2];
@@ -195,22 +197,14 @@ namespace boost{
         //es_compared(state.es_compared)
       {
 
-        core_len=orig_core_len=state.core_len;
-        t1in_len=state.t1in_len;
-        t1out_len=state.t1out_len;
-        t1both_len=state.t1both_len;
-        t2in_len=state.t2in_len;
-        t2out_len=state.t2out_len;
-        t2both_len=state.t2both_len;
-
-        added_node1=NULL_NODE;
+        core_len=state.core_len;
+        t1_len=state.t1_len;
+        t2_len=state.t2_len;
 
         core_1=state.core_1;
         core_2=state.core_2;
-        in_1=state.in_1;
-        in_2=state.in_2;
-        out_1=state.out_1;
-        out_2=state.out_2;
+        term_1=state.term_1;
+        term_2=state.term_2;
         share_count=state.share_count;
 
         ++(*share_count);
@@ -220,10 +214,8 @@ namespace boost{
         if (-- *share_count == 0) {
           delete [] core_1;
           delete [] core_2;
-          delete [] in_1;
-          delete [] out_1;
-          delete [] in_2;
-          delete [] out_2;
+          delete [] term_1;
+          delete [] term_2;
           delete share_count;
           delete [] order;
           //delete [] vs_compared;
@@ -236,22 +228,19 @@ namespace boost{
         return mc(c1,c2);
       };
       bool IsDead() { return n1>n2  || 
-          t1both_len>t2both_len ||
-          t1out_len>t2out_len ||
-          t1in_len>t2in_len;
+          t1_len>t2_len;
       };
       unsigned int CoreLen() { return core_len; }
       Graph *GetGraph1() { return g1; }
       Graph *GetGraph2() { return g2; }
 
-      bool NextPair(node_id *pn1, node_id *pn2,
-                    node_id prev_n1=NULL_NODE, node_id prev_n2=NULL_NODE){
-        if (prev_n1==NULL_NODE)
-          prev_n1=0;
-        if (prev_n2==NULL_NODE)
-          prev_n2=0;
+      bool NextPair(Pair<Graph> &pair){
+        if (pair.n1==NULL_NODE)
+          pair.n1=0;
+        if (pair.n2==NULL_NODE)
+          pair.n2=0;
         else
-          prev_n2++;
+          pair.n2++;
 
 #if 0
     std::cerr<<" **** np: "<< prev_n1<<","<<prev_n2<<std::endl;
@@ -266,75 +255,78 @@ namespace boost{
     } 
     std::cerr<<std::endl;
 #endif
-        if (t1both_len>core_len && t2both_len>core_len) {
-          while (prev_n1<n1 &&
-                 (core_1[prev_n1]!=NULL_NODE || out_1[prev_n1]==0
-                  || in_1[prev_n1]==0) ) {
-            prev_n1++;    
-            prev_n2=0;
+        if (t1_len>core_len && t2_len>core_len) {
+          while (pair.n1<n1 &&
+                 (core_1[pair.n1]!=NULL_NODE || term_1[pair.n1]==0) ) {
+            pair.n1++;
+            pair.n2=0;
+          }
+          
+          /* Initialize VF2 Plus neighbor iterator.
+           * The next query node (pair.n1) has been selected from the terminal
+           * set and is therefore adjacent to an already mapped atom (in
+           * core_1). Rather than select pair.n2 from all atoms (0...n2) we can
+           * select it from the neighbors of this mapped atom (0...deg(nbor))
+           * since it must also be adajcent to this mapped atom!
+           */
+          if (!pair.hasiter) {
+            RDK_ADJ_ITER n1iter_beg, n1iter_end;
+            boost::tie(n1iter_beg, n1iter_end)
+            = boost::adjacent_vertices(pair.n1,*g1);
+
+            while (n1iter_beg!=n1iter_end && core_1[*n1iter_beg]==NULL_NODE)
+              ++n1iter_beg;
+
+            assert(n1iter_beg!=n1iter_end);
+
+            boost::tie(pair.nbrbeg, pair.nbrend)
+              = boost::adjacent_vertices(core_1[*n1iter_beg],*g2);
+            pair.hasiter = true;
           }
         }
-        else if (t1out_len>core_len && t2out_len>core_len) {
-          while (prev_n1<n1 &&
-                 (core_1[prev_n1]!=NULL_NODE || out_1[prev_n1]==0) ){
-            prev_n1++;    
-            prev_n2=0;
-          }
-        }
-        else if (t1in_len>core_len && t2in_len>core_len) {
-          while (prev_n1<n1 &&
-                 (core_1[prev_n1]!=NULL_NODE || in_1[prev_n1]==0) ) {
-            prev_n1++;    
-            prev_n2=0;
-          }
-        }
-        else if (prev_n1==0 && order!=NULL) {
+        else if (pair.n1==0 && order!=NULL) {
+          // Optimisation: if the order vector is laid out in a DFS/BFS then this
+          // loop can be replaced with:
+          //   pair.n1=order[core_len];
+          // :)
           unsigned int i=0;
-          while (i<n1 && core_1[prev_n1=order[i]] != NULL_NODE)
+          while (i<n1 && core_1[pair.n1=order[i]] != NULL_NODE)
             i++;
           if (i==n1)
-            prev_n1=n1;
+            pair.n1=n1;
         }
         else {
-          while (prev_n1<n1 && core_1[prev_n1]!=NULL_NODE ){
-            prev_n1++;    
-            prev_n2=0;
+          while (pair.n1<n1 && core_1[pair.n1]!=NULL_NODE ){
+            pair.n1++;
+            pair.n2=0;
           }
         }
-
-        if (t1both_len>core_len && t2both_len>core_len) {
-          while (prev_n2<n2 &&
-                 (core_2[prev_n2]!=NULL_NODE || out_2[prev_n2]==0
-                  || in_2[prev_n2]==0) ) {
-            prev_n2++;    
+        
+        /* VF2 Plus iterator available? */
+        if (pair.hasiter) {
+          while (pair.nbrbeg < pair.nbrend && core_2[*pair.nbrbeg]!=NULL_NODE) {
+            ++pair.nbrbeg;
           }
+          
+          if (pair.nbrbeg < pair.nbrend)
+            pair.n2=*pair.nbrbeg;
+          else
+            pair.n2=n2;
+          
+          ++pair.nbrbeg;
         }
-        else if (t1out_len>core_len && t2out_len>core_len) {
-          while (prev_n2<n2 &&
-                 (core_2[prev_n2]!=NULL_NODE || out_2[prev_n2]==0) ) {
-            prev_n2++;    
-          }
-        }
-        else if (t1in_len>core_len && t2in_len>core_len) {
-          while (prev_n2<n2 &&
-                 (core_2[prev_n2]!=NULL_NODE || in_2[prev_n2]==0) ) {
-            prev_n2++;    
+        else if (t1_len>core_len && t2_len>core_len) {
+          while (pair.n2<n2 &&
+                 (core_2[pair.n2]!=NULL_NODE || term_2[pair.n2]==0) ) {
+            pair.n2++;
           }
         }
         else {
-          while (prev_n2<n2 && core_2[prev_n2]!=NULL_NODE ){
-            prev_n2++;    
+          while (pair.n2<n2 && core_2[pair.n2]!=NULL_NODE ){
+            pair.n2++;
           }
         }
-        //std::cerr<<" "<< prev_n1<<"<"<<n1<<" "<<prev_n2<<"<"<<n2;
-        if (prev_n1<n1 && prev_n2<n2) {
-          *pn1=prev_n1;
-          *pn2=prev_n2;
-          //std::cerr<<"  Found"<<std::endl;
-          return true;
-        }
-        //std::cerr<<"  nope"<< std::endl;
-        return false;
+        return pair.n1 < n1 && pair.n2 < n2;
       };
       bool IsFeasiblePair(node_id node1, node_id node2){
         assert(node1 < n1);
@@ -351,11 +343,17 @@ namespace boost{
         //   //std::cerr<<"  short1"<<std::endl;
         //   return false;
         // }
+        
+        // O(1) check for adjacency list
+        if (boost::out_degree(node1,*g1)>boost::out_degree(node2,*g2))
+          return false;
         if(!vc(node1,node2)) return false;
 
         unsigned int other1, other2;
-        unsigned int termout1 = 0, termout2 = 0, termin1 = 0, termin2 = 0;
+#ifdef RDK_VF2_PRUNING
+        unsigned int term1 = 0, term2 = 0;
         unsigned int new1 = 0, new2 = 0;
+#endif
 
         // Check the out edges of node1
         typename Graph::out_edge_iterator bNbrs,eNbrs;
@@ -371,14 +369,17 @@ namespace boost{
               //std::cerr<<"  short2"<<std::endl;
               return false;
             }
-          } else {
-            if (in_1[other1]) ++termin1;
-            if (out_1[other1]) ++termout1;
-            if (!in_1[other1] && !out_1[other1]) ++new1;
           }
+#ifdef RDK_VF2_PRUNING
+          else {
+            if (term_1[other1]) ++term1;
+            if (!term_1[other1]) ++new1;
+          }
+#endif
           ++bNbrs;
         }
 
+#ifdef RDK_VF2_PRUNING
         // Check the out edges of node2
         boost::tie(bNbrs,eNbrs) = boost::out_edges(node2,*g2);
         while(bNbrs!=eNbrs){
@@ -386,15 +387,19 @@ namespace boost{
           if (core_2[other2] != NULL_NODE) {
             // do nothing
           } else {
-            if (in_2[other2]) ++termin2;
-            if (out_2[other2]) ++termout2;
-            if (!in_2[other2] && !out_2[other2]) ++new2;
+            if (term_2[other2]) ++term2;
+            if (!term_2[other2]) ++new2;
           }
           ++bNbrs;
         }
         //std::cerr<<(termin1 <= termin2 && termout1 <= termout2 && (termin1+termout1+new1)<=(termin2+termout2+new2))<<std::endl;
 
-        return termin1 <= termin2 && termout1 <= termout2 && (termin1+termout1+new1)<=(termin2+termout2+new2);
+        // n.b. term1+new1 == boost::out_degree(node1) and
+        //      term2+new2 == boost::out_degree(node2)
+        return term1 <= term2 && (term1+new1)<=(term2+new2);
+#else
+        return true;
+#endif
       };
       void AddPair(node_id node1, node_id node2){
         assert(node1 < n1);
@@ -403,30 +408,16 @@ namespace boost{
         assert(core_len < n2);
 
         ++core_len;
-        added_node1 = node1;
-
-        if (!in_1[node1]) {
-          in_1[node1] = core_len;
-          ++t1in_len;
-          if (out_1[node1]) ++t1both_len;
-        }
-        if (!out_1[node1]) {
-          out_1[node1] = core_len;
-          ++t1out_len;
-          if (in_1[node1]) ++t1both_len;
+        if (!term_1[node1]) {
+          term_1[node1] = core_len;
+          ++t1_len;
         }
 
-        if (!in_2[node2]) {
-          in_2[node2] = core_len;
-          ++t2in_len;
-          if (out_2[node2]) ++t2both_len;
+        if (!term_2[node2]) {
+          term_2[node2] = core_len;
+          ++t2_len;
         }
-        if (!out_2[node2]) {
-          out_2[node2] = core_len;
-          ++t2out_len;
-          if (in_2[node2]) ++t2both_len;
-        }
-
+        
         core_1[node1] = node2;
         core_2[node2] = node1;
 
@@ -435,15 +426,9 @@ namespace boost{
         boost::tie(bNbrs,eNbrs) = boost::out_edges(node1,*g1);
         while(bNbrs!=eNbrs){
           unsigned int other = getOtherIdx(*g1,*bNbrs,node1);
-          if (!in_1[other]) {
-            in_1[other] = core_len;
-            ++t1in_len;
-            if (out_1[other])  ++t1both_len;
-          }
-          if (!out_1[other]) {
-            out_1[other] = core_len;
-            ++t1out_len;
-            if (in_1[other])  ++t1both_len;
+          if (!term_1[other]) {
+            term_1[other] = core_len;
+            ++t1_len;
           }
           ++bNbrs;
         }
@@ -452,15 +437,9 @@ namespace boost{
         boost::tie(bNbrs,eNbrs) = boost::out_edges(node2,*g2);
         while(bNbrs!=eNbrs){
           unsigned int other = getOtherIdx(*g2,*bNbrs,node2);
-          if (!in_2[other]) {
-            in_2[other] = core_len;
-            ++t2in_len;
-            if (out_2[other]) ++t2both_len;
-          }
-          if (!out_2[other]) {
-            out_2[other] = core_len;
-            ++t2out_len;
-            if (in_2[other]) ++t2both_len;
+          if (!term_2[other]) {
+            term_2[other] = core_len;
+            ++t2_len;
           }
           ++bNbrs;
         }
@@ -479,43 +458,95 @@ namespace boost{
       VF2SubState *Clone(){
         return new VF2SubState(*this);
       };
-      void BackTrack(){
-        assert(core_len - orig_core_len <= 1);
-        assert(added_node1 != NULL_NODE);
-
-        if (orig_core_len < core_len) {
-
-          if (in_1[added_node1] == core_len) in_1[added_node1] = 0;
-          if (out_1[added_node1] == core_len)  out_1[added_node1] = 0;
-
-          typename Graph::out_edge_iterator bNbrs,eNbrs;
-          boost::tie(bNbrs,eNbrs) = boost::out_edges(added_node1,*g1);
-          while(bNbrs!=eNbrs){
-            unsigned int other = getOtherIdx(*g1,*bNbrs,added_node1);
-            if (out_1[other] == core_len) out_1[other] = 0;
-            if (in_1[other] == core_len) in_1[other] = 0;
-            ++bNbrs;
-          }
-
-          unsigned int node2 = core_1[added_node1];
-          if (in_2[node2] == core_len) in_2[node2] = 0;
-          if (out_2[node2] == core_len) out_2[node2] = 0;
-
-          boost::tie(bNbrs,eNbrs) = boost::out_edges(node2,*g2);
-          while(bNbrs!=eNbrs){
-            unsigned int other = getOtherIdx(*g2,*bNbrs,node2);
-            if (out_2[other] == core_len) out_2[other] = 0;
-            if (in_2[other] == core_len) in_2[other] = 0;
-            ++bNbrs;
-          }
-
-          core_1[added_node1] = NULL_NODE;
-          core_2[node2] = NULL_NODE;
-
-          core_len = orig_core_len;
-          added_node1 = NULL_NODE;
+      void BackTrack(node_id node1, node_id node2){
+        if (term_1[node1] == core_len) {
+          term_1[node1] = 0;
+          --t1_len;
         }
+
+        typename Graph::out_edge_iterator bNbrs,eNbrs;
+        boost::tie(bNbrs,eNbrs) = boost::out_edges(node1,*g1);
+        while(bNbrs!=eNbrs){
+          unsigned int other = getOtherIdx(*g1,*bNbrs,node1);
+          if (term_1[other] == core_len) {
+            term_1[other] = 0;
+            --t1_len;
+          }
+          ++bNbrs;
+        }
+
+        if (term_2[node2] == core_len) {
+          term_2[node2] = 0;
+          --t2_len;
+        }
+
+        boost::tie(bNbrs,eNbrs) = boost::out_edges(node2,*g2);
+        while(bNbrs!=eNbrs){
+          unsigned int other = getOtherIdx(*g2,*bNbrs,node2);
+          if (term_2[other] == core_len) {
+            term_2[other] = 0;
+            --t2_len;
+          }
+          ++bNbrs;
+        }
+
+        core_1[node1] = NULL_NODE;
+        core_2[node2] = NULL_NODE;
+        --core_len;
       };
+      bool Match(node_id c1[], node_id c2[])
+      {
+        if (IsGoal()) {
+          GetCoreSet(c1, c2);
+          if(MatchChecks(c1,c2))
+            return true;
+        }
+        
+        if (IsDead())
+          return false;
+        
+        Pair<Graph> pair;
+        while (NextPair(pair)) {
+          if (IsFeasiblePair(pair.n1, pair.n2)){
+            AddPair(pair.n1, pair.n2);
+            if (Match(c1, c2)) // recurse
+              return true;
+            BackTrack(pair.n1, pair.n2);
+          }
+        }
+        return false;
+      }
+      
+      template <class DoubleBackInsertionSequence>
+      bool MatchAll(node_id c1[], node_id c2[],
+                    DoubleBackInsertionSequence &res, unsigned int lim=0)
+      {
+        if (IsGoal()) {
+          GetCoreSet(c1, c2);
+          if(MatchChecks(c1,c2)) {
+            typename DoubleBackInsertionSequence::value_type newSeq;
+            for(unsigned int i=0;i<core_len;++i){
+              newSeq.push_back(std::pair<int,int>(c1[i],c2[i]));
+            }
+            res.push_back(newSeq);
+            return lim && res.size() >= lim;
+          }
+        }
+        
+        if (IsDead())
+          return false;
+        
+        Pair<Graph> pair;
+        while (NextPair(pair)) {
+          if (IsFeasiblePair(pair.n1, pair.n2)){
+            AddPair(pair.n1, pair.n2);
+            if (MatchAll(c1, c2, res, lim)) // recurse
+              return true;
+            BackTrack(pair.n1, pair.n2);
+          }
+        }
+        return false;
+      }
     };
 
     /*-------------------------------------------------------------
@@ -530,31 +561,12 @@ namespace boost{
     template <class SubState>
     bool match(int *pn, node_id c1[], node_id c2[], SubState &s)
     {
-      if (s.IsGoal() ) { 
-        s.GetCoreSet(c1, c2);
-        if(s.MatchChecks(c1,c2)) {
-          *pn=s.CoreLen();
-          return true;
-        }
+      if (s.Match(c1, c2)) {
+        // not needed, pn = num query atoms (n1)...
+        *pn=s.CoreLen();
+        return true;
       }
-
-      if (s.IsDead())
-        return false;
-      //std::cerr<<"  > match: "<<*pn<<" "<<&s<<std::endl;
-      node_id n1=NULL_NODE, n2=NULL_NODE;
-      bool found=false;
-      while (!found && s.NextPair(&n1, &n2, n1, n2)) {
-        //std::cerr<<"           "<<n1<<","<<n2<<std::endl;
-        if (s.IsFeasiblePair(n1, n2)){
-          SubState *s1=s.Clone();
-          s1->AddPair(n1, n2);
-          found=match(pn, c1, c2, *s1);
-          s1->BackTrack();
-          delete s1;
-        }
-      }
-      //std::cerr<<"  < returning: "<<found<<" "<<*pn<<" "<<&s<<std::endl;
-      return found;
+      return false;
     }
 
     /*-------------------------------------------------------------
@@ -562,45 +574,15 @@ namespace boost{
      * Visits all the matchings between two graphs,  starting
      * from state s.
      * Returns true if the caller must stop the visit.
-     * Stops when there are no more matches
+     * Stops when max_results is reached, set max_results to 0 to
+     * keep going until there are no more matches
      *
      ------------------------------------------------------------*/
     template <class SubState,class DoubleBackInsertionSequence>
     bool match(node_id c1[], node_id c2[], SubState &s, DoubleBackInsertionSequence &res,
                unsigned int max_results) {
-      if (s.IsGoal()){
-        s.GetCoreSet(c1, c2);
-        if(s.MatchChecks(c1,c2)) {
-          typename DoubleBackInsertionSequence::value_type newSeq;
-          for(unsigned int i=0;i<s.CoreLen();++i){
-            newSeq.push_back(std::pair<int,int>(c1[i],c2[i]));
-          }
-          res.push_back(newSeq);
-          if(res.size()>=max_results) return true;
-        }
-        return false;
-      }
-
-      if (s.IsDead())
-        return false;
-
-      node_id n1=NULL_NODE, n2=NULL_NODE;
-      while (s.NextPair(&n1, &n2, n1, n2)) {
-        if (s.IsFeasiblePair(n1, n2)){
-          SubState *s1=s.Clone();
-          s1->AddPair(n1, n2);
-          if (match(c1, c2, *s1,res,max_results)){
-            s1->BackTrack(); 
-            delete s1;
-            return true;
-          }
-          else {
-            s1->BackTrack(); 
-            delete s1;
-          }
-        }
-      }
-      return false;
+      s.MatchAll(c1, c2, res, max_results);
+      return !res.empty();
     }
   }; //end of namespace detail
 
@@ -663,3 +645,5 @@ namespace boost{
 } // end of namespace boost
 #endif
 
+#undef RDK_VF2_PRUNING
+#undef RDK_ADJ_ITER

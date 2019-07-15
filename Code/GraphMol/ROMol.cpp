@@ -110,7 +110,7 @@ void ROMol::initFromOther(const ROMol &other, bool quickCopy, int confId) {
       addSubstanceGroup(*this, sg);
     }
 
-    dp_props = other.dp_props;
+    d_props = other.d_props;
 
     // Bookmarks should be copied as well:
     BOOST_FOREACH (ATOM_BOOKMARK_MAP::value_type abmI, other.d_atomBookmarks) {
@@ -124,16 +124,16 @@ void ROMol::initFromOther(const ROMol &other, bool quickCopy, int confId) {
       }
     }
   } else {
-    dp_props.reset();
+    d_props.reset();
     STR_VECT computed;
-    dp_props.setVal(RDKit::detail::computedPropName, computed);
+    d_props.setVal(RDKit::detail::computedPropName, computed);
   }
   // std::cerr<<"---------    done init from other: "<<this<<"
   // "<<&other<<std::endl;
 }
 
 void ROMol::initMol() {
-  dp_props.reset();
+  d_props.reset();
   dp_ringInfo = new RingInfo();
   // ok every molecule contains a property entry called
   // RDKit::detail::computedPropName
@@ -143,7 +143,7 @@ void ROMol::initMol() {
   // along
   // initialize this list to an empty vector of strings
   STR_VECT computed;
-  dp_props.setVal(RDKit::detail::computedPropName, computed);
+  d_props.setVal(RDKit::detail::computedPropName, computed);
 }
 
 unsigned int ROMol::getAtomDegree(const Atom *at) const {

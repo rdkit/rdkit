@@ -28,7 +28,8 @@ SmilesWriter::SmilesWriter(const std::string &fileName,
                            bool isomericSmiles, bool kekuleSmiles) {
   if (fileName != "-") {
     auto *tmpStream = new std::ofstream(fileName.c_str());
-    if (!tmpStream || !(*tmpStream) || (tmpStream->bad())) {
+    if (!(*tmpStream) || (tmpStream->bad())) {
+      delete tmpStream;
       std::ostringstream errout;
       errout << "Bad output file " << fileName;
       throw BadFileException(errout.str());

@@ -27,9 +27,11 @@ PDBMolSupplier::PDBMolSupplier(std::istream *inStream, bool takeOwnership,
 }
 
 PDBMolSupplier::PDBMolSupplier(const std::string &fileName, bool sanitize,
-                               bool removeHs, unsigned int flavor, bool proximityBonding) {
+                               bool removeHs, unsigned int flavor,
+                               bool proximityBonding) {
   auto *ifs = new std::ifstream(fileName.c_str(), std::ios_base::binary);
-  if (!ifs || !(*ifs) || ifs->bad()) {
+  if (!(*ifs) || ifs->bad()) {
+    delete ifs;
     std::ostringstream errout;
     errout << "Bad input file " << fileName;
     throw BadFileException(errout.str());
@@ -55,4 +57,4 @@ bool PDBMolSupplier::atEnd() {
   int ch = dp_inStream->peek();
   return ch == -1;
 }
-}
+}  // namespace RDKit

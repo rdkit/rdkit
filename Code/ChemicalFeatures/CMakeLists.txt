@@ -9,7 +9,8 @@ rdkit_headers(ChemicalFeature.h
 rdkit_test(testChemicalFeatures testChemicalFeatures.cpp 
            LINK_LIBRARIES ChemicalFeatures RDGeneral)
 
+if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
-
+endif()
 
 

@@ -30,4 +30,6 @@ set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES
         "${extra_clean_files};${TEST_OUTPUT_FILES}")
 
 
+if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
+endif()

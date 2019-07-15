@@ -59,6 +59,7 @@ class RDKIT_GRAPHMOL_EXPORT Conformer : public RDProps {
 
   //! Copy Constructor: initialize from a second conformation.
   Conformer(const Conformer &other);
+  Conformer &operator=(const Conformer &other);
 
   //! Destructor
   ~Conformer(){};
@@ -74,9 +75,9 @@ class RDKIT_GRAPHMOL_EXPORT Conformer : public RDProps {
   bool hasOwningMol() const { return dp_mol != nullptr; };
 
   //! Get the molecule that owns this instance
-  ROMol &getOwningMol() const {     
+  ROMol &getOwningMol() const {
     PRECONDITION(dp_mol, "no owner");
-    return *dp_mol; 
+    return *dp_mol;
   }
 
   //! Get a const reference to the vector of atom positions
@@ -139,6 +140,7 @@ class RDKIT_GRAPHMOL_EXPORT Conformer : public RDProps {
   unsigned int d_id;                 // id is the conformation
   ROMol *dp_mol;                     // owning molecule
   RDGeom::POINT3D_VECT d_positions;  // positions of the atoms
+  void initFromOther(const Conformer &conf);
 };
 
 typedef boost::shared_ptr<Conformer> CONFORMER_SPTR;

@@ -404,9 +404,7 @@ void parseCXExtensions(RDKit::RWMol &mol, const std::string &extText,
   bool ok = parser::parse_it(first, extText.end(), mol);
   if (!ok)
     throw RDKit::SmilesParseException("failure parsing CXSMILES extensions");
-  if (ok) {
-    processCXSmilesLabels(mol);
-  }
+  processCXSmilesLabels(mol);
 }
 }  // end of namespace SmilesParseOps
 namespace RDKit {

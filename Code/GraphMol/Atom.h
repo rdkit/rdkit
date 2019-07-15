@@ -103,6 +103,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   // PeriodicTable)
   explicit Atom(const std::string &what);
   Atom(const Atom &other);
+  Atom &operator=(const Atom &other);
   virtual ~Atom();
 
   //! makes a copy of this Atom and returns a pointer to it.
@@ -405,6 +406,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   ROMol *dp_mol;
   AtomMonomerInfo *dp_monomerInfo;
   void initAtom();
+  void initFromOther(const Atom &other);
 };
 
 //! Set the atom's MDL integer RLabel

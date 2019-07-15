@@ -957,12 +957,13 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
       atomVisitOrders, bondVisitOrders, atomRingClosures,
       atomTraversalBondOrder, bondsInPlay, bondSymbols, doRandom);
 
-  PRECONDITION(!molStack.empty(), "Empty stack.");
-  PRECONDITION(molStack.begin()->type == MOL_STACK_ATOM,
-               "Corrupted stack. First element should be an atom.");
+  CHECK_INVARIANT(!molStack.empty(), "Empty stack.");
+  CHECK_INVARIANT(molStack.begin()->type == MOL_STACK_ATOM,
+                  "Corrupted stack. First element should be an atom.");
 
   // collect some information about traversal order on chiral atoms
   bool *numSwapsChiralAtoms = (bool *)malloc(nAtoms * sizeof(bool));
+  CHECK_INVARIANT(numSwapsChiralAtoms, "failed to allocate memory");
   memset(numSwapsChiralAtoms, 0, nAtoms * sizeof(bool));
   if (doIsomericSmiles) {
     for (ROMol::AtomIterator atomIt = mol.beginAtoms();

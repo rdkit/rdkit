@@ -10,10 +10,10 @@
 
 #define NO_IMPORT_ARRAY
 #include <boost/python.hpp>
-#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include <string>
 
 // ours
+#include <RDBoost/Wrap.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/StereoGroup.h>
 
@@ -21,33 +21,58 @@ namespace python = boost::python;
 
 namespace RDKit {
 
+namespace {
 std::string stereoGroupClassDoc =
     "A collection of atoms with a defined stereochemical relationship.\n\n"
     "Used to help represent a sample with unknown stereochemistry, or that "
     "is a mix\nof diastereomers.\n";
 
+StereoGroup *createStereoGroup(StereoGroupType typ, ROMol& mol,
+                                python::object atomIds) {
+  std::vector<Atom *> cppAtoms;
+  python::stl_input_iterator<unsigned int> beg(atomIds), end;
+  while (beg != end) {
+    unsigned int v = *beg;
+    if (v >= mol.getNumAtoms())
+      throw_value_error("atom index exceeds mol.GetNumAtoms()");
+    cppAtoms.push_back(mol.getAtomWithIdx(v));
+    ++beg;
+  }
+  StereoGroup *sg = new StereoGroup(typ, cppAtoms);
+  return sg;
+}
+
+}  // namespace
+
 struct stereogroup_wrap {
   static void wrap() {
-    python::enum_<RDKit::StereoGroupType>(
-        "StereoGroupType")
+    python::enum_<RDKit::StereoGroupType>("StereoGroupType")
         .value("STEREO_ABSOLUTE", RDKit::StereoGroupType::STEREO_ABSOLUTE)
         .value("STEREO_OR", RDKit::StereoGroupType::STEREO_OR)
         .value("STEREO_AND", RDKit::StereoGroupType::STEREO_AND)
         .export_values();
 
-    python::class_<ROMol::ATOM_PTR_VECT>("AtomVector")
-        .def(python::vector_indexing_suite<ROMol::ATOM_PTR_VECT>());
+    RegisterVectorConverter<Atom *>("Atom_vect");
 
-    python::class_<StereoGroup, boost::shared_ptr<StereoGroup>> (
-        "StereoGroup", stereoGroupClassDoc.c_str(), python::init<>())
+    python::class_<StereoGroup, boost::shared_ptr<StereoGroup>>(
+        "StereoGroup", stereoGroupClassDoc.c_str(), python::no_init)
         .def("GetGroupType", &StereoGroup::getGroupType,
              "Returns the StereoGroupType.\n")
         .def("GetAtoms", &StereoGroup::getAtoms,
              "Access the atoms in the StereoGroup.\n",
              python::return_internal_reference<
                  1, python::with_custodian_and_ward_postcall<0, 1>>());
+
+    python::def("CreateStereoGroup", &createStereoGroup,
+                "creates a StereoGroup associated with a molecule from a list "
+                "of atom Ids",
+                (python::arg("stereoGroupType"), python::arg("mol"), python::arg("atomIds")),
+                python::return_value_policy<
+                    python::manage_new_object,
+                    python::with_custodian_and_ward_postcall<0, 2>>());
+
   }
 };
-}
+}  // namespace RDKit
 
 void wrap_stereogroup() { RDKit::stereogroup_wrap::wrap(); }

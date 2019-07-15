@@ -64,13 +64,24 @@ void FilterCatalogParams::fillCatalog(FilterCatalog &catalog) const {
     const unsigned int propEntries = GetNumPropertyEntries(catalogToAdd);
     // XXX Fix Me -> these should probably be shared to save memory
     const FilterProperty_t *props = GetFilterProperties(catalogToAdd);
-
+    CHECK_INVARIANT(props, "No filter properties for catalog");
+    
     for (unsigned int i = 0; i < entries; ++i) {
       const FilterData_t &data = GetFilterData(catalogToAdd)[i];
       FilterCatalogEntry *entry =
           MakeFilterCatalogEntry(data, propEntries, props);
-      PRECONDITION(entry, "Bad Entry data");
-      if (entry) catalog.addEntry(entry);  // catalog owns entry
+
+      if (entry) {
+	catalog.addEntry(entry);  // catalog owns entry
+      } else {
+	std::string catalog_name = "Unnamed internal catalog";
+	for(unsigned int i=0; i<propEntries; ++i) {
+	  if (std::string("FilterSet") == props[i].key) {
+	    catalog_name = props[i].value;
+	  }
+	}
+	throw ValueErrorException(std::string("Bad entry in built-in filter catalog: ") + catalog_name);
+      }
     }
   }
 }
@@ -149,9 +160,10 @@ const FilterCatalog::entryType_t *FilterCatalog::getEntryWithIdx(
 }
 
 FilterCatalog::CONST_SENTRY FilterCatalog::getEntry(unsigned int idx) const {
-  PRECONDITION(idx < d_entries.size(), "Index out of bounds");
-  if (idx < d_entries.size()) return d_entries[idx];
-  return CONST_SENTRY();
+  if(idx >= d_entries.size())
+    throw IndexErrorException(idx);
+
+  return d_entries[idx];
 }
 
 bool FilterCatalog::removeEntry(unsigned int idx) {

@@ -462,7 +462,7 @@ Cl[*:2]
       }
     }
     delete core;
-    // std::cerr<<ss.str()<<std::endl;
+    // std::cerr << ss.str() << std::endl;
     TEST_ASSERT(ss.str() == R"RES(Rgroup===Core
 Cc1c([*:1])cccc1[*:2]
 Cc1c([*:1])cccc1[*:2]
@@ -477,6 +477,21 @@ Rgroup===R2
 [H][*:2]
 [H][*:2]
 [H][*:2]
+F[*:2]
+)RES" || ss.str() == R"RES(Rgroup===Core
+Cc1c([*:1])cccc1[*:2]
+Cc1c([*:1])cccc1[*:2]
+Cc1c([*:1])cccc1[*:2]
+Cc1c([*:1])cccc1[*:2]
+Rgroup===R1
+[H][*:1]
+[H][*:1]
+[H][*:1]
+F[*:1]
+Rgroup===R2
+[H][*:2]
+F[*:2]
+F[*:2]
 F[*:2]
 )RES");
   }
@@ -845,16 +860,20 @@ $$$$)CTAB";
     RGroupRows rows = decomp.getRGroupsAsRows();
 
     const char *expected[4] = {
-      "Core:N1C(N([*:2])[*:4])C2C(NC1[*:1])[*:5]C([*:3])[*:6]2 R2:C(CC[*:2])CC[*:4] R4:C(CC[*:2])CC[*:4] R5:N([*:5])[*:5] R6:C([*:6])[*:6]",
-      "Core:N1C(N([*:2])[*:4])C2C(NC1[*:1])[*:5]C([*:3])[*:6]2 R2:C[*:2] R4:[H][*:4] R5:S([*:5])[*:5] R6:CC(C)C([*:6])[*:6]",
-      "Core:C1C([*:1])NC(N([*:2])[*:6])C2C1[*:5]C([*:3])[*:6]2 R2:C[*:2] R4:[H][*:4] R5:S([*:5])[*:5] R6:CC(C)C([*:6])[*:6]",
-      "Core:C1C([*:1])NC(N([*:2])[*:6])C2C1[*:5]C([*:3])[*:6]2 R2:[H][*:2] R4:[H][*:4] R5:CN([*:5])[*:5] R6:N([*:6])[*:6]"
-    };
+        "Core:N1C(N([*:2])[*:4])C2C(NC1[*:1])[*:5]C([*:3])[*:6]2 "
+        "R2:C(CC[*:2])CC[*:4] R4:C(CC[*:2])CC[*:4] R5:N([*:5])[*:5] "
+        "R6:C([*:6])[*:6]",
+        "Core:N1C(N([*:2])[*:4])C2C(NC1[*:1])[*:5]C([*:3])[*:6]2 R2:C[*:2] "
+        "R4:[H][*:4] R5:S([*:5])[*:5] R6:CC(C)C([*:6])[*:6]",
+        "Core:C1C([*:1])NC(N([*:2])[*:6])C2C1[*:5]C([*:3])[*:6]2 R2:C[*:2] "
+        "R4:[H][*:4] R5:S([*:5])[*:5] R6:CC(C)C([*:6])[*:6]",
+        "Core:C1C([*:1])NC(N([*:2])[*:6])C2C1[*:5]C([*:3])[*:6]2 R2:[H][*:2] "
+        "R4:[H][*:4] R5:CN([*:5])[*:5] R6:N([*:6])[*:6]"};
 
     int i = 0;
     for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
          ++it, ++i) {
-      TEST_ASSERT(i<4);
+      TEST_ASSERT(i < 4);
       CHECK_RGROUP(it, expected[i]);
     }
   }

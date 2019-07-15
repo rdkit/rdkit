@@ -3,7 +3,6 @@ steps:
   displayName: Setup build environment
 - script: |
     conda config --set always_yes yes --set changeps1 no
-    conda update -q conda
     conda info -a
     conda create --name rdkit_build $(compiler) cmake ^
         boost-cpp=$(boost_version) boost=$(boost_version) ^

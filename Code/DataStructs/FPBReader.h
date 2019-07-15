@@ -264,9 +264,10 @@ class RDKIT_DATASTRUCTS_EXPORT FPBReader {
   void _initFromFilename(const char *fname, bool lazyRead) {
     std::istream *tmpStream = static_cast<std::istream *>(
         new std::ifstream(fname, std::ios_base::binary));
-    if (!tmpStream || (!(*tmpStream)) || (tmpStream->bad())) {
+    if (!(*tmpStream) || (tmpStream->bad())) {
       std::ostringstream errout;
       errout << "Bad input file " << fname;
+      delete tmpStream;
       throw BadFileException(errout.str());
     }
     dp_istrm = tmpStream;

@@ -10,7 +10,9 @@ rdkit_library(StructChecker
 rdkit_headers(StructChecker.h Utilites.h Pattern.h Stereo.h StripSmallFragments.h ReCharge.h Tautomer.h
               DEST GraphMol/StructChecker)
 
+if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
+endif()
 
 rdkit_test(testStructChecker  testStructChecker.cpp 
            LINK_LIBRARIES StructChecker ChemTransforms Depictor Descriptors

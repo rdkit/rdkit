@@ -23,7 +23,9 @@ rdkit_headers(Wrap.h PySequenceHolder.h
               python_streambuf.h
               DEST RDBoost)
 
+if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
+endif()
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
   # this is a particularly nasty little bit of hackery.

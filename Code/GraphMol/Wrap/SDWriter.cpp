@@ -63,7 +63,7 @@ struct sdwriter_wrap {
 \n\
     2) writing to a file-like object: \n\n\
        >>> import gzip\n\
-       >>> outf=gzip.open('out.sdf.gz','w+')\n\
+       >>> outf=gzip.open('out.sdf.gz','wt+')\n\
        >>> writer = SDWriter(outf)\n\
        >>> for mol in list_of_mols:\n\
        ...   writer.write(mol)\n\

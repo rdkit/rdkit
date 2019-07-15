@@ -178,6 +178,8 @@ class AtomElectrons {
   void assignNonBonded(unsigned int nb) { d_nb = nb; }
   void assignFormalCharge() { d_fc = oe() - (d_nb + d_tv); }
   bool isNbrCharged(unsigned int bo, unsigned int oeConstraint = 0);
+  AtomElectrons &operator=(const AtomElectrons &) = delete;
+  AtomElectrons(const AtomElectrons &) = delete;
 
  private:
   std::uint8_t d_nb;
@@ -186,7 +188,6 @@ class AtomElectrons {
   std::uint8_t d_flags;
   const Atom *d_atom;
   ConjElectrons *d_parent;
-  AtomElectrons &operator=(const AtomElectrons &);
   std::uint8_t canAddBondWithOrder(unsigned int bo);
   void allConjBondsDefinitiveBut(unsigned int bi);
 };
@@ -207,13 +208,14 @@ class BondElectrons {
   unsigned int orderFromBond();
   void initOrderFromBond() { d_bo = orderFromBond(); };
   const Bond *bond() { return d_bond; };
+  BondElectrons &operator=(const BondElectrons &) = delete;
+  BondElectrons(const BondElectrons &) = delete;
 
  private:
   std::uint8_t d_bo;
   std::uint8_t d_flags;
   const Bond *d_bond;
   ConjElectrons *d_parent;
-  BondElectrons &operator=(const BondElectrons &);
 };
 
 namespace ResonanceUtils {
@@ -356,9 +358,8 @@ std::uint8_t AtomElectrons::canAddBondWithOrder(unsigned int bo) {
       // - the neighbor is charged, and triple-bonded to
       //   this atom, which is left of N (e.g., isonitrile)
       bool isnc = isNbrCharged(bo);
-      fcInc = (((!isnc &&
-                 !(!d_parent->allowedChgLeftOfN() &&
-                   d_parent->totalFormalCharge())) ||
+      fcInc = (((!isnc && !(!d_parent->allowedChgLeftOfN() &&
+                            d_parent->totalFormalCharge())) ||
                 (isnc && (bo == 3) && (oe() < 5)))
                    ? 1
                    : 0);
@@ -771,7 +772,7 @@ void ConjElectrons::enumerateNonBonded(CEMap &ceMap) {
       // get the next binary code
       ResonanceUtils::updateV(v);
     }
-    if (ceCopy) delete ceCopy;
+    delete ceCopy;
   } else if (nbTotal == currElectrons()) {
     // if the electrons required to satisfy all octets
     // are as many as those currently available, assignment
@@ -798,7 +799,7 @@ void ConjElectrons::computeMetrics() {
       881,  1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000,
       1000, 1000, 1000, 1000, 1090, 1160, 1340, 1470, 1600, 1650, 1680,
       1720, 1920, 1760, 1789, 1854, 2010, 2190, 2390, 2600, 670,  890};
-  const int enSize = sizeof(en) / sizeof(double);
+  const size_t enSize = sizeof(en) / sizeof(double);
   for (ConjAtomMap::const_iterator it = d_conjAtomMap.begin();
        it != d_conjAtomMap.end(); ++it) {
     d_ceMetrics.d_absFormalCharges += abs(it->second->fc());
@@ -1588,4 +1589,4 @@ ROMol *ResonanceMolSupplier::assignBondsFormalCharges(
   ResonanceUtils::sanitizeMol((RWMol &)*mol);
   return mol;
 }
-}
+}  // namespace RDKit

@@ -47,6 +47,7 @@ class RDKIT_GRAPHMOL_EXPORT StereoGroup {
   StereoGroup() : d_grouptype(StereoGroupType::STEREO_ABSOLUTE), d_atoms(0u){};
   // Takes control of atoms if possible.
   StereoGroup(StereoGroupType grouptype, std::vector<Atom*>&& atoms);
+  StereoGroup(StereoGroupType grouptype, const std::vector<Atom*>& atoms);
   StereoGroupType getGroupType() const;
   const std::vector<Atom*>& getAtoms() const;
   // Seems odd to have to define these, but otherwise the SWIG wrappers

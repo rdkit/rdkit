@@ -44,7 +44,9 @@ rdkit_headers(MolStandardize.h
         TautomerCatalog/TautomerCatalogUtils.h
 	      DEST GraphMol/MolStandardize)
 
+if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
+endif()
 
 rdkit_test(molStandardizeTest test1.cpp LINK_LIBRARIES MolStandardize
 	SmilesParse RDGeneral GraphMol SubstructMatch )

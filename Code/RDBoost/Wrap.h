@@ -51,17 +51,22 @@ RDKIT_RDBOOST_EXPORT void translate_invariant_error(Invar::Invariant const &e);
 //!    directly because this will catch the appropriate exception if
 //!    the specified converter has already been registered.
 template <typename T>
+void RegisterVectorConverter(const char *name, bool noproxy = false) {
+  if (noproxy) {
+    python::class_<std::vector<T>>(name)
+        .def(python::vector_indexing_suite<std::vector<T>, 1>());
+  } else {
+    python::class_<std::vector<T>>(name)
+        .def(python::vector_indexing_suite<std::vector<T>>());
+  }
+}
+
+template <typename T>
 void RegisterVectorConverter(bool noproxy = false) {
   std::string name = "_vect";
   name += typeid(T).name();
 
-  if (noproxy) {
-    python::class_<std::vector<T>>(name.c_str())
-        .def(python::vector_indexing_suite<std::vector<T>, 1>());
-  } else {
-    python::class_<std::vector<T>>(name.c_str())
-        .def(python::vector_indexing_suite<std::vector<T>>());
-  }
+  RegisterVectorConverter<T>(name.c_str(), noproxy);
 }
 
 //! \brief Registers a templated converter for returning \c lists of a

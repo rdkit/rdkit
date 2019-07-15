@@ -25,4 +25,6 @@ rdkit_headers(MolInterchange.h details.h
 rdkit_test(molInterchangeTest1 test1.cpp
            LINK_LIBRARIES MolInterchange FileParsers SmilesParse GraphMol RDGeneral)
 
+if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
+endif()

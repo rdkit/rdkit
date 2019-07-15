@@ -353,6 +353,7 @@ inline bool isSerializable(const Dict::Pair &pair,
           return true;
         }
       }
+      return false;
     default:
       return false;
   }
