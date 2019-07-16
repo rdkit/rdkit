@@ -13,6 +13,7 @@
 #include "catch.hpp"
 
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/QueryAtom.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -715,6 +716,26 @@ M  END
     CHECK(sgroups[0].getProp<std::string>("TYPE") == "DAT");
     CHECK(sgroups[0].hasProp("FIELDNAME"));
     CHECK(sgroups[0].getProp<std::string>("FIELDNAME") == "MRV_IMPLICIT_H");
+  }
+}
+
+TEST_CASE("Github #2527: handling of \"R\" in CTABs", "[rgroups]") {
+  std::string molblock = R"CTAB(example
+  Mrv1902 07031913362D          
+
+  2  1  0  0  0  0            999 V2000
+   -1.1418    0.0687    0.0000 N   0  0  0  0  0  0  0  0  0  3  0  0
+   -1.9668    0.0687    0.0000 R   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+M  END
+)CTAB";
+  SECTION("basics") {
+    bool sanitize = false;
+    std::unique_ptr<ROMol> mol(MolBlockToMol(molblock, sanitize));
+    REQUIRE(mol);
+    QueryAtom *at = static_cast<QueryAtom *>(mol->getAtomWithIdx(1));
+    REQUIRE(at->hasQuery());
+    CHECK(at->getQuery()->getDescription() == "AtomNull");
   }
 }
 
