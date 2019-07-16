@@ -790,7 +790,7 @@ void ConjElectrons::enumerateNonBonded(CEMap &ceMap) {
 void ConjElectrons::computeMetrics() {
   // 1000 * Electronegativity according to the Allen scale
   // (Allen, L.C. J. Am. Chem. Soc. 1989, 111, 9003-9014)
-  static const unsigned int en[] = {
+  static const unsigned int en[] = {1000,
       2300, 4160, 912,  1576, 2051, 2544, 3066, 3610, 4193, 4789, 869,
       1293, 1613, 1916, 2253, 2589, 2869, 3242, 734,  1034, 1190, 1380,
       1530, 1650, 1750, 1800, 1840, 1880, 1850, 1590, 1756, 1994, 2211,
@@ -803,7 +803,7 @@ void ConjElectrons::computeMetrics() {
   for (ConjAtomMap::const_iterator it = d_conjAtomMap.begin();
        it != d_conjAtomMap.end(); ++it) {
     d_ceMetrics.d_absFormalCharges += abs(it->second->fc());
-    int anIdx = it->second->atom()->getAtomicNum() - 1;
+    size_t anIdx = it->second->atom()->getAtomicNum();
     d_ceMetrics.d_wtdFormalCharges +=
         (it->second->fc() * ((anIdx >= enSize) ? 1000 : en[anIdx]));
     d_ceMetrics.d_nbMissing += it->second->neededNbForOctet();
@@ -1196,10 +1196,13 @@ void ResonanceMolSupplier::assignConjGrpIdx() {
   unsigned int na = d_mol->getNumAtoms();
   d_atomConjGrpIdx.resize(na, -1);
   for (d_nConjGrp = 0; true; ++d_nConjGrp) {
-    for (unsigned int i = 0; i < nb && bondIndexStack.empty(); ++i) {
-      const Bond *bi = d_mol->getBondWithIdx(i);
-      if (bi->getIsConjugated() && (d_bondConjGrpIdx[i] == -1))
+    for (const auto b: d_mol->bonds()) {
+      unsigned int i = b->getIdx();
+      if (b->getIsConjugated() && (d_bondConjGrpIdx[i] == -1))
+      {
         bondIndexStack.push(i);
+        break;
+      }
     }
     if (bondIndexStack.empty()) break;
     while (!bondIndexStack.empty()) {
@@ -1207,13 +1210,10 @@ void ResonanceMolSupplier::assignConjGrpIdx() {
       bondIndexStack.pop();
       const Bond *bi = d_mol->getBondWithIdx(i);
       for (const Atom *bondAtom: { bi->getBeginAtom(), bi->getEndAtom() }) {
-        // loop over neighbors of the bondAtom
-        unsigned int aiSelf = bondAtom->getIdx();
-        ROMol::ADJ_ITER nbrIdx, endNbrs;
-        boost::tie(nbrIdx, endNbrs) = d_mol->getAtomNeighbors(bondAtom);
-        for (; nbrIdx != endNbrs; ++nbrIdx) {
-          unsigned int aiNbr = (*d_mol)[*nbrIdx]->getIdx();
-          const Bond *bNbr = d_mol->getBondBetweenAtoms(aiSelf, aiNbr);
+        // loop over bonds sprouting from bondAtom
+        for (const auto &bNbri: boost::make_iterator_range(
+          d_mol->getAtomBonds(bondAtom))) {
+          const auto &bNbr = (*d_mol)[bNbri];
           unsigned int biNbr = bNbr->getIdx();
           if (bNbr->getIsConjugated() && (d_bondConjGrpIdx[biNbr] == -1)) {
             d_bondConjGrpIdx[biNbr] = d_nConjGrp;
