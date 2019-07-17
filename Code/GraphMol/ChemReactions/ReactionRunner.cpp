@@ -57,7 +57,71 @@ namespace ReactionRunnerUtils {
 //! returns whether or not all reactants matched
 namespace {
 const unsigned int MatchAll = UINT_MAX;
+
+class StereoBondEndCap {
+ private:
+  const Atom *m_anchor = nullptr;
+  const Atom *m_nonAnchor = nullptr;
+
+  StereoBondEndCap() = delete;
+  StereoBondEndCap(const StereoBondEndCap &) = delete;
+  StereoBondEndCap &operator=(const StereoBondEndCap &) = delete;
+
+ public:
+  StereoBondEndCap(const ROMol &mol, const Bond *bond, Atom *atom,
+                   Atom *otherAtom) {
+    PRECONDITION(bond->getStereo() > Bond::BondStereo::STEREOANY,
+                 "Bond must have defined stereo");
+    PRECONDITION(atom->getTotalDegree() <= 3,
+                 "Stereo Bond extremes must have less than four neighbors");
+    PRECONDITION(bond->getStereoAtoms().size() == 2,
+                 "StereoAtoms must be known for the stereo bond");
+
+    const auto stereoAtoms = bond->getStereoAtoms();
+    const unsigned otherIdx = otherAtom->getIdx();
+    for (ROMol::ADJ_ITER_PAIR atomIter = mol.getAtomNeighbors(atom);
+         atomIter.first != atomIter.second; ++atomIter.first) {
+      const unsigned neighborIdx = *atomIter.first;
+      // We are not interested in the other side of the double bond
+      if (otherIdx == neighborIdx) {
+        continue;
+      }
+
+      const Atom *neighbor = mol.getAtomWithIdx(neighborIdx);
+      if (std::find(stereoAtoms.begin(), stereoAtoms.end(), neighborIdx) !=
+          stereoAtoms.end()) {
+        m_anchor = neighbor;
+      } else {
+        m_nonAnchor = neighbor;
+      }
+    }
+  }
+
+  const Atom *getAnchor() const { return m_anchor; }
+  const Atom *getNonAnchor() const { return m_nonAnchor; }
+};
+
+bool hasStereoBondDirection(const Bond *bond) {
+  return bond->getBondDir() == Bond::BondDir::ENDDOWNRIGHT ||
+         bond->getBondDir() == Bond::BondDir::ENDUPRIGHT;
 }
+
+const Bond *getNeighboringStereoDirectedBond(const ROMol &mol,
+                                             const Atom *atom) {
+  for (ROMol::OBOND_ITER_PAIR bondIter = mol.getAtomBonds(atom);
+       bondIter.first != bondIter.second; ++bondIter.first) {
+    const Bond *bond = mol[*bondIter.first];
+
+    // We will use the first directed bond we find. It is not likely, but there
+    // might be more than one
+    if (bond->getBondType() != Bond::BondType::DOUBLE &&
+        hasStereoBondDirection(bond)) {
+      return bond;
+    }
+  }
+  return nullptr;
+}
+}  // namespace
 
 bool getReactantMatches(const MOL_SPTR_VECT &reactants,
                         const ChemicalReaction &rxn,
@@ -284,6 +348,23 @@ RWMOL_SPTR convertTemplateToMol(const ROMOL_SPTR prodTemplateSptr) {
         newB->setProp(common_properties::NullBond, 1);
       }
     }
+
+    // Double bond stereo: if a double bond has at least one bond on each side,
+    // and none of those has a direction, then we temporarily set STEREOANY.
+    // This has to be done before the reactant atoms are added, and will be
+    // reviewed later on.
+    if (oldB->getBondType() == Bond::BondType::DOUBLE) {
+      const Atom *startAtom = oldB->getBeginAtom();
+      const Atom *endAtom = oldB->getEndAtom();
+
+      if (startAtom->getDegree() > 1 && endAtom->getDegree() > 1 &&
+          getNeighboringStereoDirectedBond(*prodTemplate, startAtom) ==
+              nullptr &&
+          getNeighboringStereoDirectedBond(*prodTemplate, endAtom) == nullptr) {
+        newB->setStereo(Bond::BondStereo::STEREOANY);
+      }
+    }
+
     // copy properties over:
     bool preserveExisting = true;
     newB->updateProps(*static_cast<const RDProps *>(oldB), preserveExisting);
@@ -360,6 +441,159 @@ ReactantProductAtomMapping *getAtomMappingsReactantProduct(
   }
   return mapping;
 }
+
+namespace {
+unsigned reactProdMapAnchorIdx(Atom *atom, const RDKit::UINT_VECT &pMatches) {
+  if (pMatches.size() == 1) {
+    return pMatches[0];
+  }
+
+  auto nbrItr = atom->getOwningMol().getAtomNeighbors(atom);
+  auto match = std::find_first_of(nbrItr.first, nbrItr.second, pMatches.begin(),
+                                  pMatches.end());
+
+  if (match == nbrItr.second) {
+    throw std::logic_error("match not found");
+  }
+  return *match;
+}
+
+void forwardReactantBondStereo(ReactantProductAtomMapping *mapping, Bond *pBond,
+                               const ROMol &reactant, const Bond *rBond) {
+  PRECONDITION(rBond->getStereo() > Bond::BondStereo::STEREOANY,
+               "bond in reactant must have defined stereo");
+
+  StereoBondEndCap start(reactant, rBond, rBond->getBeginAtom(),
+                         rBond->getEndAtom());
+  StereoBondEndCap end(reactant, rBond, rBond->getEndAtom(),
+                       rBond->getBeginAtom());
+
+  auto rStartAnchorMatches =
+      mapping->reactProdAtomMap.find(start.getAnchor()->getIdx());
+  auto rEndAnchorMatches =
+      mapping->reactProdAtomMap.find(end.getAnchor()->getIdx());
+
+  // If any of the anchor pair is not mapped, see if we can make the match with
+  // the non-anchor pair, which, if defined, is symmetric to the anchors
+  if (rStartAnchorMatches == mapping->reactProdAtomMap.end() ||
+      rEndAnchorMatches == mapping->reactProdAtomMap.end()) {
+    if (start.getNonAnchor() != nullptr && end.getNonAnchor() != nullptr) {
+      rStartAnchorMatches =
+          mapping->reactProdAtomMap.find(start.getNonAnchor()->getIdx());
+      rEndAnchorMatches =
+          mapping->reactProdAtomMap.find(end.getNonAnchor()->getIdx());
+    }
+    // If there is no match in the second try (or 2nd try did not work), then
+    // the reaction invalidated the reactant's stereochemistry
+    if (rStartAnchorMatches == mapping->reactProdAtomMap.end() ||
+        rEndAnchorMatches == mapping->reactProdAtomMap.end()) {
+      return;
+    }
+  }
+
+  unsigned pStartAnchorIdx =
+      reactProdMapAnchorIdx(pBond->getBeginAtom(), rStartAnchorMatches->second);
+  unsigned pEndAnchorIdx =
+      reactProdMapAnchorIdx(pBond->getEndAtom(), rEndAnchorMatches->second);
+
+  pBond->setStereoAtoms(pStartAnchorIdx, pEndAnchorIdx);
+
+  if (rBond->getStereo() == Bond::BondStereo::STEREOCIS ||
+      rBond->getStereo() == Bond::BondStereo::STEREOZ) {
+    pBond->setStereo(Bond::BondStereo::STEREOCIS);
+  } else {
+    pBond->setStereo(Bond::BondStereo::STEREOTRANS);
+  }
+}
+
+void translateProductStereoBondDirections(Bond *pBond, const Bond *start,
+                                          const Bond *end) {
+  PRECONDITION(start && end && hasStereoBondDirection(start) &&
+                   hasStereoBondDirection(end),
+               "Both neighboring bonds must have bond directions");
+
+  unsigned pStartAnchorIdx = start->getOtherAtomIdx(pBond->getBeginAtomIdx());
+  unsigned pEndAnchorIdx = end->getOtherAtomIdx(pBond->getEndAtomIdx());
+
+  pBond->setStereoAtoms(pStartAnchorIdx, pEndAnchorIdx);
+
+  if (start->getBondDir() == end->getBondDir()) {
+    pBond->setStereo(Bond::BondStereo::STEREOTRANS);
+  } else {
+    pBond->setStereo(Bond::BondStereo::STEREOCIS);
+  }
+}
+
+void updateStereoBonds(RWMOL_SPTR product, const ROMol &reactant,
+                       ReactantProductAtomMapping *mapping) {
+  for (Bond *pBond : product->bonds()) {
+    // We are only interested in double bonds
+    if (pBond->getBondType() != Bond::BondType::DOUBLE) {
+      continue;
+    }
+
+    // If the product bond was previously marked as STEREOANY, check if it can
+    // actually sustain stereo (this could not be checked until we had all the
+    // atoms in the product)
+    if (Bond::BondStereo::STEREOANY == pBond->getStereo()) {
+      Atom *pStart = pBond->getBeginAtom();
+      Atom *pEnd = pBond->getEndAtom();
+
+      pStart->calcImplicitValence();
+      pEnd->calcImplicitValence();
+
+      if (pStart->getTotalDegree() < 3 || pEnd->getTotalDegree() < 3) {
+        pBond->setStereo(Bond::BondStereo::STEREONONE);
+      }
+
+      continue;
+    }
+
+    // Check if the reaction defined the stereo for the bond: SMARTS can only
+    // use bond directions for this, and both sides of the double bond must have
+    // them, else they will be ignored, as there is no reference to decide the
+    // stereo.
+    const auto *pBondStartDirBond =
+        getNeighboringStereoDirectedBond(*product, pBond->getBeginAtom());
+    const auto *pBondEndDirBond =
+        getNeighboringStereoDirectedBond(*product, pBond->getEndAtom());
+    if (pBondStartDirBond != nullptr && pBondEndDirBond != nullptr) {
+      translateProductStereoBondDirections(pBond, pBondStartDirBond,
+                                           pBondEndDirBond);
+    } else {
+      // If the reaction did not specify the stereo, then we need to rely on the
+      // atom mapping and use the reactant's stereo.
+
+      // The atoms and the bond might have been added in the reaction
+      const auto begIdxItr =
+          mapping->prodReactAtomMap.find(pBond->getBeginAtomIdx());
+      if (begIdxItr == mapping->prodReactAtomMap.end()) {
+        continue;
+      }
+      const auto endIdxItr =
+          mapping->prodReactAtomMap.find(pBond->getEndAtomIdx());
+      if (endIdxItr == mapping->prodReactAtomMap.end()) {
+        continue;
+      }
+
+      const Bond *rBond =
+          reactant.getBondBetweenAtoms(begIdxItr->second, endIdxItr->second);
+
+      if (rBond && rBond->getBondType() == Bond::BondType::DOUBLE) {
+        // The bond might not have been present in the reactant, or its order
+        // might have changed
+        if (rBond->getStereo() > Bond::BondStereo::STEREOANY) {
+          // If the bond had stereo, forward it
+          forwardReactantBondStereo(mapping, pBond, reactant, rBond);
+        } else if (rBond->getStereo() == Bond::BondStereo::STEREOANY) {
+          pBond->setStereo(Bond::BondStereo::STEREOANY);
+        }
+      }
+      // No stereo: Bond::BondStereo::STEREONONE
+    }
+  }
+}
+}  // namespace
 
 void setReactantBondPropertiesToProduct(RWMOL_SPTR product,
                                         const ROMol &reactant,
@@ -927,6 +1161,8 @@ void addReactantAtomsAndBonds(const ChemicalReaction &rxn, RWMOL_SPTR product,
   // directly involved in the reaction in order to make sure their chirality
   // hasn't been disturbed
   checkAndCorrectChiralityOfProduct(chiralAtomsToCheck, product, mapping);
+
+  updateStereoBonds(product, *reactant, mapping);
 
   // ---------- ---------- ---------- ---------- ---------- ----------
   // Copy enhanced StereoGroup data from reactant to product if it is
