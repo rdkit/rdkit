@@ -368,24 +368,32 @@ void setReactantBondPropertiesToProduct(RWMOL_SPTR product,
   while (bondItP.first != bondItP.second) {
     Bond *pBond = (*product)[*(bondItP.first)];
     ++bondItP.first;
-    if (pBond->hasProp(common_properties::NullBond) ||
-        pBond->hasProp(common_properties::_MolFileBondQuery)) {
-      if (mapping->prodReactAtomMap.find(pBond->getBeginAtomIdx()) !=
-              mapping->prodReactAtomMap.end() &&
-          mapping->prodReactAtomMap.find(pBond->getEndAtomIdx()) !=
-              mapping->prodReactAtomMap.end()) {
-        // the bond is between two mapped atoms from this reactant:
-        unsigned begIdx = mapping->prodReactAtomMap[pBond->getBeginAtomIdx()];
-        unsigned endIdx = mapping->prodReactAtomMap[pBond->getEndAtomIdx()];
-        const Bond *rBond = reactant.getBondBetweenAtoms(begIdx, endIdx);
-        if (!rBond) continue;
-        pBond->setBondType(rBond->getBondType());
-        pBond->setBondDir(rBond->getBondDir());
-        pBond->setIsAromatic(rBond->getIsAromatic());
-        if (pBond->hasProp(common_properties::NullBond)) {
-          pBond->clearProp(common_properties::NullBond);
-        }
-      }
+
+    if (!pBond->hasProp(common_properties::NullBond) &&
+        !pBond->hasProp(common_properties::_MolFileBondQuery)) {
+      continue;
+    }
+
+    auto rBondBegin = mapping->prodReactAtomMap.find(pBond->getBeginAtomIdx());
+    auto rBondEnd = mapping->prodReactAtomMap.find(pBond->getEndAtomIdx());
+
+    if (rBondBegin == mapping->prodReactAtomMap.end() ||
+        rBondEnd == mapping->prodReactAtomMap.end()) {
+      continue;
+    }
+
+    // the bond is between two mapped atoms from this reactant:
+    const Bond *rBond =
+        reactant.getBondBetweenAtoms(rBondBegin->second, rBondEnd->second);
+    if (!rBond) {
+      continue;
+    }
+
+    pBond->setBondType(rBond->getBondType());
+    pBond->setIsAromatic(rBond->getIsAromatic());
+
+    if (pBond->hasProp(common_properties::NullBond)) {
+      pBond->clearProp(common_properties::NullBond);
     }
   }
 }
@@ -486,14 +494,6 @@ void setReactantAtomPropertiesToProduct(Atom *productAtom,
   }
 }
 
-void setNewProductBond(const Bond &origB, RWMOL_SPTR product,
-                       unsigned bondBeginIdx, unsigned bondEndIdx) {
-  unsigned bondIdx =
-      product->addBond(bondBeginIdx, bondEndIdx, origB.getBondType()) - 1;
-  Bond *newB = product->getBondWithIdx(bondIdx);
-  newB->setBondDir(origB.getBondDir());
-}
-
 void addMissingProductBonds(const Bond &origB, RWMOL_SPTR product,
                             ReactantProductAtomMapping *mapping) {
   unsigned int begIdx = origB.getBeginAtomIdx();
@@ -504,7 +504,8 @@ void addMissingProductBonds(const Bond &origB, RWMOL_SPTR product,
   CHECK_INVARIANT(prodBeginIdxs.size() == prodEndIdxs.size(),
                   "Different number of start-end points for product bonds.");
   for (unsigned i = 0; i < prodBeginIdxs.size(); i++) {
-    setNewProductBond(origB, product, prodBeginIdxs.at(i), prodEndIdxs.at(i));
+    product->addBond(prodBeginIdxs.at(i), prodEndIdxs.at(i),
+                     origB.getBondType());
   }
 }
 
@@ -524,9 +525,9 @@ void addMissingProductAtom(const Atom &reactAtom, unsigned reactNeighborIdx,
       reactant.getBondBetweenAtoms(reactNeighborIdx, reactAtomIdx);
   unsigned int begIdx = origB->getBeginAtomIdx();
   if (begIdx == reactNeighborIdx) {
-    setNewProductBond(*origB, product, prodNeighborIdx, productIdx);
+    product->addBond(prodNeighborIdx, productIdx, origB->getBondType());
   } else {
-    setNewProductBond(*origB, product, productIdx, prodNeighborIdx);
+    product->addBond(productIdx, prodNeighborIdx, origB->getBondType());
   }
 }
 
@@ -883,7 +884,7 @@ void addReactantAtomsAndBonds(const ChemicalReaction &rxn, RWMOL_SPTR product,
   // ---------- ---------- ---------- ---------- ---------- ----------
   // Loop over the bonds in the product and look for those that have
   // the NullBond property set. These are bonds for which no information
-  // (other than their existance) was provided in the template:
+  // (other than their existence) was provided in the template:
   setReactantBondPropertiesToProduct(product, *reactant, mapping);
 
   // ---------- ---------- ---------- ---------- ---------- ----------
