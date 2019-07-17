@@ -291,6 +291,75 @@ void Bond::setStereoAtoms(unsigned int bgnIdx, unsigned int endIdx) {
   atoms.push_back(endIdx);
 };
 
+namespace {
+const Atom *findHighestCIPNeighbor(const Atom *atom, const Atom *skipAtom) {
+  unsigned bestCipRank = 0;
+  const Atom *bestCipRankedAtom = nullptr;
+  const auto mol = atom->getOwningMol();
+  for (ROMol::ADJ_ITER_PAIR atomIter = mol.getAtomNeighbors(atom);
+       atomIter.first != atomIter.second; ++atomIter.first) {
+    const Atom *neighbor = mol.getAtomWithIdx(*atomIter.first);
+    if (neighbor == skipAtom) {
+      continue;
+    }
+    unsigned cip = 0;
+    if (!neighbor->getPropIfPresent(common_properties::_CIPRank, cip)) {
+      // If at least one of the atoms doesn't have a CIP rank, the highest rank
+      // does not make sense, so return a nullptr.
+      return nullptr;
+    }
+    if (cip > bestCipRank || bestCipRankedAtom == nullptr) {
+      bestCipRank = cip;
+      bestCipRankedAtom = neighbor;
+    } else if (cip == bestCipRank) {
+      // This also doesn't make sense if there is a tie (if that's possible).
+      // We still keep the best CIP rank in case something better comes around
+      // (also not sure if that's possible).
+      bestCipRankedAtom = nullptr;
+    }
+  }
+  return bestCipRankedAtom;
+}
+
+INT_VECT *findStereoAtoms(const Bond *bond) {
+  switch (bond->getStereo()) {
+    case Bond::BondStereo::STEREOE:
+    case Bond::BondStereo::STEREOZ: {
+      const Atom *startStereoAtom =
+          findHighestCIPNeighbor(bond->getBeginAtom(), bond->getEndAtom());
+      const Atom *endStereoAtom =
+          findHighestCIPNeighbor(bond->getEndAtom(), bond->getBeginAtom());
+
+      if (startStereoAtom != nullptr && endStereoAtom != nullptr) {
+        int startStereoAtomIdx = static_cast<int>(startStereoAtom->getIdx());
+        int endStereoAtomIdx = static_cast<int>(endStereoAtom->getIdx());
+
+        return new INT_VECT({startStereoAtomIdx, endStereoAtomIdx});
+
+        break;
+      }
+    }
+    default:
+      return new INT_VECT;
+  }
+}
+
+}  // namespace
+
+const INT_VECT &Bond::getStereoAtoms() const {
+  if (!dp_stereoAtoms) {
+    const_cast<Bond *>(this)->dp_stereoAtoms = findStereoAtoms(this);
+  }
+  return *dp_stereoAtoms;
+};
+
+INT_VECT &Bond::getStereoAtoms() {
+  if (!dp_stereoAtoms) {
+    dp_stereoAtoms = findStereoAtoms(this);
+  }
+  return *dp_stereoAtoms;
+};
+
 };  // namespace RDKit
 
 std::ostream &operator<<(std::ostream &target, const RDKit::Bond &bond) {
