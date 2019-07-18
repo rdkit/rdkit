@@ -295,7 +295,7 @@ namespace {
 const Atom *findHighestCIPNeighbor(const Atom *atom, const Atom *skipAtom) {
   unsigned bestCipRank = 0;
   const Atom *bestCipRankedAtom = nullptr;
-  const auto mol = atom->getOwningMol();
+  const auto &mol = atom->getOwningMol();
   for (ROMol::ADJ_ITER_PAIR atomIter = mol.getAtomNeighbors(atom);
        atomIter.first != atomIter.second; ++atomIter.first) {
     const Atom *neighbor = mol.getAtomWithIdx(*atomIter.first);
@@ -322,6 +322,9 @@ const Atom *findHighestCIPNeighbor(const Atom *atom, const Atom *skipAtom) {
 }
 
 INT_VECT *findStereoAtoms(const Bond *bond) {
+  if (!bond->hasOwningMol()) {
+    return new INT_VECT;
+  }
   switch (bond->getStereo()) {
     case Bond::BondStereo::STEREOE:
     case Bond::BondStereo::STEREOZ: {
