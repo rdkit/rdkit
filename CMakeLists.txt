@@ -89,7 +89,7 @@ endif()
 if(RDK_USE_URF)
   ADD_DEFINITIONS("-DRDK_USE_URF")
   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/External/RingDecomposerLib/src)
-  set(URF_LIBRARY ${CMAKE_CURRENT_SOURCE_DIR}/External/RingDecomposerLib/libRingDecomposerLibStatic.a )
+  set(URF_LIBRARY RingDecomposerLibStatic )
 endif()
 
 include(TestBigEndian)

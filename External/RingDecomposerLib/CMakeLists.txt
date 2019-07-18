@@ -27,7 +27,7 @@ set(RDKIT_INCLUDE_DIR "" CACHE STRING "Rdkit include dir")
 # external options -- rdkit include directories
 set(RDKIT_LIB_DIR "" CACHE STRING "Rdkit librart dir")
 
-set(SOURCE_DIR "${CMAKE_SOURCE_DIR}/src")
+set(SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
 set(LIB_SOURCE_DIR "${SOURCE_DIR}/RingDecomposerLib")
 set(PYTHON_SOURCE_DIR "${SOURCE_DIR}/python")
 
@@ -41,7 +41,7 @@ set(SHARED_MINIMALEXAMPLE "MinimalExample")
 set(STATIC_MINIMALEXAMPLE "MinimalExample_static")
 
 set(PYTHON_TEST "${PYTHON_SOURCE_DIR}/test/test.py")
-set(TEST_DIR "${CMAKE_SOURCE_DIR}/test")
+set(TEST_DIR "${CMAKE_CURRENT_SOURCE_DIR}/test")
 
 SET(CMAKE_INSTALL_RPATH "\$ORIGIN/lib")
 

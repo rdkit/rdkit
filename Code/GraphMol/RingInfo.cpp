@@ -73,13 +73,8 @@ unsigned int RingInfo::numBondRings(unsigned int idx) const {
 
 unsigned int RingInfo::numRings() const {
   PRECONDITION(df_init, "RingInfo not initialized");
-#ifndef RDK_USE_URF
   PRECONDITION(d_atomRings.size() == d_bondRings.size(), "length mismatch");
   return rdcast<unsigned int>(d_atomRings.size());
-#else
-  PRECONDITION(dp_urfData, "no URF data");
-  return numRingFamilies();
-#endif
 }
 
 unsigned int RingInfo::numRingFamilies() const {

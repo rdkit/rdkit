@@ -6950,7 +6950,6 @@ void testGithubIssue607() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
-<<<<<<< HEAD
 void testGithubIssue1204() {
   BOOST_LOG(rdInfoLog)
       << "-----------------------\n Testing github issue 1204: "
@@ -7580,7 +7579,6 @@ void testGithub1990() {
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
-=======
 #ifdef RDK_USE_URF
 void testRingFamilies() {
   BOOST_LOG(rdInfoLog)
@@ -7598,8 +7596,11 @@ void testRingFamilies() {
     TEST_ASSERT(numRC == 6);
     TEST_ASSERT(numURF == 6);
 
-    int numRings = m->getRingInfo()->numRings();
+    int numRings = m->getRingInfo()->numRingFamilies();
     TEST_ASSERT(numRings == 6);
+    numRings = m->getRingInfo()->numRings();
+    TEST_ASSERT(numRings == 6);
+
 
     delete m;
   }
@@ -7617,7 +7618,7 @@ void testRingFamilies() {
     TEST_ASSERT(numRC == 20);
     int numRings = m->getRingInfo()->numRings();
     // std::cerr << "num rings: " << numRings << std::endl;
-    TEST_ASSERT(numRings == 5);
+    TEST_ASSERT(numRings == 14);
     TEST_ASSERT(m->getRingInfo()->numRingFamilies() == 5);
     delete m;
   }
@@ -7626,7 +7627,6 @@ void testRingFamilies() {
 #else
 void testRingFamilies() {}
 #endif
->>>>>>> d726cfd93... very basics work
 
 int main() {
   RDLog::InitLogs();
@@ -7738,8 +7738,8 @@ int main() {
   testGithub1936();
   testGithub1928();
   testGithub1990();
-#endif
   testPotentialStereoBonds();
+#endif
   testRingFamilies();
 
   return 0;
