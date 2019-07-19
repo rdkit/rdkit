@@ -296,9 +296,10 @@ const Atom *findHighestCIPNeighbor(const Atom *atom, const Atom *skipAtom) {
   unsigned bestCipRank = 0;
   const Atom *bestCipRankedAtom = nullptr;
   const auto &mol = atom->getOwningMol();
-  for (ROMol::ADJ_ITER_PAIR atomIter = mol.getAtomNeighbors(atom);
-       atomIter.first != atomIter.second; ++atomIter.first) {
-    const Atom *neighbor = mol.getAtomWithIdx(*atomIter.first);
+
+  for (const auto &index :
+       boost::make_iterator_range(mol.getAtomNeighbors(atom))) {
+    const auto *neighbor = mol.getAtomWithIdx(index);
     if (neighbor == skipAtom) {
       continue;
     }
