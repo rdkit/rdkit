@@ -2088,12 +2088,14 @@ CAS<~>
     self.assertFalse(ri.IsAtomInRingOfSize(2, 3))
     self.assertFalse(ri.IsBondInRingOfSize(1, 3))
     self.assertFalse(ri.IsBondInRingOfSize(2, 3))
+    self.assertEquals(ri.AtomRingFamilies(),())
+
 
     smi = 'C1CC2C1C2'
     m = Chem.MolFromSmiles(smi)
     ri = m.GetRingInfo()
     self.assertTrue(ri)
-    self.assertTrue(ri.NumRings() == 2)
+    self.assertEquals(ri.NumRings(), 2)
     self.assertFalse(ri.IsAtomInRingOfSize(0, 3))
     self.assertTrue(ri.IsAtomInRingOfSize(0, 4))
     self.assertFalse(ri.IsBondInRingOfSize(0, 3))
@@ -2102,6 +2104,11 @@ CAS<~>
     self.assertTrue(ri.IsAtomInRingOfSize(2, 3))
     self.assertTrue(ri.IsBondInRingOfSize(2, 3))
     self.assertTrue(ri.IsBondInRingOfSize(2, 4))
+
+    Chem.FindRingFamilies(m)
+    ri = m.GetRingInfo()
+    self.assertEquals(ri.NumRingFamilies(),2)
+    self.assertEquals(sorted(ri.AtomRingFamilies()),[(0, 1, 2, 3), (2, 3, 4)])
 
   def test46ReplaceCore(self):
     """ test the ReplaceCore functionality
