@@ -33,6 +33,8 @@ python::object bondRings(const RingInfo *self) {
   }
   return python::tuple(res);
 }
+
+#ifdef RDK_USE_URF
 python::object atomRingFamilies(const RingInfo *self) {
   python::list res;
   for (const auto &ring : self->atomRingFamilies()) {
@@ -47,6 +49,8 @@ python::object bondRingFamilies(const RingInfo *self) {
   }
   return python::tuple(res);
 }
+#endif
+
 void addRing(RingInfo *self,python::object atomRing, python::object bondRing){
   unsigned int nAts = python::extract<unsigned int>(atomRing.attr("__len__")());
   unsigned int nBnds = python::extract<unsigned int>(bondRing.attr("__len__")());
@@ -75,13 +79,14 @@ struct ringinfo_wrapper {
         .def("NumAtomRings", &RingInfo::numAtomRings)
         .def("NumBondRings", &RingInfo::numBondRings)
         .def("NumRings", &RingInfo::numRings)
-        .def("NumRingFamilies", &RingInfo::numRingFamilies)
-        .def("NumRelevantCycles", &RingInfo::numRelevantCycles)
-
         .def("AtomRings", atomRings)
         .def("BondRings", bondRings)
+#ifdef RDK_USE_URF
+        .def("NumRingFamilies", &RingInfo::numRingFamilies)
+        .def("NumRelevantCycles", &RingInfo::numRelevantCycles)
         .def("AtomRingFamilies", atomRingFamilies)
         .def("BondRingFamilies", bondRingFamilies)
+#endif
         .def("AddRing", addRing, (python::arg("self"),python::arg("atomIds"),python::arg("bondIds")),
          "Adds a ring to the set. Be very careful with this operation.");
   };
