@@ -21,16 +21,28 @@ namespace {
 using namespace RDKit;
 python::object atomRings(const RingInfo *self) {
   python::list res;
-  VECT_INT_VECT rings = self->atomRings();
-  for (auto &ring : rings) {
+  for (const auto &ring : self->atomRings()) {
     res.append(python::tuple(ring));
   }
   return python::tuple(res);
 }
 python::object bondRings(const RingInfo *self) {
   python::list res;
-  VECT_INT_VECT rings = self->bondRings();
-  for (auto &ring : rings) {
+  for (const auto &ring : self->bondRings()) {
+    res.append(python::tuple(ring));
+  }
+  return python::tuple(res);
+}
+python::object atomRingFamilies(const RingInfo *self) {
+  python::list res;
+  for (const auto &ring : self->atomRingFamilies()) {
+    res.append(python::tuple(ring));
+  }
+  return python::tuple(res);
+}
+python::object bondRingFamilies(const RingInfo *self) {
+  python::list res;
+  for (const auto &ring : self->bondRingFamilies()) {
     res.append(python::tuple(ring));
   }
   return python::tuple(res);
@@ -63,8 +75,13 @@ struct ringinfo_wrapper {
         .def("NumAtomRings", &RingInfo::numAtomRings)
         .def("NumBondRings", &RingInfo::numBondRings)
         .def("NumRings", &RingInfo::numRings)
+        .def("NumRingFamilies", &RingInfo::numRingFamilies)
+        .def("NumRelevantCycles", &RingInfo::numRelevantCycles)
+
         .def("AtomRings", atomRings)
         .def("BondRings", bondRings)
+        .def("AtomRingFamilies", atomRingFamilies)
+        .def("BondRingFamilies", bondRingFamilies)
         .def("AddRing", addRing, (python::arg("self"),python::arg("atomIds"),python::arg("bondIds")),
          "Adds a ring to the set. Be very careful with this operation.");
   };

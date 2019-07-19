@@ -171,6 +171,21 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   */
   const VECT_INT_VECT &bondRings() const { return d_bondRings; };
 
+  //! returns our atom ring family vectors
+  /*!
+    <b>Notes:</b>
+      - the object must be initialized before calling this
+  */
+  const VECT_INT_VECT &atomRingFamilies() const { return d_atomRingFamilies; };
+
+//! returns our bond ring family vectors
+  /*!
+    <b>Notes:</b>
+      - the object must be initialized before calling this
+  */
+  const VECT_INT_VECT &bondRingFamilies() const { return d_bondRingFamilies; };
+
+
   //@}
 
  private:

@@ -592,7 +592,7 @@ RDKIT_GRAPHMOL_EXPORT int findSSSR(const ROMol &mol,
 */
 RDKIT_GRAPHMOL_EXPORT void fastFindRings(const ROMol &mol);
 
-void findRingFamilies(const ROMol &mol);
+RDKIT_GRAPHMOL_EXPORT void findRingFamilies(const ROMol &mol);
 
 //! symmetrize the molecule's Smallest Set of Smallest Rings
 /*!
