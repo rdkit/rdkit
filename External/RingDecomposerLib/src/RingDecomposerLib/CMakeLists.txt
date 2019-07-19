@@ -1,5 +1,7 @@
-function(build_library LIBRARY_NAME SPECIFIER)
-  add_library("${LIBRARY_NAME}" "${SPECIFIER}"
+include_directories(${PROJECT_BINARY_DIR}/include)
+link_directories(${PROJECT_BINARY_DIR}/lib)
+
+rdkit_library(RingDecomposerLib
               RDLutility.c
               RDLhandler.c
               RDLrelation.c
@@ -12,17 +14,6 @@ function(build_library LIBRARY_NAME SPECIFIER)
               RDLtesting.c
               RDLtarjan.c
               RDLdimacs.c
-              RDLbitset.c)
-  set_property(TARGET "${LIBRARY_NAME}" PROPERTY C_STANDARD 90)
-  set_target_properties("${LIBRARY_NAME}" PROPERTIES POSITION_INDEPENDENT_CODE True)
-  install(TARGETS ${LIBRARY_NAME}
-          ARCHIVE DESTINATION lib
-          LIBRARY DESTINATION lib
-          RUNTIME DESTINATION bin)
-endfunction()
-
-build_library("${SHARED_LIBRARY}" "SHARED")
-build_library("${STATIC_LIBRARY}" "STATIC")
-
-install(FILES RingDecomposerLib.h
-        DESTINATION include)
+              RDLbitset.c
+              SHARED LINK_LIBRARIES RDGeneral )
+rdkit_headers(RingDecomposerLib.h DEST GraphMol)
