@@ -774,9 +774,6 @@ void test8Validation() {
   smi = "[C:1](=[O:2])O.[N:3][C:4]>>[C:1](=[O:2])[N:3][C:1]";
   rxn = RxnSmartsToChemicalReaction(smi);
   TEST_ASSERT(rxn);
-  /* 08/08/14
-   * This test is changed due to allowing same atom mapping multiple times in
-   * the products */
   TEST_ASSERT(rxn->validate(nWarn, nError, false));
   TEST_ASSERT(nWarn == 2);
   TEST_ASSERT(nError == 0);
@@ -6943,8 +6940,7 @@ ROMOL_SPTR run_simple_reaction(const std::string &reaction,
   TEST_ASSERT(rxn->getNumProductTemplates() == 1);
   rxn->initReactantMatchers();
 
-  MOL_SPTR_VECT reacts{{reactant}};
-  const auto prods = rxn->runReactants(reacts);
+  const auto prods = rxn->runReactant(reactant, 0);
   TEST_ASSERT(prods.size() == 1);
   TEST_ASSERT(prods[0].size() == 1);
 
@@ -7131,8 +7127,7 @@ void testOtherBondStereo() {
     TEST_ASSERT(rxn->getNumProductTemplates() == 1);
     rxn->initReactantMatchers();
 
-    MOL_SPTR_VECT reacts{{mol}};
-    const auto product_sets = rxn->runReactants(reacts);
+    const auto product_sets = rxn->runReactant(mol, 0);
     TEST_ASSERT(!product_sets.empty());
     for (const auto &products : product_sets) {
       TEST_ASSERT(products.size() == 1);
@@ -7152,8 +7147,7 @@ void testOtherBondStereo() {
     TEST_ASSERT(rxn->getNumProductTemplates() == 1);
     rxn->initReactantMatchers();
 
-    MOL_SPTR_VECT reacts{{mol}};
-    const auto product_sets = rxn->runReactants(reacts);
+    const auto product_sets = rxn->runReactant(mol, 0);
     TEST_ASSERT(!product_sets.empty());
     for (const auto &products : product_sets) {
       TEST_ASSERT(products.size() == 1);
@@ -7166,6 +7160,24 @@ void testOtherBondStereo() {
           TEST_ASSERT(Bond::BondStereo::STEREONONE == bond->getStereo());
         }
       }
+    }
+  }
+  {  // Reaction with 2 product sets
+    const std::string reaction(
+        R"([C:1]=[C:2]>>[Si:1]=[C:2])");
+    const auto rxn = RxnSmartsToChemicalReaction(reaction);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
+    TEST_ASSERT(rxn->getNumProductTemplates() == 1);
+    rxn->initReactantMatchers();
+
+    const auto product_sets = rxn->runReactant(mol, 0);
+    TEST_ASSERT(product_sets.size() == 2);
+    for (const auto &products : product_sets) {
+      TEST_ASSERT(products.size() == 1);
+      const Bond *bond = products[0]->getBondWithIdx(0);
+      TEST_ASSERT(Bond::BondType::DOUBLE == bond->getBondType());
+      TEST_ASSERT(Bond::BondStereo::STEREOTRANS == bond->getStereo());
     }
   }
 }

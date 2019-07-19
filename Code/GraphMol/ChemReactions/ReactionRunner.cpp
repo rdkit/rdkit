@@ -58,9 +58,15 @@ namespace ReactionRunnerUtils {
 namespace {
 const unsigned int MatchAll = UINT_MAX;
 
+/**
+ * A storage class to find and store a StereoBond End Atom's
+ * corresponding anchor and non-anchor neighbors.
+ *
+ * The class is agnostic about the stereo type of the bond (E/Z or CIS/TRANS)
+ */
 class StereoBondEndCap {
  private:
-  const Atom *m_anchor = nullptr;
+  unsigned m_anchor;
   const Atom *m_nonAnchor = nullptr;
 
   StereoBondEndCap() = delete;
@@ -68,37 +74,32 @@ class StereoBondEndCap {
   StereoBondEndCap &operator=(const StereoBondEndCap &) = delete;
 
  public:
-  StereoBondEndCap(const ROMol &mol, const Bond *bond, Atom *atom,
-                   Atom *otherAtom) {
-    PRECONDITION(bond->getStereo() > Bond::BondStereo::STEREOANY,
-                 "Bond must have defined stereo");
+  StereoBondEndCap(const ROMol &mol, const Atom *atom,
+                   const Atom *otherDblBndAtom, const unsigned stereoAtomIdx)
+      : m_anchor(stereoAtomIdx) {
     PRECONDITION(atom->getTotalDegree() <= 3,
                  "Stereo Bond extremes must have less than four neighbors");
-    PRECONDITION(bond->getStereoAtoms().size() == 2,
-                 "StereoAtoms must be known for the stereo bond");
 
-    const auto stereoAtoms = bond->getStereoAtoms();
-    const unsigned otherIdx = otherAtom->getIdx();
-    for (ROMol::ADJ_ITER_PAIR atomIter = mol.getAtomNeighbors(atom);
-         atomIter.first != atomIter.second; ++atomIter.first) {
-      const unsigned neighborIdx = *atomIter.first;
-      // We are not interested in the other side of the double bond
-      if (otherIdx == neighborIdx) {
-        continue;
-      }
+    const auto nbrIdxItr = mol.getAtomNeighbors(atom);
+    const unsigned otherIdx = otherDblBndAtom->getIdx();
 
-      const Atom *neighbor = mol.getAtomWithIdx(neighborIdx);
-      if (std::find(stereoAtoms.begin(), stereoAtoms.end(), neighborIdx) !=
-          stereoAtoms.end()) {
-        m_anchor = neighbor;
-      } else {
-        m_nonAnchor = neighbor;
-      }
+    auto isNonAnchor = [&otherIdx, &stereoAtomIdx](const unsigned &nbrIdx) {
+      return nbrIdx != otherIdx && nbrIdx != stereoAtomIdx;
+    };
+
+    auto nonAnchorItr =
+        std::find_if(nbrIdxItr.second, nbrIdxItr.second, isNonAnchor);
+    if (nonAnchorItr != nbrIdxItr.second) {
+      m_nonAnchor = mol.getAtomWithIdx(*nonAnchorItr);
     }
   }
 
-  const Atom *getAnchor() const { return m_anchor; }
-  const Atom *getNonAnchor() const { return m_nonAnchor; }
+  StereoBondEndCap(StereoBondEndCap &&) = default;
+  StereoBondEndCap &operator=(StereoBondEndCap &&) = default;
+
+  bool hasNonAnchor() const { return m_nonAnchor != nullptr; }
+  unsigned getAnchorIdx() const { return m_anchor; }
+  unsigned getNonAnchorIdx() const { return m_nonAnchor->getIdx(); }
 };
 
 bool hasStereoBondDirection(const Bond *bond) {
@@ -108,9 +109,9 @@ bool hasStereoBondDirection(const Bond *bond) {
 
 const Bond *getNeighboringStereoDirectedBond(const ROMol &mol,
                                              const Atom *atom) {
-  for (ROMol::OBOND_ITER_PAIR bondIter = mol.getAtomBonds(atom);
-       bondIter.first != bondIter.second; ++bondIter.first) {
-    const Bond *bond = mol[*bondIter.first];
+  for (const auto &bondIdx :
+       boost::make_iterator_range(mol.getAtomBonds(atom))) {
+    const Bond *bond = mol[bondIdx];
 
     // We will use the first directed bond we find. It is not likely, but there
     // might be more than one
@@ -448,11 +449,15 @@ unsigned reactProdMapAnchorIdx(Atom *atom, const RDKit::UINT_VECT &pMatches) {
     return pMatches[0];
   }
 
-  auto nbrItr = atom->getOwningMol().getAtomNeighbors(atom);
-  auto match = std::find_first_of(nbrItr.first, nbrItr.second, pMatches.begin(),
-                                  pMatches.end());
+  const auto &pMol = atom->getOwningMol();
+  const unsigned atomIdx = atom->getIdx();
 
-  if (match == nbrItr.second) {
+  auto areAtomsBonded = [&pMol, &atomIdx](const unsigned &pAnchor) {
+    return pMol.getBondBetweenAtoms(atomIdx, pAnchor) != nullptr;
+  };
+  auto match = std::find_if(pMatches.begin(), pMatches.end(), areAtomsBonded);
+
+  if (match == pMatches.end()) {
     throw std::logic_error("match not found");
   }
   return *match;
@@ -463,30 +468,38 @@ void forwardReactantBondStereo(ReactantProductAtomMapping *mapping, Bond *pBond,
   PRECONDITION(rBond->getStereo() > Bond::BondStereo::STEREOANY,
                "bond in reactant must have defined stereo");
 
-  StereoBondEndCap start(reactant, rBond, rBond->getBeginAtom(),
-                         rBond->getEndAtom());
-  StereoBondEndCap end(reactant, rBond, rBond->getEndAtom(),
-                       rBond->getBeginAtom());
+  auto &prod2React = mapping->prodReactAtomMap;
+  auto &react2Prod = mapping->reactProdAtomMap;
 
-  auto rStartAnchorMatches =
-      mapping->reactProdAtomMap.find(start.getAnchor()->getIdx());
-  auto rEndAnchorMatches =
-      mapping->reactProdAtomMap.find(end.getAnchor()->getIdx());
+  const Atom *rStart = rBond->getBeginAtom();
+  const Atom *rEnd = rBond->getEndAtom();
+  const auto &rStereoAtoms = rBond->getStereoAtoms();
+
+  StereoBondEndCap start(reactant, rStart, rEnd, rStereoAtoms[0]);
+  StereoBondEndCap end(reactant, rEnd, rStart, rStereoAtoms[1]);
+
+  // The bond might be matched backwards in the reaction
+  if (prod2React[pBond->getBeginAtom()->getIdx()] == rEnd->getIdx()) {
+    std::swap(start, end);
+  } else if (prod2React[pBond->getBeginAtom()->getIdx()] != rStart->getIdx()) {
+    throw std::logic_error("Reactant and Product bond ends do not match");
+  }
+
+  auto rStartAnchorMatches = react2Prod.find(start.getAnchorIdx());
+  auto rEndAnchorMatches = react2Prod.find(end.getAnchorIdx());
 
   // If any of the anchor pair is not mapped, see if we can make the match with
   // the non-anchor pair, which, if defined, is symmetric to the anchors
-  if (rStartAnchorMatches == mapping->reactProdAtomMap.end() ||
-      rEndAnchorMatches == mapping->reactProdAtomMap.end()) {
-    if (start.getNonAnchor() != nullptr && end.getNonAnchor() != nullptr) {
-      rStartAnchorMatches =
-          mapping->reactProdAtomMap.find(start.getNonAnchor()->getIdx());
-      rEndAnchorMatches =
-          mapping->reactProdAtomMap.find(end.getNonAnchor()->getIdx());
+  if (rStartAnchorMatches == react2Prod.end() ||
+      rEndAnchorMatches == react2Prod.end()) {
+    if (start.hasNonAnchor() && end.hasNonAnchor()) {
+      rStartAnchorMatches = react2Prod.find(start.getNonAnchorIdx());
+      rEndAnchorMatches = react2Prod.find(end.getNonAnchorIdx());
     }
     // If there is no match in the second try (or 2nd try did not work), then
     // the reaction invalidated the reactant's stereochemistry
-    if (rStartAnchorMatches == mapping->reactProdAtomMap.end() ||
-        rEndAnchorMatches == mapping->reactProdAtomMap.end()) {
+    if (rStartAnchorMatches == react2Prod.end() ||
+        rEndAnchorMatches == react2Prod.end()) {
       return;
     }
   }
@@ -1178,9 +1191,10 @@ void addReactantAtomsAndBonds(const ChemicalReaction &rxn, RWMOL_SPTR product,
   delete (mapping);
 }  // end of addReactantAtomsAndBonds
 
-MOL_SPTR_VECT generateOneProductSet(
-    const ChemicalReaction &rxn, const MOL_SPTR_VECT &reactants,
-    const std::vector<MatchVectType> &reactantsMatch) {
+MOL_SPTR_VECT
+generateOneProductSet(const ChemicalReaction &rxn,
+                      const MOL_SPTR_VECT &reactants,
+                      const std::vector<MatchVectType> &reactantsMatch) {
   PRECONDITION(reactants.size() == reactantsMatch.size(),
                "vector size mismatch");
 
