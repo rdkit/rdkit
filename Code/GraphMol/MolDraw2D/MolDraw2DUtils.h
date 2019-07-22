@@ -77,9 +77,16 @@ RDKIT_MOLDRAW2D_EXPORT void updateDrawerParamsFromJSON(MolDraw2D &drawer,
                                                        const std::string &json);
 
 RDKIT_MOLDRAW2D_EXPORT void contourAndDrawGrid(
-    MolDraw2D &drawer, double **grid, const std::vector<double> &xcoords,
+    MolDraw2D &drawer, const double *grid, const std::vector<double> &xcoords,
     const std::vector<double> &ycoords, size_t nContours,
     std::vector<double> &levels, bool dashNegative = true);
+
+RDKIT_MOLDRAW2D_EXPORT void contourAndDrawGaussians(
+    MolDraw2D &drawer, const std::vector<Point2D> &locs,
+    const std::vector<double> &heights, const std::vector<double> &widths,
+    size_t nContours, std::vector<double> &levels, double resolution = 0.2,
+    bool dashNegative = true);
+
 }  // namespace MolDraw2DUtils
 }  // namespace RDKit
 #endif  // MOLDRAW2DUTILS_H

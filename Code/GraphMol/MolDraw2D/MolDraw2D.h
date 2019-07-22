@@ -329,7 +329,13 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
     y_offset_ = y;
   }
   //! returns the drawing offset (in drawing coords)
-  Point2D offset() { return Point2D(x_offset_, y_offset_); }
+  Point2D offset() const { return Point2D(x_offset_, y_offset_); }
+
+   //! returns the minimum point of the drawing (in molecular coords)
+  Point2D minPt() const { return Point2D(x_min_,y_min_); }
+   //! returns the width and height of the grid (in molecular coords)
+  Point2D range() const { return Point2D(x_range_,y_range_); }
+
   //! returns the font size (in nolecule units)
   virtual double fontSize() const { return font_size_; }
   //! set font size in molecule coordinate units. That's probably Angstrom for

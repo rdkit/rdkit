@@ -24,13 +24,16 @@ struct ConrecSegment {
    nc              ! number of contour levels
    z               ! contour levels in increasing order
 */
-inline void Contour(double **d, size_t ilb, size_t iub, size_t jlb, size_t jub,
-                    const double *x, const double *y, size_t nc, double *z,
-                    std::vector<ConrecSegment> &res) {
+inline void Contour(const double *d, size_t ilb, size_t iub, size_t jlb,
+                    size_t jub, const double *x, const double *y, size_t nc,
+                    double *z, std::vector<ConrecSegment> &res) {
   PRECONDITION(d, "no data");
   PRECONDITION(x, "no data");
   PRECONDITION(y, "no data");
   PRECONDITION(z, "no data");
+  PRECONDITION(nc > 0, "no contours");
+  PRECONDITION(iub > ilb, "bad bounds");
+  PRECONDITION(jub > jlb, "bad bounds");
 
 #define xsect(p1, p2) (h[p2] * xh[p1] - h[p1] * xh[p2]) / (h[p2] - h[p1])
 #define ysect(p1, p2) (h[p2] * yh[p1] - h[p1] * yh[p2]) / (h[p2] - h[p1])
@@ -46,21 +49,23 @@ inline void Contour(double **d, size_t ilb, size_t iub, size_t jlb, size_t jub,
                          {{0, 3, 4}, {1, 3, 1}, {4, 3, 0}},
                          {{9, 6, 7}, {5, 2, 0}, {8, 0, 0}}};
   double temp1, temp2;
+  size_t nx = iub - ilb + 1;
+  size_t ny = jub - jlb + 1;
 
   for (j = (jub - 1); j >= (int)jlb; j--) {
     for (i = ilb; i <= (int)iub - 1; i++) {
-      temp1 = std::min(d[i][j], d[i][j + 1]);
-      temp2 = std::min(d[i + 1][j], d[i + 1][j + 1]);
+      temp1 = std::min(d[i * ny + j], d[i * ny + j + 1]);
+      temp2 = std::min(d[(i + 1) * ny + j], d[(i + 1) * ny + j + 1]);
       dmin = std::min(temp1, temp2);
-      temp1 = std::max(d[i][j], d[i][j + 1]);
-      temp2 = std::max(d[i + 1][j], d[i + 1][j + 1]);
+      temp1 = std::max(d[i * ny + j], d[i * ny + j + 1]);
+      temp2 = std::max(d[(i + 1) * ny + j], d[(i + 1) * ny + j + 1]);
       dmax = std::max(temp1, temp2);
       if (dmax < z[0] || dmin > z[nc - 1]) continue;
       for (k = 0; k < nc; k++) {
         if (z[k] < dmin || z[k] > dmax) continue;
         for (m = 4; m >= 0; m--) {
           if (m > 0) {
-            h[m] = d[i + im[m - 1]][j + jm[m - 1]] - z[k];
+            h[m] = d[(i + im[m - 1]) * ny + j + jm[m - 1]] - z[k];
             xh[m] = x[i + im[m - 1]];
             yh[m] = y[j + jm[m - 1]];
           } else {

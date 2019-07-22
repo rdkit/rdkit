@@ -24,11 +24,7 @@ TEST_CASE("Conrec basics", "[conrec]") {
   SECTION("basics") {
     std::vector<RDGeom::Point2D> pts = {{0., 0.}, {1., 0.}, {1., 1.}, {0., 1.}};
     const size_t gridSz = 100;
-    double **grid;
-    grid = new double *[gridSz];
-    for (size_t i = 0; i < gridSz; ++i) {
-      grid[i] = new double[gridSz];
-    }
+    double *grid = new double[gridSz * gridSz];
     double xps[gridSz];
     double yps[gridSz];
     double x1 = -4, y1 = -4, x2 = 6, y2 = 6;
@@ -48,7 +44,7 @@ TEST_CASE("Conrec basics", "[conrec]") {
           if (r > 0) val += 1 / r;
         }
         maxV = std::max(val, maxV);
-        grid[ix][iy] = val;
+        grid[ix * gridSz + iy] = val;
       }
     }
     std::vector<conrec::ConrecSegment> segs;
@@ -57,8 +53,8 @@ TEST_CASE("Conrec basics", "[conrec]") {
     for (size_t i = 0; i < nContours; ++i) {
       isoLevels[i] = (i + 1) * (maxV / (nContours + 1));
     }
-    conrec::Contour((const double **)grid, 0, gridSz - 1, 0, gridSz - 1, xps,
-                    yps, nContours, isoLevels, segs);
+    conrec::Contour(grid, 0, gridSz - 1, 0, gridSz - 1, xps, yps, nContours,
+                    isoLevels, segs);
 
     std::ofstream outs("./blah.svg");
     outs << R"SVG(<?xml version='1.0' encoding='iso-8859-1'?>
@@ -83,7 +79,6 @@ width='300px' height='300px' >
       ;
     }
     outs << "</svg>" << std::endl;
-    for (size_t i = 0; i < gridSz; ++i) delete[] grid[i];
     delete[] grid;
   }
 }

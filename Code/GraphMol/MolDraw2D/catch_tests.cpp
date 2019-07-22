@@ -58,20 +58,15 @@ TEST_CASE("tag atoms in SVG", "[drawing, SVG]") {
   }
 }
 TEST_CASE("contour data", "[drawing, conrec]") {
-  SECTION("basics") {
-    auto m1 = "C1N[C@@H]2OCC12"_smiles;
-    REQUIRE(m1);
-
+  auto m1 = "C1N[C@@H]2OCC12"_smiles;
+  REQUIRE(m1);
+  SECTION("grid basics") {
     MolDraw2DSVG drawer(250, 250);
     MolDraw2DUtils::prepareMolForDrawing(*m1);
     drawer.drawMolecule(*m1);
 
     const size_t gridSz = 100;
-    double **grid;
-    grid = new double *[gridSz];
-    for (size_t i = 0; i < gridSz; ++i) {
-      grid[i] = new double[gridSz];
-    }
+    double *grid = new double[gridSz * gridSz];
     std::vector<double> xps(gridSz);
     std::vector<double> yps(gridSz);
 
@@ -101,7 +96,7 @@ TEST_CASE("contour data", "[drawing, conrec]") {
           if (r > 0.1) val += 1 / r;
         }
         maxV = std::max(val, maxV);
-        grid[ix][iy] = val;
+        grid[ix * gridSz + iy] = val;
       }
     }
 
@@ -111,6 +106,34 @@ TEST_CASE("contour data", "[drawing, conrec]") {
     drawer.finishDrawing();
     std::string text = drawer.getDrawingText();
     std::ofstream outs("contourMol_1.svg");
+    outs << text;
+    outs.flush();
+    delete[] grid;
+  }
+  SECTION("gaussian basics") {
+    MolDraw2DSVG drawer(250, 250);
+    MolDraw2DUtils::prepareMolForDrawing(*m1);
+    drawer.drawOptions().padding = 0.1;
+    drawer.drawMolecule(*m1);
+
+    const auto conf = m1->getConformer();
+    std::vector<Point2D> cents(conf.getNumAtoms());
+    std::vector<double> weights(conf.getNumAtoms());
+    std::vector<double> widths(conf.getNumAtoms());
+    for (size_t i = 0; i < conf.getNumAtoms(); ++i) {
+      cents[i] = Point2D(conf.getAtomPos(i).x, conf.getAtomPos(i).y);
+      weights[i] = 1;
+      widths[i] = 0.4 * PeriodicTable::getTable()->getRcovalent(
+                            m1->getAtomWithIdx(i)->getAtomicNum());
+    }
+
+    std::vector<double> levels;
+    MolDraw2DUtils::contourAndDrawGaussians(drawer, cents, weights, widths, 10,
+                                            levels, 0.15);
+
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("contourMol_2.svg");
     outs << text;
     outs.flush();
   }

@@ -22,6 +22,7 @@
 #include <boost/property_tree/json_parser.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #include <limits>
+#include <cmath>
 #include <Numerics/Conrec.h>
 
 namespace RDKit {
@@ -136,12 +137,13 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
   }
 }
 
-void contourAndDrawGrid(MolDraw2D &drawer, double **grid,
+void contourAndDrawGrid(MolDraw2D &drawer, const double *grid,
                         const std::vector<double> &xcoords,
                         const std::vector<double> &ycoords, size_t nContours,
                         std::vector<double> &levels, bool dashNegative) {
   PRECONDITION(grid, "no data");
   PRECONDITION(nContours > 0, "no contours");
+
   size_t nX = xcoords.size();
   size_t nY = ycoords.size();
   double dX = (xcoords.back() - xcoords.front()) / nX;
@@ -152,8 +154,8 @@ void contourAndDrawGrid(MolDraw2D &drawer, double **grid,
     double maxV = std::numeric_limits<double>::min();
     for (size_t i = 0; i < nX; ++i) {
       for (size_t j = 0; j < nY; ++j) {
-        minV = std::min(minV, grid[i][j]);
-        maxV = std::max(maxV, grid[i][j]);
+        minV = std::min(minV, grid[i * nY + j]);
+        maxV = std::max(maxV, grid[i * nY + j]);
       }
     }
     for (size_t i = 0; i < nContours; ++i) {
@@ -177,8 +179,6 @@ void contourAndDrawGrid(MolDraw2D &drawer, double **grid,
     } else {
       drawer.setDash(posDash);
     }
-    // drawer.drawLine(drawer.getDrawCoords(seg.p1),
-    // drawer.getDrawCoords(seg.p2));
     drawer.drawLine(seg.p1, seg.p2);
   }
   drawer.setDash(odash);
@@ -186,5 +186,48 @@ void contourAndDrawGrid(MolDraw2D &drawer, double **grid,
   drawer.setColour(ocolor);
 };
 
+void contourAndDrawGaussians(MolDraw2D &drawer,
+                             const std::vector<Point2D> &locs,
+                             const std::vector<double> &weights,
+                             const std::vector<double> &widths,
+                             size_t nContours, std::vector<double> &levels,
+                             double resolution, bool dashNegative) {
+  PRECONDITION(locs.size() == weights.size(), "size mismatch");
+  PRECONDITION(locs.size() == widths.size(), "size mismatch");
+
+  // start by setting up the grid
+  size_t nx = (size_t)ceil(drawer.range().x / resolution) + 1;
+  size_t ny = (size_t)ceil(drawer.range().y / resolution) + 1;
+  std::vector<double> xcoords(nx);
+  for (size_t i = 0; i < nx; ++i) {
+    xcoords[i] = drawer.minPt().x + i * resolution;
+  }
+  std::vector<double> ycoords(ny);
+  for (size_t i = 0; i < ny; ++i) {
+    ycoords[i] = drawer.minPt().y + i * resolution;
+  }
+  std::unique_ptr<double[]> grid(new double[nx * ny]);
+
+  // populate the grid from the gaussians:
+  for (size_t ix = 0; ix < nx; ++ix) {
+    auto px = drawer.minPt().x + ix * resolution;
+    for (size_t iy = 0; iy < ny; ++iy) {
+      auto py = drawer.minPt().y + iy * resolution;
+      Point2D pt(px, py);
+      double accum = 0.0;
+      for (size_t ig = 0; ig < locs.size(); ++ig) {
+        auto d2 = (pt - locs[ig]).lengthSq();
+        auto contrib = weights[ig] / widths[ig] *
+                       exp(-0.5 * d2 / (widths[ig] * widths[ig]));
+        accum += contrib;
+      }
+      grid[ix * ny + iy] = accum / (2 * M_PI);
+    }
+  }
+
+  // and render it:
+  contourAndDrawGrid(drawer, grid.get(), xcoords, ycoords, nContours, levels,
+                     dashNegative);
+};
 }  // namespace MolDraw2DUtils
 }  // namespace RDKit
