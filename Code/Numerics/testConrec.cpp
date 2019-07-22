@@ -72,11 +72,12 @@ width='300px' height='300px' >
 <!-- END OF HEADER -->
 )SVG";
     for (const auto &seg : segs) {
-      outs << "<path d='M " << 20 * seg.x1 + 150 << "," << 20 * seg.y1 + 150
-           << " " << 20 * seg.x2 + 150 << "," << 20 * seg.y2 + 150
+      outs << "<path d='M " << 40 * seg.x1 + 150 << "," << 40 * seg.y1 + 150
+           << " " << 40 * seg.x2 + 150 << "," << 40 * seg.y2 + 150
            << "' "
               "style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:"
-              "1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' "
+              "0.5px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:"
+              "1' "
               "/>"
            << std::endl;
       ;
