@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2016 Greg Landrum
+//  Copyright (C) 2016-2019 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -75,6 +75,11 @@ RDKIT_MOLDRAW2D_EXPORT void updateDrawerParamsFromJSON(MolDraw2D &drawer,
                                                        const char *json);
 RDKIT_MOLDRAW2D_EXPORT void updateDrawerParamsFromJSON(MolDraw2D &drawer,
                                                        const std::string &json);
+
+RDKIT_MOLDRAW2D_EXPORT void contourAndDrawGrid(
+    MolDraw2D &drawer, double **grid, const std::vector<double> &xcoords,
+    const std::vector<double> &ycoords, size_t nContours,
+    std::vector<double> &levels, bool dashNegative = true);
 }  // namespace MolDraw2DUtils
 }  // namespace RDKit
 #endif  // MOLDRAW2DUTILS_H

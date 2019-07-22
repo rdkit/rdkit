@@ -2,11 +2,18 @@
 // http://paulbourke.net/papers/conrec/conrec.c
 
 #include <vector>
+#include <Geometry/point.h>
+
 namespace conrec {
 struct ConrecSegment {
-  double x1, y1, x2, y2, isoVal;
+  RDGeom::Point2D p1;
+  RDGeom::Point2D p2;
+  double isoVal;
   ConrecSegment(double x1, double y1, double x2, double y2, double isoVal)
-      : x1(x1), y1(y1), x2(x2), y2(y2), isoVal(isoVal){};
+      : p1(x1, y1), p2(x2, y2), isoVal(isoVal){};
+  ConrecSegment(const RDGeom::Point2D &p1, const RDGeom::Point2D &p2,
+                double isoVal)
+      : p1(p1), p2(p2), isoVal(isoVal){};
 };
 /*
    Derivation from the fortran version of CONREC by Paul Bourke
@@ -17,9 +24,14 @@ struct ConrecSegment {
    nc              ! number of contour levels
    z               ! contour levels in increasing order
 */
-inline void Contour(const double **d, int ilb, int iub, int jlb, int jub,
-                    double *x, double *y, int nc, double *z,
+inline void Contour(double **d, size_t ilb, size_t iub, size_t jlb, size_t jub,
+                    const double *x, const double *y, size_t nc, double *z,
                     std::vector<ConrecSegment> &res) {
+  PRECONDITION(d, "no data");
+  PRECONDITION(x, "no data");
+  PRECONDITION(y, "no data");
+  PRECONDITION(z, "no data");
+
 #define xsect(p1, p2) (h[p2] * xh[p1] - h[p1] * xh[p2]) / (h[p2] - h[p1])
 #define ysect(p1, p2) (h[p2] * yh[p1] - h[p1] * yh[p2]) / (h[p2] - h[p1])
 
@@ -35,8 +47,8 @@ inline void Contour(const double **d, int ilb, int iub, int jlb, int jub,
                          {{9, 6, 7}, {5, 2, 0}, {8, 0, 0}}};
   double temp1, temp2;
 
-  for (j = (jub - 1); j >= jlb; j--) {
-    for (i = ilb; i <= iub - 1; i++) {
+  for (j = (jub - 1); j >= (int)jlb; j--) {
+    for (i = ilb; i <= (int)iub - 1; i++) {
       temp1 = std::min(d[i][j], d[i][j + 1]);
       temp2 = std::min(d[i + 1][j], d[i + 1][j + 1]);
       dmin = std::min(temp1, temp2);
@@ -157,7 +169,8 @@ inline void Contour(const double **d, int ilb, int iub, int jlb, int jub,
           }
 
           /* Finally draw the line */
-          res.push_back(ConrecSegment(x1, y1, x2, y2, z[k]));
+          res.push_back(ConrecSegment(RDGeom::Point2D(x1, y1),
+                                      RDGeom::Point2D(x2, y2), z[k]));
         } /* m */
       }   /* k - contour */
     }     /* i */

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2016 Greg Landrum
+//  Copyright (C) 2016-2019 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -21,6 +21,8 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <RDGeneral/BoostEndInclude.h>
+#include <limits>
+#include <Numerics/Conrec.h>
 
 namespace RDKit {
 namespace MolDraw2DUtils {
@@ -133,6 +135,56 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
     }
   }
 }
+
+void contourAndDrawGrid(MolDraw2D &drawer, double **grid,
+                        const std::vector<double> &xcoords,
+                        const std::vector<double> &ycoords, size_t nContours,
+                        std::vector<double> &levels, bool dashNegative) {
+  PRECONDITION(grid, "no data");
+  PRECONDITION(nContours > 0, "no contours");
+  size_t nX = xcoords.size();
+  size_t nY = ycoords.size();
+  double dX = (xcoords.back() - xcoords.front()) / nX;
+  double dY = (ycoords.back() - ycoords.front()) / nY;
+  if (!levels.size()) {
+    levels.resize(nContours);
+    double minV = std::numeric_limits<double>::max();
+    double maxV = std::numeric_limits<double>::min();
+    for (size_t i = 0; i < nX; ++i) {
+      for (size_t j = 0; j < nY; ++j) {
+        minV = std::min(minV, grid[i][j]);
+        maxV = std::max(maxV, grid[i][j]);
+      }
+    }
+    for (size_t i = 0; i < nContours; ++i) {
+      levels[i] = minV + i * (maxV - minV) / (nContours - 1);
+    }
+  }
+  std::vector<conrec::ConrecSegment> segs;
+  conrec::Contour(grid, 0, nX - 1, 0, nY - 1, xcoords.data(), ycoords.data(),
+                  nContours, levels.data(), segs);
+  const auto olw = drawer.lineWidth();
+  const auto odash = drawer.dash();
+  const auto ocolor = drawer.colour();
+  drawer.setLineWidth(1.0);
+  drawer.setColour(DrawColour(0.5, 0.5, 0.5));
+  static DashPattern negDash = {2, 6};
+  static DashPattern posDash;
+  std::cerr << "  DRAWING " << segs.size() << " SEGMENTS" << std::endl;
+  for (const auto &seg : segs) {
+    if (dashNegative && seg.isoVal < 0) {
+      drawer.setDash(negDash);
+    } else {
+      drawer.setDash(posDash);
+    }
+    // drawer.drawLine(drawer.getDrawCoords(seg.p1),
+    // drawer.getDrawCoords(seg.p2));
+    drawer.drawLine(seg.p1, seg.p2);
+  }
+  drawer.setDash(odash);
+  drawer.setLineWidth(olw);
+  drawer.setColour(ocolor);
+};
 
 }  // namespace MolDraw2DUtils
 }  // namespace RDKit

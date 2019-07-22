@@ -20,7 +20,7 @@
 #include <RDGeneral/utils.h>
 #include <Geometry/point.h>
 
-TEST_CASE("Conrec basics", "") {
+TEST_CASE("Conrec basics", "[conrec]") {
   SECTION("basics") {
     std::vector<RDGeom::Point2D> pts = {{0., 0.}, {1., 0.}, {1., 1.}, {0., 1.}};
     const size_t gridSz = 100;
@@ -72,8 +72,8 @@ width='300px' height='300px' >
 <!-- END OF HEADER -->
 )SVG";
     for (const auto &seg : segs) {
-      outs << "<path d='M " << 40 * seg.x1 + 150 << "," << 40 * seg.y1 + 150
-           << " " << 40 * seg.x2 + 150 << "," << 40 * seg.y2 + 150
+      outs << "<path d='M " << 40 * seg.p1.x + 150 << "," << 40 * seg.p1.y + 150
+           << " " << 40 * seg.p2.x + 150 << "," << 40 * seg.p2.y + 150
            << "' "
               "style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:"
               "0.5px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:"
