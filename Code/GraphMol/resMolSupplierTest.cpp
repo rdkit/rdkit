@@ -713,6 +713,91 @@ void testCrambin() {
   delete crambin;
 }
 
+void testConjGrpPerception() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n"
+                       << "testConjGrpPerception" << std::endl;
+  RWMol *mol1 = MolBlockToMol(R"SDF(
+     RDKit          2D
+
+ 14 15  0  0  0  0  0  0  0  0999 V2000
+    3.7539   -1.2744    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.4317   -0.5660    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.1571   -1.3568    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.1651   -0.6484    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.4397   -1.4393    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3921   -2.9385    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.7619   -0.7309    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.8095    0.7684    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.1316    1.4768    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5349    1.5592    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.2127    0.8508    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0619    1.6417    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    2.3841    0.9333    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.6587    1.7241    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  4  0
+  3  4  4  0
+  4  5  4  0
+  5  6  1  0
+  5  7  4  0
+  7  8  4  0
+  8  9  1  0
+  8 10  4  0
+ 10 11  4  0
+ 11 12  4  0
+ 12 13  4  0
+ 13 14  1  0
+ 13  2  4  0
+ 11  4  4  0
+M  END
+)SDF");
+  RWMol *mol2 = MolBlockToMol(R"SDF(
+     RDKit          2D
+
+ 14 15  0  0  0  0  0  0  0  0999 V2000
+    1.0619   -1.6417    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.2127   -0.8508    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5349   -1.5592    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.8095   -0.7684    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.7619    0.7309    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.4397    1.4393    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.1651    0.6484    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.1571    1.3568    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.4317    0.5660    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.7539    1.2744    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.3841   -0.9333    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.6587   -1.7241    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.1316   -1.4768    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3921    2.9385    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  4  0
+  3  4  4  0
+  4  5  4  0
+  5  6  4  0
+  2  3  4  0
+  2  7  4  0
+  7  8  4  0
+  8  9  4  0
+  9 10  1  0
+  9 11  4  0
+ 11 12  1  0
+ 11  1  4  0
+  6  7  4  0
+  4 13  1  0
+  6 14  1  0
+M  END
+)SDF");
+  auto *resMolSuppl1 = new ResonanceMolSupplier(
+      static_cast<ROMol &>(*mol1), ResonanceMolSupplier::KEKULE_ALL);
+  TEST_ASSERT(resMolSuppl1->length() == 3);
+  auto *resMolSuppl2 = new ResonanceMolSupplier(
+      static_cast<ROMol &>(*mol2), ResonanceMolSupplier::KEKULE_ALL);
+  TEST_ASSERT(resMolSuppl2->length() == 3);
+  delete resMolSuppl1;
+  delete resMolSuppl2;
+  delete mol1;
+  delete mol2;
+}
+
 void testGitHub1166() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n"
                        << "testGitHub1166" << std::endl;
@@ -770,6 +855,7 @@ int main() {
   testSubstructMatchDMAP();
   testCrambin();
   testGitHub1166();
+  testConjGrpPerception();
 #endif
   return 0;
 }
