@@ -40,3 +40,5 @@
 #cmakedefine RDK_BUILD_SLN_SUPPORT
 
 #cmakedefine RDK_BUILD_CAIRO_SUPPORT
+
+#cmakedefine RDK_USE_URF

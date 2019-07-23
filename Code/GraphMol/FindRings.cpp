@@ -1273,9 +1273,11 @@ void fastFindRings(const ROMol &mol) {
 #include <RingDecomposerLib/RingDecomposerLib.h>
 #include <RingDecomposerLib/RDLdataStruct.h>
 void findRingFamilies(const ROMol &mol) {
-  // FIX: probably want to do something else here
   if (mol.getRingInfo()->isInitialized()) {
-    // return;
+    // return if we've done this before
+    if (mol.getRingInfo()->numRingFamilies()) {
+      return;
+    }
   } else {
     mol.getRingInfo()->initialize();
   }
@@ -1287,8 +1289,6 @@ void findRingFamilies(const ROMol &mol) {
   }
   RDL_data *urfdata = RDL_calculate(graph);
   mol.getRingInfo()->dp_urfData.reset(urfdata);
-  // EFF: we actually only need to do this if someone asks for info about
-  //   how many rings an atom is in.
   for (unsigned int i = 0; i < RDL_getNofURF(urfdata); ++i) {
     RDL_node *nodes;
     unsigned nNodes = RDL_getNodesForURF(urfdata, i, &nodes);

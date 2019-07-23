@@ -71,23 +71,6 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   unsigned int addRing(const INT_VECT &atomIndices,
                        const INT_VECT &bondIndices);
 
-  //! adds a ring family to our data
-  /*!
-    \param atomIndices the integer indices of the atoms involved in the
-                       ring family
-    \param bondIndices the integer indices of the bonds involved in the
-                       ring family,
-      this must be the same size as \c atomIndices.
-
-    \return the number of ring families
-
-    <b>Notes:</b>
-      - the object must be initialized before calling this
-
-  */
-  unsigned int addRingFamily(const INT_VECT &atomIndices,
-                             const INT_VECT &bondIndices);
-
   //! \name Atom information
   //@{
 
@@ -150,6 +133,30 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   */
   unsigned int numRings() const;
 
+  //! returns our \c bond-rings vectors
+  /*!
+    <b>Notes:</b>
+      - the object must be initialized before calling this
+  */
+  const VECT_INT_VECT &bondRings() const { return d_bondRings; };
+
+#ifdef RDK_USE_URF
+  //! adds a ring family to our data
+  /*!
+    \param atomIndices the integer indices of the atoms involved in the
+                       ring family
+    \param bondIndices the integer indices of the bonds involved in the
+                       ring family,
+      this must be the same size as \c atomIndices.
+
+    \return the number of ring families
+
+    <b>Notes:</b>
+      - the object must be initialized before calling this
+
+  */
+  unsigned int addRingFamily(const INT_VECT &atomIndices,
+                             const INT_VECT &bondIndices);
   //! returns the total number of ring families
   /*!
     <b>Notes:</b>
@@ -164,13 +171,6 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   */
   unsigned int numRelevantCycles() const;
 
-  //! returns our \c bond-rings vectors
-  /*!
-    <b>Notes:</b>
-      - the object must be initialized before calling this
-  */
-  const VECT_INT_VECT &bondRings() const { return d_bondRings; };
-
   //! returns our atom ring family vectors
   /*!
     <b>Notes:</b>
@@ -178,13 +178,13 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   */
   const VECT_INT_VECT &atomRingFamilies() const { return d_atomRingFamilies; };
 
-//! returns our bond ring family vectors
+  //! returns our bond ring family vectors
   /*!
     <b>Notes:</b>
       - the object must be initialized before calling this
   */
   const VECT_INT_VECT &bondRingFamilies() const { return d_bondRingFamilies; };
-
+#endif
 
   //@}
 

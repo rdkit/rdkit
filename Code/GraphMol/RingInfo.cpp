@@ -77,25 +77,6 @@ unsigned int RingInfo::numRings() const {
   return rdcast<unsigned int>(d_atomRings.size());
 }
 
-unsigned int RingInfo::numRingFamilies() const {
-#ifndef RDK_USE_URF
-  UNDER_CONSTRUCTION("numRingFamilies not implemented without URF support");
-#else
-  PRECONDITION(df_init, "RingInfo not initialized");
-  return d_atomRingFamilies.size();
-#endif
-};
-
-unsigned int RingInfo::numRelevantCycles() const {
-#ifndef RDK_USE_URF
-  UNDER_CONSTRUCTION("numRelevantCycles not implemented without URF support");
-#else
-  PRECONDITION(df_init, "RingInfo not initialized");
-  return rdcast<unsigned int>(RDL_getNofRC(dp_urfData.get()));
-
-#endif
-};
-
 unsigned int RingInfo::addRing(const INT_VECT &atomIndices,
                                const INT_VECT &bondIndices) {
   PRECONDITION(df_init, "RingInfo not initialized");
@@ -117,6 +98,17 @@ unsigned int RingInfo::addRing(const INT_VECT &atomIndices,
   return rdcast<unsigned int>(d_atomRings.size());
 }
 
+#ifdef RDK_USE_URF
+unsigned int RingInfo::numRingFamilies() const {
+  PRECONDITION(df_init, "RingInfo not initialized");
+  return d_atomRingFamilies.size();
+};
+
+unsigned int RingInfo::numRelevantCycles() const {
+  PRECONDITION(df_init, "RingInfo not initialized");
+  return rdcast<unsigned int>(RDL_getNofRC(dp_urfData.get()));
+};
+
 unsigned int RingInfo::addRingFamily(const INT_VECT &atomIndices,
                                      const INT_VECT &bondIndices) {
   PRECONDITION(df_init, "RingInfo not initialized");
@@ -127,6 +119,7 @@ unsigned int RingInfo::addRingFamily(const INT_VECT &atomIndices,
 
   return rdcast<unsigned int>(d_atomRingFamilies.size());
 }
+#endif
 
 void RingInfo::initialize() {
   PRECONDITION(!df_init, "already initialized");
@@ -144,4 +137,4 @@ void RingInfo::preallocate(unsigned int numAtoms, unsigned int numBonds) {
   d_atomMembers.resize(numAtoms);
   d_bondMembers.resize(numBonds);
 }
-}
+}  // namespace RDKit
