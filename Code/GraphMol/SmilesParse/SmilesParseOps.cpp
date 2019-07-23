@@ -494,6 +494,13 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
               bookmarkIt->first % atom1->getIdx();
           std::string msg = fmt.str();
           ReportParseError(msg.c_str(), true);
+	} else if (mol->getBondBetweenAtoms(atom1->getIdx(), (*atomIt)->getIdx()) != nullptr) {
+          auto fmt =
+              boost::format{
+                  "ring closure %1% duplicates bond between atom %2% and atom %3%"} %
+	    bookmarkIt->first % atom1->getIdx() % (*atomIt)->getIdx();
+          std::string msg = fmt.str();
+          ReportParseError(msg.c_str(), true);	  
         } else if (atomIt != atomsEnd) {
           // we actually found an atom, so connect it to the first
           Atom *atom2 = *atomIt;

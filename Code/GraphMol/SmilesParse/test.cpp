@@ -4188,12 +4188,23 @@ void testGithub1972() {
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
+
+void testGithub2556() {
+  BOOST_LOG(rdInfoLog)
+      << "Testing Github #2556: Test correct parsing and fix memory leak for C1C1"
+      << std::endl;  
+  RWMol *m = nullptr;
+  m = SmilesToMol("C1C1");
+  TEST_ASSERT(!m);
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.debug");
-#if 0
+#if 1
   testPass();
   testFail();
 
@@ -4262,6 +4273,7 @@ int main(int argc, char *argv[]) {
   testHashAtomExtension();
   testGithub1925();
   testGithub1972();
+  testGithub2556();
 #endif
   testdoRandomSmileGeneration();
 }
