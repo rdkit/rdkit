@@ -374,6 +374,16 @@ void contourAndDrawGaussiansHelper(
                                           nContours, *levels, params);
 }
 
+void setColorsHelper(RDKit::MolDraw2DUtils::ContourParams &params,
+                     python::object pycolors) {
+  std::vector<RDKit::DrawColour> cs;
+  for (size_t i = 0; i < python::extract<size_t>(pycolors.attr("__len__")());
+       ++i) {
+    cs.push_back(
+        pyTupleToDrawColour(python::extract<python::tuple>(pycolors[i])));
+  }
+  params.colourMap = cs;
+}
 }  // namespace RDKit
 
 BOOST_PYTHON_MODULE(rdMolDraw2D) {
@@ -595,7 +605,9 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                      "colors the grid in addition to drawing contours")
       .def_readwrite("gridResolution",
                      &RDKit::MolDraw2DUtils::ContourParams::gridResolution,
-                     "set the resolution of the grid");
+                     "set the resolution of the grid")
+      .def("setColorMap", &RDKit::setColorsHelper,
+           (python::arg("self"), python::arg("colors")));
   python::def(
       "ContourAndDrawGaussians", &RDKit::contourAndDrawGaussiansHelper,
       (python::arg("drawer"), python::arg("locs"), python::arg("heights"),
