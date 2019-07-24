@@ -179,7 +179,7 @@ void contourAndDrawGrid(MolDraw2D &drawer, const double *grid,
   const auto owidth = drawer.lineWidth();
   if (params.fillGrid) {
     drawer.setFillPolys(true);
-    // drawer.setLineWidth(0);
+    drawer.setLineWidth(1);
     auto delta = (maxV - minV);
     if (params.colourMap.size() > 2) {
       // need to find how fractionally far we are from zero, not the min

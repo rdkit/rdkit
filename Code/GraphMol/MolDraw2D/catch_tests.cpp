@@ -171,4 +171,40 @@ TEST_CASE("contour data", "[drawing, conrec]") {
     outs << text;
     outs.flush();
   }
+
+  SECTION("gaussian fill 2") {
+    auto m2 = "C1N[C@@H]2OCC12C=CC"_smiles;
+    REQUIRE(m2);
+
+    MolDraw2DSVG drawer(450, 250);
+    MolDraw2DUtils::prepareMolForDrawing(*m2);
+    drawer.drawOptions().padding = 0.1;
+
+    const auto conf = m2->getConformer();
+    std::vector<Point2D> cents(conf.getNumAtoms());
+    std::vector<double> weights(conf.getNumAtoms());
+    std::vector<double> widths(conf.getNumAtoms());
+    for (size_t i = 0; i < conf.getNumAtoms(); ++i) {
+      cents[i] = Point2D(conf.getAtomPos(i).x, conf.getAtomPos(i).y);
+      weights[i] = i % 2 ? -0.5 : 1;
+      widths[i] = 0.3 * PeriodicTable::getTable()->getRcovalent(
+                            m2->getAtomWithIdx(i)->getAtomicNum());
+    }
+
+    std::vector<double> levels;
+    MolDraw2DUtils::ContourParams cps;
+    cps.fillGrid = true;
+    cps.gridResolution = 0.5;
+    drawer.clearDrawing();
+    MolDraw2DUtils::contourAndDrawGaussians(drawer, cents, weights, widths, 10,
+                                            levels, cps);
+
+    drawer.drawOptions().clearBackground = false;
+    drawer.drawMolecule(*m2);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("contourMol_4.svg");
+    outs << text;
+    outs.flush();
+  }
 }
