@@ -374,8 +374,8 @@ void contourAndDrawGaussiansHelper(
                                           nContours, *levels, params);
 }
 
-void setColorsHelper(RDKit::MolDraw2DUtils::ContourParams &params,
-                     python::object pycolors) {
+void setColoursHelper(RDKit::MolDraw2DUtils::ContourParams &params,
+                      python::object pycolors) {
   std::vector<RDKit::DrawColour> cs;
   for (size_t i = 0; i < python::extract<size_t>(pycolors.attr("__len__")());
        ++i) {
@@ -383,6 +383,11 @@ void setColorsHelper(RDKit::MolDraw2DUtils::ContourParams &params,
         pyTupleToDrawColour(python::extract<python::tuple>(pycolors[i])));
   }
   params.colourMap = cs;
+}
+
+void setContourColour(RDKit::MolDraw2DUtils::ContourParams &params,
+                      python::tuple tpl) {
+  params.contourColour = pyTupleToDrawColour(tpl);
 }
 }  // namespace RDKit
 
@@ -606,8 +611,16 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def_readwrite("gridResolution",
                      &RDKit::MolDraw2DUtils::ContourParams::gridResolution,
                      "set the resolution of the grid")
-      .def("setColorMap", &RDKit::setColorsHelper,
-           (python::arg("self"), python::arg("colors")));
+      .def_readwrite("contourWidth",
+                     &RDKit::MolDraw2DUtils::ContourParams::contourWidth,
+                     "line width of the contours")
+      .def_readwrite("extraGridPadding",
+                     &RDKit::MolDraw2DUtils::ContourParams::extraGridPadding,
+                     "extra space (in molecule coords) around the grid")
+      .def("setContourColour", &RDKit::setContourColour,
+           (python::arg("self"), python::arg("colour")))
+      .def("setColourMap", &RDKit::setColoursHelper,
+           (python::arg("self"), python::arg("colours")));
   python::def(
       "ContourAndDrawGaussians", &RDKit::contourAndDrawGaussiansHelper,
       (python::arg("drawer"), python::arg("locs"), python::arg("heights"),

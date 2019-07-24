@@ -219,8 +219,8 @@ void contourAndDrawGrid(MolDraw2D &drawer, const double *grid,
                     nContours, levels.data(), segs);
     static DashPattern negDash = {2, 6};
     static DashPattern posDash;
-    drawer.setColour(DrawColour(0.5, 0.5, 0.5));
-    drawer.setLineWidth(1.0);
+    drawer.setColour(params.contourColour);
+    drawer.setLineWidth(params.contourWidth);
     for (const auto &seg : segs) {
       if (params.dashNegative && seg.isoVal < 0) {
         drawer.setDash(negDash);
@@ -263,6 +263,17 @@ void contourAndDrawGaussians(MolDraw2D &drawer,
     minP.y -= drawer.drawOptions().padding * dims.y;
     maxP.x += drawer.drawOptions().padding * dims.x;
     maxP.y += drawer.drawOptions().padding * dims.y;
+
+    if (params.extraGridPadding > 0) {
+      Point2D p1(0, 0), p2(params.extraGridPadding, 0);
+      double pad =
+          fabs(drawer.getDrawCoords(p2).x - drawer.getDrawCoords(p1).x);
+      minP.x -= pad;
+      minP.y -= pad;
+      maxP.x += pad;
+      maxP.y += pad;
+    }
+
     drawer.setScale(drawer.width(), drawer.height(), minP, maxP);
   }
 

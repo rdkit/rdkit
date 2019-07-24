@@ -77,10 +77,14 @@ RDKIT_MOLDRAW2D_EXPORT void updateDrawerParamsFromJSON(MolDraw2D &drawer,
                                                        const std::string &json);
 
 struct ContourParams {
-  bool setScale = true;  // assumes the grid is drawn first
-  bool dashNegative = true;
-  bool fillGrid = false;
-  double gridResolution = 0.15;
+  bool setScale = true;           // assumes the grid is drawn first
+  bool dashNegative = true;       // use dashed lines for negative contours
+  bool fillGrid = false;          // shade the grid
+  double gridResolution = 0.15;   // spacing between elements of the grid
+  double contourWidth = 1.0;      // linewidth for drawing contours
+  double extraGridPadding = 0.0;  // extra padding (in molecule coordinates)
+  DrawColour contourColour = {0.5, 0.5, 0.5,
+                              0.5};  // color for drawing contours
   std::vector<DrawColour> colourMap = {
       {0.557, 0.004, 0.322, 0.5},
       {1, 1, 1, 0.5},
