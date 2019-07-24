@@ -1,6 +1,12 @@
-// adapted from conrec.c by Paul Bourke:
-// http://paulbourke.net/papers/conrec/conrec.c
-
+//
+//  Copyright (C) 2019 Greg Landrum
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
 #include <vector>
 #include <Geometry/point.h>
 
@@ -15,6 +21,8 @@ struct ConrecSegment {
                 double isoVal)
       : p1(p1), p2(p2), isoVal(isoVal){};
 };
+// adapted from conrec.c by Paul Bourke:
+// http://paulbourke.net/papers/conrec/conrec.c
 /*
    Derivation from the fortran version of CONREC by Paul Bourke
    d               ! matrix of data to contour
@@ -40,7 +48,8 @@ inline void Contour(const double *d, size_t ilb, size_t iub, size_t jlb,
 
   int m1, m2, m3, case_value;
   double dmin, dmax, x1 = 0, x2 = 0, y1 = 0, y2 = 0;
-  int i, j, k, m;
+  int i, j, m;
+  size_t k;
   double h[5];
   int sh[5];
   double xh[5], yh[5];
@@ -49,7 +58,6 @@ inline void Contour(const double *d, size_t ilb, size_t iub, size_t jlb,
                          {{0, 3, 4}, {1, 3, 1}, {4, 3, 0}},
                          {{9, 6, 7}, {5, 2, 0}, {8, 0, 0}}};
   double temp1, temp2;
-  size_t nx = iub - ilb + 1;
   size_t ny = jub - jlb + 1;
 
   for (j = (jub - 1); j >= (int)jlb; j--) {
