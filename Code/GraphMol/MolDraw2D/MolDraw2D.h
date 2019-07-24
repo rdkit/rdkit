@@ -36,7 +36,16 @@ using RDGeom::Point2D;
 
 namespace RDKit {
 
-typedef boost::tuple<float, float, float> DrawColour;
+struct DrawColour {
+  double r = 0.0, g = 0.0, b = 0.0, a = 1.0;
+  DrawColour(){};
+  DrawColour(double r, double g, double b, double a = 1.0)
+      : r(r), g(g), b(b), a(a){};
+  bool operator==(const DrawColour &other) const {
+    return r == other.r && g == other.g && b == other.b && a == other.a;
+  };
+};
+
 typedef std::map<int, DrawColour> ColourPalette;
 typedef std::vector<unsigned int> DashPattern;
 
@@ -331,10 +340,10 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   //! returns the drawing offset (in drawing coords)
   Point2D offset() const { return Point2D(x_offset_, y_offset_); }
 
-   //! returns the minimum point of the drawing (in molecular coords)
-  Point2D minPt() const { return Point2D(x_min_,y_min_); }
-   //! returns the width and height of the grid (in molecular coords)
-  Point2D range() const { return Point2D(x_range_,y_range_); }
+  //! returns the minimum point of the drawing (in molecular coords)
+  Point2D minPt() const { return Point2D(x_min_, y_min_); }
+  //! returns the width and height of the grid (in molecular coords)
+  Point2D range() const { return Point2D(x_range_, y_range_); }
 
   //! returns the font size (in nolecule units)
   virtual double fontSize() const { return font_size_; }

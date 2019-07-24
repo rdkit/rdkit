@@ -18,8 +18,8 @@
 // ****************************************************************************
 
 namespace RDKit {
-typedef boost::tuple<float, float, float> DrawColour;
 class MolDraw2D;
+class MolDraw2DColour;
 
 namespace MolDraw2DUtils {
 //! Does some cleanup operations on the molecule to prepare it to draw nicely

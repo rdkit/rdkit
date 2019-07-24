@@ -99,11 +99,11 @@ void get_colour_option(boost::property_tree::ptree *pt, const char *pnm,
   if (pt->find(pnm) == pt->not_found()) return;
 
   boost::property_tree::ptree::const_iterator itm = pt->get_child(pnm).begin();
-  colour.get<0>() = itm->second.get_value<float>();
+  colour.r = itm->second.get_value<float>();
   ++itm;
-  colour.get<1>() = itm->second.get_value<float>();
+  colour.g = itm->second.get_value<float>();
   ++itm;
-  colour.get<2>() = itm->second.get_value<float>();
+  colour.b = itm->second.get_value<float>();
   ++itm;
 }
 

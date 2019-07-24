@@ -27,19 +27,19 @@ std::string DrawColourToSVG(const DrawColour &col) {
   res[0] = '#';
   unsigned int v;
   unsigned int i = 1;
-  v = int(255 * col.get<0>());
+  v = int(255 * col.r);
   if (v > 255)
     throw ValueErrorException(
         "elements of the color should be between 0 and 1");
   res[i++] = convert[v / 16];
   res[i++] = convert[v % 16];
-  v = int(255 * col.get<1>());
+  v = int(255 * col.g);
   if (v > 255)
     throw ValueErrorException(
         "elements of the color should be between 0 and 1");
   res[i++] = convert[v / 16];
   res[i++] = convert[v % 16];
-  v = int(255 * col.get<2>());
+  v = int(255 * col.b);
   if (v > 255)
     throw ValueErrorException(
         "elements of the color should be between 0 and 1");

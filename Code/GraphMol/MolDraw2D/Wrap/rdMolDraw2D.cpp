@@ -82,17 +82,25 @@ std::map<int, double> *pyDictToDoubleMap(python::object pyo) {
 DrawColour pyTupleToDrawColour(const python::tuple tpl) {
   float r = python::extract<float>(tpl[0]);
   if (r > 1 || r < 0) {
-    throw ValueErrorException("RGB color value needs to be between 0 and 1.");
+    throw ValueErrorException("RGBA color value needs to be between 0 and 1.");
   }
   float g = python::extract<float>(tpl[1]);
   if (g > 1 || g < 0) {
-    throw ValueErrorException("RGB color value needs to be between 0 and 1.");
+    throw ValueErrorException("RGBA color value needs to be between 0 and 1.");
   }
   float b = python::extract<float>(tpl[2]);
   if (b > 1 || b < 0) {
-    throw ValueErrorException("RGB color value needs to be between 0 and 1.");
+    throw ValueErrorException("RGBA color value needs to be between 0 and 1.");
   }
-  DrawColour clr(r, g, b);
+  float a = 1;
+  if (python::extract<unsigned int>(tpl.attr("__len__")()) > 3) {
+    a = python::extract<float>(tpl[3]);
+    if (a > 1 || a < 0) {
+      throw ValueErrorException(
+          "RGBA color value needs to be between 0 and 1.");
+    }
+  }
+  DrawColour clr(r, g, b, a);
   return clr;
 }
 void pyListToColourVec(python::object pyo, std::vector<DrawColour> &res) {
@@ -302,9 +310,10 @@ ROMol *prepMolForDrawing(const ROMol *m, bool kekulize = true,
 
 python::tuple colourToPyTuple(const DrawColour &clr) {
   python::list res;
-  res.append(clr.get<0>());
-  res.append(clr.get<1>());
-  res.append(clr.get<2>());
+  res.append(clr.r);
+  res.append(clr.g);
+  res.append(clr.b);
+  res.append(clr.a);
 
   return python::tuple(res);
 }
