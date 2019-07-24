@@ -205,6 +205,11 @@ void contourAndDrawGrid(MolDraw2D &drawer, const double *grid,
                       ? params.colourMap[0]
                       : params.colourMap[2];
         auto c = c1 + (c2 - c1) * fracV;
+        // don't bother drawing boxes that are the same as the background color:
+        double tol = 0.01;
+        if (c.feq(drawer.drawOptions().backgroundColour, tol)) {
+          continue;
+        }
         drawer.setColour(c);
         Point2D p1 = {xcoords[i], ycoords[j]};
         Point2D p2 = {xcoords[i + 1], ycoords[j + 1]};

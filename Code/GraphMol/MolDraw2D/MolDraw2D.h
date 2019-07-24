@@ -41,6 +41,12 @@ struct DrawColour {
       : r(r), g(g), b(b), a(a){};
   bool operator==(const DrawColour &other) const {
     return r == other.r && g == other.g && b == other.b && a == other.a;
+  }
+  bool feq(const DrawColour &other, double tol = 0.001,
+           bool ignoreAlpha = true) const {
+    return fabs(r - other.r) <= tol && fabs(g - other.g) <= tol &&
+           fabs(b - other.b) <= tol &&
+           (ignoreAlpha || fabs(a - other.a) <= tol);
   };
   DrawColour operator+(const DrawColour &other) const {
     return DrawColour(r + other.r, g + other.g, b + other.b, a + other.a);
