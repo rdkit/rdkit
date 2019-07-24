@@ -166,9 +166,6 @@ def GetSimilarityMapFromWeights(mol, weights, colorMap=None, scale=-1, size=(250
         ps = Draw.ContourParams()
         ps.fillGrid=True
         ps.gridResolution=0.1
-        ps.setColorMap(((0.55686274509803924,  0.00392156862745098,  0.32156862745098042),
-        (1,1,1),
-        (0.15294117647058825,  0.39215686274509803,  0.09803921568627451)))
         Draw.ContourAndDrawGaussians(draw2d,locs,weights,sigmas,nContours=contourLines,params=ps)
         draw2d.drawOptions().clearBackground = False
         draw2d.DrawMolecule(mol)

@@ -143,7 +143,6 @@ void contourAndDrawGrid(MolDraw2D &drawer, const double *grid,
                         std::vector<double> &levels,
                         const ContourParams &params) {
   PRECONDITION(grid, "no data");
-  PRECONDITION(nContours > 0, "no contours");
   PRECONDITION(params.colourMap.size() > 1,
                "colourMap must have at least two entries");
 
@@ -173,9 +172,6 @@ void contourAndDrawGrid(MolDraw2D &drawer, const double *grid,
   }
   if (maxV <= minV) return;
 
-  std::vector<conrec::ConrecSegment> segs;
-  conrec::Contour(grid, 0, nX - 1, 0, nY - 1, xcoords.data(), ycoords.data(),
-                  nContours, levels.data(), segs);
   const auto olw = drawer.lineWidth();
   const auto odash = drawer.dash();
   const auto ocolor = drawer.colour();
@@ -216,17 +212,23 @@ void contourAndDrawGrid(MolDraw2D &drawer, const double *grid,
       }
     }
   }
-  static DashPattern negDash = {2, 6};
-  static DashPattern posDash;
-  drawer.setColour(DrawColour(0.5, 0.5, 0.5));
-  drawer.setLineWidth(1.0);
-  for (const auto &seg : segs) {
-    if (params.dashNegative && seg.isoVal < 0) {
-      drawer.setDash(negDash);
-    } else {
-      drawer.setDash(posDash);
+
+  if (nContours) {
+    std::vector<conrec::ConrecSegment> segs;
+    conrec::Contour(grid, 0, nX - 1, 0, nY - 1, xcoords.data(), ycoords.data(),
+                    nContours, levels.data(), segs);
+    static DashPattern negDash = {2, 6};
+    static DashPattern posDash;
+    drawer.setColour(DrawColour(0.5, 0.5, 0.5));
+    drawer.setLineWidth(1.0);
+    for (const auto &seg : segs) {
+      if (params.dashNegative && seg.isoVal < 0) {
+        drawer.setDash(negDash);
+      } else {
+        drawer.setDash(posDash);
+      }
+      drawer.drawLine(seg.p1, seg.p2);
     }
-    drawer.drawLine(seg.p1, seg.p2);
   }
 
   drawer.setDash(odash);

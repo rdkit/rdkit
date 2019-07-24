@@ -77,12 +77,14 @@ RDKIT_MOLDRAW2D_EXPORT void updateDrawerParamsFromJSON(MolDraw2D &drawer,
                                                        const std::string &json);
 
 struct ContourParams {
-  bool setScale = true; // assumes the grid is drawn first
+  bool setScale = true;  // assumes the grid is drawn first
   bool dashNegative = true;
   bool fillGrid = false;
   double gridResolution = 0.15;
   std::vector<DrawColour> colourMap = {
-      {0, 0, 1, 0.25}, {1, 1, 1, 0.25}, {1, 0, 0, 0.25}};
+      {0.557, 0.004, 0.322, 0.5},
+      {1, 1, 1, 0.5},
+      {0.153, 0.392, 0.098, 0.5}};  // similarity map color scheme
 };
 RDKIT_MOLDRAW2D_EXPORT void contourAndDrawGrid(
     MolDraw2D &drawer, const double *grid, const std::vector<double> &xcoords,
