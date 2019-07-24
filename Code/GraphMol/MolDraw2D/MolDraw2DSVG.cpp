@@ -198,13 +198,14 @@ void MolDraw2DSVG::drawPolygon(const std::vector<Point2D> &cds) {
   d_os << " " << c0.x << "," << c0.y;
   d_os << "' style='";
   if (fillPolys())
-    d_os << "fill:" << col << ";fill-rule:evenodd;";
+    d_os << "fill:" << col << ";fill-rule:evenodd;fill-opacity=" << colour().a
+         << ";";
   else
     d_os << "fill:none;";
 
   d_os << "stroke:" << col << ";stroke-width:" << width
-       << "px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       << dashString << "'";
+       << "px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:"
+       << colour().a << ";" << dashString << "'";
   d_os << " />\n";
 }
 

@@ -331,6 +331,46 @@ M  END""")
     self.assertTrue(txt.find("<circle")>0)
     self.assertTrue(txt.find("onclick=") > 0)
 
+  def testMolContours(self):
+    m = Chem.MolFromSmiles("C1N[C@@H]2OCC12")
+    dm = Draw.PrepareMolForDrawing(m)
+
+    conf = dm.GetConformer()
+    gs = []
+    ws = []
+    hs = []
+    for i in range(conf.GetNumAtoms()):
+      p = conf.GetAtomPosition(i)
+      p2 = Geometry.Point2D(p.x,p.y)
+      gs.append(p2)
+      hs.append(0.4)
+      if not i%2 :
+        ws.append(-0.5)
+      else:
+        ws.append(1)
+
+    d = Draw.MolDraw2DSVG(300, 300)
+    d.ClearDrawing()
+    Draw.ContourAndDrawGaussians(d,gs,hs,ws)
+    d.drawOptions().clearBackground = False
+    d.DrawMolecule(dm)
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    with open("contour_from_py_1.svg",'w+') as outf:
+      print(txt,file=outf)
+
+    d = Draw.MolDraw2DSVG(300, 300)
+    d.ClearDrawing()
+    ps = Draw.ContourParams()
+    ps.fillGrid=True
+    Draw.ContourAndDrawGaussians(d,gs,hs,ws,params=ps)
+    d.drawOptions().clearBackground = False
+    d.DrawMolecule(dm)
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    with open("contour_from_py_2.svg",'w+') as outf:
+      print(txt,file=outf)
+
 
 
 if __name__ == "__main__":

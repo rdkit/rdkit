@@ -29,8 +29,6 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/ChemReactions/Reaction.h>
 
-#include <boost/tuple/tuple.hpp>
-
 // ****************************************************************************
 using RDGeom::Point2D;
 
@@ -44,6 +42,18 @@ struct DrawColour {
   bool operator==(const DrawColour &other) const {
     return r == other.r && g == other.g && b == other.b && a == other.a;
   };
+  DrawColour operator+(const DrawColour &other) const {
+    return DrawColour(r + other.r, g + other.g, b + other.b, a + other.a);
+  }
+  DrawColour operator-(const DrawColour &other) const {
+    return DrawColour(r - other.r, g - other.g, b - other.b, a - other.a);
+  }
+  DrawColour operator/(double v) const {
+    return DrawColour(r / v, g / v, b / v, a / v);
+  }
+  DrawColour operator*(double v) const {
+    return DrawColour(r * v, g * v, b * v, a * v);
+  }
 };
 
 typedef std::map<int, DrawColour> ColourPalette;

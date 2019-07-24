@@ -354,6 +354,26 @@ void addMoleculeMetadata(const RDKit::MolDraw2DSVG &self, const RDKit::ROMol &m,
   self.addMoleculeMetadata(m, confId);
 }
 
+void contourAndDrawGaussiansHelper(
+    RDKit::MolDraw2D &drawer, python::object pylocs, python::object pyheights,
+    python::object pywidths, unsigned int nContours, python::object pylevels,
+    const MolDraw2DUtils::ContourParams &params) {
+  std::unique_ptr<std::vector<RDGeom::Point2D>> locs =
+      pythonObjectToVect<RDGeom::Point2D>(pylocs);
+  std::unique_ptr<std::vector<double>> heights =
+      pythonObjectToVect<double>(pyheights);
+  std::unique_ptr<std::vector<double>> widths =
+      pythonObjectToVect<double>(pywidths);
+  std::unique_ptr<std::vector<double>> levels;
+  if (pylevels) {
+    levels = pythonObjectToVect<double>(pylevels);
+  } else {
+    levels = std::unique_ptr<std::vector<double>>(new std::vector<double>);
+  }
+  MolDraw2DUtils::contourAndDrawGaussians(drawer, *locs, *heights, *widths,
+                                          nContours, *levels, params);
+}
+
 }  // namespace RDKit
 
 BOOST_PYTHON_MODULE(rdMolDraw2D) {
@@ -495,6 +515,9 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                RDKit::MolDraw2D::getDrawCoords,
            (python::arg("self"), python::arg("atomIndex")),
            "get the coordinates in drawing space for a particular atom")
+      .def("ClearDrawing", &RDKit::MolDraw2D::clearDrawing,
+           (python::arg("self")),
+           "clears the drawing by filling it with the background color")
       .def("drawOptions",
            (RDKit::MolDrawOptions & (RDKit::MolDraw2D::*)()) &
                RDKit::MolDraw2D::drawOptions,
@@ -556,5 +579,28 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
        python::arg("highlightBondColors") = python::object(),
        python::arg("highlightAtomRadii") = python::object(),
        python::arg("confId") = -1),
+      "Preps a molecule for drawing and actually draws it\n");
+  docString = "Parameters for drawing contours";
+  python::class_<RDKit::MolDraw2DUtils::ContourParams>(
+      "ContourParams", docString.c_str(), python::init<>())
+      .def_readwrite("setScale",
+                     &RDKit::MolDraw2DUtils::ContourParams::setScale,
+                     "set the scale of the drawing object (useful if you draw "
+                     "the grid/contours first)")
+      .def_readwrite("dashNegative",
+                     &RDKit::MolDraw2DUtils::ContourParams::dashNegative,
+                     "use a dashed line for negative contours")
+      .def_readwrite("fillGrid",
+                     &RDKit::MolDraw2DUtils::ContourParams::fillGrid,
+                     "colors the grid in addition to drawing contours")
+      .def_readwrite("gridResolution",
+                     &RDKit::MolDraw2DUtils::ContourParams::gridResolution,
+                     "set the resolution of the grid");
+  python::def(
+      "ContourAndDrawGaussians", &RDKit::contourAndDrawGaussiansHelper,
+      (python::arg("drawer"), python::arg("locs"), python::arg("heights"),
+       python::arg("widths"), python::arg("nContours") = 10,
+       python::arg("levels") = python::object(),
+       python::arg("params") = RDKit::MolDraw2DUtils::ContourParams()),
       "Preps a molecule for drawing and actually draws it\n");
 }

@@ -76,16 +76,24 @@ RDKIT_MOLDRAW2D_EXPORT void updateDrawerParamsFromJSON(MolDraw2D &drawer,
 RDKIT_MOLDRAW2D_EXPORT void updateDrawerParamsFromJSON(MolDraw2D &drawer,
                                                        const std::string &json);
 
+struct ContourParams {
+  bool setScale = true; // assumes the grid is drawn first
+  bool dashNegative = true;
+  bool fillGrid = false;
+  double gridResolution = 0.15;
+  std::vector<DrawColour> colourMap = {
+      {0, 0, 1, 0.25}, {1, 1, 1, 0.25}, {1, 0, 0, 0.25}};
+};
 RDKIT_MOLDRAW2D_EXPORT void contourAndDrawGrid(
     MolDraw2D &drawer, const double *grid, const std::vector<double> &xcoords,
     const std::vector<double> &ycoords, size_t nContours,
-    std::vector<double> &levels, bool dashNegative = true);
+    std::vector<double> &levels, const ContourParams &ps = ContourParams());
 
 RDKIT_MOLDRAW2D_EXPORT void contourAndDrawGaussians(
     MolDraw2D &drawer, const std::vector<Point2D> &locs,
     const std::vector<double> &heights, const std::vector<double> &widths,
-    size_t nContours, std::vector<double> &levels, double resolution = 0.2,
-    bool dashNegative = true);
+    size_t nContours, std::vector<double> &levels,
+    const ContourParams &ps = ContourParams());
 
 }  // namespace MolDraw2DUtils
 }  // namespace RDKit

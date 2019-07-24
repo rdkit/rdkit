@@ -140,50 +140,102 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
 void contourAndDrawGrid(MolDraw2D &drawer, const double *grid,
                         const std::vector<double> &xcoords,
                         const std::vector<double> &ycoords, size_t nContours,
-                        std::vector<double> &levels, bool dashNegative) {
+                        std::vector<double> &levels,
+                        const ContourParams &params) {
   PRECONDITION(grid, "no data");
   PRECONDITION(nContours > 0, "no contours");
+  PRECONDITION(params.colourMap.size() > 1,
+               "colourMap must have at least two entries");
+
+  if (params.setScale) {
+    Point2D minP = {xcoords[0], ycoords[0]};
+    Point2D maxP = {xcoords.back(), ycoords.back()};
+    drawer.setScale(drawer.width(), drawer.height(), minP, maxP);
+  }
 
   size_t nX = xcoords.size();
   size_t nY = ycoords.size();
-  double dX = (xcoords.back() - xcoords.front()) / nX;
-  double dY = (ycoords.back() - ycoords.front()) / nY;
-  if (!levels.size()) {
-    levels.resize(nContours);
-    double minV = std::numeric_limits<double>::max();
-    double maxV = std::numeric_limits<double>::min();
+  double minV = std::numeric_limits<double>::max();
+  double maxV = -std::numeric_limits<double>::max();
+  if (!levels.size() || params.fillGrid) {
     for (size_t i = 0; i < nX; ++i) {
       for (size_t j = 0; j < nY; ++j) {
         minV = std::min(minV, grid[i * nY + j]);
         maxV = std::max(maxV, grid[i * nY + j]);
       }
     }
-    for (size_t i = 0; i < nContours; ++i) {
-      levels[i] = minV + i * (maxV - minV) / (nContours - 1);
+    if (!levels.size()) {
+      levels.resize(nContours);
+      for (size_t i = 0; i < nContours; ++i) {
+        levels[i] = minV + i * (maxV - minV) / (nContours - 1);
+        std::cerr << "  level: " << levels[i] << std::endl;
+      }
     }
   }
+  if (maxV <= minV) return;
+
   std::vector<conrec::ConrecSegment> segs;
   conrec::Contour(grid, 0, nX - 1, 0, nY - 1, xcoords.data(), ycoords.data(),
                   nContours, levels.data(), segs);
   const auto olw = drawer.lineWidth();
   const auto odash = drawer.dash();
   const auto ocolor = drawer.colour();
-  drawer.setLineWidth(1.0);
-  drawer.setColour(DrawColour(0.5, 0.5, 0.5));
+  const auto ofill = drawer.fillPolys();
+  const auto owidth = drawer.lineWidth();
+  std::cerr << "  DRAWING " << segs.size() << " SEGMENTS" << std::endl;
+  if (params.fillGrid) {
+    drawer.setFillPolys(true);
+    drawer.setLineWidth(0);
+    auto delta = (maxV - minV);
+    if (params.colourMap.size() > 2) {
+      // need to find how fractionally far we are from zero, not the min
+      if (-minV > maxV)
+        delta = -minV;
+      else
+        delta = maxV;
+    }
+    for (size_t i = 0; i < nX - 1; ++i) {
+      for (size_t j = 0; j < nY - 1; ++j) {
+        auto gridV = grid[i * nY + j];
+        auto fracV = (gridV - minV) / delta;
+        if (params.colourMap.size() > 2) {
+          // need to find how fractionally far we are from zero, not the min
+          fracV = gridV / delta;
+          if (fracV < 0) fracV *= -1;
+        }
+        DrawColour fillColour;
+        auto c1 = (gridV < 0 || params.colourMap.size() == 2)
+                      ? params.colourMap[1]
+                      : params.colourMap[1];
+        auto c2 = (gridV < 0 || params.colourMap.size() == 2)
+                      ? params.colourMap[0]
+                      : params.colourMap[2];
+        auto c = c1 + (c2 - c1) * fracV;
+        drawer.setColour(c);
+        Point2D p1 = {xcoords[i], ycoords[j]};
+        Point2D p2 = {xcoords[i + 1], ycoords[j + 1]};
+        drawer.drawRect(p1, p2);
+      }
+    }
+  }
   static DashPattern negDash = {2, 6};
   static DashPattern posDash;
-  std::cerr << "  DRAWING " << segs.size() << " SEGMENTS" << std::endl;
+  drawer.setColour(DrawColour(0.5, 0.5, 0.5));
+  drawer.setLineWidth(1.0);
   for (const auto &seg : segs) {
-    if (dashNegative && seg.isoVal < 0) {
+    if (params.dashNegative && seg.isoVal < 0) {
       drawer.setDash(negDash);
     } else {
       drawer.setDash(posDash);
     }
     drawer.drawLine(seg.p1, seg.p2);
   }
+
   drawer.setDash(odash);
   drawer.setLineWidth(olw);
   drawer.setColour(ocolor);
+  drawer.setFillPolys(ofill);
+  drawer.setLineWidth(owidth);
 };
 
 void contourAndDrawGaussians(MolDraw2D &drawer,
@@ -191,28 +243,46 @@ void contourAndDrawGaussians(MolDraw2D &drawer,
                              const std::vector<double> &weights,
                              const std::vector<double> &widths,
                              size_t nContours, std::vector<double> &levels,
-                             double resolution, bool dashNegative) {
+                             const ContourParams &params) {
   PRECONDITION(locs.size() == weights.size(), "size mismatch");
   PRECONDITION(locs.size() == widths.size(), "size mismatch");
 
   // start by setting up the grid
-  size_t nx = (size_t)ceil(drawer.range().x / resolution) + 1;
-  size_t ny = (size_t)ceil(drawer.range().y / resolution) + 1;
+  if (params.setScale) {
+    Point2D minP, maxP;
+    minP.x = minP.y = std::numeric_limits<double>::max();
+    maxP.x = maxP.y = -std::numeric_limits<double>::max();
+    for (const auto &loc : locs) {
+      minP.x = std::min(loc.x, minP.x);
+      minP.y = std::min(loc.y, minP.y);
+      maxP.x = std::max(loc.x, maxP.x);
+      maxP.y = std::max(loc.y, maxP.y);
+    }
+    Point2D dims = maxP - minP;
+    minP.x -= drawer.drawOptions().padding * dims.x;
+    minP.y -= drawer.drawOptions().padding * dims.y;
+    maxP.x += drawer.drawOptions().padding * dims.x;
+    maxP.y += drawer.drawOptions().padding * dims.y;
+    drawer.setScale(drawer.width(), drawer.height(), minP, maxP);
+  }
+
+  size_t nx = (size_t)ceil(drawer.range().x / params.gridResolution) + 1;
+  size_t ny = (size_t)ceil(drawer.range().y / params.gridResolution) + 1;
   std::vector<double> xcoords(nx);
   for (size_t i = 0; i < nx; ++i) {
-    xcoords[i] = drawer.minPt().x + i * resolution;
+    xcoords[i] = drawer.minPt().x + i * params.gridResolution;
   }
   std::vector<double> ycoords(ny);
   for (size_t i = 0; i < ny; ++i) {
-    ycoords[i] = drawer.minPt().y + i * resolution;
+    ycoords[i] = drawer.minPt().y + i * params.gridResolution;
   }
   std::unique_ptr<double[]> grid(new double[nx * ny]);
 
   // populate the grid from the gaussians:
   for (size_t ix = 0; ix < nx; ++ix) {
-    auto px = drawer.minPt().x + ix * resolution;
+    auto px = drawer.minPt().x + ix * params.gridResolution;
     for (size_t iy = 0; iy < ny; ++iy) {
-      auto py = drawer.minPt().y + iy * resolution;
+      auto py = drawer.minPt().y + iy * params.gridResolution;
       Point2D pt(px, py);
       double accum = 0.0;
       for (size_t ig = 0; ig < locs.size(); ++ig) {
@@ -226,8 +296,10 @@ void contourAndDrawGaussians(MolDraw2D &drawer,
   }
 
   // and render it:
+  ContourParams paramsCopy = params;
+  paramsCopy.setScale = false;  // if scaling was needed, we did it already
   contourAndDrawGrid(drawer, grid.get(), xcoords, ycoords, nContours, levels,
-                     dashNegative);
+                     paramsCopy);
 };
 }  // namespace MolDraw2DUtils
 }  // namespace RDKit
