@@ -168,7 +168,6 @@ void contourAndDrawGrid(MolDraw2D &drawer, const double *grid,
       levels.resize(nContours);
       for (size_t i = 0; i < nContours; ++i) {
         levels[i] = minV + i * (maxV - minV) / (nContours - 1);
-        std::cerr << "  level: " << levels[i] << std::endl;
       }
     }
   }
@@ -182,7 +181,6 @@ void contourAndDrawGrid(MolDraw2D &drawer, const double *grid,
   const auto ocolor = drawer.colour();
   const auto ofill = drawer.fillPolys();
   const auto owidth = drawer.lineWidth();
-  std::cerr << "  DRAWING " << segs.size() << " SEGMENTS" << std::endl;
   if (params.fillGrid) {
     drawer.setFillPolys(true);
     drawer.setLineWidth(0);
