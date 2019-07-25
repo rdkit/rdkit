@@ -17,7 +17,6 @@
 #include <boost/shared_ptr.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #ifdef RDK_USE_URF
-#include <RingDecomposerLib/RDLdataStruct.h>
 #include <RingDecomposerLib/RingDecomposerLib.h>
 #else
 typedef void RDL_data;
@@ -184,6 +183,9 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
       - the object must be initialized before calling this
   */
   const VECT_INT_VECT &bondRingFamilies() const { return d_bondRingFamilies; };
+
+  //! check if the ring families have been initialized
+  bool areRingFamiliesInitialized() const { return dp_urfData != NULL; }
 #endif
 
   //@}

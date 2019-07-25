@@ -1271,11 +1271,10 @@ void fastFindRings(const ROMol &mol) {
 
 #ifdef RDK_USE_URF
 #include <RingDecomposerLib/RingDecomposerLib.h>
-#include <RingDecomposerLib/RDLdataStruct.h>
 void findRingFamilies(const ROMol &mol) {
   if (mol.getRingInfo()->isInitialized()) {
     // return if we've done this before
-    if (mol.getRingInfo()->numRingFamilies()) {
+    if (mol.getRingInfo()->areRingFamiliesInitialized()) {
       return;
     }
   } else {
@@ -1288,16 +1287,26 @@ void findRingFamilies(const ROMol &mol) {
     RDL_addUEdge(graph, (*cbi)->getBeginAtomIdx(), (*cbi)->getEndAtomIdx());
   }
   RDL_data *urfdata = RDL_calculate(graph);
-  mol.getRingInfo()->dp_urfData.reset(urfdata);
+  if (urfdata == NULL) {
+    RDL_deleteGraph(graph);
+    mol.getRingInfo()->dp_urfData.reset();
+    throw ValueErrorException("Cannot get URFs");
+  }
+  mol.getRingInfo()->dp_urfData.reset(urfdata, &RDL_deleteData);
   for (unsigned int i = 0; i < RDL_getNofURF(urfdata); ++i) {
     RDL_node *nodes;
     unsigned nNodes = RDL_getNodesForURF(urfdata, i, &nodes);
-    if (nNodes == RDL_INVALID_RESULT)
+    if (nNodes == RDL_INVALID_RESULT) {
+      free(nodes);
       throw ValueErrorException("Cannot get URF nodes");
+    }
     RDL_edge *edges;
     unsigned nEdges = RDL_getEdgesForURF(urfdata, i, &edges);
-    if (nEdges == RDL_INVALID_RESULT)
+    if (nEdges == RDL_INVALID_RESULT) {
+      free(nodes);
+      free(edges);
       throw ValueErrorException("Cannot get URF edges");
+    }
     INT_VECT nvect(nNodes), evect(nEdges);
     for (unsigned int ridx = 0; ridx < nNodes; ++ridx) {
       nvect[ridx] = nodes[ridx];

@@ -2107,8 +2107,11 @@ CAS<~>
 
 
     if hasattr(Chem,'FindRingFamilies'): 
+      ri = m.GetRingInfo()
+      self.assertFalse(ri.AreRingFamiliesInitialized())
       Chem.FindRingFamilies(m)
       ri = m.GetRingInfo()
+      self.assertTrue(ri.AreRingFamiliesInitialized())
       self.assertEquals(ri.NumRingFamilies(),2)
       self.assertEquals(sorted(ri.AtomRingFamilies()),[(0, 1, 2, 3), (2, 3, 4)])
 

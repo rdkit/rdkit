@@ -7589,8 +7589,10 @@ void testRingFamilies() {
     ROMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 8);
+    TEST_ASSERT(!m->getRingInfo()->areRingFamiliesInitialized());
     MolOps::findRingFamilies(*m);
     TEST_ASSERT(m->getRingInfo()->isInitialized());
+    TEST_ASSERT(m->getRingInfo()->areRingFamiliesInitialized());
     int numURF = RDL_getNofURF(m->getRingInfo()->dp_urfData.get());
     int numRC = RDL_getNofRC(m->getRingInfo()->dp_urfData.get());
     TEST_ASSERT(numRC == 6);
@@ -7609,8 +7611,10 @@ void testRingFamilies() {
     ROMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 28);
+    TEST_ASSERT(!m->getRingInfo()->areRingFamiliesInitialized());
     MolOps::findRingFamilies(*m);
     TEST_ASSERT(m->getRingInfo()->isInitialized());
+    TEST_ASSERT(m->getRingInfo()->areRingFamiliesInitialized());
     int numURF = RDL_getNofURF(m->getRingInfo()->dp_urfData.get());
     int numRC = RDL_getNofRC(m->getRingInfo()->dp_urfData.get());
     // std::cerr << " URF, RC " << numURF << " " << numRC << std::endl;

@@ -86,6 +86,7 @@ struct ringinfo_wrapper {
         .def("NumRelevantCycles", &RingInfo::numRelevantCycles)
         .def("AtomRingFamilies", atomRingFamilies)
         .def("BondRingFamilies", bondRingFamilies)
+        .def("AreRingFamiliesInitialized", &RingInfo::areRingFamiliesInitialized)
 #endif
         .def("AddRing", addRing, (python::arg("self"),python::arg("atomIds"),python::arg("bondIds")),
          "Adds a ring to the set. Be very careful with this operation.");
