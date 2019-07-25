@@ -641,7 +641,7 @@ std::string _recurseBondSmarts(const Bond *bond,
 
 std::string FragmentSmartsConstruct(ROMol &mol, unsigned int atomIdx,
                                     std::vector<Canon::AtomColors> &colors,
-                                    UINT_VECT &ranks) {
+                                    UINT_VECT &ranks, bool doIsomericSmiles) {
   Canon::MolStack molStack;
   molStack.reserve(mol.getNumAtoms() + mol.getNumBonds());
   std::stringstream res;
@@ -656,7 +656,8 @@ std::string FragmentSmartsConstruct(ROMol &mol, unsigned int atomIdx,
   for (auto &atom : mol.atoms()) {
     atom->updatePropertyCache(false);
   }
-  Canon::canonicalizeFragment(mol, atomIdx, colors, ranks, molStack);
+  Canon::canonicalizeFragment(mol, atomIdx, colors, ranks, molStack, 0, 0,
+                              doIsomericSmiles);
 
   // now clear the "SSSR" property
   mol.getRingInfo()->reset();
@@ -924,7 +925,8 @@ std::string MolToSmarts(ROMol &inmol, bool doIsomericSmiles) {
       }
     }
 
-    subSmi = FragmentSmartsConstruct(mol, nextAtomIdx, colors, ranks);
+    subSmi = FragmentSmartsConstruct(mol, nextAtomIdx, colors, ranks,
+                                     doIsomericSmiles);
     res += subSmi;
 
     colorIt = std::find(colors.begin(), colors.end(), Canon::WHITE_NODE);

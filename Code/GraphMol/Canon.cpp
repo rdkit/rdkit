@@ -1055,7 +1055,7 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
               common_properties::_ringStereoAtoms);
           BOOST_FOREACH (int nbrV, ringStereoAtoms) {
             int nbrIdx = abs(nbrV) - 1;
-            // Adjust the chiraliy flag of the ring stereo atoms according to
+            // Adjust the chirality flag of the ring stereo atoms according to
             // the first one
             if (!ringStereoChemAdjusted[nbrIdx] &&
                 atomVisitOrders[nbrIdx] >
