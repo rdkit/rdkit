@@ -36,7 +36,7 @@ foreach(swigRDKitLib ${swigRDKitLibList})
   set(swigRDKitLibs "${swigRDKitLibs}${swigRDKitLib}${swigRDKitLibSuffix};")
 endforeach()
 if(RDK_USE_URF)
-  set(swigRDKitLibs "${swigRDKitLibs};RingDecomposerLibStatic")
+  set(swigRDKitLibs "${swigRDKitLibs};RingDecomposerLibStatic;")
 endif(RDK_USE_URF)
 set(swigRDKitLibs "${swigRDKitLibs}${Boost_SERIALIZATION_LIBRARY};")
 
