@@ -32,9 +32,14 @@
 
 import copy
 import math
-
-from matplotlib import cm
-from matplotlib.colors import LinearSegmentedColormap
+try:
+  from matplotlib import cm
+  from matplotlib.colors import LinearSegmentedColormap
+except ImportError:
+    cm = None
+except RuntimeError:
+    cm = None
+    
 import numpy
 
 from rdkit import Chem
@@ -192,6 +197,8 @@ def GetSimilarityMapFromWeights(mol, weights, colorMap=None, scale=-1, size=(250
         maxScale = scale
     # coloring
     if colorMap is None:
+        if cm is None:
+            raise RuntimeError("matplotlib failed to import")
         PiYG_cmap = cm.get_cmap('PiYG', 2)
         colorMap = LinearSegmentedColormap.from_list(
             'PiWG', [PiYG_cmap(0), (1.0, 1.0, 1.0), PiYG_cmap(1)], N=255)
