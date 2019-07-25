@@ -28,9 +28,6 @@ set(swigRDKitLibList "${swigRDKitLibList}"
   "ForceFieldHelpers;ForceField;EigenSolvers;Optimizer;MolAlign;"
   "Alignment;SimDivPickers;RDGeometryLib;RDStreams;RDGeneral;"
 )
-if(RDK_USE_URF)
-  set(swigRDKitLibList "${swigRDKitLibList};RingDecomposerLibStatic")
-endif(RDK_USE_URF)
 #if(RDK_BUILD_COORDGEN_SUPPORT)
 #  set(swigRDKitLibList "${swigRDKitLibList};${RDK_COORDGEN_LIBS}")
 #endif(RDK_BUILD_COORDGEN_SUPPORT)
@@ -38,6 +35,9 @@ set(swigRDKitLibs "")
 foreach(swigRDKitLib ${swigRDKitLibList})
   set(swigRDKitLibs "${swigRDKitLibs}${swigRDKitLib}${swigRDKitLibSuffix};")
 endforeach()
+if(RDK_USE_URF)
+  set(swigRDKitLibs "${swigRDKitLibs};RingDecomposerLibStatic")
+endif(RDK_USE_URF)
 set(swigRDKitLibs "${swigRDKitLibs}${Boost_SERIALIZATION_LIBRARY};")
 
 if(RDK_USE_BOOST_IOSTREAMS)
