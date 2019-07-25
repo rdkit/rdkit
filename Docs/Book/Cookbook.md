@@ -387,11 +387,7 @@ The code:
     fps = [AllChem.GetMorganFingerprintAsBitVect(m, 2) for m in mols]
 
     # convert the RDKit explicit vectors into numpy arrays
-    np_fps = []
-    for fp in fps:
-      arr = numpy.zeros((1,))
-      DataStructs.ConvertToNumpyArray(fp, arr)
-      np_fps.append(arr)
+    np_fps = numpy.asarray(fps)
 
     # get a random forest classifiert with 100 trees
     rf = RandomForestClassifier(n_estimators=100, random_state=1123)
