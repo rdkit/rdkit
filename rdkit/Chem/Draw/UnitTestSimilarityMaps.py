@@ -48,6 +48,7 @@ try:
 except ImportError:
   matplotlib = None
 
+from rdkit.Chem import Draw
 from rdkit.Chem.Draw import SimilarityMaps as sm
 try:
   from rdkit.Chem.Draw.mplCanvas import Canvas
