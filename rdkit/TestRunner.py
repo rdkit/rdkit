@@ -8,8 +8,12 @@
 #  of the RDKit source tree.
 #
 
+import os
+import sys
+import time
+
 from rdkit import RDConfig
-import os, sys, time
+
 try:
   import subprocess
 except ImportError:
@@ -17,6 +21,15 @@ except ImportError:
 
 TEST_FAILED = -1
 TEST_PASSED = 0
+
+BUILD_TYPE_ENVVAR = 'RDKIT_BUILD_TYPE'
+
+
+def isDebugBuild():
+  try:
+    return os.environ[BUILD_TYPE_ENVVAR] == 'DEBUG'
+  except KeyError:
+    return False
 
 
 def RunTest(exeName, args, extras):
@@ -50,8 +63,10 @@ def RunScript(script, doLongTests, verbose):
     # setting environment allows this setting to recursively pass to all child
     # processes
     os.environ['PYTHON_TEST_FAILFAST'] = '1'
-  if len(sys.argv) == 3 and sys.argv[1] == '--testDir':
+  if len(sys.argv) >= 3 and sys.argv[1] == '--testDir':
     os.chdir(sys.argv[2])
+  if len(sys.argv) >= 5 and sys.argv[3] == '--buildType':
+    os.environ[BUILD_TYPE_ENVVAR] = sys.argv[4].upper()
   # -------------------------------------------------------
   # this is pretty funny.  Whatever directory we started python in
   # will be in the search path, and if we've changed to another
@@ -244,6 +259,7 @@ class OutputRedirectC:
   >>>
 
   """
+
   def __init__(self, stdout=os.devnull, stderr=os.devnull, mode='wb'):
     self.outfiles = stdout, stderr
     self.combine = (stdout == stderr)
