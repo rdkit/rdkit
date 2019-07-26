@@ -10,14 +10,13 @@ rdkit_library(GraphMol
               Renumber.cpp AdjustQuery.cpp Resonance.cpp StereoGroup.cpp
               new_canon.cpp SubstanceGroup.cpp
               SHARED
-              LINK_LIBRARIES RDGeometryLib RDGeneral URFLib 
+              LINK_LIBRARIES RDGeometryLib RDGeneral  
                  ${RDKit_THREAD_LIBS} )
 
 target_link_libraries(GraphMol PUBLIC ${RDKit_THREAD_LIBS})
 
 if(RDK_USE_URF)
-  add_dependencies(GraphMol RingDecomposerLib_project)
-  #target_link_libraries(GraphMol PUBLIC RingDecomposerLibStatic)
+  target_link_libraries(GraphMol PUBLIC URFLib)
 endif()
 
 rdkit_headers(Atom.h
