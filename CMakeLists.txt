@@ -489,12 +489,6 @@ endif(MSVC)
 
 
 add_subdirectory(External)
-if(RDK_USE_URF)
-  add_dependencies(rdkit_base RingD)
-
-  add_library(RingDecomposerLibStatic STATIC IMPORTED)
-  add_dependencies(RingDecomposerLibStatic RingDecomposerLib_project)
-endif(RDK_USE_URF)
 add_subdirectory(Code)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
