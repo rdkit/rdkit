@@ -1294,13 +1294,13 @@ void findRingFamilies(const ROMol &mol) {
   }
   mol.getRingInfo()->dp_urfData.reset(urfdata, &RDL_deleteData);
   for (unsigned int i = 0; i < RDL_getNofURF(urfdata); ++i) {
-    RDL_node *nodes;
+    RDL_node *nodes = nullptr;
     unsigned nNodes = RDL_getNodesForURF(urfdata, i, &nodes);
     if (nNodes == RDL_INVALID_RESULT) {
       free(nodes);
       throw ValueErrorException("Cannot get URF nodes");
     }
-    RDL_edge *edges;
+    RDL_edge *edges = nullptr;
     unsigned nEdges = RDL_getEdgesForURF(urfdata, i, &edges);
     if (nEdges == RDL_INVALID_RESULT) {
       free(nodes);
