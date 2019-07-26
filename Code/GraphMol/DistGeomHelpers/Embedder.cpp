@@ -973,7 +973,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
 
   if (molFrags.size() > 1 && params.boundsMat != nullptr) {
     BOOST_LOG(rdWarningLog)
-        << "Conformer generation using a client-provided boundsMat "
+        << "Conformer generation using a user-provided boundsMat "
            "does not work with molecules that have multiple fragments. The "
            "boundsMat will be ignored."
         << std::endl;

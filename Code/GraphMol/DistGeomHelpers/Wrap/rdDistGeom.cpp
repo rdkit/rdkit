@@ -148,7 +148,7 @@ DGeomHelpers::EmbedParameters *getETDG() {
   return new DGeomHelpers::EmbedParameters(DGeomHelpers::ETDG);
 }
 
-bool setBoundsMatrix(DGeomHelpers::EmbedParameters *self,
+void setBoundsMatrix(DGeomHelpers::EmbedParameters *self,
                      python::object boundsMatArg) {
   PyObject *boundsMatObj = boundsMatArg.ptr();
   if (!PyArray_Check(boundsMatObj))
