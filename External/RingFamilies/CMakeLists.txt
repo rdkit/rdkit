@@ -3,7 +3,7 @@ if(RDK_USE_URF)
 include(ExternalProject)
 
 ExternalProject_Add(RingDecomposerLib_project
-    GIT_REPOSITORY https://github.com/greglandrum/RingDecomposerLib.git
+    GIT_REPOSITORY https://github.com/rareylab/RingDecomposerLib.git
     GIT_TAG master
     PATCH_COMMAND ""
     PREFIX ${CMAKE_CURRENT_SOURCE_DIR}
