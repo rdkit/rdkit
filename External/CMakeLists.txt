@@ -3,16 +3,23 @@ add_subdirectory(AvalonTools)
 add_subdirectory(FreeSASA)
 add_subdirectory(CoordGen)
 add_subdirectory(YAeHMOP)
-if(RDK_USE_URF)
-#  add_subdirectory(RingDecomposerLib)
-include(ExternalProject)
+add_subdirectory(RingFamilies)
 
-ExternalProject_Add(RingDecomposerLib_project
-  GIT_REPOSITORY https://github.com/greglandrum/RingDecomposerLib.git
-  GIT_TAG master
-  PATCH_COMMAND ""
-  PREFIX ${CMAKE_CURRENT_SOURCE_DIR}
-  SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/RingDecomposerLib"
-  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${PROJECT_BINARY_DIR}
-  TEST_COMMAND "")
+if(FOOBAR)
+if(RDK_USE_URF)
+  #  add_subdirectory(RingDecomposerLib)
+  include(ExternalProject)
+
+  ExternalProject_Add(RingDecomposerLib_project
+    GIT_REPOSITORY https://github.com/greglandrum/RingDecomposerLib.git
+    GIT_TAG master
+    PATCH_COMMAND ""
+    PREFIX ${CMAKE_CURRENT_SOURCE_DIR}
+    SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/RingDecomposerLib"
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${PROJECT_BINARY_DIR}
+    TEST_COMMAND "")
+  add_library(RingDecomposerLibStatic STATIC IMPORTED)
+  #set_property(TARGET RingDecomposerLibStatic PROPERTY IMPORTED_LOCATION ${Project})
+  add_dependencies(RingDecomposerLibStatic RingDecomposerLib_project)
 endif(RDK_USE_URF)
+endif(FOOBAR)

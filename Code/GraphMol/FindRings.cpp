@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include "RDKitBase.h"
+#include <GraphMol/RDKitBase.h>
 #include <GraphMol/Rings.h>
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/Exceptions.h>
@@ -1270,7 +1270,6 @@ void fastFindRings(const ROMol &mol) {
 }
 
 #ifdef RDK_USE_URF
-#include <RingDecomposerLib/RingDecomposerLib.h>
 void findRingFamilies(const ROMol &mol) {
   if (mol.getRingInfo()->isInitialized()) {
     // return if we've done this before

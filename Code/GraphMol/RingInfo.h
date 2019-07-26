@@ -17,7 +17,7 @@
 #include <boost/shared_ptr.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #ifdef RDK_USE_URF
-#include <RingDecomposerLib/RingDecomposerLib.h>
+#include <RingDecomposerLib.h>
 #else
 typedef void RDL_data;
 #endif
