@@ -416,6 +416,42 @@ M  END""")
     with open("contour_from_py_3.svg", 'w+') as outf:
       print(txt, file=outf)
 
+  def testExtraDrawingCommands(self):
+    m = Chem.MolFromMolBlock("""
+  Mrv1810 07271915232D          
+
+  4  4  0  0  0  0            999 V2000
+   -1.5      -1.5       0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5       0.0       0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0       0.0       0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0      -1.5       0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  1  1  0  0  0  0
+M  END
+""")
+    d = Draw.MolDraw2DSVG(300, 300)
+    dm = Draw.PrepareMolForDrawing(m)
+    d.DrawMolecule(dm)
+    conf = dm.GetConformer()
+    ps3 = (
+      conf.GetAtomPosition(0),
+      conf.GetAtomPosition(1),
+      conf.GetAtomPosition(3),
+    )
+    ps = [Geometry.Point2D(p.x, p.y) for p in ps3]
+    d.DrawPolygon(ps)
+    d.DrawArrow(Geometry.Point2D(0, 0), Geometry.Point2D(0, 1.5))
+    d.DrawAttachmentLine(Geometry.Point2D(0, 0), Geometry.Point2D(1.5, 0), Draw.DrawColour(1, 0, 1))
+    d.DrawWavyLine(Geometry.Point2D(0, 0), Geometry.Point2D(1.0, 1.0), Draw.DrawColour(0, 0, 0),
+                   Draw.DrawColour(1, 0, 0))
+
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    with open("extras_1.svg", "w+") as outf:
+      outf.write(txt)
+
 
 if __name__ == "__main__":
   unittest.main()

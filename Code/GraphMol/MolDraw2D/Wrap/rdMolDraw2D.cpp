@@ -434,6 +434,13 @@ void setContourColour(RDKit::MolDraw2DUtils::ContourParams &params,
                       python::tuple tpl) {
   params.contourColour = pyTupleToDrawColour(tpl);
 }
+void drawPolygonHelper(RDKit::MolDraw2D &self, python::object py_cds) {
+  std::unique_ptr<std::vector<RDGeom::Point2D>> cds =
+      pythonObjectToVect<RDGeom::Point2D>(py_cds);
+
+  self.drawPolygon(*cds);
+}
+
 }  // namespace RDKit
 
 BOOST_PYTHON_MODULE(rdMolDraw2D) {
@@ -561,6 +568,53 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
            "set the line width being used")
       .def("LineWidth", &RDKit::MolDraw2D::lineWidth,
            "returns the line width being used")
+      .def("SetFillPolys", &RDKit::MolDraw2D::setFillPolys,
+           "sets whether or not polygons are filled")
+      .def("FillPolys", &RDKit::MolDraw2D::fillPolys,
+           "returns whether or not polygons are being filled")
+      .def("DrawLine",
+           (void (RDKit::MolDraw2D::*)(const Point2D &, const Point2D &)) &
+               RDKit::MolDraw2D::drawLine,
+           (python::arg("self"), python::arg("cds1"), python::arg("cds2")),
+           "draws a line with the current drawing style. The coordinates "
+           "are in the molecule frame")
+      .def("DrawArrow", &RDKit::MolDraw2D::drawArrow,
+           (python::arg("self"), python::arg("cds1"), python::arg("cds2"),
+            python::arg("asPolygon") = false, python::arg("frac") = 0.05,
+            python::arg("angle") = M_PI / 6),
+           "draws an arrow with the current drawing style. The coordinates "
+           "are in the molecule frame")
+      .def("DrawTriangle", &RDKit::MolDraw2D::drawTriangle,
+           (python::arg("self"), python::arg("cds1"), python::arg("cds2"),
+            python::arg("cds3")),
+           "draws a triangle with the current drawing style. The coordinates "
+           "are in the molecule frame")
+      .def("DrawPolygon", RDKit::drawPolygonHelper,
+           (python::arg("self"), python::arg("cds")),
+           "draws a polygon with the current drawing style. The coordinates "
+           "are in the molecule frame")
+      .def("DrawEllipse", &RDKit::MolDraw2D::drawEllipse,
+           (python::arg("self"), python::arg("cds1"), python::arg("cds2")),
+           "draws a triangle with the current drawing style in the rectangle "
+           "defined by the two points. The coordinates "
+           "are in the molecule frame")
+      .def("DrawRect", &RDKit::MolDraw2D::drawRect,
+           (python::arg("self"), python::arg("cds1"), python::arg("cds2")),
+           "draws a rectangle with the current drawing style in the rectangle "
+           "defined by the two points. The coordinates "
+           "are in the molecule frame")
+      .def("DrawAttachmentLine", &RDKit::MolDraw2D::drawAttachmentLine,
+           (python::arg("self"), python::arg("cds1"), python::arg("cds2"),
+            python::arg("color"), python::arg("len") = 1.0,
+            python::arg("nSegments") = 16),
+           "draw a line indicating the presence of an attachment point "
+           "(normally a squiggle line perpendicular to a bond)")
+      .def("DrawWavyLine", &RDKit::MolDraw2D::drawWavyLine,
+           (python::arg("self"), python::arg("cds1"), python::arg("cds2"),
+            python::arg("color1"), python::arg("color2"),
+            python::arg("nSegments") = 16, python::arg("vertOffset") = 0.05),
+           "draw a line indicating the presence of an attachment point "
+           "(normally a squiggle line perpendicular to a bond)")
       .def("DrawString", &RDKit::MolDraw2D::drawString,
            (python::arg("self"), python::arg("string"), python::arg("pos")),
            "add text to the canvas")

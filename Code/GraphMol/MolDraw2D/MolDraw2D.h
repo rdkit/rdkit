@@ -449,6 +449,10 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
     return atom_syms_[activeMolIdx_];
   };
 
+  virtual void drawArrow(const Point2D &cds1, const Point2D &cds2,
+                         bool asPolygon = false, double frac = 0.05,
+                         double angle = M_PI / 6);
+
  private:
   bool needs_scale_;
   int width_, height_, panel_width_, panel_height_;
@@ -487,9 +491,6 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
 
   virtual void drawLine(const Point2D &cds1, const Point2D &cds2,
                         const DrawColour &col1, const DrawColour &col2);
-  virtual void drawArrow(const Point2D &cds1, const Point2D &cds2,
-                         bool asPolygon = false, double frac = 0.05,
-                         double angle = M_PI / 6);
   void drawWedgedBond(const Point2D &cds1, const Point2D &cds2,
                       bool draw_dashed, const DrawColour &col1,
                       const DrawColour &col2);
