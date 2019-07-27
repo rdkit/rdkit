@@ -4,7 +4,7 @@ include(ExternalProject)
 
 ExternalProject_Add(RingDecomposerLib_project
     GIT_REPOSITORY https://github.com/rareylab/RingDecomposerLib.git
-    GIT_TAG master
+    GIT_TAG v1.1.3_rdkit
     PATCH_COMMAND ""
     PREFIX ${CMAKE_CURRENT_SOURCE_DIR}
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/RingDecomposerLib"
