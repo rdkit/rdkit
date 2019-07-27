@@ -621,11 +621,34 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
            (python::arg("self"), python::arg("colour")))
       .def("setColourMap", &RDKit::setColoursHelper,
            (python::arg("self"), python::arg("colours")));
+  docString = R"DOC(Generates and draws contours for a set of gaussians
+
+  - drawer: the MolDraw2D object to use
+  - locs: locations of the gaussians
+  - heights: the heights (or weights) of the gaussians
+  - widths: the standard deviations of the gaussians
+  - nContours: the number of contours to draw
+  - levels: the contours to use
+  - ps: additional parameters controlling the contouring.
+
+  The values are calculated on a grid with spacing params.gridResolution.
+  If params.setScale  is set, the grid size will be calculated based on the
+  locations of the gaussians and params.extraGridPadding. Otherwise the current
+  size of the viewport will be used.
+
+  If the levels argument is empty, the contour levels will be determined
+  automatically from the max and min values on the grid and levels will
+  be updated to include the contour levels.
+
+  If params.fillGrid is set, the data on the grid will also be drawn using
+  the color scheme in params.colourMap
+
+*/)DOC";
   python::def(
       "ContourAndDrawGaussians", &RDKit::contourAndDrawGaussiansHelper,
       (python::arg("drawer"), python::arg("locs"), python::arg("heights"),
        python::arg("widths"), python::arg("nContours") = 10,
        python::arg("levels") = python::object(),
        python::arg("params") = RDKit::MolDraw2DUtils::ContourParams()),
-      "Preps a molecule for drawing and actually draws it\n");
+      docString.c_str());
 }

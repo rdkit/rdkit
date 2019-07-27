@@ -219,6 +219,9 @@ void contourAndDrawGrid(MolDraw2D &drawer, const double *grid,
   }
 
   if (nContours) {
+    if(nContours > levels.size()){
+      throw ValueErrorException("nContours larger than the size of the level list");
+    }
     std::vector<conrec::ConrecSegment> segs;
     conrec::Contour(grid, 0, nX - 1, 0, nY - 1, xcoords.data(), ycoords.data(),
                     nContours, levels.data(), segs);

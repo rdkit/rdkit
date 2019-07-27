@@ -90,11 +90,53 @@ struct ContourParams {
       {1, 1, 1, 0.5},
       {0.153, 0.392, 0.098, 0.5}};  // similarity map color scheme
 };
+
+//! Generates and draws contours for data on a grid
+/*
+  \param drawer: the MolDraw2D object to use
+  \param grid: the data to be contoured
+  \param xcoords: x positions of the grid points
+  \param ycoords: y positions of the grid points
+  \param nContours: the number of contours to draw
+  \param levels: the contours to use
+  \param ps: additional parameters controlling the contouring.
+
+  If the \c levels argument is empty, the contour levels will be determined
+  automatically from the max and min values on the grid and \c levels will
+  be updated to include the contour levels.
+
+  If \c ps.fillGrid is set, the data on the grid will also be drawn using
+  the color scheme in \c ps.colourMap
+
+*/
 RDKIT_MOLDRAW2D_EXPORT void contourAndDrawGrid(
     MolDraw2D &drawer, const double *grid, const std::vector<double> &xcoords,
     const std::vector<double> &ycoords, size_t nContours,
     std::vector<double> &levels, const ContourParams &ps = ContourParams());
 
+//! Generates and draws contours for a set of gaussians
+/*
+  \param drawer: the MolDraw2D object to use
+  \param locs: locations of the gaussians
+  \param heights: the heights (or weights) of the gaussians
+  \param widths: the standard deviations of the gaussians
+  \param nContours: the number of contours to draw
+  \param levels: the contours to use
+  \param ps: additional parameters controlling the contouring.
+
+  The values are calculated on a grid with spacing \c ps.gridResolution.
+  If \c ps.setScale  is set, the grid size will be calculated based on the
+  locations of the gaussians and \c ps.extraGridPadding. Otherwise the current
+  size of the viewport will be used.
+
+  If the \c levels argument is empty, the contour levels will be determined
+  automatically from the max and min values on the grid and \c levels will
+  be updated to include the contour levels.
+
+  If \c ps.fillGrid is set, the data on the grid will also be drawn using
+  the color scheme in \c ps.colourMap
+
+*/
 RDKIT_MOLDRAW2D_EXPORT void contourAndDrawGaussians(
     MolDraw2D &drawer, const std::vector<Point2D> &locs,
     const std::vector<double> &heights, const std::vector<double> &widths,

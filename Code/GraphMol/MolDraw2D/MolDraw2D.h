@@ -55,6 +55,7 @@ struct DrawColour {
     return DrawColour(r - other.r, g - other.g, b - other.b, a - other.a);
   }
   DrawColour operator/(double v) const {
+    PRECONDITION(v != 0.0, "divide by zero");
     return DrawColour(r / v, g / v, b / v, a / v);
   }
   DrawColour operator*(double v) const {

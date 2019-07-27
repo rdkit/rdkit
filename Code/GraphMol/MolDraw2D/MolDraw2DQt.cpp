@@ -27,7 +27,8 @@ MolDraw2DQt::MolDraw2DQt(int width, int height, QPainter &qp, int panelWidth,
 // ****************************************************************************
 void MolDraw2DQt::setColour(const DrawColour &col) {
   MolDraw2D::setColour(col);
-  QColor this_col(int(255.0 * col.r), int(255.0 * col.g), int(255.0 * col.b));
+  QColor this_col(int(255.0 * col.r), int(255.0 * col.g), int(255.0 * col.b),
+                  int(255.0 * col.a));
 
   QPen pen(this_col);
   pen.setJoinStyle(Qt::RoundJoin);
@@ -98,7 +99,8 @@ void MolDraw2DQt::drawPolygon(const vector<Point2D> &cds) {
 void MolDraw2DQt::clearDrawing() {
   QColor this_col(int(255.0 * drawOptions().backgroundColour.r),
                   int(255.0 * drawOptions().backgroundColour.g),
-                  int(255.0 * drawOptions().backgroundColour.b));
+                  int(255.0 * drawOptions().backgroundColour.b),
+                  int(255.0 * drawOptions().backgroundColour.a));
 
   qp_.setBackground(QBrush(this_col));
   qp_.fillRect(0, 0, width(), height(), this_col);
