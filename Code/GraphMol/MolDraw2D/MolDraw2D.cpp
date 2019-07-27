@@ -177,7 +177,8 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
     extractAtomCoords(mol, confId, true);
     extractAtomSymbols(mol);
     if (needs_scale_) {
-      calculateScale(panel_width_, panel_height_, highlight_atoms, highlight_radii);
+      calculateScale(panel_width_, panel_height_, highlight_atoms,
+                     highlight_radii);
       needs_scale_ = false;
     }
     // make sure the font doesn't end up too large (the constants are
@@ -480,6 +481,29 @@ void get2DCoordsForReaction(ChemicalReaction &rxn, const MolDrawOptions &opts,
 
   arrowBegin.y = arrowEnd.y = minY + (maxY - minY) / 2;
 }
+
+void drawArrow(MolDraw2D &drawer, const Point2D &arrowBegin,
+               const Point2D &arrowEnd) {
+  Point2D arrowBegin_canvas = drawer.getDrawCoords(arrowBegin);
+  Point2D arrowEnd_canvas = drawer.getDrawCoords(arrowEnd);
+
+  double arrowStart = arrowBegin_canvas.x;
+  double arrowStop = arrowEnd_canvas.x;
+  double headx = 0.05 * (arrowStop - arrowStart);
+  double heady = 2 * headx / 3;
+  Point2D loc1 =
+      drawer.getAtomCoords(std::make_pair(arrowStart, arrowBegin_canvas.y));
+  Point2D loc2 =
+      drawer.getAtomCoords(std::make_pair(arrowStop, arrowBegin_canvas.y));
+  drawer.drawLine(loc1, loc2);
+  loc1 = drawer.getAtomCoords(
+      std::make_pair(arrowStop - headx, arrowBegin_canvas.y + heady));
+  drawer.drawLine(loc1, loc2);
+  loc1 = drawer.getAtomCoords(
+      std::make_pair(arrowStop - headx, arrowBegin_canvas.y - heady));
+  drawer.drawLine(loc1, loc2);
+}
+
 }  // namespace
 
 void MolDraw2D::drawReaction(
@@ -622,25 +646,8 @@ void MolDraw2D::drawReaction(
   }
 
   // The arrow:
-  {
-    Point2D arrowBegin_canvas = getDrawCoords(arrowBegin);
-    Point2D arrowEnd_canvas = getDrawCoords(arrowEnd);
+  drawArrow(*this, arrowBegin, arrowEnd);
 
-    double arrowStart = arrowBegin_canvas.x;
-    double arrowEnd = arrowEnd_canvas.x;
-    double headx = 0.05 * (arrowEnd - arrowStart);
-    double heady = 2 * headx / 3;
-    Point2D loc1 =
-        getAtomCoords(std::make_pair(arrowStart, arrowBegin_canvas.y));
-    Point2D loc2 = getAtomCoords(std::make_pair(arrowEnd, arrowBegin_canvas.y));
-    drawLine(loc1, loc2);
-    loc1 = getAtomCoords(
-        std::make_pair(arrowEnd - headx, arrowBegin_canvas.y + heady));
-    drawLine(loc1, loc2);
-    loc1 = getAtomCoords(
-        std::make_pair(arrowEnd - headx, arrowBegin_canvas.y - heady));
-    drawLine(loc1, loc2);
-  }
   setColour(odc);
   setFontSize(o_font_size);
 }
@@ -915,22 +922,23 @@ void MolDraw2D::calculateScale(int width, int height,
         x_min_ = std::min(x_min_, this_x_min);
         y_max = std::max(y_max, this_y);
       }
-      if(highlight_atoms) {
-          if(highlight_atoms->end() != find(highlight_atoms->begin(), highlight_atoms->end(), i)) {
-              double radius = 0.4;
-              if (highlight_radii &&
-                  highlight_radii->find(i) != highlight_radii->end()) {
-                  radius = highlight_radii->find(i)->second;
-              }
-              double this_x_min = at_cds_[activeMolIdx_][i].x - radius;
-              double this_x_max = at_cds_[activeMolIdx_][i].x + radius;
-              double this_y_min = at_cds_[activeMolIdx_][i].y - radius;
-              double this_y_max = at_cds_[activeMolIdx_][i].y + radius;
-              x_max = std::max(x_max, this_x_max);
-              x_min_ = std::min(x_min_, this_x_min);
-              y_max = std::max(y_max, this_y_max);
-              y_min_ = std::min(y_min_, this_y_min);
+      if (highlight_atoms) {
+        if (highlight_atoms->end() !=
+            find(highlight_atoms->begin(), highlight_atoms->end(), i)) {
+          double radius = 0.4;
+          if (highlight_radii &&
+              highlight_radii->find(i) != highlight_radii->end()) {
+            radius = highlight_radii->find(i)->second;
           }
+          double this_x_min = at_cds_[activeMolIdx_][i].x - radius;
+          double this_x_max = at_cds_[activeMolIdx_][i].x + radius;
+          double this_y_min = at_cds_[activeMolIdx_][i].y - radius;
+          double this_y_max = at_cds_[activeMolIdx_][i].y + radius;
+          x_max = std::max(x_max, this_x_max);
+          x_min_ = std::min(x_min_, this_x_min);
+          y_max = std::max(y_max, this_y_max);
+          y_min_ = std::min(y_min_, this_y_min);
+        }
       }
     }
     double old_scale = scale_;
@@ -1309,10 +1317,13 @@ void MolDraw2D::drawBond(const ROMol &mol, const Bond *bond, int at1_idx,
         p1 = at1_cds - (bv * end1_trunc) - perp * dbo;
         p2 = at2_cds + (bv * end2_trunc) - perp * dbo;
         drawLine(p1, p2, col1, col2);
-      }
-      // all we have left now are double bonds in a ring or not in a ring
-      // and multiply connected
-      else if (Bond::DOUBLE == bt || Bond::AROMATIC == bt) {
+      } else if (Bond::DATIVE == bt || Bond::DATIVEL == bt ||
+                 Bond::DATIVER == bt) {
+        // draw an arrow for dative bonds
+
+      } else if (Bond::DOUBLE == bt || Bond::AROMATIC == bt) {
+        // all we have left now are double bonds in a ring or not in a ring
+        // and multiply connected
         Point2D perp;
         if (mol.getRingInfo()->numBondRings(bond->getIdx())) {
           // in a ring, we need to draw the bond inside the ring
