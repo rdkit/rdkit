@@ -5,6 +5,7 @@ from rdkit import Chem
 from rdkit.Chem import Draw, AllChem
 from rdkit.Chem.Draw import rdMolDraw2D
 from rdkit import Geometry
+import numpy as np
 
 
 class TestCase(unittest.TestCase):
@@ -143,31 +144,36 @@ M  END""")
     self.assertEqual(nm.GetBondBetweenAtoms(2, 7).GetBondDir(), Chem.BondDir.BEGINWEDGE)
 
   def testDrawMoleculesArgs(self):
-    smis = ['O=C1c2cccc3c(N4CCCCC4)ccc(c23)C(=O)N1c1ccccn1', 'Cc1ccc[n+](C2=Nc3ccccc3[N-]C2=C(C#N)C#N)c1', 'CC(=O)NC1=NN(C(C)=O)C(c2ccccn2)S1', 'COc1cc(Cc2nccc3cc(OC)c(OC)cc23)c(S(=O)(=O)O)cc1OC']
+    smis = [
+      'O=C1c2cccc3c(N4CCCCC4)ccc(c23)C(=O)N1c1ccccn1', 'Cc1ccc[n+](C2=Nc3ccccc3[N-]C2=C(C#N)C#N)c1',
+      'CC(=O)NC1=NN(C(C)=O)C(c2ccccn2)S1', 'COc1cc(Cc2nccc3cc(OC)c(OC)cc23)c(S(=O)(=O)O)cc1OC'
+    ]
     tms = [Chem.MolFromSmiles(x) for x in smis]
     [rdMolDraw2D.PrepareMolForDrawing(x) for x in tms]
-    drawer = rdMolDraw2D.MolDraw2DSVG(600,600,300,300)
+    drawer = rdMolDraw2D.MolDraw2DSVG(600, 600, 300, 300)
     p = Chem.MolFromSmarts('c1ccccn1')
     matches = [x.GetSubstructMatch(p) for x in tms]
     acolors = []
     for mv in matches:
-        clrs = {}
-        random.seed(0xf00d)
-        for idx in mv:
-            clrs[idx] = (random.random(),random.random(),random.random())
-        acolors.append(clrs)
+      clrs = {}
+      random.seed(0xf00d)
+      for idx in mv:
+        clrs[idx] = (random.random(), random.random(), random.random())
+      acolors.append(clrs)
     # the bonds between the matching atoms too
     bnds = []
-    for mol,mv in zip(tms,matches):
-        tmp = []
-        for bnd in p.GetBonds():
-            tmp.append(mol.GetBondBetweenAtoms(mv[bnd.GetBeginAtomIdx()],mv[bnd.GetEndAtomIdx()]).GetIdx())
-        bnds.append(tmp)
-    drawer.DrawMolecules(tms,highlightAtoms=matches,highlightBonds=bnds,highlightAtomColors=acolors)
+    for mol, mv in zip(tms, matches):
+      tmp = []
+      for bnd in p.GetBonds():
+        tmp.append(
+          mol.GetBondBetweenAtoms(mv[bnd.GetBeginAtomIdx()], mv[bnd.GetEndAtomIdx()]).GetIdx())
+      bnds.append(tmp)
+    drawer.DrawMolecules(tms, highlightAtoms=matches, highlightBonds=bnds,
+                         highlightAtomColors=acolors)
     drawer.FinishDrawing()
     svg = drawer.GetDrawingText()
     # 4 molecules, 6 bonds each:
-    self.assertEqual(svg.count('fill:none;fill-rule:evenodd;stroke:#FF7F7F'),24)
+    self.assertEqual(svg.count('fill:none;fill-rule:evenodd;stroke:#FF7F7F'), 24)
     # 4 molecules, one atom each:
     self.assertEqual(svg.count('fill:#DB2D2B;fill-rule:evenodd;stroke:#DB2D2B'), 4)
 
@@ -178,15 +184,17 @@ M  END""")
     d.DrawMolecule(m)
     conf = m.GetConformer()
     for idx in range(m.GetNumAtoms()):
-        pos = conf.GetAtomPosition(idx)
-        pos = Geometry.Point2D(pos.x,pos.y)
-        dpos1 = d.GetDrawCoords(idx)
-        dpos2 = d.GetDrawCoords(pos)
-        self.assertAlmostEqual(dpos1.x,dpos2.x,6)
-        self.assertAlmostEqual(dpos1.y,dpos2.y,6)
+      pos = conf.GetAtomPosition(idx)
+      pos = Geometry.Point2D(pos.x, pos.y)
+      dpos1 = d.GetDrawCoords(idx)
+      dpos2 = d.GetDrawCoords(pos)
+      self.assertAlmostEqual(dpos1.x, dpos2.x, 6)
+      self.assertAlmostEqual(dpos1.y, dpos2.y, 6)
 
   def testReaction1(self):
-    rxn = AllChem.ReactionFromSmarts('[CH3:1][C:2](=[O:3])[OH:4].[CH3:5][NH2:6]>CC(O)C.[Pt]>[CH3:1][C:2](=[O:3])[NH:6][CH3:5].[OH2:4]',useSmiles=True)
+    rxn = AllChem.ReactionFromSmarts(
+      '[CH3:1][C:2](=[O:3])[OH:4].[CH3:5][NH2:6]>CC(O)C.[Pt]>[CH3:1][C:2](=[O:3])[NH:6][CH3:5].[OH2:4]',
+      useSmiles=True)
     d = Draw.MolDraw2DSVG(900, 300)
     d.DrawReaction(rxn)
     d.FinishDrawing()
@@ -196,9 +204,11 @@ M  END""")
     #print(txt,file=open('blah1.svg','w+'))
 
   def testReaction2(self):
-    rxn = AllChem.ReactionFromSmarts('[CH3:1][C:2](=[O:3])[OH:4].[CH3:5][NH2:6]>CC(O)C.[Pt]>[CH3:1][C:2](=[O:3])[NH:6][CH3:5].[OH2:4]',useSmiles=True)
+    rxn = AllChem.ReactionFromSmarts(
+      '[CH3:1][C:2](=[O:3])[OH:4].[CH3:5][NH2:6]>CC(O)C.[Pt]>[CH3:1][C:2](=[O:3])[NH:6][CH3:5].[OH2:4]',
+      useSmiles=True)
     d = Draw.MolDraw2DSVG(900, 300)
-    d.DrawReaction(rxn,highlightByReactant=True)
+    d.DrawReaction(rxn, highlightByReactant=True)
     d.FinishDrawing()
     txt = d.GetDrawingText()
     self.assertTrue(txt.find("<svg") != -1)
@@ -206,18 +216,22 @@ M  END""")
     #print(txt,file=open('blah2.svg','w+'))
 
   def testReaction3(self):
-    rxn = AllChem.ReactionFromSmarts('[CH3:1][C:2](=[O:3])[OH:4].[CH3:5][NH2:6]>CC(O)C.[Pt]>[CH3:1][C:2](=[O:3])[NH:6][CH3:5].[OH2:4]',useSmiles=True)
-    colors=[(0.3,0.7,0.9),(0.9,0.7,0.9),(0.6,0.9,0.3),(0.9,0.9,0.1)]
+    rxn = AllChem.ReactionFromSmarts(
+      '[CH3:1][C:2](=[O:3])[OH:4].[CH3:5][NH2:6]>CC(O)C.[Pt]>[CH3:1][C:2](=[O:3])[NH:6][CH3:5].[OH2:4]',
+      useSmiles=True)
+    colors = [(0.3, 0.7, 0.9), (0.9, 0.7, 0.9), (0.6, 0.9, 0.3), (0.9, 0.9, 0.1)]
     d = Draw.MolDraw2DSVG(900, 300)
-    d.DrawReaction(rxn,highlightByReactant=True,highlightColorsReactants=colors)
+    d.DrawReaction(rxn, highlightByReactant=True, highlightColorsReactants=colors)
     d.FinishDrawing()
     txt = d.GetDrawingText()
     self.assertTrue(txt.find("<svg") != -1)
     self.assertTrue(txt.find("</svg>") != -1)
 
   def testReaction4(self):
-    rxn = AllChem.ReactionFromSmarts('[CH3:1][C:2](=[O:3])[OH:4].[CH3:5][NH2:6]>CC(O)C.[Pt]>[CH3:1][C:2](=[O:3])[NH:6][CH3:5].[OH2:4]',useSmiles=True)
-    colors=[(100,155,245),(0,45,155)]
+    rxn = AllChem.ReactionFromSmarts(
+      '[CH3:1][C:2](=[O:3])[OH:4].[CH3:5][NH2:6]>CC(O)C.[Pt]>[CH3:1][C:2](=[O:3])[NH:6][CH3:5].[OH2:4]',
+      useSmiles=True)
+    colors = [(100, 155, 245), (0, 45, 155)]
     d = Draw.MolDraw2DSVG(900, 300)
     self.assertRaises(ValueError, d.DrawReaction, rxn, True, colors)
 
@@ -228,16 +242,16 @@ M  END""")
     d.DrawMolecule(dm)
     d.FinishDrawing()
     txt = d.GetDrawingText()
-    self.assertTrue(txt.find("stroke:#000000")>=0)
-    self.assertTrue(txt.find("stroke:#00CC00")>=0)
+    self.assertTrue(txt.find("stroke:#000000") >= 0)
+    self.assertTrue(txt.find("stroke:#00CC00") >= 0)
 
     d = Draw.MolDraw2DSVG(300, 300)
     d.drawOptions().useBWAtomPalette()
     d.DrawMolecule(dm)
     d.FinishDrawing()
     txt = d.GetDrawingText()
-    self.assertTrue(txt.find("stroke:#000000")>=0)
-    self.assertTrue(txt.find("stroke:#00CC00")==-1)
+    self.assertTrue(txt.find("stroke:#000000") >= 0)
+    self.assertTrue(txt.find("stroke:#00CC00") == -1)
 
   def testUpdatePalette(self):
     m = Chem.MolFromSmiles('CCOCNCCl')
@@ -246,18 +260,17 @@ M  END""")
     d.DrawMolecule(dm)
     d.FinishDrawing()
     txt = d.GetDrawingText()
-    self.assertTrue(txt.find("stroke:#000000")>=0)
-    self.assertTrue(txt.find("stroke:#00CC00")>=0)
+    self.assertTrue(txt.find("stroke:#000000") >= 0)
+    self.assertTrue(txt.find("stroke:#00CC00") >= 0)
 
     d = Draw.MolDraw2DSVG(300, 300)
-    d.drawOptions().updateAtomPalette({6:(1,1,0)})
+    d.drawOptions().updateAtomPalette({6: (1, 1, 0)})
     d.DrawMolecule(dm)
     d.FinishDrawing()
     txt = d.GetDrawingText()
-    self.assertTrue(txt.find("stroke:#000000")==-1)
-    self.assertTrue(txt.find("stroke:#00CC00")>=0)
-    self.assertTrue(txt.find("stroke:#FFFF00")>=0)
-
+    self.assertTrue(txt.find("stroke:#000000") == -1)
+    self.assertTrue(txt.find("stroke:#00CC00") >= 0)
+    self.assertTrue(txt.find("stroke:#FFFF00") >= 0)
 
   def testSetPalette(self):
     m = Chem.MolFromSmiles('CCOCNCCl')
@@ -266,27 +279,27 @@ M  END""")
     d.DrawMolecule(dm)
     d.FinishDrawing()
     txt = d.GetDrawingText()
-    self.assertTrue(txt.find("stroke:#000000")>=0)
-    self.assertTrue(txt.find("stroke:#00CC00")>=0)
+    self.assertTrue(txt.find("stroke:#000000") >= 0)
+    self.assertTrue(txt.find("stroke:#00CC00") >= 0)
 
     d = Draw.MolDraw2DSVG(300, 300)
-    d.drawOptions().setAtomPalette({-1:(1,1,0)})
+    d.drawOptions().setAtomPalette({-1: (1, 1, 0)})
     d.DrawMolecule(dm)
     d.FinishDrawing()
     txt = d.GetDrawingText()
-    self.assertTrue(txt.find("stroke:#000000")==-1)
-    self.assertTrue(txt.find("stroke:#00CC00")==-1)
-    self.assertTrue(txt.find("stroke:#FFFF00")>=0)
+    self.assertTrue(txt.find("stroke:#000000") == -1)
+    self.assertTrue(txt.find("stroke:#00CC00") == -1)
+    self.assertTrue(txt.find("stroke:#FFFF00") >= 0)
 
     # try a palette that doesn't have a default:
     d = Draw.MolDraw2DSVG(300, 300)
-    d.drawOptions().setAtomPalette({0:(1,1,0)})
+    d.drawOptions().setAtomPalette({0: (1, 1, 0)})
     d.DrawMolecule(dm)
     d.FinishDrawing()
     txt = d.GetDrawingText()
-    self.assertTrue(txt.find("stroke:#000000")>=0)
-    self.assertTrue(txt.find("stroke:#00CC00")==-1)
-    self.assertTrue(txt.find("stroke:#FFFF00")==-1)
+    self.assertTrue(txt.find("stroke:#000000") >= 0)
+    self.assertTrue(txt.find("stroke:#00CC00") == -1)
+    self.assertTrue(txt.find("stroke:#FFFF00") == -1)
 
   def testGithub1829(self):
     d = Draw.MolDraw2DSVG(300, 300, 100, 100)
@@ -311,26 +324,97 @@ M  END""")
     txt = d.GetDrawingText()
     self.assertTrue(txt.find("stroke-width:2px") == -1)
     self.assertTrue(txt.find("stroke-width:4px") >= 0)
- 
+
   def testPrepareAndDrawMolecule(self):
     m = Chem.MolFromSmiles("C1N[C@@H]2OCC12")
     d = Draw.MolDraw2DSVG(300, 300)
-    rdMolDraw2D.PrepareAndDrawMolecule(d,m)
+    rdMolDraw2D.PrepareAndDrawMolecule(d, m)
     d.FinishDrawing()
     txt = d.GetDrawingText()
-    self.assertTrue(txt.find("<tspan>H</tspan>")>0)
+    self.assertTrue(txt.find("<tspan>H</tspan>") > 0)
 
   def testAtomTagging(self):
     m = Chem.MolFromSmiles("C1N[C@@H]2OCC12")
     d = Draw.MolDraw2DSVG(300, 300)
     dm = Draw.PrepareMolForDrawing(m)
-    rdMolDraw2D.PrepareAndDrawMolecule(d,dm)
-    d.TagAtoms(dm,events={'onclick':'alert'})
+    rdMolDraw2D.PrepareAndDrawMolecule(d, dm)
+    d.TagAtoms(dm, events={'onclick': 'alert'})
     d.FinishDrawing()
     txt = d.GetDrawingText()
-    self.assertTrue(txt.find("<circle")>0)
+    self.assertTrue(txt.find("<circle") > 0)
     self.assertTrue(txt.find("onclick=") > 0)
 
+  def testMolContours(self):
+    m = Chem.MolFromSmiles("C1N[C@@H]2OCC12")
+    dm = Draw.PrepareMolForDrawing(m)
+
+    conf = dm.GetConformer()
+    gs = []
+    ws = []
+    hs = []
+    for i in range(conf.GetNumAtoms()):
+      p = conf.GetAtomPosition(i)
+      p2 = Geometry.Point2D(p.x, p.y)
+      gs.append(p2)
+      hs.append(0.4)
+      if not i % 2:
+        ws.append(-0.5)
+      else:
+        ws.append(1)
+
+    d = Draw.MolDraw2DSVG(300, 300)
+    d.ClearDrawing()
+    Draw.ContourAndDrawGaussians(d, gs, hs, ws)
+    d.drawOptions().clearBackground = False
+    d.DrawMolecule(dm)
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    with open("contour_from_py_1.svg", 'w+') as outf:
+      print(txt, file=outf)
+
+    d = Draw.MolDraw2DSVG(300, 300)
+    d.ClearDrawing()
+    ps = Draw.ContourParams()
+    ps.fillGrid = True
+    Draw.ContourAndDrawGaussians(d, gs, hs, ws, params=ps)
+    d.drawOptions().clearBackground = False
+    d.DrawMolecule(dm)
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    with open("contour_from_py_2.svg", 'w+') as outf:
+      print(txt, file=outf)
+
+  def testGridContours(self):
+    m = Chem.MolFromSmiles("C1N[C@@H]2OCC12")
+    dm = Draw.PrepareMolForDrawing(m)
+
+    conf = dm.GetConformer()
+    grid = np.zeros((50, 100), np.double)
+    ycoords = list(np.arange(0, 5, 0.1))
+    xcoords = list(np.arange(0, 10, 0.1))
+    for i in range(grid.shape[1]):
+      gxp = xcoords[i]
+      for j in range(grid.shape[0]):
+        gyp = ycoords[j]
+        for v in range(1, 4):
+          dvx = 2 * v - gxp
+          dvy = v - gyp
+          d2 = dvx * dvx + dvy * dvy
+          if d2 > 0:
+            grid[j, i] += 1 / np.sqrt(d2)
+
+    # sg = 255 * grid / np.max(grid)
+    # from PIL import Image
+    # img = Image.fromarray(sg.astype(np.uint8))
+    # img.save('img.png')
+
+    d = Draw.MolDraw2DSVG(300, 300)
+    d.ClearDrawing()
+    Draw.ContourAndDrawGrid(d, np.transpose(grid), xcoords, ycoords)
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    with open("contour_from_py_3.svg", 'w+') as outf:
+      print(txt, file=outf)
 
 
 if __name__ == "__main__":

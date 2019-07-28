@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2015-2017 Greg Landrum
+//  Copyright (C) 2015-2019 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,9 +9,12 @@
 //
 #define PY_ARRAY_UNIQUE_SYMBOL rdmoldraw2d_array_API
 #include <RDBoost/python.h>
-#include <GraphMol/ROMol.h>
+#include <RDBoost/boost_numpy.h>
+#include <numpy/arrayobject.h>
 #include <RDBoost/Wrap.h>
+#include <RDBoost/import_array.h>
 
+#include <GraphMol/ROMol.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 
@@ -82,17 +85,25 @@ std::map<int, double> *pyDictToDoubleMap(python::object pyo) {
 DrawColour pyTupleToDrawColour(const python::tuple tpl) {
   float r = python::extract<float>(tpl[0]);
   if (r > 1 || r < 0) {
-    throw ValueErrorException("RGB color value needs to be between 0 and 1.");
+    throw ValueErrorException("RGBA color value needs to be between 0 and 1.");
   }
   float g = python::extract<float>(tpl[1]);
   if (g > 1 || g < 0) {
-    throw ValueErrorException("RGB color value needs to be between 0 and 1.");
+    throw ValueErrorException("RGBA color value needs to be between 0 and 1.");
   }
   float b = python::extract<float>(tpl[2]);
   if (b > 1 || b < 0) {
-    throw ValueErrorException("RGB color value needs to be between 0 and 1.");
+    throw ValueErrorException("RGBA color value needs to be between 0 and 1.");
   }
-  DrawColour clr(r, g, b);
+  float a = 1;
+  if (python::extract<unsigned int>(tpl.attr("__len__")()) > 3) {
+    a = python::extract<float>(tpl[3]);
+    if (a > 1 || a < 0) {
+      throw ValueErrorException(
+          "RGBA color value needs to be between 0 and 1.");
+    }
+  }
+  DrawColour clr(r, g, b, a);
   return clr;
 }
 void pyListToColourVec(python::object pyo, std::vector<DrawColour> &res) {
@@ -302,9 +313,10 @@ ROMol *prepMolForDrawing(const ROMol *m, bool kekulize = true,
 
 python::tuple colourToPyTuple(const DrawColour &clr) {
   python::list res;
-  res.append(clr.get<0>());
-  res.append(clr.get<1>());
-  res.append(clr.get<2>());
+  res.append(clr.r);
+  res.append(clr.g);
+  res.append(clr.b);
+  res.append(clr.a);
 
   return python::tuple(res);
 }
@@ -345,17 +357,95 @@ void addMoleculeMetadata(const RDKit::MolDraw2DSVG &self, const RDKit::ROMol &m,
   self.addMoleculeMetadata(m, confId);
 }
 
+void contourAndDrawGaussiansHelper(
+    RDKit::MolDraw2D &drawer, python::object pylocs, python::object pyheights,
+    python::object pywidths, unsigned int nContours, python::object pylevels,
+    const MolDraw2DUtils::ContourParams &params) {
+  std::unique_ptr<std::vector<RDGeom::Point2D>> locs =
+      pythonObjectToVect<RDGeom::Point2D>(pylocs);
+  std::unique_ptr<std::vector<double>> heights =
+      pythonObjectToVect<double>(pyheights);
+  std::unique_ptr<std::vector<double>> widths =
+      pythonObjectToVect<double>(pywidths);
+  std::unique_ptr<std::vector<double>> levels;
+  if (pylevels) {
+    levels = pythonObjectToVect<double>(pylevels);
+  } else {
+    levels = std::unique_ptr<std::vector<double>>(new std::vector<double>);
+  }
+  MolDraw2DUtils::contourAndDrawGaussians(drawer, *locs, *heights, *widths,
+                                          nContours, *levels, params);
+}
+
+void contourAndDrawGridHelper(RDKit::MolDraw2D &drawer, python::object &data,
+                              python::object &pyxcoords,
+                              python::object &pyycoords, unsigned int nContours,
+                              python::object &pylevels,
+                              const MolDraw2DUtils::ContourParams &params) {
+  if (!PyArray_Check(data.ptr())) {
+    throw_value_error("data argument must be a numpy array");
+  }
+  PyArrayObject *dataArr = reinterpret_cast<PyArrayObject *>(
+      PyArray_ContiguousFromObject(data.ptr(), NPY_DOUBLE, 2, 2));
+  if (!dataArr) {
+    throw_value_error("could not convert data argument");
+  }
+
+  std::unique_ptr<std::vector<double>> xcoords =
+      pythonObjectToVect<double>(pyxcoords);
+  std::unique_ptr<std::vector<double>> ycoords =
+      pythonObjectToVect<double>(pyycoords);
+  std::unique_ptr<std::vector<double>> levels;
+  if (pylevels) {
+    levels = pythonObjectToVect<double>(pylevels);
+  } else {
+    levels = std::unique_ptr<std::vector<double>>(new std::vector<double>);
+  }
+
+  if (PyArray_DIM(dataArr, 0) != xcoords->size()) {
+    throw_value_error(
+        "data array and xcoords sizes do not match.\n"
+        "Did you forget to call np.transpose() on the array?");
+  }
+
+  if (PyArray_DIM(dataArr, 1) != ycoords->size()) {
+    throw_value_error("data array and ycoords sizes do not match");
+  }
+
+  MolDraw2DUtils::contourAndDrawGrid(drawer, (double *)PyArray_DATA(dataArr),
+                                     *xcoords, *ycoords, nContours, *levels,
+                                     params);
+
+  Py_DECREF(dataArr);
+}
+
+void setColoursHelper(RDKit::MolDraw2DUtils::ContourParams &params,
+                      python::object pycolors) {
+  std::vector<RDKit::DrawColour> cs;
+  for (size_t i = 0; i < python::extract<size_t>(pycolors.attr("__len__")());
+       ++i) {
+    cs.push_back(
+        pyTupleToDrawColour(python::extract<python::tuple>(pycolors[i])));
+  }
+  params.colourMap = cs;
+}
+
+void setContourColour(RDKit::MolDraw2DUtils::ContourParams &params,
+                      python::tuple tpl) {
+  params.contourColour = pyTupleToDrawColour(tpl);
+}
 }  // namespace RDKit
 
 BOOST_PYTHON_MODULE(rdMolDraw2D) {
   python::scope().attr("__doc__") =
       "Module containing a C++ implementation of 2D molecule drawing";
-  std::string docString;
+
+  rdkit_import_array();
 
   python::class_<std::map<int, std::string>>("IntStringMap")
       .def(python::map_indexing_suite<std::map<int, std::string>, true>());
 
-  docString = "Drawing options";
+  std::string docString = "Drawing options";
   python::class_<RDKit::MolDrawOptions, boost::noncopyable>("MolDrawOptions",
                                                             docString.c_str())
       .def_readwrite("dummiesAreAttachments",
@@ -486,6 +576,9 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                RDKit::MolDraw2D::getDrawCoords,
            (python::arg("self"), python::arg("atomIndex")),
            "get the coordinates in drawing space for a particular atom")
+      .def("ClearDrawing", &RDKit::MolDraw2D::clearDrawing,
+           (python::arg("self")),
+           "clears the drawing by filling it with the background color")
       .def("drawOptions",
            (RDKit::MolDrawOptions & (RDKit::MolDraw2D::*)()) &
                RDKit::MolDraw2D::drawOptions,
@@ -548,4 +641,90 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
        python::arg("highlightAtomRadii") = python::object(),
        python::arg("confId") = -1),
       "Preps a molecule for drawing and actually draws it\n");
+  docString = "Parameters for drawing contours";
+  python::class_<RDKit::MolDraw2DUtils::ContourParams>(
+      "ContourParams", docString.c_str(), python::init<>())
+      .def_readwrite("setScale",
+                     &RDKit::MolDraw2DUtils::ContourParams::setScale,
+                     "set the scale of the drawing object (useful if you draw "
+                     "the grid/contours first)")
+      .def_readwrite("dashNegative",
+                     &RDKit::MolDraw2DUtils::ContourParams::dashNegative,
+                     "use a dashed line for negative contours")
+      .def_readwrite("fillGrid",
+                     &RDKit::MolDraw2DUtils::ContourParams::fillGrid,
+                     "colors the grid in addition to drawing contours")
+      .def_readwrite("gridResolution",
+                     &RDKit::MolDraw2DUtils::ContourParams::gridResolution,
+                     "set the resolution of the grid")
+      .def_readwrite("contourWidth",
+                     &RDKit::MolDraw2DUtils::ContourParams::contourWidth,
+                     "line width of the contours")
+      .def_readwrite("extraGridPadding",
+                     &RDKit::MolDraw2DUtils::ContourParams::extraGridPadding,
+                     "extra space (in molecule coords) around the grid")
+      .def("setContourColour", &RDKit::setContourColour,
+           (python::arg("self"), python::arg("colour")))
+      .def("setColourMap", &RDKit::setColoursHelper,
+           (python::arg("self"), python::arg("colours")));
+  docString = R"DOC(Generates and draws contours for a set of gaussians
+
+  - drawer: the MolDraw2D object to use
+  - locs: locations of the gaussians
+  - heights: the heights (or weights) of the gaussians
+  - widths: the standard deviations of the gaussians
+  - nContours: the number of contours to draw
+  - levels: the contours to use
+  - ps: additional parameters controlling the contouring.
+
+  The values are calculated on a grid with spacing params.gridResolution.
+  If params.setScale  is set, the grid size will be calculated based on the
+  locations of the gaussians and params.extraGridPadding. Otherwise the current
+  size of the viewport will be used.
+
+  If the levels argument is empty, the contour levels will be determined
+  automatically from the max and min values on the grid and levels will
+  be updated to include the contour levels.
+
+  If params.fillGrid is set, the data on the grid will also be drawn using
+  the color scheme in params.colourMap
+
+*/)DOC";
+  python::def(
+      "ContourAndDrawGaussians", &RDKit::contourAndDrawGaussiansHelper,
+      (python::arg("drawer"), python::arg("locs"), python::arg("heights"),
+       python::arg("widths"), python::arg("nContours") = 10,
+       python::arg("levels") = python::object(),
+       python::arg("params") = RDKit::MolDraw2DUtils::ContourParams()),
+      docString.c_str());
+  docString = R"DOC(Generates and draws contours for data on a grid
+
+  - drawer: the MolDraw2D object to use
+  - data: numpy array with the data to be contoured
+  - xcoords: the x coordinates of the grid
+  - ycoords: the y coordinates of the grid
+  - nContours: the number of contours to draw
+  - levels: the contours to use
+  - ps: additional parameters controlling the contouring.
+
+  The values are calculated on a grid with spacing params.gridResolution.
+  If params.setScale  is set, the grid size will be calculated based on the
+  locations of the gaussians and params.extraGridPadding. Otherwise the current
+  size of the viewport will be used.
+
+  If the levels argument is empty, the contour levels will be determined
+  automatically from the max and min values on the grid and levels will
+  be updated to include the contour levels.
+
+  If params.fillGrid is set, the data on the grid will also be drawn using
+  the color scheme in params.colourMap
+
+*/)DOC";
+  python::def(
+      "ContourAndDrawGrid", &RDKit::contourAndDrawGridHelper,
+      (python::arg("drawer"), python::arg("data"), python::arg("xcoords"),
+       python::arg("ycoords"), python::arg("nContours") = 10,
+       python::arg("levels") = python::object(),
+       python::arg("params") = RDKit::MolDraw2DUtils::ContourParams()),
+      docString.c_str());
 }

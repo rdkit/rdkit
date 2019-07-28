@@ -1246,8 +1246,8 @@ M  END";
     outs << text;
     outs.flush();
     TEST_ASSERT(
-        text.find("<path class='bond-1' d='M 130.309,117.496 194.727,89.1159 "
-                  "187.092,75.893 130.309,117.496' "
+        text.find("<path class='bond-1' d='M 130.309,117.496 L 194.727,89.1159 "
+                  "L 187.092,75.893 Z' "
                   "style='fill:#000000") != std::string::npos);
     delete m;
   }
@@ -1298,8 +1298,8 @@ M  END";
     outs << text;
     outs.flush();
     TEST_ASSERT(
-        text.find("<path class='bond-3' d='M 107.911,115.963 80.5887,91.4454 "
-                  "75.9452,97.9126 107.911,115.963' "
+        text.find("<path class='bond-3' d='M 107.911,115.963 L 80.5887,91.4454 "
+                  "L 75.9452,97.9126 Z' "
                   "style='fill:#000000;") != std::string::npos);
 
     MolDraw2DUtils::prepareMolForDrawing(*m);
@@ -2226,11 +2226,11 @@ M  END)molb";
     outs.flush();
     TEST_ASSERT(
         text.find(
-            "<path class='bond-0' d='M 65.8823,110.884 134.118,89.1159'") !=
+            "<path class='bond-0' d='M 65.8823,110.884 L 134.118,89.1159'") !=
         std::string::npos);
     TEST_ASSERT(
         text.find(
-            "<path class='bond-1' d='M 69.6998,117.496 9.09091,82.5044'") !=
+            "<path class='bond-1' d='M 69.6998,117.496 L 9.09091,82.5044'") !=
         std::string::npos);
   }
   {
@@ -2260,11 +2260,11 @@ M  END)molb";
     outs.flush();
     TEST_ASSERT(
         text.find(
-            "<path class='bond-0' d='M 65.8823,110.884 134.118,89.1159'") !=
+            "<path class='bond-0' d='M 65.8823,110.884 L 134.118,89.1159'") !=
         std::string::npos);
     TEST_ASSERT(
         text.find(
-            "<path class='bond-1' d='M 69.6998,117.496 9.09091,82.5044'") !=
+            "<path class='bond-1' d='M 69.6998,117.496 L 9.09091,82.5044'") !=
         std::string::npos);
   }
   std::cerr << " Done" << std::endl;

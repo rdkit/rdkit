@@ -57,3 +57,154 @@ TEST_CASE("tag atoms in SVG", "[drawing, SVG]") {
     CHECK(text.find("onclick") != std::string::npos);
   }
 }
+TEST_CASE("contour data", "[drawing, conrec]") {
+  auto m1 = "C1N[C@@H]2OCC12"_smiles;
+  REQUIRE(m1);
+  SECTION("grid basics") {
+    MolDraw2DSVG drawer(250, 250);
+    MolDraw2DUtils::prepareMolForDrawing(*m1);
+
+    const size_t gridSz = 100;
+    double *grid = new double[gridSz * gridSz];
+    std::vector<double> xps(gridSz);
+    std::vector<double> yps(gridSz);
+
+    double minX = 1000, minY = 1000, maxX = -1000, maxY = -1000;
+    const auto conf = m1->getConformer();
+    for (size_t i = 0; i < conf.getNumAtoms(); ++i) {
+      minX = std::min(minX, conf.getAtomPos(i).x);
+      minY = std::min(minY, conf.getAtomPos(i).y);
+      maxX = std::max(maxX, conf.getAtomPos(i).x);
+      maxY = std::max(maxY, conf.getAtomPos(i).y);
+    }
+    double x1 = minX - 0.5, y1 = minY - 0.5, x2 = maxX + 0.5, y2 = maxY + 0.5;
+    double dx = (x2 - x1) / gridSz, dy = (y2 - y1) / gridSz;
+    double maxV = 0.0;
+    for (size_t ix = 0; ix < gridSz; ++ix) {
+      auto px = x1 + ix * dx;
+      xps[ix] = px;
+      for (size_t iy = 0; iy < gridSz; ++iy) {
+        auto py = y1 + iy * dy;
+        if (ix == 0) yps[iy] = py;
+        RDGeom::Point2D loc(px, py);
+        double val = 0.0;
+        for (size_t ia = 0; ia < conf.getNumAtoms(); ++ia) {
+          auto dv = loc - RDGeom::Point2D(conf.getAtomPos(ia).x,
+                                          conf.getAtomPos(ia).y);
+          auto r = dv.length();
+          if (r > 0.1) val += 1 / r;
+        }
+        maxV = std::max(val, maxV);
+        grid[ix * gridSz + iy] = val;
+      }
+    }
+
+    std::vector<double> levels;
+    drawer.clearDrawing();
+    MolDraw2DUtils::contourAndDrawGrid(drawer, grid, xps, yps, 10, levels);
+    drawer.drawOptions().clearBackground = false;
+    drawer.drawMolecule(*m1);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("contourMol_1.svg");
+    outs << text;
+    outs.flush();
+    delete[] grid;
+  }
+  SECTION("gaussian basics") {
+    MolDraw2DSVG drawer(250, 250);
+    MolDraw2DUtils::prepareMolForDrawing(*m1);
+    drawer.drawOptions().padding = 0.1;
+
+    const auto conf = m1->getConformer();
+    std::vector<Point2D> cents(conf.getNumAtoms());
+    std::vector<double> weights(conf.getNumAtoms());
+    std::vector<double> widths(conf.getNumAtoms());
+    for (size_t i = 0; i < conf.getNumAtoms(); ++i) {
+      cents[i] = Point2D(conf.getAtomPos(i).x, conf.getAtomPos(i).y);
+      weights[i] = 1;
+      widths[i] = 0.4 * PeriodicTable::getTable()->getRcovalent(
+                            m1->getAtomWithIdx(i)->getAtomicNum());
+    }
+
+    std::vector<double> levels;
+    drawer.clearDrawing();
+    MolDraw2DUtils::contourAndDrawGaussians(drawer, cents, weights, widths, 10,
+                                            levels);
+
+    drawer.drawOptions().clearBackground = false;
+    drawer.drawMolecule(*m1);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("contourMol_2.svg");
+    outs << text;
+    outs.flush();
+  }
+  SECTION("gaussian fill") {
+    MolDraw2DSVG drawer(250, 250);
+    MolDraw2DUtils::prepareMolForDrawing(*m1);
+    drawer.drawOptions().padding = 0.1;
+
+    const auto conf = m1->getConformer();
+    std::vector<Point2D> cents(conf.getNumAtoms());
+    std::vector<double> weights(conf.getNumAtoms());
+    std::vector<double> widths(conf.getNumAtoms());
+    for (size_t i = 0; i < conf.getNumAtoms(); ++i) {
+      cents[i] = Point2D(conf.getAtomPos(i).x, conf.getAtomPos(i).y);
+      weights[i] = i % 2 ? -0.5 : 1;
+      widths[i] = 0.4 * PeriodicTable::getTable()->getRcovalent(
+                            m1->getAtomWithIdx(i)->getAtomicNum());
+    }
+
+    std::vector<double> levels;
+    MolDraw2DUtils::ContourParams cps;
+    cps.fillGrid = true;
+    drawer.clearDrawing();
+    MolDraw2DUtils::contourAndDrawGaussians(drawer, cents, weights, widths, 10,
+                                            levels, cps);
+
+    drawer.drawOptions().clearBackground = false;
+    drawer.drawMolecule(*m1);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("contourMol_3.svg");
+    outs << text;
+    outs.flush();
+  }
+
+  SECTION("gaussian fill 2") {
+    auto m2 = "C1N[C@@H]2OCC12C=CC"_smiles;
+    REQUIRE(m2);
+
+    MolDraw2DSVG drawer(450, 250);
+    MolDraw2DUtils::prepareMolForDrawing(*m2);
+    drawer.drawOptions().padding = 0.1;
+
+    const auto conf = m2->getConformer();
+    std::vector<Point2D> cents(conf.getNumAtoms());
+    std::vector<double> weights(conf.getNumAtoms());
+    std::vector<double> widths(conf.getNumAtoms());
+    for (size_t i = 0; i < conf.getNumAtoms(); ++i) {
+      cents[i] = Point2D(conf.getAtomPos(i).x, conf.getAtomPos(i).y);
+      weights[i] = i % 2 ? -0.5 : 1;
+      widths[i] = 0.3 * PeriodicTable::getTable()->getRcovalent(
+                            m2->getAtomWithIdx(i)->getAtomicNum());
+    }
+
+    std::vector<double> levels;
+    MolDraw2DUtils::ContourParams cps;
+    cps.fillGrid = true;
+    cps.gridResolution = 0.5;
+    drawer.clearDrawing();
+    MolDraw2DUtils::contourAndDrawGaussians(drawer, cents, weights, widths, 10,
+                                            levels, cps);
+
+    drawer.drawOptions().clearBackground = false;
+    drawer.drawMolecule(*m2);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("contourMol_4.svg");
+    outs << text;
+    outs.flush();
+  }
+}
