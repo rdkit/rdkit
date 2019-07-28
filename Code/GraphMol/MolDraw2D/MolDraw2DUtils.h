@@ -113,6 +113,14 @@ RDKIT_MOLDRAW2D_EXPORT void contourAndDrawGrid(
     MolDraw2D &drawer, const double *grid, const std::vector<double> &xcoords,
     const std::vector<double> &ycoords, size_t nContours,
     std::vector<double> &levels, const ContourParams &ps = ContourParams());
+//! \overload
+RDKIT_MOLDRAW2D_EXPORT inline void contourAndDrawGrid(
+    MolDraw2D &drawer, const double *grid, const std::vector<double> &xcoords,
+    const std::vector<double> &ycoords, size_t nContours = 10,
+    const ContourParams &ps = ContourParams()) {
+  std::vector<double> levels;
+  contourAndDrawGrid(drawer, grid, xcoords, ycoords, nContours, levels, ps);
+};
 
 //! Generates and draws contours for a set of gaussians
 /*
@@ -142,6 +150,14 @@ RDKIT_MOLDRAW2D_EXPORT void contourAndDrawGaussians(
     const std::vector<double> &heights, const std::vector<double> &widths,
     size_t nContours, std::vector<double> &levels,
     const ContourParams &ps = ContourParams());
+//! \overload
+RDKIT_MOLDRAW2D_EXPORT inline void contourAndDrawGaussians(
+    MolDraw2D &drawer, const std::vector<Point2D> &locs,
+    const std::vector<double> &heights, const std::vector<double> &widths,
+    size_t nContours = 10, const ContourParams &ps = ContourParams()) {
+  std::vector<double> levels;
+  contourAndDrawGaussians(drawer, locs, heights, widths, nContours, levels, ps);
+};
 
 }  // namespace MolDraw2DUtils
 }  // namespace RDKit
