@@ -441,6 +441,22 @@ void drawPolygonHelper(RDKit::MolDraw2D &self, python::object py_cds) {
   self.drawPolygon(*cds);
 }
 
+void drawAttachmentLineHelper(RDKit::MolDraw2D &self, const Point2D &cds1,
+                              const Point2D &cds2, python::tuple &pycol,
+                              double len, unsigned int nSegments) {
+  auto col = pyTupleToDrawColour(pycol);
+  self.drawAttachmentLine(cds1, cds2, col, len, nSegments);
+}
+
+void drawWavyLineHelper(RDKit::MolDraw2D &self, const Point2D &cds1,
+                        const Point2D &cds2, python::tuple &pycol1,
+                        python::tuple &pycol2, unsigned int nSegments,
+                        double vertOffset) {
+  auto col1 = pyTupleToDrawColour(pycol1);
+  auto col2 = pyTupleToDrawColour(pycol2);
+  self.drawWavyLine(cds1, cds2, col1, col2, nSegments, vertOffset);
+}
+
 }  // namespace RDKit
 
 BOOST_PYTHON_MODULE(rdMolDraw2D) {
@@ -603,13 +619,13 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
            "draws a rectangle with the current drawing style in the rectangle "
            "defined by the two points. The coordinates "
            "are in the molecule frame")
-      .def("DrawAttachmentLine", &RDKit::MolDraw2D::drawAttachmentLine,
+      .def("DrawAttachmentLine", &RDKit::drawAttachmentLineHelper,
            (python::arg("self"), python::arg("cds1"), python::arg("cds2"),
             python::arg("color"), python::arg("len") = 1.0,
             python::arg("nSegments") = 16),
            "draw a line indicating the presence of an attachment point "
            "(normally a squiggle line perpendicular to a bond)")
-      .def("DrawWavyLine", &RDKit::MolDraw2D::drawWavyLine,
+      .def("DrawWavyLine", &RDKit::drawWavyLineHelper,
            (python::arg("self"), python::arg("cds1"), python::arg("cds2"),
             python::arg("color1"), python::arg("color2"),
             python::arg("nSegments") = 16, python::arg("vertOffset") = 0.05),

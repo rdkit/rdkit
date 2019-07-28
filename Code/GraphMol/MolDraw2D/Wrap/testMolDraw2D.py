@@ -417,18 +417,23 @@ M  END""")
       print(txt, file=outf)
 
   def testExtraDrawingCommands(self):
+    " this is another test just to make sure that things work "
     m = Chem.MolFromMolBlock("""
   Mrv1810 07271915232D          
 
-  4  4  0  0  0  0            999 V2000
+  6  6  0  0  0  0            999 V2000
    -1.5      -1.5       0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
    -1.5       0.0       0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
     0.0       0.0       0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
     0.0      -1.5       0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5       1.5       0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5      -1.5       0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
   1  2  1  0  0  0  0
   2  3  1  0  0  0  0
   3  4  1  0  0  0  0
   4  1  1  0  0  0  0
+  2  5  1  0  0  0  0
+  4  6  1  0  0  0  0
 M  END
 """)
     d = Draw.MolDraw2DSVG(300, 300)
@@ -443,10 +448,9 @@ M  END
     ps = [Geometry.Point2D(p.x, p.y) for p in ps3]
     d.DrawPolygon(ps)
     d.DrawArrow(Geometry.Point2D(0, 0), Geometry.Point2D(0, 1.5))
-    d.DrawAttachmentLine(Geometry.Point2D(0, 0), Geometry.Point2D(1.5, 0), Draw.DrawColour(1, 0, 1))
-    d.DrawWavyLine(Geometry.Point2D(0, 0), Geometry.Point2D(1.0, 1.0), Draw.DrawColour(0, 0, 0),
-                   Draw.DrawColour(1, 0, 0))
-
+    d.DrawAttachmentLine(Geometry.Point2D(0, 0), Geometry.Point2D(1.5, 0), (0.5, 0.5, 0.5), len=0.5)
+    d.DrawLine(Geometry.Point2D(0, 0), Geometry.Point2D(1.5, 0))
+    d.DrawWavyLine(Geometry.Point2D(0, 0), Geometry.Point2D(1.5, 1.5), (0, 0, 0), (1, 0.2, 0.2))
     d.FinishDrawing()
     txt = d.GetDrawingText()
     with open("extras_1.svg", "w+") as outf:
