@@ -161,6 +161,7 @@ struct Point_wrapper {
     python::class_<Point2D>("Point2D", Point2Ddoc.c_str(),
                             python::init<>("Default Constructor"))
         .def(python::init<double, double>())
+        .def(python::init<const Point3D &>())
         .def_readwrite("x", &Point2D::x)
         .def_readwrite("y", &Point2D::y)
         .def("__getitem__", point2dGetItem)
