@@ -67,7 +67,7 @@ const unsigned int MatchAll = UINT_MAX;
 class StereoBondEndCap {
  private:
   unsigned m_anchor;
-  const Atom *m_nonAnchor = nullptr;
+  const Atom *mp_nonAnchor = nullptr;
 
   StereoBondEndCap() = delete;
   StereoBondEndCap(const StereoBondEndCap &) = delete;
@@ -77,6 +77,8 @@ class StereoBondEndCap {
   StereoBondEndCap(const ROMol &mol, const Atom *atom,
                    const Atom *otherDblBndAtom, const unsigned stereoAtomIdx)
       : m_anchor(stereoAtomIdx) {
+    PRECONDITION(atom,"no atom");
+    PRECONDITION(otherDblBndAtom,"no atom");
     PRECONDITION(atom->getTotalDegree() <= 3,
                  "Stereo Bond extremes must have less than four neighbors");
 
@@ -103,12 +105,14 @@ class StereoBondEndCap {
 };
 
 bool hasStereoBondDirection(const Bond *bond) {
-  return bond->getBondDir() == Bond::BondDir::ENDDOWNRIGHT ||
+    PRECONDITION(bond,"no bond");
+    return bond->getBondDir() == Bond::BondDir::ENDDOWNRIGHT ||
          bond->getBondDir() == Bond::BondDir::ENDUPRIGHT;
 }
 
 const Bond *getNeighboringStereoDirectedBond(const ROMol &mol,
                                              const Atom *atom) {
+  PRECONDITION(atom,"no atom");
   for (const auto &bondIdx :
        boost::make_iterator_range(mol.getAtomBonds(atom))) {
     const Bond *bond = mol[bondIdx];
@@ -445,6 +449,7 @@ ReactantProductAtomMapping *getAtomMappingsReactantProduct(
 
 namespace {
 unsigned reactProdMapAnchorIdx(Atom *atom, const RDKit::UINT_VECT &pMatches) {
+  PRECONDITION(atom,"no atom");
   if (pMatches.size() == 1) {
     return pMatches[0];
   }
@@ -465,6 +470,9 @@ unsigned reactProdMapAnchorIdx(Atom *atom, const RDKit::UINT_VECT &pMatches) {
 
 void forwardReactantBondStereo(ReactantProductAtomMapping *mapping, Bond *pBond,
                                const ROMol &reactant, const Bond *rBond) {
+  PRECONDITION(mapping, "no mapping");
+  PRECONDITION(bond, "no bond");
+  PRECONDITION(rBond, "no bond");
   PRECONDITION(rBond->getStereo() > Bond::BondStereo::STEREOANY,
                "bond in reactant must have defined stereo");
 
@@ -521,6 +529,7 @@ void forwardReactantBondStereo(ReactantProductAtomMapping *mapping, Bond *pBond,
 
 void translateProductStereoBondDirections(Bond *pBond, const Bond *start,
                                           const Bond *end) {
+  PRECONDITION(pBond, "no bond");
   PRECONDITION(start && end && hasStereoBondDirection(start) &&
                    hasStereoBondDirection(end),
                "Both neighboring bonds must have bond directions");

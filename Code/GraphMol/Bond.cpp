@@ -299,7 +299,7 @@ const Atom *findHighestCIPNeighbor(const Atom *atom, const Atom *skipAtom) {
 
   for (const auto &index :
        boost::make_iterator_range(mol.getAtomNeighbors(atom))) {
-    const auto *neighbor = mol.getAtomWithIdx(index);
+    const auto neighbor = mol[index];
     if (neighbor == skipAtom) {
       continue;
     }
