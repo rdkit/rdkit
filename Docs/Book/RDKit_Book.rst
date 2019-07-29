@@ -182,11 +182,11 @@ Here's an example of a bipy-copper complex:
 
 .. doctest::
 
-  >>> bipycu = Chem.MolFromSmiles('c1cccn->2c1-c1n->3cccc1.[Pt]23(Cl)Cl')                                                     
+  >>> bipycu = Chem.MolFromSmiles('c1cccn->2c1-c1n->3cccc1.[Cu]23(Cl)Cl')                                                     
   >>> bipycu.GetBondBetweenAtoms(4,12).GetBondType()                                                                          
   rdkit.Chem.rdchem.BondType.DATIVE
   >>> Chem.MolToSmiles(bipycu)                                                                                                
-  'Cl[Pt]1(Cl)<-n2ccccc2-c2ccccn->12'
+  'Cl[Cu]1(Cl)<-n2ccccc2-c2ccccn->12'
 
 Dative bonds have the special characteristic that they don't affect the valence on the start atom, but do affect 
 the end atom. So in this case, the N atoms involved in the dative bond have the valence of 3 that we expect from bipy, 
