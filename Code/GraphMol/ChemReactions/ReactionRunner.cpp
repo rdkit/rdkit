@@ -77,8 +77,8 @@ class StereoBondEndCap {
   StereoBondEndCap(const ROMol &mol, const Atom *atom,
                    const Atom *otherDblBndAtom, const unsigned stereoAtomIdx)
       : m_anchor(stereoAtomIdx) {
-    PRECONDITION(atom,"no atom");
-    PRECONDITION(otherDblBndAtom,"no atom");
+    PRECONDITION(atom, "no atom");
+    PRECONDITION(otherDblBndAtom, "no atom");
     PRECONDITION(atom->getTotalDegree() <= 3,
                  "Stereo Bond extremes must have less than four neighbors");
 
@@ -92,27 +92,27 @@ class StereoBondEndCap {
     auto nonAnchorItr =
         std::find_if(nbrIdxItr.second, nbrIdxItr.second, isNonAnchor);
     if (nonAnchorItr != nbrIdxItr.second) {
-      m_nonAnchor = mol.getAtomWithIdx(*nonAnchorItr);
+      mp_nonAnchor = mol.getAtomWithIdx(*nonAnchorItr);
     }
   }
 
   StereoBondEndCap(StereoBondEndCap &&) = default;
   StereoBondEndCap &operator=(StereoBondEndCap &&) = default;
 
-  bool hasNonAnchor() const { return m_nonAnchor != nullptr; }
+  bool hasNonAnchor() const { return mp_nonAnchor != nullptr; }
   unsigned getAnchorIdx() const { return m_anchor; }
-  unsigned getNonAnchorIdx() const { return m_nonAnchor->getIdx(); }
+  unsigned getNonAnchorIdx() const { return mp_nonAnchor->getIdx(); }
 };
 
 bool hasStereoBondDirection(const Bond *bond) {
-    PRECONDITION(bond,"no bond");
-    return bond->getBondDir() == Bond::BondDir::ENDDOWNRIGHT ||
+  PRECONDITION(bond, "no bond");
+  return bond->getBondDir() == Bond::BondDir::ENDDOWNRIGHT ||
          bond->getBondDir() == Bond::BondDir::ENDUPRIGHT;
 }
 
 const Bond *getNeighboringStereoDirectedBond(const ROMol &mol,
                                              const Atom *atom) {
-  PRECONDITION(atom,"no atom");
+  PRECONDITION(atom, "no atom");
   for (const auto &bondIdx :
        boost::make_iterator_range(mol.getAtomBonds(atom))) {
     const Bond *bond = mol[bondIdx];
@@ -363,9 +363,10 @@ RWMOL_SPTR convertTemplateToMol(const ROMOL_SPTR prodTemplateSptr) {
       const Atom *endAtom = oldB->getEndAtom();
 
       if (startAtom->getDegree() > 1 && endAtom->getDegree() > 1 &&
-          getNeighboringStereoDirectedBond(*prodTemplate, startAtom) ==
-              nullptr &&
-          getNeighboringStereoDirectedBond(*prodTemplate, endAtom) == nullptr) {
+          (getNeighboringStereoDirectedBond(*prodTemplate, startAtom) ==
+               nullptr ||
+           getNeighboringStereoDirectedBond(*prodTemplate, endAtom) ==
+               nullptr)) {
         newB->setStereo(Bond::BondStereo::STEREOANY);
       }
     }
@@ -449,7 +450,7 @@ ReactantProductAtomMapping *getAtomMappingsReactantProduct(
 
 namespace {
 unsigned reactProdMapAnchorIdx(Atom *atom, const RDKit::UINT_VECT &pMatches) {
-  PRECONDITION(atom,"no atom");
+  PRECONDITION(atom, "no atom");
   if (pMatches.size() == 1) {
     return pMatches[0];
   }
@@ -460,18 +461,17 @@ unsigned reactProdMapAnchorIdx(Atom *atom, const RDKit::UINT_VECT &pMatches) {
   auto areAtomsBonded = [&pMol, &atomIdx](const unsigned &pAnchor) {
     return pMol.getBondBetweenAtoms(atomIdx, pAnchor) != nullptr;
   };
+
   auto match = std::find_if(pMatches.begin(), pMatches.end(), areAtomsBonded);
 
-  if (match == pMatches.end()) {
-    throw std::logic_error("match not found");
-  }
+  CHECK_INVARIANT(match != pMatches.end(), "match not found");
   return *match;
 }
 
 void forwardReactantBondStereo(ReactantProductAtomMapping *mapping, Bond *pBond,
                                const ROMol &reactant, const Bond *rBond) {
   PRECONDITION(mapping, "no mapping");
-  PRECONDITION(bond, "no bond");
+  PRECONDITION(pBond, "no bond");
   PRECONDITION(rBond, "no bond");
   PRECONDITION(rBond->getStereo() > Bond::BondStereo::STEREOANY,
                "bond in reactant must have defined stereo");
@@ -561,8 +561,8 @@ void updateStereoBonds(RWMOL_SPTR product, const ROMol &reactant,
       Atom *pStart = pBond->getBeginAtom();
       Atom *pEnd = pBond->getEndAtom();
 
-      pStart->calcImplicitValence();
-      pEnd->calcImplicitValence();
+      pStart->calcImplicitValence(true);
+      pEnd->calcImplicitValence(true);
 
       if (pStart->getTotalDegree() < 3 || pEnd->getTotalDegree() < 3) {
         pBond->setStereo(Bond::BondStereo::STEREONONE);
