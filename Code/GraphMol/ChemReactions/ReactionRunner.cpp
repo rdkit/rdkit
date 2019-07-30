@@ -54,8 +54,28 @@ const std::string WAS_DUMMY =
 }  // namespace
 
 namespace ReactionRunnerUtils {
-//! returns whether or not all reactants matched
+
+struct ReactantProductAtomMapping {
+  ReactantProductAtomMapping(unsigned lenghtBitSet) {
+    mappedAtoms.resize(lenghtBitSet);
+    skippedAtoms.resize(lenghtBitSet);
+  }
+
+  boost::dynamic_bitset<> mappedAtoms;
+  boost::dynamic_bitset<> skippedAtoms;
+  std::map<unsigned int, std::vector<unsigned int>> reactProdAtomMap;
+  std::map<unsigned int, unsigned int> prodReactAtomMap;
+  std::map<unsigned int, unsigned int> prodAtomBondMap;
+
+  // maps (atom map number,atom map number) pairs in the reactant template
+  // to whether or not they are bonded in the template.
+  std::map<std::pair<unsigned int, unsigned int>, unsigned int>
+      reactantTemplateAtomBonds;
+};
+
 namespace {
+
+//! returns whether or not all reactants matched
 const unsigned int MatchAll = UINT_MAX;
 
 /**
@@ -90,7 +110,7 @@ class StereoBondEndCap {
     };
 
     auto nonAnchorItr =
-        std::find_if(nbrIdxItr.second, nbrIdxItr.second, isNonAnchor);
+        std::find_if(nbrIdxItr.first, nbrIdxItr.second, isNonAnchor);
     if (nonAnchorItr != nbrIdxItr.second) {
       mp_nonAnchor = mol.getAtomWithIdx(*nonAnchorItr);
     }
@@ -102,6 +122,28 @@ class StereoBondEndCap {
   bool hasNonAnchor() const { return mp_nonAnchor != nullptr; }
   unsigned getAnchorIdx() const { return m_anchor; }
   unsigned getNonAnchorIdx() const { return mp_nonAnchor->getIdx(); }
+
+  std::pair<UINT_VECT, bool> getProductAnchorCandidates(
+      ReactantProductAtomMapping *mapping) {
+    auto &react2Prod = mapping->reactProdAtomMap;
+
+    bool swapStereo = false;
+    auto newAnchorMatches = react2Prod.find(getAnchorIdx());
+    if (newAnchorMatches != react2Prod.end()) {
+      // The corresponding StereoAtom exists in the product
+      return {newAnchorMatches->second, swapStereo};
+
+    } else if (hasNonAnchor()) {
+      // The non-StereoAtom neighbor exists in the product
+      newAnchorMatches = react2Prod.find(getNonAnchorIdx());
+      if (newAnchorMatches != react2Prod.end()) {
+        swapStereo = true;
+        return {newAnchorMatches->second, swapStereo};
+      }
+    }
+    // None of the neighbors survived the reaction
+    return {{}, swapStereo};
+  }
 };
 
 bool hasStereoBondDirection(const Bond *bond) {
@@ -378,24 +420,6 @@ RWMOL_SPTR convertTemplateToMol(const ROMOL_SPTR prodTemplateSptr) {
   return RWMOL_SPTR(res);
 }  // end of convertTemplateToMol()
 
-struct ReactantProductAtomMapping {
-  ReactantProductAtomMapping(unsigned lenghtBitSet) {
-    mappedAtoms.resize(lenghtBitSet);
-    skippedAtoms.resize(lenghtBitSet);
-  }
-
-  boost::dynamic_bitset<> mappedAtoms;
-  boost::dynamic_bitset<> skippedAtoms;
-  std::map<unsigned int, std::vector<unsigned int>> reactProdAtomMap;
-  std::map<unsigned int, unsigned int> prodReactAtomMap;
-  std::map<unsigned int, unsigned int> prodAtomBondMap;
-
-  // maps (atom map number,atom map number) pairs in the reactant template
-  // to whether or not they are bonded in the template.
-  std::map<std::pair<unsigned int, unsigned int>, unsigned int>
-      reactantTemplateAtomBonds;
-};
-
 ReactantProductAtomMapping *getAtomMappingsReactantProduct(
     const MatchVectType &match, const ROMol &reactantTemplate,
     RWMOL_SPTR product, unsigned numReactAtoms) {
@@ -477,7 +501,6 @@ void forwardReactantBondStereo(ReactantProductAtomMapping *mapping, Bond *pBond,
                "bond in reactant must have defined stereo");
 
   auto &prod2React = mapping->prodReactAtomMap;
-  auto &react2Prod = mapping->reactProdAtomMap;
 
   const Atom *rStart = rBond->getBeginAtom();
   const Atom *rEnd = rBond->getEndAtom();
@@ -493,37 +516,83 @@ void forwardReactantBondStereo(ReactantProductAtomMapping *mapping, Bond *pBond,
     throw std::logic_error("Reactant and Product bond ends do not match");
   }
 
-  auto rStartAnchorMatches = react2Prod.find(start.getAnchorIdx());
-  auto rEndAnchorMatches = react2Prod.find(end.getAnchorIdx());
+  /**
+   *  The reactants stereo can be transmitted in three similar ways:
+   *
+   * 1. Survival of both stereoatoms: direct forwarding happens, i.e.,
+   *
+   *    C/C=C/[Br] in reaction [C:1]=[C:2]>>[Si:1]=[C:2]:
+   *
+   *    C/C=C/[Br] >> C/Si=C/[Br], C/C=Si/[Br] (2 product sets)
+   *
+   *    Both stereoatoms exist unaltered in both product sets, so we can forward
+   *    the same bond stereochemistry (trans) and set the stereoatoms in the
+   *    product to the mapped indexes of the stereoatoms in the reactant.
+   *
+   * 2. Survival of both anti-stereoatoms: as this pair is symmetric to the
+   *    stereoatoms, direct forwarding also happens in this case, i.e.,
+   *
+   *    Cl/C(C)=C(/Br)F in reaction
+   *        [Cl:4][C:1]=[C:2][Br:3]>>[C:1]=[C:2].[Br:3].[Cl:4]:
+   *      Cl/C(C)=C(/Br)F >> C/C=C/F + Br + Cl
+   *
+   *    Both stereoatoms in the reactant are split from the molecule,
+   *    but the anti-stereoatoms remain in it. Since these have symmetrical
+   *    orientation to the stereoatoms, we can use these (their mapped
+   *    equivalents) as stereoatoms in the product and use the same
+   *    stereochemistry label (trans).
+   *
+   * 3. Survival of a mixed pair stereoatom-anti-stereoatom: such a pair
+   *    defines the opposite stereochemistry to the one labeled on the
+   *    reactant, but it is also valid, as long ase we use the properly mapped
+   *    indexes:
+   *
+   *    Cl/C(C)=C(/Br)F in reaction [Cl:4][C:1]=[C:2][Br:3]>>[C:1]=[C:2].[Br:3]:
+   *
+   *        Cl/C(C)=C(/Br)F >> C/C=C/F + Br
+   *
+   *    In this case, one of the stereoatoms is conserved, and the other one is
+   *    switched to the other neighbor at the same end of the bond as the
+   *    non-conserved stereoatom. Since the reference changed, the
+   *    stereochemistry label needs to be flipped too: in this case, the
+   *    reactant was trans, and the product will be cis.
+   *
+   *    Reaction [Cl:4][C:1]=[C:2][Br:3]>>[C:1]=[C:2].[Cl:4] would have the same
+   *    effect, with the only difference that the non-conserved stereoatom would
+   *    be the one at the opposite end of the reactant.
+   */
+  auto pStartAnchorCandidates = start.getProductAnchorCandidates(mapping);
+  auto pEndAnchorCandidates = end.getProductAnchorCandidates(mapping);
 
-  // If any of the anchor pair is not mapped, see if we can make the match with
-  // the non-anchor pair, which, if defined, is symmetric to the anchors
-  if (rStartAnchorMatches == react2Prod.end() ||
-      rEndAnchorMatches == react2Prod.end()) {
-    if (start.hasNonAnchor() && end.hasNonAnchor()) {
-      rStartAnchorMatches = react2Prod.find(start.getNonAnchorIdx());
-      rEndAnchorMatches = react2Prod.find(end.getNonAnchorIdx());
-    }
-    // If there is no match in the second try (or 2nd try did not work), then
-    // the reaction invalidated the reactant's stereochemistry
-    if (rStartAnchorMatches == react2Prod.end() ||
-        rEndAnchorMatches == react2Prod.end()) {
-      return;
-    }
+  // The reaction has invalidated the reactant's stereochemistry
+  if (pStartAnchorCandidates.first.empty() ||
+      pEndAnchorCandidates.first.empty()) {
+    return;
   }
 
-  unsigned pStartAnchorIdx =
-      reactProdMapAnchorIdx(pBond->getBeginAtom(), rStartAnchorMatches->second);
+  unsigned pStartAnchorIdx = reactProdMapAnchorIdx(
+      pBond->getBeginAtom(), pStartAnchorCandidates.first);
   unsigned pEndAnchorIdx =
-      reactProdMapAnchorIdx(pBond->getEndAtom(), rEndAnchorMatches->second);
+      reactProdMapAnchorIdx(pBond->getEndAtom(), pEndAnchorCandidates.first);
 
   pBond->setStereoAtoms(pStartAnchorIdx, pEndAnchorIdx);
 
+  bool flipStereo =
+      (pStartAnchorCandidates.second + pEndAnchorCandidates.second) % 2;
+
   if (rBond->getStereo() == Bond::BondStereo::STEREOCIS ||
       rBond->getStereo() == Bond::BondStereo::STEREOZ) {
-    pBond->setStereo(Bond::BondStereo::STEREOCIS);
+    if (flipStereo) {
+      pBond->setStereo(Bond::BondStereo::STEREOTRANS);
+    } else {
+      pBond->setStereo(Bond::BondStereo::STEREOCIS);
+    }
   } else {
-    pBond->setStereo(Bond::BondStereo::STEREOTRANS);
+    if (flipStereo) {
+      pBond->setStereo(Bond::BondStereo::STEREOCIS);
+    } else {
+      pBond->setStereo(Bond::BondStereo::STEREOTRANS);
+    }
   }
 }
 
@@ -546,6 +615,23 @@ void translateProductStereoBondDirections(Bond *pBond, const Bond *start,
   }
 }
 
+/**
+ * Core of the double bond stereochemistry handling (the first stereo check on
+ * the product template does actually happen in convertTemplateToMol()).
+ *
+ * Stereo in the product templates (defined by bond directions) will override
+ * the one in the reactants.
+ *
+ * Each double bond will be checked agains the following rules:
+ * 1- if product bond is marked as STEREOANY, check if stereo is possible
+ * on the bond, and eventually, keep the STEREOANY label or reset it to
+ * STEREONONE if not.
+ * 2- if the product has bond directions set, deduce the final stereochemistry
+ * from them.
+ * 3- if there are no bond directions, check the atom mapping in the reaction to
+ * see if the reactant's stereochemistry is preserved.
+ * 4- in any other case, keep the STEREONONE label.
+ */
 void updateStereoBonds(RWMOL_SPTR product, const ROMol &reactant,
                        ReactantProductAtomMapping *mapping) {
   for (Bond *pBond : product->bonds()) {

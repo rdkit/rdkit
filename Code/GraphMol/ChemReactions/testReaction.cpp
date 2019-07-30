@@ -7175,10 +7175,49 @@ void testOtherBondStereo() {
     TEST_ASSERT(product_sets.size() == 2);
     for (const auto &products : product_sets) {
       TEST_ASSERT(products.size() == 1);
-      const Bond *bond = products[0]->getBondWithIdx(0);
-      TEST_ASSERT(Bond::BondType::DOUBLE == bond->getBondType());
-      TEST_ASSERT(Bond::BondStereo::STEREOTRANS == bond->getStereo());
+      TEST_ASSERT(check_bond_stereo(products[0], 0, 2, 3,
+                                    Bond::BondStereo::STEREOTRANS));
     }
+  }
+  {  // Reactant stereo propagated by (stereoatom, anti-stereoatom) pair
+    auto mol2 = RWMOL_SPTR(SmilesToMol(R"(Cl/C(C)=C(/Br)F)"));
+    strip_bond_directions(mol2);
+    TEST_ASSERT(check_bond_stereo(mol2, 2, 0, 4, Bond::BondStereo::STEREOE));
+
+    const std::string reaction(
+        R"([C:1]=[C:2][Br:3]>>[C:1]=[C:2].[Br:3])");
+    const auto rxn = RxnSmartsToChemicalReaction(reaction);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
+    TEST_ASSERT(rxn->getNumProductTemplates() == 2);
+    rxn->initReactantMatchers();
+
+    auto product_sets = rxn->runReactant(mol2, 0);
+    TEST_ASSERT(product_sets.size() == 1);
+    TEST_ASSERT(product_sets[0].size() == 2);
+    // We are only interested in the product that keeps the double bond
+    TEST_ASSERT(check_bond_stereo(product_sets[0][0], 0, 2, 4,
+                                  Bond::BondStereo::STEREOCIS));
+  }
+  {  // Reactant stereo propagated by anti-stereoatoms pair
+    auto mol2 = RWMOL_SPTR(SmilesToMol(R"(Cl/C(C)=C(/Br)F)"));
+    strip_bond_directions(mol2);
+    TEST_ASSERT(check_bond_stereo(mol2, 2, 0, 4, Bond::BondStereo::STEREOE));
+
+    const std::string reaction(
+        R"([Cl:4][C:1]=[C:2][Br:3]>>[C:1]=[C:2].[Br:3].[Cl:4])");
+    const auto rxn = RxnSmartsToChemicalReaction(reaction);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
+    TEST_ASSERT(rxn->getNumProductTemplates() == 3);
+    rxn->initReactantMatchers();
+
+    auto product_sets = rxn->runReactant(mol2, 0);
+    TEST_ASSERT(product_sets.size() == 1);
+    TEST_ASSERT(product_sets[0].size() == 3);
+    // We are only interested in the product that keeps the double bond
+    TEST_ASSERT(check_bond_stereo(product_sets[0][0], 0, 2, 3,
+                                  Bond::BondStereo::STEREOTRANS));
   }
 }
 
