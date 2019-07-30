@@ -147,7 +147,33 @@ DGeomHelpers::EmbedParameters *getKDG() {
 DGeomHelpers::EmbedParameters *getETDG() {
   return new DGeomHelpers::EmbedParameters(DGeomHelpers::ETDG);
 }
+
+void setBoundsMatrix(DGeomHelpers::EmbedParameters *self,
+                     python::object boundsMatArg) {
+  PyObject *boundsMatObj = boundsMatArg.ptr();
+  if (!PyArray_Check(boundsMatObj))
+    throw_value_error("Argument isn't an array");
+
+  PyArrayObject *boundsMat = reinterpret_cast<PyArrayObject *>(boundsMatObj);
+  // get the dimensions of the array
+  int nrows = PyArray_DIM(boundsMat, 0);
+  int ncols = PyArray_DIM(boundsMat, 1);
+  if (nrows != ncols) throw_value_error("The array has to be square");
+  if (nrows <= 0) throw_value_error("The array has to have a nonzero size");
+  if (PyArray_DESCR(boundsMat)->type_num != NPY_DOUBLE)
+    throw_value_error("Only double arrays are currently supported");
+
+  unsigned int dSize = nrows * nrows;
+  auto *cData = new double[dSize];
+  double *inData = reinterpret_cast<double *>(PyArray_DATA(boundsMat));
+  memcpy(static_cast<void *>(cData), static_cast<const void *>(inData),
+         dSize * sizeof(double));
+  DistGeom::BoundsMatrix::DATA_SPTR sdata(cData);
+  self->boundsMat = boost::shared_ptr<const DistGeom::BoundsMatrix>(
+      new DistGeom::BoundsMatrix(nrows, sdata));
 }
+
+}  // namespace RDKit
 
 BOOST_PYTHON_MODULE(rdDistGeom) {
   python::scope().attr("__doc__") =
@@ -338,7 +364,14 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
       .def_readwrite(
           "onlyHeavyAtomsForRMS",
           &RDKit::DGeomHelpers::EmbedParameters::onlyHeavyAtomsForRMS,
-          "Only consider heavy atoms when doing RMS filtering");
+          "Only consider heavy atoms when doing RMS filtering")
+      .def_readwrite(
+          "embedFragmentsSeparately",
+          &RDKit::DGeomHelpers::EmbedParameters::embedFragmentsSeparately,
+          "split the molecule into fragments and embed them separately")
+      .def("SetBoundsMat", &RDKit::setBoundsMatrix,
+           "set the distance-bounds matrix to be used (no triangle smoothing "
+           "will be done on this) from a Numpy array");
   docString =
       "Use distance geometry to obtain multiple sets of \n\
  coordinates for a molecule\n\
