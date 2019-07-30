@@ -43,7 +43,7 @@ struct PointND_pickle_suite : python::pickle_suite {
     }
   }
 };
-}
+}  // namespace
 
 namespace RDGeom {
 
@@ -161,7 +161,9 @@ struct Point_wrapper {
     python::class_<Point2D>("Point2D", Point2Ddoc.c_str(),
                             python::init<>("Default Constructor"))
         .def(python::init<double, double>())
-        .def(python::init<const Point3D &>())
+        .def(python::init<const Point3D &>(
+            (python::args("self"), python::args("other")),
+            "construct from a Point3D (ignoring the z component)"))
         .def_readwrite("x", &Point2D::x)
         .def_readwrite("y", &Point2D::y)
         .def("__getitem__", point2dGetItem)
@@ -246,6 +248,6 @@ struct Point_wrapper {
                 "Point3D objects");
   }
 };
-}
+}  // namespace RDGeom
 
 void wrap_point() { RDGeom::Point_wrapper::wrap(); }
