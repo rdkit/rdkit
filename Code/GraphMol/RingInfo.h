@@ -18,8 +18,6 @@
 #include <RDGeneral/BoostEndInclude.h>
 #ifdef RDK_USE_URF
 #include <RingDecomposerLib.h>
-#else
-typedef void RDL_data;
 #endif
 
 namespace RDKit {
@@ -44,8 +42,11 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
         d_atomRings(other.d_atomRings),
         d_bondRings(other.d_bondRings),
         d_atomRingFamilies(other.d_atomRingFamilies),
-        d_bondRingFamilies(other.d_bondRingFamilies),
-        dp_urfData(other.dp_urfData){};
+        d_bondRingFamilies(other.d_bondRingFamilies)
+#ifdef RDK_USE_URF
+        ,dp_urfData(other.dp_urfData)
+#endif
+            {};
 
   //! checks to see if we've been properly initialized
   bool isInitialized() const { return df_init; };
@@ -199,8 +200,10 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   VECT_INT_VECT d_atomRings, d_bondRings;
   VECT_INT_VECT d_atomRingFamilies, d_bondRingFamilies;
 
+#ifdef RDK_USE_URF
  public:
   boost::shared_ptr<RDL_data> dp_urfData;
+#endif
 };
 }  // namespace RDKit
 
