@@ -599,7 +599,8 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
             python::arg("asPolygon") = false, python::arg("frac") = 0.05,
             python::arg("angle") = M_PI / 6),
            "draws an arrow with the current drawing style. The coordinates "
-           "are in the molecule frame")
+           "are in the molecule frame. If asPolygon is true the head of the "
+           "arrow will be drawn as a triangle, otherwise two lines are used.")
       .def("DrawTriangle", &RDKit::MolDraw2D::drawTriangle,
            (python::arg("self"), python::arg("cds1"), python::arg("cds2"),
             python::arg("cds3")),
