@@ -10,10 +10,14 @@ rdkit_library(GraphMol
               Renumber.cpp AdjustQuery.cpp Resonance.cpp StereoGroup.cpp
               new_canon.cpp SubstanceGroup.cpp
               SHARED
-              LINK_LIBRARIES RDGeometryLib RDGeneral
-                 ${RDKit_THREAD_LIBS})
+              LINK_LIBRARIES RDGeometryLib RDGeneral  
+                 ${RDKit_THREAD_LIBS} )
 
 target_link_libraries(GraphMol PUBLIC ${RDKit_THREAD_LIBS})
+
+if(RDK_USE_URF)
+  target_link_libraries(GraphMol PUBLIC URFLib)
+endif()
 
 rdkit_headers(Atom.h
               atomic_data.h

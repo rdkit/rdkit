@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include "RDKitBase.h"
+#include <GraphMol/RDKitBase.h>
 #include <GraphMol/Rings.h>
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/Exceptions.h>
@@ -1269,6 +1269,58 @@ void fastFindRings(const ROMol &mol) {
   FindRings::storeRingsInfo(mol, res);
 }
 
+#ifdef RDK_USE_URF
+void findRingFamilies(const ROMol &mol) {
+  if (mol.getRingInfo()->isInitialized()) {
+    // return if we've done this before
+    if (mol.getRingInfo()->areRingFamiliesInitialized()) {
+      return;
+    }
+  } else {
+    mol.getRingInfo()->initialize();
+  }
+
+  RDL_graph *graph = RDL_initNewGraph(mol.getNumAtoms());
+  for (ROMol::ConstBondIterator cbi = mol.beginBonds(); cbi != mol.endBonds();
+       ++cbi) {
+    RDL_addUEdge(graph, (*cbi)->getBeginAtomIdx(), (*cbi)->getEndAtomIdx());
+  }
+  RDL_data *urfdata = RDL_calculate(graph);
+  if (urfdata == NULL) {
+    RDL_deleteGraph(graph);
+    mol.getRingInfo()->dp_urfData.reset();
+    throw ValueErrorException("Cannot get URFs");
+  }
+  mol.getRingInfo()->dp_urfData.reset(urfdata, &RDL_deleteData);
+  for (unsigned int i = 0; i < RDL_getNofURF(urfdata); ++i) {
+    RDL_node *nodes = nullptr;
+    unsigned nNodes = RDL_getNodesForURF(urfdata, i, &nodes);
+    if (nNodes == RDL_INVALID_RESULT) {
+      free(nodes);
+      throw ValueErrorException("Cannot get URF nodes");
+    }
+    RDL_edge *edges = nullptr;
+    unsigned nEdges = RDL_getEdgesForURF(urfdata, i, &edges);
+    if (nEdges == RDL_INVALID_RESULT) {
+      free(nodes);
+      free(edges);
+      throw ValueErrorException("Cannot get URF edges");
+    }
+    INT_VECT nvect(nNodes), evect(nEdges);
+    for (unsigned int ridx = 0; ridx < nNodes; ++ridx) {
+      nvect[ridx] = nodes[ridx];
+    }
+    for (unsigned int ridx = 0; ridx < nEdges; ++ridx) {
+      unsigned int bidx = edges[ridx][0];
+      unsigned int eidx = edges[ridx][1];
+      evect[ridx] = mol.getBondBetweenAtoms(bidx, eidx)->getIdx();
+    }
+    mol.getRingInfo()->addRingFamily(nvect, evect);
+    free(nodes);
+    free(edges);
+  }
+}
+#endif
 }  // namespace MolOps
 
 }  // namespace RDKit
