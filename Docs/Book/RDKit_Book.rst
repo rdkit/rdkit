@@ -215,7 +215,7 @@ five digits ``%(NNNNN)``. Here is an example:
   >>> m = Chem.MolFromSmiles('C%(1000)OC%(1000)')
   >>> m.GetAtomWithIdx(0).IsInRing()
   True
-  >>> >>> m.GetAtomWithIdx(2).IsInRing()
+  >>> m.GetAtomWithIdx(2).IsInRing()
   True
 
 Specifying atoms by atomic number
