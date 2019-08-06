@@ -349,6 +349,7 @@ TEST_CASE("Specialized exceptions for sanitization errors", "[molops]") {
       try {
         auto m = SmilesToMol(pr.first);
       } catch (const AtomValenceException &e) {
+        CHECK(e.getType() == "AtomValenceException");
         CHECK(e.getAtomIdx() == pr.second);
       }
     }
@@ -361,6 +362,7 @@ TEST_CASE("Specialized exceptions for sanitization errors", "[molops]") {
       try {
         auto m = SmilesToMol(pr.first);
       } catch (const AtomKekulizeException &e) {
+        CHECK(e.getType() == "AtomKekulizeException");
         CHECK(e.getAtomIdx() == pr.second);
       }
     }
@@ -373,6 +375,7 @@ TEST_CASE("Specialized exceptions for sanitization errors", "[molops]") {
       try {
         auto m = SmilesToMol(pr.first);
       } catch (const KekulizeException &e) {
+        CHECK(e.getType() == "KekulizeException");
         CHECK(e.getAtomIndices() == pr.second);
       }
     }
@@ -387,14 +390,18 @@ TEST_CASE("detectChemistryProblems", "[molops]") {
     REQUIRE(m);
     auto res = MolOps::detectChemistryProblems(*m);
     REQUIRE(res.size() == 3);
+
+    CHECK(res[0]->getType() == "AtomValenceException");
     REQUIRE(dynamic_cast<AtomValenceException *>(res[0].get()));
     CHECK(dynamic_cast<AtomSanitizeException *>(res[0].get())->getAtomIdx() ==
           1);
 
+    CHECK(res[1]->getType() == "AtomValenceException");
     REQUIRE(dynamic_cast<AtomSanitizeException *>(res[1].get()));
     CHECK(dynamic_cast<AtomSanitizeException *>(res[1].get())->getAtomIdx() ==
           4);
 
+    CHECK(res[2]->getType() == "KekulizeException");
     REQUIRE(dynamic_cast<KekulizeException *>(res[2].get()));
     CHECK(dynamic_cast<KekulizeException *>(res[2].get())->getAtomIndices() ==
           std::vector<unsigned int>({6, 7, 8}));

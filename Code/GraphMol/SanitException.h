@@ -35,6 +35,7 @@ class RDKIT_GRAPHMOL_EXPORT MolSanitizeException : public std::exception {
   virtual MolSanitizeException *copy() const {
     return new MolSanitizeException(*this);
   };
+  virtual std::string getType() const { return "MolSanitizeException"; };
 
  protected:
   std::string d_msg;
@@ -54,6 +55,7 @@ class RDKIT_GRAPHMOL_EXPORT AtomSanitizeException
   virtual MolSanitizeException *copy() const {
     return new AtomSanitizeException(*this);
   };
+  virtual std::string getType() const { return "AtomSanitizeException"; };
 
  protected:
   unsigned int d_atomIdx;
@@ -72,6 +74,7 @@ class RDKIT_GRAPHMOL_EXPORT AtomValenceException
   MolSanitizeException *copy() const {
     return new AtomValenceException(*this);
   };
+  std::string getType() const { return "AtomValenceException"; };
 };
 
 class RDKIT_GRAPHMOL_EXPORT AtomKekulizeException
@@ -87,6 +90,7 @@ class RDKIT_GRAPHMOL_EXPORT AtomKekulizeException
   MolSanitizeException *copy() const {
     return new AtomKekulizeException(*this);
   };
+  std::string getType() const { return "AtomKekulizeException"; };
 };
 
 class RDKIT_GRAPHMOL_EXPORT KekulizeException : public MolSanitizeException {
@@ -103,6 +107,7 @@ class RDKIT_GRAPHMOL_EXPORT KekulizeException : public MolSanitizeException {
   };
   ~KekulizeException() throw(){};
   MolSanitizeException *copy() const { return new KekulizeException(*this); };
+  std::string getType() const { return "KekulizeException"; };
 
  protected:
   std::vector<unsigned int> d_atomIndices;
