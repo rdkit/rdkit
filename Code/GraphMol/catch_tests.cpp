@@ -340,7 +340,7 @@ M  END)CTAB";
   }
 }
 
-TEST_CASE("Specialized exceptions for sanitization errors", "[bug, molops]") {
+TEST_CASE("Specialized exceptions for sanitization errors", "[molops]") {
   SECTION("AtomValenceException") {
     std::vector<std::pair<std::string, unsigned int>> smiles = {
         {"C=n1ccnc1", 1}, {"CCO(C)C", 2}};
@@ -376,5 +376,35 @@ TEST_CASE("Specialized exceptions for sanitization errors", "[bug, molops]") {
         CHECK(e.getAtomIndices() == pr.second);
       }
     }
+  }
+}
+
+TEST_CASE("detectChemistryProblems", "[molops]") {
+  SECTION("Basics") {
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    auto m = std::unique_ptr<ROMol>(SmilesToMol("CO(C)CFCc1cc1", ps));
+    REQUIRE(m);
+    auto res = MolOps::detectChemistryProblems(*m);
+    REQUIRE(res.size() == 3);
+    REQUIRE(dynamic_cast<AtomValenceException *>(res[0].get()));
+    CHECK(dynamic_cast<AtomSanitizeException *>(res[0].get())->getAtomIdx() ==
+          1);
+
+    REQUIRE(dynamic_cast<AtomSanitizeException *>(res[1].get()));
+    CHECK(dynamic_cast<AtomSanitizeException *>(res[1].get())->getAtomIdx() ==
+          4);
+
+    REQUIRE(dynamic_cast<KekulizeException *>(res[2].get()));
+    CHECK(dynamic_cast<KekulizeException *>(res[2].get())->getAtomIndices() ==
+          std::vector<unsigned int>({6, 7, 8}));
+  }
+  SECTION("No problems") {
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    auto m = std::unique_ptr<ROMol>(SmilesToMol("c1ccccc1", ps));
+    REQUIRE(m);
+    auto res = MolOps::detectChemistryProblems(*m);
+    REQUIRE(res.size() == 0);
   }
 }
