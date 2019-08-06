@@ -257,10 +257,12 @@ TEST_CASE("github #908: AddHs() using 3D coordinates with 2D conformations",
 }
 
 #endif
-TEST_CASE("github #2437: Canon::rankMolAtoms results in crossed double bonds in rings",
-          "[bug, molops]") {
+TEST_CASE(
+    "github #2437: Canon::rankMolAtoms results in crossed double bonds in "
+    "rings",
+    "[bug, molops]") {
   SECTION("underlying problem") {
-    std::string molb=R"CTAB(testmol
+    std::string molb = R"CTAB(testmol
   Mrv1824 05081910082D          
 
   4  4  0  0  0  0            999 V2000
@@ -274,21 +276,21 @@ TEST_CASE("github #2437: Canon::rankMolAtoms results in crossed double bonds in 
   2  4  2  0  0  0  0
 M  END
     )CTAB";
-    bool sanitize=false;
-    bool removeHs=false;
-    std::unique_ptr<RWMol> mol(MolBlockToMol(molb,sanitize,removeHs));
+    bool sanitize = false;
+    bool removeHs = false;
+    std::unique_ptr<RWMol> mol(MolBlockToMol(molb, sanitize, removeHs));
     REQUIRE(mol);
     mol->updatePropertyCache();
-    CHECK(mol->getBondWithIdx(3)->getBondType()==Bond::BondType::DOUBLE);
-    CHECK(mol->getBondWithIdx(3)->getBondDir()==Bond::BondDir::NONE);
+    CHECK(mol->getBondWithIdx(3)->getBondType() == Bond::BondType::DOUBLE);
+    CHECK(mol->getBondWithIdx(3)->getBondDir() == Bond::BondDir::NONE);
     std::vector<unsigned int> ranks;
     CHECK(!mol->getRingInfo()->isInitialized());
-    Canon::rankMolAtoms(*mol,ranks);
+    Canon::rankMolAtoms(*mol, ranks);
     CHECK(!mol->getRingInfo()->isInitialized());
   }
 
   SECTION("as discovered") {
-      std::string molb = R"CTAB(testmol
+    std::string molb = R"CTAB(testmol
   Mrv1824 05081910082D          
 
   4  4  0  0  0  0            999 V2000
@@ -302,21 +304,21 @@ M  END
   2  4  2  0  0  0  0
 M  END
     )CTAB";
-      bool sanitize = false;
-      bool removeHs = false;
-      std::unique_ptr<RWMol> mol(MolBlockToMol(molb, sanitize, removeHs));
-      REQUIRE(mol);
-      mol->updatePropertyCache();
-      CHECK(mol->getBondWithIdx(3)->getBondType() == Bond::BondType::DOUBLE);
-      CHECK(mol->getBondWithIdx(3)->getBondDir() == Bond::BondDir::NONE);
-      auto nmb = MolToMolBlock(*mol);
-      CHECK(nmb.find("2  4  2  3") == std::string::npos);
-      CHECK(nmb.find("2  4  2  0") != std::string::npos);
-      std::vector<unsigned int> ranks;
-      Canon::rankMolAtoms(*mol, ranks);
-      nmb = MolToMolBlock(*mol);
-      CHECK(nmb.find("2  4  2  3") == std::string::npos);
-      CHECK(nmb.find("2  4  2  0") != std::string::npos);
+    bool sanitize = false;
+    bool removeHs = false;
+    std::unique_ptr<RWMol> mol(MolBlockToMol(molb, sanitize, removeHs));
+    REQUIRE(mol);
+    mol->updatePropertyCache();
+    CHECK(mol->getBondWithIdx(3)->getBondType() == Bond::BondType::DOUBLE);
+    CHECK(mol->getBondWithIdx(3)->getBondDir() == Bond::BondDir::NONE);
+    auto nmb = MolToMolBlock(*mol);
+    CHECK(nmb.find("2  4  2  3") == std::string::npos);
+    CHECK(nmb.find("2  4  2  0") != std::string::npos);
+    std::vector<unsigned int> ranks;
+    Canon::rankMolAtoms(*mol, ranks);
+    nmb = MolToMolBlock(*mol);
+    CHECK(nmb.find("2  4  2  3") == std::string::npos);
+    CHECK(nmb.find("2  4  2  0") != std::string::npos);
   }
 }
 TEST_CASE(
@@ -335,5 +337,20 @@ M  END)CTAB";
     REQUIRE(mol);
     CHECK(mol->getAtomWithIdx(0)->getFormalCharge() == 3);
     CHECK(mol->getAtomWithIdx(0)->getTotalNumHs() == 0);
+  }
+}
+
+TEST_CASE("Specialized exceptions for sanitization errors", "[bug, molops]") {
+  SECTION("AtomValenceException") {
+    std::vector<std::pair<std::string, unsigned int>> smiles = {
+        {"C=n1ccnc1", 1}, {"CCO(C)C", 2}};
+    for (auto pr : smiles) {
+      CHECK_THROWS_AS(SmilesToMol(pr.first), AtomValenceException);
+      try {
+        auto m = SmilesToMol(pr.first);
+      } catch (const AtomValenceException &e) {
+        CHECK(e.getAtomIdx() == pr.second);
+      }
+    }
   }
 }

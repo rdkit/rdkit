@@ -268,7 +268,7 @@ int Atom::calcExplicitValence(bool strict) {
              << effectiveValence << ", is greater than permitted";
       std::string msg = errout.str();
       BOOST_LOG(rdErrorLog) << msg << std::endl;
-      throw MolSanitizeException(msg);
+      throw AtomValenceException(msg, getIdx());
     }
   }
   d_explicitValence = res;
@@ -382,7 +382,7 @@ int Atom::calcImplicitValence(bool strict) {
                << " not equal to any accepted valence\n";
         std::string msg = errout.str();
         BOOST_LOG(rdErrorLog) << msg << std::endl;
-        throw MolSanitizeException(msg);
+        throw AtomValenceException(msg, getIdx());
       }
       res = 0;
     }
@@ -407,7 +407,7 @@ int Atom::calcImplicitValence(bool strict) {
                << " greater than permitted";
         std::string msg = errout.str();
         BOOST_LOG(rdErrorLog) << msg << std::endl;
-        throw MolSanitizeException(msg);
+        throw AtomValenceException(msg, getIdx());
       } else {
         res = 0;
       }

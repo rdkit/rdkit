@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2006 Rational Discovery LLC
+//  Copyright (C) 2002-2019 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,8 +9,8 @@
 //
 
 #include <RDGeneral/export.h>
-#ifndef _RD_SANITEXCEPTION_H
-#define _RD_SANITEXCEPTION_H
+#ifndef RD_SANITEXCEPTION_H
+#define RD_SANITEXCEPTION_H
 
 #include <RDGeneral/types.h>
 #include <GraphMol/GraphMol.h>
@@ -26,14 +26,28 @@ namespace RDKit {
 //! class for flagging sanitization errors
 class RDKIT_GRAPHMOL_EXPORT MolSanitizeException : public std::exception {
  public:
-  MolSanitizeException(const char *msg) : _msg(msg){};
-  MolSanitizeException(const std::string &msg) : _msg(msg){};
-  const char *message() const { return _msg.c_str(); };
+  MolSanitizeException(const char *msg) : d_msg(msg){};
+  MolSanitizeException(const std::string &msg) : d_msg(msg){};
+  virtual const char *message() const { return d_msg.c_str(); };
   ~MolSanitizeException() throw(){};
 
- private:
-  std::string _msg;
+ protected:
+  std::string d_msg;
 };
+
+class RDKIT_GRAPHMOL_EXPORT AtomValenceException : public MolSanitizeException {
+ public:
+  AtomValenceException(const char *msg, unsigned int atomIdx)
+      : MolSanitizeException(msg), d_atomIdx(atomIdx){};
+  AtomValenceException(const std::string &msg, unsigned int atomIdx)
+      : MolSanitizeException(msg), d_atomIdx(atomIdx){};
+  unsigned int getAtomIdx() const { return d_atomIdx; };
+  ~AtomValenceException() throw(){};
+
+ protected:
+  unsigned int d_atomIdx;
+};
+
 }  // namespace RDKit
 
 #endif
