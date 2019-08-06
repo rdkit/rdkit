@@ -37,12 +37,6 @@ void rdExceptionTranslator(RDKit::ConformerException const &x) {
   PyErr_SetString(PyExc_ValueError, "Bad Conformer Id");
 }
 
-void rdSanitExceptionTranslator(RDKit::MolSanitizeException const &x) {
-  std::ostringstream ss;
-  ss << "Sanitization error: " << x.message();
-  PyErr_SetString(PyExc_ValueError, ss.str().c_str());
-}
-
 void wrap_table();
 void wrap_atom();
 void wrap_conformer();
@@ -116,12 +110,55 @@ void WrapLogs() {
   if (rdWarningLog != nullptr) rdWarningLog->SetTee(warning);
 }
 
+PyObject *molSanitizeExceptionType = nullptr;
+
+// derived from here:
+// https://stackoverflow.com/questions/11448735/boostpython-export-custom-exception-and-inherit-from-pythons-exception
+void rdSanitExceptionTranslator(RDKit::MolSanitizeException const &x) {
+  PRECONDITION(molSanitizeExceptionType != nullptr,
+               "global type not initialized");
+  python::object pyExcInstance(
+      python::handle<>(python::borrowed(molSanitizeExceptionType)));
+  pyExcInstance.attr("cause") = x;
+  PyErr_SetString(molSanitizeExceptionType, x.message());
+}
+
+// derived from here:
+// https://stackoverflow.com/questions/9620268/boost-python-custom-exception-class
+PyObject *createExceptionClass(const char *name,
+                               PyObject *baseTypeObj = PyExc_ValueError) {
+  std::string scopeName =
+      python::extract<std::string>(python::scope().attr("__name__"));
+  std::string qualifiedName0 = scopeName + "." + name;
+  char *qualifiedName1 = const_cast<char *>(qualifiedName0.c_str());
+
+  PyObject *typeObj = PyErr_NewException(qualifiedName1, baseTypeObj, 0);
+  if (!typeObj) python::throw_error_already_set();
+  python::scope().attr(name) = python::handle<>(python::borrowed(typeObj));
+  return typeObj;
+}
+
+// void rdSanitExceptionTranslator(RDKit::MolSanitizeException const &x) {
+//   PRECONDITION(molSanitizeExceptionType != nullptr,
+//                "global type not initialized");
+//   python::object pyExcInstance(x);
+//   PyErr_SetObject(molSanitizeExceptionType, pyExcInstance.ptr());
+//}
 BOOST_PYTHON_MODULE(rdchem) {
   python::scope().attr("__doc__") =
       "Module containing the core chemistry functionality of the RDKit";
   RegisterListConverter<RDKit::Atom *>();
   RegisterListConverter<RDKit::Bond *>();
   rdkit_import_array();
+
+  python::class_<MolSanitizeException> molSanitizeExceptionClass(
+      "_cppMolSanitizeException", "exception arising from sanitization",
+      python::no_init);
+  molSanitizeExceptionClass.def("message", &MolSanitizeException::message);
+  molSanitizeExceptionClass.def("getType", &MolSanitizeException::getType);
+
+  molSanitizeExceptionType = createExceptionClass("MolSanitizeException");
+
   python::register_exception_translator<RDKit::MolSanitizeException>(
       &rdSanitExceptionTranslator);
 
