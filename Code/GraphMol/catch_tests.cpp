@@ -353,4 +353,28 @@ TEST_CASE("Specialized exceptions for sanitization errors", "[bug, molops]") {
       }
     }
   }
+  SECTION("AtomKekulizeException") {
+    std::vector<std::pair<std::string, unsigned int>> smiles = {
+        {"CCcc", 2}, {"C1:c:CC1", 0}};
+    for (auto pr : smiles) {
+      CHECK_THROWS_AS(SmilesToMol(pr.first), AtomKekulizeException);
+      try {
+        auto m = SmilesToMol(pr.first);
+      } catch (const AtomKekulizeException &e) {
+        CHECK(e.getAtomIdx() == pr.second);
+      }
+    }
+  }
+  SECTION("KekulizeException") {
+    std::vector<std::pair<std::string, std::vector<unsigned int>>> smiles = {
+        {"c1cccc1", {0, 1, 2, 3, 4}}, {"Cc1cc1", {1, 2, 3}}};
+    for (auto pr : smiles) {
+      CHECK_THROWS_AS(SmilesToMol(pr.first), KekulizeException);
+      try {
+        auto m = SmilesToMol(pr.first);
+      } catch (const KekulizeException &e) {
+        CHECK(e.getAtomIndices() == pr.second);
+      }
+    }
+  }
 }

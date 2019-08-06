@@ -35,17 +35,54 @@ class RDKIT_GRAPHMOL_EXPORT MolSanitizeException : public std::exception {
   std::string d_msg;
 };
 
-class RDKIT_GRAPHMOL_EXPORT AtomValenceException : public MolSanitizeException {
+class RDKIT_GRAPHMOL_EXPORT AtomSanitizeException
+    : public MolSanitizeException {
  public:
-  AtomValenceException(const char *msg, unsigned int atomIdx)
+  AtomSanitizeException(const char *msg, unsigned int atomIdx)
       : MolSanitizeException(msg), d_atomIdx(atomIdx){};
-  AtomValenceException(const std::string &msg, unsigned int atomIdx)
+  AtomSanitizeException(const std::string &msg, unsigned int atomIdx)
       : MolSanitizeException(msg), d_atomIdx(atomIdx){};
   unsigned int getAtomIdx() const { return d_atomIdx; };
-  ~AtomValenceException() throw(){};
+  ~AtomSanitizeException() throw(){};
 
  protected:
   unsigned int d_atomIdx;
+};
+
+class RDKIT_GRAPHMOL_EXPORT AtomValenceException
+    : public AtomSanitizeException {
+ public:
+  AtomValenceException(const char *msg, unsigned int atomIdx)
+      : AtomSanitizeException(msg, atomIdx){};
+  AtomValenceException(const std::string &msg, unsigned int atomIdx)
+      : AtomSanitizeException(msg, atomIdx){};
+  ~AtomValenceException() throw(){};
+};
+
+class RDKIT_GRAPHMOL_EXPORT AtomKekulizeException
+    : public AtomSanitizeException {
+ public:
+  AtomKekulizeException(const char *msg, unsigned int atomIdx)
+      : AtomSanitizeException(msg, atomIdx){};
+  AtomKekulizeException(const std::string &msg, unsigned int atomIdx)
+      : AtomSanitizeException(msg, atomIdx){};
+  ~AtomKekulizeException() throw(){};
+};
+
+class RDKIT_GRAPHMOL_EXPORT KekulizeException : public MolSanitizeException {
+ public:
+  KekulizeException(const char *msg, const std::vector<unsigned int> &indices)
+      : MolSanitizeException(msg), d_atomIndices(indices){};
+  KekulizeException(const std::string &msg,
+                    const std::vector<unsigned int> &indices)
+      : MolSanitizeException(msg), d_atomIndices(indices){};
+  const std::vector<unsigned int> &getAtomIndices() const {
+    return d_atomIndices;
+  };
+  ~KekulizeException() throw(){};
+
+ protected:
+  std::vector<unsigned int> d_atomIndices;
 };
 
 }  // namespace RDKit
