@@ -28,8 +28,13 @@ class RDKIT_GRAPHMOL_EXPORT MolSanitizeException : public std::exception {
  public:
   MolSanitizeException(const char *msg) : d_msg(msg){};
   MolSanitizeException(const std::string &msg) : d_msg(msg){};
+  MolSanitizeException(const MolSanitizeException &other)
+      : d_msg(other.d_msg){};
   virtual const char *message() const { return d_msg.c_str(); };
-  ~MolSanitizeException() throw(){};
+  virtual ~MolSanitizeException() throw(){};
+  virtual MolSanitizeException *copy() const {
+    return new MolSanitizeException(*this);
+  };
 
  protected:
   std::string d_msg;
@@ -42,8 +47,13 @@ class RDKIT_GRAPHMOL_EXPORT AtomSanitizeException
       : MolSanitizeException(msg), d_atomIdx(atomIdx){};
   AtomSanitizeException(const std::string &msg, unsigned int atomIdx)
       : MolSanitizeException(msg), d_atomIdx(atomIdx){};
+  AtomSanitizeException(const AtomSanitizeException &other)
+      : MolSanitizeException(other), d_atomIdx(other.d_atomIdx){};
   unsigned int getAtomIdx() const { return d_atomIdx; };
-  ~AtomSanitizeException() throw(){};
+  virtual ~AtomSanitizeException() throw(){};
+  virtual MolSanitizeException *copy() const {
+    return new AtomSanitizeException(*this);
+  };
 
  protected:
   unsigned int d_atomIdx;
@@ -56,7 +66,12 @@ class RDKIT_GRAPHMOL_EXPORT AtomValenceException
       : AtomSanitizeException(msg, atomIdx){};
   AtomValenceException(const std::string &msg, unsigned int atomIdx)
       : AtomSanitizeException(msg, atomIdx){};
+  AtomValenceException(const AtomValenceException &other)
+      : AtomSanitizeException(other){};
   ~AtomValenceException() throw(){};
+  MolSanitizeException *copy() const {
+    return new AtomValenceException(*this);
+  };
 };
 
 class RDKIT_GRAPHMOL_EXPORT AtomKekulizeException
@@ -66,7 +81,12 @@ class RDKIT_GRAPHMOL_EXPORT AtomKekulizeException
       : AtomSanitizeException(msg, atomIdx){};
   AtomKekulizeException(const std::string &msg, unsigned int atomIdx)
       : AtomSanitizeException(msg, atomIdx){};
+  AtomKekulizeException(const AtomKekulizeException &other)
+      : AtomSanitizeException(other){};
   ~AtomKekulizeException() throw(){};
+  MolSanitizeException *copy() const {
+    return new AtomKekulizeException(*this);
+  };
 };
 
 class RDKIT_GRAPHMOL_EXPORT KekulizeException : public MolSanitizeException {
@@ -76,10 +96,13 @@ class RDKIT_GRAPHMOL_EXPORT KekulizeException : public MolSanitizeException {
   KekulizeException(const std::string &msg,
                     const std::vector<unsigned int> &indices)
       : MolSanitizeException(msg), d_atomIndices(indices){};
+  KekulizeException(const KekulizeException &other)
+      : MolSanitizeException(other), d_atomIndices(other.d_atomIndices){};
   const std::vector<unsigned int> &getAtomIndices() const {
     return d_atomIndices;
   };
   ~KekulizeException() throw(){};
+  MolSanitizeException *copy() const { return new KekulizeException(*this); };
 
  protected:
   std::vector<unsigned int> d_atomIndices;
