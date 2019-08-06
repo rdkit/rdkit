@@ -5507,7 +5507,7 @@ H      0.635000    0.635000    0.635000
 
     self.assertEqual(Chem.MolToXYZBlock(mol), xyzblock_expected)
 
-  def testSantizationExceptionBasics(self):
+  def testSanitizationExceptionBasics(self):
     try:
       Chem.SanitizeMol(Chem.MolFromSmiles('CFC',sanitize=False))
     except Chem.AtomValenceException as exc:
@@ -5523,7 +5523,7 @@ H      0.635000    0.635000    0.635000
       self.assertFalse(True)
           
 
-  def testSantizationExceptionHierarchy(self):
+  def testSanitizationExceptionHierarchy(self):
     with self.assertRaises(Chem.AtomValenceException):
       Chem.SanitizeMol(Chem.MolFromSmiles('CFC',sanitize=False))
     with self.assertRaises(Chem.AtomSanitizeException):
@@ -5540,6 +5540,14 @@ H      0.635000    0.635000    0.635000
     with self.assertRaises(ValueError):
       Chem.SanitizeMol(Chem.MolFromSmiles('c1cc1', sanitize=False))
 
+  def testDetectChemistryProblems(self):
+    m = Chem.MolFromSmiles('CFCc1cc1ClC',sanitize=False)
+    ps = Chem.DetectChemistryProblems(m)
+    self.assertEqual(len(ps),3)
+    self.assertEqual([x.GetType() for x in ps],['AtomValenceException','AtomValenceException','KekulizeException'])
+    self.assertEqual(ps[0].GetAtomIdx(),1)
+    self.assertEqual(ps[1].GetAtomIdx(),6)
+    self.assertEqual(ps[2].GetAtomIndices(),(3,4,5))
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
