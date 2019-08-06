@@ -322,48 +322,51 @@ const Atom *findHighestCIPNeighbor(const Atom *atom, const Atom *skipAtom) {
   return bestCipRankedAtom;
 }
 
-INT_VECT *findStereoAtoms(const Bond *bond) {
-  if (!bond->hasOwningMol()) {
-    return new INT_VECT;
-  }
-  switch (bond->getStereo()) {
-    case Bond::BondStereo::STEREOE:
-    case Bond::BondStereo::STEREOZ: {
-      const Atom *startStereoAtom =
-          findHighestCIPNeighbor(bond->getBeginAtom(), bond->getEndAtom());
-      const Atom *endStereoAtom =
-          findHighestCIPNeighbor(bond->getEndAtom(), bond->getBeginAtom());
+void findStereoAtoms(const Bond *bond, INT_VECT *&p_stAt) {
+  if (bond->hasOwningMol() &&
+      (bond->getStereo() == Bond::BondStereo::STEREOE ||
+       bond->getStereo() == Bond::BondStereo::STEREOZ)) {
+    const Atom *startStereoAtom =
+        findHighestCIPNeighbor(bond->getBeginAtom(), bond->getEndAtom());
+    const Atom *endStereoAtom =
+        findHighestCIPNeighbor(bond->getEndAtom(), bond->getBeginAtom());
 
-      if (startStereoAtom != nullptr && endStereoAtom != nullptr) {
-        int startStereoAtomIdx = static_cast<int>(startStereoAtom->getIdx());
-        int endStereoAtomIdx = static_cast<int>(endStereoAtom->getIdx());
+    if (startStereoAtom != nullptr && endStereoAtom != nullptr) {
+      int startStereoAtomIdx = static_cast<int>(startStereoAtom->getIdx());
+      int endStereoAtomIdx = static_cast<int>(endStereoAtom->getIdx());
 
-        return new INT_VECT({startStereoAtomIdx, endStereoAtomIdx});
-
-        break;
-      }
+      p_stAt = new INT_VECT({startStereoAtomIdx, endStereoAtomIdx});
+      return;
     }
-    default:
-      return new INT_VECT;
   }
+  p_stAt = new INT_VECT;
 }
 
 }  // namespace
 
 const INT_VECT &Bond::getStereoAtoms() const {
   if (!dp_stereoAtoms) {
-    const_cast<Bond *>(this)->dp_stereoAtoms = findStereoAtoms(this);
+    Bond *mutableSelf = const_cast<Bond *>(this);
+#ifdef RDK_THREADSAFE_SSS
+    std::call_once(mutableSelf->d_stAtMutex, findStereoAtoms, mutableSelf,
+                   mutableSelf->dp_stereoAtoms);
+#else
+    findStereoAtoms(this, mutableSelf->dp_stereoAtoms);
+#endif
   }
   return *dp_stereoAtoms;
 };
 
 INT_VECT &Bond::getStereoAtoms() {
   if (!dp_stereoAtoms) {
-    dp_stereoAtoms = findStereoAtoms(this);
+#ifdef RDK_THREADSAFE_SSS
+    std::call_once(d_stAtMutex, findStereoAtoms, this, dp_stereoAtoms);
+#else
+    findStereoAtoms(this, dp_stereoAtoms);
+#endif
   }
   return *dp_stereoAtoms;
 };
-
 };  // namespace RDKit
 
 std::ostream &operator<<(std::ostream &target, const RDKit::Bond &bond) {
