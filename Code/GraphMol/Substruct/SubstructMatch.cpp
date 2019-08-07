@@ -70,11 +70,9 @@ class MolMatchFinalCheckFunctor {
       : d_query(query), d_mol(mol), d_params(ps){};
   bool operator()(const boost::detail::node_id c1[],
                   const boost::detail::node_id c2[]) const {
-    // std::cerr << "  check! " << df_useChirality << std::endl;
-    if (!d_params.useChirality) return true;
-    // for (unsigned int i = 0; i < d_query.getNumAtoms(); ++i) {
-    //   std::cerr << "    " << c1[i] << " " << c2[i] << std::endl;
-    // }
+    if (!d_params.useChirality) {
+      return true;
+    }
 
     // check chiral atoms:
     for (unsigned int i = 0; i < d_query.getNumAtoms(); ++i) {
@@ -82,19 +80,27 @@ class MolMatchFinalCheckFunctor {
       if (qAt->getDegree() <
               3 ||  // FIX: doesn't deal with "explicit" Hs properly
           (qAt->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
-           qAt->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW))
+           qAt->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW)) {
         continue;
+      }
       const Atom *mAt = d_mol.getAtomWithIdx(c2[i]);
       if (mAt->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
-          mAt->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW)
+          mAt->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW) {
         return false;
-      if (qAt->getDegree() > mAt->getDegree()) return false;
+      }
+
+      if (qAt->getDegree() > mAt->getDegree()) {
+        return false;
+      }
+
       INT_LIST qOrder;
       for (unsigned int j = 0; j < d_query.getNumAtoms(); ++j) {
         const Bond *qB = d_query.getBondBetweenAtoms(c1[i], c1[j]);
         if (qB) {
           qOrder.push_back(qB->getIdx());
-          if (qOrder.size() == qAt->getDegree()) break;
+          if (qOrder.size() == qAt->getDegree()) {
+            break;
+          }
         }
       }
       int qPermCount = qAt->getPerturbationOrder(qOrder);
@@ -104,7 +110,9 @@ class MolMatchFinalCheckFunctor {
         const Bond *mB = d_mol.getBondBetweenAtoms(c2[i], c2[j]);
         if (mB) {
           mOrder.push_back(mB->getIdx());
-          if (mOrder.size() == mAt->getDegree()) break;
+          if (mOrder.size() == mAt->getDegree()) {
+            break;
+          }
         }
       }
       while (mOrder.size() < mAt->getDegree()) {
@@ -115,34 +123,22 @@ class MolMatchFinalCheckFunctor {
       boost::tie(dbeg, dend) = d_mol.getAtomBonds(mAt);
       while (dbeg != dend) {
         int dbidx = d_mol[*dbeg]->getIdx();
-        if (std::find(mOrder.begin(), mOrder.end(), dbidx) != mOrder.end())
+        if (std::find(mOrder.begin(), mOrder.end(), dbidx) != mOrder.end()) {
           moOrder.push_back(dbidx);
-        else
+        } else {
           moOrder.push_back(-1);
+        }
         ++dbeg;
       }
       int mPermCount =
           static_cast<int>(countSwapsToInterconvert(moOrder, mOrder));
-      // std::cerr << "qorder: ";
-      // std::copy(qOrder.begin(), qOrder.end(),
-      //           std::ostream_iterator<int>(std::cerr, ", "));
-      // std::cerr << std::endl;
-      // std::cerr << "moOrder: ";
-      // std::copy(moOrder.begin(), moOrder.end(),
-      //           std::ostream_iterator<int>(std::cerr, ", "));
-      // std::cerr << std::endl;
-      // std::cerr << "morder: ";
-      // std::copy(mOrder.begin(), mOrder.end(),
-      //           std::ostream_iterator<int>(std::cerr, ", "));
-      // std::cerr << std::endl;
-      // std::cerr << "qPerm: " << qPermCount << " mPerm: " << mPermCount
-      //           << " qtag: " << qAt->getChiralTag()
-      //           << " mtag: " << mAt->getChiralTag() << std::endl;
+
       if ((qPermCount % 2 == mPermCount % 2 &&
            qAt->getChiralTag() != mAt->getChiralTag()) ||
           (qPermCount % 2 != mPermCount % 2 &&
-           qAt->getChiralTag() == mAt->getChiralTag()))
+           qAt->getChiralTag() == mAt->getChiralTag())) {
         return false;
+      }
     }
 
     // now check double bonds
@@ -188,11 +184,13 @@ class MolMatchFinalCheckFunctor {
       //           << "  --  " << end1Matches << " " << end2Matches <<
       //           std::endl;
       if (mBnd->getStereo() == qBnd->getStereo() &&
-          (end1Matches + end2Matches) == 1)
+          (end1Matches + end2Matches) == 1) {
         return false;
+      }
       if (mBnd->getStereo() != qBnd->getStereo() &&
-          (end1Matches + end2Matches) != 1)
+          (end1Matches + end2Matches) != 1) {
         return false;
+      }
     }
 
     return true;
