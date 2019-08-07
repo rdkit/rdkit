@@ -406,7 +406,7 @@ std::vector<std::unique_ptr<MolSanitizeException>> detectChemistryProblems(
         bool strict = true;
         atom->updatePropertyCache(strict);
       } catch (const MolSanitizeException &e) {
-        res.push_back(std::unique_ptr<MolSanitizeException>(e.copy()));
+        res.emplace_back(e.copy());
       }
     }
   } else {
@@ -419,7 +419,7 @@ std::vector<std::unique_ptr<MolSanitizeException>> detectChemistryProblems(
     try {
       Kekulize(mol);
     } catch (const MolSanitizeException &e) {
-      res.push_back(std::unique_ptr<MolSanitizeException>(e.copy()));
+      res.emplace_back(e.copy());
     }
   }
   return res;
