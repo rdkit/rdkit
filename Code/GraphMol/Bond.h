@@ -306,13 +306,17 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
   void setStereoAtoms(unsigned int bgnIdx, unsigned int endIdx);
 
   //! returns the indices of our stereo atoms
-  /*! If bond is STEREOZ or STEREOE, and all neighbors have a CIP ranking, these
-     will be calculated and cached. In any other case, an empty vector will be
-     returned.
-   */
-  const INT_VECT &getStereoAtoms() const;
+  const INT_VECT &getStereoAtoms() const {
+    if (!dp_stereoAtoms) {
+      const_cast<Bond *>(this)->dp_stereoAtoms = new INT_VECT();
+    }
+    return *dp_stereoAtoms;
+  };
   //! \overload
-  INT_VECT &getStereoAtoms();
+  INT_VECT &getStereoAtoms() {
+    if (!dp_stereoAtoms) dp_stereoAtoms = new INT_VECT();
+    return *dp_stereoAtoms;
+  };
 
   //! calculates any of our lazy \c properties
   /*!
