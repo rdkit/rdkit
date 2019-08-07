@@ -13,9 +13,6 @@
 
 // std stuff
 #include <iostream>
-#ifdef RDK_THREADSAFE_SSS
-#include <mutex>
-#endif
 
 // Ours
 #include <RDGeneral/Invariant.h>
@@ -338,9 +335,6 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
   atomindex_t d_beginAtomIdx, d_endAtomIdx;
   ROMol *dp_mol;
   INT_VECT *dp_stereoAtoms;
-#ifdef RDK_THREADSAFE_SSS
-  std::once_flag d_stAtMutex;
-#endif
 
   void initBond();
 };
