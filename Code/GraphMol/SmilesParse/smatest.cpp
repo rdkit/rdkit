@@ -2678,25 +2678,26 @@ void testGithub2565() {
       << "Testing Github #2565: Chirality reversed on SMARTS generation."
       << std::endl;
 
-  std::vector<std::string> smiles({
-      R"(O=C1C[C@]([H])1F)",
-      R"(Cl[C@@H]1CCC1=O)",
-      R"(N1CCN=C1[C@H]1CCCc2ccccc21)",
-      R"(C[C@@H](Cl)[C@H]1CC[C@@H](Cl)CC1)",
-      R"(Fc1cn([C@@H]2CCCO2)c(=O)[nH]c1=O)",
-      R"([C@@]1(C)(C(C)(C)C)O[C@@H](CN)[C@H](C[NH3+])O1)",
+  std::vector<std::string> smiles(
+      {R"(O=C1C[C@]([H])1F)", R"(Cl[C@@H]1CCC1=O)",
+       R"(N1CCN=C1[C@H]1CCCc2ccccc21)", R"(C[C@@H](Cl)[C@H]1CC[C@@H](Cl)CC1)",
+       R"(Fc1cn([C@@H]2CCCO2)c(=O)[nH]c1=O)",
+       R"([C@@]1(C)(C(C)(C)C)O[C@@H](CN)[C@H](C[NH3+])O1)",
 
-      // these are Ok
-      R"(O=C1C[C@](Cl)1F)",
-      R"(Br[C@@H](Cl)F)"});
+       // these are Ok
+       R"(O=C1C[C@](Cl)1F)", R"(Br[C@@H](Cl)F)"});
 
   for (const auto &smi : smiles) {
     auto *mol = SmilesToMol(smi);
     const std::string smarts = MolToSmarts(*mol, true);
     auto *query = SmartsToMol(smarts);
 
+    bool uniquify = true;
+    bool recursionPossible = true;
+    bool useChirality = true;
     std::vector<MatchVectType> matches;
-    TEST_ASSERT(SubstructMatch(*mol, *query, matches, true, true, true, false));
+    TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
+                               recursionPossible, useChirality));
   }
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
