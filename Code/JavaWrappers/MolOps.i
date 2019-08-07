@@ -1,5 +1,4 @@
 /*
-* $Id$
 *
 *  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
 *  All rights reserved.
@@ -39,6 +38,7 @@
 %newobject RDKit::MolOps::renumberAtoms;
 %newobject RDKit::MolOps::removeHs;
 %newobject RDKit::MolOps::addHs;
+%ignore RDKit::MolOps::detectChemistryProblems;
 %include <GraphMol/MolOps.h>
 %ignore RDKit::MolOps::sanitizeMol(RWMol &,unsigned int &,unsigned int &);
 
