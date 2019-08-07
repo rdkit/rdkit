@@ -34,6 +34,7 @@
 #include <GraphMol/MolOps.h>
 %}
 
+%template(MolSanitizeException_Vect) std::vector<boost::shared_ptr<RDKit::MolSanitizeException>>;
 
 %newobject RDKit::MolOps::renumberAtoms;
 %newobject RDKit::MolOps::removeHs;
@@ -52,5 +53,13 @@
 
     }
     return static_cast<int>(opThatFailed);
+  };
+  std::vector<boost::shared_ptr<RDKit::MolSanitizeException>> detectChemistryProblems(RDKit::ROMol &mol,int sanitizeOps=RDKit::MolOps::SANITIZE_ALL){
+    std::vector<boost::shared_ptr<RDKit::MolSanitizeException>> res;
+    auto probs = RDKit::MolOps::detectChemistryProblems(mol,sanitizeOps);
+    for(const auto &exc_ptr : probs) {
+      res.push_back(boost::shared_ptr<RDKit::MolSanitizeException>(exc_ptr->copy()));
+    }
+    return res;
   };
 %}
