@@ -168,6 +168,67 @@ const Bond *getNeighboringStereoDirectedBond(const ROMol &mol,
   }
   return nullptr;
 }
+
+const Atom *findHighestCIPNeighbor(const Atom *atom, const Atom *skipAtom) {
+  PRECONDITION(atom, "bad atom");
+
+  unsigned bestCipRank = 0;
+  const Atom *bestCipRankedAtom = nullptr;
+  const auto &mol = atom->getOwningMol();
+
+  for (const auto &index :
+       boost::make_iterator_range(mol.getAtomNeighbors(atom))) {
+    const auto neighbor = mol[index];
+    if (neighbor == skipAtom) {
+      continue;
+    }
+    unsigned cip = 0;
+    if (!neighbor->getPropIfPresent(common_properties::_CIPRank, cip)) {
+      // If at least one of the atoms doesn't have a CIP rank, the highest rank
+      // does not make sense, so return a nullptr.
+      return nullptr;
+    }
+    if (cip > bestCipRank || bestCipRankedAtom == nullptr) {
+      bestCipRank = cip;
+      bestCipRankedAtom = neighbor;
+    } else if (cip == bestCipRank) {
+      // This also doesn't make sense if there is a tie (if that's possible).
+      // We still keep the best CIP rank in case something better comes around
+      // (also not sure if that's possible).
+      bestCipRankedAtom = nullptr;
+    }
+  }
+  return bestCipRankedAtom;
+}
+
+INT_VECT findStereoAtoms(const Bond *bond) {
+  PRECONDITION(bond, "bad bond");
+  PRECONDITION(bond->hasOwningMol(), "no mol");
+  PRECONDITION(bond->getBondType() == Bond::DOUBLE, "not double bond");
+  PRECONDITION(bond->getStereo() > Bond::BondStereo::STEREOANY,
+               "no defined stereo");
+
+  switch (bond->getStereo()) {
+    case Bond::BondStereo::STEREOE:
+    case Bond::BondStereo::STEREOZ: {
+      const Atom *startStereoAtom =
+          findHighestCIPNeighbor(bond->getBeginAtom(), bond->getEndAtom());
+      const Atom *endStereoAtom =
+          findHighestCIPNeighbor(bond->getEndAtom(), bond->getBeginAtom());
+
+      CHECK_INVARIANT(startStereoAtom != nullptr && endStereoAtom != nullptr,
+                      "stereoatom(s) not found");
+
+      int startStereoAtomIdx = static_cast<int>(startStereoAtom->getIdx());
+      int endStereoAtomIdx = static_cast<int>(endStereoAtom->getIdx());
+
+      return {startStereoAtomIdx, endStereoAtomIdx};
+    }
+    case Bond::BondStereo::STEREOCIS:
+    case Bond::BondStereo::STEREOTRANS:
+      return bond->getStereoAtoms();
+  }
+}
 }  // namespace
 
 bool getReactantMatches(const MOL_SPTR_VECT &reactants,
@@ -504,15 +565,15 @@ void forwardReactantBondStereo(ReactantProductAtomMapping *mapping, Bond *pBond,
 
   const Atom *rStart = rBond->getBeginAtom();
   const Atom *rEnd = rBond->getEndAtom();
-  const auto &rStereoAtoms = rBond->getStereoAtoms();
+  const auto rStereoAtoms = findStereoAtoms(rBond);
 
   StereoBondEndCap start(reactant, rStart, rEnd, rStereoAtoms[0]);
   StereoBondEndCap end(reactant, rEnd, rStart, rStereoAtoms[1]);
 
   // The bond might be matched backwards in the reaction
-  if (prod2React[pBond->getBeginAtom()->getIdx()] == rEnd->getIdx()) {
+  if (prod2React[pBond->getBeginAtomIdx()] == rEnd->getIdx()) {
     std::swap(start, end);
-  } else if (prod2React[pBond->getBeginAtom()->getIdx()] != rStart->getIdx()) {
+  } else if (prod2React[pBond->getBeginAtomIdx()] != rStart->getIdx()) {
     throw std::logic_error("Reactant and Product bond ends do not match");
   }
 
