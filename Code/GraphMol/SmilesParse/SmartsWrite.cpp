@@ -910,7 +910,7 @@ std::string MolToSmarts(ROMol &inmol, bool doIsomericSmiles) {
 
   ROMol mol(inmol);
   UINT_VECT ranks;
-  ranks.resize(nAtoms);
+  ranks.reserve(nAtoms);
   // For smiles writing we would be canonicalizing but we will not do that here.
   // We will simple use the atom indices as the rank
   for (ROMol::AtomIterator atIt = mol.beginAtoms(); atIt != mol.endAtoms();
