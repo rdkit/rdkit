@@ -35,6 +35,14 @@
 
 namespace RDKit {
 namespace detail {
+
+namespace {
+bool hasChiralLabel(const Atom *at) {
+  return at->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
+         at->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW;
+}
+}  // namespace
+
 typedef std::map<unsigned int, QueryAtom::QUERYATOM_QUERY *> SUBQUERY_MAP;
 
 typedef struct {
@@ -79,13 +87,11 @@ class MolMatchFinalCheckFunctor {
       const Atom *qAt = d_query.getAtomWithIdx(c1[i]);
       if (qAt->getDegree() <
               3 ||  // FIX: doesn't deal with "explicit" Hs properly
-          (qAt->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
-           qAt->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW)) {
+          !hasChiralLabel(qAt)) {
         continue;
       }
       const Atom *mAt = d_mol.getAtomWithIdx(c2[i]);
-      if (mAt->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
-          mAt->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW) {
+      if (!hasChiralLabel(mAt)) {
         return false;
       }
 
@@ -115,9 +121,10 @@ class MolMatchFinalCheckFunctor {
           }
         }
       }
-      while (mOrder.size() < mAt->getDegree()) {
-        mOrder.push_back(-1);
-      }
+
+      unsigned unmatchedNeighbors = mAt->getDegree() - mOrder.size();
+      mOrder.insert(mOrder.end(), unmatchedNeighbors, -1);
+
       INT_LIST moOrder;
       ROMol::OEDGE_ITER dbeg, dend;
       boost::tie(dbeg, dend) = d_mol.getAtomBonds(mAt);
@@ -133,10 +140,10 @@ class MolMatchFinalCheckFunctor {
       int mPermCount =
           static_cast<int>(countSwapsToInterconvert(moOrder, mOrder));
 
-      if ((qPermCount % 2 == mPermCount % 2 &&
-           qAt->getChiralTag() != mAt->getChiralTag()) ||
-          (qPermCount % 2 != mPermCount % 2 &&
-           qAt->getChiralTag() == mAt->getChiralTag())) {
+      bool requireMatch = qPermCount % 2 == mPermCount % 2;
+      bool labelsMatch = qAt->getChiralTag() == mAt->getChiralTag();
+
+      if (requireMatch != labelsMatch) {
         return false;
       }
     }
