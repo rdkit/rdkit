@@ -100,27 +100,21 @@ class MolMatchFinalCheckFunctor {
       }
 
       INT_LIST qOrder;
-      for (unsigned int j = 0; j < d_query.getNumAtoms(); ++j) {
-        const Bond *qB = d_query.getBondBetweenAtoms(c1[i], c1[j]);
-        if (qB) {
-          qOrder.push_back(qB->getIdx());
-          if (qOrder.size() == qAt->getDegree()) {
-            break;
-          }
-        }
-      }
-      int qPermCount = qAt->getPerturbationOrder(qOrder);
-
       INT_LIST mOrder;
       for (unsigned int j = 0; j < d_query.getNumAtoms(); ++j) {
+        const Bond *qB = d_query.getBondBetweenAtoms(c1[i], c1[j]);
         const Bond *mB = d_mol.getBondBetweenAtoms(c2[i], c2[j]);
-        if (mB) {
+        if (qB && mB) {
           mOrder.push_back(mB->getIdx());
-          if (mOrder.size() == mAt->getDegree()) {
+          qOrder.push_back(qB->getIdx());
+          if (mOrder.size() == qAt->getDegree()) {
             break;
           }
         }
       }
+      CHECK_INVARIANT(qOrder.size() == qAt->getDegree(), "missing matches");
+      CHECK_INVARIANT(qOrder.size() == mOrder.size(), "bad matches");
+      int qPermCount = qAt->getPerturbationOrder(qOrder);
 
       unsigned unmatchedNeighbors = mAt->getDegree() - mOrder.size();
       mOrder.insert(mOrder.end(), unmatchedNeighbors, -1);
