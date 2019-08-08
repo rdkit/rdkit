@@ -12,6 +12,7 @@
 #define _RD_SMARTSWRITE_H
 
 #include <string>
+#include <vector>
 
 namespace RDKit {
 class QueryAtom;
@@ -26,7 +27,12 @@ RDKIT_SMILESPARSE_EXPORT std::string GetBondSmarts(const QueryBond *qbond,
 
 class ROMol;
 //! returns the SMARTS for a molecule
-RDKIT_SMILESPARSE_EXPORT std::string MolToSmarts(ROMol &mol,
+RDKIT_SMILESPARSE_EXPORT std::string MolToSmarts(const ROMol &mol,
+                                                 bool doIsomericSmarts = true);
+
+RDKIT_SMILESPARSE_EXPORT std::string MolFragmentToSmarts(const ROMol &mol,
+                                                 const std::vector<int>& atomsToUse,
+                                                 const std::vector<int> *bondsToUse = nullptr,
                                                  bool doIsomericSmarts = true);
 };  // namespace RDKit
 
