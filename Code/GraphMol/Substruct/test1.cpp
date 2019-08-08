@@ -685,7 +685,7 @@ void runblock(const std::vector<ROMol *> &mols, const ROMol *query,
     }
   }
 };
-}
+}  // namespace
 void testMultiThread() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Test multithreading" << std::endl;
@@ -974,7 +974,7 @@ void testChiralMatch() {
     bool matched = SubstructMatch(*mol, *query, matchV, true, true);
     delete mol;
     delete query;
-    TEST_ASSERT(!matched);
+    TEST_ASSERT(matched);
   }
   {
     std::string qSmi = "[C@@](C)(F)Br";
@@ -985,7 +985,7 @@ void testChiralMatch() {
     bool matched = SubstructMatch(*mol, *query, matchV, true, true);
     delete mol;
     delete query;
-    TEST_ASSERT(matched);
+    TEST_ASSERT(!matched);
   }
   {
     std::string qSmi = "C[C@](F)Br";
@@ -1589,8 +1589,148 @@ void testGithubIssue1489() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testGithub2570() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Testing Github #2570: issue pointed out by Greg in the PR."
+      << std::endl;
+
+  bool uniquify = true;
+  bool recursionPossible = true;
+  bool useChirality = true;
+  {
+    const auto mol = R"(C[C@](Cl)(Br)F)"_smiles;
+
+    {
+      const auto query = R"([C@](Cl)(Br)F)"_smarts;
+      std::vector<MatchVectType> matches;
+      TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
+                                 recursionPossible, useChirality));
+    }
+    {
+      const auto query = R"([C@@](Cl)(Br)F)"_smarts;
+      std::vector<MatchVectType> matches;
+      TEST_ASSERT(!SubstructMatch(*mol, *query, matches, uniquify,
+                                  recursionPossible, useChirality));
+    }
+    {  // Swap order of a pair of atoms
+      const auto query = R"([C@](Br)(Cl)F)"_smarts;
+      std::vector<MatchVectType> matches;
+      TEST_ASSERT(!SubstructMatch(*mol, *query, matches, uniquify,
+                                  recursionPossible, useChirality));
+    }
+    {
+      const auto query = R"([C@@](Br)(Cl)F)"_smarts;
+      std::vector<MatchVectType> matches;
+      TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
+                                 recursionPossible, useChirality));
+    }
+    {  // Try smaller fragments
+      const auto query = R"([C@](Cl)Br)"_smarts;
+      std::vector<MatchVectType> matches;
+      TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
+                                 recursionPossible, useChirality));
+    }
+    {
+      const auto query = R"([C@@](Cl)Br)"_smarts;
+      std::vector<MatchVectType> matches;
+      TEST_ASSERT(!SubstructMatch(*mol, *query, matches, uniquify,
+                                  recursionPossible, useChirality));
+    }
+    {
+      const auto query = R"([C@](Br)F)"_smarts;
+      std::vector<MatchVectType> matches;
+      TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
+                                 recursionPossible, useChirality));
+    }
+    {
+      const auto query = R"([C@@](Br)F)"_smarts;
+      std::vector<MatchVectType> matches;
+      TEST_ASSERT(!SubstructMatch(*mol, *query, matches, uniquify,
+                                  recursionPossible, useChirality));
+    }
+    {  // Go even smaller
+      const auto query = R"([C@]F)"_smarts;
+      std::vector<MatchVectType> matches;
+      TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
+                                 recursionPossible, useChirality));
+    }
+    {
+      const auto query = R"([C@@]F)"_smarts;
+      std::vector<MatchVectType> matches;
+      TEST_ASSERT(!SubstructMatch(*mol, *query, matches, uniquify,
+                                  recursionPossible, useChirality));
+    }
+    {  // Match just the chiral atom
+      const auto query = R"([C@])"_smarts;
+      std::vector<MatchVectType> matches;
+      TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
+                                 recursionPossible, useChirality));
+    }
+    {
+      const auto query = R"([C@@])"_smarts;
+      std::vector<MatchVectType> matches;
+      TEST_ASSERT(!SubstructMatch(*mol, *query, matches, uniquify,
+                                  recursionPossible, useChirality));
+    }
+  }
+  {  // Mol also starting with the chiral atom
+    const auto mol = R"([C@](C)(Cl)(Br)F)"_smiles;
+    {
+      const auto query = R"([C@](C)(Cl)(Br)F)"_smarts;
+      std::vector<MatchVectType> matches;
+      TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
+                                 recursionPossible, useChirality));
+    }
+    {
+      const auto query = R"([C@@](C)(Cl)(Br)F)"_smarts;
+      std::vector<MatchVectType> matches;
+      TEST_ASSERT(!SubstructMatch(*mol, *query, matches, uniquify,
+                                  recursionPossible, useChirality));
+    }
+    {
+      const auto query = R"([C@](C)(Cl)Br)"_smarts;
+      std::vector<MatchVectType> matches;
+      TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
+                                 recursionPossible, useChirality));
+    }
+    {
+      const auto query = R"([C@@](C)(Cl)Br)"_smarts;
+      std::vector<MatchVectType> matches;
+      TEST_ASSERT(!SubstructMatch(*mol, *query, matches, uniquify,
+                                  recursionPossible, useChirality));
+    }
+    {
+      const auto query = R"([C@](Cl)(Br)F)"_smarts;
+      std::vector<MatchVectType> matches;
+      TEST_ASSERT(!SubstructMatch(*mol, *query, matches, uniquify,
+                                  recursionPossible, useChirality));
+    }
+    {
+      const auto query = R"([C@@](Cl)(Br)F)"_smarts;
+      std::vector<MatchVectType> matches;
+      TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
+                                 recursionPossible, useChirality));
+    }
+    {  // Swap order of a pair of atoms
+      const auto query = R"([C@](Br)(Cl)F)"_smarts;
+      std::vector<MatchVectType> matches;
+      TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
+                                 recursionPossible, useChirality));
+    }
+    {
+      const auto query = R"([C@@](Br)(Cl)F)"_smarts;
+      std::vector<MatchVectType> matches;
+      TEST_ASSERT(!SubstructMatch(*mol, *query, matches, uniquify,
+                                  recursionPossible, useChirality));
+    }
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
-#if 1
+  RDLog::InitLogs();
   test1();
   test2();
   test3();
@@ -1609,7 +1749,7 @@ int main(int argc, char *argv[]) {
   testDativeMatch();
   testCisTransMatch();
   testCisTransMatch2();
-#endif
   testGithubIssue1489();
+  testGithub2570();
   return 0;
 }
