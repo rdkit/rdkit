@@ -625,7 +625,7 @@ std::string _recurseBondSmarts(const Bond *bond,
   }
 
   // ok if we have a negation and we have to change the underlying logic,
-  // since we propogated the negation i.e NOT (A OR B) = (NOT (A)) AND
+  // since we propagated the negation i.e NOT (A OR B) = (NOT (A)) AND
   // (NOT(B))
   if (negate) {
     if (descrip == "BondOr") {
@@ -656,6 +656,24 @@ std::string FragmentSmartsConstruct(ROMol &mol, unsigned int atomIdx,
   for (auto &atom : mol.atoms()) {
     atom->updatePropertyCache(false);
   }
+
+  // Another dirty trick to avoid reordering of lead chiral atoms in
+  // canonicalizeFragment: since we are writing SMARTS, there won't be a
+  // reordering on parsing.
+  // The trick consists in just avoiding the chiral atom to be the first in the
+  // SMARTS string by swapping atomIdx to the first bonded atom. This will cause
+  // the neighbor to go first.
+  if (atomIdx == 0) {
+    const Atom *atom = mol.getAtomWithIdx(atomIdx);
+    if (atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW ||
+        atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW) {
+      auto nbrItr = mol.getAtomNeighbors(atom);
+      if (nbrItr.first != nbrItr.second) {
+        atomIdx = mol[*nbrItr.first]->getIdx();
+      }
+    }
+  }
+
   Canon::canonicalizeFragment(mol, atomIdx, colors, ranks, molStack, 0, 0,
                               doIsomericSmiles);
 
