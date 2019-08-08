@@ -41,6 +41,12 @@ bool hasChiralLabel(const Atom *at) {
   return at->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
          at->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW;
 }
+
+//! Decide if an atom comes from a query that describes a mol fragment
+bool isFragmentAtom(const Atom *at) {
+  unsigned explicitDegree = at->getDegree() + at->getNumExplicitHs();
+  return explicitDegree < 4 && at->getImplicitValence() == -1;
+}
 }  // namespace
 
 typedef std::map<unsigned int, QueryAtom::QUERYATOM_QUERY *> SUBQUERY_MAP;
@@ -85,16 +91,18 @@ class MolMatchFinalCheckFunctor {
     // check chiral atoms:
     for (unsigned int i = 0; i < d_query.getNumAtoms(); ++i) {
       const Atom *qAt = d_query.getAtomWithIdx(c1[i]);
-      if (qAt->getDegree() <
-              3 ||  // FIX: doesn't deal with "explicit" Hs properly
-          !hasChiralLabel(qAt)) {
+
+      // Allow only chiral atoms. Atoms with less than 3 neighbors are only
+      // tolerated if we know they are fragments
+      bool isFragmentQuery = isFragmentAtom(qAt);
+
+      if ((qAt->getDegree() < 3 && !isFragmentQuery) || !hasChiralLabel(qAt)) {
         continue;
       }
       const Atom *mAt = d_mol.getAtomWithIdx(c2[i]);
       if (!hasChiralLabel(mAt)) {
         return false;
       }
-
       if (qAt->getDegree() > mAt->getDegree()) {
         return false;
       }
@@ -117,6 +125,11 @@ class MolMatchFinalCheckFunctor {
       int qPermCount = qAt->getPerturbationOrder(qOrder);
 
       unsigned unmatchedNeighbors = mAt->getDegree() - mOrder.size();
+      if (isFragmentQuery && qAt->getIdx() == 0 && mAt->getIdx() != 0 &&
+          unmatchedNeighbors) {
+        mOrder.insert(mOrder.begin(), 1, -1);
+        --unmatchedNeighbors;
+      }
       mOrder.insert(mOrder.end(), unmatchedNeighbors, -1);
 
       INT_LIST moOrder;
@@ -131,6 +144,7 @@ class MolMatchFinalCheckFunctor {
         }
         ++dbeg;
       }
+
       int mPermCount =
           static_cast<int>(countSwapsToInterconvert(moOrder, mOrder));
 
