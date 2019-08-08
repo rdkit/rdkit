@@ -1726,6 +1726,70 @@ void testGithub2570() {
     }
   }
 
+  {  // Start from a physical H atom
+    const auto mol = R"([H][C@](O)(F)Cl)"_smiles;
+    const auto smarts = MolToSmarts(*mol);
+    const auto query = SmartsToMol(smarts);
+    TEST_ASSERT(smarts == R"([#8]-[#6@@H](-[#9])-[#17])");
+    std::vector<MatchVectType> matches;
+    TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
+                               recursionPossible, useChirality));
+  }
+  {
+    const auto mol = R"([H][C@](O)(F)Cl)"_smiles;
+    const auto query = R"([C@H](O)(F)Cl)"_smarts;
+    std::vector<MatchVectType> matches;
+    TEST_ASSERT(!SubstructMatch(*mol, *query, matches, uniquify,
+                                recursionPossible, useChirality));
+  }
+  {  // Start from an attached H atom
+    const auto mol = R"([C@H](O)(F)Cl)"_smiles;
+    const auto smarts = MolToSmarts(*mol);
+    TEST_ASSERT(smarts == R"([#8]-[#6@@H](-[#9])-[#17])");
+    const auto query = SmartsToMol(smarts);
+    std::vector<MatchVectType> matches;
+    TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
+                               recursionPossible, useChirality));
+  }
+  {
+    const auto mol = R"([C@H](O)(F)Cl)"_smiles;
+    const auto query = R"([C@H](O)(F)Cl)"_smarts;
+    std::vector<MatchVectType> matches;
+    TEST_ASSERT(!SubstructMatch(*mol, *query, matches, uniquify,
+                                recursionPossible, useChirality));
+  }
+  {  // Without H
+    const auto mol = R"([C@](O)(F)(Cl)C)"_smiles;
+    const auto smarts = MolToSmarts(*mol);
+    const auto query = SmartsToMol(smarts);
+    TEST_ASSERT(smarts == R"([#8]-[#6@](-[#9])(-[#17])-[#6])");
+    std::vector<MatchVectType> matches;
+    TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
+                               recursionPossible, useChirality));
+  }
+  {
+    const auto mol = R"([C@](O)(F)(Cl)C)"_smiles;
+    const auto query = R"([#6@](-[#8])(-[#9])(-[#17])-[#6])"_smarts;
+    std::vector<MatchVectType> matches;
+    TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
+                               recursionPossible, useChirality));
+  }
+
+  {  // What about queries not coming from SMARTS?
+    const std::vector<std::string> smiles(  // These are all equivalent
+        {"N[C@@]([H])(C)C(=O)O", "N[C@@H](C)C(=O)O", "N[C@H](C(=O)O)C",
+         "[H][C@](N)(C)C(=O)O", "[C@H](N)(C)C(=O)O"});
+    for (const auto &smi1 : smiles) {
+      const auto mol1 = std::unique_ptr<ROMol>(SmilesToMol(smi1));
+      for (const auto &smi2 : smiles) {  // Test them in both directions
+        const auto mol2 = std::unique_ptr<ROMol>(SmilesToMol(smi2));
+        std::vector<MatchVectType> matches;
+        TEST_ASSERT(SubstructMatch(*mol1, *mol2, matches, uniquify,
+                                   recursionPossible, useChirality));
+      };
+    }
+  }
+
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
