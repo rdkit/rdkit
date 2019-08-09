@@ -10,6 +10,7 @@
 //
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/QueryOps.h>
+#include <Query/NullQueryAlgebra.h>
 
 namespace RDKit {
 
@@ -26,6 +27,15 @@ Atom *QueryAtom::copy() const {
 void QueryAtom::expandQuery(QUERYATOM_QUERY *what,
                             Queries::CompositeQueryType how,
                             bool maintainOrder) {
+  bool thisIsNullQuery = dp_query->getDescription() == "AtomNull";
+  bool otherIsNullQuery = what->getDescription() == "AtomNull";
+
+  if (thisIsNullQuery || otherIsNullQuery) {
+    nullQueryCombine(dp_query, thisIsNullQuery, what, otherIsNullQuery, how);
+    delete what;
+    return;
+  }
+
   QUERYATOM_QUERY *origQ = dp_query;
   std::string descrip;
   switch (how) {
@@ -69,11 +79,13 @@ bool queriesMatch(QueryAtom::QUERYATOM_QUERY const *q1,
 
   static const unsigned int nQueries = 19;
   static std::string equalityQueries[nQueries] = {
-      "AtomType", "AtomRingBondCount", "AtomRingSize", "AtomMinRingSize",
-      "AtomImplicitValence", "AtomExplicitValence", "AtomTotalValence",
-      "AtomAtomicNum", "AtomExplicitDegree", "AtomTotalDegree", "AtomHCount",
-      "AtomIsAromatic", "AtomIsAliphatic", "AtomUnsaturated", "AtomMass",
-      "AtomFormalCharge", "AtomHybridization", "AtomInRing", "AtomInNRings"};
+      "AtomType",         "AtomRingBondCount",   "AtomRingSize",
+      "AtomMinRingSize",  "AtomImplicitValence", "AtomExplicitValence",
+      "AtomTotalValence", "AtomAtomicNum",       "AtomExplicitDegree",
+      "AtomTotalDegree",  "AtomHCount",          "AtomIsAromatic",
+      "AtomIsAliphatic",  "AtomUnsaturated",     "AtomMass",
+      "AtomFormalCharge", "AtomHybridization",   "AtomInRing",
+      "AtomInNRings"};
 
   bool res = false;
   std::string d1 = q1->getDescription();
@@ -149,7 +161,7 @@ bool queriesMatch(QueryAtom::QUERYATOM_QUERY const *q1,
   }
   return res;
 }
-}  // end of local namespace
+}  // namespace
 
 bool QueryAtom::Match(Atom const *what) const {
   PRECONDITION(what, "bad query atom");
@@ -166,4 +178,4 @@ bool QueryAtom::QueryMatch(QueryAtom const *what) const {
   }
 }
 
-};  // end o' namespace
+};  // namespace RDKit
