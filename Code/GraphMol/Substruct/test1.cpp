@@ -16,6 +16,7 @@
 // RD bits
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
+#include <GraphMol/Chirality.h>
 #include "SubstructMatch.h"
 #include "SubstructUtils.h"
 
@@ -685,7 +686,7 @@ void runblock(const std::vector<ROMol *> &mols, const ROMol *query,
     }
   }
 };
-}
+}  // namespace
 void testMultiThread() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Test multithreading" << std::endl;
@@ -1589,8 +1590,91 @@ void testGithubIssue1489() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testEZVsCisTransMatch() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog)
+      << "    Testing matching E/Z against Cis/Trans stereo bonds" << std::endl;
+
+  const auto mol = R"(F/C(C)=C(C)/Cl)"_smiles;
+  {
+    const Bond *stereoBnd = mol->getBondWithIdx(2);
+    TEST_ASSERT(stereoBnd->getStereo() == Bond::STEREOE);
+  }
+
+  // pairs of {query, matching expectation}
+  const std::vector<std::pair<std::string, bool>> checks({
+      {R"(F/C(C)=C(C)/Cl)", true},   // identical
+      {R"(F\C(C)=C(C)\Cl)", true},   // symmetric
+      {R"(F/C(C)=C(C)\Cl)", false},  // opposite
+      {R"(F\C(C)=C(C)/Cl)", false}   // symmetric opposite
+  });
+
+  // Test with same stereoatoms as mol
+  for (const auto &check : checks) {
+    auto query = SmilesToMol(check.first);
+    {
+      Bond *stereoBnd = query->getBondWithIdx(2);
+      auto stereo = stereoBnd->getStereo();
+      TEST_ASSERT(stereo == Bond::STEREOE || stereo == Bond::STEREOZ);
+
+      stereoBnd->setStereoAtoms(0, 5);  // Same as mol
+      stereo = Chirality::translateEZLabelToCisTrans(stereo);
+      TEST_ASSERT(stereo == Bond::STEREOCIS || stereo == Bond::STEREOTRANS);
+      stereoBnd->setStereo(stereo);
+    }
+    MatchVectType match;
+    bool recursionPossible = true;
+    bool useChirality = true;
+    TEST_ASSERT(check.second == SubstructMatch(*mol, *query, match,
+                                               recursionPossible,
+                                               useChirality));
+  }
+  // Symmetrize stereoatoms
+  for (const auto &check : checks) {
+    auto query = SmilesToMol(check.first);
+    {
+      Bond *stereoBnd = query->getBondWithIdx(2);
+      auto stereo = stereoBnd->getStereo();
+      TEST_ASSERT(stereo == Bond::STEREOE || stereo == Bond::STEREOZ);
+
+      stereoBnd->setStereoAtoms(2, 4);  // symmetric to mol
+      stereo = Chirality::translateEZLabelToCisTrans(stereo);
+      TEST_ASSERT(stereo == Bond::STEREOCIS || stereo == Bond::STEREOTRANS);
+      stereoBnd->setStereo(stereo);
+    }
+    MatchVectType match;
+    bool recursionPossible = true;
+    bool useChirality = true;
+    TEST_ASSERT(check.second == SubstructMatch(*mol, *query, match,
+                                               recursionPossible,
+                                               useChirality));
+  }
+  // Flip one stereoatom and the label
+  for (const auto &check : checks) {
+    auto query = SmilesToMol(check.first);
+    {
+      Bond *stereoBnd = query->getBondWithIdx(2);
+      auto stereo = stereoBnd->getStereo();
+      TEST_ASSERT(stereo == Bond::STEREOE || stereo == Bond::STEREOZ);
+
+      stereoBnd->setStereoAtoms(0, 4);  // Reverse second stereoatom
+      if (stereo == Bond::STEREOE) {
+        stereo = Bond::STEREOCIS;
+      } else {
+        stereo = Bond::STEREOTRANS;
+      }
+      stereoBnd->setStereo(stereo);
+    }
+    MatchVectType match;
+    bool recursionPossible = true;
+    bool useChirality = true;
+    TEST_ASSERT(check.second == SubstructMatch(*mol, *query, match,
+                                               recursionPossible,
+                                               useChirality));
+  }
+}
+
 int main(int argc, char *argv[]) {
-#if 1
   test1();
   test2();
   test3();
@@ -1609,7 +1693,8 @@ int main(int argc, char *argv[]) {
   testDativeMatch();
   testCisTransMatch();
   testCisTransMatch2();
-#endif
   testGithubIssue1489();
+  testEZVsCisTransMatch();
+
   return 0;
 }
