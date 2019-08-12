@@ -2423,6 +2423,7 @@ void testBug3139534() {
 
   {
     RWMol *m;
+    // the 2 initial directed bonds are redundant (/bad ??)
     std::string smiles = "CCC/[N+]/1=C/c2ccccc2OC(=O)/C=C1/O";
     m = SmilesToMol(smiles);
     TEST_ASSERT(m);
@@ -2432,7 +2433,54 @@ void testBug3139534() {
 
     smiles = MolToSmiles(*m, true);
     BOOST_LOG(rdInfoLog) << "smiles: " << smiles << std::endl;
-    TEST_ASSERT(smiles == "CCC/[N+]1=C/c2ccccc2OC(=O)\\C=C/1O");
+    TEST_ASSERT(smiles == R"(CCC[N+]1=C/c2ccccc2OC(=O)/C=C\1O)");
+
+    delete m;
+
+    // 2nd pass to check stability
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+
+    TEST_ASSERT(m->getBondWithIdx(3)->getStereo() == Bond::STEREOZ);
+    TEST_ASSERT(m->getBondWithIdx(14)->getStereo() == Bond::STEREOE);
+
+    smiles = MolToSmiles(*m, true);
+    BOOST_LOG(rdInfoLog) << "smiles: " << smiles << std::endl;
+    TEST_ASSERT(smiles == R"(CCC[N+]1=C/c2ccccc2OC(=O)/C=C\1O)");
+
+    delete m;
+  }
+
+  { // Github #2023
+    RWMol *m;
+    // the initial directed bond is redundant
+    std::string smiles = R"(CO/C1=C/C=C\C=C/C=N\1)";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+
+    TEST_ASSERT(m->getBondWithIdx(2)->getStereo() == Bond::STEREOE);
+    TEST_ASSERT(m->getBondWithIdx(4)->getStereo() == Bond::STEREOZ);
+    TEST_ASSERT(m->getBondWithIdx(6)->getStereo() == Bond::STEREOZ);
+    TEST_ASSERT(m->getBondWithIdx(8)->getStereo() == Bond::STEREOZ);
+
+    smiles = MolToSmiles(*m, true);
+    BOOST_LOG(rdInfoLog) << "smiles: " << smiles << std::endl;
+    TEST_ASSERT(smiles == R"(COC1=C/C=C\C=C/C=N\1)");
+
+    delete m;
+
+    // 2nd pass to check stability
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+
+    TEST_ASSERT(m->getBondWithIdx(2)->getStereo() == Bond::STEREOE);
+    TEST_ASSERT(m->getBondWithIdx(4)->getStereo() == Bond::STEREOZ);
+    TEST_ASSERT(m->getBondWithIdx(6)->getStereo() == Bond::STEREOZ);
+    TEST_ASSERT(m->getBondWithIdx(8)->getStereo() == Bond::STEREOZ);
+
+    smiles = MolToSmiles(*m, true);
+    BOOST_LOG(rdInfoLog) << "smiles: " << smiles << std::endl;
+    TEST_ASSERT(smiles == R"(COC1=C/C=C\C=C/C=N\1)");
 
     delete m;
   }
