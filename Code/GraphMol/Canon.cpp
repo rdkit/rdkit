@@ -23,6 +23,39 @@ struct _possibleCompare
   }
 };
 
+bool checkBondsInSameBranch(MolStack &molStack, Bond *dblBnd, Bond *dirBnd) {
+  bool seenDblBond = false;
+  int branchCounter = 0;
+  for (const auto &item : molStack) {
+    switch (item.type) {
+      case MOL_STACK_BOND:
+        if (item.obj.bond == dirBnd || item.obj.bond == dblBnd) {
+          if (seenDblBond) {
+            return branchCounter == 0;
+          } else {
+            seenDblBond = true;
+          }
+        }
+        break;
+      case MOL_STACK_BRANCH_OPEN:
+        if (seenDblBond) {
+          ++branchCounter;
+        }
+        break;
+      case MOL_STACK_BRANCH_CLOSE:
+        if (seenDblBond) {
+          --branchCounter;
+        }
+        break;
+      default:
+        break;
+    }
+  }
+  // We should not ever hit this. But if we do, returning false
+  // causes the same behavior as before this patch.
+  return false;
+}
+
 void switchBondDir(Bond *bond) {
   PRECONDITION(bond, "bad bond");
   PRECONDITION(bond->getBondType() == Bond::SINGLE || bond->getIsAromatic(),
@@ -45,7 +78,7 @@ void switchBondDir(Bond *bond) {
 //
 void canonicalizeDoubleBond(Bond *dblBond, INT_VECT &bondVisitOrders,
                             INT_VECT &atomVisitOrders, INT_VECT &bondDirCounts,
-                            INT_VECT &atomDirCounts) {
+                            INT_VECT &atomDirCounts, MolStack &molStack) {
   PRECONDITION(dblBond, "bad bond");
   PRECONDITION(dblBond->getBondType() == Bond::DOUBLE, "bad bond order");
   PRECONDITION(dblBond->getStereo() > Bond::STEREOANY, "bad bond stereo");
@@ -346,7 +379,18 @@ void canonicalizeDoubleBond(Bond *dblBond, INT_VECT &bondVisitOrders,
       // So, since we want this bond to have the opposite direction to the
       // other one, we put it in with the same direction.
       // This was Issue 183
-      secondFromAtom1->setBondDir(firstFromAtom1->getBondDir());
+
+      // UNLESS the bond is not in a branch (in the smiles) (e.g. firstFromAtom1
+      // branches off a cycle, and secondFromAtom1 shows up at the end of the
+      // cycle). This was Github Issue #2023, see it for an example.
+      if (checkBondsInSameBranch(molStack, dblBond, secondFromAtom1)) {
+        auto otherDir = (firstFromAtom1->getBondDir() == Bond::ENDUPRIGHT)
+                            ? Bond::ENDDOWNRIGHT
+                            : Bond::ENDUPRIGHT;
+        secondFromAtom1->setBondDir(otherDir);
+      } else {
+        secondFromAtom1->setBondDir(firstFromAtom1->getBondDir());
+      }
     }
     bondDirCounts[secondFromAtom1->getIdx()] += 1;
     atomDirCounts[atom1->getIdx()] += 1;
@@ -420,6 +464,7 @@ void canonicalizeDoubleBond(Bond *dblBond, INT_VECT &bondVisitOrders,
   //               it)
   // That means that the direction of the bond from atom 3->4 needs to be set
   // when the bond from 2->3 is set.
+  // Issue2023: But only if 3->4 doesn't have a direction yet?
   //
   // I believe we only need to worry about this for the bonds from atom2.
   const Atom *atom3 = firstFromAtom2->getOtherAtom(atom2);
@@ -438,7 +483,8 @@ void canonicalizeDoubleBond(Bond *dblBond, INT_VECT &bondVisitOrders,
       }
       atomBonds.first++;
     }
-    if (dblBondPresent && otherAtom3Bond) {
+    if (dblBondPresent && otherAtom3Bond &&
+        otherAtom3Bond->getBondDir() == Bond::NONE) {
       // std::cerr<<"set!"<<std::endl;
       otherAtom3Bond->setBondDir(firstFromAtom2->getBondDir());
       bondDirCounts[otherAtom3Bond->getIdx()] += 1;
@@ -1036,7 +1082,7 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
       if (msI.obj.bond->getStereoAtoms().size() >= 2) {
         Canon::canonicalizeDoubleBond(msI.obj.bond, bondVisitOrders,
                                       atomVisitOrders, bondDirCounts,
-                                      atomDirCounts);
+                                      atomDirCounts, molStack);
       } else {
         // bad stereo spec:
         msI.obj.bond->setStereo(Bond::STEREONONE);
