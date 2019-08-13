@@ -1,3 +1,37 @@
+# Release_2019.03.4
+(Changes relative to Release_2019.03.3)
+
+## Acknowledgements:
+Jason Biggs, Lester Hedges, Brian Kelley, Noel O'Boyle, Ricardo
+Rodriguez Schmidt, Peter St. John, Amol Thakkar, Paolo Tosco, Riccardo
+Vianello
+
+## Bug Fixes:
+  - Atom index out of range error
+ (github #1868 from A-Thakkar)
+  - Incorrect cis/trans stereo symbol for conjugated ring
+ (github #2023 from baoilleach)
+  - Thread safety cleanups in the MMFF code
+ (github #2511 from greglandrum)
+  - CMake Error: Wrap directories being used when python build is turned off
+ (github #2516 from jasondbiggs)
+  - - fixes ResonanceMolSupplier bug in perceiving conjugated groups
+ (github #2517 from ptosco)
+  - update expected SVG output in cartridge tests
+ (github #2520 from greglandrum)
+  - fix to SDWriter docs
+ (github #2521 from pstjohn)
+  - getAtomNeighbors() and getAtomBonds() not in SWIG wrappers.
+ (github #2532 from greglandrum)
+  - Default sanitizerxn doesn't aromatize if possible
+ (github #2547 from bp-kelley)
+  - Chem.rdFMCS.FindMCS hangs for certain ligand pairs
+ (github #2581 from lohedges)
+  - fix the inclusion path for the targets file (#2584)
+ (github #2589 from rvianello)
+  - Fix inocuous typo/bug in Dative bond matching
+ (github #2593 from ricrogz)
+
 # Release_2019.03.3
 (Changes relative to Release_2019.03.2)
 
