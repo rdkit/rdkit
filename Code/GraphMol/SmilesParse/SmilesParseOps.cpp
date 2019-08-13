@@ -9,6 +9,7 @@
 //
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
+#include <GraphMol/Canon.h>
 #include "SmilesParse.h"
 #include "SmilesParseOps.h"
 #include <list>
@@ -243,59 +244,13 @@ void _invChiralRingAtomWithHs(Atom *atom) {
     atom->invertChirality();
   }
 }
-typedef std::pair<size_t, size_t> SIZET_PAIR;
+typedef std::pair<size_t, int> SIZET_PAIR;
 typedef std::pair<int, int> INT_PAIR;
 template <typename T>
 bool operator<(const std::pair<T, T> &p1, const std::pair<T, T> &p2) {
   return p1.first < p2.first;
 }
-namespace {
-bool isUnsaturated(const Atom *atom, const RWMol *mol) {
-  ROMol::OEDGE_ITER beg, end;
-  boost::tie(beg, end) = mol->getAtomBonds(atom);
-  while (beg != end) {
-    const Bond *bond = (*mol)[*beg];
-    ++beg;
-    if (bond->getBondType() != Bond::SINGLE) return true;
-  }
-  return false;
-}
 
-bool hasSingleHQuery(const Atom::QUERYATOM_QUERY *q) {
-  // list queries are series of nested ors of AtomAtomicNum queries
-  PRECONDITION(q, "bad query");
-  bool res = false;
-  std::string descr = q->getDescription();
-  if (descr == "AtomAnd") {
-    for (auto cIt = q->beginChildren(); cIt != q->endChildren(); ++cIt) {
-      std::string descr = (*cIt)->getDescription();
-      if (descr == "AtomHCount") {
-        if (!(*cIt)->getNegation() &&
-            ((ATOM_EQUALS_QUERY *)(*cIt).get())->getVal() == 1) {
-          return true;
-        }
-        return false;
-      } else if (descr == "AtomAnd") {
-        res = hasSingleHQuery((*cIt).get());
-        if (res) return true;
-      }
-    }
-  }
-  return res;
-}
-
-bool atomHasExplicitHs(const Atom *atom) {
-  if (atom->getNumExplicitHs()) return true;
-  if (atom->hasQuery()) {
-    // the SMARTS [C@@H] produces an atom with a H query, but we also
-    // need to treat this like an explicit H for chirality purposes
-    // This was Github #1489
-    bool res = hasSingleHQuery(atom->getQuery());
-    return res;
-  }
-  return false;
-}
-}  // end of anonymous namespace
 void AdjustAtomChiralityFlags(RWMol *mol) {
   PRECONDITION(mol, "no molecule");
   for (RWMol::AtomIterator atomIt = mol->beginAtoms();
@@ -392,11 +347,10 @@ void AdjustAtomChiralityFlags(RWMol *mol) {
       //      C[S@]2(=O).Cl2 into the same bin (was github #760). We detect
       //      those cases by looking for unsaturated atoms
       //
-      if ((*atomIt)->getDegree() == 3 &&
-          (((*atomIt)->getNumExplicitHs() &&
-            (*atomIt)->hasProp(common_properties::_SmilesStart)) ||
-           (!atomHasExplicitHs(*atomIt) && ringClosures.size() == 1 &&
-            !isUnsaturated(*atomIt, mol)))) {
+      if (Canon::chiralAtomNeedsTagInversion(
+              *mol, *atomIt,
+              (*atomIt)->hasProp(common_properties::_SmilesStart),
+              ringClosures.size())) {
         ++nSwaps;
       }
       // std::cerr << "nswaps " << (*atomIt)->getIdx() << " " << nSwaps
@@ -494,13 +448,15 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
               bookmarkIt->first % atom1->getIdx();
           std::string msg = fmt.str();
           ReportParseError(msg.c_str(), true);
-	} else if (mol->getBondBetweenAtoms(atom1->getIdx(), (*atomIt)->getIdx()) != nullptr) {
+        } else if (mol->getBondBetweenAtoms(atom1->getIdx(),
+                                            (*atomIt)->getIdx()) != nullptr) {
           auto fmt =
               boost::format{
-                  "ring closure %1% duplicates bond between atom %2% and atom %3%"} %
-	    bookmarkIt->first % atom1->getIdx() % (*atomIt)->getIdx();
+                  "ring closure %1% duplicates bond between atom %2% and atom "
+                  "%3%"} %
+              bookmarkIt->first % atom1->getIdx() % (*atomIt)->getIdx();
           std::string msg = fmt.str();
-          ReportParseError(msg.c_str(), true);	  
+          ReportParseError(msg.c_str(), true);
         } else if (atomIt != atomsEnd) {
           // we actually found an atom, so connect it to the first
           Atom *atom2 = *atomIt;
