@@ -57,7 +57,7 @@ TEST_CASE("SKIP_IF_ALL_MATCH") {
   }
 }
 
-TEST_CASE("symmetry in the uncharger") {
+TEST_CASE("symmetry in the uncharger", "uncharger") {
   SECTION("case 1") {
     auto m = "C[N+](C)(C)CC(C(=O)[O-])CC(=O)[O-]"_smiles;
     REQUIRE(m);
@@ -91,7 +91,7 @@ TEST_CASE("symmetry in the uncharger") {
   }
 }
 
-TEST_CASE("uncharger bug with duplicates") {
+TEST_CASE("uncharger bug with duplicates", "uncharger") {
   SECTION("case 1") {
     auto m = "[NH3+]CC([O-])C[O-]"_smiles;
     REQUIRE(m);
@@ -130,7 +130,7 @@ TEST_CASE("uncharger bug with duplicates") {
 
 TEST_CASE(
     "github #2411: MolStandardize: FragmentRemover should not sanitize "
-    "fragments ") {
+    "fragments") {
   SECTION("demo") {
     std::string smi = "CN(C)(C)C.Cl";
     bool debugParse = false;
@@ -147,7 +147,7 @@ TEST_CASE(
 
 TEST_CASE(
     "github #2452: incorrectly removing charge from boron anions"
-    "fragments ") {
+    "fragments,uncharger") {
   SECTION("demo") {
     auto m = "C[B-](C)(C)C"_smiles;
     REQUIRE(m);
@@ -169,5 +169,21 @@ TEST_CASE(
     REQUIRE(outm);
     CHECK(outm->getAtomWithIdx(1)->getFormalCharge() == 0);
     CHECK(MolToSmiles(*outm) == "CB(C)C");
+  }
+}
+
+TEST_CASE("github #2602: Uncharger ignores dications", "uncharger") {
+  SECTION("demo") {
+    auto m = "[O-]CCC[O-].[Ca+2]"_smiles;
+    REQUIRE(m);
+    bool canonicalOrdering = true;
+
+    MolStandardize::Uncharger uncharger(canonicalOrdering);
+    std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
+    REQUIRE(outm);
+    CHECK(outm->getAtomWithIdx(5)->getFormalCharge() == 2);
+    CHECK(outm->getAtomWithIdx(0)->getFormalCharge() == -1);
+    CHECK(outm->getAtomWithIdx(4)->getFormalCharge() == -1);
+    CHECK(MolToSmiles(*outm) == "[Ca+2].[O-]CCC[O-]");
   }
 }

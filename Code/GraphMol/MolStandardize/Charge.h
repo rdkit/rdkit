@@ -13,8 +13,8 @@
 
 */
 #include <RDGeneral/export.h>
-#ifndef __RD_CHARGE_H__
-#define __RD_CHARGE_H__
+#ifndef RD_CHARGE_H
+#define RD_CHARGE_H
 
 #include "MolStandardize.h"
 #include <Catalogs/Catalog.h>
@@ -116,7 +116,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Uncharger {
  private:
   bool df_canonicalOrdering = true;
   std::shared_ptr<ROMol> pos_h;
-  std::shared_ptr<ROMol> pos_quat;
+  std::shared_ptr<ROMol> pos_noh;
   std::shared_ptr<ROMol> neg;
   std::shared_ptr<ROMol> neg_acid;
 };  // Uncharger class

@@ -253,13 +253,13 @@ std::pair<unsigned int, std::vector<unsigned int>> *Reionizer::weakestIonized(
 
 Uncharger::Uncharger()
     : pos_h(SmartsToMol("[+!H0!$(*~[-])]")),
-      pos_quat(SmartsToMol("[+H0!$(*~[-])]")),
+      pos_noh(SmartsToMol("[+,+2,+3,+4;H0;!$(*~[-])]")),
       neg(SmartsToMol("[-!$(*~[+H0])]")),
       neg_acid(SmartsToMol("[$([O-][C,P,S]=O),$([n-]1nnnc1),$(n1[n-]nnc1)]")){};
 
 Uncharger::Uncharger(const Uncharger &other) {
   pos_h = other.pos_h;
-  pos_quat = other.pos_quat;
+  pos_noh = other.pos_noh;
   neg = other.neg;
   neg_acid = other.neg_acid;
 };
@@ -277,7 +277,11 @@ ROMol *Uncharger::uncharge(const ROMol &mol) {
 
   // Get atom ids for matches
   SubstructMatch(*omol, *(this->pos_h), p_matches);
-  unsigned int q_matched = SubstructMatch(*omol, *(this->pos_quat), q_matches);
+  SubstructMatch(*omol, *(this->pos_noh), q_matches);
+  unsigned int q_matched = 0;
+  for (const auto &match : q_matches) {
+    q_matched += omol->getAtomWithIdx(match[0].second)->getFormalCharge();
+  }
   unsigned int n_matched = SubstructMatch(*omol, *(this->neg), n_matches);
   unsigned int a_matched = SubstructMatch(*omol, *(this->neg_acid), a_matches);
 
