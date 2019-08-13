@@ -4247,6 +4247,21 @@ void testGithub2556() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub1028() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing github issue #1028: Alternating canonical SMILES for ring with chiral N"
+                       << std::endl;
+
+    const std::string smi = "C[N@]1C[C@@H](O)C1";
+    for(int i = 0; i < 3; ++i) {
+      const auto mol = std::unique_ptr<ROMol>(SmilesToMol(smi));
+      TEST_ASSERT(mol);
+      const std::string out = MolToSmiles(*mol);
+      TEST_ASSERT(out == smi);
+    }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -4324,4 +4339,5 @@ int main(int argc, char *argv[]) {
   testGithub2556();
 #endif
   testdoRandomSmileGeneration();
+  testGithub1028();
 }
