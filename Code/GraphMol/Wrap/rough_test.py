@@ -3471,13 +3471,8 @@ CAS<~>
       list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(4, 8), breakTies=True)),
       [-1, -1, -1, -1, 4, 6, 4, 6])
 
-    for atom in mol.GetAtoms():
-      atom.SetIsotope(atom.GetIdx())
-
-    order1 = list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, 4), breakTies=False, includeIsotopes=True))
-    order2 = list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(4, 8), breakTies=False, includeIsotopes=False))
-    self.assertNotEqual(order1[:4], order2[4:])
     
+
 
   def test93RWMolsAsROMol(self):
     """ test the RWMol class as a proper ROMol
@@ -5521,6 +5516,31 @@ H      0.635000    0.635000    0.635000
 
     self.assertEqual(Chem.MolToXYZBlock(mol), xyzblock_expected)
 
+  def testGithub2611(self):
+    mol = Chem.MolFromSmiles('ONCS.ONCS')
+    for atom in mol.GetAtoms():
+      atom.SetIsotope(atom.GetIdx())
+    
+    order1 = list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, 4), breakTies=False, includeIsotopes=True))
+    order2 = list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(4, 8), breakTies=False, includeIsotopes=False))
+    self.assertNotEqual(order1[:4], order2[4:])
+
+  
+    for smi in ['ONCS.ONCS', 'F[C@@H](Br)[C@H](F)Cl']:
+      mol = Chem.MolFromSmiles(smi)
+      for atom in mol.GetAtoms():
+        atom.SetIsotope(atom.GetIdx())
+
+        for iso,chiral in [(True,True),(True,False),(False,True), (False,False)]:
+          order1 = list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, mol.GetNumAtoms()), bondsToUse=range(0,mol.GetNumBonds()),
+                                                          breakTies=False, includeIsotopes=iso, includeChirality=chiral))
+          order2 = list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, mol.GetNumAtoms()), bondsToUse=range(0,mol.GetNumBonds()),
+                                                          breakTies=True, includeIsotopes=iso, includeChirality=chiral))
+          order3 = list(Chem.CanonicalRankAtoms(mol, breakTies=False, includeIsotopes=iso, includeChirality=chiral))
+          order4 = list(Chem.CanonicalRankAtoms(mol, breakTies=True, includeIsotopes=iso, includeChirality=chiral))
+          self.assertEqual(order1,order3)
+          self.assertEqual(order2,order4)
+    
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
