@@ -316,8 +316,9 @@ std::vector<int> CanonicalRankAtomsInFragment(const ROMol &mol,
                                               python::object atomsToUse,
                                               python::object bondsToUse,
                                               python::object atomSymbols,
-                                              python::object bondSymbols,
-                                              bool breakTies = true)
+                                              bool breakTies = true,
+					      bool includeChirality = true,
+					      bool includeIsotopes = true)
 
 {
   std::unique_ptr<std::vector<int>> avect =
@@ -329,13 +330,8 @@ std::vector<int> CanonicalRankAtomsInFragment(const ROMol &mol,
       pythonObjectToVect(bondsToUse, static_cast<int>(mol.getNumBonds()));
   std::unique_ptr<std::vector<std::string>> asymbols =
       pythonObjectToVect<std::string>(atomSymbols);
-  std::unique_ptr<std::vector<std::string>> bsymbols =
-      pythonObjectToVect<std::string>(bondSymbols);
   if (asymbols.get() && asymbols->size() != mol.getNumAtoms()) {
     throw_value_error("length of atom symbol list != number of atoms");
-  }
-  if (bsymbols.get() && bsymbols->size() != mol.getNumBonds()) {
-    throw_value_error("length of bond symbol list != number of bonds");
   }
 
   boost::dynamic_bitset<> atoms(mol.getNumAtoms());
@@ -347,7 +343,7 @@ std::vector<int> CanonicalRankAtomsInFragment(const ROMol &mol,
 
   std::vector<unsigned int> ranks(mol.getNumAtoms());
   Canon::rankFragmentAtoms(mol, ranks, atoms, bonds, asymbols.get(),
-                           bsymbols.get(), breakTies);
+                           breakTies, includeChirality, includeIsotopes);
 
   std::vector<int> resRanks(mol.getNumAtoms());
   // set unused ranks to -1 for the Python interface
@@ -1302,8 +1298,6 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       will be included.\n\
     - atomSymbols : (optional) a list with the symbols to use for the atoms\n\
       in the SMILES. This should have be mol.GetNumAtoms() long.\n\
-    - bondSymbols : (optional) a list with the symbols to use for the bonds\n\
-      in the SMILES. This should have be mol.GetNumBonds() long.\n\
     - breakTies: (optional) force breaking of ranked ties\n\
 \n\
   RETURNS:\n\
@@ -1313,7 +1307,9 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
   python::def("CanonicalRankAtomsInFragment", CanonicalRankAtomsInFragment,
               (python::arg("mol"), python::arg("atomsToUse"),
                python::arg("bondsToUse") = 0, python::arg("atomSymbols") = 0,
-               python::arg("bondSymbols") = 0, python::arg("breakTies") = true),
+               python::arg("breakTies") = true,
+	       python::arg("includeChirality") = true,
+               python::arg("includeIsotopes") = true),
               docString.c_str());
 
   python::def(
