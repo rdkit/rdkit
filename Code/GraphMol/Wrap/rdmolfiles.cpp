@@ -1299,6 +1299,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     - atomSymbols : (optional) a list with the symbols to use for the atoms\n\
       in the SMILES. This should have be mol.GetNumAtoms() long.\n\
     - breakTies: (optional) force breaking of ranked ties\n\
+    - includeChirality: (optional) use chiral information when computing rank [default=True]\n\
+    - includeIsotopes: (optional) use isotope information when computing rank [default=True]\n\
 \n\
   RETURNS:\n\
 \n\
