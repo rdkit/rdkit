@@ -226,3 +226,18 @@ TEST_CASE(
     CHECK(MolToSmiles(*outm) == "CCC[NH3+].F[B-](F)(F)F");
   }
 }
+
+TEST_CASE("github #2610: Uncharger incorrectly modifying a zwitterion.",
+          "uncharger") {
+  SECTION("demo") {
+    auto m = "C1=CC=CC[NH+]1-[O-]"_smiles;
+    REQUIRE(m);
+    bool canonicalOrdering = true;
+    MolStandardize::Uncharger uncharger(canonicalOrdering);
+    std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
+    REQUIRE(outm);
+    CHECK(outm->getAtomWithIdx(5)->getFormalCharge() == 1);
+    CHECK(outm->getAtomWithIdx(6)->getFormalCharge() == -1);
+    CHECK(MolToSmiles(*outm) == "[O-][NH+]1C=CC=CC1");
+  }
+}

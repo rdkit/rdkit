@@ -254,7 +254,7 @@ std::pair<unsigned int, std::vector<unsigned int>> *Reionizer::weakestIonized(
 Uncharger::Uncharger()
     : pos_h(SmartsToMol("[+,+2,+3,+4;!H0!$(*~[-])]")),
       pos_noh(SmartsToMol("[+,+2,+3,+4;H0;!$(*~[-])]")),
-      neg(SmartsToMol("[-!$(*~[+,+2,+3,+4;H0])]")),
+      neg(SmartsToMol("[-!$(*~[+,+2,+3,+4])]")),
       neg_acid(SmartsToMol("[$([O-][C,P,S]=O),$([n-]1nnnc1),$(n1[n-]nnc1)]")){};
 
 Uncharger::Uncharger(const Uncharger &other) {
