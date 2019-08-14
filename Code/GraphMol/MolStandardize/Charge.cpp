@@ -252,9 +252,9 @@ std::pair<unsigned int, std::vector<unsigned int>> *Reionizer::weakestIonized(
 }
 
 Uncharger::Uncharger()
-    : pos_h(SmartsToMol("[+!H0!$(*~[-])]")),
+    : pos_h(SmartsToMol("[+,+2,+3,+4;!H0!$(*~[-])]")),
       pos_noh(SmartsToMol("[+,+2,+3,+4;H0;!$(*~[-])]")),
-      neg(SmartsToMol("[-!$(*~[+H0])]")),
+      neg(SmartsToMol("[-!$(*~[+,+2,+3,+4;H0])]")),
       neg_acid(SmartsToMol("[$([O-][C,P,S]=O),$([n-]1nnnc1),$(n1[n-]nnc1)]")){};
 
 Uncharger::Uncharger(const Uncharger &other) {
@@ -381,24 +381,36 @@ ROMol *Uncharger::uncharge(const ROMol &mol) {
       }
     }
   }
-  // Neutralize positive charges
-  std::vector<unsigned int> p_idx_matches;
-  for (const auto &match : p_matches) {
-    for (const auto &pair : match) {
-      p_idx_matches.push_back(pair.second);
-    }
+
+  // Neutralize cations until there is no longer a net charge remaining:
+  int netCharge = 0;
+  for (const auto &at : omol->atoms()) {
+    netCharge += at->getFormalCharge();
   }
-  for (const auto &idx : p_idx_matches) {
-    Atom *atom = omol->getAtomWithIdx(idx);
-    if (!atom->getNumExplicitHs()) {
-      // atoms from places like Mol blocks are normally missing explicit Hs:
-      atom->setNumExplicitHs(atom->getTotalNumHs());
+
+  if (netCharge > 0) {
+    // Neutralize positive charges
+    std::vector<unsigned int> p_idx_matches;
+    for (const auto &match : p_matches) {
+      for (const auto &pair : match) {
+        p_idx_matches.push_back(pair.second);
+      }
     }
-    atom->setNoImplicit(true);
-    while (atom->getFormalCharge() > 0 && atom->getNumExplicitHs() > 0) {
-      atom->setNumExplicitHs(atom->getTotalNumHs() - 1);
-      atom->setFormalCharge(atom->getFormalCharge() - 1);
-      BOOST_LOG(rdInfoLog) << "Removed positive charge.\n";
+    for (const auto &idx : p_idx_matches) {
+      Atom *atom = omol->getAtomWithIdx(idx);
+      if (!atom->getNumExplicitHs()) {
+        // atoms from places like Mol blocks are normally missing explicit Hs:
+        atom->setNumExplicitHs(atom->getTotalNumHs());
+      }
+      atom->setNoImplicit(true);
+      while (atom->getFormalCharge() > 0 && atom->getNumExplicitHs() > 0 &&
+             netCharge > 0) {
+        atom->setNumExplicitHs(atom->getTotalNumHs() - 1);
+        atom->setFormalCharge(atom->getFormalCharge() - 1);
+        --netCharge;
+        BOOST_LOG(rdInfoLog) << "Removed positive charge.\n";
+      }
+      if (!netCharge) break;
     }
   }
   return omol;
