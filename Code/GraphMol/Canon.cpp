@@ -53,8 +53,10 @@ bool hasSingleHQuery(const Atom::QUERYATOM_QUERY *q) {
   return res;
 }
 
-bool atomHasExplicitHs(const Atom *atom) {
-  if (atom->getNumExplicitHs()) return true;
+bool atomHasFourthValence(const Atom *atom) {
+  if (atom->getNumExplicitHs() == 1 || atom->getImplicitValence() == 1) {
+    return true;
+  }
   if (atom->hasQuery()) {
     // the SMARTS [C@@H] produces an atom with a H query, but we also
     // need to treat this like an explicit H for chirality purposes
@@ -72,7 +74,7 @@ bool chiralAtomNeedsTagInversion(const RDKit::ROMol &mol,
   PRECONDITION(atom, "bad atom");
   return atom->getDegree() == 3 &&
          ((isAtomFirst && atom->getNumExplicitHs() == 1) ||
-          (!atomHasExplicitHs(atom) && numClosures == 1 &&
+          (!atomHasFourthValence(atom) && numClosures == 1 &&
            !isUnsaturated(atom, mol)));
 }
 

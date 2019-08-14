@@ -8,19 +8,25 @@ it's intended to be shallow, but broad
 
 """
 
-import os, sys, tempfile, gzip, gc
-import unittest, doctest
-from rdkit import RDConfig, rdBase
-from rdkit import DataStructs
-from rdkit import Chem
-import rdkit.Chem.rdDepictor
-from rdkit.Chem import rdqueries
-
-from rdkit import __version__
-
+import doctest
+import gc
+import gzip
 # Boost functions are NOT found by doctest, this "fixes" them
 #  by adding the doctests to a fake module
 import importlib.util
+import os
+import sys
+import tempfile
+import unittest
+
+import rdkit.Chem.rdDepictor
+from rdkit import Chem
+from rdkit import DataStructs
+from rdkit import RDConfig
+from rdkit import __version__
+from rdkit import rdBase
+from rdkit.Chem import rdqueries
+
 spec = importlib.util.spec_from_loader("TestReplaceCore", loader=None)
 TestReplaceCore = importlib.util.module_from_spec(spec)
 code = """
@@ -3771,7 +3777,7 @@ CAS<~>
     helm = 'PEPTIDE1{C.Y.I.Q.N.C.P.L.G}$$$$'
     seq = 'CYIQNCPLG'
     fasta = '>\nCYIQNCPLG\n'
-    smi = 'CC[C@H](C)[C@H](NC(=O)[C@H](Cc1ccc(O)cc1)NC(=O)[C@@H](N)CS)C(=O)N[C@@H](CCC(N)=O)C(=O)N[C@@H](CC(N)=O)C(=O)N[C@@H](CS)C(=O)N1CCC[C@@H]1C(=O)N[C@@H](CC(C)C)C(=O)NCC(=O)O'
+    smi = 'CC[C@H](C)[C@H](NC(=O)[C@H](Cc1ccc(O)cc1)NC(=O)[C@@H](N)CS)C(=O)N[C@@H](CCC(N)=O)C(=O)N[C@@H](CC(N)=O)C(=O)N[C@@H](CS)C(=O)N1CCC[C@H]1C(=O)N[C@@H](CC(C)C)C(=O)NCC(=O)O'
 
     m = Chem.MolFromSequence(seq)
     self.assertTrue(m is not None)
