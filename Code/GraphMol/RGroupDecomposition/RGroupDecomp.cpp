@@ -105,6 +105,34 @@ std::map<int, Atom *> getRlabels(const RWMol &mol) {
   return atoms;
 }
 
+std::map<int,std::set<int>> getSymmetricAtoms(const RWMol &mol) {
+  const bool uniquify = false; // need all matches
+  const bool useChirality = true;
+  const bool useQueryQueryMatches = false;
+  const bool recursionPossible = true;
+  const bool maxMatches = 1000;
+
+  std::vector<MatchVectType> matches;
+  SubstructMatch(mol, mol,
+		 matches,
+		 uniquify,
+		 recursionPossible,
+		 useChirality,
+		 useQueryQueryMatches,
+		 maxMatches);
+  std::map<int,std::set<int>> symmetries;
+  
+  for (auto &match:matches) {
+    for(auto &matchpair:match) {
+      if (matchpair.first != matchpair.second) {
+	symmetries[matchpair.first].insert(matchpair.second);
+	symmetries[matchpair.second].insert(matchpair.first);
+      }
+    }
+  }
+  return symmetries;
+}
+  
 void clearInputLabels(Atom *atom) {
   // atom->setIsotope(0); Don't want to clear deuterium and things like that if
   // they aren't labels
@@ -323,8 +351,7 @@ struct RGroupData {
   boost::shared_ptr<RWMol> combinedMol;
   std::vector<boost::shared_ptr<ROMol>> mols;  // All the mols in the rgroup
   std::set<std::string> smilesSet;             // used for rgroup equivalence
-  std::string
-      smiles;  // smiles for all the mols in the rgroup (with attachments)
+  std::string smiles;  // smiles for all the mols in the rgroup (with attachments)
   std::set<int> attachments;  // attachment points
   bool labelled;
 
@@ -667,12 +694,48 @@ struct RGroupDecompData {
     permutation = std::vector<size_t>(matches.size(), 0);
   }
 
+  // Check if the all h labels have any symmetry in common with the
+  //  remaining labels.
+  void remap_symmetry_labels(std::vector<RGroupMatch> &results,
+			     const std::set<int> &hs_dropped) const {
+    // if any of the dropped h labels were user supplied,
+    //  we should try and remap them
+    
+    
+    std::set<int> processed_core;
+    bool has_symmetry = true;
+    for (auto &position : results) {
+      int core_idx = position.core_idx;
+      if(processed_core.find(core_idx) != processed_core.end()) {
+	processed_core.insert(core_idx);
+	auto core = cores.find(core_idx);
+	auto symm = getSymmetricAtoms(core->second);
+	if(!symm.size()){
+	  has_symmetry = false;
+	  break;
+	}
+
+	// if we have a user supplied label that was dropped
+	//  that has symmetry one that was, we can
+	//  swap the labels.
+	for( auto label_to_atom : getRlabels(core->second) ) {
+	  if (label_to_atom.first > 0 &&
+	      hs_dropped.find(label_to_atom.first) != hs_dropped.end()) {
+	  }
+	}
+      }
+    }
+
+    if(has_symmetry) {
+    }
+  }
+
   // Return the RGroups with the current "best" permutation
   //  of matches.
   std::vector<RGroupMatch> GetCurrentBestPermutation() const {
     const bool removeAllHydrogenRGroups = params.removeAllHydrogenRGroups;
 
-    std::vector<RGroupMatch> results;  // std::map<int, RGroup> > result;
+    std::vector<RGroupMatch> results;
     for (size_t i = 0; i < permutation.size(); ++i) {
       CHECK_INVARIANT(i < matches.size(),
                       "Best Permutation mol idx out of range");
@@ -681,47 +744,61 @@ struct RGroupDecompData {
       results.push_back(matches[i][permutation[i]]);
     }
 
-    if (removeAllHydrogenRGroups) {
-      // if a label is all hydrogens, remove it
 
-      // This logic is a bit tricky, find all labels that have common cores
-      //  and analyze those sets independently.
-      //  i.e. if core 1 doesn't have R1 then don't analyze it in when looking
-      //  at label 1
-      std::map<int, std::set<int>> labelCores;  // map from label->cores
-      for (auto &position : results) {
-        int core_idx = position.core_idx;
-        if (labelCores.find(core_idx) == labelCores.end()) {
-          auto core = cores.find(core_idx);
-          if (core != cores.end()) {
-            for (auto rlabels : getRlabels(core->second)) {
-              int rlabel = rlabels.first;
-              labelCores[rlabel].insert(core_idx);
-            }
-          }
-        }
-      }
-
-      for (int label : labels) {
-        bool allH = true;
-        for (auto &position : results) {
-          R_DECOMP::const_iterator rgroup = position.rgroups.find(label);
-          bool labelHasCore = labelCores[label].find(position.core_idx) !=
-                              labelCores[label].end();
-          if (labelHasCore && (rgroup == position.rgroups.end() ||
-                               !rgroup->second->isHydrogen())) {
-            allH = false;
-            break;
-          }
-        }
-
-        if (allH) {
-          for (auto &position : results) {
-            position.rgroups.erase(label);
-          }
-        }
+    // if a label is all hydrogens, we need to make sure this wasn't caused
+    // by core symmetry issues and the greedy nature of the search.
+    //  we also optionally remove it if removeMatchOnlyAtRGroups is set
+    
+    // This logic is a bit tricky, find all labels that have common cores
+    //  and analyze those sets independently.
+    //  i.e. if core 1 doesn't have R1 then don't analyze it in when looking
+    //  at label 1
+    std::map<int, std::set<int>> labelCores;  // map from label->cores
+    for (auto &rgroups_for_mol : results) {
+      int core_idx = rgroups_for_mol.core_idx;
+      if (labelCores.find(core_idx) == labelCores.end()) {
+	auto core = cores.find(core_idx);
+	if (core != cores.end()) {
+	  for (auto rlabels : getRlabels(core->second)) {
+	    int rlabel = rlabels.first;
+	    labelCores[rlabel].insert(core_idx);
+	  }
+	}
       }
     }
+
+    std::set<int> labels_dropped_because_they_were_all_h;
+    bool foundAllHs = false;
+    for (int label : labels) {
+      bool allH = true;
+      for (auto &rgroups_for_mol : results) {
+	R_DECOMP::const_iterator rgroup = rgroups_for_mol.rgroups.find(label);
+	bool labelHasCore = labelCores[label].find(rgroups_for_mol.core_idx) !=
+	  labelCores[label].end();
+	if (labelHasCore && (rgroup == rgroups_for_mol.rgroups.end() ||
+			     !rgroup->second->isHydrogen())) {
+	  allH = false;
+	  break;
+	}
+      }
+      
+      if (allH) {
+	foundAllHs = true;
+	labels_dropped_because_they_were_all_h.insert(label);
+	if(removeAllHydrogenRGroups) {
+	  for (auto &rgroups_for_mol : results) {
+	    rgroups_for_mol.rgroups.erase(label);
+	  }
+	}
+      }
+    }
+
+    if (foundAllHs) {
+      std::cerr << "Dropped some H labels, let's see if they should be relabelled" <<
+	std::endl;
+      remap_symmetry_labels(results, labels_dropped_because_they_were_all_h);
+    }
+    
     return results;
   }
 
@@ -1005,7 +1082,9 @@ int RGroupDecomposition::add(const ROMol &inmol) {
       const bool uniquify = false;
       const bool recursionPossible = false;
       const bool useChirality = true;
-      SubstructMatch(mol, coreIt->second, tmatches, uniquify, recursionPossible,
+      SubstructMatch(mol, coreIt->second,
+		     tmatches,
+		     uniquify, recursionPossible,
                      useChirality);
     }
 
