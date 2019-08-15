@@ -45,7 +45,6 @@
 %}
 
 %template(Int_String_Map) std::map< int, std::string >;
-%template(DrawColour) boost::tuple<float,float,float>;
 
 #ifdef SWIGJAVA
 %template(ColourPalette) std::map< int, RDKit::DrawColour >;

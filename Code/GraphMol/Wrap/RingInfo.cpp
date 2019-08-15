@@ -21,20 +21,36 @@ namespace {
 using namespace RDKit;
 python::object atomRings(const RingInfo *self) {
   python::list res;
-  VECT_INT_VECT rings = self->atomRings();
-  for (auto &ring : rings) {
+  for (const auto &ring : self->atomRings()) {
     res.append(python::tuple(ring));
   }
   return python::tuple(res);
 }
 python::object bondRings(const RingInfo *self) {
   python::list res;
-  VECT_INT_VECT rings = self->bondRings();
-  for (auto &ring : rings) {
+  for (const auto &ring : self->bondRings()) {
     res.append(python::tuple(ring));
   }
   return python::tuple(res);
 }
+
+#ifdef RDK_USE_URF
+python::object atomRingFamilies(const RingInfo *self) {
+  python::list res;
+  for (const auto &ring : self->atomRingFamilies()) {
+    res.append(python::tuple(ring));
+  }
+  return python::tuple(res);
+}
+python::object bondRingFamilies(const RingInfo *self) {
+  python::list res;
+  for (const auto &ring : self->bondRingFamilies()) {
+    res.append(python::tuple(ring));
+  }
+  return python::tuple(res);
+}
+#endif
+
 void addRing(RingInfo *self,python::object atomRing, python::object bondRing){
   unsigned int nAts = python::extract<unsigned int>(atomRing.attr("__len__")());
   unsigned int nBnds = python::extract<unsigned int>(bondRing.attr("__len__")());
@@ -65,6 +81,13 @@ struct ringinfo_wrapper {
         .def("NumRings", &RingInfo::numRings)
         .def("AtomRings", atomRings)
         .def("BondRings", bondRings)
+#ifdef RDK_USE_URF
+        .def("NumRingFamilies", &RingInfo::numRingFamilies)
+        .def("NumRelevantCycles", &RingInfo::numRelevantCycles)
+        .def("AtomRingFamilies", atomRingFamilies)
+        .def("BondRingFamilies", bondRingFamilies)
+        .def("AreRingFamiliesInitialized", &RingInfo::areRingFamiliesInitialized)
+#endif
         .def("AddRing", addRing, (python::arg("self"),python::arg("atomIds"),python::arg("bondIds")),
          "Adds a ring to the set. Be very careful with this operation.");
   };

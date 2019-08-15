@@ -27,19 +27,19 @@ std::string DrawColourToSVG(const DrawColour &col) {
   res[0] = '#';
   unsigned int v;
   unsigned int i = 1;
-  v = int(255 * col.get<0>());
+  v = int(255 * col.r);
   if (v > 255)
     throw ValueErrorException(
         "elements of the color should be between 0 and 1");
   res[i++] = convert[v / 16];
   res[i++] = convert[v % 16];
-  v = int(255 * col.get<1>());
+  v = int(255 * col.g);
   if (v > 255)
     throw ValueErrorException(
         "elements of the color should be between 0 and 1");
   res[i++] = convert[v / 16];
   res[i++] = convert[v % 16];
-  v = int(255 * col.get<2>());
+  v = int(255 * col.b);
   if (v > 255)
     throw ValueErrorException(
         "elements of the color should be between 0 and 1");
@@ -151,7 +151,8 @@ void MolDraw2DSVG::drawLine(const Point2D &cds1, const Point2D &cds2) {
   if (d_activeClass != "") {
     d_os << "class='" << d_activeClass << "' ";
   }
-  d_os << "d='M " << c1.x << "," << c1.y << " " << c2.x << "," << c2.y << "' ";
+  d_os << "d='M " << c1.x << "," << c1.y << " L " << c2.x << "," << c2.y
+       << "' ";
   d_os << "style='fill:none;fill-rule:evenodd;stroke:" << col
        << ";stroke-width:" << width
        << "px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
@@ -193,18 +194,19 @@ void MolDraw2DSVG::drawPolygon(const std::vector<Point2D> &cds) {
   d_os << " " << c0.x << "," << c0.y;
   for (unsigned int i = 1; i < cds.size(); ++i) {
     Point2D ci = getDrawCoords(cds[i]);
-    d_os << " " << ci.x << "," << ci.y;
+    d_os << " L " << ci.x << "," << ci.y;
   }
-  d_os << " " << c0.x << "," << c0.y;
+  d_os << " Z";
   d_os << "' style='";
   if (fillPolys())
-    d_os << "fill:" << col << ";fill-rule:evenodd;";
+    d_os << "fill:" << col << ";fill-rule:evenodd;fill-opacity=" << colour().a
+         << ";";
   else
     d_os << "fill:none;";
 
   d_os << "stroke:" << col << ";stroke-width:" << width
-       << "px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       << dashString << "'";
+       << "px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:"
+       << colour().a << ";" << dashString << "'";
   d_os << " />\n";
 }
 

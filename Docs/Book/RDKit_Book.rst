@@ -170,8 +170,13 @@ Here's the (likely partial) list of extensions:
 Aromaticity
 -----------
 
- ``te`` (aromatic Te) is accepted
+``te`` (aromatic Te) is accepted. Here is an example with tellurophene-2-carboxylic acid:
 
+.. doctest::
+
+  >>> m = Chem.MolFromSmiles('OC(=O)c1[te]ccc1')
+  >>> m.GetAtomWithIdx(4).GetIsAromatic()
+  True
 
 Dative bonds
 ------------
@@ -182,23 +187,36 @@ Here's an example of a bipy-copper complex:
 
 .. doctest::
 
-  >>> bipycu = Chem.MolFromSmiles('c1cccn->2c1-c1n->3cccc1.[Pt]23(Cl)Cl')                                                     
-  >>> bipycu.GetBondBetweenAtoms(4,12).GetBondType()                                                                          
+  >>> bipycu = Chem.MolFromSmiles('c1cccn->2c1-c1n->3cccc1.[Cu]23(Cl)Cl')
+  >>> bipycu.GetBondBetweenAtoms(4,12).GetBondType()
   rdkit.Chem.rdchem.BondType.DATIVE
-  >>> Chem.MolToSmiles(bipycu)                                                                                                
-  'Cl[Pt]1(Cl)<-n2ccccc2-c2ccccn->12'
+  >>> Chem.MolToSmiles(bipycu)
+  'Cl[Cu]1(Cl)<-n2ccccc2-c2ccccn->12'
 
-Dative bonds have the special characteristic that they don't affect the valence on the start atom, but do affect 
-the end atom. So in this case, the N atoms involved in the dative bond have the valence of 3 that we expect from bipy, 
+Dative bonds have the special characteristic that they don't affect the valence on the start atom, but do affect
+the end atom. So in this case, the N atoms involved in the dative bond have the valence of 3 that we expect from bipy,
 while the Cu has a valence of 4:
 
 .. doctest::
 
-  >>> bipycu.GetAtomWithIdx(4).GetTotalValence()                                                                         
+  >>> bipycu.GetAtomWithIdx(4).GetTotalValence()
   3
-  >>> bipycu.GetAtomWithIdx(12).GetTotalValence()                                                                        
+  >>> bipycu.GetAtomWithIdx(12).GetTotalValence()
   4
 
+Ring closures
+------------
+
+``%(N)`` notation is supported for ring closures, where N is a single digit ``%(N)`` up to
+five digits ``%(NNNNN)``. Here is an example:
+
+.. doctest::
+
+  >>> m = Chem.MolFromSmiles('C%(1000)OC%(1000)')
+  >>> m.GetAtomWithIdx(0).IsInRing()
+  True
+  >>> m.GetAtomWithIdx(2).IsInRing()
+  True
 
 Specifying atoms by atomic number
 ---------------------------------
@@ -221,7 +239,7 @@ The features which are parsed include:
 - radicals
 - enhanced stereo (these are converted into ``StereoGroups``)
 
-The features which are written by :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmiles` 
+The features which are written by :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmiles`
 (note the specialized writer function) include:
 
 - atomic coordinates
@@ -233,13 +251,13 @@ The features which are written by :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmiles`
 
 .. doctest::
 
-  >>> m = Chem.MolFromSmiles('OC')                                                                                       
-  >>> m.GetAtomWithIdx(0).SetProp('p1','2')                                                                              
-  >>> m.GetAtomWithIdx(1).SetProp('p1','5')                                                                              
-  >>> m.GetAtomWithIdx(1).SetProp('p2','A1')                                                                             
-  >>> m.GetAtomWithIdx(0).SetProp('atomLabel','O1')                                                                      
-  >>> m.GetAtomWithIdx(1).SetProp('atomLabel','C2') 
-  >>> Chem.MolToCXSmiles(m)                                                                                              
+  >>> m = Chem.MolFromSmiles('OC')
+  >>> m.GetAtomWithIdx(0).SetProp('p1','2')
+  >>> m.GetAtomWithIdx(1).SetProp('p1','5')
+  >>> m.GetAtomWithIdx(1).SetProp('p2','A1')
+  >>> m.GetAtomWithIdx(0).SetProp('atomLabel','O1')
+  >>> m.GetAtomWithIdx(1).SetProp('atomLabel','C2')
+  >>> Chem.MolToCXSmiles(m)
   'CO |$C2;O1$,atomProp:0.p1.5:0.p2.A1:1.p1.2|'
 
 
@@ -305,10 +323,10 @@ Heteroatom neighbor queries
 
 Range queries
 -------------
-Ranges of values can be provided for many query types that expect numeric values. 
-The query types that currently support range queries are: 
+Ranges of values can be provided for many query types that expect numeric values.
+The query types that currently support range queries are:
 ``D``, ``h``, ``r``, ``R``, ``v``, ``x``, ``X``, ``z``, ``Z``
-  
+
 Here are some examples:
   - ``D{2-4}`` matches atoms that have between 2 and 4 (inclusive) explicit connections.
   - ``D{-3}`` matches atoms that have less than or equal to 3 explicit connections.
@@ -396,7 +414,7 @@ This is the approach that we took with the RDKit.
 
 Because it is sometimes useful to be able to count how many SSSR rings are present in the molecule, there is a GetSSSR function, but this only returns the SSSR count, not the potentially non-unique set of rings.
 
-For situations where you just care about knowing whether or not atoms/bonds are in rings, the RDKit provides the function 
+For situations where you just care about knowing whether or not atoms/bonds are in rings, the RDKit provides the function
 :py:func:`rdkit.Chem.rdmolops.FastFindRings`. This does a depth-first traversal of the molecule graph and identifies atoms and bonds that
 are in rings.
 
@@ -1118,9 +1136,9 @@ Atom Properties and SDF files
 
 *Note* This section describes functionality added in the `2019.03.1` release of the RDKit.
 
-By default the :py:class:`rdkit.Chem.rdmolfiles.SDMolSupplier` and :py:class:`rdkit.Chem.rdmolfiles.ForwardSDMolSupplier` classes 
+By default the :py:class:`rdkit.Chem.rdmolfiles.SDMolSupplier` and :py:class:`rdkit.Chem.rdmolfiles.ForwardSDMolSupplier` classes
 (``RDKit::SDMolSupplier`` and ``RDKit::ForwardMolSupplier`` in C++) can now recognize some molecular properties as property lists
-and them into atomic properties. Properties with names that start with ``atom.prop``, ``atom.iprop``, ``atom.dprop``, or ``atom.bprop`` 
+and them into atomic properties. Properties with names that start with ``atom.prop``, ``atom.iprop``, ``atom.dprop``, or ``atom.bprop``
 are converted to atomic properties of type string, int (64 bit), double, or bool respectively.
 
 Here's a sample block from an SDF that demonstrates all of the features, they are explained below::
@@ -1136,52 +1154,52 @@ Here's a sample block from an SDF that demonstrates all of the features, they ar
     2  3  1  0
     3  1  1  0
   M  END
-  >  <atom.dprop.PartialCharge>  (1) 
+  >  <atom.dprop.PartialCharge>  (1)
   0.008 -0.314 0.008
 
-  >  <atom.iprop.NumHeavyNeighbors>  (1) 
+  >  <atom.iprop.NumHeavyNeighbors>  (1)
   2 2 2
 
-  >  <atom.prop.AtomLabel>  (1) 
+  >  <atom.prop.AtomLabel>  (1)
   C1 N2 C3
 
-  >  <atom.bprop.IsCarbon>  (1) 
+  >  <atom.bprop.IsCarbon>  (1)
   1 0 1
 
-  >  <atom.prop.PartiallyMissing>  (1) 
+  >  <atom.prop.PartiallyMissing>  (1)
   one n/a three
 
-  >  <atom.iprop.PartiallyMissingInt>  (1) 
+  >  <atom.iprop.PartiallyMissingInt>  (1)
   [?] 2 2 ?
 
   $$$$
 
-Every atom property list should contain a number of space-delimited elements equal to the number of atoms. 
+Every atom property list should contain a number of space-delimited elements equal to the number of atoms.
 Missing values are, by default, indicated with the string ``n/a``. The missing value marker can be changed by beginning
-the property list with a value in square brackets. So, for example, the property ``PartiallyMissing`` is set to "one" 
+the property list with a value in square brackets. So, for example, the property ``PartiallyMissing`` is set to "one"
 for atom 0, "three" for atom 2, and is not set for atom 1. Similarly the property ``PartiallyMissingInt`` is set to 2 for atom 0, 2 for atom 1,
 and is not set for atom 2.
 
-This behavior is enabled by default and can be turned on/off with the 
+This behavior is enabled by default and can be turned on/off with the
 :py:class:`rdkit.Chem.rdmolfiles.SetProcessPropertyLists` method.
 
 If you have atom properties that you would like to have written to SDF files, you can use the functions
-:py:func:`rdkit.Chem.rdmolfiles.CreateAtomStringPropertyList`, :py:func:`rdkit.Chem.rdmolfiles.CreateAtomIntPropertyList`, 
+:py:func:`rdkit.Chem.rdmolfiles.CreateAtomStringPropertyList`, :py:func:`rdkit.Chem.rdmolfiles.CreateAtomIntPropertyList`,
 :py:func:`rdkit.Chem.rdmolfiles.CreateAtomDoublePropertyList`, or :py:func:`rdkit.Chem.rdmolfiles.CreateAtomBoolPropertyList` :
 
 .. doctest::
 
   >>> m = Chem.MolFromSmiles('CO')
-  >>> m.GetAtomWithIdx(0).SetDoubleProp('foo',3.14)                                                                      
-  >>> Chem.CreateAtomDoublePropertyList(m,'foo')                                                                         
-  >>> m.GetProp('atom.dprop.foo')                                                                                        
+  >>> m.GetAtomWithIdx(0).SetDoubleProp('foo',3.14)
+  >>> Chem.CreateAtomDoublePropertyList(m,'foo')
+  >>> m.GetProp('atom.dprop.foo')
   '3.1400000000000001 n/a'
-  >>> from io import StringIO                                                                                            
-  >>> sio = StringIO()                                                                                                   
-  >>> w = Chem.SDWriter(sio)                                                                                             
-  >>> w.write(m)                                                                                                         
-  >>> w=None                                                                                                             
-  >>> print(sio.getvalue())   # doctest: +NORMALIZE_WHITESPACE                                                                                     
+  >>> from io import StringIO
+  >>> sio = StringIO()
+  >>> w = Chem.SDWriter(sio)
+  >>> w.write(m)
+  >>> w=None
+  >>> print(sio.getvalue())   # doctest: +NORMALIZE_WHITESPACE
   <BLANKLINE>
        RDKit          2D
   <BLANKLINE>
@@ -1190,7 +1208,7 @@ If you have atom properties that you would like to have written to SDF files, yo
       1.2990    0.7500    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
     1  2  1  0
   M  END
-  >  <atom.dprop.foo>  (1) 
+  >  <atom.dprop.foo>  (1)
   3.1400000000000001 n/a
   <BLANKLINE>
   $$$$
@@ -1202,8 +1220,8 @@ Support for Enhanced Stereochemistry
 Overview
 ========
 
-We are going to follow, at least for the initial implementation, the enhanced stereo representation 
-used in V3k mol files: groups of atoms with specified stereochemistry with an ``ABS``, ``AND``, or ``OR`` 
+We are going to follow, at least for the initial implementation, the enhanced stereo representation
+used in V3k mol files: groups of atoms with specified stereochemistry with an ``ABS``, ``AND``, or ``OR``
 marker indicating what is known. The general idea is that ``AND`` indicates mixtures and ``OR`` indicates unknown single substances.
 
 Here are some illustrations of what the various combinations mean:
@@ -1260,23 +1278,23 @@ Here are some illustrations of what the various combinations mean:
 
 
 ====================  ==========   ==============
-  What's drawn         Mixture?     What it means 
+  What's drawn         Mixture?     What it means
 ====================  ==========   ==============
-|and1_and2_base|      mixture      |and1_and2_expand| 
-|and1_cis_base|       mixture      |and1_cis_expand| 
-|and1_trans_base|     mixture      |and1_trans_expand| 
-|or1_or2_base|        single       |or1_or2_expand| 
-|or1_cis_base|        single       |or1_cis_expand| 
-|or1_trans_base|      single       |or1_trans_expand| 
-|abs_and_base|        mixture      |abs_and_expand| 
-|abs_or_base|         single       |abs_or_expand| 
+|and1_and2_base|      mixture      |and1_and2_expand|
+|and1_cis_base|       mixture      |and1_cis_expand|
+|and1_trans_base|     mixture      |and1_trans_expand|
+|or1_or2_base|        single       |or1_or2_expand|
+|or1_cis_base|        single       |or1_cis_expand|
+|or1_trans_base|      single       |or1_trans_expand|
+|abs_and_base|        mixture      |abs_and_expand|
+|abs_or_base|         single       |abs_or_expand|
 ====================  ==========   ==============
 
 
 Representation
 ==============
 
-Stored as a vector of :py:class:`rdkit.Chem.rdchem.StereoGroup` objects on a molecule. Each ``StereoGroup`` keeps track of its type 
+Stored as a vector of :py:class:`rdkit.Chem.rdchem.StereoGroup` objects on a molecule. Each ``StereoGroup`` keeps track of its type
 and the set of atoms that make it up.
 
 
@@ -1336,15 +1354,15 @@ then sets the corresponding bit. Options are available to generate count-based
 forms of the fingerprint or "non-folded" forms (using a sparse representation).
 
 The default scheme for hashing subgraphs is to hash the individual bonds based on:
-  - the types of the two atoms. Atom types include the atomic number (mod 128), and whether or not the atom is aromatic. 
+  - the types of the two atoms. Atom types include the atomic number (mod 128), and whether or not the atom is aromatic.
   - the degrees of the two atoms in the path.
   - the bond type (or ``AROMATIC`` if the bond is marked as aromatic)
- 
+
 Fingerprint-specific options
 ----------------------------
 
   - ``minPath`` and ``maxPath`` control the size (in bonds) of the subgraphs/paths considered
-  - ``nBitsPerHash``: If this is greater than one, each subgraph will set more than one bit. 
+  - ``nBitsPerHash``: If this is greater than one, each subgraph will set more than one bit.
     The additional bits will be generated by seeding a random number generator with the original
     raw bit ID and generating the appropriate number of random numbers.
   - ``useHs``: toggles whether or not Hs are included in the subgraphs/paths (assuming that there
@@ -1377,7 +1395,7 @@ atom and the bond types use the bond type, or ``AROMATIC`` for aromatic bonds).
 
 **NOTE**: Because it plays an important role in substructure screenout, the
 internals of this fingerprint (the generic patterns used and/or the details of
-the hashing algorithm) may change from one release to the next. 
+the hashing algorithm) may change from one release to the next.
 
 Atom-Pair and Topological Torsion Fingerprints
 ==============================================

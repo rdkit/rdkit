@@ -29,14 +29,40 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/ChemReactions/Reaction.h>
 
-#include <boost/tuple/tuple.hpp>
-
 // ****************************************************************************
 using RDGeom::Point2D;
 
 namespace RDKit {
 
-typedef boost::tuple<float, float, float> DrawColour;
+struct DrawColour {
+  double r = 0.0, g = 0.0, b = 0.0, a = 1.0;
+  DrawColour(){};
+  DrawColour(double r, double g, double b, double a = 1.0)
+      : r(r), g(g), b(b), a(a){};
+  bool operator==(const DrawColour &other) const {
+    return r == other.r && g == other.g && b == other.b && a == other.a;
+  }
+  bool feq(const DrawColour &other, double tol = 0.001,
+           bool ignoreAlpha = true) const {
+    return fabs(r - other.r) <= tol && fabs(g - other.g) <= tol &&
+           fabs(b - other.b) <= tol &&
+           (ignoreAlpha || fabs(a - other.a) <= tol);
+  };
+  DrawColour operator+(const DrawColour &other) const {
+    return DrawColour(r + other.r, g + other.g, b + other.b, a + other.a);
+  }
+  DrawColour operator-(const DrawColour &other) const {
+    return DrawColour(r - other.r, g - other.g, b - other.b, a - other.a);
+  }
+  DrawColour operator/(double v) const {
+    PRECONDITION(v != 0.0, "divide by zero");
+    return DrawColour(r / v, g / v, b / v, a / v);
+  }
+  DrawColour operator*(double v) const {
+    return DrawColour(r * v, g * v, b * v, a * v);
+  }
+};
+
 typedef std::map<int, DrawColour> ColourPalette;
 typedef std::vector<unsigned int> DashPattern;
 
@@ -329,7 +355,13 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
     y_offset_ = y;
   }
   //! returns the drawing offset (in drawing coords)
-  Point2D offset() { return Point2D(x_offset_, y_offset_); }
+  Point2D offset() const { return Point2D(x_offset_, y_offset_); }
+
+  //! returns the minimum point of the drawing (in molecular coords)
+  Point2D minPt() const { return Point2D(x_min_, y_min_); }
+  //! returns the width and height of the grid (in molecular coords)
+  Point2D range() const { return Point2D(x_range_, y_range_); }
+
   //! returns the font size (in nolecule units)
   virtual double fontSize() const { return font_size_; }
   //! set font size in molecule coordinate units. That's probably Angstrom for
@@ -416,6 +448,10 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
     PRECONDITION(activeMolIdx_ >= 0, "no index");
     return atom_syms_[activeMolIdx_];
   };
+  //! Draw an arrow with either lines or a filled head (when asPolygon is true)
+  virtual void drawArrow(const Point2D &cds1, const Point2D &cds2,
+                         bool asPolygon = false, double frac = 0.05,
+                         double angle = M_PI / 6);
 
  private:
   bool needs_scale_;

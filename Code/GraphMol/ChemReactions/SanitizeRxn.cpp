@@ -346,10 +346,6 @@ void fixHs(ChemicalReaction &rxn) {
 
 void adjustTemplates(ChemicalReaction &rxn,
                      const MolOps::AdjustQueryParameters &params) {
-  if (!params.adjustDegree && !params.adjustRingCount) {
-    return;
-  }
-
   for (auto it = rxn.beginReactantTemplates(); it != rxn.endReactantTemplates();
        ++it) {
     RWMol *rw = dynamic_cast<RWMol *>(it->get());

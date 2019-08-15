@@ -443,3 +443,32 @@ TEST_CASE("github#2450: getAtomSmarts() fails for free atoms", "[bug]") {
     CHECK(smiles == ":");
   }
 }
+
+TEST_CASE("MolFragmentToSmarts", "[Smarts]")
+{
+  SECTION("BasicFragment") {
+    auto m = "CCCCCN"_smiles;
+    std::vector<int> indices = {3, 4, 5};
+    const auto smarts = MolFragmentToSmarts(*m, indices);
+    CHECK(smarts == "[#6]-[#6]-[#7]");
+  }
+  SECTION("FragmentWithParity") {
+    auto m = "C[C@H](F)CCCN"_smiles;
+    std::vector<int> indices = {0, 1, 2};
+    const auto smarts = MolFragmentToSmarts(*m, indices);
+    CHECK(smarts == "[#6]-[#6@H]-[#9]");
+  }
+  SECTION("FragmentWithSpecifiedBonds") {
+    auto m = "C1CC1O"_smiles;
+    std::vector<int> atomIndices = {0, 1, 2};
+    std::vector<int> bondIndices = {0};
+    const auto smarts = MolFragmentToSmarts(*m, atomIndices, &bondIndices);
+    CHECK(smarts == "[#6]-[#6].[#6]");
+  }
+  SECTION("SmartsFragmentFromQueryMol") {
+    auto m = "CCCC[C,N]N"_smarts;
+    std::vector<int> indices = {3, 4, 5};
+    const auto smarts = MolFragmentToSmarts(*m, indices);
+    CHECK(smarts == "C[C,N]N");
+  }
+}

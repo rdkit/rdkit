@@ -2423,6 +2423,7 @@ void testBug3139534() {
 
   {
     RWMol *m;
+    // the 2 initial directed bonds are redundant (/bad ??)
     std::string smiles = "CCC/[N+]/1=C/c2ccccc2OC(=O)/C=C1/O";
     m = SmilesToMol(smiles);
     TEST_ASSERT(m);
@@ -2432,7 +2433,54 @@ void testBug3139534() {
 
     smiles = MolToSmiles(*m, true);
     BOOST_LOG(rdInfoLog) << "smiles: " << smiles << std::endl;
-    TEST_ASSERT(smiles == "CCC/[N+]1=C/c2ccccc2OC(=O)\\C=C/1O");
+    TEST_ASSERT(smiles == R"(CCC[N+]1=C/c2ccccc2OC(=O)/C=C\1O)");
+
+    delete m;
+
+    // 2nd pass to check stability
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+
+    TEST_ASSERT(m->getBondWithIdx(3)->getStereo() == Bond::STEREOZ);
+    TEST_ASSERT(m->getBondWithIdx(14)->getStereo() == Bond::STEREOE);
+
+    smiles = MolToSmiles(*m, true);
+    BOOST_LOG(rdInfoLog) << "smiles: " << smiles << std::endl;
+    TEST_ASSERT(smiles == R"(CCC[N+]1=C/c2ccccc2OC(=O)/C=C\1O)");
+
+    delete m;
+  }
+
+  { // Github #2023
+    RWMol *m;
+    // the initial directed bond is redundant
+    std::string smiles = R"(CO/C1=C/C=C\C=C/C=N\1)";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+
+    TEST_ASSERT(m->getBondWithIdx(2)->getStereo() == Bond::STEREOE);
+    TEST_ASSERT(m->getBondWithIdx(4)->getStereo() == Bond::STEREOZ);
+    TEST_ASSERT(m->getBondWithIdx(6)->getStereo() == Bond::STEREOZ);
+    TEST_ASSERT(m->getBondWithIdx(8)->getStereo() == Bond::STEREOZ);
+
+    smiles = MolToSmiles(*m, true);
+    BOOST_LOG(rdInfoLog) << "smiles: " << smiles << std::endl;
+    TEST_ASSERT(smiles == R"(COC1=C/C=C\C=C/C=N\1)");
+
+    delete m;
+
+    // 2nd pass to check stability
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+
+    TEST_ASSERT(m->getBondWithIdx(2)->getStereo() == Bond::STEREOE);
+    TEST_ASSERT(m->getBondWithIdx(4)->getStereo() == Bond::STEREOZ);
+    TEST_ASSERT(m->getBondWithIdx(6)->getStereo() == Bond::STEREOZ);
+    TEST_ASSERT(m->getBondWithIdx(8)->getStereo() == Bond::STEREOZ);
+
+    smiles = MolToSmiles(*m, true);
+    BOOST_LOG(rdInfoLog) << "smiles: " << smiles << std::endl;
+    TEST_ASSERT(smiles == R"(COC1=C/C=C\C=C/C=N\1)");
 
     delete m;
   }
@@ -4188,12 +4236,23 @@ void testGithub1972() {
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
+
+void testGithub2556() {
+  BOOST_LOG(rdInfoLog)
+      << "Testing Github #2556: Test correct parsing and fix memory leak for C1C1"
+      << std::endl;  
+  RWMol *m = nullptr;
+  m = SmilesToMol("C1C1");
+  TEST_ASSERT(!m);
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.debug");
-#if 0
+#if 1
   testPass();
   testFail();
 
@@ -4262,6 +4321,7 @@ int main(int argc, char *argv[]) {
   testHashAtomExtension();
   testGithub1925();
   testGithub1972();
+  testGithub2556();
 #endif
   testdoRandomSmileGeneration();
 }

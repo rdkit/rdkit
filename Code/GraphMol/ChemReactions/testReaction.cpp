@@ -7219,6 +7219,29 @@ void testOtherBondStereo() {
     TEST_ASSERT(check_bond_stereo(product_sets[0][0], 0, 2, 3,
                                   Bond::BondStereo::STEREOTRANS));
   }
+
+void testGithub2547() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github #2547: Check kekulization issues in mdl rxn files"
+                       << std::endl;
+  
+  std::string rdbase = getenv("RDBASE");
+  std::string fName;
+
+  fName = rdbase + "/Code/GraphMol/ChemReactions/testData/kekule_reaction.rxn";
+  BOOST_LOG(rdInfoLog) << "--- reading file" << std::endl;
+  std::unique_ptr<ChemicalReaction> rxn(RxnFileToChemicalReaction(fName));
+  BOOST_LOG(rdInfoLog) << "--- read file" << std::endl;
+  ROMOL_SPTR mol("c1ccccc1"_smiles);
+  rxn->initReactantMatchers();
+  std::vector<ROMOL_SPTR> v{mol};
+  auto prods = rxn->runReactants(v);
+  TEST_ASSERT(prods.size() == 0);
+
+  RxnOps::sanitizeRxn(*rxn);
+
+  prods = rxn->runReactants(v);
+  TEST_ASSERT(prods.size() > 1);
 }
 
 int main() {
@@ -7310,6 +7333,7 @@ int main() {
   testBondStereoGistExamples();
   testStereoBondIsomerization();
   testOtherBondStereo();
+  testGithub2547();
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
   return (0);

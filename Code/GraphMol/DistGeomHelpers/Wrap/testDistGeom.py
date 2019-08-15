@@ -10,6 +10,7 @@ import pickle
 from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdkit.Chem import rdDistGeom, ChemicalForceFields, rdMolAlign
+import rdkit.DistanceGeometry as DG
 from rdkit import RDConfig, rdBase
 from rdkit.Geometry import rdGeometry as geom
 from rdkit.RDLogger import logger
@@ -533,6 +534,28 @@ class TestCase(unittest.TestCase):
         ref = Chem.MolFromMolFile(fn, removeHs=False)
         self.assertEqual(rdDistGeom.EmbedMolecule(mol, randomSeed=42), 0)
         self._compareConfs(mol, ref, 0, 0)
+
+    def testProvidingBoundsMatrix(self):
+        m1 = Chem.MolFromSmiles("C1CCC1C")
+        bm1 = rdDistGeom.GetMoleculeBoundsMatrix(m1)
+        bm1[0,3] = 1.21
+        bm1[3,0] = 1.20
+        bm1[2,3] = 1.21
+        bm1[3,2] = 1.20
+        bm1[4,3] = 1.21
+        bm1[3,4] = 1.20
+        DG.DoTriangleSmoothing(bm1)
+        ps = rdDistGeom.EmbedParameters()
+        ps.useRandomCoords = True
+        ps.SetBoundsMat(bm1)
+        ps.randomSeed = 0xf00d
+        self.assertEqual(rdDistGeom.EmbedMolecule(m1,ps),0)
+        conf = m1.GetConformer()
+        self.assertAlmostEqual((conf.GetAtomPosition(3)-conf.GetAtomPosition(0)).Length(),1.2,delta=0.05)
+        self.assertAlmostEqual((conf.GetAtomPosition(3)-conf.GetAtomPosition(2)).Length(),1.2,delta=0.05)
+        self.assertAlmostEqual((conf.GetAtomPosition(3)-conf.GetAtomPosition(4)).Length(),1.2,delta=0.05)
+
+        
 
 
 if __name__ == '__main__':
