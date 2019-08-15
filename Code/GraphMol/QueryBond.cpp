@@ -9,6 +9,7 @@
 //  of the RDKit source tree.
 //
 #include <GraphMol/QueryBond.h>
+#include <Query/NullQueryAlgebra.h>
 
 namespace RDKit {
 
@@ -57,7 +58,7 @@ void QueryBond::setBondDir(BondDir bD) {
   //   situations, whatever those may be.
   //
   d_dirTag = bD;
-#if 0  
+#if 0
   delete dp_query;
   dp_query = NULL;
   dp_query = makeBondDirEqualsQuery(bD);
@@ -67,6 +68,15 @@ void QueryBond::setBondDir(BondDir bD) {
 void QueryBond::expandQuery(QUERYBOND_QUERY *what,
                             Queries::CompositeQueryType how,
                             bool maintainOrder) {
+  bool thisIsNullQuery = dp_query->getDescription() == "BondNull";
+  bool otherIsNullQuery = what->getDescription() == "BondNull";
+
+  if (thisIsNullQuery || otherIsNullQuery) {
+    mergeNullQueries(dp_query, thisIsNullQuery, what, otherIsNullQuery, how);
+    delete what;
+    return;
+  }
+
   QUERYBOND_QUERY *origQ = dp_query;
   std::string descrip;
   switch (how) {

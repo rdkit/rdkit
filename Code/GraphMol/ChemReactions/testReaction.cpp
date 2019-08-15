@@ -6790,7 +6790,7 @@ void testGithub1869() {
     TEST_ASSERT(nError == 0);
 
     smi = ChemicalReactionToRxnSmarts(*rxn);
-    TEST_ASSERT(smi == "[R:1]~&!@[*:2]>>([*:1].[*:2])");
+    TEST_ASSERT(smi == "[R:1]!@[*:2]>>([*:1].[*:2])");
 
     delete rxn;
   }
