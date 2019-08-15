@@ -1,0 +1,11 @@
+SMILES Name Column_2
+CC1=CC(=O)C=CC1=O 1 34.14
+c1ccc2sc(SSc3nc4ccccc4s3)nc2c1 2 25.78
+O=[N+]([O-])c1cc(Cl)c(O)c([N+](=O)[O-])c1 3 106.51
+N=c1[nH]cc([N+](=O)[O-])s1 4 82.78
+Nc1ccc2c(c1)C(=O)c1ccccc1C2=O 5 60.16
+O=C(O)c1ccccc1-c1c2ccc(=O)c(Br)c-2oc2c(Br)c(O)ccc12 6 87.74
+CN(C)C1=C(Cl)C(=O)c2ccccc2C1=O 7 37.38
+Cc1ccc2c(c1[N+](=O)[O-])C(=O)c1ccccc1C2=O 8 77.28
+CC(=NO)C(C)=NO 9 65.18
+c1ccc(P(c2ccccc2)c2ccccc2)cc1 10 0.00

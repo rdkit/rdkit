@@ -2451,7 +2451,7 @@ void testBug3139534() {
     delete m;
   }
 
-  { // Github #2023
+  {  // Github #2023
     RWMol *m;
     // the initial directed bond is redundant
     std::string smiles = R"(CO/C1=C/C=C\C=C/C=N\1)";
@@ -4236,12 +4236,53 @@ void testGithub1972() {
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
+
+void testGithub2556() {
+  BOOST_LOG(rdInfoLog) << "Testing Github #2556: Test correct parsing and fix "
+                          "memory leak for C1C1"
+                       << std::endl;
+  RWMol *m = nullptr;
+  m = SmilesToMol("C1C1");
+  TEST_ASSERT(!m);
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testGithub1028() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing github issue #1028: Alternating canonical "
+                          "SMILES for ring with chiral N"
+                       << std::endl;
+
+  {
+    const std::string smi = "O[C@H]1CC2CCC(C1)[N@@]2C";
+    const std::string ref = "C[N@]1C2CCC1C[C@H](O)C2";
+    for (int i = 0; i < 3; ++i) {
+      const auto mol = std::unique_ptr<ROMol>(SmilesToMol(smi));
+      TEST_ASSERT(mol);
+      const std::string out = MolToSmiles(*mol);
+      TEST_ASSERT(out == ref);
+    }
+
+    {
+      const std::string smi = "C[N@]1C[C@@H](O)C1";
+      for (int i = 0; i < 3; ++i) {
+        const auto mol = std::unique_ptr<ROMol>(SmilesToMol(smi));
+        TEST_ASSERT(mol);
+        const std::string out = MolToSmiles(*mol);
+        TEST_ASSERT(out == smi);
+      }
+    }
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.debug");
-#if 0
+#if 1
   testPass();
   testFail();
 
@@ -4312,4 +4353,5 @@ int main(int argc, char *argv[]) {
   testGithub1972();
 #endif
   testdoRandomSmileGeneration();
+  testGithub1028();
 }

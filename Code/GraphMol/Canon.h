@@ -119,6 +119,13 @@ RDKIT_GRAPHMOL_EXPORT void canonicalizeFragment(ROMol &mol, int atomIdx,
                           bool doIsomericSmiles = false,
                           bool doRandom = false);
 
+//! Check if a chiral atom needs to have its tag flipped after reading or before
+//! writing SMILES
+RDKIT_GRAPHMOL_EXPORT bool chiralAtomNeedsTagInversion(const RDKit::ROMol &mol,
+                                                       const RDKit::Atom *atom,
+                                                       bool isAtomFirst,
+                                                       size_t numClosures);
+
 }  // end of namespace Canon
 }  // end of namespace RDKit
 #endif
