@@ -389,7 +389,7 @@ ROMol *Uncharger::uncharge(const ROMol &mol) {
   }
 
   if (netCharge > 0) {
-    // Neutralize positive charges
+    // Neutralize positive charges where H counts can be adjusted
     std::vector<unsigned int> p_idx_matches;
     for (const auto &match : p_matches) {
       for (const auto &pair : match) {
