@@ -7219,12 +7219,13 @@ void testOtherBondStereo() {
     TEST_ASSERT(check_bond_stereo(product_sets[0][0], 0, 2, 3,
                                   Bond::BondStereo::STEREOTRANS));
   }
+}
 
 void testGithub2547() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing Github #2547: Check kekulization issues in mdl rxn files"
                        << std::endl;
-  
+
   std::string rdbase = getenv("RDBASE");
   std::string fName;
 
