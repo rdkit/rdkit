@@ -78,7 +78,7 @@ void mergeNullQueries(T *&returnQuery, bool isQueryNull, T *&otherQuery,
     mergeNullQFirst(returnQuery, otherQuery, how);
   } else if (isOtherQNull) {
     std::swap(returnQuery,otherQuery);
-    composeNullQFirst(returnQuery, otherQuery, how);
+    mergeNullQFirst(returnQuery, otherQuery, how);
   }
 }
 }  // namespace RDKit
