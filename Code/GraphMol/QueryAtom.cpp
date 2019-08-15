@@ -31,7 +31,7 @@ void QueryAtom::expandQuery(QUERYATOM_QUERY *what,
   bool otherIsNullQuery = what->getDescription() == "AtomNull";
 
   if (thisIsNullQuery || otherIsNullQuery) {
-    nullQueryCombine(dp_query, thisIsNullQuery, what, otherIsNullQuery, how);
+    mergeNullQueries(dp_query, thisIsNullQuery, what, otherIsNullQuery, how);
     delete what;
     return;
   }

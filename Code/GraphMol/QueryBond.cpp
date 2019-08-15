@@ -58,7 +58,7 @@ void QueryBond::setBondDir(BondDir bD) {
   //   situations, whatever those may be.
   //
   d_dirTag = bD;
-#if 0  
+#if 0
   delete dp_query;
   dp_query = NULL;
   dp_query = makeBondDirEqualsQuery(bD);
@@ -72,7 +72,7 @@ void QueryBond::expandQuery(QUERYBOND_QUERY *what,
   bool otherIsNullQuery = what->getDescription() == "BondNull";
 
   if (thisIsNullQuery || otherIsNullQuery) {
-    nullQueryCombine(dp_query, thisIsNullQuery, what, otherIsNullQuery, how);
+    mergeNullQueries(dp_query, thisIsNullQuery, what, otherIsNullQuery, how);
     delete what;
     return;
   }

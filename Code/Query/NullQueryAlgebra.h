@@ -16,7 +16,7 @@
 namespace RDKit {
 namespace {
 template <class T>
-void composeBothNullQ(T *&returnQuery, T *&otherNullQ,
+void mergeBothNullQ(T *&returnQuery, T *&otherNullQ,
                       Queries::CompositeQueryType how) {
   bool negatedQ = returnQuery->getNegation();
   bool negatedOtherQ = otherNullQ->getNegation();
@@ -41,7 +41,7 @@ void composeBothNullQ(T *&returnQuery, T *&otherNullQ,
 }
 
 template <class T>
-void composeNullQFirst(T *&returnQuery, T *&otherQ,
+void mergeNullQFirst(T *&returnQuery, T *&otherQ,
                        Queries::CompositeQueryType how) {
   bool negatedQ = returnQuery->getNegation();
 
@@ -62,7 +62,7 @@ void composeNullQFirst(T *&returnQuery, T *&otherQ,
 }
 
 template <class T>
-void composeNullQSecond(T *&returnQuery, T *&nullQ,
+void mergeNullQSecond(T *&returnQuery, T *&nullQ,
                         Queries::CompositeQueryType how) {
   bool negatedQ = nullQ->getNegation();
 
@@ -85,7 +85,7 @@ void composeNullQSecond(T *&returnQuery, T *&nullQ,
 }  // namespace
 
 template <class T>
-void nullQueryCombine(T *&returnQuery, bool isQueryNull, T *&otherQuery,
+void mergeNullQueries(T *&returnQuery, bool isQueryNull, T *&otherQuery,
                       bool isOtherQNull, Queries::CompositeQueryType how) {
   PRECONDITION(returnQuery, "bad query");
   PRECONDITION(otherQuery, "bad query");
@@ -94,11 +94,11 @@ void nullQueryCombine(T *&returnQuery, bool isQueryNull, T *&otherQuery,
                "bad combination op");
 
   if (isQueryNull && isOtherQNull) {
-    composeBothNullQ(returnQuery, otherQuery, how);
+    mergeBothNullQ(returnQuery, otherQuery, how);
   } else if (isQueryNull) {
-    composeNullQFirst(returnQuery, otherQuery, how);
+    mergeNullQFirst(returnQuery, otherQuery, how);
   } else if (isOtherQNull) {
-    composeNullQSecond(returnQuery, otherQuery, how);
+    mergeNullQSecond(returnQuery, otherQuery, how);
   }
 }
 }  // namespace RDKit
