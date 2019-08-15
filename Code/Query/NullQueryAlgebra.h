@@ -61,27 +61,6 @@ void mergeNullQFirst(T *&returnQuery, T *&otherQ,
   }
 }
 
-template <class T>
-void mergeNullQSecond(T *&returnQuery, T *&nullQ,
-                        Queries::CompositeQueryType how) {
-  bool negatedQ = nullQ->getNegation();
-
-  if (how == Queries::COMPOSITE_AND) {
-    if (negatedQ) {
-      std::swap(returnQuery, nullQ);
-    }
-  } else if (how == Queries::COMPOSITE_OR) {
-    if (!negatedQ) {
-      std::swap(returnQuery, nullQ);
-    }
-  } else if (how == Queries::COMPOSITE_XOR) {
-    if (!negatedQ) {
-      returnQuery->setNegation(!returnQuery->getNegation());
-    }
-  } else {
-    UNDER_CONSTRUCTION("unrecognized combination query");
-  }
-}
 }  // namespace
 
 template <class T>
@@ -98,7 +77,8 @@ void mergeNullQueries(T *&returnQuery, bool isQueryNull, T *&otherQuery,
   } else if (isQueryNull) {
     mergeNullQFirst(returnQuery, otherQuery, how);
   } else if (isOtherQNull) {
-    mergeNullQSecond(returnQuery, otherQuery, how);
+    std::swap(returnQuery,otherQuery);
+    composeNullQFirst(returnQuery, otherQuery, how);
   }
 }
 }  // namespace RDKit
