@@ -3747,6 +3747,18 @@ CAS<~>
     am = Chem.AdjustQueryProperties(m, qps)
     self.assertEqual(Chem.MolToSmarts(am), '[#6&D2]1-[#6&D2]-[#6&D2]-[#6&D3]-1~[#8]~[#6]')
 
+  def testMolFragmentSmarts(self):
+    m = Chem.MolFromSmiles('C1CCC1OC')
+    self.assertEqual(Chem.MolFragmentToSmarts(m, [0, 1, 2]), '[#6]-[#6]-[#6]')
+    # if bondsToUse is honored, the ring won't show up
+    self.assertEqual(Chem.MolFragmentToSmarts(m, [0, 1, 2, 3], bondsToUse=[0, 1, 2, 3]), '[#6]-[#6]-[#6]-[#6]')
+
+    # Does MolFragmentToSmarts accept output of AdjustQueryProperties?
+    qps = Chem.AdjustQueryParameters()
+    qps.makeAtomsGeneric = True
+    am = Chem.AdjustQueryProperties(m, qps)
+    self.assertEqual(Chem.MolFragmentToSmarts(am, [0, 1, 2]), '*-*-*')
+
   def testAdjustQueryPropertiesgithubIssue1474(self):
     core = Chem.MolFromSmiles('[*:1]C1N([*:2])C([*:3])O1')
     core.GetAtomWithIdx(0).SetProp('foo', 'bar')

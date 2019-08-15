@@ -245,6 +245,16 @@ ROMol *MolFromHELM(python::object seq, bool sanitize) {
   return static_cast<ROMol *>(newM);
 }
 
+std::string molFragmentToSmarts(const ROMol &mol, python::object atomsToUse,
+                                python::object bondsToUse,
+                                bool doIsomericSmarts = true)
+{
+  auto atomIndices = pythonObjectToVect(atomsToUse, static_cast<int>(mol.getNumAtoms()));
+  auto bondIndices = pythonObjectToVect(bondsToUse, static_cast<int>(mol.getNumBonds()));
+  return RDKit::MolFragmentToSmarts(mol, *atomIndices, bondIndices.get(), doIsomericSmarts);
+}
+
+
 struct smilesfrag_gen {
   std::string operator()(const ROMol &mol, const std::vector<int> &atomsToUse,
                          const std::vector<int> *bondsToUse,
@@ -278,13 +288,11 @@ std::string MolFragmentToSmilesHelper(
     python::object atomSymbols, python::object bondSymbols,
     bool doIsomericSmiles, bool doKekule, int rootedAtAtom, bool canonical,
     bool allBondsExplicit, bool allHsExplicit) {
-  std::unique_ptr<std::vector<int>> avect =
-      pythonObjectToVect(atomsToUse, static_cast<int>(mol.getNumAtoms()));
+  auto avect = pythonObjectToVect(atomsToUse, static_cast<int>(mol.getNumAtoms()));
   if (!avect.get() || !(avect->size())) {
     throw_value_error("atomsToUse must not be empty");
   }
-  std::unique_ptr<std::vector<int>> bvect =
-      pythonObjectToVect(bondsToUse, static_cast<int>(mol.getNumBonds()));
+  auto bvect = pythonObjectToVect(bondsToUse, static_cast<int>(mol.getNumBonds()));
   std::unique_ptr<std::vector<std::string>> asymbols =
       pythonObjectToVect<std::string>(atomSymbols);
   std::unique_ptr<std::vector<std::string>> bsymbols =
@@ -988,6 +996,24 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 \n";
   python::def("MolToSmarts", RDKit::MolToSmarts,
               (python::arg("mol"), python::arg("isomericSmiles") = true),
+              docString.c_str());
+
+  docString =
+      "Returns a SMARTS string for a fragment of a molecule\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule\n\
+    - atomsToUse: indices of atoms to include in the SMARTS string\n\
+    - bondsToUse: indices of bonds to include in the SMARTS string (optional)\n\
+    - isomericSmarts: (optional) include information about stereochemistry in\n\
+      the SMARTS.  Defaults to true.\n\
+\n\
+  RETURNS:\n\
+\n\
+    a string\n\
+\n";
+  python::def("MolFragmentToSmarts", molFragmentToSmarts,
+              (python::arg("mol"), python::arg("atomsToUse"), python::arg("bondsToUse") = 0, python::arg("isomericSmarts") = true),
               docString.c_str());
 
   docString =
