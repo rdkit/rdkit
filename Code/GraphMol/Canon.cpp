@@ -10,12 +10,74 @@
 //
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Canon.h>
+#include <GraphMol/SmilesParse/SmilesParseOps.h>
+#include <GraphMol/RDKitQueries.h>
 #include <RDGeneral/Exceptions.h>
 #include <RDGeneral/hash/hash.hpp>
 #include <algorithm>
 
 namespace RDKit {
 namespace Canon {
+namespace {
+bool isUnsaturated(const Atom *atom, const ROMol &mol) {
+  ROMol::OEDGE_ITER beg, end;
+  boost::tie(beg, end) = mol.getAtomBonds(atom);
+  while (beg != end) {
+    const Bond *bond = mol[*beg];
+    ++beg;
+    if (bond->getBondType() != Bond::SINGLE) return true;
+  }
+  return false;
+}
+
+bool hasSingleHQuery(const Atom::QUERYATOM_QUERY *q) {
+  // list queries are series of nested ors of AtomAtomicNum queries
+  PRECONDITION(q, "bad query");
+  bool res = false;
+  std::string descr = q->getDescription();
+  if (descr == "AtomAnd") {
+    for (auto cIt = q->beginChildren(); cIt != q->endChildren(); ++cIt) {
+      std::string descr = (*cIt)->getDescription();
+      if (descr == "AtomHCount") {
+        if (!(*cIt)->getNegation() &&
+            ((ATOM_EQUALS_QUERY *)(*cIt).get())->getVal() == 1) {
+          return true;
+        }
+        return false;
+      } else if (descr == "AtomAnd") {
+        res = hasSingleHQuery((*cIt).get());
+        if (res) return true;
+      }
+    }
+  }
+  return res;
+}
+
+bool atomHasFourthValence(const Atom *atom) {
+  if (atom->getNumExplicitHs() == 1 || atom->getImplicitValence() == 1) {
+    return true;
+  }
+  if (atom->hasQuery()) {
+    // the SMARTS [C@@H] produces an atom with a H query, but we also
+    // need to treat this like an explicit H for chirality purposes
+    // This was Github #1489
+    bool res = hasSingleHQuery(atom->getQuery());
+    return res;
+  }
+  return false;
+}
+}  // end of anonymous namespace
+
+bool chiralAtomNeedsTagInversion(const RDKit::ROMol &mol,
+                                 const RDKit::Atom *atom, bool isAtomFirst,
+                                 size_t numClosures) {
+  PRECONDITION(atom, "bad atom");
+  return atom->getDegree() == 3 &&
+         ((isAtomFirst && atom->getNumExplicitHs() == 1) ||
+          (!atomHasFourthValence(atom) && numClosures == 1 &&
+           !isUnsaturated(atom, mol)));
+}
+
 struct _possibleCompare
     : public std::binary_function<PossibleType, PossibleType, bool> {
   bool operator()(const PossibleType &arg1, const PossibleType &arg2) const {
@@ -1031,8 +1093,10 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
         // Test if the atom is in current fragment
         if (trueOrder.size() > 0) {
           int nSwaps = (*atomIt)->getPerturbationOrder(trueOrder);
-          if ((*atomIt)->getDegree() == 3 &&
-              molStack.begin()->obj.atom->getIdx() == (*atomIt)->getIdx()) {
+          if (chiralAtomNeedsTagInversion(
+                  mol, *atomIt,
+                  molStack.begin()->obj.atom->getIdx() == (*atomIt)->getIdx(),
+                  atomRingClosures[(*atomIt)->getIdx()].size())) {
             // This is a special case. Here's an example:
             //   Our internal representation of a chiral center is equivalent
             //   to:
