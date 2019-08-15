@@ -25,7 +25,16 @@ namespace RDKit {
 
 // Determine whether or not a molecule is to the left of Carbon
 bool isEarlyAtom(int atomicNum) {
-  return (4 - PeriodicTable::getTable()->getNouterElecs(atomicNum)) > 0;
+  int eshift = 4 - PeriodicTable::getTable()->getNouterElecs(atomicNum);
+  if (eshift > 0) {
+    return true;
+  } else if (eshift < 0) {
+    return false;
+  } else {
+    // we make an arbitrary decision that Ge, Sn, and Pb
+    // are treated like early elements (part of github #2606)
+    return atomicNum > 14;
+  }
 }
 
 Atom::Atom() : RDProps() {
