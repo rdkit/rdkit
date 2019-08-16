@@ -2688,9 +2688,9 @@ void testGithub2565() {
        R"(O=C1C[C@](Cl)1F)", R"(Br[C@@H](Cl)F)"});
 
   for (const auto &smi : smiles) {
-    auto *mol = SmilesToMol(smi);
+    const std::unique_ptr<ROMol> mol(SmilesToMol(smi));
     const std::string smarts = MolToSmarts(*mol, true);
-    auto *query = SmartsToMol(smarts);
+    const std::unique_ptr<ROMol> query(SmartsToMol(smarts));
 
     bool uniquify = true;
     bool recursionPossible = true;
