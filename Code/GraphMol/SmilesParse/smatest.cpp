@@ -2696,6 +2696,7 @@ void testGithub2565() {
     bool recursionPossible = true;
     bool useChirality = true;
     std::vector<MatchVectType> matches;
+    std::cerr << "* " << smi << "..." << smarts << std::endl;
     TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
                                recursionPossible, useChirality));
   }

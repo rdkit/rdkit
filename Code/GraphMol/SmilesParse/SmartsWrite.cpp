@@ -836,7 +836,7 @@ std::string molToSmarts(const ROMol &inmol, bool doIsomericSmiles,
     }
 
     subSmi =
-        FragmentSmartsConstruct(mol, nextAtomIdx, colors, ranks, bondsInPlay);
+        FragmentSmartsConstruct(mol, nextAtomIdx, colors, ranks, doIsomericSmiles, bondsInPlay);
     res += subSmi;
 
     colorIt = std::find(colors.begin(), colors.end(), Canon::WHITE_NODE);
