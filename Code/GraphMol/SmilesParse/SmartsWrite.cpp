@@ -660,16 +660,17 @@ std::string FragmentSmartsConstruct(
   // Another dirty trick to avoid reordering of lead chiral atoms in
   // canonicalizeFragment: since we are writing SMARTS, there won't be a
   // reordering on parsing.
-  // The trick consists in just avoiding the chiral atom to be the first in the
-  // SMARTS string by swapping atomIdx to the first bonded atom. This will cause
-  // the neighbor to go first.
-  if (atomIdx == 0) {
-    const Atom *atom = mol.getAtomWithIdx(atomIdx);
-    if (atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW ||
-        atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW) {
-      auto nbrItr = mol.getAtomNeighbors(atom);
-      if (nbrItr.first != nbrItr.second) {
-        atomIdx = mol[*nbrItr.first]->getIdx();
+  // The trick is as easy as choosing the first non-chiral atom we can find as
+  // root of the string. This should not be a problem, since SMARTS do not get
+  // canonicalized.
+  if (molStack.empty()) {
+    for (unsigned i = 0; i < mol.getNumAtoms(); ++i) {
+      const Atom *atom = mol.getAtomWithIdx(i);
+      if (colors[i] == Canon::WHITE_NODE &&
+          atom->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW &&
+          atom->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW) {
+        atomIdx = i;
+        break;
       }
     }
   }
