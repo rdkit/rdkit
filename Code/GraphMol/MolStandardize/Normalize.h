@@ -82,13 +82,13 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Normalizer {
   };
 
  private:
-  TransformCatalog *d_tcat;
+  const TransformCatalog *d_tcat;
   unsigned int MAX_RESTARTS;
 
-  ROMol *normalizeFragment(
+  boost::shared_ptr<ROMol> normalizeFragment(
       const ROMol &mol,
       const std::vector<std::shared_ptr<ChemicalReaction>> &transforms);
-  boost::shared_ptr<ROMol> applyTransform(const ROMol &mol,
+  boost::shared_ptr<ROMol> applyTransform(const boost::shared_ptr<ROMol> mol,
                                           ChemicalReaction &rule);
 
 };  // Normalizer class
