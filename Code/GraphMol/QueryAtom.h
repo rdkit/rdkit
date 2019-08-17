@@ -60,7 +60,10 @@ class RDKIT_GRAPHMOL_EXPORT QueryAtom : public Atom {
 
   //! expands our current query
   /*!
-    \param what          the Queries::Query to be added
+    \param what          the Queries::Query to be added. The ownership of
+                         the query is passed to the current object, where it
+                         might be deleted, so that the pointer should not be
+                         used again in the calling code.
     \param how           the operator to be used in the expansion
     \param maintainOrder (optional) flags whether the relative order of
                          the queries needs to be maintained, if this is

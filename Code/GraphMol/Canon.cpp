@@ -10,18 +10,113 @@
 //
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Canon.h>
+#include <GraphMol/SmilesParse/SmilesParseOps.h>
+#include <GraphMol/RDKitQueries.h>
 #include <RDGeneral/Exceptions.h>
 #include <RDGeneral/hash/hash.hpp>
 #include <algorithm>
 
 namespace RDKit {
 namespace Canon {
+namespace {
+bool isUnsaturated(const Atom *atom, const ROMol &mol) {
+  ROMol::OEDGE_ITER beg, end;
+  boost::tie(beg, end) = mol.getAtomBonds(atom);
+  while (beg != end) {
+    const Bond *bond = mol[*beg];
+    ++beg;
+    if (bond->getBondType() != Bond::SINGLE) return true;
+  }
+  return false;
+}
+
+bool hasSingleHQuery(const Atom::QUERYATOM_QUERY *q) {
+  // list queries are series of nested ors of AtomAtomicNum queries
+  PRECONDITION(q, "bad query");
+  bool res = false;
+  std::string descr = q->getDescription();
+  if (descr == "AtomAnd") {
+    for (auto cIt = q->beginChildren(); cIt != q->endChildren(); ++cIt) {
+      std::string descr = (*cIt)->getDescription();
+      if (descr == "AtomHCount") {
+        if (!(*cIt)->getNegation() &&
+            ((ATOM_EQUALS_QUERY *)(*cIt).get())->getVal() == 1) {
+          return true;
+        }
+        return false;
+      } else if (descr == "AtomAnd") {
+        res = hasSingleHQuery((*cIt).get());
+        if (res) return true;
+      }
+    }
+  }
+  return res;
+}
+
+bool atomHasFourthValence(const Atom *atom) {
+  if (atom->getNumExplicitHs() == 1 || atom->getImplicitValence() == 1) {
+    return true;
+  }
+  if (atom->hasQuery()) {
+    // the SMARTS [C@@H] produces an atom with a H query, but we also
+    // need to treat this like an explicit H for chirality purposes
+    // This was Github #1489
+    bool res = hasSingleHQuery(atom->getQuery());
+    return res;
+  }
+  return false;
+}
+}  // end of anonymous namespace
+
+bool chiralAtomNeedsTagInversion(const RDKit::ROMol &mol,
+                                 const RDKit::Atom *atom, bool isAtomFirst,
+                                 size_t numClosures) {
+  PRECONDITION(atom, "bad atom");
+  return atom->getDegree() == 3 &&
+         ((isAtomFirst && atom->getNumExplicitHs() == 1) ||
+          (!atomHasFourthValence(atom) && numClosures == 1 &&
+           !isUnsaturated(atom, mol)));
+}
+
 struct _possibleCompare
     : public std::binary_function<PossibleType, PossibleType, bool> {
   bool operator()(const PossibleType &arg1, const PossibleType &arg2) const {
     return (arg1.get<0>() < arg2.get<0>());
   }
 };
+
+bool checkBondsInSameBranch(MolStack &molStack, Bond *dblBnd, Bond *dirBnd) {
+  bool seenDblBond = false;
+  int branchCounter = 0;
+  for (const auto &item : molStack) {
+    switch (item.type) {
+      case MOL_STACK_BOND:
+        if (item.obj.bond == dirBnd || item.obj.bond == dblBnd) {
+          if (seenDblBond) {
+            return branchCounter == 0;
+          } else {
+            seenDblBond = true;
+          }
+        }
+        break;
+      case MOL_STACK_BRANCH_OPEN:
+        if (seenDblBond) {
+          ++branchCounter;
+        }
+        break;
+      case MOL_STACK_BRANCH_CLOSE:
+        if (seenDblBond) {
+          --branchCounter;
+        }
+        break;
+      default:
+        break;
+    }
+  }
+  // We should not ever hit this. But if we do, returning false
+  // causes the same behavior as before this patch.
+  return false;
+}
 
 void switchBondDir(Bond *bond) {
   PRECONDITION(bond, "bad bond");
@@ -45,7 +140,7 @@ void switchBondDir(Bond *bond) {
 //
 void canonicalizeDoubleBond(Bond *dblBond, INT_VECT &bondVisitOrders,
                             INT_VECT &atomVisitOrders, INT_VECT &bondDirCounts,
-                            INT_VECT &atomDirCounts) {
+                            INT_VECT &atomDirCounts, MolStack &molStack) {
   PRECONDITION(dblBond, "bad bond");
   PRECONDITION(dblBond->getBondType() == Bond::DOUBLE, "bad bond order");
   PRECONDITION(dblBond->getStereo() > Bond::STEREOANY, "bad bond stereo");
@@ -346,7 +441,18 @@ void canonicalizeDoubleBond(Bond *dblBond, INT_VECT &bondVisitOrders,
       // So, since we want this bond to have the opposite direction to the
       // other one, we put it in with the same direction.
       // This was Issue 183
-      secondFromAtom1->setBondDir(firstFromAtom1->getBondDir());
+
+      // UNLESS the bond is not in a branch (in the smiles) (e.g. firstFromAtom1
+      // branches off a cycle, and secondFromAtom1 shows up at the end of the
+      // cycle). This was Github Issue #2023, see it for an example.
+      if (checkBondsInSameBranch(molStack, dblBond, secondFromAtom1)) {
+        auto otherDir = (firstFromAtom1->getBondDir() == Bond::ENDUPRIGHT)
+                            ? Bond::ENDDOWNRIGHT
+                            : Bond::ENDUPRIGHT;
+        secondFromAtom1->setBondDir(otherDir);
+      } else {
+        secondFromAtom1->setBondDir(firstFromAtom1->getBondDir());
+      }
     }
     bondDirCounts[secondFromAtom1->getIdx()] += 1;
     atomDirCounts[atom1->getIdx()] += 1;
@@ -420,6 +526,7 @@ void canonicalizeDoubleBond(Bond *dblBond, INT_VECT &bondVisitOrders,
   //               it)
   // That means that the direction of the bond from atom 3->4 needs to be set
   // when the bond from 2->3 is set.
+  // Issue2023: But only if 3->4 doesn't have a direction yet?
   //
   // I believe we only need to worry about this for the bonds from atom2.
   const Atom *atom3 = firstFromAtom2->getOtherAtom(atom2);
@@ -438,7 +545,8 @@ void canonicalizeDoubleBond(Bond *dblBond, INT_VECT &bondVisitOrders,
       }
       atomBonds.first++;
     }
-    if (dblBondPresent && otherAtom3Bond) {
+    if (dblBondPresent && otherAtom3Bond &&
+        otherAtom3Bond->getBondDir() == Bond::NONE) {
       // std::cerr<<"set!"<<std::endl;
       otherAtom3Bond->setBondDir(firstFromAtom2->getBondDir());
       bondDirCounts[otherAtom3Bond->getIdx()] += 1;
@@ -985,8 +1093,10 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
         // Test if the atom is in current fragment
         if (trueOrder.size() > 0) {
           int nSwaps = (*atomIt)->getPerturbationOrder(trueOrder);
-          if ((*atomIt)->getDegree() == 3 &&
-              molStack.begin()->obj.atom->getIdx() == (*atomIt)->getIdx()) {
+          if (chiralAtomNeedsTagInversion(
+                  mol, *atomIt,
+                  molStack.begin()->obj.atom->getIdx() == (*atomIt)->getIdx(),
+                  atomRingClosures[(*atomIt)->getIdx()].size())) {
             // This is a special case. Here's an example:
             //   Our internal representation of a chiral center is equivalent
             //   to:
@@ -1036,7 +1146,7 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
       if (msI.obj.bond->getStereoAtoms().size() >= 2) {
         Canon::canonicalizeDoubleBond(msI.obj.bond, bondVisitOrders,
                                       atomVisitOrders, bondDirCounts,
-                                      atomDirCounts);
+                                      atomDirCounts, molStack);
       } else {
         // bad stereo spec:
         msI.obj.bond->setStereo(Bond::STEREONONE);

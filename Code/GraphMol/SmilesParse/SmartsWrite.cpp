@@ -639,9 +639,10 @@ std::string _recurseBondSmarts(const Bond *bond,
   return res;
 }
 
-std::string FragmentSmartsConstruct(ROMol &mol, unsigned int atomIdx,
-                                    std::vector<Canon::AtomColors> &colors,
-                                    UINT_VECT &ranks, bool doIsomericSmiles) {
+std::string FragmentSmartsConstruct(
+    ROMol &mol, unsigned int atomIdx, std::vector<Canon::AtomColors> &colors,
+    UINT_VECT &ranks, bool doIsomericSmiles,
+    const boost::dynamic_bitset<> *bondsInPlay = nullptr) {
   Canon::MolStack molStack;
   molStack.reserve(mol.getNumAtoms() + mol.getNumBonds());
   std::stringstream res;
@@ -650,7 +651,6 @@ std::string FragmentSmartsConstruct(ROMol &mol, unsigned int atomIdx,
   // thinks we already called findSSSR - to do some atom ranking
   // but for smarts we are going to ignore that part. We will artificially
   // set the "SSSR" property to an empty property
-  VECT_INT_VECT rings;
   mol.getRingInfo()->reset();
   mol.getRingInfo()->initialize();
   for (auto &atom : mol.atoms()) {
@@ -674,8 +674,8 @@ std::string FragmentSmartsConstruct(ROMol &mol, unsigned int atomIdx,
     }
   }
 
-  Canon::canonicalizeFragment(mol, atomIdx, colors, ranks, molStack, 0, 0,
-                              doIsomericSmiles);
+  Canon::canonicalizeFragment(mol, atomIdx, colors, ranks, molStack,
+                              bondsInPlay, nullptr, doIsomericSmiles);
 
   // now clear the "SSSR" property
   mol.getRingInfo()->reset();
@@ -803,6 +803,49 @@ std::string getNonQueryBondSmarts(const QueryBond *qbond, int atomToLeftIdx) {
   return res;
 }
 
+std::string molToSmarts(const ROMol &inmol, bool doIsomericSmiles,
+                        std::vector<AtomColors> &&colors,
+                        const boost::dynamic_bitset<> *bondsInPlay = nullptr) {
+  ROMol mol(inmol);
+  const unsigned int nAtoms = mol.getNumAtoms();
+  UINT_VECT ranks;
+  ranks.reserve(nAtoms);
+  // For smiles writing we would be canonicalizing but we will not do that here.
+  // We will simply use the atom indices as the rank
+  for (const auto &atom : mol.atoms()) {
+    ranks.push_back(atom->getIdx());
+  }
+
+  if (doIsomericSmiles) {
+    mol.setProp(common_properties::_doIsoSmiles, 1);
+  }
+
+  std::string res;
+  auto colorIt = std::find(colors.begin(), colors.end(), Canon::WHITE_NODE);
+  while (colorIt != colors.end()) {
+    unsigned int nextAtomIdx = 0;
+    unsigned int nextRank;
+    std::string subSmi;
+    nextRank = nAtoms + 1;
+    for (unsigned int i = 0; i < nAtoms; ++i) {
+      if (colors[i] == Canon::WHITE_NODE && ranks[i] < nextRank) {
+        nextRank = ranks[i];
+        nextAtomIdx = i;
+      }
+    }
+
+    subSmi =
+        FragmentSmartsConstruct(mol, nextAtomIdx, colors, ranks, bondsInPlay);
+    res += subSmi;
+
+    colorIt = std::find(colors.begin(), colors.end(), Canon::WHITE_NODE);
+    if (colorIt != colors.end()) {
+      res += ".";
+    }
+  }
+  return res;
+}
+
 }  // namespace
 
 namespace SmartsWrite {
@@ -901,57 +944,48 @@ std::string GetBondSmarts(const QueryBond *bond, int atomToLeftIdx) {
   // BOOST_LOG(rdInfoLog) << "\t  query:" << descrip << " " << res << std::endl;
   return res;
 }
+
 }  // end of namespace SmartsWrite
 
-std::string MolToSmarts(ROMol &inmol, bool doIsomericSmiles) {
-  std::string res;
-  unsigned int nAtoms = inmol.getNumAtoms();
+std::string MolToSmarts(const ROMol &mol, bool doIsomericSmarts) {
+  const unsigned int nAtoms = mol.getNumAtoms();
   if (!nAtoms) return "";
 
-  ROMol mol(inmol);
-  UINT_VECT ranks;
-  ranks.reserve(nAtoms);
-  // For smiles writing we would be canonicalizing but we will not do that here.
-  // We will simple use the atom indices as the rank
-  for (ROMol::AtomIterator atIt = mol.beginAtoms(); atIt != mol.endAtoms();
-       atIt++) {
-    ranks.push_back((*atIt)->getIdx());
-  }
-
-  // clean up the chirality on any atom that is marked as chiral,
-  // but that should not be:
-  if (doIsomericSmiles) {
-    mol.setProp(common_properties::_doIsoSmiles, 1);
-  }
-
-  std::vector<AtomColors> colors;
-  colors.resize(nAtoms);
-  std::vector<AtomColors>::iterator colorIt;
-  for (colorIt = colors.begin(); colorIt != colors.end(); colorIt++)
-    *colorIt = Canon::WHITE_NODE;
-
-  colorIt = std::find(colors.begin(), colors.end(), Canon::WHITE_NODE);
-  while (colorIt != colors.end()) {
-    unsigned int nextAtomIdx = 0;
-    unsigned int nextRank;
-    std::string subSmi;
-    nextRank = nAtoms + 1;
-    for (unsigned int i = 0; i < nAtoms; i++) {
-      if (colors[i] == Canon::WHITE_NODE && ranks[i] < nextRank) {
-        nextRank = ranks[i];
-        nextAtomIdx = i;
-      }
-    }
-
-    subSmi = FragmentSmartsConstruct(mol, nextAtomIdx, colors, ranks,
-                                     doIsomericSmiles);
-    res += subSmi;
-
-    colorIt = std::find(colors.begin(), colors.end(), Canon::WHITE_NODE);
-    if (colorIt != colors.end()) {
-      res += ".";
-    }
-  }
-  return res;
+  std::vector<AtomColors> colors(nAtoms, Canon::WHITE_NODE);
+  return molToSmarts(mol, doIsomericSmarts, std::move(colors));
 }
+
+std::string MolFragmentToSmarts(const ROMol &mol,
+                                const std::vector<int> &atomsToUse,
+                                const std::vector<int> *bondsToUse,
+                                bool doIsomericSmarts) {
+  PRECONDITION(!atomsToUse.empty(), "no atoms provided");
+  PRECONDITION(!bondsToUse || !bondsToUse->empty(), "no bonds provided");
+
+  const unsigned int nAtoms = mol.getNumAtoms();
+  if (!nAtoms) {
+    return "";
+  }
+
+  std::unique_ptr<boost::dynamic_bitset<>> bondsInPlay(nullptr);
+  if (bondsToUse != nullptr) {
+    bondsInPlay.reset(new boost::dynamic_bitset<>(mol.getNumBonds(), 0));
+    for (int bidx : *bondsToUse) {
+      bondsInPlay->set(bidx);
+    }
+  }
+
+  // Mark all atoms except the ones in atomIndices as already processed.
+  // white: unprocessed
+  // grey: partial
+  // black: complete
+  std::vector<AtomColors> colors(nAtoms, Canon::BLACK_NODE);
+  for (const auto &idx : atomsToUse) {
+    colors[idx] = Canon::WHITE_NODE;
+  }
+
+  return molToSmarts(mol, doIsomericSmarts, std::move(colors),
+                     bondsInPlay.get());
+}
+
 }  // namespace RDKit

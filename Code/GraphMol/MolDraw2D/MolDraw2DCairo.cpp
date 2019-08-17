@@ -28,7 +28,7 @@ void MolDraw2DCairo::finishDrawing() {}
 void MolDraw2DCairo::setColour(const DrawColour &col) {
   PRECONDITION(dp_cr, "no draw context");
   MolDraw2D::setColour(col);
-  cairo_set_source_rgb(dp_cr, col.get<0>(), col.get<1>(), col.get<2>());
+  cairo_set_source_rgb(dp_cr, col.r, col.g, col.b);
 }
 
 // ****************************************************************************
@@ -208,7 +208,7 @@ cairo_status_t grab_str(void *closure, const unsigned char *data,
   (*str_ptr) += std::string((const char *)data, len);
   return CAIRO_STATUS_SUCCESS;
 }
-}
+}  // namespace
 std::string MolDraw2DCairo::getDrawingText() const {
   PRECONDITION(dp_cr, "no draw context");
   std::string res = "";
@@ -223,4 +223,4 @@ void MolDraw2DCairo::writeDrawingText(const std::string &fName) const {
   cairo_surface_write_to_png(surf, fName.c_str());
 };
 
-}  // EO namespace RDKit
+}  // namespace RDKit

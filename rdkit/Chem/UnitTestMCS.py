@@ -3,7 +3,7 @@ import time
 
 from rdkit import Chem
 from rdkit.Chem import rdFMCS
-
+from rdkit.TestRunner import isDebugBuild
 
 def load_smiles(text):
   mols = []
@@ -321,6 +321,7 @@ lengthy_mols = [Chem.MolFromSmiles("Nc1ccccc1" * 20), Chem.MolFromSmiles("Nc1ccc
 
 class TestTimeout(MCSTestCase):
   # This should take over two minutes to process. Give it 1 seconds.
+  @unittest.skipIf(isDebugBuild(), "Timeout test will fail on debug builds.")
   def test_timeout(self):
     t1 = time.time()
     result = rdFMCS.FindMCS(lengthy_mols, timeout=1)

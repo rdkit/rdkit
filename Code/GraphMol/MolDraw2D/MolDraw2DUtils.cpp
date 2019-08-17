@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2016 Greg Landrum
+//  Copyright (C) 2016-2019 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -21,6 +21,9 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <RDGeneral/BoostEndInclude.h>
+#include <limits>
+#include <cmath>
+#include <Numerics/Conrec.h>
 
 namespace RDKit {
 namespace MolDraw2DUtils {
@@ -96,11 +99,11 @@ void get_colour_option(boost::property_tree::ptree *pt, const char *pnm,
   if (pt->find(pnm) == pt->not_found()) return;
 
   boost::property_tree::ptree::const_iterator itm = pt->get_child(pnm).begin();
-  colour.get<0>() = itm->second.get_value<float>();
+  colour.r = itm->second.get_value<float>();
   ++itm;
-  colour.get<1>() = itm->second.get_value<float>();
+  colour.g = itm->second.get_value<float>();
   ++itm;
-  colour.get<2>() = itm->second.get_value<float>();
+  colour.b = itm->second.get_value<float>();
   ++itm;
 }
 
@@ -134,5 +137,188 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
   }
 }
 
+void contourAndDrawGrid(MolDraw2D &drawer, const double *grid,
+                        const std::vector<double> &xcoords,
+                        const std::vector<double> &ycoords, size_t nContours,
+                        std::vector<double> &levels,
+                        const ContourParams &params) {
+  PRECONDITION(grid, "no data");
+  PRECONDITION(params.colourMap.size() > 1,
+               "colourMap must have at least two entries");
+
+  if (params.setScale) {
+    Point2D minP = {xcoords[0], ycoords[0]};
+    Point2D maxP = {xcoords.back(), ycoords.back()};
+    drawer.setScale(drawer.width(), drawer.height(), minP, maxP);
+  }
+
+  size_t nX = xcoords.size();
+  size_t nY = ycoords.size();
+  double minV = std::numeric_limits<double>::max();
+  double maxV = -std::numeric_limits<double>::max();
+  if (!levels.size() || params.fillGrid) {
+    for (size_t i = 0; i < nX; ++i) {
+      for (size_t j = 0; j < nY; ++j) {
+        minV = std::min(minV, grid[i * nY + j]);
+        maxV = std::max(maxV, grid[i * nY + j]);
+      }
+    }
+    if (!levels.size()) {
+      levels.resize(nContours);
+      for (size_t i = 0; i < nContours; ++i) {
+        levels[i] = minV + i * (maxV - minV) / (nContours - 1);
+      }
+    }
+  }
+  if (maxV <= minV) return;
+
+  const auto olw = drawer.lineWidth();
+  const auto odash = drawer.dash();
+  const auto ocolor = drawer.colour();
+  const auto ofill = drawer.fillPolys();
+  const auto owidth = drawer.lineWidth();
+  if (params.fillGrid) {
+    drawer.setFillPolys(true);
+    drawer.setLineWidth(1);
+    auto delta = (maxV - minV);
+    if (params.colourMap.size() > 2) {
+      // need to find how fractionally far we are from zero, not the min
+      if (-minV > maxV)
+        delta = -minV;
+      else
+        delta = maxV;
+    }
+    for (size_t i = 0; i < nX - 1; ++i) {
+      for (size_t j = 0; j < nY - 1; ++j) {
+        auto gridV = grid[i * nY + j];
+        auto fracV = (gridV - minV) / delta;
+        if (params.colourMap.size() > 2) {
+          // need to find how fractionally far we are from zero, not the min
+          fracV = gridV / delta;
+          if (fracV < 0) fracV *= -1;
+        }
+        DrawColour fillColour;
+        auto c1 = (gridV < 0 || params.colourMap.size() == 2)
+                      ? params.colourMap[1]
+                      : params.colourMap[1];
+        auto c2 = (gridV < 0 || params.colourMap.size() == 2)
+                      ? params.colourMap[0]
+                      : params.colourMap[2];
+        auto c = c1 + (c2 - c1) * fracV;
+        // don't bother drawing boxes that are the same as the background color:
+        double tol = 0.01;
+        if (c.feq(drawer.drawOptions().backgroundColour, tol)) {
+          continue;
+        }
+        drawer.setColour(c);
+        Point2D p1 = {xcoords[i], ycoords[j]};
+        Point2D p2 = {xcoords[i + 1], ycoords[j + 1]};
+        drawer.drawRect(p1, p2);
+      }
+    }
+  }
+
+  if (nContours) {
+    if(nContours > levels.size()){
+      throw ValueErrorException("nContours larger than the size of the level list");
+    }
+    std::vector<conrec::ConrecSegment> segs;
+    conrec::Contour(grid, 0, nX - 1, 0, nY - 1, xcoords.data(), ycoords.data(),
+                    nContours, levels.data(), segs);
+    static DashPattern negDash = {2, 6};
+    static DashPattern posDash;
+    drawer.setColour(params.contourColour);
+    drawer.setLineWidth(params.contourWidth);
+    for (const auto &seg : segs) {
+      if (params.dashNegative && seg.isoVal < 0) {
+        drawer.setDash(negDash);
+      } else {
+        drawer.setDash(posDash);
+      }
+      drawer.drawLine(seg.p1, seg.p2);
+    }
+  }
+
+  drawer.setDash(odash);
+  drawer.setLineWidth(olw);
+  drawer.setColour(ocolor);
+  drawer.setFillPolys(ofill);
+  drawer.setLineWidth(owidth);
+};
+
+void contourAndDrawGaussians(MolDraw2D &drawer,
+                             const std::vector<Point2D> &locs,
+                             const std::vector<double> &weights,
+                             const std::vector<double> &widths,
+                             size_t nContours, std::vector<double> &levels,
+                             const ContourParams &params) {
+  PRECONDITION(locs.size() == weights.size(), "size mismatch");
+  PRECONDITION(locs.size() == widths.size(), "size mismatch");
+
+  // start by setting up the grid
+  if (params.setScale) {
+    Point2D minP, maxP;
+    minP.x = minP.y = std::numeric_limits<double>::max();
+    maxP.x = maxP.y = -std::numeric_limits<double>::max();
+    for (const auto &loc : locs) {
+      minP.x = std::min(loc.x, minP.x);
+      minP.y = std::min(loc.y, minP.y);
+      maxP.x = std::max(loc.x, maxP.x);
+      maxP.y = std::max(loc.y, maxP.y);
+    }
+    Point2D dims = maxP - minP;
+    minP.x -= drawer.drawOptions().padding * dims.x;
+    minP.y -= drawer.drawOptions().padding * dims.y;
+    maxP.x += drawer.drawOptions().padding * dims.x;
+    maxP.y += drawer.drawOptions().padding * dims.y;
+
+    if (params.extraGridPadding > 0) {
+      Point2D p1(0, 0), p2(params.extraGridPadding, 0);
+      double pad =
+          fabs(drawer.getDrawCoords(p2).x - drawer.getDrawCoords(p1).x);
+      minP.x -= pad;
+      minP.y -= pad;
+      maxP.x += pad;
+      maxP.y += pad;
+    }
+
+    drawer.setScale(drawer.width(), drawer.height(), minP, maxP);
+  }
+
+  size_t nx = (size_t)ceil(drawer.range().x / params.gridResolution) + 1;
+  size_t ny = (size_t)ceil(drawer.range().y / params.gridResolution) + 1;
+  std::vector<double> xcoords(nx);
+  for (size_t i = 0; i < nx; ++i) {
+    xcoords[i] = drawer.minPt().x + i * params.gridResolution;
+  }
+  std::vector<double> ycoords(ny);
+  for (size_t i = 0; i < ny; ++i) {
+    ycoords[i] = drawer.minPt().y + i * params.gridResolution;
+  }
+  std::unique_ptr<double[]> grid(new double[nx * ny]);
+
+  // populate the grid from the gaussians:
+  for (size_t ix = 0; ix < nx; ++ix) {
+    auto px = drawer.minPt().x + ix * params.gridResolution;
+    for (size_t iy = 0; iy < ny; ++iy) {
+      auto py = drawer.minPt().y + iy * params.gridResolution;
+      Point2D pt(px, py);
+      double accum = 0.0;
+      for (size_t ig = 0; ig < locs.size(); ++ig) {
+        auto d2 = (pt - locs[ig]).lengthSq();
+        auto contrib = weights[ig] / widths[ig] *
+                       exp(-0.5 * d2 / (widths[ig] * widths[ig]));
+        accum += contrib;
+      }
+      grid[ix * ny + iy] = accum / (2 * M_PI);
+    }
+  }
+
+  // and render it:
+  ContourParams paramsCopy = params;
+  paramsCopy.setScale = false;  // if scaling was needed, we did it already
+  contourAndDrawGrid(drawer, grid.get(), xcoords, ycoords, nContours, levels,
+                     paramsCopy);
+};
 }  // namespace MolDraw2DUtils
 }  // namespace RDKit

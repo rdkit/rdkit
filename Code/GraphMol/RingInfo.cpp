@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2019 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -99,6 +98,29 @@ unsigned int RingInfo::addRing(const INT_VECT &atomIndices,
   return rdcast<unsigned int>(d_atomRings.size());
 }
 
+#ifdef RDK_USE_URF
+unsigned int RingInfo::numRingFamilies() const {
+  PRECONDITION(df_init, "RingInfo not initialized");
+  return d_atomRingFamilies.size();
+};
+
+unsigned int RingInfo::numRelevantCycles() const {
+  PRECONDITION(df_init, "RingInfo not initialized");
+  return rdcast<unsigned int>(RDL_getNofRC(dp_urfData.get()));
+};
+
+unsigned int RingInfo::addRingFamily(const INT_VECT &atomIndices,
+                                     const INT_VECT &bondIndices) {
+  PRECONDITION(df_init, "RingInfo not initialized");
+  d_atomRingFamilies.push_back(atomIndices);
+  d_bondRingFamilies.push_back(bondIndices);
+  POSTCONDITION(d_atomRingFamilies.size() == d_bondRingFamilies.size(),
+                "length mismatch");
+
+  return rdcast<unsigned int>(d_atomRingFamilies.size());
+}
+#endif
+
 void RingInfo::initialize() {
   PRECONDITION(!df_init, "already initialized");
   df_init = true;
@@ -115,4 +137,4 @@ void RingInfo::preallocate(unsigned int numAtoms, unsigned int numBonds) {
   d_atomMembers.resize(numAtoms);
   d_bondMembers.resize(numBonds);
 }
-}
+}  // namespace RDKit

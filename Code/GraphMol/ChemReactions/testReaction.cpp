@@ -6790,7 +6790,7 @@ void testGithub1869() {
     TEST_ASSERT(nError == 0);
 
     smi = ChemicalReactionToRxnSmarts(*rxn);
-    TEST_ASSERT(smi == "[R:1]~&!@[*:2]>>([*:1].[*:2])");
+    TEST_ASSERT(smi == "[R:1]!@[*:2]>>([*:1].[*:2])");
 
     delete rxn;
   }
@@ -6876,6 +6876,30 @@ void testGithub1868() {
       MolToSmiles(*v.get());
     }
   }
+}
+
+void testGithub2547() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github #2547: Check kekulization issues in mdl rxn files"
+                       << std::endl;
+  
+  std::string rdbase = getenv("RDBASE");
+  std::string fName;
+
+  fName = rdbase + "/Code/GraphMol/ChemReactions/testData/kekule_reaction.rxn";
+  BOOST_LOG(rdInfoLog) << "--- reading file" << std::endl;
+  std::unique_ptr<ChemicalReaction> rxn(RxnFileToChemicalReaction(fName));
+  BOOST_LOG(rdInfoLog) << "--- read file" << std::endl;
+  ROMOL_SPTR mol("c1ccccc1"_smiles);
+  rxn->initReactantMatchers();
+  std::vector<ROMOL_SPTR> v{mol};
+  auto prods = rxn->runReactants(v);
+  TEST_ASSERT(prods.size() == 0);
+
+  RxnOps::sanitizeRxn(*rxn);
+
+  prods = rxn->runReactants(v);
+  TEST_ASSERT(prods.size() > 1);
 }
 
 int main() {
@@ -6966,6 +6990,7 @@ int main() {
   testGithub1269();
 #endif
   testGithub1868();
+  testGithub2547();
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
   return (0);

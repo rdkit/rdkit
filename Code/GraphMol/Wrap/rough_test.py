@@ -1684,7 +1684,7 @@ M  END
         Chem.AssignStereochemistry(mol, force=True)
       smi = Chem.MolToSmiles(mol, isomericSmiles=True)
       self.allStereoBonds([bond])
-      self.assertEqual(smi, "F/C=C\F")
+      self.assertEqual(smi, r"F/C=C\F")
       self.assertDoubleBondStereo(smi, Chem.BondStereo.STEREOZ)
 
   def recursive_enumerate_stereo_bonds(self, mol, done_bonds, bonds):
@@ -2088,12 +2088,14 @@ CAS<~>
     self.assertFalse(ri.IsAtomInRingOfSize(2, 3))
     self.assertFalse(ri.IsBondInRingOfSize(1, 3))
     self.assertFalse(ri.IsBondInRingOfSize(2, 3))
+    if hasattr(Chem,'FindRingFamilies'): self.assertEquals(ri.AtomRingFamilies(),())
+
 
     smi = 'C1CC2C1C2'
     m = Chem.MolFromSmiles(smi)
     ri = m.GetRingInfo()
     self.assertTrue(ri)
-    self.assertTrue(ri.NumRings() == 2)
+    self.assertEquals(ri.NumRings(), 2)
     self.assertFalse(ri.IsAtomInRingOfSize(0, 3))
     self.assertTrue(ri.IsAtomInRingOfSize(0, 4))
     self.assertFalse(ri.IsBondInRingOfSize(0, 3))
@@ -2102,6 +2104,16 @@ CAS<~>
     self.assertTrue(ri.IsAtomInRingOfSize(2, 3))
     self.assertTrue(ri.IsBondInRingOfSize(2, 3))
     self.assertTrue(ri.IsBondInRingOfSize(2, 4))
+
+
+    if hasattr(Chem,'FindRingFamilies'): 
+      ri = m.GetRingInfo()
+      self.assertFalse(ri.AreRingFamiliesInitialized())
+      Chem.FindRingFamilies(m)
+      ri = m.GetRingInfo()
+      self.assertTrue(ri.AreRingFamiliesInitialized())
+      self.assertEquals(ri.NumRingFamilies(),2)
+      self.assertEquals(sorted(ri.AtomRingFamilies()),[(0, 1, 2, 3), (2, 3, 4)])
 
   def test46ReplaceCore(self):
     """ test the ReplaceCore functionality
@@ -3734,6 +3746,18 @@ CAS<~>
     qps.makeBondsGenericFlags = Chem.ADJUST_IGNORERINGS
     am = Chem.AdjustQueryProperties(m, qps)
     self.assertEqual(Chem.MolToSmarts(am), '[#6&D2]1-[#6&D2]-[#6&D2]-[#6&D3]-1~[#8]~[#6]')
+
+  def testMolFragmentSmarts(self):
+    m = Chem.MolFromSmiles('C1CCC1OC')
+    self.assertEqual(Chem.MolFragmentToSmarts(m, [0, 1, 2]), '[#6]-[#6]-[#6]')
+    # if bondsToUse is honored, the ring won't show up
+    self.assertEqual(Chem.MolFragmentToSmarts(m, [0, 1, 2, 3], bondsToUse=[0, 1, 2, 3]), '[#6]-[#6]-[#6]-[#6]')
+
+    # Does MolFragmentToSmarts accept output of AdjustQueryProperties?
+    qps = Chem.AdjustQueryParameters()
+    qps.makeAtomsGeneric = True
+    am = Chem.AdjustQueryProperties(m, qps)
+    self.assertEqual(Chem.MolFragmentToSmarts(am, [0, 1, 2]), '*-*-*')
 
   def testAdjustQueryPropertiesgithubIssue1474(self):
     core = Chem.MolFromSmiles('[*:1]C1N([*:2])C([*:3])O1')

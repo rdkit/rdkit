@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2016 Greg Landrum
+//  Copyright (C) 2016-2019 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -18,8 +18,8 @@
 // ****************************************************************************
 
 namespace RDKit {
-typedef boost::tuple<float, float, float> DrawColour;
 class MolDraw2D;
+class MolDraw2DColour;
 
 namespace MolDraw2DUtils {
 //! Does some cleanup operations on the molecule to prepare it to draw nicely
@@ -75,6 +75,90 @@ RDKIT_MOLDRAW2D_EXPORT void updateDrawerParamsFromJSON(MolDraw2D &drawer,
                                                        const char *json);
 RDKIT_MOLDRAW2D_EXPORT void updateDrawerParamsFromJSON(MolDraw2D &drawer,
                                                        const std::string &json);
+
+struct ContourParams {
+  bool setScale = true;           // assumes the grid is drawn first
+  bool dashNegative = true;       // use dashed lines for negative contours
+  bool fillGrid = false;          // shade the grid
+  double gridResolution = 0.15;   // spacing between elements of the grid
+  double contourWidth = 1.0;      // linewidth for drawing contours
+  double extraGridPadding = 0.0;  // extra padding (in molecule coordinates)
+  DrawColour contourColour = {0.5, 0.5, 0.5,
+                              0.5};  // color for drawing contours
+  std::vector<DrawColour> colourMap = {
+      {0.557, 0.004, 0.322, 0.5},
+      {1, 1, 1, 0.5},
+      {0.153, 0.392, 0.098, 0.5}};  // similarity map color scheme
+};
+
+//! Generates and draws contours for data on a grid
+/*
+  \param drawer: the MolDraw2D object to use
+  \param grid: the data to be contoured
+  \param xcoords: x positions of the grid points
+  \param ycoords: y positions of the grid points
+  \param nContours: the number of contours to draw
+  \param levels: the contours to use
+  \param ps: additional parameters controlling the contouring.
+
+  If the \c levels argument is empty, the contour levels will be determined
+  automatically from the max and min values on the grid and \c levels will
+  be updated to include the contour levels.
+
+  If \c ps.fillGrid is set, the data on the grid will also be drawn using
+  the color scheme in \c ps.colourMap
+
+*/
+RDKIT_MOLDRAW2D_EXPORT void contourAndDrawGrid(
+    MolDraw2D &drawer, const double *grid, const std::vector<double> &xcoords,
+    const std::vector<double> &ycoords, size_t nContours,
+    std::vector<double> &levels, const ContourParams &ps = ContourParams());
+//! \overload
+RDKIT_MOLDRAW2D_EXPORT inline void contourAndDrawGrid(
+    MolDraw2D &drawer, const double *grid, const std::vector<double> &xcoords,
+    const std::vector<double> &ycoords, size_t nContours = 10,
+    const ContourParams &ps = ContourParams()) {
+  std::vector<double> levels;
+  contourAndDrawGrid(drawer, grid, xcoords, ycoords, nContours, levels, ps);
+};
+
+//! Generates and draws contours for a set of gaussians
+/*
+  \param drawer: the MolDraw2D object to use
+  \param locs: locations of the gaussians
+  \param heights: the heights (or weights) of the gaussians
+  \param widths: the standard deviations of the gaussians
+  \param nContours: the number of contours to draw
+  \param levels: the contours to use
+  \param ps: additional parameters controlling the contouring.
+
+  The values are calculated on a grid with spacing \c ps.gridResolution.
+  If \c ps.setScale  is set, the grid size will be calculated based on the
+  locations of the gaussians and \c ps.extraGridPadding. Otherwise the current
+  size of the viewport will be used.
+
+  If the \c levels argument is empty, the contour levels will be determined
+  automatically from the max and min values on the grid and \c levels will
+  be updated to include the contour levels.
+
+  If \c ps.fillGrid is set, the data on the grid will also be drawn using
+  the color scheme in \c ps.colourMap
+
+*/
+RDKIT_MOLDRAW2D_EXPORT void contourAndDrawGaussians(
+    MolDraw2D &drawer, const std::vector<Point2D> &locs,
+    const std::vector<double> &heights, const std::vector<double> &widths,
+    size_t nContours, std::vector<double> &levels,
+    const ContourParams &ps = ContourParams());
+//! \overload
+RDKIT_MOLDRAW2D_EXPORT inline void contourAndDrawGaussians(
+    MolDraw2D &drawer, const std::vector<Point2D> &locs,
+    const std::vector<double> &heights, const std::vector<double> &widths,
+    size_t nContours = 10, const ContourParams &ps = ContourParams()) {
+  std::vector<double> levels;
+  contourAndDrawGaussians(drawer, locs, heights, widths, nContours, levels, ps);
+};
+
 }  // namespace MolDraw2DUtils
 }  // namespace RDKit
 #endif  // MOLDRAW2DUTILS_H

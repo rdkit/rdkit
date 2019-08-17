@@ -48,13 +48,14 @@ try:
 except ImportError:
   matplotlib = None
 
+from rdkit.Chem import Draw
+from rdkit.Chem.Draw import SimilarityMaps as sm
 try:
-  from rdkit.Chem.Draw import SimilarityMaps as sm
   from rdkit.Chem.Draw.mplCanvas import Canvas
 except RuntimeError:
-  sm = None
+  Canvas = None
 except ImportError:
-  sm = None
+  Canvas = None
 
 logger = logger()
 
@@ -65,7 +66,7 @@ class TestCase(unittest.TestCase):
     self.mol1 = Chem.MolFromSmiles('c1ccccc1')
     self.mol2 = Chem.MolFromSmiles('c1ccncc1')
 
-  @unittest.skipUnless(sm, 'Matplotlib required')
+  @unittest.skipUnless(Canvas, 'Matplotlib required')
   def testSimilarityMap(self):
     # Morgan2 BV
     refWeights = [0.5, 0.5, 0.5, -0.5, 0.5, 0.5]
@@ -88,8 +89,8 @@ class TestCase(unittest.TestCase):
       self.mol1, self.mol2, lambda m, i: sm.GetMorganFingerprint(m, i, fpType='count'))
     self.assertTrue(weights[3] < 0)
     weights = sm.GetAtomicWeightsForFingerprint(
-      self.mol1, self.mol2,
-      lambda m, i: sm.GetMorganFingerprint(m, i, fpType='bv', useFeatures=True))
+      self.mol1,
+      self.mol2, lambda m, i: sm.GetMorganFingerprint(m, i, fpType='bv', useFeatures=True))
     self.assertTrue(weights[3] < 0)
 
     # hashed AP BV
@@ -109,8 +110,8 @@ class TestCase(unittest.TestCase):
     # hashed TT BV
     refWeights = [0.5, 0.5, -0.16666, -0.5, -0.16666, 0.5]
     weights = sm.GetAtomicWeightsForFingerprint(
-      self.mol1, self.mol2,
-      lambda m, i: sm.GetTTFingerprint(m, i, fpType='bv', nBits=1024, nBitsPerEntry=1))
+      self.mol1,
+      self.mol2, lambda m, i: sm.GetTTFingerprint(m, i, fpType='bv', nBits=1024, nBitsPerEntry=1))
     for w, r in zip(weights, refWeights):
       self.assertAlmostEqual(w, r, 4)
 
@@ -128,7 +129,7 @@ class TestCase(unittest.TestCase):
     for w, r in zip(weights, refWeights):
       self.assertAlmostEqual(w, r, 4)
 
-  @unittest.skipUnless(sm, 'Matplotlib required')
+  @unittest.skipUnless(Canvas, 'Matplotlib required')
   def testSimilarityMapKWArgs(self):
     # Morgan2 BV
     m1 = Chem.MolFromSmiles('CC[C@](F)(Cl)c1ccccc1')
@@ -164,6 +165,18 @@ class TestCase(unittest.TestCase):
     # testing explicit values here seems silly, just check that the contribution of the
     # chiral center drops:
     self.assertTrue(weights[2] > weights2[2])
+
+  def testSimilarityMapsMolDraw2D(self):
+    # nothing really sensible to test here, just make sure things run
+    mol = Chem.MolFromSmiles('COc1cccc2cc(C(=O)NCCCCN3CCN(c4cccc5nccnc54)CC3)oc21')
+    refmol = Chem.MolFromSmiles('CCCN(CCCCN1CCN(c2ccccc2OC)CC1)Cc1ccc2ccccc2c1')
+    d = Draw.MolDraw2DSVG(400, 400)
+    d.ClearDrawing()
+    _, maxWeight = sm.GetSimilarityMapForFingerprint(
+      refmol, mol, lambda m, i: sm.GetMorganFingerprint(m, i, radius=2, fpType='bv'), draw2d=d)
+    d.FinishDrawing()
+    with open('similarityMap1_out.svg', 'w+') as outf:
+      outf.write(d.GetDrawingText())
 
 
 if __name__ == '__main__':

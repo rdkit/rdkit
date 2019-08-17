@@ -1,4 +1,3 @@
-
 import os, sys
 import unittest
 import copy
@@ -401,6 +400,12 @@ class TestCase(unittest.TestCase):
     self.assertEqual(xi, 3)
     self.assertEqual(yi, 2)
     self.assertEqual(zi, 1)
+
+  def test8InitPoint2DFromPoint3D(self):
+    p3 = geom.Point3D(1., 2., 3.)
+    p2 = geom.Point2D(p3)
+    self.assertEqual(p2.x, p3.x)
+    self.assertEqual(p2.y, p3.y)
 
 
 if __name__ == '__main__':

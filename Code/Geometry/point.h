@@ -261,10 +261,11 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point2D : public Point {
 
   Point2D() : x(0.0), y(0.0){};
   Point2D(double xv, double yv) : x(xv), y(yv){};
-
   ~Point2D(){};
 
   Point2D(const Point2D &other) : Point(other), x(other.x), y(other.y) {}
+  //! construct from a Point3D (ignoring the z coordinate)
+  Point2D(const Point3D &p3d) : Point(p3d), x(p3d.x), y(p3d.y){};
 
   virtual Point *copy() const { return new Point2D(*this); }
 

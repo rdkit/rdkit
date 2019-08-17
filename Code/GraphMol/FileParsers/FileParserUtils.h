@@ -55,7 +55,7 @@ RDKIT_FILEPARSERS_EXPORT bool ParseV2000CTAB(
     bool strictParsing = true);
 
 //! finishes up the processing (sanitization, etc.) of a molecule read from CTAB
-void finishMolProcessing(RWMol *res, bool chiralityPossible, bool sanitize,
+RDKIT_FILEPARSERS_EXPORT void finishMolProcessing(RWMol *res, bool chiralityPossible, bool sanitize,
                          bool removeHs);
 
 RDKIT_FILEPARSERS_EXPORT Atom *replaceAtomWithQueryAtom(RWMol *mol, Atom *atom);

@@ -2524,7 +2524,7 @@ void testGithub1756() {
     m->updatePropertyCache(false);
     auto sma = MolToSmarts(*m);
     // std::cerr << sma << std::endl;
-    TEST_ASSERT(sma == "C-[C@&*&H0](-Cl)-F");  // FIX: this seems odd...
+    TEST_ASSERT(sma == "C-[C@&H0](-Cl)-F");  // FIX: this seems odd...
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }

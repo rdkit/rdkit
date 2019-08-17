@@ -32,14 +32,22 @@
 
 import copy
 import math
-
-from matplotlib import cm
-from matplotlib.colors import LinearSegmentedColormap
+try:
+  from matplotlib import cm
+  from matplotlib.colors import LinearSegmentedColormap
+except ImportError:
+    cm = None
+except RuntimeError:
+    cm = None
+    
 import numpy
 
 from rdkit import Chem
 from rdkit import DataStructs
+from rdkit import Geometry
 from rdkit.Chem import Draw
+from rdkit.Chem.Draw import rdMolDraw2D
+from rdkit.Chem import rdDepictor
 from rdkit.Chem import rdMolDescriptors as rdMD
 
 
@@ -120,7 +128,7 @@ def GetStandardizedWeights(weights):
 
 def GetSimilarityMapFromWeights(mol, weights, colorMap=None, scale=-1, size=(250, 250),
                                 sigma=None, coordScale=1.5, step=0.01, colors='k', contourLines=10,
-                                alpha=0.5, **kwargs):
+                                alpha=0.5, draw2d=None, **kwargs):
     """
     Generates the similarity map for a molecule given the atomic weights.
 
@@ -141,6 +149,34 @@ def GetSimilarityMapFromWeights(mol, weights, colorMap=None, scale=-1, size=(250
     """
     if mol.GetNumAtoms() < 2:
         raise ValueError("too few atoms")
+    if draw2d is not None:
+        mol = rdMolDraw2D.PrepareMolForDrawing(mol,addChiralHs=False)
+        if not mol.GetNumConformers():
+            rdDepictor.Compute2DCoords(mol)
+        if sigma is None:
+            if mol.GetNumBonds() > 0:
+                bond = mol.GetBondWithIdx(0)
+                idx1 = bond.GetBeginAtomIdx()
+                idx2 = bond.GetEndAtomIdx()
+                sigma = 0.3 * (mol.GetConformer().GetAtomPosition(idx1)-mol.GetConformer().GetAtomPosition(idx2)).Length()
+            else:
+                sigma = 0.3 * (mol.GetConformer().GetAtomPosition(0)-mol.GetConformer().GetAtomPosition(1)).Length()
+            sigma = round(sigma, 2)
+        sigmas = [sigma]*mol.GetNumAtoms()
+        locs=[]
+        for i in range(mol.GetNumAtoms()):
+            p = mol.GetConformer().GetAtomPosition(i)
+            locs.append(Geometry.Point2D(p.x,p.y))
+        draw2d.ClearDrawing()
+        ps = Draw.ContourParams()
+        ps.fillGrid=True
+        ps.gridResolution=0.1
+        ps.extraGridPadding = 0.5
+        Draw.ContourAndDrawGaussians(draw2d,locs,weights,sigmas,nContours=contourLines,params=ps)
+        draw2d.drawOptions().clearBackground = False
+        draw2d.DrawMolecule(mol)
+        return draw2d
+
     fig = Draw.MolToMPL(mol, coordScale=coordScale, size=size, **kwargs)
     if sigma is None:
         if mol.GetNumBonds() > 0:
@@ -161,6 +197,8 @@ def GetSimilarityMapFromWeights(mol, weights, colorMap=None, scale=-1, size=(250
         maxScale = scale
     # coloring
     if colorMap is None:
+        if cm is None:
+            raise RuntimeError("matplotlib failed to import")
         PiYG_cmap = cm.get_cmap('PiYG', 2)
         colorMap = LinearSegmentedColormap.from_list(
             'PiWG', [PiYG_cmap(0), (1.0, 1.0, 1.0), PiYG_cmap(1)], N=255)
