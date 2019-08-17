@@ -1625,53 +1625,18 @@ void testGithub2570() {
       TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
                                  recursionPossible, useChirality));
     }
-    {  // Try smaller fragments
-      const auto query = R"([C@](Cl)Br)"_smarts;
+    {  // Smaller fragments should always match as long as they have have a
+       // chiral tag,
+      // as these don't have enough neighbors to define CW/CCW chirality
+      const std::vector<std::string> smarts(
+          {"[C@](Cl)Br", "[C@@](Cl)Br", "[C@](Br)F", "[C@@](Br)F",
+           "[C@]F", "[C@@]F", "[C@]", "[C@@]"});
       std::vector<MatchVectType> matches;
-      TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
-                                 recursionPossible, useChirality));
-    }
-    {
-      const auto query = R"([C@@](Cl)Br)"_smarts;
-      std::vector<MatchVectType> matches;
-      TEST_ASSERT(!SubstructMatch(*mol, *query, matches, uniquify,
-                                  recursionPossible, useChirality));
-    }
-    {
-      const auto query = R"([C@](Br)F)"_smarts;
-      std::vector<MatchVectType> matches;
-      TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
-                                 recursionPossible, useChirality));
-    }
-    {
-      const auto query = R"([C@@](Br)F)"_smarts;
-      std::vector<MatchVectType> matches;
-      TEST_ASSERT(!SubstructMatch(*mol, *query, matches, uniquify,
-                                  recursionPossible, useChirality));
-    }
-    {  // Go even smaller
-      const auto query = R"([C@]F)"_smarts;
-      std::vector<MatchVectType> matches;
-      TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
-                                 recursionPossible, useChirality));
-    }
-    {
-      const auto query = R"([C@@]F)"_smarts;
-      std::vector<MatchVectType> matches;
-      TEST_ASSERT(!SubstructMatch(*mol, *query, matches, uniquify,
-                                  recursionPossible, useChirality));
-    }
-    {  // Match just the chiral atom
-      const auto query = R"([C@])"_smarts;
-      std::vector<MatchVectType> matches;
-      TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
-                                 recursionPossible, useChirality));
-    }
-    {
-      const auto query = R"([C@@])"_smarts;
-      std::vector<MatchVectType> matches;
-      TEST_ASSERT(!SubstructMatch(*mol, *query, matches, uniquify,
-                                  recursionPossible, useChirality));
+      for (const auto &sma : smarts) {
+        std::unique_ptr<ROMol> query(SmartsToMol(sma));
+        TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
+                                   recursionPossible, useChirality));
+      }
     }
   }
   {  // Mol also starting with the chiral atom
@@ -1729,7 +1694,7 @@ void testGithub2570() {
   {  // Start from a physical H atom
     const auto mol = R"([H][C@](O)(F)Cl)"_smiles;
     const auto smarts = MolToSmarts(*mol);
-    const auto query = SmartsToMol(smarts);
+    std::unique_ptr<ROMol> query(SmartsToMol(smarts));
     TEST_ASSERT(smarts == R"([#8]-[#6@@H](-[#9])-[#17])");
     std::vector<MatchVectType> matches;
     TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,

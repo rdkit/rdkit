@@ -38,14 +38,9 @@ namespace detail {
 
 namespace {
 bool hasChiralLabel(const Atom *at) {
+  PRECONDITION(at, "bad atom");
   return at->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
          at->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW;
-}
-
-//! Decide if an atom comes from a query that describes a mol fragment
-bool isFragmentAtom(const Atom *at) {
-  unsigned explicitDegree = at->getDegree() + at->getNumExplicitHs();
-  return explicitDegree < 4 && at->getImplicitValence() == -1;
 }
 }  // namespace
 
@@ -92,11 +87,9 @@ class MolMatchFinalCheckFunctor {
     for (unsigned int i = 0; i < d_query.getNumAtoms(); ++i) {
       const Atom *qAt = d_query.getAtomWithIdx(c1[i]);
 
-      // Allow only chiral atoms. Atoms with less than 3 neighbors are only
-      // tolerated if we know they are fragments
-      bool isFragmentQuery = isFragmentAtom(qAt);
-
-      if ((qAt->getDegree() < 3 && !isFragmentQuery) || !hasChiralLabel(qAt)) {
+      // With less than 3 neighbors we can't establish CW/CCW parity,
+      // so query will be a match if it has any kind of chirality.
+      if ((qAt->getDegree() < 3) || !hasChiralLabel(qAt)) {
         continue;
       }
       const Atom *mAt = d_mol.getAtomWithIdx(c2[i]);
@@ -125,7 +118,7 @@ class MolMatchFinalCheckFunctor {
       int qPermCount = qAt->getPerturbationOrder(qOrder);
 
       unsigned unmatchedNeighbors = mAt->getDegree() - mOrder.size();
-      if (isFragmentQuery && qAt->getIdx() == 0 && mAt->getIdx() != 0 &&
+      if (qAt->getIdx() == 0 && mAt->getIdx() != 0 &&
           unmatchedNeighbors) {
         mOrder.insert(mOrder.begin(), 1, -1);
         --unmatchedNeighbors;
