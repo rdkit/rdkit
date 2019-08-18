@@ -774,9 +774,6 @@ void test8Validation() {
   smi = "[C:1](=[O:2])O.[N:3][C:4]>>[C:1](=[O:2])[N:3][C:1]";
   rxn = RxnSmartsToChemicalReaction(smi);
   TEST_ASSERT(rxn);
-  /* 08/08/14
-   * This test is changed due to allowing same atom mapping muliple times in the
-   * products */
   TEST_ASSERT(rxn->validate(nWarn, nError, false));
   TEST_ASSERT(nWarn == 2);
   TEST_ASSERT(nError == 0);
@@ -1304,18 +1301,19 @@ void test12DoubleBondStereochem() {
   TEST_ASSERT(prods[0][0]->getNumBonds() == 5);
   prods[0][0]->updatePropertyCache();
   BOOST_LOG(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
-  MolOps::assignStereochemistry(*(prods[0][0]));
   TEST_ASSERT(mol->getBondWithIdx(4)->getStereo() == Bond::STEREOE);
-  TEST_ASSERT(prods[0][0]->getBondWithIdx(3)->getStereo() == Bond::STEREOE);
+
+  Bond *stereoBond = prods[0][0]->getBondWithIdx(3);
+  INT_VECT stereoAtomsRef{{0, 5}};
+  TEST_ASSERT(stereoBond->getStereoAtoms() == stereoAtomsRef);
+  TEST_ASSERT(stereoBond->getStereo() == Bond::STEREOTRANS);
 
   reacts.clear();
 
   // FIX: note that the handling of this situation, where we match double bonds
-  // that
-  // have stereochem indicated, is currently not completely correct since the
-  // stereochem querying stuff doesn't match C/C=C\Cl when C\C=C/Cl is provided
-  // as
-  // a query.
+  // that have stereochem indicated, is currently not completely correct since
+  // the stereochem querying stuff doesn't match C/C=C\Cl when C\C=C/Cl is
+  // provided as a query.
   delete rxn;
   smi = "[Cl:3]\\[C:1]=[C:2]/[C:4]>>[Cl:3]\\[C:1]=[C:2]\\[C:4]";
   rxn = RxnSmartsToChemicalReaction(smi);
@@ -1338,9 +1336,12 @@ void test12DoubleBondStereochem() {
   TEST_ASSERT(prods[0][0]->getNumBonds() == 3);
   prods[0][0]->updatePropertyCache();
   BOOST_LOG(rdInfoLog) << MolToSmiles(*prods[0][0], true) << std::endl;
-  MolOps::assignStereochemistry(*(prods[0][0]));
   TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
-  TEST_ASSERT(prods[0][0]->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
+
+  stereoBond = prods[0][0]->getBondWithIdx(1);
+  stereoAtomsRef = {0, 3};
+  TEST_ASSERT(stereoBond->getStereoAtoms() == stereoAtomsRef);
+  TEST_ASSERT(stereoBond->getStereo() == Bond::STEREOTRANS);
 
   reacts.clear();
   delete rxn;
@@ -2361,9 +2362,7 @@ void test23Pickling() {
 
     /* 08/05/14
      * This test is changed due to a new behavior of the smarts reaction parser
-     * which now
-     * allows using parenthesis in products as well
-     * original smiles:
+     * which now allows using parenthesis in products as well original smiles:
      * std::string smi  = "[C:1]1[O:2][N:3]1>>[C:1]1[O:2].[N:3]1"; */
     smi = "[C:1]1[O:2][N:3]1>>([C:1]1[O:2].[N:3]1)";
     rxn = RxnSmartsToChemicalReaction(smi);
@@ -5386,14 +5385,29 @@ void test55RedundantProductMappingNumbersAndEZStereochemistry() {
 
     ROMOL_SPTR prod = prods[0][0];
     MolOps::sanitizeMol(*(static_cast<RWMol *>(prod.get())));
-    MolOps::assignStereochemistry(*prod);
-    TEST_ASSERT(prod->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
-    TEST_ASSERT(prod->getBondWithIdx(5)->getStereo() == Bond::STEREOE);
+
+    Bond *stereoBond = prod->getBondWithIdx(1);
+    INT_VECT stereoAtomsRef{{0, 3}};
+    TEST_ASSERT(stereoBond->getStereoAtoms() == stereoAtomsRef);
+    TEST_ASSERT(stereoBond->getStereo() == Bond::STEREOTRANS);
+
+    stereoBond = prod->getBondWithIdx(5);
+    stereoAtomsRef = {4, 7};
+    TEST_ASSERT(stereoBond->getStereoAtoms() == stereoAtomsRef);
+    TEST_ASSERT(stereoBond->getStereo() == Bond::STEREOTRANS);
+
     prod = prods[1][0];
     MolOps::sanitizeMol(*(static_cast<RWMol *>(prod.get())));
-    MolOps::assignStereochemistry(*prod);
-    TEST_ASSERT(prod->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
-    TEST_ASSERT(prod->getBondWithIdx(5)->getStereo() == Bond::STEREOE);
+
+    stereoBond = prod->getBondWithIdx(1);
+    stereoAtomsRef = {0, 3};
+    TEST_ASSERT(stereoBond->getStereoAtoms() == stereoAtomsRef);
+    TEST_ASSERT(stereoBond->getStereo() == Bond::STEREOTRANS);
+
+    stereoBond = prod->getBondWithIdx(5);
+    stereoAtomsRef = {4, 7};
+    TEST_ASSERT(stereoBond->getStereoAtoms() == stereoAtomsRef);
+    TEST_ASSERT(stereoBond->getStereo() == Bond::STEREOTRANS);
 
     delete rxn;
   }
@@ -5432,14 +5446,29 @@ void test55RedundantProductMappingNumbersAndEZStereochemistry() {
 
     ROMOL_SPTR prod = prods[0][0];
     MolOps::sanitizeMol(*(static_cast<RWMol *>(prod.get())));
-    MolOps::assignStereochemistry(*prod);
-    TEST_ASSERT(prod->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
-    TEST_ASSERT(prod->getBondWithIdx(5)->getStereo() == Bond::STEREOZ);
+
+    Bond *stereoBond = prod->getBondWithIdx(1);
+    INT_VECT stereoAtomsRef{{0, 3}};
+    TEST_ASSERT(stereoBond->getStereoAtoms() == stereoAtomsRef);
+    TEST_ASSERT(stereoBond->getStereo() == Bond::STEREOTRANS);
+
+    stereoBond = prod->getBondWithIdx(5);
+    stereoAtomsRef = {4, 7};
+    TEST_ASSERT(stereoBond->getStereoAtoms() == stereoAtomsRef);
+    TEST_ASSERT(stereoBond->getStereo() == Bond::STEREOCIS);
+
     prod = prods[1][0];
     MolOps::sanitizeMol(*(static_cast<RWMol *>(prod.get())));
-    MolOps::assignStereochemistry(*prod);
-    TEST_ASSERT(prod->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
-    TEST_ASSERT(prod->getBondWithIdx(5)->getStereo() == Bond::STEREOZ);
+
+    stereoBond = prod->getBondWithIdx(1);
+    stereoAtomsRef = {0, 3};
+    TEST_ASSERT(stereoBond->getStereoAtoms() == stereoAtomsRef);
+    TEST_ASSERT(stereoBond->getStereo() == Bond::STEREOTRANS);
+
+    stereoBond = prod->getBondWithIdx(5);
+    stereoAtomsRef = {4, 7};
+    TEST_ASSERT(stereoBond->getStereoAtoms() == stereoAtomsRef);
+    TEST_ASSERT(stereoBond->getStereo() == Bond::STEREOCIS);
 
     delete rxn;
   }
@@ -5477,14 +5506,29 @@ void test55RedundantProductMappingNumbersAndEZStereochemistry() {
 
     ROMOL_SPTR prod = prods[0][0];
     MolOps::sanitizeMol(*(static_cast<RWMol *>(prod.get())));
-    MolOps::assignStereochemistry(*prod);
-    TEST_ASSERT(prod->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
-    TEST_ASSERT(prod->getBondWithIdx(3)->getStereo() == Bond::STEREOE);
+
+    Bond *stereoBond = prod->getBondWithIdx(1);
+    INT_VECT stereoAtomsRef{{0, 3}};
+    TEST_ASSERT(stereoBond->getStereoAtoms() == stereoAtomsRef);
+    TEST_ASSERT(stereoBond->getStereo() == Bond::STEREOTRANS);
+
+    stereoBond = prod->getBondWithIdx(3);
+    stereoAtomsRef = {2, 5};
+    TEST_ASSERT(stereoBond->getStereoAtoms() == stereoAtomsRef);
+    TEST_ASSERT(stereoBond->getStereo() == Bond::STEREOTRANS);
+
     prod = prods[1][0];
     MolOps::sanitizeMol(*(static_cast<RWMol *>(prod.get())));
-    MolOps::assignStereochemistry(*prod);
-    TEST_ASSERT(prod->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
-    TEST_ASSERT(prod->getBondWithIdx(3)->getStereo() == Bond::STEREOE);
+
+    stereoBond = prod->getBondWithIdx(1);
+    stereoAtomsRef = {0, 3};
+    TEST_ASSERT(stereoBond->getStereoAtoms() == stereoAtomsRef);
+    TEST_ASSERT(stereoBond->getStereo() == Bond::STEREOTRANS);
+
+    stereoBond = prod->getBondWithIdx(3);
+    stereoAtomsRef = {2, 5};
+    TEST_ASSERT(stereoBond->getStereoAtoms() == stereoAtomsRef);
+    TEST_ASSERT(stereoBond->getStereo() == Bond::STEREOTRANS);
 
     delete rxn;
   }
@@ -6878,11 +6922,310 @@ void testGithub1868() {
   }
 }
 
+bool check_bond_stereo(const ROMOL_SPTR &mol, unsigned bond_idx,
+                       int start_anchor_idx, int end_anchor_idx,
+                       Bond::BondStereo stereo) {
+  auto *bond = mol->getBondWithIdx(bond_idx);
+  std::vector<int> stereo_atoms_ref{{start_anchor_idx, end_anchor_idx}};
+  return Bond::BondType::DOUBLE == bond->getBondType() &&
+         stereo == bond->getStereo() &&
+         stereo_atoms_ref == bond->getStereoAtoms();
+}
+
+ROMOL_SPTR run_simple_reaction(const std::string &reaction,
+                               const ROMOL_SPTR &reactant) {
+  const auto rxn = RxnSmartsToChemicalReaction(reaction);
+  TEST_ASSERT(rxn);
+  TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
+  TEST_ASSERT(rxn->getNumProductTemplates() == 1);
+  rxn->initReactantMatchers();
+
+  const auto prods = rxn->runReactant(reactant, 0);
+  TEST_ASSERT(prods.size() == 1);
+  TEST_ASSERT(prods[0].size() == 1);
+
+  return prods[0][0];
+};
+
+void run_gist_reaction_tests(const std::vector<RWMOL_SPTR> &mols) {
+  TEST_ASSERT(check_bond_stereo(mols[0], 1, 0, 3, Bond::BondStereo::STEREOE));
+  TEST_ASSERT(check_bond_stereo(mols[1], 1, 0, 3, Bond::BondStereo::STEREOE));
+  TEST_ASSERT(check_bond_stereo(mols[2], 2, 2, 4, Bond::BondStereo::STEREOZ));
+  TEST_ASSERT(check_bond_stereo(mols[3], 1, 0, 3, Bond::BondStereo::STEREOE));
+
+  // StereoAtoms atoms get set such that TRANS == E and CIS == Z
+
+  {  // Example 1: reaction that does not affect double bond or neighboring
+     // single bonds
+    const std::string reaction(R"([Br:1]>>[F:1])");
+
+    {
+      // 1a
+      const auto product = run_simple_reaction(reaction, mols[0]);
+      TEST_ASSERT(
+          check_bond_stereo(product, 2, 4, 1, Bond::BondStereo::STEREOTRANS));
+    }
+
+    {
+      // 1b
+      const auto product = run_simple_reaction(reaction, mols[1]);
+      TEST_ASSERT(
+          check_bond_stereo(product, 1, 3, 0, Bond::BondStereo::STEREOTRANS));
+    }
+  }
+  {  // Example 2: reaction that does affect neighboring single bonds
+    const std::string reaction(R"([C:2][Br:1]>>[C:2][F:1])");
+
+    {
+      // 2a
+      const auto product = run_simple_reaction(reaction, mols[1]);
+      TEST_ASSERT(
+          check_bond_stereo(product, 1, 3, 1, Bond::BondStereo::STEREOTRANS));
+    }
+
+    {
+      // 2b
+      const auto product = run_simple_reaction(reaction, mols[2]);
+      TEST_ASSERT(
+          check_bond_stereo(product, 2, 1, 4, Bond::BondStereo::STEREOCIS));
+    }
+  }
+  {  // Example 3: reaction that affects the double bond itself
+    const std::string reaction(R"([C:1]=[N:2]>>[C:1]=[C:2])");
+
+    auto product = run_simple_reaction(reaction, mols[3]);
+    TEST_ASSERT(
+        check_bond_stereo(product, 0, 2, 3, Bond::BondStereo::STEREOTRANS));
+  }
+}
+
+void strip_bond_directions(RWMOL_SPTR &mol) {
+  for (auto &bond : mol->bonds()) {
+    if (bond->getBondDir() == Bond::BondDir::ENDDOWNRIGHT ||
+        bond->getBondDir() == Bond::BondDir::ENDUPRIGHT) {
+      bond->setBondDir(Bond::BondDir::NONE);
+    }
+  }
+}
+
+void testBondStereoGistExamples() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Testing Bond Stereo propagation across reactions in gist examples"
+      << std::endl;
+
+  // Examples from
+  // https://gist.github.com/greglandrum/1c7d933537fd97f14a5c1ec3419f8d7a
+
+  // All these mols have Z stereo, except mol3, which is Z
+  auto mol1 = RWMOL_SPTR(SmilesToMol(R"(C/C=C/C[Br])"));
+  auto mol2 = RWMOL_SPTR(SmilesToMol(R"(C/C=C/[Br])"));
+  auto mol3 = RWMOL_SPTR(SmilesToMol(R"(C/C(Br)=C/C)"));
+  auto mol4 = RWMOL_SPTR(SmilesToMol(R"(C/C=N/F)"));
+
+  std::vector<RWMOL_SPTR> mols{mol1, mol2, mol3, mol4};
+
+  run_gist_reaction_tests(mols);
+
+  // Now, strip bond directions and rerun the same tests to make sure tests
+  // yield the same results without bond directions in the reactants
+
+  for (auto &mol : mols) {
+    strip_bond_directions(mol);
+  }
+
+  run_gist_reaction_tests(mols);
+}
+
+void testStereoBondIsomerization() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Stereo Bond isomerization" << std::endl;
+
+  auto mol = RWMOL_SPTR(SmilesToMol(R"(C/C(Br)=C(Cl)/F)"));
+  strip_bond_directions(mol);
+  TEST_ASSERT(check_bond_stereo(mol, 2, 2, 4, Bond::BondStereo::STEREOE));
+
+  // StereoAtoms will get set to the end of the directed bonds in the products
+
+  {  // Try a null reaction
+    const std::string reaction(
+        R"([C:1]/[C:2](-[Br:3])=[C:4](\[Cl:5])-[F:6]>>[C:1]/[C:2](-[Br:3])=[C:4](\[Cl:5])-[F:6])");
+
+    const auto product = run_simple_reaction(reaction, mol);
+    TEST_ASSERT(
+        check_bond_stereo(product, 2, 0, 4, Bond::BondStereo::STEREOCIS));
+  }
+
+  {  // Flip the bond stereo (second bond direction is flipped in the product)
+    const std::string reaction(
+        R"([C:1]/[C:2](-[Br:3])=[C:4](\[Cl:5])-[F:6]>>[C:1]/[C:2](-[Br:3])=[C:4](/[Cl:5])-[F:6])");
+
+    const auto product = run_simple_reaction(reaction, mol);
+    TEST_ASSERT(
+        check_bond_stereo(product, 2, 0, 4, Bond::BondStereo::STEREOTRANS));
+  }
+
+  {  // This should fail, but doesn't:
+    // we attempt a null reaction on the opposite isomer of the reactant (second
+    // bond direction is flipped), but it sill works because RDKit cannot match
+    // SMARTS bond directions in the reactant, but still can force them onto the
+    // products of the reaction.
+    const std::string reaction(
+        R"([C:1]/[C:2](-[Br:3])=[C:4](/[Cl:5])-[F:6]>>[C:1]/[C:2](-[Br:3])=[C:4](/[Cl:5])-[F:6])");
+
+    const auto product = run_simple_reaction(reaction, mol);
+    TEST_ASSERT(
+        check_bond_stereo(product, 2, 0, 4, Bond::BondStereo::STEREOTRANS));
+  }
+
+  {  // Isomerize swapping the directed bond to the other atom
+    // Note that the stereo is the same, but we changed the stereoatom it is
+    // referred to!
+    const std::string reaction(
+        R"([C:1]/[C:2](-[Br:3])=[C:4](\[Cl:5])-[F:6]>>[C:1]/[C:2](-[Br:3])=[C:4](-[Cl:5])\[F:6])");
+
+    const auto product = run_simple_reaction(reaction, mol);
+    TEST_ASSERT(
+        check_bond_stereo(product, 2, 0, 5, Bond::BondStereo::STEREOCIS));
+  }
+
+  // From here on, StereoAtoms set to reactant's StereoAtoms (= highest CIPs)
+
+  {  // One-side reaction isomerization (no double bond in reaction)
+    const std::string reaction(
+        R"([C:1](\[Cl:2])-[F:3]>>[C:1](/[Cl:2])-[F:3])");
+
+    const auto product = run_simple_reaction(reaction, mol);
+    TEST_ASSERT(
+        check_bond_stereo(product, 2, 5, 1, Bond::BondStereo::STEREOTRANS));
+  }
+
+  {  // One-side reaction isomerization II (double bond in the reaction)
+    const std::string reaction(
+        R"([C:1]=[C:2](\[Cl:3])-[F:4]>>[C:1]=[C:2](/[Cl:3])-[F:4])");
+
+    const auto product = run_simple_reaction(reaction, mol);
+    TEST_ASSERT(
+        check_bond_stereo(product, 0, 5, 2, Bond::BondStereo::STEREOTRANS));
+  }
+}
+
+void testOtherBondStereo() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Other Bond Stereo reaction cases"
+                       << std::endl;
+
+  auto mol = RWMOL_SPTR(SmilesToMol(R"(C/C=C/[Br])"));
+  strip_bond_directions(mol);
+  TEST_ASSERT(check_bond_stereo(mol, 1, 0, 3, Bond::BondStereo::STEREOE));
+
+  {  // Reaction changes order of the stereo bond
+    const std::string reaction(R"([C:1]=[C:2]>>[C:1]-[C:2])");
+    const auto rxn = RxnSmartsToChemicalReaction(reaction);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
+    TEST_ASSERT(rxn->getNumProductTemplates() == 1);
+    rxn->initReactantMatchers();
+
+    const auto product_sets = rxn->runReactant(mol, 0);
+    TEST_ASSERT(!product_sets.empty());
+    for (const auto &products : product_sets) {
+      TEST_ASSERT(products.size() == 1);
+      for (const Bond *bond : products[0]->bonds()) {
+        TEST_ASSERT(Bond::BondType::SINGLE == bond->getBondType());
+        TEST_ASSERT(Bond::BondStereo::STEREONONE == bond->getStereo());
+      }
+    }
+  }
+  {  // Reaction explicitly destroys stereochemistry
+     // (no directed bonds enclosing the double bond)
+    const std::string reaction(
+        R"([C:1]/[C:2]=[C:3]/[Br:4]>>[C:1][C:2]=[C:3]-[Br:4])");
+    const auto rxn = RxnSmartsToChemicalReaction(reaction);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
+    TEST_ASSERT(rxn->getNumProductTemplates() == 1);
+    rxn->initReactantMatchers();
+
+    const auto product_sets = rxn->runReactant(mol, 0);
+    TEST_ASSERT(!product_sets.empty());
+    for (const auto &products : product_sets) {
+      TEST_ASSERT(products.size() == 1);
+      for (const Bond *bond : products[0]->bonds()) {
+        if (bond->getIdx() == 1) {
+          TEST_ASSERT(Bond::BondType::DOUBLE == bond->getBondType());
+          TEST_ASSERT(Bond::BondStereo::STEREOANY == bond->getStereo());
+        } else {
+          TEST_ASSERT(Bond::BondType::SINGLE == bond->getBondType());
+          TEST_ASSERT(Bond::BondStereo::STEREONONE == bond->getStereo());
+        }
+      }
+    }
+  }
+  {  // Reaction with 2 product sets
+    const std::string reaction(
+        R"([C:1]=[C:2]>>[Si:1]=[C:2])");
+    const auto rxn = RxnSmartsToChemicalReaction(reaction);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
+    TEST_ASSERT(rxn->getNumProductTemplates() == 1);
+    rxn->initReactantMatchers();
+
+    const auto product_sets = rxn->runReactant(mol, 0);
+    TEST_ASSERT(product_sets.size() == 2);
+    for (const auto &products : product_sets) {
+      TEST_ASSERT(products.size() == 1);
+      TEST_ASSERT(check_bond_stereo(products[0], 0, 2, 3,
+                                    Bond::BondStereo::STEREOTRANS));
+    }
+  }
+  {  // Reactant stereo propagated by (stereoatom, anti-stereoatom) pair
+    auto mol2 = RWMOL_SPTR(SmilesToMol(R"(Cl/C(C)=C(/Br)F)"));
+    strip_bond_directions(mol2);
+    TEST_ASSERT(check_bond_stereo(mol2, 2, 0, 4, Bond::BondStereo::STEREOE));
+
+    const std::string reaction(
+        R"([C:1]=[C:2][Br:3]>>[C:1]=[C:2].[Br:3])");
+    const auto rxn = RxnSmartsToChemicalReaction(reaction);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
+    TEST_ASSERT(rxn->getNumProductTemplates() == 2);
+    rxn->initReactantMatchers();
+
+    auto product_sets = rxn->runReactant(mol2, 0);
+    TEST_ASSERT(product_sets.size() == 1);
+    TEST_ASSERT(product_sets[0].size() == 2);
+    // We are only interested in the product that keeps the double bond
+    TEST_ASSERT(check_bond_stereo(product_sets[0][0], 0, 2, 4,
+                                  Bond::BondStereo::STEREOCIS));
+  }
+  {  // Reactant stereo propagated by anti-stereoatoms pair
+    auto mol2 = RWMOL_SPTR(SmilesToMol(R"(Cl/C(C)=C(/Br)F)"));
+    strip_bond_directions(mol2);
+    TEST_ASSERT(check_bond_stereo(mol2, 2, 0, 4, Bond::BondStereo::STEREOE));
+
+    const std::string reaction(
+        R"([Cl:4][C:1]=[C:2][Br:3]>>[C:1]=[C:2].[Br:3].[Cl:4])");
+    const auto rxn = RxnSmartsToChemicalReaction(reaction);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
+    TEST_ASSERT(rxn->getNumProductTemplates() == 3);
+    rxn->initReactantMatchers();
+
+    auto product_sets = rxn->runReactant(mol2, 0);
+    TEST_ASSERT(product_sets.size() == 1);
+    TEST_ASSERT(product_sets[0].size() == 3);
+    // We are only interested in the product that keeps the double bond
+    TEST_ASSERT(check_bond_stereo(product_sets[0][0], 0, 2, 3,
+                                  Bond::BondStereo::STEREOTRANS));
+  }
+}
+
 void testGithub2547() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing Github #2547: Check kekulization issues in mdl rxn files"
                        << std::endl;
-  
+
   std::string rdbase = getenv("RDBASE");
   std::string fName;
 
@@ -6909,7 +7252,6 @@ int main() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing Chemical Reactions \n";
 
-#if 1
   test1Basics();
   test2SimpleReactions();
   test3RingFormation();
@@ -6988,8 +7330,10 @@ int main() {
   testGithub1950();
   testGithub1869();
   testGithub1269();
-#endif
   testGithub1868();
+  testBondStereoGistExamples();
+  testStereoBondIsomerization();
+  testOtherBondStereo();
   testGithub2547();
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
