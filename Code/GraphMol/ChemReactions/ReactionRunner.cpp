@@ -204,6 +204,7 @@ INT_VECT findStereoAtoms(const Bond *bond) {
     }
     case Bond::BondStereo::STEREOCIS:
     case Bond::BondStereo::STEREOTRANS:
+    default:
       return bond->getStereoAtoms();
   }
 }

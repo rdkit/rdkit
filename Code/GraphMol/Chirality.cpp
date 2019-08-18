@@ -1775,23 +1775,19 @@ void setBondDirRelativeToAtom(Bond *bond, Atom *atom, Bond::BondDir dir,
   PRECONDITION(dir == Bond::ENDUPRIGHT || dir == Bond::ENDDOWNRIGHT, "bad dir");
   PRECONDITION(atom == bond->getBeginAtom() || atom == bond->getEndAtom(),
                "atom doesn't belong to bond");
-  // std::cerr << "\t\t>sbdra :  bond " << bond->getIdx() << " atom "
-  //           << atom->getIdx() << " dir : " << dir << " reverse: " << reverse
-  //           << std::endl;
-  Atom *oAtom;
+  RDUNUSED_PARAM(needsDir);
+
   if (bond->getBeginAtom() != atom) {
     reverse = !reverse;
-    oAtom = bond->getBeginAtom();
-  } else {
-    oAtom = bond->getEndAtom();
   }
+
   if (reverse) {
     dir = (dir == Bond::ENDUPRIGHT ? Bond::ENDDOWNRIGHT : Bond::ENDUPRIGHT);
   }
   // to ensure maximum compatibility, even when a bond has unknown stereo (set
   // explicitly and recorded in _UnknownStereo property), I will still let a
   // direction to be computed. You must check the _UnknownStereo property to
-  // make sure whether this bond is explictly set to have no direction info.
+  // make sure whether this bond is explicitly set to have no direction info.
   // This makes sense because the direction info are all derived from
   // coordinates, the _UnknownStereo property is like extra metadata to be
   // used with the direction info.
