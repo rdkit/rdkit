@@ -19,6 +19,8 @@
 
 /// @cond
 namespace RDKit {
+class Atom;
+class Bond;
 class ROMol;
 namespace Chirality {
 /*!
@@ -33,6 +35,17 @@ namespace Chirality {
 */
 RDKIT_GRAPHMOL_EXPORT void assignAtomCIPRanks(const ROMol &mol,
                                               UINT_VECT &ranks);
+
+RDKIT_GRAPHMOL_EXPORT bool hasStereoBondDir(const Bond *bond);
+
+/**
+ *  Returns the first neighboring bond that can be found which has a stereo
+ * bond direction set. If no such bond can be found, it returns null. No
+ * checks are made to ensure there aren't any other conflicting directed bonds.
+ */
+RDKIT_GRAPHMOL_EXPORT const Bond *getNeighboringDirectedBond(const ROMol &mol,
+                                                             const Atom *atom);
+
 }  // namespace Chirality
 }  // namespace RDKit
 /// @endcond

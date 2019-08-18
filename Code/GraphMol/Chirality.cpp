@@ -1290,6 +1290,26 @@ void rerankAtoms(const ROMol &mol, UINT_VECT &ranks) {
   }
 #endif
 }
+
+bool hasStereoBondDir(const Bond *bond) {
+  PRECONDITION(bond, "no bond");
+  return bond->getBondDir() == Bond::BondDir::ENDDOWNRIGHT ||
+         bond->getBondDir() == Bond::BondDir::ENDUPRIGHT;
+}
+
+const Bond *getNeighboringDirectedBond(const ROMol &mol, const Atom *atom) {
+  PRECONDITION(atom, "no atom");
+  for (const auto &bondIdx :
+       boost::make_iterator_range(mol.getAtomBonds(atom))) {
+    const Bond *bond = mol[bondIdx];
+
+    if (bond->getBondType() != Bond::BondType::DOUBLE &&
+        hasStereoBondDir(bond)) {
+      return bond;
+    }
+  }
+  return nullptr;
+}
 }  // namespace Chirality
 
 namespace MolOps {
