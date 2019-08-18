@@ -487,13 +487,16 @@ RWMol *SmartsToMol(const std::string &smarts, int debugParse, bool mergeHs,
   } else {
     res = toMol(labelRecursivePatterns(smarts), smarts_parse, smarts);
   }
-  if (res && mergeHs) {
-    try {
-      MolOps::mergeQueryHs(*res);
-    } catch (...) {
-      delete res;
-      throw;
+  if (res) {
+    if (mergeHs) {
+      try {
+        MolOps::mergeQueryHs(*res);
+      } catch (...) {
+        delete res;
+        throw;
+      }
     }
+    MolOps::setBondStereoFromDirections(*res);
   }
   return res;
 };

@@ -2234,6 +2234,34 @@ void detectBondStereochemistry(ROMol &mol, int confId) {
   setDoubleBondNeighborDirections(mol, &conf);
 }
 
+void setBondStereoFromDirections(ROMol &mol) {
+  for (Bond *bond : mol.bonds()) {
+    if (bond->getBondType() == Bond::DOUBLE) {
+      const Atom *startAtom = bond->getBeginAtom();
+      const Atom *endAtom = bond->getEndAtom();
+
+      const Bond *startDirBond =
+          Chirality::getNeighboringDirectedBond(mol, startAtom);
+      const Bond *endDirBond =
+          Chirality::getNeighboringDirectedBond(mol, endAtom);
+
+      if (startDirBond != nullptr && endDirBond != nullptr) {
+        unsigned startStereoAtom =
+            startDirBond->getOtherAtomIdx(startAtom->getIdx());
+        unsigned endStereoAtom = endDirBond->getOtherAtomIdx(endAtom->getIdx());
+
+        bond->setStereoAtoms(startStereoAtom, endStereoAtom);
+
+        if (startDirBond->getBondDir() == endDirBond->getBondDir()) {
+          bond->setStereo(Bond::STEREOTRANS);
+        } else {
+          bond->setStereo(Bond::STEREOCIS);
+        }
+      }
+    }
+  }
+}
+
 void assignStereochemistryFrom3D(ROMol &mol, int confId,
                                  bool replaceExistingTags) {
   if (!mol.getNumConformers() || !mol.getConformer(confId).is3D()) return;
