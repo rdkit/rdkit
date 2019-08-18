@@ -2671,11 +2671,82 @@ void testGithub2142() {
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
+
+void testSmartsStereoBonds() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Testing stereo bond labels in mols parsed from SMARTS" << std::endl;
+  {
+    const auto mol = R"(C/C=C/C)"_smarts;
+    const Bond *bnd = mol->getBondWithIdx(1);
+    TEST_ASSERT(bnd->getStereoAtoms() == INT_VECT({0, 3}));
+    TEST_ASSERT(bnd->getStereo() == Bond::STEREOTRANS);
+  }
+  {
+    const auto mol = R"(C/C(F)=C(Cl)\C)"_smarts;
+    const Bond *bnd = mol->getBondWithIdx(2);
+    TEST_ASSERT(bnd->getStereoAtoms() == INT_VECT({0, 5}));
+    TEST_ASSERT(bnd->getStereo() == Bond::STEREOCIS);
+  }
+  {
+    const auto mol = R"(F/C=C/C=C/C)"_smarts;
+    {
+      const Bond *bnd = mol->getBondWithIdx(1);
+      TEST_ASSERT(bnd->getStereoAtoms() == INT_VECT({0, 3}));
+      TEST_ASSERT(bnd->getStereo() == Bond::STEREOTRANS);
+    }
+    {
+      const Bond *bnd = mol->getBondWithIdx(3);
+      TEST_ASSERT(bnd->getStereoAtoms() == INT_VECT({2, 5}));
+      TEST_ASSERT(bnd->getStereo() == Bond::STEREOTRANS);
+    }
+  }
+  {
+    const auto mol = R"(F\C=C/C=C/C)"_smarts;
+    {
+      const Bond *bnd = mol->getBondWithIdx(1);
+      TEST_ASSERT(bnd->getStereoAtoms() == INT_VECT({0, 3}));
+      TEST_ASSERT(bnd->getStereo() == Bond::STEREOCIS);
+    }
+    {
+      const Bond *bnd = mol->getBondWithIdx(3);
+      TEST_ASSERT(bnd->getStereoAtoms() == INT_VECT({2, 5}));
+      TEST_ASSERT(bnd->getStereo() == Bond::STEREOTRANS);
+    }
+  }
+  {
+    const auto mol = R"(F\C=C\C=C/C)"_smarts;
+    {
+      const Bond *bnd = mol->getBondWithIdx(1);
+      TEST_ASSERT(bnd->getStereoAtoms() == INT_VECT({0, 3}));
+      TEST_ASSERT(bnd->getStereo() == Bond::STEREOTRANS);
+    }
+    {
+      const Bond *bnd = mol->getBondWithIdx(3);
+      TEST_ASSERT(bnd->getStereoAtoms() == INT_VECT({2, 5}));
+      TEST_ASSERT(bnd->getStereo() == Bond::STEREOCIS);
+    }
+  }
+  {
+    const auto mol = R"(F/C=C/C=CC)"_smarts;
+    {
+      const Bond *bnd = mol->getBondWithIdx(1);
+      TEST_ASSERT(bnd->getStereoAtoms() == INT_VECT({0, 3}));
+      TEST_ASSERT(bnd->getStereo() == Bond::STEREOTRANS);
+    }
+    {
+      const Bond *bnd = mol->getBondWithIdx(3);
+      TEST_ASSERT(bnd->getStereo() == Bond::STEREONONE);
+    }
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
   RDLog::InitLogs();
-#if 1
   testPass();
   testFail();
   testMatches();
@@ -2722,8 +2793,8 @@ int main(int argc, char *argv[]) {
   testGithub1906();
   testGithub1988();
   testGithub1985();
-#endif
   testGithub2142();
+  testSmartsStereoBonds();
 
   return 0;
 }
