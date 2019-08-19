@@ -26,11 +26,11 @@ using boost_adaptbx::python::streambuf;
 namespace {
 PDBWriter *getPDBWriter(python::object &fileobj, unsigned int flavor = 0) {
   // FIX: minor leak here
-  auto *sb = new streambuf(fileobj);
+  auto *sb = new streambuf(fileobj, 't');
   auto *ost = new streambuf::ostream(*sb);
   return new PDBWriter(ost, true, flavor);
 }
-}
+}  // namespace
 std::string pdbwDocStr =
     "Constructor.\n\n"
     "   ARGUMENTS:\n\n"
@@ -65,6 +65,6 @@ struct pdbwriter_wrap {
              "Returns the number of molecules written so far.\n\n");
   };
 };
-}
+}  // namespace RDKit
 
 void wrap_pdbwriter() { RDKit::pdbwriter_wrap::wrap(); }
