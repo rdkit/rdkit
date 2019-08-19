@@ -36,8 +36,7 @@ class TestCase(unittest.TestCase):
     self.failUnless(fNames[1] == 'HBondAcceptor')
 
     mol = Chem.MolFromSmiles("COCN")
-    rdDistGeom.EmbedMolecule(mol, 30, 100, useExpTorsionAnglePrefs=False,
-                            useBasicKnowledge=False)
+    rdDistGeom.EmbedMolecule(mol, 30, 100, useExpTorsionAnglePrefs=False, useBasicKnowledge=False)
 
     self.failUnless(cfac.GetNumMolFeatures(mol) == 3)
     for i in range(cfac.GetNumMolFeatures(mol)):
@@ -54,17 +53,17 @@ class TestCase(unittest.TestCase):
 
     positions = [[1.3041, -0.6079, 0.0924], [-0.7066, 0.5994, 0.1824], [1.3041, -0.6079, 0.0924]]
     targetAids = [[3], [1], [3]]
-    for i,feat in enumerate(feats):
-      self.assertEqual(feat.GetFamily(),fTypes[i])
+    for i, feat in enumerate(feats):
+      self.assertEqual(feat.GetFamily(), fTypes[i])
       pos = list(feat.GetPos())
       aids = list(feat.GetAtomIds())
-      self.assertEqual(aids,targetAids[i])
+      self.assertEqual(aids, targetAids[i])
       self.assertTrue(lstFeq(pos, positions[i]))
       nmol = feat.GetMol()
-      self.assertEqual(Chem.MolToSmiles(nmol),"COCN")
+      self.assertEqual(Chem.MolToSmiles(nmol), "COCN")
       ncfac = feat.GetFactory()
       self.assertEqual(ncfac.GetNumFeatureDefs(), 2)
-      self.assertEqual(feat.GetActiveConformer(),-1)
+      self.assertEqual(feat.GetActiveConformer(), -1)
 
   def testIncludeOnly(self):
     cfac = ChemicalFeatures.BuildFeatureFactory(
@@ -80,8 +79,8 @@ class TestCase(unittest.TestCase):
     self.failUnless(cfac.GetNumMolFeatures(mol, includeOnly="Bogus") == 0)
 
     self.failUnlessRaises(IndexError, lambda: cfac.GetMolFeature(mol, 1, includeOnly="HBondDonor"))
-    self.failUnlessRaises(IndexError,
-                          lambda: cfac.GetMolFeature(mol, 2, includeOnly="HBondAcceptor"))
+    self.failUnlessRaises(
+      IndexError, lambda: cfac.GetMolFeature(mol, 2, includeOnly="HBondAcceptor"))
     f = cfac.GetMolFeature(mol, 0, includeOnly="HBondDonor")
     self.failUnless(f.GetFamily() == 'HBondDonor')
 
@@ -127,15 +126,15 @@ EndFeature\r
     Weights 1.0
 EndFeature
 """
-    self.failUnlessRaises(ValueError,
-                          lambda: ChemicalFeatures.BuildFeatureFactoryFromString(fdefBlock))
+    self.failUnlessRaises(
+      ValueError, lambda: ChemicalFeatures.BuildFeatureFactoryFromString(fdefBlock))
     fdefBlock = \
 """DefineFeature HDonor1 [N,O;!H0]
     Family HBondDonor
     Weights 1.0
 """
-    self.failUnlessRaises(ValueError,
-                          lambda: ChemicalFeatures.BuildFeatureFactoryFromString(fdefBlock))
+    self.failUnlessRaises(
+      ValueError, lambda: ChemicalFeatures.BuildFeatureFactoryFromString(fdefBlock))
 
     self.failUnlessRaises(IOError, lambda: ChemicalFeatures.BuildFeatureFactory('noSuchFile.txt'))
 
@@ -186,6 +185,15 @@ EndFeature
     m = None
     for feat in feats:
       feat.GetPos()
+
+  def testGithub2603(self):
+    cfac = ChemicalFeatures.BuildFeatureFactory(
+      os.path.join(RDConfig.RDDataDir, "BaseFeatures.fdef"))
+    m = Chem.MolFromSmiles('OCc1ccccc1CN')
+    feats = cfac.GetFeaturesForMol(m)
+    self.assertEqual(feats[0].GetFamily(), 'Donor')
+    cfac = None
+    self.assertEqual(feats[0].GetFamily(), 'Donor')
 
 
 if __name__ == '__main__':
