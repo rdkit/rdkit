@@ -5522,8 +5522,9 @@ H      0.635000    0.635000    0.635000
       atom.SetIsotope(atom.GetIdx())
     
     order1 = list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, 4), breakTies=False, includeIsotopes=True))
-    order2 = list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(4, 8), breakTies=False, includeIsotopes=False))
+    order2 = list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, 8), breakTies=False, includeIsotopes=False))
     self.assertNotEqual(order1[:4], order2[4:])
+    # ensure that the orders are ignored in the second batch
     self.assertEqual(order2[:4], order2[4:])
 
   
