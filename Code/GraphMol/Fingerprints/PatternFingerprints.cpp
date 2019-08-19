@@ -50,7 +50,7 @@ class ss_matcher {
  private:
   RDKit::ROMOL_SPTR m_matcher;
 };
-}
+}  // namespace
 
 namespace RDKit {
 const char *pqs[] = {
@@ -151,7 +151,7 @@ void getAtomNumbers(const Atom *a, std::vector<int> &atomNums) {
   }
   return;
 }
-}
+}  // namespace detail
 
 namespace {
 bool isPatternComplexQuery(const Bond *b) {
@@ -164,7 +164,7 @@ bool isPatternComplexQuery(const Bond *b) {
   if (descr == "BondOrder") return false;
   return true;
 }
-}
+}  // namespace
 
 // caller owns the result, it must be deleted
 ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
@@ -194,40 +194,40 @@ ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
 
   boost::dynamic_bitset<> isQueryAtom(mol.getNumAtoms()),
       isQueryBond(mol.getNumBonds());
-  ROMol::VERTEX_ITER firstA, lastA;
-  boost::tie(firstA, lastA) = mol.getVertices();
-  while (firstA != lastA) {
-    const Atom *at = mol[*firstA];
-    // isComplexQuery() no longer considers "AtomNull" to be complex, but for the purposes
-    // of the pattern FP, it definitely needs to be treated as a query feature.
-    if ( at->hasQuery() && (at->getQuery()->getDescription()=="AtomNull" || isComplexQuery(at))) {
+  for (const auto at : mol.atoms()) {
+    // isComplexQuery() no longer considers "AtomNull" to be complex, but for
+    // the purposes of the pattern FP, it definitely needs to be treated as a
+    // query feature.
+    if (at->hasQuery() && (at->getQuery()->getDescription() == "AtomNull" ||
+                           isComplexQuery(at))) {
       isQueryAtom.set(at->getIdx());
     }
-    ++firstA;
   }
 
-  ROMol::EDGE_ITER firstB, lastB;
-  boost::tie(firstB, lastB) = mol.getEdges();
-  while (firstB != lastB) {
-    const Bond *bond = mol[*firstB];
-    // if( isComplexQuery(bond) ){
+  for (const auto bond : mol.bonds()) {
     if (isPatternComplexQuery(bond)) {
       isQueryBond.set(bond->getIdx());
     }
-    ++firstB;
   }
 
   auto *res = new ExplicitBitVect(fpSize);
   unsigned int pIdx = 0;
-  BOOST_FOREACH (const ROMol *patt, patts) {
+  for (const auto patt : patts) {
     ++pIdx;
     std::vector<MatchVectType> matches;
     // uniquify matches?
     //   time for 10K molecules w/ uniquify: 5.24s
     //   time for 10K molecules w/o uniquify: 4.87s
-    SubstructMatch(mol, *patt, matches, false);
+
+    SubstructMatchParameters params;
+    params.uniquify = false;
+    // raise maxMatches really high. This was the cause for github #2614.
+    // if we end up with more matches than this, we're completely hosed: :-)
+    params.maxMatches = 100000000;
+    matches = SubstructMatch(mol, *patt, params);
+
     std::uint32_t mIdx = pIdx + patt->getNumAtoms() + patt->getNumBonds();
-    BOOST_FOREACH (MatchVectType &mv, matches) {
+    for (const auto &mv : matches) {
 #ifdef VERBOSE_FINGERPRINTING
       std::cerr << "\nPatt: " << pIdx << " | ";
 #endif
@@ -241,7 +241,7 @@ ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
       bool isQuery = false;
       std::uint32_t bitId = pIdx;
       std::vector<unsigned int> amap(mv.size(), 0);
-      BOOST_FOREACH (MatchVectType::value_type &p, mv) {
+      for (const auto &p : mv) {
 #ifdef VERBOSE_FINGERPRINTING
         std::cerr << p.second << " ";
 #endif
@@ -263,7 +263,7 @@ ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
       std::cerr << " bs:|| ";
 #endif
       while (!isQuery && firstB != lastB) {
-        const Bond* pbond = (*patt)[*firstB];
+        const Bond *pbond = (*patt)[*firstB];
         ++firstB;
         const Bond *mbond = mol.getBondBetweenAtoms(
             amap[pbond->getBeginAtomIdx()], amap[pbond->getEndAtomIdx()]);
@@ -304,4 +304,4 @@ ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
   }
   return res;
 }
-}
+}  // namespace RDKit
