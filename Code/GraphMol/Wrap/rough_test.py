@@ -5524,6 +5524,7 @@ H      0.635000    0.635000    0.635000
     order1 = list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, 4), breakTies=False, includeIsotopes=True))
     order2 = list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(4, 8), breakTies=False, includeIsotopes=False))
     self.assertNotEqual(order1[:4], order2[4:])
+    self.assertEqual(order2[:4], order2[4:])
 
   
     for smi in ['ONCS.ONCS', 'F[C@@H](Br)[C@H](F)Cl']:
