@@ -86,11 +86,6 @@ if(RDK_PGSQL_STATIC AND RDK_BUILD_PGSQL)
   endif(NOT RDK_INSTALL_STATIC_LIBS)
 endif()
 
-if(RDK_USE_URF)
-  ADD_DEFINITIONS("-DRDK_USE_URF")
-  include_directories(${PROJECT_BINARY_DIR}/include)
-  link_directories(${PROJECT_BINARY_DIR}/lib)
-endif()
 
 include(TestBigEndian)
 TEST_BIG_ENDIAN(RDK_BIG_ENDIAN)
@@ -170,6 +165,10 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
     include_directories(${RDKit_ExternalDir})
 endif()
 
+if(RDK_USE_URF)
+  ADD_DEFINITIONS("-DRDK_USE_URF")
+  include_directories(${RDKit_ExternalDir}/RingFamilies/RingDecomposerLib/src/RingDecomposerLib)
+endif()
 
 
 if(CMAKE_SIZEOF_VOID_P MATCHES 4)
