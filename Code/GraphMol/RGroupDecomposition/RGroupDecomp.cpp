@@ -1039,7 +1039,7 @@ struct RGroupDecompData {
       }
     }
 
-    permutation = best_permutation;    
+    permutation = best_permutation;
     if (pruneMatches || finalize) {
       prune();
     }
@@ -1050,7 +1050,6 @@ struct RGroupDecompData {
 
     return true;
   }
-  
 };
 
 RGroupDecomposition::RGroupDecomposition(
