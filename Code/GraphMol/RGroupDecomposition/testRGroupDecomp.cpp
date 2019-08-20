@@ -933,6 +933,24 @@ void testRowColumnAlignmentProblem() {
   }
 }
 
+void testSymmetryIssues() {
+  BOOST_LOG(rdInfoLog)
+    << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "Testing R-Group symmetry issues \n";
+
+  auto m1 = "c1c(F)cccn1"_smiles; 
+  auto m2 = "c1c(Cl)c(C)ccn1"_smiles;
+  auto m3 = "c1c(O)cccn1"_smiles;
+  auto m4 = "c1cc(C)c(F)cn1"_smiles;
+  auto core = "c1c([*:1])c([*:2])ccn1"_smiles;
+  RGroupDecomposition decomp(*core);
+  decomp.add(*m1);
+  decomp.add(*m2);
+  decomp.add(*m3);
+  decomp.add(*m4);
+  decomp.process();
+  auto cols = decomp.getRGroupsAsColumns();
+}
 int main() {
   RDLog::InitLogs();
 
@@ -956,7 +974,7 @@ int main() {
   testSDFGRoupMultiCoreNoneShouldMatch();
 #endif
   testRowColumnAlignmentProblem();
-
+  testSymmetryIssues();
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;

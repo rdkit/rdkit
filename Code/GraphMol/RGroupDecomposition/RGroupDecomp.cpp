@@ -940,6 +940,8 @@ struct RGroupDecompData {
     //  set
     double best_score = 0;
     std::vector<size_t> best_permutation = permutation;
+    std::vector<std::vector<size_t>> ties;
+    
     size_t count = 0;
 #ifdef DEBUG
     std::cerr << "Processing" << std::endl;
@@ -952,17 +954,60 @@ struct RGroupDecompData {
                 << std::endl;
 #endif
       double newscore = score(iterator.permutation, matches, labels);
-      if (newscore > best_score) {
+
+      if (newscore == best_score) {
+	ties.push_back(iterator.permutation);
+      }
+      else if (newscore > best_score) {
 #ifdef DEBUG
         std::cerr << " ===> current best:" << newscore << ">" << best_score
                   << std::endl;
 #endif
+	ties.clear();
+	ties.push_back(iterator.permutation);
         best_score = newscore;
         best_permutation = iterator.permutation;
       }
     }
+    
+    if(ties.size() > 1) {
+      std::cerr << "===  Ties in the permutations" << std::endl;
+      // choose one that doesn't add rgroups inappropriately
+      //  an rgroup is added when
+      //  (1) the label is <=0
+      //  (2) the group has any substituent with heavy atoms
+      //   XXX Might be more efficient to add this comp to the score function
+      int best_groups = -10000;
+      
+	
+      for(auto tied_permutation: ties) {
+	// check to see if this permutation adds an rgroup
+	std::cerr << "-------" << std::endl;
+	int addsRGroup = 0;
+	for (int label : labels) {
+	  if (label <= 0) { // label is user supplied
+	    for (size_t m = 0; m < tied_permutation.size(); ++m) {  // for each molecule
+	      auto rg = matches[m][tied_permutation[m]].rgroups.find(label);
+	      if (rg != matches[m][tied_permutation[m]].rgroups.end()) {
+		if(rg->second->smiles.find_first_not_of("0123456789[]*H:.") >=
+		   rg->second->smiles.length()) {
+		  std::cerr << "Adds rgroup" << label << std::endl;
+		  addsRGroup = label;
+		}
+	      }
+	    }
+	  }
+	}
+	if(addsRGroup > best_groups) {
+	  best_groups = addsRGroup;
+	  std::cerr << "Adding best permutation" << std::endl;
+	  best_permutation = tied_permutation;
+	}
+      }
+    }
 
     permutation = best_permutation;
+    
     if (pruneMatches || finalize) {
       prune();
     }
@@ -973,6 +1018,7 @@ struct RGroupDecompData {
 
     return true;
   }
+  
 };
 
 RGroupDecomposition::RGroupDecomposition(
