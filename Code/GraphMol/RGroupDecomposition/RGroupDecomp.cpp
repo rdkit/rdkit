@@ -775,9 +775,7 @@ struct RGroupDecompData {
       if (userLabel < 0) continue;  // not a user specified label
       Atom *atom = rlabels.second;
       mappings[userLabel] = userLabel;
-      if (!used_labels.add(userLabel)) {
-	std::cerr << "WARNING: duplicate labels" << std::endl;
-      }
+      used_labels.add(userLabel);
 
       if (atom->getAtomicNum() == 0) {  // add to existing dummy/rlabel
         setRlabel(atom, userLabel);
