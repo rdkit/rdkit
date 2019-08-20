@@ -415,26 +415,24 @@ void testGitHubIssue1705() {
       }
     }
     delete core;
-    // std::cerr<<ss.str()<<std::endl;
-
     TEST_ASSERT(ss.str() == R"RES(Rgroup===Core
-Oc1ccc([*:1])cc1[*:2]
-Oc1ccc([*:1])cc1[*:2]
-Oc1ccc([*:1])cc1[*:2]
-Oc1ccc([*:1])cc1[*:2]
-Oc1ccc([*:1])cc1[*:2]
+Oc1ccc([*:2])cc1[*:1]
+Oc1ccc([*:2])cc1[*:1]
+Oc1ccc([*:2])cc1[*:1]
+Oc1ccc([*:2])cc1[*:1]
+Oc1ccc([*:2])cc1[*:1]
 Rgroup===R1
 [H][*:1]
-[H][*:1]
-[H][*:1]
-[H]N([H])[*:1]
-[H][*:1]
+F[*:1]
+F[*:1]
+F[*:1]
+Cl[*:1]
 Rgroup===R2
 [H][*:2]
-F[*:2]
-F[*:2]
-F[*:2]
-Cl[*:2]
+[H][*:2]
+[H][*:2]
+[H]N([H])[*:2]
+[H][*:2]
 )RES");
   }
 #endif
@@ -462,7 +460,6 @@ Cl[*:2]
       }
     }
     delete core;
-    // std::cerr << ss.str() << std::endl;
     TEST_ASSERT(ss.str() == R"RES(Rgroup===Core
 Cc1c([*:1])cccc1[*:2]
 Cc1c([*:1])cccc1[*:2]
@@ -523,8 +520,6 @@ void testMatchOnlyAtRgroupHs() {
       ss << MolToSmiles(*rgroup) << std::endl;
     }
   }
-  std::cerr << ss.str() << std::endl;
-
   delete core;
   TEST_ASSERT(ss.str() ==
               "Rgroup===Core\nCCO[*:1]\nCCO[*:1]\nRgroup===R1\n[H][*:1]\n[H]C(["
@@ -817,7 +812,6 @@ $$$$)CTAB";
       while (!sdsup.atEnd()) {
         ROMol *mol = sdsup.next();
         TEST_ASSERT(mol);
-        std::cerr << "adding: " << MolToSmiles(*mol) << std::endl;
         int addedIndex = decomp.add(*mol);
         TEST_ASSERT(addedIndex == -1);  // none should match
         ++idx;
@@ -849,7 +843,6 @@ $$$$)CTAB";
       while (!sdsup.atEnd()) {
         ROMol *mol = sdsup.next();
         TEST_ASSERT(mol);
-        std::cerr << "adding: " << MolToSmiles(*mol) << std::endl;
         decomp.add(*mol);
         ++idx;
         delete mol;
@@ -863,12 +856,13 @@ $$$$)CTAB";
         "Core:N1C(N([*:2])[*:4])C2C(NC1[*:1])[*:5]C([*:3])[*:6]2 "
         "R2:C(CC[*:2])CC[*:4] R4:C(CC[*:2])CC[*:4] R5:N([*:5])[*:5] "
         "R6:C([*:6])[*:6]",
-        "Core:N1C(N([*:2])[*:4])C2C(NC1[*:1])[*:5]C([*:3])[*:6]2 R2:C[*:2] "
-        "R4:[H][*:4] R5:S([*:5])[*:5] R6:CC(C)C([*:6])[*:6]",
-        "Core:C1C([*:1])NC(N([*:2])[*:6])C2C1[*:5]C([*:3])[*:6]2 R2:C[*:2] "
-        "R4:[H][*:4] R5:S([*:5])[*:5] R6:CC(C)C([*:6])[*:6]",
-        "Core:C1C([*:1])NC(N([*:2])[*:6])C2C1[*:5]C([*:3])[*:6]2 R2:[H][*:2] "
-        "R4:[H][*:4] R5:CN([*:5])[*:5] R6:N([*:6])[*:6]"};
+	"Core:N1C(N([*:2])[*:4])C2C(NC1[*:1])[*:5]C([*:3])[*:6]2 "
+	"R2:C[*:2] R4:[H][*:4] R5:S([*:5])[*:5] R6:CC(C)C([*:6])[*:6]",
+	"Core:C1C([*:1])NC(N([*:2])[*:4])C2C1[*:5]C([*:3])[*:6]2 "
+	"R2:C[*:2] R4:[H][*:4] R5:S([*:5])[*:5] R6:CC(C)C([*:6])[*:6]",
+	"Core:C1C([*:1])NC(N([*:2])[*:4])C2C1[*:5]C([*:3])[*:6]2 "
+	"R2:[H][*:2] R4:[H][*:4] R5:CN([*:5])[*:5] R6:N([*:6])[*:6]"
+    };
 
     int i = 0;
     for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
@@ -907,8 +901,13 @@ void testRowColumnAlignmentProblem() {
     auto rows = decomp.getRGroupsAsRows();
     TEST_ASSERT(rows.size() == mols.size());
     // dump rgroups
-    for (RGroupRows::const_iterator it = rows.begin(); it != rows.end(); ++it) {
-      CHECK_RGROUP(it, "", false);
+    const char *expected[] = {"Core:c1cncc([*:1])c1 R1:F[*:1]",
+			      "Core:c1ncc([*:1])cn1 R1:F[*:1]",
+			      "Core:c1cncc([*:1])c1 R1:Cl[*:1]"};
+
+    int i=0;
+    for (RGroupRows::const_iterator it = rows.begin(); it != rows.end(); ++it, ++i) {
+      CHECK_RGROUP(it, expected[i]);
     }
 
     for (const auto row : rows) {
@@ -949,7 +948,37 @@ void testSymmetryIssues() {
   decomp.add(*m3);
   decomp.add(*m4);
   decomp.process();
-  auto cols = decomp.getRGroupsAsColumns();
+  std::stringstream ss;
+  auto groups = decomp.getRGroupsAsColumns();
+  std::set<std::string> r_labels;
+  for (auto &column : groups) {
+    r_labels.insert(column.first);
+    ss << "Rgroup===" << column.first << std::endl;
+    for (auto &rgroup : column.second) {
+      ss << MolToSmiles(*rgroup) << std::endl;
+    }
+  }
+  // We only want two groups added
+  
+  TEST_ASSERT(r_labels == std::set<std::string>({"Core", "R1", "R2"}));  
+  TEST_ASSERT(groups.size() == 3);
+  
+  TEST_ASSERT(ss.str() == R"RES(Rgroup===Core
+c1cc([*:2])c([*:1])cn1
+c1cc([*:2])c([*:1])cn1
+c1cc([*:2])c([*:1])cn1
+c1cc([*:2])c([*:1])cn1
+Rgroup===R1
+F[*:1]
+Cl[*:1]
+[H]O[*:1]
+F[*:1]
+Rgroup===R2
+[H][*:2]
+[H]C([H])([H])[*:2]
+[H][*:2]
+[H]C([H])([H])[*:2]
+)RES");
 }
 int main() {
   RDLog::InitLogs();

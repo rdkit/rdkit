@@ -39,6 +39,7 @@
 #include <GraphMol/FMCS/FMCS.h>
 #include <boost/scoped_ptr.hpp>
 #include <boost/dynamic_bitset.hpp>
+#include <boost/range/adaptor/reversed.hpp>
 #include <set>
 #include <utility>
 #include <vector>
@@ -490,7 +491,7 @@ double score(const std::vector<size_t> &permutation,
 #endif
         matchSet[rg->second->smiles] += 1;
         // detect whether or not this is an H
-        if (rg->second->smiles.find_first_not_of("0123456789[]*H:.") >=
+        if (rg->second->smiles.find_first_not_of("0123456789[]*H:.") <
             rg->second->smiles.length()) {
           onlyH[rg->second->smiles] = 0;
         } else {
@@ -725,9 +726,34 @@ struct RGroupDecompData {
     return results;
   }
 
+  class UsedLabels
+  {
+  public:
+
+    std::set<int> labels_used;
+    bool add(int rlabel) {
+      if (labels_used.find(rlabel) != labels_used.end()) {
+	return false;
+      }
+      labels_used.insert(rlabel);
+      return true;
+    }
+
+    int next() {
+      int i=1;
+      while( labels_used.find(i) != labels_used.end() )
+	++i;
+      labels_used.insert(i);
+      return i;
+    }
+  };
+  
   void relabelCore(RWMol &core, std::map<int, int> &mappings, int &count,
                    const std::set<int> &indexLabels,
                    std::map<int, std::vector<int>> extraAtomRLabels) {
+    if(core.hasProp("relabeled"))
+      std::cerr << "RELABELED CORE!!!!" << std::endl;
+    core.setProp<bool>("relabeled", true);
     // Now remap to proper rlabel ids
     //  if labels are positive, they come from User labels
     //  if they are negative, they come from indices and should be
@@ -735,6 +761,7 @@ struct RGroupDecompData {
     //
     //  Some indices are attached to multiple bonds,
     //   these rlabels should be incrementally added last
+    UsedLabels used_labels;
     std::map<int, Atom *> atoms = getRlabels(core);
     // a core only has one labelled index
     //  a secondary structure extraAtomRLabels contains the number
@@ -749,10 +776,13 @@ struct RGroupDecompData {
     // Deal with user supplied labels
     for (auto rlabels : atoms) {
       int userLabel = rlabels.first;
-      if (userLabel <= 0) continue;  // not a user specified label
+      if (userLabel < 0) continue;  // not a user specified label
       Atom *atom = rlabels.second;
       if (count < userLabel) count = userLabel;
       mappings[userLabel] = userLabel;
+      if (!used_labels.add(userLabel)) {
+	std::cerr << "WARNING: duplicate labels" << std::endl;
+      }
 
       if (atom->getAtomicNum() == 0) {  // add to existing dummy/rlabel
         setRlabel(atom, userLabel);
@@ -764,16 +794,26 @@ struct RGroupDecompData {
     }
 
     // Deal with non-user supplied labels
-    for (int indexLabel : indexLabels) {
-      auto atm = atoms.find(indexLabel);
-      if (atm == atoms.end()) continue;  // label not used in the rgroup
-
-      Atom *atom = atm->second;
-
+    //  It is important to go in reverse order as the symmetry mappings
+    //  prefers symmetries that add 'larger' labels
+    //for (auto rlabels : boost::adaptors::reverse(atoms)) {
+    for (auto newLabel : indexLabels) {
+      //int newLabel = rlabels.first;
+      //if (newLabel >= 0) continue;  // we already dealt with these
+      //Atom *atom = rlabels.second;
+      
+      auto atm = atoms.find(newLabel);
+      if (atm == atoms.end()) {
+	continue;
+      }
+      
+      Atom * atom = atm->second;
+      
       int rlabel;
-      auto mapping = mappings.find(indexLabel);
+      auto mapping = mappings.find(newLabel);
       if (mapping == mappings.end()) {
-        rlabel = mappings[indexLabel] = ++count;
+	rlabel = used_labels.next();
+        mappings[newLabel] = rlabel;
       } else {
         rlabel = mapping->second;
       }
@@ -782,7 +822,7 @@ struct RGroupDecompData {
         setRlabel(atom, rlabel);
       } else {
         auto *newAt = new Atom(0);
-        setRlabel(newAt, count);
+        setRlabel(newAt, rlabel);
         atomsToAdd.push_back(std::make_pair(atom, newAt));
       }
     }
@@ -794,13 +834,14 @@ struct RGroupDecompData {
       Atom *atom = atm->second;
 
       for (size_t i = 0; i < extraAtomRLabel.second.size(); ++i) {
-        extraAtomRLabel.second[i] = ++count;
+	int rlabel = used_labels.next();
+        extraAtomRLabel.second[i] = rlabel;//++count;
         // Is this necessary?
         CHECK_INVARIANT(
             atom->getAtomicNum() > 1,
             "Multiple attachements to a dummy (or hydrogen) is weird.");
         auto *newAt = new Atom(0);
-        setRlabel(newAt, count);
+        setRlabel(newAt, rlabel);
         atomsToAdd.push_back(std::make_pair(atom, newAt));
       }
     }
@@ -920,16 +961,37 @@ struct RGroupDecompData {
     }
   }
 
+  // compute the number of rgroups that would be added if we
+  //  accepted this permutation
+  int compute_num_added_rgroups(std::vector<size_t> &tied_permutation) {
+    int num_added_rgroups = 0;
+    for (int label : labels) {
+      if (label <= 0) { // label is not user supplied
+	for (size_t m = 0; m < tied_permutation.size(); ++m) {  // for each molecule
+	  auto rg = matches[m][tied_permutation[m]].rgroups.find(label);
+	  if (rg != matches[m][tied_permutation[m]].rgroups.end()) {
+	    if(rg->second->smiles.find_first_not_of("0123456789[]*H:.") <
+	       rg->second->smiles.length()) {
+	      num_added_rgroups +=1;//= label;		  
+	      break;
+	    }
+	  }
+	}
+      }
+    }
+    return num_added_rgroups;
+  }
+  
   bool process(bool pruneMatches, bool finalize = false) {
     if (matches.size() == 0) return false;
 
     // Exhaustive search, get the MxN matrix
-    size_t M = matches.size();
+    size_t M = matches.size();  // Number of molecules
     std::vector<size_t> permutations;
     size_t N = 1;
 
     for (size_t m = 0; m < M; ++m) {
-      size_t sz = matches[m].size();
+      size_t sz = matches[m].size(); // # permutations for molecule m
       permutations.push_back(sz);
       N *= sz;
     }
@@ -947,6 +1009,9 @@ struct RGroupDecompData {
     std::cerr << "Processing" << std::endl;
 #endif
     CartesianProduct iterator(permutations);
+    // Iterates through the permutation idx, i.e.
+    //  [m1_permutation_idx,  m2_permutation_idx, m3_permutation_idx]
+    
     while (iterator.next()) {
       if (count > N) throw ValueErrorException("Next did not finish");
 #ifdef DEBUG
@@ -955,7 +1020,7 @@ struct RGroupDecompData {
 #endif
       double newscore = score(iterator.permutation, matches, labels);
 
-      if (newscore == best_score) {
+      if (fabs(newscore - best_score) < 1e-6) { // heuristic to overcome floating point comparison issues
 	ties.push_back(iterator.permutation);
       }
       else if (newscore > best_score) {
@@ -971,36 +1036,18 @@ struct RGroupDecompData {
     }
     
     if(ties.size() > 1) {
-      std::cerr << "===  Ties in the permutations" << std::endl;
       // choose one that doesn't add rgroups inappropriately
       //  an rgroup is added when
       //  (1) the label is <=0
       //  (2) the group has any substituent with heavy atoms
       //   XXX Might be more efficient to add this comp to the score function
-      int best_groups = -10000;
+      int smallest_added_rgroups = 100000000;
       
 	
       for(auto tied_permutation: ties) {
-	// check to see if this permutation adds an rgroup
-	std::cerr << "-------" << std::endl;
-	int addsRGroup = 0;
-	for (int label : labels) {
-	  if (label <= 0) { // label is user supplied
-	    for (size_t m = 0; m < tied_permutation.size(); ++m) {  // for each molecule
-	      auto rg = matches[m][tied_permutation[m]].rgroups.find(label);
-	      if (rg != matches[m][tied_permutation[m]].rgroups.end()) {
-		if(rg->second->smiles.find_first_not_of("0123456789[]*H:.") >=
-		   rg->second->smiles.length()) {
-		  std::cerr << "Adds rgroup" << label << std::endl;
-		  addsRGroup = label;
-		}
-	      }
-	    }
-	  }
-	}
-	if(addsRGroup > best_groups) {
-	  best_groups = addsRGroup;
-	  std::cerr << "Adding best permutation" << std::endl;
+	int num_added_rgroups = compute_num_added_rgroups(tied_permutation);
+	if(num_added_rgroups  < smallest_added_rgroups) {
+	  smallest_added_rgroups = num_added_rgroups;
 	  best_permutation = tied_permutation;
 	}
       }
