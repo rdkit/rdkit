@@ -39,7 +39,6 @@
 #include <GraphMol/FMCS/FMCS.h>
 #include <boost/scoped_ptr.hpp>
 #include <boost/dynamic_bitset.hpp>
-#include <boost/range/adaptor/reversed.hpp>
 #include <set>
 #include <utility>
 #include <vector>
@@ -751,9 +750,6 @@ struct RGroupDecompData {
   void relabelCore(RWMol &core, std::map<int, int> &mappings, int &count,
                    const std::set<int> &indexLabels,
                    std::map<int, std::vector<int>> extraAtomRLabels) {
-    if(core.hasProp("relabeled"))
-      std::cerr << "RELABELED CORE!!!!" << std::endl;
-    core.setProp<bool>("relabeled", true);
     // Now remap to proper rlabel ids
     //  if labels are positive, they come from User labels
     //  if they are negative, they come from indices and should be
@@ -794,14 +790,7 @@ struct RGroupDecompData {
     }
 
     // Deal with non-user supplied labels
-    //  It is important to go in reverse order as the symmetry mappings
-    //  prefers symmetries that add 'larger' labels
-    //for (auto rlabels : boost::adaptors::reverse(atoms)) {
     for (auto newLabel : indexLabels) {
-      //int newLabel = rlabels.first;
-      //if (newLabel >= 0) continue;  // we already dealt with these
-      //Atom *atom = rlabels.second;
-      
       auto atm = atoms.find(newLabel);
       if (atm == atoms.end()) {
 	continue;
