@@ -747,7 +747,8 @@ struct RGroupDecompData {
     }
   };
   
-  void relabelCore(RWMol &core, std::map<int, int> &mappings, int &count,
+  void relabelCore(RWMol &core, std::map<int, int> &mappings,
+		   UsedLabels &used_labels,
                    const std::set<int> &indexLabels,
                    std::map<int, std::vector<int>> extraAtomRLabels) {
     // Now remap to proper rlabel ids
@@ -757,7 +758,6 @@ struct RGroupDecompData {
     //
     //  Some indices are attached to multiple bonds,
     //   these rlabels should be incrementally added last
-    UsedLabels used_labels;
     std::map<int, Atom *> atoms = getRlabels(core);
     // a core only has one labelled index
     //  a secondary structure extraAtomRLabels contains the number
@@ -774,7 +774,6 @@ struct RGroupDecompData {
       int userLabel = rlabels.first;
       if (userLabel < 0) continue;  // not a user specified label
       Atom *atom = rlabels.second;
-      if (count < userLabel) count = userLabel;
       mappings[userLabel] = userLabel;
       if (!used_labels.add(userLabel)) {
 	std::cerr << "WARNING: duplicate labels" << std::endl;
@@ -824,7 +823,7 @@ struct RGroupDecompData {
 
       for (size_t i = 0; i < extraAtomRLabel.second.size(); ++i) {
 	int rlabel = used_labels.next();
-        extraAtomRLabel.second[i] = rlabel;//++count;
+        extraAtomRLabel.second[i] = rlabel;
         // Is this necessary?
         CHECK_INVARIANT(
             atom->getAtomicNum() > 1,
@@ -933,13 +932,13 @@ struct RGroupDecompData {
     //  the scaffold
     finalRlabelMapping.clear();
 
-    int count = 0;
+    UsedLabels used_labels;
     for (std::map<int, RWMol>::const_iterator coreIt = cores.begin();
          coreIt != cores.end(); ++coreIt) {
       boost::shared_ptr<RWMol> labelledCore(new RWMol(coreIt->second));
       labelledCores[coreIt->first] = labelledCore;
 
-      relabelCore(*labelledCore.get(), finalRlabelMapping, count, indexLabels,
+      relabelCore(*labelledCore.get(), finalRlabelMapping, used_labels, indexLabels,
                   extraAtomRLabels);
     }
 
