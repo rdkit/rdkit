@@ -1030,8 +1030,6 @@ struct RGroupDecompData {
       //  (2) the group has any substituent with heavy atoms
       //   XXX Might be more efficient to add this comp to the score function
       int smallest_added_rgroups = 100000000;
-      
-	
       for(auto tied_permutation: ties) {
 	int num_added_rgroups = compute_num_added_rgroups(tied_permutation);
 	if(num_added_rgroups  < smallest_added_rgroups) {
@@ -1041,8 +1039,7 @@ struct RGroupDecompData {
       }
     }
 
-    permutation = best_permutation;
-    
+    permutation = best_permutation;    
     if (pruneMatches || finalize) {
       prune();
     }
