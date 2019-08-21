@@ -1290,6 +1290,18 @@ void rerankAtoms(const ROMol &mol, UINT_VECT &ranks) {
   }
 #endif
 }
+
+Bond::BondStereo translateEZLabelToCisTrans(Bond::BondStereo label) {
+  switch (label) {
+    case Bond::STEREOE:
+      return Bond::STEREOTRANS;
+    case Bond::STEREOZ:
+      return Bond::STEREOCIS;
+    default:
+      return label;
+  }
+}
+
 }  // namespace Chirality
 
 namespace MolOps {
