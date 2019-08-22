@@ -26,6 +26,7 @@
 
 //#include <tbxx/error_utils.hpp>
 #include <RDGeneral/Invariant.h>
+#include <RDGeneral/Exceptions.h>
 
 #include <streambuf>
 #include <iostream>
@@ -185,6 +186,48 @@ class streambuf : public std::basic_streambuf<char> {
       off_type py_pos = bp::extract<off_type>(py_tell());
       pos_of_read_buffer_end_in_py_file = py_pos;
       pos_of_write_buffer_end_in_py_file = py_pos;
+    }
+  }
+
+  /// constructor to enforce a mode (binary or text)
+  streambuf(bp::object& python_file_obj, char mode,
+            std::size_t buffer_size_ = 0)
+      : streambuf(python_file_obj, buffer_size_) {
+#if 1
+    bp::object io_mod = bp::import("io");
+    CHECK_INVARIANT(io_mod,"module not found");
+    bp::object iobase = io_mod.attr("TextIOBase");;
+    CHECK_INVARIANT(iobase,"base class not found");
+#else 
+    // using statics to save an undetermined amount of time results in
+    // alarming seg faults on windows. so we don't do it. Keep this here
+    // for the moment though in case someone manages to figure that out in
+    // the future       
+    static bp::object io_mod = bp::object();
+    static bp::object iobase = bp::object();
+    if(!io_mod) io_mod = bp::import("io");
+    if(io_mod && !iobase) iobase = io_mod.attr("TextIOBase");
+    CHECK_INVARIANT(io_mod,"module not found");
+    CHECK_INVARIANT(iobase,"base class not found");
+#endif
+
+    bool isTextMode = PyObject_IsInstance(python_file_obj.ptr(), iobase.ptr());
+    switch (mode) {
+      case 's':  /// yeah, is redundant, but it is somehow natural to do "s"
+      case 't':
+        if (!isTextMode)
+          throw ValueErrorException(
+              "Need a text mode file object like StringIO or a file opened "
+              "with mode 't'");
+        break;
+      case 'b':
+        if (isTextMode)
+          throw ValueErrorException(
+              "Need a binary mode file object like BytesIO or a file opened "
+              "with mode 'b'");
+        break;
+      default:
+        throw std::invalid_argument("bad mode character");
     }
   }
 

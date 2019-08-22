@@ -1310,6 +1310,18 @@ const Bond *getNeighboringDirectedBond(const ROMol &mol, const Atom *atom) {
   }
   return nullptr;
 }
+
+Bond::BondStereo translateEZLabelToCisTrans(Bond::BondStereo label) {
+  switch (label) {
+    case Bond::STEREOE:
+      return Bond::STEREOTRANS;
+    case Bond::STEREOZ:
+      return Bond::STEREOCIS;
+    default:
+      return label;
+  }
+}
+
 }  // namespace Chirality
 
 namespace MolOps {

@@ -3642,37 +3642,8 @@ CAS<~>
 
   def testGithub497(self):
     outf = gzip.open(tempfile.mktemp(), 'wb+')
-    m = Chem.MolFromSmiles('C')
-    w = Chem.SDWriter(outf)
-    e = False
-    try:
-      w.write(m)
-    except Exception:
-      sys.stderr.write('Opening gzip as binary fails on Python3 ' \
-        'upon writing to SDWriter without crashing the RDKit\n')
-      e = True
-    else:
-      e = (sys.version_info < (3, 0))
-    try:
-      w.close()
-    except Exception:
-      sys.stderr.write('Opening gzip as binary fails on Python3 ' \
-        'upon closing SDWriter without crashing the RDKit\n')
-      e = True
-    else:
-      if (not e):
-        e = (sys.version_info < (3, 0))
-    w = None
-    try:
-      outf.close()
-    except Exception:
-      sys.stderr.write('Opening gzip as binary fails on Python3 ' \
-        'upon closing the stream without crashing the RDKit\n')
-      e = True
-    else:
-      if (not e):
-        e = (sys.version_info < (3, 0))
-    self.assertTrue(e)
+    with self.assertRaises(ValueError):
+      w = Chem.SDWriter(outf)
 
   def testGithub498(self):
     if (sys.version_info < (3, 0)):

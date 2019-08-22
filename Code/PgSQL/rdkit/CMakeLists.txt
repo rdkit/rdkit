@@ -115,12 +115,12 @@ set(pgRDKitLibList "${pgRDKitLibList}"
     "FileParsers;SmilesParse;Fingerprints;Subgraphs;Descriptors;"
     "PartialCharges;SubstructMatch;GraphMol;EigenSolvers;DataStructs;Depictor;"
     "RDGeometryLib;RDGeneral")
+if(RDK_USE_URF)
+  set(pgRDKitLibList "${pgRDKitLibList};${RDK_URF_LIBS}")
+endif(RDK_USE_URF)
 foreach(pgRDKitLib ${pgRDKitLibList})
   set(pgRDKitLibs "${pgRDKitLibs}${pgRDKitLib}${pgRDKitLibSuffix};")
 endforeach()
-if(RDK_USE_URF)
-  set(pgRDKitLibs "${pgRDKitLibs};RingDecomposerLibStatic")
-endif(RDK_USE_URF)
 target_link_libraries(${EXTENSION}${EXTENSION_SUFFIX} ${pgRDKitLibs})
 if(RDK_BUILD_THREADSAFE_SSS)
   target_link_libraries(${EXTENSION}${EXTENSION_SUFFIX} ${RDKit_THREAD_LIBS})
