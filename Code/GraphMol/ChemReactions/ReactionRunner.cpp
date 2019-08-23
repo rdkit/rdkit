@@ -43,6 +43,7 @@
 #include "GraphMol/ChemReactions/ReactionRunner.h"
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/MonomerInfo.h>
+#include <GraphMol/Chirality.h>
 
 namespace RDKit {
 typedef std::vector<MatchVectType> VectMatchVectType;
@@ -146,29 +147,6 @@ class StereoBondEndCap {
   }
 };
 
-bool hasStereoBondDirection(const Bond *bond) {
-  PRECONDITION(bond, "no bond");
-  return bond->getBondDir() == Bond::BondDir::ENDDOWNRIGHT ||
-         bond->getBondDir() == Bond::BondDir::ENDUPRIGHT;
-}
-
-const Bond *getNeighboringStereoDirectedBond(const ROMol &mol,
-                                             const Atom *atom) {
-  PRECONDITION(atom, "no atom");
-  for (const auto &bondIdx :
-       boost::make_iterator_range(mol.getAtomBonds(atom))) {
-    const Bond *bond = mol[bondIdx];
-
-    // We will use the first directed bond we find. It is not likely, but there
-    // might be more than one
-    if (bond->getBondType() != Bond::BondType::DOUBLE &&
-        hasStereoBondDirection(bond)) {
-      return bond;
-    }
-  }
-  return nullptr;
-}
-
 const Atom *findHighestCIPNeighbor(const Atom *atom, const Atom *skipAtom) {
   PRECONDITION(atom, "bad atom");
 
@@ -226,6 +204,7 @@ INT_VECT findStereoAtoms(const Bond *bond) {
     }
     case Bond::BondStereo::STEREOCIS:
     case Bond::BondStereo::STEREOTRANS:
+    default:
       return bond->getStereoAtoms();
   }
 }
@@ -466,9 +445,9 @@ RWMOL_SPTR convertTemplateToMol(const ROMOL_SPTR prodTemplateSptr) {
       const Atom *endAtom = oldB->getEndAtom();
 
       if (startAtom->getDegree() > 1 && endAtom->getDegree() > 1 &&
-          (getNeighboringStereoDirectedBond(*prodTemplate, startAtom) ==
+          (Chirality::getNeighboringDirectedBond(*prodTemplate, startAtom) ==
                nullptr ||
-           getNeighboringStereoDirectedBond(*prodTemplate, endAtom) ==
+           Chirality::getNeighboringDirectedBond(*prodTemplate, endAtom) ==
                nullptr)) {
         newB->setStereo(Bond::BondStereo::STEREOANY);
       }
@@ -660,8 +639,8 @@ void forwardReactantBondStereo(ReactantProductAtomMapping *mapping, Bond *pBond,
 void translateProductStereoBondDirections(Bond *pBond, const Bond *start,
                                           const Bond *end) {
   PRECONDITION(pBond, "no bond");
-  PRECONDITION(start && end && hasStereoBondDirection(start) &&
-                   hasStereoBondDirection(end),
+  PRECONDITION(start && end && Chirality::hasStereoBondDir(start) &&
+                   Chirality::hasStereoBondDir(end),
                "Both neighboring bonds must have bond directions");
 
   unsigned pStartAnchorIdx = start->getOtherAtomIdx(pBond->getBeginAtomIdx());
@@ -723,9 +702,9 @@ void updateStereoBonds(RWMOL_SPTR product, const ROMol &reactant,
     // them, else they will be ignored, as there is no reference to decide the
     // stereo.
     const auto *pBondStartDirBond =
-        getNeighboringStereoDirectedBond(*product, pBond->getBeginAtom());
+        Chirality::getNeighboringDirectedBond(*product, pBond->getBeginAtom());
     const auto *pBondEndDirBond =
-        getNeighboringStereoDirectedBond(*product, pBond->getEndAtom());
+        Chirality::getNeighboringDirectedBond(*product, pBond->getEndAtom());
     if (pBondStartDirBond != nullptr && pBondEndDirBond != nullptr) {
       translateProductStereoBondDirections(pBond, pBondStartDirBond,
                                            pBondEndDirBond);

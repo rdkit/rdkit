@@ -1291,6 +1291,26 @@ void rerankAtoms(const ROMol &mol, UINT_VECT &ranks) {
 #endif
 }
 
+bool hasStereoBondDir(const Bond *bond) {
+  PRECONDITION(bond, "no bond");
+  return bond->getBondDir() == Bond::BondDir::ENDDOWNRIGHT ||
+         bond->getBondDir() == Bond::BondDir::ENDUPRIGHT;
+}
+
+const Bond *getNeighboringDirectedBond(const ROMol &mol, const Atom *atom) {
+  PRECONDITION(atom, "no atom");
+  for (const auto &bondIdx :
+       boost::make_iterator_range(mol.getAtomBonds(atom))) {
+    const Bond *bond = mol[bondIdx];
+
+    if (bond->getBondType() != Bond::BondType::DOUBLE &&
+        hasStereoBondDir(bond)) {
+      return bond;
+    }
+  }
+  return nullptr;
+}
+
 Bond::BondStereo translateEZLabelToCisTrans(Bond::BondStereo label) {
   switch (label) {
     case Bond::STEREOE:
@@ -1767,23 +1787,19 @@ void setBondDirRelativeToAtom(Bond *bond, Atom *atom, Bond::BondDir dir,
   PRECONDITION(dir == Bond::ENDUPRIGHT || dir == Bond::ENDDOWNRIGHT, "bad dir");
   PRECONDITION(atom == bond->getBeginAtom() || atom == bond->getEndAtom(),
                "atom doesn't belong to bond");
-  // std::cerr << "\t\t>sbdra :  bond " << bond->getIdx() << " atom "
-  //           << atom->getIdx() << " dir : " << dir << " reverse: " << reverse
-  //           << std::endl;
-  Atom *oAtom;
+  RDUNUSED_PARAM(needsDir);
+
   if (bond->getBeginAtom() != atom) {
     reverse = !reverse;
-    oAtom = bond->getBeginAtom();
-  } else {
-    oAtom = bond->getEndAtom();
   }
+
   if (reverse) {
     dir = (dir == Bond::ENDUPRIGHT ? Bond::ENDDOWNRIGHT : Bond::ENDUPRIGHT);
   }
   // to ensure maximum compatibility, even when a bond has unknown stereo (set
   // explicitly and recorded in _UnknownStereo property), I will still let a
   // direction to be computed. You must check the _UnknownStereo property to
-  // make sure whether this bond is explictly set to have no direction info.
+  // make sure whether this bond is explicitly set to have no direction info.
   // This makes sense because the direction info are all derived from
   // coordinates, the _UnknownStereo property is like extra metadata to be
   // used with the direction info.
@@ -2224,6 +2240,34 @@ void detectBondStereochemistry(ROMol &mol, int confId) {
   if (!mol.getNumConformers()) return;
   const Conformer &conf = mol.getConformer(confId);
   setDoubleBondNeighborDirections(mol, &conf);
+}
+
+void setBondStereoFromDirections(ROMol &mol) {
+  for (Bond *bond : mol.bonds()) {
+    if (bond->getBondType() == Bond::DOUBLE) {
+      const Atom *startAtom = bond->getBeginAtom();
+      const Atom *endAtom = bond->getEndAtom();
+
+      const Bond *startDirBond =
+          Chirality::getNeighboringDirectedBond(mol, startAtom);
+      const Bond *endDirBond =
+          Chirality::getNeighboringDirectedBond(mol, endAtom);
+
+      if (startDirBond != nullptr && endDirBond != nullptr) {
+        unsigned startStereoAtom =
+            startDirBond->getOtherAtomIdx(startAtom->getIdx());
+        unsigned endStereoAtom = endDirBond->getOtherAtomIdx(endAtom->getIdx());
+
+        bond->setStereoAtoms(startStereoAtom, endStereoAtom);
+
+        if (startDirBond->getBondDir() == endDirBond->getBondDir()) {
+          bond->setStereo(Bond::STEREOTRANS);
+        } else {
+          bond->setStereo(Bond::STEREOCIS);
+        }
+      }
+    }
+  }
 }
 
 void assignStereochemistryFrom3D(ROMol &mol, int confId,
