@@ -34,7 +34,7 @@ class LocalForwardSDMolSupplier : public RDKit::ForwardSDMolSupplier {
   LocalForwardSDMolSupplier(python::object &input, bool sanitize, bool removeHs,
                             bool strictParsing) {
     // FIX: minor leak here
-    auto *sb = new streambuf(input);
+    auto *sb = new streambuf(input,'b');
     dp_inStream = new streambuf::istream(*sb);
     df_owner = true;
     df_sanitize = sanitize;

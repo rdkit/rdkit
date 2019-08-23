@@ -26,7 +26,7 @@ namespace RDKit {
 using boost_adaptbx::python::streambuf;
 TDTWriter *getTDTWriter(python::object &fileobj) {
   // FIX: minor leak here
-  auto *sb = new streambuf(fileobj);
+  auto *sb = new streambuf(fileobj, 't');
   auto *ost = new streambuf::ostream(*sb);
   return new TDTWriter(ost, true);
 }
@@ -51,8 +51,8 @@ struct tdtwriter_wrap {
         "TDTWriter", "A class for writing molecules to TDT files.\n",
         python::no_init)
         .def("__init__", python::make_constructor(&getTDTWriter))
-        .def(python::init<std::string>(python::args("fileName"),
-                                       docStr.c_str()))
+        .def(
+            python::init<std::string>(python::args("fileName"), docStr.c_str()))
         .def("SetProps", SetTDTWriterProps,
              "Sets the properties to be written to the output file\n\n"
              "  ARGUMENTS:\n\n"
@@ -86,6 +86,6 @@ struct tdtwriter_wrap {
         .def("GetNumDigits", &TDTWriter::getNumDigits);
   };
 };
-}
+}  // namespace RDKit
 
 void wrap_tdtwriter() { RDKit::tdtwriter_wrap::wrap(); }

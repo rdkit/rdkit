@@ -14,6 +14,7 @@
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/Resonance.h>
 #include <GraphMol/MolBundle.h>
+#include "GraphMol/Chirality.h"
 
 #include "SubstructMatch.h"
 #include "SubstructUtils.h"
@@ -89,7 +90,7 @@ class MolMatchFinalCheckFunctor {
 
       // With less than 3 neighbors we can't establish CW/CCW parity,
       // so query will be a match if it has any kind of chirality.
-      if ((qAt->getDegree() < 3) || !hasChiralLabel(qAt)) {
+      if (qAt->getDegree() < 3 || !hasChiralLabel(qAt)) {
         continue;
       }
       const Atom *mAt = d_mol.getAtomWithIdx(c2[i]);
@@ -118,8 +119,7 @@ class MolMatchFinalCheckFunctor {
       int qPermCount = qAt->getPerturbationOrder(qOrder);
 
       unsigned unmatchedNeighbors = mAt->getDegree() - mOrder.size();
-      if (qAt->getIdx() == 0 && mAt->getIdx() != 0 &&
-          unmatchedNeighbors) {
+      if (qAt->getIdx() == 0 && mAt->getIdx() != 0 && unmatchedNeighbors) {
         mOrder.insert(mOrder.begin(), 1, -1);
         --unmatchedNeighbors;
       }
@@ -187,18 +187,15 @@ class MolMatchFinalCheckFunctor {
         if (c2[qMap[qBnd->getStereoAtoms()[1]]] == mBnd->getStereoAtoms()[0])
           end2Matches = 1;
       }
-      // std::cerr << "  bnd: " << qBnd->getIdx() << ":" << qBnd->getStereo()
-      //           << " - " << mBnd->getIdx() << ":" << mBnd->getStereo()
-      //           << "  --  " << end1Matches << " " << end2Matches <<
-      //           std::endl;
-      if (mBnd->getStereo() == qBnd->getStereo() &&
-          (end1Matches + end2Matches) == 1) {
-        return false;
-      }
-      if (mBnd->getStereo() != qBnd->getStereo() &&
-          (end1Matches + end2Matches) != 1) {
-        return false;
-      }
+
+      const unsigned totalMatches = end1Matches + end2Matches;
+      const auto mStereo =
+          Chirality::translateEZLabelToCisTrans(mBnd->getStereo());
+      const auto qStereo =
+          Chirality::translateEZLabelToCisTrans(qBnd->getStereo());
+
+      if (mStereo == qStereo && totalMatches == 1) return false;
+      if (mStereo != qStereo && totalMatches != 1) return false;
     }
 
     return true;

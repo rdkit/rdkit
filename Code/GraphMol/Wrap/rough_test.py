@@ -3461,9 +3461,18 @@ CAS<~>
     self.assertEqual(
       list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, 4), breakTies=False)),
       [4, 6, 4, 6, -1, -1, -1, -1])
+    self.assertNotEqual(
+      list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, 4), breakTies=True)),
+      [4, 6, 4, 6, -1, -1, -1, -1])
     self.assertEqual(
       list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(4, 8), breakTies=False)),
       [-1, -1, -1, -1, 4, 6, 4, 6])
+    self.assertNotEqual(
+      list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(4, 8), breakTies=True)),
+      [-1, -1, -1, -1, 4, 6, 4, 6])
+
+    
+
 
   def test93RWMolsAsROMol(self):
     """ test the RWMol class as a proper ROMol
@@ -3642,37 +3651,8 @@ CAS<~>
 
   def testGithub497(self):
     outf = gzip.open(tempfile.mktemp(), 'wb+')
-    m = Chem.MolFromSmiles('C')
-    w = Chem.SDWriter(outf)
-    e = False
-    try:
-      w.write(m)
-    except Exception:
-      sys.stderr.write('Opening gzip as binary fails on Python3 ' \
-        'upon writing to SDWriter without crashing the RDKit\n')
-      e = True
-    else:
-      e = (sys.version_info < (3, 0))
-    try:
-      w.close()
-    except Exception:
-      sys.stderr.write('Opening gzip as binary fails on Python3 ' \
-        'upon closing SDWriter without crashing the RDKit\n')
-      e = True
-    else:
-      if (not e):
-        e = (sys.version_info < (3, 0))
-    w = None
-    try:
-      outf.close()
-    except Exception:
-      sys.stderr.write('Opening gzip as binary fails on Python3 ' \
-        'upon closing the stream without crashing the RDKit\n')
-      e = True
-    else:
-      if (not e):
-        e = (sys.version_info < (3, 0))
-    self.assertTrue(e)
+    with self.assertRaises(ValueError):
+      w = Chem.SDWriter(outf)
 
   def testGithub498(self):
     if (sys.version_info < (3, 0)):
@@ -5519,6 +5499,33 @@ H      0.635000    0.635000    0.635000
 
     self.assertEqual(Chem.MolToXYZBlock(mol), xyzblock_expected)
 
+  def testGithub2611(self):
+    mol = Chem.MolFromSmiles('ONCS.ONCS')
+    for atom in mol.GetAtoms():
+      atom.SetIsotope(atom.GetIdx())
+    
+    order1 = list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, 4), breakTies=False, includeIsotopes=True))
+    order2 = list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, 8), breakTies=False, includeIsotopes=False))
+    self.assertNotEqual(order1[:4], order2[4:])
+    # ensure that the orders are ignored in the second batch
+    self.assertEqual(order2[:4], order2[4:])
+
+  
+    for smi in ['ONCS.ONCS', 'F[C@@H](Br)[C@H](F)Cl']:
+      mol = Chem.MolFromSmiles(smi)
+      for atom in mol.GetAtoms():
+        atom.SetIsotope(atom.GetIdx())
+
+        for iso,chiral in [(True,True),(True,False),(False,True), (False,False)]:
+          order1 = list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, mol.GetNumAtoms()), bondsToUse=range(0,mol.GetNumBonds()),
+                                                          breakTies=False, includeIsotopes=iso, includeChirality=chiral))
+          order2 = list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, mol.GetNumAtoms()), bondsToUse=range(0,mol.GetNumBonds()),
+                                                          breakTies=True, includeIsotopes=iso, includeChirality=chiral))
+          order3 = list(Chem.CanonicalRankAtoms(mol, breakTies=False, includeIsotopes=iso, includeChirality=chiral))
+          order4 = list(Chem.CanonicalRankAtoms(mol, breakTies=True, includeIsotopes=iso, includeChirality=chiral))
+          self.assertEqual(order1,order3)
+          self.assertEqual(order2,order4)
+    
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:

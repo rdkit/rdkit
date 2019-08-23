@@ -26,22 +26,36 @@
 using namespace RDKit;
 
 TEST_CASE("Github 2051", "[patternfp,bug]") {
-    auto mol="CCC1CC1"_smiles;
-    std::unique_ptr<ExplicitBitVect> mfp(PatternFingerprintMol(*mol));
+  auto mol = "CCC1CC1"_smiles;
+  std::unique_ptr<ExplicitBitVect> mfp(PatternFingerprintMol(*mol));
 
-    REQUIRE(mfp);
+  REQUIRE(mfp);
   SECTION("basics1") {
-      auto qmol="**"_smarts;
-      std::unique_ptr<ExplicitBitVect> qfp(PatternFingerprintMol(*qmol));
-      REQUIRE(qfp);
+    auto qmol = "**"_smarts;
+    std::unique_ptr<ExplicitBitVect> qfp(PatternFingerprintMol(*qmol));
+    REQUIRE(qfp);
 
-      CHECK(AllProbeBitsMatch(*qfp,*mfp));   
+    CHECK(AllProbeBitsMatch(*qfp, *mfp));
   }
   SECTION("basics2") {
-      auto qmol="*"_smarts;
-      std::unique_ptr<ExplicitBitVect> qfp(PatternFingerprintMol(*qmol));
-      REQUIRE(qfp);
-      CHECK(AllProbeBitsMatch(*qfp,*mfp));
+    auto qmol = "*"_smarts;
+    std::unique_ptr<ExplicitBitVect> qfp(PatternFingerprintMol(*qmol));
+    REQUIRE(qfp);
+    CHECK(AllProbeBitsMatch(*qfp, *mfp));
   }
 }
 
+TEST_CASE("Github 2614", "[patternfp,bug]") {
+  SECTION("basics") {
+    auto mol =
+        "F[P-](F)(F)(F)(F)F.F[P-](F)(F)(F)(F)F.F[P-](F)(F)(F)(F)F.F[P-](F)(F)(F)(F)F.F[P-](F)(F)(F)(F)F.F[P-](F)(F)(F)(F)F.F[P-](F)(F)(F)(F)F.F[P-](F)(F)(F)(F)F.F[P-](F)(F)(F)(F)F.c1ccc2ccccc2c1"_smiles;
+    REQUIRE(mol);
+    std::unique_ptr<ExplicitBitVect> mfp(PatternFingerprintMol(*mol));
+    REQUIRE(mfp);
+    auto query = "c1ccc2ccccc2c1"_smiles;
+    REQUIRE(query);
+    std::unique_ptr<ExplicitBitVect> qfp(PatternFingerprintMol(*query));
+    REQUIRE(qfp);
+    CHECK(AllProbeBitsMatch(*qfp, *mfp));
+  }
+}
