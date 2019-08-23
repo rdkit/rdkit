@@ -334,6 +334,13 @@ ATOM_EQUALS_QUERY *makeAtomMissingChiralTagQuery() {
   return res;
 }
 
+ATOM_EQUALS_QUERY *makeAtomHasChiralityValueQuery(Atom::ChiralType what) {
+  ATOM_EQUALS_QUERY *res = makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(
+      static_cast<int>(what), queryAtomHasChiralityValue);
+  res->setDescription("AtomChirality");
+  return res;
+}
+
 ATOM_EQUALS_QUERY *makeAtomInRingQuery() {
   ATOM_EQUALS_QUERY *res =
       makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(true, queryIsAtomInRing);

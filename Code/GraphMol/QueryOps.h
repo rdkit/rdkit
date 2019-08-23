@@ -166,6 +166,9 @@ static inline int queryAtomMissingChiralTag(Atom const *at) {
   return at->getChiralTag() == Atom::CHI_UNSPECIFIED &&
          at->hasProp(common_properties::_ChiralityPossible);
 };
+static inline int queryAtomHasChiralityValue(Atom const *at) {
+  return static_cast<int>(at->getChiralTag());
+};
 
 static inline int queryAtomHasHeteroatomNbrs(Atom const *at) {
   ROMol::ADJ_ITER nbrIdx, endNbrs;
@@ -495,6 +498,16 @@ T *makeAtomMissingChiralTagQuery(const std::string &descr) {
 }
 //! \overloadquery
 RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *makeAtomMissingChiralTagQuery();
+
+//! returns a Query for matching whether a specific chirality has been set on
+//! the atom
+template <class T>
+T *makeAtomHasChiralityValueQuery(int what, const std::string &descr) {
+  return makeAtomSimpleQuery<T>(what, queryAtomHasChiralityValue, descr);
+}
+//! \overloadquery
+RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *makeAtomHasChiralityValueQuery(
+    Atom::ChiralType what);
 
 //! returns a Query for matching atoms with unsaturation:
 template <class T>

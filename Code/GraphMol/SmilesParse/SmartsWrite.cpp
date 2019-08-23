@@ -252,6 +252,19 @@ std::string getAtomSmartsSimple(const QueryAtom *qatom,
   } else if (descrip == "AtomMass") {
     res << query->getVal() / massIntegerConversionFactor << "*";
     needParen = true;
+  } else if (descrip == "AtomChirality") {
+    switch (static_cast<Atom::ChiralType>(query->getVal())) {
+      case Atom::CHI_TETRAHEDRAL_CW:
+        res << "@@";
+        needParen = true;
+        break;
+      case Atom::CHI_TETRAHEDRAL_CCW:
+        res << "@";
+        needParen = true;
+        break;
+      default:
+        break;
+    }
   } else if (descrip == "AtomIsotope") {
     res << query->getVal() << "*";
     needParen = true;
