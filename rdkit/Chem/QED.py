@@ -41,13 +41,17 @@ identical to those from the original publication [1]. These differences are a co
 differences within the underlying calculated property calculators used in both methods. For
 example, discrepancies can be noted in the results from the logP calculations, nevertheless
 despite the fact that both approaches (Pipeline Pilot in the original publication and RDKit
-in our Biscu-it(tm) implementation) mention to use the Wildmann and Crippen methodology for the
+in our Biscu-it(tm) implementation) mention to use the Wildman and Crippen methodology for the
 calculation of their logP-values [2]. However, the differences in the resulting QED-values
 are very small and are not compromising the usefulness of using Qed in your daily research.
 
 [1] Bickerton, G.R.; Paolini, G.V.; Besnard, J.; Muresan, S.; Hopkins, A.L. (2012)
     'Quantifying the chemical beauty of drugs',
-    Nature Chemistry, 4, 90-98 [http://dx.doi.org/10.1038/nchem.1243]
+    Nature Chemistry, 4, 90-98 [https://doi.org/10.1038/nchem.1243]
+
+[2] Wildman, S.A.; Crippen, G.M. (1999)
+    'Prediction of Physicochemical Parameters by Atomic Contributions',
+    Journal of Chemical Information and Computer Sciences, 39, 868-873 [https://doi.org/10.1021/ci990307l]
 
 """
 from collections import namedtuple

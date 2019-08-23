@@ -16,10 +16,12 @@
 #ifndef _RD_CHIRALITY_20AUG2008_H_
 #define _RD_CHIRALITY_20AUG2008_H_
 #include <RDGeneral/types.h>
+#include <GraphMol/Bond.h>
 
 /// @cond
 namespace RDKit {
 class ROMol;
+
 namespace Chirality {
 /*!
   \param mol the molecule to be altered
@@ -33,6 +35,13 @@ namespace Chirality {
 */
 RDKIT_GRAPHMOL_EXPORT void assignAtomCIPRanks(const ROMol &mol,
                                               UINT_VECT &ranks);
+
+//! This just translates the labels, setting/translating StereoAtoms or the
+//! Label is not the responsibility of this function.
+//! If the passed label is not E/Z, it will be returned unchanged.
+RDKIT_GRAPHMOL_EXPORT Bond::BondStereo translateEZLabelToCisTrans(
+    Bond::BondStereo label);
+
 }  // namespace Chirality
 }  // namespace RDKit
 /// @endcond

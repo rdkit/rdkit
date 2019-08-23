@@ -16,7 +16,7 @@ rdkit_library(GraphMol
 target_link_libraries(GraphMol PUBLIC ${RDKit_THREAD_LIBS})
 
 if(RDK_USE_URF)
-  target_link_libraries(GraphMol PUBLIC URFLib)
+  target_link_libraries(GraphMol PUBLIC ${RDK_URF_LIBS})
 endif()
 
 rdkit_headers(Atom.h

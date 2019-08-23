@@ -415,3 +415,98 @@ TEST_CASE("detectChemistryProblems", "[molops]") {
     REQUIRE(res.size() == 0);
   }
 }
+
+TEST_CASE(
+    "github #2606: Bad valence corrections on Pb, Sn"
+    "[bug, molops]") {
+  SECTION("basics-Pb") {
+    std::string mb = R"CTAB(
+  Mrv1810 08141905562D          
+
+  5  0  0  0  0  0            999 V2000
+   -3.6316   -0.4737    0.0000 Pb  0  0  0  0  0  0  0  0  0  0  0  0
+   -3.6541    0.3609    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+   -2.4586   -0.5188    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+   -3.6992   -1.5338    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+   -4.5789   -0.4286    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+M  CHG  5   1   4   2  -1   3  -1   4  -1   5  -1
+M  END
+)CTAB";
+    std::unique_ptr<ROMol> mol(MolBlockToMol(mb));
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(0)->getFormalCharge() == 4);
+    CHECK(mol->getAtomWithIdx(0)->getTotalNumHs() == 0);
+  }
+  SECTION("basics-Sn") {
+    std::string mb = R"CTAB(
+  Mrv1810 08141905562D          
+
+  5  0  0  0  0  0            999 V2000
+   -3.6316   -0.4737    0.0000 Sn  0  0  0  0  0  0  0  0  0  0  0  0
+   -3.6541    0.3609    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+   -2.4586   -0.5188    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+   -3.6992   -1.5338    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+   -4.5789   -0.4286    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+M  CHG  5   1   4   2  -1   3  -1   4  -1   5  -1
+M  END
+)CTAB";
+    std::unique_ptr<ROMol> mol(MolBlockToMol(mb));
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(0)->getFormalCharge() == 4);
+    CHECK(mol->getAtomWithIdx(0)->getTotalNumHs() == 0);
+  }
+  SECTION("basics-Ge") {
+    std::string mb = R"CTAB(
+  Mrv1810 08141905562D          
+
+  5  0  0  0  0  0            999 V2000
+   -3.6316   -0.4737    0.0000 Ge  0  0  0  0  0  0  0  0  0  0  0  0
+   -3.6541    0.3609    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+   -2.4586   -0.5188    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+   -3.6992   -1.5338    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+   -4.5789   -0.4286    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+M  CHG  5   1   4   2  -1   3  -1   4  -1   5  -1
+M  END
+)CTAB";
+    std::unique_ptr<ROMol> mol(MolBlockToMol(mb));
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(0)->getFormalCharge() == 4);
+    CHECK(mol->getAtomWithIdx(0)->getTotalNumHs() == 0);
+  }
+}
+TEST_CASE(
+    "github #2607: Pb, Sn should support valence 2"
+    "[bug, molops]") {
+  SECTION("basics-Pb") {
+    std::string mb = R"CTAB(
+  Mrv1810 08141905562D          
+
+  3  0  0  0  0  0            999 V2000
+   -3.6316   -0.4737    0.0000 Pb  0  0  0  0  0  0  0  0  0  0  0  0
+   -3.6541    0.3609    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+   -2.4586   -0.5188    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+M  CHG  3   1   2   2  -1   3  -1
+M  END
+)CTAB";
+    std::unique_ptr<ROMol> mol(MolBlockToMol(mb));
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(0)->getFormalCharge() == 2);
+    CHECK(mol->getAtomWithIdx(0)->getTotalNumHs() == 0);
+  }
+  SECTION("basics-Sn") {
+    std::string mb = R"CTAB(
+  Mrv1810 08141905562D          
+
+  3  0  0  0  0  0            999 V2000
+   -3.6316   -0.4737    0.0000 Sn  0  0  0  0  0  0  0  0  0  0  0  0
+   -3.6541    0.3609    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+   -2.4586   -0.5188    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+M  CHG  3   1   2   2  -1   3  -1
+M  END
+)CTAB";
+    std::unique_ptr<ROMol> mol(MolBlockToMol(mb));
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(0)->getFormalCharge() == 2);
+    CHECK(mol->getAtomWithIdx(0)->getTotalNumHs() == 0);
+  }
+}

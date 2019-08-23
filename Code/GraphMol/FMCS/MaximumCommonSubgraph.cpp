@@ -571,7 +571,7 @@ bool MaximumCommonSubgraph::growSeeds() {
     }
     if (NotSet == si->GrowingStage)  // finished
       Seeds.erase(si);
-    if (Parameters.ProgressCallback && (steps >= 377)) {
+    if (Parameters.ProgressCallback) {
       steps = 0;
       Stat.NumAtoms = getMaxNumberAtoms();
       Stat.NumBonds = getMaxNumberBonds();

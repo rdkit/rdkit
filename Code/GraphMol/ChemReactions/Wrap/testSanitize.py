@@ -228,6 +228,50 @@ $MOL
   1  2  1  0        0
 M  END
 """
+
+kekule_rxn = """$RXN
+bug.rxn
+  ChemDraw06121709062D
+
+  1  1
+$MOL
+
+     RDKit          2D
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+    1.5000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7500   -1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7500   -1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7500    1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7500    1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  2  0
+  3  4  1  0
+  4  5  2  0
+  5  6  1  0
+  6  1  2  0
+M  END
+$MOL
+
+     RDKit          2D
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+    1.5000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7500   -1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7500   -1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7500    1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7500    1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  2  0
+  3  4  1  0
+  4  5  2  0
+  5  6  1  0
+  6  1  2  0
+M  END
+"""
+
 good_res = (0,0,2,1,(((0, 'halogen.bromine.aromatic'),), ((1, 'boronicacid'),)))
 bad_res = (3,0,2,1,(((0, 'halogen.bromine.aromatic'),), ((1, 'boronicacid'),)))
 
@@ -263,7 +307,27 @@ class TestCase(unittest.TestCase) :
         # test was for a seg fault
         rdChemReactions.SanitizeRxn(rxn)
 
+    def test_only_aromatize_if_possible(self):
+        rxn = AllChem.ReactionFromRxnBlock(kekule_rxn)
+        # test was for a seg fault
+        groups = rxn.RunReactants([Chem.MolFromSmiles("c1ccccc1")])
+        print(groups)
+        self.assertFalse(len(groups))
 
+        # check normal sanitization
+        rdChemReactions.SanitizeRxn(rxn)
+        groups = rxn.RunReactants([Chem.MolFromSmiles("c1ccccc1")])
+        self.assertTrue(len(groups[0]))
+
+        # now check adjustparams with ONLY aromatize if possible
+        rxn = AllChem.ReactionFromRxnBlock(kekule_rxn)
+        rdChemReactions.SanitizeRxn(rxn)
+        
+        groups = rxn.RunReactants([Chem.MolFromSmiles("c1ccccc1")])
+        self.assertTrue(len(groups[0]))
+        
+
+        
 
 if __name__ == '__main__':
   unittest.main()

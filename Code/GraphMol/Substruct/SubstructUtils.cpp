@@ -74,7 +74,7 @@ bool bondCompat(const Bond *b1, const Bond *b2,
   if (res && b1->getBondType() == Bond::DATIVE &&
       b2->getBondType() == Bond::DATIVE) {
     // for dative bonds we need to make sure that the direction also matches:
-    if (!b1->getBeginAtom()->Match(b1->getBeginAtom()) ||
+    if (!b1->getBeginAtom()->Match(b2->getBeginAtom()) ||
         !b1->getEndAtom()->Match(b2->getEndAtom())) {
       res = false;
     }

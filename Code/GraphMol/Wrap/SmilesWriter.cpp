@@ -30,7 +30,7 @@ SmilesWriter *getSmilesWriter(python::object &fileobj,
                               bool isomericSmiles = true,
                               bool kekuleSmiles = false) {
   // FIX: minor leak here
-  auto *sb = new streambuf(fileobj);
+  auto *sb = new streambuf(fileobj, 't');
   auto *ost = new streambuf::ostream(*sb);
   return new SmilesWriter(ost, delimiter, nameHeader, includeHeader, true,
                           isomericSmiles, kekuleSmiles);
@@ -104,6 +104,6 @@ struct smiwriter_wrap {
              "Returns the number of molecules written so far.\n\n");
   };
 };
-}
+}  // namespace RDKit
 
 void wrap_smiwriter() { RDKit::smiwriter_wrap::wrap(); }

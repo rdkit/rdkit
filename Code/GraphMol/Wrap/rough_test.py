@@ -1684,7 +1684,7 @@ M  END
         Chem.AssignStereochemistry(mol, force=True)
       smi = Chem.MolToSmiles(mol, isomericSmiles=True)
       self.allStereoBonds([bond])
-      self.assertEqual(smi, "F/C=C\F")
+      self.assertEqual(smi, r"F/C=C\F")
       self.assertDoubleBondStereo(smi, Chem.BondStereo.STEREOZ)
 
   def recursive_enumerate_stereo_bonds(self, mol, done_bonds, bonds):
@@ -3642,37 +3642,8 @@ CAS<~>
 
   def testGithub497(self):
     outf = gzip.open(tempfile.mktemp(), 'wb+')
-    m = Chem.MolFromSmiles('C')
-    w = Chem.SDWriter(outf)
-    e = False
-    try:
-      w.write(m)
-    except Exception:
-      sys.stderr.write('Opening gzip as binary fails on Python3 ' \
-        'upon writing to SDWriter without crashing the RDKit\n')
-      e = True
-    else:
-      e = (sys.version_info < (3, 0))
-    try:
-      w.close()
-    except Exception:
-      sys.stderr.write('Opening gzip as binary fails on Python3 ' \
-        'upon closing SDWriter without crashing the RDKit\n')
-      e = True
-    else:
-      if (not e):
-        e = (sys.version_info < (3, 0))
-    w = None
-    try:
-      outf.close()
-    except Exception:
-      sys.stderr.write('Opening gzip as binary fails on Python3 ' \
-        'upon closing the stream without crashing the RDKit\n')
-      e = True
-    else:
-      if (not e):
-        e = (sys.version_info < (3, 0))
-    self.assertTrue(e)
+    with self.assertRaises(ValueError):
+      w = Chem.SDWriter(outf)
 
   def testGithub498(self):
     if (sys.version_info < (3, 0)):
@@ -3746,6 +3717,18 @@ CAS<~>
     qps.makeBondsGenericFlags = Chem.ADJUST_IGNORERINGS
     am = Chem.AdjustQueryProperties(m, qps)
     self.assertEqual(Chem.MolToSmarts(am), '[#6&D2]1-[#6&D2]-[#6&D2]-[#6&D3]-1~[#8]~[#6]')
+
+  def testMolFragmentSmarts(self):
+    m = Chem.MolFromSmiles('C1CCC1OC')
+    self.assertEqual(Chem.MolFragmentToSmarts(m, [0, 1, 2]), '[#6]-[#6]-[#6]')
+    # if bondsToUse is honored, the ring won't show up
+    self.assertEqual(Chem.MolFragmentToSmarts(m, [0, 1, 2, 3], bondsToUse=[0, 1, 2, 3]), '[#6]-[#6]-[#6]-[#6]')
+
+    # Does MolFragmentToSmarts accept output of AdjustQueryProperties?
+    qps = Chem.AdjustQueryParameters()
+    qps.makeAtomsGeneric = True
+    am = Chem.AdjustQueryProperties(m, qps)
+    self.assertEqual(Chem.MolFragmentToSmarts(am, [0, 1, 2]), '*-*-*')
 
   def testAdjustQueryPropertiesgithubIssue1474(self):
     core = Chem.MolFromSmiles('[*:1]C1N([*:2])C([*:3])O1')

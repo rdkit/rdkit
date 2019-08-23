@@ -20,12 +20,6 @@ namespace RDKit {
 // Local utility namespace
 namespace {
 
-// Determine whether or not a molecule is to the left of Carbon
-bool isEarlyAtom(int atomicNum) {
-  // FIX: this is duplicated from Atom.cpp. It should be defined once!
-  return (4 - PeriodicTable::getTable()->getNouterElecs(atomicNum)) > 0;
-}
-
 void backTrack(RWMol &mol, INT_INT_DEQ_MAP &options, int lastOpt,
                INT_VECT &done, INT_DEQUE &aqueue,
                boost::dynamic_bitset<> &dBndCands,
