@@ -666,17 +666,28 @@ std::string MaximumCommonSubgraph::generateResultSMARTS(
     } else {
       QueryAtom a;  // generate [#6] instead of C or c !
       a.setQuery(makeAtomNumQuery((*atom)->getAtomicNum()));
+      if (Parameters.AtomCompareParameters.MatchChiralTag &&
+          ((*atom)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
+           (*atom)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW)) {
+        a.setChiralTag((*atom)->getChiralTag());
+      }
       // for all atomMatchSet[ai] items add atom query to template like
       // [#6,#17,#9, ... ]
       for (std::map<unsigned, const Atom*>::const_iterator am =
                atomMatchSet[ai].begin();
            am != atomMatchSet[ai].end(); am++) {
-        a.expandQuery(makeAtomNumQuery(am->second->getAtomicNum()),
-                      Queries::COMPOSITE_OR);
+        QueryAtom subQ;
+        subQ.setQuery(makeAtomNumQuery(am->second->getAtomicNum()));
+
         if (Parameters.AtomCompareParameters.MatchChiralTag &&
             (am->second->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
-             am->second->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW))
-          a.setChiralTag(am->second->getChiralTag());
+             am->second->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW)) {
+          subQ.expandQuery(
+              makeAtomHasChiralityValueQuery(am->second->getChiralTag()),
+              Queries::COMPOSITE_AND);
+        }
+
+        a.expandQuery(subQ.getQuery()->copy(), Queries::COMPOSITE_OR);
       }
       mol.addAtom(&a, true, false);
     }
