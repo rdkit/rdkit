@@ -1178,6 +1178,7 @@ void MolDraw2D::drawBond(const ROMol &mol, const Bond *bond, int at1_idx,
   static const DashPattern noDash;
   static const DashPattern dots = assign::list_of(2)(6);
   static const DashPattern dashes = assign::list_of(6)(6);
+  static const DashPattern shortDashes = assign::list_of(2)(2);
   // the percent shorter that the extra bonds in a double bond are
   const double multipleBondTruncation = 0.15;
 
@@ -1292,6 +1293,10 @@ void MolDraw2D::drawBond(const ROMol &mol, const Bond *bond, int at1_idx,
         drawArrow(at2_cds, at1_cds, asPolygon, frac, angle);
       }
       setFillPolys(fps);
+    } else if (Bond::ZERO == bt) {
+      setDash(shortDashes);
+      drawLine(at1_cds, at2_cds, col1, col2);
+      setDash(noDash);
     } else {
       // in all other cases, we will definitely want to draw a line between
       // the two atoms
