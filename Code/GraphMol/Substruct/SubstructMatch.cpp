@@ -119,10 +119,6 @@ class MolMatchFinalCheckFunctor {
       int qPermCount = qAt->getPerturbationOrder(qOrder);
 
       unsigned unmatchedNeighbors = mAt->getDegree() - mOrder.size();
-      if (qAt->getIdx() == 0 && mAt->getIdx() != 0 && unmatchedNeighbors) {
-        mOrder.insert(mOrder.begin(), 1, -1);
-        --unmatchedNeighbors;
-      }
       mOrder.insert(mOrder.end(), unmatchedNeighbors, -1);
 
       INT_LIST moOrder;

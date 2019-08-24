@@ -975,7 +975,7 @@ void testChiralMatch() {
     bool matched = SubstructMatch(*mol, *query, matchV, true, true);
     delete mol;
     delete query;
-    TEST_ASSERT(matched);
+    TEST_ASSERT(!matched);
   }
   {
     std::string qSmi = "[C@@](C)(F)Br";
@@ -986,7 +986,7 @@ void testChiralMatch() {
     bool matched = SubstructMatch(*mol, *query, matchV, true, true);
     delete mol;
     delete query;
-    TEST_ASSERT(!matched);
+    TEST_ASSERT(matched);
   }
   {
     std::string qSmi = "C[C@](F)Br";
@@ -1605,26 +1605,26 @@ void testGithub2570() {
     {
       const auto query = R"([C@](Cl)(Br)F)"_smarts;
       std::vector<MatchVectType> matches;
-      TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
-                                 recursionPossible, useChirality));
+      TEST_ASSERT(!SubstructMatch(*mol, *query, matches, uniquify,
+                                  recursionPossible, useChirality));
     }
     {
       const auto query = R"([C@@](Cl)(Br)F)"_smarts;
       std::vector<MatchVectType> matches;
-      TEST_ASSERT(!SubstructMatch(*mol, *query, matches, uniquify,
-                                  recursionPossible, useChirality));
+      TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
+                                 recursionPossible, useChirality));
     }
     {  // Swap order of a pair of atoms
       const auto query = R"([C@](Br)(Cl)F)"_smarts;
       std::vector<MatchVectType> matches;
-      TEST_ASSERT(!SubstructMatch(*mol, *query, matches, uniquify,
-                                  recursionPossible, useChirality));
+      TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
+                                 recursionPossible, useChirality));
     }
     {
       const auto query = R"([C@@](Br)(Cl)F)"_smarts;
       std::vector<MatchVectType> matches;
-      TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
-                                 recursionPossible, useChirality));
+      TEST_ASSERT(!SubstructMatch(*mol, *query, matches, uniquify,
+                                  recursionPossible, useChirality));
     }
     {  // Smaller fragments should always match as long as they have have a
        // chiral tag,
