@@ -102,12 +102,15 @@ BOOST_PYTHON_MODULE(rdMolInterchange) {
       .def_readwrite("includeConformers",
           &RDKit::MolInterchange::JSONWriteParameters::includeConformers,
           "add conformers to output")
-      .def_readwrite("includeExplicitValence",
-          &RDKit::MolInterchange::JSONWriteParameters::includeExplicitValence,
-          "add explicit valence to atomic output")
-      .def_readwrite("writeAromaticBonds",
-          &RDKit::MolInterchange::JSONWriteParameters::writeAromaticBonds,
-          "include aromatic bonds in output");
+      .def_readwrite("formatName",
+          &RDKit::MolInterchange::JSONWriteParameters::formatName,
+          "format name to use")
+      .def_readwrite("formatVersion",
+          &RDKit::MolInterchange::JSONWriteParameters::formatVersion,
+          "version of the format")
+      .def_readwrite("doValidationJSON",
+          &RDKit::MolInterchange::JSONWriteParameters::doValidationJSON,
+          "write simplified JSON for molecular validation");
   std::string docString;
   docString =
       "Convert a single molecule to JSON\n\

@@ -15,6 +15,7 @@
 namespace RDKit {
 namespace MolInterchange {
 static const int currentMolJSONVersion = 10;
+static const int currentValidationJSONVersion = 1;
 static const int currentRDKitRepresentationVersion = 1;
 static const int currentChargeRepresentationVersion = 10;
 

@@ -58,12 +58,9 @@ struct RDKIT_MOLINTERCHANGE_EXPORT JSONWriteParameters {
       true; 
   bool includeConformers =
       true;
-  bool includeExplicitValence =
-      false;
-  bool writeAromaticBonds =
-      false; 
   std::string formatName="commonchem";
-  bool doValidationJSON = false;
+  unsigned int formatVersion = 0;
+  bool doValidationJSON = false; // overrides many of the above options
 };
 static JSONWriteParameters defaultJSONWriteParameters;
 

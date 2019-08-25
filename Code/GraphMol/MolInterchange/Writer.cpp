@@ -50,8 +50,10 @@ void initBondDefaults(rj::Value &rjDefaults, rj::Document &document) {
   rjDefaults.AddMember("bo", 1, document.GetAllocator());
   rjDefaults.AddMember("stereo", "unspecified", document.GetAllocator());
 }
-void initHeader(rj::Value &rjHeader, rj::Document &document) {
-  rjHeader.AddMember("version", currentMolJSONVersion, document.GetAllocator());
+void initHeader(rj::Value &rjHeader, rj::Document &document, const JSONWriteParameters &params) {
+  int version = currentMolJSONVersion;
+  if (params.formatVersion > 0) version = params.formatVersion;
+  rjHeader.AddMember("version", version, document.GetAllocator());
 }
 
 void addIntVal(rj::Value &dest, const rj::Value *defaults, const char *tag,
@@ -100,18 +102,35 @@ void addAtom(const Atom &atom, rj::Value &rjAtom, rj::Document &doc,
   addIntVal(rjAtom, rjDefaults, "chg", atom.getFormalCharge(), doc);
   addIntVal(rjAtom, rjDefaults, "isotope", atom.getIsotope(), doc);
   addIntVal(rjAtom, rjDefaults, "nRad", atom.getNumRadicalElectrons(), doc);
-  if(params.includeExplicitValence){
+  if(params.doValidationJSON){
     addIntVal(rjAtom, rjDefaults, "explicitValence", atom.getExplicitValence(), doc);
   }
   std::string chi = "";
+  std::vector<int> chi_atoms;
   if (inv_chilookup.find(atom.getChiralTag()) != inv_chilookup.end()) {
     chi = inv_chilookup.find(atom.getChiralTag())->second;
+    if(params.doValidationJSON){
+        ROMol::OEDGE_ITER beg, end;
+        boost::tie(beg, end) = atom.getOwningMol().getAtomBonds(&atom);
+        while (beg != end) {
+          chi_atoms.push_back(atom.getOwningMol()[*beg]->getOtherAtomIdx(atom.getIdx()));
+          ++beg;
+        }
+    }
   } else {
     BOOST_LOG(rdWarningLog)
         << " unrecognized atom chirality set to default while writing"
         << std::endl;
   }
   addStringVal(rjAtom, rjDefaults, "stereo", chi, doc);
+  if(!chi_atoms.empty()){
+      rj::Value rjNeighbors(rj::kArrayType);
+      for(auto idx : chi_atoms) {
+        rj::Value v(idx);
+        rjNeighbors.PushBack(v,doc.GetAllocator());
+      }
+      rjAtom.AddMember("chi_atoms",rjNeighbors,doc.GetAllocator());
+  }
 }
 
 void addBond(const Bond &bond, rj::Value &rjBond, rj::Document &doc,
@@ -173,7 +192,7 @@ void addMol(const T &imol, rj::Value &rjMol, rj::Document &doc,
             const rj::Value *atomDefaults, const rj::Value *bondDefaults,
             const JSONWriteParameters &params) {
   RWMol mol(imol);
-  if(!params.writeAromaticBonds)
+  if(!params.doValidationJSON)
     MolOps::Kekulize(mol, false);
   if (mol.hasProp(common_properties::_Name)) {
     rj::Value nmv;
@@ -351,19 +370,32 @@ void addMol(const T &imol, rj::Value &rjMol, rj::Document &doc,
     rjMol.AddMember("extensions", rjReprs, doc.GetAllocator());
   }
 }
+
+void adjustParams(JSONWriteParameters &params){
+  if(params.doValidationJSON){
+    params.formatName = "validation_JSON";
+    params.formatVersion = currentValidationJSONVersion;
+    params.includeConformers = false;
+    params.includeExtensions = false;
+    params.includeProperties = false;
+    params.useDefaults = false;
+  }
+}
 }  // end of anonymous namespace
 
 template <typename T>
-std::string MolsToJSONData(const std::vector<T> &mols,const JSONWriteParameters &params) {
+std::string MolsToJSONData(const std::vector<T> &mols,const JSONWriteParameters &iparams) {
+  JSONWriteParameters lparams = iparams;
+  adjustParams(lparams);
   std::string res = "";
   rj::Document doc;
   doc.SetObject();
 
   rj::Value header(rj::kObjectType);
-  initHeader(header, doc);
-  doc.AddMember(rj::StringRef(params.formatName), header, doc.GetAllocator());
+  initHeader(header, doc, lparams);
+  doc.AddMember(rj::StringRef(lparams.formatName.c_str()), header, doc.GetAllocator());
 
-  if(params.useDefaults){
+  if(lparams.useDefaults){
     rj::Value defaults(rj::kObjectType);
 
     rj::Value atomDefaults(rj::kObjectType);
@@ -381,7 +413,7 @@ std::string MolsToJSONData(const std::vector<T> &mols,const JSONWriteParameters 
     rj::Value rjMol(rj::kObjectType);
     // write mol;
     addMol(*mol, rjMol, doc, rj::GetValueByPointer(doc, "/defaults/atom"),
-           rj::GetValueByPointer(doc, "/defaults/bond"), params);
+           rj::GetValueByPointer(doc, "/defaults/bond"), lparams);
     rjMols.PushBack(rjMol, doc.GetAllocator());
   }
   doc.AddMember("molecules", rjMols, doc.GetAllocator());

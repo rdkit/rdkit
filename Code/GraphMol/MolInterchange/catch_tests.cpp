@@ -44,18 +44,14 @@ TEST_CASE("basic options","[molinterchange]"){
         CHECK(jsond.find("defaults") != std::string::npos);
         CHECK(jsond.find("extensions") == std::string::npos);
     }
-    SECTION("basics4") {
+    SECTION("validation_json") {
         MolInterchange::JSONWriteParameters ps;
-        ps.writeAromaticBonds = true;
-        ps.includeExplicitValence = true;
-        ps.includeExtensions = false;
-        ps.useDefaults = false;
-        ps.formatName = "validation_json";
+        ps.doValidationJSON = true;
         auto jsond = MolInterchange::MolToJSONData(*m,ps);
         CHECK(jsond.find("\"explicitValence\":3") != std::string::npos);
         CHECK(jsond.find("\"bo\":100") != std::string::npos);
         CHECK(jsond.find("commonchem") == std::string::npos);
-        CHECK(jsond.find("validation_json") != std::string::npos);
+        CHECK(jsond.find("validation_JSON") != std::string::npos);
     }
 }
 
