@@ -48,6 +48,25 @@ struct RDKIT_MOLINTERCHANGE_EXPORT JSONParseParameters {
 };
 static JSONParseParameters defaultJSONParseParameters;
 
+// \brief parameters controlling generation of MolJSON
+struct RDKIT_MOLINTERCHANGE_EXPORT JSONWriteParameters {
+  bool useDefaults =
+      true; 
+  bool includeExtensions =
+      true; 
+  bool includeProperties =
+      true; 
+  bool includeConformers =
+      true;
+  bool includeExplicitValence =
+      false;
+  bool writeAromaticBonds =
+      false; 
+  std::string formatName="commonchem";
+  bool doValidationJSON = false;
+};
+static JSONWriteParameters defaultJSONWriteParameters;
+
 // \brief construct molecules from MolJSON data in a stream
 /*!
  *   \param inStream - stream containing the data
@@ -72,16 +91,18 @@ JSONDataToMols(const std::string &jsonBlock,
  */
 template <typename T>
 RDKIT_MOLINTERCHANGE_EXPORT std::string MolsToJSONData(
-    const std::vector<T> &mols);
+    const std::vector<T> &mols,const JSONWriteParameters &params =
+                                                 defaultJSONWriteParameters);
 
 // \brief returns MolJSON for a molecule
 /*!
  *   \param mol   - the molecule to work with
  */
 template <typename T>
-std::string MolToJSONData(const T &mol) {
+std::string MolToJSONData(const T &mol,const JSONWriteParameters &params =
+                                                 defaultJSONWriteParameters) {
   std::vector<const T *> ms{&mol};
-  return MolsToJSONData(ms);
+  return MolsToJSONData(ms,params);
 };
 
 }  // end of namespace MolInterchange

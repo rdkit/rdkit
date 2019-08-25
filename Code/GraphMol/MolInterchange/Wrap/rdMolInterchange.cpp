@@ -33,10 +33,31 @@ python::tuple JSONToMols(const std::string &jsonBlock,
   return python::tuple(result);
 }
 
-std::string MolsToJSON(const python::object &mols) {
+std::string MolsToJSON(const python::object &mols,
+                         python::object pyparams) {
   auto pymols = pythonObjectToVect<const RDKit::ROMol *>(mols);
-  return RDKit::MolInterchange::MolsToJSONData(*pymols);
+  RDKit::MolInterchange::JSONWriteParameters params;
+  if (pyparams) {
+    params =
+        python::extract<RDKit::MolInterchange::JSONWriteParameters>(pyparams);
+  } else {
+    params = RDKit::MolInterchange::defaultJSONWriteParameters;
+  }
+  return RDKit::MolInterchange::MolsToJSONData(*pymols,params);
 }
+
+std::string MolToJSON(const RDKit::ROMol &mol,
+                         python::object pyparams) {
+  RDKit::MolInterchange::JSONWriteParameters params;
+  if (pyparams) {
+    params =
+        python::extract<RDKit::MolInterchange::JSONWriteParameters>(pyparams);
+  } else {
+    params = RDKit::MolInterchange::defaultJSONWriteParameters;
+  }
+  return RDKit::MolInterchange::MolToJSONData(mol,params);
+}
+
 }
 
 BOOST_PYTHON_MODULE(rdMolInterchange) {
@@ -65,25 +86,48 @@ BOOST_PYTHON_MODULE(rdMolInterchange) {
           &RDKit::MolInterchange::JSONParseParameters::parseProperties,
           "parse molecular properties in the JSON");
 
+  python::class_<RDKit::MolInterchange::JSONWriteParameters,
+                 boost::noncopyable>("JSONWriteParameters",
+                                     "Paramters controlling the JSON writer")
+      .def_readwrite(
+          "useDefaults",
+          &RDKit::MolInterchange::JSONWriteParameters::useDefaults,
+          "add defaults to output")
+      .def_readwrite("includeExtensions",
+          &RDKit::MolInterchange::JSONWriteParameters::includeExtensions,
+          "add extensions to output")
+      .def_readwrite("includeProperties",
+          &RDKit::MolInterchange::JSONWriteParameters::includeProperties,
+          "add properties to output")
+      .def_readwrite("includeConformers",
+          &RDKit::MolInterchange::JSONWriteParameters::includeConformers,
+          "add conformers to output")
+      .def_readwrite("includeExplicitValence",
+          &RDKit::MolInterchange::JSONWriteParameters::includeExplicitValence,
+          "add explicit valence to atomic output")
+      .def_readwrite("writeAromaticBonds",
+          &RDKit::MolInterchange::JSONWriteParameters::writeAromaticBonds,
+          "include aromatic bonds in output");
   std::string docString;
   docString =
       "Convert a single molecule to JSON\n\
 \n\
     ARGUMENTS:\n\
       - mol: the molecule to work with\n\
+      - params: the parameters to be used\n\
     RETURNS:\n\
       a string\n";
-  python::def("MolToJSON", (std::string(*)(const RDKit::ROMol &))
-                               RDKit::MolInterchange::MolToJSONData,
-              (python::arg("mol")), docString.c_str());
+  python::def("MolToJSON", MolToJSON,
+              (python::arg("mol"),python::arg("params")=python::object()), docString.c_str());
   docString =
       "Convert a set of molecules to JSON\n\
 \n\
     ARGUMENTS:\n\
       - mols: the molecules to work with\n\
+      - params: the parameters to be used\n\
     RETURNS:\n\
       a string\n";
-  python::def("MolsToJSON", MolsToJSON, (python::arg("mols")),
+  python::def("MolsToJSON", MolsToJSON, (python::arg("mols"),python::arg("params")=python::object()),
               docString.c_str());
   docString =
       "Convert JSON to a tuple of molecules\n\
