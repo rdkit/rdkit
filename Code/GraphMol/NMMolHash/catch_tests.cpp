@@ -70,6 +70,32 @@ TEST_CASE("Basic MolHash","[molhash]") {
         auto hsh = MolHash(m.get(),HashFunction::Mesomer);
       CHECK(hsh == "CO[C]1[CH][C](C2CCCCC2O)[CH][CH][N]1_0");
     }   
+    // { regioisomers currently crash
+    //     std::unique_ptr<RWMol> m(new RWMol(*om));
+    //     auto hsh = MolHash(m.get(),HashFunction::Regioisomer);
+    //   CHECK(hsh == "");
+    // }   
+    {
+        std::unique_ptr<RWMol> m(new RWMol(*om));
+        auto hsh = MolHash(m.get(),HashFunction::NetCharge);
+      CHECK(hsh == "0");
+    }   
+    {
+        std::unique_ptr<RWMol> m(new RWMol(*om));
+        auto hsh = MolHash(m.get(),HashFunction::SmallWorldIndexBR);
+      CHECK(hsh == "B16R2");
+    }   
+    {
+        std::unique_ptr<RWMol> m(new RWMol(*om));
+        auto hsh = MolHash(m.get(),HashFunction::SmallWorldIndexBRL);
+      CHECK(hsh == "B16R2L9");
+    }
+        {
+        std::unique_ptr<RWMol> m(new RWMol(*om));
+        auto hsh = MolHash(m.get(),HashFunction::ArthorSubstructureOrder);
+      CHECK(hsh == "000f001001000c000300005f000000");
+    }   
+   
   }
   SECTION("tautomers") {
       auto om = "C(CC1=NNC=C1)C1=CNC=N1"_smiles;
