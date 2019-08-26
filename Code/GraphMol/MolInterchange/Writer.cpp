@@ -109,7 +109,7 @@ void addAtom(const Atom &atom, rj::Value &rjAtom, rj::Document &doc,
   std::vector<int> chi_atoms;
   if (inv_chilookup.find(atom.getChiralTag()) != inv_chilookup.end()) {
     chi = inv_chilookup.find(atom.getChiralTag())->second;
-    if(params.doValidationJSON){
+    if(chi != "unspecified" && params.doValidationJSON){
         ROMol::OEDGE_ITER beg, end;
         boost::tie(beg, end) = atom.getOwningMol().getAtomBonds(&atom);
         while (beg != end) {
@@ -122,14 +122,16 @@ void addAtom(const Atom &atom, rj::Value &rjAtom, rj::Document &doc,
         << " unrecognized atom chirality set to default while writing"
         << std::endl;
   }
-  addStringVal(rjAtom, rjDefaults, "stereo", chi, doc);
-  if(!chi_atoms.empty()){
+  if(chi != "unspecified" || !params.doValidationJSON){
+    addStringVal(rjAtom, rjDefaults, "stereo", chi, doc);
+    if(!chi_atoms.empty()){
       rj::Value rjNeighbors(rj::kArrayType);
       for(auto idx : chi_atoms) {
         rj::Value v(idx);
         rjNeighbors.PushBack(v,doc.GetAllocator());
       }
       rjAtom.AddMember("chi_atoms",rjNeighbors,doc.GetAllocator());
+    }
   }
 }
 
@@ -157,7 +159,10 @@ void addBond(const Bond &bond, rj::Value &rjBond, rj::Document &doc,
     BOOST_LOG(rdWarningLog) << " unrecognized bond stereo " << bond.getStereo()
                             << " set to default while writing" << std::endl;
   }
-  addStringVal(rjBond, rjDefaults, "stereo", chi, doc);
+  
+  if(chi != "unspecified" || !params.doValidationJSON){
+    addStringVal(rjBond, rjDefaults, "stereo", chi, doc);
+  }
   if (chi != "unspecified" && bond.getStereoAtoms().size() == 2) {
     rj::Value rjStereoAtoms(rj::kArrayType);
     rj::Value v1(static_cast<int>(bond.getStereoAtoms()[0]));

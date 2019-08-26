@@ -48,8 +48,11 @@ TEST_CASE("basic options","[molinterchange]"){
         MolInterchange::JSONWriteParameters ps;
         ps.doValidationJSON = true;
         auto jsond = MolInterchange::MolToJSONData(*m,ps);
+        CHECK(jsond.find("defaults") == std::string::npos);
+        CHECK(jsond.find("extensions") == std::string::npos);
         CHECK(jsond.find("\"explicitValence\":3") != std::string::npos);
         CHECK(jsond.find("\"bo\":100") != std::string::npos);
+        CHECK(jsond.find("chi_atoms") == std::string::npos);
         CHECK(jsond.find("commonchem") == std::string::npos);
         CHECK(jsond.find("validation_JSON") != std::string::npos);
     }
