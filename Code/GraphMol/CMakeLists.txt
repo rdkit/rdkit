@@ -81,6 +81,8 @@ add_subdirectory(MolHash)
 add_subdirectory(MMPA)
 add_subdirectory(StructChecker)
 
+add_subdirectory(NMMolHash)
+
 
 add_subdirectory(ReducedGraphs)
 add_subdirectory(Trajectory)
