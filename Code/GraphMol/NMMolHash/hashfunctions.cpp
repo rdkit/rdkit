@@ -508,12 +508,15 @@ static void ClearEZStereo(NMS_pATOM atm)
 
 static std::string RegioisomerHash(NMS_pMOL mol)
 {
+  // we need a copy of the molecule so that we can loop over the bonds of something
+  // while modifying something else
   NMS_MOL_CALCULATE_RINGINFO(mol);
-
-  NMS_FOR_BOND_IN_MOL(bond, mol) {
-    NMS_pBOND bptr = NMS_ITER_MOL_BOND(bond, mol);
+  RDKit::ROMol molcpy(*mol);
+  for(int i=molcpy.getNumBonds()-1;i>=0;--i){
+    auto bptr = molcpy.getBondWithIdx(i);
     int split = RegioisomerBond(bptr);
     if (split >= 0) {
+      bptr = mol->getBondWithIdx(i);
       NMS_pATOM beg = NMS_BOND_GET_BEG(bptr);
       NMS_pATOM end = NMS_BOND_GET_END(bptr);
       NMS_MOL_DELETE_BOND(mol, bptr);

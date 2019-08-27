@@ -70,11 +70,12 @@ TEST_CASE("Basic MolHash","[molhash]") {
         auto hsh = MolHash(m.get(),HashFunction::Mesomer);
       CHECK(hsh == "CO[C]1[CH][C](C2CCCCC2O)[CH][CH][N]1_0");
     }   
-    // { regioisomers currently crash
-    //     std::unique_ptr<RWMol> m(new RWMol(*om));
-    //     auto hsh = MolHash(m.get(),HashFunction::Regioisomer);
-    //   CHECK(hsh == "");
-    // }   
+    { 
+        std::unique_ptr<RWMol> m(new RWMol(*om));
+        auto hsh = MolHash(m.get(),HashFunction::Regioisomer);
+      CHECK(hsh == "*O.*O*.C.C1CCCCC1.c1ccncc1");
+
+    }   
     {
         std::unique_ptr<RWMol> m(new RWMol(*om));
         auto hsh = MolHash(m.get(),HashFunction::NetCharge);
