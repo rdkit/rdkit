@@ -29,7 +29,6 @@ const CleanupParameters defaultCleanupParameters;
 
 RWMol *cleanup(const RWMol &mol, const CleanupParameters &params) {
   RWMol m(mol);
-  MolOps::sanitizeMol(m);
   MolOps::removeHs(m);
 
   MolStandardize::MetalDisconnector md;

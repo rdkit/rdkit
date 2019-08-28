@@ -89,7 +89,6 @@ void MetalDisconnector::disconnect(RWMol &mol) {
     //	std::cout << "After removing bond and charge adjustment: " <<
     //MolToSmiles(mol) << std::endl;
   }
-  MolOps::sanitizeMol(mol);
 }
 }  // namespace MolStandardize
 }  // namespace RDKit

@@ -15,6 +15,11 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <boost/range/adaptor/reversed.hpp>
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/flyweight.hpp>
+#include <boost/flyweight/key_value.hpp>
+#include <boost/flyweight/no_tracking.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 namespace RDKit {
 namespace MolStandardize {
@@ -25,23 +30,31 @@ std::vector<ChargeCorrection> CHARGE_CORRECTIONS = {
     ChargeCorrection("[Mg,Ca]", "[Mg,Ca;X0+0]", 2),
     ChargeCorrection("[Cl]", "[Cl;X0+0]", -1)};
 
+typedef boost::flyweight<
+    boost::flyweights::key_value<std::string, AcidBaseCatalogParams>,
+    boost::flyweights::no_tracking>
+    param_flyweight;
+
 // constructor
 Reionizer::Reionizer() {
-  AcidBaseCatalogParams abparams(defaultCleanupParameters.acidbaseFile);
-  this->d_abcat = new AcidBaseCatalog(&abparams);
+  const AcidBaseCatalogParams *abparams =
+      &(param_flyweight(defaultCleanupParameters.acidbaseFile).get());
+  this->d_abcat = new AcidBaseCatalog(abparams);
   this->d_ccs = CHARGE_CORRECTIONS;
 }
 
 Reionizer::Reionizer(const std::string acidbaseFile) {
-  AcidBaseCatalogParams abparams(acidbaseFile);
-  this->d_abcat = new AcidBaseCatalog(&abparams);
+  const AcidBaseCatalogParams *abparams =
+      &(param_flyweight(acidbaseFile).get());
+  this->d_abcat = new AcidBaseCatalog(abparams);
   this->d_ccs = CHARGE_CORRECTIONS;
 }
 
 Reionizer::Reionizer(const std::string acidbaseFile,
                      const std::vector<ChargeCorrection> ccs) {
-  AcidBaseCatalogParams abparams(acidbaseFile);
-  this->d_abcat = new AcidBaseCatalog(&abparams);
+  const AcidBaseCatalogParams *abparams =
+      &(param_flyweight(acidbaseFile).get());
+  this->d_abcat = new AcidBaseCatalog(abparams);
   this->d_ccs = ccs;
 }
 
@@ -67,7 +80,7 @@ ROMol *Reionizer::reionize(const ROMol &mol) {
   const std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> abpairs =
       abparams->getPairs();
 
-  ROMOL_SPTR omol(new ROMol(mol));
+  ROMol *omol = new ROMol(mol);
   int start_charge = MolOps::getFormalCharge(*omol);
 
   for (const auto &cc : this->d_ccs) {
@@ -202,10 +215,9 @@ ROMol *Reionizer::reionize(const ROMol &mol) {
     }
   }  // while loop
 
-  RWMOL_SPTR wmol(new RWMol(*omol));
-  MolOps::sanitizeMol(*wmol);
+  // MolOps::sanitizeMol(*static_cast<RWMol *>(omol));
 
-  return new ROMol(*wmol);
+  return omol;
 }
 
 std::pair<unsigned int, std::vector<unsigned int>>
