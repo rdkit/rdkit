@@ -341,6 +341,9 @@ void setPreferCoordGen(bool);
   int findSSSR() {
     return RDKit::MolOps::findSSSR(*($self));
   };
+  void fastFindRings() {
+    RDKit::MolOps::fastFindRings(*($self));
+  }
   int symmetrizeSSSR(RDKit::VECT_INT_VECT &res) {
     return RDKit::MolOps::symmetrizeSSSR(*($self), res);
   }
