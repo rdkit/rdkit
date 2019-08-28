@@ -351,6 +351,7 @@ void addRecursiveQuery(ROMol &mol, const ROMol &query, unsigned int atomIdx,
     oAt->expandQuery(q, Queries::COMPOSITE_AND);
   }
 }
+
 MolOps::SanitizeFlags sanitizeMol(ROMol &mol, boost::uint64_t sanitizeOps,
                                   bool catchErrors) {
   RWMol &wmol = static_cast<RWMol &>(mol);
@@ -764,6 +765,16 @@ ROMol *adjustQueryPropertiesHelper(const ROMol &mol, python::object pyparams) {
     params = python::extract<MolOps::AdjustQueryParameters>(pyparams);
   }
   return MolOps::adjustQueryProperties(mol, &params);
+}
+
+python::tuple detectChemistryProblemsHelper(const ROMol &mol,
+                                            unsigned int sanitizeOps) {
+  auto probs = MolOps::detectChemistryProblems(mol, sanitizeOps);
+  python::list res;
+  for (const auto &exc_ptr : probs) {
+    res.append(boost::shared_ptr<MolSanitizeException>(exc_ptr->copy()));
+  }
+  return python::tuple(res);
 }
 
 ROMol *replaceCoreHelper(const ROMol &mol, const ROMol &core,
@@ -2258,6 +2269,11 @@ A note on the flags controlling which atoms/bonds are modified: \n\
                 (python::arg("mol"), python::arg("params") = python::object()),
                 docString.c_str(),
                 python::return_value_policy<python::manage_new_object>());
+    docString = "checks for chemistry problems";
+    python::def(
+        "DetectChemistryProblems", detectChemistryProblemsHelper,
+        (python::arg("mol"), python::arg("sanitizeOps") = MolOps::SANITIZE_ALL),
+        docString.c_str());
   };
 };
 }  // namespace RDKit

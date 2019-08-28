@@ -37,12 +37,6 @@ void rdExceptionTranslator(RDKit::ConformerException const &x) {
   PyErr_SetString(PyExc_ValueError, "Bad Conformer Id");
 }
 
-void rdSanitExceptionTranslator(RDKit::MolSanitizeException const &x) {
-  std::ostringstream ss;
-  ss << "Sanitization error: " << x.message();
-  PyErr_SetString(PyExc_ValueError, ss.str().c_str());
-}
-
 void wrap_table();
 void wrap_atom();
 void wrap_conformer();
@@ -116,14 +110,111 @@ void WrapLogs() {
   if (rdWarningLog != nullptr) rdWarningLog->SetTee(warning);
 }
 
+python::tuple getAtomIndicesHelper(const KekulizeException &self) {
+  python::list res;
+  for (auto idx : self.getAtomIndices()) {
+    res.append(idx);
+  }
+  return python::tuple(res);
+}
+
+PyObject *molSanitizeExceptionType = nullptr;
+PyObject *atomSanitizeExceptionType = nullptr;
+PyObject *atomValenceExceptionType = nullptr;
+PyObject *atomKekulizeExceptionType = nullptr;
+PyObject *kekulizeExceptionType = nullptr;
+
+// pattern from here:
+// https://stackoverflow.com/questions/11448735/boostpython-export-custom-exception-and-inherit-from-pythons-exception
+template <typename EXC_TYPE>
+void sanitExceptionTranslator(const EXC_TYPE &x, PyObject *pyExcType) {
+  PRECONDITION(pyExcType != nullptr, "global type not initialized");
+  python::object pyExcInstance(python::handle<>(python::borrowed(pyExcType)));
+  pyExcInstance.attr("cause") = x;
+  PyErr_SetString(pyExcType, x.message());
+}
+
+// pattern from here:
+// https://stackoverflow.com/questions/9620268/boost-python-custom-exception-class
+PyObject *createExceptionClass(const char *name,
+                               PyObject *baseTypeObj = PyExc_ValueError) {
+  std::string scopeName =
+      python::extract<std::string>(python::scope().attr("__name__"));
+  std::string qualifiedName0 = scopeName + "." + name;
+  char *qualifiedName1 = const_cast<char *>(qualifiedName0.c_str());
+
+  PyObject *typeObj = PyErr_NewException(qualifiedName1, baseTypeObj, 0);
+  if (!typeObj) python::throw_error_already_set();
+  python::scope().attr(name) = python::handle<>(python::borrowed(typeObj));
+  return typeObj;
+}
+
 BOOST_PYTHON_MODULE(rdchem) {
   python::scope().attr("__doc__") =
       "Module containing the core chemistry functionality of the RDKit";
   RegisterListConverter<RDKit::Atom *>();
   RegisterListConverter<RDKit::Bond *>();
   rdkit_import_array();
+
+  // this is one of those parts where I think I wish that I knew how to do
+  // template meta-programming
+  python::class_<MolSanitizeException>("_cppMolSanitizeException",
+                                       "exception arising from sanitization",
+                                       python::no_init)
+      .def("Message", &MolSanitizeException::message)
+      .def("GetType", &MolSanitizeException::getType);
+  python::register_ptr_to_python<boost::shared_ptr<MolSanitizeException>>();
+  molSanitizeExceptionType = createExceptionClass("MolSanitizeException");
   python::register_exception_translator<RDKit::MolSanitizeException>(
-      &rdSanitExceptionTranslator);
+      [&](const MolSanitizeException &exc) {
+        sanitExceptionTranslator(exc, molSanitizeExceptionType);
+      });
+
+  python::class_<AtomSanitizeException, python::bases<MolSanitizeException>>(
+      "_cppAtomSanitizeException", "exception arising from sanitization",
+      python::no_init)
+      .def("GetAtomIdx", &AtomSanitizeException::getAtomIdx);
+  python::register_ptr_to_python<boost::shared_ptr<AtomSanitizeException>>();
+  atomSanitizeExceptionType =
+      createExceptionClass("AtomSanitizeException", molSanitizeExceptionType);
+  python::register_exception_translator<RDKit::AtomSanitizeException>(
+      [&](const AtomSanitizeException &exc) {
+        sanitExceptionTranslator(exc, atomSanitizeExceptionType);
+      });
+
+  python::class_<AtomValenceException, python::bases<AtomSanitizeException>>(
+      "_cppAtomValenceException", "exception arising from sanitization",
+      python::no_init);
+  python::register_ptr_to_python<boost::shared_ptr<AtomValenceException>>();
+  atomValenceExceptionType =
+      createExceptionClass("AtomValenceException", atomSanitizeExceptionType);
+  python::register_exception_translator<RDKit::AtomValenceException>(
+      [&](const AtomValenceException &exc) {
+        sanitExceptionTranslator(exc, atomValenceExceptionType);
+      });
+
+  python::class_<AtomKekulizeException, python::bases<AtomSanitizeException>>(
+      "_cppAtomKekulizeException", "exception arising from sanitization",
+      python::no_init);
+  python::register_ptr_to_python<boost::shared_ptr<AtomKekulizeException>>();
+  atomKekulizeExceptionType =
+      createExceptionClass("AtomKekulizeException", atomSanitizeExceptionType);
+  python::register_exception_translator<RDKit::AtomKekulizeException>(
+      [&](const AtomKekulizeException &exc) {
+        sanitExceptionTranslator(exc, atomKekulizeExceptionType);
+      });
+
+  python::class_<KekulizeException, python::bases<MolSanitizeException>>(
+      "_cppAtomKekulizeException", "exception arising from sanitization",
+      python::no_init)
+      .def("GetAtomIndices", &getAtomIndicesHelper);
+  python::register_ptr_to_python<boost::shared_ptr<KekulizeException>>();
+  kekulizeExceptionType =
+      createExceptionClass("KekulizeException", molSanitizeExceptionType);
+  python::register_exception_translator<RDKit::KekulizeException>(
+      [&](const KekulizeException &exc) {
+        sanitExceptionTranslator(exc, kekulizeExceptionType);
+      });
 
   python::def("WrapLogs", WrapLogs,
               "Wrap the internal RDKit streams so they go to python's "

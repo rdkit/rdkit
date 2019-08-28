@@ -340,6 +340,82 @@ M  END)CTAB";
   }
 }
 
+TEST_CASE("Specialized exceptions for sanitization errors", "[molops]") {
+  SECTION("AtomValenceException") {
+    std::vector<std::pair<std::string, unsigned int>> smiles = {
+        {"C=n1ccnc1", 1}, {"CCO(C)C", 2}};
+    for (auto pr : smiles) {
+      CHECK_THROWS_AS(SmilesToMol(pr.first), AtomValenceException);
+      try {
+        auto m = SmilesToMol(pr.first);
+      } catch (const AtomValenceException &e) {
+        CHECK(e.getType() == "AtomValenceException");
+        CHECK(e.getAtomIdx() == pr.second);
+      }
+    }
+  }
+  SECTION("AtomKekulizeException") {
+    std::vector<std::pair<std::string, unsigned int>> smiles = {
+        {"CCcc", 2}, {"C1:c:CC1", 0}};
+    for (auto pr : smiles) {
+      CHECK_THROWS_AS(SmilesToMol(pr.first), AtomKekulizeException);
+      try {
+        auto m = SmilesToMol(pr.first);
+      } catch (const AtomKekulizeException &e) {
+        CHECK(e.getType() == "AtomKekulizeException");
+        CHECK(e.getAtomIdx() == pr.second);
+      }
+    }
+  }
+  SECTION("KekulizeException") {
+    std::vector<std::pair<std::string, std::vector<unsigned int>>> smiles = {
+        {"c1cccc1", {0, 1, 2, 3, 4}}, {"Cc1cc1", {1, 2, 3}}};
+    for (auto pr : smiles) {
+      CHECK_THROWS_AS(SmilesToMol(pr.first), KekulizeException);
+      try {
+        auto m = SmilesToMol(pr.first);
+      } catch (const KekulizeException &e) {
+        CHECK(e.getType() == "KekulizeException");
+        CHECK(e.getAtomIndices() == pr.second);
+      }
+    }
+  }
+}
+
+TEST_CASE("detectChemistryProblems", "[molops]") {
+  SECTION("Basics") {
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    auto m = std::unique_ptr<ROMol>(SmilesToMol("CO(C)CFCc1cc1", ps));
+    REQUIRE(m);
+    auto res = MolOps::detectChemistryProblems(*m);
+    REQUIRE(res.size() == 3);
+
+    CHECK(res[0]->getType() == "AtomValenceException");
+    REQUIRE(dynamic_cast<AtomValenceException *>(res[0].get()));
+    CHECK(dynamic_cast<AtomSanitizeException *>(res[0].get())->getAtomIdx() ==
+          1);
+
+    CHECK(res[1]->getType() == "AtomValenceException");
+    REQUIRE(dynamic_cast<AtomSanitizeException *>(res[1].get()));
+    CHECK(dynamic_cast<AtomSanitizeException *>(res[1].get())->getAtomIdx() ==
+          4);
+
+    CHECK(res[2]->getType() == "KekulizeException");
+    REQUIRE(dynamic_cast<KekulizeException *>(res[2].get()));
+    CHECK(dynamic_cast<KekulizeException *>(res[2].get())->getAtomIndices() ==
+          std::vector<unsigned int>({6, 7, 8}));
+  }
+  SECTION("No problems") {
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    auto m = std::unique_ptr<ROMol>(SmilesToMol("c1ccccc1", ps));
+    REQUIRE(m);
+    auto res = MolOps::detectChemistryProblems(*m);
+    REQUIRE(res.size() == 0);
+  }
+}
+
 TEST_CASE(
     "github #2606: Bad valence corrections on Pb, Sn"
     "[bug, molops]") {

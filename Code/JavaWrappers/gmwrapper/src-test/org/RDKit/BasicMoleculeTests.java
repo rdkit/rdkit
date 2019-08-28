@@ -1,5 +1,4 @@
 /*
- * $Id: BasicMoleculeTests.java 131 2011-01-20 22:01:29Z ebakke $
  *
  *  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
  *  All rights reserved.
