@@ -237,8 +237,8 @@ C1CCO[C@@](S)(P)1
         mols = [Chem.MolFromSmiles(smi) for smi in ("C1NC1OCCC", "C1NC1NCCC")]
         groups,unmatched = RGroupDecompose(scaffolds, mols,
                                            asSmiles=True, asRows=True)
-        print("test_aligned_Cores")
-        print("groups:", groups)
+        #print("test_aligned_Cores")
+        #print("groups:", groups)
         self.assertEqual(groups,
                          [{'Core': 'C1NC1OC[*:1]',
                            'R1': '[H]C([H])([H])C([H])([H])[*:1].[H][*:1].[H][*:1]'},
@@ -248,10 +248,10 @@ C1CCO[C@@](S)(P)1
     def test_aligned_cores2(self):
         scaffolds = [Chem.MolFromSmarts(x) for x in ("C1NCC1", "C1SCC1")]
         mols = [Chem.MolFromSmiles(smi) for smi in ("C1N(P)CC1", "C1S(P)CC1")]
-        print("test_aligned_Cores2")
+        #print("test_aligned_Cores2")
         groups,unmatched = RGroupDecompose(scaffolds, mols,
                                            asSmiles=True, asRows=True)
-        print("groups: ", groups)
+        #print("groups: ", groups)
         self.assertEqual(groups,
                          [{'Core': 'C1CN([*:1])C1',
                            'R1': '[H]P([H])[*:1]'},
