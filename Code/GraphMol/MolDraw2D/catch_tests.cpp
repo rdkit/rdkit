@@ -242,3 +242,21 @@ TEST_CASE("dative bonds", "[drawing, organometallics]") {
           std::string::npos);
   }
 }
+
+TEST_CASE("zero-order bonds", "[drawing, organometallics]") {
+  SECTION("basics") {
+    auto m1 = "N-[Pt]"_smiles;
+    REQUIRE(m1);
+    m1->getBondWithIdx(0)->setBondType(Bond::ZERO);
+    MolDraw2DSVG drawer(200, 200);
+    MolDraw2DUtils::prepareMolForDrawing(*m1);
+    drawer.drawMolecule(*m1);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("testZeroOrderBonds_1.svg");
+    outs << text;
+    outs.flush();
+
+    CHECK(text.find("stroke-dasharray:2,2") != std::string::npos);
+  }
+}
