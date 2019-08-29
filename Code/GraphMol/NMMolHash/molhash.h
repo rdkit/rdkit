@@ -8,6 +8,7 @@
 /* BSD license, which is included in the file   */
 /* license.txt.                                 */
 /*==============================================*/
+#include <RDGeneral/export.h>
 #ifndef NMS_MOLHASH_H
 #define NMS_MOLHASH_H
 
@@ -17,7 +18,7 @@
 namespace RDKit {
   class RWMol;
 }
-struct HashFunction {
+struct RDKIT_NMMOLHASHLIB_EXPORT HashFunction {
   static const unsigned int AnonymousGraph	= 1;
   static const unsigned int ElementGraph	= 2;
   static const unsigned int CanonicalSmiles	= 3;
@@ -37,9 +38,9 @@ struct HashFunction {
   static const unsigned int ArthorSubstructureOrder = 17;
 };
 
-std::string MolHash(RDKit::RWMol *mol, unsigned int func);
+RDKIT_NMMOLHASHLIB_EXPORT std::string MolHash(RDKit::RWMol *mol, unsigned int func);
 
-struct StripType {
+struct RDKIT_NMMOLHASHLIB_EXPORT StripType {
   static const unsigned int AtomStereo = 1;
   static const unsigned int BondStereo = 2;
   static const unsigned int Isotope = 4;
@@ -47,7 +48,7 @@ struct StripType {
   static const unsigned int Hydrogen = 16;
 };
 
-void Strip(RDKit::RWMol *mol, unsigned int striptype);
-void SplitMolecule(RDKit::RWMol *mol, std::vector<RDKit::RWMol *> &molv);
+RDKIT_NMMOLHASHLIB_EXPORT void Strip(RDKit::RWMol *mol, unsigned int striptype);
+RDKIT_NMMOLHASHLIB_EXPORT void SplitMolecule(RDKit::RWMol *mol, std::vector<RDKit::RWMol *> &molv);
 
 #endif // NMS_MOLHASH_H
