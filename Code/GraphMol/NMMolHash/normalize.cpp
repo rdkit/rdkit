@@ -9,47 +9,52 @@
 /* license.txt.                                 */
 /*==============================================*/
 
-#include "toolkit.h"
+
+#include <GraphMol/RDKitBase.h>
+#include <GraphMol/RDKitQueries.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 #include "molhash.h"
 
-void Strip(NMS_pMOL mol, unsigned int striptype)
+using namespace RDKit;
+
+void Strip(RWMol * mol, unsigned int striptype)
 {
   // The order of these operations is significant to some degree
   // - Hydrogens should be at the end as that is the common
   //   use case
 
   if (striptype & StripType::AtomStereo) {
-    NMS_FOR_ATOM_IN_MOL(atom, mol) {
-      NMS_pATOM aptr = NMS_ITER_MOL_ATOM(atom, mol);
-      if (NMS_ATOM_HAS_STEREO(aptr))
-        NMS_ATOM_REMOVE_STEREO(aptr);
+    for(auto aptr : mol->atoms()){
+      aptr->setChiralTag(RDKit::Atom::CHI_UNSPECIFIED);
     }
   }
   if (striptype & StripType::BondStereo) {
-    NMS_FOR_BOND_IN_MOL(bond, mol) {
-      NMS_pBOND bptr = NMS_ITER_MOL_BOND(bond, mol);
-      if (NMS_BOND_HAS_STEREO(bptr))
-        NMS_BOND_REMOVE_STEREO(bptr);
+    for(auto bptr : mol->bonds() ) {
+      if (bptr->getStereo() > RDKit::Bond::STEREOANY)
+        bptr->setStereo(RDKit::Bond::STEREOANY);
     }
   }
   if (striptype & StripType::Isotope) {
-    NMS_FOR_ATOM_IN_MOL(atom, mol) {
-      NMS_pATOM aptr = NMS_ITER_MOL_ATOM(atom, mol);
-      NMS_ATOM_SET_ISOTOPE(aptr, 0);
+    for(auto aptr : mol->atoms()){
+      aptr->setIsotope(0);
     }
   }
   if (striptype & StripType::AtomMap) {
-    NMS_FOR_ATOM_IN_MOL(atom, mol) {
-      NMS_pATOM aptr = NMS_ITER_MOL_ATOM(atom, mol);
-      NMS_ATOM_SET_MAPIDX(aptr, 0);
+    for(auto aptr : mol->atoms()){
+      aptr->setAtomMapNum(0);
     }
   }
   if (striptype & StripType::Hydrogen) {
-    NMS_MOL_SUPPRESS_HYDROGENS(mol);
+    MolOps::removeHs(*mol);
   }
 }
 
-void SplitMolecule(NMS_pMOL mol, std::vector<NMS_MOL*> &molv)
+void SplitMolecule(RWMol *mol, std::vector<RWMol *> &molv)
 {
-  NMS_MOL_SPLIT_INTO_FRAGMENTS(mol, molv);
+  RDKit::MOL_SPTR_VECT mfrags = RDKit::MolOps::getMolFrags(*mol);
+  RDKit::MOL_SPTR_VECT::iterator vit;
+  for(vit = mfrags.begin(); vit != mfrags.end(); ++vit) {
+    RDKit::ROMol* wrappedmol = (*vit).get(); // reach inside the shared pointer...
+    molv.push_back(new RWMol(*wrappedmol)); // ...and make a copy
+  }
 }
