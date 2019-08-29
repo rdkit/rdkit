@@ -65,29 +65,29 @@ Start by downloading and installing the postgresql dump from the ChEMBL website 
 
 Connect to the database, install the cartridge, and create the schema that we'll use:
 
-    chembl_23=# create extension if not exists rdkit;
-    chembl_23=# create schema rdk;
+    chembl_25=# create extension if not exists rdkit;
+    chembl_25=# create schema rdk;
 
 Create the molecules and build the substructure search index:
 
-    chembl_23=# select * into rdk.mols from (select molregno,mol_from_ctab(molfile::cstring) m  from compound_structures) tmp where m is not null;
+    chembl_25=# select * into rdk.mols from (select molregno,mol_from_ctab(molfile::cstring) m  from compound_structures) tmp where m is not null;
     SELECT 1727081
-    chembl_23=# create index molidx on rdk.mols using gist(m);
+    chembl_25=# create index molidx on rdk.mols using gist(m);
     CREATE INDEX
-    chembl_23=# alter table rdk.mols add primary key (molregno);
+    chembl_25=# alter table rdk.mols add primary key (molregno);
     ALTER TABLE
 
 Create some fingerprints and build the similarity search index:
 
-    chembl_23=# select molregno,torsionbv_fp(m) as torsionbv,morganbv_fp(m) as mfp2,featmorganbv_fp(m) as ffp2 into rdk.fps from rdk.mols;
+    chembl_25=# select molregno,torsionbv_fp(m) as torsionbv,morganbv_fp(m) as mfp2,featmorganbv_fp(m) as ffp2 into rdk.fps from rdk.mols;
     SELECT 1727081
-    chembl_23=# create index fps_ttbv_idx on rdk.fps using gist(torsionbv);
+    chembl_25=# create index fps_ttbv_idx on rdk.fps using gist(torsionbv);
     CREATE INDEX
-    chembl_23=# create index fps_mfp2_idx on rdk.fps using gist(mfp2);
+    chembl_25=# create index fps_mfp2_idx on rdk.fps using gist(mfp2);
     CREATE INDEX
-    chembl_23=# create index fps_ffp2_idx on rdk.fps using gist(ffp2);
+    chembl_25=# create index fps_ffp2_idx on rdk.fps using gist(ffp2);
     CREATE INDEX
-    chembl_23=# alter table rdk.fps add primary key (molregno);
+    chembl_25=# alter table rdk.fps add primary key (molregno);
     ALTER TABLE
 
 Here is a group of the commands used here (and below) in one block so that you can just paste it in at the psql prompt:
@@ -103,7 +103,7 @@ Here is a group of the commands used here (and below) in one block so that you c
     create index fps_ffp2_idx on rdk.fps using gist(ffp2);
     alter table rdk.fps add primary key (molregno);
     create or replace function get_mfp2_neighbors(smiles text)
-    returns table(molregno integer, m mol, similarity double precision) as
+    returns table(molregno bigint, m mol, similarity double precision) as
     $$
     select molregno,m,tanimoto_sml(morganbv_fp(mol_from_smiles($1::cstring)),mfp2) as similarity
     from rdk.fps join rdk.mols using (molregno)
@@ -115,52 +115,52 @@ Here is a group of the commands used here (and below) in one block so that you c
 
 Example query molecules taken from the [eMolecules home page](http://www.emolecules.com/):
 
-    chembl_23=# select count(*) from rdk.mols where m@>'c1cccc2c1nncc2' ;
+    chembl_25=# select count(*) from rdk.mols where m@>'c1cccc2c1nncc2' ;
      count
     -------
-       447
+       461
     (1 row)
 
     Time: 107.602 ms
-    chembl_23=# select count(*) from rdk.mols where m@>'c1ccnc2c1nccn2' ;
+    chembl_25=# select count(*) from rdk.mols where m@>'c1ccnc2c1nccn2' ;
      count
     -------
-      1013
+      1124
     (1 row)
 
     Time: 216.222 ms
-    chembl_23=# select count(*) from rdk.mols where m@>'c1cncc2n1ccn2' ;
+    chembl_25=# select count(*) from rdk.mols where m@>'c1cncc2n1ccn2' ;
      count
     -------
-      1775
+      2233
     (1 row)
 
     Time: 88.266 ms
-    chembl_23=# select count(*) from rdk.mols where m@>'Nc1ncnc(N)n1' ;
+    chembl_25=# select count(*) from rdk.mols where m@>'Nc1ncnc(N)n1' ;
      count
     -------
-      5842
+      7095
     (1 row)
 
     Time: 327.855 ms
-    chembl_23=# select count(*) from rdk.mols where m@>'c1scnn1' ;
+    chembl_25=# select count(*) from rdk.mols where m@>'c1scnn1' ;
      count
     -------
-     15962
+     16526
     (1 row)
 
     Time: 568.675 ms
-    chembl_23=# select count(*) from rdk.mols where m@>'c1cccc2c1ncs2' ;
+    chembl_25=# select count(*) from rdk.mols where m@>'c1cccc2c1ncs2' ;
      count
     -------
-     18986
+     20745
     (1 row)
 
     Time: 998.104 ms
-    chembl_23=# select count(*) from rdk.mols where m@>'c1cccc2c1CNCCN2' ;
+    chembl_25=# select count(*) from rdk.mols where m@>'c1cccc2c1CNCCN2' ;
      count
     -------
-      1613
+      1788
     (1 row)
 
     Time: 1922.273 ms
@@ -171,7 +171,7 @@ Given we're searching through 1.7 million compounds these search times aren't in
 
 One easy way to speed things up, particularly for queries that return a large number of results, is to only retrieve a limited number of results:
 
-    chembl_23=# select * from rdk.mols where m@>'c1cccc2c1CNCCN2' limit 100;
+    chembl_25=# select * from rdk.mols where m@>'c1cccc2c1CNCCN2' limit 100;
      molregno |                                                                                             m                                                             
 
     ----------+-----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -196,7 +196,7 @@ One easy way to speed things up, particularly for queries that return a large nu
 
 Oxadiazole or thiadiazole:
 
-    chembl_23=# select * from rdk.mols where m@>'c1[o,s]ncn1'::qmol limit 500;
+    chembl_25=# select * from rdk.mols where m@>'c1[o,s]ncn1'::qmol limit 500;
      molregno |                                                      m                                                       
     ----------+--------------------------------------------------------------------------------------------------------------
       1370170 | Fc1cccc(-c2nc(NCC3COc4ccccc4O3)no2)c1F
@@ -220,7 +220,7 @@ This is slower than the pure SMILES query, this is generally true of SMARTS-base
 
 Note that by default stereochemistry is not taken into account when doing substructure queries:
 
-    chembl_23=# select * from rdk.mols where m@>'NC(=O)[C@@H]1CCCN1C=O' limit 10;
+    chembl_25=# select * from rdk.mols where m@>'NC(=O)[C@@H]1CCCN1C=O' limit 10;
      molregno |                                                                                                                                                           
                    m                                                                                                                                                      
 
@@ -252,10 +252,10 @@ Note that by default stereochemistry is not taken into account when doing substr
 
 This can be changed using the rdkit.do\_chiral\_sss configuration variable:
 
-    chembl_23=# set rdkit.do_chiral_sss=true;
+    chembl_25=# set rdkit.do_chiral_sss=true;
     SET
     Time: 0.241 ms
-    chembl_23=# select * from rdk.mols where m@>'NC(=O)[C@@H]1CCCN1C=O' limit 10;
+    chembl_25=# select * from rdk.mols where m@>'NC(=O)[C@@H]1CCCN1C=O' limit 10;
      molregno |                                                                                                                                                              
                 m                                                                                                                                                            
 
@@ -289,7 +289,7 @@ having to construct complex SMARTS queries. The cartridge function `mol_adjust_q
 can be used to do just this. Here is an example of the default behavior, using a  
 query for 2,6 di-substituted pyridines:
 
-    chembl_23=# select molregno,m from rdk.mols where m@>mol_adjust_query_properties('*c1cccc(NC(=O)*)n1') limit 10;
+    chembl_25=# select molregno,m from rdk.mols where m@>mol_adjust_query_properties('*c1cccc(NC(=O)*)n1') limit 10;
      molregno |                                             m                                             
     ----------+-------------------------------------------------------------------------------------------
       1993749 | Cn1c(Nc2c(Cl)ccc(CNC(=O)C(C)(C)C)c2Cl)nc2cc(C(=O)Nc3cccc(C(F)(F)F)n3)c(N3CCC(F)(F)C3)cc21
@@ -315,8 +315,8 @@ By default `mol_adjust_query_properties()` makes the following changes to the mo
 We can control the behavior by providing an additional JSON argument. Here's an example
 where we disable the additional degree queries:
 
-    chembl_23=# select molregno,m from rdk.mols where m@>mol_adjust_query_properties('*c1cccc(NC(=O)*)n1',
-    chembl_23(# '{"adjustDegree":false}') limit 10;
+    chembl_25=# select molregno,m from rdk.mols where m@>mol_adjust_query_properties('*c1cccc(NC(=O)*)n1',
+    chembl_25(# '{"adjustDegree":false}') limit 10;
      molregno |                                             m                                             
     ----------+-------------------------------------------------------------------------------------------
       1993749 | Cn1c(Nc2c(Cl)ccc(CNC(=O)C(C)(C)C)c2Cl)nc2cc(C(=O)Nc3cccc(C(F)(F)F)n3)c(N3CCC(F)(F)C3)cc21
@@ -336,8 +336,8 @@ where we disable the additional degree queries:
 or where we don't add the additional degree queries to ring atoms or dummies (they are only
 added to chain atoms):
 
-    chembl_23=# select molregno,m from rdk.mols where m@>mol_adjust_query_properties('*c1cccc(NC(=O)*)n1',
-    chembl_23(# '{"adjustDegree":true,"adjustDegreeFlags":"IGNORERINGS|IGNOREDUMMIES"}') limit 10;
+    chembl_25=# select molregno,m from rdk.mols where m@>mol_adjust_query_properties('*c1cccc(NC(=O)*)n1',
+    chembl_25(# '{"adjustDegree":true,"adjustDegreeFlags":"IGNORERINGS|IGNOREDUMMIES"}') limit 10;
      molregno |                                             m                                             
     ----------+-------------------------------------------------------------------------------------------
       1993749 | Cn1c(Nc2c(Cl)ccc(CNC(=O)C(C)(C)C)c2Cl)nc2cc(C(=O)Nc3cccc(C(F)(F)F)n3)c(N3CCC(F)(F)C3)cc21
@@ -381,7 +381,7 @@ are constructed by combining operations from the list below with the `|` charact
 
 Basic similarity searching:
 
-    chembl_23=# select count(*) from rdk.fps where mfp2%morganbv_fp('Cc1ccc2nc(-c3ccc(NC(C4N(C(c5cccs5)=O)CCC4)=O)cc3)sc2c1');
+    chembl_25=# select count(*) from rdk.fps where mfp2%morganbv_fp('Cc1ccc2nc(-c3ccc(NC(C4N(C(c5cccs5)=O)CCC4)=O)cc3)sc2c1');
      count
     -------
         67
@@ -391,8 +391,8 @@ Basic similarity searching:
 
 Usually we'd like to find a sorted listed of neighbors along with the accompanying SMILES. This SQL function makes that pattern easy:
 
-    chembl_23=# create or replace function get_mfp2_neighbors(smiles text)
-        returns table(molregno integer, m mol, similarity double precision) as
+    chembl_25=# create or replace function get_mfp2_neighbors(smiles text)
+        returns table(molregno bigint, m mol, similarity double precision) as
       $$
       select molregno,m,tanimoto_sml(morganbv_fp(mol_from_smiles($1::cstring)),mfp2) as similarity
       from rdk.fps join rdk.mols using (molregno)
@@ -401,7 +401,7 @@ Usually we'd like to find a sorted listed of neighbors along with the accompanyi
       $$ language sql stable ;
     CREATE FUNCTION
     Time: 0.856 ms
-    chembl_23=# select * from get_mfp2_neighbors('Cc1ccc2nc(-c3ccc(NC(C4N(C(c5cccs5)=O)CCC4)=O)cc3)sc2c1') limit 10;
+    chembl_25=# select * from get_mfp2_neighbors('Cc1ccc2nc(-c3ccc(NC(C4N(C(c5cccs5)=O)CCC4)=O)cc3)sc2c1') limit 10;
      molregno |                             m                              |    similarity     
     ----------+------------------------------------------------------------+-------------------
        471319 | Cc1ccc2nc(-c3ccc(NC(=O)C4CCN(S(=O)(=O)c5cccs5)C4)cc3)sc2c1 | 0.638888888888889
@@ -417,7 +417,7 @@ Usually we'd like to find a sorted listed of neighbors along with the accompanyi
     (10 rows)
 
     Time: 28.909 ms
-    chembl_23=# select * from get_mfp2_neighbors('Cc1ccc2nc(N(C)CC(=O)O)sc2c1') limit 10;
+    chembl_25=# select * from get_mfp2_neighbors('Cc1ccc2nc(N(C)CC(=O)O)sc2c1') limit 10;
      molregno |                           m                           |    similarity     
     ----------+-------------------------------------------------------+-------------------
       1044892 | Cc1ccc2nc(N(CCN(C)C)C(=O)c3cc(Cl)sc3Cl)sc2c1          | 0.518518518518518
@@ -438,40 +438,40 @@ Usually we'd like to find a sorted listed of neighbors along with the accompanyi
 
 By default, the minimum similarity returned with a similarity search is 0.5. This can be adjusted with the rdkit.tanimoto\_threshold (and rdkit.dice\_threshold) configuration variables:
 
-    chembl_23=# select count(*) from get_mfp2_neighbors('Cc1ccc2nc(N(C)CC(=O)O)sc2c1');
+    chembl_25=# select count(*) from get_mfp2_neighbors('Cc1ccc2nc(N(C)CC(=O)O)sc2c1');
      count
     -------
-        20
+        21
     (1 row)
 
     Time: 181.438 ms
-    chembl_23=# set rdkit.tanimoto_threshold=0.7;
+    chembl_25=# set rdkit.tanimoto_threshold=0.7;
     SET
     Time: 0.047 ms
-    chembl_23=# select count(*) from get_mfp2_neighbors('Cc1ccc2nc(N(C)CC(=O)O)sc2c1');
+    chembl_25=# select count(*) from get_mfp2_neighbors('Cc1ccc2nc(N(C)CC(=O)O)sc2c1');
      count
     -------
          0
     (1 row)
 
     Time: 161.228 ms
-    chembl_23=# set rdkit.tanimoto_threshold=0.6;
+    chembl_25=# set rdkit.tanimoto_threshold=0.6;
     SET
     Time: 0.045 ms
-    chembl_23=# select count(*) from get_mfp2_neighbors('Cc1ccc2nc(N(C)CC(=O)O)sc2c1');
+    chembl_25=# select count(*) from get_mfp2_neighbors('Cc1ccc2nc(N(C)CC(=O)O)sc2c1');
      count
     -------
-         1
+         2
     (1 row)
 
     Time: 184.275 ms
-    chembl_23=# set rdkit.tanimoto_threshold=0.5;
+    chembl_25=# set rdkit.tanimoto_threshold=0.5;
     SET
     Time: 0.055 ms
-    chembl_23=# select count(*) from get_mfp2_neighbors('Cc1ccc2nc(N(C)CC(=O)O)sc2c1');
+    chembl_25=# select count(*) from get_mfp2_neighbors('Cc1ccc2nc(N(C)CC(=O)O)sc2c1');
      count
     -------
-        20
+        21
     (1 row)
 
     Time: 181.100 ms
@@ -480,14 +480,14 @@ By default, the minimum similarity returned with a similarity search is 0.5. Thi
 
 The most straightforward use of the MCS code is to find the maximum common substructure of a group of molecules:
 
-    chembl_23=# select fmcs(m::text) from rdk.mols join compound_records using (molregno) where doc_id=4;
+    chembl_25=# select fmcs(m::text) from rdk.mols join compound_records using (molregno) where doc_id=4;
                                       fmcs                                  
     ------------------------------------------------------------------------
      [#6](-[#6]-[#7]-[#6]-[#6](-,:[#6])-,:[#6])-,:[#6]-,:[#6]-,:[#6]-,:[#6]
     (1 row)
 
     Time: 31.041 ms
-    chembl_23=# select fmcs(m::text) from rdk.mols join compound_records using (molregno) where doc_id=5;
+    chembl_25=# select fmcs(m::text) from rdk.mols join compound_records using (molregno) where doc_id=5;
                                                                        fmcs                                                                   
     ------------------------------------------------------------------------------------------------------------------------------------------
      [#6]-[#6](=[#8])-[#7]-[#6](-[#6](=[#8])-[#7]1-[#6]-[#6]-[#6]-[#6]-1-[#6](=[#8])-[#7]-[#6](-[#6](=[#8])-[#8])-[#6]-[#6])-[#6](-[#6])-[#6]
@@ -497,7 +497,7 @@ The most straightforward use of the MCS code is to find the maximum common subst
 
 The same thing can be done with a SMILES column:
 
-    chembl_23=# select fmcs(canonical_smiles) from compound_structures join compound_records using (molregno) where doc_id=4;
+    chembl_25=# select fmcs(canonical_smiles) from compound_structures join compound_records using (molregno) where doc_id=4;
                                       fmcs                                  
     ------------------------------------------------------------------------
      [#6](-[#7]-[#6]-[#6]-,:[#6]-,:[#6]-,:[#6]-,:[#6])-[#6](-,:[#6])-,:[#6]
@@ -507,9 +507,9 @@ The same thing can be done with a SMILES column:
 
 It's also possible to adjust some of the parameters to the FMCS algorithm, though this is somewhat more painful as of this writing (the 2017\_03 release cycle). Here are a couple of examples:
 
-    chembl_23=# select fmcs_smiles(str,'{"Threshold":0.8}') from
-    chembl_23-#    (select string_agg(m::text,' ') as str from rdk.mols
-    chembl_23(#    join compound_records using (molregno) where doc_id=4) as str ;
+    chembl_25=# select fmcs_smiles(str,'{"Threshold":0.8}') from
+    chembl_25-#    (select string_agg(m::text,' ') as str from rdk.mols
+    chembl_25(#    join compound_records using (molregno) where doc_id=4) as str ;
 
                                                                                fmcs_smiles                                                                            
     ------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -517,10 +517,10 @@ It's also possible to adjust some of the parameters to the FMCS algorithm, thoug
     (1 row)
 
     Time: 9673.949 ms
-    chembl_23=#
-    chembl_23=# select fmcs_smiles(str,'{"AtomCompare":"Any"}') from
-    chembl_23-#    (select string_agg(m::text,' ') as str from rdk.mols
-    chembl_23(#    join compound_records using (molregno) where doc_id=4) as str ;
+    chembl_25=#
+    chembl_25=# select fmcs_smiles(str,'{"AtomCompare":"Any"}') from
+    chembl_25-#    (select string_agg(m::text,' ') as str from rdk.mols
+    chembl_25(#    join compound_records using (molregno) where doc_id=4) as str ;
                                                                                   fmcs_smiles                                                                               
     ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
      [#6]-,:[#6,#7]-[#8,#6]-[#6,#7](-[#6,#8]-[#7,#6]-,:[#6,#7]-,:[#6,#7]-,:[#7,#6]-,:[#6])-[#6,#7]-[#6]-[#6](-[#8,#6]-[#6])-[#6,#7]-[#7,#6]-[#6]-,:[#6,#8]-,:[#7,#6]-,:[#6]
@@ -530,9 +530,9 @@ It's also possible to adjust some of the parameters to the FMCS algorithm, thoug
 
 *Note* The combination of `"AtomCompare":"Any"` and a value of `"Threshold"` that is less than 1.0 does a quite generic search and can results in very long search times. Using `"Timeout"` with this combination is recommended:
 
-    chembl_23=# select fmcs_smiles(str,'{"AtomCompare":"Any","CompleteRingsOnly":true,"Threshold":0.8,"Timeout":60}') from
-    chembl_23-#    (select string_agg(m::text,' ') as str from rdk.mols
-    chembl_23(#    join compound_records using (molregno) where doc_id=3) as str ;
+    chembl_25=# select fmcs_smiles(str,'{"AtomCompare":"Any","CompleteRingsOnly":true,"Threshold":0.8,"Timeout":60}') from
+    chembl_25-#    (select string_agg(m::text,' ') as str from rdk.mols
+    chembl_25(#    join compound_records using (molregno) where doc_id=3) as str ;
 
     WARNING:  findMCS timed out, result is not maximal
                                                                                               fmcs_smiles                                                                    
@@ -724,7 +724,7 @@ The recommended adapter for connecting to postgresql is pyscopg2 (<https://pypi.
 Here's an example of connecting to our local copy of ChEMBL and doing a basic substructure search:
 
     >>> import psycopg2
-    >>> conn = psycopg2.connect(database='chembl_16')
+    >>> conn = psycopg2.connect(database='chembl_25')
     >>> curs = conn.cursor()
     >>> curs.execute('select * from rdk.mols where m@>%s',('c1cccc2c1nncc2',))
     >>> curs.fetchone()
@@ -735,12 +735,12 @@ That returns a SMILES for each molecule. If you plan to do more work with the mo
     >>> curs.execute('select molregno,mol_send(m) from rdk.mols where m@>%s',('c1cccc2c1nncc2',))
     >>> row = curs.fetchone()
     >>> row
-    (9830, <read-only buffer for 0x...>)
+    (9830, <memory at 0x...>)
 
 These pickles can then be converted into molecules:
 
     >>> from rdkit import Chem
-    >>> m = Chem.Mol(str(row[1]))
+    >>> m = Chem.Mol(row[1].tobytes())
     >>> Chem.MolToSmiles(m,True)
     'CC(C)Sc1ccc(CC2CCN(C3CCN(C(=O)c4cnnc5ccccc54)CC3)CC2)cc1'
 
