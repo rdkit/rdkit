@@ -107,7 +107,6 @@
 #define NMS_BOND_GET_ENDIDX(B)   (B)->getEndAtomIdx()
 #define NMS_BOND_GET_IDX(B)      (B)->getIdx()
 #define NMS_BOND_GET_NBR(B,A)    (B)->getOtherAtom(A)
-#define NMS_BOND_GET_ORDER(B)    NMRDKitBondGetOrder(B)
 #define NMS_BOND_IS_AROMATIC(B)  \
 	((B)->getBondType() == RDKit::Bond::AROMATIC)
 #define NMS_BOND_IS_DOUBLE(B) \
@@ -151,7 +150,6 @@ RDKit::Bond *NMRDKitMolNewBond(RDKit::RWMol *mol,
                                RDKit::Atom *src, RDKit::Atom *dst,
                                unsigned int order, bool arom);
 unsigned int NMRDKitAtomGetExplicitValence(RDKit::Atom *atm);
-unsigned int NMRDKitBondGetOrder(const RDKit::Bond *bnd);
 void NMRDKitAtomSetImplicitHCount(RDKit::Atom *atm, unsigned int hcount);
 void NMRDKitBondSetOrder(RDKit::Bond *bnd, unsigned int order);
 void NMRDKitSanitizeHydrogens(RDKit::RWMol *mol);

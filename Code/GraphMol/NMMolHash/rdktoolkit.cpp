@@ -150,28 +150,6 @@ void NMRDKitBondSetOrder(RDKit::Bond *bnd, unsigned int order)
 }
 
 
-unsigned int NMRDKitBondGetOrder(const RDKit::Bond *bnd)
-{
-  switch (bnd->getBondType()) {
-  case RDKit::Bond::AROMATIC:
-  case RDKit::Bond::SINGLE:
-    return 1;
-  case RDKit::Bond::DOUBLE:
-    return 2;
-  case RDKit::Bond::TRIPLE:
-    return 3;
-  case RDKit::Bond::QUADRUPLE:
-    return 4;
-  case RDKit::Bond::QUINTUPLE:
-    return 5;
-  case RDKit::Bond::HEXTUPLE:
-    return 6;
-  default:
-    return 0;
-  }
-}
-
-
 std::string NMRDKitMolGetTitle(RDKit::RWMol *mol)
 {
   static std::string key("_Name");

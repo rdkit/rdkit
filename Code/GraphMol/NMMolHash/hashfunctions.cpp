@@ -20,17 +20,42 @@
 #include "molhash.h"
 #include "mf.h"
 
+using namespace RDKit;
 
-static unsigned int NMDetermineComponents(NMS_pMOL mol, unsigned int *parts,
+namespace {
+  unsigned int NMRDKitBondGetOrder(const RDKit::Bond *bnd)
+{
+  switch (bnd->getBondType()) {
+  case RDKit::Bond::AROMATIC:
+  case RDKit::Bond::SINGLE:
+    return 1;
+  case RDKit::Bond::DOUBLE:
+    return 2;
+  case RDKit::Bond::TRIPLE:
+    return 3;
+  case RDKit::Bond::QUADRUPLE:
+    return 4;
+  case RDKit::Bond::QUINTUPLE:
+    return 5;
+  case RDKit::Bond::HEXTUPLE:
+    return 6;
+  default:
+    return 0;
+  }
+}
+
+}
+
+
+static unsigned int NMDetermineComponents(RWMol * mol, unsigned int *parts,
   unsigned int acount)
 {
   memset(parts, 0, acount * sizeof(unsigned int));
-  std::vector<NMS_pATOM> todo;
+  std::vector<Atom *> todo;
 
   unsigned int result = 0;
-  NMS_FOR_ATOM_IN_MOL(atom, mol) {
-    NMS_pATOM aptr = NMS_ITER_MOL_ATOM(atom, mol);
-    unsigned int idx = NMS_ATOM_GET_IDX(aptr);
+  for( auto aptr : mol->atoms() ){
+    unsigned int idx = aptr->getIdx();
     if (parts[idx] == 0) {
       parts[idx] = ++result;
       todo.push_back(aptr);
@@ -38,9 +63,10 @@ static unsigned int NMDetermineComponents(NMS_pMOL mol, unsigned int *parts,
       while (!todo.empty()) {
         aptr = todo.back();
         todo.pop_back();
-        NMS_FOR_NBR_OF_ATOM(nbor, aptr) {
-          NMS_pATOM nptr = NMS_ITER_ATOM_NBR(nbor, aptr);
-          idx = NMS_ATOM_GET_IDX(nptr);
+      for (auto nbri :
+           boost::make_iterator_range(mol->getAtomNeighbors(aptr))) {
+        auto nptr = (*mol)[nbri];
+        idx = nptr->getIdx();
           if (parts[idx] == 0) {
             parts[idx] = result;
             todo.push_back(nptr);
@@ -53,7 +79,7 @@ static unsigned int NMDetermineComponents(NMS_pMOL mol, unsigned int *parts,
 }
 
 
-static std::string NMMolecularFormula(NMS_pMOL mol,
+static std::string NMMolecularFormula(RWMol * mol,
                                       const unsigned int *parts,
                                       unsigned int part)
 {
@@ -62,16 +88,15 @@ static std::string NMMolecularFormula(NMS_pMOL mol,
 
   memset(hist, 0, sizeof(hist));
 
-  NMS_FOR_ATOM_IN_MOL(atom, mol) {
-    NMS_pATOM aptr = NMS_ITER_MOL_ATOM(atom, mol);
-    unsigned int idx = NMS_ATOM_GET_IDX(aptr);
+  for( auto aptr : mol->atoms() ){
+    unsigned int idx = aptr->getIdx();
     if (part == 0 || parts[idx] == part) {
-      unsigned int elem = NMS_ATOM_GET_ATOMICNUM(aptr);
+      unsigned int elem = aptr->getAtomicNum();
       if (elem < 256)
         hist[elem]++;
       else hist[0]++;
-      hist[1] += NMS_ATOM_GET_IMPLICITHCOUNT(aptr);
-      charge += NMS_ATOM_GET_FORMALCHARGE(aptr);
+      hist[1] += aptr->getTotalNumHs(false);
+      charge += aptr->getFormalCharge();
     }
   }
 
@@ -108,12 +133,12 @@ static std::string NMMolecularFormula(NMS_pMOL mol,
 }
 
 
-static std::string NMMolecularFormula(NMS_pMOL mol, bool sep=false)
+static std::string NMMolecularFormula(RWMol * mol, bool sep=false)
 {
   if (!sep)
     return NMMolecularFormula(mol, 0, 0);
 
-  unsigned int acount = NMS_MOL_GET_MAXATOMIDX(mol);
+  unsigned int acount = mol->getNumAtoms();
   if (acount == 0)
     return "";
 
@@ -140,30 +165,30 @@ static std::string NMMolecularFormula(NMS_pMOL mol, bool sep=false)
   return result;
 }
 
-static void NormalizeHCount(NMS_pATOM aptr)
+static void NormalizeHCount(Atom * aptr)
 {
   unsigned int hcount;
 
-  switch (NMS_ATOM_GET_ATOMICNUM(aptr)) {
+  switch (aptr->getAtomicNum()) {
   case 9:  // Fluorine
   case 17: // Chlorine
   case 35: // Bromine
   case 53: // Iodine
-    hcount = NMS_ATOM_GET_EXPLICITDEGREE(aptr);
+    hcount = aptr->getDegree();
     hcount = hcount < 1 ? 1 - hcount : 0;
     break;
   case 8:  // Oxygen
   case 16: // Sulfur
-    hcount = NMS_ATOM_GET_EXPLICITDEGREE(aptr);
+    hcount = aptr->getDegree();
     hcount = hcount < 2 ? 2 - hcount : 0;
     break;
   case 5:  // Boron
-    hcount = NMS_ATOM_GET_EXPLICITDEGREE(aptr);
+    hcount = aptr->getDegree();
     hcount = hcount < 3 ? 3 - hcount : 0;
     break;
   case 7:  // Nitogen
   case 15: // Phosphorus
-    hcount = NMS_ATOM_GET_EXPLICITDEGREE(aptr);
+    hcount = aptr->getDegree();
     if (hcount < 3)
       hcount = 3 - hcount;
     else if (hcount == 4)
@@ -172,63 +197,59 @@ static void NormalizeHCount(NMS_pATOM aptr)
       hcount = 0;
     break;
   case 6:  // Carbon
-    hcount = NMS_ATOM_GET_EXPLICITDEGREE(aptr);
+    hcount = aptr->getDegree();
     hcount = hcount < 4 ? 4 - hcount : 0;
     break;
   default:
     hcount = 0;
   }
-  NMS_ATOM_SET_IMPLICITHCOUNT(aptr, hcount);
+  aptr->setNoImplicit(true);aptr->setNumExplicitHs(hcount);
 }
 
-static std::string AnonymousGraph(NMS_pMOL mol, bool elem)
+static std::string AnonymousGraph(RWMol * mol, bool elem)
 {
   std::string result;
   int charge = 0;
 
-  NMS_FOR_ATOM_IN_MOL(atom, mol) {
-    NMS_pATOM aptr = NMS_ITER_MOL_ATOM(atom, mol);
-    charge += NMS_ATOM_GET_FORMALCHARGE(aptr);
-    NMS_ATOM_SET_IS_AROMATIC(aptr, false);
-    NMS_ATOM_SET_FORMALCHARGE(aptr, 0);
+  for( auto aptr : mol->atoms() ){
+    charge += aptr->getFormalCharge();
+    aptr->setIsAromatic(false);
+    aptr->setFormalCharge(0);
     if (!elem) {
-      NMS_ATOM_SET_IMPLICITHCOUNT(aptr, 0);
-      NMS_ATOM_SET_ATOMICNUM(aptr, 0);
+      aptr->setNumExplicitHs(0);
+      aptr->setNoImplicit(true);
+      aptr->setAtomicNum(0);
     } else {
       NormalizeHCount(aptr);
     }
   }
 
-  NMS_FOR_BOND_IN_MOL(bond, mol) {
-    NMS_pBOND bptr = NMS_ITER_MOL_BOND(bond, mol);
-    NMS_BOND_SET_ORDER(bptr, 1);
+  for( auto bptr : mol->bonds() ){
+    bptr->setBondType(Bond::SINGLE);
   }
-
-  NMS_MOL_ASSIGN_RADICALS(mol);
-  NMS_GENERATE_SMILES(mol, result);
+  MolOps::assignRadicals(*mol);
+  result = MolToSmiles(*mol);
   return result;
 }
 
-static std::string MesomerHash(NMS_pMOL mol, bool netq)
+static std::string MesomerHash(RWMol * mol, bool netq)
 {
   std::string result;
   char buffer[32];
   int charge = 0;
 
-  NMS_FOR_ATOM_IN_MOL(atom, mol) {
-    NMS_pATOM aptr = NMS_ITER_MOL_ATOM(atom, mol);
-    charge += NMS_ATOM_GET_FORMALCHARGE(aptr);
-    NMS_ATOM_SET_IS_AROMATIC(aptr, false);
-    NMS_ATOM_SET_FORMALCHARGE(aptr, 0);
+  for( auto aptr : mol->atoms() ){
+    charge += aptr->getFormalCharge();
+    aptr->setIsAromatic(false);
+    aptr->setFormalCharge(0);
   }
 
-  NMS_FOR_BOND_IN_MOL(bond, mol) {
-    NMS_pBOND bptr = NMS_ITER_MOL_BOND(bond, mol);
-    NMS_BOND_SET_ORDER(bptr, 1);
+  for( auto bptr : mol->bonds() ){
+bptr->setBondType(Bond::SINGLE);
   }
 
-  NMS_MOL_ASSIGN_RADICALS(mol);
-  NMS_GENERATE_SMILES(mol, result);
+  MolOps::assignRadicals(*mol);
+  result = MolToSmiles(*mol);
   if (netq) {
     sprintf(buffer,"_%d",charge);
     result += buffer;
@@ -236,31 +257,29 @@ static std::string MesomerHash(NMS_pMOL mol, bool netq)
   return result;
 }
 
-static std::string TautomerHash(NMS_pMOL mol, bool proto)
+static std::string TautomerHash(RWMol * mol, bool proto)
 {
   std::string result;
   char buffer[32];
   int hcount = 0;
   int charge = 0;
 
-  NMS_FOR_ATOM_IN_MOL(atom, mol) {
-    NMS_pATOM aptr = NMS_ITER_MOL_ATOM(atom, mol);
-    charge += NMS_ATOM_GET_FORMALCHARGE(aptr);
-    NMS_ATOM_SET_IS_AROMATIC(aptr, false);
-    NMS_ATOM_SET_FORMALCHARGE(aptr, 0);
-    if (NMS_ATOM_GET_ATOMICNUM(aptr) != 6) {
-      hcount += NMS_ATOM_GET_IMPLICITHCOUNT(aptr);
-      NMS_ATOM_SET_IMPLICITHCOUNT(aptr, 0);
+  for( auto aptr : mol->atoms() ){
+    charge += aptr->getFormalCharge();
+    aptr->setIsAromatic(false);
+    aptr->setFormalCharge(0);
+    if (aptr->getAtomicNum() != 6) {
+      hcount += aptr->getTotalNumHs(false);
+      aptr->setNoImplicit(true);aptr->setNumExplicitHs(0);
     }
   }
 
-  NMS_FOR_BOND_IN_MOL(bond, mol) {
-    NMS_pBOND bptr = NMS_ITER_MOL_BOND(bond, mol);
-    NMS_BOND_SET_ORDER(bptr, 1);
+  for( auto bptr : mol->bonds() ){
+bptr->setBondType(Bond::SINGLE);
   }
 
-  NMS_MOL_ASSIGN_RADICALS(mol);
-  NMS_GENERATE_SMILES(mol, result);
+  MolOps::assignRadicals(*mol);
+  result = MolToSmiles(*mol);
   if (!proto) {
     sprintf(buffer, "_%d_%d", hcount, charge);
   } else sprintf(buffer, "_%d", hcount - charge);
@@ -269,15 +288,19 @@ static std::string TautomerHash(NMS_pMOL mol, bool proto)
 }
 
 
-static bool TraverseForRing(NMS_pATOM atom,
+static bool TraverseForRing(Atom * atom,
                             unsigned char *visit)
 {
-  visit[NMS_ATOM_GET_IDX(atom)] = 1;
+  visit[atom->getIdx()] = 1;
 
-  NMS_FOR_NBR_OF_ATOM(nbr, atom) {
-    NMS_pATOM nptr = NMS_ITER_ATOM_NBR(nbr, atom);
-    if (visit[NMS_ATOM_GET_IDX(nptr)] == 0) {
-      if (NMS_ATOM_IS_IN_RING(nptr))
+
+      for (auto nbri :
+           boost::make_iterator_range(atom->getOwningMol().getAtomNeighbors(atom))) {
+        auto nptr = atom->getOwningMol()[nbri];
+
+
+    if (visit[nptr->getIdx()] == 0) {
+      if (RDKit::queryIsAtomInRing(nptr))
         return true;
 
       if (TraverseForRing(nptr, visit))
@@ -288,8 +311,8 @@ static bool TraverseForRing(NMS_pATOM atom,
 }
 
 
-static bool DepthFirstSearchForRing(NMS_pATOM root,
-                             NMS_pATOM nbor,
+static bool DepthFirstSearchForRing(Atom * root,
+                             Atom * nbor,
                              unsigned int maxatomidx)
 {
   unsigned int natoms = maxatomidx;
@@ -300,14 +323,14 @@ static bool DepthFirstSearchForRing(NMS_pATOM root,
   return TraverseForRing(nbor, visit);
 }
 
-bool IsInScaffold(NMS_pATOM atom, unsigned int maxatomidx)
+bool IsInScaffold(Atom * atom, unsigned int maxatomidx)
 {
-  if (NMS_ATOM_IS_IN_RING(atom))
+  if (RDKit::queryIsAtomInRing(atom))
     return true;
 
   unsigned int count = 0;
   NMS_FOR_NBR_OF_ATOM(nbr, atom) {
-    NMS_pATOM nptr = NMS_ITER_ATOM_NBR(nbr, atom);
+    Atom * nptr = NMS_ITER_ATOM_NBR(nbr, atom);
     if (DepthFirstSearchForRing(atom, nptr, maxatomidx))
       ++count;
   }
@@ -315,36 +338,34 @@ bool IsInScaffold(NMS_pATOM atom, unsigned int maxatomidx)
 }
 
 
-static bool HasNbrInScaffold(NMS_pATOM aptr, unsigned char* is_in_scaffold)
+static bool HasNbrInScaffold(Atom * aptr, unsigned char* is_in_scaffold)
 {
   NMS_FOR_NBR_OF_ATOM(nbr, aptr) {
-    NMS_pATOM nptr = NMS_ITER_ATOM_NBR(nbr, aptr);
+    Atom * nptr = NMS_ITER_ATOM_NBR(nbr, aptr);
     if (is_in_scaffold[NMS_ATOM_GET_IDX(nptr)])
       return true;
   }
   return false;
 }
 
-static std::string ExtendedMurckoScaffold(NMS_pMOL mol)
+static std::string ExtendedMurckoScaffold(RWMol * mol)
 {
   NMS_MOL_CALCULATE_RINGINFO(mol);
 
-  unsigned int maxatomidx = NMS_MOL_GET_MAXATOMIDX(mol);
+  unsigned int maxatomidx = mol->getNumAtoms();
   unsigned char* is_in_scaffold = (unsigned char*)alloca(maxatomidx);
-  NMS_FOR_ATOM_IN_MOL(atom, mol) {
-    NMS_pATOM aptr = NMS_ITER_MOL_ATOM(atom, mol);
-    is_in_scaffold[NMS_ATOM_GET_IDX(aptr)] = IsInScaffold(aptr, maxatomidx);
+  for( auto aptr : mol->atoms() ){
+    is_in_scaffold[aptr->getIdx()] = IsInScaffold(aptr, maxatomidx);
   }
 
-  std::vector<NMS_pATOM> for_deletion;
-  NMS_FOR_ATOM_IN_MOL(atom, mol) {
-    NMS_pATOM aptr = NMS_ITER_MOL_ATOM(atom, mol);
-    unsigned int aidx = NMS_ATOM_GET_IDX(aptr);
+  std::vector<Atom *> for_deletion;
+  for( auto aptr : mol->atoms() ){
+    unsigned int aidx = aptr->getIdx();
     if (is_in_scaffold[aidx]) continue;
     if (HasNbrInScaffold(aptr, is_in_scaffold)) {
       NMS_ATOM_SET_ATOMICNUM(aptr, 0);
       NMS_ATOM_SET_FORMALCHARGE(aptr, 0);
-      NMS_ATOM_SET_IMPLICITHCOUNT(aptr, 0);
+      aptr->setNoImplicit(true);aptr->setNumExplicitHs(0);
     } else {
       for_deletion.push_back(aptr);
     }
@@ -355,25 +376,25 @@ static std::string ExtendedMurckoScaffold(NMS_pMOL mol)
 
   NMS_MOL_ASSIGN_RADICALS(mol);
   std::string result;
-  NMS_GENERATE_SMILES(mol, result);
+  result = MolToSmiles(*mol);
   return result;
 }
 
-static std::string MurckoScaffoldHash(NMS_pMOL mol)
+static std::string MurckoScaffoldHash(RWMol * mol)
 {
-  std::vector<NMS_pATOM> for_deletion;
+  std::vector<Atom *> for_deletion;
   do {
     for_deletion.clear();
-    NMS_FOR_ATOM_IN_MOL(atom, mol) {
-      NMS_pATOM aptr = NMS_ITER_MOL_ATOM(atom, mol);
-      unsigned int deg = NMS_ATOM_GET_EXPLICITDEGREE(aptr);
+  for( auto aptr : mol->atoms() ){
+      unsigned int deg = aptr->getDegree();
       if (deg < 2) {
         if (deg == 1) { // i.e. not 0 and the last atom in the molecule
-          NMS_FOR_BOND_OF_ATOM(bond, aptr) {
-            NMS_pBOND bptr = NMS_ITER_ATOM_BOND(bond, aptr);
-            NMS_pATOM nbr = NMS_BOND_GET_NBR(bptr, aptr);
+          for (auto &nbri :
+                boost::make_iterator_range(aptr->getOwningMol().getAtomBonds(aptr))){
+            auto bptr = (aptr->getOwningMol())[nbri];
+            Atom * nbr = NMS_BOND_GET_NBR(bptr, aptr);
             unsigned int hcount = NMS_ATOM_GET_IMPLICITHCOUNT(nbr);
-            NMS_ATOM_SET_IMPLICITHCOUNT(nbr, hcount + NMS_BOND_GET_ORDER(bptr));
+            NMS_ATOM_SET_IMPLICITHCOUNT(nbr, hcount + NMRDKitBondGetOrder(bptr));
           }
         }
         for_deletion.push_back(aptr);
@@ -386,17 +407,16 @@ static std::string MurckoScaffoldHash(NMS_pMOL mol)
 
   NMS_MOL_ASSIGN_RADICALS(mol);
   std::string result;
-  NMS_GENERATE_SMILES(mol, result);
+  result = MolToSmiles(*mol);
   return result;
 }
 
-static std::string NetChargeHash(NMS_pMOL mol)
+static std::string NetChargeHash(RWMol * mol)
 {
   int totalq = 0;
 
-  NMS_FOR_ATOM_IN_MOL(atom, mol) {
-    NMS_pATOM aptr = NMS_ITER_MOL_ATOM(atom, mol);
-    totalq += NMS_ATOM_GET_FORMALCHARGE(aptr);
+  for( auto aptr : mol->atoms() ){
+    totalq += aptr->getFormalCharge();
   }
 
   char buffer[16];
@@ -405,19 +425,18 @@ static std::string NetChargeHash(NMS_pMOL mol)
 }
 
 
-static std::string SmallWorldHash(NMS_pMOL mol, bool brl)
+static std::string SmallWorldHash(RWMol * mol, bool brl)
 {
   char buffer[64];
 
-  unsigned int acount = NMS_MOL_GET_NUMATOMS(mol);
-  unsigned int bcount = NMS_MOL_GET_NUMBONDS(mol);
+  unsigned int acount = mol->getNumAtoms();
+  unsigned int bcount = mol->getNumBonds();
   unsigned int rcount = (bcount + 1) - acount;
 
   if (brl) {
     unsigned int lcount = 0;
-    NMS_FOR_ATOM_IN_MOL(atom, mol) {
-      NMS_pATOM aptr = NMS_ITER_MOL_ATOM(atom, mol);
-      if (NMS_ATOM_GET_EXPLICITDEGREE(aptr) == 2)
+  for( auto aptr : mol->atoms() ){
+      if (aptr->getDegree() == 2)
         lcount++;
     }
     sprintf(buffer, "B%uR%uL%u", bcount, rcount, lcount);
@@ -428,12 +447,11 @@ static std::string SmallWorldHash(NMS_pMOL mol, bool brl)
   return buffer;
 }
 
-static void DegreeVector(NMS_pMOL mol, unsigned int *v)
+static void DegreeVector(RWMol * mol, unsigned int *v)
 {
   memset(v, 0, 4 * sizeof(unsigned int));
-  NMS_FOR_ATOM_IN_MOL(atom, mol) {
-    NMS_pATOM aptr = NMS_ITER_MOL_ATOM(atom, mol);
-    switch (NMS_ATOM_GET_EXPLICITDEGREE(aptr)) {
+  for( auto aptr : mol->atoms() ){
+    switch (aptr->getDegree()) {
     case 4:  v[0]++;  break;
     case 3:  v[1]++;  break;
     case 2:  v[2]++;  break;
@@ -443,15 +461,17 @@ static void DegreeVector(NMS_pMOL mol, unsigned int *v)
 }
 
 
-static bool HasDoubleBond(NMS_pATOM atom)
+static bool HasDoubleBond(Atom * atom)
 {
-  NMS_FOR_BOND_OF_ATOM(bond, atom) {
-    NMS_pBOND bptr = NMS_ITER_ATOM_BOND(bond, atom);
-    if (NMS_BOND_GET_ORDER(bptr) == 2)
+  for (auto &nbri :
+        boost::make_iterator_range(atom->getOwningMol().getAtomBonds(atom))){
+    auto bptr = (atom->getOwningMol())[nbri];
+    if (NMRDKitBondGetOrder(bptr) == 2)
       return true;
   }
   return false;
 }
+
 
 // Determine whether/how to fragment bond
 // -1 means don't fragment bond
@@ -460,27 +480,27 @@ static bool HasDoubleBond(NMS_pATOM atom)
 // 2 means break, with hydrogen on beg and asterisk on end
 // 3 means break, with asterisks on both beg and end
 
-static int RegioisomerBond(NMS_pBOND bnd)
+static int RegioisomerBond(Bond * bnd)
 {
-  if (NMS_BOND_GET_ORDER(bnd) != 1)
+  if (NMRDKitBondGetOrder(bnd) != 1)
     return -1;
-  if (NMS_BOND_IS_IN_RING(bnd))
+  if (RDKit::queryIsBondInRing(bnd))
     return -1;
 
-  NMS_pATOM beg = NMS_BOND_GET_BEG(bnd);
-  NMS_pATOM end = NMS_BOND_GET_END(bnd);
-  unsigned int beg_elem = NMS_ATOM_GET_ATOMICNUM(beg);
-  unsigned int end_elem = NMS_ATOM_GET_ATOMICNUM(end);
+  Atom * beg = bnd->getBeginAtom();
+  Atom * end = bnd->getEndAtom();
+  unsigned int beg_elem = beg->getAtomicNum();
+  unsigned int end_elem = end->getAtomicNum();
 
   if (beg_elem == 0 || end_elem == 0)
     return -1;
 
-  if (NMS_ATOM_IS_IN_RING(beg)) {
-    if (NMS_ATOM_IS_IN_RING(end))
+  if (RDKit::queryIsAtomInRing(beg)) {
+    if (RDKit::queryIsAtomInRing(end))
       return 0;
     return 2;
   }
-  if (NMS_ATOM_IS_IN_RING(end))
+  if (RDKit::queryIsAtomInRing(end))
     return 1;
 
   if (beg_elem != 6 &&
@@ -496,66 +516,74 @@ static int RegioisomerBond(NMS_pBOND bnd)
 }
 
 
-static void ClearEZStereo(NMS_pATOM atm)
+static void ClearEZStereo(Atom * atm)
 {
-  NMS_FOR_BOND_OF_ATOM(bond, atm) {
-    NMS_pBOND bptr = NMS_ITER_ATOM_BOND(bond, atm);
-    if (NMS_BOND_HAS_STEREO(bptr))
-      NMS_BOND_REMOVE_STEREO(bptr);
+
+  for (auto &nbri :
+        boost::make_iterator_range(atm->getOwningMol().getAtomBonds(atm))){
+    auto bptr = (atm->getOwningMol())[nbri];
+    if (bptr->getStereo() > RDKit::Bond::STEREOANY)
+      bptr->setStereo(RDKit::Bond::STEREOANY);
   }
 }
 
 
-static std::string RegioisomerHash(NMS_pMOL mol)
+static std::string RegioisomerHash(RWMol * mol)
 {
   // we need a copy of the molecule so that we can loop over the bonds of something
   // while modifying something else
-  NMS_MOL_CALCULATE_RINGINFO(mol);
+if (!mol->getRingInfo()->isInitialized())
+    RDKit::MolOps::fastFindRings(*mol);
   RDKit::ROMol molcpy(*mol);
   for(int i=molcpy.getNumBonds()-1;i>=0;--i){
     auto bptr = molcpy.getBondWithIdx(i);
     int split = RegioisomerBond(bptr);
     if (split >= 0) {
       bptr = mol->getBondWithIdx(i);
-      NMS_pATOM beg = NMS_BOND_GET_BEG(bptr);
-      NMS_pATOM end = NMS_BOND_GET_END(bptr);
-      NMS_MOL_DELETE_BOND(mol, bptr);
-
+      Atom * beg = bptr->getBeginAtom();
+      Atom * end = bptr->getEndAtom();
+      mol->removeBond(bptr->getBeginAtomIdx(),bptr->getEndAtomIdx());
       ClearEZStereo(beg);
       ClearEZStereo(end);
 
       if (split & 1) {
-        NMS_pATOM star = NMS_MOL_NEW_ATOM(mol, 0);
+        Atom * star = new RDKit::Atom(0);
+        mol->addAtom(star,true,true);
+        star->setNoImplicit(true);
         NMS_MOL_NEW_BOND(mol, beg, star, 1, false);
       } else {
-        unsigned int hcount = NMS_ATOM_GET_IMPLICITHCOUNT(beg);
-        NMS_ATOM_SET_IMPLICITHCOUNT(beg, hcount + 1);
+        unsigned int hcount = beg->getTotalNumHs(false);
+        beg->setNumExplicitHs(hcount+1);
+        beg->setNoImplicit(true);
       }
       if (split & 2) {
-        NMS_pATOM star = NMS_MOL_NEW_ATOM(mol, 0);
+        Atom * star = new RDKit::Atom(0);
+        mol->addAtom(star,true,true);
+        star->setNoImplicit(true);
         NMS_MOL_NEW_BOND(mol, end, star, 1, false);
       } else {
-        unsigned int hcount = NMS_ATOM_GET_IMPLICITHCOUNT(end);
-        NMS_ATOM_SET_IMPLICITHCOUNT(end, hcount + 1);
+        unsigned int hcount = end->getTotalNumHs(false);
+        end->setNumExplicitHs(hcount+1);
+        end->setNoImplicit(true);
       }
     }
   }
 
   std::string result;
-  NMS_GENERATE_SMILES(mol, result);
+  result = MolToSmiles(*mol);
   return result;
 }
 
 
-static std::string ArthorSubOrderHash(NMS_pMOL mol)
+static std::string ArthorSubOrderHash(RWMol * mol)
 {
   char buffer[256];
 
-  unsigned int acount = NMS_MOL_GET_NUMATOMS(mol);
-  unsigned int bcount = NMS_MOL_GET_NUMBONDS(mol);
+  unsigned int acount = mol->getNumAtoms();
+  unsigned int bcount = mol->getNumBonds();
 
   unsigned int pcount = 1;
-  unsigned int size = 4*NMS_MOL_GET_MAXATOMIDX(mol)+4;
+  unsigned int size = 4*mol->getNumAtoms()+4;
   unsigned int *parts = (unsigned int*)malloc(size);
   if (parts) {
     memset(parts,0,size);
@@ -570,33 +598,32 @@ static std::string ArthorSubOrderHash(NMS_pMOL mol)
   unsigned int qcount = 0;
   unsigned int rcount = 0;
 
-  NMS_FOR_ATOM_IN_MOL(atom, mol) {
-    NMS_pATOM aptr = NMS_ITER_MOL_ATOM(atom, mol);
-    unsigned int elem = NMS_ATOM_GET_ATOMICNUM(aptr);
-    int charge = NMS_ATOM_GET_FORMALCHARGE(aptr);
+  for( auto aptr : mol->atoms() ){
+    unsigned int elem = aptr->getAtomicNum();
+    int charge = aptr->getFormalCharge();
     switch (elem) {
     case 6:  // Carbon
       ccount++;
-      if (charge==0 && NMS_ATOM_GET_VALENCE(aptr)!=4)
+      if (charge==0 && aptr->getTotalValence()!=4)
         rcount++;
       break;
     case 7:  // Nitrogen
     case 15: // Phosphorus
       ocount++;
       if (charge==0) {
-        unsigned int valence = NMS_ATOM_GET_VALENCE(aptr);
+        unsigned int valence = aptr->getTotalValence();
         if (valence!=3 && valence!=5)
           rcount++;
       }
       break;
     case 8:  // Oxygen
       ocount++;
-      if (charge && NMS_ATOM_GET_VALENCE(aptr) !=2)
+      if (charge && aptr->getTotalValence() !=2)
         rcount++;
       break;
     case 9:  // Fluorine
       ocount++;
-      if (charge && NMS_ATOM_GET_VALENCE(aptr) !=1)
+      if (charge && aptr->getTotalValence() !=1)
         rcount++;
       break;
     case 17: // Chlorine
@@ -604,7 +631,7 @@ static std::string ArthorSubOrderHash(NMS_pMOL mol)
     case 53: // Iodine
       ocount++;
       if (charge==0) {
-        unsigned int valence = NMS_ATOM_GET_VALENCE(aptr);
+        unsigned int valence = aptr->getTotalValence();
         if (valence!=1 && valence!=3 && valence!=5 && valence!=7)
           rcount++;
       }
@@ -612,7 +639,7 @@ static std::string ArthorSubOrderHash(NMS_pMOL mol)
     case 16: // Sulfur
       ocount++;
       if (charge==0) {
-        unsigned int valence = NMS_ATOM_GET_VALENCE(aptr);
+        unsigned int valence = aptr->getTotalValence();
         if (valence!=2 && valence!=4 && valence!=6)
           rcount++;
       }
@@ -641,7 +668,7 @@ static std::string ArthorSubOrderHash(NMS_pMOL mol)
 }
 
 
-std::string MolHash(NMS_pMOL mol, unsigned int func)
+std::string MolHash(RWMol * mol, unsigned int func)
 {
   std::string result;
   char buffer[32];
@@ -656,7 +683,7 @@ std::string MolHash(NMS_pMOL mol, unsigned int func)
     result = AnonymousGraph(mol, true);
     break;
   case HashFunction::CanonicalSmiles:
-    NMS_GENERATE_SMILES(mol, result);
+    result = MolToSmiles(*mol);
     break;
   case HashFunction::MurckoScaffold:
     result = MurckoScaffoldHash(mol);
@@ -681,8 +708,8 @@ std::string MolHash(NMS_pMOL mol, unsigned int func)
     break;
   case HashFunction::AtomBondCounts:
     sprintf(buffer, "%u,%u",
-            NMS_MOL_GET_NUMATOMS(mol),
-            NMS_MOL_GET_NUMBONDS(mol));
+            mol->getNumAtoms(),
+            mol->getNumBonds());
     result = buffer;
     break;
   case HashFunction::NetCharge:

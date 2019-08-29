@@ -34,7 +34,7 @@ static void ProcessComponent(NMS_pMOL mol, FILE *fp)
   std::string smi;
 
   if (!title_only)
-    NMS_GENERATE_SMILES(mol, smi);
+    smi = RDKit::MolToSmiles(*mol);
 
   hash = MolHash(mol, hash_func);
 
