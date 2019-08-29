@@ -11,9 +11,12 @@
 #ifndef NMS_MOLHASH_H
 #define NMS_MOLHASH_H
 
-#include "toolkit.h"
 #include <string>
+#include <vector>
 
+namespace RDKit {
+  class RWMol;
+}
 struct HashFunction {
   static const unsigned int AnonymousGraph	= 1;
   static const unsigned int ElementGraph	= 2;
@@ -34,7 +37,7 @@ struct HashFunction {
   static const unsigned int ArthorSubstructureOrder = 17;
 };
 
-std::string MolHash(NMS_pMOL mol, unsigned int func);
+std::string MolHash(RDKit::RWMol *mol, unsigned int func);
 
 struct StripType {
   static const unsigned int AtomStereo = 1;
@@ -44,7 +47,7 @@ struct StripType {
   static const unsigned int Hydrogen = 16;
 };
 
-void Strip(NMS_pMOL mol, unsigned int striptype);
-void SplitMolecule(NMS_pMOL mol, std::vector<NMS_MOL*> &molv);
+void Strip(RDKit::RWMol *mol, unsigned int striptype);
+void SplitMolecule(RDKit::RWMol *mol, std::vector<RDKit::RWMol *> &molv);
 
 #endif // NMS_MOLHASH_H

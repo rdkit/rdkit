@@ -58,7 +58,6 @@
 #define NMS_MOL_DELETE_BOND(M,B)	\
 	(M)->removeBond((B)->getBeginAtomIdx(),(B)->getEndAtomIdx())
 #define NMS_MOL_NEW_ATOM(X,Y)		NMRDKitMolNewAtom((X),(Y))
-#define NMS_MOL_NEW_BOND(M,B,E,O,A)	NMRDKitMolNewBond((M),(B),(E),(O),(A))
 #define NMS_MOL_NONEMPTY(M)		((M)->getNumAtoms()>0)
 #define NMS_MOL_ASSIGN_RADICALS(M) RDKit::MolOps::assignRadicals(*(M));
 #define NMS_MOL_SUPPRESS_HYDROGENS(M) RDKit::MolOps::removeHs(*(M))
@@ -140,19 +139,14 @@
 
 #define NMS_GENERATE_SMILES(M,S)	S = RDKit::MolToSmiles(*(M));
 #define NMS_SMILES_TO_MOL(X)      NMRDKitSmilesToMol(X)
-#define NMS_SANITIZE_HYDROGENS(M) NMRDKitSanitizeHydrogens(M)
 
 
 /* Implemented in rdktoolkit.cpp */
 RDKit::RWMol *NMRDKitSmilesToMol(const char *str);
 RDKit::Atom *NMRDKitMolNewAtom(RDKit::RWMol *mol, unsigned int elem);
-RDKit::Bond *NMRDKitMolNewBond(RDKit::RWMol *mol,
-                               RDKit::Atom *src, RDKit::Atom *dst,
-                               unsigned int order, bool arom);
 unsigned int NMRDKitAtomGetExplicitValence(RDKit::Atom *atm);
 void NMRDKitAtomSetImplicitHCount(RDKit::Atom *atm, unsigned int hcount);
 void NMRDKitBondSetOrder(RDKit::Bond *bnd, unsigned int order);
-void NMRDKitSanitizeHydrogens(RDKit::RWMol *mol);
 void NMRDKitAtomSetMapIdx(RDKit::Atom *atm, unsigned int idx);
 void NMRDKitMolSplitFragments(NMS_pMOL mol, std::vector<NMS_MOL*> &fragments);
 void NMRDKitMolCalculateRingInfo(NMS_pMOL mol);

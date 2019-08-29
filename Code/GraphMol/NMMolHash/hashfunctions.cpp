@@ -11,12 +11,14 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 #include <string.h>
-#include <stdlib.h>
+#include <stdlib.h>         
 #include <stdio.h>
 
 #include <string>
+#include <GraphMol/RDKitBase.h>
+#include <GraphMol/RDKitQueries.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 
-#include "toolkit.h"
 #include "molhash.h"
 #include "mf.h"
 
@@ -41,6 +43,58 @@ namespace {
     return 6;
   default:
     return 0;
+  }
+}
+
+RDKit::Bond *NMRDKitMolNewBond(RDKit::RWMol *mol,
+                               RDKit::Atom *src, RDKit::Atom *dst,
+                               unsigned int order, bool arom)
+{
+  RDKit::Bond *result;
+  result = mol->getBondBetweenAtoms(src->getIdx(),dst->getIdx());
+  if (result) {
+    if (order == 1) {
+      switch (result->getBondType()) {
+      case RDKit::Bond::SINGLE:
+        result->setBondType(RDKit::Bond::DOUBLE);
+        break;
+      case RDKit::Bond::DOUBLE:
+        result->setBondType(RDKit::Bond::TRIPLE);
+        break;
+      default:
+        break;
+      }
+    }
+    return result;
+  }
+  RDKit::Bond::BondType type = RDKit::Bond::UNSPECIFIED;
+  if (!arom) {
+    switch (order) {
+    case 1:  type = RDKit::Bond::SINGLE;     break;
+    case 2:  type = RDKit::Bond::DOUBLE;     break;
+    case 3:  type = RDKit::Bond::TRIPLE;     break;
+    case 4:  type = RDKit::Bond::QUADRUPLE;  break;
+    }
+  } else type = RDKit::Bond::AROMATIC;
+
+  result = new RDKit::Bond(type);
+  result->setOwningMol(mol);
+  result->setBeginAtom(src);
+  result->setEndAtom(dst);
+  mol->addBond(result,true);
+  if (arom)
+    result->setIsAromatic(true);
+  return result;
+}
+
+void NMRDKitSanitizeHydrogens(RDKit::RWMol *mol)
+{
+  // Move all of the implicit Hs into one box
+  for(auto aptr : mol->atoms()){
+    unsigned int hcount = aptr->getTotalNumHs();
+    aptr->setNoImplicit(true);
+    aptr->setNumExplicitHs(hcount);
+    aptr->updatePropertyCache(); // or else the valence is reported incorrectly
   }
 }
 
@@ -292,13 +346,9 @@ static bool TraverseForRing(Atom * atom,
                             unsigned char *visit)
 {
   visit[atom->getIdx()] = 1;
-
-
       for (auto nbri :
            boost::make_iterator_range(atom->getOwningMol().getAtomNeighbors(atom))) {
         auto nptr = atom->getOwningMol()[nbri];
-
-
     if (visit[nptr->getIdx()] == 0) {
       if (RDKit::queryIsAtomInRing(nptr))
         return true;
@@ -319,7 +369,7 @@ static bool DepthFirstSearchForRing(Atom * root,
   unsigned char *visit = (unsigned char*)alloca(natoms);
   memset(visit, 0, natoms);
 
-  visit[NMS_ATOM_GET_IDX(root)] = true;
+  visit[root->getIdx()] = true;
   return TraverseForRing(nbor, visit);
 }
 
@@ -329,8 +379,9 @@ bool IsInScaffold(Atom * atom, unsigned int maxatomidx)
     return true;
 
   unsigned int count = 0;
-  NMS_FOR_NBR_OF_ATOM(nbr, atom) {
-    Atom * nptr = NMS_ITER_ATOM_NBR(nbr, atom);
+  for (auto nbri :
+        boost::make_iterator_range(atom->getOwningMol().getAtomNeighbors(atom))) {
+    auto nptr = atom->getOwningMol()[nbri];
     if (DepthFirstSearchForRing(atom, nptr, maxatomidx))
       ++count;
   }
@@ -340,9 +391,10 @@ bool IsInScaffold(Atom * atom, unsigned int maxatomidx)
 
 static bool HasNbrInScaffold(Atom * aptr, unsigned char* is_in_scaffold)
 {
-  NMS_FOR_NBR_OF_ATOM(nbr, aptr) {
-    Atom * nptr = NMS_ITER_ATOM_NBR(nbr, aptr);
-    if (is_in_scaffold[NMS_ATOM_GET_IDX(nptr)])
+  for (auto nbri :
+        boost::make_iterator_range(aptr->getOwningMol().getAtomNeighbors(aptr))) {
+    auto nptr = aptr->getOwningMol()[nbri];
+    if (is_in_scaffold[nptr->getIdx()])
       return true;
   }
   return false;
@@ -350,7 +402,7 @@ static bool HasNbrInScaffold(Atom * aptr, unsigned char* is_in_scaffold)
 
 static std::string ExtendedMurckoScaffold(RWMol * mol)
 {
-  NMS_MOL_CALCULATE_RINGINFO(mol);
+  RDKit::MolOps::fastFindRings(*mol);
 
   unsigned int maxatomidx = mol->getNumAtoms();
   unsigned char* is_in_scaffold = (unsigned char*)alloca(maxatomidx);
@@ -363,8 +415,8 @@ static std::string ExtendedMurckoScaffold(RWMol * mol)
     unsigned int aidx = aptr->getIdx();
     if (is_in_scaffold[aidx]) continue;
     if (HasNbrInScaffold(aptr, is_in_scaffold)) {
-      NMS_ATOM_SET_ATOMICNUM(aptr, 0);
-      NMS_ATOM_SET_FORMALCHARGE(aptr, 0);
+      aptr->setAtomicNum(0);
+      aptr->setFormalCharge(0);
       aptr->setNoImplicit(true);aptr->setNumExplicitHs(0);
     } else {
       for_deletion.push_back(aptr);
@@ -372,9 +424,9 @@ static std::string ExtendedMurckoScaffold(RWMol * mol)
   }
 
   for(unsigned int i=0; i<for_deletion.size(); ++i)
-    NMS_MOL_DELETE_ATOM(mol, for_deletion[i]);
+    mol->removeAtom(for_deletion[i]);
 
-  NMS_MOL_ASSIGN_RADICALS(mol);
+  MolOps::assignRadicals(*mol);
   std::string result;
   result = MolToSmiles(*mol);
   return result;
@@ -392,20 +444,20 @@ static std::string MurckoScaffoldHash(RWMol * mol)
           for (auto &nbri :
                 boost::make_iterator_range(aptr->getOwningMol().getAtomBonds(aptr))){
             auto bptr = (aptr->getOwningMol())[nbri];
-            Atom * nbr = NMS_BOND_GET_NBR(bptr, aptr);
-            unsigned int hcount = NMS_ATOM_GET_IMPLICITHCOUNT(nbr);
-            NMS_ATOM_SET_IMPLICITHCOUNT(nbr, hcount + NMRDKitBondGetOrder(bptr));
+            Atom * nbr = bptr->getOtherAtom(aptr);
+            unsigned int hcount = nbr->getTotalNumHs(false);
+            nbr->setNumExplicitHs(hcount + NMRDKitBondGetOrder(bptr));
+            nbr->setNoImplicit(true);
           }
         }
         for_deletion.push_back(aptr);
       }
     }
     for (unsigned int i = 0; i < for_deletion.size(); ++i) {
-      NMS_MOL_DELETE_ATOM(mol, for_deletion[i]);
+      mol->removeAtom(for_deletion[i]);
     }
   } while (!for_deletion.empty());
-
-  NMS_MOL_ASSIGN_RADICALS(mol);
+  MolOps::assignRadicals(*mol);
   std::string result;
   result = MolToSmiles(*mol);
   return result;
@@ -532,8 +584,7 @@ static std::string RegioisomerHash(RWMol * mol)
 {
   // we need a copy of the molecule so that we can loop over the bonds of something
   // while modifying something else
-if (!mol->getRingInfo()->isInitialized())
-    RDKit::MolOps::fastFindRings(*mol);
+  RDKit::MolOps::fastFindRings(*mol);
   RDKit::ROMol molcpy(*mol);
   for(int i=molcpy.getNumBonds()-1;i>=0;--i){
     auto bptr = molcpy.getBondWithIdx(i);
@@ -550,7 +601,7 @@ if (!mol->getRingInfo()->isInitialized())
         Atom * star = new RDKit::Atom(0);
         mol->addAtom(star,true,true);
         star->setNoImplicit(true);
-        NMS_MOL_NEW_BOND(mol, beg, star, 1, false);
+        NMRDKitMolNewBond(mol, beg, star, 1, false);
       } else {
         unsigned int hcount = beg->getTotalNumHs(false);
         beg->setNumExplicitHs(hcount+1);
@@ -560,7 +611,7 @@ if (!mol->getRingInfo()->isInitialized())
         Atom * star = new RDKit::Atom(0);
         mol->addAtom(star,true,true);
         star->setNoImplicit(true);
-        NMS_MOL_NEW_BOND(mol, end, star, 1, false);
+        NMRDKitMolNewBond(mol, end, star, 1, false);
       } else {
         unsigned int hcount = end->getTotalNumHs(false);
         end->setNumExplicitHs(hcount+1);
@@ -646,7 +697,7 @@ static std::string ArthorSubOrderHash(RWMol * mol)
       break;
     }
     zcount += elem;
-    if (NMS_ATOM_GET_ISOTOPE(aptr) != 0)
+    if (aptr->getIsotope() != 0)
       icount++;
     if (charge != 0)
       qcount++;
@@ -672,7 +723,7 @@ std::string MolHash(RWMol * mol, unsigned int func)
 {
   std::string result;
   char buffer[32];
-  NMS_SANITIZE_HYDROGENS(mol);
+  NMRDKitSanitizeHydrogens(mol);
 
   switch (func) {
   default:
