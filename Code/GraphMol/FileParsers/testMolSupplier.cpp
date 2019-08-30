@@ -23,6 +23,7 @@
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/RDLog.h>
 #include <RDStreams/streams.h>
+#include <GraphMol/MonomerInfo.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Depictor/RDDepictor.h>
@@ -127,6 +128,20 @@ int testMolSup() {
       ok = true;
     }
     TEST_ASSERT(ok);
+  }
+
+  { // Test Maestro PDB property reading
+    fname = rdbase + "/Code/GraphMol/FileParsers/test_data/1kv1.maegz";
+    gzstream *strm = new gzstream(fname);
+    MaeMolSupplier maesup(strm);
+
+    std::shared_ptr<ROMol> nmol;
+    nmol.reset(maesup.next());
+    const Atom* atom = nmol->getAtomWithIdx(0);
+    AtomPDBResidueInfo *info = (AtomPDBResidueInfo *)(atom->getMonomerInfo());
+    TEST_ASSERT(info->getResidueName() == "ARG ");
+    TEST_ASSERT(info->getChainId() == "A");
+    TEST_ASSERT(info->getResidueNumber() == 5);
   }
 #endif  // RDK_BUILD_COORDGEN_SUPPORT
   return 1;

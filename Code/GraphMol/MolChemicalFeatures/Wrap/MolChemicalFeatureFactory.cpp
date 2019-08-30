@@ -103,7 +103,8 @@ struct featfactory_wrapper {
              (python::arg("mol"), python::arg("idx"),
               python::arg("includeOnly") = std::string(""),
               python::arg("recompute") = true, python::arg("confId") = -1),
-             python::with_custodian_and_ward_postcall<0, 2>(),
+             python::with_custodian_and_ward_postcall<
+                 0, 2, python::with_custodian_and_ward_postcall<0, 1>>(),
              "returns a particular feature (by index)");
   };
 };

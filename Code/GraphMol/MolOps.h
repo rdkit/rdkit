@@ -20,6 +20,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #include <RDGeneral/types.h>
+#include "SanitException.h"
 
 RDKIT_GRAPHMOL_EXPORT extern const int ci_LOCAL_INF;
 namespace RDKit {
@@ -378,30 +379,53 @@ typedef enum {
    \param mol : the RWMol to be cleaned
 
    \param operationThatFailed : the first (if any) sanitization operation that
-   fails is set here.
+                                fails is set here.
                                 The values are taken from the \c SanitizeFlags
-   enum.
-                                On success, the value is  \c
-   SanitizeFlags::SANITIZE_NONE
+                                enum. On success, the value is \c
+                                SanitizeFlags::SANITIZE_NONE
 
    \param sanitizeOps : the bits here are used to set which sanitization
-   operations are carried
-                        out. The elements of the \c SanitizeFlags enum define
-   the operations.
+                        operations are carried out. The elements of the \c
+                        SanitizeFlags enum define the operations.
 
    <b>Notes:</b>
-    - If there is a failure in the sanitization, a \c SanitException
+    - If there is a failure in the sanitization, a \c MolSanitizeException
       will be thrown.
     - in general the user of this function should cast the molecule following
-   this
-      function to a ROMol, so that new atoms and bonds cannot be added to the
-      molecule and screw up the sanitizing that has been done here
+      this function to a ROMol, so that new atoms and bonds cannot be added to
+      the molecule and screw up the sanitizing that has been done here
 */
 RDKIT_GRAPHMOL_EXPORT void sanitizeMol(RWMol &mol,
                                        unsigned int &operationThatFailed,
                                        unsigned int sanitizeOps = SANITIZE_ALL);
 //! \overload
 RDKIT_GRAPHMOL_EXPORT void sanitizeMol(RWMol &mol);
+
+//! \brief Identifies chemistry problems (things that don't make chemical sense)
+//! in a molecule
+/*!
+   This functions uses the operations in sanitizeMol but does not change
+   the input structure and returns a list of the problems encountered instead of
+   stopping at the first failure,
+
+   The problems this looks for come from the sanitization operations:
+     -# mol.updatePropertyCache()  : Unreasonable valences
+     -# MolOps::Kekulize()  : Unkekulizable ring systems, aromatic atoms not in
+                              rings, aromatic bonds to non-aromatic atoms.
+
+   \param mol : the RWMol to be cleaned
+
+   \param sanitizeOps : the bits here are used to set which sanitization
+                        operations are carried out. The elements of the \c
+                        SanitizeFlags enum define the operations.
+
+   \return a vector of \c MolSanitizeException values that indicate what
+           problems were encountered
+
+*/
+RDKIT_GRAPHMOL_EXPORT
+std::vector<std::unique_ptr<MolSanitizeException>> detectChemistryProblems(
+    const ROMol &mol, unsigned int sanitizeOps = SANITIZE_ALL);
 
 //! Possible aromaticity models
 /*!
@@ -872,6 +896,9 @@ RDKIT_GRAPHMOL_EXPORT void detectBondStereochemistry(ROMol &mol,
                                                      int confId = -1);
 RDKIT_GRAPHMOL_EXPORT void setDoubleBondNeighborDirections(
     ROMol &mol, const Conformer *conf = NULL);
+
+//! Assign CIS/TRANS bond stereochemistry tags based on neighboring directions
+RDKIT_GRAPHMOL_EXPORT void setBondStereoFromDirections(ROMol &mol);
 
 //! Assign stereochemistry tags to atoms (i.e. R/S) and bonds (i.e. Z/E)
 /*!

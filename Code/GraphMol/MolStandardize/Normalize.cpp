@@ -15,6 +15,11 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SanitException.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/flyweight.hpp>
+#include <boost/flyweight/key_value.hpp>
+#include <boost/flyweight/no_tracking.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 using namespace std;
 using namespace RDKit;
@@ -25,15 +30,21 @@ class ROMol;
 
 namespace MolStandardize {
 
+typedef boost::flyweight<
+    boost::flyweights::key_value<std::string, TransformCatalogParams>,
+    boost::flyweights::no_tracking>
+    param_flyweight;
+
 // unsigned int MAX_RESTARTS = 200;
 
 // constructor
 Normalizer::Normalizer() {
   BOOST_LOG(rdInfoLog) << "Initializing Normalizer\n";
-  TransformCatalogParams tparams(defaultCleanupParameters.normalizations);
+  const TransformCatalogParams *tparams =
+      &(param_flyweight(defaultCleanupParameters.normalizations).get());
   //  unsigned int ntransforms = tparams->getNumTransformations();
   //  TEST_ASSERT(ntransforms == 22);
-  this->d_tcat = new TransformCatalog(&tparams);
+  this->d_tcat = new TransformCatalog(tparams);
   this->MAX_RESTARTS = 200;
 }
 
@@ -41,8 +52,9 @@ Normalizer::Normalizer() {
 Normalizer::Normalizer(const std::string normalizeFile,
                        const unsigned int maxRestarts) {
   BOOST_LOG(rdInfoLog) << "Initializing Normalizer\n";
-  TransformCatalogParams tparams(normalizeFile);
-  this->d_tcat = new TransformCatalog(&tparams);
+  const TransformCatalogParams *tparams =
+      &(param_flyweight(normalizeFile).get());
+  this->d_tcat = new TransformCatalog(tparams);
   this->MAX_RESTARTS = maxRestarts;
 }
 
@@ -86,22 +98,22 @@ ROMol *Normalizer::normalize(const ROMol &mol) {
   return outmol;
 }
 
-ROMol *Normalizer::normalizeFragment(
+boost::shared_ptr<ROMol> Normalizer::normalizeFragment(
     const ROMol &mol,
     const std::vector<std::shared_ptr<ChemicalReaction>> &transforms) {
-  ROMol *nfrag = new ROMol(mol);
+  boost::shared_ptr<ROMol> nfrag(new ROMol(mol));
   for (unsigned int i = 0; i < MAX_RESTARTS; ++i) {
     bool loop_brake = false;
     // Iterate through Normalization transforms and apply each in order
     for (auto &transform : transforms) {
-      std::string tname;
-      transform->getProp(common_properties::_Name, tname);
       boost::shared_ptr<ROMol> product =
-          this->applyTransform(*nfrag, *transform);
+          this->applyTransform(nfrag, *transform);
       if (product != nullptr) {
-        BOOST_LOG(rdInfoLog) << "Rule applied: " << tname << "\n";
-        delete nfrag;
-        nfrag = new ROMol(*product);
+        BOOST_LOG(rdInfoLog)
+            << "Rule applied: "
+            << transform->getProp<std::string>(common_properties::_Name)
+            << "\n";
+        nfrag = product;
         loop_brake = true;
         break;
       }
@@ -117,7 +129,7 @@ ROMol *Normalizer::normalizeFragment(
 }
 
 boost::shared_ptr<ROMol> Normalizer::applyTransform(
-    const ROMol &mol, ChemicalReaction &transform) {
+    const boost::shared_ptr<ROMol> mol, ChemicalReaction &transform) {
   // Repeatedly apply normalization transform to molecule until no changes
   // occur.
   //
@@ -128,11 +140,10 @@ boost::shared_ptr<ROMol> Normalizer::applyTransform(
   // If there are multiple unique products after the final application, the
   // first product (sorted alphabetically by SMILES) is chosen.
 
-  boost::shared_ptr<ROMol> tmp(new ROMol(mol));
   MOL_SPTR_VECT mols;
-  mols.push_back(tmp);
+  mols.push_back(mol);
 
-  transform.initReactantMatchers();
+  if (!transform.isInitialized()) transform.initReactantMatchers();
   // REVIEW: what's the source of the 20 in the next line?
   for (unsigned int i = 0; i < 20; ++i) {
     std::vector<Normalizer::Product> pdts;
@@ -144,17 +155,16 @@ boost::shared_ptr<ROMol> Normalizer::applyTransform(
         // std::endl;
         unsigned int failed;
         try {
-          RWMol tmol(*static_cast<RWMol *>(pdt[0].get()));
+          RWMol *tmol = static_cast<RWMol *>(pdt[0].get());
           // we'll allow atoms with a valence that's too high to make it
           // through, but we should fail if we just created something that
           // can't, for example, be kekulized.
           unsigned int sanitizeOps = MolOps::SANITIZE_ALL ^
                                      MolOps::SANITIZE_CLEANUP ^
                                      MolOps::SANITIZE_PROPERTIES;
-          MolOps::sanitizeMol(tmol, failed, sanitizeOps);
-          pdt[0]->updatePropertyCache(false);
+          MolOps::sanitizeMol(*tmol, failed, sanitizeOps);
           // REVIEW: is it actually important that we use canonical SMILES here?
-          Normalizer::Product np(MolToSmiles(tmol), pdt[0]);
+          Normalizer::Product np(MolToSmiles(*tmol), pdt[0]);
           pdts.push_back(np);
         } catch (MolSanitizeException &) {
           BOOST_LOG(rdInfoLog) << "FAILED sanitizeMol.\n";

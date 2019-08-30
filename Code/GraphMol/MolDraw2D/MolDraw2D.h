@@ -448,6 +448,10 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
     PRECONDITION(activeMolIdx_ >= 0, "no index");
     return atom_syms_[activeMolIdx_];
   };
+  //! Draw an arrow with either lines or a filled head (when asPolygon is true)
+  virtual void drawArrow(const Point2D &cds1, const Point2D &cds2,
+                         bool asPolygon = false, double frac = 0.05,
+                         double angle = M_PI / 6);
 
  private:
   bool needs_scale_;

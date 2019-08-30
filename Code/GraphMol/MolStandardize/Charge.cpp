@@ -15,6 +15,11 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <boost/range/adaptor/reversed.hpp>
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/flyweight.hpp>
+#include <boost/flyweight/key_value.hpp>
+#include <boost/flyweight/no_tracking.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 namespace RDKit {
 namespace MolStandardize {
@@ -25,23 +30,31 @@ std::vector<ChargeCorrection> CHARGE_CORRECTIONS = {
     ChargeCorrection("[Mg,Ca]", "[Mg,Ca;X0+0]", 2),
     ChargeCorrection("[Cl]", "[Cl;X0+0]", -1)};
 
+typedef boost::flyweight<
+    boost::flyweights::key_value<std::string, AcidBaseCatalogParams>,
+    boost::flyweights::no_tracking>
+    param_flyweight;
+
 // constructor
 Reionizer::Reionizer() {
-  AcidBaseCatalogParams abparams(defaultCleanupParameters.acidbaseFile);
-  this->d_abcat = new AcidBaseCatalog(&abparams);
+  const AcidBaseCatalogParams *abparams =
+      &(param_flyweight(defaultCleanupParameters.acidbaseFile).get());
+  this->d_abcat = new AcidBaseCatalog(abparams);
   this->d_ccs = CHARGE_CORRECTIONS;
 }
 
 Reionizer::Reionizer(const std::string acidbaseFile) {
-  AcidBaseCatalogParams abparams(acidbaseFile);
-  this->d_abcat = new AcidBaseCatalog(&abparams);
+  const AcidBaseCatalogParams *abparams =
+      &(param_flyweight(acidbaseFile).get());
+  this->d_abcat = new AcidBaseCatalog(abparams);
   this->d_ccs = CHARGE_CORRECTIONS;
 }
 
 Reionizer::Reionizer(const std::string acidbaseFile,
                      const std::vector<ChargeCorrection> ccs) {
-  AcidBaseCatalogParams abparams(acidbaseFile);
-  this->d_abcat = new AcidBaseCatalog(&abparams);
+  const AcidBaseCatalogParams *abparams =
+      &(param_flyweight(acidbaseFile).get());
+  this->d_abcat = new AcidBaseCatalog(abparams);
   this->d_ccs = ccs;
 }
 
@@ -67,7 +80,7 @@ ROMol *Reionizer::reionize(const ROMol &mol) {
   const std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> abpairs =
       abparams->getPairs();
 
-  ROMOL_SPTR omol(new ROMol(mol));
+  ROMol *omol = new ROMol(mol);
   int start_charge = MolOps::getFormalCharge(*omol);
 
   for (const auto &cc : this->d_ccs) {
@@ -202,10 +215,9 @@ ROMol *Reionizer::reionize(const ROMol &mol) {
     }
   }  // while loop
 
-  RWMOL_SPTR wmol(new RWMol(*omol));
-  MolOps::sanitizeMol(*wmol);
+  // MolOps::sanitizeMol(*static_cast<RWMol *>(omol));
 
-  return new ROMol(*wmol);
+  return omol;
 }
 
 std::pair<unsigned int, std::vector<unsigned int>>
@@ -252,14 +264,14 @@ std::pair<unsigned int, std::vector<unsigned int>> *Reionizer::weakestIonized(
 }
 
 Uncharger::Uncharger()
-    : pos_h(SmartsToMol("[+!H0!$(*~[-])]")),
-      pos_quat(SmartsToMol("[+H0!$(*~[-])]")),
-      neg(SmartsToMol("[-!$(*~[+H0])]")),
+    : pos_h(SmartsToMol("[+,+2,+3,+4;!H0!$(*~[-])]")),
+      pos_noh(SmartsToMol("[+,+2,+3,+4;H0;!$(*~[-])]")),
+      neg(SmartsToMol("[-!$(*~[+,+2,+3,+4])]")),
       neg_acid(SmartsToMol("[$([O-][C,P,S]=O),$([n-]1nnnc1),$(n1[n-]nnc1)]")){};
 
 Uncharger::Uncharger(const Uncharger &other) {
   pos_h = other.pos_h;
-  pos_quat = other.pos_quat;
+  pos_noh = other.pos_noh;
   neg = other.neg;
   neg_acid = other.neg_acid;
 };
@@ -277,7 +289,11 @@ ROMol *Uncharger::uncharge(const ROMol &mol) {
 
   // Get atom ids for matches
   SubstructMatch(*omol, *(this->pos_h), p_matches);
-  unsigned int q_matched = SubstructMatch(*omol, *(this->pos_quat), q_matches);
+  SubstructMatch(*omol, *(this->pos_noh), q_matches);
+  unsigned int q_matched = 0;
+  for (const auto &match : q_matches) {
+    q_matched += omol->getAtomWithIdx(match[0].second)->getFormalCharge();
+  }
   unsigned int n_matched = SubstructMatch(*omol, *(this->neg), n_matches);
   unsigned int a_matched = SubstructMatch(*omol, *(this->neg_acid), a_matches);
 
@@ -377,24 +393,36 @@ ROMol *Uncharger::uncharge(const ROMol &mol) {
       }
     }
   }
-  // Neutralize positive charges
-  std::vector<unsigned int> p_idx_matches;
-  for (const auto &match : p_matches) {
-    for (const auto &pair : match) {
-      p_idx_matches.push_back(pair.second);
-    }
+
+  // Neutralize cations until there is no longer a net charge remaining:
+  int netCharge = 0;
+  for (const auto &at : omol->atoms()) {
+    netCharge += at->getFormalCharge();
   }
-  for (const auto &idx : p_idx_matches) {
-    Atom *atom = omol->getAtomWithIdx(idx);
-    if (!atom->getNumExplicitHs()) {
-      // atoms from places like Mol blocks are normally missing explicit Hs:
-      atom->setNumExplicitHs(atom->getTotalNumHs());
+
+  if (netCharge > 0) {
+    // Neutralize positive charges where H counts can be adjusted
+    std::vector<unsigned int> p_idx_matches;
+    for (const auto &match : p_matches) {
+      for (const auto &pair : match) {
+        p_idx_matches.push_back(pair.second);
+      }
     }
-    atom->setNoImplicit(true);
-    while (atom->getFormalCharge() > 0 && atom->getNumExplicitHs() > 0) {
-      atom->setNumExplicitHs(atom->getTotalNumHs() - 1);
-      atom->setFormalCharge(atom->getFormalCharge() - 1);
-      BOOST_LOG(rdInfoLog) << "Removed positive charge.\n";
+    for (const auto &idx : p_idx_matches) {
+      Atom *atom = omol->getAtomWithIdx(idx);
+      if (!atom->getNumExplicitHs()) {
+        // atoms from places like Mol blocks are normally missing explicit Hs:
+        atom->setNumExplicitHs(atom->getTotalNumHs());
+      }
+      atom->setNoImplicit(true);
+      while (atom->getFormalCharge() > 0 && atom->getNumExplicitHs() > 0 &&
+             netCharge > 0) {
+        atom->setNumExplicitHs(atom->getTotalNumHs() - 1);
+        atom->setFormalCharge(atom->getFormalCharge() - 1);
+        --netCharge;
+        BOOST_LOG(rdInfoLog) << "Removed positive charge.\n";
+      }
+      if (!netCharge) break;
     }
   }
   return omol;

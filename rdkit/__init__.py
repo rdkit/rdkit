@@ -3,3 +3,16 @@ try:
 except ImportError:
   __version__ = 'Unknown'
   raise
+
+# if we are running in a jupyter notebook, enable the extensions
+try:
+  kernel_name = get_ipython().__class__.__name__
+
+  if kernel_name == 'ZMQInteractiveShell':
+    from rdkit.Chem.Draw import IPythonConsole
+    from rdkit.Chem import LogWarningMsg, WrapLogs
+    WrapLogs()  
+    LogWarningMsg("Enabling RDKit %s jupyter extensions"%__version__)
+    
+except:
+  pass

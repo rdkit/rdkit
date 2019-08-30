@@ -257,10 +257,12 @@ TEST_CASE("github #908: AddHs() using 3D coordinates with 2D conformations",
 }
 
 #endif
-TEST_CASE("github #2437: Canon::rankMolAtoms results in crossed double bonds in rings",
-          "[bug, molops]") {
+TEST_CASE(
+    "github #2437: Canon::rankMolAtoms results in crossed double bonds in "
+    "rings",
+    "[bug, molops]") {
   SECTION("underlying problem") {
-    std::string molb=R"CTAB(testmol
+    std::string molb = R"CTAB(testmol
   Mrv1824 05081910082D          
 
   4  4  0  0  0  0            999 V2000
@@ -274,21 +276,21 @@ TEST_CASE("github #2437: Canon::rankMolAtoms results in crossed double bonds in 
   2  4  2  0  0  0  0
 M  END
     )CTAB";
-    bool sanitize=false;
-    bool removeHs=false;
-    std::unique_ptr<RWMol> mol(MolBlockToMol(molb,sanitize,removeHs));
+    bool sanitize = false;
+    bool removeHs = false;
+    std::unique_ptr<RWMol> mol(MolBlockToMol(molb, sanitize, removeHs));
     REQUIRE(mol);
     mol->updatePropertyCache();
-    CHECK(mol->getBondWithIdx(3)->getBondType()==Bond::BondType::DOUBLE);
-    CHECK(mol->getBondWithIdx(3)->getBondDir()==Bond::BondDir::NONE);
+    CHECK(mol->getBondWithIdx(3)->getBondType() == Bond::BondType::DOUBLE);
+    CHECK(mol->getBondWithIdx(3)->getBondDir() == Bond::BondDir::NONE);
     std::vector<unsigned int> ranks;
     CHECK(!mol->getRingInfo()->isInitialized());
-    Canon::rankMolAtoms(*mol,ranks);
+    Canon::rankMolAtoms(*mol, ranks);
     CHECK(!mol->getRingInfo()->isInitialized());
   }
 
   SECTION("as discovered") {
-      std::string molb = R"CTAB(testmol
+    std::string molb = R"CTAB(testmol
   Mrv1824 05081910082D          
 
   4  4  0  0  0  0            999 V2000
@@ -302,21 +304,21 @@ M  END
   2  4  2  0  0  0  0
 M  END
     )CTAB";
-      bool sanitize = false;
-      bool removeHs = false;
-      std::unique_ptr<RWMol> mol(MolBlockToMol(molb, sanitize, removeHs));
-      REQUIRE(mol);
-      mol->updatePropertyCache();
-      CHECK(mol->getBondWithIdx(3)->getBondType() == Bond::BondType::DOUBLE);
-      CHECK(mol->getBondWithIdx(3)->getBondDir() == Bond::BondDir::NONE);
-      auto nmb = MolToMolBlock(*mol);
-      CHECK(nmb.find("2  4  2  3") == std::string::npos);
-      CHECK(nmb.find("2  4  2  0") != std::string::npos);
-      std::vector<unsigned int> ranks;
-      Canon::rankMolAtoms(*mol, ranks);
-      nmb = MolToMolBlock(*mol);
-      CHECK(nmb.find("2  4  2  3") == std::string::npos);
-      CHECK(nmb.find("2  4  2  0") != std::string::npos);
+    bool sanitize = false;
+    bool removeHs = false;
+    std::unique_ptr<RWMol> mol(MolBlockToMol(molb, sanitize, removeHs));
+    REQUIRE(mol);
+    mol->updatePropertyCache();
+    CHECK(mol->getBondWithIdx(3)->getBondType() == Bond::BondType::DOUBLE);
+    CHECK(mol->getBondWithIdx(3)->getBondDir() == Bond::BondDir::NONE);
+    auto nmb = MolToMolBlock(*mol);
+    CHECK(nmb.find("2  4  2  3") == std::string::npos);
+    CHECK(nmb.find("2  4  2  0") != std::string::npos);
+    std::vector<unsigned int> ranks;
+    Canon::rankMolAtoms(*mol, ranks);
+    nmb = MolToMolBlock(*mol);
+    CHECK(nmb.find("2  4  2  3") == std::string::npos);
+    CHECK(nmb.find("2  4  2  0") != std::string::npos);
   }
 }
 TEST_CASE(
@@ -334,6 +336,177 @@ M  END)CTAB";
     std::unique_ptr<ROMol> mol(MolBlockToMol(mb));
     REQUIRE(mol);
     CHECK(mol->getAtomWithIdx(0)->getFormalCharge() == 3);
+    CHECK(mol->getAtomWithIdx(0)->getTotalNumHs() == 0);
+  }
+}
+
+TEST_CASE("Specialized exceptions for sanitization errors", "[molops]") {
+  SECTION("AtomValenceException") {
+    std::vector<std::pair<std::string, unsigned int>> smiles = {
+        {"C=n1ccnc1", 1}, {"CCO(C)C", 2}};
+    for (auto pr : smiles) {
+      CHECK_THROWS_AS(SmilesToMol(pr.first), AtomValenceException);
+      try {
+        auto m = SmilesToMol(pr.first);
+      } catch (const AtomValenceException &e) {
+        CHECK(e.getType() == "AtomValenceException");
+        CHECK(e.getAtomIdx() == pr.second);
+      }
+    }
+  }
+  SECTION("AtomKekulizeException") {
+    std::vector<std::pair<std::string, unsigned int>> smiles = {
+        {"CCcc", 2}, {"C1:c:CC1", 0}};
+    for (auto pr : smiles) {
+      CHECK_THROWS_AS(SmilesToMol(pr.first), AtomKekulizeException);
+      try {
+        auto m = SmilesToMol(pr.first);
+      } catch (const AtomKekulizeException &e) {
+        CHECK(e.getType() == "AtomKekulizeException");
+        CHECK(e.getAtomIdx() == pr.second);
+      }
+    }
+  }
+  SECTION("KekulizeException") {
+    std::vector<std::pair<std::string, std::vector<unsigned int>>> smiles = {
+        {"c1cccc1", {0, 1, 2, 3, 4}}, {"Cc1cc1", {1, 2, 3}}};
+    for (auto pr : smiles) {
+      CHECK_THROWS_AS(SmilesToMol(pr.first), KekulizeException);
+      try {
+        auto m = SmilesToMol(pr.first);
+      } catch (const KekulizeException &e) {
+        CHECK(e.getType() == "KekulizeException");
+        CHECK(e.getAtomIndices() == pr.second);
+      }
+    }
+  }
+}
+
+TEST_CASE("detectChemistryProblems", "[molops]") {
+  SECTION("Basics") {
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    auto m = std::unique_ptr<ROMol>(SmilesToMol("CO(C)CFCc1cc1", ps));
+    REQUIRE(m);
+    auto res = MolOps::detectChemistryProblems(*m);
+    REQUIRE(res.size() == 3);
+
+    CHECK(res[0]->getType() == "AtomValenceException");
+    REQUIRE(dynamic_cast<AtomValenceException *>(res[0].get()));
+    CHECK(dynamic_cast<AtomSanitizeException *>(res[0].get())->getAtomIdx() ==
+          1);
+
+    CHECK(res[1]->getType() == "AtomValenceException");
+    REQUIRE(dynamic_cast<AtomSanitizeException *>(res[1].get()));
+    CHECK(dynamic_cast<AtomSanitizeException *>(res[1].get())->getAtomIdx() ==
+          4);
+
+    CHECK(res[2]->getType() == "KekulizeException");
+    REQUIRE(dynamic_cast<KekulizeException *>(res[2].get()));
+    CHECK(dynamic_cast<KekulizeException *>(res[2].get())->getAtomIndices() ==
+          std::vector<unsigned int>({6, 7, 8}));
+  }
+  SECTION("No problems") {
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    auto m = std::unique_ptr<ROMol>(SmilesToMol("c1ccccc1", ps));
+    REQUIRE(m);
+    auto res = MolOps::detectChemistryProblems(*m);
+    REQUIRE(res.size() == 0);
+  }
+}
+
+TEST_CASE(
+    "github #2606: Bad valence corrections on Pb, Sn"
+    "[bug, molops]") {
+  SECTION("basics-Pb") {
+    std::string mb = R"CTAB(
+  Mrv1810 08141905562D          
+
+  5  0  0  0  0  0            999 V2000
+   -3.6316   -0.4737    0.0000 Pb  0  0  0  0  0  0  0  0  0  0  0  0
+   -3.6541    0.3609    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+   -2.4586   -0.5188    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+   -3.6992   -1.5338    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+   -4.5789   -0.4286    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+M  CHG  5   1   4   2  -1   3  -1   4  -1   5  -1
+M  END
+)CTAB";
+    std::unique_ptr<ROMol> mol(MolBlockToMol(mb));
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(0)->getFormalCharge() == 4);
+    CHECK(mol->getAtomWithIdx(0)->getTotalNumHs() == 0);
+  }
+  SECTION("basics-Sn") {
+    std::string mb = R"CTAB(
+  Mrv1810 08141905562D          
+
+  5  0  0  0  0  0            999 V2000
+   -3.6316   -0.4737    0.0000 Sn  0  0  0  0  0  0  0  0  0  0  0  0
+   -3.6541    0.3609    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+   -2.4586   -0.5188    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+   -3.6992   -1.5338    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+   -4.5789   -0.4286    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+M  CHG  5   1   4   2  -1   3  -1   4  -1   5  -1
+M  END
+)CTAB";
+    std::unique_ptr<ROMol> mol(MolBlockToMol(mb));
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(0)->getFormalCharge() == 4);
+    CHECK(mol->getAtomWithIdx(0)->getTotalNumHs() == 0);
+  }
+  SECTION("basics-Ge") {
+    std::string mb = R"CTAB(
+  Mrv1810 08141905562D          
+
+  5  0  0  0  0  0            999 V2000
+   -3.6316   -0.4737    0.0000 Ge  0  0  0  0  0  0  0  0  0  0  0  0
+   -3.6541    0.3609    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+   -2.4586   -0.5188    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+   -3.6992   -1.5338    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+   -4.5789   -0.4286    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+M  CHG  5   1   4   2  -1   3  -1   4  -1   5  -1
+M  END
+)CTAB";
+    std::unique_ptr<ROMol> mol(MolBlockToMol(mb));
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(0)->getFormalCharge() == 4);
+    CHECK(mol->getAtomWithIdx(0)->getTotalNumHs() == 0);
+  }
+}
+TEST_CASE(
+    "github #2607: Pb, Sn should support valence 2"
+    "[bug, molops]") {
+  SECTION("basics-Pb") {
+    std::string mb = R"CTAB(
+  Mrv1810 08141905562D          
+
+  3  0  0  0  0  0            999 V2000
+   -3.6316   -0.4737    0.0000 Pb  0  0  0  0  0  0  0  0  0  0  0  0
+   -3.6541    0.3609    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+   -2.4586   -0.5188    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+M  CHG  3   1   2   2  -1   3  -1
+M  END
+)CTAB";
+    std::unique_ptr<ROMol> mol(MolBlockToMol(mb));
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(0)->getFormalCharge() == 2);
+    CHECK(mol->getAtomWithIdx(0)->getTotalNumHs() == 0);
+  }
+  SECTION("basics-Sn") {
+    std::string mb = R"CTAB(
+  Mrv1810 08141905562D          
+
+  3  0  0  0  0  0            999 V2000
+   -3.6316   -0.4737    0.0000 Sn  0  0  0  0  0  0  0  0  0  0  0  0
+   -3.6541    0.3609    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+   -2.4586   -0.5188    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+M  CHG  3   1   2   2  -1   3  -1
+M  END
+)CTAB";
+    std::unique_ptr<ROMol> mol(MolBlockToMol(mb));
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(0)->getFormalCharge() == 2);
     CHECK(mol->getAtomWithIdx(0)->getTotalNumHs() == 0);
   }
 }

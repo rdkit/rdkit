@@ -163,7 +163,7 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
 
   //------------------------------------
   //! Construct by making a copy of the input \c params object
-  HierarchCatalog<entryType, paramType, orderType>(paramType *params)
+  HierarchCatalog<entryType, paramType, orderType>(const paramType *params)
       : Catalog<entryType, paramType>() {
     this->setCatalogParams(params);
   }

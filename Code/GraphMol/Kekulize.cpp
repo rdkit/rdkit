@@ -20,12 +20,6 @@ namespace RDKit {
 // Local utility namespace
 namespace {
 
-// Determine whether or not a molecule is to the left of Carbon
-bool isEarlyAtom(int atomicNum) {
-  // FIX: this is duplicated from Atom.cpp. It should be defined once!
-  return (4 - PeriodicTable::getTable()->getNouterElecs(atomicNum)) > 0;
-}
-
 void backTrack(RWMol &mol, INT_INT_DEQ_MAP &options, int lastOpt,
                INT_VECT &done, INT_DEQUE &aqueue,
                boost::dynamic_bitset<> &dBndCands,
@@ -109,7 +103,7 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
           errout << "Aromatic bonds on non aromatic atom " << at->getIdx();
           std::string msg = errout.str();
           BOOST_LOG(rdErrorLog) << msg << std::endl;
-          throw MolSanitizeException(msg);
+          throw AtomKekulizeException(msg, at->getIdx());
         }
         ++beg;
       }
@@ -472,16 +466,20 @@ void kekulizeFused(RWMol &mol, const VECT_INT_VECT &arings,
     // we exhausted all option (or crossed the allowed
     // number of backTracks) and we still need to backtrack
     // can't kekulize this thing
+    std::vector<unsigned int> problemAtoms;
     std::ostringstream errout;
     errout << "Can't kekulize mol.";
     errout << "  Unkekulized atoms:";
     for (unsigned int i = 0; i < nats; ++i) {
-      if (dBndCands[i]) errout << " " << i;
+      if (dBndCands[i]) {
+        errout << " " << i;
+        problemAtoms.push_back(i);
+      }
     }
     errout << std::endl;
     std::string msg = errout.str();
     BOOST_LOG(rdErrorLog) << msg << std::endl;
-    throw MolSanitizeException(msg);
+    throw KekulizeException(msg, problemAtoms);
   }
 }
 }  // namespace
@@ -598,7 +596,7 @@ void Kekulize(RWMol &mol, bool markAtomsBonds, unsigned int maxBackTracks) {
           errout << "non-ring atom " << (*ai)->getIdx() << " marked aromatic";
           std::string msg = errout.str();
           BOOST_LOG(rdErrorLog) << msg << std::endl;
-          throw MolSanitizeException(msg);
+          throw AtomKekulizeException(msg, (*ai)->getIdx());
         }
         (*ai)->setIsAromatic(false);
         // make sure "explicit" Hs on things like pyrroles don't hang around
@@ -625,7 +623,7 @@ void Kekulize(RWMol &mol, bool markAtomsBonds, unsigned int maxBackTracks) {
              << ": " << val << "!=" << valences[i] << std::endl;
       std::string msg = errout.str();
       BOOST_LOG(rdErrorLog) << msg << std::endl;
-      throw MolSanitizeException(msg);
+      throw AtomKekulizeException(msg, (*ai)->getIdx());
     }
     i++;
   }

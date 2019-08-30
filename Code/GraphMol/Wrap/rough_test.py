@@ -453,7 +453,7 @@ class TestCase(unittest.TestCase):
     smi1 = Chem.MolToSmiles(m)
     smi2 = Chem.MolToSmiles(m2)
     self.assertTrue(smi1 == smi2)
-    
+
   def test16Props(self):
     m = Chem.MolFromSmiles('C1=CN=CC=C1')
     self.assertTrue(not m.HasProp('prop1'))
@@ -1684,7 +1684,7 @@ M  END
         Chem.AssignStereochemistry(mol, force=True)
       smi = Chem.MolToSmiles(mol, isomericSmiles=True)
       self.allStereoBonds([bond])
-      self.assertEqual(smi, "F/C=C\F")
+      self.assertEqual(smi, r"F/C=C\F")
       self.assertDoubleBondStereo(smi, Chem.BondStereo.STEREOZ)
 
   def recursive_enumerate_stereo_bonds(self, mol, done_bonds, bonds):
@@ -2106,7 +2106,7 @@ CAS<~>
     self.assertTrue(ri.IsBondInRingOfSize(2, 4))
 
 
-    if hasattr(Chem,'FindRingFamilies'): 
+    if hasattr(Chem,'FindRingFamilies'):
       ri = m.GetRingInfo()
       self.assertFalse(ri.AreRingFamiliesInitialized())
       Chem.FindRingFamilies(m)
@@ -3461,9 +3461,18 @@ CAS<~>
     self.assertEqual(
       list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, 4), breakTies=False)),
       [4, 6, 4, 6, -1, -1, -1, -1])
+    self.assertNotEqual(
+      list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, 4), breakTies=True)),
+      [4, 6, 4, 6, -1, -1, -1, -1])
     self.assertEqual(
       list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(4, 8), breakTies=False)),
       [-1, -1, -1, -1, 4, 6, 4, 6])
+    self.assertNotEqual(
+      list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(4, 8), breakTies=True)),
+      [-1, -1, -1, -1, 4, 6, 4, 6])
+
+    
+
 
   def test93RWMolsAsROMol(self):
     """ test the RWMol class as a proper ROMol
@@ -3642,37 +3651,8 @@ CAS<~>
 
   def testGithub497(self):
     outf = gzip.open(tempfile.mktemp(), 'wb+')
-    m = Chem.MolFromSmiles('C')
-    w = Chem.SDWriter(outf)
-    e = False
-    try:
-      w.write(m)
-    except Exception:
-      sys.stderr.write('Opening gzip as binary fails on Python3 ' \
-        'upon writing to SDWriter without crashing the RDKit\n')
-      e = True
-    else:
-      e = (sys.version_info < (3, 0))
-    try:
-      w.close()
-    except Exception:
-      sys.stderr.write('Opening gzip as binary fails on Python3 ' \
-        'upon closing SDWriter without crashing the RDKit\n')
-      e = True
-    else:
-      if (not e):
-        e = (sys.version_info < (3, 0))
-    w = None
-    try:
-      outf.close()
-    except Exception:
-      sys.stderr.write('Opening gzip as binary fails on Python3 ' \
-        'upon closing the stream without crashing the RDKit\n')
-      e = True
-    else:
-      if (not e):
-        e = (sys.version_info < (3, 0))
-    self.assertTrue(e)
+    with self.assertRaises(ValueError):
+      w = Chem.SDWriter(outf)
 
   def testGithub498(self):
     if (sys.version_info < (3, 0)):
@@ -3746,6 +3726,18 @@ CAS<~>
     qps.makeBondsGenericFlags = Chem.ADJUST_IGNORERINGS
     am = Chem.AdjustQueryProperties(m, qps)
     self.assertEqual(Chem.MolToSmarts(am), '[#6&D2]1-[#6&D2]-[#6&D2]-[#6&D3]-1~[#8]~[#6]')
+
+  def testMolFragmentSmarts(self):
+    m = Chem.MolFromSmiles('C1CCC1OC')
+    self.assertEqual(Chem.MolFragmentToSmarts(m, [0, 1, 2]), '[#6]-[#6]-[#6]')
+    # if bondsToUse is honored, the ring won't show up
+    self.assertEqual(Chem.MolFragmentToSmarts(m, [0, 1, 2, 3], bondsToUse=[0, 1, 2, 3]), '[#6]-[#6]-[#6]-[#6]')
+
+    # Does MolFragmentToSmarts accept output of AdjustQueryProperties?
+    qps = Chem.AdjustQueryParameters()
+    qps.makeAtomsGeneric = True
+    am = Chem.AdjustQueryProperties(m, qps)
+    self.assertEqual(Chem.MolFragmentToSmarts(am, [0, 1, 2]), '*-*-*')
 
   def testAdjustQueryPropertiesgithubIssue1474(self):
     core = Chem.MolFromSmiles('[*:1]C1N([*:2])C([*:3])O1')
@@ -5028,16 +5020,16 @@ width='200px' height='200px' >
 
   def testAssignStereochemistryFrom3D(self):
     def _stereoTester(mol,expectedCIP,expectedStereo):
-        mol.UpdatePropertyCache()
-        self.assertEqual(mol.GetNumAtoms(),9)
-        self.assertFalse(mol.GetAtomWithIdx(1).HasProp("_CIPCode"))
-        self.assertEqual(mol.GetBondWithIdx(3).GetStereo(),Chem.BondStereo.STEREONONE)
-        for bond in mol.GetBonds():
-            bond.SetBondDir(Chem.BondDir.NONE)
-        Chem.AssignStereochemistryFrom3D(mol)
-        self.assertTrue(mol.GetAtomWithIdx(1).HasProp("_CIPCode"))
-        self.assertEqual(mol.GetAtomWithIdx(1).GetProp("_CIPCode"),expectedCIP)
-        self.assertEqual(mol.GetBondWithIdx(3).GetStereo(),expectedStereo)
+      mol.UpdatePropertyCache()
+      self.assertEqual(mol.GetNumAtoms(),9)
+      self.assertFalse(mol.GetAtomWithIdx(1).HasProp("_CIPCode"))
+      self.assertEqual(mol.GetBondWithIdx(3).GetStereo(),Chem.BondStereo.STEREONONE)
+      for bond in mol.GetBonds():
+        bond.SetBondDir(Chem.BondDir.NONE)
+      Chem.AssignStereochemistryFrom3D(mol)
+      self.assertTrue(mol.GetAtomWithIdx(1).HasProp("_CIPCode"))
+      self.assertEqual(mol.GetAtomWithIdx(1).GetProp("_CIPCode"),expectedCIP)
+      self.assertEqual(mol.GetBondWithIdx(3).GetStereo(),expectedStereo)
 
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'test_data',
                        'stereochem.sdf')
@@ -5049,8 +5041,8 @@ width='200px' height='200px' >
     ("S",Chem.BondStereo.STEREOE),
     )
     for i,mol in enumerate(suppl):
-        cip,stereo = expected[i]
-        _stereoTester(mol,cip,stereo)
+      cip,stereo = expected[i]
+      _stereoTester(mol,cip,stereo)
 
   def testGitHub2082(self):
     ctab="""
@@ -5104,9 +5096,9 @@ M  END
   def testGitHub1985(self):
     # simple check, this used to throw an exception
     try:
-       Chem.MolToSmarts(Chem.MolFromSmarts("[C@]"))
+      Chem.MolToSmarts(Chem.MolFromSmarts("[C@]"))
     except:
-       self.fail("[C@] caused an exception when roundtripping smarts")
+      self.fail("[C@] caused an exception when roundtripping smarts")
 
   def testGetEnhancedStereo(self):
 
@@ -5293,7 +5285,7 @@ M  END
     for atom in m.GetAtoms():
       bv.SetBit(atom.GetIdx())
       atom.SetExplicitBitVectProp("prop", bv)
-      
+
     for atom in m.GetAtoms():
       bv = atom.GetExplicitBitVectProp("prop")
       self.assertTrue(bv.GetBit(atom.GetIdx()))
@@ -5310,7 +5302,7 @@ M  END
     for atom in m.GetAtoms():
       if atom.GetIdx() == 0:
         atom.SetExplicitBitVectProp("prop", bv)
-      
+
     l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
     self.assertEqual(l, (0,))
 
@@ -5319,37 +5311,37 @@ M  END
       bv = DataStructs.ExplicitBitVect(4)
       bv.SetBit(atom.GetIdx())
       atom.SetExplicitBitVectProp("prop", bv)
-        
+
     sma = Chem.MolFromSmarts("C")
     for atom in sma.GetAtoms():
-        bv = DataStructs.ExplicitBitVect(4)
-        bv.SetBit(1)
-        qa = rdqueries.HasBitVectPropWithValueQueryAtom("prop", bv, tolerance=0.0)
-        atom.ExpandQuery(qa)
+      bv = DataStructs.ExplicitBitVect(4)
+      bv.SetBit(1)
+      qa = rdqueries.HasBitVectPropWithValueQueryAtom("prop", bv, tolerance=0.0)
+      atom.ExpandQuery(qa)
 
     res = m.GetSubstructMatches(sma)
     self.assertEqual(res, ((1,),))
 
     sma = Chem.MolFromSmarts("C")
     for atom in sma.GetAtoms():
-        bv = DataStructs.ExplicitBitVect(4)
-        bv.SetBit(0)
-        qa = rdqueries.HasBitVectPropWithValueQueryAtom("prop", bv, tolerance=0.0)
-        atom.ExpandQuery(qa)
+      bv = DataStructs.ExplicitBitVect(4)
+      bv.SetBit(0)
+      qa = rdqueries.HasBitVectPropWithValueQueryAtom("prop", bv, tolerance=0.0)
+      atom.ExpandQuery(qa)
 
     res = m.GetSubstructMatches(sma)
     self.assertEqual(res, ((0,),))
-    
+
     sma = Chem.MolFromSmarts("C")
     for atom in sma.GetAtoms():
-        bv = DataStructs.ExplicitBitVect(4)
-        bv.SetBit(0)
-        qa = rdqueries.HasBitVectPropWithValueQueryAtom("prop", bv, tolerance=1.0)
-        atom.ExpandQuery(qa)
+      bv = DataStructs.ExplicitBitVect(4)
+      bv.SetBit(0)
+      qa = rdqueries.HasBitVectPropWithValueQueryAtom("prop", bv, tolerance=1.0)
+      atom.ExpandQuery(qa)
 
     res = m.GetSubstructMatches(sma)
     self.assertEqual(res, ((0,),(1,)))
-        
+
   def testGithub2441(self):
     m = Chem.MolFromSmiles("CC")
     conf = Chem.Conformer(2)
@@ -5395,7 +5387,7 @@ C1C(Cl)CCCC duff2
     l = [x for x in suppl2]
     self.assertEqual(len(l),7)
     self.assertTrue(l[6] is None)
-      
+
     sdf=b"""
   Mrv1810 06051911332D          
 
@@ -5430,7 +5422,7 @@ $$$$
     self.assertEqual(len(l),3)
     self.assertTrue(l[1] is None)
     self.assertTrue(l[2] is None)
-    
+
     from io import BytesIO
     sio = BytesIO(sdf)
     suppl3 = Chem.ForwardSDMolSupplier(sio)
@@ -5438,7 +5430,7 @@ $$$$
     self.assertEqual(len(l),3)
     self.assertTrue(l[1] is None)
     self.assertTrue(l[2] is None)
-      
+
     sdf=b"""
   Mrv1810 06051911332D          
 
@@ -5472,7 +5464,7 @@ M  END
     self.assertEqual(len(l),2)
     self.assertTrue(l[0] is not None)
     self.assertTrue(l[1] is not None)
-    
+
     from io import BytesIO
     sio = BytesIO(sdf)
     suppl3 = Chem.ForwardSDMolSupplier(sio)
@@ -5507,7 +5499,75 @@ H      0.635000    0.635000    0.635000
 
     self.assertEqual(Chem.MolToXYZBlock(mol), xyzblock_expected)
 
+  def testSanitizationExceptionBasics(self):
+    try:
+      Chem.SanitizeMol(Chem.MolFromSmiles('CFC',sanitize=False))
+    except Chem.AtomValenceException as exc:
+      self.assertEqual(exc.cause.GetAtomIdx(),1)
+    else:
+      self.assertFalse(True)
+      
+    try:
+      Chem.SanitizeMol(Chem.MolFromSmiles('c1cc1',sanitize=False))
+    except Chem.KekulizeException as exc:
+      self.assertEqual(exc.cause.GetAtomIndices(),(0,1,2))
+    else:
+      self.assertFalse(True)
+          
 
+  def testSanitizationExceptionHierarchy(self):
+    with self.assertRaises(Chem.AtomValenceException):
+      Chem.SanitizeMol(Chem.MolFromSmiles('CFC',sanitize=False))
+    with self.assertRaises(Chem.AtomSanitizeException):
+      Chem.SanitizeMol(Chem.MolFromSmiles('CFC',sanitize=False))
+    with self.assertRaises(Chem.MolSanitizeException):
+      Chem.SanitizeMol(Chem.MolFromSmiles('CFC',sanitize=False))
+    with self.assertRaises(ValueError):
+      Chem.SanitizeMol(Chem.MolFromSmiles('CFC',sanitize=False))
+
+    with self.assertRaises(Chem.KekulizeException):
+      Chem.SanitizeMol(Chem.MolFromSmiles('c1cc1',sanitize=False))
+    with self.assertRaises(Chem.MolSanitizeException):
+      Chem.SanitizeMol(Chem.MolFromSmiles('c1cc1',sanitize=False))
+    with self.assertRaises(ValueError):
+      Chem.SanitizeMol(Chem.MolFromSmiles('c1cc1', sanitize=False))
+
+  def testDetectChemistryProblems(self):
+    m = Chem.MolFromSmiles('CFCc1cc1ClC',sanitize=False)
+    ps = Chem.DetectChemistryProblems(m)
+    self.assertEqual(len(ps),3)
+    self.assertEqual([x.GetType() for x in ps],['AtomValenceException','AtomValenceException','KekulizeException'])
+    self.assertEqual(ps[0].GetAtomIdx(),1)
+    self.assertEqual(ps[1].GetAtomIdx(),6)
+    self.assertEqual(ps[2].GetAtomIndices(),(3,4,5))
+
+  def testGithub2611(self):
+    mol = Chem.MolFromSmiles('ONCS.ONCS')
+    for atom in mol.GetAtoms():
+      atom.SetIsotope(atom.GetIdx())
+    
+    order1 = list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, 4), breakTies=False, includeIsotopes=True))
+    order2 = list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, 8), breakTies=False, includeIsotopes=False))
+    self.assertNotEqual(order1[:4], order2[4:])
+    # ensure that the orders are ignored in the second batch
+    self.assertEqual(order2[:4], order2[4:])
+
+  
+    for smi in ['ONCS.ONCS', 'F[C@@H](Br)[C@H](F)Cl']:
+      mol = Chem.MolFromSmiles(smi)
+      for atom in mol.GetAtoms():
+        atom.SetIsotope(atom.GetIdx())
+
+        for iso,chiral in [(True,True),(True,False),(False,True), (False,False)]:
+          order1 = list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, mol.GetNumAtoms()), bondsToUse=range(0,mol.GetNumBonds()),
+                                                          breakTies=False, includeIsotopes=iso, includeChirality=chiral))
+          order2 = list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, mol.GetNumAtoms()), bondsToUse=range(0,mol.GetNumBonds()),
+                                                          breakTies=True, includeIsotopes=iso, includeChirality=chiral))
+          order3 = list(Chem.CanonicalRankAtoms(mol, breakTies=False, includeIsotopes=iso, includeChirality=chiral))
+          order4 = list(Chem.CanonicalRankAtoms(mol, breakTies=True, includeIsotopes=iso, includeChirality=chiral))
+          self.assertEqual(order1,order3)
+          self.assertEqual(order2,order4)
+    
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()

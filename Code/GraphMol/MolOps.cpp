@@ -383,6 +383,48 @@ void sanitizeMol(RWMol &mol, unsigned int &operationThatFailed,
   operationThatFailed = 0;
 }
 
+std::vector<std::unique_ptr<MolSanitizeException>> detectChemistryProblems(
+    const ROMol &imol, unsigned int sanitizeOps) {
+  RWMol mol(imol);
+  std::vector<std::unique_ptr<MolSanitizeException>> res;
+
+  // clear out any cached properties
+  mol.clearComputedProps();
+
+  int operation;
+  operation = SANITIZE_CLEANUP;
+  if (sanitizeOps & operation) {
+    // clean up things like nitro groups
+    cleanUp(mol);
+  }
+
+  // update computed properties on atoms and bonds:
+  operation = SANITIZE_PROPERTIES;
+  if (sanitizeOps & operation) {
+    for (auto &atom : mol.atoms()) {
+      try {
+        bool strict = true;
+        atom->updatePropertyCache(strict);
+      } catch (const MolSanitizeException &e) {
+        res.emplace_back(e.copy());
+      }
+    }
+  } else {
+    mol.updatePropertyCache(false);
+  }
+
+  // kekulizations
+  operation = SANITIZE_KEKULIZE;
+  if (sanitizeOps & operation) {
+    try {
+      Kekulize(mol);
+    } catch (const MolSanitizeException &e) {
+      res.emplace_back(e.copy());
+    }
+  }
+  return res;
+}
+
 std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
                                     INT_VECT *frags,
                                     VECT_INT_VECT *fragsMolAtomMapping,

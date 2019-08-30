@@ -245,6 +245,16 @@ ROMol *MolFromHELM(python::object seq, bool sanitize) {
   return static_cast<ROMol *>(newM);
 }
 
+std::string molFragmentToSmarts(const ROMol &mol, python::object atomsToUse,
+                                python::object bondsToUse,
+                                bool doIsomericSmarts = true)
+{
+  auto atomIndices = pythonObjectToVect(atomsToUse, static_cast<int>(mol.getNumAtoms()));
+  auto bondIndices = pythonObjectToVect(bondsToUse, static_cast<int>(mol.getNumBonds()));
+  return RDKit::MolFragmentToSmarts(mol, *atomIndices, bondIndices.get(), doIsomericSmarts);
+}
+
+
 struct smilesfrag_gen {
   std::string operator()(const ROMol &mol, const std::vector<int> &atomsToUse,
                          const std::vector<int> *bondsToUse,
@@ -278,13 +288,11 @@ std::string MolFragmentToSmilesHelper(
     python::object atomSymbols, python::object bondSymbols,
     bool doIsomericSmiles, bool doKekule, int rootedAtAtom, bool canonical,
     bool allBondsExplicit, bool allHsExplicit) {
-  std::unique_ptr<std::vector<int>> avect =
-      pythonObjectToVect(atomsToUse, static_cast<int>(mol.getNumAtoms()));
+  auto avect = pythonObjectToVect(atomsToUse, static_cast<int>(mol.getNumAtoms()));
   if (!avect.get() || !(avect->size())) {
     throw_value_error("atomsToUse must not be empty");
   }
-  std::unique_ptr<std::vector<int>> bvect =
-      pythonObjectToVect(bondsToUse, static_cast<int>(mol.getNumBonds()));
+  auto bvect = pythonObjectToVect(bondsToUse, static_cast<int>(mol.getNumBonds()));
   std::unique_ptr<std::vector<std::string>> asymbols =
       pythonObjectToVect<std::string>(atomSymbols);
   std::unique_ptr<std::vector<std::string>> bsymbols =
@@ -316,8 +324,9 @@ std::vector<int> CanonicalRankAtomsInFragment(const ROMol &mol,
                                               python::object atomsToUse,
                                               python::object bondsToUse,
                                               python::object atomSymbols,
-                                              python::object bondSymbols,
-                                              bool breakTies = true)
+                                              bool breakTies = true,
+					      bool includeChirality = true,
+					      bool includeIsotopes = true)
 
 {
   std::unique_ptr<std::vector<int>> avect =
@@ -329,13 +338,8 @@ std::vector<int> CanonicalRankAtomsInFragment(const ROMol &mol,
       pythonObjectToVect(bondsToUse, static_cast<int>(mol.getNumBonds()));
   std::unique_ptr<std::vector<std::string>> asymbols =
       pythonObjectToVect<std::string>(atomSymbols);
-  std::unique_ptr<std::vector<std::string>> bsymbols =
-      pythonObjectToVect<std::string>(bondSymbols);
   if (asymbols.get() && asymbols->size() != mol.getNumAtoms()) {
     throw_value_error("length of atom symbol list != number of atoms");
-  }
-  if (bsymbols.get() && bsymbols->size() != mol.getNumBonds()) {
-    throw_value_error("length of bond symbol list != number of bonds");
   }
 
   boost::dynamic_bitset<> atoms(mol.getNumAtoms());
@@ -347,7 +351,7 @@ std::vector<int> CanonicalRankAtomsInFragment(const ROMol &mol,
 
   std::vector<unsigned int> ranks(mol.getNumAtoms());
   Canon::rankFragmentAtoms(mol, ranks, atoms, bonds, asymbols.get(),
-                           bsymbols.get(), breakTies);
+                           breakTies, includeChirality, includeIsotopes);
 
   std::vector<int> resRanks(mol.getNumAtoms());
   // set unused ranks to -1 for the Python interface
@@ -991,6 +995,24 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
               docString.c_str());
 
   docString =
+      "Returns a SMARTS string for a fragment of a molecule\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule\n\
+    - atomsToUse: indices of atoms to include in the SMARTS string\n\
+    - bondsToUse: indices of bonds to include in the SMARTS string (optional)\n\
+    - isomericSmarts: (optional) include information about stereochemistry in\n\
+      the SMARTS.  Defaults to true.\n\
+\n\
+  RETURNS:\n\
+\n\
+    a string\n\
+\n";
+  python::def("MolFragmentToSmarts", molFragmentToSmarts,
+              (python::arg("mol"), python::arg("atomsToUse"), python::arg("bondsToUse") = 0, python::arg("isomericSmarts") = true),
+              docString.c_str());
+
+  docString =
       "Writes a molecule to a TPL file.\n\n\
   ARGUMENTS:\n\
 \n\
@@ -1302,9 +1324,9 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       will be included.\n\
     - atomSymbols : (optional) a list with the symbols to use for the atoms\n\
       in the SMILES. This should have be mol.GetNumAtoms() long.\n\
-    - bondSymbols : (optional) a list with the symbols to use for the bonds\n\
-      in the SMILES. This should have be mol.GetNumBonds() long.\n\
     - breakTies: (optional) force breaking of ranked ties\n\
+    - includeChirality: (optional) use chiral information when computing rank [default=True]\n\
+    - includeIsotopes: (optional) use isotope information when computing rank [default=True]\n\
 \n\
   RETURNS:\n\
 \n\
@@ -1313,7 +1335,9 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
   python::def("CanonicalRankAtomsInFragment", CanonicalRankAtomsInFragment,
               (python::arg("mol"), python::arg("atomsToUse"),
                python::arg("bondsToUse") = 0, python::arg("atomSymbols") = 0,
-               python::arg("bondSymbols") = 0, python::arg("breakTies") = true),
+               python::arg("breakTies") = true,
+	       python::arg("includeChirality") = true,
+               python::arg("includeIsotopes") = true),
               docString.c_str());
 
   python::def(
