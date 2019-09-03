@@ -29,7 +29,7 @@ And to improve search performance, I allowed postgresql to use more memory than 
 
 #### Creating a database from a file
 
-In this example I show how to load a database from the SMILES file of commercially available compounds that is downloadable from emolecules.com at URL <http://www.emolecules.com/doc/plus/download-database.php>
+In this example I show how to load a database from the SMILES file of commercially available compounds that is downloadable from emolecules.com at URL <http://downloads.emolecules.com/free/>
 
 If you choose to repeat this exact example yourself, please note that it takes several hours to load the 6 million row database and generate all fingerprints.
 
