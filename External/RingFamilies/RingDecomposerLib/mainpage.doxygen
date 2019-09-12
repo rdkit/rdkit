@@ -1,0 +1,95 @@
+/*!
+
+@mainpage
+
+The RingDecomposerLib is a library for calculation of the
+unique ring families and related ring topology
+descriptions.
+
+It is developed at the
+University of Hamburg, ZBH - Center for Bioinformatics
+by Niek Andresen, Florian Flachsenberg and Matthias Rarey.
+
+The library is distributed under BSD New license,
+see the file LICENSE and [BSD New]
+(https://opensource.org/licenses/BSD-3-Clause). 
+
+Please cite:
+
+Kolodzik, A.; Urbaczek, S.; Rarey, M.
+Unique Ring Families: A Chemically Meaningful Description
+of Molecular Ring Topologies.
+J. Chem. Inf. Model., 2012, 52 (8), pp 2013-2021
+
+Flachsenberg, F.; Andresen, N.; Rarey, M.
+RingDecomposerLib: An Open-Source Implementation of
+Unique Ring Families and Other Cycle Bases.
+J. Chem. Inf. Model., 2017, 57 (2), pp 122-126
+
+This package contains a C-library as well as an optional
+Python wrapper for the library.
+
+These pages are the documentation of the RingDecomposerLib
+library and the Python wrapper.
+
+For installation instructions see here:
+@subpage install
+
+Core library RingDecomposerLib
+------------
+
+The documentation of the C library is available here:
+@ref RingDecomposerLib.h
+
+The testing util for the library documented is here: @ref Test.c
+
+A minimal example can be found here: @subpage example
+
+Python wrapper py_urf
+--------------
+
+The documentation of the Python wrapper can be found here:
+@ref py_rdl.Calculator.Calculator, @ref py_rdl.Graph.Graph
+
+Example scripts that show how to use the Python wrapper
+together with RDKit can be found here: @subpage example_rd, @subpage example_rd2
+
+A minimal example im Python looks like this:
+
+@code
+import py_rdl
+data = py_rdl.Calculator.get_calculated_result([(0,1),(1,2),(2,3),(3,4),(4,5),(5,0)])
+print(data.get_nof_urf())
+@endcode
+
+*/
+
+/*!
+
+@page example Minimal Example
+
+A minimal example for the C library is:
+
+\include MinimalExample.c
+
+*/
+
+/*!
+
+@page example_rd Minimal RDKit Example
+
+A minimal example for using the RingDecomposerLib together with RDKit is:
+
+\include minimal_example.py
+
+*/
+
+/*!
+
+@page example_rd2 RDKit Example
+
+A more complex examplefor using the RingDecomposerLib together with RDKit is:
+
+\include rdkit_demo.py
+
+*/
