@@ -739,17 +739,18 @@ M  END
   }
 }
 
-TEST_CASE("XYZ", "[XYZ,writer]"){
+TEST_CASE("XYZ", "[XYZ,writer]") {
   SECTION("basics") {
     std::unique_ptr<RWMol> mol{new RWMol{}};
-    mol->setProp(common_properties::_Name, "methane\nthis part should not be output");
+    mol->setProp(common_properties::_Name,
+                 "methane\nthis part should not be output");
 
     for (unsigned z : {6, 1, 1, 1, 1}) {
-      auto* a = new Atom{z};
+      auto *a = new Atom{z};
       mol->addAtom(a, false, true);
     }
 
-    auto* conf = new Conformer{5};
+    auto *conf = new Conformer{5};
     conf->setId(0);
     conf->setAtomPos(0, RDGeom::Point3D{0.000, 0.000, 0.000});
     conf->setAtomPos(1, RDGeom::Point3D{-0.635, -0.635, 0.635});
@@ -768,5 +769,50 @@ H      0.635000   -0.635000   -0.635000
 H      0.635000    0.635000    0.635000
 )XYZ";
     CHECK(xyzblock == xyzblock_expected);
+  }
+}
+
+TEST_CASE("valence writing 1", "[bug,writer]") {
+  SECTION("carbon") {
+    std::string molblock = R"CTAB(carbon atom
+
+
+  1  0  0  0  0  0            999 V2000
+   -0.3958   -0.0542    0.0000 C   0  0  0  0  0 15
+M  END)CTAB";
+    bool sanitize = false;
+    bool removeHs = false;
+    std::unique_ptr<ROMol> mol(MolBlockToMol(molblock, sanitize, removeHs));
+    REQUIRE(mol);
+    mol->updatePropertyCache();
+    CHECK(mol->getAtomWithIdx(0)->getNoImplicit());
+    CHECK(mol->getAtomWithIdx(0)->getExplicitValence() == 0);
+    CHECK(mol->getAtomWithIdx(0)->getTotalValence() == 0);
+    auto outBlock = MolToMolBlock(*mol);
+    std::cerr << outBlock << std::endl;
+    REQUIRE(outBlock.find("0  0 15") != std::string::npos);
+  }
+  SECTION("P valences") {
+    std::string molblock = R"CTAB(H2PO2
+
+
+  3  2  0  0  0  0            999 V2000
+    0.2667   -0.4167    0.0000 P   0  0  0  0  0  5
+    0.2667    1.1083    0.0000 O   0  0
+   -1.0958   -1.0042    0.0000 O   0  0
+  2  1  2  0
+  3  1  1  0
+M  END)CTAB";
+    bool sanitize = false;
+    bool removeHs = false;
+    std::unique_ptr<ROMol> mol(MolBlockToMol(molblock, sanitize, removeHs));
+    REQUIRE(mol);
+    mol->updatePropertyCache();
+    CHECK(mol->getAtomWithIdx(0)->getNoImplicit());
+    CHECK(mol->getAtomWithIdx(0)->getExplicitValence() == 5);
+    CHECK(mol->getAtomWithIdx(0)->getTotalValence() == 5);
+    auto outBlock = MolToMolBlock(*mol);
+    std::cerr << outBlock << std::endl;
+    REQUIRE(outBlock.find("0  0  5") != std::string::npos);
   }
 }

@@ -29,6 +29,7 @@
 #include <boost/format.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/BadFileException.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/Depictor/RDDepictor.h>
 
@@ -539,19 +540,17 @@ unsigned int getAtomParityFlag(const Atom *atom, const Conformer *conf) {
 bool hasNonDefaultValence(const Atom *atom) {
   if (atom->getNumRadicalElectrons() != 0) return true;
   if (atom->hasQuery()) return false;
-  switch (atom->getAtomicNum()) {
-    case 1:   // H
-    case 5:   // B
-    case 6:   // C
-    case 7:   // N
-    case 8:   // O
-    case 9:   // F
-    case 15:  // P
-    case 16:  // S
-    case 17:  // Cl
-    case 35:  // Br
-    case 53:  // I
+  if (atom->getAtomicNum() == 1 ||
+      SmilesWrite ::inOrganicSubset(atom->getAtomicNum())) {
+    // for the ones we "know", we may have to specify the valence if it's
+    // not the default value
+    if (atom->getNoImplicit() &&
+        (atom->getExplicitValence() !=
+         PeriodicTable::getTable()->getDefaultValence(atom->getAtomicNum()))) {
+      return true;
+    } else {
       return false;
+    }
   }
   return true;
 }
