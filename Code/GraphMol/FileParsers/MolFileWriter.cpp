@@ -795,33 +795,41 @@ void GetMolFileBondStereoInfo(const Bond *bond, const INT_MAP_INT &wedgeBonds,
         if (bond->getBondDir() == Bond::EITHERDOUBLE) {
           dirCode = 3;
         } else {
-          bool nbrHasDir = false;
+          if((bond->getBeginAtom()->getTotalValence()-bond->getBeginAtom()->getTotalDegree())==1 &&
+          (bond->getEndAtom()->getTotalValence()-bond->getEndAtom()->getTotalDegree())==1
+          ) {
+            // we only do this if each atom only has one unsaturation
+            // FIX: this is the fix for github #2649, but we will need to change it
+            // once we start handling allenes properly
+            
+            bool nbrHasDir = false;
 
-          ROMol::OEDGE_ITER beg, end;
-          boost::tie(beg, end) =
-              bond->getOwningMol().getAtomBonds(bond->getBeginAtom());
-          while (beg != end && !nbrHasDir) {
-            const Bond *nbrBond = bond->getOwningMol()[*beg];
-            if (nbrBond->getBondType() == Bond::SINGLE &&
-                (nbrBond->getBondDir() == Bond::ENDUPRIGHT ||
-                 nbrBond->getBondDir() == Bond::ENDDOWNRIGHT)) {
-              nbrHasDir = true;
+            ROMol::OEDGE_ITER beg, end;
+            boost::tie(beg, end) =
+                bond->getOwningMol().getAtomBonds(bond->getBeginAtom());
+            while (beg != end && !nbrHasDir) {
+              const Bond *nbrBond = bond->getOwningMol()[*beg];
+              if (nbrBond->getBondType() == Bond::SINGLE &&
+                  (nbrBond->getBondDir() == Bond::ENDUPRIGHT ||
+                  nbrBond->getBondDir() == Bond::ENDDOWNRIGHT)) {
+                nbrHasDir = true;
+              }
+              ++beg;
             }
-            ++beg;
-          }
-          boost::tie(beg, end) =
-              bond->getOwningMol().getAtomBonds(bond->getEndAtom());
-          while (beg != end && !nbrHasDir) {
-            const Bond *nbrBond = bond->getOwningMol()[*beg];
-            if (nbrBond->getBondType() == Bond::SINGLE &&
-                (nbrBond->getBondDir() == Bond::ENDUPRIGHT ||
-                 nbrBond->getBondDir() == Bond::ENDDOWNRIGHT)) {
-              nbrHasDir = true;
+            boost::tie(beg, end) =
+                bond->getOwningMol().getAtomBonds(bond->getEndAtom());
+            while (beg != end && !nbrHasDir) {
+              const Bond *nbrBond = bond->getOwningMol()[*beg];
+              if (nbrBond->getBondType() == Bond::SINGLE &&
+                  (nbrBond->getBondDir() == Bond::ENDUPRIGHT ||
+                  nbrBond->getBondDir() == Bond::ENDDOWNRIGHT)) {
+                nbrHasDir = true;
+              }
+              ++beg;
             }
-            ++beg;
-          }
-          if (!nbrHasDir) {
-            dirCode = 3;
+            if (!nbrHasDir) {
+              dirCode = 3;
+            }
           }
         }
       }

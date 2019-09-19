@@ -510,3 +510,36 @@ M  END
     CHECK(mol->getAtomWithIdx(0)->getTotalNumHs() == 0);
   }
 }
+
+TEST_CASE(
+    "github #2649: Allenes read from mol blocks have crossed bonds assigned"
+    "[bug, stereochemistry]") {
+  SECTION("basics") {
+    std::string mb = R"CTAB(mol
+  Mrv1824 09191901002D          
+
+  6  5  0  0  0  0            999 V2000
+   -1.6986   -7.4294    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2522   -6.8245    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.1438   -8.0357    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.8095   -6.2156    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3374   -7.8470    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.6162   -6.3886    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  3  2  0  0  0  0
+  2  1  2  0  0  0  0
+  3  5  1  0  0  0  0
+  4  2  2  0  0  0  0
+  6  4  1  0  0  0  0
+M  END)CTAB";
+    std::unique_ptr<ROMol> mol(MolBlockToMol(mb));
+    REQUIRE(mol);
+    CHECK(mol->getBondWithIdx(0)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(3)->getStereo() == Bond::STEREONONE);
+    auto outmolb = MolToMolBlock(*mol);
+    //std::cerr<<outmolb<<std::endl;
+    CHECK(outmolb.find("1  3  2  0") != std::string::npos);
+    CHECK(outmolb.find("2  1  2  0") != std::string::npos);
+    CHECK(outmolb.find("4  2  2  0") != std::string::npos);
+  }
+}
