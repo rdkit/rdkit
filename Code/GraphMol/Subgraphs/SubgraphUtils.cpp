@@ -30,15 +30,19 @@ ROMol *pathToSubmol(const ROMol &mol, const PATH_TYPE &path, bool useQuery) {
 ROMol *pathToSubmol(const ROMol &mol, const PATH_TYPE &path, bool useQuery,
                     INT_MAP_INT &atomIdxMap) {
   auto *subMol = new RWMol();
+  // path needs to be in sorted order to preserve chirality
+  PATH_TYPE sorted_path(path);
+  std::sort(sorted_path.begin(), sorted_path.end());
+
   PATH_TYPE::const_iterator pathIter;
   atomIdxMap.clear();
 
   if (useQuery) {
     // have to do this in two different blocks because of issues with variable
     // scopes.
-    for (pathIter = path.begin(); pathIter != path.end(); ++pathIter) {
+    for(auto bondidx : sorted_path) {
       QueryBond *bond;
-      bond = new QueryBond(*(mol.getBondWithIdx(*pathIter)));
+      bond = new QueryBond(*(mol.getBondWithIdx(bondidx)));
 
       int begIdx = bond->getBeginAtomIdx();
       int endIdx = bond->getEndAtomIdx();
@@ -62,9 +66,9 @@ ROMol *pathToSubmol(const ROMol &mol, const PATH_TYPE &path, bool useQuery,
       subMol->addBond(bond, true);
     }
   } else {
-    for (pathIter = path.begin(); pathIter != path.end(); ++pathIter) {
+    for(auto bondidx : sorted_path) {
       Bond *bond;
-      bond = mol.getBondWithIdx(*pathIter)->copy();
+      bond = mol.getBondWithIdx(bondidx)->copy();
 
       int begIdx = bond->getBeginAtomIdx();
       int endIdx = bond->getEndAtomIdx();
