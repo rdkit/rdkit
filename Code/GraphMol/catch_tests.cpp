@@ -537,7 +537,7 @@ M  END)CTAB";
     CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
     CHECK(mol->getBondWithIdx(3)->getStereo() == Bond::STEREONONE);
     auto outmolb = MolToMolBlock(*mol);
-    //std::cerr<<outmolb<<std::endl;
+    // std::cerr<<outmolb<<std::endl;
     CHECK(outmolb.find("1  3  2  0") != std::string::npos);
     CHECK(outmolb.find("2  1  2  0") != std::string::npos);
     CHECK(outmolb.find("4  2  2  0") != std::string::npos);

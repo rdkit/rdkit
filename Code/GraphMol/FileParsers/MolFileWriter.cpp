@@ -795,13 +795,14 @@ void GetMolFileBondStereoInfo(const Bond *bond, const INT_MAP_INT &wedgeBonds,
         if (bond->getBondDir() == Bond::EITHERDOUBLE) {
           dirCode = 3;
         } else {
-          if((bond->getBeginAtom()->getTotalValence()-bond->getBeginAtom()->getTotalDegree())==1 &&
-          (bond->getEndAtom()->getTotalValence()-bond->getEndAtom()->getTotalDegree())==1
-          ) {
+          if ((bond->getBeginAtom()->getTotalValence() -
+               bond->getBeginAtom()->getTotalDegree()) == 1 &&
+              (bond->getEndAtom()->getTotalValence() -
+               bond->getEndAtom()->getTotalDegree()) == 1) {
             // we only do this if each atom only has one unsaturation
-            // FIX: this is the fix for github #2649, but we will need to change it
-            // once we start handling allenes properly
-            
+            // FIX: this is the fix for github #2649, but we will need to change
+            // it once we start handling allenes properly
+
             bool nbrHasDir = false;
 
             ROMol::OEDGE_ITER beg, end;
@@ -811,7 +812,7 @@ void GetMolFileBondStereoInfo(const Bond *bond, const INT_MAP_INT &wedgeBonds,
               const Bond *nbrBond = bond->getOwningMol()[*beg];
               if (nbrBond->getBondType() == Bond::SINGLE &&
                   (nbrBond->getBondDir() == Bond::ENDUPRIGHT ||
-                  nbrBond->getBondDir() == Bond::ENDDOWNRIGHT)) {
+                   nbrBond->getBondDir() == Bond::ENDDOWNRIGHT)) {
                 nbrHasDir = true;
               }
               ++beg;
@@ -822,7 +823,7 @@ void GetMolFileBondStereoInfo(const Bond *bond, const INT_MAP_INT &wedgeBonds,
               const Bond *nbrBond = bond->getOwningMol()[*beg];
               if (nbrBond->getBondType() == Bond::SINGLE &&
                   (nbrBond->getBondDir() == Bond::ENDUPRIGHT ||
-                  nbrBond->getBondDir() == Bond::ENDDOWNRIGHT)) {
+                   nbrBond->getBondDir() == Bond::ENDDOWNRIGHT)) {
                 nbrHasDir = true;
               }
               ++beg;
