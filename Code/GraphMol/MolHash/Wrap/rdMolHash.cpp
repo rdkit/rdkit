@@ -10,7 +10,7 @@
 #include <RDBoost/python.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/MolHash/MolHash.h>
-#include <GraphMol/NMMolHash/molhash.h>
+#include <GraphMol/MolHash/nmmolhash.h>
 #include <RDBoost/Wrap.h>
 
 namespace python = boost::python;

@@ -12,7 +12,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
-#include "molhash.h"
+#include "nmmolhash.h"
 
 namespace RDKit {
 namespace MolHash {

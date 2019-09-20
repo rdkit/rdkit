@@ -14,7 +14,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
-#include "molhash.h"
+#include "nmmolhash.h"
 
 #include <iostream>
 #include <fstream>

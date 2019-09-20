@@ -19,7 +19,7 @@
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 
-#include "molhash.h"
+#include "nmmolhash.h"
 #include "mf.h"
 
 namespace {
