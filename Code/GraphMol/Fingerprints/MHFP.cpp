@@ -126,7 +126,7 @@ MHFPEncoder::CreateShingling(ROMol& mol,
 
       PATH_TYPE bonds_vect(bonds.size());
       std::copy(bonds.begin(), bonds.end(), bonds_vect.begin());
-      std::unique_ptr m(Subgraphs::pathToSubmol(mol, bonds_vect));
+      std::unique_ptr<ROMol> m(Subgraphs::pathToSubmol(mol, bonds_vect));
       shingling.emplace_back(MolToSmiles(*m));
     }
   }
@@ -146,12 +146,12 @@ MHFPEncoder::CreateShingling(ROMol& mol,
     for (unsigned char r = min_radius_internal; r < radius + 1; r++) {
       PATH_TYPE path = findAtomEnvironmentOfRadiusN(mol, r, index);
       INT_MAP_INT amap;
-      ROMol submol = *Subgraphs::pathToSubmol(mol, path, false, amap);
+      std::unique_ptr<ROMol> submol(Subgraphs::pathToSubmol(mol, path, false, amap));
 
       if (amap.find(index) == amap.end())
         continue;
 
-      std::string smiles = MolToSmiles(submol, isomeric, kekulize, amap[index]);
+      std::string smiles = MolToSmiles(*submol, isomeric, kekulize, amap[index]);
       
       if (smiles != "")
         shingling.emplace_back(smiles);
@@ -170,7 +170,7 @@ MHFPEncoder::CreateShingling(std::string& smiles,
                const bool& isomeric,
                const bool& kekulize,
                const unsigned char& min_radius) {
-  std::unique_ptr m(SmilesToMol(smiles));
+  std::unique_ptr<ROMol> m(SmilesToMol(smiles));
   return CreateShingling(*m, radius, rings, isomeric, kekulize, min_radius);
 }
 
