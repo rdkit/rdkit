@@ -21,28 +21,28 @@ void Strip(RWMol *mol, unsigned int striptype) {
   // - Hydrogens should be at the end as that is the common
   //   use case
 
-  if (striptype & StripType::AtomStereo) {
+  if (striptype & static_cast<unsigned>(StripType::AtomStereo)) {
     for (auto aptr : mol->atoms()) {
       aptr->setChiralTag(RDKit::Atom::CHI_UNSPECIFIED);
     }
   }
-  if (striptype & StripType::BondStereo) {
+  if (striptype & static_cast<unsigned>(StripType::BondStereo)) {
     for (auto bptr : mol->bonds()) {
       if (bptr->getStereo() > RDKit::Bond::STEREOANY)
         bptr->setStereo(RDKit::Bond::STEREOANY);
     }
   }
-  if (striptype & StripType::Isotope) {
+  if (striptype & static_cast<unsigned>(StripType::Isotope)) {
     for (auto aptr : mol->atoms()) {
       aptr->setIsotope(0);
     }
   }
-  if (striptype & StripType::AtomMap) {
+  if (striptype & static_cast<unsigned>(StripType::AtomMap)) {
     for (auto aptr : mol->atoms()) {
       aptr->setAtomMapNum(0);
     }
   }
-  if (striptype & StripType::Hydrogen) {
+  if (striptype & static_cast<unsigned>(StripType::Hydrogen)) {
     MolOps::removeHs(*mol);
   }
 }
