@@ -22,8 +22,6 @@
 #include "molhash.h"
 #include "mf.h"
 
-using namespace RDKit;
-
 namespace {
 unsigned int NMRDKitBondGetOrder(const RDKit::Bond *bnd) {
   switch (bnd->getBondType()) {
@@ -105,6 +103,8 @@ void NMRDKitSanitizeHydrogens(RDKit::RWMol *mol) {
 
 }  // namespace
 
+namespace RDKit {
+namespace MolHash {
 static unsigned int NMDetermineComponents(RWMol *mol, unsigned int *parts,
                                           unsigned int acount) {
   memset(parts, 0, acount * sizeof(unsigned int));
@@ -734,3 +734,5 @@ std::string MolHash(RWMol *mol, unsigned int func) {
   }
   return result;
 }
+}  // namespace MolHash
+}  // namespace RDKit
