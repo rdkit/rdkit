@@ -34,7 +34,10 @@
 
 ## Deprecated code (to be removed in a future release):
 
-- The old MolHash code should be considered deprecated. This release introduces a more flexible alternative
+- The old MolHash code should be considered deprecated. This release introduces
+  a more flexible alternative. Specifically the following pieces will be removed in a future release:
+  - The python functionality `rdkit.Chem.rdMolHash.GenerateMoleculeHashString()`
+  - The C++ functionality directly present in the header file `GraphMol/MolHash/MolHash.h`
 
 
 
