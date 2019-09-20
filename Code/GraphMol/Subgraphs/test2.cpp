@@ -163,7 +163,7 @@ void testGithubIssue103() {
     TEST_ASSERT(pth.size() == 5);
     ROMol *frag = Subgraphs::pathToSubmol(*mol, pth, false);
     smiles = MolToSmarts(*frag);
-    TEST_ASSERT(smiles == "[#6](-[#6@H](-[#8])-[#6]=[#6])=[#6]");
+    TEST_ASSERT(smiles == "[#6]=[#6]-[#6@H](-[#8])-[#6]=[#6]");
     delete frag;
     delete mol;
   }
@@ -176,7 +176,9 @@ void testGithubIssue103() {
     TEST_ASSERT(pth.size() == 5);
     ROMol *frag = Subgraphs::pathToSubmol(*mol, pth, true);
     smiles = MolToSmarts(*frag);
-    TEST_ASSERT(smiles == "[#6](-[#6@](-[#8])-[#6]=[#6])=[#6]");
+    std::cerr << smiles << std::endl;
+    TEST_ASSERT(smiles == "[#6]=[#6]-[#6@](-[#8])-[#6]=[#6]");
+    std::cerr << "ok!" << endl;
     delete frag;
     delete mol;
   }
