@@ -29,6 +29,7 @@
 #include <boost/format.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/BadFileException.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/Depictor/RDDepictor.h>
 
@@ -539,19 +540,17 @@ unsigned int getAtomParityFlag(const Atom *atom, const Conformer *conf) {
 bool hasNonDefaultValence(const Atom *atom) {
   if (atom->getNumRadicalElectrons() != 0) return true;
   if (atom->hasQuery()) return false;
-  switch (atom->getAtomicNum()) {
-    case 1:   // H
-    case 5:   // B
-    case 6:   // C
-    case 7:   // N
-    case 8:   // O
-    case 9:   // F
-    case 15:  // P
-    case 16:  // S
-    case 17:  // Cl
-    case 35:  // Br
-    case 53:  // I
+  if (atom->getAtomicNum() == 1 ||
+      SmilesWrite ::inOrganicSubset(atom->getAtomicNum())) {
+    // for the ones we "know", we may have to specify the valence if it's
+    // not the default value
+    if (atom->getNoImplicit() &&
+        (atom->getExplicitValence() !=
+         PeriodicTable::getTable()->getDefaultValence(atom->getAtomicNum()))) {
+      return true;
+    } else {
       return false;
+    }
   }
   return true;
 }
@@ -796,33 +795,42 @@ void GetMolFileBondStereoInfo(const Bond *bond, const INT_MAP_INT &wedgeBonds,
         if (bond->getBondDir() == Bond::EITHERDOUBLE) {
           dirCode = 3;
         } else {
-          bool nbrHasDir = false;
+          if ((bond->getBeginAtom()->getTotalValence() -
+               bond->getBeginAtom()->getTotalDegree()) == 1 &&
+              (bond->getEndAtom()->getTotalValence() -
+               bond->getEndAtom()->getTotalDegree()) == 1) {
+            // we only do this if each atom only has one unsaturation
+            // FIX: this is the fix for github #2649, but we will need to change
+            // it once we start handling allenes properly
 
-          ROMol::OEDGE_ITER beg, end;
-          boost::tie(beg, end) =
-              bond->getOwningMol().getAtomBonds(bond->getBeginAtom());
-          while (beg != end && !nbrHasDir) {
-            const Bond *nbrBond = bond->getOwningMol()[*beg];
-            if (nbrBond->getBondType() == Bond::SINGLE &&
-                (nbrBond->getBondDir() == Bond::ENDUPRIGHT ||
-                 nbrBond->getBondDir() == Bond::ENDDOWNRIGHT)) {
-              nbrHasDir = true;
+            bool nbrHasDir = false;
+
+            ROMol::OEDGE_ITER beg, end;
+            boost::tie(beg, end) =
+                bond->getOwningMol().getAtomBonds(bond->getBeginAtom());
+            while (beg != end && !nbrHasDir) {
+              const Bond *nbrBond = bond->getOwningMol()[*beg];
+              if (nbrBond->getBondType() == Bond::SINGLE &&
+                  (nbrBond->getBondDir() == Bond::ENDUPRIGHT ||
+                   nbrBond->getBondDir() == Bond::ENDDOWNRIGHT)) {
+                nbrHasDir = true;
+              }
+              ++beg;
             }
-            ++beg;
-          }
-          boost::tie(beg, end) =
-              bond->getOwningMol().getAtomBonds(bond->getEndAtom());
-          while (beg != end && !nbrHasDir) {
-            const Bond *nbrBond = bond->getOwningMol()[*beg];
-            if (nbrBond->getBondType() == Bond::SINGLE &&
-                (nbrBond->getBondDir() == Bond::ENDUPRIGHT ||
-                 nbrBond->getBondDir() == Bond::ENDDOWNRIGHT)) {
-              nbrHasDir = true;
+            boost::tie(beg, end) =
+                bond->getOwningMol().getAtomBonds(bond->getEndAtom());
+            while (beg != end && !nbrHasDir) {
+              const Bond *nbrBond = bond->getOwningMol()[*beg];
+              if (nbrBond->getBondType() == Bond::SINGLE &&
+                  (nbrBond->getBondDir() == Bond::ENDUPRIGHT ||
+                   nbrBond->getBondDir() == Bond::ENDDOWNRIGHT)) {
+                nbrHasDir = true;
+              }
+              ++beg;
             }
-            ++beg;
-          }
-          if (!nbrHasDir) {
-            dirCode = 3;
+            if (!nbrHasDir) {
+              dirCode = 3;
+            }
           }
         }
       }

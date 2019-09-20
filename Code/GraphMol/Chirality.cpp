@@ -1833,9 +1833,14 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
 
   Bond *bond1 = nullptr, *obond1 = nullptr;
   bool squiggleBondSeen = false;
+  bool doubleBondSeen = false;
   boost::tie(beg, end) = mol.getAtomBonds(dblBond->getBeginAtom());
   while (beg != end) {
     Bond *tBond = mol[*beg];
+    if(tBond == dblBond){ 
+      ++beg;
+      continue;
+    }
     if (tBond->getBondType() == Bond::SINGLE ||
         tBond->getBondType() == Bond::AROMATIC) {
       // prefer bonds that already have their directionality set
@@ -1854,6 +1859,8 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
         obond1 = bond1;
         bond1 = tBond;
       }
+    } else if(tBond->getBondType() == Bond::DOUBLE) {
+      doubleBondSeen = true;
     }
     int explicit_unknown_stereo;
     if (tBond->getBondType() == Bond::SINGLE &&
@@ -1869,8 +1876,12 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
   }
   // Don't do any direction setting if we've seen a squiggle bond, but do mark
   // the double bond as a crossed bond and return
-  if (!bond1 || squiggleBondSeen) {
-    dblBond->setBondDir(Bond::EITHERDOUBLE);
+  if (!bond1 || squiggleBondSeen || doubleBondSeen) {
+    if(!doubleBondSeen){
+      // FIX: This is the fix for #2649, but it will need to be modified once we
+      // decide to properly handle allenese
+      dblBond->setBondDir(Bond::EITHERDOUBLE);
+    }
     return;
   }
 
@@ -1878,6 +1889,10 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
   boost::tie(beg, end) = mol.getAtomBonds(dblBond->getEndAtom());
   while (beg != end) {
     Bond *tBond = mol[*beg];
+    if(tBond == dblBond){ 
+      ++beg;
+      continue;
+    }
     if (tBond->getBondType() == Bond::SINGLE ||
         tBond->getBondType() == Bond::AROMATIC) {
       if (!bond2) {
@@ -1896,6 +1911,8 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
         obond2 = bond2;
         bond2 = tBond;
       }
+    } else if(tBond->getBondType() == Bond::DOUBLE) {
+      doubleBondSeen = true;
     }
     int explicit_unknown_stereo;
     if (tBond->getBondType() == Bond::SINGLE &&
@@ -1910,16 +1927,20 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
   }
   // Don't do any direction setting if we've seen a squiggle bond, but do mark
   // the double bond as a crossed bond and return
-  if (!bond2 || squiggleBondSeen) {
-    dblBond->setBondDir(Bond::EITHERDOUBLE);
+  if (!bond2 || squiggleBondSeen || doubleBondSeen) {
+    if(!doubleBondSeen) {
+      // FIX: This is the fix for #2649, but it will need to be modified once we
+      // decide to properly handle allenese
+      dblBond->setBondDir(Bond::EITHERDOUBLE);
+    }
     return;
   }
 
   CHECK_INVARIANT(bond1 && bond2, "no bonds found");
-  bool sameTorsionDir;
 
+  bool sameTorsionDir=false;
   if (conf) {
-    RDGeom::Point3D beginP = conf->getAtomPos(dblBond->getBeginAtomIdx());
+    RDGeom::Point3D beginP = conf->getAtomPos(dblBond->getBeginAtomIdx()); 
     RDGeom::Point3D endP = conf->getAtomPos(dblBond->getEndAtomIdx());
     RDGeom::Point3D bond1P =
         conf->getAtomPos(bond1->getOtherAtomIdx(dblBond->getBeginAtomIdx()));
