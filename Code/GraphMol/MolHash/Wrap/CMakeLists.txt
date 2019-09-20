@@ -2,7 +2,7 @@ remove_definitions(-DRDKIT_MOLHASH_BUILD)
 rdkit_python_extension(rdMolHash
                        rdMolHash.cpp
                        DEST Chem 
-                       LINK_LIBRARIES MolHash
+                       LINK_LIBRARIES MolHash NMMolHashLib
 Descriptors GraphMol DataStructs 
 RDGeometryLib RDGeneral RDBoost)
 
