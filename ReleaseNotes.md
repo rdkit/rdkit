@@ -32,6 +32,12 @@
 
 ## New Features and Enhancements:
 
+## Deprecated code (to be removed in a future release):
+
+- The old MolHash code should be considered deprecated. This release introduces a more flexible alternative
+
+
+
 
 # Release_2019.03.1
 (Changes relative to Release_2018.09.1)

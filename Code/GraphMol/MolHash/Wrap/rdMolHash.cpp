@@ -10,7 +10,6 @@
 #include <RDBoost/python.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/MolHash/MolHash.h>
-#include <GraphMol/MolHash/nmmolhash.h>
 #include <RDBoost/Wrap.h>
 
 namespace python = boost::python;
@@ -42,7 +41,7 @@ std::string MolHashHelper(const ROMol &mol, MolHash::HashFunction func) {
 
 BOOST_PYTHON_MODULE(rdMolHash) {
   python::scope().attr("__doc__") =
-      "Module containing functions to generate a hash/key for molecules";
+      "Module containing functions to generate hashes for molecules";
 
   python::enum_<MolHash::HashFunction>("HashFunction")
       .value("AnonymousGraph", MolHash::HashFunction::AnonymousGraph)
@@ -64,12 +63,13 @@ BOOST_PYTHON_MODULE(rdMolHash) {
       .value("ArthorSubstructureOrder",
              MolHash::HashFunction::ArthorSubstructureOrder);
 
-  std::string docString = "Generates a hash string for a molecule";
+  std::string docString = "DEPRECATED: please use MolHash() instead";
   python::def("GenerateMoleculeHashString", GenMolHashString,
               (python::arg("mol"), python::arg("atomsToUse") = python::list(),
                python::arg("bondsToUse") = python::list()),
               docString.c_str());
   python::def("MolHash", MolHashHelper,
               (python::arg("mol"), python::arg("func")),
-              "Generate a hash for a molecule");
+              "Generate a hash for a molecule. The func argument determines "
+              "which hash is generated.");
 }

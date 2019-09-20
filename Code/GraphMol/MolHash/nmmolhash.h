@@ -8,6 +8,10 @@
 /* BSD license, which is included in the file   */
 /* license.txt.                                 */
 /*==============================================*/
+
+// This file will disappear in a future release; please don't include it
+// directly. Use MolHash.h instead.
+
 #include <RDGeneral/export.h>
 #ifndef NMS_MOLHASH_H
 #define NMS_MOLHASH_H
@@ -18,7 +22,7 @@
 namespace RDKit {
 class RWMol;
 namespace MolHash {
-enum class RDKIT_NMMOLHASHLIB_EXPORT HashFunction {
+enum class RDKIT_MOLHASH_EXPORT HashFunction {
   AnonymousGraph = 1,
   ElementGraph = 2,
   CanonicalSmiles = 3,
@@ -38,10 +42,9 @@ enum class RDKIT_NMMOLHASHLIB_EXPORT HashFunction {
   ArthorSubstructureOrder = 17
 };
 
-RDKIT_NMMOLHASHLIB_EXPORT std::string MolHash(RWMol *mol,
-                                              enum HashFunction func);
+RDKIT_MOLHASH_EXPORT std::string MolHash(RWMol *mol, enum HashFunction func);
 
-enum class RDKIT_NMMOLHASHLIB_EXPORT StripType {
+enum class RDKIT_MOLHASH_EXPORT StripType {
   AtomStereo = 1,
   BondStereo = 2,
   Isotope = 4,
@@ -49,9 +52,8 @@ enum class RDKIT_NMMOLHASHLIB_EXPORT StripType {
   Hydrogen = 16
 };
 
-RDKIT_NMMOLHASHLIB_EXPORT void Strip(RWMol *mol, unsigned int striptype);
-RDKIT_NMMOLHASHLIB_EXPORT void SplitMolecule(RWMol *mol,
-                                             std::vector<RWMol *> &molv);
+RDKIT_MOLHASH_EXPORT void Strip(RWMol *mol, unsigned int striptype);
+RDKIT_MOLHASH_EXPORT void SplitMolecule(RWMol *mol, std::vector<RWMol *> &molv);
 }  // namespace MolHash
 }  // namespace RDKit
 #endif  // NMS_MOLHASH_H
