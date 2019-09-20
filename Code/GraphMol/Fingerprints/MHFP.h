@@ -192,7 +192,7 @@ public:
     \brief Creates a binary fingerprint based on circular sub-SMILES.
    
     Creates a binary fingerprint similar to ECFP. However, instead of using
-    a Morgan-style hasing, circular n-grams (sub-SMILES) are created, hashed
+    a Morgan-style hashing, circular n-grams (sub-SMILES) are created, hashed
     directly and folded.
    
     \param radius the maximum radius of the substructure that is generated at

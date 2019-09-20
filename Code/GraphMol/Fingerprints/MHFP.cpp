@@ -126,7 +126,8 @@ MHFPEncoder::CreateShingling(ROMol& mol,
 
       PATH_TYPE bonds_vect(bonds.size());
       std::copy(bonds.begin(), bonds.end(), bonds_vect.begin());
-      shingling.emplace_back(MolToSmiles(*Subgraphs::pathToSubmol(mol, bonds_vect)));
+      std::unique_ptr m(Subgraphs::pathToSubmol(mol, bonds_vect));
+      shingling.emplace_back(MolToSmiles(*m));
     }
   }
 
@@ -169,10 +170,8 @@ MHFPEncoder::CreateShingling(std::string& smiles,
                const bool& isomeric,
                const bool& kekulize,
                const unsigned char& min_radius) {
-  ROMol* mol = SmilesToMol(smiles);
-  std::vector<std::string> shingling = CreateShingling(*mol, radius, rings, isomeric, kekulize, min_radius);
-  delete mol;
-  return shingling;
+  std::unique_ptr m(SmilesToMol(smiles));
+  return CreateShingling(*m, radius, rings, isomeric, kekulize, min_radius);
 }
 
 std::vector<uint32_t>
