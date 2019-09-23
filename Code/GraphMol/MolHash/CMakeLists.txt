@@ -5,7 +5,7 @@ rdkit_library(MolHash
               MolHash.cpp HashToString.cpp hashfunctions.cpp normalize.cpp
               LINK_LIBRARIES Depictor Descriptors GraphMol RDGeneral)
 
-rdkit_headers(MolHash.h nmmolhash.h mf.h            
+rdkit_headers(MolHash.h nmmolhash.h           
               DEST GraphMol/MolHash)
 
 rdkit_test(testMolHash testMolHash.cpp 
