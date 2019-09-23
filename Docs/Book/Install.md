@@ -120,7 +120,7 @@ cmake -DPy_ENABLE_SHARED=1 \
   -DRDK_INSTALL_INTREE=ON \
   -DRDK_INSTALL_STATIC_LIBS=OFF \
   -DRDK_BUILD_CPP_TESTS=ON \
-  -DPYTHON_NUMPY_INCLUDE_PATH="$CONDA_PREFIX/lib/python3.6/site-packages/numpy/core/include" \
+  -DPYTHON_NUMPY_INCLUDE_PATH="$(python -c 'import numpy ; print(numpy.get_include())')" \
   -DBOOST_ROOT="$CONDA_PREFIX" \
   ..
 ```
