@@ -176,9 +176,7 @@ void testGithubIssue103() {
     TEST_ASSERT(pth.size() == 5);
     ROMol *frag = Subgraphs::pathToSubmol(*mol, pth, true);
     smiles = MolToSmarts(*frag);
-    std::cerr << smiles << std::endl;
     TEST_ASSERT(smiles == "[#6]=[#6]-[#6@](-[#8])-[#6]=[#6]");
-    std::cerr << "ok!" << endl;
     delete frag;
     delete mol;
   }
@@ -194,9 +192,8 @@ void testGithubIssue2647() {
   std::unique_ptr<ROMol> mol(SmilesToMol(smiles));
   std::vector<int> path = { 0, 3, 2, 1 };
   const bool useQuery=false;
-  const bool useStereo=true;
   std::unique_ptr<ROMol> mol2(Subgraphs::pathToSubmol(*mol, path, useQuery));
-  TEST_ASSERT(MolToSmiles(*mol2) == MolToSmiles(*mol, useStereo));
+  TEST_ASSERT(MolToSmiles(*mol2) == MolToSmiles(*mol));
   std::cout << "Finished" << std::endl;
 }
 

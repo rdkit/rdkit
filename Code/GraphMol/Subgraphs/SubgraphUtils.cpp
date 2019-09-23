@@ -34,15 +34,13 @@ ROMol *pathToSubmol(const ROMol &mol, const PATH_TYPE &path, bool useQuery,
   PATH_TYPE sorted_path(path);
   std::sort(sorted_path.begin(), sorted_path.end());
 
-  PATH_TYPE::const_iterator pathIter;
   atomIdxMap.clear();
 
   if (useQuery) {
     // have to do this in two different blocks because of issues with variable
     // scopes.
     for(auto bondidx : sorted_path) {
-      QueryBond *bond;
-      bond = new QueryBond(*(mol.getBondWithIdx(bondidx)));
+      QueryBond *bond = new QueryBond(*(mol.getBondWithIdx(bondidx)));
 
       int begIdx = bond->getBeginAtomIdx();
       int endIdx = bond->getEndAtomIdx();
@@ -67,8 +65,7 @@ ROMol *pathToSubmol(const ROMol &mol, const PATH_TYPE &path, bool useQuery,
     }
   } else {
     for(auto bondidx : sorted_path) {
-      Bond *bond;
-      bond = mol.getBondWithIdx(bondidx)->copy();
+      Bond *bond = mol.getBondWithIdx(bondidx)->copy();
 
       int begIdx = bond->getBeginAtomIdx();
       int endIdx = bond->getEndAtomIdx();
