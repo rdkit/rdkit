@@ -114,11 +114,12 @@ from rdkit import Chem
 from rdkit import DataStructs
 from rdkit.Chem import AllChem
 from rdkit.Chem import Draw
-from rdkit.Chem.Draw import rdMolDraw2D
 from rdkit.Chem import SDWriter
 from rdkit.Chem import rdchem
 from rdkit.Chem.Scaffolds import MurckoScaffold
 from io import BytesIO
+from xml.dom import minidom
+from xml.parsers.expat import ExpatError
 
 log = logging.getLogger(__name__)
 
@@ -169,24 +170,63 @@ molSize = (200, 200)
 
 
 def patchPandasHTMLrepr(self, **kwargs):
-    '''
-    Patched default escaping of HTML control characters to allow molecule image rendering dataframes
-    '''
-    # set escape to False if not set
-    kwargs['escape'] = kwargs.get('escape') or False
+    """A patched version of the DataFrame.to_html method that allows rendering
+    molecule images in data frames.
+    """
 
-    # do not allow pandas to truncate text since PNG byte strings are lengthy
-    with pd.option_context('display.max_colwidth', -1):
+    # Two things have to be done:
+    # 1. Disable escaping of HTML in order to render img / svg tags
+    # 2. Avoid truncation of data frame values that contain HTML content
+
+    # 1. Set escape=False unless specified otherwise.
+    kwargs['escape'] = kwargs.get('escape', False)
+
+    # 2. Pandas uses TextAdjustment objects to measure the length of texts
+    #    (e.g. for east asian languages). We take advantage of this mechanism
+    #    and replace the original text adjustment object with a custom one.
+    #    This "RenderHTMLAdjustment" object assigns a length of 0 to a given
+    #    text if it is valid HTML. And a value having length 0 will not be
+    #    truncated.
+
+    # store original _get_adjustment method
+    defPandasGetAdjustment = pd.io.formats.format._get_adjustment
+
+    def patched_get_adjustment():
+        inner_adjustment = defPandasGetAdjustment()
+        return RenderHTMLAdjustment(inner_adjustment)
+
+    try:
+        # patch _get_adjustment method and call original to_html function
+        pd.io.formats.format._get_adjustment = patched_get_adjustment
         return defPandasRendering(self, **kwargs)
+    finally:
+        # restore original _get_adjustment method
+        pd.io.formats.format._get_adjustment = defPandasGetAdjustment
 
 
-def patchPandasHeadMethod(self, n=5):
-    '''Ensure inheritance of patched to_html in "head" subframe
-    '''
-    df = self[:n]
-    df.to_html = types.MethodType(patchPandasHTMLrepr, df)
-    df.head = types.MethodType(patchPandasHeadMethod, df)
-    return df
+class RenderHTMLAdjustment:
+    def __init__(self, inner_adjustment):
+        """Creates a new instance.
+
+        @param inner_adjustment: The text adjustment that is used if the
+            specified text is not valid XML / HTML.
+        """
+        self.inner_adjustment = inner_adjustment
+
+    def len(self, text):
+        try:
+            # return 0 if text is valid XML / HTML
+            minidom.parseString(text)
+            return 0
+        except ExpatError:
+            # else measure the length using the underlying adjustment object
+            return self.inner_adjustment.len(text)
+
+    def justify(self, texts, max_len, mode='right'):
+        return self.inner_adjustment.justify(texts, max_len, mode)
+
+    def adjoin(self, space, *lists, **kwargs):
+        return self.inner_adjustment.adjoin(space, *lists, **kwargs)
 
 
 def _get_image(x):
