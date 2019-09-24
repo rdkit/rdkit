@@ -234,23 +234,6 @@ def _get_image(x):
     return b64encode(x).decode('ascii')
 
 
-def _get_svg_image(mol, size=(200, 200), highlightAtoms=[]):
-    """ mol rendered as SVG """
-    from IPython.display import SVG
-    from rdkit.Chem import rdDepictor
-    from rdkit.Chem.Draw import rdMolDraw2D
-    try:
-        # If no coordinates, calculate 2D
-        mol.GetConformer(-1)
-    except ValueError:
-        rdDepictor.Compute2DCoords(mol)
-    drawer = rdMolDraw2D.MolDraw2DSVG(*size)
-    drawer.DrawMolecule(mol, highlightAtoms=highlightAtoms)
-    drawer.FinishDrawing()
-    svg = drawer.GetDrawingText()
-    return SVG(svg).data  # IPython's SVG clears the svg text
-
-
 try:
     from rdkit.Avalon import pyAvalonTools as pyAvalonTools
     # Calculate the Avalon fingerprint
@@ -292,10 +275,20 @@ def PrintAsBase64PNGString(x, renderer=None):
         highlightAtoms = x.__sssAtoms
     else:
         highlightAtoms = []
+    # TODO: should we generate coordinates if no coordinates available?
+    # from rdkit.Chem import rdDepictor
+    # try:
+    #     # If no coordinates, calculate 2D
+    #     x.GetConformer(-1)
+    # except ValueError:
+    #     rdDepictor.Compute2DCoords(x)
     if molRepresentation.lower() == 'svg':
-        from IPython.display import SVG
         svg = Draw._moltoSVG(x, molSize, highlightAtoms, "", True)
-        return SVG(svg).data
+        svg = minidom.parseString(svg)
+        svg = svg.getElementsByTagName('svg')[0]
+        svg.attributes['viewbox'] = f'0 0 {molSize[0]} {molSize[1]}'
+        svg.attributes['style'] = f'max-width: {molSize[0]}px; height: {molSize[1]}px;'
+        return svg.toxml()
     else:
         data = Draw._moltoimg(x, molSize, highlightAtoms, "", returnPNG=True, kekulize=True)
         return '<img src="data:image/png;base64,%s" alt="Mol"/>' % _get_image(data)
