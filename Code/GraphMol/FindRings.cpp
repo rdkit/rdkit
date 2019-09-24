@@ -1243,14 +1243,14 @@ void _DFS(const ROMol &mol, const Atom *atom, INT_VECT &atomColors,
 }  // end of anonymous namespace
 void fastFindRings(const ROMol &mol) {
   // std::cerr<<"ffr"<<std::endl;
-  VECT_INT_VECT res;
-  res.resize(0);
   // check if SSSR's are already on the molecule
   if (mol.getRingInfo()->isInitialized()) {
     return;
   } else {
     mol.getRingInfo()->initialize();
   }
+  VECT_INT_VECT res;
+  res.resize(0);
 
   unsigned int nats = mol.getNumAtoms();
 
