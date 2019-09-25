@@ -71,7 +71,7 @@ Connect to the database, install the cartridge, and create the schema that we'll
 Create the molecules and build the substructure search index:
 
     chembl_25=# select * into rdk.mols from (select molregno,mol_from_ctab(molfile::cstring) m  from compound_structures) tmp where m is not null;
-    SELECT 1727081
+    SELECT 1870451
     chembl_25=# create index molidx on rdk.mols using gist(m);
     CREATE INDEX
     chembl_25=# alter table rdk.mols add primary key (molregno);
@@ -80,7 +80,7 @@ Create the molecules and build the substructure search index:
 Create some fingerprints and build the similarity search index:
 
     chembl_25=# select molregno,torsionbv_fp(m) as torsionbv,morganbv_fp(m) as mfp2,featmorganbv_fp(m) as ffp2 into rdk.fps from rdk.mols;
-    SELECT 1727081
+    SELECT 1870451
     chembl_25=# create index fps_ttbv_idx on rdk.fps using gist(torsionbv);
     CREATE INDEX
     chembl_25=# create index fps_mfp2_idx on rdk.fps using gist(mfp2);
@@ -172,24 +172,21 @@ Given we're searching through 1.7 million compounds these search times aren't in
 One easy way to speed things up, particularly for queries that return a large number of results, is to only retrieve a limited number of results:
 
     chembl_25=# select * from rdk.mols where m@>'c1cccc2c1CNCCN2' limit 100;
-     molregno |                                                                                             m                                                             
-
-    ----------+-----------------------------------------------------------------------------------------------------------------------------------------------------------
-    --------------------------------
-       908048 | O=C1CN(C(=O)c2ccc(Br)o2)C(c2ccc(F)cc2)c2cc(F)ccc2N1
-       931972 | Cl.c1ccc(CC2CNc3ccccc3CN2)cc1
-       904450 | CCOC(=O)[C@H]1[C@H]2COc3ccc(Cl)cc3[C@@H]2N2C(=O)c3ccc(Cl)cc3NC(=O)[C@@]12C
-       226391 | C/C=C1/CC2C(OC)Nc3cc(OC)c(OC)cc3C(=O)N2C1
-       930820 | CN1CC(=O)N(CC(=O)Nc2ccc(N(C)C)cc2)c2ccccc2C1=O
-        18576 | CO[C@H]1Nc2c(ccc(C)c2O)C(=O)N2C=C(/C=C/C(N)=O)C[C@@H]12
-       249934 | O=C(c1cccc2ccccc12)N1CCN(Cc2cncn2Cc2ccccc2)c2ccccc2C1
-       ...
-        91020 | CC(C)C[C@H]1C(=O)N2c3ccccc3[C@@](O)(C[C@@H]3NC(=O)c4ccccc4N4C(=O)c5ccccc5NC34)[C@H]2N1C(=O)C(CCCNC(=O)OCc1ccccc1)NC(=O)OC(C)(C)C
-        91225 | CC(C)C[C@H]1C(=O)N2c3ccccc3[C@@](O)(C[C@@H]3NC(=O)c4ccccc4N4C(=O)c5ccccc5NC34)[C@H]2N1C(=O)CCC(=O)[O-].[Na+]
-       348798 | O=C(O)CN1C(=O)C(c2ccc(Cl)cc2)N(C(C(=O)O)c2ccc(Cl)cc2)C(=O)c2cc(I)ccc21
-       348972 | C[C@H](c1ccc(Cl)cc1)N1C(=O)c2cc(I)ccc2N(CCCCC(=O)O)C(=O)[C@@H]1c1ccc(C(F)(F)F)cc1
-
-    ...skipping 23 lines
+     molregno |                                                      m                                                       
+    ----------+--------------------------------------------------------------------------------------------------------------
+      1671940 | Cc1cccc(C)c1N1C(=O)c2ccccc2NC(=O)C1C(=O)NCc1ccco1
+      1318078 | COCN1C(=O)[C@@H]2C[C@@H](O)CN2C(=O)c2ccccc21
+      1318783 | O/N=C1/Nc2ccccc2C(=S)N2CSCC12
+      1318127 | CC(=O)O[C@H]1C[C@H]2C(=S)Nc3ccccc3C(=S)N2C1
+      1308578 | O=C1Nc2cc([N+](=O)[O-])ccc2C(=O)N2CCC[C@@H]12
+      1417168 | O=C(NCC(F)(F)F)C1C(=O)Nc2ccccc2C(=O)N1Cc1ccccc1
+      ...
+       793329 | Cc1ccc2c(c1)C(c1ccccc1)N(C(=O)c1ccc(OC(C)C)cc1)CC(=O)N2
+       921215 | O=C1CN(C(=O)c2cc([N+](=O)[O-])ccc2Cl)C(c2ccc(F)cc2)c2cc(F)ccc2N1
+       790949 | CCOC(=O)[C@H]1[C@H]2COc3ccc(Cl)cc3[C@@H]2N2C(=O)c3cc(C)ccc3NC(=O)[C@@]12C
+       760998 | CC(=O)N1CC(=O)Nc2ccc(Cl)cc2C1c1ccc(F)cc1
+    (100 rows)
+    
     Time: 97.357 ms
 
 #### SMARTS-based queries
@@ -197,19 +194,19 @@ One easy way to speed things up, particularly for queries that return a large nu
 Oxadiazole or thiadiazole:
 
     chembl_25=# select * from rdk.mols where m@>'c1[o,s]ncn1'::qmol limit 500;
-     molregno |                                                      m                                                       
-    ----------+--------------------------------------------------------------------------------------------------------------
-      1370170 | Fc1cccc(-c2nc(NCC3COc4ccccc4O3)no2)c1F
-      1370417 | COc1cc(CN2CCC(Cc3nc(-c4ccc5c(c4)CCO5)no3)C2)ccc1F
-      1370526 | Cl.Cn1cc(-c2noc(/C=C3/CCN4CCCC[C@@H]4C3)n2)c2ccccc21
-      1379267 | CCC(c1ccccc1)c1noc(CCN(CC)CC)n1
-      1404150 | OC[C@H]1O[C@H](c2nc(-c3nc(-c4cccs4)no3)cs2)C[C@@H]1O
-      1217463 | CC(C)(C)c1ccc(-c2noc(CCC(=O)N3CCCCC3)n2)cc1
+     molregno |                                                 m
+    ----------+---------------------------------------------------------------------------------------------------
+      1882516 | COc1cccc(CN(C)Cc2nc(C(C)C)no2)c1
+      2194441 | Cc1nc([C@](C)(O)C#Cc2ccc3c(c2)-c2nc(C(N)=O)sc2[C@@H](F)CO3)no1
+      1881742 | CCOc1ccc(C(F)(F)F)cc1NC(=O)NCc1noc(C)n1
+      1949861 | FC(F)(F)c1ccc(-c2nc(-c3ccc4nc[nH]c4c3)no2)cc1
+      1949860 | FC(F)(F)c1cccc(-c2nc(-c3ccc4nc[nH]c4c3)no2)c1
+      2172627 | O=c1[nH]cc(-c2cc(Cl)ccc2Oc2cc(F)c(S(=O)(=O)Nc3ncns3)cc2F)n2cncc12
       ...
-      1517753 | CC(C)c1noc(N2CCC(CO[C@H]3CC[C@H](c4ccc(S(C)(=O)=O)cc4F)CC3)CC2)n1
-      1263024 | COc1cc(Nc2nc3c(s2)CCCC3c2ccccc2)ccc1-c1nc(C)no1
-      1264016 | O=C(O)CCc1nc2cc(-c3noc(-c4cc(C(F)(F)F)cc(C(F)(F)F)c4)n3)ccc2[nH]1
-      1847733 | Cc1cc(-c2noc([C@H]3CCCCN3C(=O)COc3ccccc3)n2)no1
+      1848026 | O=C1CCCN1c1cccc(-c2noc([C@H]3CCCCN3C(=O)COc3ccccc3)n2)c1
+      1848027 | O=C1CN(c2cccc(-c3noc([C@H]4CCCCN4C(=O)COc4ccccc4)n3)c2)C(=O)N1
+      1848036 | CN(C)C(=O)CCC(=O)Nc1cc(F)cc(-c2noc([C@H]3CCCCN3C(=O)COc3ccccc3)n2)c1
+      1852688 | CC(Sc1nc(N)cc(N)n1)c1nc(C(C)(C)C)no1
     (500 rows)
 
     Time: 761.847 ms
@@ -221,63 +218,38 @@ This is slower than the pure SMILES query, this is generally true of SMARTS-base
 Note that by default stereochemistry is not taken into account when doing substructure queries:
 
     chembl_25=# select * from rdk.mols where m@>'NC(=O)[C@@H]1CCCN1C=O' limit 10;
-     molregno |                                                                                                                                                           
-                   m                                                                                                                                                      
-
-    ----------+-----------------------------------------------------------------------------------------------------------------------------------------------------------
-    ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    ---------------------
-        87611 | CNCC(=O)N[C@@H](CCCN=C(N)N)C(=O)N1C[C@H]2C[C@H]1C(=O)N[C@@H](Cc1ccc(O)cc1)C(=O)N[C@H](C(=O)N[C@@H](Cc1c[nH]cn1)C(=O)N1CCC[C@H]1C(=O)N[C@@H](Cc1ccccc1)C(=O
-    )O)CCSS2
-        88372 | CNCCCC[C@H](NC(=O)[C@H](Cc1ccccc1)NC(=O)[C@@H](CCCCNC)NC(=O)[C@H](Cc1ccc(O)cc1)NC(=O)[C@H](CO)NC(=O)[C@@H](Cc1ccccc1)NC(=O)[C@@H](Cc1ccccc1)NC(=O)[C@@H](C
-    c1ccc2ccccc2c1)NC(C)=O)C(=O)N1CCC[C@@H]1C(=O)N[C@H](C)C(=O)O
-        88322 | CC(=O)N[C@H](Cc1ccc2ccccc2c1)C(=O)N[C@H](Cc1ccccc1)C(=O)N[C@H](Cc1ccccc1)C(=O)N[C@@H](CO)C(=O)N[C@@H](Cc1ccc(O)cc1)C(=O)N[C@H](CCCCNC(C)C)C(=O)N[C@@H](Cc1
-    ccccc1)C(=O)N[C@@H](CCCCNC(C)C)C(=O)N1CCC[C@@H]1C(=O)N[C@H](C)C(=O)O
-        88168 | CC(=O)N[C@H](Cc1ccc2ccccc2c1)C(=O)N[C@H](Cc1ccccc1)C(=O)N[C@H](Cc1ccccc1)C(=O)N[C@@H](CO)C(=O)N[C@@H](Cc1ccc(O)cc1)C(=O)N[C@H](CCCN=C(N)N)C(=O)N[C@@H](Cc1
-    ccccc1)C(=O)N[C@@H](CCCCNC1CCCC1)C(=O)N1CCC[C@@H]1C(=O)N[C@H](C)C(=O)O
-        88150 | CC(=O)N[C@H](Cc1ccc2ccccc2c1)C(=O)N[C@H](Cc1ccccc1)C(=O)N[C@H](Cc1ccccc1)C(=O)N[C@@H](CO)C(=O)N[C@@H](Cc1ccc(O)cc1)C(=O)N[C@H](CCCN=C(N)N)C(=O)N[C@@H](Cc1
-    ccccc1)C(=O)N[C@@H](CCCCNCc1ccc(C)cc1)C(=O)N1CCC[C@@H]1C(=O)N[C@H](C)C(=O)O
-        88373 | CC(=O)N[C@H](Cc1ccc2ccccc2c1)C(=O)N[C@H](Cc1ccccc1)C(=O)N[C@H](Cc1ccccc1)C(=O)N[C@@H](CO)C(=O)N[C@@H](Cc1ccc(O)cc1)C(=O)N[C@H](CCCCNC1CCCCC1)C(=O)N[C@@H](
-    Cc1ccccc1)C(=O)N[C@@H](CCCCNC1CCCCC1)C(=O)N1CCC[C@@H]1C(=O)N[C@H](C)C(=O)O
-        93377 | CC(=O)N[C@@H](Cc1ccc([N+](=O)[O-])cc1)C(=O)N1CCC[C@H]1C(=O)N[C@@H](CCC/N=C(/N)NS(=O)(=O)c1c(C)c(C)c2c(c1C)CCC(C)(C)O2)C(=O)N[C@@H](Cc1ccccc1)C(=O)N[C@@H](
-    CCC/N=C(/N)NS(=O)(=O)c1c(C)c(C)c2c(c1C)CCC(C)(C)O2)C(=O)N[C@H](C(=O)NCC(=O)N[C@@H](COC(C)(C)C)C(=O)N[C@@H](CCCCNC(=O)c1ccccc1N)C(=O)NCC(=O)O)[C@@H](C)OC(C)(C)C
-        94493 | CC(C)C[C@@H]1NC(=O)[C@H]([C@@H](C)O)NC(=O)[C@H](Cc2c[nH]c3ccccc23)NC(=O)[C@H](C(C)C)NC(=O)[C@H](NC(=O)[C@H](CCCCN)NC(=O)[C@@H]2CCCN2C(=O)[C@H](CCC(N)=O)NC
-    (=O)CNC(=O)CN)CSSC[C@@H](C(=O)N[C@@H](Cc2ccc(O)cc2)C(=O)N[C@@H](CO)C(=O)N[C@H](C(=O)NCC(=O)NCC(N)=O)[C@@H](C)O)NC(=O)[C@H](Cc2c[nH]cn2)NC(=O)[C@H](Cc2ccccc2)NC(=O)CNC
-    (=O)[C@@H]2CCCN2C1=O
-
-    ...skipping 1 line
-        89559 | CC1(C)SSC(C)(C)[C@@H](C(=O)N[C@@H](Cc2c[nH]cn2)C(=O)N2CCC[C@H]2C(=O)N[C@@H](Cc2ccccc2)C(=O)O)NC(=O)[C@H](Cc2ccc(O)cc2)NC(=O)[C@H]1NC(=O)[C@H](CCCN=C(N)N)N
-    C(=O)[C@@H](N)CC(=O)O
+     molregno |                                                 m
+    ----------+---------------------------------------------------------------------------------------------------
+      2213985 | CC[C@H](C)[C@@H]1NC(=O)[C@@H]2CCCN2C(=O)[C@@H]2CCCN2C(=O)[C@H]([C@@H](C)CC)NC(=O)[C@H](CO)NC(=O)[C@H](C)NC(=O)[C@H]([C@H](C)O)NC(=O)[C@@H]2CSSC[C@H](NC1=O)C(=O)N[C@@H](Cc1cnc[nH]1)C(=O)N[C@H](Cc1ccccc1)C(=O)N[C@@H](CCCNC(=N)N)C(=O)N[C@@H](Cc1c[nH]c3ccccc13)C(=O)N[C@@H](CCCNC(=N)N)C(=O)N2
+      1956682 | NC(=O)[C@@H]1CCCN1C(=O)[C@H](Cc1nc(I)[nH]c1I)NC(=O)c1cnccn1
+      2212188 | CN1C(=O)[C@H](CCCNC(=N)N)NC(=O)[C@@H](Cc2ccc(O)cc2)NC(=O)[C@@H]2CCCN2C(=O)[C@H](Cc2ccc3ccccc3c2)NC(=O)[C@@H]1CC(=O)O
+      2053463 | NCCCC[C@H](NC(=O)[C@H](Cc1ccc(OP(=O)(O)O)cc1)NC(=O)Cc1ccccc1)C(=O)N1CCC[C@H]1C(=O)N[C@@H](Cc1ccccc1)C(N)=O
+      2060743 | CCCCCCCCCCCCCCCCNC(=O)CN(CC(=O)NC(C)(C)C(=O)N[C@@H](Cc1ccccc1)C(=O)N[C@@H](CC(C)C)C(=O)N[C@@H](Cc1ccccc1)C(=O)N[C@@H](CCCNC(=N)N)C(=O)N1CCC[C@H]1C(=O)N[C@@H](CCCNC(=N)N)C(=O)N[C@@H](CC(N)=O)C(N)=O)C(=O)c1cccnc1
+      2060744 | CCCCCCCCCCCCCCCCN(CCCCCCCCCCCCCCCC)CCCCCC(=O)NC(C)(C)C(=O)NC(Cc1ccccc1)C(=O)NC(CC(C)C)C(=O)NC(Cc1ccccc1)C(=O)NC(CCCNC(=N)N)C(=O)N1CCCC1C(=O)NC(CCCNC(=N)N)C(=O)NC(CC(N)=O)C(N)=O
+      2077784 | CC[C@H](C)[C@@H]1NC(=O)[C@H](Cc2ccccc2)NC(=O)[C@H](CC(C)C)NC(=O)[C@@H]2CCCN2C(=O)[C@H](Cc2ccccc2)NC(=O)[C@H](C(C)C)NC(=O)[C@H](CC(C)C)NC(=O)[C@H](CCSC)NC1=O
+      2077779 | CC[C@H](C)[C@@H]1NC(=O)[C@H](Cc2ccccc2)NC(=O)[C@H](CC(C)C)NC(=O)[C@@H]2CCCN2C(=O)[C@H](Cc2ccccc2)NC(=O)[C@H](C(C)C)NC(=O)[C@H](CC(C)C)NC(=O)[C@H](CC[S+](C)[O-])NC1=O
+      2077782 | CC[C@H](C)[C@@H]1NC(=O)[C@H](Cc2c[nH]c3ccccc23)NC(=O)[C@H](Cc2ccccc2)NC(=O)[C@H](Cc2ccccc2)NC(=O)[C@@H]2CCCN2C(=O)[C@H](CCSC)NC(=O)[C@H](CC(C)C)NC(=O)[C@H](CC[S+](C)[O-])NC1=O
+      2077780 | CC(C)C[C@@H]1NC(=O)[C@H](CC[S+](C)[O-])NC(=O)[C@H](C(C)C)NC(=O)[C@H](Cc2c[nH]c3ccccc23)NC(=O)[C@H](Cc2ccccc2)NC(=O)[C@H](Cc2ccccc2)NC(=O)[C@@H]2CCCN2C(=O)[C@H](CC[S+](C)[O-])NC1=O
     (10 rows)
-
+    
 This can be changed using the rdkit.do\_chiral\_sss configuration variable:
 
     chembl_25=# set rdkit.do_chiral_sss=true;
     SET
     Time: 0.241 ms
     chembl_25=# select * from rdk.mols where m@>'NC(=O)[C@@H]1CCCN1C=O' limit 10;
-     molregno |                                                                                                                                                              
-                m                                                                                                                                                            
-
-    ----------+--------------------------------------------------------------------------------------------------------------------------------------------------------------
-    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    ---------------
-        87611 | CNCC(=O)N[C@@H](CCCN=C(N)N)C(=O)N1C[C@H]2C[C@H]1C(=O)N[C@@H](Cc1ccc(O)cc1)C(=O)N[C@H](C(=O)N[C@@H](Cc1c[nH]cn1)C(=O)N1CCC[C@H]1C(=O)N[C@@H](Cc1ccccc1)C(=O)O)
-    CCSS2
-        93377 | CC(=O)N[C@@H](Cc1ccc([N+](=O)[O-])cc1)C(=O)N1CCC[C@H]1C(=O)N[C@@H](CCC/N=C(/N)NS(=O)(=O)c1c(C)c(C)c2c(c1C)CCC(C)(C)O2)C(=O)N[C@@H](Cc1ccccc1)C(=O)N[C@@H](CCC
-    /N=C(/N)NS(=O)(=O)c1c(C)c(C)c2c(c1C)CCC(C)(C)O2)C(=O)N[C@H](C(=O)NCC(=O)N[C@@H](COC(C)(C)C)C(=O)N[C@@H](CCCCNC(=O)c1ccccc1N)C(=O)NCC(=O)O)[C@@H](C)OC(C)(C)C
-        94493 | CC(C)C[C@@H]1NC(=O)[C@H]([C@@H](C)O)NC(=O)[C@H](Cc2c[nH]c3ccccc23)NC(=O)[C@H](C(C)C)NC(=O)[C@H](NC(=O)[C@H](CCCCN)NC(=O)[C@@H]2CCCN2C(=O)[C@H](CCC(N)=O)NC(=O
-    )CNC(=O)CN)CSSC[C@@H](C(=O)N[C@@H](Cc2ccc(O)cc2)C(=O)N[C@@H](CO)C(=O)N[C@H](C(=O)NCC(=O)NCC(N)=O)[C@@H](C)O)NC(=O)[C@H](Cc2c[nH]cn2)NC(=O)[C@H](Cc2ccccc2)NC(=O)CNC(=O)[C
-    @@H]2CCCN2C1=O
-        89558 | NC(N)=NCCC[C@H](NC(=O)[C@@H](N)CC(=O)O)C(=O)N[C@H]1CCSSC[C@@H](C(=O)N[C@@H](Cc2c[nH]cn2)C(=O)N2CCC[C@H]2C(=O)N[C@@H](Cc2ccccc2)C(=O)O)NC(=O)[C@H](Cc2ccc(O)cc
-    2)NC1=O
-        89559 | CC1(C)SSC(C)(C)[C@@H](C(=O)N[C@@H](Cc2c[nH]cn2)C(=O)N2CCC[C@H]2C(=O)N[C@@H](Cc2ccccc2)C(=O)O)NC(=O)[C@H](Cc2ccc(O)cc2)NC(=O)[C@H]1NC(=O)[C@H](CCCN=C(N)N)NC(=
-    O)[C@@H](N)CC(=O)O
-       126618 | NC(=O)[C@@H]1CCCN1C(=O)[C@@H]1CCCN1C(=O)[C@@H](O)[C@H](N)Cc1ccccc1
-       152339 | O=C(O)CN[C@H](CC1CCCCC1)C(=O)N1CCC[C@H]1C(=O)NCCCc1c[nH]cn1
-       152504 | N[C@H](CC1CCCCC1)C(=O)N1[C@H](C(=O)NC/C=C/c2c[nH]cn2)C[C@@H]2CCCC[C@@H]21
-       152383 | N[C@H](CC1CCCCC1)C(=O)N1CCC[C@H]1C(=O)NCCCCc1c[nH]cn1
-       151837 | N[C@H](CC1CCCCC1)C(=O)N1CCC[C@H]1C(=O)NC/C=C/c1c[nH]cn1
+     molregno |                                                 m
+    ----------+---------------------------------------------------------------------------------------------------
+      2213985 | CC[C@H](C)[C@@H]1NC(=O)[C@@H]2CCCN2C(=O)[C@@H]2CCCN2C(=O)[C@H]([C@@H](C)CC)NC(=O)[C@H](CO)NC(=O)[C@H](C)NC(=O)[C@H]([C@H](C)O)NC(=O)[C@@H]2CSSC[C@H](NC1=O)C(=O)N[C@@H](Cc1cnc[nH]1)C(=O)N[C@H](Cc1ccccc1)C(=O)N[C@@H](CCCNC(=N)N)C(=O)N[C@@H](Cc1c[nH]c3ccccc13)C(=O)N[C@@H](CCCNC(=N)N)C(=O)N2
+      1956682 | NC(=O)[C@@H]1CCCN1C(=O)[C@H](Cc1nc(I)[nH]c1I)NC(=O)c1cnccn1
+      2212188 | CN1C(=O)[C@H](CCCNC(=N)N)NC(=O)[C@@H](Cc2ccc(O)cc2)NC(=O)[C@@H]2CCCN2C(=O)[C@H](Cc2ccc3ccccc3c2)NC(=O)[C@@H]1CC(=O)O
+      2053463 | NCCCC[C@H](NC(=O)[C@H](Cc1ccc(OP(=O)(O)O)cc1)NC(=O)Cc1ccccc1)C(=O)N1CCC[C@H]1C(=O)N[C@@H](Cc1ccccc1)C(N)=O
+      2060743 | CCCCCCCCCCCCCCCCNC(=O)CN(CC(=O)NC(C)(C)C(=O)N[C@@H](Cc1ccccc1)C(=O)N[C@@H](CC(C)C)C(=O)N[C@@H](Cc1ccccc1)C(=O)N[C@@H](CCCNC(=N)N)C(=O)N1CCC[C@H]1C(=O)N[C@@H](CCCNC(=N)N)C(=O)N[C@@H](CC(N)=O)C(N)=O)C(=O)c1cccnc1
+      2077784 | CC[C@H](C)[C@@H]1NC(=O)[C@H](Cc2ccccc2)NC(=O)[C@H](CC(C)C)NC(=O)[C@@H]2CCCN2C(=O)[C@H](Cc2ccccc2)NC(=O)[C@H](C(C)C)NC(=O)[C@H](CC(C)C)NC(=O)[C@H](CCSC)NC1=O
+      2077779 | CC[C@H](C)[C@@H]1NC(=O)[C@H](Cc2ccccc2)NC(=O)[C@H](CC(C)C)NC(=O)[C@@H]2CCCN2C(=O)[C@H](Cc2ccccc2)NC(=O)[C@H](C(C)C)NC(=O)[C@H](CC(C)C)NC(=O)[C@H](CC[S+](C)[O-])NC1=O
+      2077782 | CC[C@H](C)[C@@H]1NC(=O)[C@H](Cc2c[nH]c3ccccc23)NC(=O)[C@H](Cc2ccccc2)NC(=O)[C@H](Cc2ccccc2)NC(=O)[C@@H]2CCCN2C(=O)[C@H](CCSC)NC(=O)[C@H](CC(C)C)NC(=O)[C@H](CC[S+](C)[O-])NC1=O
+      2077780 | CC(C)C[C@@H]1NC(=O)[C@H](CC[S+](C)[O-])NC(=O)[C@H](C(C)C)NC(=O)[C@H](Cc2c[nH]c3ccccc23)NC(=O)[C@H](Cc2ccccc2)NC(=O)[C@H](Cc2ccccc2)NC(=O)[C@@H]2CCCN2C(=O)[C@H](CC[S+](C)[O-])NC1=O
+      2211488 | CC[C@H](C)[C@H](N)C(=O)N[C@H](C(=O)N[C@@H](CC(C)C)C(=O)N[C@H](C(=O)N1CCC[C@H]1C(=O)N1CCC[C@H]1C(=O)N[C@H](CCC(=O)N[C@@H](CCC(=O)N[C@@H](CC(C)C)C(=O)O)Cc1ccccc1)Cc1ccccc1)C(C)C)[C@@H](C)CC
     (10 rows)
 
     Time: 6.181 ms
@@ -290,18 +262,18 @@ can be used to do just this. Here is an example of the default behavior, using a
 query for 2,6 di-substituted pyridines:
 
     chembl_25=# select molregno,m from rdk.mols where m@>mol_adjust_query_properties('*c1cccc(NC(=O)*)n1') limit 10;
-     molregno |                                             m                                             
-    ----------+-------------------------------------------------------------------------------------------
-      1993749 | Cn1c(Nc2c(Cl)ccc(CNC(=O)C(C)(C)C)c2Cl)nc2cc(C(=O)Nc3cccc(C(F)(F)F)n3)c(N3CCC(F)(F)C3)cc21
-      1988455 | Cc1cccc(C(=O)Nc2cccc(Oc3cccnc3)n2)c1
-      1870095 | COC(=O)CN(C(=O)C(C)c1c(F)cccc1F)c1cccc(C)n1
-      1870023 | CCC(C)C(=O)N(CC(=O)OC)c1cccc(C)n1
-      1873944 | Cc1ccc(C(=O)N(C)CC(=O)Nc2cccc(C)n2)cn1
-      1873968 | Cc1cccc(NC(=O)CN(C)C(=O)c2ccc(-n3cccc3)nc2)n1
-      1882693 | Cc1cccc(NC(=O)CCNCc2c(C)nn(C)c2N(C)C)n1
-      1882711 | COc1c(CNCCC(=O)Nc2cccc(C)n2)c(C)nn1C
-      1868705 | CCOc1cccc(NC(=O)c2cnc(C)cn2)n1
-      1875177 | Cc1cccc(NC(=O)[C@@H]2CCCN2Cc2nc(C)c(C)o2)n1
+     molregno |                                                 m
+    ----------+---------------------------------------------------------------------------------------------------
+      1609520 | Cc1cccc(NC(=O)c2cc(Br)ccc2C(=O)O)n1
+      1141456 | CCN(CC)CCCn1cc(NC(=O)Nc2cccc(-c3ccccc3)n2)c2ccccc21
+      1431198 | Cc1cccc(NC(=O)c2nc(C)sc2Nc2cccnc2)n1
+       734975 | Cc1cccc(NC(=O)CN(C)S(=O)(=O)c2ccc(Cl)cc2)n1
+       760426 | Cc1cccc(NC(=O)CCCn2cc([N+](=O)[O-])cn2)n1
+       782786 | Cc1cccc(NC(=O)CN2C(=O)NC(C)(c3ccc4ccccc4c3)C2=O)n1
+      1478990 | Cc1cccc(NC(=O)Cn2c(=O)sc3cc(C(=O)c4ccccc4)ccc32)n1
+      1478787 | Cc1cccc(NC(=O)Cn2c(=O)sc3cc(C(=O)c4ccccc4F)ccc32)n1
+      1955608 | C[C@H](N)C(=O)Nc1cccc(N)n1
+       773911 | Cc1cccc(NC(=O)c2c(-c3ccccc3)noc2C)n1
     (10 rows)
 
     Time: 11.895 ms
@@ -317,18 +289,18 @@ where we disable the additional degree queries:
 
     chembl_25=# select molregno,m from rdk.mols where m@>mol_adjust_query_properties('*c1cccc(NC(=O)*)n1',
     chembl_25(# '{"adjustDegree":false}') limit 10;
-     molregno |                                             m                                             
-    ----------+-------------------------------------------------------------------------------------------
-      1993749 | Cn1c(Nc2c(Cl)ccc(CNC(=O)C(C)(C)C)c2Cl)nc2cc(C(=O)Nc3cccc(C(F)(F)F)n3)c(N3CCC(F)(F)C3)cc21
-      1957849 | COc1ccc2ncc(F)c(C[C@H](O)C3CCC(NCc4nc5c(cc4F)OCC(=O)N5)CO3)c2n1
-      1959611 | O=C1COc2ccc(CNC3CCN(CCn4c(=O)ccc5ncc(OCc6cccnn6)cc54)CC3)nc2N1
-      1988455 | Cc1cccc(C(=O)Nc2cccc(Oc3cccnc3)n2)c1
-      1870095 | COC(=O)CN(C(=O)C(C)c1c(F)cccc1F)c1cccc(C)n1
-      1870023 | CCC(C)C(=O)N(CC(=O)OC)c1cccc(C)n1
-      1873944 | Cc1ccc(C(=O)N(C)CC(=O)Nc2cccc(C)n2)cn1
-      1873968 | Cc1cccc(NC(=O)CN(C)C(=O)c2ccc(-n3cccc3)nc2)n1
-      1882693 | Cc1cccc(NC(=O)CCNCc2c(C)nn(C)c2N(C)C)n1
-      1882711 | COc1c(CNCCC(=O)Nc2cccc(C)n2)c(C)nn1C
+     molregno |                                                 m
+    ----------+---------------------------------------------------------------------------------------------------
+      2146308 | CCn1ncc2cc3nc(c21)NCCOC[C@H](c1ccccc1)NC(=O)N3
+      2137309 | CCn1ncc2cc3nc(c21)CCCO[C@@H](O)[C@H](c1ccccc1)NC(=O)N3
+      2102593 | CCn1ncc2cc3nc(c21)CCCO[C@@H]([C@@H](C)O)[C@@H](c1ccccc1)NC(=O)N3
+      2171613 | CCn1ncc2cc3nc(c21)CCCO[C@@H]([C@H](C)O)[C@@H](c1ccccc1)NC(=O)N3
+      2111904 | CCn1ncc2cc3nc(c21)C[C@H](O)COC[C@H](c1cccc(Cl)c1)NC(=O)N3
+      2173410 | CCn1ncc2cc3nc(c21)CCCOC[C@H](c1ccccc1)NC(=O)N3
+      2189450 | Cn1ncc2cc3nc(c21)CCCOC[C@H](c1ccccc1)NC(=O)N3
+      2195752 | CCn1ncc2cc3nc(c21)C[C@H](O)COC[C@H](c1ccccc1)NC(=O)N3
+      1609520 | Cc1cccc(NC(=O)c2cc(Br)ccc2C(=O)O)n1
+      1141456 | CCN(CC)CCCn1cc(NC(=O)Nc2cccc(-c3ccccc3)n2)c2ccccc21
     (10 rows)
 
     Time: 10.780 ms
@@ -338,18 +310,18 @@ added to chain atoms):
 
     chembl_25=# select molregno,m from rdk.mols where m@>mol_adjust_query_properties('*c1cccc(NC(=O)*)n1',
     chembl_25(# '{"adjustDegree":true,"adjustDegreeFlags":"IGNORERINGS|IGNOREDUMMIES"}') limit 10;
-     molregno |                                             m                                             
-    ----------+-------------------------------------------------------------------------------------------
-      1993749 | Cn1c(Nc2c(Cl)ccc(CNC(=O)C(C)(C)C)c2Cl)nc2cc(C(=O)Nc3cccc(C(F)(F)F)n3)c(N3CCC(F)(F)C3)cc21
-      1957849 | COc1ccc2ncc(F)c(C[C@H](O)C3CCC(NCc4nc5c(cc4F)OCC(=O)N5)CO3)c2n1
-      1959611 | O=C1COc2ccc(CNC3CCN(CCn4c(=O)ccc5ncc(OCc6cccnn6)cc54)CC3)nc2N1
-      1988455 | Cc1cccc(C(=O)Nc2cccc(Oc3cccnc3)n2)c1
-      1873944 | Cc1ccc(C(=O)N(C)CC(=O)Nc2cccc(C)n2)cn1
-      1873968 | Cc1cccc(NC(=O)CN(C)C(=O)c2ccc(-n3cccc3)nc2)n1
-      1882693 | Cc1cccc(NC(=O)CCNCc2c(C)nn(C)c2N(C)C)n1
-      1882711 | COc1c(CNCCC(=O)Nc2cccc(C)n2)c(C)nn1C
-      1884388 | Cc1noc(COCC(=O)Nc2ccc(Br)c(C)n2)n1
-      1868705 | CCOc1cccc(NC(=O)c2cnc(C)cn2)n1
+     molregno |                                                 m
+    ----------+---------------------------------------------------------------------------------------------------
+      2146308 | CCn1ncc2cc3nc(c21)NCCOC[C@H](c1ccccc1)NC(=O)N3
+      2137309 | CCn1ncc2cc3nc(c21)CCCO[C@@H](O)[C@H](c1ccccc1)NC(=O)N3
+      2102593 | CCn1ncc2cc3nc(c21)CCCO[C@@H]([C@@H](C)O)[C@@H](c1ccccc1)NC(=O)N3
+      2171613 | CCn1ncc2cc3nc(c21)CCCO[C@@H]([C@H](C)O)[C@@H](c1ccccc1)NC(=O)N3
+      2111904 | CCn1ncc2cc3nc(c21)C[C@H](O)COC[C@H](c1cccc(Cl)c1)NC(=O)N3
+      2173410 | CCn1ncc2cc3nc(c21)CCCOC[C@H](c1ccccc1)NC(=O)N3
+      2189450 | Cn1ncc2cc3nc(c21)CCCOC[C@H](c1ccccc1)NC(=O)N3
+      2195752 | CCn1ncc2cc3nc(c21)C[C@H](O)COC[C@H](c1ccccc1)NC(=O)N3
+      1609520 | Cc1cccc(NC(=O)c2cc(Br)ccc2C(=O)O)n1
+      1141456 | CCN(CC)CCCn1cc(NC(=O)Nc2cccc(-c3ccccc3)n2)c2ccccc21
     (10 rows)
 
     Time: 12.827 ms
