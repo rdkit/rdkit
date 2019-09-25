@@ -184,16 +184,16 @@ def patchPandasHTMLrepr(self, **kwargs):
     # 2. Pandas uses TextAdjustment objects to measure the length of texts
     #    (e.g. for east asian languages). We take advantage of this mechanism
     #    and replace the original text adjustment object with a custom one.
-    #    This "RenderHTMLAdjustment" object assigns a length of 0 to a given
-    #    text if it is valid HTML. And a value having length 0 will not be
-    #    truncated.
+    #    This "RenderMoleculeAdjustment" object assigns a length of 0 to a
+    #    given text if it is valid HTML. And a value having length 0 will not
+    #    be truncated.
 
     # store original _get_adjustment method
     defPandasGetAdjustment = pd.io.formats.format._get_adjustment
 
     def patched_get_adjustment():
         inner_adjustment = defPandasGetAdjustment()
-        return RenderHTMLAdjustment(inner_adjustment)
+        return RenderMoleculeAdjustment(inner_adjustment)
 
     try:
         # patch _get_adjustment method and call original to_html function
@@ -204,7 +204,7 @@ def patchPandasHTMLrepr(self, **kwargs):
         pd.io.formats.format._get_adjustment = defPandasGetAdjustment
 
 
-class RenderHTMLAdjustment:
+class RenderMoleculeAdjustment:
     def __init__(self, inner_adjustment):
         """Creates a new instance.
 
@@ -214,13 +214,20 @@ class RenderHTMLAdjustment:
         self.inner_adjustment = inner_adjustment
 
     def len(self, text):
+        is_molecule = False
         try:
-            # return 0 if text is valid XML / HTML
-            minidom.parseString(text)
-            return 0
+            # is text valid XML / HTML?
+            xml = minidom.parseString(text)
+            root_node = xml.firstChild
+            # check data-content attribute
+            if root_node.nodeName in ['svg', 'img'] and \
+               'data-content' in root_node.attributes.keys() and \
+               root_node.attributes['data-content'].value == 'rdkit/molecule':
+                is_molecule = True
         except ExpatError:
-            # else measure the length using the underlying adjustment object
-            return self.inner_adjustment.len(text)
+            pass  # parsing xml failed and text is not a molecule image
+
+        return 0 if is_molecule else self.inner_adjustment.len(text)
 
     def justify(self, texts, max_len, mode='right'):
         return self.inner_adjustment.justify(texts, max_len, mode)
@@ -288,10 +295,11 @@ def PrintAsBase64PNGString(x, renderer=None):
         svg = svg.getElementsByTagName('svg')[0]
         svg.attributes['viewbox'] = f'0 0 {molSize[0]} {molSize[1]}'
         svg.attributes['style'] = f'max-width: {molSize[0]}px; height: {molSize[1]}px;'
+        svg.attributes['data-content'] = 'rdkit/molecule'
         return svg.toxml()
     else:
         data = Draw._moltoimg(x, molSize, highlightAtoms, "", returnPNG=True, kekulize=True)
-        return '<img src="data:image/png;base64,%s" alt="Mol"/>' % _get_image(data)
+        return '<img data-content="rdkit/molecule" src="data:image/png;base64,%s" alt="Mol"/>' % _get_image(data)
 
 
 def PrintDefaultMolRep(x):
