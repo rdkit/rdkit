@@ -374,34 +374,34 @@ Usually we'd like to find a sorted listed of neighbors along with the accompanyi
     CREATE FUNCTION
     Time: 0.856 ms
     chembl_25=# select * from get_mfp2_neighbors('Cc1ccc2nc(-c3ccc(NC(C4N(C(c5cccs5)=O)CCC4)=O)cc3)sc2c1') limit 10;
-     molregno |                             m                              |    similarity     
-    ----------+------------------------------------------------------------+-------------------
-       471319 | Cc1ccc2nc(-c3ccc(NC(=O)C4CCN(S(=O)(=O)c5cccs5)C4)cc3)sc2c1 | 0.638888888888889
-      1032469 | O=C(Nc1nc2ccc(Cl)cc2s1)[C@@H]1CCCN1C(=O)c1cccs1            | 0.623188405797101
-       751668 | COc1ccc2nc(NC(=O)[C@@H]3CCCN3C(=O)c3cccs3)sc2c1            | 0.619718309859155
-       471318 | Cc1ccc2nc(-c3ccc(NC(=O)C4CN(S(=O)(=O)c5cccs5)C4)cc3)sc2c1  | 0.611111111111111
-       740754 | Cc1ccc(NC(=O)C2CCCN2C(=O)c2cccs2)cc1C                      | 0.606060606060606
-       732905 | O=C(Nc1ccc(S(=O)(=O)N2CCCC2)cc1)C1CCCN1C(=O)c1cccs1        | 0.602941176470588
-      1087495 | Cc1ccc(NC(=O)C2CCCN2C(=O)c2cccs2)c(C)c1                    | 0.597014925373134
-       471462 | CCS(=O)(=O)N1CCC(C(=O)Nc2ccc(-c3nc4ccc(C)cc4s3)cc2)CC1     | 0.585714285714286
-       810850 | Cc1cc(C)n(-c2ccc(NC(=O)C3CCCCN3C(=O)c3cccs3)cc2)n1         | 0.583333333333333
-      1224407 | O=C(Nc1cccc(S(=O)(=O)N2CCCC2)c1)C1CCCN1C(=O)c1cccs1        | 0.579710144927536
+     molregno |                                m                                 |    similarity
+    ----------+------------------------------------------------------------------+-------------------
+       751668 | COc1ccc2nc(NC(=O)[C@@H]3CCCN3C(=O)c3cccs3)sc2c1                  | 0.619718309859155
+       740754 | Cc1ccc(NC(=O)C2CCCN2C(=O)c2cccs2)cc1C                            | 0.606060606060606
+       732905 | O=C(Nc1ccc(S(=O)(=O)N2CCCC2)cc1)C1CCCN1C(=O)c1cccs1              | 0.602941176470588
+       810850 | Cc1cc(C)n(-c2ccc(NC(=O)C3CCCCN3C(=O)c3cccs3)cc2)n1               | 0.583333333333333
+      1224407 | O=C(Nc1cccc(S(=O)(=O)N2CCCC2)c1)C1CCCN1C(=O)c1cccs1              | 0.579710144927536
+       779258 | CC1CCN(S(=O)(=O)c2ccc(NC(=O)[C@@H]3CCCN3C(=O)c3cccs3)cc2)CC1     | 0.569444444444444
+       472441 | Cc1ccc2nc(-c3ccc(NC(=O)C4CCN(S(=O)(=O)C(C)C)CC4)cc3)sc2c1        | 0.569444444444444
+       745651 | Cc1ccc(NC(=O)[C@@H]2CCCN2C(=O)c2cccs2)cc1S(=O)(=O)N1CCCCC1       | 0.567567567567568
+       472510 | Cc1ccc2nc(-c3ccc(NC(=O)C4CCN(S(=O)(=O)c5cccc(Cl)c5)CC4)cc3)sc2c1 | 0.565789473684211
+      1233426 | Cc1cccc2sc(NC(=O)[C@@H]3CCCN3C(=O)c3cccs3)nc12                   | 0.563380281690141
     (10 rows)
 
     Time: 28.909 ms
     chembl_25=# select * from get_mfp2_neighbors('Cc1ccc2nc(N(C)CC(=O)O)sc2c1') limit 10;
-     molregno |                           m                           |    similarity     
-    ----------+-------------------------------------------------------+-------------------
-      1044892 | Cc1ccc2nc(N(CCN(C)C)C(=O)c3cc(Cl)sc3Cl)sc2c1          | 0.518518518518518
-      1040496 | Cc1ccc2nc(N(CCCN(C)C)C(=O)CCc3ccccc3)sc2c1            | 0.517857142857143
-      1049393 | Cc1ccc2nc(N(CCCN(C)C)C(=O)CS(=O)(=O)c3ccccc3)sc2c1    | 0.517857142857143
-       441378 | Cc1ccc2nc(NC(=O)CCC(=O)O)sc2c1                        | 0.510204081632653
-      1047691 | Cc1ccc(S(=O)(=O)CC(=O)N(CCCN(C)C)c2nc3ccc(C)cc3s2)cc1 | 0.509090909090909
-       911501 | Cc1ccc2nc(N(CCN(C)C)C(=O)c3cc(Cl)sc3Cl)sc2c1.Cl       | 0.509090909090909
-      1042958 | Cc1ccc2nc(N(CCN(C)C)C(=O)c3ccc4ccccc4c3)sc2c1         | 0.509090909090909
-       775269 | Cc1ccc2nc(N(CCCN(C)C)C(=O)CCc3ccccc3)sc2c1.Cl         | 0.508771929824561
-      1045663 | Cc1ccc2nc(N(CCCN(C)C)C(=O)COc3ccc(Cl)cc3)sc2c1        |               0.5
-      1015485 | Cc1ccc2nc(N(Cc3cccnc3)C(=O)Cc3ccccc3)sc2c1            |               0.5
+     molregno |                                m                         |    similarity
+    ----------+----------------------------------------------------------+-------------------
+      2138088 | CN(CC(=O)O)c1nc2ccc([N+](=O)[O-])cc2s1                   | 0.673913043478261
+      1040255 | CC(=O)N(CCCN(C)C)c1nc2ccc(C)cc2s1                        | 0.571428571428571
+       773946 | CC(=O)N(CCCN(C)C)c1nc2ccc(C)cc2s1.Cl                     |              0.56
+      1044892 | Cc1ccc2nc(N(CCN(C)C)C(=O)c3cc(Cl)sc3Cl)sc2c1             | 0.518518518518518
+       441378 | Cc1ccc2nc(NC(=O)CCC(=O)O)sc2c1                           | 0.510204081632653
+      1047691 | Cc1ccc(S(=O)(=O)CC(=O)N(CCCN(C)C)c2nc3ccc(C)cc3s2)cc1    | 0.509090909090909
+      1042958 | Cc1ccc2nc(N(CCN(C)C)C(=O)c3ccc4ccccc4c3)sc2c1            | 0.509090909090909
+      1015485 | Cc1ccc2nc(N(Cc3cccnc3)C(=O)Cc3ccccc3)sc2c1               |               0.5
+       994843 | Cc1ccc(S(=O)(=O)CC(=O)N(CCCN(C)C)c2nc3ccc(C)cc3s2)cc1.Cl |               0.5
+       841938 | Cc1ccc2nc(N(CCN(C)C)C(=O)c3ccc4ccccc4c3)sc2c1.Cl         |               0.5
     (10 rows)
 
     Time: 41.623 ms
