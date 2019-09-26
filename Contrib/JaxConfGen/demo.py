@@ -35,7 +35,7 @@ AllChem.EmbedMultipleConfs(mol, numConfs=n_confs)
 
 # 1. Serial Optimization with scipy, run one molecule at a time.
 
-# # Quasi-newton methods are quite slow
+# quasi-newton methods are quite slow
 for cidx in range(2):
     conf_angstroms = np.array(mol.GetConformer(cidx).GetPositions())
     conf_nanometers = conf_angstroms/10
@@ -61,7 +61,7 @@ batched_potential = jax.jit(jax.vmap(potential))
 
 print("Before Batched Energies", batched_potential(all_confs))
 
-jax_minimizer = functools.partial(optimizer.minimize_jax_momentum, potential, gradient)
+jax_minimizer = functools.partial(optimizer.minimize_jax_adam, potential, gradient)
 batched_minimizer = jax.jit(jax.vmap(jax_minimizer))
 batched_geometries = batched_minimizer(all_confs)
 
@@ -85,17 +85,36 @@ for _ in range(n_confs):
     dijs.append(dg.generate_nxn(mol))
 dijs = np.array(dijs) # BxNxN
 
-@jax.jit
-def conf_gen(dij):
-    conf = dg.embed(dij) # diagonalization and embedding of the Gramian
+
+def conf_gen(dij, dims):
+    conf = dg.embed(dij, dims) # diagonalization and embedding of the Gramian
     return jax_minimizer(conf)
 
-batched_conf_gen = jax.vmap(conf_gen)
-minimized_confs = batched_conf_gen(dijs)
-print("After Batched Energies", batched_potential(minimized_confs))
+batch_minimizer = jax.jit(jax.vmap(jax_minimizer))
+
+def generate_batched_embedding(dims):
+
+    cg_fn = functools.partial(conf_gen, dims=dims)
+    batched_conf_gen_fn = jax.jit(jax.vmap(cg_fn))
+    return batched_conf_gen_fn
+
+# 3D
+embed_3d = generate_batched_embedding(3)
+minimized_confs = embed_3d(dijs)
+res = batched_potential(minimized_confs)
+print("3D After Batched Energies", res, "Mean", np.mean(res))
 
 start_time = time.time()
-batched_conf_gen(dijs)
+embed_3d(dijs)
 end_time = time.time()
 # Takes ~500 milliseconds if we include the batched SVD time
-print("Minimized", n_confs, "conformers in", end_time-start_time, "seconds") 
+print("3D Minimized", n_confs, "conformers in", end_time-start_time, "seconds") 
+
+# Minimize in 4D then re-minimize in 3D
+embed_4d = generate_batched_embedding(4)
+minimized_confs_4d = embed_4d(dijs)
+print(minimized_confs_4d.shape)
+unminimized_confs_3d = minimized_confs_4d[:, :, :3]
+minimized_confs_3d = batch_minimizer(unminimized_confs_3d)
+res = batched_potential(minimized_confs_3d)
+print("4D/3D After Batched Energies", res, "Mean", np.mean(res))

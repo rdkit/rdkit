@@ -6,18 +6,30 @@ import jax.numpy as jnp
 from rdkit.Chem import rdDistGeom
 import rdkit.DistanceGeometry as DG
 
-def embed(D):
-    '''
-    D: distance matrix (N,N)
-    returns: coordinates given the distance matrix (N,3)
-    '''
+def embed(D, dims):
+    """
+    Embed a distance matrix into Euclidean coordinates.
+
+    Parameters
+    ----------
+    D: np.ndarray of shape (N,N)
+        A symmetric pairwise distance matrix
+
+    dims: int
+        Number of dimensions we keep
+
+    Returns
+    -------
+    Cartesian Coordinates given the distance matrix (N,dims)
+
+    """
     # Generate Gramian Matrix (B)
-    # n = len(D)
     n = D.shape[0]                                                                       
     H = jnp.eye(n) - jnp.ones((n, n))/n
     B = -H.dot(D**2).dot(H)/2
     
     # perform SVD (vmap batch is broken)
+    # https://github.com/google/jax/issues/1397
     # u, s, v = jnp.linalg.svd(B)
 
     # so we do it manually instead
@@ -31,14 +43,23 @@ def embed(D):
     u = evecs[:, perm]
 
     x = u.dot(jnp.diag(jnp.sqrt(s)))
-
-    return x[:, :3]/10
+    return x[:, :dims]/10
 
 def generate_nxn(mol):
-    '''
-    mol: RDKit molecule
-    returns: Conformation based only on the bounded distance matrix (shape N,3)
-    '''
+    """
+    Generate a N x N pairwise distance matrix by random sampling the upper and lower constraints
+
+    Parameters
+    ----------
+    mol: rdkit.Mol
+        An RDKit molecule
+
+    Returns
+    -------
+    np.ndarray of shape (N,N)
+        Pairwise distance matrix
+
+    """
     bounds_mat = rdDistGeom.GetMoleculeBoundsMatrix(mol)
     
     DG.DoTriangleSmoothing(bounds_mat)
@@ -60,6 +81,3 @@ def generate_nxn(mol):
                 print('WARNING: lower bound {} greater than upper bound {}'.format(lower_bound,upper_bound))
     
     return dij
-    # conf = cmdscale(dij)
-    
-    # return conf

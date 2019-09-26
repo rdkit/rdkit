@@ -5,15 +5,16 @@ import jax
 from jax.experimental import optimizers
 import jax.lax
 
-def minimize_scipy_bfgs(potential, grad, conf):
+def minimize_scipy_bfgs(potential_fn, grad_fn, conf):
+
 
     N = conf.shape[0]
     D = conf.shape[1]
 
     def wrap_fun(x):
         x = np.reshape(x, (N, D))
-        uu = potential(x)
-        gg = grad(x)
+        uu = potential_fn(x)
+        gg = grad_fn(x)
         return uu, np.reshape(gg, (-1,))
 
     res = scipy.optimize.minimize(
@@ -26,11 +27,12 @@ def minimize_scipy_bfgs(potential, grad, conf):
 
     return np.reshape(res.x, (N, D))
 
-def minimize_jax_momentum(potential, grad, conf):
+def minimize_jax_adam(potential_fn, grad_fn, conf):
 
-    step_size = 1e-3
+    step_size = 1e-2
     num_epochs = 1000
-    # TODO: Change the optimizer
+
+    # (ytz): Unclear if Adam is actually a sane choice
     opt_init, opt_update, get_params = optimizers.adam(step_size)
 
     opt_state = opt_init(conf)
@@ -42,7 +44,7 @@ def minimize_jax_momentum(potential, grad, conf):
     def body_fun(val):
         epoch, opt_state = val
         x_i = get_params(opt_state)
-        dx = grad(x_i)[0]
+        dx = grad_fn(x_i)[0]
         opt_state = opt_update(epoch, dx, opt_state)
         return (epoch+1, opt_state)
 
@@ -50,3 +52,4 @@ def minimize_jax_momentum(potential, grad, conf):
 
     _, final_state = jax.lax.while_loop(cond_fun, body_fun, init_val)
     return get_params(final_state)
+

@@ -1,7 +1,6 @@
 # Taken from the timemachine trunk
 # www.github.com/proteneer/timemachine
 
-
 BOLTZMANN = 1.380658e-23
 AVOGADRO = 6.0221367e23
 RGAS = BOLTZMANN*AVOGADRO

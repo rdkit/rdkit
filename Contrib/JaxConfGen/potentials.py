@@ -9,6 +9,9 @@ from constants import ONE_4PI_EPS0
 
 
 def delta_r(ri, rj, box=None):
+    """
+    Compute ri - rj under PBC
+    """
     diff = ri - rj # this can be either N,N,3 or B,3
     if box is not None:
         diff -= box[2]*np.floor(np.expand_dims(diff[...,2], axis=-1)/box[2][2]+0.5)
@@ -325,97 +328,6 @@ def electrostatics(conf, params, box, param_idxs, scale_matrix, cutoff=None, alp
 
     """
     charges = params[param_idxs]
+    eij = scale_matrix*pairwise_energy(conf, box, charges, cutoff)
+    return ONE_4PI_EPS0*np.sum(eij)/2
 
-    # if we use periodic boundary conditions, then the following three parameters
-    # must be set in order for Ewald to make sense.
-    if box is not None:
-
-        # note that periodic boundary conditions are subject to the following
-        # convention and constraints:
-        # http://docs.openmm.org/latest/userguide/theory.html#periodic-boundary-conditions
-        box_lengths = np.linalg.norm(box, axis=-1)
-        assert cutoff is not None and cutoff >= 0.00
-        assert alpha is not None
-        assert kmax is not None
-
-        # this is an implicit assumption in the Ewald calculation. If it were any larger
-        # then there may be more than N^2 number of interactions.
-        if np.any(box_lengths < 2*cutoff):
-            raise ValueError("Box lengths cannot be smaller than twice the cutoff.")
-
-        return ewald_energy(conf, box, charges, scale_matrix, cutoff, alpha, kmax)
-
-    else:    
-        # non periodic electrostatics is straightforward.
-        # note that we do not support reaction field approximations.
-        eij = scale_matrix*pairwise_energy(conf, box, charges, cutoff)
-
-        return ONE_4PI_EPS0*np.sum(eij)/2
-
-
-def self_energy(conf, charges, alpha):
-    return np.sum(ONE_4PI_EPS0 * np.power(charges, 2) * alpha/np.sqrt(np.pi))
-
-
-def ewald_energy(conf, box, charges, scale_matrix, cutoff, alpha, kmax):
-    eij = pairwise_energy(conf, box, charges, cutoff)
-
-    assert cutoff is not None
-
-    # 1. Assume scale matrix is not used at all (no exceptions, no exclusions)
-    # 1a. Direct Space
-    eij_direct = eij * erfc(alpha*eij)
-    eij_direct = ONE_4PI_EPS0*np.sum(eij_direct)/2
-
-    # 1b. Reciprocal Space
-    eij_recip = reciprocal_energy(conf, box, charges, alpha, kmax)
-
-    # 2. Remove over estimated scale matrix contribution scaled by erf
-    eij_offset = (1-scale_matrix) * eij
-    eij_offset *= erf(alpha*eij_offset)
-    eij_offset = ONE_4PI_EPS0*np.sum(eij_offset)/2
-
-    return eij_direct + eij_recip - eij_offset - self_energy(conf, charges, alpha)
-
-def reciprocal_energy(conf, box, charges, alpha, kmax):
-
-    assert kmax > 0
-    assert box is not None
-    assert alpha > 0
-
-    recipBoxSize = (2*np.pi)/np.diag(box)
-
-    mg = []
-    lowry = 0
-    lowrz = 1
-
-    numRx, numRy, numRz = kmax, kmax, kmax
-
-    for rx in range(numRx):
-        for ry in range(lowry, numRy):
-            for rz in range(lowrz, numRz):
-                mg.append([rx, ry, rz])
-                lowrz = 1 - numRz
-            lowry = 1 - numRy
-
-    mg = np.array(onp.array(mg))
-
-    # lattice vectors
-    ki = np.expand_dims(recipBoxSize, axis=0) * mg # [nk, 3]
-    ri = np.expand_dims(conf, axis=0) # [1, N, 3]
-    rik = np.sum(np.multiply(ri, np.expand_dims(ki, axis=1)), axis=-1) # [nk, N]
-    real = np.cos(rik)
-    imag = np.sin(rik)
-    eikr = real + 1j*imag # [nk, N]
-    qi = charges +0j
-    Sk = np.sum(qi*eikr, axis=-1)  # [nk]
-    n2Sk = np.power(np.abs(Sk), 2)
-    k2 = np.sum(np.multiply(ki, ki), axis=-1) # [nk]
-    factorEwald = -1/(4*alpha*alpha)
-    ak = np.exp(k2*factorEwald)/k2 # [nk]
-    nrg = np.sum(ak * n2Sk)
-    # the following volume calculation assumes the reduced PBC convention consistent
-    # with that of OpenMM
-    recipCoeff = (ONE_4PI_EPS0*4*np.pi)/(box[0][0]*box[1][1]*box[2][2]) 
-
-    return recipCoeff * nrg
