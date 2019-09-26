@@ -178,8 +178,18 @@ def patchPandasHTMLrepr(self, **kwargs):
     # 1. Disable escaping of HTML in order to render img / svg tags
     # 2. Avoid truncation of data frame values that contain HTML content
 
-    # 1. Set escape=False unless specified otherwise.
-    kwargs['escape'] = kwargs.get('escape', False)
+    # 1. Temporarily set escape=False in HTMLFormatter._write_cell
+    import pandas.io.formats.html  # necessary for loading HTMLFormatter
+    defHTMLFormatter_write_cell = pd.io.formats.html.HTMLFormatter._write_cell
+
+    def patched_HTMLFormatter_write_cell(self, s, *args, **kwargs):
+        def_escape = self.escape
+        try:
+            if is_molecule_image(s):
+                self.escape = False
+            return defHTMLFormatter_write_cell(self, s, *args, **kwargs)
+        finally:
+            self.escape = def_escape
 
     # 2. Pandas uses TextAdjustment objects to measure the length of texts
     #    (e.g. for east asian languages). We take advantage of this mechanism
@@ -198,10 +208,29 @@ def patchPandasHTMLrepr(self, **kwargs):
     try:
         # patch _get_adjustment method and call original to_html function
         pd.io.formats.format._get_adjustment = patched_get_adjustment
+        pd.io.formats.html.HTMLFormatter._write_cell = patched_HTMLFormatter_write_cell
         return defPandasRendering(self, **kwargs)
     finally:
         # restore original _get_adjustment method
         pd.io.formats.format._get_adjustment = defPandasGetAdjustment
+        pd.io.formats.html.HTMLFormatter._write_cell = defHTMLFormatter_write_cell
+
+
+def is_molecule_image(s):
+    result = False
+    try:
+        # is text valid XML / HTML?
+        xml = minidom.parseString(s)
+        root_node = xml.firstChild
+        # check data-content attribute
+        if root_node.nodeName in ['svg', 'img'] and \
+           'data-content' in root_node.attributes.keys() and \
+           root_node.attributes['data-content'].value == 'rdkit/molecule':
+            result = True
+    except ExpatError:
+        pass  # parsing xml failed and text is not a molecule image
+
+    return result
 
 
 class RenderMoleculeAdjustment:
@@ -214,20 +243,10 @@ class RenderMoleculeAdjustment:
         self.inner_adjustment = inner_adjustment
 
     def len(self, text):
-        is_molecule = False
-        try:
-            # is text valid XML / HTML?
-            xml = minidom.parseString(text)
-            root_node = xml.firstChild
-            # check data-content attribute
-            if root_node.nodeName in ['svg', 'img'] and \
-               'data-content' in root_node.attributes.keys() and \
-               root_node.attributes['data-content'].value == 'rdkit/molecule':
-                is_molecule = True
-        except ExpatError:
-            pass  # parsing xml failed and text is not a molecule image
-
-        return 0 if is_molecule else self.inner_adjustment.len(text)
+        if is_molecule_image(text):
+            return 0
+        else:
+            return self.inner_adjustment.len(text)
 
     def justify(self, texts, max_len, mode='right'):
         return self.inner_adjustment.justify(texts, max_len, mode)
