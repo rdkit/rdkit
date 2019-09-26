@@ -1,6 +1,20 @@
 # Author: Yutong Zhao
 # Taken from the Time Machine
 
+
+from openforcefield.typing.engines.smirnoff import ForceField
+from rdkit.Chem import rdDistGeom
+import rdkit.DistanceGeometry as DG
+
+
+import forcefield 
+import numpy as np
+import jax
+import functools
+import dg
+import time
+import optimizer
+
 import numpy as np
 import jax.numpy as jnp
 
@@ -75,3 +89,48 @@ def generate_nxn(bounds_mat):
                 print('WARNING: lower bound {} greater than upper bound {}'.format(lower_bound,upper_bound))
     
     return dij
+
+
+def generate_conformer(mol, n_confs, dims=3):
+    """
+    Generate conformers for the input molecule.
+
+    Parameters
+    ----------
+    mol: rdkit.ROMol
+        Input molecule
+
+    n_confs: int
+        Number of conformers we generate
+
+    """
+    off = ForceField("smirnoff99Frosst.offxml")
+    potential, params = forcefield.parameterize(mol, off)
+
+    potential = functools.partial(potential, params=params)
+    gradient = jax.grad(potential, argnums=(0,)) # dU/dx
+
+    # JIT the kernels
+    potential = jax.jit(potential)
+    gradient = jax.jit(gradient)
+
+    jax_minimizer = functools.partial(optimizer.minimize_jax_adam, potential, gradient)
+    batched_minimizer = jax.jit(jax.vmap(jax_minimizer))
+
+    bounds_mat = rdDistGeom.GetMoleculeBoundsMatrix(mol)
+    DG.DoTriangleSmoothing(bounds_mat)
+
+    def conf_gen(dij):
+        conf = dg.embed(dij, dims) # diagonalization and embedding of the Gramian
+        return jax_minimizer(conf)
+
+    batched_conf_gen_fn = jax.jit(jax.vmap(conf_gen))
+
+    dijs = []
+    for _ in range(n_confs):
+        dijs.append(dg.generate_nxn(bounds_mat))
+    dijs = np.array(dijs) # BxNxN
+
+    minimized_confs = batched_conf_gen_fn(dijs)
+    return minimized_confs
+

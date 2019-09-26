@@ -88,7 +88,7 @@ print("Minimized", n_confs, "conformers in", end_time-start_time, "seconds")
 
 # 3. Direct DG embedding
 mol.RemoveAllConformers()
-bounds_mat = rdDistGeom.GetMoleculeBoundsMatrix(mol)    
+bounds_mat = rdDistGeom.GetMoleculeBoundsMatrix(mol)
 DG.DoTriangleSmoothing(bounds_mat)
 
 print("Full set conformers:", n_confs)
@@ -118,7 +118,6 @@ minimized_confs = embed_3d(dijs)
 res = batched_potential(minimized_confs)
 print("3D After Batched Energies Median", np.median(res), "std", np.std(res))
 
-
 for _ in range(10):
     print("Generating distance matrices...")
     dijs = []
@@ -133,7 +132,7 @@ for _ in range(10):
     print("Generated", n_confs, "conformers in", end_time-start_time, "seconds") 
 
 # Minimize in 5D then re-minimize in 3D
-embed_4d = generate_batched_embedding(5)
+embed_4d = generate_batched_embedding(4)
 minimized_confs_4d = embed_4d(dijs)
 unminimized_confs_3d = minimized_confs_4d[:, :, :3]
 minimized_confs_3d = batch_minimizer(unminimized_confs_3d)
