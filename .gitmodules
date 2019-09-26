@@ -1,3 +1,0 @@
-[submodule "Contrib/JaxConfGen/Contrib/JaxConfGen/openforcefield"]
-	path = Contrib/JaxConfGen/Contrib/JaxConfGen/openforcefield
-	url = git@github.com:openforcefield/openforcefield
