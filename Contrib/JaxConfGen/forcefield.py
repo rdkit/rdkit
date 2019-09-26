@@ -15,7 +15,6 @@ from openforcefield.topology import ValenceDict
 
 import potentials
 
-
 import jax.numpy as jnp
 
 
@@ -35,46 +34,6 @@ def match_bonds(mol, triples):
         param_idxs.append([k_idx, length_idx])
 
     return bond_idxs, param_idxs
-
-def simple_charge_model():
-    model = {
-        "[#1:1]": 0.0157,
-        "[#1:1]-[#6X4]": 0.0157,
-        "[#1:1]-[#6X4]-[#7,#8,#9,#16,#17,#35]": 0.0157,
-        "[#1:1]-[#6X4](-[#7,#8,#9,#16,#17,#35])-[#7,#8,#9,#16,#17,#35]": 0.0157,
-        "[#1:1]-[#6X4](-[#7,#8,#9,#16,#17,#35])(-[#7,#8,#9,#16,#17,#35])-[#7,#8,#9,#16,#17,#35]": 0.0157,
-        "[#1:1]-[#6X4]~[*+1,*+2]": 0.0157,
-        "[#1:1]-[#6X3]": 0.0150,
-        "[#1:1]-[#6X3]~[#7,#8,#9,#16,#17,#35]": 0.0150,
-        "[#1:1]-[#6X3](~[#7,#8,#9,#16,#17,#35])~[#7,#8,#9,#16,#17,#35]": 0.0150,
-        "[#1:1]-[#6X2]": 0.0150,
-        "[#1:1]-[#7]": -0.157,
-        "[#1:1]-[#8]": -0.2,
-        "[#1:1]-[#16]": 0.0157,
-        "[#6:1]": 0.3860,
-        "[#6X2:1]": 0.3100,
-        "[#6X4:1]": 0.3094,
-        "[#8:1]": -0.2100,
-        "[#8X2H0+0:1]": -0.1700,
-        "[#8X2H1+0:1]": -0.2104,
-        "[#7:1]": -0.200,
-        "[#16:1]": -0.2500,
-        "[#15:1]": -0.2000,
-        "[#9:1]": -0.361,
-        "[#17:1]": -0.265,
-        "[#35:1]": -0.320,
-        "[#53:1]": 0.40,
-        "[#3+1:1]": 0.0279896,
-        "[#11+1:1]": 0.0874393,
-        "[#19+1:1]": 0.1936829,
-        "[#37+1:1]": 0.3278219,
-        "[#55+1:1]": 0.4065394,
-        "[#9X0-1:1]": 0.0033640,
-        "[#17X0-1:1]": 0.0355910,
-        "[#35X0-1:1]": 0.0586554,
-        "[#53X0-1:1]": 0.0536816
-    }
-    return model
 
 def parameterize(mol, forcefield):
     """
@@ -136,14 +95,6 @@ def parameterize(mol, forcefield):
             )
 
             nrg_fns.append(partial_fn)
-            # nrg_fns.append(
-            #     (
-            #     custom_ops.HarmonicBond_f64,
-            #     (
-            #         np.array(bond_idxs, dtype=np.int32),
-            #         np.array(bond_param_idxs, dtype=np.int32)
-            #     )
-            # ))
 
         elif handler_name == "Angles":
 
@@ -169,14 +120,6 @@ def parameterize(mol, forcefield):
             )
 
             nrg_fns.append(partial_fn)
-
-            # nrg_fns.append((
-            #     custom_ops.HarmonicAngle_f64,
-            #     (
-            #         np.array(angle_idxs, dtype=np.int32),
-            #         np.array(angle_param_idxs, dtype=np.int32)
-            #     )
-            # ))
 
         # TODO: ImproperTorsions
         elif handler_name == "ProperTorsions":
@@ -219,14 +162,6 @@ def parameterize(mol, forcefield):
 
             nrg_fns.append(partial_fn)
 
-            # nrg_fns.append((
-            #     custom_ops.PeriodicTorsion_f64,
-            #     (
-            #         np.array(torsion_idxs, dtype=np.int32),
-            #         np.array(torsion_param_idxs, dtype=np.int32)
-            #     )
-            # ))
-
         elif handler_name == "vdW":
             # lennardjones
             vd = ValenceDict()
@@ -262,14 +197,6 @@ def parameterize(mol, forcefield):
                 lj_param_idxs=np.array(lj_param_idxs),
                 box=None
             )
-
-            # nrg_fns.append((
-            #     custom_ops.LennardJones_f64,
-            #     [
-            #         np.array(scale_matrix, dtype=np.int32),
-            #         np.array(lj_param_idxs, dtype=np.int32)
-            #     ]
-            # ))
 
     def total_potential(conf, params):
 
@@ -349,4 +276,44 @@ def parameterize(mol, forcefield):
 
 
 
+
+# def simple_charge_model():
+#     model = {
+#         "[#1:1]": 0.0157,
+#         "[#1:1]-[#6X4]": 0.0157,
+#         "[#1:1]-[#6X4]-[#7,#8,#9,#16,#17,#35]": 0.0157,
+#         "[#1:1]-[#6X4](-[#7,#8,#9,#16,#17,#35])-[#7,#8,#9,#16,#17,#35]": 0.0157,
+#         "[#1:1]-[#6X4](-[#7,#8,#9,#16,#17,#35])(-[#7,#8,#9,#16,#17,#35])-[#7,#8,#9,#16,#17,#35]": 0.0157,
+#         "[#1:1]-[#6X4]~[*+1,*+2]": 0.0157,
+#         "[#1:1]-[#6X3]": 0.0150,
+#         "[#1:1]-[#6X3]~[#7,#8,#9,#16,#17,#35]": 0.0150,
+#         "[#1:1]-[#6X3](~[#7,#8,#9,#16,#17,#35])~[#7,#8,#9,#16,#17,#35]": 0.0150,
+#         "[#1:1]-[#6X2]": 0.0150,
+#         "[#1:1]-[#7]": -0.157,
+#         "[#1:1]-[#8]": -0.2,
+#         "[#1:1]-[#16]": 0.0157,
+#         "[#6:1]": 0.3860,
+#         "[#6X2:1]": 0.3100,
+#         "[#6X4:1]": 0.3094,
+#         "[#8:1]": -0.2100,
+#         "[#8X2H0+0:1]": -0.1700,
+#         "[#8X2H1+0:1]": -0.2104,
+#         "[#7:1]": -0.200,
+#         "[#16:1]": -0.2500,
+#         "[#15:1]": -0.2000,
+#         "[#9:1]": -0.361,
+#         "[#17:1]": -0.265,
+#         "[#35:1]": -0.320,
+#         "[#53:1]": 0.40,
+#         "[#3+1:1]": 0.0279896,
+#         "[#11+1:1]": 0.0874393,
+#         "[#19+1:1]": 0.1936829,
+#         "[#37+1:1]": 0.3278219,
+#         "[#55+1:1]": 0.4065394,
+#         "[#9X0-1:1]": 0.0033640,
+#         "[#17X0-1:1]": 0.0355910,
+#         "[#35X0-1:1]": 0.0586554,
+#         "[#53X0-1:1]": 0.0536816
+#     }
+#     return model
 
