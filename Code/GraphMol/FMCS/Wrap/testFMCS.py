@@ -171,7 +171,7 @@ class TestCase(unittest.TestCase):
         for m in ms:
             self.assertTrue(m.HasSubstructMatch(qm))
 
-    def testAtomCompareAnyHeavyAtom(self) {
+    def testAtomCompareAnyHeavyAtom(self):
         # H matches H, O matches C
 		smis = ('[H]c1ccccc1C', '[H]c1ccccc1O')
         ms = [Chem.MolFromSmiles(x) for x in smis]
@@ -183,7 +183,7 @@ class TestCase(unittest.TestCase):
         for m in ms:
             self.assertTrue(m.HasSubstructMatch(qm))
 
-	def testAtomCompareAnyHeavyAtom1(self) {
+	def testAtomCompareAnyHeavyAtom1(self):
         # O matches C, H does not match O
 		smis = ('[H]c1ccccc1C', 'Oc1ccccc1O')
         ms = [Chem.MolFromSmiles(x) for x in smis]
