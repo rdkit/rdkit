@@ -49,6 +49,10 @@ RDKIT_FMCS_EXPORT bool MCSAtomCompareAny(const MCSAtomCompareParameters& p,
                                          const ROMol& mol1, unsigned int atom1,
                                          const ROMol& mol2, unsigned int atom2,
                                          void* userData);
+RDKIT_FMCS_EXPORT bool MCSAtomCompareAnyHeavyAtom(const MCSAtomCompareParameters& p,
+                                         const ROMol& mol1, unsigned int atom1,
+                                         const ROMol& mol2, unsigned int atom2,
+                                         void* userData);
 
 RDKIT_FMCS_EXPORT bool MCSAtomCompareElements(
     const MCSAtomCompareParameters& p, const ROMol& mol1, unsigned int atom1,
@@ -125,7 +129,8 @@ RDKIT_FMCS_EXPORT MCSResult findMCS_P(const std::vector<ROMOL_SPTR>& mols,
 typedef enum {
   AtomCompareAny,
   AtomCompareElements,
-  AtomCompareIsotopes
+  AtomCompareIsotopes,
+  AtomCompareAnyHeavyAtom
 } AtomComparator;
 typedef enum {
   BondCompareAny,

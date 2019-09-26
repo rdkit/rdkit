@@ -57,6 +57,8 @@ void parseMCSParametersJSON(const char* json, MCSParameters* params) {
       p.AtomTyper = MCSAtomCompareElements;
     else if (0 == strcmp("Isotopes", s.c_str()))
       p.AtomTyper = MCSAtomCompareIsotopes;
+    else if (0 == strcmp("AnyHeavy", s.c_str()))
+	  p.AtomTyper = MCSAtomCompareAnyHeavyAtom;
 
     s = pt.get<std::string>("BondCompare", "def");
     if (0 == strcmp("Any", s.c_str()))
@@ -109,6 +111,9 @@ MCSResult findMCS(const std::vector<ROMOL_SPTR>& mols, bool maximizeBonds,
     case AtomCompareIsotopes:
       ps->AtomTyper = MCSAtomCompareIsotopes;
       break;
+	case AromCompareAnyHeavyAtom:
+	  ps->AtomTyper = MCSAtomCompareAnyHeavyAtom;
+	  break;
   }
   ps->AtomCompareParameters.RingMatchesRingOnly = ringMatchesRingOnly;
   switch (bondComp) {
@@ -219,6 +224,26 @@ bool MCSAtomCompareIsotopes(const MCSAtomCompareParameters& p,
     return false;
   if (p.RingMatchesRingOnly) return checkRingMatch(p, mol1, atom1, mol2, atom2);
   return true;
+}
+
+bool MCSAtomCompareAnyHeavyAtom(const MCSAtomCompareParameters& p,
+                            const ROMol& mol1, unsigned int atom1,
+                            const ROMol& mol2, unsigned int atom2, void*) {
+  const Atom& a1 = *mol1.getAtomWithIdx(atom1);
+  const Atom& a2 = *mol2.getAtomWithIdx(atom2);
+  //Any atom, including H, matches another atom of the same type,  according to the other flags
+  if (a1.getAtomicNum() == a2.getAtomicNum() || (a1.getAtomicNum() > 1 && a2.getAtomicNum() > 1)){
+    if (p.MatchValences && a1.getTotalValence() != a2.getTotalValence())
+      return false;
+    if (p.MatchChiralTag && !checkAtomChirality(p, mol1, atom1, mol2, atom2))
+      return false;
+    if (p.MatchFormalCharge && !checkAtomCharge(p, mol1, atom1, mol2, atom2))
+      return false;
+    if (p.RingMatchesRingOnly)
+      return checkRingMatch(p, mol1, atom1, mol2, atom2);
+    return true;
+  }
+  return false;
 }
 
 //=== BOND COMPARE ========================================================
