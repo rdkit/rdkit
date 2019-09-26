@@ -3,8 +3,6 @@
 
 import numpy as np
 import jax.numpy as jnp
-from rdkit.Chem import rdDistGeom
-import rdkit.DistanceGeometry as DG
 
 def embed(D, dims):
     """
@@ -45,14 +43,14 @@ def embed(D, dims):
     x = u.dot(jnp.diag(jnp.sqrt(s)))
     return x[:, :dims]/10
 
-def generate_nxn(mol):
+def generate_nxn(bounds_mat):
     """
     Generate a N x N pairwise distance matrix by random sampling the upper and lower constraints
 
     Parameters
     ----------
-    mol: rdkit.Mol
-        An RDKit molecule
+    bounds_mat: [N, N]
+        A bounds matrix
 
     Returns
     -------
@@ -60,14 +58,10 @@ def generate_nxn(mol):
         Pairwise distance matrix
 
     """
-    bounds_mat = rdDistGeom.GetMoleculeBoundsMatrix(mol)
-    
-    DG.DoTriangleSmoothing(bounds_mat)
-    
-    num_atoms = mol.GetNumAtoms()
+    num_atoms = bounds_mat.shape[0]
     
     dij = np.zeros((num_atoms, num_atoms))
-    
+    # We can vectorize this
     # Sample from upper/lower bound matrix
     for i in range(num_atoms):
         for j in range(i, num_atoms):

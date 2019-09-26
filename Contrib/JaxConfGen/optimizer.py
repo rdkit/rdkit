@@ -29,7 +29,7 @@ def minimize_scipy_bfgs(potential_fn, grad_fn, conf):
 
 def minimize_jax_adam(potential_fn, grad_fn, conf):
 
-    step_size = 1e-2
+    step_size = 2e-2
     num_epochs = 1000
 
     # (ytz): Unclear if Adam is actually a sane choice
