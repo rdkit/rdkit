@@ -111,7 +111,7 @@ MCSResult findMCS(const std::vector<ROMOL_SPTR>& mols, bool maximizeBonds,
     case AtomCompareIsotopes:
       ps->AtomTyper = MCSAtomCompareIsotopes;
       break;
-	case AromCompareAnyHeavyAtom:
+	case AtomCompareAnyHeavyAtom:
 	  ps->AtomTyper = MCSAtomCompareAnyHeavyAtom;
 	  break;
   }
