@@ -179,13 +179,16 @@ def patchPandasHTMLrepr(self, **kwargs):
 
     # The correct patch requires that two private methods in pandas exist. If
     # this is not the case, use a working but suboptimal patch:
+    def patch_v1():
+        with pd.option_context('display.max_colwidth', -1):  # do not truncate
+            kwargs['escape'] = False  # disable escaping
+            return defPandasRendering(self, **kwargs)
+
     import pandas.io.formats.html  # necessary for loading HTMLFormatter
     if not hasattr(pd.io.formats.html, 'HTMLFormatter') or \
        not hasattr(pd.io.formats.html.HTMLFormatter, '_write_cell') or \
        not hasattr(pd.io.formats.format, '_get_adjustment'):
-        with pd.option_context('display.max_colwidth', -1):  # do not truncate
-            kwargs['escape'] = False  # disable escaping
-            return defPandasRendering(self, **kwargs)
+        return patch_v1()
 
     # The "clean" patch:
     # 1. Temporarily set escape=False in HTMLFormatter._write_cell
@@ -215,14 +218,20 @@ def patchPandasHTMLrepr(self, **kwargs):
         return RenderMoleculeAdjustment(inner_adjustment)
 
     try:
-        # patch _get_adjustment method and call original to_html function
+        # patch methods and call original to_html function
         pd.io.formats.format._get_adjustment = patched_get_adjustment
         pd.io.formats.html.HTMLFormatter._write_cell = patched_HTMLFormatter_write_cell
         return defPandasRendering(self, **kwargs)
+    except:
+        pass
     finally:
-        # restore original _get_adjustment method
+        # restore original methods
         pd.io.formats.format._get_adjustment = defPandasGetAdjustment
         pd.io.formats.html.HTMLFormatter._write_cell = defHTMLFormatter_write_cell
+
+    # If this point is reached, an error occurred in the previous try block.
+    # Use old patch:
+    return patch_v1()
 
 
 def is_molecule_image(s):
