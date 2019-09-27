@@ -10,8 +10,8 @@ import dg
 import time
 import optimizer
 
-mol = "O=C(C)Oc1ccccc1C(=O)O"
-# mol = "CCCCN(CCCC)C(=O)c1nn(c(C)c1Cl)-c1ccc(cc1C(=O)N1CCc2ccccc2C1)C(=O)NS(=O)(=O)c1ccc2ccc(I)cc2c1"
+# mol = "O=C(C)Oc1ccccc1C(=O)O"
+mol = "CCCCN(CCCC)C(=O)c1nn(c(C)c1Cl)-c1ccc(cc1C(=O)N1CCc2ccccc2C1)C(=O)NS(=O)(=O)c1ccc2ccc(I)cc2c1"
 # # mol = "c1ccccc1"
 mol = Chem.MolFromSmiles(mol)
 mol = Chem.AddHs(mol)

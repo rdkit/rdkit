@@ -18,6 +18,8 @@ import optimizer
 import numpy as np
 import jax.numpy as jnp
 
+import bfgs
+
 def embed(D, dims):
     """
     Embed a distance matrix into Euclidean coordinates.
@@ -115,7 +117,9 @@ def generate_conformer(mol, n_confs, dims=3):
     potential = jax.jit(potential)
     gradient = jax.jit(gradient)
 
-    jax_minimizer = functools.partial(optimizer.minimize_jax_adam, potential, gradient)
+    # jax_minimizer = functools.partial(optimizer.minimize_jax_adam, potential, gradient)
+    jax_minimizer = functools.partial(optimizer.minimize_jax_fire, potential, gradient)
+
     batched_minimizer = jax.jit(jax.vmap(jax_minimizer))
 
     bounds_mat = rdDistGeom.GetMoleculeBoundsMatrix(mol)
@@ -124,6 +128,8 @@ def generate_conformer(mol, n_confs, dims=3):
     def conf_gen(dij):
         conf = dg.embed(dij, dims) # diagonalization and embedding of the Gramian
         return jax_minimizer(conf)
+
+    
 
     batched_conf_gen_fn = jax.jit(jax.vmap(conf_gen))
 
@@ -135,6 +141,9 @@ def generate_conformer(mol, n_confs, dims=3):
     batched_potential = jax.jit(jax.vmap(potential))
     minimized_confs = batched_conf_gen_fn(dijs)
     energies = batched_potential(minimized_confs)
+    energies = np.array(energies) # convert to numpy array so we can fancy index
+    energies[np.isnan(energies)] = np.inf
+    # x[x == -inf] = 0
     perm = np.argsort(energies)
     sorted_min_confs = minimized_confs[perm]
     return sorted_min_confs
