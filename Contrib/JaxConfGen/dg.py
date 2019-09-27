@@ -101,11 +101,12 @@ def generate_conformer(mol, n_confs, dims=3):
         Input molecule
 
     n_confs: int
-        Number of conformers we generate
+        Number of conformers we generate, sorted by increasing energy
 
     """
     off = ForceField("smirnoff99Frosst.offxml")
     potential, params = forcefield.parameterize(mol, off)
+
 
     potential = functools.partial(potential, params=params)
     gradient = jax.grad(potential, argnums=(0,)) # dU/dx
@@ -131,6 +132,10 @@ def generate_conformer(mol, n_confs, dims=3):
         dijs.append(dg.generate_nxn(bounds_mat))
     dijs = np.array(dijs) # BxNxN
 
+    batched_potential = jax.jit(jax.vmap(potential))
     minimized_confs = batched_conf_gen_fn(dijs)
-    return minimized_confs
+    energies = batched_potential(minimized_confs)
+    perm = np.argsort(energies)
+    sorted_min_confs = minimized_confs[perm]
+    return sorted_min_confs
 

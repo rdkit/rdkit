@@ -121,7 +121,55 @@ def parameterize(mol, forcefield):
 
             nrg_fns.append(partial_fn)
 
-        # TODO: ImproperTorsions
+
+        elif handler_name == "ImproperTorsions":
+            vd = ValenceDict()
+
+            for all_params in handler_params.parameters:
+
+                matches = toolkits.RDKitToolkitWrapper._find_smarts_matches(mol, all_params.smirks)
+
+                all_k_idxs = []
+                all_phase_idxs = []
+                all_period_idxs = []
+
+                for k, phase, period in zip(all_params.k, all_params.phase, all_params.periodicity):
+
+                    # (ytz): hack
+                    impdivf = 3
+
+                    k_idx, phase_idx, period_idx = add_param(to_md_units(k/impdivf), 4), add_param(to_md_units(phase), 5), add_param(period, 6),
+                    all_k_idxs.append(k_idx)
+                    all_phase_idxs.append(phase_idx)
+                    all_period_idxs.append(period_idx)
+
+                for m in matches:
+                    t_p = []
+                    for k_idx, phase_idx, period_idx in zip(all_k_idxs, all_phase_idxs, all_period_idxs):
+                        t_p.append((k_idx, phase_idx, period_idx))
+
+                    # 3-way trefoil permutation
+                    others = [m[0], m[2], m[3]]
+                    for p in [(others[i], others[j], others[k]) for (i, j, k) in [(0, 1, 2), (1, 2, 0), (2, 0, 1)]]:
+                        vd[(m[1], p[0], p[1], p[2])] = t_p
+
+            torsion_idxs = []
+            torsion_param_idxs = []
+
+            for k, vv in vd.items():
+                for v in vv:
+                    torsion_idxs.append(k)
+                    torsion_param_idxs.append(v)
+
+            partial_fn = functools.partial(
+                potentials.periodic_torsion,
+                torsion_idxs=np.array(torsion_idxs),
+                param_idxs=np.array(torsion_param_idxs),
+                box=None
+            )
+
+            nrg_fns.append(partial_fn)
+
         elif handler_name == "ProperTorsions":
 
             vd = ValenceDict()
@@ -133,8 +181,8 @@ def parameterize(mol, forcefield):
                 all_phase_idxs = []
                 all_period_idxs = []
 
-                for k, phase, period in zip(all_params.k, all_params.phase, all_params.periodicity):
-                    k_idx, phase_idx, period_idx = add_param(to_md_units(k), 4), add_param(to_md_units(phase), 5), add_param(period, 6),
+                for k, phase, period, idivf in zip(all_params.k, all_params.phase, all_params.periodicity, all_params.idivf):
+                    k_idx, phase_idx, period_idx = add_param(to_md_units(k/idivf), 4), add_param(to_md_units(phase), 5), add_param(period, 6),
                     all_k_idxs.append(k_idx)
                     all_phase_idxs.append(phase_idx)
                     all_period_idxs.append(period_idx)
@@ -163,7 +211,7 @@ def parameterize(mol, forcefield):
             nrg_fns.append(partial_fn)
 
         elif handler_name == "vdW":
-            # lennardjones
+            # lennard jones
             vd = ValenceDict()
             for param in handler_params.parameters:
                 s_idx, e_idx = add_param(to_md_units(param.sigma), 8), add_param(to_md_units(param.epsilon), 9)
@@ -194,9 +242,11 @@ def parameterize(mol, forcefield):
             partial_fn = functools.partial(
                 potentials.lennard_jones,
                 scale_matrix=np.array(scale_matrix),
-                lj_param_idxs=np.array(lj_param_idxs),
+                param_idxs=np.array(lj_param_idxs),
                 box=None
             )
+
+            nrg_fns.append(partial_fn)
 
     def total_potential(conf, params):
 
