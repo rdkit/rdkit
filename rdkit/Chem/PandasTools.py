@@ -173,13 +173,22 @@ def patchPandasHTMLrepr(self, **kwargs):
     """A patched version of the DataFrame.to_html method that allows rendering
     molecule images in data frames.
     """
-
     # Two things have to be done:
     # 1. Disable escaping of HTML in order to render img / svg tags
     # 2. Avoid truncation of data frame values that contain HTML content
 
-    # 1. Temporarily set escape=False in HTMLFormatter._write_cell
+    # The correct patch requires that two private methods in pandas exist. If
+    # this is not the case, use a working but suboptimal patch:
     import pandas.io.formats.html  # necessary for loading HTMLFormatter
+    if not hasattr(pd.io.formats.html, 'HTMLFormatter') or \
+       not hasattr(pd.io.formats.html.HTMLFormatter, '_write_cell') or \
+       not hasattr(pd.io.formats.format, '_get_adjustment'):
+        with pd.option_context('display.max_colwidth', -1):  # do not truncate
+            kwargs['escape'] = False  # disable escaping
+            return defPandasRendering(self, **kwargs)
+
+    # The "clean" patch:
+    # 1. Temporarily set escape=False in HTMLFormatter._write_cell
     defHTMLFormatter_write_cell = pd.io.formats.html.HTMLFormatter._write_cell
 
     def patched_HTMLFormatter_write_cell(self, s, *args, **kwargs):
