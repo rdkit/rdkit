@@ -141,9 +141,9 @@ class TestCase(unittest.TestCase):
         self.assertEqual(mcs.smartsString, '[#6]-[#6](-[#6]-[#6])-[#6]')
 
         mcs = rdFMCS.FindMCS(ms, completeRingsOnly=True)
-        self.assertEqual(mcs.numBonds, 0)
-        self.assertEqual(mcs.numAtoms, 0)
-        self.assertEqual(mcs.smartsString, '')
+        self.assertEqual(mcs.numBonds, 1)
+        self.assertEqual(mcs.numAtoms, 2)
+        self.assertEqual(mcs.smartsString, '[#6]-&!@[#6]')
 
         mcs = rdFMCS.FindMCS(ms, ringMatchesRingOnly=True)
         self.assertEqual(mcs.numBonds, 4)
