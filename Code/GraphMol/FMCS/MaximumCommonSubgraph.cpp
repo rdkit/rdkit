@@ -700,6 +700,11 @@ std::string MaximumCommonSubgraph::generateResultSMARTS(
           bm->second->getStereo() > Bond::STEREOANY)
         b.setStereo(bm->second->getStereo());
     }
+    if (Parameters.BondCompareParameters.RingMatchesRingOnly) {
+      BOND_EQUALS_QUERY *q = makeBondIsInRingQuery();
+      q->setNegation(!queryIsBondInRing(*bond));
+      b.expandQuery(q, Queries::COMPOSITE_AND, true);
+    }
     mol.addBond(&b, false);
   }
 
