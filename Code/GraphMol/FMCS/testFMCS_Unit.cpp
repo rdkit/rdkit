@@ -593,7 +593,7 @@ void testAtomCompareAnyHeavyAtom() {
   const char* smi[] = {
       "[H]c1ccccc1C", "[H]c1ccccc1O",  // H matches H, O matches C
   };
-  for (auto& i : smi) mols.push_back(ROMOL_SPTR(SmilesToMol(getSmilesOnly(i))));
+  for (auto& i : smi) mols.push_back(ROMOL_SPTR(SmilesToMol(getSmilesOnly(i),0,false)));
   MCSParameters p;
   p.AtomTyper = MCSAtomCompareAnyHeavyAtom;
   t0 = nanoClock();
@@ -613,7 +613,7 @@ void testAtomCompareAnyHeavyAtom1() {
   const char* smi[] = {
       "[H]c1ccccc1C", "Oc1ccccc1O",  // O matches C, H does not match O
   };
-  for (auto& i : smi) mols.push_back(ROMOL_SPTR(SmilesToMol(getSmilesOnly(i))));
+  for (auto& i : smi) mols.push_back(ROMOL_SPTR(SmilesToMol(getSmilesOnly(i),0,false)));
   MCSParameters p;
   p.AtomTyper = MCSAtomCompareAnyHeavyAtom;
   t0 = nanoClock();

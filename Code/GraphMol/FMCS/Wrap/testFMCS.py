@@ -174,7 +174,7 @@ class TestCase(unittest.TestCase):
 	def testAtomCompareAnyHeavyAtom(self):
 		# H matches H, O matches C
 		smis = ('[H]c1ccccc1C', '[H]c1ccccc1O')
-		ms = [Chem.MolFromSmiles(x) for x in smis]
+		ms = [Chem.MolFromSmiles(x, sanitize=False) for x in smis]
 		mcs = rdFMCS.FindMCS(ms, atomCompare=rdFMCS.AtomCompare.CompareAnyHeavyAtom)
 		self.assertEqual(mcs.numBonds, 8)
 		self.assertEqual(mcs.numAtoms, 8)
@@ -186,7 +186,7 @@ class TestCase(unittest.TestCase):
 	def testAtomCompareAnyHeavyAtom1(self):
 		# O matches C, H does not match O
 		smis = ('[H]c1ccccc1C', 'Oc1ccccc1O')
-		ms = [Chem.MolFromSmiles(x) for x in smis]
+		ms = [Chem.MolFromSmiles(x, sanitize=False) for x in smis]
 		mcs = rdFMCS.FindMCS(ms, atomCompare=rdFMCS.AtomCompare.CompareAnyHeavyAtom)
 		self.assertEqual(mcs.numBonds, 7)
 		self.assertEqual(mcs.numAtoms, 7)

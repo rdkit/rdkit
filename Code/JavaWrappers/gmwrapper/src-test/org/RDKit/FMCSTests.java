@@ -90,8 +90,8 @@ public class FMCSTests extends GraphMolTest {
 	@Test
 	void testAtomCompareAnyHeavyAtom() {
 		ROMol_Vect mols = new ROMol_Vect();
-		mols.add(RWMol.MolFromSmiles("[H]c1ccccc1C"));
-		mols.add(RWMol.MolFromSmiles("[H]c1ccccc1O"));
+		mols.add(RWMol.MolFromSmiles("[H]c1ccccc1C",0, false));
+		mols.add(RWMol.MolFromSmiles("[H]c1ccccc1O",0, false));
 		        // H matches H, O matches C
                 MCSResult mcs=RDKFuncs.findMCS(mols,true,1,60,false,false,false,false,false,
                                                AtomComparator.AtomCompareAnyHeavyAtom,
@@ -105,8 +105,8 @@ public class FMCSTests extends GraphMolTest {
 	@Test
 	void testAtomCompareAnyHeavyAtom1() {
 		ROMol_Vect mols = new ROMol_Vect();
-			mols.add(RWMol.MolFromSmiles("[H]c1ccccc1C"));
-			mols.add(RWMol.MolFromSmiles("Oc1ccccc1O"));
+			mols.add(RWMol.MolFromSmiles("[H]c1ccccc1C",0, false));
+			mols.add(RWMol.MolFromSmiles("Oc1ccccc1O",0, false));
 					// O matches C, H does not match O
 					MCSResult mcs=RDKFuncs.findMCS(mols,true,1,60,false,false,false,false,false,
 												   AtomComparator.AtomCompareAnyHeavyAtom,
