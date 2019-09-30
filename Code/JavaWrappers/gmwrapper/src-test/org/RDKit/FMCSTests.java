@@ -88,7 +88,7 @@ public class FMCSTests extends GraphMolTest {
 	}
 	
 	@Test
-	void testAtomCompareAnyHeavyAtom() {
+	public void testAtomCompareAnyHeavyAtom() {
 		ROMol_Vect mols = new ROMol_Vect();
 		mols.add(RWMol.MolFromSmiles("[H]c1ccccc1C",0, false));
 		mols.add(RWMol.MolFromSmiles("[H]c1ccccc1O",0, false));
@@ -103,7 +103,7 @@ public class FMCSTests extends GraphMolTest {
 }
 
 	@Test
-	void testAtomCompareAnyHeavyAtom1() {
+	public void testAtomCompareAnyHeavyAtom1() {
 		ROMol_Vect mols = new ROMol_Vect();
 			mols.add(RWMol.MolFromSmiles("[H]c1ccccc1C",0, false));
 			mols.add(RWMol.MolFromSmiles("Oc1ccccc1O",0, false));
