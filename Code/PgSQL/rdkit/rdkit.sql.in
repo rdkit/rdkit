@@ -669,6 +669,11 @@ CREATE OR REPLACE FUNCTION mol_hash(mol)
     AS 'MODULE_PATHNAME', 'mol_hash'
     LANGUAGE C STRICT IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION mol_nm_hash(mol, cstring default 'AnonymousGraph')
+    RETURNS cstring
+    AS 'MODULE_PATHNAME', 'mol_nm_hash'
+    LANGUAGE C STRICT IMMUTABLE;
+
 
 -- bfp integer descriptors
 

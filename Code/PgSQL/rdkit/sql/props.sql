@@ -72,3 +72,22 @@ select
   , substring(mol_to_svg(the_mol)::text, 1, 20) as the_svg
   , substring(mol_to_ctab(the_mol)::text, 1, 65) as after_mol
   from t;
+
+select mol_nm_hash('c1cccnc1CO'::mol);
+select mol_nm_hash('c1cccnc1CO'::mol,'AnonymousGraph');
+select mol_nm_hash('c1cccnc1CO'::mol,'ElementGraph');
+select mol_nm_hash('c1cccnc1CO'::mol,'CanonicalSmiles');
+select mol_nm_hash('c1cccnc1CO'::mol,'MurckoScaffold');
+select mol_nm_hash('c1cccnc1CO'::mol,'ExtendedMurcko');
+select mol_nm_hash('c1cccnc1CO'::mol,'MolFormula');
+select mol_nm_hash('c1cccnc1CO'::mol,'AtomBondCounts');
+select mol_nm_hash('c1cccnc1CO'::mol,'DegreeVector');
+select mol_nm_hash('c1cccnc1CO'::mol,'Mesomer');
+select mol_nm_hash('c1cccnc1CO'::mol,'HetAtomTautomer');
+select mol_nm_hash('c1cccnc1CO'::mol,'HetAtomProtomer');
+select mol_nm_hash('c1cccnc1CO'::mol,'RedoxPair');
+select mol_nm_hash('c1cccnc1CO'::mol,'Regioisomer');
+select mol_nm_hash('c1cccnc1CO'::mol,'NetCharge');
+select mol_nm_hash('c1cccnc1CO'::mol,'SmallWorldIndexBR');
+select mol_nm_hash('c1cccnc1CO'::mol,'SmallWorldIndexBRL');
+select mol_nm_hash('c1cccnc1CO'::mol,'ArthorSubstructureOrder');

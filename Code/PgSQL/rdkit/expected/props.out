@@ -362,3 +362,111 @@ select
                                          |                      | 
 (1 row)
 
+select mol_nm_hash('c1cccnc1CO'::mol);
+ mol_nm_hash 
+-------------
+ ***1*****1
+(1 row)
+
+select mol_nm_hash('c1cccnc1CO'::mol,'AnonymousGraph');
+ mol_nm_hash 
+-------------
+ ***1*****1
+(1 row)
+
+select mol_nm_hash('c1cccnc1CO'::mol,'ElementGraph');
+ mol_nm_hash 
+-------------
+ OCC1CCCCN1
+(1 row)
+
+select mol_nm_hash('c1cccnc1CO'::mol,'CanonicalSmiles');
+ mol_nm_hash 
+-------------
+ OCc1ccccn1
+(1 row)
+
+select mol_nm_hash('c1cccnc1CO'::mol,'MurckoScaffold');
+ mol_nm_hash 
+-------------
+ c1ccncc1
+(1 row)
+
+select mol_nm_hash('c1cccnc1CO'::mol,'ExtendedMurcko');
+ mol_nm_hash 
+-------------
+ *c1ccccn1
+(1 row)
+
+select mol_nm_hash('c1cccnc1CO'::mol,'MolFormula');
+ mol_nm_hash 
+-------------
+ C6H7NO
+(1 row)
+
+select mol_nm_hash('c1cccnc1CO'::mol,'AtomBondCounts');
+ mol_nm_hash 
+-------------
+ 8,8
+(1 row)
+
+select mol_nm_hash('c1cccnc1CO'::mol,'DegreeVector');
+ mol_nm_hash 
+-------------
+ 0,1,6,1
+(1 row)
+
+select mol_nm_hash('c1cccnc1CO'::mol,'Mesomer');
+         mol_nm_hash          
+------------------------------
+ OC[C]1[CH][CH][CH][CH][N]1_0
+(1 row)
+
+select mol_nm_hash('c1cccnc1CO'::mol,'HetAtomTautomer');
+           mol_nm_hash            
+----------------------------------
+ [O]C[C]1[CH][CH][CH][CH][N]1_1_0
+(1 row)
+
+select mol_nm_hash('c1cccnc1CO'::mol,'HetAtomProtomer');
+          mol_nm_hash           
+--------------------------------
+ [O]C[C]1[CH][CH][CH][CH][N]1_1
+(1 row)
+
+select mol_nm_hash('c1cccnc1CO'::mol,'RedoxPair');
+        mol_nm_hash         
+----------------------------
+ OC[C]1[CH][CH][CH][CH][N]1
+(1 row)
+
+select mol_nm_hash('c1cccnc1CO'::mol,'Regioisomer');
+  mol_nm_hash   
+----------------
+ *C.*O.c1ccncc1
+(1 row)
+
+select mol_nm_hash('c1cccnc1CO'::mol,'NetCharge');
+ mol_nm_hash 
+-------------
+ 0
+(1 row)
+
+select mol_nm_hash('c1cccnc1CO'::mol,'SmallWorldIndexBR');
+ mol_nm_hash 
+-------------
+ B8R1
+(1 row)
+
+select mol_nm_hash('c1cccnc1CO'::mol,'SmallWorldIndexBRL');
+ mol_nm_hash 
+-------------
+ B8R1L6
+(1 row)
+
+select mol_nm_hash('c1cccnc1CO'::mol,'ArthorSubstructureOrder');
+          mol_nm_hash           
+--------------------------------
+ 000800080100060002000033000000
+(1 row)
+
