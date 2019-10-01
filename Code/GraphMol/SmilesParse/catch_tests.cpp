@@ -444,8 +444,7 @@ TEST_CASE("github#2450: getAtomSmarts() fails for free atoms", "[bug]") {
   }
 }
 
-TEST_CASE("MolFragmentToSmarts", "[Smarts]")
-{
+TEST_CASE("MolFragmentToSmarts", "[Smarts]") {
   SECTION("BasicFragment") {
     auto m = "CCCCCN"_smiles;
     std::vector<int> indices = {3, 4, 5};
@@ -470,5 +469,15 @@ TEST_CASE("MolFragmentToSmarts", "[Smarts]")
     std::vector<int> indices = {3, 4, 5};
     const auto smarts = MolFragmentToSmarts(*m, indices);
     CHECK(smarts == "C[C,N]N");
+  }
+}
+
+TEST_CASE("github #2667: MolToCXSmiles generates error for empty molecule",
+          "[bug,cxsmiles]") {
+  SECTION("basics") {
+    auto mol = ""_smiles;
+    REQUIRE(mol);
+    auto smi = MolToCXSmiles(*mol);
+    CHECK(smi == "");
   }
 }
