@@ -233,6 +233,9 @@ bool MCSAtomCompareAnyHeavyAtom(const MCSAtomCompareParameters& p,
   const Atom& a2 = *mol2.getAtomWithIdx(atom2);
   //Any atom, including H, matches another atom of the same type,  according to the other flags
   if (a1.getAtomicNum() == a2.getAtomicNum() || (a1.getAtomicNum() > 1 && a2.getAtomicNum() > 1)){
+      return MCSAtomCompareAny(p,mol1,atom1,mol2,atom2,nullptr);
+  }
+  return false;
     if (p.MatchValences && a1.getTotalValence() != a2.getTotalValence())
       return false;
     if (p.MatchChiralTag && !checkAtomChirality(p, mol1, atom1, mol2, atom2))
