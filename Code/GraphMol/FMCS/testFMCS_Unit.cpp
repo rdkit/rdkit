@@ -1271,6 +1271,69 @@ void testGithub2420() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testGithub2663() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github #2663: The C++ MCS code "
+                          "generates ambiguous SMARTS strings"
+                       << std::endl;
+
+  {
+    std::vector<ROMOL_SPTR> mols;
+    const char* smi[] = {"C1C(C)CC2CC12", "CC1CCCC2CCCC12"};
+
+    for (auto& i : smi) {
+      auto m = SmilesToMol(getSmilesOnly(i));
+      TEST_ASSERT(m);
+
+      mols.push_back(ROMOL_SPTR(m));
+    }
+    MCSParameters p;
+    p.BondCompareParameters.CompleteRingsOnly = true;
+    MCSResult res = findMCS(mols, &p);
+    std::cerr << "MCS: " << res.SmartsString << " " << res.NumAtoms
+              << " atoms, " << res.NumBonds << " bonds\n"
+              << std::endl;
+    TEST_ASSERT(res.NumAtoms == 7);
+    TEST_ASSERT(res.NumBonds == 7);
+    TEST_ASSERT(res.SmartsString == "[#6]1-&@[#6](-&!@[#6])-&@[#6]-&@[#6]-&@[#6]-&@[#6]-&@1");
+  }
+
+  BOOST_LOG(rdInfoLog) << "============================================"
+                       << std::endl;
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+void testGithub2662() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github #2662: C++ MCS code returns a null "
+                          "MCS between methylcyclopentane and methylcyclohexane"
+                       << std::endl;
+
+  {
+    std::vector<ROMOL_SPTR> mols;
+    const char* smi[] = {"CC1CCCC1", "CC1CCCCC1"};
+
+    for (auto& i : smi) {
+      auto m = SmilesToMol(getSmilesOnly(i));
+      TEST_ASSERT(m);
+
+      mols.push_back(ROMOL_SPTR(m));
+    }
+    MCSParameters p;
+    p.BondCompareParameters.CompleteRingsOnly = true;
+    MCSResult res = findMCS(mols, &p);
+    std::cerr << "MCS: " << res.SmartsString << " " << res.NumAtoms
+              << " atoms, " << res.NumBonds << " bonds\n"
+              << std::endl;
+    TEST_ASSERT(res.NumAtoms == 2);
+    TEST_ASSERT(res.NumBonds == 1);
+  }
+
+  BOOST_LOG(rdInfoLog) << "============================================"
+                       << std::endl;
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 //====================================================================================================
 //====================================================================================================
 
@@ -1334,6 +1397,8 @@ int main(int argc, const char* argv[]) {
 #endif
   testGithub945();
   testGithub2420();
+  testGithub2663();
+  testGithub2662();
 
   unsigned long long t1 = nanoClock();
   double sec = double(t1 - T0) / 1000000.;

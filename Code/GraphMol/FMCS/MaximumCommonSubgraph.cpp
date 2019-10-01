@@ -700,6 +700,11 @@ std::string MaximumCommonSubgraph::generateResultSMARTS(
           bm->second->getStereo() > Bond::STEREOANY)
         b.setStereo(bm->second->getStereo());
     }
+    if (Parameters.BondCompareParameters.RingMatchesRingOnly) {
+      BOND_EQUALS_QUERY *q = makeBondIsInRingQuery();
+      q->setNegation(!queryIsBondInRing(*bond));
+      b.expandQuery(q, Queries::COMPOSITE_AND, true);
+    }
     mol.addBond(&b, false);
   }
 
@@ -814,16 +819,21 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR>& src_mols) {
     res.Canceled = growSeeds() ? false : true;
     // verify what MCS is equal to one of initial seed for chirality match
     if (FinalChiralityCheckFunction == Parameters.FinalMatchChecker &&
-        1 == getMaxNumberBonds()) {
+        1 == getMaxNumberBonds() || 0 == getMaxNumberBonds()) {
       McsIdx = MCS();      // clear
       makeInitialSeeds();  // check all possible initial seeds
       if (!Seeds.empty()) {
         const Seed& fs = Seeds.front();
-        McsIdx.QueryMolecule = QueryMolecule;
-        McsIdx.Atoms = fs.MoleculeFragment.Atoms;
-        McsIdx.Bonds = fs.MoleculeFragment.Bonds;
-        McsIdx.AtomsIdx = fs.MoleculeFragment.AtomsIdx;
-        McsIdx.BondsIdx = fs.MoleculeFragment.BondsIdx;
+        if (1 == getMaxNumberBonds()
+          || !(Parameters.BondCompareParameters.CompleteRingsOnly
+          && fs.MoleculeFragment.Bonds.size() == 1
+          && queryIsBondInRing(fs.MoleculeFragment.Bonds.front()))) {
+          McsIdx.QueryMolecule = QueryMolecule;
+          McsIdx.Atoms = fs.MoleculeFragment.Atoms;
+          McsIdx.Bonds = fs.MoleculeFragment.Bonds;
+          McsIdx.AtomsIdx = fs.MoleculeFragment.AtomsIdx;
+          McsIdx.BondsIdx = fs.MoleculeFragment.BondsIdx;
+        }
       }
 
     } else if (i + 1 < Molecules.size() - ThresholdCount) {
