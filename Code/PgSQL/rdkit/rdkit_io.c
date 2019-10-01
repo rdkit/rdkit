@@ -91,7 +91,7 @@ mol_out(PG_FUNCTION_ARGS) {
                                             fcinfo->flinfo->fn_mcxt,
                                             PG_GETARG_DATUM(0),
                                             NULL, &mol, NULL);
-  str = makeMolText(mol, &len,false);
+  str = makeMolText(mol, &len,false,true);
 
   PG_RETURN_CSTRING( pnstrdup(str, len) );
 }
@@ -233,7 +233,25 @@ mol_to_smiles(PG_FUNCTION_ARGS) {
                                             fcinfo->flinfo->fn_mcxt,
                                             PG_GETARG_DATUM(0),
                                             NULL, &mol, NULL);
-  str = makeMolText(mol, &len,false);
+  str = makeMolText(mol, &len,false,false);
+
+  PG_RETURN_CSTRING( pnstrdup(str, len) );
+}
+
+PGDLLEXPORT Datum           mol_to_cxsmiles(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(mol_to_cxsmiles);
+Datum
+mol_to_cxsmiles(PG_FUNCTION_ARGS) {
+  CROMol  mol;
+  char    *str;
+  int     len;
+
+  fcinfo->flinfo->fn_extra = searchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(0),
+                                            NULL, &mol, NULL);
+  str = makeMolText(mol, &len,false,true);
 
   PG_RETURN_CSTRING( pnstrdup(str, len) );
 }
@@ -251,7 +269,7 @@ mol_to_smarts(PG_FUNCTION_ARGS) {
                                             fcinfo->flinfo->fn_mcxt,
                                             PG_GETARG_DATUM(0),
                                             NULL, &mol, NULL);
-  str = makeMolText(mol, &len,true);
+  str = makeMolText(mol, &len,true,false);
 
   PG_RETURN_CSTRING( pnstrdup(str, len) );
 }
@@ -328,7 +346,7 @@ qmol_out(PG_FUNCTION_ARGS) {
                                             fcinfo->flinfo->fn_mcxt,
                                             PG_GETARG_DATUM(0),
                                             NULL, &mol, NULL);
-  str = makeMolText(mol, &len,true);
+  str = makeMolText(mol, &len,true,false);
 
   PG_RETURN_CSTRING( pnstrdup(str, len) );
 }

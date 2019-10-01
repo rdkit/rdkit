@@ -103,7 +103,7 @@ char *makeMolBlob(CROMol data, int *len);
 CROMol parseMolText(char *data, bool asSmarts, bool warnOnFail, bool asQuery);
 CROMol parseMolCTAB(char *data, bool keepConformer, bool warnOnFail,
                     bool asQuery);
-char *makeMolText(CROMol data, int *len, bool asSmarts);
+char *makeMolText(CROMol data, int *len, bool asSmarts, bool cxSmiles);
 char *makeCtabText(CROMol data, int *len, bool createDepictionIfMissing);
 bool isValidSmiles(char *data);
 bool isValidSmarts(char *data);

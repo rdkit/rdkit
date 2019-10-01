@@ -329,12 +329,17 @@ extern "C" bool isValidMolBlob(char *data, int len) {
   return res;
 }
 
-extern "C" char *makeMolText(CROMol data, int *len, bool asSmarts) {
+extern "C" char *makeMolText(CROMol data, int *len, bool asSmarts,
+                             bool cxSmiles) {
   ROMol *mol = (ROMol *)data;
 
   try {
     if (!asSmarts) {
-      StringData = MolToSmiles(*mol, true);
+      if (!cxSmiles) {
+        StringData = MolToSmiles(*mol);
+      } else {
+        StringData = MolToCXSmiles(*mol);
+      }
     } else {
       StringData = MolToSmarts(*mol, false);
     }

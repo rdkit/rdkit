@@ -399,7 +399,7 @@ Datum fmcs_mol2s_transition(PG_FUNCTION_ARGS) {
         searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                        PG_GETARG_DATUM(1), NULL, &mol, NULL);
 
-    smiles = makeMolText(mol, &len, false);
+    smiles = makeMolText(mol, &len, false, false);
 
     //        char *smiles= Mol2Smiles(mol);
     //        int   len   = strlen(smiles);
@@ -426,7 +426,7 @@ Datum fmcs_mol2s_transition(PG_FUNCTION_ARGS) {
         searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                        PG_GETARG_DATUM(1), NULL, &mol, NULL);
 
-    char *smiles = makeMolText(mol, &len, false);
+    char *smiles = makeMolText(mol, &len, false, false);
     //        char *smiles= Mol2Smiles(mol);
     //        int   len   = strlen(smiles);
     /// elog(WARNING, smiles);
