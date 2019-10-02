@@ -77,6 +77,14 @@ class RGroupDecompositionHelper {
   int Add(const ROMol &mol) { return decomp->add(mol); }
   bool Process() { return decomp->process(); }
 
+  python::list GetRGroupLabels() {
+    python::list result;
+    std::vector<std::string> labels = decomp->getRGroupLabels();
+    for(auto label : labels) {
+      result.append(label);
+    }
+    return result;
+  }
   python::list GetRGroupsAsRows(bool asSmiles = false) {
     const RGroupRows &groups = decomp->getRGroupsAsRows();
     python::list result;
@@ -256,7 +264,10 @@ struct rgroupdecomp_wrapper {
         .def("Add", &RGroupDecompositionHelper::Add)
         .def("Process", &RGroupDecompositionHelper::Process,
              "Process the rgroups (must be done prior to "
-             "GetRGroupsAsRows/Columns)")
+             "GetRGroupsAsRows/Columns and GetRGroupLabels)")
+        .def("GetRGroupLabels", &RGroupDecompositionHelper::GetRGroupLabels,
+	     "Return the current list of found rgroups.\n"
+	     "Note, Process() should be called first")
         .def("GetRGroupsAsRows", &RGroupDecompositionHelper::GetRGroupsAsRows,
              python::arg("asSmiles") = false,
              "Return the rgroups as rows (note: can be fed directrly into a "

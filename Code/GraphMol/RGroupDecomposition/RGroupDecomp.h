@@ -117,6 +117,9 @@ class RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecomposition {
   int add(const ROMol &mol);
   bool process();
 
+  //! return the current group labels
+  std::vector<std::string> getRGroupLabels() const;
+  
   //! return rgroups in row order group[row][attachment_point] = ROMol
   RGroupRows getRGroupsAsRows() const;
   //! return rgroups in column order group[attachment_point][row] = ROMol
