@@ -99,8 +99,13 @@ void addStringVal(rj::Value &dest, const rj::Value *defaults, const char *tag,
 void addAtom(const Atom &atom, rj::Value &rjAtom, rj::Document &doc,
              const rj::Value *rjDefaults, const JSONWriteParameters &params) {
   addIntVal(rjAtom, rjDefaults, "z", atom.getAtomicNum(), doc);
-  addIntVal(rjAtom, rjDefaults, "impHs", atom.getTotalNumHs(), doc);
-  addIntVal(rjAtom, rjDefaults, "chg", atom.getFormalCharge(), doc);
+  if (!params.doValidationJSON) {
+    addIntVal(rjAtom, rjDefaults, "impHs", atom.getTotalNumHs(), doc);
+    addIntVal(rjAtom, rjDefaults, "chg", atom.getFormalCharge(), doc);
+  } else {
+    addIntVal(rjAtom, rjDefaults, "implicit_hs", atom.getTotalNumHs(), doc);
+    addIntVal(rjAtom, rjDefaults, "charge", atom.getFormalCharge(), doc);
+  }
   addIntVal(rjAtom, rjDefaults, "isotope", atom.getIsotope(), doc);
   if (!params.doValidationJSON) {
     addIntVal(rjAtom, rjDefaults, "nRad", atom.getNumRadicalElectrons(), doc);
@@ -205,7 +210,11 @@ void addBond(const Bond &bond, rj::Value &rjBond, rj::Document &doc,
     rj::Value v2(static_cast<int>(bond.getStereoAtoms()[1]));
     rjStereoAtoms.PushBack(v1, doc.GetAllocator());
     rjStereoAtoms.PushBack(v2, doc.GetAllocator());
-    rjBond.AddMember("stereoAtoms", rjStereoAtoms, doc.GetAllocator());
+    if (!params.doValidationJSON) {
+      rjBond.AddMember("stereoAtoms", rjStereoAtoms, doc.GetAllocator());
+    } else {
+      rjBond.AddMember("stereo_atoms", rjStereoAtoms, doc.GetAllocator());
+    }
   }
 }
 
