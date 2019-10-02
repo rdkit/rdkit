@@ -73,19 +73,32 @@ ROMol *qmol_from_input(const std::string &input) {
 }
 
 std::string svg_(const ROMol &m,
-                 const std::vector<unsigned int> *atomIds = nullptr) {
+                 const std::vector<unsigned int> *atomIds = nullptr,
+                 const std::vector<unsigned int> *bondIds = nullptr) {
   MolDraw2DSVG drawer(250, 200);
   std::vector<int> *highlight_atoms = nullptr;
-  if (atomIds) {
+  if (atomIds && atomIds->size()) {
     highlight_atoms = new std::vector<int>;
     highlight_atoms->reserve(atomIds->size());
     for (auto ai : *atomIds) {
       highlight_atoms->push_back(ai);
     }
   }
-  MolDraw2DUtils::prepareAndDrawMolecule(drawer, m, "", highlight_atoms);
+
+  std::vector<int> *highlight_bonds = nullptr;
+  if (bondIds && bondIds->size()) {
+    highlight_bonds = new std::vector<int>;
+    highlight_bonds->reserve(bondIds->size());
+    for (auto ai : *bondIds) {
+      highlight_bonds->push_back(ai);
+    }
+  }
+
+  MolDraw2DUtils::prepareAndDrawMolecule(drawer, m, "", highlight_atoms,
+                                         highlight_bonds);
   drawer.finishDrawing();
   delete highlight_atoms;
+  delete highlight_bonds;
 
   return drawer.getDrawingText();
 }
@@ -114,7 +127,16 @@ std::string JSMol::get_svg_with_highlights(const std::string &details) const {
     if (!molval.IsInt()) return ("Atom IDs should be integers");
     atomIds.push_back(static_cast<unsigned int>(molval.GetInt()));
   }
-  return svg_(*d_mol, &atomIds);
+  std::vector<unsigned int> bondIds;
+  if (doc.HasMember("bonds") && !doc["bonds"].IsArray()) {
+    return "JSON doesn't contain 'bonds' field, but it is not an array";
+  }
+  for (const auto &molval : doc["bonds"].GetArray()) {
+    if (!molval.IsInt()) return ("Bond IDs should be integers");
+    bondIds.push_back(static_cast<unsigned int>(molval.GetInt()));
+  }
+
+  return svg_(*d_mol, &atomIds, &bondIds);
 }
 std::string JSMol::get_inchi() const {
   if (!d_mol) return "";
@@ -132,11 +154,24 @@ std::string JSMol::get_substruct_match(const JSMol &q) const {
   MatchVectType match;
   if (SubstructMatch(*d_mol, *(q.d_mol), match)) {
     rj::Document doc;
-    doc.SetArray();
-    rj::Document::AllocatorType &allocator = doc.GetAllocator();
+    doc.SetObject();
+    rj::Value rjAtoms(rj::kArrayType);
     for (const auto &pr : match) {
-      doc.PushBack(pr.second, allocator);
+      rjAtoms.PushBack(pr.second, doc.GetAllocator());
     }
+    doc.AddMember("atoms", rjAtoms, doc.GetAllocator());
+
+    rj::Value rjBonds(rj::kArrayType);
+    for (const auto qbond : q.d_mol->bonds()) {
+      unsigned int idx1 = match[qbond->getBeginAtomIdx()].second;
+      unsigned int idx2 = match[qbond->getEndAtomIdx()].second;
+      const auto bond = d_mol->getBondBetweenAtoms(idx1, idx2);
+      if (bond != nullptr) {
+        rjBonds.PushBack(bond->getIdx(), doc.GetAllocator());
+      }
+    }
+    doc.AddMember("bonds", rjBonds, doc.GetAllocator());
+
     rj::StringBuffer buffer;
     rj::Writer<rj::StringBuffer> writer(buffer);
     doc.Accept(writer);
