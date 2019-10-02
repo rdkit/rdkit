@@ -457,6 +457,25 @@ void MolDraw2DSVG::addMoleculeMetadata(const std::vector<ROMol *> &mols,
 void MolDraw2DSVG::tagAtoms(const ROMol &mol, double radius,
                             const std::map<std::string, std::string> &events) {
   PRECONDITION(d_os, "no output stream");
+  // first bonds so that they are under the atoms
+  for (const auto &bond : mol.bonds()) {
+    auto this_idx = bond->getIdx();
+    auto a1pos = getDrawCoords(atomCoords()[bond->getBeginAtomIdx()]);
+    auto a2pos = getDrawCoords(atomCoords()[bond->getEndAtomIdx()]);
+    auto width = 2 + lineWidth();
+    d_os << "<path "
+         << " d='M " << a1pos.x << "," << a1pos.y << " L " << a2pos.x << ","
+         << a2pos.y << "'";
+    d_os << " class='bond-selector bond-" << this_idx;
+    if (d_activeClass != "") {
+      d_os << " " << d_activeClass;
+    }
+    d_os << "'";
+    d_os << " style='fill:#fff;stroke:#fff;stroke-width:" << width
+         << "px;fill-opacity:0;"
+            "stroke-opacity:0' ";
+    d_os << "/>\n";
+  }
   for (const auto &at : mol.atoms()) {
     auto this_idx = at->getIdx();
     auto pos = getDrawCoords(atomCoords()[this_idx]);

@@ -54,7 +54,9 @@ TEST_CASE("tag atoms in SVG", "[drawing, SVG]") {
     outs.flush();
 
     CHECK(text.find("<circle") != std::string::npos);
-    CHECK(text.find("onclick") != std::string::npos);
+    CHECK(text.find("<circle") != std::string::npos);
+    CHECK(text.find("atom-selector") != std::string::npos);
+    CHECK(text.find("bond-selector") != std::string::npos);
   }
 }
 TEST_CASE("contour data", "[drawing, conrec]") {
