@@ -110,7 +110,7 @@ BOOST_PYTHON_MODULE(rdMolInterchange) {
           "version of the format")
       .def_readwrite("doValidationJSON",
           &RDKit::MolInterchange::JSONWriteParameters::doValidationJSON,
-          "write simplified JSON for molecular validation");
+          "write simplified JSON for molecular validation. This option is primarily included for testing purposes and may be removed in a future RDKit release.");
   std::string docString;
   docString =
       "Convert a single molecule to JSON\n\

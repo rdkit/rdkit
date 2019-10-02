@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Greg Landrum
+//  Copyright (C) 2018-2019 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -50,7 +50,8 @@ void initBondDefaults(rj::Value &rjDefaults, rj::Document &document) {
   rjDefaults.AddMember("bo", 1, document.GetAllocator());
   rjDefaults.AddMember("stereo", "unspecified", document.GetAllocator());
 }
-void initHeader(rj::Value &rjHeader, rj::Document &document, const JSONWriteParameters &params) {
+void initHeader(rj::Value &rjHeader, rj::Document &document,
+                const JSONWriteParameters &params) {
   int version = currentMolJSONVersion;
   if (params.formatVersion > 0) version = params.formatVersion;
   rjHeader.AddMember("version", version, document.GetAllocator());
@@ -59,7 +60,7 @@ void initHeader(rj::Value &rjHeader, rj::Document &document, const JSONWritePara
 void addIntVal(rj::Value &dest, const rj::Value *defaults, const char *tag,
                int val, rj::Document &doc) {
   const auto srt = rj::StringRef(tag);
-  if(defaults){
+  if (defaults) {
     const auto &miter = defaults->FindMember(srt);
     if (miter != defaults->MemberEnd()) {
       int dval = miter->value.GetInt();
@@ -80,7 +81,7 @@ void addStringVal(rj::Value &dest, const rj::Value *defaults, const char *tag,
   nmv.SetString(val.c_str(), val.size(), doc.GetAllocator());
   const auto srt = rj::StringRef(tag);
 
-  if(defaults){
+  if (defaults) {
     const auto &miter = defaults->FindMember(srt);
     if (miter != defaults->MemberEnd()) {
       std::string dval = miter->value.GetString();
@@ -91,60 +92,95 @@ void addStringVal(rj::Value &dest, const rj::Value *defaults, const char *tag,
       dest.AddMember(srt, nmv, doc.GetAllocator());
     }
   } else {
-      dest.AddMember(srt, nmv, doc.GetAllocator());
+    dest.AddMember(srt, nmv, doc.GetAllocator());
   }
 }
 
 void addAtom(const Atom &atom, rj::Value &rjAtom, rj::Document &doc,
-             const rj::Value *rjDefaults,const JSONWriteParameters &params) {
+             const rj::Value *rjDefaults, const JSONWriteParameters &params) {
   addIntVal(rjAtom, rjDefaults, "z", atom.getAtomicNum(), doc);
   addIntVal(rjAtom, rjDefaults, "impHs", atom.getTotalNumHs(), doc);
   addIntVal(rjAtom, rjDefaults, "chg", atom.getFormalCharge(), doc);
   addIntVal(rjAtom, rjDefaults, "isotope", atom.getIsotope(), doc);
-  addIntVal(rjAtom, rjDefaults, "nRad", atom.getNumRadicalElectrons(), doc);
-  if(params.doValidationJSON){
-    addIntVal(rjAtom, rjDefaults, "explicitValence", atom.getExplicitValence(), doc);
+  if (!params.doValidationJSON) {
+    addIntVal(rjAtom, rjDefaults, "nRad", atom.getNumRadicalElectrons(), doc);
+  }
+  if (params.doValidationJSON) {
+    addIntVal(rjAtom, rjDefaults, "explicit_valence", atom.getExplicitValence(),
+              doc);
+    addIntVal(rjAtom, rjDefaults, "is_aromatic", (int)atom.getIsAromatic(),
+              doc);
   }
   std::string chi = "";
   std::vector<int> chi_atoms;
   if (inv_chilookup.find(atom.getChiralTag()) != inv_chilookup.end()) {
     chi = inv_chilookup.find(atom.getChiralTag())->second;
-    if(chi != "unspecified" && params.doValidationJSON){
-        ROMol::OEDGE_ITER beg, end;
-        boost::tie(beg, end) = atom.getOwningMol().getAtomBonds(&atom);
-        while (beg != end) {
-          chi_atoms.push_back(atom.getOwningMol()[*beg]->getOtherAtomIdx(atom.getIdx()));
-          ++beg;
-        }
+    if (chi != "unspecified" && params.doValidationJSON) {
+      ROMol::OEDGE_ITER beg, end;
+      boost::tie(beg, end) = atom.getOwningMol().getAtomBonds(&atom);
+      while (beg != end) {
+        chi_atoms.push_back(
+            atom.getOwningMol()[*beg]->getOtherAtomIdx(atom.getIdx()));
+        ++beg;
+      }
     }
   } else {
     BOOST_LOG(rdWarningLog)
         << " unrecognized atom chirality set to default while writing"
         << std::endl;
   }
-  if(chi != "unspecified" || !params.doValidationJSON){
+  if (chi != "unspecified" || !params.doValidationJSON) {
     addStringVal(rjAtom, rjDefaults, "stereo", chi, doc);
-    if(!chi_atoms.empty()){
+    if (!chi_atoms.empty()) {
       rj::Value rjNeighbors(rj::kArrayType);
-      for(auto idx : chi_atoms) {
+      for (auto idx : chi_atoms) {
         rj::Value v(idx);
-        rjNeighbors.PushBack(v,doc.GetAllocator());
+        rjNeighbors.PushBack(v, doc.GetAllocator());
       }
-      rjAtom.AddMember("chi_atoms",rjNeighbors,doc.GetAllocator());
+      rjAtom.AddMember("chi_atoms", rjNeighbors, doc.GetAllocator());
     }
   }
 }
 
 void addBond(const Bond &bond, rj::Value &rjBond, rj::Document &doc,
-             const rj::Value *rjDefaults,const JSONWriteParameters &params) {
-  int bo = 0;
-  if (inv_bolookup.find(bond.getBondType()) != inv_bolookup.end()) {
-    bo = inv_bolookup.find(bond.getBondType())->second;
+             const rj::Value *rjDefaults, const JSONWriteParameters &params) {
+  if (!params.doValidationJSON) {
+    int bo = 0;
+    if (inv_bolookup.find(bond.getBondType()) != inv_bolookup.end()) {
+      bo = inv_bolookup.find(bond.getBondType())->second;
+    } else {
+      BOOST_LOG(rdWarningLog)
+          << " unrecognized bond type set to zero while writing" << std::endl;
+    }
+    addIntVal(rjBond, rjDefaults, "bo", bo, doc);
   } else {
-    BOOST_LOG(rdWarningLog)
-        << " unrecognized bond type set to zero while writing" << std::endl;
+    std::string bondOrder;
+    switch (bond.getBondType()) {
+      case Bond::SINGLE:
+        bondOrder = "single";
+        break;
+      case Bond::DOUBLE:
+        bondOrder = "double";
+        break;
+      case Bond::TRIPLE:
+        bondOrder = "triple";
+        break;
+      case Bond::AROMATIC:
+        bondOrder = "aromatic";
+        break;
+      case Bond::DATIVE:
+      case Bond::DATIVEL:
+      case Bond::DATIVER:
+        bondOrder = "dative";
+        break;
+      default:
+        bondOrder = "unknown";
+        BOOST_LOG(rdWarningLog)
+            << " unrecognized bond type set to unknown while writing"
+            << std::endl;
+    }
+    addStringVal(rjBond, rjDefaults, "bond_type", bondOrder, doc);
   }
-  addIntVal(rjBond, rjDefaults, "bo", bo, doc);
   rj::Value rjAtoms(rj::kArrayType);
   rj::Value v1(static_cast<int>(bond.getBeginAtomIdx()));
   rj::Value v2(static_cast<int>(bond.getEndAtomIdx()));
@@ -159,8 +195,8 @@ void addBond(const Bond &bond, rj::Value &rjBond, rj::Document &doc,
     BOOST_LOG(rdWarningLog) << " unrecognized bond stereo " << bond.getStereo()
                             << " set to default while writing" << std::endl;
   }
-  
-  if(chi != "unspecified" || !params.doValidationJSON){
+
+  if (chi != "unspecified" || !params.doValidationJSON) {
     addStringVal(rjBond, rjDefaults, "stereo", chi, doc);
   }
   if (chi != "unspecified" && bond.getStereoAtoms().size() == 2) {
@@ -197,8 +233,7 @@ void addMol(const T &imol, rj::Value &rjMol, rj::Document &doc,
             const rj::Value *atomDefaults, const rj::Value *bondDefaults,
             const JSONWriteParameters &params) {
   RWMol mol(imol);
-  if(!params.doValidationJSON)
-    MolOps::Kekulize(mol, false);
+  if (!params.doValidationJSON) MolOps::Kekulize(mol, false);
   if (mol.hasProp(common_properties::_Name)) {
     rj::Value nmv;
     const std::string &nm =
@@ -222,11 +257,11 @@ void addMol(const T &imol, rj::Value &rjMol, rj::Document &doc,
   }
   rjMol.AddMember("bonds", rjBonds, doc.GetAllocator());
 
-  if(params.includeConformers){
+  if (params.includeConformers) {
     if (mol.getNumConformers()) {
       rj::Value rjConfs(rj::kArrayType);
       for (auto conf = mol.beginConformers(); conf != mol.endConformers();
-          ++conf) {
+           ++conf) {
         rj::Value rjConf(rj::kObjectType);
         addConformer(*(conf->get()), rjConf, doc);
         rjConfs.PushBack(rjConf, doc.GetAllocator());
@@ -236,7 +271,7 @@ void addMol(const T &imol, rj::Value &rjMol, rj::Document &doc,
     }
   }
 
-  if(params.includeProperties){
+  if (params.includeProperties) {
     bool includePrivate = false, includeComputed = false;
     auto propNames = mol.getPropList(includePrivate, includeComputed);
     if (propNames.size()) {
@@ -263,15 +298,15 @@ void addMol(const T &imol, rj::Value &rjMol, rj::Document &doc,
     }
   }
 
-  if(params.includeExtensions){
+  if (params.includeExtensions) {
     rj::Value representation(rj::kObjectType);
     representation.AddMember("name", "rdkitRepresentation", doc.GetAllocator());
     representation.AddMember("formatVersion", currentRDKitRepresentationVersion,
-                            doc.GetAllocator());
+                             doc.GetAllocator());
     rj::Value toolkitVersion;
     toolkitVersion.SetString(rj::StringRef(rdkitVersion));
     representation.AddMember("toolkitVersion", toolkitVersion,
-                            doc.GetAllocator());
+                             doc.GetAllocator());
 
     bool hasArom = false;
     for (const auto &atom : mol.atoms()) {
@@ -304,8 +339,9 @@ void addMol(const T &imol, rj::Value &rjMol, rj::Document &doc,
       rj::Value rjArr(rj::kArrayType);
       if (mol.getAtomWithIdx(0)->hasProp(common_properties::_CIPRank)) {
         for (const auto &atom : mol.atoms()) {
-          rjArr.PushBack(atom->getProp<unsigned int>(common_properties::_CIPRank),
-                        doc.GetAllocator());
+          rjArr.PushBack(
+              atom->getProp<unsigned int>(common_properties::_CIPRank),
+              doc.GetAllocator());
         }
       }
       if (rjArr.Size()) {
@@ -351,12 +387,12 @@ void addMol(const T &imol, rj::Value &rjMol, rj::Document &doc,
       representation.AddMember("name", "partialCharges", doc.GetAllocator());
       representation.AddMember("generator", "RDKit", doc.GetAllocator());
       representation.AddMember("formatVersion",
-                              currentChargeRepresentationVersion,
-                              doc.GetAllocator());
+                               currentChargeRepresentationVersion,
+                               doc.GetAllocator());
       rj::Value toolkitVersion;
       toolkitVersion.SetString(rj::StringRef(rdkitVersion));
       representation.AddMember("generatorVersion", toolkitVersion,
-                              doc.GetAllocator());
+                               doc.GetAllocator());
 
       rj::Value rjArr(rj::kArrayType);
       for (const auto &at : mol.atoms()) {
@@ -376,8 +412,8 @@ void addMol(const T &imol, rj::Value &rjMol, rj::Document &doc,
   }
 }
 
-void adjustParams(JSONWriteParameters &params){
-  if(params.doValidationJSON){
+void adjustParams(JSONWriteParameters &params) {
+  if (params.doValidationJSON) {
     params.formatName = "validation_JSON";
     params.formatVersion = currentValidationJSONVersion;
     params.includeConformers = false;
@@ -389,7 +425,8 @@ void adjustParams(JSONWriteParameters &params){
 }  // end of anonymous namespace
 
 template <typename T>
-std::string MolsToJSONData(const std::vector<T> &mols,const JSONWriteParameters &iparams) {
+std::string MolsToJSONData(const std::vector<T> &mols,
+                           const JSONWriteParameters &iparams) {
   JSONWriteParameters lparams = iparams;
   adjustParams(lparams);
   std::string res = "";
@@ -398,9 +435,10 @@ std::string MolsToJSONData(const std::vector<T> &mols,const JSONWriteParameters 
 
   rj::Value header(rj::kObjectType);
   initHeader(header, doc, lparams);
-  doc.AddMember(rj::StringRef(lparams.formatName.c_str()), header, doc.GetAllocator());
+  doc.AddMember(rj::StringRef(lparams.formatName.c_str()), header,
+                doc.GetAllocator());
 
-  if(lparams.useDefaults){
+  if (lparams.useDefaults) {
     rj::Value defaults(rj::kObjectType);
 
     rj::Value atomDefaults(rj::kObjectType);
@@ -430,12 +468,14 @@ std::string MolsToJSONData(const std::vector<T> &mols,const JSONWriteParameters 
   return buffer.GetString();
 };
 
-template RDKIT_MOLINTERCHANGE_EXPORT std::string MolsToJSONData<ROMol *>(const std::vector<ROMol *> &,const JSONWriteParameters &);
-template RDKIT_MOLINTERCHANGE_EXPORT std::string MolsToJSONData<RWMol *>(const std::vector<RWMol *> &,const JSONWriteParameters &);
+template RDKIT_MOLINTERCHANGE_EXPORT std::string MolsToJSONData<ROMol *>(
+    const std::vector<ROMol *> &, const JSONWriteParameters &);
+template RDKIT_MOLINTERCHANGE_EXPORT std::string MolsToJSONData<RWMol *>(
+    const std::vector<RWMol *> &, const JSONWriteParameters &);
 template RDKIT_MOLINTERCHANGE_EXPORT std::string MolsToJSONData<const ROMol *>(
-    const std::vector<const ROMol *> &,const JSONWriteParameters &);
+    const std::vector<const ROMol *> &, const JSONWriteParameters &);
 template RDKIT_MOLINTERCHANGE_EXPORT std::string MolsToJSONData<const RWMol *>(
-    const std::vector<const RWMol *> &,const JSONWriteParameters &);
+    const std::vector<const RWMol *> &, const JSONWriteParameters &);
 
 }  // end of namespace MolInterchange
 }  // end of namespace RDKit

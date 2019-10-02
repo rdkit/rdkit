@@ -60,7 +60,7 @@ struct RDKIT_MOLINTERCHANGE_EXPORT JSONWriteParameters {
       true;
   std::string formatName="commonchem";
   unsigned int formatVersion = 0;
-  bool doValidationJSON = false; // overrides many of the above options
+  bool doValidationJSON = false; // overrides many of the above options. Note that this option is primarily included for testing purposes and may be removed in a future RDKit release.
 };
 static JSONWriteParameters defaultJSONWriteParameters;
 

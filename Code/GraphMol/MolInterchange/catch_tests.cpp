@@ -22,39 +22,41 @@
 
 using namespace RDKit;
 
-TEST_CASE("basic options","[molinterchange]"){
-    auto m="c1ccccc1"_smiles;
-    REQUIRE(m);
-    SECTION("basics1") {
-        auto jsond = MolInterchange::MolToJSONData(*m);
-        CHECK(jsond.find("defaults") != std::string::npos);
-        CHECK(jsond.find("extensions") != std::string::npos);
-    }
-    SECTION("basics2") {
-        MolInterchange::JSONWriteParameters ps;
-        ps.useDefaults = false;
-        auto jsond = MolInterchange::MolToJSONData(*m,ps);
-        CHECK(jsond.find("defaults") == std::string::npos);
-        CHECK(jsond.find("extensions") != std::string::npos);
-    }
-    SECTION("basics3") {
-        MolInterchange::JSONWriteParameters ps;
-        ps.includeExtensions = false;
-        auto jsond = MolInterchange::MolToJSONData(*m,ps);
-        CHECK(jsond.find("defaults") != std::string::npos);
-        CHECK(jsond.find("extensions") == std::string::npos);
-    }
-    SECTION("validation_json") {
-        MolInterchange::JSONWriteParameters ps;
-        ps.doValidationJSON = true;
-        auto jsond = MolInterchange::MolToJSONData(*m,ps);
-        CHECK(jsond.find("defaults") == std::string::npos);
-        CHECK(jsond.find("extensions") == std::string::npos);
-        CHECK(jsond.find("\"explicitValence\":3") != std::string::npos);
-        CHECK(jsond.find("\"bo\":100") != std::string::npos);
-        CHECK(jsond.find("chi_atoms") == std::string::npos);
-        CHECK(jsond.find("commonchem") == std::string::npos);
-        CHECK(jsond.find("validation_JSON") != std::string::npos);
-    }
+TEST_CASE("basic options", "[molinterchange]") {
+  auto m = "c1ccccc1C"_smiles;
+  REQUIRE(m);
+  SECTION("basics1") {
+    auto jsond = MolInterchange::MolToJSONData(*m);
+    CHECK(jsond.find("defaults") != std::string::npos);
+    CHECK(jsond.find("extensions") != std::string::npos);
+  }
+  SECTION("basics2") {
+    MolInterchange::JSONWriteParameters ps;
+    ps.useDefaults = false;
+    auto jsond = MolInterchange::MolToJSONData(*m, ps);
+    CHECK(jsond.find("defaults") == std::string::npos);
+    CHECK(jsond.find("extensions") != std::string::npos);
+  }
+  SECTION("basics3") {
+    MolInterchange::JSONWriteParameters ps;
+    ps.includeExtensions = false;
+    auto jsond = MolInterchange::MolToJSONData(*m, ps);
+    CHECK(jsond.find("defaults") != std::string::npos);
+    CHECK(jsond.find("extensions") == std::string::npos);
+  }
+  SECTION("validation_json") {
+    MolInterchange::JSONWriteParameters ps;
+    ps.doValidationJSON = true;
+    auto jsond = MolInterchange::MolToJSONData(*m, ps);
+    CHECK(jsond.find("defaults") == std::string::npos);
+    CHECK(jsond.find("extensions") == std::string::npos);
+    CHECK(jsond.find("\"explicit_valence\":3") != std::string::npos);
+    CHECK(jsond.find("\"bo\"") == std::string::npos);
+    CHECK(jsond.find("\"bond_type\":\"aromatic\"") != std::string::npos);
+    CHECK(jsond.find("\"is_aromatic\":1") != std::string::npos);
+    CHECK(jsond.find("\"is_aromatic\":0") != std::string::npos);
+    CHECK(jsond.find("chi_atoms") == std::string::npos);
+    CHECK(jsond.find("commonchem") == std::string::npos);
+    CHECK(jsond.find("validation_JSON") != std::string::npos);
+  }
 }
-
