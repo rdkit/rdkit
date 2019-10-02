@@ -15,7 +15,7 @@
 import os, sys
 if 'RDBASE' in os.environ:
   RDBaseDir = os.environ['RDBASE']
-  RDCodeDir = os.path.join(RDBaseDir, 'rdkit')
+  RDCodeDir = os.path.join(RDBaseDir, 'python', 'rdkit')
   RDDataDir = os.path.join(RDBaseDir, 'Data')
   RDDocsDir = os.path.join(RDBaseDir, 'Docs')
   RDDemoDir = os.path.join(RDBaseDir, 'Demo')

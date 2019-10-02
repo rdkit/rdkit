@@ -22,6 +22,7 @@ add_dependencies(rdkit_base catch)
 
 option(RDK_BUILD_SWIG_WRAPPERS "build the SWIG wrappers" OFF )
 option(RDK_BUILD_PYTHON_WRAPPERS "build the standard python wrappers" ON )
+option(RDK_INSTALL_PYTHON_PACKAGE "install Python wrappers via pip to the selected python" ON )
 option(RDK_BUILD_COMPRESSED_SUPPLIERS "build in support for compressed MolSuppliers" OFF )
 option(RDK_BUILD_INCHI_SUPPORT "build the rdkit inchi wrapper" OFF )
 option(RDK_BUILD_AVALON_SUPPORT "install support for the avalon toolkit. Use the variable AVALONTOOLS_DIR to set the location of the source." OFF )
@@ -32,7 +33,6 @@ option(RDK_BUILD_CONTRIB "build the Contrib directory" OFF )
 option(RDK_INSTALL_INTREE "install the rdkit in the source tree (former behavior)" ON )
 option(RDK_INSTALL_DLLS_MSVC "install the rdkit DLLs when using MSVC" OFF)
 option(RDK_INSTALL_STATIC_LIBS "install the rdkit static libraries" ON )
-option(RDK_INSTALL_PYTHON_TESTS "install the rdkit Python tests with the wrappers" OFF )
 option(RDK_BUILD_THREADSAFE_SSS "enable thread-safe substructure searching" ON )
 option(RDK_BUILD_SLN_SUPPORT "include support for the SLN format" ON )
 option(RDK_TEST_MULTITHREADED "run some tests of multithreading" ON )
@@ -262,43 +262,49 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
     find_package(Boost 1.56.0 COMPONENTS python REQUIRED)
   endif()
 
+  set(RDK_PYTHON_SOURCE_DIR ${CMAKE_SOURCE_DIR}/python)
+  set(RDK_PYTHON_BINARY_DIR ${CMAKE_BINARY_DIR}/python)
 
-  if(RDK_INSTALL_INTREE)
-    set(RDKit_PythonDir "${CMAKE_SOURCE_DIR}/rdkit")
-  else(RDK_INSTALL_INTREE)
-    if (NOT PYTHON_INSTDIR)
-      # Determine correct installation directory for Python bindings
-      # From http://plplot.svn.sourceforge.net/viewvc/plplot/trunk/cmake/modules/python.cmake?revision=11014
-      execute_process(
+  if(NOT RDK_INSTALL_INTREE)
+    SET(RDKIT_PY_VERSION ${RDKit_Year}.${RDKit_Month}.${RDKit_Revision}${RDKit_RevisionModifier})
+    # Remember Numpy version this wheel was built with.
+    execute_process(
         COMMAND
-        ${PYTHON_EXECUTABLE} -c "from __future__ import print_function; from distutils import sysconfig; print(sysconfig.get_python_lib(1,0,prefix='${CMAKE_INSTALL_PREFIX}'))"
-        OUTPUT_VARIABLE PYTHON_INSTDIR
+        ${PYTHON_EXECUTABLE} -c "import numpy; print(numpy.__version__)"
+        OUTPUT_VARIABLE RDK_NUMPY_VERSION
         OUTPUT_STRIP_TRAILING_WHITESPACE
-      )
-    endif (NOT PYTHON_INSTDIR)
-    message("Python Install directory ${PYTHON_INSTDIR}")
-    set(RDKit_PythonDir "${PYTHON_INSTDIR}/rdkit")
-    if(RDK_INSTALL_PYTHON_TESTS)
-      install(DIRECTORY rdkit DESTINATION ${PYTHON_INSTDIR}
-        COMPONENT python
-        PATTERN ".svn" EXCLUDE
-        PATTERN "CMake*" EXCLUDE
-        PATTERN "Basement" EXCLUDE
-        )
-    else(RDK_INSTALL_PYTHON_TESTS)
-      install(DIRECTORY rdkit DESTINATION ${PYTHON_INSTDIR}
-        COMPONENT python
-        PATTERN ".svn" EXCLUDE
-        PATTERN "test_data" EXCLUDE
-        PATTERN "testData" EXCLUDE
-        PATTERN "test_list*" EXCLUDE
-        PATTERN "CMake*" EXCLUDE
-        PATTERN "Basement" EXCLUDE
-        PATTERN "UnitTest*" EXCLUDE
-        )
-    endif(RDK_INSTALL_PYTHON_TESTS)
+    )
 
-  endif(RDK_INSTALL_INTREE)
+    # To support out-of-source builds, store all required python files in BINARY dir.
+    # This directory will contain the whole Python package with a setup.py file.
+    file(COPY
+        ${RDK_PYTHON_SOURCE_DIR}/rdkit/
+        DESTINATION ${RDK_PYTHON_BINARY_DIR}/rdkit/
+    )
+
+    configure_file(
+        ${RDK_PYTHON_SOURCE_DIR}/setup.py.in
+        ${RDK_PYTHON_BINARY_DIR}/setup.py
+        @ONLY
+    )
+
+    add_custom_target(python_dist ALL
+        COMMAND ${PYTHON_EXECUTABLE} setup.py bdist_wheel
+        WORKING_DIRECTORY ${RDK_PYTHON_BINARY_DIR}
+        SOURCES ${RDK_PYTHON_BINARY_DIR}/setup.py
+        COMMENT "Building Python wheel package"
+    )
+    if(RDK_INSTALL_PYTHON_PACKAGE)
+      # Run this code at "make install" step. As .whl does not exist at configure or build time,
+      # we have to do GLOB in install time.
+      install(CODE "message(\"Installing python package from wheel\")")
+      install(CODE "file(GLOB RDKIT_PY_WHEEL ${RDK_PYTHON_BINARY_DIR}/dist/rdkit-*.whl)")
+      install(CODE "execute_process(
+          COMMAND ${PYTHON_EXECUTABLE} -m pip install \${RDKIT_PY_WHEEL}
+          WORKING_DIRECTORY ${RDK_PYTHON_BINARY_DIR}/dist)"
+      )
+    endif(RDK_INSTALL_PYTHON_PACKAGE)
+  endif(NOT RDK_INSTALL_INTREE)
 
   # determine linkage of python
   execute_process(
@@ -492,7 +498,7 @@ add_subdirectory(Code)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
   add_subdirectory(Projects)
-  add_subdirectory(rdkit)
+  add_subdirectory(python)
 endif(RDK_BUILD_PYTHON_WRAPPERS)
 
 if(RDK_BUILD_CONTRIB)

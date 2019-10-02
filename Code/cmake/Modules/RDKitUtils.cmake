@@ -137,8 +137,17 @@ macro(rdkit_python_extension)
       endif()
     endif()
 
-    INSTALL(TARGETS ${RDKPY_NAME}
-            LIBRARY DESTINATION ${RDKit_PythonDir}/${RDKPY_DEST} COMPONENT python)
+    file(MAKE_DIRECTORY ${RDK_PYTHON_BINARY_DIR}/rdkit/${RDKPY_DEST})
+
+    # Copy built library into Python package tree.
+    add_custom_command(TARGET ${RDKPY_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${RDKPY_NAME}> ${RDK_PYTHON_BINARY_DIR}/rdkit/${RDKPY_DEST}
+    )
+    add_dependencies(python_dist ${RDKPY_NAME})
+    # We will build .whl package with these libs at __build time__, which means they already must have
+    # correct RPATHs.
+    set_target_properties(${RDKPY_NAME} PROPERTIES BUILD_WITH_INSTALL_RPATH ON)
+    set_target_properties(${RDKPY_NAME} PROPERTIES BUILD_WITH_INSTALL_NAME_DIR ON)
   endif(RDK_BUILD_PYTHON_WRAPPERS)
 endmacro(rdkit_python_extension)
 
