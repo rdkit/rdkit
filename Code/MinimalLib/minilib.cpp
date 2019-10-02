@@ -25,6 +25,7 @@
 #include <GraphMol/Descriptors/Property.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
+#include <GraphMol/Depictor/RDDepictor.h>
 #include <DataStructs/BitOps.h>
 
 #include <INCHI-API/inchi.h>
@@ -177,6 +178,96 @@ std::string JSMol::get_morgan_fp(unsigned int radius,
   std::string res = BitVectToText(*fp);
   delete fp;
   return res;
+}
+
+std::string JSMol::get_stereo_tags() const {
+  if (!d_mol) return "{}";
+  rj::Document doc;
+  doc.SetObject();
+
+  bool cleanIt = true;
+  bool force = true;
+  MolOps::assignStereochemistry(*d_mol, cleanIt, force);
+
+  rj::Value rjAtoms(rj::kArrayType);
+  for (const auto atom : d_mol->atoms()) {
+    std::string cip;
+    if (atom->getPropIfPresent(common_properties::_CIPCode, cip)) {
+      cip = "(" + cip + ")";
+      rj::Value entry(rj::kArrayType);
+      entry.PushBack(atom->getIdx(), doc.GetAllocator());
+      rj::Value v;
+      v.SetString(cip.c_str(), cip.size(), doc.GetAllocator());
+      entry.PushBack(v, doc.GetAllocator());
+      rjAtoms.PushBack(entry, doc.GetAllocator());
+    }
+  }
+  doc.AddMember("CIP_atoms", rjAtoms, doc.GetAllocator());
+
+  rj::Value rjBonds(rj::kArrayType);
+  for (const auto bond : d_mol->bonds()) {
+    std::string cip = "";
+    if (bond->getStereo() == Bond::STEREOE)
+      cip = "(E)";
+    else if (bond->getStereo() == Bond::STEREOZ)
+      cip = "(Z)";
+    if (cip.empty()) continue;
+    rj::Value entry(rj::kArrayType);
+    entry.PushBack(bond->getBeginAtomIdx(), doc.GetAllocator());
+    entry.PushBack(bond->getEndAtomIdx(), doc.GetAllocator());
+    rj::Value v;
+    v.SetString(cip.c_str(), cip.size(), doc.GetAllocator());
+    entry.PushBack(v, doc.GetAllocator());
+    rjBonds.PushBack(entry, doc.GetAllocator());
+  }
+
+  doc.AddMember("CIP_bonds", rjBonds, doc.GetAllocator());
+
+  rj::StringBuffer buffer;
+  rj::Writer<rj::StringBuffer> writer(buffer);
+  doc.Accept(writer);
+  return buffer.GetString();
+}
+
+std::string JSMol::get_aromatic_form() const {
+  if (!d_mol) return "";
+
+  RWMol molCopy(*d_mol);
+  MolOps::setAromaticity(molCopy);
+
+  bool includeStereo = true;
+  int confId = -1;
+  bool kekulize = false;
+  return MolToMolBlock(molCopy, includeStereo, confId, kekulize);
+}
+
+std::string JSMol::get_kekule_form() const {
+  if (!d_mol) return "";
+
+  RWMol molCopy(*d_mol);
+  MolOps::Kekulize(molCopy);
+
+  bool includeStereo = true;
+  int confId = -1;
+  bool kekulize = true;
+  return MolToMolBlock(molCopy, includeStereo, confId, kekulize);
+}
+
+std::string JSMol::get_new_coords(bool useCoordGen) const {
+  if (!d_mol) return "";
+
+  RWMol molCopy(*d_mol);
+
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
+  bool oprefer = RDDepict::preferCoordGen;
+  RDDepict::preferCoordGen = useCoordGen;
+#endif
+  RDDepict::compute2DCoords(molCopy);
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
+  RDDepict::preferCoordGen = oprefer;
+#endif
+
+  return MolToMolBlock(molCopy);
 }
 
 std::string get_inchikey_for_inchi(const std::string &input) {
