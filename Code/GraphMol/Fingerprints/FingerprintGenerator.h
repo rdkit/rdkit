@@ -52,12 +52,14 @@ template <typename OutputType>
 class RDKIT_FINGERPRINTS_EXPORT FingerprintArguments
     : private boost::noncopyable {
  public:
-  FingerprintArguments(const bool countSimulation,
+  FingerprintArguments(bool countSimulation,
                        const std::vector<std::uint32_t> countBounds,
-                       const std::uint32_t fpSize);
+                       std::uint32_t fpSize,
+                       std::uint32_t numBitsPerFeature = 1);
   const bool d_countSimulation;
   const std::vector<std::uint32_t> d_countBounds;
   const std::uint32_t d_fpSize;
+  const std::uint32_t d_numBitsPerFeature;
 
   /*!
     \brief Returns the size of the fingerprint based on arguments
