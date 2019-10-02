@@ -147,30 +147,62 @@ std::string JSMol::get_molblock() const {
   if (!d_mol) return "";
   return MolToMolBlock(*d_mol);
 }
+
+namespace {
+void get_sss_json(const ROMol *d_mol, const ROMol *q_mol,
+                  const MatchVectType &match, rj::Value &obj,
+                  rj::Document &doc) {
+  rj::Value rjAtoms(rj::kArrayType);
+  for (const auto &pr : match) {
+    rjAtoms.PushBack(pr.second, doc.GetAllocator());
+  }
+  obj.AddMember("atoms", rjAtoms, doc.GetAllocator());
+
+  rj::Value rjBonds(rj::kArrayType);
+  for (const auto qbond : q_mol->bonds()) {
+    unsigned int idx1 = match[qbond->getBeginAtomIdx()].second;
+    unsigned int idx2 = match[qbond->getEndAtomIdx()].second;
+    const auto bond = d_mol->getBondBetweenAtoms(idx1, idx2);
+    if (bond != nullptr) {
+      rjBonds.PushBack(bond->getIdx(), doc.GetAllocator());
+    }
+  }
+  obj.AddMember("bonds", rjBonds, doc.GetAllocator());
+}
+}  // namespace
+
 std::string JSMol::get_substruct_match(const JSMol &q) const {
   std::string res = "{}";
-  if (!d_mol) return res;
+  if (!d_mol || !q.d_mol) return res;
 
   MatchVectType match;
   if (SubstructMatch(*d_mol, *(q.d_mol), match)) {
     rj::Document doc;
     doc.SetObject();
-    rj::Value rjAtoms(rj::kArrayType);
-    for (const auto &pr : match) {
-      rjAtoms.PushBack(pr.second, doc.GetAllocator());
-    }
-    doc.AddMember("atoms", rjAtoms, doc.GetAllocator());
+    get_sss_json(d_mol.get(), q.d_mol.get(), match, doc, doc);
+    rj::StringBuffer buffer;
+    rj::Writer<rj::StringBuffer> writer(buffer);
+    doc.Accept(writer);
+    res = buffer.GetString();
+  }
 
-    rj::Value rjBonds(rj::kArrayType);
-    for (const auto qbond : q.d_mol->bonds()) {
-      unsigned int idx1 = match[qbond->getBeginAtomIdx()].second;
-      unsigned int idx2 = match[qbond->getEndAtomIdx()].second;
-      const auto bond = d_mol->getBondBetweenAtoms(idx1, idx2);
-      if (bond != nullptr) {
-        rjBonds.PushBack(bond->getIdx(), doc.GetAllocator());
-      }
+  return res;
+}
+
+std::string JSMol::get_substruct_matches(const JSMol &q) const {
+  std::string res = "{}";
+  if (!d_mol || !q.d_mol) return res;
+
+  auto matches = SubstructMatch(*d_mol, (*q.d_mol));
+  if (!matches.empty()) {
+    rj::Document doc;
+    doc.SetArray();
+
+    for (const auto match : matches) {
+      rj::Value rjMatch(rj::kObjectType);
+      get_sss_json(d_mol.get(), q.d_mol.get(), match, rjMatch, doc);
+      doc.PushBack(rjMatch, doc.GetAllocator());
     }
-    doc.AddMember("bonds", rjBonds, doc.GetAllocator());
 
     rj::StringBuffer buffer;
     rj::Writer<rj::StringBuffer> writer(buffer);
@@ -180,6 +212,7 @@ std::string JSMol::get_substruct_match(const JSMol &q) const {
 
   return res;
 }
+
 std::string JSMol::get_descriptors() const {
   if (!d_mol) return "{}";
   rj::Document doc;

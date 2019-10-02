@@ -21,6 +21,7 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("get_svg", &JSMol::get_svg)
       .function("get_svg_with_highlights", &JSMol::get_svg_with_highlights)
       .function("get_substruct_match", &JSMol::get_substruct_match)
+      .function("get_substruct_matches", &JSMol::get_substruct_matches)
       .function("get_descriptors", &JSMol::get_descriptors)
       .function("get_morgan_fp",
                 select_overload<std::string() const>(&JSMol::get_morgan_fp))

@@ -44,7 +44,7 @@
     if (mol.is_valid() && qmol.is_valid()) {
       var mdetails = mol.get_substruct_match(qmol);
       var match = JSON.parse(mdetails);
-      if (match.atoms.length) draw_with_highlights(mol, mdetails);
+      if (match.atoms && match.atoms.length) draw_with_highlights(mol, mdetails);
     }
     mol.delete();
     qmol.delete();
@@ -60,6 +60,6 @@
 <br>
 SMILES: <input id="smiles_input" type="text" value="CC(=O)Oc1ccccc1C(=O)O" onkeyup="callback(this.value)">
 <br>
-SMARTS: <input id="smart_input" type="text" value="" onkeyup="sma_callback(this.value)">
+SMARTS: <input id="smarts_input" type="text" value="" onkeyup="sma_callback(this.value)">
 
 </html>
