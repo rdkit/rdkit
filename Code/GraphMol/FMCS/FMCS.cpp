@@ -236,17 +236,6 @@ bool MCSAtomCompareAnyHeavyAtom(const MCSAtomCompareParameters& p,
       return MCSAtomCompareAny(p,mol1,atom1,mol2,atom2,nullptr);
   }
   return false;
-    if (p.MatchValences && a1.getTotalValence() != a2.getTotalValence())
-      return false;
-    if (p.MatchChiralTag && !checkAtomChirality(p, mol1, atom1, mol2, atom2))
-      return false;
-    if (p.MatchFormalCharge && !checkAtomCharge(p, mol1, atom1, mol2, atom2))
-      return false;
-    if (p.RingMatchesRingOnly)
-      return checkRingMatch(p, mol1, atom1, mol2, atom2);
-    return true;
-  }
-  return false;
 }
 
 //=== BOND COMPARE ========================================================
