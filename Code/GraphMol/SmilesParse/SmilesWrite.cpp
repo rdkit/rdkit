@@ -560,9 +560,11 @@ std::string MolToCXSmiles(const ROMol &mol, bool doIsomericSmiles,
                           bool doRandom) {
   auto res = MolToSmiles(mol, doIsomericSmiles, doKekule, rootedAtAtom,
                          canonical, allBondsExplicit, allHsExplicit, doRandom);
-  auto cxext = SmilesWrite::getCXExtensions(mol);
-  if (cxext.length()) {
-    res += " " + cxext;
+  if (!res.empty()) {
+    auto cxext = SmilesWrite::getCXExtensions(mol);
+    if (cxext.length()) {
+      res += " " + cxext;
+    }
   }
   return res;
 }
