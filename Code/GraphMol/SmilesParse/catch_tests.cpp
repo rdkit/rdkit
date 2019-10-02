@@ -286,6 +286,13 @@ TEST_CASE("github #2257: writing cxsmiles", "[smiles,cxsmiles]") {
     CHECK(smi == "C[C@@H]1CCO[C@H](C)C1 |a:1,5|");
   }
 
+  SECTION("enhanced stereo with other properties") {
+    auto mol = "CC[C@H](C)O |atomProp:3.p2.v2,o1:2|"_smiles;
+    REQUIRE(mol);
+    auto smi = MolToCXSmiles(*mol);
+    CHECK(smi == "CC[C@H](C)O |atomProp:3.p2.v2,o1:2|");
+  }
+
   SECTION("mol fragments1") {
     auto mol = "Cl.OC |(1,0,0;0,.75,0.1;0,-.75,-0.1)|"_smiles;
     REQUIRE(mol);
