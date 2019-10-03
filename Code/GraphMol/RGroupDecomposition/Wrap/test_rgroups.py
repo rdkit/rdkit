@@ -257,6 +257,19 @@ C1CCO[C@@](S)(P)1
                            'R1': '[H]P([H])[*:1]'},
                           {'Core': 'C1C[SH]([*:2])C1',
                            'R2': '[H]P([H])[*:2].[H][*:2]'}])
+
+    def test_getrgrouplabels(self):
+        smis = ["C(Cl)N(N)O(O)"]
+        mols = [Chem.MolFromSmiles(smi) for smi in smis]
+        smarts = 'C([*:1])N([*:5])O([*:6])'
+        core = Chem.MolFromSmarts(smarts)
+        rg = RGroupDecomposition(core)
+        for m in mols:
+            rg.Add(m)
+        rg.Process()
+        self.assertEqual(set(rg.GetRGroupLabels()),
+                         set(rg.GetRGroupsAsColumns()))
+
         
 if __name__ == '__main__':
   unittest.main()
