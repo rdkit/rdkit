@@ -27,6 +27,9 @@ void SetMCSAtomTyper(MCSParameters &p, AtomComparator atomComp) {
     case AtomCompareIsotopes:
       p.AtomTyper = MCSAtomCompareIsotopes;
       break;
+    case AtomCompareAnyHeavyAtom:
+      p.AtomTyper = MCSAtomCompareAnyHeavyAtom;
+	  break;
   }
 }
 void SetMCSBondTyper(MCSParameters &p, BondComparator bondComp) {
@@ -120,7 +123,8 @@ BOOST_PYTHON_MODULE(rdFMCS) {
   python::enum_<RDKit::AtomComparator>("AtomCompare")
       .value("CompareAny", RDKit::AtomCompareAny)
       .value("CompareElements", RDKit::AtomCompareElements)
-      .value("CompareIsotopes", RDKit::AtomCompareIsotopes);
+      .value("CompareIsotopes", RDKit::AtomCompareIsotopes)
+      .value("CompareAnyHeavyAtom", RDKit::AtomCompareAnyHeavyAtom);
   python::enum_<RDKit::BondComparator>("BondCompare")
       .value("CompareAny", RDKit::BondCompareAny)
       .value("CompareOrder", RDKit::BondCompareOrder)

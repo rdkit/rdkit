@@ -171,6 +171,30 @@ class TestCase(unittest.TestCase):
         for m in ms:
             self.assertTrue(m.HasSubstructMatch(qm))
 
+    def testAtomCompareAnyHeavyAtom(self):
+        # H matches H, O matches C
+        smis = ('[H]c1ccccc1C', '[H]c1ccccc1O')
+        ms = [Chem.MolFromSmiles(x, sanitize=False) for x in smis]
+        mcs = rdFMCS.FindMCS(ms, atomCompare=rdFMCS.AtomCompare.CompareAnyHeavyAtom)
+        self.assertEqual(mcs.numBonds, 8)
+        self.assertEqual(mcs.numAtoms, 8)
+        qm = Chem.MolFromSmarts(mcs.smartsString)
+
+        for m in ms:
+            self.assertTrue(m.HasSubstructMatch(qm))
+
+    def testAtomCompareAnyHeavyAtom1(self):
+        # O matches C, H does not match O
+        smis = ('[H]c1ccccc1C', 'Oc1ccccc1O')
+        ms = [Chem.MolFromSmiles(x, sanitize=False) for x in smis]
+        mcs = rdFMCS.FindMCS(ms, atomCompare=rdFMCS.AtomCompare.CompareAnyHeavyAtom)
+        self.assertEqual(mcs.numBonds, 7)
+        self.assertEqual(mcs.numAtoms, 7)
+        qm = Chem.MolFromSmarts(mcs.smartsString)
+
+        for m in ms:
+            self.assertTrue(m.HasSubstructMatch(qm))
+        
     def test6MatchValences(self):
         ms = (Chem.MolFromSmiles('NC1OC1'), Chem.MolFromSmiles('C1OC1[N+](=O)[O-]'))
         mcs = rdFMCS.FindMCS(ms)

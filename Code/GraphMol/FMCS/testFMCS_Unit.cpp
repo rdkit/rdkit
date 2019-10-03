@@ -585,6 +585,46 @@ void testAtomCompareAnyAtomBond() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testAtomCompareAnyHeavyAtom() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing FMCS testAtomCompareAnyAtom" << std::endl;
+  std::cout << "\ntestAtomCompareAnyAtom()\n";
+  std::vector<ROMOL_SPTR> mols;
+  const char* smi[] = {
+      "[H]c1ccccc1C", "[H]c1ccccc1O",  // H matches H, O matches C
+  };
+  for (auto& i : smi) mols.push_back(ROMOL_SPTR(SmilesToMol(getSmilesOnly(i),0,false)));
+  MCSParameters p;
+  p.AtomTyper = MCSAtomCompareAnyHeavyAtom;
+  t0 = nanoClock();
+  MCSResult res = findMCS(mols, &p);
+  std::cout << "MCS: " << res.SmartsString << " " << res.NumAtoms << " atoms, "
+            << res.NumBonds << " bonds\n";
+  printTime();
+  TEST_ASSERT(res.NumAtoms == 8 && res.NumBonds == 8);
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+void testAtomCompareAnyHeavyAtom1() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing FMCS testAtomCompareAnyAtom" << std::endl;
+  std::cout << "\ntestAtomCompareAnyAtom()\n";
+  std::vector<ROMOL_SPTR> mols;
+  const char* smi[] = {
+      "[H]c1ccccc1C", "Oc1ccccc1O",  // O matches C, H does not match O
+  };
+  for (auto& i : smi) mols.push_back(ROMOL_SPTR(SmilesToMol(getSmilesOnly(i),0,false)));
+  MCSParameters p;
+  p.AtomTyper = MCSAtomCompareAnyHeavyAtom;
+  t0 = nanoClock();
+  MCSResult res = findMCS(mols, &p);
+  std::cout << "MCS: " << res.SmartsString << " " << res.NumAtoms << " atoms, "
+            << res.NumBonds << " bonds\n";
+  printTime();
+  TEST_ASSERT(res.NumAtoms == 7 && res.NumBonds == 7);
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 void testSimple() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing FMCS testSimple" << std::endl;
@@ -1376,6 +1416,8 @@ int main(int argc, const char* argv[]) {
   testAtomCompareIsotopes();
   testAtomCompareAnyAtom();
   testAtomCompareAnyAtomBond();
+  testAtomCompareAnyHeavyAtom();
+  testAtomCompareAnyHeavyAtom1();
 
   test18();
   test504();
