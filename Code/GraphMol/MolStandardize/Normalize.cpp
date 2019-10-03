@@ -102,6 +102,8 @@ boost::shared_ptr<ROMol> Normalizer::normalizeFragment(
     const ROMol &mol,
     const std::vector<std::shared_ptr<ChemicalReaction>> &transforms) {
   boost::shared_ptr<ROMol> nfrag(new ROMol(mol));
+  MolOps::fastFindRings(
+      *nfrag);  // this doesn't do anything if rings are already there
   for (unsigned int i = 0; i < MAX_RESTARTS; ++i) {
     bool loop_brake = false;
     // Iterate through Normalization transforms and apply each in order
