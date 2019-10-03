@@ -13,7 +13,7 @@
 
 using namespace emscripten;
 EMSCRIPTEN_BINDINGS(RDKit_minimal) {
-   class_<JSMol>("Mol")
+  class_<JSMol>("Mol")
       .function("is_valid", &JSMol::is_valid)
       .function("get_smiles", &JSMol::get_smiles)
       .function("get_molblock", &JSMol::get_molblock)
@@ -21,12 +21,22 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("get_svg", &JSMol::get_svg)
       .function("get_svg_with_highlights", &JSMol::get_svg_with_highlights)
       .function("get_substruct_match", &JSMol::get_substruct_match)
+      .function("get_substruct_matches", &JSMol::get_substruct_matches)
       .function("get_descriptors", &JSMol::get_descriptors)
       .function("get_morgan_fp",
                 select_overload<std::string() const>(&JSMol::get_morgan_fp))
       .function("get_morgan_fp",
                 select_overload<std::string(unsigned int, unsigned int) const>(
-                    &JSMol::get_morgan_fp));
+                    &JSMol::get_morgan_fp))
+
+      // functionality primarily useful in ketcher
+      .function("get_stereo_tags", &JSMol::get_stereo_tags)
+      .function("get_aromatic_form", &JSMol::get_aromatic_form)
+      .function("get_kekule_form", &JSMol::get_kekule_form)
+      .function("get_new_coords",
+                select_overload<std::string() const>(&JSMol::get_new_coords))
+      .function("get_new_coords", select_overload<std::string(bool) const>(
+                                      &JSMol::get_new_coords));
 
   function("version", &version);
   function("get_inchikey_for_inchi", &get_inchikey_for_inchi);
