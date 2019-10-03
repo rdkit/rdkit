@@ -17,6 +17,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/MolStandardize/MolStandardize.h>
+#include <GraphMol/MolStandardize/Normalize.h>
 #include <GraphMol/MolStandardize/Fragment.h>
 #include <GraphMol/MolStandardize/Charge.h>
 
@@ -239,5 +240,20 @@ TEST_CASE("github #2610: Uncharger incorrectly modifying a zwitterion.",
     CHECK(outm->getAtomWithIdx(5)->getFormalCharge() == 1);
     CHECK(outm->getAtomWithIdx(6)->getFormalCharge() == -1);
     CHECK(MolToSmiles(*outm) == "[O-][NH+]1C=CC=CC1");
+  }
+}
+
+TEST_CASE("problems with ringInfo initialization", "normalizer") {
+  std::string tfs =
+      R"TXT(Bad amide tautomer1	[C:1]([OH1;D1:2])=;!@[NH1:3]>>[C:1](=[OH0:2])-[NH2:3]
+Bad amide tautomer2	[C:1]([OH1;D1:2])=;!@[NH0:3]>>[C:1](=[OH0:2])-[NH1:3])TXT";
+  std::stringstream iss(tfs);
+  MolStandardize::Normalizer nrml(iss, 20);
+  SECTION("example1") {
+    auto m = "Cl.Cl.OC(=N)NCCCCCCCCCCCCNC(O)=N"_smiles;
+    REQUIRE(m);
+    std::unique_ptr<ROMol> res(nrml.normalize(*m));
+    REQUIRE(res);
+    CHECK(MolToSmiles(*res) == "Cl.Cl.NC(=O)NCCCCCCCCCCCCNC(N)=O");
   }
 }
