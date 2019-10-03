@@ -251,6 +251,7 @@ typedef unsigned long long int	uintmax_t;
 %include "../FilterCatalog.i"
 %include "../Trajectory.i"
 %include "../SubstructLibrary.i"
+%include "../MolHash.i"
 %include "../Streams.i"
 
 
