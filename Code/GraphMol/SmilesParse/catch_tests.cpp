@@ -458,7 +458,19 @@ TEST_CASE("MolFragmentToSmarts", "[Smarts]") {
     const auto smarts = MolFragmentToSmarts(*m, indices);
     CHECK(smarts == "[#6]-[#6]-[#7]");
   }
-  SECTION("FragmentWithParity") {
+  SECTION("FragmentWithParity1") {
+    auto m = "C[C@H](F)CCCN"_smiles;
+    std::vector<int> indices = {0, 1, 2, 3};
+    const auto smarts = MolFragmentToSmarts(*m, indices);
+    CHECK(smarts == "[#6]-[#6@H](-[#9])-[#6]");
+  }
+  SECTION("FragmentWithParity2") {
+    auto m = "C[C@](F)(Cl)CCCN"_smiles;
+    std::vector<int> indices = {0, 1, 2, 4};
+    const auto smarts = MolFragmentToSmarts(*m, indices);
+    CHECK(smarts == "[#6]-[#6@@](-[#9])-[#6]");
+  }
+  SECTION("FragmentLosingParity") {
     auto m = "C[C@H](F)CCCN"_smiles;
     std::vector<int> indices = {0, 1, 2};
     const auto smarts = MolFragmentToSmarts(*m, indices);
