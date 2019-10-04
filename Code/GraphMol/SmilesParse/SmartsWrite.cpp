@@ -227,6 +227,17 @@ std::string getAtomSmartsSimple(const QueryAtom *qatom,
       res << abs(val);
     }
     needParen = true;
+  } else if (descrip == "AtomNegativeFormalCharge") {
+    int val = query->getVal();
+    if (val < 0) {
+      res << "+";
+    } else {
+      res << "-";
+    }
+    if (abs(val) != 1) {
+      res << abs(val);
+    }
+    needParen = true;
   } else if (descrip == "AtomHybridization") {
     res << "^";
     switch (query->getVal()) {
@@ -835,8 +846,8 @@ std::string molToSmarts(const ROMol &inmol, bool doIsomericSmiles,
       }
     }
 
-    subSmi =
-        FragmentSmartsConstruct(mol, nextAtomIdx, colors, ranks, doIsomericSmiles, bondsInPlay);
+    subSmi = FragmentSmartsConstruct(mol, nextAtomIdx, colors, ranks,
+                                     doIsomericSmiles, bondsInPlay);
     res += subSmi;
 
     colorIt = std::find(colors.begin(), colors.end(), Canon::WHITE_NODE);

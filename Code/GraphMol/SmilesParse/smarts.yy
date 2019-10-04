@@ -609,6 +609,16 @@ possible_range_query : COMPLEX_ATOM_QUERY_TOKEN
 | IMPLICIT_H_ATOM_QUERY_TOKEN {
   $1->setQuery(makeAtomImplicitHCountQuery(0));
 }
+| PLUS_TOKEN {
+  QueryAtom *newQ = new QueryAtom();
+  newQ->setQuery(makeAtomFormalChargeQuery(0));
+  $$ = newQ;
+}
+| MINUS_TOKEN {
+  QueryAtom *newQ = new QueryAtom();
+  newQ->setQuery(makeAtomNegativeFormalChargeQuery(0));
+  $$ = newQ;
+}
 ;
 
 /* --------------------------------------------------------------- */
