@@ -60,8 +60,8 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
     endif()
 
     if(NOT EXISTS "${COORDGEN_DIR}/sketcherMinimizer.h")
-        set(RELEASE_NO "1.3.1")
-        set(MD5 "332d6a708c01bc1fb7c012e5caa5157d")
+        set(RELEASE_NO "1.3.2")
+        set(MD5 "06a67c9ba7668946e89d0baa52dc8d04")
         downloadAndCheckMD5("https://github.com/schrodinger/coordgenlibs/archive/v${RELEASE_NO}.tar.gz"
               "${CMAKE_CURRENT_SOURCE_DIR}/coordgenlibs-${RELEASE_NO}.tar.gz" ${MD5})
         execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf
