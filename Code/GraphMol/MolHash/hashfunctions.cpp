@@ -322,7 +322,11 @@ static std::string TautomerHash(RWMol *mol, bool proto) {
   }
 
   for (auto bptr : mol->bonds()) {
-    bptr->setBondType(Bond::SINGLE);
+    if (bptr->getBondType() != Bond::SINGLE &&
+        (bptr->getIsConjugated() || bptr->getBeginAtom()->getAtomicNum() != 6 ||
+         bptr->getEndAtom()->getAtomicNum() != 6)) {
+      bptr->setBondType(Bond::SINGLE);
+    }
   }
 
   MolOps::assignRadicals(*mol);

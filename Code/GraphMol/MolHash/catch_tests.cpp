@@ -120,4 +120,29 @@ TEST_CASE("Basic MolHash", "[molhash]") {
       CHECK(hsh == "[CH]1[CH][C](CC[C]2[CH][N][CH][N]2)[N][N]1_2");
     }
   }
+  SECTION("tautomers 2") {
+    {
+      auto om = "C/C=C/C"_smiles;
+      REQUIRE(om);
+      auto hsh =
+          MolHash::MolHash(om.get(), MolHash::HashFunction::HetAtomTautomer);
+      CHECK(hsh == "C/C=C/C_0_0");
+    }
+
+    {
+      auto om = "C/C=N/C"_smiles;
+      REQUIRE(om);
+      auto hsh =
+          MolHash::MolHash(om.get(), MolHash::HashFunction::HetAtomTautomer);
+      CHECK(hsh == "C[CH][N]C_0_0");
+    }
+
+    {
+      auto om = "C/C=C/C=C/C"_smiles;
+      REQUIRE(om);
+      auto hsh =
+          MolHash::MolHash(om.get(), MolHash::HashFunction::HetAtomTautomer);
+      CHECK(hsh == "C[CH][CH][CH][CH]C_0_0");
+    }
+  }
 }
