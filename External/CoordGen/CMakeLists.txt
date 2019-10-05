@@ -17,10 +17,10 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
   endif()
 
   if (WIN32)
+    set( T_LIBS ${Boost_LIBRARIES})
     find_package(Boost 1.58.0 COMPONENTS zlib)
-    if(Boost_zlib_FOUND)
-      set(zlib_lib Boost::zlib)
-    endif()
+    set( Boost_LIBRARIES ${T_LIBS} ${Boost_LIBRARIES})
+
   else()
     if(Boost_USE_STATIC_LIBS)
       # when we're doing static linkage of boost
@@ -99,7 +99,7 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
           DESTINATION ${RDKit_ShareDir}/Data
           COMPONENT data)
 
-  set(RDK_COORDGEN_LIBS MolAlign ${coordgen_LIBRARIES} ${maeparser_LIBRARIES}
+  set(RDK_COORDGEN_LIBS MolAlign ${coordgen_LIBRARIES} ${maeparser_LIBRARIES} ${Boost_LIBRARIES}
       CACHE STRING "the external libraries" FORCE)
   rdkit_headers(CoordGen.h DEST GraphMol)
 
