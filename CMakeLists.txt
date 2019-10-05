@@ -304,6 +304,11 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
           WORKING_DIRECTORY ${RDK_PYTHON_BINARY_DIR}/dist)"
       )
     endif(RDK_INSTALL_PYTHON_PACKAGE)
+  else(NOT RDK_INSTALL_INTREE)
+    # Dummy target for add_dependencies() call in "rdkit_python_extension" macros.
+    add_custom_target(python_dist ALL
+        COMMAND ""
+        )
   endif(NOT RDK_INSTALL_INTREE)
 
   # determine linkage of python
