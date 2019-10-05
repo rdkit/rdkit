@@ -6,7 +6,8 @@ steps:
     conda info -a
     conda create --name rdkit_build cmake ^
         eigen swig
-  displayName: Install dependencies- script: |
+  displayName: Install dependencies 
+- script: |
     mkdir build && cd build
     call activate rdkit_build
     cmake .. ^
