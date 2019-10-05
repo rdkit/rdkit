@@ -60,3 +60,14 @@ jobs:
     target_platform: 10.9
   steps:
   - template: .azure-pipelines/mac_build_java.yml
+- job: Windows_VS2017_x64_java
+  timeoutInMinutes: 90
+  pool:
+    vmImage: vs2017-win2016
+  variables:
+    compiler: vs2017_win-64
+    boost_version: 1.67.0
+    number_of_cores: '%NUMBER_OF_PROCESSORS%'
+    python_name: python37
+  steps:
+  - template: .azure-pipelines/vs_build_java.yml
