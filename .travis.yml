@@ -46,7 +46,7 @@ before_script:
  - echo "BEFORE SCRIPT"
  - export RDBASE=`pwd`
  - echo $RDBASE
- - export PYTHONPATH=${RDBASE}
+ - export PYTHONPATH=${RDBASE}/python
  - export LD_LIBRARY_PATH=${RDBASE}/lib
  - export DYLD_FALLBACK_LIBRARY_PATH=${RDBASE}/lib
 

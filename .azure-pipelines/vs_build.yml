@@ -43,7 +43,7 @@ steps:
 - script: |
     call activate rdkit_build
     set RDBASE=%cd%
-    set PYTHONPATH=%RDBASE%;%PYTHONPATH%
+    set PYTHONPATH=%RDBASE%\python;%PYTHONPATH%
     set PATH=%RDBASE%\lib;%PATH%
     cd build
     ctest -j $(number_of_cores) --output-on-failure -T Test
