@@ -6,10 +6,16 @@ matrix:
   include:
   - os: linux
     dist: xenial
-    env: CONDA_PYTHON_VERSION=3.6
+    env: CONDA_PYTHON_VERSION=3.6 INTREE=OFF
+  - os: linux
+    dist: xenial
+    env: CONDA_PYTHON_VERSION=3.6 INTREE=ON
   - os: osx
     osx_image: xcode8.3
-    env: CONDA_PYTHON_VERSION=3.6
+    env: CONDA_PYTHON_VERSION=3.6 INTREE=OFF
+  - os: osx
+    osx_image: xcode8.3
+    env: CONDA_PYTHON_VERSION=3.6 INTREE=ON
 
 addons:
       apt:
@@ -46,9 +52,9 @@ before_script:
  - echo "BEFORE SCRIPT"
  - export RDBASE=`pwd`
  - echo $RDBASE
- - export PYTHONPATH=${RDBASE}/python
+ - if [[ $INTREE == ON ]]; then export PYTHONPATH=$RDBASE/python; else export PYTHONPATH=${RDBASE}/build/python; fi
  - export LD_LIBRARY_PATH=${RDBASE}/lib
- - export DYLD_FALLBACK_LIBRARY_PATH=${RDBASE}/lib
+ - export DYLD_FALLBACK_LIBRARY_PATH="${RDBASE}/lib:$RDBASE/build/lib"
 
  - export PYTHON=`which python`
  - echo $PYTHON
@@ -64,7 +70,7 @@ script:
   - cd build
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then  export CXX="g++" ; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then  export CC="gcc" ; fi
-  - cmake $REGEX_EXTRA -D PYTHON_EXECUTABLE=$PYTHON -D BOOST_ROOT=$PY_PREFIX -D Boost_NO_SYSTEM_PATHS=ON -D RDK_BUILD_AVALON_SUPPORT=ON -D RDK_BUILD_INCHI_SUPPORT=ON -DRDK_BUILD_THREADSAFE_SSS=on -DRDK_TEST_MULTITHREADED=on -DRDK_INSTALL_STATIC_LIBS=OFF -DRDK_BUILD_SWIG_WRAPPERS=OFF -DRDK_SWIG_STATIC=OFF -DRDK_BUILD_PYTHON_WRAPPERS=ON -DRDK_BUILD_FREESASA_SUPPORT=ON ..
-  - make -j2 install
+  - cmake $REGEX_EXTRA -D RDK_INSTALL_INTREE=$INTREE -D PYTHON_EXECUTABLE=$PYTHON -D BOOST_ROOT=$PY_PREFIX -D Boost_NO_SYSTEM_PATHS=ON -D RDK_BUILD_AVALON_SUPPORT=ON -D RDK_BUILD_INCHI_SUPPORT=ON -DRDK_BUILD_THREADSAFE_SSS=on -DRDK_TEST_MULTITHREADED=on -DRDK_INSTALL_STATIC_LIBS=OFF -DRDK_BUILD_SWIG_WRAPPERS=OFF -DRDK_SWIG_STATIC=OFF -DRDK_BUILD_PYTHON_WRAPPERS=ON -DRDK_BUILD_FREESASA_SUPPORT=ON ..
+  - if [[ $INTREE == ON ]]; then make -j2 install; else make -j2; fi
   - ls "$PY_PREFIX/lib"
-  - LD_LIBRARY_PATH="$PY_PREFIX/lib:$PREFIX/lib;$SRC_DIR/lib;$LD_LIBRARY_PATH" ctest -j2 --output-on-failure
+  - LD_LIBRARY_PATH="$PY_PREFIX/lib:$PREFIX/lib:$SRC_DIR/lib:$RDBASE/build/lib:$LD_LIBRARY_PATH" ctest -j2 --output-on-failure
