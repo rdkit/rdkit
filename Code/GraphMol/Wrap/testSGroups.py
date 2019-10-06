@@ -9,6 +9,7 @@
 #
 
 from rdkit import Chem
+from rdkit import Geometry
 from rdkit.Chem import RDConfig
 import os
 import sys
@@ -110,6 +111,41 @@ M  END"""
     pd = sgs2[0].GetPropsAsDict()
     self.assertTrue('foo' in pd)
     self.assertEqual(pd['foo'], 'bar')
+
+  def testCreateSGroup(self):
+    mol = Chem.MolFromMolBlock('''
+  Mrv1810 10061910532D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 O -14.8632 3.7053 0 0
+M  V30 2 C -13.3232 3.7053 0 0
+M  V30 3 O -11.7832 3.7053 0 0
+M  V30 4 * -10.2453 3.6247 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 END BOND
+M  V30 END CTAB
+M  END''')
+    self.assertTrue(mol is not None)
+    mcpy = Chem.Mol(mol)
+    sg = Chem.CreateMolSubstanceGroup(mcpy, "SRU")
+    self.assertEqual(sg.GetProp("TYPE"), "SRU")
+    sg = Chem.GetMolSubstanceGroupWithIdx(mcpy, 0)
+    sg.AddBracket((Geometry.Point3D(-11.1, 4.6, 0), Geometry.Point3D(-11.1, 2.7, 0)))
+    sg.AddBracket((Geometry.Point3D(-13.9, 2.7, 0), Geometry.Point3D(-13.9, 4.6, 0)))
+    sg.AddAtomWithIdx(1)
+    sg.AddAtomWithIdx(2)
+    sg.AddBondWithIdx(0)
+    sg.AddBondWithIdx(2)
+    sg.SetProp("CONNECT", "HT")
+    sg.SetProp("LABEL", "n")
+    print(Chem.MolToMolBlock(mcpy, forceV3000=True))
 
 
 if __name__ == '__main__':
