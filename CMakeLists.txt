@@ -305,10 +305,8 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
       )
     endif(RDK_INSTALL_PYTHON_PACKAGE)
   else(NOT RDK_INSTALL_INTREE)
-    # Dummy target for add_dependencies() call in "rdkit_python_extension" macros.
-    add_custom_target(python_dist ALL
-        COMMAND ""
-        )
+    set(RDK_PYTHON_SOURCE_DIR ${CMAKE_SOURCE_DIR}/python)
+    set(RDK_PYTHON_BINARY_DIR ${CMAKE_SOURCE_DIR}/python)
   endif(NOT RDK_INSTALL_INTREE)
 
   # determine linkage of python
