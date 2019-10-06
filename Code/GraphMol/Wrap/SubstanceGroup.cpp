@@ -23,6 +23,14 @@ namespace python = boost::python;
 namespace RDKit {
 
 namespace {
+SubstanceGroup *getMolSubstanceGroupWithIdx(ROMol &mol, unsigned int idx) {
+  auto &sgs = getSubstanceGroups(mol);
+  if (idx >= sgs.size()) {
+    throw_index_error(idx);
+  }
+  return &(sgs[idx]);
+}
+
 std::vector<SubstanceGroup> getMolSubstanceGroups(ROMol &mol) {
   return getSubstanceGroups(mol);
 }
@@ -70,6 +78,12 @@ struct sgroup_wrap {
             "GetBonds", &SubstanceGroup::getBonds,
             "returns a list of the indices of the bonds in this SubstanceGroup",
             python::return_value_policy<python::copy_const_reference>())
+        .def("SetProp",
+             (void (RDProps::*)(const std::string &, std::string, bool) const) &
+                 SubstanceGroup::setProp<std::string>,
+             (python::arg("self"), python::arg("key"), python::arg("val"),
+              python::arg("computed") = false),
+             "sets the value of a particular property")
         .def("HasProp",
              (bool (RDProps::*)(const std::string &) const) &
                  SubstanceGroup::hasProp,
@@ -105,8 +119,12 @@ struct sgroup_wrap {
              "SubstanceGroup.\n"
              " n.b. some properties cannot be converted to python types.\n");
     python::def("GetMolSubstanceGroups", &getMolSubstanceGroups,
-                "returns the SubstanceGroups for a molecule (if any)",
+                "returns a copy of a molecule's SubstanceGroups (if any)",
                 python::with_custodian_and_ward_postcall<0, 1>());
+    python::def("GetMolSubstanceGroupWithIdx", &getMolSubstanceGroupWithIdx,
+                "returns a particular SubstanceGroup from the molecule",
+                python::return_internal_reference<
+                    1, python::with_custodian_and_ward_postcall<0, 1>>());
     python::def("ClearMolSubstanceGroups", &clearMolSubstanceGroups,
                 "removes all SubstanceGroups from a molecule (if any)");
     // FIX: needs something tying the lifetime to the mol

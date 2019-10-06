@@ -16,8 +16,9 @@ import unittest
 
 
 class TestCase(unittest.TestCase):
-    def setUp(self):
-        mb = """
+
+  def setUp(self):
+    mb = """
   ACCLDraw04231812452D
 
  13 13  0  0  0  0  0  0  0  0999 V2000
@@ -59,46 +60,58 @@ M  SDT   2 Stereo
 M  SDD   2     0.0000    0.0000    DR    ALL  1       6
 M  SED   2 E/Z unknown
 M  END"""
-        self.m1 = Chem.MolFromMolBlock(mb)
+    self.m1 = Chem.MolFromMolBlock(mb)
 
-    def testBasics(self):
-        self.assertTrue(self.m1 is not None)
-        sgs = Chem.GetMolSubstanceGroups(self.m1)
-        self.assertEqual(len(sgs), 2)
-        self.assertTrue(sgs[0].HasProp("TYPE"))
-        self.assertTrue(sgs[1].HasProp("TYPE"))
-        self.assertEqual(sgs[0].GetProp("TYPE"), "DAT")
-        self.assertEqual(sgs[1].GetProp("TYPE"), "DAT")
+  def testBasics(self):
+    self.assertTrue(self.m1 is not None)
+    sgs = Chem.GetMolSubstanceGroups(self.m1)
+    self.assertEqual(len(sgs), 2)
+    self.assertTrue(sgs[0].HasProp("TYPE"))
+    self.assertTrue(sgs[1].HasProp("TYPE"))
+    self.assertEqual(sgs[0].GetProp("TYPE"), "DAT")
+    self.assertEqual(sgs[1].GetProp("TYPE"), "DAT")
 
-        self.assertTrue(sgs[0].HasProp("FIELDNAME"))
-        self.assertEqual(sgs[0].GetProp("FIELDNAME"), "pH")
+    self.assertTrue(sgs[0].HasProp("FIELDNAME"))
+    self.assertEqual(sgs[0].GetProp("FIELDNAME"), "pH")
 
-        self.assertEqual(sorted(sgs[0].GetPropNames()), [
-                         'DATAFIELDS', 'FIELDDISP', 'FIELDINFO', 'FIELDNAME', 'FIELDTYPE', 'ID', 'QUERYOP', 'QUERYTYPE', 'TYPE'])
-        dd = sgs[0].GetPropsAsDict()
-        self.assertTrue("TYPE" in dd)
-        self.assertEqual(dd["TYPE"], "DAT")
-        self.assertTrue("FIELDNAME" in dd)
-        self.assertEqual(dd["FIELDNAME"], "pH")
+    self.assertEqual(sorted(sgs[0].GetPropNames()), [
+      'DATAFIELDS', 'FIELDDISP', 'FIELDINFO', 'FIELDNAME', 'FIELDTYPE', 'ID', 'QUERYOP',
+      'QUERYTYPE', 'TYPE'
+    ])
+    dd = sgs[0].GetPropsAsDict()
+    self.assertTrue("TYPE" in dd)
+    self.assertEqual(dd["TYPE"], "DAT")
+    self.assertTrue("FIELDNAME" in dd)
+    self.assertEqual(dd["FIELDNAME"], "pH")
 
-        Chem.ClearMolSubstanceGroups(self.m1)
-        self.assertEqual(len(Chem.GetMolSubstanceGroups(self.m1)), 0)
+    Chem.ClearMolSubstanceGroups(self.m1)
+    self.assertEqual(len(Chem.GetMolSubstanceGroups(self.m1)), 0)
 
-    def testLifetime(self):
-        self.assertTrue(self.m1 is not None)
-        mcpy = Chem.Mol(self.m1)
-        smi = Chem.MolToSmiles(mcpy)
-        sgs = Chem.GetMolSubstanceGroups(mcpy)
-        self.assertEqual(len(sgs), 2)
-        mcpy = None
-        parent = sgs[0].GetOwningMol()
-        self.assertEqual(smi, Chem.MolToSmiles(parent))
-        sgl = list(sgs)
-        sgs = None
-        parent = sgl[0].GetOwningMol()
-        self.assertEqual(smi, Chem.MolToSmiles(parent))
+  def testLifetime(self):
+    self.assertTrue(self.m1 is not None)
+    mcpy = Chem.Mol(self.m1)
+    smi = Chem.MolToSmiles(mcpy)
+    sgs = Chem.GetMolSubstanceGroups(mcpy)
+    self.assertEqual(len(sgs), 2)
+    mcpy = None
+    parent = sgs[0].GetOwningMol()
+    self.assertEqual(smi, Chem.MolToSmiles(parent))
+    sgl = list(sgs)
+    sgs = None
+    parent = sgl[0].GetOwningMol()
+    self.assertEqual(smi, Chem.MolToSmiles(parent))
+
+  def testSetProp(self):
+    self.assertTrue(self.m1 is not None)
+    mcpy = Chem.Mol(self.m1)
+    sg = Chem.GetMolSubstanceGroupWithIdx(mcpy, 0)
+    sg.SetProp("foo", "bar")
+    sgs2 = Chem.GetMolSubstanceGroups(mcpy)
+    pd = sgs2[0].GetPropsAsDict()
+    self.assertTrue('foo' in pd)
+    self.assertEqual(pd['foo'], 'bar')
 
 
 if __name__ == '__main__':
-    print("Testing SubstanceGroups wrapper")
-    unittest.main()
+  print("Testing SubstanceGroups wrapper")
+  unittest.main()
