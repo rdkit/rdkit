@@ -145,7 +145,10 @@ M  END''')
     sg.AddBondWithIdx(2)
     sg.SetProp("CONNECT", "HT")
     sg.SetProp("LABEL", "n")
-    print(Chem.MolToMolBlock(mcpy, forceV3000=True))
+    mb = Chem.MolToMolBlock(mcpy, forceV3000=True)
+    self.assertNotEqual(mb.find('V30 1 SRU'), -1)
+    self.assertNotEqual(mb.find('BRKXYZ'), -1)
+    self.assertNotEqual(mb.find('CONNECT=HT'), -1)
 
 
 if __name__ == '__main__':
