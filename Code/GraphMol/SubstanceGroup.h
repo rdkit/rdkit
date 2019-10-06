@@ -84,7 +84,7 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroup : public RDProps {
   //! No default constructor
   SubstanceGroup() = delete;
 
-  //! Main Constructor. Ownsership is only set on this side of the relationship:
+  //! Main Constructor. Ownership is only set on this side of the relationship:
   //! mol->addSubstanceGroup(sgroup) still needs to be called to get ownership
   //! on the other side.
   SubstanceGroup(ROMol *owning_mol, const std::string &type);
@@ -102,9 +102,9 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroup : public RDProps {
   bool hasOwningMol() const { return dp_mol != nullptr; };
 
   //! Get the molecule that owns this instance
-  ROMol &getOwningMol() const {     
+  ROMol &getOwningMol() const {
     PRECONDITION(dp_mol, "no owner");
-    return *dp_mol; 
+    return *dp_mol;
   }
 
   //! get the index of this sgroup in dp_mol's sgroups vector
