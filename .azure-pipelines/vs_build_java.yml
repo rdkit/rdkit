@@ -7,6 +7,10 @@ steps:
     conda create --name rdkit_build cmake ^
         eigen swig
   displayName: Install dependencies 
+- script: .\vcpkg\bootstrap-vcpkg.bat
+  displayName: Bootstrap vcpkg
+- script: .\vcpkg\vcpkg.exe install zlib --vcpkg-root .\vcpkg
+  displayName: vcpkg install dependencies
 - script: |
     mkdir build && cd build
     call activate rdkit_build
