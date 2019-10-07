@@ -327,6 +327,7 @@ static std::string TautomerHash(RWMol *mol, bool proto) {
          bptr->getEndAtom()->getAtomicNum() != 6)) {
       bptr->setIsAromatic(false);
       bptr->setBondType(Bond::SINGLE);
+      bptr->setStereo(Bond::BondStereo::STEREONONE);
     }
   }
 

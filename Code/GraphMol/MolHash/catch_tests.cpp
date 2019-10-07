@@ -164,4 +164,23 @@ TEST_CASE("Basic MolHash", "[molhash]") {
           "CC[C]([CH][C]1S[C]2[CH][C](C)[C](C)[CH][C]2N1CC([O])CS([O])([O])[O])"
           "[CH][C]1[Se][C]2[CH][CH][C](C)[CH][C]2N1CC_2_1");
   }
+  SECTION("tautomers bug found in testing2") {
+    auto m1 =
+        "N/C(=N\\[N+](=O)[O-])NCCCCCCCC(=O)NC(CC(=O)OCc1ccccc1)C(=O)NCCCCN/C(N)=N/[N+](=O)[O-]"_smiles;
+    REQUIRE(m1);
+    auto m2 =
+        "N/C(=N\\CCCCCCCC(=O)NC(CC(=O)OCc1ccccc1)C(=O)NCCCC/N=C(\\N)N[N+](=O)[O-])N[N+](=O)[O-]"_smiles;
+    REQUIRE(m2);
+
+    std::unique_ptr<RWMol> t1(new RWMol(*m1));
+    auto hsh1 =
+        MolHash::MolHash(t1.get(), MolHash::HashFunction::HetAtomTautomer);
+    std::unique_ptr<RWMol> t2(new RWMol(*m2));
+    auto hsh2 =
+        MolHash::MolHash(t2.get(), MolHash::HashFunction::HetAtomTautomer);
+    CHECK(hsh1 == hsh2);
+    CHECK(hsh1 ==
+          "[N][C]([N]CCCCCCC[C]([O])[N]C(C[C]([O])OC[C]1[CH][CH][CH][CH][CH]1)["
+          "C]([O])[N]CCCC[N][C]([N])[N]N([O])[O])[N]N([O])[O]_8_0");
+  }
 }
