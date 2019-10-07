@@ -27,8 +27,8 @@ std::string stereoGroupClassDoc =
     "Used to help represent a sample with unknown stereochemistry, or that "
     "is a mix\nof diastereomers.\n";
 
-StereoGroup *createStereoGroup(StereoGroupType typ, ROMol& mol,
-                                python::object atomIds) {
+StereoGroup *createStereoGroup(StereoGroupType typ, ROMol &mol,
+                               python::object atomIds) {
   std::vector<Atom *> cppAtoms;
   python::stl_input_iterator<unsigned int> beg(atomIds), end;
   while (beg != end) {
@@ -42,6 +42,13 @@ StereoGroup *createStereoGroup(StereoGroupType typ, ROMol& mol,
   return sg;
 }
 
+python::object getAtomsHelper(StereoGroup &sg) {
+  python::list res;
+  for (auto at : sg.getAtoms()) {
+    res.append(boost::ref(*at));
+  }
+  return python::tuple(res);
+}
 }  // namespace
 
 struct stereogroup_wrap {
@@ -52,25 +59,21 @@ struct stereogroup_wrap {
         .value("STEREO_AND", RDKit::StereoGroupType::STEREO_AND)
         .export_values();
 
-    RegisterVectorConverter<Atom *>("Atom_vect");
-
     python::class_<StereoGroup, boost::shared_ptr<StereoGroup>>(
         "StereoGroup", stereoGroupClassDoc.c_str(), python::no_init)
         .def("GetGroupType", &StereoGroup::getGroupType,
              "Returns the StereoGroupType.\n")
-        .def("GetAtoms", &StereoGroup::getAtoms,
-             "Access the atoms in the StereoGroup.\n",
-             python::return_internal_reference<
-                 1, python::with_custodian_and_ward_postcall<0, 1>>());
+        .def("GetAtoms", getAtomsHelper,
+             "access the atoms in the StereoGroup.\n");
 
     python::def("CreateStereoGroup", &createStereoGroup,
                 "creates a StereoGroup associated with a molecule from a list "
                 "of atom Ids",
-                (python::arg("stereoGroupType"), python::arg("mol"), python::arg("atomIds")),
+                (python::arg("stereoGroupType"), python::arg("mol"),
+                 python::arg("atomIds")),
                 python::return_value_policy<
                     python::manage_new_object,
                     python::with_custodian_and_ward_postcall<0, 2>>());
-
   }
 };
 }  // namespace RDKit
