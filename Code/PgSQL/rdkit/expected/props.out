@@ -470,3 +470,10 @@ select mol_nm_hash('c1cccnc1CO'::mol,'ArthorSubstructureOrder');
  000800080100060002000033000000
 (1 row)
 
+select mol_nm_hash('c1cccnc1CO'::mol,'BogusValue');
+WARNING:  computeNMMolHash: hash BogusValue not recognized, using AnonymousGraph
+ mol_nm_hash 
+-------------
+ ***1*****1
+(1 row)
+

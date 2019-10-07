@@ -91,3 +91,4 @@ select mol_nm_hash('c1cccnc1CO'::mol,'NetCharge');
 select mol_nm_hash('c1cccnc1CO'::mol,'SmallWorldIndexBR');
 select mol_nm_hash('c1cccnc1CO'::mol,'SmallWorldIndexBRL');
 select mol_nm_hash('c1cccnc1CO'::mol,'ArthorSubstructureOrder');
+select mol_nm_hash('c1cccnc1CO'::mol,'BogusValue');
