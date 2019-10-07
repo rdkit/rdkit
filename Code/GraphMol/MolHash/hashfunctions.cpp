@@ -325,6 +325,7 @@ static std::string TautomerHash(RWMol *mol, bool proto) {
     if (bptr->getBondType() != Bond::SINGLE &&
         (bptr->getIsConjugated() || bptr->getBeginAtom()->getAtomicNum() != 6 ||
          bptr->getEndAtom()->getAtomicNum() != 6)) {
+      bptr->setIsAromatic(false);
       bptr->setBondType(Bond::SINGLE);
     }
   }
