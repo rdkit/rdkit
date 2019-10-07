@@ -47,8 +47,8 @@ public class SuppliersTests extends GraphMolTest {
 	@Before 
 	public void setUp() {
 		File base = getRdBase();
-		baseTestPath = new File(base, "python" + File.separator + "rdkit" + File.separator +
-               "VLib" + File.separator + "NodeLib" + File.separator + "test_data");
+		baseTestPath = new File(base, "rdkit" + File.separator + "VLib" + File.separator + 
+				"NodeLib" + File.separator + "test_data");
 
 	}
 

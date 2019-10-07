@@ -139,7 +139,7 @@ macro(rdkit_python_extension)
 
     if(RDK_INSTALL_INTREE)
       INSTALL(TARGETS ${RDKPY_NAME}
-              LIBRARY DESTINATION ${CMAKE_SOURCE_DIR}/python/rdkit/${RDKPY_DEST} COMPONENT python)
+              LIBRARY DESTINATION ${CMAKE_SOURCE_DIR}/rdkit/${RDKPY_DEST} COMPONENT python)
     else(RDK_INSTALL_INTREE)
       file(MAKE_DIRECTORY ${RDK_PYTHON_BINARY_DIR}/rdkit/${RDKPY_DEST})
 

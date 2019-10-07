@@ -82,8 +82,8 @@ public class DescriptorTests extends GraphMolTest {
     @Before
 	public void setUp() {
 	File base = getRdBase();
-	dataFile = new File(base, "python" + File.separator + "rdkit" + File.separator
-                    + "Chem" + File.separator + "test_data" + File.separator + "Crippen.csv");
+	dataFile = new File(base, "rdkit" + File.separator + "Chem" + File.separator + "test_data"
+			    + File.separator + "Crippen.csv");
     }
 
     @Test

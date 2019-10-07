@@ -52,7 +52,8 @@ before_script:
  - echo "BEFORE SCRIPT"
  - export RDBASE=`pwd`
  - echo $RDBASE
- - if [[ $INTREE == ON ]]; then export PYTHONPATH=$RDBASE/python; else export PYTHONPATH=${RDBASE}/build/python; fi
+ - export PYTHONPATH=${RDBASE}
+ - if [[ $INTREE == ON ]]; then export PYTHONPATH=${RDBASE}; else export PYTHONPATH=${RDBASE}/build; fi
  - export LD_LIBRARY_PATH=${RDBASE}/lib
  - export DYLD_FALLBACK_LIBRARY_PATH="${RDBASE}/lib:$RDBASE/build/lib"
 

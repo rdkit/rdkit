@@ -11,10 +11,10 @@ class BinaryDistribution(Distribution):
 setup(
     name="rdkit",
     version="@RDKIT_PY_VERSION@",
-    description="A collection of cheminformatics and machine-learning software written in C++ and Python",
+    description="A collection of chemoinformatics and machine-learning software written in C++ and Python",
     url="http://rdkit.org/",
     license="BSD-3-Clause",
-    packages=find_packages(),
+    packages=find_packages(".", include=["rdkit.*"]),
     package_data={"": ["*.so", "*.dylib", "*.dll", "*.pyd"]},
     distclass=BinaryDistribution,
     install_requires=["numpy == @RDK_NUMPY_VERSION@", "pillow"],

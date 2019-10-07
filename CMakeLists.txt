@@ -262,8 +262,8 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
     find_package(Boost 1.56.0 COMPONENTS python REQUIRED)
   endif()
 
-  set(RDK_PYTHON_SOURCE_DIR ${CMAKE_SOURCE_DIR}/python)
-  set(RDK_PYTHON_BINARY_DIR ${CMAKE_BINARY_DIR}/python)
+  set(RDK_PYTHON_SOURCE_DIR ${CMAKE_SOURCE_DIR})
+  set(RDK_PYTHON_BINARY_DIR ${CMAKE_BINARY_DIR})
 
   if(NOT RDK_INSTALL_INTREE)
     SET(RDKIT_PY_VERSION ${RDKit_Year}.${RDKit_Month}.${RDKit_Revision}${RDKit_RevisionModifier})
@@ -305,8 +305,8 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
       )
     endif(RDK_INSTALL_PYTHON_PACKAGE)
   else(NOT RDK_INSTALL_INTREE)
-    set(RDK_PYTHON_SOURCE_DIR ${CMAKE_SOURCE_DIR}/python)
-    set(RDK_PYTHON_BINARY_DIR ${CMAKE_SOURCE_DIR}/python)
+    set(RDK_PYTHON_SOURCE_DIR ${CMAKE_SOURCE_DIR})
+    set(RDK_PYTHON_BINARY_DIR ${CMAKE_SOURCE_DIR})
   endif(NOT RDK_INSTALL_INTREE)
 
   # determine linkage of python
@@ -501,7 +501,7 @@ add_subdirectory(Code)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
   add_subdirectory(Projects)
-  add_subdirectory(python)
+  add_subdirectory(rdkit)
 endif(RDK_BUILD_PYTHON_WRAPPERS)
 
 if(RDK_BUILD_CONTRIB)

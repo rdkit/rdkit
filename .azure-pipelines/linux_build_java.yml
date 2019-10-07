@@ -41,7 +41,7 @@ steps:
   displayName: Build
 - bash: |
     export RDBASE=`pwd`
-    export PYTHONPATH=${RDBASE}/python:${PYTHONPATH}
+    export PYTHONPATH=${RDBASE}:${PYTHONPATH}
     export LD_LIBRARY_PATH=${RDBASE}/lib:${LD_LIBRARY_PATH}
     export QT_QPA_PLATFORM='offscreen'
     cd build

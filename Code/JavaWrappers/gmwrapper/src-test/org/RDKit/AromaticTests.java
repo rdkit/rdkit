@@ -79,7 +79,7 @@ public class AromaticTests extends GraphMolTest {
 
 	public String getFilePath(String fileName) {
 		File base = getRdBase();
-		File testFileDir = new File(base, "python" + File.separator + "rdkit" + File.separator + "Chem" + File.separator + "test_data");
+		File testFileDir = new File(base, "rdkit" + File.separator + "Chem" + File.separator + "test_data");
 		return testFileDir.getAbsolutePath() + File.separator + fileName;
 	}
 
