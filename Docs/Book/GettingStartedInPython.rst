@@ -2443,6 +2443,63 @@ this approach isn't particularly effective for this artificial
 example.
 
 
+R-Group Decomposition
+*********************
+
+Let's look at how it works. We'll read in a group of molecules (these were taken ChEMBL), define a core
+with labelled R groups, and then use the simplest call to do R-group decomposition: 
+:py:func:`rdkit.Chem.rdRGroupDecomposition.RGroupDecompose`
+
+.. doctest::
+
+  >>> from rdkit import Chem
+  >>> from rdkit.Chem import rdRGroupDecomposition as rdRGD
+  >>> suppl = Chem.SmilesMolSupplier('data/s1p_chembldoc89753.txt',delimiter=",",smilesColumn=9,nameColumn=10)
+  >>> ms = [x for x in suppl if x is not None]
+  >>> len(ms)
+  40
+  >>> core = Chem.MolFromSmarts('[*:1]c1nc([*:2])on1')
+  >>> res,unmatched = rdRGD.RGroupDecompose([core],ms,asSmiles=True)
+  >>> unmatched
+  []
+  >>> len(res)
+  40
+  >>> res[:2]
+  [{'Core': 'n1oc([*:2])nc1[*:1]', 'R1': 'O=C(O)CCCC1NCCOc2c1cccc2[*:1]', 'R2': 'CC(C)Oc1ccc([*:2])cc1Cl'}, {'Core': 'n1oc([*:2])nc1[*:1]', 'R1': 'O=C(O)CCC1NCCOc2c1cccc2[*:1]', 'R2': 'CC(C)Oc1ccc([*:2])cc1Cl'}]
+
+The `unmatched` return value has the indices of the molecules that did not match
+a core; in this case there are none. The other result is a list with one dict
+for each molecule; each dict contains the core that matched the molecule (in
+this case there was only one) and the molecule's R groups.
+
+As an aside, if you are a Pandas user, it's very easy to get the R-group
+decomposition results into a DataFrame:
+
+.. doctest::
+
+  >>> import pandas as pd
+  >>> res,unmatched = rdRGD.RGroupDecompose([core],ms,asSmiles=True,asRows=False)
+  >>> df= pd.DataFrame(res)
+  >>> df.head()
+                    Core                              R1                       R2
+  0  n1oc([*:2])nc1[*:1]   O=C(O)CCCC1NCCOc2c1cccc2[*:1]  CC(C)Oc1ccc([*:2])cc1Cl
+  1  n1oc([*:2])nc1[*:1]    O=C(O)CCC1NCCOc2c1cccc2[*:1]  CC(C)Oc1ccc([*:2])cc1Cl
+  2  n1oc([*:2])nc1[*:1]  O=C(O)CCC1COc2ccc([*:1])cc2CN1  CC(C)Oc1ccc([*:2])cc1Cl
+  3  n1oc([*:2])nc1[*:1]   O=C(O)CCCC1NCCOc2c1cccc2[*:1]  CC(C)Oc1ncc([*:2])cc1Cl
+  4  n1oc([*:2])nc1[*:1]   O=C(O)CCCC1NCCOc2c1cccc2[*:1]  CC(C)Oc1ncc([*:2])cc1Cl
+
+It's not necessary to label the attachment points on the core, if you leave them
+out the code will automatically assign labels:
+
+.. doctest::
+
+  >>> core2 = Chem.MolFromSmarts('c1ncon1')
+  >>> res,unmatched = rdRGD.RGroupDecompose([core2],ms,asSmiles=True)
+  >>> res[:2]
+  [{'Core': 'n1oc([*:1])nc1[*:2]', 'R1': 'CC(C)Oc1ccc([*:1])cc1Cl', 'R2': 'O=C(O)CCCC1NCCOc2c1cccc2[*:2]'}, {'Core': 'n1oc([*:1])nc1[*:2]', 'R1': 'CC(C)Oc1ccc([*:1])cc1Cl', 'R2': 'O=C(O)CCC1NCCOc2c1cccc2[*:2]'}]
+
+R-group decomposition is actually pretty complex, so there's a lot more there. Hopefully this is enough to get you started. 
+
 Non-Chemical Functionality
 **************************
 
