@@ -47,7 +47,7 @@ SubstanceGroup *createMolSubstanceGroup(ROMol &mol, std::string type) {
 
 void addBracketHelper(SubstanceGroup &self, python::object pts) {
   unsigned int sz = python::extract<unsigned int>(pts.attr("__len__")());
-  if (sz != 2 and sz != 3)
+  if (sz != 2 && sz != 3)
     throw_value_error("pts object have a length of 2 or 3");
 
   SubstanceGroup::Bracket bkt;
