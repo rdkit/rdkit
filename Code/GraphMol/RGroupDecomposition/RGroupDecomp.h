@@ -70,7 +70,7 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
                                 unsigned int chunkSize = 5,
                                 bool matchOnlyAtRGroups = false,
                                 bool removeHydrogenOnlyGroups = true,
-                                bool removeHydrogensPostMatch = false)
+                                bool removeHydrogensPostMatch = true)
       : labels(labels),
         matchingStrategy(strategy),
         rgroupLabelling(labelling),
