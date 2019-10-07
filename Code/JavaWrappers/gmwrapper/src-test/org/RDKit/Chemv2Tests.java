@@ -133,6 +133,24 @@ public class Chemv2Tests extends GraphMolTest {
 
 
 	@Test
+	public void testMatchingDepictions() {
+		ROMol template = RWMol.MolFromSmiles("c1nccc2n1ccc2");
+		template.compute2DCoords();
+		ROMol m = RWMol.MolFromSmiles("c1cccc2ncn3cccc3c21");
+		ROMol patt = RWMol.MolFromSmarts("*1****2*1***2");
+		m.generateDepictionMatching2DStructure(template,-1,patt);		
+
+		// System.out.print(template.MolToMolBlock());
+		// System.out.print(m.MolToMolBlock());
+		Conformer c1 = template.getConformer();
+		Conformer c2 = m.getConformer();
+		assertEquals(c1.getAtomPos(0).getX(), c2.getAtomPos(6).getX(), defaultDoubleTol);
+		assertEquals(c1.getAtomPos(0).getY(), c2.getAtomPos(6).getY(), defaultDoubleTol);
+		assertEquals(c1.getAtomPos(0).getZ(), c2.getAtomPos(6).getZ(), defaultDoubleTol);
+	}
+
+
+	@Test
 	public void testGenerateSVG() {
 		ROMol m = RWMol.MolFromSmiles("[C@H]1(C)CO1");
 		m.compute2DCoords();

@@ -334,6 +334,20 @@ void setPreferCoordGen(bool);
 
   }
 
+  void generateDepictionMatching2DStructure(RDKit::ROMol &reference,
+                                          int confId=-1,
+                                           bool acceptFailure=false, bool forceRDKit=false) {
+    RDDepict::generateDepictionMatching2DStructure(*($self),reference,confId,nullptr,
+            acceptFailure,forceRDKit);
+  }
+  void generateDepictionMatching2DStructure(RDKit::ROMol &reference,
+                                          int confId,
+                                          RDKit::ROMol referencePattern,
+                                          bool acceptFailure=false, bool forceRDKit=false) {
+    RDDepict::generateDepictionMatching2DStructure(*($self),reference,confId,
+           &referencePattern,acceptFailure,forceRDKit);
+  }
+
   /* From FindRings.cpp, MolOps.h */
   int findSSSR(RDKit::VECT_INT_VECT &res) {
     return RDKit::MolOps::findSSSR(*($self), res);
