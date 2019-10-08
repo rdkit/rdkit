@@ -359,6 +359,19 @@ Atom::ChiralType atomChiralTypeFromBondDir(const ROMol &mol, const Bond *bond,
   return res;
 }
 
+Bond::BondDir getOppositeBondDir(Bond::BondDir dir) {
+  PRECONDITION(dir == Bond::ENDDOWNRIGHT || dir == Bond::ENDUPRIGHT,
+               "bad bond direction");
+  switch (dir) {
+    case Bond::ENDDOWNRIGHT:
+      return Bond::ENDUPRIGHT;
+    case Bond::ENDUPRIGHT:
+      return Bond::ENDDOWNRIGHT;
+    default:
+      return Bond::NONE;
+  }
+}
+
 }  // end of anonymous namespace
 
 namespace Chirality {
@@ -1837,7 +1850,7 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
   boost::tie(beg, end) = mol.getAtomBonds(dblBond->getBeginAtom());
   while (beg != end) {
     Bond *tBond = mol[*beg];
-    if(tBond == dblBond){ 
+    if (tBond == dblBond) {
       ++beg;
       continue;
     }
@@ -1859,7 +1872,7 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
         obond1 = bond1;
         bond1 = tBond;
       }
-    } else if(tBond->getBondType() == Bond::DOUBLE) {
+    } else if (tBond->getBondType() == Bond::DOUBLE) {
       doubleBondSeen = true;
     }
     int explicit_unknown_stereo;
@@ -1877,7 +1890,7 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
   // Don't do any direction setting if we've seen a squiggle bond, but do mark
   // the double bond as a crossed bond and return
   if (!bond1 || squiggleBondSeen || doubleBondSeen) {
-    if(!doubleBondSeen){
+    if (!doubleBondSeen) {
       // FIX: This is the fix for #2649, but it will need to be modified once we
       // decide to properly handle allenese
       dblBond->setBondDir(Bond::EITHERDOUBLE);
@@ -1889,7 +1902,7 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
   boost::tie(beg, end) = mol.getAtomBonds(dblBond->getEndAtom());
   while (beg != end) {
     Bond *tBond = mol[*beg];
-    if(tBond == dblBond){ 
+    if (tBond == dblBond) {
       ++beg;
       continue;
     }
@@ -1911,7 +1924,7 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
         obond2 = bond2;
         bond2 = tBond;
       }
-    } else if(tBond->getBondType() == Bond::DOUBLE) {
+    } else if (tBond->getBondType() == Bond::DOUBLE) {
       doubleBondSeen = true;
     }
     int explicit_unknown_stereo;
@@ -1928,7 +1941,7 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
   // Don't do any direction setting if we've seen a squiggle bond, but do mark
   // the double bond as a crossed bond and return
   if (!bond2 || squiggleBondSeen || doubleBondSeen) {
-    if(!doubleBondSeen) {
+    if (!doubleBondSeen) {
       // FIX: This is the fix for #2649, but it will need to be modified once we
       // decide to properly handle allenese
       dblBond->setBondDir(Bond::EITHERDOUBLE);
@@ -1938,9 +1951,9 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
 
   CHECK_INVARIANT(bond1 && bond2, "no bonds found");
 
-  bool sameTorsionDir=false;
+  bool sameTorsionDir = false;
   if (conf) {
-    RDGeom::Point3D beginP = conf->getAtomPos(dblBond->getBeginAtomIdx()); 
+    RDGeom::Point3D beginP = conf->getAtomPos(dblBond->getBeginAtomIdx());
     RDGeom::Point3D endP = conf->getAtomPos(dblBond->getEndAtomIdx());
     RDGeom::Point3D bond1P =
         conf->getAtomPos(bond1->getOtherAtomIdx(dblBond->getBeginAtomIdx()));
@@ -2281,7 +2294,17 @@ void setBondStereoFromDirections(ROMol &mol) {
 
         bond->setStereoAtoms(startStereoAtom, endStereoAtom);
 
-        if (startDirBond->getBondDir() == endDirBond->getBondDir()) {
+        auto startBondDir = startDirBond->getBondDir();
+        if (startDirBond->getBeginAtom() == startAtom) {
+          startBondDir = getOppositeBondDir(startBondDir);
+        }
+
+        auto endBondDir = endDirBond->getBondDir();
+        if (endDirBond->getEndAtom() == endAtom) {
+          endBondDir = getOppositeBondDir(endBondDir);
+        }
+
+        if (startBondDir == endBondDir) {
           bond->setStereo(Bond::STEREOTRANS);
         } else {
           bond->setStereo(Bond::STEREOCIS);
