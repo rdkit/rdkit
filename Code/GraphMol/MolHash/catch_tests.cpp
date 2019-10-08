@@ -184,3 +184,27 @@ TEST_CASE("Basic MolHash", "[molhash]") {
           "C]([O])[N]CCCC[N][C]([N])[N]N([O])[O])[N]N([O])[O]_8_0");
   }
 }
+
+
+TEST_CASE("Tautomers and chirality", "[molhash]") {
+  SECTION("basics") {
+    auto om = "C[C@H](C(=O)O)C(=O)[O-]"_smiles;
+    REQUIRE(om);
+
+{    std::unique_ptr<RWMol> m(new RWMol(*om));
+    auto hsh =
+        MolHash::MolHash(m.get(), MolHash::HashFunction::CanonicalSmiles);
+    CHECK(hsh == "C[C@@H](C(=O)[O-])C(=O)O");
+}  
+{    std::unique_ptr<RWMol> m(new RWMol(*om));
+    auto hsh =
+        MolHash::MolHash(m.get(), MolHash::HashFunction::HetAtomTautomer);
+    CHECK(hsh == "CC([C]([O])[O])[C]([O])[O]_1_-1");
+}  
+{    std::unique_ptr<RWMol> m(new RWMol(*om));
+    auto hsh =
+        MolHash::MolHash(m.get(), MolHash::HashFunction::HetAtomProtomer);
+    CHECK(hsh == "CC([C]([O])[O])[C]([O])[O]_2");
+}  
+}
+}

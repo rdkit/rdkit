@@ -332,6 +332,11 @@ static std::string TautomerHash(RWMol *mol, bool proto) {
   }
 
   MolOps::assignRadicals(*mol);
+  // we may have just destroyed some stereocenters/bonds
+  // clean that up:
+  bool cleanIt=true;
+  bool force=true;
+  MolOps::assignStereochemistry(*mol,cleanIt,force);
   result = MolToSmiles(*mol);
   if (!proto) {
     sprintf(buffer, "_%d_%d", hcount, charge);
