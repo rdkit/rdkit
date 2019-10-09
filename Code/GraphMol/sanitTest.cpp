@@ -86,7 +86,7 @@ int main(int argc, char *argv[]) {
 
       // MolOps::setHybridization(*m);
       delete m;
-    } catch (MolSanitizeException) {
+    } catch (MolSanitizeException &) {
       BOOST_LOG(rdErrorLog) << smi << "\n";
       delete m;
     }
