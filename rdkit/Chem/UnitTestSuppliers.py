@@ -85,11 +85,10 @@ CCOC,5
 """
         RDLogger.DisableLog('rdApp.error')
 
-        fileN = tempfile.mktemp('.csv')
         try:
-            with open(fileN, 'w+') as f:
-                f.write(txt)
-            suppl = Chem.SmilesMolSupplier(fileN, delimiter=',', smilesColumn=0, nameColumn=1,
+            with tempfile.NamedTemporaryFile('w+', suffix='.csv', delete=False) as tmp:
+                tmp.write(txt)
+            suppl = Chem.SmilesMolSupplier(tmp.name, delimiter=',', smilesColumn=0, nameColumn=1,
                                            titleLine=0)
             ms = [x for x in suppl]
             suppl = None
@@ -97,7 +96,7 @@ CCOC,5
                 ms.remove(None)
             self.assertEqual(len(ms), 3)
         finally:
-            os.unlink(fileN)
+            os.unlink(tmp.name)
 
 
 if __name__ == '__main__':
