@@ -5115,6 +5115,17 @@ M  END
     # file is 1 indexed and says 5
     self.assertEqual(stereo_atoms[1].GetIdx(), 4)
 
+    # make sure the atoms are connected to the parent molecule
+    stereo_atoms[1].SetProp("foo","bar")
+    self.assertTrue(m.GetAtomWithIdx(4).HasProp("foo"))
+
+    # make sure that we can iterate over the atoms:
+    for at in stereo_atoms:
+      at.SetProp("foo2","bar2")
+      self.assertTrue(m.GetAtomWithIdx(at.GetIdx()).HasProp("foo2"))
+    
+        
+
   def testEnhancedStereoPreservesMol(self):
     """
     Check that the stereo group (and the atoms therein) preserve the lifetime
