@@ -114,11 +114,12 @@ from rdkit import Chem
 from rdkit import DataStructs
 from rdkit.Chem import AllChem
 from rdkit.Chem import Draw
-from rdkit.Chem.Draw import rdMolDraw2D
 from rdkit.Chem import SDWriter
 from rdkit.Chem import rdchem
 from rdkit.Chem.Scaffolds import MurckoScaffold
 from io import BytesIO
+from xml.dom import minidom
+from xml.parsers.expat import ExpatError
 
 log = logging.getLogger(__name__)
 
@@ -169,46 +170,112 @@ molSize = (200, 200)
 
 
 def patchPandasHTMLrepr(self, **kwargs):
-    '''
-    Patched default escaping of HTML control characters to allow molecule image rendering dataframes
-    '''
-    # set escape to False if not set
-    kwargs['escape'] = kwargs.get('escape') or False
+    """A patched version of the DataFrame.to_html method that allows rendering
+    molecule images in data frames.
+    """
+    # Two things have to be done:
+    # 1. Disable escaping of HTML in order to render img / svg tags
+    # 2. Avoid truncation of data frame values that contain HTML content
 
-    # do not allow pandas to truncate text since PNG byte strings are lengthy
-    with pd.option_context('display.max_colwidth', -1):
+    # The correct patch requires that two private methods in pandas exist. If
+    # this is not the case, use a working but suboptimal patch:
+    def patch_v1():
+        with pd.option_context('display.max_colwidth', -1):  # do not truncate
+            kwargs['escape'] = False  # disable escaping
+            return defPandasRendering(self, **kwargs)
+
+    import pandas.io.formats.html  # necessary for loading HTMLFormatter
+    if not hasattr(pd.io.formats.html, 'HTMLFormatter') or \
+       not hasattr(pd.io.formats.html.HTMLFormatter, '_write_cell') or \
+       not hasattr(pd.io.formats.format, '_get_adjustment'):
+        return patch_v1()
+
+    # The "clean" patch:
+    # 1. Temporarily set escape=False in HTMLFormatter._write_cell
+    defHTMLFormatter_write_cell = pd.io.formats.html.HTMLFormatter._write_cell
+
+    def patched_HTMLFormatter_write_cell(self, s, *args, **kwargs):
+        def_escape = self.escape
+        try:
+            if is_molecule_image(s):
+                self.escape = False
+            return defHTMLFormatter_write_cell(self, s, *args, **kwargs)
+        finally:
+            self.escape = def_escape
+
+    # 2. Pandas uses TextAdjustment objects to measure the length of texts
+    #    (e.g. for east asian languages). We take advantage of this mechanism
+    #    and replace the original text adjustment object with a custom one.
+    #    This "RenderMoleculeAdjustment" object assigns a length of 0 to a
+    #    given text if it is valid HTML. And a value having length 0 will not
+    #    be truncated.
+
+    # store original _get_adjustment method
+    defPandasGetAdjustment = pd.io.formats.format._get_adjustment
+
+    def patched_get_adjustment():
+        inner_adjustment = defPandasGetAdjustment()
+        return RenderMoleculeAdjustment(inner_adjustment)
+
+    try:
+        # patch methods and call original to_html function
+        pd.io.formats.format._get_adjustment = patched_get_adjustment
+        pd.io.formats.html.HTMLFormatter._write_cell = patched_HTMLFormatter_write_cell
         return defPandasRendering(self, **kwargs)
+    except:
+        pass
+    finally:
+        # restore original methods
+        pd.io.formats.format._get_adjustment = defPandasGetAdjustment
+        pd.io.formats.html.HTMLFormatter._write_cell = defHTMLFormatter_write_cell
+
+    # If this point is reached, an error occurred in the previous try block.
+    # Use old patch:
+    return patch_v1()
 
 
-def patchPandasHeadMethod(self, n=5):
-    '''Ensure inheritance of patched to_html in "head" subframe
-    '''
-    df = self[:n]
-    df.to_html = types.MethodType(patchPandasHTMLrepr, df)
-    df.head = types.MethodType(patchPandasHeadMethod, df)
-    return df
+def is_molecule_image(s):
+    result = False
+    try:
+        # is text valid XML / HTML?
+        xml = minidom.parseString(s)
+        root_node = xml.firstChild
+        # check data-content attribute
+        if root_node.nodeName in ['svg', 'img'] and \
+           'data-content' in root_node.attributes.keys() and \
+           root_node.attributes['data-content'].value == 'rdkit/molecule':
+            result = True
+    except ExpatError:
+        pass  # parsing xml failed and text is not a molecule image
+
+    return result
+
+
+class RenderMoleculeAdjustment:
+    def __init__(self, inner_adjustment):
+        """Creates a new instance.
+
+        @param inner_adjustment: The text adjustment that is used if the
+            specified text is not valid XML / HTML.
+        """
+        self.inner_adjustment = inner_adjustment
+
+    def len(self, text):
+        if is_molecule_image(text):
+            return 0
+        else:
+            return self.inner_adjustment.len(text)
+
+    def justify(self, texts, max_len, mode='right'):
+        return self.inner_adjustment.justify(texts, max_len, mode)
+
+    def adjoin(self, space, *lists, **kwargs):
+        return self.inner_adjustment.adjoin(space, *lists, **kwargs)
 
 
 def _get_image(x):
     """displayhook function for PNG data"""
     return b64encode(x).decode('ascii')
-
-
-def _get_svg_image(mol, size=(200, 200), highlightAtoms=[]):
-    """ mol rendered as SVG """
-    from IPython.display import SVG
-    from rdkit.Chem import rdDepictor
-    from rdkit.Chem.Draw import rdMolDraw2D
-    try:
-        # If no coordinates, calculate 2D
-        mol.GetConformer(-1)
-    except ValueError:
-        rdDepictor.Compute2DCoords(mol)
-    drawer = rdMolDraw2D.MolDraw2DSVG(*size)
-    drawer.DrawMolecule(mol, highlightAtoms=highlightAtoms)
-    drawer.FinishDrawing()
-    svg = drawer.GetDrawingText()
-    return SVG(svg).data  # IPython's SVG clears the svg text
 
 
 try:
@@ -252,13 +319,24 @@ def PrintAsBase64PNGString(x, renderer=None):
         highlightAtoms = x.__sssAtoms
     else:
         highlightAtoms = []
+    # TODO: should we generate coordinates if no coordinates available?
+    # from rdkit.Chem import rdDepictor
+    # try:
+    #     # If no coordinates, calculate 2D
+    #     x.GetConformer(-1)
+    # except ValueError:
+    #     rdDepictor.Compute2DCoords(x)
     if molRepresentation.lower() == 'svg':
-        from IPython.display import SVG
         svg = Draw._moltoSVG(x, molSize, highlightAtoms, "", True)
-        return SVG(svg).data
+        svg = minidom.parseString(svg)
+        svg = svg.getElementsByTagName('svg')[0]
+        svg.attributes['viewbox'] = f'0 0 {molSize[0]} {molSize[1]}'
+        svg.attributes['style'] = f'max-width: {molSize[0]}px; height: {molSize[1]}px;'
+        svg.attributes['data-content'] = 'rdkit/molecule'
+        return svg.toxml()
     else:
         data = Draw._moltoimg(x, molSize, highlightAtoms, "", returnPNG=True, kekulize=True)
-        return '<img src="data:image/png;base64,%s" alt="Mol"/>' % _get_image(data)
+        return '<img data-content="rdkit/molecule" src="data:image/png;base64,%s" alt="Mol"/>' % _get_image(data)
 
 
 def PrintDefaultMolRep(x):
