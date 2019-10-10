@@ -2279,32 +2279,33 @@ void detectBondStereochemistry(ROMol &mol, int confId) {
 void setBondStereoFromDirections(ROMol &mol) {
   for (Bond *bond : mol.bonds()) {
     if (bond->getBondType() == Bond::DOUBLE) {
-      const Atom *startAtom = bond->getBeginAtom();
-      const Atom *endAtom = bond->getEndAtom();
+      const Atom *stereoBondBeginAtom = bond->getBeginAtom();
+      const Atom *stereoBondEndAtom = bond->getEndAtom();
 
-      const Bond *startDirBond =
-          Chirality::getNeighboringDirectedBond(mol, startAtom);
-      const Bond *endDirBond =
-          Chirality::getNeighboringDirectedBond(mol, endAtom);
+      const Bond *directedBondAtBegin =
+          Chirality::getNeighboringDirectedBond(mol, stereoBondBeginAtom);
+      const Bond *directedBondAtEnd =
+          Chirality::getNeighboringDirectedBond(mol, stereoBondEndAtom);
 
-      if (startDirBond != nullptr && endDirBond != nullptr) {
-        unsigned startStereoAtom =
-            startDirBond->getOtherAtomIdx(startAtom->getIdx());
-        unsigned endStereoAtom = endDirBond->getOtherAtomIdx(endAtom->getIdx());
+      if (directedBondAtBegin != nullptr && directedBondAtEnd != nullptr) {
+        unsigned beginSideStereoAtom =
+            directedBondAtBegin->getOtherAtomIdx(stereoBondBeginAtom->getIdx());
+        unsigned endSideStereoAtom =
+            directedBondAtEnd->getOtherAtomIdx(stereoBondEndAtom->getIdx());
 
-        bond->setStereoAtoms(startStereoAtom, endStereoAtom);
+        bond->setStereoAtoms(beginSideStereoAtom, endSideStereoAtom);
 
-        auto startBondDir = startDirBond->getBondDir();
-        if (startDirBond->getBeginAtom() == startAtom) {
-          startBondDir = getOppositeBondDir(startBondDir);
+        auto beginSideBondDirection = directedBondAtBegin->getBondDir();
+        if (directedBondAtBegin->getBeginAtom() == stereoBondBeginAtom) {
+          beginSideBondDirection = getOppositeBondDir(beginSideBondDirection);
         }
 
-        auto endBondDir = endDirBond->getBondDir();
-        if (endDirBond->getEndAtom() == endAtom) {
-          endBondDir = getOppositeBondDir(endBondDir);
+        auto endSideBondDirection = directedBondAtEnd->getBondDir();
+        if (directedBondAtEnd->getEndAtom() == stereoBondEndAtom) {
+          endSideBondDirection = getOppositeBondDir(endSideBondDirection);
         }
 
-        if (startBondDir == endBondDir) {
+        if (beginSideBondDirection == endSideBondDirection) {
           bond->setStereo(Bond::STEREOTRANS);
         } else {
           bond->setStereo(Bond::STEREOCIS);
