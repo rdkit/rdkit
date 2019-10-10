@@ -25,27 +25,30 @@ namespace RDKit {
 template <typename OutputType>
 FingerprintArguments<OutputType>::FingerprintArguments(
     const bool countSimulation, const std::vector<std::uint32_t> countBounds,
-    std::uint32_t fpSize)
+    std::uint32_t fpSize, std::uint32_t numBitsPerFeature)
     : d_countSimulation(countSimulation),
       d_countBounds(countBounds),
-      d_fpSize(fpSize) {
+      d_fpSize(fpSize),
+      d_numBitsPerFeature(numBitsPerFeature) {
   PRECONDITION(!countSimulation || !countBounds.empty(),
                "bad count bounds provided");
+  PRECONDITION(d_numBitsPerFeature > 0, "numBitsPerFeature must be >0");
 }
 
 template FingerprintArguments<std::uint32_t>::FingerprintArguments(
-    const bool countSimulation, const std::vector<std::uint32_t> countBounds,
-    std::uint32_t fpSize);
+    bool countSimulation, const std::vector<std::uint32_t> countBounds,
+    std::uint32_t fpSize, std::uint32_t numBitsPerFeature);
 
 template FingerprintArguments<std::uint64_t>::FingerprintArguments(
-    const bool countSimulation, const std::vector<std::uint32_t> countBounds,
-    std::uint32_t fpSize);
+    bool countSimulation, const std::vector<std::uint32_t> countBounds,
+    std::uint32_t fpSize, std::uint32_t numBitsPerFeature);
 
 template <typename OutputType>
 std::string FingerprintArguments<OutputType>::commonArgumentsString() const {
   return "Common arguments : countSimulation=" +
          std::to_string(d_countSimulation) +
-         " fpSize=" + std::to_string(d_fpSize);
+         " fpSize=" + std::to_string(d_fpSize) +
+         " bitsPerFeature=" + std::to_string(d_numBitsPerFeature);
 }
 
 template <typename OutputType>
@@ -156,19 +159,58 @@ SparseIntVect<OutputType>
         new SparseIntVect<OutputType>(dp_fingerprintArguments->getResultSize());
   }
 
+  // define a mersenne twister with customized parameters.
+  // The standard parameters (used to create boost::mt19937)
+  // result in an RNG that's much too computationally intensive
+  // to seed.
+  // These are the parameters that have been used for the RDKit fingerprint.
+  typedef boost::random::mersenne_twister<std::uint32_t, 32, 4, 2, 31,
+                                          0x9908b0df, 11, 7, 0x9d2c5680, 15,
+                                          0xefc60000, 18, 3346425566U>
+      rng_type;
+  typedef boost::uniform_int<> distrib_type;
+  typedef boost::variate_generator<rng_type &, distrib_type> source_type;
+  std::unique_ptr<rng_type> generator;
+  //
+  // if we generate arbitrarily sized ints then mod them down to the
+  // appropriate size, we can guarantee that a fingerprint of
+  // size x has the same bits set as one of size 2x that's been folded
+  // in half.  This is a nice guarantee to have.
+  //
+  std::unique_ptr<distrib_type> dist;
+  std::unique_ptr<source_type> randomSource;
+  if (dp_fingerprintArguments->d_numBitsPerFeature > 1) {
+    // we will only create the RNG if we're going to need it
+    generator.reset(new rng_type(42u));
+    dist.reset(new distrib_type(0, INT_MAX));
+    randomSource.reset(new source_type(*generator, *dist));
+  }
+
   // iterate over every atom environment and generate bit-ids that will make up
   // the fingerprint
   for (auto it = atomEnvironments.begin(); it != atomEnvironments.end(); it++) {
-    OutputType bitId =
+    OutputType seed =
         (*it)->getBitId(dp_fingerprintArguments, atomInvariants, bondInvariants,
                         additionalOutput, hashResults);
 
+    auto bitId = seed;
     if (fpSize != 0) {
       bitId %= fpSize;
     }
-
     res->setVal(bitId, res->getVal(bitId) + 1);
+    // do the additional bits if required:
+    if (dp_fingerprintArguments->d_numBitsPerFeature > 1) {
+      generator->seed(static_cast<rng_type::result_type>(seed));
 
+      for (boost::uint32_t bitN = 1;
+           bitN < dp_fingerprintArguments->d_numBitsPerFeature; ++bitN) {
+        bitId = (*randomSource)();
+        if (fpSize != 0) {
+          bitId %= fpSize;
+        }
+        res->setVal(bitId, res->getVal(bitId) + 1);
+      }
+    }
     delete (*it);
   }
 
@@ -227,7 +269,7 @@ SparseBitVect *FingerprintGenerator<OutputType>::getSparseFingerprint(
         // for every bound in the d_countBounds in dp_fingerprintArguments, set
         // a bit if the occurrence count is equal or higher than the bound for
         // that bit
-        const auto& bounds_count = dp_fingerprintArguments->d_countBounds;
+        const auto &bounds_count = dp_fingerprintArguments->d_countBounds;
         if (val.second >= static_cast<int>(bounds_count[i])) {
           result->setBit(val.first * bounds_count.size() + i);
         }
@@ -290,7 +332,7 @@ ExplicitBitVect *FingerprintGenerator<OutputType>::getFingerprint(
         // for every bound in the d_countBounds in dp_fingerprintArguments, set
         // a bit if the occurrence count is equal or higher than the bound for
         // that bit
-        const auto& bounds_count = dp_fingerprintArguments->d_countBounds;
+        const auto &bounds_count = dp_fingerprintArguments->d_countBounds;
         if (val.second >= static_cast<int>(bounds_count[i])) {
           result->setBit(val.first * bounds_count.size() + i);
         }
@@ -352,14 +394,16 @@ template RDKIT_FINGERPRINTS_EXPORT SparseIntVect<std::uint32_t>
         const std::vector<std::uint32_t> *customAtomInvariants,
         const std::vector<std::uint32_t> *customBondInvariants) const;
 
-template RDKIT_FINGERPRINTS_EXPORT ExplicitBitVect *FingerprintGenerator<std::uint32_t>::getFingerprint(
+template RDKIT_FINGERPRINTS_EXPORT ExplicitBitVect *
+FingerprintGenerator<std::uint32_t>::getFingerprint(
     const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms,
     const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
     const AdditionalOutput *additionalOutput,
     const std::vector<std::uint32_t> *customAtomInvariants,
     const std::vector<std::uint32_t> *customBondInvariants) const;
 
-template RDKIT_FINGERPRINTS_EXPORT ExplicitBitVect *FingerprintGenerator<std::uint64_t>::getFingerprint(
+template RDKIT_FINGERPRINTS_EXPORT ExplicitBitVect *
+FingerprintGenerator<std::uint64_t>::getFingerprint(
     const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms,
     const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
     const AdditionalOutput *additionalOutput,
