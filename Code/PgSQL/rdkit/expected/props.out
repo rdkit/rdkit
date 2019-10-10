@@ -285,9 +285,9 @@ SELECT mol_to_svg('CCO'::mol) svg;
  width='250px' height='200px' >                                                                                                                                                                     +
  <!-- END OF HEADER -->                                                                                                                                                                             +
  <rect style='opacity:1.0;fill:#FFFFFF;stroke:none' width='250' height='200' x='0' y='0'> </rect>                                                                                                   +
- <path class='bond-0' d='M 11.3636,124.362 95.7545,75.6385' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />       +
- <path class='bond-1' d='M 95.7545,75.6385 131.455,96.25' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />         +
- <path class='bond-1' d='M 131.455,96.25 167.155,116.862' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />         +
+ <path class='bond-0' d='M 11.3636,124.362 L 95.7545,75.6385' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />     +
+ <path class='bond-1' d='M 95.7545,75.6385 L 131.455,96.25' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />       +
+ <path class='bond-1' d='M 131.455,96.25 L 167.155,116.862' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />       +
  <text x='166.64' y='131.862' style='font-size:15px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#FF0000' ><tspan>OH</tspan></text>+
  </svg>                                                                                                                                                                                             +
  
@@ -305,9 +305,9 @@ SELECT mol_to_svg('CCO'::mol,'legend') svg;
  width='250px' height='200px' >                                                                                                                                                                      +
  <!-- END OF HEADER -->                                                                                                                                                                              +
  <rect style='opacity:1.0;fill:#FFFFFF;stroke:none' width='250' height='200' x='0' y='0'> </rect>                                                                                                    +
- <path class='bond-0' d='M 11.3636,124.362 95.7545,75.6385' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />        +
- <path class='bond-1' d='M 95.7545,75.6385 131.455,96.25' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />          +
- <path class='bond-1' d='M 131.455,96.25 167.155,116.862' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />          +
+ <path class='bond-0' d='M 11.3636,124.362 L 95.7545,75.6385' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />      +
+ <path class='bond-1' d='M 95.7545,75.6385 L 131.455,96.25' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />        +
+ <path class='bond-1' d='M 131.455,96.25 L 167.155,116.862' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />        +
  <text x='166.64' y='131.862' style='font-size:15px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#FF0000' ><tspan>OH</tspan></text> +
  <text x='103.377' y='194' style='font-size:12px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#000000' ><tspan>legend</tspan></text>+
  </svg>                                                                                                                                                                                              +
@@ -327,9 +327,9 @@ SELECT mol_to_svg('CCO'::mol,'legend',250,200,
  width='250px' height='200px' >                                                                                                                                                                       +
  <!-- END OF HEADER -->                                                                                                                                                                               +
  <rect style='opacity:1.0;fill:#FFFFFF;stroke:none' width='250' height='200' x='0' y='0'> </rect>                                                                                                     +
- <path class='bond-0' d='M 11.3636,124.362 83.2395,82.864' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />          +
- <path class='bond-1' d='M 108.269,82.864 137.712,99.8628' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />          +
- <path class='bond-1' d='M 137.712,99.8628 167.155,116.862' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />         +
+ <path class='bond-0' d='M 11.3636,124.362 L 83.2395,82.864' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />        +
+ <path class='bond-1' d='M 108.269,82.864 L 137.712,99.8628' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />        +
+ <path class='bond-1' d='M 137.712,99.8628 L 167.155,116.862' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />       +
  <text x='83.2395' y='83.1385' style='font-size:15px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#000000' ><tspan>foo</tspan></text>+
  <text x='166.64' y='131.862' style='font-size:15px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#FF0000' ><tspan>OH</tspan></text>  +
  <text x='103.377' y='194' style='font-size:12px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#7F7F7F' ><tspan>legend</tspan></text> +
@@ -360,5 +360,120 @@ select
                                         +|                      |                                        +
   10 11  0  0  0  0  0  0  0  0999 V2000+|                      |  10 11  0  0  0  0  0  0  0  0999 V2000+
                                          |                      | 
+(1 row)
+
+select mol_nm_hash('c1cccnc1CO'::mol);
+ mol_nm_hash 
+-------------
+ ***1*****1
+(1 row)
+
+select mol_nm_hash('c1cccnc1CO'::mol,'AnonymousGraph');
+ mol_nm_hash 
+-------------
+ ***1*****1
+(1 row)
+
+select mol_nm_hash('c1cccnc1CO'::mol,'ElementGraph');
+ mol_nm_hash 
+-------------
+ OCC1CCCCN1
+(1 row)
+
+select mol_nm_hash('c1cccnc1CO'::mol,'CanonicalSmiles');
+ mol_nm_hash 
+-------------
+ OCc1ccccn1
+(1 row)
+
+select mol_nm_hash('c1cccnc1CO'::mol,'MurckoScaffold');
+ mol_nm_hash 
+-------------
+ c1ccncc1
+(1 row)
+
+select mol_nm_hash('c1cccnc1CO'::mol,'ExtendedMurcko');
+ mol_nm_hash 
+-------------
+ *c1ccccn1
+(1 row)
+
+select mol_nm_hash('c1cccnc1CO'::mol,'MolFormula');
+ mol_nm_hash 
+-------------
+ C6H7NO
+(1 row)
+
+select mol_nm_hash('c1cccnc1CO'::mol,'AtomBondCounts');
+ mol_nm_hash 
+-------------
+ 8,8
+(1 row)
+
+select mol_nm_hash('c1cccnc1CO'::mol,'DegreeVector');
+ mol_nm_hash 
+-------------
+ 0,1,6,1
+(1 row)
+
+select mol_nm_hash('c1cccnc1CO'::mol,'Mesomer');
+         mol_nm_hash          
+------------------------------
+ OC[C]1[CH][CH][CH][CH][N]1_0
+(1 row)
+
+select mol_nm_hash('c1cccnc1CO'::mol,'HetAtomTautomer');
+           mol_nm_hash            
+----------------------------------
+ [O]C[C]1[CH][CH][CH][CH][N]1_1_0
+(1 row)
+
+select mol_nm_hash('c1cccnc1CO'::mol,'HetAtomProtomer');
+          mol_nm_hash           
+--------------------------------
+ [O]C[C]1[CH][CH][CH][CH][N]1_1
+(1 row)
+
+select mol_nm_hash('c1cccnc1CO'::mol,'RedoxPair');
+        mol_nm_hash         
+----------------------------
+ OC[C]1[CH][CH][CH][CH][N]1
+(1 row)
+
+select mol_nm_hash('c1cccnc1CO'::mol,'Regioisomer');
+  mol_nm_hash   
+----------------
+ *C.*O.c1ccncc1
+(1 row)
+
+select mol_nm_hash('c1cccnc1CO'::mol,'NetCharge');
+ mol_nm_hash 
+-------------
+ 0
+(1 row)
+
+select mol_nm_hash('c1cccnc1CO'::mol,'SmallWorldIndexBR');
+ mol_nm_hash 
+-------------
+ B8R1
+(1 row)
+
+select mol_nm_hash('c1cccnc1CO'::mol,'SmallWorldIndexBRL');
+ mol_nm_hash 
+-------------
+ B8R1L6
+(1 row)
+
+select mol_nm_hash('c1cccnc1CO'::mol,'ArthorSubstructureOrder');
+          mol_nm_hash           
+--------------------------------
+ 000800080100060002000033000000
+(1 row)
+
+select mol_nm_hash('c1cccnc1CO'::mol,'BogusValue');
+WARNING:  computeNMMolHash: hash BogusValue not recognized, using AnonymousGraph
+ mol_nm_hash 
+-------------
+ ***1*****1
 (1 row)
 

@@ -279,6 +279,7 @@ CBfp makeReactionBFP(CChemicalReaction data, int size, int fpType);
 CSfp makeReactionDifferenceSFP(CChemicalReaction data, int size, int fpType);
 
 char *computeMolHash(CROMol data, int *len);
+char *computeNMMolHash(CROMol data, const char *which);
 
 char *findMCSsmiles(char *smiles, char *params);
 void *addMol2list(void *lst, Mol *mol);
