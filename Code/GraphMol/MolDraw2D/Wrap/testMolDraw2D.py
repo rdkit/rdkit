@@ -456,6 +456,25 @@ M  END
     with open("extras_1.svg", "w+") as outf:
       outf.write(txt)
 
+  def testSetDrawOptions(self):
+    m = Chem.MolFromSmiles('CCNC(=O)O')
+    d = rdMolDraw2D.MolDraw2DSVG(250, 200)
+    rdMolDraw2D.PrepareAndDrawMolecule(d, m)
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    self.assertNotEqual(txt.find("fill:#0000FF' ><tspan>NH"), -1)
+    self.assertEqual(txt.find("fill:#000000' ><tspan>NH"), -1)
+
+    d = rdMolDraw2D.MolDraw2DSVG(250, 200)
+    do = rdMolDraw2D.MolDrawOptions()
+    do.useBWAtomPalette()
+    d.SetDrawOptions(do)
+    rdMolDraw2D.PrepareAndDrawMolecule(d, m)
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    self.assertEqual(txt.find("fill:#0000FF' ><tspan>NH"), -1)
+    self.assertNotEqual(txt.find("fill:#000000' ><tspan>NH"), -1)
+
 
 if __name__ == "__main__":
   unittest.main()

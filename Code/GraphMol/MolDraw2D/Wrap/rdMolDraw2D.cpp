@@ -457,6 +457,10 @@ void drawWavyLineHelper(RDKit::MolDraw2D &self, const Point2D &cds1,
   self.drawWavyLine(cds1, cds2, col1, col2, nSegments, vertOffset);
 }
 
+void setDrawOptions(RDKit::MolDraw2D &self, const MolDrawOptions &opts) {
+  self.drawOptions() = opts;
+}
+
 }  // namespace RDKit
 
 BOOST_PYTHON_MODULE(rdMolDraw2D) {
@@ -655,7 +659,11 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                RDKit::MolDraw2D::drawOptions,
            python::return_internal_reference<
                1, python::with_custodian_and_ward_postcall<0, 1>>(),
-           "Returns a modifiable version of the current drawing options");
+           "Returns a modifiable version of the current drawing options")
+      .def("SetDrawOptions", RDKit::setDrawOptions,
+           "Copies the drawing options passed in over our drawing options");
+
+  ;
   docString = "SVG molecule drawer";
   python::class_<RDKit::MolDraw2DSVG, python::bases<RDKit::MolDraw2D>,
                  boost::noncopyable>("MolDraw2DSVG", docString.c_str(),
