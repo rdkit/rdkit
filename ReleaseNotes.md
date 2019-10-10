@@ -25,7 +25,7 @@
   the queries should not change.
 - The RGroupDecomposition code now removes Hs from output R groups by default.
   To restore the old behavior create an RGroupDecompositionParameters object and
-  set removeHydrogensPostMatch to true.
+  set removeHydrogensPostMatch to false.
 
 ## Highlights:
 
