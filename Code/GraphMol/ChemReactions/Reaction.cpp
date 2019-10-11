@@ -215,7 +215,7 @@ bool ChemicalReaction::validate(unsigned int &numWarnings,
               query->getDescription() == "AtomNegativeFormalCharge") {
             int qval;
             int neg =
-                query->getDescription() == "NegativeFormalCharge" ? -1 : 1;
+                query->getDescription() == "AtomNegativeFormalCharge" ? -1 : 1;
             if ((*atomIt)->getPropIfPresent(
                     common_properties::_QueryFormalCharge, qval) &&
                 (neg * qval) !=
@@ -228,7 +228,7 @@ bool ChemicalReaction::validate(unsigned int &numWarnings,
               numWarnings++;
             } else {
               int neg =
-                  query->getDescription() == "NegativeFormalCharge" ? -1 : 1;
+                  query->getDescription() == "AtomNegativeFormalCharge" ? -1 : 1;
               (*atomIt)->setProp(
                   common_properties::_QueryFormalCharge,
                   neg *
