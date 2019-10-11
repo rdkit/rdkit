@@ -19,10 +19,10 @@ namespace RDKit {
 namespace RDKitFPWrapper {
 template <typename OutputType>
 FingerprintGenerator<OutputType> *getRDKitFPGenerator(
-    const unsigned int minPath, const unsigned int maxPath, const bool useHs,
-    const bool branchedPaths, const bool useBondOrder,
-    const bool countSimulation, python::object &py_countBounds,
-    const std::uint32_t fpSize, python::object &py_atomInvGen) {
+    unsigned int minPath, unsigned int maxPath, bool useHs, bool branchedPaths,
+    bool useBondOrder, bool countSimulation, python::object &py_countBounds,
+    std::uint32_t fpSize, std::uint32_t numBitsPerFeature,
+    python::object &py_atomInvGen) {
   AtomInvariantsGenerator *atomInvariantsGenerator = nullptr;
 
   python::extract<AtomInvariantsGenerator *> atomInvGen(py_atomInvGen);
@@ -40,7 +40,8 @@ FingerprintGenerator<OutputType> *getRDKitFPGenerator(
 
   return RDKitFP::getRDKitFPGenerator<OutputType>(
       minPath, maxPath, useHs, branchedPaths, useBondOrder,
-      atomInvariantsGenerator, countSimulation, countBoundsC, fpSize, true);
+      atomInvariantsGenerator, countSimulation, countBoundsC, fpSize,
+      numBitsPerFeature, true);
 }
 
 AtomInvariantsGenerator *getRDKitAtomInvGen() {
@@ -48,25 +49,14 @@ AtomInvariantsGenerator *getRDKitAtomInvGen() {
 }
 
 void exportRDKit() {
-  /*python::def("GetRDKitFPGenerator32", &getRDKitFPGenerator<std::uint32_t>,
-              (python::arg("minPath") = 1, python::arg("maxPath") = 7,
-               python::arg("useHs") = true, python::arg("branchedPaths") = true,
-               python::arg("useBondOrder") = true,
-               python::arg("countSimulation") = true,
-               python::arg("countBounds") = python::object(),
-               python::arg("fpSize") = 2048,
-               python::arg("atomInvariantsGenerator") = python::object()),
-              docString.c_str(),
-              python::return_value_policy<python::manage_new_object>());*/
-
   python::def(
       "GetRDKitFPGenerator", &getRDKitFPGenerator<std::uint64_t>,
       (python::arg("minPath") = 1, python::arg("maxPath") = 7,
        python::arg("useHs") = true, python::arg("branchedPaths") = true,
        python::arg("useBondOrder") = true,
-       python::arg("countSimulation") = true,
+       python::arg("countSimulation") = false,
        python::arg("countBounds") = python::object(),
-       python::arg("fpSize") = 2048,
+       python::arg("fpSize") = 2048, python::arg("numBitsPerFeature") = 2,
        python::arg("atomInvariantsGenerator") = python::object()),
       "Get an RDKit fingerprint generator\n\n"
       "  ARGUMENTS:\n"
@@ -85,6 +75,8 @@ void exportRDKit() {
       "spot\n"
       "    - fpSize: size of the generated fingerprint, does not affect the "
       "sparse versions\n"
+      "    - numBitsPerFeature: the number of bits set per path/subgraph "
+      "found\n"
       "    - atomInvariantsGenerator: atom invariants to be used during "
       "fingerprint generation\n\n"
       "  RETURNS: FingerprintGenerator\n\n",

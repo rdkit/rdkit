@@ -322,10 +322,21 @@ static std::string TautomerHash(RWMol *mol, bool proto) {
   }
 
   for (auto bptr : mol->bonds()) {
-    bptr->setBondType(Bond::SINGLE);
+    if (bptr->getBondType() != Bond::SINGLE &&
+        (bptr->getIsConjugated() || bptr->getBeginAtom()->getAtomicNum() != 6 ||
+         bptr->getEndAtom()->getAtomicNum() != 6)) {
+      bptr->setIsAromatic(false);
+      bptr->setBondType(Bond::SINGLE);
+      bptr->setStereo(Bond::BondStereo::STEREONONE);
+    }
   }
 
   MolOps::assignRadicals(*mol);
+  // we may have just destroyed some stereocenters/bonds
+  // clean that up:
+  bool cleanIt=true;
+  bool force=true;
+  MolOps::assignStereochemistry(*mol,cleanIt,force);
   result = MolToSmiles(*mol);
   if (!proto) {
     sprintf(buffer, "_%d_%d", hcount, charge);

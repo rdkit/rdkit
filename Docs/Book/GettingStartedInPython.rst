@@ -1180,7 +1180,9 @@ you set it to True then ring bonds will only match ring bonds.
   >>> rdFMCS.FindMCS(mols).smartsString
   '[#6](-[#6]-[#6])-[#6]-[#6]-[#6]-[#6]'
   >>> rdFMCS.FindMCS(mols, ringMatchesRingOnly=True).smartsString
-  '[#6](-[#6]-[#6])-[#6]'
+  '[#6](-&@[#6]-&@[#6])-&@[#6]'
+
+Notice that the SMARTS returned now include ring queries on the bonds.
 
 You can further restrict things and require that partial rings (as in
 this case) are not allowed. That is, if an atom is part of the MCS and
@@ -1194,9 +1196,9 @@ requirement and also sets ringMatchesRingOnly to True.
   >>> rdFMCS.FindMCS(mols).smartsString
   '[#6]1-[#6]-[#6](-[#6]-1-[#6])-[#6]'
   >>> rdFMCS.FindMCS(mols, ringMatchesRingOnly=True).smartsString
-  '[#6](-[#6]-[#6]-[#6]-[#6])-[#6]'
+  '[#6](-&@[#6]-&@[#6]-&@[#6]-&@[#6])-&@[#6]'
   >>> rdFMCS.FindMCS(mols, completeRingsOnly=True).smartsString
-  '[#6]1-[#6]-[#6]-[#6]-1'
+  '[#6]1-&@[#6]-&@[#6]-&@[#6]-&@1'
 
 The MCS algorithm will exhaustively search for a maximum common substructure.
 Typically this takes a fraction of a second, but for some comparisons this
@@ -1495,7 +1497,7 @@ of all atoms within a radius of 2 of atom 5:
   >>> submol.GetNumAtoms()
   6
   >>> amap
-  {0: 3, 1: 5, 3: 4, 4: 0, 5: 1, 6: 2}
+  {0: 0, 1: 1, 3: 2, 4: 3, 5: 4, 6: 5}
 
 And then “explain” the bit by generating SMILES for that submolecule:
 
@@ -1509,7 +1511,7 @@ This is more useful when the SMILES is rooted at the central atom:
 .. doctest::
 
   >>> Chem.MolToSmiles(submol,rootedAtAtom=amap[5],canonical=False)
-  'c(nc)(C)cc'
+  'c(cc)(nc)C'
 
 An alternate (and faster, particularly for large numbers of molecules)
 approach to do the same thing, using the function :py:func:`rdkit.Chem.MolFragmentToSmiles` :
@@ -2011,6 +2013,7 @@ set of fragments to create new molecules:
   >>> import random
   >>> random.seed(127)
   >>> fragms = [Chem.MolFromSmiles(x) for x in sorted(allfrags)]
+  >>> random.seed(0xf00d)
   >>> ms = BRICS.BRICSBuild(fragms)
 
 The result is a generator object:
@@ -2036,11 +2039,29 @@ The molecules have not been sanitized, so it's a good idea to at least update th
   ...     prod.UpdatePropertyCache(strict=False)
   ...
   >>> Chem.MolToSmiles(prods[0],True)
-  'COCCO'
+  'CNC(=O)C(C)C'
   >>> Chem.MolToSmiles(prods[1],True)
-  'O=C1Nc2ccc3ncsc3c2/C1=C/NCCO'
+  'CC(C)C(=O)NC(=N)N'
   >>> Chem.MolToSmiles(prods[2],True)
-  'O=C1Nc2ccccc2/C1=C/NCCO'
+  'CC(C)C(=O)NC=C1C(=O)Nc2ccc3ncsc3c21'
+
+
+By default those results come back in a random order (technically the example
+above will always return the same results since we seeded Python's random number
+generator just before calling BRICSBuild()). If you want the results to be
+returned in a consistent order use the scrambleReagents argument:
+
+  >>> ms = BRICS.BRICSBuild(fragms, scrambleReagents=False)
+  >>> prods = [next(ms) for x in range(10)]
+  >>> for prod in prods:
+  ...     prod.UpdatePropertyCache(strict=False)
+  ...
+  >>> Chem.MolToSmiles(prods[0],True)
+  'COC(=O)C(C)C'
+  >>> Chem.MolToSmiles(prods[1],True)
+  'CNC(=O)C(C)C'
+  >>> Chem.MolToSmiles(prods[2],True)
+  'CC(C)C(=O)NC(=N)N'
 
 Other fragmentation approaches
 ==============================
@@ -2603,7 +2624,7 @@ but that are, of course, complete nonsense, as sanitization will indicate:
       compileflags, 1) in test.globs
     File "<doctest default[0]>", line 1, in <module>
       Chem.SanitizeMol(m)
-  ValueError: Sanitization error: Can't kekulize mol
+  rdkit.Chem.rdchem.KekulizeException: Can't kekulize mol.  Unkekulized atoms: 1 2 3 4 5
   <BLANKLINE>
 
 More complex transformations can be carried out using the

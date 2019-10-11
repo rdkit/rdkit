@@ -70,14 +70,12 @@ MOL_SPTR_VECT readFuncGroups(std::istream &inStream, int nToRead) {
     throw BadFileException("Bad stream contents.");
   }
 
-  const int MAX_LINE_LEN = 512;
-  char inLine[MAX_LINE_LEN];
   int nRead = 0;
 
   MOL_SPTR_VECT funcGroups;
   while (!inStream.eof() && (nToRead < 0 || nRead < nToRead)) {
-    inStream.getline(inLine, MAX_LINE_LEN, '\n');
-    std::string tmpstr(inLine);
+    std::string tmpstr;
+    std::getline(inStream, tmpstr);
     // parse the molecule on this line (if there is one)
     ROMol *mol = getSmarts(std::move(tmpstr));
     if (mol) {

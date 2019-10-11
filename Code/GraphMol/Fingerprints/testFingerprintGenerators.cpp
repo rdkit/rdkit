@@ -221,10 +221,12 @@ void testAtomPairNonSparseBitvector() {
     fp2 = atomPairGenerator->getFingerprint(*mol);
 
     std::map<std::uint32_t, int> nz = fp1->getNonzeroElements();
-    for (const auto& it : nz) {
+    for (const auto &it : nz) {
       for (unsigned int i = 0; i < defaultCountBounds.size(); ++i) {
-        bool isSet = static_cast<bool>(fp2->getBit(it.first * defaultCountBounds.size() + i));
-        TEST_ASSERT(isSet == (it.second >= static_cast<long>(defaultCountBounds[i])));
+        bool isSet = static_cast<bool>(
+            fp2->getBit(it.first * defaultCountBounds.size() + i));
+        TEST_ASSERT(isSet ==
+                    (it.second >= static_cast<long>(defaultCountBounds[i])));
       }
     }
 
@@ -237,10 +239,12 @@ void testAtomPairNonSparseBitvector() {
     fp2 = atomPairGenerator->getFingerprint(*mol);
 
     nz = fp1->getNonzeroElements();
-    for (const auto& it : nz) {
+    for (const auto &it : nz) {
       for (unsigned int i = 0; i < defaultCountBounds.size(); ++i) {
-        bool isSet = static_cast<bool>(fp2->getBit(it.first * defaultCountBounds.size() + i));
-        TEST_ASSERT(isSet == (it.second >= static_cast<long>(defaultCountBounds[i])));
+        bool isSet = static_cast<bool>(
+            fp2->getBit(it.first * defaultCountBounds.size() + i));
+        TEST_ASSERT(isSet ==
+                    (it.second >= static_cast<long>(defaultCountBounds[i])));
       }
     }
 
@@ -1431,8 +1435,24 @@ void testRDKitFP() {
   ROMol *mol;
   SparseIntVect<std::uint64_t> *fp, *fpTemp, *fpOld;
 
-  FingerprintGenerator<std::uint64_t> *fpGenerator =
-      RDKitFP::getRDKitFPGenerator<std::uint64_t>();
+  // I won't lie: having to do this makes my head hurt, but fixing it to create
+  // a ctor that takes a Parameters object is more effort than I can devote at
+  // the moment
+  unsigned int minPath = 1;
+  unsigned int maxPath = 7;
+  bool useHs = true;
+  bool branchedPaths = true;
+  bool useBondOrder = true;
+  AtomInvariantsGenerator *atomInvariantsGenerator = nullptr;
+  bool countSimulation = false;
+  const std::vector<std::uint32_t> countBounds = {1, 2, 4, 8};
+  std::uint32_t fpSize = 2048;
+  std::uint32_t numBitsPerFeature = 1;
+  std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
+      RDKitFP::getRDKitFPGenerator<std::uint64_t>(
+          minPath, maxPath, useHs, branchedPaths, useBondOrder,
+          atomInvariantsGenerator, countSimulation, countBounds, fpSize,
+          numBitsPerFeature));
 
   BOOST_FOREACH (std::string sm, smis) {
     mol = SmilesToMol(sm);
@@ -1456,8 +1476,6 @@ void testRDKitFP() {
     delete fpTemp;
   }
 
-  delete fpGenerator;
-
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
@@ -1474,7 +1492,7 @@ void testRDKFPUnfolded() {
 
     fp1 = generator->getSparseCountFingerprint(*m1);
     TEST_ASSERT(fp1);
-    TEST_ASSERT(fp1->getNonzeroElements().size() == 19);
+    TEST_ASSERT(fp1->getNonzeroElements().size() == 38);
     iter = fp1->getNonzeroElements().find(374073638);
     TEST_ASSERT(iter != fp1->getNonzeroElements().end() && iter->second == 6);
     iter = fp1->getNonzeroElements().find(464351883);
@@ -2401,8 +2419,8 @@ void testBulkFP() {
     delete results;
   }
 
-  BOOST_FOREACH (auto&& m, molVect) { delete m; }
-  BOOST_FOREACH (auto&& t, testPairs) { delete t.first; }
+  BOOST_FOREACH (auto &&m, molVect) { delete m; }
+  BOOST_FOREACH (auto &&t, testPairs) { delete t.first; }
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }

@@ -225,8 +225,7 @@ Datum mol_inchi(PG_FUNCTION_ARGS) {
   if (*str == 0) {
     free((void *)str);
     PG_RETURN_NULL();
-  }
-  else {
+  } else {
     res = pnstrdup(str, strlen(str));
     free((void *)str);
     PG_RETURN_CSTRING(res);
@@ -247,8 +246,7 @@ Datum mol_inchikey(PG_FUNCTION_ARGS) {
   if (*str == 0) {
     free((void *)str);
     PG_RETURN_NULL();
-  }
-  else {
+  } else {
     res = pnstrdup(str, strlen(str));
     free((void *)str);
     PG_RETURN_CSTRING(res);
@@ -283,6 +281,23 @@ Datum mol_hash(PG_FUNCTION_ARGS) {
   str = computeMolHash(mol, &len);
   Assert(str != 0 && strlen(str) != 0);
   char *res = pnstrdup(str, len);
+  free((void *)str);
+  PG_RETURN_CSTRING(res);
+}
+
+PGDLLEXPORT Datum mol_nm_hash(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(mol_nm_hash);
+Datum mol_nm_hash(PG_FUNCTION_ARGS) {
+  CROMol mol;
+  char *opts = PG_GETARG_CSTRING(1);
+  int len;
+  fcinfo->flinfo->fn_extra =
+      searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(0), NULL, &mol, NULL);
+  Assert(mol != 0);
+  char *str = computeNMMolHash(mol, opts);
+  Assert(str != 0 && strlen(str) != 0);
+  char *res = pnstrdup(str, strlen(str));
   free((void *)str);
   PG_RETURN_CSTRING(res);
 }
@@ -399,7 +414,7 @@ Datum fmcs_mol2s_transition(PG_FUNCTION_ARGS) {
         searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                        PG_GETARG_DATUM(1), NULL, &mol, NULL);
 
-    smiles = makeMolText(mol, &len, false);
+    smiles = makeMolText(mol, &len, false, false);
 
     //        char *smiles= Mol2Smiles(mol);
     //        int   len   = strlen(smiles);
@@ -426,7 +441,7 @@ Datum fmcs_mol2s_transition(PG_FUNCTION_ARGS) {
         searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                        PG_GETARG_DATUM(1), NULL, &mol, NULL);
 
-    char *smiles = makeMolText(mol, &len, false);
+    char *smiles = makeMolText(mol, &len, false, false);
     //        char *smiles= Mol2Smiles(mol);
     //        int   len   = strlen(smiles);
     /// elog(WARNING, smiles);

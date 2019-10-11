@@ -26,6 +26,10 @@
 - The RGroupDecomposition code now removes Hs from output R groups by default.
   To restore the old behavior create an RGroupDecompositionParameters object and
   set removeHydrogensPostMatch to false.
+- The default values for some of the new fingerprint generators have been changed so
+  that they more closely resemble the original fingerprinting code. In
+  particular most fingerprinters no longer do count simulation by default and
+  the RDKit fingerprint now sets two bits per feature by default.
 
 ## Highlights:
 
