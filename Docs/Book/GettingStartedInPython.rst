@@ -2485,8 +2485,9 @@ with labelled R groups, and then use the simplest call to do R-group decompositi
   []
   >>> len(res)
   40
-  >>> res[:2]
-  [{'Core': 'n1oc([*:2])nc1[*:1]', 'R1': 'O=C(O)CCCC1NCCOc2c1cccc2[*:1]', 'R2': 'CC(C)Oc1ccc([*:2])cc1Cl'}, {'Core': 'n1oc([*:2])nc1[*:1]', 'R1': 'O=C(O)CCC1NCCOc2c1cccc2[*:1]', 'R2': 'CC(C)Oc1ccc([*:2])cc1Cl'}]
+  >>> res[:2]            # doctest: +NORMALIZE_WHITESPACE
+  [{'Core': 'n1oc([*:2])nc1[*:1]', 'R1': 'O=C(O)CCCC1NCCOc2c1cccc2[*:1]', 'R2': 'CC(C)Oc1ccc([*:2])cc1Cl'}, 
+   {'Core': 'n1oc([*:2])nc1[*:1]', 'R1': 'O=C(O)CCC1NCCOc2c1cccc2[*:1]', 'R2': 'CC(C)Oc1ccc([*:2])cc1Cl'}]
 
 The `unmatched` return value has the indices of the molecules that did not match
 a core; in this case there are none. The other result is a list with one dict
@@ -2516,10 +2517,12 @@ out the code will automatically assign labels:
 
   >>> core2 = Chem.MolFromSmarts('c1ncon1')
   >>> res,unmatched = rdRGD.RGroupDecompose([core2],ms,asSmiles=True)
-  >>> res[:2]
-  [{'Core': 'n1oc([*:1])nc1[*:2]', 'R1': 'CC(C)Oc1ccc([*:1])cc1Cl', 'R2': 'O=C(O)CCCC1NCCOc2c1cccc2[*:2]'}, {'Core': 'n1oc([*:1])nc1[*:2]', 'R1': 'CC(C)Oc1ccc([*:1])cc1Cl', 'R2': 'O=C(O)CCC1NCCOc2c1cccc2[*:2]'}]
+  >>> res[:2]            # doctest: +NORMALIZE_WHITESPACE
+  [{'Core': 'n1oc([*:1])nc1[*:2]', 'R1': 'CC(C)Oc1ccc([*:1])cc1Cl', 'R2': 'O=C(O)CCCC1NCCOc2c1cccc2[*:2]'}, 
+   {'Core': 'n1oc([*:1])nc1[*:2]', 'R1': 'CC(C)Oc1ccc([*:1])cc1Cl', 'R2': 'O=C(O)CCC1NCCOc2c1cccc2[*:2]'}]
 
-R-group decomposition is actually pretty complex, so there's a lot more there. Hopefully this is enough to get you started. 
+R-group decomposition is actually pretty complex, so there's a lot more there.
+Hopefully this is enough to get you started. 
 
 Non-Chemical Functionality
 **************************
