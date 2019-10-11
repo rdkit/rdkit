@@ -339,14 +339,14 @@ ROMol *Uncharger::uncharge(const ROMol &mol) {
           // Add hydrogen to negative atom, increase formal charge
           // Until quaternary positive == negative total or no more negative
           // acid
+          atom->setNumExplicitHs(atom->getTotalNumHs() + 1);
           atom->setNoImplicit(true);
-          atom->setNumExplicitHs(atom->getNumExplicitHs() + 1);
           atom->setFormalCharge(atom->getFormalCharge() + 1);
           --neg_surplus;
           BOOST_LOG(rdInfoLog) << "Removed negative charge.\n";
-        } else if (atom->getNumExplicitHs()) {
+        } else if (atom->getTotalNumHs()) {
+          atom->setNumExplicitHs(atom->getTotalNumHs() - 1);
           atom->setNoImplicit(true);
-          atom->setNumExplicitHs(atom->getNumExplicitHs() - 1);
           atom->setFormalCharge(atom->getFormalCharge() + 1);
           --neg_surplus;
           BOOST_LOG(rdInfoLog) << "Removed negative charge.\n";
@@ -364,8 +364,8 @@ ROMol *Uncharger::uncharge(const ROMol &mol) {
         Atom *atom = omol->getAtomWithIdx(a_atoms[midx++].second);
         // skip ahead if we already neutralized this
         if (atom->getFormalCharge() >= 0) continue;
+        atom->setNumExplicitHs(atom->getTotalNumHs() + 1);
         atom->setNoImplicit(true);
-        atom->setNumExplicitHs(atom->getNumExplicitHs() + 1);
         atom->setFormalCharge(atom->getFormalCharge() + 1);
         --neg_surplus;
         BOOST_LOG(rdInfoLog) << "Removed negative charge.\n";
@@ -377,16 +377,18 @@ ROMol *Uncharger::uncharge(const ROMol &mol) {
       auto idx = pair.second;
       Atom *atom = omol->getAtomWithIdx(idx);
       if (!isEarlyAtom(atom->getAtomicNum())) {
+        atom->setNumExplicitHs(atom->getTotalNumHs());
         atom->setNoImplicit(true);
         while (atom->getFormalCharge() < 0) {
           atom->setNumExplicitHs(atom->getNumExplicitHs() + 1);
           atom->setFormalCharge(atom->getFormalCharge() + 1);
           BOOST_LOG(rdInfoLog) << "Removed negative charge.\n";
         }
-      } else if (atom->getNumExplicitHs()) {
+      } else if (atom->getTotalNumHs()) {
+        atom->setNumExplicitHs(atom->getTotalNumHs());
         atom->setNoImplicit(true);
         while (atom->getFormalCharge() < 0 && atom->getNumExplicitHs()) {
-          atom->setNumExplicitHs(atom->getNumExplicitHs() - 1);
+          atom->setNumExplicitHs(atom->getTotalNumHs() - 1);
           atom->setFormalCharge(atom->getFormalCharge() + 1);
           BOOST_LOG(rdInfoLog) << "Removed negative charge.\n";
         }
@@ -410,14 +412,12 @@ ROMol *Uncharger::uncharge(const ROMol &mol) {
     }
     for (const auto &idx : p_idx_matches) {
       Atom *atom = omol->getAtomWithIdx(idx);
-      if (!atom->getNumExplicitHs()) {
-        // atoms from places like Mol blocks are normally missing explicit Hs:
-        atom->setNumExplicitHs(atom->getTotalNumHs());
-      }
+      // atoms from places like Mol blocks are normally missing explicit Hs:
+      atom->setNumExplicitHs(atom->getTotalNumHs());
       atom->setNoImplicit(true);
       while (atom->getFormalCharge() > 0 && atom->getNumExplicitHs() > 0 &&
              netCharge > 0) {
-        atom->setNumExplicitHs(atom->getTotalNumHs() - 1);
+        atom->setNumExplicitHs(atom->getNumExplicitHs() - 1);
         atom->setFormalCharge(atom->getFormalCharge() - 1);
         --netCharge;
         BOOST_LOG(rdInfoLog) << "Removed positive charge.\n";

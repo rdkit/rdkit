@@ -386,3 +386,19 @@ M  END
           "[C@H]1C[C@H](O)CN1C");
   }
 }
+TEST_CASE("problems with uncharging HS- from mol file", "normalizer") {
+  SECTION("example1") {
+    std::string mb = R"CTAB(
+  SciTegic12231509382D
+
+  1  0  0  0  0  0            999 V2000
+   13.0092   -4.9004    0.0000 S   0  5
+M  CHG  1   1  -1
+M  END)CTAB";
+    std::unique_ptr<ROMol> m(MolBlockToMol(mb));
+    REQUIRE(m);
+    MolStandardize::Uncharger uncharger;
+    std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
+    CHECK(MolToSmiles(*outm) == "S");
+  }
+}
