@@ -1772,12 +1772,12 @@ YY_RULE_SETUP
 case 160:
 YY_RULE_SETUP
 #line 380 "smarts.ll"
-{  return RANGE_OPEN_TOKEN; }
+{ return RANGE_OPEN_TOKEN; }
 	YY_BREAK
 case 161:
 YY_RULE_SETUP
 #line 381 "smarts.ll"
-{ yy_pop_state(yyscanner); return RANGE_CLOSE_TOKEN; }
+{ return RANGE_CLOSE_TOKEN; }
 	YY_BREAK
 case 162:
 YY_RULE_SETUP

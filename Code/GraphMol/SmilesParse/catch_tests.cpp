@@ -500,3 +500,55 @@ TEST_CASE("github #2667: MolToCXSmiles generates error for empty molecule",
     CHECK(smi == "");
   }
 }
+
+TEST_CASE("github #2604: support range-based charge queries from SMARTS",
+          "[ranges,smarts]") {
+  SECTION("positive") {
+    auto query = "[N+{0-1}]"_smarts;
+    REQUIRE(query);
+    {
+      auto m1 = "CN"_smiles;
+      REQUIRE(m1);
+      CHECK(SubstructMatch(*m1, *query).size() == 1);
+    }
+    {
+      auto m1 = "C[NH3+]"_smiles;
+      REQUIRE(m1);
+      CHECK(SubstructMatch(*m1, *query).size() == 1);
+    }
+    {
+      auto m1 = "C[NH4+2]"_smiles;
+      REQUIRE(m1);
+      CHECK(SubstructMatch(*m1, *query).empty());
+    }
+    {
+      auto m1 = "C[NH-]"_smiles;
+      REQUIRE(m1);
+      CHECK(SubstructMatch(*m1, *query).empty());
+    }
+  }
+  SECTION("negative") {
+    auto query = "[N-{0-1}]"_smarts;
+    REQUIRE(query);
+    {
+      auto m1 = "CN"_smiles;
+      REQUIRE(m1);
+      CHECK(SubstructMatch(*m1, *query).size() == 1);
+    }
+    {
+      auto m1 = "C[NH-]"_smiles;
+      REQUIRE(m1);
+      CHECK(SubstructMatch(*m1, *query).size() == 1);
+    }
+    {
+      auto m1 = "C[N-2]"_smiles;
+      REQUIRE(m1);
+      CHECK(SubstructMatch(*m1, *query).empty());
+    }
+    {
+      auto m1 = "C[NH3+]"_smiles;
+      REQUIRE(m1);
+      CHECK(SubstructMatch(*m1, *query).empty());
+    }
+  }
+}

@@ -297,6 +297,8 @@ void finalizeQueryFromDescription(Query<int, Atom const *, true> *query,
     query->setDataFunc(queryAtomIsotope);
   } else if (descr == "AtomFormalCharge") {
     query->setDataFunc(queryAtomFormalCharge);
+  } else if (descr == "AtomNegativeFormalCharge") {
+    query->setDataFunc(queryAtomNegativeFormalCharge);
   } else if (descr == "AtomHybridization") {
     query->setDataFunc(queryAtomHybridization);
   } else if (descr == "AtomInRing") {

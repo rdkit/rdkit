@@ -325,7 +325,7 @@ Range queries
 -------------
 Ranges of values can be provided for many query types that expect numeric values.
 The query types that currently support range queries are:
-``D``, ``h``, ``r``, ``R``, ``v``, ``x``, ``X``, ``z``, ``Z``
+``D``, ``h``, ``r``, ``R``, ``v``, ``x``, ``X``, ``z``, ``Z``, ``+``, ``-``
 
 Here are some examples:
   - ``D{2-4}`` matches atoms that have between 2 and 4 (inclusive) explicit connections.
@@ -367,9 +367,9 @@ X          "total degree"                             1                Y
 z          "number of heteroatom neighbors"           >0               Y       extension
 Z          "number of alphatic heteroatom neighbors"  >0               Y       extension
 \*         "any atom"
-\+         "positive charge"                          1
+\+         "positive charge"                          1                Y 
 ++         "+2 charge"
-\-         "negative charge"                          1
+\-         "negative charge"                          1                Y
 \--        "-2 charge"
 ^0         "S hybridized"                             n/a              N       extension
 ^1         "SP hybridized"                            n/a              N       extension

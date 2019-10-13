@@ -31,7 +31,7 @@ void testPass() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing patterns which should parse." << std::endl;
   string smis[] = {
-#if 1
+#if 0
     "C",
     "CC",
     "C-C",
@@ -95,13 +95,17 @@ void testPass() {
     "[z1]",
     "[Z]",
     "[Z1]",
-#endif
     "[D{1-3}]",  // cactvs range queries
     "[D{-3}]",
     "[D{1-}]",
     "[z{1-3}]",
     "[Z{1-3}]",
     "[2H,13C]",  // github #1719
+    "[+{0-3}]",
+#endif
+    "[-{0-3}]",
+    "[-{0-3},C]",
+    "[-{0-3},D{1-3}]",  // github #2709
     "EOS"
   };
   while (smis[i] != "EOS") {

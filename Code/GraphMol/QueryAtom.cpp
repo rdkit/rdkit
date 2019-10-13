@@ -77,15 +77,27 @@ bool queriesMatch(QueryAtom::QUERYATOM_QUERY const *q1,
   PRECONDITION(q1, "no q1");
   PRECONDITION(q2, "no q2");
 
-  static const unsigned int nQueries = 19;
-  static std::string equalityQueries[nQueries] = {
-      "AtomType",         "AtomRingBondCount",   "AtomRingSize",
-      "AtomMinRingSize",  "AtomImplicitValence", "AtomExplicitValence",
-      "AtomTotalValence", "AtomAtomicNum",       "AtomExplicitDegree",
-      "AtomTotalDegree",  "AtomHCount",          "AtomIsAromatic",
-      "AtomIsAliphatic",  "AtomUnsaturated",     "AtomMass",
-      "AtomFormalCharge", "AtomHybridization",   "AtomInRing",
-      "AtomInNRings"};
+  static const unsigned int nQueries = 20;
+  static std::string equalityQueries[nQueries] = {"AtomType",
+                                                  "AtomRingBondCount",
+                                                  "AtomRingSize",
+                                                  "AtomMinRingSize",
+                                                  "AtomImplicitValence",
+                                                  "AtomExplicitValence",
+                                                  "AtomTotalValence",
+                                                  "AtomAtomicNum",
+                                                  "AtomExplicitDegree",
+                                                  "AtomTotalDegree",
+                                                  "AtomHCount",
+                                                  "AtomIsAromatic",
+                                                  "AtomIsAliphatic",
+                                                  "AtomUnsaturated",
+                                                  "AtomMass",
+                                                  "AtomFormalCharge",
+                                                  "AtomNegativeFormalCharge",
+                                                  "AtomHybridization",
+                                                  "AtomInRing",
+                                                  "AtomInNRings"};
 
   bool res = false;
   std::string d1 = q1->getDescription();
