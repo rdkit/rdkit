@@ -5579,6 +5579,45 @@ H      0.635000    0.635000    0.635000
           self.assertEqual(order1,order3)
           self.assertEqual(order2,order4)
     
+  def testSetBondStereoFromDirections(self):
+    m1 = Chem.MolFromMolBlock('''
+  Mrv1810 10141909482D          
+
+  4  3  0  0  0  0            999 V2000
+    3.3412   -2.9968    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5162   -2.9968    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.1037   -3.7112    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.7537   -2.2823    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  1  4  1  0  0  0  0
+M  END
+''', sanitize=False)
+    self.assertEqual(m1.GetBondBetweenAtoms(0,1).GetBondType(),Chem.BondType.DOUBLE)
+    self.assertEqual(m1.GetBondBetweenAtoms(0,1).GetStereo(),Chem.BondStereo.STEREONONE)
+    Chem.SetBondStereoFromDirections(m1)
+    self.assertEqual(m1.GetBondBetweenAtoms(0,1).GetStereo(),Chem.BondStereo.STEREOTRANS)
+    
+    m2 = Chem.MolFromMolBlock('''
+  Mrv1810 10141909542D          
+
+  4  3  0  0  0  0            999 V2000
+    3.4745   -5.2424    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.6495   -5.2424    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2370   -5.9569    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.8870   -5.9569    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  1  4  1  0  0  0  0
+M  END
+''',sanitize=False)
+    self.assertEqual(m2.GetBondBetweenAtoms(0,1).GetBondType(),Chem.BondType.DOUBLE)
+    self.assertEqual(m2.GetBondBetweenAtoms(0,1).GetStereo(),Chem.BondStereo.STEREONONE)
+    Chem.SetBondStereoFromDirections(m2)
+    self.assertEqual(m2.GetBondBetweenAtoms(0,1).GetStereo(),Chem.BondStereo.STEREOCIS)
+
+
+
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()
