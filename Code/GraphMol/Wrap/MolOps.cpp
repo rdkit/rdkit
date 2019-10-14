@@ -868,6 +868,17 @@ struct molops_wrapper {
                 (python::arg("mol"), python::arg("confId") = -1),
                 docString.c_str());
 
+    docString =
+        "Uses the directions of neighboring bonds to set cis/trans stereo on double bonds.\n\
+        \n\
+  ARGUMENTS:\n\
+  \n\
+    - mol: the molecule to be modified\n\
+\n";
+    python::def("SetBondStereoFromDirections", MolOps::setBondStereoFromDirections,
+                (python::arg("mol")),
+                docString.c_str());
+
     // ------------------------------------------------------------------------
     docString =
         "Kekulize, check valencies, set aromaticity, conjugation and hybridization\n\
