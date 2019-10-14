@@ -543,3 +543,96 @@ M  END)CTAB";
     CHECK(outmolb.find("4  2  2  0") != std::string::npos);
   }
 }
+
+TEST_CASE(
+    "setBondStereoFromDirections()"
+    "[stereochemistry]") {
+  SECTION("basics 1a") {
+    std::string mb = R"CTAB(
+  Mrv1810 10141909562D          
+
+  4  3  0  0  0  0            999 V2000
+    3.3412   -2.9968    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5162   -2.9968    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.1037   -3.7112    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.7537   -2.2823    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  1  4  1  0  0  0  0
+M  END
+)CTAB";
+    bool sanitize = false;
+    std::unique_ptr<ROMol> mol(MolBlockToMol(mb, sanitize));
+    REQUIRE(mol);
+    CHECK(mol->getBondWithIdx(0)->getBondType() == Bond::DOUBLE);
+    CHECK(mol->getBondWithIdx(0)->getStereo() == Bond::STEREONONE);
+    MolOps::setBondStereoFromDirections(*mol);
+    CHECK(mol->getBondWithIdx(0)->getStereo() == Bond::STEREOTRANS);
+  }
+  SECTION("basics 1b") {
+    std::string mb = R"CTAB(
+  Mrv1810 10141909562D          
+
+  4  3  0  0  0  0            999 V2000
+    3.3412   -2.9968    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5162   -2.9968    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.1037   -3.7112    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.7537   -2.2823    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  4  1  1  0  0  0  0
+M  END
+)CTAB";
+    bool sanitize = false;
+    std::unique_ptr<ROMol> mol(MolBlockToMol(mb, sanitize));
+    REQUIRE(mol);
+    CHECK(mol->getBondWithIdx(0)->getBondType() == Bond::DOUBLE);
+    CHECK(mol->getBondWithIdx(0)->getStereo() == Bond::STEREONONE);
+    MolOps::setBondStereoFromDirections(*mol);
+    CHECK(mol->getBondWithIdx(0)->getStereo() == Bond::STEREOTRANS);
+  }
+  SECTION("basics 2a") {
+    std::string mb = R"CTAB(
+  Mrv1810 10141909582D          
+
+  4  3  0  0  0  0            999 V2000
+    3.4745   -5.2424    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.6495   -5.2424    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2370   -5.9569    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.8870   -5.9569    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  1  4  1  0  0  0  0
+M  END
+)CTAB";
+    bool sanitize = false;
+    std::unique_ptr<ROMol> mol(MolBlockToMol(mb, sanitize));
+    REQUIRE(mol);
+    CHECK(mol->getBondWithIdx(0)->getBondType() == Bond::DOUBLE);
+    CHECK(mol->getBondWithIdx(0)->getStereo() == Bond::STEREONONE);
+    MolOps::setBondStereoFromDirections(*mol);
+    CHECK(mol->getBondWithIdx(0)->getStereo() == Bond::STEREOCIS);
+  }
+  SECTION("basics 2b") {
+    std::string mb = R"CTAB(
+  Mrv1810 10141909582D          
+
+  4  3  0  0  0  0            999 V2000
+    3.4745   -5.2424    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.6495   -5.2424    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2370   -5.9569    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.8870   -5.9569    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  4  1  1  0  0  0  0
+M  END
+)CTAB";
+    bool sanitize = false;
+    std::unique_ptr<ROMol> mol(MolBlockToMol(mb, sanitize));
+    REQUIRE(mol);
+    CHECK(mol->getBondWithIdx(0)->getBondType() == Bond::DOUBLE);
+    CHECK(mol->getBondWithIdx(0)->getStereo() == Bond::STEREONONE);
+    MolOps::setBondStereoFromDirections(*mol);
+    CHECK(mol->getBondWithIdx(0)->getStereo() == Bond::STEREOCIS);
+  }
+}

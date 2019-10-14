@@ -2276,6 +2276,12 @@ void setBondStereoFromDirections(ROMol &mol) {
           Chirality::getNeighboringDirectedBond(mol, endAtom);
 
       if (startDirBond != nullptr && endDirBond != nullptr) {
+        // does a direction need to be reversed because neither or both of the
+        // bonds starts at the double bond atom?  (This was github #2712)
+        bool reverseDir = (startDirBond->getBeginAtom() == startAtom &&
+                           endDirBond->getBeginAtom() == endAtom) ||
+                          (startDirBond->getBeginAtom() != startAtom &&
+                           endDirBond->getBeginAtom() != endAtom);
         unsigned startStereoAtom =
             startDirBond->getOtherAtomIdx(startAtom->getIdx());
         unsigned endStereoAtom = endDirBond->getOtherAtomIdx(endAtom->getIdx());
@@ -2283,9 +2289,9 @@ void setBondStereoFromDirections(ROMol &mol) {
         bond->setStereoAtoms(startStereoAtom, endStereoAtom);
 
         if (startDirBond->getBondDir() == endDirBond->getBondDir()) {
-          bond->setStereo(Bond::STEREOTRANS);
+          bond->setStereo(reverseDir ? Bond::STEREOCIS : Bond::STEREOTRANS);
         } else {
-          bond->setStereo(Bond::STEREOCIS);
+          bond->setStereo(reverseDir ? Bond::STEREOTRANS : Bond::STEREOCIS);
         }
       }
     }
