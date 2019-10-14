@@ -658,13 +658,12 @@ std::string MaximumCommonSubgraph::generateResultSMARTS(
   unsigned ai = 0;  // SeedAtomIdx
   for (auto atom = mcsIdx.Atoms.begin(); atom != mcsIdx.Atoms.end();
        atom++, ai++) {
+    QueryAtom a;
     if (Parameters.AtomTyper ==
         MCSAtomCompareIsotopes) {  // do '[0*]-[0*]-[13*]' for CC[13NH2]
-      QueryAtom a;
       a.setQuery(makeAtomIsotopeQuery((int)(*atom)->getIsotope()));
-      mol.addAtom(&a, true, false);
     } else {
-      QueryAtom a;  // generate [#6] instead of C or c !
+      // generate [#6] instead of C or c !
       a.setQuery(makeAtomNumQuery((*atom)->getAtomicNum()));
       // for all atomMatchSet[ai] items add atom query to template like
       // [#6,#17,#9, ... ]
@@ -678,8 +677,13 @@ std::string MaximumCommonSubgraph::generateResultSMARTS(
              am->second->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW))
           a.setChiralTag(am->second->getChiralTag());
       }
-      mol.addAtom(&a, true, false);
     }
+    if (Parameters.AtomCompareParameters.RingMatchesRingOnly) {
+      ATOM_EQUALS_QUERY *q = makeAtomInRingQuery();
+      q->setNegation(!queryIsAtomInRing(*atom));
+      a.expandQuery(q, Queries::COMPOSITE_AND, true);
+    }
+    mol.addAtom(&a, true, false);
   }
   unsigned bi = 0;  // Seed Idx
   for (auto bond = mcsIdx.Bonds.begin(); bond != mcsIdx.Bonds.end();
