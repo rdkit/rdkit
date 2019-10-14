@@ -62,7 +62,7 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalogEntry
   FilterCatalogEntry() : d_matcher(), d_props() {}
 
   FilterCatalogEntry(const std::string &name, const FilterMatcherBase &matcher)
-      : RDCatalog::CatalogEntry(), d_matcher(matcher.Clone()) {
+      : RDCatalog::CatalogEntry(), d_matcher(matcher.copy()) {
     setDescription(name);
   }
 
