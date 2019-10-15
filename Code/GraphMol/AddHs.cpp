@@ -561,6 +561,7 @@ bool adjustStereoAtomsIfRequired(RWMol &mol, const Atom *atom,
 //   - Hs that are part of the definition of double bond Stereochemistry
 //     will not be removed
 //   - Hs that are not connected to anything else will not be removed
+//   - H atoms part of an SGroup will not be removed.
 //
 void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
               bool sanitize) {
@@ -571,6 +572,43 @@ void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
     if ((*atIt)->getAtomicNum() == 1) continue;
     (*atIt)->updatePropertyCache(false);
   }
+
+  std::unordered_map<unsigned int, unsigned int> sgroupAtoms;
+  for (const auto &sgroup : getSubstanceGroups(mol)) {
+    const auto sgroup_idx = sgroup.getIndexInMol();
+
+    for (const auto &atom_idx : sgroup.getAtoms()) {
+      sgroupAtoms[atom_idx] = sgroup_idx;
+    }
+
+    for (const auto &atom_idx : sgroup.getParentAtoms()) {
+      sgroupAtoms[atom_idx] = sgroup_idx;
+    }
+
+    for (const auto &bond_idx : sgroup.getBonds()) {
+      const auto bond = mol.getBondWithIdx(bond_idx);
+      sgroupAtoms[bond->getBeginAtomIdx()] = sgroup_idx;
+      sgroupAtoms[bond->getEndAtomIdx()] = sgroup_idx;
+    }
+
+    for (const auto &cState : sgroup.getCStates()) {
+      const auto bond = mol.getBondWithIdx(cState.bondIdx);
+      sgroupAtoms[bond->getBeginAtomIdx()] = sgroup_idx;
+      sgroupAtoms[bond->getEndAtomIdx()] = sgroup_idx;
+    }
+
+    for (const auto &attachPoint : sgroup.getAttachPoints()) {
+      sgroupAtoms[attachPoint.aIdx] = sgroup_idx;
+
+      // In the spec, lvIdx can be 0, meaning an atom that has been deleted.
+      // In our implementation, where atom indexes are 0-based, that translates
+      // into lvIdx == -1.
+      if (attachPoint.lvIdx >= 0) {
+        sgroupAtoms[attachPoint.lvIdx] = sgroup_idx;
+      }
+    }
+  }
+
   while (currIdx < mol.getNumAtoms()) {
     Atom *atom = mol.getAtomWithIdx(currIdx);
     idxMap[origIdx] = currIdx;
@@ -581,6 +619,11 @@ void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
         BOOST_LOG(rdWarningLog)
             << "WARNING: not removing hydrogen atom without neighbors"
             << std::endl;
+      } else if (sgroupAtoms.count(atom->getIdx()) != 0) {
+        const auto atom_idx = atom->getIdx();
+        BOOST_LOG(rdWarningLog) << "WARNING: not removing hydrogen atom "
+                                << atom_idx << ", part of SubstanceGroup "
+                                << sgroupAtoms[atom_idx] << std::endl;
       } else if (!atom->hasQuery()) {
         if (atom->hasProp(common_properties::isImplicit)) {
           removeIt = true;
