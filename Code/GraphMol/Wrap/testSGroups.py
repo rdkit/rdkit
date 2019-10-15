@@ -98,6 +98,31 @@ M  END"""
         parent = sgl[0].GetOwningMol()
         self.assertEqual(smi, Chem.MolToSmiles(parent))
 
+    def testHRemoval(self):
+        mol = Chem.MolFromMolBlock("""
+                    3D
+
+  3  2  0  0  0  0            999 V2000
+    -2.3620   -1.8090    1.7866 C   0  0  0  0  0  0
+    -2.9887   -1.8667    2.6766 H   0  0  0  0  0  0
+    -1.7353   -1.7513    0.8966 H   0  0  0  0  0  0
+  1  2  1  0  0  0
+  1  3  1  0  0  0
+M  STY  1   1 SRU
+M  SAL   1  2   1   2
+M  SBL   1  1   2
+M  SCN  1   1 HT
+M  END""")
+
+        assert mol is not None
+        assert mol.GetNumAtoms() == 3
+        sgs = Chem.GetMolSubstanceGroups(mol)
+        assert len(sgs) == 1
+
+        # Atom 3 is not in the SGroup itself, but is part of a bond that is
+        assert len(sgs[0].GetAtoms()) == 2
+        assert len(sgs[0].GetBonds()) == 1
+
 
 if __name__ == '__main__':
     print("Testing SubstanceGroups wrapper")
