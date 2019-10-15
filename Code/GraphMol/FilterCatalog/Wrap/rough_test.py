@@ -537,6 +537,11 @@ class TestCase(unittest.TestCase):
       self.assertTrue(len(res) > 0)
       self.assertEquals(res[0].GetDescription(), descriptions[i])
 
+    # Test with some bad input
+    smiles = ['mydoghasfleas']
+    results = FilterCatalog.RunFilterCatalog(fc, smiles)
+    self.assertEquals(len(results[0]), 0)
+
 
 if __name__ == '__main__':
   unittest.main()
