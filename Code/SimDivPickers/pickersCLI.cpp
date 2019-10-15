@@ -204,7 +204,8 @@ int main(int argc, char *argv[]) {
 #endif
   for (unsigned int i = 0; i < std::min(iv.size(), (size_t)10); ++i) {
     for (unsigned int j = 0; j < i; ++j) {
-      std::cerr << iv[i] << " " << iv[j] << ": " << MyDist(i, j) << std::endl;
+      std::cerr << iv[i] << " " << iv[j] << ": " << MyDist(iv[i], iv[j])
+                << std::endl;
     }
   }
   fprintf(stderr, "%u picks\n", count);
