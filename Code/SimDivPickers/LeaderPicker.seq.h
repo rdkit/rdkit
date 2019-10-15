@@ -137,7 +137,7 @@ struct LeaderPickerState {
     unsigned int count = 0;
     for (unsigned int i = 0; i < len; i++) {
       double ld = (*func)(query, src[i]);
-      std::cerr << query << "-" << src[i] << " " << ld << std::endl;
+      // std::cerr << query << "-" << src[i] << " " << ld << std::endl;
       if (ld > threshold) dst[count++] = src[i];
     }
     return count;
@@ -167,6 +167,7 @@ RDKit::INT_VECT LeaderPicker::lazyPick(T &func, unsigned int poolSize,
   if (poolSize < pickSize)
     throw ValueErrorException("pickSize cannot be larger than the poolSize");
 
+  if (!pickSize) pickSize = poolSize;
   RDKit::INT_VECT picks;
 
   LeaderPickerState<T> stat(poolSize, nthreads);
@@ -193,7 +194,7 @@ RDKit::INT_VECT LeaderPicker::lazyPick(T &func, unsigned int poolSize,
     pick = stat.compact_next();
     picks.push_back(pick);
     picked++;
-    printf("\t %u %u %u\n", picked, pick, stat.left);
+    // printf("\t %u %u %u\n", picked, pick, stat.left);
   }
   return picks;
 }
