@@ -66,20 +66,7 @@ class pyobjFunctor {
   python::object dp_obj;
 };
 
-namespace {
-template <typename T>
-void LazyMaxMinHelper(MaxMinPicker *picker, T functor, unsigned int poolSize,
-                      unsigned int pickSize, python::object firstPicks,
-                      int seed, RDKit::INT_VECT &res, double &threshold) {
-  RDKit::INT_VECT firstPickVect;
-  for (unsigned int i = 0;
-       i < python::extract<unsigned int>(firstPicks.attr("__len__")()); ++i) {
-    firstPickVect.push_back(python::extract<int>(firstPicks[i]));
-  }
-  res = picker->lazyPick(functor, poolSize, pickSize, firstPickVect, seed,
-                         threshold);
-}
-}  // end of anonymous namespace
+
 
 RDKit::INT_VECT LazyMaxMinPicks(MaxMinPicker *picker, python::object distFunc,
                                 int poolSize, int pickSize,
@@ -105,6 +92,40 @@ python::tuple LazyMaxMinPicksWithThreshold(
                    threshold);
   return python::make_tuple(res, threshold);
 }
+
+
+
+python::tuple LazyVectorMaxMinPicksWithThreshold(
+    MaxMinPicker *picker, python::object objs, int poolSize, int pickSize,
+    double threshold, python::object firstPicks, int seed) {
+  std::vector<const ExplicitBitVect *> bvs(poolSize);
+  for (int i = 0; i < poolSize; ++i) {
+    bvs[i] = python::extract<const ExplicitBitVect *>(objs[i]);
+  }
+  pyBVFunctor<ExplicitBitVect> functor(bvs, TANIMOTO);
+
+  RDKit::INT_VECT res;
+  LazyMaxMinHelper(picker, functor, poolSize, pickSize, firstPicks, seed, res,
+                   threshold);
+  return python::make_tuple(res, threshold);
+}
+#endif
+
+namespace {
+template <typename T>
+void LazyLeaderHelper(LeaderPicker *picker, T functor, unsigned int poolSize,
+                      double &threshold, unsigned int pickSize,
+                      python::object firstPicks, RDKit::INT_VECT &res,
+                      int nThreads) {
+  RDKit::INT_VECT firstPickVect;
+  for (unsigned int i = 0;
+       i < python::extract<unsigned int>(firstPicks.attr("__len__")()); ++i) {
+    firstPickVect.push_back(python::extract<int>(firstPicks[i]));
+  }
+  res = picker->lazyPick(functor, poolSize, pickSize, firstPickVect, threshold,
+                         nThreads);
+}
+}  // end of anonymous namespace
 
 // NOTE: TANIMOTO and DICE provably return the same results for the diversity
 // picking this is still here just in case we ever later want to support other
@@ -136,43 +157,21 @@ class pyBVFunctor {
   const std::vector<const BV *> &d_obj;
   DistanceMethod d_method;
 };
-
-RDKit::INT_VECT LazyVectorMaxMinPicks(MaxMinPicker *picker, python::object objs,
-                                      int poolSize, int pickSize,
-                                      python::object firstPicks, int seed,
-                                      python::object useCache) {
-  if (useCache != python::object()) {
-    BOOST_LOG(rdWarningLog)
-        << "the useCache argument is deprecated and ignored" << std::endl;
-  }
+RDKit::INT_VECT LazyVectorLeaderPicks(LeaderPicker *picker, python::object objs,
+                                      int poolSize, double threshold,
+                                      int pickSize, python::object firstPicks,
+                                      int numThreads) {
   std::vector<const ExplicitBitVect *> bvs(poolSize);
   for (int i = 0; i < poolSize; ++i) {
     bvs[i] = python::extract<const ExplicitBitVect *>(objs[i]);
   }
   pyBVFunctor<ExplicitBitVect> functor(bvs, TANIMOTO);
-
   RDKit::INT_VECT res;
-  double threshold = -1.;
-  LazyMaxMinHelper(picker, functor, poolSize, pickSize, firstPicks, seed, res,
-                   threshold);
+  LazyLeaderHelper(picker, functor, poolSize, threshold, pickSize, firstPicks,
+                   res, numThreads);
   return res;
 }
 
-python::tuple LazyVectorMaxMinPicksWithThreshold(
-    MaxMinPicker *picker, python::object objs, int poolSize, int pickSize,
-    double threshold, python::object firstPicks, int seed) {
-  std::vector<const ExplicitBitVect *> bvs(poolSize);
-  for (int i = 0; i < poolSize; ++i) {
-    bvs[i] = python::extract<const ExplicitBitVect *>(objs[i]);
-  }
-  pyBVFunctor<ExplicitBitVect> functor(bvs, TANIMOTO);
-
-  RDKit::INT_VECT res;
-  LazyMaxMinHelper(picker, functor, poolSize, pickSize, firstPicks, seed, res,
-                   threshold);
-  return python::make_tuple(res, threshold);
-}
-#endif
 }  // end of namespace RDPickers
 
 struct LeaderPicker_wrap {
@@ -180,6 +179,13 @@ struct LeaderPicker_wrap {
     python::class_<RDPickers::LeaderPicker>(
         "LeaderPicker",
         "A class for diversity picking of items using the Leader algorithm\n")
+        .def("LazyBitVectorPick", RDPickers::LazyVectorLeaderPicks,
+             (python::arg("self"), python::arg("objects"),
+              python::arg("poolSize"), python::arg("threshold"),
+              python::arg("pickSize") = 0,
+              python::arg("firstPicks") = python::tuple(),
+              python::arg("numThreads") = 0),
+             "")
 #if 0
         .def("Pick", RDPickers::MaxMinPicks,
              (python::arg("self"), python::arg("distMat"),
@@ -290,6 +296,7 @@ struct LeaderPicker_wrap {
              "the list)\n"
              "  - seed: (optional) seed for the random number generator\n")
 #endif
+
         ;
   };
 };

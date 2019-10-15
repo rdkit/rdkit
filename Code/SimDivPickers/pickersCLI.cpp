@@ -18,7 +18,7 @@
 #include <SimDivPickers/LeaderPicker.h>
 #else
 #include "MaxMinPicker.h"
-#include "LeaderPicker.seq.h"
+#include "LeaderPicker.h"
 #endif
 
 std::vector<RDKit::ROMol *> mols;
