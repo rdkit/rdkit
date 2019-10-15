@@ -454,12 +454,27 @@ struct filtercat_wrapper {
         .def(python::vector_indexing_suite<
              std::vector<boost::shared_ptr<const FilterCatalogEntry> >,
              true>());
+    
+    python::class_<
+      std::vector<
+	std::vector<boost::shared_ptr<const FilterCatalogEntry>>>>(
+			   "FilterCatalogListOfEntryList")
+      .def(python::vector_indexing_suite<
+	   std::vector<std::vector<boost::shared_ptr<const FilterCatalogEntry> > > >());
 
 #else
     python::class_<std::vector<boost::shared_ptr<FilterCatalogEntry> > >(
         "FilterCatalogEntryList")
         .def(python::vector_indexing_suite<
              std::vector<boost::shared_ptr<FilterCatalogEntry> >, true>());
+    python::class_<
+      std::vector<
+	std::vector<boost::shared_ptr<FilterCatalogEntry>>>>(
+			   "FilterCatalogListOfEntryList")
+      .def(python::vector_indexing_suite<
+	   std::vector<std::vector<boost::shared_ptr<FilterCatalogEntry> > > >());
+
+
 #endif
 
     {
@@ -518,6 +533,12 @@ struct filtercat_wrapper {
     python::def("FilterCatalogCanSerialize", FilterCatalogCanSerialize,
                 "Returns True if the FilterCatalog is serializable "
                 "(requires boost serialization");
+    
+    python::def("RunFilterCatalog", RunFilterCatalog,
+		(python::arg("filterCatalog"),
+		 python::arg("smiles"),
+		 python::arg("numThreads") = -1),
+                "Run the filter catalog on the input list of smiles strings");
 
     std::string nested_name = python::extract<std::string>(
         python::scope().attr("__name__") + ".FilterMatchOps");
@@ -537,6 +558,8 @@ struct filtercat_wrapper {
     python::class_<FilterMatchOps::Not, FilterMatchOps::Not *,
                    python::bases<FilterMatcherBase> >(
         "Not", python::init<FilterMatcherBase &>());
+
+    
   };
 };
 
