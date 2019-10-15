@@ -325,6 +325,7 @@ RDKit::INT_VECT LeaderPicker::lazyPick(T &func, unsigned int poolSize,
   if (poolSize < pickSize)
     throw ValueErrorException("pickSize cannot be larger than the poolSize");
 
+  if (!pickSize) pickSize = poolSize;
   RDKit::INT_VECT picks;
 
   LeaderPickerState<T> stat(poolSize, nthreads);
