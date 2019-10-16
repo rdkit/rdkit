@@ -157,6 +157,19 @@ class pyBVFunctor {
   const std::vector<const BV *> &d_obj;
   DistanceMethod d_method;
 };
+
+class pyobjFunctor {
+ public:
+  pyobjFunctor(python::object obj) : dp_obj(std::move(obj)) {}
+  ~pyobjFunctor() {}
+  double operator()(unsigned int i, unsigned int j) {
+    return python::extract<double>(dp_obj(i, j));
+  }
+
+ private:
+  python::object dp_obj;
+};
+
 RDKit::INT_VECT LazyVectorLeaderPicks(LeaderPicker *picker, python::object objs,
                                       int poolSize, double threshold,
                                       int pickSize, python::object firstPicks,
@@ -172,20 +185,45 @@ RDKit::INT_VECT LazyVectorLeaderPicks(LeaderPicker *picker, python::object objs,
   return res;
 }
 
+RDKit::INT_VECT LazyLeaderPicks(LeaderPicker *picker, python::object distFunc,
+                                int poolSize, double threshold, int pickSize,
+                                python::object firstPicks, int numThreads) {
+  pyobjFunctor functor(distFunc);
+  RDKit::INT_VECT res;
+  LazyLeaderHelper(picker, functor, poolSize, threshold, pickSize, firstPicks,
+                   res, numThreads);
+  return res;
+}
+
 }  // end of namespace RDPickers
 
 struct LeaderPicker_wrap {
   static void wrap() {
     python::class_<RDPickers::LeaderPicker>(
         "LeaderPicker",
-        "A class for diversity picking of items using the Leader algorithm\n")
+        "A class for diversity picking of items using Roger Sayle's Leader "
+        "algorithm (analogous to sphere exclusion). The algorithm is "
+        "currently unpublished, but a description is available in this "
+        "presentation from the 2019 RDKit UGM: "
+        "https://github.com/rdkit/UGM_2019/raw/master/Presentations/"
+        "Sayle_Clustering.pdf\n")
         .def("LazyBitVectorPick", RDPickers::LazyVectorLeaderPicks,
              (python::arg("self"), python::arg("objects"),
               python::arg("poolSize"), python::arg("threshold"),
               python::arg("pickSize") = 0,
               python::arg("firstPicks") = python::tuple(),
-              python::arg("numThreads") = 0),
-             "")
+              python::arg("numThreads") = 1),
+             "Pick a subset of items from a collection of bit vectors using "
+             "Tanimoto distance. Note that the threshold value is a "
+             "*distance* (i.e. 1-similarity).")
+        .def("LazyPick", RDPickers::LazyLeaderPicks,
+             (python::arg("self"), python::arg("distFunc"),
+              python::arg("poolSize"), python::arg("threshold"),
+              python::arg("pickSize") = 0,
+              python::arg("firstPicks") = python::tuple(),
+              python::arg("numThreads") = 1),
+             "Pick a subset of items from a pool of items using the "
+             "user-provided function to determine distances.")
 #if 0
         .def("Pick", RDPickers::MaxMinPicks,
              (python::arg("self"), python::arg("distMat"),
@@ -205,30 +243,6 @@ struct LeaderPicker_wrap {
              "the list)\n"
              "  - seed: (optional) seed for the random number generator\n")
 
-        .def("LazyPick", RDPickers::LazyMaxMinPicks,
-             (python::arg("self"), python::arg("distFunc"),
-              python::arg("poolSize"), python::arg("pickSize"),
-              python::arg("firstPicks") = python::tuple(),
-              python::arg("seed") = -1,
-              python::arg("useCache") = python::object()),
-             "Pick a subset of items from a pool of items using the MaxMin "
-             "Algorithm\n"
-             "Ashton, M. et. al., Quant. Struct.-Act. Relat., 21 (2002), "
-             "598-604 \n"
-             "ARGUMENTS:\n\n"
-             "  - distFunc: a function that should take two indices and return "
-             "the\n"
-             "              distance between those two points.\n"
-             "              NOTE: the implementation caches distance values, "
-             "so the\n"
-             "              client code does not need to do so; indeed, it "
-             "should not.\n"
-             "  - poolSize: number of items in the pool\n"
-             "  - pickSize: number of items to pick from the pool\n"
-             "  - firstPicks: (optional) the first items to be picked (seeds "
-             "the list)\n"
-             "  - seed: (optional) seed for the random number generator\n"
-             "  - useCache: IGNORED\n")
         .def("LazyBitVectorPick", RDPickers::LazyVectorMaxMinPicks,
              (python::arg("self"), python::arg("objects"),
               python::arg("poolSize"), python::arg("pickSize"),

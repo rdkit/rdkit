@@ -300,6 +300,19 @@ class TestCase(unittest.TestCase):
         self.assertGreaterEqual(1 - DataStructs.TanimotoSimilarity(fps[ids[i]], fps[ids[j]]),
                                 thresh)
 
+  def testLazyLeader(self):
+    pkr = rdSimDivPickers.LeaderPicker()
+
+    def func(i, j):
+      if i == j:
+        return 0.0
+      if i < j:
+        j, i = i, j
+      return i - j
+
+    lres = pkr.LazyPick(func, 100, 20)
+    self.assertEqual(list(lres), [0, 21, 42, 63, 84])
+
 
 if __name__ == '__main__':
   unittest.main()
