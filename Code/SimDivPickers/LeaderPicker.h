@@ -116,6 +116,7 @@ class RDKIT_SIMDIVPICKERS_EXPORT LeaderPicker : public DistPicker {
   }
 };
 
+#ifdef RDK_THREADSAFE_SSS
 template <typename T>
 void *LeaderPickerWork(void *arg);
 
@@ -158,7 +159,7 @@ struct LeaderPickerState {
       bcount = (count + (bsize - 1)) / bsize;
       unsigned int tasks = (bcount + 1) / 2;
       // limit number of threads to available work
-      if (nt > tasks) nt = tasks;
+      if (nt > (int)tasks) nt = tasks;
     } else {
       bsize = 32768;
       bcount = (count + (bsize - 1)) / bsize;
@@ -312,7 +313,47 @@ void *LeaderPickerWork(void *arg) {
     pthread_barrier_wait(&stat->done);
   }
 }
+#else
 
+template <typename T>
+struct LeaderPickerState {
+  std::vector<int> v;
+  unsigned int left;
+  double threshold;
+  int query;
+  T *func;
+
+  LeaderPickerState(unsigned int count, int) {
+    v.resize(count);
+    for (unsigned int i = 0; i < count; i++) v[i] = i;
+    left = count;
+  }
+
+  bool empty() { return left == 0; }
+
+  unsigned int compact(int *dst, int *src, unsigned int len) {
+    unsigned int count = 0;
+    for (unsigned int i = 0; i < len; i++) {
+      double ld = (*func)(query, src[i]);
+      // std::cerr << query << "-" << src[i] << " " << ld << std::endl;
+      if (ld > threshold) dst[count++] = src[i];
+    }
+    return count;
+  }
+
+  void compact(int pick) {
+    query = pick;
+    left = compact(&v[0], &v[0], left);
+  }
+
+  int compact_next() {
+    query = v[0];
+    left = compact(&v[0], &v[1], left - 1);
+    return query;
+  }
+};
+
+#endif
 // we implement this here in order to allow arbitrary functors without link
 // errors
 template <typename T>
