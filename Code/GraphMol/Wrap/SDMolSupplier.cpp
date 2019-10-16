@@ -49,10 +49,10 @@ std::string sdMolSupplierClassDoc =
 \n\
     2) Lazy evaluation 2:\n\n\
        >>> suppl = SDMolSupplier('in.sdf')\n\
-       >>> mol1 = suppl.next()\n\
-       >>> mol2 = suppl.next()\n\
+       >>> mol1 = next(suppl)\n\
+       >>> mol2 = next(suppl)\n\
        >>> suppl.reset()\n\
-       >>> mol3 = suppl.next()\n\
+       >>> mol3 = next(suppl)\n\
        # mol3 and mol1 are the same:\n\
        >>> MolToSmiles(mol3)==MolToSmiles(mol1)\n\
 \n\
