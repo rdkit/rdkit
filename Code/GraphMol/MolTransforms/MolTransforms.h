@@ -100,14 +100,14 @@ computePrincipalAxesAndMomentsFromGyrationMatrix(
 // the y-axis
 //! and the smallest with the z-axis
 /*!
-  If center is not specified the the centroid of the conformer will be used
+  If center is not specified the centroid of the conformer will be used
   \param conf                Conformer of interest
   \param center              Center to be used for canonicalization, defaults to
   the centroid of the
                              conformation
   \param normalizeCovar      Normalize the covariance matrix with the number of
   atoms
-  \param ignoreHs            Optinally ignore hydrogens
+  \param ignoreHs            Optionally ignore hydrogens
 */
 RDKIT_MOLTRANSFORMS_EXPORT RDGeom::Transform3D *computeCanonicalTransform(
     const RDKit::Conformer &conf, const RDGeom::Point3D *center = 0,

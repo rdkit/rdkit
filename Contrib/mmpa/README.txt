@@ -233,7 +233,7 @@ a) mmp: Find all MMPs of a input/query compound to the compounds in the db
 
 b) subs: Find all MMPs in the db where the LHS of the transform matches an input
 substructure. Make sure the attached points are donated by an asterisk and the
-input substructure has been canonicalised (eg. [*]c1ccccc1). Note: Up to 3 attachement
+input substructure has been canonicalised (eg. [*]c1ccccc1). Note: Up to 3 attachment
 points are allowed.
 
 c) trans: Find all MMPs that match the input transform/SMIRKS. Make sure the input

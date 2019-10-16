@@ -52,7 +52,7 @@ nameField = 'Compound_orig'
 propField = 'chemical_shift_1'
 
 # similarity threshold for a pair to be considered interesting.
-# (i.e. pairs with a similiarity below this value will not be
+# (i.e. pairs with a similarity below this value will not be
 # added to the output.
 similarityThreshold = 0.5
 

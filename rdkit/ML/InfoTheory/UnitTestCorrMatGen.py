@@ -26,7 +26,7 @@ class TestCase(unittest.TestCase):
 
     def setUp(self):
         # here is what we are going to do to test this out
-        # - generate bit vectrs of length nbits
+        # - generate bit vectors of length nbits
         # - turn on a fraction of the first nbits/2 bits at random
         # - for each bit i turned on in the range (0, nbits/2) turn on the bit
         #   nbits/2 + i

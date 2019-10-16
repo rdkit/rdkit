@@ -34,7 +34,7 @@ class RDKIT_GRAPHMOL_EXPORT ResonanceMolSupplier {
  public:
   typedef enum {
     /*! include resonance structures whose octets are less complete
-     *  than the the most octet-complete structure */
+     *  than the most octet-complete structure */
     ALLOW_INCOMPLETE_OCTETS = (1 << 0),
     /*! include resonance structures featuring charge separation also
      *   when uncharged resonance structures exist */

@@ -134,7 +134,7 @@ BOOST_PYTHON_MODULE(rdMolTransforms) {
 
   docString =
       "Compute the transformation required aligna conformer so that\n\
-               the the principal axes align up with the x,y, z axes\n\
+               the principal axes align up with the x,y, z axes\n\
                The conformer itself is left unchanged\n\
   ARGUMENTS:\n\
     - conf : the conformer of interest\n\

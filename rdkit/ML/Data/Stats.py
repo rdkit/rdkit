@@ -85,7 +85,7 @@ def PrincipalComponents(mat, reverseOrder=1):
   covMat = FormCorrelationMatrix(mat)
 
   eigenVals, eigenVects = numpy.linalg.eig(covMat)
-  # The the 'real' component, if it exists as its own attribute
+  # The 'real' component, if it exists as its own attribute
   eigenVals = getattr(eigenVals, "real", eigenVals)
   eigenVects = getattr(eigenVects, "real", eigenVects)
 

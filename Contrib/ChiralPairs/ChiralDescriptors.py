@@ -260,7 +260,7 @@ def calculateChiralDescriptors(mol, idxChiral, dists, verbose=False):
     desc['maxDistfromCC'] = int(np.max(paths))
     # determine the number of neighbors per shell/distance level
     nlevels=Counter(paths.astype(int))
-    # consider the levels until a path lenght of 10
+    # consider the levels until a path length of 10
     for i in range(1,11):
         desc['nLevel'+str(i)]=nlevels[i]
     # determine the number of nitrogen and oxygen atoms in a certain level around the chiral center

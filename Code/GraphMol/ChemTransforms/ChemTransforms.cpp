@@ -227,7 +227,7 @@ std::vector<ROMOL_SPTR> replaceSubstructs(
     }
 
     // clear conformers and computed props and do basic updates
-    // on the the resulting molecules, but allow unhappiness:
+    // on the resulting molecules, but allow unhappiness:
     for (auto &re : res) {
       updateSubMolConfs(mol, *(RWMol *)re.get(), removedAtoms);
       re->clearComputedProps(true);

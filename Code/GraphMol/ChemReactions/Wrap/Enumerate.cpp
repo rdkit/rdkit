@@ -229,7 +229,7 @@ Options:\n\
     docString = \
 "EnumerateLibrary\n\
 This class allows easy enumeration of reactions.  Simply provide a reaction\n\
-and a set of reagents and you are off the the races.\n\
+and a set of reagents and you are off the races.\n\
 \n\
 Note that this functionality should be considered beta and that the API may\n\
 change in a future release.\n\

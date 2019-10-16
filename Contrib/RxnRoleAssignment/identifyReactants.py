@@ -216,7 +216,7 @@ def _getBestCombination(rfps,pfps,output=False):
                         print("Frequent reagent found: ", j)
             if temp not in tests:
                 tests.append(temp)
-    # initalisation of the results
+    # initialisation of the results
     maxScore=0
     maxDetailScore=0
     finalReacts=[[]]
@@ -281,7 +281,7 @@ def _getBestCombination(rfps,pfps,output=False):
             # test for almost perfect matchings (e.g. oxidations, reduction etc.)
             if scaffoldFPScore[0] > 0.9999 and detailFPScore[0] > 0.8:
                 return finalReacts, finalNumUnmappedProdAtoms
-            # test for number of mapped product atoms e.g. to capture deprotections ealier 
+            # test for number of mapped product atoms e.g. to capture deprotections earlier
             if len(finalNumUnmappedProdAtoms) > 0 and len(test) == 1:
                 if finalNumUnmappedProdAtoms[0][1] == 0 and finalNumUnmappedProdAtoms[0][0] <= 3:
                     return finalReacts, finalNumUnmappedProdAtoms

@@ -367,7 +367,7 @@ void applyHuckelToFused(
       // check is we are done with all the atoms in the fused
       // system, if so quit. This is a fix for Issue252 REVIEW: is
       // this check sufficient or should we add an additional
-      // contraint on the the number of combinations of rings in a
+      // constraint on the number of combinations of rings in a
       // fused system that we will try. The number of combinations
       // can obviously be quite large when the number of rings in
       // the fused system is large

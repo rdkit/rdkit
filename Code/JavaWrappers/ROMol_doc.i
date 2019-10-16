@@ -60,7 +60,7 @@ Add a new conformation to the molecule.
 <p>
 @param
 conf 	- conformation to be added to the molecule, this molecule takes ownership of the conformer
-assignId 	- a unique ID will be assigned to the the conformation if true otherwise it is assumed that the conformation already has an (unique) ID set
+assignId 	- a unique ID will be assigned to the conformation if true otherwise it is assumed that the conformation already has an (unique) ID set
 
 */
 public";

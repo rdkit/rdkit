@@ -89,7 +89,7 @@ class PiddleWxDc(sping_pid.Canvas):
       font = self.defaultFont
     #  PIDDLE fonts are matched to wxFont families.  While it is possible to
     #  match them to individual fonts, this is difficult to do in a platform
-    #  independant way
+    #  independent way
     if font.face is None or font.face == 'times':
       family = wxDEFAULT
     elif font.face == 'courier' or font.face == 'monospaced':
