@@ -545,6 +545,8 @@ void forwardReactantBondStereo(ReactantProductAtomMapping *mapping, Bond *pBond,
   const Atom *rStart = rBond->getBeginAtom();
   const Atom *rEnd = rBond->getEndAtom();
   const auto rStereoAtoms = findStereoAtoms(rBond);
+  PRECONDITION(rStereoAtoms.size() == 2,
+               "stereo atoms not found for double bond");
 
   StereoBondEndCap start(reactant, rStart, rEnd, rStereoAtoms[0]);
   StereoBondEndCap end(reactant, rEnd, rStart, rStereoAtoms[1]);
