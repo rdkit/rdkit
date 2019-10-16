@@ -9,7 +9,6 @@ rdkit_headers(DistPicker.h LeaderPicker.h LeaderPicker.seq.h
               MaxMinPicker.h DEST SimDivPickers)
 
 rdkit_test(testSimDivPickers testPickers.cpp LINK_LIBRARIES SimDivPickers RDGeneral)
-rdkit_test(testLeaderPickers pickersCLI.cpp LINK_LIBRARIES SimDivPickers Fingerprints SmilesParse GraphMol DataStructs RDGeneral)
 
 rdkit_catch_test(pickersTestsCatch catch_tests.cpp
            LINK_LIBRARIES SimDivPickers DataStructs RDGeneral)
