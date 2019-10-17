@@ -34,10 +34,10 @@ std::string tdtMolSupplierClassDoc =
 \n\
     2) Lazy evaluation 2:\n\n\
        >>> suppl = TDTMolSupplier('in.smi')\n\
-       >>> mol1 = suppl.next()\n\
-       >>> mol2 = suppl.next()\n\
+       >>> mol1 = next(suppl)\n\
+       >>> mol2 = next(suppl)\n\
        >>> suppl.reset()\n\
-       >>> mol3 = suppl.next()\n\n\
+       >>> mol3 = next(suppl)\n\n\
        # mol3 and mol1 are the same:\
        >>> MolToSmiles(mol3)==MolToSmiles(mol1)\n\
 \n\
