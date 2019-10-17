@@ -116,7 +116,7 @@ class RDKIT_SIMDIVPICKERS_EXPORT LeaderPicker : public DistPicker {
   }
 };
 
-#ifdef RDK_THREADSAFE_SSS
+#ifdef USE_THREADED_LEADERPICKER
 template <typename T>
 void *LeaderPickerWork(void *arg);
 
