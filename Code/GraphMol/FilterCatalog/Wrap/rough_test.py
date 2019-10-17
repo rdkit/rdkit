@@ -540,7 +540,8 @@ class TestCase(unittest.TestCase):
     # Test with some bad input
     smiles = ['mydoghasfleas']
     results = FilterCatalog.RunFilterCatalog(fc, smiles)
-    self.assertEquals(len(results[0]), 0)
+    self.assertEquals(len(results[0]), 1)
+    self.assertEquals(results[0][0].GetDescription(), "Bad smiles");
 
 
 if __name__ == '__main__':

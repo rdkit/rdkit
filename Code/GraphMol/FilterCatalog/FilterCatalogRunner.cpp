@@ -42,6 +42,12 @@
 
 namespace RDKit {
 namespace {
+boost::shared_ptr<FilterCatalogEntry>  & makeBadSmilesEntry() {
+  static boost::shared_ptr<FilterCatalogEntry> bad_smiles(
+       new FilterCatalogEntry("Bad smiles",
+			  boost::shared_ptr<FilterMatcherBase>()));
+  return bad_smiles;
+}
 void CatalogSearcher(const FilterCatalog &fc,
 		     const std::vector<std::string> &smiles,
 		     std::vector<std::vector<FilterCatalog::CONST_SENTRY>> &results,
@@ -53,6 +59,8 @@ void CatalogSearcher(const FilterCatalog &fc,
     std::unique_ptr<ROMol> mol(SmilesToMol(smiles[idx]));
     if(mol.get()) {
       results[idx] = fc.getMatches(*mol);
+    } else {
+      results[idx].push_back( makeBadSmilesEntry() );
     }
   } 
 }
@@ -72,7 +80,7 @@ std::vector<std::vector<boost::shared_ptr<const FilterCatalogEntry>>> RunFilterC
     numThreads = std::min(numThreads, (int)getNumThreadsToUse(numThreads));
 
   std::vector<std::future<void>> thread_group;  
-  for (int thread_group_idx = 0; thread_group_idx < numThreads;
+  for (int thread_group_idx = 0; thread_group_idx < numThreads+1;
        ++thread_group_idx) {
     // need to use boost::ref otherwise things are passed by value
     thread_group.emplace_back(
