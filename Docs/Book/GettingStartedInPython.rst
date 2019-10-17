@@ -1180,15 +1180,15 @@ you set it to True then ring bonds will only match ring bonds.
   >>> rdFMCS.FindMCS(mols).smartsString
   '[#6](-[#6]-[#6])-[#6]-[#6]-[#6]-[#6]'
   >>> rdFMCS.FindMCS(mols, ringMatchesRingOnly=True).smartsString
-  '[#6](-&@[#6]-&@[#6])-&@[#6]'
+  '[#6&R](-&@[#6&R]-&@[#6&R])-&@[#6&R]'
 
-Notice that the SMARTS returned now include ring queries on the bonds.
+Notice that the SMARTS returned now include ring queries on the atoms and bonds.
 
 You can further restrict things and require that partial rings (as in
 this case) are not allowed. That is, if an atom is part of the MCS and
 the atom is in a ring of the entire molecule then that atom is also in
-a ring of the MCS. Set ``completeRingsOnly`` to True to toggle this
-requirement and also sets ringMatchesRingOnly to True.
+a ring of the MCS. Setting ``completeRingsOnly`` to True toggles this
+requirement.
 
 .. doctest::
 
@@ -1196,9 +1196,25 @@ requirement and also sets ringMatchesRingOnly to True.
   >>> rdFMCS.FindMCS(mols).smartsString
   '[#6]1-[#6]-[#6](-[#6]-1-[#6])-[#6]'
   >>> rdFMCS.FindMCS(mols, ringMatchesRingOnly=True).smartsString
-  '[#6](-&@[#6]-&@[#6]-&@[#6]-&@[#6])-&@[#6]'
+  '[#6&R](-&@[#6&R]-&@[#6&R]-&@[#6&R]-&@[#6&R])-&@[#6&R]'
   >>> rdFMCS.FindMCS(mols, completeRingsOnly=True).smartsString
   '[#6]1-&@[#6]-&@[#6]-&@[#6]-&@1'
+
+Of course the two options can be combined with each other:
+
+.. doctest::
+
+  >>> ms = [Chem.MolFromSmiles(x) for x in ('CC1CCC1','CCC1CC1',)]                                                                                                      
+  >>> rdFMCS.FindMCS(ms,ringMatchesRingOnly=True).smartsString                                                                                                          
+  '[#6&!R]-&!@[#6&R](-&@[#6&R])-&@[#6&R]'
+  >>> rdFMCS.FindMCS(ms,completeRingsOnly=True).smartsString                                                                                                            
+  '[#6]-&!@[#6]'
+  >>> rdFMCS.FindMCS(ms,ringMatchesRingOnly=True,completeRingsOnly=True).smartsString                                                                                   
+  '[#6&!R]-&!@[#6&R]'
+
+
+
+
 
 The MCS algorithm will exhaustively search for a maximum common substructure.
 Typically this takes a fraction of a second, but for some comparisons this

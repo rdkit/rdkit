@@ -30,6 +30,8 @@
   that they more closely resemble the original fingerprinting code. In
   particular most fingerprinters no longer do count simulation by default and
   the RDKit fingerprint now sets two bits per feature by default.
+- The SMARTS generated for MCS results using the ringMatchesRingOnly or
+  completeRingsOnly options now includes ring-membership queries.
 
 ## Highlights:
 

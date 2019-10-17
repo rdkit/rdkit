@@ -1374,6 +1374,39 @@ void testGithub2662() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testGithub2714() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github #2714"
+                       << std::endl;
+
+  {
+    std::vector<ROMOL_SPTR> mols;
+    const char* smi[] = {"CC1CCC1", "CCC1CC1"};
+
+    for (auto& i : smi) {
+      auto m = SmilesToMol(getSmilesOnly(i));
+      TEST_ASSERT(m);
+
+      mols.push_back(ROMOL_SPTR(m));
+    }
+    MCSParameters p;
+    p.BondCompareParameters.CompleteRingsOnly = true;
+    p.BondCompareParameters.RingMatchesRingOnly = true;
+    p.AtomCompareParameters.RingMatchesRingOnly = true;
+    MCSResult res = findMCS(mols, &p);
+    std::cerr << "MCS: " << res.SmartsString << " " << res.NumAtoms
+              << " atoms, " << res.NumBonds << " bonds\n"
+              << std::endl;
+    TEST_ASSERT(res.NumAtoms == 2);
+    TEST_ASSERT(res.NumBonds == 1);
+    TEST_ASSERT(res.SmartsString == "[#6&!R]-&!@[#6&R]");
+  }
+
+  BOOST_LOG(rdInfoLog) << "============================================"
+                       << std::endl;
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 //====================================================================================================
 //====================================================================================================
 
@@ -1441,6 +1474,7 @@ int main(int argc, const char* argv[]) {
   testGithub2420();
   testGithub2663();
   testGithub2662();
+  testGithub2714();
 
   unsigned long long t1 = nanoClock();
   double sec = double(t1 - T0) / 1000000.;
