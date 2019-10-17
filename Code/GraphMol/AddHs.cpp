@@ -721,6 +721,10 @@ void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
               oBond->setBondDir(bond->getBondDir());
             }
           }
+          // if this atom is one of the stereoatoms for a double bond we need
+          // to switch the stereo atom on this end to be the other neighbor
+          // This was part of github #1810
+          adjustStereoAtomsIfRequired(mol, atom, heavyAtom);
         } else {
           // if this atom is one of the stereoatoms for a double bond we need
           // to switch the stereo atom on this end to be the other neighbor
