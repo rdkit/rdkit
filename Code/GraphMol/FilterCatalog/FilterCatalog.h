@@ -114,17 +114,9 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalog : public FCatalog {
   // syntactic sugar for getMatch(es) return values.
   typedef boost::shared_ptr<FilterCatalogEntry> SENTRY;
 
-#if BOOST_VERSION / 100000 >= 1 && (BOOST_VERSION / 100 % 1000) > 44
-#define BOOST_PYTHON_SUPPORT_SHARED_CONST
-#endif
-
-#ifdef BOOST_PYTHON_SUPPORT_SHARED_CONST
   // If boost::python can support shared_ptr of const objects
   //  we can enable support for this feature
   typedef boost::shared_ptr<const entryType_t> CONST_SENTRY;
-#else
-  typedef boost::shared_ptr<entryType_t> CONST_SENTRY;
-#endif
 
   FilterCatalog() : FCatalog(), d_entries() {}
 
@@ -250,13 +242,13 @@ RDKIT_FILTERCATALOG_EXPORT bool FilterCatalogCanSerialize();
 //! Run a filter catalog on a set of smiles strings
 /*
   \param smiles vector of smiles strings to analyze
-  \param nthreads specify the number of threads to use, -1 is use all processors
-                         [default -1]
+  \param nthreads specify the number of threads to use or specify 0 to use all processors
+                         [default 1]
   \returns a vector of shared_ptr::FilterMatchEntries, null entries matched
      no filters
 */
 RDKIT_FILTERCATALOG_EXPORT
-std::vector<std::vector<FilterCatalog::CONST_SENTRY>> RunFilterCatalog(
+std::vector<std::vector<boost::shared_ptr<const FilterCatalogEntry>>> RunFilterCatalog(
               const FilterCatalog &filterCatalog,
 	      const std::vector<std::string> &smiles,
 	      int numThreads=-1);

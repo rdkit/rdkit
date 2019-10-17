@@ -58,7 +58,7 @@ void CatalogSearcher(const FilterCatalog &fc,
 }
 }
   
-std::vector<std::vector<FilterCatalog::CONST_SENTRY>> RunFilterCatalog(
+std::vector<std::vector<boost::shared_ptr<const FilterCatalogEntry>>> RunFilterCatalog(
               const FilterCatalog &fc,
 	      const std::vector<std::string> &smiles,
 	      int numThreads) {
