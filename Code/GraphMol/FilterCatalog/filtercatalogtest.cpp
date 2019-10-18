@@ -248,8 +248,9 @@ void testFilterCatalogThreadedRunner() {
       count += 1;
     }
     TEST_ASSERT(smiles.size() == 3);
-    
-    auto results = RunFilterCatalog(catalog, smiles);
+
+    int numThreads = 3;  // one per entry
+    auto results = RunFilterCatalog(catalog, smiles, numThreads);
     TEST_ASSERT(results.size() == smiles.size());
     count=0;
     for(auto &entries : results) {
