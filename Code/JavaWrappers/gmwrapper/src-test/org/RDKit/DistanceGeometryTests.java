@@ -493,14 +493,12 @@ public class DistanceGeometryTests extends GraphMolTest {
     double ssd;
 		ssd = test.alignMol(ref);
 		assertTrue(ssd < 0.1);
-		System.out.println(" ssd1: "+ssd);
     // make sure we didn't change the global params
 	EmbedParameters eps2 = RDKFuncs.getETKDG();
 		assertEquals(eps2.getRandomSeed(),-1);
 		cid = DistanceGeom.EmbedMolecule(test,eps2);
 		assertTrue(cid>-1);
 		ssd = test.alignMol(ref);
-		System.out.println(" ssd2: "+ssd+" seed: "+eps2.getRandomSeed());
 		assertTrue(ssd > 0.1);
 
 	}
