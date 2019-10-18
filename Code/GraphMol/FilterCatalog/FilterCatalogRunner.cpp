@@ -22,7 +22,7 @@ namespace RDKit {
 namespace {
 boost::shared_ptr<FilterCatalogEntry>  & makeBadSmilesEntry() {
   static boost::shared_ptr<FilterCatalogEntry> bad_smiles(
-       new FilterCatalogEntry("Bad smiles",
+       new FilterCatalogEntry("no valid RDKit molecule",
 			  boost::shared_ptr<FilterMatcherBase>()));
   return bad_smiles;
 }
