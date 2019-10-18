@@ -282,7 +282,7 @@ SELECT mol_to_svg('CCO'::mol) svg;
                        xmlns:rdkit='http://www.rdkit.org/xml'                                                                                                                                       +
                        xmlns:xlink='http://www.w3.org/1999/xlink'                                                                                                                                   +
                    xml:space='preserve'                                                                                                                                                             +
- width='250px' height='200px' >                                                                                                                                                                     +
+ width='250px' height='200px' viewBox='0 0 250 200'>                                                                                                                                                +
  <!-- END OF HEADER -->                                                                                                                                                                             +
  <rect style='opacity:1.0;fill:#FFFFFF;stroke:none' width='250' height='200' x='0' y='0'> </rect>                                                                                                   +
  <path class='bond-0' d='M 11.3636,124.362 L 95.7545,75.6385' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />     +
@@ -302,7 +302,7 @@ SELECT mol_to_svg('CCO'::mol,'legend') svg;
                        xmlns:rdkit='http://www.rdkit.org/xml'                                                                                                                                        +
                        xmlns:xlink='http://www.w3.org/1999/xlink'                                                                                                                                    +
                    xml:space='preserve'                                                                                                                                                              +
- width='250px' height='200px' >                                                                                                                                                                      +
+ width='250px' height='200px' viewBox='0 0 250 200'>                                                                                                                                                 +
  <!-- END OF HEADER -->                                                                                                                                                                              +
  <rect style='opacity:1.0;fill:#FFFFFF;stroke:none' width='250' height='200' x='0' y='0'> </rect>                                                                                                    +
  <path class='bond-0' d='M 11.3636,124.362 L 95.7545,75.6385' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />      +
@@ -324,7 +324,7 @@ SELECT mol_to_svg('CCO'::mol,'legend',250,200,
                        xmlns:rdkit='http://www.rdkit.org/xml'                                                                                                                                         +
                        xmlns:xlink='http://www.w3.org/1999/xlink'                                                                                                                                     +
                    xml:space='preserve'                                                                                                                                                               +
- width='250px' height='200px' >                                                                                                                                                                       +
+ width='250px' height='200px' viewBox='0 0 250 200'>                                                                                                                                                  +
  <!-- END OF HEADER -->                                                                                                                                                                               +
  <rect style='opacity:1.0;fill:#FFFFFF;stroke:none' width='250' height='200' x='0' y='0'> </rect>                                                                                                     +
  <path class='bond-0' d='M 11.3636,124.362 L 83.2395,82.864' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />        +
