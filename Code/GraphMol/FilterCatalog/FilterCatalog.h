@@ -244,8 +244,11 @@ RDKIT_FILTERCATALOG_EXPORT bool FilterCatalogCanSerialize();
   \param smiles vector of smiles strings to analyze
   \param nthreads specify the number of threads to use or specify 0 to use all processors
                          [default 1]
-  \returns a vector of shared_ptr::FilterMatchEntries, null entries matched
-     no filters
+  \returns a vector of vectors.  For each input smiles string, returns
+                   a vector of shared_ptr::FilterMatchEntry objects.
+                   If a molecule matches no filters, the vector will be empty.
+                   If a smiles can't be parsed, a 'Bad smiles' catalog entry is returned.
+
 */
 RDKIT_FILTERCATALOG_EXPORT
 std::vector<std::vector<boost::shared_ptr<const FilterCatalogEntry>>> RunFilterCatalog(

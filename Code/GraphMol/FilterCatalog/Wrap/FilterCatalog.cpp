@@ -525,7 +525,10 @@ struct filtercat_wrapper {
 		(python::arg("filterCatalog"),
 		 python::arg("smiles"),
 		 python::arg("numThreads") = 1),
-                "Run the filter catalog on the input list of smiles strings.\nUse numThreads=0 to use all available processors.");
+                "Run the filter catalog on the input list of smiles strings.\nUse numThreads=0 to use all available processors. "
+		"Returns a vector of vectors.  For each input smiles, a vector of FilterCatalogEntry objects are "
+		"returned for each matched filter.  If a molecule matches no filter, the vector will be empty. "
+		"If a smiles string can't be parsed, a 'Bad smiles' entry is returned.");
 
     std::string nested_name = python::extract<std::string>(
         python::scope().attr("__name__") + ".FilterMatchOps");
