@@ -15,7 +15,7 @@
   and Java/C# code that is using DrawColour.
 - When reading Mol blocks, atoms with the symbol "R" are now converted into
   queries that match any atom when doing a substructure search (analogous to "*"
-  in SMARTS). The previous behavior was to only match other dummy atoms/
+  in SMARTS). The previous behavior was to only match other dummy atoms
 - When loading SDF files using PandasTools.LoadSDF(), we now default to
   producing isomeric smiles in pandas tables.  To reproduce the original
   behavior, use isomericSmiles=False in the call to the function.
@@ -36,10 +36,279 @@
 ## Highlights:
 
 ## Acknowledgements:
+Patricia Bento, Francois Berenger, Jason Biggs, David Cosgrove, Andrew Dalke,
+Thomas Duigou, Eloy Felix, Guillaume Godin, Lester Hedges, Anne Hersey,
+Christoph Hillisch, Christopher Ing, Jan Holst Jensen, Gareth Jones, Eisuke
+Kawashima, Brian Kelley, Alan Kerstjens, Karl Leswing, Pat Lorton, John
+Mayfield, Mike Mazanetz, Dan Nealschneider, Noel O'Boyle, Stephen Roughley,
+Roger Sayle, Ricardo Rodriguez Schmidt, Paula Schmiel, Peter St. John, Matt
+Swain, Amol Thakkar Paolo Tosco, Ricardo Vianello, Marc Wittke,  
+'7FeiW', 'c56pony', 'msteijaert', 'sirbiscuit' 
+
 
 ## Bug Fixes:
+  - MCS returning partial rings with completeRingsOnly=True 
+ (github issue #945 from greglandrum)
+  - Alternating canonical SMILES for fused ring with N
+ (github issue #1028 from greglandrum)
+  - Atom index out of range error
+ (github issue #1868 from A-Thakkar)
+  - Incorrect cis/trans stereo symbol for conjugated ring
+ (github issue #2023 from baoilleach)
+  - Hardcoded max length of SMARTs string cut of input query for FragCatlog
+ (github issue #2163 from 7FeiW)
+  - VSA_EState {1, ..., 10} calculated by rdkit doesn't seem correct.
+ (github issue #2372 from c56pony)
+  - MolStandardize: FragmentRemover should not sanitize fragments
+ (github issue #2411 from greglandrum)
+  - MolStandardize: combinatorial explosion in Normalizer
+ (github issue #2414 from greglandrum)
+  - MCS code doesn't return envelope MCS if CompleteRingsOnly is true
+ (github issue #2420 from greglandrum)
+  - RemoveHs() does not remove all hydrogens.
+ (github issue #2422 from paulaju)
+  - Incorrect assignment of explicit Hs to Al+3 read from mol block
+ (github issue #2423 from greglandrum)
+  - Cannot set maxProducts > 1000 in RunReactants
+ (github issue #2427 from tduigou)
+  - Chem.MolStandardize.standardize.Standardizer drops molecular properties
+ (github pull #2431 from lilleswing)
+  - Canon::rankMolAtoms results in crossed double bonds in rings
+ (github issue #2437 from greglandrum)
+  - make boost::iostreams optional
+ (github pull #2440 from greglandrum)
+  - Fix/rgroup sdf isotope
+ (github pull #2449 from bp-kelley)
+  - Uncharger incorrectly removing charge from boron anions
+ (github issue #2452 from greglandrum)
+  - Add java builds to azure devops
+ (github pull #2460 from greglandrum)
+  - Cart fixes
+ (github pull #2462 from jones-gareth)
+  - Negative atom map values cause depickling to fail
+ (github issue #2465 from greglandrum)
+  - Deserialization failures crash Java wrapper
+ (github issue #2466 from greglandrum)
+  - rdkit.six fix and cleanup
+ (github pull #2469 from rvianello)
+  - dummy atom queries are flagged as complex
+ (github issue #2471 from greglandrum)
+  - 3D structure display broken in jupyter notebook
+ (github issue #2473 from greglandrum)
+  - Inconsistent defaults for nonBondedThresh in MMFF optimization
+ (github issue #2475 from greglandrum)
+  - Fix/rgroup multiple labels
+ (github pull #2481 from bp-kelley)
+  - 2D Depiction clipped atom highlighting
+ (github issue #2486 from DavidACosgrove)
+  - BRICSBuild now passes scrambleReagents to children
+ (github pull #2488 from greglandrum)
+  - Pattern Fingerprint Issues
+ (github issue #2501 from jones-gareth)
+  - CMake Error: Wrap directories being used when python build is turned off
+ (github issue #2516 from jasondbiggs)
+  - - fixes ResonanceMolSupplier bug in perceiving conjugated groups
+ (github pull #2517 from ptosco)
+  - Fix/mmff threadsafety issues
+ (github pull #2518 from bp-kelley)
+  - update expected SVG output in cartridge tests
+ (github pull #2520 from greglandrum)
+  - fix to SDWriter docs
+ (github pull #2521 from pstjohn)
+  - Fix the azure pipelines builds
+ (github pull #2522 from greglandrum)
+  - Code cleanups from PVS/Studio
+ (github pull #2531 from greglandrum)
+  - getAtomNeighbors() and getAtomBonds() not in SWIG wrappers.
+ (github issue #2532 from greglandrum)
+  - Default sanitizerxn doesn't aromatize if possible
+ (github issue #2547 from bp-kelley)
+  - Add RDKIT_FILEPARSERS_EXPORT to finishMolProcessing
+ (github pull #2551 from d-b-w)
+  - Chem.rdFMCS.FindMCS hangs for certain ligand pairs
+ (github issue #2581 from lohedges)
+  - fix the inclusion path for the targets file (#2584)
+ (github pull #2589 from rvianello)
+  - Fix inocuous typo/bug in Dative bond matching
+ (github pull #2593 from ricrogz)
+  - E/Z and CIS/TRANS stereo bonds are incorrectly matched
+ (github pull #2596 from ricrogz)
+  - Uncharger ignores dications
+ (github issue #2602 from greglandrum)
+  - Possible Garbage Collection Bug in Pharmacophore Generation
+ (github issue #2603 from cing)
+  - Uncharger incorrectly neutralizes cations when non-neutralizable anions are present.
+ (github issue #2605 from greglandrum)
+  - Bad valence corrections on Pb, Sn
+ (github issue #2606 from greglandrum)
+  - Pb and Sn should support valence 2
+ (github issue #2607 from greglandrum)
+  - Uncharger incorrectly modifying a zwitterion
+ (github issue #2610 from greglandrum)
+  - CanonicalRankAtomsInFragment breakTies doesn't
+ (github issue #2611 from bp-kelley)
+  - Pattern fingerprint failing substructure condition in very large molecules
+ (github issue #2614 from greglandrum)
+  - Memory leak with Chem.Atom() constructor
+ (github issue #2639 from AlanKerstjens)
+  - Fixes: Atoms in non-standard valences not being properly written to mol blocks
+ (github pull #2646 from greglandrum)
+  - C++ MCS code returns a null MCS between methylcyclopentane and methylcyclohexane
+ (github issue #2662 from ptosco)
+  - CXSMILES writer has error if mol comes from v3000 molfile
+ (github issue #2666 from d-b-w)
+  - MolToCXSmiles generates error for empty molecule
+ (github issue #2667 from greglandrum)
+  - fix a problem with normalize, ringinfo, and fragments
+ (github pull #2685 from greglandrum)
+  - Error when a squiggle bond is in an aromatic ring
+ (github issue #2695 from greglandrum)
+  - Cannot combine multiple range queries on a single atom.
+ (github issue #2709 from greglandrum)
+  - setBondStereoFromDirections() returning incorrect results.
+ (github issue #2712 from greglandrum)
+  - update supplier documentation to reflect python 3 iterator syntax
+ (github pull #2719 from greglandrum)
+  - removeHs messing up double bond stereo in partially sanitized molecules
+ (github issue #2721 from greglandrum)
+  - seg fault in ReactionRunner
+ (github issue #2722 from greglandrum)
 
 ## New Features and Enhancements:
+  - Added rankAtoms to ROMol wrapper and added Java test case
+ (github pull #1540 from sroughley)
+  - Use van der Waals radii from blue obelisk
+ (github pull #2154 from UnixJunkie)
+  - add generateDepictionMatching2DStructure() to SWIG wrappers
+ (github issue #2239 from greglandrum)
+  - Added OptimizeMoleculeConfs with pre-generated force-field
+ (github pull #2401 from ptosco)
+  - FreeSASA improvements
+ (github pull #2402 from ptosco)
+  - Speed up symmetrizeSSSR
+ (github issue #2403 from d-b-w)
+  - Trim whitespace from mol fragment SMARTS and check SMARTS presence
+ (github pull #2406 from ricrogz)
+  - Run clang-tidy over the entire codebase
+ (github pull #2408 from greglandrum)
+  - Enable Azure Pipelines builds for CI
+ (github pull #2409 from ricrogz)
+  - Add RDProps interface to Conformers
+ (github issue #2441 from greglandrum)
+  - Add minimal JavaScript wrapper
+ (github pull #2444 from greglandrum)
+  - Fixes annoying warnings on MSVC
+ (github pull #2454 from ptosco)
+  - add prepareMolsBeforeDrawing option for drawMols 
+ (github pull #2455 from greglandrum)
+  - computeGasteigerCharges quality of life improvement for python api
+ (github issue #2480 from bp-kelley)
+  - Preserve bond direction in fragmentOnBonds
+ (github pull #2484 from greglandrum)
+  - SanitizeRxn code and docstring cleanup
+ (github pull #2491 from greglandrum)
+  - Support XYZ format for output
+ (github pull #2498 from e-kwsm)
+  - vf2 optimisations
+ (github pull #2500 from johnmay)
+  - Python wrap enhanced stereo setters
+ (github pull #2509 from d-b-w)
+  - Fix the azure pipelines builds
+ (github pull #2522 from greglandrum)
+  - add a script for benchmarking fingerprint screenout and substructure performance
+ (github pull #2523 from greglandrum)
+  - make "R" in CTABs an AtomNull query
+ (github pull #2528 from greglandrum)
+  - Expose SDF loading options to LoadSDF
+ (github pull #2534 from bp-kelley)
+  - Remove unused ctest: testCanon
+ (github pull #2541 from ricrogz)
+  - Update maeparser and coordgen versions
+ (github pull #2542 from ricrogz)
+  - Improved handling of bond stereo in reactions
+ (github pull #2553 from ricrogz)
+  - Code simplification for fingerprints to np array
+ (github pull #2557 from ChrisHill8)
+  - Integrate Unique Ring Families from RingDecomposerLib 
+ (github pull #2558 from greglandrum)
+  - Allow providing a bounds matrix to EmbedMol
+ (github pull #2560 from greglandrum)
+  - Enable SimilarityMaps in C++
+ (github pull #2562 from greglandrum)
+  - Do not run UnitTestMCS.py::TestTimeout in debug builds
+ (github pull #2569 from ricrogz)
+  - Expose more drawing methods to Python
+ (github issue #2571 from greglandrum)
+  - Allow Point2D to be constructed from Point3D
+ (github pull #2572 from greglandrum)
+  - Allows dative bonds to be drawn
+ (github pull #2573 from greglandrum)
+  - Allow identification of chemistry problems
+ (github pull #2587 from greglandrum)
+  - Adds MolFragmentToSmarts to generate smarts for a subset of a Molecule
+ (github pull #2594 from d-b-w)
+  - Removal of redundant wildcards in SMARTS (Null Atom/Bond Query combination)
+ (github pull #2595 from ricrogz)
+  - Support range-based charge queries from SMARTS
+ (github issue #2604 from greglandrum)
+  - Keep PDB info from Maestro files if available
+ (github pull #2619 from lorton)
+  - optimization of the MolStandardize code
+ (github pull #2621 from greglandrum)
+  - Assign stereo bond labels in molecules read from SMARTS
+ (github pull #2623 from ricrogz)
+  - Automatically load the ipython extensions running in Jupyter
+ (github pull #2626 from bp-kelley)
+  - draw zero-order bonds
+ (github pull #2630 from greglandrum)
+  - Updated cartridge documentation
+ (github pull #2635 from msteijaert)
+  - Add new mol hashing code
+ (github pull #2636 from greglandrum)
+  - emolecules link updated
+ (github pull #2638 from marcwittke)
+  - Update maeparser to 1.2.1 and coorgen to 1.3.1
+ (github pull #2652 from ricrogz)
+  - Get numpy include dir programmatically
+ (github pull #2653 from sirbiscuit)
+ - Fix long columns pandas
+ (github pull #2655 from sirbiscuit)
+  - Added AtomComparator.AtomCompareAnyHeavyAtom and test cases to FMCS code
+ (github pull #2656 from sroughley)
+  - The C++ MCS code generates ambiguous SMARTS strings
+ (github issue #2663 from ptosco)
+  - add bond-selector info to SVGs
+ (github pull #2664 from greglandrum)
+  - support writing CXSMILES from the cartridge
+ (github issue #2668 from greglandrum)
+  - support the new hashing code in the cartridge
+ (github pull #2671 from greglandrum)
+  - Adds additional capabilities to the minimal JS wrapper
+ (github pull #2676 from greglandrum)
+  - Add MolHash to Java Wrappers
+ (github issue #2677 from sroughley)
+  - A bunch of changes to the new fingerprinter code
+ (github pull #2679 from greglandrum)
+  - Add viewBox to default SVG output
+ (github issue #2680 from bp-kelley)
+  - Allow Java to see RGroup labels in the std::map wrapper.
+ (github pull #2681 from bp-kelley)
+  - Update maeparser to v1.2.2.
+ (github pull #2682 from ricrogz)
+  - Update coordgen to v1.3.2
+ (github pull #2686 from ricrogz)
+  - Add a drawOptions object to IPythonConsole
+ (github pull #2691 from greglandrum)
+  - [WIP] Make StructureGroups editable from Python
+ (github pull #2692 from greglandrum)
+  - Update documentation
+ (github pull #2697 from greglandrum)
+  - Make removeHydrogensPostMatch=true the default for RGD
+ (github pull #2701 from greglandrum)
+  - Eat our own dogfood, Clone is deprecated so use copy
+ (github pull #2711 from bp-kelley)
+  - The MCS smartsString may still be ambiguous
+ (github issue #2714 from ptosco)
 
 ## Deprecated code (to be removed in a future release):
 
@@ -47,8 +316,6 @@
   a more flexible alternative. Specifically the following pieces will be removed in a future release:
   - The python functionality `rdkit.Chem.rdMolHash.GenerateMoleculeHashString()`
   - The C++ functionality directly present in the header file `GraphMol/MolHash/MolHash.h`
-
-
 
 
 # Release_2019.03.1
