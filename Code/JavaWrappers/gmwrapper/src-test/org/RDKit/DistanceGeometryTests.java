@@ -483,6 +483,10 @@ public class DistanceGeometryTests extends GraphMolTest {
     assertTrue(test.getNumAtoms()==ref.getNumAtoms());
 
 	// basic embedding works:
+        // The default random seed is 42, but we don't want to start at the beginning
+        //  of the random source stream since this is also our explicit seed, so
+        //  ensure that we don't, otherwise we can't tell if we are really
+        //  using the seed specified in the parameter object.
 	int cid = DistanceGeom.EmbedMolecule(test);
     assertTrue(cid>-1);
 
