@@ -29,9 +29,10 @@ void SetMCSAtomTyper(MCSParameters &p, AtomComparator atomComp) {
       break;
     case AtomCompareAnyHeavyAtom:
       p.AtomTyper = MCSAtomCompareAnyHeavyAtom;
-	  break;
+      break;
   }
 }
+
 void SetMCSBondTyper(MCSParameters &p, BondComparator bondComp) {
   switch (bondComp) {
     case BondCompareAny:
@@ -51,7 +52,7 @@ MCSResult *FindMCSWrapper(python::object mols, bool maximizeBonds,
                           bool matchValences, bool ringMatchesRingOnly,
                           bool completeRingsOnly, bool matchChiralTag,
                           AtomComparator atomComp, BondComparator bondComp,
-                          std::string seedSmarts) {
+                          RingComparator ringComp, std::string seedSmarts) {
   std::vector<ROMOL_SPTR> ms;
   unsigned int nElems = python::extract<unsigned int>(mols.attr("__len__")());
   ms.resize(nElems);
@@ -72,6 +73,8 @@ MCSResult *FindMCSWrapper(python::object mols, bool maximizeBonds,
   SetMCSBondTyper(p, bondComp);
   p.BondCompareParameters.RingMatchesRingOnly = ringMatchesRingOnly;
   p.BondCompareParameters.CompleteRingsOnly = completeRingsOnly;
+  p.BondCompareParameters.MatchFusedRings = (ringComp != IgnoreRingFusion);
+  p.BondCompareParameters.MatchFusedRingsStrict = (ringComp == StrictRingFusion);
 
   MCSResult *res = nullptr;
   {
@@ -129,6 +132,10 @@ BOOST_PYTHON_MODULE(rdFMCS) {
       .value("CompareAny", RDKit::BondCompareAny)
       .value("CompareOrder", RDKit::BondCompareOrder)
       .value("CompareOrderExact", RDKit::BondCompareOrderExact);
+  python::enum_<RDKit::RingComparator>("RingCompare")
+      .value("IgnoreRingFusion", RDKit::IgnoreRingFusion)
+      .value("PermissiveRingFusion", RDKit::PermissiveRingFusion)
+      .value("StrictRingFusion", RDKit::StrictRingFusion);
 
   std::string docString = "Find the MCS for a set of molecules";
   python::def(
@@ -141,6 +148,7 @@ BOOST_PYTHON_MODULE(rdFMCS) {
        python::arg("matchChiralTag") = false,
        python::arg("atomCompare") = RDKit::AtomCompareElements,
        python::arg("bondCompare") = RDKit::BondCompareOrder,
+       python::arg("ringCompare") = RDKit::IgnoreRingFusion,
        python::arg("seedSmarts") = ""),
       python::return_value_policy<python::manage_new_object>(),
       docString.c_str());
@@ -203,6 +211,16 @@ BOOST_PYTHON_MODULE(rdFMCS) {
       .def_readwrite("CompleteRingsOnly",
                      &RDKit::MCSBondCompareParameters::CompleteRingsOnly,
                      "results cannot include partial rings")
+      .def_readwrite("MatchFusedRings",
+                     &RDKit::MCSBondCompareParameters::MatchFusedRings,
+                     "enforce check on ring fusion, i.e. alpha-methylnaphthalene "
+                     "won't match beta-methylnaphtalene, but decalin "
+                     "will match cyclodecane unless MatchFusedRingsStrict is True")
+      .def_readwrite("MatchFusedRingsStrict",
+                     &RDKit::MCSBondCompareParameters::MatchFusedRingsStrict,
+                     "only enforced if MatchFusedRings is True; the ring fusion "
+                     "must be the same in both query and target, i.e. decalin "
+                     "won't match cyclodecane")
       .def_readwrite("MatchStereo",
                      &RDKit::MCSBondCompareParameters::MatchStereo,
                      "include bond stereo in the comparison");

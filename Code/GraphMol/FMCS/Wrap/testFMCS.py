@@ -128,6 +128,16 @@ class TestCase(unittest.TestCase):
         self.assertEqual(mcs.numAtoms, 3)
         self.assertEqual(mcs.smartsString, '[#6]-&!@[#6]-&!@[#6]')
 
+        mcs = rdFMCS.FindMCS(ms, ringCompare=rdFMCS.RingCompare.PermissiveRingFusion)
+        self.assertEqual(mcs.numBonds, 2)
+        self.assertEqual(mcs.numAtoms, 3)
+        self.assertEqual(mcs.smartsString, '[#6]-&!@[#6]-&!@[#6]')
+
+        mcs = rdFMCS.FindMCS(ms, ringCompare=rdFMCS.RingCompare.StrictRingFusion)
+        self.assertEqual(mcs.numBonds, 2)
+        self.assertEqual(mcs.numAtoms, 3)
+        self.assertEqual(mcs.smartsString, '[#6]-&!@[#6]-&!@[#6]')
+
         mcs = rdFMCS.FindMCS(ms, ringMatchesRingOnly=True)
         self.assertEqual(mcs.numBonds, 1)
         self.assertEqual(mcs.numAtoms, 2)
@@ -146,6 +156,16 @@ class TestCase(unittest.TestCase):
         self.assertEqual(mcs.smartsString, '[#6]-&!@[#6]')
 
         mcs = rdFMCS.FindMCS(ms, ringMatchesRingOnly=True, completeRingsOnly=True)
+        self.assertEqual(mcs.numBonds, 1)
+        self.assertEqual(mcs.numAtoms, 2)
+        self.assertEqual(mcs.smartsString, '[#6&!R]-&!@[#6&R]')
+
+        mcs = rdFMCS.FindMCS(ms, ringMatchesRingOnly=True, ringCompare=rdFMCS.RingCompare.PermissiveRingFusion)
+        self.assertEqual(mcs.numBonds, 1)
+        self.assertEqual(mcs.numAtoms, 2)
+        self.assertEqual(mcs.smartsString, '[#6&!R]-&!@[#6&R]')
+
+        mcs = rdFMCS.FindMCS(ms, ringMatchesRingOnly=True, ringCompare=rdFMCS.RingCompare.StrictRingFusion)
         self.assertEqual(mcs.numBonds, 1)
         self.assertEqual(mcs.numAtoms, 2)
         self.assertEqual(mcs.smartsString, '[#6&!R]-&!@[#6&R]')
@@ -199,7 +219,7 @@ class TestCase(unittest.TestCase):
 
         for m in ms:
             self.assertTrue(m.HasSubstructMatch(qm))
-        
+
     def test6MatchValences(self):
         ms = (Chem.MolFromSmiles('NC1OC1'), Chem.MolFromSmiles('C1OC1[N+](=O)[O-]'))
         mcs = rdFMCS.FindMCS(ms)
@@ -228,6 +248,16 @@ class TestCase(unittest.TestCase):
 
         ps = rdFMCS.MCSParameters()
         ps.BondCompareParameters.CompleteRingsOnly = True
+        mcs = rdFMCS.FindMCS(ms, ps)
+        self.assertEqual(mcs.numAtoms, 3)
+
+        ps = rdFMCS.MCSParameters()
+        ps.BondCompareParameters.MatchFusedRings = True
+        mcs = rdFMCS.FindMCS(ms, ps)
+        self.assertEqual(mcs.numAtoms, 3)
+
+        ps = rdFMCS.MCSParameters()
+        ps.BondCompareParameters.MatchFusedRingsStrict = True
         mcs = rdFMCS.FindMCS(ms, ps)
         self.assertEqual(mcs.numAtoms, 3)
 
