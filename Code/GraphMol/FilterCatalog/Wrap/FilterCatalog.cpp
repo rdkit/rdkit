@@ -404,8 +404,10 @@ struct filtercat_wrapper {
     python::class_<std::vector<RDKit::ROMol *> >("MolList").def(
         python::vector_indexing_suite<std::vector<ROMol *>, true>());
 
-    python::class_<FilterCatalogEntry, FilterCatalogEntry *,
-                   const FilterCatalogEntry *>(
+    python::class_<FilterCatalogEntry,
+		   FilterCatalogEntry *,
+                   const FilterCatalogEntry *,
+		   boost::shared_ptr<const FilterCatalogEntry>>(
         "FilterCatalogEntry", FilterCatalogEntryDoc, python::init<>())
         .def(python::init<const std::string &, FilterMatcherBase &>())
         .def("IsValid", &FilterCatalogEntry::isValid)
@@ -434,7 +436,8 @@ struct filtercat_wrapper {
         .def("ClearProp", (void (FilterCatalogEntry::*)(const std::string &)) &
                               FilterCatalogEntry::clearProp);
 
-    python::register_ptr_to_python<boost::shared_ptr<FilterCatalogEntry> >();
+    python::register_ptr_to_python<boost::shared_ptr<FilterCatalogEntry> >();    
+    python::register_ptr_to_python<boost::shared_ptr<const FilterCatalogEntry> >();
     python::def(
         "GetFunctionalGroupHierarchy", GetFunctionalGroupHierarchy,
         "Returns the functional group hierarchy filter catalog",
@@ -446,21 +449,20 @@ struct filtercat_wrapper {
         "Returns the flattened functional group hierarchy as a dictionary "
         " of name:ROMOL_SPTR substructure items");
 
-#ifdef BOOST_PYTHON_SUPPORT_SHARED_CONST
     python::register_ptr_to_python<
         boost::shared_ptr<const FilterCatalogEntry> >();
-    python::class_<std::vector<boost::shared_ptr<const FilterCatalogEntry> > >(
+    python::class_<std::vector<boost::shared_ptr<FilterCatalogEntry const> > >(
         "FilterCatalogEntryList")
         .def(python::vector_indexing_suite<
-             std::vector<boost::shared_ptr<const FilterCatalogEntry> >,
+             std::vector<boost::shared_ptr<FilterCatalogEntry const> >,
              true>());
-
-#else
-    python::class_<std::vector<boost::shared_ptr<FilterCatalogEntry> > >(
-        "FilterCatalogEntryList")
-        .def(python::vector_indexing_suite<
-             std::vector<boost::shared_ptr<FilterCatalogEntry> >, true>());
-#endif
+    
+    python::class_<
+      std::vector<
+	std::vector<boost::shared_ptr<FilterCatalogEntry const>>>>(
+			   "FilterCatalogListOfEntryList")
+      .def(python::vector_indexing_suite<
+	   std::vector<std::vector<boost::shared_ptr<FilterCatalogEntry const> > > >());
 
     {
       python::scope in_FilterCatalogParams =
@@ -518,6 +520,15 @@ struct filtercat_wrapper {
     python::def("FilterCatalogCanSerialize", FilterCatalogCanSerialize,
                 "Returns True if the FilterCatalog is serializable "
                 "(requires boost serialization");
+    
+    python::def("RunFilterCatalog", RunFilterCatalog,
+		(python::arg("filterCatalog"),
+		 python::arg("smiles"),
+		 python::arg("numThreads") = 1),
+                "Run the filter catalog on the input list of smiles strings.\nUse numThreads=0 to use all available processors. "
+		"Returns a vector of vectors.  For each input smiles, a vector of FilterCatalogEntry objects are "
+		"returned for each matched filter.  If a molecule matches no filter, the vector will be empty. "
+		"If a smiles string can't be parsed, a 'Bad smiles' entry is returned.");
 
     std::string nested_name = python::extract<std::string>(
         python::scope().attr("__name__") + ".FilterMatchOps");
@@ -537,6 +548,8 @@ struct filtercat_wrapper {
     python::class_<FilterMatchOps::Not, FilterMatchOps::Not *,
                    python::bases<FilterMatcherBase> >(
         "Not", python::init<FilterMatcherBase &>());
+
+    
   };
 };
 

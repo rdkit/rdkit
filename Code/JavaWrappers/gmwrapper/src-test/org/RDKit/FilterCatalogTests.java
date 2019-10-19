@@ -147,6 +147,18 @@ public class FilterCatalogTests extends GraphMolTest {
             
         }
 
+        @Test
+	public void testFilterCatalogRunner() {
+	    FilterCatalog catalog = new FilterCatalog(
+                FilterCatalogParams.FilterCatalogs.PAINS_A);
+            assertEquals(16, catalog.getNumEntries());
+	    Str_Vect smiles = new Str_Vect(1);
+	    smiles.set(0, "O=C(Cn1cnc2c1c(=O)n(C)c(=O)n2C)N/N=C/c1c(O)ccc2c1cccc2");
+
+	    FilterCatalogEntry_VectVect result = RDKFuncs.RunFilterCatalog(catalog, smiles);
+
+	}
+
 	public static void main(String args[]) {
 		org.junit.runner.JUnitCore.main("org.RDKit.FilterCatalogTests");
 	}

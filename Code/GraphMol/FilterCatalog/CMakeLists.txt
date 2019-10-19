@@ -28,6 +28,7 @@ rdkit_library(FilterCatalog
               Filters.cpp
               FilterCatalog.cpp
               FilterCatalogEntry.cpp
+	      FilterCatalogRunner.cpp
               FilterMatchers.cpp
               FunctionalGroupHierarchy.cpp
               LINK_LIBRARIES Subgraphs SubstructMatch SmilesParse
