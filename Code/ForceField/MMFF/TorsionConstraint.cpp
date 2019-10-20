@@ -24,128 +24,86 @@
 
 namespace ForceFields {
 namespace MMFF {
-void _pretreatDihedrals(double &minDihedralDeg, double &maxDihedralDeg) {
-  if (minDihedralDeg < 0.0) minDihedralDeg += 360.0;
-  if (maxDihedralDeg < 0.0) maxDihedralDeg += 360.0;
-  minDihedralDeg = fmod(minDihedralDeg, 360.0);
-  maxDihedralDeg = fmod(maxDihedralDeg, 360.0);
-  if (maxDihedralDeg < minDihedralDeg) maxDihedralDeg += 360.0;
+inline void checkPrecondition(const ForceField *owner, unsigned int idx1,
+    unsigned int idx2, unsigned int idx3, unsigned int idx4) {
+  PRECONDITION(owner, "bad owner");
+  URANGE_CHECK(idx1, owner->positions().size());
+  URANGE_CHECK(idx2, owner->positions().size());
+  URANGE_CHECK(idx3, owner->positions().size());
+  URANGE_CHECK(idx4, owner->positions().size());
+}
+
+double TorsionConstraintContrib::computeDihedralTerm(double dihedral) const {
+  double dihedralTarget = dihedral;
+  if (!(dihedral > d_minDihedralDeg && dihedral < d_maxDihedralDeg)
+      && !(dihedral > d_minDihedralDeg && d_minDihedralDeg > d_maxDihedralDeg)
+      && !(dihedral < d_maxDihedralDeg && d_minDihedralDeg > d_maxDihedralDeg)) {
+    double minDihedralTarget = dihedral - d_minDihedralDeg;
+    double maxDihedralTarget = dihedral - d_maxDihedralDeg;
+    RDKit::ForceFieldsHelper::normalizeAngleDeg(minDihedralTarget);
+    RDKit::ForceFieldsHelper::normalizeAngleDeg(maxDihedralTarget);
+    dihedralTarget = (fabs(minDihedralTarget) < fabs(maxDihedralTarget)
+      ? d_minDihedralDeg : d_maxDihedralDeg);
+  }
+  double dihedralTerm = dihedral - dihedralTarget;
+  RDKit::ForceFieldsHelper::normalizeAngleDeg(dihedralTerm);
+  return dihedralTerm;
+}
+
+void TorsionConstraintContrib::setParameters(ForceField *owner, unsigned int idx1,
+    unsigned int idx2, unsigned int idx3, unsigned int idx4, double minDihedralDeg,
+    double maxDihedralDeg, double forceConst) {
+  dp_forceField = owner;
+  d_at1Idx = idx1;
+  d_at2Idx = idx2;
+  d_at3Idx = idx3;
+  d_at4Idx = idx4;
+  d_minDihedralDeg = minDihedralDeg;
+  d_maxDihedralDeg = maxDihedralDeg;
+  d_forceConstant = forceConst;
 }
 
 TorsionConstraintContrib::TorsionConstraintContrib(
     ForceField *owner, unsigned int idx1, unsigned int idx2, unsigned int idx3,
     unsigned int idx4, double minDihedralDeg, double maxDihedralDeg,
     double forceConst) {
-  PRECONDITION(owner, "bad owner");
-  URANGE_CHECK(idx1, owner->positions().size());
-  URANGE_CHECK(idx2, owner->positions().size());
-  URANGE_CHECK(idx3, owner->positions().size());
-  URANGE_CHECK(idx4, owner->positions().size());
-  PRECONDITION((!(maxDihedralDeg < minDihedralDeg)) &&
-                   ((maxDihedralDeg - minDihedralDeg) < 360.0),
-               "bad bounds");
-  _pretreatDihedrals(minDihedralDeg, maxDihedralDeg);
-
-  dp_forceField = owner;
-  d_at1Idx = idx1;
-  d_at2Idx = idx2;
-  d_at3Idx = idx3;
-  d_at4Idx = idx4;
-  d_minDihedralDeg = minDihedralDeg;
-  d_maxDihedralDeg = maxDihedralDeg;
-  d_forceConstant = forceConst;
+  checkPrecondition(owner, idx1, idx2, idx3, idx4);
+  RDKit::ForceFieldsHelper::normalizeAngleDeg(minDihedralDeg);
+  RDKit::ForceFieldsHelper::normalizeAngleDeg(maxDihedralDeg);
+  setParameters(owner, idx1, idx2, idx3, idx4,
+    minDihedralDeg, maxDihedralDeg, forceConst);
 }
 
 TorsionConstraintContrib::TorsionConstraintContrib(
     ForceField *owner, unsigned int idx1, unsigned int idx2, unsigned int idx3,
     unsigned int idx4, bool relative, double minDihedralDeg,
     double maxDihedralDeg, double forceConst) {
-  PRECONDITION(owner, "bad owner");
-  const RDGeom::PointPtrVect &pos = owner->positions();
-  URANGE_CHECK(idx1, pos.size());
-  URANGE_CHECK(idx2, pos.size());
-  URANGE_CHECK(idx3, pos.size());
-  URANGE_CHECK(idx4, pos.size());
-  PRECONDITION((!(maxDihedralDeg < minDihedralDeg)) &&
-                   ((maxDihedralDeg - minDihedralDeg) < 360.0),
-               "bad bounds");
-
-  double dihedral = 0.0;
+  checkPrecondition(owner, idx1, idx2, idx3, idx4);
+  RDKit::ForceFieldsHelper::normalizeAngleDeg(minDihedralDeg);
+  RDKit::ForceFieldsHelper::normalizeAngleDeg(maxDihedralDeg);
   if (relative) {
-    RDGeom::Point3D p1 = *((RDGeom::Point3D *)pos[idx1]);
-    RDGeom::Point3D p2 = *((RDGeom::Point3D *)pos[idx2]);
-    RDGeom::Point3D p3 = *((RDGeom::Point3D *)pos[idx3]);
-    RDGeom::Point3D p4 = *((RDGeom::Point3D *)pos[idx4]);
-    RDGeom::Point3D r12 = p2 - p1;
-    RDGeom::Point3D r23 = p3 - p2;
-    RDGeom::Point3D r34 = p4 - p3;
-
-    RDGeom::Point3D n123 = r12.crossProduct(r23);
-    double nIJKSqLength = n123.lengthSq();
-    RDGeom::Point3D n234 = r23.crossProduct(r34);
-    double nJKLSqLength = n234.lengthSq();
-    RDGeom::Point3D m = n123.crossProduct(r23);
-    // we want a signed dihedral, that's why we use atan2 instead of acos
-    dihedral =
-        RAD2DEG *
-        (-atan2(m.dotProduct(n234) / sqrt(nJKLSqLength * m.lengthSq()),
-                n123.dotProduct(n234) / sqrt(nIJKSqLength * nJKLSqLength)));
+    double dihedral;
+    RDKit::ForceFieldsHelper::computeDihedral(
+        owner->positions(), idx1, idx2, idx3, idx4, &dihedral);
+    dihedral *= RAD2DEG;
+    minDihedralDeg += dihedral;
+    maxDihedralDeg += dihedral;
+    RDKit::ForceFieldsHelper::normalizeAngleDeg(minDihedralDeg);
+    RDKit::ForceFieldsHelper::normalizeAngleDeg(maxDihedralDeg);
   }
-  dp_forceField = owner;
-  d_at1Idx = idx1;
-  d_at2Idx = idx2;
-  d_at3Idx = idx3;
-  d_at4Idx = idx4;
-  minDihedralDeg += dihedral;
-  maxDihedralDeg += dihedral;
-  _pretreatDihedrals(minDihedralDeg, maxDihedralDeg);
-  d_minDihedralDeg = minDihedralDeg;
-  d_maxDihedralDeg = maxDihedralDeg;
-  d_forceConstant = forceConst;
+  setParameters(owner, idx1, idx2, idx3, idx4,
+    minDihedralDeg, maxDihedralDeg, forceConst);
 }
 
 double TorsionConstraintContrib::getEnergy(double *pos) const {
   PRECONDITION(dp_forceField, "no owner");
   PRECONDITION(pos, "bad vector");
-
-  RDGeom::Point3D p1(pos[3 * d_at1Idx], pos[3 * d_at1Idx + 1],
-                     pos[3 * d_at1Idx + 2]);
-  RDGeom::Point3D p2(pos[3 * d_at2Idx], pos[3 * d_at2Idx + 1],
-                     pos[3 * d_at2Idx + 2]);
-  RDGeom::Point3D p3(pos[3 * d_at3Idx], pos[3 * d_at3Idx + 1],
-                     pos[3 * d_at3Idx + 2]);
-  RDGeom::Point3D p4(pos[3 * d_at4Idx], pos[3 * d_at4Idx + 1],
-                     pos[3 * d_at4Idx + 2]);
-
-  RDGeom::Point3D r1 = p1 - p2;
-  RDGeom::Point3D r2 = p3 - p2;
-  RDGeom::Point3D r3 = p2 - p3;
-  RDGeom::Point3D r4 = p4 - p3;
-  RDGeom::Point3D t1 = r1.crossProduct(r2);
-  RDGeom::Point3D t2 = r3.crossProduct(r4);
-  double d1 = std::max(t1.length(), 0.0);
-  double d2 = std::max(t2.length(), 0.0);
-  t1 /= d1;
-  t2 /= d2;
-
-  RDGeom::Point3D n123 = (-r1).crossProduct(r2);
-  double n123SqLength = n123.lengthSq();
-  RDGeom::Point3D n234 = r2.crossProduct(r4);
-  double n234SqLength = n234.lengthSq();
-  RDGeom::Point3D m = n123.crossProduct(r2);
-  // we want a signed dihedral, that's why we use atan2 instead of acos
-  double dihedral =
-      RAD2DEG *
-      (-atan2(m.dotProduct(n234) / sqrt(n234SqLength * m.lengthSq()),
-              n123.dotProduct(n234) / sqrt(n123SqLength * n234SqLength)));
-  if (dihedral < 0.0) dihedral += 360.0;
-  double dihedralTerm = 0.0;
-  if (dihedral < d_minDihedralDeg) {
-    dihedralTerm = dihedral - d_minDihedralDeg;
-  } else if (dihedral > d_maxDihedralDeg) {
-    dihedralTerm = dihedral - d_maxDihedralDeg;
-  }
-  double const c = 0.5 * DEG2RAD * DEG2RAD;
+  double dihedral;
+  RDKit::ForceFieldsHelper::computeDihedral(
+    pos, d_at1Idx, d_at2Idx, d_at3Idx, d_at4Idx, &dihedral);
+  dihedral *= RAD2DEG;
+  double dihedralTerm = computeDihedralTerm(dihedral);
+  static double const c = 0.5 * DEG2RAD * DEG2RAD;
   double res = c * d_forceConstant * dihedralTerm * dihedralTerm;
 
   return res;
@@ -156,50 +114,21 @@ void TorsionConstraintContrib::getGrad(double *pos, double *grad) const {
   PRECONDITION(pos, "bad vector");
   PRECONDITION(grad, "bad vector");
 
-  RDGeom::Point3D p1(pos[3 * d_at1Idx], pos[3 * d_at1Idx + 1],
-                     pos[3 * d_at1Idx + 2]);
-  RDGeom::Point3D p2(pos[3 * d_at2Idx], pos[3 * d_at2Idx + 1],
-                     pos[3 * d_at2Idx + 2]);
-  RDGeom::Point3D p3(pos[3 * d_at3Idx], pos[3 * d_at3Idx + 1],
-                     pos[3 * d_at3Idx + 2]);
-  RDGeom::Point3D p4(pos[3 * d_at4Idx], pos[3 * d_at4Idx + 1],
-                     pos[3 * d_at4Idx + 2]);
   double *g[4] = {&(grad[3 * d_at1Idx]), &(grad[3 * d_at2Idx]),
                   &(grad[3 * d_at3Idx]), &(grad[3 * d_at4Idx])};
 
-  RDGeom::Point3D r[4] = {p1 - p2, p3 - p2, p2 - p3, p4 - p3};
-  RDGeom::Point3D t[2] = {r[0].crossProduct(r[1]), r[2].crossProduct(r[3])};
-  double d[2] = {t[0].length(), t[1].length()};
-  if (isDoubleZero(d[0]) || isDoubleZero(d[1])) {
-    return;
-  }
-  t[0] /= d[0];
-  t[1] /= d[1];
-  double cosPhi = t[0].dotProduct(t[1]);
-  clipToOne(cosPhi);
+  RDGeom::Point3D r[4];
+  RDGeom::Point3D t[2];
+  double d[2];
+  double cosPhi;
+  double dihedral;
+  RDKit::ForceFieldsHelper::computeDihedral(
+    pos, d_at1Idx, d_at2Idx, d_at3Idx, d_at4Idx, &dihedral, &cosPhi, r, t, d);
+  dihedral *= RAD2DEG;
   double sinPhiSq = 1.0 - cosPhi * cosPhi;
   double sinPhi = ((sinPhiSq > 0.0) ? sqrt(sinPhiSq) : 0.0);
   // dE/dPhi is independent of cartesians:
-
-  RDGeom::Point3D n123 = (-r[0]).crossProduct(r[1]);
-  double n123SqLength = n123.lengthSq();
-  RDGeom::Point3D n234 = r[1].crossProduct(r[3]);
-  double n234SqLength = n234.lengthSq();
-  RDGeom::Point3D m = n123.crossProduct(r[1]);
-  // we want a signed dihedral, that's why we use atan2 instead of acos
-  double dihedral =
-      RAD2DEG *
-      (-atan2(m.dotProduct(n234) / sqrt(n234SqLength * m.lengthSq()),
-              n123.dotProduct(n234) / sqrt(n123SqLength * n234SqLength)));
-  if (dihedral < 0.0) dihedral += 360.0;
-  // double dihedral = RAD2DEG * acos(cosPhi);
-  double dihedralTerm = 0.0;
-  if (dihedral < d_minDihedralDeg) {
-    dihedralTerm = dihedral - d_minDihedralDeg;
-  } else if (dihedral > d_maxDihedralDeg) {
-    dihedralTerm = dihedral - d_maxDihedralDeg;
-  }
-  if (dihedral > 180.0) dihedralTerm = -dihedralTerm;
+  double dihedralTerm = computeDihedralTerm(dihedral);
   double dE_dPhi = DEG2RAD * d_forceConstant * dihedralTerm;
 
   // FIX: use a tolerance here

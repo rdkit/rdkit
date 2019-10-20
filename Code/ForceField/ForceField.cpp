@@ -14,6 +14,80 @@
 #include <RDGeneral/Invariant.h>
 #include <Numerics/Optimizer/BFGSOpt.h>
 
+namespace RDKit {
+namespace ForceFieldsHelper {
+void normalizeAngleDeg(double &angleDeg) {
+  double normFactor = 360.0;
+  if (angleDeg < 0.0)
+    normFactor = -normFactor;
+  angleDeg = fmod(angleDeg, normFactor);
+  if (fabs(angleDeg) > 180.0)
+    angleDeg -= normFactor;
+}
+
+void computeDihedral(const RDGeom::PointPtrVect &pos, unsigned int idx1,
+    unsigned int idx2, unsigned int idx3, unsigned int idx4,
+    double *dihedral, double *cosPhi, RDGeom::Point3D r[4],
+    RDGeom::Point3D t[2], double d[2]) {
+  computeDihedral(static_cast<RDGeom::Point3D *>(pos[idx1]),
+    static_cast<RDGeom::Point3D *>(pos[idx2]),
+    static_cast<RDGeom::Point3D *>(pos[idx3]),
+    static_cast<RDGeom::Point3D *>(pos[idx4]), dihedral, cosPhi, r, t, d);
+}
+
+void computeDihedral(const double *pos, unsigned int idx1,
+    unsigned int idx2, unsigned int idx3, unsigned int idx4,
+    double *dihedral, double *cosPhi, RDGeom::Point3D r[4],
+    RDGeom::Point3D t[2], double d[2]) {
+  RDGeom::Point3D p1(pos[3 * idx1], pos[3 * idx1 + 1],
+                     pos[3 * idx1 + 2]);
+  RDGeom::Point3D p2(pos[3 * idx2], pos[3 * idx2 + 1],
+                     pos[3 * idx2 + 2]);
+  RDGeom::Point3D p3(pos[3 * idx3], pos[3 * idx3 + 1],
+                     pos[3 * idx3 + 2]);
+  RDGeom::Point3D p4(pos[3 * idx4], pos[3 * idx4 + 1],
+                     pos[3 * idx4 + 2]);
+  computeDihedral(&p1, &p2, &p3, &p4, dihedral, cosPhi, r, t, d);
+}
+
+void computeDihedral(const RDGeom::Point3D *p1, const RDGeom::Point3D *p2,
+    const RDGeom::Point3D *p3, const RDGeom::Point3D *p4,
+    double *dihedral, double *cosPhi, RDGeom::Point3D r[4],
+    RDGeom::Point3D t[2], double d[2]) {
+  RDGeom::Point3D rLocal[4];
+  RDGeom::Point3D tLocal[2];
+  double dLocal[2];
+  if (!r)
+    r = rLocal;
+  if (!t)
+    t = tLocal;
+  if (!d)
+    d = dLocal;
+  r[0] = *p1 - *p2;
+  r[1] = *p3 - *p2;
+  r[2] = -r[1];
+  r[3] = *p4 - *p3;
+
+  t[0] = r[0].crossProduct(r[1]);
+  d[0] = (std::max)(t[0].length(), 1.0e-5);
+  t[0] /= d[0];
+  t[1] = r[2].crossProduct(r[3]);
+  d[1] = (std::max)(t[1].length(), 1.0e-5);
+  t[1] /= d[1];
+  double cosPhiLocal;
+  if (!cosPhi)
+    cosPhi = &cosPhiLocal;
+  *cosPhi = (std::max)(-1.0, (std::min)(t[0].dotProduct(t[1]), 1.0));
+  // we want a signed dihedral, that's why we use atan2 instead of acos
+  if (dihedral) {
+    RDGeom::Point3D m = t[0].crossProduct(r[1]);
+    double mLength = (std::max)(m.length(), 1.0e-5);
+    *dihedral = -atan2(m.dotProduct(t[1]) / mLength, *cosPhi);
+  }
+}
+}
+}
+
 namespace ForceFieldsHelper {
 class calcEnergy {
  public:
