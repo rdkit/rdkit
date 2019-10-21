@@ -162,17 +162,19 @@ const Atom *findHighestCIPNeighbor(const Atom *atom, const Atom *skipAtom) {
     }
     unsigned cip = 0;
     if (!neighbor->getPropIfPresent(common_properties::_CIPRank, cip)) {
-      // If at least one of the atoms doesn't have a CIP rank, the highest rank
-      // does not make sense, so return a nullptr.
-      return nullptr;
-    }
-    if (cip > bestCipRank || bestCipRankedAtom == nullptr) {
+      if (bestCipRankedAtom == nullptr) {
+        bestCipRankedAtom = neighbor;
+      }
+    } else if (cip > bestCipRank || bestCipRankedAtom == nullptr) {
       bestCipRank = cip;
       bestCipRankedAtom = neighbor;
     } else if (cip == bestCipRank) {
       // This also doesn't make sense if there is a tie (if that's possible).
       // We still keep the best CIP rank in case something better comes around
       // (also not sure if that's possible).
+      BOOST_LOG(rdWarningLog)
+          << "Warning: duplicate CIP ranks found in findHighestCIPNeighbor()"
+          << std::endl;
       bestCipRankedAtom = nullptr;
     }
   }
@@ -681,7 +683,6 @@ void updateStereoBonds(RWMOL_SPTR product, const ROMol &reactant,
     if (pBond->getBondType() != Bond::BondType::DOUBLE) {
       continue;
     }
-
     // If the product bond was previously marked as STEREOANY, check if it can
     // actually sustain stereo (this could not be checked until we had all the
     // atoms in the product)
@@ -1285,7 +1286,6 @@ void addReactantAtomsAndBonds(const ChemicalReaction &rxn, RWMOL_SPTR product,
                       "mapped reactant atom not present in product.");
 
       const Atom *reactantAtom = reactant->getAtomWithIdx(reactantAtomIdx);
-
       for (unsigned i = 0;
            i < mapping->reactProdAtomMap[reactantAtomIdx].size(); i++) {
         // here's a pointer to the atom in the product:

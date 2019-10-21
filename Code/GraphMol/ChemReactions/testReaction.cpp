@@ -7092,8 +7092,7 @@ void testStereoBondIsomerization() {
   // From here on, StereoAtoms set to reactant's StereoAtoms (= highest CIPs)
 
   {  // One-side reaction isomerization (no double bond in reaction)
-    const std::string reaction(
-        R"([C:1](\[Cl:2])-[F:3]>>[C:1](/[Cl:2])-[F:3])");
+    const std::string reaction(R"([C:1](\[Cl:2])-[F:3]>>[C:1](/[Cl:2])-[F:3])");
 
     const auto product = run_simple_reaction(reaction, mol);
     TEST_ASSERT(
@@ -7163,8 +7162,7 @@ void testOtherBondStereo() {
     }
   }
   {  // Reaction with 2 product sets
-    const std::string reaction(
-        R"([C:1]=[C:2]>>[Si:1]=[C:2])");
+    const std::string reaction(R"([C:1]=[C:2]>>[Si:1]=[C:2])");
     const auto rxn = RxnSmartsToChemicalReaction(reaction);
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
@@ -7184,8 +7182,7 @@ void testOtherBondStereo() {
     strip_bond_directions(mol2);
     TEST_ASSERT(check_bond_stereo(mol2, 2, 0, 4, Bond::BondStereo::STEREOE));
 
-    const std::string reaction(
-        R"([C:1]=[C:2][Br:3]>>[C:1]=[C:2].[Br:3])");
+    const std::string reaction(R"([C:1]=[C:2][Br:3]>>[C:1]=[C:2].[Br:3])");
     const auto rxn = RxnSmartsToChemicalReaction(reaction);
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
@@ -7223,8 +7220,9 @@ void testOtherBondStereo() {
 
 void testGithub2547() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Github #2547: Check kekulization issues in mdl rxn files"
-                       << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Testing Github #2547: Check kekulization issues in mdl rxn files"
+      << std::endl;
 
   std::string rdbase = getenv("RDBASE");
   std::string fName;
@@ -7245,13 +7243,41 @@ void testGithub2547() {
   TEST_ASSERT(prods.size() > 1);
 }
 
+void testDblBondCrash() {
+  {  // Reactant stereo propagated by anti-stereoatoms pair
+
+    const std::string reaction(R"([N;!H0:1]>>[N:1])");
+    std::unique_ptr<ChemicalReaction> rxn(
+        RxnSmartsToChemicalReaction(reaction));
+    TEST_ASSERT(rxn);
+    rxn->initReactantMatchers();
+    // get a sanitized molecule that hasn't had stereochemistry assigned:
+#if 0
+    SmilesParserParams ps;
+    ps.sanitize = true;
+    auto mol = RWMOL_SPTR(SmilesToMol("CC(=O)/N=C(\\N)c1nonc1N", ps));
+    MolOps::sanitizeMol(*mol);
+#else
+    auto mol = RWMOL_SPTR(SmilesToMol("C/C=C(/C)CN"));
+#endif
+    std::vector<ROMOL_SPTR> v{mol};
+    auto prods = rxn->runReactants(v);
+    TEST_ASSERT(prods.size() == 1);
+    TEST_ASSERT(prods[0].size() == 1);
+    MolOps::sanitizeMol(*(RWMol *)prods[0][0].get());
+    prods[0][0]->debugMol(std::cerr);
+    std::cerr << "  " << MolToSmiles(*prods[0][0]) << std::endl;
+    TEST_ASSERT(MolToSmiles(*prods[0][0]) == "C/C=C(/C)CN");
+  }
+}
+
 int main() {
   RDLog::InitLogs();
 
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing Chemical Reactions \n";
-
+#if 0
   test1Basics();
   test2SimpleReactions();
   test3RingFormation();
@@ -7335,6 +7361,9 @@ int main() {
   testStereoBondIsomerization();
   testOtherBondStereo();
   testGithub2547();
+#endif
+  testDblBondCrash();
+
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
   return (0);
