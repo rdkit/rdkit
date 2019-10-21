@@ -63,7 +63,7 @@ if hasattr(rdMolDescriptors, 'CalcPMI1'):
   NPR1.__doc__ = """ Normalized principal moments ratio 1 (=I1/I3)
 
         from Sauer and Schwarz JCIM 43:987-1003 (2003)
-        https://dx.doi.org/10.1021/ci025599w
+        https://doi.org/10.1021/ci025599w
 
 
     **Arguments**
@@ -81,7 +81,7 @@ if hasattr(rdMolDescriptors, 'CalcPMI1'):
   NPR2.__doc__ = """ Normalized principal moments ratio 2 (=I2/I3)
 
         from Sauer and Schwarz JCIM 43:987-1003 (2003)
-        https://dx.doi.org/10.1021/ci025599w
+        https://doi.org/10.1021/ci025599w
 
 
     **Arguments**
@@ -100,7 +100,7 @@ if hasattr(rdMolDescriptors, 'CalcPMI1'):
 
        from Todeschini and Consoni "Descriptors from Molecular Geometry"
        Handbook of Chemoinformatics
-       http://dx.doi.org/10.1002/9783527618279.ch37
+       https://doi.org/10.1002/9783527618279.ch37
 
        Definition:
          for planar molecules: sqrt( sqrt(pm3*pm2)/MW )
@@ -122,7 +122,7 @@ if hasattr(rdMolDescriptors, 'CalcPMI1'):
 
        from Todeschini and Consoni "Descriptors from Molecular Geometry"
        Handbook of Chemoinformatics
-       http://dx.doi.org/10.1002/9783527618279.ch37
+       https://doi.org/10.1002/9783527618279.ch37
 
        Definition:
          pm2 / (pm1*pm3)
@@ -143,7 +143,7 @@ if hasattr(rdMolDescriptors, 'CalcPMI1'):
 
        from Todeschini and Consoni "Descriptors from Molecular Geometry"
        Handbook of Chemoinformatics
-       http://dx.doi.org/10.1002/9783527618279.ch37
+       https://doi.org/10.1002/9783527618279.ch37
 
        Definition:
          sqrt(pm3**2 -pm1**2) / pm3**2
@@ -164,7 +164,7 @@ if hasattr(rdMolDescriptors, 'CalcPMI1'):
 
        from Todeschini and Consoni "Descriptors from Molecular Geometry"
        Handbook of Chemoinformatics
-       http://dx.doi.org/10.1002/9783527618279.ch37
+       https://doi.org/10.1002/9783527618279.ch37
 
        Definition:
          0.5 * ((pm3-pm2)**2 + (pm3-pm1)**2 + (pm2-pm1)**2)/(pm1**2+pm2**2+pm3**2)
@@ -185,7 +185,7 @@ if hasattr(rdMolDescriptors, 'CalcPMI1'):
 
        from Todeschini and Consoni "Descriptors from Molecular Geometry"
        Handbook of Chemoinformatics
-       http://dx.doi.org/10.1002/9783527618279.ch37
+       https://doi.org/10.1002/9783527618279.ch37
 
        Definition:
          3 * pm1 / (pm1+pm2+pm3) where the moments are calculated without weights
