@@ -7135,6 +7135,12 @@ void testOtherBondStereo() {
         TEST_ASSERT(Bond::BondStereo::STEREONONE == bond->getStereo());
       }
     }
+    // and if we don't strip direction?
+    auto lmol = RWMOL_SPTR(SmilesToMol(R"(C/C=C/[Br])"));
+    auto product_sets2 = rxn->runReactant(lmol, 0);
+    TEST_ASSERT(!product_sets2.empty());
+    auto osmi = MolToSmiles(*product_sets2[0][0]);
+    TEST_ASSERT(osmi == "CCCBr");
   }
   {  // Reaction explicitly destroys stereochemistry
      // (no directed bonds enclosing the double bond)
@@ -7160,6 +7166,12 @@ void testOtherBondStereo() {
         }
       }
     }
+    // and if we don't strip direction?
+    auto lmol = RWMOL_SPTR(SmilesToMol(R"(C/C=C/[Br])"));
+    auto product_sets2 = rxn->runReactant(lmol, 0);
+    TEST_ASSERT(!product_sets.empty());
+    auto osmi = MolToSmiles(*product_sets2[0][0]);
+    TEST_ASSERT(osmi == "CC=CBr");
   }
   {  // Reaction with 2 product sets
     const std::string reaction(R"([C:1]=[C:2]>>[Si:1]=[C:2])");
@@ -7176,6 +7188,14 @@ void testOtherBondStereo() {
       TEST_ASSERT(check_bond_stereo(products[0], 0, 2, 3,
                                     Bond::BondStereo::STEREOTRANS));
     }
+    // and if we don't strip direction?
+    auto lmol = RWMOL_SPTR(SmilesToMol(R"(C/C=C/[Br])"));
+    auto product_sets2 = rxn->runReactant(lmol, 0);
+    TEST_ASSERT(!product_sets2.empty());
+    auto osmi = MolToSmiles(*product_sets2[0][0]);
+    TEST_ASSERT(osmi == "C/[SiH]=C/Br");
+    osmi = MolToSmiles(*product_sets2[1][0]);
+    TEST_ASSERT(osmi == "C/C=[SiH]/Br");
   }
   {  // Reactant stereo propagated by (stereoatom, anti-stereoatom) pair
     auto mol2 = RWMOL_SPTR(SmilesToMol(R"(Cl/C(C)=C(/Br)F)"));
@@ -7195,6 +7215,13 @@ void testOtherBondStereo() {
     // We are only interested in the product that keeps the double bond
     TEST_ASSERT(check_bond_stereo(product_sets[0][0], 0, 2, 4,
                                   Bond::BondStereo::STEREOCIS));
+
+    // and if we don't strip direction?
+    auto lmol = RWMOL_SPTR(SmilesToMol(R"(Cl/C(C)=C(/Br)F)"));
+    auto product_sets2 = rxn->runReactant(lmol, 0);
+    TEST_ASSERT(!product_sets2.empty());
+    auto osmi = MolToSmiles(*product_sets2[0][0]);
+    TEST_ASSERT(osmi == "C/C(Cl)=C/F");
   }
   {  // Reactant stereo propagated by anti-stereoatoms pair
     auto mol2 = RWMOL_SPTR(SmilesToMol(R"(Cl/C(C)=C(/Br)F)"));
@@ -7215,6 +7242,13 @@ void testOtherBondStereo() {
     // We are only interested in the product that keeps the double bond
     TEST_ASSERT(check_bond_stereo(product_sets[0][0], 0, 2, 3,
                                   Bond::BondStereo::STEREOTRANS));
+
+    // and if we don't strip direction?
+    auto lmol = RWMOL_SPTR(SmilesToMol(R"(Cl/C(C)=C(/Br)F)"));
+    auto product_sets2 = rxn->runReactant(lmol, 0);
+    TEST_ASSERT(!product_sets2.empty());
+    auto osmi = MolToSmiles(*product_sets2[0][0]);
+    TEST_ASSERT(osmi == "C/C=C/F");
   }
 }
 
