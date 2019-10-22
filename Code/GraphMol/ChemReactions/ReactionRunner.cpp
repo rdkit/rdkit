@@ -188,26 +188,27 @@ INT_VECT findStereoAtoms(const Bond *bond) {
   PRECONDITION(bond->getStereo() > Bond::BondStereo::STEREOANY,
                "no defined stereo");
 
-  switch (bond->getStereo()) {
-    case Bond::BondStereo::STEREOE:
-    case Bond::BondStereo::STEREOZ: {
-      const Atom *startStereoAtom =
-          findHighestCIPNeighbor(bond->getBeginAtom(), bond->getEndAtom());
-      const Atom *endStereoAtom =
-          findHighestCIPNeighbor(bond->getEndAtom(), bond->getBeginAtom());
+  if (!bond->getStereoAtoms().empty()) {
+    return bond->getStereoAtoms();
+  }
+  if (bond->getStereo() == Bond::BondStereo::STEREOE ||
+      bond->getStereo() == Bond::BondStereo::STEREOZ) {
+    const Atom *startStereoAtom =
+        findHighestCIPNeighbor(bond->getBeginAtom(), bond->getEndAtom());
+    const Atom *endStereoAtom =
+        findHighestCIPNeighbor(bond->getEndAtom(), bond->getBeginAtom());
 
-      CHECK_INVARIANT(startStereoAtom != nullptr && endStereoAtom != nullptr,
-                      "stereoatom(s) not found");
+    CHECK_INVARIANT(startStereoAtom != nullptr && endStereoAtom != nullptr,
+                    "stereoatom(s) not found");
 
-      int startStereoAtomIdx = static_cast<int>(startStereoAtom->getIdx());
-      int endStereoAtomIdx = static_cast<int>(endStereoAtom->getIdx());
+    int startStereoAtomIdx = static_cast<int>(startStereoAtom->getIdx());
+    int endStereoAtomIdx = static_cast<int>(endStereoAtom->getIdx());
 
-      return {startStereoAtomIdx, endStereoAtomIdx};
-    }
-    case Bond::BondStereo::STEREOCIS:
-    case Bond::BondStereo::STEREOTRANS:
-    default:
-      return bond->getStereoAtoms();
+    return {startStereoAtomIdx, endStereoAtomIdx};
+  } else {
+    BOOST_LOG(rdWarningLog) << "Unable to assign stereo atoms for bond "
+                            << bond->getIdx() << std::endl;
+    return {};
   }
 }
 }  // namespace
@@ -1338,11 +1339,21 @@ generateOneProductSet(const ChemicalReaction &rxn,
   // if any of the reactants have a conformer, we'll go ahead and
   // generate conformers for the products:
   bool doConfs = false;
-  for (auto &reactant : reactants) {
+  // if any of the reactants have a single bond with directionality specified,
+  // we will make sure that the output molecules have directionality specified.
+  bool doBondDirs = false;
+  for (const auto &reactant : reactants) {
     if (reactant->getNumConformers()) {
       doConfs = true;
-      break;
     }
+    for (const auto bnd : reactant->bonds()) {
+      if (bnd->getBondType() == Bond::SINGLE &&
+          bnd->getBondDir() > Bond::NONE) {
+        doBondDirs = true;
+        break;
+      }
+    }
+    if (doConfs && doBondDirs) break;
   }
 
   MOL_SPTR_VECT res;
@@ -1368,6 +1379,13 @@ generateOneProductSet(const ChemicalReaction &rxn,
     if (doConfs) {
       product->addConformer(conf, true);
     }
+
+    // if there was bond direction information in any reactant, it has been
+    // lost, add it back.
+    if (doBondDirs) {
+      MolOps::setDoubleBondNeighborDirections(*product);
+    }
+
     res[prodId] = product;
     ++prodId;
   }
