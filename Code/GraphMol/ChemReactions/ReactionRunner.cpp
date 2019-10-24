@@ -162,9 +162,9 @@ const Atom *findHighestCIPNeighbor(const Atom *atom, const Atom *skipAtom) {
     }
     unsigned cip = 0;
     if (!neighbor->getPropIfPresent(common_properties::_CIPRank, cip)) {
-      if (bestCipRankedAtom == nullptr) {
-        bestCipRankedAtom = neighbor;
-      }
+      // If at least one of the atoms doesn't have a CIP rank, the highest rank
+      // does not make sense, so return a nullptr.
+      return nullptr;
     } else if (cip > bestCipRank || bestCipRankedAtom == nullptr) {
       bestCipRank = cip;
       bestCipRankedAtom = neighbor;
@@ -198,8 +198,9 @@ INT_VECT findStereoAtoms(const Bond *bond) {
     const Atom *endStereoAtom =
         findHighestCIPNeighbor(bond->getEndAtom(), bond->getBeginAtom());
 
-    CHECK_INVARIANT(startStereoAtom != nullptr && endStereoAtom != nullptr,
-                    "stereoatom(s) not found");
+    if (startStereoAtom == nullptr || endStereoAtom == nullptr) {
+      return {};
+    }
 
     int startStereoAtomIdx = static_cast<int>(startStereoAtom->getIdx());
     int endStereoAtomIdx = static_cast<int>(endStereoAtom->getIdx());
@@ -548,8 +549,14 @@ void forwardReactantBondStereo(ReactantProductAtomMapping *mapping, Bond *pBond,
   const Atom *rStart = rBond->getBeginAtom();
   const Atom *rEnd = rBond->getEndAtom();
   const auto rStereoAtoms = findStereoAtoms(rBond);
-  PRECONDITION(rStereoAtoms.size() == 2,
-               "stereo atoms not found for double bond");
+  if (rStereoAtoms.size() != 2) {
+    BOOST_LOG(rdWarningLog)
+        << "WARNING: neither stereo atoms nor CIP codes found for double bond. "
+           "Stereochemistry info will not be propagated to product."
+        << std::endl;
+    pBond->setStereo(Bond::BondStereo::STEREONONE);
+    return;
+  }
 
   StereoBondEndCap start(reactant, rStart, rEnd, rStereoAtoms[0]);
   StereoBondEndCap end(reactant, rEnd, rStart, rStereoAtoms[1]);

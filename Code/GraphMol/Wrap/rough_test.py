@@ -5622,7 +5622,7 @@ M  END
     m1.GetBondWithIdx(1).SetStereoAtoms(0,3)
     m1.GetBondWithIdx(1).SetStereo(Chem.BondStereo.STEREOCIS)
     Chem.SetDoubleBondNeighborDirections(m1)
-    self.assertEqual(Chem.MolToSmiles(m1),"C/C=C\\C")   
+    self.assertEqual(Chem.MolToSmiles(m1),r"C/C=C\C")   
     self.assertEqual(m1.GetBondWithIdx(0).GetBondDir(),Chem.BondDir.ENDUPRIGHT)
     self.assertEqual(m1.GetBondWithIdx(2).GetBondDir(),Chem.BondDir.ENDDOWNRIGHT)
 

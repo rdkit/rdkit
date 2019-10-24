@@ -7297,6 +7297,24 @@ void testDblBondCrash() {
       TEST_ASSERT(MolToSmiles(*prods[0][0]) == "C/C=C(/C)CN");
     }
     {
+      // create an artificial situation in the molecule where bond stereo is
+      // set, but neither stereoatoms nor CIP ranks are there (this can happen
+      // with serialized molecules from old RDKit versions)
+      auto mol = RWMOL_SPTR(SmilesToMol("C/C=C(/C)CN"));
+      mol->getBondWithIdx(1)->getStereoAtoms().clear();
+      for (auto atom : mol->atoms()) {
+        if (atom->hasProp(common_properties::_CIPRank)) {
+          atom->clearProp(common_properties::_CIPRank);
+        }
+      }
+      std::vector<ROMOL_SPTR> v{mol};
+      auto prods = rxn->runReactants(v);
+      TEST_ASSERT(prods.size() == 1);
+      TEST_ASSERT(prods[0].size() == 1);
+      MolOps::sanitizeMol(*(RWMol *)prods[0][0].get());
+      TEST_ASSERT(MolToSmiles(*prods[0][0]) == "CC=C(C)CN");
+    }
+    {
       SmilesParserParams ps;
       ps.sanitize = true;
       auto mol = RWMOL_SPTR(SmilesToMol("CC(=O)/N=C(\\C)c1nonc1N", ps));
