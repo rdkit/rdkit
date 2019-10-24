@@ -7351,6 +7351,22 @@ void testDblBondCrash() {
       MolOps::sanitizeMol(*(RWMol *)prods[0][0].get());
       TEST_ASSERT(MolToSmiles(*prods[0][0]) == "CC(=O)/N=C(\\C)c1nonc1N");
     }
+    {
+      // another example
+      const std::string reaction2(R"([N;!H0;$(N-c):1]>>[N:1]-c1cncnn1)");
+      std::unique_ptr<ChemicalReaction> rxn2(
+          RxnSmartsToChemicalReaction(reaction2));
+      TEST_ASSERT(rxn2);
+      rxn2->initReactantMatchers();
+      auto mol = RWMOL_SPTR(SmilesToMol("CC(=O)/C=C(\\N)c1nonc1N"));
+      std::vector<ROMOL_SPTR> v{mol};
+      auto prods = rxn2->runReactants(v);
+      TEST_ASSERT(prods.size() == 1);
+      TEST_ASSERT(prods[0].size() == 1);
+      MolOps::sanitizeMol(*(RWMol *)prods[0][0].get());
+      TEST_ASSERT(MolToSmiles(*prods[0][0]) ==
+                  "CC(=O)/C=C(\\N)c1nonc1Nc1cncnn1");
+    }
   }
 }
 
