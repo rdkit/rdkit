@@ -107,9 +107,6 @@ MCSResult findMCS(const std::vector<ROMOL_SPTR>& mols, bool maximizeBonds,
                   bool completeRingsOnly, bool matchChiralTag,
                   AtomComparator atomComp, BondComparator bondComp,
                   RingComparator ringComp) {
-  // AtomComparator atomComp=AtomCompareElements;
-  // BondComparator bondComp=BondCompareOrder;
-  // RingComparator bondComp=IgnoreRingFusion;
   auto* ps = new MCSParameters();
   ps->MaximizeBonds = maximizeBonds;
   ps->Threshold = threshold;
