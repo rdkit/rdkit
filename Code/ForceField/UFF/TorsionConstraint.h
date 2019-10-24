@@ -55,7 +55,7 @@ class RDKIT_FORCEFIELD_EXPORT TorsionConstraintContrib
   };
 
  private:
-  inline void setParameters(ForceField *owner, unsigned int idx1,
+  void setParameters(ForceField *owner, unsigned int idx1,
     unsigned int idx2, unsigned int idx3, unsigned int idx4,
     double minDihedralDeg, double maxDihedralDeg, double forceConst);
   double computeDihedralTerm(double dihedral) const;

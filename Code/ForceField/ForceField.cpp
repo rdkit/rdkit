@@ -54,6 +54,10 @@ void computeDihedral(const RDGeom::Point3D *p1, const RDGeom::Point3D *p2,
     const RDGeom::Point3D *p3, const RDGeom::Point3D *p4,
     double *dihedral, double *cosPhi, RDGeom::Point3D r[4],
     RDGeom::Point3D t[2], double d[2]) {
+  PRECONDITION(p1, "p1 must not be null");
+  PRECONDITION(p2, "p2 must not be null");
+  PRECONDITION(p3, "p3 must not be null");
+  PRECONDITION(p4, "p4 must not be null");
   RDGeom::Point3D rLocal[4];
   RDGeom::Point3D tLocal[2];
   double dLocal[2];
