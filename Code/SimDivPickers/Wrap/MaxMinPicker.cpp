@@ -16,6 +16,8 @@
 #include <numpy/arrayobject.h>
 #include <map>
 
+#include "PickerHelpers.h"
+
 #include <DataStructs/BitVects.h>
 #include <DataStructs/BitOps.h>
 #include <SimDivPickers/DistPicker.h>
@@ -54,18 +56,6 @@ RDKit::INT_VECT MaxMinPicks(MaxMinPicker *picker, python::object distMat,
   Py_DECREF(copy);
   return res;
 }
-
-class pyobjFunctor {
- public:
-  pyobjFunctor(python::object obj) : dp_obj(std::move(obj)) {}
-  ~pyobjFunctor() {}
-  double operator()(unsigned int i, unsigned int j) {
-    return python::extract<double>(dp_obj(i, j));
-  }
-
- private:
-  python::object dp_obj;
-};
 
 namespace {
 template <typename T>
@@ -106,37 +96,6 @@ python::tuple LazyMaxMinPicksWithThreshold(
                    threshold);
   return python::make_tuple(res, threshold);
 }
-
-// NOTE: TANIMOTO and DICE provably return the same results for the diversity
-// picking this is still here just in case we ever later want to support other
-//    methods.
-typedef enum { TANIMOTO = 1, DICE } DistanceMethod;
-
-template <typename BV>
-class pyBVFunctor {
- public:
-  pyBVFunctor(const std::vector<const BV *> &obj, DistanceMethod method)
-      : d_obj(obj), d_method(method) {}
-  ~pyBVFunctor() {}
-  double operator()(unsigned int i, unsigned int j) {
-    double res = 0.0;
-    switch (d_method) {
-      case TANIMOTO:
-        res = 1. - TanimotoSimilarity(*d_obj[i], *d_obj[j]);
-        break;
-      case DICE:
-        res = 1. - DiceSimilarity(*d_obj[i], *d_obj[j]);
-        break;
-      default:
-        throw_value_error("unsupported similarity value");
-    }
-    return res;
-  }
-
- private:
-  const std::vector<const BV *> &d_obj;
-  DistanceMethod d_method;
-};
 
 RDKit::INT_VECT LazyVectorMaxMinPicks(MaxMinPicker *picker, python::object objs,
                                       int poolSize, int pickSize,

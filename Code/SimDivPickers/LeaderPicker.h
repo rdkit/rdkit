@@ -117,6 +117,9 @@ class RDKIT_SIMDIVPICKERS_EXPORT LeaderPicker : public DistPicker {
 };
 
 #ifdef USE_THREADED_LEADERPICKER
+// Note that this block of code currently only works on linux (which is why it's disabled by default)
+// We will revisit this during the 2020.03 release cycle in order to get a multi-threaded version of
+// the LeaderPicker that works on all supported platforms
 template <typename T>
 void *LeaderPickerWork(void *arg);
 
