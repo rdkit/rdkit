@@ -34,6 +34,11 @@
   completeRingsOnly options now includes ring-membership queries.
 
 ## Highlights:
+- The substructure matching code is now about 30% faster. This also improves the
+  speed of reaction matching and the FMCS code. (#2500)
+- A minimal JavaScript wrapper has been added as part of the core release. (#2444)
+- It's now possible to get information about why molecule sanitization failed. (#2587)
+- A flexible new molecular hashing scheme has been added. (#2636)
 
 ## Acknowledgements:
 Patricia Bento, Francois Berenger, Jason Biggs, David Cosgrove, Andrew Dalke,
@@ -41,9 +46,9 @@ Thomas Duigou, Eloy Felix, Guillaume Godin, Lester Hedges, Anne Hersey,
 Christoph Hillisch, Christopher Ing, Jan Holst Jensen, Gareth Jones, Eisuke
 Kawashima, Brian Kelley, Alan Kerstjens, Karl Leswing, Pat Lorton, John
 Mayfield, Mike Mazanetz, Dan Nealschneider, Noel O'Boyle, Stephen Roughley,
-Roger Sayle, Ricardo Rodriguez Schmidt, Paula Schmiel, Peter St. John, Matt
-Swain, Amol Thakkar Paolo Tosco, Ricardo Vianello, Marc Wittke,  
-'7FeiW', 'c56pony', 'msteijaert', 'sirbiscuit' 
+Roger Sayle, Ricardo Rodriguez Schmidt, Paula Schmiel, Peter St. John, Marvin
+Steijaert, Matt Swain, Amol Thakkar Paolo Tosco, Yi-Shu Tu, Ricardo Vianello,
+Marc Wittke, '7FeiW', 'c56pony', 'sirbiscuit' 
 
 
 ## Bug Fixes:
@@ -173,6 +178,12 @@ Swain, Amol Thakkar Paolo Tosco, Ricardo Vianello, Marc Wittke,
  (github issue #2721 from greglandrum)
   - seg fault in ReactionRunner
  (github issue #2722 from greglandrum)
+  - Intermittent test failures for JavaDistanceGeometryTests
+ (github issue #2727 from greglandrum)
+  - Fixes a bug in TorsionConstraint
+ (github pull #2732 from ptosco)
+  - Apply fix for #1592 to _MolsToGridSVG
+ (github pull #2737 from yishutu)
 
 ## New Features and Enhancements:
   - Added rankAtoms to ROMol wrapper and added Java test case
@@ -299,7 +310,7 @@ Swain, Amol Thakkar Paolo Tosco, Ricardo Vianello, Marc Wittke,
  (github pull #2686 from ricrogz)
   - Add a drawOptions object to IPythonConsole
  (github pull #2691 from greglandrum)
-  - [WIP] Make StructureGroups editable from Python
+  - Make StructureGroups editable from Python
  (github pull #2692 from greglandrum)
   - Update documentation
  (github pull #2697 from greglandrum)
@@ -309,6 +320,13 @@ Swain, Amol Thakkar Paolo Tosco, Ricardo Vianello, Marc Wittke,
  (github pull #2711 from bp-kelley)
   - The MCS smartsString may still be ambiguous
  (github issue #2714 from ptosco)
+  - Add threaded runner for the filter catalog
+ (github pull #2718 from bp-kelley)
+  - Add Leader picker implementation
+ (github pull #2724 from greglandrum)
+  - Add consideration of ring fusion to the MCS algorithm
+ (github pull #2731 from ptosco)
+
 
 ## Deprecated code (to be removed in a future release):
 
