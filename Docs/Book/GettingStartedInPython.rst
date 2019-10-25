@@ -2053,13 +2053,13 @@ The molecules have not been sanitized, so it's a good idea to at least update th
 
   >>> for prod in prods:
   ...     prod.UpdatePropertyCache(strict=False)
-  ...
+  ...  
   >>> Chem.MolToSmiles(prods[0],True)
-  'CNC(=O)C(C)C'
+  'CC(C)C(=O)N/C=C1\\C(=O)Nc2ccc3ncsc3c21'
   >>> Chem.MolToSmiles(prods[1],True)
-  'CC(C)C(=O)NC(=N)N'
+  'CC(C)C(=O)N/C=C1\\C(=O)Nc2ccccc21'
   >>> Chem.MolToSmiles(prods[2],True)
-  'CC(C)C(=O)NC=C1C(=O)Nc2ccc3ncsc3c21'
+  'CNC(=O)C(C)C'
 
 
 By default those results come back in a random order (technically the example
