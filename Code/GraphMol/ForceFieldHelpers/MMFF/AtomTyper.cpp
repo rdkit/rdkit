@@ -2869,7 +2869,7 @@ MMFFMolProperties::getMMFFBondStretchEmpiricalRuleParams(const ROMol &mol,
   } else {
     // MMFF.V, page 627
     // Herschbach-Laurie version of Badger's rule
-    // J. Chem. Phys. 35, 458 (1961); http://dx.doi.org/10.1063/1.1731952
+    // J. Chem. Phys. 35, 458 (1961); https://doi.org/10.1063/1.1731952
     // equation (8), page 5
     mmffHerschbachLaurieParams = (*mmffHerschbachLaurie)(
         getPeriodicTableRowHL(atomicNum1), getPeriodicTableRowHL(atomicNum2));
@@ -3575,7 +3575,7 @@ void MMFFMolProperties::computeMMFFCharges(const ROMol &mol) {
   }
   // now we compute partial charges
   // See Halgren, T. MMFF.V, J. Comput. Chem. 1996, 17, 616-641
-  // http://dx.doi.org/10.1002/(SICI)1096-987X(199604)17:5/6<616::AID-JCC5>3.0.CO;2-X
+  // https://doi.org/10.1002/(SICI)1096-987X(199604)17:5/6<616::AID-JCC5>3.0.CO;2-X
   for (idx = 0; idx < mol.getNumAtoms(); ++idx) {
     const Atom *atom = mol.getAtomWithIdx(idx);
     atomType = this->getMMFFAtomType(idx);

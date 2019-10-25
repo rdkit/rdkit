@@ -484,7 +484,7 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   /*
     Add an atom to this embedded fragment when the fragment already
     has a atleast two previously added neighbors to 'toAid'. In this
-    case we have to choose where the the new neighbor goes based on
+    case we have to choose where the new neighbor goes based on
     the angle that is already taken around the atom.
 
     ARGUMENTS:

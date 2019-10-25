@@ -101,7 +101,7 @@ class TestAtomTypes(MCSTestCase):
                        bondCompare=rdFMCS.BondCompare.CompareOrderExact)
 
   def test_atom_compare_any(self):
-    # Note: bond aromaticies must still match!
+    # Note: bond aromaticities must still match!
     # 'cccccO' matches 'ccccnO'
     self.assert_search(atomtype_mols, 6, 5,
                        atomCompare=rdFMCS.AtomCompare.CompareAny,

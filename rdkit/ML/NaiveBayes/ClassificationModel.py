@@ -66,9 +66,9 @@ class NaiveBayesClassifier:
         self._name = ""
         self.mprob = -1.0
 
-        # for the sake a of efficiency lets try to change the conditional probabities
+        # for the sake a of efficiency lets try to change the conditional probabilities
         # to a numpy array instead of a dictionary. The three dimension array is indexed
-        # on the the activity class, the discriptor ID and the descriptor binID
+        # on the activity class, the descriptor ID and the descriptor binID
         # self._condProbs = {}
         # self._condProbs = numpy.zeros((self._nClasses, max(self._attrs)+1,
         #                                max(self._nPosVals)+1), 'd')

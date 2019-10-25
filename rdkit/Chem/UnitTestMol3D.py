@@ -265,7 +265,7 @@ class TestCase(unittest.TestCase):
     smiles = set(Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(fully_assigned))
     self.assertEqual(smiles, set(['C/C(F)=C/[C@@H](C)Cl']))
 
-    # should only enuemrate the bond stereo
+    # should only enumerate the bond stereo
     partially_assigned = Chem.MolFromSmiles('CC(F)=C[C@@H](C)Cl')
     smiles = set(Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(partially_assigned))
     self.assertEqual(smiles, set(['C/C(F)=C/[C@@H](C)Cl', 'C/C(F)=C\\[C@@H](C)Cl']))

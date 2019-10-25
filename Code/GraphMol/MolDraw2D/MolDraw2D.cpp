@@ -1707,7 +1707,6 @@ void MolDraw2D::drawTriangle(const Point2D &cds1, const Point2D &cds2,
 void MolDraw2D::drawArrow(const Point2D &arrowBegin, const Point2D &arrowEnd,
                           bool asPolygon, double frac, double angle) {
   Point2D delta = arrowBegin - arrowEnd;
-  double l = frac * delta.length();
   double cos_angle = std::cos(angle), sin_angle = std::sin(angle);
 
   Point2D p1 = arrowEnd;

@@ -2644,7 +2644,7 @@ SSSR問題
 | Autocorr2D                                            | | 2017.09リリースで新しく導入                                        | C++    |
 |                                                       | | Todeschini and Consoni                                             |        |
 |                                                       | | “Descriptors from Molecular Geometry” Handbook of Chemoinformatics |        |
-|                                                       | | http://dx.doi.org/10.1002/9783527618279.ch37                       |        |
+|                                                       | | https://doi.org/10.1002/9783527618279.ch37                         |        |
 +-------------------------------------------------------+----------------------------------------------------------------------+--------+
 
 
@@ -2667,44 +2667,44 @@ SSSR問題
 +---------------------------+-------------------------------------------------------------------------------------------------------+------+
 | Radius of gyration        | | G. A. Arteca “Molecular Shape Descriptors”                                                          | C++  |
 |                           | | Reviews in Computational Chemistry vol 9                                                            |      |
-|                           | | http://dx.doi.org/10.1002/9780470125861.ch5                                                         |      |
+|                           | | https://doi.org/10.1002/9780470125861.ch5                                                           |      |
 +---------------------------+-------------------------------------------------------------------------------------------------------+------+
 | Inertial shape factor     | | Todeschini and Consoni                                                                              | C++  |
 |                           | | “Descriptors from Molecular Geometry” Handbook of Chemoinformatics                                  |      |
-|                           | | http://dx.doi.org/10.1002/9783527618279.ch37                                                        |      |
+|                           | | https://doi.org/10.1002/9783527618279.ch37                                                          |      |
 +---------------------------+-------------------------------------------------------------------------------------------------------+------+
 | Eccentricity              | | G. A. Arteca “Molecular Shape Descriptors”                                                          | C++  |
 |                           | | Reviews in Computational Chemistry vol 9                                                            |      |
-|                           | | http://dx.doi.org/10.1002/9780470125861.ch5                                                         |      |
+|                           | | https://doi.org/10.1002/9780470125861.ch5                                                           |      |
 +---------------------------+-------------------------------------------------------------------------------------------------------+------+
 | Asphericity               | | A. Baumgaertner, “Shapes of flexible vesicles”                                                      | C++  |
 |                           | | *J. Chem. Phys.* **98**:7496 (1993)                                                                 |      |
-|                           | | http://dx.doi.org/10.1063/1.464689                                                                  |      |
+|                           | | https://doi.org/10.1063/1.464689                                                                    |      |
 +---------------------------+-------------------------------------------------------------------------------------------------------+------+
 | Spherocity Index          | | Todeschini and Consoni                                                                              | C++  |
 |                           | | “Descriptors from Molecular Geometry”                                                               |      |
 |                           | | Handbook of Chemoinformatics                                                                        |      |
-|                           | | http://dx.doi.org/10.1002/9783527618279.ch37                                                        |      |
+|                           | | https://doi.org/10.1002/9783527618279.ch37                                                          |      |
 +---------------------------+-------------------------------------------------------------------------------------------------------+------+
 | Autocorr3D                | | 2017.09リリースで新しく導入。                                                                       | C++  |
 |                           | | Todeschini and Consoni                                                                              |      |
 |                           | | “Descriptors from Molecular Geometry” Handbook of Chemoinformatics                                  |      |
-|                           | | http://dx.doi.org/10.1002/9783527618279.ch37                                                        |      |
+|                           | | https://doi.org/10.1002/9783527618279.ch37                                                          |      |
 +---------------------------+-------------------------------------------------------------------------------------------------------+------+
 | RDF                       | | 2017.09リリースで新しく導入。                                                                       | C++  |
 |                           | | Todeschini and Consoni                                                                              |      |
 |                           | | “Descriptors from Molecular Geometry” Handbook of Chemoinformatics                                  |      |
-|                           | | http://dx.doi.org/10.1002/9783527618279.ch37                                                        |      |
+|                           | | https://doi.org/10.1002/9783527618279.ch37                                                          |      |
 +---------------------------+-------------------------------------------------------------------------------------------------------+------+
 | MORSE                     | | 2017.09リリースで新しく導入。                                                                       | C++  |
 |                           | | Todeschini and Consoni                                                                              |      |
 |                           | | “Descriptors from Molecular Geometry” Handbook of Chemoinformatics                                  |      |
-|                           | | http://dx.doi.org/10.1002/9783527618279.ch37                                                        |      |
+|                           | | https://doi.org/10.1002/9783527618279.ch37                                                          |      |
 +---------------------------+-------------------------------------------------------------------------------------------------------+------+
 | WHIM                      | | 2017.09リリースで新しく導入。                                                                       | C++  |
 |                           | | Todeschini and Consoni                                                                              |      |
 |                           | | “Descriptors from Molecular Geometry” Handbook of Chemoinformatics                                  |      |
-|                           | | http://dx.doi.org/10.1002/9783527618279.ch37                                                        |      |
+|                           | | https://doi.org/10.1002/9783527618279.ch37                                                          |      |
 |                           | |                                                                                                     |      |
 |                           | | **注意** DRAGONを使って求めたこれらの記述子の値を正確に再現するには十分な情報が手にはいりません。　 |      |
 |                           | | 我々はこれが近い実装と信じています。                                                                |      |
@@ -2712,7 +2712,7 @@ SSSR問題
 | GETAWAY                   | | 2017.09リリースで新しく導入。                                                                       | C++  |
 |                           | | Todeschini and Consoni                                                                              |      |
 |                           | | “Descriptors from Molecular Geometry” Handbook of Chemoinformatics                                  |      |
-|                           | | http://dx.doi.org/10.1002/9783527618279.ch37                                                        |      |
+|                           | | https://doi.org/10.1002/9783527618279.ch37                                                          |      |
 |                           | |                                                                                                     |      |
 |                           | | **注意** DRAGONを使って求めたこれらの記述子の値を正確に再現するには十分な情報が手にはいりません。   |      |
 |                           | | 我々はこれが近い実装と信じています。                                                                |      |

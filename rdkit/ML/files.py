@@ -62,7 +62,7 @@ class ReFile:
 
 def ReadDataFile(fileName, comment=r'#', depVarCol=0, dataType=numpy.float):
   """ read in the data file and return a tuple of two Numeric arrays:
-  (independant variables, dependant variables).
+  (independent variables, dependant variables).
 
   **ARGUMENTS:**
 
@@ -78,7 +78,7 @@ def ReadDataFile(fileName, comment=r'#', depVarCol=0, dataType=numpy.float):
 
    a tuple of two Numeric arrays:
 
-    (independant variables, dependant variables).
+    (independent variables, dependant variables).
 
   """
   inFile = ReFile(fileName)

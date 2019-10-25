@@ -29,7 +29,7 @@ class ResonanceEnumerator(object):
                  unconstrained_anions=False, allow_charge_separation=False, max_structures=MAX_STRUCTURES):
         """
 
-        :param bool allow_incomplete_octets: include resonance structures whose octets are less complete than the the most octet-complete structure.
+        :param bool allow_incomplete_octets: include resonance structures whose octets are less complete than the most octet-complete structure.
         :param bool allow_charge_separation: include resonance structures featuring charge separation also when uncharged resonance structures exist.
         :param bool kekule_all: enumerate all possible degenerate Kekule resonance structures (the default is to include just one).
         :param bool unconstrained_cations: if False positively charged atoms left and right of N with an incomplete octet are acceptable only if the conjugated group has a positive total formal charge.

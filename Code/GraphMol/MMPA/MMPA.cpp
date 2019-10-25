@@ -125,7 +125,7 @@ static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>>&
     // remove the bond
     em.removeBond(bi.first, bi.second);
 
-    // now add attachement points and set attachment point lables
+    // now add attachment points and set attachment point labels
     auto* a = new Atom(0);
     a->setProp(common_properties::molAtomMapNumber, (int)isotope);
     unsigned newAtomA = em.addAtom(a, true, true);

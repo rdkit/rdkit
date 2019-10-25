@@ -160,7 +160,7 @@ class FontManager:
       # nope, let's create a new tk font.
       # this way we will return info about the actual font
       # selected by Tk, which may be different than what we ask
-      # for if it's not availible.
+      # for if it's not available.
       font = tkFont.Font(self.master, family=family, size=size, weight=weight, slant=slant,
                          underline=underline)
       self.font_cache[(family, size, weight, slant, underline)] = font

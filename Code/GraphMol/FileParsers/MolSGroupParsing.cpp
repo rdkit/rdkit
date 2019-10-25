@@ -446,7 +446,7 @@ void ParseSGroupV2000SCDSEDLine(IDX_TO_SGROUP_MAP &sGroupMap,
 
   if (lastDataSGroup != 0 && lastDataSGroup != sgIdx) {
     std::ostringstream errout;
-    errout << "Found a Data Field not matching the the SGroup of the last Data "
+    errout << "Found a Data Field not matching the SGroup of the last Data "
               "Field at line "
            << line;
     throw FileParseException(errout.str());

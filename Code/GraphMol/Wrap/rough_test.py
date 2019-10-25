@@ -714,7 +714,7 @@ class TestCase(unittest.TestCase):
   def test21Robustification(self):
     ok = False
     # FIX: at the moment I can't figure out how to catch the
-    # actual exception that BPL is throwinng when it gets
+    # actual exception that BPL is throwing when it gets
     # invalid arguments (Boost.Python.ArgumentError)
     try:
       Chem.MolFromSmiles('C=O').HasSubstructMatch(Chem.MolFromSmarts('fiib'))
@@ -1145,7 +1145,7 @@ mol-4,CCOC
     self.assertTrue(smiSup[4])
     self.assertTrue(len(m) == 5)
 
-    # order dependance:
+    # order dependence:
     smiSup.SetData(inD, delimiter=",", smilesColumn=0, nameColumn=-1, titleLine=0)
     self.assertTrue(smiSup[4])
     self.assertTrue(len(smiSup) == 5)
@@ -4817,7 +4817,7 @@ M  END
       "C1=CNC=C1",  #pyrrole
       "C1=COC=N1",  # oxazole
       "C1=CSC=N1",  # thiazole
-      "C1=CNC=N1",  # imidzole
+      "C1=CNC=N1",  # imidazole
       "C1=CNN=C1",  # pyrazole
       "C1=CON=C1",  # isoxazole
       "C1=CSN=C1",  # isothiazole

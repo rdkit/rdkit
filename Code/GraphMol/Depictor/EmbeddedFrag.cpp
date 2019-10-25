@@ -666,7 +666,7 @@ void EmbeddedFrag::mergeRing(const EmbeddedFrag &embRing, unsigned int nCommon,
     } else {
       // update the neighbor only on atoms that were used to compute the
       // transform to merge the
-      // and only if the the two are the only common atoms
+      // and only if the two are the only common atoms
       // i.e. we are doing bridged systems we will leave the nbrs untouched
       if (nCommon <= 2) {
         if (std::find(pinAtoms.begin(), pinAtoms.end(), aid) !=
@@ -690,7 +690,7 @@ void EmbeddedFrag::mergeRing(const EmbeddedFrag &embRing, unsigned int nCommon,
 void EmbeddedFrag::addNonRingAtom(unsigned int aid, unsigned int toAid) {
   // const RDKit::ROMol *mol) {
   PRECONDITION(dp_mol, "");
-  // check that aid does not belong the the embedded fragment yet
+  // check that aid does not belong the embedded fragment yet
   PRECONDITION(d_eatoms.find(aid) == d_eatoms.end(), "");
   // and that toAid is already in the embedded system
   PRECONDITION(d_eatoms.find(toAid) != d_eatoms.end(), "");

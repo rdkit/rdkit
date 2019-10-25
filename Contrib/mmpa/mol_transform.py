@@ -91,7 +91,7 @@ if __name__ == '__main__':
   for transform in infile:
     transform = transform.rstrip()
 
-    #need to conver the smiles to smart to get rid of any potential issues
+    #need to convert the smiles to smart to get rid of any potential issues
     lhs, rhs = transform.split(">>")
 
     if (lhs == "[*:1][H]"):

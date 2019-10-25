@@ -151,7 +151,7 @@ def run_subs_query(subs):
 
 def run_subs_smarts_query(subs_smarts):
 
-  #set os enviroment for rdkit to use sqllite
+  #set os environment for rdkit to use sqllite
   os.environ['RD_USESQLLITE'] = '1'
   temp_core_ni_file = 'temp_core_ni_file_%s' % (os.getpid())
   cmd = "python $RDBASE/Projects/DbCLI/SearchDb.py --dbDir=%s_smarts --smarts='%s' --silent >%s" % (
@@ -205,7 +205,7 @@ def run_trans_smarts_query(transform):
   matching_lhs = []
   matching_rhs = []
 
-  #set os enviroment for rdkit to use sqllite
+  #set os environment for rdkit to use sqllite
   os.environ['RD_USESQLLITE'] = '1'
 
   cmd = "python $RDBASE/Projects/DbCLI/SearchDb.py --dbDir=%s_smarts --smarts='%s' --silent" % (pre,
@@ -357,7 +357,7 @@ parser.add_option('-p', '--prefix', action='store', dest='prefix', type='string'
 (options, args) = parser.parse_args()
 
 #note max heavy atom count does not
-#include the attachement points (*)
+#include the attachment points (*)
 max_size = 10
 ratio = 0.3
 use_ratio = False

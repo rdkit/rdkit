@@ -106,7 +106,7 @@ RDKIT_DEPICTOR_EXPORT unsigned int compute2DCoords(
   mol before adding a conformation
 
   \param weightDistMat - A value between 0.0 and 1.0, this
-  determines the importance of mimicing the the inter atoms
+  determines the importance of mimicing the inter atoms
   distances in dmat. (1.0 - weightDistMat) is the weight associated
   to spreading out the structure (density) in the cost function
 
