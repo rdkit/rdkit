@@ -35,7 +35,7 @@ RUN mkdir /src
 WORKDIR /src
 ENV RDBASE=/src/rdkit
 ARG RDKIT_BRANCH
-RUN git clone https://github.com/greglandrum/rdkit.git
+RUN git clone https://github.com/rdkit/rdkit.git
 WORKDIR $RDBASE
 RUN git checkout $RDKIT_BRANCH
 
