@@ -28,7 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-# Retrieve stereo and tautomer information from the the InChI string
+# Retrieve stereo and tautomer information from the InChI string
 # Created on Sep 23, 2010
 # Original author: Thomas Muellerk muelleth
 import logging

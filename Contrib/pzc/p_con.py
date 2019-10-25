@@ -317,7 +317,7 @@ def to_table(data, bins=None):
     #alternative implementation with double loop
     #tt = np.asarray([[(x == [i,j]).all(1).sum() for j in cat_uni]
     #                 for i in cat_uni] )
-    #other altervative: unique rows and bincount
+    #other alternative: unique rows and bincount
   elif np.isscalar(bins):
     bins_ = np.arange(bins + 1) - 0.5
     data_ = data

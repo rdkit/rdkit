@@ -45,18 +45,16 @@ __pycache__/
 
 /Data/templates.mae
 
+/External/**/*.tar.gz
+/External/**/*.zip
 /External/catch/catch/
 /External/CoordGen/coordgen/
 /External/CoordGen/maeparser/
-/External/CoordGen/maeparser-v*.tar.gz
-/External/CoordGen/coordgenlibs-v*.tar.gz
 /External/FreeSASA/freesasa-2.0.1/
-/External/FreeSASA/master.tar.gz
-/External/INCHI-API/INCHI-1-SRC.zip
 /External/INCHI-API/INCHI-1-SRC/
 /External/INCHI-API/src/
-/External/rapidjson-1.1.0.tar.gz
 /External/rapidjson-1.1.0/
+/External/RingFamilies/RingDecomposerLib/
 
 /rdkit/RDPaths.py
 /rdkit/Chem/inchi.py

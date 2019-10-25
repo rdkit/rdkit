@@ -4192,7 +4192,7 @@ Removed modules:
    2952272)
  - Double bonds with unspecified stereochemistry are now correctly
    flagged when output to mol files. (issue 2963522)
- - A segmentation fault that occured when kekulizing modified
+ - A segmentation fault that occurred when kekulizing modified
    molecules has been fixed. (issue 2983794)
 
 ## New Features

@@ -88,7 +88,7 @@ def IndexToRDId(idx, leadText='RDCmpd'):
 
   The format of the ID is:
     leadText-xxx-xxx-xxx-y
-  The number blocks are zero padded and the the final digit (y)
+  The number blocks are zero padded and the final digit (y)
   is a checksum:
 
   >>> str(IndexToRDId(9))

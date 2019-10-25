@@ -108,7 +108,7 @@ RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToRxnSmiles(
 //! returns an RXN block for a reaction
 /*!
    \param rxn            chemical reaction
-   \param separateAgents flag to decide if agents were put in a seperate block,
+   \param separateAgents flag to decide if agents were put in a separate block,
                          otherwise they were included in the reactants block
    (default)
  */

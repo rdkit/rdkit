@@ -65,7 +65,7 @@ const std::string morganFingerprintVersion = "1.0.0";
   The algorithm used is described in the paper
   Rogers, D. & Hahn, M. Extended-Connectivity Fingerprints. JCIM 50:742-54
   (2010)
-  http://dx.doi.org/10.1021/ci100050t
+  https://doi.org/10.1021/ci100050t
 
   The original implementation was done using this paper:
   D. Rogers, R.D. Brown, M. Hahn J. Biomol. Screen. 10:682-6 (2005)
@@ -115,7 +115,7 @@ RDKIT_FINGERPRINTS_EXPORT SparseIntVect<std::uint32_t> *getFingerprint(
   The algorithm used is described in the paper
   Rogers, D. & Hahn, M. Extended-Connectivity Fingerprints. JCIM 50:742-54
   (2010)
-  http://dx.doi.org/10.1021/ci100050t
+  https://doi.org/10.1021/ci100050t
 
   The original implementation was done using this paper:
   D. Rogers, R.D. Brown, M. Hahn J. Biomol. Screen. 10:682-6 (2005)

@@ -1087,7 +1087,7 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
   FindRings::storeRingsInfo(mol, res);
 
   // update the ring memberships of atoms and bonds in the molecule:
-  // store the SSSR rings on the the molecule as a property
+  // store the SSSR rings on the molecule as a property
   // we will ignore any existing SSSRs ont eh molecule - simply overwrite
   return rdcast<int>(res.size());
 }

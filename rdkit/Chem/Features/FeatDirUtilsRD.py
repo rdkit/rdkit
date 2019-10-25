@@ -15,7 +15,7 @@ import math
 
 # BIG NOTE: we are going assume atom IDs starting from 0 instead of 1
 # for all the functions in this file. This is so that they
-# are reasonably indepedent of the combicode. However when using
+# are reasonably independent of the combicode. However when using
 # with combicode the caller needs to make sure the atom IDs from combicode
 # are corrected before feeding them in here.
 

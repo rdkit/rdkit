@@ -122,7 +122,7 @@ RDKIT_DEPICTOR_EXPORT RDGeom::Point2D reflectPoint(const RDGeom::Point2D &point,
         --D--
           |
 </pre>
-  In this case the the number substituent of A, B, C, D are 3, 1, 1,
+  In this case the number substituent of A, B, C, D are 3, 1, 1,
   4 respectively so want to A and D to go opposite sides and so that
   we draw
 <pre>
@@ -150,7 +150,7 @@ RDKIT_DEPICTOR_EXPORT RDKit::INT_VECT setNbrOrder(unsigned int aid,
   in common with the rings that are already embedded.
 
   \param doneRings    a vertor of ring IDs that have been embedded already
-  \param fusedRings   list of all the rings in the the fused system
+  \param fusedRings   list of all the rings in the fused system
   \param nextId       this is where the ID for the next ring is written
 
   \return list of atom ids that are common

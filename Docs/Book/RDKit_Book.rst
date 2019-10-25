@@ -1384,7 +1384,7 @@ are, as far as I know, unique to the RDKit. The algorithm identifies features in
 the molecule by doing substructure searches using a small number (12 in the
 ``2019.03`` release of the RDKit) of very generic SMARTS patterns - like
 ``[*]~[*]~[*](~[*])~[*]`` or ``[R]~1[R]~[R]~[R]~1``, and then hashing each
-occurence of a pattern based on the atom and bond types involved. The fact that
+occurrence of a pattern based on the atom and bond types involved. The fact that
 particular pattern matched the molecule at all is also stored by hashing the
 pattern ID and size. If a particular feature contains either a query atom or a
 query bond (e.g. something generated from SMARTS), the only information that is

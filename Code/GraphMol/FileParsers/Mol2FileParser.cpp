@@ -324,7 +324,7 @@ bool cleanUpMol2Substructures(RWMol *res) {
         // this should return only the bond between C.2 and O.co2
         Bond *b = res->getBondBetweenAtoms(idx, *nbrIdxIt);
         if (!isFixed[*nbrIdxIt]) {
-          // the first occurence is negatively charged and has a single bond
+          // the first occurrence is negatively charged and has a single bond
           b->setBondType(Bond::SINGLE);
           b->setIsAromatic(false);
           at->setFormalCharge(-1);
@@ -333,7 +333,7 @@ bool cleanUpMol2Substructures(RWMol *res) {
           isFixed[idx] = 1;
           isFixed[*nbrIdxIt] = 1;
         } else {
-          // the other occurences are not charged and have a double bond
+          // the other occurrences are not charged and have a double bond
           b->setBondType(Bond::DOUBLE);
           b->setIsAromatic(false);
           at->setIsAromatic(false);

@@ -972,9 +972,9 @@ class HasPropWithValueQuery<TargetPtr, ExplicitBitVect>
             what->template getProp<const ExplicitBitVect &>(propname);
         const double tani = TanimotoSimilarity(val, bv);
         res = (1.0 - tani) <= tol;
-      } catch (KeyErrorException) {
+      } catch (KeyErrorException &) {
         res = false;
-      } catch (boost::bad_any_cast) {
+      } catch (boost::bad_any_cast &) {
         res = false;
       }
 #ifdef __GNUC__

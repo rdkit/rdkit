@@ -1576,7 +1576,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::scope().attr("_CalcPBF_version") = RDKit::Descriptors::PBFVersion;
   docString =
       "Returns the PBF (plane of best fit) descriptor "
-      "(http://dx.doi.org/10.1021/ci300293f)";
+      "(https://doi.org/10.1021/ci300293f)";
   python::def("CalcPBF", RDKit::Descriptors::PBF,
               (python::arg("mol"), python::arg("confId") = -1),
               docString.c_str());

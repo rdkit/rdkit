@@ -825,7 +825,7 @@ struct RGroupDecompData {
         // Is this necessary?
         CHECK_INVARIANT(
             atom->getAtomicNum() > 1,
-            "Multiple attachements to a dummy (or hydrogen) is weird.");
+            "Multiple attachments to a dummy (or hydrogen) is weird.");
         auto *newAt = new Atom(0);
         setRlabel(newAt, rlabel);
         atomsToAdd.push_back(std::make_pair(atom, newAt));

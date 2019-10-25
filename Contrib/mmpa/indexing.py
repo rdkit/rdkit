@@ -64,7 +64,7 @@ def get_symmetry_class(smi):
   m = Chem.MolFromSmiles(smi)
   symmetry_classes = Chem.CanonicalRankAtoms(m, breakTies=False)
 
-  #get the symmetry class of the attachements points
+  #get the symmetry class of the attachments points
   #Note: 1st star is the zero index,
   #2nd star is first index, etc
   for atom, symmetry_class in zip(m.GetAtoms(), symmetry_classes):
@@ -81,9 +81,9 @@ def cansmirk(lhs, rhs, context):
   #2) For the LHS the 1st star will have label 1, 2nd star will have label 2 and so on
   #3) Do a symmetry check of lhs and rhs and use that to decide if the labels on
   #   RHS or/and context need to change.
-  #4) For the rhs, if you have a choice (ie. two attachement points are symmetrically
+  #4) For the rhs, if you have a choice (ie. two attachment points are symmetrically
   #   equivalent), always put the label with lower numerical value on the earlier
-  #   attachement point on the cansmi-ed smiles
+  #   attachment point on the cansmi-ed smiles
 
   #print "in: %s,%s" % (lhs,rhs)
 
@@ -123,7 +123,7 @@ def cansmirk(lhs, rhs, context):
       #switch labels lhs based on position
       lhs = switch_labels_on_position(lhs)
       #change labels on rhs based on position but need to record
-      #the changes as need to appy them to the context
+      #the changes as need to apply them to the context
       isotope_track = build_track_dictionary(rhs, stars)
       rhs = switch_labels_on_position(rhs)
       context = switch_labels(isotope_track, stars, context)
@@ -131,7 +131,7 @@ def cansmirk(lhs, rhs, context):
     #unsymmetric lhs and symmetric rhs
     elif ((lhs_sym[0] != lhs_sym[1]) and (rhs_sym[0] == rhs_sym[1])):
       #change labels on lhs based on position but need to record
-      #the changes as need to appy them to the context
+      #the changes as need to apply them to the context
       isotope_track = build_track_dictionary(lhs, stars)
       lhs = switch_labels_on_position(lhs)
       context = switch_labels(isotope_track, stars, context)
@@ -159,7 +159,7 @@ def cansmirk(lhs, rhs, context):
       #alter lhs in usual way
       lhs = switch_labels_on_position(lhs)
       #change labels on rhs based on position but need to record
-      #the changes as need to appy them to the context
+      #the changes as need to apply them to the context
       isotope_track = build_track_dictionary(rhs, stars)
       rhs = switch_labels_on_position(rhs)
       context = switch_labels(isotope_track, stars, context)
@@ -226,7 +226,7 @@ def cansmirk(lhs, rhs, context):
         #alter lhs in usual way
         lhs = switch_labels_on_position(lhs)
         #change labels on rhs based on position but need to record
-        #the changes as need to appy them to the context
+        #the changes as need to apply them to the context
         isotope_track = build_track_dictionary(rhs, stars)
         rhs = switch_labels_on_position(rhs)
         context = switch_labels(isotope_track, stars, context)
@@ -346,7 +346,7 @@ def build_track_dictionary(smi, stars):
 
 def index_hydrogen_change():
   #Algorithm details
-  #have an index of common fragment(key) => fragments conected to it (values)
+  #have an index of common fragment(key) => fragments connected to it (values)
   #Need to add *-H to the values where appropriate - and its
   #appropriate when the key is what you would get if you chopped a H off a cmpd.
   #Therefore simply need to check if key with the * replaced with a H is
@@ -389,7 +389,7 @@ def index_hydrogen_change():
 if __name__ == '__main__':
 
   #note max heavy atom count does not
-  #include the attachement points (*)
+  #include the attachment points (*)
   max_size = 10
   ratio = 0.3
   use_ratio = False
@@ -455,7 +455,7 @@ if __name__ == '__main__':
     if (len(core) == 0):
       side_chains = context.split('.')
 
-      #minus 1 for the attachement pt
+      #minus 1 for the attachment pt
       if (add_to_index(side_chains[1], 1, cmpd_heavy) == True):
         context = side_chains[0]
         core = side_chains[1]
@@ -466,7 +466,7 @@ if __name__ == '__main__':
         #add the context with id to index
         index.setdefault(context, []).append(value)
 
-      #minus 1 for the attachement pt
+      #minus 1 for the attachment pt
       if (add_to_index(side_chains[0], 1, cmpd_heavy) == True):
         context = side_chains[1]
         core = side_chains[0]

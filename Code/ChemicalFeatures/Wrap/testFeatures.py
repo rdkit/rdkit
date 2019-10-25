@@ -98,7 +98,7 @@ class TestCase(unittest.TestCase):
 
     # Test the new version also has the id and works as expected
 
-    # uncomment the following to generate (overrwrite) new version of pickled
+    # uncomment the following to generate (overwrite) new version of pickled
     # data file
     #pickle.dump(ffeat,file(os.path.join(RDConfig.RDBaseDir, 'Code/ChemicalFeatures/Wrap/testData/featv2.pkl'),'wb+'))
     inTF = open(

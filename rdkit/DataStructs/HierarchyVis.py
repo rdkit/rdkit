@@ -88,7 +88,7 @@ def DrawHierarchy(adjList, levelList, canvas, entryColors=None, bitIds=None, min
       nodeRad = max(spacePerNode / 2, visOpts.minCircRad)
       nodeRad = min(nodeRad, visOpts.maxCircRad)
       spacePerNode = nodeRad * 2 + visOpts.horizOffset
-      # start in the midde of the canvas:
+      # start in the middle of the canvas:
       pos[0] = dims[0] / 2.
       # maybe we need to offset a little:
       if nHere % 2:
