@@ -47,6 +47,10 @@ void parseMCSParametersJSON(const char* json, MCSParameters* params) {
         "RingMatchesRingOnly", p.BondCompareParameters.RingMatchesRingOnly);
     p.BondCompareParameters.CompleteRingsOnly = pt.get<bool>(
         "CompleteRingsOnly", p.BondCompareParameters.CompleteRingsOnly);
+    p.BondCompareParameters.MatchFusedRings = pt.get<bool>(
+        "MatchFusedRings", p.BondCompareParameters.MatchFusedRings);
+    p.BondCompareParameters.MatchFusedRingsStrict = pt.get<bool>(
+        "MatchFusedRingsStrict", p.BondCompareParameters.MatchFusedRingsStrict);
     p.BondCompareParameters.MatchStereo =
         pt.get<bool>("MatchStereo", p.BondCompareParameters.MatchStereo);
 
@@ -58,7 +62,7 @@ void parseMCSParametersJSON(const char* json, MCSParameters* params) {
     else if (0 == strcmp("Isotopes", s.c_str()))
       p.AtomTyper = MCSAtomCompareIsotopes;
     else if (0 == strcmp("AnyHeavy", s.c_str()))
-	  p.AtomTyper = MCSAtomCompareAnyHeavyAtom;
+      p.AtomTyper = MCSAtomCompareAnyHeavyAtom;
 
     s = pt.get<std::string>("BondCompare", "def");
     if (0 == strcmp("Any", s.c_str()))
@@ -88,12 +92,21 @@ MCSResult findMCS_P(const std::vector<ROMOL_SPTR>& mols,
 }
 
 MCSResult findMCS(const std::vector<ROMOL_SPTR>& mols, bool maximizeBonds,
+        double threshold, unsigned timeout, bool verbose,
+        bool matchValences, bool ringMatchesRingOnly,
+        bool completeRingsOnly, bool matchChiralTag,
+        AtomComparator atomComp, BondComparator bondComp) {
+  return findMCS(mols, maximizeBonds, threshold, timeout, verbose,
+          matchValences, ringMatchesRingOnly, completeRingsOnly,
+          matchChiralTag, atomComp, bondComp, IgnoreRingFusion);
+}
+
+MCSResult findMCS(const std::vector<ROMOL_SPTR>& mols, bool maximizeBonds,
                   double threshold, unsigned timeout, bool verbose,
                   bool matchValences, bool ringMatchesRingOnly,
                   bool completeRingsOnly, bool matchChiralTag,
-                  AtomComparator atomComp, BondComparator bondComp) {
-  // AtomComparator atomComp=AtomCompareElements;
-  // BondComparator bondComp=BondCompareOrder;
+                  AtomComparator atomComp, BondComparator bondComp,
+                  RingComparator ringComp) {
   auto* ps = new MCSParameters();
   ps->MaximizeBonds = maximizeBonds;
   ps->Threshold = threshold;
@@ -111,9 +124,9 @@ MCSResult findMCS(const std::vector<ROMOL_SPTR>& mols, bool maximizeBonds,
     case AtomCompareIsotopes:
       ps->AtomTyper = MCSAtomCompareIsotopes;
       break;
-	case AtomCompareAnyHeavyAtom:
-	  ps->AtomTyper = MCSAtomCompareAnyHeavyAtom;
-	  break;
+    case AtomCompareAnyHeavyAtom:
+      ps->AtomTyper = MCSAtomCompareAnyHeavyAtom;
+      break;
   }
   ps->AtomCompareParameters.RingMatchesRingOnly = ringMatchesRingOnly;
   switch (bondComp) {
@@ -129,6 +142,8 @@ MCSResult findMCS(const std::vector<ROMOL_SPTR>& mols, bool maximizeBonds,
   }
   ps->BondCompareParameters.RingMatchesRingOnly = ringMatchesRingOnly;
   ps->BondCompareParameters.CompleteRingsOnly = completeRingsOnly;
+  ps->BondCompareParameters.MatchFusedRings = (ringComp != IgnoreRingFusion);
+  ps->BondCompareParameters.MatchFusedRingsStrict = (ringComp == StrictRingFusion);
   MCSResult res = findMCS(mols, ps);
   delete ps;
   return res;
@@ -287,7 +302,7 @@ static bool checkBondStereo(const MCSBondCompareParameters& p,
   return true;
 }
 
-static bool checkRingMatch(const MCSBondCompareParameters& p, const ROMol& mol1,
+static bool checkRingMatch(const MCSBondCompareParameters&, const ROMol&,
                            unsigned int bond1, const ROMol& mol2,
                            unsigned int bond2, void* v_ringMatchMatrixSet) {
   if (!v_ringMatchMatrixSet) throw "v_ringMatchMatrixSet is NULL";  // never
@@ -301,10 +316,8 @@ static bool checkRingMatch(const MCSBondCompareParameters& p, const ROMol& mol1,
   bool bond1inRing = !ringsIdx1.empty();
   bool bond2inRing = !ringsIdx2.empty();
 
-  if (bond1inRing != bond2inRing) return false;
-
-  // both bonds are either in rings or not:
-  return true;
+  // bond are both either in a ring or not
+  return (bond1inRing == bond2inRing);
 }
 
 bool MCSBondCompareAny(const MCSBondCompareParameters& p, const ROMol& mol1,
@@ -351,6 +364,140 @@ bool MCSBondCompareOrderExact(const MCSBondCompareParameters& p,
     return true;
   }
   return false;
+}
+
+//=== RING COMPARE ========================================================
+inline static bool ringFusionCheck(const short unsigned c1[],
+    const short unsigned c2[], const ROMol& mol1,
+    const FMCS::Graph& query, const ROMol& mol2,
+    const FMCS::Graph& target, const MCSParameters* p) {
+  const RingInfo *ri2 = mol2.getRingInfo();
+  const VECT_INT_VECT &br2 = ri2->bondRings();
+  std::vector<size_t> nonFusedBonds(br2.size(), 0);
+  std::vector<size_t> numMcsBondRings(br2.size(), 0);
+  RDKit::FMCS::Graph::BOND_ITER_PAIR bpIter = boost::edges(query);
+  size_t i = 0;
+  // numMcsBondRings stores the number of bonds which
+  // are part of the MCS for each ring
+  for (auto it = bpIter.first; it != bpIter.second; ++it) {
+    const Bond *b = mol2.getBondBetweenAtoms(
+      target[c2[boost::source(*it, query)]], target[c2[boost::target(*it, query)]]);
+    if (!b) continue;
+    unsigned int bi = b->getIdx();
+    if (!ri2->numBondRings(bi)) continue;
+    for (i = 0; i < br2.size(); ++i) {
+      if (std::find(br2[i].begin(), br2[i].end(), bi) != br2[i].end())
+        ++numMcsBondRings[i];
+    }
+  }
+  // nonFusedBonds stores the number of non-fused bonds
+  // (i.e., which belong to a single ring) for each ring
+  for (i = 0; i < br2.size(); ++i) {
+    for (auto bi: br2[i]) {
+      if (ri2->numBondRings(bi) == 1)
+        ++nonFusedBonds[i];
+    }
+  }
+  /* if a ring has at least one bond which is part of the MCS,
+     we need to check how many bonds are actually part of the MCS:
+     if they are greater than the number of fused bonds but lower
+     than the number of non-fused bonds, then the ring is not
+     complete and we should return true straightaway
+     We need to check that the number of bonds in a ring
+     is greater than the number of fused bonds because that
+     guarantees that this ring is actually involved in the
+     MCS and not just adjacent to another ring which is
+     indeed part of the MCS. */
+  bool missingFusedBond = false;
+  for (i = 0; i < br2.size(); ++i) {
+    if (numMcsBondRings[i]
+      && numMcsBondRings[i] > (br2[i].size() - nonFusedBonds[i])
+      && numMcsBondRings[i] < nonFusedBonds[i])
+      break;
+    if (numMcsBondRings[i] == nonFusedBonds[i]
+      && numMcsBondRings[i] < br2[i].size())
+      missingFusedBond = true;
+  }
+  if (i < br2.size())
+    return true;
+  /* If we found that the MCS is missing a fused bond, we may need to
+     check against the smaller molecule as well.
+     Consider this case: MCS between
+     2-methylbicyclo[4.3.0]nonane and 1-methylbicyclo[3.1.0]hexane
+
+                   \__
+                   /  \_                          \___
+                   \__/ \                         / \/
+                      \ /                         \ /
+                       C                           C
+                       H2                          H2
+
+     In permissive mode, we are happy for methylcyclohexane to be the MCS.
+     in strict mode, we don't want methylcyclohexane to be the MCS.
+
+                                         \__
+                                         /  \
+                                         \__/
+
+     When methylcyclohexane is checked against 2-methylbicyclo[4.3.0]nonane
+     there is no missing fused bond. This is OK for permissive mode.
+     In strict mode, we also need to check against 1-methylbicyclo[3.1.0]hexane,
+     where there is indeed a missing fused bond. */
+  bool missingFusedBond2 = false;
+  if (missingFusedBond ^ p->BondCompareParameters.MatchFusedRingsStrict) {
+    // if we are in permissive mode we allow one of the molecules to miss
+    // fused bonds, but not both. In strict mode we allow neither.
+    if (!p->BondCompareParameters.MatchFusedRingsStrict)
+      missingFusedBond = false;
+    const RingInfo *ri1 = mol1.getRingInfo();
+    const VECT_INT_VECT &br1 = ri1->bondRings();
+    std::set<unsigned int> mcsRingBondIdxSet;
+    // put all MCS bond indices which belong to one or more rings in a set
+    for (auto it = bpIter.first; it != bpIter.second; ++it) {
+      const Bond *b = mol1.getBondBetweenAtoms(
+        query[c1[boost::source(*it, query)]], query[c1[boost::target(*it, query)]]);
+      if (b && ri1->numBondRings(b->getIdx()))
+        mcsRingBondIdxSet.insert(b->getIdx());
+    }
+    for (i = 0; i < br1.size(); ++i) {
+      size_t foundBonds = 0;
+      size_t fusedBonds = 0;
+      // for each ring, check how many bonds belong to MCS (foundBonds)
+      // and how many belong to multiple rings (fused bonds).
+      for (auto bi: br1[i]) {
+        if (std::find(mcsRingBondIdxSet.begin(),
+          mcsRingBondIdxSet.end(), bi) != mcsRingBondIdxSet.end()) {
+          ++foundBonds;
+          if (ri1->numBondRings(bi) > 1)
+            ++fusedBonds;
+        }
+      }
+      // if the ring is part of the MCS, and we found more bonds than the fused ones
+      // (i.e., the ring is not simply adjacent to an MCS ring) but less than
+      // the bonds which are part of this ring, then some fused bond is missing.
+      if (foundBonds && foundBonds > fusedBonds && foundBonds < br1[i].size()) {
+        missingFusedBond2 = true;
+        break;
+      }
+    }
+  }
+  // if both missingFusedBond and missingFusedBond2 are false, return true
+  return (!missingFusedBond && !missingFusedBond2);
+}
+
+bool FinalMatchCheckFunction(const short unsigned c1[],
+                             const short unsigned c2[], const ROMol& mol1,
+                             const FMCS::Graph& query, const ROMol& mol2,
+                             const FMCS::Graph& target,
+                             const MCSParameters *p) {
+  if ((p->BondCompareParameters.MatchFusedRings
+      || p->BondCompareParameters.MatchFusedRingsStrict)
+      && !ringFusionCheck(c1, c2, mol1, query, mol2, target, p))
+    return false;
+  if (p->AtomCompareParameters.MatchChiralTag
+    && !FinalChiralityCheckFunction(c1, c2, mol1, query, mol2, target, p))
+    return false;
+  return true;
 }
 
 bool FinalChiralityCheckFunction(const short unsigned c1[],

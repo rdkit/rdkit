@@ -25,11 +25,17 @@
 
 namespace RDKit {
 
-bool FinalChiralityCheckFunction(const short unsigned c1[],
-                                 const short unsigned c2[], const ROMol& mol1,
-                                 const FMCS::Graph& query, const ROMol& mol2,
-                                 const FMCS::Graph& target,
-                                 const MCSParameters* p);
+inline bool FinalChiralityCheckFunction(const short unsigned c1[],
+                                        const short unsigned c2[], const ROMol& mol1,
+                                        const FMCS::Graph& query, const ROMol& mol2,
+                                        const FMCS::Graph& target,
+                                        const MCSParameters* p);
+
+bool FinalMatchCheckFunction(const short unsigned c1[],
+                             const short unsigned c2[], const ROMol& mol1,
+                             const FMCS::Graph& query, const ROMol& mol2,
+                             const FMCS::Graph& target,
+                             const MCSParameters* p);
 
 namespace FMCS {
 class RDKIT_FMCS_EXPORT MaximumCommonSubgraph {
