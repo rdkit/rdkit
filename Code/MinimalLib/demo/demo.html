@@ -1,11 +1,27 @@
 <!doctype html>
 <html>
+
+<head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="Author" content="greg Landrum">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+
+  <style>
+    h1,
+    h2,
+    h3,
+    h4 {
+      color: #044484;
+    }
+  </style>
+</head>
 <script>
   var Module = {
     onRuntimeInitialized: function () {
       console.log('version: ' + Module.version());
       var m1 = Module.get_mol("c1ccccc1O");
-      console.log('smile: ' + m1.get_smiles());
+      console.log('smiles: ' + m1.get_smiles());
       m1.delete();
       callback("CC(=O)Oc1ccccc1C(=O)O");
     }
@@ -51,15 +67,23 @@
   }
 </script>
 <script src="./RDKit_minimal.js"></script>
-<div id="molecule">
-  <div id="drawing"></div>
-  <div id="can_smiles"></div>
-  <div id="descrs"></div>
-</div>
-<br>
-<br>
-SMILES: <input id="smiles_input" type="text" value="CC(=O)Oc1ccccc1C(=O)O" onkeyup="callback(this.value)">
-<br>
-SMARTS: <input id="smarts_input" type="text" value="" onkeyup="sma_callback(this.value)">
+
+<body>
+  <div class="container-fluid col-md-8">
+    <h1>RDKit-JS demo</h1>
+    <div id="molecule">
+      <div id="drawing"></div>
+      <div id="can_smiles"></div>
+    </div>
+    <br>
+    SMILES: <input id="smiles_input" type="text" value="CC(=O)Oc1ccccc1C(=O)O" onkeyup="callback(this.value)">
+    SMARTS: <input id="smarts_input" type="text" value="" onkeyup="sma_callback(this.value)">
+    <br>
+    <h2>Computed values</h2>
+
+    <div id="descrs"></div>
+  </div>
+
+</body>
 
 </html>
