@@ -824,6 +824,14 @@ ROMol *replaceCoreHelper(const ROMol &mol, const ROMol &core,
                      requireDummyMatch);
 }
 
+void setDoubleBondNeighborDirectionsHelper(ROMol &mol, python::object confObj) {
+  Conformer *conf = nullptr;
+  if (confObj) {
+    conf = python::extract<Conformer *>(confObj);
+  }
+  MolOps::setDoubleBondNeighborDirections(mol, conf);
+}
+
 struct molops_wrapper {
   static void wrap() {
     std::string docString;
@@ -846,7 +854,7 @@ struct molops_wrapper {
     // ------------------------------------------------------------------------
     docString =
         "Assign stereochemistry to bonds based on coordinates and a conformer.\n\
-        DEPRECATED: Please use the version that takes a conformer ID instead.\n\
+        DEPRECATED\n\
         \n\
   ARGUMENTS:\n\
   \n\
@@ -857,8 +865,7 @@ struct molops_wrapper {
                 (python::arg("mol"), python::arg("conformer")),
                 docString.c_str());
     docString =
-        "Assign stereochemistry to bonds based on coordinates.\n\
-        \n\
+        "DEPRECATED, use SetDoubleBondNeighborDirections() instead\n\
   ARGUMENTS:\n\
   \n\
     - mol: the molecule to be modified\n\
@@ -869,14 +876,26 @@ struct molops_wrapper {
                 docString.c_str());
 
     docString =
+        "Uses the stereo info on double bonds to set the directions of neighboring single bonds\n\
+        \n\
+  ARGUMENTS:\n\
+  \n\
+    - mol: the molecule to be modified\n\
+\n";
+    python::def("SetDoubleBondNeighborDirections",
+                setDoubleBondNeighborDirectionsHelper,
+                (python::arg("mol"), python::arg("conf") = python::object()),
+                docString.c_str());
+
+    docString =
         "Uses the directions of neighboring bonds to set cis/trans stereo on double bonds.\n\
         \n\
   ARGUMENTS:\n\
   \n\
     - mol: the molecule to be modified\n\
 \n";
-    python::def("SetBondStereoFromDirections", MolOps::setBondStereoFromDirections,
-                (python::arg("mol")),
+    python::def("SetBondStereoFromDirections",
+                MolOps::setBondStereoFromDirections, (python::arg("mol")),
                 docString.c_str());
 
     // ------------------------------------------------------------------------

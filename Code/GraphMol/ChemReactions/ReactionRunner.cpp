@@ -165,14 +165,16 @@ const Atom *findHighestCIPNeighbor(const Atom *atom, const Atom *skipAtom) {
       // If at least one of the atoms doesn't have a CIP rank, the highest rank
       // does not make sense, so return a nullptr.
       return nullptr;
-    }
-    if (cip > bestCipRank || bestCipRankedAtom == nullptr) {
+    } else if (cip > bestCipRank || bestCipRankedAtom == nullptr) {
       bestCipRank = cip;
       bestCipRankedAtom = neighbor;
     } else if (cip == bestCipRank) {
       // This also doesn't make sense if there is a tie (if that's possible).
       // We still keep the best CIP rank in case something better comes around
       // (also not sure if that's possible).
+      BOOST_LOG(rdWarningLog)
+          << "Warning: duplicate CIP ranks found in findHighestCIPNeighbor()"
+          << std::endl;
       bestCipRankedAtom = nullptr;
     }
   }
@@ -186,26 +188,28 @@ INT_VECT findStereoAtoms(const Bond *bond) {
   PRECONDITION(bond->getStereo() > Bond::BondStereo::STEREOANY,
                "no defined stereo");
 
-  switch (bond->getStereo()) {
-    case Bond::BondStereo::STEREOE:
-    case Bond::BondStereo::STEREOZ: {
-      const Atom *startStereoAtom =
-          findHighestCIPNeighbor(bond->getBeginAtom(), bond->getEndAtom());
-      const Atom *endStereoAtom =
-          findHighestCIPNeighbor(bond->getEndAtom(), bond->getBeginAtom());
+  if (!bond->getStereoAtoms().empty()) {
+    return bond->getStereoAtoms();
+  }
+  if (bond->getStereo() == Bond::BondStereo::STEREOE ||
+      bond->getStereo() == Bond::BondStereo::STEREOZ) {
+    const Atom *startStereoAtom =
+        findHighestCIPNeighbor(bond->getBeginAtom(), bond->getEndAtom());
+    const Atom *endStereoAtom =
+        findHighestCIPNeighbor(bond->getEndAtom(), bond->getBeginAtom());
 
-      CHECK_INVARIANT(startStereoAtom != nullptr && endStereoAtom != nullptr,
-                      "stereoatom(s) not found");
-
-      int startStereoAtomIdx = static_cast<int>(startStereoAtom->getIdx());
-      int endStereoAtomIdx = static_cast<int>(endStereoAtom->getIdx());
-
-      return {startStereoAtomIdx, endStereoAtomIdx};
+    if (startStereoAtom == nullptr || endStereoAtom == nullptr) {
+      return {};
     }
-    case Bond::BondStereo::STEREOCIS:
-    case Bond::BondStereo::STEREOTRANS:
-    default:
-      return bond->getStereoAtoms();
+
+    int startStereoAtomIdx = static_cast<int>(startStereoAtom->getIdx());
+    int endStereoAtomIdx = static_cast<int>(endStereoAtom->getIdx());
+
+    return {startStereoAtomIdx, endStereoAtomIdx};
+  } else {
+    BOOST_LOG(rdWarningLog) << "Unable to assign stereo atoms for bond "
+                            << bond->getIdx() << std::endl;
+    return {};
   }
 }
 }  // namespace
@@ -545,8 +549,14 @@ void forwardReactantBondStereo(ReactantProductAtomMapping *mapping, Bond *pBond,
   const Atom *rStart = rBond->getBeginAtom();
   const Atom *rEnd = rBond->getEndAtom();
   const auto rStereoAtoms = findStereoAtoms(rBond);
-  PRECONDITION(rStereoAtoms.size() == 2,
-               "stereo atoms not found for double bond");
+  if (rStereoAtoms.size() != 2) {
+    BOOST_LOG(rdWarningLog)
+        << "WARNING: neither stereo atoms nor CIP codes found for double bond. "
+           "Stereochemistry info will not be propagated to product."
+        << std::endl;
+    pBond->setStereo(Bond::BondStereo::STEREONONE);
+    return;
+  }
 
   StereoBondEndCap start(reactant, rStart, rEnd, rStereoAtoms[0]);
   StereoBondEndCap end(reactant, rEnd, rStart, rStereoAtoms[1]);
@@ -681,7 +691,6 @@ void updateStereoBonds(RWMOL_SPTR product, const ROMol &reactant,
     if (pBond->getBondType() != Bond::BondType::DOUBLE) {
       continue;
     }
-
     // If the product bond was previously marked as STEREOANY, check if it can
     // actually sustain stereo (this could not be checked until we had all the
     // atoms in the product)
@@ -1285,7 +1294,6 @@ void addReactantAtomsAndBonds(const ChemicalReaction &rxn, RWMOL_SPTR product,
                       "mapped reactant atom not present in product.");
 
       const Atom *reactantAtom = reactant->getAtomWithIdx(reactantAtomIdx);
-
       for (unsigned i = 0;
            i < mapping->reactProdAtomMap[reactantAtomIdx].size(); i++) {
         // here's a pointer to the atom in the product:
@@ -1338,11 +1346,21 @@ generateOneProductSet(const ChemicalReaction &rxn,
   // if any of the reactants have a conformer, we'll go ahead and
   // generate conformers for the products:
   bool doConfs = false;
-  for (auto &reactant : reactants) {
+  // if any of the reactants have a single bond with directionality specified,
+  // we will make sure that the output molecules have directionality specified.
+  bool doBondDirs = false;
+  for (const auto &reactant : reactants) {
     if (reactant->getNumConformers()) {
       doConfs = true;
-      break;
     }
+    for (const auto bnd : reactant->bonds()) {
+      if (bnd->getBondType() == Bond::SINGLE &&
+          bnd->getBondDir() > Bond::NONE) {
+        doBondDirs = true;
+        break;
+      }
+    }
+    if (doConfs && doBondDirs) break;
   }
 
   MOL_SPTR_VECT res;
@@ -1368,6 +1386,13 @@ generateOneProductSet(const ChemicalReaction &rxn,
     if (doConfs) {
       product->addConformer(conf, true);
     }
+
+    // if there was bond direction information in any reactant, it has been
+    // lost, add it back.
+    if (doBondDirs) {
+      MolOps::setDoubleBondNeighborDirections(*product);
+    }
+
     res[prodId] = product;
     ++prodId;
   }

@@ -885,17 +885,13 @@ RDKIT_GRAPHMOL_EXPORT void assignStereochemistryFrom3D(
 RDKIT_GRAPHMOL_EXPORT void assignChiralTypesFromBondDirs(
     ROMol &mol, int confId = -1, bool replaceExistingTags = true);
 
-//! \brief Uses a conformer to assign directionality to the single bonds
-//!   around double bonds
-/*!
-
-  \param mol                  the molecule of interest
-  \param confId               the conformer to use
-*/
+//! \deprecated: this function will be removed in a future release. Use
+//! setDoubleBondNeighborDirections() instead
 RDKIT_GRAPHMOL_EXPORT void detectBondStereochemistry(ROMol &mol,
                                                      int confId = -1);
+//! Sets bond directions based on double bond stereochemistry
 RDKIT_GRAPHMOL_EXPORT void setDoubleBondNeighborDirections(
-    ROMol &mol, const Conformer *conf = NULL);
+    ROMol &mol, const Conformer *conf = nullptr);
 
 //! Assign CIS/TRANS bond stereochemistry tags based on neighboring directions
 RDKIT_GRAPHMOL_EXPORT void setBondStereoFromDirections(ROMol &mol);

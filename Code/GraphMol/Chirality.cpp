@@ -2260,13 +2260,6 @@ void setDoubleBondNeighborDirections(ROMol &mol, const Conformer *conf) {
     //           << pairIter->second->getStereo() << std::endl;
     updateDoubleBondNeighbors(mol, pairIter->second, conf, needsDir,
                               singleBondCounts, singleBondNbrs);
-    // if the bond is cis or trans we've now set the directions
-    // that correspond to that, so we can remove the bond stereo setting
-    if (pairIter->second->getStereo() == Bond::STEREOCIS ||
-        pairIter->second->getStereo() == Bond::STEREOTRANS) {
-      // std::cerr << "RESET: " << pairIter->second->getIdx() << std::endl;
-      pairIter->second->setStereo(Bond::STEREONONE);
-    }
   }
   if (resetRings) mol.getRingInfo()->reset();
 }

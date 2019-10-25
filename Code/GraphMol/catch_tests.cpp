@@ -766,3 +766,16 @@ M  END
     CHECK(m->getBondWithIdx(9)->getStereoAtoms()[1] == 30);
   }
 }
+
+TEST_CASE("setDoubleBondNeighborDirections()", "[stereochemistry,bug]") {
+  SECTION("basics") {
+    auto m = "CC=CC"_smiles;
+    REQUIRE(m);
+    m->getBondWithIdx(1)->getStereoAtoms() = {0, 3};
+    m->getBondWithIdx(1)->setStereo(Bond::STEREOCIS);
+    MolOps::setDoubleBondNeighborDirections(*m);
+    CHECK(m->getBondWithIdx(0)->getBondDir() == Bond::ENDUPRIGHT);
+    CHECK(m->getBondWithIdx(2)->getBondDir() == Bond::ENDDOWNRIGHT);
+    CHECK(MolToSmiles(*m) == "C/C=C\\C");
+  }
+}

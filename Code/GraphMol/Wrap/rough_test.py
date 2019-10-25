@@ -5617,6 +5617,16 @@ M  END
     self.assertEqual(m2.GetBondBetweenAtoms(0,1).GetStereo(),Chem.BondStereo.STEREOCIS)
 
 
+  def testSetBondDirFromStereo(self):
+    m1 = Chem.MolFromSmiles('CC=CC')
+    m1.GetBondWithIdx(1).SetStereoAtoms(0,3)
+    m1.GetBondWithIdx(1).SetStereo(Chem.BondStereo.STEREOCIS)
+    Chem.SetDoubleBondNeighborDirections(m1)
+    self.assertEqual(Chem.MolToSmiles(m1),r"C/C=C\C")   
+    self.assertEqual(m1.GetBondWithIdx(0).GetBondDir(),Chem.BondDir.ENDUPRIGHT)
+    self.assertEqual(m1.GetBondWithIdx(2).GetBondDir(),Chem.BondDir.ENDDOWNRIGHT)
+
+
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
