@@ -471,7 +471,7 @@ def _MolsToGridSVG(mols, molsPerRow=3, subImgSize=(200, 200), legends=None, high
       if hasattr(dops, k):
         setattr(dops, k, v)
         del kwargs[k]
-  d2d.DrawMolecules(mols, legends=legends, highlightAtoms=highlightAtomLists,
+  d2d.DrawMolecules(list(mols), legends=legends, highlightAtoms=highlightAtomLists,
                     highlightBonds=highlightBondLists, **kwargs)
   d2d.FinishDrawing()
   res = d2d.GetDrawingText()
