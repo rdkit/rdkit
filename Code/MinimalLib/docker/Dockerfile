@@ -25,9 +25,10 @@ WORKDIR /opt
 RUN git clone https://github.com/emscripten-core/emsdk.git
 
 WORKDIR /opt/emsdk
+# the embind output seems to only work with fastcomp, not upstream (Oct 2019)
 RUN ./emsdk update-tags && \
-  ./emsdk install latest && \
-  ./emsdk activate latest
+  ./emsdk install latest-fastcomp && \
+  ./emsdk activate latest-fastcomp
 
 #RUN source ./emsdk_env.sh
 
