@@ -9,10 +9,55 @@
 #
 
 from rdkit import Chem
+from rdkit.Chem import rdChemReactions
 
 
 class ScaffoldTreeParams(object):
-  bondsToBreak = ('[R]!@[!R]', )
+  bondBreakers = ('[R:1]-!@[!R:2]>>[*:1]-[#0].[#0]-[*:2]', )
+  includeGenericScaffolds = True
+  includeGenericBondScaffolds = False
+  keepOnlyFirstFragment = False
+  keepIntermediates = True
+
+
+def _addReactionsToParams(params):
+  rxns = []
+  for sma in params.bondBreakers:
+    rxn = rdChemReactions.ReactionFromSmarts(sma)
+    if rxn:
+      rxns.append(rxn)
+  params._breakers = tuple(rxns)
+
+
+def getMolFragments(mol, params):
+  """
+    >>> ps = ScaffoldTreeParams()
+    >>> m = Chem.MolFromSmiles('c1ccccc1CC1NC(=O)CCC1')
+    >>> ms = getMolFragments(m,ps)
+    >>> sorted(Chem.MolToSmiles(x) for x in ms)
+  """
+  if not hasattr(params, '_breakers'):
+    _addReactionsToParams(params)
+  res = []
+  stack = [mol]
+  while stack:
+    wmol = stack.pop(0)
+    wmol_modified = False
+    for rxn in params._breakers:
+      ps = rxn.RunReactants((wmol, ))
+      for p in ps:
+        wmol_modified = True  # we made at least one change to this
+        _updateMolProps(p[0])
+        stack.append(p[0])
+        if params.keepIntermediates:
+          res.append(p[0])
+        if not params.keepOnlyFirstFragment:
+          stack.append(p[1])
+          if params.keepIntermediates:
+            res.append(p[1])
+    if not wmol_modified:
+      res.append(wmol)
+  return res
 
 
 def makeScaffoldGeneric(mol, doBondsToo=False):
