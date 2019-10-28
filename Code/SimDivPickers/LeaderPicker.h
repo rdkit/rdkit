@@ -8,7 +8,6 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
 #ifndef RD_LEADERPICKER_H
 #define RD_LEADERPICKER_H
 
@@ -29,7 +28,7 @@ namespace RDPickers {
  *strategy aimed at diversity. See documentation for "pick()" member function
  *for the algorithm details
  */
-class RDKIT_SIMDIVPICKERS_EXPORT LeaderPicker : public DistPicker {
+class LeaderPicker : public DistPicker {
  public:
   double default_threshold;
   int default_nthreads;
