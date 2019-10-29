@@ -197,7 +197,7 @@ PyObject *getUFFAtomTypes(const RDKit::ROMol &mol) {
 //      PyTuple_SetItem(resitem, 10, PyFloat_FromDouble(params(i).GMP_Radius));
 //      PyList_SetItem(res, i, resitem);
 //  }
-  return foundAll;
+  return res;
 };
 
 PyObject *getUFFBondStretchParams(const RDKit::ROMol &mol,
