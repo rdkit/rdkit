@@ -174,10 +174,10 @@ bool MMFFHasAllMoleculeParams(const ROMol &mol) {
 namespace ForceFields {
 //typedef std::vector<const ForceFields::UFF::AtomicParams *> AtomicParamVect;
 PyObject *getUFFAtomTypes(const RDKit::ROMol &mol) {
-  PyObject *res = nullptr;
+//  PyObject *res = nullptr;
 //  AtomicParamVect params;
-  bool foundAll;
-  foundAll = true;
+//  bool foundAll;
+//  foundAll = true;
   
 //  boost::tie(params, foundAll) = getAtomTypes(mol);
   
@@ -197,7 +197,7 @@ PyObject *getUFFAtomTypes(const RDKit::ROMol &mol) {
 //      PyTuple_SetItem(resitem, 10, PyFloat_FromDouble(params(i).GMP_Radius));
 //      PyList_SetItem(res, i, resitem);
 //  }
-  return res;
+  return nullptr;
 };
 
 PyObject *getUFFBondStretchParams(const RDKit::ROMol &mol,
