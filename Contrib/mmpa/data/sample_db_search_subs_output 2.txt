@@ -1,1 +1,0 @@
-[*]c1ccccc1,c1cc2c(ncnc2NCc2ccccc2)s1,c1cc2c(ncnc2NCc2cccnc2)s1,2139597,2531831,[*:1]c1ccccc1>>[*:1]c1cccnc1,[*:1]CNc1ncnc2sccc21

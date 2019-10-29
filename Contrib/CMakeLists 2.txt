@@ -1,4 +1,0 @@
-
-add_subdirectory(ConformerParser)
-
-

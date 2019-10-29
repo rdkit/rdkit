@@ -1,2 +1,0 @@
-# package
-from .pidPIL import *
