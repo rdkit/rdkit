@@ -172,6 +172,7 @@ bool MMFFHasAllMoleculeParams(const ROMol &mol) {
 };
 
 namespace ForceFields {
+typedef std::vector<const ForceFields::UFF::AtomicParams *> AtomicParamVect;
 PyObject *getUFFAtomTypes(const RDKit::ROMol &mol) {
   PyObject *res = nullptr;
   AtomicParamVect params;
