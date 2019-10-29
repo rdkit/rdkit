@@ -1,0 +1,15 @@
+# Testing data
+# ----------
+# Variable Table
+# foo1 []
+# foo2 []
+# foo3 []
+# foo4 []
+# res []
+# ---------
+p1 0 0 0 0 0
+p2 0 0 0 1 0
+p3 1 0 0 0 1
+p4 2 1 0 0 1
+p5 2 2 1 0 1
+

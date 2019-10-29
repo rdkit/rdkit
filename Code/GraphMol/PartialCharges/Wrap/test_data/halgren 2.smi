@@ -1,0 +1,22 @@
+Smiles	Name
+CO	Methanol
+CN	Methylamine
+CC#N	Acetonitrile
+COC	Dimethyl_Ether
+CS	Methanethiol
+C[Cl]	Chloromethane
+CC	Ethane
+CC(=O)N	Acetamide
+CC(=O)O	Acetic_Acid_prot
+CC(=O)C	Acetone
+CC(=O)OC	Methyl_Acetate
+c1ccccc1	Benzene
+c1ccncc1	Pyridine
+c1ccccc1N	Aniline
+C1=CNC=N1	Imidazole
+O	Water
+CC(=O)[O-]	Acetic_Acid(-)
+C[NH3+]	Methylamonium
+C1=C[NH+]=CN1	Imidazolium(+)
+[NH3+]CCCCCCC(=O)[O-]	7-Aminoheptanoic_Acid
+

@@ -1,0 +1,8 @@
+DefineFeature HDonor1 [N,O;!H0]
+    Family HBondDonor
+    Weights 1.0
+EndFeature
+DefineFeature HAcceptor1 [N,O]
+    Family HBondAcceptor
+    Weights 1.0
+EndFeature

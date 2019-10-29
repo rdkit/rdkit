@@ -1,0 +1,39 @@
+To build the optional InChI support, run cmake with the
+-DRDK_BUILD_INCHI_SUPPORT=ON argument. If InChI sources could not be
+found, the CMake build system will attempt to download the InChI
+distribution from the following URL:
+
+http://www.inchi-trust.org/wp/wp-content/uploads/2014/06/INCHI-1-API.zip
+
+The default download URL and MD5 checksum can be overridden with the
+following CMake definitions:
+
+INCHI_URL
+INCHI_MD5SUM
+
+If INCHI_URL is set to "", no download will be attempted.
+If INCHI_MD5SUM is set to "", no MD5 checksum will be performed.
+
+If you prefer to install InChI sources manually, please follow these
+instructions:
+
+1. Download the zip file from
+   http://www.inchi-trust.org/wp/wp-content/uploads/2014/06/INCHI-1-API.zip
+
+2. Unzip the package, which creates a INCHI-1-API folder.
+
+3. In the unzipped folder, find INCHI-1-API/INCHI_API/inchi_dll, under which
+   there are 73 files including things like ichi.h and ikey_dll.c. Create a
+   'src' directory inside the same directory that contains this README file
+   you are readingCopy, and copy all those 73 files 'src' you have just
+   created. The actual path is '$RDBASE/External/INCHI-API/src'.
+
+4. Rerun `cmake` with `-DRDK_BUILD_INCHI_SUPPORT=ON` as an additional argument
+
+Alternatively, if you are on a UNIX variant system (Linux, Mac OS X, Cygwin,
+etc), you may invoke the included script `download-inchi.sh`:
+	
+	$ bash download-inchi.sh
+
+When the download is successful, rerun`cmake` with
+`-DRDK_BUILD_INCHI_SUPPORT=ON` as an additional argument

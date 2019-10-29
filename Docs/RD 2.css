@@ -1,0 +1,53 @@
+/* block elements */
+BODY, TABLE, TD, TH {
+    font-family: "Trebuchet MS",Arial, Helvetica, sans-serif;
+    background: #ffffff; color: #000000; 
+}
+
+H1, H2, H3 {
+    font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+    color: #044484; font-weight: bold;
+}
+
+P.indent {margin-top: 0;margin-bottom: 0;margin-left: 2em;text-indent: -0.5em;}
+P.plain {margin-top: 0;margin-bottom: 0;margin-left: 0.5em; text-indent: -0.5em}
+
+
+
+H1 { font-size: x-large; font-weight: bold; }
+H2 { font-size: large; font-weight: bold; }
+H3 { font-size: medium; font-weight: bold; text-indent: 2.0em;}
+
+/* opera: <tt> overrides font weight settings */
+
+H1 TT { font-weight: bold; }
+H2 TT { font-weight: bold; }
+H3 TT { font-weight: bold; }
+
+/* title links */
+
+H1 A:link, H1 A:visited, H1 A:active { text-decoration: none; color: #044484; }
+H1 A:hover { text-decoration: underline; color: #044484; }
+
+/* subtitles (use with H2 on overview pages) */
+
+.subtitle {
+     font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+     font-size: large; font-weight: bold; margin-bottom: 0;
+     color: #044484;
+}
+.subinfo { font-size: x-small; margin: 0; color: #044484; }
+
+.small { font-size: xx-small; }
+
+.highlight { background: #ffffcc; }
+
+.mark { color: #044484; }
+
+.h4 { color: #044484; }
+
+.timestamp { font-size: xx-small; color: #044484; }
+
+.navbar {font-size: smaller}
+.navbar A:link, .navbar A:visited, .navbar A:active { text-decoration: none; color: #044484; }
+.navbar A:hover {text-decoration: underline}

@@ -1,0 +1,17 @@
+SMILES Name
+C1C(=O)NC1 beta-lactam
+O=C1CC1 cyclopropanone
+N1CC1 aziridine
+O=C1NC1 aziridinone
+C(C)(C)=C isobutene
+O=C(C)C acetone
+O=C1CCCC1 cyclopentanone
+C1C=C1 cyclopropene
+C1CC=C1 cyclobutene
+C1CC1 cyclopropane
+O=C1NCCC1 gamma-lactam
+O=C1[C@@H]([C@H]1c1ccccc1)c1ccccc1 trans-2,3-diphenylcyclopropan-1-one
+O=C1[C@H]([C@H]1c1ccccc1)c1ccccc1 cis-2,3-diphenylcyclopropan-1-one
+O=C1C(=C1c1ccccc1)c1ccccc1 2,3-diphenylcyclopropa-2-en-1-one
+C1CC1=C1CCC1 cyclopropylidencyclobutane
+C1CCC1=C(c1ccccc1)c1ccccc1 diphenylmethylidencyclobutane

@@ -1,0 +1,30 @@
+#include "nsISupports.idl"
+[scriptable, uuid(2FD55049-0125-48be-88E6-270B1B83A8A8)]
+interface IRDMolecule : nsISupports
+{
+  double GetMW();
+  string GetSmiles();
+  string GetMolBlock();
+  unsigned long GetSmartsMatchCount(in string smarts);
+  double LogP();
+  double MR();
+  void Generate3DCoords();
+};
+
+[scriptable, uuid(056a8da1-7820-41d7-b254-5ef7dd1693ce)]
+interface IRDMolSupplier : nsISupports
+{
+  boolean atEnd();
+  IRDMolecule next();
+};
+
+[scriptable, uuid(BFB9ACF3-9349-47ec-8984-F6F8E2F02F65)]
+interface IRDKit : nsISupports
+{
+  unsigned long strlen(in string arg);
+  IRDMolecule MolFromSmiles(in string smiles);
+  IRDMolecule MolFromMolBlock(in string molBlock);
+  IRDMolSupplier SupplierFromSDFile(in string fileName);
+
+};
+

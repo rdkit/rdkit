@@ -1,0 +1,9 @@
+Source of data:
+
+1) bzr.sdf and bzr.smi : compounds from the publication:
+"Spline-Fitting with a Genetic Algorithm: A Method for Developing
+Classification Structure-Activity Relationships" J.J. Sutherland,
+L.A. O'Brien, D.F. Weaver JCICS:43 1906-15 (2003).
+
+2) pubchem.200.sdf : 200 arbitrary pubchem compounds
+

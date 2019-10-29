@@ -1,0 +1,99 @@
+Molecule: Methanol
+0 C 0.0319
+1 O -0.3996
+Molecule: Methylamine
+0 C -0.0195
+1 N -0.3333
+Molecule: Acetonitrile
+0 C 0.0236
+1 C 0.0587
+2 N -0.1987
+Molecule: Dimethyl_Ether
+0 C 0.0351
+1 O -0.3879
+2 C 0.0351
+Molecule: Methanethiol
+0 C -0.0215
+1 S -0.1828
+Molecule: Chloromethane
+0 C 0.0108
+1 Cl -0.1304
+Molecule: Ethane
+0 C -0.0683
+1 C -0.0683
+Molecule: Acetamide
+0 C 0.0146
+1 C 0.2138
+2 O -0.2757
+3 N -0.3699
+Molecule: Acetic_Acid_prot
+0 C 0.0338
+1 C 0.2997
+2 O -0.2528
+3 O -0.4814
+Molecule: Acetone
+0 C -0.0060
+1 C 0.1263
+2 O -0.3003
+3 C -0.0060
+Molecule: Methyl_Acetate
+0 C 0.0339
+1 C 0.3018
+2 O -0.2526
+3 O -0.4692
+4 C 0.0806
+Molecule: Benzene
+0 C -0.0623
+1 C -0.0623
+2 C -0.0623
+3 C -0.0623
+4 C -0.0623
+5 C -0.0623
+Molecule: Pyridine
+0 C -0.0592
+1 C -0.0438
+2 C 0.0267
+3 N -0.2647
+4 C 0.0267
+5 C -0.0438
+Molecule: Aniline
+0 C -0.0392
+1 C -0.0602
+2 C -0.0621
+3 C -0.0602
+4 C -0.0392
+5 C 0.0313
+6 N -0.3987
+Molecule: Imidazole
+0 C 0.0446
+1 C 0.0203
+2 N -0.3512
+3 C 0.0919
+4 N -0.2455
+Molecule: Water
+0 O -0.4115
+Molecule: Acetic_Acid(-)
+0 C -0.0250
+1 C 0.0383
+2 O -0.5505
+3 O -0.5505
+Molecule: Methylamonium
+0 C 0.0634
+1 N -0.3600
+Molecule: Imidazolium(+)
+0 C 0.1264
+1 C 0.1264
+2 N -0.2503
+3 C 0.2388
+4 N -0.2503
+Molecule: 7-Aminoheptanoic_Acid
+0 N -0.3576
+1 C 0.0739
+2 C -0.0037
+3 C -0.0479
+4 C -0.0527
+5 C -0.0481
+6 C -0.0131
+7 C 0.0414
+8 O -0.5502
+9 O -0.5502

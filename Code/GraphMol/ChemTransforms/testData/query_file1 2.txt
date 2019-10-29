@@ -1,0 +1,19 @@
+//  Format: Name\tSmarts\tLabel\tRemovalReaction (optional)
+//
+//  NOTES:
+//     1) be sure to make the distinguishing feature of the functional group
+//        the first atom in the pattern
+//     2) the RemovalReaction (if present) is used to remove the functional
+//        group from the molecule. This is necessary for cases like boronic
+//        ethers where the full functional group cannot be specified in SMARTS.
+//
+AcidChloride	C(=O)Cl	Acid Chloride
+  AcidChloride.Aromatic	[$(C-!@[a])](=O)(Cl)	Aromatic
+  AcidChloride.Aliphatic	[$(C-!@[A;!Cl])](=O)(Cl)	Aliphatic
+
+CarboxylicAcid	C(=O)[O;H,-]	Carboxylic acid
+// ignore this
+  CarboxylicAcid.Aromatic	[$(C-!@[a])](=O)([O;H,-])	Aromatic
+  CarboxylicAcid.Aliphatic	[$(C-!@[A;!O])](=O)([O;H,-])	Aliphatic  // ignore this
+  CarboxylicAcid.AlphaAmino	[$(C-[C;!$(C=[!#6])]-[N;!H0;!$(N-[!#6;!#1]);!$(N-C=[O,N,S])])](=O)([O;H,-])	alpha Amino Acid
+

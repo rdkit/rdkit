@@ -1,0 +1,42 @@
+#	Name:			benzene
+#	Creating user name:	stiefni2
+#	Creation time:		Thu May 15 13:14:53 2008
+
+#	Modifying user name:	stiefni2
+#	Modification time:	Thu May 15 13:16:20 2008
+
+@<TRIPOS>MOLECULE
+benzene
+   12    12     1     0     0
+SMALL
+NO_CHARGES
+
+
+@<TRIPOS>ATOM
+      1 C1          0.2823    0.2650    0.0000 C.ar      1 BENZENE     0.0000 
+      2 C2         -0.4167    1.4758    0.0000 C.ar      1 BENZENE     0.0000 
+      3 C3         -1.8149    1.4758    0.0000 C.ar      1 BENZENE     0.0000 
+      4 C4         -2.5139    0.2650    0.0000 C.ar      1 BENZENE     0.0000 
+      5 C5         -1.8149   -0.9458    0.0000 C.ar      1 BENZENE     0.0000 
+      6 C6         -0.4167   -0.9458    0.0000 C.ar      1 BENZENE     0.0000 
+      7 H1          1.3680    0.2650    0.0000 H         1 BENZENE     0.0000 
+      8 H2          0.1261    2.4160    0.0000 H         1 BENZENE     0.0000 
+      9 H3         -2.3577    2.4160    0.0000 H         1 BENZENE     0.0000 
+     10 H4         -3.5996    0.2650    0.0000 H         1 BENZENE     0.0000 
+     11 H5         -2.3577   -1.8860    0.0000 H         1 BENZENE     0.0000 
+     12 H6          0.1261   -1.8860    0.0000 H         1 BENZENE     0.0000 
+@<TRIPOS>BOND
+     1    1    2 ar   
+     2    1    6 ar   
+     3    1    7 1    
+     4    6    5 ar   
+     5    6   12 1    
+     6    5    4 ar   
+     7    5   11 1    
+     8    4    3 ar   
+     9    4   10 1    
+    10    3    2 ar   
+    11    3    9 1    
+    12    2    8 1    
+@<TRIPOS>SUBSTRUCTURE
+     1 BENZENE     1 PERM              0 ****  ****    0 ROOT 
