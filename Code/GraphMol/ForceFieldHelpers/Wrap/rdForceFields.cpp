@@ -440,6 +440,11 @@ RETURNS: a list of (not_converged, energy) 2-tuples. \n\
       docString.c_str());
 
   python::def(
+      "GetUFFAtomTypes", ForceFields::GetUFFAtomTypes,
+      (python::arg("mol")),
+      "Retrieves UFF atom types for atoms in the provided molecule "
+      "as a V float value, or None if no parameters could be found");
+  python::def(
       "GetUFFBondStretchParams", ForceFields::getUFFBondStretchParams,
       (python::arg("mol"), python::arg("idx1"), python::arg("idx2")),
       "Retrieves UFF bond stretch parameters for atoms with indexes idx1, idx2 "
