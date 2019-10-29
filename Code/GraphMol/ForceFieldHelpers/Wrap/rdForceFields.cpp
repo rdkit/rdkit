@@ -174,21 +174,29 @@ bool MMFFHasAllMoleculeParams(const ROMol &mol) {
 namespace ForceFields {
 PyObject *getUFFAtomTypes(const RDKit::ROMol &mol) {
   PyObject *res = nullptr;
-  std::pair<AtomicParamVect, bool> uffAtomTypes
-  AtomicParamVect paramVect;
+  AtomicParamVect params;
   bool foundAll;
   
-  paramVect.resize(mol.getNumAtoms());
-  foundAll = ture
-  uffAtomTypes = std::make_pair(paramVect, foundAll);
-  uffAtomTypes = RDKit::UFF::getAtomTypes(mol,const std::string &paramData = "");
+  boost::tie(params, foundAll) = getAtomTypes(mol);
   
-  res = PyTuple_New(mol.getNumAtoms());
+  res = PyList_New(mol.getNumAtoms());
   for (unsigned int i = 0; i < mol.getNumAtoms(); i++) {
-    PyTuple_SetItem(res, i, PyFloat_FromDouble(uffAtomTypes.first(i)));
+      resitem = PyTuple_New(11);
+      PyTuple_SetItem(resitem, 0, PyFloat_FromDouble(params(i).r1));
+      PyTuple_SetItem(resitem, 1, PyFloat_FromDouble(params(i).theta0));
+      PyTuple_SetItem(resitem, 2, PyFloat_FromDouble(params(i).x1));
+      PyTuple_SetItem(resitem, 3, PyFloat_FromDouble(params(i).D1));
+      PyTuple_SetItem(resitem, 4, PyFloat_FromDouble(params(i).zeta));
+      PyTuple_SetItem(resitem, 5, PyFloat_FromDouble(params(i).Z1));
+      PyTuple_SetItem(resitem, 6, PyFloat_FromDouble(params(i).V1));
+      PyTuple_SetItem(resitem, 7, PyFloat_FromDouble(params(i).U1));
+      PyTuple_SetItem(resitem, 8, PyFloat_FromDouble(params(i).GMP_Xi));
+      PyTuple_SetItem(resitem, 9, PyFloat_FromDouble(params(i).GMP_Hardness));
+      PyTuple_SetItem(resitem, 10, PyFloat_FromDouble(params(i).GMP_Radius));
+      PyList_SetItem(res, i, resitem);
   }
   return res;
-};  
+};
 
 PyObject *getUFFBondStretchParams(const RDKit::ROMol &mol,
                                   const unsigned int idx1,
