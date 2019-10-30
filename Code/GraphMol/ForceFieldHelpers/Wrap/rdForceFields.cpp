@@ -219,9 +219,9 @@ PyObject *getUFFAngleBendParams(const RDKit::ROMol &mol,
                                 const unsigned int idx2,
                                 const unsigned int idx3) {
   PyObject *res = nullptr;
-  PyObject *res2 = nullptr;
-  AtomicParamVect params;
+  ForceFields::UFF::AtomicParamVect params;
   bool foundAll;
+
   ForceFields::UFF::UFFAngle uffAngleBendParams;
   if (RDKit::UFF::getUFFAngleBendParams(mol, idx1, idx2, idx3,
                                         uffAngleBendParams)) {
