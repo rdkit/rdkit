@@ -201,16 +201,18 @@ typedef std::vector<const ForceFields::UFF::AtomicParams *> AtomicParamVect;
 //  return nullptr;
 //};
 PyObject *getUFFBondStretchParamstest(const RDKit::ROMol &mol,
-                                  const unsigned int idx1,
-                                  const unsigned int idx2) {
+                                      const unsigned int idx1,
+                                      const unsigned int idx2) {
   PyObject *res = nullptr;
-  ForceFields::UFF::UFFBond uffBondStretchParams;
-  if (RDKit::UFF::getUFFBondStretchParams(mol, idx1, idx2,
-                                          uffBondStretchParams)) {
-    res = PyTuple_New(2);
-    PyTuple_SetItem(res, 0, PyFloat_FromDouble(uffBondStretchParams.kb));
-    PyTuple_SetItem(res, 1, PyFloat_FromDouble(uffBondStretchParams.r0));
-  }
+  AtomicParamVect params;
+  bool foundAll;
+  boost::tie(params, foundAll) = RDKit::UFF::getAtomTypes(mol);
+
+  
+  res = PyTuple_New(2);
+  PyTuple_SetItem(res, 0, PyFloat_FromDouble(params[1].kb));
+  PyTuple_SetItem(res, 1, PyFloat_FromDouble(params[1].r0));
+    
   return res;
 };
 
@@ -233,8 +235,6 @@ PyObject *getUFFAngleBendParams(const RDKit::ROMol &mol,
                                 const unsigned int idx2,
                                 const unsigned int idx3) {
   PyObject *res = nullptr;
-  AtomicParamVect params;
-  bool foundAll;
 
   ForceFields::UFF::UFFAngle uffAngleBendParams;
   if (RDKit::UFF::getUFFAngleBendParams(mol, idx1, idx2, idx3,
@@ -243,27 +243,6 @@ PyObject *getUFFAngleBendParams(const RDKit::ROMol &mol,
     PyTuple_SetItem(res, 0, PyFloat_FromDouble(uffAngleBendParams.ka));
     PyTuple_SetItem(res, 1, PyFloat_FromDouble(uffAngleBendParams.theta0));
   }
-//=========================
-    
-  boost::tie(params, foundAll) = RDKit::UFF::getAtomTypes(mol);
-    
-  //  res = PyList_New(mol.getNumAtoms());
-  //  for (unsigned int i = 0; i < mol.getNumAtoms(); i++) {
-  //      resitem = PyTuple_New(11);
-  //      PyTuple_SetItem(resitem, 0, PyFloat_FromDouble(params(i).r1));
-  //      PyTuple_SetItem(resitem, 1, PyFloat_FromDouble(params(i).theta0));
-  //      PyTuple_SetItem(resitem, 2, PyFloat_FromDouble(params(i).x1));
-  //      PyTuple_SetItem(resitem, 3, PyFloat_FromDouble(params(i).D1));
-  //      PyTuple_SetItem(resitem, 4, PyFloat_FromDouble(params(i).zeta));
-  //      PyTuple_SetItem(resitem, 5, PyFloat_FromDouble(params(i).Z1));
-  //      PyTuple_SetItem(resitem, 6, PyFloat_FromDouble(params(i).V1));
-  //      PyTuple_SetItem(resitem, 7, PyFloat_FromDouble(params(i).U1));
-  //      PyTuple_SetItem(resitem, 8, PyFloat_FromDouble(params(i).GMP_Xi));
-  //      PyTuple_SetItem(resitem, 9, PyFloat_FromDouble(params(i).GMP_Hardness));
-  //      PyTuple_SetItem(resitem, 10, PyFloat_FromDouble(params(i).GMP_Radius));
-  //      PyList_SetItem(res, i, resitem);
-  //  }
-//=======================
     
   return res;
 };
