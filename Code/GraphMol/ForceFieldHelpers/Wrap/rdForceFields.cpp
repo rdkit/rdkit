@@ -204,6 +204,7 @@ PyObject *getUFFBondStretchParamstest(const RDKit::ROMol &mol,
                                       const unsigned int idx1,
                                       const unsigned int idx2) {
   PyObject *res = nullptr;
+  PyObject *resitem = nullptr;
   AtomicParamVect params;
   bool foundAll;
   boost::tie(params, foundAll) = RDKit::UFF::getAtomTypes(mol);
