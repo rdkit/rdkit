@@ -402,3 +402,29 @@ M  END)CTAB";
     CHECK(MolToSmiles(*outm) == "S");
   }
 }
+
+TEST_CASE("explicit Hs and Ns when neutralizing", "normalizer") {
+  SECTION("example1") {
+    std::string molblock = R"CTAB(
+  Mrv1810 10301909502D          
+
+  2  1  0  0  0  0            999 V2000
+   -3.0000    0.6316    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1750    0.6316    0.0000 N   0  5  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+M  CHG  1   2  -1
+M  END
+)CTAB";
+    std::unique_ptr<RWMol> m(MolBlockToMol(molblock, false, false));
+    REQUIRE(m);
+    m->updatePropertyCache();
+    MolStandardize::Uncharger uc;
+    std::unique_ptr<ROMol> res((ROMol *)uc.uncharge(*m));
+    REQUIRE(res);
+    CHECK(res->getAtomWithIdx(1)->getFormalCharge() == 0);
+    CHECK(res->getAtomWithIdx(1)->getTotalNumHs() == 2);
+    auto mb = MolToMolBlock(*res);
+    // should be no valence markers in the output mol block:
+    CHECK(mb.find("0.0000 N   0  0  0  0  0  0") != std::string::npos);
+  }
+}

@@ -351,6 +351,9 @@ ROMol *Uncharger::uncharge(const ROMol &mol) {
           --neg_surplus;
           BOOST_LOG(rdInfoLog) << "Removed negative charge.\n";
         }
+        // since we chnaged the number of explicit Hs, we need to update the
+        // other valence parameters
+        atom->updatePropertyCache(false);
       }
     }
 
@@ -369,6 +372,9 @@ ROMol *Uncharger::uncharge(const ROMol &mol) {
         atom->setFormalCharge(atom->getFormalCharge() + 1);
         --neg_surplus;
         BOOST_LOG(rdInfoLog) << "Removed negative charge.\n";
+        // since we chnaged the number of explicit Hs, we need to update the
+        // other valence parameters
+        atom->updatePropertyCache(false);
       }
     }
 
@@ -393,6 +399,9 @@ ROMol *Uncharger::uncharge(const ROMol &mol) {
           BOOST_LOG(rdInfoLog) << "Removed negative charge.\n";
         }
       }
+      // since we chnaged the number of explicit Hs, we need to update the
+      // other valence parameters
+      atom->updatePropertyCache(false);
     }
   }
 
@@ -422,6 +431,9 @@ ROMol *Uncharger::uncharge(const ROMol &mol) {
         --netCharge;
         BOOST_LOG(rdInfoLog) << "Removed positive charge.\n";
       }
+      // since we chnaged the number of explicit Hs, we need to update the
+      // other valence parameters
+      atom->updatePropertyCache(false);
       if (!netCharge) break;
     }
   }
