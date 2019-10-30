@@ -786,9 +786,6 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR>& src_mols) {
 
   // Selecting CompleteRingsOnly option also enables --ring-matches-ring-only.
   // ring--ring and chain bonds only match chain bonds.
-  if (Parameters.BondCompareParameters.MatchFusedRings
-      || Parameters.BondCompareParameters.MatchFusedRingsStrict)
-    Parameters.BondCompareParameters.CompleteRingsOnly = true;
   if (Parameters.BondCompareParameters.CompleteRingsOnly)
     Parameters.BondCompareParameters.RingMatchesRingOnly = true;
 

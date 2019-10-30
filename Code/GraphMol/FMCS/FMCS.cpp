@@ -412,14 +412,16 @@ inline static bool ringFusionCheck(const short unsigned c1[],
   for (i = 0; i < br2.size(); ++i) {
     if (numMcsBondRings[i]
       && numMcsBondRings[i] > (br2[i].size() - nonFusedBonds[i])
-      && numMcsBondRings[i] < nonFusedBonds[i])
-      break;
+      && numMcsBondRings[i] < nonFusedBonds[i]) {
+      if (p->BondCompareParameters.CompleteRingsOnly)
+        return true;
+      else
+        continue;
+    }
     if (numMcsBondRings[i] == nonFusedBonds[i]
       && numMcsBondRings[i] < br2[i].size())
       missingFusedBond = true;
   }
-  if (i < br2.size())
-    return true;
   /* If we found that the MCS is missing a fused bond, we may need to
      check against the smaller molecule as well.
      Consider this case: MCS between
@@ -460,22 +462,30 @@ inline static bool ringFusionCheck(const short unsigned c1[],
         mcsRingBondIdxSet.insert(b->getIdx());
     }
     for (i = 0; i < br1.size(); ++i) {
-      size_t foundBonds = 0;
-      size_t fusedBonds = 0;
-      // for each ring, check how many bonds belong to MCS (foundBonds)
-      // and how many belong to multiple rings (fused bonds).
+      size_t mcsBonds = 0;
+      size_t mcsFusedBonds = 0;
+      size_t nonFusedBonds = 0;
+      // for each ring, check how many bonds belong to MCS (mcsBonds),
+      // how many bonds in the MCS belong to multiple rings (mcsFusedBonds).
+      // and how many bonds in each ring belong to a single ring (nonFusedBonds)
       for (auto bi: br1[i]) {
+        bool isFused = (ri1->numBondRings(bi) > 1);
+        if (!isFused)
+          ++nonFusedBonds;
         if (std::find(mcsRingBondIdxSet.begin(),
           mcsRingBondIdxSet.end(), bi) != mcsRingBondIdxSet.end()) {
-          ++foundBonds;
-          if (ri1->numBondRings(bi) > 1)
-            ++fusedBonds;
+          ++mcsBonds;
+          if (isFused)
+            ++mcsFusedBonds;
         }
       }
+      if (!p->BondCompareParameters.CompleteRingsOnly
+        && mcsBonds > mcsFusedBonds && mcsBonds - mcsFusedBonds < nonFusedBonds)
+        continue;
       // if the ring is part of the MCS, and we found more bonds than the fused ones
       // (i.e., the ring is not simply adjacent to an MCS ring) but less than
       // the bonds which are part of this ring, then some fused bond is missing.
-      if (foundBonds && foundBonds > fusedBonds && foundBonds < br1[i].size()) {
+      if (mcsBonds && mcsBonds > mcsFusedBonds && mcsBonds < br1[i].size()) {
         missingFusedBond2 = true;
         break;
       }
