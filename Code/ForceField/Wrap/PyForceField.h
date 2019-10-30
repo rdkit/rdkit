@@ -156,6 +156,9 @@ class PyMMFFMolProperties {
   boost::shared_ptr<RDKit::MMFF::MMFFMolProperties> mmffMolProperties;
 };
 //PyObject *getUFFAtomTypes(const RDKit::ROMol &mol);
+PyObject *getUFFBondStretchParamstest(const RDKit::ROMol &mol,
+                                  const unsigned int idx1,
+                                  const unsigned int idx2);
 PyObject *getUFFBondStretchParams(const RDKit::ROMol &mol,
                                   const unsigned int idx1,
                                   const unsigned int idx2);
