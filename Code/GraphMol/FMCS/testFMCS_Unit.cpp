@@ -1925,6 +1925,39 @@ void testGitHub2731_comment546175466() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testQueryMolVsSmarts() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing QueryMol vs SmartsString"
+                       << std::endl;
+
+  std::vector<ROMOL_SPTR> mols;
+  const char* smi[] = {"C1CCC2CCCCC12", "C12CC1C1C3CCCC3CCC12"};
+
+  for (auto& i : smi) {
+    auto m = SmilesToMol(getSmilesOnly(i));
+    TEST_ASSERT(m);
+
+    mols.push_back(ROMOL_SPTR(m));
+  }
+  MCSParameters p;
+  p.BondCompareParameters.MatchFusedRingsStrict = true;
+  MCSResult res = findMCS(mols, &p);
+  //std::cerr << "MCS: " << res.SmartsString << " " << res.NumAtoms
+  //          << " atoms, " << res.NumBonds << " bonds\n"
+  //          << std::endl;
+  TEST_ASSERT(res.NumAtoms == 9);
+  TEST_ASSERT(res.NumBonds == 10);
+  ROMOL_SPTR smartsMol(SmartsToMol(res.SmartsString));
+  std::vector<MatchVectType> matchVectFromQueryMol;
+  std::vector<MatchVectType> matchVectFromSmartsMol;
+  TEST_ASSERT(SubstructMatch(*mols[1], *res.QueryMol, matchVectFromQueryMol) == 1);
+  TEST_ASSERT(SubstructMatch(*mols[1], *smartsMol, matchVectFromSmartsMol) == 2);
+
+  BOOST_LOG(rdInfoLog) << "============================================"
+                       << std::endl;
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 //====================================================================================================
 //====================================================================================================
 
@@ -1998,6 +2031,7 @@ int main(int argc, const char* argv[]) {
   test_p38();
   testGithub2714();
   testGitHub2731_comment546175466();
+  testQueryMolVsSmarts();
 
   unsigned long long t1 = nanoClock();
   double sec = double(t1 - T0) / 1000000.;

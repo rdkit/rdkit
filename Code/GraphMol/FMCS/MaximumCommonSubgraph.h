@@ -98,7 +98,8 @@ class RDKIT_FMCS_EXPORT MaximumCommonSubgraph {
   void makeInitialSeeds();
   bool createSeedFromMCS(size_t newQueryTarget, Seed& seed);
   bool growSeeds();  // returns false if canceled
-  std::string generateResultSMARTS(const MCS& McsIdx) const;
+  std::string generateResultSMARTSAndQueryMol(const MCS& mcsIdx, RWMol **rwMol = NULL) const;
+  bool addFusedBondQueries(const MCS& McsIdx, RWMol *rwMol) const;
 
   bool match(Seed& seed);
   bool matchIncrementalFast(Seed& seed, unsigned itarget);

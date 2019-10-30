@@ -115,6 +115,7 @@ struct RDKIT_FMCS_EXPORT MCSResult {
   std::string SmartsString;
   bool Canceled;  // interrupted by timeout or user defined progress callback.
                   // Contains valid current MCS !
+  RWMOL_SPTR QueryMol;
  public:
   MCSResult() : NumAtoms(0), NumBonds(0), Canceled(false) {}
   bool isCompleted() const { return !Canceled; }
