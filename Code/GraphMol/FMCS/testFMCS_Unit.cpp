@@ -262,6 +262,7 @@ void testRing1() {
   }
   {
     MCSParameters p;
+    p.BondCompareParameters.CompleteRingsOnly = true;
     p.BondCompareParameters.MatchFusedRings = true;
     t0 = nanoClock();
     MCSResult res = findMCS(mols, &p);
@@ -273,6 +274,7 @@ void testRing1() {
   }
   {
     MCSParameters p;
+    p.BondCompareParameters.CompleteRingsOnly = true;
     p.BondCompareParameters.MatchFusedRingsStrict = true;
     t0 = nanoClock();
     MCSResult res = findMCS(mols, &p);
@@ -543,6 +545,7 @@ void testSegFault() {
   }
   {
     MCSParameters p;
+    p.BondCompareParameters.CompleteRingsOnly = true;
     p.BondCompareParameters.MatchFusedRings = true;
     t0 = nanoClock();
     MCSResult res = findMCS(mols, &p);
@@ -554,6 +557,7 @@ void testSegFault() {
   }
   {
     MCSParameters p;
+    p.BondCompareParameters.CompleteRingsOnly = true;
     p.BondCompareParameters.MatchFusedRingsStrict = true;
     t0 = nanoClock();
     MCSResult res = findMCS(mols, &p);
@@ -724,6 +728,7 @@ void testSimple() {
   }
   {
     MCSParameters p;
+    p.BondCompareParameters.CompleteRingsOnly = true;
     p.BondCompareParameters.MatchFusedRings = true;
     t0 = nanoClock();
     MCSResult res = findMCS(mols, &p);
@@ -735,6 +740,7 @@ void testSimple() {
   }
   {
     MCSParameters p;
+    p.BondCompareParameters.CompleteRingsOnly = true;
     p.BondCompareParameters.MatchFusedRingsStrict = true;
     t0 = nanoClock();
     MCSResult res = findMCS(mols, &p);
@@ -1325,6 +1331,7 @@ void testGithub945() {
     }
     {
       MCSParameters p;
+      p.BondCompareParameters.CompleteRingsOnly = true;
       p.BondCompareParameters.MatchFusedRings = true;
       MCSResult res = findMCS(mols, &p);
       // std::cerr << "MCS MatchFusedRings: "
@@ -1336,6 +1343,7 @@ void testGithub945() {
     }
     {
       MCSParameters p;
+      p.BondCompareParameters.CompleteRingsOnly = true;
       p.BondCompareParameters.MatchFusedRingsStrict = true;
       MCSResult res = findMCS(mols, &p);
       // std::cerr << "MCS MatchFusedRingsStrict: "
@@ -1371,6 +1379,7 @@ void testGithub945() {
     }
     {
       MCSParameters p;
+      p.BondCompareParameters.CompleteRingsOnly = true;
       p.BondCompareParameters.MatchFusedRings = true;
       MCSResult res = findMCS(mols, &p);
       // std::cerr << "MCS MatchFusedRings: "
@@ -1382,6 +1391,7 @@ void testGithub945() {
     }
     {
       MCSParameters p;
+      p.BondCompareParameters.CompleteRingsOnly = true;
       p.BondCompareParameters.MatchFusedRingsStrict = true;
       MCSResult res = findMCS(mols, &p);
       // std::cerr << "MCS MatchFusedRingsStrict: "
@@ -1439,6 +1449,7 @@ void testGithub2420() {
   }
   {
     MCSParameters p;
+    p.BondCompareParameters.CompleteRingsOnly = true;
     p.BondCompareParameters.MatchFusedRings = true;
     MCSResult res = findMCS(mols, &p);
     // std::cerr << "MCS MatchFusedRings: "
@@ -1450,6 +1461,7 @@ void testGithub2420() {
   }
   {
     MCSParameters p;
+    p.BondCompareParameters.CompleteRingsOnly = true;
     p.BondCompareParameters.MatchFusedRingsStrict = true;
     MCSResult res = findMCS(mols, &p);
     // std::cerr << "MCS MatchFusedRingsStrict: "
@@ -1812,12 +1824,100 @@ void testGithub2714() {
     p.BondCompareParameters.RingMatchesRingOnly = true;
     p.AtomCompareParameters.RingMatchesRingOnly = true;
     MCSResult res = findMCS(mols, &p);
-    std::cerr << "MCS: " << res.SmartsString << " " << res.NumAtoms
-              << " atoms, " << res.NumBonds << " bonds\n"
-              << std::endl;
+    //std::cerr << "MCS: " << res.SmartsString << " " << res.NumAtoms
+    //          << " atoms, " << res.NumBonds << " bonds\n"
+    //          << std::endl;
     TEST_ASSERT(res.NumAtoms == 2);
     TEST_ASSERT(res.NumBonds == 1);
     TEST_ASSERT(res.SmartsString == "[#6&!R]-&!@[#6&R]");
+  }
+
+  BOOST_LOG(rdInfoLog) << "============================================"
+                       << std::endl;
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+void testGitHub2731_comment546175466() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github #2731 comment 546175466"
+                       << std::endl;
+
+  {
+    std::vector<ROMOL_SPTR> mols;
+    const char* smi[] = {"C1=CC2=CC3=CC=CC=C3N=C2C=C1", "C1=CC=C2N=C3C=NC=CC3=CC2=C1"};
+
+    for (auto& i : smi) {
+      auto m = SmilesToMol(getSmilesOnly(i));
+      TEST_ASSERT(m);
+
+      mols.push_back(ROMOL_SPTR(m));
+    }
+    {
+      MCSParameters p;
+      p.BondCompareParameters.MatchFusedRingsStrict = true;
+      MCSResult res = findMCS(mols, &p);
+      //std::cerr << "MCS: " << res.SmartsString << " " << res.NumAtoms
+      //          << " atoms, " << res.NumBonds << " bonds\n"
+      //          << std::endl;
+      TEST_ASSERT(res.NumAtoms == 13);
+      TEST_ASSERT(res.NumBonds == 14);
+      TEST_ASSERT(res.SmartsString == "[#6]1:[#6]:[#6]2:[#6]:[#6](:[#6]:[#6]):[#6](:[#7]:[#6]:2:[#6]:[#6]:1):[#6]");
+    }
+    {
+      MCSParameters p;
+      p.BondCompareParameters.CompleteRingsOnly = true;
+      p.BondCompareParameters.MatchFusedRingsStrict = true;
+      MCSResult res = findMCS(mols, &p);
+      //std::cerr << "MCS: " << res.SmartsString << " " << res.NumAtoms
+      //          << " atoms, " << res.NumBonds << " bonds\n"
+      //          << std::endl;
+      TEST_ASSERT(res.NumAtoms == 10);
+      TEST_ASSERT(res.NumBonds == 11);
+      TEST_ASSERT(res.SmartsString == "[#6]1:&@[#6]:&@[#6]2:&@[#6]:&@[#6]:&@[#6]:&@[#7]:&@[#6]:&@2:&@[#6]:&@[#6]:&@1");
+    }
+  }
+  {
+    std::vector<ROMOL_SPTR> mols;
+    const char* smi[] = {"C12CCC1C1CCCCC12", "C12CC1CC1CCC3CC123"};
+
+    for (auto& i : smi) {
+      auto m = SmilesToMol(getSmilesOnly(i));
+      TEST_ASSERT(m);
+
+      mols.push_back(ROMOL_SPTR(m));
+    }
+    {
+      MCSParameters p;
+      MCSResult res = findMCS(mols, &p);
+      //std::cerr << "MCS: " << res.SmartsString << " " << res.NumAtoms
+      //          << " atoms, " << res.NumBonds << " bonds\n"
+      //          << std::endl;
+      TEST_ASSERT(res.NumAtoms == 10);
+      TEST_ASSERT(res.NumBonds == 11);
+      TEST_ASSERT(res.SmartsString == "[#6]1-[#6]-[#6]-[#6]-[#6]2-[#6]-1-[#6]-[#6]-[#6]-[#6]-2");
+    }
+    {
+      MCSParameters p;
+      p.BondCompareParameters.MatchFusedRings = true;
+      MCSResult res = findMCS(mols, &p);
+      //std::cerr << "MCS: " << res.SmartsString << " " << res.NumAtoms
+      //          << " atoms, " << res.NumBonds << " bonds\n"
+      //          << std::endl;
+      TEST_ASSERT(res.NumAtoms == 10);
+      TEST_ASSERT(res.NumBonds == 10);
+      TEST_ASSERT(res.SmartsString == "[#6](-[#6]-[#6])(-[#6])-[#6]1-[#6]-[#6]-[#6]-[#6]-[#6]-1");
+    }
+    {
+      MCSParameters p;
+      p.BondCompareParameters.MatchFusedRingsStrict = true;
+      MCSResult res = findMCS(mols, &p);
+      //std::cerr << "MCS: " << res.SmartsString << " " << res.NumAtoms
+      //          << " atoms, " << res.NumBonds << " bonds\n"
+      //          << std::endl;
+      TEST_ASSERT(res.NumAtoms == 10);
+      TEST_ASSERT(res.NumBonds == 9);
+      TEST_ASSERT(res.SmartsString == "[#6](-[#6]-[#6])(-[#6])-[#6](-[#6]-[#6]-[#6])-[#6]-[#6]");
+    }
   }
 
   BOOST_LOG(rdInfoLog) << "============================================"
@@ -1897,6 +1997,7 @@ int main(int argc, const char* argv[]) {
   testBicyclesTricycles();
   test_p38();
   testGithub2714();
+  testGitHub2731_comment546175466();
 
   unsigned long long t1 = nanoClock();
   double sec = double(t1 - T0) / 1000000.;
