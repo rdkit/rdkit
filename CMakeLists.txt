@@ -297,11 +297,21 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
     if(RDK_INSTALL_PYTHON_PACKAGE)
       # Run this code at "make install" step. As .whl does not exist at configure or build time,
       # we have to do GLOB in install time.
-      install(CODE "message(\"Installing python package from wheel\")")
-      install(CODE "file(GLOB RDKIT_PY_WHEEL ${RDK_PYTHON_BINARY_DIR}/dist/rdkit-*.whl)")
-      install(CODE "execute_process(
-          COMMAND ${PYTHON_EXECUTABLE} -m pip install \${RDKIT_PY_WHEEL}
-          WORKING_DIRECTORY ${RDK_PYTHON_BINARY_DIR}/dist)"
+      install(CODE
+          "message(\"Installing python package from wheel\")
+           file(GLOB RDKIT_PY_WHEEL ${RDK_PYTHON_BINARY_DIR}/dist/rdkit-*.whl)
+           if(\"\$ENV{DESTDIR}\" STREQUAL \"\")
+               set(_py_root_opt \"\")
+               set(_py_root \"\")
+           else()
+               set(_py_root_opt \"--root\")
+               set(_py_root \"\$ENV{DESTDIR}\")
+           endif()
+           execute_process(
+               COMMAND ${PYTHON_EXECUTABLE} -m pip install --prefix ${CMAKE_INSTALL_PREFIX} \${_py_root_opt} \${_py_root} --no-deps \${RDKIT_PY_WHEEL}
+               WORKING_DIRECTORY ${RDK_PYTHON_BINARY_DIR}/dist)
+          "
+          COMPONENT python
       )
     endif(RDK_INSTALL_PYTHON_PACKAGE)
   else(NOT RDK_INSTALL_INTREE)
