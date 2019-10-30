@@ -210,8 +210,8 @@ PyObject *getUFFBondStretchParamstest(const RDKit::ROMol &mol,
 
   
   res = PyTuple_New(2);
-  PyTuple_SetItem(res, 0, PyFloat_FromDouble(params[1].r1));
-  PyTuple_SetItem(res, 1, PyFloat_FromDouble(params[1].theta0));
+  PyTuple_SetItem(res, 0, PyFloat_FromDouble(params[1]->r1));
+  PyTuple_SetItem(res, 1, PyFloat_FromDouble(params[1]->theta0));
     
   return res;
 };
