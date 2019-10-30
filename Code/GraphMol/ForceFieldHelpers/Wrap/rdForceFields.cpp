@@ -172,6 +172,7 @@ bool MMFFHasAllMoleculeParams(const ROMol &mol) {
 };
 
 namespace ForceFields {
+typedef std::vector<const ForceFields::UFF::AtomicParams *> AtomicParamVect;
 //typedef std::vector<const ForceFields::UFF::AtomicParams *> AtomicParamVect;
 //PyObject *getUFFAtomTypes(const RDKit::ROMol &mol) {
 //  PyObject *res = nullptr;
@@ -219,7 +220,7 @@ PyObject *getUFFAngleBendParams(const RDKit::ROMol &mol,
                                 const unsigned int idx2,
                                 const unsigned int idx3) {
   PyObject *res = nullptr;
-  ForceFields::UFF::AtomicParamVect params;
+  AtomicParamVect params;
   bool foundAll;
 
   ForceFields::UFF::UFFAngle uffAngleBendParams;
