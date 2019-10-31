@@ -5,7 +5,9 @@ rdkit_library(FMCS
               FMCS.cpp Seed.cpp MaximumCommonSubgraph.cpp SubstructMatchCustom.cpp
               LINK_LIBRARIES Depictor FileParsers ChemTransforms SubstructMatch)
 
-rdkit_headers(FMCS.h
+rdkit_headers(DebugTrace.h
+              DuplicatedSeedCache.h
+              FMCS.h
               Graph.h
               Seed.h
               SeedSet.h
@@ -14,10 +16,12 @@ rdkit_headers(FMCS.h
               SubstructureCache.h
               SubstructMatchCustom.h
               MaximumCommonSubgraph.h
+              Target.h
+              TargetMatch.h
               DEST GraphMol/FMCS)
 
 rdkit_test(testFMCS testFMCS_Unit.cpp LINK_LIBRARIES
-FMCS ChemTransforms Depictor FileParsers SmilesParse 
+FMCS ChemTransforms Depictor FileParsers SmilesParse
 GraphMol RDGeneral RDGeometryLib SubstructMatch  ${RDKit_THREAD_LIBS})
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
