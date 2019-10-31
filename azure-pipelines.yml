@@ -37,6 +37,17 @@ jobs:
     python_name: python37
   steps:
   - template: .azure-pipelines/vs_build.yml
+- job: Windows_VS2017_x64_dll
+  timeoutInMinutes: 90
+  pool:
+    vmImage: vs2017-win2016
+  variables:
+    compiler: vs2017_win-64
+    boost_version: 1.67.0
+    number_of_cores: '%NUMBER_OF_PROCESSORS%'
+    python_name: python37
+  steps:
+  - template: .azure-pipelines/vs_build_dll.yml
 - job: Ubuntu_16_04_x64_java
   timeoutInMinutes: 90
   pool:
