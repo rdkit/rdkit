@@ -46,6 +46,11 @@ void rdBadFileExceptionTranslator(RDKit::BadFileException const &x) {
   ss << "File error: " << x.message();
   PyErr_SetString(PyExc_IOError, ss.str().c_str());
 }
+void rdFileParseExceptionTranslator(RDKit::FileParseException const &x) {
+  std::ostringstream ss;
+  ss << "File parsing error: " << x.message();
+  PyErr_SetString(PyExc_RuntimeError, ss.str().c_str());
+}
 
 namespace RDKit {
 std::string pyObjectToString(python::object input) {
@@ -400,6 +405,10 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       "formats.";
   python::register_exception_translator<RDKit::BadFileException>(
       &rdBadFileExceptionTranslator);
+
+  python::register_exception_translator<RDKit::FileParseException>(
+      &rdFileParseExceptionTranslator);
+
 
   docString =
       "Construct a molecule from a TPL file.\n\n\

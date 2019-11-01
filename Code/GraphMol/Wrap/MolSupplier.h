@@ -31,6 +31,8 @@ ROMol *MolForwardSupplNext(T *suppl) {
   if (!suppl->atEnd()) {
     try {
       res = suppl->next();
+    } catch (const FileParseException&) {
+      throw;
     } catch (...) {
       res = 0;
     }
@@ -51,6 +53,8 @@ ROMol *MolSupplNext(T *suppl) {
   if (!suppl->atEnd()) {
     try {
       res = suppl->next();
+    } catch (const FileParseException&) {
+      throw;
     } catch (...) {
       res = 0;
     }
@@ -68,6 +72,8 @@ ROMol *MolSupplNextAcceptNullLastMolecule(T *suppl) {
   if (!suppl->atEnd()) {
     try {
       res = suppl->next();
+    } catch (const FileParseException&) {
+      throw;
     } catch (...) {
       res = 0;
     }
