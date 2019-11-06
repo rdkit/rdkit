@@ -267,10 +267,10 @@ void contourAndDrawGaussians(MolDraw2D &drawer,
       maxP.y = std::max(loc.y, maxP.y);
     }
     Point2D dims = maxP - minP;
-    minP.x -= drawer.drawOptions().padding * dims.x;
-    minP.y -= drawer.drawOptions().padding * dims.y;
-    maxP.x += drawer.drawOptions().padding * dims.x;
-    maxP.y += drawer.drawOptions().padding * dims.y;
+    minP.x -= fabs(drawer.drawOptions().padding) * dims.x;
+    minP.y -= fabs(drawer.drawOptions().padding) * dims.y;
+    maxP.x += fabs(drawer.drawOptions().padding) * dims.x;
+    maxP.y += fabs(drawer.drawOptions().padding) * dims.y;
 
     if (params.extraGridPadding > 0) {
       Point2D p1(0, 0), p2(params.extraGridPadding, 0);
