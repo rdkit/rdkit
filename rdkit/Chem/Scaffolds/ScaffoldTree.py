@@ -154,68 +154,78 @@ class EdgeTypes:
 def generateScaffoldNetwork(mol, params=None):
   """
 
+  Run with default settings. The result is a 2-tuple with nodes and edges:
   >>> m = Chem.MolFromSmiles('c1ccccc1CC1NC(=O)CCC1')
   >>> nodes,edges = generateScaffoldNetwork(m)
+
+  The nodes is a set of canonical SMILES describing the nodes:
   >>> len(nodes)
   9
-  >>> sorted(nodes)         
-  ['**1****(=*)*1', '**1:*:*:*:*:*:1', '*1*****1', '*1:*:*:*:*:*:1', 
-   '*C1CCCC(=O)N1', '*c1ccccc1', 'O=C1CCCC(Cc2ccccc2)N1', 'O=C1CCCCN1', 
-   'c1ccccc1']
+  >>> nodes
+  ['O=C1CCCC(Cc2ccccc2)N1', '*c1ccccc1', '**1:*:*:*:*:*:1', '*1:*:*:*:*:*:1', 
+   'c1ccccc1', '*C1CCCC(=O)N1', '**1****(=*)*1', '*1*****1', 'O=C1CCCCN1']
   >>> len(edges)
   8
   >>> sorted(x for x in edges if x.type==EdgeTypes.FragmentEdge)          
-  [NetworkEdge(start='O=C1CCCC(Cc2ccccc2)N1', end='*C1CCCC(=O)N1', type=1), 
-   NetworkEdge(start='O=C1CCCC(Cc2ccccc2)N1', end='*c1ccccc1', type=1)]
+  [NetworkEdge(start=0, end=1, type=1), 
+   NetworkEdge(start=0, end=5, type=1)]
   >>> sorted(x for x in edges if x.type==EdgeTypes.GenericEdge)           
-  [NetworkEdge(start='*C1CCCC(=O)N1', end='**1****(=*)*1', type=2), 
-   NetworkEdge(start='*c1ccccc1', end='**1:*:*:*:*:*:1', type=2)]
+  [NetworkEdge(start=1, end=2, type=2), 
+   NetworkEdge(start=5, end=6, type=2)]
   >>> sorted(x for x in edges if x.type==EdgeTypes.RemoveAttachmentEdge)  
-  [NetworkEdge(start='**1****(=*)*1', end='*1*****1', type=4), 
-   NetworkEdge(start='**1:*:*:*:*:*:1', end='*1:*:*:*:*:*:1', type=4), 
-   NetworkEdge(start='*C1CCCC(=O)N1', end='O=C1CCCCN1', type=4), 
-   NetworkEdge(start='*c1ccccc1', end='c1ccccc1', type=4)]
-
-
+  [NetworkEdge(start=1, end=4, type=4), 
+   NetworkEdge(start=2, end=3, type=4), 
+   NetworkEdge(start=5, end=8, type=4), 
+   NetworkEdge(start=6, end=7, type=4)]
 
   """
   if params is None:
     params = ScaffoldTreeParams()
-  nodes = set()
+  nodes = []
   edges = []
   frags = getMolFragments(mol, params)
   for smi, fmol in frags:
-    nodes.add(smi)
+    if smi not in nodes:
+      nodes.append(smi)
     fsmi = Chem.MolToSmiles(fmol)
-    nodes.add(fsmi)
-    edges.append(NetworkEdge(smi, fsmi, EdgeTypes.FragmentEdge))
+    if fsmi not in nodes:
+      nodes.append(fsmi)
+    edges.append(NetworkEdge(nodes.index(smi), nodes.index(fsmi), EdgeTypes.FragmentEdge))
 
     if params.includeGenericScaffolds:
       gmol = makeScaffoldGeneric(fmol, doAtoms=True, doBonds=False)
       gsmi = Chem.MolToSmiles(gmol)
-      nodes.add(gsmi)
-      edges.append(NetworkEdge(fsmi, gsmi, EdgeTypes.GenericEdge))
+      if gsmi not in nodes:
+        nodes.append(gsmi)
+      edges.append(NetworkEdge(nodes.index(fsmi), nodes.index(gsmi), EdgeTypes.GenericEdge))
 
       if params.includeScaffoldsWithoutAttachments:
         asmi = Chem.MolToSmiles(removeAttachmentPoints(gmol))
-        nodes.add(asmi)
-        edges.append(NetworkEdge(gsmi, asmi, EdgeTypes.RemoveAttachmentEdge))
+        if asmi not in nodes:
+          nodes.append(asmi)
+        edges.append(
+          NetworkEdge(nodes.index(gsmi), nodes.index(asmi), EdgeTypes.RemoveAttachmentEdge))
 
       if params.includeGenericBondScaffolds:
         gbmol = makeScaffoldGeneric(fmol, doAtoms=True, doBonds=True)
         gbsmi = Chem.MolToSmiles(gbmol)
-        nodes.add(gbsmi)
-        edges.append(NetworkEdge(fsmi, gbsmi, EdgeTypes.GenericBondEdge))
+        if gbsmi not in nodes:
+          nodes.append(gbsmi)
+        edges.append(NetworkEdge(nodes.index(fsmi), nodes.index(gbsmi), EdgeTypes.GenericBondEdge))
 
         if params.includeScaffoldsWithoutAttachments:
           asmi = Chem.MolToSmiles(removeAttachmentPoints(gbmol))
-          nodes.add(asmi)
-          edges.append(NetworkEdge(gbsmi, asmi, EdgeTypes.RemoveAttachmentEdge))
+          if asmi not in nodes:
+            nodes.append(asmi)
+          edges.append(
+            NetworkEdge(nodes.index(gbsmi), nodes.index(asmi), EdgeTypes.RemoveAttachmentEdge))
 
     if params.includeScaffoldsWithoutAttachments:
       asmi = Chem.MolToSmiles(removeAttachmentPoints(fmol))
-      nodes.add(asmi)
-      edges.append(NetworkEdge(fsmi, asmi, EdgeTypes.RemoveAttachmentEdge))
+      if asmi not in nodes:
+        nodes.append(asmi)
+      edges.append(NetworkEdge(nodes.index(fsmi), nodes.index(asmi),
+                               EdgeTypes.RemoveAttachmentEdge))
 
   return nodes, edges
 
