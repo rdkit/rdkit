@@ -40,11 +40,11 @@ def _updateMolProps(m):
   Chem.SanitizeMol(m)
 
 
-def getMolFragments(mol, params):
+def _getMolFragments(mol, params):
   """
     >>> ps = ScaffoldTreeParams()
     >>> m = Chem.MolFromSmiles('c1ccccc1CC1NC(=O)CCC1')
-    >>> frags = getMolFragments(m,ps)
+    >>> frags = _getMolFragments(m,ps)
     >>> len(frags)
     2
 
@@ -58,7 +58,7 @@ def getMolFragments(mol, params):
 
     Setting keepOnlyFirstFragment results in us getting all the fragments with linkers:
     >>> ps.keepOnlyFirstFragment = False
-    >>> frags = getMolFragments(m,ps)
+    >>> frags = _getMolFragments(m,ps)
     >>> len(frags)
     8
     >>> sorted((x,Chem.MolToSmiles(y)) for x,y in frags)
@@ -87,13 +87,13 @@ def getMolFragments(mol, params):
   return res
 
 
-def removeAttachmentPoints(mol):
+def _removeAttachmentPoints(mol):
   """
   
   >>> m = Chem.MolFromSmiles('*c1ccc(*)cc1')
   >>> m.GetNumAtoms()
   8
-  >>> sm = removeAttachmentPoints(m)
+  >>> sm = _removeAttachmentPoints(m)
   >>> sm.GetNumAtoms()
   6
   >>> Chem.MolToSmiles(sm)
@@ -109,21 +109,21 @@ def removeAttachmentPoints(mol):
   return Chem.Mol(res)
 
 
-def makeScaffoldGeneric(mol, doAtoms=True, doBonds=False):
+def _makeScaffoldGeneric(mol, doAtoms=True, doBonds=False):
   """
 
     >>> m = Chem.MolFromSmiles('*c1ncc(C(=O)O)cc1')
-    >>> gm = makeScaffoldGeneric(m)
+    >>> gm = _makeScaffoldGeneric(m)
     >>> Chem.SanitizeMol(gm)
     rdkit.Chem.rdmolops.SanitizeFlags.SANITIZE_NONE
     >>> Chem.MolToSmiles(gm)
     '**(=*)*1:*:*:*(*):*:*:1'
-    >>> gm2 = makeScaffoldGeneric(m,doBonds=True)
+    >>> gm2 = _makeScaffoldGeneric(m,doBonds=True)
     >>> Chem.SanitizeMol(gm2)
     rdkit.Chem.rdmolops.SanitizeFlags.SANITIZE_NONE
     >>> Chem.MolToSmiles(gm2)
     '**1***(*(*)*)**1'
-    >>> gm3 = makeScaffoldGeneric(m,doAtoms=False,doBonds=True)
+    >>> gm3 = _makeScaffoldGeneric(m,doAtoms=False,doBonds=True)
     >>> Chem.SanitizeMol(gm3)
     rdkit.Chem.rdmolops.SanitizeFlags.SANITIZE_NONE
     >>> Chem.MolToSmiles(gm3)
@@ -144,12 +144,12 @@ def makeScaffoldGeneric(mol, doAtoms=True, doBonds=False):
   return res
 
 
-def pruneMol(mol, params):
+def _pruneMol(mol, params):
   """
 
   >>> ps = ScaffoldTreeParams()
   >>> m = Chem.MolFromSmiles('O=C(O)C1C(=O)CC1')
-  >>> Chem.MolToSmiles(pruneMol(m,ps))
+  >>> Chem.MolToSmiles(_pruneMol(m,ps))
   'O=C1CCC1'
 
   """
@@ -158,38 +158,28 @@ def pruneMol(mol, params):
   Chem.FastFindRings(mol)
   return mol
 
-  # atomsToPrune = Chem.MolFromSmarts(params.atomsToPrune)
-  # res = Chem.RWMol(mol)
-  # remove = sorted(res.GetSubstructMatches(atomsToPrune), reverse=True)
-  # while remove:
-  #   for aid in remove:
-  #     res.RemoveAtom(aid[0])
-  #   Chem.FastFindRings(res)
-  #   remove = sorted(res.GetSubstructMatches(atomsToPrune), reverse=True)
-  # return res
 
-
-def flattenMol(mol, params):
+def _flattenMol(mol, params):
   """
 
   >>> m = Chem.MolFromSmiles('Cl.[13CH3][C@H](F)/C=C/C')
   >>> ps = ScaffoldTreeParams()
-  >>> Chem.MolToSmiles(flattenMol(m,ps))
+  >>> Chem.MolToSmiles(_flattenMol(m,ps))
   'CC=CC(C)F'
 
   >>> ps = ScaffoldTreeParams()
   >>> ps.flattenIsotopes=False
-  >>> Chem.MolToSmiles(flattenMol(m,ps))
+  >>> Chem.MolToSmiles(_flattenMol(m,ps))
   'CC=CC([13CH3])F'
 
   >>> ps = ScaffoldTreeParams()
   >>> ps.flattenChirality=False
-  >>> Chem.MolToSmiles(flattenMol(m,ps))
+  >>> Chem.MolToSmiles(_flattenMol(m,ps))
   'C/C=C/[C@H](C)F'
 
   >>> ps = ScaffoldTreeParams()
   >>> ps.flattenKeepLargest=False
-  >>> Chem.MolToSmiles(flattenMol(m,ps))
+  >>> Chem.MolToSmiles(_flattenMol(m,ps))
   'CC=CC(C)F.Cl'
 
   """
@@ -226,12 +216,12 @@ class EdgeTypes:
   InitializeEdge = 5
 
 
-def generateScaffoldNetwork(inMol, params=None):
+def generateScaffoldNetwork(inMols, params=None):
   """
 
   Run with default settings. The result is a 2-tuple with nodes and edges:
   >>> m = Chem.MolFromSmiles('c1ccccc1CC1NC(=O)CCC1')
-  >>> nodes,edges = generateScaffoldNetwork(m)
+  >>> nodes,edges = generateScaffoldNetwork([m])
 
   nodes is a list of canonical SMILES describing the nodes:
   >>> len(nodes)
@@ -264,7 +254,7 @@ def generateScaffoldNetwork(inMol, params=None):
   >>> params = ScaffoldTreeParams()
   >>> params.includeGenericScaffolds = False
   >>> params.includeScaffoldsWithoutAttachments = False
-  >>> nodes,edges = generateScaffoldNetwork(m,params)
+  >>> nodes,edges = generateScaffoldNetwork([m],params)
   >>> nodes
   ['Cc1onc(-c2c(F)cccc2Cl)c1C(=O)N[C@@H]1C(=O)N2[C@@H](C(=O)O)C(C)(C)S[C@H]12', 
    'O=C(NC1C(=O)N2CCSC12)c1conc1-c1ccccc1', '*c1nocc1C(=O)NC1C(=O)N2CCSC12', 
@@ -286,61 +276,65 @@ def generateScaffoldNetwork(inMol, params=None):
   nodes = []
   edges = []
 
-  ismi = Chem.MolToSmiles(inMol)
-  mol = flattenMol(inMol, params)
+  for inMol in inMols:
+    ismi = Chem.MolToSmiles(inMol)
+    mol = _flattenMol(inMol, params)
 
-  if params.pruneFirst:
-    mol = pruneMol(mol, params)
-  smi = Chem.MolToSmiles(mol)
+    if params.pruneFirst:
+      mol = _pruneMol(mol, params)
+    smi = Chem.MolToSmiles(mol)
 
-  if smi != ismi:
-    nodes.append(ismi)
-    nodes.append(smi)
-    edges.append(NetworkEdge(0, 1, EdgeTypes.InitializeEdge))
+    if smi != ismi:
+      if ismi not in nodes:
+        nodes.append(ismi)
+      if smi not in nodes:
+        nodes.append(smi)
+      edges.append(NetworkEdge(nodes.index(ismi), nodes.index(smi), EdgeTypes.InitializeEdge))
 
-  frags = getMolFragments(mol, params)
-  for smi, fmol in frags:
-    if smi not in nodes:
-      nodes.append(smi)
-    fsmi = Chem.MolToSmiles(fmol)
-    if fsmi not in nodes:
-      nodes.append(fsmi)
-    edges.append(NetworkEdge(nodes.index(smi), nodes.index(fsmi), EdgeTypes.FragmentEdge))
+    frags = _getMolFragments(mol, params)
+    for smi, fmol in frags:
+      if smi not in nodes:
+        nodes.append(smi)
+      fsmi = Chem.MolToSmiles(fmol)
+      if fsmi not in nodes:
+        nodes.append(fsmi)
+      edges.append(NetworkEdge(nodes.index(smi), nodes.index(fsmi), EdgeTypes.FragmentEdge))
 
-    if params.includeGenericScaffolds:
-      gmol = makeScaffoldGeneric(fmol, doAtoms=True, doBonds=False)
-      gsmi = Chem.MolToSmiles(gmol)
-      if gsmi not in nodes:
-        nodes.append(gsmi)
-      edges.append(NetworkEdge(nodes.index(fsmi), nodes.index(gsmi), EdgeTypes.GenericEdge))
-
-      if params.includeScaffoldsWithoutAttachments:
-        asmi = Chem.MolToSmiles(removeAttachmentPoints(gmol))
-        if asmi not in nodes:
-          nodes.append(asmi)
-        edges.append(
-          NetworkEdge(nodes.index(gsmi), nodes.index(asmi), EdgeTypes.RemoveAttachmentEdge))
-
-      if params.includeGenericBondScaffolds:
-        gbmol = makeScaffoldGeneric(fmol, doAtoms=True, doBonds=True)
-        gbsmi = Chem.MolToSmiles(gbmol)
-        if gbsmi not in nodes:
-          nodes.append(gbsmi)
-        edges.append(NetworkEdge(nodes.index(fsmi), nodes.index(gbsmi), EdgeTypes.GenericBondEdge))
+      if params.includeGenericScaffolds:
+        gmol = _makeScaffoldGeneric(fmol, doAtoms=True, doBonds=False)
+        gsmi = Chem.MolToSmiles(gmol)
+        if gsmi not in nodes:
+          nodes.append(gsmi)
+        edges.append(NetworkEdge(nodes.index(fsmi), nodes.index(gsmi), EdgeTypes.GenericEdge))
 
         if params.includeScaffoldsWithoutAttachments:
-          asmi = Chem.MolToSmiles(removeAttachmentPoints(gbmol))
+          asmi = Chem.MolToSmiles(_removeAttachmentPoints(gmol))
           if asmi not in nodes:
             nodes.append(asmi)
           edges.append(
-            NetworkEdge(nodes.index(gbsmi), nodes.index(asmi), EdgeTypes.RemoveAttachmentEdge))
+            NetworkEdge(nodes.index(gsmi), nodes.index(asmi), EdgeTypes.RemoveAttachmentEdge))
 
-    if params.includeScaffoldsWithoutAttachments:
-      asmi = Chem.MolToSmiles(removeAttachmentPoints(fmol))
-      if asmi not in nodes:
-        nodes.append(asmi)
-      edges.append(NetworkEdge(nodes.index(fsmi), nodes.index(asmi),
-                               EdgeTypes.RemoveAttachmentEdge))
+        if params.includeGenericBondScaffolds:
+          gbmol = _makeScaffoldGeneric(fmol, doAtoms=True, doBonds=True)
+          gbsmi = Chem.MolToSmiles(gbmol)
+          if gbsmi not in nodes:
+            nodes.append(gbsmi)
+          edges.append(NetworkEdge(nodes.index(fsmi), nodes.index(gbsmi),
+                                   EdgeTypes.GenericBondEdge))
+
+          if params.includeScaffoldsWithoutAttachments:
+            asmi = Chem.MolToSmiles(_removeAttachmentPoints(gbmol))
+            if asmi not in nodes:
+              nodes.append(asmi)
+            edges.append(
+              NetworkEdge(nodes.index(gbsmi), nodes.index(asmi), EdgeTypes.RemoveAttachmentEdge))
+
+      if params.includeScaffoldsWithoutAttachments:
+        asmi = Chem.MolToSmiles(_removeAttachmentPoints(fmol))
+        if asmi not in nodes:
+          nodes.append(asmi)
+        edges.append(
+          NetworkEdge(nodes.index(fsmi), nodes.index(asmi), EdgeTypes.RemoveAttachmentEdge))
 
   return nodes, edges
 
