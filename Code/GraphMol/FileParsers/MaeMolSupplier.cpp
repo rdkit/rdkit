@@ -249,9 +249,9 @@ void set_atom_properties(Atom &atom, const mae::IndexedBlock &atom_block,
 
   for (const auto &prop : atom_block.getProperties<double>()) {
     if (prop.first == mae::ATOM_X_COORD || prop.first == mae::ATOM_Y_COORD ||
-        // Coordinates are used in defining a conformation, and should not be
-        // set on the atom.
         prop.first == mae::ATOM_Z_COORD) {
+      // Coordinates are used in defining a conformation, and should not be
+      // set on the atom.
       continue;
     } else if (prop.first == PDB_OCCUPANCY || prop.first == PDB_TFACTOR) {
       // PDB information is parsed separately.
@@ -334,7 +334,9 @@ void addBonds(const mae::IndexedBlock &bond_block, RWMol &mol) {
     const auto from_atom = from_atoms->at(i) - 1;
     const auto to_atom = to_atoms->at(i) - 1;
     const auto order = bolookup.find(orders->at(i))->second;
-    if (from_atom > to_atom) continue;  // Maestro files double-list bonds
+    if (from_atom > to_atom) {
+      continue;  // Maestro files may double-list some bonds
+    }
 
     auto bond = new Bond(order);
     bond->setOwningMol(mol);
