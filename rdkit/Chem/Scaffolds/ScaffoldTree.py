@@ -18,6 +18,10 @@ class ScaffoldTreeParams(object):
   includeGenericBondScaffolds = False
   keepOnlyFirstFragment = True
   includeScaffoldsWithoutAttachments = True
+  pruneFirst = True
+  flattenIsotopes = True
+  flattenChirality = True
+  flattenKeepLargest = True
 
 
 def _addReactionsToParams(params):
@@ -140,6 +144,76 @@ def makeScaffoldGeneric(mol, doAtoms=True, doBonds=False):
   return res
 
 
+def pruneMol(mol, params):
+  """
+
+  >>> ps = ScaffoldTreeParams()
+  >>> m = Chem.MolFromSmiles('O=C(O)C1C(=O)CC1')
+  >>> Chem.MolToSmiles(pruneMol(m,ps))
+  'O=C1CCC1'
+
+  """
+  mol = Chem.MurckoDecompose(mol)
+  mol.UpdatePropertyCache()
+  Chem.FastFindRings(mol)
+  return mol
+
+  # atomsToPrune = Chem.MolFromSmarts(params.atomsToPrune)
+  # res = Chem.RWMol(mol)
+  # remove = sorted(res.GetSubstructMatches(atomsToPrune), reverse=True)
+  # while remove:
+  #   for aid in remove:
+  #     res.RemoveAtom(aid[0])
+  #   Chem.FastFindRings(res)
+  #   remove = sorted(res.GetSubstructMatches(atomsToPrune), reverse=True)
+  # return res
+
+
+def flattenMol(mol, params):
+  """
+
+  >>> m = Chem.MolFromSmiles('Cl.[13CH3][C@H](F)/C=C/C')
+  >>> ps = ScaffoldTreeParams()
+  >>> Chem.MolToSmiles(flattenMol(m,ps))
+  'CC=CC(C)F'
+
+  >>> ps = ScaffoldTreeParams()
+  >>> ps.flattenIsotopes=False
+  >>> Chem.MolToSmiles(flattenMol(m,ps))
+  'CC=CC([13CH3])F'
+
+  >>> ps = ScaffoldTreeParams()
+  >>> ps.flattenChirality=False
+  >>> Chem.MolToSmiles(flattenMol(m,ps))
+  'C/C=C/[C@H](C)F'
+
+  >>> ps = ScaffoldTreeParams()
+  >>> ps.flattenKeepLargest=False
+  >>> Chem.MolToSmiles(flattenMol(m,ps))
+  'CC=CC(C)F.Cl'
+
+  """
+  if params.flattenKeepLargest:
+    frags = sorted(((x.GetNumAtoms(), x) for x in Chem.GetMolFrags(mol, asMols=True)), reverse=True)
+    mol = frags[0][1]
+  else:
+    mol = Chem.Mol(mol)
+  for atom in mol.GetAtoms():
+    if params.flattenIsotopes:
+      atom.SetIsotope(0)
+    if params.flattenChirality:
+      if atom.GetChiralTag() != Chem.ChiralType.CHI_UNSPECIFIED:
+        atom.SetChiralTag(Chem.ChiralType.CHI_UNSPECIFIED)
+        if atom.GetNoImplicit() and atom.GetAtomicNum() in (6, 7, 15, 16):
+          atom.SetNoImplicit(False)
+          atom.SetNumExplicitHs(0)
+  for bond in mol.GetBonds():
+    if params.flattenChirality:
+      bond.SetBondDir(Chem.BondDir.NONE)
+      bond.SetStereo(Chem.BondStereo.STEREONONE)
+  return mol
+
+
 from collections import namedtuple
 NetworkEdge = namedtuple('NetworkEdge', ('start', 'end', 'type'))
 
@@ -149,21 +223,27 @@ class EdgeTypes:
   GenericEdge = 2
   GenericBondEdge = 3
   RemoveAttachmentEdge = 4
+  InitializeEdge = 5
 
 
-def generateScaffoldNetwork(mol, params=None):
+def generateScaffoldNetwork(inMol, params=None):
   """
 
   Run with default settings. The result is a 2-tuple with nodes and edges:
   >>> m = Chem.MolFromSmiles('c1ccccc1CC1NC(=O)CCC1')
   >>> nodes,edges = generateScaffoldNetwork(m)
 
-  The nodes is a set of canonical SMILES describing the nodes:
+  nodes is a list of canonical SMILES describing the nodes:
   >>> len(nodes)
   9
   >>> nodes
   ['O=C1CCCC(Cc2ccccc2)N1', '*c1ccccc1', '**1:*:*:*:*:*:1', '*1:*:*:*:*:*:1', 
    'c1ccccc1', '*C1CCCC(=O)N1', '**1****(=*)*1', '*1*****1', 'O=C1CCCCN1']
+
+  edges is a list of NetworkEdge objects with indices into the nodes list for
+  the start and end of each edge and the edge type as the last element. Edge
+  types are defined in the EdgeType class
+
   >>> len(edges)
   8
   >>> sorted(x for x in edges if x.type==EdgeTypes.FragmentEdge)          
@@ -178,11 +258,46 @@ def generateScaffoldNetwork(mol, params=None):
    NetworkEdge(start=5, end=8, type=4), 
    NetworkEdge(start=6, end=7, type=4)]
 
+
+  Here's a more complex example, flucloxacillin:
+  >>> m = Chem.MolFromSmiles('Cc1onc(-c2c(F)cccc2Cl)c1C(=O)N[C@@H]1C(=O)N2[C@@H](C(=O)O)C(C)(C)S[C@H]12')
+  >>> params = ScaffoldTreeParams()
+  >>> params.includeGenericScaffolds = False
+  >>> params.includeScaffoldsWithoutAttachments = False
+  >>> nodes,edges = generateScaffoldNetwork(m,params)
+  >>> nodes
+  ['Cc1onc(-c2c(F)cccc2Cl)c1C(=O)N[C@@H]1C(=O)N2[C@@H](C(=O)O)C(C)(C)S[C@H]12', 
+   'O=C(NC1C(=O)N2CCSC12)c1conc1-c1ccccc1', '*c1nocc1C(=O)NC1C(=O)N2CCSC12', 
+   '*c1ccccc1', '*c1conc1-c1ccccc1', '*C1C(=O)N2CCSC12', '*c1conc1*']
+  >>> len(edges)
+  9
+  >>> edges
+  [NetworkEdge(start=0, end=1, type=5), NetworkEdge(start=1, end=2, type=1), 
+   NetworkEdge(start=1, end=3, type=1), NetworkEdge(start=1, end=4, type=1), 
+   NetworkEdge(start=1, end=5, type=1), NetworkEdge(start=2, end=6, type=1), 
+   NetworkEdge(start=2, end=5, type=1), NetworkEdge(start=4, end=6, type=1), 
+   NetworkEdge(start=4, end=3, type=1)]
+
+
   """
   if params is None:
     params = ScaffoldTreeParams()
+
   nodes = []
   edges = []
+
+  ismi = Chem.MolToSmiles(inMol)
+  mol = flattenMol(inMol, params)
+
+  if params.pruneFirst:
+    mol = pruneMol(mol, params)
+  smi = Chem.MolToSmiles(mol)
+
+  if smi != ismi:
+    nodes.append(ismi)
+    nodes.append(smi)
+    edges.append(NetworkEdge(0, 1, EdgeTypes.InitializeEdge))
+
   frags = getMolFragments(mol, params)
   for smi, fmol in frags:
     if smi not in nodes:
