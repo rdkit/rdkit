@@ -141,7 +141,8 @@ void parseChiralityLabel(RWMol &mol, const std::string &stereo_prop) {
   CHECK_INVARIANT(chiral_atom != nullptr, "bad prop value");
 
   unsigned nSwaps = 2;
-  switch (*((++tItr)->rbegin())) {
+  const char rotation_direction = (++tItr)->back();
+  switch (rotation_direction) {
     case 'R':  // R, ANR
       nSwaps = 0;
       break;
