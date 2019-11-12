@@ -1,0 +1,9 @@
+[submodule "External/CoordGen/coordgen"]
+	path = External/CoordGen/coordgen
+	url = https://github.com/schrodinger/coordgenlibs
+[submodule "External/CoordGen/maeparser"]
+	path = External/CoordGen/maeparser
+	url = https://github.com/schrodinger/maeparser
+[submodule "External/catch/catch"]
+	path = External/catch/catch
+	url = https://github.com/catchorg/Catch2

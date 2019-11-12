@@ -36,7 +36,11 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
       set(MAEPARSER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/maeparser")
     endif()
 
-    if(NOT EXISTS "${MAEPARSER_DIR}/MaeParser.hpp")
+    if(EXISTS "${MAEPARSER_DIR}/MaeParser.hpp")
+      message("-- Found MAEParser source in ${MAEPARSER_DIR}")
+    else()
+      gitSubmoduleUpdate(${CMAKE_CURRENT_SOURCE_DIR}/maeparser)
+      if(GIT_SUBMOD_FAILURE)
         set(RELEASE_NO "1.2.2")
         set(MD5 "3c42d4f98e5fc3214ff991ccf76938bd")
         downloadAndCheckMD5("https://github.com/schrodinger/maeparser/archive/v${RELEASE_NO}.tar.gz"
@@ -47,8 +51,7 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
         file(RENAME "maeparser-${RELEASE_NO}" "${MAEPARSER_DIR}")
         patchCoordGenMaeExportHeaders("MAEPARSER" "${MAEPARSER_DIR}/MaeParserConfig.hpp")
 
-    else()
-      message("-- Found MAEParser source in ${MAEPARSER_DIR}")
+      endif()
     endif()
 
     set(maeparser_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
@@ -68,7 +71,11 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
       set(COORDGEN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/coordgen")
     endif()
 
-    if(NOT EXISTS "${COORDGEN_DIR}/sketcherMinimizer.h")
+    if(EXISTS "${COORDGEN_DIR}/sketcherMinimizer.h")
+      message("-- Found coordgenlibs source in ${COORDGEN_DIR}")
+    else()
+      gitSubmoduleUpdate(${CMAKE_CURRENT_SOURCE_DIR}/coordgen)
+      if(GIT_SUBMOD_FAILURE)
         set(RELEASE_NO "1.3.2")
         set(MD5 "06a67c9ba7668946e89d0baa52dc8d04")
         downloadAndCheckMD5("https://github.com/schrodinger/coordgenlibs/archive/v${RELEASE_NO}.tar.gz"
@@ -78,8 +85,7 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
         file(RENAME "coordgenlibs-${RELEASE_NO}" "${COORDGEN_DIR}")
 
-    else()
-      message("-- Found coordgenlibs source in ${COORDGEN_DIR}")
+      endif()
     endif()
 
     set(coordgen_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}

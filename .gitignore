@@ -47,9 +47,6 @@ __pycache__/
 
 /External/**/*.tar.gz
 /External/**/*.zip
-/External/catch/catch/
-/External/CoordGen/coordgen/
-/External/CoordGen/maeparser/
 /External/FreeSASA/freesasa-2.0.1/
 /External/INCHI-API/INCHI-1-SRC/
 /External/INCHI-API/src/

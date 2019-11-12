@@ -221,6 +221,23 @@ function(downloadAndCheckMD5 url target md5chksum)
   endif()
 endfunction(downloadAndCheckMD5)
 
+function(gitSubmoduleUpdate path)
+  set(GIT_SUBMOD_FAILURE TRUE PARENT_SCOPE)
+  find_package(Git)
+  if(NOT GIT_FOUND)
+    message(SEND_ERROR "git is not found")
+    return()
+  endif()
+
+  execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init ${path}
+    RESULT_VARIABLE r)
+  if(NOT r EQUAL "0")
+    message(SEND_ERROR "Failed to update submodule ${CMAKE_CURRENT_SOURCE_DIR}/${path}")
+    return()
+  endif()
+  set(GIT_SUBMOD_FAILURE FALSE PARENT_SCOPE)
+endfunction(gitSubmoduleUpdate)
+
 function(overwriteIfChanged src dest)
   set(overwrite TRUE)
   if (EXISTS "${dest}")
