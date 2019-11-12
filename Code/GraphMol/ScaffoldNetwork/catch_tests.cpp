@@ -10,7 +10,7 @@
 
 #include "catch.hpp"
 #include "RDGeneral/test.h"
-
+#include <sstream>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/ScaffoldNetwork/ScaffoldNetwork.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
@@ -292,5 +292,28 @@ TEST_CASE("Network defaults", "[scaffolds]") {
                           return e.type ==
                                  ScaffoldNetwork::EdgeType::RemoveAttachment;
                         }) == 5);
+  }
+}
+TEST_CASE("ostream integration", "[scaffolds]") {
+  auto smis = {"c1ccccc1CC1NC(=O)CCC1"};
+  std::vector<ROMOL_SPTR> ms;
+  for (const auto smi : smis) {
+    auto m = SmilesToMol(smi);
+    REQUIRE(m);
+    ms.push_back(ROMOL_SPTR(m));
+  }
+  SECTION("edges") {
+    ScaffoldNetwork::ScaffoldNetworkParams ps;
+    ScaffoldNetwork::ScaffoldNetwork net =
+        ScaffoldNetwork::createScaffoldNetwork(ms, ps);
+    CHECK(net.edges.size() == 8);
+    CHECK(net.edges[0].beginIdx == 0);
+    CHECK(net.edges[0].endIdx == 1);
+    CHECK(net.edges[0].type == ScaffoldNetwork::EdgeType::Fragment);
+
+    std::ostringstream oss;
+    oss << net.edges[0];
+    auto txt = oss.str();
+    CHECK(txt == "NetworkEdge( 0, 1, Fragment )");
   }
 }

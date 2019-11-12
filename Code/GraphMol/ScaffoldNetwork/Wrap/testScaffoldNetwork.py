@@ -82,6 +82,16 @@ class TestCase(unittest.TestCase):
     self.assertEqual(
       len([x for x in net.edges if x.type == rdScaffoldNetwork.EdgeType.RemoveAttachment]), 5)
 
+  def test4Str(self):
+    smis = ["c1ccccc1CC1NC(=O)CCC1"]
+    ms = [Chem.MolFromSmiles(x) for x in smis]
+    params = rdScaffoldNetwork.ScaffoldNetworkParams()
+
+    net = rdScaffoldNetwork.CreateScaffoldNetwork(ms, params)
+    self.assertEqual(len(net.nodes), 9)
+    self.assertEqual(len(net.edges), 8)
+    self.assertEqual(str(net.edges[0]), "NetworkEdge( 0, 1, Fragment )")
+
 
 if __name__ == '__main__':
   unittest.main()

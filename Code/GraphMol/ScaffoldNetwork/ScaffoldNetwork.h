@@ -15,6 +15,7 @@
 #include <map>
 #include <string>
 #include <memory>
+#include <iostream>
 
 namespace RDKit {
 class ROMol;
@@ -86,6 +87,37 @@ ScaffoldNetwork createScaffoldNetwork(const T &mols,
   updateScaffoldNetwork(mols, res, params);
   return res;
 }
+inline std::ostream &operator<<(std::ostream &ostr,
+                                const RDKit::ScaffoldNetwork::EdgeType &e) {
+  switch (e) {
+    case RDKit::ScaffoldNetwork::EdgeType::Fragment:
+      ostr << "Fragment";
+      break;
+    case RDKit::ScaffoldNetwork::EdgeType::Generic:
+      ostr << "Generic";
+      break;
+    case RDKit::ScaffoldNetwork::EdgeType::GenericBond:
+      ostr << "GenericBond";
+      break;
+    case RDKit::ScaffoldNetwork::EdgeType::RemoveAttachment:
+      ostr << "RemoveAttachment";
+      break;
+    case RDKit::ScaffoldNetwork::EdgeType::Initialize:
+      ostr << "Initialize";
+      break;
+    default:
+      ostr << "UNKNOWN";
+      break;
+  }
+  return ostr;
+}
+inline std::ostream &operator<<(std::ostream &ostr,
+                                const RDKit::ScaffoldNetwork::NetworkEdge &e) {
+  ostr << "NetworkEdge( " << e.beginIdx << ", " << e.endIdx << ", " << e.type
+       << " )";
+  return ostr;
+}
 }  // namespace ScaffoldNetwork
 }  // namespace RDKit
+
 #endif

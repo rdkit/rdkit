@@ -20,8 +20,8 @@ using namespace RDKit;
 using namespace RDKit::ScaffoldNetwork;
 
 namespace {
-ScaffoldNetwork::ScaffoldNetwork *createNetworkHelper(python::object pmols,
-                                                      python::object &params) {
+ScaffoldNetwork::ScaffoldNetwork *createNetworkHelper(
+    python::object pmols, const ScaffoldNetworkParams &params) {
   auto mols = pythonObjectToVect<ROMOL_SPTR>(pmols);
   ScaffoldNetwork::ScaffoldNetwork *res = new ScaffoldNetwork::ScaffoldNetwork;
   updateScaffoldNetwork(*mols, *res, params);
@@ -83,7 +83,8 @@ BOOST_PYTHON_MODULE(rdScaffoldNetwork) {
                               python::no_init)
       .def_readonly("beginIdx", &NetworkEdge::beginIdx)
       .def_readonly("endIdx", &NetworkEdge::endIdx)
-      .def_readonly("type", &NetworkEdge::type);
+      .def_readonly("type", &NetworkEdge::type)
+      .def(python::self_ns::str(python::self_ns::self));
 
   python::class_<ScaffoldNetwork::ScaffoldNetwork>(
       "ScaffoldNetwork", "A scaffold network", python::init<>())
