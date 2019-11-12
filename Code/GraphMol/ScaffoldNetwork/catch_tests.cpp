@@ -1,5 +1,6 @@
 //
 //  Copyright (C) 2019 Greg Landrum and T5 Informatics GmbH
+//
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license

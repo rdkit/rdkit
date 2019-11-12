@@ -10,6 +10,6 @@ rdkit_catch_test(testScaffoldNetwork catch_main.cpp catch_tests.cpp
 LINK_LIBRARIES ScaffoldNetwork SmilesParse GraphMol RDGeneral 
 ${RDKit_THREAD_LIBS} )
 
-#if(RDK_BUILD_PYTHON_WRAPPERS)
-#add_subdirectory(Wrap)
-#endif()
+if(RDK_BUILD_PYTHON_WRAPPERS)
+add_subdirectory(Wrap)
+endif()

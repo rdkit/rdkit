@@ -244,6 +244,8 @@ void updateScaffoldNetwork(const T &mols, ScaffoldNetwork &network,
 template RDKIT_SCAFFOLDNETWORK_EXPORT void updateScaffoldNetwork(
     const std::vector<ROMOL_SPTR> &ms, ScaffoldNetwork &network,
     const ScaffoldNetworkParams &params);
+template RDKIT_SCAFFOLDNETWORK_EXPORT ScaffoldNetwork createScaffoldNetwork(
+    const std::vector<ROMOL_SPTR> &ms, const ScaffoldNetworkParams &params);
 
 }  // namespace ScaffoldNetwork
 }  // namespace RDKit
