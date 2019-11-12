@@ -7,10 +7,8 @@
 //  of the RDKit source tree.
 //
 
-#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do
-                           // this in one cpp file
-#include "RDGeneral/test.h"
 #include "catch.hpp"
+#include "RDGeneral/test.h"
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/ScaffoldNetwork/ScaffoldNetwork.h>

@@ -6,7 +6,7 @@ rdkit_library(ScaffoldNetwork
 
 rdkit_headers(ScaffoldNetwork.h DEST GraphMol/ScaffoldNetwor)
 
-rdkit_catch_test(testScaffoldNetwork catch_tests.cpp 
+rdkit_catch_test(testScaffoldNetwork catch_main.cpp catch_tests.cpp 
 LINK_LIBRARIES ScaffoldNetwork SmilesParse GraphMol RDGeneral 
 ${RDKit_THREAD_LIBS} )
 
