@@ -332,19 +332,16 @@ double ForceField::calcEnergy(double *pos) {
 
 std::vector<std::vector<double>> ForceField::calcEnergyTerms() const {
   PRECONDITION(df_init, "not initialized");
-  std::vector<std::vector<double>> res;
+  std::vector<std::vector<double>> res(d_contribs.size());
   if (d_contribs.empty()) return res;
-  res.reserve(d_contribs.size());
 
   unsigned int N = d_positions.size();
   auto *pos = new double[d_dimension * N];
   this->scatter(pos);
   // now loop over the contribs
   for (const auto &d_contrib : d_contribs) {
-    std::vector<double> e = d_contrib->getEnergyTerms(pos);
-    if (res) {
-      res.push_back(e);
-    }
+    std::vector<double> e(6) = d_contrib->getEnergyTerms(pos);
+    res.push_back(e);
   }
   delete[] pos;
   return res;

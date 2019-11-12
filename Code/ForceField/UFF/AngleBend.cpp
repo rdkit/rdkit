@@ -145,7 +145,7 @@ double AngleBendContrib::getEnergy(double *pos) const {
 std::vector<double> AngleBendContrib::getEnergyTerms(double *pos) const {
   PRECONDITION(dp_forceField, "no owner");
   PRECONDITION(pos, "bad vector");
-  std::vector<double> resvec;
+  std::vector<double> resvec(6);
   
   double dist1 = dp_forceField->distance(d_at1Idx, d_at2Idx, pos);
   double dist2 = dp_forceField->distance(d_at2Idx, d_at3Idx, pos);
@@ -165,11 +165,13 @@ std::vector<double> AngleBendContrib::getEnergyTerms(double *pos) const {
 
   double angleTerm = getEnergyTerm(cosTheta, sinThetaSq);
   double res = d_forceConstant * angleTerm;
-    
+
+  resvec.push_back(3.0);
   resvec.push_back(double(d_at1Idx));
   resvec.push_back(double(d_at2Idx));
   resvec.push_back(double(d_at3Idx));
   resvec.push_back(res);
+  resvec.push_back(0.0);
   return resvec;
 }
 

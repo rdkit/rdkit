@@ -78,13 +78,16 @@ double BondStretchContrib::getEnergy(double *pos) const {
 
 std::vector<double> BondStretchContrib::getEnergyTerms(double *pos) const {
   PRECONDITION(dp_forceField, "no owner");
-  std::vector<double> resvec;
+  std::vector<double> resvec(6);
   double distTerm =
       dp_forceField->distance(d_end1Idx, d_end2Idx, pos) - d_restLen;
   double res = 0.5 * d_forceConstant * distTerm * distTerm;
+  resvec.push_back(2.0);
   resvec.push_back(double(d_end1Idx));
   resvec.push_back(double(d_end2Idx));
   resvec.push_back(res);
+  resvec.push_back(0.0);
+  resvec.push_back(0.0);
   return resvec;
 }
 

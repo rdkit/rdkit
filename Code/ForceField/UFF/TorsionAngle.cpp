@@ -214,7 +214,7 @@ std::vector<double> TorsionAngleContrib::getEnergyTerms(double *pos) const {
   PRECONDITION(dp_forceField, "no owner");
   PRECONDITION(pos, "bad vector");
   PRECONDITION(d_order == 2 || d_order == 3 || d_order == 6, "bad order");
-  std::vector<double> resvec;
+  std::vector<double> resvec(6);
 
   RDGeom::Point3D p1(pos[3 * d_at1Idx], pos[3 * d_at1Idx + 1],
                      pos[3 * d_at1Idx + 2]);
@@ -251,6 +251,7 @@ std::vector<double> TorsionAngleContrib::getEnergyTerms(double *pos) const {
   // if(d_at2Idx==5&&d_at3Idx==6) std::cerr << " torsion(" << d_at1Idx << "," <<
   // d_at2Idx << "," << d_at3Idx << "," << d_at4Idx << "): " << cosPhi << "(" <<
   // acos(cosPhi) << ")" << " -> " << res << std::endl;
+  resvec.push_back(4.0);
   resvec.push_back(double(d_at1Idx));
   resvec.push_back(double(d_at2Idx));
   resvec.push_back(double(d_at3Idx));
