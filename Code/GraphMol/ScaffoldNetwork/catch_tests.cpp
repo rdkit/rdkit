@@ -23,6 +23,7 @@ using namespace RDKit;
 namespace RDKit {
 namespace ScaffoldNetwork {
 namespace detail {
+ROMol *makeScaffoldGeneric(const ROMol &mol, bool doAtoms, bool doBonds);
 ROMol *removeAttachmentPoints(const ROMol &mol,
                               const ScaffoldNetworkParams &params);
 ROMol *pruneMol(const ROMol &mol, const ScaffoldNetworkParams &params);
@@ -108,6 +109,32 @@ TEST_CASE("removeAttachmentPoints", "[unittest, scaffolds]") {
     REQUIRE(pm);
     CHECK(m->getNumAtoms() == 8);
     CHECK(pm->getNumAtoms() == 6);
+  }
+}
+
+TEST_CASE("makeScaffoldGeneric", "[unittest, scaffolds]") {
+  auto m = "c1[nH]ccc1"_smiles;
+  REQUIRE(m);
+  SECTION("atoms") {
+    std::unique_ptr<ROMol> pm(
+        ScaffoldNetwork::detail::makeScaffoldGeneric(*m, true, false));
+    REQUIRE(pm);
+    auto smiles = MolToSmiles(*pm);
+    CHECK(smiles == "*1:*:*:*:*:1");
+  }
+  SECTION("bonds") {
+    std::unique_ptr<ROMol> pm(
+        ScaffoldNetwork::detail::makeScaffoldGeneric(*m, false, true));
+    REQUIRE(pm);
+    auto smiles = MolToSmiles(*pm);
+    CHECK(smiles == "C1CCNC1");
+  }
+  SECTION("both") {
+    std::unique_ptr<ROMol> pm(
+        ScaffoldNetwork::detail::makeScaffoldGeneric(*m, true, true));
+    REQUIRE(pm);
+    auto smiles = MolToSmiles(*pm);
+    CHECK(smiles == "*1****1");
   }
 }
 

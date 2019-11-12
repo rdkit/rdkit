@@ -45,6 +45,24 @@ ScaffoldNetworkParams::ScaffoldNetworkParams(
 };
 
 namespace detail {
+ROMol *makeScaffoldGeneric(const ROMol &mol, bool doAtoms, bool doBonds) {
+  RWMol *res = new RWMol(mol);
+  if (doAtoms) {
+    for (auto atom : res->atoms()) {
+      atom->setAtomicNum(0);
+      atom->setNumExplicitHs(0);
+      atom->setNoImplicit(false);
+    }
+  }
+  if (doBonds) {
+    for (auto bond : res->bonds()) {
+      bond->setBondType(Bond::SINGLE);
+      bond->getBeginAtom()->setIsAromatic(false);
+      bond->getEndAtom()->setIsAromatic(false);
+    }
+  }
+  return static_cast<ROMol *>(res);
+}
 ROMol *removeAttachmentPoints(const ROMol &mol,
                               const ScaffoldNetworkParams &params) {
   RDUNUSED_PARAM(params);
