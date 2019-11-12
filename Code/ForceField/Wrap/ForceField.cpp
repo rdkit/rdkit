@@ -148,13 +148,13 @@ PyObject *PyForceField::calcEnergyTerms() {
   terms = this->field->calcEnergyTerms();
   ETerms = PyTuple_New(terms.size());
     
-  for (std::vector<double> term: terms) {
+  for (auto term: terms) {
     j = 0;
     ETerm = PyTuple_New(term.size());
-    for (double e: term) {
+    for (auto e: term) {
       PyTuple_SetItem(ETerm, j++, PyFloat_FromDouble(e));
     }
-    PyTuple_SetItem(ETerms, j++, ETerm);
+    PyTuple_SetItem(ETerms, i++, ETerm);
   }
   return ETerms;
 }
