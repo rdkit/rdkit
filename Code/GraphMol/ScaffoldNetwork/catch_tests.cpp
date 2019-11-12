@@ -21,6 +21,8 @@ using namespace RDKit;
 namespace RDKit {
 namespace ScaffoldNetwork {
 namespace detail {
+std::vector<std::pair<std::string, ROMOL_SPTR>> getMolFragments(
+    const ROMol &mol, const ScaffoldNetworkParams &params);
 ROMol *makeScaffoldGeneric(const ROMol &mol, bool doAtoms, bool doBonds);
 ROMol *removeAttachmentPoints(const ROMol &mol,
                               const ScaffoldNetworkParams &params);
@@ -133,6 +135,44 @@ TEST_CASE("makeScaffoldGeneric", "[unittest, scaffolds]") {
     REQUIRE(pm);
     auto smiles = MolToSmiles(*pm);
     CHECK(smiles == "*1****1");
+  }
+}
+
+TEST_CASE("getMolFrags", "[unittest, scaffolds]") {
+  auto m = "c1ccccc1CC1NC(=O)CCC1"_smiles;
+  REQUIRE(m);
+  SECTION("defaults") {
+    ScaffoldNetwork::ScaffoldNetworkParams ps;
+    auto frags = ScaffoldNetwork::detail::getMolFragments(*m, ps);
+    REQUIRE(frags.size() == 2);
+    CHECK(frags[0].first == "O=C1CCCC(Cc2ccccc2)N1");
+    CHECK(frags[1].first == "O=C1CCCC(Cc2ccccc2)N1");
+
+    auto smi1 = MolToSmiles(*frags[0].second);
+    auto smi2 = MolToSmiles(*frags[1].second);
+    // don't want to make any assumptions about the order in which the
+    // fragments come back:
+    CHECK((std::min(smi1, smi2) == "*C1CCCC(=O)N1"));
+    CHECK((std::max(smi1, smi2) == "*c1ccccc1"));
+  }
+  SECTION("keep-linkers") {
+    ScaffoldNetwork::ScaffoldNetworkParams ps;
+    ps.keepOnlyFirstFragment = false;
+    auto frags = ScaffoldNetwork::detail::getMolFragments(*m, ps);
+    REQUIRE(frags.size() == 8);
+
+    std::vector<std::pair<std::string, std::string>> res;
+    res.reserve(frags.size());
+    for (const auto frag : frags) {
+      res.push_back(std::make_pair(frag.first, MolToSmiles(*frag.second)));
+    }
+    std::sort(res.begin(), res.end());
+    CHECK(res[0].first == "*CC1CCCC(=O)N1");
+    CHECK(res[0].second == "*C*");
+    CHECK(res[1].first == "*CC1CCCC(=O)N1");
+    CHECK(res[1].second == "*C1CCCC(=O)N1");
+    CHECK(res[5].first == "O=C1CCCC(Cc2ccccc2)N1");
+    CHECK(res[5].second == "*CC1CCCC(=O)N1");
   }
 }
 

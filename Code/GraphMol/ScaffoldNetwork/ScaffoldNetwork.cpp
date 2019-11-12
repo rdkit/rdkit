@@ -40,11 +40,44 @@ ScaffoldNetworkParams::ScaffoldNetworkParams(
       throw ValueErrorException(
           "bond breaker reactions must have exactly two products");
     }
+    rxn->initReactantMatchers();
     bondBreakersRxns.push_back(rxn);
   }
 };
 
 namespace detail {
+
+void updateMolProps(RWMol &mol, const ScaffoldNetworkParams &params) {
+  RDUNUSED_PARAM(params);
+  MolOps::sanitizeMol(mol);
+}
+
+std::vector<std::pair<std::string, ROMOL_SPTR>> getMolFragments(
+    const ROMol &mol, const ScaffoldNetworkParams &params) {
+  std::vector<std::pair<std::string, ROMOL_SPTR>> res;
+  std::deque<ROMOL_SPTR> stack;
+  stack.push_back(ROMOL_SPTR(new ROMol(mol)));
+  while (!stack.empty()) {
+    auto wmol = stack.front();
+    stack.pop_front();
+    auto parentSmi = MolToSmiles(*wmol);
+    for (auto rxn : params.bondBreakersRxns) {
+      auto ps = rxn->runReactant(wmol, 0);
+      for (auto p : ps) {
+        updateMolProps(*static_cast<RWMol *>(p[0].get()), params);
+        stack.push_back(p[0]);
+        res.push_back(std::make_pair(parentSmi, p[0]));
+        if (!params.keepOnlyFirstFragment) {
+          updateMolProps(*static_cast<RWMol *>(p[1].get()), params);
+          stack.push_back(p[1]);
+          res.push_back(std::make_pair(parentSmi, p[1]));
+        }
+      }
+    }
+  }
+  return res;
+}
+
 ROMol *makeScaffoldGeneric(const ROMol &mol, bool doAtoms, bool doBonds) {
   RWMol *res = new RWMol(mol);
   if (doAtoms) {
