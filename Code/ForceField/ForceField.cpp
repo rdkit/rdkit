@@ -332,8 +332,8 @@ double ForceField::calcEnergy(double *pos) {
 
 std::vector<std::vector<double>> ForceField::calcEnergyTerms() const {
   PRECONDITION(df_init, "not initialized");
-  std::vector<std::vector<double>> res(d_contribs.size(),vector<double> (6, 0));
-  std::vector<double> e(6);
+  std::vector<std::vector<double>> res;
+  std::vector<double> e;
   if (d_contribs.empty()) return res;
 
   unsigned int N = d_positions.size();

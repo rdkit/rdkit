@@ -139,7 +139,7 @@ double InversionContrib::getEnergy(double *pos) const {
 std::vector<double> InversionContrib::getEnergyTerms(double *pos) const {
   PRECONDITION(dp_forceField, "no owner");
   PRECONDITION(pos, "bad vector");
-  std::vector<double> resvec(6);
+  std::vector<double> resvec;
 
   RDGeom::Point3D p1(pos[3 * d_at1Idx], pos[3 * d_at1Idx + 1],
                      pos[3 * d_at1Idx + 2]);

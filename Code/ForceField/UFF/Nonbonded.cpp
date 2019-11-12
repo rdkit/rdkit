@@ -70,7 +70,7 @@ double vdWContrib::getEnergy(double *pos) const {
 std::vector<double> vdWContrib::getEnergyTerms(double *pos) const {
   PRECONDITION(dp_forceField, "no owner");
   PRECONDITION(pos, "bad vector");
-  std::vector<double> resvec(6);
+  std::vector<double> resvec;
 
   double dist = dp_forceField->distance(d_at1Idx, d_at2Idx, pos);
   if (dist > d_thresh || dist <= 0.0) return 0.0;
