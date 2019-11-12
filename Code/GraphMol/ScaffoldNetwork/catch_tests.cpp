@@ -23,6 +23,8 @@ using namespace RDKit;
 namespace RDKit {
 namespace ScaffoldNetwork {
 namespace detail {
+ROMol *removeAttachmentPoints(const ROMol &mol,
+                              const ScaffoldNetworkParams &params);
 ROMol *pruneMol(const ROMol &mol, const ScaffoldNetworkParams &params);
 ROMol *flattenMol(const ROMol &mol, const ScaffoldNetworkParams &params);
 }  // namespace detail
@@ -31,6 +33,7 @@ ROMol *flattenMol(const ROMol &mol, const ScaffoldNetworkParams &params);
 
 TEST_CASE("flattenMol", "[unittest, scaffolds]") {
   auto m = "Cl.[13CH3][C@H](F)/C=C/C"_smiles;
+  REQUIRE(m);
   SECTION("defaults") {
     ScaffoldNetwork::ScaffoldNetworkParams ps;
     std::unique_ptr<ROMol> pm(ScaffoldNetwork::detail::flattenMol(*m, ps));
@@ -85,12 +88,26 @@ TEST_CASE("flattenMol", "[unittest, scaffolds]") {
 
 TEST_CASE("pruneMol", "[unittest, scaffolds]") {
   auto m = "O=C(O)C1C(=O)CC1"_smiles;
+  REQUIRE(m);
   SECTION("defaults") {
     ScaffoldNetwork::ScaffoldNetworkParams ps;
     std::unique_ptr<ROMol> pm(ScaffoldNetwork::detail::pruneMol(*m, ps));
     REQUIRE(pm);
     auto smiles = MolToSmiles(*pm);
     CHECK(smiles == "O=C1CCC1");
+  }
+}
+
+TEST_CASE("removeAttachmentPoints", "[unittest, scaffolds]") {
+  auto m = "*c1ccc(*)c*1"_smiles;
+  REQUIRE(m);
+  SECTION("defaults") {
+    ScaffoldNetwork::ScaffoldNetworkParams ps;
+    std::unique_ptr<ROMol> pm(
+        ScaffoldNetwork::detail::removeAttachmentPoints(*m, ps));
+    REQUIRE(pm);
+    CHECK(m->getNumAtoms() == 8);
+    CHECK(pm->getNumAtoms() == 6);
   }
 }
 

@@ -45,7 +45,20 @@ ScaffoldNetworkParams::ScaffoldNetworkParams(
 };
 
 namespace detail {
-ROMol *pruneMol(const ROMol &mol, const ScaffoldNetworkParams &params){
+ROMol *removeAttachmentPoints(const ROMol &mol,
+                              const ScaffoldNetworkParams &params) {
+  RDUNUSED_PARAM(params);
+  RWMol *res = new RWMol(mol);
+  for (unsigned int i = 1; i <= mol.getNumAtoms(); ++i) {
+    auto atom = res->getAtomWithIdx(mol.getNumAtoms() - i);
+    if (!atom->getAtomicNum() && atom->getDegree() == 1) {
+      res->removeAtom(atom);
+    }
+  }
+  return static_cast<ROMol *>(res);
+}
+ROMol *pruneMol(const ROMol &mol, const ScaffoldNetworkParams &params) {
+  RDUNUSED_PARAM(params);
   ROMol *res = MurckoDecompose(mol);
   res->updatePropertyCache();
   MolOps::fastFindRings(*res);
