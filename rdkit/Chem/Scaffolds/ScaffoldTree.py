@@ -54,8 +54,6 @@ def _getMolFragments(mol, params):
     >>> sorted((x,Chem.MolToSmiles(y)) for x,y in frags)
     [('O=C1CCCC(Cc2ccccc2)N1', '*C1CCCC(=O)N1'), ('O=C1CCCC(Cc2ccccc2)N1', '*c1ccccc1')]
 
-    Here's what the actual results look like:
-
     Setting keepOnlyFirstFragment results in us getting all the fragments with linkers:
     >>> ps.keepOnlyFirstFragment = False
     >>> frags = _getMolFragments(m,ps)
