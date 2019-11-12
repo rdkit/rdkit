@@ -56,13 +56,18 @@ enum class RDKIT_SCAFFOLDNETWORK_EXPORT EdgeType {
 };
 
 struct RDKIT_SCAFFOLDNETWORK_EXPORT NetworkEdge {
-  unsigned beginIdx;
-  unsigned endIdx;
+  size_t beginIdx;
+  size_t endIdx;
   EdgeType type;
+  NetworkEdge(size_t bi, size_t ei, EdgeType typ)
+      : beginIdx(bi), endIdx(ei), type(typ){};
+  bool operator==(const RDKit::ScaffoldNetwork::NetworkEdge &o) const {
+    return (beginIdx == o.beginIdx) && (endIdx == o.endIdx) && (type == o.type);
+  }
 };
 
 struct RDKIT_SCAFFOLDNETWORK_EXPORT ScaffoldNetwork {
-  std::vector<std::string> scaffolds;  ///< SMILES for the scaffolds
+  std::vector<std::string> nodes;  ///< SMILES for the scaffolds
   std::vector<unsigned>
       counts;  ///< number of times each scaffold was encountered
   std::vector<NetworkEdge> edges;  ///< edges in the network
@@ -82,9 +87,5 @@ ScaffoldNetwork createScaffoldNetwork(const T &mols,
   return res;
 }
 }  // namespace ScaffoldNetwork
-
-// RDKIT_PARTIALCHARGES_EXPORT void computeGasteigerCharges(
-//     const ROMol *mol, int nIter = 12, bool throwOnParamFailure = false);
 }  // namespace RDKit
-
 #endif

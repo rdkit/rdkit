@@ -28,6 +28,8 @@ ROMol *removeAttachmentPoints(const ROMol &mol,
                               const ScaffoldNetworkParams &params);
 ROMol *pruneMol(const ROMol &mol, const ScaffoldNetworkParams &params);
 ROMol *flattenMol(const ROMol &mol, const ScaffoldNetworkParams &params);
+void addMolToNetwork(const ROMol &mol, ScaffoldNetwork &network,
+                     const ScaffoldNetworkParams &params);
 }  // namespace detail
 }  // namespace ScaffoldNetwork
 }  // namespace RDKit
@@ -138,7 +140,7 @@ TEST_CASE("makeScaffoldGeneric", "[unittest, scaffolds]") {
   }
 }
 
-TEST_CASE("getMolFrags", "[unittest, scaffolds]") {
+TEST_CASE("getMolFragments", "[unittest, scaffolds]") {
   auto m = "c1ccccc1CC1NC(=O)CCC1"_smiles;
   REQUIRE(m);
   SECTION("defaults") {
@@ -176,6 +178,118 @@ TEST_CASE("getMolFrags", "[unittest, scaffolds]") {
   }
 }
 
+TEST_CASE("addMolToNetwork", "[unittest, scaffolds]") {
+  SECTION("defaults") {
+    auto m = "c1ccccc1CC1NC(=O)CCC1"_smiles;
+    REQUIRE(m);
+    ScaffoldNetwork::ScaffoldNetworkParams ps;
+    ScaffoldNetwork::ScaffoldNetwork net;
+    ScaffoldNetwork::detail::addMolToNetwork(*m, net, ps);
+    CHECK(net.nodes.size() == 9);
+    CHECK(net.edges.size() == 8);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type == ScaffoldNetwork::EdgeType::Fragment;
+                        }) == 2);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type == ScaffoldNetwork::EdgeType::Generic;
+                        }) == 2);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type ==
+                                 ScaffoldNetwork::EdgeType::RemoveAttachment;
+                        }) == 4);
+
+    // make sure adding the same molecule again doesn't do anything:
+    ScaffoldNetwork::detail::addMolToNetwork(*m, net, ps);
+    CHECK(net.nodes.size() == 9);
+    CHECK(net.edges.size() == 8);
+  }
+  SECTION("flucloxacillin") {
+    auto m =
+        "Cc1onc(-c2c(F)cccc2Cl)c1C(=O)N[C@@H]1C(=O)N2[C@@H](C(=O)O)C(C)(C)S[C@H]12"_smiles;
+    REQUIRE(m);
+    ScaffoldNetwork::ScaffoldNetworkParams ps;
+    ps.includeGenericScaffolds = false;
+    ps.includeScaffoldsWithoutAttachments = false;
+    ScaffoldNetwork::ScaffoldNetwork net;
+    ScaffoldNetwork::detail::addMolToNetwork(*m, net, ps);
+    CHECK(net.nodes.size() == 7);
+    CHECK(net.edges.size() == 9);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type == ScaffoldNetwork::EdgeType::Fragment;
+                        }) == 8);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type ==
+                                 ScaffoldNetwork::EdgeType::Initialize;
+                        }) == 1);
+  }
+}
 TEST_CASE("Network defaults", "[scaffolds]") {
-  SECTION("basics") {}
+  auto smis = {"c1ccccc1CC1NC(=O)CCC1", "c1cccnc1CC1NC(=O)CCC1"};
+  std::vector<ROMOL_SPTR> ms;
+  for (const auto smi : smis) {
+    auto m = SmilesToMol(smi);
+    REQUIRE(m);
+    ms.push_back(ROMOL_SPTR(m));
+  }
+  SECTION("basics") {
+    ScaffoldNetwork::ScaffoldNetworkParams ps;
+    ScaffoldNetwork::ScaffoldNetwork net;
+    ScaffoldNetwork::updateScaffoldNetwork(ms, net, ps);
+    CHECK(net.nodes.size() == 12);
+    CHECK(net.edges.size() == 12);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type == ScaffoldNetwork::EdgeType::Fragment;
+                        }) == 4);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type == ScaffoldNetwork::EdgeType::Generic;
+                        }) == 3);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type ==
+                                 ScaffoldNetwork::EdgeType::RemoveAttachment;
+                        }) == 5);
+  }
+  SECTION("don't remove attachments (makes sure parameters actually work)") {
+    ScaffoldNetwork::ScaffoldNetworkParams ps;
+    ps.includeScaffoldsWithoutAttachments = false;
+    ScaffoldNetwork::ScaffoldNetwork net;
+    ScaffoldNetwork::updateScaffoldNetwork(ms, net, ps);
+    CHECK(net.nodes.size() == 7);
+    CHECK(net.edges.size() == 7);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type == ScaffoldNetwork::EdgeType::Fragment;
+                        }) == 4);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type == ScaffoldNetwork::EdgeType::Generic;
+                        }) == 3);
+  }
+  SECTION("create network basics") {
+    ScaffoldNetwork::ScaffoldNetworkParams ps;
+    ScaffoldNetwork::ScaffoldNetwork net =
+        ScaffoldNetwork::createScaffoldNetwork(ms, ps);
+    CHECK(net.nodes.size() == 12);
+    CHECK(net.edges.size() == 12);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type == ScaffoldNetwork::EdgeType::Fragment;
+                        }) == 4);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type == ScaffoldNetwork::EdgeType::Generic;
+                        }) == 3);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type ==
+                                 ScaffoldNetwork::EdgeType::RemoveAttachment;
+                        }) == 5);
+  }
 }
