@@ -135,6 +135,39 @@ double InversionContrib::getEnergy(double *pos) const {
 
   return res;
 }
+
+std::vector<double> InversionContrib::getEnergyTerms(double *pos) const {
+  PRECONDITION(dp_forceField, "no owner");
+  PRECONDITION(pos, "bad vector");
+  std::vector<double> resvec;
+
+  RDGeom::Point3D p1(pos[3 * d_at1Idx], pos[3 * d_at1Idx + 1],
+                     pos[3 * d_at1Idx + 2]);
+  RDGeom::Point3D p2(pos[3 * d_at2Idx], pos[3 * d_at2Idx + 1],
+                     pos[3 * d_at2Idx + 2]);
+  RDGeom::Point3D p3(pos[3 * d_at3Idx], pos[3 * d_at3Idx + 1],
+                     pos[3 * d_at3Idx + 2]);
+  RDGeom::Point3D p4(pos[3 * d_at4Idx], pos[3 * d_at4Idx + 1],
+                     pos[3 * d_at4Idx + 2]);
+
+  double cosY = Utils::calculateCosY(p1, p2, p3, p4);
+  double sinYSq = 1.0 - cosY * cosY;
+  double sinY = ((sinYSq > 0.0) ? sqrt(sinYSq) : 0.0);
+  // cos(2 * W) = 2 * cos(W) * cos(W) - 1 = 2 * sin(W) * sin(W) - 1
+  double cos2W = 2.0 * sinY * sinY - 1.0;
+  double res = d_forceConstant * (d_C0 + d_C1 * sinY + d_C2 * cos2W);
+  // std::cout << d_at1Idx + 1 << "," << d_at2Idx + 1 << "," << d_at3Idx + 1 <<
+  // "," << d_at4Idx + 1 << " Inversion: " << res << std::endl;
+
+  resvec.push_back(999.0);
+  resvec.push_back(double(d_at1Idx));
+  resvec.push_back(double(d_at2Idx));
+  resvec.push_back(double(d_at3Idx));
+  resvec.push_back(double(d_at4Idx));
+  resvec.push_back(res);
+  return resvec;
+}
+
 void InversionContrib::getGrad(double *pos, double *grad) const {
   PRECONDITION(dp_forceField, "no owner");
   PRECONDITION(pos, "bad vector");
