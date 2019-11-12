@@ -17,6 +17,7 @@
 #include <GraphMol/ChemReactions/ReactionParser.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/MolStandardize/Fragment.h>
+#include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <RDGeneral/Exceptions.h>
 
 namespace RDKit {
@@ -44,6 +45,13 @@ ScaffoldNetworkParams::ScaffoldNetworkParams(
 };
 
 namespace detail {
+ROMol *pruneMol(const ROMol &mol, const ScaffoldNetworkParams &params){
+  ROMol *res = MurckoDecompose(mol);
+  res->updatePropertyCache();
+  MolOps::fastFindRings(*res);
+  return res;
+}
+
 ROMol *flattenMol(const ROMol &mol, const ScaffoldNetworkParams &params) {
   RWMol *res;
   if (params.flattenKeepLargest) {

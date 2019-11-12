@@ -23,8 +23,9 @@ using namespace RDKit;
 namespace RDKit {
 namespace ScaffoldNetwork {
 namespace detail {
+ROMol *pruneMol(const ROMol &mol, const ScaffoldNetworkParams &params);
 ROMol *flattenMol(const ROMol &mol, const ScaffoldNetworkParams &params);
-}
+}  // namespace detail
 }  // namespace ScaffoldNetwork
 }  // namespace RDKit
 
@@ -79,6 +80,17 @@ TEST_CASE("flattenMol", "[unittest, scaffolds]") {
     REQUIRE(pm);
     auto smiles = MolToSmiles(*pm);
     CHECK(smiles == "C/C=C/[C@H]([13CH3])F.Cl");
+  }
+}
+
+TEST_CASE("pruneMol", "[unittest, scaffolds]") {
+  auto m = "O=C(O)C1C(=O)CC1"_smiles;
+  SECTION("defaults") {
+    ScaffoldNetwork::ScaffoldNetworkParams ps;
+    std::unique_ptr<ROMol> pm(ScaffoldNetwork::detail::pruneMol(*m, ps));
+    REQUIRE(pm);
+    auto smiles = MolToSmiles(*pm);
+    CHECK(smiles == "O=C1CCC1");
   }
 }
 
