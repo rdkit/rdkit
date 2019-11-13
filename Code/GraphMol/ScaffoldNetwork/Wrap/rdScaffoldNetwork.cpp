@@ -89,6 +89,7 @@ BOOST_PYTHON_MODULE(rdScaffoldNetwork) {
   python::class_<ScaffoldNetwork::ScaffoldNetwork>(
       "ScaffoldNetwork", "A scaffold network", python::init<>())
       .def_readonly("nodes", &ScaffoldNetwork::ScaffoldNetwork::nodes)
+      .def_readonly("counts", &ScaffoldNetwork::ScaffoldNetwork::counts)
       .def_readonly("edges", &ScaffoldNetwork::ScaffoldNetwork::edges);
 
   python::def("CreateScaffoldNetwork", &createNetworkHelper,

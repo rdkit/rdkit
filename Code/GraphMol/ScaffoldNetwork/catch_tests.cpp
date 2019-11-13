@@ -187,6 +187,7 @@ TEST_CASE("addMolToNetwork", "[unittest, scaffolds]") {
     ScaffoldNetwork::ScaffoldNetwork net;
     ScaffoldNetwork::detail::addMolToNetwork(*m, net, ps);
     CHECK(net.nodes.size() == 9);
+    CHECK(net.counts.size() == net.nodes.size());
     CHECK(net.edges.size() == 8);
     CHECK(std::count_if(net.edges.begin(), net.edges.end(),
                         [](ScaffoldNetwork::NetworkEdge e) {
@@ -201,11 +202,17 @@ TEST_CASE("addMolToNetwork", "[unittest, scaffolds]") {
                           return e.type ==
                                  ScaffoldNetwork::EdgeType::RemoveAttachment;
                         }) == 4);
+    CHECK(std::count(net.counts.begin(), net.counts.end(), 1) ==
+          net.counts.size());
 
-    // make sure adding the same molecule again doesn't do anything:
+    // make sure adding the same molecule again doesn't do anything except
+    // change the counts:
     ScaffoldNetwork::detail::addMolToNetwork(*m, net, ps);
     CHECK(net.nodes.size() == 9);
+    CHECK(net.counts.size() == net.nodes.size());
     CHECK(net.edges.size() == 8);
+    CHECK(std::count(net.counts.begin(), net.counts.end(), 2) ==
+          net.counts.size());
   }
   SECTION("flucloxacillin") {
     auto m =
@@ -217,6 +224,7 @@ TEST_CASE("addMolToNetwork", "[unittest, scaffolds]") {
     ScaffoldNetwork::ScaffoldNetwork net;
     ScaffoldNetwork::detail::addMolToNetwork(*m, net, ps);
     CHECK(net.nodes.size() == 7);
+    CHECK(net.counts.size() == net.nodes.size());
     CHECK(net.edges.size() == 9);
     CHECK(std::count_if(net.edges.begin(), net.edges.end(),
                         [](ScaffoldNetwork::NetworkEdge e) {
@@ -242,6 +250,7 @@ TEST_CASE("Network defaults", "[scaffolds]") {
     ScaffoldNetwork::ScaffoldNetwork net;
     ScaffoldNetwork::updateScaffoldNetwork(ms, net, ps);
     CHECK(net.nodes.size() == 12);
+    CHECK(net.counts.size() == net.nodes.size());
     CHECK(net.edges.size() == 12);
     CHECK(std::count_if(net.edges.begin(), net.edges.end(),
                         [](ScaffoldNetwork::NetworkEdge e) {
@@ -263,6 +272,7 @@ TEST_CASE("Network defaults", "[scaffolds]") {
     ScaffoldNetwork::ScaffoldNetwork net;
     ScaffoldNetwork::updateScaffoldNetwork(ms, net, ps);
     CHECK(net.nodes.size() == 7);
+    CHECK(net.counts.size() == net.nodes.size());
     CHECK(net.edges.size() == 7);
     CHECK(std::count_if(net.edges.begin(), net.edges.end(),
                         [](ScaffoldNetwork::NetworkEdge e) {
@@ -278,6 +288,7 @@ TEST_CASE("Network defaults", "[scaffolds]") {
     ScaffoldNetwork::ScaffoldNetwork net =
         ScaffoldNetwork::createScaffoldNetwork(ms, ps);
     CHECK(net.nodes.size() == 12);
+    CHECK(net.counts.size() == net.nodes.size());
     CHECK(net.edges.size() == 12);
     CHECK(std::count_if(net.edges.begin(), net.edges.end(),
                         [](ScaffoldNetwork::NetworkEdge e) {

@@ -29,6 +29,7 @@ class TestCase(unittest.TestCase):
     net = rdScaffoldNetwork.CreateScaffoldNetwork(ms, params)
     self.assertEqual(len(net.nodes), 12)
     self.assertEqual(len(net.edges), 12)
+    self.assertEqual(len(net.counts), len(net.nodes))
     self.assertEqual(len([x for x in net.edges if x.type == rdScaffoldNetwork.EdgeType.Fragment]),
                      4)
     self.assertEqual(len([x for x in net.edges if x.type == rdScaffoldNetwork.EdgeType.Generic]), 3)
@@ -63,9 +64,14 @@ class TestCase(unittest.TestCase):
     params = rdScaffoldNetwork.ScaffoldNetworkParams()
     net = rdScaffoldNetwork.ScaffoldNetwork()
     rdScaffoldNetwork.UpdateScaffoldNetwork(ms[0:1], net, params)
+    self.assertEqual(len(net.nodes), 9)
+    self.assertEqual(len(net.edges), 8)
+    self.assertEqual(len(net.counts), len(net.nodes))
+    self.assertEqual(list(net.counts).count(1), len(net.counts))
     rdScaffoldNetwork.UpdateScaffoldNetwork(ms[1:2], net, params)
     self.assertEqual(len(net.nodes), 12)
     self.assertEqual(len(net.edges), 12)
+    self.assertEqual(len(net.counts), len(net.nodes))
     self.assertEqual(len([x for x in net.edges if x.type == rdScaffoldNetwork.EdgeType.Fragment]),
                      4)
     self.assertEqual(len([x for x in net.edges if x.type == rdScaffoldNetwork.EdgeType.Generic]), 3)
