@@ -145,7 +145,9 @@ PyObject *PyForceField::calcEnergyTerms() {
     PyObject *ETerm = nullptr;
     int i = 0;
     std::vector<std::vector<double>> terms;
-    this->field->calcEnergyTerms(terms);
+    std::vector<double> e(6);
+    terms.push_back(e);
+//    this->field->calcEnergyTerms(terms);
     ETerms = PyTuple_New(terms.size());
 
     for (std::vector<double> term: terms) {

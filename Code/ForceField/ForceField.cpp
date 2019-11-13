@@ -330,11 +330,11 @@ double ForceField::calcEnergy(double *pos) {
   return res;
 }
 
-void ForceField::calcEnergyTerms(std::vector<std::vector<double>>& res) const{
-    std::vector<double> e(6);
-    res.push_back(e);
-    return res;
-}
+//void ForceField::calcEnergyTerms(std::vector<std::vector<double>>& res) const{
+//    std::vector<double> e(6);
+//    res.push_back(e);
+//    return res;
+//}
 
 void ForceField::calcGrad(double *grad) const {
   PRECONDITION(df_init, "not initialized");
