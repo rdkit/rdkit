@@ -127,6 +127,9 @@ class RDKIT_FORCEFIELD_EXPORT ForceField {
       This function is less efficient than calcGrad with positions passed in
       the positions need to be converted to double * here
    */
+    
+  void calcEnergyTerms(std::vector<std::vector<double>>& res);
+    
   void calcGrad(double *forces) const;
 
   //! calculates the gradient of the energy at the provided position
