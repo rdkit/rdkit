@@ -250,12 +250,12 @@ void TorsionAngleContrib::getEnergyTerms(double *pos, std::vector<double>& resve
   // if(d_at2Idx==5&&d_at3Idx==6) std::cerr << " torsion(" << d_at1Idx << "," <<
   // d_at2Idx << "," << d_at3Idx << "," << d_at4Idx << "): " << cosPhi << "(" <<
   // acos(cosPhi) << ")" << " -> " << res << std::endl;
-  resvec.push_back(4.0);
-  resvec.push_back(double(d_at1Idx));
-  resvec.push_back(double(d_at2Idx));
-  resvec.push_back(double(d_at3Idx));
-  resvec.push_back(double(d_at4Idx));
-  resvec.push_back(res);
+  resvec->push_back(4.0);
+  resvec->push_back(double(d_at1Idx));
+  resvec->push_back(double(d_at2Idx));
+  resvec->push_back(double(d_at3Idx));
+  resvec->push_back(double(d_at4Idx));
+  resvec->push_back(res);
 }
 
 void TorsionAngleContrib::getGrad(double *pos, double *grad) const {
