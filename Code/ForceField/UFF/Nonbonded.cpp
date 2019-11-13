@@ -67,10 +67,9 @@ double vdWContrib::getEnergy(double *pos) const {
   return res;
 }
 
-std::vector<double> vdWContrib::getEnergyTerms(double *pos) const {
+void vdWContrib::getEnergyTerms(double *pos, std::vector<double>& resvec) const {
   PRECONDITION(dp_forceField, "no owner");
   PRECONDITION(pos, "bad vector");
-  std::vector<double> resvec;
 
   double dist = dp_forceField->distance(d_at1Idx, d_at2Idx, pos);
   if (dist > d_thresh || dist <= 0.0) return 0.0;
@@ -87,7 +86,6 @@ std::vector<double> vdWContrib::getEnergyTerms(double *pos) const {
   resvec.push_back(res);
   resvec.push_back(0.0);
   resvec.push_back(0.0);
-  return resvec;
 }
 
 void vdWContrib::getGrad(double *pos, double *grad) const {
