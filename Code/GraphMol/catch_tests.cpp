@@ -779,3 +779,18 @@ TEST_CASE("setDoubleBondNeighborDirections()", "[stereochemistry,bug]") {
     CHECK(MolToSmiles(*m) == "C/C=C\\C");
   }
 }
+
+TEST_CASE("github #2782: addHs() fails on atoms with 'bad' valences", "[bug]") {
+  SECTION("basics") {
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    std::unique_ptr<RWMol> m(
+        static_cast<RWMol *>(SmilesToMol("C=C1=CC=CC=C1", ps)));
+    REQUIRE(m);
+    bool strict = false;
+    m->updatePropertyCache(strict);
+    CHECK(m->getNumAtoms() == 7);
+    MolOps::addHs(*m);
+    CHECK(m->getNumAtoms() == 14);
+  }
+}
