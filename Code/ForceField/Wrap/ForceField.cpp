@@ -139,7 +139,7 @@ double PyForceField::calcEnergyWithPos(const python::object &pos) {
     return this->field->calcEnergy();
 }
 
-PyObject *PyForceField::calcEnergyWithPos() {
+PyObject *PyForceField::calcEnergyTerms() {
     PRECONDITION(this->field, "no force field");
     PyObject *ETerms = nullptr;
     PyObject *ETerm = nullptr;
@@ -147,7 +147,7 @@ PyObject *PyForceField::calcEnergyWithPos() {
     std::vector<std::vector<double>> terms;
 //    this->field->calcEnergyTerms(terms);
 //    ETerms = PyTuple_New(terms.size());
-//  
+//
 //    for (std::vector<double> term: terms) {
 //      j = 0;
 //      ETerm = PyTuple_New(term.size());
