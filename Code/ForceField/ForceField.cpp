@@ -340,7 +340,7 @@ void ForceField::calcEnergyTerms(std::vector<std::vector<double>>& res) const {
   for (const auto &d_contrib : d_contribs) {
     std::vector<double> e;
     d_contrib->getEnergyTerms(pos, e);
-    res->push_back(e);
+    res.push_back(e);
   }
   delete[] pos;
 }
