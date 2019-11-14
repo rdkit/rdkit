@@ -792,5 +792,7 @@ TEST_CASE("github #2782: addHs() fails on atoms with 'bad' valences", "[bug]") {
     CHECK(m->getNumAtoms() == 7);
     MolOps::addHs(*m);
     CHECK(m->getNumAtoms() == 14);
+    // this doesn't change the fact that there's still a bad valence present:
+    CHECK_THROWS_AS(m->updatePropertyCache(), AtomValenceException);
   }
 }
