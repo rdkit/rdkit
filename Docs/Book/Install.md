@@ -499,6 +499,25 @@ This section assumes that python is installed in `C:\Python27`, that the boost l
 -   cd to `C:\RDKit\build` and run ctest. Please note that if you have built in PostgreSQL support, the current logged in user needs to be a PostgreSQL user with database creation and superuser privileges, or the PostgreSQL test will fail. A convenient option to authenticate will be to set the `PGPASSWORD` environment variable to the PostgreSQL password of the current logged in user in the shell from which you are running ctest.
 -   You're done!
 
+## A note on pip packages
+
+RDKit uses `pip` to install its Python package to the system. This means that RDKit is registered in
+`pip`'s package database and thus can be listed in other package's `install_requires`.
+
+If you need RDKit's package in your virtualenv, here's how to get it:
+
+- Install RDKit with your package manager: `brew`, `apt-get`, ..., or build it from source
+- Create a virtualenv
+- Locate RDKit's `*.whl` package
+- Install it with `pip` in the virtualenv.
+
+If you are building from source, `*.whl` package is located in `dist` directory inside you build
+root (where you run `cmake`). If you are installing with system's package manager, check
+documentation on system's package, e.g. in Homebrew's package install messages.
+
+Alternatively, you can symlink `rdkit` and `rdkit-*.dist-info` directories from system's
+`site-packages` into your virtualenv's `site-packages`.
+
 ## License
 
 This document is copyright (C) 2012-2018 by Greg Landrum
