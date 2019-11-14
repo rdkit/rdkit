@@ -779,3 +779,26 @@ TEST_CASE("setDoubleBondNeighborDirections()", "[stereochemistry,bug]") {
     CHECK(MolToSmiles(*m) == "C/C=C\\C");
   }
 }
+
+TEST_CASE(
+    "Github #2784: Element symbol lookup for some transuranics returns "
+    "incorrect results",
+    "[transuranics,bug]") {
+  auto pt = PeriodicTable::getTable();
+  SECTION("number to symbol") {
+    std::vector<std::pair<unsigned int, std::string>> data = {
+        {113, "Nh"}, {114, "Fl"}, {115, "Mc"},
+        {116, "Lv"}, {117, "Ts"}, {118, "Og"}};
+    for (auto pr : data) {
+      CHECK(pt->getElementSymbol(pr.first) == pr.second);
+    }
+  }
+  SECTION("symbol to number") {
+    std::vector<std::pair<unsigned int, std::string>> data = {
+        {113, "Nh"}, {114, "Fl"}, {115, "Mc"},  {116, "Lv"},
+        {117, "Ts"}, {118, "Og"}, {113, "Uut"}, {115, "Uup"}};
+    for (auto pr : data) {
+      CHECK(pt->getAtomicNumber(pr.second) == pr.first);
+    }
+  }
+}
