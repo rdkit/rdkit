@@ -26,14 +26,11 @@ class RDKIT_FORCEFIELD_EXPORT ForceFieldContrib {
   //! returns our contribution to the energy of a position
   virtual double getEnergy(double *pos) const = 0;
     
-    virtual void getEnergyTerms(double *pos, std::vector<double> &resvec) const {
-        std::vector<double> e;
-        e.push_back(0.0);
-        e.push_back(0.0);
-        e.push_back(0.0);
-        resvec.push_back(e);
-        resvec.push_back(e);
-    }
+  virtual void getEnergyTerms(double *pos, std::vector<double> &resvec) const {
+    resvec.push_back(0.0);
+    resvec.push_back(0.0);
+    resvec.push_back(0.0);
+  };
 
   //! calculates our contribution to the gradients of a position
   virtual void getGrad(double *pos, double *grad) const = 0;
