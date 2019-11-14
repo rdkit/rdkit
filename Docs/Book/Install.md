@@ -499,17 +499,23 @@ This section assumes that python is installed in `C:\Python27`, that the boost l
 -   cd to `C:\RDKit\build` and run ctest. Please note that if you have built in PostgreSQL support, the current logged in user needs to be a PostgreSQL user with database creation and superuser privileges, or the PostgreSQL test will fail. A convenient option to authenticate will be to set the `PGPASSWORD` environment variable to the PostgreSQL password of the current logged in user in the shell from which you are running ctest.
 -   You're done!
 
-## A note on pip packages
+## A note on python packages
 
-If you are building the RDKit from source, you can configure the build system to produce a `whl` file that can be
-installed locally using `pip`. This means that RDKit is registered in
-`pip`'s package database and thus can be listed in other package's `install_requires`.
+Both binary and source installs of RDKit use Python's package manager `pip` to instal Python
+bindings. This means that `pip` at your system becomes aware of RDKit's package existence &mdash;
+this may be checked with `pip freeze` command. This makes it possible to add `rdkit` to other
+package's `install_requires` in `setup.py`.
 
-If you need RDKit's package in your virtualenv, here's how to get it:
+Internally, this is done by creating `*.whl` package and installing it at `make install` step with
+`pip` (when `-DRDK_INSTALL_PYTHON_PACKAGE` CMake option is `ON`, which is the default).
 
-- Build and install the RDKit from source as you normally would, but add `-DRDK_INSTALL_INTREE=OFF -DRDK_INSTALL_PYTHON_PACKAGE=ON` to your cmake line.
+This `*.whl` package contains only Python-related files which are linked to main RDKit libraries
+installed somewhere on the system. If you wish to use virtualenvs, here's one possible approach:
+
+- Install the RDKit from brew, apt-get or another package manager or install it from source.
 - Create a virtualenv
-- Locate RDKit's `*.whl` package in the `dist` directory of your build root.
+- Locate RDKit's `*.whl` package according to your binary package's instruction or
+  in the `dist` directory of your build root.
 - Install that `whl` with `pip` in the virtualenv.
 
 Alternatively, you can symlink `rdkit` and `rdkit-*.dist-info` directories from system's
