@@ -30,7 +30,7 @@ class RDKIT_FORCEFIELD_EXPORT ForceFieldContrib {
     resvec.push_back(0.0);
     resvec.push_back(0.0);
     resvec.push_back(0.0);
-  };
+  }
 
   //! calculates our contribution to the gradients of a position
   virtual void getGrad(double *pos, double *grad) const = 0;
