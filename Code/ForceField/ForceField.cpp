@@ -337,7 +337,6 @@ void ForceField::calcEnergyTerms(std::vector<std::vector<double>>& res) const{
     e.push_back(1.0);
     res.push_back(e);
     res.push_back(e);
-    return res;
 }
 
 void ForceField::calcGrad(double *grad) const {
