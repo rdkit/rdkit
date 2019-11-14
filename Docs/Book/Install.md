@@ -501,19 +501,16 @@ This section assumes that python is installed in `C:\Python27`, that the boost l
 
 ## A note on pip packages
 
-RDKit uses `pip` to install its Python package to the system. This means that RDKit is registered in
+If you are building the RDKit from source, you can configure the build system to produce a `whl` file that can be
+installed locally using `pip`. This means that RDKit is registered in
 `pip`'s package database and thus can be listed in other package's `install_requires`.
 
 If you need RDKit's package in your virtualenv, here's how to get it:
 
-- Install RDKit with your package manager: `brew`, `apt-get`, ..., or build it from source
+- Build and install the RDKit from source as you normally would, but add `-DRDK_INSTALL_INTREE=OFF -DRDK_INSTALL_PYTHON_PACKAGE=ON` to your cmake line.
 - Create a virtualenv
-- Locate RDKit's `*.whl` package
-- Install it with `pip` in the virtualenv.
-
-If you are building from source, `*.whl` package is located in `dist` directory inside you build
-root (where you run `cmake`). If you are installing with system's package manager, check
-documentation on system's package, e.g. in Homebrew's package install messages.
+- Locate RDKit's `*.whl` package in the `dist` directory of your build root.
+- Install that `whl` with `pip` in the virtualenv.
 
 Alternatively, you can symlink `rdkit` and `rdkit-*.dist-info` directories from system's
 `site-packages` into your virtualenv's `site-packages`.
