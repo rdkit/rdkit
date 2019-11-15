@@ -131,6 +131,23 @@ double TorsionAngleContrib::getEnergy(double *pos) const {
       d_V1, d_V2, d_V3,
       Utils::calcTorsionCosPhi(iPoint, jPoint, kPoint, lPoint));
 }
+double TorsionAngleContrib::getEnergyTerms(double *pos) const {
+  PRECONDITION(dp_forceField, "no owner");
+  PRECONDITION(pos, "bad vector");
+
+  RDGeom::Point3D iPoint(pos[3 * d_at1Idx], pos[3 * d_at1Idx + 1],
+                         pos[3 * d_at1Idx + 2]);
+  RDGeom::Point3D jPoint(pos[3 * d_at2Idx], pos[3 * d_at2Idx + 1],
+                         pos[3 * d_at2Idx + 2]);
+  RDGeom::Point3D kPoint(pos[3 * d_at3Idx], pos[3 * d_at3Idx + 1],
+                         pos[3 * d_at3Idx + 2]);
+  RDGeom::Point3D lPoint(pos[3 * d_at4Idx], pos[3 * d_at4Idx + 1],
+                         pos[3 * d_at4Idx + 2]);
+
+  return Utils::calcTorsionEnergy(
+      d_V1, d_V2, d_V3,
+      Utils::calcTorsionCosPhi(iPoint, jPoint, kPoint, lPoint));
+}
 
 void TorsionAngleContrib::getGrad(double *pos, double *grad) const {
   PRECONDITION(dp_forceField, "no owner");

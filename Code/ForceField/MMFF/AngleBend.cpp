@@ -124,6 +124,24 @@ double AngleBendContrib::getEnergy(double *pos) const {
       d_theta0, d_ka, d_isLinear,
       Utils::calcCosTheta(p1, p2, p3, dist1, dist2));
 }
+double AngleBendContrib::getEnergyTerms(double *pos) const {
+  PRECONDITION(dp_forceField, "no owner");
+  PRECONDITION(pos, "bad vector");
+
+  double dist1 = dp_forceField->distance(d_at1Idx, d_at2Idx, pos);
+  double dist2 = dp_forceField->distance(d_at2Idx, d_at3Idx, pos);
+
+  RDGeom::Point3D p1(pos[3 * d_at1Idx], pos[3 * d_at1Idx + 1],
+                     pos[3 * d_at1Idx + 2]);
+  RDGeom::Point3D p2(pos[3 * d_at2Idx], pos[3 * d_at2Idx + 1],
+                     pos[3 * d_at2Idx + 2]);
+  RDGeom::Point3D p3(pos[3 * d_at3Idx], pos[3 * d_at3Idx + 1],
+                     pos[3 * d_at3Idx + 2]);
+
+  return Utils::calcAngleBendEnergy(
+      d_theta0, d_ka, d_isLinear,
+      Utils::calcCosTheta(p1, p2, p3, dist1, dist2));
+}
 
 void AngleBendContrib::getGrad(double *pos, double *grad) const {
   PRECONDITION(dp_forceField, "no owner");

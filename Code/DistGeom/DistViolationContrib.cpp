@@ -57,6 +57,34 @@ double DistViolationContrib::getEnergy(double *pos) const {
   // }
   return res;
 }
+double DistViolationContrib::getEnergyTerms(double *pos) const {
+  PRECONDITION(dp_forceField, "no owner");
+  PRECONDITION(pos, "bad vector");
+
+  double d =
+      this->dp_forceField->distance(this->d_end1Idx, this->d_end2Idx, pos);
+  double val = 0.0;
+  if (d > d_ub) {
+    val = ((d * d) / (d_ub * d_ub)) - 1.0;
+  } else if (d < d_lb) {
+    val = ((2 * d_lb * d_lb) / (d_lb * d_lb + d * d)) - 1.0;
+  }
+  double res;
+  if (val > 0.0) {
+    res = d_weight * val * val;
+  } else {
+    res = 0;
+  }
+  // if (res > 0.1) {
+  //   std::cerr << "dvc:getEnergy: " << this->d_end1Idx << "-" <<
+  //   this->d_end2Idx
+  //             << ": " << d_lb << "-" << d_ub << " " << d << " => " << res
+  //             << std::endl;
+  // }
+  return res;
+}
+
+void DistViolationContrib::getGrad(double *pos, double *grad) const {
 
 void DistViolationContrib::getGrad(double *pos, double *grad) const {
   PRECONDITION(dp_forceField, "no owner");

@@ -69,6 +69,13 @@ double BondStretchContrib::getEnergy(double *pos) const {
   return Utils::calcBondStretchEnergy(
       d_r0, d_kb, dp_forceField->distance(d_at1Idx, d_at2Idx, pos));
 }
+double BondStretchContrib::getEnergyTerms(double *pos) const {
+  PRECONDITION(dp_forceField, "no owner");
+  PRECONDITION(pos, "bad vector");
+
+  return Utils::calcBondStretchEnergy(
+      d_r0, d_kb, dp_forceField->distance(d_at1Idx, d_at2Idx, pos));
+}
 
 void BondStretchContrib::getGrad(double *pos, double *grad) const {
   PRECONDITION(dp_forceField, "no owner");

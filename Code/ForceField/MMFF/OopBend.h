@@ -39,6 +39,7 @@ and the angle formed by atom1-atom2-atom3
                  unsigned int idx3, unsigned int idx4,
                  const MMFFOop *mmffOopParams);
   double getEnergy(double *pos) const;
+  double getEnergyTerms(double *pos) const;
   void getGrad(double *pos, double *grad) const;
   virtual OopBendContrib *copy() const { return new OopBendContrib(*this); };
 

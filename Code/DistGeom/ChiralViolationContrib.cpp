@@ -47,6 +47,21 @@ double ChiralViolationContrib::getEnergy(double *pos) const {
   // std::cerr<<"Chiral Violation vol: "<<vol<<" E: "<<res<<std::endl;
   return res;
 }
+double ChiralViolationContrib::getEnergyTerms(double *pos) const {
+  PRECONDITION(dp_forceField, "no owner");
+  PRECONDITION(pos, "bad vector");
+
+  unsigned int dim = dp_forceField->dimension();
+  double vol = calcChiralVolume(d_idx1, d_idx2, d_idx3, d_idx4, pos, dim);
+  double res = 0.0;
+  if (vol < d_volLower) {
+    res = d_weight * (vol - d_volLower) * (vol - d_volLower);
+  } else if (vol > d_volUpper) {
+    res = d_weight * (vol - d_volUpper) * (vol - d_volUpper);
+  }
+  // std::cerr<<"Chiral Violation vol: "<<vol<<" E: "<<res<<std::endl;
+  return res;
+}
 
 void ChiralViolationContrib::getGrad(double *pos, double *grad) const {
   PRECONDITION(dp_forceField, "no owner");

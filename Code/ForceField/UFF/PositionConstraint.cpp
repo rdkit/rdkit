@@ -44,6 +44,18 @@ double PositionConstraintContrib::getEnergy(double *pos) const {
 
   return res;
 }
+double PositionConstraintContrib::getEnergyTerms(double *pos) const {
+  PRECONDITION(dp_forceField, "no owner");
+  PRECONDITION(pos, "bad vector");
+
+  RDGeom::Point3D p(pos[3 * d_atIdx], pos[3 * d_atIdx + 1],
+                    pos[3 * d_atIdx + 2]);
+  double dist = (p - d_pos0).length();
+  double distTerm = (dist > d_maxDispl) ? dist - d_maxDispl : 0.0;
+  double res = 0.5 * d_forceConstant * distTerm * distTerm;
+
+  return res;
+}
 
 void PositionConstraintContrib::getGrad(double *pos, double *grad) const {
   PRECONDITION(dp_forceField, "no owner");

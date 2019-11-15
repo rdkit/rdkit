@@ -37,6 +37,7 @@ class RDKIT_FORCEFIELD_EXPORT BondStretchContrib : public ForceFieldContrib {
                      const unsigned int idx2, const MMFFBond *mmffBondParams);
 
   double getEnergy(double *pos) const;
+  double getEnergyTerms(double *pos) const;
 
   void getGrad(double *pos, double *grad) const;
 

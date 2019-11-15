@@ -41,6 +41,14 @@ class RDKIT_DISTGEOMETRY_EXPORT FourthDimContrib
     unsigned int pid = d_idx * dp_forceField->dimension() + 3;
     return d_weight * pos[pid] * pos[pid];
   }
+  double getEnergyTerms(double *pos) const {
+    PRECONDITION(dp_forceField, "no owner");
+    PRECONDITION(dp_forceField->dimension() == 4,
+                 "force field has wrong dimension");
+    PRECONDITION(pos, "bad vector");
+    unsigned int pid = d_idx * dp_forceField->dimension() + 3;
+    return d_weight * pos[pid] * pos[pid];
+  }
 
   //! calculate the contribution of this contrib to the gradient at a given
   // state

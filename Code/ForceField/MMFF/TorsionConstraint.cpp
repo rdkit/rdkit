@@ -108,6 +108,19 @@ double TorsionConstraintContrib::getEnergy(double *pos) const {
 
   return res;
 }
+double TorsionConstraintContrib::getEnergyTerms(double *pos) const {
+  PRECONDITION(dp_forceField, "no owner");
+  PRECONDITION(pos, "bad vector");
+  double dihedral;
+  RDKit::ForceFieldsHelper::computeDihedral(
+    pos, d_at1Idx, d_at2Idx, d_at3Idx, d_at4Idx, &dihedral);
+  dihedral *= RAD2DEG;
+  double dihedralTerm = computeDihedralTerm(dihedral);
+  static double const c = 0.5 * DEG2RAD * DEG2RAD;
+  double res = c * d_forceConstant * dihedralTerm * dihedralTerm;
+
+  return res;
+}
 
 void TorsionConstraintContrib::getGrad(double *pos, double *grad) const {
   PRECONDITION(dp_forceField, "no owner");

@@ -75,6 +75,15 @@ double BondStretchContrib::getEnergy(double *pos) const {
   double res = 0.5 * d_forceConstant * distTerm * distTerm;
   return res;
 }
+double BondStretchContrib::getEnergyTerms(double *pos) const {
+  PRECONDITION(dp_forceField, "no owner");
+  PRECONDITION(pos, "bad vector");
+
+  double distTerm =
+      dp_forceField->distance(d_end1Idx, d_end2Idx, pos) - d_restLen;
+  double res = 0.5 * d_forceConstant * distTerm * distTerm;
+  return res;
+}
 void BondStretchContrib::getGrad(double *pos, double *grad) const {
   PRECONDITION(dp_forceField, "no owner");
   PRECONDITION(pos, "bad vector");

@@ -48,6 +48,7 @@ class RDKIT_FORCEFIELD_EXPORT RDKIT_FORCEFIELD_EXPORT TorsionConstraintContrib
 
   ~TorsionConstraintContrib() {}
   double getEnergy(double *pos) const;
+  double getEnergyTerms(double *pos) const;
 
   void getGrad(double *pos, double *grad) const;
   virtual TorsionConstraintContrib *copy() const {
