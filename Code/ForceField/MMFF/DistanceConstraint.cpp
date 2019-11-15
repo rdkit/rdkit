@@ -71,21 +71,6 @@ double DistanceConstraintContrib::getEnergy(double *pos) const {
 
   return res;
 }
-double DistanceConstraintContrib::getEnergyTerms(double *pos) const {
-  PRECONDITION(dp_forceField, "no owner");
-  PRECONDITION(pos, "bad vector");
-
-  double dist = dp_forceField->distance(d_end1Idx, d_end2Idx, pos);
-  double distTerm = 0.0;
-  if (dist < d_minLen) {
-    distTerm = d_minLen - dist;
-  } else if (dist > d_maxLen) {
-    distTerm = dist - d_maxLen;
-  }
-  double res = 0.5 * d_forceConstant * distTerm * distTerm;
-
-  return res;
-}
 
 void DistanceConstraintContrib::getGrad(double *pos, double *grad) const {
   PRECONDITION(dp_forceField, "no owner");

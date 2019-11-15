@@ -45,7 +45,6 @@ class RDKIT_FORCEFIELD_EXPORT DistanceConstraintContrib
     // << std::endl;
   }
   double getEnergy(double *pos) const;
-  double getEnergyTerms(double *pos) const;
 
   void getGrad(double *pos, double *grad) const;
   virtual DistanceConstraintContrib *copy() const {

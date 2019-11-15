@@ -113,13 +113,6 @@ double VdWContrib::getEnergy(double *pos) const {
   double dist = dp_forceField->distance(d_at1Idx, d_at2Idx, pos);
   return Utils::calcVdWEnergy(dist, d_R_ij_star, d_wellDepth);
 }
-double VdWContrib::getEnergyTerms(double *pos) const {
-  PRECONDITION(dp_forceField, "no owner");
-  PRECONDITION(pos, "bad vector");
-
-  double dist = dp_forceField->distance(d_at1Idx, d_at2Idx, pos);
-  return Utils::calcVdWEnergy(dist, d_R_ij_star, d_wellDepth);
-}
 
 void VdWContrib::getGrad(double *pos, double *grad) const {
   PRECONDITION(dp_forceField, "no owner");
@@ -172,14 +165,6 @@ EleContrib::EleContrib(ForceField *owner, unsigned int idx1, unsigned int idx2,
 }
 
 double EleContrib::getEnergy(double *pos) const {
-  PRECONDITION(dp_forceField, "no owner");
-  PRECONDITION(pos, "bad vector");
-
-  return Utils::calcEleEnergy(d_at1Idx, d_at2Idx,
-                              dp_forceField->distance(d_at1Idx, d_at2Idx, pos),
-                              d_chargeTerm, d_dielModel, d_is1_4);
-}
-double EleContrib::getEnergyTerms(double *pos) const {
   PRECONDITION(dp_forceField, "no owner");
   PRECONDITION(pos, "bad vector");
 

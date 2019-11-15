@@ -85,20 +85,6 @@ double OopBendContrib::getEnergy(double *pos) const {
 
   return Utils::calcOopBendEnergy(Utils::calcOopChi(p1, p2, p3, p4), d_koop);
 }
-double OopBendContrib::getEnergyTerms(double *pos) const {
-  PRECONDITION(dp_forceField, "no owner");
-  PRECONDITION(pos, "bad vector");
-  RDGeom::Point3D p1(pos[3 * d_at1Idx], pos[3 * d_at1Idx + 1],
-                     pos[3 * d_at1Idx + 2]);
-  RDGeom::Point3D p2(pos[3 * d_at2Idx], pos[3 * d_at2Idx + 1],
-                     pos[3 * d_at2Idx + 2]);
-  RDGeom::Point3D p3(pos[3 * d_at3Idx], pos[3 * d_at3Idx + 1],
-                     pos[3 * d_at3Idx + 2]);
-  RDGeom::Point3D p4(pos[3 * d_at4Idx], pos[3 * d_at4Idx + 1],
-                     pos[3 * d_at4Idx + 2]);
-
-  return Utils::calcOopBendEnergy(Utils::calcOopChi(p1, p2, p3, p4), d_koop);
-}
 
 void OopBendContrib::getGrad(double *pos, double *grad) const {
   PRECONDITION(dp_forceField, "no owner");

@@ -38,7 +38,6 @@ class RDKIT_FORCEFIELD_EXPORT PositionConstraintContrib
 
   ~PositionConstraintContrib() {}
   double getEnergy(double *pos) const;
-  double getEnergyTerms(double *pos) const;
 
   void getGrad(double *pos, double *grad) const;
   virtual PositionConstraintContrib *copy() const {

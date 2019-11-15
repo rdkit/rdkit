@@ -35,7 +35,6 @@ class RDKIT_FORCEFIELD_EXPORT BondStretchContrib : public ForceFieldContrib {
                      const AtomicParams *end2Params);
 
   double getEnergy(double *pos) const;
-  double getEnergyTerms(double *pos) const;
 
   void getGrad(double *pos, double *grad) const;
 

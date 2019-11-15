@@ -66,7 +66,6 @@ class RDKIT_FORCEFIELD_EXPORT TorsionAngleContrib : public ForceFieldContrib {
                       const AtomicParams *at2Params,
                       const AtomicParams *at3Params, bool endAtomIsSP2 = false);
   double getEnergy(double *pos) const;
-  double getEnergyTerms(double *pos) const;
   void getGrad(double *pos, double *grad) const;
   void scaleForceConstant(unsigned int count) {
     this->d_forceConstant /= static_cast<double>(count);

@@ -25,7 +25,6 @@ class RDKIT_FORCEFIELD_EXPORT ForceFieldContrib {
 
   //! returns our contribution to the energy of a position
   virtual double getEnergy(double *pos) const = 0;
-  virtual double getEnergyTerms(double *pos) const = 0;
     
 //  void getEnergyTerms(double *pos, std::vector<double> &resvec) const {
 //    resvec.push_back(0.0);
