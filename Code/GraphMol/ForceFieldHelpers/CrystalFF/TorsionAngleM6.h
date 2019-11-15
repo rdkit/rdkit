@@ -53,7 +53,6 @@ class RDKIT_FORCEFIELDHELPERS_EXPORT TorsionAngleContribM6
                         unsigned int idx2, unsigned int idx3, unsigned int idx4,
                         std::vector<double> V, std::vector<int> signs);
   double getEnergy(double *pos) const;
-  void getEnergyTerms(double *pos, std::vector<double> &resvec) const;
   void getGrad(double *pos, double *grad) const;
   virtual TorsionAngleContribM6 *copy() const {
     return new TorsionAngleContribM6(*this);

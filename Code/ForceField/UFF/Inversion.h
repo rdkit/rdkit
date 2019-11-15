@@ -42,7 +42,6 @@ class RDKIT_FORCEFIELD_EXPORT InversionContrib : public ForceFieldContrib {
 
   double getEnergy(double *pos) const;
 
-  void getEnergyTerms(double *pos, std::vector<double> &resvec) const;
   void getGrad(double *pos, double *grad) const;
   virtual InversionContrib *copy() const {
     return new InversionContrib(*this);

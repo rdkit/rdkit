@@ -39,7 +39,6 @@ and the angle formed by atom1-atom2-atom3
                  unsigned int idx3, unsigned int idx4,
                  const MMFFOop *mmffOopParams);
   double getEnergy(double *pos) const;
-  void getEnergyTerms(double *pos, std::vector<double> &resvec) const;
   void getGrad(double *pos, double *grad) const;
   virtual OopBendContrib *copy() const { return new OopBendContrib(*this); };
 

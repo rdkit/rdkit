@@ -46,7 +46,6 @@ class RDKIT_FORCEFIELD_EXPORT StretchBendContrib : public ForceFieldContrib {
                      const MMFFBond *mmffBondParams2);
 
   double getEnergy(double *pos) const;
-  void getEnergyTerms(double *pos, std::vector<double> &resvec) const;
   void getGrad(double *pos, double *grad) const;
   virtual StretchBendContrib *copy() const {
     return new StretchBendContrib(*this);

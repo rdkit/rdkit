@@ -38,7 +38,6 @@ class RDKIT_FORCEFIELD_EXPORT PositionConstraintContrib
 
   ~PositionConstraintContrib() {}
   double getEnergy(double *pos) const;
-  void getEnergyTerms(double *pos, std::vector<double> &resvec) const;
 
   void getGrad(double *pos, double *grad) const;
   virtual PositionConstraintContrib *copy() const {

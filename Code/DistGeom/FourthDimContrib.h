@@ -42,12 +42,6 @@ class RDKIT_DISTGEOMETRY_EXPORT FourthDimContrib
     return d_weight * pos[pid] * pos[pid];
   }
 
-  void getEnergyTerms(double *pos, std::vector<double> &resvec) const {
-    resvec.push_back(0.0);
-    resvec.push_back(0.0);
-    resvec.push_back(0.0);
-  }
-
   //! calculate the contribution of this contrib to the gradient at a given
   // state
   void getGrad(double *pos, double *grad) const {

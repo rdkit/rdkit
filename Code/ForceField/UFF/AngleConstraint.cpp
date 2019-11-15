@@ -121,11 +121,6 @@ double AngleConstraintContrib::getEnergy(double *pos) const {
 
   return res;
 }
-void AngleConstraintContrib::getEnergyTerms(double *pos, std::vector<double> &resvec) const {
-  resvec.push_back(0.0);
-  resvec.push_back(0.0);
-  resvec.push_back(0.0);
-}
 
 void AngleConstraintContrib::getGrad(double *pos, double *grad) const {
   PRECONDITION(dp_forceField, "no owner");

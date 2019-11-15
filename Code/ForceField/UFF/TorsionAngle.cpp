@@ -210,11 +210,6 @@ double TorsionAngleContrib::getEnergy(double *pos) const {
   return res;
 }
 
-void TorsionAngleContrib::getEnergyTerms(double *pos, std::vector<double> &resvec) const {
-  resvec.push_back(0.0);
-  resvec.push_back(0.0);
-  resvec.push_back(0.0);
-}
 void TorsionAngleContrib::getGrad(double *pos, double *grad) const {
   PRECONDITION(dp_forceField, "no owner");
   PRECONDITION(pos, "bad vector");
