@@ -481,7 +481,8 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
       newAt->setNoImplicit(true);
     }
     // update the atom's derived properties (valence count, etc.)
-    newAt->updatePropertyCache();
+    // no sense in being strict here (was github #2782)
+    newAt->updatePropertyCache(false);
   }
   // take care of AtomPDBResidueInfo for Hs if root atom has it
   if (addResidueInfo) AssignHsResidueInfo(mol);
