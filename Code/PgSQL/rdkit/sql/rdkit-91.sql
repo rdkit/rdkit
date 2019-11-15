@@ -7,6 +7,7 @@ SET client_min_messages = warning;
 CREATE EXTENSION rdkit;
 \set ECHO all
 RESET client_min_messages;
+SET extra_float_digits=0;
 
 SELECT is_valid_smiles('c1ccccc1');
 SELECT mol_from_smiles('c1ccccc1');
