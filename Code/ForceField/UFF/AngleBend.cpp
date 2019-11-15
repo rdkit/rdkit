@@ -241,6 +241,41 @@ double AngleBendContrib::getEnergyTerm(double cosTheta,
   return res;
 }
 
+double AngleBendContrib::testtest(double cosTheta,
+                                       double sinThetaSq) const {
+  PRECONDITION(d_order == 0 || d_order == 1 || d_order == 2 || d_order == 3 ||
+                   d_order == 4,
+               "bad order");
+  // cos(2x) = cos^2(x) - sin^2(x);
+  double cos2Theta = cosTheta * cosTheta - sinThetaSq;
+
+  double res = 0.0;
+  if (d_order == 0) {
+    res = d_C0 + d_C1 * cosTheta + d_C2 * cos2Theta;
+  } else {
+    switch (d_order) {
+      case 1:
+        res = -cosTheta;
+        break;
+      case 2:
+        res = cos2Theta;
+        break;
+      case 3:
+        // cos(3x) = cos^3(x) - 3*cos(x)*sin^2(x)
+        res = cosTheta * (cosTheta * cosTheta - 3. * sinThetaSq);
+        break;
+      case 4:
+        // cos(4x) = cos^4(x) - 6*cos^2(x)*sin^2(x)+sin^4(x)
+        res = int_pow<4>(cosTheta) - 6. * cosTheta * cosTheta * sinThetaSq +
+              sinThetaSq * sinThetaSq;
+        break;
+    }
+    res = 1. - res;
+    res /= (double)(d_order * d_order);
+  }
+  return res;
+}
+
 double AngleBendContrib::getThetaDeriv(double cosTheta, double sinTheta) const {
   PRECONDITION(d_order == 0 || d_order == 1 || d_order == 2 || d_order == 3 ||
                    d_order == 4,
