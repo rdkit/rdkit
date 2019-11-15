@@ -143,25 +143,6 @@ double AngleBendContrib::getEnergy(double *pos) const {
 }
 
 void AngleBendContrib::getEnergyTerms(double *pos, std::vector<double> &resvec) const {
-  PRECONDITION(dp_forceField, "no owner");
-  PRECONDITION(pos, "bad vector");
-
-  double dist1 = dp_forceField->distance(d_at1Idx, d_at2Idx, pos);
-  double dist2 = dp_forceField->distance(d_at2Idx, d_at3Idx, pos);
-
-  RDGeom::Point3D p1(pos[3 * d_at1Idx], pos[3 * d_at1Idx + 1],
-                     pos[3 * d_at1Idx + 2]);
-  RDGeom::Point3D p2(pos[3 * d_at2Idx], pos[3 * d_at2Idx + 1],
-                     pos[3 * d_at2Idx + 2]);
-  RDGeom::Point3D p3(pos[3 * d_at3Idx], pos[3 * d_at3Idx + 1],
-                     pos[3 * d_at3Idx + 2]);
-  RDGeom::Point3D p12 = p1 - p2;
-  RDGeom::Point3D p32 = p3 - p2;
-  double cosTheta = p12.dotProduct(p32) / (dist1 * dist2);
-  clipToOne(cosTheta);
-  // we need sin^2(theta) to get cos(2*theta), so compute that:
-  double sinThetaSq = 1. - cosTheta * cosTheta;
-
   resvec.push_back(0.0);
   resvec.push_back(0.0);
   resvec.push_back(0.0);

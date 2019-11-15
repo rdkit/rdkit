@@ -67,16 +67,6 @@ double vdWContrib::getEnergy(double *pos) const {
   return res;
 }
 void vdWContrib::getEnergyTerms(double *pos, std::vector<double> &resvec) const {
-  PRECONDITION(dp_forceField, "no owner");
-  PRECONDITION(pos, "bad vector");
-
-  double dist = dp_forceField->distance(d_at1Idx, d_at2Idx, pos);
-  if (dist > d_thresh || dist <= 0.0) return 0.0;
-
-  double r = d_xij / dist;
-  double r6 = int_pow<6>(r);
-  double r12 = r6 * r6;
-  double res = d_wellDepth * (r12 - 2.0 * r6);
   resvec.push_back(0.0);
   resvec.push_back(0.0);
   resvec.push_back(0.0);

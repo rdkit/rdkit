@@ -87,17 +87,6 @@ double OopBendContrib::getEnergy(double *pos) const {
 }
 
 void OopBendContrib::getEnergyTerms(double *pos, std::vector<double> &resvec) const {
-  PRECONDITION(dp_forceField, "no owner");
-  PRECONDITION(pos, "bad vector");
-  RDGeom::Point3D p1(pos[3 * d_at1Idx], pos[3 * d_at1Idx + 1],
-                     pos[3 * d_at1Idx + 2]);
-  RDGeom::Point3D p2(pos[3 * d_at2Idx], pos[3 * d_at2Idx + 1],
-                     pos[3 * d_at2Idx + 2]);
-  RDGeom::Point3D p3(pos[3 * d_at3Idx], pos[3 * d_at3Idx + 1],
-                     pos[3 * d_at3Idx + 2]);
-  RDGeom::Point3D p4(pos[3 * d_at4Idx], pos[3 * d_at4Idx + 1],
-                     pos[3 * d_at4Idx + 2]);
-
   resvec.push_back(0.0);
   resvec.push_back(0.0);
   resvec.push_back(0.0);

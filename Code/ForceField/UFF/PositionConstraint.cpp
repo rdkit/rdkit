@@ -45,14 +45,6 @@ double PositionConstraintContrib::getEnergy(double *pos) const {
   return res;
 }
 void PositionConstraintContrib::getEnergyTerms(double *pos, std::vector<double> &resvec) const {
-  PRECONDITION(dp_forceField, "no owner");
-  PRECONDITION(pos, "bad vector");
-
-  RDGeom::Point3D p(pos[3 * d_atIdx], pos[3 * d_atIdx + 1],
-                    pos[3 * d_atIdx + 2]);
-  double dist = (p - d_pos0).length();
-  double distTerm = (dist > d_maxDispl) ? dist - d_maxDispl : 0.0;
-  double res = 0.5 * d_forceConstant * distTerm * distTerm;
   resvec.push_back(0.0);
   resvec.push_back(0.0);
   resvec.push_back(0.0);
