@@ -428,3 +428,112 @@ M  END
     CHECK(mb.find("0.0000 N   0  0  0  0  0  0") != std::string::npos);
   }
 }
+
+TEST_CASE("fragment remover not considering bond counts", "[fragments,bug]") {
+  std::string salts = R"DATA(Benethamine	C(Cc1ccccc1)NCc2ccccc2
+Chloride	Cl
+)DATA";
+  std::istringstream iss(salts);
+  bool leave_last = false;
+  MolStandardize::FragmentRemover rmv(iss, leave_last);
+
+  SECTION("example that should not be removed") {
+    std::string molblock = R"CTAB(
+  SciTegic11261411092D
+
+ 17 18  0  0  0  0            999 V2000
+    0.0000    0.0000    0.0000 Cl  0  0
+    2.2393    0.5156    0.0000 N   0  0
+    3.6682    0.5156    0.0000 C   0  0
+    2.9538    0.1031    0.0000 C   0  0
+    3.6682    1.3406    0.0000 C   0  0
+    2.9538   -0.7219    0.0000 C   0  0
+    4.3827    0.1031    0.0000 C   0  0
+    2.9538    1.7531    0.0000 C   0  0
+    4.3827    1.7531    0.0000 C   0  0
+    2.2393    1.3406    0.0000 C   0  0
+    3.6682   -1.1344    0.0000 C   0  0
+    2.2393   -1.1344    0.0000 C   0  0
+    5.0972    0.5156    0.0000 C   0  0
+    5.0972    1.3406    0.0000 C   0  0
+    3.6682   -1.9594    0.0000 C   0  0
+    2.2393   -1.9594    0.0000 C   0  0
+    2.9538   -2.3719    0.0000 C   0  0
+  2  4  1  0
+  2 10  1  0
+  3  4  1  0
+  3  5  1  0
+  3  7  2  0
+  4  6  1  0
+  5  8  1  0
+  5  9  2  0
+  6 11  2  0
+  6 12  1  0
+  7 13  1  0
+  8 10  1  0
+  9 14  1  0
+ 11 15  1  0
+ 12 16  2  0
+ 13 14  2  0
+ 15 17  2  0
+ 16 17  1  0
+M  END)CTAB";
+    std::unique_ptr<RWMol> m(MolBlockToMol(molblock));
+    REQUIRE(m);
+    m->updatePropertyCache();
+
+    std::unique_ptr<ROMol> sm(rmv.remove(*m));
+    REQUIRE(sm);
+    CHECK(sm->getNumAtoms() == 16);
+  }
+
+  SECTION("example that should be removed") {
+    std::string molblock = R"CTAB(
+  Mrv1810 11071914502D          
+
+ 17 17  0  0  0  0            999 V2000
+    0.0000    0.0000    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+    2.2393    0.5156    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    3.6682    0.5156    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.9538    0.1031    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.6682    1.3406    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.9538   -0.7219    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.3827    0.1031    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.9538    1.7531    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.3827    1.7531    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2393    1.3406    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.6682   -1.1344    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2393   -1.1344    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.0972    0.5156    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.0972    1.3406    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.6682   -1.9594    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2393   -1.9594    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.9538   -2.3719    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  2  4  1  0  0  0  0
+  2 10  1  0  0  0  0
+  3  5  1  0  0  0  0
+  3  7  2  0  0  0  0
+  4  6  1  0  0  0  0
+  5  8  1  0  0  0  0
+  5  9  2  0  0  0  0
+  6 11  2  0  0  0  0
+  6 12  1  0  0  0  0
+  7 13  1  0  0  0  0
+  8 10  1  0  0  0  0
+  9 14  1  0  0  0  0
+ 11 15  1  0  0  0  0
+ 12 16  2  0  0  0  0
+ 13 14  2  0  0  0  0
+ 15 17  2  0  0  0  0
+ 16 17  1  0  0  0  0
+M  END
+)CTAB";
+    std::unique_ptr<RWMol> m(MolBlockToMol(molblock));
+    REQUIRE(m);
+    m->updatePropertyCache();
+
+    std::unique_ptr<ROMol> sm(rmv.remove(*m));
+    REQUIRE(sm);
+    CHECK(sm->getNumAtoms() == 0);
+  }
+}
