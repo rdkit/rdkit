@@ -50,6 +50,7 @@ class RDKIT_FORCEFIELD_EXPORT AngleBendContrib : public ForceFieldContrib {
   double getEnergy(double *pos) const;
   //void getEnergyTerms(double *pos, std::vector<double> &resvec) const;
   void getGrad(double *pos, double *grad) const;
+  double testtest(double cosTheta, double sinThetaSq) const;
 
   virtual AngleBendContrib *copy() const {
     return new AngleBendContrib(*this);
@@ -61,7 +62,7 @@ class RDKIT_FORCEFIELD_EXPORT AngleBendContrib : public ForceFieldContrib {
   double d_forceConstant, d_C0, d_C1, d_C2;
 
   double getEnergyTerm(double cosTheta, double sinThetaSq) const;
-  double testtest(double cosTheta, double sinThetaSq) const;
+  
   double getThetaDeriv(double cosTheta, double sinTheta) const;
 };
 
