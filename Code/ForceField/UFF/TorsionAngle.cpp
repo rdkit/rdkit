@@ -209,6 +209,53 @@ double TorsionAngleContrib::getEnergy(double *pos) const {
   // acos(cosPhi) << ")" << " -> " << res << std::endl;
   return res;
 }
+void TorsionAngleContrib::getEnergyTerms(double *pos, std::vector<double> &resvec) const {
+  PRECONDITION(dp_forceField, "no owner");
+  PRECONDITION(pos, "bad vector");
+  PRECONDITION(d_order == 2 || d_order == 3 || d_order == 6, "bad order");
+
+  RDGeom::Point3D p1(pos[3 * d_at1Idx], pos[3 * d_at1Idx + 1],
+                     pos[3 * d_at1Idx + 2]);
+  RDGeom::Point3D p2(pos[3 * d_at2Idx], pos[3 * d_at2Idx + 1],
+                     pos[3 * d_at2Idx + 2]);
+  RDGeom::Point3D p3(pos[3 * d_at3Idx], pos[3 * d_at3Idx + 1],
+                     pos[3 * d_at3Idx + 2]);
+  RDGeom::Point3D p4(pos[3 * d_at4Idx], pos[3 * d_at4Idx + 1],
+                     pos[3 * d_at4Idx + 2]);
+
+  double cosPhi = Utils::calculateCosTorsion(p1, p2, p3, p4);
+  double sinPhiSq = 1 - cosPhi * cosPhi;
+
+  // E(phi) = V/2 * (1 - cos(n*phi_0)*cos(n*phi))
+  double cosNPhi = 0.0;
+  switch (d_order) {
+    case 2:
+      cosNPhi = cosPhi * cosPhi - sinPhiSq;
+      break;
+    case 3:
+      // cos(3x) = cos^3(x) - 3*cos(x)*sin^2(x)
+      cosNPhi = cosPhi * (cosPhi * cosPhi - 3. * sinPhiSq);
+      break;
+    case 6:
+      // cos(6x) = 1 - 32*sin^6(x) + 48*sin^4(x) - 18*sin^2(x)
+      cosNPhi =
+          1 + sinPhiSq * (-32. * sinPhiSq * sinPhiSq + 48. * sinPhiSq - 18.);
+      break;
+  }
+  double res = d_forceConstant / 2.0 * (1. - d_cosTerm * cosNPhi);
+  // std::cout << " torsion(" << d_at1Idx << "," << d_at2Idx << "," << d_at3Idx
+  // << "," << d_at4Idx << "): " << cosPhi << "(" << acos(cosPhi) << ")" << " ->
+  // " << res << std::endl;
+  // if(d_at2Idx==5&&d_at3Idx==6) std::cerr << " torsion(" << d_at1Idx << "," <<
+  // d_at2Idx << "," << d_at3Idx << "," << d_at4Idx << "): " << cosPhi << "(" <<
+  // acos(cosPhi) << ")" << " -> " << res << std::endl;
+  resvec.push_back(4.0);
+  resvec.push_back(double(d_at1Idx));
+  resvec.push_back(double(d_at2Idx));
+  resvec.push_back(double(d_at3Idx));
+  resvec.push_back(double(d_at4Idx));
+  resvec.push_back(res);
+}
 
 void TorsionAngleContrib::getGrad(double *pos, double *grad) const {
   PRECONDITION(dp_forceField, "no owner");
