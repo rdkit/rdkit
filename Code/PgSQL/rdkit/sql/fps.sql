@@ -1,3 +1,4 @@
+SET extra_float_digits=0;
 SELECT dice_sml(rdkit_fp('c1ccccc1'::mol),rdkit_fp('c1ccncc1'::mol));
 SELECT tversky_sml(rdkit_fp('c1ccccc1'::mol),rdkit_fp('c1ccncc1'::mol),0.5,0.5);
 SELECT tanimoto_sml(rdkit_fp('c1ccccc1'::mol),rdkit_fp('c1ccncc1'::mol));

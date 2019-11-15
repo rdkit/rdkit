@@ -96,6 +96,8 @@ RDKIT_SMILESPARSE_EXPORT std::string MolToSmiles(
   \param allBondsExplicit : if true, symbols will be included for all bonds.
   \param allHsExplicit : if true, hydrogen counts will be provided for every
   atom.
+  \param doRandom : generate a randomized smiles string by randomly choosing
+                    the priority to follow in the DFS traversal. [default false]
 
   \b NOTE: the bondSymbols are *not* currently used in the canonicalization.
 
@@ -147,6 +149,8 @@ RDKIT_SMILESPARSE_EXPORT std::string MolToCXSmiles(
   \param allBondsExplicit : if true, symbols will be included for all bonds.
   \param allHsExplicit : if true, hydrogen counts will be provided for every
   atom.
+  \param doRandom : generate a randomized smiles string by randomly choosing
+                    the priority to follow in the DFS traversal. [default false]
 
   \b NOTE: the bondSymbols are *not* currently used in the canonicalization.
 

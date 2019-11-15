@@ -1,3 +1,4 @@
+SET extra_float_digits=0;
 SELECT mol_amw('c1ccccc1'::mol) mol_amw;
 SELECT mol_logp('c1ccccc1'::mol) mol_logp;
 SELECT mol_hba('c1ccccc1'::mol) mol_hba;

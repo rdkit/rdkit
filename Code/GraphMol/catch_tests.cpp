@@ -779,3 +779,84 @@ TEST_CASE("setDoubleBondNeighborDirections()", "[stereochemistry,bug]") {
     CHECK(MolToSmiles(*m) == "C/C=C\\C");
   }
 }
+
+TEST_CASE("github #2782: addHs() fails on atoms with 'bad' valences", "[bug]") {
+  SECTION("basics") {
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    std::unique_ptr<RWMol> m(
+        static_cast<RWMol *>(SmilesToMol("C=C1=CC=CC=C1", ps)));
+    REQUIRE(m);
+    bool strict = false;
+    m->updatePropertyCache(strict);
+    CHECK(m->getNumAtoms() == 7);
+    MolOps::addHs(*m);
+    CHECK(m->getNumAtoms() == 14);
+    // this doesn't change the fact that there's still a bad valence present:
+    CHECK_THROWS_AS(m->updatePropertyCache(), AtomValenceException);
+  }
+}
+
+TEST_CASE(
+    "Github #2784: Element symbol lookup for some transuranics returns "
+    "incorrect results",
+    "[transuranics,bug]") {
+  auto pt = PeriodicTable::getTable();
+  SECTION("number to symbol") {
+    std::vector<std::pair<unsigned int, std::string>> data = {
+        {113, "Nh"}, {114, "Fl"}, {115, "Mc"},
+        {116, "Lv"}, {117, "Ts"}, {118, "Og"}};
+    for (auto pr : data) {
+      CHECK(pt->getElementSymbol(pr.first) == pr.second);
+    }
+  }
+  SECTION("symbol to number") {
+    std::vector<std::pair<unsigned int, std::string>> data = {
+        {113, "Nh"}, {114, "Fl"}, {115, "Mc"},  {116, "Lv"},
+        {117, "Ts"}, {118, "Og"}, {113, "Uut"}, {115, "Uup"}};
+    for (auto pr : data) {
+      CHECK(pt->getAtomicNumber(pr.second) == pr.first);
+    }
+  }
+}
+TEST_CASE("github #2775", "[valence,bug]") {
+  SECTION("basics") {
+    std::string molblock = R"CTAB(bismuth citrate
+  Mrv1810 11111908592D          
+
+ 14 12  0  0  0  0            999 V2000
+    7.4050   -0.5957    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.6906   -1.0082    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.9761   -0.5957    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    6.6906   -1.8332    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+    7.4050    0.2293    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.5800    0.2293    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.1675    0.9438    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.5800    1.6583    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    5.3425    0.9438    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+    8.2300    0.2293    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.6425   -0.4851    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    8.6425    0.9438    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+    7.4050    1.0543    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    4.5175    0.9438    0.0000 Bi  0  1  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  2  0  0  0  0
+  2  4  1  0  0  0  0
+  1  5  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  1  0  0  0  0
+  7  8  2  0  0  0  0
+  7  9  1  0  0  0  0
+  5 10  1  0  0  0  0
+ 10 11  2  0  0  0  0
+ 10 12  1  0  0  0  0
+  5 13  1  0  0  0  0
+M  CHG  4   4  -1   9  -1  12  -1  14   3
+M  END
+)CTAB";
+    std::unique_ptr<RWMol> m(MolBlockToMol(molblock));
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(13)->getSymbol() == "Bi");
+    CHECK(m->getAtomWithIdx(13)->getNumImplicitHs() == 0);
+  }
+}

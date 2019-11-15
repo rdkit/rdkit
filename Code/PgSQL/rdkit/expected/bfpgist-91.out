@@ -1,3 +1,4 @@
+SET extra_float_digits=0;
 CREATE INDEX fpidx ON pgbfp USING gist (f);
 CREATE INDEX maccsfpidx ON pgbfp USING gist (maccsf);
 SET rdkit.tanimoto_threshold = 0.5;

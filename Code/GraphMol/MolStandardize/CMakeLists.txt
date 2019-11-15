@@ -30,19 +30,27 @@ rdkit_headers(MolStandardize.h
 	      Charge.h
 	      Tautomer.h
 	      Fragment.h
-        FragmentCatalog/FragmentCatalogEntry.h
+	      DEST GraphMol/MolStandardize)
+
+rdkit_headers(FragmentCatalog/FragmentCatalogEntry.h
         FragmentCatalog/FragmentCatalogParams.h
         FragmentCatalog/FragmentCatalogUtils.h
-        AcidBaseCatalog/AcidBaseCatalogEntry.h
+	    DEST GraphMol/MolStandardize/FragmentCatalog)
+
+rdkit_headers(AcidBaseCatalog/AcidBaseCatalogEntry.h
         AcidBaseCatalog/AcidBaseCatalogParams.h
         AcidBaseCatalog/AcidBaseCatalogUtils.h
-        TransformCatalog/TransformCatalogEntry.h
+	    DEST GraphMol/MolStandardize/AcidBaseCatalog)
+
+rdkit_headers(TransformCatalog/TransformCatalogEntry.h
         TransformCatalog/TransformCatalogParams.h
         TransformCatalog/TransformCatalogUtils.h
-        TautomerCatalog/TautomerCatalogEntry.h
+	    DEST GraphMol/MolStandardize/TransformCatalog)
+
+rdkit_headers(TautomerCatalog/TautomerCatalogEntry.h
         TautomerCatalog/TautomerCatalogParams.h
         TautomerCatalog/TautomerCatalogUtils.h
-	      DEST GraphMol/MolStandardize)
+	    DEST GraphMol/MolStandardize/TautomerCatalog)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
