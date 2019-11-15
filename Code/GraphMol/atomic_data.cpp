@@ -155,7 +155,11 @@ const std::string periodicTableAtomData =
     // added from BODR 30.10.2016
     // atomic mass data from NIST
     // we leave Uut and Uup in here for backwards
-    // compatibility
+    // compatibility. Nh and Mc (the entries appearing first
+    // for a particular atomic number) will be the values returned
+    // when looking an atomic symbol up using atomic number.
+    // In the event that symbols need to be corrected in the future,
+    // follow this same pattern to ensure backwards compatibility.
     "113	Nh	1.36	0	2.0	284	2	284	284.17873	-1 \n \
 113	Uut	1.36	0	2.0	284	2	284	284.17873	-1 \n \
 114	Fl	1.43	0	2.0	289	2	289	289.19042	-1 \n \
