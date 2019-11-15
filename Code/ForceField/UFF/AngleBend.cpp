@@ -166,9 +166,11 @@ void AngleBendContrib::getEnergyTerms(double *pos, std::vector<double> &resvec) 
   double res = d_forceConstant * angleTerm;
 
   resvec.push_back(0.0);
-  resvec.push_back(0.0);
-  resvec.push_back(0.0);
+  resvec.push_back(double(d_at1Idx));
+  resvec.push_back(double(d_at2Idx));
+  resvec.push_back(double(d_at3Idx));
   resvec.push_back(res);
+  resvec.push_back(0.0);
 }
 
 void AngleBendContrib::getGrad(double *pos, double *grad) const {
