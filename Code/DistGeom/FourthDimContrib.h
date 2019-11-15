@@ -43,6 +43,11 @@ class RDKIT_DISTGEOMETRY_EXPORT FourthDimContrib
   }
 
   void getEnergyTerms(double *pos, std::vector<double> &resvec) const {
+    PRECONDITION(dp_forceField, "no owner");
+    PRECONDITION(dp_forceField->dimension() == 4,
+                 "force field has wrong dimension");
+    PRECONDITION(pos, "bad vector");
+    unsigned int pid = d_idx * dp_forceField->dimension() + 3;
     resvec.push_back(0.0);
     resvec.push_back(0.0);
     resvec.push_back(0.0);

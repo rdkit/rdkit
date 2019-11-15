@@ -71,6 +71,8 @@ double BondStretchContrib::getEnergy(double *pos) const {
 }
 
 void BondStretchContrib::getEnergyTerms(double *pos, std::vector<double> &resvec) const {
+  PRECONDITION(dp_forceField, "no owner");
+  PRECONDITION(pos, "bad vector");
   resvec.push_back(0.0);
   resvec.push_back(0.0);
   resvec.push_back(0.0);

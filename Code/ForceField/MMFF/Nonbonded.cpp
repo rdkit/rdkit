@@ -114,6 +114,10 @@ double VdWContrib::getEnergy(double *pos) const {
   return Utils::calcVdWEnergy(dist, d_R_ij_star, d_wellDepth);
 }
 void VdWContrib::getEnergyTerms(double *pos, std::vector<double> &resvec) const {
+  PRECONDITION(dp_forceField, "no owner");
+  PRECONDITION(pos, "bad vector");
+
+  double dist = dp_forceField->distance(d_at1Idx, d_at2Idx, pos);
   resvec.push_back(0.0);
   resvec.push_back(0.0);
   resvec.push_back(0.0);
@@ -178,6 +182,8 @@ double EleContrib::getEnergy(double *pos) const {
                               d_chargeTerm, d_dielModel, d_is1_4);
 }
 void EleContrib::getEnergyTerms(double *pos, std::vector<double> &resvec) const {
+  PRECONDITION(dp_forceField, "no owner");
+  PRECONDITION(pos, "bad vector");
   resvec.push_back(0.0);
   resvec.push_back(0.0);
   resvec.push_back(0.0);
