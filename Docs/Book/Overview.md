@@ -76,6 +76,7 @@ a Python library for building, manipulating, analyzing and automatic design of m
 - [Vernalis KNIME nodes](https://www.knime.com/book/vernalis-nodes-for-knime-trusted-extension)
 - [Erlwood KNIME nodes](https://www.knime.com/community/erlwood)
 - [AZOrange](https://github.com/AZcompTox/AZOrange)
+- [Open Force Field Toolkit](https://github.com/openforcefield/openforcefield/) - A parametrization engine for force fields based on direct chemical perception.
 
 
 ## The Contrib Directory
