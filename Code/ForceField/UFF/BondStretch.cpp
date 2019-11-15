@@ -75,20 +75,6 @@ double BondStretchContrib::getEnergy(double *pos) const {
   double res = 0.5 * d_forceConstant * distTerm * distTerm;
   return res;
 }
-void BondStretchContrib::getEnergyTerms(double *pos, std::vector<double> &resvec) const {
-  PRECONDITION(dp_forceField, "no owner");
-  PRECONDITION(pos, "bad vector");
-
-  double distTerm =
-      dp_forceField->distance(d_end1Idx, d_end2Idx, pos) - d_restLen;
-  double res = 0.5 * d_forceConstant * distTerm * distTerm;
-  resvec.push_back(2.0);
-  resvec.push_back(double(d_end1Idx));
-  resvec.push_back(double(d_end2Idx));
-  resvec.push_back(res);
-  resvec.push_back(0.0);
-  resvec.push_back(0.0);
-}
 void BondStretchContrib::getGrad(double *pos, double *grad) const {
   PRECONDITION(dp_forceField, "no owner");
   PRECONDITION(pos, "bad vector");
