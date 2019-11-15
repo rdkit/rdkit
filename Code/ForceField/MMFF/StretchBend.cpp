@@ -83,6 +83,11 @@ double StretchBendContrib::getEnergy(double *pos) const {
   return (stretchBendEnergies.first + stretchBendEnergies.second);
 }
 
+void StretchBendContrib::getEnergyTerms(double *pos, std::vector<double> &resvec) const {
+  resvec.push_back(0.0);
+  resvec.push_back(0.0);
+  resvec.push_back(0.0);
+}
 void StretchBendContrib::getGrad(double *pos, double *grad) const {
   PRECONDITION(dp_forceField, "no owner");
   PRECONDITION(pos, "bad vector");

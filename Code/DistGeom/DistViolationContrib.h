@@ -36,6 +36,7 @@ class RDKIT_DISTGEOMETRY_EXPORT DistViolationContrib
                        double weight = 1.0);
 
   double getEnergy(double *pos) const;
+  void getEnergyTerms(double *pos, std::vector<double> &resvec) const;
 
   void getGrad(double *pos, double *grad) const;
   virtual DistViolationContrib *copy() const {

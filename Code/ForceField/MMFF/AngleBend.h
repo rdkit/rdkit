@@ -41,6 +41,7 @@ class RDKIT_FORCEFIELD_EXPORT AngleBendContrib : public ForceFieldContrib {
                    unsigned int idx3, const MMFFAngle *mmffAngleParams,
                    const MMFFProp *mmffPropParamsCentralAtom);
   double getEnergy(double *pos) const;
+  void getEnergyTerms(double *pos, std::vector<double> &resvec) const;
   void getGrad(double *pos, double *grad) const;
   virtual AngleBendContrib *copy() const {
     return new AngleBendContrib(*this);

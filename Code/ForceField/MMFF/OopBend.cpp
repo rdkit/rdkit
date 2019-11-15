@@ -86,6 +86,11 @@ double OopBendContrib::getEnergy(double *pos) const {
   return Utils::calcOopBendEnergy(Utils::calcOopChi(p1, p2, p3, p4), d_koop);
 }
 
+void OopBendContrib::getEnergyTerms(double *pos, std::vector<double> &resvec) const {
+  resvec.push_back(0.0);
+  resvec.push_back(0.0);
+  resvec.push_back(0.0);
+}
 void OopBendContrib::getGrad(double *pos, double *grad) const {
   PRECONDITION(dp_forceField, "no owner");
   PRECONDITION(pos, "bad vector");

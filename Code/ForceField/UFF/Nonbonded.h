@@ -47,6 +47,7 @@ class RDKIT_FORCEFIELD_EXPORT vdWContrib : public ForceFieldContrib {
              const AtomicParams *at1Params, const AtomicParams *at2Params,
              double threshMultiplier = 10.0);
   double getEnergy(double *pos) const;
+  void getEnergyTerms(double *pos, std::vector<double> &resvec) const;
   void getGrad(double *pos, double *grad) const;
   virtual vdWContrib *copy() const { return new vdWContrib(*this); };
 

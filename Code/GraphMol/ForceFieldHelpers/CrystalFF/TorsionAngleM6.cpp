@@ -81,6 +81,11 @@ double TorsionAngleContribM6::getEnergy(double *pos) const {
       d_V, d_sign, Utils::calcTorsionCosPhi(iPoint, jPoint, kPoint, lPoint));
 }
 
+void TorsionAngleContribM6::getEnergyTerms(double *pos, std::vector<double> &resvec) const {
+  resvec.push_back(0.0);
+  resvec.push_back(0.0);
+  resvec.push_back(0.0);
+}
 void TorsionAngleContribM6::getGrad(double *pos, double *grad) const {
   PRECONDITION(dp_forceField, "no owner");
   PRECONDITION(pos, "bad vector");

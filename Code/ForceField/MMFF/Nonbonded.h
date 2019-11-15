@@ -35,6 +35,7 @@ class RDKIT_FORCEFIELD_EXPORT VdWContrib : public ForceFieldContrib {
   VdWContrib(ForceField *owner, unsigned int idx1, unsigned int idx2,
              const MMFFVdWRijstarEps *mmffVdWConstants);
   double getEnergy(double *pos) const;
+  void getEnergyTerms(double *pos, std::vector<double> &resvec) const;
   void getGrad(double *pos, double *grad) const;
   virtual VdWContrib *copy() const { return new VdWContrib(*this); };
 
@@ -59,6 +60,7 @@ class RDKIT_FORCEFIELD_EXPORT EleContrib : public ForceFieldContrib {
   EleContrib(ForceField *owner, unsigned int idx1, unsigned int idx2,
              double chargeTerm, std::uint8_t dielModel, bool is1_4);
   double getEnergy(double *pos) const;
+  void getEnergyTerms(double *pos, std::vector<double> &resvec) const;
   void getGrad(double *pos, double *grad) const;
 
   virtual EleContrib *copy() const { return new EleContrib(*this); };
