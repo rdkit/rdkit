@@ -165,7 +165,7 @@ void AngleBendContrib::getEnergyTerms(double *pos, std::vector<double> &resvec) 
   double angleTerm = getEnergyTerm(cosTheta, sinThetaSq);
   double res = d_forceConstant * angleTerm;
 
-  resvec.push_back(0.0);
+  resvec.push_back(3.0);
   resvec.push_back(double(d_at1Idx));
   resvec.push_back(double(d_at2Idx));
   resvec.push_back(double(d_at3Idx));
