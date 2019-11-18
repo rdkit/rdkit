@@ -734,9 +734,9 @@ void overTrigonalBipyramidAngles(const Atom *atom, const ROMol &mol, int confId,
 //
 // ------------------------------------------------------------------------
 void overAngleSpecialCases(const ROMol &mol, int confId,
-                          const AtomicParamVect &params, double *pos,
-                          ForceFields::ForceField *field,
-                          std::vector<std::vector<double>> &res) {
+                           const AtomicParamVect &params, double *pos,
+                           ForceFields::ForceField *field,
+                           std::vector<std::vector<double>> &res) {
   PRECONDITION(mol.getNumAtoms() == params.size(), "bad parameters");
   PRECONDITION(field, "bad forcefield");
 
@@ -1287,5 +1287,65 @@ ForceFields::ForceField *constructForceField(ROMol &mol, double vdwThresh,
   return constructForceField(mol, params, vdwThresh, confId,
                              ignoreInterfragInteractions);
 }
+
+// ------------------------------------------------------------------------
+//
+//
+//
+// ------------------------------------------------------------------------
+void getForceFieldTerms(ROMol &mol,
+                        const AtomicParamVect &params,
+                        double vdwThresh, int confId,
+                        bool ignoreInterfragInteractions,
+                        std::vector<std::vector<double>> &res) {
+  PRECONDITION(mol.getNumAtoms() == params.size(), "bad parameters");
+
+  auto *field = new ForceFields::ForceField();
+
+  // add the atomic positions:
+  Conformer &conf = mol.getConformer(confId);
+  for (unsigned int i = 0; i < mol.getNumAtoms(); i++) {
+    field->positions().push_back(&conf.getAtomPos(i));
+  }
+
+  unsigned int N = field->positions().size();
+  auto *pos = new double[field->dimension() * N];
+  
+  unsigned int tab = 0;
+  for (auto d_position : field->positions()) {
+    for (unsigned int di = 0; di < this->dimension(); ++di) {
+      pos[tab + di] = (*d_position)[di];  //->x;
+    }
+    tab += this->dimension();
+  }
+  POSTCONDITION(tab == this->dimension() * d_positions.size(), "bad index");
+
+  Tools::overBonds(mol, params, pos, field, res);
+  Tools::overAngles(mol, params, pos, field, res);
+  Tools::overAngleSpecialCases(mol, confId, params, pos, field, res);
+  boost::shared_array<std::uint8_t> neighborMat =
+      Tools::buildNeighborMatrix(mol);
+  Tools::overNonbonded(mol, confId, params, pos, field, neighborMat, res, vdwThresh,
+                      ignoreInterfragInteractions);
+  Tools::overTorsions(mol, params, pos, field, res);
+  Tools::overInversions(mol, params, pos, field, res);
+
+  return res;
 }
+
+// ------------------------------------------------------------------------
+//
+//
+//
+// ------------------------------------------------------------------------
+void getForceFieldTerms(ROMol &mol, double vdwThresh,
+                        int confId, bool ignoreInterfragInteractions,
+                        std::vector<std::vector<double>> &res) {
+  bool foundAll;
+  AtomicParamVect params;
+  boost::tie(params, foundAll) = getAtomTypes(mol);
+  getForceFieldTerms(mol, params, vdwThresh, confId,
+                     ignoreInterfragInteractions, res);
 }
+} //end of UFF namespace
+} //end of RDkit namespace
