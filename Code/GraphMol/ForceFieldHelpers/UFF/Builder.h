@@ -125,6 +125,12 @@ RDKIT_FORCEFIELDHELPERS_EXPORT void addNonbonded(
     ForceFields::ForceField *field,
     boost::shared_array<std::uint8_t> neighborMatrix, double vdwThresh = 100.0,
     bool ignoreInterfragInteractions = true);
+RDKIT_FORCEFIELDHELPERS_EXPORT void overNonbonded(
+    const ROMol &mol, int confId, const AtomicParamVect &params,
+    double *pos, ForceFields::ForceField *field,
+    boost::shared_array<std::uint8_t> neighborMatrix, double vdwThresh = 100.0,
+    bool ignoreInterfragInteractions = true,
+    std::vector<std::vector<double>> &res);
 RDKIT_FORCEFIELDHELPERS_EXPORT void addTorsions(
     const ROMol &mol, const AtomicParamVect &params,
     ForceFields::ForceField *field,

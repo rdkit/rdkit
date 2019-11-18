@@ -790,6 +790,55 @@ void addNonbonded(const ROMol &mol, int confId, const AtomicParamVect &params,
     }
   }
 }
+// ------------------------------------------------------------------------
+//
+//
+//
+// ------------------------------------------------------------------------
+void overNonbonded(const ROMol &mol, int confId, const AtomicParamVect &params,
+                  double *pos, ForceFields::ForceField *field,
+                  boost::shared_array<std::uint8_t> neighborMatrix,
+                  double vdwThresh, bool ignoreInterfragInteractions,
+                  std::vector<std::vector<double>> &res) {
+  PRECONDITION(mol.getNumAtoms() == params.size(), "bad parameters");
+  PRECONDITION(field, "bad forcefield");
+
+  INT_VECT fragMapping;
+  if (ignoreInterfragInteractions) {
+    std::vector<ROMOL_SPTR> molFrags =
+        MolOps::getMolFrags(mol, true, &fragMapping);
+  }
+
+  unsigned int nAtoms = mol.getNumAtoms();
+  const Conformer &conf = mol.getConformer(confId);
+  for (unsigned int i = 0; i < nAtoms; i++) {
+    if (!params[i]) continue;
+    for (unsigned int j = i + 1; j < nAtoms; j++) {
+      if (!params[j] ||
+          (ignoreInterfragInteractions && fragMapping[i] != fragMapping[j])) {
+        continue;
+      }
+      if (getTwoBitCell(neighborMatrix, twoBitCellPos(nAtoms, i, j)) >=
+          RELATION_1_4) {
+        double dist = (conf.getAtomPos(i) - conf.getAtomPos(j)).length();
+        if (dist < vdwThresh *
+                       UFF::Utils::calcNonbondedMinimum(params[i], params[j])) {
+          vdWContrib *contrib;
+          contrib = new vdWContrib(field, i, j, params[i], params[j]);
+//          field->contribs().push_back(ForceFields::ContribPtr(contrib));
+          std::vector<double> e;
+          e.push_back(1.0);
+          e.push_back(double(i));
+          e.push_back(double(j));
+          e.push_back(contrib->getEnergy(pos));
+          e.push_back(0.0);
+          e.push_back(0.0);
+          res.push_back(e);
+        }
+      }
+    }
+  }
+}
 
 #if 0
       // ------------------------------------------------------------------------
