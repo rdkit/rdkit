@@ -826,14 +826,14 @@ void overNonbonded(const ROMol &mol, int confId, const AtomicParamVect &params,
           vdWContrib *contrib;
           contrib = new vdWContrib(field, i, j, params[i], params[j]);
 //          field->contribs().push_back(ForceFields::ContribPtr(contrib));
-//          std::vector<double> e;
-//          e.push_back(1.0);
-//          e.push_back(double(i));
-//          e.push_back(double(j));
-//          e.push_back(contrib->getEnergy(pos));
-//          e.push_back(0.0);
-//          e.push_back(0.0);
-//          res.push_back(e);
+          std::vector<double> e;
+          e.push_back(1.0);
+          e.push_back(double(i));
+          e.push_back(double(j));
+          e.push_back(contrib->getEnergy(pos));
+          e.push_back(0.0);
+          e.push_back(0.0);
+          res.push_back(e);
         }
       }
     }
