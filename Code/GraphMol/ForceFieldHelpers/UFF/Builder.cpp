@@ -56,10 +56,6 @@ void overBonds(const ROMol &mol, const AtomicParamVect &params, double *pos,
               ForceFields::ForceField *field, std::vector<std::vector<double>> &res) {
   PRECONDITION(mol.getNumAtoms() == params.size(), "bad parameters");
   PRECONDITION(field, "bad forcefield");
-    
-//  unsigned int N = field->positions().size();
-//  auto *pos = new double[field->dimension() * N];
-//  field->scatter(pos);
 
   for (ROMol::ConstBondIterator bi = mol.beginBonds(); bi != mol.endBonds();
        bi++) {
@@ -84,7 +80,6 @@ void overBonds(const ROMol &mol, const AtomicParamVect &params, double *pos,
       res.push_back(e);
     }
   }
-//  delete[] pos;
 }
 
 unsigned int twoBitCellPos(unsigned int nAtoms, int i, int j) {
@@ -263,6 +258,119 @@ void addAngles(const ROMol &mol, const AtomicParamVect &params,
                                    b2->getBondTypeAsDouble(), params[i],
                                    params[j], params[k], order);
           field->contribs().push_back(ForceFields::ContribPtr(contrib));
+        }
+      }
+    }
+  }
+}
+// ------------------------------------------------------------------------
+//
+//
+//
+// ------------------------------------------------------------------------
+void overAngles(const ROMol &mol, const AtomicParamVect &params, double *pos,
+               ForceFields::ForceField *field, std::vector<std::vector<double>> &res) {
+  PRECONDITION(mol.getNumAtoms() == params.size(), "bad parameters");
+  PRECONDITION(field, "bad forcefield");
+  ROMol::ADJ_ITER nbr1Idx;
+  ROMol::ADJ_ITER end1Nbrs;
+  ROMol::ADJ_ITER nbr2Idx;
+  ROMol::ADJ_ITER end2Nbrs;
+  RingInfo *rings = mol.getRingInfo();
+
+  unsigned int nAtoms = mol.getNumAtoms();
+  for (unsigned int j = 0; j < nAtoms; j++) {
+    if (!params[j]) continue;
+    const Atom *atomJ = mol.getAtomWithIdx(j);
+    if (atomJ->getDegree() == 1) continue;
+    boost::tie(nbr1Idx, end1Nbrs) = mol.getAtomNeighbors(atomJ);
+    for (; nbr1Idx != end1Nbrs; nbr1Idx++) {
+      const Atom *atomI = mol[*nbr1Idx];
+      unsigned int i = atomI->getIdx();
+      if (!params[i]) continue;
+      boost::tie(nbr2Idx, end2Nbrs) = mol.getAtomNeighbors(atomJ);
+      for (; nbr2Idx != end2Nbrs; nbr2Idx++) {
+        if (nbr2Idx < (nbr1Idx + 1)) {
+          continue;
+        }
+        const Atom *atomK = mol[*nbr2Idx];
+        unsigned int k = atomK->getIdx();
+        if (!params[k]) continue;
+        // skip special cases:
+        if (!(atomJ->getHybridization() == Atom::SP3D &&
+              atomJ->getDegree() == 5)) {
+          const Bond *b1 = mol.getBondBetweenAtoms(i, j);
+          const Bond *b2 = mol.getBondBetweenAtoms(k, j);
+          // FIX: recognize amide bonds here.
+          AngleBendContrib *contrib;
+          int order = 0;
+          switch (atomJ->getHybridization()) {
+            case Atom::SP:
+              order = 1;
+              break;
+            case Atom::SP2:
+              order = 3;
+              // the following is a hack to get decent geometries
+              // with 3- and 4-membered rings incorporating sp2 atoms
+              // if the central atom is in a ring of size 3
+              if (rings->isAtomInRingOfSize(j, 3)) {
+                // if the central atom and one of the bonded atoms, but not the
+                //  other one are inside a ring, then this angle is between a
+                // ring substituent and a ring edge
+                if ((rings->isAtomInRingOfSize(i, 3) &&
+                     !rings->isAtomInRingOfSize(k, 3)) ||
+                    (!rings->isAtomInRingOfSize(i, 3) &&
+                     rings->isAtomInRingOfSize(k, 3))) {
+                  order = 30;
+                }
+                // if all atoms are inside the ring, then this is one of ring
+                // angles
+                else if (rings->isAtomInRingOfSize(i, 3) &&
+                         rings->isAtomInRingOfSize(k, 3)) {
+                  order = 35;
+                }
+              }
+              // if the central atom is in a ring of size 4
+              else if (rings->isAtomInRingOfSize(j, 4)) {
+                // if the central atom and one of the bonded atoms, but not the
+                //  other one are inside a ring, then this angle is between a
+                // ring substituent and a ring edge
+                if ((rings->isAtomInRingOfSize(i, 4) &&
+                     !rings->isAtomInRingOfSize(k, 4)) ||
+                    (!rings->isAtomInRingOfSize(i, 4) &&
+                     rings->isAtomInRingOfSize(k, 4))) {
+                  order = 40;
+                }
+                // if all atoms are inside the ring, then this is one of ring
+                // angles
+                else if (rings->isAtomInRingOfSize(i, 4) &&
+                         rings->isAtomInRingOfSize(k, 4)) {
+                  order = 45;
+                }
+              }
+              // end of the hack
+              break;
+            case Atom::SP3D2:
+              order = 4;
+              break;
+            default:
+              order = 0;
+              break;
+          }
+
+          contrib =
+              new AngleBendContrib(field, i, j, k, b1->getBondTypeAsDouble(),
+                                   b2->getBondTypeAsDouble(), params[i],
+                                   params[j], params[k], order);
+//          field->contribs().push_back(ForceFields::ContribPtr(contrib));
+          std::vector<double> e;
+          e.push_back(3.0);
+          e.push_back(double(i));
+          e.push_back(double(j));
+          e.push_back(double(k));
+          e.push_back(contrib->getEnergy(pos));
+          e.push_back(0.0);
+          res.push_back(e);
         }
       }
     }
