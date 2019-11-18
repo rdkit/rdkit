@@ -56,6 +56,10 @@ void overBonds(const ROMol &mol, const AtomicParamVect &params,
               ForceFields::ForceField *field, std::vector<std::vector<double>> &res) {
   PRECONDITION(mol.getNumAtoms() == params.size(), "bad parameters");
   PRECONDITION(field, "bad forcefield");
+    
+  unsigned int N = field->positions().size();
+  auto *pos = new double[field->dimension() * N];
+  field->scatter(pos);
 
   for (ROMol::ConstBondIterator bi = mol.beginBonds(); bi != mol.endBonds();
        bi++) {
@@ -74,12 +78,13 @@ void overBonds(const ROMol &mol, const AtomicParamVect &params,
       e.push_back(2.0);
       e.push_back(double(idx1));
       e.push_back(double(idx2));
-//      e.push_back(ForceFields::ContribPtr(contrib)->getEnergy(field->positions()));
+      e.push_back(contrib->getEnergy(pos));
       e.push_back(0.0);
       e.push_back(0.0);
       res.push_back(e);
     }
   }
+  delete[] pos;
 }
 
 unsigned int twoBitCellPos(unsigned int nAtoms, int i, int j) {
