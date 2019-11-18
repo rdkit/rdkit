@@ -107,6 +107,10 @@ buildNeighborMatrix(const ROMol &mol);
 RDKIT_FORCEFIELDHELPERS_EXPORT void addBonds(const ROMol &mol,
                                              const AtomicParamVect &params,
                                              ForceFields::ForceField *field);
+RDKIT_FORCEFIELDHELPERS_EXPORT void overBonds(const ROMol &mol,
+                                              const AtomicParamVect &params,
+                                              ForceFields::ForceField *field,
+                                              std::vector<std::vector<double>> &res)
 RDKIT_FORCEFIELDHELPERS_EXPORT void addAngles(const ROMol &mol,
                                               const AtomicParamVect &params,
                                               ForceFields::ForceField *field);
