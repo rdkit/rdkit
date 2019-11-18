@@ -59,7 +59,7 @@ void overBonds(const ROMol &mol, const AtomicParamVect &params,
     
   unsigned int N = field->positions().size();
   auto *pos = new double[field->dimension() * N];
-//  field->scatter(pos);
+  field->scatter(pos);
 
   for (ROMol::ConstBondIterator bi = mol.beginBonds(); bi != mol.endBonds();
        bi++) {
