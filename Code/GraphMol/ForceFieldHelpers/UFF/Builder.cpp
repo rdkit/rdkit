@@ -1230,10 +1230,10 @@ void overInversions(const ROMol &mol, const AtomicParamVect &params,
 //      field->contribs().push_back(ForceFields::ContribPtr(contrib));
       std::vector<double> e;
       e.push_back(5.0);
-      e.push_back(double(bIdx));
-      e.push_back(double(idx1));
-      e.push_back(double(idx2));
-      e.push_back(double(eIdx));
+      e.push_back(double(idx[n[0]]));
+      e.push_back(double(idx[n[1]]));
+      e.push_back(double(idx[n[2]]));
+      e.push_back(double(idx[n[3]]));
       e.push_back(contrib->getEnergy(pos));
       res.push_back(e);
     }
