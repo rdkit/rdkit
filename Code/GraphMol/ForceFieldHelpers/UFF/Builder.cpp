@@ -57,7 +57,7 @@ void overBonds(const ROMol &mol, const AtomicParamVect &params,
   PRECONDITION(mol.getNumAtoms() == params.size(), "bad parameters");
   PRECONDITION(field, "bad forcefield");
     
-  unsigned int N = field->positions()->size();
+  int N = field->positions().size();
 //  auto *pos = new double[field->dimension() * N];
 //  field->scatter(pos);
 
