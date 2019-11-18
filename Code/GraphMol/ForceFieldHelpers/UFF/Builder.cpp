@@ -78,7 +78,7 @@ void overBonds(const ROMol &mol, const AtomicParamVect &params, double *pos,
       e.push_back(2.0);
       e.push_back(double(idx1));
       e.push_back(double(idx2));
-//      e.push_back(contrib->getEnergy(pos));
+      e.push_back(contrib->getEnergy(pos));
       e.push_back(0.0);
       e.push_back(0.0);
       res.push_back(e);
