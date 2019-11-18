@@ -558,6 +558,197 @@ void addAngleSpecialCases(const ROMol &mol, int confId,
     }
   }
 }
+// ------------------------------------------------------------------------
+//
+//
+//
+// ------------------------------------------------------------------------
+void overTrigonalBipyramidAngles(const Atom *atom, const ROMol &mol, int confId,
+                                const AtomicParamVect &params, double *pos,
+                                ForceFields::ForceField *field,
+                                std::vector<std::vector<double>> &res) {
+  PRECONDITION(atom, "bad atom");
+  PRECONDITION(atom->getHybridization() == Atom::SP3D, "bad hybridization");
+  PRECONDITION(atom->getDegree() == 5, "bad degree");
+  PRECONDITION(mol.getNumAtoms() == params.size(), "bad parameters");
+  PRECONDITION(field, "bad forcefield");
+
+  const Bond *ax1 = nullptr, *ax2 = nullptr;
+  const Bond *eq1 = nullptr, *eq2 = nullptr, *eq3 = nullptr;
+
+  const Conformer &conf = mol.getConformer(confId);
+  //------------------------------------------------------------
+  // identify the axial and equatorial bonds:
+  double mostNeg = 100.0;
+  ROMol::OEDGE_ITER beg1, end1;
+  boost::tie(beg1, end1) = mol.getAtomBonds(atom);
+  unsigned int aid = atom->getIdx();
+  while (beg1 != end1) {
+    const Bond *bond1 = mol[*beg1];
+    unsigned int oaid = bond1->getOtherAtomIdx(aid);
+    RDGeom::Point3D v1 =
+        conf.getAtomPos(aid).directionVector(conf.getAtomPos(oaid));
+
+    ROMol::OEDGE_ITER beg2, end2;
+    boost::tie(beg2, end2) = mol.getAtomBonds(atom);
+    while (beg2 != end2) {
+      const Bond *bond2 = mol[*beg2];
+      if (bond2->getIdx() > bond1->getIdx()) {
+        unsigned int oaid2 = bond2->getOtherAtomIdx(aid);
+        RDGeom::Point3D v2 =
+            conf.getAtomPos(aid).directionVector(conf.getAtomPos(oaid2));
+        double dot = v1.dotProduct(v2);
+        if (dot < mostNeg) {
+          mostNeg = dot;
+          ax1 = bond1;
+          ax2 = bond2;
+        }
+      }
+      ++beg2;
+    }
+    ++beg1;
+  }
+  CHECK_INVARIANT(ax1, "axial bond not found");
+  CHECK_INVARIANT(ax2, "axial bond not found");
+
+  boost::tie(beg1, end1) = mol.getAtomBonds(atom);
+  while (beg1 != end1) {
+    const Bond *bond = mol[*beg1];
+    ++beg1;
+    if (bond == ax1 || bond == ax2) continue;
+    if (!eq1)
+      eq1 = bond;
+    else if (!eq2)
+      eq2 = bond;
+    else if (!eq3)
+      eq3 = bond;
+  }
+
+  CHECK_INVARIANT(eq1, "equatorial bond not found");
+  CHECK_INVARIANT(eq2, "equatorial bond not found");
+  CHECK_INVARIANT(eq3, "equatorial bond not found");
+
+  //------------------------------------------------------------
+  // alright, add the angles:
+  AngleBendContrib *contrib;
+  int atomIdx = atom->getIdx();
+  int i, j;
+
+  // Axial-Axial
+  i = ax1->getOtherAtomIdx(atomIdx);
+  j = ax2->getOtherAtomIdx(atomIdx);
+  if (params[i] && params[j]) {
+    contrib = new AngleBendContrib(
+        field, i, atomIdx, j, ax1->getBondTypeAsDouble(),
+        ax2->getBondTypeAsDouble(), params[i], params[atomIdx], params[j], 2);
+    field->contribs().push_back(ForceFields::ContribPtr(contrib));
+  }
+  // Equatorial-Equatorial
+  i = eq1->getOtherAtomIdx(atomIdx);
+  j = eq2->getOtherAtomIdx(atomIdx);
+  if (params[i] && params[j]) {
+    contrib = new AngleBendContrib(
+        field, i, atomIdx, j, eq1->getBondTypeAsDouble(),
+        eq2->getBondTypeAsDouble(), params[i], params[atomIdx], params[j], 3);
+    field->contribs().push_back(ForceFields::ContribPtr(contrib));
+  }
+  i = eq1->getOtherAtomIdx(atomIdx);
+  j = eq3->getOtherAtomIdx(atomIdx);
+  if (params[i] && params[j]) {
+    contrib = new AngleBendContrib(
+        field, i, atomIdx, j, eq1->getBondTypeAsDouble(),
+        eq3->getBondTypeAsDouble(), params[i], params[atomIdx], params[j], 3);
+    field->contribs().push_back(ForceFields::ContribPtr(contrib));
+  }
+  i = eq2->getOtherAtomIdx(atomIdx);
+  j = eq3->getOtherAtomIdx(atomIdx);
+  if (params[i] && params[j]) {
+    contrib = new AngleBendContrib(
+        field, i, atomIdx, j, eq2->getBondTypeAsDouble(),
+        eq3->getBondTypeAsDouble(), params[i], params[atomIdx], params[j], 3);
+    field->contribs().push_back(ForceFields::ContribPtr(contrib));
+  }
+
+  // Axial-Equatorial
+  i = ax1->getOtherAtomIdx(atomIdx);
+  j = eq1->getOtherAtomIdx(atomIdx);
+  if (params[i] && params[j]) {
+    contrib = new AngleBendContrib(
+        field, i, atomIdx, j, ax1->getBondTypeAsDouble(),
+        eq1->getBondTypeAsDouble(), params[i], params[atomIdx], params[j]);
+    field->contribs().push_back(ForceFields::ContribPtr(contrib));
+  }
+  i = ax1->getOtherAtomIdx(atomIdx);
+  j = eq2->getOtherAtomIdx(atomIdx);
+  if (params[i] && params[j]) {
+    contrib = new AngleBendContrib(
+        field, i, atomIdx, j, ax1->getBondTypeAsDouble(),
+        eq2->getBondTypeAsDouble(), params[i], params[atomIdx], params[j]);
+    field->contribs().push_back(ForceFields::ContribPtr(contrib));
+  }
+  i = ax1->getOtherAtomIdx(atomIdx);
+  j = eq3->getOtherAtomIdx(atomIdx);
+  if (params[i] && params[j]) {
+    contrib = new AngleBendContrib(
+        field, i, atomIdx, j, ax1->getBondTypeAsDouble(),
+        eq3->getBondTypeAsDouble(), params[i], params[atomIdx], params[j]);
+    field->contribs().push_back(ForceFields::ContribPtr(contrib));
+  }
+  i = ax2->getOtherAtomIdx(atomIdx);
+  j = eq1->getOtherAtomIdx(atomIdx);
+  if (params[i] && params[j]) {
+    contrib = new AngleBendContrib(
+        field, i, atomIdx, j, ax2->getBondTypeAsDouble(),
+        eq1->getBondTypeAsDouble(), params[i], params[atomIdx], params[j]);
+    field->contribs().push_back(ForceFields::ContribPtr(contrib));
+  }
+  i = ax2->getOtherAtomIdx(atomIdx);
+  j = eq2->getOtherAtomIdx(atomIdx);
+  if (params[i] && params[j]) {
+    contrib = new AngleBendContrib(
+        field, i, atomIdx, j, ax2->getBondTypeAsDouble(),
+        eq2->getBondTypeAsDouble(), params[i], params[atomIdx], params[j]);
+    field->contribs().push_back(ForceFields::ContribPtr(contrib));
+  }
+  i = ax2->getOtherAtomIdx(atomIdx);
+  j = eq3->getOtherAtomIdx(atomIdx);
+  if (params[i] && params[j]) {
+    contrib = new AngleBendContrib(
+        field, i, atomIdx, j, ax2->getBondTypeAsDouble(),
+        eq3->getBondTypeAsDouble(), params[i], params[atomIdx], params[j]);
+//    field->contribs().push_back(ForceFields::ContribPtr(contrib));
+    std::vector<double> e;
+    e.push_back(2.0);
+    e.push_back(double(idx1));
+    e.push_back(double(idx2));
+    e.push_back(contrib->getEnergy(pos));
+    e.push_back(0.0);
+    e.push_back(0.0);
+    res.push_back(e);
+  }
+}
+
+// ------------------------------------------------------------------------
+//
+//
+//
+// ------------------------------------------------------------------------
+void overAngleSpecialCases(const ROMol &mol, int confId,
+                          const AtomicParamVect &params, double *pos,
+                          ForceFields::ForceField *field,
+                          std::vector<std::vector<double>> &res) {
+  PRECONDITION(mol.getNumAtoms() == params.size(), "bad parameters");
+  PRECONDITION(field, "bad forcefield");
+
+  unsigned int nAtoms = mol.getNumAtoms();
+  for (unsigned int i = 0; i < nAtoms; i++) {
+    const Atom *atom = mol.getAtomWithIdx(i);
+    // trigonal bipyramidal:
+    if ((atom->getHybridization() == Atom::SP3D && atom->getDegree() == 5)) {
+      overTrigonalBipyramidAngles(atom, mol, confId, params, pos, field, res);
+    }
+  }
+}
 
 // ------------------------------------------------------------------------
 //
