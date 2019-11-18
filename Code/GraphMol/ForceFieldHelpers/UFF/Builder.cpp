@@ -1313,12 +1313,12 @@ void getForceFieldTerms(ROMol &mol,
   
   unsigned int tab = 0;
   for (auto d_position : field->positions()) {
-    for (unsigned int di = 0; di < this->dimension(); ++di) {
+    for (unsigned int di = 0; di < field->dimension(); ++di) {
       pos[tab + di] = (*d_position)[di];  //->x;
     }
-    tab += this->dimension();
+    tab += field->dimension();
   }
-  POSTCONDITION(tab == this->dimension() * d_positions.size(), "bad index");
+  POSTCONDITION(tab == field->dimension() * N, "bad index");
 
   Tools::overBonds(mol, params, pos, field, res);
   Tools::overAngles(mol, params, pos, field, res);
