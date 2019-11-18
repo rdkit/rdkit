@@ -135,6 +135,10 @@ RDKIT_FORCEFIELDHELPERS_EXPORT void addTorsions(
     const ROMol &mol, const AtomicParamVect &params,
     ForceFields::ForceField *field,
     const std::string &torsionBondSmarts = DefaultTorsionBondSmarts::string());
+RDKIT_FORCEFIELDHELPERS_EXPORT void overTorsions(
+    const ROMol &mol, const AtomicParamVect &params,
+    double *pos, ForceFields::ForceField *field, std::vector<std::vector<double>> &res,
+    const std::string &torsionBondSmarts = DefaultTorsionBondSmarts::string());
 RDKIT_FORCEFIELDHELPERS_EXPORT void addInversions(
     const ROMol &mol, const AtomicParamVect &params,
     ForceFields::ForceField *field);
