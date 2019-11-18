@@ -96,13 +96,12 @@ ForceFields::PyForceField *UFFGetMoleculeForceField(
   return res;
 }
 
-PyObject *UFFGetForceFieldTerms(
+python::object *UFFGetForceFieldTerms(
     ROMol &mol, double vdwThresh = 10.0, int confId = -1,
     bool ignoreInterfragInteractions = true) {
    
-  PyObject *ETerms = nullptr;
-  PyObject *ETerm = nullptr;
-  int i = 0;
+  python::list ETerms;
+//  python::list ETerm;
   std::vector<std::vector<double>> terms;
     
   UFF::getForceFieldTerms(
@@ -110,12 +109,10 @@ PyObject *UFFGetForceFieldTerms(
   ETerms = PyTuple_New(terms.size());
 
   for (std::vector<double> term: terms) {
-    int j = 0;
-    ETerm = PyTuple_New(term.size());
-    for (double e: term) {
-      PyTuple_SetItem(ETerm, j++, PyFloat_FromDouble(e));
-    }
-    PyTuple_SetItem(ETerms, i++, ETerm);
+//    for (double e: term) {
+//      ETerm.append(e);
+//    }
+    ETerms.append(python::make_tuple(term[0],term[1],term[2],term[3],term[4],term[5]));
   }
   return ETerms;
 }
