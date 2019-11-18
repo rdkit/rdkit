@@ -46,7 +46,6 @@ class RDKIT_FORCEFIELD_EXPORT BondStretchContrib : public ForceFieldContrib {
   int d_end1Idx, d_end2Idx;  //!< indices of end points
   double d_restLen;          //!< rest length of the bond
   double d_forceConstant;    //!< force constant of the bond
-  void getEnergyTerms(double *pos, std::vector<double> &resvec) const;
 };
 
 namespace Utils {
