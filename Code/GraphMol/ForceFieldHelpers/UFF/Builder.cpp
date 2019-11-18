@@ -52,6 +52,36 @@ void addBonds(const ROMol &mol, const AtomicParamVect &params,
   }
 }
 
+void overBonds(const ROMol &mol, const AtomicParamVect &params,
+              ForceFields::ForceField *field, std::vector<std::vector<double>> &res) {
+  PRECONDITION(mol.getNumAtoms() == params.size(), "bad parameters");
+  PRECONDITION(field, "bad forcefield");
+
+  for (ROMol::ConstBondIterator bi = mol.beginBonds(); bi != mol.endBonds();
+       bi++) {
+    int idx1 = (*bi)->getBeginAtomIdx();
+    int idx2 = (*bi)->getEndAtomIdx();
+
+    // FIX: recognize amide bonds here.
+
+    if (params[idx1] && params[idx2]) {
+      BondStretchContrib *contrib;
+      contrib = new BondStretchContrib(field, idx1, idx2,
+                                       (*bi)->getBondTypeAsDouble(),
+                                       params[idx1], params[idx2]);
+//      field->contribs().push_back(ForceFields::ContribPtr(contrib));
+      std::vector<double> e;
+      e.push_back(2.0);
+      e.push_back(double(idx1));
+      e.push_back(double(idx2));
+      e.push_back(ForceFields::ContribPtr(contrib)->getEnergy(field->positions()));
+      e.push_back(0.0);
+      e.push_back(0.0);
+      res.push_back(e);
+    }
+  }
+}
+
 unsigned int twoBitCellPos(unsigned int nAtoms, int i, int j) {
   if (j < i) std::swap(i, j);
 

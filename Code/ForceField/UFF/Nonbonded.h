@@ -11,7 +11,6 @@
 #ifndef __RD_NONBONDED_H__
 #define __RD_NONBONDED_H__
 #include <ForceField/Contrib.h>
-#include <Geometry/point.h>
 
 namespace ForceFields {
 namespace UFF {
@@ -49,7 +48,7 @@ class RDKIT_FORCEFIELD_EXPORT vdWContrib : public ForceFieldContrib {
              double threshMultiplier = 10.0);
   double getEnergy(double *pos) const;
   void getGrad(double *pos, double *grad) const;
-  void getEnergyTerms(double *pos, std::vector<double> &resvec) const;
+//  void getEnergyTerms(double *pos, std::vector<double> &resvec) const;
   virtual vdWContrib *copy() const { return new vdWContrib(*this); };
 
  private:
