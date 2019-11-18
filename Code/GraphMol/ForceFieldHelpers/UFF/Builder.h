@@ -142,6 +142,10 @@ RDKIT_FORCEFIELDHELPERS_EXPORT void overTorsions(
 RDKIT_FORCEFIELDHELPERS_EXPORT void addInversions(
     const ROMol &mol, const AtomicParamVect &params,
     ForceFields::ForceField *field);
+RDKIT_FORCEFIELDHELPERS_EXPORT void overInversions(
+    const ROMol &mol, const AtomicParamVect &params,
+    double *pos, ForceFields::ForceField *field,
+    std::vector<std::vector<double>> &res);
 }  // namespace Tools
 }  // namespace UFF
 }  // namespace RDKit

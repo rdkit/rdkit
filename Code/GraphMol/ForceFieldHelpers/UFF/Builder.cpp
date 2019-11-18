@@ -1150,6 +1150,95 @@ void addInversions(const ROMol &mol, const AtomicParamVect &params,
     }
   }
 }
+
+// ------------------------------------------------------------------------
+//
+//
+//
+// ------------------------------------------------------------------------
+void overInversions(const ROMol &mol, const AtomicParamVect &params,
+                    double *pos, ForceFields::ForceField *field,
+                    std::vector<std::vector<double>> &res) {
+  PRECONDITION(mol.getNumAtoms() == params.size(), "bad parameters");
+  PRECONDITION(field, "bad forcefield");
+
+  unsigned int idx[4];
+  unsigned int n[4];
+  const Atom *atom[4];
+  ROMol::ADJ_ITER nbrIdx;
+  ROMol::ADJ_ITER endNbrs;
+
+  for (idx[1] = 0; idx[1] < mol.getNumAtoms(); ++idx[1]) {
+    atom[1] = mol.getAtomWithIdx(idx[1]);
+    int at2AtomicNum = atom[1]->getAtomicNum();
+    // if the central atom is not carbon, nitrogen, oxygen,
+    // phosphorous, arsenic, antimonium or bismuth, skip it
+    if (((at2AtomicNum != 6) && (at2AtomicNum != 7) && (at2AtomicNum != 8) &&
+         (at2AtomicNum != 15) && (at2AtomicNum != 33) && (at2AtomicNum != 51) &&
+         (at2AtomicNum != 83)) ||
+        (atom[1]->getDegree() != 3)) {
+      continue;
+    }
+    // if the central atom is carbon, nitrogen or oxygen
+    // but hybridization is not sp2, skip it
+    if (((at2AtomicNum == 6) || (at2AtomicNum == 7) || (at2AtomicNum == 8)) &&
+        (atom[1]->getHybridization() != Atom::SP2)) {
+      continue;
+    }
+    boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atom[1]);
+    unsigned int i = 0;
+    bool isBoundToSP2O = false;
+    for (; nbrIdx != endNbrs; ++nbrIdx) {
+      atom[i] = mol[*nbrIdx];
+      idx[i] = atom[i]->getIdx();
+      // if the central atom is sp2 carbon and is
+      // bound to sp2 oxygen, set a flag
+      if (!isBoundToSP2O) {
+        isBoundToSP2O =
+            ((at2AtomicNum == 6) && (atom[i]->getAtomicNum() == 8) &&
+             (atom[i]->getHybridization() == Atom::SP2));
+      }
+      if (!i) {
+        ++i;
+      }
+      ++i;
+    }
+    for (unsigned int i = 0; i < 3; ++i) {
+      n[1] = 1;
+      switch (i) {
+        case 0:
+          n[0] = 0;
+          n[2] = 2;
+          n[3] = 3;
+          break;
+
+        case 1:
+          n[0] = 0;
+          n[2] = 3;
+          n[3] = 2;
+          break;
+
+        case 2:
+          n[0] = 2;
+          n[2] = 3;
+          n[3] = 0;
+          break;
+      }
+      InversionContrib *contrib;
+      contrib = new InversionContrib(field, idx[n[0]], idx[n[1]], idx[n[2]],
+                                     idx[n[3]], at2AtomicNum, isBoundToSP2O);
+//      field->contribs().push_back(ForceFields::ContribPtr(contrib));
+      std::vector<double> e;
+      e.push_back(5.0);
+      e.push_back(double(bIdx));
+      e.push_back(double(idx1));
+      e.push_back(double(idx2));
+      e.push_back(double(eIdx));
+      e.push_back(contrib->getEnergy(pos));
+      res.push_back(e);
+    }
+  }
+}
 }  // end of namespace Tools
 
 // ------------------------------------------------------------------------
