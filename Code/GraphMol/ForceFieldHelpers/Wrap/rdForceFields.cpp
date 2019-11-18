@@ -96,6 +96,30 @@ ForceFields::PyForceField *UFFGetMoleculeForceField(
   return res;
 }
 
+PyObject *UFFGetForceFieldTerms(
+    ROMol &mol, double vdwThresh = 10.0, int confId = -1,
+    bool ignoreInterfragInteractions = true) {
+   
+  PyObject *ETerms = nullptr;
+  PyObject *ETerm = nullptr;
+  int i = 0;
+  std::vector<std::vector<double>> terms;
+    
+  UFF::getForceFieldTerms(
+      mol, vdwThresh, confId, ignoreInterfragInteractions, terms);
+  ETerms = PyTuple_New(terms.size());
+
+  for (std::vector<double> term: terms) {
+    int j = 0;
+    ETerm = PyTuple_New(term.size());
+    for (double e: term) {
+      PyTuple_SetItem(ETerm, j++, PyFloat_FromDouble(e));
+    }
+    PyTuple_SetItem(ETerms, i++, ETerm);
+  }
+  return ETerms;
+}
+
 bool UFFHasAllMoleculeParams(const ROMol &mol) {
   UFF::AtomicParamVect types;
   bool foundAll;
@@ -345,6 +369,11 @@ BOOST_PYTHON_MODULE(rdForceFieldHelpers) {
  ARGUMENTS:\n\n\
     - mol : the molecule of interest.\n\
 \n";
+  python::def("UFFGetForceFieldTerms", RDKit::UFFGetForceFieldTerms,
+              (python::arg("mol"), python::arg("vdwThresh") = 10.0,
+               python::arg("confId") = -1,
+               python::arg("ignoreInterfragInteractions") = true),
+              "get UFF ForceField terms");
   python::def("UFFHasAllMoleculeParams", RDKit::UFFHasAllMoleculeParams,
               (python::arg("mol")), docString.c_str());
 
