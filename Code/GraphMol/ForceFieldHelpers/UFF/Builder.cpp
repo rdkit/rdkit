@@ -74,7 +74,7 @@ void overBonds(const ROMol &mol, const AtomicParamVect &params,
       e.push_back(2.0);
       e.push_back(double(idx1));
       e.push_back(double(idx2));
-      e.push_back(ForceFields::ContribPtr(contrib)->getEnergy(field->positions()));
+//      e.push_back(ForceFields::ContribPtr(contrib)->getEnergy(field->positions()));
       e.push_back(0.0);
       e.push_back(0.0);
       res.push_back(e);
