@@ -798,7 +798,7 @@ void addNonbonded(const ROMol &mol, int confId, const AtomicParamVect &params,
 void overNonbonded(const ROMol &mol, int confId, const AtomicParamVect &params,
                    double *pos, ForceFields::ForceField *field,
                    boost::shared_array<std::uint8_t> neighborMatrix,
-                   std::vector<std::vector<double>> &res
+                   std::vector<std::vector<double>> &res,
                    double vdwThresh, bool ignoreInterfragInteractions) {
   PRECONDITION(mol.getNumAtoms() == params.size(), "bad parameters");
   PRECONDITION(field, "bad forcefield");
