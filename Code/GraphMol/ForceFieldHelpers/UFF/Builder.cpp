@@ -58,8 +58,8 @@ void overBonds(const ROMol &mol, const AtomicParamVect &params,
   PRECONDITION(field, "bad forcefield");
     
   unsigned int N = field->positions().size();
-  auto *pos = new double[field->dimension() * N];
-  field->scatter(pos);
+//  auto *pos = new double[field->dimension() * N];
+//  field->scatter(pos);
 
   for (ROMol::ConstBondIterator bi = mol.beginBonds(); bi != mol.endBonds();
        bi++) {
