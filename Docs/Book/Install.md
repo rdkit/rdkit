@@ -499,27 +499,25 @@ This section assumes that python is installed in `C:\Python27`, that the boost l
 -   cd to `C:\RDKit\build` and run ctest. Please note that if you have built in PostgreSQL support, the current logged in user needs to be a PostgreSQL user with database creation and superuser privileges, or the PostgreSQL test will fail. A convenient option to authenticate will be to set the `PGPASSWORD` environment variable to the PostgreSQL password of the current logged in user in the shell from which you are running ctest.
 -   You're done!
 
-## A note on python packages
+## A note on python packages and pip
 
-Both binary and source installs of RDKit use Python's package manager `pip` to instal Python
-bindings. This means that `pip` at your system becomes aware of RDKit's package existence &mdash;
-this may be checked with `pip freeze` command. This makes it possible to add `rdkit` to other
-package's `install_requires` in `setup.py`.
+If you are building the RDKit yourself or using certain package managers, it is possible to install 
+the binaries using Python's package manager `pip`. By doing this pip becomes aware of the RDKit's
+existence, allowing you to use the RDKit with virtualenvs or add it to the `install_requires` lists for 
+other local packages' `setup.py` files.
 
-Internally, this is done by creating `*.whl` package and installing it at `make install` step with
-`pip` (when `-DRDK_INSTALL_PYTHON_PACKAGE` CMake option is `ON`, which is the default).
+Using the RDKit together with pip requires you to have a `.whl` file containing the RDKit's python files 
+and binary extension modules. If you do your own build, you can create this file by providing the 
+`-DRDK_INSTALL_PYTHON_PACKAGE=ON` argument to cmake (along with your usual other cmake arguments) and then
+doing `make install`. If you are on the Mac and using homebrew, you can also find a `.whl` file in the homebrew
+install files.
 
-This `*.whl` package contains only Python-related files which are linked to main RDKit libraries
-installed somewhere on the system. If you wish to use virtualenvs, here's one possible approach:
+To install the `.whl` file in a virtualenv on a system that already has the other binary dependencies installed,
+you can just `pip install` the `.whl` file in your virtualenv.
 
-- Install the RDKit from brew, apt-get or another package manager or install it from source.
-- Create a virtualenv
-- Locate RDKit's `*.whl` package according to your binary package's instruction or
-  in the `dist` directory of your build root.
-- Install that `whl` with `pip` in the virtualenv.
-
-Alternatively, you can symlink `rdkit` and `rdkit-*.dist-info` directories from system's
-`site-packages` into your virtualenv's `site-packages`.
+**Important note**
+Since the `.whl` files created by the RDKit builds do not contain all of the RDKit's binary dependencies, they are
+not suitable for uploading to the Python package index `pypi`. 
 
 ## License
 
