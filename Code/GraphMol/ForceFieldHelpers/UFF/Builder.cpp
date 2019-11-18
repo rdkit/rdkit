@@ -718,11 +718,11 @@ void overTrigonalBipyramidAngles(const Atom *atom, const ROMol &mol, int confId,
         eq3->getBondTypeAsDouble(), params[i], params[atomIdx], params[j]);
 //    field->contribs().push_back(ForceFields::ContribPtr(contrib));
     std::vector<double> e;
-    e.push_back(2.0);
-    e.push_back(double(idx1));
-    e.push_back(double(idx2));
+    e.push_back(3.0);
+    e.push_back(double(i));
+    e.push_back(double(atomIdx));
+    e.push_back(double(j));
     e.push_back(contrib->getEnergy(pos));
-    e.push_back(0.0);
     e.push_back(0.0);
     res.push_back(e);
   }
