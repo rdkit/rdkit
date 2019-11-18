@@ -1329,8 +1329,6 @@ void getForceFieldTerms(ROMol &mol,
                       ignoreInterfragInteractions);
   Tools::overTorsions(mol, params, pos, field, res);
   Tools::overInversions(mol, params, pos, field, res);
-
-  return res;
 }
 
 // ------------------------------------------------------------------------
