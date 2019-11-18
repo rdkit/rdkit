@@ -11,6 +11,7 @@
 #ifndef __RD_NONBONDED_H__
 #define __RD_NONBONDED_H__
 #include <ForceField/Contrib.h>
+#include <vector>
 
 namespace ForceFields {
 namespace UFF {
