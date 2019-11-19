@@ -106,7 +106,6 @@ python::object *UFFGetForceFieldTerms(
     
   UFF::getForceFieldTerms(
       mol, vdwThresh, confId, ignoreInterfragInteractions, terms);
-  ETerms = PyTuple_New(terms.size());
 
   for (std::vector<double> term: terms) {
 //    for (double e: term) {
