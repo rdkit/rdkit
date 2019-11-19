@@ -68,6 +68,7 @@ class RDKIT_FORCEFIELD_EXPORT TorsionAngleContrib : public ForceFieldContrib {
   double getEnergy(double *pos) const;
 //  void getEnergyTerms(double *pos, std::vector<double>& resvec) const;
   void getGrad(double *pos, double *grad) const;
+  void getEnergyTerms(double *pos, std::vector<double> &resvec) const;
   void scaleForceConstant(unsigned int count) {
     this->d_forceConstant /= static_cast<double>(count);
   };

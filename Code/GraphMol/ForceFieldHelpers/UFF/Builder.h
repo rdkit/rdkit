@@ -76,6 +76,16 @@ RDKIT_FORCEFIELDHELPERS_EXPORT ForceFields::ForceField *constructForceField(
     ROMol &mol, const AtomicParamVect &params, double vdwThresh = 100.0,
     int confId = -1, bool ignoreInterfragInteractions = true);
 
+RDKIT_FORCEFIELDHELPERS_EXPORT void getForceFieldTerms(
+    ROMol &mol, std::vector<std::vector<double>> &res,
+    double vdwThresh = 100.0, int confId = -1,
+    bool ignoreInterfragInteractions = true);
+
+RDKIT_FORCEFIELDHELPERS_EXPORT void getForceFieldTerms(
+    ROMol &mol, const AtomicParamVect &params,
+    std::vector<std::vector<double>> &res, double vdwThresh = 100.0,
+    int confId = -1, bool ignoreInterfragInteractions = true);
+
 namespace Tools {
 class RDKIT_FORCEFIELDHELPERS_EXPORT DefaultTorsionBondSmarts
     : private boost::noncopyable {
@@ -107,21 +117,45 @@ buildNeighborMatrix(const ROMol &mol);
 RDKIT_FORCEFIELDHELPERS_EXPORT void addBonds(const ROMol &mol,
                                              const AtomicParamVect &params,
                                              ForceFields::ForceField *field);
+RDKIT_FORCEFIELDHELPERS_EXPORT void overBonds(const ROMol &mol,
+                                              const AtomicParamVect &params,
+                                              double *pos,
+                                              ForceFields::ForceField *field,
+                                              std::vector<std::vector<double>> &res);
 RDKIT_FORCEFIELDHELPERS_EXPORT void addAngles(const ROMol &mol,
                                               const AtomicParamVect &params,
                                               ForceFields::ForceField *field);
+RDKIT_FORCEFIELDHELPERS_EXPORT void overAngles(const ROMol &mol,
+                                               const AtomicParamVect &params,
+                                               double *pos,
+                                               ForceFields::ForceField *field,
+                                               std::vector<std::vector<double>> &res);
 RDKIT_FORCEFIELDHELPERS_EXPORT void addNonbonded(
     const ROMol &mol, int confId, const AtomicParamVect &params,
     ForceFields::ForceField *field,
     boost::shared_array<std::uint8_t> neighborMatrix, double vdwThresh = 100.0,
     bool ignoreInterfragInteractions = true);
+RDKIT_FORCEFIELDHELPERS_EXPORT void overNonbonded(
+    const ROMol &mol, int confId, const AtomicParamVect &params,
+    double *pos, ForceFields::ForceField *field,
+    boost::shared_array<std::uint8_t> neighborMatrix,
+    std::vector<std::vector<double>> &res, double vdwThresh = 100.0,
+    bool ignoreInterfragInteractions = true);
 RDKIT_FORCEFIELDHELPERS_EXPORT void addTorsions(
     const ROMol &mol, const AtomicParamVect &params,
     ForceFields::ForceField *field,
     const std::string &torsionBondSmarts = DefaultTorsionBondSmarts::string());
+RDKIT_FORCEFIELDHELPERS_EXPORT void overTorsions(
+    const ROMol &mol, const AtomicParamVect &params,
+    double *pos, ForceFields::ForceField *field, std::vector<std::vector<double>> &res,
+    const std::string &torsionBondSmarts = DefaultTorsionBondSmarts::string());
 RDKIT_FORCEFIELDHELPERS_EXPORT void addInversions(
     const ROMol &mol, const AtomicParamVect &params,
     ForceFields::ForceField *field);
+RDKIT_FORCEFIELDHELPERS_EXPORT void overInversions(
+    const ROMol &mol, const AtomicParamVect &params,
+    double *pos, ForceFields::ForceField *field,
+    std::vector<std::vector<double>> &res);
 }  // namespace Tools
 }  // namespace UFF
 }  // namespace RDKit

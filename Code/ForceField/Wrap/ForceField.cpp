@@ -139,6 +139,7 @@ double PyForceField::calcEnergyWithPos(const python::object &pos) {
     return this->field->calcEnergy();
 }
 
+<<<<<<< HEAD
 //PyObject *PyForceField::calcEnergyTerms() {
 //  PRECONDITION(this->field, "no force field");
 //  PyObject *ETerms = nullptr;
@@ -158,6 +159,28 @@ double PyForceField::calcEnergyWithPos(const python::object &pos) {
 //  }
 //  return ETerms;
 //}
+=======
+PyObject *PyForceField::calcEnergyTerms() {
+    PRECONDITION(this->field, "no force field");
+    PyObject *ETerms = nullptr;
+    PyObject *ETerm = nullptr;
+    int i = 0;
+    std::vector<std::vector<double>> terms;
+
+    this->field->calcEnergyTerms(terms);
+    ETerms = PyTuple_New(terms.size());
+
+    for (std::vector<double> term: terms) {
+      int j = 0;
+      ETerm = PyTuple_New(term.size());
+      for (double e: term) {
+        PyTuple_SetItem(ETerm, j++, PyFloat_FromDouble(e));
+      }
+      PyTuple_SetItem(ETerms, i++, ETerm);
+    }
+    return ETerms;
+}
+>>>>>>> getEnergyTerms2
 
 PyObject *PyForceField::positions() {
   PRECONDITION(this->field, "no force field");
@@ -320,8 +343,14 @@ BOOST_PYTHON_MODULE(rdForceField) {
            (python::arg("pos") = python::object()),
            "Returns the energy (in kcal/mol) of the current arrangement\n"
            "or of the supplied coordinate list (if non-empty)")
+<<<<<<< HEAD
 //      .def("CalcEnergyTerms", &PyForceField::calcEnergyTerms,
 //           "Returns the force field terms\n")
+=======
+      .def("CalcEnergyTerms", &PyForceField::calcEnergyTerms,
+           "Returns a tuple of tuples filled with the terms of the\n"
+           "UFF forcefield")
+>>>>>>> getEnergyTerms2
       .def("CalcGrad", &PyForceField::calcGradWithPos,
            (python::arg("pos") = python::object()),
            "Returns a tuple filled with the per-coordinate gradients\n"

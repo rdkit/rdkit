@@ -39,7 +39,7 @@ class RDKIT_FORCEFIELD_EXPORT BondStretchContrib : public ForceFieldContrib {
  // void getEnergyTerms(double *pos, std::vector<double>& resvec) const;
 
   void getGrad(double *pos, double *grad) const;
-
+//  void getEnergyTerms(double *pos, std::vector<double> &resvec) const;
   virtual BondStretchContrib *copy() const {
     return new BondStretchContrib(*this);
   };

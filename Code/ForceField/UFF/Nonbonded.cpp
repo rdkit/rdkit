@@ -66,12 +66,17 @@ double vdWContrib::getEnergy(double *pos) const {
   // "-" << d_at2Idx << " " << r << " = " << res << std::endl;
   return res;
 }
+<<<<<<< HEAD
 
 //void vdWContrib::getEnergyTerms(double *pos, std::vector<double>& resvec) const {
+=======
+//void vdWContrib::getEnergyTerms(double *pos, std::vector<double> &resvec) const {
+>>>>>>> getEnergyTerms2
 //  PRECONDITION(dp_forceField, "no owner");
 //  PRECONDITION(pos, "bad vector");
 //
 //  double dist = dp_forceField->distance(d_at1Idx, d_at2Idx, pos);
+<<<<<<< HEAD
 //  if (dist > d_thresh || dist <= 0.0) {
 //    resvec.push_back(1.0);
 //    resvec.push_back(double(d_at1Idx));
@@ -96,6 +101,23 @@ double vdWContrib::getEnergy(double *pos) const {
   resvec.push_back(0.0);
 }
 
+=======
+////  if (dist > d_thresh || dist <= 0.0) return 0.0;
+//
+//  double r = d_xij / dist;
+//  double r6 = int_pow<6>(r);
+//  double r12 = r6 * r6;
+//  double res = d_wellDepth * (r12 - 2.0 * r6);
+//  // if(d_at1Idx==12 && d_at2Idx==21 ) std::cerr << "     >: " << d_at1Idx <<
+//  // "-" << d_at2Idx << " " << r << " = " << res << std::endl;
+//  resvec.push_back(3.0);
+//  resvec.push_back(double(d_at1Idx));
+//  resvec.push_back(double(d_at2Idx));
+//  resvec.push_back(double(d_at3Idx));
+//  resvec.push_back(res);
+//  resvec.push_back(0.0);
+//}
+>>>>>>> getEnergyTerms2
 void vdWContrib::getGrad(double *pos, double *grad) const {
   PRECONDITION(dp_forceField, "no owner");
   PRECONDITION(pos, "bad vector");
