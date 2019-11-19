@@ -102,11 +102,11 @@ python::object UFFGetForceFieldTerms(
    
   python::list ETerms;
 //  python::list ETerm;
-//  std::vector<std::vector<double>> terms;
+  std::vector<std::vector<double>> terms;
 //  {
 //    NOGIL gil;
-//    UFF::getForceFieldTerms(
-//      mol, vdwThresh, confId, ignoreInterfragInteractions, terms);
+  UFF::getForceFieldTerms(
+        mol, vdwThresh, confId, ignoreInterfragInteractions, terms);
 //  }
 //  for (std::vector<double> term: terms) {
 ////    for (double e: term) {
