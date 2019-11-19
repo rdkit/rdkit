@@ -101,21 +101,11 @@ python::object UFFGetForceFieldTerms(
     bool ignoreInterfragInteractions = true) {
    
   python::list ETerms;
-//  python::list ETerm;
   std::vector<std::vector<double>> terms;
-//  {
-//    NOGIL gil;
   UFF::getForceFieldTerms(
         mol, terms, vdwThresh, confId, ignoreInterfragInteractions);
-//  }
   for (std::vector<double> term: terms) {
-//    for (double e: term) {
-//      ETerm.append(e);
-//    }
     ETerms.append(python::make_tuple(term[0],term[1],term[2],term[3],term[4],term[5]));
-//    ETerms.append(0.01);
-//    ETerms.append(0.01);
-//    ETerms.append(0.01);
   }
   return ETerms;
 }
