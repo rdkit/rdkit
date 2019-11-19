@@ -96,7 +96,7 @@ ForceFields::PyForceField *UFFGetMoleculeForceField(
   return res;
 }
 
-python::object *UFFGetForceFieldTerms(
+python::object UFFGetForceFieldTerms(
     ROMol &mol, double vdwThresh = 10.0, int confId = -1,
     bool ignoreInterfragInteractions = true) {
    
