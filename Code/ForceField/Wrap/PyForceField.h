@@ -51,8 +51,6 @@ class PyForceField {
 
   double calcEnergy() { return calcEnergyWithPos(); }
     
-  PyObject *calcEnergyTerms();
-
   PyObject *calcGradWithPos(const python::object &pos = python::object());
 
   PyObject *positions();

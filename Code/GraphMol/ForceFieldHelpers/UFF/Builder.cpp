@@ -72,8 +72,8 @@ void overBonds(const ROMol &mol, const AtomicParamVect &params, double *pos,
 //      field->contribs().push_back(ForceFields::ContribPtr(contrib));
       std::vector<double> e;
       e.push_back(2.0);
-      e.push_back(double(idx1));
-      e.push_back(double(idx2));
+      e.push_back(double(idx1+1));
+      e.push_back(double(idx2+1));
       e.push_back(contrib->getEnergy(pos));
       e.push_back(0.0);
       e.push_back(0.0);
@@ -365,9 +365,9 @@ void overAngles(const ROMol &mol, const AtomicParamVect &params, double *pos,
 //          field->contribs().push_back(ForceFields::ContribPtr(contrib));
           std::vector<double> e;
           e.push_back(3.0);
-          e.push_back(double(i));
-          e.push_back(double(j));
-          e.push_back(double(k));
+          e.push_back(double(i+1));
+          e.push_back(double(j+1));
+          e.push_back(double(k+1));
           e.push_back(contrib->getEnergy(pos));
           e.push_back(0.0);
           res.push_back(e);
@@ -719,9 +719,9 @@ void overTrigonalBipyramidAngles(const Atom *atom, const ROMol &mol, int confId,
 //    field->contribs().push_back(ForceFields::ContribPtr(contrib));
     std::vector<double> e;
     e.push_back(3.0);
-    e.push_back(double(i));
-    e.push_back(double(atomIdx));
-    e.push_back(double(j));
+    e.push_back(double(i+1));
+    e.push_back(double(atomIdx+1));
+    e.push_back(double(j+1));
     e.push_back(contrib->getEnergy(pos));
     e.push_back(0.0);
     res.push_back(e);
@@ -828,8 +828,8 @@ void overNonbonded(const ROMol &mol, int confId, const AtomicParamVect &params,
 //          field->contribs().push_back(ForceFields::ContribPtr(contrib));
           std::vector<double> e;
           e.push_back(1.0);
-          e.push_back(double(i));
-          e.push_back(double(j));
+          e.push_back(double(i+1));
+          e.push_back(double(j+1));
           e.push_back(contrib->getEnergy(pos));
           e.push_back(0.0);
           e.push_back(0.0);
@@ -1047,10 +1047,10 @@ void overTorsions(const ROMol &mol, const AtomicParamVect &params, double *pos,
 //                field->contribs().push_back(ForceFields::ContribPtr(contrib));
                 std::vector<double> e;
                 e.push_back(4.0);
-                e.push_back(double(bIdx));
-                e.push_back(double(idx1));
-                e.push_back(double(idx2));
-                e.push_back(double(eIdx));
+                e.push_back(double(bIdx+1));
+                e.push_back(double(idx1+1));
+                e.push_back(double(idx2+1));
+                e.push_back(double(eIdx+1));
                 e.push_back(contrib->getEnergy(pos));
                 res.push_back(e);
                 contribsHere.push_back(contrib);
@@ -1230,10 +1230,10 @@ void overInversions(const ROMol &mol, const AtomicParamVect &params,
 //      field->contribs().push_back(ForceFields::ContribPtr(contrib));
       std::vector<double> e;
       e.push_back(5.0);
-      e.push_back(double(idx[n[0]]));
-      e.push_back(double(idx[n[1]]));
-      e.push_back(double(idx[n[2]]));
-      e.push_back(double(idx[n[3]]));
+      e.push_back(double(idx[n[0]]+1));
+      e.push_back(double(idx[n[1]]+1));
+      e.push_back(double(idx[n[2]]+1));
+      e.push_back(double(idx[n[3]]+1));
       e.push_back(contrib->getEnergy(pos));
       res.push_back(e);
     }
