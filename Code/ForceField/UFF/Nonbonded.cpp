@@ -66,26 +66,6 @@ double vdWContrib::getEnergy(double *pos) const {
   // "-" << d_at2Idx << " " << r << " = " << res << std::endl;
   return res;
 }
-<<<<<<< HEAD
-
-//void vdWContrib::getEnergyTerms(double *pos, std::vector<double>& resvec) const {
-=======
-//void vdWContrib::getEnergyTerms(double *pos, std::vector<double> &resvec) const {
->>>>>>> getEnergyTerms2
-//  PRECONDITION(dp_forceField, "no owner");
-//  PRECONDITION(pos, "bad vector");
-//
-//  double dist = dp_forceField->distance(d_at1Idx, d_at2Idx, pos);
-<<<<<<< HEAD
-//  if (dist > d_thresh || dist <= 0.0) {
-//    resvec.push_back(1.0);
-//    resvec.push_back(double(d_at1Idx));
-//    resvec.push_back(double(d_at2Idx));
-//    resvec.push_back(0.0);
-//    resvec.push_back(0.0);
-//    resvec.push_back(0.0);
-//    return;
-//  }
 
   double r = d_xij / dist;
   double r6 = int_pow<6>(r);
