@@ -1307,6 +1307,18 @@ void getForceFieldTerms(ROMol &mol,
   for (unsigned int i = 0; i < mol.getNumAtoms(); i++) {
     field->positions().push_back(&conf.getAtomPos(i));
   }
+    
+  Tools::addBonds(mol, params, field);
+  Tools::addAngles(mol, params, field);
+  Tools::addAngleSpecialCases(mol, confId, params, field);
+  boost::shared_array<std::uint8_t> neighborMat =
+      Tools::buildNeighborMatrix(mol);
+  Tools::addNonbonded(mol, confId, params, field, neighborMat, vdwThresh,
+                      ignoreInterfragInteractions);
+  Tools::addTorsions(mol, params, field);
+  Tools::addInversions(mol, params, field);
+    
+  field->initialize();
 
   unsigned int N = field->positions().size();
   auto *pos = new double[field->dimension() * N];
@@ -1323,8 +1335,6 @@ void getForceFieldTerms(ROMol &mol,
   Tools::overBonds(mol, params, pos, field, res);
   Tools::overAngles(mol, params, pos, field, res);
   Tools::overAngleSpecialCases(mol, confId, params, pos, field, res);
-  boost::shared_array<std::uint8_t> neighborMat =
-      Tools::buildNeighborMatrix(mol);
   Tools::overNonbonded(mol, confId, params, pos, field, neighborMat, res, vdwThresh,
                       ignoreInterfragInteractions);
   Tools::overTorsions(mol, params, pos, field, res);

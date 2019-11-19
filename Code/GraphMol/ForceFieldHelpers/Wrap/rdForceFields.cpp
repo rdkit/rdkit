@@ -362,18 +362,23 @@ BOOST_PYTHON_MODULE(rdForceFieldHelpers) {
                python::arg("ignoreInterfragInteractions") = true),
               python::return_value_policy<python::manage_new_object>(),
               docString.c_str());
-
+  docString =
+          "checks if UFF parameters are available for all of a molecule's atoms\n\n\
+     \n\
+     ARGUMENTS:\n\n\
+        - mol : the molecule of interest.\n\
+    \n";
+  python::def("UFFGetForceFieldTerms", RDKit::UFFGetForceFieldTerms,
+              (python::arg("mol"), python::arg("vdwThresh") = 10.0,
+               python::arg("confId") = -1,
+               python::arg("ignoreInterfragInteractions") = true),
+              docString.c_str());
   docString =
       "checks if UFF parameters are available for all of a molecule's atoms\n\n\
  \n\
  ARGUMENTS:\n\n\
     - mol : the molecule of interest.\n\
 \n";
-  python::def("UFFGetForceFieldTerms", RDKit::UFFGetForceFieldTerms,
-              (python::arg("mol"), python::arg("vdwThresh") = 10.0,
-               python::arg("confId") = -1,
-               python::arg("ignoreInterfragInteractions") = true),
-              "get UFF ForceField terms");
   python::def("UFFHasAllMoleculeParams", RDKit::UFFHasAllMoleculeParams,
               (python::arg("mol")), docString.c_str());
 
