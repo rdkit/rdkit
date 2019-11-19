@@ -102,7 +102,6 @@ class calcEnergy {
   ForceFields::ForceField *mp_ffHolder;
 };
 
-
 class calcGradient {
  public:
   calcGradient(ForceFields::ForceField *ffHolder) : mp_ffHolder(ffHolder){};

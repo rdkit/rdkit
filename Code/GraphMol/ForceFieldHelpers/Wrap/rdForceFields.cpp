@@ -216,42 +216,6 @@ PyObject *GetUFFAtomTypes(const RDKit::ROMol &mol) {
   return res;
 };
 
-//PyObject *GetUFFBondTerms(const RDKit::ROMol &mol) {
-//  PyObject *res = nullptr;
-//  PyObject *resitem = nullptr;
-//  AtomicParamVect params;
-//  bool foundAll;
-//  auto *field = new ForceFields::ForceField();
-    
-//  Conformer &conf = mol.getConformer(-1);
-//  for (unsigned int i = 0; i < mol.getNumAtoms(); i++) {
-//    field->positions().push_back(&conf.getAtomPos(i));
-//  }
-    
-//  boost::tie(params, foundAll) = RDKit::UFF::getAtomTypes(mol);
-//  res = PyList_New();
-    
-//  for (RDKit::ROMol::ConstBondIterator bi = mol.beginBonds(); bi != mol.endBonds();
-//       bi++) {
-//    resitem = PyTuple_New(3);
-//    int idx1 = (*bi)->getBeginAtomIdx();
-//    int idx2 = (*bi)->getEndAtomIdx();
-
-    // FIX: recognize amide bonds here.
-
-//    if (params[idx1] && params[idx2]) {
-//      BondStretchContrib *contrib;
-//      contrib = new UFF::BondStretchContrib(field, idx1, idx2,
-//                                       (*bi)->getBondTypeAsDouble(),
-//                                       params[idx1], params[idx2]);
-//      field->contribs().push_back(ForceFields::ContribPtr(contrib));
-//      PyTuple_SetItem(resitem, 0, PyInt_FromLong(idx1));
-//      PyTuple_SetItem(resitem, 1, PyInt_FromLong(idx2));
-//      PyTuple_SetItem(resitem, 2, PyFloat_FromDouble(params[i]->x1));
-//    }
-//  }
-//}
-
 PyObject *getUFFBondStretchParams(const RDKit::ROMol &mol,
                                   const unsigned int idx1,
                                   const unsigned int idx2) {
