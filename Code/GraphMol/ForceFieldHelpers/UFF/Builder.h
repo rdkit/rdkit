@@ -76,6 +76,16 @@ RDKIT_FORCEFIELDHELPERS_EXPORT ForceFields::ForceField *constructForceField(
     ROMol &mol, const AtomicParamVect &params, double vdwThresh = 100.0,
     int confId = -1, bool ignoreInterfragInteractions = true);
 
+RDKIT_FORCEFIELDHELPERS_EXPORT void getForceFieldTerms(
+    ROMol &mol, std::vector<std::vector<double>> &res,
+    double vdwThresh = 100.0, int confId = -1,
+    bool ignoreInterfragInteractions = true);
+
+RDKIT_FORCEFIELDHELPERS_EXPORT void getForceFieldTerms(
+    ROMol &mol, const AtomicParamVect &params,
+    std::vector<std::vector<double>> &res, double vdwThresh = 100.0,
+    int confId = -1, bool ignoreInterfragInteractions = true);
+
 namespace Tools {
 class RDKIT_FORCEFIELDHELPERS_EXPORT DefaultTorsionBondSmarts
     : private boost::noncopyable {

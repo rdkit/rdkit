@@ -1295,9 +1295,9 @@ ForceFields::ForceField *constructForceField(ROMol &mol, double vdwThresh,
 // ------------------------------------------------------------------------
 void getForceFieldTerms(ROMol &mol,
                         const AtomicParamVect &params,
+                        std::vector<std::vector<double>> &res,
                         double vdwThresh, int confId,
-                        bool ignoreInterfragInteractions,
-                        std::vector<std::vector<double>> &res) {
+                        bool ignoreInterfragInteractions) {
   PRECONDITION(mol.getNumAtoms() == params.size(), "bad parameters");
 
   auto *field = new ForceFields::ForceField();
@@ -1336,14 +1336,14 @@ void getForceFieldTerms(ROMol &mol,
 //
 //
 // ------------------------------------------------------------------------
-void getForceFieldTerms(ROMol &mol, double vdwThresh,
-                        int confId, bool ignoreInterfragInteractions,
-                        std::vector<std::vector<double>> &res) {
+void getForceFieldTerms(ROMol &mol, std::vector<std::vector<double>> &res,
+                        double vdwThresh, int confId,
+                        bool ignoreInterfragInteractions) {
   bool foundAll;
   AtomicParamVect params;
   boost::tie(params, foundAll) = getAtomTypes(mol);
-  getForceFieldTerms(mol, params, vdwThresh, confId,
-                     ignoreInterfragInteractions, res);
+  getForceFieldTerms(mol, params, res, vdwThresh, confId,
+                     ignoreInterfragInteractions);
 }
 } //end of UFF namespace
 } //end of RDkit namespace
