@@ -56,7 +56,8 @@ std::string _combineChildSmarts(std::string cs1, unsigned int features1,
           "binary tree");
     }
     res += cs1;
-    res += ",";
+    if (!(cs1.empty() || cs2.empty()))
+      res += ",";
     res += cs2;
     features |= static_cast<unsigned int>(QueryBoolFeatures::HAS_OR);
   } else if ((descrip.find("And") > 0) &&
@@ -71,7 +72,8 @@ std::string _combineChildSmarts(std::string cs1, unsigned int features1,
       features |= static_cast<unsigned int>(QueryBoolFeatures::HAS_AND);
     }
     res += cs1;
-    res += symb;
+    if (!(cs1.empty() || cs2.empty()))
+      res += symb;
     res += cs2;
   } else {
     std::stringstream err;
@@ -418,7 +420,7 @@ std::string getBondSmartsSimple(const Bond *bond,
                             bond->getBondDir(), doIsoSmiles, reverseDative);
   } else {
     std::stringstream msg;
-    msg << "Canot write smarts for this query bond type : " << descrip;
+    msg << "Can't write smarts for this query bond type: " << descrip;
     throw msg.str().c_str();
   }
   return res;
