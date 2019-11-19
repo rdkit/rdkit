@@ -103,6 +103,8 @@ python::object UFFGetForceFieldTerms(
   python::list ETerms;
 //  python::list ETerm;
   std::vector<std::vector<double>> terms;
+  ForceFields::ForceField *ff = UFF::constructForceField(
+  mol, vdwThresh, confId, ignoreInterfragInteractions);
 //  {
 //    NOGIL gil;
 //  UFF::getForceFieldTerms(
