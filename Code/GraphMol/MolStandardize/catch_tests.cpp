@@ -537,3 +537,54 @@ M  END
     CHECK(sm->getNumAtoms() == 0);
   }
 }
+
+TEST_CASE("github #2792: carbon in the uncharger", "[uncharger,bug]") {
+  SECTION("carbocation 1") {
+    auto m = "C[CH2+]"_smiles;
+    REQUIRE(m);
+    MolStandardize::Uncharger uncharger;
+    std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
+    REQUIRE(outm);
+    CHECK(outm->getAtomWithIdx(1)->getFormalCharge() == 0);
+    CHECK(outm->getAtomWithIdx(1)->getTotalNumHs() == 3);
+  }
+  SECTION("boron cation") {
+    auto m = "C[BH+]"_smiles;
+    REQUIRE(m);
+    MolStandardize::Uncharger uncharger;
+    std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
+    REQUIRE(outm);
+    CHECK(outm->getAtomWithIdx(1)->getFormalCharge() == 0);
+    CHECK(outm->getAtomWithIdx(1)->getTotalNumHs() == 2);
+  }
+  SECTION("carbanion 1") {
+    auto m = "C[CH2-]"_smiles;
+    REQUIRE(m);
+    MolStandardize::Uncharger uncharger;
+    std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
+    REQUIRE(outm);
+    CHECK(outm->getAtomWithIdx(1)->getFormalCharge() == 0);
+    CHECK(outm->getAtomWithIdx(1)->getTotalNumHs() == 3);
+  }
+  SECTION("carbocation 2") {
+    auto m = "CN1C=CN[CH+]1"_smiles;
+    REQUIRE(m);
+    MolStandardize::Uncharger uncharger;
+    std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
+    REQUIRE(outm);
+    CHECK(outm->getAtomWithIdx(5)->getFormalCharge() == 0);
+    CHECK(outm->getAtomWithIdx(5)->getTotalNumHs() == 2);
+  }
+  SECTION("carbocation 2 without sanitization") {
+    SmilesParserParams params;
+    params.sanitize = false;
+    std::unique_ptr<ROMol> m(SmilesToMol("CN1C=CN[CH+]1", params));
+    REQUIRE(m);
+    m->updatePropertyCache();
+    MolStandardize::Uncharger uncharger;
+    std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
+    REQUIRE(outm);
+    CHECK(outm->getAtomWithIdx(5)->getFormalCharge() == 0);
+    CHECK(outm->getAtomWithIdx(5)->getTotalNumHs() == 2);
+  }
+}
