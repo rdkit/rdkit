@@ -424,14 +424,23 @@ ROMol *Uncharger::uncharge(const ROMol &mol) {
         atom->setNumExplicitHs(atom->getTotalNumHs());
       }
       atom->setNoImplicit(true);
-      while (atom->getFormalCharge() > 0 && atom->getNumExplicitHs() > 0 &&
-             netCharge > 0) {
-        atom->setNumExplicitHs(atom->getTotalNumHs() - 1);
+      while (atom->getFormalCharge() > 0 && netCharge > 0) {
         atom->setFormalCharge(atom->getFormalCharge() - 1);
         --netCharge;
+        // the special case for C here was github #2792
+        if (atom->getAtomicNum() != 6 && !isEarlyAtom(atom->getAtomicNum())) {
+          auto nExplicit = atom->getNumExplicitHs();
+          if (nExplicit >= 1) atom->setNumExplicitHs(nExplicit - 1);
+          if (nExplicit == 1) {
+            // we just removed the last one:
+            break;
+          }
+        } else {
+          atom->setNumExplicitHs(atom->getNumExplicitHs() + 1);
+        }
         BOOST_LOG(rdInfoLog) << "Removed positive charge.\n";
       }
-      // since we chnaged the number of explicit Hs, we need to update the
+      // since we changed the number of explicit Hs, we need to update the
       // other valence parameters
       atom->updatePropertyCache(false);
       if (!netCharge) break;
