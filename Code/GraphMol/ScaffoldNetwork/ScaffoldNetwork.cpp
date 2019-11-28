@@ -104,6 +104,14 @@ ROMol *removeAttachmentPoints(const ROMol &mol,
   for (unsigned int i = 1; i <= mol.getNumAtoms(); ++i) {
     auto atom = res->getAtomWithIdx(mol.getNumAtoms() - i);
     if (!atom->getAtomicNum() && atom->getDegree() == 1) {
+      // if we're removing a neighbor from an aromatic heteroatom,
+      // don't forget to set the H count on that atom:
+      auto nbri = res->getAtomNeighbors(atom);
+      auto nbr = (*res)[*nbri.first];
+      if (nbr->getIsAromatic() && nbr->getAtomicNum() != 6) {
+        nbr->setNoImplicit(true);
+        nbr->setNumExplicitHs(1);
+      }
       res->removeAtom(atom);
     }
   }

@@ -406,3 +406,33 @@ TEST_CASE("BRICS Fragmenter", "[unittest, scaffolds]") {
                         }) == 20);
   }
 }
+
+TEST_CASE("Implicit Hs on aromatic atoms with attachments",
+          "[bug, scaffolds]") {
+  auto m = "c1cn(C3CCC3)nc1"_smiles;
+  REQUIRE(m);
+  SECTION("original behavior default") {
+    ScaffoldNetwork::ScaffoldNetworkParams ps;
+    ps.includeScaffoldsWithoutAttachments = true;
+    ps.includeGenericScaffolds = false;
+    ScaffoldNetwork::ScaffoldNetwork net;
+    ScaffoldNetwork::detail::addMolToNetwork(*m, net, ps);
+    CHECK(net.nodes.size() == 5);
+    CHECK(net.counts.size() == net.nodes.size());
+    CHECK(net.edges.size() == 4);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type == ScaffoldNetwork::EdgeType::Fragment;
+                        }) == 2);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type ==
+                                 ScaffoldNetwork::EdgeType::RemoveAttachment;
+                        }) == 2);
+    CHECK(std::count(net.counts.begin(), net.counts.end(), 1) == 5);
+    for (auto nd : net.nodes) {
+      std::unique_ptr<ROMol> m(SmilesToMol(nd));
+      CHECK(m);
+    }
+  }
+}
