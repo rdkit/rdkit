@@ -328,3 +328,81 @@ TEST_CASE("ostream integration", "[scaffolds]") {
     CHECK(txt == "NetworkEdge( 0, 1, Fragment )");
   }
 }
+
+TEST_CASE("no attachment points", "[unittest, scaffolds]") {
+  auto m = "c1ccccc1CC1NC(=O)CCC1"_smiles;
+  REQUIRE(m);
+  SECTION("others default") {
+    ScaffoldNetwork::ScaffoldNetworkParams ps;
+    ps.includeScaffoldsWithAttachments = false;
+    ScaffoldNetwork::ScaffoldNetwork net;
+    ScaffoldNetwork::detail::addMolToNetwork(*m, net, ps);
+    CHECK(net.nodes.size() == 5);
+    CHECK(net.counts.size() == net.nodes.size());
+    CHECK(net.edges.size() == 4);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type == ScaffoldNetwork::EdgeType::Fragment;
+                        }) == 2);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type == ScaffoldNetwork::EdgeType::Generic;
+                        }) == 2);
+    CHECK(std::count(net.counts.begin(), net.counts.end(), 1) ==
+          net.counts.size());
+  }
+  SECTION("no generic") {
+    ScaffoldNetwork::ScaffoldNetworkParams ps;
+    ps.includeScaffoldsWithAttachments = false;
+    ps.includeGenericScaffolds = false;
+    ScaffoldNetwork::ScaffoldNetwork net;
+    ScaffoldNetwork::detail::addMolToNetwork(*m, net, ps);
+    CHECK(net.nodes.size() == 3);
+    CHECK(net.counts.size() == net.nodes.size());
+    CHECK(net.edges.size() == 2);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type == ScaffoldNetwork::EdgeType::Fragment;
+                        }) == 2);
+    CHECK(std::count(net.counts.begin(), net.counts.end(), 1) ==
+          net.counts.size());
+  }
+}
+
+TEST_CASE("BRICS Fragmenter", "[unittest, scaffolds]") {
+  auto m = "c1ccccc1C(=O)NC1NC(=O)CCC1"_smiles;
+  REQUIRE(m);
+  SECTION("original behavior default") {
+    ScaffoldNetwork::ScaffoldNetworkParams ps;
+    ps.includeScaffoldsWithoutAttachments = false;
+    ps.includeGenericScaffolds = false;
+    ps.keepOnlyFirstFragment = false;
+    ScaffoldNetwork::ScaffoldNetwork net;
+    ScaffoldNetwork::detail::addMolToNetwork(*m, net, ps);
+    CHECK(net.nodes.size() == 6);
+    CHECK(net.counts.size() == net.nodes.size());
+    CHECK(net.edges.size() == 8);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type == ScaffoldNetwork::EdgeType::Fragment;
+                        }) == 8);
+    CHECK(std::count(net.counts.begin(), net.counts.end(), 1) == 3);
+    CHECK(std::count(net.counts.begin(), net.counts.end(), 2) == 3);
+  }
+  SECTION("BRICS fragmenter") {
+    ScaffoldNetwork::ScaffoldNetworkParams ps =
+        ScaffoldNetwork::BRICSNetworkParams;
+    ps.includeScaffoldsWithoutAttachments = false;
+    ps.includeGenericScaffolds = false;
+    ps.keepOnlyFirstFragment = false;
+    ScaffoldNetwork::ScaffoldNetwork net;
+    ScaffoldNetwork::detail::addMolToNetwork(*m, net, ps);
+    CHECK(net.nodes.size() == 10);
+    CHECK(net.counts.size() == net.nodes.size());
+    CHECK(net.edges.size() == 20);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type == ScaffoldNetwork::EdgeType::Fragment;
+                        }) == 20);
+  }
+}

@@ -188,10 +188,16 @@ void addMolToNetwork(const ROMol &mol, ScaffoldNetwork &network,
   auto frags = getMolFragments(*fmol, params);
   for (auto frag : frags) {
     auto smi = frag.first;
-    auto lsmi = MolToSmiles(*frag.second);
+    ROMOL_SPTR fragMol = frag.second;
+
     // the first node is certain to already be in the network, so don't
     // update counts for it
     auto iidx = addEntryIfMissing(network.nodes, smi);
+    if (!params.includeScaffoldsWithAttachments) {
+      // we're only including scaffolds without attachments:
+      fragMol.reset(removeAttachmentPoints(*fragMol, params));
+    }
+    auto lsmi = MolToSmiles(*fragMol);
     auto lidx = addEntryIfMissing(network.nodes, lsmi, &network.counts);
     addEntryIfMissing(network.edges,
                       NetworkEdge({iidx, lidx, EdgeType::Fragment}));
@@ -200,12 +206,13 @@ void addMolToNetwork(const ROMol &mol, ScaffoldNetwork &network,
       bool doAtoms = true;
       bool doBonds = false;
       std::unique_ptr<ROMol> gmol(
-          makeScaffoldGeneric(*frag.second, doAtoms, doBonds));
+          makeScaffoldGeneric(*fragMol, doAtoms, doBonds));
       auto gsmi = MolToSmiles(*gmol);
       auto gidx = addEntryIfMissing(network.nodes, gsmi, &network.counts);
       addEntryIfMissing(network.edges,
                         NetworkEdge({lidx, gidx, EdgeType::Generic}));
-      if (params.includeScaffoldsWithoutAttachments) {
+      if (params.includeScaffoldsWithAttachments &&
+          params.includeScaffoldsWithoutAttachments) {
         std::unique_ptr<ROMol> amol(removeAttachmentPoints(*gmol, params));
         auto asmi = MolToSmiles(*amol);
         auto aidx = addEntryIfMissing(network.nodes, asmi, &network.counts);
@@ -217,12 +224,13 @@ void addMolToNetwork(const ROMol &mol, ScaffoldNetwork &network,
         bool doAtoms = true;
         bool doBonds = true;
         std::unique_ptr<ROMol> gbmol(
-            makeScaffoldGeneric(*frag.second, doAtoms, doBonds));
+            makeScaffoldGeneric(*fragMol, doAtoms, doBonds));
         auto gbsmi = MolToSmiles(*gbmol);
         auto gbidx = addEntryIfMissing(network.nodes, gbsmi, &network.counts);
         addEntryIfMissing(network.edges,
                           NetworkEdge({lidx, gbidx, EdgeType::GenericBond}));
-        if (params.includeScaffoldsWithoutAttachments) {
+        if (params.includeScaffoldsWithAttachments &&
+            params.includeScaffoldsWithoutAttachments) {
           std::unique_ptr<ROMol> amol(removeAttachmentPoints(*gbmol, params));
           auto asmi = MolToSmiles(*amol);
           auto aidx = addEntryIfMissing(network.nodes, asmi, &network.counts);
@@ -232,8 +240,11 @@ void addMolToNetwork(const ROMol &mol, ScaffoldNetwork &network,
         }
       }
     }
-    if (params.includeScaffoldsWithoutAttachments) {
-      std::unique_ptr<ROMol> amol(removeAttachmentPoints(*frag.second, params));
+    if (params.includeScaffoldsWithAttachments &&
+        params.includeScaffoldsWithoutAttachments) {
+      // we're including both scaffolds without attachments and those with.
+      // do the one without now.
+      std::unique_ptr<ROMol> amol(removeAttachmentPoints(*fragMol, params));
       auto asmi = MolToSmiles(*amol);
       auto aidx = addEntryIfMissing(network.nodes, asmi, &network.counts);
       addEntryIfMissing(network.edges,
@@ -246,6 +257,12 @@ void addMolToNetwork(const ROMol &mol, ScaffoldNetwork &network,
 template <typename T>
 void updateScaffoldNetwork(const T &mols, ScaffoldNetwork &network,
                            const ScaffoldNetworkParams &params) {
+  if (!params.includeScaffoldsWithAttachments &&
+      !params.includeScaffoldsWithoutAttachments) {
+    throw ValueErrorException(
+        "must include at least one of scaffolds with attachments or scaffolds "
+        "without attachments");
+  }
   for (const auto &mol : mols) {
     detail::addMolToNetwork(*mol, network, params);
   }
@@ -256,6 +273,99 @@ template RDKIT_SCAFFOLDNETWORK_EXPORT void updateScaffoldNetwork(
     const ScaffoldNetworkParams &params);
 template RDKIT_SCAFFOLDNETWORK_EXPORT ScaffoldNetwork createScaffoldNetwork(
     const std::vector<ROMOL_SPTR> &ms, const ScaffoldNetworkParams &params);
+
+const ScaffoldNetworkParams BRICSNetworkParams(
+    {"[$([C;D3]([#0,#6,#7,#8])(=O)):1]-;!@[$([O;D2]-;!@[#0,#6,#1]):2]>>[1*]-[*"
+     ":1].[3*]-[*:2]",
+     "[$([C;D3]([#0,#6,#7,#8])(=O)):1]-;!@[$([N;!D1;!$(N=*);!$(N-[!#6;!#16;!#"
+     "0;!#1]);!$([N;R]@[C;R]=O)]):2]>>[1*]-[*:1].[5*]-[*:2]",
+     "[$([C;D3]([#0,#6,#7,#8])(=O)):1]-;!@[$([N;R;$(N(@C(=O))@[C,N,O,S])]):2]>"
+     ">[1*]-[*:1].[10*]-[*:2]",
+     "[$([O;D2]-;!@[#0,#6,#1]):1]-;!@[$([C;!D1;!$(C=*)]-;!@[#6]):2]>>[3*]-[*:"
+     "1].[4*]-[*:2]",
+     "[$([O;D2]-;!@[#0,#6,#1]):1]-;!@[$([C;$(C(-;@[C,N,O,S])-;@[N,O,S])]):2]>>"
+     "[3*]-[*:1].[13*]-[*:2]",
+     "[$([O;D2]-;!@[#0,#6,#1]):1]-;!@[$([c;$(c(:[c,n,o,s]):[n,o,s])]):2]>>[3*]"
+     "-[*:1].[14*]-[*:2]",
+     "[$([O;D2]-;!@[#0,#6,#1]):1]-;!@[$([C;$(C(-;@C)-;@C)]):2]>>[3*]-[*:1].["
+     "15*]-[*:2]",
+     "[$([O;D2]-;!@[#0,#6,#1]):1]-;!@[$([c;$(c(:c):c)]):2]>>[3*]-[*:1].[16*]-["
+     "*:2]",
+     "[$([C;!D1;!$(C=*)]-;!@[#6]):1]-;!@[$([N;!D1;!$(N=*);!$(N-[!#6;!#16;!#0;!"
+     "#1]);!$([N;R]@[C;R]=O)]):2]>>[4*]-[*:1].[5*]-[*:2]",
+     "[$([C;!D1;!$(C=*)]-;!@[#6]):1]-;!@[$([S;D2](-;!@[#0,#6])):2]>>[4*]-[*:1]"
+     ".[11*]-[*:2]",
+     "[$([N;!D1;!$(N=*);!$(N-[!#6;!#16;!#0;!#1]);!$([N;R]@[C;R]=O)]):1]-;!@[$("
+     "[S;D4]([#6,#0])(=O)(=O)):2]>>[5*]-[*:1].[12*]-[*:2]",
+     "[$([N;!D1;!$(N=*);!$(N-[!#6;!#16;!#0;!#1]);!$([N;R]@[C;R]=O)]):1]-;!@[$("
+     "[c;$(c(:[c,n,o,s]):[n,o,s])]):2]>>[5*]-[*:1].[14*]-[*:2]",
+     "[$([N;!D1;!$(N=*);!$(N-[!#6;!#16;!#0;!#1]);!$([N;R]@[C;R]=O)]):1]-;!@[$("
+     "[c;$(c(:c):c)]):2]>>[5*]-[*:1].[16*]-[*:2]",
+     "[$([N;!D1;!$(N=*);!$(N-[!#6;!#16;!#0;!#1]);!$([N;R]@[C;R]=O)]):1]-;!@[$("
+     "[C;$(C(-;@[C,N,O,S])-;@[N,O,S])]):2]>>[5*]-[*:1].[13*]-[*:2]",
+     "[$([N;!D1;!$(N=*);!$(N-[!#6;!#16;!#0;!#1]);!$([N;R]@[C;R]=O)]):1]-;!@[$("
+     "[C;$(C(-;@C)-;@C)]):2]>>[5*]-[*:1].[15*]-[*:2]",
+     "[$([C;D3;!R](=O)-;!@[#0,#6,#7,#8]):1]-;!@[$([C;$(C(-;@[C,N,O,S])-;@[N,O,"
+     "S])]):2]>>[6*]-[*:1].[13*]-[*:2]",
+     "[$([C;D3;!R](=O)-;!@[#0,#6,#7,#8]):1]-;!@[$([c;$(c(:[c,n,o,s]):[n,o,s])]"
+     "):2]>>[6*]-[*:1].[14*]-[*:2]",
+     "[$([C;D3;!R](=O)-;!@[#0,#6,#7,#8]):1]-;!@[$([C;$(C(-;@C)-;@C)]):2]>>[6*]"
+     "-[*:1].[15*]-[*:2]",
+     "[$([C;D3;!R](=O)-;!@[#0,#6,#7,#8]):1]-;!@[$([c;$(c(:c):c)]):2]>>[6*]-[*:"
+     "1].[16*]-[*:2]",
+     "[$([C;D2,D3]-[#6]):1]=;!@[$([C;D2,D3]-[#6]):2]>>[7*]-[*:1].[7*]-[*:2]",
+     "[$([C;!R;!D1;!$(C!-*)]):1]-;!@[$([n;+0;$(n(:[c,n,o,s]):[c,n,o,s])]):2]>>"
+     "[8*]-[*:1].[9*]-[*:2]",
+     "[$([C;!R;!D1;!$(C!-*)]):1]-;!@[$([N;R;$(N(@C(=O))@[C,N,O,S])]):2]>>[8*]-"
+     "[*:1].[10*]-[*:2]",
+     "[$([C;!R;!D1;!$(C!-*)]):1]-;!@[$([C;$(C(-;@[C,N,O,S])-;@[N,O,S])]):2]>>["
+     "8*]-[*:1].[13*]-[*:2]",
+     "[$([C;!R;!D1;!$(C!-*)]):1]-;!@[$([c;$(c(:[c,n,o,s]):[n,o,s])]):2]>>[8*]-"
+     "[*:1].[14*]-[*:2]",
+     "[$([C;!R;!D1;!$(C!-*)]):1]-;!@[$([C;$(C(-;@C)-;@C)]):2]>>[8*]-[*:1].[15*"
+     "]-[*:2]",
+     "[$([C;!R;!D1;!$(C!-*)]):1]-;!@[$([c;$(c(:c):c)]):2]>>[8*]-[*:1].[16*]-[*"
+     ":2]",
+     "[$([n;+0;$(n(:[c,n,o,s]):[c,n,o,s])]):1]-;!@[$([C;$(C(-;@[C,N,O,S])-;@["
+     "N,O,S])]):2]>>[9*]-[*:1].[13*]-[*:2]",
+     "[$([n;+0;$(n(:[c,n,o,s]):[c,n,o,s])]):1]-;!@[$([c;$(c(:[c,n,o,s]):[n,o,"
+     "s])]):2]>>[9*]-[*:1].[14*]-[*:2]",
+     "[$([n;+0;$(n(:[c,n,o,s]):[c,n,o,s])]):1]-;!@[$([C;$(C(-;@C)-;@C)]):2]>>["
+     "9*]-[*:1].[15*]-[*:2]",
+     "[$([n;+0;$(n(:[c,n,o,s]):[c,n,o,s])]):1]-;!@[$([c;$(c(:c):c)]):2]>>[9*]-"
+     "[*:1].[16*]-[*:2]",
+     "[$([N;R;$(N(@C(=O))@[C,N,O,S])]):1]-;!@[$([C;$(C(-;@[C,N,O,S])-;@[N,O,S]"
+     ")]):2]>>[10*]-[*:1].[13*]-[*:2]",
+     "[$([N;R;$(N(@C(=O))@[C,N,O,S])]):1]-;!@[$([c;$(c(:[c,n,o,s]):[n,o,s])]):"
+     "2]>>[10*]-[*:1].[14*]-[*:2]",
+     "[$([N;R;$(N(@C(=O))@[C,N,O,S])]):1]-;!@[$([C;$(C(-;@C)-;@C)]):2]>>[10*]-"
+     "[*:1].[15*]-[*:2]",
+     "[$([N;R;$(N(@C(=O))@[C,N,O,S])]):1]-;!@[$([c;$(c(:c):c)]):2]>>[10*]-[*:"
+     "1].[16*]-[*:2]",
+     "[$([S;D2](-;!@[#0,#6])):1]-;!@[$([C;$(C(-;@[C,N,O,S])-;@[N,O,S])]):2]>>["
+     "11*]-[*:1].[13*]-[*:2]",
+     "[$([S;D2](-;!@[#0,#6])):1]-;!@[$([c;$(c(:[c,n,o,s]):[n,o,s])]):2]>>[11*]"
+     "-[*:1].[14*]-[*:2]",
+     "[$([S;D2](-;!@[#0,#6])):1]-;!@[$([C;$(C(-;@C)-;@C)]):2]>>[11*]-[*:1].["
+     "15*]-[*:2]",
+     "[$([S;D2](-;!@[#0,#6])):1]-;!@[$([c;$(c(:c):c)]):2]>>[11*]-[*:1].[16*]-["
+     "*:2]",
+     "[$([C;$(C(-;@[C,N,O,S])-;@[N,O,S])]):1]-;!@[$([c;$(c(:[c,n,o,s]):[n,o,s]"
+     ")]):2]>>[13*]-[*:1].[14*]-[*:2]",
+     "[$([C;$(C(-;@[C,N,O,S])-;@[N,O,S])]):1]-;!@[$([C;$(C(-;@C)-;@C)]):2]>>["
+     "13*]-[*:1].[15*]-[*:2]",
+     "[$([C;$(C(-;@[C,N,O,S])-;@[N,O,S])]):1]-;!@[$([c;$(c(:c):c)]):2]>>[13*]-"
+     "[*:1].[16*]-[*:2]",
+     "[$([c;$(c(:[c,n,o,s]):[n,o,s])]):1]-;!@[$([c;$(c(:[c,n,o,s]):[n,o,s])]):"
+     "2]>>[14*]-[*:1].[14*]-[*:2]",
+     "[$([c;$(c(:[c,n,o,s]):[n,o,s])]):1]-;!@[$([C;$(C(-;@C)-;@C)]):2]>>[14*]-"
+     "[*:1].[15*]-[*:2]",
+     "[$([c;$(c(:[c,n,o,s]):[n,o,s])]):1]-;!@[$([c;$(c(:c):c)]):2]>>[14*]-[*:"
+     "1].[16*]-[*:2]",
+     "[$([C;$(C(-;@C)-;@C)]):1]-;!@[$([c;$(c(:c):c)]):2]>>[15*]-[*:1].[16*]-[*"
+     ":2]",
+     "[$([c;$(c(:c):c)]):1]-;!@[$([c;$(c(:c):c)]):2]>>[16*]-[*:1].[16*]-[*:"
+     "2]"});
 
 }  // namespace ScaffoldNetwork
 }  // namespace RDKit

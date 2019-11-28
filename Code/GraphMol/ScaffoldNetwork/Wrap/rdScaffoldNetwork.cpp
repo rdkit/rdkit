@@ -34,6 +34,11 @@ void updateNetworkHelper(python::object pmols,
   updateScaffoldNetwork(*mols, net, params);
 }
 
+ScaffoldNetwork::ScaffoldNetworkParams *getBRICSParams() {
+  return new ScaffoldNetwork::ScaffoldNetworkParams(
+      ScaffoldNetwork::BRICSNetworkParams);
+}
+
 }  // namespace
 
 BOOST_PYTHON_MODULE(rdScaffoldNetwork) {
@@ -62,6 +67,8 @@ BOOST_PYTHON_MODULE(rdScaffoldNetwork) {
                      &ScaffoldNetworkParams::includeGenericScaffolds)
       .def_readwrite("includeScaffoldsWithoutAttachments",
                      &ScaffoldNetworkParams::includeScaffoldsWithoutAttachments)
+      .def_readwrite("includeScaffoldsWithAttachments",
+                     &ScaffoldNetworkParams::includeScaffoldsWithAttachments)
       .def_readwrite("keepOnlyFirstFragment",
                      &ScaffoldNetworkParams::keepOnlyFirstFragment)
       .def_readwrite("pruneBeforeFragmenting",
@@ -100,4 +107,8 @@ BOOST_PYTHON_MODULE(rdScaffoldNetwork) {
       "UpdateScaffoldNetwork", &updateNetworkHelper,
       (python::arg("mols"), python::arg("network"), python::arg("params")),
       "update an existing network");
+
+  python::def("BRICSScaffoldParams", &getBRICSParams,
+              "Returns parameters for generating BRICS scaffolds.",
+              python::return_value_policy<python::manage_new_object>());
 }

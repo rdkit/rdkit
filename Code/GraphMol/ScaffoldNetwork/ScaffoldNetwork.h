@@ -30,6 +30,8 @@ struct RDKIT_SCAFFOLDNETWORK_EXPORT ScaffoldNetworkParams {
       false;  ///< include scaffolds with all bonds replaced by single bonds
   bool includeScaffoldsWithoutAttachments =
       true;  ///< remove attachment points from scaffolds and include the result
+  bool includeScaffoldsWithAttachments =
+      true;  ///< Include the version of the scaffold without attachment points
   bool keepOnlyFirstFragment =
       true;  ///<  keep only the first fragment from the bond breaking rule
   bool pruneBeforeFragmenting =
@@ -39,6 +41,7 @@ struct RDKIT_SCAFFOLDNETWORK_EXPORT ScaffoldNetworkParams {
       true;  ///< remove chirality and bond stereo when flattening
   bool flattenKeepLargest =
       true;  ///< keep only the largest fragment when doing flattening
+
   std::vector<std::shared_ptr<ChemicalReaction>>
       bondBreakersRxns;  ///< the reaction(s) used to fragment. Should expect a
                          ///< single reactant and produce two products
@@ -47,6 +50,9 @@ struct RDKIT_SCAFFOLDNETWORK_EXPORT ScaffoldNetworkParams {
             {"[!#0;R:1]-!@[!#0:2]>>[*:1]-[#0].[#0]-[*:2]"}} {};
   ScaffoldNetworkParams(const std::vector<std::string> &bondBreakersSmarts);
 };
+
+RDKIT_SCAFFOLDNETWORK_EXPORT extern const ScaffoldNetworkParams BRICSNetworkParams;
+
 
 enum class RDKIT_SCAFFOLDNETWORK_EXPORT EdgeType {
   Fragment = 1,     ///< molecule -> fragment
