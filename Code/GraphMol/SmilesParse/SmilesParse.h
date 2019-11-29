@@ -127,12 +127,9 @@ inline std::unique_ptr<RDKit::RWMol> operator"" _smiles(const char *text,
 inline std::unique_ptr<RDKit::RWMol> operator"" _smarts(const char *text,
                                                         size_t len) {
   std::string smi(text, len);
-  RWMol *ptr = nullptr;
-  try {
-    ptr = SmartsToMol(smi);
-  } catch (const RDKit::MolSanitizeException &) {
-    ptr = nullptr;
-  }
+  // no need for exception handling here: SmartsToMol() doesn't do
+  // sanitization
+  RWMol *ptr = SmartsToMol(smi);
   return std::unique_ptr<RWMol>(ptr);
 }
 

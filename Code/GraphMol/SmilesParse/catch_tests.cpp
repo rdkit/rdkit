@@ -552,3 +552,14 @@ TEST_CASE("github #2604: support range-based charge queries from SMARTS",
     }
   }
 }
+
+TEST_CASE("_smarts fails gracefully", "[smarts]") {
+  SECTION("empty") {
+    auto mol = ""_smarts;
+    REQUIRE(mol);
+  }
+  SECTION("syntax error") {
+    auto mol = "C1C"_smarts;
+    REQUIRE(!mol);
+  }
+}
