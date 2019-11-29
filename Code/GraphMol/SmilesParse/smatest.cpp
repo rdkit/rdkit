@@ -114,14 +114,24 @@ void testPass() {
     CHECK_INVARIANT(mol, smi);
     int nAts = mol->getNumAtoms();
     CHECK_INVARIANT(nAts != 0, smi.c_str());
-    // make sure that we can pickle and de-pickle it (this is the test for
-    // github #1710):
-    std::string pkl;
-    MolPickler::pickleMol(*mol, pkl);
+    {  // make sure that we can pickle and de-pickle it (this is the test for
+      // github #1710):
+      std::string pkl;
+      MolPickler::pickleMol(*mol, pkl);
+      auto mol2 = new Mol(pkl);
+      TEST_ASSERT(mol2);
+      delete mol2;
+    }
+    {
+      // finally make sure that we can create parsable SMARTS from it:
+      auto outSmarts = MolToSmarts(*mol);
+      std::cerr << smi << " " << outSmarts << std::endl;
+      auto mol2 = SmartsToMol(outSmarts);
+      TEST_ASSERT(mol2);
+      delete mol2;
+    }
     delete mol;
-    mol = new Mol(pkl);
-    TEST_ASSERT(mol);
-    delete mol;
+
     i++;
   }
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
