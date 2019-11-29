@@ -31,7 +31,7 @@ void testPass() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing patterns which should parse." << std::endl;
   string smis[] = {
-#if 0
+#if 1
     "C",
     "CC",
     "C-C",
