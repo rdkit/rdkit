@@ -236,14 +236,6 @@ void AddFragToMol(RWMol *mol, RWMol *frag, Bond::BondType bondOrder,
   frag->clearAllBondBookmarks();
 };
 
-void _invChiralRingAtomWithHs(Atom *atom) {
-  PRECONDITION(atom, "bad atom");
-  // we will assume that this function is called on a ring atom with a
-  // ring closure bond
-  if (atom->getNumExplicitHs() == 1) {
-    atom->invertChirality();
-  }
-}
 typedef std::pair<size_t, int> SIZET_PAIR;
 typedef std::pair<int, int> INT_PAIR;
 template <typename T>
