@@ -2307,6 +2307,33 @@ void testGithub2151() {
   std::cerr << " Done" << std::endl;
 }
 
+void testGithub2762() {
+  std::cout << " ----------------- Testing testGithub2762: MolDraw2D: HCl "
+               "and ethane should be drawn"
+            << std::endl;
+  {
+    auto m1 = "Cl"_smiles;
+    TEST_ASSERT(m1);
+    auto m2 = "CC"_smiles;
+    TEST_ASSERT(m2);
+    MolDraw2DUtils::prepareMolForDrawing(*m1);
+    MolDraw2DUtils::prepareMolForDrawing(*m2);
+    std::vector<ROMol *> mols;
+    mols.push_back(m1.get());
+    mols.push_back(m2.get());
+    MolDraw2DSVG drawer(500, 250, 250, 250);
+    drawer.drawMolecules(mols);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("testGithub2762.svg");
+    outs << text;
+    outs.flush();
+    TEST_ASSERT(text.find("font-size:0px") == std::string::npos);
+    TEST_ASSERT(text.find("'bond-0' d='M 0,200 L 0,200'") == std::string::npos);
+  }
+  std::cerr << " Done" << std::endl;
+}
+
 int main() {
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   RDDepict::preferCoordGen = false;
@@ -2350,4 +2377,5 @@ int main() {
   test16MoleculeMetadata();
   testGithub2063();
   testGithub2151();
+  testGithub2762();
 }

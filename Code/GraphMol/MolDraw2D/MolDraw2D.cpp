@@ -816,32 +816,31 @@ void MolDraw2D::setScale(int width, int height, const Point2D &minv,
 
   x_range_ = x_max - x_min_;
   y_range_ = y_max - y_min_;
-  if (x_range_ > 1e-4 && y_range_ > 1e-4) {
-    scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
-  } else {
-    scale_ = 0;
+
+  if (x_range_ < 1.0e-4) {
+    x_range_ = 1.0;
+    x_min_ = -0.5;
   }
+  if (y_range_ < 1.0e-4) {
+    y_range_ = 1.0;
+    y_min_ = -0.5;
+  }
+
   // put a buffer round the drawing and calculate a final scale
   x_min_ -= drawOptions().padding * x_range_;
   x_range_ *= 1 + 2 * drawOptions().padding;
   y_min_ -= drawOptions().padding * y_range_;
   y_range_ *= 1 + 2 * drawOptions().padding;
 
-  if (x_range_ > 1e-4 && y_range_ > 1e-4) {
-    scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
-    double y_mid = y_min_ + 0.5 * y_range_;
-    double x_mid = x_min_ + 0.5 * x_range_;
-    Point2D mid = getDrawCoords(Point2D(x_mid, y_mid));
-    // that used the offset, we need to remove that:
-    mid.x -= x_offset_;
-    mid.y += y_offset_;
-    x_trans_ = (width / 2 - mid.x) / scale_;
-    y_trans_ = (mid.y - height / 2) / scale_;
-  } else {
-    scale_ = 0.;
-    x_trans_ = 0.;
-    y_trans_ = 0.;
-  }
+  scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
+  double y_mid = y_min_ + 0.5 * y_range_;
+  double x_mid = x_min_ + 0.5 * x_range_;
+  Point2D mid = getDrawCoords(Point2D(x_mid, y_mid));
+  // that used the offset, we need to remove that:
+  mid.x -= x_offset_;
+  mid.y += y_offset_;
+  x_trans_ = (width / 2 - mid.x) / scale_;
+  y_trans_ = (mid.y - height / 2) / scale_;
 }
 
 // ****************************************************************************
