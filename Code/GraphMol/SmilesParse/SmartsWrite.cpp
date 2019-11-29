@@ -260,6 +260,7 @@ std::string getAtomSmartsSimple(const QueryAtom *qatom,
         res << "5";
         break;
     }
+    needParen = true;
   } else if (descrip == "AtomMass") {
     res << query->getVal() / massIntegerConversionFactor << "*";
     needParen = true;
