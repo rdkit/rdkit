@@ -552,3 +552,52 @@ TEST_CASE("github #2604: support range-based charge queries from SMARTS",
     }
   }
 }
+
+TEST_CASE("github #2801: MolToSmarts may generate invalid SMARTS for bond queries",
+          "[bug,smarts]") {
+  SECTION("original_report") {
+    auto q1 = "*~CCC"_smarts;
+    REQUIRE(q1);
+    Bond *qb = q1->getBondBetweenAtoms(0, 1);
+    BOND_EQUALS_QUERY *bq1 = makeBondOrderEqualsQuery(qb->getBondType());
+    qb->setQuery(bq1);
+    BOND_EQUALS_QUERY *bq2 = makeBondIsInRingQuery();
+    bq2->setNegation(true);
+    qb->expandQuery(bq2, Queries::COMPOSITE_AND, true);
+    std::string smarts = MolToSmarts(*q1);
+    CHECK(smarts == "*!@CCC");
+    std::unique_ptr<RWMol> q2(SmartsToMol(smarts));
+    REQUIRE(q2);
+  }
+  SECTION("composite_or") {
+    auto q1 = "*~CCC"_smarts;
+    REQUIRE(q1);
+    Bond *qb = q1->getBondBetweenAtoms(0, 1);
+    BOND_EQUALS_QUERY *bq1 = makeBondOrderEqualsQuery(qb->getBondType());
+    qb->setQuery(bq1);
+    BOND_EQUALS_QUERY *bq2 = makeBondIsInRingQuery();
+    bq2->setNegation(true);
+    qb->expandQuery(bq2, Queries::COMPOSITE_OR, true);
+    // this used to yield *,!@CCC
+    std::string smarts = MolToSmarts(*q1);
+    CHECK(smarts == "*!@CCC");
+    std::unique_ptr<RWMol> q2(SmartsToMol(smarts));
+    REQUIRE(q2);
+  }
+  SECTION("composite_lowand") {
+    auto q1 = "*~CCC"_smarts;
+    REQUIRE(q1);
+    Bond *qb = q1->getBondBetweenAtoms(0, 1);
+    BOND_EQUALS_QUERY *bq1 = makeBondOrderEqualsQuery(qb->getBondType());
+    qb->setQuery(bq1);
+    BOND_EQUALS_QUERY *bq2 = makeBondOrderEqualsQuery(qb->getBondType());
+    qb->expandQuery(bq2, Queries::COMPOSITE_OR, true);
+    BOND_EQUALS_QUERY *bq3 = makeBondIsInRingQuery();
+    bq3->setNegation(true);
+    qb->expandQuery(bq3, Queries::COMPOSITE_AND, true);
+    std::string smarts = MolToSmarts(*q1);
+    CHECK(smarts == "*!@CCC");
+    std::unique_ptr<RWMol> q2(SmartsToMol(smarts));
+    REQUIRE(q2);
+  }
+}
