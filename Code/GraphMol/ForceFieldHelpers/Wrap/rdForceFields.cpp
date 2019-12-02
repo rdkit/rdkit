@@ -34,9 +34,8 @@ int UFFHelper(ROMol &mol, int maxIters, double vdwThresh, int confId,
       .first;
 }
 python::object UFFConfsHelper(ROMol &mol, int numThreads, int maxIters,
-                              double vdwThresh, int confId,
+                              double vdwThresh,
                               bool ignoreInterfragInteractions) {
-  RDUNUSED_PARAM(confId);  // XXX FIX ME?
   std::vector<std::pair<int, double>> res;
   {
     NOGIL gil;
@@ -52,8 +51,7 @@ python::object UFFConfsHelper(ROMol &mol, int numThreads, int maxIters,
 
 python::object MMFFConfsHelper(ROMol &mol, int numThreads, int maxIters,
                                std::string mmffVariant, double nonBondedThresh,
-                               int confId, bool ignoreInterfragInteractions) {
-  RDUNUSED_PARAM(confId);  // Fix me?
+                               bool ignoreInterfragInteractions) {
   std::vector<std::pair<int, double>> res;
   {
     NOGIL gil;
