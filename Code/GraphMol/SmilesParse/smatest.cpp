@@ -69,6 +69,9 @@ void testPass() {
     "[C;!$(C-[OH])]=O",
     "[#6]-!:[#6]",
     "[C^3]",
+    "[*^0]",
+    "[*^1]",
+    "[*^2]",
     "[*^4]",
     "[*^5]",
     "[se]",
@@ -125,7 +128,6 @@ void testPass() {
     {
       // finally make sure that we can create parsable SMARTS from it:
       auto outSmarts = MolToSmarts(*mol);
-      std::cerr << smi << " " << outSmarts << std::endl;
       auto mol2 = SmartsToMol(outSmarts);
       TEST_ASSERT(mol2);
       delete mol2;
