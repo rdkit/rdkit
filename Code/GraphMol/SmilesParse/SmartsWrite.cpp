@@ -225,7 +225,7 @@ std::string getAtomSmartsSimple(const QueryAtom *qatom,
     } else {
       res << "+";
     }
-    if (abs(val) != 1) {
+    if (mods == Modifiers::NONE && abs(val) != 1) {
       res << abs(val);
     }
     needParen = true;
@@ -236,7 +236,7 @@ std::string getAtomSmartsSimple(const QueryAtom *qatom,
     } else {
       res << "-";
     }
-    if (abs(val) != 1) {
+    if (mods == Modifiers::NONE && abs(val) != 1) {
       res << abs(val);
     }
     needParen = true;
@@ -262,6 +262,7 @@ std::string getAtomSmartsSimple(const QueryAtom *qatom,
         res << "5";
         break;
     }
+    needParen = true;
   } else if (descrip == "AtomMass") {
     res << query->getVal() / massIntegerConversionFactor << "*";
     needParen = true;
