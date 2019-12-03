@@ -1,3 +1,42 @@
+# Release_2019.09.2
+(Changes relative to Release_2019.09.1)
+
+## Acknowledgements:
+Stephen Kearnes, Brian Kelley, Maxim Koltsov, Luan Carvalho Martins, Kevin Ryan, Paolo Tosco
+
+## Bug Fixes:
+  - - enable building RDKitRingDecomposerLib.dll under Windows
+ (github #2742 from ptosco)
+  - Do a windows DLL build as part of the Azure DevOps setup
+ (github #2743 from greglandrum)
+  - Fix data race in sascorer.py
+ (github #2744 from skearnes)
+  - Uncharger not properly setting explicit/implicit H count
+ (github #2749 from greglandrum)
+  - Molecules whose Y size is very small won't display as SVG
+ (github #2762 from ptosco)
+  - Make the cartridge tests work with PostgreSQL 12
+ (github #2767 from greglandrum)
+  - Salt stripper should consider bond matches as well as atom matches
+ (github #2768 from greglandrum)
+  - Bismuth should count as an early element
+ (github #2775 from greglandrum)
+  - addHs() fails on atoms with "bad" valences
+ (github #2782 from greglandrum)
+  - Element symbol lookup for some transuranics returns incorrect results
+ (github #2784 from LeanAndMean)
+  - uncharger removes Hs from carbocations instead of adding them
+ (github #2792 from greglandrum)
+  - Fix build without boost serialization library
+ (github #2796 from maksbotan)
+  - rdkit.Ched.rdFMCS.FindMCS generates invalid smarts
+ (github #2801 from luancarvalhomartins)
+  - Hybridization queries on dummy atoms not written properly to SMARTS
+ (github #2814 from greglandrum)
+  - Charge range queries not properly written to SMARTS
+ (github #2815 from greglandrum)
+
+
 # Release_2019.09.1
 (Changes relative to Release_2019.03.1)
 
