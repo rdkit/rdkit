@@ -16,18 +16,27 @@
 
 // ours
 #include <RDGeneral/BadFileException.h>
+#include <RDGeneral/FileParseException.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/RDKitBase.h>
 #include <RDBoost/python_streambuf.h>
 #include <RDBoost/iterator_next.h>
+
+#include <maeparser/MaeConstants.hpp>
 #include <maeparser/Reader.hpp>
 
 #include "MolSupplier.h"
 
 namespace python = boost::python;
 
+using namespace schrodinger;
 using boost_adaptbx::python::streambuf;
 namespace {
+
+bool streamIsGoodOrExhausted(std::istream *stream) {
+  PRECONDITION(stream, "bad stream");
+  return stream->good() || (stream->eof() && stream->fail() && !stream->bad());
+}
 
 class LocalMaeMolSupplier : public RDKit::MaeMolSupplier {
  public:
@@ -39,9 +48,14 @@ class LocalMaeMolSupplier : public RDKit::MaeMolSupplier {
     df_owner = true;
     df_sanitize = sanitize;
     df_removeHs = removeHs;
-    d_reader.reset(new schrodinger::mae::Reader(dp_sInStream));
-    d_next_struct = d_reader->next("f_m_ct");
-    POSTCONDITION(dp_inStream, "bad instream");
+    d_reader.reset(new mae::Reader(dp_sInStream));
+    CHECK_INVARIANT(streamIsGoodOrExhausted(dp_inStream), "bad instream");
+
+    try {
+      d_next_struct = d_reader->next(mae::CT_BLOCK);
+    } catch (const mae::read_exception &e) {
+      throw RDKit::FileParseException(e.what());
+    }
   }
   LocalMaeMolSupplier(streambuf &input, bool sanitize, bool removeHs) {
     dp_inStream = new streambuf::istream(input);
@@ -49,9 +63,14 @@ class LocalMaeMolSupplier : public RDKit::MaeMolSupplier {
     df_owner = true;
     df_sanitize = sanitize;
     df_removeHs = removeHs;
-    d_reader.reset(new schrodinger::mae::Reader(dp_sInStream));
-    d_next_struct = d_reader->next("f_m_ct");
-    POSTCONDITION(dp_inStream, "bad instream");
+    d_reader.reset(new mae::Reader(dp_sInStream));
+    CHECK_INVARIANT(streamIsGoodOrExhausted(dp_inStream), "bad instream");
+
+    try {
+      d_next_struct = d_reader->next(mae::CT_BLOCK);
+    } catch (const mae::read_exception &e) {
+      throw RDKit::FileParseException(e.what());
+    }
   }
 
   LocalMaeMolSupplier(const std::string &fname, bool sanitize = true,
@@ -68,9 +87,14 @@ class LocalMaeMolSupplier : public RDKit::MaeMolSupplier {
     df_sanitize = sanitize;
     df_removeHs = removeHs;
 
-    d_reader.reset(new schrodinger::mae::Reader(dp_sInStream));
-    d_next_struct = d_reader->next("f_m_ct");
-    POSTCONDITION(dp_inStream, "bad instream");
+    d_reader.reset(new mae::Reader(dp_sInStream));
+    CHECK_INVARIANT(streamIsGoodOrExhausted(dp_inStream), "bad instream");
+
+    try {
+      d_next_struct = d_reader->next(mae::CT_BLOCK);
+    } catch (const mae::read_exception &e) {
+      throw RDKit::FileParseException(e.what());
+    }
   };
 };
 

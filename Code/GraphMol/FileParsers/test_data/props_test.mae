@@ -1,0 +1,113 @@
+{ 
+ s_m_m2io_version
+ :::
+ 2.0.0 
+} 
+
+f_m_ct { 
+ s_m_title
+ s_m_entry_id
+ s_m_entry_name
+ i_sd_NSC
+ s_sd_CAS\_RN
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_IC50
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_EC50
+ s_sd_NCI\_AIDS\_Antiviral\_Screen\_Conclusion
+ b_sd_chiral_flag
+ i_sd_version
+ i_m_ct_enhanced_stereo_status
+ s_m_Source_Path
+ s_m_Source_File
+ i_m_Source_File_Index
+ s_m_subgroup_title
+ s_m_subgroupid
+ b_m_subgroup_collapsed
+ r_f3d_dummy
+ i_m_ct_format
+ :::
+ 48 
+  1 
+  NCI_aids_few.1 
+  48
+  15716-70-8 
+  "2.00E-04	M	=	2.46E-05	3" 
+  "2.00E-04	M	>	2.00E-04	3" 
+  CI 
+  0
+  0
+  0
+  /Users/lorton/Desktop 
+  NCI_aids_few.sdf 
+  1
+  NCI_aids_few 
+  NCI_aids_few 
+  0
+  42.123
+  2
+ m_atom[19] { 
+  # First column is atom index #
+  i_m_mmod_type
+  r_m_x_coord
+  r_m_y_coord
+  r_m_z_coord
+  i_m_residue_number
+  i_m_color
+  i_m_atomic_number
+  i_m_formal_charge
+  s_m_color_rgb
+  i_m_minimize_atom_index
+  b_m_dummy
+  r_f3d_dummy
+  s_m_dummy
+  :::
+  1 5 1.397061 -2.611162 -1.314020 900 2 6 0 A0A0A0  1 0 <> "19"
+  2 6 0.617928 -3.334828 -0.196596 900 2 6 0 A0A0A0  2 1 <> "18"
+  3 2 2.732411 -2.034793 -0.841139 900 2 6 0 A0A0A0  3 0 <> "17"
+  4 20 2.839828 -0.686768 -0.673014 900 70 8 1 FF2F2F  4 1 <> "16"
+  5 5 3.944737 -2.883585 -0.484556 900 2 6 0 A0A0A0  5 0 <> "15"
+  6 85 3.741314 -0.025539 0.237863 900 4 29 0 1E1EE1  6 1 <> "14"
+  7 2 4.968398 -2.161871 0.387270 900 2 6 0 A0A0A0  7 0 <> "13"
+  8 20 2.794694 0.657596 1.112194 900 70 8 1 FF2F2F  8 1 <> "12"
+  9 20 4.695954 0.864963 -0.371680 900 70 8 1 FF2F2F  9 0 <> "11"
+  10 20 4.624730 -0.950167 0.948767 900 70 8 1 FF2F2F  10 1 <> "10"
+  11 5 6.368986 -2.710753 0.670636 900 2 6 0 A0A0A0  11 <> 9.100000 "9"
+  12 2 2.701594 2.011042 1.258879 900 2 6 0 A0A0A0  12 <> 8.100000 "8"
+  13 2 4.991026 2.116804 0.111189 900 2 6 0 A0A0A0  13 <> 7.100000 "7"
+  14 6 6.354735 -4.065574 1.405169 900 2 6 0 A0A0A0  14 <> 6.100000 "6"
+  15 5 1.361960 2.605791 1.694724 900 2 6 0 A0A0A0  15 <> 5.100000 "5"
+  16 5 3.932152 2.848878 0.932186 900 2 6 0 A0A0A0  16 <> 4.100000 "4"
+  17 5 6.379352 2.690720 -0.184727 900 2 6 0 A0A0A0  17 <> 3.100000 "3"
+  18 6 0.644094 3.380844 0.570671 900 2 6 0 A0A0A0  18 <> 2.100000 "2"
+  19 6 6.344370 4.108667 -0.787523 900 2 6 0 A0A0A0  19 <> 1.100000 "1"
+  :::
+ } 
+ m_bond[20] { 
+  # First column is bond index #
+  i_m_from
+  i_m_to
+  i_m_order
+  :::
+  1 1 2 1
+  2 1 3 1
+  3 3 4 2
+  4 3 5 1
+  5 4 6 1
+  6 5 7 1
+  7 6 8 1
+  8 6 9 1
+  9 6 10 1
+  10 7 11 1
+  11 7 10 2
+  12 8 12 2
+  13 9 13 2
+  14 11 14 1
+  15 12 15 1
+  16 12 16 1
+  17 13 17 1
+  18 13 16 1
+  19 15 18 1
+  20 17 19 1
+  :::
+ } 
+} 
+
