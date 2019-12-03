@@ -177,6 +177,21 @@ TEST_CASE("getMolFragments", "[unittest, scaffolds]") {
     CHECK(res[5].first == "O=C1CCCC(Cc2ccccc2)N1");
     CHECK(res[5].second == "*CC1CCCC(=O)N1");
   }
+  SECTION("includeScaffoldsWithAttachments=false") {
+    ScaffoldNetwork::ScaffoldNetworkParams ps;
+    ps.includeScaffoldsWithAttachments = false;
+    auto frags = ScaffoldNetwork::detail::getMolFragments(*m, ps);
+    REQUIRE(frags.size() == 2);
+    CHECK(frags[0].first == "O=C1CCCC(Cc2ccccc2)N1");
+    CHECK(frags[1].first == "O=C1CCCC(Cc2ccccc2)N1");
+
+    auto smi1 = MolToSmiles(*frags[0].second);
+    auto smi2 = MolToSmiles(*frags[1].second);
+    // don't want to make any assumptions about the order in which the
+    // fragments come back:
+    CHECK((std::min(smi1, smi2) == "O=C1CCCCN1"));
+    CHECK((std::max(smi1, smi2) == "c1ccccc1"));
+  }
 }
 
 TEST_CASE("addMolToNetwork", "[unittest, scaffolds]") {
@@ -431,6 +446,35 @@ TEST_CASE("Implicit Hs on aromatic atoms with attachments",
                         }) == 2);
     CHECK(std::count(net.counts.begin(), net.counts.end(), 1) == 5);
     for (auto nd : net.nodes) {
+      std::unique_ptr<ROMol> m(SmilesToMol(nd));
+      CHECK(m);
+    }
+  }
+}
+
+TEST_CASE("scaffold with attachment when attachments are disabled",
+          "[bug, scaffolds]") {
+  auto m = "C1CCC1C1CCCC1C1CCCCC1"_smiles;
+  REQUIRE(m);
+  SECTION("bug report") {
+    ScaffoldNetwork::ScaffoldNetworkParams ps;
+    ps.includeScaffoldsWithoutAttachments = true;
+    ps.includeScaffoldsWithAttachments = false;
+    ps.includeGenericScaffolds = false;
+    ScaffoldNetwork::ScaffoldNetwork net;
+    ScaffoldNetwork::detail::addMolToNetwork(*m, net, ps);
+    CHECK(net.nodes.size() == 6);
+    CHECK(net.counts.size() == net.nodes.size());
+    CHECK(net.edges.size() == 8);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type == ScaffoldNetwork::EdgeType::Fragment;
+                        }) == 8);
+
+    CHECK(std::count(net.counts.begin(), net.counts.end(), 1) == 3);
+    CHECK(std::count(net.counts.begin(), net.counts.end(), 2) == 3);
+    for (auto nd : net.nodes) {
+      CHECK(nd.find("*") == std::string::npos);
       std::unique_ptr<ROMol> m(SmilesToMol(nd));
       CHECK(m);
     }

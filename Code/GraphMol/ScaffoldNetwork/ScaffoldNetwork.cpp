@@ -53,32 +53,6 @@ void updateMolProps(RWMol &mol, const ScaffoldNetworkParams &params) {
   MolOps::sanitizeMol(mol);
 }
 
-std::vector<std::pair<std::string, ROMOL_SPTR>> getMolFragments(
-    const ROMol &mol, const ScaffoldNetworkParams &params) {
-  std::vector<std::pair<std::string, ROMOL_SPTR>> res;
-  std::deque<ROMOL_SPTR> stack;
-  stack.push_back(ROMOL_SPTR(new ROMol(mol)));
-  while (!stack.empty()) {
-    auto wmol = stack.front();
-    stack.pop_front();
-    auto parentSmi = MolToSmiles(*wmol);
-    for (auto rxn : params.bondBreakersRxns) {
-      auto ps = rxn->runReactant(wmol, 0);
-      for (auto p : ps) {
-        updateMolProps(*static_cast<RWMol *>(p[0].get()), params);
-        stack.push_back(p[0]);
-        res.push_back(std::make_pair(parentSmi, p[0]));
-        if (!params.keepOnlyFirstFragment) {
-          updateMolProps(*static_cast<RWMol *>(p[1].get()), params);
-          stack.push_back(p[1]);
-          res.push_back(std::make_pair(parentSmi, p[1]));
-        }
-      }
-    }
-  }
-  return res;
-}
-
 ROMol *makeScaffoldGeneric(const ROMol &mol, bool doAtoms, bool doBonds) {
   RWMol *res = new RWMol(mol);
   if (doAtoms) {
@@ -155,6 +129,42 @@ ROMol *flattenMol(const ROMol &mol, const ScaffoldNetworkParams &params) {
   }
   return static_cast<ROMol *>(res);
 }
+std::vector<std::pair<std::string, ROMOL_SPTR>> getMolFragments(
+    const ROMol &mol, const ScaffoldNetworkParams &params) {
+  std::vector<std::pair<std::string, ROMOL_SPTR>> res;
+  std::deque<ROMOL_SPTR> stack;
+  stack.push_back(ROMOL_SPTR(new ROMol(mol)));
+  while (!stack.empty()) {
+    auto wmol = stack.front();
+    stack.pop_front();
+    auto parentSmi = MolToSmiles(*wmol);
+    for (auto rxn : params.bondBreakersRxns) {
+      auto ps = rxn->runReactant(wmol, 0);
+      for (auto p : ps) {
+        if (!params.includeScaffoldsWithAttachments) {
+          // we're only including scaffolds without attachments, so
+          // go ahead and remove attachment points here
+          p[0].reset(removeAttachmentPoints(*p[0], params));
+        }
+
+        updateMolProps(*static_cast<RWMol *>(p[0].get()), params);
+        stack.push_back(p[0]);
+        res.push_back(std::make_pair(parentSmi, p[0]));
+        if (!params.keepOnlyFirstFragment) {
+          if (!params.includeScaffoldsWithAttachments) {
+            // we're only including scaffolds without attachments, so
+            // go ahead and remove attachment points here
+            p[1].reset(removeAttachmentPoints(*p[1], params));
+          }
+          updateMolProps(*static_cast<RWMol *>(p[1].get()), params);
+          stack.push_back(p[1]);
+          res.push_back(std::make_pair(parentSmi, p[1]));
+        }
+      }
+    }
+  }
+  return res;
+}
 namespace {
 template <typename T, typename V>
 size_t addEntryIfMissing(T &vect, const V &e,
@@ -201,10 +211,6 @@ void addMolToNetwork(const ROMol &mol, ScaffoldNetwork &network,
     // the first node is certain to already be in the network, so don't
     // update counts for it
     auto iidx = addEntryIfMissing(network.nodes, smi);
-    if (!params.includeScaffoldsWithAttachments) {
-      // we're only including scaffolds without attachments:
-      fragMol.reset(removeAttachmentPoints(*fragMol, params));
-    }
     auto lsmi = MolToSmiles(*fragMol);
     auto lidx = addEntryIfMissing(network.nodes, lsmi, &network.counts);
     addEntryIfMissing(network.edges,
