@@ -93,7 +93,7 @@ void MMFFOptimizeMoleculeConfs(ROMol &mol,
     delete ff;
   } else {
     for (unsigned int i = 0; i < mol.getNumConformers(); ++i) {
-      res[i] = std::make_pair(static_cast<int>(-1), static_cast<double>(-1));
+      res.emplace_back(std::make_pair(static_cast<int>(-1), static_cast<double>(-1)));
     }
   }
 }
