@@ -5,7 +5,9 @@
 Stephen Kearnes, Brian Kelley, Maxim Koltsov, Luan Carvalho Martins, Kevin Ryan, Paolo Tosco
 
 ## Bug Fixes:
-  - - enable building RDKitRingDecomposerLib.dll under Windows
+  - Removed RDKIT_SIMDIVPICKERS_EXPORT
+ (github #2740 from ptosco)
+  - enable building RDKitRingDecomposerLib.dll under Windows
  (github #2742 from ptosco)
   - Do a windows DLL build as part of the Azure DevOps setup
  (github #2743 from greglandrum)
