@@ -680,7 +680,7 @@ static std::string ArthorSubOrderHash(RWMol *mol) {
   return buffer;
 }
 
-std::string MolHash(RWMol *mol, enum HashFunction func) {
+std::string MolHash(RWMol *mol, HashFunction func) {
   std::string result;
   char buffer[32];
   NMRDKitSanitizeHydrogens(mol);
