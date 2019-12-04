@@ -34,9 +34,8 @@ int UFFHelper(ROMol &mol, int maxIters, double vdwThresh, int confId,
       .first;
 }
 python::object UFFConfsHelper(ROMol &mol, int numThreads, int maxIters,
-                              double vdwThresh, int confId,
+                              double vdwThresh,
                               bool ignoreInterfragInteractions) {
-  RDUNUSED_PARAM(confId);  // XXX FIX ME?
   std::vector<std::pair<int, double>> res;
   {
     NOGIL gil;
@@ -52,8 +51,7 @@ python::object UFFConfsHelper(ROMol &mol, int numThreads, int maxIters,
 
 python::object MMFFConfsHelper(ROMol &mol, int numThreads, int maxIters,
                                std::string mmffVariant, double nonBondedThresh,
-                               int confId, bool ignoreInterfragInteractions) {
-  RDUNUSED_PARAM(confId);  // Fix me?
+                               bool ignoreInterfragInteractions) {
   std::vector<std::pair<int, double>> res;
   {
     NOGIL gil;
@@ -275,7 +273,6 @@ BOOST_PYTHON_MODULE(rdForceFieldHelpers) {
     - maxIters : the maximum number of iterations (defaults to 200)\n\
     - vdwThresh : used to exclude long-range van der Waals interactions\n\
                   (defaults to 10.0)\n\
-    - confId : indicates which conformer to optimize\n\
     - ignoreInterfragInteractions : if true, nonbonded terms between\n\
                   fragments will not be added to the forcefield.\n\
 \n\
@@ -285,7 +282,6 @@ BOOST_PYTHON_MODULE(rdForceFieldHelpers) {
   python::def("UFFOptimizeMoleculeConfs", RDKit::UFFConfsHelper,
               (python::arg("self"), python::arg("numThreads") = 1,
                python::arg("maxIters") = 200, python::arg("vdwThresh") = 10.0,
-               python::arg("confId") = -1,
                python::arg("ignoreInterfragInteractions") = true),
               docString.c_str());
 
@@ -406,7 +402,6 @@ BOOST_PYTHON_MODULE(rdForceFieldHelpers) {
     - mmffVariant : \"MMFF94\" or \"MMFF94s\"\n\
     - nonBondedThresh : used to exclude long-range non-bonded\n\
                   interactions (defaults to 100.0)\n\
-    - confId : indicates which conformer to optimize\n\
     - ignoreInterfragInteractions : if true, nonbonded terms between\n\
                   fragments will not be added to the forcefield.\n\
 \n\
@@ -417,7 +412,7 @@ RETURNS: a list of (not_converged, energy) 2-tuples. \n\
       "MMFFOptimizeMoleculeConfs", RDKit::MMFFConfsHelper,
       (python::arg("self"), python::arg("numThreads") = 1,
        python::arg("maxIters") = 200, python::arg("mmffVariant") = "MMFF94",
-       python::arg("nonBondedThresh") = 100.0, python::arg("confId") = -1,
+       python::arg("nonBondedThresh") = 100.0,
        python::arg("ignoreInterfragInteractions") = true),
       docString.c_str());
 
