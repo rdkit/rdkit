@@ -69,7 +69,7 @@ class TestCase(unittest.TestCase):
   def setUp(self):
     pass
 
-  def atest0SubstructLibrary(self):
+  def test0SubstructLibrary(self):
     for fpholderCls in [None, rdSubstructLibrary.PatternHolder]:
       for holder in [rdSubstructLibrary.MolHolder(), rdSubstructLibrary.CachedMolHolder(),
                      rdSubstructLibrary.CachedSmilesMolHolder()]:
@@ -104,7 +104,7 @@ class TestCase(unittest.TestCase):
           self.assertTrue(slib.HasMatch(m))
           self.assertEqual(slib.CountMatches(m), 100)
 
-  def atest1SubstructLibrary(self):
+  def test1SubstructLibrary(self):
     for fpholderCls in [None, rdSubstructLibrary.PatternHolder]:
       for holder in [rdSubstructLibrary.MolHolder(), rdSubstructLibrary.CachedMolHolder(),
                      rdSubstructLibrary.CachedSmilesMolHolder()]:
@@ -151,7 +151,7 @@ class TestCase(unittest.TestCase):
           self.assertEqual(slib.CountMatches(m), 100)
           self.assertEqual(slib.CountMatches(m2), 100)        
 
-  def atestOptions(self):
+  def testOptions(self):
     mols = makeStereoExamples() * 10
 
     for holderCls in [
@@ -195,7 +195,7 @@ class TestCase(unittest.TestCase):
         self.assertEqual(len(res),
                          len([x for x in mols if x.HasSubstructMatch(core, useChirality=True)]))
 
-  def atestSmilesCache(self):
+  def testSmilesCache(self):
     mols = makeStereoExamples() * 10
     holder = rdSubstructLibrary.CachedSmilesMolHolder()
 
@@ -234,7 +234,7 @@ class TestCase(unittest.TestCase):
                        len([x for x in mols if x.HasSubstructMatch(core, useChirality=True)]))
 
 
-  def atestTrustedSmilesCache(self):
+  def testTrustedSmilesCache(self):
     mols = makeStereoExamples() * 10
     holder = rdSubstructLibrary.CachedTrustedSmilesMolHolder()
 
@@ -272,7 +272,7 @@ class TestCase(unittest.TestCase):
       self.assertEqual(len(res),
                        len([x for x in mols if x.HasSubstructMatch(core, useChirality=True)]))
     
-  def atestBinaryCache(self):
+  def testBinaryCache(self):
     mols = makeStereoExamples() * 10
     holder = rdSubstructLibrary.CachedMolHolder()
 
