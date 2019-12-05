@@ -1009,11 +1009,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
             "size of boundsMat provided does not match the number of atoms in "
             "the molecule.");
       }
-      mmat.reset(new DistGeom::BoundsMatrix(nAtoms));
-      initBoundsMat(mmat);
-      setTopolBounds(*(piece.get()), mmat, etkdgDetails.bonds,
-                     etkdgDetails.angles, true, false);
-
+      collectBondsAndAngles((*piece.get()),etkdgDetails.bonds, etkdgDetails.angles);
       mmat.reset(new DistGeom::BoundsMatrix(*params.boundsMat));
     }
 
