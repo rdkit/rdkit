@@ -70,6 +70,7 @@ RDKIT_DISTGEOMHELPERS_EXPORT void setTopolBounds(
     std::vector<std::vector<int>> &angles, bool set15bounds = true,
     bool scaleVDW = false);
 
+//! generate the vectors of bonds and angles used by (ET)KDG
 RDKIT_DISTGEOMHELPERS_EXPORT void collectBondsAndAngles(
     const ROMol &mol, 
     std::vector<std::pair<int, int>> &bonds,
