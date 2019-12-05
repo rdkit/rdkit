@@ -51,9 +51,6 @@ struct RDKIT_SCAFFOLDNETWORK_EXPORT ScaffoldNetworkParams {
   ScaffoldNetworkParams(const std::vector<std::string> &bondBreakersSmarts);
 };
 
-RDKIT_SCAFFOLDNETWORK_EXPORT extern const ScaffoldNetworkParams BRICSNetworkParams;
-
-
 enum class RDKIT_SCAFFOLDNETWORK_EXPORT EdgeType {
   Fragment = 1,     ///< molecule -> fragment
   Generic = 2,      ///< molecule -> generic molecule (all atoms are dummies)
@@ -123,6 +120,10 @@ inline std::ostream &operator<<(std::ostream &ostr,
        << " )";
   return ostr;
 }
+
+RDKIT_SCAFFOLDNETWORK_EXPORT extern const ScaffoldNetworkParams BRICSNetworkParams;
+//static const ScaffoldNetworkParams BRICSNetworkParams;
+
 }  // namespace ScaffoldNetwork
 }  // namespace RDKit
 

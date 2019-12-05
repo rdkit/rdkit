@@ -14,7 +14,7 @@
 // As of this writing (July 2019) I was unable to get dependencies to
 // work correctly without adding this bogus library.
 
-RDL_API void do_nothing(unsigned n) {
+void do_nothing(unsigned n) {
   RDL_graph *graph = RDL_initNewGraph(n);
   for (auto i = 0; i < n - 1; ++i) {
     RDL_addUEdge(graph, i, i + 1);

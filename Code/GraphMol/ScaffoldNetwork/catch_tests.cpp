@@ -9,6 +9,7 @@
 //
 
 #include "catch.hpp"
+#include "GraphMol/ScaffoldNetwork/detail.h"
 #include "RDGeneral/test.h"
 #include <sstream>
 #include <GraphMol/RDKitBase.h>
@@ -18,22 +19,6 @@
 
 using namespace RDKit;
 
-// declarations of stuff we'll be testing that isn't in the public API
-namespace RDKit {
-namespace ScaffoldNetwork {
-namespace detail {
-std::vector<std::pair<std::string, ROMOL_SPTR>> getMolFragments(
-    const ROMol &mol, const ScaffoldNetworkParams &params);
-ROMol *makeScaffoldGeneric(const ROMol &mol, bool doAtoms, bool doBonds);
-ROMol *removeAttachmentPoints(const ROMol &mol,
-                              const ScaffoldNetworkParams &params);
-ROMol *pruneMol(const ROMol &mol, const ScaffoldNetworkParams &params);
-ROMol *flattenMol(const ROMol &mol, const ScaffoldNetworkParams &params);
-void addMolToNetwork(const ROMol &mol, ScaffoldNetwork &network,
-                     const ScaffoldNetworkParams &params);
-}  // namespace detail
-}  // namespace ScaffoldNetwork
-}  // namespace RDKit
 
 TEST_CASE("flattenMol", "[unittest, scaffolds]") {
   auto m = "Cl.[13CH3][C@H](F)/C=C/C"_smiles;
@@ -404,9 +389,9 @@ TEST_CASE("BRICS Fragmenter", "[unittest, scaffolds]") {
     CHECK(std::count(net.counts.begin(), net.counts.end(), 1) == 3);
     CHECK(std::count(net.counts.begin(), net.counts.end(), 2) == 3);
   }
+
   SECTION("BRICS fragmenter") {
-    ScaffoldNetwork::ScaffoldNetworkParams ps =
-        ScaffoldNetwork::BRICSNetworkParams;
+    ScaffoldNetwork::ScaffoldNetworkParams ps(ScaffoldNetwork::BRICSNetworkParams);
     ps.includeScaffoldsWithoutAttachments = false;
     ps.includeGenericScaffolds = false;
     ps.keepOnlyFirstFragment = false;
