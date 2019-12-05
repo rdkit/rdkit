@@ -69,7 +69,7 @@ class TestCase(unittest.TestCase):
   def setUp(self):
     pass
 
-  def test0SubstructLibrary(self):
+  def atest0SubstructLibrary(self):
     for fpholderCls in [None, rdSubstructLibrary.PatternHolder]:
       for holder in [rdSubstructLibrary.MolHolder(), rdSubstructLibrary.CachedMolHolder(),
                      rdSubstructLibrary.CachedSmilesMolHolder()]:
@@ -104,7 +104,7 @@ class TestCase(unittest.TestCase):
           self.assertTrue(slib.HasMatch(m))
           self.assertEqual(slib.CountMatches(m), 100)
 
-  def test1SubstructLibrary(self):
+  def atest1SubstructLibrary(self):
     for fpholderCls in [None, rdSubstructLibrary.PatternHolder]:
       for holder in [rdSubstructLibrary.MolHolder(), rdSubstructLibrary.CachedMolHolder(),
                      rdSubstructLibrary.CachedSmilesMolHolder()]:
@@ -151,7 +151,7 @@ class TestCase(unittest.TestCase):
           self.assertEqual(slib.CountMatches(m), 100)
           self.assertEqual(slib.CountMatches(m2), 100)        
 
-  def testOptions(self):
+  def atestOptions(self):
     mols = makeStereoExamples() * 10
 
     for holderCls in [
@@ -195,7 +195,7 @@ class TestCase(unittest.TestCase):
         self.assertEqual(len(res),
                          len([x for x in mols if x.HasSubstructMatch(core, useChirality=True)]))
 
-  def testSmilesCache(self):
+  def atestSmilesCache(self):
     mols = makeStereoExamples() * 10
     holder = rdSubstructLibrary.CachedSmilesMolHolder()
 
@@ -234,7 +234,7 @@ class TestCase(unittest.TestCase):
                        len([x for x in mols if x.HasSubstructMatch(core, useChirality=True)]))
 
 
-  def testTrustedSmilesCache(self):
+  def atestTrustedSmilesCache(self):
     mols = makeStereoExamples() * 10
     holder = rdSubstructLibrary.CachedTrustedSmilesMolHolder()
 
@@ -272,7 +272,7 @@ class TestCase(unittest.TestCase):
       self.assertEqual(len(res),
                        len([x for x in mols if x.HasSubstructMatch(core, useChirality=True)]))
     
-  def testBinaryCache(self):
+  def atestBinaryCache(self):
     mols = makeStereoExamples() * 10
     holder = rdSubstructLibrary.CachedMolHolder()
 
@@ -309,6 +309,24 @@ class TestCase(unittest.TestCase):
       res = slib.GetMatches(core)
       self.assertEqual(len(res),
                        len([x for x in mols if x.HasSubstructMatch(core, useChirality=True)]))
-        
+
+  def testRingSmartsWithTrustedSmiles(self):
+    pat = Chem.MolFromSmarts("[C&R1]")
+    holder = rdSubstructLibrary.CachedTrustedSmilesMolHolder()
+    lib = rdSubstructLibrary.SubstructLibrary(holder)
+    lib.AddMol(Chem.MolFromSmiles("C1CC1"))
+
+    # make sure we can get an unsanitized molecule that fails (no ring info)
+    with self.assertRaises(RuntimeError):
+      holder.GetMol(0,False).HasSubstructMatch(pat)
+
+    # shouldn't throw
+    self.assertEqual(len(lib.GetMatches(pat)), 1)
+
+    pat = Chem.MolFromSmarts("C@C")
+    self.assertEqual(len(lib.GetMatches(pat)), 1)
+    
+
+    
 if __name__ == '__main__':
   unittest.main()

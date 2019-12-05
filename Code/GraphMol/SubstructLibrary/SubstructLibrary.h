@@ -38,6 +38,7 @@
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <DataStructs/ExplicitBitVect.h>
 #include <DataStructs/BitOps.h>
+#include <GraphMol/MolOps.h>
 
 namespace RDKit {
 
@@ -58,7 +59,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT MolHolderBase {
   virtual unsigned int addMol(const ROMol &m) = 0;
 
   // implementations should throw IndexError on out of range
-  virtual boost::shared_ptr<ROMol> getMol(unsigned int) const = 0;
+  virtual boost::shared_ptr<ROMol> getMol(unsigned int, bool sanitize=true) const = 0;
 
   //! Get the current library size
   virtual unsigned int size() const = 0;
@@ -80,8 +81,10 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT MolHolder : public MolHolderBase {
     return size() - 1;
   }
 
-  virtual boost::shared_ptr<ROMol> getMol(unsigned int idx) const {
+  virtual boost::shared_ptr<ROMol> getMol(unsigned int idx, bool sanitize=true) const {
+    RDUNUSED_PARAM(sanitize);
     if (idx >= mols.size()) throw IndexErrorException(idx);
+    // Assume mols are already sanitized
     return mols[idx];
   }
 
@@ -120,7 +123,8 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedMolHolder : public MolHolderBase {
     return size() - 1;
   }
 
-  virtual boost::shared_ptr<ROMol> getMol(unsigned int idx) const {
+  virtual boost::shared_ptr<ROMol> getMol(unsigned int idx, bool sanitize=true) const {
+    RDUNUSED_PARAM(sanitize); // assume mols are pre sanitized
     if (idx >= mols.size()) throw IndexErrorException(idx);
     boost::shared_ptr<ROMol> mol(new ROMol);
     MolPickler::molFromPickle(mols[idx], mol.get());
@@ -164,7 +168,8 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedSmilesMolHolder
     return size() - 1;
   }
 
-  virtual boost::shared_ptr<ROMol> getMol(unsigned int idx) const {
+  virtual boost::shared_ptr<ROMol> getMol(unsigned int idx, bool sanitize=true) const {
+    RDUNUSED_PARAM(sanitize); // mols are pre sanitized
     if (idx >= mols.size()) throw IndexErrorException(idx);
 
     boost::shared_ptr<ROMol> mol(SmilesToMol(mols[idx]));
@@ -213,10 +218,13 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedTrustedSmilesMolHolder
     return size() - 1;
   }
 
-  virtual boost::shared_ptr<ROMol> getMol(unsigned int idx) const {
+  virtual boost::shared_ptr<ROMol> getMol(unsigned int idx, bool sanitize=true) const {
     if (idx >= mols.size()) throw IndexErrorException(idx);
 
     RWMol *m = SmilesToMol(mols[idx], 0, false);
+    if (sanitize) { // only need ring info for sanitiation
+      MolOps::symmetrizeSSSR(*m);
+    }
     m->updatePropertyCache();
     return boost::shared_ptr<ROMol>(m);
   }
@@ -549,7 +557,8 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
   boost::shared_ptr<ROMol> getMol(unsigned int idx) const {
     // expects implementation to throw IndexError if out of range
     PRECONDITION(mols, "molholder is null in SubstructLibrary");
-    return mols->getMol(idx);
+    const bool sanitize=true;
+    return mols->getMol(idx, sanitize);
   }
 
   //! Returns the molecule at the given index
@@ -559,7 +568,8 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
   boost::shared_ptr<ROMol> operator[](unsigned int idx) {
     // expects implementation to throw IndexError if out of range
     PRECONDITION(mols, "molholder is null in SubstructLibrary");
-    return mols->getMol(idx);
+    const bool sanitize=true;
+    return mols->getMol(idx, sanitize);
   }
 
   //! return the number of molecules in the library

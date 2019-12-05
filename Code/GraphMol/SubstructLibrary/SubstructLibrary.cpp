@@ -38,6 +38,7 @@
 #include <atomic>
 #include <GraphMol/Substruct/SubstructMatch.h>
 
+
 namespace RDKit {
 
 bool SubstructLibraryCanSerialize() {
@@ -87,12 +88,30 @@ unsigned int SubstructLibrary::addMol(const ROMol &m) {
 }
 
 namespace {
+//  Return true if the pattern contains a ring query
+bool query_needs_rings(const ROMol &in_query) {
+  for (auto &atom: in_query.atoms()) {
+    if(atom->hasQuery()) {
+      if (describeQuery(atom).find("Ring") != std::string::npos) {
+	return true;
+      }
+    }
+  }
+  for (auto &bond: in_query.bonds()) {
+    if(bond->hasQuery()) {
+      if (describeQuery(bond).find("Ring") != std::string::npos) {
+	return true;
+      }
+    }
+  }
+  return false;
+}
 
 // end is exclusive here
 void SubSearcher(const ROMol &in_query, const Bits &bits,
                  const MolHolderBase &mols, std::vector<unsigned int> &idxs,
                  unsigned int start, unsigned int end, unsigned int numThreads,
-                 std::atomic<int> &counter, const int maxResults) {
+                 std::atomic<int> &counter, const int maxResults, const bool needs_rings) {
   ROMol query(in_query);
   MatchVectType matchVect;
   for (unsigned int idx = start;
@@ -101,8 +120,9 @@ void SubSearcher(const ROMol &in_query, const Bits &bits,
     if (!bits.check(idx)) continue;
     // need shared_ptr as it (may) control the lifespan of the
     //  returned molecule!
-    const boost::shared_ptr<ROMol> &m = mols.getMol(idx);
+    const boost::shared_ptr<ROMol> &m = mols.getMol(idx, needs_rings);
     const ROMol *mol = m.get();
+      
     if (SubstructMatch(*mol, query, matchVect, bits.recursionPossible,
                        bits.useChirality, bits.useQueryQueryMatches)) {
       // this is squishy when updating the counter.  While incrementing is
@@ -120,15 +140,16 @@ void SubSearcher(const ROMol &in_query, const Bits &bits,
 void SubSearchMatchCounter(const ROMol &in_query, const Bits &bits,
                            const MolHolderBase &mols, unsigned int start,
                            unsigned int end, int numThreads,
-                           std::atomic<int> &counter) {
+                           std::atomic<int> &counter, bool needs_rings) {
   ROMol query(in_query);
   MatchVectType matchVect;
   for (unsigned int idx = start; idx < end; idx += numThreads) {
     if (!bits.check(idx)) continue;
     // need shared_ptr as it (may) controls the lifespan of the
     //  returned molecule!
-    const boost::shared_ptr<ROMol> &m = mols.getMol(idx);
+    const boost::shared_ptr<ROMol> &m = mols.getMol(idx, needs_rings);
     const ROMol *mol = m.get();
+    
     if (SubstructMatch(*mol, query, matchVect, bits.recursionPossible,
                        bits.useChirality, bits.useQueryQueryMatches)) {
       counter++;
@@ -155,6 +176,7 @@ std::vector<unsigned int> internalGetMatches(
   std::atomic<int> counter(0);
   std::vector<std::vector<unsigned int>> internal_results(numThreads);
 
+  bool needs_rings = query_needs_rings(query);
   Bits bits(fps, query, recursionPossible, useChirality, useQueryQueryMatches);
 
   for (int thread_group_idx = 0; thread_group_idx < numThreads;
@@ -164,7 +186,7 @@ std::vector<unsigned int> internalGetMatches(
         std::async(std::launch::async, SubSearcher, std::ref(query), bits,
                    std::ref(mols), std::ref(internal_results[thread_group_idx]),
                    startIdx + thread_group_idx, endIdx, numThreads,
-                   std::ref(counter), maxResults));
+                   std::ref(counter), maxResults, needs_rings));
   }
   for (auto &fut : thread_group) {
     fut.get();
@@ -204,7 +226,8 @@ int internalMatchCounter(const ROMol &query, MolHolderBase &mols,
 
   std::vector<std::future<void>> thread_group;
   std::atomic<int> counter(0);
-
+  bool needs_rings = query_needs_rings(query);
+  
   Bits bits(fps, query, recursionPossible, useChirality, useQueryQueryMatches);
   for (int thread_group_idx = 0; thread_group_idx < numThreads;
        ++thread_group_idx) {
@@ -212,7 +235,7 @@ int internalMatchCounter(const ROMol &query, MolHolderBase &mols,
     thread_group.emplace_back(
         std::async(std::launch::async, SubSearchMatchCounter, std::ref(query),
                    bits, std::ref(mols), startIdx + thread_group_idx, endIdx,
-                   numThreads, std::ref(counter)));
+                   numThreads, std::ref(counter), needs_rings));
   }
   for (auto &thread : thread_group) {
     thread.get();
