@@ -2810,6 +2810,34 @@ CAS<~>
       i += 1
     self.assertEqual(i, 16)
 
+  def testMaeFileSupplierException(self):
+    try:
+      MaeMolSupplier = Chem.MaeMolSupplier
+    except AttributeError:  # Built without Maestro support, return w/o testing
+      return
+
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'bad_ppty.mae')
+    err_msg_substr = "Bad format for property";
+
+    ok = False
+    suppl = MaeMolSupplier(fileN)
+    for i in range(5):
+      try:
+        mol = next(suppl)
+      except RuntimeError as e:
+        self.assertEqual(i, 1)
+        self.assertTrue(err_msg_substr in str(e))
+        ok = True
+        break
+      else:
+        self.assertTrue(mol)
+        self.assertTrue(mol.HasProp("_Name"))
+        self.assertTrue(mol.GetNumAtoms() == 1)
+
+    self.assertFalse(suppl.atEnd())
+    self.assertTrue(ok)
+
   def test66StreamSupplierIter(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'NCI_aids_few.sdf.gz')

@@ -404,6 +404,7 @@ class RDKIT_FILEPARSERS_EXPORT MaeMolSupplier : public MolSupplier {
   std::shared_ptr<schrodinger::mae::Reader> d_reader;
   std::shared_ptr<schrodinger::mae::Block> d_next_struct;
   std::shared_ptr<std::istream> dp_sInStream;
+  std::string d_stored_exc;
 };
 #endif  // RDK_BUILD_COORDGEN_SUPPORT
 }  // namespace RDKit
