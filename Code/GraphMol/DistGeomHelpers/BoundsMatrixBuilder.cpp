@@ -1273,6 +1273,9 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
 void collectBondsAndAngles(const ROMol &mol,
                     std::vector<std::pair<int, int> > &bonds,
                     std::vector<std::vector<int> > &angles){
+  bonds.resize(0);
+  angles.resize(0);
+  bonds.reserve(mol.GetNumBonds());
   for (const auto bondi : mol.bonds()) {
     bonds.push_back(std::make_pair(bondi->getBeginAtomIdx(), bondi->getEndAtomIdx()));
 
