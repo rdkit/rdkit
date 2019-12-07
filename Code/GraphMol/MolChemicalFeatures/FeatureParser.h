@@ -28,7 +28,7 @@ class RDKIT_MOLCHEMICALFEATURES_EXPORT FeatureFileParseException
   unsigned int lineNo() const { return d_lineNo; };
   std::string line() const { return d_line; };
   std::string message() const { return d_msg; };
-  ~FeatureFileParseException() throw(){};
+  ~FeatureFileParseException() noexcept {};
 
  private:
   unsigned int d_lineNo;

@@ -19,7 +19,7 @@ class GenericRDKitException : public std::exception {
   GenericRDKitException(const std::string &i) : _value(i){};
   GenericRDKitException(const char *msg) : _value(msg){};
   std::string message() const { return _value; };
-  ~GenericRDKitException() throw(){};
+  ~GenericRDKitException() noexcept {};
 
  private:
   std::string _value;

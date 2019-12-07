@@ -27,7 +27,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT GridException : public std::exception {
   GridException(const std::string &msg) : _msg(msg){};
   //! get the error message
   const char *message() const { return _msg.c_str(); };
-  ~GridException() throw(){};
+  ~GridException() noexcept {};
 
  private:
   std::string _msg;

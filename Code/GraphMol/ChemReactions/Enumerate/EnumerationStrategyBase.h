@@ -59,7 +59,7 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerationStrategyException
   EnumerationStrategyException(const char *msg) : _msg(msg){};
   EnumerationStrategyException(const std::string &msg) : _msg(msg){};
   const char *message() const { return _msg.c_str(); };
-  ~EnumerationStrategyException() throw(){};
+  ~EnumerationStrategyException() noexcept {};
 
  private:
   std::string _msg;

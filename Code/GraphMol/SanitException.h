@@ -31,7 +31,7 @@ class RDKIT_GRAPHMOL_EXPORT MolSanitizeException : public std::exception {
   MolSanitizeException(const MolSanitizeException &other)
       : d_msg(other.d_msg){};
   virtual const char *message() const { return d_msg.c_str(); };
-  virtual ~MolSanitizeException() throw(){};
+  virtual ~MolSanitizeException() noexcept {};
   virtual MolSanitizeException *copy() const {
     return new MolSanitizeException(*this);
   };
@@ -51,7 +51,7 @@ class RDKIT_GRAPHMOL_EXPORT AtomSanitizeException
   AtomSanitizeException(const AtomSanitizeException &other)
       : MolSanitizeException(other), d_atomIdx(other.d_atomIdx){};
   unsigned int getAtomIdx() const { return d_atomIdx; };
-  virtual ~AtomSanitizeException() throw(){};
+  virtual ~AtomSanitizeException() noexcept {};
   virtual MolSanitizeException *copy() const {
     return new AtomSanitizeException(*this);
   };
@@ -70,7 +70,7 @@ class RDKIT_GRAPHMOL_EXPORT AtomValenceException
       : AtomSanitizeException(msg, atomIdx){};
   AtomValenceException(const AtomValenceException &other)
       : AtomSanitizeException(other){};
-  virtual ~AtomValenceException() throw(){};
+  virtual ~AtomValenceException() noexcept {};
   MolSanitizeException *copy() const {
     return new AtomValenceException(*this);
   };
@@ -86,7 +86,7 @@ class RDKIT_GRAPHMOL_EXPORT AtomKekulizeException
       : AtomSanitizeException(msg, atomIdx){};
   AtomKekulizeException(const AtomKekulizeException &other)
       : AtomSanitizeException(other){};
-  virtual ~AtomKekulizeException() throw(){};
+  virtual ~AtomKekulizeException() noexcept {};
   MolSanitizeException *copy() const {
     return new AtomKekulizeException(*this);
   };
@@ -105,7 +105,7 @@ class RDKIT_GRAPHMOL_EXPORT KekulizeException : public MolSanitizeException {
   const std::vector<unsigned int> &getAtomIndices() const {
     return d_atomIndices;
   };
-  virtual ~KekulizeException() throw(){};
+  virtual ~KekulizeException() noexcept {};
   MolSanitizeException *copy() const { return new KekulizeException(*this); };
   std::string getType() const { return "KekulizeException"; };
 

@@ -29,7 +29,7 @@ class RDKIT_MOLALIGN_EXPORT MolAlignException : public std::exception {
   MolAlignException(const std::string msg) : _msg(msg){};
   //! get the error message
   const char *message() const { return _msg.c_str(); };
-  ~MolAlignException() throw(){};
+  ~MolAlignException() noexcept {};
 
  private:
   std::string _msg;
