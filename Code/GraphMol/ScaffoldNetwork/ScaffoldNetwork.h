@@ -121,8 +121,7 @@ inline std::ostream &operator<<(std::ostream &ostr,
   return ostr;
 }
 
-RDKIT_SCAFFOLDNETWORK_EXPORT extern const ScaffoldNetworkParams BRICSNetworkParams;
-//static const ScaffoldNetworkParams BRICSNetworkParams;
+RDKIT_SCAFFOLDNETWORK_EXPORT ScaffoldNetworkParams getBRICSNetworkParams();
 
 }  // namespace ScaffoldNetwork
 }  // namespace RDKit

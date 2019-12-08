@@ -44,7 +44,7 @@ ScaffoldNetworkParams::ScaffoldNetworkParams(
           "bond breaker reactions must have exactly two products");
     }
     rxn->initReactantMatchers();
-    bondBreakersRxns.push_back(rxn);
+    bondBreakersRxns.emplace_back(rxn);
   }
 };
 
@@ -290,7 +290,7 @@ template RDKIT_SCAFFOLDNETWORK_EXPORT void updateScaffoldNetwork(
 template RDKIT_SCAFFOLDNETWORK_EXPORT ScaffoldNetwork createScaffoldNetwork(
     const std::vector<ROMOL_SPTR> &ms, const ScaffoldNetworkParams &params);
 
-const ScaffoldNetworkParams BRICSNetworkParams({"[$([C;D3]([#0,#6,#7,#8])(=O)):1]-;!@[$([O;D2]-;!@[#0,#6,#1]):2]>>[1*]-[*"
+const std::vector<std::string> BRICSDefinitions = {"[$([C;D3]([#0,#6,#7,#8])(=O)):1]-;!@[$([O;D2]-;!@[#0,#6,#1]):2]>>[1*]-[*"
      ":1].[3*]-[*:2]",
      "[$([C;D3]([#0,#6,#7,#8])(=O)):1]-;!@[$([N;!D1;!$(N=*);!$(N-[!#6;!#16;!#"
      "0;!#1]);!$([N;R]@[C;R]=O)]):2]>>[1*]-[*:1].[5*]-[*:2]",
@@ -380,7 +380,12 @@ const ScaffoldNetworkParams BRICSNetworkParams({"[$([C;D3]([#0,#6,#7,#8])(=O)):1
      "[$([C;$(C(-;@C)-;@C)]):1]-;!@[$([c;$(c(:c):c)]):2]>>[15*]-[*:1].[16*]-[*"
      ":2]",
      "[$([c;$(c(:c):c)]):1]-;!@[$([c;$(c(:c):c)]):2]>>[16*]-[*:1].[16*]-[*:"
-     "2]"});
+     "2]"};
+
+ScaffoldNetworkParams getBRICSNetworkParams(){
+  return ScaffoldNetworkParams(BRICSDefinitions);
+};
+
 
 //const ScaffoldNetworkParams BRICSNetworkParams;
 
