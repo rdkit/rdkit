@@ -35,7 +35,7 @@ void updateNetworkHelper(python::object pmols,
 
 ScaffoldNetwork::ScaffoldNetworkParams *getBRICSParams() {
   return new ScaffoldNetwork::ScaffoldNetworkParams(
-      ScaffoldNetwork::BRICSNetworkParams);
+      ScaffoldNetwork::getBRICSNetworkParams());
 }
 
 }  // namespace
