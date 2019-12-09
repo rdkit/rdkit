@@ -16,10 +16,13 @@
 #include <GraphMol/ScaffoldNetwork/ScaffoldNetwork.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/ChemReactions/Reaction.h>
+#include <GraphMol/ChemReactions/ReactionParser.h>
+
 
 using namespace RDKit;
 
-#if 0
+#if 1
 TEST_CASE("flattenMol", "[unittest, scaffolds]") {
   auto m = "Cl.[13CH3][C@H](F)/C=C/C"_smiles;
   REQUIRE(m);
@@ -127,6 +130,7 @@ TEST_CASE("makeScaffoldGeneric", "[unittest, scaffolds]") {
 }
 #endif
 
+#if 1
 TEST_CASE("getMolFragments", "[unittest, scaffolds]") {
   auto m = "c1ccccc1CC1NC(=O)CCC1"_smiles;
   REQUIRE(m);
@@ -179,8 +183,9 @@ TEST_CASE("getMolFragments", "[unittest, scaffolds]") {
     CHECK((std::max(smi1, smi2) == "c1ccccc1"));
   }
 }
+#endif
 
-#if 0
+#if 1
 TEST_CASE("addMolToNetwork", "[unittest, scaffolds]") {
   SECTION("defaults") {
     auto m = "c1ccccc1CC1NC(=O)CCC1"_smiles;
