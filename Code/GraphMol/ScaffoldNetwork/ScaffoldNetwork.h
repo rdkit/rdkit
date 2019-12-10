@@ -31,7 +31,7 @@ struct RDKIT_SCAFFOLDNETWORK_EXPORT ScaffoldNetworkParams {
   bool includeScaffoldsWithoutAttachments =
       true;  ///< remove attachment points from scaffolds and include the result
   bool includeScaffoldsWithAttachments =
-      true;  ///< Include the version of the scaffold without attachment points
+      true;  ///< Include the version of the scaffold with attachment points
   bool keepOnlyFirstFragment =
       true;  ///<  keep only the first fragment from the bond breaking rule
   bool pruneBeforeFragmenting =
@@ -90,6 +90,7 @@ ScaffoldNetwork createScaffoldNetwork(const T &mols,
   updateScaffoldNetwork(mols, res, params);
   return res;
 }
+//! allows nodes to output nicely as strings
 inline std::ostream &operator<<(std::ostream &ostr,
                                 const RDKit::ScaffoldNetwork::EdgeType &e) {
   switch (e) {
@@ -114,6 +115,7 @@ inline std::ostream &operator<<(std::ostream &ostr,
   }
   return ostr;
 }
+//! allows edges to output nicely as strings
 inline std::ostream &operator<<(std::ostream &ostr,
                                 const RDKit::ScaffoldNetwork::NetworkEdge &e) {
   ostr << "NetworkEdge( " << e.beginIdx << ", " << e.endIdx << ", " << e.type
@@ -121,6 +123,8 @@ inline std::ostream &operator<<(std::ostream &ostr,
   return ostr;
 }
 
+//! returns parameters for constructing scaffold networks using BRICS
+//! fragmentation
 RDKIT_SCAFFOLDNETWORK_EXPORT ScaffoldNetworkParams getBRICSNetworkParams();
 
 }  // namespace ScaffoldNetwork

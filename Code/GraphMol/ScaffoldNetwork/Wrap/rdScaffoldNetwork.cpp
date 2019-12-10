@@ -20,7 +20,8 @@ using namespace RDKit;
 
 namespace {
 ScaffoldNetwork::ScaffoldNetwork *createNetworkHelper(
-    python::object pmols, const ScaffoldNetwork::ScaffoldNetworkParams &params) {
+    python::object pmols,
+    const ScaffoldNetwork::ScaffoldNetworkParams &params) {
   auto mols = pythonObjectToVect<ROMOL_SPTR>(pmols);
   ScaffoldNetwork::ScaffoldNetwork *res = new ScaffoldNetwork::ScaffoldNetwork;
   updateScaffoldNetwork(*mols, *res, params);
@@ -52,31 +53,52 @@ BOOST_PYTHON_MODULE(rdScaffoldNetwork) {
   const boost::python::converter::registration *reg =
       boost::python::converter::registry::query(info);
   if (reg == NULL || (*reg).m_to_python == NULL) {
-    python::class_<std::vector<ScaffoldNetwork::NetworkEdge>>("NetworkEdge_VECT")
-        .def(python::vector_indexing_suite<std::vector<ScaffoldNetwork::NetworkEdge>>());
+    python::class_<std::vector<ScaffoldNetwork::NetworkEdge>>(
+        "NetworkEdge_VECT")
+        .def(python::vector_indexing_suite<
+             std::vector<ScaffoldNetwork::NetworkEdge>>());
   }
 
   std::string docString = R"DOC()DOC";
 
   python::class_<ScaffoldNetwork::ScaffoldNetworkParams>(
       "ScaffoldNetworkParams", "Scaffold network parameters", python::init<>())
-      .def_readwrite("includeGenericScaffolds",
-                     &ScaffoldNetwork::ScaffoldNetworkParams::includeGenericScaffolds)
-      .def_readwrite("includeGenericBondScaffolds",
-                     &ScaffoldNetwork::ScaffoldNetworkParams::includeGenericScaffolds)
-      .def_readwrite("includeScaffoldsWithoutAttachments",
-                     &ScaffoldNetwork::ScaffoldNetworkParams::includeScaffoldsWithoutAttachments)
-      .def_readwrite("includeScaffoldsWithAttachments",
-                     &ScaffoldNetwork::ScaffoldNetworkParams::includeScaffoldsWithAttachments)
-      .def_readwrite("keepOnlyFirstFragment",
-                     &ScaffoldNetwork::ScaffoldNetworkParams::keepOnlyFirstFragment)
-      .def_readwrite("pruneBeforeFragmenting",
-                     &ScaffoldNetwork::ScaffoldNetworkParams::pruneBeforeFragmenting)
-      .def_readwrite("flattenIsotopes", &ScaffoldNetwork::ScaffoldNetworkParams::flattenIsotopes)
+      .def_readwrite(
+          "includeGenericScaffolds",
+          &ScaffoldNetwork::ScaffoldNetworkParams::includeGenericScaffolds,
+          "include scaffolds with all atoms replaced by dummies")
+      .def_readwrite(
+          "includeGenericBondScaffolds",
+          &ScaffoldNetwork::ScaffoldNetworkParams::includeGenericScaffolds,
+          "include scaffolds with all bonds replaced by single bonds")
+      .def_readwrite(
+          "includeScaffoldsWithoutAttachments",
+          &ScaffoldNetwork::ScaffoldNetworkParams::
+              includeScaffoldsWithoutAttachments,
+          "remove attachment points from scaffolds and include the result")
+      .def_readwrite(
+          "includeScaffoldsWithAttachments",
+          &ScaffoldNetwork::ScaffoldNetworkParams::
+              includeScaffoldsWithAttachments,
+          "Include the version of the scaffold with attachment points")
+      .def_readwrite(
+          "keepOnlyFirstFragment",
+          &ScaffoldNetwork::ScaffoldNetworkParams::keepOnlyFirstFragment,
+          "keep only the first fragment from the bond breaking rule")
+      .def_readwrite(
+          "pruneBeforeFragmenting",
+          &ScaffoldNetwork::ScaffoldNetworkParams::pruneBeforeFragmenting,
+          "Do a pruning/flattening step before starting fragmenting")
+      .def_readwrite("flattenIsotopes",
+                     &ScaffoldNetwork::ScaffoldNetworkParams::flattenIsotopes,
+                     "remove isotopes when flattening")
       .def_readwrite("flattenChirality",
-                     &ScaffoldNetwork::ScaffoldNetworkParams::flattenChirality)
-      .def_readwrite("flattenKeepLargest",
-                     &ScaffoldNetwork::ScaffoldNetworkParams::flattenKeepLargest);
+                     &ScaffoldNetwork::ScaffoldNetworkParams::flattenChirality,
+                     "remove chirality and bond stereo when flattening")
+      .def_readwrite(
+          "flattenKeepLargest",
+          &ScaffoldNetwork::ScaffoldNetworkParams::flattenKeepLargest,
+          "keep only the largest fragment when doing flattening");
 
   python::enum_<ScaffoldNetwork::EdgeType>("EdgeType")
       .value("Fragment", ScaffoldNetwork::EdgeType::Fragment)
@@ -85,29 +107,37 @@ BOOST_PYTHON_MODULE(rdScaffoldNetwork) {
       .value("RemoveAttachment", ScaffoldNetwork::EdgeType::RemoveAttachment)
       .value("Initialize", ScaffoldNetwork::EdgeType::Initialize);
 
-  python::class_<ScaffoldNetwork::NetworkEdge>("NetworkEdge", "A scaffold network edge",
-                              python::no_init)
-      .def_readonly("beginIdx", &ScaffoldNetwork::NetworkEdge::beginIdx)
-      .def_readonly("endIdx", &ScaffoldNetwork::NetworkEdge::endIdx)
-      .def_readonly("type", &ScaffoldNetwork::NetworkEdge::type)
+  python::class_<ScaffoldNetwork::NetworkEdge>(
+      "NetworkEdge", "A scaffold network edge", python::no_init)
+      .def_readonly("beginIdx", &ScaffoldNetwork::NetworkEdge::beginIdx,
+                    "index of the begin node in node list")
+      .def_readonly("endIdx", &ScaffoldNetwork::NetworkEdge::endIdx,
+                    "index of the end node in node list")
+      .def_readonly("type", &ScaffoldNetwork::NetworkEdge::type, ,
+                    "type of the edge")
       .def(python::self_ns::str(python::self_ns::self));
 
   python::class_<ScaffoldNetwork::ScaffoldNetwork>(
       "ScaffoldNetwork", "A scaffold network", python::init<>())
-      .def_readonly("nodes", &ScaffoldNetwork::ScaffoldNetwork::nodes)
-      .def_readonly("counts", &ScaffoldNetwork::ScaffoldNetwork::counts)
-      .def_readonly("edges", &ScaffoldNetwork::ScaffoldNetwork::edges);
+      .def_readonly("nodes", &ScaffoldNetwork::ScaffoldNetwork::nodes,
+                    "the sequence of SMILES defining the nodes")
+      .def_readonly("counts", &ScaffoldNetwork::ScaffoldNetwork::counts,
+                    "the number of times each node was encountered while "
+                    "building the network.")
+      .def_readonly("edges", &ScaffoldNetwork::ScaffoldNetwork::edges,
+                    "the sequence of network edges");
 
   python::def("CreateScaffoldNetwork", &createNetworkHelper,
               (python::arg("mols"), python::arg("params")),
-              "create (and return) a new network",
+              "create (and return) a new network from a sequence of molecules",
               python::return_value_policy<python::manage_new_object>());
   python::def(
       "UpdateScaffoldNetwork", &updateNetworkHelper,
       (python::arg("mols"), python::arg("network"), python::arg("params")),
-      "update an existing network");
+      "update an existing network by adding molecules");
 
   python::def("BRICSScaffoldParams", &getBRICSParams,
-              "Returns parameters for generating BRICS scaffolds.",
+              "Returns parameters for generating scaffolds using BRICS "
+              "fragmentation rules",
               python::return_value_policy<python::manage_new_object>());
 }
