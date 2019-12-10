@@ -308,12 +308,13 @@ namespace boost{
             ++pair.nbrbeg;
           }
           
-          if (pair.nbrbeg < pair.nbrend)
-            pair.n2=*pair.nbrbeg;
-          else
-            pair.n2=n2;
-          
-          ++pair.nbrbeg;
+          if (pair.nbrbeg < pair.nbrend) {
+              pair.n2 = *pair.nbrbeg;
+              ++pair.nbrbeg;
+          }
+          else {
+              pair.n2 = n2;
+          }
         }
         else if (t1_len>core_len && t2_len>core_len) {
           while (pair.n2<n2 &&
