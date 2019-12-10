@@ -118,8 +118,8 @@ inline std::ostream &operator<<(std::ostream &ostr,
 //! allows edges to output nicely as strings
 inline std::ostream &operator<<(std::ostream &ostr,
                                 const RDKit::ScaffoldNetwork::NetworkEdge &e) {
-  ostr << "NetworkEdge( " << e.beginIdx << ", " << e.endIdx << ", " << e.type
-       << " )";
+  ostr << "NetworkEdge( " << e.beginIdx << "->" << e.endIdx
+       << ", type:" << e.type << " )";
   return ostr;
 }
 

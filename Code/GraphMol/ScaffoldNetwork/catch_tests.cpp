@@ -19,7 +19,6 @@
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/ChemReactions/ReactionParser.h>
 
-
 using namespace RDKit;
 
 #if 1
@@ -332,7 +331,7 @@ TEST_CASE("ostream integration", "[scaffolds]") {
     std::ostringstream oss;
     oss << net.edges[0];
     auto txt = oss.str();
-    CHECK(txt == "NetworkEdge( 0, 1, Fragment )");
+    CHECK(txt == "NetworkEdge( 0->1, type:Fragment )");
   }
 }
 
@@ -398,7 +397,8 @@ TEST_CASE("BRICS Fragmenter", "[unittest, scaffolds]") {
   }
 
   SECTION("BRICS fragmenter") {
-    ScaffoldNetwork::ScaffoldNetworkParams ps = ScaffoldNetwork::getBRICSNetworkParams();
+    ScaffoldNetwork::ScaffoldNetworkParams ps =
+        ScaffoldNetwork::getBRICSNetworkParams();
     ps.includeScaffoldsWithoutAttachments = false;
     ps.includeGenericScaffolds = false;
     ps.keepOnlyFirstFragment = false;

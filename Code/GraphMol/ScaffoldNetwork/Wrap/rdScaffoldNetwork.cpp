@@ -111,7 +111,7 @@ BOOST_PYTHON_MODULE(rdScaffoldNetwork) {
                     "index of the begin node in node list")
       .def_readonly("endIdx", &ScaffoldNetwork::NetworkEdge::endIdx,
                     "index of the end node in node list")
-      .def_readonly("type", &ScaffoldNetwork::NetworkEdge::type, ,
+      .def_readonly("type", &ScaffoldNetwork::NetworkEdge::type,
                     "type of the edge")
       .def(python::self_ns::str(python::self_ns::self));
 

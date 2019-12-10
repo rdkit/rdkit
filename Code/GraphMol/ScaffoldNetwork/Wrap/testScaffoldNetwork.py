@@ -96,7 +96,7 @@ class TestCase(unittest.TestCase):
     net = rdScaffoldNetwork.CreateScaffoldNetwork(ms, params)
     self.assertEqual(len(net.nodes), 9)
     self.assertEqual(len(net.edges), 8)
-    self.assertEqual(str(net.edges[0]), "NetworkEdge( 0, 1, Fragment )")
+    self.assertEqual(str(net.edges[0]), "NetworkEdge( 0->1, type:Fragment )")
 
 
 if __name__ == '__main__':
