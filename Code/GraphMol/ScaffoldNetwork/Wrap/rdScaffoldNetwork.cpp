@@ -45,7 +45,7 @@ BOOST_PYTHON_MODULE(rdScaffoldNetwork) {
   python::scope().attr("__doc__") =
       "Module containing functions for creating a Scaffold Network";
 
-  // register the vector_indexing_suite for SubstanceGroups
+  // register the vector_indexing_suite for NetworkEdges
   // if it hasn't already been done.
   // logic from https://stackoverflow.com/a/13017303
   boost::python::type_info info =
@@ -58,8 +58,6 @@ BOOST_PYTHON_MODULE(rdScaffoldNetwork) {
         .def(python::vector_indexing_suite<
              std::vector<ScaffoldNetwork::NetworkEdge>>());
   }
-
-  std::string docString = R"DOC()DOC";
 
   python::class_<ScaffoldNetwork::ScaffoldNetworkParams>(
       "ScaffoldNetworkParams", "Scaffold network parameters", python::init<>())
