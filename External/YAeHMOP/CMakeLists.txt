@@ -29,16 +29,17 @@ ExternalProject_Add(yaehmop_project
 
 include_directories(${PROJECT_BINARY_DIR}/include)
 link_directories(${PROJECT_BINARY_DIR}/lib)
+link_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/yaehmop_project-build)
 
 set(EHT_PARAM_FILE ${CMAKE_CURRENT_SOURCE_DIR}/yaehmop/tightbind/eht_parms.dat )
 install(FILES ${EHT_PARAM_FILE}
         DESTINATION ${RDKit_ShareDir}/Data
         COMPONENT data)
 
-message("include_dirs: ${PROJECT_BINARY_DIR}/include")
-message("link_dirs: ${PROJECT_BINARY_DIR}/lib")
+message("YAeHMOP include_dirs: ${PROJECT_BINARY_DIR}/include")
+message("YAeHMOP link_dirs: ${PROJECT_BINARY_DIR}/lib ${CMAKE_CURRENT_SOURCE_DIR}/src/yaehmop_project-build")
 
-add_definitions(-DRDKIT_AVALONLIB_BUILD)
+add_definitions(-DRDKIT_EHTLIB_BUILD)
 rdkit_library(EHTLib EHTTools.cpp SHARED LINK_LIBRARIES yaehmop_eht GraphMol DataStructs RDGeometryLib RDGeneral )
 add_dependencies(EHTLib yaehmop_project)
 rdkit_headers(EHTTools.h DEST GraphMol)
