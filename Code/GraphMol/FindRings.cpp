@@ -1087,7 +1087,7 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
   FindRings::storeRingsInfo(mol, res);
 
   // update the ring memberships of atoms and bonds in the molecule:
-  // store the SSSR rings on the the molecule as a property
+  // store the SSSR rings on the molecule as a property
   // we will ignore any existing SSSRs ont eh molecule - simply overwrite
   return rdcast<int>(res.size());
 }
@@ -1243,14 +1243,14 @@ void _DFS(const ROMol &mol, const Atom *atom, INT_VECT &atomColors,
 }  // end of anonymous namespace
 void fastFindRings(const ROMol &mol) {
   // std::cerr<<"ffr"<<std::endl;
-  VECT_INT_VECT res;
-  res.resize(0);
   // check if SSSR's are already on the molecule
   if (mol.getRingInfo()->isInitialized()) {
     return;
   } else {
     mol.getRingInfo()->initialize();
   }
+  VECT_INT_VECT res;
+  res.resize(0);
 
   unsigned int nats = mol.getNumAtoms();
 

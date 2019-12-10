@@ -739,17 +739,18 @@ M  END
   }
 }
 
-TEST_CASE("XYZ", "[XYZ,writer]"){
+TEST_CASE("XYZ", "[XYZ,writer]") {
   SECTION("basics") {
     std::unique_ptr<RWMol> mol{new RWMol{}};
-    mol->setProp(common_properties::_Name, "methane\nthis part should not be output");
+    mol->setProp(common_properties::_Name,
+                 "methane\nthis part should not be output");
 
     for (unsigned z : {6, 1, 1, 1, 1}) {
-      auto* a = new Atom{z};
+      auto *a = new Atom{z};
       mol->addAtom(a, false, true);
     }
 
-    auto* conf = new Conformer{5};
+    auto *conf = new Conformer{5};
     conf->setId(0);
     conf->setAtomPos(0, RDGeom::Point3D{0.000, 0.000, 0.000});
     conf->setAtomPos(1, RDGeom::Point3D{-0.635, -0.635, 0.635});
@@ -768,5 +769,104 @@ H      0.635000   -0.635000   -0.635000
 H      0.635000    0.635000    0.635000
 )XYZ";
     CHECK(xyzblock == xyzblock_expected);
+  }
+}
+
+TEST_CASE("valence writing 1", "[bug,writer]") {
+  SECTION("carbon") {
+    std::string molblock = R"CTAB(carbon atom
+
+
+  1  0  0  0  0  0            999 V2000
+   -0.3958   -0.0542    0.0000 C   0  0  0  0  0 15
+M  END)CTAB";
+    bool sanitize = false;
+    bool removeHs = false;
+    std::unique_ptr<ROMol> mol(MolBlockToMol(molblock, sanitize, removeHs));
+    REQUIRE(mol);
+    mol->updatePropertyCache();
+    CHECK(mol->getAtomWithIdx(0)->getNoImplicit());
+    CHECK(mol->getAtomWithIdx(0)->getExplicitValence() == 0);
+    CHECK(mol->getAtomWithIdx(0)->getTotalValence() == 0);
+    auto outBlock = MolToMolBlock(*mol);
+    std::cerr << outBlock << std::endl;
+    REQUIRE(outBlock.find("0  0 15") != std::string::npos);
+  }
+  SECTION("P valences") {
+    std::string molblock = R"CTAB(H2PO2
+
+
+  3  2  0  0  0  0            999 V2000
+    0.2667   -0.4167    0.0000 P   0  0  0  0  0  5
+    0.2667    1.1083    0.0000 O   0  0
+   -1.0958   -1.0042    0.0000 O   0  0
+  2  1  2  0
+  3  1  1  0
+M  END)CTAB";
+    bool sanitize = false;
+    bool removeHs = false;
+    std::unique_ptr<ROMol> mol(MolBlockToMol(molblock, sanitize, removeHs));
+    REQUIRE(mol);
+    mol->updatePropertyCache();
+    CHECK(mol->getAtomWithIdx(0)->getNoImplicit());
+    CHECK(mol->getAtomWithIdx(0)->getExplicitValence() == 5);
+    CHECK(mol->getAtomWithIdx(0)->getTotalValence() == 5);
+    auto outBlock = MolToMolBlock(*mol);
+    std::cerr << outBlock << std::endl;
+    REQUIRE(outBlock.find("0  0  5") != std::string::npos);
+  }
+}
+
+TEST_CASE("Github #2695: Error when a squiggle bond is in an aromatic ring",
+          "[bug,reader]") {
+  SECTION("reported") {
+    auto ctab = R"CTAB(
+  -ISIS-  -- StrEd -- 
+
+ 19 22  0  0  0  0  0  0  0  0999 V2000
+   -3.1355   -0.9331    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6355   -1.7990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6356   -1.7990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.1356   -0.9331    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6356   -0.0671    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6355   -0.0671    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.1355    0.7991    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6355    1.6651    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6356    1.6651    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.1356    0.7991    0.0000 C   0  0  3  0  0  0  0  0  0  0  0  0
+   -0.1354    0.7991    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4523    1.6080    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4034    1.2991    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2693    1.7990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.1355    1.2991    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.1355    0.2991    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2693   -0.2011    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4034    0.2991    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4523   -0.0099    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  2  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  2  0  0  0  0
+  5  6  1  0  0  0  0
+  1  6  1  0  0  0  0
+  6  7  2  0  0  0  0
+  7  8  1  0  0  0  0
+  8  9  2  0  0  0  0
+ 10  9  1  4  0  0  0
+  5 10  1  0  0  0  0
+ 10 11  2  0  0  0  0
+ 11 12  1  0  0  0  0
+ 12 13  2  0  0  0  0
+ 13 14  1  0  0  0  0
+ 14 15  2  0  0  0  0
+ 15 16  1  0  0  0  0
+ 16 17  2  0  0  0  0
+ 17 18  1  0  0  0  0
+ 13 18  1  0  0  0  0
+ 18 19  2  0  0  0  0
+ 11 19  1  0  0  0  0
+M  END)CTAB";
+    std::unique_ptr<ROMol> mol(MolBlockToMol(ctab));
+    REQUIRE(mol);
   }
 }

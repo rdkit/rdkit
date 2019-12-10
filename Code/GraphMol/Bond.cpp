@@ -298,7 +298,13 @@ std::ostream &operator<<(std::ostream &target, const RDKit::Bond &bond) {
   target << bond.getBeginAtomIdx() << "->" << bond.getEndAtomIdx();
   target << " order: " << bond.getBondType();
   if (bond.getBondDir()) target << " dir: " << bond.getBondDir();
-  if (bond.getStereo()) target << " stereo: " << bond.getStereo();
+  if (bond.getStereo()) {
+    target << " stereo: " << bond.getStereo();
+    if (bond.getStereoAtoms().size() == 2) {
+      const auto &ats = bond.getStereoAtoms();
+      target << " stereoAts: (" << ats[0] << " " << ats[1] << ")";
+    }
+  }
   target << " conj?: " << bond.getIsConjugated();
   target << " aromatic?: " << bond.getIsAromatic();
 

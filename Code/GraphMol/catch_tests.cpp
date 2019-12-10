@@ -28,12 +28,12 @@ TEST_CASE("Sanitization tests", "[molops]") {
     mol->updatePropertyCache();
     CHECK(mol->getAtomWithIdx(0)->getTotalNumHs() == 1);
     CHECK(!mol->getAtomWithIdx(0)->getIsAromatic());
-    CHECK(mol->getAtomWithIdx(7)->getIsAromatic());
+    CHECK(mol->getAtomWithIdx(10)->getIsAromatic());
     SECTION("aromaticity") {
       unsigned int opThatFailed;
       MolOps::sanitizeMol(*mol, opThatFailed, MolOps::SANITIZE_SETAROMATICITY);
       // mol->debugMol(std::cerr);
-      CHECK(mol->getAtomWithIdx(7)->getIsAromatic());
+      CHECK(mol->getAtomWithIdx(10)->getIsAromatic());
       // blocked by #1730
       // CHECK(mol->getAtomWithIdx(0)->getIsAromatic());
     }
@@ -41,7 +41,7 @@ TEST_CASE("Sanitization tests", "[molops]") {
       unsigned int opThatFailed;
       MolOps::sanitizeMol(*mol, opThatFailed, MolOps::SANITIZE_KEKULIZE);
       CHECK(!mol->getAtomWithIdx(0)->getIsAromatic());
-      CHECK(!mol->getAtomWithIdx(7)->getIsAromatic());
+      CHECK(!mol->getAtomWithIdx(10)->getIsAromatic());
     }
   }
 }
@@ -508,5 +508,355 @@ M  END
     REQUIRE(mol);
     CHECK(mol->getAtomWithIdx(0)->getFormalCharge() == 2);
     CHECK(mol->getAtomWithIdx(0)->getTotalNumHs() == 0);
+  }
+}
+
+TEST_CASE(
+    "github #2649: Allenes read from mol blocks have crossed bonds assigned"
+    "[bug, stereochemistry]") {
+  SECTION("basics") {
+    std::string mb = R"CTAB(mol
+  Mrv1824 09191901002D          
+
+  6  5  0  0  0  0            999 V2000
+   -1.6986   -7.4294    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2522   -6.8245    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.1438   -8.0357    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.8095   -6.2156    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3374   -7.8470    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.6162   -6.3886    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  3  2  0  0  0  0
+  2  1  2  0  0  0  0
+  3  5  1  0  0  0  0
+  4  2  2  0  0  0  0
+  6  4  1  0  0  0  0
+M  END)CTAB";
+    std::unique_ptr<ROMol> mol(MolBlockToMol(mb));
+    REQUIRE(mol);
+    CHECK(mol->getBondWithIdx(0)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
+    CHECK(mol->getBondWithIdx(3)->getStereo() == Bond::STEREONONE);
+    auto outmolb = MolToMolBlock(*mol);
+    // std::cerr<<outmolb<<std::endl;
+    CHECK(outmolb.find("1  3  2  0") != std::string::npos);
+    CHECK(outmolb.find("2  1  2  0") != std::string::npos);
+    CHECK(outmolb.find("4  2  2  0") != std::string::npos);
+  }
+}
+
+TEST_CASE(
+    "GitHub 2712: setBondStereoFromDirections() returning incorrect results"
+    "[stereochemistry]") {
+  SECTION("basics 1a") {
+    std::string mb = R"CTAB(
+  Mrv1810 10141909562D          
+
+  4  3  0  0  0  0            999 V2000
+    3.3412   -2.9968    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5162   -2.9968    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.1037   -3.7112    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.7537   -2.2823    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  1  4  1  0  0  0  0
+M  END
+)CTAB";
+    bool sanitize = false;
+    std::unique_ptr<ROMol> mol(MolBlockToMol(mb, sanitize));
+    REQUIRE(mol);
+    CHECK(mol->getBondWithIdx(0)->getBondType() == Bond::DOUBLE);
+    CHECK(mol->getBondWithIdx(0)->getStereo() == Bond::STEREONONE);
+    MolOps::setBondStereoFromDirections(*mol);
+    CHECK(mol->getBondWithIdx(0)->getStereo() == Bond::STEREOTRANS);
+  }
+  SECTION("basics 1b") {
+    std::string mb = R"CTAB(
+  Mrv1810 10141909562D          
+
+  4  3  0  0  0  0            999 V2000
+    3.3412   -2.9968    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5162   -2.9968    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.1037   -3.7112    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.7537   -2.2823    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  4  1  1  0  0  0  0
+M  END
+)CTAB";
+    bool sanitize = false;
+    std::unique_ptr<ROMol> mol(MolBlockToMol(mb, sanitize));
+    REQUIRE(mol);
+    CHECK(mol->getBondWithIdx(0)->getBondType() == Bond::DOUBLE);
+    CHECK(mol->getBondWithIdx(0)->getStereo() == Bond::STEREONONE);
+    MolOps::setBondStereoFromDirections(*mol);
+    CHECK(mol->getBondWithIdx(0)->getStereo() == Bond::STEREOTRANS);
+  }
+  SECTION("basics 2a") {
+    std::string mb = R"CTAB(
+  Mrv1810 10141909582D          
+
+  4  3  0  0  0  0            999 V2000
+    3.4745   -5.2424    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.6495   -5.2424    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2370   -5.9569    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.8870   -5.9569    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  1  4  1  0  0  0  0
+M  END
+)CTAB";
+    bool sanitize = false;
+    std::unique_ptr<ROMol> mol(MolBlockToMol(mb, sanitize));
+    REQUIRE(mol);
+    CHECK(mol->getBondWithIdx(0)->getBondType() == Bond::DOUBLE);
+    CHECK(mol->getBondWithIdx(0)->getStereo() == Bond::STEREONONE);
+    MolOps::setBondStereoFromDirections(*mol);
+    CHECK(mol->getBondWithIdx(0)->getStereo() == Bond::STEREOCIS);
+  }
+  SECTION("basics 2b") {
+    std::string mb = R"CTAB(
+  Mrv1810 10141909582D          
+
+  4  3  0  0  0  0            999 V2000
+    3.4745   -5.2424    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.6495   -5.2424    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2370   -5.9569    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.8870   -5.9569    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  4  1  1  0  0  0  0
+M  END
+)CTAB";
+    bool sanitize = false;
+    std::unique_ptr<ROMol> mol(MolBlockToMol(mb, sanitize));
+    REQUIRE(mol);
+    CHECK(mol->getBondWithIdx(0)->getBondType() == Bond::DOUBLE);
+    CHECK(mol->getBondWithIdx(0)->getStereo() == Bond::STEREONONE);
+    MolOps::setBondStereoFromDirections(*mol);
+    CHECK(mol->getBondWithIdx(0)->getStereo() == Bond::STEREOCIS);
+  }
+}
+
+TEST_CASE("removeHs screwing up double bond stereo", "[bug,removeHs]") {
+  SECTION("example1") {
+    std::string molblock = R"CTAB(molblock = """
+  SciTegic12221702182D
+
+ 47 51  0  0  0  0            999 V2000
+    0.2962    6.2611    0.0000 C   0  0
+   -3.9004    4.4820    0.0000 C   0  0
+    1.4195    5.2670    0.0000 C   0  0
+   -3.8201   -7.4431    0.0000 C   0  0
+   -4.9433   -6.4490    0.0000 C   0  0
+   -2.3975   -6.9674    0.0000 C   0  0
+    3.5921   -3.5947    0.0000 C   0  0
+   -3.1475    2.3700    0.0000 C   0  0
+    2.1695   -4.0705    0.0000 C   0  0
+   -2.0242    1.3759    0.0000 C   0  0
+   -4.6440   -4.9792    0.0000 C   0  0
+    2.7681   -1.1308    0.0000 C   0  0
+   -5.8626    1.1332    0.0000 C   0  0
+    3.0674    0.3391    0.0000 C   0  0
+    3.6660    3.2787    0.0000 C   0  0
+    8.1591   -0.6978    0.0000 C   0  0
+    7.3351    1.7662    0.0000 C   0  0
+   -6.3876    3.5028    0.0000 C   0  0
+   -0.6756   -5.0219    0.0000 C   0  0
+    7.0358    0.2964    0.0000 C   0  0
+    3.8914   -2.1249    0.0000 C   0  0
+   -2.0982   -5.4976    0.0000 C   0  0
+   -4.5701    1.8943    0.0000 C   0  0  1  0  0  0
+   -6.9859    2.1273    0.0000 C   0  0  1  0  0  0
+    4.4900    0.8148    0.0000 C   0  0
+    1.3455   -1.6065    0.0000 C   0  0
+    4.7893    2.2846    0.0000 C   0  0
+    1.9442    1.3332    0.0000 C   0  0
+    1.0462   -3.0763    0.0000 C   0  0
+    2.2435    2.8030    0.0000 C   0  0
+   -0.6017    1.8516    0.0000 C   0  0
+    5.6132   -0.1794    0.0000 C   0  0
+    0.2223   -0.6124    0.0000 Cl  0  0
+    9.2823   -1.6919    0.0000 N   0  0
+   -3.2215   -4.5035    0.0000 N   0  0
+    6.2119    2.7603    0.0000 N   0  0
+    5.3139   -1.6492    0.0000 N   0  0
+    0.5216    0.8575    0.0000 N   0  0
+   -4.8945    3.3588    0.0000 N   0  0
+   -8.2913    2.8662    0.0000 O   0  0
+   -0.3024    3.3214    0.0000 O   0  0
+    1.1202    3.7971    0.0000 O   0  0
+   -0.3763   -3.5520    0.0000 O   0  0
+   -2.8482    3.8398    0.0000 H   0  0
+   -2.3235   -0.0940    0.0000 H   0  0
+   -3.9483    0.5292    0.0000 H   0  0
+   -7.8572    0.9063    0.0000 H   0  0
+  1  3  1  0
+  2 39  1  0
+  3 42  1  0
+  4  5  2  0
+  4  6  1  0
+  5 11  1  0
+  6 22  2  0
+  7  9  2  0
+  7 21  1  0
+  8 44  1  0
+  8 10  2  0
+  8 23  1  0
+  9 29  1  0
+ 10 45  1  0
+ 10 31  1  0
+ 11 35  2  0
+ 12 21  2  0
+ 12 26  1  0
+ 13 23  1  0
+ 13 24  1  0
+ 14 25  2  0
+ 14 28  1  0
+ 15 27  2  0
+ 15 30  1  0
+ 16 20  1  0
+ 16 34  3  0
+ 17 20  2  0
+ 17 36  1  0
+ 18 24  1  0
+ 18 39  1  0
+ 19 22  1  0
+ 19 43  1  0
+ 20 32  1  0
+ 21 37  1  0
+ 22 35  1  0
+ 23 46  1  6
+ 23 39  1  0
+ 24 47  1  1
+ 24 40  1  0
+ 25 27  1  0
+ 25 32  1  0
+ 26 29  2  0
+ 26 33  1  0
+ 27 36  1  0
+ 28 30  2  0
+ 28 38  1  0
+ 29 43  1  0
+ 30 42  1  0
+ 31 38  2  0
+ 31 41  1  0
+ 32 37  2  3
+M  END
+"""
+
+)CTAB";
+    bool sanitize = false;
+    bool removeHs = false;
+    std::unique_ptr<RWMol> m(MolBlockToMol(molblock, sanitize, removeHs));
+    REQUIRE(m);
+    m->updatePropertyCache();
+    MolOps::setBondStereoFromDirections(*m);
+    CHECK(m->getBondWithIdx(10)->getBondType() == Bond::DOUBLE);
+    CHECK(m->getBondWithIdx(10)->getStereo() == Bond::STEREOTRANS);
+    REQUIRE(m->getBondWithIdx(10)->getStereoAtoms().size() == 2);
+    CHECK(m->getBondWithIdx(10)->getStereoAtoms()[0] == 43);
+    CHECK(m->getBondWithIdx(10)->getStereoAtoms()[1] == 44);
+
+    MolOps::removeHs(*m);  // implicitOnly,updateExplicitCount,sanitize);
+    // m->debugMol(std::cerr);
+    CHECK(m->getBondWithIdx(9)->getBondType() == Bond::DOUBLE);
+    CHECK(m->getBondWithIdx(9)->getStereo() == Bond::STEREOTRANS);
+    REQUIRE(m->getBondWithIdx(9)->getStereoAtoms().size() == 2);
+    CHECK(m->getBondWithIdx(9)->getStereoAtoms()[0] == 22);
+    CHECK(m->getBondWithIdx(9)->getStereoAtoms()[1] == 30);
+  }
+}
+
+TEST_CASE("setDoubleBondNeighborDirections()", "[stereochemistry,bug]") {
+  SECTION("basics") {
+    auto m = "CC=CC"_smiles;
+    REQUIRE(m);
+    m->getBondWithIdx(1)->getStereoAtoms() = {0, 3};
+    m->getBondWithIdx(1)->setStereo(Bond::STEREOCIS);
+    MolOps::setDoubleBondNeighborDirections(*m);
+    CHECK(m->getBondWithIdx(0)->getBondDir() == Bond::ENDUPRIGHT);
+    CHECK(m->getBondWithIdx(2)->getBondDir() == Bond::ENDDOWNRIGHT);
+    CHECK(MolToSmiles(*m) == "C/C=C\\C");
+  }
+}
+
+TEST_CASE("github #2782: addHs() fails on atoms with 'bad' valences", "[bug]") {
+  SECTION("basics") {
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    std::unique_ptr<RWMol> m(
+        static_cast<RWMol *>(SmilesToMol("C=C1=CC=CC=C1", ps)));
+    REQUIRE(m);
+    bool strict = false;
+    m->updatePropertyCache(strict);
+    CHECK(m->getNumAtoms() == 7);
+    MolOps::addHs(*m);
+    CHECK(m->getNumAtoms() == 14);
+    // this doesn't change the fact that there's still a bad valence present:
+    CHECK_THROWS_AS(m->updatePropertyCache(), AtomValenceException);
+  }
+}
+
+TEST_CASE(
+    "Github #2784: Element symbol lookup for some transuranics returns "
+    "incorrect results",
+    "[transuranics,bug]") {
+  auto pt = PeriodicTable::getTable();
+  SECTION("number to symbol") {
+    std::vector<std::pair<unsigned int, std::string>> data = {
+        {113, "Nh"}, {114, "Fl"}, {115, "Mc"},
+        {116, "Lv"}, {117, "Ts"}, {118, "Og"}};
+    for (auto pr : data) {
+      CHECK(pt->getElementSymbol(pr.first) == pr.second);
+    }
+  }
+  SECTION("symbol to number") {
+    std::vector<std::pair<unsigned int, std::string>> data = {
+        {113, "Nh"}, {114, "Fl"}, {115, "Mc"},  {116, "Lv"},
+        {117, "Ts"}, {118, "Og"}, {113, "Uut"}, {115, "Uup"}};
+    for (auto pr : data) {
+      CHECK(pt->getAtomicNumber(pr.second) == pr.first);
+    }
+  }
+}
+TEST_CASE("github #2775", "[valence,bug]") {
+  SECTION("basics") {
+    std::string molblock = R"CTAB(bismuth citrate
+  Mrv1810 11111908592D          
+
+ 14 12  0  0  0  0            999 V2000
+    7.4050   -0.5957    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.6906   -1.0082    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.9761   -0.5957    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    6.6906   -1.8332    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+    7.4050    0.2293    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.5800    0.2293    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.1675    0.9438    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.5800    1.6583    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    5.3425    0.9438    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+    8.2300    0.2293    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.6425   -0.4851    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    8.6425    0.9438    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+    7.4050    1.0543    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    4.5175    0.9438    0.0000 Bi  0  1  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  2  0  0  0  0
+  2  4  1  0  0  0  0
+  1  5  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  1  0  0  0  0
+  7  8  2  0  0  0  0
+  7  9  1  0  0  0  0
+  5 10  1  0  0  0  0
+ 10 11  2  0  0  0  0
+ 10 12  1  0  0  0  0
+  5 13  1  0  0  0  0
+M  CHG  4   4  -1   9  -1  12  -1  14   3
+M  END
+)CTAB";
+    std::unique_ptr<RWMol> m(MolBlockToMol(molblock));
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(13)->getSymbol() == "Bi");
+    CHECK(m->getAtomWithIdx(13)->getNumImplicitHs() == 0);
   }
 }

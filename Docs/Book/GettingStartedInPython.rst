@@ -1180,13 +1180,15 @@ you set it to True then ring bonds will only match ring bonds.
   >>> rdFMCS.FindMCS(mols).smartsString
   '[#6](-[#6]-[#6])-[#6]-[#6]-[#6]-[#6]'
   >>> rdFMCS.FindMCS(mols, ringMatchesRingOnly=True).smartsString
-  '[#6](-[#6]-[#6])-[#6]'
+  '[#6&R](-&@[#6&R]-&@[#6&R])-&@[#6&R]'
+
+Notice that the SMARTS returned now include ring queries on the atoms and bonds.
 
 You can further restrict things and require that partial rings (as in
 this case) are not allowed. That is, if an atom is part of the MCS and
 the atom is in a ring of the entire molecule then that atom is also in
-a ring of the MCS. Set ``completeRingsOnly`` to True to toggle this
-requirement and also sets ringMatchesRingOnly to True.
+a ring of the MCS. Setting ``completeRingsOnly`` to True toggles this
+requirement.
 
 .. doctest::
 
@@ -1194,9 +1196,25 @@ requirement and also sets ringMatchesRingOnly to True.
   >>> rdFMCS.FindMCS(mols).smartsString
   '[#6]1-[#6]-[#6](-[#6]-1-[#6])-[#6]'
   >>> rdFMCS.FindMCS(mols, ringMatchesRingOnly=True).smartsString
-  '[#6](-[#6]-[#6]-[#6]-[#6])-[#6]'
+  '[#6&R](-&@[#6&R]-&@[#6&R]-&@[#6&R]-&@[#6&R])-&@[#6&R]'
   >>> rdFMCS.FindMCS(mols, completeRingsOnly=True).smartsString
-  '[#6]1-[#6]-[#6]-[#6]-1'
+  '[#6]1-&@[#6]-&@[#6]-&@[#6]-&@1'
+
+Of course the two options can be combined with each other:
+
+.. doctest::
+
+  >>> ms = [Chem.MolFromSmiles(x) for x in ('CC1CCC1','CCC1CC1',)]                                                                                                      
+  >>> rdFMCS.FindMCS(ms,ringMatchesRingOnly=True).smartsString                                                                                                          
+  '[#6&!R]-&!@[#6&R](-&@[#6&R])-&@[#6&R]'
+  >>> rdFMCS.FindMCS(ms,completeRingsOnly=True).smartsString                                                                                                            
+  '[#6]-&!@[#6]'
+  >>> rdFMCS.FindMCS(ms,ringMatchesRingOnly=True,completeRingsOnly=True).smartsString                                                                                   
+  '[#6&!R]-&!@[#6&R]'
+
+
+
+
 
 The MCS algorithm will exhaustively search for a maximum common substructure.
 Typically this takes a fraction of a second, but for some comparisons this
@@ -1495,7 +1513,7 @@ of all atoms within a radius of 2 of atom 5:
   >>> submol.GetNumAtoms()
   6
   >>> amap
-  {0: 3, 1: 5, 3: 4, 4: 0, 5: 1, 6: 2}
+  {0: 0, 1: 1, 3: 2, 4: 3, 5: 4, 6: 5}
 
 And then “explain” the bit by generating SMILES for that submolecule:
 
@@ -1509,7 +1527,7 @@ This is more useful when the SMILES is rooted at the central atom:
 .. doctest::
 
   >>> Chem.MolToSmiles(submol,rootedAtAtom=amap[5],canonical=False)
-  'c(nc)(C)cc'
+  'c(cc)(nc)C'
 
 An alternate (and faster, particularly for large numbers of molecules)
 approach to do the same thing, using the function :py:func:`rdkit.Chem.MolFragmentToSmiles` :
@@ -2011,6 +2029,7 @@ set of fragments to create new molecules:
   >>> import random
   >>> random.seed(127)
   >>> fragms = [Chem.MolFromSmiles(x) for x in sorted(allfrags)]
+  >>> random.seed(0xf00d)
   >>> ms = BRICS.BRICSBuild(fragms)
 
 The result is a generator object:
@@ -2034,13 +2053,31 @@ The molecules have not been sanitized, so it's a good idea to at least update th
 
   >>> for prod in prods:
   ...     prod.UpdatePropertyCache(strict=False)
+  ...  
+  >>> Chem.MolToSmiles(prods[0],True)
+  'CC(C)C(=O)N/C=C1\\C(=O)Nc2ccc3ncsc3c21'
+  >>> Chem.MolToSmiles(prods[1],True)
+  'CC(C)C(=O)N/C=C1\\C(=O)Nc2ccccc21'
+  >>> Chem.MolToSmiles(prods[2],True)
+  'CNC(=O)C(C)C'
+
+
+By default those results come back in a random order (technically the example
+above will always return the same results since we seeded Python's random number
+generator just before calling BRICSBuild()). If you want the results to be
+returned in a consistent order use the scrambleReagents argument:
+
+  >>> ms = BRICS.BRICSBuild(fragms, scrambleReagents=False)
+  >>> prods = [next(ms) for x in range(10)]
+  >>> for prod in prods:
+  ...     prod.UpdatePropertyCache(strict=False)
   ...
   >>> Chem.MolToSmiles(prods[0],True)
-  'COCCO'
+  'COC(=O)C(C)C'
   >>> Chem.MolToSmiles(prods[1],True)
-  'O=C1Nc2ccc3ncsc3c2/C1=C/NCCO'
+  'CNC(=O)C(C)C'
   >>> Chem.MolToSmiles(prods[2],True)
-  'O=C1Nc2ccccc2/C1=C/NCCO'
+  'CC(C)C(=O)NC(=N)N'
 
 Other fragmentation approaches
 ==============================
@@ -2443,6 +2480,66 @@ this approach isn't particularly effective for this artificial
 example.
 
 
+R-Group Decomposition
+*********************
+
+Let's look at how it works. We'll read in a group of molecules (these were taken ChEMBL), define a core
+with labelled R groups, and then use the simplest call to do R-group decomposition: 
+:py:func:`rdkit.Chem.rdRGroupDecomposition.RGroupDecompose`
+
+.. doctest::
+
+  >>> from rdkit import Chem
+  >>> from rdkit.Chem import rdRGroupDecomposition as rdRGD
+  >>> suppl = Chem.SmilesMolSupplier('data/s1p_chembldoc89753.txt',delimiter=",",smilesColumn=9,nameColumn=10)
+  >>> ms = [x for x in suppl if x is not None]
+  >>> len(ms)
+  40
+  >>> core = Chem.MolFromSmarts('[*:1]c1nc([*:2])on1')
+  >>> res,unmatched = rdRGD.RGroupDecompose([core],ms,asSmiles=True)
+  >>> unmatched
+  []
+  >>> len(res)
+  40
+  >>> res[:2]            # doctest: +NORMALIZE_WHITESPACE
+  [{'Core': 'n1oc([*:2])nc1[*:1]', 'R1': 'O=C(O)CCCC1NCCOc2c1cccc2[*:1]', 'R2': 'CC(C)Oc1ccc([*:2])cc1Cl'}, 
+   {'Core': 'n1oc([*:2])nc1[*:1]', 'R1': 'O=C(O)CCC1NCCOc2c1cccc2[*:1]', 'R2': 'CC(C)Oc1ccc([*:2])cc1Cl'}]
+
+The `unmatched` return value has the indices of the molecules that did not match
+a core; in this case there are none. The other result is a list with one dict
+for each molecule; each dict contains the core that matched the molecule (in
+this case there was only one) and the molecule's R groups.
+
+As an aside, if you are a Pandas user, it's very easy to get the R-group
+decomposition results into a DataFrame:
+
+.. doctest::
+
+  >>> import pandas as pd
+  >>> res,unmatched = rdRGD.RGroupDecompose([core],ms,asSmiles=True,asRows=False)
+  >>> df= pd.DataFrame(res)
+  >>> df.head()
+                    Core                              R1                       R2
+  0  n1oc([*:2])nc1[*:1]   O=C(O)CCCC1NCCOc2c1cccc2[*:1]  CC(C)Oc1ccc([*:2])cc1Cl
+  1  n1oc([*:2])nc1[*:1]    O=C(O)CCC1NCCOc2c1cccc2[*:1]  CC(C)Oc1ccc([*:2])cc1Cl
+  2  n1oc([*:2])nc1[*:1]  O=C(O)CCC1COc2ccc([*:1])cc2CN1  CC(C)Oc1ccc([*:2])cc1Cl
+  3  n1oc([*:2])nc1[*:1]   O=C(O)CCCC1NCCOc2c1cccc2[*:1]  CC(C)Oc1ncc([*:2])cc1Cl
+  4  n1oc([*:2])nc1[*:1]   O=C(O)CCCC1NCCOc2c1cccc2[*:1]  CC(C)Oc1ncc([*:2])cc1Cl
+
+It's not necessary to label the attachment points on the core, if you leave them
+out the code will automatically assign labels:
+
+.. doctest::
+
+  >>> core2 = Chem.MolFromSmarts('c1ncon1')
+  >>> res,unmatched = rdRGD.RGroupDecompose([core2],ms,asSmiles=True)
+  >>> res[:2]            # doctest: +NORMALIZE_WHITESPACE
+  [{'Core': 'n1oc([*:1])nc1[*:2]', 'R1': 'CC(C)Oc1ccc([*:1])cc1Cl', 'R2': 'O=C(O)CCCC1NCCOc2c1cccc2[*:2]'}, 
+   {'Core': 'n1oc([*:1])nc1[*:2]', 'R1': 'CC(C)Oc1ccc([*:1])cc1Cl', 'R2': 'O=C(O)CCC1NCCOc2c1cccc2[*:2]'}]
+
+R-group decomposition is actually pretty complex, so there's a lot more there.
+Hopefully this is enough to get you started. 
+
 Non-Chemical Functionality
 **************************
 
@@ -2546,7 +2643,7 @@ but that are, of course, complete nonsense, as sanitization will indicate:
       compileflags, 1) in test.globs
     File "<doctest default[0]>", line 1, in <module>
       Chem.SanitizeMol(m)
-  ValueError: Sanitization error: Can't kekulize mol
+  rdkit.Chem.rdchem.KekulizeException: Can't kekulize mol.  Unkekulized atoms: 1 2 3 4 5
   <BLANKLINE>
 
 More complex transformations can be carried out using the
@@ -2763,7 +2860,7 @@ List of Available Descriptors
 +-----------------------------------------------------+------------------------------------------------------------+----------+
 |Autocorr2D                                           |New in 2017.09 release. Todeschini and Consoni "Descriptors | C++      |
 |                                                     |from Molecular Geometry" Handbook of Chemoinformatics       |          |
-|                                                     |http://dx.doi.org/10.1002/9783527618279.ch37                |          |
+|                                                     |https://doi.org/10.1002/9783527618279.ch37                  |          |
 +-----------------------------------------------------+------------------------------------------------------------+----------+
 
 
@@ -2786,40 +2883,40 @@ These all require the molecule to have a 3D conformer.
 +-----------------------------------------------------+-------------------------------------------------------------+----------+
 |Radius of gyration                                   |G. A. Arteca "Molecular Shape Descriptors"                   | C++      |
 |                                                     |Reviews in Computational Chemistry vol 9                     |          |
-|                                                     |http://dx.doi.org/10.1002/9780470125861.ch5                  |          |
+|                                                     |https://doi.org/10.1002/9780470125861.ch5                    |          |
 +-----------------------------------------------------+-------------------------------------------------------------+----------+
 |Inertial shape factor                                |Todeschini and Consoni "Descriptors from Molecular Geometry" | C++      |
 |                                                     |Handbook of Chemoinformatics                                 |          |
-|                                                     |http://dx.doi.org/10.1002/9783527618279.ch37                 |          |
+|                                                     |https://doi.org/10.1002/9783527618279.ch37                   |          |
 +-----------------------------------------------------+-------------------------------------------------------------+----------+
 |Eccentricity                                         |G. A. Arteca "Molecular Shape Descriptors"                   | C++      |
 |                                                     |Reviews in Computational Chemistry vol 9                     |          |
-|                                                     |http://dx.doi.org/10.1002/9780470125861.ch5                  |          |
+|                                                     |https://doi.org/10.1002/9780470125861.ch5                    |          |
 +-----------------------------------------------------+-------------------------------------------------------------+----------+
 |Asphericity                                          |A. Baumgaertner, "Shapes of flexible vesicles"               | C++      |
 |                                                     |J. Chem. Phys. 98:7496                                       |          |
 |                                                     |(1993)                                                       |          |
-|                                                     |http://dx.doi.org/10.1063/1.464689                           |          |
+|                                                     |https://doi.org/10.1063/1.464689                             |          |
 +-----------------------------------------------------+-------------------------------------------------------------+----------+
 |Spherocity Index                                     |Todeschini and Consoni "Descriptors from Molecular Geometry" | C++      |
 |                                                     |Handbook of Chemoinformatics                                 |          |
-|                                                     |http://dx.doi.org/10.1002/9783527618279.ch37                 |          |
+|                                                     |https://doi.org/10.1002/9783527618279.ch37                   |          |
 +-----------------------------------------------------+-------------------------------------------------------------+----------+
 |Autocorr3D                                           |New in 2017.09 release. Todeschini and Consoni "Descriptors  | C++      |
 |                                                     |from Molecular Geometry" Handbook of Chemoinformatics        |          |
-|                                                     |http://dx.doi.org/10.1002/9783527618279.ch37                 |          |
+|                                                     |https://doi.org/10.1002/9783527618279.ch37                   |          |
 +-----------------------------------------------------+-------------------------------------------------------------+----------+
 |RDF                                                  |New in 2017.09 release. Todeschini and Consoni "Descriptors  | C++      |
 |                                                     |from Molecular Geometry" Handbook of Chemoinformatics        |          |
-|                                                     |http://dx.doi.org/10.1002/9783527618279.ch37                 |          |
+|                                                     |https://doi.org/10.1002/9783527618279.ch37                   |          |
 +-----------------------------------------------------+-------------------------------------------------------------+----------+
 |MORSE                                                |New in 2017.09 release. Todeschini and Consoni "Descriptors  | C++      |
 |                                                     |from Molecular Geometry" Handbook of Chemoinformatics        |          |
-|                                                     |http://dx.doi.org/10.1002/9783527618279.ch37                 |          |
+|                                                     |https://doi.org/10.1002/9783527618279.ch37                   |          |
 +-----------------------------------------------------+-------------------------------------------------------------+----------+
 |WHIM                                                 |New in 2017.09 release. Todeschini and Consoni "Descriptors  | C++      |
 |                                                     |from Molecular Geometry" Handbook of Chemoinformatics        |          |
-|                                                     |http://dx.doi.org/10.1002/9783527618279.ch37                 |          |
+|                                                     |https://doi.org/10.1002/9783527618279.ch37                   |          |
 |                                                     |                                                             |          |
 |                                                     |**Note** insufficient information is available to exactly    |          |
 |                                                     |reproduce values from DRAGON for these descriptors. We       |          |
@@ -2827,7 +2924,7 @@ These all require the molecule to have a 3D conformer.
 +-----------------------------------------------------+-------------------------------------------------------------+----------+
 |GETAWAY                                              |New in 2017.09 release. Todeschini and Consoni "Descriptors  | C++      |
 |                                                     |from Molecular Geometry" Handbook of Chemoinformatics        |          |
-|                                                     |http://dx.doi.org/10.1002/9783527618279.ch37                 |          |
+|                                                     |https://doi.org/10.1002/9783527618279.ch37                   |          |
 |                                                     |                                                             |          |
 |                                                     |**Note** insufficient information is available to exactly    |          |
 |                                                     |reproduce values from DRAGON for these descriptors. We       |          |

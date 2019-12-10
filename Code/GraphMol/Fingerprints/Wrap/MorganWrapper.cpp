@@ -19,11 +19,10 @@ namespace RDKit {
 namespace MorganWrapper {
 template <typename OutputType>
 FingerprintGenerator<OutputType> *getMorganGenerator(
-    const unsigned int radius, const bool countSimulation,
-    const bool includeChirality, const bool useBondTypes,
-    const bool onlyNonzeroInvariants,
-    const bool, // includeRingMembership
-    python::object &py_countBounds, const std::uint32_t fpSize,
+    unsigned int radius, bool countSimulation, bool includeChirality,
+    bool useBondTypes, bool onlyNonzeroInvariants,
+    bool,  // includeRingMembership
+    python::object &py_countBounds, std::uint32_t fpSize,
     python::object &py_atomInvGen, python::object &py_bondInvGen) {
   AtomInvariantsGenerator *atomInvariantsGenerator = nullptr;
   BondInvariantsGenerator *bondInvariantsGenerator = nullptr;
@@ -75,23 +74,9 @@ BondInvariantsGenerator *getMorganBondInvGen(const bool useBondTypes,
 }
 
 void exportMorgan() {
-  /*python::def(
-      "GetMorganGenerator32", getMorganGenerator<std::uint32_t>,
-      (python::arg("radius") = 3, python::arg("useCountSimulation") = true,
-       python::arg("includeChirality") = false,
-       python::arg("useBondTypes") = true,
-       python::arg("onlyNonzeroInvariants") = false,
-       python::arg("includeRingMembership") = true,
-       python::arg("countBounds") = python::object(),
-       python::arg("fpSize") = 2048,
-       python::arg("atomInvariantsGenerator") = python::object(),
-       python::arg("bondInvariantsGenerator") = python::object()),
-      docString.c_str(),
-      python::return_value_policy<python::manage_new_object>());*/
-
   python::def(
       "GetMorganGenerator", getMorganGenerator<std::uint64_t>,
-      (python::arg("radius") = 3, python::arg("useCountSimulation") = true,
+      (python::arg("radius") = 3, python::arg("useCountSimulation") = false,
        python::arg("includeChirality") = false,
        python::arg("useBondTypes") = true,
        python::arg("onlyNonzeroInvariants") = false,
@@ -109,8 +94,6 @@ void exportMorgan() {
       "the generated fingerprint\n"
       "    - useBondTypes: if set, bond types will be included as a part of "
       "the default bond invariants\n"
-      "    - useCountSimulation:  if set, use count simulation while  "
-      "generating the fingerprint\n"
       "    - countBounds: boundaries for count simulation, corresponding bit "
       "will be  set if the count is higher than the number provided for that "
       "spot\n"

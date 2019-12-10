@@ -95,13 +95,17 @@ void testPass() {
     "[z1]",
     "[Z]",
     "[Z1]",
-#endif
     "[D{1-3}]",  // cactvs range queries
     "[D{-3}]",
     "[D{1-}]",
     "[z{1-3}]",
     "[Z{1-3}]",
     "[2H,13C]",  // github #1719
+    "[+{0-3}]",
+#endif
+    "[-{0-3}]",
+    "[-{0-3},C]",
+    "[-{0-3},D{1-3}]",  // github #2709
     "EOS"
   };
   while (smis[i] != "EOS") {
@@ -110,14 +114,24 @@ void testPass() {
     CHECK_INVARIANT(mol, smi);
     int nAts = mol->getNumAtoms();
     CHECK_INVARIANT(nAts != 0, smi.c_str());
-    // make sure that we can pickle and de-pickle it (this is the test for
-    // github #1710):
-    std::string pkl;
-    MolPickler::pickleMol(*mol, pkl);
+    {  // make sure that we can pickle and de-pickle it (this is the test for
+      // github #1710):
+      std::string pkl;
+      MolPickler::pickleMol(*mol, pkl);
+      auto mol2 = new Mol(pkl);
+      TEST_ASSERT(mol2);
+      delete mol2;
+    }
+    {
+      // finally make sure that we can create parsable SMARTS from it:
+      auto outSmarts = MolToSmarts(*mol);
+      std::cerr << smi << " " << outSmarts << std::endl;
+      auto mol2 = SmartsToMol(outSmarts);
+      TEST_ASSERT(mol2);
+      delete mol2;
+    }
     delete mol;
-    mol = new Mol(pkl);
-    TEST_ASSERT(mol);
-    delete mol;
+
     i++;
   }
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -2672,6 +2686,37 @@ void testGithub2142() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub2565() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Testing Github #2565: Chirality reversed on SMARTS generation."
+      << std::endl;
+
+  std::vector<std::string> smiles(
+      {R"(O=C1C[C@]([H])1F)", R"(Cl[C@@H]1CCC1=O)",
+       R"(N1CCN=C1[C@H]1CCCc2ccccc21)", R"(C[C@@H](Cl)[C@H]1CC[C@@H](Cl)CC1)",
+       R"(Fc1cn([C@@H]2CCCO2)c(=O)[nH]c1=O)",
+       R"([C@@]1(C)(C(C)(C)C)O[C@@H](CN)[C@H](C[NH3+])O1)",
+
+       // these are Ok
+       R"(O=C1C[C@](Cl)1F)", R"(Br[C@@H](Cl)F)"});
+
+  for (const auto &smi : smiles) {
+    const std::unique_ptr<ROMol> mol(SmilesToMol(smi));
+    const std::string smarts = MolToSmarts(*mol, true);
+    const std::unique_ptr<ROMol> query(SmartsToMol(smarts));
+
+    bool uniquify = true;
+    bool recursionPossible = true;
+    bool useChirality = true;
+    std::vector<MatchVectType> matches;
+    TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
+                               recursionPossible, useChirality));
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 void testSmartsStereoBonds() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog)
@@ -2739,14 +2784,37 @@ void testSmartsStereoBonds() {
       TEST_ASSERT(bnd->getStereo() == Bond::STEREONONE);
     }
   }
+  {
+    // A weird way of writing C/C=C/O:
+    const auto mol = R"([#6](=[#6]/[#8])\[#6])"_smarts;
+
+    const Bond *bnd = mol->getBondWithIdx(1);
+
+    TEST_ASSERT(bnd->getStereoAtoms() == INT_VECT({3, 2}));
+    TEST_ASSERT(bnd->getStereo() == Bond::STEREOTRANS);
+  }
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testRingBondCrash() {
+    BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+    BOOST_LOG(rdInfoLog)
+        << "Testing a crash arising from negated ring bond queries" << std::endl;
+    {
+        auto m2 = "CC"_smiles;
+        auto q = "[C]@[Cl]"_smarts;
+        auto matches0 = SubstructMatch(*m2, *q);
+    }
+
+    BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
   RDLog::InitLogs();
+#if 1
   testPass();
   testFail();
   testMatches();
@@ -2794,7 +2862,9 @@ int main(int argc, char *argv[]) {
   testGithub1988();
   testGithub1985();
   testGithub2142();
+  testGithub2565();
   testSmartsStereoBonds();
-
+#endif
+  testRingBondCrash();
   return 0;
 }

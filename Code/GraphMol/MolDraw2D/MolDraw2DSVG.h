@@ -68,11 +68,15 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
   // this only makes sense if the object was initialized without a stream
   std::string getDrawingText() const { return d_ss.str(); };
 
+  // adds additional tags to the atoms and bonds in the SVG. This should be
+  // invoked *after* the molecule has been drawn
   using MolDraw2D::tagAtoms;  // Avoid overload warning.
   void tagAtoms(const ROMol &mol) { tagAtoms(mol, 0.2); }
   void tagAtoms(const ROMol &mol, double radius,
                 const std::map<std::string, std::string> &events = {});
 
+  // adds metadata describing the molecule to the SVG. This allows
+  // molecules to be re-built from SVG with MolFromSVG
   void addMoleculeMetadata(const ROMol &mol, int confId = -1) const;
   void addMoleculeMetadata(const std::vector<ROMol *> &mols,
                            const std::vector<int> confIds = {}) const;

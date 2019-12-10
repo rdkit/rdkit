@@ -91,6 +91,7 @@ ROMol *FragmentRemover::remove(const ROMol &mol) {
                     [&fgci](const std::pair<boost::shared_ptr<ROMol>,
                                             unsigned int> &frag) -> bool {
                       return fgci->getNumAtoms() == frag.first->getNumAtoms() &&
+                             fgci->getNumBonds() == frag.first->getNumBonds() &&
                              SubstructMatch(*frag.first, *fgci).size() > 0;
                     }),
                 frags.end());

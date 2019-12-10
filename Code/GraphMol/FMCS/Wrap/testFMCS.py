@@ -126,12 +126,24 @@ class TestCase(unittest.TestCase):
         mcs = rdFMCS.FindMCS(ms, completeRingsOnly=True)
         self.assertEqual(mcs.numBonds, 2)
         self.assertEqual(mcs.numAtoms, 3)
-        self.assertEqual(mcs.smartsString, '[#6]-[#6]-[#6]')
+        self.assertEqual(mcs.smartsString, '[#6]-&!@[#6]-&!@[#6]')
+
+        mcs = rdFMCS.FindMCS(ms, completeRingsOnly=True,
+                             ringCompare=rdFMCS.RingCompare.PermissiveRingFusion)
+        self.assertEqual(mcs.numBonds, 2)
+        self.assertEqual(mcs.numAtoms, 3)
+        self.assertEqual(mcs.smartsString, '[#6]-&!@[#6]-&!@[#6]')
+
+        mcs = rdFMCS.FindMCS(ms, completeRingsOnly=True,
+                             ringCompare=rdFMCS.RingCompare.StrictRingFusion)
+        self.assertEqual(mcs.numBonds, 2)
+        self.assertEqual(mcs.numAtoms, 3)
+        self.assertEqual(mcs.smartsString, '[#6]-&!@[#6]-&!@[#6]')
 
         mcs = rdFMCS.FindMCS(ms, ringMatchesRingOnly=True)
         self.assertEqual(mcs.numBonds, 1)
         self.assertEqual(mcs.numAtoms, 2)
-        self.assertEqual(mcs.smartsString, '[#6]-[#6]')
+        self.assertEqual(mcs.smartsString, '[#6&!R]-&!@[#6&!R]')
 
         smis = ['CC1CCC1', 'CCC1CCCCC1']
         ms = [Chem.MolFromSmiles(x) for x in smis]
@@ -141,14 +153,31 @@ class TestCase(unittest.TestCase):
         self.assertEqual(mcs.smartsString, '[#6]-[#6](-[#6]-[#6])-[#6]')
 
         mcs = rdFMCS.FindMCS(ms, completeRingsOnly=True)
-        self.assertEqual(mcs.numBonds, 0)
-        self.assertEqual(mcs.numAtoms, 0)
-        self.assertEqual(mcs.smartsString, '')
+        self.assertEqual(mcs.numBonds, 1)
+        self.assertEqual(mcs.numAtoms, 2)
+        self.assertEqual(mcs.smartsString, '[#6]-&!@[#6]')
+
+        mcs = rdFMCS.FindMCS(ms, ringMatchesRingOnly=True, completeRingsOnly=True)
+        self.assertEqual(mcs.numBonds, 1)
+        self.assertEqual(mcs.numAtoms, 2)
+        self.assertEqual(mcs.smartsString, '[#6&!R]-&!@[#6&R]')
+
+        mcs = rdFMCS.FindMCS(ms, ringMatchesRingOnly=True, completeRingsOnly=True,
+                             ringCompare=rdFMCS.RingCompare.PermissiveRingFusion)
+        self.assertEqual(mcs.numBonds, 1)
+        self.assertEqual(mcs.numAtoms, 2)
+        self.assertEqual(mcs.smartsString, '[#6&!R]-&!@[#6&R]')
+
+        mcs = rdFMCS.FindMCS(ms, ringMatchesRingOnly=True, completeRingsOnly=True,
+                             ringCompare=rdFMCS.RingCompare.StrictRingFusion)
+        self.assertEqual(mcs.numBonds, 1)
+        self.assertEqual(mcs.numAtoms, 2)
+        self.assertEqual(mcs.smartsString, '[#6&!R]-&!@[#6&R]')
 
         mcs = rdFMCS.FindMCS(ms, ringMatchesRingOnly=True)
         self.assertEqual(mcs.numBonds, 4)
         self.assertEqual(mcs.numAtoms, 5)
-        self.assertEqual(mcs.smartsString, '[#6]-[#6](-[#6]-[#6])-[#6]')
+        self.assertEqual(mcs.smartsString, '[#6&!R]-&!@[#6&R](-&@[#6&R]-&@[#6&R])-&@[#6&R]')
 
     def test5AnyMatch(self):
         smis = ('c1ccccc1C', 'c1ccccc1O', 'c1ccccc1Cl')
@@ -164,6 +193,30 @@ class TestCase(unittest.TestCase):
         smis = ('c1cccnc1C', 'c1cnncc1O', 'c1cccnc1Cl')
         ms = [Chem.MolFromSmiles(x) for x in smis]
         mcs = rdFMCS.FindMCS(ms, atomCompare=rdFMCS.AtomCompare.CompareAny)
+        self.assertEqual(mcs.numBonds, 7)
+        self.assertEqual(mcs.numAtoms, 7)
+        qm = Chem.MolFromSmarts(mcs.smartsString)
+
+        for m in ms:
+            self.assertTrue(m.HasSubstructMatch(qm))
+
+    def testAtomCompareAnyHeavyAtom(self):
+        # H matches H, O matches C
+        smis = ('[H]c1ccccc1C', '[H]c1ccccc1O')
+        ms = [Chem.MolFromSmiles(x, sanitize=False) for x in smis]
+        mcs = rdFMCS.FindMCS(ms, atomCompare=rdFMCS.AtomCompare.CompareAnyHeavyAtom)
+        self.assertEqual(mcs.numBonds, 8)
+        self.assertEqual(mcs.numAtoms, 8)
+        qm = Chem.MolFromSmarts(mcs.smartsString)
+
+        for m in ms:
+            self.assertTrue(m.HasSubstructMatch(qm))
+
+    def testAtomCompareAnyHeavyAtom1(self):
+        # O matches C, H does not match O
+        smis = ('[H]c1ccccc1C', 'Oc1ccccc1O')
+        ms = [Chem.MolFromSmiles(x, sanitize=False) for x in smis]
+        mcs = rdFMCS.FindMCS(ms, atomCompare=rdFMCS.AtomCompare.CompareAnyHeavyAtom)
         self.assertEqual(mcs.numBonds, 7)
         self.assertEqual(mcs.numAtoms, 7)
         qm = Chem.MolFromSmarts(mcs.smartsString)
@@ -199,6 +252,18 @@ class TestCase(unittest.TestCase):
 
         ps = rdFMCS.MCSParameters()
         ps.BondCompareParameters.CompleteRingsOnly = True
+        mcs = rdFMCS.FindMCS(ms, ps)
+        self.assertEqual(mcs.numAtoms, 3)
+
+        ps = rdFMCS.MCSParameters()
+        ps.BondCompareParameters.CompleteRingsOnly = True;
+        ps.BondCompareParameters.MatchFusedRings = True
+        mcs = rdFMCS.FindMCS(ms, ps)
+        self.assertEqual(mcs.numAtoms, 3)
+
+        ps = rdFMCS.MCSParameters()
+        ps.BondCompareParameters.CompleteRingsOnly = True;
+        ps.BondCompareParameters.MatchFusedRingsStrict = True
         mcs = rdFMCS.FindMCS(ms, ps)
         self.assertEqual(mcs.numAtoms, 3)
 

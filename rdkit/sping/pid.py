@@ -296,7 +296,7 @@ class Canvas:
 
     def fontHeight(self, font=None):
         "Find the height of one line of text (baseline to baseline) of the given font."
-        # the following approxmation is correct for PostScript fonts,
+        # the following approximation is correct for PostScript fonts,
         # and should be close for most others:
         if not font:
             font = self.defaultFont

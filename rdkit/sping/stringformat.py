@@ -176,7 +176,7 @@ class StringFormatter(xmllib.XMLParser):
   # At the start of each tag the corresponding field will
   # be set to 1 and at the end tag the corresponding field will
   # be set to 0.  Then when handle_data is called the options
-  # for that data will be aparent by the current settings.
+  # for that data will be apparent by the current settings.
   #----------------------------------------------------------
 
   #### bold

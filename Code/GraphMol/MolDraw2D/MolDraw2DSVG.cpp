@@ -56,7 +56,8 @@ void MolDraw2DSVG::initDrawing() {
         xmlns:rdkit='http://www.rdkit.org/xml'\n              \
         xmlns:xlink='http://www.w3.org/1999/xlink'\n          \
         xml:space='preserve'\n";
-  d_os << "width='" << width() << "px' height='" << height() << "px' >\n";
+  d_os << boost::format{"width='%1%px' height='%2%px' viewBox='0 0 %1% %2%'>\n"}
+      % width() % height();
   d_os << "<!-- END OF HEADER -->\n";
 
   // d_os<<"<g transform='translate("<<width()*.05<<","<<height()*.05<<")
@@ -457,6 +458,25 @@ void MolDraw2DSVG::addMoleculeMetadata(const std::vector<ROMol *> &mols,
 void MolDraw2DSVG::tagAtoms(const ROMol &mol, double radius,
                             const std::map<std::string, std::string> &events) {
   PRECONDITION(d_os, "no output stream");
+  // first bonds so that they are under the atoms
+  for (const auto &bond : mol.bonds()) {
+    auto this_idx = bond->getIdx();
+    auto a1pos = getDrawCoords(atomCoords()[bond->getBeginAtomIdx()]);
+    auto a2pos = getDrawCoords(atomCoords()[bond->getEndAtomIdx()]);
+    auto width = 2 + lineWidth();
+    d_os << "<path "
+         << " d='M " << a1pos.x << "," << a1pos.y << " L " << a2pos.x << ","
+         << a2pos.y << "'";
+    d_os << " class='bond-selector bond-" << this_idx;
+    if (d_activeClass != "") {
+      d_os << " " << d_activeClass;
+    }
+    d_os << "'";
+    d_os << " style='fill:#fff;stroke:#fff;stroke-width:" << width
+         << "px;fill-opacity:0;"
+            "stroke-opacity:0' ";
+    d_os << "/>\n";
+  }
   for (const auto &at : mol.atoms()) {
     auto this_idx = at->getIdx();
     auto pos = getDrawCoords(atomCoords()[this_idx]);

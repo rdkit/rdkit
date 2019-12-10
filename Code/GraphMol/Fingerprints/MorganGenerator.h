@@ -128,7 +128,7 @@ class RDKIT_FINGERPRINTS_EXPORT MorganArguments
    \param fpSize size of the generated fingerprint, does not affect the sparse
    versions
    */
-  MorganArguments(const unsigned int radius, const bool countSimulation = true,
+  MorganArguments(const unsigned int radius, const bool countSimulation = false,
                   const bool includeChirality = false,
                   const bool onlyNonzeroInvariants = false,
                   const std::vector<std::uint32_t> countBounds = {1, 2, 4, 8},
@@ -226,7 +226,7 @@ class RDKIT_FINGERPRINTS_EXPORT MorganEnvGenerator
  */
 template <typename OutputType>
 RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<OutputType> *getMorganGenerator(
-    const unsigned int radius, const bool countSimulation = true,
+    const unsigned int radius, const bool countSimulation = false,
     const bool includeChirality = false, const bool useBondTypes = true,
     const bool onlyNonzeroInvariants = false,
     AtomInvariantsGenerator *atomInvariantsGenerator = nullptr,

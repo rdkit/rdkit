@@ -15,7 +15,7 @@
 #    Usage: Frames.py <database.sdf>
 #    Output: 
 #    - sd files containing all molecules belonging to one frame (1.sdf, 2.sdf etc)
-#    - frames.smi containing the (caninical) smiles and count of occurrence
+#    - frames.smi containing the (canonical) smiles and count of occurrence
 #
 
 

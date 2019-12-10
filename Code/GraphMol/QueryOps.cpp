@@ -306,6 +306,13 @@ ATOM_EQUALS_QUERY *makeAtomFormalChargeQuery(int what) {
   return res;
 }
 
+ATOM_EQUALS_QUERY *makeAtomNegativeFormalChargeQuery(int what) {
+  ATOM_EQUALS_QUERY *res = makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(
+      what, queryAtomNegativeFormalCharge);
+  res->setDescription("AtomNegativeFormalCharge");
+  return res;
+}
+
 ATOM_EQUALS_QUERY *makeAtomHybridizationQuery(int what) {
   ATOM_EQUALS_QUERY *res =
       makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(what, queryAtomHybridization);

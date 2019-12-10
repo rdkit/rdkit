@@ -714,7 +714,7 @@ class TestCase(unittest.TestCase):
   def test21Robustification(self):
     ok = False
     # FIX: at the moment I can't figure out how to catch the
-    # actual exception that BPL is throwinng when it gets
+    # actual exception that BPL is throwing when it gets
     # invalid arguments (Boost.Python.ArgumentError)
     try:
       Chem.MolFromSmiles('C=O').HasSubstructMatch(Chem.MolFromSmarts('fiib'))
@@ -1145,7 +1145,7 @@ mol-4,CCOC
     self.assertTrue(smiSup[4])
     self.assertTrue(len(m) == 5)
 
-    # order dependance:
+    # order dependence:
     smiSup.SetData(inD, delimiter=",", smilesColumn=0, nameColumn=-1, titleLine=0)
     self.assertTrue(smiSup[4])
     self.assertTrue(len(smiSup) == 5)
@@ -2809,6 +2809,34 @@ CAS<~>
       self.assertTrue(mol.GetProp("_Name") == molNames[i])
       i += 1
     self.assertEqual(i, 16)
+
+  def testMaeFileSupplierException(self):
+    try:
+      MaeMolSupplier = Chem.MaeMolSupplier
+    except AttributeError:  # Built without Maestro support, return w/o testing
+      return
+
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'bad_ppty.mae')
+    err_msg_substr = "Bad format for property";
+
+    ok = False
+    suppl = MaeMolSupplier(fileN)
+    for i in range(5):
+      try:
+        mol = next(suppl)
+      except RuntimeError as e:
+        self.assertEqual(i, 1)
+        self.assertTrue(err_msg_substr in str(e))
+        ok = True
+        break
+      else:
+        self.assertTrue(mol)
+        self.assertTrue(mol.HasProp("_Name"))
+        self.assertTrue(mol.GetNumAtoms() == 1)
+
+    self.assertFalse(suppl.atEnd())
+    self.assertTrue(ok)
 
   def test66StreamSupplierIter(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
@@ -4817,7 +4845,7 @@ M  END
       "C1=CNC=C1",  #pyrrole
       "C1=COC=N1",  # oxazole
       "C1=CSC=N1",  # thiazole
-      "C1=CNC=N1",  # imidzole
+      "C1=CNC=N1",  # imidazole
       "C1=CNN=C1",  # pyrazole
       "C1=CON=C1",  # isoxazole
       "C1=CSN=C1",  # isothiazole
@@ -5114,6 +5142,17 @@ M  END
     self.assertEqual(len(stereo_atoms), 2)
     # file is 1 indexed and says 5
     self.assertEqual(stereo_atoms[1].GetIdx(), 4)
+
+    # make sure the atoms are connected to the parent molecule
+    stereo_atoms[1].SetProp("foo","bar")
+    self.assertTrue(m.GetAtomWithIdx(4).HasProp("foo"))
+
+    # make sure that we can iterate over the atoms:
+    for at in stereo_atoms:
+      at.SetProp("foo2","bar2")
+      self.assertTrue(m.GetAtomWithIdx(at.GetIdx()).HasProp("foo2"))
+    
+        
 
   def testEnhancedStereoPreservesMol(self):
     """
@@ -5568,6 +5607,55 @@ H      0.635000    0.635000    0.635000
           self.assertEqual(order1,order3)
           self.assertEqual(order2,order4)
     
+  def testSetBondStereoFromDirections(self):
+    m1 = Chem.MolFromMolBlock('''
+  Mrv1810 10141909482D          
+
+  4  3  0  0  0  0            999 V2000
+    3.3412   -2.9968    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5162   -2.9968    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.1037   -3.7112    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.7537   -2.2823    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  1  4  1  0  0  0  0
+M  END
+''', sanitize=False)
+    self.assertEqual(m1.GetBondBetweenAtoms(0,1).GetBondType(),Chem.BondType.DOUBLE)
+    self.assertEqual(m1.GetBondBetweenAtoms(0,1).GetStereo(),Chem.BondStereo.STEREONONE)
+    Chem.SetBondStereoFromDirections(m1)
+    self.assertEqual(m1.GetBondBetweenAtoms(0,1).GetStereo(),Chem.BondStereo.STEREOTRANS)
+    
+    m2 = Chem.MolFromMolBlock('''
+  Mrv1810 10141909542D          
+
+  4  3  0  0  0  0            999 V2000
+    3.4745   -5.2424    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.6495   -5.2424    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2370   -5.9569    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.8870   -5.9569    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  1  4  1  0  0  0  0
+M  END
+''',sanitize=False)
+    self.assertEqual(m2.GetBondBetweenAtoms(0,1).GetBondType(),Chem.BondType.DOUBLE)
+    self.assertEqual(m2.GetBondBetweenAtoms(0,1).GetStereo(),Chem.BondStereo.STEREONONE)
+    Chem.SetBondStereoFromDirections(m2)
+    self.assertEqual(m2.GetBondBetweenAtoms(0,1).GetStereo(),Chem.BondStereo.STEREOCIS)
+
+
+  def testSetBondDirFromStereo(self):
+    m1 = Chem.MolFromSmiles('CC=CC')
+    m1.GetBondWithIdx(1).SetStereoAtoms(0,3)
+    m1.GetBondWithIdx(1).SetStereo(Chem.BondStereo.STEREOCIS)
+    Chem.SetDoubleBondNeighborDirections(m1)
+    self.assertEqual(Chem.MolToSmiles(m1),r"C/C=C\C")   
+    self.assertEqual(m1.GetBondWithIdx(0).GetBondDir(),Chem.BondDir.ENDUPRIGHT)
+    self.assertEqual(m1.GetBondWithIdx(2).GetBondDir(),Chem.BondDir.ENDDOWNRIGHT)
+
+
+
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()

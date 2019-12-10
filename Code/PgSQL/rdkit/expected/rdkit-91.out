@@ -5,6 +5,7 @@
 SET client_min_messages = warning;
 \set ECHO none
 RESET client_min_messages;
+SET extra_float_digits=0;
 SELECT is_valid_smiles('c1ccccc1');
  is_valid_smiles 
 -----------------
@@ -861,5 +862,18 @@ select 'C1C([2H])C1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"a
  ?column? 
 ----------
  t
+(1 row)
+
+-- CXSmiles
+SELECT mol_to_smiles(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:4,5|'));
+        mol_to_smiles         
+------------------------------
+ C[C@H](F)[C@H](C)[C@@H](C)Br
+(1 row)
+
+SELECT mol_to_cxsmiles(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:4,5|'));
+              mol_to_cxsmiles              
+-------------------------------------------
+ C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:4,5|
 (1 row)
 

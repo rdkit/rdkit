@@ -70,7 +70,7 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
                                 unsigned int chunkSize = 5,
                                 bool matchOnlyAtRGroups = false,
                                 bool removeHydrogenOnlyGroups = true,
-                                bool removeHydrogensPostMatch = false)
+                                bool removeHydrogensPostMatch = true)
       : labels(labels),
         matchingStrategy(strategy),
         rgroupLabelling(labelling),
@@ -117,6 +117,9 @@ class RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecomposition {
   int add(const ROMol &mol);
   bool process();
 
+  //! return the current group labels
+  std::vector<std::string> getRGroupLabels() const;
+  
   //! return rgroups in row order group[row][attachment_point] = ROMol
   RGroupRows getRGroupsAsRows() const;
   //! return rgroups in column order group[attachment_point][row] = ROMol

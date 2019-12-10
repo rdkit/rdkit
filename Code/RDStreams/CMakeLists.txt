@@ -14,7 +14,7 @@ if (WIN32)
   endif()
 else()
   if(Boost_USE_STATIC_LIBS)
-    # when we're doing static linkage of boost, at least on windows, we need
+    # when we're doing static linkage of boost
     # to also link against zlib (due to iostreams)
     find_package(ZLIB)
     set(zlib_lib ${ZLIB_LIBRARIES})

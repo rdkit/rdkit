@@ -36,10 +36,13 @@ MaximumCommonSubgraph::MaximumCommonSubgraph(const MCSParameters* params) {
     Parameters.ProgressCallback = MCSProgressCallbackTimeout;
     Parameters.ProgressCallbackUserData = &To;
   }
-  if (Parameters.AtomCompareParameters.MatchChiralTag &&
+  if ((Parameters.AtomCompareParameters.MatchChiralTag ||
+      Parameters.BondCompareParameters.MatchFusedRings ||
+      Parameters.BondCompareParameters.MatchFusedRingsStrict) &&
       nullptr == Parameters.FinalMatchChecker) {
-    Parameters.FinalMatchChecker = FinalChiralityCheckFunction;
-    Parameters.BondCompareParameters.MatchStereo = true;
+    Parameters.FinalMatchChecker = FinalMatchCheckFunction;
+    if (Parameters.AtomCompareParameters.MatchChiralTag)
+      Parameters.BondCompareParameters.MatchStereo = true;
   }
   To = nanoClock();
 }
@@ -307,8 +310,7 @@ struct WeightedBond {
 
 void MaximumCommonSubgraph::makeInitialSeeds() {
   // build a set of initial seeds as "all" single bonds from query molecule
-  std::vector<bool> excludedBonds(QueryMolecule->getNumBonds());
-  for (auto&& excludedBond : excludedBonds) excludedBond = false;
+  std::vector<bool> excludedBonds(QueryMolecule->getNumBonds(), false);
 
   Seeds.clear();
   QueryMoleculeMatchedBonds = 0;
@@ -603,8 +605,7 @@ std::string MaximumCommonSubgraph::generateResultSMARTS(
   // match the result MCS with all targets to check if it is exact match or
   // template
   Seed seed;  // result MCS
-  seed.ExcludedBonds.resize(mcsIdx.QueryMolecule->getNumBonds());
-  for (auto&& ExcludedBond : seed.ExcludedBonds) ExcludedBond = false;
+  seed.ExcludedBonds.resize(mcsIdx.QueryMolecule->getNumBonds(), false);
   std::vector<AtomMatchSet> atomMatchResult(mcsIdx.Targets.size());
   std::vector<unsigned> atomIdxMap(mcsIdx.QueryMolecule->getNumAtoms());
   std::vector<std::map<unsigned, const Bond*>> bondMatchSet(
@@ -658,13 +659,12 @@ std::string MaximumCommonSubgraph::generateResultSMARTS(
   unsigned ai = 0;  // SeedAtomIdx
   for (auto atom = mcsIdx.Atoms.begin(); atom != mcsIdx.Atoms.end();
        atom++, ai++) {
+    QueryAtom a;
     if (Parameters.AtomTyper ==
         MCSAtomCompareIsotopes) {  // do '[0*]-[0*]-[13*]' for CC[13NH2]
-      QueryAtom a;
       a.setQuery(makeAtomIsotopeQuery((int)(*atom)->getIsotope()));
-      mol.addAtom(&a, true, false);
     } else {
-      QueryAtom a;  // generate [#6] instead of C or c !
+      // generate [#6] instead of C or c !
       a.setQuery(makeAtomNumQuery((*atom)->getAtomicNum()));
       // for all atomMatchSet[ai] items add atom query to template like
       // [#6,#17,#9, ... ]
@@ -678,8 +678,13 @@ std::string MaximumCommonSubgraph::generateResultSMARTS(
              am->second->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW))
           a.setChiralTag(am->second->getChiralTag());
       }
-      mol.addAtom(&a, true, false);
     }
+    if (Parameters.AtomCompareParameters.RingMatchesRingOnly) {
+      ATOM_EQUALS_QUERY *q = makeAtomInRingQuery();
+      q->setNegation(!queryIsAtomInRing(*atom));
+      a.expandQuery(q, Queries::COMPOSITE_AND, true);
+    }
+    mol.addAtom(&a, true, false);
   }
   unsigned bi = 0;  // Seed Idx
   for (auto bond = mcsIdx.Bonds.begin(); bond != mcsIdx.Bonds.end();
@@ -700,6 +705,11 @@ std::string MaximumCommonSubgraph::generateResultSMARTS(
           bm->second->getStereo() > Bond::STEREOANY)
         b.setStereo(bm->second->getStereo());
     }
+    if (Parameters.BondCompareParameters.RingMatchesRingOnly) {
+      BOND_EQUALS_QUERY *q = makeBondIsInRingQuery();
+      q->setNegation(!queryIsBondInRing(*bond));
+      b.expandQuery(q, Queries::COMPOSITE_AND, true);
+    }
     mol.addBond(&b, false);
   }
 
@@ -709,8 +719,7 @@ std::string MaximumCommonSubgraph::generateResultSMARTS(
 bool MaximumCommonSubgraph::createSeedFromMCS(size_t newQueryTarget,
                                               Seed& newSeed) {
   Seed mcs;
-  mcs.ExcludedBonds.resize(McsIdx.QueryMolecule->getNumBonds());
-  for (auto&& ExcludedBond : mcs.ExcludedBonds) ExcludedBond = false;
+  mcs.ExcludedBonds.resize(McsIdx.QueryMolecule->getNumBonds(), false);
   std::vector<unsigned> mcsAtomIdxMap(McsIdx.QueryMolecule->getNumAtoms());
 
   for (std::vector<const Atom*>::const_iterator atom = McsIdx.Atoms.begin();
@@ -732,8 +741,7 @@ bool MaximumCommonSubgraph::createSeedFromMCS(size_t newQueryTarget,
 
   AtomMatchSet atomMatchResult(mcs.getNumAtoms());
 
-  newSeed.ExcludedBonds.resize(newQuery.Molecule->getNumBonds());
-  for (auto&& ExcludedBond : newSeed.ExcludedBonds) ExcludedBond = false;
+  newSeed.ExcludedBonds.resize(newQuery.Molecule->getNumBonds(), false);
 
   for (match_V_t::const_iterator mit = match.begin(); mit != match.end();
        mit++) {
@@ -796,8 +804,8 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR>& src_mols) {
     init();
     if (Targets.empty()) break;
     MCSFinalMatchCheckFunction tff = Parameters.FinalMatchChecker;
-    if (FinalChiralityCheckFunction == Parameters.FinalMatchChecker)
-      Parameters.FinalMatchChecker = nullptr;  // skip final chirality check for
+    if (FinalMatchCheckFunction == Parameters.FinalMatchChecker)
+      Parameters.FinalMatchChecker = nullptr;  // skip final match check for
     // initial seed to allow future growing
     // of it
     makeInitialSeeds();
@@ -813,17 +821,22 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR>& src_mols) {
     if (Seeds.empty()) break;
     res.Canceled = growSeeds() ? false : true;
     // verify what MCS is equal to one of initial seed for chirality match
-    if (FinalChiralityCheckFunction == Parameters.FinalMatchChecker &&
-        1 == getMaxNumberBonds()) {
+    if ((FinalMatchCheckFunction == Parameters.FinalMatchChecker &&
+        1 == getMaxNumberBonds()) || 0 == getMaxNumberBonds()) {
       McsIdx = MCS();      // clear
       makeInitialSeeds();  // check all possible initial seeds
       if (!Seeds.empty()) {
         const Seed& fs = Seeds.front();
-        McsIdx.QueryMolecule = QueryMolecule;
-        McsIdx.Atoms = fs.MoleculeFragment.Atoms;
-        McsIdx.Bonds = fs.MoleculeFragment.Bonds;
-        McsIdx.AtomsIdx = fs.MoleculeFragment.AtomsIdx;
-        McsIdx.BondsIdx = fs.MoleculeFragment.BondsIdx;
+        if (1 == getMaxNumberBonds()
+          || !(Parameters.BondCompareParameters.CompleteRingsOnly
+          && fs.MoleculeFragment.Bonds.size() == 1
+          && queryIsBondInRing(fs.MoleculeFragment.Bonds.front()))) {
+          McsIdx.QueryMolecule = QueryMolecule;
+          McsIdx.Atoms = fs.MoleculeFragment.Atoms;
+          McsIdx.Bonds = fs.MoleculeFragment.Bonds;
+          McsIdx.AtomsIdx = fs.MoleculeFragment.AtomsIdx;
+          McsIdx.BondsIdx = fs.MoleculeFragment.BondsIdx;
+        }
       }
 
     } else if (i + 1 < Molecules.size() - ThresholdCount) {
@@ -1205,15 +1218,17 @@ bool MaximumCommonSubgraph::matchIncrementalFast(Seed& seed, unsigned itarget) {
   }
   // CHIRALITY: FinalMatchCheck
   if (matched && Parameters.FinalMatchChecker) {
-    short unsigned c1[4096];  // seed.getNumAtoms()
-    short unsigned c2[4096];  // seed.getNumAtoms()
+    std::vector<short unsigned> c1;
+    c1.reserve(4096);
+    std::vector<short unsigned> c2;
+    c2.reserve(4096);
     for (unsigned si = 0; si < seed.getNumAtoms();
          si++) {  // index in the seed topology
-      c1[si] = si;
-      c2[si] = match.TargetAtomIdx[seed.Topology[si]];
+      c1.push_back(si);
+      c2.push_back(match.TargetAtomIdx[seed.Topology[si]]);
     }
     matched = Parameters.FinalMatchChecker(
-        c1, c2, *QueryMolecule, seed.Topology, *target.Molecule,
+        c1.data(), c2.data(), *QueryMolecule, seed.Topology, *target.Molecule,
         target.Topology, &Parameters);  // check CHIRALITY
     if (!matched) match.clear();
   }

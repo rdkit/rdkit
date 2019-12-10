@@ -49,8 +49,9 @@ function test_basics(){
     var qmol = Module.get_qmol("Oc(c)c");
     assert.equal(qmol.is_valid(),1);
     var match = mol.get_substruct_match(qmol);
-    assert.equal(match.size(),4);
-    assert.equal(match.get(0),6);
+    var pmatch = JSON.parse(match);
+    assert.equal(pmatch.atoms.length,4);
+    assert.equal(pmatch.atoms[0],6);
     var svg2 = mol.get_svg_with_highlights(match);
     assert(svg2.search("svg")>0);
     assert(svg.search("#FF7F7F")<0);

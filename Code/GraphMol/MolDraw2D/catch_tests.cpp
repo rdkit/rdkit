@@ -54,7 +54,9 @@ TEST_CASE("tag atoms in SVG", "[drawing, SVG]") {
     outs.flush();
 
     CHECK(text.find("<circle") != std::string::npos);
-    CHECK(text.find("onclick") != std::string::npos);
+    CHECK(text.find("<circle") != std::string::npos);
+    CHECK(text.find("atom-selector") != std::string::npos);
+    CHECK(text.find("bond-selector") != std::string::npos);
   }
 }
 TEST_CASE("contour data", "[drawing, conrec]") {
@@ -258,5 +260,41 @@ TEST_CASE("zero-order bonds", "[drawing, organometallics]") {
     outs.flush();
 
     CHECK(text.find("stroke-dasharray:2,2") != std::string::npos);
+  }
+}
+
+TEST_CASE("copying drawing options", "[drawing]") {
+  auto m1 = "C1N[C@@H]2OCC12"_smiles;
+  REQUIRE(m1);
+  SECTION("foundations") {
+    {
+      MolDraw2DSVG drawer(200, 200);
+      MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      CHECK(text.find("fill:#0000FF' ><tspan>NH") != std::string::npos);
+    }
+    {
+      MolDraw2DSVG drawer(200, 200);
+      assignBWPalette(drawer.drawOptions().atomColourPalette);
+      MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      CHECK(text.find("fill:#0000FF' ><tspan>NH") == std::string::npos);
+      CHECK(text.find("fill:#000000' ><tspan>NH") != std::string::npos);
+    }
+  }
+  SECTION("test") {
+    {
+      MolDraw2DSVG drawer(200, 200);
+      MolDrawOptions options = drawer.drawOptions();
+      assignBWPalette(options.atomColourPalette);
+      drawer.drawOptions() = options;
+      MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      CHECK(text.find("fill:#0000FF' ><tspan>NH") == std::string::npos);
+      CHECK(text.find("fill:#000000' ><tspan>NH") != std::string::npos);
+    }
   }
 }

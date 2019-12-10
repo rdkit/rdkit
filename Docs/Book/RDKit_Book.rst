@@ -325,7 +325,7 @@ Range queries
 -------------
 Ranges of values can be provided for many query types that expect numeric values.
 The query types that currently support range queries are:
-``D``, ``h``, ``r``, ``R``, ``v``, ``x``, ``X``, ``z``, ``Z``
+``D``, ``h``, ``r``, ``R``, ``v``, ``x``, ``X``, ``z``, ``Z``, ``+``, ``-``
 
 Here are some examples:
   - ``D{2-4}`` matches atoms that have between 2 and 4 (inclusive) explicit connections.
@@ -367,9 +367,9 @@ X          "total degree"                             1                Y
 z          "number of heteroatom neighbors"           >0               Y       extension
 Z          "number of alphatic heteroatom neighbors"  >0               Y       extension
 \*         "any atom"
-\+         "positive charge"                          1
+\+         "positive charge"                          1                Y 
 ++         "+2 charge"
-\-         "negative charge"                          1
+\-         "negative charge"                          1                Y
 \--        "-2 charge"
 ^0         "S hybridized"                             n/a              N       extension
 ^1         "SP hybridized"                            n/a              N       extension
@@ -1384,7 +1384,7 @@ are, as far as I know, unique to the RDKit. The algorithm identifies features in
 the molecule by doing substructure searches using a small number (12 in the
 ``2019.03`` release of the RDKit) of very generic SMARTS patterns - like
 ``[*]~[*]~[*](~[*])~[*]`` or ``[R]~1[R]~[R]~[R]~1``, and then hashing each
-occurence of a pattern based on the atom and bond types involved. The fact that
+occurrence of a pattern based on the atom and bond types involved. The fact that
 particular pattern matched the molecule at all is also stored by hashing the
 pattern ID and size. If a particular feature contains either a query atom or a
 query bond (e.g. something generated from SMARTS), the only information that is

@@ -30,7 +30,16 @@ public class RGroupDecompositionTests extends GraphMolTest {
             m = RWMol.MolFromSmiles("c1c(Cl)cccc1");
             assertEquals(1,decomp.add(m));
             assertTrue(decomp.process());
+	    Str_Vect keys = decomp.getRGroupsAsColumns().keys();
+	    assertTrue(keys.size() == 2);
+	    assertTrue(keys.get(0).equals("Core"));
+	    assertTrue(keys.get(1).equals("R1"));
 
+	    Str_Vect keys2 = decomp.getRGroupLabels();
+	    assertTrue(keys2.size() == 2);
+	    assertTrue(keys2.get(0).equals("Core"));
+	    assertTrue(keys2.get(1).equals("R1"));
+	    
 	}
   
 	public static void main(String args[]) {

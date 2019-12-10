@@ -409,7 +409,7 @@ class TestCase(unittest.TestCase):
   #     self.assertNotEqual(fixed_mol.GetAtomWithIdx(0).GetChiralTag(),Chem.rdchem.ChiralType.CHI_UNSPECIFIED)
 
   def testAvalonCountFPs(self):
-    # need to go to longer bit counts to avoid collions:
+    # need to go to longer bit counts to avoid collisions:
     cv1 = pyAvalonTools.GetAvalonCountFP('c1ccccc1', True, nBits=6000)
     cv2 = pyAvalonTools.GetAvalonCountFP('c1ccccc1.c1ccccc1', True, nBits=6000)
     for idx, v in cv1.GetNonzeroElements().items():

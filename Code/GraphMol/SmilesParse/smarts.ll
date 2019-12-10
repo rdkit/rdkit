@@ -376,8 +376,8 @@ A			{
 <IN_BRANCH_STATE>\)       	{ yy_pop_state(yyscanner); return GROUP_CLOSE_TOKEN; }
 <IN_RECURSION_STATE>\)       	{ yy_pop_state(yyscanner); return END_RECURSE; }
 
-\{       	{  return RANGE_OPEN_TOKEN; }
-\}       	{ yy_pop_state(yyscanner); return RANGE_CLOSE_TOKEN; }
+\{       	{ return RANGE_OPEN_TOKEN; }
+\}       	{ return RANGE_CLOSE_TOKEN; }
 
 
 

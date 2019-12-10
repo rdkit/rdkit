@@ -153,6 +153,9 @@ static inline int queryAtomIsotope(Atom const *at) {
 static inline int queryAtomFormalCharge(Atom const *at) {
   return static_cast<int>(at->getFormalCharge());
 };
+static inline int queryAtomNegativeFormalCharge(Atom const *at) {
+  return static_cast<int>(-1 * at->getFormalCharge());
+};
 static inline int queryAtomHybridization(Atom const *at) {
   return at->getHybridization();
 };
@@ -460,6 +463,16 @@ T *makeAtomFormalChargeQuery(int what, const std::string &descr) {
 }
 //! \overload
 RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *makeAtomFormalChargeQuery(int what);
+
+//! returns a Query for matching negative formal charges (i.e. a query val of 1
+//! matches a formal charge of -1)
+template <class T>
+T *makeAtomNegativeFormalChargeQuery(int what, const std::string &descr) {
+  return makeAtomSimpleQuery<T>(what, queryAtomNegativeFormalCharge, descr);
+}
+//! \overload
+RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *makeAtomNegativeFormalChargeQuery(
+    int what);
 
 //! returns a Query for matching hybridization
 template <class T>
@@ -959,9 +972,9 @@ class HasPropWithValueQuery<TargetPtr, ExplicitBitVect>
             what->template getProp<const ExplicitBitVect &>(propname);
         const double tani = TanimotoSimilarity(val, bv);
         res = (1.0 - tani) <= tol;
-      } catch (KeyErrorException) {
+      } catch (KeyErrorException &) {
         res = false;
-      } catch (boost::bad_any_cast) {
+      } catch (boost::bad_any_cast &) {
         res = false;
       }
 #ifdef __GNUC__

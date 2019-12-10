@@ -7092,8 +7092,7 @@ void testStereoBondIsomerization() {
   // From here on, StereoAtoms set to reactant's StereoAtoms (= highest CIPs)
 
   {  // One-side reaction isomerization (no double bond in reaction)
-    const std::string reaction(
-        R"([C:1](\[Cl:2])-[F:3]>>[C:1](/[Cl:2])-[F:3])");
+    const std::string reaction(R"([C:1](\[Cl:2])-[F:3]>>[C:1](/[Cl:2])-[F:3])");
 
     const auto product = run_simple_reaction(reaction, mol);
     TEST_ASSERT(
@@ -7136,6 +7135,12 @@ void testOtherBondStereo() {
         TEST_ASSERT(Bond::BondStereo::STEREONONE == bond->getStereo());
       }
     }
+    // and if we don't strip direction?
+    auto lmol = RWMOL_SPTR(SmilesToMol(R"(C/C=C/[Br])"));
+    auto product_sets2 = rxn->runReactant(lmol, 0);
+    TEST_ASSERT(!product_sets2.empty());
+    auto osmi = MolToSmiles(*product_sets2[0][0]);
+    TEST_ASSERT(osmi == "CCCBr");
   }
   {  // Reaction explicitly destroys stereochemistry
      // (no directed bonds enclosing the double bond)
@@ -7161,10 +7166,15 @@ void testOtherBondStereo() {
         }
       }
     }
+    // and if we don't strip direction?
+    auto lmol = RWMOL_SPTR(SmilesToMol(R"(C/C=C/[Br])"));
+    auto product_sets2 = rxn->runReactant(lmol, 0);
+    TEST_ASSERT(!product_sets.empty());
+    auto osmi = MolToSmiles(*product_sets2[0][0]);
+    TEST_ASSERT(osmi == "CC=CBr");
   }
   {  // Reaction with 2 product sets
-    const std::string reaction(
-        R"([C:1]=[C:2]>>[Si:1]=[C:2])");
+    const std::string reaction(R"([C:1]=[C:2]>>[Si:1]=[C:2])");
     const auto rxn = RxnSmartsToChemicalReaction(reaction);
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
@@ -7178,14 +7188,21 @@ void testOtherBondStereo() {
       TEST_ASSERT(check_bond_stereo(products[0], 0, 2, 3,
                                     Bond::BondStereo::STEREOTRANS));
     }
+    // and if we don't strip direction?
+    auto lmol = RWMOL_SPTR(SmilesToMol(R"(C/C=C/[Br])"));
+    auto product_sets2 = rxn->runReactant(lmol, 0);
+    TEST_ASSERT(!product_sets2.empty());
+    auto osmi = MolToSmiles(*product_sets2[0][0]);
+    TEST_ASSERT(osmi == "C/[SiH]=C/Br");
+    osmi = MolToSmiles(*product_sets2[1][0]);
+    TEST_ASSERT(osmi == "C/C=[SiH]/Br");
   }
   {  // Reactant stereo propagated by (stereoatom, anti-stereoatom) pair
     auto mol2 = RWMOL_SPTR(SmilesToMol(R"(Cl/C(C)=C(/Br)F)"));
     strip_bond_directions(mol2);
     TEST_ASSERT(check_bond_stereo(mol2, 2, 0, 4, Bond::BondStereo::STEREOE));
 
-    const std::string reaction(
-        R"([C:1]=[C:2][Br:3]>>[C:1]=[C:2].[Br:3])");
+    const std::string reaction(R"([C:1]=[C:2][Br:3]>>[C:1]=[C:2].[Br:3])");
     const auto rxn = RxnSmartsToChemicalReaction(reaction);
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
@@ -7198,6 +7215,13 @@ void testOtherBondStereo() {
     // We are only interested in the product that keeps the double bond
     TEST_ASSERT(check_bond_stereo(product_sets[0][0], 0, 2, 4,
                                   Bond::BondStereo::STEREOCIS));
+
+    // and if we don't strip direction?
+    auto lmol = RWMOL_SPTR(SmilesToMol(R"(Cl/C(C)=C(/Br)F)"));
+    auto product_sets2 = rxn->runReactant(lmol, 0);
+    TEST_ASSERT(!product_sets2.empty());
+    auto osmi = MolToSmiles(*product_sets2[0][0]);
+    TEST_ASSERT(osmi == "C/C(Cl)=C/F");
   }
   {  // Reactant stereo propagated by anti-stereoatoms pair
     auto mol2 = RWMOL_SPTR(SmilesToMol(R"(Cl/C(C)=C(/Br)F)"));
@@ -7218,13 +7242,21 @@ void testOtherBondStereo() {
     // We are only interested in the product that keeps the double bond
     TEST_ASSERT(check_bond_stereo(product_sets[0][0], 0, 2, 3,
                                   Bond::BondStereo::STEREOTRANS));
+
+    // and if we don't strip direction?
+    auto lmol = RWMOL_SPTR(SmilesToMol(R"(Cl/C(C)=C(/Br)F)"));
+    auto product_sets2 = rxn->runReactant(lmol, 0);
+    TEST_ASSERT(!product_sets2.empty());
+    auto osmi = MolToSmiles(*product_sets2[0][0]);
+    TEST_ASSERT(osmi == "C/C=C/F");
   }
 }
 
 void testGithub2547() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Github #2547: Check kekulization issues in mdl rxn files"
-                       << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Testing Github #2547: Check kekulization issues in mdl rxn files"
+      << std::endl;
 
   std::string rdbase = getenv("RDBASE");
   std::string fName;
@@ -7245,13 +7277,106 @@ void testGithub2547() {
   TEST_ASSERT(prods.size() > 1);
 }
 
+void testDblBondCrash() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Testing double bond stereo vanishing during a reaction" << std::endl;
+  {
+    const std::string reaction(R"([N;!H0:1]>>[N:1])");
+    std::unique_ptr<ChemicalReaction> rxn(
+        RxnSmartsToChemicalReaction(reaction));
+    TEST_ASSERT(rxn);
+    rxn->initReactantMatchers();
+    {
+      auto mol = RWMOL_SPTR(SmilesToMol("C/C=C(/C)CN"));
+      std::vector<ROMOL_SPTR> v{mol};
+      auto prods = rxn->runReactants(v);
+      TEST_ASSERT(prods.size() == 1);
+      TEST_ASSERT(prods[0].size() == 1);
+      MolOps::sanitizeMol(*(RWMol *)prods[0][0].get());
+      TEST_ASSERT(MolToSmiles(*prods[0][0]) == "C/C=C(/C)CN");
+    }
+    {
+      // create an artificial situation in the molecule where bond stereo is
+      // set, but neither stereoatoms nor CIP ranks are there (this can happen
+      // with serialized molecules from old RDKit versions)
+      auto mol = RWMOL_SPTR(SmilesToMol("C/C=C(/C)CN"));
+      mol->getBondWithIdx(1)->getStereoAtoms().clear();
+      for (auto atom : mol->atoms()) {
+        if (atom->hasProp(common_properties::_CIPRank)) {
+          atom->clearProp(common_properties::_CIPRank);
+        }
+      }
+      std::vector<ROMOL_SPTR> v{mol};
+      auto prods = rxn->runReactants(v);
+      TEST_ASSERT(prods.size() == 1);
+      TEST_ASSERT(prods[0].size() == 1);
+      MolOps::sanitizeMol(*(RWMol *)prods[0][0].get());
+      TEST_ASSERT(MolToSmiles(*prods[0][0]) == "CC=C(C)CN");
+    }
+    {
+      SmilesParserParams ps;
+      ps.sanitize = true;
+      auto mol = RWMOL_SPTR(SmilesToMol("CC(=O)/N=C(\\C)c1nonc1N", ps));
+      std::vector<ROMOL_SPTR> v{mol};
+      auto prods = rxn->runReactants(v);
+      TEST_ASSERT(prods.size() == 1);
+      TEST_ASSERT(prods[0].size() == 1);
+      MolOps::sanitizeMol(*(RWMol *)prods[0][0].get());
+      TEST_ASSERT(MolToSmiles(*prods[0][0]) == "CC(=O)/N=C(\\C)c1nonc1N");
+    }
+    {
+      SmilesParserParams ps;
+      ps.sanitize = true;
+      auto mol = RWMOL_SPTR(SmilesToMol("CC(=O)/N=C(\\C)c1nonc1N", ps));
+      // make sure that sanitizing again doesn't screw things up.
+      MolOps::sanitizeMol(*mol);
+      std::vector<ROMOL_SPTR> v{mol};
+      auto prods = rxn->runReactants(v);
+      TEST_ASSERT(prods.size() == 1);
+      TEST_ASSERT(prods[0].size() == 1);
+      MolOps::sanitizeMol(*(RWMol *)prods[0][0].get());
+      TEST_ASSERT(MolToSmiles(*prods[0][0]) == "CC(=O)/N=C(\\C)c1nonc1N");
+    }
+    {
+      // make sure that sanitizing afterwards doesn't screw things up:
+      SmilesParserParams ps;
+      ps.sanitize = false;
+      auto mol = RWMOL_SPTR(SmilesToMol("CC(=O)/N=C(\\C)c1nonc1N", ps));
+      MolOps::sanitizeMol(*mol);
+      std::vector<ROMOL_SPTR> v{mol};
+      auto prods = rxn->runReactants(v);
+      TEST_ASSERT(prods.size() == 1);
+      TEST_ASSERT(prods[0].size() == 1);
+      MolOps::sanitizeMol(*(RWMol *)prods[0][0].get());
+      TEST_ASSERT(MolToSmiles(*prods[0][0]) == "CC(=O)/N=C(\\C)c1nonc1N");
+    }
+    {
+      // another example
+      const std::string reaction2(R"([N;!H0;$(N-c):1]>>[N:1]-c1cncnn1)");
+      std::unique_ptr<ChemicalReaction> rxn2(
+          RxnSmartsToChemicalReaction(reaction2));
+      TEST_ASSERT(rxn2);
+      rxn2->initReactantMatchers();
+      auto mol = RWMOL_SPTR(SmilesToMol("CC(=O)/C=C(\\N)c1nonc1N"));
+      std::vector<ROMOL_SPTR> v{mol};
+      auto prods = rxn2->runReactants(v);
+      TEST_ASSERT(prods.size() == 1);
+      TEST_ASSERT(prods[0].size() == 1);
+      MolOps::sanitizeMol(*(RWMol *)prods[0][0].get());
+      TEST_ASSERT(MolToSmiles(*prods[0][0]) ==
+                  "CC(=O)/C=C(\\N)c1nonc1Nc1cncnn1");
+    }
+  }
+}
+
 int main() {
   RDLog::InitLogs();
 
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing Chemical Reactions \n";
-
+#if 1
   test1Basics();
   test2SimpleReactions();
   test3RingFormation();
@@ -7335,6 +7460,9 @@ int main() {
   testStereoBondIsomerization();
   testOtherBondStereo();
   testGithub2547();
+#endif
+  testDblBondCrash();
+
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
   return (0);

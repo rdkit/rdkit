@@ -514,6 +514,35 @@ class TestCase(unittest.TestCase):
       hits = [name for name, pat in items if mol.HasSubstructMatch(pat)]
       self.assertEquals(hits, res)
 
+  def testThreadedRunner(self):
+    path = os.path.join(os.environ['RDBASE'], 'Code', 'GraphMol', 'test_data', 'pains.smi')
+    with open(path) as f:
+      smiles = [f.strip() for f in f.readlines()][1:]
+
+    self.assertEquals(len(smiles), 3)
+    params = FilterCatalog.FilterCatalogParams()
+    params.AddCatalog(FilterCatalogParams.FilterCatalogs.PAINS_A)
+    params.AddCatalog(FilterCatalogParams.FilterCatalogs.PAINS_B)
+    params.AddCatalog(FilterCatalogParams.FilterCatalogs.PAINS_C)
+    fc = FilterCatalog.FilterCatalog(params)
+    
+    results = FilterCatalog.RunFilterCatalog(fc, smiles)
+    self.assertEquals(len(results), 3)
+
+    descriptions = ["hzone_phenol_A(479)",
+                    "cyano_imine_B(17)",
+                    "keto_keto_gamma(5)"]
+
+    for i, res in enumerate(results):
+      self.assertTrue(len(res) > 0)
+      self.assertEquals(res[0].GetDescription(), descriptions[i])
+
+    # Test with some bad input
+    smiles = ['mydoghasfleas']
+    results = FilterCatalog.RunFilterCatalog(fc, smiles, numThreads=3)
+    self.assertEquals(len(results[0]), 1)
+    self.assertEquals(results[0][0].GetDescription(), "no valid RDKit molecule");
+
 
 if __name__ == '__main__':
   unittest.main()

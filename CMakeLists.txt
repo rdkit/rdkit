@@ -99,8 +99,8 @@ set(RDK_PYTHON_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/rdkit")
 
 #-------
 # Config variables:
-set(RDKit_Year "2019")
-set(RDKit_Month "09")
+set(RDKit_Year "2020")
+set(RDKit_Month "03")
 set(RDKit_Revision "1")
 set(RDKit_RevisionModifier "dev1")
 set(RDKit_ABI "1")
@@ -361,6 +361,8 @@ if(RDK_USE_BOOST_SERIALIZATION)
     find_package(Boost 1.56.0 COMPONENTS serialization)
     if (Boost_SERIALIZATION_LIBRARY)
       set(Boost_LIBRARIES ${T_LIBS} ${Boost_LIBRARIES})
+    else()
+      set(Boost_LIBRARIES ${T_LIBS})
     endif()
 endif()
 

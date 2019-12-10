@@ -481,7 +481,8 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
       newAt->setNoImplicit(true);
     }
     // update the atom's derived properties (valence count, etc.)
-    newAt->updatePropertyCache();
+    // no sense in being strict here (was github #2782)
+    newAt->updatePropertyCache(false);
   }
   // take care of AtomPDBResidueInfo for Hs if root atom has it
   if (addResidueInfo) AssignHsResidueInfo(mol);
@@ -721,6 +722,10 @@ void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
               oBond->setBondDir(bond->getBondDir());
             }
           }
+          // if this atom is one of the stereoatoms for a double bond we need
+          // to switch the stereo atom on this end to be the other neighbor
+          // This was part of github #1810
+          adjustStereoAtomsIfRequired(mol, atom, heavyAtom);
         } else {
           // if this atom is one of the stereoatoms for a double bond we need
           // to switch the stereo atom on this end to be the other neighbor

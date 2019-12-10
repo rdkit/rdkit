@@ -100,7 +100,7 @@ class TestCase(unittest.TestCase):
     def test3Params(self):
         """ tests handling of Issue187 """
         m2 = Chem.MolFromSmiles('C(=O)[O-].[Na+]')
-        with self.assertRaisesRegexp(Exception, ""):
+        with self.assertRaisesRegex(Exception, ""):
             rdPartialCharges.ComputeGasteigerCharges(m2, 12, 1)
 
     def testGithubIssue20(self):
@@ -130,6 +130,9 @@ class TestCase(unittest.TestCase):
         rdPartialCharges.ComputeGasteigerCharges(m1)
         for at in m1.GetAtoms():
             float(at.GetProp('_GasteigerCharge'))
+    def testGithub2480(self):
+        with self.assertRaisesRegex(Exception, "^Python argument types"):
+            rdPartialCharges.ComputeGasteigerCharges(None)
 
 
 if __name__ == '__main__':

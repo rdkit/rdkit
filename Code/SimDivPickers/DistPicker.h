@@ -73,6 +73,20 @@ class RDKIT_SIMDIVPICKERS_EXPORT DistPicker {
   virtual RDKit::INT_VECT pick(const double *distMat, unsigned int poolSize,
                                unsigned int pickSize) const = 0;
 };
+
+namespace {
+class RDKIT_SIMDIVPICKERS_EXPORT distmatFunctor {
+ public:
+  distmatFunctor(const double *distMat) : dp_distMat(distMat){};
+  double operator()(unsigned int i, unsigned int j) {
+    return getDistFromLTM(this->dp_distMat, i, j);
+  }
+
+ private:
+  const double *dp_distMat;
+};
+}  // namespace
+
 };  // namespace RDPickers
 
 #endif

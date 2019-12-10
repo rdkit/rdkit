@@ -573,6 +573,17 @@ std::string get_atom_props_block(const ROMol &mol,
   }
   return res;
 }
+
+void appendToCXExtension(const std::string& addition, std::string& base)
+{
+  if (!addition.empty()) {
+    if (base.size() > 1) {
+      base += ",";
+    }
+    base += addition;
+  }
+}
+
 }  // namespace
 std::string getCXExtensions(const ROMol &mol) {
   std::string res = "|";
@@ -607,13 +618,12 @@ std::string getCXExtensions(const ROMol &mol) {
     res += radblock;
     if (res.back() == ',') res.erase(res.size() - 1);
   }
-  auto atomblock = get_atom_props_block(mol, atomOrder);
-  if (atomblock.size()) {
-    if (res.size() > 1) res += ",";
-    res += atomblock;
-  }
 
-  res += get_enhanced_stereo_block(mol, atomOrder);
+  const auto atomblock = get_atom_props_block(mol, atomOrder);
+  appendToCXExtension(atomblock, res);
+
+  const auto stereoblock = get_enhanced_stereo_block(mol, atomOrder);
+  appendToCXExtension(stereoblock, res);
 
   if (res.size() > 1) {
     res += "|";

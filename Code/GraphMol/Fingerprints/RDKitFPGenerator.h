@@ -41,19 +41,20 @@ class RDKIT_FINGERPRINTS_EXPORT RDKitFPArguments
    \param branchedPaths toggles generation of branched subgraphs, not just
    linear paths
    \param useBondOrder toggles inclusion of bond orders in the path hashes
-   \param useCountSimulation         if set, use count simulation while
+   \param countSimulation         if set, use count simulation while
    generating the fingerprint
    \param countBounds  boundaries for count simulation, corresponding bit will
    be set if the count is higher than the number provided for that spot
    \param fpSize size of the generated fingerprint, does not affect the sparse
    versions
+   \param numBitsPerFeature controls the number of bits that are set for each
+   path/subgraph found
 
    */
   RDKitFPArguments(unsigned int minPath, unsigned int maxPath, bool useHs,
-                   bool branchedPaths, bool useBondOrder,
-                   const bool countSimulation,
+                   bool branchedPaths, bool useBondOrder, bool countSimulation,
                    const std::vector<std::uint32_t> countBounds,
-                   const std::uint32_t fpSize);
+                   std::uint32_t fpSize, std::uint32_t numBitsPerFeature);
 };
 
 class RDKIT_FINGERPRINTS_EXPORT RDKitFPAtomInvGenerator
@@ -76,7 +77,7 @@ class RDKIT_FINGERPRINTS_EXPORT RDKitFPAtomEnv
                       const std::vector<std::uint32_t> *atomInvariants,
                       const std::vector<std::uint32_t> *bondInvariants,
                       const AdditionalOutput *additionalOutput,
-                      const bool hashResults = false) const;
+                      bool hashResults = false) const;
 
   /**
   \brief Construct a new RDKitFPAtomEnv object
@@ -86,7 +87,7 @@ class RDKIT_FINGERPRINTS_EXPORT RDKitFPAtomEnv
 
   */
   RDKitFPAtomEnv(const OutputType bitId,
-                 const boost::dynamic_bitset<> atomsInPath);
+                 const boost::dynamic_bitset<> &atomsInPath);
 };
 
 template <typename OutputType>
@@ -96,11 +97,11 @@ class RDKIT_FINGERPRINTS_EXPORT RDKitFPEnvGenerator
   std::vector<AtomEnvironment<OutputType> *> getEnvironments(
       const ROMol &mol, FingerprintArguments<OutputType> *arguments,
       const std::vector<std::uint32_t> *fromAtoms,
-      const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
+      const std::vector<std::uint32_t> *ignoreAtoms, int confId,
       const AdditionalOutput *additionalOutput,
       const std::vector<std::uint32_t> *atomInvariants,
       const std::vector<std::uint32_t> *bondInvariants,
-      const bool hashResults = false) const;
+      bool hashResults = false) const;
 
   std::string infoString() const;
 };
@@ -118,12 +119,14 @@ class RDKIT_FINGERPRINTS_EXPORT RDKitFPEnvGenerator
  linear paths
  \param useBondOrder toggles inclusion of bond orders in the path hashes
  \param atomInvariantsGenerator custom atom invariants generator to use
- \param useCountSimulation         if set, use count simulation while
+ \param countSimulation         if set, use count simulation while
  generating the fingerprint
  \param countBounds  boundaries for count simulation, corresponding bit will be
  set if the count is higher than the number provided for that spot
  \param fpSize size of the generated fingerprint, does not affect the sparse
  versions
+ \param numBitsPerFeature controls the number of bits that are set for each
+ path/subgraph found
  \param ownsAtomInvGen  if set atom invariants generator is destroyed with the
  fingerprint generator
 
@@ -131,13 +134,13 @@ class RDKIT_FINGERPRINTS_EXPORT RDKitFPEnvGenerator
  */
 template <typename OutputType>
 RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<OutputType> *getRDKitFPGenerator(
-    const unsigned int minPath = 1, const unsigned int maxPath = 7,
-    const bool useHs = true, const bool branchedPaths = true,
-    const bool useBondOrder = true,
+    unsigned int minPath = 1, unsigned int maxPath = 7, bool useHs = true,
+    bool branchedPaths = true, bool useBondOrder = true,
     AtomInvariantsGenerator *atomInvariantsGenerator = nullptr,
-    const bool countSimulation = true,
+    bool countSimulation = false,
     const std::vector<std::uint32_t> countBounds = {1, 2, 4, 8},
-    const std::uint32_t fpSize = 2048, const bool ownsAtomInvGen = false);
+    std::uint32_t fpSize = 2048, std::uint32_t numBitsPerFeature = 2,
+    bool ownsAtomInvGen = false);
 
 }  // namespace RDKitFP
 }  // namespace RDKit

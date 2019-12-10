@@ -29,7 +29,7 @@ class TestCase(unittest.TestCase):
         for i in range(numpy.shape(dmat)[0]):
             assert feq(dmat[i], exp[i])
 
-        # repeat with an flaot array
+        # repeat with an float array
         desc = numpy.zeros((3, 2), 'f')
         desc[1, 0] = 1.0
         desc[2, 0] = 1.0
@@ -39,7 +39,7 @@ class TestCase(unittest.TestCase):
         for i in range(numpy.shape(dmat)[0]):
             assert feq(dmat[i], exp[i])
 
-        # finally with an interger array
+        # finally with an integer array
         desc = numpy.zeros((3, 2), 'i')
         desc[1, 0] = 1
         desc[2, 0] = 1

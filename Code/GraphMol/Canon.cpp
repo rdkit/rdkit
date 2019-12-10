@@ -1090,8 +1090,22 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
           continue;
         }
         INT_LIST trueOrder = atomTraversalBondOrder[(*atomIt)->getIdx()];
-        // Test if the atom is in current fragment
-        if (trueOrder.size() > 0) {
+
+        // Check if the atom can be chiral, and if chirality needs inversion
+        if (trueOrder.size() >= 3) {
+          // We have to make sure that trueOrder contains all the bonds, even if
+          // they won't be written to the SMARTS
+          if (trueOrder.size() < (*atomIt)->getDegree()) {
+            for (const auto &bndItr :
+                 boost::make_iterator_range(mol.getAtomBonds(*atomIt))) {
+              int bndIdx = mol[bndItr]->getIdx();
+              if (std::find(trueOrder.begin(), trueOrder.end(), bndIdx) ==
+                  trueOrder.end()) {
+                trueOrder.push_back(bndIdx);
+                break;
+              }
+            }
+          }
           int nSwaps = (*atomIt)->getPerturbationOrder(trueOrder);
           if (chiralAtomNeedsTagInversion(
                   mol, *atomIt,
@@ -1165,7 +1179,7 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
               common_properties::_ringStereoAtoms);
           BOOST_FOREACH (int nbrV, ringStereoAtoms) {
             int nbrIdx = abs(nbrV) - 1;
-            // Adjust the chiraliy flag of the ring stereo atoms according to
+            // Adjust the chirality flag of the ring stereo atoms according to
             // the first one
             if (!ringStereoChemAdjusted[nbrIdx] &&
                 atomVisitOrders[nbrIdx] >

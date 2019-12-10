@@ -286,6 +286,13 @@ TEST_CASE("github #2257: writing cxsmiles", "[smiles,cxsmiles]") {
     CHECK(smi == "C[C@@H]1CCO[C@H](C)C1 |a:1,5|");
   }
 
+  SECTION("enhanced stereo with other properties") {
+    auto mol = "CC[C@H](C)O |atomProp:3.p2.v2,o1:2|"_smiles;
+    REQUIRE(mol);
+    auto smi = MolToCXSmiles(*mol);
+    CHECK(smi == "CC[C@H](C)O |atomProp:3.p2.v2,o1:2|");
+  }
+
   SECTION("mol fragments1") {
     auto mol = "Cl.OC |(1,0,0;0,.75,0.1;0,-.75,-0.1)|"_smiles;
     REQUIRE(mol);
@@ -444,15 +451,26 @@ TEST_CASE("github#2450: getAtomSmarts() fails for free atoms", "[bug]") {
   }
 }
 
-TEST_CASE("MolFragmentToSmarts", "[Smarts]")
-{
+TEST_CASE("MolFragmentToSmarts", "[Smarts]") {
   SECTION("BasicFragment") {
     auto m = "CCCCCN"_smiles;
     std::vector<int> indices = {3, 4, 5};
     const auto smarts = MolFragmentToSmarts(*m, indices);
     CHECK(smarts == "[#6]-[#6]-[#7]");
   }
-  SECTION("FragmentWithParity") {
+  SECTION("FragmentWithParity1") {
+    auto m = "C[C@H](F)CCCN"_smiles;
+    std::vector<int> indices = {0, 1, 2, 3};
+    const auto smarts = MolFragmentToSmarts(*m, indices);
+    CHECK(smarts == "[#6]-[#6@H](-[#9])-[#6]");
+  }
+  SECTION("FragmentWithParity2") {
+    auto m = "C[C@](F)(Cl)CCCN"_smiles;
+    std::vector<int> indices = {0, 1, 2, 4};
+    const auto smarts = MolFragmentToSmarts(*m, indices);
+    CHECK(smarts == "[#6]-[#6@@](-[#9])-[#6]");
+  }
+  SECTION("FragmentLosingParity") {
     auto m = "C[C@H](F)CCCN"_smiles;
     std::vector<int> indices = {0, 1, 2};
     const auto smarts = MolFragmentToSmarts(*m, indices);
@@ -470,5 +488,116 @@ TEST_CASE("MolFragmentToSmarts", "[Smarts]")
     std::vector<int> indices = {3, 4, 5};
     const auto smarts = MolFragmentToSmarts(*m, indices);
     CHECK(smarts == "C[C,N]N");
+  }
+}
+
+TEST_CASE("github #2667: MolToCXSmiles generates error for empty molecule",
+          "[bug,cxsmiles]") {
+  SECTION("basics") {
+    auto mol = ""_smiles;
+    REQUIRE(mol);
+    auto smi = MolToCXSmiles(*mol);
+    CHECK(smi == "");
+  }
+}
+
+TEST_CASE("github #2604: support range-based charge queries from SMARTS",
+          "[ranges,smarts]") {
+  SECTION("positive") {
+    auto query = "[N+{0-1}]"_smarts;
+    REQUIRE(query);
+    {
+      auto m1 = "CN"_smiles;
+      REQUIRE(m1);
+      CHECK(SubstructMatch(*m1, *query).size() == 1);
+    }
+    {
+      auto m1 = "C[NH3+]"_smiles;
+      REQUIRE(m1);
+      CHECK(SubstructMatch(*m1, *query).size() == 1);
+    }
+    {
+      auto m1 = "C[NH4+2]"_smiles;
+      REQUIRE(m1);
+      CHECK(SubstructMatch(*m1, *query).empty());
+    }
+    {
+      auto m1 = "C[NH-]"_smiles;
+      REQUIRE(m1);
+      CHECK(SubstructMatch(*m1, *query).empty());
+    }
+  }
+  SECTION("negative") {
+    auto query = "[N-{0-1}]"_smarts;
+    REQUIRE(query);
+    {
+      auto m1 = "CN"_smiles;
+      REQUIRE(m1);
+      CHECK(SubstructMatch(*m1, *query).size() == 1);
+    }
+    {
+      auto m1 = "C[NH-]"_smiles;
+      REQUIRE(m1);
+      CHECK(SubstructMatch(*m1, *query).size() == 1);
+    }
+    {
+      auto m1 = "C[N-2]"_smiles;
+      REQUIRE(m1);
+      CHECK(SubstructMatch(*m1, *query).empty());
+    }
+    {
+      auto m1 = "C[NH3+]"_smiles;
+      REQUIRE(m1);
+      CHECK(SubstructMatch(*m1, *query).empty());
+    }
+  }
+}
+
+TEST_CASE("github #2801: MolToSmarts may generate invalid SMARTS for bond queries",
+          "[bug,smarts]") {
+  SECTION("original_report") {
+    auto q1 = "*~CCC"_smarts;
+    REQUIRE(q1);
+    Bond *qb = q1->getBondBetweenAtoms(0, 1);
+    BOND_EQUALS_QUERY *bq1 = makeBondOrderEqualsQuery(qb->getBondType());
+    qb->setQuery(bq1);
+    BOND_EQUALS_QUERY *bq2 = makeBondIsInRingQuery();
+    bq2->setNegation(true);
+    qb->expandQuery(bq2, Queries::COMPOSITE_AND, true);
+    std::string smarts = MolToSmarts(*q1);
+    CHECK(smarts == "*!@CCC");
+    std::unique_ptr<RWMol> q2(SmartsToMol(smarts));
+    REQUIRE(q2);
+  }
+  SECTION("composite_or") {
+    auto q1 = "*~CCC"_smarts;
+    REQUIRE(q1);
+    Bond *qb = q1->getBondBetweenAtoms(0, 1);
+    BOND_EQUALS_QUERY *bq1 = makeBondOrderEqualsQuery(qb->getBondType());
+    qb->setQuery(bq1);
+    BOND_EQUALS_QUERY *bq2 = makeBondIsInRingQuery();
+    bq2->setNegation(true);
+    qb->expandQuery(bq2, Queries::COMPOSITE_OR, true);
+    // this used to yield *,!@CCC
+    std::string smarts = MolToSmarts(*q1);
+    CHECK(smarts == "*!@CCC");
+    std::unique_ptr<RWMol> q2(SmartsToMol(smarts));
+    REQUIRE(q2);
+  }
+  SECTION("composite_lowand") {
+    auto q1 = "*~CCC"_smarts;
+    REQUIRE(q1);
+    Bond *qb = q1->getBondBetweenAtoms(0, 1);
+    BOND_EQUALS_QUERY *bq1 = makeBondOrderEqualsQuery(qb->getBondType());
+    qb->setQuery(bq1);
+    BOND_EQUALS_QUERY *bq2 = makeBondOrderEqualsQuery(qb->getBondType());
+    qb->expandQuery(bq2, Queries::COMPOSITE_OR, true);
+    BOND_EQUALS_QUERY *bq3 = makeBondIsInRingQuery();
+    bq3->setNegation(true);
+    qb->expandQuery(bq3, Queries::COMPOSITE_AND, true);
+    std::string smarts = MolToSmarts(*q1);
+    CHECK(smarts == "*!@CCC");
+    std::unique_ptr<RWMol> q2(SmartsToMol(smarts));
+    REQUIRE(q2);
   }
 }

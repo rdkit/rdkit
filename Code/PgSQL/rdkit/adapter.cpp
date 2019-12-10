@@ -329,12 +329,17 @@ extern "C" bool isValidMolBlob(char *data, int len) {
   return res;
 }
 
-extern "C" char *makeMolText(CROMol data, int *len, bool asSmarts) {
+extern "C" char *makeMolText(CROMol data, int *len, bool asSmarts,
+                             bool cxSmiles) {
   ROMol *mol = (ROMol *)data;
 
   try {
     if (!asSmarts) {
-      StringData = MolToSmiles(*mol, true);
+      if (!cxSmiles) {
+        StringData = MolToSmiles(*mol);
+      } else {
+        StringData = MolToCXSmiles(*mol);
+      }
     } else {
       StringData = MolToSmarts(*mol, false);
     }
@@ -1954,6 +1959,64 @@ extern "C" char *computeMolHash(CROMol data, int *len) {
     text.clear();
   }
   *len = text.length();
+  return strdup(text.c_str());
+}
+
+extern "C" char *computeNMMolHash(CROMol data, const char *which) {
+  RWMol mol(*(ROMol *)data);
+
+  RDKit::MolHash::HashFunction func =
+      RDKit::MolHash::HashFunction::AnonymousGraph;
+  if (!strcmp(which, "AnonymousGraph")) {
+    func = RDKit::MolHash::HashFunction::AnonymousGraph;
+  } else if (!strcmp(which, "ElementGraph")) {
+    func = RDKit::MolHash::HashFunction::ElementGraph;
+  } else if (!strcmp(which, "CanonicalSmiles")) {
+    func = RDKit::MolHash::HashFunction::CanonicalSmiles;
+  } else if (!strcmp(which, "MurckoScaffold")) {
+    func = RDKit::MolHash::HashFunction::MurckoScaffold;
+  } else if (!strcmp(which, "ExtendedMurcko")) {
+    func = RDKit::MolHash::HashFunction::ExtendedMurcko;
+  } else if (!strcmp(which, "MolFormula")) {
+    func = RDKit::MolHash::HashFunction::MolFormula;
+  } else if (!strcmp(which, "AtomBondCounts")) {
+    func = RDKit::MolHash::HashFunction::AtomBondCounts;
+  } else if (!strcmp(which, "DegreeVector")) {
+    func = RDKit::MolHash::HashFunction::DegreeVector;
+  } else if (!strcmp(which, "Mesomer")) {
+    func = RDKit::MolHash::HashFunction::Mesomer;
+  } else if (!strcmp(which, "HetAtomTautomer")) {
+    func = RDKit::MolHash::HashFunction::HetAtomTautomer;
+  } else if (!strcmp(which, "HetAtomProtomer")) {
+    func = RDKit::MolHash::HashFunction::HetAtomProtomer;
+  } else if (!strcmp(which, "RedoxPair")) {
+    func = RDKit::MolHash::HashFunction::RedoxPair;
+  } else if (!strcmp(which, "Regioisomer")) {
+    func = RDKit::MolHash::HashFunction::Regioisomer;
+  } else if (!strcmp(which, "NetCharge")) {
+    func = RDKit::MolHash::HashFunction::NetCharge;
+  } else if (!strcmp(which, "SmallWorldIndexBR")) {
+    func = RDKit::MolHash::HashFunction::SmallWorldIndexBR;
+  } else if (!strcmp(which, "SmallWorldIndexBRL")) {
+    func = RDKit::MolHash::HashFunction::SmallWorldIndexBRL;
+  } else if (!strcmp(which, "ArthorSubstructureOrder")) {
+    func = RDKit::MolHash::HashFunction::ArthorSubstructureOrder;
+  } else {
+    ereport(
+        WARNING,
+        (errcode(ERRCODE_WARNING),
+         errmsg(
+             "computeNMMolHash: hash %s not recognized, using AnonymousGraph",
+             which)));
+  }
+
+  string text;
+  try {
+    text = RDKit::MolHash::MolHash(&mol, func);
+  } catch (...) {
+    ereport(WARNING,
+            (errcode(ERRCODE_WARNING), errmsg("computeMolHash: failed")));
+  }
   return strdup(text.c_str());
 }
 

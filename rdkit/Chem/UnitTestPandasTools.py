@@ -122,17 +122,17 @@ class TestPandasTools(unittest.TestCase):
     @unittest.skipIf(IPython is None, 'Package IPython required for testing')
     def test_svgRendering(self):
         df = PandasTools.LoadSDF(getStreamIO(methane + peroxide))
-        self.assertIn('image/png', str(df))
-        self.assertNotIn('svg', str(df))
+        self.assertIn('image/png', df.to_html())
+        self.assertNotIn('svg', df.to_html())
 
         PandasTools.molRepresentation = 'svg'
-        self.assertIn('svg', str(df))
-        self.assertNotIn('image/png', str(df))
+        self.assertIn('svg', df.to_html())
+        self.assertNotIn('image/png', df.to_html())
 
         # we can use upper case for the molRepresentation
         PandasTools.molRepresentation = 'PNG'
-        self.assertNotIn('svg', str(df))
-        self.assertIn('image/png', str(df))
+        self.assertNotIn('svg', df.to_html())
+        self.assertIn('image/png', df.to_html())
 
     def test_patchHeadFrame(self):
         df = self.df.copy()

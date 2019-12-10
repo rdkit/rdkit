@@ -32,7 +32,8 @@
 //%import "ROMol.i"
 %include "std_string.i"
 %include "std_vector.i"
-
+%include <boost_shared_ptr.i>
+%shared_ptr(RDKit::FilterCatalogEntry)
 
 %{
 #include <../RDGeneral/Dict.h>
@@ -42,13 +43,15 @@
 #include <GraphMol/FilterCatalog/FilterCatalogEntry.h>
 #include <GraphMol/FilterCatalog/FilterCatalog.h>
 
-  // bug fix for swig, it removes these from their namespaces
-  typedef RDCatalog::Catalog<RDKit::FilterCatalogEntry, RDKit::FilterCatalogParams>::paramType_t paramType_t;
-  typedef RDCatalog::Catalog<RDKit::FilterCatalogEntry, RDKit::FilterCatalogParams>::entryType_t entryType_t;
-  typedef std::vector<std::string> STR_VECT;
+// bug fix for swig, it removes these from their namespaces
+typedef RDCatalog::Catalog<RDKit::FilterCatalogEntry, RDKit::FilterCatalogParams>::paramType_t paramType_t;
+
+typedef std::vector<std::string> STR_VECT;
 %}
 
 %template(FilterCatalogEntry_Vect) std::vector< boost::shared_ptr<RDKit::FilterCatalogEntry> >;
+%template(FilterCatalogEntry_VectVect) std::vector<std::vector< boost::shared_ptr<const RDKit::FilterCatalogEntry> > >;
+
 %template(FilterCatalogEntryVect) std::vector< const RDKit::FilterCatalogEntry* >;
 %template(UChar_Vect) std::vector<unsigned char>;
 %template(FilterMatch_Vect) std::vector<RDKit::FilterMatch>;

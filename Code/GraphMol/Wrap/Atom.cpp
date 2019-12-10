@@ -139,8 +139,8 @@ Note that, though it is possible to create one, having an Atom on its own\n\
 (i.e not associated with a molecule) is not particularly useful.\n";
 struct atom_wrapper {
   static void wrap() {
-    python::class_<Atom, Atom *>("Atom", atomClassDoc.c_str(),
-                                 python::init<std::string>())
+    python::class_<Atom>("Atom", atomClassDoc.c_str(),
+                         python::init<std::string>())
 
         .def(python::init<const Atom &>())
         .def(python::init<unsigned int>(

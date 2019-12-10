@@ -56,7 +56,8 @@ std::string _combineChildSmarts(std::string cs1, unsigned int features1,
           "binary tree");
     }
     res += cs1;
-    res += ",";
+    if (!(cs1.empty() || cs2.empty()))
+      res += ",";
     res += cs2;
     features |= static_cast<unsigned int>(QueryBoolFeatures::HAS_OR);
   } else if ((descrip.find("And") > 0) &&
@@ -71,7 +72,8 @@ std::string _combineChildSmarts(std::string cs1, unsigned int features1,
       features |= static_cast<unsigned int>(QueryBoolFeatures::HAS_AND);
     }
     res += cs1;
-    res += symb;
+    if (!(cs1.empty() || cs2.empty()))
+      res += symb;
     res += cs2;
   } else {
     std::stringstream err;
@@ -223,7 +225,18 @@ std::string getAtomSmartsSimple(const QueryAtom *qatom,
     } else {
       res << "+";
     }
-    if (abs(val) != 1) {
+    if (mods == Modifiers::NONE && abs(val) != 1) {
+      res << abs(val);
+    }
+    needParen = true;
+  } else if (descrip == "AtomNegativeFormalCharge") {
+    int val = query->getVal();
+    if (val < 0) {
+      res << "+";
+    } else {
+      res << "-";
+    }
+    if (mods == Modifiers::NONE && abs(val) != 1) {
       res << abs(val);
     }
     needParen = true;
@@ -249,6 +262,7 @@ std::string getAtomSmartsSimple(const QueryAtom *qatom,
         res << "5";
         break;
     }
+    needParen = true;
   } else if (descrip == "AtomMass") {
     res << query->getVal() / massIntegerConversionFactor << "*";
     needParen = true;
@@ -407,7 +421,7 @@ std::string getBondSmartsSimple(const Bond *bond,
                             bond->getBondDir(), doIsoSmiles, reverseDative);
   } else {
     std::stringstream msg;
-    msg << "Canot write smarts for this query bond type : " << descrip;
+    msg << "Can't write smarts for this query bond type: " << descrip;
     throw msg.str().c_str();
   }
   return res;
@@ -625,7 +639,7 @@ std::string _recurseBondSmarts(const Bond *bond,
   }
 
   // ok if we have a negation and we have to change the underlying logic,
-  // since we propogated the negation i.e NOT (A OR B) = (NOT (A)) AND
+  // since we propagated the negation i.e NOT (A OR B) = (NOT (A)) AND
   // (NOT(B))
   if (negate) {
     if (descrip == "BondOr") {
@@ -639,10 +653,10 @@ std::string _recurseBondSmarts(const Bond *bond,
   return res;
 }
 
-std::string FragmentSmartsConstruct(ROMol &mol, unsigned int atomIdx,
-                                    std::vector<Canon::AtomColors> &colors,
-                                    UINT_VECT &ranks,
-                                    const boost::dynamic_bitset<> *bondsInPlay=nullptr) {
+std::string FragmentSmartsConstruct(
+    ROMol &mol, unsigned int atomIdx, std::vector<Canon::AtomColors> &colors,
+    UINT_VECT &ranks, bool doIsomericSmiles,
+    const boost::dynamic_bitset<> *bondsInPlay = nullptr) {
   Canon::MolStack molStack;
   molStack.reserve(mol.getNumAtoms() + mol.getNumBonds());
   std::stringstream res;
@@ -656,7 +670,27 @@ std::string FragmentSmartsConstruct(ROMol &mol, unsigned int atomIdx,
   for (auto &atom : mol.atoms()) {
     atom->updatePropertyCache(false);
   }
-  Canon::canonicalizeFragment(mol, atomIdx, colors, ranks, molStack, bondsInPlay);
+
+  // Another dirty trick to avoid reordering of lead chiral atoms in
+  // canonicalizeFragment: since we are writing SMARTS, there won't be a
+  // reordering on parsing.
+  // The trick is as easy as choosing the first non-chiral atom we can find as
+  // root of the string. This should not be a problem, since SMARTS do not get
+  // canonicalized.
+  if (molStack.empty()) {
+    for (unsigned i = 0; i < mol.getNumAtoms(); ++i) {
+      const Atom *atom = mol.getAtomWithIdx(i);
+      if (colors[i] == Canon::WHITE_NODE &&
+          atom->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW &&
+          atom->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW) {
+        atomIdx = i;
+        break;
+      }
+    }
+  }
+
+  Canon::canonicalizeFragment(mol, atomIdx, colors, ranks, molStack,
+                              bondsInPlay, nullptr, doIsomericSmiles);
 
   // now clear the "SSSR" property
   mol.getRingInfo()->reset();
@@ -784,15 +818,16 @@ std::string getNonQueryBondSmarts(const QueryBond *qbond, int atomToLeftIdx) {
   return res;
 }
 
-std::string molToSmarts(const ROMol &inmol, bool doIsomericSmiles, std::vector<AtomColors>&& colors,
-                        const boost::dynamic_bitset<> *bondsInPlay=nullptr) {
+std::string molToSmarts(const ROMol &inmol, bool doIsomericSmiles,
+                        std::vector<AtomColors> &&colors,
+                        const boost::dynamic_bitset<> *bondsInPlay = nullptr) {
   ROMol mol(inmol);
   const unsigned int nAtoms = mol.getNumAtoms();
   UINT_VECT ranks;
   ranks.reserve(nAtoms);
   // For smiles writing we would be canonicalizing but we will not do that here.
   // We will simply use the atom indices as the rank
-  for (const auto& atom: mol.atoms()) {
+  for (const auto &atom : mol.atoms()) {
     ranks.push_back(atom->getIdx());
   }
 
@@ -814,7 +849,8 @@ std::string molToSmarts(const ROMol &inmol, bool doIsomericSmiles, std::vector<A
       }
     }
 
-    subSmi = FragmentSmartsConstruct(mol, nextAtomIdx, colors, ranks, bondsInPlay);
+    subSmi = FragmentSmartsConstruct(mol, nextAtomIdx, colors, ranks,
+                                     doIsomericSmiles, bondsInPlay);
     res += subSmi;
 
     colorIt = std::find(colors.begin(), colors.end(), Canon::WHITE_NODE);
@@ -934,12 +970,10 @@ std::string MolToSmarts(const ROMol &mol, bool doIsomericSmarts) {
   return molToSmarts(mol, doIsomericSmarts, std::move(colors));
 }
 
-
 std::string MolFragmentToSmarts(const ROMol &mol,
-                                const std::vector<int>& atomsToUse,
+                                const std::vector<int> &atomsToUse,
                                 const std::vector<int> *bondsToUse,
-                                bool doIsomericSmarts)
-{
+                                bool doIsomericSmarts) {
   PRECONDITION(!atomsToUse.empty(), "no atoms provided");
   PRECONDITION(!bondsToUse || !bondsToUse->empty(), "no bonds provided");
 
@@ -951,7 +985,7 @@ std::string MolFragmentToSmarts(const ROMol &mol,
   std::unique_ptr<boost::dynamic_bitset<>> bondsInPlay(nullptr);
   if (bondsToUse != nullptr) {
     bondsInPlay.reset(new boost::dynamic_bitset<>(mol.getNumBonds(), 0));
-    for (int bidx: *bondsToUse) {
+    for (int bidx : *bondsToUse) {
       bondsInPlay->set(bidx);
     }
   }
@@ -961,7 +995,7 @@ std::string MolFragmentToSmarts(const ROMol &mol,
   // grey: partial
   // black: complete
   std::vector<AtomColors> colors(nAtoms, Canon::BLACK_NODE);
-  for (const auto& idx: atomsToUse) {
+  for (const auto &idx : atomsToUse) {
     colors[idx] = Canon::WHITE_NODE;
   }
 

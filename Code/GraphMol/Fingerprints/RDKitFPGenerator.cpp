@@ -74,9 +74,11 @@ std::string RDKitFPArguments<OutputType>::infoString() const {
 template <typename OutputType>
 RDKitFPArguments<OutputType>::RDKitFPArguments(
     unsigned int minPath, unsigned int maxPath, bool useHs, bool branchedPaths,
-    bool useBondOrder, const bool countSimulation,
-    const std::vector<std::uint32_t> countBounds, const std::uint32_t fpSize)
-    : FingerprintArguments<OutputType>(countSimulation, countBounds, fpSize),
+    bool useBondOrder, bool countSimulation,
+    const std::vector<std::uint32_t> countBounds, std::uint32_t fpSize,
+    std::uint32_t numBitsPerFeature)
+    : FingerprintArguments<OutputType>(countSimulation, countBounds, fpSize,
+                                       numBitsPerFeature),
       d_minPath(minPath),
       d_maxPath(maxPath),
       df_useHs(useHs),
@@ -88,19 +90,19 @@ RDKitFPArguments<OutputType>::RDKitFPArguments(
 
 template <typename OutputType>
 OutputType RDKitFPAtomEnv<OutputType>::getBitId(
-    FingerprintArguments<OutputType> *, // arguments
-    const std::vector<std::uint32_t> *, // atomInvariants
-    const std::vector<std::uint32_t> *, // bondInvariants
-    const AdditionalOutput *, // additionalOutput
-    const bool // hashResults
-) const {
+    FingerprintArguments<OutputType> *,  // arguments
+    const std::vector<std::uint32_t> *,  // atomInvariants
+    const std::vector<std::uint32_t> *,  // bondInvariants
+    const AdditionalOutput *,            // additionalOutput
+    const bool                           // hashResults
+    ) const {
   // todo set additional outputs
   return d_bitId;
 }
 
 template <typename OutputType>
 RDKitFPAtomEnv<OutputType>::RDKitFPAtomEnv(
-    const OutputType bitId, const boost::dynamic_bitset<> atomsInPath)
+    const OutputType bitId, const boost::dynamic_bitset<> &atomsInPath)
     : d_bitId(bitId), d_atomsInPath(atomsInPath) {}
 
 template <typename OutputType>
@@ -113,13 +115,13 @@ std::vector<AtomEnvironment<OutputType> *>
 RDKitFPEnvGenerator<OutputType>::getEnvironments(
     const ROMol &mol, FingerprintArguments<OutputType> *arguments,
     const std::vector<std::uint32_t> *fromAtoms,
-    const std::vector<std::uint32_t> *, // ignoreAtoms
-    const int, // confId
-    const AdditionalOutput *, // additionalOutput
+    const std::vector<std::uint32_t> *,  // ignoreAtoms
+    const int,                           // confId
+    const AdditionalOutput *,            // additionalOutput
     const std::vector<std::uint32_t> *atomInvariants,
-    const std::vector<std::uint32_t> *, // bondInvariants
-    const bool // hashResults
-) const {
+    const std::vector<std::uint32_t> *,  // bondInvariants
+    const bool                           // hashResults
+    ) const {
   PRECONDITION(!atomInvariants || atomInvariants->size() >= mol.getNumAtoms(),
                "bad atomInvariants size");
 
@@ -176,17 +178,17 @@ RDKitFPEnvGenerator<OutputType>::getEnvironments(
 
 template <typename OutputType>
 FingerprintGenerator<OutputType> *getRDKitFPGenerator(
-    const unsigned int minPath, const unsigned int maxPath, const bool useHs,
-    const bool branchedPaths, const bool useBondOrder,
-    AtomInvariantsGenerator *atomInvariantsGenerator,
-    const bool countSimulation, const std::vector<std::uint32_t> countBounds,
-    const std::uint32_t fpSize, const bool ownsAtomInvGen) {
+    unsigned int minPath, unsigned int maxPath, bool useHs, bool branchedPaths,
+    bool useBondOrder, AtomInvariantsGenerator *atomInvariantsGenerator,
+    bool countSimulation, const std::vector<std::uint32_t> countBounds,
+    std::uint32_t fpSize, std::uint32_t numBitsPerFeature,
+    bool ownsAtomInvGen) {
   AtomEnvironmentGenerator<OutputType> *envGenerator =
       new RDKitFPEnvGenerator<OutputType>();
   FingerprintArguments<OutputType> *arguments =
       new RDKitFPArguments<OutputType>(minPath, maxPath, useHs, branchedPaths,
                                        useBondOrder, countSimulation,
-                                       countBounds, fpSize);
+                                       countBounds, fpSize, numBitsPerFeature);
 
   bool ownsAtomInvGenerator = ownsAtomInvGen;
   if (!atomInvariantsGenerator) {
@@ -199,18 +201,24 @@ FingerprintGenerator<OutputType> *getRDKitFPGenerator(
                                               ownsAtomInvGenerator, false);
 }
 
-template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint32_t> *getRDKitFPGenerator(
-    const unsigned int minPath, const unsigned int maxPath, const bool useHs,
-    const bool branchedPaths, const bool useBondOrder,
-    AtomInvariantsGenerator *atomInvariantsGenerator,
-    const bool countSimulation, const std::vector<std::uint32_t> countBounds,
-    const std::uint32_t fpSize, const bool ownsAtomInvGen);
+template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint32_t>
+    *getRDKitFPGenerator(unsigned int minPath, unsigned int maxPath, bool useHs,
+                         bool branchedPaths, bool useBondOrder,
+                         AtomInvariantsGenerator *atomInvariantsGenerator,
+                         bool countSimulation,
+                         const std::vector<std::uint32_t> countBounds,
+                         std::uint32_t fpSize, std::uint32_t numBitsPerFeature,
+                         bool ownsAtomInvGen);
 
-template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint64_t> *getRDKitFPGenerator(
-    const unsigned int minPath, const unsigned int maxPath, const bool useHs,
-    const bool branchedPaths, const bool useBondOrder,
-    AtomInvariantsGenerator *atomInvariantsGenerator,
-    const bool countSimulation, const std::vector<std::uint32_t> countBounds,
-    const std::uint32_t fpSize, const bool ownsAtomInvGen);
+template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint64_t>
+    *getRDKitFPGenerator(unsigned int minPath, unsigned int maxPath, bool useHs,
+                         bool branchedPaths, bool useBondOrder,
+                         AtomInvariantsGenerator *atomInvariantsGenerator,
+                         bool countSimulation,
+                         const std::vector<std::uint32_t> countBounds,
+                         std::uint32_t fpSize, std::uint32_t numBitsPerFeature,
+                         bool ownsAtomInvGen);
+
 }  // namespace RDKitFP
+
 }  // namespace RDKit

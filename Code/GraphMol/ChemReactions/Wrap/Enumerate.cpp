@@ -229,7 +229,7 @@ Options:\n\
     docString = \
 "EnumerateLibrary\n\
 This class allows easy enumeration of reactions.  Simply provide a reaction\n\
-and a set of reagents and you are off the the races.\n\
+and a set of reagents and you are off the races.\n\
 \n\
 Note that this functionality should be considered beta and that the API may\n\
 change in a future release.\n\
@@ -265,7 +265,7 @@ template and products2 are the molecule products for the second product\n\
 template.  Since each reactant can match more than once, there may be\n\
 multiple product molecules for each template.\n\
 \n\
-for result in library:\n\
+for products in library:\n\
     for results_for_product_template in products:\n\
         for mol in results_for_product_template:\n\
             Chem.MolToSmiles(mol) # finally have a molecule!\n\

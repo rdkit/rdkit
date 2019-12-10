@@ -1,3 +1,4 @@
+SET extra_float_digits=0;
 PREPARE dummy AS SELECT rdkit_version();
 SET rdkit.ignore_reaction_agents=false;
 SET rdkit.agent_FP_bit_ratio=0.2;

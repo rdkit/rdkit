@@ -57,10 +57,10 @@ std::string resonanceMolSupplierClassDoc =
 \n\
     2) Lazy evaluation 2:\n\n\
        >>> suppl = ResonanceMolSupplier(mol)\n\
-       >>> resMol1 = suppl.next()\n\
-       >>> resMol2 = suppl.next()\n\
+       >>> resMol1 = next(suppl)\n\
+       >>> resMol2 = next(suppl)\n\
        >>> suppl.reset()\n\
-       >>> resMol3 = suppl.next()\n\
+       >>> resMol3 = next(suppl)\n\
        # resMol3 and resMol1 are the same: \n\
        >>> MolToSmiles(resMol3)==MolToSmiles(resMol1)\n\
 \n\
