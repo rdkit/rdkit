@@ -12,6 +12,7 @@
 
 */
 
+#include <RDGeneral/export.h>
 #include <string>
 #include <memory>
 
@@ -19,7 +20,7 @@ namespace RDKit {
 class ROMol;
 namespace EHTTools {
 
-struct EHTResults {
+struct RDKIT_EHTLIB_EXPORT EHTResults {
   unsigned int numAtoms;
   unsigned int numOrbitals;
   std::unique_ptr<double[]> overlapPopulationMatrix;
@@ -36,7 +37,7 @@ struct EHTResults {
 
 //! Runs an extended Hueckel calculation for a molecule
 //!   The results are returned in the EHTResults structure
-bool runMol(const ROMol &mol, EHTResults &results, int confId = -1);
+RDKIT_EHTLIB_EXPORT bool runMol(const ROMol &mol, EHTResults &results, int confId = -1);
 
 }  // namespace EHTTools
 }  // namespace RDKit
