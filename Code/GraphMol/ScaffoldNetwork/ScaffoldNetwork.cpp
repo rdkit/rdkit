@@ -200,6 +200,26 @@ void addMolToNetwork(const ROMol &mol, ScaffoldNetwork &network,
     auto fidx = addEntryIfMissing(network.nodes, fsmi, &network.counts);
     addEntryIfMissing(network.edges,
                       NetworkEdge({iidx, fidx, EdgeType::Initialize}));
+
+    if (params.includeGenericScaffolds) {
+      bool doAtoms = true;
+      bool doBonds = false;
+      std::unique_ptr<ROMol> gmol(makeScaffoldGeneric(*fmol, doAtoms, doBonds));
+      auto gsmi = MolToSmiles(*gmol);
+      auto gidx = addEntryIfMissing(network.nodes, gsmi, &network.counts);
+      addEntryIfMissing(network.edges,
+                        NetworkEdge({fidx, gidx, EdgeType::Generic}));
+      if (params.includeGenericBondScaffolds) {
+        bool doAtoms = true;
+        bool doBonds = true;
+        std::unique_ptr<ROMol> gbmol(
+            makeScaffoldGeneric(*fmol, doAtoms, doBonds));
+        auto gbsmi = MolToSmiles(*gbmol);
+        auto gbidx = addEntryIfMissing(network.nodes, gbsmi, &network.counts);
+        addEntryIfMissing(network.edges,
+                          NetworkEdge({fidx, gbidx, EdgeType::GenericBond}));
+      }
+    }
   } else {
     // add the base molecule to the network
     addEntryIfMissing(network.nodes, fsmi, &network.counts);

@@ -242,6 +242,38 @@ TEST_CASE("addMolToNetwork", "[unittest, scaffolds]") {
                                  ScaffoldNetwork::EdgeType::Initialize;
                         }) == 1);
   }
+
+  SECTION("generic flattened structures") {
+    auto m = "Cc1ccccc1OC1C(C)C1"_smiles;
+    REQUIRE(m);
+    ScaffoldNetwork::ScaffoldNetworkParams ps;
+    ps.includeGenericScaffolds = true;
+    ps.includeScaffoldsWithoutAttachments = false;
+    ps.keepOnlyFirstFragment = true;
+    ScaffoldNetwork::ScaffoldNetwork net;
+    ScaffoldNetwork::detail::addMolToNetwork(*m, net, ps);
+    CHECK(net.nodes.size() == 7);
+    CHECK(net.counts.size() == net.nodes.size());
+    CHECK(net.edges.size() == 6);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type == ScaffoldNetwork::EdgeType::Fragment;
+                        }) == 2);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type ==
+                                 ScaffoldNetwork::EdgeType::Initialize;
+                        }) == 1);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type == ScaffoldNetwork::EdgeType::Generic;
+                        }) == 3);
+    // std::copy(net.nodes.begin(), net.nodes.end(),
+    //           std::ostream_iterator<std::string>(std::cerr, " "));
+    // std::cerr << std::endl;
+    CHECK(std::find(net.nodes.begin(), net.nodes.end(),
+                    "*1**1**1:*:*:*:*:*:1") != net.nodes.end());
+  }
 }
 TEST_CASE("Network defaults", "[scaffolds]") {
   auto smis = {"c1ccccc1CC1NC(=O)CCC1", "c1cccnc1CC1NC(=O)CCC1"};
