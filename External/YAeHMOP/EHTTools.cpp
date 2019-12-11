@@ -8,7 +8,7 @@
 #include <fstream>
 
 extern "C" {
-#include <yaehmop/bind.h>
+#include <yaehmop/tightbind/bind.h>
 }
 
 namespace RDKit {
