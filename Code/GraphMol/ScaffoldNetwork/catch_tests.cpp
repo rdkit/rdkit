@@ -433,7 +433,6 @@ TEST_CASE("BRICS Fragmenter", "[unittest, scaffolds]") {
         ScaffoldNetwork::getBRICSNetworkParams();
     ps.includeScaffoldsWithoutAttachments = false;
     ps.includeGenericScaffolds = false;
-    ps.keepOnlyFirstFragment = false;
     ScaffoldNetwork::ScaffoldNetwork net;
     ScaffoldNetwork::detail::addMolToNetwork(*m, net, ps);
     CHECK(net.nodes.size() == 10);

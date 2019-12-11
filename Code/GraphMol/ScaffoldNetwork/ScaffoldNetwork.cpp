@@ -404,7 +404,9 @@ const std::vector<std::string> BRICSDefinitions = {
     "2]"};
 
 ScaffoldNetworkParams getBRICSNetworkParams() {
-  return ScaffoldNetworkParams(BRICSDefinitions);
+  ScaffoldNetworkParams res{BRICSDefinitions};
+  res.keepOnlyFirstFragment = false;
+  return res;
 };
 
 // const ScaffoldNetworkParams BRICSNetworkParams;
