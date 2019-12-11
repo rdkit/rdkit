@@ -362,6 +362,8 @@ if(RDK_USE_BOOST_SERIALIZATION)
     find_package(Boost 1.56.0 COMPONENTS serialization)
     if (Boost_SERIALIZATION_LIBRARY)
       set(Boost_LIBRARIES ${T_LIBS} ${Boost_LIBRARIES})
+    else()
+      set(Boost_LIBRARIES ${T_LIBS})
     endif()
 endif()
 

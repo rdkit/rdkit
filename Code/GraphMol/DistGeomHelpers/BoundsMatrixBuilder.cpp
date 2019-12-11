@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2019 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -1270,6 +1270,53 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   setLowerBoundVDW(mol, mmat, scaleVDW, distMatrix);
 }
 
+void collectBondsAndAngles(const ROMol &mol,
+                    std::vector<std::pair<int, int> > &bonds,
+                    std::vector<std::vector<int> > &angles){
+  bonds.resize(0);
+  angles.resize(0);
+  bonds.reserve(mol.getNumBonds());
+  for (const auto bondi : mol.bonds()) {
+    bonds.push_back(std::make_pair(bondi->getBeginAtomIdx(), bondi->getEndAtomIdx()));
+
+    for(unsigned int j=bondi->getIdx()+1;j<mol.getNumBonds();++j){
+      const Bond *bondj = mol.getBondWithIdx(j);
+      int aid11 = bondi->getBeginAtomIdx();
+      int aid12 = bondi->getEndAtomIdx();
+      int aid21 = bondj->getBeginAtomIdx();
+      int aid22 = bondj->getEndAtomIdx();
+      if( aid11!=aid21 && aid11!=aid22 && aid12!=aid21 && aid12!=aid22 ){
+        continue;
+      }
+      std::vector<int> tmp(4,
+                            0);  // elements: aid1, aid2, flag for triple bonds
+      if ((bondi->getBondType() == Bond::TRIPLE) ||
+          (bondj->getBondType() == Bond::TRIPLE)) {
+        tmp[3] = 1;
+      }
+
+      if (aid12 == aid21) {
+        tmp[0] = aid11;
+        tmp[1] = aid12;
+        tmp[2] = aid22;
+      } else if (aid12 == aid22) {
+        tmp[0] = aid11;
+        tmp[1] = aid12;
+        tmp[2] = aid21;
+      } else if (aid11 == aid21) {
+        tmp[0] = aid12;
+        tmp[1] = aid11;
+        tmp[2] = aid22;
+      } else if (aid11 == aid22) {
+        tmp[0] = aid12;
+        tmp[1] = aid11;
+        tmp[2] = aid21;
+      }
+      angles.push_back(tmp);
+    }
+  }
+}
+
 void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                     std::vector<std::pair<int, int> > &bonds,
                     std::vector<std::vector<int> > &angles, bool set15bounds,
@@ -1287,54 +1334,7 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   distMatrix = MolOps::getDistanceMat(mol);
 
   set12Bounds(mol, mmat, accumData);
-
-  // store the 1,2-interactions
-  ROMol::ConstBondIterator bi;
-  for (bi = mol.beginBonds(); bi != mol.endBonds(); ++bi) {
-    unsigned int begId = (*bi)->getBeginAtomIdx();
-    unsigned int endId = (*bi)->getEndAtomIdx();
-    bonds.push_back(std::make_pair(begId, endId));
-  }
-
   set13Bounds(mol, mmat, accumData);
-
-  // store the 1,3-interactions
-  for (unsigned int bid1 = 0; bid1 < nb - 1; ++bid1) {
-    for (unsigned int bid2 = bid1 + 1; bid2 < nb; ++bid2) {
-      if (accumData.bondAngles->getVal(bid1, bid2) != -1.0) {
-        int aid11 = mol.getBondWithIdx(bid1)->getBeginAtomIdx();
-        int aid12 = mol.getBondWithIdx(bid1)->getEndAtomIdx();
-        int aid21 = mol.getBondWithIdx(bid2)->getBeginAtomIdx();
-        int aid22 = mol.getBondWithIdx(bid2)->getEndAtomIdx();
-        std::vector<int> tmp(4,
-                             0);  // elements: aid1, aid2, flag for triple bonds
-        if ((mol.getBondWithIdx(bid1)->getBondType() == Bond::TRIPLE) ||
-            (mol.getBondWithIdx(bid2)->getBondType() == Bond::TRIPLE)) {
-          tmp[3] = 1;
-        }
-
-        if (aid12 == aid21) {
-          tmp[0] = aid11;
-          tmp[1] = aid12;
-          tmp[2] = aid22;
-        } else if (aid12 == aid22) {
-          tmp[0] = aid11;
-          tmp[1] = aid12;
-          tmp[2] = aid21;
-        } else if (aid11 == aid21) {
-          tmp[0] = aid12;
-          tmp[1] = aid11;
-          tmp[2] = aid22;
-        } else if (aid11 == aid22) {
-          tmp[0] = aid12;
-          tmp[1] = aid11;
-          tmp[2] = aid21;
-        }
-        angles.push_back(tmp);
-      }
-    }
-  }
-
   set14Bounds(mol, mmat, accumData, distMatrix);
 
   if (set15bounds) {
@@ -1342,6 +1342,8 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   }
 
   setLowerBoundVDW(mol, mmat, scaleVDW, distMatrix);
+
+  collectBondsAndAngles(mol,bonds,angles);
 }
 
 // some helper functions to set 15 distances
