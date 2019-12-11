@@ -5,7 +5,6 @@
 tests = [
   ("python", "UnitTestMurckoScaffold.py", {}),
   ("python", "MurckoScaffold.py", {}),
-  ("python", "ScaffoldTree.py", {}),
 ]
 
 longTests = []
