@@ -43,19 +43,22 @@ void testGithub2245() {
     RDPickers::MaxMinPicker pkr;
     int poolSz = 1000;
     auto picks1 = pkr.lazyPick(dist_on_line, poolSz, 10, RDKit::INT_VECT(), -1);
-	for (maxAllowedFailures = MAX_ALLOWED_FAILURES; maxAllowedFailures; --maxAllowedFailures) {
-	  auto picks2 = pkr.lazyPick(dist_on_line, poolSz, 10, RDKit::INT_VECT(), -1);
-	  if (picks1 != picks2) break;
+    for (maxAllowedFailures = MAX_ALLOWED_FAILURES; maxAllowedFailures;
+         --maxAllowedFailures) {
+      auto picks2 =
+          pkr.lazyPick(dist_on_line, poolSz, 10, RDKit::INT_VECT(), -1);
+      if (picks1 != picks2) break;
     }
-	TEST_ASSERT(maxAllowedFailures);
+    TEST_ASSERT(maxAllowedFailures);
   }
   {  // make sure the default is also random
     RDPickers::MaxMinPicker pkr;
     int poolSz = 1000;
     auto picks1 = pkr.lazyPick(dist_on_line, poolSz, 10);
-	for (maxAllowedFailures = MAX_ALLOWED_FAILURES; maxAllowedFailures; --maxAllowedFailures) {
-	  auto picks2 = pkr.lazyPick(dist_on_line, poolSz, 10);
-	  if (picks1 != picks2) break;
+    for (maxAllowedFailures = MAX_ALLOWED_FAILURES; maxAllowedFailures;
+         --maxAllowedFailures) {
+      auto picks2 = pkr.lazyPick(dist_on_line, poolSz, 10);
+      if (picks1 != picks2) break;
     }
     TEST_ASSERT(maxAllowedFailures);
   }
