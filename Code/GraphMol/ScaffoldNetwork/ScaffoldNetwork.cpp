@@ -137,6 +137,7 @@ std::vector<std::pair<std::string, ROMOL_SPTR>> getMolFragments(
   std::vector<std::pair<std::string, ROMOL_SPTR>> res;
   std::deque<ROMOL_SPTR> stack;
   stack.push_back(ROMOL_SPTR(new ROMol(mol)));
+  std::vector<std::string> seen;
   while (!stack.empty()) {
     auto wmol = stack.front();
     stack.pop_front();
@@ -151,7 +152,11 @@ std::vector<std::pair<std::string, ROMOL_SPTR>> getMolFragments(
         }
 
         updateMolProps(*static_cast<RWMol *>(p[0].get()), params);
-        stack.push_back(p[0]);
+        auto tsmi0 = MolToSmiles(*p[0]);
+        if (std::find(seen.begin(), seen.end(), tsmi0) == seen.end()) {
+          stack.push_back(p[0]);
+          seen.push_back(tsmi0);
+        }
         res.push_back(std::make_pair(parentSmi, p[0]));
         if (!params.keepOnlyFirstFragment) {
           if (!params.includeScaffoldsWithAttachments) {
@@ -160,7 +165,11 @@ std::vector<std::pair<std::string, ROMOL_SPTR>> getMolFragments(
             p[1].reset(removeAttachmentPoints(*p[1], params));
           }
           updateMolProps(*static_cast<RWMol *>(p[1].get()), params);
-          stack.push_back(p[1]);
+          auto tsmi1 = MolToSmiles(*p[1]);
+          if (std::find(seen.begin(), seen.end(), tsmi1) == seen.end()) {
+            stack.push_back(p[1]);
+            seen.push_back(tsmi1);
+          }
           res.push_back(std::make_pair(parentSmi, p[1]));
         }
       }

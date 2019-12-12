@@ -127,9 +127,7 @@ TEST_CASE("makeScaffoldGeneric", "[unittest, scaffolds]") {
     CHECK(smiles == "*1****1");
   }
 }
-#endif
 
-#if 1
 TEST_CASE("getMolFragments", "[unittest, scaffolds]") {
   auto m = "c1ccccc1CC1NC(=O)CCC1"_smiles;
   REQUIRE(m);
@@ -182,9 +180,7 @@ TEST_CASE("getMolFragments", "[unittest, scaffolds]") {
     CHECK((std::max(smi1, smi2) == "c1ccccc1"));
   }
 }
-#endif
 
-#if 1
 TEST_CASE("addMolToNetwork", "[unittest, scaffolds]") {
   SECTION("defaults") {
     auto m = "c1ccccc1CC1NC(=O)CCC1"_smiles;
@@ -495,6 +491,9 @@ TEST_CASE("BRICS Fragmenter", "[unittest, scaffolds]") {
     ps.keepOnlyFirstFragment = false;
     ScaffoldNetwork::ScaffoldNetwork net;
     ScaffoldNetwork::detail::addMolToNetwork(*m, net, ps);
+    // std::copy(net.nodes.begin(), net.nodes.end(),
+    //           std::ostream_iterator<std::string>(std::cerr, " "));
+    // std::cerr << std::endl;
     CHECK(net.nodes.size() == 6);
     CHECK(net.counts.size() == net.nodes.size());
     CHECK(net.edges.size() == 8);
@@ -682,3 +681,34 @@ TEST_CASE("larger multi-mol test", "[regression, scaffold]") {
   }
 }
 #endif
+
+TEST_CASE("BRICS performance problems", "[uncharger,bug]") {
+  SECTION("mol 1") {
+    auto m =
+        "COc1ccc(cc1)-c1cc(ccc1-c1ccc(OC)cc1)C(=O)OCCOC(=O)CCOC1CCCCC1"_smiles;
+    REQUIRE(m);
+    ScaffoldNetwork::ScaffoldNetworkParams ps =
+        ScaffoldNetwork::getBRICSNetworkParams();
+    ps.includeGenericScaffolds = false;
+    ps.includeScaffoldsWithoutAttachments = false;
+    ScaffoldNetwork::ScaffoldNetwork net;
+    ScaffoldNetwork::detail::addMolToNetwork(*m, net, ps);
+    CHECK(net.nodes.size() == 59);
+    CHECK(net.counts.size() == net.nodes.size());
+    CHECK(net.edges.size() == 387);
+  }
+  SECTION("mol 2") {
+    auto m =
+        "COc1ccc(cc1)-c1cc(ccc1-c1ccc(OC)cc1)C(=O)OCCOC(=O)CCOCCOCCOCCOCCOC1CCCCC1"_smiles;
+    REQUIRE(m);
+    ScaffoldNetwork::ScaffoldNetworkParams ps =
+        ScaffoldNetwork::getBRICSNetworkParams();
+    ps.includeGenericScaffolds = false;
+    ps.includeScaffoldsWithoutAttachments = false;
+    ScaffoldNetwork::ScaffoldNetwork net;
+    ScaffoldNetwork::detail::addMolToNetwork(*m, net, ps);
+    CHECK(net.nodes.size() == 148);
+    CHECK(net.counts.size() == net.nodes.size());
+    CHECK(net.edges.size() == 1969);
+  }
+}
