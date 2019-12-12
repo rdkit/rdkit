@@ -44,7 +44,7 @@ const char *MolHolderBaseDoc =
     "The API is quite simple: \n"
     "  AddMol(mol) -> adds a molecule to the molecule holder, returns index of "
     "molecule\n"
-    "  GetMol(idx,sanitize=True) -> return the molecule at index idx\n";
+    "  GetMol(idx) -> return the molecule at index idx\n";
 
 const char *MolHolderDoc =
     "Holds raw in-memory molecules\n"
@@ -61,7 +61,7 @@ const char *CachedMolHolderDoc =
     "holder, returns index of molecule\n"
     "                     The data is stored as-is, no checking is done for "
     "validity.\n"
-    "  GetMol(idx,sanitize=True) -> return the molecule at index idx\n";
+    "  GetMol(idx) -> return the molecule at index idx\n";
 
 const char *CachedSmilesMolHolderDoc =
     "Holds molecules as smiles string\n"
@@ -87,8 +87,9 @@ const char *CachedTrustedSmilesMolHolderDoc =
     "returns index of molecule\n"
     "                       The smiles is stored as-is, no checking is done "
     "for validity.\n"
-    "  GetMol(idx,sanitize=True) -> return the molecule at index idx, \n"
-    "              if sanitize=False, the molecules RingInfo is not initialized\n";
+    "  GetMol(idx,s) -> return the molecule at index idx, \n"
+    "              note, only light sanitization is done here, for instance\n"
+    "              the molecules RingInfo is not initialized\n";
 
 const char *PatternHolderDoc =
     "Holds fingerprints used for filtering of molecules.";

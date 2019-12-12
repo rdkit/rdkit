@@ -59,7 +59,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT MolHolderBase {
   virtual unsigned int addMol(const ROMol &m) = 0;
 
   // implementations should throw IndexError on out of range
-  virtual boost::shared_ptr<ROMol> getMol(unsigned int, bool sanitize=true) const = 0;
+  virtual boost::shared_ptr<ROMol> getMol(unsigned int) const = 0;
 
   //! Get the current library size
   virtual unsigned int size() const = 0;
@@ -81,10 +81,8 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT MolHolder : public MolHolderBase {
     return size() - 1;
   }
 
-  virtual boost::shared_ptr<ROMol> getMol(unsigned int idx, bool sanitize=true) const {
-    RDUNUSED_PARAM(sanitize);
+  virtual boost::shared_ptr<ROMol> getMol(unsigned int idx) const {
     if (idx >= mols.size()) throw IndexErrorException(idx);
-    // Assume mols are already sanitized
     return mols[idx];
   }
 
@@ -123,8 +121,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedMolHolder : public MolHolderBase {
     return size() - 1;
   }
 
-  virtual boost::shared_ptr<ROMol> getMol(unsigned int idx, bool sanitize=true) const {
-    RDUNUSED_PARAM(sanitize); // assume mols are pre sanitized
+  virtual boost::shared_ptr<ROMol> getMol(unsigned int idx) const {
     if (idx >= mols.size()) throw IndexErrorException(idx);
     boost::shared_ptr<ROMol> mol(new ROMol);
     MolPickler::molFromPickle(mols[idx], mol.get());
@@ -168,8 +165,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedSmilesMolHolder
     return size() - 1;
   }
 
-  virtual boost::shared_ptr<ROMol> getMol(unsigned int idx, bool sanitize=true) const {
-    RDUNUSED_PARAM(sanitize); // mols are pre sanitized
+  virtual boost::shared_ptr<ROMol> getMol(unsigned int idx) const {
     if (idx >= mols.size()) throw IndexErrorException(idx);
 
     boost::shared_ptr<ROMol> mol(SmilesToMol(mols[idx]));
@@ -218,13 +214,10 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedTrustedSmilesMolHolder
     return size() - 1;
   }
 
-  virtual boost::shared_ptr<ROMol> getMol(unsigned int idx, bool sanitize=true) const {
+  virtual boost::shared_ptr<ROMol> getMol(unsigned int idx) const {
     if (idx >= mols.size()) throw IndexErrorException(idx);
 
     RWMol *m = SmilesToMol(mols[idx], 0, false);
-    if (sanitize) { // only need ring info for sanitiation
-      MolOps::symmetrizeSSSR(*m);
-    }
     m->updatePropertyCache();
     return boost::shared_ptr<ROMol>(m);
   }
@@ -332,7 +325,9 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT PatternHolder : public FPHolderBase {
      a trusted source.  This makes the basic assumption that RDKit was
      used to sanitize and canonicalize the smiles string.  In practice
      this is considerably faster than using arbitrary smiles strings since
-     certain assumptions can be made.
+     certain assumptions can be made.  Molecules generated from trusted
+     smiles do not have ring information (although this is created
+     in the molecule being searched if necessary).
 
      When loading from external data, as opposed to using the "addMol" API,
      care must be taken to ensure that the pattern fingerprints and smiles
@@ -557,8 +552,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
   boost::shared_ptr<ROMol> getMol(unsigned int idx) const {
     // expects implementation to throw IndexError if out of range
     PRECONDITION(mols, "molholder is null in SubstructLibrary");
-    const bool sanitize=true;
-    return mols->getMol(idx, sanitize);
+    return mols->getMol(idx);
   }
 
   //! Returns the molecule at the given index
@@ -568,8 +562,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
   boost::shared_ptr<ROMol> operator[](unsigned int idx) {
     // expects implementation to throw IndexError if out of range
     PRECONDITION(mols, "molholder is null in SubstructLibrary");
-    const bool sanitize=true;
-    return mols->getMol(idx, sanitize);
+    return mols->getMol(idx);
   }
 
   //! return the number of molecules in the library

@@ -120,9 +120,16 @@ void SubSearcher(const ROMol &in_query, const Bits &bits,
     if (!bits.check(idx)) continue;
     // need shared_ptr as it (may) control the lifespan of the
     //  returned molecule!
-    const boost::shared_ptr<ROMol> &m = mols.getMol(idx, needs_rings);
-    const ROMol *mol = m.get();
-      
+    const boost::shared_ptr<ROMol> &m = mols.getMol(idx);
+    ROMol *mol = m.get();
+    if (needs_rings && (!mol->getRingInfo() || !mol->getRingInfo()->isInitialized())) {
+      // I have no idea what happens when symmetrizeSSSR gets called
+      //  on the same molecule twice in two threads.
+      //  This most likely WILL NOT HAPPEN since only one molholder
+      //  likely needs ring info.
+      MolOps::symmetrizeSSSR(*mol);
+    }
+    
     if (SubstructMatch(*mol, query, matchVect, bits.recursionPossible,
                        bits.useChirality, bits.useQueryQueryMatches)) {
       // this is squishy when updating the counter.  While incrementing is
@@ -147,9 +154,15 @@ void SubSearchMatchCounter(const ROMol &in_query, const Bits &bits,
     if (!bits.check(idx)) continue;
     // need shared_ptr as it (may) controls the lifespan of the
     //  returned molecule!
-    const boost::shared_ptr<ROMol> &m = mols.getMol(idx, needs_rings);
-    const ROMol *mol = m.get();
-    
+    const boost::shared_ptr<ROMol> &m = mols.getMol(idx);
+    ROMol *mol = m.get();
+    if (needs_rings && (!mol->getRingInfo() || !mol->getRingInfo()->isInitialized())) {
+      // I have no idea what happens when symmetrizeSSSR gets called
+      //  on the same molecule twice in two threads.
+      //  This most likely WILL NOT HAPPEN since only one molholder
+      //  likely needs ring info.
+      MolOps::symmetrizeSSSR(*mol);
+    }    
     if (SubstructMatch(*mol, query, matchVect, bits.recursionPossible,
                        bits.useChirality, bits.useQueryQueryMatches)) {
       counter++;
