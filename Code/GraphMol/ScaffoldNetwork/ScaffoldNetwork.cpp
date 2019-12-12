@@ -310,6 +310,12 @@ template RDKIT_SCAFFOLDNETWORK_EXPORT void updateScaffoldNetwork(
     const ScaffoldNetworkParams &params);
 template RDKIT_SCAFFOLDNETWORK_EXPORT ScaffoldNetwork createScaffoldNetwork(
     const std::vector<ROMOL_SPTR> &ms, const ScaffoldNetworkParams &params);
+template RDKIT_SCAFFOLDNETWORK_EXPORT void updateScaffoldNetwork(
+    const std::vector<std::shared_ptr<ROMol>> &ms, ScaffoldNetwork &network,
+    const ScaffoldNetworkParams &params);
+template RDKIT_SCAFFOLDNETWORK_EXPORT ScaffoldNetwork
+createScaffoldNetwork(const std::vector<std::shared_ptr<ROMol>> &ms,
+                      const ScaffoldNetworkParams &params);
 
 const std::vector<std::string> BRICSDefinitions = {
     "[$([C;D3]([#0,#6,#7,#8])(=O)):1]-;!@[$([O;D2]-;!@[#0,#6,#1]):2]>>[1*]-[*"
