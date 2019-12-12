@@ -581,4 +581,104 @@ TEST_CASE("scaffold with attachment when attachments are disabled",
     }
   }
 }
+
+TEST_CASE("larger multi-mol test", "[regression, scaffold]") {
+  std::vector<std::string> smiles{
+      "Cc1onc(-c2c(F)cccc2Cl)c1C(=O)N[C@@H]1C(=O)N2[C@@H](C(=O)O)C(C)(C)S[C@H]"
+      "12",
+      "CC1(C)S[C@@H]2[C@H](NC(=O)[C@H](N)c3ccccc3)C(=O)N2[C@H]1C(=O)O",
+      "CC1(C)SC2C(NC(=O)Cc3ccccc3)C(=O)N2C1C(=O)O.[Na]",
+      "Cc1onc(-c2ccccc2)c1C(=O)N[C@@H]1C(=O)N2[C@@H](C(=O)O)C(C)(C)S[C@H]12"};
+  std::vector<std::shared_ptr<ROMol>> ms;
+  ms.reserve(smiles.size());
+  std::transform(smiles.cbegin(), smiles.cend(), std::back_inserter(ms),
+                 [](const std::string &smi) {
+                   return std::shared_ptr<ROMol>(SmilesToMol(smi));
+                 });
+
+  SECTION("basics") {
+    ScaffoldNetwork::ScaffoldNetworkParams ps;
+    ps.includeGenericScaffolds = false;
+    ps.includeScaffoldsWithoutAttachments = false;
+    ScaffoldNetwork::ScaffoldNetwork net =
+        ScaffoldNetwork::createScaffoldNetwork(ms, ps);
+    CHECK(net.nodes.size() == 11);
+    CHECK(net.counts.size() == net.nodes.size());
+    CHECK(net.edges.size() == 14);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type == ScaffoldNetwork::EdgeType::Fragment;
+                        }) == 10);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type ==
+                                 ScaffoldNetwork::EdgeType::Initialize;
+                        }) == 4);
+    auto snodes = net.nodes;
+    std::sort(snodes.begin(), snodes.end());
+    std::vector<std::string> tgt{
+        "*C1C(=O)N2CCSC12",
+        "*c1ccccc1",
+        "*c1conc1*",
+        "*c1conc1-c1ccccc1",
+        "*c1nocc1C(=O)NC1C(=O)N2CCSC12",
+        "CC1(C)SC2C(NC(=O)Cc3ccccc3)C(=O)N2C1C(=O)O.[Na]",
+        "CC1(C)S[C@@H]2[C@H](NC(=O)[C@H](N)c3ccccc3)C(=O)N2[C@H]1C(=O)O",
+        "Cc1onc(-c2c(F)cccc2Cl)c1C(=O)N[C@@H]1C(=O)N2[C@@H](C(=O)O)C(C)(C)S[C@"
+        "H]12",
+        "Cc1onc(-c2ccccc2)c1C(=O)N[C@@H]1C(=O)N2[C@@H](C(=O)O)C(C)(C)S[C@H]12",
+        "O=C(Cc1ccccc1)NC1C(=O)N2CCSC12",
+        "O=C(NC1C(=O)N2CCSC12)c1conc1-c1ccccc1"};
+    CHECK(snodes == tgt);
+  }
+  SECTION("generics") {
+    ScaffoldNetwork::ScaffoldNetworkParams ps;
+    ps.includeGenericScaffolds = true;
+    ps.includeScaffoldsWithoutAttachments = false;
+    ScaffoldNetwork::ScaffoldNetwork net =
+        ScaffoldNetwork::createScaffoldNetwork(ms, ps);
+    CHECK(net.nodes.size() == 18);
+    CHECK(net.counts.size() == net.nodes.size());
+    CHECK(net.edges.size() == 21);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type == ScaffoldNetwork::EdgeType::Fragment;
+                        }) == 10);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type ==
+                                 ScaffoldNetwork::EdgeType::Initialize;
+                        }) == 4);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type == ScaffoldNetwork::EdgeType::Generic;
+                        }) == 7);
+    auto snodes = net.nodes;
+    std::sort(snodes.begin(), snodes.end());
+    std::copy(snodes.begin(), snodes.end(),
+              std::ostream_iterator<std::string>(std::cerr, " "));
+    std::cerr << std::endl;
+    std::vector<std::string> tgt{
+        "**1*2****2*1=*",
+        "**1:*:*:*:*:*:1",
+        "**1:*:*:*:*:1*",
+        "**1:*:*:*:*:1*(=*)**1*2****2*1=*",
+        "**1:*:*:*:*:1*1:*:*:*:*:*:1",
+        "*=*(**1*2****2*1=*)**1:*:*:*:*:*:1",
+        "*=*1*2****2*1**(=*)*1:*:*:*:*:1*1:*:*:*:*:*:1",
+        "*C1C(=O)N2CCSC12",
+        "*c1ccccc1",
+        "*c1conc1*",
+        "*c1conc1-c1ccccc1",
+        "*c1nocc1C(=O)NC1C(=O)N2CCSC12",
+        "CC1(C)SC2C(NC(=O)Cc3ccccc3)C(=O)N2C1C(=O)O.[Na]",
+        "CC1(C)S[C@@H]2[C@H](NC(=O)[C@H](N)c3ccccc3)C(=O)N2[C@H]1C(=O)O",
+        "Cc1onc(-c2c(F)cccc2Cl)c1C(=O)N[C@@H]1C(=O)N2[C@@H](C(=O)O)C(C)(C)S[C@"
+        "H]12",
+        "Cc1onc(-c2ccccc2)c1C(=O)N[C@@H]1C(=O)N2[C@@H](C(=O)O)C(C)(C)S[C@H]12",
+        "O=C(Cc1ccccc1)NC1C(=O)N2CCSC12",
+        "O=C(NC1C(=O)N2CCSC12)c1conc1-c1ccccc1"};
+    CHECK(snodes == tgt);
+  }
+}
 #endif
