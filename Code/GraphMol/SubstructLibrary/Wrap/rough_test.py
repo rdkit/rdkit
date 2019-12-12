@@ -328,8 +328,10 @@ class TestCase(unittest.TestCase):
     # shouldn't throw
     print("searching atom rings")
     self.assertEqual(len(lib.GetMatches(pat)), 1)
+    self.assertEqual(lib.CountMatches(pat), 1)
     print("searching bond rings")
     self.assertEqual(len(lib.GetMatches(pat2)), 1)
+    self.assertEqual(lib.CountMatches(pat2), 1)
     print("done")
 
     
