@@ -405,6 +405,84 @@ TEST_CASE("no attachment points", "[unittest, scaffolds]") {
     CHECK(std::count(net.counts.begin(), net.counts.end(), 1) ==
           net.counts.size());
   }
+  SECTION("generic bonds") {
+    auto m = "Cc1ccccc1OC1C(C)C1"_smiles;
+    REQUIRE(m);
+    ScaffoldNetwork::ScaffoldNetworkParams ps;
+    ps.includeGenericScaffolds = true;
+    ps.includeGenericBondScaffolds = true;
+    ps.includeScaffoldsWithoutAttachments = false;
+    ps.keepOnlyFirstFragment = true;
+    ScaffoldNetwork::ScaffoldNetwork net;
+    ScaffoldNetwork::detail::addMolToNetwork(*m, net, ps);
+    CHECK(net.nodes.size() == 9);
+    CHECK(net.counts.size() == net.nodes.size());
+    CHECK(net.edges.size() == 9);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type == ScaffoldNetwork::EdgeType::Fragment;
+                        }) == 2);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type ==
+                                 ScaffoldNetwork::EdgeType::Initialize;
+                        }) == 1);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type == ScaffoldNetwork::EdgeType::Generic;
+                        }) == 3);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type ==
+                                 ScaffoldNetwork::EdgeType::GenericBond;
+                        }) == 3);
+    // std::copy(net.nodes.begin(), net.nodes.end(),
+    //           std::ostream_iterator<std::string>(std::cerr, " "));
+    // std::cerr << std::endl;
+    CHECK(std::find(net.nodes.begin(), net.nodes.end(), "*1**1**1*****1") !=
+          net.nodes.end());
+    CHECK(std::find(net.nodes.begin(), net.nodes.end(), "**1*****1") !=
+          net.nodes.end());
+  }
+  SECTION("generic + no attach") {
+    auto m = "Cc1ccccc1OC1C(C)C1"_smiles;
+    REQUIRE(m);
+    ScaffoldNetwork::ScaffoldNetworkParams ps;
+    ps.includeGenericScaffolds = true;
+    ps.includeGenericBondScaffolds = false;
+    ps.includeScaffoldsWithoutAttachments = true;
+    ps.keepOnlyFirstFragment = true;
+    ScaffoldNetwork::ScaffoldNetwork net;
+    ScaffoldNetwork::detail::addMolToNetwork(*m, net, ps);
+    CHECK(net.nodes.size() == 11);
+    CHECK(net.counts.size() == net.nodes.size());
+    CHECK(net.edges.size() == 10);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type == ScaffoldNetwork::EdgeType::Fragment;
+                        }) == 2);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type ==
+                                 ScaffoldNetwork::EdgeType::Initialize;
+                        }) == 1);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type == ScaffoldNetwork::EdgeType::Generic;
+                        }) == 3);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type ==
+                                 ScaffoldNetwork::EdgeType::RemoveAttachment;
+                        }) == 4);
+    // std::copy(net.nodes.begin(), net.nodes.end(),
+    //           std::ostream_iterator<std::string>(std::cerr, " "));
+    // std::cerr << std::endl;
+    CHECK(std::find(net.nodes.begin(), net.nodes.end(), "c1ccccc1") !=
+          net.nodes.end());
+    CHECK(std::find(net.nodes.begin(), net.nodes.end(), "*1:*:*:*:*:*:1") !=
+          net.nodes.end());
+  }
 }
 
 TEST_CASE("BRICS Fragmenter", "[unittest, scaffolds]") {
