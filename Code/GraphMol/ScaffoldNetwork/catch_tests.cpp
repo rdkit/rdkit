@@ -655,9 +655,9 @@ TEST_CASE("larger multi-mol test", "[regression, scaffold]") {
                         }) == 7);
     auto snodes = net.nodes;
     std::sort(snodes.begin(), snodes.end());
-    std::copy(snodes.begin(), snodes.end(),
-              std::ostream_iterator<std::string>(std::cerr, " "));
-    std::cerr << std::endl;
+    // std::copy(snodes.begin(), snodes.end(),
+    //           std::ostream_iterator<std::string>(std::cerr, " "));
+    // std::cerr << std::endl;
     std::vector<std::string> tgt{
         "**1*2****2*1=*",
         "**1:*:*:*:*:*:1",
