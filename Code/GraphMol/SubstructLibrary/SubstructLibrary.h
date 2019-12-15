@@ -38,6 +38,7 @@
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <DataStructs/ExplicitBitVect.h>
 #include <DataStructs/BitOps.h>
+#include <GraphMol/MolOps.h>
 
 namespace RDKit {
 
@@ -324,7 +325,9 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT PatternHolder : public FPHolderBase {
      a trusted source.  This makes the basic assumption that RDKit was
      used to sanitize and canonicalize the smiles string.  In practice
      this is considerably faster than using arbitrary smiles strings since
-     certain assumptions can be made.
+     certain assumptions can be made.  Molecules generated from trusted
+     smiles do not have ring information (although this is created
+     in the molecule being searched if necessary).
 
      When loading from external data, as opposed to using the "addMol" API,
      care must be taken to ensure that the pattern fingerprints and smiles
