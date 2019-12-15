@@ -600,8 +600,8 @@ struct AtomMatch {  // for each seed atom (matched)
 };
 typedef std::vector<AtomMatch> AtomMatchSet;
 
-std::string MaximumCommonSubgraph::generateResultSMARTSAndQueryMol(
-    const MCS& mcsIdx, RWMol **molExt) const {
+std::pair<std::string, RWMol*> MaximumCommonSubgraph::generateResultSMARTSAndQueryMol(
+    const MCS& mcsIdx) const {
   // match the result MCS with all targets to check if it is exact match or
   // template
   Seed seed;  // result MCS
@@ -656,14 +656,7 @@ std::string MaximumCommonSubgraph::generateResultSMARTSAndQueryMol(
   // Generate result's SMARTS
 
   // create molecule from MCS for MolToSmarts()
-  RWMol molLocal;
-  RWMol *mol;
-  if (molExt) {
-    *molExt = new RWMol();
-    mol = *molExt;
-  }
-  else
-    mol = &molLocal;
+  RWMol *mol = new RWMol();
   const RingInfo *ri = QueryMolecule->getRingInfo();
   unsigned ai = 0;  // SeedAtomIdx
   for (auto atom = mcsIdx.Atoms.begin(); atom != mcsIdx.Atoms.end();
@@ -722,7 +715,7 @@ std::string MaximumCommonSubgraph::generateResultSMARTSAndQueryMol(
     mol->addBond(&b, false);
   }
 
-  return MolToSmarts(*mol, true);
+  return std::make_pair(MolToSmarts(*mol, true), mol);
 }
 
 bool MaximumCommonSubgraph::addFusedBondQueries(const MCS& mcsIdx, RWMol *rwMol) const {
@@ -890,15 +883,15 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR>& src_mols) {
 
   res.NumAtoms = getMaxNumberAtoms();
   res.NumBonds = getMaxNumberBonds();
-  RWMol *queryMol = NULL;
+  ;
   if (res.NumBonds > 0) {
-    res.SmartsString = generateResultSMARTSAndQueryMol(McsIdx, &queryMol);
-    res.QueryMol = RWMOL_SPTR(queryMol);
+    std::pair<std::string, RWMol *> smartsQueryMolPair =
+      generateResultSMARTSAndQueryMol(McsIdx);
+    res.SmartsString = smartsQueryMolPair.first;
+    res.QueryMol = RWMOL_SPTR(smartsQueryMolPair.second);
     if (Parameters.BondCompareParameters.MatchFusedRingsStrict)
-      addFusedBondQueries(McsIdx, queryMol);
+      addFusedBondQueries(McsIdx, smartsQueryMolPair.second);
   }
-  if (!queryMol)
-    queryMol = new RWMol();
 
 #ifdef VERBOSE_STATISTICS_ON
   if (Parameters.Verbose) {

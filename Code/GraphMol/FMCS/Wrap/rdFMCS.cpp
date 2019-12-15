@@ -47,15 +47,6 @@ void SetMCSBondTyper(MCSParameters &p, BondComparator bondComp) {
   }
 }
 
-ROMol *getQueryMol(MCSResult &mcsRes) {
-  ROMol *res;
-  {
-    NOGIL gil;
-    res = new ROMol(*mcsRes.QueryMol);
-  }
-  return res;
-}
-
 MCSResult *FindMCSWrapper(python::object mols, bool maximizeBonds,
                           double threshold, unsigned timeout, bool verbose,
                           bool matchValences, bool ringMatchesRingOnly,
@@ -119,9 +110,8 @@ struct mcsresult_wrapper {
                       "number of atoms in MCS")
         .def_readonly("numBonds", &RDKit::MCSResult::NumBonds,
                       "number of bonds in MCS")
-        .def("queryMol", RDKit::getQueryMol,
-             python::return_value_policy<python::manage_new_object>(),
-             "Query molecule for the MCS")
+        .def_readonly("queryMol", &RDKit::MCSResult::QueryMol,
+                      "query molecule for the MCS")
         .def_readonly("smartsString", &RDKit::MCSResult::SmartsString,
                       "SMARTS string for the MCS")
         .def_readonly("canceled", &RDKit::MCSResult::Canceled,
