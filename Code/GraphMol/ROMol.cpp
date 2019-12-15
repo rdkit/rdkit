@@ -271,7 +271,7 @@ void ROMol::clearBondBookmark(int mark, const Bond *bond) {
 unsigned int ROMol::getNumBonds(bool onlyHeavy) const {
   // By default resturn the bonds that connect only the heavy atoms
   // hydrogen connecting bonds are ignores
-  int res = rdcast<int>(boost::num_edges(d_graph));
+  int res = numBonds;
   if (!onlyHeavy) {
     // If we need hydrogen connecting bonds add them up
     for (ConstAtomIterator ai = beginAtoms(); ai != endAtoms(); ++ai) {

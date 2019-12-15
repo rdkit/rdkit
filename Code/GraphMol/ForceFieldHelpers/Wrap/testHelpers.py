@@ -1,5 +1,5 @@
 from rdkit import Chem
-from rdkit.Chem import ChemicalForceFields
+from rdkit.Chem import ChemicalForceFields, rdDistGeom
 from rdkit import RDConfig
 import unittest
 import os
@@ -257,7 +257,7 @@ M  END"""
                                 'test_data')
     fName = os.path.join(self.dirName, 'Issue239.mol')
     m = Chem.MolFromMolFile(fName)
-    self.assertIsNotNone(m);
+    self.assertIsNotNone(m)
     ff = ChemicalForceFields.UFFGetMoleculeForceField(m)
     ff.Initialize()
     positions = ff.Positions()
@@ -267,20 +267,20 @@ M  END"""
     e2 = ff.CalcEnergy()
     self.failUnless(e2 < e1)
     e3 = ff.CalcEnergy(savedPos)
-    self.assertAlmostEqual(e3, e1, 2);
+    self.assertAlmostEqual(e3, e1, 2)
     savedPos = tuple(positions)
     e3 = ff.CalcEnergy(savedPos)
-    self.assertAlmostEqual(e3, e1, 2);
+    self.assertAlmostEqual(e3, e1, 2)
     savedPos = tuple(numpy.array(savedPos))
     e3 = ff.CalcEnergy(savedPos)
-    self.assertAlmostEqual(e3, e1, 2);
+    self.assertAlmostEqual(e3, e1, 2)
 
   def test13(self):
     self.dirName = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'ForceFieldHelpers', 'UFF',
                                 'test_data')
     fName = os.path.join(self.dirName, 'Issue239.mol')
     m = Chem.MolFromMolFile(fName)
-    self.assertIsNotNone(m);
+    self.assertIsNotNone(m)
     mp = ChemicalForceFields.MMFFGetMoleculeProperties(m)
     ff = ChemicalForceFields.MMFFGetMoleculeForceField(m, mp)
     ff.Initialize()
@@ -291,14 +291,14 @@ M  END"""
     e2 = ff.CalcEnergy()
     self.failUnless(e2 < e1)
     e3 = ff.CalcEnergy(savedPos)
-    self.assertAlmostEqual(e3, e1, 2);
+    self.assertAlmostEqual(e3, e1, 2)
 
   def test14(self):
     self.dirName = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'ForceFieldHelpers', 'UFF',
                                 'test_data')
     fName = os.path.join(self.dirName, 'Issue239.mol')
     m = Chem.MolFromMolFile(fName)
-    self.assertIsNotNone(m);
+    self.assertIsNotNone(m)
     ff = ChemicalForceFields.UFFGetMoleculeForceField(m)
     ff.Initialize()
     positions = ff.Positions()
@@ -321,7 +321,7 @@ M  END"""
                                 'test_data')
     fName = os.path.join(self.dirName, 'Issue239.mol')
     m = Chem.MolFromMolFile(fName)
-    self.assertIsNotNone(m);
+    self.assertIsNotNone(m)
     mp = ChemicalForceFields.MMFFGetMoleculeProperties(m)
     ff = ChemicalForceFields.MMFFGetMoleculeForceField(m, mp)
     ff.Initialize()
@@ -340,6 +340,16 @@ M  END"""
     for i in range(len(grad1)):
       self.assertAlmostEqual(grad1[i], grad2[i], 3)
 
+  def testGitHub2820(self):
+    m = Chem.MolFromSmiles("[Na]C")
+    self.assertIsNotNone(m)
+    mp = ChemicalForceFields.MMFFGetMoleculeProperties(m)
+    self.assertIsNone(mp)
+    rdDistGeom.EmbedMultipleConfs(m, 2)
+    res = ChemicalForceFields.MMFFOptimizeMoleculeConfs(m)
+    self.assertEqual(len(res), 2)
+    self.assertEqual(res[0], res[1])
+    self.assertEqual(res[0], (-1, -1.0))
 
 if __name__ == '__main__':
   unittest.main()

@@ -34,14 +34,17 @@ rdkit_headers(Reaction.h
               ReactionRunner.h
               PreprocessRxn.h
               SanitizeRxn.h
-              Enumerate/Enumerate.h
+              DEST GraphMol/ChemReactions)
+
+rdkit_headers(Enumerate/Enumerate.h
               Enumerate/EnumerateBase.h
+              Enumerate/EnumerateTypes.h
               Enumerate/EnumerationPickler.h
               Enumerate/EnumerationStrategyBase.h
               Enumerate/CartesianProduct.h
               Enumerate/RandomSample.h
               Enumerate/RandomSampleAllBBs.h
-              DEST GraphMol/ChemReactions)
+              DEST GraphMol/ChemReactions/Enumerate)
 
 rdkit_test(testReaction testReaction.cpp LINK_LIBRARIES
  ChemReactions ChemTransforms Descriptors Fingerprints

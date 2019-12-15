@@ -31,7 +31,7 @@ void testPass() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing patterns which should parse." << std::endl;
   string smis[] = {
-#if 0
+#if 1
     "C",
     "CC",
     "C-C",
@@ -114,14 +114,24 @@ void testPass() {
     CHECK_INVARIANT(mol, smi);
     int nAts = mol->getNumAtoms();
     CHECK_INVARIANT(nAts != 0, smi.c_str());
-    // make sure that we can pickle and de-pickle it (this is the test for
-    // github #1710):
-    std::string pkl;
-    MolPickler::pickleMol(*mol, pkl);
+    {  // make sure that we can pickle and de-pickle it (this is the test for
+      // github #1710):
+      std::string pkl;
+      MolPickler::pickleMol(*mol, pkl);
+      auto mol2 = new Mol(pkl);
+      TEST_ASSERT(mol2);
+      delete mol2;
+    }
+    {
+      // finally make sure that we can create parsable SMARTS from it:
+      auto outSmarts = MolToSmarts(*mol);
+      std::cerr << smi << " " << outSmarts << std::endl;
+      auto mol2 = SmartsToMol(outSmarts);
+      TEST_ASSERT(mol2);
+      delete mol2;
+    }
     delete mol;
-    mol = new Mol(pkl);
-    TEST_ASSERT(mol);
-    delete mol;
+
     i++;
   }
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -2787,10 +2797,24 @@ void testSmartsStereoBonds() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testRingBondCrash() {
+    BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+    BOOST_LOG(rdInfoLog)
+        << "Testing a crash arising from negated ring bond queries" << std::endl;
+    {
+        auto m2 = "CC"_smiles;
+        auto q = "[C]@[Cl]"_smarts;
+        auto matches0 = SubstructMatch(*m2, *q);
+    }
+
+    BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
   RDLog::InitLogs();
+#if 1
   testPass();
   testFail();
   testMatches();
@@ -2840,6 +2864,7 @@ int main(int argc, char *argv[]) {
   testGithub2142();
   testGithub2565();
   testSmartsStereoBonds();
-
+#endif
+  testRingBondCrash();
   return 0;
 }
