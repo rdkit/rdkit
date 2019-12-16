@@ -282,12 +282,12 @@ class Canvas(CanvasBase):
         if have_cairocffi:
             measureLout = pangocairo.pango_cairo_create_layout(self.ctx._pointer)
             pango.pango_layout_set_alignment(measureLout, pango.PANGO_ALIGN_LEFT)
-            pango.pango_layout_set_markup(measureLout, plainText.encode('latin1'), -1)
+            pango.pango_layout_set_markup(measureLout, plainText.encode('utf-8'), -1)
             lout = pangocairo.pango_cairo_create_layout(self.ctx._pointer)
             pango.pango_layout_set_alignment(lout, pango.PANGO_ALIGN_LEFT)
-            pango.pango_layout_set_markup(lout, text.encode('latin1'), -1)
+            pango.pango_layout_set_markup(lout, text.encode('utf-8'), -1)
             fnt = pango.pango_font_description_new()
-            pango.pango_font_description_set_family(fnt, font.face.encode('latin1'))
+            pango.pango_font_description_set_family(fnt, font.face.encode('utf-8'))
             pango.pango_font_description_set_size(fnt,
                                                   int(round(font.size * pango.PANGO_SCALE * pangoCoeff)))
             pango.pango_layout_set_font_description(lout, fnt)
