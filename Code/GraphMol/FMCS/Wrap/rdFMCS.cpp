@@ -110,6 +110,8 @@ struct mcsresult_wrapper {
                       "number of atoms in MCS")
         .def_readonly("numBonds", &RDKit::MCSResult::NumBonds,
                       "number of bonds in MCS")
+        .def_readonly("queryMol", &RDKit::MCSResult::QueryMol,
+                      "query molecule for the MCS")
         .def_readonly("smartsString", &RDKit::MCSResult::SmartsString,
                       "SMARTS string for the MCS")
         .def_readonly("canceled", &RDKit::MCSResult::Canceled,
