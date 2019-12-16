@@ -31,10 +31,12 @@
 #include <RDBoost/python.h>
 #include <RDBoost/Wrap.h>
 #include <GraphMol/RDKitBase.h>
+#include <RDBoost/python_streambuf.h>
 
 #include <GraphMol/SubstructLibrary/SubstructLibrary.h>
 
 namespace python = boost::python;
+using boost_adaptbx::python::streambuf;
 
 namespace RDKit {
 
@@ -193,6 +195,18 @@ struct substructlibrary_pickle_suite : python::pickle_suite {
         PyBytes_FromStringAndSize(res.c_str(), res.length()))));
   };
 };
+
+void toStream(const SubstructLibrary &cat, python::object &fileobj) {
+  streambuf ss(fileobj, 't');
+  streambuf::ostream ost(ss);
+  cat.toStream(ost);
+}
+
+  void initFromStream(SubstructLibrary &cat, python::object &fileobj) {
+  streambuf ss(fileobj);
+  streambuf::istream is(ss);
+  cat.initFromStream(is);
+}
 
 struct substructlibrary_wrapper {
   static void wrap() {
@@ -370,6 +384,8 @@ struct substructlibrary_wrapper {
 
         .def("__len__", &SubstructLibrary::size)
 
+        .def("ToStream", &toStream)
+        .def("InitFromStream", &initFromStream)
         .def("Serialize", &SubstructLibrary_Serialize)
         // enable pickle support
         .def_pickle(substructlibrary_pickle_suite())

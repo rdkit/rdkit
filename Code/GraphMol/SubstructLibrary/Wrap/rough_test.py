@@ -42,6 +42,7 @@ from rdkit import Chem
 from rdkit.Chem import rdSubstructLibrary
 import time
 import pickle
+import tempfile
 
 def load_tests(loader, tests, ignore):
   tests.addTests(doctest.DocTestSuite(rdSubstructLibrary))
@@ -309,6 +310,37 @@ class TestCase(unittest.TestCase):
       res = slib.GetMatches(core)
       self.assertEqual(len(res),
                        len([x for x in mols if x.HasSubstructMatch(core, useChirality=True)]))
-        
+
+  def init_from_and_to_stream(self):
+    mols = makeStereoExamples() * 10
+    holder = rdSubstructLibrary.CachedSmilesMolHolder()
+
+    # one day I'll fix this, but we need to write text but read binary
+    #  grrr....  something about the python_streambuf handler.
+    slib = rdSubstructLibrary.SubstructLibrary(holder, None)
+
+    for mol in mols:
+      holder.AddSmiles(Chem.MolToSmiles(mol, isomericSmiles=True))
+
+    if rdSubstructLibrary.SubstructLibraryCanSerialize():
+      fd, path = tempfile.mkstemp()
+      with open(path, 'w') as file:
+        slib.ToStream(file)
+
+      file = open(path, 'rb')
+      slib2 = rdSubstructLibrary.SubstructLibrary()
+      slib2.InitFromStream(file)
+      self.assertEqual(len(slib), len(slib2))
+
+    from io import StringIO, BytesIO
+    s = StringIO()
+    slib.ToStream(s)
+
+    s = BytesIO(s.getvalue().encode("ascii"))
+    self.assertTrue(len(s.getvalue()) > 0)
+    slib3 = rdSubstructLibrary.SubstructLibrary()
+    slib3.InitFromStream(s)
+    self.assertEqual(len(slib), len(slib2))
+
 if __name__ == '__main__':
   unittest.main()
