@@ -2798,23 +2798,23 @@ void testSmartsStereoBonds() {
 }
 
 void testRingBondCrash() {
-    BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-    BOOST_LOG(rdInfoLog)
-        << "Testing a crash arising from negated ring bond queries" << std::endl;
-    {
-        auto m2 = "CC"_smiles;
-        auto q = "[C]@[Cl]"_smarts;
-        auto matches0 = SubstructMatch(*m2, *q);
-    }
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Testing a crash arising from negated ring bond queries" << std::endl;
+  {
+    auto m2 = "CC"_smiles;
+    auto q = "[C]@[Cl]"_smarts;
+    auto matches0 = SubstructMatch(*m2, *q);
+  }
 
-    BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
   RDLog::InitLogs();
-#if 0
+#if 1
   testPass();
   testFail();
   testMatches();

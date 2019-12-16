@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2018 Rational Discovery LLC
+//  Copyright (C) 2004-2019 Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -69,6 +69,13 @@ RDKIT_DISTGEOMHELPERS_EXPORT void setTopolBounds(
     std::vector<std::pair<int, int>> &bonds,
     std::vector<std::vector<int>> &angles, bool set15bounds = true,
     bool scaleVDW = false);
+
+//! generate the vectors of bonds and angles used by (ET)KDG
+RDKIT_DISTGEOMHELPERS_EXPORT void collectBondsAndAngles(
+    const ROMol &mol, 
+    std::vector<std::pair<int, int>> &bonds,
+    std::vector<std::vector<int>> &angles);
+
 }  // namespace DGeomHelpers
 }  // namespace RDKit
 #endif
