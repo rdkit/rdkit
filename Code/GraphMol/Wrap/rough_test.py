@@ -2089,6 +2089,7 @@ CAS<~>
     self.assertFalse(ri.IsBondInRingOfSize(1, 3))
     self.assertFalse(ri.IsBondInRingOfSize(2, 3))
     if hasattr(Chem,'FindRingFamilies'): self.assertEquals(ri.AtomRingFamilies(),())
+    if hasattr(Chem,'FindRingFamilies'): self.assertEquals(ri.BondRingFamilies(),())
 
 
     smi = 'C1CC2C1C2'
@@ -2114,6 +2115,9 @@ CAS<~>
       self.assertTrue(ri.AreRingFamiliesInitialized())
       self.assertEquals(ri.NumRingFamilies(),2)
       self.assertEquals(sorted(ri.AtomRingFamilies()),[(0, 1, 2, 3), (2, 3, 4)])
+      self.assertEquals(sorted(ri.BondRingFamilies()),[(0, 1, 2, 4), (2, 3, 5)])
+
+
 
   def test46ReplaceCore(self):
     """ test the ReplaceCore functionality

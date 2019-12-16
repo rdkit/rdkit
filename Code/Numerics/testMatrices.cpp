@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2019 Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -99,6 +98,42 @@ void test2Matrix() {
   CHECK_INVARIANT(RDKit::feq(C.getVal(0, 1), 10), "");
   CHECK_INVARIANT(RDKit::feq(C.getVal(1, 0), 10), "");
   CHECK_INVARIANT(RDKit::feq(C.getVal(1, 1), 10.25), "");
+
+  auto Ccp(C);
+  Ccp += C;
+  CHECK_INVARIANT(RDKit::feq(Ccp.getVal(0, 0), 20.5), "");
+  CHECK_INVARIANT(RDKit::feq(Ccp.getVal(0, 1), 20), "");
+  CHECK_INVARIANT(RDKit::feq(Ccp.getVal(1, 0), 20), "");
+  CHECK_INVARIANT(RDKit::feq(Ccp.getVal(1, 1), 20.5), "");
+
+  Ccp -= C;
+  CHECK_INVARIANT(RDKit::feq(Ccp.getVal(0, 0), 10.25), "");
+  CHECK_INVARIANT(RDKit::feq(Ccp.getVal(0, 1), 10), "");
+  CHECK_INVARIANT(RDKit::feq(Ccp.getVal(1, 0), 10), "");
+  CHECK_INVARIANT(RDKit::feq(Ccp.getVal(1, 1), 10.25), "");
+
+  C *= 2.;
+  CHECK_INVARIANT(RDKit::feq(C.getVal(0, 0), 20.5), "");
+  CHECK_INVARIANT(RDKit::feq(C.getVal(0, 1), 20), "");
+  CHECK_INVARIANT(RDKit::feq(C.getVal(1, 0), 20), "");
+  CHECK_INVARIANT(RDKit::feq(C.getVal(1, 1), 20.5), "");
+
+  C /= 2.;
+  CHECK_INVARIANT(RDKit::feq(C.getVal(0, 0), 10.25), "");
+  CHECK_INVARIANT(RDKit::feq(C.getVal(0, 1), 10), "");
+  CHECK_INVARIANT(RDKit::feq(C.getVal(1, 0), 10), "");
+  CHECK_INVARIANT(RDKit::feq(C.getVal(1, 1), 10.25), "");
+
+  Vector<double> tRow(A.numCols());
+  A.getRow(1, tRow);
+  for (unsigned int i = 0; i < A.numCols(); ++i) {
+    TEST_ASSERT(RDKit::feq(A.getVal(1, i), tRow.getVal(i)));
+  }
+  Vector<double> tCol(A.numRows());
+  A.getCol(1, tCol);
+  for (unsigned int i = 0; i < A.numRows(); ++i) {
+    TEST_ASSERT(RDKit::feq(A.getVal(i, 1), tCol.getVal(i)));
+  }
 }
 
 void test3SquareMatrix() {

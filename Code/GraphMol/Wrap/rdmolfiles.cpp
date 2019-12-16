@@ -36,11 +36,6 @@
 namespace python = boost::python;
 using namespace RDKit;
 
-void rdSanitExceptionTranslator(RDKit::MolSanitizeException const &x) {
-  std::ostringstream ss;
-  ss << "Sanitization error: " << x.message();
-  PyErr_SetString(PyExc_ValueError, ss.str().c_str());
-}
 void rdBadFileExceptionTranslator(RDKit::BadFileException const &x) {
   std::ostringstream ss;
   ss << "File error: " << x.message();
@@ -252,13 +247,14 @@ ROMol *MolFromHELM(python::object seq, bool sanitize) {
 
 std::string molFragmentToSmarts(const ROMol &mol, python::object atomsToUse,
                                 python::object bondsToUse,
-                                bool doIsomericSmarts = true)
-{
-  auto atomIndices = pythonObjectToVect(atomsToUse, static_cast<int>(mol.getNumAtoms()));
-  auto bondIndices = pythonObjectToVect(bondsToUse, static_cast<int>(mol.getNumBonds()));
-  return RDKit::MolFragmentToSmarts(mol, *atomIndices, bondIndices.get(), doIsomericSmarts);
+                                bool doIsomericSmarts = true) {
+  auto atomIndices =
+      pythonObjectToVect(atomsToUse, static_cast<int>(mol.getNumAtoms()));
+  auto bondIndices =
+      pythonObjectToVect(bondsToUse, static_cast<int>(mol.getNumBonds()));
+  return RDKit::MolFragmentToSmarts(mol, *atomIndices, bondIndices.get(),
+                                    doIsomericSmarts);
 }
-
 
 struct smilesfrag_gen {
   std::string operator()(const ROMol &mol, const std::vector<int> &atomsToUse,
@@ -293,11 +289,13 @@ std::string MolFragmentToSmilesHelper(
     python::object atomSymbols, python::object bondSymbols,
     bool doIsomericSmiles, bool doKekule, int rootedAtAtom, bool canonical,
     bool allBondsExplicit, bool allHsExplicit) {
-  auto avect = pythonObjectToVect(atomsToUse, static_cast<int>(mol.getNumAtoms()));
+  auto avect =
+      pythonObjectToVect(atomsToUse, static_cast<int>(mol.getNumAtoms()));
   if (!avect.get() || !(avect->size())) {
     throw_value_error("atomsToUse must not be empty");
   }
-  auto bvect = pythonObjectToVect(bondsToUse, static_cast<int>(mol.getNumBonds()));
+  auto bvect =
+      pythonObjectToVect(bondsToUse, static_cast<int>(mol.getNumBonds()));
   std::unique_ptr<std::vector<std::string>> asymbols =
       pythonObjectToVect<std::string>(atomSymbols);
   std::unique_ptr<std::vector<std::string>> bsymbols =
@@ -325,13 +323,10 @@ std::vector<unsigned int> CanonicalRankAtoms(const ROMol &mol,
   return ranks;
 }
 
-std::vector<int> CanonicalRankAtomsInFragment(const ROMol &mol,
-                                              python::object atomsToUse,
-                                              python::object bondsToUse,
-                                              python::object atomSymbols,
-                                              bool breakTies = true,
-					      bool includeChirality = true,
-					      bool includeIsotopes = true)
+std::vector<int> CanonicalRankAtomsInFragment(
+    const ROMol &mol, python::object atomsToUse, python::object bondsToUse,
+    python::object atomSymbols, bool breakTies = true,
+    bool includeChirality = true, bool includeIsotopes = true)
 
 {
   std::unique_ptr<std::vector<int>> avect =
@@ -355,8 +350,8 @@ std::vector<int> CanonicalRankAtomsInFragment(const ROMol &mol,
     bonds[(*bvect)[i]] = true;
 
   std::vector<unsigned int> ranks(mol.getNumAtoms());
-  Canon::rankFragmentAtoms(mol, ranks, atoms, bonds, asymbols.get(),
-                           breakTies, includeChirality, includeIsotopes);
+  Canon::rankFragmentAtoms(mol, ranks, atoms, bonds, asymbols.get(), breakTies,
+                           includeChirality, includeIsotopes);
 
   std::vector<int> resRanks(mol.getNumAtoms());
   // set unused ranks to -1 for the Python interface
@@ -408,7 +403,6 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 
   python::register_exception_translator<RDKit::FileParseException>(
       &rdFileParseExceptionTranslator);
-
 
   docString =
       "Construct a molecule from a TPL file.\n\n\
@@ -1017,9 +1011,11 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 \n\
     a string\n\
 \n";
-  python::def("MolFragmentToSmarts", molFragmentToSmarts,
-              (python::arg("mol"), python::arg("atomsToUse"), python::arg("bondsToUse") = 0, python::arg("isomericSmarts") = true),
-              docString.c_str());
+  python::def(
+      "MolFragmentToSmarts", molFragmentToSmarts,
+      (python::arg("mol"), python::arg("atomsToUse"),
+       python::arg("bondsToUse") = 0, python::arg("isomericSmarts") = true),
+      docString.c_str());
 
   docString =
       "Writes a molecule to a TPL file.\n\n\
@@ -1341,13 +1337,13 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 \n\
     a string\n\
 \n";
-  python::def("CanonicalRankAtomsInFragment", CanonicalRankAtomsInFragment,
-              (python::arg("mol"), python::arg("atomsToUse"),
-               python::arg("bondsToUse") = 0, python::arg("atomSymbols") = 0,
-               python::arg("breakTies") = true,
-	       python::arg("includeChirality") = true,
-               python::arg("includeIsotopes") = true),
-              docString.c_str());
+  python::def(
+      "CanonicalRankAtomsInFragment", CanonicalRankAtomsInFragment,
+      (python::arg("mol"), python::arg("atomsToUse"),
+       python::arg("bondsToUse") = 0, python::arg("atomSymbols") = 0,
+       python::arg("breakTies") = true, python::arg("includeChirality") = true,
+       python::arg("includeIsotopes") = true),
+      docString.c_str());
 
   python::def(
       "CreateAtomIntPropertyList", FileParserUtils::createAtomIntPropertyList,
