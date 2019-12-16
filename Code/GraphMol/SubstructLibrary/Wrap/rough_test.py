@@ -311,6 +311,30 @@ class TestCase(unittest.TestCase):
       self.assertEqual(len(res),
                        len([x for x in mols if x.HasSubstructMatch(core, useChirality=True)]))
 
+  def testRingSmartsWithTrustedSmiles(self):
+    pat = Chem.MolFromSmarts("[C&R1]")
+    pat2 = Chem.MolFromSmarts("C@C") # ring bond
+    holder = rdSubstructLibrary.CachedTrustedSmilesMolHolder()
+    lib = rdSubstructLibrary.SubstructLibrary(holder)
+    lib.AddMol(Chem.MolFromSmiles("C1CC1"))
+
+    # make sure we can get an unsanitized molecule that fails (no ring info)
+    print("Testing atom rings")
+    with self.assertRaises(RuntimeError):
+      holder.GetMol(0).HasSubstructMatch(pat)
+    print("testing bond rings")
+    with self.assertRaises(RuntimeError):
+      holder.GetMol(0).HasSubstructMatch(pat2)
+
+    # shouldn't throw
+    print("searching atom rings")
+    self.assertEqual(len(lib.GetMatches(pat)), 1)
+    self.assertEqual(lib.CountMatches(pat), 1)
+    print("searching bond rings")
+    self.assertEqual(len(lib.GetMatches(pat2)), 1)
+    self.assertEqual(lib.CountMatches(pat2), 1)
+    print("done")
+
   def init_from_and_to_stream(self):
     mols = makeStereoExamples() * 10
     holder = rdSubstructLibrary.CachedSmilesMolHolder()
@@ -342,5 +366,6 @@ class TestCase(unittest.TestCase):
     slib3.InitFromStream(s)
     self.assertEqual(len(slib), len(slib2))
 
+    
 if __name__ == '__main__':
   unittest.main()
