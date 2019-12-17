@@ -354,6 +354,11 @@ ADD_TEST(JavaRGroupDecompositionTests
 	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 	org.RDKit.RGroupDecompositionTests)
 
+ADD_TEST(JavaScaffoldNetworkTests
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
+	org.RDKit.ScaffoldNetworkTests)
+
 ADD_TEST(JavaMolHashTest
     java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
 	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
