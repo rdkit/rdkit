@@ -14,6 +14,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <sstream>
 #include <memory>
 #include <iostream>
 
@@ -100,7 +101,14 @@ struct RDKIT_SCAFFOLDNETWORK_EXPORT ScaffoldNetwork {
   std::vector<unsigned>
       counts;  ///< number of times each scaffold was encountered
   std::vector<NetworkEdge> edges;  ///< edges in the network
+  ScaffoldNetwork(){};
 #ifdef RDK_USE_BOOST_SERIALIZATION
+  ScaffoldNetwork(const std::string &pkl) {
+    std::stringstream iss(pkl);
+    boost::archive::text_iarchive ia(iss);
+    ia >> *this;
+  }
+
  private:
   friend class boost::serialization::access;
   template <class Archive>

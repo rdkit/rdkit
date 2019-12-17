@@ -734,15 +734,30 @@ TEST_CASE("Serialization", "[serialization]") {
     std::stringstream ss;
     boost::archive::text_oarchive oa(ss);
     oa << net;
-    boost::archive::text_iarchive ia(ss);
-    ScaffoldNetwork::ScaffoldNetwork net2;
-    ia >> net2;
-    CHECK(net2.nodes.size() == 12);
-    CHECK(net2.counts.size() == net2.nodes.size());
-    CHECK(net2.edges.size() == 12);
-    CHECK(net2.nodes == net.nodes);
-    CHECK(net2.counts == net.counts);
-    CHECK(net2.edges == net.edges);
+    std::string pkl = ss.str();
+    {
+      std::stringstream iss(pkl);
+      boost::archive::text_iarchive ia(iss);
+      ScaffoldNetwork::ScaffoldNetwork net2;
+      ia >> net2;
+      CHECK(net2.nodes.size() == 12);
+      CHECK(net2.counts.size() == net2.nodes.size());
+      CHECK(net2.edges.size() == 12);
+      CHECK(net2.nodes == net.nodes);
+      CHECK(net2.counts == net.counts);
+      CHECK(net2.edges == net.edges);
+    }
+    {
+      std::stringstream iss(pkl);
+      boost::archive::text_iarchive ia(iss);
+      ScaffoldNetwork::ScaffoldNetwork net2(pkl);
+      CHECK(net2.nodes.size() == 12);
+      CHECK(net2.counts.size() == net2.nodes.size());
+      CHECK(net2.edges.size() == 12);
+      CHECK(net2.nodes == net.nodes);
+      CHECK(net2.counts == net.counts);
+      CHECK(net2.edges == net.edges);
+    }
   }
 }
 #endif
