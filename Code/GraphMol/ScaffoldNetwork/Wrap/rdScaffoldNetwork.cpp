@@ -41,6 +41,27 @@ ScaffoldNetwork::ScaffoldNetworkParams *getBRICSParams() {
 
 }  // namespace
 
+#ifdef RDK_USE_BOOST_SERIALIZATION
+struct scaffoldnetwork_pickle_suite : python::pickle_suite {
+  static python::tuple getinitargs(
+      const RDKit::ScaffoldNetwork::ScaffoldNetwork &self) {
+    std::stringstream oss;
+    boost::archive::text_oarchive oa(oss);
+    oa << self;
+    std::string res = oss.str();
+    return python::make_tuple(python::object(python::handle<>(
+        PyBytes_FromStringAndSize(res.c_str(), res.length()))));
+  };
+};
+#else
+struct scaffoldnetwork_pickle_suite : python::pickle_suite {
+  static python::tuple getinitargs(
+      const RDKit::ScaffoldNetwork::ScaffoldNetwork &self) {
+    throw_runtime_error("Pickling of ScaffoldNetwork instances is not enabled");
+  };
+};
+#endif
+
 BOOST_PYTHON_MODULE(rdScaffoldNetwork) {
   python::scope().attr("__doc__") =
       "Module containing functions for creating a Scaffold Network";
@@ -117,6 +138,9 @@ BOOST_PYTHON_MODULE(rdScaffoldNetwork) {
 
   python::class_<ScaffoldNetwork::ScaffoldNetwork>(
       "ScaffoldNetwork", "A scaffold network", python::init<>())
+      .def(python::init<const std::string &>())
+      // enable pickle support
+      .def_pickle(scaffoldnetwork_pickle_suite())
       .def_readonly("nodes", &ScaffoldNetwork::ScaffoldNetwork::nodes,
                     "the sequence of SMILES defining the nodes")
       .def_readonly("counts", &ScaffoldNetwork::ScaffoldNetwork::counts,

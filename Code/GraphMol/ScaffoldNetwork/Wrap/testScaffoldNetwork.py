@@ -13,6 +13,7 @@ from rdkit import Chem
 from rdkit.Chem.Scaffolds import rdScaffoldNetwork
 from rdkit import RDConfig
 from rdkit import rdBase
+import pickle
 rdBase.DisableLog("rdApp.info")
 
 
@@ -97,6 +98,22 @@ class TestCase(unittest.TestCase):
     self.assertEqual(len(net.nodes), 9)
     self.assertEqual(len(net.edges), 8)
     self.assertEqual(str(net.edges[0]), "NetworkEdge( 0->1, type:Fragment )")
+
+  def test5Pickle(self):
+    smis = ["c1ccccc1CC1NC(=O)CCC1", "c1cccnc1CC1NC(=O)CCC1"]
+    ms = [Chem.MolFromSmiles(x) for x in smis]
+    params = rdScaffoldNetwork.ScaffoldNetworkParams()
+    params.includeScaffoldsWithoutAttachments = False
+    net = rdScaffoldNetwork.CreateScaffoldNetwork(ms, params)
+    self.assertEqual(len(net.nodes), 7)
+    self.assertEqual(len(net.edges), 7)
+
+    pkl = pickle.dumps(net)
+    net2 = pickle.loads(pkl)
+    self.assertEqual(len(net2.nodes), 7)
+    self.assertEqual(len(net2.edges), 7)
+    self.assertEqual(list(net2.nodes), list(net.nodes))
+    self.assertEqual([str(x) for x in net2.edges], [str(x) for x in net.edges])
 
 
 if __name__ == '__main__':
