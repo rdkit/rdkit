@@ -17,6 +17,16 @@
 #include <memory>
 #include <iostream>
 
+#ifdef RDK_USE_BOOST_SERIALIZATION
+#include <RDGeneral/Invariant.h>
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/shared_ptr.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+#endif
+
 namespace RDKit {
 class ROMol;
 class ChemicalReaction;
@@ -72,6 +82,17 @@ struct RDKIT_SCAFFOLDNETWORK_EXPORT NetworkEdge {
   bool operator!=(const RDKit::ScaffoldNetwork::NetworkEdge &o) const {
     return (beginIdx != o.beginIdx) || (endIdx != o.endIdx) || (type != o.type);
   }
+#ifdef RDK_USE_BOOST_SERIALIZATION
+ private:
+  friend class boost::serialization::access;
+  template <class Archive>
+  void serialize(Archive &ar, const unsigned int version) {
+    RDUNUSED_PARAM(version);
+    ar &beginIdx;
+    ar &endIdx;
+    ar &type;
+  }
+#endif
 };
 
 struct RDKIT_SCAFFOLDNETWORK_EXPORT ScaffoldNetwork {
@@ -79,6 +100,17 @@ struct RDKIT_SCAFFOLDNETWORK_EXPORT ScaffoldNetwork {
   std::vector<unsigned>
       counts;  ///< number of times each scaffold was encountered
   std::vector<NetworkEdge> edges;  ///< edges in the network
+#ifdef RDK_USE_BOOST_SERIALIZATION
+ private:
+  friend class boost::serialization::access;
+  template <class Archive>
+  void serialize(Archive &ar, const unsigned int version) {
+    RDUNUSED_PARAM(version);
+    ar &nodes;
+    ar &counts;
+    ar &edges;
+  }
+#endif
 };
 
 //! update an existing ScaffoldNetwork using a set of molecules

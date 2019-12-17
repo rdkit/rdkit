@@ -682,7 +682,7 @@ TEST_CASE("larger multi-mol test", "[regression, scaffold]") {
 }
 #endif
 
-TEST_CASE("BRICS performance problems", "[uncharger,bug]") {
+TEST_CASE("BRICS performance problems", "[bug]") {
   SECTION("mol 1") {
     auto m =
         "COc1ccc(cc1)-c1cc(ccc1-c1ccc(OC)cc1)C(=O)OCCOC(=O)CCOC1CCCCC1"_smiles;
@@ -712,3 +712,37 @@ TEST_CASE("BRICS performance problems", "[uncharger,bug]") {
     CHECK(net.edges.size() == 1969);
   }
 }
+
+#ifdef RDK_USE_BOOST_SERIALIZATION
+
+TEST_CASE("Serialization", "[serialization]") {
+  auto smis = {"c1ccccc1CC1NC(=O)CCC1", "c1cccnc1CC1NC(=O)CCC1"};
+  std::vector<ROMOL_SPTR> ms;
+  for (const auto smi : smis) {
+    auto m = SmilesToMol(smi);
+    REQUIRE(m);
+    ms.push_back(ROMOL_SPTR(m));
+  }
+  SECTION("basics") {
+    // start by building the network
+    ScaffoldNetwork::ScaffoldNetworkParams ps;
+    ScaffoldNetwork::ScaffoldNetwork net;
+    ScaffoldNetwork::updateScaffoldNetwork(ms, net, ps);
+    CHECK(net.nodes.size() == 12);
+    CHECK(net.counts.size() == net.nodes.size());
+    CHECK(net.edges.size() == 12);
+    std::stringstream ss;
+    boost::archive::text_oarchive oa(ss);
+    oa << net;
+    boost::archive::text_iarchive ia(ss);
+    ScaffoldNetwork::ScaffoldNetwork net2;
+    ia >> net2;
+    CHECK(net2.nodes.size() == 12);
+    CHECK(net2.counts.size() == net2.nodes.size());
+    CHECK(net2.edges.size() == 12);
+    CHECK(net2.nodes == net.nodes);
+    CHECK(net2.counts == net.counts);
+    CHECK(net2.edges == net.edges);
+  }
+}
+#endif
