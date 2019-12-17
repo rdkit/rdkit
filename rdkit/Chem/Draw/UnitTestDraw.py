@@ -160,6 +160,7 @@ class TestCase(unittest.TestCase):
     mol = Chem.MolFromSmiles('F[C@H](Cl)Br')
     for b in mol.GetBonds():
       self.assertEqual(b.GetBondDir(), Chem.BondDir.NONE)
+    
     img = Draw.MolToImage(mol, kekulize=False)
     self.assertTrue(img)
     # img.show()

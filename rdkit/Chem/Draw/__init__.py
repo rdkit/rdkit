@@ -1,6 +1,11 @@
 #
-# Copyright (C) 2006-2016 Greg Landrum
+# Copyright (C) 2006-2019 Greg Landrum
 #  All Rights Reserved
+#
+#  This file is part of the RDKit.
+#  The contents are covered by the terms of the BSD license
+#  which is included in the file license.txt, found at the root
+#  of the RDKit source tree.
 #
 import os
 import re
@@ -61,9 +66,9 @@ def _createCanvas(size):
   return img, canvas
 
 
-def MolToImage(mol, size=(300, 300), kekulize=True, wedgeBonds=True, fitImage=False, options=None,
+def _legacyMolToImage(mol, size=(300, 300), kekulize=True, wedgeBonds=True, fitImage=False, options=None,
                canvas=None, **kwargs):
-  """Returns a PIL image containing a drawing of the molecule
+  """Returns a PIL image containing a drawing of the molecule using the legacy drawing code
 
       ARGUMENTS:
 
@@ -145,6 +150,51 @@ def MolToImage(mol, size=(300, 300), kekulize=True, wedgeBonds=True, fitImage=Fa
   else:
     canvas.flush()
     return img
+
+def MolToImage(mol, size=(300, 300), kekulize=True, wedgeBonds=True, fitImage=False, options=None,
+               canvas=None, **kwargs):
+  """Returns a PIL image containing a drawing of the molecule
+
+      ARGUMENTS:
+
+        - kekulize: run kekulization routine on input `mol` (default True)
+
+        - size: final image size, in pixel (default (300,300))
+
+        - wedgeBonds: draw wedge (stereo) bonds (default True)
+
+        - highlightAtoms: list of atoms to highlight (default [])
+
+        - highlightMap: dictionary of (atom, color) pairs (default None)
+
+        - highlightBonds: list of bonds to highlight (default [])
+
+        - highlightColor: RGB color as tuple (default [1, 0, 0])
+
+      NOTE:
+
+            use 'matplotlib.colors.to_rgb()' to convert string and
+            HTML color codes into the RGB tuple representation, eg.
+
+              from matplotlib.colors import ColorConverter
+              img = Draw.MolToImage(m, highlightAtoms=[1,2], highlightColor=ColorConverter().to_rgb('aqua'))
+              img.save("molecule.png")
+
+      RETURNS:
+
+        a PIL Image object
+  """
+  if not mol:
+    raise ValueError('Null molecule provided')
+  if canvas is not None or not hasattr(rdMolDraw2D,'MolDraw2DCairo'):
+    return _legacyMolToImage(mol,size=size,kekulize=kekulize,wedgeBonds=wedgeBonds,fitImage=fitImage,
+                             options=options,canvas=canvas,**kwargs)    
+  return _moltoimg(mol,size,kwargs.get('highlightAtoms',[]),
+                   kwargs.get('legend',''),highlightBonds=kwargs.get('highlightBonds',[]),
+                   drawOptions=options,
+                  kekulize=kekulize,wedgeBonds=wedgeBonds)
+  
+  
 
 
 def MolToFile(mol, fileName, size=(300, 300), kekulize=True, wedgeBonds=True, imageType=None,
@@ -356,11 +406,13 @@ def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **
     mol.UpdatePropertyCache(False)
 
   kekulize = _okToKekulizeMol(mol, kwargs.get('kekulize', True))
+  wedge = kwargs.get('wedgeBonds',True)
+
 
   try:
-    mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulize)
+    mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulize, wedgeBonds=wedge)
   except ValueError:  # <- can happen on a kekulization failure
-    mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=False)
+    mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=False, wedgeBonds=wedge)
   if not hasattr(rdMolDraw2D, 'MolDraw2DCairo'):
     img = MolToImage(mc, sz, legend=legend, highlightAtoms=highlights, **kwargs)
     if returnPNG:
@@ -371,7 +423,11 @@ def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **
     d2d = rdMolDraw2D.MolDraw2DCairo(sz[0], sz[1])
     if drawOptions is not None:
       d2d.SetDrawOptions(drawOptions)
-    d2d.DrawMolecule(mc, legend=legend, highlightAtoms=highlights)
+    if 'highlightColor' in kwargs:
+      d2d.drawOptions().setHighlightColor(kwargs['highlightColor'])
+
+    d2d.DrawMolecule(mc, legend=legend, highlightAtoms=highlights, 
+                     highlightBonds = kwargs.get('highlightBonds',[]))
     d2d.FinishDrawing()
     if returnPNG:
       img = d2d.GetDrawingText()
