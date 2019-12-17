@@ -345,6 +345,74 @@ static bool StandardPDBDoubleBond(unsigned int rescode, unsigned int atm1,
           atm2 == BCATM(' ', 'C', 'Z', '2'))
         return true;
       break;
+    case BCNAM(' ', ' ', 'A'):
+    case BCNAM(' ', 'D', 'A'):
+      if (atm1 == BCATM(' ', 'C', '6', ' ') &&
+          atm2 == BCATM(' ', 'N', '1', ' '))
+        return true;
+      if (atm1 == BCATM(' ', 'C', '2', ' ') &&
+          atm2 == BCATM(' ', 'N', '3', ' '))
+        return true;
+      if (atm1 == BCATM(' ', 'C', '4', ' ') &&
+          atm2 == BCATM(' ', 'C', '5', ' '))
+        return true;
+      if (atm1 == BCATM(' ', 'C', '8', ' ') &&
+          atm2 == BCATM(' ', 'N', '7', ' '))
+        return true;
+      if (atm1 == BCATM(' ', 'O', 'P', '1') &&
+          atm2 == BCATM(' ', 'P', ' ', ' '))
+        return true;
+      break;
+    case BCNAM(' ', ' ', 'G'):
+    case BCNAM(' ', 'D', 'G'):
+      if (atm1 == BCATM(' ', 'C', '6', ' ') &&
+          atm2 == BCATM(' ', 'O', '6', ' '))
+        return true;
+      if (atm1 == BCATM(' ', 'C', '2', ' ') &&
+          atm2 == BCATM(' ', 'N', '3', ' '))
+        return true;
+      if (atm1 == BCATM(' ', 'C', '4', ' ') &&
+          atm2 == BCATM(' ', 'C', '5', ' '))
+        return true;
+      if (atm1 == BCATM(' ', 'C', '8', ' ') &&
+          atm2 == BCATM(' ', 'N', '7', ' '))
+        return true;
+      if (atm1 == BCATM(' ', 'O', 'P', '1') &&
+          atm2 == BCATM(' ', 'P', ' ', ' '))
+        return true;
+      break;
+    case BCNAM(' ', ' ', 'C'):
+    case BCNAM(' ', 'D', 'C'):
+      if (atm1 == BCATM(' ', 'C', '2', ' ') &&
+          atm2 == BCATM(' ', 'O', '2', ' '))
+        return true;
+      if (atm1 == BCATM(' ', 'C', '4', ' ') &&
+          atm2 == BCATM(' ', 'N', '3', ' '))
+        return true;
+      if (atm1 == BCATM(' ', 'C', '5', ' ') &&
+          atm2 == BCATM(' ', 'C', '6', ' '))
+        return true;
+      if (atm1 == BCATM(' ', 'O', 'P', '1') &&
+          atm2 == BCATM(' ', 'P', ' ', ' '))
+        return true;
+      break;
+    case BCNAM(' ', ' ', 'T'):
+    case BCNAM(' ', 'D', 'T'):
+    case BCNAM(' ', ' ', 'U'):
+    case BCNAM(' ', 'D', 'U'):
+      if (atm1 == BCATM(' ', 'C', '2', ' ') &&
+          atm2 == BCATM(' ', 'O', '2', ' '))
+        return true;
+      if (atm1 == BCATM(' ', 'C', '4', ' ') &&
+          atm2 == BCATM(' ', 'O', '4', ' '))
+        return true;
+      if (atm1 == BCATM(' ', 'C', '5', ' ') &&
+          atm2 == BCATM(' ', 'C', '6', ' '))
+        return true;
+      if (atm1 == BCATM(' ', 'O', 'P', '1') &&
+          atm2 == BCATM(' ', 'P', ' ', ' '))
+        return true;
+      break;
   }
   return false;
 }
