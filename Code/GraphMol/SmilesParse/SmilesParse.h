@@ -107,7 +107,7 @@ class RDKIT_SMILESPARSE_EXPORT SmilesParseException : public std::exception {
   SmilesParseException(const char *msg) : _msg(msg){};
   SmilesParseException(const std::string msg) : _msg(msg){};
   const char *message() const { return _msg.c_str(); };
-  ~SmilesParseException() throw(){};
+  ~SmilesParseException() noexcept {};
 
  private:
   std::string _msg;

@@ -33,7 +33,7 @@ class RDKIT_DEPICTOR_EXPORT DepictException : public std::exception {
   DepictException(const char *msg) : _msg(msg){};
   DepictException(const std::string msg) : _msg(msg){};
   const char *message() const { return _msg.c_str(); };
-  ~DepictException() throw(){};
+  ~DepictException() noexcept {};
 
  private:
   std::string _msg;

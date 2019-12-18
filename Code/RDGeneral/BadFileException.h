@@ -28,7 +28,7 @@ class BadFileException : public std::runtime_error {
       : std::runtime_error("BadFileException"), _msg(msg){};
   //! get the error message
   const char *message() const { return _msg.c_str(); };
-  ~BadFileException() throw(){};
+  ~BadFileException() noexcept {};
 
  private:
   std::string _msg;

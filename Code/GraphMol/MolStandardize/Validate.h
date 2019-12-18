@@ -40,7 +40,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT ValidationErrorInfo : public std::exception {
     BOOST_LOG(rdInfoLog) << d_msg << std::endl;
   };
   const char *message() const { return d_msg.c_str(); };
-  ~ValidationErrorInfo() throw(){};
+  ~ValidationErrorInfo() noexcept {};
 
  private:
   std::string d_msg;
