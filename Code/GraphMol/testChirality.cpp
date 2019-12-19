@@ -2782,6 +2782,8 @@ void testStereoGroupUpdating() {
   TEST_ASSERT(m->getStereoGroups().size() == 1);
   m->removeAtom(m->getAtomWithIdx(0));
   TEST_ASSERT(m->getStereoGroups().size() == 0u);
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
 void testClearDirsOnDoubleBondsWithoutStereo() {
@@ -2899,6 +2901,50 @@ M  END)CTAB";
     MolOps::removeHs(*m);
     TEST_ASSERT(m->getNumAtoms() == 4);
   }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testIncorrectBondDirsOnWedging() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Bonds not being reversed when wedging is updated"
+                       << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  {
+    std::string fName =
+        rdbase + "/Code/GraphMol/test_data/wedging_problems1.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondBetweenAtoms(10, 4));
+    TEST_ASSERT(m->getBondBetweenAtoms(10, 4)->getBeginAtomIdx() == 10);
+    WedgeMolBonds(*m, &m->getConformer());
+    TEST_ASSERT(m->getBondBetweenAtoms(10, 4));
+    TEST_ASSERT(m->getBondBetweenAtoms(10, 4)->getBondDir() ==
+                Bond::BEGINWEDGE);
+    TEST_ASSERT(m->getBondBetweenAtoms(10, 4)->getBeginAtomIdx() == 4);
+
+    delete m;
+  }
+  {
+    std::string fName =
+        rdbase + "/Code/GraphMol/test_data/wedging_problems2.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondBetweenAtoms(3, 21));
+    TEST_ASSERT(m->getBondBetweenAtoms(3, 21)->getBeginAtomIdx() == 3);
+    TEST_ASSERT(m->getBondBetweenAtoms(2, 20));
+    TEST_ASSERT(m->getBondBetweenAtoms(2, 20)->getBeginAtomIdx() == 2);
+    WedgeMolBonds(*m, &m->getConformer());
+    TEST_ASSERT(m->getBondBetweenAtoms(3, 21));
+    TEST_ASSERT(m->getBondBetweenAtoms(3, 21)->getBeginAtomIdx() == 21);
+    TEST_ASSERT(m->getBondBetweenAtoms(2, 20));
+    TEST_ASSERT(m->getBondBetweenAtoms(2, 20)->getBeginAtomIdx() == 20);
+
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
 int main() {
@@ -2933,5 +2979,6 @@ int main() {
   testStereoGroupUpdating();
 #endif
   testClearDirsOnDoubleBondsWithoutStereo();
+  testIncorrectBondDirsOnWedging();
   return 0;
 }
