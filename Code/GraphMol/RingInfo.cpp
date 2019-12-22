@@ -12,6 +12,15 @@
 #include <algorithm>
 
 namespace RDKit {
+RingInfo::INT_VECT RingInfo::atomRingSizes(unsigned int idx) const {
+  PRECONDITION(df_init, "RingInfo not initialized");
+
+  if (idx < d_atomMembers.size()) {
+    return d_atomMembers[idx];
+  } else {
+    return INT_VECT{0};
+  }
+}
 bool RingInfo::isAtomInRingOfSize(unsigned int idx, unsigned int size) const {
   PRECONDITION(df_init, "RingInfo not initialized");
 
@@ -39,6 +48,15 @@ unsigned int RingInfo::numAtomRings(unsigned int idx) const {
     return rdcast<unsigned int>(d_atomMembers[idx].size());
   } else {
     return 0;
+  }
+}
+RingInfo::INT_VECT RingInfo::bondRingSizes(unsigned int idx) const {
+  PRECONDITION(df_init, "RingInfo not initialized");
+
+  if (idx < d_bondMembers.size()) {
+    return d_bondMembers[idx];
+  } else {
+    return INT_VECT{0};
   }
 }
 bool RingInfo::isBondInRingOfSize(unsigned int idx, unsigned int size) const {

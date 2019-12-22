@@ -371,6 +371,30 @@ void docTest() {
   BOOST_LOG(rdErrorLog) << "    Done (C++ doc tests)" << std::endl;
 }
 
+void ringTest() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Testing C++ ring query" << std::endl;
+
+  std::unique_ptr<ROMol> q(SmartsToMol("[C&R1]"));
+  std::unique_ptr<ROMol> q2(SmartsToMol("C@C"));
+
+  std::unique_ptr<ROMol> m(SmilesToMol("C1CCO[C@@](N)(O)1"));
+
+  boost::shared_ptr<CachedTrustedSmilesMolHolder> molHolder =
+    boost::make_shared<CachedTrustedSmilesMolHolder>();
+  boost::shared_ptr<PatternHolder> patternHolder =
+    boost::make_shared<PatternHolder>();
+  
+  SubstructLibrary lib(molHolder, patternHolder);
+  lib.addMol(*m.get());
+  std::vector<unsigned int> results = lib.getMatches(*q.get());
+  TEST_ASSERT(results.size() == 1);
+  results = lib.getMatches(*q2.get());
+  TEST_ASSERT(results.size() == 1);
+
+  BOOST_LOG(rdErrorLog) << "    Done (C++ ring query tests)" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -379,6 +403,7 @@ int main() {
   test3();
   test4();
   docTest();
+  ringTest();
 #endif
   return 0;
 }

@@ -1962,7 +1962,7 @@ CAS<~>
     for m in ms:
       self.assertTrue(m.HasProp('_MolFileInfo'))
       self.assertTrue(m.HasProp('_MolFileComments'))
-    fName = tempfile.mktemp('.sdf')
+    fName = tempfile.NamedTemporaryFile(suffix='.sdf', delete=False).name
     w = Chem.SDWriter(fName)
     w.SetProps(ms[0].GetPropNames())
     for m in ms:
@@ -3678,22 +3678,20 @@ CAS<~>
     self.assertEqual(path, (1, 2, 3, 16, 17, 18, 20))
 
   def testGithub497(self):
-    outf = gzip.open(tempfile.mktemp(), 'wb+')
-    with self.assertRaises(ValueError):
-      w = Chem.SDWriter(outf)
+    with tempfile.TemporaryFile() as tmp, gzip.open(tmp) as outf:
+      with self.assertRaises(ValueError):
+        w = Chem.SDWriter(outf)
 
   def testGithub498(self):
     if (sys.version_info < (3, 0)):
       mode = 'w+'
     else:
       mode = 'wt+'
-    outf = gzip.open(tempfile.mktemp(), mode)
     m = Chem.MolFromSmiles('C')
-    w = Chem.SDWriter(outf)
-    w.write(m)
-    w.close()
-    w = None
-    outf.close()
+    with tempfile.NamedTemporaryFile() as tmp, gzip.open(tmp, mode) as outf:
+      w = Chem.SDWriter(outf)
+      w.write(m)
+      w.close()
 
   def testReplaceBond(self):
     origmol = Chem.RWMol(Chem.MolFromSmiles("CC"))

@@ -26,7 +26,7 @@ class FileParseException : public std::runtime_error {
       : std::runtime_error("FileParseException"), _msg(msg){};
   //! get the error message
   const char *message() const { return _msg.c_str(); };
-  ~FileParseException() throw(){};
+  ~FileParseException() noexcept {};
 
  private:
   std::string _msg;

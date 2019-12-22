@@ -3905,6 +3905,14 @@ void testPDBFile() {
     TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(
                     m->getAtomWithIdx(57)->getMonomerInfo())
                     ->getResidueName() == " DG");
+    TEST_ASSERT(m->getBondBetweenAtoms(31, 33)->getBondType() ==
+                Bond::AROMATIC);
+    TEST_ASSERT(m->getBondBetweenAtoms(120, 114)->getBondType() ==
+                Bond::AROMATIC);
+    TEST_ASSERT(m->getBondBetweenAtoms(39, 38)->getBondType() ==
+                Bond::DOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(138, 140)->getBondType() ==
+                Bond::AROMATIC);
     delete m;
   }
   {  // RNA
@@ -3931,6 +3939,14 @@ void testPDBFile() {
     TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(
                     m->getAtomWithIdx(197)->getMonomerInfo())
                     ->getIsHeteroAtom());
+    TEST_ASSERT(m->getBondBetweenAtoms(104, 103)->getBondType() ==
+                Bond::AROMATIC);
+    TEST_ASSERT(m->getBondBetweenAtoms(60, 61)->getBondType() ==
+                Bond::DOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(38, 37)->getBondType() ==
+                Bond::DOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(148, 149)->getBondType() ==
+                Bond::DOUBLE);
 
     std::string mb = MolToPDBBlock(*m);
     delete m;
@@ -4231,7 +4247,7 @@ void testGithub194() {
 
 void testGithub196() {
   BOOST_LOG(rdInfoLog)
-      << "testing github issue 196: left justitified bond topology"
+      << "testing github issue 196: left justified bond topology"
       << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/test_data/";
