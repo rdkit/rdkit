@@ -147,7 +147,7 @@ void alignMolConformers(ROMol &mol, const std::vector<unsigned int> *atomIds,
   const Conformer &refCnf = mol.getConformer(cid);
   _fillAtomPositions(refPoints, refCnf, atomIds);
 
-  // now loop throught the remaininf conformations and transform them
+  // now loop through the remaining conformations and transform them
   RDGeom::Transform3D trans;
   double ssd;
   if (confIds == nullptr) {

@@ -75,7 +75,7 @@ PyObject *AlignPointPairs(python::object refPoints, python::object probePoints,
                           python::object weights = python::list(),
                           bool reflect = false,
                           unsigned int maxIterations = 50) {
-  // The reference and probe points can be specifed in two formats
+  // The reference and probe points can be specified in two formats
   // 1. A Numeric array of dimensions (N,3) where N is the number of points
   // 2. A list (or tuple) or lists (or tuples)
   //

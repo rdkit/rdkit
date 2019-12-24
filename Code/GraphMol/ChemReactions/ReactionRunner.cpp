@@ -1488,7 +1488,7 @@ std::vector<MOL_SPTR_VECT> run_Reactant(const ChemicalReaction &rxn,
   }
 
   VectMatchVectType &matches = matchesByReactant[reactantIdx];
-  // each match on a reactant is a seperate product
+  // each match on a reactant is a separate product
   VectVectMatchVectType matchesAtReactants(matches.size());
   for (size_t i = 0; i < matches.size(); ++i) {
     matchesAtReactants[i].resize(rxn.getReactants().size());

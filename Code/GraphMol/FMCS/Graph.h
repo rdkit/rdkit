@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-// graph topology in terms of indeces in source molecule
+// graph topology in terms of indices in source molecule
 #include <RDGeneral/export.h>
 #pragma once
 #include <boost/graph/adjacency_list.hpp>

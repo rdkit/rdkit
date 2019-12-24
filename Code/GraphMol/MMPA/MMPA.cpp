@@ -76,7 +76,7 @@ static inline void convertMatchingToBondVect(
   for (const auto& matching_atom : matching_atoms) {
     matching_bonds.push_back(BondVector_t());
     BondVector_t& mb = matching_bonds.back();  // current match
-    // assume patern is only one bond pattern
+    // assume pattern is only one bond pattern
     unsigned a1 = (unsigned)matching_atom[0].second;  // mol atom 1 index
     unsigned a2 = (unsigned)matching_atom[1].second;  // mol atom 2 index
     mb.push_back(std::pair<unsigned, unsigned>(a1, a2));
@@ -283,7 +283,7 @@ static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>>&
           (nullptr == core ||
            computeMorganCodeHash(*core) == computeMorganCodeHash(*r.first))) {
         // 2. final check to exclude hash collisions
-        // We decided that it does not neccessary to implement
+        // We decided that it is not necessary to implement
         resFound = true;
         break;
       }

@@ -102,13 +102,13 @@ template std::string FingerprintGenerator<std::uint64_t>::infoString() const;
 
 template <typename OutputType>
 std::string FingerprintGenerator<OutputType>::infoString() const {
-  std::string seperator = " --- ";
-  return dp_fingerprintArguments->commonArgumentsString() + seperator +
-         dp_fingerprintArguments->infoString() + seperator +
-         dp_atomEnvironmentGenerator->infoString() + seperator +
+  std::string separator = " --- ";
+  return dp_fingerprintArguments->commonArgumentsString() + separator +
+         dp_fingerprintArguments->infoString() + separator +
+         dp_atomEnvironmentGenerator->infoString() + separator +
          (dp_atomInvariantsGenerator
-              ? (dp_atomInvariantsGenerator->infoString() + seperator)
-              : ("No atom invariants generator" + seperator)) +
+              ? (dp_atomInvariantsGenerator->infoString() + separator)
+              : ("No atom invariants generator" + separator)) +
          (dp_bondInvariantsGenerator
               ? (dp_bondInvariantsGenerator->infoString())
               : "No bond invariants generator");

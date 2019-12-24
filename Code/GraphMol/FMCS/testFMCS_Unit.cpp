@@ -1026,7 +1026,7 @@ void testGithubIssue481() {
       std::vector<std::pair<int, int>> vect;
       bool sub_res =
           SubstructMatch(*mols[1].get(), *mols[0].get(), vect, true, true);
-      if (sub_res == false) {  // actualy == true & 4, 3 !!!
+      if (sub_res == false) {  // actually == true & 4, 3 !!!
         TEST_ASSERT(mcs_res.NumAtoms == 0);
         TEST_ASSERT(mcs_res.NumBonds == 0);
       }
@@ -1969,7 +1969,7 @@ int main(int argc, const char* argv[]) {
       << "*******************************************************\n";
   BOOST_LOG(rdInfoLog) << "FMCS Unit Test \n";
 
-// use maximum CPU resoures to increase time measuring accuracy and stability in
+// use maximum CPU resources to increase time measuring accuracy and stability in
 // multi process environment
 #ifdef WIN32
   //    SetPriorityClass (GetCurrentProcess(), REALTIME_PRIORITY_CLASS );

@@ -231,7 +231,7 @@ ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
 #ifdef VERBOSE_FINGERPRINTING
       std::cerr << "\nPatt: " << pIdx << " | ";
 #endif
-      // collect bits counting the number of occurances of the pattern:
+      // collect bits counting the number of occurrences of the pattern:
       gboost::hash_combine(mIdx, 0xBEEF);
       res->setBit(mIdx % fpSize);
 #ifdef VERBOSE_FINGERPRINTING

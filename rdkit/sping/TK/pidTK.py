@@ -115,7 +115,7 @@ class FontManager:
             '-underline %(underline)s' % tkfont.config())
 
   def getTkFontName(self, font):
-    """Return a the name associated with the piddle-style FONT"""
+    """Return a name associated with the piddle-style FONT"""
     tkfont = self.piddleToTkFont(font)
     return str(tkfont)
 

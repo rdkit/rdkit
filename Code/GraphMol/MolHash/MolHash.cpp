@@ -28,7 +28,7 @@ struct MolFragment  // Reference to a fragment of source molecule
   std::vector<std::uint32_t> AtomsIdx;
   std::vector<std::uint32_t> BondsIdx;
   std::map<std::uint32_t, std::uint32_t> MolAtomIdxMap;  // Full Molecule to
-                                                             // fragment indeces
+                                                             // fragment indices
                                                              // backward
                                                              // conversion map
  public:

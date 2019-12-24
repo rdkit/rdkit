@@ -53,7 +53,7 @@ RDKIT_MOLDRAW2D_EXPORT void prepareMolForDrawing(RWMol &mol,
   \param highlight_atoms: (optional) vector of bond ids to highlight
   \param highlight_atom_map: (optional) map from atomId -> DrawColour
             providing the highlight colors. If not provided the default
-            higlight colour from \c drawOptions() will be used.
+            highlight colour from \c drawOptions() will be used.
   \param highlight_bond_map: (optional) map from bondId -> DrawColour
             providing the highlight colors. If not provided the default
             highlight colour from \c drawOptions() will be used.

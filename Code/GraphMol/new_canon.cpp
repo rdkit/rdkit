@@ -394,7 +394,7 @@ void getChiralBonds(const ROMol &mol, const Atom *at,
     }
     if (bond->getBondType() == Bond::DOUBLE && nbr->getAtomicNum() == 15 &&
         (degreeNbr == 4 || degreeNbr == 3)) {
-      // a special case for chiral phophorous compounds
+      // a special case for chiral phosphorous compounds
       // (this was leading to incorrect assignment of
       // R/S labels ):
       nReps = 1;
@@ -402,7 +402,7 @@ void getChiralBonds(const ROMol &mol, const Atom *at,
       // Paragraph 2.2. in the 1966 article is "Valence-Bond Conventions:
       // Multiple-Bond Unsaturation and Aromaticity". It contains several
       // conventions of which convention (b) is the one applying here:
-      // "(b) Contibutions by d orbitals to bonds of quadriligant atoms are
+      // "(b) Contributions by d orbitals to bonds of quadriligant atoms are
       // neglected."
       // FIX: this applies to more than just P
     } else {

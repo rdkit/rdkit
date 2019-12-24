@@ -534,7 +534,7 @@ SSSR rings obatined from 'findSSSR' can be non-unique in some case. For example,
 <p>
 This function adds additional rings to the SSSR list if necessary to make the list symmetric, e.g. all atoms in cubane will be part of the same number of SSSRs. This function choses these extra rings from the extra rings computed and discarded during findSSSR. The new ring are chosen such that:
 <p>
-    * replacing a same sized ring in the SSSR list with an extra ring yields the same union of bond IDs as the orignal SSSR list
+    * replacing a same sized ring in the SSSR list with an extra ring yields the same union of bond IDs as the original SSSR list
 <p>
 <p>
 @param

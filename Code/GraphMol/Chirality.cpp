@@ -558,7 +558,7 @@ void iterateCIPRanks(const ROMol &mol, DOUBLE_VECT &invars, UINT_VECT &ranks,
         unsigned int count;
         if (bond->getBondType() == Bond::DOUBLE && nbr->getAtomicNum() == 15 &&
             (nbr->getDegree() == 4 || nbr->getDegree() == 3)) {
-          // a special case for chiral phophorous compounds
+          // a special case for chiral phosphorous compounds
           // (this was leading to incorrect assignment of
           // R/S labels ):
           count = 1;
@@ -567,7 +567,7 @@ void iterateCIPRanks(const ROMol &mol, DOUBLE_VECT &invars, UINT_VECT &ranks,
           // Paragraph 2.2. in the 1966 article is "Valence-Bond Conventions:
           // Multiple-Bond Unsaturation and Aromaticity". It contains several
           // conventions of which convention (b) is the one applying here:
-          // "(b) Contibutions by d orbitals to bonds of quadriligant atoms are
+          // "(b) Contributions by d orbitals to bonds of quadriligant atoms are
           // neglected."
           // FIX: this applies to more than just P
         } else {
@@ -667,7 +667,7 @@ void findAtomNeighborDirHelper(const ROMol &mol, const Atom *atom,
   boost::tie(beg, end) = mol.getAtomBonds(atom);
   while (beg != end) {
     const Bond *bond = mol[*beg];
-    // check whether this bond is explictly set to have unknown stereo
+    // check whether this bond is explicitly set to have unknown stereo
     if (!hasExplicitUnknownStereo) {
       int explicit_unknown_stereo;
       if (bond->getBondDir() == Bond::UNKNOWN  // there's a squiggle bond

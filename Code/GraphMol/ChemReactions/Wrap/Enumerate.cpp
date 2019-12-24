@@ -421,7 +421,7 @@ for result in itertools.islice(libary2, 1000):\n\
         .def("__copy__", &RDKit::EvenSamplePairsStrategy::copy,
              python::return_value_policy<python::manage_new_object>())
         .def("Stats", &RDKit::EvenSamplePairsStrategy::stats,
-             "Return the a statisics log of the pairs used in the current enumeration.")
+             "Return the statistics log of the pairs used in the current enumeration.")
       ;
 
     python::def("EnumerateLibraryCanSerialize", EnumerateLibraryCanSerialize,

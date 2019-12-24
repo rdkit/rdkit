@@ -322,7 +322,7 @@ void test4() {
     std::cout << generateMoleculeHashSet(*mol, nullptr, nullptr) << "  " << i
               << std::endl;
   }
-  TEST_ASSERT(true);  // there is no any exseption
+  TEST_ASSERT(true);  // there is no any exception
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 

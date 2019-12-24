@@ -3274,7 +3274,7 @@ Wiswedel
  - TDT files with atomic coordinates now have those coordinates in the
    correct order. (issue 265)
  - A ring-finding error/crash has been fixed. (issue 266)
- - Dummy atoms now have a default valence of 0 and no maximim
+ - Dummy atoms now have a default valence of 0 and no maximum
    valence. (issue 267)
  - The Python code no longer throws string exceptions. (issue 268)
  - Invalid/unrecognized atom symbols in CTABs are no longer
@@ -4861,7 +4861,7 @@ Removed modules:
  - An EditableMol class is now exposed to Python to allow molecules to
    be easily edited. (issue 1764162)
  - The RingInfo class is now exposed to Python.
- - The replaceSidechains and and replaceCore functions have been added
+ - The replaceSidechains and replaceCore functions have been added
    in the ChemTransforms library and are exposed to Python as
    Chem.ReplaceSidechains and Chem.ReplaceCore.
  - pickle support added to classes: PointND

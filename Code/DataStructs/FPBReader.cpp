@@ -88,7 +88,7 @@ void extractPopCounts(FPBReader_impl *dp_impl, boost::uint64_t sz,
 };
 
 //-----------------------------------------------------
-//  Arena procesing
+//  Arena processing
 
 /* Documentation from Andrew's code on the structure of the arena:
 The 'AREN'a starts with a header:

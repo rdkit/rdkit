@@ -61,7 +61,7 @@ class RDKIT_SIMDIVPICKERS_EXPORT DistPicker {
    *that only the
    *              lower triangle elements of the matrix are supplied in a 1D
    *array
-   *    \param poolSize - the size of teh pool to pick the items from. It is
+   *    \param poolSize - the size of the pool to pick the items from. It is
    *assumed that the
    *              distance matrix above contains the right number of elements;
    *i.e.

@@ -44,7 +44,7 @@ fileName 	- the name of smiles table file
 delimiter 	- delimiting characters between records on a each line NOTE that this is not a string, the tokenizer looks for the individual characters in delimiter, not the full string itself. So the default delimiter: ' \t', means ' ' or '\t'.
 smilesColumn 	- column number for the SMILES string (defaults to the first column)
 nameColumn 	- column number for the molecule name (defaults to the second column) If set to -1 we assume that no name is available for the molecule and the name is defaulted to the smiles string
-titleLine 	- if true, the first line is assumed to list the names of properties in order seperated by 'delimiter'. It is also assume that the 'SMILES' column and the 'name' column are not specified here if false - no title line is assumed and the properties are recorded as the 'columnX' where 'X' is the cloumn number
+titleLine 	- if true, the first line is assumed to list the names of properties in order separated by 'delimiter'. It is also assume that the 'SMILES' column and the 'name' column are not specified here if false - no title line is assumed and the properties are recorded as the 'columnX' where 'X' is the column number
 sanitize 	- if true sanitize the molecule before returning it
 
 */

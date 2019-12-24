@@ -1552,7 +1552,7 @@ void testGregSDFFileSetFiltered() {
 int main(int argc, const char* argv[]) {
   p.Verbose = true;
 
-// use maximum CPU resoures to increase time measuring accuracy and stability in
+// use maximum CPU resources to increase time measuring accuracy and stability in
 // multi process environment
 #ifdef WIN32
   //    SetPriorityClass (GetCurrentProcess(), REALTIME_PRIORITY_CLASS );

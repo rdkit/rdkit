@@ -31,7 +31,7 @@ RDKIT_SHAPEHELPERS_EXPORT void computeConfDimsAndOffset(
     const Conformer &conf, RDGeom::Point3D &dims, RDGeom::Point3D &offSet,
     const RDGeom::Transform3D *trans = 0, double padding = 2.5);
 
-//! Compute the a box that will fit the confomer
+//! Compute the box that will fit the conformer
 /*!
   \param conf            The conformer of interest
   \param leftBottom      Storage for one extremity of the box

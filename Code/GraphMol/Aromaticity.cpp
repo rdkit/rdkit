@@ -16,7 +16,7 @@
 
 // introduced for the sake of efficiency
 // this is the maximum ring size that will be considered
-// as a candiate for fused-ring aromaticity. This is picked to
+// as a candidate for fused-ring aromaticity. This is picked to
 // be a bit bigger than the outer ring in a porphyrin
 // This came up while fixing sf.net issue249
 const unsigned int maxFusedAromaticRingSize = 24;
@@ -158,11 +158,11 @@ static bool applyHuckel(ROMol &mol, const INT_VECT &ring,
                         const VECT_EDON_TYPE &edon);
 
 static void applyHuckelToFused(
-    ROMol &mol,                   // molecule of interets
+    ROMol &mol,                   // molecule of interests
     const VECT_INT_VECT &srings,  // list of all ring as atom IDS
     const VECT_INT_VECT &brings,  // list of all rings as bond ids
     const INT_VECT &fused,       // list of ring ids in the current fused system
-    const VECT_EDON_TYPE &edon,  // eletron donar state for each atom
+    const VECT_EDON_TYPE &edon,  // electron donor state for each atom
     INT_INT_VECT_MAP &ringNeighs,
     int &narom,  // number of aromatic ring so far
     unsigned int maxNumFusedRings, unsigned int minRingSize);
@@ -192,7 +192,7 @@ void markAtomsBondsArom(ROMol &mol, const VECT_INT_VECT &srings,
   // as aromatic - only the outside bonds in a fused system are marked aromatic.
   // - loop through the rings and count the number of times each bond appears in
   //   all the fused rings.
-  // - bonds that appeard only once are marked aromatic
+  // - bonds that appears only once are marked aromatic
   INT_MAP_INT bndCntr;
   INT_MAP_INT_I bci;
 
@@ -333,18 +333,18 @@ bool applyHuckel(ROMol &mol, const INT_VECT &ring, const VECT_EDON_TYPE &edon,
 }
 
 void applyHuckelToFused(
-    ROMol &mol,                   // molecule of interets
+    ROMol &mol,                   // molecule of interests
     const VECT_INT_VECT &srings,  // list of all ring as atom IDS
     const VECT_INT_VECT &brings,  // list of all rings as bond ids
     const INT_VECT &fused,       // list of ring ids in the current fused system
-    const VECT_EDON_TYPE &edon,  // eletron donor state for each atom
+    const VECT_EDON_TYPE &edon,  // electron donor state for each atom
     INT_INT_VECT_MAP &ringNeighs,  // list of neighbors for eac candidate ring
     int &narom,                    // number of aromatic ring so far
     unsigned int maxNumFusedRings, unsigned int minRingSize = 0) {
   // this function check huckel rule on a fused system it starts
   // with the individual rings in the system and then proceeds to
   // check for larger system i.e. if we have a 3 ring fused system,
-  // huckel rule checked first on all teh 1 ring subsystems then 2
+  // huckel rule checked first on all the 1 ring subsystems then 2
   // rung subsystems etc.
 
   INT_VECT aromRings;

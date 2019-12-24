@@ -69,8 +69,8 @@ class RDKIT_GRAPHMOL_EXPORT atomicData {
   // is tolerated
   double mass;               // atomic mass
   int nVal;                  // number of outer shell electrons
-  int commonIsotope;         // most comon isotope
-  double commonIsotopeMass;  // most comon isotope
+  int commonIsotope;         // most common isotope
+  double commonIsotopeMass;  // most common isotope
 };
 };  // namespace RDKit
 #endif

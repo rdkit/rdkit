@@ -365,7 +365,7 @@ v          "total valence"                            1                Y
 x          "number of ring bonds"                     >0               Y
 X          "total degree"                             1                Y
 z          "number of heteroatom neighbors"           >0               Y       extension
-Z          "number of alphatic heteroatom neighbors"  >0               Y       extension
+Z          "number of aliphatic heteroatom neighbors" >0               Y       extension
 \*         "any atom"
 \+         "positive charge"                          1                Y 
 ++         "+2 charge"
@@ -711,7 +711,7 @@ Which is equivalent to the more efficient::
 
   AtomType d1 [N,O;!H0]
 
-**Note** that these examples tend to use SMARTS's high-precendence and operator "&" and not the low-precedence and ";".
+**Note** that these examples tend to use SMARTS's high-precedence and operator "&" and not the low-precedence and ";".
 This can be important when AtomTypes are combined or when they are repeated.
 The SMARTS "," operator is higher precedence than ";", so definitions that use ";" can lead to unexpected results.
 
@@ -939,7 +939,7 @@ Here are the steps involved, in order.
         like chlorous acid, chloric acid, and perchloric acid.
         Example: ``O=Cl(=O)O -> [O-][Cl+2][O-]O``
 
-     This step should not generate execptions.
+     This step should not generate exceptions.
 
   3. ``updatePropertyCache``: calculates the explicit and implicit valences on
      all atoms. This generates exceptions for atoms in higher-than-allowed
@@ -1348,7 +1348,7 @@ RDKit Fingerprints
 This is an RDKit-specific fingerprint that is inspired by (though it differs
 significantly from) public descriptions of the Daylight fingerprint
 [#daylightFP]_. The fingerprinting algorithm identifies all subgraphs in the
-molecule within a particular range of sizes, hashes each subraphs to generate a
+molecule within a particular range of sizes, hashes each subgraphs to generate a
 raw bit ID, mods that raw bit ID to fit in the assigned fingerprint size, and
 then sets the corresponding bit. Options are available to generate count-based
 forms of the fingerprint or "non-folded" forms (using a sparse representation).
@@ -1367,7 +1367,7 @@ Fingerprint-specific options
     raw bit ID and generating the appropriate number of random numbers.
   - ``useHs``: toggles whether or not Hs are included in the subgraphs/paths (assuming that there
     are Hs in the molecule graph.
-  - ``tgtDensity``: if this is greather than zero, the fingerprint will be repeatedly folded in half
+  - ``tgtDensity``: if this is greater than zero, the fingerprint will be repeatedly folded in half
     until the density of set bits is greater than or equal to this value or the fingerprint only
     contains `minSize` bits. Note that this means that the resulting fingerprint will not necessarily
     be the size you requested.
@@ -1422,7 +1422,7 @@ times in a molecule, the bits corresponding to counts 1, 2, and 4 will be set.
 Morgan and Feature Morgan Fingerprints
 ======================================
 
-These are implememented based on the original paper [#morganFP]_. The algorithm
+These are implemented based on the original paper [#morganFP]_. The algorithm
 follows the description in the paper as closely as possible with the exception
 of the chemical feature definitions used for the "Feature Morgan" fingerprint -
 the RDKit implementation uses the feature types Donor, Acceptor, Aromatic,
