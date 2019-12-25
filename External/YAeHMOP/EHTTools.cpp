@@ -115,7 +115,7 @@ bool runMol(const ROMol &mol, EHTResults &results, int confId) {
   std::memcpy(static_cast<void *>(results.atomicCharges.get()),
               static_cast<void *>(properties.net_chgs),
               mol.getNumAtoms() * sizeof(double));
-  size_t sz = mol.getNumAtoms() * mol.getNumAtoms();
+  size_t sz = mol.getNumAtoms() * num_orbs;
   results.reducedChargeMatrix = std::make_unique<double[]>(sz);
   memcpy(static_cast<void *>(results.reducedChargeMatrix.get()),
          static_cast<void *>(properties.Rchg_mat), sz * sizeof(double));
