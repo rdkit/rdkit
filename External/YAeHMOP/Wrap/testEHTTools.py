@@ -34,6 +34,8 @@ class TestCase(unittest.TestCase):
         self.assertEqual(mol.GetNumAtoms(), 12)
         ok, res = rdEHTTools.RunMol(mol)
         self.assertTrue(ok)
+        self.assertEqual(res.numOrbitals,30)
+        self.assertEqual(res.numElectrons,30)
         cm = res.GetReducedChargeMatrix()
         self.assertEqual(cm.shape, (12, res.numOrbitals))
         for i in range(6):
@@ -43,7 +45,6 @@ class TestCase(unittest.TestCase):
             self.assertAlmostEqual(cm[i+6][6], 0.060, places=3)
             self.assertAlmostEqual(cm[i][9], 0.167, places=3)
             self.assertAlmostEqual(cm[i+6][9], 0.000, places=3)
-        
 
     def test3(self):
         mol = Chem.MolFromMolFile(os.path.join(

@@ -38,6 +38,9 @@ TEST_CASE("benzene", "[basics]") {
   REQUIRE(mol->getNumAtoms() == 12);
   EHTTools::EHTResults res;
   REQUIRE(EHTTools::runMol(*mol, res));
+  CHECK(res.numElectrons == 30);
+  CHECK(res.numOrbitals == 30);
+  CHECK(res.numAtoms == 12);
   for (unsigned int i = 0; i < 6; ++i) {
     CHECK(res.atomicCharges[i] == Approx(-0.026).margin(0.001));
   }

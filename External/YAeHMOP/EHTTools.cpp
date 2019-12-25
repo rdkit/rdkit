@@ -109,6 +109,7 @@ bool runMol(const ROMol &mol, EHTResults &results, int confId) {
   // pull properties
   results.numAtoms = mol.getNumAtoms();
   results.numOrbitals = num_orbs;
+  results.numElectrons = std::lround(unit_cell->num_electrons);
   results.fermiEnergy = properties.Fermi_E;
   results.totalEnergy = properties.total_E;
   results.atomicCharges = std::make_unique<double[]>(mol.getNumAtoms());
