@@ -1791,6 +1791,87 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
   }
 }
 
+void assignChiralTypesFromMolParity(ROMol &mol, bool replaceExistingTags) {
+  // if the molecule already has stereochemistry
+  // perceived, remove the flags that indicate
+  // this... what we're about to do will require
+  // that we go again.
+  static const std::vector<Atom::ChiralType> chiralTypeVect {
+    Atom::CHI_TETRAHEDRAL_CW,
+    Atom::CHI_TETRAHEDRAL_CCW
+  };
+  if (mol.hasProp(common_properties::_StereochemDone)) {
+    mol.clearProp(common_properties::_StereochemDone);
+  }
+  // Atom-based parity
+  //
+  // Parity 1 (CW)        Parity 2 (CCW)
+  //     3   1                3   2
+  //      \ /                  \ /
+  //       |                    |
+  //       2                    1
+  //
+  for (auto atomIt = mol.beginAtoms(); atomIt != mol.endAtoms(); ++atomIt) {
+    Atom *atom = *atomIt;
+    // if we aren't replacing existing tags and the atom is already tagged,
+    // punt:
+    if (!replaceExistingTags && atom->getChiralTag() != Atom::CHI_UNSPECIFIED)
+      continue;
+    int parity = 0;
+    atom->getPropIfPresent(common_properties::molParity, parity);
+    if (parity <= 0 || parity > 2 || atom->getDegree() < 3) {
+      atom->setChiralTag(Atom::CHI_UNSPECIFIED);
+      continue;
+    }
+    // if we are here, parity was 1 (CW) or 2 (CCW)
+    // now we set parity 0 to be CW and 1 to be CCW
+    --parity;
+    RDKit::ROMol::OBOND_ITER_PAIR nbrBonds = mol.getAtomBonds(atom);
+    std::vector<const Bond *> nbrBondVect;
+    std::transform(nbrBonds.first, nbrBonds.second,
+      std::back_inserter(nbrBondVect), [mol](const ROMol::edge_descriptor &e) {
+        return mol[e];
+      });
+    std::sort(nbrBondVect.begin(), nbrBondVect.end(), [](const Bond *a, const Bond *b) {
+      return (a->getIdx() < b->getIdx());
+    });
+    unsigned int atomIdx = atom->getIdx();
+    std::vector<unsigned int> nbrAtomIdxVectSortedByBond;
+    std::transform(nbrBondVect.begin(), nbrBondVect.end(),
+      std::back_inserter(nbrAtomIdxVectSortedByBond), [atomIdx](const Bond *b) {
+        return b->getOtherAtomIdx(atomIdx);
+      });
+    std::vector<unsigned int> nbrAtomIdxVectSortedByAtom(
+      nbrAtomIdxVectSortedByBond.begin(), nbrAtomIdxVectSortedByBond.end());
+    std::sort(nbrAtomIdxVectSortedByAtom.begin(), nbrAtomIdxVectSortedByAtom.end());
+    unsigned int nSwaps = 0;
+    size_t j = std::find(nbrAtomIdxVectSortedByBond.begin(),
+      nbrAtomIdxVectSortedByBond.end(), nbrAtomIdxVectSortedByAtom[0])
+      - nbrAtomIdxVectSortedByBond.begin();
+    for (size_t i = 0; i < nbrAtomIdxVectSortedByBond.size(); ++i, ++j) {
+      if (j >= nbrAtomIdxVectSortedByBond.size())
+        j = 0;
+      if (nbrAtomIdxVectSortedByBond[j] != nbrAtomIdxVectSortedByAtom[i])
+        ++nSwaps;
+    }
+    if (nSwaps / 2)
+      parity = 1 - parity;
+    atom->setChiralTag(chiralTypeVect[parity]);
+    if (atom->getImplicitValence() == -1) {
+      atom->calcExplicitValence(false);
+      atom->calcImplicitValence(false);
+    }
+    // within the RD representation, if a three-coordinate atom
+    // is chiral and has an implicit H, that H needs to be made explicit:
+    if (atom->getDegree() == 3 && !atom->getNumExplicitHs() &&
+        atom->getNumImplicitHs() == 1) {
+      atom->setNumExplicitHs(1);
+      // recalculated number of implicit Hs:
+      atom->updatePropertyCache();
+    }
+  }
+}
+
 namespace {
 
 void setBondDirRelativeToAtom(Bond *bond, Atom *atom, Bond::BondDir dir,

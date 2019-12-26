@@ -957,6 +957,15 @@ RDKIT_GRAPHMOL_EXPORT void findPotentialStereoBonds(ROMol &mol,
                                                     bool cleanIt = false);
 //@}
 
+//! \brief Uses the molParity atom property to assign ChiralType to a molecule's atoms
+/*!
+  \param mol                  the molecule of interest
+  \param replaceExistingTags  if this flag is true, any existing atomic chiral
+                              tags will be replaced
+*/
+RDKIT_GRAPHMOL_EXPORT void assignChiralTypesFromMolParity(
+    ROMol &mol, bool replaceExistingTags = true);
+
 //! returns the number of atoms which have a particular property set
 RDKIT_GRAPHMOL_EXPORT unsigned getNumAtomsWithDistinctProperty(
     const ROMol &mol, std::string prop);
