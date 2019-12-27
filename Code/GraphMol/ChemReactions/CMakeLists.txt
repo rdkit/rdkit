@@ -1,5 +1,4 @@
 if(RDK_USE_BOOST_SERIALIZATION AND Boost_SERIALIZATION_LIBRARY)
-    ADD_DEFINITIONS("-DRDK_USE_BOOST_SERIALIZATION")
     set(RDKit_SERIALIZATION_LIBS ${Boost_SERIALIZATION_LIBRARY})
 else()
       message("== Making EnumerateLibrary without boost Serialization support")

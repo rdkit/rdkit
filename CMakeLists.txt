@@ -364,6 +364,7 @@ if(RDK_USE_BOOST_SERIALIZATION)
     else()
       set(Boost_LIBRARIES ${T_LIBS})
     endif()
+  target_compile_definitions(rdkit_base INTERFACE -DRDK_USE_BOOST_SERIALIZATION)
 endif()
 
 
