@@ -230,12 +230,12 @@ std::pair<unsigned int, std::vector<unsigned int>>
     RDKit::MatchVectType res;
     unsigned int matches = SubstructMatch(mol, *(abpair.first), res);
     if (matches > 0) {
-      std::vector<unsigned int> occurence;
+      std::vector<unsigned int> occurrence;
       for (const auto &pair : res) {
-        occurence.push_back(pair.second);
+        occurrence.push_back(pair.second);
       }
       return new std::pair<unsigned int, std::vector<unsigned int>>(position,
-                                                                    occurence);
+                                                                    occurrence);
     }
     ++position;
   }
@@ -251,12 +251,12 @@ std::pair<unsigned int, std::vector<unsigned int>> *Reionizer::weakestIonized(
     RDKit::MatchVectType res;
     unsigned int matches = SubstructMatch(mol, *(abpair.second), res);
     if (matches > 0) {
-      std::vector<unsigned int> occurence;
+      std::vector<unsigned int> occurrence;
       for (const auto &pair : res) {
-        occurence.push_back(pair.second);
+        occurrence.push_back(pair.second);
       }
       return new std::pair<unsigned int, std::vector<unsigned int>>(
-          (abpairs.size() - position - 1), occurence);
+          (abpairs.size() - position - 1), occurrence);
     }
     ++position;
   }

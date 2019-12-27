@@ -190,7 +190,7 @@ def GetDonor3FeatVects(conf, featAtoms, scale=1.5):
 
   This is a donor with three heavy atoms as neighbors. We will assume
   a tetrahedral arrangement of these neighbors. So the direction we are seeking
-  is the last fourth arm of the sp3 arrangment
+  is the last fourth arm of the sp3 arrangement
 
   ARGUMENTS:
     featAtoms - list of atoms that are part of the feature
@@ -209,7 +209,7 @@ def GetAcceptor3FeatVects(conf, featAtoms, scale=1.5):
 
   This is a donor with three heavy atoms as neighbors. We will assume
   a tetrahedral arrangement of these neighbors. So the direction we are seeking
-  is the last fourth arm of the sp3 arrangment
+  is the last fourth arm of the sp3 arrangement
 
   ARGUMENTS:
     featAtoms - list of atoms that are part of the feature

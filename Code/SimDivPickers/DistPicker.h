@@ -39,7 +39,7 @@ RDKIT_SIMDIVPICKERS_EXPORT double getDistFromLTM(const double *distMat,
  *  This class should never be instantiated by itself. One of the child classes
  *need to be
  *  used. The picking algorithm itself is missing here and only the child
- *calsses implement that
+ *classes implement that
  *  This class contains a pointer to a distance matrix, but it is not
  *responsible for cleaning it up
  */

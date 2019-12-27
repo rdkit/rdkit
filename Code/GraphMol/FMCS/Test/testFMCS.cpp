@@ -1706,7 +1706,7 @@ int main(int argc, const char* argv[]) {
     else if (0 == strcmp(argv[1] + strlen(argv[1]) - 4, ".dat"))
       testChEMBLdat(argv[1]);  // .sdf
     else
-      printf("UNKNOWN File Extention.\n");
+      printf("UNKNOWN File Extension.\n");
   } else if (argc > 1 + 2)
     testCmndLineSMILES(argc, argv);
   else {

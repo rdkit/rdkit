@@ -281,7 +281,7 @@ double tversky(const FPBReader_impl *dp_impl, unsigned int which,
 The actual layout inside of the chunk is:
  <num_4byte_elements: 4 bytes> -- the number of 4 byte offsets.
  <num_8byte_elements: 4 bytes> -- the number of 8 byte offsets
- Note: the number of indicies is num_4byte_elements + num_8byte_elements + 1
+ Note: the number of indices is num_4byte_elements + num_8byte_elements + 1
  because even with no elements there will be the initial '\0\0\0\0'.
 
  <id 0> + NUL   -- the first string, with an added NUL terminator

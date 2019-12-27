@@ -385,7 +385,7 @@ Kekulizes the molecule.
 @param
 mol 	the molecule of interest
 markAtomsBonds 	if this is set to true, isAromatic boolean settings on both the Bonds and Atoms are turned to false following the Kekulization, otherwise they are left alone in their original state.
-maxBackTracks 	the maximum number of attempts at back-tracking. The algorithm uses a back-tracking procedure to revist a previous setting of double bond if we hit a wall in the kekulization process
+maxBackTracks 	the maximum number of attempts at back-tracking. The algorithm uses a back-tracking procedure to revisit a previous setting of double bond if we hit a wall in the kekulization process
 <p>
 @notes
 <li>even if markAtomsBonds is false the BondType for all aromatic bonds will be changed from RDKit::Bond::AROMATIC to RDKit::Bond::SINGLE or RDKit::Bond::DOUBLE during Kekulization.

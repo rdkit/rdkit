@@ -30,7 +30,7 @@ Here are some molecule that have trouble us aromaticity wise
 
 2. We the fused ring system with all the rings in it is considered aroamtic by
 our code.
-   This is because we count electrons from burried atoms as well when
+   This is because we count electrons from buried atoms as well when
    we are dealing with fused rings
 
 3. Here's a weird fused ring case, Pattern NAN, A overall

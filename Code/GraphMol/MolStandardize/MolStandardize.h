@@ -31,7 +31,7 @@ namespace MolStandardize {
 /*!
 
   <b>Notes:</b>
-    - To customize the parameters, the stucture must be initialized first.
+    - To customize the parameters, the structure must be initialized first.
                   (Another on the TODO list)
                 - For this project, not all the parameters have been revealed.
   (TODO)

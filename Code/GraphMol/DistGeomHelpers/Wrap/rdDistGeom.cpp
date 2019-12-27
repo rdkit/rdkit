@@ -185,7 +185,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
   // RegisterListConverter<RDKit::Atom*>();
 
   std::string docString =
-      "Use distance geometry to obtain intial \n\
+      "Use distance geometry to obtain initial \n\
  coordinates for a molecule\n\n\
  \n\
  ARGUMENTS:\n\n\
@@ -389,7 +389,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
       docString.c_str());
 
   docString =
-      "Use distance geometry to obtain intial \n\
+      "Use distance geometry to obtain initial \n\
  coordinates for a molecule\n\n\
  \n\
  ARGUMENTS:\n\n\

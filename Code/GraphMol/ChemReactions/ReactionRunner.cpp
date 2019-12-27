@@ -674,7 +674,7 @@ void translateProductStereoBondDirections(Bond *pBond, const Bond *start,
  * Stereo in the product templates (defined by bond directions) will override
  * the one in the reactants.
  *
- * Each double bond will be checked agains the following rules:
+ * Each double bond will be checked against the following rules:
  * 1- if product bond is marked as STEREOANY, check if stereo is possible
  * on the bond, and eventually, keep the STEREOANY label or reset it to
  * STEREONONE if not.

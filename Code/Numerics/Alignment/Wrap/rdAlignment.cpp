@@ -164,7 +164,7 @@ BOOST_PYTHON_MODULE(rdAlignment) {
       "Compute the optimal alignment (minimum RMSD) between two set of points \n\n\
  \n\
  ARGUMENTS:\n\n\
-    - refPoints : reference points sepcified as a N by 3 Numeric array or \n\
+    - refPoints : reference points specified as a N by 3 Numeric array or \n\
                   sequence of 3-sequences or sequence of Point3Ds \n\
     - probePoints : probe points to align to reference points - same format \n\
                   restrictions as reference points apply here \n\

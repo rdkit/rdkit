@@ -1,4 +1,4 @@
-FilterCatalogs give RDKit the ability to screen out or reject undesireable molecules
+FilterCatalogs give RDKit the ability to screen out or reject undesirable molecules
 based on various criteria.  Supplied with RDKIt are the following filter sets:
 
   * PAINS - Pan assay interference patterns.  These are separated into three

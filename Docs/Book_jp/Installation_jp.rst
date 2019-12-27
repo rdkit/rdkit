@@ -316,7 +316,7 @@ FAQと解決方法のリストは下を見てください。
 
 ビルドの検証 (オプションですが、推奨します)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[`Testing the build (optional, but recomended) <https://www.rdkit.org/docs/Install.html#testing-the-build-optional-but-recommended>`__]
+[`Testing the build (optional, but recommended) <https://www.rdkit.org/docs/Install.html#testing-the-build-optional-but-recommended>`__]
 
 -  $RDBASE/build にcd、次に\ ``ctest``\ を実行
 -  これでおしまい！

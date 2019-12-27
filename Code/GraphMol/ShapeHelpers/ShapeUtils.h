@@ -80,7 +80,7 @@ RDKIT_SHAPEHELPERS_EXPORT std::vector<double> getConfDimensions(
   \param vdwScale     Scaling factor for the radius of the atoms to determine
   the base radius
                       used in the encoding - grid points inside this sphere
-  carry the maximum occupany
+  carry the maximum occupancy
   \param stepSize     thickness of the each layer outside the base radius, the
   occupancy value is decreased
                       from layer to layer from the maximum value
@@ -114,7 +114,7 @@ RDKIT_SHAPEHELPERS_EXPORT double tverskyIndex(
   \param vdwScale     Scaling factor for the radius of the atoms to determine
   the base radius
                       used in the encoding - grid points inside this sphere
-  carry the maximum occupany
+  carry the maximum occupancy
   \param stepSize     thickness of the each layer outside the base radius, the
   occupancy value is decreased
                       from layer to layer from the maximum value
@@ -150,7 +150,7 @@ RDKIT_SHAPEHELPERS_EXPORT double tverskyIndex(
   \param vdwScale     Scaling factor for the radius of the atoms to determine
   the base radius
                       used in the encoding - grid points inside this sphere
-  carry the maximum occupany
+  carry the maximum occupancy
   \param stepSize     thickness of the each layer outside the base radius, the
   occupancy value is decreased
                       from layer to layer from the maximum value
@@ -181,7 +181,7 @@ RDKIT_SHAPEHELPERS_EXPORT double tanimotoDistance(
   \param vdwScale     Scaling factor for the radius of the atoms to determine
   the base radius
                       used in the encoding - grid points inside this sphere
-  carry the maximum occupany
+  carry the maximum occupancy
   \param stepSize     thickness of the each layer outside the base radius, the
   occupancy value is decreased
                       from layer to layer from the maximum value
@@ -216,7 +216,7 @@ RDKIT_SHAPEHELPERS_EXPORT double tanimotoDistance(
   \param vdwScale     Scaling factor for the radius of the atoms to determine
   the base radius
                       used in the encoding - grid points inside this sphere
-  carry the maximum occupany
+  carry the maximum occupancy
   \param stepSize     thickness of the each layer outside the base radius, the
   occupancy value is decreased
                       from layer to layer from the maximum value
@@ -251,7 +251,7 @@ RDKIT_SHAPEHELPERS_EXPORT double protrudeDistance(
   \param vdwScale     Scaling factor for the radius of the atoms to determine
   the base radius
                       used in the encoding - grid points inside this sphere
-  carry the maximum occupany
+  carry the maximum occupancy
   \param stepSize     thickness of the each layer outside the base radius, the
   occupancy value is decreased
                       from layer to layer from the maximum value

@@ -162,7 +162,7 @@ std::vector<double> getWhimD(std::vector<double> weightvector,
   // we should take into account atoms that are in the axis too!!! which is not
   // trivial
   for (int i = 0; i < 3; i++) {
-    std::vector<double> Symetric(2 * numAtoms, 0.0);
+    std::vector<double> Symmetric(2 * numAtoms, 0.0);
     double ns = 0.0;
     double na = 0.0;
     for (int j = 0; j < numAtoms; j++) {
@@ -176,22 +176,22 @@ std::vector<double> getWhimD(std::vector<double> weightvector,
           ns += 1;  // check only once the symmetric none null we need to add +2!
           // (reduce the loop duration)
           amatch = true;
-          Symetric[j] = 1.0;
-          Symetric[j + numAtoms] = 2.0;
-          Symetric[k] = 1.0;
-          Symetric[k + numAtoms] = 2.0;
+          Symmetric[j] = 1.0;
+          Symmetric[j + numAtoms] = 2.0;
+          Symmetric[k] = 1.0;
+          Symmetric[k + numAtoms] = 2.0;
           break;
         }
       }
       if (!amatch) {
         na += 1;
-        Symetric[j] = 0.0;
-        Symetric[j + numAtoms] = std::fabs(Scores(j, i));
+        Symmetric[j] = 0.0;
+        Symmetric[j + numAtoms] = std::fabs(Scores(j, i));
       }
     }
     // take into account the atoms close to the axis
     for (int aj = 0; aj < numAtoms; aj++) {
-      if (Symetric[aj + numAtoms] < th && Symetric[aj] < 1.0) {
+      if (Symmetric[aj + numAtoms] < th && Symmetric[aj] < 1.0) {
         ns += 1;
         na -= 1;
       }

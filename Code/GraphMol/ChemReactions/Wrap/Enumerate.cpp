@@ -279,10 +279,10 @@ this strategy never terminates, however, python supplies itertools:\n\
 \n\
 import itertools\n\
 library = EnumerateLibrary(rxn, bbs, rdChemReactions.RandomSampleStrategy())\n\
-for result in itertools.islice(libary, 1000):\n\
+for result in itertools.islice(library, 1000):\n\
     # do something with the first 1000 samples\n\
 \n\
-for result in itertools.islice(libary, 1000):\n\
+for result in itertools.islice(library, 1000):\n\
     # do something with the next 1000 samples\n\
 \n\
 Libraries are also serializable, including their current state:\n\

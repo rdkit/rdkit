@@ -532,7 +532,7 @@ RDKIT_GRAPHMOL_EXPORT void adjustHs(RWMol &mol);
                           original state.
    \param maxBackTracks   the maximum number of attempts at back-tracking. The
    algorithm
-                          uses a back-tracking procedure to revist a previous
+                          uses a back-tracking procedure to revisit a previous
    setting of
                           double bond if we hit a wall in the kekulization
    process

@@ -167,7 +167,7 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalog : public FCatalog {
     Removes a FilterCatalogEntry from the catalog.
 
     \param idx          The FilterCatalogEntry index for the entry to remove.
-     n.b. removing an entry may change the indicies of other entries.
+     n.b. removing an entry may change the indices of other entries.
           To safely remove entries, remove entries with the highest idx
            first.
   */

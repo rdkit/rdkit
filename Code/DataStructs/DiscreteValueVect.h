@@ -69,7 +69,7 @@ class RDKIT_DATASTRUCTS_EXPORT DiscreteValueVect {
   //! set the value at an index
   /*!
     NOTE: it is an error to have val > the max value this
-    DiscreteValueVect can accomodate
+    DiscreteValueVect can accommodate
   */
   void setVal(unsigned int i, unsigned int val);
 

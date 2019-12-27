@@ -326,7 +326,7 @@ void EmbeddedFrag::updateNewNeighs(
                               hIndices.end());
 
   int deg = getDepictDegree(dp_mol->getAtomWithIdx(aid));
-  // order the neigbors by their CIPranks, if the number is between > 0 but less
+  // order the neighbors by their CIPranks, if the number is between > 0 but less
   // than 3
   if ((d_eatoms[aid].neighs.size() > 0) &&
       ((deg < 4) || (d_eatoms[aid].neighs.size() < 3))) {
@@ -433,7 +433,7 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings) {
       // if the common atoms form a chain they are going to be in order - we try
       // to
       // do that in findNextRingToEmbed
-      // we will therfore try to use the last and the first atoms in the chain
+      // we will therefore try to use the last and the first atoms in the chain
       // to
       // fuse the rings - will hopefully fix issue 177
       int aid1 = commonAtomIds.front();
