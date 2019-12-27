@@ -109,13 +109,14 @@ bool runMol(const ROMol &mol, EHTResults &results, int confId) {
   // pull properties
   results.numAtoms = mol.getNumAtoms();
   results.numOrbitals = num_orbs;
+  results.numElectrons = std::lround(unit_cell->num_electrons);
   results.fermiEnergy = properties.Fermi_E;
   results.totalEnergy = properties.total_E;
   results.atomicCharges = std::make_unique<double[]>(mol.getNumAtoms());
   std::memcpy(static_cast<void *>(results.atomicCharges.get()),
               static_cast<void *>(properties.net_chgs),
               mol.getNumAtoms() * sizeof(double));
-  size_t sz = mol.getNumAtoms() * mol.getNumAtoms();
+  size_t sz = mol.getNumAtoms() * num_orbs;
   results.reducedChargeMatrix = std::make_unique<double[]>(sz);
   memcpy(static_cast<void *>(results.reducedChargeMatrix.get()),
          static_cast<void *>(properties.Rchg_mat), sz * sizeof(double));
