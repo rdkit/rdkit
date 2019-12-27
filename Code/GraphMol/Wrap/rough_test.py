@@ -14,7 +14,7 @@ from rdkit import RDConfig, rdBase
 from rdkit import DataStructs
 from rdkit import Chem
 import rdkit.Chem.rdDepictor
-from rdkit.Chem import rdqueries, rdmolops
+from rdkit.Chem import rdqueries
 
 from rdkit import __version__
 
@@ -5671,12 +5671,12 @@ M  END
         self.d_rwMol = Chem.RWMol(mol)
         self.assignMolParity()
         self.fillBondDefVect()
-        rdmolops.AssignAtomChiralTagsFromMolParity(self.d_rwMol)
+        Chem.AssignAtomChiralTagsFromMolParity(self.d_rwMol)
         self.d_refSmiles = Chem.MolToSmiles(self.d_rwMol)
         self.heapPermutation()
 
       def assignMolParity(self):
-        rdmolops.AssignAtomChiralTagsFromStructure(self.d_rwMol)
+        Chem.AssignAtomChiralTagsFromStructure(self.d_rwMol)
         for a in self.d_rwMol.GetAtoms():
           parity = self.parityMap[a.GetChiralTag()]
           a.SetIntProp("molParity", parity)
@@ -5699,7 +5699,7 @@ M  END
         self.stripBonds()
         self.addBonds();
         Chem.SanitizeMol(self.d_rwMol)
-        rdmolops.AssignAtomChiralTagsFromMolParity(self.d_rwMol)
+        Chem.AssignAtomChiralTagsFromMolParity(self.d_rwMol)
         self.parent.assertEqual(Chem.MolToSmiles(self.d_rwMol), self.d_refSmiles)
 
       def heapPermutation(self, s = 0):
