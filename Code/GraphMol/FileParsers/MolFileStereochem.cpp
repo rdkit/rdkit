@@ -23,8 +23,9 @@ typedef std::list<double> DOUBLE_LIST;
 void WedgeBond(Bond *bond, unsigned int fromAtomIdx, const Conformer *conf) {
   PRECONDITION(bond, "no bond");
   PRECONDITION(conf, "no conformer");
-  PRECONDITION(&conf->getOwningMol() == &bond->getOwningMol(),"bond and conformer do not belong to same molecule");
-  if(bond->getBondType() != Bond::SINGLE) return;
+  PRECONDITION(&conf->getOwningMol() == &bond->getOwningMol(),
+               "bond and conformer do not belong to same molecule");
+  if (bond->getBondType() != Bond::SINGLE) return;
   Bond::BondDir dir = DetermineBondWedgeState(bond, fromAtomIdx, conf);
   if (dir == Bond::BEGINWEDGE || dir == Bond::BEGINDASH) {
     bond->setBondDir(dir);
@@ -41,6 +42,18 @@ void WedgeMolBonds(ROMol &mol, const Conformer *conf) {
       Bond::BondDir dir = DetermineBondWedgeState(bond, wedgeBonds, conf);
       if (dir == Bond::BEGINWEDGE || dir == Bond::BEGINDASH) {
         bond->setBondDir(dir);
+
+        // it is possible that this
+        // wedging was determined by a chiral atom at the end of the
+        // bond (instead of at the beginning). In this case we need to
+        // reverse the begin and end atoms for the bond
+        auto wbi = wedgeBonds.find(bond->getIdx());
+        if (wbi != wedgeBonds.end() &&
+            static_cast<unsigned int>(wbi->second) != bond->getBeginAtomIdx()) {
+          auto tmp = bond->getBeginAtomIdx();
+          bond->setBeginAtomIdx(bond->getEndAtomIdx());
+          bond->setEndAtomIdx(tmp);
+        }
       }
     }
   }
@@ -89,7 +102,7 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
     ROMol::ADJ_ITER nbrIdx, endNbrs;
     boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(at);
     while (nbrIdx != endNbrs) {
-      const Atom* nat = mol[*nbrIdx];
+      const Atom *nat = mol[*nbrIdx];
       ++nbrIdx;
       if (nat->getAtomicNum() == 1) {
         // special case: it's an H... we weight these especially high:
@@ -203,120 +216,119 @@ Bond::BondDir DetermineBondWedgeState(const Bond *bond,
   PRECONDITION(bond, "no bond");
   PRECONDITION(bond->getBondType() == Bond::SINGLE,
                "bad bond order for wedging");
-   const ROMol *mol = &(bond->getOwningMol());
-   PRECONDITION(mol, "no mol");
+  const ROMol *mol = &(bond->getOwningMol());
+  PRECONDITION(mol, "no mol");
 
-   Bond::BondDir res = bond->getBondDir();
-   if (!conf) {
-     return res;
-   }
+  Bond::BondDir res = bond->getBondDir();
+  if (!conf) {
+    return res;
+  }
 
+  Atom *atom, *bondAtom;  // = bond->getBeginAtom();
+  if (bond->getBeginAtom()->getIdx() == fromAtomIdx) {
+    atom = bond->getBeginAtom();
+    bondAtom = bond->getEndAtom();
+  } else {
+    atom = bond->getEndAtom();
+    bondAtom = bond->getBeginAtom();
+  }
 
-   Atom *atom, *bondAtom;  // = bond->getBeginAtom();
-   if (bond->getBeginAtom()->getIdx() == fromAtomIdx) {
-     atom = bond->getBeginAtom();
-     bondAtom = bond->getEndAtom();
-   } else {
-     atom = bond->getEndAtom();
-     bondAtom = bond->getBeginAtom();
-   }
+  Atom::ChiralType chiralType = atom->getChiralTag();
+  CHECK_INVARIANT(chiralType == Atom::CHI_TETRAHEDRAL_CW ||
+                      chiralType == Atom::CHI_TETRAHEDRAL_CCW,
+                  "");
 
-   Atom::ChiralType chiralType = atom->getChiralTag();
-   CHECK_INVARIANT(chiralType == Atom::CHI_TETRAHEDRAL_CW ||
-                       chiralType == Atom::CHI_TETRAHEDRAL_CCW,
-                   "");
+  // if we got this far, we really need to think about it:
+  INT_LIST neighborBondIndices;
+  DOUBLE_LIST neighborBondAngles;
+  RDGeom::Point3D centerLoc, tmpPt;
+  centerLoc = conf->getAtomPos(atom->getIdx());
+  tmpPt = conf->getAtomPos(bondAtom->getIdx());
+  centerLoc.z = 0.0;
+  tmpPt.z = 0.0;
+  RDGeom::Point3D refVect = centerLoc.directionVector(tmpPt);
 
-   // if we got this far, we really need to think about it:
-   INT_LIST neighborBondIndices;
-   DOUBLE_LIST neighborBondAngles;
-   RDGeom::Point3D centerLoc, tmpPt;
-   centerLoc = conf->getAtomPos(atom->getIdx());
-   tmpPt = conf->getAtomPos(bondAtom->getIdx());
-   centerLoc.z = 0.0;
-   tmpPt.z = 0.0;
-   RDGeom::Point3D refVect = centerLoc.directionVector(tmpPt);
+  neighborBondIndices.push_back(bond->getIdx());
+  neighborBondAngles.push_back(0.0);
 
-   neighborBondIndices.push_back(bond->getIdx());
-   neighborBondAngles.push_back(0.0);
+  ROMol::OEDGE_ITER beg, end;
+  boost::tie(beg, end) = mol->getAtomBonds(atom);
+  while (beg != end) {
+    const Bond *nbrBond = (*mol)[*beg];
+    Atom *otherAtom = nbrBond->getOtherAtom(atom);
+    if (nbrBond != bond) {
+      tmpPt = conf->getAtomPos(otherAtom->getIdx());
+      tmpPt.z = 0.0;
+      RDGeom::Point3D tmpVect = centerLoc.directionVector(tmpPt);
+      double angle = refVect.signedAngleTo(tmpVect);
+      if (angle < 0.0) angle += 2. * M_PI;
+      auto nbrIt = neighborBondIndices.begin();
+      auto angleIt = neighborBondAngles.begin();
+      // find the location of this neighbor in our angle-sorted list
+      // of neighbors:
+      while (angleIt != neighborBondAngles.end() && angle > (*angleIt)) {
+        ++angleIt;
+        ++nbrIt;
+      }
+      neighborBondAngles.insert(angleIt, angle);
+      neighborBondIndices.insert(nbrIt, nbrBond->getIdx());
+    }
+    ++beg;
+  }
 
-   ROMol::OEDGE_ITER beg, end;
-   boost::tie(beg, end) = mol->getAtomBonds(atom);
-   while (beg != end) {
-     const Bond *nbrBond = (*mol)[*beg];
-     Atom *otherAtom = nbrBond->getOtherAtom(atom);
-     if (nbrBond != bond) {
-       tmpPt = conf->getAtomPos(otherAtom->getIdx());
-       tmpPt.z = 0.0;
-       RDGeom::Point3D tmpVect = centerLoc.directionVector(tmpPt);
-       double angle = refVect.signedAngleTo(tmpVect);
-       if (angle < 0.0) angle += 2. * M_PI;
-       auto nbrIt = neighborBondIndices.begin();
-       auto angleIt = neighborBondAngles.begin();
-       // find the location of this neighbor in our angle-sorted list
-       // of neighbors:
-       while (angleIt != neighborBondAngles.end() && angle > (*angleIt)) {
-         ++angleIt;
-         ++nbrIt;
-       }
-       neighborBondAngles.insert(angleIt, angle);
-       neighborBondIndices.insert(nbrIt, nbrBond->getIdx());
-     }
-     ++beg;
-   }
+  // at this point, neighborBondIndices contains a list of bond
+  // indices from the central atom.  They are arranged starting
+  // at the reference bond in CCW order (based on the current
+  // depiction).
+  int nSwaps = atom->getPerturbationOrder(neighborBondIndices);
 
-   // at this point, neighborBondIndices contains a list of bond
-   // indices from the central atom.  They are arranged starting
-   // at the reference bond in CCW order (based on the current
-   // depiction).
-   int nSwaps = atom->getPerturbationOrder(neighborBondIndices);
+  // in the case of three-coordinated atoms we may have to worry about
+  // the location of the implicit hydrogen - Issue 209
+  // Check if we have one of these situation
+  //
+  //      0        1 0 2
+  //      *         \*/
+  //  1 - C - 2      C
+  //
+  // here the hydrogen will be between 1 and 2 and we need to add an additional
+  // swap
+  if (neighborBondAngles.size() == 3) {
+    // three coordinated
+    auto angleIt = neighborBondAngles.begin();
+    ++angleIt;  // the first is the 0 (or reference bond - we will ignoire that
+    double angle1 = (*angleIt);
+    ++angleIt;
+    double angle2 = (*angleIt);
+    if (angle2 - angle1 >= (M_PI - 1e-4)) {
+      // we have the above situation
+      nSwaps++;
+    }
+  }
 
-   // in the case of three-coordinated atoms we may have to worry about
-   // the location of the implicit hydrogen - Issue 209
-   // Check if we have one of these situation
-   //
-   //      0        1 0 2
-   //      *         \*/
-   //  1 - C - 2      C
-   //
-   // here the hydrogen will be between 1 and 2 and we need to add an additional
-   // swap
-   if (neighborBondAngles.size() == 3) {
-     // three coordinated
-     auto angleIt = neighborBondAngles.begin();
-     ++angleIt;  // the first is the 0 (or reference bond - we will ignoire that
-     double angle1 = (*angleIt);
-     ++angleIt;
-     double angle2 = (*angleIt);
-     if (angle2 - angle1 >= (M_PI - 1e-4)) {
-       // we have the above situation
-       nSwaps++;
-     }
-   }
+#ifdef VERBOSE_STEREOCHEM
+  BOOST_LOG(rdDebugLog) << "--------- " << nSwaps << std::endl;
+  std::copy(neighborBondIndices.begin(), neighborBondIndices.end(),
+            std::ostream_iterator<int>(BOOST_LOG(rdDebugLog), " "));
+  BOOST_LOG(rdDebugLog) << std::endl;
+  std::copy(neighborBondAngles.begin(), neighborBondAngles.end(),
+            std::ostream_iterator<double>(BOOST_LOG(rdDebugLog), " "));
+  BOOST_LOG(rdDebugLog) << std::endl;
+#endif
+  if (chiralType == Atom::CHI_TETRAHEDRAL_CCW) {
+    if (nSwaps % 2 == 1) {  // ^ reverse) {
+      res = Bond::BEGINDASH;
+    } else {
+      res = Bond::BEGINWEDGE;
+    }
+  } else {
+    if (nSwaps % 2 == 1) {  // ^ reverse) {
+      res = Bond::BEGINWEDGE;
+    } else {
+      res = Bond::BEGINDASH;
+    }
+  }
 
- #ifdef VERBOSE_STEREOCHEM
-   BOOST_LOG(rdDebugLog) << "--------- " << nSwaps << std::endl;
-   std::copy(neighborBondIndices.begin(), neighborBondIndices.end(),
-             std::ostream_iterator<int>(BOOST_LOG(rdDebugLog), " "));
-   BOOST_LOG(rdDebugLog) << std::endl;
-   std::copy(neighborBondAngles.begin(), neighborBondAngles.end(),
-             std::ostream_iterator<double>(BOOST_LOG(rdDebugLog), " "));
-   BOOST_LOG(rdDebugLog) << std::endl;
- #endif
-   if (chiralType == Atom::CHI_TETRAHEDRAL_CCW) {
-     if (nSwaps % 2 == 1) {  // ^ reverse) {
-       res = Bond::BEGINDASH;
-     } else {
-       res = Bond::BEGINWEDGE;
-     }
-   } else {
-     if (nSwaps % 2 == 1) {  // ^ reverse) {
-       res = Bond::BEGINWEDGE;
-     } else {
-       res = Bond::BEGINDASH;
-     }
-   }
-
-   return res;
+  return res;
 }
 Bond::BondDir DetermineBondWedgeState(const Bond *bond,
                                       const INT_MAP_INT &wedgeBonds,
@@ -329,7 +341,7 @@ Bond::BondDir DetermineBondWedgeState(const Bond *bond,
   }
 
   unsigned int waid = wbi->second;
-  return DetermineBondWedgeState(bond,waid,conf);
+  return DetermineBondWedgeState(bond, waid, conf);
 }
 
 // handles stereochem markers set by the Mol file parser and
@@ -358,4 +370,4 @@ void DetectBondStereoChemistry(ROMol &mol, const Conformer *conf) {
                "conformer does not belong to molecule");
   MolOps::detectBondStereochemistry(mol, conf->getId());
 }
-}
+}  // namespace RDKit

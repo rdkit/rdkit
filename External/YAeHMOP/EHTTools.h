@@ -23,6 +23,7 @@ namespace EHTTools {
 struct RDKIT_EHTLIB_EXPORT EHTResults {
   unsigned int numAtoms;
   unsigned int numOrbitals;
+  unsigned int numElectrons;
   std::unique_ptr<double[]> overlapPopulationMatrix;
   std::unique_ptr<double[]> reducedOverlapPopulationMatrix;
   std::unique_ptr<double[]> chargeMatrix;
