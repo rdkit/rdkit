@@ -1348,7 +1348,7 @@ RDKit Fingerprints
 This is an RDKit-specific fingerprint that is inspired by (though it differs
 significantly from) public descriptions of the Daylight fingerprint
 [#daylightFP]_. The fingerprinting algorithm identifies all subgraphs in the
-molecule within a particular range of sizes, hashes each subgraphs to generate a
+molecule within a particular range of sizes, hashes each subgraph to generate a
 raw bit ID, mods that raw bit ID to fit in the assigned fingerprint size, and
 then sets the corresponding bit. Options are available to generate count-based
 forms of the fingerprint or "non-folded" forms (using a sparse representation).

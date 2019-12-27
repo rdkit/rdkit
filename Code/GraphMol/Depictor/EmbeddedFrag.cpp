@@ -246,7 +246,7 @@ EmbeddedFrag::EmbeddedFrag(const RDKit::Bond *dblBond) {
   // used to deal with this ugliness.
   // Now we will just embed the atoms on the double bonds and mark at these
   // atoms
-  // the direction in which the in coming single bonds should go.
+  // the direction in which the incoming single bonds should go.
   // Makes the merge function easier and address issue 171 simultaneously.
   PRECONDITION(dblBond, "");
   PRECONDITION(dblBond->getBondType() == RDKit::Bond::DOUBLE, "");

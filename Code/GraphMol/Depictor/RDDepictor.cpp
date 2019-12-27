@@ -196,7 +196,7 @@ void computeInitialCoords(RDKit::ROMol &mol,
 
   efrags.clear();
 
-  // user specified coordinates exist
+  // user-specified coordinates exist
   bool preSpec = false;
   // first embed any atoms for which the coordinates have been specified.
   if ((coordMap) && (coordMap->size() > 1)) {
@@ -384,7 +384,7 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
   other. The second component is the sum of squares of the
   difference in distance between those in dmat and the generated
   structure.  The user can adjust the relative importance of the two
-  components via a adjustable parameter (see below)
+  components via an adjustable parameter (see below)
 
   ARGUMENTS:
   \param mol - molecule involved in the fragment

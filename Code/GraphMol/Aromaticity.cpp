@@ -158,7 +158,7 @@ static bool applyHuckel(ROMol &mol, const INT_VECT &ring,
                         const VECT_EDON_TYPE &edon);
 
 static void applyHuckelToFused(
-    ROMol &mol,                   // molecule of interests
+    ROMol &mol,                   // molecule of interest
     const VECT_INT_VECT &srings,  // list of all ring as atom IDS
     const VECT_INT_VECT &brings,  // list of all rings as bond ids
     const INT_VECT &fused,       // list of ring ids in the current fused system
@@ -333,7 +333,7 @@ bool applyHuckel(ROMol &mol, const INT_VECT &ring, const VECT_EDON_TYPE &edon,
 }
 
 void applyHuckelToFused(
-    ROMol &mol,                   // molecule of interests
+    ROMol &mol,                   // molecule of interest
     const VECT_INT_VECT &srings,  // list of all ring as atom IDS
     const VECT_INT_VECT &brings,  // list of all rings as bond ids
     const INT_VECT &fused,       // list of ring ids in the current fused system

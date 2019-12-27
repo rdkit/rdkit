@@ -216,7 +216,7 @@ RDKit::INT_VECT findNextRingToEmbed(const RDKit::INT_VECT &doneRings,
   // in common are in general flat systems to start with and can be embedded
   // cleanly.
   // when there are more than 2 atoms in common, these are most likely bridged
-  // system, which are
+  // systems, which are
   // screwed up anyway, might as well screw them up later
   // if we do not have a system with two rings in common then we will return the
   // ring with max,
