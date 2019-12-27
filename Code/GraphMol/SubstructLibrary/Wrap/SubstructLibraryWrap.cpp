@@ -205,7 +205,7 @@ void toStream(const SubstructLibrary &cat, python::object &fileobj) {
 }
 
   void initFromStream(SubstructLibrary &cat, python::object &fileobj) {
-  streambuf ss(fileobj);
+  streambuf ss(fileobj, 'b'); // python StringIO can't seek, so need binary data
   streambuf::istream is(ss);
   cat.initFromStream(is);
 }
