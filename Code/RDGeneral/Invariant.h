@@ -66,7 +66,7 @@ class RDKIT_RDGENERAL_EXPORT Invariant : public std::runtime_error {
         prefix_d(prefix),
         file_dp(file),
         line_d(line) {}
-  ~Invariant() throw(){};
+  ~Invariant() noexcept {};
 
   std::string getMessage() const { return mess_d; }
 

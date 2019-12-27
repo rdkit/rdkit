@@ -39,6 +39,7 @@ UniformGrid3D &UniformGrid3D::operator=(const UniformGrid3D &other) {
   initGrid(other.d_numX * other.d_spacing, other.d_numY * other.d_spacing,
            other.d_numZ * other.d_spacing, other.d_spacing,
            other.dp_storage->getValueType(), other.d_offSet, data);
+  return *this;
 }
 
 void UniformGrid3D::initGrid(

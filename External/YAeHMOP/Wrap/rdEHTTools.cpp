@@ -46,16 +46,16 @@ boost::python::object transfer_to_python(T *t) {
   return python::object(handle);
 }
 
-PyObject *getMatrixProp(const double *mat, unsigned int sz) {
+PyObject *getMatrixProp(const double *mat, unsigned int dim1, unsigned int dim2) {
   if (!mat) throw_value_error("matrix has not be initialized");
   npy_intp dims[2];
-  dims[0] = sz;
-  dims[1] = sz;
+  dims[0] = dim1;
+  dims[1] = dim2;
 
   PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
 
   memcpy(PyArray_DATA(res), static_cast<const void *>(mat),
-         sz * sz * sizeof(double));
+         dim1 * dim2 * sizeof(double));
 
   return PyArray_Return(res);
 }
@@ -84,7 +84,7 @@ PyObject *getVectorProp(const double *mat, unsigned int sz) {
   return PyArray_Return(res);
 }
 PyObject *getChargeMatrix(EHTTools::EHTResults &self) {
-  return getMatrixProp(self.reducedChargeMatrix.get(), self.numAtoms);
+  return getMatrixProp(self.reducedChargeMatrix.get(), self.numAtoms, self.numOrbitals);
 }
 
 PyObject *getOPMatrix(EHTTools::EHTResults &self) {
@@ -109,6 +109,8 @@ struct EHT_wrapper {
 
     python::class_<RDKit::EHTTools::EHTResults, boost::noncopyable>(
         "EHTResults", docString.c_str(), python::no_init)
+        .def_readonly("numOrbitals", &RDKit::EHTTools::EHTResults::numOrbitals)
+        .def_readonly("numElectrons", &RDKit::EHTTools::EHTResults::numElectrons)
         .def_readonly("fermiEnergy", &RDKit::EHTTools::EHTResults::fermiEnergy)
         .def_readonly("totalEnergy", &RDKit::EHTTools::EHTResults::totalEnergy)
         .def("GetReducedChargeMatrix", getChargeMatrix,

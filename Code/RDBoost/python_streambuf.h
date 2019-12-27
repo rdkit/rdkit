@@ -502,7 +502,7 @@ struct ostream : private streambuf_capsule, streambuf::ostream {
       : streambuf_capsule(python_file_obj, buffer_size),
         streambuf::ostream(python_streambuf) {}
 
-  ~ostream() throw() {
+  ~ostream() noexcept {
     try {
       if (this->good()) this->flush();
     } catch (bp::error_already_set&) {

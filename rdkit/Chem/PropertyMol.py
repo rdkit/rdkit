@@ -56,8 +56,8 @@ class PropertyMol(Chem.Mol):
 
      This is a test for sf.net issue 2880943: make sure properties end up in SD files:
 
-     >>> import tempfile,os
-     >>> fn = tempfile.mktemp('.sdf')
+     >>> import tempfile, os
+     >>> fn = tempfile.NamedTemporaryFile(suffix='.sdf', delete=False).name
      >>> w = Chem.SDWriter(fn)
      >>> w.write(pm)
      >>> w=None
@@ -73,7 +73,7 @@ class PropertyMol(Chem.Mol):
      The next level of that bug: does writing a *depickled* propertymol
      to an SD file include properties:
 
-     >>> fn = tempfile.mktemp('.sdf')
+     >>> fn = tempfile.NamedTemporaryFile(suffix='.sdf', delete=False).name
      >>> w = Chem.SDWriter(fn)
      >>> pm = pickle.loads(pickle.dumps(pm))
      >>> w.write(pm)

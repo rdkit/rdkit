@@ -20,7 +20,7 @@ class RDKIT_DATASTRUCTS_EXPORT DatastructsException : public std::exception {
   DatastructsException(const std::string &msg) : _msg(msg){};
   //! get the error message
   const char *message() const { return _msg.c_str(); };
-  ~DatastructsException() throw(){};
+  ~DatastructsException() noexcept {};
 
  private:
   std::string _msg;

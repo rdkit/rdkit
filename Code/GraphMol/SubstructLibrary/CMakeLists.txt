@@ -1,13 +1,7 @@
-
-
-
-
 if(RDK_USE_BOOST_SERIALIZATION AND Boost_SERIALIZATION_LIBRARY)
     set(RDKit_SERIALIZATION_LIBS ${Boost_SERIALIZATION_LIBRARY})
-    add_definitions(-DRDK_USE_BOOST_SERIALIZATION)
 else()
     message("== Making SubstructLibrary without boost Serialization support")
-    remove_definitions(-DRDK_USE_BOOST_SERIALIZATION)
     set(RDKit_SERIALIZATION_LIBS )
 endif()
 

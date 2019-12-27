@@ -37,19 +37,30 @@ void testGithub2245() {
   BOOST_LOG(rdErrorLog) << "Testing github issue 2245: MinMax Diversity picker "
                            "seeding shows deterministic / non-random behaviour."
                         << std::endl;
+  const int MAX_ALLOWED_FAILURES = 3;
+  int maxAllowedFailures;
   {
     RDPickers::MaxMinPicker pkr;
     int poolSz = 1000;
     auto picks1 = pkr.lazyPick(dist_on_line, poolSz, 10, RDKit::INT_VECT(), -1);
-    auto picks2 = pkr.lazyPick(dist_on_line, poolSz, 10, RDKit::INT_VECT(), -1);
-    TEST_ASSERT(picks1 != picks2);
+    for (maxAllowedFailures = MAX_ALLOWED_FAILURES; maxAllowedFailures;
+         --maxAllowedFailures) {
+      auto picks2 =
+          pkr.lazyPick(dist_on_line, poolSz, 10, RDKit::INT_VECT(), -1);
+      if (picks1 != picks2) break;
+    }
+    TEST_ASSERT(maxAllowedFailures);
   }
   {  // make sure the default is also random
     RDPickers::MaxMinPicker pkr;
     int poolSz = 1000;
     auto picks1 = pkr.lazyPick(dist_on_line, poolSz, 10);
-    auto picks2 = pkr.lazyPick(dist_on_line, poolSz, 10);
-    TEST_ASSERT(picks1 != picks2);
+    for (maxAllowedFailures = MAX_ALLOWED_FAILURES; maxAllowedFailures;
+         --maxAllowedFailures) {
+      auto picks2 = pkr.lazyPick(dist_on_line, poolSz, 10);
+      if (picks1 != picks2) break;
+    }
+    TEST_ASSERT(maxAllowedFailures);
   }
   {  // and we're still reproducible when we want to be
     RDPickers::MaxMinPicker pkr;
