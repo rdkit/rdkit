@@ -195,23 +195,11 @@ def MolToImage(mol, size=(300, 300), kekulize=True, wedgeBonds=True, fitImage=Fa
                    kwargs.get('legend',''),highlightBonds=kwargs.get('highlightBonds',[]),
                    drawOptions=options,
                   kekulize=kekulize,wedgeBonds=wedgeBonds)
-  
-  
 
-
-def MolToFile(mol, fileName, size=(300, 300), kekulize=True, wedgeBonds=True, imageType=None,
-              fitImage=False, options=None, **kwargs):
+def _legacyMolToFile(mol, fileName, size, kekulize, wedgeBonds, imageType,
+              fitImage, options, **kwargs):
   """ Generates a drawing of a molecule and writes it to a file
   """
-  # original contribution from Uwe Hoffmann
-  if not fileName:
-    raise ValueError('no fileName provided')
-  if not mol:
-    raise ValueError('Null molecule provided')
-
-  if imageType is None:
-    imageType = os.path.splitext(fileName)[1][1:]
-
   if options is None:
     options = DrawingOptions()
   useAGG, useCairo, Canvas = _getCanvas()
@@ -239,11 +227,47 @@ def MolToFile(mol, fileName, size=(300, 300), kekulize=True, wedgeBonds=True, im
   else:
     canvas.save()
 
+def MolToFile(mol, filename, size=(300, 300), kekulize=True, wedgeBonds=True, imageType=None,
+              fitImage=False, options=None, **kwargs):
+  """ Generates a drawing of a molecule and writes it to a file
+  """
+  # original contribution from Uwe Hoffmann
+  if not filename:
+    raise ValueError('no filename provided')
+  if not mol:
+    raise ValueError('Null molecule provided')
 
+  if imageType is None:
+    imageType = os.path.splitext(filename)[1][1:]
+
+  if imageType not in ('svg','png'):
+    _legacyMolToFile(mol,filename,size,kekulize,wedgeBonds,imageType,fitImage,options,
+                       **kwargs)
+  
+  if type(options)==DrawingOptions:
+    warnings.warn("legacy DrawingOptions not translated for new drawing code, please update manually",DeprecationWarning)
+    options = None
+  if imageType=='png':
+    drawfn = _moltoimg
+    mode = 'b'
+  elif imageType=='svg':
+    data = _moltoSVG
+    mode = 't'
+  else:
+    raise ValueError("unsupported output format")
+  data = drawfn(mol,size,kwargs.get('highlightAtoms',[]),
+                  kwargs.get('legend',''),highlightBonds=kwargs.get('highlightBonds',[]),
+                  drawOptions=options,
+                kekulize=kekulize,wedgeBonds=wedgeBonds,returnPNG=True)
+  with open(filename,'w+'+mode) as outf:
+    outf.write(data)
+    outf.close()
+ 
 def MolToImageFile(mol, filename, size=(300, 300), kekulize=True, wedgeBonds=True, **kwargs):
   """  DEPRECATED:  please use MolToFile instead
 
   """
+  warnings.warn("MolToImageFile is deprecated, please use MolToFile instead",DeprecationWarning)
   img = MolToImage(mol, size=size, kekulize=kekulize, wedgeBonds=wedgeBonds, **kwargs)
   img.save(filename)
 
