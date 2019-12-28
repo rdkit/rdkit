@@ -1806,7 +1806,7 @@ void assignChiralTypesFromMolParity(ROMol &mol, bool replaceExistingTags) {
   // Atom-based parity
   // Number the atoms surrounding the stereo center with 1, 2, 3, and 4
   // in order of increasing atom number (position in the atom block)
-  // (a hydrogen atom should be considered the highest numbered atom).
+  // (an implicit hydrogen should be considered the highest numbered atom).
   // View the center from a position such that the bond connecting the
   // highest-numbered atom (4) projects behind the plane formed by
   // atoms 1, 2, and 3.
