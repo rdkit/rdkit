@@ -9,6 +9,7 @@
 #
 import os
 import re
+import warnings
 
 from rdkit.Chem.Draw import rdMolDraw2D
 from rdkit.Chem.Draw.MolDrawing import MolDrawing, DrawingOptions
@@ -99,7 +100,6 @@ def _legacyMolToImage(mol, size=(300, 300), kekulize=True, wedgeBonds=True, fitI
 
         a PIL Image object
   """
-
   if not mol:
     raise ValueError('Null molecule provided')
   if canvas is None:
@@ -150,7 +150,7 @@ def _legacyMolToImage(mol, size=(300, 300), kekulize=True, wedgeBonds=True, fitI
   else:
     canvas.flush()
     return img
-
+ 
 def MolToImage(mol, size=(300, 300), kekulize=True, wedgeBonds=True, fitImage=False, options=None,
                canvas=None, **kwargs):
   """Returns a PIL image containing a drawing of the molecule
@@ -188,7 +188,10 @@ def MolToImage(mol, size=(300, 300), kekulize=True, wedgeBonds=True, fitImage=Fa
     raise ValueError('Null molecule provided')
   if canvas is not None or not hasattr(rdMolDraw2D,'MolDraw2DCairo'):
     return _legacyMolToImage(mol,size=size,kekulize=kekulize,wedgeBonds=wedgeBonds,fitImage=fitImage,
-                             options=options,canvas=canvas,**kwargs)    
+                             options=options,canvas=canvas,**kwargs)
+  if type(options)==DrawingOptions:
+    warnings.warn("legacy DrawingOptions not translated for new drawing code, please update manually",DeprecationWarning)
+    options = None
   return _moltoimg(mol,size,kwargs.get('highlightAtoms',[]),
                    kwargs.get('legend',''),highlightBonds=kwargs.get('highlightBonds',[]),
                    drawOptions=options,
