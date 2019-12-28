@@ -249,35 +249,25 @@ def MolToImageFile(mol, filename, size=(300, 300), kekulize=True, wedgeBonds=Tru
   img.save(filename)
 
 
-tkRoot = None
-tkLabel = None
-tkPI = None
-
-
-def ShowMol(mol, size=(300, 300), kekulize=True, wedgeBonds=True, title='RDKit Molecule', **kwargs):
+def ShowMol(mol, size=(300, 300), kekulize=True, wedgeBonds=True, title='RDKit Molecule', 
+            stayInFront=True,**kwargs):
   """ Generates a picture of a molecule and displays it in a Tkinter window
   """
-  global tkRoot, tkLabel, tkPI
-  try:
-    import Tkinter
-  except ImportError:
-    import tkinter as Tkinter
-  try:
-    import ImageTk
-  except ImportError:
-    from PIL import ImageTk
+  import tkinter
+  from PIL import ImageTk
 
   img = MolToImage(mol, size, kekulize, wedgeBonds, **kwargs)
 
-  if not tkRoot:
-    tkRoot = Tkinter.Tk()
-    tkRoot.title(title)
-    tkPI = ImageTk.PhotoImage(img)
-    tkLabel = Tkinter.Label(tkRoot, image=tkPI)
-    tkLabel.place(x=0, y=0, width=img.size[0], height=img.size[1])
-  else:
-    tkPI.paste(img)
+  tkRoot = tkinter.Tk()
+  tkRoot.title(title)
+  tkPI = ImageTk.PhotoImage(img)
+  tkLabel = tkinter.Label(tkRoot, image=tkPI)
+  tkLabel.place(x=0, y=0, width=img.size[0], height=img.size[1])
   tkRoot.geometry('%dx%d' % (img.size))
+  tkRoot.lift()
+  if stayInFront:
+    tkRoot.attributes('-topmost',True)
+  tkRoot.mainloop()
 
 
 def MolToMPL(mol, size=(300, 300), kekulize=True, wedgeBonds=True, imageType=None, fitImage=False,
