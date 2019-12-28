@@ -13,6 +13,7 @@ import tempfile
 import unittest
 
 from rdkit import Chem
+from rdkit.Chem import rdDepictor
 from rdkit.Chem import Draw
 
 try:
@@ -161,6 +162,7 @@ class TestCase(unittest.TestCase):
     for b in mol.GetBonds():
       self.assertEqual(b.GetBondDir(), Chem.BondDir.NONE)
     
+    rdDepictor.Compute2DCoords(mol)
     img = Draw.MolToImage(mol, kekulize=False)
     self.assertTrue(img)
     # img.show()
