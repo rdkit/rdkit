@@ -67,8 +67,7 @@ def _createCanvas(size):
   return img, canvas
 
 
-def _legacyMolToImage(mol, size=(300, 300), kekulize=True, wedgeBonds=True, fitImage=False, options=None,
-               canvas=None, **kwargs):
+def _legacyMolToImage(mol, size, kekulize, wedgeBonds, fitImage, options, canvas, **kwargs):
   """Returns a PIL image containing a drawing of the molecule using the legacy drawing code
 
       ARGUMENTS:
@@ -187,8 +186,8 @@ def MolToImage(mol, size=(300, 300), kekulize=True, wedgeBonds=True, fitImage=Fa
   if not mol:
     raise ValueError('Null molecule provided')
   if canvas is not None or not hasattr(rdMolDraw2D,'MolDraw2DCairo'):
-    return _legacyMolToImage(mol,size=size,kekulize=kekulize,wedgeBonds=wedgeBonds,fitImage=fitImage,
-                             options=options,canvas=canvas,**kwargs)
+    return _legacyMolToImage(mol,size,kekulize,wedgeBonds,fitImage,
+                             options,canvas,**kwargs)
   if type(options)==DrawingOptions:
     warnings.warn("legacy DrawingOptions not translated for new drawing code, please update manually",DeprecationWarning)
     options = None
