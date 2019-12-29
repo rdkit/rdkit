@@ -1791,6 +1791,76 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
   }
 }
 
+void assignChiralTypesFromMolParity(ROMol &mol, bool replaceExistingTags) {
+  static const std::vector<Atom::ChiralType> chiralTypeVect {
+    Atom::CHI_TETRAHEDRAL_CW,
+    Atom::CHI_TETRAHEDRAL_CCW
+  };
+  // if the molecule already has stereochemistry
+  // perceived, remove the flags that indicate
+  // this... what we're about to do will require
+  // that we go again.
+  if (mol.hasProp(common_properties::_StereochemDone)) {
+    mol.clearProp(common_properties::_StereochemDone);
+  }
+  // Atom-based parity
+  // Number the atoms surrounding the stereo center with 1, 2, 3, and 4
+  // in order of increasing atom number (position in the atom block)
+  // (an implicit hydrogen should be considered the highest numbered atom).
+  // View the center from a position such that the bond connecting the
+  // highest-numbered atom (4) projects behind the plane formed by
+  // atoms 1, 2, and 3.
+  //
+  // Parity 1 (CW)        Parity 2 (CCW)
+  //     3   1                3   2
+  //      \ /                  \ /
+  //       |                    |
+  //       2                    1
+  //
+  for (auto atom: mol.atoms()) {
+    // if we aren't replacing existing tags and the atom is already tagged,
+    // punt:
+    if (!replaceExistingTags && atom->getChiralTag() != Atom::CHI_UNSPECIFIED)
+      continue;
+    int parity = 0;
+    atom->getPropIfPresent(common_properties::molParity, parity);
+    if (parity <= 0 || parity > 2 || atom->getDegree() < 3) {
+      atom->setChiralTag(Atom::CHI_UNSPECIFIED);
+      continue;
+    }
+    // if we are here, parity was 1 (CW) or 2 (CCW)
+    // now we set parity 0 to be CW and 1 to be CCW
+    --parity;
+    RDKit::ROMol::OBOND_ITER_PAIR nbrBonds = mol.getAtomBonds(atom);
+    INT_LIST nbrBondIdxList;
+    std::transform(nbrBonds.first, nbrBonds.second,
+      std::back_inserter(nbrBondIdxList), [mol](const ROMol::edge_descriptor &e) {
+        return mol[e]->getIdx();
+      });
+    unsigned int atomIdx = atom->getIdx();
+    nbrBondIdxList.sort([mol, atomIdx](const int ai, const int bi) {
+      return (mol.getBondWithIdx(ai)->getOtherAtomIdx(atomIdx)
+        < mol.getBondWithIdx(bi)->getOtherAtomIdx(atomIdx));
+    });
+    int nSwaps = atom->getPerturbationOrder(nbrBondIdxList);
+    if (nSwaps % 2)
+      parity = 1 - parity;
+    atom->setChiralTag(chiralTypeVect[parity]);
+    if (atom->getImplicitValence() == -1) {
+      atom->calcExplicitValence(false);
+      atom->calcImplicitValence(false);
+    }
+    // within the RD representation, if a three-coordinate atom
+    // is chiral and has an implicit H, that H needs to be made explicit:
+    if (atom->getDegree() == 3 && !atom->getNumExplicitHs() &&
+        atom->getNumImplicitHs() == 1) {
+      atom->setNumExplicitHs(1);
+      // recalculated number of implicit Hs:
+      atom->updatePropertyCache();
+    }
+  }
+}
+
 namespace {
 
 void setBondDirRelativeToAtom(Bond *bond, Atom *atom, Bond::BondDir dir,
