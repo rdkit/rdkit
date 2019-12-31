@@ -231,7 +231,7 @@ class PiddleWxDc(sping_pid.Canvas):
         """
 
     # Because wxPython automatically closes polygons, the polygon fill and the border
-    # are drawn seperately, so open polygons will display correctly
+    # are drawn separately, so open polygons will display correctly
     self.dc.SetPen(wxTRANSPARENT_PEN)
     self.dc.SetBrush(self._getWXbrush(fillColor, self.defaultFillColor))
 

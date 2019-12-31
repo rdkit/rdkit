@@ -163,11 +163,11 @@ class RDKIT_FMCS_EXPORT RingMatchTableSet {
         bp.CompleteRingsOnly = false;
         bool match =
 #ifdef NEVER_xxx_PRECOMPUTED_TABLES_MATCH  // not computed yet, because
-                                           // MatchTable computation usees this
+                                           // MatchTable computation uses this
                                            // ring info table
             FMCS::SubstructMatchCustomTable(graph2, graph1, tag->AtomMatchTable,
                                             tag->BondMatchTable);
-#else  // noticable slowly:
+#else  // noticeable slowly:
             FMCS::SubstructMatchCustom(
                 graph2, *targetMolecule, graph1, *query, parameters.AtomTyper,
                 parameters.BondTyper, NULL, parameters.AtomCompareParameters,

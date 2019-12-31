@@ -16,7 +16,7 @@
 #include <DataStructs/BitVects.h>
 #include <iostream>
 
-/*! \brief Class used to rank bits based on a specified measure of infomation
+/*! \brief Class used to rank bits based on a specified measure of information
  *
  * Basically a primitive mimic of the CombiChem "signal" functionality
  * To use:
@@ -209,7 +209,7 @@ class RDKIT_INFOTHEORY_EXPORT InfoBitRanker {
    *computed
    *    - the maximum of these fractions for classes that are not in the
    *biasList are computed
-   *    - If this maximum is less than the fraction for atleast one of classes
+   *    - If this maximum is less than the fraction for at least one of the classes
    *in the biaslist
    *      the bit is considered good
    * ARGUMENTS:
@@ -259,7 +259,7 @@ class RDKIT_INFOTHEORY_EXPORT InfoBitRanker {
   unsigned int d_dims;     // the number of bits in the fingerprints
   unsigned int d_classes;  // the number of classes (active, inactive,
                            // moderately active etc.)
-  InfoType d_type;  // the type of information meassure - currently we support
+  InfoType d_type;  // the type of information measure - currently we support
                     // only entropy
   VECT_USHORT_VECT d_counts;  // place holder of counting the number of hits for
                               // each bit for each class

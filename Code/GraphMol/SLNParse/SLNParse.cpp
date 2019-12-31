@@ -101,7 +101,7 @@ void finalizeQueryMol(ROMol *mol, bool mergeHs) {
     SLNParse::parseFinalAtomAttribs(*atomIt, true);
     if ((*atomIt)->hasProp(common_properties::_starred)) {
       if (rootIdx > -1) {
-        BOOST_LOG(rdErrorLog) << "SLN Error: mulitple starred atoms in a "
+        BOOST_LOG(rdErrorLog) << "SLN Error: multiple starred atoms in a "
                                  "recursive query. Extra stars ignored"
                               << std::endl;
       } else {

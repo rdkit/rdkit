@@ -47,7 +47,7 @@
                               // rings where seeds growing in both directions
                               // throw the same ring.
 
-#define FAST_INCREMENTAL_MATCH  // fast and some time very usefull. request
+#define FAST_INCREMENTAL_MATCH  // fast and some time very useful. request
                                 // PRECOMPUTED_TABLES_MATCH
 // previous match result based match checking without finding new matched
 // substructure location in the target

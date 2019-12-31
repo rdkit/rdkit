@@ -210,7 +210,7 @@ class DbConnect(object):
 
       - tableName: the name of the table to add
 
-      - colString: a string containing column defintions
+      - colString: a string containing column definitions
 
     **Notes**
 

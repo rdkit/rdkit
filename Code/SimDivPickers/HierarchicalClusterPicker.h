@@ -38,7 +38,7 @@ class RDKIT_SIMDIVPICKERS_EXPORT HierarchicalClusterPicker : public DistPicker {
 
   /*! \brief Constructor - takes a ClusterMethod as an argument
    *
-   * Sets the hierarch clustering method
+   * Sets the hierarchy clustering method
    */
   explicit HierarchicalClusterPicker(ClusterMethod clusterMethod)
       : d_method(clusterMethod) {
@@ -51,8 +51,8 @@ class RDKIT_SIMDIVPICKERS_EXPORT HierarchicalClusterPicker : public DistPicker {
    *  FIX: Supply reference
    *
    * - The entire pool is clustered using the distance matrix using one of the
-   *   hierachical clustering method (specified via the constructor). \n
-   * - Starting with the individaul items in the pool, clusters are merged based
+   *   hierarchical clustering method (specified via the constructor). \n
+   * - Starting with the individual items in the pool, clusters are merged based
    *   on the output from clustering method. \n
    * - The merging is stopped when the number of clusters is same as
    *   the number of picks.

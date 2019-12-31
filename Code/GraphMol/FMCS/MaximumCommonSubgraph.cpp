@@ -141,7 +141,7 @@ void MaximumCommonSubgraph::init() {
           if (Parameters.AtomTyper(Parameters.AtomCompareParameters,
                                    *QueryMolecule, label.ItemIndex,
                                    *QueryMolecule, ai,
-                                   userData)) {  // equal itoms
+                                   userData)) {  // equal items
             QueryAtomLabels[ai] = label.Value;
             break;
           }
@@ -318,7 +318,7 @@ void MaximumCommonSubgraph::makeInitialSeeds() {
   if (!Parameters.InitialSeed.empty()) {  // make user defined seed
     std::auto_ptr<const ROMol> initialSeedMolecule(
         (const ROMol*)SmartsToMol(Parameters.InitialSeed));
-    // make a set of of seed as indeces and pointers to current query molecule
+    // make a set of of seed as indices and pointers to current query molecule
     // items based on matching results
     std::vector<MatchVectType> matching_substructs;
     SubstructMatch(*QueryMolecule, *initialSeedMolecule, matching_substructs);
@@ -516,7 +516,7 @@ bool MaximumCommonSubgraph::growSeeds() {
   bool mcsFound = false;
   bool canceled = false;
   unsigned steps = 99999;  // steps from last progress callback call. call it
-                           // immediately in the begining
+                           // immediately in the beginning
 
   // Find MCS -- SDF Seed growing OPTIMISATION (it works in 3 times faster)
   while (!Seeds.empty()) {
@@ -1073,7 +1073,7 @@ bool MaximumCommonSubgraph::checkIfMatchAndAppend(Seed& seed) {
     *newSeed =
         seed;  // non-blocking copy for MULTI_THREAD and best CPU utilization
 
-  return found;  // new matched seed has been actualy added
+  return found;  // new matched seed has been actually added
 }
 
 bool MaximumCommonSubgraph::match(Seed& seed) {
@@ -1109,7 +1109,7 @@ bool MaximumCommonSubgraph::match(Seed& seed) {
     }
 
     if (target_matched) {
-      if (++passed >= ThresholdCount)  // it's enought
+      if (++passed >= ThresholdCount)  // it's enough
         break;
     } else {  // mismatched
       if (++missing > max_miss) break;

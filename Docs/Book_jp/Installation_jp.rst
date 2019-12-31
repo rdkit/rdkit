@@ -68,7 +68,7 @@ conda-forgeパッケージ
 
 Condaを使ってソースからビルドする方法
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-[`How to bulid from source with Conda <https://www.rdkit.org/docs/Install.html#how-to-build-from-source-with-conda>`__]
+[`How to build from source with Conda <https://www.rdkit.org/docs/Install.html#how-to-build-from-source-with-conda>`__]
 
 condaを使ってソースからビルドする方法の詳細は、\ `conda-rdkit repository <https://github.com/rdkit/conda-rdkit>`__\ を見てください。
 
@@ -316,7 +316,7 @@ FAQと解決方法のリストは下を見てください。
 
 ビルドの検証 (オプションですが、推奨します)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[`Testing the build (optional, but recomended) <https://www.rdkit.org/docs/Install.html#testing-the-build-optional-but-recommended>`__]
+[`Testing the build (optional, but recommended) <https://www.rdkit.org/docs/Install.html#testing-the-build-optional-but-recommended>`__]
 
 -  $RDBASE/build にcd、次に\ ``ctest``\ を実行
 -  これでおしまい！

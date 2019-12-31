@@ -27,7 +27,7 @@
 
 namespace RDKit {
 std::string strip(const std::string &orig) {
-  // FIX: this can be more efficeint
+  // FIX: this can be more efficient
   // strip the end of line, white spaces and tabs
   std::string res =
       boost::trim_right_copy_if(orig, boost::is_any_of(" \t\r\n"));
@@ -78,7 +78,7 @@ void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
       if (tempStr[0] == '>') {  // data header line: start of a data item
         // ignore all other crap and seek for for a data label enclosed
         // by '<' and '>'
-        // FIX: "CTfile.pdf" (page 51) says that the a data header line does not
+        // FIX: "CTfile.pdf" (page 51) says that the data header line does not
         // have to contain a data label (instead can have something line field
         // id into a MACCS db). But we do not currently know what to do in this
         // situation - so ignore such data items for now
@@ -89,7 +89,7 @@ void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
         size_t se = tempStr.find(">");  // end datalabel
         if ((sl == std::string::npos) || (se == std::string::npos) ||
             (se == (sl + 1))) {
-          // we either do not have a data label or the label is emtpy
+          // we either do not have a data label or the label is empty
           // no data label ignore until next data item
           // i.e. until we hit a blank line
           d_line++;
@@ -223,7 +223,7 @@ ROMol *ForwardSDMolSupplier::_next() {
     // the exception. This should allow us to read the next molecule.
     BOOST_LOG(rdErrorLog) << "ERROR: " << fe.message() << std::endl;
     BOOST_LOG(rdErrorLog)
-        << "ERROR: moving to the begining of the next molecule\n";
+        << "ERROR: moving to the beginning of the next molecule\n";
 
     // FIX: report files missing the $$$$ marker
     d_line++;
@@ -258,7 +258,7 @@ ROMol *ForwardSDMolSupplier::_next() {
     BOOST_LOG(rdErrorLog) << "Unexpected error hit on line " << d_line
                           << std::endl;
     BOOST_LOG(rdErrorLog)
-        << "ERROR: moving to the begining of the next molecule\n";
+        << "ERROR: moving to the beginning of the next molecule\n";
     d_line++;
     std::getline(*dp_inStream, tempStr);
     if (dp_inStream->eof()) df_eofHitOnRead = true;

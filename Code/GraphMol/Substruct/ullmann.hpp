@@ -93,7 +93,7 @@ namespace boost {
           }
         }
       }
-      // TODO: change the data structure of the M matrix to sparse matrix. This wouldn't be neccessary
+      // TODO: change the data structure of the M matrix to sparse matrix. This wouldn't be necessary
       size_t cero_row(0);
       for (size_t k=0; k<num_vert_g1; ++k) {
         for (size_t l=0; l<num_vert_g2; ++l) {

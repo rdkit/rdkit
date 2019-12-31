@@ -697,7 +697,7 @@ class Composite(object):
     """
     outStr = 'Composite\n'
     for i in range(len(self.modelList)):
-      outStr = (outStr + '  Model %4d:  %5d occurances  %%%5.2f average error\n' %
+      outStr = (outStr + '  Model %4d:  %5d occurrences  %%%5.2f average error\n' %
                 (i, self.countList[i], 100. * self.errList[i]))
     return outStr
 

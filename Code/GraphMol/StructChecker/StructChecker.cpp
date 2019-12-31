@@ -181,7 +181,7 @@ unsigned StructChecker::checkMolStructure(RWMol &mol) const {
   */
 
   // the end:
-  if (0 != (flags & TRANSFORMED)) {  // sanitaze molecule
+  if (0 != (flags & TRANSFORMED)) {  // sanitize molecule
                                      // + ???? .............. ????
     if (mol.getRingInfo()->isInitialized()) mol.getRingInfo()->reset();
     mol.getRingInfo()->initialize();

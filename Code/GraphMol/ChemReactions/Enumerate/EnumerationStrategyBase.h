@@ -103,7 +103,7 @@ getReactantsFromRGroups(const std::vector<MOL_SPTR_VECT> &bbs,
 RDKIT_CHEMREACTIONS_EXPORT boost::uint64_t computeNumProducts(
     const EnumerationTypes::RGROUPS &sizes);
 
-//! Base Class for enumeration strageties
+//! Base Class for enumeration strategies
 //!  Usage:
 //!  EnumerationStrategyBase must be initialized with both a reaction
 //!   and the building block (molecule) vector to be sampled.

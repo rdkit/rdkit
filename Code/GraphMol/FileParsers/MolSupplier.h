@@ -222,7 +222,7 @@ class RDKIT_FILEPARSERS_EXPORT SmilesMolSupplier : public MolSupplier {
    *     available for the molecule and the name is defaulted to the
    *     smiles string
    *   \param titleLine - if true, the first line is assumed to list the
-   *     names of properties in order seperated by 'delimiter'. It is
+   *     names of properties in order separated by 'delimiter'. It is
    *     also assume that the 'SMILES' column and the 'name' column
    *     are not specified here if false - no title line is assumed
    *     and the properties are recorded as the "columnX" where "X" is

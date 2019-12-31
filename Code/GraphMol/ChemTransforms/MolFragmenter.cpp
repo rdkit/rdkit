@@ -68,7 +68,7 @@ void constructFragmenterAtomTypes(
     if (defs.find(idx) != defs.end()) {
       BOOST_LOG(rdWarningLog)
           << "definition #" << idx
-          << " encountered more than once. Using the first occurance."
+          << " encountered more than once. Using the first occurrence."
           << std::endl;
       continue;
     }

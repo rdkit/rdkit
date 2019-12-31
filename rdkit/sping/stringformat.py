@@ -349,7 +349,7 @@ def stringWidth(canvas, s, font=None):
 
 
 def rotateXY(x, y, theta):
-  "Rotate (x,y) by theta degrees.  Got tranformation \
+  "Rotate (x,y) by theta degrees.  Got transformation \
         from page 299 in linear algebra book."
 
   radians = theta * math.pi / 180.0

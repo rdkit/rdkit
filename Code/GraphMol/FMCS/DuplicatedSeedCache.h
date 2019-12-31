@@ -53,7 +53,7 @@ class DuplicatedSeedCache {
       if (BondIdx.size() < right.BondIdx.size()) return true;
       if (BondIdx.size() > right.BondIdx.size()) return false;
 
-      // everything is equal -> perform straight comparision
+      // everything is equal -> perform straight comparison
       int diff;
       diff = memcmp(&AtomIdx[0], &right.AtomIdx[0],
                     AtomIdx.size() * sizeof(unsigned));

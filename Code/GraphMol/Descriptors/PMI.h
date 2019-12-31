@@ -98,7 +98,7 @@ const std::string eccentricityVersion = "1.0.0";
                   where t_i is the ith moment from the gyration matrix
 
    Some explanation of that definition: the text of the paper mentions axes
-   of inertia, but then the defintion of the radius of gyration in eq.9 clearly
+   of inertia, but then the definition of the radius of gyration in eq.9 clearly
    uses the moments of the gyration matrix. The text under equation 11 has the
    appropriate inequalities and limits for the moments of gyration, but the
    description of the geometry provided corresponds to the moments of inertia.

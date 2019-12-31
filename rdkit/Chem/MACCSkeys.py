@@ -8,7 +8,7 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-""" SMARTS definitions for the publically available MACCS keys
+""" SMARTS definitions for the publicly available MACCS keys
 and a MACCS fingerprinter
 
 I compared the MACCS fingerprints generated here with those from two

@@ -335,7 +335,7 @@ class p_con:
     using threshold for value in training-data"""
 
   def __init__(self, acc_id=None, proxy={}):
-    """Constructor to initialize Object, use proxy if neccessary"""
+    """Constructor to initialize Object, use proxy if necessary"""
     self.request_data = {"acc_id": acc_id, "proxy": proxy}
     self.acc_id = acc_id
     self.proxy = proxy

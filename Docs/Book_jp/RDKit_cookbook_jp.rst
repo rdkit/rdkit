@@ -16,7 +16,7 @@ RDKitクックブック
 
 異なる芳香族性モデルを使う方法
 ========================================
-[`Using a differnt aromaticity model <https://www.rdkit.org/docs/Cookbook.html#using-a-different-aromaticity-model>`__]
+[`Using a different aromaticity model <https://www.rdkit.org/docs/Cookbook.html#using-a-different-aromaticity-model>`__]
 
 デフォルトでは、RDKitは分子を読み込むときにRDKit自体の芳香族性モデル（RDKit Theory Bookで説明されています）を適用します。
 ですが、このモデルを上書きし、自分の芳香族性モデルを使うのはとても簡単です。

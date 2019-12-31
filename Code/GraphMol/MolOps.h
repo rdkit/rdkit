@@ -128,7 +128,7 @@ getMolFragsWithQuery(const ROMol &mol, T (*query)(const ROMol &, const Atom *),
                      bool negateList = false);
 
 #if 0
-    //! finds a molecule's minimium spanning tree (MST)
+    //! finds a molecule's minimum spanning tree (MST)
     /*!
       \param mol  the molecule of interest
       \param mst  used to return the MST as a vector of bond indices
@@ -532,7 +532,7 @@ RDKIT_GRAPHMOL_EXPORT void adjustHs(RWMol &mol);
                           original state.
    \param maxBackTracks   the maximum number of attempts at back-tracking. The
    algorithm
-                          uses a back-tracking procedure to revist a previous
+                          uses a back-tracking procedure to revisit a previous
    setting of
                           double bond if we hit a wall in the kekulization
    process
@@ -630,7 +630,7 @@ RDKIT_GRAPHMOL_EXPORT void findRingFamilies(const ROMol &mol);
   computed
    and discarded during findSSSR. The new ring are chosen such that:
     - replacing a same sized ring in the SSSR list with an extra ring yields
-      the same union of bond IDs as the orignal SSSR list
+      the same union of bond IDs as the original SSSR list
 
   \param mol - the molecule of interest
   \param res used to return the vector of rings. Each entry is a vector with

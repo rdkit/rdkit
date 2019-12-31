@@ -272,7 +272,7 @@ void test3MatMultiply() {
 
   std::cout << "Pt1: " << pt1 << " Pt2: " << pt2 << "\n";
   std::cout << "-Pt1: " << (-pt1) << "\n";
-  // move to orgin
+  // move to origin
   Transform3D t1;
   t1.SetTranslation(-pt1);
 

@@ -364,7 +364,7 @@ class SparseIntVect {
       streamRead(ss, tInt);
       if (tInt > sizeof(IndexType)) {
         throw ValueErrorException(
-            "IndexType cannot accomodate index size in SparseIntVect pickle");
+            "IndexType cannot accommodate index size in SparseIntVect pickle");
       }
       switch (tInt) {
         case sizeof(char):

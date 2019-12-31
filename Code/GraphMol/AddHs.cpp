@@ -374,7 +374,7 @@ void AssignHsResidueInfo(RWMol &mol) {
         if (mol.getAtomWithIdx(*begin)->getAtomicNum() == 1) {
           // Make all Hs unique - increment id even for existing
           ++current_h_id;
-          // skip if hyrogen already has PDB info
+          // skip if hydrogen already has PDB info
           AtomPDBResidueInfo *h_info =
               (AtomPDBResidueInfo *)mol.getAtomWithIdx(*begin)
                   ->getMonomerInfo();

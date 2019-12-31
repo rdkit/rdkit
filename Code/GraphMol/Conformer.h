@@ -19,7 +19,7 @@
 namespace RDKit {
 class ROMol;
 
-//! used to indicate errors from incorrect confomer access
+//! used to indicate errors from incorrect conformer access
 class RDKIT_GRAPHMOL_EXPORT ConformerException : public std::exception {
  public:
   //! construct with an error message
@@ -129,10 +129,10 @@ class RDKIT_GRAPHMOL_EXPORT Conformer : public RDProps {
   inline void set3D(bool v) { df_is3D = v; }
 
  protected:
-  //! Set owning moelcule
+  //! Set owning molecule
   void setOwningMol(ROMol *mol);
 
-  //! Set owning moelcule
+  //! Set owning molecule
   void setOwningMol(ROMol &mol);
 
  private:
