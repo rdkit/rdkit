@@ -101,7 +101,7 @@ const float B3[] =
 {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
 */
 
-// function to retreive the atomtype value based on the "highest" (e.g. max)
+// function to retrieve the atomtype value based on the "highest" (e.g. max)
 // bond type of an atom potential improvement : in the original publication they
 // don't have access to "Aromatic type" like in RDKit
 unsigned int getAtomtype(const ROMol &mol, const RDKit::Atom *atom) {
@@ -239,7 +239,7 @@ void EEM(ROMol &mol, std::vector<double> &res, int confId) {
   res.resize(numAtoms);
   // copy molecule so that we can kekulize it
   RWMol wmol(mol);
-  // kekulize is currenlty required but it could be remove if and only if:
+  // kekulize is currently required but it could be remove if and only if:
   // we use "Aromatic type"  in RDKit retrain the model without Kekulize
   // that would be part of a future release if it's really important
   MolOps::Kekulize(wmol, true);

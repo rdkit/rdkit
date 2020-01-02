@@ -49,15 +49,15 @@ RDKIT_GRAPHMOL_EXPORT void pickFusedRings(int curr,
                                           boost::dynamic_bitset<> &done,
                                           int depth = 0);
 
-//! \brief For each ring in bring compute and strore the ring that are fused
-//! (share atleast one bond with it).
+//! \brief For each ring in bring compute and store the ring that are fused
+//! (share at least one bond with it).
 /*!
   Useful both for the keulization stuff and aromaticity perception.
 
   \param brings   list of rings - each ring is specified as a list of bond IDs
   \param neighMap an STL map into which the results are stored. Each entry in
   the
-              map is indexed by the ring ID and the conents are the list
+              map is indexed by the ring ID and the contents are the list
               rings (rather their IDs) that are fused with this ring
   \param maxSize if this is >0, rings that are larger than the threshold
                  will not be considered as candidates to be neighbors

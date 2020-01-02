@@ -140,7 +140,7 @@ const std::string chiNnVersion = "1.2.0";
   \param atomContribs  if provided, this will be used to return the
   contributions
                        of the individual atoms to the value. These do not
-                       neccessarily sum to the full value.
+                       necessarily sum to the full value.
                        Note: this can be a time-consuming calculation.
 */
 RDKIT_DESCRIPTORS_EXPORT double calcHallKierAlpha(

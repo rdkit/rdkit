@@ -36,7 +36,7 @@ int getBitId(const char*& text, int format, int size, int curr) {
     tmp = EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(*(int*)text);
     text += sizeof(tmp);
     res = tmp;
-  } else if (format == 1) {  // version 16 and on bits sotred as short ints
+  } else if (format == 1) {  // version 16 and on bits sorted as short ints
     unsigned short tmp;
     tmp = EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(
         *(unsigned short*)text);
@@ -242,7 +242,7 @@ int NumOnBitsInCommon(const ExplicitBitVect& bv1, const ExplicitBitVect& bv2) {
 // """ -------------------------------------------------------
 //
 //  TanimotoSimilarity(T1,T2)
-//   returns the Tanamoto similarity between T1 and T2, a double.
+//   returns the Tanimoto similarity between T1 and T2, a double.
 //
 //  T1 and T2 should be the same length.
 //

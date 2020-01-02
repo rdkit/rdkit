@@ -59,9 +59,9 @@ inline T SwapBytes(T value) {
 }
 
 // Here is the function you will use. Again there is two compile-time assertion
-// that use the boost librarie. You could probably comment them out, but if you
+// that use the boost libraries. You could probably comment them out, but if you
 // do be cautious not to use this function for anything else than integers
-// types. This function need to be calles like this :
+// types. This function need to be called like this :
 //
 //     int x = someValue;
 //     int i = EndianSwapBytes<HOST_ENDIAN_ORDER, BIG_ENDIAN_ORDER>(x);

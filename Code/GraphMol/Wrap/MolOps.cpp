@@ -1676,19 +1676,36 @@ struct molops_wrapper {
 
     // ------------------------------------------------------------------------
     docString =
-        "Sets the chiral tags on a molecule's atoms based on \n\
+        "Sets the chiral tags on a molecule's atoms based on\n\
   a 3D conformation.\n\
 \n\
   ARGUMENTS:\n\
 \n\
     - mol: the molecule to use\n\
     - confId: the conformer id to use, -1 for the default \n\
-    - replaceExistingTags: if True, existing stereochemistry information will be cleared \n\
-    before running the calculation. \n\
+    - replaceExistingTags: if True, existing stereochemistry information will be cleared\n\
+    before running the calculation.\n\
 \n";
     python::def("AssignAtomChiralTagsFromStructure",
                 MolOps::assignChiralTypesFrom3D,
                 (python::arg("mol"), python::arg("confId") = -1,
+                 python::arg("replaceExistingTags") = true),
+                docString.c_str());
+
+    // ------------------------------------------------------------------------
+    docString =
+        "Sets the chiral tags on a molecule's atoms based on\n\
+  the molParity atom property.\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use\n\
+    - replaceExistingTags: if True, existing stereochemistry information will be cleared\n\
+    before running the calculation.\n\
+\n";
+    python::def("AssignAtomChiralTagsFromMolParity",
+                MolOps::assignChiralTypesFromMolParity,
+                (python::arg("mol"),
                  python::arg("replaceExistingTags") = true),
                 docString.c_str());
 

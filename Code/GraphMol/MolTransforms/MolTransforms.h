@@ -96,7 +96,7 @@ computePrincipalAxesAndMomentsFromGyrationMatrix(
 //! Compute the transformation require to orient the conformation
 //! along the principal axes about the center; i.e. center is made to coincide
 // with the
-//! origin, the largest princiapl axis with the x-axis, the next largest with
+//! origin, the largest principal axis with the x-axis, the next largest with
 // the y-axis
 //! and the smallest with the z-axis
 /*!

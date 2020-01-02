@@ -28,7 +28,7 @@ struct RDKIT_FMCS_EXPORT
   std::vector<unsigned> AtomsIdx;
   std::vector<unsigned> BondsIdx;  // need for results and size() only !
   std::map<unsigned, unsigned> SeedAtomIdxMap;  // Full Query Molecule to Seed
-                                                // indeces backward conversion
+                                                // indices backward conversion
                                                 // map
 };
 
@@ -65,7 +65,7 @@ class RDKIT_FMCS_EXPORT Seed {
                                           // directly connected outgoing bonds
  public:
   bool CopyComplete;  // this seed has been completely copied into list.
-                      // postponed non0locked copy for MULTI_THREAD
+                      // postponed non-locked copy for MULTI_THREAD
   mutable unsigned GrowingStage;  // 0 new seed; -1 finished; n>0 in progress,
                                   // exact stage of growing for SDF
   MolFragment MoleculeFragment;   // Reference to a fragment of source molecule

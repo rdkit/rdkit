@@ -269,7 +269,7 @@ const char *FilterCatalogEntryDoc =
     "FilterCatalogEntry\n"
     "A filter catalog entry is an entry in a filter catalog.\n"
     "Each filter is named and is used to flag a molecule usually for some\n"
-    "undesireable property.\n\n"
+    "undesirable property.\n\n"
     "For example, a PAINS (Pan Assay INterference) catalog entry be appear as\n"
     "follows:\n\n"
     ">>> from rdkit.Chem.FilterCatalog import *\n"

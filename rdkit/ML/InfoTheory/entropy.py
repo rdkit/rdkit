@@ -69,7 +69,7 @@ def PyInfoGain(varMat):
 
     **Arguments**
 
-      varMat is a Numeric array with the number of possible occurances
+      varMat is a Numeric array with the number of possible occurrences
         of each result for reach possible value of the given variable.
 
       So, for a variable which adopts 4 possible values and a result which

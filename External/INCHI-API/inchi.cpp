@@ -125,7 +125,7 @@ bool assignBondDirs(RWMol& mol, INT_PAIR_VECT& zBondPairs,
           // not doable
           return false;
       } else {
-        // assign since it's not assgned yet
+        // assign since it's not assigned yet
         bond->setBondDir(dir);
         std::set<int>::iterator searchItr = pending.find(curBondIdx);
         if (searchItr != pending.end()) pending.erase(searchItr);
@@ -159,7 +159,7 @@ bool assignBondDirs(RWMol& mol, INT_PAIR_VECT& zBondPairs,
             }    // end if there is a match
           }      // end boost_foreach
         }        // end for _ to go thru rule sets
-      }          // end if this bond is asssigned
+      }          // end if this bond is assigned
     }            // end if queue is empty
   }              // end while on pending set and queue
   return true;
@@ -167,7 +167,7 @@ bool assignBondDirs(RWMol& mol, INT_PAIR_VECT& zBondPairs,
 
 /* findAlternatingBonds
  *
- * This is a modified DFS that returns the shortest path consiting of
+ * This is a modified DFS that returns the shortest path consisting of
  * alternating bonds from the current node to a node with desired atomic
  * number.
  *
@@ -232,7 +232,7 @@ Atom* findAlternatingBonds(
       path.push(lastBond);
       return current;
     } else {
-      // I am no better than the exisiting one. This will also cause the
+      // I am no better than the existing one. This will also cause the
       // path search to not continue down
       return NULL;
     }
@@ -1894,7 +1894,7 @@ std::string MolToInchi(const ROMol& mol, ExtraInchiReturnValues& rv,
     } else if (bond->getStereo() == Bond::STEREOANY) {
       // have to treat STEREOANY separately because RDKit will clear out
       // StereoAtoms information.
-      // Here we just change the coordiates of the two end atoms - to bring
+      // Here we just change the coordinates of the two end atoms - to bring
       // them really close - so that InChI will not try to infer stereobond
       // info from coordinates.
       inchiAtoms[atomIndex1].x = inchiAtoms[atomIndex2].x;

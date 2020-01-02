@@ -762,7 +762,7 @@ unsigned int numBridgeheadAtoms(const RDKit::ROMol &mol,
 /// @brief Type that allows for registration of conversions from
 ///        python iterable types.
 struct iterable_converter {
-  /// @note Registers converter from a python interable type to the
+  /// @note Registers converter from a python iterable type to the
   ///       provided type.
   template <typename Container>
   iterable_converter &from_python() {

@@ -385,7 +385,7 @@ Kekulizes the molecule.
 @param
 mol 	the molecule of interest
 markAtomsBonds 	if this is set to true, isAromatic boolean settings on both the Bonds and Atoms are turned to false following the Kekulization, otherwise they are left alone in their original state.
-maxBackTracks 	the maximum number of attempts at back-tracking. The algorithm uses a back-tracking procedure to revist a previous setting of double bond if we hit a wall in the kekulization process
+maxBackTracks 	the maximum number of attempts at back-tracking. The algorithm uses a back-tracking procedure to revisit a previous setting of double bond if we hit a wall in the kekulization process
 <p>
 @notes
 <li>even if markAtomsBonds is false the BondType for all aromatic bonds will be changed from RDKit::Bond::AROMATIC to RDKit::Bond::SINGLE or RDKit::Bond::DOUBLE during Kekulization.
@@ -534,7 +534,7 @@ SSSR rings obatined from 'findSSSR' can be non-unique in some case. For example,
 <p>
 This function adds additional rings to the SSSR list if necessary to make the list symmetric, e.g. all atoms in cubane will be part of the same number of SSSRs. This function choses these extra rings from the extra rings computed and discarded during findSSSR. The new ring are chosen such that:
 <p>
-    * replacing a same sized ring in the SSSR list with an extra ring yields the same union of bond IDs as the orignal SSSR list
+    * replacing a same sized ring in the SSSR list with an extra ring yields the same union of bond IDs as the original SSSR list
 <p>
 <p>
 @param

@@ -859,7 +859,7 @@ void LAP::computeMinCostPath(const int dim) {
               up = low;
               min = h;
             }
-            // new index with same minimum, put on undex up, and extend list
+            // new index with same minimum, put on index up, and extend list
             d_colList[k] = d_colList[up];
             d_colList[up++] = j;
           }

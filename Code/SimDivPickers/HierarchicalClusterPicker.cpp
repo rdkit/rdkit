@@ -62,7 +62,7 @@ RDKit::VECT_INT_VECT HierarchicalClusterPicker::cluster(
     clusters.push_back(cls);
   }
 
-  // do the merging, each round of of this loop eleminates one cluster
+  // do the merging, each round of of this loop eliminates one cluster
   RDKit::INT_VECT removed;
   for (unsigned int i = 0; i < (poolSize - pickSize); i++) {
     int cx1 = ia[i] - 1;

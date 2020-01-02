@@ -86,7 +86,7 @@ class RDKIT_DATASTRUCTS_EXPORT MultiFPBReader {
 
   //! Read the data from the file and initialize internal data structures
   /*!
-  This must be called before most of the other methods of this clases.
+  This must be called before most of the other methods of this class.
   It calls the \c init() method on each of the child FPBReaders
 
   */

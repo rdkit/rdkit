@@ -789,7 +789,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 \n\
    The optional replacements dict can be used to do string substitution of abbreviations \n\
    in the input SMILES. The set of substitutions is repeatedly looped through until \n\
-   the string no longer changes. It is the responsiblity of the caller to make sure \n\
+   the string no longer changes. It is the responsibility of the caller to make sure \n\
    that substitutions results in legal and sensible SMILES. \n\
  \n\
    Examples of replacements: \n\
@@ -1295,7 +1295,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     [0,1,0,1]\n\
 \n\
   In this case the carbons have the same symmetry class and the nitrogens have the same\n\
-  symmetry class.  From the perspective of the Molecular Graph, they are indentical.\n\
+  symmetry class.  From the perspective of the Molecular Graph, they are identical.\n\
 \n\
   ARGUMENTS:\n\
 \n\

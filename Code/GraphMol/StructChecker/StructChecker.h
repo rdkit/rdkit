@@ -174,19 +174,19 @@ struct RDKIT_STRUCTCHECKER_EXPORT StructCheckerOptions {
 
   bool loadPatterns(const std::string &path);  // file with clean patterns
   void parsePatterns(
-      const std::vector<std::string> &smarts);  // can throw RDKit exeptions
+      const std::vector<std::string> &smarts);  // can throw RDKit exceptions
   void setPatterns(const std::vector<ROMOL_SPTR> &p);
 
   bool loadRotatePatterns(
       const std::string &path);  // file with rotate patterns
   void parseRotatePatterns(
-      const std::vector<std::string> &smarts);  // can throw RDKit exeptions
+      const std::vector<std::string> &smarts);  // can throw RDKit exceptions
   void setRotatePatterns(const std::vector<ROMOL_SPTR> &p);
 
   bool loadStereoPatterns(
       const std::string &path);  // file with stereo patterns
   void parseStereoPatterns(
-      const std::vector<std::string> &smarts);  // can throw RDKit exeptions
+      const std::vector<std::string> &smarts);  // can throw RDKit exceptions
   void setStereoPatterns(const std::vector<ROMOL_SPTR> &p);
 
   bool loadTautomerData(const std::string &path);  // file path
@@ -288,10 +288,10 @@ class RDKIT_STRUCTCHECKER_EXPORT StructChecker {
   // that describes what have been done
   unsigned checkMolStructure(RWMol &mol) const;
 
-  // an instance independed helper methods:
-  // Converts structure property flags to a comma seperated string
+  // an instance independent helper methods:
+  // Converts structure property flags to a comma separated string
   static std::string StructureFlagsToString(unsigned flags);
-  // Converts a comma seperated string to a StructureFlag unsigned integer
+  // Converts a comma separated string to a StructureFlag unsigned integer
   static unsigned StringToStructureFlags(const std::string &str);
   // internal implementation:
  private:

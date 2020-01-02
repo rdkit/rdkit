@@ -309,7 +309,7 @@ class Glare:
         if self.initialFraction is None or self.initialFraction > 0.999:
             print ("INITIAL FRACTION TO KEEP : AUTOMATIC")
         else:
-            print ("INITAL FRACTION TO KEEP : %s%%"%(self.initialFraction*100))
+            print ("INITIAL FRACTION TO KEEP : %s%%"%(self.initialFraction*100))
         print ("Actual SIZE : %s = %s"%(
             " x ".join([str(len(rg.sidechains)) for rg in library.rgroups]),
             reduce(operator.mul, [len(rg.sidechains) for rg in library.rgroups])
@@ -319,7 +319,7 @@ class Glare:
         Gt = self.desiredFinalGoodness
 
         for iteration in range(1, self.maxIterations+1):
-            # chunk of the total library into smaller more managable sets
+            # chunk of the total library into smaller more manageable sets
             #  and run combinatorial analysis on the sub libraries
             #  each of these records the number of times a sidechain is used
             #  in a successful enumeration which is then used to prune the

@@ -2,7 +2,7 @@
 # encoding: utf-8
 
 #	Jan 2011	(markus kossner)	Cleaned up the code, added some documentation
-#	somwhere around Aug 2008	(markus kossner)	created
+#	somewhere around Aug 2008	(markus kossner)	created
 #    
 #    This script extracts the molecular framework for a database of molecules.
 #    You can use two modes (hard coded): 

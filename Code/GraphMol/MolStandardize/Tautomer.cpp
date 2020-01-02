@@ -81,7 +81,7 @@ std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(
   bool broken = false;
 
   while (tautomers.size() < MAX_TAUTOMERS) {
-    // std::map automaticaly sorts tautomers into alphabetical order (SMILES)
+    // std::map automatically sorts tautomers into alphabetical order (SMILES)
     for (const auto &tautomer : tautomers) {
       // std::cout << "Done : " << std::endl;
       // for (const auto d : done) {

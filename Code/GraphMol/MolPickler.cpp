@@ -1006,7 +1006,7 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
   }
   Conformer *conf = nullptr;
   if ((version >= 2000 && version < 3000) && includeCoords) {
-    // there can only one conformation - since the poositions were stored on
+    // there can only one conformation - since the positions were stored on
     // the atoms themselves in this version
     conf = new Conformer(numAtoms);
     mol->addConformer(conf, true);

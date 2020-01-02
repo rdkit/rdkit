@@ -32,7 +32,7 @@ static const char* flags[] = {
     "TAUTOMER_TRANSFORMED",
 };
 
-// Converts structure property flags to a comma seperated string
+// Converts structure property flags to a comma separated string
 std::string StructChecker::StructureFlagsToString(unsigned f) {
   std::string s;
   for (unsigned bit = 0; bit < 16; bit++) {
@@ -44,7 +44,7 @@ std::string StructChecker::StructureFlagsToString(unsigned f) {
   return s;
 }
 
-// Converts a comma seperated string to a StructureFlag unsigned integer
+// Converts a comma separated string to a StructureFlag unsigned integer
 class FMap : public std::map<std::string, unsigned> {
  public:
   FMap() {

@@ -498,7 +498,7 @@ Sample Usage:
       .def("RemoveAgentTemplates", RDKit::RemoveAgentTemplates,
            (python::arg("self"), python::arg("targetList") = python::object()),
            "Removes agents from reaction. If targetList is provide the agents "
-           "will be transfered to that list.")
+           "will be transferred to that list.")
       .def("RunReactants",
            (PyObject * (*)(RDKit::ChemicalReaction *, python::tuple,
                            unsigned int maxProducts)) RDKit::RunReactants,

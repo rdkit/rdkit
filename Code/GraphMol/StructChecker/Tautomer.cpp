@@ -44,7 +44,7 @@ bool StructCheckTautomer::applyTautomer(unsigned it) {
                          << " atoms\n";
   // init
   size_t invalid_idx = 1 + Mol.getNumAtoms();
-  std::vector<unsigned> atomIdxMap(Mol.getNumAtoms(), invalid_idx);  // matched tau atom indeces
+  std::vector<unsigned> atomIdxMap(Mol.getNumAtoms(), invalid_idx);  // matched tau atom indices
   for (MatchVectType::const_iterator mit = match.begin(); mit != match.end();
        ++mit) {
     unsigned tai = mit->first;   // From and To Tautomer Atom index

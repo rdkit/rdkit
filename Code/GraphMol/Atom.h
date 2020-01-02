@@ -213,9 +213,9 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   //! returns the \c noImplicit flag
   bool getNoImplicit() const { return df_noImplicit; };
 
-  //! sets our number of explict Hs
+  //! sets our number of explicit Hs
   void setNumExplicitHs(unsigned int what) { d_numExplicitHs = what; };
-  //! returns our number of explict Hs
+  //! returns our number of explicit Hs
   unsigned int getNumExplicitHs() const { return d_numExplicitHs; };
 
   //! sets our \c isAromatic flag, indicating whether or not we are aromatic

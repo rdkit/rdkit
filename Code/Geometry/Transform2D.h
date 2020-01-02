@@ -50,9 +50,9 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Transform2D
 
   void SetTranslation(const Point2D &pt);
 
-  /*! \brief Set the tranform so that the specified points are aligned
+  /*! \brief Set the transform so that the specified points are aligned
    *
-   * The resulting tranformation will align pt1 with ref1, and rotation
+   * The resulting transformation will align pt1 with ref1, and rotation
    * pt2 such that the line betweem (pt1, pt2) will align with
    * with the line (ref1, ref2)
    */

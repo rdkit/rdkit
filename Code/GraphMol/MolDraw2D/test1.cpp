@@ -2136,7 +2136,7 @@ void testGithub1829() {
   {
     std::vector<ROMol *> mols;
     MolDraw2DSVG drawer(750, 400, 250, 200);
-    // this should run quietly wihtout complaining
+    // this should run quietly without complaining
     drawer.drawMolecules(mols);
     drawer.finishDrawing();
     std::string text = drawer.getDrawingText();
@@ -2161,7 +2161,7 @@ void test16MoleculeMetadata() {
       std::string text = drawer.getDrawingText();
       TEST_ASSERT(text.find("idx=\"2\" atom-smiles=\"[NH]\" drawing-x=\"52.") !=
                   std::string::npos);
-      TEST_ASSERT(text.find("idx=\"2\" begin-atom-idx=\"2\" end-atom-idx=\"3\" "
+      TEST_ASSERT(text.find("idx=\"2\" begin-atom-idx=\"3\" end-atom-idx=\"2\" "
                             "bond-smiles=\"-\"") != std::string::npos);
       std::ofstream outs("test16_1.svg");
       outs << text;

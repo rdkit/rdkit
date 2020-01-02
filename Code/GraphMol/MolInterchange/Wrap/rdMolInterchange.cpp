@@ -47,7 +47,7 @@ BOOST_PYTHON_MODULE(rdMolInterchange) {
 
   python::class_<RDKit::MolInterchange::JSONParseParameters,
                  boost::noncopyable>("JSONParseParameters",
-                                     "Paramters controlling the JSON parser")
+                                     "Parameters controlling the JSON parser")
       .def_readwrite(
           "setAromaticBonds",
           &RDKit::MolInterchange::JSONParseParameters::setAromaticBonds,

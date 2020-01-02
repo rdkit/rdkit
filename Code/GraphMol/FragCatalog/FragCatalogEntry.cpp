@@ -148,7 +148,7 @@ bool FragCatalogEntry::match(const FragCatalogEntry *other, double tol) const {
   }
 
   // FIX: this may not be enough
-  // we may have to do teh actual isomorphism mapping
+  // we may have to do the actual isomorphism mapping
   return true;
 }
 

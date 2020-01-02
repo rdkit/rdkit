@@ -99,7 +99,7 @@ void testDeleteSubstruct() {
   delete matcher1;
   delete matcher2;
 
-  // test chiralty
+  // test chirality
   smi = "CCO[C@H](N)(P)";
   mol1 = SmilesToMol(smi);
   matcher1 = SmartsToMol("O[C@H](N)(P)");

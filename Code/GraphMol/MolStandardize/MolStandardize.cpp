@@ -43,7 +43,7 @@ RWMol *cleanup(const RWMol &mol, const CleanupParameters &params) {
 void tautomerParent(RWMol &mol, const CleanupParameters &params) {
   RDUNUSED_PARAM(mol);
   RDUNUSED_PARAM(params);
-  UNDER_CONSTRUCTION("Not yet implmented");
+  UNDER_CONSTRUCTION("Not yet implemented");
 }
 
 // Return the fragment parent of a given molecule.
@@ -69,13 +69,13 @@ RWMol *fragmentParent(const RWMol &mol, const CleanupParameters &params,
 void stereoParent(RWMol &mol, const CleanupParameters &params) {
   RDUNUSED_PARAM(mol);
   RDUNUSED_PARAM(params);
-  UNDER_CONSTRUCTION("Not yet implmented");
+  UNDER_CONSTRUCTION("Not yet implemented");
 }
 
 void isotopeParent(RWMol &mol, const CleanupParameters &params) {
   RDUNUSED_PARAM(mol);
   RDUNUSED_PARAM(params);
-  UNDER_CONSTRUCTION("Not yet implmented");
+  UNDER_CONSTRUCTION("Not yet implemented");
 }
 
 RWMol *chargeParent(const RWMol &mol, const CleanupParameters &params,

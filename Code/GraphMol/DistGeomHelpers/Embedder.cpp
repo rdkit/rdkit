@@ -691,7 +691,7 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
         // now create a chiral set and set the upper and lower bound on the
         // volume
         if (chiralType == Atom::CHI_TETRAHEDRAL_CCW) {
-          // postive chiral volume
+          // positive chiral volume
           auto *cset = new DistGeom::ChiralSet(atom->getIdx(), nbrs[0], nbrs[1],
                                                nbrs[2], nbrs[3], 5.0, 100.0);
           DistGeom::ChiralSetPtr cptr(cset);
@@ -1052,7 +1052,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     Conformer *conf = confs[ci];
     if (confsOk[ci]) {
       // check if we are pruning away conformations and
-      // a closeby conformation has already been chosen :
+      // a close-by conformation has already been chosen :
       if (params.pruneRmsThresh > 0.0 &&
           !_isConfFarFromRest(mol, *conf, params.pruneRmsThresh,
                               params.onlyHeavyAtomsForRMS)) {

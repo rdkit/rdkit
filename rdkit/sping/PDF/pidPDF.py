@@ -467,7 +467,7 @@ class PDFCanvas(Canvas):
     def drawArc(self, x1, y1, x2, y2, startAng=0, extent=90, edgeColor=None, edgeWidth=None,
                 fillColor=None, dash=None, **kwargs):
         """This draws a PacMan-type shape connected to the centre.  One
-            idiosyncracy - if you specify an edge color, it apples to the
+            idiosyncrasy - if you specify an edge color, it apples to the
             outer curved rim but not the radial edges."""
         if edgeColor:
             self._updateLineColor(edgeColor)

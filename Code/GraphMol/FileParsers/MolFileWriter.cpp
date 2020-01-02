@@ -643,7 +643,7 @@ const std::string GetMolFileAtomLine(const Atom *atom, const Conformer *conf,
            totValence, rxnComponentType, rxnComponentNumber, atomMapNumber,
            inversionFlag, exactChangeFlag);
 #else
-  // ok, technically we should be being more careful about this, but tiven that
+  // ok, technically we should be being more careful about this, but given that
   // the format string makes it impossible for this to overflow, I think we're
   // safe. I just used the snprintf above to prevent linters from complaining
   // about use of sprintf
@@ -1267,7 +1267,7 @@ std::string MolToMolBlock(const ROMol &mol, bool includeStereo, int confId,
 #if 0
     if(includeStereo){
       // assign "any" status to any stereo bonds that are not
-      // marked with "E" or "Z" code - these bonds need to be explictly written
+      // marked with "E" or "Z" code - these bonds need to be explicitly written
       // out to the mol file
       MolOps::findPotentialStereoBonds(trwmol);
       // now assign stereo code if any have been specified by the directions on
