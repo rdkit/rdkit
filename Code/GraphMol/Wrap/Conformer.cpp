@@ -44,7 +44,7 @@ PyObject* GetPos(const Conformer *conf) {
     // represent the array as a 1D/flat array of doubles
     double *resData = reinterpret_cast<double *>(PyArray_DATA(res));
 
-    // manually insert the data, 3 corresponsd to the x, y and z dimensions
+    // manually insert the data, 3 corresponds to the x, y and z dimensions
     for (unsigned int i = 0; i < pos.size(); ++i) {
         resData[3*i+0] = pos[i].x;
         resData[3*i+1] = pos[i].y;

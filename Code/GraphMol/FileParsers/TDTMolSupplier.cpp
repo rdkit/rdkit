@@ -417,7 +417,7 @@ unsigned int TDTMolSupplier::length() {
       d_len++;
       std::getline(*dp_inStream, inL);
     }
-    // now remember to set the stream to the last postion we want to read
+    // now remember to set the stream to the last position we want to read
     dp_inStream->clear();
     dp_inStream->seekg(d_molpos[d_last]);
     return d_len;

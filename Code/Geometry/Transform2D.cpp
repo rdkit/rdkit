@@ -61,7 +61,7 @@ void Transform2D::SetTransform(const Point2D &pt, double angle) {
 
   (*this) *= trans1;
 
-  // translation back to the orignal coordinate
+  // translation back to the original coordinate
   Transform2D trans2;
   trans2.SetTranslation(pt);
   trans2 *= (*this);

@@ -21,7 +21,7 @@ namespace RDKit {
 class ROMol;
 
 struct RDKIT_FINGERPRINTS_EXPORT AdditionalOutput {
-  // will review this structure once more fignerprint types are implemented
+  // will review this structure once more fingerprint types are implemented
 
   std::vector<std::vector<std::uint64_t>> *atomToBits;
 

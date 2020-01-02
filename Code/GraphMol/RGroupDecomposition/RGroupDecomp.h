@@ -16,7 +16,7 @@
 
 namespace RDKit {
 
-//! Compute the isomporphic degenerative points in the
+//! Compute the isomorphic degenerative points in the
 //!  molecule.  These are points that are symmetrically
 //!  equivalent.
 /*!

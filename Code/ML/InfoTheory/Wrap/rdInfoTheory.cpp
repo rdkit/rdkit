@@ -136,7 +136,7 @@ BOOST_PYTHON_MODULE(rdInfoTheory) {
       "Calculates the information gain for a variable\n\n\
    ARGUMENTS:\n\n\
      - varMat: a Numeric Array object\n\
-       varMat is a Numeric array with the number of possible occurances\n\
+       varMat is a Numeric array with the number of possible occurrences\n\
          of each result for reach possible value of the given variable.\n\n\
        So, for a variable which adopts 4 possible values and a result which\n\
          has 3 possible values, varMat would be 4x3\n\n\
@@ -150,7 +150,7 @@ BOOST_PYTHON_MODULE(rdInfoTheory) {
       "Calculates the chi squared value for a variable\n\n\
    ARGUMENTS:\n\n\
      - varMat: a Numeric Array object\n\
-       varMat is a Numeric array with the number of possible occurances\n\
+       varMat is a Numeric array with the number of possible occurrences\n\
          of each result for reach possible value of the given variable.\n\n\
        So, for a variable which adopts 4 possible values and a result which\n\
          has 3 possible values, varMat would be 4x3\n\n\

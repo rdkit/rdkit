@@ -2786,6 +2786,113 @@ void testStereoGroupUpdating() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+class TestAssignChiralTypesFromMolParity {
+ public:
+  TestAssignChiralTypesFromMolParity(const ROMol &mol) :
+    d_rwMol(new RWMol(mol)) {
+    assignMolParity();
+    fillBondDefVect();
+    MolOps::assignChiralTypesFromMolParity(*d_rwMol);
+    d_refSmiles = MolToSmiles(*d_rwMol);
+    heapPermutation();
+  }
+ private:
+  struct BondDef {
+    BondDef(unsigned int bi, unsigned int ei, Bond::BondType t) :
+      beginIdx(bi),
+      endIdx(ei),
+      type(t) {};
+    unsigned int beginIdx;
+    unsigned int endIdx;
+    Bond::BondType type;
+  };
+  void assignMolParity() {
+    static const std::map<Atom::ChiralType, int> parityMap {
+      { Atom::CHI_TETRAHEDRAL_CW, 1 },
+      { Atom::CHI_TETRAHEDRAL_CCW, 2 },
+      { Atom::CHI_UNSPECIFIED, 0 },
+      { Atom::CHI_OTHER, 0 }
+    };
+    MolOps::assignChiralTypesFrom3D(*d_rwMol);
+    for (auto ai = d_rwMol->beginAtoms(); ai != d_rwMol->endAtoms(); ++ai) {
+      int parity = parityMap.at((*ai)->getChiralTag());
+      (*ai)->setProp(common_properties::molParity, parity);
+      (*ai)->setChiralTag(Atom::CHI_UNSPECIFIED);
+    }
+  }
+  void fillBondDefVect() {
+    for (auto bi = d_rwMol->beginBonds(); bi != d_rwMol->endBonds(); ++bi)
+      d_bondDefVect.emplace_back(BondDef((*bi)->getBeginAtomIdx(),
+        (*bi)->getEndAtomIdx(), (*bi)->getBondType()));
+  }
+  void stripBonds() {
+    for (unsigned int i = d_rwMol->getNumBonds(); i--;) {
+      const Bond *b = d_rwMol->getBondWithIdx(i);
+      d_rwMol->removeBond(b->getBeginAtomIdx(), b->getEndAtomIdx());
+    }
+  }
+  void addBonds() {
+    for (auto bondDef: d_bondDefVect)
+      d_rwMol->addBond(bondDef.beginIdx, bondDef.endIdx, bondDef.type);
+  }
+  void checkBondPermutation() {
+    stripBonds();
+    addBonds();
+    MolOps::sanitizeMol(*d_rwMol);
+    MolOps::assignChiralTypesFromMolParity(*d_rwMol);
+    TEST_ASSERT(MolToSmiles(*d_rwMol) == d_refSmiles);
+  }
+  void heapPermutation(size_t s = 0) {
+    // if size becomes 1 the permutation is ready to use
+    if (s == 0)
+      s = d_bondDefVect.size();
+    if (s == 1) {
+      checkBondPermutation();
+      return;
+    }
+    for (size_t i = 0; i < s; ++i) {
+      heapPermutation(s - 1);
+      // if size is odd, swap first and last element
+      size_t j = (s % 2 == 1) ? 0 : i;
+      swap(d_bondDefVect[j], d_bondDefVect[s - 1]);
+    }
+  }
+  std::unique_ptr<RWMol> d_rwMol;
+  std::vector<BondDef> d_bondDefVect;
+  std::string d_refSmiles;
+};
+
+void testAssignChiralTypesFromMolParity() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------------------------------------------"
+      << std::endl;
+  BOOST_LOG(rdInfoLog) << "testAssignChiralTypesFromMolParity"
+                       << std::endl;
+  {
+    std::string molb = R"CTAB(
+     RDKit          3D
+
+  6  5  0  0  1  0  0  0  0  0999 V2000
+   -2.9747    1.7234    0.0753 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.4586    1.4435    0.1253 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.5885    2.6215    1.4893 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+   -3.7306    0.3885   -0.0148 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3395    3.0471    0.1580 Br  0  0  0  0  0  0  0  0  0  0  0  0
+   -1.1574    0.7125    1.2684 F   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  1  3  1  0
+  1  4  1  0
+  2  5  1  0
+  2  6  1  0
+M  END)CTAB";
+    bool sanitize = true;
+    bool removeHs = false;
+    std::unique_ptr<RWMol> m(MolBlockToMol(molb, sanitize, removeHs));
+    TEST_ASSERT(m);
+    TestAssignChiralTypesFromMolParity test(*m);
+  }
+}
+
 void testClearDirsOnDoubleBondsWithoutStereo() {
   BOOST_LOG(rdInfoLog)
       << "-----------------------------------------------------------"
@@ -2979,6 +3086,7 @@ int main() {
   testStereoGroupUpdating();
 #endif
   testClearDirsOnDoubleBondsWithoutStereo();
+  testAssignChiralTypesFromMolParity();
   testIncorrectBondDirsOnWedging();
   return 0;
 }

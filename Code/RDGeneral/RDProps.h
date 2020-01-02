@@ -12,7 +12,7 @@ class RDProps {
   mutable Dict d_props;
   // It is a quirk of history that this is mutable
   //  as the RDKit allows properties to be set
-  //  on const obects.
+  //  on const objects.
 
  public:
   RDProps() : d_props() {}

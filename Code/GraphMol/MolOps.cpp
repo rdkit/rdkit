@@ -234,14 +234,14 @@ void adjustHs(RWMol &mol) {
     //    Smiles:  O=C1NC=CC2=C1C=CC=C2
     //
     //    after perception is done, the N atom has two aromatic
-    //    bonds to it and a single implict H.  When the Smiles is
+    //    bonds to it and a single implicit H.  When the Smiles is
     //    written, we get: n1ccc2ccccc2c1=O.  Here the nitrogen has
     //    no implicit Hs (because there are two aromatic bonds to
     //    it, giving it a valence of 3).  Also: this SMILES is bogus
     //    (un-kekulizable).  The correct SMILES would be:
     //    [nH]1ccc2ccccc2c1=O.  So we need to loop through the atoms
     //    and find those that have lost implicit H; we'll add those
-    //    back as explict Hs.
+    //    back as explicit Hs.
     //
     //    <phew> that takes way longer to comment than it does to
     //    write:

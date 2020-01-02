@@ -25,7 +25,7 @@ operated on by anything in particular (except for standard math stuff).
 Here's the general flow of things:
 
   1) Composition descriptor references ($a, $b, etc.) are replaced with the
-     corresponding descriptor names using string subsitution.
+     corresponding descriptor names using string substitution.
      (*_SubForCompoundDescriptors*)
 
   2) Atomic descriptor references ($1, $2, etc) are replaced with lookups

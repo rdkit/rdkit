@@ -302,8 +302,8 @@ MatrixXd GetCenterMatrix(MatrixXd Mat) {
 }
 
 MatrixXd GetHmatrix(MatrixXd X) {
-  MatrixXd Weigthed = X.transpose() * X;
-  return X * GetPinv(Weigthed) * X.transpose();
+  MatrixXd Weighted = X.transpose() * X;
+  return X * GetPinv(Weighted) * X.transpose();
 }
 
 MatrixXd GetRmatrix(MatrixXd H, MatrixXd DM, int numAtoms) {
@@ -622,11 +622,11 @@ void getGETAWAYDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,
   for (double Clu : Clus) {
     ITH -= Clu * log(Clu) / log(2.0);
   }
-  res[0] = roundn(ITH, 3);  // issue somethime with this due to cluster
+  res[0] = roundn(ITH, 3);  // issue sometime with this due to cluster
   double ISH = ITH / ITH0;
-  res[1] = roundn(ISH, 3);  // issue somethime with this due to cluster
+  res[1] = roundn(ISH, 3);  // issue sometime with this due to cluster
 
-  // use the PBF to determine 2D vs 3D (with Thresold)
+  // use the PBF to determine 2D vs 3D (with Threshold)
   // determine if this is a plane molecule
   double pbf = RDKit::Descriptors::PBF(mol);
   double D;
@@ -703,7 +703,7 @@ void getGETAWAYDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,
 
   double* dist =
       MolOps::getDistanceMat(mol, false);  // need to be be set to false to have
-                                           // topological distance not weigthed!
+                                           // topological distance not weighted!
 
   Map<MatrixXd> D2(dist, numAtoms, numAtoms);
 
@@ -1009,7 +1009,7 @@ void getGETAWAYDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,
     }
   }
 
-  // can be column vs row selecgted that can explain the issue!
+  // can be column vs row selected that can explain the issue!
   double HATSTu = HATSk[0][0] + HATSut;
   double HATSTm = HATSk[1][0] + HATSmt;
   double HATSTv = HATSk[2][0] + HATSvt;
@@ -1047,7 +1047,7 @@ void getGETAWAYDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,
   }
 
   // 2*(Rk[1]+Rk[2]+Rk[3]+Rk[4]+Rk[5]+Rk[6]+Rk[7]+Rk[8]) // this is not true
-  // this is on all the elemen;
+  // this is on all the element
 
   double RTu = 0.0;
   double RTm = 0.0;

@@ -139,7 +139,7 @@ const char *SubstructLibraryDoc =
     "\n"
     "Pattern fingerprints provide an easy way to indicate whether the "
     "substructure search should be\n"
-    "be done at all.  This is particulary useful with the Binary and Smiles "
+    "be done at all.  This is particularly useful with the Binary and Smiles "
     "based molecule holders\n"
     "as they have an expensive molecule creation step in addition to the "
     "substructure searching step\n "

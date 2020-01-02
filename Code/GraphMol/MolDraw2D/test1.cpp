@@ -2136,7 +2136,7 @@ void testGithub1829() {
   {
     std::vector<ROMol *> mols;
     MolDraw2DSVG drawer(750, 400, 250, 200);
-    // this should run quietly wihtout complaining
+    // this should run quietly without complaining
     drawer.drawMolecules(mols);
     drawer.finishDrawing();
     std::string text = drawer.getDrawingText();

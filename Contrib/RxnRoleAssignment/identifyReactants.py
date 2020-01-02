@@ -338,7 +338,7 @@ def _findMissingReactiveReactants(rfps, pfps, currentReactants, unmappedPAtoms, 
                             countFullfilledQueries+=1
                     if output > 0:
                         print(" Max reactivity", maxReactivity)
-                        print(" Max fullfilled queries", maxFullfilledQueries)
+                        print(" Max fulfilled queries", maxFullfilledQueries)
                     if countFullfilledQueries > maxFullfilledQueries:
                         maxFullfilledQueries = countFullfilledQueries
                         maxReactivity = rfps[r].reactivity/float(rfps[r].molecule.GetNumAtoms())

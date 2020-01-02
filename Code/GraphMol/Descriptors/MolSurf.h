@@ -31,7 +31,7 @@ const std::string labuteASAVersion = "1.0.2";
   (2000)
 
   \param mol        the molecule of interest
-  \param Vi         used to return the explict atom contribs
+  \param Vi         used to return the explicit atom contribs
   \param hContrib   used to return the H contributions (if calculated)
   \param includeHs  (optional) if this is true (the default),
       the contribution of H atoms to the ASA will be included.

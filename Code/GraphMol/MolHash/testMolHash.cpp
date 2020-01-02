@@ -322,7 +322,7 @@ void test4() {
     std::cout << generateMoleculeHashSet(*mol, nullptr, nullptr) << "  " << i
               << std::endl;
   }
-  TEST_ASSERT(true);  // there is no any exseption
+  TEST_ASSERT(true);  // there is no any exception
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
@@ -536,7 +536,7 @@ void checkCollisions(const char* file, std::uint32_t bits = 0) {
   if (0 == strcmp(file + strlen(file) - 4, ".smi"))
     testFileSMILES(file, bitMask);
   else
-    std::cout << "UNKNOWN File Extention.\n";
+    std::cout << "UNKNOWN File Extension.\n";
 }
 
 }  // RDKit

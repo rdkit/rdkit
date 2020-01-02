@@ -185,7 +185,7 @@ std::vector<MatchVectType> _checkMatches(std::string smarts, std::string smiles,
   //  nMatches : expected number of matches
   //  lenFirst : length of the first match
   //
-  // Return the list of all matches just in case want to do aditional testing
+  // Return the list of all matches just in case want to do additional testing
   ROMol *mol, *mol2, *matcher, *matcher2;
   bool matches;
   unsigned int matchCount;

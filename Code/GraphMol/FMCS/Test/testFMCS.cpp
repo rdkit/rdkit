@@ -1552,7 +1552,7 @@ void testGregSDFFileSetFiltered() {
 int main(int argc, const char* argv[]) {
   p.Verbose = true;
 
-// use maximum CPU resoures to increase time measuring accuracy and stability in
+// use maximum CPU resources to increase time measuring accuracy and stability in
 // multi process environment
 #ifdef WIN32
   //    SetPriorityClass (GetCurrentProcess(), REALTIME_PRIORITY_CLASS );
@@ -1706,7 +1706,7 @@ int main(int argc, const char* argv[]) {
     else if (0 == strcmp(argv[1] + strlen(argv[1]) - 4, ".dat"))
       testChEMBLdat(argv[1]);  // .sdf
     else
-      printf("UNKNOWN File Extention.\n");
+      printf("UNKNOWN File Extension.\n");
   } else if (argc > 1 + 2)
     testCmndLineSMILES(argc, argv);
   else {

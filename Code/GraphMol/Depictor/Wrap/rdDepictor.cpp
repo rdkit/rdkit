@@ -146,7 +146,7 @@ BOOST_PYTHON_MODULE(rdDepictor) {
 
   python::def("SetPreferCoordGen", setPreferCoordGen, python::arg("val"),
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
-              "Sets whether or not the CoordGen library should be prefered to "
+              "Sets whether or not the CoordGen library should be preferred to "
               "the RDKit depiction library."
 #else
               "Has no effect (CoordGen support not enabled)"
@@ -194,7 +194,7 @@ BOOST_PYTHON_MODULE(rdDepictor) {
      canonOrient - orient the molecule in a canonical way\n\
      clearConfs - if true, all existing conformations on the molecule\n\
              will be cleared\n\
-     weightDistMat - weight assigned in the cost function to mimicing\n\
+     weightDistMat - weight assigned in the cost function to mimicking\n\
                      the distance matrix.\n\
                      This must be between (0.0,1.0). (1.0-weightDistMat)\n\
                      is then the weight assigned to improving \n\

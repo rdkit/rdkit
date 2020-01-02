@@ -528,7 +528,7 @@ def OptimizeMol(mol, bm, atomMatches=None, excludedVolumes=None, forceConstant=1
 
     If we optimize without the distance constraints (provided via the atomMatches
     argument) we're not guaranteed to get the same results, particularly in a case
-    like the current one where the pharmcophore brings the atoms uncomfortably
+    like the current one where the pharmacophore brings the atoms uncomfortably
     close together:
 
     >>> testM = embeds[1]

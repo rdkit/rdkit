@@ -804,7 +804,7 @@ translate
 
   def _drawImageLevel1(self, image, x1, y1, x2=None, y2=None, **kwargs):
     # Postscript Level1 version available for fallback mode when Level2 doesn't work
-    """drawImage(self,image,x1,y1,x2=None,y2=None) : If x2 and y2 are ommitted, they are
+    """drawImage(self,image,x1,y1,x2=None,y2=None) : If x2 and y2 are omitted, they are
        calculated from image size.  (x1,y1) is upper left of image, (x2,y2) is lower right of
        image in piddle coordinates."""
     try:

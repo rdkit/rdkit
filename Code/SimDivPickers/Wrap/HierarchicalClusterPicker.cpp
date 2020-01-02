@@ -88,7 +88,7 @@ struct HierarchCP_wrap {
              "  - pickSize: number of items to pick from the pool\n")
         .def("Cluster", HierarchicalClusters,
              "Return a list of clusters of item from the pool using "
-             "hierachical clustering\n"
+             "hierarchical clustering\n"
              "\n"
              "ARGUMENTS: \n"
              "  - distMat: 1D distance matrix (only the lower triangle "

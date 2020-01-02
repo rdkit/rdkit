@@ -59,7 +59,7 @@ void testSubgraphs() {
   totPs += tmp.size();
 
   // now use the direct range function and check that we get the
-  // same anwswer
+  // same answer
   INT_PATH_LIST_MAP tmpm;
   tmpm = findAllSubgraphsOfLengthsMtoN(mol, 1, 6);
   int newTot, idx;

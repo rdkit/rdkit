@@ -33,7 +33,7 @@
 %typemap(javaimports) RDKit::FilterCatalogParams "
 /**
 <p>
-Paramter Class for initializing a FilterCatalog with the specified set of FilterCatalogs. Current
+Parameter Class for initializing a FilterCatalog with the specified set of FilterCatalogs. Current
 catalogs include:
 
 <pre><code>

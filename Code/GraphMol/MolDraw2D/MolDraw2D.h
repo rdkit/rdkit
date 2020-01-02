@@ -362,7 +362,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   //! returns the width and height of the grid (in molecular coords)
   Point2D range() const { return Point2D(x_range_, y_range_); }
 
-  //! returns the font size (in nolecule units)
+  //! returns the font size (in molecule units)
   virtual double fontSize() const { return font_size_; }
   //! set font size in molecule coordinate units. That's probably Angstrom for
   //! RDKit.
@@ -388,7 +388,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   //! \returns true or false depending on whether it did something or not
   bool setStringDrawMode(const std::string &instring, TextDrawType &draw_mode,
                          int &i) const;
-  //! clears the contes of the drawingd]
+  //! clears the contents of the drawing
   virtual void clearDrawing() = 0;
   //! draws a line from \c cds1 to \c cds2 using the current drawing style
   virtual void drawLine(const Point2D &cds1, const Point2D &cds2) = 0;
@@ -407,7 +407,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
 
   //! draw a polygon
   virtual void drawPolygon(const std::vector<Point2D> &cds) = 0;
-  //! draw a triange
+  //! draw a triangle
   virtual void drawTriangle(const Point2D &cds1, const Point2D &cds2,
                             const Point2D &cds3);
   //! draw an ellipse
@@ -429,7 +429,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   virtual void tagAtoms(const ROMol &mol) { RDUNUSED_PARAM(mol); };
   //! set whether or not polygons are being filled
   virtual bool fillPolys() const { return fill_polys_; }
-  //! returns ehther or not polygons should be filled
+  //! returns either or not polygons should be filled
   virtual void setFillPolys(bool val) { fill_polys_ = val; }
 
   //! returns our current drawing options

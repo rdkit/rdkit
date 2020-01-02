@@ -137,7 +137,7 @@ class RDKIT_FMCS_EXPORT SubstructureCache {
       try {
         ValueStorage.push_back(TIndexEntry());
       } catch (...) {
-        return;  // not enought memory room to add the item, but it's just a
+        return;  // not enough memory room to add the item, but it's just a
                  // cache
       }
       entry = &ValueStorage.back();
@@ -148,7 +148,7 @@ class RDKIT_FMCS_EXPORT SubstructureCache {
              .insert(std::pair<KeyNumericMetrics::TValue, size_t>(
                  key.NumericMetrics.Value, ValueStorage.size() - 1))
              .second)
-      return;  // not enought memory room to add the item, but it is just cache
+      return;  // not enough memory room to add the item, but it is just cache
   }
 
   size_t keyssize() const {  // for statistics only
