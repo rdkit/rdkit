@@ -432,7 +432,7 @@ def ChangeMoleculeRendering(frame=None, renderer='PNG'):
   if frame is not None:
     frame.to_html = types.MethodType(patchPandasHTMLrepr, frame)
     if defPandasRepr is not None:
-      frame.DataFrame._repr_html_ = type.MethodType(defPandasRepr, frame)
+      frame.DataFrame._repr_html_ = types.MethodType(defPandasRepr, frame)
 
 
 def LoadSDF(filename, idName='ID', molColName='ROMol', includeFingerprints=False,
