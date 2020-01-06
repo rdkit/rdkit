@@ -143,6 +143,11 @@ try:
   else:
     # saves the default pandas rendering to allow restoration
     defPandasRendering = pd.core.frame.DataFrame.to_html
+    if pandasVersion > (0, 25, 0):
+      # this was github #2673
+      defPandasRepr = pd.core.frame.DataFrame._repr_html_
+    else:
+      defPandasRepr = None
 except ImportError:
   import traceback
   traceback.print_exc()
@@ -169,10 +174,44 @@ molRepresentation = 'png'  # supports also SVG
 molSize = (200, 200)
 
 
+def _patched_HTMLFormatter_write_cell(self, s, *args, **kwargs):
+  def_escape = self.escape
+  try:
+    if is_molecule_image(s):
+      self.escape = False
+    return defHTMLFormatter_write_cell(self, s, *args, **kwargs)
+  finally:
+    self.escape = def_escape
+
+
+def _patched_get_adjustment():
+  inner_adjustment = defPandasGetAdjustment()
+  return RenderMoleculeAdjustment(inner_adjustment)
+
+
+def patchPandasrepr(self, **kwargs):
+  """  used to patch DataFrame._repr_html_ in pandas version > 0.25.0
+  """
+  global defHTMLFormatter_write_cell
+  global defPandasGetAdjustment
+
+  import pandas.io.formats.html  # necessary for loading HTMLFormatter
+  defHTMLFormatter_write_cell = pandas.io.formats.html.HTMLFormatter._write_cell
+  pandas.io.formats.html.HTMLFormatter._write_cell = _patched_HTMLFormatter_write_cell
+  defPandasGetAdjustment = pandas.io.formats.format._get_adjustment
+  pandas.io.formats.format._get_adjustment = _patched_get_adjustment
+  res = defPandasRepr(self, **kwargs)
+  pandas.io.formats.format._get_adjustment = defPandasGetAdjustment
+  pandas.io.formats.html.HTMLFormatter._write_cell = defHTMLFormatter_write_cell
+  return res
+
+
 def patchPandasHTMLrepr(self, **kwargs):
   """A patched version of the DataFrame.to_html method that allows rendering
     molecule images in data frames.
-    """
+  """
+  global defHTMLFormatter_write_cell
+  global defPandasGetAdjustment
 
   # Two things have to be done:
   # 1. Disable escaping of HTML in order to render img / svg tags
@@ -195,15 +234,6 @@ def patchPandasHTMLrepr(self, **kwargs):
   # 1. Temporarily set escape=False in HTMLFormatter._write_cell
   defHTMLFormatter_write_cell = pd.io.formats.html.HTMLFormatter._write_cell
 
-  def patched_HTMLFormatter_write_cell(self, s, *args, **kwargs):
-    def_escape = self.escape
-    try:
-      if is_molecule_image(s):
-        self.escape = False
-      return defHTMLFormatter_write_cell(self, s, *args, **kwargs)
-    finally:
-      self.escape = def_escape
-
   # 2. Pandas uses TextAdjustment objects to measure the length of texts
   #    (e.g. for east asian languages). We take advantage of this mechanism
   #    and replace the original text adjustment object with a custom one.
@@ -214,14 +244,10 @@ def patchPandasHTMLrepr(self, **kwargs):
   # store original _get_adjustment method
   defPandasGetAdjustment = pd.io.formats.format._get_adjustment
 
-  def patched_get_adjustment():
-    inner_adjustment = defPandasGetAdjustment()
-    return RenderMoleculeAdjustment(inner_adjustment)
-
   try:
     # patch methods and call original to_html function
-    pd.io.formats.format._get_adjustment = patched_get_adjustment
-    pd.io.formats.html.HTMLFormatter._write_cell = patched_HTMLFormatter_write_cell
+    pd.io.formats.format._get_adjustment = _patched_get_adjustment
+    pd.io.formats.html.HTMLFormatter._write_cell = _patched_HTMLFormatter_write_cell
     return defPandasRendering(self, **kwargs)
   except:
     pass
@@ -367,8 +393,12 @@ def RenderImagesInAllDataFrames(images=True):
     '''
   if images:
     pd.core.frame.DataFrame.to_html = patchPandasHTMLrepr
+    if defPandasRepr is not None:
+      pd.core.frame.DataFrame._repr_html_ = patchPandasrepr
   else:
     pd.core.frame.DataFrame.to_html = defPandasRendering
+    if defPandasRepr is not None:
+      pd.core.frame.DataFrame._repr_html_ = defPandasRepr
 
 
 def AddMoleculeColumnToFrame(frame, smilesCol='Smiles', molCol='ROMol', includeFingerprints=False):
@@ -401,6 +431,8 @@ def ChangeMoleculeRendering(frame=None, renderer='PNG'):
     Chem.Mol.__str__ = PrintAsBase64PNGString
   if frame is not None:
     frame.to_html = types.MethodType(patchPandasHTMLrepr, frame)
+    if defPandasRepr is not None:
+      frame.DataFrame._repr_html_ = type.MethodType(defPandasRepr, frame)
 
 
 def LoadSDF(filename, idName='ID', molColName='ROMol', includeFingerprints=False,
