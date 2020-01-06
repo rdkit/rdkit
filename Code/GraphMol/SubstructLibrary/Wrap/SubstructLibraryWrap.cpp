@@ -387,8 +387,33 @@ struct substructlibrary_wrapper {
 
         .def("__len__", &SubstructLibrary::size)
 
-        .def("ToStream", &toStream)
-        .def("InitFromStream", &initFromStream)
+        .def("ToStream", &toStream,
+	     python::arg("stream"),
+	     "Serialize a substructure library to a python text stream.\n"
+	     "The stream can be a file in text mode or an io.StringIO type object\n\n"
+             "  ARGUMENTS:\n"
+	     "    - stream: a text or text stream like object\n\n"
+	     "  >>> stream = io.StringIO()\n"
+	     "  >>> lib.ToStream(stream)\n"
+	     "   or\n"
+	     "  >>> stream = open('rdkit.sslib', 'w')\n"
+	     "  >>> lib.ToStream(stream)\n"
+	     )
+
+        .def("InitFromStream", &initFromStream,
+	   python::arg("stream"),
+	   "Deserialize a substructure library from a python bytes stream.\n"
+	   "Python doesn't allow seeking operations inside a unicode or string stream anymore\n"
+	   "so this requires opening a file in binary mode or using an io.ByteIO type object\n\n"
+	   "  ARGUMENTS:\n"
+	   "    - stream: a binary stream like object\n\n"
+	   "  >>> stream = io.BytesIO( ... )\n"
+	   "  >>> lib.InitFromStream(stream)\n"
+           "   or\n"
+	   "  >>> stream = open('rdkit.sslib', 'b')\n"
+	   "  >>> lib.InitFromStream(stream)\n"
+	     )
+      
         .def("Serialize", &SubstructLibrary_Serialize)
         // enable pickle support
         .def_pickle(substructlibrary_pickle_suite())
