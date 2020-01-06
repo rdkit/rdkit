@@ -694,7 +694,6 @@ if __name__ == '__main__':  # pragma: nocover
         _runDoctests()
         unittest.main()
 
-# $Id$
 #
 #  Copyright (c) 2013, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.
