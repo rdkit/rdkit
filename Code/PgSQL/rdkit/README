@@ -8,7 +8,7 @@ Compatibility: PostgreSQL 9.1+
  that you have the -devel package installed.
 
 Installation:
-Cartirdge is build from the root RDKit level ie. you need to tell CMake to 
+Cartridge is build from the root RDKit level ie. you need to tell CMake to 
 build it too by including the following switch:
     -D RDK_BUILD_PGSQL=ON
 
