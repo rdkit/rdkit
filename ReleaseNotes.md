@@ -1,3 +1,13 @@
+# Release_2020.03.1
+(Changes relative to Release_2019.09.1)
+
+## Backwards incompatible changes
+- Searches for equal molecules (i.e. `mol1 @= mol2`) in the PostgreSQL cartridge
+  now use the `do_chiral_sss` option. So if `do_chiral_sss` is false (the
+  default), the molecules `CC(F)Cl` and `C[C@H](F)Cl` will be considered to be equal.
+  Previously these molecules were always considered to be different.
+
+
 # Release_2019.09.1
 (Changes relative to Release_2019.03.1)
 

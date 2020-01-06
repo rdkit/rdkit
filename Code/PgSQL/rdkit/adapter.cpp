@@ -441,13 +441,20 @@ extern "C" int molcmp(CROMol i, CROMol a) {
   if (res) return res;
 
   RDKit::MatchVectType matchVect;
-  bool ss1 = RDKit::SubstructMatch(*im, *am, matchVect, false, false);
-  bool ss2 = RDKit::SubstructMatch(*am, *im, matchVect, false, false);
-  if (ss1 != ss2) return ss1;
+  bool recursionPossible = false;
+  bool doChiralMatch = getDoChiralSSS();
+  bool ss1 = RDKit::SubstructMatch(*im, *am, matchVect, recursionPossible,
+                                   doChiralMatch);
+  bool ss2 = RDKit::SubstructMatch(*am, *im, matchVect, recursionPossible,
+                                   doChiralMatch);
+  if (ss1 && !ss2)
+    return 1;
+  else if (!ss1 && ss2)
+    return -1;
 
   // the above can still fail in some chirality cases
-  std::string smi1 = MolToSmiles(*im, true);
-  std::string smi2 = MolToSmiles(*am, true);
+  std::string smi1 = MolToSmiles(*im, doChiralMatch);
+  std::string smi2 = MolToSmiles(*am, doChiralMatch);
   return smi1 == smi2 ? 0 : (smi1 < smi2 ? -1 : 1);
 }
 
