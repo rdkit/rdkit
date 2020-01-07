@@ -18,7 +18,10 @@ class JSMol {
   std::string get_smiles() const;
   std::string get_molblock() const;
   std::string get_inchi() const;
-  std::string get_svg() const;
+  std::string get_svg(unsigned int width, unsigned int height) const;
+  std::string get_svg() const {
+    return get_svg(d_defaultWidth, d_defaultHeight);
+  };
   std::string get_svg_with_highlights(const std::string &details) const;
   std::string get_substruct_match(const JSMol &q) const;
   std::string get_substruct_matches(const JSMol &q) const;
@@ -37,6 +40,8 @@ class JSMol {
 
  private:
   std::unique_ptr<RDKit::ROMol> d_mol;
+  static constexpr unsigned int d_defaultWidth = 250;
+  static constexpr unsigned int d_defaultHeight = 200;
 };
 
 std::string get_inchikey_for_inchi(const std::string &input);
