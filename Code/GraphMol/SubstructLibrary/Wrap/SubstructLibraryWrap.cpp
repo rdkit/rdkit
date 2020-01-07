@@ -394,6 +394,7 @@ struct substructlibrary_wrapper {
              "  ARGUMENTS:\n"
 	     "    - stream: a text or text stream like object\n\n"
 	     "  >>> from rdkit.Chem import rdSubstructLibrary\n"
+	     "  >>> import io\n"
 	     "  >>> lib = rdSubstructLibrary.SubstructLibrary()\n"
 	     "  >>> stream = io.StringIO()\n"
 	     "  >>> lib.ToStream(stream)\n"
@@ -409,14 +410,16 @@ struct substructlibrary_wrapper {
 	   "so this requires opening a file in binary mode or using an io.ByteIO type object\n\n"
 	   "  ARGUMENTS:\n"
 	   "    - stream: a binary stream like object\n\n"
+	   "  SubstructLibrary.Serialize already writes a binary stream\n\n"
 	   "  >>> from rdkit.Chem import rdSubstructLibrary\n"
+	   "  >>> import io\n"
 	   "  >>> lib = rdSubstructLibrary.SubstructLibrary()\n"
 	   "  >>> stream = io.BytesIO( lib.Serialize() )\n"
 	   "  >>> lib.InitFromStream(stream)\n"
-           "   or\n"
-	   "  >>> stream = open('rdkit.sslib', 'b')\n"
-	   "  >>> lib.InitFromStream(stream)\n"
-	     )
+           "   remember to write to text and read from a binary stream\n"
+	   "  >>> with open('rdkit.sslib', 'w') as f: lib.ToStream(f)\n"
+	   "  >>> with open('rdkit.sslib', 'rb') as f: lib.InitFromStream(f)\n"
+	)
       
         .def("Serialize", &SubstructLibrary_Serialize)
         // enable pickle support
