@@ -232,6 +232,25 @@ RDKIT_GRAPHMOL_EXPORT ROMol *removeHs(const ROMol &mol,
 RDKIT_GRAPHMOL_EXPORT void removeHs(RWMol &mol, bool implicitOnly = false,
                                     bool updateExplicitCount = false,
                                     bool sanitize = true);
+struct RDKIT_GRAPHMOL_EXPORT RemoveHsParameters {
+  bool removeDegreeZero = false;    /**< hydrogens that have no bonds */
+  bool removeHigherDegrees = false; /**< hydrogens with two (or more) bonds */
+  bool removeNoHeavyAtoms =
+      false;                   /**< hydrogens with bonds to non-heavy atoms */
+  bool removeIsotopes = false; /**< hydrogens with non-default isotopes */
+  bool removeDummyNeighbors =
+      false; /**< hydrogens with at least one dummy-atom neighbor */
+  bool removeDefiningBondStereo =
+      false; /**< hydrogens defining bond stereochemistry */
+  bool removeWithWedgedBond = true; /**< hydrogens with wedged bonds to them */
+  bool removeWithQuery = false;     /**< hydrogens with queries defined */
+  bool showWarnings = true; /**< display warnings for Hs that are not removed */
+  bool removeNonimplicit = true; /**< DEPRECATED equivalent of implicitOnly */
+  bool updateExplicitCount =
+      false; /**< DEPRECATED equivalent of updateExplicitCount */
+};
+RDKIT_GRAPHMOL_EXPORT void removeHs(RWMol &mol, const RemoveHsParameters &ps,
+                                    bool sanitize = true);
 
 //! returns a copy of a molecule with hydrogens removed and added as queries
 //!  to the heavy atoms to which they are bound.
@@ -251,7 +270,8 @@ RDKIT_GRAPHMOL_EXPORT void removeHs(RWMol &mol, bool implicitOnly = false,
     - Hydrogens which aren't connected to a heavy atom will not be
       removed.  This prevents molecules like <tt>"[H][H]"</tt> from having
       all atoms removed.
-    - the caller is responsible for <tt>delete</tt>ing the pointer this returns.
+    - the caller is responsible for <tt>delete</tt>ing the pointer this
+  returns.
     - By default all hydrogens are removed, however if
       mergeUnmappedOnly is true, any hydrogen participating
       in an atom map will be retained
@@ -957,7 +977,8 @@ RDKIT_GRAPHMOL_EXPORT void findPotentialStereoBonds(ROMol &mol,
                                                     bool cleanIt = false);
 //@}
 
-//! \brief Uses the molParity atom property to assign ChiralType to a molecule's atoms
+//! \brief Uses the molParity atom property to assign ChiralType to a molecule's
+//! atoms
 /*!
   \param mol                  the molecule of interest
   \param replaceExistingTags  if this flag is true, any existing atomic chiral

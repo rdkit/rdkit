@@ -547,24 +547,7 @@ bool adjustStereoAtomsIfRequired(RWMol &mol, const Atom *atom,
 }
 }  // end of anonymous namespace
 
-//
-//  This routine removes hydrogens (and bonds to them) from the molecular graph.
-//  Other Atom and bond indices may be affected by the removal.
-//
-//  NOTES:
-//   - Hydrogens which aren't connected to a heavy atom will not be
-//     removed.  This prevents molecules like "[H][H]" from having
-//     all atoms removed.
-//   - Labelled hydrogen (e.g. atoms with atomic number=1, but isotope > 1),
-//     will not be removed.
-//   - two coordinate Hs, like the central H in C[H-]C, will not be removed
-//   - Hs connected to dummy atoms will not be removed
-//   - Hs that are part of the definition of double bond Stereochemistry
-//     will not be removed
-//   - Hs that are not connected to anything else will not be removed
-//
-void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
-              bool sanitize) {
+void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
   unsigned int currIdx = 0, origIdx = 0;
   std::map<unsigned int, unsigned int> idxMap;
   for (ROMol::AtomIterator atIt = mol.beginAtoms(); atIt != mol.endAtoms();
@@ -574,27 +557,36 @@ void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
   }
   while (currIdx < mol.getNumAtoms()) {
     Atom *atom = mol.getAtomWithIdx(currIdx);
-    idxMap[origIdx] = currIdx;
-    ++origIdx;
-    if (atom->getAtomicNum() == 1) {
+    idxMap[origIdx++] = currIdx;
+    if (atom->getAtomicNum() == 1 && (ps.removeNonimplicit || atom->hasProp(common_properties::isImplicit)) {
       bool removeIt = false;
-      if (!atom->getDegree()) {
-        BOOST_LOG(rdWarningLog)
-            << "WARNING: not removing hydrogen atom without neighbors"
-            << std::endl;
-      } else if (!atom->hasQuery()) {
+      if (!ps.removeDegreeZero && !atom->getDegree()) {
+        if (ps.showWarnings) {
+          BOOST_LOG(rdWarningLog)
+              << "WARNING: not removing hydrogen atom without neighbors"
+              << std::endl;
+        }
+      } else if (ps.removeWithQuery || !atom->hasQuery()) {
         if (atom->hasProp(common_properties::isImplicit)) {
           removeIt = true;
-          if (atom->getDegree() == 1) {
+          if (atom->getDegree() == 1 || (ps.removeHigherDegrees && atom->getDegree()>1) {
             // by default we remove implicit Hs, but not if they are
             // attached to dummy atoms. This was Github #1439
             ROMol::ADJ_ITER begin, end;
             boost::tie(begin, end) = mol.getAtomNeighbors(atom);
-            if (mol.getAtomWithIdx(*begin)->getAtomicNum() < 1) {
-              removeIt = false;
-              BOOST_LOG(rdWarningLog) << "WARNING: not removing hydrogen atom "
-                                         "with only dummy atom neighbors"
-                                      << std::endl;
+            while (begin != end) {
+              if (!ps.removeDummyNeighbors &&
+                  mol.getAtomWithIdx(*begin)->getAtomicNum() < 1) {
+                removeIt = false;
+                if (ps.showWarnings) {
+                  BOOST_LOG(rdWarningLog)
+                      << "WARNING: not removing hydrogen atom "
+                         "with only dummy atom neighbors"
+                      << std::endl;
+                }
+                break;
+              }
+              ++begin;
             }
           }
         } else if (!implicitOnly && !atom->getIsotope() &&
@@ -765,7 +757,13 @@ void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
     }
   }
 };
-
+void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
+              bool sanitize) {
+  RemoveHsParameters ps;
+  ps.nonImplicit = !implicitOnly;
+  ps.updateExplicitCount = updateExplicitCount;
+  removeHs(mol, ps, sanitize);
+};
 ROMol *removeHs(const ROMol &mol, bool implicitOnly, bool updateExplicitCount,
                 bool sanitize) {
   auto *res = new RWMol(mol);
@@ -808,8 +806,8 @@ bool isQueryH(const Atom *atom) {
     }
     std::list<QueryAtom::QUERYATOM_QUERY::CHILD_TYPE> childStack(
         atom->getQuery()->beginChildren(), atom->getQuery()->endChildren());
-    // the logic gets too complicated if there's an OR in the children, so just
-    // punt on those (with a warning)
+    // the logic gets too complicated if there's an OR in the children, so
+    // just punt on those (with a warning)
     while (!(hasHQuery && hasOr) && childStack.size()) {
       QueryAtom::QUERYATOM_QUERY::CHILD_TYPE query = childStack.front();
       childStack.pop_front();
@@ -897,8 +895,8 @@ void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly) {
         //  having started with a non-standard SMARTS.
         //
         if (!atom->hasQuery()) {
-          // it wasn't a query atom, we need to replace it so that we can add a
-          // query:
+          // it wasn't a query atom, we need to replace it so that we can add
+          // a query:
           ATOM_EQUALS_QUERY *tmp = makeAtomNumQuery(atom->getAtomicNum());
           auto *newAt = new QueryAtom;
           newAt->setQuery(tmp);
