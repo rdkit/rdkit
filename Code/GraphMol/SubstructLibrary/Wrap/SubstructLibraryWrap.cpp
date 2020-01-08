@@ -31,10 +31,12 @@
 #include <RDBoost/python.h>
 #include <RDBoost/Wrap.h>
 #include <GraphMol/RDKitBase.h>
+#include <RDBoost/python_streambuf.h>
 
 #include <GraphMol/SubstructLibrary/SubstructLibrary.h>
 
 namespace python = boost::python;
+using boost_adaptbx::python::streambuf;
 
 namespace RDKit {
 
@@ -195,6 +197,18 @@ struct substructlibrary_pickle_suite : python::pickle_suite {
         PyBytes_FromStringAndSize(res.c_str(), res.length()))));
   };
 };
+
+void toStream(const SubstructLibrary &cat, python::object &fileobj) {
+  streambuf ss(fileobj, 't');
+  streambuf::ostream ost(ss);
+  cat.toStream(ost);
+}
+
+  void initFromStream(SubstructLibrary &cat, python::object &fileobj) {
+  streambuf ss(fileobj, 'b'); // python StringIO can't seek, so need binary data
+  streambuf::istream is(ss);
+  cat.initFromStream(is);
+}
 
 struct substructlibrary_wrapper {
   static void wrap() {
@@ -373,6 +387,40 @@ struct substructlibrary_wrapper {
 
         .def("__len__", &SubstructLibrary::size)
 
+        .def("ToStream", &toStream,
+	     python::arg("stream"),
+	     "Serialize a substructure library to a python text stream.\n"
+	     "The stream can be a file in text mode or an io.StringIO type object\n\n"
+             "  ARGUMENTS:\n"
+	     "    - stream: a text or text stream like object\n\n"
+	     "  >>> from rdkit.Chem import rdSubstructLibrary\n"
+	     "  >>> import io\n"
+	     "  >>> lib = rdSubstructLibrary.SubstructLibrary()\n"
+	     "  >>> stream = io.StringIO()\n"
+	     "  >>> lib.ToStream(stream)\n\n"
+	     "   or\n"
+	     "  >>> stream = open('rdkit.sslib', 'w')\n"
+	     "  >>> lib.ToStream(stream)\n"
+	     )
+
+        .def("InitFromStream", &initFromStream,
+	   python::arg("stream"),
+	   "Deserialize a substructure library from a python bytes stream.\n"
+	   "Python doesn't allow seeking operations inside a unicode or string stream anymore\n"
+	   "so this requires opening a file in binary mode or using an io.ByteIO type object\n\n"
+	   "  ARGUMENTS:\n"
+	   "    - stream: a binary stream like object\n\n"
+	   "  SubstructLibrary.Serialize already writes a binary stream\n\n"
+	   "  >>> from rdkit.Chem import rdSubstructLibrary\n"
+	   "  >>> import io\n"
+	   "  >>> lib = rdSubstructLibrary.SubstructLibrary()\n"
+	   "  >>> stream = io.BytesIO( lib.Serialize() )\n"
+	   "  >>> lib.InitFromStream(stream)\n\n"
+           "   remember to write to text and read from a binary stream\n"
+	   "  >>> with open('rdkit.sslib', 'w') as f: lib.ToStream(f)\n"
+	   "  >>> with open('rdkit.sslib', 'rb') as f: lib.InitFromStream(f)\n"
+	)
+      
         .def("Serialize", &SubstructLibrary_Serialize)
         // enable pickle support
         .def_pickle(substructlibrary_pickle_suite())
