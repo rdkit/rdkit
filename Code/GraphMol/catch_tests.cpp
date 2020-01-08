@@ -1058,4 +1058,16 @@ TEST_CASE("RemoveHsParameters", "[molops]") {
       CHECK(cp.getNumAtoms() == 2);
     }
   }
+  SECTION("allHs") {
+    std::unique_ptr<RWMol> m{SmilesToMol(
+        "[C@]12([H])CCC1CO2.[H+].F[H-]F.[H][H].[H]*.F/C=C/[H]", smilesPs)};
+    REQUIRE(m);
+    // artificial wedging since we don't have a conformer
+    m->getBondBetweenAtoms(0, 1)->setBondDir(Bond::BEGINWEDGE);
+    RWMol cp(*m);
+    MolOps::removeAllHs(cp);
+    for (auto atom : cp.atoms()) {
+      CHECK(atom->getAtomicNum() != 1);
+    }
+  }
 }

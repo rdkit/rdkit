@@ -5792,6 +5792,11 @@ M  END
     self.assertEqual(m.GetNumAtoms(), 1)
 
 
+    m = Chem.MolFromSmiles('[C@]12([H])CCC1CO2.[H+].F[H-]F.[H][H].[H]*.F/C=C/[H]')
+    m = Chem.RemoveAllHs(m)
+    for at in m.GetAtoms():
+      self.assertNotEqual(at.GetAtomicNum(),1)
+
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()

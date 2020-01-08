@@ -259,6 +259,13 @@ RDKIT_GRAPHMOL_EXPORT ROMol *removeHs(const ROMol &mol,
                                       const RemoveHsParameters &ps,
                                       bool sanitize = true);
 
+//! removes all Hs from a molecule
+RDKIT_GRAPHMOL_EXPORT void removeAllHs(RWMol &mol, bool sanitize = true);
+//! \overload
+// The caller owns the pointer this returns
+RDKIT_GRAPHMOL_EXPORT ROMol *removeAllHs(const ROMol &mol,
+                                         bool sanitize = true);
+
 //! returns a copy of a molecule with hydrogens removed and added as queries
 //!  to the heavy atoms to which they are bound.
 /*!

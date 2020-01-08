@@ -791,6 +791,31 @@ ROMol *removeHs(const ROMol &mol, bool implicitOnly, bool updateExplicitCount,
   return static_cast<ROMol *>(res);
 }
 
+void removeAllHs(RWMol &mol, bool sanitize) {
+  RemoveHsParameters ps;
+  ps.removeDegreeZero = true;
+  ps.removeHigherDegrees = true;
+  ps.removeOnlyHNeighbors = true;
+  ps.removeIsotopes = true;
+  ps.removeDummyNeighbors = true;
+  ps.removeDefiningBondStereo = true;
+  ps.removeWithWedgedBond = true;
+  ps.removeWithQuery = true;
+  ps.removeNonimplicit = true;
+  ps.showWarnings = false;
+  removeHs(mol, ps, sanitize);
+};
+ROMol *removeAllHs(const ROMol &mol, bool sanitize) {
+  auto *res = new RWMol(mol);
+  try {
+    removeAllHs(*res, sanitize);
+  } catch (MolSanitizeException &se) {
+    delete res;
+    throw se;
+  }
+  return static_cast<ROMol *>(res);
+}
+
 namespace {
 bool isQueryH(const Atom *atom) {
   PRECONDITION(atom, "bogus atom");

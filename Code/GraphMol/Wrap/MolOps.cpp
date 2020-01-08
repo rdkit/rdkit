@@ -1077,7 +1077,13 @@ struct molops_wrapper {
                              bool)) MolOps::removeHs,
                 (python::arg("mol"), python::arg("params"),
                  python::arg("sanitize") = true),
-                docString.c_str(),
+                "Returns a copy of the molecule with Hs removed. Which Hs are "
+                "removed is controlled by the params argument",
+                python::return_value_policy<python::manage_new_object>());
+    python::def("RemoveAllHs",
+                (ROMol * (*)(const ROMol &, bool)) MolOps::removeAllHs,
+                (python::arg("mol"), python::arg("sanitize") = true),
+                "Returns a copy of the molecule with all Hs removed.",
                 python::return_value_policy<python::manage_new_object>());
     python::def("MergeQueryHs",
                 (ROMol * (*)(const ROMol &, bool)) & MolOps::mergeQueryHs,
