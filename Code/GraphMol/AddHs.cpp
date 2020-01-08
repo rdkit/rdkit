@@ -688,10 +688,12 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
       continue;
     }
     bool removeIt = true;
-    if (!ps.removeDummyNeighbors || !ps.removeDefiningBondStereo) {
+    if (!ps.removeDummyNeighbors || !ps.removeDefiningBondStereo ||
+        !ps.removeOnlyHNeighbors) {
+      bool onlyHNeighbors = true;
       ROMol::ADJ_ITER begin, end;
       boost::tie(begin, end) = mol.getAtomNeighbors(atom);
-      while (begin != end) {
+      while (begin != end && removeIt) {
         auto nbr = mol.getAtomWithIdx(*begin);
         // is it a dummy?
         if (!ps.removeDummyNeighbors && nbr->getAtomicNum() < 1) {
@@ -701,7 +703,9 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
                                        "with dummy atom neighbors"
                                     << std::endl;
           }
-          break;
+        }
+        if (!ps.removeOnlyHNeighbors && nbr->getAtomicNum() != 1) {
+          onlyHNeighbors = false;
         }
         if (!ps.removeWithWedgedBond) {
           const auto bnd =
@@ -714,7 +718,6 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
                                          "with wedged bond"
                                       << std::endl;
             }
-            break;
           }
         }
         // Check to see if the neighbor has a double bond and we're the only
@@ -732,17 +735,18 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
             }
           }
         }
-        if (!removeIt) break;
         ++begin;
       }
+      if (removeIt && (!ps.removeOnlyHNeighbors && onlyHNeighbors)) {
+        removeIt = false;
+      }
     }
-    if (!removeIt) {
-      continue;
+    if (removeIt) {
+      atomsToRemove.set(atom->getIdx());
     }
-    atomsToRemove.set(atom->getIdx());
   }  // end of the loop over atoms
   // now that we know which atoms need to be removed, go ahead and remove them
-  for (size_t idx = mol.getNumAtoms() - 1; idx >= 0; --idx) {
+  for (int idx = mol.getNumAtoms() - 1; idx >= 0; --idx) {
     if (atomsToRemove[idx]) {
       molRemoveH(mol, idx, ps.updateExplicitCount);
     }

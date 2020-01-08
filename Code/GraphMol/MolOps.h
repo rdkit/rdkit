@@ -235,8 +235,8 @@ RDKIT_GRAPHMOL_EXPORT void removeHs(RWMol &mol, bool implicitOnly = false,
 struct RDKIT_GRAPHMOL_EXPORT RemoveHsParameters {
   bool removeDegreeZero = false;    /**< hydrogens that have no bonds */
   bool removeHigherDegrees = false; /**< hydrogens with two (or more) bonds */
-  bool removeNoHeavyAtoms =
-      false;                   /**< hydrogens with bonds to non-heavy atoms */
+  bool removeOnlyHNeighbors =
+      false; /**< hydrogens with bonds only to other hydrogens */
   bool removeIsotopes = false; /**< hydrogens with non-default isotopes */
   bool removeDummyNeighbors =
       false; /**< hydrogens with at least one dummy-atom neighbor */
