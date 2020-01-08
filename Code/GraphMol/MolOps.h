@@ -249,8 +249,15 @@ struct RDKIT_GRAPHMOL_EXPORT RemoveHsParameters {
   bool updateExplicitCount =
       false; /**< DEPRECATED equivalent of updateExplicitCount */
 };
+//! \overload
+// modifies the molecule in place
 RDKIT_GRAPHMOL_EXPORT void removeHs(RWMol &mol, const RemoveHsParameters &ps,
                                     bool sanitize = true);
+//! \overload
+// The caller owns the pointer this returns
+RDKIT_GRAPHMOL_EXPORT ROMol *removeHs(const ROMol &mol,
+                                      const RemoveHsParameters &ps,
+                                      bool sanitize = true);
 
 //! returns a copy of a molecule with hydrogens removed and added as queries
 //!  to the heavy atoms to which they are bound.

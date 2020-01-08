@@ -688,8 +688,9 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
       continue;
     }
     bool removeIt = true;
-    if (!ps.removeDummyNeighbors || !ps.removeDefiningBondStereo ||
-        !ps.removeOnlyHNeighbors) {
+    if (atom->getDegree() &&
+        (!ps.removeDummyNeighbors || !ps.removeDefiningBondStereo ||
+         !ps.removeOnlyHNeighbors)) {
       bool onlyHNeighbors = true;
       ROMol::ADJ_ITER begin, end;
       boost::tie(begin, end) = mol.getAtomNeighbors(atom);
@@ -761,7 +762,16 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
     sanitizeMol(mol);
   }
 };
-
+ROMol *removeHs(const ROMol &mol, const RemoveHsParameters &ps, bool sanitize) {
+  auto *res = new RWMol(mol);
+  try {
+    removeHs(*res, ps, sanitize);
+  } catch (MolSanitizeException &se) {
+    delete res;
+    throw se;
+  }
+  return static_cast<ROMol *>(res);
+}
 void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
               bool sanitize) {
   RemoveHsParameters ps;
