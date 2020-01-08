@@ -1046,6 +1046,39 @@ struct molops_wrapper {
                 docString.c_str(),
                 python::return_value_policy<python::manage_new_object>());
 
+    // ------------------------------------------------------------------------
+    docString = R"DOC(Parameters controlling which Hs are removed.)DOC";
+    python::class_<MolOps::RemoveHsParameters>("RemoveHsParameters",
+                                               docString.c_str())
+        .def_readwrite("removeDegreeZero",
+                       &MolOps::RemoveHsParameters::removeDegreeZero)
+        .def_readwrite("removeHigherDegrees",
+                       &MolOps::RemoveHsParameters::removeHigherDegrees)
+        .def_readwrite("removeOnlyHNeighbors",
+                       &MolOps::RemoveHsParameters::removeOnlyHNeighbors)
+        .def_readwrite("removeIsotopes",
+                       &MolOps::RemoveHsParameters::removeIsotopes)
+        .def_readwrite("removeDummyNeighbors",
+                       &MolOps::RemoveHsParameters::removeDummyNeighbors)
+        .def_readwrite("removeDefiningBondStereo",
+                       &MolOps::RemoveHsParameters::removeDefiningBondStereo)
+        .def_readwrite("removeWithWedgedBond",
+                       &MolOps::RemoveHsParameters::removeWithWedgedBond)
+        .def_readwrite("removeWithQuery",
+                       &MolOps::RemoveHsParameters::removeWithQuery)
+        .def_readwrite("removeNonimplicit",
+                       &MolOps::RemoveHsParameters::removeNonimplicit)
+        .def_readwrite("showWarnings",
+                       &MolOps::RemoveHsParameters::showWarnings)
+        .def_readwrite("updateExplicitCount",
+                       &MolOps::RemoveHsParameters::updateExplicitCount);
+    python::def("RemoveHs",
+                (ROMol * (*)(const ROMol &, const MolOps::RemoveHsParameters &,
+                             bool)) MolOps::removeHs,
+                (python::arg("mol"), python::arg("params"),
+                 python::arg("sanitize") = true),
+                docString.c_str(),
+                python::return_value_policy<python::manage_new_object>());
     python::def("MergeQueryHs",
                 (ROMol * (*)(const ROMol &, bool)) & MolOps::mergeQueryHs,
                 (python::arg("mol"), python::arg("mergeUnmappedOnly") = false),
@@ -1705,8 +1738,7 @@ struct molops_wrapper {
 \n";
     python::def("AssignAtomChiralTagsFromMolParity",
                 MolOps::assignChiralTypesFromMolParity,
-                (python::arg("mol"),
-                 python::arg("replaceExistingTags") = true),
+                (python::arg("mol"), python::arg("replaceExistingTags") = true),
                 docString.c_str());
 
     // ------------------------------------------------------------------------
