@@ -271,7 +271,7 @@ mol: atomd {
 | mol branch {
   RWMol *m1_p = (*molList)[$$],*m2_p=(*molList)[$2];
   // FIX: handle generic bonds here
-  SmilesParseOps::AddFragToMol(m1_p,m2_p,Bond::UNSPECIFIED,Bond::NONE,false,true);
+  SmilesParseOps::AddFragToMol(m1_p,m2_p,Bond::UNSPECIFIED,Bond::NONE);
   delete m2_p;
   int sz = molList->size();
   if ( sz==$2+1) {

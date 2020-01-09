@@ -79,7 +79,10 @@ add_subdirectory(MolDraw2D)
 add_subdirectory(FMCS)
 add_subdirectory(MolHash)
 add_subdirectory(MMPA)
+
+if(RDK_BUILD_STRUCTCHECKER_SUPPORT)
 add_subdirectory(StructChecker)
+endif()
 
 add_subdirectory(ReducedGraphs)
 add_subdirectory(Trajectory)

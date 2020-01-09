@@ -1,6 +1,5 @@
-// $Id$
 //
-//   Copyright (C) 2005-2006 Rational Discovery LLC
+//   Copyright (C) 2005-2019 Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -14,10 +13,7 @@
 #include "ShapeEncoder.h"
 #include "ShapeUtils.h"
 #include <GraphMol/RDKitBase.h>
-//#include <GraphMol/DistGeomHelpers/Embedder.h>
 #include <GraphMol/FileParsers/FileParsers.h>
-//#include <GraphMol/ForceFieldHelpers/UFF/Builder.h>
-//#include <ForceField/ForceField.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <Geometry/GridUtils.h>
 #include <GraphMol/MolAlign/AlignMolecules.h>
@@ -37,8 +33,6 @@ void test1Encode() {
   MolShapes::EncodeShape(*m, grd, 0);
   delete m;
 
-  // RDGeom::writeGridToFile(grd, "junk.grd");
-  // MolToMolFile(m, "junk.mol", 0);
   CHECK_INVARIANT(grd.getOccupancyVect()->getTotalVal() == 7405, "");
 }
 
@@ -89,22 +83,6 @@ void test2Compare() {
   delete m2;
 }
 
-void test3Methane() {
-  std::string rdbase = getenv("RDBASE");
-  std::string fname =
-      rdbase + "/Code/GraphMol/ShapeHelpers/test_data/methane.mol";
-  ROMol *m = MolFileToMol(fname);
-  RDGeom::Point3D dims, offSet;
-  MolShapes::computeConfDimsAndOffset(m->getConformer(), dims, offSet, nullptr,
-                                      3.0);
-  std::cout << dims << " " << offSet << "\n";
-  RDGeom::UniformGrid3D grd(6.5, 6.5, 6.5);
-  // dims.x, dims.y, dims.z, 0.5, DiscreteValueVect::TWOBITVALUE, &offSet);
-  MolShapes::EncodeShape(*m, grd, 0);
-  RDGeom::writeGridToFile(grd, "methane.grd");
-  delete m;
-}
-
 int main() {
 #if 1
   std::cout << "***********************************************************\n";
@@ -119,6 +97,5 @@ int main() {
   test2Compare();
   std::cout << "***********************************************************\n";
 #endif
-  // test3Methane();
   return 0;
 }

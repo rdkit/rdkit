@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2018 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2019 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -95,42 +95,6 @@ void describeQuery(const T *query, std::string leader = "\t") {
   }
 }
 
-// called with the children of AND queries:
-std::string smartsOrganicAtom(const QueryAtom::QUERYATOM_QUERY *child1,
-                              const QueryAtom::QUERYATOM_QUERY *child2) {
-  PRECONDITION(child1 && child2, "bad query");
-
-  std::string desc1 = child1->getDescription();
-  std::string desc2 = child2->getDescription();
-  const QueryAtom::QUERYATOM_QUERY *origA, *otherA;
-  if (desc1 == "AtomAtomicNum") {
-    origA = child1;
-    otherA = child2;
-  } else {
-    origA = child2;
-    otherA = child1;
-  }
-
-  std::string odsc = otherA->getDescription();
-  CHECK_INVARIANT(((odsc == "AtomIsAliphatic") || (odsc == "AtomIsAromatic")),
-                  "Should be either an aromatic or Aliphatic atom");
-
-  const ATOM_EQUALS_QUERY *torig =
-      static_cast<const ATOM_EQUALS_QUERY *>(origA);
-  int val = torig->getVal();
-  std::string res = PeriodicTable::getTable()->getElementSymbol(val);
-  if (odsc == "AtomIsAromatic") {
-    // if aromatic convert the first leter to a small letter
-    res[0] += ('a' - 'A');
-    if (res.length() > 1) {
-      res = "[" + res + "]";
-    }
-  }
-  if (torig->getNegation()) {
-    res = "!" + res;
-  }
-  return res;
-}
 const static std::string _qatomHasStereoSet = "_qatomHasStereoSet";
 std::string getAtomSmartsSimple(const QueryAtom *qatom,
                                 const ATOM_EQUALS_QUERY *query,
@@ -476,32 +440,6 @@ std::string _recurseGetSmarts(const QueryAtom *qatom,
   std::string csmarts1, csmarts2;
 
   bool needParen;
-
-  // deal with any special AND cases
-  //  1. This "node" is an AtomAnd between a AliphaticAtom (or AromaticAtom)
-  //  and
-  //      an organic atom e.g. "C"
-  if (descrip == "AtomAnd") {
-    bool specialCase = false;
-    // case 1
-    if ((!child1->getNegation() && !child2->getNegation()) &&
-        (((dsc1 == "AtomAtomicNum") &&
-          ((dsc2 == "AtomIsAliphatic") || (dsc2 == "AtomIsAromatic"))) ||
-         ((dsc2 == "AtomAtomicNum") &&
-          ((dsc1 == "AtomIsAliphatic") || (dsc1 == "AtomIsAromatic"))))) {
-      // we trap this one because it's nicer to see
-      //   "CC" in the output than "[#6&A][#6&A]"
-      res = smartsOrganicAtom(child1, child2);
-      specialCase = true;
-    }
-    if (specialCase) {
-      if (negate) {
-        res = "!" + res;
-      }
-      return res;
-    }
-  }
-
   // deal with the first child
   if (dsc1 == "RecursiveStructure") {
     csmarts1 = getRecursiveStructureQuerySmarts(child1);

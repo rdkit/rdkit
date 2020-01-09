@@ -1924,7 +1924,7 @@ yyreduce:
     {
   RWMol *m1_p = (*molList)[(yyval.moli)],*m2_p=(*molList)[(yyvsp[0].moli)];
   // FIX: handle generic bonds here
-  SmilesParseOps::AddFragToMol(m1_p,m2_p,Bond::UNSPECIFIED,Bond::NONE,false,true);
+  SmilesParseOps::AddFragToMol(m1_p,m2_p,Bond::UNSPECIFIED,Bond::NONE);
   delete m2_p;
   int sz = molList->size();
   if ( sz==(yyvsp[0].moli)+1) {

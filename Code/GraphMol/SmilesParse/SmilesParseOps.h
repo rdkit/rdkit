@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2016 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2019 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -20,10 +20,11 @@ namespace SmilesParseOps {
 void CheckRingClosureBranchStatus(RDKit::Atom *atom, RDKit::RWMol *mp);
 void ReportParseError(const char *message, bool throwIt = true);
 void CleanupAfterParseError(RDKit::RWMol *mol);
+// This uses SMARTS semantics: unspecified bonds are treated as
+// aromatic or single.
 void AddFragToMol(RDKit::RWMol *mol, RDKit::RWMol *frag,
                   RDKit::Bond::BondType bondOrder = RDKit::Bond::UNSPECIFIED,
-                  RDKit::Bond::BondDir bondDir = RDKit::Bond::NONE,
-                  bool closeRings = false, bool doingQuery = false);
+                  RDKit::Bond::BondDir bondDir = RDKit::Bond::NONE);
 RDKit::Bond::BondType GetUnspecifiedBondType(const RDKit::RWMol *mol,
                                              const RDKit::Atom *atom1,
                                              const RDKit::Atom *atom2);
