@@ -1,3 +1,36 @@
+# Release_2019.09.3
+(Changes relative to Release_2019.09.2)
+
+## Acknowledgements:
+Marcel Baltruschat, Brian Kelley, Matt Swain, Paolo Tosco, 'hjuinj'
+
+## Bug Fixes:
+  - Mol rendering within DataFrames in a Jupyter Notebook is broken with Pandas 0.25.1
+ (github #2673 from mrcblt)
+  - MSVC compile error: MolHash scoped enum cannot be redeclared as unscoped
+ (github #2752 from mcs07)
+  - Using `SetBoundsMat` significantly slows down conformer generation process.
+ (github #2800 from hjuinj)
+  - Remove confId from *FFOptimizeMoleculeConfs Python docs
+ (github #2805 from ptosco)
+  - RDKit segfaults in MMFFOptimizeMoleculeConfs()
+ (github #2820 from ptosco)
+  - Trusted Smiles holder doesn't handle ring queries
+ (github #2830 from bp-kelley)
+  - Fix windows substructure crash
+ (github #2836 from greglandrum)
+  - Fix YAeHMOP build
+ (github #2838 from ptosco)
+  - testGithub2245 in testPickers.cpp occasionally fails
+ (github #2839 from ptosco)
+  - add define for RDK_USE_BOOST_SERIALIZATION
+ (github #2859 from greglandrum)
+  - fix start/end atoms when wedging bonds
+ (github #2861 from greglandrum)
+  - Fixes the size of the reduced charge matrix from eHT calculations
+ (github #2864 from greglandrum)
+
+
 # Release_2019.09.2
 (Changes relative to Release_2019.09.1)
 
