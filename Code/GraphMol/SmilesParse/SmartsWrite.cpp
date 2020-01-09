@@ -411,7 +411,7 @@ std::string _recurseGetSmarts(const QueryAtom *qatom,
   //
   // There is an additional complication with composite nodes that carry a
   // negation - in this
-  // case we will propogate the negation to the child nodes using the
+  // case we will propagate the negation to the child nodes using the
   // following rules
   //   NOT (a AND b) = ( NOT (a)) AND ( NOT (b))
   //   NOT (a OR b) = ( NOT (a)) OR ( NOT (b))
@@ -478,7 +478,7 @@ std::string _recurseGetSmarts(const QueryAtom *qatom,
   }
 
   // ok if we have a negation and we have an OR , we have to change to
-  // an AND since we propogated the negation
+  // an AND since we propagated the negation
   // i.e NOT (A OR B) = (NOT (A)) AND (NOT(B))
   if (negate) {
     if (descrip == "AtomOr") {
@@ -513,7 +513,7 @@ std::string _recurseBondSmarts(const Bond *bond,
   //
   // There is an additional complication with composite nodes that carry a
   // negation - in this
-  // case we will propogate the neagtion to the child nodes using the
+  // case we will propagate the negation to the child nodes using the
   // following rules
   //   NOT (a AND b) = ( NOT (a)) AND ( NOT (b))
   //   NOT (a OR b) = ( NOT (a)) OR ( NOT (b))
@@ -535,7 +535,7 @@ std::string _recurseBondSmarts(const Bond *bond,
   chi++;
   // OK we should be at the end of vector by now - since we can have only two
   // children,
-  // well - atleat in this case
+  // well - at least in this case
   CHECK_INVARIANT(chi == node->endChildren(), "Too many children on the query");
 
   std::string dsc1, dsc2;

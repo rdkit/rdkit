@@ -44,10 +44,10 @@ PyObject *getEuclideanDistMat(python::object descripMat) {
   //     - in this case wrap descripMat with a PySequenceHolder<type*> where
   //     type is the
   //       type of entry in vector (accepted types are int, double and float
-  //     - Then pass the PySequenceHolder to the metrci calculator
+  //     - Then pass the PySequenceHolder to the metric calculator
   // 3. A list (or tuple) of lists (or tuple)
   //     - In this case other than wrapping descripMat with a PySequenceHolder
-  //       each of the indivual list in there are also wrapped by a
+  //       each of the individual list in there are also wrapped by a
   //       PySequenceHolder
   //     - so the distance calculator is passed in a
   //     "PySequenceHolder<PySequenceHolder<double>>"
@@ -123,7 +123,7 @@ PyObject *getEuclideanDistMat(python::object descripMat) {
       return PyArray_Return(distRes);
     }
 
-    // if we have an interger array
+    // if we have an integer array
     else if (PyArray_DESCR((PyArrayObject *)descMatObj)->type_num == NPY_INT) {
       int *desc = (int *)PyArray_DATA(copy);
       auto **desc2D = new int *[nrows];
@@ -137,7 +137,7 @@ PyObject *getEuclideanDistMat(python::object descripMat) {
       delete[] desc2D;
       return PyArray_Return(distRes);
     } else {
-      // unreconiged type for the matrix, throw up
+      // unrecognized type for the matrix, throw up
       throw_value_error(
           "The array has to be of type int, float, or double for "
           "GetEuclideanDistMat");

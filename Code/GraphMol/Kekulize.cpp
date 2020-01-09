@@ -48,7 +48,7 @@ void backTrack(RWMol &mol, INT_INT_DEQ_MAP &options, int lastOpt,
       int aid1 = bnd->getBeginAtomIdx();
       int aid2 = bnd->getEndAtomIdx();
       // if one of these atoms has been dealt with before lastOpt
-      // we don't have to chnage the double bond addition
+      // we don't have to change the double bond addition
       if ((std::find(tdone.begin(), tdone.end(), aid1) == tdone.end()) &&
           (std::find(tdone.begin(), tdone.end(), aid2) == tdone.end())) {
         // otherwise strip the double bond and set it back to single
@@ -551,7 +551,7 @@ void Kekulize(RWMol &mol, bool markAtomsBonds, unsigned int maxBackTracks) {
   // brings = mol.getRingInfo()->bondRings();
   RingUtils::convertToBonds(arings, brings, mol);
 
-  // make a the neighbor map for the rings i.e. a ring is a
+  // make a neighbor map for the rings i.e. a ring is a
   // neighbor to another candidate ring if it shares at least
   // one bond
   // useful to figure out fused systems

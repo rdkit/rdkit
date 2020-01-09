@@ -20,7 +20,7 @@ def GetHeterocycleReactionSmarts():
     CONVERT_FROM - the element type being converted: c, n, o, s
     CONVERT_TO - the right side of the reaction SMARTS pattern, there can be multiple destination types separated with a comma, these should map to multiple actual reaction objects
     EXAMPLE - an example aromatic ring system that SMARTS should match against, used in test cases
-    NEGATIVE_EXAMPLE - an example aromatic ring system that SMART should NOT match aginst, used in test cases
+    NEGATIVE_EXAMPLE - an example aromatic ring system that SMART should NOT match against, used in test cases
     DESCRIPTION - a human readable description of the SMARTS pattern matching
     """
     HeteroAtomReaction = collections.namedtuple(

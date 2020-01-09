@@ -853,7 +853,7 @@ int main() {
   try {
     testLoadOptionsFromFiles();
   } catch (...) {
-    // relative path to patern files must be correct !
+    // relative path to pattern files must be correct !
   }
   testOptionsDefault();
 

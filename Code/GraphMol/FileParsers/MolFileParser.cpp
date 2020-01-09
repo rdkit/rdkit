@@ -2389,7 +2389,7 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
 
   if (n3DConstraints) {
     BOOST_LOG(rdWarningLog)
-        << "3D constraint information in mol block igored at line " << line
+        << "3D constraint information in mol block ignored at line " << line
         << std::endl;
     tempStr = getV3000Line(inStream, line);
     boost::to_upper(tempStr);

@@ -39,6 +39,7 @@ UniformGrid3D &UniformGrid3D::operator=(const UniformGrid3D &other) {
   initGrid(other.d_numX * other.d_spacing, other.d_numY * other.d_spacing,
            other.d_numZ * other.d_spacing, other.d_spacing,
            other.dp_storage->getValueType(), other.d_offSet, data);
+  return *this;
 }
 
 void UniformGrid3D::initGrid(
@@ -397,7 +398,7 @@ void writeGridToStream(const UniformGrid3D &grid, std::ostream &outStrm) {
   int outX2 = (int)(floor(offSet.x + 0.5)) + (int)(dimX - 1);
   // REVIEW: ok - here is a fix to try and make the grid closer to the molecule
   // when displayed
-  // (atleast in PyMol). The difference between the pair of values (outX1,
+  // (at least in PyMol). The difference between the pair of values (outX1,
   // outX2) is (dimX-1),
   // that is not the case with pairs the (outY1, outY2) a (outZ1, outZ2). In
   // these cases, the difference is

@@ -18,7 +18,7 @@ if RDConfig.usePgSQL:
     pulling pickled objects from PostgreSQL databases.  Instead of
     having to use all of PgSQL's typechecking, we'll make a lot of
     assumptions about what's coming out of the Db and its layout.
-    The results can lead to drastic improvements in perfomance.
+    The results can lead to drastic improvements in performance.
     
     """
 

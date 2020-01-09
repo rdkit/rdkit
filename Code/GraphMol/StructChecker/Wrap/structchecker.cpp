@@ -150,7 +150,7 @@ struct struct_wrapper {
         .def("StringToStructureFlags",
              &RDKit::StructureCheck::StructChecker::StringToStructureFlags,
              (python::arg("str")),
-             "Convert a comma seperated string to the appropriate structure "
+             "Convert a comma separated string to the appropriate structure "
              "flags")
         .staticmethod("StringToStructureFlags");
   }

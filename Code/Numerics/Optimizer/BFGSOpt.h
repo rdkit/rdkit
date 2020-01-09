@@ -26,7 +26,7 @@ const int MAXITS = 200;   //!< Default maximum number of iterations
 const double EPS = 3e-8;  //!< Default gradient tolerance in the minimizer
 const double TOLX =
     4. * EPS;  //!< Default direction vector tolerance in the minimizer
-const double MAXSTEP = 100.0;  //!< Default maximim step size in the minimizer
+const double MAXSTEP = 100.0;  //!< Default maximum step size in the minimizer
 
 //! Do a Quasi-Newton minimization along a line.
 /*!

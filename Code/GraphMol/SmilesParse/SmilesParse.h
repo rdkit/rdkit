@@ -55,7 +55,7 @@ RDKIT_SMILESPARSE_EXPORT Bond *SmilesToBond(const std::string &smi);
  abbreviations
  in the input SMILES. The set of substitutions is repeatedly looped through
  until
- the string no longer changes. It is the responsiblity of the caller to make
+ the string no longer changes. It is the responsibility of the caller to make
  sure
  that substitutions results in legal and sensible SMILES.
 
@@ -107,7 +107,7 @@ class RDKIT_SMILESPARSE_EXPORT SmilesParseException : public std::exception {
   SmilesParseException(const char *msg) : _msg(msg){};
   SmilesParseException(const std::string msg) : _msg(msg){};
   const char *message() const { return _msg.c_str(); };
-  ~SmilesParseException() throw(){};
+  ~SmilesParseException() noexcept {};
 
  private:
   std::string _msg;

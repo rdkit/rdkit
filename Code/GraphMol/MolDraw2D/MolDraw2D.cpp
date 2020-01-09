@@ -228,7 +228,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
     doContinuousHighlighting(mol, highlight_atoms, highlight_bonds,
                              highlight_atom_map, highlight_bond_map,
                              highlight_radii);
-    // at this point we shouldn't be doing any more higlighting, so blow out
+    // at this point we shouldn't be doing any more highlighting, so blow out
     // those variables:
     highlight_bonds = nullptr;
     highlight_atoms = nullptr;
@@ -503,7 +503,7 @@ void MolDraw2D::drawReaction(
       (!nrxn.getNumReactantTemplates() || !nrxn.getNumProductTemplates())) {
     // drawMolecule() will figure out the scaling so that the molecule
     // fits the drawing pane. In order to ensure that we have space for the
-    // arrow, we need to figoure out the scaling on our own.
+    // arrow, we need to figure out the scaling on our own.
     RWMol tmol2;
     tmol2.addAtom(new Atom(0), true, true);
     tmol2.addAtom(new Atom(0), true, true);

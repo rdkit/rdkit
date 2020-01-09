@@ -2444,7 +2444,7 @@ another:
 
 .. doctest::
 
-  >>> combinedFp=fp&(fp^fp2) # can be more efficent than fp&(!fp2)
+  >>> combinedFp=fp&(fp^fp2) # can be more efficient than fp&(!fp2)
   >>> obl = list(combinedFp.GetOnBits())
   >>> fcat.GetEntryDescription(obl[-1])
   'cccc(N)cc'

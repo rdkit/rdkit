@@ -1930,7 +1930,7 @@ RDKitの\ `rdkit.Chem.Recap <https://www.rdkit.org/docs/source/rdkit.Chem.Recap.
 
 BRICSの実装
 ==========================================================
-[`BRICS Implemetation <https://www.rdkit.org/docs/GettingStartedInPython.html#brics-implementation>`__]
+[`BRICS Implementation <https://www.rdkit.org/docs/GettingStartedInPython.html#brics-implementation>`__]
 
 RDKitはBRICSアルゴリズムの実装も提供しています。[#degen]_ BRICSは合成的に利用可能な結合に沿って分子をフラグメント化するもう一つの方法です:
 

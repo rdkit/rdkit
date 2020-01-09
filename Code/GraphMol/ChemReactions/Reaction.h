@@ -52,7 +52,7 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReactionException
   explicit ChemicalReactionException(const std::string msg) : _msg(msg){};
   //! get the error message
   const char *message() const { return _msg.c_str(); };
-  ~ChemicalReactionException() throw(){};
+  ~ChemicalReactionException() noexcept {};
 
  private:
   std::string _msg;

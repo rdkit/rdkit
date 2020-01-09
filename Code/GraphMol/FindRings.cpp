@@ -85,7 +85,7 @@ void storeRingsInfo(const ROMol &mol, const VECT_INT_VECT &rings) {
 void markUselessD2s(unsigned int root, const ROMol &tMol,
                     boost::dynamic_bitset<> &forb, const INT_VECT &atomDegrees,
                     const boost::dynamic_bitset<> &activeBonds) {
-  // recursive function to mark any degree 2 nodes that are already represnted
+  // recursive function to mark any degree 2 nodes that are already represented
   // by root for the purpose of finding smallest rings.
   ROMol::OEDGE_ITER beg, end;
   boost::tie(beg, end) = tMol.getAtomBonds(tMol.getAtomWithIdx(root));
@@ -355,7 +355,7 @@ void findRingsD2nodes(const ROMol &tMol, VECT_INT_VECT &res,
           if (std::find(nici->second.begin(), nici->second.end(), invr) !=
               nici->second.end()) {
             // ok we discovered this ring via another node before
-            // add that node as duplicate to this node and and vice versa
+            // add that node as duplicate to this node and vice versa
             dupMap[cand].push_back(nici->first);
             dupMap[nici->first].push_back(cand);
           }
@@ -680,7 +680,7 @@ int smallestRingsBfs(const ROMol &mol, int root, VECT_INT_VECT &rings,
           // we have been here via a different path
           // there is a potential for ring closure here
           INT_VECT npath = atPaths[nbrIdx];
-          // make sure that the intersections of cpath and npath give exactl one
+          // make sure that the intersections of cpath and npath give exactly one
           // element and that should be the root element for correct ring
           // closure
           int id = -1;
@@ -945,7 +945,7 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
       // std::cerr<<std::endl;
       // std::cerr<<"activeBonds2: "<<activeBonds<<std::endl;
 
-      // all atoms left in the fragment should atleast have a degree >= 2
+      // all atoms left in the fragment should at least have a degree >= 2
       // collect all the degree two nodes;
       INT_VECT d2nodes;
       FindRings::pickD2Nodes(mol, d2nodes, curFrag, atomDegrees, activeBonds);
@@ -998,7 +998,7 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
         ++nAtomsDone;
         FindRings::trimBonds(cand, mol, changed, atomDegrees, activeBonds);
       }  // done with degree 3 node
-    }    // done finding rings in this fragement
+    }    // done finding rings in this fragment
 
 #if 0
         std::cerr<<"\n\nFOUND:\n";
@@ -1088,7 +1088,7 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
 
   // update the ring memberships of atoms and bonds in the molecule:
   // store the SSSR rings on the molecule as a property
-  // we will ignore any existing SSSRs ont eh molecule - simply overwrite
+  // we will ignore any existing SSSRs on the molecule - simply overwrite
   return rdcast<int>(res.size());
 }
 

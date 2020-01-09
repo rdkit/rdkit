@@ -29,7 +29,7 @@ namespace MolShapes {
   \param vdwScale  Scaling factor for the radius of the atoms to determine the
   base radius
                    used in the encoding - grid points inside this sphere carry
-  the maximum occupany
+  the maximum occupancy
   \param stepSize  thickness of the layers outside the base radius, the
   occupancy value is decreased
                    from layer to layer from the maximum value
@@ -53,7 +53,7 @@ RDKIT_SHAPEHELPERS_EXPORT void EncodeShape(
   \param vdwScale  Scaling factor for the radius of the atoms to determine the
   base radius
                    used in the encoding - grid points inside this sphere carry
-  the maximum occupany
+  the maximum occupancy
   \param stepSize  thickness of the layers outside the base radius, the
   occupancy value is decreased
                    from layer to layer from the maximum value

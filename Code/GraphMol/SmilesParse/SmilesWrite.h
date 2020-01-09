@@ -85,7 +85,7 @@ RDKIT_SMILESPARSE_EXPORT std::string MolToSmiles(
   provided,
                       all bonds between the atoms in atomsToUse will be included
   \param atomSymbols : symbols to use for the atoms in the output SMILES
-  \param bondSymbols : sybmols to use for the bonds in the output SMILES
+  \param bondSymbols : symbols to use for the bonds in the output SMILES
   \param doIsomericSmiles : include stereochemistry and isotope information
       in the SMILES
   \param doKekule : do Kekule smiles (i.e. don't use aromatic bonds)
@@ -138,7 +138,7 @@ RDKIT_SMILESPARSE_EXPORT std::string MolToCXSmiles(
   provided,
                       all bonds between the atoms in atomsToUse will be included
   \param atomSymbols : symbols to use for the atoms in the output SMILES
-  \param bondSymbols : sybmols to use for the bonds in the output SMILES
+  \param bondSymbols : symbols to use for the bonds in the output SMILES
   \param doIsomericSmiles : include stereochemistry and isotope information
       in the SMILES
   \param doKekule : do Kekule smiles (i.e. don't use aromatic bonds)

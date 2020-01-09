@@ -38,7 +38,7 @@ unsigned Seed::addBond(const Bond* bond) {
   ExcludedBonds[b] = true;
   MoleculeFragment.BondsIdx.push_back(b);
   MoleculeFragment.Bonds.push_back(bond);
-  // remap idx to seed's indeces:
+  // remap idx to seed's indices:
   unsigned i = MoleculeFragment.SeedAtomIdxMap[bond->getBeginAtomIdx()];
   unsigned j = MoleculeFragment.SeedAtomIdxMap[bond->getEndAtomIdx()];
   Topology.addBond(b, i, j);
@@ -136,7 +136,7 @@ void Seed::grow(MaximumCommonSubgraph& mcs) const {
 #ifdef VERBOSE_STATISTICS_ON
       ++mcs.VerboseStatistics.RemainingSizeRejected;
 #endif
-      return;  // the biggest possible subrgaph from this seed is too small for
+      return;  // the biggest possible subgraph from this seed is too small for
                // future growing. So, skip ALL children !
     }
     seed.MatchResult = MatchResult;

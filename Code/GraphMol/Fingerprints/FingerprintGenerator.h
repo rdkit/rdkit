@@ -21,7 +21,7 @@ namespace RDKit {
 class ROMol;
 
 struct RDKIT_FINGERPRINTS_EXPORT AdditionalOutput {
-  // will review this structure once more fignerprint types are implemented
+  // will review this structure once more fingerprint types are implemented
 
   std::vector<std::vector<std::uint64_t>> *atomToBits;
 
@@ -306,7 +306,7 @@ class RDKIT_FINGERPRINTS_EXPORT UnimplementedFPException
   UnimplementedFPException(const std::string &msg) : _msg(msg){};
   //! get the error message
   const char *message() const { return _msg.c_str(); };
-  ~UnimplementedFPException() throw(){};
+  ~UnimplementedFPException() noexcept {};
 
  private:
   std::string _msg;

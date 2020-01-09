@@ -33,7 +33,7 @@ class RDKIT_DEPICTOR_EXPORT DepictException : public std::exception {
   DepictException(const char *msg) : _msg(msg){};
   DepictException(const std::string msg) : _msg(msg){};
   const char *message() const { return _msg.c_str(); };
-  ~DepictException() throw(){};
+  ~DepictException() noexcept {};
 
  private:
   std::string _msg;
@@ -66,7 +66,7 @@ class RDKIT_DEPICTOR_EXPORT DepictException : public std::exception {
   \param permuteDeg4Nodes - try permuting the drawing order of bonds around
         atoms with four neighbors in order to improve the depiction
 
-  \return ID of the conformation added to the molecule cotaining the
+  \return ID of the conformation added to the molecule containing the
   2D coordinates
 
 */
@@ -89,7 +89,7 @@ RDKIT_DEPICTOR_EXPORT unsigned int compute2DCoords(
   other. The second component is the sum of squares of the
   difference in distance between those in dmat and the generated
   structure.  The user can adjust the relative importance of the two
-  components via a adjustable paramter (see below)
+  components via a adjustable parameter (see below)
 
   ARGUMENTS:
 
@@ -120,7 +120,7 @@ RDKIT_DEPICTOR_EXPORT unsigned int compute2DCoords(
   \param permuteDeg4Nodes - try permuting the drawing order of bonds around
         atoms with four neighbors in order to improve the depiction
 
-  \return ID of the conformation added to the molecule cotaining the
+  \return ID of the conformation added to the molecule containing the
   2D coordinates
 
 

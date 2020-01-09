@@ -96,8 +96,8 @@ void computeGasteigerCharges(const ROMol &mol, int nIter,
 /*! \brief compute the Gasteiger partial charges and return a new molecule with
  *the charges set
  *
- * Ref : J.Gasteiger, M. Marsili, "Iterative Equalization of Oribital
- *Electronegatiity
+ * Ref : J.Gasteiger, M. Marsili, "Iterative Equalization of Orbital
+ * Electronegativity
  *  A Rapid Access to Atomic Charges", Tetrahedron Vol 36 p3219 1980
  */
 void computeGasteigerCharges(const ROMol &mol, std::vector<double> &charges,
@@ -154,8 +154,8 @@ void computeGasteigerCharges(const ROMol &mol, std::vector<double> &charges,
           // if it is hydrogen
           mode = "*";
         } else if ((*ai)->getAtomicNum() == 16) {
-          // we have a sulfur atom with no hydribidation information
-          // check how many oxygens we have on the sulfer
+          // we have a sulfur atom with no hybridization information
+          // check how many oxygens we have on the sulfur
           boost::tie(nbrIdx, endIdx) = mol.getAtomNeighbors(*ai);
           int no = 0;
           while (nbrIdx != endIdx) {
@@ -179,7 +179,7 @@ void computeGasteigerCharges(const ROMol &mol, std::vector<double> &charges,
     // following will will throw an exception
     atmPs.push_back(params->getParams(elem, mode, throwOnParamFailure));
 
-    // set ionX paramters
+    // set ionX parameters
     // if Hydrogen treat differently
     int idx = (*ai)->getIdx();
     if ((*ai)->getAtomicNum() == 1) {

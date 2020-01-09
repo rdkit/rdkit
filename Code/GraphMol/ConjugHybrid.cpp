@@ -41,7 +41,7 @@ void markConjAtomBonds(Atom *at) {
   Atom *at2;
 
   int atx = at->getIdx();
-  // make sure that have either 2 or 3 subtitutions on this atom
+  // make sure that have either 2 or 3 substitutions on this atom
   int sbo = at->getDegree() + at->getTotalNumHs();
   if ((sbo < 2) || (sbo > 3)) {
     return;

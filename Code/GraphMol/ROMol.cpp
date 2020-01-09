@@ -269,7 +269,7 @@ void ROMol::clearBondBookmark(int mark, const Bond *bond) {
 }
 
 unsigned int ROMol::getNumBonds(bool onlyHeavy) const {
-  // By default resturn the bonds that connect only the heavy atoms
+  // By default return the bonds that connect only the heavy atoms
   // hydrogen connecting bonds are ignores
   int res = numBonds;
   if (!onlyHeavy) {

@@ -104,7 +104,7 @@ class RDKIT_DATASTRUCTS_EXPORT FPBReader {
 
   //! Read the data from the file and initialize internal data structures
   /*!
-  This must be called before most of the other methods of this clases.
+  This must be called before most of the other methods of this class.
 
   Some notes:
   \li if \c lazyRead is not set, all fingerprints will be read into memory. This

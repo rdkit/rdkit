@@ -128,7 +128,7 @@ namespace gboost
 
             v = gboost::hash_detail::call_frexp(v, &exp);
 
-            // A postive value is easier to hash, so combine the
+            // A positive value is easier to hash, so combine the
             // sign with the exponent.
             if(v < 0) {
                 v = -v;

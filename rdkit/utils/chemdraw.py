@@ -314,9 +314,9 @@ def Add3DCoordsToMol(data, format, props={}):
     molData = CDXClean(data, format, 'chemical/mdl-molfile')
   else:
     molData = data
-  molFName = tempfile.mktemp('.mol')
-  open(molFName, 'wb+').write(molData)
-  doc = c3dApp.Documents.Open(molFName)
+  with tempfile.NamedTemporaryFile(suffix='.mol', delete=False) as molF:
+    molF.write(molData)
+  doc = c3dApp.Documents.Open(molF.name)
 
   if not doc:
     print('cannot open molecule')
@@ -344,7 +344,7 @@ def Add3DCoordsToMol(data, format, props={}):
 
   doc.Close(0)
 
-  os.unlink(molFName)
+  os.unlink(molF.name)
   c3dData = open(outFName, 'r').read()
   gone = 0
   while not gone:

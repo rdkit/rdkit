@@ -122,7 +122,7 @@ class LocaleSwitcherImpl {
   std::string old_locale;
 #else  // _WIN32
   locale_t loc;      // current "C" locale
-  locale_t old_loc;  // locale we came frome
+  locale_t old_loc;  // locale we came from
 
   LocaleSwitcherImpl() : old_locale(setlocale(LC_ALL, nullptr)) {
     // set locale for this thread

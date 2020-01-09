@@ -926,7 +926,7 @@ struct RGroupDecompData {
       }
     }
 
-    // Assign final RGroup labels to the cores and propogate these to
+    // Assign final RGroup labels to the cores and propagate these to
     //  the scaffold
     finalRlabelMapping.clear();
 
@@ -1063,7 +1063,7 @@ RGroupDecomposition::~RGroupDecomposition() { delete data; }
 
 int RGroupDecomposition::add(const ROMol &inmol) {
   // get the sidechains if possible
-  //  Add hs for better symmeterization
+  //  Add hs for better symmetrization
   RWMol mol(inmol);
   bool explicitOnly = false;
   bool addCoords = true;
@@ -1151,7 +1151,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
   // strategies
   // ==========
   // Exhaustive - saves all matches and optimizes later exhaustive
-  //               May never finish due to combinitorial complexity
+  //               May never finish due to combinatorial complexity
   // Greedy - matches to *FIRST* available match
   // GreedyChunks - default - process every N chunks
 
