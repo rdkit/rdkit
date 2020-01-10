@@ -6,6 +6,7 @@ steps:
     sudo -u postgres createuser -s `whoami`
   displayName: Setup build environment
 - bash: |
+    echo $BOOST_ROOT
     mkdir build && cd build && \
     cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
