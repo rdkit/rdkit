@@ -1,9 +1,9 @@
 steps:
 - bash: |
-    apt-get install -y postgresql-10 postgresql-server-dev-10
-    service postgresql start
-    su postgres
-    createuser -s root
+    sudo apt-get install -y postgresql-10 postgresql-server-dev-10
+    sudo service postgresql start
+    #sudo su postgres
+    sudo -u postgres createuser -s `whoami`
   displayName: Setup build environment
 - bash: |
     mkdir build && cd build && \
