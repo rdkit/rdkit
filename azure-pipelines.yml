@@ -80,4 +80,4 @@ jobs:
     boost_version: 1.69.0
     number_of_cores: nproc
   steps:
-  - template: .azure-pipelines/linux_build_catridge.yml
+  - template: .azure-pipelines/linux_build_cartridge.yml
