@@ -27,7 +27,7 @@ steps:
 - bash: |
     cd build
     make -j $( $(number_of_cores) ) install
-    sh ./Code/PgSQL/rdkit/pgsql_install.sh
+    sudo sh ./Code/PgSQL/rdkit/pgsql_install.sh
   displayName: Build
 - bash: |
     cd build
