@@ -1086,16 +1086,17 @@ struct molops_wrapper {
         .def_readwrite("updateExplicitCount",
                        &MolOps::RemoveHsParameters::updateExplicitCount,
                        "DEPRECATED");
-    python::def("RemoveHs",
-                (ROMol * (*)(const ROMol &, const MolOps::RemoveHsParameters &,
-                             bool)) MolOps::removeHs,
-                (python::arg("mol"), python::arg("params"),
-                 python::arg("sanitize") = true),
-                "Returns a copy of the molecule with Hs removed. Which Hs are "
-                "removed is controlled by the params argument",
-                python::return_value_policy<python::manage_new_object>());
+    python::def(
+        "RemoveHs",
+        (ROMol * (*)(const ROMol &, const MolOps::RemoveHsParameters &, bool)) &
+            MolOps::removeHs,
+        (python::arg("mol"), python::arg("params"),
+         python::arg("sanitize") = true),
+        "Returns a copy of the molecule with Hs removed. Which Hs are "
+        "removed is controlled by the params argument",
+        python::return_value_policy<python::manage_new_object>());
     python::def("RemoveAllHs",
-                (ROMol * (*)(const ROMol &, bool)) MolOps::removeAllHs,
+                (ROMol * (*)(const ROMol &, bool)) & MolOps::removeAllHs,
                 (python::arg("mol"), python::arg("sanitize") = true),
                 "Returns a copy of the molecule with all Hs removed.",
                 python::return_value_policy<python::manage_new_object>());

@@ -989,7 +989,7 @@ TEST_CASE("RemoveHsParameters", "[molops]") {
   }
 
   SECTION("defining bond stereo") {
-    std::unique_ptr<RWMol> m{SmilesToMol("F/C=C/[H]", smilesPs)};
+    std::unique_ptr<RWMol> m{SmilesToMol("F/C=N/[H]", smilesPs)};
     REQUIRE(m);
     CHECK(m->getNumAtoms() == 4);
     {
@@ -1084,6 +1084,17 @@ TEST_CASE("RemoveHsParameters", "[molops]") {
     RWMol cp(*m);
     MolOps::removeAllHs(cp);
     for (auto atom : cp.atoms()) {
+      CHECK(atom->getAtomicNum() != 1);
+    }
+  }
+  SECTION("allHs2") {
+    std::unique_ptr<ROMol> m{SmilesToMol(
+        "[C@]12([H])CCC1CO2.[H+].F[H-]F.[H][H].[H]*.F/C=C/[H]", smilesPs)};
+    REQUIRE(m);
+    // artificial wedging since we don't have a conformer
+    m->getBondBetweenAtoms(0, 1)->setBondDir(Bond::BEGINWEDGE);
+    std::unique_ptr<ROMol> cp{MolOps::removeAllHs(*m)};
+    for (auto atom : cp->atoms()) {
       CHECK(atom->getAtomicNum() != 1);
     }
   }

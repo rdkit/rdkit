@@ -5743,37 +5743,55 @@ M  END
     smips.removeHs = False
 
     m = Chem.MolFromSmiles('F.[H]',smips)
+    m = Chem.MolFromSmiles('F.[H]',smips)
     ps = Chem.RemoveHsParameters()
+    m = Chem.RemoveHs(m,ps)
+    self.assertEqual(m.GetNumAtoms(),2)
     ps.removeDegreeZero = True
     m = Chem.RemoveHs(m,ps)
     self.assertEqual(m.GetNumAtoms(),1)
 
     m = Chem.MolFromSmiles('F[H-]F',smips)
     ps = Chem.RemoveHsParameters()
+    m = Chem.RemoveHs(m,ps)
+    self.assertEqual(m.GetNumAtoms(),3)
+    m = Chem.MolFromSmiles('F[H-]F',smips)
     ps.removeHigherDegrees = True
     m = Chem.RemoveHs(m,ps)
     self.assertEqual(m.GetNumAtoms(),2)
 
     m = Chem.MolFromSmiles('[H][H]',smips)
     ps = Chem.RemoveHsParameters()
+    m = Chem.RemoveHs(m,ps)
+    self.assertEqual(m.GetNumAtoms(),2)
+    m = Chem.MolFromSmiles('[H][H]',smips)
     ps.removeOnlyHNeighbors = True
     m = Chem.RemoveHs(m,ps)
     self.assertEqual(m.GetNumAtoms(),0)
 
     m = Chem.MolFromSmiles('F[2H]',smips)
     ps = Chem.RemoveHsParameters()
+    m = Chem.RemoveHs(m,ps)
+    self.assertEqual(m.GetNumAtoms(),2)
+    m = Chem.MolFromSmiles('F[2H]',smips)
     ps.removeIsotopes = True
     m = Chem.RemoveHs(m,ps)
     self.assertEqual(m.GetNumAtoms(),1)
 
     m = Chem.MolFromSmiles('*[H]',smips)
     ps = Chem.RemoveHsParameters()
+    m = Chem.RemoveHs(m, ps)
+    self.assertEqual(m.GetNumAtoms(), 2)
+    m = Chem.MolFromSmiles('*[H]',smips)
     ps.removeDummyNeighbors = True
     m = Chem.RemoveHs(m, ps)
     self.assertEqual(m.GetNumAtoms(), 1)
 
-    m = Chem.MolFromSmiles('F/C=C/[H]',smips)
+    m = Chem.MolFromSmiles('F/C=N/[H]',smips)
     ps = Chem.RemoveHsParameters()
+    m = Chem.RemoveHs(m,ps)
+    self.assertEqual(m.GetNumAtoms(),4)
+    m = Chem.MolFromSmiles('F/C=N/[H]',smips)
     ps.removeDefiningBondStereo = True
     m = Chem.RemoveHs(m,ps)
     self.assertEqual(m.GetNumAtoms(),3)
@@ -5781,16 +5799,22 @@ M  END
     m = Chem.MolFromSmiles('FC([H])(O)Cl', smips)
     m.GetBondBetweenAtoms(1,2).SetBondDir(Chem.BondDir.BEGINWEDGE)
     ps = Chem.RemoveHsParameters()
+    m = Chem.RemoveHs(m, ps)
+    self.assertEqual(m.GetNumAtoms(), 4)
+    m = Chem.MolFromSmiles('FC([H])(O)Cl', smips)
+    m.GetBondBetweenAtoms(1,2).SetBondDir(Chem.BondDir.BEGINWEDGE)
     ps.removeWithWedgedBond = False
     m = Chem.RemoveHs(m, ps)
     self.assertEqual(m.GetNumAtoms(), 5)
 
     m = Chem.MolFromSmarts('F[#1]')
     ps = Chem.RemoveHsParameters()
+    m = Chem.RemoveHs(m, ps)
+    self.assertEqual(m.GetNumAtoms(), 2)
+    m = Chem.MolFromSmarts('F[#1]')
     ps.removeWithQuery = True
     m = Chem.RemoveHs(m, ps)
     self.assertEqual(m.GetNumAtoms(), 1)
-
 
     m = Chem.MolFromSmiles('[C@]12([H])CCC1CO2.[H+].F[H-]F.[H][H].[H]*.F/C=C/[H]')
     m = Chem.RemoveAllHs(m)
