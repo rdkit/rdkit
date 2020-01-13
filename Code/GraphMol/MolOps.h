@@ -244,7 +244,8 @@ struct RDKIT_GRAPHMOL_EXPORT RemoveHsParameters {
       false; /**< hydrogens defining bond stereochemistry */
   bool removeWithWedgedBond = true; /**< hydrogens with wedged bonds to them */
   bool removeWithQuery = false;     /**< hydrogens with queries defined */
-  bool showWarnings = true; /**< display warnings for Hs that are not removed */
+  bool removeMapped = true;  /**< mapped hydrogens */
+  bool showWarnings = true;  /**< display warnings for Hs that are not removed */
   bool removeNonimplicit = true; /**< DEPRECATED equivalent of implicitOnly */
   bool updateExplicitCount =
       false; /**< DEPRECATED equivalent of updateExplicitCount */

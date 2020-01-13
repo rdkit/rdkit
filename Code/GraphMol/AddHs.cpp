@@ -687,6 +687,9 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
         !atom->hasProp(common_properties::isImplicit)) {
       continue;
     }
+    if (!ps.removeMapped && atom->getAtomMapNum()) {
+      continue;
+    }
     bool removeIt = true;
     if (atom->getDegree() &&
         (!ps.removeDummyNeighbors || !ps.removeDefiningBondStereo ||

@@ -1051,27 +1051,41 @@ struct molops_wrapper {
     python::class_<MolOps::RemoveHsParameters>("RemoveHsParameters",
                                                docString.c_str())
         .def_readwrite("removeDegreeZero",
-                       &MolOps::RemoveHsParameters::removeDegreeZero)
+                       &MolOps::RemoveHsParameters::removeDegreeZero,
+                       "hydrogens that have no bonds")
         .def_readwrite("removeHigherDegrees",
-                       &MolOps::RemoveHsParameters::removeHigherDegrees)
+                       &MolOps::RemoveHsParameters::removeHigherDegrees,
+                       "hydrogens with two (or more) bonds")
         .def_readwrite("removeOnlyHNeighbors",
-                       &MolOps::RemoveHsParameters::removeOnlyHNeighbors)
+                       &MolOps::RemoveHsParameters::removeOnlyHNeighbors,
+                       "hydrogens with bonds only to other hydrogens")
         .def_readwrite("removeIsotopes",
-                       &MolOps::RemoveHsParameters::removeIsotopes)
+                       &MolOps::RemoveHsParameters::removeIsotopes,
+                       "hydrogens with non-default isotopes")
         .def_readwrite("removeDummyNeighbors",
-                       &MolOps::RemoveHsParameters::removeDummyNeighbors)
+                       &MolOps::RemoveHsParameters::removeDummyNeighbors,
+                       "hydrogens with at least one dummy-atom neighbor")
         .def_readwrite("removeDefiningBondStereo",
-                       &MolOps::RemoveHsParameters::removeDefiningBondStereo)
+                       &MolOps::RemoveHsParameters::removeDefiningBondStereo,
+                       "hydrogens defining bond stereochemistry")
         .def_readwrite("removeWithWedgedBond",
-                       &MolOps::RemoveHsParameters::removeWithWedgedBond)
+                       &MolOps::RemoveHsParameters::removeWithWedgedBond,
+                       "hydrogens with wedged bonds to them")
         .def_readwrite("removeWithQuery",
-                       &MolOps::RemoveHsParameters::removeWithQuery)
+                       &MolOps::RemoveHsParameters::removeWithQuery,
+                       "hydrogens with queries defined")
+        .def_readwrite("removeMapped",
+                       &MolOps::RemoveHsParameters::removeMapped,
+                       "mapped hydrogens")
         .def_readwrite("removeNonimplicit",
-                       &MolOps::RemoveHsParameters::removeNonimplicit)
-        .def_readwrite("showWarnings",
-                       &MolOps::RemoveHsParameters::showWarnings)
+                       &MolOps::RemoveHsParameters::removeNonimplicit,
+                       "DEPRECATED")
+        .def_readwrite(
+            "showWarnings", &MolOps::RemoveHsParameters::showWarnings,
+            "display warning messages for some classes of removed Hs")
         .def_readwrite("updateExplicitCount",
-                       &MolOps::RemoveHsParameters::updateExplicitCount);
+                       &MolOps::RemoveHsParameters::updateExplicitCount,
+                       "DEPRECATED");
     python::def("RemoveHs",
                 (ROMol * (*)(const ROMol &, const MolOps::RemoveHsParameters &,
                              bool)) MolOps::removeHs,

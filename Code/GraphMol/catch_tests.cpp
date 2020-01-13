@@ -1058,6 +1058,23 @@ TEST_CASE("RemoveHsParameters", "[molops]") {
       CHECK(cp.getNumAtoms() == 2);
     }
   }
+  SECTION("mapped Hs") {
+    std::unique_ptr<RWMol> m{SmilesToMol("[H:1]O[H]", smilesPs)};
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 3);
+    {
+      RWMol cp(*m);
+      MolOps::removeHs(cp);
+      CHECK(cp.getNumAtoms() == 1);
+    }
+    {
+      MolOps::RemoveHsParameters ps;
+      ps.removeMapped = false;
+      RWMol cp(*m);
+      MolOps::removeHs(cp, ps);
+      CHECK(cp.getNumAtoms() == 2);
+    }
+  }
   SECTION("allHs") {
     std::unique_ptr<RWMol> m{SmilesToMol(
         "[C@]12([H])CCC1CO2.[H+].F[H-]F.[H][H].[H]*.F/C=C/[H]", smilesPs)};
