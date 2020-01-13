@@ -1252,6 +1252,7 @@ O3A::O3A(int (*costFunc)(const unsigned int, const unsigned int, double,
     }
   }
   if (!prbHvyAtoms) {
+    prbHvyAtoms = new boost::dynamic_bitset<>(prbNAtoms);
     for (i = 0; i < prbNAtoms; ++i) {
       if (prbMol[i]->getAtomicNum() != 1) {
         prbHvyAtoms->set(i);
