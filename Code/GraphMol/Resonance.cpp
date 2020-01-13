@@ -790,22 +790,21 @@ void ConjElectrons::enumerateNonBonded(CEMap &ceMap) {
 void ConjElectrons::computeMetrics() {
   // 1000 * Electronegativity according to the Allen scale
   // (Allen, L.C. J. Am. Chem. Soc. 1989, 111, 9003-9014)
-  static const unsigned int en[] = {1000,
-      2300, 4160, 912,  1576, 2051, 2544, 3066, 3610, 4193, 4789, 869,
-      1293, 1613, 1916, 2253, 2589, 2869, 3242, 734,  1034, 1190, 1380,
-      1530, 1650, 1750, 1800, 1840, 1880, 1850, 1590, 1756, 1994, 2211,
-      2434, 2685, 2966, 706,  963,  1120, 1320, 1410, 1470, 1510, 1540,
-      1560, 1590, 1870, 1520, 1656, 1824, 1984, 2158, 2359, 2582, 659,
-      881,  1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000,
-      1000, 1000, 1000, 1000, 1090, 1160, 1340, 1470, 1600, 1650, 1680,
-      1720, 1920, 1760, 1789, 1854, 2010, 2190, 2390, 2600, 670,  890};
-  const size_t enSize = sizeof(en) / sizeof(double);
+  static const std::vector<unsigned int> en{
+      1000, 2300, 4160, 912,  1576, 2051, 2544, 3066, 3610, 4193, 4789, 869,
+      1293, 1613, 1916, 2253, 2589, 2869, 3242, 734,  1034, 1190, 1380, 1530,
+      1650, 1750, 1800, 1840, 1880, 1850, 1590, 1756, 1994, 2211, 2434, 2685,
+      2966, 706,  963,  1120, 1320, 1410, 1470, 1510, 1540, 1560, 1590, 1870,
+      1520, 1656, 1824, 1984, 2158, 2359, 2582, 659,  881,  1000, 1000, 1000,
+      1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1090,
+      1160, 1340, 1470, 1600, 1650, 1680, 1720, 1920, 1760, 1789, 1854, 2010,
+      2190, 2390, 2600, 670,  890};
   for (ConjAtomMap::const_iterator it = d_conjAtomMap.begin();
        it != d_conjAtomMap.end(); ++it) {
     d_ceMetrics.d_absFormalCharges += abs(it->second->fc());
     size_t anIdx = it->second->atom()->getAtomicNum();
     d_ceMetrics.d_wtdFormalCharges +=
-        (it->second->fc() * ((anIdx >= enSize) ? 1000 : en[anIdx]));
+        (it->second->fc() * ((anIdx >= en.size()) ? 1000 : en[anIdx]));
     d_ceMetrics.d_nbMissing += it->second->neededNbForOctet();
   }
   computeDistFormalCharges();
@@ -1196,10 +1195,9 @@ void ResonanceMolSupplier::assignConjGrpIdx() {
   unsigned int na = d_mol->getNumAtoms();
   d_atomConjGrpIdx.resize(na, -1);
   for (d_nConjGrp = 0; true; ++d_nConjGrp) {
-    for (const auto b: d_mol->bonds()) {
+    for (const auto b : d_mol->bonds()) {
       unsigned int i = b->getIdx();
-      if (b->getIsConjugated() && (d_bondConjGrpIdx[i] == -1))
-      {
+      if (b->getIsConjugated() && (d_bondConjGrpIdx[i] == -1)) {
         bondIndexStack.push(i);
         break;
       }
@@ -1209,10 +1207,10 @@ void ResonanceMolSupplier::assignConjGrpIdx() {
       unsigned int i = bondIndexStack.top();
       bondIndexStack.pop();
       const Bond *bi = d_mol->getBondWithIdx(i);
-      for (const Atom *bondAtom: { bi->getBeginAtom(), bi->getEndAtom() }) {
+      for (const Atom *bondAtom : {bi->getBeginAtom(), bi->getEndAtom()}) {
         // loop over bonds sprouting from bondAtom
-        for (const auto &bNbri: boost::make_iterator_range(
-          d_mol->getAtomBonds(bondAtom))) {
+        for (const auto &bNbri :
+             boost::make_iterator_range(d_mol->getAtomBonds(bondAtom))) {
           const auto &bNbr = (*d_mol)[bNbri];
           unsigned int biNbr = bNbr->getIdx();
           if (bNbr->getIsConjugated() && (d_bondConjGrpIdx[biNbr] == -1)) {

@@ -390,7 +390,8 @@ MaeMolSupplier::MaeMolSupplier(const std::string &fileName, bool sanitize,
                                bool removeHs) {
   df_owner = true;
   auto *ifs = new std::ifstream(fileName.c_str(), std::ios_base::binary);
-  if (!ifs || !(*ifs) || ifs->bad()) {
+  if (!(*ifs) || ifs->bad()) {
+    delete ifs;
     std::ostringstream errout;
     errout << "Bad input file " << fileName;
     throw BadFileException(errout.str());

@@ -480,11 +480,8 @@ double DiceSimilarity(const SparseIntVect<IndexType> &v1,
     v2Sum = v2.getTotalVal(true);
     double denom = v1Sum + v2Sum;
     if (fabs(denom) < 1e-6) {
-      if (returnDistance) {
-        return 1.0;
-      } else {
-        return 0.0;
-      }
+      // no need to worry about returnDistance here
+      return 0.0;
     }
     double minV = v1Sum < v2Sum ? v1Sum : v2Sum;
     if (2. * minV / denom < bounds) {

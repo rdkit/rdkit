@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2007-2010 Greg Landrum
 //
@@ -146,6 +145,7 @@ Conformer *ParseConfData(std::istream *inStream, unsigned int &line, RWMol *mol,
     boost::split(splitLine, tempStr, boost::is_any_of(" \t"),
                  boost::token_compress_on);
     if (splitLine.size() < 3) {
+      delete conf;
       std::ostringstream errout;
       errout << "Did not find enough fields on line " << line
              << " while reading conformer  " << confId << std::endl;
@@ -266,7 +266,7 @@ RWMol *TPLDataStreamToMol(std::istream *inStream, unsigned int &line,
       throw FileParseException("Found a non-blank line between conformers.");
     }
   }
-  if (sanitize && res) {
+  if (sanitize) {
     MolOps::sanitizeMol(*res);
   }
 
@@ -307,7 +307,7 @@ RWMol *TPLFileToMol(const std::string &fName, bool sanitize,
   //------------------------------------------------
   RWMol *MolBlockToMol(const std::string &molBlock, bool sanitize){
     std::istringstream inStream(molBlock);
-    RWMol *res=NULL;
+    RWMol *res = nullptr;
     unsigned int line = 0;
     return MolDataStreamToMol(inStream, line, sanitize);
   }

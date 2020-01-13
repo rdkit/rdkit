@@ -37,8 +37,8 @@ MaximumCommonSubgraph::MaximumCommonSubgraph(const MCSParameters* params) {
     Parameters.ProgressCallbackUserData = &To;
   }
   if ((Parameters.AtomCompareParameters.MatchChiralTag ||
-      Parameters.BondCompareParameters.MatchFusedRings ||
-      Parameters.BondCompareParameters.MatchFusedRingsStrict) &&
+       Parameters.BondCompareParameters.MatchFusedRings ||
+       Parameters.BondCompareParameters.MatchFusedRingsStrict) &&
       nullptr == Parameters.FinalMatchChecker) {
     Parameters.FinalMatchChecker = FinalMatchCheckFunction;
     if (Parameters.AtomCompareParameters.MatchChiralTag)
@@ -600,7 +600,8 @@ struct AtomMatch {  // for each seed atom (matched)
 };
 typedef std::vector<AtomMatch> AtomMatchSet;
 
-std::pair<std::string, RWMol*> MaximumCommonSubgraph::generateResultSMARTSAndQueryMol(
+std::pair<std::string, RWMol*>
+MaximumCommonSubgraph::generateResultSMARTSAndQueryMol(
     const MCS& mcsIdx) const {
   // match the result MCS with all targets to check if it is exact match or
   // template
@@ -656,8 +657,8 @@ std::pair<std::string, RWMol*> MaximumCommonSubgraph::generateResultSMARTSAndQue
   // Generate result's SMARTS
 
   // create molecule from MCS for MolToSmarts()
-  RWMol *mol = new RWMol();
-  const RingInfo *ri = QueryMolecule->getRingInfo();
+  RWMol* mol = new RWMol();
+  const RingInfo* ri = QueryMolecule->getRingInfo();
   unsigned ai = 0;  // SeedAtomIdx
   for (auto atom = mcsIdx.Atoms.begin(); atom != mcsIdx.Atoms.end();
        atom++, ai++) {
@@ -682,7 +683,7 @@ std::pair<std::string, RWMol*> MaximumCommonSubgraph::generateResultSMARTSAndQue
       }
     }
     if (Parameters.AtomCompareParameters.RingMatchesRingOnly) {
-      ATOM_EQUALS_QUERY *q = makeAtomInRingQuery();
+      ATOM_EQUALS_QUERY* q = makeAtomInRingQuery();
       q->setNegation(!ri->numAtomRings((*atom)->getIdx()));
       a.expandQuery(q, Queries::COMPOSITE_AND, true);
     }
@@ -708,7 +709,7 @@ std::pair<std::string, RWMol*> MaximumCommonSubgraph::generateResultSMARTSAndQue
         b.setStereo(bm->second->getStereo());
     }
     if (Parameters.BondCompareParameters.RingMatchesRingOnly) {
-      BOND_EQUALS_QUERY *q = makeBondIsInRingQuery();
+      BOND_EQUALS_QUERY* q = makeBondIsInRingQuery();
       q->setNegation(!ri->numBondRings((*bond)->getIdx()));
       b.expandQuery(q, Queries::COMPOSITE_AND, true);
     }
@@ -718,32 +719,32 @@ std::pair<std::string, RWMol*> MaximumCommonSubgraph::generateResultSMARTSAndQue
   return std::make_pair(MolToSmarts(*mol, true), mol);
 }
 
-bool MaximumCommonSubgraph::addFusedBondQueries(const MCS& mcsIdx, RWMol *rwMol) const {
-  const RingInfo *ri = QueryMolecule->getRingInfo();
+bool MaximumCommonSubgraph::addFusedBondQueries(const MCS& mcsIdx,
+                                                RWMol* rwMol) const {
+  const RingInfo* ri = QueryMolecule->getRingInfo();
   unsigned bi = 0;  // Seed Idx
   bool haveFusedBondQuery = false;
   std::map<int, std::set<size_t>> bondRingMembership;
-  const VECT_INT_VECT &br = ri->bondRings();
+  const VECT_INT_VECT& br = ri->bondRings();
   std::vector<size_t> mcsRingSize(br.size(), 0);
   for (size_t ringIdx = 0; ringIdx < br.size(); ++ringIdx) {
-    for (int bondIdx: br[ringIdx])
-      bondRingMembership[bondIdx].insert(ringIdx);
+    for (int bondIdx : br[ringIdx]) bondRingMembership[bondIdx].insert(ringIdx);
   }
   for (auto bond = mcsIdx.Bonds.begin(); bond != mcsIdx.Bonds.end(); ++bond) {
     unsigned int bondIdx = (*bond)->getIdx();
     if (!ri->numBondRings(bondIdx)) continue;
-    for (size_t ringIdx: bondRingMembership[bondIdx])
-      ++mcsRingSize[ringIdx];
+    for (size_t ringIdx : bondRingMembership[bondIdx]) ++mcsRingSize[ringIdx];
   }
   for (auto bond = mcsIdx.Bonds.begin(); bond != mcsIdx.Bonds.end();
        ++bond, ++bi) {
     unsigned int bondIdx = (*bond)->getIdx();
     if (!ri->numBondRings(bondIdx)) continue;
     haveFusedBondQuery = true;
-    for (int ringIdx: bondRingMembership[bondIdx]) {
+    for (int ringIdx : bondRingMembership[bondIdx]) {
       if (mcsRingSize[ringIdx] < br[ringIdx].size()) continue;
       rwMol->getBondWithIdx(bi)->expandQuery(
-        makeBondInRingOfSizeQuery(br[ringIdx].size()), Queries::COMPOSITE_AND, true);
+          makeBondInRingOfSizeQuery(br[ringIdx].size()), Queries::COMPOSITE_AND,
+          true);
     }
   }
   return haveFusedBondQuery;
@@ -855,15 +856,16 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR>& src_mols) {
     res.Canceled = growSeeds() ? false : true;
     // verify what MCS is equal to one of initial seed for chirality match
     if ((FinalMatchCheckFunction == Parameters.FinalMatchChecker &&
-        1 == getMaxNumberBonds()) || 0 == getMaxNumberBonds()) {
+         1 == getMaxNumberBonds()) ||
+        0 == getMaxNumberBonds()) {
       McsIdx = MCS();      // clear
       makeInitialSeeds();  // check all possible initial seeds
       if (!Seeds.empty()) {
         const Seed& fs = Seeds.front();
-        if (1 == getMaxNumberBonds()
-          || !(Parameters.BondCompareParameters.CompleteRingsOnly
-          && fs.MoleculeFragment.Bonds.size() == 1
-          && queryIsBondInRing(fs.MoleculeFragment.Bonds.front()))) {
+        if (1 == getMaxNumberBonds() ||
+            !(Parameters.BondCompareParameters.CompleteRingsOnly &&
+              fs.MoleculeFragment.Bonds.size() == 1 &&
+              queryIsBondInRing(fs.MoleculeFragment.Bonds.front()))) {
           McsIdx.QueryMolecule = QueryMolecule;
           McsIdx.Atoms = fs.MoleculeFragment.Atoms;
           McsIdx.Bonds = fs.MoleculeFragment.Bonds;
@@ -885,8 +887,8 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR>& src_mols) {
   res.NumBonds = getMaxNumberBonds();
   ;
   if (res.NumBonds > 0) {
-    std::pair<std::string, RWMol *> smartsQueryMolPair =
-      generateResultSMARTSAndQueryMol(McsIdx);
+    std::pair<std::string, RWMol*> smartsQueryMolPair =
+        generateResultSMARTSAndQueryMol(McsIdx);
     res.SmartsString = smartsQueryMolPair.first;
     res.QueryMol = RWMOL_SPTR(smartsQueryMolPair.second);
     if (Parameters.BondCompareParameters.MatchFusedRingsStrict)
@@ -900,7 +902,8 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR>& src_mols) {
          res.NumAtoms > 0 && tag != Targets.end(); tag++, itarget++) {
       MatchVectType match;
 
-      bool target_matched = SubstructMatch(*tag->Molecule, *res.QueryMol, match);
+      bool target_matched =
+          SubstructMatch(*tag->Molecule, *res.QueryMol, match);
       if (!target_matched)
         std::cout << "Target " << itarget + 1
                   << (target_matched ? " matched " : " MISMATCHED ")
@@ -1257,9 +1260,9 @@ bool MaximumCommonSubgraph::matchIncrementalFast(Seed& seed, unsigned itarget) {
   }
   // CHIRALITY: FinalMatchCheck
   if (matched && Parameters.FinalMatchChecker) {
-    std::vector<short unsigned> c1;
+    std::vector<std::uint32_t> c1;
     c1.reserve(4096);
-    std::vector<short unsigned> c2;
+    std::vector<std::uint32_t> c2;
     c2.reserve(4096);
     for (unsigned si = 0; si < seed.getNumAtoms();
          si++) {  // index in the seed topology
