@@ -1220,8 +1220,8 @@ O3A::O3A(int (*costFunc)(const unsigned int, const unsigned int, double,
          double (*weightFunc)(const unsigned int, const unsigned int, void *),
          double (*scoringFunc)(const unsigned int, const unsigned int, void *),
          void *data, ROMol &prbMol, const ROMol &refMol, const int prbCid,
-         const int refCid, boost::dynamic_bitset<> *extPrbHvyAtoms,
-         boost::dynamic_bitset<> *extRefHvyAtoms, const bool reflect,
+         const int refCid, const boost::dynamic_bitset<> &prbHvyAtoms,
+         const boost::dynamic_bitset<> &refHvyAtoms, const bool reflect,
          const unsigned int maxIters, unsigned int options,
          O3AConstraintVect *o3aConstraintVect, ROMol *extWorkPrbMol,
          LAP *extLAP, MolHistogram *extPrbHist, MolHistogram *extRefHist)
@@ -1242,24 +1242,6 @@ O3A::O3A(int (*costFunc)(const unsigned int, const unsigned int, double,
   unsigned int prbNHeavyAtoms = prbMol.getNumHeavyAtoms();
   unsigned int largestNHeavyAtoms = std::max(refNHeavyAtoms, prbNHeavyAtoms);
   unsigned int i;
-  boost::dynamic_bitset<> *refHvyAtoms = extRefHvyAtoms;
-  if (!extRefHvyAtoms) {
-    refHvyAtoms = new boost::dynamic_bitset<>(refNAtoms);
-    for (i = 0; i < refNAtoms; ++i) {
-      if (refMol[i]->getAtomicNum() != 1) {
-        refHvyAtoms->set(i);
-      }
-    }
-  }
-  boost::dynamic_bitset<> *prbHvyAtoms = extPrbHvyAtoms;
-  if (!prbHvyAtoms) {
-    prbHvyAtoms = new boost::dynamic_bitset<>(prbNAtoms);
-    for (i = 0; i < prbNAtoms; ++i) {
-      if (prbMol[i]->getAtomicNum() != 1) {
-        prbHvyAtoms->set(i);
-      }
-    }
-  }
   std::vector<unsigned int> pairs(4, 0);
   std::vector<double> score(3, 0.0);
   std::vector<double> pairsRMSD(2, 0.0);
@@ -1269,7 +1251,7 @@ O3A::O3A(int (*costFunc)(const unsigned int, const unsigned int, double,
   MolHistogram *prbHist = nullptr;
   LAP *lap = nullptr;
   if (local) {
-    startSDM.fillFromDist(O3_SDM_THRESHOLD_START, *refHvyAtoms, *prbHvyAtoms);
+    startSDM.fillFromDist(O3_SDM_THRESHOLD_START, refHvyAtoms, prbHvyAtoms);
   } else {
     refHist =
         (extRefHist ? extRefHist
@@ -1307,7 +1289,7 @@ O3A::O3A(int (*costFunc)(const unsigned int, const unsigned int, double,
                                 (double)sdmThresholdIt * O3_SDM_THRESHOLD_STEP;
       while (flag && (iter < O3_MAX_SDM_ITERATIONS)) {
         SDM progressSDM(&prbConf, &refConf, o3aConstraintVect);
-        progressSDM.fillFromDist(sdmThresholdDist, *refHvyAtoms, *prbHvyAtoms);
+        progressSDM.fillFromDist(sdmThresholdDist, refHvyAtoms, prbHvyAtoms);
         pairs[3] = progressSDM.size();
         if (pairs[3] < 3) {
           break;
@@ -1395,12 +1377,6 @@ O3A::O3A(int (*costFunc)(const unsigned int, const unsigned int, double,
   }
   if (!extWorkPrbMol) {
     delete workPrbMol;
-  }
-  if (!extPrbHvyAtoms) {
-    delete prbHvyAtoms;
-  }
-  if (!extRefHvyAtoms) {
-    delete refHvyAtoms;
   }
 }
 
@@ -1508,7 +1484,7 @@ O3A::O3A(ROMol &prbMol, const ROMol &refMol, void *prbProp, void *refProp,
       data.weight = (l ? c : 0);
       data.coeff = c;
       auto *o3a = new O3A(costFunc, weightFunc, scoringFunc, &data, prbMol,
-                          refMol, prbCid, refCid, &prbHvyAtoms, &refHvyAtoms,
+                          refMol, prbCid, refCid, prbHvyAtoms, refHvyAtoms,
                           reflect, maxIters, options, &o3aConstraintVect,
                           &extWorkPrbMol, lap, prbHist, refHist);
       score[1] = o3a->score();
