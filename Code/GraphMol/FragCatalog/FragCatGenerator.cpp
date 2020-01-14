@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2003-2006 Rational Discovery LLC
 //
@@ -54,6 +53,7 @@ unsigned int addOrder1Paths(PATH_LIST &paths, const ROMol &mol,
         invar = computeIntVectPrimesProduct(*pi);
         mapkm1[invar] = (*eti);
         delete nent;
+        nent = nullptr;
         break;
       }
     }
@@ -178,6 +178,7 @@ unsigned int addHigherOrderPaths(const INT_PATH_LIST_MAP &allPaths,
           found = true;
           mEntId = (*iti);
           delete nent;
+          nent = nullptr;
           break;
         }
       }
@@ -251,4 +252,4 @@ unsigned int FragCatGenerator::addFragsFromMol(const ROMol &mol,
   delete coreMol;
   return (nO1Pths + nremPths);
 }
-}
+}  // namespace RDKit

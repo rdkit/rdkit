@@ -145,8 +145,10 @@ void readAtom(RWMol *mol, const rj::Value &atomVal,
   at->setNumRadicalElectrons(getIntDefaultValue("nRad", atomVal, atomDefaults));
   at->setIsotope(getIntDefaultValue("isotope", atomVal, atomDefaults));
   std::string stereo = getStringDefaultValue("stereo", atomVal, atomDefaults);
-  if (chilookup.find(stereo) == chilookup.end())
+  if (chilookup.find(stereo) == chilookup.end()) {
+    delete at;
     throw FileParseException("Bad Format: bad stereo value for atom");
+  }
   at->setChiralTag(chilookup.find(stereo)->second);
   bool updateLabel = false, takeOwnership = true;
   mol->addAtom(at, updateLabel, takeOwnership);
@@ -235,7 +237,8 @@ void readPartialCharges(RWMol *mol, const rj::Value &repVal,
         throw FileParseException(
             "Bad Format: size of values array != num atoms");
       for (unsigned int idx = 0; idx != mol->getNumAtoms(); ++idx) {
-        const auto &val = miter->value.GetArray()[idx];
+        const auto &aval = miter->value.GetArray();
+        const auto &val = aval[idx];
         if (!val.IsDouble())
           throw FileParseException("Bad Format: partial charge not double");
         mol->getAtomWithIdx(idx)->setProp(common_properties::_GasteigerCharge,

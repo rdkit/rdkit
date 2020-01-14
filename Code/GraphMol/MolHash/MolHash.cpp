@@ -22,15 +22,15 @@
 namespace RDKit {
 namespace MolHash {
 struct MolFragment  // Reference to a fragment of source molecule
-    {
+{
   std::vector<const Atom *> Atoms;
   std::vector<const Bond *> Bonds;
   std::vector<std::uint32_t> AtomsIdx;
   std::vector<std::uint32_t> BondsIdx;
   std::map<std::uint32_t, std::uint32_t> MolAtomIdxMap;  // Full Molecule to
-                                                             // fragment indices
-                                                             // backward
-                                                             // conversion map
+                                                         // fragment indices
+                                                         // backward
+                                                         // conversion map
  public:
   std::uint32_t getNumAtoms() const { return AtomsIdx.size(); }
   std::uint32_t getNumBonds() const { return BondsIdx.size(); }
@@ -251,7 +251,8 @@ std::string generateMoleculeHashSet(const ROMol &mol,
   // snprintf(buf, sizeof(buf),"%u-%u-%u-", res.Version,
   // res.NumAtoms,res.NumBonds);
   str = (boost::format("%u-%u-%u-") % (res.Version) % (res.NumAtoms) %
-         (res.NumBonds)).str();
+         (res.NumBonds))
+            .str();
   str += encode(&res.FormulaCRC32, sizeof(res.FormulaCRC32));
   str += "-";
   str += encode(&res.NonChiralAtomsHash, sizeof(res.NonChiralAtomsHash));
@@ -320,9 +321,8 @@ static void prepareMolFragment(MolFragment &m, const ROMol &mol,
     n = mol.getNumBonds();
     m.BondsIdx.resize(n);
     for (unsigned i = 0; i < n; i++) m.BondsIdx[i] = i;
-  } else if (nullptr !=
-             atomsToUse)  // selected atoms only and all/selected bonds
-                          // between them
+  } else if (nullptr != atomsToUse)  // selected atoms only and all/selected
+                                     // bonds between them
   {
     std::map<unsigned, unsigned> addedBonds;
     unsigned n = atomsToUse->size();
@@ -375,11 +375,11 @@ static void prepareMolFragment(MolFragment &m, const ROMol &mol,
       unsigned endAtoms[2];
       endAtoms[0] = bond->getBeginAtomIdx();
       endAtoms[1] = bond->getEndAtomIdx();
-      for (unsigned ai = 0; ai < 2 && nullptr != bond;
-           ai++)  // both ending bonds of the atom
+      for (unsigned ai = 0; ai < 2; ai++)  // both ending bonds of the atom
       {
         if (addedAtoms.end() == addedAtoms.find(endAtoms[ai])) {
-          addedAtoms[endAtoms[ai]] = addedAtoms.size();
+          auto val = addedAtoms.size();
+          addedAtoms[endAtoms[ai]] = val;
           m.AtomsIdx.push_back(
               endAtoms[ai]);  // the atom has NOT been already added
         }
@@ -422,5 +422,5 @@ static void prepareLabels(std::vector<std::uint32_t> &atomLabels,
   }
 }
 //=============================================================================
-}
-}
+}  // namespace MolHash
+}  // namespace RDKit
