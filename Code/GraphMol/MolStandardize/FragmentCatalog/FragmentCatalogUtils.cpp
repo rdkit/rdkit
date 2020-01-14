@@ -83,7 +83,8 @@ std::vector<std::shared_ptr<ROMol>> readFuncGroups(std::istream &inStream,
   int nRead = 0;
 
   std::vector<std::shared_ptr<ROMol>> funcGroups;
-  while (!inStream.eof() && (nToRead < 0 || nRead < nToRead)) {
+  while (!inStream.eof() && !inStream.fail() &&
+         (nToRead < 0 || nRead < nToRead)) {
     inStream.getline(inLine, MAX_LINE_LEN, '\n');
     std::string tmpstr(inLine);
     // parse the molecule on this line (if there is one)

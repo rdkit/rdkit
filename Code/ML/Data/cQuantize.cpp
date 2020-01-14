@@ -1,4 +1,3 @@
-// $Id$
 //
 // Copyright 2003-2008 Rational Discovery LLC and Greg Landrum
 //   @@ All Rights Reserved @@
@@ -124,6 +123,8 @@ long int *GenVarTable(double *vals, int nVals, long int *cuts, int nCuts,
 double RecurseHelper(double *vals, int nVals, long int *cuts, int nCuts,
                      int which, long int *starts, int nStarts,
                      long int *results, int nPossibleRes) {
+  PRECONDITION(vals, "bad vals pointer");
+
   double maxGain = -1e6, gainHere;
   long int *bestCuts, *tCuts;
   long int *varTable = nullptr;
@@ -133,6 +134,9 @@ double RecurseHelper(double *vals, int nVals, long int *cuts, int nCuts,
   varTable = (long int *)calloc((nCuts + 1) * nPossibleRes, sizeof(long int));
   bestCuts = (long int *)calloc(nCuts, sizeof(long int));
   tCuts = (long int *)calloc(nCuts, sizeof(long int));
+  CHECK_INVARIANT(varTable, "failed to allocate memory");
+  CHECK_INVARIANT(bestCuts, "failed to allocate memory");
+  CHECK_INVARIANT(tCuts, "failed to allocate memory");
   GenVarTable(vals, nVals, cuts, nCuts, starts, results, nPossibleRes,
               varTable);
   while (cuts[which] <= highestCutHere) {
@@ -244,6 +248,7 @@ static python::tuple cQuantize_RecurseOnBounds(python::object vals,
 
   python::ssize_t nCuts = python::len(pyCuts);
   cuts = (long int *)calloc(nCuts, sizeof(long int));
+  CHECK_INVARIANT(cuts, "failed to allocate memory");
   for (python::ssize_t i = 0; i < nCuts; i++) {
     python::object elem = pyCuts[i];
     cuts[i] = python::extract<long int>(elem);
@@ -251,6 +256,7 @@ static python::tuple cQuantize_RecurseOnBounds(python::object vals,
 
   python::ssize_t nStarts = python::len(pyStarts);
   starts = (long int *)calloc(nStarts, sizeof(long int));
+  CHECK_INVARIANT(starts, "failed to allocate memory");
   for (python::ssize_t i = 0; i < nStarts; i++) {
     python::object elem = pyStarts[i];
     starts[i] = python::extract<long int>(elem);

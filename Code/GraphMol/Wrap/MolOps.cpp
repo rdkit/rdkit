@@ -372,7 +372,7 @@ MolOps::SanitizeFlags sanitizeMol(ROMol &mol, boost::uint64_t sanitizeOps,
 }
 
 RWMol *getEditable(const ROMol &mol) {
-  RWMol *res = static_cast<RWMol *>(new ROMol(mol, false));
+  RWMol *res = new RWMol(mol, false);
   return res;
 }
 
@@ -1705,8 +1705,7 @@ struct molops_wrapper {
 \n";
     python::def("AssignAtomChiralTagsFromMolParity",
                 MolOps::assignChiralTypesFromMolParity,
-                (python::arg("mol"),
-                 python::arg("replaceExistingTags") = true),
+                (python::arg("mol"), python::arg("replaceExistingTags") = true),
                 docString.c_str());
 
     // ------------------------------------------------------------------------
