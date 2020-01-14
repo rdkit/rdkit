@@ -560,7 +560,7 @@ void addTorsions(const ROMol &mol, const AtomicParamVect &params,
                 // here.
                 bool hasSP2 = false;
                 if (mol.getAtomWithIdx(bIdx)->getHybridization() == Atom::SP2 ||
-                    mol.getAtomWithIdx(bIdx)->getHybridization() == Atom::SP2) {
+                    mol.getAtomWithIdx(eIdx)->getHybridization() == Atom::SP2) {
                   hasSP2 = true;
                 }
                 // std::cout << "Torsion: " << bIdx << "-" << idx1 << "-" <<
