@@ -158,6 +158,7 @@ void parseChiralityLabel(RWMol &mol, const std::string &stereo_prop) {
   for (++tItr; tItr != tokenizer.end(); ++tItr) {
     const int nbr_idx = FileParserUtils::toInt(*tItr) - 1;
     const Bond *bnd = mol.getBondBetweenAtoms(chiral_idx, nbr_idx);
+    CHECK_INVARIANT(bnd, "bad chiral bond");
     bond_indexes.push_back(bnd->getIdx());
   }
   CHECK_INVARIANT(bond_indexes.size() == chiral_atom->getDegree(),
