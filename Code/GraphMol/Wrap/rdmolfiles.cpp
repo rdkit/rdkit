@@ -743,6 +743,10 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       .def_readwrite(
           "allowCXSMILES", &RDKit::SmilesParserParams::allowCXSMILES,
           "controls whether or not the CXSMILES extensions are parsed")
+      .def_readwrite("strictCXSMILES",
+                     &RDKit::SmilesParserParams::strictCXSMILES,
+                     "controls whether or not problems in CXSMILES parsing "
+                     "causes molecule parsing to fail")
       .def_readwrite("sanitize", &RDKit::SmilesParserParams::sanitize,
                      "controls whether or not the molecule is sanitized before "
                      "being returned")

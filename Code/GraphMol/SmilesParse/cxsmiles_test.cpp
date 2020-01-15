@@ -494,6 +494,45 @@ void testHTMLCharCodes() {
 
     delete m;
   }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testErrorsInCXSmiles() {
+  BOOST_LOG(rdInfoLog) << "Testing handling of errors in CXSMILES" << std::endl;
+
+  {
+    std::string smiles = R"(CC |failure)";
+    SmilesParserParams params;
+
+    ROMol *m = nullptr;
+    try {
+      m = SmilesToMol(smiles, params);
+    } catch (const SmilesParseException &e) {
+    }
+    TEST_ASSERT(!m);
+
+    params.strictCXSMILES = false;
+    m = SmilesToMol(smiles, params);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 2);
+
+    delete m;
+  }
+
+  {  // sure partial parsing also works
+    std::string smiles = "[O][C][O] |^1:0,2,^4:1 FAILURE|";
+    SmilesParserParams params;
+    params.strictCXSMILES = false;
+    ROMol *m = SmilesToMol(smiles, params);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 3);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons() == 2);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getNumRadicalElectrons() == 1);
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
 int main(int argc, char *argv[]) {
@@ -513,4 +552,5 @@ int main(int argc, char *argv[]) {
   testGithub1968();
   testEnhancedStereo();
   testHTMLCharCodes();
+  testErrorsInCXSmiles();
 }

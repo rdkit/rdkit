@@ -5742,6 +5742,14 @@ M  END
     self.assertIsNotNone(m)
     TestAssignChiralTypesFromMolParity(m, self)
 
+  def testCXSMILESErrors(self):
+    smi = "CCC |FAILURE|"
+    ps = Chem.SmilesParserParams()
+    ps.strictCXSMILES = False
+    m = Chem.MolFromSmiles(smi, ps)
+    self.assertTrue(m is not None)
+    self.assertEqual(m.GetNumAtoms(),3)
+
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:

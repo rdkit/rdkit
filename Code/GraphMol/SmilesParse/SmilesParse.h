@@ -25,6 +25,8 @@ struct RDKIT_SMILESPARSE_EXPORT SmilesParserParams {
   std::map<std::string, std::string> *replacements =
       nullptr;               /**< allows SMILES "macros" */
   bool allowCXSMILES = true; /**< recognize and parse CXSMILES*/
+  bool strictCXSMILES =
+      true; /**< throw an exception if the CXSMILES parsing fails */
   bool parseName = false; /**< parse (and set) the molecule name as well */
   bool removeHs = true;   /**< remove Hs after constructing the molecule */
 };
