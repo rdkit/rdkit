@@ -17,6 +17,10 @@
 #include <algorithm>
 #include <limits>
 
+#include <boost/flyweight.hpp>
+#include <boost/flyweight/key_value.hpp>
+#include <boost/flyweight/no_tracking.hpp>
+
 using namespace RDKit;
 
 namespace RDKit {
@@ -80,6 +84,19 @@ int scoreRings(const ROMol &mol) {
   return score;
 };
 
+struct smarts_mol_holder {
+  std::string d_smarts;
+  std::shared_ptr<ROMol> dp_mol;
+  smarts_mol_holder(const std::string &smarts) : d_smarts(smarts) {
+    dp_mol.reset(SmartsToMol(smarts));
+  }
+};
+
+typedef boost::flyweight<
+    boost::flyweights::key_value<std::string, smarts_mol_holder>,
+    boost::flyweights::no_tracking>
+    smarts_mol_flyweight;
+
 struct SubstructTerm {
   std::string name;
   std::string smarts;
@@ -88,12 +105,14 @@ struct SubstructTerm {
   SubstructTerm(const std::string &aname, const std::string &asmarts,
                 int ascore)
       : name(aname), smarts(asmarts), score(ascore) {
-    matcher.reset(SmartsToMol(smarts));
+    matcher = smarts_mol_flyweight(smarts).get().dp_mol;
   };
 };
 
 int scoreSubstructs(const ROMol &mol) {
-  // EFF: this is really not the best way to do this.
+  // a note on efficiency here: we'll construct the SubstructTerm objects here
+  // repeatedly, but the SMARTS parsing for each entry will only be done once
+  // since we're using the boost::flyweights above to cache them
   const std::vector<SubstructTerm> substructureTerms{
       {"benzoquinone", "[#6]1([#6]=[#6][#6]([#6]=[#6]1)=,:[N,S,O])=,:[N,S,O]",
        25},
