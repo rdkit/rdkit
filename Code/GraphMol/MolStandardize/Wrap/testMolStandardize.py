@@ -233,5 +233,21 @@ chlorine	[Cl]
     ctauts = list(sorted(Chem.MolToSmiles(x) for x in tauts))
     self.assertEqual(ctauts, ['O=C1CCCCC1', 'OC1=CCCCC1'])
 
+    def scorefunc1(mol):
+      ' stupid tautomer scoring function '
+      p = Chem.MolFromSmarts('[OH]')
+      return len(mol.GetSubstructMatches(p))
+
+    def scorefunc2(mol):
+      ' stupid tautomer scoring function '
+      p = Chem.MolFromSmarts('O=C')
+      return len(mol.GetSubstructMatches(p))
+
+    m = Chem.MolFromSmiles("C1(=CCCCC1)O")
+    ctaut = enumerator.Canonicalize(m, scorefunc1)
+    self.assertEqual(Chem.MolToSmiles(ctaut), "OC1=CCCCC1")
+    ctaut = enumerator.Canonicalize(m, scorefunc2)
+    self.assertEqual(Chem.MolToSmiles(ctaut), "O=C1CCCCC1")
+
 if __name__ == "__main__":
   unittest.main()

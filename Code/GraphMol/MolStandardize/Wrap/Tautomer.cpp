@@ -18,11 +18,6 @@ namespace python = boost::python;
 using namespace RDKit;
 
 namespace {
-
-// ROMol *normalizeHelper(MolStandardize::Normalizer &self, const ROMol &mol) {
-//   return self.normalize(mol);
-// }
-
 MolStandardize::TautomerEnumerator *EnumeratorFromParams(
     const MolStandardize::CleanupParameters &params) {
   auto tautparams =
@@ -40,21 +35,45 @@ ROMol *canonicalizeHelper(MolStandardize::TautomerEnumerator &self,
                           const ROMol &mol) {
   return self.canonicalize(mol);
 }
+
+class pyobjFunctor {
+ public:
+  pyobjFunctor(python::object obj) : dp_obj(std::move(obj)) {}
+  ~pyobjFunctor() {}
+  int operator()(const ROMol &m) {
+    return python::extract<int>(dp_obj(boost::ref(m)));
+  }
+
+ private:
+  python::object dp_obj;
+};
+
+ROMol *canonicalizeHelper2(MolStandardize::TautomerEnumerator &self,
+                           const ROMol &mol, python::object scoreFunc) {
+  pyobjFunctor ftor(scoreFunc);
+  return self.canonicalize(mol, ftor);
+}
 }  // namespace
 
 struct tautomer_wrapper {
   static void wrap() {
-    std::string docString = "";
-
     python::class_<MolStandardize::TautomerEnumerator, boost::noncopyable>(
         "TautomerEnumerator", python::no_init)
         .def("__init__", python::make_constructor(createDefaultEnumerator))
         .def("__init__", python::make_constructor(EnumeratorFromParams))
         .def("Enumerate", &MolStandardize::TautomerEnumerator::enumerate,
-             (python::arg("self"), python::arg("mol")), "")
+             (python::arg("self"), python::arg("mol")),
+             "generates the tautomers for a molecule")
         .def("Canonicalize", &canonicalizeHelper,
-             (python::arg("self"), python::arg("mol")), "",
-             python::return_value_policy<python::manage_new_object>());
+             (python::arg("self"), python::arg("mol")),
+             "returns the canonical tautomer for a molecule",
+             python::return_value_policy<python::manage_new_object>())
+        .def(
+            "Canonicalize", &canonicalizeHelper2,
+            (python::arg("self"), python::arg("mol"), python::arg("scoreFunc")),
+            "returns the canonical tautomer for a molecul using a custom "
+            "scoring function",
+            python::return_value_policy<python::manage_new_object>());
     ;
   }
 };
