@@ -160,7 +160,7 @@ unsigned int MAX_TAUTOMERS = 1000;
 
 ROMol *TautomerEnumerator::pickCanonical(
     const std::vector<ROMOL_SPTR> &tautomers,
-    int (*scoreFunc)(const ROMol &)) const {
+    boost::function<int(const ROMol &mol)> scoreFunc) const {
   PRECONDITION(scoreFunc, "no scoring function");
   if (tautomers.size() == 1) {
     return new ROMol(*tautomers[0]);

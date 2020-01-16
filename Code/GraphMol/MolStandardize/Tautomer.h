@@ -11,6 +11,7 @@
 #ifndef RD_TAUTOMER_H
 #define RD_TAUTOMER_H
 
+#include <boost/function.hpp>
 #include <string>
 #include <Catalogs/Catalog.h>
 #include <GraphMol/MolStandardize/TautomerCatalog/TautomerCatalogEntry.h>
@@ -50,10 +51,10 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
 
   std::vector<ROMOL_SPTR> enumerate(const ROMol &mol) const;
   ROMol *pickCanonical(const std::vector<ROMOL_SPTR> &tautomers,
-                       int (*scoreFunc)(const ROMol &) =
+                       boost::function<int(const ROMol &mol)> scoreFunc =
                            TautomerScoringFunctions::scoreTautomer) const;
   ROMol *canonicalize(const ROMol &mol,
-                      int (*scoreFunc)(const ROMol &) =
+                      boost::function<int(const ROMol &mol)> scoreFunc =
                           TautomerScoringFunctions::scoreTautomer) const {
     auto tautomers = enumerate(mol);
     if (!tautomers.size()) {
