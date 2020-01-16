@@ -16,6 +16,7 @@
 #include <Geometry/point.h>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/dynamic_bitset.hpp>
 
 namespace RDKit {
 
@@ -545,212 +546,213 @@ bool adjustStereoAtomsIfRequired(RWMol &mol, const Atom *atom,
   }
   return false;
 }
+
+void molRemoveH(RWMol &mol, unsigned int idx, bool updateExplicitCount) {
+  auto atom = mol.getAtomWithIdx(idx);
+  PRECONDITION(atom->getAtomicNum() == 1, "idx corresponds to a non-Hydrogen");
+  for (const auto &nbri : boost::make_iterator_range(mol.getAtomBonds(atom))) {
+    const Bond *bond = mol[nbri];
+    Atom *heavyAtom = bond->getOtherAtom(atom);
+    int heavyAtomNum = heavyAtom->getAtomicNum();
+
+    // we'll update the neighbor's explicit H count if we were told to
+    // *or* if the neighbor is chiral, in which case the H is needed
+    // in order to complete the coordination
+    // *or* if the neighbor has the noImplicit flag set:
+    if (updateExplicitCount || heavyAtom->getNoImplicit() ||
+        heavyAtom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
+      heavyAtom->setNumExplicitHs(heavyAtom->getNumExplicitHs() + 1);
+    } else {
+      // this is a special case related to Issue 228 and the
+      // "disappearing Hydrogen" problem discussed in MolOps::adjustHs
+      //
+      // If we remove a hydrogen from an aromatic N or P, or if
+      // the heavy atom it is connected to is not in its default
+      // valence state, we need to be *sure* to increment the
+      // explicit count, even if the H itself isn't marked as explicit
+      const INT_VECT &defaultVs =
+          PeriodicTable::getTable()->getValenceList(heavyAtomNum);
+      if (((heavyAtomNum == 7 || heavyAtomNum == 15) &&
+           heavyAtom->getIsAromatic()) ||
+          (std::find(defaultVs.begin() + 1, defaultVs.end(),
+                     heavyAtom->getTotalValence()) != defaultVs.end())) {
+        heavyAtom->setNumExplicitHs(heavyAtom->getNumExplicitHs() + 1);
+      }
+    }
+
+    // One other consequence of removing the H from the graph is
+    // that we may change the ordering of the bonds about a
+    // chiral center.  This may change the chiral label at that
+    // atom.  We deal with that by explicitly checking here:
+    if (heavyAtom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
+      INT_LIST neighborIndices;
+      for (const auto &nbri :
+           boost::make_iterator_range(mol.getAtomBonds(heavyAtom))) {
+        Bond *nbnd = mol[nbri];
+        if (nbnd->getIdx() != bond->getIdx()) {
+          neighborIndices.push_back(nbnd->getIdx());
+        }
+      }
+      neighborIndices.push_back(bond->getIdx());
+
+      int nSwaps = heavyAtom->getPerturbationOrder(neighborIndices);
+      // std::cerr << "H: "<<atom->getIdx()<<" hvy:
+      // "<<heavyAtom->getIdx()<<" swaps: " << nSwaps<<std::endl;
+      if (nSwaps % 2) {
+        heavyAtom->invertChirality();
+      }
+    }
+
+    // if it's a wavy bond, then we need to
+    // mark the beginning atom with the _UnknownStereo tag.
+    // so that we know later that something was affecting its
+    // stereochem
+    if (bond->getBondDir() == Bond::UNKNOWN &&
+        bond->getBeginAtomIdx() == heavyAtom->getIdx()) {
+      heavyAtom->setProp(common_properties::_UnknownStereo, 1);
+    } else if (bond->getBondDir() == Bond::ENDDOWNRIGHT ||
+               bond->getBondDir() == Bond::ENDUPRIGHT) {
+      // if the direction is set on this bond and the atom it's connected to
+      // has no other single bonds with directions set, then we need to set
+      // direction on one of the other neighbors in order to avoid double
+      // bond stereochemistry possibly being lost. This was github #754
+      bool foundADir = false;
+      Bond *oBond = nullptr;
+      for (const auto &nbri :
+           boost::make_iterator_range(mol.getAtomBonds(heavyAtom))) {
+        Bond *nbnd = mol[nbri];
+        if (nbnd->getIdx() != bond->getIdx() &&
+            nbnd->getBondType() == Bond::SINGLE) {
+          if (nbnd->getBondDir() == Bond::NONE) {
+            oBond = nbnd;
+          } else {
+            foundADir = true;
+          }
+        }
+      }
+      if (!foundADir && oBond != nullptr) {
+        bool flipIt = (oBond->getBeginAtom() == heavyAtom) &&
+                      (bond->getBeginAtom() == heavyAtom);
+        if (flipIt) {
+          oBond->setBondDir(bond->getBondDir() == Bond::ENDDOWNRIGHT
+                                ? Bond::ENDUPRIGHT
+                                : Bond::ENDDOWNRIGHT);
+        } else {
+          oBond->setBondDir(bond->getBondDir());
+        }
+      }
+      // if this atom is one of the stereoatoms for a double bond we need
+      // to switch the stereo atom on this end to be the other neighbor
+      // This was part of github #1810
+      adjustStereoAtomsIfRequired(mol, atom, heavyAtom);
+    } else {
+      // if this atom is one of the stereoatoms for a double bond we need
+      // to switch the stereo atom on this end to be the other neighbor
+      // This was part of github #1810
+      adjustStereoAtomsIfRequired(mol, atom, heavyAtom);
+    }
+  }
+  mol.removeAtom(atom);
+}
+
 }  // end of anonymous namespace
 
-//
-//  This routine removes hydrogens (and bonds to them) from the molecular graph.
-//  Other Atom and bond indices may be affected by the removal.
-//
-//  NOTES:
-//   - Hydrogens which aren't connected to a heavy atom will not be
-//     removed.  This prevents molecules like "[H][H]" from having
-//     all atoms removed.
-//   - Labelled hydrogen (e.g. atoms with atomic number=1, but isotope > 1),
-//     will not be removed.
-//   - two coordinate Hs, like the central H in C[H-]C, will not be removed
-//   - Hs connected to dummy atoms will not be removed
-//   - Hs that are part of the definition of double bond Stereochemistry
-//     will not be removed
-//   - Hs that are not connected to anything else will not be removed
-//
-void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
-              bool sanitize) {
-  unsigned int currIdx = 0, origIdx = 0;
-  std::map<unsigned int, unsigned int> idxMap;
-  for (ROMol::AtomIterator atIt = mol.beginAtoms(); atIt != mol.endAtoms();
-       ++atIt) {
-    if ((*atIt)->getAtomicNum() == 1) continue;
-    (*atIt)->updatePropertyCache(false);
+void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
+  for (auto atom : mol.atoms()) {
+    atom->updatePropertyCache(false);
   }
-  while (currIdx < mol.getNumAtoms()) {
-    Atom *atom = mol.getAtomWithIdx(currIdx);
-    idxMap[origIdx] = currIdx;
-    ++origIdx;
-    if (atom->getAtomicNum() == 1) {
-      bool removeIt = false;
-      if (!atom->getDegree()) {
+  boost::dynamic_bitset<> atomsToRemove{mol.getNumAtoms(), 0};
+  for (auto atom : mol.atoms()) {
+    if (atom->getAtomicNum() != 1) {
+      continue;
+    }
+    if (!ps.removeWithQuery && atom->hasQuery()) {
+      continue;
+    }
+    if (!ps.removeDegreeZero && !atom->getDegree()) {
+      if (ps.showWarnings) {
         BOOST_LOG(rdWarningLog)
             << "WARNING: not removing hydrogen atom without neighbors"
             << std::endl;
-      } else if (!atom->hasQuery()) {
-        if (atom->hasProp(common_properties::isImplicit)) {
-          removeIt = true;
-          if (atom->getDegree() == 1) {
-            // by default we remove implicit Hs, but not if they are
-            // attached to dummy atoms. This was Github #1439
-            ROMol::ADJ_ITER begin, end;
-            boost::tie(begin, end) = mol.getAtomNeighbors(atom);
-            if (mol.getAtomWithIdx(*begin)->getAtomicNum() < 1) {
-              removeIt = false;
+      }
+      continue;
+    }
+    if (!ps.removeHigherDegrees && atom->getDegree() > 1) {
+      continue;
+    }
+    if (!ps.removeIsotopes && atom->getIsotope()) {
+      continue;
+    }
+    if (!ps.removeNonimplicit &&
+        !atom->hasProp(common_properties::isImplicit)) {
+      continue;
+    }
+    if (!ps.removeMapped && atom->getAtomMapNum()) {
+      continue;
+    }
+    bool removeIt = true;
+    if (atom->getDegree() &&
+        (!ps.removeDummyNeighbors || !ps.removeDefiningBondStereo ||
+         !ps.removeOnlyHNeighbors)) {
+      bool onlyHNeighbors = true;
+      ROMol::ADJ_ITER begin, end;
+      boost::tie(begin, end) = mol.getAtomNeighbors(atom);
+      while (begin != end && removeIt) {
+        auto nbr = mol.getAtomWithIdx(*begin);
+        // is it a dummy?
+        if (!ps.removeDummyNeighbors && nbr->getAtomicNum() < 1) {
+          removeIt = false;
+          if (ps.showWarnings) {
+            BOOST_LOG(rdWarningLog) << "WARNING: not removing hydrogen atom "
+                                       "with dummy atom neighbors"
+                                    << std::endl;
+          }
+        }
+        if (!ps.removeOnlyHNeighbors && nbr->getAtomicNum() != 1) {
+          onlyHNeighbors = false;
+        }
+        if (!ps.removeWithWedgedBond) {
+          const auto bnd =
+              mol.getBondBetweenAtoms(atom->getIdx(), nbr->getIdx());
+          if (bnd->getBondDir() == Bond::BEGINDASH ||
+              bnd->getBondDir() == Bond::BEGINWEDGE) {
+            removeIt = false;
+            if (ps.showWarnings) {
               BOOST_LOG(rdWarningLog) << "WARNING: not removing hydrogen atom "
-                                         "with only dummy atom neighbors"
+                                         "with wedged bond"
                                       << std::endl;
             }
           }
-        } else if (!implicitOnly && !atom->getIsotope() &&
-                   atom->getDegree() == 1) {
-          ROMol::ADJ_ITER begin, end;
-          boost::tie(begin, end) = mol.getAtomNeighbors(atom);
-          auto nbr = mol.getAtomWithIdx(*begin);
-          if (nbr->getAtomicNum() > 1) {
-            removeIt = true;
-            // we're connected to a non-dummy, non H atom. Check to see
-            // if the neighbor has a double bond and we're the only neighbor
-            // at this end.  This was part of github #1810
-            if (nbr->getDegree() == 2) {
-              for (const auto &nbri :
-                   boost::make_iterator_range(mol.getAtomBonds(nbr))) {
-                const Bond *bnd = mol[nbri];
-                if (bnd->getBondType() == Bond::DOUBLE &&
-                    (bnd->getStereo() > Bond::STEREOANY ||
-                     mol.getBondBetweenAtoms(atom->getIdx(), nbr->getIdx())
-                             ->getBondDir() > Bond::NONE)) {
-                  removeIt = false;
-                  break;
-                }
-              }
+        }
+        // Check to see if the neighbor has a double bond and we're the only
+        // neighbor at this end.  This was part of github #1810
+        if (!ps.removeDefiningBondStereo && nbr->getDegree() == 2) {
+          for (const auto &nbri :
+               boost::make_iterator_range(mol.getAtomBonds(nbr))) {
+            const Bond *bnd = mol[nbri];
+            if (bnd->getBondType() == Bond::DOUBLE &&
+                (bnd->getStereo() > Bond::STEREOANY ||
+                 mol.getBondBetweenAtoms(atom->getIdx(), nbr->getIdx())
+                         ->getBondDir() > Bond::NONE)) {
+              removeIt = false;
+              break;
             }
           }
         }
+        ++begin;
       }
-
-      if (removeIt) {
-        ROMol::OEDGE_ITER beg, end;
-        boost::tie(beg, end) = mol.getAtomBonds(atom);
-        // part of the fix for github #2086:
-        CHECK_INVARIANT(beg != end, "H has no neighbors!");
-        // note the assumption that the H only has one neighbor... I
-        // feel no need to handle the case of hypervalent hydrogen!
-        // :-)
-        const Bond *bond = mol[*beg];
-        Atom *heavyAtom = bond->getOtherAtom(atom);
-        int heavyAtomNum = heavyAtom->getAtomicNum();
-        const INT_VECT &defaultVs =
-            PeriodicTable::getTable()->getValenceList(heavyAtomNum);
-
-        // we'll update the atom's explicit H count if we were told to
-        // *or* if the atom is chiral, in which case the H is needed
-        // in order to complete the coordination
-        // *or* if the atom has the noImplicit flag set:
-        if (updateExplicitCount || heavyAtom->getNoImplicit() ||
-            heavyAtom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
-          heavyAtom->setNumExplicitHs(heavyAtom->getNumExplicitHs() + 1);
-        } else {
-          // this is a special case related to Issue 228 and the
-          // "disappearing Hydrogen" problem discussed in MolOps::adjustHs
-          //
-          // If we remove a hydrogen from an aromatic N or P, or if
-          // the heavy atom it is connected to is not in its default
-          // valence state, we need to be *sure* to increment the
-          // explicit count, even if the H itself isn't marked as explicit
-          if (((heavyAtomNum == 7 || heavyAtomNum == 15) &&
-               heavyAtom->getIsAromatic()) ||
-              (std::find(defaultVs.begin() + 1, defaultVs.end(),
-                         heavyAtom->getTotalValence()) != defaultVs.end())) {
-            heavyAtom->setNumExplicitHs(heavyAtom->getNumExplicitHs() + 1);
-          }
-        }
-
-        // One other consequence of removing the H from the graph is
-        // that we may change the ordering of the bonds about a
-        // chiral center.  This may change the chiral label at that
-        // atom.  We deal with that by explicitly checking here:
-        if (heavyAtom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
-          INT_LIST neighborIndices;
-          boost::tie(beg, end) = mol.getAtomBonds(heavyAtom);
-          while (beg != end) {
-            if (mol[*beg]->getIdx() != bond->getIdx()) {
-              neighborIndices.push_back(mol[*beg]->getIdx());
-            }
-            ++beg;
-          }
-          neighborIndices.push_back(bond->getIdx());
-
-          int nSwaps = heavyAtom->getPerturbationOrder(neighborIndices);
-          // std::cerr << "H: "<<atom->getIdx()<<" hvy:
-          // "<<heavyAtom->getIdx()<<" swaps: " << nSwaps<<std::endl;
-          if (nSwaps % 2) {
-            heavyAtom->invertChirality();
-          }
-        }
-
-        // if it's a wavy bond, then we need to
-        // mark the beginning atom with the _UnknownStereo tag.
-        // so that we know later that something was affecting its
-        // stereochem
-        if (bond->getBondDir() == Bond::UNKNOWN &&
-            bond->getBeginAtomIdx() == heavyAtom->getIdx()) {
-          heavyAtom->setProp(common_properties::_UnknownStereo, 1);
-        } else if (bond->getBondDir() == Bond::ENDDOWNRIGHT ||
-                   bond->getBondDir() == Bond::ENDUPRIGHT) {
-          // if the direction is set on this bond and the atom it's connected to
-          // has no other single bonds with directions set, then we need to set
-          // direction on one of the other neighbors in order to avoid double
-          // bond stereochemistry possibly being lost. This was github #754
-          bool foundADir = false;
-          Bond *oBond = nullptr;
-          boost::tie(beg, end) = mol.getAtomBonds(heavyAtom);
-          while (beg != end) {
-            if (mol[*beg]->getIdx() != bond->getIdx() &&
-                mol[*beg]->getBondType() == Bond::SINGLE) {
-              if (mol[*beg]->getBondDir() == Bond::NONE) {
-                oBond = mol[*beg];
-              } else {
-                foundADir = true;
-              }
-            }
-            ++beg;
-          }
-          if (!foundADir && oBond != nullptr) {
-            bool flipIt = (oBond->getBeginAtom() == heavyAtom) &&
-                          (bond->getBeginAtom() == heavyAtom);
-            if (flipIt) {
-              oBond->setBondDir(bond->getBondDir() == Bond::ENDDOWNRIGHT
-                                    ? Bond::ENDUPRIGHT
-                                    : Bond::ENDDOWNRIGHT);
-            } else {
-              oBond->setBondDir(bond->getBondDir());
-            }
-          }
-          // if this atom is one of the stereoatoms for a double bond we need
-          // to switch the stereo atom on this end to be the other neighbor
-          // This was part of github #1810
-          adjustStereoAtomsIfRequired(mol, atom, heavyAtom);
-        } else {
-          // if this atom is one of the stereoatoms for a double bond we need
-          // to switch the stereo atom on this end to be the other neighbor
-          // This was part of github #1810
-          adjustStereoAtomsIfRequired(mol, atom, heavyAtom);
-        }
-        mol.removeAtom(atom);
-      } else {
-        // only increment the atom idx if we don't remove the atom
-        currIdx++;
+      if (removeIt && (!ps.removeOnlyHNeighbors && onlyHNeighbors)) {
+        removeIt = false;
       }
-    } else {
-      // only increment the atom idx if we don't remove the atom
-      currIdx++;
-      bool origNoImplicit;
-      if (atom->getPropIfPresent(common_properties::origNoImplicit,
-                                 origNoImplicit)) {
-        // we'll get in here if we haven't already processed the atom's implicit
-        //  hydrogens. (this is protection for the case that removeHs() is
-        //  called
-        //  multiple times on a single molecule without intervening addHs()
-        //  calls)
-        atom->setNoImplicit(origNoImplicit);
-        atom->clearProp(common_properties::origNoImplicit);
-      }
+    }
+    if (removeIt) {
+      atomsToRemove.set(atom->getIdx());
+    }
+  }  // end of the loop over atoms
+  // now that we know which atoms need to be removed, go ahead and remove them
+  for (int idx = mol.getNumAtoms() - 1; idx >= 0; --idx) {
+    if (atomsToRemove[idx]) {
+      molRemoveH(mol, idx, ps.updateExplicitCount);
     }
   }
   //
@@ -759,13 +761,27 @@ void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
   //  This can screw up derived properties (such as ring members), so
   //  do some checks:
   //
-  if (!implicitOnly) {
-    if (sanitize) {
-      sanitizeMol(mol);
-    }
+  if (!atomsToRemove.empty() && ps.removeNonimplicit && sanitize) {
+    sanitizeMol(mol);
   }
 };
-
+ROMol *removeHs(const ROMol &mol, const RemoveHsParameters &ps, bool sanitize) {
+  auto *res = new RWMol(mol);
+  try {
+    removeHs(*res, ps, sanitize);
+  } catch (MolSanitizeException &se) {
+    delete res;
+    throw;
+  }
+  return static_cast<ROMol *>(res);
+}
+void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
+              bool sanitize) {
+  RemoveHsParameters ps;
+  ps.removeNonimplicit = !implicitOnly;
+  ps.updateExplicitCount = updateExplicitCount;
+  removeHs(mol, ps, sanitize);
+};
 ROMol *removeHs(const ROMol &mol, bool implicitOnly, bool updateExplicitCount,
                 bool sanitize) {
   auto *res = new RWMol(mol);
@@ -773,7 +789,32 @@ ROMol *removeHs(const ROMol &mol, bool implicitOnly, bool updateExplicitCount,
     removeHs(*res, implicitOnly, updateExplicitCount, sanitize);
   } catch (MolSanitizeException &se) {
     delete res;
-    throw se;
+    throw;
+  }
+  return static_cast<ROMol *>(res);
+}
+
+void removeAllHs(RWMol &mol, bool sanitize) {
+  RemoveHsParameters ps;
+  ps.removeDegreeZero = true;
+  ps.removeHigherDegrees = true;
+  ps.removeOnlyHNeighbors = true;
+  ps.removeIsotopes = true;
+  ps.removeDummyNeighbors = true;
+  ps.removeDefiningBondStereo = true;
+  ps.removeWithWedgedBond = true;
+  ps.removeWithQuery = true;
+  ps.removeNonimplicit = true;
+  ps.showWarnings = false;
+  removeHs(mol, ps, sanitize);
+};
+ROMol *removeAllHs(const ROMol &mol, bool sanitize) {
+  auto *res = new RWMol(mol);
+  try {
+    removeAllHs(*res, sanitize);
+  } catch (MolSanitizeException &se) {
+    delete res;
+    throw;
   }
   return static_cast<ROMol *>(res);
 }
@@ -808,8 +849,8 @@ bool isQueryH(const Atom *atom) {
     }
     std::list<QueryAtom::QUERYATOM_QUERY::CHILD_TYPE> childStack(
         atom->getQuery()->beginChildren(), atom->getQuery()->endChildren());
-    // the logic gets too complicated if there's an OR in the children, so just
-    // punt on those (with a warning)
+    // the logic gets too complicated if there's an OR in the children, so
+    // just punt on those (with a warning)
     while (!(hasHQuery && hasOr) && childStack.size()) {
       QueryAtom::QUERYATOM_QUERY::CHILD_TYPE query = childStack.front();
       childStack.pop_front();
@@ -897,8 +938,8 @@ void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly) {
         //  having started with a non-standard SMARTS.
         //
         if (!atom->hasQuery()) {
-          // it wasn't a query atom, we need to replace it so that we can add a
-          // query:
+          // it wasn't a query atom, we need to replace it so that we can add
+          // a query:
           ATOM_EQUALS_QUERY *tmp = makeAtomNumQuery(atom->getAtomicNum());
           auto *newAt = new QueryAtom;
           newAt->setQuery(tmp);
