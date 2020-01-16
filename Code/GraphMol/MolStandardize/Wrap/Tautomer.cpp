@@ -66,15 +66,21 @@ struct tautomer_wrapper {
              "generates the tautomers for a molecule")
         .def("Canonicalize", &canonicalizeHelper,
              (python::arg("self"), python::arg("mol")),
-             "returns the canonical tautomer for a molecule",
+             R"DOC(Returns the canonical tautomer for a molecule.
+  Note that the canonical tautomer is very likely not the most stable tautomer for any given
+  conditions. The scoring rules are designed to produce "reasonable" tautomers, but the primary 
+  concern is that the results are canonical: you always get the same canonical tautomer for a
+  molecule regardless of what the input tautomer or atom ordering were.)DOC",
              python::return_value_policy<python::manage_new_object>())
         .def(
             "Canonicalize", &canonicalizeHelper2,
             (python::arg("self"), python::arg("mol"), python::arg("scoreFunc")),
-            "returns the canonical tautomer for a molecul using a custom "
+            "returns the canonical tautomer for a molecule using a custom "
             "scoring function",
-            python::return_value_policy<python::manage_new_object>());
-    ;
+            python::return_value_policy<python::manage_new_object>())
+        .def_readonly(
+            "tautomerScoreVersion",
+            MolStandardize::TautomerScoringFunctions::tautomerScoringVersion);
   }
 };
 

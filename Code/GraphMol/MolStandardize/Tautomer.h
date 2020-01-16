@@ -28,6 +28,8 @@ typedef RDCatalog::HierarchCatalog<TautomerCatalogEntry, TautomerCatalogParams,
     TautomerCatalog;
 
 namespace TautomerScoringFunctions {
+const std::string tautomerScoringVersion = "1.0.0";
+
 RDKIT_MOLSTANDARDIZE_EXPORT int scoreRings(const ROMol &mol);
 RDKIT_MOLSTANDARDIZE_EXPORT int scoreSubstructs(const ROMol &mol);
 RDKIT_MOLSTANDARDIZE_EXPORT int scoreHeteroHs(const ROMol &mol);
@@ -49,10 +51,29 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
     return *this;
   }
 
+  //! returns all tautomers for the input molecule
   std::vector<ROMOL_SPTR> enumerate(const ROMol &mol) const;
+
+  //! returns the canonical tautomer from a set of possible tautomers
+  /*!
+    Note that the canonical tautomer is very likely not the most stable tautomer
+    for any given conditions. The default scoring rules are designed to produce
+    "reasonable" tautomers, but the primary concern is that the results are
+    canonical: you always get the same canonical tautomer for a molecule
+    regardless of what the input tautomer or atom ordering were.
+  */
   ROMol *pickCanonical(const std::vector<ROMOL_SPTR> &tautomers,
                        boost::function<int(const ROMol &mol)> scoreFunc =
                            TautomerScoringFunctions::scoreTautomer) const;
+
+  //! returns the canonical tautomer for a molecule
+  /*!
+    Note that the canonical tautomer is very likely not the most stable tautomer
+    for any given conditions. The default scoring rules are designed to produce
+    "reasonable" tautomers, but the primary concern is that the results are
+    canonical: you always get the same canonical tautomer for a molecule
+    regardless of what the input tautomer or atom ordering were.
+  */
   ROMol *canonicalize(const ROMol &mol,
                       boost::function<int(const ROMol &mol)> scoreFunc =
                           TautomerScoringFunctions::scoreTautomer) const {
