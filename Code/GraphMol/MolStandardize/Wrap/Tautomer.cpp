@@ -31,6 +31,11 @@ MolStandardize::TautomerEnumerator *EnumeratorFromParams(
   return new MolStandardize::TautomerEnumerator(cat);
 }
 
+MolStandardize::TautomerEnumerator *createDefaultEnumerator() {
+  MolStandardize::CleanupParameters ps;
+  return EnumeratorFromParams(ps);
+}
+
 ROMol *canonicalizeHelper(MolStandardize::TautomerEnumerator &self,
                           const ROMol &mol) {
   return self.canonicalize(mol);
@@ -43,15 +48,14 @@ struct tautomer_wrapper {
 
     python::class_<MolStandardize::TautomerEnumerator, boost::noncopyable>(
         "TautomerEnumerator", python::no_init)
+        .def("__init__", python::make_constructor(createDefaultEnumerator))
+        .def("__init__", python::make_constructor(EnumeratorFromParams))
         .def("Enumerate", &MolStandardize::TautomerEnumerator::enumerate,
              (python::arg("self"), python::arg("mol")), "")
         .def("Canonicalize", &canonicalizeHelper,
              (python::arg("self"), python::arg("mol")), "",
              python::return_value_policy<python::manage_new_object>());
     ;
-    python::def("TautomerEnumeratorFromParams", &EnumeratorFromParams,
-                (python::arg("params")), "creates a tautomer enumerator",
-                python::return_value_policy<python::manage_new_object>());
   }
 };
 

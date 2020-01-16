@@ -217,8 +217,13 @@ chlorine	[Cl]
     self.assertEqual(Chem.MolToSmiles(nm), "O=S([O-])c1ccc(S(=O)(=O)O)cc1")
 
   def test13Tautomers(self):
+    enumerator = rdMolStandardize.TautomerEnumerator()
+    m = Chem.MolFromSmiles("C1(=CCCCC1)O")
+    ctaut = enumerator.Canonicalize(m)
+    self.assertEqual(Chem.MolToSmiles(ctaut), "O=C1CCCCC1")
+
     params = rdMolStandardize.CleanupParameters()
-    enumerator = rdMolStandardize.TautomerEnumeratorFromParams(params)
+    enumerator = rdMolStandardize.TautomerEnumerator(params)
     m = Chem.MolFromSmiles("C1(=CCCCC1)O")
     ctaut = enumerator.Canonicalize(m)
     self.assertEqual(Chem.MolToSmiles(ctaut), "O=C1CCCCC1")
