@@ -52,7 +52,8 @@ int scoreRings(const ROMol &mol) {
   for (const auto &bnd : mol.bonds()) {
     if (bnd->getIsAromatic()) {
       isArom.set(bnd->getIdx());
-      if(bnd->getBeginAtom()->getAtomicNum()==6 && bnd->getEndAtom()->getAtomicNum()==6){
+      if (bnd->getBeginAtom()->getAtomicNum() == 6 &&
+          bnd->getEndAtom()->getAtomicNum() == 6) {
         bothCarbon.set(bnd->getIdx());
       }
     }
@@ -65,7 +66,7 @@ int scoreRings(const ROMol &mol) {
         allAromatic = false;
         break;
       }
-      if(!bothCarbon[bidx]){
+      if (!bothCarbon[bidx]) {
         allC = false;
       }
     }
@@ -122,17 +123,18 @@ int scoreSubstructs(const ROMol &mol) {
   }
   return score;
 };
-int scoreHeteroHs(const ROMol &mol) { 
-  int score=0;
-  for(const auto &at:mol.atoms()){
+int scoreHeteroHs(const ROMol &mol) {
+  int score = 0;
+  for (const auto &at : mol.atoms()) {
     int anum = at->getAtomicNum();
-    if(anum==15 || anum==16 || anum==34 || anum==52){
+    if (anum == 15 || anum == 16 || anum == 34 || anum == 52) {
       score -= at->getTotalNumHs();
     }
   }
   return score;
-  
-  return 1; };
+
+  return 1;
+};
 }  // namespace TautomerScoringFunctions
 
 unsigned int MAX_TAUTOMERS = 1000;

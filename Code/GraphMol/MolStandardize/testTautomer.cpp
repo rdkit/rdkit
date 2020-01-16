@@ -22,7 +22,8 @@ void testEnumerator() {
   std::string rdbase = getenv("RDBASE");
   std::string tautomerFile =
       rdbase + "/Data/MolStandardize/tautomerTransforms.in";
-  auto tautparams = std::unique_ptr<TautomerCatalogParams>(new TautomerCatalogParams(tautomerFile));
+  auto tautparams = std::unique_ptr<TautomerCatalogParams>(
+      new TautomerCatalogParams(tautomerFile));
   unsigned int ntautomers = tautparams->getNumTautomers();
   TEST_ASSERT(ntautomers == 34);
 
@@ -792,95 +793,95 @@ void testCanonicalize() {
   TautomerCatalog tautcat(tautparams);
   TautomerCanonicalizer tc;
 
-{  // Enumerate 1,3 keto/enol tautomer.
-  std::string smi1 = "C1(=CCCCC1)O";
-  std::unique_ptr<ROMol> m1(SmilesToMol(smi1));
-  ROMol *res = tc.canonicalize(*m1, &tautcat);
-  std::cerr << MolToSmiles(*res)<<std::endl;
-  TEST_ASSERT(MolToSmiles(*res) == "O=C1CCCCC1");
-  delete res;
-}
-  // tests from the molvs repo: https://github.com/mcs07/MolVS/blob/456f2fe723acfedbf634a8bcfe943b83ea7d4c20/tests/test_tautomer.py
-  std::vector<std::pair<std::string,std::string>> data{{"C1(=CCCCC1)O","O=C1CCCCC1"},
-    {"C1(CCCCC1)=O","O=C1CCCCC1"},
-    {"C(=C)(O)C1=CC=CC=C1","CC(=O)c1ccccc1"},
-    {"CC(C)=O","CC(C)=O"},
-    {"OC(C)=C(C)C","CC(=O)C(C)C"},
-    {"c1(ccccc1)CC(=O)C","CC(=O)Cc1ccccc1"},
-    {"Oc1nccc2cc[nH]c(=N)c12","N=c1[nH]ccc2cc[nH]c(=O)c12"},
-    {"C1(C=CCCC1)=O","O=C1C=CCCC1"},
-    {"C1(CCCCC1)=N", "N=C1CCCCC1"},
-    {"C1(=CCCCC1)N", "N=C1CCCCC1"},
-    {"C1(C=CC=CN1)=CC", "CCc1ccccn1"},
-    {"C1(=NC=CC=C1)CC", "CCc1ccccn1"},
-    {"O=c1cccc[nH]1", "O=c1cccc[nH]1"},
-    {"Oc1ccccn1", "O=c1cccc[nH]1"},
-    {"Oc1ncc[nH]1", "O=c1[nH]cc[nH]1"},
-    {"OC(C)=NC", "CNC(C)=O"},
-    {"CNC(C)=O", "CNC(C)=O"},
-    {"S=C(N)N", "NC(N)=S"},
-    {"SC(N)=N", "NC(N)=S"},
-    {"N=c1[nH]ccn(C)1", "Cn1cc[nH]c1=N"},
-    {"CN=c1[nH]cncc1", "CN=c1cc[nH]cn1"},
-    {"Oc1cccc2ccncc12", "Oc1cccc2ccncc12"},
-    {"O=c1cccc2cc[nH]cc1-2", "Oc1cccc2ccncc12"},
-    {"Cc1n[nH]c2ncnn12", "Cc1n[nH]c2ncnn12"},
-    {"Cc1nnc2nc[nH]n12", "Cc1n[nH]c2ncnn12"},
-    {"Oc1ccncc1", "O=c1cc[nH]cc1"},
-    {"Oc1c(cccc3)c3nc2ccncc12", "O=c1c2ccccc2[nH]c2ccncc12"},
-    {"Oc1ncncc1", "O=c1cc[nH]cn1"},
-    {"C2(=C1C(=NC=N1)[NH]C(=N2)N)O", "N=c1[nH]c(=O)c2[nH]cnc2[nH]1"},
-    {"C2(C1=C([NH]C=N1)[NH]C(=N2)N)=O", "N=c1[nH]c(=O)c2[nH]cnc2[nH]1"},
-    {"Oc1n(C)ncc1", "Cn1[nH]ccc1=O"},
-    {"O=c1nc2[nH]ccn2cc1", "O=c1ccn2cc[nH]c2n1"},
-    {"N=c1nc[nH]cc1", "N=c1cc[nH]cn1"},
-    {"N=c(c1)ccn2cc[nH]c12", "N=c1ccn2cc[nH]c2c1"},
-    {"CN=c1nc[nH]cc1", "CN=c1cc[nH]cn1"},
-    {"c1ccc2[nH]c(-c3nc4ccccc4[nH]3)nc2c1", "c1ccc2[nH]c(-c3nc4ccccc4[nH]3)nc2c1"},
-    {"c1ccc2c(c1)NC(=C1N=c3ccccc3=N1)N2", "c1ccc2[nH]c(-c3nc4ccccc4[nH]3)nc2c1"},
-    {"CNc1ccnc2ncnn21", "CN=c1cc[nH]c2ncnn12"},
-    {"CN=c1ccnc2nc[nH]n21", "CN=c1cc[nH]c2ncnn12"},
-    {"Nc1ccc(C=C2C=CC(=O)C=C2)cc1", "Nc1ccc(C=C2C=CC(=O)C=C2)cc1"},
-    {"N=C1C=CC(=Cc2ccc(O)cc2)C=C1", "Nc1ccc(C=C2C=CC(=O)C=C2)cc1"},
-    {"n1ccc2ccc[nH]c12", "c1cnc2[nH]ccc2c1"},
-    {"c1cc(=O)[nH]c2nccn12", "O=c1ccn2cc[nH]c2n1"},
-    {"c1cnc2c[nH]ccc12", "c1cc2cc[nH]c2cn1"},
-    {"n1ccc2c[nH]ccc12", "c1cc2[nH]ccc2cn1"},
-    {"c1cnc2ccc[nH]c12", "c1cnc2cc[nH]c2c1"},
-    {"C1=CC=C(O1)O", "Oc1ccco1"},
-    {"O=C1CC=CO1", "Oc1ccco1"},
-    {"CC=C=O", "CC=C=O"},
-    {"CC#CO", "CC=C=O"},
-    {"C([N+](=O)[O-])C", "CC[N+](=O)[O-]"},
-    {"C(=[N+](O)[O-])C", "CC[N+](=O)[O-]"},
-    {"CC(C)=NO", "CC(C)=NO"},
-    {"CC(C)N=O", "CC(C)=NO"},
-    {"O=Nc1ccc(O)cc1", "O=Nc1ccc(O)cc1"},
-    {"O=C1C=CC(=NO)C=C1", "O=Nc1ccc(O)cc1"},
-    {"C(#N)O", "N=C=O"},
-    {"C(=N)=O", "N=C=O"},
-    {"N=C(N)S(=O)O", "N=C(N)S(=O)O"},
-    {"C#N", "C#N"},
-    {"[C-]#[NH+]", "C#N"},
-    {"[PH](=O)(O)(O)", "O=[PH](O)O"},
-    {"P(O)(O)O", "O=[PH](O)O"}
-  };
-  for(const auto itm : data){
+  {  // Enumerate 1,3 keto/enol tautomer.
+    std::string smi1 = "C1(=CCCCC1)O";
+    std::unique_ptr<ROMol> m1(SmilesToMol(smi1));
+    ROMol *res = tc.canonicalize(*m1, &tautcat);
+    std::cerr << MolToSmiles(*res) << std::endl;
+    TEST_ASSERT(MolToSmiles(*res) == "O=C1CCCCC1");
+    delete res;
+  }
+  // tests from the molvs repo:
+  // https://github.com/mcs07/MolVS/blob/456f2fe723acfedbf634a8bcfe943b83ea7d4c20/tests/test_tautomer.py
+  std::vector<std::pair<std::string, std::string>> data{
+      {"C1(=CCCCC1)O", "O=C1CCCCC1"},
+      {"C1(CCCCC1)=O", "O=C1CCCCC1"},
+      {"C(=C)(O)C1=CC=CC=C1", "CC(=O)c1ccccc1"},
+      {"CC(C)=O", "CC(C)=O"},
+      {"OC(C)=C(C)C", "CC(=O)C(C)C"},
+      {"c1(ccccc1)CC(=O)C", "CC(=O)Cc1ccccc1"},
+      {"Oc1nccc2cc[nH]c(=N)c12", "N=c1[nH]ccc2cc[nH]c(=O)c12"},
+      {"C1(C=CCCC1)=O", "O=C1C=CCCC1"},
+      {"C1(CCCCC1)=N", "N=C1CCCCC1"},
+      {"C1(=CCCCC1)N", "N=C1CCCCC1"},
+      {"C1(C=CC=CN1)=CC", "CCc1ccccn1"},
+      {"C1(=NC=CC=C1)CC", "CCc1ccccn1"},
+      {"O=c1cccc[nH]1", "O=c1cccc[nH]1"},
+      {"Oc1ccccn1", "O=c1cccc[nH]1"},
+      {"Oc1ncc[nH]1", "O=c1[nH]cc[nH]1"},
+      {"OC(C)=NC", "CNC(C)=O"},
+      {"CNC(C)=O", "CNC(C)=O"},
+      {"S=C(N)N", "NC(N)=S"},
+      {"SC(N)=N", "NC(N)=S"},
+      {"N=c1[nH]ccn(C)1", "Cn1cc[nH]c1=N"},
+      {"CN=c1[nH]cncc1", "CN=c1cc[nH]cn1"},
+      {"Oc1cccc2ccncc12", "Oc1cccc2ccncc12"},
+      {"O=c1cccc2cc[nH]cc1-2", "Oc1cccc2ccncc12"},
+      {"Cc1n[nH]c2ncnn12", "Cc1n[nH]c2ncnn12"},
+      {"Cc1nnc2nc[nH]n12", "Cc1n[nH]c2ncnn12"},
+      {"Oc1ccncc1", "O=c1cc[nH]cc1"},
+      {"Oc1c(cccc3)c3nc2ccncc12", "O=c1c2ccccc2[nH]c2ccncc12"},
+      {"Oc1ncncc1", "O=c1cc[nH]cn1"},
+      {"C2(=C1C(=NC=N1)[NH]C(=N2)N)O", "N=c1[nH]c(=O)c2[nH]cnc2[nH]1"},
+      {"C2(C1=C([NH]C=N1)[NH]C(=N2)N)=O", "N=c1[nH]c(=O)c2[nH]cnc2[nH]1"},
+      {"Oc1n(C)ncc1", "Cn1[nH]ccc1=O"},
+      {"O=c1nc2[nH]ccn2cc1", "O=c1ccn2cc[nH]c2n1"},
+      {"N=c1nc[nH]cc1", "N=c1cc[nH]cn1"},
+      {"N=c(c1)ccn2cc[nH]c12", "N=c1ccn2cc[nH]c2c1"},
+      {"CN=c1nc[nH]cc1", "CN=c1cc[nH]cn1"},
+      {"c1ccc2[nH]c(-c3nc4ccccc4[nH]3)nc2c1",
+       "c1ccc2[nH]c(-c3nc4ccccc4[nH]3)nc2c1"},
+      {"c1ccc2c(c1)NC(=C1N=c3ccccc3=N1)N2",
+       "c1ccc2[nH]c(-c3nc4ccccc4[nH]3)nc2c1"},
+      {"CNc1ccnc2ncnn21", "CN=c1cc[nH]c2ncnn12"},
+      {"CN=c1ccnc2nc[nH]n21", "CN=c1cc[nH]c2ncnn12"},
+      {"Nc1ccc(C=C2C=CC(=O)C=C2)cc1", "Nc1ccc(C=C2C=CC(=O)C=C2)cc1"},
+      {"N=C1C=CC(=Cc2ccc(O)cc2)C=C1", "Nc1ccc(C=C2C=CC(=O)C=C2)cc1"},
+      {"n1ccc2ccc[nH]c12", "c1cnc2[nH]ccc2c1"},
+      {"c1cc(=O)[nH]c2nccn12", "O=c1ccn2cc[nH]c2n1"},
+      {"c1cnc2c[nH]ccc12", "c1cc2cc[nH]c2cn1"},
+      {"n1ccc2c[nH]ccc12", "c1cc2[nH]ccc2cn1"},
+      {"c1cnc2ccc[nH]c12", "c1cnc2cc[nH]c2c1"},
+      {"C1=CC=C(O1)O", "Oc1ccco1"},
+      {"O=C1CC=CO1", "Oc1ccco1"},
+      {"CC=C=O", "CC=C=O"},
+      {"CC#CO", "CC=C=O"},
+      {"C([N+](=O)[O-])C", "CC[N+](=O)[O-]"},
+      {"C(=[N+](O)[O-])C", "CC[N+](=O)[O-]"},
+      {"CC(C)=NO", "CC(C)=NO"},
+      {"CC(C)N=O", "CC(C)=NO"},
+      {"O=Nc1ccc(O)cc1", "O=Nc1ccc(O)cc1"},
+      {"O=C1C=CC(=NO)C=C1", "O=Nc1ccc(O)cc1"},
+      {"C(#N)O", "N=C=O"},
+      {"C(=N)=O", "N=C=O"},
+      {"N=C(N)S(=O)O", "N=C(N)S(=O)O"},
+      {"C#N", "C#N"},
+      {"[C-]#[NH+]", "C#N"},
+      {"[PH](=O)(O)(O)", "O=[PH](O)O"},
+      {"P(O)(O)O", "O=[PH](O)O"}};
+  for (const auto itm : data) {
     std::unique_ptr<ROMol> mol{SmilesToMol(itm.first)};
     TEST_ASSERT(mol);
-    std::unique_ptr<ROMol> res{tc.canonicalize(*mol,&tautcat)};
+    std::unique_ptr<ROMol> res{tc.canonicalize(*mol, &tautcat)};
     TEST_ASSERT(res);
-    std::cerr << itm.first<<" -> "<<MolToSmiles(*res)<<std::endl;
+    // std::cerr << itm.first<<" -> "<<MolToSmiles(*res)<<std::endl;
     TEST_ASSERT(MolToSmiles(*res) == itm.second);
-
-    
   }
-
 }
 
 int main() {
   RDLog::InitLogs();
-#if 0
+#if 1
   testEnumerator();
 #endif
   testCanonicalize();
