@@ -30,6 +30,11 @@ MolStandardize::TautomerEnumerator *EnumeratorFromParams(
   auto cat = new MolStandardize::TautomerCatalog(tautparams);
   return new MolStandardize::TautomerEnumerator(cat);
 }
+
+ROMol *canonicalizeHelper(MolStandardize::TautomerEnumerator &self,
+                          const ROMol &mol) {
+  return self.canonicalize(mol);
+}
 }  // namespace
 
 struct tautomer_wrapper {
@@ -40,7 +45,7 @@ struct tautomer_wrapper {
         "TautomerEnumerator", python::no_init)
         .def("Enumerate", &MolStandardize::TautomerEnumerator::enumerate,
              (python::arg("self"), python::arg("mol")), "")
-        .def("Canonicalize", &MolStandardize::TautomerEnumerator::canonicalize,
+        .def("Canonicalize", &canonicalizeHelper,
              (python::arg("self"), python::arg("mol")), "",
              python::return_value_policy<python::manage_new_object>());
     ;

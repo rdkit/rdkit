@@ -140,7 +140,9 @@ int scoreHeteroHs(const ROMol &mol) {
 unsigned int MAX_TAUTOMERS = 1000;
 
 ROMol *TautomerEnumerator::pickCanonical(
-    const std::vector<ROMOL_SPTR> &tautomers) const {
+    const std::vector<ROMOL_SPTR> &tautomers,
+    int (*scoreFunc)(const ROMol &)) const {
+  PRECONDITION(scoreFunc, "no scoring function");
   if (tautomers.size() == 1) {
     return new ROMol(*tautomers[0]);
   }
@@ -149,7 +151,7 @@ ROMol *TautomerEnumerator::pickCanonical(
   std::string bestSmiles = "";
   ROMOL_SPTR bestMol;
   for (const auto t : tautomers) {
-    auto score = TautomerScoringFunctions::scoreTautomer(*t);
+    auto score = scoreFunc(*t);
     if (score > bestScore) {
       bestScore = score;
       bestSmiles = MolToSmiles(*t);

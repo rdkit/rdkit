@@ -49,15 +49,19 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
   }
 
   std::vector<ROMOL_SPTR> enumerate(const ROMol &mol) const;
-  ROMol *pickCanonical(const std::vector<ROMOL_SPTR> &tautomers) const;
-  ROMol *canonicalize(const ROMol &mol) const {
+  ROMol *pickCanonical(const std::vector<ROMOL_SPTR> &tautomers,
+                       int (*scoreFunc)(const ROMol &) =
+                           TautomerScoringFunctions::scoreTautomer) const;
+  ROMol *canonicalize(const ROMol &mol,
+                      int (*scoreFunc)(const ROMol &) =
+                          TautomerScoringFunctions::scoreTautomer) const {
     auto tautomers = enumerate(mol);
     if (!tautomers.size()) {
       BOOST_LOG(rdWarningLog)
           << "no tautomers found, returning input molecule" << std::endl;
       return new ROMol(mol);
     }
-    return pickCanonical(tautomers);
+    return pickCanonical(tautomers, scoreFunc);
   };
 
  private:

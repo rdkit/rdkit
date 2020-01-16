@@ -900,6 +900,52 @@ void testPickCanonical() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testCustomScoreFunc() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing custom scoring functions"
+      << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  std::string tautomerFile =
+      rdbase + "/Data/MolStandardize/tautomerTransforms.in";
+  auto *tautparams = new TautomerCatalogParams(tautomerFile);
+  unsigned int ntautomers = tautparams->getNumTautomers();
+  TEST_ASSERT(ntautomers == 34);
+
+  TautomerEnumerator te(new TautomerCatalog(tautparams));
+
+  // silly examples just using the scoreRings() function
+  std::vector<std::pair<std::string, std::string>> subsetTautomerData{
+      {"C1(=CCCCC1)O", "O=C1CCCCC1"},
+      {"C1(CCCCC1)=O", "O=C1CCCCC1"},
+      {"C(=C)(O)C1=CC=CC=C1", "C=C(O)c1ccccc1"},
+      {"CC(C)=O", "C=C(C)O"},
+      {"OC(C)=C(C)C", "C=C(O)C(C)C"},
+  };
+  for (const auto itm : subsetTautomerData) {
+    std::unique_ptr<ROMol> mol{SmilesToMol(itm.first)};
+    TEST_ASSERT(mol);
+    {
+      std::unique_ptr<ROMol> res{
+          te.canonicalize(*mol, [](const ROMol &m) -> int {
+            return MolStandardize::TautomerScoringFunctions::scoreRings(m);
+          })};
+      TEST_ASSERT(res);
+      TEST_ASSERT(MolToSmiles(*res) == itm.second);
+    }
+    {
+      auto tauts = te.enumerate(*mol);
+      std::unique_ptr<ROMol> res{
+          te.pickCanonical(tauts, [](const ROMol &m) -> int {
+            return MolStandardize::TautomerScoringFunctions::scoreRings(m);
+          })};
+      TEST_ASSERT(res);
+      TEST_ASSERT(MolToSmiles(*res) == itm.second);
+    }
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -907,5 +953,6 @@ int main() {
 #endif
   testCanonicalize();
   testPickCanonical();
+  testCustomScoreFunc();
   return 0;
 }
