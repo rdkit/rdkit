@@ -1,6 +1,6 @@
 remove_definitions(-DRDKIT_MOLSTANDARDIZE_BUILD)
 rdkit_python_extension(rdMolStandardize rdMolStandardize.cpp Validate.cpp
-	Charge.cpp Fragment.cpp Normalize.cpp Metal.cpp
+	Charge.cpp Fragment.cpp Normalize.cpp Metal.cpp Tautomer.cpp
                        DEST Chem/MolStandardize
                        LINK_LIBRARIES
 LINK_LIBRARIES MolStandardize SmilesParse
