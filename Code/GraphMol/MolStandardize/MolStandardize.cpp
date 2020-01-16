@@ -145,11 +145,9 @@ std::vector<std::string> enumerateTautomerSmiles(
 
   auto *tautparams = new TautomerCatalogParams(params.tautomerTransforms);
   //	unsigned int ntautomers = tautparams->getNumTautomers();
-  TautomerCatalog tautcat(tautparams);
-  TautomerEnumerator te;
+  TautomerEnumerator te(new TautomerCatalog(tautparams));
 
-  std::vector<ROMOL_SPTR> res =
-      te.enumerate(static_cast<ROMol>(*mol), &tautcat);
+  std::vector<ROMOL_SPTR> res = te.enumerate(*mol);
 
   std::vector<std::string> tsmiles;
   for (const auto &r : res) {

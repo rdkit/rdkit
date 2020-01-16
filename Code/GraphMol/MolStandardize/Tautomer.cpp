@@ -139,10 +139,8 @@ int scoreHeteroHs(const ROMol &mol) {
 
 unsigned int MAX_TAUTOMERS = 1000;
 
-ROMol *TautomerCanonicalizer::canonicalize(const ROMol &mol,
-                                           TautomerCatalog *tautcat) {
-  TautomerEnumerator tenum;
-  std::vector<ROMOL_SPTR> tautomers = tenum.enumerate(mol, tautcat);
+ROMol *TautomerEnumerator::pickCanonical(
+    const std::vector<ROMOL_SPTR> &tautomers) const {
   if (tautomers.size() == 1) {
     return new ROMol(*tautomers[0]);
   }
@@ -152,7 +150,6 @@ ROMol *TautomerCanonicalizer::canonicalize(const ROMol &mol,
   ROMOL_SPTR bestMol;
   for (const auto t : tautomers) {
     auto score = TautomerScoringFunctions::scoreTautomer(*t);
-    // std::cerr<<"    "<<MolToSmiles(*t)<<" "<<score<<std::endl;
     if (score > bestScore) {
       bestScore = score;
       bestSmiles = MolToSmiles(*t);
@@ -165,22 +162,14 @@ ROMol *TautomerCanonicalizer::canonicalize(const ROMol &mol,
       }
     }
   }
-
-  if (!bestSmiles.empty()) {
-    return new ROMol(*bestMol);
-  } else {
-    BOOST_LOG(rdWarningLog)
-        << "no tautomers found, returning input molecule" << std::endl;
-    return new ROMol(mol);
-  }
+  return new ROMol(*bestMol);
 }
 
-std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(
-    const ROMol &mol, TautomerCatalog *tautcat) {
+std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(const ROMol &mol) const {
   // std::cout << "**********************************" << std::endl;
 
-  PRECONDITION(tautcat, "");
-  const TautomerCatalogParams *tautparams = tautcat->getCatalogParams();
+  PRECONDITION(dp_catalog, "no catalog!");
+  const TautomerCatalogParams *tautparams = dp_catalog->getCatalogParams();
 
   PRECONDITION(tautparams, "");
   const std::vector<TautomerTransform> &transforms =

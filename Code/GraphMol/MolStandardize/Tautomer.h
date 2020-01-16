@@ -26,25 +26,42 @@ typedef RDCatalog::HierarchCatalog<TautomerCatalogEntry, TautomerCatalogParams,
                                    int>
     TautomerCatalog;
 
-namespace TautomerScoringFunctions{
-  RDKIT_MOLSTANDARDIZE_EXPORT int scoreRings(const ROMol &mol);
-  RDKIT_MOLSTANDARDIZE_EXPORT int scoreSubstructs(const ROMol &mol);
-  RDKIT_MOLSTANDARDIZE_EXPORT int scoreHeteroHs(const ROMol &mol);
+namespace TautomerScoringFunctions {
+RDKIT_MOLSTANDARDIZE_EXPORT int scoreRings(const ROMol &mol);
+RDKIT_MOLSTANDARDIZE_EXPORT int scoreSubstructs(const ROMol &mol);
+RDKIT_MOLSTANDARDIZE_EXPORT int scoreHeteroHs(const ROMol &mol);
 
-  inline int scoreTautomer(const ROMol &mol){
-    return scoreRings(mol)+scoreSubstructs(mol)+scoreHeteroHs(mol);
-  }
+inline int scoreTautomer(const ROMol &mol) {
+  return scoreRings(mol) + scoreSubstructs(mol) + scoreHeteroHs(mol);
 }
-
-
-class RDKIT_MOLSTANDARDIZE_EXPORT TautomerCanonicalizer {
- public:
-  ROMol *canonicalize(const ROMol &mol, TautomerCatalog *tautcat);
-};  // TautomerCanonicalizer class
+}  // namespace TautomerScoringFunctions
 
 class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
  public:
-  std::vector<ROMOL_SPTR> enumerate(const ROMol &mol, TautomerCatalog *tautcat);
+  TautomerEnumerator() = delete;
+  TautomerEnumerator(TautomerCatalog *tautCat) : dp_catalog(tautCat){};
+  TautomerEnumerator(const TautomerEnumerator &other)
+      : dp_catalog(other.dp_catalog){};
+  TautomerEnumerator &operator=(const TautomerEnumerator &other) {
+    if (this == &other) return *this;
+    dp_catalog = other.dp_catalog;
+    return *this;
+  }
+
+  std::vector<ROMOL_SPTR> enumerate(const ROMol &mol) const;
+  ROMol *pickCanonical(const std::vector<ROMOL_SPTR> &tautomers) const;
+  ROMol *canonicalize(const ROMol &mol) const {
+    auto tautomers = enumerate(mol);
+    if (!tautomers.size()) {
+      BOOST_LOG(rdWarningLog)
+          << "no tautomers found, returning input molecule" << std::endl;
+      return new ROMol(mol);
+    }
+    return pickCanonical(tautomers);
+  };
+
+ private:
+  std::shared_ptr<TautomerCatalog> dp_catalog;
 };  // TautomerEnumerator class
 
 }  // namespace MolStandardize
