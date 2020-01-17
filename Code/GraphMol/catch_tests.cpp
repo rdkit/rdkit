@@ -860,3 +860,242 @@ M  END
     CHECK(m->getAtomWithIdx(13)->getNumImplicitHs() == 0);
   }
 }
+
+TEST_CASE("RemoveHsParameters", "[molops]") {
+  SmilesParserParams smilesPs;
+  smilesPs.removeHs = false;
+
+  SECTION("H-H") {
+    std::unique_ptr<RWMol> m{SmilesToMol("[H][H].[H]O[H]", smilesPs)};
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 5);
+    {
+      RWMol cp(*m);
+      MolOps::removeHs(cp);
+      CHECK(cp.getNumAtoms() == 3);
+    }
+    {
+      MolOps::RemoveHsParameters ps;
+      RWMol cp(*m);
+      MolOps::removeHs(cp, ps);
+      CHECK(cp.getNumAtoms() == 3);
+    }
+    {
+      MolOps::RemoveHsParameters ps;
+      ps.removeOnlyHNeighbors = true;
+      RWMol cp(*m);
+      MolOps::removeHs(cp, ps);
+      CHECK(cp.getNumAtoms() == 1);
+    }
+  }
+
+  SECTION("dummies") {
+    std::unique_ptr<RWMol> m{SmilesToMol("[H][*]O[H]", smilesPs)};
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 4);
+    {
+      RWMol cp(*m);
+      MolOps::removeHs(cp);
+      CHECK(cp.getNumAtoms() == 3);
+    }
+    {
+      MolOps::RemoveHsParameters ps;
+      RWMol cp(*m);
+      MolOps::removeHs(cp, ps);
+      CHECK(cp.getNumAtoms() == 3);
+    }
+    {
+      MolOps::RemoveHsParameters ps;
+      ps.removeDummyNeighbors = true;
+      RWMol cp(*m);
+      MolOps::removeHs(cp, ps);
+      CHECK(cp.getNumAtoms() == 2);
+    }
+  }
+
+  SECTION("chiralHs") {
+    std::unique_ptr<RWMol> m{SmilesToMol("[C@]12([H])CCC1CO2", smilesPs)};
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 7);
+    // artificial wedging since we don't have a conformer
+    m->getBondBetweenAtoms(0, 1)->setBondDir(Bond::BEGINWEDGE);
+
+    {
+      RWMol cp(*m);
+      MolOps::removeHs(cp);
+      CHECK(cp.getNumAtoms() == 6);
+    }
+    {
+      MolOps::RemoveHsParameters ps;
+      RWMol cp(*m);
+      MolOps::removeHs(cp, ps);
+      CHECK(cp.getNumAtoms() == 6);
+    }
+    {
+      MolOps::RemoveHsParameters ps;
+      ps.removeWithWedgedBond = false;
+      RWMol cp(*m);
+      MolOps::removeHs(cp, ps);
+      CHECK(cp.getNumAtoms() == 7);
+    }
+  }
+
+  SECTION("degree zero") {
+    std::unique_ptr<RWMol> m{SmilesToMol("[F-].[H+]", smilesPs)};
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 2);
+    {
+      RWMol cp(*m);
+      MolOps::removeHs(cp);
+      CHECK(cp.getNumAtoms() == 2);
+    }
+    {
+      MolOps::RemoveHsParameters ps;
+      RWMol cp(*m);
+      MolOps::removeHs(cp, ps);
+      CHECK(cp.getNumAtoms() == 2);
+    }
+    {
+      MolOps::RemoveHsParameters ps;
+      ps.removeDegreeZero = true;
+      RWMol cp(*m);
+      MolOps::removeHs(cp, ps);
+      CHECK(cp.getNumAtoms() == 1);
+    }
+  }
+
+  SECTION("isotopes") {
+    std::unique_ptr<RWMol> m{SmilesToMol("F[2H]", smilesPs)};
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 2);
+    {
+      RWMol cp(*m);
+      MolOps::removeHs(cp);
+      CHECK(cp.getNumAtoms() == 2);
+    }
+    {
+      MolOps::RemoveHsParameters ps;
+      RWMol cp(*m);
+      MolOps::removeHs(cp, ps);
+      CHECK(cp.getNumAtoms() == 2);
+    }
+    {
+      MolOps::RemoveHsParameters ps;
+      ps.removeIsotopes = true;
+      RWMol cp(*m);
+      MolOps::removeHs(cp, ps);
+      CHECK(cp.getNumAtoms() == 1);
+    }
+  }
+
+  SECTION("defining bond stereo") {
+    std::unique_ptr<RWMol> m{SmilesToMol("F/C=N/[H]", smilesPs)};
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 4);
+    {
+      RWMol cp(*m);
+      MolOps::removeHs(cp);
+      CHECK(cp.getNumAtoms() == 4);
+    }
+    {
+      MolOps::RemoveHsParameters ps;
+      RWMol cp(*m);
+      MolOps::removeHs(cp, ps);
+      CHECK(cp.getNumAtoms() == 4);
+    }
+    {
+      MolOps::RemoveHsParameters ps;
+      ps.removeDefiningBondStereo = true;
+      RWMol cp(*m);
+      MolOps::removeHs(cp, ps);
+      CHECK(cp.getNumAtoms() == 3);
+    }
+  }
+  SECTION("Query atoms") {
+    std::unique_ptr<RWMol> m{SmartsToMol("O[#1]")};
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 2);
+    {
+      RWMol cp(*m);
+      MolOps::removeHs(cp);
+      CHECK(cp.getNumAtoms() == 2);
+    }
+    {
+      MolOps::RemoveHsParameters ps;
+      RWMol cp(*m);
+      MolOps::removeHs(cp, ps);
+      CHECK(cp.getNumAtoms() == 2);
+    }
+    {
+      MolOps::RemoveHsParameters ps;
+      ps.removeWithQuery = true;
+      RWMol cp(*m);
+      MolOps::removeHs(cp, ps);
+      CHECK(cp.getNumAtoms() == 1);
+    }
+  }
+  SECTION("higher degree") {
+    // this is a silly example
+    std::unique_ptr<RWMol> m{SmilesToMol("F[H-]F", smilesPs)};
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 3);
+    {
+      RWMol cp(*m);
+      MolOps::removeHs(cp);
+      CHECK(cp.getNumAtoms() == 3);
+    }
+    {
+      MolOps::RemoveHsParameters ps;
+      RWMol cp(*m);
+      MolOps::removeHs(cp, ps);
+      CHECK(cp.getNumAtoms() == 3);
+    }
+    {
+      MolOps::RemoveHsParameters ps;
+      ps.removeHigherDegrees = true;
+      RWMol cp(*m);
+      MolOps::removeHs(cp, ps);
+      CHECK(cp.getNumAtoms() == 2);
+    }
+  }
+  SECTION("mapped Hs") {
+    std::unique_ptr<RWMol> m{SmilesToMol("[H:1]O[H]", smilesPs)};
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 3);
+    {
+      RWMol cp(*m);
+      MolOps::removeHs(cp);
+      CHECK(cp.getNumAtoms() == 1);
+    }
+    {
+      MolOps::RemoveHsParameters ps;
+      ps.removeMapped = false;
+      RWMol cp(*m);
+      MolOps::removeHs(cp, ps);
+      CHECK(cp.getNumAtoms() == 2);
+    }
+  }
+  SECTION("allHs") {
+    std::unique_ptr<RWMol> m{SmilesToMol(
+        "[C@]12([H])CCC1CO2.[H+].F[H-]F.[H][H].[H]*.F/C=C/[H]", smilesPs)};
+    REQUIRE(m);
+    // artificial wedging since we don't have a conformer
+    m->getBondBetweenAtoms(0, 1)->setBondDir(Bond::BEGINWEDGE);
+    RWMol cp(*m);
+    MolOps::removeAllHs(cp);
+    for (auto atom : cp.atoms()) {
+      CHECK(atom->getAtomicNum() != 1);
+    }
+  }
+  SECTION("allHs2") {
+    std::unique_ptr<ROMol> m{SmilesToMol(
+        "[C@]12([H])CCC1CO2.[H+].F[H-]F.[H][H].[H]*.F/C=C/[H]", smilesPs)};
+    REQUIRE(m);
+    // artificial wedging since we don't have a conformer
+    m->getBondBetweenAtoms(0, 1)->setBondDir(Bond::BEGINWEDGE);
+    std::unique_ptr<ROMol> cp{MolOps::removeAllHs(*m)};
+    for (auto atom : cp->atoms()) {
+      CHECK(atom->getAtomicNum() != 1);
+    }
+  }
+}
