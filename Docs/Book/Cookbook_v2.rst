@@ -463,7 +463,8 @@ Create Fragments
 
    # Finally, you can manually cut bonds using Chem.RWMol.RemoveBonds:
    rwmol = Chem.RWMol(mol)
-   for b_idx in sorted([0, 2, 4], reverse=True):
+   for b_idx in sorted([0, 2, 4], reverse=True): # reverse because when a bond or atom is deleted, 
+   # the bond or atom indices are remapped. If your bonds have a higher index first, bonds with lower indices will not be remapped.
        b = rwmol.GetBondWithIdx(b_idx)
        rwmol.RemoveBond(b.GetBeginAtomIdx(), b.GetEndAtomIdx())
    # And then call Chem.GetMolFrags() to get sanitized fragments where empty valences were filled with implicit hydrogens:
