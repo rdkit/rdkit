@@ -1,5 +1,5 @@
-RDKit Cookbook v2
-%%%%%%%%%%%%%%%%%%%%
+RDKit Cookbook
+%%%%%%%%%%%%%%
 
 .. sectionauthor:: Vincent F. Scalfani <vfscalfani@ua.edu>
 
