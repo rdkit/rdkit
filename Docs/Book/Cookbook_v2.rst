@@ -9,19 +9,19 @@ Introduction
 What is this?
 ===============
 
-This document provides example recipes of how to carry out particular tasks using the RDKit functionality
-from Python. The contents have been contributed by the RDKit community, tested with the latest 
-RDKit release, and then compiled into this document. Note that this document is the second 
-iteration of the :doc:`Cookbook` (i.e., v2). The old Cookbook written in Markdown is no longer 
-maintained, but is available in prior RDKit releases for reference. The RDKit Cookbook v2 
-is written in reStructuredText, which supports Sphinx doctests, allowing for easier 
-validation and maintenance of the RDKit Cookbook v2 code examples, where appropriate. 
+This document provides example recipes of how to carry out particular tasks using the RDKit 
+functionality from Python. The contents have been contributed by the RDKit community, 
+tested with the latest RDKit release, and then compiled into this document. Note that this 
+document is the second iteration of the :doc:`Cookbook` (i.e., v2). The old Cookbook written 
+in Markdown is no longer maintained, but is available in prior RDKit releases for reference. 
+The RDKit Cookbook v2 is written in reStructuredText, which supports Sphinx doctests, 
+allowing for easier validation and maintenance of the RDKit Cookbook v2 code examples, where appropriate. 
 
 What gets included?
 =====================
 
 The examples included come from various online sources such as blogs, shared gists, and 
-the RDKit mailing lists. Generally, only minimal editing is added to the examples for 
+the RDKit mailing lists. Generally, only minimal editing is added to the example code/notes for 
 formatting consistency and to incorporate the doctests. We have made a conscious effort 
 to appropriately credit the original source and authors. One of the first priorities of this
 document is to compile useful **short** examples shared on the RDKit mailing lists, as 
@@ -29,14 +29,19 @@ these can be difficult to discover. It will take some time, but we hope to expan
 document into 100s of examples. As the document grows, it may make sense to prioritize 
 examples included in the RDKit Cookbook v2 based on community demand.
 
-Feedback
-=========
+Feedback and Contributing
+==========================
 
 If you have suggestions for how to improve the Cookbook v2 and/or examples you would like 
-included, please contribute directly in the source document (the .rst file). The Index ID# 
-is simply a way to track Cookbook entries and images. New additions are sequentially index numbered. 
+included, please contribute directly in the source document (the .rst file).
 Alternatively, you can also send Cookbook revisions and addition requests to the mailing list:
 <rdkit-discuss@lists.sourceforge.net> (you will need to subscribe first).
+
+.. note::
+
+   The Index ID# (e.g., **RDKitCB_##**) is simply a way to track Cookbook entries and image file names. 
+   New Cookbook additions are sequentially index numbered, regardless of where they are placed 
+   within the document. As such, for reference, the next Cookbook entry is **RDKitCB_20**.
 
 Drawing Molecules (in a Jupyter Environment)
 **********************************************
@@ -62,7 +67,8 @@ Include an Atom Index
    def mol_with_atom_index(mol):
        atoms = mol.GetNumAtoms()
        for idx in range(atoms):
-           mol.GetAtomWithIdx(idx).SetProp('molAtomMapNumber',str(mol.GetAtomWithIdx(idx).GetIdx()))
+           atom = mol.GetAtomWithIdx(idx)
+           atom.SetProp('molAtomMapNumber', str(idx))  
        return mol
 
 .. testcode::
@@ -127,7 +133,8 @@ Highlight a Substructure in a Molecule
 .. testcode::
 
    m = Chem.MolFromSmiles('c1cc(C(=O)O)c(OC(=O)C)cc1')
-   print(m.GetSubstructMatches(Chem.MolFromSmarts('C(=O)O')))
+   substructure = Chem.MolFromSmarts('C(=O)O')
+   print(m.GetSubstructMatches(substructure))
 
 .. testoutput::
    
@@ -160,7 +167,7 @@ Without Implicit Hydrogens
 .. testcode::
 
    for atom in m.GetAtoms():
-       atom.SetProp("atomLabel",atom.GetSymbol())
+       atom.SetProp("atomLabel", atom.GetSymbol())
    m
 
 .. image:: images/RDKitCB_17_im1.png
@@ -184,12 +191,11 @@ Count Ring Systems
 
 .. testcode::
 
-   def GetRingSystems(mol,includeSpiro=False):
+   def GetRingSystems(mol, includeSpiro=False):
         ri = mol.GetRingInfo()
         systems = []
         for ring in ri.AtomRings():
             ringAts = set(ring)
-            found = False
             nSystems = []
             for system in systems:
                 nInCommon = len(ringAts.intersection(system)) 
@@ -214,7 +220,8 @@ Count Ring Systems
    def mol_with_atom_index(mol):
         atoms = mol.GetNumAtoms()
         for idx in range(atoms):
-            mol.GetAtomWithIdx(idx).SetProp('molAtomMapNumber',str(mol.GetAtomWithIdx(idx).GetIdx()))
+            atom = mol.GetAtomWithIdx(idx)
+            atom.SetProp('molAtomMapNumber', str(idx))
         return mol
    mol_with_atom_index(mol)
 
@@ -259,7 +266,7 @@ Identify Aromatic Rings
 
    # To detect aromatic rings, I would loop over the bonds in each ring and
    # flag the ring as aromatic if all bonds are aromatic:
-   def isRingAromatic(mol,bondRing):
+   def isRingAromatic(mol, bondRing):
            for id in bondRing:
                if not mol.GetBondWithIdx(id).GetIsAromatic():
                    return False
@@ -267,7 +274,7 @@ Identify Aromatic Rings
 
 .. testcode::
 
-   print(isRingAromatic(m,ri.BondRings()[0]))
+   print(isRingAromatic(m, ri.BondRings()[0]))
 
 .. testoutput::
 
@@ -275,7 +282,7 @@ Identify Aromatic Rings
 
 .. testcode::
 
-   print(isRingAromatic(m,ri.BondRings()[1]))
+   print(isRingAromatic(m, ri.BondRings()[1]))
 
 .. testoutput::
 
@@ -292,8 +299,8 @@ Identify Aromatic Atoms (e.g., carbon)
 .. testcode::
 
    from rdkit import Chem
-   mol  =  Chem.MolFromSmiles("c1ccccc1C=CCC")
-   aromatic_carbon  =  Chem.MolFromSmarts("c")
+   mol = Chem.MolFromSmiles("c1ccccc1C=CCC")
+   aromatic_carbon = Chem.MolFromSmarts("c")
    print(mol.GetSubstructMatches(aromatic_carbon))
 
 .. testoutput::
@@ -302,7 +309,7 @@ Identify Aromatic Atoms (e.g., carbon)
 
 .. testcode::
 
-   olefinic_carbon  =  Chem.MolFromSmarts("[C^2]")
+   olefinic_carbon = Chem.MolFromSmarts("[C^2]")
    print(mol.GetSubstructMatches(olefinic_carbon))
 
 .. testoutput::
@@ -407,7 +414,6 @@ Create Fragments
    # I have put explicit bonds in the SMILES definition to facilitate comprehension:
    mol = Chem.MolFromSmiles("O-C-C-C-C-N")
    mol1 = Chem.Mol(mol)
-   mol2 = Chem.Mol(mol)
    mol1
 
 .. image:: images/RDKitCB_7_im0.png
@@ -482,8 +488,8 @@ Functional Group with SMARTS queries
    from rdkit import Chem
    from rdkit.Chem.Draw import IPythonConsole
    sucrose = "C([C@@H]1[C@H]([C@@H]([C@H]([C@H](O1)O[C@]2([C@H]([C@@H]([C@H](O2)CO)O)O)CO)O)O)O)O"
-   sucrose_mol  =  Chem.MolFromSmiles(sucrose)
-   primary_alcohol  =  Chem.MolFromSmarts("[CH2][OH1]")
+   sucrose_mol = Chem.MolFromSmiles(sucrose)
+   primary_alcohol = Chem.MolFromSmarts("[CH2][OH1]")
    print(sucrose_mol.GetSubstructMatches(primary_alcohol))
 
 .. testoutput::
@@ -492,7 +498,7 @@ Functional Group with SMARTS queries
 
 .. testcode::
 
-   secondary_alcohol  =  Chem.MolFromSmarts("[CH1][OH1]")
+   secondary_alcohol = Chem.MolFromSmarts("[CH1][OH1]")
    print(sucrose_mol.GetSubstructMatches(secondary_alcohol))
 
 .. testoutput::
@@ -521,7 +527,7 @@ Macrocycles with SMARTS queries
 .. testcode::
 
    # Define SMARTS pattern with ring size > 12
-   macro  =  Chem.MolFromSmarts("[r{12-}]")
+   macro = Chem.MolFromSmarts("[r{12-}]")
    print(erythromycin.GetSubstructMatches(macro))
 
 .. testoutput::
@@ -588,7 +594,6 @@ Returning Substructure Matches as SMILES
 
    # If this is important, then you need to pass the correct bond indices to MolFragmentToSmiles(). 
    # This can be done by using the bonds in the query graph to get the bond indices in the molecule graph. 
-   # I believe the following is correct:
    def get_match_bond_indices(query, mol, match_atom_indices):
        bond_indices = []
        for query_bond in query.GetBonds():
@@ -660,6 +665,7 @@ Isomeric SMILES without isotopes
    def MolWithoutIsotopesToSmiles(mol):
       atom_data = [(atom, atom.GetIsotope()) for atom in mol.GetAtoms()]
       for atom, isotope in atom_data:
+      # restore original isotope values
           if isotope:
               atom.SetIsotope(0)
       smiles = Chem.MolToSmiles(mol)
@@ -772,7 +778,7 @@ Capturing Error Messages with Chem.DetectChemistryProblems
 .. testcode::
 
    from rdkit import Chem
-   m = Chem.MolFromSmiles('CN(C)(C)C',sanitize=False)
+   m = Chem.MolFromSmiles('CN(C)(C)C', sanitize=False)
    problems = Chem.DetectChemistryProblems(m)
    print(len(problems))
 
@@ -828,7 +834,7 @@ Explicit Valence and Number of Hydrogens
 
 Most of the time (exception is explained below), explicit refers to atoms that are in the graph and 
 implicit refers to atoms that are not in the graph (i.e., Hydrogens). So given that the ring is aromatic (e.g.,in pyrrole), 
-the explicit valence of each of the atoms (ignores the Hs that are not present in the graph) in pyrrole is 3. If you want the Hydrogen count,
+the explicit valence of each of the atoms (ignoring the Hs that are not present in the graph) in pyrrole is 3. If you want the Hydrogen count,
 use GetTotalNumHs(); the total number of Hs for each atom is one:
 
 .. testcode::
@@ -909,8 +915,9 @@ Wiener Index
    def wiener_index(m):
        res = 0
        amat = Chem.GetDistanceMatrix(m)
-       for i in range(m.GetNumAtoms()):
-           for j in range(i+1,m.GetNumAtoms()):
+       num_atoms = m.GetNumAtoms()
+       for i in range(num_atoms):
+           for j in range(i+1,num_atoms):
                res += amat[i][j]
        return res
 
@@ -937,7 +944,7 @@ Organometallics with Dative Bonds
 ==================================
 
 | **Author:** Greg Landrum
-| **Source:** `<https://sourceforge.net/p/rdkit/mailman/message/36727044/>`_ and `<https://gist.github.com/greglandrum/6cd7aadcdedb1ebcafa9537e8a47e3a4>_
+| **Source:** `<https://sourceforge.net/p/rdkit/mailman/message/36727044/>`_ and `<https://gist.github.com/greglandrum/6cd7aadcdedb1ebcafa9537e8a47e3a4>`_
 | **Index ID#:** RDKitCB_19
 | **Summary:** Process organometallic SMILES by detecting single bonds between metals and replacing with dative bonds.
 
@@ -951,7 +958,7 @@ Organometallics with Dative Bonds
     def is_transition_metal(at):
         n = at.GetAtomicNum()
         return (n>=22 and n<=29) or (n>=40 and n<=47) or (n>=72 and n<=79)
-    def set_dative_bonds(mol,fromAtoms=(7,8)):
+    def set_dative_bonds(mol, fromAtoms=(7,8)):
         """ convert some bonds to dative 
     
         Replaces some single bonds between metals and atoms with atomic numbers in fomAtoms
@@ -975,7 +982,7 @@ Organometallics with Dative Bonds
 
 .. testcode::
 
-   m = Chem.MolFromSmiles('CN(C)(C)[Pt]',sanitize=False)
+   m = Chem.MolFromSmiles('CN(C)(C)[Pt]', sanitize=False)
    m2 = set_dative_bonds(m)
 
 .. testcode::
