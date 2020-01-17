@@ -60,15 +60,12 @@ Include an Atom Index
    from rdkit.Chem.Draw import IPythonConsole
    from rdkit.Chem import Draw
    IPythonConsole.ipython_useSVG=False
-   import rdkit
 
 .. testcode::
   
    def mol_with_atom_index(mol):
-       atoms = mol.GetNumAtoms()
-       for idx in range(atoms):
-           atom = mol.GetAtomWithIdx(idx)
-           atom.SetProp('molAtomMapNumber', str(idx))  
+       for atom in mol.GetAtoms():
+           atom.SetAtomMapNum(atom.GetIdx())
        return mol
 
 .. testcode::
@@ -100,7 +97,6 @@ Black and White Molecules
    from rdkit import Chem
    from rdkit.Chem.Draw import IPythonConsole
    from rdkit.Chem import Draw
-   import rdkit
 
 .. testcode::
 
@@ -122,13 +118,12 @@ Highlight a Substructure in a Molecule
 | **Author:** Greg Landrum
 | **Source:** `<https://gist.github.com/greglandrum/5d45b56afe75603b955103cdd0d8e038>`_
 | **Index ID#:** RDKitCB_2
-| **Summary:** Draw a molecule with a substructure highlight.
+| **Summary:** Draw a molecule with a substructure highlight in Jupyter.
 
 .. testcode::
 
    from rdkit import Chem
    from rdkit.Chem.Draw import IPythonConsole
-   import rdkit
 
 .. testcode::
 
@@ -145,7 +140,15 @@ Highlight a Substructure in a Molecule
    m
 
 .. image:: images/RDKitCB_2_im0.png
-   
+
+.. testcode::
+
+   # you can also manually set the atoms that should be highlighted:
+   m.__sssAtoms = [0,1,2,6,11,12]
+   m
+
+.. image:: images/RDKitCB_2_im1.png
+
 
 Without Implicit Hydrogens
 ===========================
@@ -309,6 +312,8 @@ Identify Aromatic Atoms (e.g., carbon)
 
 .. testcode::
 
+   # The RDKit includes a SMARTS extension that allows hybridization queries,
+   # here we query for SP2 aliphatic carbons:
    olefinic_carbon = Chem.MolFromSmarts("[C^2]")
    print(mol.GetSubstructMatches(olefinic_carbon))
 
@@ -359,8 +364,8 @@ Identifying Chiral Centers
 
 .. testcode::
    
-   # This also works with isomeric SMILES
-   print(Chem.MolToSmiles(mol1, isomericSmiles = True))
+   # This also shows up in the SMILES
+   print(Chem.MolToSmiles(mol1))
 
 .. testoutput::
 
@@ -528,6 +533,7 @@ Macrocycles with SMARTS queries
 .. testcode::
 
    # Define SMARTS pattern with ring size > 12
+   # This is an RDKit SMARTS extension
    macro = Chem.MolFromSmarts("[r{12-}]")
    print(erythromycin.GetSubstructMatches(macro))
 
@@ -743,6 +749,7 @@ Reversing Reactions
 
 .. image:: images/RDKitCB_6_im2.png
 
+*N.B.* This approach isn't perfect and won't work for every reaction. Reactions that include extensive query information in the original reactants are very likely to be problematic.
 
 Error Messages
 ****************
@@ -985,16 +992,29 @@ Organometallics with Dative Bonds
 
    m = Chem.MolFromSmiles('CN(C)(C)[Pt]', sanitize=False)
    m2 = set_dative_bonds(m)
+   m2
+
+.. image:: images/RDKitCB_19_im0.png
 
 .. testcode::
 
-   # Note that the dative bond is not currently displayed in the molecule drawing,
-   # but we can check the bond between nitrogen and platinum
+   # we can check the bond between nitrogen and platinum
    print(m2.GetBondBetweenAtoms(1,4).GetBondType())
 
 .. testoutput::
 
    DATIVE
+
+.. testcode::
+
+   # It also shows up in the output SMILES
+   # This is an RDKit extension to SMILES
+   print(Chem.MolToSmiles(m2))
+
+.. testoutput::
+
+   CN(C)(C)->[Pt]
+
 
 .. rubric:: References
 
