@@ -11,11 +11,9 @@ What is this?
 
 This document provides example recipes of how to carry out particular tasks using the RDKit 
 functionality from Python. The contents have been contributed by the RDKit community, 
-tested with the latest RDKit release, and then compiled into this document. Note that this 
-document is the second iteration of the :doc:`Cookbook` (i.e., v2). The old Cookbook written 
-in Markdown is no longer maintained, but is available in prior RDKit releases for reference. 
-The RDKit Cookbook v2 is written in reStructuredText, which supports Sphinx doctests, 
-allowing for easier validation and maintenance of the RDKit Cookbook v2 code examples, where appropriate. 
+tested with the latest RDKit release, and then compiled into this document. 
+The RDKit Cookbook is written in reStructuredText, which supports Sphinx doctests, 
+allowing for easier validation and maintenance of the RDKit Cookbook code examples, where appropriate. 
 
 What gets included?
 =====================
@@ -27,12 +25,12 @@ to appropriately credit the original source and authors. One of the first priori
 document is to compile useful **short** examples shared on the RDKit mailing lists, as 
 these can be difficult to discover. It will take some time, but we hope to expand this 
 document into 100s of examples. As the document grows, it may make sense to prioritize 
-examples included in the RDKit Cookbook v2 based on community demand.
+examples included in the RDKit Cookbook based on community demand.
 
 Feedback and Contributing
 ==========================
 
-If you have suggestions for how to improve the Cookbook v2 and/or examples you would like 
+If you have suggestions for how to improve the Cookbook and/or examples you would like 
 included, please contribute directly in the source document (the .rst file).
 Alternatively, you can also send Cookbook revisions and addition requests to the mailing list:
 <rdkit-discuss@lists.sourceforge.net> (you will need to subscribe first).
@@ -221,11 +219,9 @@ Count Ring Systems
 
    # Draw molecule with atom index (see RDKitCB_0)
    def mol_with_atom_index(mol):
-        atoms = mol.GetNumAtoms()
-        for idx in range(atoms):
-            atom = mol.GetAtomWithIdx(idx)
-            atom.SetProp('molAtomMapNumber', str(idx))
-        return mol
+       for atom in mol.GetAtoms():
+           atom.SetAtomMapNum(atom.GetIdx())
+       return mol
    mol_with_atom_index(mol)
 
 .. image:: images/RDKitCB_3_im0.png
