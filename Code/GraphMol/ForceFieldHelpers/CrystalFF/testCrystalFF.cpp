@@ -143,9 +143,67 @@ void testTorsionPrefs() {
   delete mol;
 }
 
+void testTorsionPrefsSmallRings() {
+  ROMol *mol;
+  ForceFields::CrystalFF::CrystalFFDetails details;
+  mol = SmilesToMol("C1COCC1");
+  TEST_ASSERT(mol);
+
+  //small ring torsion turned off
+  ForceFields::CrystalFF::getExperimentalTorsions(*mol, details, true, false, 1,
+                                                  false, false);
+  TEST_ASSERT(details.expTorsionAtoms.size() == 0);
+  TEST_ASSERT(details.expTorsionAngles.size() == 0);
+
+  //small ring torsion turned on
+  ForceFields::CrystalFF::getExperimentalTorsions(*mol, details, true, false, 1,
+                                                  false, true);
+  TEST_ASSERT(details.expTorsionAtoms.size() > 0);
+  TEST_ASSERT(details.expTorsionAngles.size() > 0);
+  delete mol;
+}
+
+void testTorsionPrefsMacrocycles() {
+  ROMol *mol;
+  ForceFields::CrystalFF::CrystalFFDetails details;
+  mol = SmilesToMol("C1COCCCCCCC1");
+  TEST_ASSERT(mol);
+
+  // macrocycle ring torsion turned off
+  ForceFields::CrystalFF::getExperimentalTorsions(*mol, details, true, false, 1,
+                                                  false, false, false);
+  TEST_ASSERT(details.expTorsionAtoms.size() == 0);
+  TEST_ASSERT(details.expTorsionAngles.size() == 0);
+
+  // macrocycle ring torsion turned on
+  ForceFields::CrystalFF::getExperimentalTorsions(*mol, details, true, false, 1,
+                                                  false, false, true);
+  TEST_ASSERT(details.expTorsionAtoms.size() > 0);
+  TEST_ASSERT(details.expTorsionAngles.size() > 0);
+  delete mol;
+}
+
 int main() {
+  RDLog::InitLogs();
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "Testing Crystal ForceField\n";
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t SMARTS parsing\n";
   testTorsionAngleM6();
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t Seeing if non-ring torsions are applied\n";
   testTorsionPrefs();
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t Seeing if small ring torsions are applied\n";
+  testTorsionPrefsSmallRings();
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t Seeing if macrocycle ring torsions are applied\n";
+  testTorsionPrefsMacrocycles();
 
   return 0;
 }

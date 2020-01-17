@@ -470,8 +470,14 @@ bool minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
   // create the force field
   std::unique_ptr<ForceFields::ForceField> field;
   if (embedParams.useBasicKnowledge) {  // ETKDG or KDG
-    field.reset(DistGeom::construct3DForceField(*eargs.mmat, positions3D,
+      if (embedParams.CPCI != nullptr) {
+        field.reset(DistGeom::construct3DForceField(*eargs.mmat, positions3D,
+                                                *eargs.etkdgDetails, *embedParams.CPCI));
+      }
+      else{
+        field.reset(DistGeom::construct3DForceField(*eargs.mmat, positions3D,
                                                 *eargs.etkdgDetails));
+      }
   } else {  // plain ETDG
     field.reset(DistGeom::constructPlain3DForceField(*eargs.mmat, positions3D,
                                                      *eargs.etkdgDetails));
@@ -746,7 +752,8 @@ void initETKDG(ROMol *mol, const EmbedParameters &params,
   if (params.useExpTorsionAnglePrefs || params.useBasicKnowledge) {
     ForceFields::CrystalFF::getExperimentalTorsions(
         *mol, etkdgDetails, params.useExpTorsionAnglePrefs,
-        params.useBasicKnowledge, params.ETversion, params.verbose);
+        params.useBasicKnowledge, params.ETversion, params.verbose, 
+	params.useSmallRingTorsions, params.useMacrocycleTorsions);
     etkdgDetails.atomNums.resize(nAtoms);
     for (unsigned int i = 0; i < nAtoms; ++i) {
       etkdgDetails.atomNums[i] = mol->getAtomWithIdx(i)->getAtomicNum();
@@ -977,7 +984,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
            "does not work with molecules that have multiple fragments. The "
            "boundsMat will be ignored."
         << std::endl;
-    coordMap = nullptr;
+    coordMap = nullptr; //FIXME this is a bug!!!!!!!!!!!!!!!!!!
   }
 
   // we will generate conformations for each fragment in the molecule

@@ -32,7 +32,8 @@ struct CrystalFFDetails {
 RDKIT_FORCEFIELDHELPERS_EXPORT void getExperimentalTorsions(
     const RDKit::ROMol &mol, CrystalFFDetails &details,
     bool useExpTorsions = false, bool useBasicKnowledge = false,
-    unsigned int version = 1, bool verbose = false);
+    unsigned int version = 1, bool verbose = false, 
+    bool useSmallRingTorsions = false, bool useMacrocycleTorsions = false);
 }  // namespace CrystalFF
 }  // namespace ForceFields
 

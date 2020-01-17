@@ -44,6 +44,8 @@ using namespace RDKit;
  */
 #include "torsionPreferences_v1.in"
 #include "torsionPreferences_v2.in"
+#include "torsionPreferences_smallrings.in"
+#include "torsionPreferences_macrocycles.in"
 
 //! A structure used to the experimental torsion patterns
 struct ExpTorsionAngle {
@@ -59,7 +61,7 @@ class ExpTorsionAngleCollection {
  public:
   typedef std::vector<ExpTorsionAngle> ParamsVect;
   static const ExpTorsionAngleCollection *getParams(
-      unsigned int version, const std::string &paramData = "");
+      unsigned int version, bool useSmallRingTorsions, bool useMacrocycleTorsions, const std::string &paramData = "");
   ParamsVect::const_iterator begin() const { return d_params.begin(); };
   ParamsVect::const_iterator end() const { return d_params.end(); };
   ExpTorsionAngleCollection(const std::string &paramData);
@@ -74,7 +76,7 @@ typedef boost::flyweight<
     param_flyweight;
 
 const ExpTorsionAngleCollection *ExpTorsionAngleCollection::getParams(
-    unsigned int version, const std::string &paramData) {
+    unsigned int version, bool useSmallRingTorsions, bool useMacrocycleTorsions, const std::string &paramData) {
   std::string params;
   if (paramData == "") {
     switch (version) {
@@ -90,6 +92,10 @@ const ExpTorsionAngleCollection *ExpTorsionAngleCollection::getParams(
   } else {
     params = paramData;
   }
+  if (useSmallRingTorsions)
+	  params += torsionPreferencesSmallRings;
+  if (useMacrocycleTorsions)
+	  params += torsionPreferencesMacrocycles;
   const ExpTorsionAngleCollection *res = &(param_flyweight(params).get());
   return res;
 }
@@ -136,7 +142,8 @@ ExpTorsionAngleCollection::ExpTorsionAngleCollection(
 
 void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
                              bool useExpTorsions, bool useBasicKnowledge,
-                             unsigned int version, bool verbose) {
+                             unsigned int version, bool verbose, 
+			     bool useSmallRingTorsions,bool useMacrocycleTorsions) {
   unsigned int nb = mol.getNumBonds();
   unsigned int na = mol.getNumAtoms();
   if (!na) {
@@ -156,7 +163,7 @@ void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
   if (useExpTorsions) {
     // we set the torsion angles with experimental data
     const ExpTorsionAngleCollection *params =
-        ExpTorsionAngleCollection::getParams(version);
+        ExpTorsionAngleCollection::getParams(version, useSmallRingTorsions, useMacrocycleTorsions);
 
     // loop over patterns
     for (const auto &param : *params) {

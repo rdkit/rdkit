@@ -148,6 +148,30 @@ DGeomHelpers::EmbedParameters *getETDG() {
   return new DGeomHelpers::EmbedParameters(DGeomHelpers::ETDG);
 }
 
+void setCPCI(DGeomHelpers::EmbedParameters *self,
+                     python::dict &CPCIdict) {
+  //CPCI has the atom pair tuple as key and charge product as value
+  std::map<std::pair<unsigned int, unsigned int>, double> *CPCI;
+  CPCI = new std::map<std::pair<unsigned int, unsigned int>, double>;
+
+  python::list ks = CPCIdict.keys();
+  unsigned int nKeys = python::extract<unsigned int>(ks.attr("__len__")());
+
+  for (unsigned int i = 0; i < nKeys; ++i) {
+    python::tuple id = python::extract<python::tuple>(ks[i]);
+    unsigned int a = python::extract<unsigned int>(id[0]);
+    unsigned int b = python::extract<unsigned int>(id[1]);
+    (*CPCI)[std::make_pair(a, b)] = python::extract<double>(CPCIdict[id]);
+  }
+  //std::map<std::pair<unsigned int, unsigned int>,double> *CPCI_Ptr = nullptr;
+  //if (nKeys){
+  //  CPCI_Ptr =  &CPCI;
+  //}
+  //self->CPCI =  CPCI_Ptr;
+  self->CPCI = CPCI;
+
+}
+
 void setBoundsMatrix(DGeomHelpers::EmbedParameters *self,
                      python::object boundsMatArg) {
   PyObject *boundsMatObj = boundsMatArg.ptr();
@@ -185,7 +209,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
   // RegisterListConverter<RDKit::Atom*>();
 
   std::string docString =
-      "Use distance geometry to obtain initial \n\
+      "Use distance geometry to obtain intial \n\
  coordinates for a molecule\n\n\
  \n\
  ARGUMENTS:\n\n\
@@ -356,6 +380,10 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                      "version of the experimental torsion-angle preferences")
       .def_readwrite("verbose", &RDKit::DGeomHelpers::EmbedParameters::verbose,
                      "be verbose about configuration")
+      .def_readwrite("useSmallRingTorsions", &RDKit::DGeomHelpers::EmbedParameters::useSmallRingTorsions,
+                     "impose small ring torsion angle preferences")
+      .def_readwrite("useMacrocycleTorsions", &RDKit::DGeomHelpers::EmbedParameters::useMacrocycleTorsions,
+                     "impose macrocycle torsion angle preferences")
       .def_readwrite("pruneRmsThresh",
                      &RDKit::DGeomHelpers::EmbedParameters::pruneRmsThresh,
                      "used to filter multiple conformations: keep only "
@@ -371,7 +399,10 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
           "split the molecule into fragments and embed them separately")
       .def("SetBoundsMat", &RDKit::setBoundsMatrix,
            "set the distance-bounds matrix to be used (no triangle smoothing "
-           "will be done on this) from a Numpy array");
+           "will be done on this) from a Numpy array")
+      .def("SetCPCI", &RDKit::setCPCI,
+           "set the customised pairwise Columb-like interaction to atom pairs."
+           "used during structural minimisation stage");
   docString =
       "Use distance geometry to obtain multiple sets of \n\
  coordinates for a molecule\n\
@@ -389,7 +420,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
       docString.c_str());
 
   docString =
-      "Use distance geometry to obtain initial \n\
+      "Use distance geometry to obtain intial \n\
  coordinates for a molecule\n\n\
  \n\
  ARGUMENTS:\n\n\

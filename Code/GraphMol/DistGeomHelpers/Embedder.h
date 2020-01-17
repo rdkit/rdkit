@@ -118,7 +118,10 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   double pruneRmsThresh;
   bool onlyHeavyAtomsForRMS;
   unsigned int ETversion;
+  bool useSmallRingTorsions;
+  bool useMacrocycleTorsions;
   boost::shared_ptr<const DistGeom::BoundsMatrix> boundsMat;
+  const std::map<std::pair<unsigned int, unsigned int>, double> *CPCI;
   bool embedFragmentsSeparately;
   EmbedParameters()
       : maxIterations(0),
@@ -140,7 +143,10 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
         pruneRmsThresh(-1.0),
         onlyHeavyAtomsForRMS(false),
         ETversion(1),
+	useSmallRingTorsions(false),
+	useMacrocycleTorsions(false),
         boundsMat(nullptr),
+        CPCI(nullptr),
         embedFragmentsSeparately(true){};
   EmbedParameters(unsigned int maxIterations, int numThreads, int randomSeed,
                   bool clearConfs, bool useRandomCoords, double boxSizeMult,
@@ -151,7 +157,9 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
                   bool useBasicKnowledge, bool verbose, double basinThresh,
                   double pruneRmsThresh, bool onlyHeavyAtomsForRMS,
                   unsigned int ETversion = 1,
+		  bool useSmallRingTorsions = false, bool useMacrocycleTorsions = false,
                   const DistGeom::BoundsMatrix *boundsMat = nullptr,
+                  const std::map<std::pair<unsigned int, unsigned int>, double> *CPCI = nullptr,
                   bool embedFragmentsSeparately = true)
       : maxIterations(maxIterations),
         numThreads(numThreads),
@@ -172,7 +180,10 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
         pruneRmsThresh(pruneRmsThresh),
         onlyHeavyAtomsForRMS(onlyHeavyAtomsForRMS),
         ETversion(ETversion),
+	useSmallRingTorsions(useSmallRingTorsions),
+	useMacrocycleTorsions(useMacrocycleTorsions),
         boundsMat(boundsMat),
+        CPCI(CPCI),
         embedFragmentsSeparately(embedFragmentsSeparately){};
 };
 
