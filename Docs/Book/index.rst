@@ -14,7 +14,6 @@ The RDKit Documentation
   GettingStartedInPython
   RDKit_Book
   Cookbook
-  Cookbook_v2
   Cartridge
   BackwardsIncompatibleChanges
   api-docs
