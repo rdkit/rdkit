@@ -248,6 +248,14 @@ chlorine	[Cl]
     self.assertEqual(Chem.MolToSmiles(ctaut), "OC1=CCCCC1")
     ctaut = enumerator.Canonicalize(m, scorefunc2)
     self.assertEqual(Chem.MolToSmiles(ctaut), "O=C1CCCCC1")
+    # make sure lambdas work
+    ctaut = enumerator.Canonicalize(
+      m, lambda x: len(x.GetSubstructMatches(Chem.MolFromSmarts('C=O'))))
+    self.assertEqual(Chem.MolToSmiles(ctaut), "O=C1CCCCC1")
+
+    # make sure we behave if we return something bogus from the scoring function
+    with self.assertRaises(TypeError):
+      ctaut = enumerator.Canonicalize(m, lambda x: 'fail')
 
 if __name__ == "__main__":
   unittest.main()
