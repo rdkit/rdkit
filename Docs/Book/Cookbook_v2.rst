@@ -60,15 +60,12 @@ Include an Atom Index
    from rdkit.Chem.Draw import IPythonConsole
    from rdkit.Chem import Draw
    IPythonConsole.ipython_useSVG=False
-   import rdkit
 
 .. testcode::
   
    def mol_with_atom_index(mol):
-       atoms = mol.GetNumAtoms()
-       for idx in range(atoms):
-           atom = mol.GetAtomWithIdx(idx)
-           atom.SetProp('molAtomMapNumber', str(idx))  
+       for atom in mol.GetAtoms():
+           atom.SetAtomMapNum(atom.GetIdx())
        return mol
 
 .. testcode::
@@ -100,7 +97,6 @@ Black and White Molecules
    from rdkit import Chem
    from rdkit.Chem.Draw import IPythonConsole
    from rdkit.Chem import Draw
-   import rdkit
 
 .. testcode::
 
@@ -128,7 +124,6 @@ Highlight a Substructure in a Molecule
 
    from rdkit import Chem
    from rdkit.Chem.Draw import IPythonConsole
-   import rdkit
 
 .. testcode::
 
@@ -218,11 +213,9 @@ Count Ring Systems
 
    # Draw molecule with atom index (see RDKitCB_0)
    def mol_with_atom_index(mol):
-        atoms = mol.GetNumAtoms()
-        for idx in range(atoms):
-            atom = mol.GetAtomWithIdx(idx)
-            atom.SetProp('molAtomMapNumber', str(idx))
-        return mol
+       for atom in mol.GetAtoms():
+           atom.SetAtomMapNum(atom.GetIdx())
+       return mol
    mol_with_atom_index(mol)
 
 .. image:: images/RDKitCB_3_im0.png
