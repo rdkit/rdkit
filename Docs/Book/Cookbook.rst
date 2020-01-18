@@ -193,21 +193,20 @@ Count Ring Systems
 .. testcode::
 
    def GetRingSystems(mol, includeSpiro=False):
-        ri = mol.GetRingInfo()
-        systems = []
-        for ring in ri.AtomRings():
-            ringAts = set(ring)
-            nSystems = []
-            for system in systems:
-                nInCommon = len(ringAts.intersection(system)) 
-                if nInCommon and (includeSpiro or nInCommon>1):
-                    ringAts = ringAts.union(system)
-                else:
-                    nSystems.append(system)
-            nSystems.append(ringAts)
-            systems = nSystems
-        return systems
-
+       ri = mol.GetRingInfo()
+       systems = []
+       for ring in ri.AtomRings():
+           ringAts = set(ring)
+           nSystems = []
+           for system in systems:
+               nInCommon = len(ringAts.intersection(system)) 
+               if nInCommon and (includeSpiro or nInCommon>1):
+                   ringAts = ringAts.union(system)
+               else:
+                   nSystems.append(system)
+           nSystems.append(ringAts)
+           systems = nSystems
+       return systems
    mol = Chem.MolFromSmiles('CN1C(=O)CN=C(C2=C1C=CC(=C2)Cl)C3=CC=CC=C3')
    print(GetRingSystems(mol))
 
@@ -465,7 +464,7 @@ Create Fragments
    # Finally, you can manually cut bonds using Chem.RWMol.RemoveBonds:
    rwmol = Chem.RWMol(mol)
    for b_idx in sorted([0, 2, 4], reverse=True): # reverse because when a bond or atom is deleted, 
-   # the bond or atom indices are remapped. If your bonds have a higher index first, bonds with lower indices will not be remapped.
+   # the bond or atom indices are remapped. If you remove bonds with a higher index first, bonds with lower indices will not be remapped.
        b = rwmol.GetBondWithIdx(b_idx)
        rwmol.RemoveBond(b.GetBeginAtomIdx(), b.GetEndAtomIdx())
    # And then call Chem.GetMolFrags() to get sanitized fragments where empty valences were filled with implicit hydrogens:
