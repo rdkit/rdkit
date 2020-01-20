@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2016 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2020 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -416,7 +416,13 @@ RWMol *SmilesToMol(const std::string &smiles,
 
   if (res && params.allowCXSMILES && !cxPart.empty()) {
     std::string::const_iterator pos = cxPart.cbegin();
-    SmilesParseOps::parseCXExtensions(*res, cxPart, pos);
+    try {
+      SmilesParseOps::parseCXExtensions(*res, cxPart, pos);
+    } catch (const SmilesParseException &e) {
+      if (params.strictCXSMILES) {
+        throw;
+      }
+    }
     res->setProp("_CXSMILES_Data", std::string(cxPart.cbegin(), pos));
     if (params.parseName && pos != cxPart.cend()) {
       std::string nmpart(pos, cxPart.cend());

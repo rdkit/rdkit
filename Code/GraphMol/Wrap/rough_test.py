@@ -5742,11 +5742,18 @@ M  END
     self.assertIsNotNone(m)
     TestAssignChiralTypesFromMolParity(m, self)
 
+  def testCXSMILESErrors(self):
+    smi = "CCC |FAILURE|"
+    ps = Chem.SmilesParserParams()
+    ps.strictCXSMILES = False
+    m = Chem.MolFromSmiles(smi, ps)
+    self.assertTrue(m is not None)
+    self.assertEqual(m.GetNumAtoms(),3)
+
   def testRemoveHsParams(self):
     smips = Chem.SmilesParserParams()
     smips.removeHs = False
 
-    m = Chem.MolFromSmiles('F.[H]',smips)
     m = Chem.MolFromSmiles('F.[H]',smips)
     ps = Chem.RemoveHsParameters()
     m = Chem.RemoveHs(m,ps)
