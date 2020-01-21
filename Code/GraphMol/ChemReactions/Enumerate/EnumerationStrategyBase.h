@@ -138,7 +138,7 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerationStrategyBase {
   //! Initialize the enumerator based on the reaction and the
   //! supplied building blocks
   //!  This is the standard API point.
-  //!  This calls the derived class initializeStrategy which must be implemented
+  //!  This calls the derived class's initializeStrategy method which must be implemented
   void initialize(const ChemicalReaction &reaction,
                   const EnumerationTypes::BBS &building_blocks) {
     // default initialization, may be overridden (sets the # reactants
