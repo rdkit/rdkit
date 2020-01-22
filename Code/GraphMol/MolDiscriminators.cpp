@@ -26,7 +26,9 @@ double computeBalabanJ(double *distMat, int nb, int nAts) {
   int nActive = nAts;
   int mu = nb - nActive + 1;
 
-  if (mu == -1) return 0.0;
+  if (mu == -1) {
+    return 0.0;
+  }
 
   for (int i = 0; i < nAts; i++) {
     int iTab = i * nAts;
@@ -105,7 +107,9 @@ double computeBalabanJ(const ROMol &mol, bool useBO, bool force,
       delete[] dMat;
     }
 
-    if (cacheIt) mol.setProp(common_properties::BalabanJ, res, true);
+    if (cacheIt) {
+      mol.setProp(common_properties::BalabanJ, res, true);
+    }
   }
   return res;
 }

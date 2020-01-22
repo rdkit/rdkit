@@ -111,7 +111,9 @@ void AddFragToMol(RWMol *mol, RWMol *frag, Bond::BondType bondOrder,
                                     tmpVect)) {
       BOOST_FOREACH (int &v, tmpVect) {
         // if the ring closure is not already a bond, don't touch it:
-        if (v >= 0) v += nOrigBonds;
+        if (v >= 0) {
+          v += nOrigBonds;
+        }
       }
       Atom *newAtom = mol->getAtomWithIdx(nOrigAtoms + (*atomIt)->getIdx());
       newAtom->setProp(common_properties::_RingClosures, tmpVect);
@@ -592,15 +594,18 @@ void CleanupAfterParsing(RWMol *mol) {
   PRECONDITION(mol, "no molecule");
   for (RWMol::AtomIterator atomIt = mol->beginAtoms();
        atomIt != mol->endAtoms(); ++atomIt) {
-    if ((*atomIt)->hasProp(common_properties::_RingClosures))
+    if ((*atomIt)->hasProp(common_properties::_RingClosures)) {
       (*atomIt)->clearProp(common_properties::_RingClosures);
-    if ((*atomIt)->hasProp(common_properties::_SmilesStart))
+    }
+    if ((*atomIt)->hasProp(common_properties::_SmilesStart)) {
       (*atomIt)->clearProp(common_properties::_SmilesStart);
+    }
   }
   for (RWMol::BondIterator bondIt = mol->beginBonds();
        bondIt != mol->endBonds(); ++bondIt) {
-    if ((*bondIt)->hasProp(common_properties::_unspecifiedOrder))
+    if ((*bondIt)->hasProp(common_properties::_unspecifiedOrder)) {
       (*bondIt)->clearProp(common_properties::_unspecifiedOrder);
+    }
   }
 }
 

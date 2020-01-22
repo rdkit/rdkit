@@ -47,12 +47,14 @@ boost::python::object transfer_to_python(T *t) {
 }
 
 PyObject *getMatrixProp(const double *mat, unsigned int dim1, unsigned int dim2) {
-  if (!mat) throw_value_error("matrix has not be initialized");
+  if (!mat) {
+    throw_value_error("matrix has not be initialized");
+  }
   npy_intp dims[2];
   dims[0] = dim1;
   dims[1] = dim2;
 
-  PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
+  auto *res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
 
   memcpy(PyArray_DATA(res), static_cast<const void *>(mat),
          dim1 * dim2 * sizeof(double));
@@ -60,11 +62,13 @@ PyObject *getMatrixProp(const double *mat, unsigned int dim1, unsigned int dim2)
   return PyArray_Return(res);
 }
 PyObject *getSymmMatrixProp(const double *mat, unsigned int sz) {
-  if (!mat) throw_value_error("matrix has not be initialized");
+  if (!mat) {
+    throw_value_error("matrix has not be initialized");
+  }
   npy_intp dims[1];
   dims[0] = sz * (sz + 1) / 2;
 
-  PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(1, dims, NPY_DOUBLE);
+  auto *res = (PyArrayObject *)PyArray_SimpleNew(1, dims, NPY_DOUBLE);
 
   memcpy(PyArray_DATA(res), static_cast<const void *>(mat),
          dims[0] * sizeof(double));
@@ -72,11 +76,13 @@ PyObject *getSymmMatrixProp(const double *mat, unsigned int sz) {
   return PyArray_Return(res);
 }
 PyObject *getVectorProp(const double *mat, unsigned int sz) {
-  if (!mat) throw_value_error("vector has not be initialized");
+  if (!mat) {
+    throw_value_error("vector has not be initialized");
+  }
   npy_intp dims[1];
   dims[0] = sz;
 
-  PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(1, dims, NPY_DOUBLE);
+  auto *res = (PyArrayObject *)PyArray_SimpleNew(1, dims, NPY_DOUBLE);
 
   memcpy(PyArray_DATA(res), static_cast<const void *>(mat),
          sz * sizeof(double));

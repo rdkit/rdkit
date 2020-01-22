@@ -31,8 +31,8 @@ PyObject *computeCanonTrans(const Conformer &conf,
   npy_intp dims[2];
   dims[0] = 4;
   dims[1] = 4;
-  PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
-  double *resData = reinterpret_cast<double *>(PyArray_DATA(res));
+  auto *res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
+  auto *resData = reinterpret_cast<double *>(PyArray_DATA(res));
   const double *tdata = trans->getData();
   memcpy(static_cast<void *>(resData), static_cast<const void *>(tdata),
          4 * 4 * sizeof(double));
@@ -48,16 +48,18 @@ PyObject *computePrincAxesMomentsHelper(bool func(const Conformer &,
                             bool ignoreHs, const python::object &weights) {
   Eigen::Matrix3d axes;
   Eigen::Vector3d moments;
-  std::vector<double> *weightsVecPtr = NULL;
+  std::vector<double> *weightsVecPtr = nullptr;
   std::vector<double> weightsVec;
   size_t i;
   if (weights != python::object()) {
     size_t numElements = python::extract<int>(weights.attr("__len__")());
-    if (numElements != conf.getNumAtoms())
+    if (numElements != conf.getNumAtoms()) {
       throw ValueErrorException("The Python container must have length equal to conf.GetNumAtoms()");
+    }
     weightsVec.resize(numElements);
-    for (i = 0; i < numElements; ++i)
+    for (i = 0; i < numElements; ++i) {
       weightsVec[i] = python::extract<double>(weights[i]);
+    }
     weightsVecPtr = &weightsVec;
   }
   PyObject *res = PyTuple_New(2);
@@ -66,17 +68,19 @@ PyObject *computePrincAxesMomentsHelper(bool func(const Conformer &,
     npy_intp dims[2];
     dims[0] = 3;
     dims[1] = 3;
-    PyArrayObject *axesNpy = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
-    double *axesNpyData = reinterpret_cast<double *>(PyArray_DATA(axesNpy));
+    auto *axesNpy = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
+    auto *axesNpyData = reinterpret_cast<double *>(PyArray_DATA(axesNpy));
     i = 0;
     for (size_t y = 0; y < 3; ++y) {
-      for (size_t x = 0; x < 3; ++x)
+      for (size_t x = 0; x < 3; ++x) {
         axesNpyData[i++] = axes(y, x);
+      }
     }
-    PyArrayObject *momentsNpy = (PyArrayObject *)PyArray_SimpleNew(1, dims, NPY_DOUBLE);
-    double *momentsNpyData = reinterpret_cast<double *>(PyArray_DATA(momentsNpy));
-    for (size_t y = 0; y < 3; ++y)
+    auto *momentsNpy = (PyArrayObject *)PyArray_SimpleNew(1, dims, NPY_DOUBLE);
+    auto *momentsNpyData = reinterpret_cast<double *>(PyArray_DATA(momentsNpy));
+    for (size_t y = 0; y < 3; ++y) {
       momentsNpyData[y] = moments(y);
+    }
     res = PyTuple_New(2);
     PyTuple_SetItem(res, 0, (PyObject *)axesNpy);
     PyTuple_SetItem(res, 1, (PyObject *)momentsNpy);
@@ -106,10 +110,10 @@ void transConformer(Conformer &conf, python::object trans) {
   if (!PyArray_Check(transObj)) {
     throw_value_error("Expecting a numeric array for transformation");
   }
-  PyArrayObject *transMat = reinterpret_cast<PyArrayObject *>(transObj);
+  auto *transMat = reinterpret_cast<PyArrayObject *>(transObj);
   unsigned int nrows = PyArray_DIM(transMat, 0);
   unsigned int dSize = nrows * nrows;
-  double *inData = reinterpret_cast<double *>(PyArray_DATA(transMat));
+  auto *inData = reinterpret_cast<double *>(PyArray_DATA(transMat));
   RDGeom::Transform3D transform;
   double *tData = transform.getData();
   memcpy(static_cast<void *>(tData), static_cast<void *>(inData),

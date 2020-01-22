@@ -615,7 +615,9 @@ void test2Layers() {
 
     atomCounts.clear();
     atomCounts.resize(m1->getNumAtoms());
-    for (unsigned int i = 0; i < m1->getNumAtoms(); ++i) atomCounts[i] = 0;
+    for (unsigned int i = 0; i < m1->getNumAtoms(); ++i) {
+      atomCounts[i] = 0;
+    }
 
     delete fp2;
     fp2 = LayeredFingerprintMol(*m1, 0xFFFFFFFF, 1, 7, 2048, &atomCounts);
@@ -649,7 +651,9 @@ void test2Layers() {
 
     atomCounts.clear();
     atomCounts.resize(m1->getNumAtoms());
-    for (unsigned int i = 0; i < m1->getNumAtoms(); ++i) atomCounts[i] = 0;
+    for (unsigned int i = 0; i < m1->getNumAtoms(); ++i) {
+      atomCounts[i] = 0;
+    }
 
     ExplicitBitVect *fp3 =
         LayeredFingerprintMol(*m1, 0xFFFFFFFF, 1, 7, 2048, &atomCounts, fp2);
@@ -2941,11 +2945,14 @@ void runblock(const std::vector<ROMol *> &mols, unsigned int count,
               unsigned int nReps) {
   for (unsigned int j = 0; j < nReps; j++) {
     for (unsigned int i = 0; i < mols.size(); ++i) {
-      if (i % count != idx) continue;
+      if (i % count != idx) {
+        continue;
+      }
       ROMol *mol = mols[i];
       ExplicitBitVect *lbv = PatternFingerprintMol(*mol, 2048);
-      if (referenceData.size() && referenceData[i])
+      if (referenceData.size() && referenceData[i]) {
         TEST_ASSERT((*lbv) == (*referenceData[i]));
+      }
       delete lbv;
     }
   }
@@ -2971,7 +2978,9 @@ void testMultithreadedPatternFP() {
     } catch (...) {
       continue;
     }
-    if (!mol) continue;
+    if (!mol) {
+      continue;
+    }
     mols.push_back(mol);
   }
   std::vector<std::future<void>> tg;

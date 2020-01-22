@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <utility>
 #include "StereoGroup.h"
 
 namespace RDKit {
@@ -7,7 +8,7 @@ StereoGroup::StereoGroup(StereoGroupType grouptype, std::vector<Atom *> &&atoms)
     : d_grouptype(grouptype), d_atoms(atoms) {}
 StereoGroup::StereoGroup(StereoGroupType grouptype,
                          const std::vector<Atom *> &atoms)
-    : d_grouptype(grouptype), d_atoms(atoms) {}
+    : d_grouptype(grouptype), d_atoms(std::move(atoms)) {}
 
 StereoGroupType StereoGroup::getGroupType() const { return d_grouptype; }
 

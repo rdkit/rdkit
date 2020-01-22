@@ -482,7 +482,9 @@ ExplicitBitVect *LayeredFingerprintMol(
   boost::tie(firstA, lastA) = mol.getVertices();
   while (firstA != lastA) {
     const Atom *atom = mol[*firstA];
-    if (isAtomAromatic(atom)) aromaticAtoms[atom->getIdx()] = true;
+    if (isAtomAromatic(atom)) {
+      aromaticAtoms[atom->getIdx()] = true;
+    }
     anums[atom->getIdx()] = atom->getAtomicNum();
     ++firstA;
   }
@@ -528,7 +530,9 @@ ExplicitBitVect *LayeredFingerprintMol(
 
       std::vector<std::vector<unsigned int>> hashLayers(maxFingerprintLayers);
       for (unsigned int i = 0; i < maxFingerprintLayers; ++i) {
-        if (layerFlags & (0x1 << i)) hashLayers[i].reserve(maxPath);
+        if (layerFlags & (0x1 << i)) {
+          hashLayers[i].reserve(maxPath);
+        }
       }
 
       // details about what kinds of query features appear on the path:
@@ -648,7 +652,9 @@ ExplicitBitVect *LayeredFingerprintMol(
           bool a1Hash = aromaticAtoms[bi->getBeginAtomIdx()];
           bool a2Hash = aromaticAtoms[bi->getEndAtomIdx()];
 
-          if ((!a1Hash) && a2Hash) std::swap(a1Hash, a2Hash);
+          if ((!a1Hash) && a2Hash) {
+            std::swap(a1Hash, a2Hash);
+          }
           ourHash = a1Hash;
           ourHash |= a2Hash << 1;
           ourHash |= (bondNbrs[i] % 8) << 5;
@@ -659,7 +665,9 @@ ExplicitBitVect *LayeredFingerprintMol(
       bool flaggedPath = false;
       for (auto layerIt = hashLayers.begin(); layerIt != hashLayers.end();
            ++layerIt, ++l) {
-        if (!layerIt->size()) continue;
+        if (!layerIt->size()) {
+          continue;
+        }
         // ----
         std::sort(layerIt->begin(), layerIt->end());
 

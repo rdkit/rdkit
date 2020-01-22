@@ -40,7 +40,7 @@ ROMol *pathToSubmol(const ROMol &mol, const PATH_TYPE &path, bool useQuery,
     // have to do this in two different blocks because of issues with variable
     // scopes.
     for(auto bondidx : sorted_path) {
-      QueryBond *bond = new QueryBond(*(mol.getBondWithIdx(bondidx)));
+      auto *bond = new QueryBond(*(mol.getBondWithIdx(bondidx)));
 
       int begIdx = bond->getBeginAtomIdx();
       int endIdx = bond->getEndAtomIdx();
@@ -132,9 +132,10 @@ using std::int32_t;
 DiscrimTuple calcPathDiscriminators(const ROMol &mol, const PATH_TYPE &path,
                                     bool useBO,
                                     std::vector<std::uint32_t> *extraInvars) {
-  if (extraInvars)
+  if (extraInvars) {
     CHECK_INVARIANT(extraInvars->size() == mol.getNumAtoms(),
                     "bad extra invars");
+  }
   DiscrimTuple res;
 
   // Start by collecting the atoms in the path and their degrees

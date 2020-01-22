@@ -88,8 +88,9 @@ void RWMol::insertMol(const ROMol &other) {
       auto *nconf = new Conformer(getNumAtoms());
       nconf->set3D((*cfi)->is3D());
       nconf->setId((*cfi)->getId());
-      for (unsigned int i = 0; i < newAtomIds.size(); ++i)
+      for (unsigned int i = 0; i < newAtomIds.size(); ++i) {
         nconf->setAtomPos(newAtomIds[i], (*cfi)->getAtomPos(i));
+      }
       addConformer(nconf, false);
     }
   } else if (getNumConformers()) {
@@ -99,15 +100,17 @@ void RWMol::insertMol(const ROMol &other) {
       for (cfi = beginConformers(), ocfi = other.beginConformers();
            cfi != endConformers(); ++cfi, ++ocfi) {
         (*cfi)->resize(getNumAtoms());
-        for (unsigned int i = 0; i < newAtomIds.size(); ++i)
+        for (unsigned int i = 0; i < newAtomIds.size(); ++i) {
           (*cfi)->setAtomPos(newAtomIds[i], (*ocfi)->getAtomPos(i));
+        }
       }
     } else {
       for (auto cfi = this->beginConformers(); cfi != this->endConformers();
            ++cfi) {
         (*cfi)->resize(getNumAtoms());
-        for (unsigned int newAtomId : newAtomIds)
+        for (unsigned int newAtomId : newAtomIds) {
           (*cfi)->setAtomPos(newAtomId, RDGeom::Point3D(0.0, 0.0, 0.0));
+        }
       }
     }
   }
@@ -160,7 +163,9 @@ void RWMol::replaceBond(unsigned int idx, Bond *bond_pin, bool preserveProps) {
   PRECONDITION(bond_pin, "bad bond passed to replaceBond");
   URANGE_CHECK(idx, getNumBonds());
   BOND_ITER_PAIR bIter = getEdges();
-  for (unsigned int i = 0; i < idx; i++) ++bIter.first;
+  for (unsigned int i = 0; i < idx; i++) {
+    ++bIter.first;
+  }
   Bond *obond = d_graph[*(bIter.first)];
   Bond *bond_p = bond_pin->copy();
   bond_p->setOwningMol(this);
@@ -181,10 +186,11 @@ void RWMol::replaceBond(unsigned int idx, Bond *bond_pin, bool preserveProps) {
 };
 
 Atom *RWMol::getActiveAtom() {
-  if (hasAtomBookmark(ci_RIGHTMOST_ATOM))
+  if (hasAtomBookmark(ci_RIGHTMOST_ATOM)) {
     return getAtomWithBookmark(ci_RIGHTMOST_ATOM);
-  else
+  } else {
     return getLastAtom();
+  }
 };
 
 void RWMol::setActiveAtom(Atom *at) {
@@ -257,9 +263,13 @@ void RWMol::removeAtom(Atom *atom) {
   while (beg != end) {
     Bond *bond = d_graph[*beg++];
     unsigned int tmpIdx = bond->getBeginAtomIdx();
-    if (tmpIdx > idx) bond->setBeginAtomIdx(tmpIdx - 1);
+    if (tmpIdx > idx) {
+      bond->setBeginAtomIdx(tmpIdx - 1);
+    }
     tmpIdx = bond->getEndAtomIdx();
-    if (tmpIdx > idx) bond->setEndAtomIdx(tmpIdx - 1);
+    if (tmpIdx > idx) {
+      bond->setEndAtomIdx(tmpIdx - 1);
+    }
     bond->setIdx(nBonds++);
     for (auto bsi = bond->getStereoAtoms().begin();
          bsi != bond->getStereoAtoms().end(); ++bsi) {
@@ -346,7 +356,9 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
   URANGE_CHECK(aid1, getNumAtoms());
   URANGE_CHECK(aid2, getNumAtoms());
   Bond *bnd = getBondBetweenAtoms(aid1, aid2);
-  if (!bnd) return;
+  if (!bnd) {
+    return;
+  }
   unsigned int idx = bnd->getIdx();
 
   // remove any bookmarks which point to this bond:
@@ -369,25 +381,35 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
   ADJ_ITER a1, a2;
   boost::tie(a1, a2) = boost::adjacent_vertices(aid1, d_graph);
   while (a1 != a2) {
-    unsigned int oIdx = rdcast<unsigned int>(*a1);
+    auto oIdx = rdcast<unsigned int>(*a1);
     ++a1;
-    if (oIdx == aid2) continue;
+    if (oIdx == aid2) {
+      continue;
+    }
     Bond *obnd = getBondBetweenAtoms(aid1, oIdx);
-    if (!obnd) continue;
+    if (!obnd) {
+      continue;
+    }
     if (std::find(obnd->getStereoAtoms().begin(), obnd->getStereoAtoms().end(),
-                  aid2) != obnd->getStereoAtoms().end())
+                  aid2) != obnd->getStereoAtoms().end()) {
       obnd->getStereoAtoms().clear();
+    }
   }
   boost::tie(a1, a2) = boost::adjacent_vertices(aid2, d_graph);
   while (a1 != a2) {
-    unsigned int oIdx = rdcast<unsigned int>(*a1);
+    auto oIdx = rdcast<unsigned int>(*a1);
     ++a1;
-    if (oIdx == aid1) continue;
+    if (oIdx == aid1) {
+      continue;
+    }
     Bond *obnd = getBondBetweenAtoms(aid2, oIdx);
-    if (!obnd) continue;
+    if (!obnd) {
+      continue;
+    }
     if (std::find(obnd->getStereoAtoms().begin(), obnd->getStereoAtoms().end(),
-                  aid1) != obnd->getStereoAtoms().end())
+                  aid1) != obnd->getStereoAtoms().end()) {
       obnd->getStereoAtoms().clear();
+    }
   }
 
   // reset our ring info structure, because it is pretty likely

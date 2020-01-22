@@ -158,7 +158,9 @@ Subgraphs::DiscrimTuple FragCatalogEntry::getDiscrims() const {
     this->getProp(common_properties::Discrims, res);
   } else {
     PATH_TYPE path;
-    for (unsigned int i = 0; i < dp_mol->getNumBonds(); ++i) path.push_back(i);
+    for (unsigned int i = 0; i < dp_mol->getNumBonds(); ++i) {
+      path.push_back(i);
+    }
 
     // create invariant additions to reflect the functional groups attached to
     // the atoms

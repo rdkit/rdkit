@@ -115,10 +115,14 @@ bool getBestFitPlane(const Conformer &conf,
 double PBF(const ROMol &mol, int confId) {
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers")
   unsigned int numAtoms = mol.getNumAtoms();
-  if (numAtoms < 4) return 0;
+  if (numAtoms < 4) {
+    return 0;
+  }
 
   const Conformer &conf = mol.getConformer(confId);
-  if (!conf.is3D()) return 0;
+  if (!conf.is3D()) {
+    return 0;
+  }
 
   std::vector<RDGeom::Point3D> points;
   points.reserve(numAtoms);

@@ -104,10 +104,18 @@ void WrapLogs() {
   if (!rdDebugLog || !rdInfoLog || !rdErrorLog || !rdWarningLog) {
     RDLog::InitLogs();
   }
-  if (rdDebugLog != nullptr) rdDebugLog->SetTee(debug);
-  if (rdInfoLog != nullptr) rdInfoLog->SetTee(info);
-  if (rdErrorLog != nullptr) rdErrorLog->SetTee(error);
-  if (rdWarningLog != nullptr) rdWarningLog->SetTee(warning);
+  if (rdDebugLog != nullptr) {
+    rdDebugLog->SetTee(debug);
+  }
+  if (rdInfoLog != nullptr) {
+    rdInfoLog->SetTee(info);
+  }
+  if (rdErrorLog != nullptr) {
+    rdErrorLog->SetTee(error);
+  }
+  if (rdWarningLog != nullptr) {
+    rdWarningLog->SetTee(warning);
+  }
 }
 
 python::tuple getAtomIndicesHelper(const KekulizeException &self) {
@@ -143,8 +151,10 @@ PyObject *createExceptionClass(const char *name,
   std::string qualifiedName0 = scopeName + "." + name;
   char *qualifiedName1 = const_cast<char *>(qualifiedName0.c_str());
 
-  PyObject *typeObj = PyErr_NewException(qualifiedName1, baseTypeObj, 0);
-  if (!typeObj) python::throw_error_already_set();
+  PyObject *typeObj = PyErr_NewException(qualifiedName1, baseTypeObj, nullptr);
+  if (!typeObj) {
+    python::throw_error_already_set();
+  }
   python::scope().attr(name) = python::handle<>(python::borrowed(typeObj));
   return typeObj;
 }

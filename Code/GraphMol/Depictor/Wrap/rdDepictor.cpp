@@ -72,7 +72,7 @@ unsigned int Compute2DCoordsMimicDistmat(
     throw_value_error("Argument isn't an array");
   }
 
-  PyArrayObject *dmatrix = reinterpret_cast<PyArrayObject *>(distMatPtr);
+  auto *dmatrix = reinterpret_cast<PyArrayObject *>(distMatPtr);
   unsigned int nitems = PyArray_DIM(dmatrix, 0);
   unsigned int na = mol.getNumAtoms();
 
@@ -80,7 +80,7 @@ unsigned int Compute2DCoordsMimicDistmat(
     throw_value_error(
         "The array size does not match the number of atoms in the molecule");
   }
-  double *inData = reinterpret_cast<double *>(PyArray_DATA(dmatrix));
+  auto *inData = reinterpret_cast<double *>(PyArray_DATA(dmatrix));
   auto *cData = new double[nitems];
 
   memcpy(static_cast<void *>(cData), static_cast<const void *>(inData),

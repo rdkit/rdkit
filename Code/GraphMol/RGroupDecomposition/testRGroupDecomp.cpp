@@ -49,7 +49,9 @@ void CHECK_RGROUP(RGroupRows::const_iterator &it, std::string expected,
   int i = 0;
 
   for (auto rgroups = it->begin(); rgroups != it->end(); ++rgroups, ++i) {
-    if (i) str << " ";
+    if (i) {
+      str << " ";
+    }
     // rlabel:smiles
     str << rgroups->first << ":" << MolToSmiles(*rgroups->second.get(), true);
   }
@@ -60,7 +62,9 @@ void CHECK_RGROUP(RGroupRows::const_iterator &it, std::string expected,
     std::cerr << "Got:      '" << result << "'" << std::endl;
   }
 
-  if (doassert) TEST_ASSERT(result == expected);
+  if (doassert) {
+    TEST_ASSERT(result == expected);
+  }
 }
 
 void DUMP_RGROUP(RGroupRows::const_iterator &it, std::string &result) {
@@ -505,8 +509,8 @@ void testMatchOnlyAtRgroupHs() {
   params.onlyMatchAtRGroups = true;
   RGroupDecomposition decomp(*core, params);
   const char *smilesData[2] = {"OCC", "COCC"};
-  for (int i = 0; i < 2; ++i) {
-    ROMol *mol = SmilesToMol(smilesData[i]);
+  for (auto &i : smilesData) {
+    ROMol *mol = SmilesToMol(i);
     decomp.add(*mol);
     delete mol;
   }
@@ -560,8 +564,8 @@ M  END
   2  3  1  0  0  0  0
 M  END
 )CTAB"};
-  for (int i = 0; i < 2; ++i) {
-    ROMol *mol = MolBlockToMol(chains[i]);
+  for (const auto &chain : chains) {
+    ROMol *mol = MolBlockToMol(chain);
     decomp.add(*mol);
     delete mol;
   }

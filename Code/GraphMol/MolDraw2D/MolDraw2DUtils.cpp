@@ -58,7 +58,9 @@ void prepareMolForDrawing(RWMol &mol, bool kekulize, bool addChiralHs,
     }
     if (chiralAts.size()) {
       bool addCoords = false;
-      if (!forceCoords && mol.getNumConformers()) addCoords = true;
+      if (!forceCoords && mol.getNumConformers()) {
+        addCoords = true;
+      }
       MolOps::addHs(mol, false, addCoords, &chiralAts);
     }
   }
@@ -96,7 +98,9 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const char *json) {
 void get_colour_option(boost::property_tree::ptree *pt, const char *pnm,
                        DrawColour &colour) {
   PRECONDITION(pnm && strlen(pnm), "bad property name");
-  if (pt->find(pnm) == pt->not_found()) return;
+  if (pt->find(pnm) == pt->not_found()) {
+    return;
+  }
 
   boost::property_tree::ptree::const_iterator itm = pt->get_child(pnm).begin();
   colour.r = itm->second.get_value<float>();
@@ -108,7 +112,9 @@ void get_colour_option(boost::property_tree::ptree *pt, const char *pnm,
 }
 
 void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
-  if (json == "") return;
+  if (json == "") {
+    return;
+  }
   std::istringstream ss;
   ss.str(json);
   MolDrawOptions &opts = drawer.drawOptions();
@@ -170,7 +176,9 @@ void contourAndDrawGrid(MolDraw2D &drawer, const double *grid,
       }
     }
   }
-  if (maxV <= minV) return;
+  if (maxV <= minV) {
+    return;
+  }
 
   const auto olw = drawer.lineWidth();
   const auto odash = drawer.dash();
@@ -183,10 +191,11 @@ void contourAndDrawGrid(MolDraw2D &drawer, const double *grid,
     auto delta = (maxV - minV);
     if (params.colourMap.size() > 2) {
       // need to find how fractionally far we are from zero, not the min
-      if (-minV > maxV)
+      if (-minV > maxV) {
         delta = -minV;
-      else
+      } else {
         delta = maxV;
+      }
     }
     for (size_t i = 0; i < nX - 1; ++i) {
       for (size_t j = 0; j < nY - 1; ++j) {
@@ -195,7 +204,9 @@ void contourAndDrawGrid(MolDraw2D &drawer, const double *grid,
         if (params.colourMap.size() > 2) {
           // need to find how fractionally far we are from zero, not the min
           fracV = gridV / delta;
-          if (fracV < 0) fracV *= -1;
+          if (fracV < 0) {
+            fracV *= -1;
+          }
         }
         DrawColour fillColour;
         auto c1 = (gridV < 0 || params.colourMap.size() == 2)

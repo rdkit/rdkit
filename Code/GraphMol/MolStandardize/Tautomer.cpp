@@ -20,6 +20,7 @@
 #include <boost/flyweight.hpp>
 #include <boost/flyweight/key_value.hpp>
 #include <boost/flyweight/no_tracking.hpp>
+#include <utility>
 
 using namespace RDKit;
 
@@ -102,9 +103,8 @@ struct SubstructTerm {
   std::string smarts;
   int score;
   std::shared_ptr<ROMol> matcher;
-  SubstructTerm(const std::string &aname, const std::string &asmarts,
-                int ascore)
-      : name(aname), smarts(asmarts), score(ascore) {
+  SubstructTerm(std::string aname, std::string asmarts, int ascore)
+      : name(std::move(aname)), smarts(std::move(asmarts)), score(ascore) {
     matcher = smarts_mol_flyweight(smarts).get().dp_mol;
   };
 };

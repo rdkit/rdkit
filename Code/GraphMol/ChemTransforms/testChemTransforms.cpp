@@ -1071,7 +1071,9 @@ void testMurckoDecomp() {
     std::string smi = testMolecules[i][0];
     std::string tgt = testMolecules[i][1];
     ++i;
-    if (smi == "EOS") break;
+    if (smi == "EOS") {
+      break;
+    }
     ROMol *mol = SmilesToMol(smi);
     ROMol *nMol = MurckoDecompose(*mol);
     TEST_ASSERT(nMol);
@@ -1883,13 +1885,12 @@ void testGithubIssue429() {
     std::vector<std::vector<int>> fragMap;
 
     BOOST_FOREACH (ROMOL_SPTR romol, frags) {
-      RWMol *rwmol = (RWMol *)(romol.get());
+      auto *rwmol = (RWMol *)(romol.get());
       MolOps::sanitizeMol(*rwmol);
     }
 
     // we actually changed fragmentOnBonds(), check that too:
-    RWMol *nmol =
-        (RWMol *)MolFragmenter::fragmentOnBonds(*mol, bindices, false);
+    auto *nmol = (RWMol *)MolFragmenter::fragmentOnBonds(*mol, bindices, false);
     MolOps::sanitizeMol(*nmol);
     delete nmol;
 

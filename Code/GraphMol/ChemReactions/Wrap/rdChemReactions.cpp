@@ -100,7 +100,9 @@ PyObject *RunReactants(ChemicalReaction *self, T reactants,
   reacts.resize(len1);
   for (unsigned int i = 0; i < len1; ++i) {
     reacts[i] = python::extract<ROMOL_SPTR>(reactants[i]);
-    if (!reacts[i]) throw_value_error("reaction called with None reactants");
+    if (!reacts[i]) {
+      throw_value_error("reaction called with None reactants");
+    }
   }
   std::vector<MOL_SPTR_VECT> mols;
   {
@@ -160,7 +162,7 @@ ROMol *GetProductTemplate(const ChemicalReaction *self, unsigned int which) {
   }
   auto iter = self->beginProductTemplates();
   iter += which;
-  ROMol *res = const_cast<ROMol *>(iter->get());
+  auto *res = const_cast<ROMol *>(iter->get());
   return res;
 }
 ROMol *GetReactantTemplate(const ChemicalReaction *self, unsigned int which) {
@@ -169,7 +171,7 @@ ROMol *GetReactantTemplate(const ChemicalReaction *self, unsigned int which) {
   }
   auto iter = self->beginReactantTemplates();
   iter += which;
-  ROMol *res = const_cast<ROMol *>(iter->get());
+  auto *res = const_cast<ROMol *>(iter->get());
   return res;
 }
 ROMol *GetAgentTemplate(const ChemicalReaction *self, unsigned int which) {
@@ -178,7 +180,7 @@ ROMol *GetAgentTemplate(const ChemicalReaction *self, unsigned int which) {
   }
   auto iter = self->beginAgentTemplates();
   iter += which;
-  ROMol *res = const_cast<ROMol *>(iter->get());
+  auto *res = const_cast<ROMol *>(iter->get());
   return res;
 }
 
@@ -388,7 +390,9 @@ RxnOps::SanitizeRxnFlags sanitizeReaction(
   try {
     RxnOps::sanitizeRxn(rxn, operationsThatFailed, sanitizeOps, params);
   } catch (...) {
-    if (!catchErrors) throw;
+    if (!catchErrors) {
+      throw;
+    }
   }
   return static_cast<RxnOps::SanitizeRxnFlags>(operationsThatFailed);
 }
@@ -454,7 +458,7 @@ Sample Usage:
       boost::python::type_id<RDKit::MOL_SPTR_VECT>();
   const boost::python::converter::registration *reg =
       boost::python::converter::registry::query(info);
-  if (reg == NULL || (*reg).m_to_python == NULL) {
+  if (reg == nullptr || (*reg).m_to_python == nullptr) {
     python::class_<RDKit::MOL_SPTR_VECT>("MOL_SPTR_VECT")
         .def(python::vector_indexing_suite<RDKit::MOL_SPTR_VECT, true>());
   }

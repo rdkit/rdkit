@@ -121,10 +121,11 @@ python::object FilterCatalog_Serialize(const FilterCatalog &cat) {
 
 int GetMatchVectItem(std::pair<int, int> &pair, size_t idx) {
   static const int def = 0xDEADBEEF;
-  if (idx == 0)
+  if (idx == 0) {
     return pair.first;
-  else if (idx == 1)
+  } else if (idx == 1) {
     return pair.second;
+  }
   PyErr_SetString(PyExc_IndexError, "Index out of bounds");
   python::throw_error_already_set();
   return def;
@@ -154,7 +155,9 @@ class PythonFilterMatch : public FilterMatcherBase {
   }
 
   ~PythonFilterMatch() override {
-    if (incref) python::decref(functor);
+    if (incref) {
+      python::decref(functor);
+    }
   }
   bool isValid() const override {
     return python::call_method<bool>(functor, "IsValid");

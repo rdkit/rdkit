@@ -162,17 +162,20 @@ double RecurseHelper(double *vals, int nVals, long int *cuts, int nCuts,
     cuts[which] += 1;
     int top, bot;
     bot = starts[oldCut];
-    if (oldCut + 1 < nStarts)
+    if (oldCut + 1 < nStarts) {
       top = starts[oldCut + 1];
-    else
+    } else {
       top = starts[nStarts - 1];
+    }
     for (i = bot; i < top; i++) {
       int v = results[i];
       varTable[which * nPossibleRes + v] += 1;
       varTable[(which + 1) * nPossibleRes + v] -= 1;
     }
     for (i = which + 1; i < nBounds; i++) {
-      if (cuts[i] == cuts[i - 1]) cuts[i] += 1;
+      if (cuts[i] == cuts[i - 1]) {
+        cuts[i] += 1;
+      }
     }
   }
   memcpy(cuts, bestCuts, nCuts * sizeof(long int));
@@ -293,15 +296,15 @@ static python::list cQuantize_FindStartPoints(python::object values,
     return startPts;
   }
 
-  PyArrayObject *contigVals = reinterpret_cast<PyArrayObject *>(
+  auto *contigVals = reinterpret_cast<PyArrayObject *>(
       PyArray_ContiguousFromObject(values.ptr(), NPY_DOUBLE, 1, 1));
   if (!contigVals) {
     throw_value_error("could not convert value argument");
   }
 
-  double *vals = (double *)PyArray_DATA(contigVals);
+  auto *vals = (double *)PyArray_DATA(contigVals);
 
-  PyArrayObject *contigResults = reinterpret_cast<PyArrayObject *>(
+  auto *contigResults = reinterpret_cast<PyArrayObject *>(
       PyArray_ContiguousFromObject(results.ptr(), NPY_LONG, 1, 1));
   if (!contigResults) {
     throw_value_error("could not convert results argument");
@@ -335,7 +338,9 @@ static python::list cQuantize_FindStartPoints(python::object values,
         lastDiv = i;
       }
     }
-    if (i < nData) blockAct = res[i];
+    if (i < nData) {
+      blockAct = res[i];
+    }
     ++i;
   }
 

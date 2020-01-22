@@ -37,7 +37,7 @@ void convertToNumpyArray(const T &v, python::object destArray) {
   if (!PyArray_Check(destArray.ptr())) {
     throw_value_error("Expecting a Numeric array object");
   }
-  PyArrayObject *destP = (PyArrayObject *)destArray.ptr();
+  auto *destP = (PyArrayObject *)destArray.ptr();
   npy_intp ndims[1];
   ndims[0] = v.size();
   PyArray_Dims dims;

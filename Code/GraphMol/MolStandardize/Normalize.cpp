@@ -87,7 +87,7 @@ ROMol *Normalizer::normalize(const ROMol &mol) {
     ROMOL_SPTR nfrag(this->normalizeFragment(*frag, transforms));
     nfrags.push_back(nfrag);
   }
-  ROMol *outmol = new ROMol(*(nfrags.back()));
+  auto *outmol = new ROMol(*(nfrags.back()));
   nfrags.pop_back();
   for (const auto &nfrag : nfrags) {
     ROMol *tmol = combineMols(*outmol, *nfrag);
@@ -145,7 +145,9 @@ boost::shared_ptr<ROMol> Normalizer::applyTransform(
   MOL_SPTR_VECT mols;
   mols.push_back(mol);
 
-  if (!transform.isInitialized()) transform.initReactantMatchers();
+  if (!transform.isInitialized()) {
+    transform.initReactantMatchers();
+  }
   // REVIEW: what's the source of the 20 in the next line?
   for (unsigned int i = 0; i < 20; ++i) {
     std::vector<Normalizer::Product> pdts;
@@ -157,7 +159,7 @@ boost::shared_ptr<ROMol> Normalizer::applyTransform(
         // std::endl;
         unsigned int failed;
         try {
-          RWMol *tmol = static_cast<RWMol *>(pdt[0].get());
+          auto *tmol = static_cast<RWMol *>(pdt[0].get());
           // we'll allow atoms with a valence that's too high to make it
           // through, but we should fail if we just created something that
           // can't, for example, be kekulized.
@@ -185,10 +187,11 @@ boost::shared_ptr<ROMol> Normalizer::applyTransform(
       }
     }
   }
-  if (mols.size())
+  if (mols.size()) {
     return mols[0];
-  else
+  } else {
     return nullptr;
+  }
 }
 
 }  // namespace MolStandardize

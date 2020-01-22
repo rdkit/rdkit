@@ -26,7 +26,9 @@ double computeSignedDihedralAngle(const Point3D& pt1, const Point3D& pt2,
   // now calculate the sign:
   Point3D crs3 = crs1.crossProduct(crs2);
   double dot = crs3.dotProduct(begEndVec);
-  if (dot < 0.0) ang *= -1;
+  if (dot < 0.0) {
+    ang *= -1;
+  }
 
   return ang;
 }

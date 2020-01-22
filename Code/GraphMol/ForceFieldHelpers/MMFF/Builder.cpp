@@ -99,7 +99,9 @@ void addBonds(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
 }
 
 unsigned int twoBitCellPos(unsigned int nAtoms, int i, int j) {
-  if (j < i) std::swap(i, j);
+  if (j < i) {
+    std::swap(i, j);
+  }
 
   return i * (nAtoms - 1) + i * (1 - i) / 2 + j;
 }
@@ -659,7 +661,9 @@ void addTorsions(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
                            : SmartsToMol(torsionBondSmarts);
   TEST_ASSERT(query);
   unsigned int nHits = SubstructMatch(mol, *query, matchVect);
-  if (query != defaultQuery) delete query;
+  if (query != defaultQuery) {
+    delete query;
+  }
 
   for (unsigned int i = 0; i < nHits; ++i) {
     MatchVectType match = matchVect[i];
@@ -896,8 +900,9 @@ void addEle(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
       bool is1_4 = (cell == RELATION_1_4);
       if (cell >= RELATION_1_4) {
         if (isDoubleZero(mmffMolProperties->getMMFFPartialCharge(i)) ||
-            isDoubleZero(mmffMolProperties->getMMFFPartialCharge(j)))
+            isDoubleZero(mmffMolProperties->getMMFFPartialCharge(j))) {
           continue;
+        }
         double dist = (conf.getAtomPos(i) - conf.getAtomPos(j)).length();
         if (dist > nonBondedThresh) {
           continue;

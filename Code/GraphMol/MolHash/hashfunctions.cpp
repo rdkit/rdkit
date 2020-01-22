@@ -83,15 +83,18 @@ RDKit::Bond *NMRDKitMolNewBond(RDKit::RWMol *mol, RDKit::Atom *src,
         type = RDKit::Bond::QUADRUPLE;
         break;
     }
-  } else
+  } else {
     type = RDKit::Bond::AROMATIC;
+  }
 
   result = new RDKit::Bond(type);
   result->setOwningMol(mol);
   result->setBeginAtom(src);
   result->setEndAtom(dst);
   mol->addBond(result, true);
-  if (arom) result->setIsAromatic(true);
+  if (arom) {
+    result->setIsAromatic(true);
+  }
   return result;
 }
 
@@ -155,10 +158,11 @@ static std::string NMMolecularFormula(RWMol *mol, const unsigned int *parts,
     unsigned int idx = aptr->getIdx();
     if (part == 0 || parts[idx] == part) {
       unsigned int elem = aptr->getAtomicNum();
-      if (elem < 256)
+      if (elem < 256) {
         hist[elem]++;
-      else
+      } else {
         hist[0]++;
+      }
       hist[1] += aptr->getTotalNumHs(false);
       charge += aptr->getFormalCharge();
     }
@@ -197,20 +201,25 @@ static std::string NMMolecularFormula(RWMol *mol, const unsigned int *parts,
 
 static std::string NMMolecularFormula(RWMol *mol, bool sep = false) {
   PRECONDITION(mol, "bad molecule");
-  if (!sep) return NMMolecularFormula(mol, 0, 0);
+  if (!sep) {
+    return NMMolecularFormula(mol, nullptr, 0);
+  }
 
   unsigned int acount = mol->getNumAtoms();
-  if (acount == 0) return "";
+  if (acount == 0) {
+    return "";
+  }
 
-  unsigned int size = (unsigned int)(acount * sizeof(int));
-  unsigned int *parts = (unsigned int *)malloc(size);
+  auto size = (unsigned int)(acount * sizeof(int));
+  auto *parts = (unsigned int *)malloc(size);
   unsigned int pcount = NMDetermineComponents(mol, parts, acount);
 
   std::string result;
   if (pcount > 1) {
     std::vector<std::string> vmf;
-    for (unsigned int i = 1; i <= pcount; i++)
+    for (unsigned int i = 1; i <= pcount; i++) {
       vmf.push_back(NMMolecularFormula(mol, parts, i));
+    }
 
     // sort
     result = vmf[0];
@@ -218,8 +227,9 @@ static std::string NMMolecularFormula(RWMol *mol, bool sep = false) {
       result += ".";
       result += vmf[i];
     }
-  } else  // pcount == 1
+  } else {  // pcount == 1
     result = NMMolecularFormula(mol, parts, 1);
+  }
   free(parts);
   return result;
 }
@@ -248,12 +258,13 @@ static void NormalizeHCount(Atom *aptr) {
     case 7:   // Nitogen
     case 15:  // Phosphorus
       hcount = aptr->getDegree();
-      if (hcount < 3)
+      if (hcount < 3) {
         hcount = 3 - hcount;
-      else if (hcount == 4)
+      } else if (hcount == 4) {
         hcount = 1;
-      else
+      } else {
         hcount = 0;
+      }
       break;
     case 6:  // Carbon
       hcount = aptr->getDegree();
@@ -354,8 +365,9 @@ static std::string TautomerHash(RWMol *mol, bool proto) {
   result = MolToSmiles(*mol);
   if (!proto) {
     sprintf(buffer, "_%d_%d", hcount, charge);
-  } else
+  } else {
     sprintf(buffer, "_%d", hcount - charge);
+  }
   result += buffer;
   return result;
 }
@@ -368,9 +380,13 @@ static bool TraverseForRing(Atom *atom, unsigned char *visit) {
            atom->getOwningMol().getAtomNeighbors(atom))) {
     auto nptr = atom->getOwningMol()[nbri];
     if (visit[nptr->getIdx()] == 0) {
-      if (RDKit::queryIsAtomInRing(nptr)) return true;
+      if (RDKit::queryIsAtomInRing(nptr)) {
+        return true;
+      }
 
-      if (TraverseForRing(nptr, visit)) return true;
+      if (TraverseForRing(nptr, visit)) {
+        return true;
+      }
     }
   }
   return false;
@@ -382,7 +398,7 @@ static bool DepthFirstSearchForRing(Atom *root, Atom *nbor,
   PRECONDITION(nbor, "bad atom pointer");
 
   unsigned int natoms = maxatomidx;
-  unsigned char *visit = (unsigned char *)alloca(natoms);
+  auto *visit = (unsigned char *)alloca(natoms);
   memset(visit, 0, natoms);
 
   visit[root->getIdx()] = true;
@@ -391,13 +407,17 @@ static bool DepthFirstSearchForRing(Atom *root, Atom *nbor,
 
 bool IsInScaffold(Atom *atom, unsigned int maxatomidx) {
   PRECONDITION(atom, "bad atom pointer");
-  if (RDKit::queryIsAtomInRing(atom)) return true;
+  if (RDKit::queryIsAtomInRing(atom)) {
+    return true;
+  }
 
   unsigned int count = 0;
   for (auto nbri : boost::make_iterator_range(
            atom->getOwningMol().getAtomNeighbors(atom))) {
     auto nptr = atom->getOwningMol()[nbri];
-    if (DepthFirstSearchForRing(atom, nptr, maxatomidx)) ++count;
+    if (DepthFirstSearchForRing(atom, nptr, maxatomidx)) {
+      ++count;
+    }
   }
   return count > 1;
 }
@@ -408,7 +428,9 @@ static bool HasNbrInScaffold(Atom *aptr, unsigned char *is_in_scaffold) {
   for (auto nbri : boost::make_iterator_range(
            aptr->getOwningMol().getAtomNeighbors(aptr))) {
     auto nptr = aptr->getOwningMol()[nbri];
-    if (is_in_scaffold[nptr->getIdx()]) return true;
+    if (is_in_scaffold[nptr->getIdx()]) {
+      return true;
+    }
   }
   return false;
 }
@@ -418,7 +440,7 @@ static std::string ExtendedMurckoScaffold(RWMol *mol) {
   RDKit::MolOps::fastFindRings(*mol);
 
   unsigned int maxatomidx = mol->getNumAtoms();
-  unsigned char *is_in_scaffold = (unsigned char *)alloca(maxatomidx);
+  auto *is_in_scaffold = (unsigned char *)alloca(maxatomidx);
   for (auto aptr : mol->atoms()) {
     is_in_scaffold[aptr->getIdx()] = IsInScaffold(aptr, maxatomidx);
   }
@@ -426,7 +448,9 @@ static std::string ExtendedMurckoScaffold(RWMol *mol) {
   std::vector<Atom *> for_deletion;
   for (auto aptr : mol->atoms()) {
     unsigned int aidx = aptr->getIdx();
-    if (is_in_scaffold[aidx]) continue;
+    if (is_in_scaffold[aidx]) {
+      continue;
+    }
     if (HasNbrInScaffold(aptr, is_in_scaffold)) {
       aptr->setAtomicNum(0);
       aptr->setFormalCharge(0);
@@ -437,8 +461,9 @@ static std::string ExtendedMurckoScaffold(RWMol *mol) {
     }
   }
 
-  for (unsigned int i = 0; i < for_deletion.size(); ++i)
-    mol->removeAtom(for_deletion[i]);
+  for (auto &i : for_deletion) {
+    mol->removeAtom(i);
+  }
 
   MolOps::assignRadicals(*mol);
   std::string result;
@@ -467,8 +492,8 @@ static std::string MurckoScaffoldHash(RWMol *mol) {
         for_deletion.push_back(aptr);
       }
     }
-    for (unsigned int i = 0; i < for_deletion.size(); ++i) {
-      mol->removeAtom(for_deletion[i]);
+    for (auto &i : for_deletion) {
+      mol->removeAtom(i);
     }
   } while (!for_deletion.empty());
   MolOps::assignRadicals(*mol);
@@ -501,7 +526,9 @@ static std::string SmallWorldHash(RWMol *mol, bool brl) {
   if (brl) {
     unsigned int lcount = 0;
     for (auto aptr : mol->atoms()) {
-      if (aptr->getDegree() == 2) lcount++;
+      if (aptr->getDegree() == 2) {
+        lcount++;
+      }
     }
     sprintf(buffer, "B%uR%uL%u", bcount, rcount, lcount);
   } else {
@@ -535,7 +562,9 @@ static bool HasDoubleBond(Atom *atom) {
   for (const auto &nbri :
        boost::make_iterator_range(atom->getOwningMol().getAtomBonds(atom))) {
     auto bptr = (atom->getOwningMol())[nbri];
-    if (NMRDKitBondGetOrder(bptr) == 2) return true;
+    if (NMRDKitBondGetOrder(bptr) == 2) {
+      return true;
+    }
   }
   return false;
 }
@@ -549,24 +578,38 @@ static bool HasDoubleBond(Atom *atom) {
 
 static int RegioisomerBond(Bond *bnd) {
   PRECONDITION(bnd, "bad bond");
-  if (NMRDKitBondGetOrder(bnd) != 1) return -1;
-  if (RDKit::queryIsBondInRing(bnd)) return -1;
+  if (NMRDKitBondGetOrder(bnd) != 1) {
+    return -1;
+  }
+  if (RDKit::queryIsBondInRing(bnd)) {
+    return -1;
+  }
 
   Atom *beg = bnd->getBeginAtom();
   Atom *end = bnd->getEndAtom();
   unsigned int beg_elem = beg->getAtomicNum();
   unsigned int end_elem = end->getAtomicNum();
 
-  if (beg_elem == 0 || end_elem == 0) return -1;
+  if (beg_elem == 0 || end_elem == 0) {
+    return -1;
+  }
 
   if (RDKit::queryIsAtomInRing(beg)) {
-    if (RDKit::queryIsAtomInRing(end)) return 0;
+    if (RDKit::queryIsAtomInRing(end)) {
+      return 0;
+    }
     return 2;
   }
-  if (RDKit::queryIsAtomInRing(end)) return 1;
+  if (RDKit::queryIsAtomInRing(end)) {
+    return 1;
+  }
 
-  if (beg_elem != 6 && end_elem == 6 && !HasDoubleBond(end)) return 1;
-  if (beg_elem == 6 && end_elem != 6 && !HasDoubleBond(beg)) return 2;
+  if (beg_elem != 6 && end_elem == 6 && !HasDoubleBond(end)) {
+    return 1;
+  }
+  if (beg_elem == 6 && end_elem != 6 && !HasDoubleBond(beg)) {
+    return 2;
+  }
 
   return -1;
 }
@@ -576,8 +619,9 @@ static void ClearEZStereo(Atom *atm) {
   for (const auto &nbri :
        boost::make_iterator_range(atm->getOwningMol().getAtomBonds(atm))) {
     auto bptr = (atm->getOwningMol())[nbri];
-    if (bptr->getStereo() > RDKit::Bond::STEREOANY)
+    if (bptr->getStereo() > RDKit::Bond::STEREOANY) {
       bptr->setStereo(RDKit::Bond::STEREOANY);
+    }
   }
 }
 
@@ -636,7 +680,7 @@ static std::string ArthorSubOrderHash(RWMol *mol) {
 
   unsigned int pcount = 1;
   unsigned int size = 4 * mol->getNumAtoms() + 4;
-  unsigned int *parts = (unsigned int *)malloc(size);
+  auto *parts = (unsigned int *)malloc(size);
   if (parts) {
     memset(parts, 0, size);
     pcount = NMDetermineComponents(mol, parts, acount);
@@ -656,23 +700,31 @@ static std::string ArthorSubOrderHash(RWMol *mol) {
     switch (elem) {
       case 6:  // Carbon
         ccount++;
-        if (charge == 0 && aptr->getTotalValence() != 4) rcount++;
+        if (charge == 0 && aptr->getTotalValence() != 4) {
+          rcount++;
+        }
         break;
       case 7:   // Nitrogen
       case 15:  // Phosphorus
         ocount++;
         if (charge == 0) {
           unsigned int valence = aptr->getTotalValence();
-          if (valence != 3 && valence != 5) rcount++;
+          if (valence != 3 && valence != 5) {
+            rcount++;
+          }
         }
         break;
       case 8:  // Oxygen
         ocount++;
-        if (charge && aptr->getTotalValence() != 2) rcount++;
+        if (charge && aptr->getTotalValence() != 2) {
+          rcount++;
+        }
         break;
       case 9:  // Fluorine
         ocount++;
-        if (charge && aptr->getTotalValence() != 1) rcount++;
+        if (charge && aptr->getTotalValence() != 1) {
+          rcount++;
+        }
         break;
       case 17:  // Chlorine
       case 35:  // Bromine
@@ -680,32 +732,57 @@ static std::string ArthorSubOrderHash(RWMol *mol) {
         ocount++;
         if (charge == 0) {
           unsigned int valence = aptr->getTotalValence();
-          if (valence != 1 && valence != 3 && valence != 5 && valence != 7)
+          if (valence != 1 && valence != 3 && valence != 5 && valence != 7) {
             rcount++;
+          }
         }
         break;
       case 16:  // Sulfur
         ocount++;
         if (charge == 0) {
           unsigned int valence = aptr->getTotalValence();
-          if (valence != 2 && valence != 4 && valence != 6) rcount++;
+          if (valence != 2 && valence != 4 && valence != 6) {
+            rcount++;
+          }
         }
         break;
     }
     zcount += elem;
-    if (aptr->getIsotope() != 0) icount++;
-    if (charge != 0) qcount++;
+    if (aptr->getIsotope() != 0) {
+      icount++;
+    }
+    if (charge != 0) {
+      qcount++;
+    }
   }
 
-  if (acount > 0xffff) acount = 0xffff;
-  if (bcount > 0xffff) bcount = 0xffff;
-  if (pcount > 0xff) pcount = 0xff;
-  if (ccount > 0xffff) ccount = 0xffff;
-  if (ocount > 0xffff) ocount = 0xffff;
-  if (zcount > 0xffffff) zcount = 0xffffff;
-  if (rcount > 0xff) rcount = 0xff;
-  if (qcount > 0xff) qcount = 0xff;
-  if (icount > 0xff) icount = 0xff;
+  if (acount > 0xffff) {
+    acount = 0xffff;
+  }
+  if (bcount > 0xffff) {
+    bcount = 0xffff;
+  }
+  if (pcount > 0xff) {
+    pcount = 0xff;
+  }
+  if (ccount > 0xffff) {
+    ccount = 0xffff;
+  }
+  if (ocount > 0xffff) {
+    ocount = 0xffff;
+  }
+  if (zcount > 0xffffff) {
+    zcount = 0xffffff;
+  }
+  if (rcount > 0xff) {
+    rcount = 0xff;
+  }
+  if (qcount > 0xff) {
+    qcount = 0xff;
+  }
+  if (icount > 0xff) {
+    icount = 0xff;
+  }
 
   sprintf(buffer, "%04x%04x%02x%04x%04x%06x%02x%02x%02x", acount, bcount,
           pcount, ccount, ocount, zcount, rcount, qcount, icount);

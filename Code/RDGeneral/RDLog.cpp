@@ -29,32 +29,48 @@ void enable_logs(const char *arg) { enable_logs(std::string(arg)); };
 void enable_logs(const std::string &arg) {
   // Yes... this is extremely crude
   if (arg == "rdApp.debug" || arg == "rdApp.*") {
-    if (rdDebugLog) rdDebugLog->df_enabled = true;
+    if (rdDebugLog) {
+      rdDebugLog->df_enabled = true;
+    }
   }
   if (arg == "rdApp.info" || arg == "rdApp.*") {
-    if (rdInfoLog) rdInfoLog->df_enabled = true;
+    if (rdInfoLog) {
+      rdInfoLog->df_enabled = true;
+    }
   }
   if (arg == "rdApp.warning" || arg == "rdApp.*") {
-    if (rdWarningLog) rdWarningLog->df_enabled = true;
+    if (rdWarningLog) {
+      rdWarningLog->df_enabled = true;
+    }
   }
   if (arg == "rdApp.error" || arg == "rdApp.*") {
-    if (rdErrorLog) rdErrorLog->df_enabled = true;
+    if (rdErrorLog) {
+      rdErrorLog->df_enabled = true;
+    }
   }
 };
 void disable_logs(const char *arg) { disable_logs(std::string(arg)); };
 void disable_logs(const std::string &arg) {
   // Yes... this is extremely crude
   if (arg == "rdApp.debug" || arg == "rdApp.*") {
-    if (rdDebugLog) rdDebugLog->df_enabled = false;
+    if (rdDebugLog) {
+      rdDebugLog->df_enabled = false;
+    }
   }
   if (arg == "rdApp.info" || arg == "rdApp.*") {
-    if (rdInfoLog) rdInfoLog->df_enabled = false;
+    if (rdInfoLog) {
+      rdInfoLog->df_enabled = false;
+    }
   }
   if (arg == "rdApp.warning" || arg == "rdApp.*") {
-    if (rdWarningLog) rdWarningLog->df_enabled = false;
+    if (rdWarningLog) {
+      rdWarningLog->df_enabled = false;
+    }
   }
   if (arg == "rdApp.error" || arg == "rdApp.*") {
-    if (rdErrorLog) rdErrorLog->df_enabled = false;
+    if (rdErrorLog) {
+      rdErrorLog->df_enabled = false;
+    }
   }
 };
 }  // namespace logging

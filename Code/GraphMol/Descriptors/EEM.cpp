@@ -125,7 +125,7 @@ std::unique_ptr<double[]> getEEMMatrix(double *dist3D, unsigned int n,
                                        const EEM_arrays& EEMatoms) {
   PRECONDITION(dist3D != nullptr, "bad dist3D argument")
   int sizeArray = (n + 1) * (n + 1);
-  double *EEM =
+  auto *EEM =
       new double[sizeArray]();  // declaration to set all elements to zeros!
   /* Fill the full n * n block */
   for (unsigned int i = 0; i < n; i++) {
@@ -159,7 +159,7 @@ std::unique_ptr<double[]> getEEMMatrix(double *dist3D, unsigned int n,
 std::unique_ptr<double[]> getBVector(const ROMol &mol, unsigned int n,
                                      const EEM_arrays &EEMatoms) {
   /* Fill vector b i.e. -A */
-  double *b = new double[n + 1];
+  auto *b = new double[n + 1];
   for (unsigned int j = 0; j < n; j++) {
     unsigned int t = EEMatoms.EEMatomtype[j];
     unsigned int idx = EEMatoms.Atomindex[j];

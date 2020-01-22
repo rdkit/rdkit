@@ -117,8 +117,9 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
                           fromAtoms->end()) {
       if (!onlyNonzeroInvariants || (*invariants)[i]) {
         uint32_t bit = updateElement(res, (*invariants)[i], useCounts);
-        if (atomsSettingBits)
+        if (atomsSettingBits) {
           (*atomsSettingBits)[bit].push_back(std::make_pair(i, 0));
+        }
       }
     }
   }
@@ -144,10 +145,11 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
   if (onlyNonzeroInvariants) {
     std::vector<std::pair<int32_t, uint32_t>> ordering;
     for (unsigned int i = 0; i < nAtoms; ++i) {
-      if (!(*invariants)[i])
+      if (!(*invariants)[i]) {
         ordering.push_back(std::make_pair(1, i));
-      else
+      } else {
         ordering.push_back(std::make_pair(0, i));
+      }
     }
     std::sort(ordering.begin(), ordering.end());
     for (unsigned int i = 0; i < nAtoms; ++i) {
@@ -262,9 +264,10 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
         if (!onlyNonzeroInvariants || invariantCpy[iter->get<2>()]) {
           if (includeAtoms[iter->get<2>()]) {
             uint32_t bit = updateElement(res, iter->get<1>(), useCounts);
-            if (atomsSettingBits)
+            if (atomsSettingBits) {
               (*atomsSettingBits)[bit].push_back(
                   std::make_pair(iter->get<2>(), layer + 1));
+            }
           }
           if (!fromAtoms || std::find(fromAtoms->begin(), fromAtoms->end(),
                                       iter->get<2>()) != fromAtoms->end()) {
@@ -289,7 +292,9 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
     atomNeighborhoods = roundAtomNeighborhoods;
   }
 
-  if (owner) delete invariants;
+  if (owner) {
+    delete invariants;
+  }
 }
 
 SparseIntVect<uint32_t> *getFingerprint(const ROMol &mol, unsigned int radius,

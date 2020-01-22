@@ -84,7 +84,9 @@ void SDMolSupplier::init() {
 
 void SDMolSupplier::setDataCommon(const std::string &text, bool sanitize,
                                   bool removeHs) {
-  if (dp_inStream && df_owner) delete dp_inStream;
+  if (dp_inStream && df_owner) {
+    delete dp_inStream;
+  }
   init();
   std::istream *tmpStream = nullptr;
   tmpStream = static_cast<std::istream *>(

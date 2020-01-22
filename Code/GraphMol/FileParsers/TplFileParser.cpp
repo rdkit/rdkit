@@ -43,19 +43,18 @@ void ParseTPLAtomLine(std::string text, unsigned int lineNum, RWMol *mol,
   atomId = mol->addAtom(atom, false, true);
 
   atom->setFormalCharge(FileParserUtils::stripSpacesAndCast<int>(splitLine[2]));
-  double partialChg = FileParserUtils::stripSpacesAndCast<double>(splitLine[3]);
+  auto partialChg = FileParserUtils::stripSpacesAndCast<double>(splitLine[3]);
   atom->setProp("TPLCharge", partialChg);
-  double xp = FileParserUtils::stripSpacesAndCast<double>(splitLine[4]);
-  double yp = FileParserUtils::stripSpacesAndCast<double>(splitLine[5]);
-  double zp = FileParserUtils::stripSpacesAndCast<double>(splitLine[6]);
+  auto xp = FileParserUtils::stripSpacesAndCast<double>(splitLine[4]);
+  auto yp = FileParserUtils::stripSpacesAndCast<double>(splitLine[5]);
+  auto zp = FileParserUtils::stripSpacesAndCast<double>(splitLine[6]);
   // coords in TPL files are in picometers, adjust:
   xp /= 100.;
   yp /= 100.;
   zp /= 100.;
   conf->setAtomPos(atomId, RDGeom::Point3D(xp, yp, zp));
 
-  unsigned int nBonds =
-      FileParserUtils::stripSpacesAndCast<unsigned int>(splitLine[7]);
+  auto nBonds = FileParserUtils::stripSpacesAndCast<unsigned int>(splitLine[7]);
   // the only remaining info we care about is stereochem, and then only if
   // the number of bonds is 4:
   if (nBonds == 4 && splitLine.size() > 8 + nBonds) {
@@ -151,9 +150,9 @@ Conformer *ParseConfData(std::istream *inStream, unsigned int &line, RWMol *mol,
              << " while reading conformer  " << confId << std::endl;
       throw FileParseException(errout.str());
     }
-    double xp = FileParserUtils::stripSpacesAndCast<double>(splitLine[0]);
-    double yp = FileParserUtils::stripSpacesAndCast<double>(splitLine[1]);
-    double zp = FileParserUtils::stripSpacesAndCast<double>(splitLine[2]);
+    auto xp = FileParserUtils::stripSpacesAndCast<double>(splitLine[0]);
+    auto yp = FileParserUtils::stripSpacesAndCast<double>(splitLine[1]);
+    auto zp = FileParserUtils::stripSpacesAndCast<double>(splitLine[2]);
     // coords in TPL files are in picometers, adjust:
     xp /= 100.;
     yp /= 100.;

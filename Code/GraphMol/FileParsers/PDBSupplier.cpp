@@ -53,7 +53,9 @@ ROMol *PDBMolSupplier::next() {
 }
 
 bool PDBMolSupplier::atEnd() {
-  if (dp_inStream->eof()) return true;
+  if (dp_inStream->eof()) {
+    return true;
+  }
   int ch = dp_inStream->peek();
   return ch == -1;
 }

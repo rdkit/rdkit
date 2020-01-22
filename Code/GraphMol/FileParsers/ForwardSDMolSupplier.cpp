@@ -98,8 +98,9 @@ void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
           while (stmp.length() != 0) {
             d_line++;
             std::getline(*dp_inStream, tempStr);
-            if (dp_inStream->eof())
+            if (dp_inStream->eof()) {
               throw FileParseException("End of data field name not found");
+            }
           }
         } else {
           dlabel = tempStr.substr(sl + 1, se - sl - 1);
@@ -200,8 +201,9 @@ ROMol *ForwardSDMolSupplier::_next() {
     // there's a special case when trying to read an empty string that
     // we get an empty molecule after only reading a single line without any
     // additional error state.
-    if (!res && dp_inStream->eof() && (line - d_line < 2))
+    if (!res && dp_inStream->eof() && (line - d_line < 2)) {
       df_eofHitOnRead = true;
+    }
     d_line = line;
     if (res) {
       this->readMolProps(res);
@@ -216,7 +218,9 @@ ROMol *ForwardSDMolSupplier::_next() {
       }
     }
   } catch (FileParseException &fe) {
-    if (d_line < static_cast<int>(line)) d_line = line;
+    if (d_line < static_cast<int>(line)) {
+      d_line = line;
+    }
     // we couldn't read a mol block or the data for the molecule. In this case
     // advance forward in the stream until we hit the next record and then
     // rethrow
@@ -234,7 +238,9 @@ ROMol *ForwardSDMolSupplier::_next() {
       std::getline(*dp_inStream, tempStr);
     }
   } catch (MolSanitizeException &se) {
-    if (d_line < static_cast<int>(line)) d_line = line;
+    if (d_line < static_cast<int>(line)) {
+      d_line = line;
+    }
     // We couldn't sanitize a molecule we got - write out an error message and
     // move to
     // the beginning of the next molecule
@@ -245,15 +251,21 @@ ROMol *ForwardSDMolSupplier::_next() {
 
     d_line++;
     std::getline(*dp_inStream, tempStr);
-    if (dp_inStream->eof()) df_eofHitOnRead = true;
+    if (dp_inStream->eof()) {
+      df_eofHitOnRead = true;
+    }
     while (!dp_inStream->eof() && !dp_inStream->fail() &&
            (tempStr[0] != '$' || tempStr.substr(0, 4) != "$$$$")) {
       d_line++;
       std::getline(*dp_inStream, tempStr);
     }
   } catch (...) {
-    if (dp_inStream->eof()) df_eofHitOnRead = true;
-    if (d_line < static_cast<int>(line)) d_line = line;
+    if (dp_inStream->eof()) {
+      df_eofHitOnRead = true;
+    }
+    if (d_line < static_cast<int>(line)) {
+      d_line = line;
+    }
 
     BOOST_LOG(rdErrorLog) << "Unexpected error hit on line " << d_line
                           << std::endl;
@@ -261,7 +273,9 @@ ROMol *ForwardSDMolSupplier::_next() {
         << "ERROR: moving to the beginning of the next molecule\n";
     d_line++;
     std::getline(*dp_inStream, tempStr);
-    if (dp_inStream->eof()) df_eofHitOnRead = true;
+    if (dp_inStream->eof()) {
+      df_eofHitOnRead = true;
+    }
     while (!dp_inStream->eof() && !dp_inStream->fail() &&
            (tempStr[0] != '$' || tempStr.substr(0, 4) != "$$$$")) {
       d_line++;

@@ -89,7 +89,9 @@ void Atom::initFromOther(const Atom &other) {
 Atom::Atom(const Atom &other) : RDProps() { initFromOther(other); }
 
 Atom &Atom::operator=(const Atom &other) {
-  if (this == &other) return *this;
+  if (this == &other) {
+    return *this;
+  }
   initFromOther(other);
   return *this;
 }
@@ -166,7 +168,9 @@ unsigned int Atom::getTotalNumHs(bool includeNeighbors) const {
     boost::tie(begin, end) = parent->getAtomNeighbors(this);
     while (begin != end) {
       const Atom *at = parent->getAtomWithIdx(*begin);
-      if (at->getAtomicNum() == 1) res++;
+      if (at->getAtomicNum() == 1) {
+        res++;
+      }
       ++begin;
     }
   }
@@ -174,7 +178,9 @@ unsigned int Atom::getTotalNumHs(bool includeNeighbors) const {
 }
 
 unsigned int Atom::getNumImplicitHs() const {
-  if (df_noImplicit) return 0;
+  if (df_noImplicit) {
+    return 0;
+  }
 
   PRECONDITION(d_implicitValence > -1,
                "getNumImplicitHs() called without preceding call to "
@@ -215,10 +221,13 @@ int Atom::calcExplicitValence(bool strict) {
   // check accum is greater than the default valence
   unsigned int dv = PeriodicTable::getTable()->getDefaultValence(d_atomicNum);
   int chr = getFormalCharge();
-  if (isEarlyAtom(d_atomicNum))
+  if (isEarlyAtom(d_atomicNum)) {
     chr *= -1;  // <- the usual correction for early atoms
+  }
   // special case for carbon - see GitHub #539
-  if (d_atomicNum == 6 && chr > 0) chr = -chr;
+  if (d_atomicNum == 6 && chr > 0) {
+    chr = -chr;
+  }
   if (accum > (dv + chr) && this->getIsAromatic()) {
     // this needs some explanation : if the atom is aromatic and
     // accum > (dv + chr) we assume that no hydrogen can be added
@@ -247,7 +256,9 @@ int Atom::calcExplicitValence(bool strict) {
     // the valence is 3 or the bridging N in c1ccn2cncc2c1, which starts
     // with a valence of 4.5, but can be happily kekulized down to a valence
     // of 3
-    if (accum - pval <= 1.5) accum = pval;
+    if (accum - pval <= 1.5) {
+      accum = pval;
+    }
   }
   // despite promising to not to blame it on him - this a trick Greg
   // came up with: if we have a bond order sum of x.5 (i.e. 1.5, 2.5
@@ -298,7 +309,9 @@ int Atom::calcExplicitValence(bool strict) {
 int Atom::getImplicitValence() const {
   PRECONDITION(dp_mol,
                "valence not defined for atoms not associated with molecules");
-  if (df_noImplicit) return 0;
+  if (df_noImplicit) {
+    return 0;
+  }
   return d_implicitValence;
 }
 
@@ -307,8 +320,12 @@ int Atom::getImplicitValence() const {
 int Atom::calcImplicitValence(bool strict) {
   PRECONDITION(dp_mol,
                "valence not defined for atoms not associated with molecules");
-  if (df_noImplicit) return 0;
-  if (d_explicitValence == -1) this->calcExplicitValence(strict);
+  if (df_noImplicit) {
+    return 0;
+  }
+  if (d_explicitValence == -1) {
+    this->calcExplicitValence(strict);
+  }
   // this is basically the difference between the allowed valence of
   // the atom and the explicit valence already specified - tells how
   // many Hs to add
@@ -372,7 +389,9 @@ int Atom::calcImplicitValence(bool strict) {
     chg *= -1;
   }
   // special case for carbon - see GitHub #539
-  if (d_atomicNum == 6 && chg > 0) chg = -chg;
+  if (d_atomicNum == 6 && chg > 0) {
+    chg = -chg;
+  }
 
   // if we have an aromatic case treat it differently
   if (getIsAromatic()) {
@@ -443,7 +462,9 @@ double Atom::getMass() const {
   if (d_isotope) {
     double res =
         PeriodicTable::getTable()->getMassForIsotope(d_atomicNum, d_isotope);
-    if (d_atomicNum != 0 && res == 0.0) res = d_isotope;
+    if (d_atomicNum != 0 && res == 0.0) {
+      res = d_isotope;
+    }
     return res;
   } else {
     return PeriodicTable::getTable()->getAtomicWeight(d_atomicNum);

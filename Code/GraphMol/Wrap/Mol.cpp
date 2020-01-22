@@ -197,10 +197,13 @@ class ReadWriteMol : public RWMol {
     pythonObjectToVect<StereoGroup>(stereo_groups, groups);
     for (const auto group : groups) {
       for (const auto atom : group.getAtoms()) {
-        if (!atom) throw_value_error("NULL atom in StereoGroup");
-        if (&atom->getOwningMol() != this)
+        if (!atom) {
+          throw_value_error("NULL atom in StereoGroup");
+        }
+        if (&atom->getOwningMol() != this) {
           throw_value_error(
               "atom in StereoGroup does not belong to this molecule.");
+        }
       }
     }
     setStereoGroups(std::move(groups));

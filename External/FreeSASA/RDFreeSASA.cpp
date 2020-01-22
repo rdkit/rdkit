@@ -159,7 +159,9 @@ double internalCalcSASA(const ROMol &mol, const std::vector<double> &radii,
 
   freesasa_result *res =
       freesasa_calc_coord(&coords[0], &radii[0], mol.getNumAtoms(), &params);
-  if (!res) return 0.0;
+  if (!res) {
+    return 0.0;
+  }
   CHECK_INVARIANT(res->n_atoms == rdcast<int>(mol.getNumAtoms()),
                   "freesasa didn't return the correct number of atoms");
 

@@ -112,10 +112,11 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
         switch (heavyAtom->getHybridization()) {
           case Atom::SP3:
             // get a perpendicular to nbr1Vect:
-            if ((*cfi)->is3D())
+            if ((*cfi)->is3D()) {
               perpVect = nbr1Vect.getPerpendicular();
-            else
+            } else {
               perpVect.z = 1.0;
+            }
             // and move off it:
             tform.SetRotation((180 - 109.471) * M_PI / 180., perpVect);
             dirVect = tform * nbr1Vect;
@@ -165,10 +166,11 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
       boost::tie(nbrIdx, endNbrs) = mol->getAtomNeighbors(heavyAtom);
       while (nbrIdx != endNbrs) {
         if (*nbrIdx != hydIdx) {
-          if (!nbr1)
+          if (!nbr1) {
             nbr1 = mol->getAtomWithIdx(*nbrIdx);
-          else
+          } else {
             nbr2 = mol->getAtomWithIdx(*nbrIdx);
+          }
         }
         ++nbrIdx;
       }
@@ -355,7 +357,7 @@ void AssignHsResidueInfo(RWMol &mol) {
   int max_serial = 0;
   unsigned int stopIdx = mol.getNumAtoms();
   for (unsigned int aidx = 0; aidx < stopIdx; ++aidx) {
-    AtomPDBResidueInfo *info =
+    auto *info =
         (AtomPDBResidueInfo *)(mol.getAtomWithIdx(aidx)->getMonomerInfo());
     if (info && info->getMonomerType() == AtomMonomerInfo::PDBRESIDUE &&
         info->getSerialNumber() > max_serial) {
@@ -363,11 +365,11 @@ void AssignHsResidueInfo(RWMol &mol) {
     }
   }
 
-  AtomPDBResidueInfo *current_info = 0;
+  AtomPDBResidueInfo *current_info = nullptr;
   int current_h_id = 0;
   for (unsigned int aidx = 0; aidx < stopIdx; ++aidx) {
     Atom *newAt = mol.getAtomWithIdx(aidx);
-    AtomPDBResidueInfo *info = (AtomPDBResidueInfo *)(newAt->getMonomerInfo());
+    auto *info = (AtomPDBResidueInfo *)(newAt->getMonomerInfo());
     if (info && info->getMonomerType() == AtomMonomerInfo::PDBRESIDUE) {
       ROMol::ADJ_ITER begin, end;
       boost::tie(begin, end) = mol.getAtomNeighbors(newAt);
@@ -376,11 +378,12 @@ void AssignHsResidueInfo(RWMol &mol) {
           // Make all Hs unique - increment id even for existing
           ++current_h_id;
           // skip if hydrogen already has PDB info
-          AtomPDBResidueInfo *h_info =
-              (AtomPDBResidueInfo *)mol.getAtomWithIdx(*begin)
-                  ->getMonomerInfo();
-          if (h_info && h_info->getMonomerType() == AtomMonomerInfo::PDBRESIDUE)
+          auto *h_info = (AtomPDBResidueInfo *)mol.getAtomWithIdx(*begin)
+                             ->getMonomerInfo();
+          if (h_info &&
+              h_info->getMonomerType() == AtomMonomerInfo::PDBRESIDUE) {
             continue;
+          }
           // the hydrogens have unique names on residue basis (H1, H2, ...)
           if (!current_info ||
               current_info->getResidueNumber() != info->getResidueNumber() ||
@@ -388,10 +391,13 @@ void AssignHsResidueInfo(RWMol &mol) {
             current_h_id = 1;
             current_info = info;
           }
-          std::string h_label = boost::lexical_cast<std::string>(current_h_id);
-          if (h_label.length() > 3)
+          std::string h_label = std::to_string(current_h_id);
+          if (h_label.length() > 3) {
             h_label = h_label.substr(h_label.length() - 3, 3);
-          while (h_label.length() < 3) h_label = h_label + " ";
+          }
+          while (h_label.length() < 3) {
+            h_label = h_label + " ";
+          }
           h_label = "H" + h_label;
           // wrap around id to '3H12'
           h_label = h_label.substr(3, 1) + h_label.substr(0, 3);
@@ -459,7 +465,9 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
       newIdx = mol.addAtom(new Atom(1), false, true);
       mol.addBond(aidx, newIdx, Bond::SINGLE);
       mol.getAtomWithIdx(newIdx)->updatePropertyCache();
-      if (addCoords) setHydrogenCoords(&mol, newIdx, aidx);
+      if (addCoords) {
+        setHydrogenCoords(&mol, newIdx, aidx);
+      }
     }
     // clear the local property
     newAt->setNumExplicitHs(0);
@@ -474,7 +482,9 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
         // off later if need be.
         mol.getAtomWithIdx(newIdx)->setProp(common_properties::isImplicit, 1);
         mol.getAtomWithIdx(newIdx)->updatePropertyCache();
-        if (addCoords) setHydrogenCoords(&mol, newIdx, aidx);
+        if (addCoords) {
+          setHydrogenCoords(&mol, newIdx, aidx);
+        }
       }
       // be very clear about implicits not being allowed in this representation
       newAt->setProp(common_properties::origNoImplicit, newAt->getNoImplicit(),
@@ -486,7 +496,9 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
     newAt->updatePropertyCache(false);
   }
   // take care of AtomPDBResidueInfo for Hs if root atom has it
-  if (addResidueInfo) AssignHsResidueInfo(mol);
+  if (addResidueInfo) {
+    AssignHsResidueInfo(mol);
+  }
 }
 
 ROMol *addHs(const ROMol &mol, bool explicitOnly, bool addCoords,
@@ -504,10 +516,14 @@ bool adjustStereoAtomsIfRequired(RWMol &mol, const Atom *atom,
   PRECONDITION(heavyAtom != nullptr, "bad heavy atom");
   // nothing we can do if the degree is only 2 (and we should have covered
   // that earlier anyway)
-  if (heavyAtom->getDegree() == 2) return false;
+  if (heavyAtom->getDegree() == 2) {
+    return false;
+  }
   const auto &cbnd =
       mol.getBondBetweenAtoms(atom->getIdx(), heavyAtom->getIdx());
-  if (!cbnd) return false;
+  if (!cbnd) {
+    return false;
+  }
   for (const auto &nbri :
        boost::make_iterator_range(mol.getAtomBonds(heavyAtom))) {
     Bond *bnd = mol[nbri];
@@ -523,8 +539,9 @@ bool adjustStereoAtomsIfRequired(RWMol &mol, const Atom *atom,
         for (const auto &nbri :
              boost::make_iterator_range(mol.getAtomNeighbors(heavyAtom))) {
           const auto &nbr = mol[nbri];
-          if (nbr->getIdx() == dblNbrIdx || nbr->getIdx() == atom->getIdx())
+          if (nbr->getIdx() == dblNbrIdx || nbr->getIdx() == atom->getIdx()) {
             continue;
+          }
           *sAtomIt = nbr->getIdx();
           bool madeAdjustment = true;
           switch (bnd->getStereo()) {
@@ -959,7 +976,7 @@ void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly) {
       if (atom->hasQuery()) {
         // std::cerr<<"  q: "<<atom->getQuery()->getDescription()<<std::endl;
         if (atom->getQuery()->getDescription() == "RecursiveStructure") {
-          RWMol *rqm = static_cast<RWMol *>(const_cast<ROMol *>(
+          auto *rqm = static_cast<RWMol *>(const_cast<ROMol *>(
               static_cast<RecursiveStructureQuery *>(atom->getQuery())
                   ->getQueryMol()));
           mergeQueryHs(*rqm, mergeUnmappedOnly);
@@ -974,7 +991,7 @@ void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly) {
           // std::cerr<<"      child: "<<qry->getDescription()<<std::endl;
           if (qry->getDescription() == "RecursiveStructure") {
             // std::cerr<<"    recurse"<<std::endl;
-            RWMol *rqm = static_cast<RWMol *>(const_cast<ROMol *>(
+            auto *rqm = static_cast<RWMol *>(const_cast<ROMol *>(
                 static_cast<RecursiveStructureQuery *>(qry.get())
                     ->getQueryMol()));
             mergeQueryHs(*rqm, mergeUnmappedOnly);

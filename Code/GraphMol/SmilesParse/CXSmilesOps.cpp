@@ -40,8 +40,12 @@ bool read_int(Iterator &first, Iterator last, unsigned int &res) {
 template <typename Iterator>
 bool read_int_pair(Iterator &first, Iterator last, unsigned int &n1,
                    unsigned int &n2, char sep = '.') {
-  if (!read_int(first, last, n1)) return false;
-  if (first >= last || *first != sep) return false;
+  if (!read_int(first, last, n1)) {
+    return false;
+  }
+  if (first >= last || *first != sep) {
+    return false;
+  }
   ++first;
   return read_int(first, last, n2);
 }
@@ -62,10 +66,11 @@ std::string read_text_to(Iterator &first, Iterator last, std::string delims) {
       while (next != last && *next >= '0' && *next <= '9') {
         ++next;
       }
-      if (next == last || *next != ';')
+      if (next == last || *next != ';') {
         throw RDKit::SmilesParseException(
             "failure parsing CXSMILES extensions: quoted block not terminated "
             "with ';'");
+      }
       if (next > first + 2) {
         std::string blk = std::string(first + 2, next);
         res += (char)(boost::lexical_cast<int>(blk));
@@ -76,13 +81,17 @@ std::string read_text_to(Iterator &first, Iterator last, std::string delims) {
       ++first;
     }
   }
-  if (start != first) res += std::string(start, first);
+  if (start != first) {
+    res += std::string(start, first);
+  }
   return res;
 }
 
 template <typename Iterator>
 bool parse_atom_values(Iterator &first, Iterator last, RDKit::RWMol &mol) {
-  if (first >= last || *first != ':') return false;
+  if (first >= last || *first != ':') {
+    return false;
+  }
   ++first;
   unsigned int atIdx = 0;
   while (first != last && *first != '$') {
@@ -92,24 +101,34 @@ bool parse_atom_values(Iterator &first, Iterator last, RDKit::RWMol &mol) {
                                          tkn);
     }
     ++atIdx;
-    if (first != last && *first != '$') ++first;
+    if (first != last && *first != '$') {
+      ++first;
+    }
   }
-  if (first == last || *first != '$') return false;
+  if (first == last || *first != '$') {
+    return false;
+  }
   ++first;
   return true;
 }
 
 template <typename Iterator>
 bool parse_atom_props(Iterator &first, Iterator last, RDKit::RWMol &mol) {
-  if (first >= last) return false;
+  if (first >= last) {
+    return false;
+  }
   while (first != last && *first != '|' && *first != ',') {
     unsigned int atIdx;
     if (read_int(first, last, atIdx)) {
-      if (first == last || *first != '.') return false;
+      if (first == last || *first != '.') {
+        return false;
+      }
       ++first;
       std::string pname = read_text_to(first, last, ".");
       if (pname != "") {
-        if (first == last || *first != '.') return false;
+        if (first == last || *first != '.') {
+          return false;
+        }
         ++first;
         std::string pval = read_text_to(first, last, ":|,");
         if (pval != "") {
@@ -117,16 +136,24 @@ bool parse_atom_props(Iterator &first, Iterator last, RDKit::RWMol &mol) {
         }
       }
     }
-    if (first != last && *first != '|' && *first != ',') ++first;
+    if (first != last && *first != '|' && *first != ',') {
+      ++first;
+    }
   }
-  if (first != last && *first != '|' && *first != ',') return false;
-  if (*first != '|') ++first;
+  if (first != last && *first != '|' && *first != ',') {
+    return false;
+  }
+  if (*first != '|') {
+    ++first;
+  }
   return true;
 }
 
 template <typename Iterator>
 bool parse_atom_labels(Iterator &first, Iterator last, RDKit::RWMol &mol) {
-  if (first >= last || *first != '$') return false;
+  if (first >= last || *first != '$') {
+    return false;
+  }
   ++first;
   unsigned int atIdx = 0;
   while (first != last && *first != '$') {
@@ -136,16 +163,22 @@ bool parse_atom_labels(Iterator &first, Iterator last, RDKit::RWMol &mol) {
                                          tkn);
     }
     ++atIdx;
-    if (first != last && *first != '$') ++first;
+    if (first != last && *first != '$') {
+      ++first;
+    }
   }
-  if (first == last || *first != '$') return false;
+  if (first == last || *first != '$') {
+    return false;
+  }
   ++first;
   return true;
 }
 
 template <typename Iterator>
 bool parse_coords(Iterator &first, Iterator last, RDKit::RWMol &mol) {
-  if (first >= last || *first != '(') return false;
+  if (first >= last || *first != '(') {
+    return false;
+  }
 
   auto *conf = new Conformer(mol.getNumAtoms());
   mol.addConformer(conf);
@@ -157,28 +190,39 @@ bool parse_coords(Iterator &first, Iterator last, RDKit::RWMol &mol) {
     if (tkn != "") {
       std::vector<std::string> tokens;
       boost::split(tokens, tkn, boost::is_any_of(std::string(",")));
-      if (tokens.size() >= 1 && tokens[0].size())
+      if (tokens.size() >= 1 && tokens[0].size()) {
         pt.x = boost::lexical_cast<double>(tokens[0]);
-      if (tokens.size() >= 2 && tokens[1].size())
+      }
+      if (tokens.size() >= 2 && tokens[1].size()) {
         pt.y = boost::lexical_cast<double>(tokens[1]);
-      if (tokens.size() >= 3 && tokens[2].size())
+      }
+      if (tokens.size() >= 3 && tokens[2].size()) {
         pt.z = boost::lexical_cast<double>(tokens[2]);
+      }
     }
 
     conf->setAtomPos(atIdx, pt);
     ++atIdx;
-    if (first != last && *first != ')') ++first;
+    if (first != last && *first != ')') {
+      ++first;
+    }
   }
-  if (first == last || *first != ')') return false;
+  if (first == last || *first != ')') {
+    return false;
+  }
   ++first;
   return true;
 }
 
 template <typename Iterator>
 bool parse_coordinate_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol) {
-  if (first >= last || *first != 'C') return false;
+  if (first >= last || *first != 'C') {
+    return false;
+  }
   ++first;
-  if (first >= last || *first != ':') return false;
+  if (first >= last || *first != ':') {
+    return false;
+  }
   ++first;
   while (first != last && *first >= '0' && *first <= '9') {
     unsigned int aidx;
@@ -199,7 +243,9 @@ bool parse_coordinate_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol) {
     } else {
       return false;
     }
-    if (first < last && *first == ',') ++first;
+    if (first < last && *first == ',') {
+      ++first;
+    }
   }
   return true;
 }
@@ -207,44 +253,67 @@ bool parse_coordinate_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol) {
 template <typename Iterator>
 bool processRadicalSection(Iterator &first, Iterator last, RDKit::RWMol &mol,
                            unsigned int numRadicalElectrons) {
-  if (first >= last) return false;
+  if (first >= last) {
+    return false;
+  }
   ++first;
-  if (first >= last || *first != ':') return false;
+  if (first >= last || *first != ':') {
+    return false;
+  }
   ++first;
   unsigned int atIdx;
-  if (!read_int(first, last, atIdx)) return false;
+  if (!read_int(first, last, atIdx)) {
+    return false;
+  }
   mol.getAtomWithIdx(atIdx)->setNumRadicalElectrons(numRadicalElectrons);
   while (first < last && *first == ',') {
     ++first;
-    if (first < last && (*first < '0' || *first > '9')) return true;
-    if (!read_int(first, last, atIdx)) return false;
+    if (first < last && (*first < '0' || *first > '9')) {
+      return true;
+    }
+    if (!read_int(first, last, atIdx)) {
+      return false;
+    }
     mol.getAtomWithIdx(atIdx)->setNumRadicalElectrons(numRadicalElectrons);
   }
-  if (first >= last) return false;
+  if (first >= last) {
+    return false;
+  }
   return true;
 }
 
 template <typename Iterator>
 bool parse_radicals(Iterator &first, Iterator last, RDKit::RWMol &mol) {
-  if (first >= last || *first != '^') return false;
+  if (first >= last || *first != '^') {
+    return false;
+  }
   while (*first == '^') {
     ++first;
-    if (first >= last) return false;
-    if (*first < '1' || *first > '7')
+    if (first >= last) {
+      return false;
+    }
+    if (*first < '1' || *first > '7') {
       return false;  // these are the values that are allowed to be there
+    }
     switch (*first) {
       case '1':
-        if (!processRadicalSection(first, last, mol, 1)) return false;
+        if (!processRadicalSection(first, last, mol, 1)) {
+          return false;
+        }
         break;
       case '2':
       case '3':
       case '4':
-        if (!processRadicalSection(first, last, mol, 2)) return false;
+        if (!processRadicalSection(first, last, mol, 2)) {
+          return false;
+        }
         break;
       case '5':
       case '6':
       case '7':
-        if (!processRadicalSection(first, last, mol, 3)) return false;
+        if (!processRadicalSection(first, last, mol, 3)) {
+          return false;
+        }
         break;
       default:
         BOOST_LOG(rdWarningLog)
@@ -272,7 +341,9 @@ bool parse_enhanced_stereo(Iterator &first, Iterator last, RDKit::RWMol &mol) {
     read_int(first, last, group_id);
   }
 
-  if (first >= last || *first != ':') return false;
+  if (first >= last || *first != ':') {
+    return false;
+  }
   ++first;
 
   std::vector<Atom *> atoms;
@@ -304,36 +375,54 @@ bool parse_enhanced_stereo(Iterator &first, Iterator last, RDKit::RWMol &mol) {
 
 template <typename Iterator>
 bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol) {
-  if (first >= last || *first != '|') return false;
+  if (first >= last || *first != '|') {
+    return false;
+  }
   ++first;
   while (first < last && *first != '|') {
     typename Iterator::difference_type length = std::distance(first, last);
     if (*first == '(') {
-      if (!parse_coords(first, last, mol)) return false;
+      if (!parse_coords(first, last, mol)) {
+        return false;
+      }
     } else if (*first == '$') {
       if (length > 4 && *(first + 1) == '_' && *(first + 2) == 'A' &&
           *(first + 3) == 'V' && *(first + 4) == ':') {
         first += 4;
-        if (!parse_atom_values(first, last, mol)) return false;
+        if (!parse_atom_values(first, last, mol)) {
+          return false;
+        }
       } else {
-        if (!parse_atom_labels(first, last, mol)) return false;
+        if (!parse_atom_labels(first, last, mol)) {
+          return false;
+        }
       }
     } else if (length > 9 && std::string(first, first + 9) == "atomProp:") {
       first += 9;
-      if (!parse_atom_props(first, last, mol)) return false;
+      if (!parse_atom_props(first, last, mol)) {
+        return false;
+      }
     } else if (*first == 'C') {
-      if (!parse_coordinate_bonds(first, last, mol)) return false;
+      if (!parse_coordinate_bonds(first, last, mol)) {
+        return false;
+      }
     } else if (*first == '^') {
-      if (!parse_radicals(first, last, mol)) return false;
+      if (!parse_radicals(first, last, mol)) {
+        return false;
+      }
     } else if (*first == 'a' || *first == 'o' ||
                (*first == '&' && first + 1 < last && first[1] != '#')) {
-      if (!parse_enhanced_stereo(first, last, mol)) return false;
+      if (!parse_enhanced_stereo(first, last, mol)) {
+        return false;
+      }
     } else {
       ++first;
     }
     // if(first < last && *first != '|') ++first;
   }
-  if (first >= last || *first != '|') return false;
+  if (first >= last || *first != '|') {
+    return false;
+  }
   ++first;  // step past the last '|'
   return true;
 }
@@ -347,9 +436,10 @@ void addquery(Q *qry, std::string symbol, RDKit::RWMol &mol, unsigned int idx) {
   qa->setQuery(qry);
   qa->setNoImplicit(true);
   mol.replaceAtom(idx, qa);
-  if (symbol != "")
+  if (symbol != "") {
     mol.getAtomWithIdx(idx)->setProp(RDKit::common_properties::atomLabel,
                                      symbol);
+  }
   delete qa;
 }
 void processCXSmilesLabels(RDKit::RWMol &mol) {
@@ -359,7 +449,7 @@ void processCXSmilesLabels(RDKit::RWMol &mol) {
     if ((*atIt)->getPropIfPresent(RDKit::common_properties::atomLabel, symb)) {
       if (symb.size() > 3 && symb[0] == '_' && symb[1] == 'A' &&
           symb[2] == 'P') {
-        unsigned int mapNum =
+        auto mapNum =
             boost::lexical_cast<unsigned int>(symb.substr(3, symb.size() - 3));
         (*atIt)->setAtomMapNum(mapNum);
       } else if (symb == "star_e") {
@@ -399,11 +489,14 @@ void processCXSmilesLabels(RDKit::RWMol &mol) {
 void parseCXExtensions(RDKit::RWMol &mol, const std::string &extText,
                        std::string::const_iterator &first) {
   // BOOST_LOG(rdWarningLog) << "parseCXNExtensions: " << extText << std::endl;
-  if (extText.empty() || extText[0] != '|') return;
+  if (extText.empty() || extText[0] != '|') {
+    return;
+  }
   first = extText.begin();
   bool ok = parser::parse_it(first, extText.end(), mol);
-  if (!ok)
+  if (!ok) {
     throw RDKit::SmilesParseException("failure parsing CXSMILES extensions");
+  }
   processCXSmilesLabels(mol);
 }
 }  // end of namespace SmilesParseOps
@@ -476,7 +569,9 @@ std::string get_enhanced_stereo_block(
     }
   }
   std::string resStr = res.str();
-  if (!resStr.empty() && resStr.back() == ',') resStr.pop_back();
+  if (!resStr.empty() && resStr.back() == ',') {
+    resStr.pop_back();
+  }
   return resStr;
 }
 
@@ -486,10 +581,11 @@ std::string get_value_block(const ROMol &mol,
   std::string res = "";
   bool first = true;
   for (auto idx : atomOrder) {
-    if (!first)
+    if (!first) {
       res += ";";
-    else
+    } else {
       first = false;
+    }
     std::string lbl;
     if (mol.getAtomWithIdx(idx)->getPropIfPresent(prop, lbl)) {
       res += quote_string(lbl);
@@ -546,7 +642,9 @@ std::string get_coords_block(const ROMol &mol,
     res += boost::str(boost::format("%g,%g,") % pt.x % pt.y);
     if (conf.is3D()) {
       auto zc = boost::str(boost::format("%g") % pt.z);
-      if (zc != "0") res += zc;
+      if (zc != "0") {
+        res += zc;
+      }
     }
   }
   return res;
@@ -563,7 +661,9 @@ std::string get_atom_props_block(const ROMol &mol,
     bool includePrivate = false, includeComputed = false;
     for (const auto &pn : atom->getPropList(includePrivate, includeComputed)) {
       if (std::find(skip.begin(), skip.end(), pn) == skip.end()) {
-        if (res.size() == 0) res += "atomProp";
+        if (res.size() == 0) {
+          res += "atomProp";
+        }
         res +=
             boost::str(boost::format(":%d.%s.%s") % which % quote_string(pn) %
                        quote_string(atom->getProp<std::string>(pn)));
@@ -595,28 +695,40 @@ std::string getCXExtensions(const ROMol &mol) {
   bool needValues = false;
   for (auto idx : atomOrder) {
     const auto at = mol.getAtomWithIdx(idx);
-    if (at->hasProp(common_properties::atomLabel)) needLabels = true;
-    if (at->hasProp(common_properties::molFileValue)) needValues = true;
+    if (at->hasProp(common_properties::atomLabel)) {
+      needLabels = true;
+    }
+    if (at->hasProp(common_properties::molFileValue)) {
+      needValues = true;
+    }
   }
   if (mol.getNumConformers()) {
     res += "(" + get_coords_block(mol, atomOrder) + ")";
   }
   if (needLabels) {
-    if (res.size() > 1) res += ",";
+    if (res.size() > 1) {
+      res += ",";
+    }
     res += "$" + get_value_block(mol, atomOrder, common_properties::atomLabel) +
            "$";
   }
   if (needValues) {
-    if (res.size() > 1) res += ",";
+    if (res.size() > 1) {
+      res += ",";
+    }
     res += "$_AV:" +
            get_value_block(mol, atomOrder, common_properties::molFileValue) +
            "$";
   }
   auto radblock = get_radical_block(mol, atomOrder);
   if (radblock.size()) {
-    if (res.size() > 1) res += ",";
+    if (res.size() > 1) {
+      res += ",";
+    }
     res += radblock;
-    if (res.back() == ',') res.erase(res.size() - 1);
+    if (res.back() == ',') {
+      res.erase(res.size() - 1);
+    }
   }
 
   const auto atomblock = get_atom_props_block(mol, atomOrder);

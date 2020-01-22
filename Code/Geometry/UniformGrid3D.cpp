@@ -32,7 +32,9 @@ UniformGrid3D::UniformGrid3D(const UniformGrid3D &other) : Grid3D(other) {
 }
 
 UniformGrid3D &UniformGrid3D::operator=(const UniformGrid3D &other) {
-  if (&other == this) return *this;
+  if (&other == this) {
+    return *this;
+  }
   PRECONDITION(other.dp_storage, "cannot copy an uninitialized grid");
   delete dp_storage;
   auto *data = new RDKit::DiscreteValueVect(*other.dp_storage);
@@ -168,10 +170,18 @@ void UniformGrid3D::setVal(unsigned int pointId, unsigned int val) {
 }
 
 bool UniformGrid3D::compareParams(const UniformGrid3D &other) const {
-  if (d_numX != other.getNumX()) return false;
-  if (d_numY != other.getNumY()) return false;
-  if (d_numZ != other.getNumZ()) return false;
-  if (fabs(d_spacing - other.getSpacing()) > SPACING_TOL) return false;
+  if (d_numX != other.getNumX()) {
+    return false;
+  }
+  if (d_numY != other.getNumY()) {
+    return false;
+  }
+  if (d_numZ != other.getNumZ()) {
+    return false;
+  }
+  if (fabs(d_spacing - other.getSpacing()) > SPACING_TOL) {
+    return false;
+  }
   Point3D dOffset = d_offSet;
   dOffset -= other.getOffset();
   if (dOffset.lengthSq() > OFFSET_TOL) {
@@ -423,7 +433,7 @@ void writeGridToStream(const UniformGrid3D &grid, std::ostream &outStrm) {
 void writeGridToFile(const UniformGrid3D &grid, const std::string &filename) {
   // std::ofstream ofStrm(filename.c_str());
   auto *ofStrm = new std::ofstream(filename.c_str());
-  std::ostream *oStrm = static_cast<std::ostream *>(ofStrm);
+  auto *oStrm = static_cast<std::ostream *>(ofStrm);
   writeGridToStream(grid, *oStrm);
   delete ofStrm;
 }

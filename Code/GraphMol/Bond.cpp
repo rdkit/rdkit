@@ -42,7 +42,9 @@ Bond::Bond(const Bond &other) : RDProps(other) {
 Bond::~Bond() { delete dp_stereoAtoms; }
 
 Bond &Bond::operator=(const Bond &other) {
-  if (this == &other) return *this;
+  if (this == &other) {
+    return *this;
+  }
   dp_mol = other.dp_mol;
   d_bondType = other.d_bondType;
   d_beginAtomIdx = other.d_beginAtomIdx;
@@ -75,21 +77,26 @@ void Bond::setOwningMol(ROMol *other) {
 unsigned int Bond::getOtherAtomIdx(const unsigned int thisIdx) const {
   PRECONDITION(d_beginAtomIdx == thisIdx || d_endAtomIdx == thisIdx,
                "bad index");
-  if (d_beginAtomIdx == thisIdx)
+  if (d_beginAtomIdx == thisIdx) {
     return d_endAtomIdx;
-  else if (d_endAtomIdx == thisIdx)
+  } else if (d_endAtomIdx == thisIdx) {
     return d_beginAtomIdx;
+  }
   // we cannot actually get down here
   return 0;
 }
 
 void Bond::setBeginAtomIdx(unsigned int what) {
-  if (dp_mol) URANGE_CHECK(what, getOwningMol().getNumAtoms());
+  if (dp_mol) {
+    URANGE_CHECK(what, getOwningMol().getNumAtoms());
+  }
   d_beginAtomIdx = what;
 };
 
 void Bond::setEndAtomIdx(unsigned int what) {
-  if (dp_mol) URANGE_CHECK(what, getOwningMol().getNumAtoms());
+  if (dp_mol) {
+    URANGE_CHECK(what, getOwningMol().getNumAtoms());
+  }
   d_endAtomIdx = what;
 };
 
@@ -214,16 +221,18 @@ double Bond::getValenceContrib(const Atom *atom) const {
       return 1.5;
       break;
     case DATIVEONE:
-      if (atom->getIdx() == getEndAtomIdx())
+      if (atom->getIdx() == getEndAtomIdx()) {
         return 1.0;
-      else
+      } else {
         return 0.0;
+      }
       break;
     case DATIVE:
-      if (atom->getIdx() == getEndAtomIdx())
+      if (atom->getIdx() == getEndAtomIdx()) {
         return 1.0;
-      else
+      } else {
         return 0.0;
+      }
       break;
     default:
       UNDER_CONSTRUCTION("Bad bond type");
@@ -297,7 +306,9 @@ std::ostream &operator<<(std::ostream &target, const RDKit::Bond &bond) {
   target << bond.getIdx() << " ";
   target << bond.getBeginAtomIdx() << "->" << bond.getEndAtomIdx();
   target << " order: " << bond.getBondType();
-  if (bond.getBondDir()) target << " dir: " << bond.getBondDir();
+  if (bond.getBondDir()) {
+    target << " dir: " << bond.getBondDir();
+  }
   if (bond.getStereo()) {
     target << " stereo: " << bond.getStereo();
     if (bond.getStereoAtoms().size() == 2) {

@@ -2658,7 +2658,7 @@ void testGithub2142() {
     std::string sma2 = "[C]";
     std::unique_ptr<ROMol> m2(SmartsToMol(sma2));
     TEST_ASSERT(m2);
-    QueryAtom *qa = static_cast<QueryAtom *>(m2->getAtomWithIdx(0));
+    auto *qa = static_cast<QueryAtom *>(m2->getAtomWithIdx(0));
     const auto q1 = static_cast<QueryAtom *>(m1->getAtomWithIdx(0))->getQuery();
     qa->expandQuery(q1->copy(), Queries::COMPOSITE_OR);
     bool ok = true;

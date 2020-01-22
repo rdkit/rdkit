@@ -89,7 +89,7 @@ OutputType AtomPairAtomEnv<OutputType>::getBitId(
                    (atomInvariants->size() >= d_atomIdSecond),
                "bad atom invariants size");
 
-  AtomPairArguments<OutputType> *atomPairArguments =
+  auto *atomPairArguments =
       dynamic_cast<AtomPairArguments<OutputType> *>(arguments);
 
   std::uint32_t codeSizeLimit =
@@ -144,7 +144,7 @@ AtomPairEnvGenerator<OutputType>::getEnvironments(
                    additionalOutput->atomToBits->size() == atomCount,
                "bad atomToBits size in AdditionalOutput");
 
-  AtomPairArguments<OutputType> *atomPairArguments =
+  auto *atomPairArguments =
       dynamic_cast<AtomPairArguments<OutputType> *>(arguments);
   std::vector<AtomEnvironment<OutputType> *> result =
       std::vector<AtomEnvironment<OutputType> *>();
@@ -178,7 +178,7 @@ AtomPairEnvGenerator<OutputType>::getEnvironments(
            fromAtoms->end())) {
         continue;
       }
-      unsigned int distance =
+      auto distance =
           static_cast<unsigned int>(floor(distanceMatrix[i * atomCount + j]));
 
       if (distance >= atomPairArguments->d_minDistance &&

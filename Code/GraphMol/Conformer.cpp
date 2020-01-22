@@ -27,7 +27,9 @@ void Conformer::initFromOther(const Conformer &conf) {
 
 Conformer::Conformer(const Conformer &conf) : RDProps() { initFromOther(conf); }
 Conformer &Conformer::operator=(const Conformer &other) {
-  if (this == &other) return *this;
+  if (this == &other) {
+    return *this;
+  }
   initFromOther(other);
   return *this;
 }

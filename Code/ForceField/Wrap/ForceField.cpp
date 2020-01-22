@@ -128,15 +128,17 @@ double PyForceField::calcEnergyWithPos(const python::object &pos) {
   if (pos != python::object()) {
     size_t s = this->field->dimension() * this->field->numPoints();
     size_t numElements = python::extract<size_t>(pos.attr("__len__")());
-    if (s != numElements)
+    if (s != numElements) {
       throw ValueErrorException("The Python container must have length equal to Dimension() * NumPoints()");
+    }
     std::vector<double> c(s);
-    for (size_t i = 0; i < s; ++i)
+    for (size_t i = 0; i < s; ++i) {
       c[i] = python::extract<double>(pos[i]);
+    }
     return this->field->calcEnergy(c.data());
-  }
-  else
+  } else {
     return this->field->calcEnergy();
+  }
 }
 
 PyObject *PyForceField::positions() {
@@ -162,15 +164,17 @@ PyObject *PyForceField::calcGradWithPos(const python::object &pos) {
   PyObject *gradTuple = PyTuple_New(s);
   if (pos != python::object()) {
     size_t numElements = python::extract<size_t>(pos.attr("__len__")());
-    if (s != numElements)
+    if (s != numElements) {
       throw ValueErrorException("The Python container must have length equal to Dimension() * NumPoints()");
+    }
     std::vector<double> c(s);
-    for (size_t i = 0; i < s; ++i)
+    for (size_t i = 0; i < s; ++i) {
       c[i] = python::extract<double>(pos[i]);
+    }
     this->field->calcGrad(c.data(), g.data());
-  }
-  else
+  } else {
     this->field->calcGrad(g.data());
+  }
   for (size_t i = 0; i < s; ++i) {
     PyObject *coordItem = PyFloat_FromDouble(g[i]);
     PyTuple_SetItem(gradTuple, i, coordItem);
@@ -184,8 +188,10 @@ python::tuple PyForceField::minimizeTrajectory(unsigned int snapshotFreq, int ma
   int resInt = this->field->minimize(snapshotFreq, &snapshotVect,
                                maxIts, forceTol, energyTol);
   python::list l;
-  for (RDKit::SnapshotVect::const_iterator it = snapshotVect.begin(); it != snapshotVect.end(); ++it)
+  for (RDKit::SnapshotVect::const_iterator it = snapshotVect.begin();
+       it != snapshotVect.end(); ++it) {
     l.append(new RDKit::Snapshot(*it));
+  }
   return python::make_tuple(resInt, l);
   
 }

@@ -3879,8 +3879,9 @@ void testDativeBonds() {
 
     int dative_bond_count = 0;
     for (size_t i = 0; i < m->getNumBonds(); i++) {
-      if (m->getBondWithIdx(i)->getBondType() == Bond::DATIVE)
+      if (m->getBondWithIdx(i)->getBondType() == Bond::DATIVE) {
         dative_bond_count++;
+      }
     }
     TEST_ASSERT(dative_bond_count == 1);
 
@@ -3895,8 +3896,9 @@ void testDativeBonds() {
 
     int dative_bond_count = 0;
     for (size_t i = 0; i < m->getNumBonds(); i++) {
-      if (m->getBondWithIdx(i)->getBondType() == Bond::DATIVE)
+      if (m->getBondWithIdx(i)->getBondType() == Bond::DATIVE) {
         dative_bond_count++;
+      }
     }
     TEST_ASSERT(dative_bond_count == 2);
 
@@ -4048,10 +4050,9 @@ void testRingClosureNumberWithBrackets() {
     const char *benzenes[6] = {
         "c1ccccc1",           "c%(1)ccccc%(1)",       "c%(12)ccccc%(12)",
         "c%(123)ccccc%(123)", "c%(1234)ccccc%(1234)", "c%(99999)ccccc%(99999)"};
-    for (int i = 0; i < 6; ++i) {
-      BOOST_LOG(rdInfoLog) << "Test: " << benzenes[i] << " (should be read)"
-                           << std::endl;
-      ROMol *m = SmilesToMol(benzenes[i]);
+    for (auto &i : benzenes) {
+      BOOST_LOG(rdInfoLog) << "Test: " << i << " (should be read)" << std::endl;
+      ROMol *m = SmilesToMol(i);
       TEST_ASSERT(m);
       TEST_ASSERT(m->getNumAtoms() == 6);
       TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic());
@@ -4061,11 +4062,11 @@ void testRingClosureNumberWithBrackets() {
     }
 
     const char *not_allowed[2] = {"c%()ccccc%()", "c%(100000)ccccc%(100000)"};
-    for (int i = 0; i < 2; ++i) {
-      BOOST_LOG(rdInfoLog) << "Test: " << not_allowed[i]
-                           << " (should NOT be read)" << std::endl;
-      ROMol *m = SmilesToMol(not_allowed[i]);
-      TEST_ASSERT(m == (ROMol *)0);
+    for (auto &i : not_allowed) {
+      BOOST_LOG(rdInfoLog) << "Test: " << i << " (should NOT be read)"
+                           << std::endl;
+      ROMol *m = SmilesToMol(i);
+      TEST_ASSERT(m == (ROMol *)nullptr);
       delete m;
     }
   }

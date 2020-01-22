@@ -86,8 +86,7 @@ class RDKIT_FINGERPRINTS_EXPORT RDKitFPAtomEnv
   \param atomsInPath holds atoms in this environment to set additional output
 
   */
-  RDKitFPAtomEnv(const OutputType bitId,
-                 const boost::dynamic_bitset<> &atomsInPath);
+  RDKitFPAtomEnv(const OutputType bitId, boost::dynamic_bitset<> atomsInPath);
 };
 
 template <typename OutputType>

@@ -61,10 +61,12 @@ void testTrajectory2D() {
   CHECK_INVARIANT(traj.dimension() == dim, "");
   CHECK_INVARIANT(traj.numPoints() == np, "");
   boost::shared_array<double> c(new double [np * dim]);
-  for (unsigned int i = 0; i < np * dim; ++i)
+  for (unsigned int i = 0; i < np * dim; ++i) {
     c[i] = static_cast<double>(i);
-  for (unsigned int i = 0; i < ns; ++i)
+  }
+  for (unsigned int i = 0; i < ns; ++i) {
     traj.addSnapshot(Snapshot(c, static_cast<double>(i)));
+  }
   TEST_ASSERT(traj.size() == ns);
   {
     bool e = false;
@@ -98,12 +100,14 @@ void testTrajectory2D() {
     }
     TEST_ASSERT(!e);
   }
-  for (unsigned int i = 0; i < ns; ++i)
+  for (unsigned int i = 0; i < ns; ++i) {
     TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(i).getEnergy()), static_cast<double>(i)));
+  }
   traj.removeSnapshot(0);
   TEST_ASSERT(traj.size() == ns - 1);
-  for (unsigned int i = 0; i < ns - 1; ++i)
+  for (unsigned int i = 0; i < ns - 1; ++i) {
     TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(i).getEnergy()), static_cast<double>(i + 1)));
+  }
   traj.insertSnapshot(0, Snapshot(c, 999.0));
   TEST_ASSERT(traj.size() == ns);
   Snapshot copySnapshot(traj.getSnapshot(0));
@@ -126,10 +130,12 @@ void testTrajectory3D() {
   CHECK_INVARIANT(traj.dimension() == dim, "");
   CHECK_INVARIANT(traj.numPoints() == np, "");
   boost::shared_array<double> c(new double [np * dim]);
-  for (unsigned int i = 0; i < np * dim; ++i)
+  for (unsigned int i = 0; i < np * dim; ++i) {
     c[i] = static_cast<double>(i);
-  for (unsigned int i = 0; i < ns; ++i)
+  }
+  for (unsigned int i = 0; i < ns; ++i) {
     traj.addSnapshot(Snapshot(c, static_cast<double>(i)));
+  }
   TEST_ASSERT(traj.size() == ns);
   {
     bool e = false;
@@ -166,12 +172,14 @@ void testTrajectory3D() {
       TEST_ASSERT(e);
     }
   }
-  for (unsigned int i = 0; i < ns; ++i)
+  for (unsigned int i = 0; i < ns; ++i) {
     TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(i).getEnergy()), static_cast<double>(i)));
+  }
   traj.removeSnapshot(0);
   TEST_ASSERT(traj.size() == ns - 1);
-  for (unsigned int i = 0; i < ns - 1; ++i)
+  for (unsigned int i = 0; i < ns - 1; ++i) {
     TEST_ASSERT(RDKit::feq(RDKit::round(traj.getSnapshot(i).getEnergy()), static_cast<double>(i + 1)));
+  }
   traj.insertSnapshot(0, Snapshot(c, 999.0));
   TEST_ASSERT(traj.size() == ns);
   Snapshot copySnapshot(traj.getSnapshot(0));

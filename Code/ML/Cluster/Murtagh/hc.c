@@ -286,8 +286,11 @@ integer *n, *i__, *j;
 /*  Map row I and column J of upper half diagonal symmetric matrix */
 /*  onto vector. */
     /*ret_val = *j + (*i__ - 1) * *n - *i__ * (*i__ + 1) / 2;*/
-    if(*j > *i__) ret_val = (*j-1)*(*j-2)/2+*i__;
-    else ret_val = (*i__-1)*(*i__-2)/2+*j;
+    if (*j > *i__) {
+      ret_val = (*j - 1) * (*j - 2) / 2 + *i__;
+    } else {
+      ret_val = (*i__ - 1) * (*i__ - 2) / 2 + *j;
+    }
     return ret_val;
 } /* ioffset_ */
 

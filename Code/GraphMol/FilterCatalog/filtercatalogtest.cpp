@@ -98,8 +98,9 @@ void testFilterCatalog() {
                                 {8, 16},
                                 {9, 21}};
     MatchVectType matchvec1;
-    for (auto i : match1)
+    for (auto i : match1) {
       matchvec1.push_back(std::make_pair(i.first, i.second));
+    }
 
     const IntPair match2[13] = {{0, 11},
                                 {1, 12},
@@ -115,8 +116,9 @@ void testFilterCatalog() {
                                 {11, 17},
                                 {12, 16}};
     MatchVectType matchvec2;
-    for (auto i : match2)
+    for (auto i : match2) {
       matchvec2.push_back(std::make_pair(i.first, i.second));
+    }
 
     const IntPair match3[12] = {{0, 0},
                                 {1, 1},
@@ -131,8 +133,9 @@ void testFilterCatalog() {
                                 {10, 15},
                                 {11, 16}};
     MatchVectType matchvec3;
-    for (auto i : match3)
+    for (auto i : match3) {
       matchvec3.push_back(std::make_pair(i.first, i.second));
+    }
     int count = 0;
     while (!suppl.atEnd()) {
       mol.reset(suppl.next());

@@ -227,10 +227,11 @@ void guessFormalCharges(RWMol *res) {
       int nElectrons =
           PeriodicTable::getTable()->getNouterElecs(at->getAtomicNum());
       int assignChg;
-      if (nElectrons >= 4)
+      if (nElectrons >= 4) {
         assignChg = expVal - (*valens.begin());
-      else
+      } else {
         assignChg = (*valens.begin()) - expVal;
+      }
       if (assignChg > 0 && nElectrons >= 4) {
         for (vi = valens.begin(); vi != valens.end(); ++vi) {
           // Since we do this only for nocharged atoms we can get away without

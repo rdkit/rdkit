@@ -63,8 +63,7 @@ MatrixXd GetCovMatrix(MatrixXd &X, MatrixXd &Weight, double weight) {
 }
 
 JacobiSVD<MatrixXd> *getSVD(MatrixXd &Mat) {
-  JacobiSVD<MatrixXd> *svd =
-      new JacobiSVD<MatrixXd>(Mat, ComputeThinU | ComputeThinV);
+  auto *svd = new JacobiSVD<MatrixXd>(Mat, ComputeThinU | ComputeThinV);
   return svd;
 }
 
@@ -149,7 +148,7 @@ std::vector<double> getWhimD(std::vector<double> weightvector,
   // Index and/or Sphericity !
 
   double gamma[3];  // Gamma values
-  double nAT = (double)numAtoms;
+  auto nAT = (double)numAtoms;
 
   // check if two atoms are symmetric versus the new axis ie newx,newy,newz a
   for (int i = 0; i < 3; i++) {
@@ -304,7 +303,7 @@ void getWHIM(const ROMol &mol, std::vector<double> &res, int confId,
              double th) {
   int numAtoms = mol.getNumAtoms();
   const Conformer &conf = mol.getConformer(confId);
-  double *Vpoints = new double[3 * numAtoms];
+  auto *Vpoints = new double[3 * numAtoms];
 
   for (int i = 0; i < numAtoms; ++i) {
     Vpoints[3 * i] = conf.getAtomPos(i).x;
@@ -353,7 +352,7 @@ void getWHIMone(const ROMol &mol, std::vector<double> &res, int confId,
                 double th, const std::string &customAtomPropName) {
   int numAtoms = mol.getNumAtoms();
   const Conformer &conf = mol.getConformer(confId);
-  double *Vpoints = new double[3 * numAtoms];
+  auto *Vpoints = new double[3 * numAtoms];
 
   for (int i = 0; i < numAtoms; ++i) {
     Vpoints[3 * i] = conf.getAtomPos(i).x;

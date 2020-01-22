@@ -55,7 +55,7 @@ void updateSubMolConfs(const ROMol &mol, RWMol &res,
 
 ROMol *deleteSubstructs(const ROMol &mol, const ROMol &query, bool onlyFrags,
                         bool useChirality) {
-  RWMol *res = new RWMol(mol, false);
+  auto *res = new RWMol(mol, false);
   std::vector<MatchVectType> fgpMatches;
   std::vector<MatchVectType>::const_iterator mati;
   VECT_INT_VECT
@@ -220,7 +220,7 @@ std::vector<ROMOL_SPTR> replaceSubstructs(
     if (replaceAll) {
       // remove the atoms from the delList:
       std::sort(delList.begin(), delList.end());
-      RWMol *newMol = static_cast<RWMol *>(res[0].get());
+      auto *newMol = static_cast<RWMol *>(res[0].get());
       for (auto dri = delList.rbegin(); dri != delList.rend(); dri++) {
         removedAtoms.set(*dri);
         newMol->removeAtom(*dri);
@@ -260,7 +260,7 @@ ROMol *replaceSidechains(const ROMol &mol, const ROMol &coreQuery,
   }
   std::vector<Atom *> keepList;
 
-  RWMol *newMol = new RWMol(mol);
+  auto *newMol = new RWMol(mol);
   unsigned int nDummies = 0;
   for (MatchVectType::const_iterator mvit = matchV.begin();
        mvit != matchV.end(); mvit++) {
@@ -337,12 +337,14 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
   std::vector<int> matchingIndices(origNumAtoms, -1);
   std::vector<int> allIndices(origNumAtoms, -1);
   for (const auto &mvit : matchV) {
-    if (mvit.first < 0 || mvit.first >= rdcast<int>(core.getNumAtoms()))
+    if (mvit.first < 0 || mvit.first >= rdcast<int>(core.getNumAtoms())) {
       throw ValueErrorException(
           "Supplied MatchVect indices out of bounds of the core molecule");
-    if (mvit.second < 0 || mvit.second >= rdcast<int>(mol.getNumAtoms()))
+    }
+    if (mvit.second < 0 || mvit.second >= rdcast<int>(mol.getNumAtoms())) {
       throw ValueErrorException(
           "Supplied MatchVect indices out of bounds of the target molecule");
+    }
 
     if (replaceDummies || core.getAtomWithIdx(mvit.first)->getAtomicNum() > 0) {
       matchingIndices[mvit.second] = mvit.first;
@@ -350,7 +352,7 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
     allIndices[mvit.second] = mvit.first;
   }
 
-  RWMol *newMol = new RWMol(mol);
+  auto *newMol = new RWMol(mol);
   std::vector<Atom *> keepList;
   std::map<int, Atom *> dummyAtomMap;
 
@@ -366,7 +368,7 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
   std::vector<std::pair<int, Atom *>> dummies;
 
   for (unsigned int j = 0; j < origNumAtoms; ++j) {
-    unsigned int i = (unsigned)matchorder_atomidx[j].second;
+    auto i = (unsigned)matchorder_atomidx[j].second;
 
     if (matchingIndices[i] == -1) {
       Atom *sidechainAtom = newMol->getAtomWithIdx(i);
@@ -444,7 +446,9 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
                 //   F[C@](N)(Cl)C -> F[C@](Cl)(C)X     no
                 //   F[C@](Cl)(N)C -> F[C@@](Cl)(C)X    yes
                 //   F[C@](Cl)(C)N -> F[C@](Cl)(C)X     no
-                if (!(whichNbr % 2)) switchIt = true;
+                if (!(whichNbr % 2)) {
+                  switchIt = true;
+                }
                 break;
               case 3:
                 // things are different in the degree three case because of the
@@ -454,7 +458,9 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
                 //   [C@H](N)(F)C -> [C@H](F)(C)X   no
                 //   F[C@H](N)C -> F[C@@H](C)X      yes
                 //   F[C@H](C)N -> F[C@H](C)X       no
-                if (whichNbr == 1) switchIt = true;
+                if (whichNbr == 1) {
+                  switchIt = true;
+                }
                 break;
             }
             if (switchIt) {
@@ -521,9 +527,11 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
 }
 
 ROMol *MurckoDecompose(const ROMol &mol) {
-  RWMol *res = new RWMol(mol);
+  auto *res = new RWMol(mol);
   unsigned int nAtoms = res->getNumAtoms();
-  if (!nAtoms) return res;
+  if (!nAtoms) {
+    return res;
+  }
 
   // start by getting the shortest paths matrix:
   MolOps::getDistanceMat(mol, false, false, true);
@@ -533,7 +541,9 @@ ROMol *MurckoDecompose(const ROMol &mol) {
   boost::dynamic_bitset<> keepAtoms(nAtoms);
   const RingInfo *ringInfo = res->getRingInfo();
   for (unsigned int i = 0; i < nAtoms; ++i) {
-    if (ringInfo->numAtomRings(i)) keepAtoms[i] = 1;
+    if (ringInfo->numAtomRings(i)) {
+      keepAtoms[i] = 1;
+    }
   }
   const VECT_INT_VECT &rings = ringInfo->atomRings();
   // std::cerr<<"  rings: "<<rings.size()<<std::endl;
@@ -548,7 +558,9 @@ ROMol *MurckoDecompose(const ROMol &mol) {
         keepAtoms[atomI] = 1;
         atomI = pathMat[atomJ * nAtoms + atomI];
         // test for the disconnected case:
-        if (atomI < 0) break;
+        if (atomI < 0) {
+          break;
+        }
         // std::cerr<<atomI<<" ";
       }
       // std::cerr<<std::endl;
@@ -648,7 +660,9 @@ void addRecursiveQueries(
   while (atBegin != atEnd) {
     Atom *at = mol[*atBegin];
     ++atBegin;
-    if (!at->hasProp(propName)) continue;
+    if (!at->hasProp(propName)) {
+      continue;
+    }
     std::string pval;
     at->getProp(propName, pval);
     std::string maybeSmarts =
@@ -659,7 +673,7 @@ void addRecursiveQueries(
       (*reactantLabels).push_back(label);
     }
 
-    QueryAtom::QUERYATOM_QUERY *qToAdd = 0;
+    QueryAtom::QUERYATOM_QUERY *qToAdd = nullptr;
     bool notFound = false;
     if (pval.find(delim) != std::string::npos) {
       boost::tokenizer<boost::char_separator<char>> tokens(pval, sep);
@@ -687,10 +701,12 @@ void addRecursiveQueries(
 
     if (notFound) {
       // See if we are actually a smarts expression already
-      RWMol *m = 0;
+      RWMol *m = nullptr;
       try {
         m = SmartsToMol(maybeSmarts);
-        if (!m) throw KeyErrorException(pval);
+        if (!m) {
+          throw KeyErrorException(pval);
+        }
         qToAdd = new RecursiveStructureQuery(m);
       } catch (...) {
         throw KeyErrorException(pval);
@@ -721,7 +737,9 @@ void parseQueryDefFile(std::istream *inStream,
   while (!inStream->eof() && !inStream->fail()) {
     line++;
     tempStr = getLine(inStream);
-    if (tempStr == "" || tempStr.find(comment) == 0) continue;
+    if (tempStr == "" || tempStr.find(comment) == 0) {
+      continue;
+    }
     boost::tokenizer<boost::char_separator<char>> tokens(tempStr, sep);
     unsigned int tpos;
     boost::tokenizer<boost::char_separator<char>>::iterator token;

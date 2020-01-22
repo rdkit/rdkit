@@ -175,7 +175,9 @@ double *getDistanceMat(const ROMol &mol, bool useBO, bool useAtomWts,
   }
   propName += "DistanceMatrix";
   // make sure we don't use the nonBO cache for the BO matrix and vice versa:
-  if (useBO) propName += "BO";
+  if (useBO) {
+    propName += "BO";
+  }
   if (!force && mol.hasProp(propName)) {
     mol.getProp(propName, sptr);
     return sptr.get();
@@ -184,8 +186,12 @@ double *getDistanceMat(const ROMol &mol, bool useBO, bool useAtomWts,
   auto *dMat = new double[nAts * nAts];
   int i, j;
   // initialize off diagonals to LOCAL_INF and diagonals to 0
-  for (i = 0; i < nAts * nAts; i++) dMat[i] = LOCAL_INF;
-  for (i = 0; i < nAts; i++) dMat[i * nAts + i] = 0.0;
+  for (i = 0; i < nAts * nAts; i++) {
+    dMat[i] = LOCAL_INF;
+  }
+  for (i = 0; i < nAts; i++) {
+    dMat[i * nAts + i] = 0.0;
+  }
 
   ROMol::EDGE_ITER firstB, lastB;
   boost::tie(firstB, lastB) = mol.getEdges();
@@ -234,8 +240,12 @@ double *getDistanceMat(const ROMol &mol, const std::vector<int> &activeAtoms,
   auto *dMat = new double[nAts * nAts];
   int i, j;
   // initialize off diagonals to LOCAL_INF and diagonals to 0
-  for (i = 0; i < nAts * nAts; i++) dMat[i] = LOCAL_INF;
-  for (i = 0; i < nAts; i++) dMat[i * nAts + i] = 0.0;
+  for (i = 0; i < nAts * nAts; i++) {
+    dMat[i] = LOCAL_INF;
+  }
+  for (i = 0; i < nAts; i++) {
+    dMat[i * nAts + i] = 0.0;
+  }
 
   for (auto bond : bonds) {
     i = rdcast<int>(std::find(activeAtoms.begin(), activeAtoms.end(),

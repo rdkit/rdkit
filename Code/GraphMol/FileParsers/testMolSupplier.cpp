@@ -272,13 +272,13 @@ int testMolSup() {
 
   {  // Test Maestro PDB property reading
     fname = rdbase + "/Code/GraphMol/FileParsers/test_data/1kv1.maegz";
-    gzstream *strm = new gzstream(fname);
+    auto *strm = new gzstream(fname);
     MaeMolSupplier maesup(strm);
 
     std::shared_ptr<ROMol> nmol;
     nmol.reset(maesup.next());
     const Atom *atom = nmol->getAtomWithIdx(0);
-    AtomPDBResidueInfo *info = (AtomPDBResidueInfo *)(atom->getMonomerInfo());
+    auto *info = (AtomPDBResidueInfo *)(atom->getMonomerInfo());
     TEST_ASSERT(info->getResidueName() == "ARG ");
     TEST_ASSERT(info->getChainId() == "A");
     TEST_ASSERT(info->getResidueNumber() == 5);
@@ -1436,7 +1436,9 @@ void testSDSupplierFromTextStrLax1() {
     while (!reader.atEnd()) {
       ROMol *mol = reader.next();
       TEST_ASSERT(mol->hasProp(common_properties::_Name));
-      if (i == 0) TEST_ASSERT(!mol->hasProp("ID"));
+      if (i == 0) {
+        TEST_ASSERT(!mol->hasProp("ID"));
+      }
       TEST_ASSERT(!mol->hasProp("ANOTHER_PROPERTY"));
       i++;
       delete mol;
@@ -1571,7 +1573,9 @@ void testSDSupplierStrLax1() {
     while (!reader.atEnd()) {
       ROMol *mol = reader.next();
       TEST_ASSERT(mol->hasProp(common_properties::_Name));
-      if (i == 0) TEST_ASSERT(!mol->hasProp("ID"));
+      if (i == 0) {
+        TEST_ASSERT(!mol->hasProp("ID"));
+      }
       TEST_ASSERT(!mol->hasProp("ANOTHER_PROPERTY"));
       i++;
       delete mol;
@@ -1737,7 +1741,9 @@ void testIssue381() {
   count = 0;
   while (!sdsup->atEnd()) {
     nmol = sdsup->next();
-    if (nmol) delete nmol;
+    if (nmol) {
+      delete nmol;
+    }
     count++;
   }
   TEST_ASSERT(sdsup->atEnd());
@@ -1759,10 +1765,14 @@ void testSetStreamIndices() {
   std::streampos pos = 0;
   std::string line;
   while (notEof) {
-    if (addIndex) pos = ifs.tellg();
+    if (addIndex) {
+      pos = ifs.tellg();
+    }
     notEof = (std::getline(ifs, line) ? true : false);
     if (notEof) {
-      if (addIndex) indices.push_back(pos);
+      if (addIndex) {
+        indices.push_back(pos);
+      }
       addIndex = (line.substr(0, 4) == "$$$$");
     }
   }
@@ -1780,7 +1790,9 @@ void testSetStreamIndices() {
   count = 0;
   while (!sdsup->atEnd()) {
     nmol = sdsup->next();
-    if (nmol) delete nmol;
+    if (nmol) {
+      delete nmol;
+    }
     count++;
   }
   TEST_ASSERT(sdsup->atEnd());
@@ -2248,8 +2260,12 @@ int testForwardSDSupplier() {
     while (!strm.eof()) {
       std::string line;
       std::getline(strm, line);
-      if (!strm.eof()) ++i;
-      if (i > 1000) break;
+      if (!strm.eof()) {
+        ++i;
+      }
+      if (i > 1000) {
+        break;
+      }
     }
     TEST_ASSERT(i == 998);
   }
@@ -2259,8 +2275,12 @@ int testForwardSDSupplier() {
     while (!strm.eof()) {
       std::string line;
       std::getline(strm, line);
-      if (!strm.eof()) ++i;
-      if (i > 1000) break;
+      if (!strm.eof()) {
+        ++i;
+      }
+      if (i > 1000) {
+        break;
+      }
     }
     TEST_ASSERT(i == 997);
   }
@@ -2297,8 +2317,12 @@ int testForwardSDSupplier() {
     while (!strm.eof()) {
       std::string line;
       std::getline(strm, line);
-      if (!strm.eof()) ++i;
-      if (i > 1700) break;
+      if (!strm.eof()) {
+        ++i;
+      }
+      if (i > 1700) {
+        break;
+      }
     }
     TEST_ASSERT(i == 1663);
   }
@@ -2309,14 +2333,18 @@ int testForwardSDSupplier() {
     while (!strm.eof()) {
       std::string line;
       std::getline(strm, line);
-      if (!strm.eof()) ++i;
-      if (i > 1700) break;
+      if (!strm.eof()) {
+        ++i;
+      }
+      if (i > 1700) {
+        break;
+      }
     }
     TEST_ASSERT(i == 1663);
   }
   // looks good, now do a supplier:
   {
-    gzstream *strm = new gzstream(maefname2);
+    auto *strm = new gzstream(maefname2);
 
     MaeMolSupplier maesup(strm);
     unsigned int i = 0;
@@ -2521,7 +2549,9 @@ CC(C)(C)(C)C duff2
     unsigned int cnt = 0;
     while (!suppl.atEnd()) {
       std::unique_ptr<ROMol> mol(suppl.next());
-      if (cnt % 2) TEST_ASSERT(mol);
+      if (cnt % 2) {
+        TEST_ASSERT(mol);
+      }
       ++cnt;
     }
     TEST_ASSERT(cnt == 5);
@@ -2770,7 +2800,7 @@ void testGitHub2881() {
 } 
 )DATA";
   {
-    std::istringstream *iss = new std::istringstream(data);
+    auto *iss = new std::istringstream(data);
     bool sanitize = false;
     bool takeOwnership = true;
     MaeMolSupplier suppl(iss, takeOwnership, sanitize);
