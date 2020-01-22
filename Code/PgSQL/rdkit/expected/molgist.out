@@ -94,10 +94,18 @@ select count(*) from chemblmol join chemblmol2 using (m);
     10
 (1 row)
 
+set rdkit.do_chiral_sss=true;
 select count(*) from chemblmol c2 join chemblmol using (m);
  count 
 -------
    100
+(1 row)
+
+set rdkit.do_chiral_sss=false;
+select count(*) from chemblmol c2 join chemblmol using (m);
+ count 
+-------
+   104
 (1 row)
 
 -- now enable the index to trigger the bug:
@@ -116,9 +124,17 @@ select count(*) from chemblmol join chemblmol2 using (m);
     10
 (1 row)
 
+set rdkit.do_chiral_sss=true;
 select count(*) from chemblmol c2 join chemblmol using (m);
  count 
 -------
    100
+(1 row)
+
+set rdkit.do_chiral_sss=false;
+select count(*) from chemblmol c2 join chemblmol using (m);
+ count 
+-------
+   104
 (1 row)
 
