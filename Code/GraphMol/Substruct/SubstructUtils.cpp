@@ -29,10 +29,6 @@ bool atomCompat(const Atom *a1, const Atom *a2,
     res = a1->Match(a2);
   }
   return res;
-  std::cerr << "\t\tatomCompat: " << a1 << " " << a1->getIdx() << "-" << a2
-            << " " << a2->getIdx() << std::endl;
-  std::cerr << "\t\t    " << res << std::endl;
-  return res;
 }
 
 bool chiralAtomCompat(const Atom *&a1, const Atom *&a2) {

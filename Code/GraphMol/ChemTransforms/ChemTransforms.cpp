@@ -51,14 +51,15 @@ void updateSubMolConfs(const ROMol &mol, RWMol &res,
     res.addConformer(newConf, false);
   }
 }
-}
+}  // namespace
 
 ROMol *deleteSubstructs(const ROMol &mol, const ROMol &query, bool onlyFrags,
                         bool useChirality) {
-  RWMol *res = static_cast<RWMol *>(new ROMol(mol, false));
+  RWMol *res = new RWMol(mol, false);
   std::vector<MatchVectType> fgpMatches;
   std::vector<MatchVectType>::const_iterator mati;
-  VECT_INT_VECT matches;  // all matches on the molecule - list of list of atom ids
+  VECT_INT_VECT
+  matches;  // all matches on the molecule - list of list of atom ids
   MatchVectType::const_iterator mi;
   // do the substructure matching and get the atoms that match the query
   const bool uniquify = true;
@@ -259,7 +260,7 @@ ROMol *replaceSidechains(const ROMol &mol, const ROMol &coreQuery,
   }
   std::vector<Atom *> keepList;
 
-  RWMol *newMol = static_cast<RWMol *>(new ROMol(mol));
+  RWMol *newMol = new RWMol(mol);
   unsigned int nDummies = 0;
   for (MatchVectType::const_iterator mvit = matchV.begin();
        mvit != matchV.end(); mvit++) {
@@ -349,7 +350,7 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
     allIndices[mvit.second] = mvit.first;
   }
 
-  RWMol *newMol = static_cast<RWMol *>(new ROMol(mol));
+  RWMol *newMol = new RWMol(mol);
   std::vector<Atom *> keepList;
   std::map<int, Atom *> dummyAtomMap;
 
@@ -374,7 +375,7 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
       int mapping = -1;
       // if we were not in the matching list, still keep
       //  the original indices (replaceDummies=False)
-      if (matchingIndices[i] == -1 && allIndices[i] != -1) {
+      if (allIndices[i] != -1) {
         mapping = allIndices[i];
       }
       // loop over our neighbors and see if any are in the match:
@@ -650,7 +651,8 @@ void addRecursiveQueries(
     if (!at->hasProp(propName)) continue;
     std::string pval;
     at->getProp(propName, pval);
-    std::string maybeSmarts = pval; // keep unmodified in case we are a smarts string
+    std::string maybeSmarts =
+        pval;  // keep unmodified in case we are a smarts string
     boost::algorithm::to_lower(pval);
     if (reactantLabels != nullptr) {
       std::pair<unsigned int, std::string> label(at->getIdx(), pval);
@@ -678,8 +680,7 @@ void addRecursiveQueries(
       auto iter = queries.find(pval);
       if (iter == queries.end()) {
         notFound = true;
-      }
-      else {
+      } else {
         qToAdd = new RecursiveStructureQuery(new ROMol(*(iter->second)));
       }
     }
@@ -689,8 +690,7 @@ void addRecursiveQueries(
       RWMol *m = 0;
       try {
         m = SmartsToMol(maybeSmarts);
-        if (!m)
-          throw KeyErrorException(pval);
+        if (!m) throw KeyErrorException(pval);
         qToAdd = new RecursiveStructureQuery(m);
       } catch (...) {
         throw KeyErrorException(pval);
@@ -718,7 +718,7 @@ void parseQueryDefFile(std::istream *inStream,
   boost::char_separator<char> sep(delimiter.c_str());
   unsigned int line = 0;
   std::string tempStr;
-  while (!inStream->eof()) {
+  while (!inStream->eof() && !inStream->fail()) {
     line++;
     tempStr = getLine(inStream);
     if (tempStr == "" || tempStr.find(comment) == 0) continue;

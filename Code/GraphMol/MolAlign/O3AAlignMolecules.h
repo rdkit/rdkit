@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2013-2014 Paolo Tosco
 //
@@ -208,6 +207,7 @@ class RDKIT_MOLALIGN_EXPORT SDM {
   };
   // assignment operator
   SDM &operator=(const SDM &other) {
+    if (this == &other) return *this;
     d_prbConf = other.d_prbConf;
     d_refConf = other.d_refConf;
     d_o3aConstraintVect = other.d_o3aConstraintVect;
@@ -286,8 +286,8 @@ class RDKIT_MOLALIGN_EXPORT O3A {
       double (*weightFunc)(const unsigned int, const unsigned int, void *),
       double (*scoringFunc)(const unsigned int, const unsigned int, void *),
       void *data, ROMol &prbMol, const ROMol &refMol, const int prbCid,
-      const int refCid, boost::dynamic_bitset<> *prbHvyAtoms = NULL,
-      boost::dynamic_bitset<> *refHvyAtoms = NULL, const bool reflect = false,
+      const int refCid, const boost::dynamic_bitset<> &prbHvyAtoms,
+      const boost::dynamic_bitset<> &refHvyAtoms, const bool reflect = false,
       const unsigned int maxIters = 50, unsigned int options = 0,
       O3AConstraintVect *o3aConstraintVect = NULL, ROMol *extWorkPrbMol = NULL,
       LAP *extLAP = NULL, MolHistogram *extPrbHist = NULL,

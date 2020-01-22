@@ -440,11 +440,8 @@ std::string MolToSmiles(const ROMol &mol, bool doIsomericSmiles, bool doKekule,
     // adding randomness without setting the rootedAtAtom
     if (doRandom) {
       if (rootedAtAtom == -1) {
-        rootedAtAtom = std::rand() % mol.getNumAtoms();
         // need to find an atom id between 0 and mol.getNumAtoms() exclusively
-        PRECONDITION(rootedAtAtom < 0 || static_cast<unsigned int>(
-                                             rootedAtAtom) < mol.getNumAtoms(),
-                     "rootedAtomAtom must be less than the number of atoms");
+        rootedAtAtom = std::rand() % mol.getNumAtoms();
       }
     }
 

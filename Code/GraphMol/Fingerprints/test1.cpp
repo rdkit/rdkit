@@ -2321,6 +2321,39 @@ void testMACCS() {
     delete m1;
     delete fp1;
   }
+  {
+    // check bits 124 and 130 part 1
+    std::string smi = "CNNCOOC";
+    RWMol *m1 = SmilesToMol(smi);
+    TEST_ASSERT(m1);
+    ExplicitBitVect *fp1 = MACCSFingerprints::getFingerprintAsBitVect(*m1);
+    TEST_ASSERT((*fp1)[124]);
+    TEST_ASSERT((*fp1)[130]);
+    delete m1;
+    delete fp1;
+  }
+  {
+    // check bits 124 and 130 part 2
+    std::string smi = "CNNCC";
+    RWMol *m1 = SmilesToMol(smi);
+    TEST_ASSERT(m1);
+    ExplicitBitVect *fp1 = MACCSFingerprints::getFingerprintAsBitVect(*m1);
+    TEST_ASSERT((*fp1)[124]);
+    TEST_ASSERT(!(*fp1)[130]);
+    delete m1;
+    delete fp1;
+  }
+  {
+    // check bits 124 and 130 part 3
+    std::string smi = "CNCCC";
+    RWMol *m1 = SmilesToMol(smi);
+    TEST_ASSERT(m1);
+    ExplicitBitVect *fp1 = MACCSFingerprints::getFingerprintAsBitVect(*m1);
+    TEST_ASSERT(!(*fp1)[124]);
+    TEST_ASSERT(!(*fp1)[130]);
+    delete m1;
+    delete fp1;
+  }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 

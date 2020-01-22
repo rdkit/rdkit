@@ -1095,14 +1095,13 @@ double o3aMMFFWeightFunc(const unsigned int prbIdx, const unsigned int refIdx,
 
   return static_cast<double>(O3_MAX_WEIGHT_COEFF -
                              (static_cast<O3AFuncData *>(data))->weight) *
-             ((1.0 +
-               O3_CHARGE_COEFF *
-                   fabs((static_cast<MMFF::MMFFMolProperties *>(
-                             (static_cast<O3AFuncData *>(data))->refProp))
-                            ->getMMFFPartialCharge(refIdx) +
-                        (static_cast<MMFF::MMFFMolProperties *>(
-                             (static_cast<O3AFuncData *>(data))->prbProp))
-                            ->getMMFFPartialCharge(prbIdx))) /
+             ((1.0 + O3_CHARGE_COEFF *
+                         fabs((static_cast<MMFF::MMFFMolProperties *>(
+                                   (static_cast<O3AFuncData *>(data))->refProp))
+                                  ->getMMFFPartialCharge(refIdx) +
+                              (static_cast<MMFF::MMFFMolProperties *>(
+                                   (static_cast<O3AFuncData *>(data))->prbProp))
+                                  ->getMMFFPartialCharge(prbIdx))) /
               (1.0 + fabs((static_cast<MMFF::MMFFMolProperties *>(
                                (static_cast<O3AFuncData *>(data))->refProp))
                               ->getMMFFPartialCharge(refIdx) -
@@ -1221,8 +1220,8 @@ O3A::O3A(int (*costFunc)(const unsigned int, const unsigned int, double,
          double (*weightFunc)(const unsigned int, const unsigned int, void *),
          double (*scoringFunc)(const unsigned int, const unsigned int, void *),
          void *data, ROMol &prbMol, const ROMol &refMol, const int prbCid,
-         const int refCid, boost::dynamic_bitset<> *prbHvyAtoms,
-         boost::dynamic_bitset<> *refHvyAtoms, const bool reflect,
+         const int refCid, const boost::dynamic_bitset<> &prbHvyAtoms,
+         const boost::dynamic_bitset<> &refHvyAtoms, const bool reflect,
          const unsigned int maxIters, unsigned int options,
          O3AConstraintVect *o3aConstraintVect, ROMol *extWorkPrbMol,
          LAP *extLAP, MolHistogram *extPrbHist, MolHistogram *extRefHist)
@@ -1243,21 +1242,6 @@ O3A::O3A(int (*costFunc)(const unsigned int, const unsigned int, double,
   unsigned int prbNHeavyAtoms = prbMol.getNumHeavyAtoms();
   unsigned int largestNHeavyAtoms = std::max(refNHeavyAtoms, prbNHeavyAtoms);
   unsigned int i;
-  if (!refHvyAtoms) {
-    refHvyAtoms = new boost::dynamic_bitset<>(refNAtoms);
-    for (i = 0; i < refNAtoms; ++i) {
-      if (refMol[i]->getAtomicNum() != 1) {
-        refHvyAtoms->set(i);
-      }
-    }
-  }
-  if (!prbHvyAtoms) {
-    for (i = 0; i < prbNAtoms; ++i) {
-      if (prbMol[i]->getAtomicNum() != 1) {
-        prbHvyAtoms->set(i);
-      }
-    }
-  }
   std::vector<unsigned int> pairs(4, 0);
   std::vector<double> score(3, 0.0);
   std::vector<double> pairsRMSD(2, 0.0);
@@ -1267,18 +1251,20 @@ O3A::O3A(int (*costFunc)(const unsigned int, const unsigned int, double,
   MolHistogram *prbHist = nullptr;
   LAP *lap = nullptr;
   if (local) {
-    startSDM.fillFromDist(O3_SDM_THRESHOLD_START, *refHvyAtoms, *prbHvyAtoms);
+    startSDM.fillFromDist(O3_SDM_THRESHOLD_START, refHvyAtoms, prbHvyAtoms);
   } else {
-    refHist = (extRefHist ? extRefHist
-                          : new MolHistogram(
-                                refMol, MolOps::get3DDistanceMat(
-                                            refMol, refCid, false, false, ""),
-                                true));
-    prbHist = (extPrbHist ? extPrbHist
-                          : new MolHistogram(
-                                prbMol, MolOps::get3DDistanceMat(
-                                            prbMol, prbCid, false, false, ""),
-                                true));
+    refHist =
+        (extRefHist ? extRefHist
+                    : new MolHistogram(refMol,
+                                       MolOps::get3DDistanceMat(
+                                           refMol, refCid, false, false, ""),
+                                       true));
+    prbHist =
+        (extPrbHist ? extPrbHist
+                    : new MolHistogram(prbMol,
+                                       MolOps::get3DDistanceMat(
+                                           prbMol, prbCid, false, false, ""),
+                                       true));
     lap = (extLAP ? extLAP : new LAP(largestNHeavyAtoms));
     lap->computeCostMatrix(prbMol, *prbHist, refMol, *refHist,
                            o3aConstraintVect, costFunc, data);
@@ -1303,7 +1289,7 @@ O3A::O3A(int (*costFunc)(const unsigned int, const unsigned int, double,
                                 (double)sdmThresholdIt * O3_SDM_THRESHOLD_STEP;
       while (flag && (iter < O3_MAX_SDM_ITERATIONS)) {
         SDM progressSDM(&prbConf, &refConf, o3aConstraintVect);
-        progressSDM.fillFromDist(sdmThresholdDist, *refHvyAtoms, *prbHvyAtoms);
+        progressSDM.fillFromDist(sdmThresholdDist, refHvyAtoms, prbHvyAtoms);
         pairs[3] = progressSDM.size();
         if (pairs[3] < 3) {
           break;
@@ -1380,16 +1366,16 @@ O3A::O3A(int (*costFunc)(const unsigned int, const unsigned int, double,
       delete bestSDM[i];
     }
   }
-  if ((!extLAP) && lap) {
+  if (!extLAP) {
     delete lap;
   }
-  if ((!extRefHist) && refHist) {
+  if (!extRefHist) {
     delete refHist;
   }
-  if ((!extPrbHist) && prbHist) {
+  if (!extPrbHist) {
     delete prbHist;
   }
-  if ((!extWorkPrbMol) && workPrbMol) {
+  if (!extWorkPrbMol) {
     delete workPrbMol;
   }
 }
@@ -1476,16 +1462,18 @@ O3A::O3A(ROMol &prbMol, const ROMol &refMol, void *prbProp, void *refProp,
   MolHistogram *prbHist = nullptr;
   LAP *lap = nullptr;
   if (!local) {
-    refHist = (extRefHist ? extRefHist
-                          : new MolHistogram(
-                                refMol, MolOps::get3DDistanceMat(
-                                            refMol, refCid, false, false, ""),
-                                true));
-    prbHist = (extPrbHist ? extPrbHist
-                          : new MolHistogram(
-                                prbMol, MolOps::get3DDistanceMat(
-                                            prbMol, prbCid, false, false, ""),
-                                true));
+    refHist =
+        (extRefHist ? extRefHist
+                    : new MolHistogram(refMol,
+                                       MolOps::get3DDistanceMat(
+                                           refMol, refCid, false, false, ""),
+                                       true));
+    prbHist =
+        (extPrbHist ? extPrbHist
+                    : new MolHistogram(prbMol,
+                                       MolOps::get3DDistanceMat(
+                                           prbMol, prbCid, false, false, ""),
+                                       true));
     lap = (extLAP ? extLAP : new LAP(largestNHeavyAtoms));
   }
   for (l = 0, score[0] = 0.0;
@@ -1496,7 +1484,7 @@ O3A::O3A(ROMol &prbMol, const ROMol &refMol, void *prbProp, void *refProp,
       data.weight = (l ? c : 0);
       data.coeff = c;
       auto *o3a = new O3A(costFunc, weightFunc, scoringFunc, &data, prbMol,
-                          refMol, prbCid, refCid, &prbHvyAtoms, &refHvyAtoms,
+                          refMol, prbCid, refCid, prbHvyAtoms, refHvyAtoms,
                           reflect, maxIters, options, &o3aConstraintVect,
                           &extWorkPrbMol, lap, prbHist, refHist);
       score[1] = o3a->score();
@@ -1681,7 +1669,7 @@ void O3AHelper_(ROMol *prbMol, const ROMol *refMol, void *prbProp,
     (*res)[i].reset(lres);
   }
 }
-}  // end of detail namespace
+}  // namespace detail
 #endif
 
 void getO3AForProbeConfs(ROMol &prbMol, const ROMol &refMol, void *prbProp,

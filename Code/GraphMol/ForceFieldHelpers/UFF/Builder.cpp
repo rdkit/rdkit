@@ -67,7 +67,7 @@ void setTwoBitCell(boost::shared_array<std::uint8_t> &res, unsigned int pos,
 }
 
 std::uint8_t getTwoBitCell(boost::shared_array<std::uint8_t> &res,
-                             unsigned int pos) {
+                           unsigned int pos) {
   unsigned int twoBitPos = pos / 4;
   unsigned int shift = 2 * (pos % 4);
   std::uint8_t twoBitMask = 3 << shift;
@@ -89,16 +89,17 @@ std::uint8_t getTwoBitCell(boost::shared_array<std::uint8_t> &res,
 // ------------------------------------------------------------------------
 boost::shared_array<std::uint8_t> buildNeighborMatrix(const ROMol &mol) {
   const std::uint8_t RELATION_1_X_INIT = RELATION_1_X | (RELATION_1_X << 2) |
-                                           (RELATION_1_X << 4) |
-                                           (RELATION_1_X << 6);
+                                         (RELATION_1_X << 4) |
+                                         (RELATION_1_X << 6);
   unsigned int nAtoms = mol.getNumAtoms();
   unsigned nTwoBitCells = (nAtoms * (nAtoms + 1) - 1) / 8 + 1;
   boost::shared_array<std::uint8_t> res(new std::uint8_t[nTwoBitCells]);
   std::memset(res.get(), RELATION_1_X_INIT, nTwoBitCells);
   for (ROMol::ConstBondIterator bondi = mol.beginBonds();
        bondi != mol.endBonds(); ++bondi) {
-    setTwoBitCell(res, twoBitCellPos(nAtoms, (*bondi)->getBeginAtomIdx(),
-                                     (*bondi)->getEndAtomIdx()),
+    setTwoBitCell(res,
+                  twoBitCellPos(nAtoms, (*bondi)->getBeginAtomIdx(),
+                                (*bondi)->getEndAtomIdx()),
                   RELATION_1_2);
     unsigned int bondiBeginAtomIdx = (*bondi)->getBeginAtomIdx();
     unsigned int bondiEndAtomIdx = (*bondi)->getEndAtomIdx();
@@ -182,10 +183,8 @@ void addAngles(const ROMol &mol, const AtomicParamVect &params,
                 // if the central atom and one of the bonded atoms, but not the
                 //  other one are inside a ring, then this angle is between a
                 // ring substituent and a ring edge
-                if ((rings->isAtomInRingOfSize(i, 3) &&
-                     !rings->isAtomInRingOfSize(k, 3)) ||
-                    (!rings->isAtomInRingOfSize(i, 3) &&
-                     rings->isAtomInRingOfSize(k, 3))) {
+                if (rings->isAtomInRingOfSize(i, 3) !=
+                    rings->isAtomInRingOfSize(k, 3)) {
                   order = 30;
                 }
                 // if all atoms are inside the ring, then this is one of ring
@@ -200,10 +199,8 @@ void addAngles(const ROMol &mol, const AtomicParamVect &params,
                 // if the central atom and one of the bonded atoms, but not the
                 //  other one are inside a ring, then this angle is between a
                 // ring substituent and a ring edge
-                if ((rings->isAtomInRingOfSize(i, 4) &&
-                     !rings->isAtomInRingOfSize(k, 4)) ||
-                    (!rings->isAtomInRingOfSize(i, 4) &&
-                     rings->isAtomInRingOfSize(k, 4))) {
+                if (rings->isAtomInRingOfSize(i, 4) !=
+                    rings->isAtomInRingOfSize(k, 4)) {
                   order = 40;
                 }
                 // if all atoms are inside the ring, then this is one of ring
@@ -718,5 +715,5 @@ ForceFields::ForceField *constructForceField(ROMol &mol, double vdwThresh,
   return constructForceField(mol, params, vdwThresh, confId,
                              ignoreInterfragInteractions);
 }
-}
-}
+}  // namespace UFF
+}  // namespace RDKit

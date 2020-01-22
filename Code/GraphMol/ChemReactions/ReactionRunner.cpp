@@ -1600,9 +1600,6 @@ ROMol *reduceProductToSideChains(const ROMOL_SPTR &product,
 
             if (atommapno) {
               Atom *at = mol->getAtomWithIdx(idx);
-              PRECONDITION(at,
-                           "Internal error in reduceProductToSideChains, bad "
-                           "atom retrieval");
               at->setProp(common_properties::molAtomMapNumber, atommapno);
             }
           }

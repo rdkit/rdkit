@@ -38,7 +38,7 @@ SmilesMolSupplier::SmilesMolSupplier(const std::string &fileName,
   // Need to check if this has been fixed in VC++ 7.0
   auto *tmpStream = new std::ifstream(fileName.c_str(), std::ios_base::binary);
 
-  if (!tmpStream || (!(*tmpStream)) || (tmpStream->bad())) {
+  if (!(*tmpStream) || tmpStream->bad()) {
     std::ostringstream errout;
     errout << "Bad input file " << fileName;
     delete tmpStream;

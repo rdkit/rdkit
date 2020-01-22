@@ -52,7 +52,7 @@ void constructFragmenterAtomTypes(
   PRECONDITION(inStream, "no stream");
   defs.clear();
   unsigned int line = 0;
-  while (!inStream->eof()) {
+  while (!inStream->eof() && !inStream->fail()) {
     ++line;
     std::string tempStr = getLine(inStream);
     if (tempStr == "" || tempStr.find(comment) == 0) continue;
@@ -141,7 +141,7 @@ void constructFragmenterBondTypes(
   defs.resize(0);
 
   unsigned int line = 0;
-  while (!inStream->eof()) {
+  while (!inStream->eof() && !inStream->fail()) {
     ++line;
     std::string tempStr = getLine(inStream);
     if (tempStr == "" || tempStr.find(comment) == 0) continue;

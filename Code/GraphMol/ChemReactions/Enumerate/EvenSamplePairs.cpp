@@ -40,9 +40,10 @@ using namespace EnumerationTypes;
 void EvenSamplePairsStrategy::initializeStrategy(const ChemicalReaction &,
                                                  const BBS &bbs) {
   // If we fail here, someone has a ridiculous amount of memory
-  PRECONDITION(m_numPermutations != EnumerationStrategyBase::EnumerationOverflow,
-               "Cannot represent all permutations for the even sampler");
-  
+  PRECONDITION(
+      m_numPermutations != EnumerationStrategyBase::EnumerationOverflow,
+      "Cannot represent all permutations for the even sampler");
+
   boost::uint64_t npos = bbs.size();
   used_count.resize(npos);
   std::fill(used_count.begin(), used_count.end(), 0);
@@ -97,8 +98,8 @@ void EvenSamplePairsStrategy::initializeStrategy(const ChemicalReaction &,
 //  This is fairly suboptimal for large collections
 //  of building blocks and may take a while to
 //  terminate...
-bool EvenSamplePairsStrategy::try_add(boost::uint64_t seed) {
-  const RGROUPS &digits = decode(seed);
+bool EvenSamplePairsStrategy::try_add(boost::uint64_t iseed) {
+  const RGROUPS &digits = decode(iseed);
   const RGROUPS &rgroups = m_permutationSizes;
   boost::uint64_t islack = 0;
   boost::uint64_t num_rgroups = m_permutationSizes.size();
@@ -145,7 +146,7 @@ bool EvenSamplePairsStrategy::try_add(boost::uint64_t seed) {
     if (used_count[i] == rdcast<boost::int64_t>(rgroups[i])) {
       // complete variable scan => initialize
       if (nslack > min_nslack && rgroups[i] > 1)  // cleared slack on i
-        nslack = min_nslack;  
+        nslack = min_nslack;
 
       used_count[i] = 0;
       for (boost::uint64_t j = 0; j < rgroups[i]; ++j) {
@@ -186,14 +187,14 @@ bool EvenSamplePairsStrategy::try_add(boost::uint64_t seed) {
     }
   }
 
-  selected.insert(seed);
+  selected.insert(iseed);
   return true;
 }
 
 const RGROUPS &EvenSamplePairsStrategy::next() {
   nslack = 0;
-  while (m_numPermutationsProcessed < rdcast<boost::uint64_t>(m_numPermutations)) {
-    bool added = false;
+  while (m_numPermutationsProcessed <
+         rdcast<boost::uint64_t>(m_numPermutations)) {
     for (boost::uint64_t l = 0; l < M; ++l) {
       seed = ((seed * a + b) % M);
       if (seed > rdcast<boost::uint64_t>(m_numPermutations)) {
@@ -204,16 +205,13 @@ const RGROUPS &EvenSamplePairsStrategy::next() {
         continue;
       } else if (try_add(seed)) {
         m_numPermutationsProcessed++;
-        added = true;
         return decode(seed);
       }
     }
 
-    if (!added) {
-      // loosen heuristic
-      nslack += 1;
-      min_nslack += 1;
-    }
+    // loosen heuristic
+    nslack += 1;
+    min_nslack += 1;
   }
 
   throw EnumerationStrategyException("Ran out of molecules");

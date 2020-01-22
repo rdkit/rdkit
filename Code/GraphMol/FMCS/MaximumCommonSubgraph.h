@@ -25,16 +25,14 @@
 
 namespace RDKit {
 
-inline bool FinalChiralityCheckFunction(const short unsigned c1[],
-                                        const short unsigned c2[], const ROMol& mol1,
-                                        const FMCS::Graph& query, const ROMol& mol2,
-                                        const FMCS::Graph& target,
-                                        const MCSParameters* p);
+inline bool FinalChiralityCheckFunction(
+    const std::uint32_t c1[], const std::uint32_t c2[], const ROMol& mol1,
+    const FMCS::Graph& query, const ROMol& mol2, const FMCS::Graph& target,
+    const MCSParameters* p);
 
-bool FinalMatchCheckFunction(const short unsigned c1[],
-                             const short unsigned c2[], const ROMol& mol1,
-                             const FMCS::Graph& query, const ROMol& mol2,
-                             const FMCS::Graph& target,
+bool FinalMatchCheckFunction(const std::uint32_t c1[], const std::uint32_t c2[],
+                             const ROMol& mol1, const FMCS::Graph& query,
+                             const ROMol& mol2, const FMCS::Graph& target,
                              const MCSParameters* p);
 
 namespace FMCS {
@@ -98,8 +96,9 @@ class RDKIT_FMCS_EXPORT MaximumCommonSubgraph {
   void makeInitialSeeds();
   bool createSeedFromMCS(size_t newQueryTarget, Seed& seed);
   bool growSeeds();  // returns false if canceled
-  std::pair<std::string, RWMol*> generateResultSMARTSAndQueryMol(const MCS& mcsIdx) const;
-  bool addFusedBondQueries(const MCS& McsIdx, RWMol *rwMol) const;
+  std::pair<std::string, RWMol*> generateResultSMARTSAndQueryMol(
+      const MCS& mcsIdx) const;
+  bool addFusedBondQueries(const MCS& McsIdx, RWMol* rwMol) const;
 
   bool match(Seed& seed);
   bool matchIncrementalFast(Seed& seed, unsigned itarget);

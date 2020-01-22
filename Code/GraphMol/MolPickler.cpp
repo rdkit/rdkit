@@ -511,12 +511,12 @@ Query<int, Atom const *, true> *unpickleQuery(std::istream &ss,
   ROMol *tmpMol;
   switch (tag) {
     case MolPickler::QUERY_ATOMRING:
-      res = new AtomRingQuery();
       streamRead(ss, tag, version);
       if (tag != MolPickler::QUERY_VALUE) {
         throw MolPicklerException(
             "Bad pickle format: QUERY_VALUE tag not found.");
       }
+      res = new AtomRingQuery();
       streamRead(ss, val, version);
       static_cast<EqualityQuery<int, Atom const *, true> *>(res)->setVal(val);
       streamRead(ss, val, version);
@@ -723,12 +723,12 @@ AtomMonomerInfo *unpickleAtomMonomerInfo(std::istream &ss, int version) {
   switch (typ) {
     case AtomMonomerInfo::UNKNOWN:
     case AtomMonomerInfo::OTHER:
-      res =
-          new AtomMonomerInfo(RDKit::AtomMonomerInfo::AtomMonomerType(typ), nm);
       streamRead(ss, tag, version);
       if (tag != MolPickler::END_ATOM_MONOMER)
         throw MolPicklerException(
             "did not find expected end of atom monomer info");
+      res =
+          new AtomMonomerInfo(RDKit::AtomMonomerInfo::AtomMonomerType(typ), nm);
       break;
     case AtomMonomerInfo::PDBRESIDUE:
       res = static_cast<AtomMonomerInfo *>(new AtomPDBResidueInfo(nm));
@@ -945,9 +945,6 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
       const Conformer *conf = ci->get();
       _pickleProperties(ss, *conf, propertyFlags);
     }
-  }
-
-  if (propertyFlags & PicklerOps::MolProps) {
     streamWrite(ss, BEGINPROPS);
     _pickleProperties(ss, *mol, propertyFlags);
     streamWrite(ss, ENDPROPS);
