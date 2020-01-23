@@ -47,7 +47,7 @@ if(WIN32)
   set(swigRDKitLibs "${swigRDKitLibs}${Boost_IOSTREAMS_LIBRARY};${Boost_SYSTEM_LIBRARY};")
   
   find_package(Boost 1.56.0 COMPONENTS zlib)
-  if(Boost_zlib_FOUND)
+  if(Boost_ZLIB_FOUND)
     set(swigRDKitLibs "${swigRDKitLibs}${Boost_ZLIB_LIBRARY};")
   endif()
 else()
