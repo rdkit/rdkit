@@ -53,6 +53,7 @@
 %template(Int_Double_Map) std::map< int, double >;
 %template(Float_Pair) std::pair<float,float>;
 %template(Float_Pair_Vect) std::vector< std::pair<float,float> >;
+%template(ROMol_Ptr_Vect) std::vector<RDKit::ROMol*>;
 
 %ignore RDKit::MolDraw2DSVG::MolDraw2DSVG(int,int,std::ostream &);
 
