@@ -256,7 +256,6 @@ TEST_CASE("github #908: AddHs() using 3D coordinates with 2D conformations",
   }
 }
 
-#endif
 TEST_CASE(
     "github #2437: Canon::rankMolAtoms results in crossed double bonds in "
     "rings",
@@ -294,10 +293,10 @@ M  END
   Mrv1824 05081910082D          
 
   4  4  0  0  0  0            999 V2000
-    6.9312   -8.6277    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
     6.9312   -9.4527    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
     7.7562   -8.6277    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
     7.7562   -9.4527    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.9312   -8.6277    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
   1  2  1  0  0  0  0
   1  3  1  0  0  0  0
   3  4  1  0  0  0  0
@@ -1097,5 +1096,15 @@ TEST_CASE("RemoveHsParameters", "[molops]") {
     for (auto atom : cp->atoms()) {
       CHECK(atom->getAtomicNum() != 1);
     }
+  }
+}
+#endif
+TEST_CASE("github #2895: acepentalene aromaticity perception ",
+          "[molops,bug,aromaticity]") {
+  SECTION("acepentalene") {
+    std::unique_ptr<RWMol> m{SmilesToMol("C1=CC2=CC=C3C2=C1C=C3")};
+    REQUIRE(m);
+    auto smi = MolToSmiles(*m);
+    CHECK(smi == "C1=CC2=C3C1=CC=C3C=C2");
   }
 }
