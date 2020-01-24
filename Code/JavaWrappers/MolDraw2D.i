@@ -54,9 +54,63 @@
 %template(Float_Pair) std::pair<float,float>;
 %template(Float_Pair_Vect) std::vector< std::pair<float,float> >;
 %template(ROMol_Ptr_Vect) std::vector<RDKit::ROMol*>;
+%template(Point2D_Vect) std::vector<RDGeom::Point2D *>;
 
 %ignore RDKit::MolDraw2DSVG::MolDraw2DSVG(int,int,std::ostream &);
+%ignore RDKit::MolDraw2DUtils::contourAndDrawGaussians(
+    MolDraw2D &, const std::vector<Point2D> &,
+    const std::vector<double> &, const std::vector<double> &,
+    size_t, std::vector<double> &,
+    const ContourParams &);
+%ignore RDKit::MolDraw2DUtils::contourAndDrawGaussians(
+    MolDraw2D &, const std::vector<Point2D> &,
+    const std::vector<double> &, const std::vector<double> &,
+    size_t, ContourParams &);
+%ignore RDKit::MolDraw2DUtils::contourAndDrawGaussians;
+%ignore RDKit::MolDraw2DUtils::contourAndDrawGrid;
+
 
 %include <GraphMol/MolDraw2D/MolDraw2D.h>
 %include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 %include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
+
+%inline %{
+    void ContourAndDrawGaussians(
+    RDKit::MolDraw2D &drawer, const std::vector<RDGeom::Point2D *> &p_locs,
+    const std::vector<double> &heights, const std::vector<double> &widths,
+    size_t nContours, std::vector<double> &levels,
+    const RDKit::MolDraw2DUtils::ContourParams &ps = RDKit::MolDraw2DUtils::ContourParams()){
+        std::vector<Point2D> locs;
+        locs.reserve(p_locs.size());
+        for(const auto *p : p_locs){
+            locs.push_back(*p);
+        }
+        contourAndDrawGaussians(drawer,locs,heights,widths,nContours,levels,ps);
+    };
+    void ContourAndDrawGaussians(
+    RDKit::MolDraw2D &drawer, const std::vector<RDGeom::Point2D *> &p_locs,
+    const std::vector<double> &heights, const std::vector<double> &widths,
+    size_t nContours = 10, 
+    const RDKit::MolDraw2DUtils::ContourParams &ps = RDKit::MolDraw2DUtils::ContourParams()){
+        std::vector<Point2D> locs;
+        locs.reserve(p_locs.size());
+        for(const auto *p : p_locs){
+            locs.push_back(*p);
+        }
+        contourAndDrawGaussians(drawer,locs,heights,widths,nContours,ps);
+    };
+    void ContourAndDrawGrid(
+    RDKit::MolDraw2D &drawer, const std::vector<double> &p_grid,
+    const std::vector<double> &xcoords, const std::vector<double> &ycoords,
+    size_t nContours, std::vector<double> &levels,
+    const RDKit::MolDraw2DUtils::ContourParams &ps = RDKit::MolDraw2DUtils::ContourParams()){
+        contourAndDrawGrid(drawer,p_grid.data(),xcoords,ycoords,nContours,levels,ps);
+    };
+    void ContourAndDrawGrid(
+    RDKit::MolDraw2D &drawer, const std::vector<double> &p_grid,
+    const std::vector<double> &xcoords, const std::vector<double> &ycoords,
+    size_t nContours=10,
+    const RDKit::MolDraw2DUtils::ContourParams &ps = RDKit::MolDraw2DUtils::ContourParams()){
+        contourAndDrawGrid(drawer,p_grid.data(),xcoords,ycoords,nContours,ps);
+    };
+%}
