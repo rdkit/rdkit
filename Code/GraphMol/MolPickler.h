@@ -46,7 +46,7 @@ class RDKIT_GRAPHMOL_EXPORT MolPicklerException : public std::exception {
 
 namespace PicklerOps {
 typedef enum {
-  NoProps = 0,                 // no data pickled
+  NoProps = 0,                 // no data pickled (default pickling, float confs)
   MolProps = BOOST_BINARY(1),  // only public non computed properties
   AtomProps = BOOST_BINARY(10),
   BondProps = BOOST_BINARY(100),
@@ -55,7 +55,8 @@ typedef enum {
   PrivateProps = BOOST_BINARY(10000),
   ComputedProps = BOOST_BINARY(100000),
   AllProps =
-      0x7FFFFFFF,  // all data pickled (only 31 bit flags in case enum==int)
+      0x0000FFFF,  // all data pickled (only 31 bit flags in case enum==int)
+  ConfDouble = 0x0001FFFF // save 3D confs as double
 } PropertyPickleOptions;
 }
 
@@ -135,7 +136,8 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
     BEGINQUERYATOMDATA,
     BEGINSGROUP,
     BEGINSTEREOGROUP,
-    BEGINCONFPROPS,    
+    BEGINCONFPROPS,
+    BEGINCONFS_DOUBLE,
   } Tags;
 
   static unsigned int getDefaultPickleProperties();
@@ -219,7 +221,7 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
                             std::map<int, int> &atomIdxMap);
 
   //! do the actual work of pickling a Conformer
-  template <typename T>
+  template <typename T, typename C>
   static void _pickleConformer(std::ostream &ss, const Conformer *conf);
 
   //! do the actual work of de-pickling a molecule
@@ -254,7 +256,7 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
   static void _depickleStereo(std::istream &ss, ROMol *mol, int version);
 
   //! extract a conformation from a pickle
-  template <typename T>
+  template <typename T, typename C>
   static Conformer *_conformerFromPickle(std::istream &ss, int version);
 
   //! pickle standard properties

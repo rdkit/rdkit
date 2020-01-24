@@ -929,14 +929,25 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
     }
   }
 
-  // pickle the conformations
-  streamWrite(ss, BEGINCONFS);
-  tmpInt = static_cast<int32_t>(mol->getNumConformers());
-  streamWrite(ss, tmpInt);
+  if (propertyFlags & PicklerOps::ConfDouble) {
+    // pickle the conformations
+    streamWrite(ss, BEGINCONFS_DOUBLE);
+    tmpInt = static_cast<int32_t>(mol->getNumConformers());
+    streamWrite(ss, tmpInt);
+    for (auto ci = mol->beginConformers(); ci != mol->endConformers(); ++ci) {
+      const Conformer *conf = ci->get();
+      _pickleConformer<T, double>(ss, conf);
+    }
 
-  for (auto ci = mol->beginConformers(); ci != mol->endConformers(); ++ci) {
-    const Conformer *conf = ci->get();
-    _pickleConformer<T>(ss, conf);
+  } else {
+    // pickle the conformations
+    streamWrite(ss, BEGINCONFS);
+    tmpInt = static_cast<int32_t>(mol->getNumConformers());
+    streamWrite(ss, tmpInt);
+    for (auto ci = mol->beginConformers(); ci != mol->endConformers(); ++ci) {
+      const Conformer *conf = ci->get();
+      _pickleConformer<T, float>(ss, conf);
+    }
   }
 
   if (propertyFlags & PicklerOps::MolProps) {
@@ -1076,12 +1087,17 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
     streamRead(ss, tag, version);
   }
 
-  if (tag == BEGINCONFS) {
+  if (tag == BEGINCONFS || tag == BEGINCONFS_DOUBLE) {
     // read in the conformation
     streamRead(ss, tmpInt, version);
     std::vector<unsigned int> cids(tmpInt);
     for (auto i = 0; i < tmpInt; i++) {
-      Conformer *conf = _conformerFromPickle<T>(ss, version);
+      Conformer *conf;
+      if (tag == BEGINCONFS) {
+	conf = _conformerFromPickle<T, float>(ss, version);
+      } else {
+	conf = _conformerFromPickle<T, double>(ss, version);	
+      }
       mol->addConformer(conf);
       cids[i] = conf->getId();
     }
@@ -1346,7 +1362,7 @@ void MolPickler::_pickleAtom(std::ostream &ss, const Atom *atom) {
   }
 }
 
-template <typename T>
+template <typename T, typename C>
 void MolPickler::_pickleConformer(std::ostream &ss, const Conformer *conf) {
   PRECONDITION(conf, "empty conformer");
   char tmpChr = static_cast<int>(conf->is3D());
@@ -1357,19 +1373,19 @@ void MolPickler::_pickleConformer(std::ostream &ss, const Conformer *conf) {
   streamWrite(ss, tmpT);
   const RDGeom::POINT3D_VECT &pts = conf->getPositions();
   for (const auto &pt : pts) {
-    float tmpFloat;
-    tmpFloat = static_cast<float>(pt.x);
+    C tmpFloat;
+    tmpFloat = static_cast<C>(pt.x);
     streamWrite(ss, tmpFloat);
-    tmpFloat = static_cast<float>(pt.y);
+    tmpFloat = static_cast<C>(pt.y);
     streamWrite(ss, tmpFloat);
-    tmpFloat = static_cast<float>(pt.z);
+    tmpFloat = static_cast<C>(pt.z);
     streamWrite(ss, tmpFloat);
   }
 }
 
-template <typename T>
+template <typename T, typename C>
 Conformer *MolPickler::_conformerFromPickle(std::istream &ss, int version) {
-  float tmpFloat;
+  C tmpFloat;
   bool is3D = true;
   if (version > 4000) {
     char tmpChr;
