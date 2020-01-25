@@ -46,7 +46,7 @@ class RDKIT_GRAPHMOL_EXPORT MolPicklerException : public std::exception {
 
 namespace PicklerOps {
 typedef enum {
-  NoProps = 0,                 // no data pickled (default pickling, float confs)
+  NoProps = 0,                 // no data pickled (default pickling, single-precision coords)
   MolProps = BOOST_BINARY(1),  // only public non computed properties
   AtomProps = BOOST_BINARY(10),
   BondProps = BOOST_BINARY(100),
