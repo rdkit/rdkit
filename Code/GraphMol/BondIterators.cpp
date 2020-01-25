@@ -60,18 +60,20 @@ BondIterator_ BondIterator_::operator++(int) {
 }
 // pre-decrement
 BondIterator_ &BondIterator_::operator--() {
-  if (_pos == _beg)
+  if (_pos == _beg) {
     _pos = _end;
-  else
+  } else {
     _pos--;
+  }
   return *this;
 }
 BondIterator_ BondIterator_::operator--(int) {
   BondIterator_ res(*this);
-  if (_pos == _beg)
+  if (_pos == _beg) {
     _pos = _end;
-  else
+  } else {
     _pos--;
+  }
   return res;
 }
 
@@ -125,18 +127,20 @@ ConstBondIterator_ ConstBondIterator_::operator++(int) {
 }
 // pre-decrement
 ConstBondIterator_ &ConstBondIterator_::operator--() {
-  if (_pos == _beg)
+  if (_pos == _beg) {
     _pos = _end;
-  else
+  } else {
     _pos--;
+  }
   return *this;
 }
 ConstBondIterator_ ConstBondIterator_::operator--(int) {
   ConstBondIterator_ res(*this);
-  if (_pos == _beg)
+  if (_pos == _beg) {
     _pos = _end;
-  else
+  } else {
     _pos--;
+  }
   return res;
 }
 }

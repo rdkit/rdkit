@@ -28,8 +28,9 @@ void Strip(RWMol *mol, unsigned int striptype) {
   }
   if (striptype & static_cast<unsigned>(StripType::BondStereo)) {
     for (auto bptr : mol->bonds()) {
-      if (bptr->getStereo() > RDKit::Bond::STEREOANY)
+      if (bptr->getStereo() > RDKit::Bond::STEREOANY) {
         bptr->setStereo(RDKit::Bond::STEREOANY);
+      }
     }
   }
   if (striptype & static_cast<unsigned>(StripType::Isotope)) {

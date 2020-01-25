@@ -65,8 +65,9 @@ struct Bits {
         useQueryQueryMatches(useQueryQueryMatches) {
     if (fps) {
       queryBits = fps->makeFingerprint(m);
-    } else
+    } else {
       queryBits = nullptr;
+    }
   }
 
   bool check(unsigned int idx) const {
@@ -117,7 +118,9 @@ void SubSearcher(const ROMol &in_query, const Bits &bits,
   for (unsigned int idx = start;
        idx < end && (maxResults == -1 || counter < maxResults);
        idx += numThreads) {
-    if (!bits.check(idx)) continue;
+    if (!bits.check(idx)) {
+      continue;
+    }
     // need shared_ptr as it (may) control the lifespan of the
     //  returned molecule!
     const boost::shared_ptr<ROMol> &m = mols.getMol(idx);
@@ -136,9 +139,13 @@ void SubSearcher(const ROMol &in_query, const Bits &bits,
       // atomic
       // several substructure runs can update the counter beyond the maxResults
       //  This okay: if we get one or two extra, we can fix it on the way out
-      if (maxResults != -1 && counter >= maxResults) break;
+      if (maxResults != -1 && counter >= maxResults) {
+        break;
+      }
       idxs.push_back(idx);
-      if (maxResults != -1) counter++;
+      if (maxResults != -1) {
+        counter++;
+      }
     }
   }
 }
@@ -151,7 +158,9 @@ void SubSearchMatchCounter(const ROMol &in_query, const Bits &bits,
   ROMol query(in_query);
   MatchVectType matchVect;
   for (unsigned int idx = start; idx < end; idx += numThreads) {
-    if (!bits.check(idx)) continue;
+    if (!bits.check(idx)) {
+      continue;
+    }
     // need shared_ptr as it (may) controls the lifespan of the
     //  returned molecule!
     const boost::shared_ptr<ROMol> &m = mols.getMol(idx);
@@ -177,13 +186,16 @@ std::vector<unsigned int> internalGetMatches(
     int maxResults = 1000) {
   PRECONDITION(startIdx < mols.size(), "startIdx out of bounds");
   PRECONDITION(endIdx > startIdx, "endIdx > startIdx");
-  if (numThreads == -1)
+  if (numThreads == -1) {
     numThreads = (int)getNumThreadsToUse(numThreads);
-  else
+  } else {
     numThreads = std::min(numThreads, (int)getNumThreadsToUse(numThreads));
+  }
 
   endIdx = std::min(mols.size(), endIdx);
-  if (endIdx < static_cast<unsigned int>(numThreads)) numThreads = endIdx;
+  if (endIdx < static_cast<unsigned int>(numThreads)) {
+    numThreads = endIdx;
+  }
 
   std::vector<std::future<void>> thread_group;
   std::atomic<int> counter(0);
@@ -214,8 +226,9 @@ std::vector<unsigned int> internalGetMatches(
   }
 
   // this is so we don't really have to do locking on the atomic counter...
-  if (maxResults != -1 && rdcast<int>(results.size()) > maxResults)
+  if (maxResults != -1 && rdcast<int>(results.size()) > maxResults) {
     results.resize(maxResults);
+  }
 
   return results;
 }
@@ -230,12 +243,15 @@ int internalMatchCounter(const ROMol &query, MolHolderBase &mols,
 
   endIdx = std::min(mols.size(), endIdx);
 
-  if (numThreads == -1)
+  if (numThreads == -1) {
     numThreads = (int)getNumThreadsToUse(numThreads);
-  else
+  } else {
     numThreads = std::min(numThreads, (int)getNumThreadsToUse(numThreads));
+  }
 
-  if (endIdx < static_cast<unsigned int>(numThreads)) numThreads = endIdx;
+  if (endIdx < static_cast<unsigned int>(numThreads)) {
+    numThreads = endIdx;
+  }
 
   std::vector<std::future<void>> thread_group;
   std::atomic<int> counter(0);

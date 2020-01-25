@@ -148,12 +148,14 @@ double *InfoBitRanker::getTopN(unsigned int num) {
   // in addition the infogain function pretends that this is a 2D matrix
   // with the number of rows equal to nVals and num of columns equal to
   // d_classes
-  if (num > d_dims)
+  if (num > d_dims) {
     throw ValueErrorException(
         "attempt to rank more bits than present in the bit vectors");
-  if (dp_maskBits)
+  }
+  if (dp_maskBits) {
     CHECK_INVARIANT(num <= dp_maskBits->getNumOnBits(),
                     "Can't rank more bits than the ensemble size");
+  }
   auto *resMat = new RDKit::USHORT[2 * d_classes];
 
   PR_QUEUE topN;
@@ -280,7 +282,7 @@ void InfoBitRanker::writeTopBitsToFile(const std::string &fileName) const {
     throw RDKit::FileParseException(errout.str());
   }
 
-  std::ostream &outStream = static_cast<std::ostream &>(tmpStream);
+  auto &outStream = static_cast<std::ostream &>(tmpStream);
   this->writeTopBitsToStream(&outStream);
 }
 }

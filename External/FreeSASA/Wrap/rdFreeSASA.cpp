@@ -53,7 +53,9 @@ python::object classifyAtomsHelper(RDKit::ROMol &mol,
   std::vector<double> radii;
   python::list l;
   if (FreeSASA::classifyAtoms(mol, radii, opts)) {
-    for (double &i : radii) l.append(i);
+    for (double &i : radii) {
+      l.append(i);
+    }
     return l;
   }
   return l;

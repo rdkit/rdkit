@@ -28,21 +28,24 @@ std::string DrawColourToSVG(const DrawColour &col) {
   unsigned int v;
   unsigned int i = 1;
   v = int(255 * col.r);
-  if (v > 255)
+  if (v > 255) {
     throw ValueErrorException(
         "elements of the color should be between 0 and 1");
+  }
   res[i++] = convert[v / 16];
   res[i++] = convert[v % 16];
   v = int(255 * col.g);
-  if (v > 255)
+  if (v > 255) {
     throw ValueErrorException(
         "elements of the color should be between 0 and 1");
+  }
   res[i++] = convert[v / 16];
   res[i++] = convert[v % 16];
   v = int(255 * col.b);
-  if (v > 255)
+  if (v > 255) {
     throw ValueErrorException(
         "elements of the color should be between 0 and 1");
+  }
   res[i++] = convert[v / 16];
   res[i++] = convert[v % 16];
   return res;
@@ -81,8 +84,9 @@ void MolDraw2DSVG::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
   PRECONDITION(nSegments > 1, "too few segments");
   RDUNUSED_PARAM(col2);
 
-  if (nSegments % 2)
+  if (nSegments % 2) {
     ++nSegments;  // we're going to assume an even number of segments
+  }
   setColour(col1);
 
   Point2D perp = calcPerpendicular(cds1, cds2);
@@ -125,7 +129,9 @@ void MolDraw2DSVG::drawBond(
     const std::map<int, DrawColour> *highlight_bond_map) {
   PRECONDITION(bond, "bad bond");
   std::string o_class = d_activeClass;
-  if (d_activeClass != "") d_activeClass += " ";
+  if (d_activeClass != "") {
+    d_activeClass += " ";
+  }
   d_activeClass += boost::str(boost::format("bond-%d") % bond->getIdx());
   MolDraw2D::drawBond(mol, bond, at1_idx, at2_idx, highlight_atoms,
                       highlight_atom_map, highlight_bonds, highlight_bond_map);
@@ -199,11 +205,12 @@ void MolDraw2DSVG::drawPolygon(const std::vector<Point2D> &cds) {
   }
   d_os << " Z";
   d_os << "' style='";
-  if (fillPolys())
+  if (fillPolys()) {
     d_os << "fill:" << col << ";fill-rule:evenodd;fill-opacity=" << colour().a
          << ";";
-  else
+  } else {
     d_os << "fill:none;";
+  }
 
   d_os << "stroke:" << col << ";stroke-width:" << width
        << "px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:"
@@ -234,10 +241,11 @@ void MolDraw2DSVG::drawEllipse(const Point2D &cds1, const Point2D &cds2) {
     d_os << " class='" << d_activeClass << "'";
   }
   d_os << " style='";
-  if (fillPolys())
+  if (fillPolys()) {
     d_os << "fill:" << col << ";fill-rule:evenodd;";
-  else
+  } else {
     d_os << "fill:none;";
+  }
 
   d_os << "stroke:" << col << ";stroke-width:" << width
        << "px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
@@ -421,10 +429,11 @@ void MolDraw2DSVG::addMoleculeMetadata(const ROMol &mol, int confId) const {
     RDGeom::Point3D pos = conf.getAtomPos(atom->getIdx());
 
     Point2D dpos(pos.x, pos.y);
-    if (atom->hasProp(tag))
+    if (atom->hasProp(tag)) {
       dpos = atom->getProp<Point2D>(tag);
-    else
+    } else {
       dpos = getDrawCoords(dpos);
+    }
     d_os << " drawing-x=\"" << dpos.x << "\""
          << " drawing-y=\"" << dpos.y << "\"";
     d_os << " x=\"" << pos.x << "\""
@@ -450,7 +459,9 @@ void MolDraw2DSVG::addMoleculeMetadata(const std::vector<ROMol *> &mols,
                                        const std::vector<int> confIds) const {
   for (unsigned int i = 0; i < mols.size(); ++i) {
     int confId = -1;
-    if (confIds.size() == mols.size()) confId = confIds[i];
+    if (confIds.size() == mols.size()) {
+      confId = confIds[i];
+    }
     addMoleculeMetadata(*(mols[i]), confId);
   }
 };

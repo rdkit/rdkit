@@ -79,10 +79,11 @@ static int recurseLocale(int state) {
   return recursion;
 #else
   static thread_local int recursion = 0;
-  if (state == SwitchLocale)
+  if (state == SwitchLocale) {
     recursion++;
-  else if (state == ResetLocale)
+  } else if (state == ResetLocale) {
     recursion--;
+  }
   return recursion;
 #endif
 }
@@ -133,8 +134,9 @@ class LocaleSwitcherImpl {
       loc = newlocale(LC_ALL_MASK, "C", (locale_t) nullptr);
       uselocale(loc);
       // Don't free "C" or "GLOBAL" Locales
-    } else
+    } else {
       old_locale = "C";  // prevents recursion
+    }
   }
   ~LocaleSwitcherImpl() {
     if (old_locale != "C") {

@@ -34,7 +34,9 @@ unsigned Seed::addAtom(const Atom* atom) {
 
 unsigned Seed::addBond(const Bond* bond) {
   unsigned b = bond->getIdx();
-  if (ExcludedBonds[b]) throw - 1;  // never, check the implementation
+  if (ExcludedBonds[b]) {
+    throw - 1;  // never, check the implementation
+  }
   ExcludedBonds[b] = true;
   MoleculeFragment.BondsIdx.push_back(b);
   MoleculeFragment.Bonds.push_back(bond);
@@ -64,12 +66,13 @@ void Seed::fillNewBonds(const ROMol& qmol) {
                                                      : bond->getBeginAtomIdx();
         const Atom* end_atom = qmol.getAtomWithIdx(ai);
         unsigned end_atom_idx = NotSet;
-        for (unsigned i = 0; i < getNumAtoms(); i++)
+        for (unsigned i = 0; i < getNumAtoms(); i++) {
           if (end_atom ==
               MoleculeFragment.Atoms[i]) {  // already exists in this seed
             end_atom_idx = i;
             break;
           }
+        }
         NewBonds.push_back(
             NewBond(srcAtomIdx, bond->getIdx(), ai, end_atom_idx,
                     NotSet == end_atom_idx ? end_atom : nullptr));
@@ -144,8 +147,9 @@ void Seed::grow(MaximumCommonSubgraph& mcs) const {
         seed);  // this seed + all extern bonds is a part of MCS
 
     GrowingStage = 1;
-    if (allMatched && NewBonds.size() > 1)
+    if (allMatched && NewBonds.size() > 1) {
       return;  // grow deep first. postpone next growing steps
+    }
   }
   // 2. Check and add all 2^N-1-1 other possible seeds:
   if (1 == NewBonds.size()) {
@@ -175,7 +179,9 @@ void Seed::grow(MaximumCommonSubgraph& mcs) const {
 
     if (seed.canGrowBiggerThan(mcs.getMaxNumberBonds(),
                                mcs.getMaxNumberAtoms())) {  // prune()
-      if (!MatchResult.empty()) seed.MatchResult = MatchResult;
+      if (!MatchResult.empty()) {
+        seed.MatchResult = MatchResult;
+      }
       if (!mcs.checkIfMatchAndAppend(seed)) {
         nbi.BondIdx = NotSet;  // exclude this new bond from growing this seed
                                // - decrease 2^^N-1 to 2^^k-1, k<N.
@@ -196,16 +202,19 @@ void Seed::grow(MaximumCommonSubgraph& mcs) const {
     dirtyNewBonds.reserve(NewBonds.size());
     dirtyNewBonds.swap(NewBonds);
     for (std::vector<NewBond>::const_iterator nbi = dirtyNewBonds.begin();
-         nbi != dirtyNewBonds.end(); nbi++)
-      if (NotSet != nbi->BondIdx) NewBonds.push_back(*nbi);
+         nbi != dirtyNewBonds.end(); nbi++) {
+      if (NotSet != nbi->BondIdx) {
+        NewBonds.push_back(*nbi);
+      }
+    }
   }
-
   // add all other from 2^k-1 possible seeds, where k=newBonds.size()
   // if just one new bond, then seed has already been created
   if (NewBonds.size() > 1) {
-    if (sizeof(unsigned long long) * 8 < NewBonds.size())
+    if (sizeof(unsigned long long) * 8 < NewBonds.size()) {
       throw std::runtime_error(
           "Max number of new external bonds of a seed more than 64");
+    }
     BitSet maxCompositionValue;
     Composition2N::compute2N(NewBonds.size(), maxCompositionValue);
     maxCompositionValue -= 1;  // 2^N-1
@@ -217,12 +226,14 @@ void Seed::grow(MaximumCommonSubgraph& mcs) const {
 #endif
     while (composition.generateNext()) {
       // exclude already processed single external bond combinations
-      if (composition.is2Power()) 
+      if (composition.is2Power()) {
         continue;
+      }
       if (0 == numErasedNewBonds &&
-          composition.getBitSet() == maxCompositionValue)
+          composition.getBitSet() == maxCompositionValue) {
         continue;  // exclude already processed all external bonds combination
-                   // 2N-1
+      }
+      // 2N-1
 #ifdef EXCLUDE_WRONG_COMPOSITION
       // OPTIMISATION. reduce amount of generated seeds and match calls
       // 2120 instead of 2208 match calls on small test. 43 wrongComp-s, 83
@@ -253,7 +264,7 @@ void Seed::grow(MaximumCommonSubgraph& mcs) const {
       seed.createFromParent(this);
       newAtomsSet.clear();
 
-      for (unsigned i = 0; i < NewBonds.size(); i++)
+      for (unsigned i = 0; i < NewBonds.size(); i++) {
         if (composition.isSet(i)) {
           const NewBond* nbi = &NewBonds[i];
           unsigned aIdx =
@@ -268,6 +279,7 @@ void Seed::grow(MaximumCommonSubgraph& mcs) const {
           const Bond* src_bond = qmol.getBondWithIdx(nbi->BondIdx);
           seed.addBond(src_bond);
         }
+      }
       seed.computeRemainingSize(qmol);
       if (!seed.canGrowBiggerThan(
               mcs.getMaxNumberBonds(),
@@ -303,11 +315,14 @@ void Seed::computeRemainingSize(const ROMol& qmol) {
   std::vector<bool> visitedBonds = ExcludedBonds;
   std::vector<bool> visitedAtoms(qmol.getNumAtoms());
 
-  for (auto&& visitedAtom : visitedAtoms) visitedAtom = false;
+  for (auto&& visitedAtom : visitedAtoms) {
+    visitedAtom = false;
+  }
   for (std::vector<unsigned>::const_iterator it =
            MoleculeFragment.AtomsIdx.begin();
-       it != MoleculeFragment.AtomsIdx.end(); it++)
+       it != MoleculeFragment.AtomsIdx.end(); it++) {
     visitedAtoms[*it] = true;
+  }
 
   // SDF all paths
   // 1. direct neighbours
@@ -359,5 +374,5 @@ void Seed::computeRemainingSize(const ROMol& qmol) {
     }
   }
 }
-}
-}
+}  // namespace FMCS
+}  // namespace RDKit

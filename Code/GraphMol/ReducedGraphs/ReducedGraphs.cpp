@@ -131,7 +131,9 @@ RDNumeric::DoubleVector *generateErGFingerprintForReducedGraph(
   PRECONDITION(maxPath > minPath, "maxPath<=minPath");
   // FIX: this isn't doing the special handling for flip/flop bits
   unsigned int nTypes = nFeatures;
-  if (atomTypes) nTypes = atomTypes->size();
+  if (atomTypes) {
+    nTypes = atomTypes->size();
+  }
   nTypes += 1;  // need the extra one for aromatic features
   unsigned int nBins = maxPath - minPath;
 
@@ -153,7 +155,9 @@ RDNumeric::DoubleVector *generateErGFingerprintForReducedGraph(
 
   // now loop and set the bits between features
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-    if (tvs[i].empty()) continue;
+    if (tvs[i].empty()) {
+      continue;
+    }
 #ifdef VERBOSE_FINGERPRINTING
     std::cerr << " atom: " << i << " ";
     std::copy(tvs[i].begin(), tvs[i].end(),
@@ -161,9 +165,13 @@ RDNumeric::DoubleVector *generateErGFingerprintForReducedGraph(
     std::cerr << std::endl;
 #endif
     for (unsigned int j = i + 1; j < mol.getNumAtoms(); ++j) {
-      if (tvs[j].empty()) continue;
+      if (tvs[j].empty()) {
+        continue;
+      }
       int dist = int(dm[i * mol.getNumAtoms() + j]);
-      if (dist < rdcast<int>(minPath) || dist > rdcast<int>(maxPath)) continue;
+      if (dist < rdcast<int>(minPath) || dist > rdcast<int>(maxPath)) {
+        continue;
+      }
       BOOST_FOREACH (int ti, tvs[i]) {
         BOOST_FOREACH (int tj, tvs[j]) {
           int ijMin = std::min(ti, tj);
@@ -177,10 +185,12 @@ RDNumeric::DoubleVector *generateErGFingerprintForReducedGraph(
           block += ijMax;
           unsigned int bin = block * nBins + (dist - minPath);
           (*res)[bin] += 1;
-          if (dist > rdcast<int>(minPath) && fuzzIncrement > 0)
+          if (dist > rdcast<int>(minPath) && fuzzIncrement > 0) {
             (*res)[bin - 1] += fuzzIncrement;
-          if (dist < rdcast<int>(maxPath) && fuzzIncrement > 0)
+          }
+          if (dist < rdcast<int>(maxPath) && fuzzIncrement > 0) {
             (*res)[bin + 1] += fuzzIncrement;
+          }
         }
       }
     }
@@ -206,7 +216,9 @@ ROMol *generateMolExtendedReducedGraph(
     std::list<int> tv;
     tv.clear();
     for (unsigned int i = 0; i < atomTypes->size(); ++i) {
-      if ((*atomTypes)[i][(*atIt)->getIdx()]) tv.push_back(i);
+      if ((*atomTypes)[i][(*atIt)->getIdx()]) {
+        tv.push_back(i);
+      }
     }
     (*atIt)->setProp("_ErGAtomTypes", tv);
   }
@@ -225,10 +237,11 @@ ROMol *generateMolExtendedReducedGraph(
         }
       }
       std::list<int> tv;
-      if (nAromatic >= 2 || nSP2 >= rdcast<int>(ring.size() / 2))
+      if (nAromatic >= 2 || nSP2 >= rdcast<int>(ring.size() / 2)) {
         tv.push_back(aromaticFlag);
-      else
+      } else {
         tv.push_back(aliphaticFlag);
+      }
       res->getAtomWithIdx(nIdx)->setProp("_ErGAtomTypes", tv);
     }
   }
@@ -247,7 +260,9 @@ ROMol *generateMolExtendedReducedGraph(
   // FIX: still need to do the "highly fused rings" simplification for things
   // like adamantane
 
-  if (latomTypes) delete latomTypes;
+  if (latomTypes) {
+    delete latomTypes;
+  }
   return res;
 }
 }  // end of namespace ReducedGraphs

@@ -312,7 +312,9 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
   // default to use CoordGen if we have it installed
   if (!forceRDKit && preferCoordGen) {
     RDKit::CoordGen::CoordGenParams params;
-    if (coordMap) params.coordMap = *coordMap;
+    if (coordMap) {
+      params.coordMap = *coordMap;
+    }
     return RDKit::CoordGen::addCoords(mol, &params);
   };
 #endif

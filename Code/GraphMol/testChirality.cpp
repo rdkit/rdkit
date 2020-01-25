@@ -1674,7 +1674,9 @@ void testBondDirRemoval() {
     std::vector<Canon::AtomColors> colors(m->getNumAtoms());
     Canon::MolStack stack;
     std::vector<unsigned int> ranks(oranks.size());
-    for (unsigned int i = 0; i < ranks.size(); ++i) ranks[i] = oranks[i];
+    for (unsigned int i = 0; i < ranks.size(); ++i) {
+      ranks[i] = oranks[i];
+    }
     Canon::canonicalizeFragment(*m, 0, colors, ranks, stack);
 
     TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getBondDir() == Bond::NONE);
@@ -2668,25 +2670,25 @@ void testAssignStereochemistryFrom3D() {
   {
     SDMolSupplier suppl(pathName + "stereochem.sdf", false);  // don't sanitize
     {
-      RWMol *m = (RWMol *)suppl.next();
+      auto *m = (RWMol *)suppl.next();
       TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) == "R-Z");
       stereochemTester(m, "R", Bond::STEREOZ);
       delete m;
     }
     {
-      RWMol *m = (RWMol *)suppl.next();
+      auto *m = (RWMol *)suppl.next();
       TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) == "R-E");
       stereochemTester(m, "R", Bond::STEREOE);
       delete m;
     }
     {
-      RWMol *m = (RWMol *)suppl.next();
+      auto *m = (RWMol *)suppl.next();
       TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) == "S-Z");
       stereochemTester(m, "S", Bond::STEREOZ);
       delete m;
     }
     {
-      RWMol *m = (RWMol *)suppl.next();
+      auto *m = (RWMol *)suppl.next();
       TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) == "S-E");
       stereochemTester(m, "S", Bond::STEREOE);
       delete m;
@@ -2821,9 +2823,10 @@ class TestAssignChiralTypesFromMolParity {
     }
   }
   void fillBondDefVect() {
-    for (auto bi = d_rwMol->beginBonds(); bi != d_rwMol->endBonds(); ++bi)
+    for (auto bi = d_rwMol->beginBonds(); bi != d_rwMol->endBonds(); ++bi) {
       d_bondDefVect.emplace_back(BondDef((*bi)->getBeginAtomIdx(),
         (*bi)->getEndAtomIdx(), (*bi)->getBondType()));
+    }
   }
   void stripBonds() {
     for (unsigned int i = d_rwMol->getNumBonds(); i--;) {
@@ -2832,8 +2835,9 @@ class TestAssignChiralTypesFromMolParity {
     }
   }
   void addBonds() {
-    for (auto bondDef: d_bondDefVect)
+    for (auto bondDef : d_bondDefVect) {
       d_rwMol->addBond(bondDef.beginIdx, bondDef.endIdx, bondDef.type);
+    }
   }
   void checkBondPermutation() {
     stripBonds();
@@ -2844,8 +2848,9 @@ class TestAssignChiralTypesFromMolParity {
   }
   void heapPermutation(size_t s = 0) {
     // if size becomes 1 the permutation is ready to use
-    if (s == 0)
+    if (s == 0) {
       s = d_bondDefVect.size();
+    }
     if (s == 1) {
       checkBondPermutation();
       return;

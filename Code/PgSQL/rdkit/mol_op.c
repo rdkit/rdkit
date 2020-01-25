@@ -261,7 +261,9 @@ Datum mol_murckoscaffold(PG_FUNCTION_ARGS) {
       searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                      PG_GETARG_DATUM(0), NULL, &mol, NULL);
   CROMol scaffold = MolMurckoScaffold(mol);
-  if (!scaffold) PG_RETURN_NULL();
+  if (!scaffold) {
+    PG_RETURN_NULL();
+  }
   res = deconstructROMol(scaffold);
   freeCROMol(scaffold);
 
@@ -313,7 +315,9 @@ Datum mol_adjust_query_properties(PG_FUNCTION_ARGS) {
   char *data = PG_GETARG_CSTRING(1);
 
   CROMol adj = MolAdjustQueryProperties(mol, data);
-  if (!adj) PG_RETURN_NULL();
+  if (!adj) {
+    PG_RETURN_NULL();
+  }
   Mol *res = deconstructROMol(adj);
   freeCROMol(adj);
 

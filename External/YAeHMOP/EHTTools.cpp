@@ -95,7 +95,7 @@ bool runMol(const ROMol &mol, EHTResults &results, int confId) {
     }
   }
 
-  fill_atomic_parms(unit_cell->atoms, unit_cell->num_atoms, NULL,
+  fill_atomic_parms(unit_cell->atoms, unit_cell->num_atoms, nullptr,
                     const_cast<char *>(parmFilePtr));
   unit_cell->num_raw_atoms = unit_cell->num_atoms;
   charge_to_num_electrons(unit_cell);

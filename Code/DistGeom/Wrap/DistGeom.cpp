@@ -35,21 +35,27 @@ namespace python = boost::python;
 namespace RDKit {
 bool doTriangleSmoothing(python::object boundsMatArg, double tol) {
   PyObject *boundsMatObj = boundsMatArg.ptr();
-  if (!PyArray_Check(boundsMatObj))
+  if (!PyArray_Check(boundsMatObj)) {
     throw_value_error("Argument isn't an array");
+  }
 
-  PyArrayObject *boundsMat = reinterpret_cast<PyArrayObject *>(boundsMatObj);
+  auto *boundsMat = reinterpret_cast<PyArrayObject *>(boundsMatObj);
   // get the dimensions of the array
   int nrows = PyArray_DIM(boundsMat, 0);
   int ncols = PyArray_DIM(boundsMat, 1);
-  if (nrows != ncols) throw_value_error("The array has to be square");
-  if (nrows <= 0) throw_value_error("The array has to have a nonzero size");
-  if (PyArray_DESCR(boundsMat)->type_num != NPY_DOUBLE)
+  if (nrows != ncols) {
+    throw_value_error("The array has to be square");
+  }
+  if (nrows <= 0) {
+    throw_value_error("The array has to have a nonzero size");
+  }
+  if (PyArray_DESCR(boundsMat)->type_num != NPY_DOUBLE) {
     throw_value_error("Only double arrays are currently supported");
+  }
 
   unsigned int dSize = nrows * nrows;
   auto *cData = new double[dSize];
-  double *inData = reinterpret_cast<double *>(PyArray_DATA(boundsMat));
+  auto *inData = reinterpret_cast<double *>(PyArray_DATA(boundsMat));
   memcpy(static_cast<void *>(cData), static_cast<const void *>(inData),
          dSize * sizeof(double));
   DistGeom::BoundsMatrix::DATA_SPTR sdata(cData);
@@ -67,21 +73,27 @@ PyObject *embedBoundsMatrix(python::object boundsMatArg, int maxIters = 10,
                             python::list weights = python::list(),
                             int randomSeed = -1) {
   PyObject *boundsMatObj = boundsMatArg.ptr();
-  if (!PyArray_Check(boundsMatObj))
+  if (!PyArray_Check(boundsMatObj)) {
     throw_value_error("Argument isn't an array");
+  }
 
-  PyArrayObject *boundsMat = reinterpret_cast<PyArrayObject *>(boundsMatObj);
+  auto *boundsMat = reinterpret_cast<PyArrayObject *>(boundsMatObj);
   // get the dimensions of the array
   unsigned int nrows = PyArray_DIM(boundsMat, 0);
   unsigned int ncols = PyArray_DIM(boundsMat, 1);
-  if (nrows != ncols) throw_value_error("The array has to be square");
-  if (nrows <= 0) throw_value_error("The array has to have a nonzero size");
-  if (PyArray_DESCR(boundsMat)->type_num != NPY_DOUBLE)
+  if (nrows != ncols) {
+    throw_value_error("The array has to be square");
+  }
+  if (nrows <= 0) {
+    throw_value_error("The array has to have a nonzero size");
+  }
+  if (PyArray_DESCR(boundsMat)->type_num != NPY_DOUBLE) {
     throw_value_error("Only double arrays are currently supported");
+  }
 
   unsigned int dSize = nrows * nrows;
   auto *cData = new double[dSize];
-  double *inData = reinterpret_cast<double *>(PyArray_DATA(boundsMat));
+  auto *inData = reinterpret_cast<double *>(PyArray_DATA(boundsMat));
   memcpy(static_cast<void *>(cData), static_cast<const void *>(inData),
          dSize * sizeof(double));
 
@@ -108,7 +120,9 @@ PyObject *embedBoundsMatrix(python::object boundsMatArg, int maxIters = 10,
         distMat, posPtrs, randomizeOnFailure, numZeroFail, randomSeed);
 
     // update the seed:
-    if (randomSeed >= 0) randomSeed += iter * 999;
+    if (randomSeed >= 0) {
+      randomSeed += iter * 999;
+    }
   }
 
   if (gotCoords) {
@@ -145,8 +159,8 @@ PyObject *embedBoundsMatrix(python::object boundsMatArg, int maxIters = 10,
   npy_intp dims[2];
   dims[0] = nrows;
   dims[1] = 3;
-  PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
-  double *resData = reinterpret_cast<double *>(PyArray_DATA(res));
+  auto *res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
+  auto *resData = reinterpret_cast<double *>(PyArray_DATA(res));
   for (unsigned int i = 0; i < nrows; i++) {
     unsigned int iTab = i * 3;
     for (unsigned int j = 0; j < 3; ++j) {

@@ -31,7 +31,9 @@ typedef boost::tokenizer<boost::escaped_list_separator<char>> CommaTokenizer;
 
 void getNextLine(std::istream &inStream, std::string &line,
                  unsigned int &lineNo) {
-  if (inStream.eof() || inStream.fail()) return;
+  if (inStream.eof() || inStream.fail()) {
+    return;
+  }
   line = "";
   bool continuationLine = false;
   while (!inStream.eof() && !inStream.fail()) {
@@ -39,12 +41,16 @@ void getNextLine(std::istream &inStream, std::string &line,
     std::getline(inStream, tmpLine);
     lineNo++;
     // std::cerr << ">> " << lineNo << " " << tmpLine << std::endl;
-    if (tmpLine == "") continue;
+    if (tmpLine == "") {
+      continue;
+    }
     if (tmpLine[0] != '#') {
       // strip space at the end to check for a continuation line:
       std::string stripLine =
           boost::trim_right_copy_if(tmpLine, boost::is_any_of(" \t\r\n"));
-      if (stripLine == "") continue;
+      if (stripLine == "") {
+        continue;
+      }
       if (stripLine[stripLine.size() - 1] != '\\') {
         if (continuationLine) {
           // if it's a continuation line, strip any whitespace:
@@ -293,7 +299,9 @@ int parseFeatureData(std::istream &inStream,
       } else if (token == "DEFINEFEATURE") {
         MolChemicalFeatureDef *fDef =
             Local::parseFeatureDef(inStream, inLine, lineNo, atomTypeDefs);
-        if (fDef) res.push_back(boost::shared_ptr<MolChemicalFeatureDef>(fDef));
+        if (fDef) {
+          res.push_back(boost::shared_ptr<MolChemicalFeatureDef>(fDef));
+        }
       } else {
         throw FeatureFileParseException(lineNo, inLine,
                                         "bad or missing keyword");

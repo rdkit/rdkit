@@ -121,7 +121,9 @@ bool queriesMatch(QueryAtom::QUERYATOM_QUERY const *q1,
           res = true;
         }
       }
-      if (res) break;
+      if (res) {
+        break;
+      }
     }
   } else if (d1 == "AtomAnd") {
     res = true;

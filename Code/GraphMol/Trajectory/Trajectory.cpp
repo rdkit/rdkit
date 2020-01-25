@@ -44,9 +44,13 @@ RDGeom::Point3D Snapshot::getPoint3D(unsigned int pointNum) const {
 Trajectory::Trajectory(unsigned int dimension, unsigned int numPoints,
                        SnapshotVect *snapshotVect)
     : d_dimension(dimension), d_numPoints(numPoints) {
-  if (!snapshotVect) snapshotVect = new SnapshotVect;
+  if (!snapshotVect) {
+    snapshotVect = new SnapshotVect;
+  }
   d_snapshotVect.reset(snapshotVect);
-  for (auto &vectIt : *d_snapshotVect) vectIt.d_trajectory = this;
+  for (auto &vectIt : *d_snapshotVect) {
+    vectIt.d_trajectory = this;
+  }
 }
 
 Trajectory::Trajectory(const Trajectory &other)
@@ -54,8 +58,9 @@ Trajectory::Trajectory(const Trajectory &other)
       d_numPoints(other.d_numPoints),
       d_snapshotVect(new SnapshotVect) {
   for (SnapshotVect::const_iterator vectIt = other.d_snapshotVect->begin();
-       vectIt != other.d_snapshotVect->end(); ++vectIt)
+       vectIt != other.d_snapshotVect->end(); ++vectIt) {
     addSnapshot(*vectIt);
+  }
 }
 
 unsigned int Trajectory::addSnapshot(const Snapshot &s) {
@@ -85,15 +90,20 @@ unsigned int Trajectory::addConformersToMol(ROMol &mol, int from, int to) {
                "Number of atom mismatch between ROMol and Trajectory");
   PRECONDITION(from < static_cast<int>(size()), "from must be < size()");
   PRECONDITION(to < static_cast<int>(size()), "to must be < size()");
-  if (from < 0) from = 0;
-  if (to < 0) to = size() - 1;
+  if (from < 0) {
+    from = 0;
+  }
+  if (to < 0) {
+    to = size() - 1;
+  }
   PRECONDITION(!size() || (from <= to), "from must be <= to");
   int n;
   unsigned int nConf;
   for (n = from, nConf = 0; size() && (n <= to); ++n, ++nConf) {
     auto *conf = new Conformer(mol.getNumAtoms());
-    for (unsigned int i = 0; i < mol.getNumAtoms(); ++i)
+    for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
       conf->setAtomPos(i, getSnapshot(n).getPoint3D(i));
+    }
     mol.addConformer(conf, true);
   }
   return nConf;
@@ -155,29 +165,37 @@ unsigned int readGromosTrajectory(const std::string &fName, Trajectory &traj) {
   const static char *ignoredKeywordArray[] = {
       "TITLE", "TIMESTEP", "VELOCITYRED", "VELOCITY", "GENBOX", "BOX"};
   std::set<std::string> ignoredKeywordSet;
-  for (auto &kw : ignoredKeywordArray)
+  for (auto &kw : ignoredKeywordArray) {
     ignoredKeywordSet.insert(std::string(kw));
+  }
   while (inStream.good() && !inStream.eof()) {
     std::getline(inStream, tempStr);
-    if (inStream.bad() || inStream.eof()) continue;
+    if (inStream.bad() || inStream.eof()) {
+      continue;
+    }
     if (ignoredKeywordSet.find(tempStr) != ignoredKeywordSet.end()) {
       // ignored block
-      while (inStream.good() && !inStream.eof() && (tempStr != "END"))
+      while (inStream.good() && !inStream.eof() && (tempStr != "END")) {
         std::getline(inStream, tempStr);
+      }
     } else if ((tempStr == "POSITIONRED") || (tempStr == "POSITION")) {
       // these are the positions
       boost::shared_array<double> c(new double[nCoords]());
       unsigned int j = 0;
       for (unsigned int i = 0; i < traj.numPoints();) {
         std::getline(inStream, tempStr);
-        if (inStream.bad() || inStream.eof() || (tempStr == "END"))
+        if (inStream.bad() || inStream.eof() || (tempStr == "END")) {
           throw ValueErrorException("Wrong number of coordinates");
+        }
         // ignore comments
-        if (tempStr.find("#") != std::string::npos) continue;
+        if (tempStr.find("#") != std::string::npos) {
+          continue;
+        }
         std::stringstream ls(tempStr);
         double x, y, z;
-        if (!(ls >> x >> y >> z))
+        if (!(ls >> x >> y >> z)) {
           throw ValueErrorException("Error while reading file");
+        }
         // store the coordinates (convert to Angstrom!)
         c[j++] = x * 10.0;
         c[j++] = y * 10.0;
@@ -185,13 +203,16 @@ unsigned int readGromosTrajectory(const std::string &fName, Trajectory &traj) {
         ++i;
       }
       std::getline(inStream, tempStr);  // the END line
-      if (inStream.bad() || inStream.eof() || (tempStr != "END"))
+      if (inStream.bad() || inStream.eof() || (tempStr != "END")) {
         throw ValueErrorException("Wrong number of coordinates");
+      }
       traj.addSnapshot(Snapshot(c));
       ++nSnapshots;
     } else {
       std::string supportedBlocks("POSITIONRED, POSITION");
-      for (const auto &it : ignoredKeywordSet) supportedBlocks += ", " + it;
+      for (const auto &it : ignoredKeywordSet) {
+        supportedBlocks += ", " + it;
+      }
       throw ValueErrorException("Unsupported block: " + tempStr +
                                 ". Supported blocks are " + supportedBlocks);
     }

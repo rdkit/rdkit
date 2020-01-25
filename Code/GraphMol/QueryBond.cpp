@@ -14,10 +14,11 @@
 namespace RDKit {
 
 QueryBond::QueryBond(BondType bT) : Bond(bT) {
-  if (bT != Bond::UNSPECIFIED)
+  if (bT != Bond::UNSPECIFIED) {
     dp_query = makeBondOrderEqualsQuery(bT);
-  else
+  } else {
     dp_query = makeBondNullQuery();
+  }
 };
 
 QueryBond::~QueryBond() {
@@ -146,7 +147,9 @@ bool queriesMatch(QueryBond::QUERYBOND_QUERY const *q1,
           res = true;
         }
       }
-      if (res) break;
+      if (res) {
+        break;
+      }
     }
   } else if (d1 == "BondAnd") {
     res = true;

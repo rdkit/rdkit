@@ -1673,8 +1673,8 @@ M  END
     ForceFields::ForceField *field = RDKit::MMFF::constructForceField(*mol, &mmffMolProperties);
     TEST_ASSERT(field);
     field->initialize();
-    ForceFields::MMFF::TorsionConstraintContrib *tc =
-      new ForceFields::MMFF::TorsionConstraintContrib(field, 0, 3, 6, 9, d, d, 1.0e6);
+    auto *tc = new ForceFields::MMFF::TorsionConstraintContrib(field, 0, 3, 6,
+                                                               9, d, d, 1.0e6);
     field->contribs().push_back(ForceFields::ContribPtr(tc));
     field->minimize();
     e.push_back(field->calcEnergy());

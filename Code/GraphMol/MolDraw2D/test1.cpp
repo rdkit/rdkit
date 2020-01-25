@@ -561,7 +561,9 @@ void runblock(const std::vector<ROMol *> &mols,
               unsigned int idx) {
   for (unsigned int j = 0; j < 200; j++) {
     for (unsigned int i = 0; i < mols.size(); ++i) {
-      if (i % count != idx) continue;
+      if (i % count != idx) {
+        continue;
+      }
       ROMol *mol = mols[i];
       MolDraw2DSVG drawer(300, 300);
       drawer.drawMolecule(*mol);
@@ -587,7 +589,9 @@ void testMultiThreaded() {
     } catch (...) {
       continue;
     }
-    if (!mol) continue;
+    if (!mol) {
+      continue;
+    }
     mols.push_back(mol);
   }
 
@@ -1341,11 +1345,14 @@ void testDeuteriumTritium() {
       std::string line;
       std::getline(ins, line);
       ok = (ins.good() && !ins.eof());
-      if (!ok) continue;
+      if (!ok) {
+        continue;
+      }
       if ((line.find("baseline-shift:super") != std::string::npos) &&
           (line.find(">2<") != std::string::npos) &&
-          (line.find(">H<") != std::string::npos))
+          (line.find(">H<") != std::string::npos)) {
         ++count;
+      }
     }
     TEST_ASSERT(count == 4);
     delete m;
@@ -1368,11 +1375,14 @@ void testDeuteriumTritium() {
       std::string line;
       std::getline(ins, line);
       ok = (ins.good() && !ins.eof());
-      if (!ok) continue;
+      if (!ok) {
+        continue;
+      }
       if ((line.find("baseline-shift:super") != std::string::npos) &&
           (line.find(">3<") != std::string::npos) &&
-          (line.find(">H<") != std::string::npos))
+          (line.find(">H<") != std::string::npos)) {
         ++count;
+      }
     }
     TEST_ASSERT(count == 4);
     delete m;
@@ -1395,11 +1405,14 @@ void testDeuteriumTritium() {
       std::string line;
       std::getline(ins, line);
       ok = (ins.good() && !ins.eof());
-      if (!ok) continue;
+      if (!ok) {
+        continue;
+      }
       if ((line.find("baseline-shift:super") == std::string::npos) &&
           (line.find(">2<") == std::string::npos) &&
-          (line.find(">D<") != std::string::npos))
+          (line.find(">D<") != std::string::npos)) {
         ++count;
+      }
     }
     TEST_ASSERT(count == 4);
     delete m;
@@ -1422,11 +1435,14 @@ void testDeuteriumTritium() {
       std::string line;
       std::getline(ins, line);
       ok = (ins.good() && !ins.eof());
-      if (!ok) continue;
+      if (!ok) {
+        continue;
+      }
       if ((line.find("baseline-shift:super") == std::string::npos) &&
           (line.find(">3<") == std::string::npos) &&
-          (line.find(">T<") != std::string::npos))
+          (line.find(">T<") != std::string::npos)) {
         ++count;
+      }
     }
     TEST_ASSERT(count == 4);
     delete m;
@@ -2171,7 +2187,7 @@ void test16MoleculeMetadata() {
 #if 1
     {  // multiple molecules
       MolDraw2DSVG drawer(400, 400, 200, 200);
-      ROMol *rom = rdcast<ROMol *>(m1.get());
+      auto *rom = rdcast<ROMol *>(m1.get());
       std::vector<ROMol *> ms = {new ROMol(*rom), new ROMol(*rom),
                                  new ROMol(*rom), new ROMol(*rom)};
       drawer.drawMolecules(ms);
@@ -2187,7 +2203,9 @@ void test16MoleculeMetadata() {
       std::ofstream outs("test16_2.svg");
       outs << text;
       outs.flush();
-      for (auto ptr : ms) delete ptr;
+      for (auto ptr : ms) {
+        delete ptr;
+      }
     }
 #endif
   }

@@ -1154,7 +1154,9 @@ namespace {
 std::string qhelper(Atom::QUERYATOM_QUERY *q, unsigned int depth = 0) {
   std::string res = "";
   if (q) {
-    for (unsigned int i = 0; i < depth; ++i) res += "  ";
+    for (unsigned int i = 0; i < depth; ++i) {
+      res += "  ";
+    }
     res += q->getFullDescription() + "\n";
     for (auto ci = q->beginChildren(); ci != q->endChildren(); ++ci) {
       res += qhelper((*ci).get(), depth + 1);

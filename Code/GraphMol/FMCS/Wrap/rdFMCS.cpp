@@ -57,7 +57,9 @@ MCSResult *FindMCSWrapper(python::object mols, bool maximizeBonds,
   unsigned int nElems = python::extract<unsigned int>(mols.attr("__len__")());
   ms.resize(nElems);
   for (unsigned int i = 0; i < nElems; ++i) {
-    if (!mols[i]) throw_value_error("molecule is None");
+    if (!mols[i]) {
+      throw_value_error("molecule is None");
+    }
     ms[i] = python::extract<ROMOL_SPTR>(mols[i]);
   }
   MCSParameters p;
@@ -89,7 +91,9 @@ MCSResult *FindMCSWrapper2(python::object mols, const MCSParameters &params) {
   unsigned int nElems = python::extract<unsigned int>(mols.attr("__len__")());
   ms.resize(nElems);
   for (unsigned int i = 0; i < nElems; ++i) {
-    if (!mols[i]) throw_value_error("molecule is None");
+    if (!mols[i]) {
+      throw_value_error("molecule is None");
+    }
     ms[i] = python::extract<ROMOL_SPTR>(mols[i]);
   }
 

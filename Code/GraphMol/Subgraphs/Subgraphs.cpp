@@ -270,7 +270,9 @@ pathFinderHelper(int *adjMat, unsigned int dim, unsigned int minLen,
   // and build them up one index at a time:
   for (unsigned int length = 1; length < maxLen; length++) {
     // extend each path:
-    if (length >= minLen) res[length] = paths;
+    if (length >= minLen) {
+      res[length] = paths;
+    }
     paths = extendPaths(adjMat, dim, paths, maxLen);
   }
   res[maxLen] = paths;
@@ -540,8 +542,9 @@ findAllPathsOfLengthN(const ROMol &mol, unsigned int targetLen, bool useBonds,
 
 PATH_TYPE findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius,
                                        unsigned int rootedAtAtom, bool useHs) {
-  if (rootedAtAtom >= mol.getNumAtoms())
+  if (rootedAtAtom >= mol.getNumAtoms()) {
     throw ValueErrorException("bad atom index");
+  }
 
   PATH_TYPE res;
   std::list<std::pair<int, int> > nbrStack;

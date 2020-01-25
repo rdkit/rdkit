@@ -4879,11 +4879,11 @@ MMFFDfsbCollection::MMFFDfsbCollection(std::string mmffDfsb) {
       tokenizer tokens(inLine, tabSep);
       tokenizer::iterator token = tokens.begin();
 
-      unsigned int iAtomicNum = boost::lexical_cast<unsigned int>(*token);
+      auto iAtomicNum = boost::lexical_cast<unsigned int>(*token);
       ++token;
-      unsigned int jAtomicNum = boost::lexical_cast<unsigned int>(*token);
+      auto jAtomicNum = boost::lexical_cast<unsigned int>(*token);
       ++token;
-      unsigned int kAtomicNum = boost::lexical_cast<unsigned int>(*token);
+      auto kAtomicNum = boost::lexical_cast<unsigned int>(*token);
       ++token;
       mmffStbnObj.kbaIJK = boost::lexical_cast<double>(*token);
       ++token;

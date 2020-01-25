@@ -565,15 +565,16 @@ MolHistogram::MolHistogram(const ROMol &mol, const double *dmat,
       d_h[y][j] = 0;
     }
     for (unsigned int j = 0; j < nAtoms; ++j) {
-      unsigned int dist =
-          static_cast<unsigned int>(floor(dmat[i * nAtoms + j]));
+      auto dist = static_cast<unsigned int>(floor(dmat[i * nAtoms + j]));
       if (dist < O3_MAX_H_BINS) {
         ++d_h[y][dist];
       }
     }
     ++y;
   }
-  if (cleanupDmat) delete[] dmat;
+  if (cleanupDmat) {
+    delete[] dmat;
+  }
 }
 
 int o3aMMFFCostFunc(const unsigned int prbIdx, const unsigned int refIdx,
@@ -660,7 +661,9 @@ void LAP::computeCostMatrix(const ROMol &prbMol, const MolHistogram &prbHist,
         for (k = 0, hSum = 0.0; k < n_bins; ++k) {
           int rhyk = refHist.get(y, k);
           int phxk = prbHist.get(x, k);
-          if ((!rhyk) && (!phxk)) continue;
+          if ((!rhyk) && (!phxk)) {
+            continue;
+          }
           hSum += (double)square(rhyk - phxk) / (double)(rhyk + phxk);
         }
         d_cost[y][x] = (*costFunc)(j, i, hSum, data);
@@ -1034,10 +1037,14 @@ void SDM::fillFromDist(double threshold,
   boost::dynamic_bitset<> prbUsed(largestNAtoms);
   // loop over ref atoms
   for (unsigned int i = 0; i < refNAtoms; ++i) {
-    if (!refHvyAtoms[i]) continue;
+    if (!refHvyAtoms[i]) {
+      continue;
+    }
     // loop over prb atoms
     for (unsigned int j = 0; j < prbNAtoms; ++j) {
-      if (!prbHvyAtoms[j]) continue;
+      if (!prbHvyAtoms[j]) {
+        continue;
+      }
       double sqDist = (refPos[i] - prbPos[j]).lengthSq();
       // if the distance between these two atoms is lower
       // than threshold, then include this pair in the SDM matrix
@@ -1500,7 +1507,7 @@ O3A::O3A(ROMol &prbMol, const ROMol &refMol, void *prbProp, void *refProp,
       }
     }
   }
-  unsigned int pairs = rdcast<unsigned int>(bestO3A->matches()->size());
+  auto pairs = rdcast<unsigned int>(bestO3A->matches()->size());
   RDKit::MatchVectType *bestO3AMatchVect = new RDKit::MatchVectType(pairs);
   auto *bestO3AWeights = new RDNumeric::DoubleVector(pairs);
   d_o3aMatchVect = bestO3AMatchVect;
@@ -1660,7 +1667,9 @@ void O3AHelper_(ROMol *prbMol, const ROMol *refMol, void *prbProp,
   unsigned int i = 0;
   for (ROMol::ConstConformerIterator cit = prbMol->beginConformers();
        cit != prbMol->endConformers(); ++cit, ++i) {
-    if (i % numThreads != threadIdx) continue;
+    if (i % numThreads != threadIdx) {
+      continue;
+    }
 
     auto *lres =
         new O3A(*prbMol, *refMol, prbProp, refProp, args->atomTypes,

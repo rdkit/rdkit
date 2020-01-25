@@ -40,7 +40,9 @@ void addAtomChargeFlags(const Atom *atom, std::string &atomKey,
           atomKey += "+2";
           break;
         default:
-          if (tolerateChargeMismatch) atomKey += "+2";
+          if (tolerateChargeMismatch) {
+            atomKey += "+2";
+          }
           BOOST_LOG(rdErrorLog)
               << "UFFTYPER: Unrecognized charge state for atom: "
               << atom->getIdx() << std::endl;
@@ -69,7 +71,9 @@ void addAtomChargeFlags(const Atom *atom, std::string &atomKey,
           atomKey += "+5";
           break;
         default:
-          if (tolerateChargeMismatch) atomKey += "+5";
+          if (tolerateChargeMismatch) {
+            atomKey += "+5";
+          }
           BOOST_LOG(rdErrorLog)
               << "UFFTYPER: Unrecognized charge state for atom: "
               << atom->getIdx() << std::endl;
@@ -88,7 +92,9 @@ void addAtomChargeFlags(const Atom *atom, std::string &atomKey,
             atomKey += "+6";
             break;
           default:
-            if (tolerateChargeMismatch) atomKey += "+6";
+            if (tolerateChargeMismatch) {
+              atomKey += "+6";
+            }
             BOOST_LOG(rdErrorLog)
                 << "UFFTYPER: Unrecognized charge state for atom: "
                 << atom->getIdx() << std::endl;
@@ -101,7 +107,9 @@ void addAtomChargeFlags(const Atom *atom, std::string &atomKey,
           atomKey += "+2";
           break;
         default:
-          if (tolerateChargeMismatch) atomKey += "+2";
+          if (tolerateChargeMismatch) {
+            atomKey += "+2";
+          }
           BOOST_LOG(rdErrorLog)
               << "UFFTYPER: Unrecognized charge state for atom: "
               << atom->getIdx() << std::endl;
@@ -113,7 +121,9 @@ void addAtomChargeFlags(const Atom *atom, std::string &atomKey,
           atomKey += "+3";
           break;
         default:
-          if (tolerateChargeMismatch) atomKey += "+3";
+          if (tolerateChargeMismatch) {
+            atomKey += "+3";
+          }
           BOOST_LOG(rdErrorLog)
               << "UFFTYPER: Unrecognized charge state for atom: "
               << atom->getIdx() << std::endl;
@@ -125,7 +135,9 @@ void addAtomChargeFlags(const Atom *atom, std::string &atomKey,
           atomKey += "+3";
           break;
         default:
-          if (tolerateChargeMismatch) atomKey += "+3";
+          if (tolerateChargeMismatch) {
+            atomKey += "+3";
+          }
           BOOST_LOG(rdErrorLog)
               << "UFFTYPER: Unrecognized charge state for atom: "
               << atom->getIdx() << std::endl;
@@ -137,7 +149,9 @@ void addAtomChargeFlags(const Atom *atom, std::string &atomKey,
           atomKey += "+2";
           break;
         default:
-          if (tolerateChargeMismatch) atomKey += "+2";
+          if (tolerateChargeMismatch) {
+            atomKey += "+2";
+          }
           BOOST_LOG(rdErrorLog)
               << "UFFTYPER: Unrecognized charge state for atom: "
               << atom->getIdx() << std::endl;
@@ -149,7 +163,9 @@ void addAtomChargeFlags(const Atom *atom, std::string &atomKey,
           atomKey += "+2";
           break;
         default:
-          if (tolerateChargeMismatch) atomKey += "+2";
+          if (tolerateChargeMismatch) {
+            atomKey += "+2";
+          }
           BOOST_LOG(rdErrorLog)
               << "UFFTYPER: Unrecognized charge state for atom: "
               << atom->getIdx() << std::endl;
@@ -161,7 +177,9 @@ void addAtomChargeFlags(const Atom *atom, std::string &atomKey,
           atomKey += "+3";
           break;
         default:
-          if (tolerateChargeMismatch) atomKey += "+3";
+          if (tolerateChargeMismatch) {
+            atomKey += "+3";
+          }
           BOOST_LOG(rdErrorLog)
               << "UFFTYPER: Unrecognized charge state for atom: "
               << atom->getIdx() << std::endl;
@@ -173,7 +191,9 @@ void addAtomChargeFlags(const Atom *atom, std::string &atomKey,
           atomKey += "+3";
           break;
         default:
-          if (tolerateChargeMismatch) atomKey += "+3";
+          if (tolerateChargeMismatch) {
+            atomKey += "+3";
+          }
           BOOST_LOG(rdErrorLog)
               << "UFFTYPER: Unrecognized charge state for atom: "
               << atom->getIdx() << std::endl;
@@ -185,7 +205,9 @@ void addAtomChargeFlags(const Atom *atom, std::string &atomKey,
           atomKey += "+2";
           break;
         default:
-          if (tolerateChargeMismatch) atomKey += "+2";
+          if (tolerateChargeMismatch) {
+            atomKey += "+2";
+          }
           BOOST_LOG(rdErrorLog)
               << "UFFTYPER: Unrecognized charge state for atom: "
               << atom->getIdx() << std::endl;
@@ -197,7 +219,9 @@ void addAtomChargeFlags(const Atom *atom, std::string &atomKey,
           atomKey += "+2";
           break;
         default:
-          if (tolerateChargeMismatch) atomKey += "+2";
+          if (tolerateChargeMismatch) {
+            atomKey += "+2";
+          }
           BOOST_LOG(rdErrorLog)
               << "UFFTYPER: Unrecognized charge state for atom: "
               << atom->getIdx() << std::endl;
@@ -209,7 +233,9 @@ void addAtomChargeFlags(const Atom *atom, std::string &atomKey,
           atomKey += "+3";
           break;
         default:
-          if (tolerateChargeMismatch) atomKey += "+3";
+          if (tolerateChargeMismatch) {
+            atomKey += "+3";
+          }
           BOOST_LOG(rdErrorLog)
               << "UFFTYPER: Unrecognized charge state for atom: "
               << atom->getIdx() << std::endl;
@@ -221,7 +247,9 @@ void addAtomChargeFlags(const Atom *atom, std::string &atomKey,
           atomKey += "+3";
           break;
         default:
-          if (tolerateChargeMismatch) atomKey += "+3";
+          if (tolerateChargeMismatch) {
+            atomKey += "+3";
+          }
           BOOST_LOG(rdErrorLog)
               << "UFFTYPER: Unrecognized charge state for atom: "
               << atom->getIdx() << std::endl;
@@ -233,7 +261,9 @@ void addAtomChargeFlags(const Atom *atom, std::string &atomKey,
           atomKey += "+3";
           break;
         default:
-          if (tolerateChargeMismatch) atomKey += "+3";
+          if (tolerateChargeMismatch) {
+            atomKey += "+3";
+          }
           BOOST_LOG(rdErrorLog)
               << "UFFTYPER: Unrecognized charge state for atom: "
               << atom->getIdx() << std::endl;
@@ -245,7 +275,9 @@ void addAtomChargeFlags(const Atom *atom, std::string &atomKey,
           atomKey += "+2";
           break;
         default:
-          if (tolerateChargeMismatch) atomKey += "+2";
+          if (tolerateChargeMismatch) {
+            atomKey += "+2";
+          }
           BOOST_LOG(rdErrorLog)
               << "UFFTYPER: Unrecognized charge state for atom: "
               << atom->getIdx() << std::endl;
@@ -259,7 +291,9 @@ void addAtomChargeFlags(const Atom *atom, std::string &atomKey,
         atomKey += "+3";
         break;
       default:
-        if (tolerateChargeMismatch) atomKey += "+3";
+        if (tolerateChargeMismatch) {
+          atomKey += "+3";
+        }
         BOOST_LOG(rdErrorLog)
             << "UFFTYPER: Unrecognized charge state for atom: "
             << atom->getIdx() << std::endl;
@@ -272,7 +306,9 @@ std::string getAtomLabel(const Atom *atom) {
   PRECONDITION(atom, "bad atom");
   int atNum = atom->getAtomicNum();
   std::string atomKey = atom->getSymbol();
-  if (atomKey.size() == 1) atomKey += '_';
+  if (atomKey.size() == 1) {
+    atomKey += '_';
+  }
   PeriodicTable *table = PeriodicTable::getTable();
 
   // FIX: handle main group/organometallic cases better:
@@ -481,8 +517,12 @@ bool getUFFTorsionParams(const ROMol &mol, unsigned int idx1, unsigned int idx2,
           UFF::Utils::isInGroup6(atNum[1])) {
         double V2 = 6.8;
         double V3 = 6.8;
-        if (atNum[0] == 8) V2 = 2.0;
-        if (atNum[1] == 8) V3 = 2.0;
+        if (atNum[0] == 8) {
+          V2 = 2.0;
+        }
+        if (atNum[1] == 8) {
+          V3 = 2.0;
+        }
         uffTorsionParams.V = sqrt(V2 * V3);
       }
     } else if ((hyb[0] == RDKit::Atom::SP2) && (hyb[1] == RDKit::Atom::SP2)) {

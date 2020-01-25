@@ -26,7 +26,7 @@ PyObject *getCorrMatrix(BitCorrMatGenerator *cmGen) {
   double *dres = cmGen->getCorrMat();
   unsigned int nb = cmGen->getCorrBitList().size();
   npy_intp dim = nb * (nb - 1) / 2;
-  PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(1, &dim, NPY_DOUBLE);
+  auto *res = (PyArrayObject *)PyArray_SimpleNew(1, &dim, NPY_DOUBLE);
   memcpy(static_cast<void *>(PyArray_DATA(res)), static_cast<void *>(dres),
          dim * sizeof(double));
   return PyArray_Return(res);

@@ -55,7 +55,9 @@ SDWriter::SDWriter(std::ostream *outStream, bool takeOwnership) {
 
 SDWriter::~SDWriter() {
   // close the writer if it's still open:
-  if (dp_ostream != nullptr) close();
+  if (dp_ostream != nullptr) {
+    close();
+  }
 }
 
 void SDWriter::setProps(const STR_VECT &propNames) {
@@ -84,7 +86,9 @@ void _writePropToStream(std::ostream *dp_ostream, const ROMol &mol,
 
   // write the property header line
   (*dp_ostream) << ">  <" << name << ">  ";
-  if (d_molid >= 0) (*dp_ostream) << "(" << d_molid + 1 << ") ";
+  if (d_molid >= 0) {
+    (*dp_ostream) << "(" << d_molid + 1 << ") ";
+  }
   (*dp_ostream) << "\n";
 
   (*dp_ostream) << pval << "\n";

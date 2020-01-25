@@ -50,7 +50,9 @@ void rdFileParseExceptionTranslator(RDKit::FileParseException const &x) {
 namespace RDKit {
 std::string pyObjectToString(python::object input) {
   python::extract<std::string> ex(input);
-  if (ex.check()) return ex();
+  if (ex.check()) {
+    return ex();
+  }
   std::wstring ws = python::extract<std::wstring>(input);
   return std::string(ws.begin(), ws.end());
 }
@@ -343,11 +345,14 @@ std::vector<int> CanonicalRankAtomsInFragment(
   }
 
   boost::dynamic_bitset<> atoms(mol.getNumAtoms());
-  for (size_t i = 0; i < avect->size(); ++i) atoms[(*avect)[i]] = true;
+  for (size_t i = 0; i < avect->size(); ++i) {
+    atoms[(*avect)[i]] = true;
+  }
 
   boost::dynamic_bitset<> bonds(mol.getNumBonds());
-  for (size_t i = 0; bvect.get() && i < bvect->size(); ++i)
+  for (size_t i = 0; bvect.get() && i < bvect->size(); ++i) {
     bonds[(*bvect)[i]] = true;
+  }
 
   std::vector<unsigned int> ranks(mol.getNumAtoms());
   Canon::rankFragmentAtoms(mol, ranks, atoms, bonds, asymbols.get(), breakTies,

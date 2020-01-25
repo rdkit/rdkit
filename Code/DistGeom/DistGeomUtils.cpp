@@ -258,10 +258,11 @@ ForceFields::ForceField *construct3DForceField(
     int j = etkdgDetails.expTorsionAtoms[t][1];
     int k = etkdgDetails.expTorsionAtoms[t][2];
     int l = etkdgDetails.expTorsionAtoms[t][3];
-    if (i < j)
+    if (i < j) {
       atomPairs[i * N + j] = 1;
-    else
+    } else {
       atomPairs[j * N + i] = 1;
+    }
     // etkdgDetails.expTorsionAngles[t][0] = (signs, V's)
     auto *contrib = new ForceFields::CrystalFF::TorsionAngleContribM6(
         field, i, j, k, l, etkdgDetails.expTorsionAngles[t].second,
@@ -307,10 +308,11 @@ ForceFields::ForceField *construct3DForceField(
   for (const auto &bnd : etkdgDetails.bonds) {
     unsigned int i = bnd.first;
     unsigned int j = bnd.second;
-    if (i < j)
+    if (i < j) {
       atomPairs[i * N + j] = 1;
-    else
+    } else {
       atomPairs[j * N + i] = 1;
+    }
     double d = ((*positions[i]) - (*positions[j])).length();
     double l = d - 0.01;
     double u = d + 0.01;
@@ -324,10 +326,11 @@ ForceFields::ForceField *construct3DForceField(
     unsigned int i = angle[0];
     unsigned int j = angle[1];
     unsigned int k = angle[2];
-    if (i < j)
+    if (i < j) {
       atomPairs[i * N + j] = 1;
-    else
+    } else {
       atomPairs[j * N + i] = 1;
+    }
     // check for triple bonds
     if (angle[3]) {
       auto *contrib = new ForceFields::UFF::AngleConstraintContrib(
@@ -382,10 +385,11 @@ ForceFields::ForceField *constructPlain3DForceField(
     int j = etkdgDetails.expTorsionAtoms[t][1];
     int k = etkdgDetails.expTorsionAtoms[t][2];
     int l = etkdgDetails.expTorsionAtoms[t][3];
-    if (i < j)
+    if (i < j) {
       atomPairs[i * N + j] = 1;
-    else
+    } else {
       atomPairs[j * N + i] = 1;
+    }
     // etkdgDetails.expTorsionAngles[t][0] = (signs, V's)
     auto *contrib = new ForceFields::CrystalFF::TorsionAngleContribM6(
         field, i, j, k, l, etkdgDetails.expTorsionAngles[t].second,
@@ -398,10 +402,11 @@ ForceFields::ForceField *constructPlain3DForceField(
   for (const auto &bnd : etkdgDetails.bonds) {
     unsigned int i = bnd.first;
     unsigned int j = bnd.second;
-    if (i < j)
+    if (i < j) {
       atomPairs[i * N + j] = 1;
-    else
+    } else {
       atomPairs[j * N + i] = 1;
+    }
     double d = ((*positions[i]) - (*positions[j])).length();
     double l = d - 0.01;
     double u = d + 0.01;
@@ -414,10 +419,11 @@ ForceFields::ForceField *constructPlain3DForceField(
   for (unsigned int a = 1; a < etkdgDetails.angles.size(); ++a) {
     unsigned int i = etkdgDetails.angles[a][0];
     unsigned int j = etkdgDetails.angles[a][2];
-    if (i < j)
+    if (i < j) {
       atomPairs[i * N + j] = 1;
-    else
+    } else {
       atomPairs[j * N + i] = 1;
+    }
     double d = ((*positions[i]) - (*positions[j])).length();
     double l = d - 0.01;
     double u = d + 0.01;

@@ -384,7 +384,9 @@ RWMOL_SPTR convertTemplateToMol(const ROMOL_SPTR prodTemplateSptr) {
     // ignore it:
     int iFlag;
     if (oAtom->getPropIfPresent(common_properties::molInversionFlag, iFlag)) {
-      if (iFlag == 4) newAtom->setChiralTag(oAtom->getChiralTag());
+      if (iFlag == 4) {
+        newAtom->setChiralTag(oAtom->getChiralTag());
+      }
     }
 
     // check for properties we need to set:
@@ -481,7 +483,9 @@ ReactantProductAtomMapping *getAtomMappingsReactantProduct(
       // don't care about that
       int a1mapidx = bond->getBeginAtom()->getAtomMapNum();
       int a2mapidx = bond->getEndAtom()->getAtomMapNum();
-      if (a1mapidx > a2mapidx) std::swap(a1mapidx, a2mapidx);
+      if (a1mapidx > a2mapidx) {
+        std::swap(a1mapidx, a2mapidx);
+      }
       mapping->reactantTemplateAtomBonds[std::make_pair(a1mapidx, a2mapidx)] =
           1;
       ++firstB;
@@ -860,7 +864,9 @@ void setReactantAtomPropertiesToProduct(Atom *productAtom,
     productAtom->setProp(WAS_DUMMY, true);
   } else {
     // remove bookkeeping labels (if present)
-    if (productAtom->hasProp(WAS_DUMMY)) productAtom->clearProp(WAS_DUMMY);
+    if (productAtom->hasProp(WAS_DUMMY)) {
+      productAtom->clearProp(WAS_DUMMY);
+    }
   }
   productAtom->setProp<unsigned int>(common_properties::reactantAtomIdx,
                                      reactantAtom.getIdx());
@@ -1013,7 +1019,9 @@ void addReactantNeighborsToProduct(
               int a2mapidx =
                   product->getAtomWithIdx(prodEndIdx)
                       ->getProp<int>(common_properties::reactionMapNum);
-              if (a1mapidx > a2mapidx) std::swap(a1mapidx, a2mapidx);
+              if (a1mapidx > a2mapidx) {
+                std::swap(a1mapidx, a2mapidx);
+              }
               if (mapping->reactantTemplateAtomBonds.find(
                       std::make_pair(a1mapidx, a2mapidx)) ==
                   mapping->reactantTemplateAtomBonds.end()) {
@@ -1081,7 +1089,9 @@ void checkAndCorrectChiralityOfMatchingAtomsInProduct(
         ++nUnknown;
         // if there's more than one bond in the product that doesn't correspond
         // to anything in the reactant, we're also doomed
-        if (nUnknown > 1) break;
+        if (nUnknown > 1) {
+          break;
+        }
         // otherwise, add a -1 to the bond order that we'll fill in later
         pOrder.push_back(-1);
       } else {
@@ -1360,7 +1370,9 @@ generateOneProductSet(const ChemicalReaction &rxn,
         break;
       }
     }
-    if (doConfs && doBondDirs) break;
+    if (doConfs && doBondDirs) {
+      break;
+    }
   }
 
   MOL_SPTR_VECT res;
@@ -1476,10 +1488,11 @@ std::vector<MOL_SPTR_VECT> run_Reactant(const ChemicalReaction &rxn,
   // assemble the reactants (use an empty mol for missing reactants)
   MOL_SPTR_VECT reactants(rxn.getNumReactantTemplates());
   for (size_t i = 0; i < rxn.getNumReactantTemplates(); ++i) {
-    if (i == reactantIdx)
+    if (i == reactantIdx) {
       reactants[i] = reactant;
-    else
+    } else {
       reactants[i] = ROMOL_SPTR(new ROMol);
+    }
   }
 
   if (!ReactionRunnerUtils::getReactantMatches(
@@ -1512,7 +1525,9 @@ int getAtomMapNo(ROMol::ATOM_BOOKMARK_MAP *map, Atom *atom) {
     for (ROMol::ATOM_BOOKMARK_MAP::const_iterator it = map->begin();
          it != map->end(); ++it) {
       for (auto ait = it->second.begin(); ait != it->second.end(); ++ait) {
-        if (*ait == atom) return it->first;
+        if (*ait == atom) {
+          return it->first;
+        }
       }
     }
   }

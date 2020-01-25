@@ -32,11 +32,12 @@ void _copyTransform(const PyArrayObject *transMat, RDGeom::Transform3D &trans) {
     throw_value_error("The transform has to be square matrix, of size 4x4");
   }
   if (PyArray_DESCR(const_cast<PyArrayObject *>(transMat))->type_num !=
-      NPY_DOUBLE)
+      NPY_DOUBLE) {
     throw_value_error("Only double arrays allowed for transform object ");
+  }
 
   unsigned int dSize = nrows * nrows;
-  const double *inData = reinterpret_cast<const double *>(
+  const auto *inData = reinterpret_cast<const double *>(
       PyArray_DATA(const_cast<PyArrayObject *>(transMat)));
   double *tData = trans.getData();
   memcpy(static_cast<void *>(tData), static_cast<const void *>(inData),
@@ -49,7 +50,7 @@ python::tuple getConformerDimsAndOffset(const Conformer &conf,
   RDGeom::Point3D dims, offSet;
   PyObject *transObj = trans.ptr();
   if (PyArray_Check(transObj)) {
-    PyArrayObject *transMat = reinterpret_cast<PyArrayObject *>(transObj);
+    auto *transMat = reinterpret_cast<PyArrayObject *>(transObj);
     RDGeom::Transform3D ctrans;
     _copyTransform(transMat, ctrans);
     MolShapes::computeConfDimsAndOffset(conf, dims, offSet, &ctrans, padding);
@@ -67,7 +68,7 @@ python::tuple getConfBox(const Conformer &conf,
   RDGeom::Point3D lowerCorner, upperCorner;
   PyObject *transObj = trans.ptr();
   if (PyArray_Check(transObj)) {
-    PyArrayObject *transMat = reinterpret_cast<PyArrayObject *>(transObj);
+    auto *transMat = reinterpret_cast<PyArrayObject *>(transObj);
     RDGeom::Transform3D ctrans;
     _copyTransform(transMat, ctrans);
     MolShapes::computeConfBox(conf, lowerCorner, upperCorner, &ctrans, padding);
@@ -110,7 +111,7 @@ void EncodeMolShape(
   PyObject *transObj = trans.ptr();
 
   if (PyArray_Check(transObj)) {
-    PyArrayObject *transMat = reinterpret_cast<PyArrayObject *>(transObj);
+    auto *transMat = reinterpret_cast<PyArrayObject *>(transObj);
     RDGeom::Transform3D ctrans;
     _copyTransform(transMat, ctrans);
     MolShapes::EncodeShape(mol, grid, confId, &ctrans, vdwScale, stepSize,

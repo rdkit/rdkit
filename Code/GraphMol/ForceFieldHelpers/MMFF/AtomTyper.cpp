@@ -147,19 +147,25 @@ RingMembershipSize::RingMembershipSize(const ROMol &mol) {
     unsigned int ringSize = atomRings[ringIdx].size();
     std::uint32_t ringIdxWithAromaticFlag = ringIdx;
     bool ringIsAromatic = isRingAromatic(mol, atomRings[ringIdx]);
-    if (ringIsAromatic) ringIdxWithAromaticFlag |= IS_AROMATIC_BIT;
+    if (ringIsAromatic) {
+      ringIdxWithAromaticFlag |= IS_AROMATIC_BIT;
+    }
     auto it = d_ringSizeMembershipMap.find(ringSize);
-    if (it == d_ringSizeMembershipMap.end())
+    if (it == d_ringSizeMembershipMap.end()) {
       it = d_ringSizeMembershipMap
                .insert(std::make_pair(ringSize, RingMembershipMap()))
                .first;
+    }
     for (int atomIdxIt : atomRings[ringIdx]) {
       auto it2 = it->second.find(atomIdxIt);
-      if (it2 == it->second.end())
+      if (it2 == it->second.end()) {
         it2 = it->second.insert(std::make_pair(atomIdxIt, RingMembership()))
                   .first;
+      }
       it2->second.getRingIdxSet().insert(ringIdxWithAromaticFlag);
-      if (ringIsAromatic) it2->second.setIsInAromaticRing(true);
+      if (ringIsAromatic) {
+        it2->second.setIsInAromaticRing(true);
+      }
     }
   }
 }
@@ -172,7 +178,9 @@ bool RingMembershipSize::isAtomInAromaticRingOfSize(
   if (isAromatic) {
     auto it2 = it->second.find(atom->getIdx());
     isAromatic = (it2 != it->second.end());
-    if (isAromatic) isAromatic = it2->second.getIsInAromaticRing();
+    if (isAromatic) {
+      isAromatic = it2->second.getIsInAromaticRing();
+    }
   }
 
   return isAromatic;
@@ -195,8 +203,9 @@ bool RingMembershipSize::areAtomsInSameAromaticRing(const Atom *atom1,
                             std::back_inserter(intersectVect));
       for (std::vector<std::uint32_t>::const_iterator ivIt =
                intersectVect.begin();
-           !areInSameAromaticRing && (ivIt != intersectVect.end()); ++ivIt)
+           !areInSameAromaticRing && (ivIt != intersectVect.end()); ++ivIt) {
         areInSameAromaticRing = *ivIt & IS_AROMATIC_BIT;
+      }
     }
   }
 
@@ -220,7 +229,9 @@ bool RingMembershipSize::areAtomsInSameRingOfSize(const unsigned int ringSize,
         areInSameRingOfSize = false;
         unsigned int idx2 = va_arg(atoms, const Atom *)->getIdx();
         auto it2 = it->second.find(idx2);
-        if (it2 == it->second.end()) break;
+        if (it2 == it->second.end()) {
+          break;
+        }
         std::set<std::uint32_t> intersect;
         std::set_intersection(commonSet.begin(), commonSet.end(),
                               it2->second.getRingIdxSet().begin(),
@@ -294,9 +305,10 @@ bool isAromaticAtomType(const unsigned int atomType) {
 
 bool isRingAromatic(const ROMol &mol, const INT_VECT &ringIndxVect) {
   bool isAromatic = true;
-  for (unsigned int i = 0; isAromatic && (i < ringIndxVect.size() - 1); ++i)
+  for (unsigned int i = 0; isAromatic && (i < ringIndxVect.size() - 1); ++i) {
     isAromatic = (mol.getBondBetweenAtoms(ringIndxVect[i], ringIndxVect[i + 1])
                       ->getBondType() == Bond::AROMATIC);
+  }
   return isAromatic;
 }
 
@@ -3048,7 +3060,7 @@ MMFFMolProperties::getMMFFTorsionEmpiricalRuleParams(const ROMol &mol,
   double W[2] = {0.0, 0.0};
   double beta = 0.0;
   double pi_jk = 0.0;
-  const double N_jk = (double)((jMMFFProp->crd - 1) * (kMMFFProp->crd - 1));
+  const auto N_jk = (double)((jMMFFProp->crd - 1) * (kMMFFProp->crd - 1));
   int atomicNum[2] = {mol.getAtomWithIdx(idx2)->getAtomicNum(),
                       mol.getAtomWithIdx(idx3)->getAtomicNum()};
 
@@ -3580,7 +3592,7 @@ void MMFFMolProperties::computeMMFFCharges(const ROMol &mol) {
     const Atom *atom = mol.getAtomWithIdx(idx);
     atomType = this->getMMFFAtomType(idx);
     double q0 = this->getMMFFFormalCharge(idx);
-    double M = (double)((*mmffProp)(atomType)->crd);
+    auto M = (double)((*mmffProp)(atomType)->crd);
     double v = (*mmffPBCI)(atomType)->fcadj;
     double sumFormalCharge = 0.0;
     double sumPartialCharge = 0.0;

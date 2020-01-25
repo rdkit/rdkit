@@ -388,8 +388,12 @@ RDKit::SparseIntVect<std::uint32_t> *MorganFingerprintHelper(
     }
     delete bitInfoMap;
   }
-  if (invars) delete invars;
-  if (froms) delete froms;
+  if (invars) {
+    delete invars;
+  }
+  if (froms) {
+    delete froms;
+  }
   return res;
 }
 }  // namespace
@@ -434,7 +438,7 @@ ExplicitBitVect *GetMorganFingerprintBV(
 
   std::unique_ptr<std::vector<std::uint32_t>> froms =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
-  RDKit::MorganFingerprints::BitInfoMap *bitInfoMap = 0;
+  RDKit::MorganFingerprints::BitInfoMap *bitInfoMap = nullptr;
   if (bitInfo != python::object()) {
     // make sure the optional argument actually was a dictionary
     python::dict typecheck = python::extract<python::dict>(bitInfo);

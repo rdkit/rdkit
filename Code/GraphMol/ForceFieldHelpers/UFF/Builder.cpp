@@ -53,7 +53,9 @@ void addBonds(const ROMol &mol, const AtomicParamVect &params,
 }
 
 unsigned int twoBitCellPos(unsigned int nAtoms, int i, int j) {
-  if (j < i) std::swap(i, j);
+  if (j < i) {
+    std::swap(i, j);
+  }
 
   return i * (nAtoms - 1) + i * (1 - i) / 2 + j;
 }
@@ -146,14 +148,20 @@ void addAngles(const ROMol &mol, const AtomicParamVect &params,
 
   unsigned int nAtoms = mol.getNumAtoms();
   for (unsigned int j = 0; j < nAtoms; j++) {
-    if (!params[j]) continue;
+    if (!params[j]) {
+      continue;
+    }
     const Atom *atomJ = mol.getAtomWithIdx(j);
-    if (atomJ->getDegree() == 1) continue;
+    if (atomJ->getDegree() == 1) {
+      continue;
+    }
     boost::tie(nbr1Idx, end1Nbrs) = mol.getAtomNeighbors(atomJ);
     for (; nbr1Idx != end1Nbrs; nbr1Idx++) {
       const Atom *atomI = mol[*nbr1Idx];
       unsigned int i = atomI->getIdx();
-      if (!params[i]) continue;
+      if (!params[i]) {
+        continue;
+      }
       boost::tie(nbr2Idx, end2Nbrs) = mol.getAtomNeighbors(atomJ);
       for (; nbr2Idx != end2Nbrs; nbr2Idx++) {
         if (nbr2Idx < (nbr1Idx + 1)) {
@@ -161,7 +169,9 @@ void addAngles(const ROMol &mol, const AtomicParamVect &params,
         }
         const Atom *atomK = mol[*nbr2Idx];
         unsigned int k = atomK->getIdx();
-        if (!params[k]) continue;
+        if (!params[k]) {
+          continue;
+        }
         // skip special cases:
         if (!(atomJ->getHybridization() == Atom::SP3D &&
               atomJ->getDegree() == 5)) {
@@ -287,13 +297,16 @@ void addTrigonalBipyramidAngles(const Atom *atom, const ROMol &mol, int confId,
   while (beg1 != end1) {
     const Bond *bond = mol[*beg1];
     ++beg1;
-    if (bond == ax1 || bond == ax2) continue;
-    if (!eq1)
+    if (bond == ax1 || bond == ax2) {
+      continue;
+    }
+    if (!eq1) {
       eq1 = bond;
-    else if (!eq2)
+    } else if (!eq2) {
       eq2 = bond;
-    else if (!eq3)
+    } else if (!eq3) {
       eq3 = bond;
+    }
   }
 
   CHECK_INVARIANT(eq1, "equatorial bond not found");
@@ -434,7 +447,9 @@ void addNonbonded(const ROMol &mol, int confId, const AtomicParamVect &params,
   unsigned int nAtoms = mol.getNumAtoms();
   const Conformer &conf = mol.getConformer(confId);
   for (unsigned int i = 0; i < nAtoms; i++) {
-    if (!params[i]) continue;
+    if (!params[i]) {
+      continue;
+    }
     for (unsigned int j = i + 1; j < nAtoms; j++) {
       if (!params[j] ||
           (ignoreInterfragInteractions && fragMapping[i] != fragMapping[j])) {
@@ -517,14 +532,18 @@ void addTorsions(const ROMol &mol, const AtomicParamVect &params,
                            : SmartsToMol(torsionBondSmarts);
   TEST_ASSERT(query);
   unsigned int nHits = SubstructMatch(mol, *query, matchVect);
-  if (query != defaultQuery) delete query;
+  if (query != defaultQuery) {
+    delete query;
+  }
 
   for (unsigned int i = 0; i < nHits; i++) {
     MatchVectType match = matchVect[i];
     TEST_ASSERT(match.size() == 2);
     int idx1 = match[0].second;
     int idx2 = match[1].second;
-    if (!params[idx1] || !params[idx2]) continue;
+    if (!params[idx1] || !params[idx2]) {
+      continue;
+    }
     const Bond *bond = mol.getBondBetweenAtoms(idx1, idx2);
     std::vector<TorsionAngleContrib *> contribsHere;
     TEST_ASSERT(bond);
