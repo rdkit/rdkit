@@ -56,7 +56,7 @@ typedef enum {
   ComputedProps = BOOST_BINARY(100000),
   AllProps =
       0x0000FFFF,  // all data pickled
-  ConfsAsDouble = 0x0001FFFF // save conformations in double precision
+  CoordsAsDouble = 0x0001FFFF // save conformations in double precision
 } PropertyPickleOptions;
 }
 

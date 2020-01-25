@@ -31,8 +31,8 @@ using std::int32_t;
 using std::uint32_t;
 namespace RDKit {
 
-const int32_t MolPickler::versionMajor = 10;
-const int32_t MolPickler::versionMinor = 1;
+const int32_t MolPickler::versionMajor = 11;
+const int32_t MolPickler::versionMinor = 0;
 const int32_t MolPickler::versionPatch = 0;
 const int32_t MolPickler::endianId = 0xDEADBEEF;
 
@@ -929,7 +929,7 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
     }
   }
 
-  if (propertyFlags & PicklerOps::ConfsAsDouble) {
+  if (propertyFlags & PicklerOps::CoordsAsDouble) {
     // pickle the conformations
     streamWrite(ss, BEGINCONFS_DOUBLE);
     tmpInt = static_cast<int32_t>(mol->getNumConformers());

@@ -1485,7 +1485,7 @@ void testGithubIssue2510() {
   conf->setAtomPos(0, point);
   m1->addConformer(conf);
   
-  MolPickler::pickleMol(*m1, pickle, PicklerOps::ConfsAsDouble);
+  MolPickler::pickleMol(*m1, pickle, PicklerOps::CoordsAsDouble);
   m3 = new ROMol();
   MolPickler::molFromPickle(pickle, *m3);
   TEST_ASSERT(m1->getNumAtoms() == m3->getNumAtoms());

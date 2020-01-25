@@ -5832,7 +5832,7 @@ M  END
     for at in m.GetAtoms():
       self.assertNotEqual(at.GetAtomicNum(),1)
 
-  def testPickleConfsAsDouble(self):
+  def testPickleCoordsAsDouble(self):
     import pickle
     m = Chem.MolFromSmiles('C')
     test_num = 1e50
@@ -5848,7 +5848,7 @@ M  END
 
 
     try:
-      Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.ConfsAsDouble)
+      Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.CoordsAsDouble)
       self.assertEqual(
         pickle.loads(pickle.dumps(m)).GetConformer().GetAtomPosition(0).x,
         test_num)
