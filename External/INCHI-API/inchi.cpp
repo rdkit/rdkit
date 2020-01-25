@@ -1694,15 +1694,17 @@ void fixOptionSymbol(const char* in, char* out) {
   unsigned int i;
   for (i = 0; i < strlen(in); i++) {
 #ifdef _WIN32
-    if (in[i] == '-') out[i] = '/';
+    if (in[i] == '-') {
+      out[i] = '/';
+
 #else
     if (in[i] == '/') {
       out[i] = '-';
+
 #endif
-  }
-  else {
-    out[i] = in[i];
-  }
+    } else {
+      out[i] = in[i];
+    }
   }
   out[i] = '\0';
 }
