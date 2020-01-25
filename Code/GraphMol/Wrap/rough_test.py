@@ -5848,7 +5848,7 @@ M  END
 
 
     try:
-      Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.ConfDouble)
+      Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.ConfsAsDouble)
       self.assertEqual(
         pickle.loads(pickle.dumps(m)).GetConformer().GetAtomPosition(0).x,
         test_num)

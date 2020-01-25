@@ -55,8 +55,8 @@ typedef enum {
   PrivateProps = BOOST_BINARY(10000),
   ComputedProps = BOOST_BINARY(100000),
   AllProps =
-      0x0000FFFF,  // all data pickled (only 31 bit flags in case enum==int)
-  ConfDouble = 0x0001FFFF // save 3D confs as double
+      0x0000FFFF,  // all data pickled
+  ConfsAsDouble = 0x0001FFFF // save conformations in double precision
 } PropertyPickleOptions;
 }
 

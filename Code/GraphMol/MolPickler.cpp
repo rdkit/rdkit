@@ -929,7 +929,7 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
     }
   }
 
-  if (propertyFlags & PicklerOps::ConfDouble) {
+  if (propertyFlags & PicklerOps::ConfsAsDouble) {
     // pickle the conformations
     streamWrite(ss, BEGINCONFS_DOUBLE);
     tmpInt = static_cast<int32_t>(mol->getNumConformers());
