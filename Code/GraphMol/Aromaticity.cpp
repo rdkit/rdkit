@@ -409,7 +409,7 @@ void applyHuckelToFused(
     INT_VECT unon;
     for (i = 0; i < atsInRingSystem.size(); ++i) {
       // condition for inclusion of an atom in the aromaticity of a fused ring system
-      // is that it's presetnt in one or two of the rings.
+      // is that it's present in one or two of the rings.
       // this was #2895: the central atom in acepentalene was being included in
       // the count of aromatic atoms
       if (atsInRingSystem[i] == 1 || atsInRingSystem[i] == 2) {
