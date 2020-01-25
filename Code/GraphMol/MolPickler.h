@@ -1,4 +1,4 @@
-//
+///
 //  Copyright (C) 2001-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
@@ -56,7 +56,7 @@ typedef enum {
   ComputedProps = BOOST_BINARY(100000),
   AllProps =
       0x0000FFFF,  // all data pickled
-  CoordsAsDouble = 0x0001FFFF // save conformations in double precision
+  CoordsAsDouble = 0x0001FFFF // save coordinates in double precision
 } PropertyPickleOptions;
 }
 
