@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
+// Copyright (C) 2003-2020 Greg Landrum and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -268,9 +268,6 @@ class RDKIT_RDGENERAL_EXPORT Dict {
 
      \param what the key to clear
 
-   <b>Notes:</b>
-      - If the dictionary does not contain the key \c what,
-        a KeyErrorException will be thrown.
   */
   void clearVal(const std::string &what) {
     for (DataType::iterator it = _data.begin(); it < _data.end(); ++it) {
@@ -282,7 +279,6 @@ class RDKIT_RDGENERAL_EXPORT Dict {
         return;
       }
     }
-    throw KeyErrorException(what);
   };
 
   //----------------------------------------------------------
