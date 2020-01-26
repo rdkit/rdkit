@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2020 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef _RD_SMILESWRITE_H
-#define _RD_SMILESWRITE_H
+#ifndef RD_SMILESWRITE_H_012020
+#define RD_SMILESWRITE_H_012020
 
 #include <string>
 #include <vector>
@@ -32,8 +32,7 @@ RDKIT_SMILESPARSE_EXPORT bool inOrganicSubset(int atomicNumber);
   \param atom : the atom to work with
   \param doKekule : we're doing kekulized smiles (e.g. don't use
     lower case for the atom label)
-  \param bondIn : the bond we came into the atom on (used for
-    chirality calculation
+  \param bondIn : the bond we came into the atom on (unused)
   \param allHsExplicit : if true, hydrogen counts will be provided for every
   atom.
   \param isomericSmiles : if true, isomeric SMILES will be generated

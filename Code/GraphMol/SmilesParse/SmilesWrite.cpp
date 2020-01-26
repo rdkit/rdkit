@@ -361,7 +361,6 @@ std::string FragmentSmilesConstruct(
           //   we're closing a ring, so grab
           //   the index and then delete the value:
           closureVal = ringClosureMap[ringIdx];
-          // ringClosureMap.erase(ringIdx);
           ringClosuresToErase.push_back(ringIdx);
         } else {
           // we're opening a new ring, find the index for it:
@@ -479,7 +478,8 @@ std::string MolToSmiles(const ROMol &mol, bool doIsomericSmiles, bool doKekule,
           ranks[atom->getIdx()] = rankNum;
         }
       } else {
-        Canon::rankMolAtoms(*tmol, ranks, true, doIsomericSmiles,
+        bool breakTies = true;
+        Canon::rankMolAtoms(*tmol, ranks, breakTies, doIsomericSmiles,
                             doIsomericSmiles);
       }
     } else {
@@ -688,8 +688,9 @@ std::string MolFragmentToSmiles(const ROMol &mol,
     }
   }
   if (canonical) {
+    bool breakTies = true;
     Canon::rankFragmentAtoms(tmol, ranks, atomsInPlay, bondsInPlay, atomSymbols,
-                             true, doIsomericSmiles, doIsomericSmiles);
+                             breakTies, doIsomericSmiles, doIsomericSmiles);
     // std::cerr << "RANKS: ";
     // std::copy(ranks.begin(), ranks.end(),
     //           std::ostream_iterator<int>(std::cerr, " "));
@@ -732,10 +733,10 @@ std::string MolFragmentToSmiles(const ROMol &mol,
       }
     }
     CHECK_INVARIANT(nextAtomIdx >= 0, "no start atom found");
-
+    bool doRandom = false;
     auto subSmi = SmilesWrite::FragmentSmilesConstruct(
         tmol, nextAtomIdx, colors, ranks, doKekule, canonical, doIsomericSmiles,
-        allBondsExplicit, allHsExplicit, false, atomOrdering, &bondsInPlay,
+        allBondsExplicit, allHsExplicit, doRandom, atomOrdering, &bondsInPlay,
         atomSymbols, bondSymbols);
 
     res += subSmi;

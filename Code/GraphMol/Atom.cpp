@@ -541,7 +541,7 @@ bool Atom::needsUpdatePropertyCache() const {
 //   getPerturbationOrder([1,0,2,3]) = 1
 //   getPerturbationOrder([1,2,3,0]) = 3
 //   getPerturbationOrder([1,2,0,3]) = 2
-int Atom::getPerturbationOrder(INT_LIST probe) const {
+int Atom::getPerturbationOrder(const INT_LIST &probe) const {
   PRECONDITION(
       dp_mol,
       "perturbation order not defined for atoms not associated with molecules")
@@ -552,7 +552,7 @@ int Atom::getPerturbationOrder(INT_LIST probe) const {
     ref.push_back(getOwningMol()[*beg]->getIdx());
     ++beg;
   }
-  int nSwaps = static_cast<int>(countSwapsToInterconvert(ref, probe));
+  int nSwaps = static_cast<int>(countSwapsToInterconvert(probe, ref));
   return nSwaps;
 }
 

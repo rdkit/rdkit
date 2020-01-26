@@ -216,9 +216,8 @@ bool operator<(const std::pair<T, T> &p1, const std::pair<T, T> &p2) {
 
 void AdjustAtomChiralityFlags(RWMol *mol) {
   PRECONDITION(mol, "no molecule");
-  for (RWMol::AtomIterator atomIt = mol->beginAtoms();
-       atomIt != mol->endAtoms(); ++atomIt) {
-    Atom::ChiralType chiralType = (*atomIt)->getChiralTag();
+  for (auto atom : mol->atoms()) {
+    Atom::ChiralType chiralType = atom->getChiralTag();
     if (chiralType == Atom::CHI_TETRAHEDRAL_CW ||
         chiralType == Atom::CHI_TETRAHEDRAL_CCW) {
       //
@@ -229,8 +228,7 @@ void AdjustAtomChiralityFlags(RWMol *mol) {
       // need to insert into the list in a particular order
       //
       INT_VECT ringClosures;
-      (*atomIt)->getPropIfPresent(common_properties::_RingClosures,
-                                  ringClosures);
+      atom->getPropIfPresent(common_properties::_RingClosures, ringClosures);
 
 #if 0
       std::cerr << "CLOSURES: ";
@@ -241,12 +239,12 @@ void AdjustAtomChiralityFlags(RWMol *mol) {
       std::list<SIZET_PAIR> neighbors;
       // push this atom onto the list of neighbors (we'll use this
       // to find our place later):
-      neighbors.push_back(std::make_pair((*atomIt)->getIdx(), -1));
+      neighbors.push_back(std::make_pair(atom->getIdx(), -1));
       std::list<size_t> bondOrder;
       RWMol::ADJ_ITER nbrIdx, endNbrs;
-      boost::tie(nbrIdx, endNbrs) = mol->getAtomNeighbors(*atomIt);
+      boost::tie(nbrIdx, endNbrs) = mol->getAtomNeighbors(atom);
       while (nbrIdx != endNbrs) {
-        Bond *nbrBond = mol->getBondBetweenAtoms((*atomIt)->getIdx(), *nbrIdx);
+        Bond *nbrBond = mol->getBondBetweenAtoms(atom->getIdx(), *nbrIdx);
         if (std::find(ringClosures.begin(), ringClosures.end(),
                       static_cast<int>(nbrBond->getIdx())) ==
             ringClosures.end()) {
@@ -261,11 +259,10 @@ void AdjustAtomChiralityFlags(RWMol *mol) {
       // first in the list, e.g for smiles like [C@](F)(Cl)(Br)I, or
       // second (everything else).
       auto selfPos = neighbors.begin();
-      if (selfPos->first != (*atomIt)->getIdx()) {
+      if (selfPos->first != atom->getIdx()) {
         ++selfPos;
       }
-      CHECK_INVARIANT(selfPos->first == (*atomIt)->getIdx(),
-                      "weird atom ordering");
+      CHECK_INVARIANT(selfPos->first == atom->getIdx(), "weird atom ordering");
 
       // copy over the bond ids:
       INT_LIST bondOrdering;
@@ -294,7 +291,7 @@ void AdjustAtomChiralityFlags(RWMol *mol) {
       //   in F[C@]1(Br)I.Cl1 the C-Cl bond is index 1 in the SMILES
       //         and index 3 as built.
       //
-      int nSwaps = (*atomIt)->getPerturbationOrder(bondOrdering);
+      int nSwaps = atom->getPerturbationOrder(bondOrdering);
       // FIX: explain this one:
       // At least part of what's going on here for degree 3 atoms:
       //   - The first part: if we're at the beginning of the SMILES and have
@@ -311,22 +308,21 @@ void AdjustAtomChiralityFlags(RWMol *mol) {
       //      those cases by looking for unsaturated atoms
       //
       if (Canon::chiralAtomNeedsTagInversion(
-              *mol, *atomIt,
-              (*atomIt)->hasProp(common_properties::_SmilesStart),
+              *mol, atom, atom->hasProp(common_properties::_SmilesStart),
               ringClosures.size())) {
         ++nSwaps;
       }
-      // std::cerr << "nswaps " << (*atomIt)->getIdx() << " " << nSwaps
+      // std::cerr << "nswaps " << atom->getIdx() << " " << nSwaps
       //           << std::endl;
       // std::copy(bondOrdering.begin(), bondOrdering.end(),
       //           std::ostream_iterator<int>(std::cerr, ", "));
       // std::cerr << std::endl;
       if (nSwaps % 2) {
-        (*atomIt)->invertChirality();
+        atom->invertChirality();
       }
     }
   }
-}
+}  // namespace SmilesParseOps
 
 Bond::BondType GetUnspecifiedBondType(const RWMol *mol, const Atom *atom1,
                                       const Atom *atom2) {

@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2001-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2020 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -20,12 +19,11 @@ namespace RDKit {
 namespace Canon {
 namespace {
 bool isUnsaturated(const Atom *atom, const ROMol &mol) {
-  ROMol::OEDGE_ITER beg, end;
-  boost::tie(beg, end) = mol.getAtomBonds(atom);
-  while (beg != end) {
-    const Bond *bond = mol[*beg];
-    ++beg;
-    if (bond->getBondType() != Bond::SINGLE) {
+  for (const auto &bndItr :
+       boost::make_iterator_range(mol.getAtomBonds(atom))) {
+    // can't just check for single bonds, because dative bonds also have an
+    // order of 1
+    if (mol[bndItr]->getBondTypeAsDouble() > 1.001) {
       return true;
     }
   }
@@ -65,8 +63,7 @@ bool atomHasFourthValence(const Atom *atom) {
     // the SMARTS [C@@H] produces an atom with a H query, but we also
     // need to treat this like an explicit H for chirality purposes
     // This was Github #1489
-    bool res = hasSingleHQuery(atom->getQuery());
-    return res;
+    return hasSingleHQuery(atom->getQuery());
   }
   return false;
 }
@@ -153,41 +150,37 @@ void canonicalizeDoubleBond(Bond *dblBond, INT_VECT &bondVisitOrders,
                    atomVisitOrders[dblBond->getEndAtomIdx()] > 0,
                "neither end atom traversed");
 
-  // atom1 is the lower numbered atom of the double bond (the one traversed
-  // first)
-  Atom *atom1, *atom2;
-  if (atomVisitOrders[dblBond->getBeginAtomIdx()] <
-      atomVisitOrders[dblBond->getEndAtomIdx()]) {
-    atom1 = dblBond->getBeginAtom();
-    atom2 = dblBond->getEndAtom();
-  } else {
-    atom1 = dblBond->getEndAtom();
-    atom2 = dblBond->getBeginAtom();
-  }
-
+  Atom *atom1 = dblBond->getBeginAtom();
+  Atom *atom2 = dblBond->getEndAtom();
   // we only worry about double bonds that begin and end at atoms
   // of degree 2 or 3:
   if ((atom1->getDegree() != 2 && atom1->getDegree() != 3) ||
       (atom2->getDegree() != 2 && atom2->getDegree() != 3)) {
     return;
   }
+  // ensure that atom1 is the lower numbered atom of the double bond (the one
+  // traversed first)
+  if (atomVisitOrders[dblBond->getBeginAtomIdx()] >=
+      atomVisitOrders[dblBond->getEndAtomIdx()]) {
+    std::swap(atom1, atom2);
+  }
 
   Bond *firstFromAtom1 = nullptr, *secondFromAtom1 = nullptr;
   Bond *firstFromAtom2 = nullptr, *secondFromAtom2 = nullptr;
 
-  int firstVisitOrder = 100000;
-
   ROMol &mol = dblBond->getOwningMol();
+  int firstVisitOrder = mol.getNumBonds() + 1;
 
   ROMol::OBOND_ITER_PAIR atomBonds;
   // -------------------------------------------------------
   // find the lowest visit order bonds from each end and determine
   // if anything is already constraining our choice of directions:
   bool dir1Set = false, dir2Set = false;
-  atomBonds = mol.getAtomBonds(atom1);
-  while (atomBonds.first != atomBonds.second) {
-    if (mol[*atomBonds.first] != dblBond) {
-      int bondIdx = mol[*atomBonds.first]->getIdx();
+  for (const auto &bndItr :
+       boost::make_iterator_range(mol.getAtomBonds(atom1))) {
+    auto bond = mol[bndItr];
+    if (bond != dblBond) {
+      unsigned int bondIdx = bond->getIdx();
       if (bondDirCounts[bondIdx] > 0) {
         dir1Set = true;
       }
@@ -195,19 +188,19 @@ void canonicalizeDoubleBond(Bond *dblBond, INT_VECT &bondVisitOrders,
         if (firstFromAtom1) {
           secondFromAtom1 = firstFromAtom1;
         }
-        firstFromAtom1 = mol[*atomBonds.first];
+        firstFromAtom1 = bond;
         firstVisitOrder = bondVisitOrders[bondIdx];
       } else {
-        secondFromAtom1 = mol[*atomBonds.first];
+        secondFromAtom1 = bond;
       }
     }
-    atomBonds.first++;
   }
-  atomBonds = mol.getAtomBonds(atom2);
-  firstVisitOrder = 10000;
-  while (atomBonds.first != atomBonds.second) {
-    if (mol[*atomBonds.first] != dblBond) {
-      int bondIdx = mol[*atomBonds.first]->getIdx();
+  firstVisitOrder = mol.getNumBonds() + 1;
+  for (const auto &bndItr :
+       boost::make_iterator_range(mol.getAtomBonds(atom2))) {
+    auto bond = mol[bndItr];
+    if (bond != dblBond) {
+      unsigned int bondIdx = bond->getIdx();
       if (bondDirCounts[bondIdx] > 0) {
         dir2Set = true;
       }
@@ -215,13 +208,12 @@ void canonicalizeDoubleBond(Bond *dblBond, INT_VECT &bondVisitOrders,
         if (firstFromAtom2) {
           secondFromAtom2 = firstFromAtom2;
         }
-        firstFromAtom2 = mol[*atomBonds.first];
+        firstFromAtom2 = bond;
         firstVisitOrder = bondVisitOrders[bondIdx];
       } else {
-        secondFromAtom2 = mol[*atomBonds.first];
+        secondFromAtom2 = bond;
       }
     }
-    atomBonds.first++;
   }
 
   // make sure we found everything we need to find:
@@ -375,18 +367,6 @@ void canonicalizeDoubleBond(Bond *dblBond, INT_VECT &bondVisitOrders,
     // std::cerr<<" 1 set bond 2: "<<firstFromAtom2->getIdx()<<"
     // "<<atom2Dir<<std::endl;
     firstFromAtom2->setBondDir(atom2Dir);
-
-    // this block of code is no longer needed
-    // if(firstFromAtom2->hasProp(common_properties::_TraversalRingClosureBond)){
-    //   // another nice one: we're traversing and come to a ring
-    //   // closure bond that has directionality set. This is going to
-    //   // have its direction swapped on writing so we need to
-    //   // pre-emptively swap it here.
-    //   // example situation for this is a non-canonical traversal of
-    //   //   C1CCCCN/C=C/1
-    //   // starting at atom 0, we hit it on encountering the final bond.
-    //   switchBondDir(firstFromAtom2);
-    // }
 
     bondDirCounts[firstFromAtom2->getIdx()] += 1;
     atomDirCounts[atom2->getIdx()] += 1;
@@ -727,7 +707,7 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
   // ---------------------
   if (atomRingClosures[atomIdx].size()) {
     std::vector<unsigned int> ringsClosed;
-    BOOST_FOREACH (int bIdx, atomRingClosures[atomIdx]) {
+    for (auto bIdx : atomRingClosures[atomIdx]) {
       travList.push_back(bIdx);
       Bond *bond = mol.getBondWithIdx(bIdx);
       seenFromHere.set(bond->getOtherAtomIdx(atomIdx));
@@ -761,7 +741,7 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
         molStack.push_back(MolStackElem(lowestRingIdx));
       }
     }
-    BOOST_FOREACH (unsigned int ringIdx, ringsClosed) {
+    for (auto ringIdx : ringsClosed) {
       cyclesAvailable[ringIdx] = 1;
     }
   }
@@ -1046,18 +1026,14 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
                "bondsInPlay too small");
   PRECONDITION(!bondSymbols || bondSymbols->size() >= mol.getNumBonds(),
                "bondSymbols too small");
-  int nAtoms = mol.getNumAtoms();
+  unsigned int nAtoms = mol.getNumAtoms();
 
   INT_VECT atomVisitOrders(nAtoms, 0);
   INT_VECT bondVisitOrders(mol.getNumBonds(), 0);
   INT_VECT bondDirCounts(mol.getNumBonds(), 0);
   INT_VECT atomDirCounts(nAtoms, 0);
   INT_VECT cyclesAvailable(MAX_CYCLES, 1);
-
   VECT_INT_VECT cycles(nAtoms);
-  for (auto &cycle : cycles) {
-    cycle.resize(0);
-  }
 
   boost::dynamic_bitset<> ringStereoChemAdjusted(nAtoms);
 
@@ -1086,57 +1062,58 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
                   "Corrupted stack. First element should be an atom.");
 
   // collect some information about traversal order on chiral atoms
-  bool *numSwapsChiralAtoms = (bool *)malloc(nAtoms * sizeof(bool));
-  CHECK_INVARIANT(numSwapsChiralAtoms, "failed to allocate memory");
-  memset(numSwapsChiralAtoms, 0, nAtoms * sizeof(bool));
+  boost::dynamic_bitset<> numSwapsChiralAtoms(nAtoms);
   if (doIsomericSmiles) {
-    for (ROMol::AtomIterator atomIt = mol.beginAtoms();
-         atomIt != mol.endAtoms(); ++atomIt) {
-      if ((*atomIt)->getChiralTag() != Atom::CHI_UNSPECIFIED) {
-        ROMol::OEDGE_ITER beg, end;
-        boost::tie(beg, end) = mol.getAtomBonds(*atomIt);
-        while (beg != end) {
-          if (bondsInPlay && !(*bondsInPlay)[mol[*beg]->getIdx()]) {
-            (*atomIt)->setProp(common_properties::_brokenChirality, true);
+    for (const auto atom : mol.atoms()) {
+      if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
+        // check if all of this atom's bonds are in play
+        for (const auto &bndItr :
+             boost::make_iterator_range(mol.getAtomBonds(atom))) {
+          if (bondsInPlay && !(*bondsInPlay)[mol[bndItr]->getIdx()]) {
+            atom->setProp(common_properties::_brokenChirality, true);
             break;
           }
-          ++beg;
         }
-        if ((*atomIt)->hasProp(common_properties::_brokenChirality)) {
+        if (atom->hasProp(common_properties::_brokenChirality)) {
           continue;
         }
-        INT_LIST trueOrder = atomTraversalBondOrder[(*atomIt)->getIdx()];
+        const INT_LIST &trueOrder = atomTraversalBondOrder[atom->getIdx()];
 
         // Check if the atom can be chiral, and if chirality needs inversion
         if (trueOrder.size() >= 3) {
-          // We have to make sure that trueOrder contains all the bonds, even if
-          // they won't be written to the SMARTS
-          if (trueOrder.size() < (*atomIt)->getDegree()) {
+          int nSwaps;
+          // We have to make sure that trueOrder contains all the
+          // bonds, even if they won't be written to the SMARTS
+          if (trueOrder.size() < atom->getDegree()) {
+            INT_LIST tOrder = trueOrder;
             for (const auto &bndItr :
-                 boost::make_iterator_range(mol.getAtomBonds(*atomIt))) {
+                 boost::make_iterator_range(mol.getAtomBonds(atom))) {
               int bndIdx = mol[bndItr]->getIdx();
               if (std::find(trueOrder.begin(), trueOrder.end(), bndIdx) ==
                   trueOrder.end()) {
-                trueOrder.push_back(bndIdx);
+                tOrder.push_back(bndIdx);
                 break;
               }
             }
+            nSwaps = atom->getPerturbationOrder(tOrder);
+          } else {
+            nSwaps = atom->getPerturbationOrder(trueOrder);
           }
-          int nSwaps = (*atomIt)->getPerturbationOrder(trueOrder);
           if (chiralAtomNeedsTagInversion(
-                  mol, *atomIt,
-                  molStack.begin()->obj.atom->getIdx() == (*atomIt)->getIdx(),
-                  atomRingClosures[(*atomIt)->getIdx()].size())) {
+                  mol, atom,
+                  molStack.begin()->obj.atom->getIdx() == atom->getIdx(),
+                  atomRingClosures[atom->getIdx()].size())) {
             // This is a special case. Here's an example:
             //   Our internal representation of a chiral center is equivalent
             //   to:
             //     [C@](F)(O)(C)[H]
-            //   we'll be dumping it without the H, which entails a reordering:
+            //   we'll be dumping it without the H, which entails a
+            //   reordering:
             //     [C@@H](F)(O)C
             ++nSwaps;
           }
           if (nSwaps % 2) {
-            numSwapsChiralAtoms[(*atomIt)->getIdx()] = 1;
+            numSwapsChiralAtoms.set(atom->getIdx());
           }
         }
       }
@@ -1144,11 +1121,10 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
   }
 
   // remove the current directions on single bonds around double bonds:
-  for (ROMol::BondIterator bondIt = mol.beginBonds(); bondIt != mol.endBonds();
-       ++bondIt) {
-    Bond::BondDir dir = (*bondIt)->getBondDir();
+  for (auto bond : mol.bonds()) {
+    Bond::BondDir dir = bond->getBondDir();
     if (dir == Bond::ENDDOWNRIGHT || dir == Bond::ENDUPRIGHT) {
-      (*bondIt)->setBondDir(Bond::NONE);
+      bond->setBondDir(Bond::NONE);
     }
   }
 
@@ -1193,7 +1169,7 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
           }
           const INT_VECT &ringStereoAtoms = msI.obj.atom->getProp<INT_VECT>(
               common_properties::_ringStereoAtoms);
-          BOOST_FOREACH (int nbrV, ringStereoAtoms) {
+          for (auto nbrV : ringStereoAtoms) {
             int nbrIdx = abs(nbrV) - 1;
             // Adjust the chirality flag of the ring stereo atoms according to
             // the first one
@@ -1254,7 +1230,6 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
     mol.debugMol(std::cerr);
     std::cerr<<"----------------------------------------->"<<std::endl;
 #endif
-  free(numSwapsChiralAtoms);
 }
 }  // namespace Canon
 }  // namespace RDKit
