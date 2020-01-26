@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2019 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2020 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -15,7 +15,6 @@
 #include <list>
 #include <algorithm>
 #include <boost/dynamic_bitset.hpp>
-#include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <RDGeneral/RDLog.h>
 
@@ -50,6 +49,8 @@ void CheckRingClosureBranchStatus(RDKit::Atom *atom, RDKit::RWMol *mp) {
   //   2) [C@@](Cl)1(F)I.Br1    (reverse)
   //   3) [C@@](Cl)(F)1I.Br1    (ok)
   //   4) [C@@](Cl)(F)(I)1.Br1  (reverse)
+  PRECONDITION(atom, "bad atom");
+  PRECONDITION(mp, "bad mol");
   if (atom->getIdx() != mp->getNumAtoms(true) - 1 &&
       (atom->getDegree() == 1 ||
        (atom->getDegree() == 2 && atom->getIdx() != 0) ||
@@ -62,6 +63,7 @@ void CheckRingClosureBranchStatus(RDKit::Atom *atom, RDKit::RWMol *mp) {
 }
 
 void ReportParseError(const char *message, bool throwIt) {
+  PRECONDITION(message, "bad message");
   if (!throwIt) {
     BOOST_LOG(rdErrorLog) << "SMILES Parse Error: " << message << std::endl;
   } else {
@@ -72,17 +74,17 @@ void ReportParseError(const char *message, bool throwIt) {
 void CleanupAfterParseError(RWMol *mol) {
   PRECONDITION(mol, "no molecule");
   // blow out any partial bonds:
-  RWMol::BOND_BOOKMARK_MAP *marks = mol->getBondBookmarks();
-  auto markI = marks->begin();
-  while (markI != marks->end()) {
-    RWMol::BOND_PTR_LIST &bonds = markI->second;
+  for (auto markI : *mol->getBondBookmarks()) {
+    RWMol::BOND_PTR_LIST &bonds = markI.second;
     for (auto &bond : bonds) {
       delete bond;
     }
-    ++markI;
   }
 }
 
+namespace {
+bool couldBeRingClosure(int val) { return val < 100000 && val >= 0; }
+}  // namespace
 //
 // set bondOrder to Bond::IONIC to skip the formation of a bond
 //  between the fragment and the molecule
@@ -104,18 +106,16 @@ void AddFragToMol(RWMol *mol, RWMol *frag, Bond::BondType bondOrder,
   //
   // update ring-closure order information on the added atoms:
   //
-  for (RWMol::AtomIterator atomIt = frag->beginAtoms();
-       atomIt != frag->endAtoms(); atomIt++) {
+  for (const auto atom : frag->atoms()) {
     INT_VECT tmpVect;
-    if ((*atomIt)->getPropIfPresent(common_properties::_RingClosures,
-                                    tmpVect)) {
-      BOOST_FOREACH (int &v, tmpVect) {
+    if (atom->getPropIfPresent(common_properties::_RingClosures, tmpVect)) {
+      for (auto &v : tmpVect) {
         // if the ring closure is not already a bond, don't touch it:
         if (v >= 0) {
           v += nOrigBonds;
         }
       }
-      Atom *newAtom = mol->getAtomWithIdx(nOrigAtoms + (*atomIt)->getIdx());
+      auto newAtom = mol->getAtomWithIdx(nOrigAtoms + atom->getIdx());
       newAtom->setProp(common_properties::_RingClosures, tmpVect);
     }
   }
@@ -125,16 +125,14 @@ void AddFragToMol(RWMol *mol, RWMol *frag, Bond::BondType bondOrder,
   //
   if (bondOrder != Bond::IONIC) {
     // FIX: this is not so much with the elegance...
-    Atom *firstAt = mol->getAtomWithIdx(nOrigAtoms);
-    Bond::BondType bo;
-    int atomIdx1, atomIdx2;
-    atomIdx1 = firstAt->getIdx();
-    atomIdx2 = lastAt->getIdx();
+    auto firstAt = mol->getAtomWithIdx(nOrigAtoms);
+    int atomIdx1 = firstAt->getIdx();
+    int atomIdx2 = lastAt->getIdx();
     if (frag->hasBondBookmark(ci_LEADING_BOND)) {
       // std::cout << "found it" << std::endl;
       const ROMol::BOND_PTR_LIST &leadingBonds =
           frag->getAllBondsWithBookmark(ci_LEADING_BOND);
-      BOOST_FOREACH (Bond *leadingBond, leadingBonds) {
+      for (auto leadingBond : leadingBonds) {
         // we've already got a bond, so just set its local info
         // and then add it to the molecule intact (no sense doing
         // any extra work).
@@ -156,11 +154,9 @@ void AddFragToMol(RWMol *mol, RWMol *frag, Bond::BondType bondOrder,
         mol->addBond(newB);
         delete newB;
       } else {
-        bo = bondOrder;
+        Bond::BondType bo = bondOrder;
         if (bo == Bond::DATIVEL) {
-          int tmp = atomIdx2;
-          atomIdx2 = atomIdx1;
-          atomIdx1 = tmp;
+          std::swap(atomIdx1, atomIdx2);
           bo = Bond::DATIVE;
         } else if (bo == Bond::DATIVER) {
           bo = Bond::DATIVE;
@@ -181,7 +177,7 @@ void AddFragToMol(RWMol *mol, RWMol *frag, Bond::BondType bondOrder,
   for (auto atIt : *frag->getAtomBookmarks()) {
     // don't bother even considering bookmarks outside
     // the range used for cycles
-    if (atIt.first > 0) {
+    if (couldBeRingClosure(atIt.first)) {
       for (auto at2 : atIt.second) {
         int newIdx = at2->getIdx() + nOrigAtoms;
         mol->setAtomBookmark(mol->getAtomWithIdx(newIdx), atIt.first);
@@ -235,16 +231,14 @@ void AdjustAtomChiralityFlags(RWMol *mol) {
       // to find our place later):
       neighbors.push_back(std::make_pair(atom->getIdx(), -1));
       std::list<size_t> bondOrder;
-      RWMol::ADJ_ITER nbrIdx, endNbrs;
-      boost::tie(nbrIdx, endNbrs) = mol->getAtomNeighbors(atom);
-      while (nbrIdx != endNbrs) {
-        Bond *nbrBond = mol->getBondBetweenAtoms(atom->getIdx(), *nbrIdx);
+      for (auto nbrIdx :
+           boost::make_iterator_range(mol->getAtomNeighbors(atom))) {
+        Bond *nbrBond = mol->getBondBetweenAtoms(atom->getIdx(), nbrIdx);
         if (std::find(ringClosures.begin(), ringClosures.end(),
                       static_cast<int>(nbrBond->getIdx())) ==
             ringClosures.end()) {
-          neighbors.push_back(std::make_pair(*nbrIdx, nbrBond->getIdx()));
+          neighbors.push_back(std::make_pair(nbrIdx, nbrBond->getIdx()));
         }
-        ++nbrIdx;
       }
       // sort the list of non-ring-closure bonds:
       neighbors.sort();
@@ -267,9 +261,8 @@ void AdjustAtomChiralityFlags(RWMol *mol) {
         } else {
           // we are not going to add the atom itself, but we will push on
           // ring closure bonds at this point (if required):
-          BOOST_FOREACH (int closure, ringClosures) {
-            bondOrdering.push_back(closure);
-          }
+          bondOrdering.insert(bondOrdering.end(), ringClosures.begin(),
+                              ringClosures.end());
         }
       }
 
@@ -348,6 +341,8 @@ void SetUnspecifiedBondTypes(RWMol *mol) {
 
 namespace {
 void swapBondDirIfNeeded(Bond *bond1, const Bond *bond2) {
+  PRECONDITION(bond1, "bad bond1");
+  PRECONDITION(bond2, "bad bond2");
   if (bond1->getBondDir() == Bond::NONE && bond2->getBondDir() != Bond::NONE) {
     bond1->setBondDir(bond2->getBondDir());
     if (bond1->getBeginAtom() != bond2->getBeginAtom()) {
@@ -377,16 +372,13 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
   //          there may well be partial bonds in the molecule which need
   //          to be tied in as well.  WOO HOO! IT'S A BIG MESS!
   PRECONDITION(mol, "no molecule");
-  RWMol::ATOM_BOOKMARK_MAP::iterator bookmarkIt;
-  bookmarkIt = mol->getAtomBookmarks()->begin();
-  while (bookmarkIt != mol->getAtomBookmarks()->end()) {
+  for (auto bookmark : *mol->getAtomBookmarks()) {
     // don't bother even considering bookmarks outside
-    // the range used for loops
-    if (bookmarkIt->first < 100000 && bookmarkIt->first >= 0) {
-      RWMol::ATOM_PTR_LIST::iterator atomIt, atomsEnd;
+    // the range used for rings
+    if (couldBeRingClosure(bookmark.first)) {
       RWMol::ATOM_PTR_LIST bookmarkedAtomsToRemove;
-      atomIt = bookmarkIt->second.begin();
-      atomsEnd = bookmarkIt->second.end();
+      auto atomIt = bookmark.second.begin();
+      auto atomsEnd = bookmark.second.end();
       while (atomIt != atomsEnd) {
         Atom *atom1 = *atomIt;
         ++atomIt;
@@ -398,7 +390,7 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
           auto fmt =
               boost::format{
                   "duplicated ring closure %1% bonds atom %2% to itself"} %
-              bookmarkIt->first % atom1->getIdx();
+              bookmark.first % atom1->getIdx();
           std::string msg = fmt.str();
           ReportParseError(msg.c_str(), true);
         } else if (mol->getBondBetweenAtoms(atom1->getIdx(),
@@ -407,7 +399,7 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
               boost::format{
                   "ring closure %1% duplicates bond between atom %2% and atom "
                   "%3%"} %
-              bookmarkIt->first % atom1->getIdx() % (*atomIt)->getIdx();
+              bookmark.first % atom1->getIdx() % (*atomIt)->getIdx();
           std::string msg = fmt.str();
           ReportParseError(msg.c_str(), true);
         } else if (atomIt != atomsEnd) {
@@ -419,7 +411,7 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
           // We're guaranteed two partial bonds, one for each time
           // the ring index was used.  We give the first specification
           // priority.
-          CHECK_INVARIANT(mol->hasBondBookmark(bookmarkIt->first),
+          CHECK_INVARIANT(mol->hasBondBookmark(bookmark.first),
                           "Missing bond bookmark");
 
           // now use the info from the partial bond:
@@ -427,7 +419,7 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
           // directionality (with a minor caveat documented below) and will
           // have its beginning atom set already:
           RWMol::BOND_PTR_LIST bonds =
-              mol->getAllBondsWithBookmark(bookmarkIt->first);
+              mol->getAllBondsWithBookmark(bookmark.first);
           auto bondIt = bonds.begin();
           CHECK_INVARIANT(bonds.size() >= 2, "Missing bond");
 
@@ -437,8 +429,8 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
           Bond *bond2 = *bondIt;
 
           // remove those bonds from the bookmarks:
-          mol->clearBondBookmark(bookmarkIt->first, bond1);
-          mol->clearBondBookmark(bookmarkIt->first, bond2);
+          mol->clearBondBookmark(bookmark.first, bond1);
+          mol->clearBondBookmark(bookmark.first, bond2);
 
           // Make sure the bonds have the correct starting atoms:
           CHECK_INVARIANT(bond1->getBeginAtomIdx() == atom1->getIdx(),
@@ -504,35 +496,6 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
             matchedBond->setIsAromatic(true);
           }
 
-          // std::cerr << "     " <<
-          // matchedBond->getBeginAtomIdx()<<"-"<<matchedBond->getEndAtomIdx()<<":
-          // "<<matchedBond->getBondType() << " a:
-          // "<<matchedBond->getIsAromatic()<<std::endl; std::cerr <<
-          // "<-------------" << std::endl;
-#if 0
-            //
-            //  In cases like this: Cl\C=C1.F/1, we need to
-            //  reverse the directionality on the added bond
-            //  (because the bond is added from C -> F, but the
-            //  directionality is for F->C.  We recognize these
-            //  cases because the matched bond direction isn't
-            //  the same as the added bond direction (i.e. atom1
-            //  isn't the begin atom for the matched bond).
-            //
-            //  This was Issue 175
-            if(atom1->getIdx()!=matchedBond->getBeginAtomIdx()){
-              switch(matchedBond->getBondDir()){
-              case Bond::ENDUPRIGHT:
-                matchedBond->setBondDir(Bond::ENDDOWNRIGHT);
-                break;
-              case Bond::ENDDOWNRIGHT:
-                matchedBond->setBondDir(Bond::ENDUPRIGHT);
-                break;
-              default:
-                break;
-              }
-            }
-#endif
           // add the bond:
           bondIdx = mol->addBond(matchedBond, true);
 
@@ -546,7 +509,7 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
             INT_VECT closures;
             atom1->getProp(common_properties::_RingClosures, closures);
             auto closurePos = std::find(closures.begin(), closures.end(),
-                                        -(bookmarkIt->first + 1));
+                                        -(bookmark.first + 1));
             CHECK_INVARIANT(closurePos != closures.end(),
                             "could not find bookmark in atom _RingClosures");
             *closurePos = bondIdx - 1;
@@ -554,7 +517,7 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
 
             atom2->getProp(common_properties::_RingClosures, closures);
             closurePos = std::find(closures.begin(), closures.end(),
-                                   -(bookmarkIt->first + 1));
+                                   -(bookmark.first + 1));
             CHECK_INVARIANT(closurePos != closures.end(),
                             "could not find bookmark in atom _RingClosures");
             *closurePos = bondIdx - 1;
@@ -564,37 +527,27 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
           bookmarkedAtomsToRemove.push_back(atom2);
         }
       }
-      //
-      // increment the bookmark before calling erase.  Otherwise we
-      // get a seg fault under MSVC++
-      //
-      int mark = bookmarkIt->first;
-      bookmarkIt++;
-      RWMol::ATOM_PTR_LIST::const_iterator aplci;
-      BOOST_FOREACH (Atom *atom, bookmarkedAtomsToRemove) {
+      int mark = bookmark.first;
+      for (const auto atom : bookmarkedAtomsToRemove) {
         mol->clearAtomBookmark(mark, atom);
       }
-    } else {
-      ++bookmarkIt;
     }
   }
 };
 
 void CleanupAfterParsing(RWMol *mol) {
   PRECONDITION(mol, "no molecule");
-  for (RWMol::AtomIterator atomIt = mol->beginAtoms();
-       atomIt != mol->endAtoms(); ++atomIt) {
-    if ((*atomIt)->hasProp(common_properties::_RingClosures)) {
-      (*atomIt)->clearProp(common_properties::_RingClosures);
+  for (auto atom : mol->atoms()) {
+    if (atom->hasProp(common_properties::_RingClosures)) {
+      atom->clearProp(common_properties::_RingClosures);
     }
-    if ((*atomIt)->hasProp(common_properties::_SmilesStart)) {
-      (*atomIt)->clearProp(common_properties::_SmilesStart);
+    if (atom->hasProp(common_properties::_SmilesStart)) {
+      atom->clearProp(common_properties::_SmilesStart);
     }
   }
-  for (RWMol::BondIterator bondIt = mol->beginBonds();
-       bondIt != mol->endBonds(); ++bondIt) {
-    if ((*bondIt)->hasProp(common_properties::_unspecifiedOrder)) {
-      (*bondIt)->clearProp(common_properties::_unspecifiedOrder);
+  for (auto bond : mol->bonds()) {
+    if (bond->hasProp(common_properties::_unspecifiedOrder)) {
+      bond->clearProp(common_properties::_unspecifiedOrder);
     }
   }
 }
