@@ -178,26 +178,20 @@ void AddFragToMol(RWMol *mol, RWMol *frag, Bond::BondType bondOrder,
   // We deal with this by copying in the bookmarks and partial bonds
   // that exist in the fragment
   //
-  RWMol::ATOM_BOOKMARK_MAP::iterator atIt;
-  for (atIt = frag->getAtomBookmarks()->begin();
-       atIt != frag->getAtomBookmarks()->end(); ++atIt) {
+  for (auto atIt : *frag->getAtomBookmarks()) {
     // don't bother even considering bookmarks outside
-    // the range used for loops
-    if (atIt->first < 100 && atIt->first > 0) {
-      RWMol::ATOM_PTR_LIST::iterator otherAt;
-      for (otherAt = atIt->second.begin(); otherAt != atIt->second.end();
-           otherAt++) {
-        Atom *at2 = *otherAt;
+    // the range used for cycles
+    if (atIt.first > 0) {
+      for (auto at2 : atIt.second) {
         int newIdx = at2->getIdx() + nOrigAtoms;
-        mol->setAtomBookmark(mol->getAtomWithIdx(newIdx), atIt->first);
-        // frag->clearAtomBookmark(atIt->first,at2);
-        while (frag->hasBondBookmark(atIt->first)) {
-          Bond *b = frag->getBondWithBookmark(atIt->first);
+        mol->setAtomBookmark(mol->getAtomWithIdx(newIdx), atIt.first);
+        while (frag->hasBondBookmark(atIt.first)) {
+          Bond *b = frag->getBondWithBookmark(atIt.first);
           int atomIdx1 = b->getBeginAtomIdx() + nOrigAtoms;
           b->setOwningMol(mol);
           b->setBeginAtomIdx(atomIdx1);
-          mol->setBondBookmark(b, atIt->first);
-          frag->clearBondBookmark(atIt->first, b);
+          mol->setBondBookmark(b, atIt.first);
+          frag->clearBondBookmark(atIt.first, b);
         }
       }
     }
