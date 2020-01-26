@@ -22,7 +22,7 @@
 const unsigned int maxFusedAromaticRingSize = 24;
 
 /****************************************************************
-Here are some molecule that have trouble us aromaticity wise
+Here are some molecules that have troubled us aromaticity wise
 
 1. We get 2 aromatic rings for this molecule, but daylight says none. Also
    if we replace [O+] with the N daylight says we have two aromatic rings
@@ -407,15 +407,23 @@ void applyHuckelToFused(
     }
 
     // check aromaticity on the current fused system
-    INT_VECT exclude;
-    for (i = 0; i < srings.size(); i++) {
-      if (std::find(curRs.begin(), curRs.end(), static_cast<int>(i)) ==
-          curRs.end()) {
-        exclude.push_back(i);
+    INT_VECT atsInRingSystem(mol.getNumAtoms(), 0);
+    for (auto ridx : curRs) {
+      auto sring = srings[ridx];
+      for (const auto rid : sring) {
+        atsInRingSystem[rid]++;
       }
     }
     INT_VECT unon;
-    Union(srings, unon, &exclude);
+    for (i = 0; i < atsInRingSystem.size(); ++i) {
+      // condition for inclusion of an atom in the aromaticity of a fused ring system
+      // is that it's present in one or two of the rings.
+      // this was #2895: the central atom in acepentalene was being included in
+      // the count of aromatic atoms
+      if (atsInRingSystem[i] == 1 || atsInRingSystem[i] == 2) {
+        unon.push_back(i);
+      }
+    }
 
     if (applyHuckel(mol, unon, edon, minRingSize)) {
       // mark the atoms and bonds in these rings to be aromatic
