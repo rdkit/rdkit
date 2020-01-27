@@ -618,12 +618,11 @@ std::string FragmentSmartsConstruct(
   // root of the string. This should not be a problem, since SMARTS do not get
   // canonicalized.
   if (molStack.empty()) {
-    for (unsigned i = 0; i < mol.getNumAtoms(); ++i) {
-      const Atom *atom = mol.getAtomWithIdx(i);
-      if (colors[i] == Canon::WHITE_NODE &&
+    for (const auto atom : mol.atoms()) {
+      if (colors[atom->getIdx()] == Canon::WHITE_NODE &&
           atom->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW &&
           atom->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW) {
-        atomIdx = i;
+        atomIdx = atom->getIdx();
         break;
       }
     }
@@ -634,24 +633,23 @@ std::string FragmentSmartsConstruct(
 
   // now clear the "SSSR" property
   mol.getRingInfo()->reset();
-  Canon::MolStack::const_iterator msCI;
-  for (msCI = molStack.begin(); msCI != molStack.end(); msCI++) {
-    switch (msCI->type) {
+  for (auto &msCI : molStack) {
+    switch (msCI.type) {
       case Canon::MOL_STACK_ATOM: {
-        auto *qatm = static_cast<QueryAtom *>(msCI->obj.atom);
+        auto *qatm = static_cast<QueryAtom *>(msCI.obj.atom);
         res << SmartsWrite::GetAtomSmarts(qatm);
         break;
       }
       case Canon::MOL_STACK_BOND: {
-        auto *qbnd = static_cast<QueryBond *>(msCI->obj.bond);
-        res << SmartsWrite::GetBondSmarts(qbnd, msCI->number);
+        auto *qbnd = static_cast<QueryBond *>(msCI.obj.bond);
+        res << SmartsWrite::GetBondSmarts(qbnd, msCI.number);
         break;
       }
       case Canon::MOL_STACK_RING: {
-        if (msCI->number < 10) {
-          res << msCI->number;
+        if (msCI.number < 10) {
+          res << msCI.number;
         } else {
-          res << "%" << msCI->number;
+          res << "%" << msCI.number;
         }
         break;
       }
@@ -708,7 +706,7 @@ std::string getNonQueryAtomSmarts(const QueryAtom *qatom) {
     }
   }
 
-  int hs = qatom->getNumExplicitHs();
+  auto hs = qatom->getNumExplicitHs();
   // FIX: probably should be smarter about Hs:
   if (hs) {
     res << "H";
@@ -716,7 +714,7 @@ std::string getNonQueryAtomSmarts(const QueryAtom *qatom) {
       res << hs;
     }
   }
-  int chg = qatom->getFormalCharge();
+  auto chg = qatom->getFormalCharge();
   if (chg) {
     if (chg == -1) {
       res << "-";
@@ -818,12 +816,12 @@ std::string GetAtomSmarts(const QueryAtom *qatom) {
     // BOOST_LOG(rdInfoLog)<<"\tno query:" <<res;
     return res;
   }
-  QueryAtom::QUERYATOM_QUERY *query = qatom->getQuery();
+  const auto query = qatom->getQuery();
   PRECONDITION(query, "atom has no query");
   // describeQuery(query);
   unsigned int queryFeatures = 0;
   std::string descrip = qatom->getQuery()->getDescription();
-  if (descrip == "") {
+  if (descrip.empty()) {
     // we have simple atom - just generate the smiles and return
     res = SmilesWrite::GetAtomSmiles(qatom);
     if (res[0] == '[') {
@@ -880,11 +878,11 @@ std::string GetBondSmarts(const QueryBond *bond, int atomToLeftIdx) {
     BOOST_LOG(rdInfoLog) << "\tbasic:" << res << std::endl;
     return res;
   }
-  const QueryBond::QUERYBOND_QUERY *query = bond->getQuery();
+  const auto query = bond->getQuery();
   PRECONDITION(query, "bond has no query");
 
   unsigned int queryFeatures = 0;
-  std::string descrip = query->getDescription();
+  auto descrip = query->getDescription();
   if ((descrip == "BondAnd") || (descrip == "BondOr")) {
     // composite query
     res = _recurseBondSmarts(bond, query, query->getNegation(), atomToLeftIdx,
@@ -920,7 +918,7 @@ std::string MolFragmentToSmarts(const ROMol &mol,
   PRECONDITION(!atomsToUse.empty(), "no atoms provided");
   PRECONDITION(!bondsToUse || !bondsToUse->empty(), "no bonds provided");
 
-  const unsigned int nAtoms = mol.getNumAtoms();
+  auto nAtoms = mol.getNumAtoms();
   if (!nAtoms) {
     return "";
   }
@@ -928,7 +926,7 @@ std::string MolFragmentToSmarts(const ROMol &mol,
   std::unique_ptr<boost::dynamic_bitset<>> bondsInPlay(nullptr);
   if (bondsToUse != nullptr) {
     bondsInPlay.reset(new boost::dynamic_bitset<>(mol.getNumBonds(), 0));
-    for (int bidx : *bondsToUse) {
+    for (auto bidx : *bondsToUse) {
       bondsInPlay->set(bidx);
     }
   }
