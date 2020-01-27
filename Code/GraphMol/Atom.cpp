@@ -274,7 +274,7 @@ int Atom::calcExplicitValence(bool strict) {
   // correctly.
   accum += 0.1;
 
-  res = static_cast<int>(round(accum));
+  res = static_cast<int>(std::round(accum));
 
   if (strict) {
     int effectiveValence;
