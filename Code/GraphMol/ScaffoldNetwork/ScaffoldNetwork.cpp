@@ -111,7 +111,9 @@ ROMol *flattenMol(const ROMol &mol, const ScaffoldNetworkParams &params) {
     res = new RWMol(mol);
   }
   for (auto atom : res->atoms()) {
-    if (params.flattenIsotopes) atom->setIsotope(0);
+    if (params.flattenIsotopes){ 
+      atom->setIsotope(0);
+    }
     if (params.flattenChirality) {
       if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
         atom->setChiralTag(Atom::CHI_UNSPECIFIED);
@@ -186,11 +188,15 @@ size_t addEntryIfMissing(T &vect, const V &e,
   if (viter == vect.end()) {
     vect.push_back(e);
     res = vect.size() - 1;
-    if (counts) counts->push_back(0);
+    if (counts){ 
+      counts->push_back(0);
+    }
   } else {
     res = viter - vect.begin();
   }
-  if (counts) (*counts)[res] += 1;
+  if (counts) {
+    (*counts)[res] += 1;
+  }
 
   return res;
 }
