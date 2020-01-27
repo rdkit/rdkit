@@ -13,8 +13,8 @@
 
 */
 #include <RDGeneral/export.h>
-#ifndef __RD_DICT_H__
-#define __RD_DICT_H__
+#ifndef RD_DICT_H_012020
+#define RD_DICT_H_012020
 
 #include <map>
 #include <string>
@@ -137,9 +137,8 @@ class RDKIT_RDGENERAL_EXPORT Dict {
   */
   STR_VECT keys() const {
     STR_VECT res;
-    DataType::const_iterator item;
-    for (item = _data.begin(); item != _data.end(); item++) {
-      res.push_back(item->key);
+    for (const auto &item : _data) {
+      res.push_back(item.key);
     }
     return res;
   }
@@ -161,6 +160,7 @@ class RDKIT_RDGENERAL_EXPORT Dict {
   void getVal(const std::string &what, T &res) const {
     res = getVal<T>(what);
   };
+
   //! \overload
   template <typename T>
   T getVal(const std::string &what) const {
@@ -170,10 +170,18 @@ class RDKIT_RDGENERAL_EXPORT Dict {
       }
     }
     throw KeyErrorException(what);
-  }
+  };
 
   //! \overload
-  void getVal(const std::string &what, std::string &res) const;
+  void getVal(const std::string &what, std::string &res) const {
+    for (const auto &i : _data) {
+      if (i.key == what) {
+        rdvalue_tostring(i.val, res);
+        return;
+      }
+    }
+    throw KeyErrorException(what);
+  };
 
   //----------------------------------------------------------
   //! \brief Potentially gets the value associated with a particular key
@@ -189,7 +197,6 @@ class RDKIT_RDGENERAL_EXPORT Dict {
       - If the dictionary does not contain the key \c what,
         a KeyErrorException will be thrown.
   */
-
   template <typename T>
   bool getValIfPresent(const std::string &what, T &res) const {
     for (const auto &data : _data) {
@@ -202,7 +209,15 @@ class RDKIT_RDGENERAL_EXPORT Dict {
   };
 
   //! \overload
-  bool getValIfPresent(const std::string &what, std::string &res) const;
+  bool getValIfPresent(const std::string &what, std::string &res) const {
+    for (const auto &i : _data) {
+      if (i.key == what) {
+        rdvalue_tostring(i.val, res);
+        return true;
+      }
+    }
+    return false;
+  }
 
   //----------------------------------------------------------
   //! \brief Sets the value associated with a key
@@ -294,32 +309,6 @@ class RDKIT_RDGENERAL_EXPORT Dict {
     _data.swap(data);
   };
 
-  //----------------------------------------------------------
-  //! Converts a \c RDAny to type \c T
-  /*!
-     \param arg a \c RDAny reference
-
-     \returns the converted object of type \c T
-  */
-  /*
-  template <typename T>
-      T fromany(const RDAny &arg) const {
-    return from_rdany<T>(arg);
-  }
-  */
-  //----------------------------------------------------------
-  //! Converts an instance of type \c T to \c RDAny
-  /*!
-     \param arg the object to be converted
-
-     \returns a \c RDAny instance
-  */
-  /*
-  template <typename T>
-      RDAny toany(T arg) const {
-    return RDAny(arg);
-  };
-  */
  private:
   DataType _data;       //!< the actual dictionary
   bool _hasNonPodData;  // if true, need a deep copy
@@ -327,8 +316,11 @@ class RDKIT_RDGENERAL_EXPORT Dict {
 };
 
 template <>
-RDKIT_RDGENERAL_EXPORT std::string Dict::getVal<std::string>(
-    const std::string &what) const;
+inline std::string Dict::getVal<std::string>(const std::string &what) const {
+  std::string res;
+  getVal(what, res);
+  return res;
+};
 
 }  // namespace RDKit
 #endif
