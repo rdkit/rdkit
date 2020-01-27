@@ -29,10 +29,7 @@ namespace {
 class EditableMol : boost::noncopyable {
  public:
   EditableMol(const ROMol &m) { dp_mol = new RWMol(m); };
-  ~EditableMol() throw() {
-    PRECONDITION(dp_mol, "no molecule");
-    delete dp_mol;
-  };
+  ~EditableMol() noexcept { delete dp_mol; };
 
   void RemoveAtom(unsigned int idx) {
     PRECONDITION(dp_mol, "no molecule");

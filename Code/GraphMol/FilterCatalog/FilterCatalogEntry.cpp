@@ -81,7 +81,9 @@ FilterCatalogEntry *MakeFilterCatalogEntry(const FilterData_t &data,
   const int debugParse = 0;
   const bool mergeHs = true;
   ROMOL_SPTR pattern(SmartsToMol(data.smarts, debugParse, mergeHs));
-  if (!pattern.get()) return nullptr;
+  if (!pattern.get()) {
+    return nullptr;
+  }
 
   // The filter has the concept of the maximum number of times the pattern is
   // allowed

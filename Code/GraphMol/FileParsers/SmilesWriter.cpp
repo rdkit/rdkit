@@ -86,7 +86,9 @@ void SmilesWriter::dumpHeader() const {
   CHECK_INVARIANT(dp_ostream, "no output stream");
   if (df_includeHeader) {
     (*dp_ostream) << "SMILES" << d_delim;
-    if (d_nameHeader != "") (*dp_ostream) << d_nameHeader << d_delim;
+    if (d_nameHeader != "") {
+      (*dp_ostream) << d_nameHeader << d_delim;
+    }
 
     if (d_props.size() > 0) {
       auto pi = d_props.begin();
@@ -103,7 +105,9 @@ void SmilesWriter::dumpHeader() const {
 
 SmilesWriter::~SmilesWriter() {
   // close the writer if it's still open:
-  if (dp_ostream != nullptr) close();
+  if (dp_ostream != nullptr) {
+    close();
+  }
 }
 
 void SmilesWriter::write(const ROMol &mol, int confId) {

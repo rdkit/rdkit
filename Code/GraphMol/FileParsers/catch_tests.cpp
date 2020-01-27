@@ -733,7 +733,7 @@ M  END
     bool sanitize = false;
     std::unique_ptr<ROMol> mol(MolBlockToMol(molblock, sanitize));
     REQUIRE(mol);
-    QueryAtom *at = static_cast<QueryAtom *>(mol->getAtomWithIdx(1));
+    auto *at = static_cast<QueryAtom *>(mol->getAtomWithIdx(1));
     REQUIRE(at->hasQuery());
     CHECK(at->getQuery()->getDescription() == "AtomNull");
   }

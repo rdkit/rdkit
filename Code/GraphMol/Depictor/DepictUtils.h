@@ -83,7 +83,7 @@ RDKIT_DEPICTOR_EXPORT RDGeom::Point2D computeBisectPoint(
     const RDGeom::Point2D &rcr, double ang, const RDGeom::Point2D &nb1,
     const RDGeom::Point2D &nb2);
 
-//! Reflect a set of point through a the line joining two point
+//! Reflect a set of point through the line joining two point
 /*!
   ARGUMENTS:
   \param coordMap       a map of <int, point2D> going from atom id to current
@@ -149,7 +149,7 @@ RDKIT_DEPICTOR_EXPORT RDKit::INT_VECT setNbrOrder(unsigned int aid,
   atoms
   in common with the rings that are already embedded.
 
-  \param doneRings    a vertor of ring IDs that have been embedded already
+  \param doneRings    a vector of ring IDs that have been embedded already
   \param fusedRings   list of all the rings in the fused system
   \param nextId       this is where the ID for the next ring is written
 
@@ -341,7 +341,7 @@ RDKIT_DEPICTOR_EXPORT void getNbrAtomAndBondIds(unsigned int aid,
          b4
          |
          E
-   For example in teh above situation on the pairs (b1, b3) and (b1, b4) will be
+   For example in the above situation on the pairs (b1, b3) and (b1, b4) will be
   returned
    All other permutations can be achieved via a rotatable bond flip.
 

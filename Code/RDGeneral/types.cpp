@@ -156,7 +156,7 @@ void Union(const VECT_INT_VECT &rings, INT_VECT &res, const INT_VECT *exclude) {
   res.resize(0);
   INT_VECT ring;
   unsigned int id;
-  unsigned int nrings = static_cast<unsigned int>(rings.size());
+  auto nrings = static_cast<unsigned int>(rings.size());
   INT_VECT_CI ri;
 
   for (id = 0; id < nrings; id++) {

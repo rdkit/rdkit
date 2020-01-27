@@ -66,7 +66,7 @@ class TestCase(unittest.TestCase):
     def test_SDWriter(self):
         # tests writes using a file name
         supp = Chem.SDMolSupplier(self.fName)
-        _, outName = tempfile.mkstemp('.sdf')
+        outName = tempfile.NamedTemporaryFile(suffix='.sdf', delete=False).name
         writer = Chem.SDWriter(outName)
         m1 = next(supp)
         writer.SetProps(m1.GetPropNames())

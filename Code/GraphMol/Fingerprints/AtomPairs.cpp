@@ -37,7 +37,7 @@ void setAtomPairBit(std::uint32_t i, std::uint32_t j,
                     const std::vector<std::uint32_t> &atomCodes,
                     const double *dm, T *bv, unsigned int minLength,
                     unsigned int maxLength, bool includeChirality) {
-  unsigned int dist = static_cast<unsigned int>(floor(dm[i * nAtoms + j]));
+  auto dist = static_cast<unsigned int>(floor(dm[i * nAtoms + j]));
   if (dist >= minLength && dist <= maxLength) {
     std::uint32_t bitId =
         getAtomPairCode(atomCodes[i], atomCodes[j], dist, includeChirality);
@@ -185,8 +185,7 @@ SparseIntVect<std::int32_t> *getHashedAtomPairFingerprint(
                                      j) != ignoreAtoms->end()) {
           continue;
         }
-        unsigned int dist =
-            static_cast<unsigned int>(floor(dm[i * nAtoms + j]));
+        auto dist = static_cast<unsigned int>(floor(dm[i * nAtoms + j]));
         if (dist >= minLength && dist <= maxLength) {
           std::uint32_t bit = 0;
           gboost::hash_combine(bit, std::min(atomCodes[i], atomCodes[j]));
@@ -202,8 +201,7 @@ SparseIntVect<std::int32_t> *getHashedAtomPairFingerprint(
                                        j) != ignoreAtoms->end()) {
             continue;
           }
-          unsigned int dist =
-              static_cast<unsigned int>(floor(dm[i * nAtoms + j]));
+          auto dist = static_cast<unsigned int>(floor(dm[i * nAtoms + j]));
           if (dist >= minLength && dist <= maxLength) {
             std::uint32_t bit = 0;
             gboost::hash_combine(bit, std::min(atomCodes[i], atomCodes[j]));
@@ -238,8 +236,9 @@ ExplicitBitVect *getHashedAtomPairFingerprintAsBitVect(
     BOOST_FOREACH (SparseIntVect<boost::int64_t>::StorageType::value_type val,
                    sres->getNonzeroElements()) {
       for (unsigned int i = 0; i < nBitsPerEntry; ++i) {
-        if (val.second > static_cast<int>(i))
+        if (val.second > static_cast<int>(i)) {
           res->setBit(val.first * nBitsPerEntry + i);
+        }
       }
     }
   } else {
@@ -476,8 +475,9 @@ ExplicitBitVect *getHashedTopologicalTorsionFingerprintAsBitVect(
     BOOST_FOREACH (SparseIntVect<boost::int64_t>::StorageType::value_type val,
                    sres->getNonzeroElements()) {
       for (unsigned int i = 0; i < nBitsPerEntry; ++i) {
-        if (val.second > static_cast<int>(i))
+        if (val.second > static_cast<int>(i)) {
           res->setBit(val.first * nBitsPerEntry + i);
+        }
       }
     }
   } else {

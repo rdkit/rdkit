@@ -43,7 +43,9 @@ void getBondHighlightsForAtoms(const ROMol &mol,
   for (auto ai = highlight_atoms.begin(); ai != highlight_atoms.end(); ++ai) {
     for (auto aj = ai + 1; aj != highlight_atoms.end(); ++aj) {
       const Bond *bnd = mol.getBondBetweenAtoms(*ai, *aj);
-      if (bnd) highlight_bonds.push_back(bnd->getIdx());
+      if (bnd) {
+        highlight_bonds.push_back(bnd->getIdx());
+      }
     }
   }
 }
@@ -168,8 +170,9 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
   activeMolIdx_++;
 
   int origWidth = curr_width_;
-  if (drawOptions().bondLineWidth >= 0)
+  if (drawOptions().bondLineWidth >= 0) {
     curr_width_ = drawOptions().bondLineWidth;
+  }
 
   if (!activeMolIdx_) {  // on the first pass we need to do some work
     if (drawOptions().clearBackground) {
@@ -228,7 +231,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
     doContinuousHighlighting(mol, highlight_atoms, highlight_bonds,
                              highlight_atom_map, highlight_bond_map,
                              highlight_radii);
-    // at this point we shouldn't be doing any more higlighting, so blow out
+    // at this point we shouldn't be doing any more highlighting, so blow out
     // those variables:
     highlight_bonds = nullptr;
     highlight_atoms = nullptr;
@@ -414,7 +417,9 @@ void get2DCoordsForReaction(ChemicalReaction &rxn, const MolDrawOptions &opts,
     }
     ROMOL_SPTR reactant = rxn.getReactants()[midx];
     int cid = -1;
-    if (confIds) cid = (*confIds)[midx];
+    if (confIds) {
+      cid = (*confIds)[midx];
+    }
     get2DCoordsMol(*(RWMol *)reactant.get(), offset, spacing, maxY, minY, cid,
                    false, 1.0);
   }
@@ -435,9 +440,10 @@ void get2DCoordsForReaction(ChemicalReaction &rxn, const MolDrawOptions &opts,
     }
     ROMOL_SPTR product = rxn.getProducts()[midx];
     int cid = -1;
-    if (confIds)
+    if (confIds) {
       cid = (*confIds)[rxn.getNumReactantTemplates() +
                        rxn.getNumAgentTemplates() + midx];
+    }
     get2DCoordsMol(*(RWMol *)product.get(), offset, spacing, maxY, minY, cid,
                    false, 1.0);
   }
@@ -447,7 +453,9 @@ void get2DCoordsForReaction(ChemicalReaction &rxn, const MolDrawOptions &opts,
   for (unsigned int midx = 0; midx < rxn.getNumAgentTemplates(); ++midx) {
     ROMOL_SPTR agent = rxn.getAgents()[midx];
     int cid = -1;
-    if (confIds) cid = (*confIds)[rxn.getNumReactantTemplates() + midx];
+    if (confIds) {
+      cid = (*confIds)[rxn.getNumReactantTemplates() + midx];
+    }
     get2DCoordsMol(*(RWMol *)agent.get(), offset, spacing, maxY, minY, cid,
                    true, 0.45);
   }
@@ -462,9 +470,10 @@ void get2DCoordsForReaction(ChemicalReaction &rxn, const MolDrawOptions &opts,
   for (unsigned int midx = 0; midx < rxn.getNumProductTemplates(); ++midx) {
     ROMOL_SPTR product = rxn.getProducts()[midx];
     int cid = -1;
-    if (confIds)
+    if (confIds) {
       cid = (*confIds)[rxn.getNumReactantTemplates() +
                        rxn.getNumAgentTemplates() + midx];
+    }
     Conformer &conf = product->getConformer(cid);
     for (unsigned int aidx = 0; aidx < product->getNumAtoms(); ++aidx) {
       conf.getAtomPos(aidx).x += offset;
@@ -503,7 +512,7 @@ void MolDraw2D::drawReaction(
       (!nrxn.getNumReactantTemplates() || !nrxn.getNumProductTemplates())) {
     // drawMolecule() will figure out the scaling so that the molecule
     // fits the drawing pane. In order to ensure that we have space for the
-    // arrow, we need to figoure out the scaling on our own.
+    // arrow, we need to figure out the scaling on our own.
     RWMol tmol2;
     tmol2.addAtom(new Atom(0), true, true);
     tmol2.addAtom(new Atom(0), true, true);
@@ -655,7 +664,9 @@ void MolDraw2D::drawMolecules(
   PRECONDITION(!confIds || confIds->size() == mols.size(), "bad size");
   PRECONDITION(panel_width_ != 0, "panel width cannot be zero");
   PRECONDITION(panel_height_ != 0, "panel height cannot be zero");
-  if (!mols.size()) return;
+  if (!mols.size()) {
+    return;
+  }
 
   std::vector<RWMol> tmols;
   tmols.reserve(mols.size());
@@ -668,8 +679,9 @@ void MolDraw2D::drawMolecules(
       continue;
     }
     tmols.push_back(*(mols[i]));
-    if (drawOptions().prepareMolsBeforeDrawing)
+    if (drawOptions().prepareMolsBeforeDrawing) {
       MolDraw2DUtils::prepareMolForDrawing(tmols[i]);
+    }
     Conformer &conf = tmols[i].getConformer(confIds ? (*confIds)[i] : -1);
     RDGeom::Point3D centroid = MolTransforms::computeCentroid(conf, false);
     for (unsigned int j = 0; j < conf.getNumAtoms(); ++j) {
@@ -685,14 +697,20 @@ void MolDraw2D::drawMolecules(
   int nCols = width() / panelWidth();
   int nRows = height() / panelHeight();
   for (unsigned int i = 0; i < mols.size(); ++i) {
-    if (!mols[i]) continue;
+    if (!mols[i]) {
+      continue;
+    }
 
     int row = 0;
     // note that this also works when no panel size is specified since
     // the panel dimensions defaults to -1
-    if (nRows > 1) row = i / nCols;
+    if (nRows > 1) {
+      row = i / nCols;
+    }
     int col = 0;
-    if (nCols > 1) col = i % nCols;
+    if (nCols > 1) {
+      col = i % nCols;
+    }
     setOffset(col * panelWidth(), row * panelHeight());
 
     vector<int> *lhighlight_bonds = nullptr;
@@ -724,15 +742,21 @@ void MolDraw2D::drawMolecules(
 };
 
 void MolDraw2D::highlightCloseContacts() {
-  if (drawOptions().flagCloseContactsDist < 0) return;
+  if (drawOptions().flagCloseContactsDist < 0) {
+    return;
+  }
   int tol =
       drawOptions().flagCloseContactsDist * drawOptions().flagCloseContactsDist;
   boost::dynamic_bitset<> flagged(at_cds_[activeMolIdx_].size());
   for (unsigned int i = 0; i < at_cds_[activeMolIdx_].size(); ++i) {
-    if (flagged[i]) continue;
+    if (flagged[i]) {
+      continue;
+    }
     Point2D ci = getDrawCoords(at_cds_[activeMolIdx_][i]);
     for (unsigned int j = i + 1; j < at_cds_[activeMolIdx_].size(); ++j) {
-      if (flagged[j]) continue;
+      if (flagged[j]) {
+        continue;
+      }
       Point2D cj = getDrawCoords(at_cds_[activeMolIdx_][j]);
       double d = (cj - ci).lengthSq();
       if (d <= tol) {
@@ -787,9 +811,8 @@ Point2D MolDraw2D::getAtomCoords(const pair<int, int> &screen_cds) const {
 }
 
 Point2D MolDraw2D::getAtomCoords(const pair<double, double> &screen_cds) const {
-  double x = double(screen_cds.first / scale_ + x_min_ - x_trans_);
-  double y =
-      double(y_min_ - y_trans_ - (screen_cds.second - height()) / scale_);
+  auto x = double(screen_cds.first / scale_ + x_min_ - x_trans_);
+  auto y = double(y_min_ - y_trans_ - (screen_cds.second - height()) / scale_);
   return Point2D(x, y);
 }
 
@@ -922,8 +945,12 @@ void MolDraw2D::calculateScale(int width, int height,
     double old_scale = scale_;
     x_range_ = x_max - x_min_;
     y_range_ = y_max - y_min_;
-    if (x_range_ < 1e-4) x_range_ = 1.;
-    if (y_range_ < 1e-4) y_range_ = 1.;
+    if (x_range_ < 1e-4) {
+      x_range_ = 1.;
+    }
+    if (y_range_ < 1e-4) {
+      y_range_ = 1.;
+    }
     scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
     if (fabs(scale_ - old_scale) < 0.1) {
       break;
@@ -1190,7 +1217,9 @@ void MolDraw2D::drawBond(const ROMol &mol, const Bond *bond, int at1_idx,
   // mol files from, for example, Marvin use a bond length of 1 for just about
   // everything. When this is the case, the default multipleBondOffset is just
   // too much, so scale it back.
-  if ((at1_cds - at2_cds).lengthSq() < 1.4) double_bond_offset *= 0.6;
+  if ((at1_cds - at2_cds).lengthSq() < 1.4) {
+    double_bond_offset *= 0.6;
+  }
 
   adjustBondEndForLabel(at1_idx, at2_cds, at1_cds);
   adjustBondEndForLabel(at2_idx, at1_cds, at2_cds);
@@ -1329,9 +1358,13 @@ void MolDraw2D::drawBond(const ROMol &mol, const Bond *bond, int at1_idx,
         Point2D bv = at1_cds - at2_cds;
         Point2D p1 = at1_cds - bv * multipleBondTruncation + perp * dbo;
         Point2D p2 = at2_cds + bv * multipleBondTruncation + perp * dbo;
-        if (bt == Bond::AROMATIC) setDash(dashes);
+        if (bt == Bond::AROMATIC) {
+          setDash(dashes);
+        }
         drawLine(p1, p2, col1, col2);
-        if (bt == Bond::AROMATIC) setDash(noDash);
+        if (bt == Bond::AROMATIC) {
+          setDash(noDash);
+        }
       }
     }
   }
@@ -1350,7 +1383,9 @@ void MolDraw2D::drawWedgedBond(const Point2D &cds1, const Point2D &cds2,
   // (part of github #985)
   // the constants are empirical to make sure that the wedge is visible, but
   // not absurdly large.
-  if (scale_ > 40) disp *= .6;
+  if (scale_ > 40) {
+    disp *= .6;
+  }
   Point2D end1 = cds2 + disp;
   Point2D end2 = cds2 - disp;
 
@@ -1359,7 +1394,9 @@ void MolDraw2D::drawWedgedBond(const Point2D &cds1, const Point2D &cds2,
     unsigned int nDashes = 10;
     // empirical cutoff to make sure we don't have too many dashes in the
     // wedge:
-    if ((cds1 - cds2).lengthSq() < 1.0) nDashes /= 2;
+    if ((cds1 - cds2).lengthSq() < 1.0) {
+      nDashes /= 2;
+    }
 
     int orig_lw = lineWidth();
     int tgt_lw = 1;  // use the minimum line width
@@ -1622,18 +1659,6 @@ pair<string, MolDraw2D::OrientType> MolDraw2D::getAtomSymbolAndOrientation(
       if (num_h > 1) {
         // put the number as a subscript
         h += string("<sub>") + std::to_string(num_h) + string("</sub>");
-      }
-      // last check: degree zero atoms from the last three periods should have
-      // the Hs first
-      if (!atom.getDegree()) {
-        static int HsListedFirstSrc[] = {8, 9, 16, 17, 34, 35, 52, 53, 84, 85};
-        std::vector<int> HsListedFirst(
-            HsListedFirstSrc,
-            HsListedFirstSrc + sizeof(HsListedFirstSrc) / sizeof(int));
-        if (std::find(HsListedFirst.begin(), HsListedFirst.end(),
-                      atom.getAtomicNum()) != HsListedFirst.end()) {
-          orient = MolDraw2D::W;
-        }
       }
       // last check: degree zero atoms from the last three periods should have
       // the Hs first

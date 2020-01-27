@@ -94,7 +94,9 @@ std::vector<std::vector<std::string>> EnumerateLibraryBase::nextSmiles() {
   for (size_t i = 0; i < mols.size(); ++i) {
     result[i].resize(mols[i].size());
     for (size_t j = 0; j < mols[i].size(); ++j) {
-      if (mols[i][j].get()) result[i][j] = MolToSmiles(*mols[i][j], doisomeric);
+      if (mols[i][j].get()) {
+        result[i][j] = MolToSmiles(*mols[i][j], doisomeric);
+      }
     }
   }
   return result;
@@ -146,7 +148,7 @@ BBS removeNonmatchingReagents(const ChemicalReaction &rxn, BBS bbs,
           int saneProducts = 0;
           for (auto &product_idx : partialProduct) {
             try {
-              RWMol *m = dynamic_cast<RWMol *>(product_idx.get());
+              auto *m = dynamic_cast<RWMol *>(product_idx.get());
               MolOps::sanitizeMol(*m);
               saneProducts++;
             } catch (...) {
@@ -161,10 +163,11 @@ BBS removeNonmatchingReagents(const ChemicalReaction &rxn, BBS bbs,
         }
       }
 
-      if (removeReagent)
+      if (removeReagent) {
         removedCount++;
-      else
+      } else {
         result[reactant_idx].push_back(mol);
+      }
     }
 
     if (removedCount) {
@@ -235,10 +238,11 @@ boost::uint64_t computeNumProducts(const RGROUPS &sizes) {
     myint *= size;
   }
 
-  if (myint < std::numeric_limits<boost::uint64_t>::max())
+  if (myint < std::numeric_limits<boost::uint64_t>::max()) {
     return myint.convert_to<boost::uint64_t>();
-  else
+  } else {
     return EnumerationStrategyBase::EnumerationOverflow;
+  }
 #else
   boost::uint64_t myint = 1;
 

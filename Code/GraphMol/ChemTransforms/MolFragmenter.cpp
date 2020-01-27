@@ -52,10 +52,12 @@ void constructFragmenterAtomTypes(
   PRECONDITION(inStream, "no stream");
   defs.clear();
   unsigned int line = 0;
-  while (!inStream->eof()) {
+  while (!inStream->eof() && !inStream->fail()) {
     ++line;
     std::string tempStr = getLine(inStream);
-    if (tempStr == "" || tempStr.find(comment) == 0) continue;
+    if (tempStr == "" || tempStr.find(comment) == 0) {
+      continue;
+    }
     std::vector<std::string> tokens;
     boost::split(tokens, tempStr, boost::is_any_of(" \t"),
                  boost::token_compress_on);
@@ -64,11 +66,11 @@ void constructFragmenterAtomTypes(
           << "line " << line << " is too short" << std::endl;
       continue;
     }
-    unsigned int idx = boost::lexical_cast<unsigned int>(tokens[0]);
+    auto idx = boost::lexical_cast<unsigned int>(tokens[0]);
     if (defs.find(idx) != defs.end()) {
       BOOST_LOG(rdWarningLog)
           << "definition #" << idx
-          << " encountered more than once. Using the first occurance."
+          << " encountered more than once. Using the first occurrence."
           << std::endl;
       continue;
     }
@@ -141,10 +143,12 @@ void constructFragmenterBondTypes(
   defs.resize(0);
 
   unsigned int line = 0;
-  while (!inStream->eof()) {
+  while (!inStream->eof() && !inStream->fail()) {
     ++line;
     std::string tempStr = getLine(inStream);
-    if (tempStr == "" || tempStr.find(comment) == 0) continue;
+    if (tempStr == "" || tempStr.find(comment) == 0) {
+      continue;
+    }
     std::vector<std::string> tokens;
     boost::split(tokens, tempStr, boost::is_any_of(" \t"),
                  boost::token_compress_on);
@@ -153,13 +157,13 @@ void constructFragmenterBondTypes(
           << "line " << line << " is too short" << std::endl;
       continue;
     }
-    unsigned int idx1 = boost::lexical_cast<unsigned int>(tokens[0]);
+    auto idx1 = boost::lexical_cast<unsigned int>(tokens[0]);
     if (atomTypes.find(idx1) == atomTypes.end()) {
       BOOST_LOG(rdWarningLog)
           << "atom type #" << idx1 << " not recognized." << std::endl;
       continue;
     }
-    unsigned int idx2 = boost::lexical_cast<unsigned int>(tokens[1]);
+    auto idx2 = boost::lexical_cast<unsigned int>(tokens[1]);
     if (atomTypes.find(idx2) == atomTypes.end()) {
       BOOST_LOG(rdWarningLog)
           << "atom type #" << idx2 << " not recognized." << std::endl;
@@ -311,9 +315,12 @@ void fragmentOnSomeBonds(
                "bad dummyLabel vector");
   PRECONDITION((!bondTypes || bondTypes->size() == bondIndices.size()),
                "bad bondType vector");
-  if (bondIndices.size() > 63)
+  if (bondIndices.size() > 63) {
     throw ValueErrorException("currently can only fragment on up to 63 bonds");
-  if (!maxToCut || !mol.getNumAtoms() || !bondIndices.size()) return;
+  }
+  if (!maxToCut || !mol.getNumAtoms() || !bondIndices.size()) {
+    return;
+  }
 
   boost::uint64_t state = (0x1L << maxToCut) - 1;
   boost::uint64_t stop = 0x1L << bondIndices.size();
@@ -332,8 +339,12 @@ void fragmentOnSomeBonds(
     for (unsigned int i = 0; i < bondIndices.size() && nSeen < maxToCut; ++i) {
       if (state & (0x1L << i)) {
         fragmentHere[nSeen] = bondIndices[i];
-        if (dummyLabelsHere) (*dummyLabelsHere)[nSeen] = (*dummyLabels)[i];
-        if (bondTypesHere) (*bondTypesHere)[nSeen] = (*bondTypes)[i];
+        if (dummyLabelsHere) {
+          (*dummyLabelsHere)[nSeen] = (*dummyLabels)[i];
+        }
+        if (bondTypesHere) {
+          (*bondTypesHere)[nSeen] = (*bondTypes)[i];
+        }
         ++nSeen;
       }
     }
@@ -391,7 +402,9 @@ void checkChiralityPostMove(const ROMol &mol, const Atom *oAt, Atom *nAt,
   // std::cerr<<"ccpm: "<<oAt->getIdx()<<"->"<<nAt->getIdx()<<" bond:
   // "<<bond->getIdx()<<" swaps: "<<nSwaps<<std::endl;
   nAt->setChiralTag(oAt->getChiralTag());
-  if (nSwaps % 2) nAt->invertChirality();
+  if (nSwaps % 2) {
+    nAt->invertChirality();
+  }
 }
 }  // namespace
 
@@ -411,7 +424,9 @@ ROMol *fragmentOnBonds(
     BOOST_FOREACH (unsigned int &nCuts, *nCutsPerAtom) { nCuts = 0; }
   }
   auto *res = new RWMol(mol);
-  if (!mol.getNumAtoms()) return res;
+  if (!mol.getNumAtoms()) {
+    return res;
+  }
 
   std::vector<Bond *> bondsToRemove;
   bondsToRemove.reserve(bondIndices.size());
@@ -442,13 +457,16 @@ ROMol *fragmentOnBonds(
         at2->setIsotope(eidx);
       }
       unsigned int idx1 = res->addAtom(at1, false, true);
-      if (bondTypes) bT = (*bondTypes)[i];
+      if (bondTypes) {
+        bT = (*bondTypes)[i];
+      }
       bondidx = res->addBond(at1->getIdx(), eidx, bT) - 1;
       // the dummy replaces the original start atom, so the
       // direction will be ok as long as it's one of the
       // states associated with double bond stereo
-      if (bD == Bond::ENDDOWNRIGHT || bD == Bond::ENDUPRIGHT)
+      if (bD == Bond::ENDDOWNRIGHT || bD == Bond::ENDUPRIGHT) {
         res->getBondWithIdx(bondidx)->setBondDir(bD);
+      }
 
       unsigned int idx2 = res->addAtom(at2, false, true);
       bondidx = res->addBond(bidx, at2->getIdx(), bT) - 1;
@@ -526,8 +544,9 @@ ROMol *fragmentOnBonds(const ROMol &mol,
       continue;
     }
     if (atomEnvirons &&
-        (!environsMatch[fbt.atom1Type] || !environsMatch[fbt.atom2Type]))
+        (!environsMatch[fbt.atom1Type] || !environsMatch[fbt.atom2Type])) {
       continue;
+    }
     // std::cerr<<"  >>> "<<fbt.atom1Label<<" "<<fbt.atom2Label<<std::endl;
     std::vector<MatchVectType> bondMatches;
     SubstructMatch(mol, *fbt.query.get(), bondMatches);

@@ -101,13 +101,15 @@ unsigned int RingInfo::addRing(const INT_VECT &atomIndices,
   PRECONDITION(atomIndices.size() == bondIndices.size(), "length mismatch");
   int sz = rdcast<int>(atomIndices.size());
   for (auto i : atomIndices) {
-    if (i >= static_cast<int>(d_atomMembers.size()))
+    if (i >= static_cast<int>(d_atomMembers.size())) {
       d_atomMembers.resize((i) + 1);
+    }
     d_atomMembers[i].push_back(sz);
   }
   for (auto i : bondIndices) {
-    if (i >= static_cast<int>(d_bondMembers.size()))
+    if (i >= static_cast<int>(d_bondMembers.size())) {
       d_bondMembers.resize((i) + 1);
+    }
     d_bondMembers[i].push_back(sz);
   }
   d_atomRings.push_back(atomIndices);
@@ -144,7 +146,9 @@ void RingInfo::initialize() {
   df_init = true;
 };
 void RingInfo::reset() {
-  if (!df_init) return;
+  if (!df_init) {
+    return;
+  }
   df_init = false;
   d_atomMembers.clear();
   d_bondMembers.clear();

@@ -88,7 +88,7 @@ class TestCase(unittest.TestCase):
     assert m.GetBondBetweenAtoms(2, 3).GetBondType() == Chem.BondType.DOUBLE
 
   def test2(self):
-    """ editing/persistance basics """
+    """ editing/persistence basics """
     m = Chem.MolFromSmiles('COC(=C)O')
 
     a1 = m.GetAtomWithIdx(3)

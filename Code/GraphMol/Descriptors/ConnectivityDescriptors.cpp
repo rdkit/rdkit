@@ -40,8 +40,9 @@ void hkDeltas(const ROMol &mol, std::vector<double> &deltas, bool force) {
           double(tbl->getNouterElecs(n) - at->getTotalNumHs()) /
           (n - tbl->getNouterElecs(n) - 1);
     }
-    if (deltas[at->getIdx()] != 0.0)
+    if (deltas[at->getIdx()] != 0.0) {
       deltas[at->getIdx()] = 1. / sqrt(deltas[at->getIdx()]);
+    }
     ++atBegin;
   }
   mol.setProp(common_properties::_connectivityHKDeltas, deltas, true);
@@ -276,7 +277,9 @@ double calcHallKierAlpha(const ROMol &mol, std::vector<double> *atomContribs) {
     const Atom* at = mol[*atBegin];
     ++atBegin;
     unsigned int n = at->getAtomicNum();
-    if (!n) continue;
+    if (!n) {
+      continue;
+    }
     bool found;
     double alpha = detail::getAlpha(*(at), found);
     if (!found) {
@@ -284,7 +287,9 @@ double calcHallKierAlpha(const ROMol &mol, std::vector<double> *atomContribs) {
       alpha = rA / rC - 1.0;
     }
     alphaSum += alpha;
-    if (atomContribs) (*atomContribs)[at->getIdx()] = alpha;
+    if (atomContribs) {
+      (*atomContribs)[at->getIdx()] = alpha;
+    }
   }
   return alphaSum;
 };

@@ -106,8 +106,9 @@ double getBestRMS(ROMol &probeMol, ROMol &refMol, int probeId, int refId,
   }
 
   // Perform a final alignment to the best alignment...
-  if (&bestMatch != &matches.back())
+  if (&bestMatch != &matches.back()) {
     alignMol(probeMol, refMol, probeId, refId, &bestMatch);
+  }
   return bestRMS;
 }
 
@@ -147,7 +148,7 @@ void alignMolConformers(ROMol &mol, const std::vector<unsigned int> *atomIds,
   const Conformer &refCnf = mol.getConformer(cid);
   _fillAtomPositions(refPoints, refCnf, atomIds);
 
-  // now loop throught the remaininf conformations and transform them
+  // now loop through the remaining conformations and transform them
   RDGeom::Transform3D trans;
   double ssd;
   if (confIds == nullptr) {

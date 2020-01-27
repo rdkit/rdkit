@@ -61,7 +61,9 @@ void test1(bool doLong = 0) {
     TEST_ASSERT(smi1 == smi2);
     delete m;
     count++;
-    if (!doLong && count >= 100) break;
+    if (!doLong && count >= 100) {
+      break;
+    }
   }
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
@@ -122,7 +124,9 @@ void test2(bool doLong = 0) {
     TEST_ASSERT(smi1 == smi2);
     delete m1;
     count++;
-    if (!doLong && count >= 100) break;
+    if (!doLong && count >= 100) {
+      break;
+    }
   }
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
@@ -156,7 +160,9 @@ void test3(bool doLong = 0) {
     TEST_ASSERT(smi1 == smi2);
     delete m1;
     count++;
-    if (!doLong && count >= 100) break;
+    if (!doLong && count >= 100) {
+      break;
+    }
   }
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
@@ -179,7 +185,9 @@ void timeTest(bool doLong = 0) {
     ROMol *m1 = suppl.next();
     TEST_ASSERT(m1);
     count++;
-    if (!doLong && count >= 100) break;
+    if (!doLong && count >= 100) {
+      break;
+    }
     delete m1;
   }
   t2 = std::time(nullptr);
@@ -193,7 +201,9 @@ void timeTest(bool doLong = 0) {
     ROMol m2;
     MolPickler::molFromPickle(inStream, m2);
     count--;
-    if (!doLong && count >= 100) break;
+    if (!doLong && count >= 100) {
+      break;
+    }
   }
   t2 = std::time(nullptr);
   BOOST_LOG(rdInfoLog) << " Pickle time: " << std::difftime(t2, t1)
@@ -260,7 +270,7 @@ void testIssue164() {
 
   // the issue had to do with number of atoms, so let's make an enormous
   // molecule and try again:
-  RWMol *m3 = static_cast<RWMol *>(SmilesToMol(smi));
+  auto *m3 = static_cast<RWMol *>(SmilesToMol(smi));
   m3->insertMol(*m1);
   m3->insertMol(*m1);
   MolOps::sanitizeMol(*m3);
@@ -855,7 +865,9 @@ void testIssue3496759() {
     while (!inf.eof()) {
       std::string inl;
       std::getline(inf, inl);
-      if (inl[0] == '#' || inl.size() < 2) continue;
+      if (inl[0] == '#' || inl.size() < 2) {
+        continue;
+      }
       std::vector<std::string> tokens;
       boost::split(tokens, inl, boost::is_any_of(" \t"));
       // std::cerr << "smarts: " << tokens[0] << std::endl;

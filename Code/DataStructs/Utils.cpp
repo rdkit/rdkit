@@ -34,7 +34,9 @@ void FromDaylightString(T &sbv, const std::string &s) {
   size_t length = s.length();
   size_t nBits;
 
-  if (s[length - 1] == '\n') length -= 1;
+  if (s[length - 1] == '\n') {
+    length -= 1;
+  }
 
   // 4 bytes in the ascii correspond to 3 bytes in the binary
   //  plus there's one extra ascii byte for the pad marker
@@ -81,7 +83,9 @@ void FromBitString(T &sbv, const std::string &s) {
   PRECONDITION(s.length() <= sbv.getNumBits(), "bad bitvect length");
   sbv.clearBits();
   for (unsigned int i = 0; i < sbv.getNumBits(); ++i) {
-    if (s[i] == '1') sbv.setBit(i);
+    if (s[i] == '1') {
+      sbv.setBit(i);
+    }
   }
 }
 
@@ -322,16 +326,17 @@ void a2b(const char *a4, char *b3) {
     *** b3: |000000111111222222333333
     ***     |=====+=====+=====+=====|
     *********************************************/
-    if (i == 0)
+    if (i == 0) {
       b3[0] = (byte << 2); /*** 6 bits into 1st byte ***/
-    else if (i == 1) {
+    } else if (i == 1) {
       b3[0] |= ((b = byte) >> 4); /*** 2 bits into 1st byte ***/
       b3[1] = ((b = byte) << 4);  /*** 4 bits into 2nd byte ***/
     } else if (i == 2) {
       b3[1] |= ((b = byte) >> 2); /*** 4 bits into 2nd byte ***/
       b3[2] = ((b = byte) << 6);  /*** 2 bits into 3rd byte ***/
-    } else if (i == 3)
+    } else if (i == 3) {
       b3[2] |= byte; /*** 6 bits into 3rd byte ***/
+    }
   }
   return;
 }

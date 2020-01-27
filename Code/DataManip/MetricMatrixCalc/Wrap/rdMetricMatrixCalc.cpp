@@ -44,10 +44,10 @@ PyObject *getEuclideanDistMat(python::object descripMat) {
   //     - in this case wrap descripMat with a PySequenceHolder<type*> where
   //     type is the
   //       type of entry in vector (accepted types are int, double and float
-  //     - Then pass the PySequenceHolder to the metrci calculator
+  //     - Then pass the PySequenceHolder to the metric calculator
   // 3. A list (or tuple) of lists (or tuple)
   //     - In this case other than wrapping descripMat with a PySequenceHolder
-  //       each of the indivual list in there are also wrapped by a
+  //       each of the individual list in there are also wrapped by a
   //       PySequenceHolder
   //     - so the distance calculator is passed in a
   //     "PySequenceHolder<PySequenceHolder<double>>"
@@ -79,14 +79,14 @@ PyObject *getEuclideanDistMat(python::object descripMat) {
     // grab a pointer to the data in the array so that we can directly put
     // values in there
     // and avoid copying :
-    double *dMat = (double *)PyArray_DATA(distRes);
+    auto *dMat = (double *)PyArray_DATA(distRes);
 
     PyArrayObject *copy;
     copy = (PyArrayObject *)PyArray_ContiguousFromObject(
         descMatObj, PyArray_DESCR((PyArrayObject *)descMatObj)->type_num, 2, 2);
     // if we have double array
     if (PyArray_DESCR((PyArrayObject *)descMatObj)->type_num == NPY_DOUBLE) {
-      double *desc = (double *)PyArray_DATA((PyArrayObject *)descMatObj);
+      auto *desc = (double *)PyArray_DATA((PyArrayObject *)descMatObj);
 
       // REVIEW: create an adaptor object to hold a double * and support
       //  operator[]() so that we don't have to do this stuff:
@@ -110,7 +110,7 @@ PyObject *getEuclideanDistMat(python::object descripMat) {
     // if we have a float array
     else if (PyArray_DESCR((PyArrayObject *)descMatObj)->type_num ==
              NPY_FLOAT) {
-      float *desc = (float *)PyArray_DATA(copy);
+      auto *desc = (float *)PyArray_DATA(copy);
       auto **desc2D = new float *[nrows];
       for (i = 0; i < nrows; i++) {
         desc2D[i] = desc;
@@ -123,7 +123,7 @@ PyObject *getEuclideanDistMat(python::object descripMat) {
       return PyArray_Return(distRes);
     }
 
-    // if we have an interger array
+    // if we have an integer array
     else if (PyArray_DESCR((PyArrayObject *)descMatObj)->type_num == NPY_INT) {
       int *desc = (int *)PyArray_DATA(copy);
       auto **desc2D = new int *[nrows];
@@ -137,7 +137,7 @@ PyObject *getEuclideanDistMat(python::object descripMat) {
       delete[] desc2D;
       return PyArray_Return(distRes);
     } else {
-      // unreconiged type for the matrix, throw up
+      // unrecognized type for the matrix, throw up
       throw_value_error(
           "The array has to be of type int, float, or double for "
           "GetEuclideanDistMat");
@@ -155,7 +155,7 @@ PyObject *getEuclideanDistMat(python::object descripMat) {
 
     npy_intp dMatLen = nrows * (nrows - 1) / 2;
     distRes = (PyArrayObject *)PyArray_SimpleNew(1, &dMatLen, NPY_DOUBLE);
-    double *dMat = (double *)PyArray_DATA(distRes);
+    auto *dMat = (double *)PyArray_DATA(distRes);
 
     // assume that we a have a list of list of values (that can be extracted to
     // double)
@@ -198,9 +198,8 @@ PyObject *getTanimotoDistMat(python::object bitVectList) {
   }
 
   npy_intp dMatLen = nrows * (nrows - 1) / 2;
-  PyArrayObject *simRes =
-      (PyArrayObject *)PyArray_SimpleNew(1, &dMatLen, NPY_DOUBLE);
-  double *sMat = (double *)PyArray_DATA(simRes);
+  auto *simRes = (PyArrayObject *)PyArray_SimpleNew(1, &dMatLen, NPY_DOUBLE);
+  auto *sMat = (double *)PyArray_DATA(simRes);
 
   if (ebvWorks.check()) {
     PySequenceHolder<ExplicitBitVect> dData(bitVectList);
@@ -234,9 +233,8 @@ PyObject *getTanimotoSimMat(python::object bitVectList) {
   }
 
   npy_intp dMatLen = nrows * (nrows - 1) / 2;
-  PyArrayObject *simRes =
-      (PyArrayObject *)PyArray_SimpleNew(1, &dMatLen, NPY_DOUBLE);
-  double *sMat = (double *)PyArray_DATA(simRes);
+  auto *simRes = (PyArrayObject *)PyArray_SimpleNew(1, &dMatLen, NPY_DOUBLE);
+  auto *sMat = (double *)PyArray_DATA(simRes);
 
   if (ebvWorks.check()) {
     PySequenceHolder<ExplicitBitVect> dData(bitVectList);

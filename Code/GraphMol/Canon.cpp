@@ -25,7 +25,9 @@ bool isUnsaturated(const Atom *atom, const ROMol &mol) {
   while (beg != end) {
     const Bond *bond = mol[*beg];
     ++beg;
-    if (bond->getBondType() != Bond::SINGLE) return true;
+    if (bond->getBondType() != Bond::SINGLE) {
+      return true;
+    }
   }
   return false;
 }
@@ -46,7 +48,9 @@ bool hasSingleHQuery(const Atom::QUERYATOM_QUERY *q) {
         return false;
       } else if (descr == "AtomAnd") {
         res = hasSingleHQuery((*cIt).get());
-        if (res) return true;
+        if (res) {
+          return true;
+        }
       }
     }
   }
@@ -188,7 +192,9 @@ void canonicalizeDoubleBond(Bond *dblBond, INT_VECT &bondVisitOrders,
         dir1Set = true;
       }
       if (!firstFromAtom1 || bondVisitOrders[bondIdx] < firstVisitOrder) {
-        if (firstFromAtom1) secondFromAtom1 = firstFromAtom1;
+        if (firstFromAtom1) {
+          secondFromAtom1 = firstFromAtom1;
+        }
         firstFromAtom1 = mol[*atomBonds.first];
         firstVisitOrder = bondVisitOrders[bondIdx];
       } else {
@@ -206,7 +212,9 @@ void canonicalizeDoubleBond(Bond *dblBond, INT_VECT &bondVisitOrders,
         dir2Set = true;
       }
       if (!firstFromAtom2 || bondVisitOrders[bondIdx] < firstVisitOrder) {
-        if (firstFromAtom2) secondFromAtom2 = firstFromAtom2;
+        if (firstFromAtom2) {
+          secondFromAtom2 = firstFromAtom2;
+        }
         firstFromAtom2 = mol[*atomBonds.first];
         firstVisitOrder = bondVisitOrders[bondIdx];
       } else {
@@ -579,7 +587,9 @@ void dfsFindCycles(ROMol &mol, int atomIdx, int inBondIdx,
   while (bondsPair.first != bondsPair.second) {
     Bond *theBond = mol[*(bondsPair.first)];
     bondsPair.first++;
-    if (bondsInPlay && !(*bondsInPlay)[theBond->getIdx()]) continue;
+    if (bondsInPlay && !(*bondsInPlay)[theBond->getIdx()]) {
+      continue;
+    }
     if (inBondIdx < 0 ||
         theBond->getIdx() != static_cast<unsigned int>(inBondIdx)) {
       int otherIdx = theBond->getOtherAtomIdx(atomIdx);
@@ -706,7 +716,9 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
   colors[atomIdx] = GREY_NODE;
 
   INT_LIST travList;
-  if (inBondIdx >= 0) travList.push_back(inBondIdx);
+  if (inBondIdx >= 0) {
+    travList.push_back(inBondIdx);
+  }
 
   // ---------------------
   //
@@ -767,7 +779,9 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
   while (bondsPair.first != bondsPair.second) {
     Bond *theBond = mol[*(bondsPair.first)];
     bondsPair.first++;
-    if (bondsInPlay && !(*bondsInPlay)[theBond->getIdx()]) continue;
+    if (bondsInPlay && !(*bondsInPlay)[theBond->getIdx()]) {
+      continue;
+    }
     if (inBondIdx < 0 ||
         theBond->getIdx() != static_cast<unsigned int>(inBondIdx)) {
       int otherIdx = theBond->getOtherAtomIdx(atomIdx);
@@ -1041,7 +1055,9 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
   INT_VECT cyclesAvailable(MAX_CYCLES, 1);
 
   VECT_INT_VECT cycles(nAtoms);
-  for (auto &cycle : cycles) cycle.resize(0);
+  for (auto &cycle : cycles) {
+    cycle.resize(0);
+  }
 
   boost::dynamic_bitset<> ringStereoChemAdjusted(nAtoms);
 

@@ -149,11 +149,14 @@ class MolMatchFinalCheckFunctor {
     for (unsigned int i = 0; i < d_query.getNumBonds(); ++i) {
       const Bond *qBnd = d_query.getBondWithIdx(i);
       if (qBnd->getBondType() != Bond::DOUBLE ||
-          qBnd->getStereo() <= Bond::STEREOANY)
+          qBnd->getStereo() <= Bond::STEREOANY) {
         continue;
+      }
 
       // don't think this can actually happen, but check to be sure:
-      if (qBnd->getStereoAtoms().size() != 2) continue;
+      if (qBnd->getStereoAtoms().size() != 2) {
+        continue;
+      }
 
       std::map<unsigned int, unsigned int> qMap;
       for (unsigned int j = 0; j < d_query.getNumAtoms(); ++j) {
@@ -163,25 +166,32 @@ class MolMatchFinalCheckFunctor {
           c2[qMap[qBnd->getBeginAtomIdx()]], c2[qMap[qBnd->getEndAtomIdx()]]);
       CHECK_INVARIANT(mBnd, "Matching bond not found");
       if (mBnd->getBondType() != Bond::DOUBLE ||
-          qBnd->getStereo() <= Bond::STEREOANY)
+          qBnd->getStereo() <= Bond::STEREOANY) {
         continue;
+      }
       // don't think this can actually happen, but check to be sure:
-      if (mBnd->getStereoAtoms().size() != 2) continue;
+      if (mBnd->getStereoAtoms().size() != 2) {
+        continue;
+      }
 
       unsigned int end1Matches = 0;
       unsigned int end2Matches = 0;
       if (c2[qMap[qBnd->getBeginAtomIdx()]] == mBnd->getBeginAtomIdx()) {
         // query Begin == mol Begin
-        if (c2[qMap[qBnd->getStereoAtoms()[0]]] == mBnd->getStereoAtoms()[0])
+        if (c2[qMap[qBnd->getStereoAtoms()[0]]] == mBnd->getStereoAtoms()[0]) {
           end1Matches = 1;
-        if (c2[qMap[qBnd->getStereoAtoms()[1]]] == mBnd->getStereoAtoms()[1])
+        }
+        if (c2[qMap[qBnd->getStereoAtoms()[1]]] == mBnd->getStereoAtoms()[1]) {
           end2Matches = 1;
+        }
       } else {
         // query End == mol Begin
-        if (c2[qMap[qBnd->getStereoAtoms()[0]]] == mBnd->getStereoAtoms()[1])
+        if (c2[qMap[qBnd->getStereoAtoms()[0]]] == mBnd->getStereoAtoms()[1]) {
           end1Matches = 1;
-        if (c2[qMap[qBnd->getStereoAtoms()[1]]] == mBnd->getStereoAtoms()[0])
+        }
+        if (c2[qMap[qBnd->getStereoAtoms()[1]]] == mBnd->getStereoAtoms()[0]) {
           end2Matches = 1;
+        }
       }
 
       const unsigned totalMatches = end1Matches + end2Matches;
@@ -190,8 +200,12 @@ class MolMatchFinalCheckFunctor {
       const auto qStereo =
           Chirality::translateEZLabelToCisTrans(qBnd->getStereo());
 
-      if (mStereo == qStereo && totalMatches == 1) return false;
-      if (mStereo != qStereo && totalMatches != 1) return false;
+      if (mStereo == qStereo && totalMatches == 1) {
+        return false;
+      }
+      if (mStereo != qStereo && totalMatches != 1) {
+        return false;
+      }
     }
 
     return true;
@@ -216,8 +230,9 @@ class AtomLabelFunctor {
           qAt->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW) {
         const Atom *mAt = d_mol.getAtomWithIdx(j);
         if (mAt->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
-            mAt->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW)
+            mAt->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW) {
           return false;
+        }
       }
     }
     res = atomCompat(d_query[i], d_mol[j], d_params);
@@ -242,8 +257,9 @@ class BondLabelFunctor {
           qBnd->getStereo() > Bond::STEREOANY) {
         const Bond *mBnd = d_mol[j];
         if (mBnd->getBondType() == Bond::DOUBLE &&
-            mBnd->getStereo() <= Bond::STEREOANY)
+            mBnd->getStereo() <= Bond::STEREOANY) {
           return false;
+        }
       }
     }
     bool res = bondCompat(d_query[i], d_mol[j], d_params);
@@ -262,8 +278,9 @@ void mergeMatchVect(std::vector<MatchVectType> &matches,
        (matches.size() < args.params.maxMatches) && (it != matchesTmp.end());
        ++it) {
     if ((std::find(matches.begin(), matches.end(), *it) == matches.end()) &&
-        (!args.params.uniquify || isToBeAddedToVector(matches, *it)))
+        (!args.params.uniquify || isToBeAddedToVector(matches, *it))) {
       matches.push_back(*it);
+    }
   }
 };
 void ResSubstructMatchHelper_(const ResSubstructMatchHelperArgs_ &args,
@@ -386,11 +403,11 @@ std::vector<MatchVectType> SubstructMatch(
   detail::ResSubstructMatchHelperArgs_ args = {resMolSupplier, query, params};
   unsigned int nt =
       std::min(resMolSupplier.length(), getNumThreadsToUse(params.numThreads));
-  if (nt == 1)
+  if (nt == 1) {
     detail::ResSubstructMatchHelper_(args, &matches, 0,
                                      resMolSupplier.length());
 #ifdef RDK_THREADSAFE_SSS
-  else {
+  } else {
     std::vector<std::future<void>> tg;
     std::vector<std::vector<MatchVectType> *> matchesThread(nt);
     unsigned int ei = 0;
@@ -411,8 +428,9 @@ std::vector<MatchVectType> SubstructMatch(
     }
 
     unsigned int matchSize = 0;
-    for (unsigned int ti = 0; ti < nt; ++ti)
+    for (unsigned int ti = 0; ti < nt; ++ti) {
       matchSize += matchesThread[ti]->size();
+    }
     matches.reserve(matchSize);
     for (unsigned int ti = 0; ti < nt; ++ti) {
       mergeMatchVect(matches, *(matchesThread[ti]), args);
@@ -489,7 +507,7 @@ void MatchSubqueries(const ROMol &mol, QueryAtom::QUERYATOM_QUERY *query,
   // std::cout << "*-*-* MS: " << (int)query << std::endl;
   // std::cout << "\t\t" << typeid(*query).name() << std::endl;
   if (query->getDescription() == "RecursiveStructure") {
-    RecursiveStructureQuery *rsq = (RecursiveStructureQuery *)query;
+    auto *rsq = (RecursiveStructureQuery *)query;
 #ifdef RDK_THREADSAFE_SSS
     rsq->d_mutex.lock();
     locked.push_back(rsq);
@@ -551,7 +569,9 @@ bool matchCompare(const std::pair<int, int> &a, const std::pair<int, int> &b) {
 
 bool matchVectCompare(const MatchVectType &a, const MatchVectType &b) {
   for (unsigned int i = 0; i < std::min(a.size(), b.size()); ++i) {
-    if (a[i].second != b[i].second) return (a[i].second < b[i].second);
+    if (a[i].second != b[i].second) {
+      return (a[i].second < b[i].second);
+    }
   }
   return (a.size() < b.size());
 }
@@ -567,11 +587,13 @@ bool isToBeAddedToVector(std::vector<MatchVectType> &matches,
     if (!isToBeAdded) {
       MatchVectType matchCopy = *it;
       std::sort(matchCopy.begin(), matchCopy.end(), matchCompare);
-      for (unsigned int i = 0; !isToBeAdded && (i < matchCopy.size()); ++i)
+      for (unsigned int i = 0; !isToBeAdded && (i < matchCopy.size()); ++i) {
         isToBeAdded = (mCopy[i].second != matchCopy[i].second);
+      }
       if (!isToBeAdded) {
-        for (unsigned int i = 0; !isToBeAdded && (i < m.size()); ++i)
+        for (unsigned int i = 0; !isToBeAdded && (i < m.size()); ++i) {
           isToBeAdded = (m[i].second < (*it)[i].second);
+        }
         if (isToBeAdded) {
           matches.erase(it);
           break;

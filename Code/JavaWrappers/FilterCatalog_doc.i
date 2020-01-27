@@ -31,7 +31,7 @@
 */
 
 %typemap(javaimports) RDKit::FilterCatalog "
-/** FilterCatalog Class used to filter out undesireable molecules
+/** FilterCatalog Class used to filter out undesirable molecules
 <br>
 Basic usage:
 

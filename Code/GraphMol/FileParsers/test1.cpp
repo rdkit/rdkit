@@ -1892,7 +1892,7 @@ void testAtomParity() {
     // add a bogus chiral spec:
     m->getAtomWithIdx(0)->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
     std::string molBlock = MolToMolBlock(*m);
-    RWMol *m2 = (RWMol *)MolOps::removeHs(*((ROMol *)m));
+    auto *m2 = (RWMol *)MolOps::removeHs(*((ROMol *)m));
     molBlock = MolToMolBlock(*m2);
     delete m2;
     m2 = MolBlockToMol(molBlock, true, false);
@@ -2553,7 +2553,7 @@ void test3V3K() {
     RWMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 1024);
-    Conformer *conf = new Conformer(m->getNumAtoms());
+    auto *conf = new Conformer(m->getNumAtoms());
     m->addConformer(conf, true);
     std::string mb = MolToMolBlock(*m);
     TEST_ASSERT(mb.find("V2000") == std::string::npos);
@@ -3772,8 +3772,8 @@ void testPDBFile() {
     TEST_ASSERT(feq(m->getConformer().getAtomPos(0).z, 3.625));
 
     // test adding hydrogens
-    ROMol *nm = MolOps::addHs(*m, false, false, NULL, true);
-    AtomPDBResidueInfo *info =
+    ROMol *nm = MolOps::addHs(*m, false, false, nullptr, true);
+    auto *info =
         (AtomPDBResidueInfo *)(nm->getAtomWithIdx(nm->getNumAtoms() - 1)
                                    ->getMonomerInfo());
     TEST_ASSERT(info->getMonomerType() == AtomMonomerInfo::PDBRESIDUE);
@@ -3905,6 +3905,14 @@ void testPDBFile() {
     TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(
                     m->getAtomWithIdx(57)->getMonomerInfo())
                     ->getResidueName() == " DG");
+    TEST_ASSERT(m->getBondBetweenAtoms(31, 33)->getBondType() ==
+                Bond::AROMATIC);
+    TEST_ASSERT(m->getBondBetweenAtoms(120, 114)->getBondType() ==
+                Bond::AROMATIC);
+    TEST_ASSERT(m->getBondBetweenAtoms(39, 38)->getBondType() ==
+                Bond::DOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(138, 140)->getBondType() ==
+                Bond::AROMATIC);
     delete m;
   }
   {  // RNA
@@ -3931,6 +3939,14 @@ void testPDBFile() {
     TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(
                     m->getAtomWithIdx(197)->getMonomerInfo())
                     ->getIsHeteroAtom());
+    TEST_ASSERT(m->getBondBetweenAtoms(104, 103)->getBondType() ==
+                Bond::AROMATIC);
+    TEST_ASSERT(m->getBondBetweenAtoms(60, 61)->getBondType() ==
+                Bond::DOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(38, 37)->getBondType() ==
+                Bond::DOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(148, 149)->getBondType() ==
+                Bond::DOUBLE);
 
     std::string mb = MolToPDBBlock(*m);
     delete m;
@@ -4231,7 +4247,7 @@ void testGithub194() {
 
 void testGithub196() {
   BOOST_LOG(rdInfoLog)
-      << "testing github issue 196: left justitified bond topology"
+      << "testing github issue 196: left justified bond topology"
       << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/test_data/";
@@ -4297,8 +4313,9 @@ void testGithub210() {
 
 namespace {
 std::string getResidue(const ROMol &, const Atom *at) {
-  if (at->getMonomerInfo()->getMonomerType() != AtomMonomerInfo::PDBRESIDUE)
+  if (at->getMonomerInfo()->getMonomerType() != AtomMonomerInfo::PDBRESIDUE) {
     return "";
+  }
   return static_cast<const AtomPDBResidueInfo *>(at->getMonomerInfo())
       ->getResidueName();
 }
@@ -4625,7 +4642,9 @@ void testParseCHG() {
   RWMol *m = MolBlockToMol(molblock_chg);
   size_t i = 0;
   while (1) {
-    if (charges[i] == 0) break;
+    if (charges[i] == 0) {
+      break;
+    }
 
     TEST_ASSERT(
         m->getAtomWithIdx((unsigned int)charges[i] - 1)->getFormalCharge() ==

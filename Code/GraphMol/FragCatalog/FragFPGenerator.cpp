@@ -1,4 +1,3 @@
-// $Id$
 //
 // Copyright (C) 2003-2006 Rational Discovery LLC
 //
@@ -82,10 +81,10 @@ void FragFPGenerator::computeFP(const ROMol &mol, const FragCatalog &fcat,
           fp->setBit(bitId);
         }
         mapkm1[invar] = (*eti);
-        delete nent;
         break;
       }
     }
+    delete nent;
   }
 
   // now deal with the higher order stuff.
@@ -124,9 +123,9 @@ void FragFPGenerator::computeFP(const ROMol &mol, const FragCatalog &fcat,
 
       // loop over the subpaths (order (k-1) ) (by ignoring one bond
       // at a time from consideration) and find out which entries
-      // int eh catalog they correspond to and make an interestion
+      // int eh catalog they correspond to and make an intersection
       // of the down entries (i.e. order k entries that contain
-      // these order k-1 entries. - we can baiscally limit our
+      // these order k-1 entries. - we can basically limit our
       // search for an isomorphic entry in the catalog of the order
       // k path from the molecule to this intersection list
       for (pii = (*pi).begin(); pii != (*pi).end(); pii++) {
@@ -170,10 +169,10 @@ void FragFPGenerator::computeFP(const ROMol &mol, const FragCatalog &fcat,
           if (bitId >= 0) {
             fp->setBit(bitId);
           }
-          delete nent;
           break;
         }
       }
+      delete nent;
     }
 
     // overwrite mapkm1 with mapk before we move on to order k+1
@@ -235,4 +234,4 @@ void FragFPGenerator::computeFP(const ROMol &mol, const FragCatalog &fcat,
     **************************/
 #endif
 }
-}
+}  // namespace RDKit

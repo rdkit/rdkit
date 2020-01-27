@@ -385,7 +385,7 @@ void contourAndDrawGridHelper(RDKit::MolDraw2D &drawer, python::object &data,
   if (!PyArray_Check(data.ptr())) {
     throw_value_error("data argument must be a numpy array");
   }
-  PyArrayObject *dataArr = reinterpret_cast<PyArrayObject *>(
+  auto *dataArr = reinterpret_cast<PyArrayObject *>(
       PyArray_ContiguousFromObject(data.ptr(), NPY_DOUBLE, 2, 2));
   if (!dataArr) {
     throw_value_error("could not convert data argument");

@@ -152,7 +152,9 @@ void testRDAny() {
 
   {
     std::vector<int> v;
-    for (int i = 0; i < 4; ++i) v.push_back(i);
+    for (int i = 0; i < 4; ++i) {
+      v.push_back(i);
+    }
 
     RDAny foo(v);
     RDAny bar = foo;
@@ -167,7 +169,9 @@ void testRDAny() {
 
   {
     std::vector<double> v;
-    for (double i = 0; i < 4; ++i) v.push_back(i);
+    for (double i = 0; i < 4; ++i) {
+      v.push_back(i);
+    }
 
     RDAny foo(v);
 
@@ -288,7 +292,7 @@ void testRDAny() {
     boost::any_cast<const std::vector<std::pair<int, int>> &>(any1);
 
     RDAny vv(pvect);
-    boost::any &any = rdany_cast<boost::any &>(vv);
+    auto &any = rdany_cast<boost::any &>(vv);
     boost::any_cast<std::vector<std::pair<int, int>>>(any);
     boost::any_cast<std::vector<std::pair<int, int>> &>(any);
     boost::any_cast<const std::vector<std::pair<int, int>> &>(any);
@@ -323,7 +327,7 @@ void testRDAny() {
     (*m)[0] = 1;
     RDAny mv(m);
     // leaks
-    std::map<int, int> *anym = rdany_cast<std::map<int, int> *>(mv);
+    auto *anym = rdany_cast<std::map<int, int> *>(mv);
     TEST_ASSERT(anym->find(0) != anym->end());
     delete anym;
   }
@@ -654,36 +658,34 @@ void testUpdate() {
 
 class FooHandler : public CustomPropHandler {
 public:
-  virtual const char *getPropName() const { return "Foo"; }
-  virtual bool canSerialize(const RDValue &value) const {
-    return rdvalue_is<Foo>(value);
-  }
-  virtual bool read(std::istream &ss, RDValue &value) const {
-    int version = 0;
-    streamRead(ss, version);
-    Foo f;
-    streamRead(ss, f.bar);
-    streamRead(ss, f.baz);
-    value = f;
-    return true;
-  }
-  
-  virtual bool write(std::ostream &ss, const RDValue &value) const {
-    try{
-      const Foo &f = rdvalue_cast<const Foo&>(value);
-      const int version = 0;
-      streamWrite(ss, version);
-      streamWrite(ss, f.bar);
-      streamWrite(ss, f.baz);
-    } catch ( boost::bad_any_cast & ) {
-      return false;
-    }
-    return true;
-  }
-  
-  virtual CustomPropHandler* clone() const {
-    return new FooHandler;
-  }
+ const char *getPropName() const override { return "Foo"; }
+ bool canSerialize(const RDValue &value) const override {
+   return rdvalue_is<Foo>(value);
+ }
+ bool read(std::istream &ss, RDValue &value) const override {
+   int version = 0;
+   streamRead(ss, version);
+   Foo f;
+   streamRead(ss, f.bar);
+   streamRead(ss, f.baz);
+   value = f;
+   return true;
+ }
+
+ bool write(std::ostream &ss, const RDValue &value) const override {
+   try {
+     const Foo &f = rdvalue_cast<const Foo &>(value);
+     const int version = 0;
+     streamWrite(ss, version);
+     streamWrite(ss, f.bar);
+     streamWrite(ss, f.baz);
+   } catch (boost::bad_any_cast &) {
+     return false;
+   }
+   return true;
+ }
+
+ CustomPropHandler *clone() const override { return new FooHandler; }
 };
 
 void testCustomProps() {

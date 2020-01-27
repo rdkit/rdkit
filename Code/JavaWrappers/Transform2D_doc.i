@@ -61,9 +61,9 @@ public";
 %javamethodmodifiers RDGeom::Transform2D::SetTransform 	( 	const Point2D &  	ref1, 		const Point2D &  	ref2, 		const Point2D &  	pt1, 		const Point2D &  	pt2	  	) 			"
 /**
 <p>
-Set the tranform so that the specified points are aligned.
+Set the transform so that the specified points are aligned.
 <p>
-The resulting tranformation will align pt1 with ref1, and rotation pt2 such that the line betweem (pt1, pt2) will align with with the line (ref1, ref2)
+The resulting transformation will align pt1 with ref1, and rotation pt2 such that the line betweem (pt1, pt2) will align with with the line (ref1, ref2)
 <p>
 
 */

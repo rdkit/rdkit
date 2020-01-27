@@ -59,7 +59,9 @@ python::tuple fragmentOnSomeBondsHelper(const ROMol &mol,
                                         bool returnCutsPerAtom) {
   std::unique_ptr<std::vector<unsigned int>> bondIndices =
       pythonObjectToVect(pyBondIndices, mol.getNumBonds());
-  if (!bondIndices.get()) throw_value_error("empty bond indices");
+  if (!bondIndices.get()) {
+    throw_value_error("empty bond indices");
+  }
 
   std::vector<std::pair<unsigned int, unsigned int>> *dummyLabels = nullptr;
   if (pyDummyLabels) {
@@ -132,7 +134,9 @@ ROMol *fragmentOnBondsHelper(const ROMol &mol, python::object pyBondIndices,
                              python::list pyCutsPerAtom) {
   std::unique_ptr<std::vector<unsigned int>> bondIndices =
       pythonObjectToVect(pyBondIndices, mol.getNumBonds());
-  if (!bondIndices.get()) throw_value_error("empty bond indices");
+  if (!bondIndices.get()) {
+    throw_value_error("empty bond indices");
+  }
   std::vector<std::pair<unsigned int, unsigned int>> *dummyLabels = nullptr;
   if (pyDummyLabels) {
     unsigned int nVs =
@@ -195,15 +199,17 @@ ROMol *renumberAtomsHelper(const ROMol &mol, python::object &pyNewOrder) {
 namespace {
 std::string getResidue(const ROMol &m, const Atom *at) {
   RDUNUSED_PARAM(m);
-  if (at->getMonomerInfo()->getMonomerType() != AtomMonomerInfo::PDBRESIDUE)
+  if (at->getMonomerInfo()->getMonomerType() != AtomMonomerInfo::PDBRESIDUE) {
     return "";
+  }
   return static_cast<const AtomPDBResidueInfo *>(at->getMonomerInfo())
       ->getResidueName();
 }
 std::string getChainId(const ROMol &m, const Atom *at) {
   RDUNUSED_PARAM(m);
-  if (at->getMonomerInfo()->getMonomerType() != AtomMonomerInfo::PDBRESIDUE)
+  if (at->getMonomerInfo()->getMonomerType() != AtomMonomerInfo::PDBRESIDUE) {
     return "";
+  }
   return static_cast<const AtomPDBResidueInfo *>(at->getMonomerInfo())
       ->getChainId();
 }
@@ -354,7 +360,7 @@ void addRecursiveQuery(ROMol &mol, const ROMol &query, unsigned int atomIdx,
 
 MolOps::SanitizeFlags sanitizeMol(ROMol &mol, boost::uint64_t sanitizeOps,
                                   bool catchErrors) {
-  RWMol &wmol = static_cast<RWMol &>(mol);
+  auto &wmol = static_cast<RWMol &>(mol);
   unsigned int operationThatFailed;
   if (catchErrors) {
     try {
@@ -372,42 +378,42 @@ MolOps::SanitizeFlags sanitizeMol(ROMol &mol, boost::uint64_t sanitizeOps,
 }
 
 RWMol *getEditable(const ROMol &mol) {
-  RWMol *res = static_cast<RWMol *>(new ROMol(mol, false));
+  auto *res = new RWMol(mol, false);
   return res;
 }
 
 ROMol *getNormal(const RWMol &mol) {
-  ROMol *res = static_cast<ROMol *>(new RWMol(mol));
+  auto *res = static_cast<ROMol *>(new RWMol(mol));
   return res;
 }
 
 void kekulizeMol(ROMol &mol, bool clearAromaticFlags = false) {
-  RWMol &wmol = static_cast<RWMol &>(mol);
+  auto &wmol = static_cast<RWMol &>(mol);
   MolOps::Kekulize(wmol, clearAromaticFlags);
 }
 
 void cleanupMol(ROMol &mol) {
-  RWMol &rwmol = static_cast<RWMol &>(mol);
+  auto &rwmol = static_cast<RWMol &>(mol);
   MolOps::cleanUp(rwmol);
 }
 
 void setAromaticityMol(ROMol &mol, MolOps::AromaticityModel model) {
-  RWMol &wmol = static_cast<RWMol &>(mol);
+  auto &wmol = static_cast<RWMol &>(mol);
   MolOps::setAromaticity(wmol, model);
 }
 
 void setConjugationMol(ROMol &mol) {
-  RWMol &wmol = static_cast<RWMol &>(mol);
+  auto &wmol = static_cast<RWMol &>(mol);
   MolOps::setConjugation(wmol);
 }
 
 void assignRadicalsMol(ROMol &mol) {
-  RWMol &wmol = static_cast<RWMol &>(mol);
+  auto &wmol = static_cast<RWMol &>(mol);
   MolOps::assignRadicals(wmol);
 }
 
 void setHybridizationMol(ROMol &mol) {
-  RWMol &wmol = static_cast<RWMol &>(mol);
+  auto &wmol = static_cast<RWMol &>(mol);
   MolOps::setHybridization(wmol);
 }
 
@@ -427,7 +433,7 @@ PyObject *getDistanceMatrix(ROMol &mol, bool useBO = false,
 
   distMat = MolOps::getDistanceMat(mol, useBO, useAtomWts, force, prefix);
 
-  PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
+  auto *res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
 
   memcpy(PyArray_DATA(res), static_cast<void *>(distMat),
          nats * nats * sizeof(double));
@@ -445,7 +451,7 @@ PyObject *get3DDistanceMatrix(ROMol &mol, int confId = -1,
 
   distMat = MolOps::get3DDistanceMat(mol, confId, useAtomWts, force, prefix);
 
-  PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
+  auto *res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
 
   memcpy(PyArray_DATA(res), static_cast<void *>(distMat),
          nats * nats * sizeof(double));
@@ -494,10 +500,10 @@ python::tuple GetMolFragsWithMapping(
     VECT_INT_VECT fragsVec;
     MolOps::getMolFrags(mol, fragsVec);
 
-    for (unsigned int i = 0; i < fragsVec.size(); ++i) {
+    for (auto &i : fragsVec) {
       python::list tpl;
-      for (unsigned int j = 0; j < fragsVec[i].size(); ++j) {
-        tpl.append(fragsVec[i][j]);
+      for (unsigned int j = 0; j < i.size(); ++j) {
+        tpl.append(i[j]);
       }
       res.append(python::tuple(tpl));
     }
@@ -505,30 +511,34 @@ python::tuple GetMolFragsWithMapping(
     std::vector<std::vector<int>> fragsMolAtomMappingVec;
     std::vector<int> fragsVec;
     std::vector<boost::shared_ptr<ROMol>> molFrags;
-    python::list &fragsList = reinterpret_cast<python::list &>(frags);
-    python::list &fragsMolAtomMappingList =
+    auto &fragsList = reinterpret_cast<python::list &>(frags);
+    auto &fragsMolAtomMappingList =
         reinterpret_cast<python::list &>(fragsMolAtomMapping);
     bool hasFrags = fragsList != python::object();
     bool hasFragsMolAtomMapping = fragsMolAtomMappingList != python::object();
     molFrags =
         hasFrags || hasFragsMolAtomMapping
             ? MolOps::getMolFrags(
-                  mol, sanitizeFrags, hasFrags ? &fragsVec : NULL,
-                  hasFragsMolAtomMapping ? &fragsMolAtomMappingVec : NULL)
+                  mol, sanitizeFrags, hasFrags ? &fragsVec : nullptr,
+                  hasFragsMolAtomMapping ? &fragsMolAtomMappingVec : nullptr)
             : MolOps::getMolFrags(mol, sanitizeFrags);
     if (hasFrags) {
-      for (unsigned int i = 0; i < fragsVec.size(); ++i)
-        fragsList.append(fragsVec[i]);
+      for (int i : fragsVec) {
+        fragsList.append(i);
+      }
     }
     if (hasFragsMolAtomMapping) {
-      for (unsigned int i = 0; i < fragsMolAtomMappingVec.size(); ++i) {
+      for (auto &i : fragsMolAtomMappingVec) {
         python::list perFragMolAtomMappingTpl;
-        for (unsigned int j = 0; j < fragsMolAtomMappingVec[i].size(); ++j)
-          perFragMolAtomMappingTpl.append(fragsMolAtomMappingVec[i][j]);
+        for (unsigned int j = 0; j < i.size(); ++j) {
+          perFragMolAtomMappingTpl.append(i[j]);
+        }
         fragsMolAtomMappingList.append(python::tuple(perFragMolAtomMappingTpl));
       }
     }
-    for (unsigned int i = 0; i < molFrags.size(); ++i) res.append(molFrags[i]);
+    for (const auto &molFrag : molFrags) {
+      res.append(molFrag);
+    }
   }
   return python::tuple(res);
 }
@@ -628,7 +638,7 @@ ExplicitBitVect *wrapRDKFingerprintMol(
                                  lFromAtoms.get(), lAtomBits, lBitInfo);
 
   if (lAtomBits) {
-    python::list &pyl = static_cast<python::list &>(atomBits);
+    auto &pyl = static_cast<python::list &>(atomBits);
     for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
       python::list tmp;
       BOOST_FOREACH (std::uint32_t v, (*lAtomBits)[i]) { tmp.append(v); }
@@ -637,7 +647,7 @@ ExplicitBitVect *wrapRDKFingerprintMol(
     delete lAtomBits;
   }
   if (lBitInfo) {
-    python::dict &pyd = static_cast<python::dict &>(bitInfo);
+    auto &pyd = static_cast<python::dict &>(bitInfo);
     for (auto &it : (*lBitInfo)) {
       python::list temp;
       std::vector<std::vector<int>>::iterator itset;
@@ -684,7 +694,7 @@ SparseIntVect<boost::uint64_t> *wrapUnfoldedRDKFingerprintMol(
       lAtomInvariants.get(), lFromAtoms.get(), lAtomBits, lBitInfo);
 
   if (lAtomBits) {
-    python::list &pyl = static_cast<python::list &>(atomBits);
+    auto &pyl = static_cast<python::list &>(atomBits);
     for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
       python::list tmp;
       BOOST_FOREACH (boost::uint64_t v, (*lAtomBits)[i]) { tmp.append(v); }
@@ -693,7 +703,7 @@ SparseIntVect<boost::uint64_t> *wrapUnfoldedRDKFingerprintMol(
     delete lAtomBits;
   }
   if (lBitInfo) {
-    python::dict &pyd = static_cast<python::dict &>(bitInfo);
+    auto &pyd = static_cast<python::dict &>(bitInfo);
     for (auto &it : (*lBitInfo)) {
       python::list temp;
       std::vector<std::vector<int>>::iterator itset;
@@ -1046,6 +1056,60 @@ struct molops_wrapper {
                 docString.c_str(),
                 python::return_value_policy<python::manage_new_object>());
 
+    // ------------------------------------------------------------------------
+    docString = R"DOC(Parameters controlling which Hs are removed.)DOC";
+    python::class_<MolOps::RemoveHsParameters>("RemoveHsParameters",
+                                               docString.c_str())
+        .def_readwrite("removeDegreeZero",
+                       &MolOps::RemoveHsParameters::removeDegreeZero,
+                       "hydrogens that have no bonds")
+        .def_readwrite("removeHigherDegrees",
+                       &MolOps::RemoveHsParameters::removeHigherDegrees,
+                       "hydrogens with two (or more) bonds")
+        .def_readwrite("removeOnlyHNeighbors",
+                       &MolOps::RemoveHsParameters::removeOnlyHNeighbors,
+                       "hydrogens with bonds only to other hydrogens")
+        .def_readwrite("removeIsotopes",
+                       &MolOps::RemoveHsParameters::removeIsotopes,
+                       "hydrogens with non-default isotopes")
+        .def_readwrite("removeDummyNeighbors",
+                       &MolOps::RemoveHsParameters::removeDummyNeighbors,
+                       "hydrogens with at least one dummy-atom neighbor")
+        .def_readwrite("removeDefiningBondStereo",
+                       &MolOps::RemoveHsParameters::removeDefiningBondStereo,
+                       "hydrogens defining bond stereochemistry")
+        .def_readwrite("removeWithWedgedBond",
+                       &MolOps::RemoveHsParameters::removeWithWedgedBond,
+                       "hydrogens with wedged bonds to them")
+        .def_readwrite("removeWithQuery",
+                       &MolOps::RemoveHsParameters::removeWithQuery,
+                       "hydrogens with queries defined")
+        .def_readwrite("removeMapped",
+                       &MolOps::RemoveHsParameters::removeMapped,
+                       "mapped hydrogens")
+        .def_readwrite("removeNonimplicit",
+                       &MolOps::RemoveHsParameters::removeNonimplicit,
+                       "DEPRECATED")
+        .def_readwrite(
+            "showWarnings", &MolOps::RemoveHsParameters::showWarnings,
+            "display warning messages for some classes of removed Hs")
+        .def_readwrite("updateExplicitCount",
+                       &MolOps::RemoveHsParameters::updateExplicitCount,
+                       "DEPRECATED");
+    python::def(
+        "RemoveHs",
+        (ROMol * (*)(const ROMol &, const MolOps::RemoveHsParameters &, bool)) &
+            MolOps::removeHs,
+        (python::arg("mol"), python::arg("params"),
+         python::arg("sanitize") = true),
+        "Returns a copy of the molecule with Hs removed. Which Hs are "
+        "removed is controlled by the params argument",
+        python::return_value_policy<python::manage_new_object>());
+    python::def("RemoveAllHs",
+                (ROMol * (*)(const ROMol &, bool)) & MolOps::removeAllHs,
+                (python::arg("mol"), python::arg("sanitize") = true),
+                "Returns a copy of the molecule with all Hs removed.",
+                python::return_value_policy<python::manage_new_object>());
     python::def("MergeQueryHs",
                 (ROMol * (*)(const ROMol &, bool)) & MolOps::mergeQueryHs,
                 (python::arg("mol"), python::arg("mergeUnmappedOnly") = false),
@@ -1676,20 +1740,36 @@ struct molops_wrapper {
 
     // ------------------------------------------------------------------------
     docString =
-        "Sets the chiral tags on a molecule's atoms based on \n\
+        "Sets the chiral tags on a molecule's atoms based on\n\
   a 3D conformation.\n\
 \n\
   ARGUMENTS:\n\
 \n\
     - mol: the molecule to use\n\
     - confId: the conformer id to use, -1 for the default \n\
-    - replaceExistingTags: if True, existing stereochemistry information will be cleared \n\
-    before running the calculation. \n\
+    - replaceExistingTags: if True, existing stereochemistry information will be cleared\n\
+    before running the calculation.\n\
 \n";
     python::def("AssignAtomChiralTagsFromStructure",
                 MolOps::assignChiralTypesFrom3D,
                 (python::arg("mol"), python::arg("confId") = -1,
                  python::arg("replaceExistingTags") = true),
+                docString.c_str());
+
+    // ------------------------------------------------------------------------
+    docString =
+        "Sets the chiral tags on a molecule's atoms based on\n\
+  the molParity atom property.\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use\n\
+    - replaceExistingTags: if True, existing stereochemistry information will be cleared\n\
+    before running the calculation.\n\
+\n";
+    python::def("AssignAtomChiralTagsFromMolParity",
+                MolOps::assignChiralTypesFromMolParity,
+                (python::arg("mol"), python::arg("replaceExistingTags") = true),
                 docString.c_str());
 
     // ------------------------------------------------------------------------

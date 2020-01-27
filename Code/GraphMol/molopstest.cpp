@@ -1486,10 +1486,11 @@ void testIssue183() {
        bondIt++) {
     if ((*bondIt)->getBondType() == Bond::DOUBLE) {
       nDbl++;
-      if ((*bondIt)->getStereo() == Bond::STEREOE)
+      if ((*bondIt)->getStereo() == Bond::STEREOE) {
         nEs++;
-      else if ((*bondIt)->getStereo() == Bond::STEREOZ)
+      } else if ((*bondIt)->getStereo() == Bond::STEREOZ) {
         nZs++;
+      }
     }
   }
   // BOOST_LOG(rdInfoLog) << ">> " << nDbl << " " << nEs << " " << nZs <<
@@ -4673,7 +4674,9 @@ namespace {
 void _renumberTest(const ROMol *m) {
   PRECONDITION(m, "no molecule");
   std::vector<unsigned int> idxV(m->getNumAtoms());
-  for (unsigned int i = 0; i < m->getNumAtoms(); ++i) idxV[i] = i;
+  for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
+    idxV[i] = i;
+  }
 
   std::string refSmi = MolToSmiles(*m, true);
   for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
@@ -4713,7 +4716,9 @@ void _renumberTest(const ROMol *m) {
     }
 
     std::string nSmi = MolToSmiles(*nm, true);
-    if (nSmi != refSmi) std::cerr << refSmi << std::endl << nSmi << std::endl;
+    if (nSmi != refSmi) {
+      std::cerr << refSmi << std::endl << nSmi << std::endl;
+    }
     TEST_ASSERT(nSmi == refSmi);
     delete nm;
   }
@@ -4757,7 +4762,7 @@ void testRenumberAtoms() {
   }
 
   {  // github issue 1735 renumber empty molecules
-    ROMol *m = new ROMol;
+    auto *m = new ROMol;
     TEST_ASSERT(m);
     std::vector<unsigned int> nVect;
     auto *m1 = MolOps::renumberAtoms(*m, nVect);
@@ -5289,8 +5294,9 @@ void testGithubIssue539() {
     RWMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
     bool allConjugated = true;
-    for (unsigned int i = 0; allConjugated && i < m->getNumBonds(); ++i)
+    for (unsigned int i = 0; allConjugated && i < m->getNumBonds(); ++i) {
       allConjugated = m->getBondWithIdx(i)->getIsConjugated();
+    }
     TEST_ASSERT(allConjugated);
     delete m;
   }
@@ -5305,12 +5311,14 @@ void testGithubIssue539() {
       RWMol *m = SmilesToMol(*smiles);
       TEST_ASSERT(m);
       bool allConjugated = true;
-      for (unsigned int i = 0; allConjugated && i < m->getNumBonds(); ++i)
+      for (unsigned int i = 0; allConjugated && i < m->getNumBonds(); ++i) {
         allConjugated = m->getBondWithIdx(i)->getIsConjugated();
+      }
       TEST_ASSERT(allConjugated);
       bool allAromatic = true;
-      for (unsigned int i = 0; allAromatic && i < m->getNumBonds(); ++i)
+      for (unsigned int i = 0; allAromatic && i < m->getNumBonds(); ++i) {
         allAromatic = m->getBondWithIdx(i)->getIsAromatic();
+      }
       TEST_ASSERT(allAromatic);
       delete m;
     }

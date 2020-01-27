@@ -52,12 +52,13 @@ class int_compare_ftor {
     PRECONDITION(dp_ints, "no ints");
     unsigned int ivi = dp_ints[i];
     unsigned int ivj = dp_ints[j];
-    if (ivi < ivj)
+    if (ivi < ivj) {
       return -1;
-    else if (ivi > ivj)
+    } else if (ivi > ivj) {
       return 1;
-    else
+    } else {
       return 0;
+    }
   }
 };
 
@@ -79,7 +80,9 @@ void hs1(const std::vector<std::vector<int>> &vects) {
     const int *data = &vect.front();
     int_compare_ftor icmp(data);
     int *indices = (int *)malloc(vect.size() * sizeof(int));
-    for (unsigned int j = 0; j < vect.size(); ++j) indices[j] = j;
+    for (unsigned int j = 0; j < vect.size(); ++j) {
+      indices[j] = j;
+    }
     int *count = (int *)malloc(vect.size() * sizeof(int));
     int *changed = (int *)malloc(vect.size() * sizeof(int));
     memset(changed, 1, vect.size() * sizeof(int));
@@ -139,17 +142,19 @@ class atomcomparefunctor {
     // always start with the current class:
     ivi = d_atoms[i].index;
     ivj = d_atoms[j].index;
-    if (ivi < ivj)
+    if (ivi < ivj) {
       return -1;
-    else if (ivi > ivj)
+    } else if (ivi > ivj) {
       return 1;
+    }
 
     ivi = d_atoms[i].atom->getAtomicNum();
     ivj = d_atoms[j].atom->getAtomicNum();
-    if (ivi < ivj)
+    if (ivi < ivj) {
       return -1;
-    else if (ivi > ivj)
+    } else if (ivi > ivj) {
       return 1;
+    }
 
     return 0;
   }
@@ -167,26 +172,29 @@ class atomcomparefunctor2 {
     // always start with the current class:
     ivi = d_atoms[i].index;
     ivj = d_atoms[j].index;
-    if (ivi < ivj)
+    if (ivi < ivj) {
       return -1;
-    else if (ivi > ivj)
+    } else if (ivi > ivj) {
       return 1;
+    }
 
     // start by comparing degree
     ivi = d_atoms[i].atom->getDegree();
     ivj = d_atoms[j].atom->getDegree();
-    if (ivi < ivj)
+    if (ivi < ivj) {
       return -1;
-    else if (ivi > ivj)
+    } else if (ivi > ivj) {
       return 1;
+    }
 
     // move onto atomic number
     ivi = d_atoms[i].atom->getAtomicNum();
     ivj = d_atoms[j].atom->getAtomicNum();
-    if (ivi < ivj)
+    if (ivi < ivj) {
       return -1;
-    else if (ivi > ivj)
+    } else if (ivi > ivj) {
       return 1;
+    }
 
     return 0;
   }
@@ -383,26 +391,29 @@ class atomcomparefunctor3 {
     // always start with the current class:
     ivi = dp_atoms[i].index;
     ivj = dp_atoms[j].index;
-    if (ivi < ivj)
+    if (ivi < ivj) {
       return -1;
-    else if (ivi > ivj)
+    } else if (ivi > ivj) {
       return 1;
+    }
 
     // start by comparing degree
     ivi = dp_atoms[i].atom->getDegree();
     ivj = dp_atoms[j].atom->getDegree();
-    if (ivi < ivj)
+    if (ivi < ivj) {
       return -1;
-    else if (ivi > ivj)
+    } else if (ivi > ivj) {
       return 1;
+    }
 
     // move onto atomic number
     ivi = dp_atoms[i].atom->getAtomicNum();
     ivj = dp_atoms[j].atom->getAtomicNum();
-    if (ivi < ivj)
+    if (ivi < ivj) {
       return -1;
-    else if (ivi > ivj)
+    } else if (ivi > ivj) {
       return 1;
+    }
 
     return 0;
   }
@@ -417,17 +428,20 @@ class atomcomparefunctor3 {
     PRECONDITION(dp_atoms, "no atoms");
     PRECONDITION(dp_mol, "no molecule");
     int v = basecomp(i, j);
-    if (v) return v;
+    if (v) {
+      return v;
+    }
     unsigned int ivi, ivj;
     if (df_useNbrs) {
       ivi = dp_atoms[i].index + 1 + getAtomNeighborhood(i);
       ivj = dp_atoms[j].index + 1 + getAtomNeighborhood(j);
       // std::cerr<<"               "<<i<<"-"<<j<<": "<<ivi<<"
       // "<<ivj<<std::endl;
-      if (ivi < ivj)
+      if (ivi < ivj) {
         return -1;
-      else if (ivi > ivj)
+      } else if (ivi > ivj) {
         return 1;
+      }
     }
     return 0;
   }
@@ -883,7 +897,9 @@ void _renumberTest(const ROMol *m, std::string inSmiles,
   //    std::cerr<<">>>>>>>>>>>>>>>>>>>>>>>>>>>"<<std::endl;
   std::string osmi = MolToSmiles(*m, true);
   std::vector<unsigned int> idxV(m->getNumAtoms());
-  for (unsigned int i = 0; i < m->getNumAtoms(); ++i) idxV[i] = i;
+  for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
+    idxV[i] = i;
+  }
 
   std::srand(0xF00D);
   for (unsigned int i = 0; i < numRenumbers; ++i) {
@@ -920,7 +936,9 @@ void _renumberTest2(const ROMol *m, std::string inSmiles,
 
   unsigned int nAtoms = m->getNumAtoms();
   std::vector<unsigned int> idxV(m->getNumAtoms());
-  for (unsigned int i = 0; i < m->getNumAtoms(); ++i) idxV[i] = i;
+  for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
+    idxV[i] = i;
+  }
 
   std::srand(0xF00D);
   for (unsigned int i = 0; i < numRenumbers; ++i) {
@@ -1223,7 +1241,9 @@ void test8() {
     m = SmilesToMol(smi1);
     TEST_ASSERT(m);
     std::string smi2 = MolToSmiles(*m, true);
-    if (smi1 != smi2) std::cerr << smi1 << "\n" << smi2 << std::endl;
+    if (smi1 != smi2) {
+      std::cerr << smi1 << "\n" << smi2 << std::endl;
+    }
     TEST_ASSERT(smi1 == smi2);
     delete m;
   }

@@ -201,8 +201,8 @@ python::list getSparseCountFPBulkPy(python::list &py_molVect, FPType fPType) {
   auto tempResult = getSparseCountFPBulk(molVect, fPType);
   python::list result;
 
-  for (auto it = tempResult->begin(); it != tempResult->end(); ++it) {
-    result.append((boost::shared_ptr<SparseIntVect<std::uint64_t>>)*it);
+  for (auto &it : *tempResult) {
+    result.append((boost::shared_ptr<SparseIntVect<std::uint64_t>>)it);
   }
   delete tempResult;
   return result;
@@ -214,10 +214,10 @@ python::list getSparseFPBulkPy(python::list &py_molVect, FPType fpType) {
   auto tempResult = getSparseFPBulk(molVect, fpType);
   python::list result;
 
-  for (auto it = tempResult->begin(); it != tempResult->end(); ++it) {
+  for (auto &it : *tempResult) {
     // todo every other bulk method casts results to boost::shared_ptr, except
     // this one. It should also be boost::shared_ptr
-    result.append(*it);
+    result.append(it);
   }
   delete tempResult;
   return result;
@@ -229,8 +229,8 @@ python::list getCountFPBulkPy(python::list &py_molVect, FPType fPType) {
   auto tempResult = getCountFPBulk(molVect, fPType);
   python::list result;
 
-  for (auto it = tempResult->begin(); it != tempResult->end(); ++it) {
-    result.append((boost::shared_ptr<SparseIntVect<std::uint32_t>>)*it);
+  for (auto &it : *tempResult) {
+    result.append((boost::shared_ptr<SparseIntVect<std::uint32_t>>)it);
   }
   delete tempResult;
   return result;
@@ -242,8 +242,8 @@ python::list getFPBulkPy(python::list &py_molVect, FPType fPType) {
   auto tempResult = getFPBulk(molVect, fPType);
   python::list result;
 
-  for (auto it = tempResult->begin(); it != tempResult->end(); ++it) {
-    result.append((boost::shared_ptr<ExplicitBitVect>)*it);
+  for (auto &it : *tempResult) {
+    result.append((boost::shared_ptr<ExplicitBitVect>)it);
   }
   delete tempResult;
   return result;
@@ -268,9 +268,9 @@ BOOST_PYTHON_MODULE(rdFingerprintGenerator) {
            "Generates a sparse count fingerprint\n\n"
            "  ARGUMENTS:\n"
            "    - mol: molecule to be fingerprinted\n"
-           "    - fromAtoms: indicies of atoms to use while generating the "
+           "    - fromAtoms: indices of atoms to use while generating the "
            "fingerprint\n"
-           "    - ignoreAtoms: indicies of atoms to exclude while generating "
+           "    - ignoreAtoms: indices of atoms to exclude while generating "
            "the fingerprint\n"
            "    - confId: 3D confirmation to use, only used by AtomPair "
            "fingerprint\n"
@@ -289,9 +289,9 @@ BOOST_PYTHON_MODULE(rdFingerprintGenerator) {
            "Generates a sparse fingerprint\n\n"
            "  ARGUMENTS:\n"
            "    - mol: molecule to be fingerprinted\n"
-           "    - fromAtoms: indicies of atoms to use while generating the "
+           "    - fromAtoms: indices of atoms to use while generating the "
            "fingerprint\n"
-           "    - ignoreAtoms: indicies of atoms to exclude while generating "
+           "    - ignoreAtoms: indices of atoms to exclude while generating "
            "the fingerprint\n"
            "    - confId: 3D confirmation to use, only used by AtomPair "
            "fingerprint\n"
@@ -310,9 +310,9 @@ BOOST_PYTHON_MODULE(rdFingerprintGenerator) {
            "Generates a count fingerprint\n\n"
            "  ARGUMENTS:\n"
            "    - mol: molecule to be fingerprinted\n"
-           "    - fromAtoms: indicies of atoms to use while generating the "
+           "    - fromAtoms: indices of atoms to use while generating the "
            "fingerprint\n"
-           "    - ignoreAtoms: indicies of atoms to exclude while generating "
+           "    - ignoreAtoms: indices of atoms to exclude while generating "
            "the fingerprint\n"
            "    - confId: 3D confirmation to use, only used by AtomPair "
            "fingerprint\n"
@@ -331,9 +331,9 @@ BOOST_PYTHON_MODULE(rdFingerprintGenerator) {
            "Generates a fingerprint\n\n"
            "  ARGUMENTS:\n"
            "    - mol: molecule to be fingerprinted\n"
-           "    - fromAtoms: indicies of atoms to use while generating the "
+           "    - fromAtoms: indices of atoms to use while generating the "
            "fingerprint\n"
-           "    - ignoreAtoms: indicies of atoms to exclude while generating "
+           "    - ignoreAtoms: indices of atoms to exclude while generating "
            "the fingerprint\n"
            "    - confId: 3D confirmation to use, only used by AtomPair "
            "fingerprint\n"
@@ -360,9 +360,9 @@ BOOST_PYTHON_MODULE(rdFingerprintGenerator) {
            "Generates a sparse count fingerprint\n\n"
            "  ARGUMENTS:\n"
            "    - mol: molecule to be fingerprinted\n"
-           "    - fromAtoms: indicies of atoms to use while generating the "
+           "    - fromAtoms: indices of atoms to use while generating the "
            "fingerprint\n"
-           "    - ignoreAtoms: indicies of atoms to exclude while generating "
+           "    - ignoreAtoms: indices of atoms to exclude while generating "
            "the fingerprint\n"
            "    - confId: 3D confirmation to use, only used by AtomPair "
            "fingerprint\n"
@@ -381,9 +381,9 @@ BOOST_PYTHON_MODULE(rdFingerprintGenerator) {
            "Generates a sparse fingerprint\n\n"
            "  ARGUMENTS:\n"
            "    - mol: molecule to be fingerprinted\n"
-           "    - fromAtoms: indicies of atoms to use while generating the "
+           "    - fromAtoms: indices of atoms to use while generating the "
            "fingerprint\n"
-           "    - ignoreAtoms: indicies of atoms to exclude while generating "
+           "    - ignoreAtoms: indices of atoms to exclude while generating "
            "the fingerprint\n"
            "    - confId: 3D confirmation to use, only used by AtomPair "
            "fingerprint\n"
@@ -402,9 +402,9 @@ BOOST_PYTHON_MODULE(rdFingerprintGenerator) {
            "Generates a count fingerprint\n\n"
            "  ARGUMENTS:\n"
            "    - mol: molecule to be fingerprinted\n"
-           "    - fromAtoms: indicies of atoms to use while generating the "
+           "    - fromAtoms: indices of atoms to use while generating the "
            "fingerprint\n"
-           "    - ignoreAtoms: indicies of atoms to exclude while generating "
+           "    - ignoreAtoms: indices of atoms to exclude while generating "
            "the fingerprint\n"
            "    - confId: 3D confirmation to use, only used by AtomPair "
            "fingerprint\n"
@@ -423,9 +423,9 @@ BOOST_PYTHON_MODULE(rdFingerprintGenerator) {
            "Generates a fingerprint\n\n"
            "  ARGUMENTS:\n"
            "    - mol: molecule to be fingerprinted\n"
-           "    - fromAtoms: indicies of atoms to use while generating the "
+           "    - fromAtoms: indices of atoms to use while generating the "
            "fingerprint\n"
-           "    - ignoreAtoms: indicies of atoms to exclude while generating "
+           "    - ignoreAtoms: indices of atoms to exclude while generating "
            "the fingerprint\n"
            "    - confId: 3D confirmation to use, only used by AtomPair "
            "fingerprint\n"

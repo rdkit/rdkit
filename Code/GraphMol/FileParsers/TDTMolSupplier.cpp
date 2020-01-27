@@ -134,7 +134,9 @@ TDTMolSupplier::~TDTMolSupplier() {
 void TDTMolSupplier::setData(const std::string &text,
                              const std::string &nameRecord, int confId2D,
                              int confId3D, bool sanitize) {
-  if (dp_inStream && df_owner) delete dp_inStream;
+  if (dp_inStream && df_owner) {
+    delete dp_inStream;
+  }
   init();
   d_confId2D = confId2D;
   d_confId3D = confId3D;
@@ -156,7 +158,9 @@ bool TDTMolSupplier::advanceToNextRecord() {
   std::streampos pos;
   bool res = false;
   while (1) {
-    if (dp_inStream->eof()) return false;
+    if (dp_inStream->eof()) {
+      return false;
+    }
     pos = dp_inStream->tellg();
     std::string inL;
     std::getline(*dp_inStream, inL);
@@ -272,8 +276,9 @@ ROMol *TDTMolSupplier::parseMol(std::string inLine) {
         } else {
           std::string propVal = inLine.substr(startP, endP - startP);
           res->setProp(propName, propVal);
-          if (propName == d_nameProp)
+          if (propName == d_nameProp) {
             res->setProp(common_properties::_Name, propVal);
+          }
         }
       }
       std::getline(*dp_inStream, inLine);
@@ -417,7 +422,7 @@ unsigned int TDTMolSupplier::length() {
       d_len++;
       std::getline(*dp_inStream, inL);
     }
-    // now remember to set the stream to the last postion we want to read
+    // now remember to set the stream to the last position we want to read
     dp_inStream->clear();
     dp_inStream->seekg(d_molpos[d_last]);
     return d_len;

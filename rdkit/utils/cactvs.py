@@ -30,10 +30,10 @@ def SmilesToGif(smiles, fileNames, size=(200, 200), cmd=None, dblSize=0, frame=0
       )
     nDone += 1
   if args:
-    fN = tempfile.mktemp('.cmd')
-    open(fN, 'w+').write(args + '\n')
+    with tempfile.NamedTemporaryFile('w+', suffix='.cmd', delete=False) as tmp:
+      tmp.write(args + '\n')
     try:
-      cmd = "%s < %s" % (baseCmd, fN)
+      cmd = "%s < %s" % (baseCmd, tmp.name)
       os.system(cmd)
     except Exception:
       import traceback
@@ -47,18 +47,17 @@ def SmilesToGif(smiles, fileNames, size=(200, 200), cmd=None, dblSize=0, frame=0
           res = 0
           break
     try:
-      os.unlink(fN)
+      os.unlink(tmp.name)
     except Exception:
       pass
   return res
 
 
 def SmilesToImage(smiles, **kwargs):
-  tempFilename = tempfile.mktemp('.gif')
-  ok = SmilesToGif(smiles, tempFilename, **kwargs)
-  if ok:
-    img = Image.open(tempFilename)
-    os.unlink(tempFilename)
-  else:
-    img = None
+  with tempfile.NamedTemporaryFile(suffix='.gif') as tmp:
+    ok = SmilesToGif(smiles, tmp.name, **kwargs)
+    if ok:
+      img = Image.open(tmp.name)
+    else:
+      img = None
   return img

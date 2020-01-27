@@ -30,7 +30,7 @@ endif()
 if(RDK_BUILD_PYTHON_WRAPPERS)
   # this is a particularly nasty little bit of hackery.
   # cmake (as of 2.8) ignores the ADDITIONAL_MAKE_CLEAN_FILES argument
-  # unless it's in a directory that actualy has a target. So in order to
+  # unless it's in a directory that actually has a target. So in order to
   # cleanup files created by the python tests we have to put something
   # here with the ugly relative path
   IF(COMMAND cmake_policy)

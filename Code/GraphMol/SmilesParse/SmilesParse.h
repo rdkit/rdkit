@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2016 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2020 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef _RD_SMILESPARSE_H_
-#define _RD_SMILESPARSE_H_
+#ifndef RD_SMILESPARSE_H
+#define RD_SMILESPARSE_H
 
 #include <GraphMol/RWMol.h>
 #include <GraphMol/SanitException.h>
@@ -20,19 +20,15 @@
 namespace RDKit {
 
 struct RDKIT_SMILESPARSE_EXPORT SmilesParserParams {
-  int debugParse;
-  bool sanitize;
-  std::map<std::string, std::string> *replacements;
-  bool allowCXSMILES;
-  bool parseName;
-  bool removeHs;
-  SmilesParserParams()
-      : debugParse(0),
-        sanitize(true),
-        replacements(NULL),
-        allowCXSMILES(true),
-        parseName(false),
-        removeHs(true){};
+  int debugParse = 0;   /**< enable debugging in the SMILES parser*/
+  bool sanitize = true; /**< sanitize the molecule after building it */
+  std::map<std::string, std::string> *replacements =
+      nullptr;               /**< allows SMILES "macros" */
+  bool allowCXSMILES = true; /**< recognize and parse CXSMILES*/
+  bool strictCXSMILES =
+      true; /**< throw an exception if the CXSMILES parsing fails */
+  bool parseName = false; /**< parse (and set) the molecule name as well */
+  bool removeHs = true;   /**< remove Hs after constructing the molecule */
 };
 RDKIT_SMILESPARSE_EXPORT RWMol *SmilesToMol(const std::string &smi,
                                             const SmilesParserParams &params);
@@ -55,7 +51,7 @@ RDKIT_SMILESPARSE_EXPORT Bond *SmilesToBond(const std::string &smi);
  abbreviations
  in the input SMILES. The set of substitutions is repeatedly looped through
  until
- the string no longer changes. It is the responsiblity of the caller to make
+ the string no longer changes. It is the responsibility of the caller to make
  sure
  that substitutions results in legal and sensible SMILES.
 
@@ -107,7 +103,7 @@ class RDKIT_SMILESPARSE_EXPORT SmilesParseException : public std::exception {
   SmilesParseException(const char *msg) : _msg(msg){};
   SmilesParseException(const std::string msg) : _msg(msg){};
   const char *message() const { return _msg.c_str(); };
-  ~SmilesParseException() throw(){};
+  ~SmilesParseException() noexcept {};
 
  private:
   std::string _msg;
@@ -127,12 +123,9 @@ inline std::unique_ptr<RDKit::RWMol> operator"" _smiles(const char *text,
 inline std::unique_ptr<RDKit::RWMol> operator"" _smarts(const char *text,
                                                         size_t len) {
   std::string smi(text, len);
-  RWMol *ptr = nullptr;
-  try {
-    ptr = SmartsToMol(smi);
-  } catch (const RDKit::MolSanitizeException &) {
-    ptr = nullptr;
-  }
+  // no need for exception handling here: SmartsToMol() doesn't do
+  // sanitization
+  RWMol *ptr = SmartsToMol(smi);
   return std::unique_ptr<RWMol>(ptr);
 }
 

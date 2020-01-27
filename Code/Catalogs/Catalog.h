@@ -84,7 +84,7 @@ class Catalog {
   //! sets our parameters by copying the \c params argument
   virtual void setCatalogParams(const paramType *params) {
     PRECONDITION(params, "bad parameter object");
-    // if we already have a paramter object throw an exception
+    // if we already have a parameter object throw an exception
     PRECONDITION(!dp_cParams,
                  "A parameter object already exists on the catalog");
     /*
@@ -434,7 +434,7 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
   }
 
  private:
-  // graphs that store the entries in the catalog in a hierachical manner
+  // graphs that store the entries in the catalog in a hierarchical manner
   CatalogGraph d_graph;
   // a  map that maps the order type of entries in the catalog to
   // a vector of vertex indices in the graphs above

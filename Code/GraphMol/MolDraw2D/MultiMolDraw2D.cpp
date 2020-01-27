@@ -204,7 +204,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
     doContinuousHighlighting(mol, highlight_atoms, highlight_bonds,
                              highlight_atom_map, highlight_bond_map,
                              highlight_radii);
-    // at this point we shouldn't be doing any more higlighting, so blow out
+    // at this point we shouldn't be doing any more highlighting, so blow out
     // those variables:
     highlight_bonds = NULL;
     highlight_atoms = NULL;

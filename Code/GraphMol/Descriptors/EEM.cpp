@@ -101,7 +101,7 @@ const float B3[] =
 {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
 */
 
-// function to retreive the atomtype value based on the "highest" (e.g. max)
+// function to retrieve the atomtype value based on the "highest" (e.g. max)
 // bond type of an atom potential improvement : in the original publication they
 // don't have access to "Aromatic type" like in RDKit
 unsigned int getAtomtype(const ROMol &mol, const RDKit::Atom *atom) {
@@ -125,7 +125,7 @@ std::unique_ptr<double[]> getEEMMatrix(double *dist3D, unsigned int n,
                                        const EEM_arrays& EEMatoms) {
   PRECONDITION(dist3D != nullptr, "bad dist3D argument")
   int sizeArray = (n + 1) * (n + 1);
-  double *EEM =
+  auto *EEM =
       new double[sizeArray]();  // declaration to set all elements to zeros!
   /* Fill the full n * n block */
   for (unsigned int i = 0; i < n; i++) {
@@ -159,7 +159,7 @@ std::unique_ptr<double[]> getEEMMatrix(double *dist3D, unsigned int n,
 std::unique_ptr<double[]> getBVector(const ROMol &mol, unsigned int n,
                                      const EEM_arrays &EEMatoms) {
   /* Fill vector b i.e. -A */
-  double *b = new double[n + 1];
+  auto *b = new double[n + 1];
   for (unsigned int j = 0; j < n; j++) {
     unsigned int t = EEMatoms.EEMatomtype[j];
     unsigned int idx = EEMatoms.Atomindex[j];
@@ -239,7 +239,7 @@ void EEM(ROMol &mol, std::vector<double> &res, int confId) {
   res.resize(numAtoms);
   // copy molecule so that we can kekulize it
   RWMol wmol(mol);
-  // kekulize is currenlty required but it could be remove if and only if:
+  // kekulize is currently required but it could be remove if and only if:
   // we use "Aromatic type"  in RDKit retrain the model without Kekulize
   // that would be part of a future release if it's really important
   MolOps::Kekulize(wmol, true);

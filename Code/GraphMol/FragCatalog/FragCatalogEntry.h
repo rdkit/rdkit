@@ -51,7 +51,7 @@ class RDKIT_FRAGCATALOG_EXPORT FragCatalogEntry
 
   void setDescription(const FragCatParams *params);
 
-  // check if this fragment macthes the one specified
+  // check if this fragment matches the one specified
   //
 
   bool match(const FragCatalogEntry *other, double tol) const;

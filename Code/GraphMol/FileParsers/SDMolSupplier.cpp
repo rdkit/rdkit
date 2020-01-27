@@ -84,7 +84,9 @@ void SDMolSupplier::init() {
 
 void SDMolSupplier::setDataCommon(const std::string &text, bool sanitize,
                                   bool removeHs) {
-  if (dp_inStream && df_owner) delete dp_inStream;
+  if (dp_inStream && df_owner) {
+    delete dp_inStream;
+  }
   init();
   std::istream *tmpStream = nullptr;
   tmpStream = static_cast<std::istream *>(
@@ -276,7 +278,7 @@ unsigned int SDMolSupplier::length() {
         }
       }
     }
-    // now remember to set the stream to the last postion we want to read
+    // now remember to set the stream to the last position we want to read
     dp_inStream->clear();
     dp_inStream->seekg(d_molpos[d_last]);
     return d_len;

@@ -130,8 +130,12 @@ void ReactionPickler::_pickle(const ChemicalReaction *rxn, std::ostream &ss,
   streamWrite(ss, tmpInt);
 
   uint32_t flag = 0;
-  if (rxn->getImplicitPropertiesFlag()) flag |= 0x1;
-  if (rxn->df_needsInit) flag |= 0x2;
+  if (rxn->getImplicitPropertiesFlag()) {
+    flag |= 0x1;
+  }
+  if (rxn->df_needsInit) {
+    flag |= 0x2;
+  }
   streamWrite(ss, flag);
 
   // -------------------
@@ -173,7 +177,9 @@ void ReactionPickler::_pickle(const ChemicalReaction *rxn, std::ostream &ss,
 
 void ReactionPickler::_pickleProperties(std::ostream &ss, const RDProps &props,
                                         unsigned int pickleFlags) {
-  if (!pickleFlags) return;
+  if (!pickleFlags) {
+    return;
+  }
 
   streamWriteProps(ss, props, pickleFlags & PicklerOps::PrivateProps,
                    pickleFlags & PicklerOps::ComputedProps);

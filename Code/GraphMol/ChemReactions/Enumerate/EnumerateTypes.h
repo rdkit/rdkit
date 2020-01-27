@@ -37,7 +37,7 @@
 
 namespace RDKit {
 namespace EnumerationTypes {
-//! BBS - Helper typedef for holding buliding blocks for reactions
+//! BBS - Helper typedef for holding building blocks for reactions
 //!   holds vectors of reagents for each reactant in a Reaction
 typedef std::vector<MOL_SPTR_VECT> BBS;
 

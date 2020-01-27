@@ -172,7 +172,9 @@ unsigned int jacobi(double quad[4][4], double eigenVals[4],
 
   // initialize the eigen vector to Identity
   for (j = 0; j <= 3; j++) {
-    for (i = 0; i <= 3; i++) eigenVecs[i][j] = 0.0;
+    for (i = 0; i <= 3; i++) {
+      eigenVecs[i][j] = 0.0;
+    }
     eigenVecs[j][j] = 1.0;
     eigenVals[j] = quad[j][j];
   }
@@ -186,7 +188,9 @@ unsigned int jacobi(double quad[4][4], double eigenVals[4],
         offDiagNorm += fabs(quad[i][j]);
       }
     }
-    if ((offDiagNorm / diagNorm) <= TOLERANCE) goto Exit_now;
+    if ((offDiagNorm / diagNorm) <= TOLERANCE) {
+      goto Exit_now;
+    }
     for (j = 1; j <= 3; j++) {
       for (i = 0; i <= j - 1; i++) {
         b = quad[i][j];

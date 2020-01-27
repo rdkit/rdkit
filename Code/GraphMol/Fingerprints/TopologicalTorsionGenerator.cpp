@@ -66,7 +66,7 @@ TopologicalTorsionEnvGenerator<OutputType>::getEnvironments(
     const std::vector<std::uint32_t> *atomInvariants,
     const std::vector<std::uint32_t> *, // bondInvariants
     const bool hashResults) const {
-  TopologicalTorsionArguments<OutputType> *topologicalTorsionArguments =
+  auto *topologicalTorsionArguments =
       dynamic_cast<TopologicalTorsionArguments<OutputType> *>(arguments);
 
   std::vector<AtomEnvironment<OutputType> *> result =
@@ -157,13 +157,10 @@ FingerprintGenerator<OutputType> *getTopologicalTorsionGenerator(
     AtomInvariantsGenerator *atomInvariantsGenerator,
     const bool countSimulation, const std::vector<std::uint32_t> countBounds,
     const std::uint32_t fpSize, const bool ownsAtomInvGen) {
-  TopologicalTorsionEnvGenerator<OutputType> *envGenerator =
-      new TopologicalTorsionEnvGenerator<OutputType>();
+  auto *envGenerator = new TopologicalTorsionEnvGenerator<OutputType>();
 
-  TopologicalTorsionArguments<OutputType> *arguments =
-      new TopologicalTorsionArguments<OutputType>(
-          includeChirality, torsionAtomCount, countSimulation, countBounds,
-          fpSize);
+  auto *arguments = new TopologicalTorsionArguments<OutputType>(
+      includeChirality, torsionAtomCount, countSimulation, countBounds, fpSize);
 
   bool ownsAtomInvGenerator = ownsAtomInvGen;
   if (!atomInvariantsGenerator) {

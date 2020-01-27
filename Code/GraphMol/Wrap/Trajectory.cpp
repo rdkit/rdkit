@@ -25,10 +25,12 @@ Snapshot *getSnapshot_wrap(Trajectory *traj, unsigned int snapshotNum) {
 Snapshot *constructSnapshot_wrap(python::list &coordList, double energy) {
   unsigned int l = python::len(coordList);
   boost::shared_array<double> c;
-  if (l)
+  if (l) {
     c.reset(new double[l]);
-  for (unsigned int i = 0; i < l; ++i)
+  }
+  for (unsigned int i = 0; i < l; ++i) {
     c[i] = python::extract<double>(coordList[i]);
+  }
   return new Snapshot(c, energy);
 }
 

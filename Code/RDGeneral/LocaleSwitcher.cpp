@@ -79,10 +79,11 @@ static int recurseLocale(int state) {
   return recursion;
 #else
   static thread_local int recursion = 0;
-  if (state == SwitchLocale)
+  if (state == SwitchLocale) {
     recursion++;
-  else if (state == ResetLocale)
+  } else if (state == ResetLocale) {
     recursion--;
+  }
   return recursion;
 #endif
 }
@@ -122,7 +123,7 @@ class LocaleSwitcherImpl {
   std::string old_locale;
 #else  // _WIN32
   locale_t loc;      // current "C" locale
-  locale_t old_loc;  // locale we came frome
+  locale_t old_loc;  // locale we came from
 
   LocaleSwitcherImpl() : old_locale(setlocale(LC_ALL, nullptr)) {
     // set locale for this thread
@@ -133,8 +134,9 @@ class LocaleSwitcherImpl {
       loc = newlocale(LC_ALL_MASK, "C", (locale_t) nullptr);
       uselocale(loc);
       // Don't free "C" or "GLOBAL" Locales
-    } else
+    } else {
       old_locale = "C";  // prevents recursion
+    }
   }
   ~LocaleSwitcherImpl() {
     if (old_locale != "C") {

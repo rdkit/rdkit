@@ -79,7 +79,7 @@ void recurseWalk(
     boost::dynamic_bitset<> forbidden,  // bonds that have been covered already
     // we don't want reference passing for forbidden,
     // it gets altered through the processand we want
-    // fresh start everytime we buble back up to "FindAllSubGraphs"
+    // fresh start every time we buble back up to "FindAllSubGraphs"
     PATH_LIST &res  // the final list of subgraphs
     ) {
   // end case for recursion
@@ -93,7 +93,7 @@ void recurseWalk(
     return;
   }
 
-  // we  have the cndidates that can be used to add to the existing path
+  // we have the candidates that can be used to add to the existing path
   // try extending the subgraphs
   while (cands.size() != 0) {
     int next = cands.back();  // start with the last one in the candidate list
@@ -130,7 +130,7 @@ void recurseWalkRange(
     boost::dynamic_bitset<> forbidden,  // bonds that have been covered already
     // we don't want reference passing for forbidden,
     // it gets altered through the processand we want
-    // fresh start everytime we buble back up to "FindAllSubGraphs"
+    // fresh start every time we buble back up to "FindAllSubGraphs"
     INT_PATH_LIST_MAP &res  // the final list of subgraphs
     ) {
   unsigned int nsize = spath.size();
@@ -152,7 +152,7 @@ void recurseWalkRange(
     return;
   }
 
-  // we  have the cndidates that can be used to add to the existing path
+  // we have the candidates that can be used to add to the existing path
   // try extending the subgraphs
   while (cands.size() != 0) {
     int next = cands.back();  // start with the last one in the candidate list
@@ -270,7 +270,9 @@ pathFinderHelper(int *adjMat, unsigned int dim, unsigned int minLen,
   // and build them up one index at a time:
   for (unsigned int length = 1; length < maxLen; length++) {
     // extend each path:
-    if (length >= minLen) res[length] = paths;
+    if (length >= minLen) {
+      res[length] = paths;
+    }
     paths = extendPaths(adjMat, dim, paths, maxLen);
   }
   res[maxLen] = paths;
@@ -286,7 +288,7 @@ PATH_LIST findAllSubgraphsOfLengthN(const ROMol &mol, unsigned int targetLen,
     - pathListType is defined as a container of "pathType", should it be a
   container
     of "pointers to pathtype"
-    - to make few things clear it might be useful to typdef a "subgraphListType"
+    - to make few things clear it might be useful to typedef a "subgraphListType"
     even if it is exactly same as the "pathListType", just to not confuse
   between
     path vs. subgraph definitions
@@ -412,7 +414,7 @@ PATH_LIST findUniqueSubgraphsOfLengthN(const ROMol &mol, unsigned int targetLen,
 //
 //  You may find yourself wondering: "what's the difference between
 //  a subgraph and path?"  Well, let me tell you: there's a big
-//  diffference!
+//  difference!
 //
 //  Subgraphs are potentially branched, whereas paths (in our
 //  terminology at least) cannot be.  So, the following graph:
@@ -540,8 +542,9 @@ findAllPathsOfLengthN(const ROMol &mol, unsigned int targetLen, bool useBonds,
 
 PATH_TYPE findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius,
                                        unsigned int rootedAtAtom, bool useHs) {
-  if (rootedAtAtom >= mol.getNumAtoms())
+  if (rootedAtAtom >= mol.getNumAtoms()) {
     throw ValueErrorException("bad atom index");
+  }
 
   PATH_TYPE res;
   std::list<std::pair<int, int> > nbrStack;

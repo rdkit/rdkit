@@ -43,7 +43,7 @@ class MetricMatrixCalc {
    *
    * ARGUMENTS:
    *
-   *  mFunc - pointer to the metric funtion
+   *  mFunc - pointer to the metric function
    */
   void setMetricFunc(double (*mFunc)(const entryType &, const entryType &,
                                      unsigned int)) {

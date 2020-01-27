@@ -18,11 +18,13 @@ namespace RDKit {
 namespace ForceFieldsHelper {
 void normalizeAngleDeg(double &angleDeg) {
   double normFactor = 360.0;
-  if (angleDeg < 0.0)
+  if (angleDeg < 0.0) {
     normFactor = -normFactor;
+  }
   angleDeg = fmod(angleDeg, normFactor);
-  if (fabs(angleDeg) > 180.0)
+  if (fabs(angleDeg) > 180.0) {
     angleDeg -= normFactor;
+  }
 }
 
 void computeDihedral(const RDGeom::PointPtrVect &pos, unsigned int idx1,
@@ -61,12 +63,15 @@ void computeDihedral(const RDGeom::Point3D *p1, const RDGeom::Point3D *p2,
   RDGeom::Point3D rLocal[4];
   RDGeom::Point3D tLocal[2];
   double dLocal[2];
-  if (!r)
+  if (!r) {
     r = rLocal;
-  if (!t)
+  }
+  if (!t) {
     t = tLocal;
-  if (!d)
+  }
+  if (!d) {
     d = dLocal;
+  }
   r[0] = *p1 - *p2;
   r[1] = *p3 - *p2;
   r[2] = -r[1];
@@ -79,8 +84,9 @@ void computeDihedral(const RDGeom::Point3D *p1, const RDGeom::Point3D *p2,
   d[1] = (std::max)(t[1].length(), 1.0e-5);
   t[1] /= d[1];
   double cosPhiLocal;
-  if (!cosPhi)
+  if (!cosPhi) {
     cosPhi = &cosPhiLocal;
+  }
   *cosPhi = (std::max)(-1.0, (std::min)(t[0].dotProduct(t[1]), 1.0));
   // we want a signed dihedral, that's why we use atan2 instead of acos
   if (dihedral) {
@@ -123,7 +129,9 @@ class calcGradient {
     for (unsigned int i = 0;
          i < mp_ffHolder->numPoints() * mp_ffHolder->dimension(); i++) {
       grad[i] *= gradScale;
-      if (grad[i] > maxGrad) maxGrad = grad[i];
+      if (grad[i] > maxGrad) {
+        maxGrad = grad[i];
+      }
     }
     // this is a continuation of the same hack to avoid
     // some potential numeric instabilities:
@@ -269,7 +277,9 @@ int ForceField::minimize(unsigned int snapshotFreq,
   PRECONDITION(df_init, "not initialized");
   PRECONDITION(static_cast<unsigned int>(d_numPoints) == d_positions.size(),
                "size mismatch");
-  if (d_contribs.empty()) return 0;
+  if (d_contribs.empty()) {
+    return 0;
+  }
 
   unsigned int numIters = 0;
   unsigned int dim = this->d_numPoints * d_dimension;
@@ -292,7 +302,9 @@ int ForceField::minimize(unsigned int snapshotFreq,
 double ForceField::calcEnergy(std::vector<double> *contribs) const {
   PRECONDITION(df_init, "not initialized");
   double res = 0.0;
-  if (d_contribs.empty()) return res;
+  if (d_contribs.empty()) {
+    return res;
+  }
   if (contribs) {
     contribs->clear();
     contribs->reserve(d_contribs.size());
@@ -319,7 +331,9 @@ double ForceField::calcEnergy(double *pos) {
   double res = 0.0;
 
   this->initDistanceMatrix();
-  if (d_contribs.empty()) return res;
+  if (d_contribs.empty()) {
+    return res;
+  }
 
   // now loop over the contribs
   for (ContribPtrVect::const_iterator contrib = d_contribs.begin();
@@ -333,7 +347,9 @@ double ForceField::calcEnergy(double *pos) {
 void ForceField::calcGrad(double *grad) const {
   PRECONDITION(df_init, "not initialized");
   PRECONDITION(grad, "bad gradient vector");
-  if (d_contribs.empty()) return;
+  if (d_contribs.empty()) {
+    return;
+  }
 
   unsigned int N = d_positions.size();
   auto *pos = new double[d_dimension * N];
@@ -356,7 +372,9 @@ void ForceField::calcGrad(double *pos, double *grad) {
   PRECONDITION(df_init, "not initialized");
   PRECONDITION(pos, "bad position vector");
   PRECONDITION(grad, "bad gradient vector");
-  if (d_contribs.empty()) return;
+  if (d_contribs.empty()) {
+    return;
+  }
 
   for (ContribPtrVect::const_iterator contrib = d_contribs.begin();
        contrib != d_contribs.end(); contrib++) {

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2016 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2020 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -272,7 +272,9 @@ RWMol *toMol(const std::string &inp,
              int func(const std::string &, std::vector<RDKit::RWMol *> &),
              const std::string &origInp) {
   // empty strings produce empty molecules:
-  if (inp.empty()) return new RWMol();
+  if (inp.empty()) {
+    return new RWMol();
+  }
   RWMol *res = nullptr;
   std::vector<RDKit::RWMol *> molVect;
   try {
@@ -312,7 +314,9 @@ RWMol *toMol(const std::string &inp,
 
 Atom *toAtom(const std::string &inp, int func(const std::string &, Atom *&)) {
   // empty strings produce empty molecules:
-  if (inp.empty()) return nullptr;
+  if (inp.empty()) {
+    return nullptr;
+  }
   Atom *res = nullptr;
   try {
     func(inp, res);
@@ -330,7 +334,9 @@ Atom *toAtom(const std::string &inp, int func(const std::string &, Atom *&)) {
 
 Bond *toBond(const std::string &inp, int func(const std::string &, Bond *&)) {
   // empty strings produce empty molecules:
-  if (inp.empty()) return nullptr;
+  if (inp.empty()) {
+    return nullptr;
+  }
   Bond *res = nullptr;
   try {
     func(inp, res);
@@ -355,7 +361,9 @@ void preprocessSmiles(const std::string &smiles,
     boost::split(tokens, smiles, boost::is_any_of(" \t"),
                  boost::token_compress_on);
     lsmiles = tokens[0];
-    if (tokens.size() > 1) name = tokens[1];
+    if (tokens.size() > 1) {
+      name = tokens[1];
+    }
   } else if (params.allowCXSMILES) {
     size_t sidx = smiles.find_first_of(" \t");
     if (sidx != std::string::npos && sidx != 0) {
@@ -416,7 +424,13 @@ RWMol *SmilesToMol(const std::string &smiles,
 
   if (res && params.allowCXSMILES && !cxPart.empty()) {
     std::string::const_iterator pos = cxPart.cbegin();
-    SmilesParseOps::parseCXExtensions(*res, cxPart, pos);
+    try {
+      SmilesParseOps::parseCXExtensions(*res, cxPart, pos);
+    } catch (const SmilesParseException &e) {
+      if (params.strictCXSMILES) {
+        throw;
+      }
+    }
     res->setProp("_CXSMILES_Data", std::string(cxPart.cbegin(), pos));
     if (params.parseName && pos != cxPart.cend()) {
       std::string nmpart(pos, cxPart.cend());
@@ -440,7 +454,9 @@ RWMol *SmilesToMol(const std::string &smiles,
     bool cleanIt = true, force = true, flagPossible = true;
     MolOps::assignStereochemistry(*res, cleanIt, force, flagPossible);
   }
-  if (res && !name.empty()) res->setProp(common_properties::_Name, name);
+  if (res && !name.empty()) {
+    res->setProp(common_properties::_Name, name);
+  }
   return res;
 };
 

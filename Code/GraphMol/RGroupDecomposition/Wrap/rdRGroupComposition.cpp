@@ -66,7 +66,9 @@ class RGroupDecompositionHelper {
       MOL_SPTR_VECT coreMols;
       python::stl_input_iterator<ROMOL_SPTR> iter(cores), end;
       while (iter != end) {
-        if (!*iter) throw_value_error("reaction called with None reactants");
+        if (!*iter) {
+          throw_value_error("reaction called with None reactants");
+        }
         coreMols.push_back(*iter);
         ++iter;
       }
@@ -135,7 +137,9 @@ python::object RGroupDecomp(python::object cores, python::object mols,
   python::stl_input_iterator<ROMOL_SPTR> iter(mols), end;
   unsigned int idx = 0;
   while (iter != end) {
-    if (!*iter) throw_value_error("reaction called with None reactants");
+    if (!*iter) {
+      throw_value_error("reaction called with None reactants");
+    }
     if (decomp.Add(*(*iter)) == -1) {
       unmatched.append(idx);
     }
@@ -158,7 +162,7 @@ struct rgroupdecomp_wrapper {
         boost::python::type_id<RDKit::MOL_SPTR_VECT>();
     const boost::python::converter::registration *reg =
         boost::python::converter::registry::query(info);
-    if (reg == NULL || (*reg).m_to_python == NULL) {
+    if (reg == nullptr || (*reg).m_to_python == nullptr) {
       python::class_<RDKit::MOL_SPTR_VECT>("MOL_SPTR_VECT")
           .def(python::vector_indexing_suite<RDKit::MOL_SPTR_VECT, true>());
     }

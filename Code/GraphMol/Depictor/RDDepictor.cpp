@@ -196,7 +196,7 @@ void computeInitialCoords(RDKit::ROMol &mol,
 
   efrags.clear();
 
-  // user specfied coordinates exist
+  // user-specified coordinates exist
   bool preSpec = false;
   // first embed any atoms for which the coordinates have been specified.
   if ((coordMap) && (coordMap->size() > 1)) {
@@ -236,7 +236,7 @@ void computeInitialCoords(RDKit::ROMol &mol,
         rank = atomRanks[*nri];
         rank *= mol.getNumAtoms();
         // use the atom index as well so that we at least
-        // get reproduceable depictions in cases where things
+        // get reproducible depictions in cases where things
         // have identical ranks.
         rank += *nri;
         if (rank < mrank) {
@@ -295,7 +295,7 @@ unsigned int copyCoordinate(RDKit::ROMol &mol, std::list<EmbeddedFrag> &efrags,
 //   1) Find rings
 //   2) Find fused systems
 //   3) embed largest fused system
-//   4) foreach unfinished atom:
+//   4) for each unfinished atom:
 //      1) find neighbors
 //      2) if neighbor is non-ring atom, embed it; otherwise merge the
 //         ring system
@@ -312,7 +312,9 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
   // default to use CoordGen if we have it installed
   if (!forceRDKit && preferCoordGen) {
     RDKit::CoordGen::CoordGenParams params;
-    if (coordMap) params.coordMap = *coordMap;
+    if (coordMap) {
+      params.coordMap = *coordMap;
+    }
     return RDKit::CoordGen::addCoords(mol, &params);
   };
 #endif
@@ -350,7 +352,7 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
     }
   }
   DepictorLocal::_shiftCoords(efrags);
-  // create a confomation on the moelcule and copy the coodinates
+  // create a conformation on the molecule and copy the coordinates
   unsigned int cid = copyCoordinate(mol, efrags, clearConfs);
 
   // special case for a single-atom coordMap template
@@ -384,25 +386,25 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
   other. The second component is the sum of squares of the
   difference in distance between those in dmat and the generated
   structure.  The user can adjust the relative importance of the two
-  components via a adjustable paramter (see below)
+  components via an adjustable parameter (see below)
 
   ARGUMENTS:
-  \param mol - molecule involved in the frgament
+  \param mol - molecule involved in the fragment
 
   \param dmat - the distance matrix we want to mimic, this is
-                symmteric N by N matrix when N is the number of
-                atoms in mol. All ngative entries in dmat are
+                symmetric N by N matrix when N is the number of
+                atoms in mol. All negative entries in dmat are
                 ignored.
 
-  \param canonOrient - canonicalze the orientation after the 2D
+  \param canonOrient - canonicalize the orientation after the 2D
                        embedding is done
 
   \param clearConfs - clear any previously existing conformations on
                       mol before adding a conformation
 
   \param weightDistMat - A value between 0.0 and 1.0, this
-                         determines the importance of mimicing the
-                         the inter atoms distances in dmat. (1.0 -
+                         determines the importance of mimicking the
+                         inter atoms distances in dmat. (1.0 -
                          weightDistMat) is the weight associated to
                          spreading out the structure (density) in
                          the cost function
@@ -424,7 +426,7 @@ unsigned int compute2DCoordsMimicDistMat(
   std::list<EmbeddedFrag> efrags;
   computeInitialCoords(mol, nullptr, efrags);
 
-  // now perform random flips of rotatable bonds so taht we can sample the space
+  // now perform random flips of rotatable bonds so that we can sample the space
   // and try to mimic the distances in dmat
   std::list<EmbeddedFrag>::iterator eri;
   for (eri = efrags.begin(); eri != efrags.end(); eri++) {
@@ -441,7 +443,7 @@ unsigned int compute2DCoordsMimicDistMat(
   }
 
   DepictorLocal::_shiftCoords(efrags);
-  // create a confomation on the moelcule and copy the coodinates
+  // create a conformation on the molecule and copy the coordinates
   unsigned int cid = copyCoordinate(mol, efrags, clearConfs);
   return cid;
 }

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2016 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2019 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -88,20 +88,13 @@ void CleanupAfterParseError(RWMol *mol) {
 //  between the fragment and the molecule
 //
 void AddFragToMol(RWMol *mol, RWMol *frag, Bond::BondType bondOrder,
-                  Bond::BondDir bondDir, bool closeRings, bool doingQuery) {
+                  Bond::BondDir bondDir) {
   PRECONDITION(mol, "no molecule");
   PRECONDITION(frag, "no fragment");
   PRECONDITION(mol->getActiveAtom(), "no active atom");
   Atom *lastAt = mol->getActiveAtom();
   int nOrigAtoms = mol->getNumAtoms();
   int nOrigBonds = mol->getNumBonds();
-
-  //
-  // close any rings we can in the fragment
-  //
-  if (closeRings) {
-    CloseMolRings(frag, true);
-  }
 
   //
   // Add the fragment's atoms and bonds to the molecule:
@@ -118,7 +111,9 @@ void AddFragToMol(RWMol *mol, RWMol *frag, Bond::BondType bondOrder,
                                     tmpVect)) {
       BOOST_FOREACH (int &v, tmpVect) {
         // if the ring closure is not already a bond, don't touch it:
-        if (v >= 0) v += nOrigBonds;
+        if (v >= 0) {
+          v += nOrigBonds;
+        }
       }
       Atom *newAtom = mol->getAtomWithIdx(nOrigAtoms + (*atomIt)->getIdx());
       newAtom->setProp(common_properties::_RingClosures, tmpVect);
@@ -150,17 +145,18 @@ void AddFragToMol(RWMol *mol, RWMol *frag, Bond::BondType bondOrder,
       }
       mol->clearBondBookmark(ci_LEADING_BOND);
     } else {
-      if (!doingQuery) {
-        if (bondOrder == Bond::UNSPECIFIED) {
-          // no bond order provided, figure it out ourselves
-          if (lastAt->getIsAromatic() && firstAt->getIsAromatic()) {
-            bo = Bond::AROMATIC;
-          } else {
-            bo = Bond::SINGLE;
-          }
-        } else {
-          bo = bondOrder;
-        }
+      // SMARTS semantics: unspecified bonds can be single or aromatic
+      if (bondOrder == Bond::UNSPECIFIED) {
+        auto *newB = new QueryBond(Bond::SINGLE);
+        newB->expandQuery(makeBondOrderEqualsQuery(Bond::AROMATIC),
+                          Queries::COMPOSITE_OR, true);
+        newB->setOwningMol(mol);
+        newB->setBeginAtomIdx(atomIdx1);
+        newB->setEndAtomIdx(atomIdx2);
+        mol->addBond(newB);
+        delete newB;
+      } else {
+        bo = bondOrder;
         if (bo == Bond::DATIVEL) {
           int tmp = atomIdx2;
           atomIdx2 = atomIdx1;
@@ -171,31 +167,6 @@ void AddFragToMol(RWMol *mol, RWMol *frag, Bond::BondType bondOrder,
         }
         int idx = mol->addBond(atomIdx2, atomIdx1, bo) - 1;
         mol->getBondWithIdx(idx)->setBondDir(bondDir);
-      } else {
-        // semantics are different in SMARTS, unspecified bonds can be single or
-        // aromatic:
-        if (bondOrder == Bond::UNSPECIFIED) {
-          auto *newB = new QueryBond(Bond::SINGLE);
-          newB->expandQuery(makeBondOrderEqualsQuery(Bond::AROMATIC),
-                            Queries::COMPOSITE_OR, true);
-          newB->setOwningMol(mol);
-          newB->setBeginAtomIdx(atomIdx1);
-          newB->setEndAtomIdx(atomIdx2);
-          mol->addBond(newB);
-          delete newB;
-        } else {
-          bo = bondOrder;
-          if (bo == Bond::DATIVEL) {
-            int tmp = atomIdx2;
-            atomIdx2 = atomIdx1;
-            atomIdx1 = tmp;
-            bo = Bond::DATIVE;
-          } else if (bo == Bond::DATIVER) {
-            bo = Bond::DATIVE;
-          }
-          int idx = mol->addBond(atomIdx2, atomIdx1, bo) - 1;
-          mol->getBondWithIdx(idx)->setBondDir(bondDir);
-        }
       }
     }
   }
@@ -236,14 +207,6 @@ void AddFragToMol(RWMol *mol, RWMol *frag, Bond::BondType bondOrder,
   frag->clearAllBondBookmarks();
 };
 
-void _invChiralRingAtomWithHs(Atom *atom) {
-  PRECONDITION(atom, "bad atom");
-  // we will assume that this function is called on a ring atom with a
-  // ring closure bond
-  if (atom->getNumExplicitHs() == 1) {
-    atom->invertChirality();
-  }
-}
 typedef std::pair<size_t, int> SIZET_PAIR;
 typedef std::pair<int, int> INT_PAIR;
 template <typename T>
@@ -631,15 +594,18 @@ void CleanupAfterParsing(RWMol *mol) {
   PRECONDITION(mol, "no molecule");
   for (RWMol::AtomIterator atomIt = mol->beginAtoms();
        atomIt != mol->endAtoms(); ++atomIt) {
-    if ((*atomIt)->hasProp(common_properties::_RingClosures))
+    if ((*atomIt)->hasProp(common_properties::_RingClosures)) {
       (*atomIt)->clearProp(common_properties::_RingClosures);
-    if ((*atomIt)->hasProp(common_properties::_SmilesStart))
+    }
+    if ((*atomIt)->hasProp(common_properties::_SmilesStart)) {
       (*atomIt)->clearProp(common_properties::_SmilesStart);
+    }
   }
   for (RWMol::BondIterator bondIt = mol->beginBonds();
        bondIt != mol->endBonds(); ++bondIt) {
-    if ((*bondIt)->hasProp(common_properties::_unspecifiedOrder))
+    if ((*bondIt)->hasProp(common_properties::_unspecifiedOrder)) {
       (*bondIt)->clearProp(common_properties::_unspecifiedOrder);
+    }
   }
 }
 

@@ -101,7 +101,9 @@ void test1() {
     } catch (...) {
       continue;
     }
-    if (!mol) continue;
+    if (!mol) {
+      continue;
+    }
     ssslib.addMol(*mol);
     delete mol;
   }
@@ -122,11 +124,12 @@ void test1() {
   int i=0;
   for(auto lib: libs) {
     ROMol *query = SmartsToMol("[#6;$([#6]([#6])[!#6])]");
-    if (i == 0)
+    if (i == 0) {
       hasMatch = runTest(*lib, *query, 1);
-    else
+    } else {
       runTest(*lib, *query, 1, hasMatch);
-    
+    }
+
 #ifdef RDK_TEST_MULTITHREADED
     runTest(*lib, *query, -1, hasMatch);
 #endif
@@ -137,10 +140,11 @@ void test1() {
   i = 0;
   for(auto lib: libs) {
     ROMol *query = SmartsToMol("[$([O,S]-[!$(*=O)])]");
-    if (i == 0)
+    if (i == 0) {
       hasMatch = runTest(*lib, *query, 1);
-    else
+    } else {
       runTest(*lib, *query, 1, hasMatch);
+    }
 
 #ifdef RDK_TEST_MULTITHREADED
     runTest(*lib, *query, -1, hasMatch);
@@ -172,7 +176,9 @@ void test2() {
     } catch (...) {
       continue;
     }
-    if (!mol) continue;
+    if (!mol) {
+      continue;
+    }
     ssslib.addMol(*mol);
     delete mol;
   }

@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2003-2006 Rational Discovery LLC
 //
@@ -54,6 +53,7 @@ unsigned int addOrder1Paths(PATH_LIST &paths, const ROMol &mol,
         invar = computeIntVectPrimesProduct(*pi);
         mapkm1[invar] = (*eti);
         delete nent;
+        nent = nullptr;
         break;
       }
     }
@@ -61,7 +61,7 @@ unsigned int addOrder1Paths(PATH_LIST &paths, const ROMol &mol,
       bool updateSigL = false;
       if ((lLen <= 1) && (uLen >= 1)) {
         // if order 1 subgraphs are of interest in fingerprinting
-        // asign a bit to this fragment when we add to the catalog and update
+        // assign a bit to this fragment when we add to the catalog and update
         // fingerprint len
         updateSigL = true;
       }
@@ -138,9 +138,9 @@ unsigned int addHigherOrderPaths(const INT_PATH_LIST_MAP &allPaths,
       // loop over the subpaths (order (k-1) ) (by ignoring one bond
       // at a time from consideration) and find out which entries int eh catalog
       // they correspond to
-      // and make an interestion of the down entries (i.e. order k entries that
+      // and make an intersection of the down entries (i.e. order k entries that
       // contain these order k-1
-      // entries. - we can baiscally limit our search for an isomorphic entry in
+      // entries. - we can basically limit our search for an isomorphic entry in
       // the
       // catalog of the order k path from the molecule to this intersection list
       PATH_TYPE::const_iterator pii;
@@ -178,6 +178,7 @@ unsigned int addHigherOrderPaths(const INT_PATH_LIST_MAP &allPaths,
           found = true;
           mEntId = (*iti);
           delete nent;
+          nent = nullptr;
           break;
         }
       }
@@ -193,7 +194,7 @@ unsigned int addHigherOrderPaths(const INT_PATH_LIST_MAP &allPaths,
         bool updateSigL = false;
         if ((ordr >= lLen) && (ordr <= uLen)) {
           // if this order subgraphs are of interest in fingerprinting
-          // asign a bit to this fragment when we add to the catalog and update
+          // assign a bit to this fragment when we add to the catalog and update
           // fingerprint len
           updateSigL = true;
         }
@@ -251,4 +252,4 @@ unsigned int FragCatGenerator::addFragsFromMol(const ROMol &mol,
   delete coreMol;
   return (nO1Pths + nremPths);
 }
-}
+}  // namespace RDKit

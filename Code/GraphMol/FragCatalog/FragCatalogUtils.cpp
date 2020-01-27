@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2003-2006 Rational Discovery LLC
 //
@@ -73,7 +72,8 @@ MOL_SPTR_VECT readFuncGroups(std::istream &inStream, int nToRead) {
   int nRead = 0;
 
   MOL_SPTR_VECT funcGroups;
-  while (!inStream.eof() && (nToRead < 0 || nRead < nToRead)) {
+  while (!inStream.eof() && !inStream.fail() &&
+         (nToRead < 0 || nRead < nToRead)) {
     std::string tmpstr;
     std::getline(inStream, tmpstr);
     // parse the molecule on this line (if there is one)

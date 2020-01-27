@@ -69,6 +69,9 @@ void testPass() {
     "[C;!$(C-[OH])]=O",
     "[#6]-!:[#6]",
     "[C^3]",
+    "[*^0]",
+    "[*^1]",
+    "[*^2]",
     "[*^4]",
     "[*^5]",
     "[se]",
@@ -125,7 +128,6 @@ void testPass() {
     {
       // finally make sure that we can create parsable SMARTS from it:
       auto outSmarts = MolToSmarts(*mol);
-      std::cerr << smi << " " << outSmarts << std::endl;
       auto mol2 = SmartsToMol(outSmarts);
       TEST_ASSERT(mol2);
       delete mol2;
@@ -185,7 +187,7 @@ std::vector<MatchVectType> _checkMatches(std::string smarts, std::string smiles,
   //  nMatches : expected number of matches
   //  lenFirst : length of the first match
   //
-  // Return the list of all matches just in case want to do aditional testing
+  // Return the list of all matches just in case want to do additional testing
   ROMol *mol, *mol2, *matcher, *matcher2;
   bool matches;
   unsigned int matchCount;
@@ -2656,7 +2658,7 @@ void testGithub2142() {
     std::string sma2 = "[C]";
     std::unique_ptr<ROMol> m2(SmartsToMol(sma2));
     TEST_ASSERT(m2);
-    QueryAtom *qa = static_cast<QueryAtom *>(m2->getAtomWithIdx(0));
+    auto *qa = static_cast<QueryAtom *>(m2->getAtomWithIdx(0));
     const auto q1 = static_cast<QueryAtom *>(m1->getAtomWithIdx(0))->getQuery();
     qa->expandQuery(q1->copy(), Queries::COMPOSITE_OR);
     bool ok = true;

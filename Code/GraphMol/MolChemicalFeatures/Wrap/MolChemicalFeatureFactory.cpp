@@ -68,7 +68,9 @@ python::tuple getFeatureFamilies(const MolChemicalFeatureFactory &factory) {
   for (iter = factory.beginFeatureDefs(); iter != factory.endFeatureDefs();
        ++iter) {
     std::string fam = (*iter)->getFamily();
-    if (res.count(fam) == 0) res.append(fam);
+    if (res.count(fam) == 0) {
+      res.append(fam);
+    }
   }
   return python::tuple(res);
 }

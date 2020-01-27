@@ -1962,7 +1962,7 @@ CAS<~>
     for m in ms:
       self.assertTrue(m.HasProp('_MolFileInfo'))
       self.assertTrue(m.HasProp('_MolFileComments'))
-    fName = tempfile.mktemp('.sdf')
+    fName = tempfile.NamedTemporaryFile(suffix='.sdf', delete=False).name
     w = Chem.SDWriter(fName)
     w.SetProps(ms[0].GetPropNames())
     for m in ms:
@@ -2089,6 +2089,7 @@ CAS<~>
     self.assertFalse(ri.IsBondInRingOfSize(1, 3))
     self.assertFalse(ri.IsBondInRingOfSize(2, 3))
     if hasattr(Chem,'FindRingFamilies'): self.assertEquals(ri.AtomRingFamilies(),())
+    if hasattr(Chem,'FindRingFamilies'): self.assertEquals(ri.BondRingFamilies(),())
 
 
     smi = 'C1CC2C1C2'
@@ -2114,6 +2115,9 @@ CAS<~>
       self.assertTrue(ri.AreRingFamiliesInitialized())
       self.assertEquals(ri.NumRingFamilies(),2)
       self.assertEquals(sorted(ri.AtomRingFamilies()),[(0, 1, 2, 3), (2, 3, 4)])
+      self.assertEquals(sorted(ri.BondRingFamilies()),[(0, 1, 2, 4), (2, 3, 5)])
+
+
 
   def test46ReplaceCore(self):
     """ test the ReplaceCore functionality
@@ -3499,7 +3503,7 @@ CAS<~>
       list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(4, 8), breakTies=True)),
       [-1, -1, -1, -1, 4, 6, 4, 6])
 
-    
+
 
 
   def test93RWMolsAsROMol(self):
@@ -3678,22 +3682,20 @@ CAS<~>
     self.assertEqual(path, (1, 2, 3, 16, 17, 18, 20))
 
   def testGithub497(self):
-    outf = gzip.open(tempfile.mktemp(), 'wb+')
-    with self.assertRaises(ValueError):
-      w = Chem.SDWriter(outf)
+    with tempfile.TemporaryFile() as tmp, gzip.open(tmp) as outf:
+      with self.assertRaises(ValueError):
+        w = Chem.SDWriter(outf)
 
   def testGithub498(self):
     if (sys.version_info < (3, 0)):
       mode = 'w+'
     else:
       mode = 'wt+'
-    outf = gzip.open(tempfile.mktemp(), mode)
     m = Chem.MolFromSmiles('C')
-    w = Chem.SDWriter(outf)
-    w.write(m)
-    w.close()
-    w = None
-    outf.close()
+    with tempfile.NamedTemporaryFile() as tmp, gzip.open(tmp, mode) as outf:
+      w = Chem.SDWriter(outf)
+      w.write(m)
+      w.close()
 
   def testReplaceBond(self):
     origmol = Chem.RWMol(Chem.MolFromSmiles("CC"))
@@ -5151,8 +5153,8 @@ M  END
     for at in stereo_atoms:
       at.SetProp("foo2","bar2")
       self.assertTrue(m.GetAtomWithIdx(at.GetIdx()).HasProp("foo2"))
-    
-        
+
+
 
   def testEnhancedStereoPreservesMol(self):
     """
@@ -5545,14 +5547,14 @@ H      0.635000    0.635000    0.635000
       self.assertEqual(exc.cause.GetAtomIdx(),1)
     else:
       self.assertFalse(True)
-      
+
     try:
       Chem.SanitizeMol(Chem.MolFromSmiles('c1cc1',sanitize=False))
     except Chem.KekulizeException as exc:
       self.assertEqual(exc.cause.GetAtomIndices(),(0,1,2))
     else:
       self.assertFalse(True)
-          
+
 
   def testSanitizationExceptionHierarchy(self):
     with self.assertRaises(Chem.AtomValenceException):
@@ -5584,14 +5586,14 @@ H      0.635000    0.635000    0.635000
     mol = Chem.MolFromSmiles('ONCS.ONCS')
     for atom in mol.GetAtoms():
       atom.SetIsotope(atom.GetIdx())
-    
+
     order1 = list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, 4), breakTies=False, includeIsotopes=True))
     order2 = list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, 8), breakTies=False, includeIsotopes=False))
     self.assertNotEqual(order1[:4], order2[4:])
     # ensure that the orders are ignored in the second batch
     self.assertEqual(order2[:4], order2[4:])
 
-  
+
     for smi in ['ONCS.ONCS', 'F[C@@H](Br)[C@H](F)Cl']:
       mol = Chem.MolFromSmiles(smi)
       for atom in mol.GetAtoms():
@@ -5606,7 +5608,7 @@ H      0.635000    0.635000    0.635000
           order4 = list(Chem.CanonicalRankAtoms(mol, breakTies=True, includeIsotopes=iso, includeChirality=chiral))
           self.assertEqual(order1,order3)
           self.assertEqual(order2,order4)
-    
+
   def testSetBondStereoFromDirections(self):
     m1 = Chem.MolFromMolBlock('''
   Mrv1810 10141909482D          
@@ -5625,7 +5627,7 @@ M  END
     self.assertEqual(m1.GetBondBetweenAtoms(0,1).GetStereo(),Chem.BondStereo.STEREONONE)
     Chem.SetBondStereoFromDirections(m1)
     self.assertEqual(m1.GetBondBetweenAtoms(0,1).GetStereo(),Chem.BondStereo.STEREOTRANS)
-    
+
     m2 = Chem.MolFromMolBlock('''
   Mrv1810 10141909542D          
 
@@ -5650,11 +5652,185 @@ M  END
     m1.GetBondWithIdx(1).SetStereoAtoms(0,3)
     m1.GetBondWithIdx(1).SetStereo(Chem.BondStereo.STEREOCIS)
     Chem.SetDoubleBondNeighborDirections(m1)
-    self.assertEqual(Chem.MolToSmiles(m1),r"C/C=C\C")   
+    self.assertEqual(Chem.MolToSmiles(m1),r"C/C=C\C")
     self.assertEqual(m1.GetBondWithIdx(0).GetBondDir(),Chem.BondDir.ENDUPRIGHT)
     self.assertEqual(m1.GetBondWithIdx(2).GetBondDir(),Chem.BondDir.ENDDOWNRIGHT)
 
+  def testAssignChiralTypesFromMolParity(self):
+    class TestAssignChiralTypesFromMolParity:
+      class BondDef:
+        def __init__(self, bi, ei, t):
+          self.beginIdx = bi
+          self.endIdx = ei
+          self.type = t
 
+      def __init__(self, mol, parent):
+        self.parent = parent
+        self.parityMap = {
+          Chem.ChiralType.CHI_TETRAHEDRAL_CW: 1,
+          Chem.ChiralType.CHI_TETRAHEDRAL_CCW: 2,
+          Chem.ChiralType.CHI_UNSPECIFIED: 0,
+          Chem.ChiralType.CHI_OTHER: 0
+        }
+        self.d_rwMol = Chem.RWMol(mol)
+        self.assignMolParity()
+        self.fillBondDefVect()
+        Chem.AssignAtomChiralTagsFromMolParity(self.d_rwMol)
+        self.d_refSmiles = Chem.MolToSmiles(self.d_rwMol)
+        self.heapPermutation()
+
+      def assignMolParity(self):
+        Chem.AssignAtomChiralTagsFromStructure(self.d_rwMol)
+        for a in self.d_rwMol.GetAtoms():
+          parity = self.parityMap[a.GetChiralTag()]
+          a.SetIntProp("molParity", parity)
+          a.SetChiralTag(Chem.ChiralType.CHI_UNSPECIFIED)
+
+      def fillBondDefVect(self):
+        self.d_bondDefVect = [self.BondDef(b.GetBeginAtomIdx(),
+          b.GetEndAtomIdx(), b.GetBondType()) for b in self.d_rwMol.GetBonds()]
+
+      def stripBonds(self):
+        for i in reversed(range(self.d_rwMol.GetNumBonds())):
+          b = self.d_rwMol.GetBondWithIdx(i)
+          self.d_rwMol.RemoveBond(b.GetBeginAtomIdx(), b.GetEndAtomIdx())
+
+      def addBonds(self):
+        [self.d_rwMol.AddBond(bondDef.beginIdx,
+          bondDef.endIdx, bondDef.type) for bondDef in self.d_bondDefVect]
+
+      def checkBondPermutation(self):
+        self.stripBonds()
+        self.addBonds();
+        Chem.SanitizeMol(self.d_rwMol)
+        Chem.AssignAtomChiralTagsFromMolParity(self.d_rwMol)
+        self.parent.assertEqual(Chem.MolToSmiles(self.d_rwMol), self.d_refSmiles)
+
+      def heapPermutation(self, s = 0):
+        # if size becomes 1 the permutation is ready to use
+        if (s == 0):
+          s = len(self.d_bondDefVect)
+        if (s == 1):
+          self.checkBondPermutation()
+          return
+        for i in range(s):
+          self.heapPermutation(s - 1)
+          # if size is odd, swap first and last element
+          j = 0 if (s % 2 == 1) else i
+          self.d_bondDefVect[j], self.d_bondDefVect[s - 1] = \
+            self.d_bondDefVect[s - 1], self.d_bondDefVect[j]
+
+    molb = """
+     RDKit          3D
+
+  6  5  0  0  1  0  0  0  0  0999 V2000
+   -2.9747    1.7234    0.0753 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.4586    1.4435    0.1253 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.5885    2.6215    1.4893 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+   -3.7306    0.3885   -0.0148 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3395    3.0471    0.1580 Br  0  0  0  0  0  0  0  0  0  0  0  0
+   -1.1574    0.7125    1.2684 F   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  1  3  1  0
+  1  4  1  0
+  2  5  1  0
+  2  6  1  0
+M  END
+"""
+    m = Chem.RWMol(Chem.MolFromMolBlock(
+      molb, sanitize = True, removeHs = False))
+    self.assertIsNotNone(m)
+    TestAssignChiralTypesFromMolParity(m, self)
+
+  def testCXSMILESErrors(self):
+    smi = "CCC |FAILURE|"
+    ps = Chem.SmilesParserParams()
+    ps.strictCXSMILES = False
+    m = Chem.MolFromSmiles(smi, ps)
+    self.assertTrue(m is not None)
+    self.assertEqual(m.GetNumAtoms(),3)
+
+  def testRemoveHsParams(self):
+    smips = Chem.SmilesParserParams()
+    smips.removeHs = False
+
+    m = Chem.MolFromSmiles('F.[H]',smips)
+    ps = Chem.RemoveHsParameters()
+    m = Chem.RemoveHs(m,ps)
+    self.assertEqual(m.GetNumAtoms(),2)
+    ps.removeDegreeZero = True
+    m = Chem.RemoveHs(m,ps)
+    self.assertEqual(m.GetNumAtoms(),1)
+
+    m = Chem.MolFromSmiles('F[H-]F',smips)
+    ps = Chem.RemoveHsParameters()
+    m = Chem.RemoveHs(m,ps)
+    self.assertEqual(m.GetNumAtoms(),3)
+    m = Chem.MolFromSmiles('F[H-]F',smips)
+    ps.removeHigherDegrees = True
+    m = Chem.RemoveHs(m,ps)
+    self.assertEqual(m.GetNumAtoms(),2)
+
+    m = Chem.MolFromSmiles('[H][H]',smips)
+    ps = Chem.RemoveHsParameters()
+    m = Chem.RemoveHs(m,ps)
+    self.assertEqual(m.GetNumAtoms(),2)
+    m = Chem.MolFromSmiles('[H][H]',smips)
+    ps.removeOnlyHNeighbors = True
+    m = Chem.RemoveHs(m,ps)
+    self.assertEqual(m.GetNumAtoms(),0)
+
+    m = Chem.MolFromSmiles('F[2H]',smips)
+    ps = Chem.RemoveHsParameters()
+    m = Chem.RemoveHs(m,ps)
+    self.assertEqual(m.GetNumAtoms(),2)
+    m = Chem.MolFromSmiles('F[2H]',smips)
+    ps.removeIsotopes = True
+    m = Chem.RemoveHs(m,ps)
+    self.assertEqual(m.GetNumAtoms(),1)
+
+    m = Chem.MolFromSmiles('*[H]',smips)
+    ps = Chem.RemoveHsParameters()
+    m = Chem.RemoveHs(m, ps)
+    self.assertEqual(m.GetNumAtoms(), 2)
+    m = Chem.MolFromSmiles('*[H]',smips)
+    ps.removeDummyNeighbors = True
+    m = Chem.RemoveHs(m, ps)
+    self.assertEqual(m.GetNumAtoms(), 1)
+
+    m = Chem.MolFromSmiles('F/C=N/[H]',smips)
+    ps = Chem.RemoveHsParameters()
+    m = Chem.RemoveHs(m,ps)
+    self.assertEqual(m.GetNumAtoms(),4)
+    m = Chem.MolFromSmiles('F/C=N/[H]',smips)
+    ps.removeDefiningBondStereo = True
+    m = Chem.RemoveHs(m,ps)
+    self.assertEqual(m.GetNumAtoms(),3)
+
+    m = Chem.MolFromSmiles('FC([H])(O)Cl', smips)
+    m.GetBondBetweenAtoms(1,2).SetBondDir(Chem.BondDir.BEGINWEDGE)
+    ps = Chem.RemoveHsParameters()
+    m = Chem.RemoveHs(m, ps)
+    self.assertEqual(m.GetNumAtoms(), 4)
+    m = Chem.MolFromSmiles('FC([H])(O)Cl', smips)
+    m.GetBondBetweenAtoms(1,2).SetBondDir(Chem.BondDir.BEGINWEDGE)
+    ps.removeWithWedgedBond = False
+    m = Chem.RemoveHs(m, ps)
+    self.assertEqual(m.GetNumAtoms(), 5)
+
+    m = Chem.MolFromSmarts('F[#1]')
+    ps = Chem.RemoveHsParameters()
+    m = Chem.RemoveHs(m, ps)
+    self.assertEqual(m.GetNumAtoms(), 2)
+    m = Chem.MolFromSmarts('F[#1]')
+    ps.removeWithQuery = True
+    m = Chem.RemoveHs(m, ps)
+    self.assertEqual(m.GetNumAtoms(), 1)
+
+    m = Chem.MolFromSmiles('[C@]12([H])CCC1CO2.[H+].F[H-]F.[H][H].[H]*.F/C=C/[H]')
+    m = Chem.RemoveAllHs(m)
+    for at in m.GetAtoms():
+      self.assertNotEqual(at.GetAtomicNum(),1)
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:

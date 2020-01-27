@@ -53,9 +53,9 @@ std::vector<RDKit::MOL_SPTR_VECT> ConvertToVect(T bbs) {
     reacts.reserve(len1);
     for(unsigned int j=0;j<len1;++j){
       RDKit::ROMOL_SPTR mol = python::extract<RDKit::ROMOL_SPTR>(bbs[i][j]);
-      if(mol)
+      if (mol) {
         reacts.push_back(mol);
-      else {
+      } else {
         throw_value_error("reaction called with non molecule reactant");
       }
     }
@@ -279,10 +279,10 @@ this strategy never terminates, however, python supplies itertools:\n\
 \n\
 import itertools\n\
 library = EnumerateLibrary(rxn, bbs, rdChemReactions.RandomSampleStrategy())\n\
-for result in itertools.islice(libary, 1000):\n\
+for result in itertools.islice(library, 1000):\n\
     # do something with the first 1000 samples\n\
 \n\
-for result in itertools.islice(libary, 1000):\n\
+for result in itertools.islice(library, 1000):\n\
     # do something with the next 1000 samples\n\
 \n\
 Libraries are also serializable, including their current state:\n\
@@ -421,7 +421,7 @@ for result in itertools.islice(libary2, 1000):\n\
         .def("__copy__", &RDKit::EvenSamplePairsStrategy::copy,
              python::return_value_policy<python::manage_new_object>())
         .def("Stats", &RDKit::EvenSamplePairsStrategy::stats,
-             "Return the a statisics log of the pairs used in the current enumeration.")
+             "Return the statistics log of the pairs used in the current enumeration.")
       ;
 
     python::def("EnumerateLibraryCanSerialize", EnumerateLibraryCanSerialize,

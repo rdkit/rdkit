@@ -38,7 +38,7 @@ SmilesMolSupplier::SmilesMolSupplier(const std::string &fileName,
   // Need to check if this has been fixed in VC++ 7.0
   auto *tmpStream = new std::ifstream(fileName.c_str(), std::ios_base::binary);
 
-  if (!tmpStream || (!(*tmpStream)) || (tmpStream->bad())) {
+  if (!(*tmpStream) || tmpStream->bad()) {
     std::ostringstream errout;
     errout << "Bad input file " << fileName;
     delete tmpStream;
@@ -101,7 +101,9 @@ void SmilesMolSupplier::init() {
 void SmilesMolSupplier::setData(const std::string &text,
                                 const std::string &delimiter, int smilesColumn,
                                 int nameColumn, bool titleLine, bool sanitize) {
-  if (dp_inStream && df_owner) delete dp_inStream;
+  if (dp_inStream && df_owner) {
+    delete dp_inStream;
+  }
   init();
 
   dp_inStream = new std::stringstream(text);
@@ -204,8 +206,9 @@ ROMol *SmilesMolSupplier::processLine(std::string inLine) {
     // -----------
     unsigned int iprop = 0;
     for (unsigned int col = 0; col < recs.size(); col++) {
-      if (static_cast<int>(col) == d_smi || static_cast<int>(col) == d_name)
+      if (static_cast<int>(col) == d_smi || static_cast<int>(col) == d_name) {
         continue;
+      }
       std::string pname, pval;
       if (d_props.size() > col) {
         pname = d_props[col];
@@ -258,7 +261,9 @@ ROMol *SmilesMolSupplier::processLine(std::string inLine) {
 // --------------------------------------------------
 std::string SmilesMolSupplier::nextLine() {
   PRECONDITION(dp_inStream, "bad stream");
-  if (df_end) return "";
+  if (df_end) {
+    return "";
+  }
   std::string tempStr = getLine(dp_inStream);
 
   if (tempStr == "") {
@@ -289,7 +294,9 @@ std::string SmilesMolSupplier::nextLine() {
 //
 long int SmilesMolSupplier::skipComments() {
   PRECONDITION(dp_inStream, "bad stream");
-  if (this->atEnd()) return -1;
+  if (this->atEnd()) {
+    return -1;
+  }
 
   std::streampos prev = dp_inStream->tellg();
   std::string tempStr = this->nextLine();
@@ -298,7 +305,9 @@ long int SmilesMolSupplier::skipComments() {
     while ((tempStr[0] == '#') || (strip(tempStr).size() == 0)) {
       prev = dp_inStream->tellg();
       tempStr = this->nextLine();
-      if (this->atEnd()) break;
+      if (this->atEnd()) {
+        break;
+      }
     }
   }
   // if we hit EOF without getting a proper line, return -1:
@@ -387,7 +396,9 @@ void SmilesMolSupplier::moveTo(unsigned int idx) {
   if (d_molpos.empty()) {
     // if we are just starting out, process the title line
     dp_inStream->seekg(0);
-    if (df_title) this->processTitleLine();
+    if (df_title) {
+      this->processTitleLine();
+    }
   } else {
     // move to the last position we've seen:
     dp_inStream->seekg(d_molpos.back());
@@ -516,7 +527,9 @@ unsigned int SmilesMolSupplier::length() {
       this->skipComments();
     } else {
       // process the title line if need be:
-      if (df_title) this->processTitleLine();
+      if (df_title) {
+        this->processTitleLine();
+      }
     }
     int pos = this->skipComments();
     while (pos >= 0) {

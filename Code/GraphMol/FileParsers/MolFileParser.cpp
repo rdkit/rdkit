@@ -61,7 +61,9 @@ int toInt(const std::string &input, bool acceptSpaces) {
   res = strtol(input.c_str(), nullptr, 10);
   if (!res && !acceptSpaces && input[0] == ' ') {
     std::string trimmed = boost::trim_copy(input);
-    if (trimmed.length() == 0) throw boost::bad_lexical_cast();
+    if (trimmed.length() == 0) {
+      throw boost::bad_lexical_cast();
+    }
   }
   return res;
 }
@@ -70,7 +72,9 @@ double toDouble(const std::string &input, bool acceptSpaces) {
   double res = atof(input.c_str());
   if (res == 0.0 && !acceptSpaces && input[0] == ' ') {
     std::string trimmed = boost::trim_copy(input);
-    if (trimmed.length() == 0) throw boost::bad_lexical_cast();
+    if (trimmed.length() == 0) {
+      throw boost::bad_lexical_cast();
+    }
   }
   return res;
 }
@@ -110,7 +114,9 @@ std::string getV3000Line(std::istream *inStream, unsigned int &line) {
 Atom *replaceAtomWithQueryAtom(RWMol *mol, Atom *atom) {
   PRECONDITION(mol, "bad molecule");
   PRECONDITION(atom, "bad atom");
-  if (atom->hasQuery()) return atom;
+  if (atom->hasQuery()) {
+    return atom;
+  }
 
   QueryAtom qa(*atom);
   unsigned int idx = atom->getIdx();
@@ -148,8 +154,7 @@ void completeMolQueries(RWMol *mol, int magicVal = 0xDEADBEEF) {
   for (ROMol::AtomIterator ai = mol->beginAtoms(); ai != mol->endAtoms();
        ++ai) {
     if ((*ai)->hasQuery()) {
-      ATOM_EQUALS_QUERY *query =
-          static_cast<ATOM_EQUALS_QUERY *>((*ai)->getQuery());
+      auto *query = static_cast<ATOM_EQUALS_QUERY *>((*ai)->getQuery());
       completeQueryAndChildren(query, *ai, magicVal);
     }
   }
@@ -288,7 +293,9 @@ void ParseOldAtomList(RWMol *mol, const std::string &text, unsigned int line) {
     RANGE_CHECK(0, atNum, 200);  // goofy!
     q->addChild(
         QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(atNum)));
-    if (!i) a.setAtomicNum(atNum);
+    if (!i) {
+      a.setAtomicNum(atNum);
+    }
   }
 
   a.setQuery(q);
@@ -401,7 +408,7 @@ void ParsePXALine(RWMol *mol, const std::string &text, unsigned int line) {
   PRECONDITION(text.substr(0, 6) == "M  PXA", "bad PXA line");
   unsigned int pos = 7;
   try {
-    unsigned int atIdx =
+    auto atIdx =
         FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(pos, 3));
     pos += 3;
     mol->getAtomWithIdx(atIdx - 1)->setProp(
@@ -480,7 +487,9 @@ void ParseSubstitutionCountLine(RWMol *mol, const std::string &text,
       Atom *atom = mol->getAtomWithIdx(aid - 1);
       if (text.size() >= spos + 4 && text.substr(spos, 4) != "    ") {
         count = FileParserUtils::toInt(text.substr(spos, 4));
-        if (count == 0) continue;
+        if (count == 0) {
+          continue;
+        }
         ATOM_EQUALS_QUERY *q = makeAtomExplicitDegreeQuery(0);
         switch (count) {
           case -1:
@@ -601,7 +610,9 @@ void ParseRingBondCountLine(RWMol *mol, const std::string &text,
       Atom *atom = mol->getAtomWithIdx(aid - 1);
       if (text.size() >= spos + 4 && text.substr(spos, 4) != "    ") {
         count = FileParserUtils::toInt(text.substr(spos, 4));
-        if (count == 0) continue;
+        if (count == 0) {
+          continue;
+        }
         ATOM_EQUALS_QUERY *q = makeAtomRingBondCountQuery(0);
         switch (count) {
           case -1:
@@ -836,7 +847,7 @@ void ParseMarvinSmartsLine(RWMol *mol, const std::string &text,
   std::string sma = text.substr(smartsStart);
   Atom *at = mol->getAtomWithIdx(idx);
   at->setProp(common_properties::MRV_SMA, sma);
-  RWMol *m = 0;
+  RWMol *m = nullptr;
   try {
     m = SmartsToMol(sma);
   } catch (...) {
@@ -1191,7 +1202,9 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
         } catch (boost::bad_lexical_cast &) {
           rnumber = -1;
         }
-        if (rnumber >= 0) res->setIsotope(rnumber);
+        if (rnumber >= 0) {
+          res->setIsotope(rnumber);
+        }
       }
     }
   } else if (symb == "D") {  // mol blocks support "D" and "T" as shorthand...
@@ -1203,8 +1216,9 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
     res->setAtomicNum(1);
     res->setIsotope(3);
   } else {
-    if (symb.size() == 2 && symb[1] >= 'A' && symb[1] <= 'Z')
+    if (symb.size() == 2 && symb[1] >= 'A' && symb[1] <= 'Z') {
       symb[1] = static_cast<char>(tolower(symb[1]));
+    }
     try {
       res->setAtomicNum(PeriodicTable::getTable()->getAtomicNumber(symb));
     } catch (const Invar::Invariant &e) {
@@ -1214,7 +1228,9 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
   }
 
   // res->setPos(pX,pY,pZ);
-  if (chg != 0) res->setFormalCharge(4 - chg);
+  if (chg != 0) {
+    res->setFormalCharge(4 - chg);
+  }
 
   // FIX: this does not appear to be correct
   if (hCount == 1) {
@@ -1629,19 +1645,19 @@ bool ParseMolBlockProperties(std::istream *inStream, unsigned int &line,
         ++line;
         tempStr = getLine(inStream);
       }
-    } else if (lineBeg == "M  ALS")
+    } else if (lineBeg == "M  ALS") {
       ParseNewAtomList(mol, tempStr, line);
-    else if (lineBeg == "M  ISO")
+    } else if (lineBeg == "M  ISO") {
       ParseIsotopeLine(mol, tempStr, line);
-    else if (lineBeg == "M  RGP")
+    } else if (lineBeg == "M  RGP") {
       ParseRGroupLabels(mol, tempStr, line);
-    else if (lineBeg == "M  RBC")
+    } else if (lineBeg == "M  RBC") {
       ParseRingBondCountLine(mol, tempStr, line);
-    else if (lineBeg == "M  SUB")
+    } else if (lineBeg == "M  SUB") {
       ParseSubstitutionCountLine(mol, tempStr, line);
-    else if (lineBeg == "M  UNS")
+    } else if (lineBeg == "M  UNS") {
       ParseUnsaturationLine(mol, tempStr, line);
-    else if (lineBeg == "M  CHG") {
+    } else if (lineBeg == "M  CHG") {
       ParseChargeLine(mol, tempStr, firstChargeLine, line);
       firstChargeLine = false;
     } else if (lineBeg == "M  RAD") {
@@ -1695,9 +1711,9 @@ bool ParseMolBlockProperties(std::istream *inStream, unsigned int &line,
       ParseSGroupV2000SBTLine(sGroupMap, mol, tempStr, line);
 
       /* SGroup parsing end */
-    } else if (lineBeg == "M  ZBO")
+    } else if (lineBeg == "M  ZBO") {
       ParseZBOLine(mol, tempStr, line);
-    else if (lineBeg == "M  ZCH") {
+    } else if (lineBeg == "M  ZCH") {
       ParseZCHLine(mol, tempStr, line);
     } else if (lineBeg == "M  HYD") {
       ParseHYDLine(mol, tempStr, line);
@@ -1747,9 +1763,12 @@ Atom *ParseV3000AtomSymbol(std::string token, unsigned int &line) {
     for (std::vector<std::string>::const_iterator stIt = splitToken.begin();
          stIt != splitToken.end(); ++stIt) {
       std::string atSymb = boost::trim_copy(*stIt);
-      if (atSymb == "") continue;
-      if (atSymb.size() == 2 && atSymb[1] >= 'A' && atSymb[1] <= 'Z')
+      if (atSymb == "") {
+        continue;
+      }
+      if (atSymb.size() == 2 && atSymb[1] >= 'A' && atSymb[1] <= 'Z') {
         atSymb[1] = static_cast<char>(tolower(atSymb[1]));
+      }
 
       int atNum = PeriodicTable::getTable()->getAtomicNumber(atSymb);
       if (!res) {
@@ -1803,7 +1822,9 @@ Atom *ParseV3000AtomSymbol(std::string token, unsigned int &line) {
         } catch (boost::bad_lexical_cast &) {
           rnumber = -1;
         }
-        if (rnumber >= 0) res->setIsotope(rnumber);
+        if (rnumber >= 0) {
+          res->setIsotope(rnumber);
+        }
       }
     } else if (token == "D") {  // mol blocks support "D" and "T" as
                                 // shorthand... handle that.
@@ -1814,8 +1835,9 @@ Atom *ParseV3000AtomSymbol(std::string token, unsigned int &line) {
       res = new Atom(1);
       res->setIsotope(3);
     } else {
-      if (token.size() == 2 && token[1] >= 'A' && token[1] <= 'Z')
+      if (token.size() == 2 && token[1] >= 'A' && token[1] <= 'Z') {
         token[1] = static_cast<char>(tolower(token[1]));
+      }
 
       res = new Atom(PeriodicTable::getTable()->getAtomicNumber(token));
     }
@@ -1928,7 +1950,9 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
         if (!atom->hasQuery()) {
           atom = FileParserUtils::replaceAtomWithQueryAtom(mol, atom);
         }
-        if (hcount == -1) hcount = 0;
+        if (hcount == -1) {
+          hcount = 0;
+        }
         atom->expandQuery(makeAtomHCountQuery(hcount));
       }
     } else if (prop == "UNSAT") {
@@ -1944,7 +1968,9 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
         if (!atom->hasQuery()) {
           atom = FileParserUtils::replaceAtomWithQueryAtom(mol, atom);
         }
-        if (rbcount == -1) rbcount = 0;
+        if (rbcount == -1) {
+          rbcount = 0;
+        }
         atom->expandQuery(makeAtomRingBondCountQuery(rbcount));
       }
     } else if (prop == "VAL") {
@@ -2233,9 +2259,9 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
             chiralityPossible = true;
             break;
           case 2:
-            if (bType == 1)
+            if (bType == 1) {
               bond->setBondDir(Bond::UNKNOWN);
-            else if (bType == 2) {
+            } else if (bType == 2) {
               bond->setBondDir(Bond::EITHERDOUBLE);
               bond->setStereo(Bond::STEREOANY);
             }
@@ -2304,7 +2330,9 @@ void ProcessMolProps(RWMol *mol) {
     int totV;
     if (atom->getPropIfPresent(common_properties::molTotValence, totV) &&
         !atom->hasProp("_ZBO_H")) {
-      if (totV == 0) continue;
+      if (totV == 0) {
+        continue;
+      }
       atom->setNoImplicit(true);
       if (totV == 15     // V2000
           || totV == -1  // v3000
@@ -2373,10 +2401,15 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
 
   unsigned int nSgroups = 0, n3DConstraints = 0, chiralFlag = 0;
   (void)chiralFlag;  // needs to be read
-  if (splitLine.size() > 2) nSgroups = FileParserUtils::toInt(splitLine[2]);
-  if (splitLine.size() > 3)
+  if (splitLine.size() > 2) {
+    nSgroups = FileParserUtils::toInt(splitLine[2]);
+  }
+  if (splitLine.size() > 3) {
     n3DConstraints = FileParserUtils::toInt(splitLine[3]);
-  if (splitLine.size() > 4) chiralFlag = FileParserUtils::toInt(splitLine[4]);
+  }
+  if (splitLine.size() > 4) {
+    chiralFlag = FileParserUtils::toInt(splitLine[4]);
+  }
 
   ParseV3000AtomBlock(inStream, line, nAtoms, mol, conf);
   if (nBonds) {
@@ -2389,7 +2422,7 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
 
   if (n3DConstraints) {
     BOOST_LOG(rdWarningLog)
-        << "3D constraint information in mol block igored at line " << line
+        << "3D constraint information in mol block ignored at line " << line
         << std::endl;
     tempStr = getV3000Line(inStream, line);
     boost::to_upper(tempStr);
@@ -2398,8 +2431,9 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
       errout << "BEGIN OBJ3D line not found on line " << line;
       throw FileParseException(errout.str());
     }
-    for (unsigned int i = 0; i < n3DConstraints; ++i)
+    for (unsigned int i = 0; i < n3DConstraints; ++i) {
       tempStr = getV3000Line(inStream, line);
+    }
     tempStr = getV3000Line(inStream, line);
     boost::to_upper(tempStr);
     if (tempStr.length() < 9 || tempStr.substr(0, 9) != "END OBJ3D") {
@@ -2488,7 +2522,9 @@ bool ParseV2000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
 
 void finishMolProcessing(RWMol *res, bool chiralityPossible, bool sanitize,
                          bool removeHs) {
-  if (!res) return;
+  if (!res) {
+    return;
+  }
   res->clearAllAtomBookmarks();
   res->clearAllBondBookmarks();
 
@@ -2637,32 +2673,39 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
   }
   try {
     spos = 6;
-    if (tempStr.size() >= 9)
+    if (tempStr.size() >= 9) {
       nLists = FileParserUtils::toInt(tempStr.substr(spos, 3), true);
+    }
 
     spos = 12;
-    if (tempStr.size() >= spos + 3)
+    if (tempStr.size() >= spos + 3) {
       chiralFlag = FileParserUtils::toInt(tempStr.substr(spos, 3), true);
+    }
 
     spos = 15;
-    if (tempStr.size() >= spos + 3)
+    if (tempStr.size() >= spos + 3) {
       nsText = FileParserUtils::toInt(tempStr.substr(spos, 3), true);
+    }
 
     spos = 18;
-    if (tempStr.size() >= spos + 3)
+    if (tempStr.size() >= spos + 3) {
       nRxnComponents = FileParserUtils::toInt(tempStr.substr(spos, 3), true);
+    }
 
     spos = 21;
-    if (tempStr.size() >= spos + 3)
+    if (tempStr.size() >= spos + 3) {
       nReactants = FileParserUtils::toInt(tempStr.substr(spos, 3), true);
+    }
 
     spos = 24;
-    if (tempStr.size() >= spos + 3)
+    if (tempStr.size() >= spos + 3) {
       nProducts = FileParserUtils::toInt(tempStr.substr(spos, 3), true);
+    }
 
     spos = 27;
-    if (tempStr.size() >= spos + 3)
+    if (tempStr.size() >= spos + 3) {
       nIntermediates = FileParserUtils::toInt(tempStr.substr(spos, 3), true);
+    }
 
   } catch (boost::bad_lexical_cast &) {
     // some SD files (such as some from NCI) lack all the extra information
@@ -2734,7 +2777,9 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
     BOOST_LOG(rdErrorLog) << " Unhandled CTAB feature: '" << e.message()
                           << "'. Molecule skipped." << std::endl;
 
-    if (!inStream->eof()) tempStr = getLine(inStream);
+    if (!inStream->eof()) {
+      tempStr = getLine(inStream);
+    }
     ++line;
     while (!inStream->eof() && !inStream->fail() &&
            tempStr.substr(0, 6) != "M  END" && tempStr.substr(0, 4) != "$$$$") {
@@ -2742,10 +2787,11 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
       ++line;
     }
     if (!inStream->eof() || tempStr.substr(0, 6) == "M  END" ||
-        tempStr.substr(0, 4) == "$$$$")
+        tempStr.substr(0, 4) == "$$$$") {
       fileComplete = true;
-    else
+    } else {
       fileComplete = false;
+    }
   } catch (FileParseException &e) {
     // catch our exceptions and throw them back after cleanup
     delete res;

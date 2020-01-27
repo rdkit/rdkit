@@ -128,7 +128,7 @@ getMolFragsWithQuery(const ROMol &mol, T (*query)(const ROMol &, const Atom *),
                      bool negateList = false);
 
 #if 0
-    //! finds a molecule's minimium spanning tree (MST)
+    //! finds a molecule's minimum spanning tree (MST)
     /*!
       \param mol  the molecule of interest
       \param mst  used to return the MST as a vector of bond indices
@@ -232,6 +232,40 @@ RDKIT_GRAPHMOL_EXPORT ROMol *removeHs(const ROMol &mol,
 RDKIT_GRAPHMOL_EXPORT void removeHs(RWMol &mol, bool implicitOnly = false,
                                     bool updateExplicitCount = false,
                                     bool sanitize = true);
+struct RDKIT_GRAPHMOL_EXPORT RemoveHsParameters {
+  bool removeDegreeZero = false;    /**< hydrogens that have no bonds */
+  bool removeHigherDegrees = false; /**< hydrogens with two (or more) bonds */
+  bool removeOnlyHNeighbors =
+      false; /**< hydrogens with bonds only to other hydrogens */
+  bool removeIsotopes = false; /**< hydrogens with non-default isotopes */
+  bool removeDummyNeighbors =
+      false; /**< hydrogens with at least one dummy-atom neighbor */
+  bool removeDefiningBondStereo =
+      false; /**< hydrogens defining bond stereochemistry */
+  bool removeWithWedgedBond = true; /**< hydrogens with wedged bonds to them */
+  bool removeWithQuery = false;     /**< hydrogens with queries defined */
+  bool removeMapped = true;  /**< mapped hydrogens */
+  bool showWarnings = true;  /**< display warnings for Hs that are not removed */
+  bool removeNonimplicit = true; /**< DEPRECATED equivalent of implicitOnly */
+  bool updateExplicitCount =
+      false; /**< DEPRECATED equivalent of updateExplicitCount */
+};
+//! \overload
+// modifies the molecule in place
+RDKIT_GRAPHMOL_EXPORT void removeHs(RWMol &mol, const RemoveHsParameters &ps,
+                                    bool sanitize = true);
+//! \overload
+// The caller owns the pointer this returns
+RDKIT_GRAPHMOL_EXPORT ROMol *removeHs(const ROMol &mol,
+                                      const RemoveHsParameters &ps,
+                                      bool sanitize = true);
+
+//! removes all Hs from a molecule
+RDKIT_GRAPHMOL_EXPORT void removeAllHs(RWMol &mol, bool sanitize = true);
+//! \overload
+// The caller owns the pointer this returns
+RDKIT_GRAPHMOL_EXPORT ROMol *removeAllHs(const ROMol &mol,
+                                         bool sanitize = true);
 
 //! returns a copy of a molecule with hydrogens removed and added as queries
 //!  to the heavy atoms to which they are bound.
@@ -251,7 +285,8 @@ RDKIT_GRAPHMOL_EXPORT void removeHs(RWMol &mol, bool implicitOnly = false,
     - Hydrogens which aren't connected to a heavy atom will not be
       removed.  This prevents molecules like <tt>"[H][H]"</tt> from having
       all atoms removed.
-    - the caller is responsible for <tt>delete</tt>ing the pointer this returns.
+    - the caller is responsible for <tt>delete</tt>ing the pointer this
+  returns.
     - By default all hydrogens are removed, however if
       mergeUnmappedOnly is true, any hydrogen participating
       in an atom map will be retained
@@ -532,7 +567,7 @@ RDKIT_GRAPHMOL_EXPORT void adjustHs(RWMol &mol);
                           original state.
    \param maxBackTracks   the maximum number of attempts at back-tracking. The
    algorithm
-                          uses a back-tracking procedure to revist a previous
+                          uses a back-tracking procedure to revisit a previous
    setting of
                           double bond if we hit a wall in the kekulization
    process
@@ -630,7 +665,7 @@ RDKIT_GRAPHMOL_EXPORT void findRingFamilies(const ROMol &mol);
   computed
    and discarded during findSSSR. The new ring are chosen such that:
     - replacing a same sized ring in the SSSR list with an extra ring yields
-      the same union of bond IDs as the orignal SSSR list
+      the same union of bond IDs as the original SSSR list
 
   \param mol - the molecule of interest
   \param res used to return the vector of rings. Each entry is a vector with
@@ -956,6 +991,16 @@ RDKIT_GRAPHMOL_EXPORT void removeStereochemistry(ROMol &mol);
 RDKIT_GRAPHMOL_EXPORT void findPotentialStereoBonds(ROMol &mol,
                                                     bool cleanIt = false);
 //@}
+
+//! \brief Uses the molParity atom property to assign ChiralType to a molecule's
+//! atoms
+/*!
+  \param mol                  the molecule of interest
+  \param replaceExistingTags  if this flag is true, any existing atomic chiral
+                              tags will be replaced
+*/
+RDKIT_GRAPHMOL_EXPORT void assignChiralTypesFromMolParity(
+    ROMol &mol, bool replaceExistingTags = true);
 
 //! returns the number of atoms which have a particular property set
 RDKIT_GRAPHMOL_EXPORT unsigned getNumAtomsWithDistinctProperty(

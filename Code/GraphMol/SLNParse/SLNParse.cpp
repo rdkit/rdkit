@@ -101,7 +101,7 @@ void finalizeQueryMol(ROMol *mol, bool mergeHs) {
     SLNParse::parseFinalAtomAttribs(*atomIt, true);
     if ((*atomIt)->hasProp(common_properties::_starred)) {
       if (rootIdx > -1) {
-        BOOST_LOG(rdErrorLog) << "SLN Error: mulitple starred atoms in a "
+        BOOST_LOG(rdErrorLog) << "SLN Error: multiple starred atoms in a "
                                  "recursive query. Extra stars ignored"
                               << std::endl;
       } else {
@@ -245,12 +245,11 @@ void SLNParse::CleanupAfterParse(RWMol *mol) {
   PRECONDITION(mol, "no molecule");
   // blow out any partial bonds:
   RWMol::BOND_BOOKMARK_MAP *marks = mol->getBondBookmarks();
-  RWMol::BOND_BOOKMARK_MAP::iterator markI = marks->begin();
+  auto markI = marks->begin();
   while (markI != marks->end()) {
     RWMol::BOND_PTR_LIST &bonds = markI->second;
-    for (RWMol::BOND_PTR_LIST::iterator bondIt = bonds.begin();
-         bondIt != bonds.end(); ++bondIt) {
-      delete *bondIt;
+    for (auto &bond : bonds) {
+      delete bond;
     }
     ++markI;
   }

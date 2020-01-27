@@ -36,12 +36,14 @@ bool isAtomConjugCand(const Atom *at) {
 }
 
 void markConjAtomBonds(Atom *at) {
-  if (!isAtomConjugCand(at)) return;
+  if (!isAtomConjugCand(at)) {
+    return;
+  }
   ROMol &mol = at->getOwningMol();
   Atom *at2;
 
   int atx = at->getIdx();
-  // make sure that have either 2 or 3 subtitutions on this atom
+  // make sure that have either 2 or 3 substitutions on this atom
   int sbo = at->getDegree() + at->getTotalNumHs();
   if ((sbo < 2) || (sbo > 3)) {
     return;
@@ -83,7 +85,9 @@ int numBondsPlusLonePairs(Atom *at) {
   boost::tie(beg, end) = at->getOwningMol().getAtomBonds(at);
   while (beg != end) {
     Bond *bond = at->getOwningMol()[*beg];
-    if (bond->getBondType() == Bond::ZERO) --deg;
+    if (bond->getBondType() == Bond::ZERO) {
+      --deg;
+    }
     ++beg;
   }
 
@@ -115,7 +119,9 @@ bool atomHasConjugatedBond(const Atom *at) {
   ROMol::OEDGE_ITER beg, end;
   boost::tie(beg, end) = at->getOwningMol().getAtomBonds(at);
   while (beg != end) {
-    if (at->getOwningMol()[*beg]->getIsConjugated()) return true;
+    if (at->getOwningMol()[*beg]->getIsConjugated()) {
+      return true;
+    }
     beg++;
   }
   return false;

@@ -185,10 +185,8 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
   if (tokens.size() < 3 || tokens[0] != "COUNTS") {
     throw ChemicalReactionParserException("bad counts line");
   }
-  unsigned int nReacts =
-      FileParserUtils::stripSpacesAndCast<unsigned int>(tokens[1]);
-  unsigned int nProds =
-      FileParserUtils::stripSpacesAndCast<unsigned int>(tokens[2]);
+  auto nReacts = FileParserUtils::stripSpacesAndCast<unsigned int>(tokens[1]);
+  auto nProds = FileParserUtils::stripSpacesAndCast<unsigned int>(tokens[2]);
   unsigned int nAgents = 0;
   if (tokens.size() > 3) {
     nAgents = FileParserUtils::stripSpacesAndCast<unsigned int>(tokens[3]);
@@ -324,7 +322,9 @@ ChemicalReaction *RxnDataStreamToChemicalReaction(std::istream &inStream,
     throw ChemicalReactionParserException("$RXN header not found");
   }
   int version = 2000;
-  if (tempStr.size() >= 10 && tempStr.substr(5, 5) == "V3000") version = 3000;
+  if (tempStr.size() >= 10 && tempStr.substr(5, 5) == "V3000") {
+    version = 3000;
+  }
 
   ChemicalReaction *res = nullptr;
   try {

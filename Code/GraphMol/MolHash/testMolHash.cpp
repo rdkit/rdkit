@@ -74,17 +74,24 @@ void test1() {
     unsigned n;
     n = mol->getNumAtoms();
     atomsToUse.resize(n);
-    for (unsigned i = 0; i < n; i++) atomsToUse[i] = i;
+    for (unsigned i = 0; i < n; i++) {
+      atomsToUse[i] = i;
+    }
     n = mol->getNumBonds();
     bondsToUse.resize(n);
-    for (unsigned i = 0; i < n; i++) bondsToUse[i] = i;
+    for (unsigned i = 0; i < n; i++) {
+      bondsToUse[i] = i;
+    }
 
     n = mol->getNumAtoms();
-    for (unsigned i = 0; i < n; i++)
+    for (unsigned i = 0; i < n; i++) {
       atomCodes[i] =
           1;  // + mol->getAtomWithIdx(i)->getAtomicNum(); //res0 != res1,2,3
+    }
     n = mol->getNumBonds();
-    for (unsigned i = 0; i < n; i++) bondCodes[i] = 1;
+    for (unsigned i = 0; i < n; i++) {
+      bondCodes[i] = 1;
+    }
 
     fillAtomBondCodes(*mol, CF_NO_LABELS, &atomCodes, &bondCodes);
 
@@ -127,8 +134,9 @@ void test2() {
     std::vector<std::uint32_t> atomCodes(mol->getNumAtoms());
     std::vector<std::uint32_t> bondCodes(mol->getNumBonds());
 
-    fillAtomBondCodes(*mol, CF_ELEMENT | CF_CHARGE /*|CF_VALENCE*/
-                                | CF_ATOM_AROMATIC,
+    fillAtomBondCodes(*mol,
+                      CF_ELEMENT | CF_CHARGE /*|CF_VALENCE*/
+                          | CF_ATOM_AROMATIC,
                       &atomCodes, &bondCodes);
 
     //            fillAtomBondCodes(*mol, CF_ATOM_ALL &(~(CF_BOND_CHIRALITY |
@@ -140,9 +148,13 @@ void test2() {
               << std::endl;
   }
   bool passed = true;
-  for (size_t i = 0; i < HashNonChiral.size(); i++)
-    for (size_t j = 0; j < HashNonChiral.size(); j++)
-      if (i != j && HashNonChiral[i] != HashNonChiral[j]) passed = false;
+  for (size_t i = 0; i < HashNonChiral.size(); i++) {
+    for (size_t j = 0; j < HashNonChiral.size(); j++) {
+      if (i != j && HashNonChiral[i] != HashNonChiral[j]) {
+        passed = false;
+      }
+    }
+  }
   TEST_ASSERT(passed);
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
@@ -154,7 +166,9 @@ void test21() {
   std::cout << "Hash size = " << 8 * sizeof(HashCodeType) << " bits.\n";
   const char* smi[] = {
       // equal non-chiral BOND hash
-      "C/C=C/C", "CC=CC", "C/C=C\\C",
+      "C/C=C/C",
+      "CC=CC",
+      "C/C=C\\C",
   };
 
   std::vector<HashCodeType> HashNonChiral;
@@ -173,9 +187,13 @@ void test21() {
               << std::endl;
   }
   bool passed = true;
-  for (size_t i = 0; i < HashNonChiral.size(); i++)
-    for (size_t j = 0; j < HashNonChiral.size(); j++)
-      if (i != j && HashNonChiral[i] != HashNonChiral[j]) passed = false;
+  for (size_t i = 0; i < HashNonChiral.size(); i++) {
+    for (size_t j = 0; j < HashNonChiral.size(); j++) {
+      if (i != j && HashNonChiral[i] != HashNonChiral[j]) {
+        passed = false;
+      }
+    }
+  }
   TEST_ASSERT(passed);
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
@@ -185,7 +203,8 @@ void test3() {
   BOOST_LOG(rdInfoLog) << "Testing MolHash test3 CHIRALITY DIFF" << std::endl;
   const char* smi[] = {
       // different chiral hash
-      "C[C@H](F)Cl", "C[C@@H](F)Cl", "CC(F)Cl", "[13CH3]C(F)Cl",
+      "C[C@H](F)Cl",          "C[C@@H](F)Cl",          "CC(F)Cl",
+      "[13CH3]C(F)Cl",
 
       "C[C@H]1CC[C@H](C)CC1", "C[C@H]1CC[C@@H](C)CC1", "CC1CCC(C)CC1",
   };
@@ -208,9 +227,13 @@ void test3() {
   }
 
   bool passed = true;
-  for (size_t i = 0; i < HashChiral.size(); i++)
-    for (size_t j = 0; j < HashChiral.size(); j++)
-      if (i != j && HashChiral[i] == HashChiral[j]) passed = false;
+  for (size_t i = 0; i < HashChiral.size(); i++) {
+    for (size_t j = 0; j < HashChiral.size(); j++) {
+      if (i != j && HashChiral[i] == HashChiral[j]) {
+        passed = false;
+      }
+    }
+  }
   TEST_ASSERT(passed);
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
@@ -220,7 +243,8 @@ void test3a() {
   BOOST_LOG(rdInfoLog) << "Testing MolHash test3a CHIRALITY EQUAL" << std::endl;
   {
     const char* smi[] = {
-        "C[C@H](F)Cl", "C[C@@H](Cl)F",
+        "C[C@H](F)Cl",
+        "C[C@@H](Cl)F",
     };
     ROMOL_SPTR mol1 = ROMOL_SPTR(SmilesToMol(smi[0]));
     ROMOL_SPTR mol2 = ROMOL_SPTR(SmilesToMol(smi[1]));
@@ -241,7 +265,8 @@ void test3a() {
   }
   {
     const char* smi[] = {
-        "C[C@@H](F)Cl", "C[C@H](Cl)F",
+        "C[C@@H](F)Cl",
+        "C[C@H](Cl)F",
     };
     ROMOL_SPTR mol1 = ROMOL_SPTR(SmilesToMol(smi[0]));
     ROMOL_SPTR mol2 = ROMOL_SPTR(SmilesToMol(smi[1]));
@@ -263,7 +288,8 @@ void test3a() {
 
   {
     const char* smi[] = {
-        "C/C=C/Cl", "Cl/C=C/C",
+        "C/C=C/Cl",
+        "Cl/C=C/C",
     };
     ROMOL_SPTR mol1 = ROMOL_SPTR(SmilesToMol(smi[0]));
     ROMOL_SPTR mol2 = ROMOL_SPTR(SmilesToMol(smi[1]));
@@ -284,7 +310,8 @@ void test3a() {
   }
   {
     const char* smi[] = {
-        "C/C=C/Cl", "C/C=C\\Cl",
+        "C/C=C/Cl",
+        "C/C=C\\Cl",
     };
     ROMOL_SPTR mol1 = ROMOL_SPTR(SmilesToMol(smi[0]));
     ROMOL_SPTR mol2 = ROMOL_SPTR(SmilesToMol(smi[1]));
@@ -312,9 +339,14 @@ void test4() {
   BOOST_LOG(rdInfoLog) << "Testing MolHash test4 STRING" << std::endl;
   const char* smi[] = {
       // different chiral hash and equal non-chiral hash
-      "C[C@H](F)Cl", "C[C@@H](F)Cl", "CC(F)Cl", "[13CH3]C(F)Cl",
+      "C[C@H](F)Cl",
+      "C[C@@H](F)Cl",
+      "CC(F)Cl",
+      "[13CH3]C(F)Cl",
       // different chiral hash
-      "C[C@H]1CC[C@H](C)CC1", "C[C@H]1CC[C@@H](C)CC1", "CC1CCC(C)CC1",
+      "C[C@H]1CC[C@H](C)CC1",
+      "C[C@H]1CC[C@@H](C)CC1",
+      "CC1CCC(C)CC1",
   };
 
   for (auto& i : smi) {
@@ -322,15 +354,15 @@ void test4() {
     std::cout << generateMoleculeHashSet(*mol, nullptr, nullptr) << "  " << i
               << std::endl;
   }
-  TEST_ASSERT(true);  // there is no any exseption
+  TEST_ASSERT(true);  // there is no any exception
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test5() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing MolHash test5 " << std::endl;
-  const char* smi[] = {// different chiral hash and equal non-chiral hash
-                       // groups of 3
+  const char* smi[] = {// different chiral hash and equal non-chiral
+                       // hash groups of 3
                        "C[CH](F)Cl", "C[C@H](F)Cl", "C[C@@H](F)Cl",
                        //
                        "c1cc(C[CH](F)Cl)cnc1", "c1cc(C[C@H](F)Cl)cnc1",
@@ -365,38 +397,40 @@ void test5() {
 void doUnitTest() {
   std::cout << "Hash size = " << 8 * sizeof(HashCodeType) << " bits.\n";
 
-  BOOST_LOG(rdInfoLog)
-      << "*******************************************************\n";
+  BOOST_LOG(rdInfoLog) << "****************************************"
+                          "***************\n";
   test1();
-  BOOST_LOG(rdInfoLog)
-      << "*******************************************************\n";
+  BOOST_LOG(rdInfoLog) << "****************************************"
+                          "***************\n";
   test2();
-  BOOST_LOG(rdInfoLog)
-      << "*******************************************************\n";
+  BOOST_LOG(rdInfoLog) << "****************************************"
+                          "***************\n";
   test21();
-  BOOST_LOG(rdInfoLog)
-      << "*******************************************************\n";
+  BOOST_LOG(rdInfoLog) << "****************************************"
+                          "***************\n";
   test3();
-  BOOST_LOG(rdInfoLog)
-      << "*******************************************************\n";
+  BOOST_LOG(rdInfoLog) << "****************************************"
+                          "***************\n";
   test3a();
-  BOOST_LOG(rdInfoLog)
-      << "*******************************************************\n";
+  BOOST_LOG(rdInfoLog) << "****************************************"
+                          "***************\n";
   test4();
-  BOOST_LOG(rdInfoLog)
-      << "*******************************************************\n";
+  BOOST_LOG(rdInfoLog) << "****************************************"
+                          "***************\n";
   test5();
 }
 
 //=============================================================================
-// investigation test case for computing of a probability of the hash code
-// collisions
+// investigation test case for computing of a probability of the
+// hash code collisions
 //=============================================================================
 
 std::string getSmilesOnly(const char* smiles, std::string* id = nullptr) {
   const char* sp = strchr(smiles, ' ');
   unsigned n = (sp ? sp - smiles + 1 : strlen(smiles));
-  if (id) *id = std::string(smiles + n);
+  if (id) {
+    *id = std::string(smiles + n);
+  }
   return std::string(smiles, n);
 }
 
@@ -412,13 +446,17 @@ HashCodeType computeHash(const ROMol& mol, CodeFlags flags) {
   unsigned n = mol.getNumAtoms();
   for (unsigned i = 0; i < n; i++) {
     const Atom* atom = mol.getAtomWithIdx(i);
-    if (1) atomsToUse.push_back(atom->getIdx());
+    if (1) {
+      atomsToUse.push_back(atom->getIdx());
+    }
   }
 
   n = mol.getNumBonds();
   for (unsigned i = 0; i < n; i++) {
     const Bond* bond = mol.getBondWithIdx(i);
-    if (1) bondsToUse.push_back(bond->getIdx());
+    if (1) {
+      bondsToUse.push_back(bond->getIdx());
+    }
   }
 
   return generateMoleculeHashCode(mol, &atomsToUse, &bondsToUse, &atomCodes,
@@ -452,24 +490,27 @@ void analyzeResults(std::list<HashResult>& res) {
   unsigned rn = 0, cn = 0;
   for (auto r0 = res.begin(); r0 != res.end(); r0++) {
     std::cerr << "Result: " << ++rn << "\r";
-    if (0 == r0->Line)  // collision has been already found
+    if (0 == r0->Line) {  // collision has been already found
       continue;
+    }
     unsigned hashCollision = 0;
     std::vector<unsigned> cl;
-    // use binary search of collision in sorted list to improve performance
+    // use binary search of collision in sorted list to improve
+    // performance
     //........
     auto r1 = r0;
     for (auto r = ++r1; r != res.end(); r++) {
-      if (0 == r->Line)  // collision has been already found
+      if (0 == r->Line) {  // collision has been already found
         continue;
+      }
       if (r->Hash == r0->Hash)  // collision found
       {
         ++hashCollision;
         cl.push_back(r->Line);
-        //                    std::cout<<r0->Id<<"="<<r->Line<<"\n"; // TEMP
-        //                    TEST
-        r->Line =
-            0;  // mark as already processed collision to exclude duplicates
+        //                    std::cout<<r0->Id<<"="<<r->Line<<"\n"; //
+        //                    TEMP TEST
+        r->Line = 0;  // mark as already processed collision to exclude
+                      // duplicates
       }
     }
     if (0 != hashCollision)  // collision found
@@ -477,7 +518,9 @@ void analyzeResults(std::list<HashResult>& res) {
       cn += hashCollision;
       std::cout << "mol line " << r0->Line << ": " << hashCollision
                 << " collisions with: ";
-      for (unsigned int i : cl) std::cout << i << " ";
+      for (unsigned int i : cl) {
+        std::cout << i << " ";
+      }
       std::cout << "lines.\n";
     }
   }
@@ -497,8 +540,9 @@ void testFileSMILES(const char* file, HashCodeType bitMask) {
   }
   char smiles[4096];
   while (fgets(smiles, sizeof(smiles), f) && line <= 1000999) {
-    for (size_t i = strlen(smiles) - 1; i > 0 && smiles[i] < ' '; i--)
+    for (size_t i = strlen(smiles) - 1; i > 0 && smiles[i] < ' '; i--) {
       smiles[i] = '\0';  // remove LF
+    }
     std::string id;
     std::cerr << "\rLine: " << ++line << " ";
     if ('#' != smiles[0] && ' ' != smiles[0] &&
@@ -517,8 +561,9 @@ void testFileSMILES(const char* file, HashCodeType bitMask) {
       HashResult& r = res.back();
       //                r.ChiralInfo = 0;//mol-();
       r.Hash = computeHash(*mol, CF_ALL) & bitMask;
-    } else
+    } else {
       std::cerr << " skipped: " << smiles << "/n";
+    }
   }
   fclose(f);
   std::cout << "\nDONE. " << res.size() << " molecules processed.\n";
@@ -528,27 +573,32 @@ void testFileSMILES(const char* file, HashCodeType bitMask) {
 
 void checkCollisions(const char* file, std::uint32_t bits = 0) {
   HashCodeType bitMask = 0;
-  if (0 == bits || 8 * sizeof(HashCodeType) < bits)
+  if (0 == bits || 8 * sizeof(HashCodeType) < bits) {
     bits = 8 * sizeof(HashCodeType);
-  for (unsigned i = 0; i < bits; i++) bitMask |= 1ULL << i;
+  }
+  for (unsigned i = 0; i < bits; i++) {
+    bitMask |= 1ULL << i;
+  }
   std::cout << "Hash size = " << bits << " bits. Mask = " << bitMask << "\n";
 
-  if (0 == strcmp(file + strlen(file) - 4, ".smi"))
+  if (0 == strcmp(file + strlen(file) - 4, ".smi")) {
     testFileSMILES(file, bitMask);
-  else
-    std::cout << "UNKNOWN File Extention.\n";
+  } else {
+    std::cout << "UNKNOWN File Extension.\n";
+  }
 }
 
-}  // RDKit
+}  // namespace RDKit
 
 int main(int argc, char* argv[]) {
   RDKit::doUnitTest();
 
-  if (2 == argc)
+  if (2 == argc) {
     RDKit::checkCollisions(argv[1]);
-  else if (3 == argc && isdigit(*argv[2]))
+  } else if (3 == argc && isdigit(*argv[2])) {
     RDKit::checkCollisions(argv[1], atoi(argv[2]));
-  else if (1 != argc)
+  } else if (1 != argc) {
     std::cout << "UNKNOWN Argument.\n";
+  }
   return 0;
 }

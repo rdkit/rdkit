@@ -34,14 +34,13 @@ using namespace RDKit;
 #ifdef RDK_TEST_MULTITHREADED
 namespace {
 void runblock_mmff(const std::vector<ROMol *> &mols) {
-    for (unsigned int i = 0; i < mols.size(); ++i) {
-      ROMol *mol = mols[i];
-      ForceFields::ForceField *field = MMFF::constructForceField(*mol);
-      TEST_ASSERT(field);
-      field->initialize();
-      field->minimize(1);
-      delete field;
-    }
+  for (auto mol : mols) {
+    ForceFields::ForceField *field = MMFF::constructForceField(*mol);
+    TEST_ASSERT(field);
+    field->initialize();
+    field->minimize(1);
+    delete field;
+  }
 }
 }  // namespace
 #include <thread>
@@ -55,17 +54,20 @@ void testMMFFMultiThread() {
   SDMolSupplier suppl(pathName + "/bulk.sdf");
   unsigned int count = 24;
   std::vector<std::vector<ROMol*>> mols;
-  for(unsigned int i=0;i<count;++i) mols.push_back(std::vector<ROMol*>());
-  
+  for (unsigned int i = 0; i < count; ++i) {
+    mols.push_back(std::vector<ROMol *>());
+  }
+
   while (!suppl.atEnd() && mols.size() < 100) {
     ROMol *mol = nullptr;
     try {
       mol = suppl.next();
       for(unsigned int i=0;i<count;++i) {
-	if (i==0)
-	  mols[i].push_back(mol);
-	else
-	  mols[i].push_back(new ROMol(*mol));
+        if (i == 0) {
+          mols[i].push_back(mol);
+        } else {
+          mols[i].push_back(new ROMol(*mol));
+        }
       }
     } catch (...) {
       continue;

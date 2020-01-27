@@ -33,12 +33,13 @@ StereoGroup *createStereoGroup(StereoGroupType typ, ROMol &mol,
   python::stl_input_iterator<unsigned int> beg(atomIds), end;
   while (beg != end) {
     unsigned int v = *beg;
-    if (v >= mol.getNumAtoms())
+    if (v >= mol.getNumAtoms()) {
       throw_value_error("atom index exceeds mol.GetNumAtoms()");
+    }
     cppAtoms.push_back(mol.getAtomWithIdx(v));
     ++beg;
   }
-  StereoGroup *sg = new StereoGroup(typ, cppAtoms);
+  auto *sg = new StereoGroup(typ, cppAtoms);
   return sg;
 }
 

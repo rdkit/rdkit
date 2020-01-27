@@ -67,21 +67,29 @@ PeriodicTable::PeriodicTable() {
         istr >> anum;
         atomicData &adata = byanum[anum];
         ++token;
-        if (token == tokens.end()) continue;
+        if (token == tokens.end()) {
+          continue;
+        }
         ++token;
-        if (token == tokens.end()) continue;
+        if (token == tokens.end()) {
+          continue;
+        }
         unsigned int isotope;
         istr.clear();
         istr.str(*token);
         istr >> isotope;
         ++token;
-        if (token == tokens.end()) continue;
+        if (token == tokens.end()) {
+          continue;
+        }
         double mass;
         istr.clear();
         istr.str(*token);
         istr >> mass;
         ++token;
-        if (token == tokens.end()) continue;
+        if (token == tokens.end()) {
+          continue;
+        }
         double abundance;
         istr.clear();
         istr.str(*token);
@@ -101,7 +109,9 @@ PeriodicTable *PeriodicTable::getTable() {
   static std::once_flag pt_init_once;
   std::call_once(pt_init_once, initInstance);
 #else
-  if (!ds_instance) initInstance();
+  if (!ds_instance) {
+    initInstance();
+  }
 #endif
   return ds_instance.get();
 }

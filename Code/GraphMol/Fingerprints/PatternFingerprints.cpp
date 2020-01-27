@@ -107,7 +107,9 @@ void getAtomNumbers(const Atom *a, std::vector<int> &atomNums) {
     return;
   }
   // negated things are always complex:
-  if (a->getQuery()->getNegation()) return;
+  if (a->getQuery()->getNegation()) {
+    return;
+  }
   std::string descr = a->getQuery()->getDescription();
   if (descr == "AtomAtomicNum") {
     atomNums.push_back(
@@ -155,13 +157,19 @@ void getAtomNumbers(const Atom *a, std::vector<int> &atomNums) {
 
 namespace {
 bool isPatternComplexQuery(const Bond *b) {
-  if (!b->hasQuery()) return false;
+  if (!b->hasQuery()) {
+    return false;
+  }
   // negated things are always complex:
-  if (b->getQuery()->getNegation()) return true;
+  if (b->getQuery()->getNegation()) {
+    return true;
+  }
   std::string descr = b->getQuery()->getDescription();
   // std::cerr<<"   !!!!!! "<<b->getIdx()<<"
   // "<<b->getBeginAtomIdx()<<"-"<<b->getEndAtomIdx()<<" "<<descr<<std::endl;
-  if (descr == "BondOrder") return false;
+  if (descr == "BondOrder") {
+    return false;
+  }
   return true;
 }
 }  // namespace
@@ -181,7 +189,9 @@ ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
   unsigned int idx = 0;
   while (1) {
     std::string pq = pqs[idx];
-    if (pq == "") break;
+    if (pq == "") {
+      break;
+    }
     ++idx;
     const ROMol *matcher = pattern_flyweight(pq).get().getMatcher();
     CHECK_INVARIANT(matcher, "bad smarts");
@@ -231,7 +241,7 @@ ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
 #ifdef VERBOSE_FINGERPRINTING
       std::cerr << "\nPatt: " << pIdx << " | ";
 #endif
-      // collect bits counting the number of occurances of the pattern:
+      // collect bits counting the number of occurrences of the pattern:
       gboost::hash_combine(mIdx, 0xBEEF);
       res->setBit(mIdx % fpSize);
 #ifdef VERBOSE_FINGERPRINTING
@@ -256,7 +266,9 @@ ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
                              mol.getAtomWithIdx(p.second)->getAtomicNum());
         amap[p.first] = p.second;
       }
-      if (isQuery) continue;
+      if (isQuery) {
+        continue;
+      }
       ROMol::EDGE_ITER firstB, lastB;
       boost::tie(firstB, lastB) = patt->getEdges();
 #ifdef VERBOSE_FINGERPRINTING

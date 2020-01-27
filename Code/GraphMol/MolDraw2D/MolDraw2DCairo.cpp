@@ -44,7 +44,7 @@ void MolDraw2DCairo::drawLine(const Point2D &cds1, const Point2D &cds2) {
 
   const DashPattern &dashes = dash();
   if (dashes.size()) {
-    double *dd = new double[dashes.size()];
+    auto *dd = new double[dashes.size()];
     std::copy(dashes.begin(), dashes.end(), dd);
     cairo_set_dash(dp_cr, dd, dashes.size(), 0);
     delete[] dd;
@@ -65,8 +65,9 @@ void MolDraw2DCairo::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
   PRECONDITION(nSegments > 1, "too few segments");
   RDUNUSED_PARAM(col2);
 
-  if (nSegments % 2)
+  if (nSegments % 2) {
     ++nSegments;  // we're going to assume an even number of segments
+  }
 
   Point2D perp = calcPerpendicular(cds1, cds2);
   Point2D delta = (cds2 - cds1);
@@ -124,14 +125,17 @@ void MolDraw2DCairo::drawPolygon(const std::vector<Point2D> &cds) {
 
   for (unsigned int i = 0; i < cds.size(); ++i) {
     Point2D lc = getDrawCoords(cds[i]);
-    if (!i)
+    if (!i) {
       cairo_move_to(dp_cr, lc.x, lc.y);
-    else
+    } else {
       cairo_line_to(dp_cr, lc.x, lc.y);
+    }
   }
 
   cairo_close_path(dp_cr);
-  if (fillPolys()) cairo_fill_preserve(dp_cr);
+  if (fillPolys()) {
+    cairo_fill_preserve(dp_cr);
+  }
   cairo_stroke(dp_cr);
   cairo_set_line_cap(dp_cr, olinecap);
   cairo_set_line_join(dp_cr, olinejoin);
@@ -204,7 +208,7 @@ void MolDraw2DCairo::getStringSize(const std::string &label,
 namespace {
 cairo_status_t grab_str(void *closure, const unsigned char *data,
                         unsigned int len) {
-  std::string *str_ptr = (std::string *)closure;
+  auto *str_ptr = (std::string *)closure;
   (*str_ptr) += std::string((const char *)data, len);
   return CAIRO_STATUS_SUCCESS;
 }

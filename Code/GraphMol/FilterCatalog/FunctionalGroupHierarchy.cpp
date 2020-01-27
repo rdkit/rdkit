@@ -254,7 +254,9 @@ const FilterCatalog &GetFunctionalGroupHierarchy() {
 const std::map<std::string, ROMOL_SPTR> &GetFlattenedFunctionalGroupHierarchy(
     bool normalize) {
   GetFunctionalGroupHierarchy();
-  if (normalize) return flatten_normalized_get();
+  if (normalize) {
+    return flatten_normalized_get();
+  }
   return flatten_get();
 }
 }

@@ -456,7 +456,7 @@ void test7() {
   std::ifstream inStream(fName.c_str());
   TEST_ASSERT(inStream.is_open());
 
-  std::istream &instrm = static_cast<std::istream &>(inStream);
+  auto &instrm = static_cast<std::istream &>(inStream);
   factory = buildFeatureFactory(instrm);
   TEST_ASSERT(factory);
   TEST_ASSERT(factory->getNumFeatureDefs() == 2);
@@ -638,7 +638,7 @@ void testIssue346() {
   std::ifstream inStream(fName.c_str());
   TEST_ASSERT(inStream.is_open());
 
-  std::istream &instrm = static_cast<std::istream &>(inStream);
+  auto &instrm = static_cast<std::istream &>(inStream);
   factory = buildFeatureFactory(instrm);
   TEST_ASSERT(factory);
   TEST_ASSERT(factory->getNumFeatureDefs() == 2);

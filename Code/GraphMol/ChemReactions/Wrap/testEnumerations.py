@@ -171,7 +171,7 @@ class TestCase(unittest.TestCase) :
       pairs02[p01] = pairs02.get(p02, 0) + 1
       count += 1
 
-    # each pair should be used rougly once
+    # each pair should be used roughly once
     self.assertEquals(np.median(list(pairs01.values())), 1.0)
     self.assertEquals(np.median(list(pairs02.values())), 1.0)
     self.assertEquals(np.median(list(pairs12.values())), 1.0)

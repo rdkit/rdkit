@@ -68,7 +68,7 @@ RDKIT_CHEMTRANSFORMS_EXPORT ROMol *deleteSubstructs(const ROMol &mol,
     \param replaceAll  if this is true, only a single result, with all
     \param useChirality - if set, match the coreQuery using chirality
 
-   occurances
+   occurrences
                        of the substructure replaced, will be returned.
     \param replacementConnectionPoint   index of the atom in the replacement
    that

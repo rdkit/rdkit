@@ -15,7 +15,7 @@ RDKIT=$(RDBASE)
 
 
 ifeq ($(USE_INCHI),1)
-  INCHILIBS=-lRDInchiLib -lInchi
+  INCHILIBS=-lRDKitRDInchiLib -lRDKitInchi
   INCHIFLAGS=-I${RDKIT}/External -DBUILD_INCHI_SUPPORT
   INCHIREGRESS=inchi
   USE_THREADS=1
@@ -32,7 +32,7 @@ ifeq ($(USE_THREADS),1)
   THREADLIBS=-L${BOOSTHOME}/lib -lboost_thread -lboost_system
 endif
 
-RDKLIBS       = ${AVALONLIBS} ${INCHILIBS} -lMolDraw2D -lMolTransforms -lMolHash -lFMCS -lChemReactions -lChemTransforms -lFileParsers -lSmilesParse -lFingerprints -lSubgraphs -lDescriptors -lPartialCharges -lSubstructMatch  -lGraphMol -lEigenSolvers -lDataStructs -lDepictor -lRDGeometryLib -lRDGeneral
+RDKLIBS       = ${AVALONLIBS} ${INCHILIBS} -lRDKitMolDraw2D -lRDKitMolTransforms -lRDKitMolHash -lRDKitFMCS -lRDKitChemReactions -lRDKitChemTransforms -lRDKitFileParsers -lRDKitSmilesParse -lRDKitFingerprints -lRDKitSubgraphs -lRDKitDescriptors -lRDKitPartialCharges -lRDKitSubstructMatch  -lRDKitGraphMol -lRDKitEigenSolvers -lRDKitDataStructs -lRDKitDepictor -lRDKitRDGeometryLib -lRDKitRDGeneral
 
 ifeq ($(STATIC_LINK),0)
   SHLIB_LINK += -L${RDKIT}/lib -Wl,-rpath,'${RDKIT}/lib' ${RDKLIBS}
@@ -101,3 +101,10 @@ CC = $(CXX)
 
 %.o : %.cpp
 	$(CXX) $(CPLUSPLUSFLAGS) $(CPPFLAGS) -fPIC -c -o $@ $<
+
+
+COMPILE.cxx.bc = $(CLANG) -xc++ -Wno-ignored-attributes $(BITCODE_CXXFLAGS) $(CPPFLAGS) -emit-llvm -c
+
+%.bc : %.cpp
+	$(COMPILE.cxx.bc) -o $@ $<
+	$(LLVM_BINPATH)/opt -module-summary -f $@ -o $@

@@ -18,7 +18,12 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("get_smiles", &JSMol::get_smiles)
       .function("get_molblock", &JSMol::get_molblock)
       .function("get_inchi", &JSMol::get_inchi)
-      .function("get_svg", &JSMol::get_svg)
+      .function("get_svg",
+                select_overload<std::string() const>(&JSMol::get_svg))
+      .function("get_svg",
+                select_overload<std::string(unsigned int, unsigned int) const>(
+                    &JSMol::get_svg))
+
       .function("get_svg_with_highlights", &JSMol::get_svg_with_highlights)
       .function("get_substruct_match", &JSMol::get_substruct_match)
       .function("get_substruct_matches", &JSMol::get_substruct_matches)

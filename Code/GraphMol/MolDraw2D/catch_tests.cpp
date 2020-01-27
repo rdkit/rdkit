@@ -67,7 +67,7 @@ TEST_CASE("contour data", "[drawing, conrec]") {
     MolDraw2DUtils::prepareMolForDrawing(*m1);
 
     const size_t gridSz = 100;
-    double *grid = new double[gridSz * gridSz];
+    auto *grid = new double[gridSz * gridSz];
     std::vector<double> xps(gridSz);
     std::vector<double> yps(gridSz);
 
@@ -87,14 +87,18 @@ TEST_CASE("contour data", "[drawing, conrec]") {
       xps[ix] = px;
       for (size_t iy = 0; iy < gridSz; ++iy) {
         auto py = y1 + iy * dy;
-        if (ix == 0) yps[iy] = py;
+        if (ix == 0) {
+          yps[iy] = py;
+        }
         RDGeom::Point2D loc(px, py);
         double val = 0.0;
         for (size_t ia = 0; ia < conf.getNumAtoms(); ++ia) {
           auto dv = loc - RDGeom::Point2D(conf.getAtomPos(ia).x,
                                           conf.getAtomPos(ia).y);
           auto r = dv.length();
-          if (r > 0.1) val += 1 / r;
+          if (r > 0.1) {
+            val += 1 / r;
+          }
         }
         maxV = std::max(val, maxV);
         grid[ix * gridSz + iy] = val;

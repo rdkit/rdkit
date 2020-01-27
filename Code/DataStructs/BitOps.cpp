@@ -36,7 +36,7 @@ int getBitId(const char*& text, int format, int size, int curr) {
     tmp = EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(*(int*)text);
     text += sizeof(tmp);
     res = tmp;
-  } else if (format == 1) {  // version 16 and on bits sotred as short ints
+  } else if (format == 1) {  // version 16 and on bits sorted as short ints
     unsigned short tmp;
     tmp = EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(
         *(unsigned short*)text);
@@ -110,12 +110,18 @@ bool AllProbeBitsMatch(const char* probe, const char* ref) {
 
   while (nProbeOn) {
     while (currRefBit < currProbeBit && nRefOn > 0) {
-      if (refFormat == 2) currRefBit++;
+      if (refFormat == 2) {
+        currRefBit++;
+      }
       currRefBit = getBitId(ref, refFormat, refSize, currRefBit);
       nRefOn--;
     }
-    if (currRefBit != currProbeBit) return false;
-    if (probeFormat == 2) currProbeBit++;
+    if (currRefBit != currProbeBit) {
+      return false;
+    }
+    if (probeFormat == 2) {
+      currProbeBit++;
+    }
     currProbeBit = getBitId(probe, probeFormat, probeSize, currProbeBit);
     nProbeOn--;
   }
@@ -154,11 +160,15 @@ bool AllProbeBitsMatch(const T1& probe, const std::string& pkl) {
   //  if(probe.getBit(i)){
   for (std::vector<int>::const_iterator i = obl.begin(); i != obl.end(); i++) {
     while (currBit < *i && nOn > 0) {
-      if (format == 2) currBit++;
+      if (format == 2) {
+        currBit++;
+      }
       currBit = getBitId(text, format, size, currBit);
       nOn--;
     }
-    if (currBit != *i) return false;
+    if (currBit != *i) {
+      return false;
+    }
     //}
   }
   return true;
@@ -208,15 +218,19 @@ const bool canUseBitmapHack =
 
 bool EBVToBitmap(const ExplicitBitVect& bv, const unsigned char*& fp,
                  unsigned int& nBytes) {
-  if (!canUseBitmapHack) return false;
-  const bitset_impl* p1 = (const bitset_impl*)(const void*)bv.dp_bits;
+  if (!canUseBitmapHack) {
+    return false;
+  }
+  const auto* p1 = (const bitset_impl*)(const void*)bv.dp_bits;
   // Run-time sanity check (just in case)
   if (p1->m_num_bits != bv.dp_bits->size()) {
     return false;
   }
   fp = (const unsigned char*)p1->m_bits.data();
   nBytes = (unsigned int)p1->m_num_bits / 8;
-  if (p1->m_num_bits % 8) ++nBytes;
+  if (p1->m_num_bits % 8) {
+    ++nBytes;
+  }
   return true;
 }
 }  // end of local namespace
@@ -242,7 +256,7 @@ int NumOnBitsInCommon(const ExplicitBitVect& bv1, const ExplicitBitVect& bv2) {
 // """ -------------------------------------------------------
 //
 //  TanimotoSimilarity(T1,T2)
-//   returns the Tanamoto similarity between T1 and T2, a double.
+//   returns the Tanimoto similarity between T1 and T2, a double.
 //
 //  T1 and T2 should be the same length.
 //
@@ -254,10 +268,13 @@ int NumOnBitsInCommon(const ExplicitBitVect& bv1, const ExplicitBitVect& bv2) {
 // """ -------------------------------------------------------
 template <typename T1, typename T2>
 double TanimotoSimilarity(const T1& bv1, const T2& bv2) {
-  if (bv1.getNumBits() != bv2.getNumBits())
+  if (bv1.getNumBits() != bv2.getNumBits()) {
     throw ValueErrorException("BitVects must be same length");
+  }
   unsigned int total = bv1.getNumOnBits() + bv2.getNumOnBits();
-  if (total == 0) return 1.0;
+  if (total == 0) {
+    return 1.0;
+  }
   unsigned int common = NumOnBitsInCommon(bv1, bv2);
   return (double)common / (double)(total - common);
 }
@@ -266,22 +283,25 @@ template <typename T1, typename T2>
 double TverskySimilarity(const T1& bv1, const T2& bv2, double a, double b) {
   RANGE_CHECK(0, a, 1);
   RANGE_CHECK(0, b, 1);
-  if (bv1.getNumBits() != bv2.getNumBits())
+  if (bv1.getNumBits() != bv2.getNumBits()) {
     throw ValueErrorException("BitVects must be same length");
+  }
   double x = NumOnBitsInCommon(bv1, bv2);
   double y = bv1.getNumOnBits();
   double z = bv2.getNumOnBits();
   double denom = a * y + b * z + (1 - a - b) * x;
-  if (denom == 0.0)
+  if (denom == 0.0) {
     return 1.0;
-  else
+  } else {
     return x / denom;
+  }
 }
 
 template <typename T1, typename T2>
 double CosineSimilarity(const T1& bv1, const T2& bv2) {
-  if (bv1.getNumBits() != bv2.getNumBits())
+  if (bv1.getNumBits() != bv2.getNumBits()) {
     throw ValueErrorException("BitVects must be same length");
+  }
   double x = NumOnBitsInCommon(bv1, bv2);
   double y = bv1.getNumOnBits();
   double z = bv2.getNumOnBits();
@@ -295,8 +315,9 @@ double CosineSimilarity(const T1& bv1, const T2& bv2) {
 
 template <typename T1, typename T2>
 double KulczynskiSimilarity(const T1& bv1, const T2& bv2) {
-  if (bv1.getNumBits() != bv2.getNumBits())
+  if (bv1.getNumBits() != bv2.getNumBits()) {
     throw ValueErrorException("BitVects must be same length");
+  }
   double x = NumOnBitsInCommon(bv1, bv2);
   double y = bv1.getNumOnBits();
   double z = bv2.getNumOnBits();
@@ -310,8 +331,9 @@ double KulczynskiSimilarity(const T1& bv1, const T2& bv2) {
 
 template <typename T1, typename T2>
 double DiceSimilarity(const T1& bv1, const T2& bv2) {
-  if (bv1.getNumBits() != bv2.getNumBits())
+  if (bv1.getNumBits() != bv2.getNumBits()) {
     throw ValueErrorException("BitVects must be same length");
+  }
   double x = NumOnBitsInCommon(bv1, bv2);
   double y = bv1.getNumOnBits();
   double z = bv2.getNumOnBits();
@@ -325,8 +347,9 @@ double DiceSimilarity(const T1& bv1, const T2& bv2) {
 
 template <typename T1, typename T2>
 double SokalSimilarity(const T1& bv1, const T2& bv2) {
-  if (bv1.getNumBits() != bv2.getNumBits())
+  if (bv1.getNumBits() != bv2.getNumBits()) {
     throw ValueErrorException("BitVects must be same length");
+  }
   double x = NumOnBitsInCommon(bv1, bv2);
   double y = bv1.getNumOnBits();
   double z = bv2.getNumOnBits();
@@ -336,8 +359,9 @@ double SokalSimilarity(const T1& bv1, const T2& bv2) {
 
 template <typename T1, typename T2>
 double McConnaugheySimilarity(const T1& bv1, const T2& bv2) {
-  if (bv1.getNumBits() != bv2.getNumBits())
+  if (bv1.getNumBits() != bv2.getNumBits()) {
     throw ValueErrorException("BitVects must be same length");
+  }
   double x = NumOnBitsInCommon(bv1, bv2);
   double y = bv1.getNumOnBits();
   double z = bv2.getNumOnBits();
@@ -351,20 +375,25 @@ double McConnaugheySimilarity(const T1& bv1, const T2& bv2) {
 
 template <typename T>
 inline T tmin(T v1, T v2) {
-  if (v1 < v2) return v1;
+  if (v1 < v2) {
+    return v1;
+  }
   return v2;
 }
 
 template <typename T>
 inline T tmax(T v1, T v2) {
-  if (v1 > v2) return v1;
+  if (v1 > v2) {
+    return v1;
+  }
   return v2;
 }
 
 template <typename T1, typename T2>
 double AsymmetricSimilarity(const T1& bv1, const T2& bv2) {
-  if (bv1.getNumBits() != bv2.getNumBits())
+  if (bv1.getNumBits() != bv2.getNumBits()) {
     throw ValueErrorException("BitVects must be same length");
+  }
   double x = NumOnBitsInCommon(bv1, bv2);
   double y = bv1.getNumOnBits();
   double z = bv2.getNumOnBits();
@@ -378,8 +407,9 @@ double AsymmetricSimilarity(const T1& bv1, const T2& bv2) {
 
 template <typename T1, typename T2>
 double BraunBlanquetSimilarity(const T1& bv1, const T2& bv2) {
-  if (bv1.getNumBits() != bv2.getNumBits())
+  if (bv1.getNumBits() != bv2.getNumBits()) {
     throw ValueErrorException("BitVects must be same length");
+  }
   double x = NumOnBitsInCommon(bv1, bv2);
   double y = bv1.getNumOnBits();
   double z = bv2.getNumOnBits();
@@ -393,25 +423,28 @@ double BraunBlanquetSimilarity(const T1& bv1, const T2& bv2) {
 
 template <typename T1, typename T2>
 double RusselSimilarity(const T1& bv1, const T2& bv2) {
-  if (bv1.getNumBits() != bv2.getNumBits())
+  if (bv1.getNumBits() != bv2.getNumBits()) {
     throw ValueErrorException("BitVects must be same length");
+  }
   double x = NumOnBitsInCommon(bv1, bv2);
   return x / bv1.getNumBits();
 }
 
 template <typename T1, typename T2>
 double RogotGoldbergSimilarity(const T1& bv1, const T2& bv2) {
-  if (bv1.getNumBits() != bv2.getNumBits())
+  if (bv1.getNumBits() != bv2.getNumBits()) {
     throw ValueErrorException("BitVects must be same length");
+  }
   double x = NumOnBitsInCommon(bv1, bv2);
   double y = bv1.getNumOnBits();
   double z = bv2.getNumOnBits();
   double l = bv1.getNumBits();
   double d = l - y - z + x;
-  if ((x == l) || (d == l))
+  if ((x == l) || (d == l)) {
     return 1.0;
-  else
+  } else {
     return (x / (y + z) + (d) / (2 * l - y - z));
+  }
 }
 
 // """ -------------------------------------------------------
@@ -428,8 +461,9 @@ double RogotGoldbergSimilarity(const T1& bv1, const T2& bv2) {
 // """ -------------------------------------------------------
 template <typename T1, typename T2>
 double OnBitSimilarity(const T1& bv1, const T2& bv2) {
-  if (bv1.getNumBits() != bv2.getNumBits())
+  if (bv1.getNumBits() != bv2.getNumBits()) {
     throw ValueErrorException("BitVects must be same length");
+  }
 
   double num = NumOnBitsInCommon(bv1, bv2);
   double denom = (bv1 | bv2).getNumOnBits();
@@ -456,8 +490,9 @@ double OnBitSimilarity(const T1& bv1, const T2& bv2) {
 // """ -------------------------------------------------------
 template <typename T1, typename T2>
 int NumBitsInCommon(const T1& bv1, const T2& bv2) {
-  if (bv1.getNumBits() != bv2.getNumBits())
+  if (bv1.getNumBits() != bv2.getNumBits()) {
     throw ValueErrorException("BitVects must be same length");
+  }
 
   return bv1.getNumBits() - (bv1 ^ bv2).getNumOnBits();
 }
@@ -483,8 +518,9 @@ int NumBitsInCommon(const ExplicitBitVect& bv1, const ExplicitBitVect& bv2) {
 // """ -------------------------------------------------------
 template <typename T1, typename T2>
 double AllBitSimilarity(const T1& bv1, const T2& bv2) {
-  if (bv1.getNumBits() != bv2.getNumBits())
+  if (bv1.getNumBits() != bv2.getNumBits()) {
     throw ValueErrorException("BitVects must be same length");
+  }
 
   return double(NumBitsInCommon(bv1, bv2)) / bv1.getNumBits();
 }
@@ -505,8 +541,9 @@ double AllBitSimilarity(const T1& bv1, const T2& bv2) {
 // """ -------------------------------------------------------
 template <typename T1, typename T2>
 IntVect OnBitsInCommon(const T1& bv1, const T2& bv2) {
-  if (bv1.getNumBits() != bv2.getNumBits())
+  if (bv1.getNumBits() != bv2.getNumBits()) {
     throw ValueErrorException("BitVects must be same length");
+  }
   IntVect res;
   (bv1 & bv2).getOnBits(res);
   return res;
@@ -528,8 +565,9 @@ IntVect OnBitsInCommon(const T1& bv1, const T2& bv2) {
 // """ -------------------------------------------------------
 template <typename T1, typename T2>
 IntVect OffBitsInCommon(const T1& bv1, const T2& bv2) {
-  if (bv1.getNumBits() != bv2.getNumBits())
+  if (bv1.getNumBits() != bv2.getNumBits()) {
     throw ValueErrorException("BitVects must be same length");
+  }
   IntVect res;
   (~(bv1 | bv2)).getOnBits(res);
   return res;
@@ -562,8 +600,9 @@ IntVect OffBitsInCommon(const T1& bv1, const T2& bv2) {
 // """ -------------------------------------------------------
 template <typename T1, typename T2>
 DoubleVect OnBitProjSimilarity(const T1& bv1, const T2& bv2) {
-  if (bv1.getNumBits() != bv2.getNumBits())
+  if (bv1.getNumBits() != bv2.getNumBits()) {
     throw ValueErrorException("BitVects must be same length");
+  }
   DoubleVect res(2, 0.0);
   double num = NumOnBitsInCommon(bv1, bv2);
   if (num) {
@@ -600,8 +639,9 @@ DoubleVect OnBitProjSimilarity(const T1& bv1, const T2& bv2) {
 // """ -------------------------------------------------------
 template <typename T1, typename T2>
 DoubleVect OffBitProjSimilarity(const T1& bv1, const T2& bv2) {
-  if (bv1.getNumBits() != bv2.getNumBits())
+  if (bv1.getNumBits() != bv2.getNumBits()) {
     throw ValueErrorException("BitVects must be same length");
+  }
   DoubleVect res(2, 0.0);
   double num = (bv1 | bv2).getNumOffBits();
   if (num) {
@@ -613,8 +653,9 @@ DoubleVect OffBitProjSimilarity(const T1& bv1, const T2& bv2) {
 
 template <typename T1>
 T1* FoldFingerprint(const T1& bv1, unsigned int factor) {
-  if (factor <= 0 || factor >= bv1.getNumBits())
+  if (factor <= 0 || factor >= bv1.getNumBits()) {
     throw ValueErrorException("invalid fold factor");
+  }
 
   int initSize = bv1.getNumBits();
   int resSize = initSize / factor;
@@ -633,7 +674,9 @@ template <typename T1>
 std::string BitVectToText(const T1& bv1) {
   std::string res(bv1.getNumBits(), '0');
   for (unsigned int i = 0; i < bv1.getNumBits(); i++) {
-    if (bv1.getBit(i)) res[i] = '1';
+    if (bv1.getBit(i)) {
+      res[i] = '1';
+    }
   }
   return res;
 }
@@ -706,7 +749,9 @@ void UpdateBitVectFromFPSText(T1& bv1, const std::string& fps) {
     }
     for (unsigned int bit = 0; bit < 8 && bitIdx < bv1.getNumBits();
          ++bit, ++bitIdx) {
-      if (c & (1 << bit)) bv1.setBit(bitIdx);
+      if (c & (1 << bit)) {
+        bv1.setBit(bitIdx);
+      }
     }
   }
 }
@@ -719,7 +764,9 @@ void UpdateBitVectFromBinaryText(T1& bv1, const std::string& fps) {
     unsigned short c = fps[i];
     for (unsigned int bit = 0; bit < 8 && bitIdx < bv1.getNumBits();
          ++bit, ++bitIdx) {
-      if (c & (1 << bit)) bv1.setBit(bitIdx);
+      if (c & (1 << bit)) {
+        bv1.setBit(bitIdx);
+      }
     }
   }
 }

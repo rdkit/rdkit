@@ -19,8 +19,7 @@ using namespace RDKit;
 namespace {
 python::tuple taniNbrHelper(const FPBReader *self, const std::string &bytes,
                             double threshold) {
-  const std::uint8_t *bv =
-      reinterpret_cast<const std::uint8_t *>(bytes.c_str());
+  const auto *bv = reinterpret_cast<const std::uint8_t *>(bytes.c_str());
   std::vector<std::pair<double, unsigned int>> nbrs =
       self->getTanimotoNeighbors(bv, threshold);
   python::list result;
@@ -31,8 +30,7 @@ python::tuple taniNbrHelper(const FPBReader *self, const std::string &bytes,
 }
 python::tuple tverskyNbrHelper(const FPBReader *self, const std::string &bytes,
                                double ca, double cb, double threshold) {
-  const std::uint8_t *bv =
-      reinterpret_cast<const std::uint8_t *>(bytes.c_str());
+  const auto *bv = reinterpret_cast<const std::uint8_t *>(bytes.c_str());
   std::vector<std::pair<double, unsigned int>> nbrs =
       self->getTverskyNeighbors(bv, ca, cb, threshold);
   python::list result;
@@ -43,8 +41,7 @@ python::tuple tverskyNbrHelper(const FPBReader *self, const std::string &bytes,
 }
 python::tuple containingNbrHelper(const FPBReader *self,
                                   const std::string &bytes) {
-  const std::uint8_t *bv =
-      reinterpret_cast<const std::uint8_t *>(bytes.c_str());
+  const auto *bv = reinterpret_cast<const std::uint8_t *>(bytes.c_str());
   std::vector<unsigned int> nbrs = self->getContainingNeighbors(bv);
   python::list result;
   for (auto &nbr : nbrs) {
@@ -56,8 +53,7 @@ python::tuple containingNbrHelper(const FPBReader *self,
 python::tuple multiTaniNbrHelper(const MultiFPBReader *self,
                                  const std::string &bytes, double threshold,
                                  unsigned int numThreads) {
-  const std::uint8_t *bv =
-      reinterpret_cast<const std::uint8_t *>(bytes.c_str());
+  const auto *bv = reinterpret_cast<const std::uint8_t *>(bytes.c_str());
   std::vector<MultiFPBReader::ResultTuple> nbrs =
       self->getTanimotoNeighbors(bv, threshold, numThreads);
   python::list result;
@@ -70,8 +66,7 @@ python::tuple multiTverskyNbrHelper(const MultiFPBReader *self,
                                     const std::string &bytes, double ca,
                                     double cb, double threshold,
                                     unsigned int numThreads) {
-  const std::uint8_t *bv =
-      reinterpret_cast<const std::uint8_t *>(bytes.c_str());
+  const auto *bv = reinterpret_cast<const std::uint8_t *>(bytes.c_str());
   std::vector<MultiFPBReader::ResultTuple> nbrs =
       self->getTverskyNeighbors(bv, ca, cb, threshold, numThreads);
   python::list result;
@@ -83,8 +78,7 @@ python::tuple multiTverskyNbrHelper(const MultiFPBReader *self,
 python::tuple multiContainingNbrHelper(const MultiFPBReader *self,
                                        const std::string &bytes,
                                        unsigned int numThreads) {
-  const std::uint8_t *bv =
-      reinterpret_cast<const std::uint8_t *>(bytes.c_str());
+  const auto *bv = reinterpret_cast<const std::uint8_t *>(bytes.c_str());
   std::vector<std::pair<unsigned int, unsigned int>> nbrs =
       self->getContainingNeighbors(bv, numThreads);
   python::list result;
@@ -104,8 +98,7 @@ python::object getBytesHelper(const FPBReader *self, unsigned int which) {
 
 double getTaniHelper(const FPBReader *self, unsigned int which,
                      const std::string &bytes) {
-  const std::uint8_t *bv =
-      reinterpret_cast<const std::uint8_t *>(bytes.c_str());
+  const auto *bv = reinterpret_cast<const std::uint8_t *>(bytes.c_str());
   return self->getTanimoto(which, bv);
 }
 python::tuple getItemHelper(const FPBReader *self, unsigned int which) {
@@ -114,8 +107,7 @@ python::tuple getItemHelper(const FPBReader *self, unsigned int which) {
 }
 double getTverskyHelper(const FPBReader *self, unsigned int which,
                         const std::string &bytes, double ca, double cb) {
-  const std::uint8_t *bv =
-      reinterpret_cast<const std::uint8_t *>(bytes.c_str());
+  const auto *bv = reinterpret_cast<const std::uint8_t *>(bytes.c_str());
   return self->getTversky(which, bv, ca, cb);
 }
 }

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2018 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2019 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -56,8 +56,9 @@ std::string _combineChildSmarts(std::string cs1, unsigned int features1,
           "binary tree");
     }
     res += cs1;
-    if (!(cs1.empty() || cs2.empty()))
+    if (!(cs1.empty() || cs2.empty())) {
       res += ",";
+    }
     res += cs2;
     features |= static_cast<unsigned int>(QueryBoolFeatures::HAS_OR);
   } else if ((descrip.find("And") > 0) &&
@@ -72,8 +73,9 @@ std::string _combineChildSmarts(std::string cs1, unsigned int features1,
       features |= static_cast<unsigned int>(QueryBoolFeatures::HAS_AND);
     }
     res += cs1;
-    if (!(cs1.empty() || cs2.empty()))
+    if (!(cs1.empty() || cs2.empty())) {
       res += symb;
+    }
     res += cs2;
   } else {
     std::stringstream err;
@@ -95,42 +97,6 @@ void describeQuery(const T *query, std::string leader = "\t") {
   }
 }
 
-// called with the children of AND queries:
-std::string smartsOrganicAtom(const QueryAtom::QUERYATOM_QUERY *child1,
-                              const QueryAtom::QUERYATOM_QUERY *child2) {
-  PRECONDITION(child1 && child2, "bad query");
-
-  std::string desc1 = child1->getDescription();
-  std::string desc2 = child2->getDescription();
-  const QueryAtom::QUERYATOM_QUERY *origA, *otherA;
-  if (desc1 == "AtomAtomicNum") {
-    origA = child1;
-    otherA = child2;
-  } else {
-    origA = child2;
-    otherA = child1;
-  }
-
-  std::string odsc = otherA->getDescription();
-  CHECK_INVARIANT(((odsc == "AtomIsAliphatic") || (odsc == "AtomIsAromatic")),
-                  "Should be either an aromatic or Aliphatic atom");
-
-  const ATOM_EQUALS_QUERY *torig =
-      static_cast<const ATOM_EQUALS_QUERY *>(origA);
-  int val = torig->getVal();
-  std::string res = PeriodicTable::getTable()->getElementSymbol(val);
-  if (odsc == "AtomIsAromatic") {
-    // if aromatic convert the first leter to a small letter
-    res[0] += ('a' - 'A');
-    if (res.length() > 1) {
-      res = "[" + res + "]";
-    }
-  }
-  if (torig->getNegation()) {
-    res = "!" + res;
-  }
-  return res;
-}
 const static std::string _qatomHasStereoSet = "_qatomHasStereoSet";
 std::string getAtomSmartsSimple(const QueryAtom *qatom,
                                 const ATOM_EQUALS_QUERY *query,
@@ -281,9 +247,13 @@ std::string getAtomSmartsSimple(const QueryAtom *qatom,
     bool isAromatic;
     parseAtomType(query->getVal(), atNum, isAromatic);
     std::string symbol = PeriodicTable::getTable()->getElementSymbol(atNum);
-    if (isAromatic) symbol[0] += ('a' - 'A');
+    if (isAromatic) {
+      symbol[0] += ('a' - 'A');
+    }
     res << symbol;
-    if (!SmilesWrite::inOrganicSubset(atNum)) needParen = true;
+    if (!SmilesWrite::inOrganicSubset(atNum)) {
+      needParen = true;
+    }
   } else {
     BOOST_LOG(rdWarningLog)
         << "Cannot write SMARTS for query type : " << descrip
@@ -341,9 +311,8 @@ std::string getRecursiveStructureQuerySmarts(
     const QueryAtom::QUERYATOM_QUERY *query) {
   PRECONDITION(query, "bad query");
   PRECONDITION(query->getDescription() == "RecursiveStructure", "bad query");
-  const RecursiveStructureQuery *rquery =
-      static_cast<const RecursiveStructureQuery *>(query);
-  ROMol *qmol = const_cast<ROMol *>(rquery->getQueryMol());
+  const auto *rquery = static_cast<const RecursiveStructureQuery *>(query);
+  auto *qmol = const_cast<ROMol *>(rquery->getQueryMol());
   std::string res = MolToSmarts(*qmol);
   res = "$(" + res + ")";
   if (rquery->getNegation()) {
@@ -376,10 +345,11 @@ std::string getBasicBondRepr(Bond::BondType typ, Bond::BondDir dir,
       res = ":";
       break;
     case Bond::DATIVE:
-      if (reverseDative)
+      if (reverseDative) {
         res = "<-";
-      else
+      } else {
         res = "->";
+      }
       break;
     default:
       res = "";
@@ -447,7 +417,7 @@ std::string _recurseGetSmarts(const QueryAtom *qatom,
   //
   // There is an additional complication with composite nodes that carry a
   // negation - in this
-  // case we will propogate the neagtion to the child nodes using the
+  // case we will propagate the negation to the child nodes using the
   // following rules
   //   NOT (a AND b) = ( NOT (a)) AND ( NOT (b))
   //   NOT (a OR b) = ( NOT (a)) OR ( NOT (b))
@@ -476,40 +446,13 @@ std::string _recurseGetSmarts(const QueryAtom *qatom,
   std::string csmarts1, csmarts2;
 
   bool needParen;
-
-  // deal with any special AND cases
-  //  1. This "node" is an AtomAnd between a AliphaticAtom (or AromaticAtom)
-  //  and
-  //      an organic atom e.g. "C"
-  if (descrip == "AtomAnd") {
-    bool specialCase = false;
-    // case 1
-    if ((!child1->getNegation() && !child2->getNegation()) &&
-        (((dsc1 == "AtomAtomicNum") &&
-          ((dsc2 == "AtomIsAliphatic") || (dsc2 == "AtomIsAromatic"))) ||
-         ((dsc2 == "AtomAtomicNum") &&
-          ((dsc1 == "AtomIsAliphatic") || (dsc1 == "AtomIsAromatic"))))) {
-      // we trap this one because it's nicer to see
-      //   "CC" in the output than "[#6&A][#6&A]"
-      res = smartsOrganicAtom(child1, child2);
-      specialCase = true;
-    }
-    if (specialCase) {
-      if (negate) {
-        res = "!" + res;
-      }
-      return res;
-    }
-  }
-
   // deal with the first child
   if (dsc1 == "RecursiveStructure") {
     csmarts1 = getRecursiveStructureQuerySmarts(child1);
     features |= static_cast<unsigned int>(QueryBoolFeatures::HAS_RECURSION);
   } else if ((dsc1 != "AtomOr") && (dsc1 != "AtomAnd")) {
     // child 1 is a simple node
-    const ATOM_EQUALS_QUERY *tchild =
-        static_cast<const ATOM_EQUALS_QUERY *>(child1);
+    const auto *tchild = static_cast<const ATOM_EQUALS_QUERY *>(child1);
     csmarts1 = getAtomSmartsSimple(qatom, tchild, needParen);
     bool nneg = (negate) ^ (tchild->getNegation());
     if (nneg) {
@@ -527,8 +470,7 @@ std::string _recurseGetSmarts(const QueryAtom *qatom,
     features |= static_cast<unsigned int>(QueryBoolFeatures::HAS_RECURSION);
   } else if ((dsc2 != "AtomOr") && (dsc2 != "AtomAnd")) {
     // child 2 is a simple node
-    const ATOM_EQUALS_QUERY *tchild =
-        static_cast<const ATOM_EQUALS_QUERY *>(child2);
+    const auto *tchild = static_cast<const ATOM_EQUALS_QUERY *>(child2);
     csmarts2 = getAtomSmartsSimple(qatom, tchild, needParen);
     bool nneg = (negate) ^ (tchild->getNegation());
     if (nneg) {
@@ -540,7 +482,7 @@ std::string _recurseGetSmarts(const QueryAtom *qatom,
   }
 
   // ok if we have a negation and we have an OR , we have to change to
-  // an AND since we propogated the negation
+  // an AND since we propagated the negation
   // i.e NOT (A OR B) = (NOT (A)) AND (NOT(B))
   if (negate) {
     if (descrip == "AtomOr") {
@@ -575,7 +517,7 @@ std::string _recurseBondSmarts(const Bond *bond,
   //
   // There is an additional complication with composite nodes that carry a
   // negation - in this
-  // case we will propogate the neagtion to the child nodes using the
+  // case we will propagate the negation to the child nodes using the
   // following rules
   //   NOT (a AND b) = ( NOT (a)) AND ( NOT (b))
   //   NOT (a OR b) = ( NOT (a)) OR ( NOT (b))
@@ -597,7 +539,7 @@ std::string _recurseBondSmarts(const Bond *bond,
   chi++;
   // OK we should be at the end of vector by now - since we can have only two
   // children,
-  // well - atleat in this case
+  // well - at least in this case
   CHECK_INVARIANT(chi == node->endChildren(), "Too many children on the query");
 
   std::string dsc1, dsc2;
@@ -607,8 +549,7 @@ std::string _recurseBondSmarts(const Bond *bond,
 
   if ((dsc1 != "BondOr") && (dsc1 != "BondAnd")) {
     // child1 is  simple node get the smarts directly
-    const BOND_EQUALS_QUERY *tchild =
-        static_cast<const BOND_EQUALS_QUERY *>(child1);
+    const auto *tchild = static_cast<const BOND_EQUALS_QUERY *>(child1);
     csmarts1 = getBondSmartsSimple(bond, tchild, atomToLeftIdx);
     bool nneg = (negate) ^ (tchild->getNegation());
     if (nneg) {
@@ -624,8 +565,7 @@ std::string _recurseBondSmarts(const Bond *bond,
   // now deal with the second child
   if ((dsc2 != "BondOr") && (dsc2 != "BondAnd")) {
     // child 2 is a simple node
-    const BOND_EQUALS_QUERY *tchild =
-        static_cast<const BOND_EQUALS_QUERY *>(child2);
+    const auto *tchild = static_cast<const BOND_EQUALS_QUERY *>(child2);
     csmarts2 = getBondSmartsSimple(bond, tchild, atomToLeftIdx);
     bool nneg = (negate) ^ (tchild->getNegation());
     if (nneg) {
@@ -698,20 +638,21 @@ std::string FragmentSmartsConstruct(
   for (msCI = molStack.begin(); msCI != molStack.end(); msCI++) {
     switch (msCI->type) {
       case Canon::MOL_STACK_ATOM: {
-        QueryAtom *qatm = static_cast<QueryAtom *>(msCI->obj.atom);
+        auto *qatm = static_cast<QueryAtom *>(msCI->obj.atom);
         res << SmartsWrite::GetAtomSmarts(qatm);
         break;
       }
       case Canon::MOL_STACK_BOND: {
-        QueryBond *qbnd = static_cast<QueryBond *>(msCI->obj.bond);
+        auto *qbnd = static_cast<QueryBond *>(msCI->obj.bond);
         res << SmartsWrite::GetBondSmarts(qbnd, msCI->number);
         break;
       }
       case Canon::MOL_STACK_RING: {
-        if (msCI->number < 10)
+        if (msCI->number < 10) {
           res << msCI->number;
-        else
+        } else {
           res << "%" << msCI->number;
+        }
         break;
       }
       case Canon::MOL_STACK_BRANCH_OPEN: {
@@ -771,7 +712,9 @@ std::string getNonQueryAtomSmarts(const QueryAtom *qatom) {
   // FIX: probably should be smarter about Hs:
   if (hs) {
     res << "H";
-    if (hs > 1) res << hs;
+    if (hs > 1) {
+      res << hs;
+    }
   }
   int chg = qatom->getFormalCharge();
   if (chg) {
@@ -900,8 +843,7 @@ std::string GetAtomSmarts(const QueryAtom *qatom) {
     res = getRecursiveStructureQuerySmarts(query);
     needParen = true;
   } else {  // we have a simple smarts
-    ATOM_EQUALS_QUERY *tquery =
-        static_cast<ATOM_EQUALS_QUERY *>(qatom->getQuery());
+    auto *tquery = static_cast<ATOM_EQUALS_QUERY *>(qatom->getQuery());
     res = getAtomSmartsSimple(qatom, tquery, needParen);
     if (tquery->getNegation()) {
       res = "!" + res;
@@ -952,8 +894,7 @@ std::string GetBondSmarts(const QueryBond *bond, int atomToLeftIdx) {
     if (query->getNegation()) {
       res = "!";
     }
-    const BOND_EQUALS_QUERY *tquery =
-        static_cast<const BOND_EQUALS_QUERY *>(query);
+    const auto *tquery = static_cast<const BOND_EQUALS_QUERY *>(query);
     res += getBondSmartsSimple(bond, tquery, atomToLeftIdx);
   }
   // BOOST_LOG(rdInfoLog) << "\t  query:" << descrip << " " << res << std::endl;
@@ -964,7 +905,9 @@ std::string GetBondSmarts(const QueryBond *bond, int atomToLeftIdx) {
 
 std::string MolToSmarts(const ROMol &mol, bool doIsomericSmarts) {
   const unsigned int nAtoms = mol.getNumAtoms();
-  if (!nAtoms) return "";
+  if (!nAtoms) {
+    return "";
+  }
 
   std::vector<AtomColors> colors(nAtoms, Canon::WHITE_NODE);
   return molToSmarts(mol, doIsomericSmarts, std::move(colors));

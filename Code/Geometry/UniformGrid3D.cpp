@@ -32,13 +32,16 @@ UniformGrid3D::UniformGrid3D(const UniformGrid3D &other) : Grid3D(other) {
 }
 
 UniformGrid3D &UniformGrid3D::operator=(const UniformGrid3D &other) {
-  if (&other == this) return *this;
+  if (&other == this) {
+    return *this;
+  }
   PRECONDITION(other.dp_storage, "cannot copy an uninitialized grid");
   delete dp_storage;
   auto *data = new RDKit::DiscreteValueVect(*other.dp_storage);
   initGrid(other.d_numX * other.d_spacing, other.d_numY * other.d_spacing,
            other.d_numZ * other.d_spacing, other.d_spacing,
            other.dp_storage->getValueType(), other.d_offSet, data);
+  return *this;
 }
 
 void UniformGrid3D::initGrid(
@@ -155,8 +158,9 @@ Point3D UniformGrid3D::getGridPointLoc(unsigned int pointId) const {
   Point3D res;
   res.x = (pointId % d_numX) * d_spacing;
   // the rounding here is intentional, we want the coordinates of a grid point
-  res.y = ((pointId % (d_numX * d_numY)) / d_numX) * d_spacing;
-  res.z = (pointId / (d_numX * d_numY)) * d_spacing;
+  res.y =
+      static_cast<double>((pointId % (d_numX * d_numY)) / d_numX) * d_spacing;
+  res.z = static_cast<double>(pointId / (d_numX * d_numY)) * d_spacing;
   res += d_offSet;  // d_origin;
   return res;
 }
@@ -166,10 +170,18 @@ void UniformGrid3D::setVal(unsigned int pointId, unsigned int val) {
 }
 
 bool UniformGrid3D::compareParams(const UniformGrid3D &other) const {
-  if (d_numX != other.getNumX()) return false;
-  if (d_numY != other.getNumY()) return false;
-  if (d_numZ != other.getNumZ()) return false;
-  if (fabs(d_spacing - other.getSpacing()) > SPACING_TOL) return false;
+  if (d_numX != other.getNumX()) {
+    return false;
+  }
+  if (d_numY != other.getNumY()) {
+    return false;
+  }
+  if (d_numZ != other.getNumZ()) {
+    return false;
+  }
+  if (fabs(d_spacing - other.getSpacing()) > SPACING_TOL) {
+    return false;
+  }
   Point3D dOffset = d_offSet;
   dOffset -= other.getOffset();
   if (dOffset.lengthSq() > OFFSET_TOL) {
@@ -397,7 +409,7 @@ void writeGridToStream(const UniformGrid3D &grid, std::ostream &outStrm) {
   int outX2 = (int)(floor(offSet.x + 0.5)) + (int)(dimX - 1);
   // REVIEW: ok - here is a fix to try and make the grid closer to the molecule
   // when displayed
-  // (atleast in PyMol). The difference between the pair of values (outX1,
+  // (at least in PyMol). The difference between the pair of values (outX1,
   // outX2) is (dimX-1),
   // that is not the case with pairs the (outY1, outY2) a (outZ1, outZ2). In
   // these cases, the difference is
@@ -421,7 +433,7 @@ void writeGridToStream(const UniformGrid3D &grid, std::ostream &outStrm) {
 void writeGridToFile(const UniformGrid3D &grid, const std::string &filename) {
   // std::ofstream ofStrm(filename.c_str());
   auto *ofStrm = new std::ofstream(filename.c_str());
-  std::ostream *oStrm = static_cast<std::ostream *>(ofStrm);
+  auto *oStrm = static_cast<std::ostream *>(ofStrm);
   writeGridToStream(grid, *oStrm);
   delete ofStrm;
 }

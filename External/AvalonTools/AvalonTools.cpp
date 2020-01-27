@@ -54,7 +54,9 @@ int *getCountFp(struct reaccs_molecule_t *molPtr, unsigned int bitFlags,
 char *getFp(struct reaccs_molecule_t *molPtr, unsigned int bitFlags,
             bool isQuery, unsigned int nBytes) {
   PRECONDITION(molPtr, "bad molecule");
-  while (nBytes % 4) ++nBytes;
+  while (nBytes % 4) {
+    ++nBytes;
+  }
   char *fingerprint = TypeAlloc(nBytes, char);
   SetFingerprintBits(molPtr, fingerprint, static_cast<int>(nBytes),
                      static_cast<int>(bitFlags), static_cast<int>(isQuery), 0);
@@ -69,7 +71,9 @@ void reaccsToFingerprint(struct reaccs_molecule_t *molPtr,
                          std::vector<boost::uint32_t> &res,
                          unsigned int bitFlags = 32767U, bool isQuery = false,
                          bool resetVect = true, unsigned int nBytes = 64) {
-  if (resetVect) res.clear();
+  if (resetVect) {
+    res.clear();
+  }
   char *fingerprint = getFp(molPtr, bitFlags, isQuery, nBytes);
   for (unsigned int i = 0; i < nBytes; i += 4) {
     boost::uint32_t word;
@@ -101,7 +105,9 @@ void reaccsToFingerprint(struct reaccs_molecule_t *molPtr, ExplicitBitVect &res,
                          bool resetVect = true, unsigned int nBytes = 64) {
   PRECONDITION(molPtr, "bad molecule");
   PRECONDITION(res.getNumBits() >= nBytes * 8U, "res too small");
-  if (resetVect) res.clearBits();
+  if (resetVect) {
+    res.clearBits();
+  }
 
   char *fingerprint = getFp(molPtr, bitFlags, isQuery, nBytes);
 
@@ -163,7 +169,9 @@ struct reaccs_molecule_t *stringToReaccs(const std::string &data,
 }  // end of anonymous namespace
 
 std::string getCanonSmiles(ROMol &mol, int flags) {
-  if (flags == -1) flags = DB_STEREO | CENTER_STEREO;
+  if (flags == -1) {
+    flags = DB_STEREO | CENTER_STEREO;
+  }
   std::string res;
   if (!mol.getNumConformers()) {
     std::string rdSmi = MolToSmiles(mol, true);
@@ -264,7 +272,9 @@ std::string set2DCoords(const std::string &data, bool isSmiles) {
 }
 
 std::string getCanonSmiles(const std::string &data, bool isSmiles, int flags) {
-  if (flags == -1) flags = DB_STEREO | CENTER_STEREO;
+  if (flags == -1) {
+    flags = DB_STEREO | CENTER_STEREO;
+  }
   char *smiles = nullptr, *canSmiles = nullptr;
   if (!isSmiles) {
     struct reaccs_molecule_t *mp = stringToReaccs(data, isSmiles);
@@ -340,7 +350,9 @@ void getAvalonFP(const std::string &data, bool isSmiles,
 }
 
 int _checkMolWrapper(struct reaccs_molecule_t **mpp) {
-  if (!*mpp) return BAD_MOLECULE;
+  if (!*mpp) {
+    return BAD_MOLECULE;
+  }
   int res;
   struct reaccs_molecule_t *tmp = *mpp;
   res = RunStruchk(mpp, nullptr);

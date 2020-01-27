@@ -31,24 +31,34 @@ struct molcatalogentry_pickle_suite : python::pickle_suite {
 };
 
 unsigned int GetBitEntryId(const MolCatalog *self, unsigned int idx) {
-  if (idx > self->getFPLength()) throw_index_error(idx);
+  if (idx > self->getFPLength()) {
+    throw_index_error(idx);
+  }
   return self->getIdOfEntryWithBitId(idx);
 }
 
 unsigned int GetEntryBitId(const MolCatalog *self, unsigned int idx) {
-  if (idx > self->getNumEntries()) throw_index_error(idx);
+  if (idx > self->getNumEntries()) {
+    throw_index_error(idx);
+  }
   return self->getEntryWithIdx(idx)->getBitId();
 }
 std::string GetEntryDescription(const MolCatalog *self, unsigned int idx) {
-  if (idx > self->getNumEntries()) throw_index_error(idx);
+  if (idx > self->getNumEntries()) {
+    throw_index_error(idx);
+  }
   return self->getEntryWithIdx(idx)->getDescription();
 }
 std::string GetBitDescription(const MolCatalog *self, unsigned int idx) {
-  if (idx > self->getFPLength()) throw_index_error(idx);
+  if (idx > self->getFPLength()) {
+    throw_index_error(idx);
+  }
   return self->getEntryWithBitId(idx)->getDescription();
 }
 INT_VECT GetEntryDownIds(const MolCatalog *self, unsigned int idx) {
-  if (idx > self->getNumEntries()) throw_index_error(idx);
+  if (idx > self->getNumEntries()) {
+    throw_index_error(idx);
+  }
   return self->getDownEntryList(idx);
 }
 

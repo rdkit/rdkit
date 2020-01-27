@@ -26,6 +26,7 @@ MolCatalogEntry::MolCatalogEntry(const ROMol *omol) {
   dp_props = new Dict();
   d_descrip = "";
   dp_mol = omol;
+  d_order = 0;
 }
 
 MolCatalogEntry::MolCatalogEntry(const MolCatalogEntry &other) {
@@ -39,6 +40,7 @@ MolCatalogEntry::MolCatalogEntry(const MolCatalogEntry &other) {
   if (other.dp_mol) {
     dp_mol = new ROMol(*other.dp_mol);
   }
+  d_order = other.d_order;
 }
 
 MolCatalogEntry::~MolCatalogEntry() {
@@ -119,4 +121,4 @@ void MolCatalogEntry::initFromString(const std::string &text) {
   // now start reading out values:
   initFromStream(ss);
 }
-}
+}  // namespace RDKit

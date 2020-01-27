@@ -10,6 +10,7 @@
 #include "Fragment.h"
 #include <GraphMol/MolStandardize/FragmentCatalog/FragmentCatalogUtils.h>
 #include <boost/tokenizer.hpp>
+#include <utility>
 typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
@@ -83,7 +84,9 @@ ROMol *FragmentRemover::remove(const ROMol &mol) {
 
   for (auto &fgci : fgrps) {
     size_t oCount = frags.size();
-    if (!oCount) break;
+    if (!oCount) {
+      break;
+    }
     auto tfrags = frags;
     // remove any fragments that this
     frags.erase(std::remove_if(
@@ -128,7 +131,9 @@ ROMol *FragmentRemover::remove(const ROMol &mol) {
   // remove the atoms that need to go
   auto *removed = new RWMol(mol);
   for (int i = mol.getNumAtoms() - 1; i >= 0; --i) {
-    if (atomsToRemove[i]) removed->removeAtom(i);
+    if (atomsToRemove[i]) {
+      removed->removeAtom(i);
+    }
   }
   return static_cast<ROMol *>(removed);
 }
@@ -162,7 +167,9 @@ ROMol *LargestFragmentChooser::choose(const ROMol &mol) {
     if (this->PREFER_ORGANIC) {
       // Skip this fragment if not organic and we already have an organic
       // fragment as the largest so far
-      if (l.Fragment != nullptr && l.Organic && !organic) continue;
+      if (l.Fragment != nullptr && l.Organic && !organic) {
+        continue;
+      }
       // Reset largest if it wasn't organic and this fragment is organic
       // if largest and organic and not largest['organic']:
       if (l.Fragment != nullptr && organic && !l.Organic) {
@@ -174,19 +181,23 @@ ROMol *LargestFragmentChooser::choose(const ROMol &mol) {
       numatoms += 1 + at->getTotalNumHs();
     }
     // Skip this fragment if fewer atoms than the largest
-    if (l.Fragment != nullptr && (numatoms < l.NumAtoms)) continue;
+    if (l.Fragment != nullptr && (numatoms < l.NumAtoms)) {
+      continue;
+    }
 
     // Skip this fragment if equal number of atoms but weight is lower
     double weight = Descriptors::calcExactMW(*frag);
     if (l.Fragment != nullptr && (numatoms == l.NumAtoms) &&
-        (weight < l.Weight))
+        (weight < l.Weight)) {
       continue;
+    }
 
     // Skip this fragment if equal number of atoms and equal weight but smiles
     // comes last alphabetically
     if (l.Fragment != nullptr && (numatoms == l.NumAtoms) &&
-        (weight == l.Weight) && (smiles > l.Smiles))
+        (weight == l.Weight) && (smiles > l.Smiles)) {
       continue;
+    }
 
     BOOST_LOG(rdInfoLog) << "New largest fragment: " << smiles << " ("
                          << numatoms << ")\n";
@@ -204,11 +215,12 @@ ROMol *LargestFragmentChooser::choose(const ROMol &mol) {
 LargestFragmentChooser::Largest::Largest()
     : Smiles(""), Fragment(nullptr), NumAtoms(0), Weight(0), Organic(false) {}
 
-LargestFragmentChooser::Largest::Largest(
-    std::string &smiles, const boost::shared_ptr<ROMol> &fragment,
-    unsigned int &numatoms, double &weight, bool &organic)
+LargestFragmentChooser::Largest::Largest(std::string &smiles,
+                                         boost::shared_ptr<ROMol> fragment,
+                                         unsigned int &numatoms, double &weight,
+                                         bool &organic)
     : Smiles(smiles),
-      Fragment(fragment),
+      Fragment(std::move(fragment)),
       NumAtoms(numatoms),
       Weight(weight),
       Organic(organic) {}

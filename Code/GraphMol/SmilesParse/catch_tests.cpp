@@ -553,8 +553,20 @@ TEST_CASE("github #2604: support range-based charge queries from SMARTS",
   }
 }
 
-TEST_CASE("github #2801: MolToSmarts may generate invalid SMARTS for bond queries",
-          "[bug,smarts]") {
+TEST_CASE("_smarts fails gracefully", "[smarts]") {
+  SECTION("empty") {
+    auto mol = ""_smarts;
+    REQUIRE(mol);
+  }
+  SECTION("syntax error") {
+    auto mol = "C1C"_smarts;
+    REQUIRE(!mol);
+  }
+}
+
+TEST_CASE(
+    "github #2801: MolToSmarts may generate invalid SMARTS for bond queries",
+    "[bug,smarts]") {
   SECTION("original_report") {
     auto q1 = "*~CCC"_smarts;
     REQUIRE(q1);

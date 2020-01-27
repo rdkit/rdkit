@@ -86,14 +86,18 @@ QAFUNC2(MissingChiralTagQueryAtom, makeAtomMissingChiralTagQuery, int);
 QueryAtom *HasPropQueryAtom(const std::string &propname, bool negate) {
   auto *res = new QueryAtom();
   res->setQuery(makeHasPropQuery<Atom>(propname));
-  if (negate) res->getQuery()->setNegation(true);
+  if (negate) {
+    res->getQuery()->setNegation(true);
+  }
   return res;
 }
 
 QueryBond *HasPropQueryBond(const std::string &propname, bool negate) {
   auto *res = new QueryBond();
   res->setQuery(makeHasPropQuery<Bond>(propname));
-  if (negate) res->getQuery()->setNegation(true);
+  if (negate) {
+    res->getQuery()->setNegation(true);
+  }
   return res;
 }
 
@@ -101,7 +105,9 @@ template <class Ob, class Ret, class T>
 Ret *PropQuery(const std::string &propname, const T &v, bool negate) {
   auto *res = new Ret();
   res->setQuery(makePropQuery<Ob, T>(propname, v));
-  if (negate) res->getQuery()->setNegation(true);
+  if (negate) {
+    res->getQuery()->setNegation(true);
+  }
   return res;
 }
 
@@ -110,7 +116,9 @@ Ret *PropQueryWithTol(const std::string &propname, const T &v, bool negate,
                       const T &tol = T()) {
   auto *res = new Ret();
   res->setQuery(makePropQuery<Ob, T>(propname, v, tol));
-  if (negate) res->getQuery()->setNegation(true);
+  if (negate) {
+    res->getQuery()->setNegation(true);
+  }
   return res;
 }
 
@@ -119,7 +127,9 @@ Ret *PropQueryWithTol(const std::string &propname, const ExplicitBitVect &v,
                       bool negate, float tol = 0.0) {
   auto *res = new Ret();
   res->setQuery(makePropQuery<Ob>(propname, v, tol));
-  if (negate) res->getQuery()->setNegation(true);
+  if (negate) {
+    res->getQuery()->setNegation(true);
+  }
   return res;
 }
 

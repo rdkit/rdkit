@@ -129,7 +129,7 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
 /*!
   These are computed using the range of allowed torsion angles. There are
   several
-  special casses and the rest are computed using 0 and 180 deg as the min.
+  special cases and the rest are computed using 0 and 180 deg as the min.
   and max. torsion angles. The special cases deal with ring systems, double
   bonds
   with cis-trans specifications, and a few special sub-structures
@@ -182,7 +182,7 @@ namespace RDKit {
 namespace DGeomHelpers {
 void _checkAndSetBounds(unsigned int i, unsigned int j, double lb, double ub,
                         DistGeom::BoundsMatPtr mmat) {
-  // get the exisiting bounds
+  // get the existing bounds
   double clb = mmat->getLowerBound(i, j);
   double cub = mmat->getUpperBound(i, j);
 
@@ -406,7 +406,7 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
         // this invar stuff is to deal with bridged systems (Issue 215). In
         // bridged
         // systems we may be covering the same 13 (ring) paths multiple times
-        // and unnecssarily
+        // and unnecessarily
         // increasing the angleTaken at the central atom.
         _setRingAngle(mol.getAtomWithIdx(aid2)->getHybridization(), rSize,
                       angle);
@@ -466,7 +466,7 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
               // but with some special cases
               angle = 109.5 * M_PI / 180;
               // we will special-case a little bit here for 3, 4 members ring
-              // atoms that are sp3 hybirdized
+              // atoms that are sp3 hybridized
               // beyond that the angle reasonably close to the tetrahedral angle
               if (rinfo->isAtomInRingOfSize(aid2, 3)) {
                 angle = 116.0 * M_PI / 180;
@@ -497,7 +497,7 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
         ++beg1;
       }  // while loop over the first bond
     } else if (visited[aid2] == 0) {
-      // non-ring atoms - we will simply use angles based on hydridization
+      // non-ring atoms - we will simply use angles based on hybridization
       while (beg1 != end1) {
         const Bond* bnd1 = mol[*beg1];
         bid1 = bnd1->getIdx();
@@ -513,7 +513,7 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
           } else if (ahyb == Atom::SP3) {
             angle = 109.5 * M_PI / 180;
           } else if (ahyb == Atom::SP3D) {
-            // FIX: this and the remaining two hybirdization states below should
+            // FIX: this and the remaining two hybridization states below should
             // probably be special
             // cased. These defaults below are probably not the best we can do
             // particularly when
@@ -650,7 +650,9 @@ void _setInRing14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
     // basically we will assume 0 to 180 allowed
     dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
     du = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
-    if (du < dl) std::swap(du, dl);
+    if (du < dl) {
+      std::swap(du, dl);
+    }
     if (fabs(du - dl) < DIST12_DELTA) {
       dl -= GEN_DIST_TOL;
       du += GEN_DIST_TOL;
@@ -780,8 +782,8 @@ bool _checkH2NX3H1OX2(const Atom *atm) {
     return true;
   } else if ((atm->getAtomicNum() == 7) && (atm->getDegree() == 3) &&
              (atm->getTotalNumHs() == 1)) {
-    // FIX: assumming hydrogen is not in the graph
-    // this si NX3H1 situation
+    // FIX: assuming hydrogen is not in the graph
+    // this is NX3H1 situation
     return true;
   }
   return false;
@@ -1431,7 +1433,7 @@ double _compute15DistsCisTrans(double d1, double d2, double d3, double d4,
 }
 
 /*
- compute the lower and upper bounds for the dsitance between 15 atoms given
+ compute the lower and upper bounds for the distance between 15 atoms given
  than
  the first
  four atoms are in trans configuration. The 15 limits are computed assuming
@@ -1475,7 +1477,7 @@ double _compute15DistsTransTrans(double d1, double d2, double d3, double d4,
 }
 
 /*
- compute the lower and upper bounds for the dsitance between 15 atoms given
+ compute the lower and upper bounds for the distance between 15 atoms given
  than
  the first
  four atoms are in trans configuration. The 15 limits are computed assuming
@@ -1647,7 +1649,7 @@ void set15Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
     // 15 distances going one way with with 14 paths
     _set15BoundsHelper(mol, bid1, bid2, bid3, type, accumData, mmat,
                        distMatrix);
-    // goign the other way - reverse the 14 path
+    // going the other way - reverse the 14 path
     _set15BoundsHelper(mol, bid3, bid2, bid1, type, accumData, mmat,
                        distMatrix);
   }

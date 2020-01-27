@@ -85,15 +85,18 @@ void pickleTest(EnumerationStrategyBase &en, size_t len) {
 void testSamplers() {
   EnumerationTypes::BBS bbs;
   bbs.resize(3);
-  for (int i = 0; i < 10; ++i)
+  for (int i = 0; i < 10; ++i) {
     bbs[0].push_back(boost::shared_ptr<ROMol>(SmilesToMol("C=CCN=C=S")));
+  }
 
-  for (int i = 0; i < 5; ++i)
+  for (int i = 0; i < 5; ++i) {
     bbs[1].push_back(boost::shared_ptr<ROMol>(SmilesToMol("NCc1ncc(Cl)cc1Br")));
+  }
 
-  for (int i = 0; i < 6; ++i)
+  for (int i = 0; i < 6; ++i) {
     bbs[2].push_back(
         boost::shared_ptr<ROMol>(SmilesToMol("NCCCc1ncc(Cl)cc1Br")));
+  }
 
   ChemicalReaction rxn;
   CartesianProductStrategy cart;
@@ -130,15 +133,18 @@ void testEvenSamplers() {
   boost::uint64_t R1 = 6000;
   boost::uint64_t R2 = 500;
   boost::uint64_t R3 = 10000;
-  for (unsigned long i = 0; i < R1; ++i)
+  for (unsigned long i = 0; i < R1; ++i) {
     bbs[0].push_back(boost::shared_ptr<ROMol>(SmilesToMol("C=CCN=C=S")));
+  }
 
-  for (unsigned long i = 0; i < R2; ++i)
+  for (unsigned long i = 0; i < R2; ++i) {
     bbs[1].push_back(boost::shared_ptr<ROMol>(SmilesToMol("NCc1ncc(Cl)cc1Br")));
+  }
 
-  for (unsigned long i = 0; i < R3; ++i)
+  for (unsigned long i = 0; i < R3; ++i) {
     bbs[2].push_back(
         boost::shared_ptr<ROMol>(SmilesToMol("NCCCc1ncc(Cl)cc1Br")));
+  }
 
   ChemicalReaction rxn;
   EvenSamplePairsStrategy even;

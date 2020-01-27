@@ -21,7 +21,7 @@ class IndexErrorException : public std::runtime_error {
   IndexErrorException(int i)
       : std::runtime_error("IndexErrorException"), _idx(i){};
   int index() const { return _idx; };
-  ~IndexErrorException() throw(){};
+  ~IndexErrorException() noexcept {};
 
  private:
   int _idx;
@@ -37,7 +37,7 @@ class ValueErrorException : public std::runtime_error {
   ValueErrorException(const char *msg)
       : std::runtime_error("ValueErrorException"), _value(msg){};
   std::string message() const { return _value; };
-  ~ValueErrorException() throw(){};
+  ~ValueErrorException() noexcept {};
 
  private:
   std::string _value;
@@ -51,7 +51,7 @@ class KeyErrorException : public std::runtime_error {
   KeyErrorException(std::string key)
       : std::runtime_error("KeyErrorException"), _key(key){};
   std::string key() const { return _key; };
-  ~KeyErrorException() throw(){};
+  ~KeyErrorException() noexcept {};
 
  private:
   std::string _key;

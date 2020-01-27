@@ -388,8 +388,12 @@ RDKit::SparseIntVect<std::uint32_t> *MorganFingerprintHelper(
     }
     delete bitInfoMap;
   }
-  if (invars) delete invars;
-  if (froms) delete froms;
+  if (invars) {
+    delete invars;
+  }
+  if (froms) {
+    delete froms;
+  }
   return res;
 }
 }  // namespace
@@ -434,7 +438,7 @@ ExplicitBitVect *GetMorganFingerprintBV(
 
   std::unique_ptr<std::vector<std::uint32_t>> froms =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
-  RDKit::MorganFingerprints::BitInfoMap *bitInfoMap = 0;
+  RDKit::MorganFingerprints::BitInfoMap *bitInfoMap = nullptr;
   if (bitInfo != python::object()) {
     // make sure the optional argument actually was a dictionary
     python::dict typecheck = python::extract<python::dict>(bitInfo);
@@ -762,7 +766,7 @@ unsigned int numBridgeheadAtoms(const RDKit::ROMol &mol,
 /// @brief Type that allows for registration of conversions from
 ///        python iterable types.
 struct iterable_converter {
-  /// @note Registers converter from a python interable type to the
+  /// @note Registers converter from a python iterable type to the
   ///       provided type.
   template <typename Container>
   iterable_converter &from_python() {

@@ -71,7 +71,9 @@ std::string getSmilesOnly(
     std::string* id = nullptr) {  // remove label, because RDKit parse FAILED
   const char* sp = strchr(smiles, ' ');
   unsigned n = (sp ? sp - smiles + 1 : strlen(smiles));
-  if (id) *id = std::string(smiles + n);
+  if (id) {
+    *id = std::string(smiles + n);
+  }
   return std::string(smiles, n);
 }
 
@@ -81,13 +83,18 @@ std::string getSmilesOnlyTxt(
   // NS(=O)(=O)c1ccc(NC(=O)c2cccc(C(=O)O)n2)c(Cl)c1"
   const char* sp = strchr(smiles, ' ');
   if (sp && '\0' != *sp) {
-    if (id) *id = std::string(smiles, sp - smiles);
+    if (id) {
+      *id = std::string(smiles, sp - smiles);
+    }
     sp++;
     size_t i = strlen(sp);
-    while (i > 0 && sp[i - 1] < ' ') --i;
+    while (i > 0 && sp[i - 1] < ' ') {
+      --i;
+    }
     return std::string(sp, i);
-  } else
+  } else {
     return smiles;
+  }
 }
 
 std::string getSmilesOnlyChEMBL(
@@ -96,9 +103,13 @@ std::string getSmilesOnlyChEMBL(
   const char* sp = strchr(smiles, '\t');
   if (sp) {
     unsigned n = (sp ? sp - smiles + 1 : strlen(smiles));
-    if (id) *id = std::string(smiles, n);
+    if (id) {
+      *id = std::string(smiles, n);
+    }
     sp = strchr(++sp, '\t');
-    if (sp) sp++;
+    if (sp) {
+      sp++;
+    }
   }
   return std::string(sp);
 }
@@ -124,10 +135,11 @@ void testFileMCSB(
   referenceOutFile += ".REF.out";
   std::string outFile(test);
   if (!test_N.empty()) {
-    if (1 == test_N.size())
+    if (1 == test_N.size()) {
       sprintf(str, ".%u.out", test_N[0]);
-    else
+    } else {
       sprintf(str, ".%u-%u.out", test_N[0], test_N.back());
+    }
     outFile += str;
   } else {
     outFile += ".Cpp.out";
@@ -142,11 +154,11 @@ void testFileMCSB(
   std::vector<float> referenceResultsTime;
 
   FILE* f = fopen(referenceOutFile.c_str(), "rt");
-  if (!f)
+  if (!f) {
     perror("Could not open reference test result file");
-  else {
+  } else {
     std::cout << "Loading reference test results ... \n";
-    while (fgets(str, sizeof(str), f))
+    while (fgets(str, sizeof(str), f)) {
       if ('#' != str[0]) {
         char c;
         int frag;
@@ -160,6 +172,7 @@ void testFileMCSB(
         referenceResults.push_back(res);
         referenceResultsTime.push_back(t);
       }
+    }
   }
   fclose(f);
 
@@ -170,17 +183,22 @@ void testFileMCSB(
   }
   {
     std::cout << "Loading MCSB test list ... \n";
-    if (fgets(str, sizeof(str), f))
+    if (fgets(str, sizeof(str), f)) {
       if (fgets(str, sizeof(str), f)) {
         char* c = strrchr(str, '\n');  // remove LineFeed
-        if (c) *c = '\0';
+        if (c) {
+          *c = '\0';
+        }
         c = strrchr(str, '\r');
-        if (c) *c = '\0';
+        if (c) {
+          *c = '\0';
+        }
         molFile = str + 6;  // #File filename
       }
+    }
     std::cout << "Molecules file:" << molFile << "\n";
     n = 0;
-    while (fgets(str, sizeof(str), f))
+    while (fgets(str, sizeof(str), f)) {
       if ('#' != str[0]) {
         // str= "1 CHEMBL526291 CHEMBL498211 ..."
         char name[256];
@@ -194,6 +212,7 @@ void testFileMCSB(
           testCase.back().push_back(std::string(name));
         }
       }
+    }
     std::cout << n << " Test cases loaded\n";
   }
   fclose(f);
@@ -209,9 +228,13 @@ void testFileMCSB(
     std::cout << "\rLine: " << ++n << " ";
     if ('#' != str[0] && ' ' != str[0] && '/' != str[0]) {  // commented to skip
       char* c = strrchr(str, '\n');                         // remove LineFeed
-      if (c) *c = '\0';
+      if (c) {
+        *c = '\0';
+      }
       c = strrchr(str, '\r');
-      if (c) *c = '\0';
+      if (c) {
+        *c = '\0';
+      }
       std::string sm = getSmilesOnly(str, &id);
       smilesList.push_back(sm);                     // without Id and LineFeed
       mols.push_back(ROMOL_SPTR(SmilesToMol(sm)));  // SmartsToMol ???
@@ -229,7 +252,9 @@ void testFileMCSB(
   }
   setvbuf(f, nullptr, _IOFBF, 4 * 1024);
   FILE* fs = nullptr;  // fopen(outSmilesFile.c_str(), "wt");
-  if (fs) setvbuf(fs, nullptr, _IOFBF, 4 * 1024);
+  if (fs) {
+    setvbuf(fs, nullptr, _IOFBF, 4 * 1024);
+  }
 #ifdef xxVERBOSE_STATISTICS_ON
   FILE* ft = fopen((outFile + ".stat.csv").c_str(), "wt");
   setvbuf(ft, 0, _IOFBF, 4 * 1024);  // small file
@@ -249,23 +274,31 @@ void testFileMCSB(
            tc = testCase.begin();
        tc != testCase.end(); tc++, n++) {
     if (!test_N.empty() &&
-        test_N.end() == std::find(test_N.begin(), test_N.end(), n + 1))
+        test_N.end() == std::find(test_N.begin(), test_N.end(), n + 1)) {
       continue;
+    }
 
     std::cout << "\rTest: " << n + 1 << " ";
-    if (!test_N.empty())  // test case is listed
+    if (!test_N.empty()) {  // test case is listed
       std::cout << "\n";
+    }
 
     std::vector<ROMOL_SPTR> tcmols;
     fprintf(f, "# %u Using ", n + 1);
-    if (fs) fprintf(fs, "\n//TEST %u\n", n + 1);
+    if (fs) {
+      fprintf(fs, "\n//TEST %u\n", n + 1);
+    }
     for (const auto& mid : *tc) {
       std::map<std::string, size_t>::const_iterator id = molIdMap.find(mid);
-      if (molIdMap.end() == id) continue;
+      if (molIdMap.end() == id) {
+        continue;
+      }
       size_t i = id->second;
       tcmols.push_back(mols[i]);
       fprintf(f, "%s ", mid.c_str());
-      if (fs) fprintf(fs, "\"%s%s\",\n", smilesList[i].c_str(), mid.c_str());
+      if (fs) {
+        fprintf(fs, "\"%s%s\",\n", smilesList[i].c_str(), mid.c_str());
+      }
     }
     fprintf(f, "\n");
     //        ExecStatistics curStat = stat;          //to compute the
@@ -276,17 +309,18 @@ void testFileMCSB(
     double sec = double(tc1 - tc0) /
                  1000000.;  // without time of SMILES to ROMol conversion
     secTotal += sec;
-    if (!test_N.empty())
+    if (!test_N.empty()) {
       std::cout << "\n"
                 << "MCS: " << res.SmartsString << " " << res.NumAtoms
                 << " atoms, " << res.NumBonds << " bonds\n";
-    else if (!referenceResults[n].Canceled && !res.Canceled &&
-             (/*referenceResults[n].NumAtoms > res.NumAtoms ||*/ referenceResults
-                  [n].NumBonds > res.NumBonds))
+    } else if (!referenceResults[n].Canceled && !res.Canceled &&
+               (/*referenceResults[n].NumAtoms > res.NumAtoms ||*/
+                referenceResults[n].NumBonds > res.NumBonds)) {
       std::cout << " - failed. LESS: " << res.NumAtoms << " atoms, "
                 << res.NumBonds << " bonds ("
                 << referenceResults[n].NumAtoms - res.NumAtoms << ", "
                 << referenceResults[n].NumBonds - res.NumBonds << ")\n";
+    }
 
     if (!referenceResults.empty()) {
       fprintf(
@@ -300,12 +334,12 @@ void testFileMCSB(
           referenceResultsTime[n]);
       if (!referenceResults[n].Canceled) {  // && !res.Canceled)
         if (referenceResults[n].NumAtoms == res.NumAtoms &&
-            referenceResults[n].NumBonds == res.NumBonds)
+            referenceResults[n].NumBonds == res.NumBonds) {
           fprintf(f, "# %u REFCMP: res  %s %s %u %u %s.\n", n + 1, "PASSED",
                   "-------", referenceResults[n].NumAtoms,
                   referenceResults[n].NumBonds,
                   referenceResults[n].SmartsString.c_str());
-        else
+        } else {
           fprintf(
               f, "# %u REFCMP: res  %s %s %u %u %s.\n", n + 1, "FAILED",
               /*referenceResults[n].NumAtoms > res.NumAtoms ||*/ referenceResults
@@ -314,29 +348,34 @@ void testFileMCSB(
                   : "GREATER",
               referenceResults[n].NumAtoms, referenceResults[n].NumBonds,
               referenceResults[n].SmartsString.c_str());
+        }
 
         if (referenceResults[n].Canceled ||
             (referenceResults[n].NumAtoms == res.NumAtoms &&
-             referenceResults[n].NumBonds == res.NumBonds))
+             referenceResults[n].NumBonds == res.NumBonds)) {
           passed++;
-        else if (res.Canceled)
+        } else if (res.Canceled) {
           timedout++;
-        else {
-          if (referenceResults[n].NumBonds > res.NumBonds) failed_less++;
+        } else {
+          if (referenceResults[n].NumBonds > res.NumBonds) {
+            failed_less++;
+          }
           failed++;
         }
-      } else
+      } else {
         fprintf(f, "# %u REFCMP: res  ABSENT - timeout\n", n + 1);
+      }
     }
     // 1 . 1 25 28 1.69 F-c1:c:c:
     fprintf(f, "%u %c %d %u %u %.2f %s\n", n + 1, (res.Canceled ? 'F' : '.'),
             1  // number of fragments in the MCS
             ,
             res.NumAtoms, res.NumBonds, sec, res.SmartsString.c_str());
-    if (fs)
+    if (fs) {
       fprintf(fs, "//# %u %c  %u %u %.2f sec MCS: %s\n", n + 1,
               (res.Canceled ? 'F' : '.'), res.NumAtoms, res.NumBonds, sec,
               res.SmartsString.c_str());
+    }
 #ifdef xxVERBOSE_STATISTICS_ON
     if (ft)  // statistic details
       fprintf(
@@ -402,8 +441,12 @@ void testFileMCSB(
 #endif
       );
 #endif
-  if (f) fclose(f);
-  if (fs) fclose(fs);
+  if (f) {
+    fclose(f);
+  }
+  if (fs) {
+    fclose(fs);
+  }
 #ifdef xxVERBOSE_STATISTICS_ON
   if (ft) fclose(ft);
 #endif
@@ -450,9 +493,10 @@ void test504() {
   }
   std::cout << "Query +MAP " << MolToSmiles(*qm) << "\n";
   mols.push_back(ROMOL_SPTR(qm));  // with RING INFO
-  for (size_t i = 1; i < sizeof(smi) / sizeof(smi[0]); i++)
+  for (size_t i = 1; i < sizeof(smi) / sizeof(smi[0]); i++) {
     mols.push_back(
         ROMOL_SPTR(SmilesToMol(getSmilesOnly(smi[i]))));  // with RING INFO
+  }
   t0 = nanoClock();
   MCSResult res = findMCS(mols, &p);
   std::cout << "MCS: " << res.SmartsString << " " << res.NumAtoms << " atoms, "
@@ -912,9 +956,10 @@ void testChEMBL_TxtSLOW_chembl_II_sets(double th = 1.0) {
       "Target_no_10193_46700.txt", "Target_no_10980_30994.txt",
       "Target_no_11140_37038.txt",
   };
-  for (auto& i : test)
+  for (auto& i : test) {
     testChEMBL_Txt((std::string("chembl_II_sets/") + i).c_str(), th,
                    "chembl_II_sets.SLOW.C++.res.csv");
+  }
 }
 
 void testChEMBLdat(const char* test, double th = 1.0) {
@@ -1032,11 +1077,12 @@ void testChEMBLdatALL(double th = 1.0) {
       "cmp_list_ChEMBL_93_actives.dat",
       "cmp_list_ChEMBL_zinc_decoys.dat",
   };
-  for (auto& i : test)
+  for (auto& i : test) {
     testChEMBLdat(
         (std::string("benchmarking_platform-master/compounds/ChEMBL/") +
          i).c_str(),
         th);
+  }
 }
 
 void testTarget_no_10188_30149() {
@@ -1055,7 +1101,9 @@ void testTarget_no_10188_30149() {
       "COc1ccccc1Nc1ccc2c(c1)[nH]nc2-c1ccccc1 CHEMBL254443",
       "CN(C)CCNC(=O)c1cccc(-c2[nH]nc3cc(Nc4ccccc4Cl)ccc32)c1 CHEMBL198821",
   };
-  for (auto& i : smi) mols.push_back(ROMOL_SPTR(SmilesToMol(getSmilesOnly(i))));
+  for (auto& i : smi) {
+    mols.push_back(ROMOL_SPTR(SmilesToMol(getSmilesOnly(i))));
+  }
   t0 = nanoClock();
 #ifdef _DEBUG  // check memory leaks
   _CrtMemState _ms;
@@ -1097,7 +1145,9 @@ void testTarget_no_10188_49064() {
       "Cn1c(=O)c(-c2c(Cl)cccc2Cl)cc2cnc(Nc3ccc(I)cc3)nc21",
       "CN1CCN(C(=O)c2ccc(Nc3ncc4cc(-c5c(Cl)cccc5Cl)c(=O)n(C)c4n3)cc2)CC1",
   };
-  for (auto& i : smi) mols.push_back(ROMOL_SPTR(SmilesToMol(getSmilesOnly(i))));
+  for (auto& i : smi) {
+    mols.push_back(ROMOL_SPTR(SmilesToMol(getSmilesOnly(i))));
+  }
   t0 = nanoClock();
   MCSResult res = findMCS(mols, &p);
   std::cout << "MCS: " << res.SmartsString << " " << res.NumAtoms << " atoms, "
@@ -1107,8 +1157,9 @@ void testTarget_no_10188_49064() {
 
 void testCmndLineSMILES(int argc, const char* argv[]) {
   std::vector<ROMOL_SPTR> mols;
-  for (int i = 1; i < argc; i++)
+  for (int i = 1; i < argc; i++) {
     mols.push_back(ROMOL_SPTR(SmilesToMol(argv[i])));
+  }
   MCSResult res = findMCS(mols);
   std::cout << "MCS: " << res.SmartsString << " " << res.NumAtoms << " atoms, "
             << res.NumBonds << " bonds\n";
@@ -1122,7 +1173,9 @@ double testFileSDF(const char* test) {
   RDKit::SDMolSupplier suppl(fn);
   while (!suppl.atEnd()) {
     ROMol* m = suppl.next();
-    if (m) mols.push_back(ROMOL_SPTR(m));
+    if (m) {
+      mols.push_back(ROMOL_SPTR(m));
+    }
   }
   t0 = nanoClock();
   MCSResult res = findMCS(mols, &p);
@@ -1214,10 +1267,11 @@ void testFileSDF_RandomSet(const char* test = "chembl13-10000-random-pairs.sdf",
   std::string fn(std::string(path) + "/" + test);
   RDKit::MolSupplier* suppl = nullptr;
   try {
-    if ('f' == test[strlen(test) - 1])  // sdf file
+    if ('f' == test[strlen(test) - 1]) {  // sdf file
       suppl = new RDKit::SDMolSupplier(fn);
-    else if ('i' == test[strlen(test) - 1])  // smi file
+    } else if ('i' == test[strlen(test) - 1]) {  // smi file
       suppl = new RDKit::SmilesMolSupplier(fn);
+    }
   } catch (...) {
     std::cout << "ERROR: RDKit could not load input file"
               << "\n";
@@ -1280,7 +1334,9 @@ void testFileSDF_RandomSet(const char* test = "chembl13-10000-random-pairs.sdf",
         t0 = nanoClock();
         MCSResult res = findMCS(mols, &p);
         double t = (nanoClock() - t0) / 1000000.;
-        if (t < 0.00001) t = 0.00001;  // avoid division by zero
+        if (t < 0.00001) {
+          t = 0.00001;  // avoid division by zero
+        }
         printTime();
         std::cout << n << " MCS: " << res.SmartsString << " " << res.NumAtoms
                   << " atoms, " << res.NumBonds << " bonds\n";
@@ -1293,7 +1349,9 @@ void testFileSDF_RandomSet(const char* test = "chembl13-10000-random-pairs.sdf",
         t0 = nanoClock();
         MCSResult res = findMCS(mols, &p);
         double t = (nanoClock() - t0) / 1000000.;
-        if (t < 0.00001) t = 0.00001;  // avoid division by zero
+        if (t < 0.00001) {
+          t = 0.00001;  // avoid division by zero
+        }
         printTime();
         std::cout << n << " MCS: " << res.SmartsString << " " << res.NumAtoms
                   << " atoms, " << res.NumBonds << " bonds\n";
@@ -1329,7 +1387,9 @@ void testFileSDF_RandomSet(const char* test = "chembl13-10000-random-pairs.sdf",
       t0 = nanoClock();
       MCSResult res = findMCS(mols, &p);
       double t = (nanoClock() - t0) / 1000000.;
-      if (t < 0.00001) t = 0.00001;  // avoid division by zero
+      if (t < 0.00001) {
+        t = 0.00001;  // avoid division by zero
+      }
       printTime();
       std::cout << n << " MCS: " << res.SmartsString << " " << res.NumAtoms
                 << " atoms, " << res.NumBonds << " bonds\n";
@@ -1342,7 +1402,9 @@ void testFileSDF_RandomSet(const char* test = "chembl13-10000-random-pairs.sdf",
       t0 = nanoClock();
       MCSResult res = findMCS(mols, &p);
       double t = (nanoClock() - t0) / 1000000.;
-      if (t < 0.00001) t = 0.00001;  // avoid division by zero
+      if (t < 0.00001) {
+        t = 0.00001;  // avoid division by zero
+      }
       printTime();
       std::cout << n << " MCS: " << res.SmartsString << " " << res.NumAtoms
                 << " atoms, " << res.NumBonds << " bonds\n";
@@ -1359,7 +1421,9 @@ void testFileSDF_RandomSet(const char* test = "chembl13-10000-random-pairs.sdf",
 
   unsigned maxMol = 0;
   for (auto& all_mol : all_mols) {
-    if (maxMol < all_mol->getNumBonds()) maxMol = all_mol->getNumBonds();
+    if (maxMol < all_mol->getNumBonds()) {
+      maxMol = all_mol->getNumBonds();
+    }
   }
   const unsigned N_BigRandomTests =
       all_mols.size() > 2000 ? all_mols.size() / 2 : all_mols.size() * 2;
@@ -1395,20 +1459,24 @@ void testFileSDF_RandomSet(const char* test = "chembl13-10000-random-pairs.sdf",
     // ROMol *m=0;
     unsigned iN = 2 + rand() % 24;
     mols.clear();
-    for (size_t i = 0; i < iN; i++)  // load random set
+    for (size_t i = 0; i < iN; i++) {  // load random set
       for (size_t ij = 0; ij < all_mols.size() / 2; ij++) {
         unsigned mi = rand() % (all_mols.size() - 1);
-        if (all_mols[mi]->getNumBonds() < SizeOfBigMCS_ForBigRandomTests)
+        if (all_mols[mi]->getNumBonds() < SizeOfBigMCS_ForBigRandomTests) {
           continue;
+        }
         mols.push_back(all_mols[mi]);
         break;
       }
+    }
     MCSResult res;
     if (mols.size() > 1) {
       t0 = nanoClock();
       res = findMCS(mols, &p);
       double t = (nanoClock() - t0) / 1000000.;
-      if (t < 0.00001) t = 0.00001;  // avoid division by zero
+      if (t < 0.00001) {
+        t = 0.00001;  // avoid division by zero
+      }
       printTime();
       std::cout << n << " MCS: " << res.SmartsString << " " << res.NumAtoms
                 << " atoms, " << res.NumBonds << " bonds\n";
@@ -1437,7 +1505,9 @@ void testFileSDF_RandomSet(const char* test = "chembl13-10000-random-pairs.sdf",
       t0 = nanoClock();
       res = findMCS(mols, &p);
       double t = (nanoClock() - t0) / 1000000.;
-      if (t < 0.00001) t = 0.00001;  // avoid division by zero
+      if (t < 0.00001) {
+        t = 0.00001;  // avoid division by zero
+      }
       printTime();
       std::cout << n << " MCS: " << res.SmartsString << " " << res.NumAtoms
                 << " atoms, " << res.NumBonds << " bonds\n";
@@ -1464,9 +1534,10 @@ void testFileSMILES(const char* test) {
   while (fgets(smiles, sizeof(smiles), f)) {
     std::cout << "\rLine: " << ++n << " ";
     if ('#' != smiles[0] && ' ' != smiles[0] &&
-        '/' != smiles[0])  // commented to skip
+        '/' != smiles[0]) {  // commented to skip
       //            if(strlen(smiles) > 92) // minimal query size !!!
       mols.push_back(ROMOL_SPTR(SmilesToMol(getSmilesOnly(smiles))));
+    }
   }
   fclose(f);
   printTime();
@@ -1540,7 +1611,9 @@ void testGregSDFFileSetFiltered() {
   };
 
   double totalT = 0.;
-  for (auto& i : sdf) totalT += testFileSDF((sdf_dir + i).c_str());
+  for (auto& i : sdf) {
+    totalT += testFileSDF((sdf_dir + i).c_str());
+  }
   printf(
       "\nTOTAL Time elapsed %.2lf "
       "seconds\n================================================\n",
@@ -1552,7 +1625,7 @@ void testGregSDFFileSetFiltered() {
 int main(int argc, const char* argv[]) {
   p.Verbose = true;
 
-// use maximum CPU resoures to increase time measuring accuracy and stability in
+// use maximum CPU resources to increase time measuring accuracy and stability in
 // multi process environment
 #ifdef WIN32
   //    SetPriorityClass (GetCurrentProcess(), REALTIME_PRIORITY_CLASS );
@@ -1675,18 +1748,22 @@ int main(int argc, const char* argv[]) {
   }
 #endif
 
-  if (3 == argc && '-' == argv[1][0])
+  if (3 == argc && '-' == argv[1][0]) {
     switch (argv[1][1]) {  // ./test -s|m|b <filename with test files list>
       case 's': {          // smiles files list
         char test[256];
         FILE* f = fopen(argv[2], "rt");
-        while (fgets(test, sizeof(test), f)) testFileSMILES(test);
+        while (fgets(test, sizeof(test), f)) {
+          testFileSMILES(test);
+        }
         fclose(f);
       } break;
       case 'm': {  // SDF mol files list
         char test[256];
         FILE* f = fopen(argv[2], "rt");
-        while (fgets(test, sizeof(test), f)) testFileSDF(test);
+        while (fgets(test, sizeof(test), f)) {
+          testFileSDF(test);
+        }
         fclose(f);
       } break;
       case 'b': {
@@ -1696,20 +1773,21 @@ int main(int argc, const char* argv[]) {
       default:
         break;
     }
-  else if (2 == argc) {  // .sdf /.smi file
-    if (0 == strcmp(argv[1] + strlen(argv[1]) - 4, ".smi"))
+  } else if (2 == argc) {  // .sdf /.smi file
+    if (0 == strcmp(argv[1] + strlen(argv[1]) - 4, ".smi")) {
       testFileSMILES(argv[1]);  // .smi
-    else if (0 == strcmp(argv[1] + strlen(argv[1]) - 4, ".sdf"))
+    } else if (0 == strcmp(argv[1] + strlen(argv[1]) - 4, ".sdf")) {
       testFileSDF(argv[1]);  // .sdf
-    else if (0 == strcmp(argv[1] + strlen(argv[1]) - 4, "mcsb"))
+    } else if (0 == strcmp(argv[1] + strlen(argv[1]) - 4, "mcsb")) {
       testFileMCSB(argv[1], 30);  // .mcsb
-    else if (0 == strcmp(argv[1] + strlen(argv[1]) - 4, ".dat"))
+    } else if (0 == strcmp(argv[1] + strlen(argv[1]) - 4, ".dat")) {
       testChEMBLdat(argv[1]);  // .sdf
-    else
-      printf("UNKNOWN File Extention.\n");
-  } else if (argc > 1 + 2)
+    } else {
+      printf("UNKNOWN File Extension.\n");
+    }
+  } else if (argc > 1 + 2) {
     testCmndLineSMILES(argc, argv);
-  else {
+  } else {
     testGregSDFFileSetFiltered();
   }
   //  BOOST_LOG(rdInfoLog) <<

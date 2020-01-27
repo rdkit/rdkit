@@ -27,19 +27,19 @@ double infoEntropy(python::object resArr) {
       matObj, PyArray_DESCR((PyArrayObject *)matObj)->type_num, 1, 1);
   double res = 0.0;
   // we are expecting a 1 dimensional array
-  long int ncols = (long int)PyArray_DIM((PyArrayObject *)matObj, 0);
+  auto ncols = (long int)PyArray_DIM((PyArrayObject *)matObj, 0);
   CHECK_INVARIANT(ncols > 0, "");
   if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_DOUBLE) {
-    double *data = (double *)PyArray_DATA(copy);
+    auto *data = (double *)PyArray_DATA(copy);
     res = InfoEntropy(data, ncols);
   } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_FLOAT) {
-    float *data = (float *)PyArray_DATA(copy);
+    auto *data = (float *)PyArray_DATA(copy);
     res = InfoEntropy(data, ncols);
   } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_INT) {
     int *data = (int *)PyArray_DATA(copy);
     res = InfoEntropy(data, ncols);
   } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_LONG) {
-    long int *data = (long int *)PyArray_DATA(copy);
+    auto *data = (long int *)PyArray_DATA(copy);
     res = InfoEntropy(data, ncols);
   }
   Py_DECREF(copy);
@@ -54,20 +54,20 @@ double infoGain(python::object resArr) {
   PyArrayObject *copy;
   copy = (PyArrayObject *)PyArray_ContiguousFromObject(
       matObj, PyArray_DESCR((PyArrayObject *)matObj)->type_num, 2, 2);
-  long int rows = (long int)PyArray_DIM((PyArrayObject *)matObj, 0);
-  long int cols = (long int)PyArray_DIM((PyArrayObject *)matObj, 1);
+  auto rows = (long int)PyArray_DIM((PyArrayObject *)matObj, 0);
+  auto cols = (long int)PyArray_DIM((PyArrayObject *)matObj, 1);
   double res = 0.0;
   if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_DOUBLE) {
-    double *data = (double *)PyArray_DATA(copy);
+    auto *data = (double *)PyArray_DATA(copy);
     res = InfoEntropyGain(data, rows, cols);
   } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_FLOAT) {
-    float *data = (float *)PyArray_DATA(copy);
+    auto *data = (float *)PyArray_DATA(copy);
     res = InfoEntropyGain(data, rows, cols);
   } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_INT) {
     int *data = (int *)PyArray_DATA(copy);
     res = InfoEntropyGain(data, rows, cols);
   } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_LONG) {
-    long int *data = (long int *)PyArray_DATA(copy);
+    auto *data = (long int *)PyArray_DATA(copy);
     res = InfoEntropyGain(data, rows, cols);
   } else {
     throw_value_error(
@@ -85,20 +85,20 @@ double chiSquare(python::object resArr) {
   PyArrayObject *copy;
   copy = (PyArrayObject *)PyArray_ContiguousFromObject(
       matObj, PyArray_DESCR((PyArrayObject *)matObj)->type_num, 2, 2);
-  long int rows = (long int)PyArray_DIM((PyArrayObject *)matObj, 0);
-  long int cols = (long int)PyArray_DIM((PyArrayObject *)matObj, 1);
+  auto rows = (long int)PyArray_DIM((PyArrayObject *)matObj, 0);
+  auto cols = (long int)PyArray_DIM((PyArrayObject *)matObj, 1);
   double res = 0.0;
   if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_DOUBLE) {
-    double *data = (double *)PyArray_DATA(copy);
+    auto *data = (double *)PyArray_DATA(copy);
     res = ChiSquare(data, rows, cols);
   } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_FLOAT) {
-    float *data = (float *)PyArray_DATA(copy);
+    auto *data = (float *)PyArray_DATA(copy);
     res = ChiSquare(data, rows, cols);
   } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_INT) {
     int *data = (int *)PyArray_DATA(copy);
     res = ChiSquare(data, rows, cols);
   } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_LONG) {
-    long int *data = (long int *)PyArray_DATA(copy);
+    auto *data = (long int *)PyArray_DATA(copy);
     res = ChiSquare(data, rows, cols);
   } else {
     throw_value_error(
@@ -136,7 +136,7 @@ BOOST_PYTHON_MODULE(rdInfoTheory) {
       "Calculates the information gain for a variable\n\n\
    ARGUMENTS:\n\n\
      - varMat: a Numeric Array object\n\
-       varMat is a Numeric array with the number of possible occurances\n\
+       varMat is a Numeric array with the number of possible occurrences\n\
          of each result for reach possible value of the given variable.\n\n\
        So, for a variable which adopts 4 possible values and a result which\n\
          has 3 possible values, varMat would be 4x3\n\n\
@@ -150,7 +150,7 @@ BOOST_PYTHON_MODULE(rdInfoTheory) {
       "Calculates the chi squared value for a variable\n\n\
    ARGUMENTS:\n\n\
      - varMat: a Numeric Array object\n\
-       varMat is a Numeric array with the number of possible occurances\n\
+       varMat is a Numeric array with the number of possible occurrences\n\
          of each result for reach possible value of the given variable.\n\n\
        So, for a variable which adopts 4 possible values and a result which\n\
          has 3 possible values, varMat would be 4x3\n\n\

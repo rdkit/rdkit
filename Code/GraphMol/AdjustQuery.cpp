@@ -187,7 +187,9 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
         qa = static_cast<QueryAtom *>(at);
       }
       ATOM_EQUALS_QUERY *nq = makeAtomInRingQuery();
-      if (!nRings) nq->setNegation(true);
+      if (!nRings) {
+        nq->setNegation(true);
+      }
       qa->expandQuery(nq);
     }  // end of adjust ring chain
   }    // end of loop over atoms

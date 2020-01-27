@@ -227,10 +227,11 @@ void guessFormalCharges(RWMol *res) {
       int nElectrons =
           PeriodicTable::getTable()->getNouterElecs(at->getAtomicNum());
       int assignChg;
-      if (nElectrons >= 4)
+      if (nElectrons >= 4) {
         assignChg = expVal - (*valens.begin());
-      else
+      } else {
         assignChg = (*valens.begin()) - expVal;
+      }
       if (assignChg > 0 && nElectrons >= 4) {
         for (vi = valens.begin(); vi != valens.end(); ++vi) {
           // Since we do this only for nocharged atoms we can get away without
@@ -306,7 +307,7 @@ bool cleanUpMol2Substructures(RWMol *res) {
       // negatively charged carboxylates with O.co2
       // according to Tripos, those should only appear in carboxylates and
       // phosphates,
-      // FIX: do it also for phsopahtes and sulphates ...
+      // FIX: do it also for phosphates and sulphates ...
       if (at->getDegree() != 1) {
         BOOST_LOG(rdWarningLog)
             << "Warning - O.co2 with degree >1." << std::endl;
@@ -398,7 +399,7 @@ bool cleanUpMol2Substructures(RWMol *res) {
             res->getBondBetweenAtoms(idx, *nbrIdxIt)->setIsAromatic(false);
             res->getAtomWithIdx(*nbrIdxIt)->setIsAromatic(false);
             // FIX: what is happening if we hit an atom that was fixed before -
-            // propably nothing.
+            // probably nothing.
             // since I cannot think of a case where this is a problem - throw a
             // warning
             if (isFixed[*nbrIdxIt]) {
@@ -487,7 +488,7 @@ bool cleanUpMol2Substructures(RWMol *res) {
             // set N.pl3 as fixed
             isFixed[*nbrIdxIt] = 1;
           } else {
-            // the N is allready fixed - since we don't touch this atom make the
+            // the N is already fixed - since we don't touch this atom make the
             // bond to single
             // FIX: check on 3-way symmetric guanidinium mol -
             //     this could produce a only single bonded C.cat for bad H mols
