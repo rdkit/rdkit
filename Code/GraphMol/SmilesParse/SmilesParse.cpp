@@ -52,60 +52,62 @@ size_t setup_smarts_string(const std::string &text, void *);
 extern int yysmarts_debug;
 namespace RDKit {
 namespace {
+
+int smarts_parse_helper(const std::string &inp,
+                        std::vector<RDKit::RWMol *> &molVect, Atom *&atom,
+                        Bond *&bond, int start_tok) {
+  void *scanner;
+  int res = 1;  // initialize with fail code
+
+  TEST_ASSERT(!yysmarts_lex_init(&scanner));
+  try {
+    size_t ltrim = setup_smarts_string(inp, scanner);
+    res = yysmarts_parse(inp.c_str() + ltrim, &molVect, atom, bond, scanner,
+                         start_tok);
+  } catch (...) {
+    yysmarts_lex_destroy(scanner);
+    throw;
+  }
+  yysmarts_lex_destroy(scanner);
+
+  if (res == 1) {
+    std::stringstream errout;
+    errout << "Failed parsing SMARTS '" << inp << "'";
+    throw SmilesParseException(errout.str());
+  }
+
+  return res;
+}
 int smarts_bond_parse(const std::string &inp, Bond *&bond) {
-  void *scanner;
-  int res = 1;  // initialize with fail code
-
-  TEST_ASSERT(!yysmarts_lex_init(&scanner));
-  try {
-    size_t ltrim = setup_smarts_string(inp, scanner);
-    int start_tok = static_cast<int>(START_BOND);
-    std::vector<RWMol *> molVect;
-    Atom *lastAtom = nullptr;
-    res = yysmarts_parse(inp.c_str() + ltrim, &molVect, lastAtom, bond, scanner,
-                         start_tok);
-  } catch (...) {
-    yysmarts_lex_destroy(scanner);
-    throw;
-  }
-  yysmarts_lex_destroy(scanner);
-
-  if (res == 1) {
-    std::stringstream errout;
-    errout << "Failed parsing SMARTS '" << inp << "'";
-    throw SmilesParseException(errout.str());
-  }
+  auto start_tok = static_cast<int>(START_BOND);
+  std::vector<RWMol *> molVect;
+  Atom *atom = nullptr;
+  auto res = smarts_parse_helper(inp, molVect, atom, bond, start_tok);
 
   return res;
 }
+
 int smarts_atom_parse(const std::string &inp, Atom *&atom) {
-  void *scanner;
-  int res = 1;  // initialize with fail code
-
-  TEST_ASSERT(!yysmarts_lex_init(&scanner));
-  try {
-    size_t ltrim = setup_smarts_string(inp, scanner);
-    int start_tok = static_cast<int>(START_ATOM);
-    std::vector<RWMol *> molVect;
-    Bond *lastBond = nullptr;
-    res = yysmarts_parse(inp.c_str() + ltrim, &molVect, atom, lastBond, scanner,
-                         start_tok);
-  } catch (...) {
-    yysmarts_lex_destroy(scanner);
-    throw;
-  }
-  yysmarts_lex_destroy(scanner);
-
-  if (res == 1) {
-    std::stringstream errout;
-    errout << "Failed parsing SMARTS '" << inp << "'";
-    throw SmilesParseException(errout.str());
-  }
+  auto start_tok = static_cast<int>(START_ATOM);
+  std::vector<RWMol *> molVect;
+  Bond *bond = nullptr;
+  auto res = smarts_parse_helper(inp, molVect, atom, bond, start_tok);
 
   return res;
 }
 
-int smiles_bond_parse(const std::string &inp, Bond *&bond) {
+int smarts_parse(const std::string &inp, std::vector<RDKit::RWMol *> &molVect) {
+  auto start_tok = static_cast<int>(START_MOL);
+  Atom *atom = nullptr;
+  Bond *bond = nullptr;
+  auto res = smarts_parse_helper(inp, molVect, atom, bond, start_tok);
+
+  return res;
+}
+
+int smiles_parse_helper(const std::string &inp,
+                        std::vector<RDKit::RWMol *> &molVect, Atom *&atom,
+                        Bond *&bond, int start_tok) {
   std::list<unsigned int> branchPoints;
   void *scanner;
   int res = 1;  // initialize with fail code
@@ -113,64 +115,7 @@ int smiles_bond_parse(const std::string &inp, Bond *&bond) {
   TEST_ASSERT(!yysmiles_lex_init(&scanner));
   try {
     size_t ltrim = setup_smiles_string(inp, scanner);
-    int start_tok = static_cast<int>(START_BOND);
-    std::vector<RWMol *> molVect;
-    Atom *lastAtom = nullptr;
-    res = yysmiles_parse(inp.c_str() + ltrim, &molVect, lastAtom, bond,
-                         &branchPoints, scanner, start_tok);
-  } catch (...) {
-    yysmiles_lex_destroy(scanner);
-    throw;
-  }
-  yysmiles_lex_destroy(scanner);
-
-  if (res == 1) {
-    std::stringstream errout;
-    errout << "Failed parsing SMILES '" << inp << "'";
-    throw SmilesParseException(errout.str());
-  }
-
-  return res;
-}
-int smiles_atom_parse(const std::string &inp, Atom *&atom) {
-  std::list<unsigned int> branchPoints;
-  void *scanner;
-  int res = 1;  // initialize with fail code
-
-  TEST_ASSERT(!yysmiles_lex_init(&scanner));
-  try {
-    size_t ltrim = setup_smiles_string(inp, scanner);
-    int start_tok = static_cast<int>(START_ATOM);
-    std::vector<RWMol *> molVect;
-    Bond *lastBond = nullptr;
-    res = yysmiles_parse(inp.c_str() + ltrim, &molVect, atom, lastBond,
-                         &branchPoints, scanner, start_tok);
-  } catch (...) {
-    yysmiles_lex_destroy(scanner);
-    throw;
-  }
-  yysmiles_lex_destroy(scanner);
-
-  if (res == 1) {
-    std::stringstream errout;
-    errout << "Failed parsing SMILES '" << inp << "'";
-    throw SmilesParseException(errout.str());
-  }
-
-  return res;
-}
-int smiles_parse(const std::string &inp, std::vector<RDKit::RWMol *> &molVect) {
-  std::list<unsigned int> branchPoints;
-  void *scanner;
-  int res = 1;  // initialize with fail code
-
-  TEST_ASSERT(!yysmiles_lex_init(&scanner));
-  try {
-    size_t ltrim = setup_smiles_string(inp, scanner);
-    int start_tok = static_cast<int>(START_MOL);
-    Atom *lastAtom = nullptr;
-    Bond *lastBond = nullptr;
-    res = yysmiles_parse(inp.c_str() + ltrim, &molVect, lastAtom, lastBond,
+    res = yysmiles_parse(inp.c_str() + ltrim, &molVect, atom, bond,
                          &branchPoints, scanner, start_tok);
   } catch (...) {
     yysmiles_lex_destroy(scanner);
@@ -189,28 +134,29 @@ int smiles_parse(const std::string &inp, std::vector<RDKit::RWMol *> &molVect) {
   }
   return res;
 }
-int smarts_parse(const std::string &inp, std::vector<RDKit::RWMol *> &molVect) {
-  void *scanner;
-  int res = 1;  // initialize with fail code
-  TEST_ASSERT(!yysmarts_lex_init(&scanner));
-  try {
-    size_t ltrim = setup_smarts_string(inp, scanner);
-    int start_tok = static_cast<int>(START_MOL);
-    Atom *lastAtom = nullptr;
-    Bond *lastBond = nullptr;
-    res = yysmarts_parse(inp.c_str() + ltrim, &molVect, lastAtom, lastBond,
-                         scanner, start_tok);
-  } catch (...) {
-    yysmarts_lex_destroy(scanner);
-    throw;
-  }
-  yysmarts_lex_destroy(scanner);
 
-  if (res == 1) {
-    std::stringstream errout;
-    errout << "Failed parsing SMARTS '" << inp << "'";
-    throw SmilesParseException(errout.str());
-  }
+int smiles_bond_parse(const std::string &inp, Bond *&bond) {
+  auto start_tok = static_cast<int>(START_BOND);
+  std::vector<RWMol *> molVect;
+  Atom *atom = nullptr;
+  auto res = smiles_parse_helper(inp, molVect, atom, bond, start_tok);
+
+  return res;
+}
+int smiles_atom_parse(const std::string &inp, Atom *&atom) {
+  auto start_tok = static_cast<int>(START_ATOM);
+  std::vector<RWMol *> molVect;
+  Bond *bond = nullptr;
+  auto res = smiles_parse_helper(inp, molVect, atom, bond, start_tok);
+
+  return res;
+}
+
+int smiles_parse(const std::string &inp, std::vector<RDKit::RWMol *> &molVect) {
+  auto start_tok = static_cast<int>(START_MOL);
+  Atom *atom = nullptr;
+  Bond *bond = nullptr;
+  auto res = smiles_parse_helper(inp, molVect, atom, bond, start_tok);
 
   return res;
 }
