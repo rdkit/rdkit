@@ -19,7 +19,6 @@
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/algorithm/string.hpp>
-#include <boost/math/special_functions/round.hpp>
 #include <RDGeneral/RDThreads.h>
 
 #ifdef RDK_THREADSAFE_SSS
@@ -588,7 +587,7 @@ int o3aMMFFCostFunc(const unsigned int prbIdx, const unsigned int refIdx,
                            ->getMMFFAtomType(prbIdx) -
                        1];
 
-  return boost::math::iround(
+  return std::lround(
       (static_cast<double>(((O3AFuncData *)data)->coeff) * O3_CHARGE_WEIGHT *
            fabs((static_cast<MMFF::MMFFMolProperties *>(
                      (static_cast<O3AFuncData *>(data))->refProp))
@@ -607,7 +606,7 @@ int o3aMMFFCostFunc(const unsigned int prbIdx, const unsigned int refIdx,
 
 int o3aCrippenCostFunc(const unsigned int prbIdx, const unsigned int refIdx,
                        double hSum, void *data) {
-  return boost::math::iround(
+  return std::lround(
       (static_cast<double>((static_cast<O3AFuncData *>(data))->coeff) *
            O3_CHARGE_WEIGHT *
            fabs((*(static_cast<std::vector<double> *>(
