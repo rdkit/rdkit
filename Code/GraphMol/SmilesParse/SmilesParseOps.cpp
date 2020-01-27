@@ -538,17 +538,11 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
 void CleanupAfterParsing(RWMol *mol) {
   PRECONDITION(mol, "no molecule");
   for (auto atom : mol->atoms()) {
-    if (atom->hasProp(common_properties::_RingClosures)) {
-      atom->clearProp(common_properties::_RingClosures);
-    }
-    if (atom->hasProp(common_properties::_SmilesStart)) {
-      atom->clearProp(common_properties::_SmilesStart);
-    }
+    atom->clearProp(common_properties::_RingClosures);
+    atom->clearProp(common_properties::_SmilesStart);
   }
   for (auto bond : mol->bonds()) {
-    if (bond->hasProp(common_properties::_unspecifiedOrder)) {
-      bond->clearProp(common_properties::_unspecifiedOrder);
-    }
+    bond->clearProp(common_properties::_unspecifiedOrder);
   }
 }
 

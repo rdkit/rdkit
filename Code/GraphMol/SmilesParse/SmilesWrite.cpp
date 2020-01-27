@@ -198,13 +198,7 @@ std::string GetBondSmiles(const Bond *bond, int atomToLeftIdx, bool doKekule,
 
   Bond::BondDir dir = bond->getBondDir();
 
-  if (bond->hasProp(common_properties::_TraversalRingClosureBond)) {
-    // std::cerr<<"FLIP: "<<bond->getIdx()<<"
-    // "<<bond->getBeginAtomIdx()<<"-"<<bond->getEndAtomIdx()<<std::endl;
-    // if(dir==Bond::ENDDOWNRIGHT) dir=Bond::ENDUPRIGHT;
-    // else if(dir==Bond::ENDUPRIGHT) dir=Bond::ENDDOWNRIGHT;
-    bond->clearProp(common_properties::_TraversalRingClosureBond);
-  }
+  bond->clearProp(common_properties::_TraversalRingClosureBond);
 
   switch (bond->getBondType()) {
     case Bond::SINGLE:
