@@ -5832,6 +5832,29 @@ M  END
     for at in m.GetAtoms():
       self.assertNotEqual(at.GetAtomicNum(),1)
 
+  def testPickleCoordsAsDouble(self):
+    import pickle
+    m = Chem.MolFromSmiles('C')
+    test_num = 1e50
+    conf = Chem.Conformer(1)
+    conf.SetAtomPosition(0, (test_num, 0.0, 0.0))
+    m.AddConformer(conf)
+
+    opts = Chem.GetDefaultPickleProperties()
+    Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.NoProps)
+    self.assertNotEqual(
+      pickle.loads(pickle.dumps(m)).GetConformer().GetAtomPosition(0).x,
+      test_num)
+
+
+    try:
+      Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.CoordsAsDouble)
+      self.assertEqual(
+        pickle.loads(pickle.dumps(m)).GetConformer().GetAtomPosition(0).x,
+        test_num)
+    finally:
+      Chem.SetDefaultPickleProperties(opts)
+      
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()

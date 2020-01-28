@@ -37,8 +37,7 @@ install(TARGETS RingDecomposerLib DESTINATION ${RDKit_LibDir})
 rdkit_headers(${URFLIB_DIR}/RingDecomposerLib.h DEST "")
 
 
-rdkit_library(URFLib URF.cpp SHARED LINK_LIBRARIES RingDecomposerLib )
-set(RDK_URF_LIBS URFLib RingDecomposerLib
+set(RDK_URF_LIBS RingDecomposerLib
     CACHE STRING "the libraries for the URF calculation" FORCE)
 
 endif(RDK_USE_URF)

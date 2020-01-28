@@ -1358,6 +1358,10 @@ void findRingFamilies(const ROMol &mol) {
     free(edges);
   }
 }
+#else
+void findRingFamilies(const ROMol &mol) {
+  BOOST_LOG(rdErrorLog)<<"This version of the RDKit was built without URF support"<<std::endl;
+}
 #endif
 }  // namespace MolOps
 
