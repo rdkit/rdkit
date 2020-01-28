@@ -1473,6 +1473,44 @@ void testNegativeMaps() {
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
 
+void testGithubIssue2510() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog)
+      << "Testing Issue2510: Pickle Confs as double." << std::endl;
+
+  std::string smi = "CC";
+  ROMol *m1 = SmilesToMol(smi);
+  TEST_ASSERT(m1);
+  std::string pickle;
+  ROMol *m2, *m3;
+  MolPickler::pickleMol(*m1, pickle);
+  m2 = new ROMol();
+  MolPickler::molFromPickle(pickle, *m2);
+  TEST_ASSERT(m1->getNumAtoms() == m2->getNumAtoms());
+
+  auto *conf = new Conformer(2);
+  double test_num = 3.1111124589;
+  TEST_ASSERT(static_cast<float>(test_num) != test_num);
+  
+  RDGeom::Point3D point(3.1111124589,0.0,0.0);
+  
+  conf->setAtomPos(0, point);
+  m1->addConformer(conf);
+  
+  MolPickler::pickleMol(*m1, pickle, PicklerOps::CoordsAsDouble);
+  m3 = new ROMol();
+  MolPickler::molFromPickle(pickle, *m3);
+  TEST_ASSERT(m1->getNumAtoms() == m3->getNumAtoms());
+  TEST_ASSERT(m3->getConformer().getAtomPos(0).x == test_num);
+
+  
+  delete m1;
+  delete m2;
+  delete m3;
+
+  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
   bool doLong = false;
@@ -1510,6 +1548,7 @@ int main(int argc, char *argv[]) {
   testEnhancedStereoChemistry();
   testCustomPickler();
   testGithub2441();
+  testGithubIssue2510();
 #endif
   testNegativeMaps();
 }

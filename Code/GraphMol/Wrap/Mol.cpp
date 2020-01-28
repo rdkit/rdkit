@@ -251,6 +251,7 @@ struct mol_wrapper {
         .value("PrivateProps", RDKit::PicklerOps::PrivateProps)
         .value("ComputedProps", RDKit::PicklerOps::ComputedProps)
         .value("AllProps", RDKit::PicklerOps::AllProps)
+        .value("CoordsAsDouble", RDKit::PicklerOps::CoordsAsDouble)
         .export_values();
     ;
 
