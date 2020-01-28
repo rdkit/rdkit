@@ -171,7 +171,7 @@ class RDKIT_FMCS_EXPORT RingMatchTableSet {
             FMCS::SubstructMatchCustom(
                 graph2, *targetMolecule, graph1, *query, parameters.AtomTyper,
                 parameters.BondTyper, NULL, parameters.AtomCompareParameters,
-                bp, NULL);
+                bp, parameters.CompareFunctionsUserData);
 #endif
         if (match) m.setMatch(i, &*r2);
       }

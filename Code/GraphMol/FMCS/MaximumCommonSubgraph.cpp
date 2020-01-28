@@ -70,14 +70,6 @@ void MaximumCommonSubgraph::init() {
 #endif
   void* userData = Parameters.CompareFunctionsUserData;
 
-  if (Parameters.BondCompareParameters.CompleteRingsOnly ||
-      Parameters.BondCompareParameters.RingMatchesRingOnly ||
-      Parameters.AtomCompareParameters.RingMatchesRingOnly) {
-#ifdef FAST_SUBSTRUCT_CACHE
-    RingMatchTables.init(QueryMolecule);
-    Parameters.CompareFunctionsUserData = &RingMatchTables;
-#endif
-  }
   size_t nq = 0;
 #ifdef FAST_SUBSTRUCT_CACHE
   // fill out RingMatchTables to check cache Hash collision by checking match a
@@ -86,6 +78,8 @@ void MaximumCommonSubgraph::init() {
       && (Parameters.BondCompareParameters.CompleteRingsOnly ||
           Parameters.BondCompareParameters.RingMatchesRingOnly ||
           Parameters.AtomCompareParameters.RingMatchesRingOnly)) {
+    RingMatchTables.init(QueryMolecule);
+    Parameters.CompareFunctionsUserData = &RingMatchTables;
     RingMatchTables.computeRingMatchTable(QueryMolecule, QueryMolecule,
                                           Parameters);
   }
@@ -165,8 +159,9 @@ void MaximumCommonSubgraph::init() {
   for (size_t aj = 0; aj < nq; aj++) {
     const Bond* bond = QueryMolecule->getBondWithIdx(aj);
     unsigned ring = 0;
-    if (Parameters.BondCompareParameters.CompleteRingsOnly ||
-        Parameters.BondCompareParameters.RingMatchesRingOnly) {
+    if (!userData
+        && (Parameters.BondCompareParameters.CompleteRingsOnly ||
+        Parameters.BondCompareParameters.RingMatchesRingOnly)) {
       ring = RingMatchTables.isQueryBondInRing(aj) ? 0 : 1;  // is bond in ring
     }
     if (MCSBondCompareAny ==
@@ -231,17 +226,17 @@ void MaximumCommonSubgraph::init() {
       Targets[i].Topology.addBond((*b)->getIdx(), ii, jj);
     }
 
+#ifdef FAST_SUBSTRUCT_CACHE
     // fill out RingMatchTables
     if (!userData  // predefined functor - compute RingMatchTable for all
                    // targets
         && (Parameters.BondCompareParameters.CompleteRingsOnly ||
             Parameters.BondCompareParameters.RingMatchesRingOnly)) {
-#ifdef FAST_SUBSTRUCT_CACHE
       RingMatchTables.addTargetBondRingsIndeces(Targets[i].Molecule);
       RingMatchTables.computeRingMatchTable(QueryMolecule, Targets[i].Molecule,
                                             Parameters);
-#endif
     }
+#endif
 
     // fill out match tables
     size_t nq = QueryMolecule->getNumAtoms();
@@ -712,8 +707,8 @@ MaximumCommonSubgraph::generateResultSMARTSAndQueryMol(
   for (auto atom = mcsIdx.Atoms.begin(); atom != mcsIdx.Atoms.end();
        atom++, ai++) {
     QueryAtom a;
-    if (Parameters.AtomTyper ==
-        MCSAtomCompareIsotopes) {  // do '[0*]-[0*]-[13*]' for CC[13NH2]
+    if (Parameters.AtomTyper == MCSAtomCompareIsotopes ||
+      Parameters.AtomCompareParameters.MatchIsotope) {  // do '[0*]-[0*]-[13*]' for CC[13NH2]
       a.setQuery(makeAtomIsotopeQuery((int)(*atom)->getIsotope()));
     } else {
       // generate [#6] instead of C or c !
@@ -969,7 +964,7 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR>& src_mols) {
     std::pair<std::string, RWMol*> smartsQueryMolPair =
         generateResultSMARTSAndQueryMol(McsIdx);
     res.SmartsString = smartsQueryMolPair.first;
-    res.QueryMol = RWMOL_SPTR(smartsQueryMolPair.second);
+    res.QueryMol = ROMOL_SPTR(smartsQueryMolPair.second);
     if (Parameters.BondCompareParameters.MatchFusedRingsStrict) {
       addFusedBondQueries(McsIdx, smartsQueryMolPair.second);
     }
