@@ -224,11 +224,16 @@ def patchPandasHTMLrepr(self, **kwargs):
       kwargs['escape'] = False  # disable escaping
       return defPandasRendering(self, **kwargs)
 
-  import pandas.io.formats.html  # necessary for loading HTMLFormatter
-  if not hasattr(pd.io.formats.html, 'HTMLFormatter') or \
-     not hasattr(pd.io.formats.html.HTMLFormatter, '_write_cell') or \
-     not hasattr(pd.io.formats.format, '_get_adjustment'):
+  try:
+    import pandas.io.formats.html  # necessary for loading HTMLFormatter
+  except:
+    # this happens up until at least pandas v0.22
     return patch_v1()
+  else:
+    if not hasattr(pd.io.formats.html, 'HTMLFormatter') or \
+      not hasattr(pd.io.formats.html.HTMLFormatter, '_write_cell') or \
+      not hasattr(pd.io.formats.format, '_get_adjustment'):
+      return patch_v1()
 
   # The "clean" patch:
   # 1. Temporarily set escape=False in HTMLFormatter._write_cell
