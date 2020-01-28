@@ -372,7 +372,10 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
   //          there may well be partial bonds in the molecule which need
   //          to be tied in as well.  WOO HOO! IT'S A BIG MESS!
   PRECONDITION(mol, "no molecule");
-  for (auto bookmark : *mol->getAtomBookmarks()) {
+
+  auto bookmarkIt = mol->getAtomBookmarks()->begin();
+  while (bookmarkIt != mol->getAtomBookmarks()->end()) {
+    auto &bookmark = *bookmarkIt;
     // don't bother even considering bookmarks outside
     // the range used for rings
     if (couldBeRingClosure(bookmark.first)) {
@@ -528,9 +531,12 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
         }
       }
       int mark = bookmark.first;
+      ++bookmarkIt;
       for (const auto atom : bookmarkedAtomsToRemove) {
         mol->clearAtomBookmark(mark, atom);
       }
+    } else {
+      ++bookmarkIt;
     }
   }
 };
