@@ -998,3 +998,42 @@ GASTEIGER
     REQUIRE(!mol);
   }
 }
+
+TEST_CASE("handling STBOX properties from v3k ctabs", "[feature,v3k]") {
+  SECTION("atoms and bonds") {
+    auto mol = R"CTAB(basic test
+  Mrv1810 01292006422D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -7.0316 2.0632 0 0 STBOX=1
+M  V30 2 C -5.6979 2.8332 0 0 STBOX=1
+M  V30 3 O -4.3642 2.0632 0 0
+M  V30 4 F -8.3653 2.8332 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 3
+M  V30 2 1 1 4
+M  V30 3 2 1 2 STBOX=1
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 4);
+    int val;
+    CHECK(mol->getAtomWithIdx(0)->getPropIfPresent(
+        common_properties::molStereoCare, val));
+    CHECK(val == 1);
+    CHECK(mol->getAtomWithIdx(1)->getPropIfPresent(
+        common_properties::molStereoCare, val));
+    CHECK(val == 1);
+    CHECK(!mol->getAtomWithIdx(2)->hasProp(common_properties::molStereoCare));
+    REQUIRE(mol->getBondBetweenAtoms(0, 1));
+    CHECK(mol->getBondBetweenAtoms(0, 1)->getPropIfPresent(
+        common_properties::molStereoCare, val));
+    CHECK(val == 1);
+  }
+}

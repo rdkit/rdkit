@@ -103,6 +103,7 @@ const std::string molFileAlias = "molFileAlias";
 const std::string molFileValue = "molFileValue";
 const std::string molInversionFlag = "molInversionFlag";
 const std::string molParity = "molParity";
+const std::string molStereoCare = "molStereoCare";
 const std::string molRxnComponent = "molRxnComponent";
 const std::string molRxnRole = "molRxnRole";
 const std::string molTotValence = "molTotValence";
