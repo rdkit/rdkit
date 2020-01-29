@@ -15,6 +15,13 @@
 #include <GraphMol/AtomIterators.h>
 #include <GraphMol/BondIterators.h>
 
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/tokenizer.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+
 #include <vector>
 #include <algorithm>
 
@@ -26,6 +33,78 @@ bool isMapped(const Atom *atom) {
 }  // namespace
 
 namespace MolOps {
+
+namespace {
+typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
+
+void parseWhichString(const std::string &txt, unsigned int &val) {
+  if (txt.empty()) {
+    return;
+  }
+  unsigned int res = MolOps::ADJUST_IGNORENONE;
+
+  boost::char_separator<char> sep("|");
+  tokenizer tokens(txt, sep);
+  for (const auto &token : tokens) {
+    if (token == "IGNORENONE") {
+      res |= MolOps::ADJUST_IGNORENONE;
+    } else if (token == "IGNORERINGS") {
+      res |= MolOps::ADJUST_IGNORERINGS;
+    } else if (token == "IGNORECHAINS") {
+      res |= MolOps::ADJUST_IGNORECHAINS;
+    } else if (token == "IGNOREDUMMIES") {
+      res |= MolOps::ADJUST_IGNOREDUMMIES;
+    } else if (token == "IGNORENONDUMMIES") {
+      res |= MolOps::ADJUST_IGNORENONDUMMIES;
+    } else if (token == "IGNOREALL") {
+      res |= MolOps::ADJUST_IGNOREALL;
+    } else {
+      BOOST_LOG(rdErrorLog)
+          << "Unknown flag value: '" << token << "'. Flags ignored.";
+      res = val;
+      break;
+    }
+  }
+  val = res;
+}
+}  // namespace
+void parseAdjustQueryParametersFromJSON(MolOps::AdjustQueryParameters &p,
+                                        const std::string &json) {
+  PRECONDITION(!json.empty(), "empty JSON provided");
+  std::istringstream ss;
+  ss.str(json);
+
+  boost::property_tree::ptree pt;
+  boost::property_tree::read_json(ss, pt);
+  p.adjustDegree = pt.get("adjustDegree", p.adjustDegree);
+  p.adjustRingCount = pt.get("adjustRingCount", p.adjustRingCount);
+  p.makeDummiesQueries = pt.get("makeDummiesQueries", p.makeDummiesQueries);
+  p.aromatizeIfPossible = pt.get("aromatizeIfPossible", p.aromatizeIfPossible);
+  p.makeBondsGeneric = pt.get("makeBondsGeneric", p.makeBondsGeneric);
+  p.makeAtomsGeneric = pt.get("makeAtomsGeneric", p.makeAtomsGeneric);
+  p.adjustHeavyDegree = pt.get("adjustHeavyDegree", p.adjustHeavyDegree);
+  p.adjustRingChain = pt.get("adjustRingChain", p.adjustRingChain);
+  p.useStereoCareForBonds =
+      pt.get("useStereoCareForBonds", p.useStereoCareForBonds);
+
+  std::string which;
+  which = boost::to_upper_copy<std::string>(pt.get("adjustDegreeFlags", ""));
+  parseWhichString(which, p.adjustDegreeFlags);
+  which =
+      boost::to_upper_copy<std::string>(pt.get("adjustHeavyDegreeFlags", ""));
+  parseWhichString(which, p.adjustHeavyDegreeFlags);
+  which = boost::to_upper_copy<std::string>(pt.get("adjustRingCountFlags", ""));
+  parseWhichString(which, p.adjustRingCountFlags);
+  which =
+      boost::to_upper_copy<std::string>(pt.get("makeBondsGenericFlags", ""));
+  parseWhichString(which, p.makeBondsGenericFlags);
+  which =
+      boost::to_upper_copy<std::string>(pt.get("makeAtomsGenericFlags", ""));
+  parseWhichString(which, p.makeAtomsGenericFlags);
+  which = boost::to_upper_copy<std::string>(pt.get("adjustRingChainFlags", ""));
+  parseWhichString(which, p.adjustRingCountFlags);
+}  // namespace MolOps
+
 ROMol *adjustQueryProperties(const ROMol &mol,
                              const AdjustQueryParameters *params) {
   auto *res = new RWMol(mol);

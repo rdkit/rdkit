@@ -1281,3 +1281,59 @@ M  END
     }
   }
 }
+
+TEST_CASE("updateQueryParameters from JSON") {
+  SECTION("basics") {
+    MolOps::AdjustQueryParameters ps;
+    CHECK(ps.makeAtomsGeneric == false);
+    CHECK(ps.makeBondsGeneric == false);
+    CHECK(ps.makeBondsGenericFlags == MolOps::ADJUST_IGNORENONE);
+
+    std::string json = R"JSON({"makeAtomsGeneric":true})JSON";
+    MolOps::parseAdjustQueryParametersFromJSON(ps, json);
+
+    CHECK(ps.makeAtomsGeneric == true);
+    CHECK(ps.makeBondsGeneric == false);
+    // the parsing updates the parameters, it doesn't replace them:
+
+    json = R"JSON({"makeBondsGeneric":true,
+      "makeBondsGenericFlags":"IGNOREDUMMIES|IGNORECHAINS"})JSON";
+    MolOps::parseAdjustQueryParametersFromJSON(ps, json);
+
+    CHECK(ps.makeAtomsGeneric == true);
+    CHECK(ps.makeBondsGeneric == true);
+    CHECK(ps.makeBondsGenericFlags ==
+          (MolOps::ADJUST_IGNOREDUMMIES | MolOps::ADJUST_IGNORECHAINS));
+  }
+  SECTION("useStereoCare") {
+    MolOps::AdjustQueryParameters ps;
+    CHECK(ps.useStereoCareForBonds == false);
+
+    std::string json = R"JSON({"useStereoCareForBonds":true})JSON";
+    MolOps::parseAdjustQueryParametersFromJSON(ps, json);
+    CHECK(ps.useStereoCareForBonds == true);
+    json = R"JSON({"useStereoCareForBonds":false})JSON";
+    MolOps::parseAdjustQueryParametersFromJSON(ps, json);
+    CHECK(ps.useStereoCareForBonds == false);
+  }
+  SECTION("bogus contents") {
+    MolOps::AdjustQueryParameters ps;
+    CHECK(ps.adjustDegree == true);
+    CHECK(ps.adjustDegreeFlags ==
+          (MolOps::ADJUST_IGNOREDUMMIES | MolOps::ADJUST_IGNORECHAINS));
+
+    std::string json = R"JSON({"bogosity":true})JSON";
+    MolOps::parseAdjustQueryParametersFromJSON(ps, json);
+    CHECK(ps.adjustDegree == true);
+
+    json = R"JSON({"adjustDegree":"foo"})JSON";
+    MolOps::parseAdjustQueryParametersFromJSON(ps, json);
+    CHECK(ps.adjustDegree == true);
+
+    json = R"JSON({"adjustDegreeFlags":"IGNORENONE|bogus"})JSON";
+    MolOps::parseAdjustQueryParametersFromJSON(ps, json);
+    CHECK(ps.adjustDegree == true);
+    CHECK(ps.adjustDegreeFlags ==
+          (MolOps::ADJUST_IGNOREDUMMIES | MolOps::ADJUST_IGNORECHAINS));
+  }
+}

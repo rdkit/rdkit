@@ -343,6 +343,11 @@ struct RDKIT_GRAPHMOL_EXPORT AdjustQueryParameters {
 
   AdjustQueryParameters() {}
 };
+
+//! updates an AdjustQueryParameters object from a JSON string
+RDKIT_GRAPHMOL_EXPORT void parseAdjustQueryParametersFromJSON(
+    MolOps::AdjustQueryParameters &p, const std::string &json);
+
 //! returns a copy of a molecule with query properties adjusted
 /*!
   \param mol the molecule to adjust
@@ -368,7 +373,8 @@ RDKIT_GRAPHMOL_EXPORT void adjustQueryProperties(
   \return the new molecule
 
   <b>Notes:</b>
-    - the caller is responsible for <tt>delete</tt>ing the pointer this returns.
+    - the caller is responsible for <tt>delete</tt>ing the pointer this
+  returns.
 
 */
 RDKIT_GRAPHMOL_EXPORT ROMol *renumberAtoms(
@@ -435,17 +441,17 @@ RDKIT_GRAPHMOL_EXPORT void sanitizeMol(RWMol &mol,
 //! \overload
 RDKIT_GRAPHMOL_EXPORT void sanitizeMol(RWMol &mol);
 
-//! \brief Identifies chemistry problems (things that don't make chemical sense)
-//! in a molecule
+//! \brief Identifies chemistry problems (things that don't make chemical
+//! sense) in a molecule
 /*!
    This functions uses the operations in sanitizeMol but does not change
-   the input structure and returns a list of the problems encountered instead of
-   stopping at the first failure,
+   the input structure and returns a list of the problems encountered instead
+   of stopping at the first failure,
 
    The problems this looks for come from the sanitization operations:
      -# mol.updatePropertyCache()  : Unreasonable valences
-     -# MolOps::Kekulize()  : Unkekulizable ring systems, aromatic atoms not in
-                              rings, aromatic bonds to non-aromatic atoms.
+     -# MolOps::Kekulize()  : Unkekulizable ring systems, aromatic atoms not
+   in rings, aromatic bonds to non-aromatic atoms.
 
    \param mol : the RWMol to be cleaned
 
@@ -516,13 +522,12 @@ RDKIT_GRAPHMOL_EXPORT int setAromaticity(
 /*!
 
     Currently this:
-     - modifies nitro groups, so that the nitrogen does not have an unreasonable
-       valence of 5, as follows:
+     - modifies nitro groups, so that the nitrogen does not have an
+   unreasonable valence of 5, as follows:
          - the nitrogen gets a positive charge
-         - one of the oxygens gets a negative chage and the double bond to this
-           oxygen is changed to a single bond
-       The net result is that nitro groups can be counted on to be:
-         \c "[N+](=O)[O-]"
+         - one of the oxygens gets a negative chage and the double bond to
+   this oxygen is changed to a single bond The net result is that nitro groups
+   can be counted on to be: \c "[N+](=O)[O-]"
      - modifies halogen-oxygen containing species as follows:
         \c [Cl,Br,I](=O)(=O)(=O)O -> [X+3]([O-])([O-])([O-])O
         \c [Cl,Br,I](=O)(=O)O -> [X+3]([O-])([O-])O
@@ -558,13 +563,10 @@ RDKIT_GRAPHMOL_EXPORT void adjustHs(RWMol &mol);
 /*!
 
    \param mol             the molecule of interest
-   \param markAtomsBonds  if this is set to true, \c isAromatic boolean settings
-                          on both the Bonds and Atoms are turned to false
-   following
-                          the Kekulization, otherwise they are left alone in
-   their
-                          original state.
-   \param maxBackTracks   the maximum number of attempts at back-tracking. The
+   \param markAtomsBonds  if this is set to true, \c isAromatic boolean
+   settings on both the Bonds and Atoms are turned to false following the
+   Kekulization, otherwise they are left alone in their original state. \param
+   maxBackTracks   the maximum number of attempts at back-tracking. The
    algorithm
                           uses a back-tracking procedure to revisit a previous
    setting of
@@ -625,15 +627,15 @@ RDKIT_GRAPHMOL_EXPORT void setHybridization(ROMol &mol);
     - Typically 3 rings are found around a degree 3 node (when no deg 2s are
   available)
       and all the bond to that node are chopped.
-    - The extra rings that were found in this process are removed after all the
-  nodes
-      have been covered.
+    - The extra rings that were found in this process are removed after all
+  the nodes have been covered.
 
   These changes were motivated by several factors:
     - We believe the original algorithm fails to find the correct SSSR
-      (finds the correct number of them but the wrong ones) on some sample mols
-    - Since SSSR may not be unique, a post-SSSR step to symmetrize may be done.
-      The extra rings this process adds can be quite useful.
+      (finds the correct number of them but the wrong ones) on some sample
+  mols
+    - Since SSSR may not be unique, a post-SSSR step to symmetrize may be
+  done. The extra rings this process adds can be quite useful.
 */
 RDKIT_GRAPHMOL_EXPORT int findSSSR(const ROMol &mol,
                                    std::vector<std::vector<int>> &res);
@@ -658,11 +660,10 @@ RDKIT_GRAPHMOL_EXPORT void findRingFamilies(const ROMol &mol);
    For example, cubane has five SSSR rings, not six as one would hope.
 
    This function adds additional rings to the SSSR list if necessary
-   to make the list symmetric, e.g. all atoms in cubane will be part of the same
-  number
-   of SSSRs. This function choses these extra rings from the extra rings
-  computed
-   and discarded during findSSSR. The new ring are chosen such that:
+   to make the list symmetric, e.g. all atoms in cubane will be part of the
+  same number of SSSRs. This function choses these extra rings from the extra
+  rings computed and discarded during findSSSR. The new ring are chosen such
+  that:
     - replacing a same sized ring in the SSSR list with an extra ring yields
       the same union of bond IDs as the original SSSR list
 
@@ -699,9 +700,9 @@ RDKIT_GRAPHMOL_EXPORT int symmetrizeSSSR(ROMol &mol);
   \return the adjacency matrix.
 
   <b>Notes</b>
-    - The result of this is cached in the molecule's local property dictionary,
-      which will handle deallocation. The caller should <b>not</b> \c delete
-      this pointer.
+    - The result of this is cached in the molecule's local property
+  dictionary, which will handle deallocation. The caller should <b>not</b> \c
+  delete this pointer.
 
 */
 RDKIT_GRAPHMOL_EXPORT double *getAdjacencyMatrix(
@@ -725,9 +726,9 @@ RDKIT_GRAPHMOL_EXPORT double *getAdjacencyMatrix(
   \return the distance matrix.
 
   <b>Notes</b>
-    - The result of this is cached in the molecule's local property dictionary,
-      which will handle deallocation. The caller should <b>not</b> \c delete
-      this pointer.
+    - The result of this is cached in the molecule's local property
+  dictionary, which will handle deallocation. The caller should <b>not</b> \c
+  delete this pointer.
 
 
 */
