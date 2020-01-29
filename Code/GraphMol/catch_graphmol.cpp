@@ -1,5 +1,14 @@
-#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do
-                           // this in one cpp file
+//
+//
+//  Copyright (C) 2018-2020 Greg Landrum and T5 Informatics GmbH
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
+
 #include "catch.hpp"
 
 #include <GraphMol/RDKitBase.h>
@@ -1106,5 +1115,169 @@ TEST_CASE("github #2895: acepentalene aromaticity perception ",
     REQUIRE(m);
     auto smi = MolToSmiles(*m);
     CHECK(smi == "C1=CC2=C3C1=CC=C3C=C2");
+  }
+}
+
+TEST_CASE("handling of bondStereoCare in updateQueryProperties") {
+  SECTION("fully specified") {
+    auto mol = R"CTAB(basic test
+  Mrv1810 01292006422D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -7.0316 2.0632 0 0 STBOX=1
+M  V30 2 C -5.6979 2.8332 0 0 STBOX=1
+M  V30 3 O -4.3642 2.0632 0 0
+M  V30 4 F -8.3653 2.8332 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 3
+M  V30 2 1 1 4
+M  V30 3 2 1 2 STBOX=1
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    REQUIRE(mol->getBondBetweenAtoms(0, 1));
+    CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
+          Bond::BondStereo::STEREOE);
+    MolOps::AdjustQueryParameters ps;
+    ps.useStereoCareForBonds = true;
+    MolOps::adjustQueryProperties(*mol, &ps);
+    CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
+          Bond::BondStereo::STEREOE);
+  }
+  SECTION("fully unspecified") {
+    auto mol = R"CTAB(basic test
+  Mrv1810 01292006422D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -7.0316 2.0632 0 0
+M  V30 2 C -5.6979 2.8332 0 0
+M  V30 3 O -4.3642 2.0632 0 0
+M  V30 4 F -8.3653 2.8332 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 3
+M  V30 2 1 1 4
+M  V30 3 2 1 2
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    REQUIRE(mol->getBondBetweenAtoms(0, 1));
+    CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
+          Bond::BondStereo::STEREOE);
+    MolOps::AdjustQueryParameters ps;
+    ps.useStereoCareForBonds = true;
+    MolOps::adjustQueryProperties(*mol, &ps);
+    CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
+          Bond::BondStereo::STEREONONE);
+  }
+  SECTION("partially unspecified") {
+    std::vector<std::string> mbs = {R"CTAB(keep
+  Mrv1810 01292006422D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -7.0316 2.0632 0 0 STBOX=1
+M  V30 2 C -5.6979 2.8332 0 0 STBOX=1
+M  V30 3 O -4.3642 2.0632 0 0
+M  V30 4 F -8.3653 2.8332 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 3
+M  V30 2 1 1 4
+M  V30 3 2 1 2
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB",
+                                    R"CTAB(keep
+  Mrv1810 01292006422D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -7.0316 2.0632 0 0
+M  V30 2 C -5.6979 2.8332 0 0
+M  V30 3 O -4.3642 2.0632 0 0
+M  V30 4 F -8.3653 2.8332 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 3
+M  V30 2 1 1 4
+M  V30 3 2 1 2 STBOX=1
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB",
+                                    R"CTAB(remove
+  Mrv1810 01292006422D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -7.0316 2.0632 0 0 
+M  V30 2 C -5.6979 2.8332 0 0 STBOX=1
+M  V30 3 O -4.3642 2.0632 0 0
+M  V30 4 F -8.3653 2.8332 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 3
+M  V30 2 1 1 4
+M  V30 3 2 1 2
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB",
+                                    R"CTAB(remove
+  Mrv1810 01292006422D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -7.0316 2.0632 0 0 STBOX=1
+M  V30 2 C -5.6979 2.8332 0 0
+M  V30 3 O -4.3642 2.0632 0 0
+M  V30 4 F -8.3653 2.8332 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 3
+M  V30 2 1 1 4
+M  V30 3 2 1 2
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"};
+    for (const auto &mb : mbs) {
+      std::unique_ptr<RWMol> mol{MolBlockToMol(mb)};
+      REQUIRE(mol);
+      REQUIRE(mol->getBondBetweenAtoms(0, 1));
+      CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
+            Bond::BondStereo::STEREOE);
+      MolOps::AdjustQueryParameters ps;
+      ps.useStereoCareForBonds = true;
+      MolOps::adjustQueryProperties(*mol, &ps);
+      if (mol->getProp<std::string>(common_properties::_Name) == "keep") {
+        CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
+              Bond::BondStereo::STEREOE);
+      } else {
+        CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
+              Bond::BondStereo::STEREONONE);
+      }
+    }
   }
 }

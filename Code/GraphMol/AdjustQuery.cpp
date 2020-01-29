@@ -1,5 +1,5 @@
 //
-//  Copyright (c) 2015-2017 Greg Landrum
+//  Copyright (c) 2015-2020 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -193,12 +193,29 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
       qa->expandQuery(nq);
     }  // end of adjust ring chain
   }    // end of loop over atoms
-  if (params.makeBondsGeneric) {
-    ROMol::EDGE_ITER firstB, lastB;
-    boost::tie(firstB, lastB) = mol.getEdges();
-    while (firstB != lastB) {
-      // Bond *bond = mol[*firstB];
-      ++firstB;
+  if (params.useStereoCareForBonds) {
+    for (auto bnd : mol.bonds()) {
+      if (bnd->getBondType() == Bond::BondType::DOUBLE) {
+        if (bnd->getStereo() > Bond::BondStereo::STEREOANY) {
+          bool preserve = false;
+          int val = 0;
+          // is stereoCare set on the bond or both atoms?
+          if (bnd->getPropIfPresent(common_properties::molStereoCare, val) ||
+              val) {
+            preserve = true;
+          } else if ((bnd->getBeginAtom()->getPropIfPresent(
+                          common_properties::molStereoCare, val) &&
+                      val) &&
+                     (bnd->getEndAtom()->getPropIfPresent(
+                          common_properties::molStereoCare, val) &&
+                      val)) {
+            preserve = true;
+          }
+          if (!preserve) {
+            bnd->setStereo(Bond::BondStereo::STEREONONE);
+          }
+        }
+      }
     }
   }
 }

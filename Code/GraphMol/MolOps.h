@@ -244,8 +244,8 @@ struct RDKIT_GRAPHMOL_EXPORT RemoveHsParameters {
       false; /**< hydrogens defining bond stereochemistry */
   bool removeWithWedgedBond = true; /**< hydrogens with wedged bonds to them */
   bool removeWithQuery = false;     /**< hydrogens with queries defined */
-  bool removeMapped = true;  /**< mapped hydrogens */
-  bool showWarnings = true;  /**< display warnings for Hs that are not removed */
+  bool removeMapped = true;         /**< mapped hydrogens */
+  bool showWarnings = true; /**< display warnings for Hs that are not removed */
   bool removeNonimplicit = true; /**< DEPRECATED equivalent of implicitOnly */
   bool updateExplicitCount =
       false; /**< DEPRECATED equivalent of updateExplicitCount */
@@ -310,39 +310,38 @@ typedef enum {
 } AdjustQueryWhichFlags;
 
 struct RDKIT_GRAPHMOL_EXPORT AdjustQueryParameters {
-  bool adjustDegree; /**< add degree queries */
-  std::uint32_t adjustDegreeFlags;
-  bool adjustRingCount; /**< add ring-count queries */
-  std::uint32_t adjustRingCountFlags;
+  bool adjustDegree = true; /**< add degree queries */
+  std::uint32_t adjustDegreeFlags = ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINS;
 
-  bool makeDummiesQueries; /**< convert dummy atoms without isotope labels to
-                              any-atom queries */
-  bool aromatizeIfPossible;
-  bool makeBondsGeneric; /**< convert bonds to generic queries (any bonds) */
-  std::uint32_t makeBondsGenericFlags;
-  bool makeAtomsGeneric; /**< convert atoms to generic queries (any atoms) */
-  std::uint32_t makeAtomsGenericFlags;
-  bool adjustHeavyDegree; /**< adjust the heavy-atom degree instead of overall
-                             degree */
-  std::uint32_t adjustHeavyDegreeFlags;
-  bool adjustRingChain; /**< add ring-chain queries */
-  std::uint32_t adjustRingChainFlags;
+  bool adjustRingCount = false; /**< add ring-count queries */
+  std::uint32_t adjustRingCountFlags =
+      ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINS;
 
-  AdjustQueryParameters()
-      : adjustDegree(true),
-        adjustDegreeFlags(ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINS),
-        adjustRingCount(false),
-        adjustRingCountFlags(ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINS),
-        makeDummiesQueries(true),
-        aromatizeIfPossible(true),
-        makeBondsGeneric(false),
-        makeBondsGenericFlags(ADJUST_IGNORENONE),
-        makeAtomsGeneric(false),
-        makeAtomsGenericFlags(ADJUST_IGNORENONE),
-        adjustHeavyDegree(false),
-        adjustHeavyDegreeFlags(ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINS),
-        adjustRingChain(false),
-        adjustRingChainFlags(ADJUST_IGNORENONE) {}
+  bool makeDummiesQueries = true; /**< convert dummy atoms without isotope
+                                labels to any-atom queries */
+
+  bool aromatizeIfPossible = true; /**< perceive and set aromaticity */
+
+  bool makeBondsGeneric =
+      false; /**< convert bonds to generic queries (any bonds) */
+  std::uint32_t makeBondsGenericFlags = ADJUST_IGNORENONE;
+
+  bool makeAtomsGeneric =
+      false; /**< convert atoms to generic queries (any atoms) */
+  std::uint32_t makeAtomsGenericFlags = ADJUST_IGNORENONE;
+
+  bool adjustHeavyDegree = false; /**< adjust the heavy-atom degree instead of
+                               overall degree */
+  std::uint32_t adjustHeavyDegreeFlags =
+      ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINS;
+
+  bool adjustRingChain = false; /**< add ring-chain queries */
+  std::uint32_t adjustRingChainFlags = ADJUST_IGNORENONE;
+
+  bool useStereoCareForBonds =
+      false; /**< honor the stereoCare flags for double bond stereochemistry */
+
+  AdjustQueryParameters() {}
 };
 //! returns a copy of a molecule with query properties adjusted
 /*!
