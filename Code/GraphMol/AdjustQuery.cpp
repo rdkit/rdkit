@@ -37,12 +37,8 @@ namespace MolOps {
 namespace {
 typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
-void parseWhichString(const std::string &txt, unsigned int &val) {
-  if (txt.empty()) {
-    return;
-  }
+unsigned int parseWhichString(const std::string &txt) {
   unsigned int res = MolOps::ADJUST_IGNORENONE;
-
   boost::char_separator<char> sep("|");
   tokenizer tokens(txt, sep);
   for (const auto &token : tokens) {
@@ -59,13 +55,11 @@ void parseWhichString(const std::string &txt, unsigned int &val) {
     } else if (token == "IGNOREALL") {
       res |= MolOps::ADJUST_IGNOREALL;
     } else {
-      BOOST_LOG(rdErrorLog)
-          << "Unknown flag value: '" << token << "'. Flags ignored.";
-      res = val;
-      break;
+      std::string msg = "Unknown flag value: '" + token + "'. Flags ignored.";
+      throw ValueErrorException(msg);
     }
   }
-  val = res;
+  return res;
 }
 }  // namespace
 void parseAdjustQueryParametersFromJSON(MolOps::AdjustQueryParameters &p,
@@ -89,20 +83,32 @@ void parseAdjustQueryParametersFromJSON(MolOps::AdjustQueryParameters &p,
 
   std::string which;
   which = boost::to_upper_copy<std::string>(pt.get("adjustDegreeFlags", ""));
-  parseWhichString(which, p.adjustDegreeFlags);
+  if (!which.empty()) {
+    p.adjustDegreeFlags = parseWhichString(which);
+  }
   which =
       boost::to_upper_copy<std::string>(pt.get("adjustHeavyDegreeFlags", ""));
-  parseWhichString(which, p.adjustHeavyDegreeFlags);
+  if (!which.empty()) {
+    p.adjustHeavyDegreeFlags = parseWhichString(which);
+  }
   which = boost::to_upper_copy<std::string>(pt.get("adjustRingCountFlags", ""));
-  parseWhichString(which, p.adjustRingCountFlags);
+  if (!which.empty()) {
+    p.adjustRingCountFlags = parseWhichString(which);
+  }
   which =
       boost::to_upper_copy<std::string>(pt.get("makeBondsGenericFlags", ""));
-  parseWhichString(which, p.makeBondsGenericFlags);
+  if (!which.empty()) {
+    p.makeBondsGenericFlags = parseWhichString(which);
+  }
   which =
       boost::to_upper_copy<std::string>(pt.get("makeAtomsGenericFlags", ""));
-  parseWhichString(which, p.makeAtomsGenericFlags);
+  if (!which.empty()) {
+    p.makeAtomsGenericFlags = parseWhichString(which);
+  }
   which = boost::to_upper_copy<std::string>(pt.get("adjustRingChainFlags", ""));
-  parseWhichString(which, p.adjustRingCountFlags);
+  if (!which.empty()) {
+    p.adjustRingCountFlags = parseWhichString(which);
+  }
 }  // namespace MolOps
 
 ROMol *adjustQueryProperties(const ROMol &mol,
