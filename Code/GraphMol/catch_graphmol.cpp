@@ -1280,6 +1280,33 @@ M  END
       }
     }
   }
+  SECTION("V2000") {
+    auto mol = R"CTAB(basic test
+  Mrv1810 01292015042D          
+
+  4  3  0  0  0  0            999 V2000
+   -3.7669    1.1053    0.0000 C   0  0  0  0  1  0  0  0  0  0  0  0
+   -3.0524    1.5178    0.0000 C   0  0  0  0  1  0  0  0  0  0  0  0
+   -2.3380    1.1053    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.4814    1.5178    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+  2  3  1  0  0  0  0
+  1  4  1  0  0  0  0
+  1  2  2  0  0  0  0
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(0)->hasProp(common_properties::molStereoCare));
+    CHECK(mol->getAtomWithIdx(1)->hasProp(common_properties::molStereoCare));
+
+    REQUIRE(mol->getBondBetweenAtoms(0, 1));
+    CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
+          Bond::BondStereo::STEREOE);
+    MolOps::AdjustQueryParameters ps;
+    ps.useStereoCareForBonds = true;
+    MolOps::adjustQueryProperties(*mol, &ps);
+    CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
+          Bond::BondStereo::STEREOE);
+  }
 }
 
 TEST_CASE("updateQueryParameters from JSON") {
