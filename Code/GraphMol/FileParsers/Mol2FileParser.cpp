@@ -213,7 +213,7 @@ void guessFormalCharges(RWMol *res) {
       // sometimes things like benzimidazoles can have only one bond of the
       // imidazole ring as aromatic and the other one as a single bond ...
       // catch that this way - see also the trick from GL
-      int expVal = static_cast<int>(round(accum + 0.1));
+      int expVal = static_cast<int>(std::round(accum + 0.1));
       const INT_VECT &valens =
           PeriodicTable::getTable()->getValenceList(at->getAtomicNum());
       INT_VECT_CI vi;

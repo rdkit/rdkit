@@ -373,9 +373,6 @@ RDKIT_RDGENERAL_EXPORT void Union(const VECT_INT_VECT &rings, INT_VECT &res,
 */
 RDKIT_RDGENERAL_EXPORT int nextCombination(INT_VECT &comb, int tot);
 
-//! rounds a value to the closest int
-RDKIT_RDGENERAL_EXPORT double round(double v);
-
 };  // namespace RDKit
 
 #endif
