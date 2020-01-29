@@ -1331,9 +1331,7 @@ TEST_CASE("updateQueryParameters from JSON") {
     CHECK(ps.adjustDegree == true);
 
     json = R"JSON({"adjustDegreeFlags":"IGNORENONE|bogus"})JSON";
-    MolOps::parseAdjustQueryParametersFromJSON(ps, json);
-    CHECK(ps.adjustDegree == true);
-    CHECK(ps.adjustDegreeFlags ==
-          (MolOps::ADJUST_IGNOREDUMMIES | MolOps::ADJUST_IGNORECHAINS));
+    // clang-format off
+    CHECK_THROWS_AS(MolOps::parseAdjustQueryParametersFromJSON(ps, json),ValueErrorException);
   }
 }
