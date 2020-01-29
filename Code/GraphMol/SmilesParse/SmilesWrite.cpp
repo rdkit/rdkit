@@ -322,12 +322,10 @@ std::string FragmentSmilesConstruct(
   for (auto &mSE : molStack) {
     switch (mSE.type) {
       case Canon::MOL_STACK_ATOM:
-        if (!ringClosuresToErase.empty()) {
-          for (auto rclosure : ringClosuresToErase) {
-            ringClosureMap.erase(rclosure);
-          }
-          ringClosuresToErase.clear();
+        for (auto rclosure : ringClosuresToErase) {
+          ringClosureMap.erase(rclosure);
         }
+        ringClosuresToErase.clear();
         // std::cout<<"\t\tAtom: "<<mSE.obj.atom->getIdx()<<std::endl;
         if (!atomSymbols) {
           res << GetAtomSmiles(mSE.obj.atom, doKekule, bond, allHsExplicit,

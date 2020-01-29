@@ -23,7 +23,7 @@ bool isUnsaturated(const Atom *atom, const ROMol &mol) {
        boost::make_iterator_range(mol.getAtomBonds(atom))) {
     // can't just check for single bonds, because dative bonds also have an
     // order of 1
-    if (mol[bndItr]->getBondTypeAsDouble() > 1.001) {
+    if (mol[bndItr]->getBondTypeAsDouble() > 1) {
       return true;
     }
   }
@@ -139,9 +139,10 @@ void switchBondDir(Bond *bond) {
 // move it there?
 //
 //
-void canonicalizeDoubleBond(Bond *dblBond, INT_VECT &bondVisitOrders,
-                            INT_VECT &atomVisitOrders, INT_VECT &bondDirCounts,
-                            INT_VECT &atomDirCounts, MolStack &molStack) {
+void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
+                            UINT_VECT &atomVisitOrders,
+                            UINT_VECT &bondDirCounts, UINT_VECT &atomDirCounts,
+                            MolStack &molStack) {
   PRECONDITION(dblBond, "bad bond");
   PRECONDITION(dblBond->getBondType() == Bond::DOUBLE, "bad bond order");
   PRECONDITION(dblBond->getStereo() > Bond::STEREOANY, "bad bond stereo");
@@ -169,7 +170,7 @@ void canonicalizeDoubleBond(Bond *dblBond, INT_VECT &bondVisitOrders,
   Bond *firstFromAtom2 = nullptr, *secondFromAtom2 = nullptr;
 
   ROMol &mol = dblBond->getOwningMol();
-  int firstVisitOrder = mol.getNumBonds() + 1;
+  auto firstVisitOrder = mol.getNumBonds() + 1;
 
   ROMol::OBOND_ITER_PAIR atomBonds;
   // -------------------------------------------------------
@@ -180,7 +181,7 @@ void canonicalizeDoubleBond(Bond *dblBond, INT_VECT &bondVisitOrders,
        boost::make_iterator_range(mol.getAtomBonds(atom1))) {
     auto bond = mol[bndItr];
     if (bond != dblBond) {
-      unsigned int bondIdx = bond->getIdx();
+      auto bondIdx = bond->getIdx();
       if (bondDirCounts[bondIdx] > 0) {
         dir1Set = true;
       }
@@ -200,7 +201,7 @@ void canonicalizeDoubleBond(Bond *dblBond, INT_VECT &bondVisitOrders,
        boost::make_iterator_range(mol.getAtomBonds(atom2))) {
     auto bond = mol[bndItr];
     if (bond != dblBond) {
-      unsigned int bondIdx = bond->getIdx();
+      auto bondIdx = bond->getIdx();
       if (bondDirCounts[bondIdx] > 0) {
         dir2Set = true;
       }
@@ -546,7 +547,7 @@ void canonicalizeDoubleBond(Bond *dblBond, INT_VECT &bondVisitOrders,
 // finds cycles
 void dfsFindCycles(ROMol &mol, int atomIdx, int inBondIdx,
                    std::vector<AtomColors> &colors, const UINT_VECT &ranks,
-                   INT_VECT &atomOrders, VECT_INT_VECT &atomRingClosures,
+                   UINT_VECT &atomOrders, VECT_INT_VECT &atomRingClosures,
                    const boost::dynamic_bitset<> *bondsInPlay,
                    const std::vector<std::string> *bondSymbols, bool doRandom) {
   Atom *atom = mol.getAtomWithIdx(atomIdx);
@@ -675,9 +676,9 @@ void dfsFindCycles(ROMol &mol, int atomIdx, int inBondIdx,
 
 void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
                    std::vector<AtomColors> &colors, VECT_INT_VECT &cycles,
-                   const UINT_VECT &ranks, INT_VECT &cyclesAvailable,
-                   MolStack &molStack, INT_VECT &atomOrders,
-                   INT_VECT &bondVisitOrders, VECT_INT_VECT &atomRingClosures,
+                   const UINT_VECT &ranks, UINT_VECT &cyclesAvailable,
+                   MolStack &molStack, UINT_VECT &atomOrders,
+                   UINT_VECT &bondVisitOrders, VECT_INT_VECT &atomRingClosures,
                    std::vector<INT_LIST> &atomTraversalBondOrder,
                    const boost::dynamic_bitset<> *bondsInPlay,
                    const std::vector<std::string> *bondSymbols, bool doRandom) {
@@ -717,7 +718,7 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
         // this is end of the ring closure
         // we can just pull the ring index from the bond itself:
         molStack.push_back(MolStackElem(bond, atomIdx));
-        bondVisitOrders[bIdx] = rdcast<int>(molStack.size());
+        bondVisitOrders[bIdx] = molStack.size();
         molStack.push_back(MolStackElem(ringIdx));
         // don't make the ring digit immediately available again: we don't want
         // to have the same
@@ -726,14 +727,13 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
       } else {
         // this is the beginning of the ring closure, we need to come up with a
         // ring index:
-        INT_VECT::const_iterator cAIt =
+        auto cAIt =
             std::find(cyclesAvailable.begin(), cyclesAvailable.end(), 1);
         if (cAIt == cyclesAvailable.end()) {
           throw ValueErrorException(
               "Too many rings open at once. SMILES cannot be generated.");
         }
-        unsigned int lowestRingIdx =
-            rdcast<unsigned int>(cAIt - cyclesAvailable.begin());
+        unsigned int lowestRingIdx = cAIt - cyclesAvailable.begin();
         cyclesAvailable[lowestRingIdx] = 0;
         ++lowestRingIdx;
         bond->setProp(common_properties::_TraversalRingClosureBond,
@@ -839,7 +839,7 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
           MolStackElem("(", rdcast<int>(possiblesIt - possibles.begin())));
     }
     molStack.push_back(MolStackElem(bond, atomIdx));
-    bondVisitOrders[bond->getIdx()] = rdcast<int>(molStack.size());
+    bondVisitOrders[bond->getIdx()] = molStack.size();
     dfsBuildStack(mol, possibleIdx, bond->getIdx(), colors, cycles, ranks,
                   cyclesAvailable, molStack, atomOrders, bondVisitOrders,
                   atomRingClosures, atomTraversalBondOrder, bondsInPlay,
@@ -857,8 +857,8 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
 void canonicalDFSTraversal(ROMol &mol, int atomIdx, int inBondIdx,
                            std::vector<AtomColors> &colors,
                            VECT_INT_VECT &cycles, const UINT_VECT &ranks,
-                           INT_VECT &cyclesAvailable, MolStack &molStack,
-                           INT_VECT &atomOrders, INT_VECT &bondVisitOrders,
+                           UINT_VECT &cyclesAvailable, MolStack &molStack,
+                           UINT_VECT &atomOrders, UINT_VECT &bondVisitOrders,
                            VECT_INT_VECT &atomRingClosures,
                            std::vector<INT_LIST> &atomTraversalBondOrder,
                            const boost::dynamic_bitset<> *bondsInPlay,
@@ -894,8 +894,8 @@ bool canHaveDirection(const Bond *bond) {
 }
 
 void clearBondDirs(ROMol &mol, Bond *refBond, const Atom *fromAtom,
-                   INT_VECT &bondDirCounts, INT_VECT &atomDirCounts,
-                   const INT_VECT &bondVisitOrders) {
+                   UINT_VECT &bondDirCounts, UINT_VECT &atomDirCounts,
+                   const UINT_VECT &bondVisitOrders) {
   RDUNUSED_PARAM(bondVisitOrders);
   PRECONDITION(bondDirCounts.size() >= mol.getNumBonds(), "bad dirCount size");
   PRECONDITION(refBond, "bad bond");
@@ -955,9 +955,9 @@ void clearBondDirs(ROMol &mol, Bond *refBond, const Atom *fromAtom,
 }
 
 void removeRedundantBondDirSpecs(ROMol &mol, MolStack &molStack,
-                                 INT_VECT &bondDirCounts,
-                                 INT_VECT &atomDirCounts,
-                                 const INT_VECT &bondVisitOrders) {
+                                 UINT_VECT &bondDirCounts,
+                                 UINT_VECT &atomDirCounts,
+                                 const UINT_VECT &bondVisitOrders) {
   PRECONDITION(bondDirCounts.size() >= mol.getNumBonds(), "bad dirCount size");
 #if 0
     std::cerr<<"rRBDS: ";
@@ -1026,11 +1026,11 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
                "bondSymbols too small");
   unsigned int nAtoms = mol.getNumAtoms();
 
-  INT_VECT atomVisitOrders(nAtoms, 0);
-  INT_VECT bondVisitOrders(mol.getNumBonds(), 0);
-  INT_VECT bondDirCounts(mol.getNumBonds(), 0);
-  INT_VECT atomDirCounts(nAtoms, 0);
-  INT_VECT cyclesAvailable(MAX_CYCLES, 1);
+  UINT_VECT atomVisitOrders(nAtoms, 0);
+  UINT_VECT bondVisitOrders(mol.getNumBonds(), 0);
+  UINT_VECT bondDirCounts(mol.getNumBonds(), 0);
+  UINT_VECT atomDirCounts(nAtoms, 0);
+  UINT_VECT cyclesAvailable(MAX_CYCLES, 1);
   VECT_INT_VECT cycles(nAtoms);
 
   boost::dynamic_bitset<> ringStereoChemAdjusted(nAtoms);

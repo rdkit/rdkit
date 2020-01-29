@@ -82,27 +82,21 @@ int smarts_bond_parse(const std::string &inp, Bond *&bond) {
   auto start_tok = static_cast<int>(START_BOND);
   std::vector<RWMol *> molVect;
   Atom *atom = nullptr;
-  auto res = smarts_parse_helper(inp, molVect, atom, bond, start_tok);
-
-  return res;
+  return smarts_parse_helper(inp, molVect, atom, bond, start_tok);
 }
 
 int smarts_atom_parse(const std::string &inp, Atom *&atom) {
   auto start_tok = static_cast<int>(START_ATOM);
   std::vector<RWMol *> molVect;
   Bond *bond = nullptr;
-  auto res = smarts_parse_helper(inp, molVect, atom, bond, start_tok);
-
-  return res;
+  return smarts_parse_helper(inp, molVect, atom, bond, start_tok);
 }
 
 int smarts_parse(const std::string &inp, std::vector<RDKit::RWMol *> &molVect) {
   auto start_tok = static_cast<int>(START_MOL);
   Atom *atom = nullptr;
   Bond *bond = nullptr;
-  auto res = smarts_parse_helper(inp, molVect, atom, bond, start_tok);
-
-  return res;
+  return smarts_parse_helper(inp, molVect, atom, bond, start_tok);
 }
 
 int smiles_parse_helper(const std::string &inp,
@@ -139,26 +133,20 @@ int smiles_bond_parse(const std::string &inp, Bond *&bond) {
   auto start_tok = static_cast<int>(START_BOND);
   std::vector<RWMol *> molVect;
   Atom *atom = nullptr;
-  auto res = smiles_parse_helper(inp, molVect, atom, bond, start_tok);
-
-  return res;
+  return smiles_parse_helper(inp, molVect, atom, bond, start_tok);
 }
 int smiles_atom_parse(const std::string &inp, Atom *&atom) {
   auto start_tok = static_cast<int>(START_ATOM);
   std::vector<RWMol *> molVect;
   Bond *bond = nullptr;
-  auto res = smiles_parse_helper(inp, molVect, atom, bond, start_tok);
-
-  return res;
+  return smiles_parse_helper(inp, molVect, atom, bond, start_tok);
 }
 
 int smiles_parse(const std::string &inp, std::vector<RDKit::RWMol *> &molVect) {
   auto start_tok = static_cast<int>(START_MOL);
   Atom *atom = nullptr;
   Bond *bond = nullptr;
-  auto res = smiles_parse_helper(inp, molVect, atom, bond, start_tok);
-
-  return res;
+  return smiles_parse_helper(inp, molVect, atom, bond, start_tok);
 }
 
 typedef enum { BASE = 0, BRANCH, RECURSE } SmaState;
