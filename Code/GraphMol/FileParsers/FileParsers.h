@@ -130,10 +130,12 @@ RDKIT_FILEPARSERS_EXPORT void MolToMolFile(
     const ROMol &mol, const std::string &fName, bool includeStereo = true,
     int confId = -1, bool kekulize = true, bool forceV3000 = false);
 
-RDKIT_FILEPARSERS_EXPORT std::string MolToXYZBlock(const ROMol &mol, int confId = -1);
+RDKIT_FILEPARSERS_EXPORT std::string MolToXYZBlock(const ROMol &mol,
+                                                   int confId = -1);
 
-RDKIT_FILEPARSERS_EXPORT void MolToXYZFile(
-    const ROMol &mol, const std::string &fName, int confId = -1);
+RDKIT_FILEPARSERS_EXPORT void MolToXYZFile(const ROMol &mol,
+                                           const std::string &fName,
+                                           int confId = -1);
 
 //-----
 //  TPL handling:
@@ -317,6 +319,41 @@ RDKIT_FILEPARSERS_EXPORT RWMol *RDKitSVGToMol(const std::string &svg,
 RDKIT_FILEPARSERS_EXPORT RWMol *RDKitSVGToMol(std::istream *instream,
                                               bool sanitize = true,
                                               bool removeHs = true);
+
+inline std::unique_ptr<RDKit::RWMol> operator"" _ctab(const char *text,
+                                                      size_t len) {
+  std::string data(text, len);
+  RWMol *ptr = nullptr;
+  try {
+    ptr = MolBlockToMol(data);
+  } catch (const RDKit::MolSanitizeException &) {
+    ptr = nullptr;
+  }
+  return std::unique_ptr<RWMol>(ptr);
+}
+inline std::unique_ptr<RDKit::RWMol> operator"" _mol2(const char *text,
+                                                      size_t len) {
+  std::string data(text, len);
+  RWMol *ptr = nullptr;
+  try {
+    ptr = Mol2BlockToMol(data);
+  } catch (const RDKit::MolSanitizeException &) {
+    ptr = nullptr;
+  }
+  return std::unique_ptr<RWMol>(ptr);
+}
+
+inline std::unique_ptr<RDKit::RWMol> operator"" _pdb(const char *text,
+                                                     size_t len) {
+  std::string data(text, len);
+  RWMol *ptr = nullptr;
+  try {
+    ptr = PDBBlockToMol(data);
+  } catch (const RDKit::MolSanitizeException &) {
+    ptr = nullptr;
+  }
+  return std::unique_ptr<RWMol>(ptr);
+}
 
 }  // namespace RDKit
 
