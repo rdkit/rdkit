@@ -694,7 +694,17 @@ def RGroupDecompositionToFrame(groups, mols, include_core=False, redraw_sidechai
   ['Mol', 'Core', 'R1', 'R2']
   >>> len(df)
   5
-  
+  >>> df.columns() # doctest: +SKIP
+  <class 'pandas*...*DataFrame'>
+  RangeIndex: 5 entries, 0 to 4
+  Data columns (total 4 columns):
+  Mol     5 non-null object
+  Core    5 non-null object
+  R1      5 non-null object
+  R2      5 non-null object
+  dtypes: object(4)
+  memory usage: *...*
+
   """
   cols = ['Mol'] + list(groups.keys())
   if redraw_sidechains:
