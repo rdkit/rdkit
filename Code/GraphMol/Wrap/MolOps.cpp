@@ -483,7 +483,7 @@ PyObject *getAdjacencyMatrix(ROMol &mol, bool useBO = false, int emptyVal = 0,
     int *data = static_cast<int *>(PyArray_DATA(res));
     for (int i = 0; i < nats; i++) {
       for (int j = 0; j < nats; j++) {
-        data[i * nats + j] = (int)round(tmpMat[i * nats + j]);
+        data[i * nats + j] = (int)std::round(tmpMat[i * nats + j]);
       }
     }
   }

@@ -103,13 +103,13 @@ void getRDFDesc(double* DM, const ROMol& mol, const Conformer& conf,
         res7 += IState[j] * IState[k] * p;                          // "s"
       }
     }
-    R1[i] = round(1000 * res1) / 1000;
-    R2[i] = round(1000 * res2) / 1000;
-    R3[i] = round(1000 * res3) / 1000;
-    R4[i] = round(1000 * res4) / 1000;
-    R5[i] = round(1000 * res5) / 1000;
-    R6[i] = round(1000 * res6) / 1000;
-    R7[i] = round(1000 * res7) / 1000;
+    R1[i] = std::round(1000 * res1) / 1000;
+    R2[i] = std::round(1000 * res2) / 1000;
+    R3[i] = std::round(1000 * res3) / 1000;
+    R4[i] = std::round(1000 * res4) / 1000;
+    R5[i] = std::round(1000 * res5) / 1000;
+    R6[i] = std::round(1000 * res6) / 1000;
+    R7[i] = std::round(1000 * res7) / 1000;
   }
 
   R1.insert(R1.end(), R2.begin(), R2.end());
@@ -141,7 +141,7 @@ void getRDFDescCustom(double* DM, const ROMol& mol, const Conformer& conf,
         res += customAtomArray[j] * customAtomArray[k] * p;  // "custom"
       }
     }
-    R1[i] = round(1000 * res) / 1000;
+    R1[i] = std::round(1000 * res) / 1000;
   }
   res = R1;
 }

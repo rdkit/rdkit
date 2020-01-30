@@ -28,7 +28,6 @@
 #include <ForceField/MMFF/Params.h>
 #include <GraphMol/DistGeomHelpers/Embedder.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
-#include <boost/math/special_functions/round.hpp>
 
 using namespace RDKit;
 void testMMFFTyper1() {
@@ -795,10 +794,9 @@ void testMMFFParamGetters() {
     ForceFields::MMFF::MMFFBond mmffBondStretchParams[2];
     TEST_ASSERT(mmffMolProperties->getMMFFBondStretchParams(
         *molH, 6, 7, bondType, mmffBondStretchParams[0]));
-    TEST_ASSERT(
-        (bondType == 0) &&
-        ((int)boost::math::round(mmffBondStretchParams[0].r0 * 1000) == 1508) &&
-        ((int)boost::math::round(mmffBondStretchParams[0].kb * 1000) == 4258));
+    TEST_ASSERT((bondType == 0) &&
+                ((int)std::round(mmffBondStretchParams[0].r0 * 1000) == 1508) &&
+                ((int)std::round(mmffBondStretchParams[0].kb * 1000) == 4258));
     TEST_ASSERT(!(mmffMolProperties->getMMFFBondStretchParams(
         *molH, 0, 7, bondType, mmffBondStretchParams[0])));
     unsigned int angleType;
@@ -807,9 +805,8 @@ void testMMFFParamGetters() {
         *molH, 6, 7, 8, angleType, mmffAngleBendParams));
     TEST_ASSERT(
         (angleType == 0) &&
-        ((int)boost::math::round(mmffAngleBendParams.theta0 * 1000) ==
-         108290) &&
-        ((int)boost::math::round(mmffAngleBendParams.ka * 1000) == 777));
+        ((int)std::round(mmffAngleBendParams.theta0 * 1000) == 108290) &&
+        ((int)std::round(mmffAngleBendParams.ka * 1000) == 777));
     TEST_ASSERT(!(mmffMolProperties->getMMFFAngleBendParams(
         *molH, 0, 7, 8, angleType, mmffAngleBendParams)));
     unsigned int stretchBendType;
@@ -819,15 +816,14 @@ void testMMFFParamGetters() {
         mmffBondStretchParams, mmffAngleBendParams));
     TEST_ASSERT(
         (stretchBendType == 0) &&
-        ((int)boost::math::round(mmffStretchBendParams.kbaIJK * 1000) == 136) &&
-        ((int)boost::math::round(mmffStretchBendParams.kbaKJI * 1000) == 282) &&
-        ((int)boost::math::round(mmffAngleBendParams.theta0 * 1000) ==
-         108290) &&
-        ((int)boost::math::round(mmffAngleBendParams.ka * 1000) == 777) &&
-        ((int)boost::math::round(mmffBondStretchParams[0].r0 * 1000) == 1508) &&
-        ((int)boost::math::round(mmffBondStretchParams[0].kb * 1000) == 4258) &&
-        ((int)boost::math::round(mmffBondStretchParams[1].r0 * 1000) == 1451) &&
-        ((int)boost::math::round(mmffBondStretchParams[1].kb * 1000) == 5084));
+        ((int)std::round(mmffStretchBendParams.kbaIJK * 1000) == 136) &&
+        ((int)std::round(mmffStretchBendParams.kbaKJI * 1000) == 282) &&
+        ((int)std::round(mmffAngleBendParams.theta0 * 1000) == 108290) &&
+        ((int)std::round(mmffAngleBendParams.ka * 1000) == 777) &&
+        ((int)std::round(mmffBondStretchParams[0].r0 * 1000) == 1508) &&
+        ((int)std::round(mmffBondStretchParams[0].kb * 1000) == 4258) &&
+        ((int)std::round(mmffBondStretchParams[1].r0 * 1000) == 1451) &&
+        ((int)std::round(mmffBondStretchParams[1].kb * 1000) == 5084));
     TEST_ASSERT(!(mmffMolProperties->getMMFFStretchBendParams(
         *molH, 0, 7, 8, stretchBendType, mmffStretchBendParams,
         mmffBondStretchParams, mmffAngleBendParams)));
@@ -835,17 +831,16 @@ void testMMFFParamGetters() {
     ForceFields::MMFF::MMFFTor mmffTorsionParams;
     TEST_ASSERT(mmffMolProperties->getMMFFTorsionParams(
         *molH, 6, 7, 8, 9, torType, mmffTorsionParams));
-    TEST_ASSERT(
-        (torType == 0) &&
-        ((int)boost::math::round(mmffTorsionParams.V1 * 1000) == 0) &&
-        ((int)boost::math::round(mmffTorsionParams.V2 * 1000) == -300) &&
-        ((int)boost::math::round(mmffTorsionParams.V3 * 1000) == 500));
+    TEST_ASSERT((torType == 0) &&
+                ((int)std::round(mmffTorsionParams.V1 * 1000) == 0) &&
+                ((int)std::round(mmffTorsionParams.V2 * 1000) == -300) &&
+                ((int)std::round(mmffTorsionParams.V3 * 1000) == 500));
     TEST_ASSERT(!(mmffMolProperties->getMMFFTorsionParams(
         *molH, 0, 7, 8, 9, torType, mmffTorsionParams)));
     ForceFields::MMFF::MMFFOop mmffOopBendParams;
     TEST_ASSERT(mmffMolProperties->getMMFFOopBendParams(*molH, 6, 5, 4, 0,
                                                         mmffOopBendParams));
-    TEST_ASSERT(((int)boost::math::round(mmffOopBendParams.koop * 1000) == 40));
+    TEST_ASSERT(((int)std::round(mmffOopBendParams.koop * 1000) == 40));
     TEST_ASSERT(!(mmffMolProperties->getMMFFOopBendParams(*molH, 6, 5, 4, 1,
                                                           mmffOopBendParams)));
     ForceFields::MMFF::MMFFVdWRijstarEps mmffVdWParams;
@@ -857,11 +852,10 @@ void testMMFFParamGetters() {
     unsigned int hIdx = matchVect[2].second;
     TEST_ASSERT(mmffMolProperties->getMMFFVdWParams(nIdx, hIdx, mmffVdWParams));
     TEST_ASSERT(
-        ((int)boost::math::round(mmffVdWParams.R_ij_starUnscaled * 1000) ==
-         3321) &&
-        ((int)boost::math::round(mmffVdWParams.epsilonUnscaled * 1000) == 34) &&
-        ((int)boost::math::round(mmffVdWParams.R_ij_star * 1000) == 2657) &&
-        ((int)boost::math::round(mmffVdWParams.epsilon * 1000) == 17));
+        ((int)std::round(mmffVdWParams.R_ij_starUnscaled * 1000) == 3321) &&
+        ((int)std::round(mmffVdWParams.epsilonUnscaled * 1000) == 34) &&
+        ((int)std::round(mmffVdWParams.R_ij_star * 1000) == 2657) &&
+        ((int)std::round(mmffVdWParams.epsilon * 1000) == 17));
     delete molH;
     delete mmffMolProperties;
   }

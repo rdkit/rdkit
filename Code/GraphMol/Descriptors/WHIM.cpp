@@ -49,7 +49,7 @@ namespace {
 MolData3Ddescriptors moldata3D;
 
 double roundn(double in, int factor) {
-  return round(in * pow(10., factor)) / pow(10., factor);
+  return std::round(in * pow(10., factor)) / pow(10., factor);
 }
 
 MatrixXd GetCenterMatrix(MatrixXd &Mat) {
@@ -170,10 +170,11 @@ std::vector<double> getWhimD(std::vector<double> weightvector,
         if (j == k) {
           continue;
         }
+        // those that are close opposite & not close to the axis!
         if (std::fabs(Scores(j, i) + Scores(k, i)) <= th) {
-          // those that are close opposite & not close to the axis!
-          ns += 1;  // check only once the symmetric none null we need to add +2!
+          // check only once the symmetric none null we need to add +2!
           // (reduce the loop duration)
+          ns += 1;
           amatch = true;
           Symmetric[j] = 1.0;
           Symmetric[j + numAtoms] = 2.0;

@@ -331,7 +331,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
       - requires an owning molecule
 
   */
-  int getPerturbationOrder(INT_LIST probe) const;
+  int getPerturbationOrder(const INT_LIST &probe) const;
 
   //! calculates any of our lazy \c properties
   /*!

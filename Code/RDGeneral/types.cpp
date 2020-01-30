@@ -126,12 +126,6 @@ const double MAX_LONGINT =
 //  template <typename T>
 //  T larger_of(T arg1,T arg2) { return arg1>arg2 ? arg1 : arg2; };
 
-double round(double num) {
-  double floorVal = floor(num);
-  double ceilVal = ceil(num);
-  return num - floorVal > ceilVal - num ? ceilVal : floorVal;
-};
-
 void Union(const INT_VECT &r1, const INT_VECT &r2, INT_VECT &res) {
   res.resize(0);
   res = r1;

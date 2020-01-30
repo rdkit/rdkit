@@ -941,7 +941,7 @@ const std::string GetV3000MolFileAtomLine(
     // Online examples seem to have integer (isotope) values and Marvin won't
     // even read something that has a float.
     // We'll go with the int.
-    int mass = static_cast<int>(round(atom->getMass()));
+    int mass = static_cast<int>(std::round(atom->getMass()));
     // dummies may have an isotope set but they always have a mass of zero:
     if (!mass) {
       mass = isotope;
