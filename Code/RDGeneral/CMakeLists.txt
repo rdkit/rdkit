@@ -8,7 +8,7 @@ CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/RDConfig.h.cmake
 
 add_definitions(-DRDKIT_RDGENERAL_BUILD)
 rdkit_library(RDGeneral
-              Invariant.cpp types.cpp utils.cpp RDLog.cpp Dict.cpp
+              Invariant.cpp types.cpp utils.cpp RDLog.cpp 
               LocaleSwitcher.cpp versions.cpp SHARED
               LINK_LIBRARIES ${RDKit_THREAD_LIBS})
 

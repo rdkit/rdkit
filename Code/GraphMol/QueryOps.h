@@ -145,7 +145,8 @@ static inline int queryAtomType(Atom const *at) {
 };
 const int massIntegerConversionFactor = 1000;
 static inline int queryAtomMass(Atom const *at) {
-  return static_cast<int>(round(massIntegerConversionFactor * at->getMass()));
+  return static_cast<int>(
+      std::round(massIntegerConversionFactor * at->getMass()));
 };
 static inline int queryAtomIsotope(Atom const *at) {
   return static_cast<int>(at->getIsotope());

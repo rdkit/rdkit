@@ -690,7 +690,11 @@ def RGroupDecompositionToFrame(groups, mols, include_core=False, redraw_sidechai
   >>> mols = [Chem.MolFromSmiles(smi) for smi in 'c1c(F)cccn1 c1c(Cl)c(C)ccn1 c1c(O)cccn1 c1c(F)c(C)ccn1 c1cc(Cl)c(F)cn1'.split()]
   >>> groups,_ = rdRGroupDecomposition.RGroupDecompose([scaffold],mols,asSmiles=False,asRows=False) 
   >>> df = PandasTools.RGroupDecompositionToFrame(groups,mols,include_core=True)
-  >>> df.info() # doctest: +ELLIPSIS
+  >>> list(df.columns)
+  ['Mol', 'Core', 'R1', 'R2']
+  >>> len(df)
+  5
+  >>> df.columns() # doctest: +SKIP
   <class 'pandas*...*DataFrame'>
   RangeIndex: 5 entries, 0 to 4
   Data columns (total 4 columns):
