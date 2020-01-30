@@ -115,6 +115,17 @@ class TestCase(unittest.TestCase):
     self.assertEqual(list(net2.nodes), list(net.nodes))
     self.assertEqual([str(x) for x in net2.edges], [str(x) for x in net.edges])
 
+  def test6FragmentationReactions(self):
+    smis = ["c1c(CC2CC2)cc(NC2CC2)cc1OC1CC1"]
+    ms = [Chem.MolFromSmiles(x) for x in smis]
+    params = rdScaffoldNetwork.ScaffoldNetworkParams(
+      ["[!#0;R:1]-!@[O:2]>>[*:1]-[#0].[#0]-[*:2]", "[!#0;R:1]-!@[N:2]>>[*:1]-[#0].[#0]-[*:2]"])
+    params.includeScaffoldsWithoutAttachments = False
+    params.includeGenericScaffolds = False
+    net = rdScaffoldNetwork.CreateScaffoldNetwork(ms, params)
+    self.assertEqual(len(net.nodes), 5)
+    self.assertEqual(len(net.edges), 7)
+
 
 if __name__ == '__main__':
   unittest.main()

@@ -80,8 +80,14 @@ BOOST_PYTHON_MODULE(rdScaffoldNetwork) {
              std::vector<ScaffoldNetwork::NetworkEdge>>());
   }
 
+  iterable_converter().from_python<std::vector<std::string>>();
+
   python::class_<ScaffoldNetwork::ScaffoldNetworkParams>(
       "ScaffoldNetworkParams", "Scaffold network parameters", python::init<>())
+      .def(python::init<const std::vector<std::string> &>(
+          (python::arg("bondBreakerSmartsList")),
+          "Constructor taking a list of Reaction SMARTS for the fragmentation "
+          "reactions"))
       .def_readwrite(
           "includeGenericScaffolds",
           &ScaffoldNetwork::ScaffoldNetworkParams::includeGenericScaffolds,
