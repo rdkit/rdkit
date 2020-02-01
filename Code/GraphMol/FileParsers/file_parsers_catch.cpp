@@ -1036,4 +1036,109 @@ M  END
         common_properties::molStereoCare, val));
     CHECK(val == 1);
   }
+  SECTION("bonds set if the atoms are also set 1") {
+    auto mol = R"CTAB(basic test
+  Mrv1810 01292006422D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -7.0316 2.0632 0 0 STBOX=1
+M  V30 2 C -5.6979 2.8332 0 0 STBOX=1
+M  V30 3 O -4.3642 2.0632 0 0
+M  V30 4 F -8.3653 2.8332 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 3
+M  V30 2 1 1 4
+M  V30 3 2 1 2
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 4);
+    int val;
+    REQUIRE(mol->getBondBetweenAtoms(0, 1));
+    CHECK(mol->getBondBetweenAtoms(0, 1)->getPropIfPresent(
+        common_properties::molStereoCare, val));
+    CHECK(val == 1);
+  }
+  SECTION("bonds set if the atoms are also set 2") {
+    auto mol = R"CTAB(basic test
+  Mrv1810 01292006422D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -7.0316 2.0632 0 0 STBOX=0
+M  V30 2 C -5.6979 2.8332 0 0 STBOX=0
+M  V30 3 O -4.3642 2.0632 0 0
+M  V30 4 F -8.3653 2.8332 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 3
+M  V30 2 1 1 4
+M  V30 3 2 1 2
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 4);
+    REQUIRE(mol->getBondBetweenAtoms(0, 1));
+    CHECK(!mol->getBondBetweenAtoms(0, 1)->hasProp(
+        common_properties::molStereoCare));
+  }
+  SECTION("bonds set if the atoms are also set 2") {
+    auto mol = R"CTAB(basic test
+  Mrv1810 01292006422D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -7.0316 2.0632 0 0 STBOX=1
+M  V30 2 C -5.6979 2.8332 0 0 STBOX=0
+M  V30 3 O -4.3642 2.0632 0 0
+M  V30 4 F -8.3653 2.8332 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 3
+M  V30 2 1 1 4
+M  V30 3 2 1 2
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 4);
+    REQUIRE(mol->getBondBetweenAtoms(0, 1));
+    CHECK(!mol->getBondBetweenAtoms(0, 1)->hasProp(
+        common_properties::molStereoCare));
+  }
+  SECTION("bonds set if the atoms are also set v2k") {
+    auto mol = R"CTAB(basic test
+  Mrv1810 01292015042D          
+
+  4  3  0  0  0  0            999 V2000
+   -3.7669    1.1053    0.0000 C   0  0  0  0  1  0  0  0  0  0  0  0
+   -3.0524    1.5178    0.0000 C   0  0  0  0  1  0  0  0  0  0  0  0
+   -2.3380    1.1053    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.4814    1.5178    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+  2  3  1  0  0  0  0
+  1  4  1  0  0  0  0
+  1  2  2  0  0  0  0
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 4);
+    int val;
+    REQUIRE(mol->getBondBetweenAtoms(0, 1));
+    CHECK(mol->getBondBetweenAtoms(0, 1)->getPropIfPresent(
+        common_properties::molStereoCare, val));
+    CHECK(val == 1);
+  }
 }

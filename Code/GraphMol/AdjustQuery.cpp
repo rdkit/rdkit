@@ -285,15 +285,8 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
           bool preserve = false;
           int val = 0;
           // is stereoCare set on the bond or both atoms?
-          if (bnd->getPropIfPresent(common_properties::molStereoCare, val) ||
+          if (bnd->getPropIfPresent(common_properties::molStereoCare, val) &&
               val) {
-            preserve = true;
-          } else if ((bnd->getBeginAtom()->getPropIfPresent(
-                          common_properties::molStereoCare, val) &&
-                      val) &&
-                     (bnd->getEndAtom()->getPropIfPresent(
-                          common_properties::molStereoCare, val) &&
-                      val)) {
             preserve = true;
           }
           if (!preserve) {

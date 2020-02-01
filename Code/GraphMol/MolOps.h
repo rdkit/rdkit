@@ -339,7 +339,8 @@ struct RDKIT_GRAPHMOL_EXPORT AdjustQueryParameters {
   std::uint32_t adjustRingChainFlags = ADJUST_IGNORENONE;
 
   bool useStereoCareForBonds =
-      false; /**< honor the stereoCare flags for double bond stereochemistry */
+      false; /**< remove stereochemistry info from double bonds that do not have
+                the stereoCare property set */
 
   AdjustQueryParameters() {}
 };

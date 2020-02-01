@@ -1551,7 +1551,6 @@ void ParseMolBlockAtoms(std::istream *inStream, unsigned int &line,
   }
 }
 
-// returns whether or not any sign of chirality was detected
 void ParseMolBlockBonds(std::istream *inStream, unsigned int &line,
                         unsigned int nBonds, RWMol *mol,
                         bool &chiralityPossible) {
@@ -1575,6 +1574,19 @@ void ParseMolBlockBonds(std::istream *inStream, unsigned int &line,
     if (bond->getBondDir() != Bond::NONE &&
         bond->getBondDir() != Bond::UNKNOWN) {
       chiralityPossible = true;
+    }
+    // v2k has no way to set stereoCare on bonds, so set the property if both
+    // the beginning and end atoms have it set:
+    int care1 = 0;
+    int care2 = 0;
+    if (!bond->hasProp(common_properties::molStereoCare) &&
+        mol->getAtomWithIdx(bond->getBeginAtomIdx())
+            ->getPropIfPresent(common_properties::molStereoCare, care1) &&
+        mol->getAtomWithIdx(bond->getEndAtomIdx())
+            ->getPropIfPresent(common_properties::molStereoCare, care2)) {
+      if (care1 && care2) {
+        bond->setProp(common_properties::molStereoCare, 1);
+      }
     }
     mol->addBond(bond, true);
     mol->setBondBookmark(bond, i);
@@ -2319,6 +2331,20 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
       mol->getAtomWithIdx(bond->getEndAtomIdx())->setIsAromatic(true);
     }
     mol->setBondBookmark(bond, bondIdx);
+
+    // set the stereoCare property on the bond if it's not set already and both
+    // the beginning and end atoms have it set:
+    int care1 = 0;
+    int care2 = 0;
+    if (!bond->hasProp(common_properties::molStereoCare) &&
+        mol->getAtomWithIdx(bond->getBeginAtomIdx())
+            ->getPropIfPresent(common_properties::molStereoCare, care1) &&
+        mol->getAtomWithIdx(bond->getEndAtomIdx())
+            ->getPropIfPresent(common_properties::molStereoCare, care2)) {
+      if (care1 == care2) {
+        bond->setProp(common_properties::molStereoCare, care1);
+      }
+    }
   }
   tempStr = getV3000Line(inStream, line);
   if (tempStr.length() < 8 || tempStr.substr(0, 8) != "END BOND") {
