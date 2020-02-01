@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2019 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2020 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -13,6 +13,7 @@
 
 // std bits
 #include <vector>
+#include <boost/function.hpp>
 
 namespace RDKit {
 class ROMol;
@@ -26,29 +27,26 @@ class MolBundle;
 typedef std::vector<std::pair<int, int>> MatchVectType;
 
 struct RDKIT_SUBSTRUCTMATCH_EXPORT SubstructMatchParameters {
-  bool useChirality;  //!< Use chirality in determining whether or not
-                      //!< atoms/bonds match
-  bool aromaticMatchesConjugated;  //!< Aromatic and conjugated bonds match each
-                                   //!< other
-  bool useQueryQueryMatches;  //!< Consider query-query matches, not just simple
-                              //!< matches
-  bool recursionPossible;     //!< Allow recursive queries
-  bool uniquify;              //!< uniquify (by atom index) match results
-  unsigned int maxMatches;    //!< maximum number of matches to return
-  int numThreads;             //!< number of threads to use when multi-threading
-                              //!< is possible. 0 selects the number of
-                              //!< concurrent threads supported by the hardware
-                              //!< negative values are added to the number of
-                              //!< concurrent threads supported by the hardware
+  bool useChirality = false;  //!< Use chirality in determining whether or not
+                              //!< atoms/bonds match
+  bool aromaticMatchesConjugated = false;  //!< Aromatic and conjugated bonds
+                                           //!< match each other
+  bool useQueryQueryMatches = false;  //!< Consider query-query matches, not
+                                      //!< just simple matches
+  bool recursionPossible = true;      //!< Allow recursive queries
+  bool uniquify = true;            //!< uniquify (by atom index) match results
+  unsigned int maxMatches = 1000;  //!< maximum number of matches to return
+  int numThreads = 1;  //!< number of threads to use when multi-threading
+                       //!< is possible. 0 selects the number of
+                       //!< concurrent threads supported by the hardware
+                       //!< negative values are added to the number of
+                       //!< concurrent threads supported by the hardware
+  boost::function<bool(const ROMol &mol,
+                       const std::vector<unsigned int> &match)>
+      extraFinalCheck =
+          nullptr;  //!< a function to be called at the end to validate a match
 
-  SubstructMatchParameters()
-      : useChirality(false),
-        aromaticMatchesConjugated(false),
-        useQueryQueryMatches(false),
-        recursionPossible(true),
-        uniquify(true),
-        maxMatches(1000),
-        numThreads(1){};
+  SubstructMatchParameters(){};
 };
 
 //! Find a substructure match for a query in a molecule

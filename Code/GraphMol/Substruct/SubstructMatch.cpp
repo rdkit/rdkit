@@ -31,7 +31,6 @@
 #include <future>
 #endif
 
-#include "ullmann.hpp"
 #include "vf2.hpp"
 
 namespace RDKit {
@@ -80,6 +79,16 @@ class MolMatchFinalCheckFunctor {
       : d_query(query), d_mol(mol), d_params(ps){};
   bool operator()(const boost::detail::node_id c1[],
                   const boost::detail::node_id c2[]) const {
+    if (d_params.extraFinalCheck) {
+      // EFF: we can no-doubt do better than this
+      std::vector<unsigned int> aids(d_query.getNumAtoms());
+      for (unsigned int i = 0; i < d_query.getNumAtoms(); ++i) {
+        aids[i] = c2[i];
+      }
+      if (!d_params.extraFinalCheck(d_mol, aids)) {
+        return false;
+      }
+    }
     if (!d_params.useChirality) {
       return true;
     }
@@ -466,8 +475,8 @@ unsigned int RecursiveMatcher(const ROMol &mol, const ROMol &query,
       bool found=boost::ullmann_all(query.getTopology(),mol.getTopology(),
 				    atomLabeler,bondLabeler,pms);
 #else
-  bool found = boost::vf2_all(query.getTopology(), mol.getTopology(),
-                              atomLabeler, bondLabeler, matchChecker, pms);
+    bool found = boost::vf2_all(query.getTopology(), mol.getTopology(),
+                                atomLabeler, bondLabeler, matchChecker, pms);
 #endif
   unsigned int res = 0;
   if (found) {
