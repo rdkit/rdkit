@@ -21,6 +21,13 @@ class IndexErrorException : public std::runtime_error {
   IndexErrorException(int i)
       : std::runtime_error("IndexErrorException"), _idx(i){};
   int index() const { return _idx; };
+
+  const char* what() const noexcept override {
+    std::string msg{"Index Error: "};
+    msg.append(std::to_string(_idx));
+    return msg.c_str();
+  };
+
   ~IndexErrorException() noexcept {};
 
  private:
@@ -32,11 +39,12 @@ class IndexErrorException : public std::runtime_error {
 //!
 class ValueErrorException : public std::runtime_error {
  public:
-  ValueErrorException(const std::string &i)
+  ValueErrorException(const std::string& i)
       : std::runtime_error("ValueErrorException"), _value(i){};
-  ValueErrorException(const char *msg)
+  ValueErrorException(const char* msg)
       : std::runtime_error("ValueErrorException"), _value(msg){};
-  std::string message() const { return _value; };
+  const char* what() const noexcept override { return _value.c_str(); };
+  std::string message() const noexcept { return _value; };
   ~ValueErrorException() noexcept {};
 
  private:
@@ -51,6 +59,13 @@ class KeyErrorException : public std::runtime_error {
   KeyErrorException(std::string key)
       : std::runtime_error("KeyErrorException"), _key(key){};
   std::string key() const { return _key; };
+
+  const char* what() const noexcept override {
+    std::string msg{"Key Error: "};
+    msg.append(_key);
+    return msg.c_str();
+  };
+
   ~KeyErrorException() noexcept {};
 
  private:

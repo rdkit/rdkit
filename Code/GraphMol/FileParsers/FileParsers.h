@@ -33,7 +33,8 @@ class MolFileUnhandledFeatureException : public std::exception {
   explicit MolFileUnhandledFeatureException(const std::string msg)
       : _msg(msg){};
   //! get the error message
-  const char *message() const { return _msg.c_str(); };
+  const char *what() const noexcept override { return _msg.c_str(); };
+  const char *message() const noexcept { return what(); };
   ~MolFileUnhandledFeatureException() noexcept override{};
 
  private:
