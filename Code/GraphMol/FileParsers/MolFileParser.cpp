@@ -2328,39 +2328,19 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
   }
 }
 
-void ProcessMolProps(RWMol *mol) {
-  PRECONDITION(mol, "no molecule");
-  for (auto atom : mol->atoms()) {
-    int totV;
-    if (atom->getPropIfPresent(common_properties::molTotValence, totV) &&
-        !atom->hasProp("_ZBO_H")) {
-      if (totV == 0) {
-        continue;
-      }
-      atom->setNoImplicit(true);
-      if (totV == 15     // V2000
-          || totV == -1  // v3000
-      ) {
-        atom->setNumExplicitHs(0);
-      } else {
-        if (atom->getExplicitValence() > totV) {
-          BOOST_LOG(rdWarningLog)
-              << "atom " << atom->getIdx() << " has specified valence (" << totV
-              << ") smaller than the drawn valence "
-              << atom->getExplicitValence() << "." << std::endl;
-          atom->setNumExplicitHs(0);
-        } else {
-          atom->setNumExplicitHs(totV - atom->getExplicitValence());
-        }
-      }
-    }
-  }
+namespace {
+// process (and remove) SGroups which modify the structure
+// and which we can unambiguously apply
+void processSGroups(RWMol *mol) {
+  std::vector<unsigned int> sgsToRemove;
+  unsigned int sgIdx = 0;
   for (auto &sg : getSubstanceGroups(*mol)) {
     if (sg.getProp<std::string>("TYPE") == "DAT") {
       std::string fieldn;
       if (sg.getPropIfPresent("FIELDNAME", fieldn) &&
           fieldn == "MRV_IMPLICIT_H") {
         // CXN extension to specify implicit Hs, used for aromatic rings
+        sgsToRemove.push_back(sgIdx);
         std::vector<std::string> dataFields;
         if (sg.getPropIfPresent("DATAFIELDS", dataFields)) {
           for (const auto &df : dataFields) {
@@ -2401,7 +2381,45 @@ void ProcessMolProps(RWMol *mol) {
         }
       }
     }
+    ++sgIdx;
   }
+  // now remove the S groups we processed, we saved indices so do this in
+  // backwards
+  auto &sgs = getSubstanceGroups(*mol);
+  for (auto it = sgsToRemove.rbegin(); it != sgsToRemove.rend(); ++it) {
+    sgs.erase(sgs.begin() + *it);
+  }
+}
+}  // namespace
+
+void ProcessMolProps(RWMol *mol) {
+  PRECONDITION(mol, "no molecule");
+  for (auto atom : mol->atoms()) {
+    int totV;
+    if (atom->getPropIfPresent(common_properties::molTotValence, totV) &&
+        !atom->hasProp("_ZBO_H")) {
+      if (totV == 0) {
+        continue;
+      }
+      atom->setNoImplicit(true);
+      if (totV == 15     // V2000
+          || totV == -1  // v3000
+      ) {
+        atom->setNumExplicitHs(0);
+      } else {
+        if (atom->getExplicitValence() > totV) {
+          BOOST_LOG(rdWarningLog)
+              << "atom " << atom->getIdx() << " has specified valence (" << totV
+              << ") smaller than the drawn valence "
+              << atom->getExplicitValence() << "." << std::endl;
+          atom->setNumExplicitHs(0);
+        } else {
+          atom->setNumExplicitHs(totV - atom->getExplicitValence());
+        }
+      }
+    }
+  }
+  processSGroups(mol);
 }
 
 }  // namespace

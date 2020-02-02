@@ -696,7 +696,7 @@ TEST_CASE("A couple more S group problems", "[bug, sgroups]") {
 M  STY  1   1 DAT
 M  SLB  1   1   1
 M  SAL   1  1  33
-M  SDT   1 MRV_IMPLICIT_H
+M  SDT   1 FAKE_MRV_IMPLICIT_H
 M  SDD   1     0.5304   -0.4125    DR    ALL  0       0
 M  SED   1 IMPL_H1
 M  END
@@ -713,7 +713,8 @@ M  END
     CHECK(sgroups[0].hasProp("TYPE"));
     CHECK(sgroups[0].getProp<std::string>("TYPE") == "DAT");
     CHECK(sgroups[0].hasProp("FIELDNAME"));
-    CHECK(sgroups[0].getProp<std::string>("FIELDNAME") == "MRV_IMPLICIT_H");
+    CHECK(sgroups[0].getProp<std::string>("FIELDNAME") ==
+          "FAKE_MRV_IMPLICIT_H");
   }
 }
 
@@ -1095,6 +1096,8 @@ M  END
 )CTAB"_ctab;
     REQUIRE(mol);
     CHECK(MolToSmiles(*mol) == "c1cc[nH]c1");
+    // we removed all the S groups:
+    CHECK(getSubstanceGroups(*mol).empty());
   }
   SECTION("v3k two groups") {
     auto mol = R"CTAB(
@@ -1140,5 +1143,45 @@ M  END
 )CTAB"_ctab;
     REQUIRE(mol);
     CHECK(MolToSmiles(*mol) == "c1cc2c([nH]1)Cc1cc[nH]c1C2");
+    // we removed all the S groups:
+    CHECK(getSubstanceGroups(*mol).empty());
+  }
+  SECTION("removal leaves other s groups intact") {
+    auto mol = R"CTAB(
+  Mrv1810 02022006062D          
+ 
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 6 2 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 2.1256 -2.5487 0 0
+M  V30 2 C 1.2204 -1.3027 0 0
+M  V30 3 N 2.1256 -0.0569 0 0
+M  V30 4 C 3.5902 -0.5327 0 0
+M  V30 5 C 3.5902 -2.0727 0 0
+M  V30 6 C 4.8361 -2.9778 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 4 1 2
+M  V30 2 4 2 3
+M  V30 3 4 3 4
+M  V30 4 4 1 5
+M  V30 5 4 4 5
+M  V30 6 1 5 6
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 6) FIELDNAME=some_data -
+M  V30 FIELDDISP="    4.8361   -2.9778    DAU   ALL  0       0" -
+M  V30 MRV_FIELDDISP=0 FIELDDATA=foo
+M  V30 2 DAT 0 ATOMS=(1 3) FIELDNAME=MRV_IMPLICIT_H -
+M  V30 FIELDDISP="    0.0000    0.0000    DR    ALL  0       0" -
+M  V30 FIELDDATA=IMPL_H1
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(MolToSmiles(*mol) == "Cc1cc[nH]c1");
+    CHECK(getSubstanceGroups(*mol).size() == 1);
   }
 }
