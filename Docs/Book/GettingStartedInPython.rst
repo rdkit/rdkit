@@ -995,8 +995,9 @@ be accepted. This function is called with the molecule to be matched and the ind
 of the matching atoms.
 
 Here's an example of how you can use the functionality to do "Markush-like" matching,
-requiring that all atoms in a sidechain are either carbon or aromatic. We start by defining
-the class that we'll use to test the sidechains:
+requiring that all atoms in a sidechain are either carbon (type "all_carbon") or aren't 
+aromatic (type "alkyl"). We start by defining the class that we'll use to test the 
+sidechains:
 
 .. testcode::
 
@@ -1046,15 +1047,13 @@ And the default behavior:
 
 .. doctest::
 
-  >>> m = Chem.MolFromSmiles('C2NCC2CC1C(CCCC)C(OCCCC)C1C2CCCC2')
+  >>> m = Chem.MolFromSmiles('C2NCC2CC1C(CCCC)C(OCCCC)C1c2ccccc2')
   >>> p = Chem.MolFromSmarts('C1CCC1*')
   >>> p.GetAtomWithIdx(4).SetProp("queryType", "all_carbon")
   >>> m.GetSubstructMatches(p)
   ((5, 6, 11, 17, 18), (5, 17, 11, 6, 7), (6, 5, 17, 11, 12), (6, 11, 17, 5, 4))
 
-
 Now let's add the final check to filter the results:
-
 
 .. doctest::
 
@@ -1064,6 +1063,15 @@ Now let's add the final check to filter the results:
   >>> m.GetSubstructMatches(p,params)
   ((5, 6, 11, 17, 18), (5, 17, 11, 6, 7))
 
+Repeat that using the 'alkyl' query:
+
+.. doctest::
+
+  >>> p.GetAtomWithIdx(4).SetProp("queryType", "alkyl")
+  >>> checker = SidechainChecker(p)
+  >>> params.setExtraFinalCheck(checker)
+  >>> m.GetSubstructMatches(p,params)
+  ((5, 17, 11, 6, 7), (6, 5, 17, 11, 12), (6, 11, 17, 5, 4))
 
 
 Chemical Transformations
