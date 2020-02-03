@@ -139,8 +139,8 @@ def _toReactionSVG(rxn):
                               highlightByReactant=highlightByReactant, drawOptions=drawOptions)
 
 
-def _GetSubstructMatch(mol, query, **kwargs):
-  res = mol.__GetSubstructMatch(query, **kwargs)
+def _GetSubstructMatch(mol, query, *args, **kwargs):
+  res = mol.__GetSubstructMatch(query, *args, **kwargs)
   if highlightSubstructs:
     mol.__sssAtoms = list(res)
   else:
@@ -151,8 +151,8 @@ def _GetSubstructMatch(mol, query, **kwargs):
 _GetSubstructMatch.__doc__ = rdchem.Mol.GetSubstructMatch.__doc__
 
 
-def _GetSubstructMatches(mol, query, **kwargs):
-  res = mol.__GetSubstructMatches(query, **kwargs)
+def _GetSubstructMatches(mol, query, *args, **kwargs):
+  res = mol.__GetSubstructMatches(query, *args, **kwargs)
   mol.__sssAtoms = []
   if highlightSubstructs:
     for entry in res:

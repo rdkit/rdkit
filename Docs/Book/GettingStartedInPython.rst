@@ -985,6 +985,87 @@ matching atoms like this:
   ...     print(mas)
   [1, 7, 8, 10]
 
+
+Advanced substructure matching
+==============================
+
+Starting with the 2020.03 release, the RDKit allows you to provide an optional 
+function that is used to check whether or not a possible substructure match should
+be accepted. This function is called with the molecule to be matched and the indices
+of the matching atoms.
+
+Here's an example of how you can use the functionality to do "Markush-like" matching,
+requiring that all atoms in a sidechain are either carbon or aromatic. We start by defining
+the class that we'll use to test the sidechains:
+
+.. testcode::
+
+  from rdkit import Chem
+
+  class SidechainChecker(object):
+    matchers = {
+      'alkyl': lambda at: not at.GetIsAromatic(),
+      'all_carbon': lambda at: at.GetAtomicNum() == 6
+    }
+
+    def __init__(self, query, pName="queryType"):
+      # identify the atoms that have the properties we care about
+      self._atsToExamine = [(x.GetIdx(), x.GetProp(pName)) for x in query.GetAtoms()
+                            if x.HasProp(pName)]
+      self._pName = pName
+
+    def __call__(self, mol, vect):
+      seen = [0] * mol.GetNumAtoms()
+      for idx in vect:
+        seen[idx] = 1
+      # loop over the atoms we care about:
+      for idx, qtyp in self._atsToExamine:
+        midx = vect[idx]
+        stack = [midx]
+        atom = mol.GetAtomWithIdx(midx)
+        # now do a breadth-first search from that atom, checking
+        # all of its neighbors that aren't in the substructure 
+        # query:
+        stack = [atom]
+        while stack:
+          atom = stack.pop(0)
+          if not self.matchers[qtyp](atom):
+            return False
+          seen[atom.GetIdx()] = 1
+          for nbr in atom.GetNeighbors():
+            if not seen[nbr.GetIdx()]:
+              stack.append(nbr)
+      return True
+
+
+Here's the molecule we'll use:
+
+.. image:: images/substruct_search_parameters1.png
+
+And the default behavior:
+
+.. doctest::
+
+  >>> m = Chem.MolFromSmiles('C2NCC2CC1C(CCCC)C(OCCCC)C1C2CCCC2')
+  >>> p = Chem.MolFromSmarts('C1CCC1*')
+  >>> p.GetAtomWithIdx(4).SetProp("queryType", "all_carbon")
+  >>> m.GetSubstructMatches(p)
+  ((5, 6, 11, 17, 18), (5, 17, 11, 6, 7), (6, 5, 17, 11, 12), (6, 11, 17, 5, 4))
+
+
+Now let's add the final check to filter the results:
+
+
+.. doctest::
+
+  >>> params = Chem.SubstructMatchParameters()
+  >>> checker = SidechainChecker(p)
+  >>> params.setExtraFinalCheck(checker)
+  >>> m.GetSubstructMatches(p,params)
+  ((5, 6, 11, 17, 18), (5, 17, 11, 6, 7))
+
+
+
 Chemical Transformations
 ************************
 
