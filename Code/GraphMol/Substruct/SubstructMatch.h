@@ -13,7 +13,7 @@
 
 // std bits
 #include <vector>
-#include <boost/function.hpp>
+#include <functional>
 
 namespace RDKit {
 class ROMol;
@@ -41,8 +41,8 @@ struct RDKIT_SUBSTRUCTMATCH_EXPORT SubstructMatchParameters {
                        //!< concurrent threads supported by the hardware
                        //!< negative values are added to the number of
                        //!< concurrent threads supported by the hardware
-  boost::function<bool(const ROMol &mol,
-                       const std::vector<unsigned int> &match)>
+  std::function<bool(const ROMol &mol,
+                     const std::vector<unsigned int> &match)>
       extraFinalCheck;  //!< a function to be called at the end to validate a
                         //!< match
 
