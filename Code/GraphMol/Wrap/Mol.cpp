@@ -166,14 +166,13 @@ int getMolNumAtoms(const ROMol &mol, int onlyHeavy, bool onlyExplicit) {
   return mol.getNumAtoms(onlyExplicit);
 }
 
-#if 0
+#if 1
 namespace {
 class pyobjFunctor {
  public:
   pyobjFunctor(python::object obj) : dp_obj(std::move(obj)) {}
   ~pyobjFunctor() {}
   bool operator()(const ROMol &m, const std::vector<unsigned int> &match) {
-    std::cerr << "CALL! " << dp_obj.ptr() << std::endl;
     return python::extract<bool>(dp_obj(boost::ref(m), boost::ref(match)));
   }
 
@@ -328,15 +327,13 @@ struct mol_wrapper {
             "0 selects the number of concurrent threads supported by the"
             "hardware. negative values are added to the number of concurrent"
             "threads supported by the hardware.")
-        //    .def(
-        //        "setExtraFinalCheck", setSubstructMatchFinalCheck,
-        //        python::with_custodian_and_ward<1, 2>(),
-        //        R"DOC(allows you to provide a function that will be called
-        //        with the molecule
-        //    and a vector of atom IDs containing a potential match.
-        //    The function should return true or false indicating whether or not
-        //    that match should be accepted.)DOC")
-        ;
+        .def("setExtraFinalCheck", setSubstructMatchFinalCheck,
+             python::with_custodian_and_ward<1, 2>(),
+             R"DOC(allows you to provide a function that will be called
+               with the molecule
+           and a vector of atom IDs containing a potential match.
+           The function should return true or false indicating whether or not
+           that match should be accepted.)DOC");
 
     python::class_<ROMol, ROMOL_SPTR, boost::noncopyable>(
         "Mol", molClassDoc.c_str(),
@@ -565,10 +562,9 @@ struct mol_wrapper {
 
         .def("GetSubstructMatches",
              (PyObject * (*)(const ROMol &m, const ROMol &query,
-                             const SubstructMatchParameters &,
-                             const python::object)) helpGetSubstructMatches,
-             (python::arg("self"), python::arg("query"), python::arg("params"),
-              python::arg("foo") = python::object()),
+                             const SubstructMatchParameters &))
+                 helpGetSubstructMatches,
+             (python::arg("self"), python::arg("query"), python::arg("params")),
              "Returns tuples of the indices of the molecule's atoms that "
              "match "
              "a substructure query.\n\n"

@@ -16,21 +16,6 @@
 
 namespace RDKit {
 
-namespace {
-class pyobjFunctor {
- public:
-  pyobjFunctor(python::object obj) : dp_obj(std::move(obj)) {}
-  ~pyobjFunctor() {}
-  bool operator()(const ROMol &m, const std::vector<unsigned int> &match) {
-    std::cerr << "CALL! " << dp_obj.ptr() << std::endl;
-    return python::extract<bool>(dp_obj(boost::ref(m), match));
-  }
-
- private:
-  python::object dp_obj;
-};
-}  // namespace
-
 inline PyObject *convertMatches(MatchVectType &matches) {
   PyObject *res = PyTuple_New(matches.size());
   MatchVectType::const_iterator i;
@@ -111,29 +96,10 @@ template <typename T1, typename T2>
 PyObject *helpGetSubstructMatches(T1 &mol, T2 &query,
                                   const SubstructMatchParameters &params) {
   std::vector<MatchVectType> matches;
-  {
-    NOGIL gil;
-    matches = SubstructMatch(mol, query, params);
-  }
-  PyObject *res = PyTuple_New(matches.size());
-  for (size_t idx = 0; idx < matches.size(); idx++) {
-    PyTuple_SetItem(res, idx, convertMatches(matches[idx]));
-  }
-  return res;
-}
-
-template <typename T1, typename T2>
-PyObject *helpGetSubstructMatches(T1 &mol, T2 &query,
-                                  const SubstructMatchParameters &params,
-                                  python::object finalMatchFunc) {
-  std::vector<MatchVectType> matches;
-  if (finalMatchFunc) {
-    SubstructMatchParameters pcopy = params;
-    pyobjFunctor ff(finalMatchFunc);
-    pcopy.extraFinalCheck = boost::ref(ff);
+  if (params.extraFinalCheck) {
     // NOTE: Because we are going into/out of python here, we can't
     // run with NOGIL
-    matches = SubstructMatch(mol, query, pcopy);
+    matches = SubstructMatch(mol, query, params);
   } else {
     NOGIL gil;
     matches = SubstructMatch(mol, query, params);

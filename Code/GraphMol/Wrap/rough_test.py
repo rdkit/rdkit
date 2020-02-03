@@ -5857,21 +5857,24 @@ M  END
 
   def testCustomSubstructMatchCheck(self):
     def accept_none(mol,vect):
-      print(list(vect))
       return False
     def accept_all(mol,vect):
-      print(list(vect))
       return True
     def accept_large(mol,vect):
-      print(list(vect))
       return sum(vect)>5
     m = Chem.MolFromSmiles('CCOCC')
     p = Chem.MolFromSmiles('CCO')
     ps = Chem.SubstructMatchParameters()
     self.assertEqual(len(m.GetSubstructMatches(p,ps)),2)
-    self.assertEqual(len(m.GetSubstructMatches(p,ps,accept_none)),0)
-    self.assertEqual(len(m.GetSubstructMatches(p,ps,accept_all)),2)
-    self.assertEqual(len(m.GetSubstructMatches(p,ps,accept_large)),1)
+
+    ps.setExtraFinalCheck(accept_none)
+    self.assertEqual(len(m.GetSubstructMatches(p,ps)),0)
+    ps.setExtraFinalCheck(accept_all)
+    self.assertEqual(len(m.GetSubstructMatches(p,ps)),2)
+    ps.setExtraFinalCheck(accept_large)
+    self.assertEqual(len(m.GetSubstructMatches(p,ps)),1)
+
+
     
     
     
