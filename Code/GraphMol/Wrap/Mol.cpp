@@ -166,7 +166,6 @@ int getMolNumAtoms(const ROMol &mol, int onlyHeavy, bool onlyExplicit) {
   return mol.getNumAtoms(onlyExplicit);
 }
 
-#if 1
 namespace {
 class pyobjFunctor {
  public:
@@ -179,27 +178,12 @@ class pyobjFunctor {
  private:
   python::object dp_obj;
 };
-}  // namespace
 void setSubstructMatchFinalCheck(SubstructMatchParameters &ps,
                                  python::object func) {
-  // FIX: this leaks
-  pyobjFunctor *ftor = new pyobjFunctor(func);
-  std::cerr << "SET! " << func.ptr() << std::endl;
-  ps.extraFinalCheck = boost::ref(*ftor);
-#if 0
-  ROMol m;
-  std::vector<unsigned int> v{0, 1, 2};
-  std::cerr << "     lcall: " << (*ftor)(m, v) << std::endl;
-#else
-  auto m = "CCOCC"_smiles;
-  auto q = "CCO"_smiles;
-  std::cerr << "match!" << std::endl;
-  auto matches = SubstructMatch(*m, *q, ps);
-  std::cerr << "  " << matches.size() << std::endl;
-#endif
+  ps.extraFinalCheck = pyobjFunctor(func);
 }
+}  // namespace
 
-#endif
 class ReadWriteMol : public RWMol {
  public:
   ReadWriteMol(){};
