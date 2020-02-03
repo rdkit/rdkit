@@ -27,6 +27,7 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <boost/python/iterator.hpp>
 #include <boost/python/copy_non_const_reference.hpp>
+#include <GraphMol/SmilesParse/SmilesParse.h>
 
 namespace python = boost::python;
 
@@ -165,6 +166,41 @@ int getMolNumAtoms(const ROMol &mol, int onlyHeavy, bool onlyExplicit) {
   return mol.getNumAtoms(onlyExplicit);
 }
 
+#if 0
+namespace {
+class pyobjFunctor {
+ public:
+  pyobjFunctor(python::object obj) : dp_obj(std::move(obj)) {}
+  ~pyobjFunctor() {}
+  bool operator()(const ROMol &m, const std::vector<unsigned int> &match) {
+    std::cerr << "CALL! " << dp_obj.ptr() << std::endl;
+    return python::extract<bool>(dp_obj(boost::ref(m), boost::ref(match)));
+  }
+
+ private:
+  python::object dp_obj;
+};
+}  // namespace
+void setSubstructMatchFinalCheck(SubstructMatchParameters &ps,
+                                 python::object func) {
+  // FIX: this leaks
+  pyobjFunctor *ftor = new pyobjFunctor(func);
+  std::cerr << "SET! " << func.ptr() << std::endl;
+  ps.extraFinalCheck = boost::ref(*ftor);
+#if 0
+  ROMol m;
+  std::vector<unsigned int> v{0, 1, 2};
+  std::cerr << "     lcall: " << (*ftor)(m, v) << std::endl;
+#else
+  auto m = "CCOCC"_smiles;
+  auto q = "CCO"_smiles;
+  std::cerr << "match!" << std::endl;
+  auto matches = SubstructMatch(*m, *q, ps);
+  std::cerr << "  " << matches.size() << std::endl;
+#endif
+}
+
+#endif
 class ReadWriteMol : public RWMol {
  public:
   ReadWriteMol(){};
@@ -291,7 +327,16 @@ struct mol_wrapper {
             "number of threads to use when multi-threading is possible."
             "0 selects the number of concurrent threads supported by the"
             "hardware. negative values are added to the number of concurrent"
-            "threads supported by the hardware.");
+            "threads supported by the hardware.")
+        //    .def(
+        //        "setExtraFinalCheck", setSubstructMatchFinalCheck,
+        //        python::with_custodian_and_ward<1, 2>(),
+        //        R"DOC(allows you to provide a function that will be called
+        //        with the molecule
+        //    and a vector of atom IDs containing a potential match.
+        //    The function should return true or false indicating whether or not
+        //    that match should be accepted.)DOC")
+        ;
 
     python::class_<ROMol, ROMOL_SPTR, boost::noncopyable>(
         "Mol", molClassDoc.c_str(),
@@ -520,9 +565,10 @@ struct mol_wrapper {
 
         .def("GetSubstructMatches",
              (PyObject * (*)(const ROMol &m, const ROMol &query,
-                             const SubstructMatchParameters &))
-                 helpGetSubstructMatches,
-             (python::arg("self"), python::arg("query"), python::arg("params")),
+                             const SubstructMatchParameters &,
+                             const python::object)) helpGetSubstructMatches,
+             (python::arg("self"), python::arg("query"), python::arg("params"),
+              python::arg("foo") = python::object()),
              "Returns tuples of the indices of the molecule's atoms that "
              "match "
              "a substructure query.\n\n"
