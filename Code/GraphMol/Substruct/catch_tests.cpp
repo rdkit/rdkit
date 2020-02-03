@@ -100,6 +100,9 @@ bool no_match(const ROMol &mol, const std::vector<unsigned int> &ids) {
 bool always_match(const ROMol &mol, const std::vector<unsigned int> &ids) {
   return true;
 }
+bool bigger(const ROMol &mol, const std::vector<unsigned int> &ids) {
+  return std::accumulate(ids.begin(), ids.end(), 0) > 5;
+}
 }  // namespace
 TEST_CASE("providing a final match function", "[substruct]") {
   SECTION("basics") {
@@ -112,6 +115,16 @@ TEST_CASE("providing a final match function", "[substruct]") {
     ps.extraFinalCheck = &no_match;
     CHECK(SubstructMatch(*mol1, *mol2, ps).size() == 0);
     ps.extraFinalCheck = &always_match;
+    CHECK(SubstructMatch(*mol1, *mol2, ps).size() == 1);
+  }
+  SECTION("test 2") {
+    auto mol1 = "CCOCC"_smiles;
+    auto mol2 = "CCO"_smiles;
+    REQUIRE(mol1);
+    REQUIRE(mol2);
+    SubstructMatchParameters ps;
+    CHECK(SubstructMatch(*mol1, *mol2, ps).size() == 2);
+    ps.extraFinalCheck = &bigger;
     CHECK(SubstructMatch(*mol1, *mol2, ps).size() == 1);
   }
 }

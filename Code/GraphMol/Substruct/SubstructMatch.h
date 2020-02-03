@@ -43,8 +43,7 @@ struct RDKIT_SUBSTRUCTMATCH_EXPORT SubstructMatchParameters {
                        //!< concurrent threads supported by the hardware
   boost::function<bool(const ROMol &mol,
                        const std::vector<unsigned int> &match)>
-      extraFinalCheck =
-          nullptr;  //!< a function to be called at the end to validate a match
+      extraFinalCheck;  //!< a function to be called at the end to validate a match
 
   SubstructMatchParameters(){};
 };
