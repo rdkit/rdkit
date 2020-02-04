@@ -1015,6 +1015,14 @@ Organometallics with Dative Bonds
 
 .. [#Hartenfeller2011] Markus Hartenfeller, Martin Eberle, Peter Meier, Cristina Nieto-Oberhuber, Karl-Heinz Altmann, Gisbert Schneider, Edgar Jacoby, and Steffen Renner Journal of Chemical Information and Modeling 2011 51 (12), 3093-3098. DOI: 10.1021/ci200379p
 
+
+.. testcleanup::
+
+   # This must be at the end
+   # Does cleanup for any modules to come afterwards
+   IPythonConsole.UninstallIPythonRenderer()
+
+
 License
 ********
 
