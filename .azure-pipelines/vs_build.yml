@@ -49,7 +49,7 @@ steps:
     cd build
     ctest -j $(number_of_cores) --output-on-failure -T Test
   displayName: Run tests
-- bash: |
+- script: |
     call activate rdkit_build
     set RDBASE=%cd%
     set PYTHONPATH=%RDBASE%;%PYTHONPATH%
