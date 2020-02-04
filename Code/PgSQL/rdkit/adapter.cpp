@@ -950,7 +950,7 @@ extern "C" double calcSparseTanimotoSml(CSfp a, CSfp b) {
   try {
     res = TanimotoSimilarity(*(SparseFP *)a, *(SparseFP *)b);
   } catch (ValueErrorException &e) {
-    elog(ERROR, "TanimotoSimilarity: %s", e.message().c_str());
+    elog(ERROR, "TanimotoSimilarity: %s", e.message());
   } catch (...) {
     elog(ERROR, "calcSparseTanimotoSml: Unknown exception");
   }
@@ -968,7 +968,7 @@ extern "C" double calcSparseDiceSml(CSfp a, CSfp b) {
   try {
     res = DiceSimilarity(*(SparseFP *)a, *(SparseFP *)b);
   } catch (ValueErrorException &e) {
-    elog(ERROR, "DiceSimilarity: %s", e.message().c_str());
+    elog(ERROR, "DiceSimilarity: %s", e.message());
   } catch (...) {
     elog(ERROR, "calcSparseDiceSml: Unknown exception");
   }
