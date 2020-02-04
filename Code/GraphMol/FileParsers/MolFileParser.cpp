@@ -2354,11 +2354,73 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
   }
 }
 
+namespace {
+// process (and remove) SGroups which modify the structure
+// and which we can unambiguously apply
+void processSGroups(RWMol *mol) {
+  std::vector<unsigned int> sgsToRemove;
+  unsigned int sgIdx = 0;
+  for (auto &sg : getSubstanceGroups(*mol)) {
+    if (sg.getProp<std::string>("TYPE") == "DAT") {
+      std::string fieldn;
+      if (sg.getPropIfPresent("FIELDNAME", fieldn) &&
+          fieldn == "MRV_IMPLICIT_H") {
+        // CXN extension to specify implicit Hs, used for aromatic rings
+        sgsToRemove.push_back(sgIdx);
+        std::vector<std::string> dataFields;
+        if (sg.getPropIfPresent("DATAFIELDS", dataFields)) {
+          for (const auto &df : dataFields) {
+            if (df.substr(0, 6) == "IMPL_H") {
+              auto val = FileParserUtils::toInt(df.substr(6));
+              for (auto atIdx : sg.getAtoms()) {
+                if (atIdx < mol->getNumAtoms()) {
+                  // if the atom has aromatic bonds to it, then set the explicit
+                  // value, otherwise skip it.
+                  auto atom = mol->getAtomWithIdx(atIdx);
+                  bool hasAromaticBonds = false;
+                  for (auto bndI :
+                       boost::make_iterator_range(mol->getAtomBonds(atom))) {
+                    auto bnd = (*mol)[bndI];
+                    if (bnd->getIsAromatic() ||
+                        bnd->getBondType() == Bond::AROMATIC) {
+                      hasAromaticBonds = true;
+                      break;
+                    }
+                  }
+                  if (hasAromaticBonds) {
+                    atom->setNumExplicitHs(val);
+                  } else {
+                    BOOST_LOG(rdWarningLog)
+                        << "MRV_IMPLICIT_H SGroup on atom without aromatic "
+                           "bonds, "
+                        << atIdx << ", ignored." << std::endl;
+                  }
+                } else {
+                  BOOST_LOG(rdWarningLog)
+                      << "bad atom index, " << atIdx
+                      << ", found in MRV_IMPLICIT_H SGroup. Ignoring it."
+                      << std::endl;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    ++sgIdx;
+  }
+  // now remove the S groups we processed, we saved indices so do this in
+  // backwards
+  auto &sgs = getSubstanceGroups(*mol);
+  for (auto it = sgsToRemove.rbegin(); it != sgsToRemove.rend(); ++it) {
+    sgs.erase(sgs.begin() + *it);
+  }
+}
+}  // namespace
+
 void ProcessMolProps(RWMol *mol) {
   PRECONDITION(mol, "no molecule");
-  for (RWMol::AtomIterator atomIt = mol->beginAtoms();
-       atomIt != mol->endAtoms(); ++atomIt) {
-    Atom *atom = *atomIt;
+  for (auto atom : mol->atoms()) {
     int totV;
     if (atom->getPropIfPresent(common_properties::molTotValence, totV) &&
         !atom->hasProp("_ZBO_H")) {
@@ -2383,6 +2445,7 @@ void ProcessMolProps(RWMol *mol) {
       }
     }
   }
+  processSGroups(mol);
 }
 
 }  // namespace

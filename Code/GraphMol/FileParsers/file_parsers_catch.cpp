@@ -696,7 +696,7 @@ TEST_CASE("A couple more S group problems", "[bug, sgroups]") {
 M  STY  1   1 DAT
 M  SLB  1   1   1
 M  SAL   1  1  33
-M  SDT   1 MRV_IMPLICIT_H
+M  SDT   1 FAKE_MRV_IMPLICIT_H
 M  SDD   1     0.5304   -0.4125    DR    ALL  0       0
 M  SED   1 IMPL_H1
 M  END
@@ -713,7 +713,8 @@ M  END
     CHECK(sgroups[0].hasProp("TYPE"));
     CHECK(sgroups[0].getProp<std::string>("TYPE") == "DAT");
     CHECK(sgroups[0].hasProp("FIELDNAME"));
-    CHECK(sgroups[0].getProp<std::string>("FIELDNAME") == "MRV_IMPLICIT_H");
+    CHECK(sgroups[0].getProp<std::string>("FIELDNAME") ==
+          "FAKE_MRV_IMPLICIT_H");
   }
 }
 
@@ -1140,5 +1141,152 @@ M  END
     CHECK(mol->getBondBetweenAtoms(0, 1)->getPropIfPresent(
         common_properties::molStereoCare, val));
     CHECK(val == 1);
+  }
+}
+
+TEST_CASE("github #2829: support MRV_IMPLICIT_H", "[feature,sgroups]") {
+  SECTION("basics v2k") {
+    auto mol = R"CTAB(
+  Mrv1810 01302015262D          
+ 
+  5  5  0  0  0  0            999 V2000
+    1.1387   -1.3654    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6538   -0.6979    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.1387   -0.0305    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9233   -0.2854    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9233   -1.1104    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  4  0  0  0  0
+  2  3  4  0  0  0  0
+  3  4  4  0  0  0  0
+  1  5  4  0  0  0  0
+  4  5  4  0  0  0  0
+M  STY  1   1 DAT
+M  SAL   1  1   3
+M  SDT   1 MRV_IMPLICIT_H                                        
+M  SDD   1     0.0000    0.0000    DR    ALL  0       0  
+M  SED   1 IMPL_H1
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(MolToSmiles(*mol) == "c1cc[nH]c1");
+  }
+  SECTION("basics v3k") {
+    auto mol = R"CTAB(
+  Mrv1810 01302015452D          
+ 
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 5 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 2.1256 -2.5487 0 0
+M  V30 2 C 1.2204 -1.3027 0 0
+M  V30 3 N 2.1256 -0.0569 0 0
+M  V30 4 C 3.5902 -0.5327 0 0
+M  V30 5 C 3.5902 -2.0727 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 4 1 2
+M  V30 2 4 2 3
+M  V30 3 4 3 4
+M  V30 4 4 1 5
+M  V30 5 4 4 5
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 3) FIELDNAME=MRV_IMPLICIT_H -
+M  V30 FIELDDISP="    0.0000    0.0000    DR    ALL  0       0" -
+M  V30 FIELDDATA=IMPL_H1
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(MolToSmiles(*mol) == "c1cc[nH]c1");
+    // we removed all the S groups:
+    CHECK(getSubstanceGroups(*mol).empty());
+  }
+  SECTION("v3k two groups") {
+    auto mol = R"CTAB(
+  Mrv1810 01302016392D          
+ 
+ 12 14  0  0  0  0            999 V2000
+    1.1387   -1.3654    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6538   -0.6979    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.1387   -0.0305    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9233   -0.2854    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9233   -1.1104    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.6378    0.1271    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.6378   -1.5229    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.3522   -1.1104    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.3522   -0.2854    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.1369   -1.3653    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    4.1369   -0.0305    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.6218   -0.6979    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  4  0  0  0  0
+  2  3  4  0  0  0  0
+  3  4  4  0  0  0  0
+  1  5  4  0  0  0  0
+  4  5  4  0  0  0  0
+  7  8  1  0  0  0  0
+  6  9  1  0  0  0  0
+  5  7  1  0  0  0  0
+  6  4  1  0  0  0  0
+ 11 12  4  0  0  0  0
+ 10 12  4  0  0  0  0
+  9 11  4  0  0  0  0
+ 10  8  4  0  0  0  0
+  8  9  4  0  0  0  0
+M  STY  2   1 DAT   2 DAT
+M  SAL   1  1   3
+M  SDT   1 MRV_IMPLICIT_H                                        
+M  SDD   1     0.0000    0.0000    DR    ALL  0       0  
+M  SED   1 IMPL_H1
+M  SAL   2  1  10
+M  SDT   2 MRV_IMPLICIT_H                                        
+M  SDD   2     0.0000    0.0000    DR    ALL  0       0  
+M  SED   2 IMPL_H1
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(MolToSmiles(*mol) == "c1cc2c([nH]1)Cc1cc[nH]c1C2");
+    // we removed all the S groups:
+    CHECK(getSubstanceGroups(*mol).empty());
+  }
+  SECTION("removal leaves other s groups intact") {
+    auto mol = R"CTAB(
+  Mrv1810 02022006062D          
+ 
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 6 2 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 2.1256 -2.5487 0 0
+M  V30 2 C 1.2204 -1.3027 0 0
+M  V30 3 N 2.1256 -0.0569 0 0
+M  V30 4 C 3.5902 -0.5327 0 0
+M  V30 5 C 3.5902 -2.0727 0 0
+M  V30 6 C 4.8361 -2.9778 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 4 1 2
+M  V30 2 4 2 3
+M  V30 3 4 3 4
+M  V30 4 4 1 5
+M  V30 5 4 4 5
+M  V30 6 1 5 6
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 6) FIELDNAME=some_data -
+M  V30 FIELDDISP="    4.8361   -2.9778    DAU   ALL  0       0" -
+M  V30 MRV_FIELDDISP=0 FIELDDATA=foo
+M  V30 2 DAT 0 ATOMS=(1 3) FIELDNAME=MRV_IMPLICIT_H -
+M  V30 FIELDDISP="    0.0000    0.0000    DR    ALL  0       0" -
+M  V30 FIELDDATA=IMPL_H1
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(MolToSmiles(*mol) == "Cc1cc[nH]c1");
+    CHECK(getSubstanceGroups(*mol).size() == 1);
   }
 }
