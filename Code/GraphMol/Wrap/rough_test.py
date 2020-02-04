@@ -5854,7 +5854,31 @@ M  END
         test_num)
     finally:
       Chem.SetDefaultPickleProperties(opts)
-      
+
+  def testCustomSubstructMatchCheck(self):
+    def accept_none(mol,vect):
+      return False
+    def accept_all(mol,vect):
+      return True
+    def accept_large(mol,vect):
+      return sum(vect)>5
+    m = Chem.MolFromSmiles('CCOCC')
+    p = Chem.MolFromSmiles('CCO')
+    ps = Chem.SubstructMatchParameters()
+    self.assertEqual(len(m.GetSubstructMatches(p,ps)),2)
+
+    ps.setExtraFinalCheck(accept_none)
+    self.assertEqual(len(m.GetSubstructMatches(p,ps)),0)
+    ps.setExtraFinalCheck(accept_all)
+    self.assertEqual(len(m.GetSubstructMatches(p,ps)),2)
+    ps.setExtraFinalCheck(accept_large)
+    self.assertEqual(len(m.GetSubstructMatches(p,ps)),1)
+
+
+    
+    
+    
+
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()

@@ -27,6 +27,7 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <boost/python/iterator.hpp>
 #include <boost/python/copy_non_const_reference.hpp>
+#include <GraphMol/SmilesParse/SmilesParse.h>
 
 namespace python = boost::python;
 
@@ -165,6 +166,24 @@ int getMolNumAtoms(const ROMol &mol, int onlyHeavy, bool onlyExplicit) {
   return mol.getNumAtoms(onlyExplicit);
 }
 
+namespace {
+class pyobjFunctor {
+ public:
+  pyobjFunctor(python::object obj) : dp_obj(std::move(obj)) {}
+  ~pyobjFunctor() {}
+  bool operator()(const ROMol &m, const std::vector<unsigned int> &match) {
+    return python::extract<bool>(dp_obj(boost::ref(m), boost::ref(match)));
+  }
+
+ private:
+  python::object dp_obj;
+};
+void setSubstructMatchFinalCheck(SubstructMatchParameters &ps,
+                                 python::object func) {
+  ps.extraFinalCheck = pyobjFunctor(func);
+}
+}  // namespace
+
 class ReadWriteMol : public RWMol {
  public:
   ReadWriteMol(){};
@@ -291,7 +310,14 @@ struct mol_wrapper {
             "number of threads to use when multi-threading is possible."
             "0 selects the number of concurrent threads supported by the"
             "hardware. negative values are added to the number of concurrent"
-            "threads supported by the hardware.");
+            "threads supported by the hardware.")
+        .def("setExtraFinalCheck", setSubstructMatchFinalCheck,
+             python::with_custodian_and_ward<1, 2>(),
+             R"DOC(allows you to provide a function that will be called
+               with the molecule
+           and a vector of atom IDs containing a potential match.
+           The function should return true or false indicating whether or not
+           that match should be accepted.)DOC");
 
     python::class_<ROMol, ROMOL_SPTR, boost::noncopyable>(
         "Mol", molClassDoc.c_str(),
