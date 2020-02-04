@@ -1,3 +1,12 @@
+# Release_2020.09.1
+(Changes relative to Release_2020.03.1)
+
+## Deprecations
+- To improve API consistency of the exceptions in RDKit with the default ones in
+  the STL, the several `message()` methods and `Invariant::getMessage()` in RDKit's
+  exceptions are from now on deprecated in favor of `what()`. Both `message()` and
+  `Invariant::getMessage()` will be removed in the next release.
+
 # Release_2020.03.1
 (Changes relative to Release_2019.09.1)
 
