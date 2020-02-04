@@ -1557,12 +1557,12 @@ the atom environment that defines the bit using the functions
   >>> fp = AllChem.GetMorganFingerprintAsBitVect(mol, radius=2, bitInfo=bi)
   >>> bi[872]
   ((6, 2),)
-  >>> mfp2_svg = Draw.DrawMorganBit(mol, 872, bi)
+  >>> mfp2_svg = Draw.DrawMorganBit(mol, 872, bi, useSVG=True)
   >>> rdkbi = {}
   >>> rdkfp = Chem.RDKFingerprint(mol, maxPath=5, bitInfo=rdkbi)
   >>> rdkbi[1553]
   [[0, 1, 9, 5, 4], [2, 3, 4, 9, 5]]
-  >>> rdk_svg = Draw.DrawRDKitBit(mol, 1553, rdkbi)
+  >>> rdk_svg = Draw.DrawRDKitBit(mol, 1553, rdkbi, useSVG=True)
 
 Producing these images:
 
@@ -1589,7 +1589,7 @@ example to show:
 
 .. doctest::
 
-  >>> rdk_svg = Draw.DrawRDKitBit(mol, 1553, rdkbi, whichExample=1)
+  >>> rdk_svg = Draw.DrawRDKitBit(mol, 1553, rdkbi, whichExample=1, useSVG=True)
 
 Producing this image:
 
