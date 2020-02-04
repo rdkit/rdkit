@@ -790,8 +790,8 @@ molecules found in the :py:mod:`rdkit.Chem.Draw` package:
   >>> ms = [x for x in suppl if x is not None]
   >>> for m in ms: tmp=AllChem.Compute2DCoords(m)
   >>> from rdkit.Chem import Draw
-  >>> Draw.MolToFile(ms[0],'images/cdk2_mol1.o.png')
-  >>> Draw.MolToFile(ms[1],'images/cdk2_mol2.o.png')
+  >>> Draw.MolToFile(ms[0],'images/cdk2_mol1.o.png')    # doctest: +SKIP
+  >>> Draw.MolToFile(ms[1],'images/cdk2_mol2.o.png')    # doctest: +SKIP
 
 Producing these images:
 
@@ -809,7 +809,7 @@ This returns a PIL image, which can then be saved to a file:
 
 .. doctest::
 
-  >>> img.save('images/cdk2_molgrid.o.png')
+  >>> img.save('images/cdk2_molgrid.o.png')    # doctest: +SKIP
 
 The result looks like this:
 
@@ -828,7 +828,7 @@ aligned. This is easy enough to do:
   0
   >>> for m in subms: AllChem.GenerateDepictionMatching2DStructure(m,p)
   >>> img=Draw.MolsToGridImage(subms,molsPerRow=4,subImgSize=(200,200),legends=[x.GetProp("_Name") for x in subms])
-  >>> img.save('images/cdk2_molgrid.aligned.o.png')
+  >>> img.save('images/cdk2_molgrid.aligned.o.png'))    # doctest: +SKIP
 
 
 The result looks like this:
@@ -2581,7 +2581,7 @@ These are accessible using Python's help command:
   >>> m = Chem.MolFromSmiles('Cc1ccccc1')
   >>> m.GetNumAtoms()
   7
-  >>> help(m.GetNumAtoms)
+  >>> help(m.GetNumAtoms)      #doctest: 
   Help on method GetNumAtoms:
   <BLANKLINE>
   GetNumAtoms(...) method of rdkit.Chem.rdchem.Mol instance
@@ -2595,7 +2595,7 @@ These are accessible using Python's help command:
   <BLANKLINE>
   <BLANKLINE>
           C++ signature :
-              int GetNumAtoms(RDKit::ROMol [,int=-1 [,bool=True]])
+              int GetNumAtoms(...)
   <BLANKLINE>
   >>> m.GetNumAtoms(onlyExplicit=False)
   15
