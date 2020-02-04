@@ -57,7 +57,7 @@ Include an Atom Index
    from rdkit import Chem
    from rdkit.Chem.Draw import IPythonConsole
    from rdkit.Chem import Draw
-   IPythonConsole.ipython_useSVG=False
+   IPythonConsole.ipython_useSVG=True  #< set this to False if you want PNGs instead of SVGs
 
 .. testcode::
   
