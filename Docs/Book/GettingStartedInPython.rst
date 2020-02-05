@@ -2581,7 +2581,7 @@ These are accessible using Python's help command:
   >>> m = Chem.MolFromSmiles('Cc1ccccc1')
   >>> m.GetNumAtoms()
   7
-  >>> help(m.GetNumAtoms)      #doctest: 
+  >>> help(m.GetNumAtoms) 
   Help on method GetNumAtoms:
   <BLANKLINE>
   GetNumAtoms(...) method of rdkit.Chem.rdchem.Mol instance
