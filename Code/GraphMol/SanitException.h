@@ -30,7 +30,8 @@ class RDKIT_GRAPHMOL_EXPORT MolSanitizeException : public std::exception {
   MolSanitizeException(const std::string &msg) : d_msg(msg){};
   MolSanitizeException(const MolSanitizeException &other)
       : d_msg(other.d_msg){};
-  virtual const char *message() const { return d_msg.c_str(); };
+  virtual const char *what() const noexcept override { return d_msg.c_str(); };
+  virtual const char *message() const noexcept { return what(); };
   virtual ~MolSanitizeException() noexcept {};
   virtual MolSanitizeException *copy() const {
     return new MolSanitizeException(*this);

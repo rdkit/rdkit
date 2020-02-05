@@ -122,6 +122,8 @@ BOOST_PYTHON_MODULE(rdBase) {
       &translate_index_error);
   python::register_exception_translator<ValueErrorException>(
       &translate_value_error);
+  python::register_exception_translator<KeyErrorException>(
+      &translate_key_error);
 
 #if INVARIANT_EXCEPTION_METHOD
   python::register_exception_translator<Invar::Invariant>(

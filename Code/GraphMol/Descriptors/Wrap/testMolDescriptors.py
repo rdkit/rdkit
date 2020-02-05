@@ -503,7 +503,7 @@ class TestCase(unittest.TestCase):
     try:
       props = rdMD.Properties(["property that doesn't exist"])
       self.assertEqual("should not get here", "but did")
-    except RuntimeError:
+    except KeyError:
       pass
 
   def testPythonDescriptorFunctor(self):

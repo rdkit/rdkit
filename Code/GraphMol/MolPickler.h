@@ -37,7 +37,8 @@ class RDKIT_GRAPHMOL_EXPORT MolPicklerException : public std::exception {
  public:
   MolPicklerException(const char *msg) : _msg(msg){};
   MolPicklerException(const std::string msg) : _msg(msg){};
-  const char *message() const { return _msg.c_str(); };
+  const char *what() const noexcept override { return _msg.c_str(); };
+  const char *message() const noexcept { return what(); };
   ~MolPicklerException() noexcept {};
 
  private:
