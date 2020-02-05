@@ -1222,16 +1222,16 @@ void MolDraw2D::extractAtomSymbols(const ROMol &mol) {
     boost::tie(nbr, end_nbrs) = mol.getAtomBonds(at1);
     Point2D &at1_cds = at_cds_[activeMolIdx_][at1->getIdx()];
     Point2D nbr_sum(0.0, 0.0);
-    cout << "Nbours for atom : " << at1->getIdx() << endl;
+    // cout << "Nbours for atom : " << at1->getIdx() << endl;
     while (nbr != end_nbrs) {
       const Bond *bond = mol[*nbr];
       ++nbr;
       Point2D &at2_cds =
           at_cds_[activeMolIdx_][bond->getOtherAtomIdx(at1->getIdx())];
       nbr_sum += at2_cds - at1_cds;
-      cout << at2_cds.x << ", " << at2_cds.y << " : "
-           << at1_cds.x << ", " << at1_cds.y << " : "
-           << nbr_sum.x << ", " << nbr_sum.y << endl;
+      // cout << at2_cds.x << ", " << at2_cds.y << " : "
+      //      << at1_cds.x << ", " << at1_cds.y << " : "
+      //      << nbr_sum.x << ", " << nbr_sum.y << endl;
     }
     atom_syms_[activeMolIdx_].push_back(
         getAtomSymbolAndOrientation(*at1, nbr_sum));
@@ -1485,10 +1485,10 @@ void MolDraw2D::drawAtomLabel(int atom_num,
                               const std::map<int, DrawColour> *highlight_map) {
 
   setColour(getColour(atom_num, highlight_atoms, highlight_map));
-  cout << "drawString " << atom_syms_[activeMolIdx_][atom_num].first
-       << " at " << at_cds_[activeMolIdx_][atom_num][0]
-       << ", " << at_cds_[activeMolIdx_][atom_num][1]
-       << "  orient : " << atom_syms_[activeMolIdx_][atom_num].second << endl;
+//  cout << "drawString " << atom_syms_[activeMolIdx_][atom_num].first
+//       << " at " << at_cds_[activeMolIdx_][atom_num][0]
+//       << ", " << at_cds_[activeMolIdx_][atom_num][1]
+//       << "  orient : " << atom_syms_[activeMolIdx_][atom_num].second << endl;
   OrientType orient = atom_syms_[activeMolIdx_][atom_num].second;
   vector<string> label_pieces = atomLabelToPieces(atom_num);
   drawStrings(label_pieces, at_cds_[activeMolIdx_][atom_num], orient);
@@ -1496,7 +1496,7 @@ void MolDraw2D::drawAtomLabel(int atom_num,
 }
 
 // ****************************************************************************
-vector<string> MolDraw2D::atomLabelToPieces(int atom_num) {
+vector<string> MolDraw2D::atomLabelToPieces(int atom_num) const {
 
   vector<string> label_pieces;
   size_t i = 0;
@@ -1555,11 +1555,11 @@ vector<string> MolDraw2D::atomLabelToPieces(int atom_num) {
     }
   }
 
-  cout << atsym;
-  for(auto s: label_pieces) {
-    cout << " : " << s;
-  }
-  cout << endl;
+//  cout << atsym;
+//  for(auto s: label_pieces) {
+//    cout << " : " << s;
+//  }
+//  cout << endl;
 
   return label_pieces;
 
@@ -1668,8 +1668,7 @@ Point2D MolDraw2D::calcInnerPerpendicular(const Point2D &cds1,
 
 // ****************************************************************************
 // take the coords for atnum, with neighbour nbr_cds, and move cds out to
-// accommodate
-// the label associated with it.
+// accommodate the label associated with it.
 void MolDraw2D::adjustBondEndForLabel(int atnum, const Point2D &nbr_cds,
                                       Point2D &cds) const {
   if (atom_syms_[activeMolIdx_][atnum].first.empty()) {
@@ -1677,8 +1676,10 @@ void MolDraw2D::adjustBondEndForLabel(int atnum, const Point2D &nbr_cds,
   }
 
   double label_width, label_height;
-  getStringSize(atom_syms_[activeMolIdx_][atnum].first, label_width,
-                label_height);
+  // These days, labels only have the first character in the way.
+  vector<string> label_bits = atomLabelToPieces(atnum);
+  getStringSize(label_bits.front(), label_width, label_height);
+
   double additional_width = 0.0;
   double additional_height = 0.0;
   if (drawOptions().additionalAtomLabelPadding > 0.0) {
@@ -1731,8 +1732,8 @@ pair<string, MolDraw2D::OrientType> MolDraw2D::getAtomSymbolAndOrientation(
   OrientType orient = getAtomOrientation(atom, nbr_sum);
   string symbol = getAtomSymbol(atom);
 
-  std::cout << "   res: " << symbol << " orient: " << orient
-            << " nbr_sum:" << nbr_sum << std::endl << std::endl;
+  // std::cout << "   res: " << symbol << " orient: " << orient
+  //           << " nbr_sum:" << nbr_sum << std::endl << std::endl;
 
   return std::make_pair(symbol, orient);
 }
@@ -1819,9 +1820,6 @@ MolDraw2D::OrientType MolDraw2D::getAtomOrientation(const RDKit::Atom &atom,
   if(fabs(nbr_sum.x) > 1.0e-4) {
     islope = nbr_sum.y / nbr_sum.x;
   }
-  std::cout << "XXXX" << std::endl;
-  cout << "nbr_sum : " << nbr_sum.x << ", " << nbr_sum.y << endl;
-  cout << "islope : " << islope << endl;
   OrientType orient = C;
   if(fabs(islope) < 1.0) {
     if(nbr_sum.x > 0.0) {
@@ -1836,7 +1834,6 @@ MolDraw2D::OrientType MolDraw2D::getAtomOrientation(const RDKit::Atom &atom,
       orient = S;
     }
   }
-  cout << "Slope orient : " << orient << endl;
   // atoms of single degree should always be either W or E, never N or S.  If
   // either of the latter, make it E if the slope is close to vertical,
   // otherwise have it either as requuired.
@@ -1850,7 +1847,6 @@ MolDraw2D::OrientType MolDraw2D::getAtomOrientation(const RDKit::Atom &atom,
         orient = E;
       }
     }
-    cout << "adjusted orient : " << orient << endl;
   } else if (!atom.getDegree()) {
     // last check: degree zero atoms from the last three periods should have
     // the Hs first
