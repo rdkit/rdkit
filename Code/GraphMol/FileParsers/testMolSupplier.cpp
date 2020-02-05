@@ -2707,6 +2707,7 @@ M  END
   }
 }
 
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
 void testGitHub2881() {
   std::string data = R"DATA(f_m_ct { 
  s_m_title
@@ -2812,6 +2813,9 @@ void testGitHub2881() {
     TEST_ASSERT(!mol);
   }
 }
+#else
+void testGitHub2881() {}
+#endif
 
 int main() {
   RDLog::InitLogs();
