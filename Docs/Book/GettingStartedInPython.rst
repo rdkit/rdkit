@@ -803,7 +803,7 @@ It's also possible to produce an image grid out of a set of molecules:
 
 .. doctest::
 
-  >>> img=Draw.MolsToGridImage(ms[:8],molsPerRow=4,subImgSize=(200,200),legends=[x.GetProp("_Name") for x in ms[:8]])
+  >>> img=Draw.MolsToGridImage(ms[:8],molsPerRow=4,subImgSize=(200,200),legends=[x.GetProp("_Name") for x in ms[:8]])    # doctest: +SKIP
 
 This returns a PIL image, which can then be saved to a file:
 
@@ -827,7 +827,7 @@ aligned. This is easy enough to do:
   >>> AllChem.Compute2DCoords(p)
   0
   >>> for m in subms: AllChem.GenerateDepictionMatching2DStructure(m,p)
-  >>> img=Draw.MolsToGridImage(subms,molsPerRow=4,subImgSize=(200,200),legends=[x.GetProp("_Name") for x in subms])
+  >>> img=Draw.MolsToGridImage(subms,molsPerRow=4,subImgSize=(200,200),legends=[x.GetProp("_Name") for x in subms])    # doctest: +SKIP
   >>> img.save('images/cdk2_molgrid.aligned.o.png'))    # doctest: +SKIP
 
 
