@@ -415,8 +415,9 @@ std::vector<MatchVectType> SubstructMatch(
   if (nt == 1) {
     detail::ResSubstructMatchHelper_(args, &matches, 0,
                                      resMolSupplier.length());
+  } 
 #ifdef RDK_THREADSAFE_SSS
-  } else {
+  else {
     std::vector<std::future<void>> tg;
     std::vector<std::vector<MatchVectType> *> matchesThread(nt);
     unsigned int ei = 0;

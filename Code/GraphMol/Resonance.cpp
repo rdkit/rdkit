@@ -1238,8 +1238,9 @@ void ResonanceMolSupplier::enumerate() {
   resizeCeVect();
   if (d_numThreads == 1) {
     mainLoop(0, 1);
+  }
 #ifdef RDK_THREADSAFE_SSS
-  } else {
+  else {
     std::vector<std::future<void>> tg;
     auto functor = [this](unsigned int ti, unsigned int d_numThreads) -> void {
       mainLoop(ti, d_numThreads);
