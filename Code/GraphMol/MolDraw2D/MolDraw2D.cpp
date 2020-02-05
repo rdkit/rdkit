@@ -20,6 +20,7 @@
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <Geometry/point.h>
 
+#include <algorithm>
 #include <cstdlib>
 #include <cmath>
 #include <limits>
@@ -1085,6 +1086,36 @@ void MolDraw2D::drawString(const string &str, const Point2D &cds) {
 }
 
 // ****************************************************************************
+void MolDraw2D::drawStrings(const std::vector<std::string> &labels,
+                            const Point2D &cds, OrientType orient) {
+
+  double x_scale, y_scale;
+  if(orient == N) {
+    x_scale = 0.0;
+    y_scale = -1.0;
+  } else if(orient == C || orient == E) {
+    x_scale = 1.0;
+    y_scale = 0.0;
+  } else if(orient == S) {
+    x_scale = 0.0;
+    y_scale = 1.0;
+  } else if(orient == W) {
+    x_scale = -1.0;
+    y_scale = 0.0;
+  }
+
+  Point2D next_cds(cds);
+  for(auto lab: labels) {
+    drawString(lab, next_cds);
+    double width, height;
+    getStringSize(lab, width, height);
+    next_cds.x += x_scale * width;
+    next_cds.y += y_scale * height;
+  }
+
+}
+
+// ****************************************************************************
 DrawColour MolDraw2D::getColour(
     int atom_idx, const std::vector<int> *highlight_atoms,
     const std::map<int, DrawColour> *highlight_map) {
@@ -1177,13 +1208,20 @@ void MolDraw2D::extractAtomSymbols(const ROMol &mol) {
     boost::tie(nbr, end_nbrs) = mol.getAtomBonds(at1);
     Point2D &at1_cds = at_cds_[activeMolIdx_][at1->getIdx()];
     Point2D nbr_sum(0.0, 0.0);
+    cout << "Nbours for atom : " << at1->getIdx() << endl;
     while (nbr != end_nbrs) {
       const Bond *bond = mol[*nbr];
       ++nbr;
       Point2D &at2_cds =
           at_cds_[activeMolIdx_][bond->getOtherAtomIdx(at1->getIdx())];
       nbr_sum += at2_cds - at1_cds;
+      cout << at2_cds.x << ", " << at2_cds.y << " : "
+           << at1_cds.x << ", " << at1_cds.y << " : "
+           << nbr_sum.x << ", " << nbr_sum.y << endl;
     }
+//    double nbr_sum_len = sqrt(nbr_sum.x * nbr_sum.x + nbr_sum.y * nbr_sum.y);
+//    nbr_sum.x /= nbr_sum_len;
+//    nbr_sum.y /= nbr_sum_len;
     atom_syms_[activeMolIdx_].push_back(
         getAtomSymbolAndOrientation(*at1, nbr_sum));
     atomic_nums_[activeMolIdx_].push_back(at1->getAtomicNum());
@@ -1315,7 +1353,7 @@ void MolDraw2D::drawBond(const ROMol &mol, const Bond *bond, int at1_idx,
       bool asPolygon = true;
       double frac = 0.1;
       double angle = M_PI / 8;
-      if (at1_idx == bond->getBeginAtomIdx()) {
+      if (static_cast<unsigned int>(at1_idx) == bond->getBeginAtomIdx()) {
         drawArrow(at1_cds, at2_cds, asPolygon, frac, angle);
       } else {
         drawArrow(at2_cds, at1_cds, asPolygon, frac, angle);
@@ -1434,9 +1472,86 @@ void MolDraw2D::drawWedgedBond(const Point2D &cds1, const Point2D &cds2,
 void MolDraw2D::drawAtomLabel(int atom_num,
                               const std::vector<int> *highlight_atoms,
                               const std::map<int, DrawColour> *highlight_map) {
+
   setColour(getColour(atom_num, highlight_atoms, highlight_map));
-  drawString(atom_syms_[activeMolIdx_][atom_num].first,
-             at_cds_[activeMolIdx_][atom_num]);
+  cout << "drawString " << atom_syms_[activeMolIdx_][atom_num].first
+       << " at " << at_cds_[activeMolIdx_][atom_num][0]
+       << ", " << at_cds_[activeMolIdx_][atom_num][1]
+       << "  orient : " << atom_syms_[activeMolIdx_][atom_num].second << endl;
+  OrientType orient = atom_syms_[activeMolIdx_][atom_num].second;
+  vector<string> label_pieces = atomLabelToPieces(atom_num);
+  drawStrings(label_pieces, at_cds_[activeMolIdx_][atom_num], orient);
+
+}
+
+// ****************************************************************************
+vector<string> MolDraw2D::atomLabelToPieces(int atom_num) {
+
+  vector<string> label_pieces;
+  size_t i = 0;
+  const string &atsym = atom_syms_[activeMolIdx_][atom_num].first;
+  // The first character of each piece can be < or upper case letter,
+  // as in Cl or <sup>35</sup>Cl.
+  // If the next character is a lower case letter or a <, it's the
+  // same piece as in Br or H<sub>2</sub>.
+  // Worst case scenario is something like <sup>37</sup>Cl<sub>2</sub>
+  // for a molecule of chlorine 37.
+
+  auto get_marked_piece = [&]() -> string {
+    string piece;
+    // it might be the start of a <sub> or <sup> tag
+    while (atsym[i] != '>' && i < atsym.length()) {
+      piece += atsym[i++];
+    }
+    while (atsym[i] != '<' && i < atsym.length()) {
+      piece += atsym[i++];
+    }
+    while (atsym[i] != '>' && i < atsym.length()) {
+      piece += atsym[i++];
+    }
+    if (i < atsym.length() && atsym[i] == '>') {
+      piece += '>';
+      ++i;
+    }
+    return piece;
+  };
+
+  string next_piece;
+  while(true) {
+    if(i == atsym.length()) {
+      break;
+    }
+    if(atsym.substr(i, 5) == "<sup>") {
+      // the current piece is finished.  Store it and make a new one
+      if(next_piece.length()) {
+        label_pieces.emplace_back(next_piece);
+      }
+      next_piece = get_marked_piece();
+    } else if(atsym.substr(i, 5) == "<sub>") {
+      next_piece += get_marked_piece();
+      // </sub> must be the end of this piece.
+      label_pieces.emplace_back(next_piece);
+      next_piece.clear();
+    } else if(isupper(atsym[i])) {
+      next_piece += atsym[i++];
+      if(islower(atsym[i])) {
+        next_piece += atsym[i++];
+      }
+      if(atsym[i] != '<' && atsym[i] != '>') {
+        label_pieces.emplace_back(next_piece);
+        next_piece.clear();
+      }
+    }
+  }
+
+  cout << atsym;
+  for(auto s: label_pieces) {
+    cout << " : " << s;
+  }
+  cout << endl;
+
+  return label_pieces;
+
 }
 
 // ****************************************************************************
@@ -1600,36 +1715,21 @@ void MolDraw2D::adjustBondEndForLabel(int atnum, const Point2D &nbr_cds,
 // as MolDrawing.py. My first thought was for a LaTeX-like system,
 // obviously...
 pair<string, MolDraw2D::OrientType> MolDraw2D::getAtomSymbolAndOrientation(
-    const Atom &atom, const Point2D &nbr_sum) {
-  string symbol("");
+    const Atom &atom, const Point2D &nbr_sum) const {
 
-  // -----------------------------------
-  // consider the orientation
-  OrientType orient = C;
-  if (1 == atom.getDegree()) {
-    double islope = 0.0;
-    if (fabs(nbr_sum.y) > 1.0) {
-      islope = nbr_sum.x / fabs(nbr_sum.y);
-    } else {
-      islope = nbr_sum.x;
-    }
-    if (fabs(islope) > 0.85) {
-      if (islope > 0.0) {
-        orient = W;
-      } else {
-        orient = E;
-      }
-    } else {
-      if (nbr_sum.y > 0.0) {
-        orient = N;
-      } else {
-        orient = S;
-      }
-    }
-  }
+  OrientType orient = getAtomOrientation(atom, nbr_sum);
+  string symbol = getAtomSymbol(atom);
 
-  // -----------------------------------
-  // the symbol
+  std::cout << "   res: " << symbol << " orient: " << orient
+            << " nbr_sum:" << nbr_sum << std::endl << std::endl;
+
+  return std::make_pair(symbol, orient);
+}
+
+// ****************************************************************************
+string MolDraw2D::getAtomSymbol(const RDKit::Atom &atom) const {
+
+  string symbol;
   unsigned int iso = atom.getIsotope();
   if (drawOptions().atomLabels.find(atom.getIdx()) !=
       drawOptions().atomLabels.end()) {
@@ -1650,33 +1750,16 @@ pair<string, MolDraw2D::OrientType> MolDraw2D::getAtomSymbolAndOrientation(
   } else {
     std::vector<std::string> preText, postText;
     int num_h = (atom.getAtomicNum() == 6 && atom.getDegree() > 0)
-                    ? 0
-                    : atom.getTotalNumHs();  // FIX: still not quite right
+                ? 0
+                : atom.getTotalNumHs();  // FIX: still not quite right
     if (num_h > 0 && !atom.hasQuery()) {
-      // the H text can come before or after the atomic symbol, depending on
-      // the orientation
+      // the H text comes after the atomic symbol
       std::string h = "H";
       if (num_h > 1) {
         // put the number as a subscript
         h += string("<sub>") + std::to_string(num_h) + string("</sub>");
       }
-      // last check: degree zero atoms from the last three periods should have
-      // the Hs first
-      if (!atom.getDegree()) {
-        static int HsListedFirstSrc[] = {8, 9, 16, 17, 34, 35, 52, 53, 84, 85};
-        std::vector<int> HsListedFirst(
-            HsListedFirstSrc,
-            HsListedFirstSrc + sizeof(HsListedFirstSrc) / sizeof(int));
-        if (std::find(HsListedFirst.begin(), HsListedFirst.end(),
-                      atom.getAtomicNum()) != HsListedFirst.end()) {
-          orient = MolDraw2D::W;
-        }
-      }
-      if (orient == MolDraw2D::W) {
-        preText.push_back(h);
-      } else {
-        postText.push_back(h);
-      }
+      postText.push_back(h);
     }
 
     if (0 != iso) {
@@ -1713,11 +1796,68 @@ pair<string, MolDraw2D::OrientType> MolDraw2D::getAtomSymbolAndOrientation(
     BOOST_FOREACH (const std::string &se, postText) { symbol += se; }
   }
 
-  // std::cerr << "   res: " << symbol << " orient: " << orient
-  //           << " nbr_sum:" << nbr_sum << std::endl;
-  return std::make_pair(symbol, orient);
+  return symbol;
+
 }
 
+// ****************************************************************************
+MolDraw2D::OrientType MolDraw2D::getAtomOrientation(const RDKit::Atom &atom,
+                                                    const Point2D &nbr_sum) const {
+
+  double islope = 1000.0;
+  if(fabs(nbr_sum.x) > 1.0e-4) {
+    islope = nbr_sum.y / nbr_sum.x;
+  }
+  std::cout << "XXXX" << std::endl;
+  cout << "nbr_sum : " << nbr_sum.x << ", " << nbr_sum.y << endl;
+  cout << "islope : " << islope << endl;
+  OrientType orient = C;
+  if(fabs(islope) < 1.0) {
+    if(nbr_sum.x > 0.0) {
+      orient = W;
+    } else {
+      orient = E;
+    }
+  } else {
+    if(nbr_sum.y > 0.0) {
+      orient = N;
+    } else {
+      orient = S;
+    }
+  }
+  cout << "Slope orient : " << orient << endl;
+  // atoms of single degree should always be either W or E, never N or S.  If
+  // either of the latter, make it E if the slope is close to vertical,
+  // otherwise have it either as requuired.
+  if(atom.getDegree() == 1 && (orient == N || orient == S)) {
+    if(fabs(islope) > 0.85) {
+      orient = E;
+    } else {
+      if(nbr_sum.x > 0.0) {
+        orient = W;
+      } else {
+        orient = E;
+      }
+    }
+    cout << "adjusted orient : " << orient << endl;
+  } else if (!atom.getDegree()) {
+    // last check: degree zero atoms from the last three periods should have
+    // the Hs first
+    static int HsListedFirstSrc[] = {8, 9, 16, 17, 34, 35, 52, 53, 84, 85};
+    std::vector<int> HsListedFirst(
+        HsListedFirstSrc,
+        HsListedFirstSrc + sizeof(HsListedFirstSrc) / sizeof(int));
+    if (std::find(HsListedFirst.begin(), HsListedFirst.end(),
+                  atom.getAtomicNum()) != HsListedFirst.end()) {
+      orient = MolDraw2D::W;
+    }
+  }
+
+  return orient;
+
+}
+
+// ****************************************************************************
 void MolDraw2D::drawTriangle(const Point2D &cds1, const Point2D &cds2,
                              const Point2D &cds3) {
   std::vector<Point2D> pts(3);

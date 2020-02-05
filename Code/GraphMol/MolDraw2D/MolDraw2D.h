@@ -404,6 +404,10 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
                              double &label_height) const = 0;
   //! drawString centres the string on cds.
   virtual void drawString(const std::string &str, const Point2D &cds);
+  // draw the vector of strings from cds putting the nth+1 at the end of
+  // the nth.  Aligns them according to OrientType.
+  virtual void drawStrings(const std::vector<std::string> &labels,
+                           const Point2D &cds, OrientType orient);
 
   //! draw a polygon
   virtual void drawPolygon(const std::vector<Point2D> &cds) = 0;
@@ -497,6 +501,10 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   void drawAtomLabel(int atom_num,
                      const std::vector<int> *highlight_atoms = nullptr,
                      const std::map<int, DrawColour> *highlight_map = nullptr);
+  // take the label for the given atom and return the individual pieces
+  // that need to be drawn for it.  So NH<sub>2</sub> will return
+  // "N", "H<sub>2</sub>".
+  std::vector<std::string> atomLabelToPieces(int atom_num);
   // cds1 and cds2 are 2 atoms in a ring.  Returns the perpendicular pointing
   // into
   // the ring.
@@ -520,7 +528,9 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
 
   // adds LaTeX-like annotation for super- and sub-script.
   std::pair<std::string, OrientType> getAtomSymbolAndOrientation(
-      const Atom &atom, const Point2D &nbr_sum);
+      const Atom &atom, const Point2D &nbr_sum) const;
+  std::string getAtomSymbol(const Atom &atom) const;
+  OrientType getAtomOrientation(const Atom &atom, const Point2D &nbr_sum) const;
 
  protected:
   virtual void doContinuousHighlighting(
