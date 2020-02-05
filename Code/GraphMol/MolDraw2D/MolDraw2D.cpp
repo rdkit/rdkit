@@ -1588,8 +1588,15 @@ Point2D MolDraw2D::bondInsideRing(const ROMol &mol, const Bond *bond,
   while (nbr2 != end_nbrs2) {
     const Bond *bond2 = mol[*nbr2];
     ++nbr2;
+    // morphine (CN1CC[C@]23c4c5ccc(O)c4O[C@H]2[C@@H](O)C=C[C@H]3[C@H]1C5)
+    // showed a problem where one of the dashed bonds of the aromatic ring
+    // was not in the aromatic ring with the rest, because the first bond2
+    // we come to is in the aliphatic ring fused to the aromatic.  So check
+    // the types are not 1 aromatic, the other not.
     if (bond2->getIdx() == bond->getIdx() ||
-        !mol.getRingInfo()->numBondRings(bond2->getIdx())) {
+        !mol.getRingInfo()->numBondRings(bond2->getIdx()) ||
+        (bond->getIsAromatic() && !bond2->getIsAromatic()) ||
+        (!bond->getIsAromatic() && bond2->getIsAromatic())) {
       continue;
     }
     bool same_ring = false;
