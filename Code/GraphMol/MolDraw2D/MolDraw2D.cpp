@@ -903,6 +903,8 @@ void MolDraw2D::calculateScale(int width, int height,
   // the edges, and we probably need to do it iteratively because
   // get_string_size uses the current value of scale_.
   // We also need to adjust for highlighted atoms if there are any.
+  // And now we need to take account of strings with N/S orientation
+  // as well.
   while (scale_ > 1e-4) {
     for (int i = 0, is = atom_syms_[activeMolIdx_].size(); i < is; ++i) {
       if (!atom_syms_[activeMolIdx_][i].first.empty()) {
@@ -911,18 +913,30 @@ void MolDraw2D::calculateScale(int width, int height,
                       atsym_height);
         double this_x_min = at_cds_[activeMolIdx_][i].x;
         double this_x_max = at_cds_[activeMolIdx_][i].x;
-        double this_y = at_cds_[activeMolIdx_][i].y - atsym_height / 2;
-        if (W == atom_syms_[activeMolIdx_][i].second) {
+        double this_y_min = at_cds_[activeMolIdx_][i].y - atsym_height / 2;
+        double this_y_max = at_cds_[activeMolIdx_][i].y + atsym_height / 2;
+        OrientType orient = atom_syms_[activeMolIdx_][i].second;
+        if (orient == W) {
           this_x_min -= atsym_width;
-        } else if (E == atom_syms_[activeMolIdx_][i].second) {
+        } else if (orient == E) {
           this_x_max += atsym_width;
+        } else if(orient == N || orient == S) {
+          vector<string> sym_bits = atomLabelToPieces(i);
+          double height, width, cumm_height = 0.0;
+          for (auto bit: sym_bits) {
+            getStringSize(bit, width, height);
+            cumm_height += height;
+          }
+          this_y_min = at_cds_[activeMolIdx_][i].y - cumm_height / 2;
+          this_y_max = at_cds_[activeMolIdx_][i].y + cumm_height / 2;
         } else {
           this_x_max += atsym_width / 2;
           this_x_min -= atsym_width / 2;
         }
         x_max = std::max(x_max, this_x_max);
         x_min_ = std::min(x_min_, this_x_min);
-        y_max = std::max(y_max, this_y);
+        y_max = std::max(y_max, this_y_max);
+        y_min_ = std::min(y_min_, this_y_min);
       }
       if (highlight_atoms) {
         if (highlight_atoms->end() !=
@@ -1219,9 +1233,6 @@ void MolDraw2D::extractAtomSymbols(const ROMol &mol) {
            << at1_cds.x << ", " << at1_cds.y << " : "
            << nbr_sum.x << ", " << nbr_sum.y << endl;
     }
-//    double nbr_sum_len = sqrt(nbr_sum.x * nbr_sum.x + nbr_sum.y * nbr_sum.y);
-//    nbr_sum.x /= nbr_sum_len;
-//    nbr_sum.y /= nbr_sum_len;
     atom_syms_[activeMolIdx_].push_back(
         getAtomSymbolAndOrientation(*at1, nbr_sum));
     atomic_nums_[activeMolIdx_].push_back(at1->getAtomicNum());
