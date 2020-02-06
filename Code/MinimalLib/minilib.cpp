@@ -273,12 +273,19 @@ std::string JSMol::get_stereo_tags() const {
 
   bool cleanIt = true;
   bool force = true;
-  MolOps::assignStereochemistry(*d_mol, cleanIt, force);
+  bool flagPossibleStereocenters = true;
+  MolOps::assignStereochemistry(*d_mol, cleanIt, force,
+                                flagPossibleStereocenters);
 
   rj::Value rjAtoms(rj::kArrayType);
   for (const auto atom : d_mol->atoms()) {
     std::string cip;
-    if (atom->getPropIfPresent(common_properties::_CIPCode, cip)) {
+    if (!atom->getPropIfPresent(common_properties::_CIPCode, cip)) {
+      if (atom->hasProp(common_properties::_ChiralityPossible)) {
+        cip = "?";
+      }
+    }
+    if (!cip.empty()) {
       cip = "(" + cip + ")";
       rj::Value entry(rj::kArrayType);
       entry.PushBack(atom->getIdx(), doc.GetAllocator());
