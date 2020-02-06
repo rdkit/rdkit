@@ -128,25 +128,31 @@ std::string JSMol::get_svg_with_highlights(const std::string &details) const {
     atomIds.push_back(static_cast<unsigned int>(molval.GetInt()));
   }
   std::vector<unsigned int> bondIds;
-  if (doc.HasMember("bonds") && !doc["bonds"].IsArray()) {
-    return "JSON contain 'bonds' field, but it is not an array";
-  }
-  for (const auto &molval : doc["bonds"].GetArray()) {
-    if (!molval.IsInt()) return ("Bond IDs should be integers");
-    bondIds.push_back(static_cast<unsigned int>(molval.GetInt()));
+  if (doc.HasMember("bonds")) {
+    if (!doc["bonds"].IsArray()) {
+      return "JSON contain 'bonds' field, but it is not an array";
+    }
+    for (const auto &molval : doc["bonds"].GetArray()) {
+      if (!molval.IsInt()) return ("Bond IDs should be integers");
+      bondIds.push_back(static_cast<unsigned int>(molval.GetInt()));
+    }
   }
 
   unsigned int w = d_defaultWidth;
-  if (doc.HasMember("width") && !doc["width"].IsUint()) {
-    return "JSON contains 'width' field, but it is not an unsigned int";
+  if (doc.HasMember("width")) {
+    if (!doc["width"].IsUint()) {
+      return "JSON contains 'width' field, but it is not an unsigned int";
+    }
+    w = doc["width"].GetUint();
   }
-  w = doc["width"].GetUint();
 
   unsigned int h = d_defaultHeight;
-  if (doc.HasMember("height") && !doc["height"].IsUint()) {
-    return "JSON contains 'height' field, but it is not an unsigned int";
+  if (doc.HasMember("height")) {
+    if (!doc["height"].IsUint()) {
+      return "JSON contains 'height' field, but it is not an unsigned int";
+    }
+    h = doc["height"].GetUint();
   }
-  h = doc["height"].GetUint();
 
   return svg_(*d_mol, w, h, &atomIds, &bondIds);
 }
