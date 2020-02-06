@@ -91,13 +91,11 @@ void MolDraw2D::doContinuousHighlighting(
       min(tgt_lw,
           (int)(scale_ / 25. * tgt_lw)));  // the 25 here is extremely empirical
   bool orig_fp = fillPolys();
-  ROMol::VERTEX_ITER this_at, end_at;
   if (highlight_bonds) {
-    boost::tie(this_at, end_at) = mol.getVertices();
-    while (this_at != end_at) {
-      int this_idx = mol[*this_at]->getIdx();
+    for(auto this_at: mol.atoms()) {
+      int this_idx = this_at->getIdx();
       ROMol::OEDGE_ITER nbr, end_nbr;
-      boost::tie(nbr, end_nbr) = mol.getAtomBonds(mol[*this_at]);
+      boost::tie(nbr, end_nbr) = mol.getAtomBonds(this_at);
       while (nbr != end_nbr) {
         const Bond *bond = mol[*nbr];
         ++nbr;
@@ -119,13 +117,11 @@ void MolDraw2D::doContinuousHighlighting(
           }
         }
       }
-      ++this_at;
     }
   }
   if (highlight_atoms) {
-    boost::tie(this_at, end_at) = mol.getVertices();
-    while (this_at != end_at) {
-      int this_idx = mol[*this_at]->getIdx();
+    for(auto this_at: mol.atoms()) {
+      int this_idx = this_at->getIdx();
       if (std::find(highlight_atoms->begin(), highlight_atoms->end(),
                     this_idx) != highlight_atoms->end()) {
         DrawColour col = drawOptions().highlightColour;
@@ -149,7 +145,6 @@ void MolDraw2D::doContinuousHighlighting(
         setLineWidth(1);
         drawEllipse(p1, p2);
       }
-      ++this_at;
     }
   }
   setLineWidth(orig_lw);
@@ -241,11 +236,9 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
     highlight_bonds = nullptr;
     highlight_atoms = nullptr;
   } else if (drawOptions().circleAtoms && highlight_atoms) {
-    ROMol::VERTEX_ITER this_at, end_at;
-    boost::tie(this_at, end_at) = rwmol.getVertices();
     setFillPolys(drawOptions().fillHighlights);
-    while (this_at != end_at) {
-      int this_idx = rwmol[*this_at]->getIdx();
+    for(auto this_at: rwmol.atoms()) {
+      int this_idx = this_at->getIdx();
       if (std::find(highlight_atoms->begin(), highlight_atoms->end(),
                     this_idx) != highlight_atoms->end()) {
         if (highlight_atom_map &&
@@ -266,17 +259,14 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
         p2 += offset;
         drawEllipse(p1, p2);
       }
-      ++this_at;
     }
     setFillPolys(true);
   }
 
-  ROMol::VERTEX_ITER this_at, end_at;
-  boost::tie(this_at, end_at) = rwmol.getVertices();
-  while (this_at != end_at) {
-    int this_idx = rwmol[*this_at]->getIdx();
+  for(auto this_at: rwmol.atoms()) {
+    int this_idx = this_at->getIdx();
     ROMol::OEDGE_ITER nbr, end_nbr;
-    boost::tie(nbr, end_nbr) = rwmol.getAtomBonds(rwmol[*this_at]);
+    boost::tie(nbr, end_nbr) = rwmol.getAtomBonds(this_at);
     while (nbr != end_nbr) {
       const Bond *bond = rwmol[*nbr];
       ++nbr;
@@ -287,15 +277,10 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
                  highlight_atom_map, highlight_bonds, highlight_bond_map);
       }
     }
-    ++this_at;
   }
 
   if (drawOptions().dummiesAreAttachments) {
-    ROMol::VERTEX_ITER atom, end_atom;
-    boost::tie(atom, end_atom) = rwmol.getVertices();
-    while (atom != end_atom) {
-      const Atom *at1 = rwmol[*atom];
-      ++atom;
+    for(auto at1: rwmol.atoms()) {
       if (at1->hasProp(common_properties::atomLabel) ||
           drawOptions().atomLabels.find(at1->getIdx()) !=
               drawOptions().atomLabels.end()) {
@@ -1201,10 +1186,8 @@ void MolDraw2D::extractAtomCoords(const ROMol &mol, int confId,
     bbox_[1].x = bbox_[1].y = -1 * numeric_limits<double>::max();
   }
   const RDGeom::POINT3D_VECT &locs = mol.getConformer(confId).getPositions();
-  ROMol::VERTEX_ITER this_at, end_at;
-  boost::tie(this_at, end_at) = mol.getVertices();
-  while (this_at != end_at) {
-    int this_idx = mol[*this_at]->getIdx();
+  for(auto this_at: mol.atoms()) {
+    int this_idx = this_at->getIdx();
     Point2D pt(locs[this_idx].x, locs[this_idx].y);
     at_cds_[activeMolIdx_].push_back(pt);
 
@@ -1214,7 +1197,6 @@ void MolDraw2D::extractAtomCoords(const ROMol &mol, int confId,
       bbox_[1].x = std::max(bbox_[1].x, locs[this_idx].x);
       bbox_[1].y = std::max(bbox_[1].y, locs[this_idx].y);
     }
-    ++this_at;
   }
 }
 
@@ -1225,11 +1207,8 @@ void MolDraw2D::extractAtomSymbols(const ROMol &mol) {
   PRECONDITION(static_cast<int>(atomic_nums_.size()) > activeMolIdx_,
                "no space");
 
-  ROMol::VERTEX_ITER atom, end_atom;
-  boost::tie(atom, end_atom) = mol.getVertices();
-  while (atom != end_atom) {
+  for(auto at1: mol.atoms()) {
     ROMol::OEDGE_ITER nbr, end_nbrs;
-    const Atom *at1 = mol[*atom];
     boost::tie(nbr, end_nbrs) = mol.getAtomBonds(at1);
     Point2D &at1_cds = at_cds_[activeMolIdx_][at1->getIdx()];
     Point2D nbr_sum(0.0, 0.0);
@@ -1247,7 +1226,6 @@ void MolDraw2D::extractAtomSymbols(const ROMol &mol) {
     atom_syms_[activeMolIdx_].push_back(
         getAtomSymbolAndOrientation(*at1, nbr_sum));
     atomic_nums_[activeMolIdx_].push_back(at1->getAtomicNum());
-    ++atom;
   }
 }
 
