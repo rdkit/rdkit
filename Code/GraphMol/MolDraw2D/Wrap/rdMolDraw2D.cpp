@@ -531,6 +531,9 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                      &RDKit::MolDrawOptions::prepareMolsBeforeDrawing,
                      "call prepareMolForDrawing() on each molecule passed to "
                      "DrawMolecules()")
+      .def_readwrite("fixedScale", &RDKit::MolDrawOptions::fixedScale,
+                     "If > 0.0, fixes scale to that fraction of width of"
+                     "draw window.  Default -1.0 means adjust scale to fit.")
       .def_readwrite("additionalAtomLabelPadding",
                      &RDKit::MolDrawOptions::additionalAtomLabelPadding,
                      "additional padding to leave around atom labels. "

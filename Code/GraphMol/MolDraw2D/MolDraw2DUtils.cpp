@@ -84,9 +84,14 @@ void prepareAndDrawMolecule(MolDraw2D &drawer, const ROMol &mol,
                             int confId) {
   RWMol cpy(mol);
   prepareMolForDrawing(cpy);
+  // having done the prepare, we don't want to do it again in drawMolecule.
+  bool old_prep_mol = drawer.drawOptions().prepareMolsBeforeDrawing;
+  drawer.drawOptions().prepareMolsBeforeDrawing = false;
   drawer.drawMolecule(cpy, legend, highlight_atoms, highlight_bonds,
                       highlight_atom_map, highlight_bond_map, highlight_radii,
                       confId);
+  drawer.drawOptions().prepareMolsBeforeDrawing = old_prep_mol;
+
 }
 
 void updateDrawerParamsFromJSON(MolDraw2D &drawer, const char *json) {

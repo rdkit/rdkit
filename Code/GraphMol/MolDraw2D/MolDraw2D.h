@@ -126,6 +126,10 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   ColourPalette atomColourPalette;  // the palette used to assign
                                     // colors to atoms based on
                                     // atomic number. -1 is the default value
+  double fixedScale; // fixes scale to this fraction of draw window width, so
+                     // an average bond is this fraction of the width.  If
+                     // scale comes out smaller than this, reduces scale, but
+                     // won't make it larger.  Default -1.0 means no fix.
 
   MolDrawOptions()
       : atomLabelDeuteriumTritium(false),
@@ -145,7 +149,8 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
         additionalAtomLabelPadding(0.0),
         symbolColour(0, 0, 0),
         bondLineWidth(-1),
-        prepareMolsBeforeDrawing(true) {
+        prepareMolsBeforeDrawing(true),
+        fixedScale(-1.0) {
     highlightColourPalette.push_back(
         DrawColour(1., 1., .67));                              // popcorn yellow
     highlightColourPalette.push_back(DrawColour(1., .8, .6));  // sand

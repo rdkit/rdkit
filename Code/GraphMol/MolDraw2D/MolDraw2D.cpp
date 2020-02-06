@@ -24,6 +24,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <limits>
+#include <memory>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/tuple/tuple_comparison.hpp>
@@ -94,11 +95,8 @@ void MolDraw2D::doContinuousHighlighting(
   if (highlight_bonds) {
     for(auto this_at: mol.atoms()) {
       int this_idx = this_at->getIdx();
-      ROMol::OEDGE_ITER nbr, end_nbr;
-      boost::tie(nbr, end_nbr) = mol.getAtomBonds(this_at);
-      while (nbr != end_nbr) {
-        const Bond *bond = mol[*nbr];
-        ++nbr;
+      for(const auto &nbri: make_iterator_range(mol.getAtomBonds(this_at))) {
+        const Bond *bond = mol[nbri];
         int nbr_idx = bond->getOtherAtomIdx(this_idx);
         if (nbr_idx < static_cast<int>(at_cds_[activeMolIdx_].size()) &&
             nbr_idx > this_idx) {
@@ -164,22 +162,28 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
   atom_syms_.push_back(std::vector<std::pair<std::string, OrientType>>());
   activeMolIdx_++;
 
-  // prepareMolForDrawing needs a RWMol.
-  RWMol rwmol(mol);
-  if(drawOptions().prepareMolsBeforeDrawing) {
-    MolDraw2DUtils::prepareMolForDrawing(rwmol, false);
+  // prepareMolForDrawing needs a RWMol but don't copy the original mol
+  // if we don't need to
+  unique_ptr<RWMol> rwmol;
+  if(drawOptions().prepareMolsBeforeDrawing || !mol.getNumConformers()) {
+    rwmol.reset(new RWMol(mol));
+    MolDraw2DUtils::prepareMolForDrawing(*rwmol, false);
+  }
+  ROMol const &draw_mol = rwmol ? *(rwmol) : mol;
+  if(!draw_mol.getNumConformers()) {
+    // clearly, the molecule is in a sorry state.
+    return;
   }
   int origWidth = curr_width_;
   if (drawOptions().bondLineWidth >= 0) {
     curr_width_ = drawOptions().bondLineWidth;
   }
-
   if (!activeMolIdx_) {  // on the first pass we need to do some work
     if (drawOptions().clearBackground) {
       clearDrawing();
     }
-    extractAtomCoords(rwmol, confId, true);
-    extractAtomSymbols(rwmol);
+    extractAtomCoords(draw_mol, confId, true);
+    extractAtomSymbols(draw_mol);
     if (needs_scale_) {
       calculateScale(panel_width_, panel_height_, highlight_atoms,
                      highlight_radii);
@@ -193,14 +197,14 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
       setFontSize(font_size_ * 30. / scale_);
     }
   } else {
-    extractAtomCoords(rwmol, confId, false);
-    extractAtomSymbols(rwmol);
+    extractAtomCoords(draw_mol, confId, false);
+    extractAtomSymbols(draw_mol);
   }
 
-  // std::cerr << "scale: " << scale_ << " font_size_: " << font_size_
+  // std::cout << "scale: " << scale_ << " font_size_: " << font_size_
   //           << std::endl;
   if (drawOptions().includeAtomTags) {
-    tagAtoms(rwmol);
+    tagAtoms(draw_mol);
   }
   if (drawOptions().atomRegions.size()) {
     for(const std::vector<int> &region: drawOptions().atomRegions) {
@@ -228,7 +232,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
 
   if (drawOptions().continuousHighlight) {
     // if we're doing continuous highlighting, start by drawing the highlights
-    doContinuousHighlighting(rwmol, highlight_atoms, highlight_bonds,
+    doContinuousHighlighting(draw_mol, highlight_atoms, highlight_bonds,
                              highlight_atom_map, highlight_bond_map,
                              highlight_radii);
     // at this point we shouldn't be doing any more highlighting, so blow out
@@ -237,7 +241,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
     highlight_atoms = nullptr;
   } else if (drawOptions().circleAtoms && highlight_atoms) {
     setFillPolys(drawOptions().fillHighlights);
-    for(auto this_at: rwmol.atoms()) {
+    for(auto this_at: draw_mol.atoms()) {
       int this_idx = this_at->getIdx();
       if (std::find(highlight_atoms->begin(), highlight_atoms->end(),
                     this_idx) != highlight_atoms->end()) {
@@ -263,24 +267,21 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
     setFillPolys(true);
   }
 
-  for(auto this_at: rwmol.atoms()) {
+  for(auto this_at: draw_mol.atoms()) {
     int this_idx = this_at->getIdx();
-    ROMol::OEDGE_ITER nbr, end_nbr;
-    boost::tie(nbr, end_nbr) = rwmol.getAtomBonds(this_at);
-    while (nbr != end_nbr) {
-      const Bond *bond = rwmol[*nbr];
-      ++nbr;
+    for (const auto &nbri : make_iterator_range(draw_mol.getAtomBonds(this_at))) {
+      const Bond *bond = draw_mol[nbri];
       int nbr_idx = bond->getOtherAtomIdx(this_idx);
       if (nbr_idx < static_cast<int>(at_cds_[activeMolIdx_].size()) &&
           nbr_idx > this_idx) {
-        drawBond(rwmol, bond, this_idx, nbr_idx, highlight_atoms,
+        drawBond(draw_mol, bond, this_idx, nbr_idx, highlight_atoms,
                  highlight_atom_map, highlight_bonds, highlight_bond_map);
       }
     }
   }
 
   if (drawOptions().dummiesAreAttachments) {
-    for(auto at1: rwmol.atoms()) {
+    for(auto at1: draw_mol.atoms()) {
       if (at1->hasProp(common_properties::atomLabel) ||
           drawOptions().atomLabels.find(at1->getIdx()) !=
               drawOptions().atomLabels.end()) {
@@ -289,9 +290,8 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
       }
       if (at1->getAtomicNum() == 0 && at1->getDegree() == 1) {
         Point2D &at1_cds = at_cds_[activeMolIdx_][at1->getIdx()];
-        ROMol::ADJ_ITER nbrIdx, endNbrs;
-        boost::tie(nbrIdx, endNbrs) = rwmol.getAtomNeighbors(at1);
-        const Atom *at2 = rwmol[*nbrIdx];
+        const auto &iter_pair = draw_mol.getAtomNeighbors(at1);
+        const Atom *at2 = draw_mol[*iter_pair.first];
         Point2D &at2_cds = at_cds_[activeMolIdx_][at2->getIdx()];
         drawAttachmentLine(at2_cds, at1_cds, DrawColour(.5, .5, .5));
       }
@@ -562,10 +562,8 @@ void MolDraw2D::drawReaction(
         atom->setAtomMapNum(0);
         // add highlighted bonds to lower-numbered
         // (and thus already covered) neighbors
-        ROMol::ADJ_ITER nbrIdx, endNbrs;
-        boost::tie(nbrIdx, endNbrs) = tmol->getAtomNeighbors(atom);
-        while (nbrIdx != endNbrs) {
-          const Atom *nbr = (*tmol)[*nbrIdx];
+        for(const auto &nbri: make_iterator_range(tmol->getAtomNeighbors(atom))) {
+          const Atom *nbr = (*tmol)[nbri];
           if (nbr->getIdx() < aidx &&
               atomfragmap[nbr->getIdx()] == atomfragmap[aidx]) {
             int bondIdx =
@@ -573,7 +571,6 @@ void MolDraw2D::drawReaction(
             bond_highlights->push_back(bondIdx);
             (*bond_highlight_colors)[bondIdx] = (*atom_highlight_colors)[aidx];
           }
-          ++nbrIdx;
         }
       }
     }
@@ -591,10 +588,8 @@ void MolDraw2D::drawReaction(
         atom->setAtomMapNum(0);
         // add highlighted bonds to lower-numbered
         // (and thus already covered) neighbors
-        ROMol::ADJ_ITER nbrIdx, endNbrs;
-        boost::tie(nbrIdx, endNbrs) = tmol->getAtomNeighbors(atom);
-        while (nbrIdx != endNbrs) {
-          const Atom *nbr = (*tmol)[*nbrIdx];
+        for(const auto &nbri: make_iterator_range(tmol->getAtomNeighbors(atom))) {
+          const Atom *nbr = (*tmol)[nbri];
           if (nbr->getIdx() < aidx && (*atom_highlight_colors)[nbr->getIdx()] ==
                                           (*atom_highlight_colors)[aidx]) {
             int bondIdx =
@@ -602,7 +597,6 @@ void MolDraw2D::drawReaction(
             bond_highlights->push_back(bondIdx);
             (*bond_highlight_colors)[bondIdx] = (*atom_highlight_colors)[aidx];
           }
-          ++nbrIdx;
         }
       }
     }
@@ -976,6 +970,15 @@ void MolDraw2D::calculateScale(int width, int height,
 
   if (x_range_ > 1e-4 || y_range_ > 1e-4) {
     scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
+    if(drawOptions().fixedScale > 0.0) {
+      // cout << "applying fixed scale" << endl;
+      // after all that, use the fixed scale unless it's too big, in which case
+      // scale the drawing down to fit.
+      double fix_scale = double(width) * drawOptions().fixedScale;
+      if(scale_ > fix_scale) {
+        scale_ = fix_scale;
+      }
+    }
     double y_mid = y_min_ + 0.5 * y_range_;
     double x_mid = x_min_ + 0.5 * x_range_;
     Point2D mid = getDrawCoords(Point2D(x_mid, y_mid));
@@ -989,6 +992,9 @@ void MolDraw2D::calculateScale(int width, int height,
     x_trans_ = 0.;
     y_trans_ = 0.;
   }
+
+  // cout << "final scale : " << scale_ << endl;
+
 }
 
 // ****************************************************************************
@@ -1178,6 +1184,8 @@ void MolDraw2D::extractAtomCoords(const ROMol &mol, int confId,
   PRECONDITION(static_cast<int>(at_cds_.size()) > activeMolIdx_, "no space");
   PRECONDITION(static_cast<int>(atomic_nums_.size()) > activeMolIdx_,
                "no space");
+  PRECONDITION(static_cast<int>(mol.getNumConformers()) > 0,
+               "no coords")
 
   at_cds_[activeMolIdx_].clear();
   atomic_nums_[activeMolIdx_].clear();
@@ -1208,14 +1216,11 @@ void MolDraw2D::extractAtomSymbols(const ROMol &mol) {
                "no space");
 
   for(auto at1: mol.atoms()) {
-    ROMol::OEDGE_ITER nbr, end_nbrs;
-    boost::tie(nbr, end_nbrs) = mol.getAtomBonds(at1);
     Point2D &at1_cds = at_cds_[activeMolIdx_][at1->getIdx()];
     Point2D nbr_sum(0.0, 0.0);
     // cout << "Nbours for atom : " << at1->getIdx() << endl;
-    while (nbr != end_nbrs) {
-      const Bond *bond = mol[*nbr];
-      ++nbr;
+    for(const auto &nbri: make_iterator_range(mol.getAtomBonds(at1))) {
+      const Bond *bond = mol[nbri];
       Point2D &at2_cds =
           at_cds_[activeMolIdx_][bond->getOtherAtomIdx(at1->getIdx())];
       nbr_sum += at2_cds - at1_cds;
@@ -1572,11 +1577,8 @@ Point2D MolDraw2D::calcPerpendicular(const Point2D &cds1, const Point2D &cds2) {
 Point2D MolDraw2D::bondInsideRing(const ROMol &mol, const Bond *bond,
                                   const Point2D &cds1, const Point2D &cds2) {
   Atom *bgn_atom = bond->getBeginAtom();
-  ROMol::OEDGE_ITER nbr2, end_nbrs2;
-  boost::tie(nbr2, end_nbrs2) = mol.getAtomBonds(bgn_atom);
-  while (nbr2 != end_nbrs2) {
-    const Bond *bond2 = mol[*nbr2];
-    ++nbr2;
+  for(const auto &nbri2: make_iterator_range(mol.getAtomBonds(bgn_atom))) {
+    const Bond *bond2 = mol[nbri2];
     // morphine (CN1CC[C@]23c4c5ccc(O)c4O[C@H]2[C@@H](O)C=C[C@H]3[C@H]1C5)
     // showed a problem where one of the dashed bonds of the aromatic ring
     // was not in the aromatic ring with the rest, because the first bond2
@@ -1625,11 +1627,8 @@ Point2D MolDraw2D::bondInsideDoubleBond(const ROMol &mol, const Bond *bond) {
     end_atom = at1;
   }
   int at3 = -1;  // to stop the compiler whinging.
-  ROMol::OEDGE_ITER nbr2, end_nbrs2;
-  boost::tie(nbr2, end_nbrs2) = mol.getAtomBonds(bond_atom);
-  while (nbr2 != end_nbrs2) {
-    const Bond *bond2 = mol[*nbr2];
-    ++nbr2;
+  for(const auto &nbri2: make_iterator_range(mol.getAtomBonds(bond_atom))) {
+    const Bond *bond2 = mol[nbri2];
     if (bond != bond2) {
       at3 = bond2->getOtherAtomIdx(bond_atom->getIdx());
       break;
