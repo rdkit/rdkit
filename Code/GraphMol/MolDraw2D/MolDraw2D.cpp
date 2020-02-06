@@ -25,7 +25,6 @@
 #include <cmath>
 #include <limits>
 
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/tuple/tuple_comparison.hpp>
 #include <boost/assign/list_of.hpp>
@@ -209,11 +208,11 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
     tagAtoms(rwmol);
   }
   if (drawOptions().atomRegions.size()) {
-    BOOST_FOREACH (const std::vector<int> &region, drawOptions().atomRegions) {
+    for(const std::vector<int> &region: drawOptions().atomRegions) {
       if (region.size() > 1) {
         Point2D minv = at_cds_[activeMolIdx_][region[0]];
         Point2D maxv = at_cds_[activeMolIdx_][region[0]];
-        BOOST_FOREACH (int idx, region) {
+        for(int idx: region) {
           const Point2D &pt = at_cds_[activeMolIdx_][idx];
           minv.x = std::min(minv.x, pt.x);
           minv.y = std::min(minv.y, pt.y);
@@ -639,7 +638,7 @@ void MolDraw2D::drawReaction(
   setColour(options_.symbolColour);
 
   // now add the symbols
-  BOOST_FOREACH (double plusLoc, plusLocs) {
+  for(double plusLoc: plusLocs) {
     Point2D loc(plusLoc, arrowBegin.y);
     drawString("+", loc);
   }
@@ -1612,7 +1611,7 @@ Point2D MolDraw2D::bondInsideRing(const ROMol &mol, const Bond *bond,
       continue;
     }
     bool same_ring = false;
-    BOOST_FOREACH (const INT_VECT &ring, mol.getRingInfo()->bondRings()) {
+    for(const INT_VECT &ring: mol.getRingInfo()->bondRings()) {
       if (find(ring.begin(), ring.end(), bond->getIdx()) != ring.end() &&
           find(ring.begin(), ring.end(), bond2->getIdx()) != ring.end()) {
         same_ring = true;
@@ -1819,12 +1818,12 @@ string MolDraw2D::getAtomSymbol(const RDKit::Atom &atom) const {
     }
 
     symbol = "";
-    BOOST_FOREACH (const std::string &se, preText) { symbol += se; }
+    for(const std::string &se: preText) { symbol += se; }
     if (atom.getAtomicNum() != 6 || atom.getDegree() == 0 || preText.size() ||
         postText.size()) {
       symbol += atom.getSymbol();
     }
-    BOOST_FOREACH (const std::string &se, postText) { symbol += se; }
+    for(const std::string &se: postText) { symbol += se; }
   }
 
   return symbol;
