@@ -504,7 +504,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   // take the label for the given atom and return the individual pieces
   // that need to be drawn for it.  So NH<sub>2</sub> will return
   // "N", "H<sub>2</sub>".
-  std::vector<std::string> atomLabelToPieces(int atom_num);
+  std::vector<std::string> atomLabelToPieces(int atom_num) const;
   // cds1 and cds2 are 2 atoms in a ring.  Returns the perpendicular pointing
   // into
   // the ring.
