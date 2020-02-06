@@ -380,6 +380,8 @@ void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds) {
       first_span = false;
       d_os << "<tspan";
       switch (draw_mode) {
+        // To save people time later - on macOS Cataliina, at least, Firefox
+        // renders the superscript as a subscript.  It's fine on Safari.
         case TextDrawSuperscript:
           d_os << " style='baseline-shift:super;font-size:" << fontSz * 0.75
                << "px;"
