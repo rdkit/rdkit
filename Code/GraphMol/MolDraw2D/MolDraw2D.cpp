@@ -1823,38 +1823,41 @@ string MolDraw2D::getAtomSymbol(const RDKit::Atom &atom) const {
 MolDraw2D::OrientType MolDraw2D::getAtomOrientation(const RDKit::Atom &atom,
                                                     const Point2D &nbr_sum) const {
 
-  double islope = 1000.0;
-  if(fabs(nbr_sum.x) > 1.0e-4) {
-    islope = nbr_sum.y / nbr_sum.x;
-  }
+  cout << "Atom degree : " << atom.getDegree() << endl;
   OrientType orient = C;
-  if(fabs(islope) < 1.0) {
-    if(nbr_sum.x > 0.0) {
-      orient = W;
-    } else {
-      orient = E;
+  if(atom.getDegree()) {
+    double islope = 1000.0;
+    if(fabs(nbr_sum.x) > 1.0e-4) {
+      islope = nbr_sum.y / nbr_sum.x;
     }
-  } else {
-    if(nbr_sum.y > 0.0) {
-      orient = N;
-    } else {
-      orient = S;
-    }
-  }
-  // atoms of single degree should always be either W or E, never N or S.  If
-  // either of the latter, make it E if the slope is close to vertical,
-  // otherwise have it either as requuired.
-  if(atom.getDegree() == 1 && (orient == N || orient == S)) {
-    if(fabs(islope) > 0.85) {
-      orient = E;
-    } else {
+    if(fabs(islope) < 1.0) {
       if(nbr_sum.x > 0.0) {
         orient = W;
       } else {
         orient = E;
       }
+    } else {
+      if(nbr_sum.y > 0.0) {
+        orient = N;
+      } else {
+        orient = S;
+      }
     }
-  } else if (!atom.getDegree()) {
+    // atoms of single degree should always be either W or E, never N or S.  If
+    // either of the latter, make it E if the slope is close to vertical,
+    // otherwise have it either as requuired.
+    if(orient == N || orient == S) {
+      if (fabs(islope) > 0.85) {
+        orient = E;
+      } else {
+        if (nbr_sum.x > 0.0) {
+          orient = W;
+        } else {
+          orient = E;
+        }
+      }
+    }
+  } else {
     // last check: degree zero atoms from the last three periods should have
     // the Hs first
     static int HsListedFirstSrc[] = {8, 9, 16, 17, 34, 35, 52, 53, 84, 85};
@@ -1863,7 +1866,9 @@ MolDraw2D::OrientType MolDraw2D::getAtomOrientation(const RDKit::Atom &atom,
         HsListedFirstSrc + sizeof(HsListedFirstSrc) / sizeof(int));
     if (std::find(HsListedFirst.begin(), HsListedFirst.end(),
                   atom.getAtomicNum()) != HsListedFirst.end()) {
-      orient = MolDraw2D::W;
+      orient = W;
+    } else {
+      orient = E;
     }
   }
 
