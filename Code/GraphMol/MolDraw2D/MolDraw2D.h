@@ -130,6 +130,11 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
                      // an average bond is this fraction of the width.  If
                      // scale comes out smaller than this, reduces scale, but
                      // won't make it larger.  Default -1.0 means no fix.
+  double fixedBondLength; // fixes the bond length (and hence the scale) to
+                          // always be this number of pixels.  Assuming a bond
+                          // length in coordinates is 1, as is normal.  Default
+                          // -1.0 means no fix.  If both fixedScale and
+                          // fixedBondLength are > 0.0, fixedScale wins.
 
   MolDrawOptions()
       : atomLabelDeuteriumTritium(false),
@@ -150,7 +155,8 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
         symbolColour(0, 0, 0),
         bondLineWidth(-1),
         prepareMolsBeforeDrawing(true),
-        fixedScale(-1.0) {
+        fixedScale(-1.0),
+        fixedBondLength(-1.0) {
     highlightColourPalette.push_back(
         DrawColour(1., 1., .67));                              // popcorn yellow
     highlightColourPalette.push_back(DrawColour(1., .8, .6));  // sand

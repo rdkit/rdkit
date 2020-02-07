@@ -865,6 +865,26 @@ void MolDraw2D::calculateScale(int width, int height,
   PRECONDITION(height > 0, "bad height");
   PRECONDITION(activeMolIdx_ >= 0, "bad active mol");
 
+  auto centre_picture = [&]() {
+    double y_mid = y_min_ + 0.5 * y_range_;
+    double x_mid = x_min_ + 0.5 * x_range_;
+    Point2D mid = getDrawCoords(Point2D(x_mid, y_mid));
+    // that used the offset, we need to remove that:
+    mid.x -= x_offset_;
+    mid.y += y_offset_;
+    x_trans_ = (width / 2 - mid.x) / scale_;
+    y_trans_ = (mid.y - height / 2) / scale_;
+  };
+
+  // fixedScale takes precedence if both are given.
+  if(drawOptions().fixedBondLength > 0.0 && drawOptions().fixedScale < 0.0) {
+    // set the scale to exactly this and we're done.  If it doesn't fit,
+    // that's the user's lookout.
+    scale_ = drawOptions().fixedBondLength;
+    centre_picture();
+    return;
+  }
+
   x_min_ = y_min_ = numeric_limits<double>::max();
   double x_max(-numeric_limits<double>::max()),
       y_max(-numeric_limits<double>::max());
@@ -971,7 +991,6 @@ void MolDraw2D::calculateScale(int width, int height,
   if (x_range_ > 1e-4 || y_range_ > 1e-4) {
     scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
     if(drawOptions().fixedScale > 0.0) {
-      // cout << "applying fixed scale" << endl;
       // after all that, use the fixed scale unless it's too big, in which case
       // scale the drawing down to fit.
       double fix_scale = double(width) * drawOptions().fixedScale;
@@ -979,14 +998,7 @@ void MolDraw2D::calculateScale(int width, int height,
         scale_ = fix_scale;
       }
     }
-    double y_mid = y_min_ + 0.5 * y_range_;
-    double x_mid = x_min_ + 0.5 * x_range_;
-    Point2D mid = getDrawCoords(Point2D(x_mid, y_mid));
-    // that used the offset, we need to remove that:
-    mid.x -= x_offset_;
-    mid.y += y_offset_;
-    x_trans_ = (width / 2 - mid.x) / scale_;
-    y_trans_ = (mid.y - height / 2) / scale_;
+    centre_picture();
   } else {
     scale_ = 1;
     x_trans_ = 0.;
