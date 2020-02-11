@@ -2192,6 +2192,20 @@ void testGithub1973() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testGithub2948() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog)
+      << "    Test Github #2948: Empty molecule has non-zero LabuteASA"
+      << std::endl;
+
+  {
+    ROMol m;
+    auto asa = calcLabuteASA(m);
+    TEST_ASSERT(feq(asa, 0, 0.0001))
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -2234,4 +2248,5 @@ int main() {
   testGithub1702();
 #endif
   testGithub1973();
+  testGithub2948();
 }
