@@ -12,6 +12,7 @@
 #include <GraphMol/MolStandardize/FragmentCatalog/FragmentCatalogUtils.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <boost/dynamic_bitset.hpp>
 #include <algorithm>
@@ -243,9 +244,9 @@ std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(const ROMol &mol) const {
           } else {
             // std::cout << "kmol: " << kmol->first << std::endl;
             // std::cout << MolToSmiles(*(kmol->second)) << std::endl;
-            // std::cout << "transform mol: " << MolToSmiles(*(transform.Mol))
+            // std::cout << "transform mol: " << MolToSmarts(*(transform.Mol))
             //           << std::endl;
-            //
+
             // std::cout << "Matched: " << name << std::endl;
           }
           for (const auto &match : matches) {
@@ -310,6 +311,9 @@ std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(const ROMol &mol) const {
             }
 
             boost::shared_ptr<RWMol> wproduct(new RWMol(*product));
+            // wproduct->updatePropertyCache(false);
+            // std::cout << "pre-sanitization: "
+            //           << MolToSmiles(*wproduct, true, true) << std::endl;
             MolOps::sanitizeMol(*wproduct);
             //						MolOps::sanitizeMol(*static_cast<RWMol*>(product.get()));
             tsmiles = MolToSmiles(*wproduct, true);
