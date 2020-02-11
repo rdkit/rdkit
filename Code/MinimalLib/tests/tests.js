@@ -56,12 +56,19 @@ function test_basics(){
     assert(svg2.search("svg")>0);
     assert(svg.search("#FF7F7F")<0);
     assert(svg2.search("#FF7F7F")>0);
+}
 
+function test_sketcher_services(){
+    var mol = Module.get_mol("C[C@](F)(Cl)/C=C/C(F)Br");
+    assert.equal(mol.is_valid(),1);
+    var tags = mol.get_stereo_tags();
+    assert.equal(tags,'{"CIP_atoms":[[1,"(S)"],[6,"(?)"]],"CIP_bonds":[[4,5,"(E)"]]}');
 }
 
 Module.onRuntimeInitialized = () => {
     console.log(Module.version());
     test_basics();
+    test_sketcher_services();
 };
 
 
