@@ -347,9 +347,10 @@ Bond *SmilesToBond(const std::string &smiles) {
 
 RWMol *SmilesToMol(const std::string &smiles,
                    const SmilesParserParams &params) {
-  // Calling SmilesToMol in a multithreaded context is generally safe *unless* the value of debugParse is different for
-  // different threads. The if statement below avoids a TSAN warning in the case where multiple threads all use the
-  // same value for debugParse.
+  // Calling SmilesToMol in a multithreaded context is generally safe *unless*
+  // the value of debugParse is different for different threads. The if
+  // statement below avoids a TSAN warning in the case where multiple threads
+  // all use the same value for debugParse.
   if (yysmiles_debug != params.debugParse) {
     yysmiles_debug = params.debugParse;
   }
@@ -417,9 +418,10 @@ Bond *SmartsToBond(const std::string &smiles) {
 
 RWMol *SmartsToMol(const std::string &smarts, int debugParse, bool mergeHs,
                    std::map<std::string, std::string> *replacements) {
-  // Calling SmartsToMol in a multithreaded context is generally safe *unless* the value of debugParse is different for
-  // different threads. The if statement below avoids a TSAN warning in the case where multiple threads all use the
-  // same value for debugParse.
+  // Calling SmartsToMol in a multithreaded context is generally safe *unless*
+  // the value of debugParse is different for different threads. The if
+  // statement below avoids a TSAN warning in the case where multiple threads
+  // all use the same value for debugParse.
   if (yysmarts_debug != debugParse) {
     yysmarts_debug = debugParse;
   }
