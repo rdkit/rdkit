@@ -12,7 +12,6 @@
 #include <GraphMol/MolStandardize/FragmentCatalog/FragmentCatalogUtils.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
-#include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <boost/dynamic_bitset.hpp>
 #include <algorithm>
