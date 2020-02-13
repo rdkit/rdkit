@@ -946,13 +946,49 @@ void testCustomScoreFunc() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testEnumerationProblems() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing tautomer enumeration problems"
+      << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  std::string tautomerFile =
+      rdbase + "/Data/MolStandardize/tautomerTransforms.in";
+  auto *tautparams = new TautomerCatalogParams(tautomerFile);
+  unsigned int ntautomers = tautparams->getNumTautomers();
+  TEST_ASSERT(ntautomers == 34);
+
+  TautomerEnumerator te(new TautomerCatalog(tautparams));
+#if 1
+  {  // from the discussion of #2908
+    auto mol = "O=C(C1=C[NH+]=CC=C1)[O-]"_smiles;
+    auto tauts = te.enumerate(*mol);
+    TEST_ASSERT(tauts.size() == 1);
+  }
+#endif
+  {  // one of the examples from the tautobase paper
+    auto m =
+        "[S:1]=[c:2]1[nH+:3][c:5]([NH2:9])[nH:8][c:7]2[c:4]1[n:6][nH:10][n:11]2"_smiles;
+    TEST_ASSERT(m);
+
+    auto tauts = te.enumerate(*m);
+    // for (auto taut : tauts) {
+    //   std::cerr << MolToSmiles(*taut) << std::endl;
+    // }
+    TEST_ASSERT(tauts.size() == 12);
+  }
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
   testEnumerator();
-#endif
   testCanonicalize();
   testPickCanonical();
   testCustomScoreFunc();
+#endif
+  testEnumerationProblems();
   return 0;
 }
