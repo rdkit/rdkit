@@ -164,6 +164,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
 
   // prepareMolForDrawing needs a RWMol but don't copy the original mol
   // if we don't need to
+  cout << "top of drawMolecule" << endl;
   unique_ptr<RWMol> rwmol;
   if(drawOptions().prepareMolsBeforeDrawing || !mol.getNumConformers()) {
     rwmol.reset(new RWMol(mol));
@@ -201,8 +202,8 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
     extractAtomSymbols(draw_mol);
   }
 
-  // std::cout << "scale: " << scale_ << " font_size_: " << font_size_
-  //           << std::endl;
+   std::cout << "scale: " << scale_ << " font_size_: " << font_size_
+             << std::endl;
   if (drawOptions().includeAtomTags) {
     tagAtoms(draw_mol);
   }
@@ -267,6 +268,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
     setFillPolys(true);
   }
 
+  cout << "drawing atoms" << endl;
   for(auto this_at: draw_mol.atoms()) {
     int this_idx = this_at->getIdx();
     for (const auto &nbri : make_iterator_range(draw_mol.getAtomBonds(this_at))) {
@@ -298,6 +300,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
     }
   }
 
+  cout << "drawing symbols" << endl;
   for (int i = 0, is = atom_syms_[activeMolIdx_].size(); i < is; ++i) {
     if (!atom_syms_[activeMolIdx_][i].first.empty()) {
       drawAtomLabel(i, highlight_atoms, highlight_atom_map);
@@ -865,6 +868,7 @@ void MolDraw2D::calculateScale(int width, int height,
   PRECONDITION(height > 0, "bad height");
   PRECONDITION(activeMolIdx_ >= 0, "bad active mol");
 
+  cout << "calculateScale" << endl;
   auto centre_picture = [&]() {
     double y_mid = y_min_ + 0.5 * y_range_;
     double x_mid = x_min_ + 0.5 * x_range_;
@@ -916,6 +920,7 @@ void MolDraw2D::calculateScale(int width, int height,
   // And now we need to take account of strings with N/S orientation
   // as well.
   while (scale_ > 1e-4) {
+    cout << "scale iteration : " << scale_ << endl;
     for (int i = 0, is = atom_syms_[activeMolIdx_].size(); i < is; ++i) {
       if (!atom_syms_[activeMolIdx_][i].first.empty()) {
         double atsym_width, atsym_height;
@@ -1005,7 +1010,8 @@ void MolDraw2D::calculateScale(int width, int height,
     y_trans_ = 0.;
   }
 
-  // cout << "final scale : " << scale_ << endl;
+  cout << "leaving calculateScale" << endl;
+   cout << "final scale : " << scale_ << endl;
 
 }
 
@@ -1064,6 +1070,7 @@ void MolDraw2D::drawString(const string &str, const Point2D &cds) {
   double string_width, string_height;
   getStringSize(str, string_width, string_height);
 
+  cout << "drawing " << str << endl;
   // FIX: this shouldn't stay
   double M_width, M_height;
   getStringSize(std::string("M"), M_width, M_height);
@@ -1227,6 +1234,7 @@ void MolDraw2D::extractAtomSymbols(const ROMol &mol) {
   PRECONDITION(static_cast<int>(atomic_nums_.size()) > activeMolIdx_,
                "no space");
 
+  cout << "extractAtomSymbols" << endl;
   for(auto at1: mol.atoms()) {
     Point2D &at1_cds = at_cds_[activeMolIdx_][at1->getIdx()];
     Point2D nbr_sum(0.0, 0.0);
@@ -1236,14 +1244,16 @@ void MolDraw2D::extractAtomSymbols(const ROMol &mol) {
       Point2D &at2_cds =
           at_cds_[activeMolIdx_][bond->getOtherAtomIdx(at1->getIdx())];
       nbr_sum += at2_cds - at1_cds;
-      // cout << at2_cds.x << ", " << at2_cds.y << " : "
-      //      << at1_cds.x << ", " << at1_cds.y << " : "
-      //      << nbr_sum.x << ", " << nbr_sum.y << endl;
+       cout << at2_cds.x << ", " << at2_cds.y << " : "
+            << at1_cds.x << ", " << at1_cds.y << " : "
+            << nbr_sum.x << ", " << nbr_sum.y << endl;
     }
     atom_syms_[activeMolIdx_].push_back(
         getAtomSymbolAndOrientation(*at1, nbr_sum));
     atomic_nums_[activeMolIdx_].push_back(at1->getAtomicNum());
   }
+  cout << "leaving extractAtomSymbols" << endl;
+
 }
 
 // ****************************************************************************
@@ -1491,10 +1501,10 @@ void MolDraw2D::drawAtomLabel(int atom_num,
                               const std::map<int, DrawColour> *highlight_map) {
 
   setColour(getColour(atom_num, highlight_atoms, highlight_map));
-//  cout << "drawString " << atom_syms_[activeMolIdx_][atom_num].first
-//       << " at " << at_cds_[activeMolIdx_][atom_num][0]
-//       << ", " << at_cds_[activeMolIdx_][atom_num][1]
-//       << "  orient : " << atom_syms_[activeMolIdx_][atom_num].second << endl;
+  cout << "drawString " << atom_syms_[activeMolIdx_][atom_num].first
+       << " at " << at_cds_[activeMolIdx_][atom_num][0]
+       << ", " << at_cds_[activeMolIdx_][atom_num][1]
+       << "  orient : " << atom_syms_[activeMolIdx_][atom_num].second << endl;
   OrientType orient = atom_syms_[activeMolIdx_][atom_num].second;
   vector<string> label_pieces = atomLabelToPieces(atom_num);
   drawStrings(label_pieces, at_cds_[activeMolIdx_][atom_num], orient);
@@ -1507,6 +1517,20 @@ vector<string> MolDraw2D::atomLabelToPieces(int atom_num) const {
   vector<string> label_pieces;
   size_t i = 0;
   const string &atsym = atom_syms_[activeMolIdx_][atom_num].first;
+  cout << "splitting " << atsym << "XX" << endl;
+
+  // if we have the mark-up <lit>XX</lit> the symbol is to be used
+  // without modification
+  if(atsym.substr(0, 5) == "<lit>") {
+    string lit_sym = atsym.substr(5);
+    size_t idx = lit_sym.find("</lit>");
+    if(idx != string::npos) {
+      lit_sym = lit_sym.substr(0, idx);
+    }
+    label_pieces.emplace_back(lit_sym);
+    return label_pieces;
+  }
+
   // The first character of each piece can be < or upper case letter,
   // as in Cl or <sup>35</sup>Cl.
   // If the next character is a lower case letter or a <, it's the
@@ -1534,15 +1558,21 @@ vector<string> MolDraw2D::atomLabelToPieces(int atom_num) const {
   };
 
   string next_piece;
+  auto stash_piece = [&]() {
+    if(!next_piece.empty()) {
+      label_pieces.emplace_back(next_piece);
+    }
+    next_piece.clear();
+  };
+
   while(true) {
     if(i == atsym.length()) {
+      stash_piece();
       break;
     }
     if(atsym.substr(i, 5) == "<sup>") {
       // the current piece is finished.  Store it and make a new one
-      if(next_piece.length()) {
-        label_pieces.emplace_back(next_piece);
-      }
+      stash_piece();
       next_piece = get_marked_piece();
     } else if(atsym.substr(i, 5) == "<sub>") {
       next_piece += get_marked_piece();
@@ -1550,22 +1580,57 @@ vector<string> MolDraw2D::atomLabelToPieces(int atom_num) const {
       label_pieces.emplace_back(next_piece);
       next_piece.clear();
     } else if(isupper(atsym[i])) {
+      // the current piece is finished.  Store it and make a new one.
+      stash_piece();
       next_piece += atsym[i++];
-      if(islower(atsym[i])) {
+      if (islower(atsym[i])) {
         next_piece += atsym[i++];
       }
-      if(atsym[i] != '<' && atsym[i] != '>') {
-        label_pieces.emplace_back(next_piece);
-        next_piece.clear();
-      }
+    } else if(atsym[i] == ':') {
+      // it's an atom mapping label coming, so carry on.  Once the : is in,
+      // the digits of the rest will be picked up by the catch-all below.
+      stash_piece();
+      next_piece += atsym[i++];
+    } else {
+      // something we're not necessarily expecting, so add it to the current
+      // piece and move on, so as not to get stuck in a loop.  One thing
+      // that is definitely caught by this that is fine is the digits after
+      // the : from atom maps.
+      next_piece += atsym[i++];
     }
   }
 
-//  cout << atsym;
-//  for(auto s: label_pieces) {
-//    cout << " : " << s;
-//  }
-//  cout << endl;
+  cout << label_pieces.size() << " Pieces : of " << atsym << " :";
+  for(auto s: label_pieces) {
+    cout << " : " << s;
+  }
+  cout << endl;
+
+  // put any atom-mapping piece at the end where it looks better.
+  if(!label_pieces.empty()) {
+    for(size_t i = 0, i_end = label_pieces.size() - 1; i < i_end; ++i) {
+      cout << "checking " << label_pieces[i] << "YY" << endl;
+      if(!label_pieces[i].empty() && label_pieces[i][0] == ':') {
+        label_pieces.push_back(label_pieces[i]);
+        label_pieces[i].clear();
+      }
+      cout << "now " << label_pieces[i] << "ZZ" << endl;
+    }
+  }
+  label_pieces.erase(remove(label_pieces.begin(), label_pieces.end(), ""),
+                     label_pieces.end());
+  if(atom_syms_[activeMolIdx_][atom_num].second == W) {
+    // we need the atom map at the front, as it will be drawn backwards
+    if(label_pieces.size() > 1 && label_pieces.back()[0] == ':') {
+      std::rotate(label_pieces.rbegin(), label_pieces.rbegin() +1,
+                  label_pieces.rend());
+    }
+  }
+  cout << label_pieces.size() << " Pieces : of " << atsym << " :";
+  for(auto s: label_pieces) {
+    cout << " : " << s;
+  }
+  cout << endl;
 
   return label_pieces;
 
@@ -1730,9 +1795,6 @@ void MolDraw2D::adjustBondEndForLabel(int atnum, const Point2D &nbr_cds,
 }
 
 // ****************************************************************************
-// adds XML-like annotation for super- and sub-script, in the same manner
-// as MolDrawing.py. My first thought was for a LaTeX-like system,
-// obviously...
 pair<string, MolDraw2D::OrientType> MolDraw2D::getAtomSymbolAndOrientation(
     const Atom &atom, const Point2D &nbr_sum) const {
 
@@ -1747,8 +1809,12 @@ pair<string, MolDraw2D::OrientType> MolDraw2D::getAtomSymbolAndOrientation(
 
 // ****************************************************************************
 string MolDraw2D::getAtomSymbol(const RDKit::Atom &atom) const {
+  // adds XML-like annotation for super- and sub-script, in the same manner
+  // as MolDrawing.py. My first thought was for a LaTeX-like system,
+  // obviously...
 
   string symbol;
+  bool literal_symbol = true;
   unsigned int iso = atom.getIsotope();
   if (drawOptions().atomLabels.find(atom.getIdx()) !=
       drawOptions().atomLabels.end()) {
@@ -1767,6 +1833,7 @@ string MolDraw2D::getAtomSymbol(const RDKit::Atom &atom) const {
     symbol = ((iso == 2) ? "D" : "T");
     iso = 0;
   } else {
+    literal_symbol = false;
     std::vector<std::string> preText, postText;
     int num_h = (atom.getAtomicNum() == 6 && atom.getDegree() > 0)
                 ? 0
@@ -1815,6 +1882,10 @@ string MolDraw2D::getAtomSymbol(const RDKit::Atom &atom) const {
     for(const std::string &se: postText) { symbol += se; }
   }
 
+  if(literal_symbol) {
+    symbol = "<lit>" + symbol + "</lit>";
+  }
+  cout << "Atom symbol " << atom.getIdx() << " : " << symbol << endl;
   return symbol;
 
 }
@@ -1845,8 +1916,8 @@ MolDraw2D::OrientType MolDraw2D::getAtomOrientation(const RDKit::Atom &atom,
     }
     // atoms of single degree should always be either W or E, never N or S.  If
     // either of the latter, make it E if the slope is close to vertical,
-    // otherwise have it either as requuired.
-    if(orient == N || orient == S) {
+    // otherwise have it either as required.
+    if(atom.getDegree() == 1 && (orient == N || orient == S)) {
       if (fabs(islope) > 0.85) {
         orient = E;
       } else {
@@ -1872,6 +1943,7 @@ MolDraw2D::OrientType MolDraw2D::getAtomOrientation(const RDKit::Atom &atom,
     }
   }
 
+  cout << "orient : " << orient << endl;
   return orient;
 
 }
