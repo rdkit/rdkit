@@ -1515,7 +1515,6 @@ void MolDraw2D::drawAtomLabel(int atom_num,
 vector<string> MolDraw2D::atomLabelToPieces(int atom_num) const {
 
   vector<string> label_pieces;
-  size_t i = 0;
   const string &atsym = atom_syms_[activeMolIdx_][atom_num].first;
   cout << "splitting " << atsym << "XX" << endl;
 
@@ -1531,104 +1530,79 @@ vector<string> MolDraw2D::atomLabelToPieces(int atom_num) const {
     return label_pieces;
   }
 
-  // The first character of each piece can be < or upper case letter,
-  // as in Cl or <sup>35</sup>Cl.
-  // If the next character is a lower case letter or a <, it's the
-  // same piece as in Br or H<sub>2</sub>.
-  // Worst case scenario is something like <sup>37</sup>Cl<sub>2</sub>
-  // for a molecule of chlorine 37.
-
-  auto get_marked_piece = [&]() -> string {
-    string piece;
-    // it might be the start of a <sub> or <sup> tag
-    while (atsym[i] != '>' && i < atsym.length()) {
-      piece += atsym[i++];
-    }
-    while (atsym[i] != '<' && i < atsym.length()) {
-      piece += atsym[i++];
-    }
-    while (atsym[i] != '>' && i < atsym.length()) {
-      piece += atsym[i++];
-    }
-    if (i < atsym.length() && atsym[i] == '>') {
-      piece += '>';
-      ++i;
-    }
-    return piece;
-  };
-
   string next_piece;
-  auto stash_piece = [&]() {
-    if(!next_piece.empty()) {
-      label_pieces.emplace_back(next_piece);
-    }
-    next_piece.clear();
-  };
-
+  size_t i = 0;
   while(true) {
     if(i == atsym.length()) {
-      stash_piece();
-      break;
-    }
-    if(atsym.substr(i, 5) == "<sup>") {
-      // the current piece is finished.  Store it and make a new one
-      stash_piece();
-      next_piece = get_marked_piece();
-    } else if(atsym.substr(i, 5) == "<sub>") {
-      next_piece += get_marked_piece();
-      // </sub> must be the end of this piece.
-      label_pieces.emplace_back(next_piece);
-      next_piece.clear();
-    } else if(isupper(atsym[i])) {
-      // the current piece is finished.  Store it and make a new one.
-      stash_piece();
-      next_piece += atsym[i++];
-      if (islower(atsym[i])) {
-        next_piece += atsym[i++];
+      if(!next_piece.empty()) {
+        label_pieces.emplace_back(next_piece);
+        break;
       }
-    } else if(atsym[i] == ':') {
-      // it's an atom mapping label coming, so carry on.  Once the : is in,
-      // the digits of the rest will be picked up by the catch-all below.
-      stash_piece();
-      next_piece += atsym[i++];
-    } else {
-      // something we're not necessarily expecting, so add it to the current
-      // piece and move on, so as not to get stuck in a loop.  One thing
-      // that is definitely caught by this that is fine is the digits after
-      // the : from atom maps.
-      next_piece += atsym[i++];
     }
+    if(atsym.substr(i, 2) == "<s" || atsym[i] == ':' || isupper(atsym[i])) {
+      // save the old piece, start a new one
+      if(!next_piece.empty()) {
+        label_pieces.emplace_back(next_piece);
+        next_piece.clear();
+      }
+    }
+    next_piece += atsym[i++];
   }
 
-  cout << label_pieces.size() << " Pieces : of " << atsym << " :";
-  for(auto s: label_pieces) {
-    cout << " : " << s;
+  cout << label_pieces.size() << " initial pieces for " << atsym << " :";
+  for(auto l: label_pieces) {
+    cout << ": " << l;
   }
   cout << endl;
 
-  // put any atom-mapping piece at the end where it looks better.
-  if(!label_pieces.empty()) {
-    for(size_t i = 0, i_end = label_pieces.size() - 1; i < i_end; ++i) {
-      cout << "checking " << label_pieces[i] << "YY" << endl;
-      if(!label_pieces[i].empty() && label_pieces[i][0] == ':') {
-        label_pieces.push_back(label_pieces[i]);
-        label_pieces[i].clear();
+  if(label_pieces.size() < 2) {
+    return label_pieces;
+  }
+
+  // now some re-arrangement to make things look nicer
+  // if there's an atom map (:nn) it needs to go after the first atomic symbol
+  // which, because of <sup> might not be the first piece.
+  for(size_t j = 0; j < label_pieces.size(); ++j) {
+    if(label_pieces[j][0] == ':') {
+      if (label_pieces[0].substr(0, 5) == "<sup>") {
+        label_pieces[1] += label_pieces[j];
+      } else {
+        label_pieces[0] += label_pieces[j];
       }
-      cout << "now " << label_pieces[i] << "ZZ" << endl;
+      label_pieces[j].clear();
+      break;
     }
   }
   label_pieces.erase(remove(label_pieces.begin(), label_pieces.end(), ""),
                      label_pieces.end());
-  if(atom_syms_[activeMolIdx_][atom_num].second == W) {
-    // we need the atom map at the front, as it will be drawn backwards
-    if(label_pieces.size() > 1 && label_pieces.back()[0] == ':') {
-      std::rotate(label_pieces.rbegin(), label_pieces.rbegin() +1,
-                  label_pieces.rend());
+
+  // if there's a <sub> piece, attach it to the one before.
+  for(size_t j = 1; j < label_pieces.size(); ++j) {
+    if(label_pieces[j].substr(0, 5) == "<sub>") {
+      label_pieces[j-1] += label_pieces[j];
+      label_pieces[j].clear();
+      break;
     }
   }
-  cout << label_pieces.size() << " Pieces : of " << atsym << " :";
-  for(auto s: label_pieces) {
-    cout << " : " << s;
+  label_pieces.erase(remove(label_pieces.begin(), label_pieces.end(), ""),
+                     label_pieces.end());
+
+  // if there's a <sup> piece, attach it to the one after.
+  if(label_pieces.size() > 1) {
+    for (size_t j = 0; j < label_pieces.size() - 1; ++j) {
+      if (label_pieces[j].substr(0, 5) == "<sup>") {
+        label_pieces[j+1] = label_pieces[j] + label_pieces[j+1];
+        label_pieces[j].clear();
+        break;
+      }
+    }
+  }
+  label_pieces.erase(remove(label_pieces.begin(), label_pieces.end(), ""),
+                     label_pieces.end());
+
+  cout << label_pieces.size() << " final pieces for " << atsym << " :";
+  for(auto l: label_pieces) {
+    cout << ": " << l;
   }
   cout << endl;
 
