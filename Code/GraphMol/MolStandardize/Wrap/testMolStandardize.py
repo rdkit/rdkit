@@ -257,5 +257,8 @@ chlorine	[Cl]
     with self.assertRaises(TypeError):
       ctaut = enumerator.Canonicalize(m, lambda x: 'fail')
 
+    self.assertEqual(enumerator.ScoreTautomer(Chem.MolFromSmiles('N=c1[nH]cccc1')), 99)
+    self.assertEqual(enumerator.ScoreTautomer(Chem.MolFromSmiles('Nc1ncccc1')), 100)
+
 if __name__ == "__main__":
   unittest.main()
