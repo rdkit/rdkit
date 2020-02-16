@@ -18,26 +18,27 @@
 namespace RDKit {
 namespace Descriptors {
   // diagonal elements are a property (atomic num, charge, etc)
-  // off diagonal are .1,.2,.3.15 for single,double,triple or aromatic
-  // all other elements are .001
-  std::pair<double,double> BCUT2D(const ROMol &m, const std::string &atom_double_prop) {
+  // off diagonal are 1/sqrt(bond_order)
+  //  Original burden matrix was .1, .2, .3, .15 for single,double,triple or aromatic
+  //  all other elements are .001
+  std::pair<double,double> BCUT2D(const ROMol &m, const std::vector<double> &atom_props) {
     unsigned int num_atoms = m.getNumAtoms();
+    PRECONDITION(atom_props.size() == num_atoms, "Number of atom props not equal to number of atoms");
+    
     if (num_atoms == 0) {
         return std::pair<double,double>(0,0);
     }
     
-    Eigen::MatrixXd burden(num_atoms, num_atoms);
-
-    // All non bonded entires set to 0.001
-    for(unsigned int i=0;i<num_atoms;++i) {
-      burden(i,i) = m.getAtomWithIdx(i)->getProp<double>(atom_double_prop);
-      for(unsigned int j=0;j<num_atoms;++j) {
-	if (i!=j)
-	  burden(i,j) = 0.001;
+    Eigen::MatrixXd burden(num_atoms, num_atoms); //, 0.001); Doesn't work?
+    
+    for(unsigned int i=0;i<num_atoms; ++i) {
+      for(unsigned int j=0;j<num_atoms; ++j) {
+	burden(i,j) = burden(j,i) = 0.001;
       }
+      burden(i,i) = atom_props[i];
     }
 
- for(auto &bond : m.bonds()) {
+    for(auto &bond : m.bonds()) {
       unsigned int i = bond->getBeginAtomIdx();
       unsigned int j = bond->getEndAtomIdx();
       double score = 0.0;
@@ -63,9 +64,12 @@ namespace Descriptors {
       }
       burden(i,j) = burden(j,i) = score;
     }    
+
+    /*
+      Eigen::IOFormat OctaveFmt(Eigen::StreamPrecision, 0, ", ", ";\n", "", "", "[", "]");
+      std::cerr << burden.format(OctaveFmt) << std::endl;
+    */
     
-    Eigen::IOFormat OctaveFmt(Eigen::StreamPrecision, 0, ", ", ";\n", "", "", "[", "]");
-    std::cerr << burden.format(OctaveFmt) << std::endl;
     Eigen::VectorXcd eivals = burden.eigenvalues();
     double highest, lowest;
     highest = lowest = eivals(0,0).real();
@@ -77,19 +81,30 @@ namespace Descriptors {
     return std::pair<double,double>(highest,lowest);
   }
 
+std::pair<double,double> BCUT2D(const ROMol &m, const std::string &atom_double_prop) {
+  std::vector<double> props;
+  props.reserve(m.getNumAtoms());
+  for(auto &atom : m.atoms()) {
+    props.push_back(atom->getProp<double>(atom_double_prop));
+  }
+  return BCUT2D(m, props);
+}
 
 std::vector<double> BCUT2D(const ROMol &m) {
   std::unique_ptr<ROMol> mol(MolOps::removeHs(m));
   // Atom elemno?  atomic mass? so many options...
   const std::string atom_prop = "atom_elemno";
+  std::vector<double> masses;
+  masses.reserve(mol->getNumAtoms());
+  
   for(auto &atom: mol->atoms()) {
-    atom->setProp<double>(atom_prop, atom->getMass());
+    masses.push_back(atom->getMass());
   }
   // Gasteiger
   RDKit::computeGasteigerCharges(*mol, 12, true);
   // polarizability? - need model
   // slogp?  sasa?
-  auto atom_bcut = BCUT2D(*mol, atom_prop);
+  auto atom_bcut = BCUT2D(*mol, masses);
   auto gasteiger = BCUT2D(*mol, common_properties::_GasteigerCharge);
   std::vector<double> res = {atom_bcut.first, atom_bcut.second, gasteiger.first, gasteiger.second};
   return res;

@@ -18,6 +18,8 @@ namespace RDKit {
   namespace Descriptors {
     const std::string BCUT2DVersion = "1.0.0";
     RDKIT_DESCRIPTORS_EXPORT
+    std::pair<double,double> BCUT2D(const ROMol &m, const std::vector<double> &atom_props);
+    RDKIT_DESCRIPTORS_EXPORT
     std::pair<double,double> BCUT2D(const ROMol &m, const std::string &atom_double_prop);
     RDKIT_DESCRIPTORS_EXPORT    
     std::vector<double> BCUT2D(const ROMol &m);
