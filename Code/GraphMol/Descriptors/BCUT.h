@@ -9,7 +9,7 @@
 //
 #ifndef RDKIT_BCUT_H
 #define RDKIT_BCUT_H
-
+#ifdef RDK_HAS_EIGEN3
 #include <RDGeneral/export.h>
 #include <vector>
 #include <string>
@@ -24,5 +24,5 @@ namespace RDKit {
   }
 }
  
-
+#endif
 #endif

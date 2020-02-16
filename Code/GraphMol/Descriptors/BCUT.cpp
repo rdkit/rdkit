@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#ifdef RDK_HAS_EIGEN3
 #include "BCUT.h"
 #include <Eigen/Dense>
 #include <GraphMol/RDKitBase.h>
@@ -95,3 +96,5 @@ std::vector<double> BCUT2D(const ROMol &m) {
 }
 }
 }
+
+#endif

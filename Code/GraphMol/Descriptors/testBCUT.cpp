@@ -18,6 +18,8 @@
 #include <algorithm>
 #include <fstream>
 
+#ifdef RDK_HAS_EIGEN
+
 #include <GraphMol/Descriptors/BCUT.h>
 
 void test1(){
@@ -40,6 +42,13 @@ void test1(){
   }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
+#else
+void test1() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Skipping Basic BCUT tests. (No EIGEN)" << std::endl;
+
+}
+#endif
 
 int main() {
   RDLog::InitLogs();
