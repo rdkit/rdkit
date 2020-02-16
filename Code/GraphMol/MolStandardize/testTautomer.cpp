@@ -858,11 +858,12 @@ void testCanonicalize() {
   std::string rdbase = getenv("RDBASE");
   std::string tautomerFile =
       rdbase + "/Data/MolStandardize/tautomerTransforms.in";
-  auto *tautparams = new TautomerCatalogParams(tautomerFile);
+  auto tautparams = std::unique_ptr<TautomerCatalogParams>(
+      new TautomerCatalogParams(tautomerFile));
   unsigned int ntautomers = tautparams->getNumTautomers();
   TEST_ASSERT(ntautomers == 34);
 
-  TautomerEnumerator te(new TautomerCatalog(tautparams));
+  TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
 
   for (const auto itm : canonTautomerData) {
     std::unique_ptr<ROMol> mol{SmilesToMol(itm.first)};
@@ -886,11 +887,12 @@ void testPickCanonical() {
   std::string rdbase = getenv("RDBASE");
   std::string tautomerFile =
       rdbase + "/Data/MolStandardize/tautomerTransforms.in";
-  auto *tautparams = new TautomerCatalogParams(tautomerFile);
+  auto tautparams = std::unique_ptr<TautomerCatalogParams>(
+      new TautomerCatalogParams(tautomerFile));
   unsigned int ntautomers = tautparams->getNumTautomers();
   TEST_ASSERT(ntautomers == 34);
 
-  TautomerEnumerator te(new TautomerCatalog(tautparams));
+  TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
 
   for (const auto itm : canonTautomerData) {
     std::unique_ptr<ROMol> mol{SmilesToMol(itm.first)};
@@ -912,11 +914,12 @@ void testCustomScoreFunc() {
   std::string rdbase = getenv("RDBASE");
   std::string tautomerFile =
       rdbase + "/Data/MolStandardize/tautomerTransforms.in";
-  auto *tautparams = new TautomerCatalogParams(tautomerFile);
+  auto tautparams = std::unique_ptr<TautomerCatalogParams>(
+      new TautomerCatalogParams(tautomerFile));
   unsigned int ntautomers = tautparams->getNumTautomers();
   TEST_ASSERT(ntautomers == 34);
 
-  TautomerEnumerator te(new TautomerCatalog(tautparams));
+  TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
 
   // silly examples just using the scoreRings() function
   std::vector<std::pair<std::string, std::string>> subsetTautomerData{
@@ -958,11 +961,12 @@ void testEnumerationProblems() {
   std::string rdbase = getenv("RDBASE");
   std::string tautomerFile =
       rdbase + "/Data/MolStandardize/tautomerTransforms.in";
-  auto *tautparams = new TautomerCatalogParams(tautomerFile);
+  auto tautparams = std::unique_ptr<TautomerCatalogParams>(
+      new TautomerCatalogParams(tautomerFile));
   unsigned int ntautomers = tautparams->getNumTautomers();
   TEST_ASSERT(ntautomers == 34);
 
-  TautomerEnumerator te(new TautomerCatalog(tautparams));
+  TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
 #if 1
   {  // from the discussion of #2908
     auto mol = "O=C(C1=C[NH+]=CC=C1)[O-]"_smiles;
@@ -992,11 +996,12 @@ void testPickCanonical2() {
   std::string rdbase = getenv("RDBASE");
   std::string tautomerFile =
       rdbase + "/Data/MolStandardize/tautomerTransforms.in";
-  auto *tautparams = new TautomerCatalogParams(tautomerFile);
+  auto tautparams = std::unique_ptr<TautomerCatalogParams>(
+      new TautomerCatalogParams(tautomerFile));
   unsigned int ntautomers = tautparams->getNumTautomers();
   TEST_ASSERT(ntautomers == 34);
 
-  TautomerEnumerator te(new TautomerCatalog(tautparams));
+  TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
   {
     auto mol = "CN=c1nc[nH]cc1"_smiles;
     TEST_ASSERT(mol);
