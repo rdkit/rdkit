@@ -23,6 +23,10 @@
 
 #include <GraphMol/Descriptors/USRDescriptor.h>
 
+#ifdef RDK_HAS_EIGEN3
+#include <GraphMol/Descriptors/BCUT.h>
+#endif
+
 #ifdef RDK_BUILD_DESCRIPTORS3D
 #include <GraphMol/Descriptors/MolDescriptors3D.h>
 #endif
@@ -1611,4 +1615,34 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               docString.c_str());
 
 #endif
+  
+#ifdef RDK_HAS_EIGEN3
+  python::scope().attr("_BCUT2D_version") =
+      RDKit::Descriptors::BCUT2DVersion;
+  std::vector<double> (*BCUT)(const RDKit::ROMol&) = & RDKit::Descriptors::BCUT2D;
+  std::pair<double,double> (*BCUT_props)(const RDKit::ROMol&, const std::vector<double>&) = & RDKit::Descriptors::BCUT2D;
+  std::pair<double,double> (*BCUT_atomprops)(const RDKit::ROMol&, const std::string&) = & RDKit::Descriptors::BCUT2D;
+  docString = "Returns the standard 2D BCUT2D descriptors vector";
+    
+  python::def("BCUT2D", BCUT,
+              (python::arg("mol")),
+              docString.c_str());
+
+  python::class_<std::pair<double, double> >("BCUTPair")
+    .def_readwrite("first", &std::pair<double, double>::first)
+    .def_readwrite("second", &std::pair<double, double>::second)
+    .def_readwrite("higest", &std::pair<double, double>::first)
+    .def_readwrite("lowest", &std::pair<double, double>::second);
+  
+  docString = "Returns a 2D BCUT given the molecule and the specified atom props";
+  python::def("BCUT2D", BCUT_props,
+              (python::arg("mol"), python::arg("atom_props")),
+              docString.c_str());
+
+  docString = "Returns a 2D BCUT given the molecule and the specified atom prop name";
+  python::def("BCUT2D", BCUT_atomprops,
+              (python::arg("mol"), python::arg("atom_propname")),
+              docString.c_str());
+#endif
+
 }

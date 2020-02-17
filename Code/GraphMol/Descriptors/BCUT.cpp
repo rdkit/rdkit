@@ -9,6 +9,7 @@
 //
 #ifdef RDK_HAS_EIGEN3
 #include "BCUT.h"
+#include "Crippen.h"
 #include <Eigen/Dense>
 #include <GraphMol/RDKitBase.h>
 #include "GraphMol/PartialCharges/GasteigerCharges.h"
@@ -101,24 +102,32 @@ std::vector<double> BCUT2D(const ROMol &m) {
   const std::string atom_prop = "atom_elemno";
   std::vector<double> masses;
   std::vector<double> charges;
-  masses.reserve(mol->getNumAtoms());
-  charges.reserve(mol->getNumAtoms());
-  
+  unsigned int num_atoms = mol->getNumAtoms();
+  masses.reserve(num_atoms);
+  charges.reserve(num_atoms);
+
+  RDKit::computeGasteigerCharges(*mol, 12, true);
   for(auto &atom: mol->atoms()) {
     masses.push_back(atom->getMass());
+    charges.push_back(atom->getProp<double>(common_properties::_GasteigerCharge));
   }
   
-  // Gasteiger
-  RDKit::computeGasteigerCharges(*mol, 12, true);
-  for(auto charge: mol->getProp<std::vector<double>>(common_properties::_GasteigerCharge)) {
-    charges.push_back(charge);
-  }
+  std::vector<double> slogp(num_atoms, 0.0);
+  std::vector<double> cmr(num_atoms, 0.0);
+  getCrippenAtomContribs(*mol, slogp, cmr);
+  
   // polarizability? - need model
   // slogp?  sasa?
   auto burden = make_burden(m);
   auto atom_bcut = BCUT2D(burden, masses);
   auto gasteiger = BCUT2D(burden, charges);
-  std::vector<double> res = {atom_bcut.first, atom_bcut.second, gasteiger.first, gasteiger.second};
+  auto logp = BCUT2D(burden, slogp);
+  auto mr = BCUT2D(burden, cmr);
+  std::vector<double> res = {atom_bcut.first, atom_bcut.second,
+			     gasteiger.first, gasteiger.second,
+			     logp.first, logp.second,
+			     mr.first, mr.second
+  };
   return res;
 }
 }
