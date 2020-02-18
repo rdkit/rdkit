@@ -681,7 +681,6 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def("SetDrawOptions", RDKit::setDrawOptions,
            "Copies the drawing options passed in over our drawing options");
 
-  ;
   docString = "SVG molecule drawer";
   python::class_<RDKit::MolDraw2DSVG, python::bases<RDKit::MolDraw2D>,
                  boost::noncopyable>("MolDraw2DSVG", docString.c_str(),

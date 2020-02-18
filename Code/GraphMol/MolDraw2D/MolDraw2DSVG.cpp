@@ -432,6 +432,8 @@ void MolDraw2DSVG::alignString(const std::string &str, const std::string &align_
                                int align, const Point2D &in_cds,
                                Point2D &out_cds) const {
 
+  RDUNUSED_PARAM(str);
+
   if(align != 0 && align != 1) {
     out_cds = in_cds;
     return;

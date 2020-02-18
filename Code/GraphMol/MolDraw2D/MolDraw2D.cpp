@@ -1115,6 +1115,7 @@ void MolDraw2D::drawString(const string &str, const Point2D &cds) {
 void MolDraw2D::drawString(const std::string &str, const Point2D &cds,
                            AlignType align) {
 
+  RDUNUSED_PARAM(align);
   drawString(str, cds);
 
 }

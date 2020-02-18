@@ -36,7 +36,7 @@ namespace RDKit {
 
 struct DrawColour {
   double r = 0.0, g = 0.0, b = 0.0, a = 1.0;
-  DrawColour(){};
+  DrawColour() = default;
   DrawColour(double r, double g, double b, double a = 1.0)
       : r(r), g(g), b(b), a(a){};
   bool operator==(const DrawColour &other) const {
@@ -49,17 +49,17 @@ struct DrawColour {
            (ignoreAlpha || fabs(a - other.a) <= tol);
   };
   DrawColour operator+(const DrawColour &other) const {
-    return DrawColour(r + other.r, g + other.g, b + other.b, a + other.a);
+    return {r + other.r, g + other.g, b + other.b, a + other.a};
   }
   DrawColour operator-(const DrawColour &other) const {
-    return DrawColour(r - other.r, g - other.g, b - other.b, a - other.a);
+    return {r - other.r, g - other.g, b - other.b, a - other.a};
   }
   DrawColour operator/(double v) const {
     PRECONDITION(v != 0.0, "divide by zero");
-    return DrawColour(r / v, g / v, b / v, a / v);
+    return {r / v, g / v, b / v, a / v};
   }
   DrawColour operator*(double v) const {
-    return DrawColour(r * v, g * v, b * v, a * v);
+    return {r * v, g * v, b * v, a * v};
   }
 };
 
@@ -159,16 +159,16 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
         prepareMolsBeforeDrawing(true),
         fixedScale(-1.0),
         fixedBondLength(-1.0) {
-    highlightColourPalette.push_back(DrawColour(1., 1., .67));  // popcorn yellow
-    highlightColourPalette.push_back(DrawColour(1., .8, .6));  // sand
-    highlightColourPalette.push_back(DrawColour(1., .71, .76));  // light pink
-    highlightColourPalette.push_back(DrawColour(.8, 1., .8));  // offwhitegreen
-    highlightColourPalette.push_back(DrawColour(.87, .63, .87));  // plum
-    highlightColourPalette.push_back(DrawColour(.76, .94, .96));  // pastel blue
-    highlightColourPalette.push_back(DrawColour(.67, .67, 1.));   // periwinkle
-    highlightColourPalette.push_back(DrawColour(.64, .76, .34));  // avocado
-    highlightColourPalette.push_back(DrawColour(.56, .93, .56));  // light green
-    highlightColourPalette.push_back(DrawColour(.20, .63, .79));  // peacock
+    highlightColourPalette.emplace_back(DrawColour(1., 1., .67));  // popcorn yellow
+    highlightColourPalette.emplace_back(DrawColour(1., .8, .6));  // sand
+    highlightColourPalette.emplace_back(DrawColour(1., .71, .76));  // light pink
+    highlightColourPalette.emplace_back(DrawColour(.8, 1., .8));  // offwhitegreen
+    highlightColourPalette.emplace_back(DrawColour(.87, .63, .87));  // plum
+    highlightColourPalette.emplace_back(DrawColour(.76, .94, .96));  // pastel blue
+    highlightColourPalette.emplace_back(DrawColour(.67, .67, 1.));   // periwinkle
+    highlightColourPalette.emplace_back(DrawColour(.64, .76, .34));  // avocado
+    highlightColourPalette.emplace_back(DrawColour(.56, .93, .56));  // light green
+    highlightColourPalette.emplace_back(DrawColour(.20, .63, .79));  // peacock
     assignDefaultPalette(atomColourPalette);
   };
 };
