@@ -176,6 +176,8 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
 class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
  public:
   typedef enum { C = 0, N, E, S, W } OrientType;
+  // for aligning the drawing of text to the passed in coords.
+  typedef enum {START, MIDDLE, END} AlignType;
   typedef enum {
     TextDrawNormal = 0,
     TextDrawSuperscript,
@@ -415,10 +417,22 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
                              double &label_height) const = 0;
   //! drawString centres the string on cds.
   virtual void drawString(const std::string &str, const Point2D &cds);
+  // unless the specific drawer over-rides this overload, it will just call
+  // the first one.  SVG for one needs the alignment flag.
+  virtual void drawString(const std::string &str, const Point2D &cds,
+                          AlignType align);
   // draw the vector of strings from cds putting the nth+1 at the end of
   // the nth.  Aligns them according to OrientType.
   virtual void drawStrings(const std::vector<std::string> &labels,
                            const Point2D &cds, OrientType orient);
+  // calculate where to put the centre of the str so that the first/last
+  // character, which might have <sub> or <sup> labels, is at in_cds.
+  // Normally, the whole string would be centred on in_cds.
+  // If align is 0, it's left aligned, 1 it's right aligned, anything
+  // else and it's not done at all.
+  virtual void alignString(const std::string &str,
+                           const std::string &align_char, int align,
+                           const Point2D &in_cds, Point2D &out_cds) const;
 
   //! draw a polygon
   virtual void drawPolygon(const std::vector<Point2D> &cds) = 0;

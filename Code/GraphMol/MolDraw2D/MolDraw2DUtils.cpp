@@ -129,6 +129,7 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
   PT_OPT_GET(dummiesAreAttachments);
   PT_OPT_GET(circleAtoms);
   PT_OPT_GET(continuousHighlight);
+  PT_OPT_GET(fillHighlights);
   PT_OPT_GET(flagCloseContactsDist);
   PT_OPT_GET(includeAtomTags);
   PT_OPT_GET(clearBackground);
@@ -136,6 +137,10 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
   PT_OPT_GET(multipleBondOffset);
   PT_OPT_GET(padding);
   PT_OPT_GET(additionalAtomLabelPadding);
+  PT_OPT_GET(bondLineWidth);
+  PT_OPT_GET(prepareMolsBeforeDrawing);
+  PT_OPT_GET(fixedScale);
+  PT_OPT_GET(fixedBondLength);
   get_colour_option(&pt, "highlightColour", opts.highlightColour);
   get_colour_option(&pt, "backgroundColour", opts.backgroundColour);
   get_colour_option(&pt, "legendColour", opts.legendColour);

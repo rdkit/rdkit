@@ -647,9 +647,16 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
             python::arg("nSegments") = 16, python::arg("vertOffset") = 0.05),
            "draw a line indicating the presence of an attachment point "
            "(normally a squiggle line perpendicular to a bond)")
-      .def("DrawString", &RDKit::MolDraw2D::drawString,
+      .def("DrawString", (void(RDKit::MolDraw2D::*)(const std::string &, const RDGeom::Point2D &))&
+               RDKit::MolDraw2D::drawString,
            (python::arg("self"), python::arg("string"), python::arg("pos")),
            "add text to the canvas")
+      .def("DrawString", (void(RDKit::MolDraw2D::*)(const std::string &, const RDGeom::Point2D &,
+                                                    RDKit::MolDraw2D::AlignType))&
+               RDKit::MolDraw2D::drawString,
+           (python::arg("self"), python::arg("string"), python::arg("pos"),
+               python::arg("align")),
+           "add aligned text to the canvas")
       .def("GetDrawCoords",
            (RDGeom::Point2D(RDKit::MolDraw2D::*)(const RDGeom::Point2D &)
                 const) &

@@ -462,8 +462,8 @@ M  END
     rdMolDraw2D.PrepareAndDrawMolecule(d, m)
     d.FinishDrawing()
     txt = d.GetDrawingText()
-    self.assertNotEqual(txt.find("fill:#0000FF' ><tspan>NH"), -1)
-    self.assertEqual(txt.find("fill:#000000' ><tspan>NH"), -1)
+    self.assertNotEqual(txt.find("fill:#0000FF' ><tspan>N"), -1)
+    self.assertEqual(txt.find("fill:#000000' ><tspan>N"), -1)
 
     d = rdMolDraw2D.MolDraw2DSVG(250, 200)
     do = rdMolDraw2D.MolDrawOptions()
@@ -472,8 +472,8 @@ M  END
     rdMolDraw2D.PrepareAndDrawMolecule(d, m)
     d.FinishDrawing()
     txt = d.GetDrawingText()
-    self.assertEqual(txt.find("fill:#0000FF' ><tspan>NH"), -1)
-    self.assertNotEqual(txt.find("fill:#000000' ><tspan>NH"), -1)
+    self.assertEqual(txt.find("fill:#0000FF' ><tspan>N"), -1)
+    self.assertNotEqual(txt.find("fill:#000000' ><tspan>N"), -1)
 
 
 if __name__ == "__main__":
