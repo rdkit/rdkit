@@ -325,18 +325,28 @@ void escape_xhtml(std::string &data) {
 }  // namespace
 
 // ****************************************************************************
-// draws the string centred on cds
 void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds) {
+
+  drawString(str, cds, MIDDLE);
+
+}
+
+// ****************************************************************************
+// draws the string aligned as requested.
+void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds,
+                              AlignType align) {
   unsigned int fontSz = scale() * fontSize();
 
   double string_width, string_height;
   getStringSize(str, string_width, string_height);
 
-  double draw_x = cds.x - string_width / 2.0;
-  double draw_y = cds.y - string_height / 2.0;
+  double draw_x = cds.x;
+  double draw_y = cds.y;
 
-#if 0
   // for debugging text output
+#if 0
+  draw_x = cds.x - string_width / 2.0;
+  draw_y = cds.y - string_height / 2.0;
   DrawColour tcolour =colour();
   setColour(DrawColour(.8,.8,.8));
   std::vector<Point2D> poly;
@@ -349,18 +359,25 @@ void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds) {
 #endif
   std::string col = DrawColourToSVG(colour());
 
+  std::string text_anchor = "middle";
+  if(align == END) {
+    text_anchor = "end";
+  } else if(align == START) {
+    text_anchor = "start";
+  }
   Point2D draw_coords = getDrawCoords(Point2D(draw_x, draw_y));
 
-  d_os << "<text";
+  d_os << "<text dominant-baseline=\"central\" text-anchor=\""
+       << text_anchor << "\"";
   d_os << " x='" << draw_coords.x;
   d_os << "' y='" << draw_coords.y << "'";
 
-  if (d_activeClass != "") {
+  if (!d_activeClass.empty()) {
     d_os << " class='" << d_activeClass << "'";
   }
   d_os << " style='font-size:" << fontSz
        << "px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;"
-          "font-family:sans-serif;text-anchor:start;"
+          "font-family:sans-serif;"
        << "fill:" << col << "'";
   d_os << " >";
 
@@ -380,7 +397,7 @@ void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds) {
       first_span = false;
       d_os << "<tspan";
       switch (draw_mode) {
-        // To save people time later - on macOS Cataliina, at least, Firefox
+        // To save people time later - on macOS Catalina, at least, Firefox
         // renders the superscript as a subscript.  It's fine on Safari.
         case TextDrawSuperscript:
           d_os << " style='baseline-shift:super;font-size:" << fontSz * 0.75
@@ -410,6 +427,29 @@ void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds) {
   d_os << "</text>\n";
 }
 
+// ****************************************************************************
+void MolDraw2DSVG::alignString(const std::string &str, const std::string &align_char,
+                               int align, const Point2D &in_cds,
+                               Point2D &out_cds) const {
+
+  if(align != 0 && align != 1) {
+    out_cds = in_cds;
+    return;
+  }
+
+  double ac_width, ac_height;
+  getStringSize(align_char, ac_width, ac_height);
+  // align == 0 is left align - first char to go at in_cds.
+  double dir = align == 0 ? 1.0 : -1.0;
+  // this works with SVG, so long as we use the correct text anchor -
+  // W => end, E => start, N, S => middle
+  out_cds.x = in_cds.x - dir * 0.5 * ac_width;
+  // and this assumes dominant-baseline="central"
+  out_cds.y = in_cds.y;
+
+}
+
+// ****************************************************************************
 static const char *RDKIT_SVG_VERSION = "0.9";
 void MolDraw2DSVG::addMoleculeMetadata(const ROMol &mol, int confId) const {
   PRECONDITION(d_os, "no output stream");

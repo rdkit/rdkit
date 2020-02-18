@@ -863,7 +863,7 @@ void MolDraw2D::calculateScale(int width, int height,
   PRECONDITION(height > 0, "bad height");
   PRECONDITION(activeMolIdx_ >= 0, "bad active mol");
 
-  // cout << "calculateScale" << endl;
+  cout << "calculateScale" << endl;
   auto centre_picture = [&]() {
     double y_mid = y_min_ + 0.5 * y_range_;
     double x_mid = x_min_ + 0.5 * x_range_;
@@ -874,15 +874,6 @@ void MolDraw2D::calculateScale(int width, int height,
     x_trans_ = (width / 2 - mid.x) / scale_;
     y_trans_ = (mid.y - height / 2) / scale_;
   };
-
-  // fixedScale takes precedence if both are given.
-  if(drawOptions().fixedBondLength > 0.0 && drawOptions().fixedScale < 0.0) {
-    // set the scale to exactly this and we're done.  If it doesn't fit,
-    // that's the user's lookout.
-    scale_ = drawOptions().fixedBondLength;
-    centre_picture();
-    return;
-  }
 
   x_min_ = y_min_ = numeric_limits<double>::max();
   double x_max(-numeric_limits<double>::max()),
@@ -906,6 +897,7 @@ void MolDraw2D::calculateScale(int width, int height,
     y_min_ -= 0.5;
     y_max += 0.5;
   }
+
   scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
 
   // we may need to adjust the scale if there are atom symbols that go off
@@ -915,7 +907,7 @@ void MolDraw2D::calculateScale(int width, int height,
   // And now we need to take account of strings with N/S orientation
   // as well.
   while (scale_ > 1e-4) {
-    // cout << "scale iteration : " << scale_ << endl;
+    cout << "scale iteration : " << scale_ << endl;
     for (int i = 0, is = atom_syms_[activeMolIdx_].size(); i < is; ++i) {
       if (!atom_syms_[activeMolIdx_][i].first.empty()) {
         double atsym_width, atsym_height;
@@ -990,13 +982,18 @@ void MolDraw2D::calculateScale(int width, int height,
 
   if (x_range_ > 1e-4 || y_range_ > 1e-4) {
     scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
+    double fix_scale = scale_;
+    // after all that, use the fixed scale unless it's too big, in which case
+    // scale the drawing down to fit.
+    // fixedScale takes precedence if both it and fixedBondLength are given.
+    if(drawOptions().fixedBondLength > 0.0) {
+      fix_scale = drawOptions().fixedBondLength;
+    }
     if(drawOptions().fixedScale > 0.0) {
-      // after all that, use the fixed scale unless it's too big, in which case
-      // scale the drawing down to fit.
-      double fix_scale = double(width) * drawOptions().fixedScale;
-      if(scale_ > fix_scale) {
-        scale_ = fix_scale;
-      }
+      fix_scale = double(width) * drawOptions().fixedScale;
+    }
+    if(scale_ > fix_scale) {
+      scale_ = fix_scale;
     }
     centre_picture();
   } else {
@@ -1005,8 +1002,8 @@ void MolDraw2D::calculateScale(int width, int height,
     y_trans_ = 0.;
   }
 
-  // cout << "leaving calculateScale" << endl;
-  // cout << "final scale : " << scale_ << endl;
+  cout << "leaving calculateScale" << endl;
+  cout << "final scale : " << scale_ << endl;
 
 }
 
