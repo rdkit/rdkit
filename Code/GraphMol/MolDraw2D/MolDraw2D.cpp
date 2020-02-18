@@ -1792,8 +1792,8 @@ pair<string, MolDraw2D::OrientType> MolDraw2D::getAtomSymbolAndOrientation(
   OrientType orient = getAtomOrientation(atom, nbr_sum);
   string symbol = getAtomSymbol(atom);
 
-   // std::cout << "   res: " << symbol << " orient: " << orient
-   //          << " nbr_sum:" << nbr_sum << std::endl << std::endl;
+  // std::cout << "   res: " << symbol << " orient: " << orient
+  //           << " nbr_sum:" << nbr_sum << std::endl << std::endl;
 
   return std::make_pair(symbol, orient);
 }
@@ -1886,14 +1886,21 @@ MolDraw2D::OrientType MolDraw2D::getAtomOrientation(const RDKit::Atom &atom,
                                                     const Point2D &nbr_sum) const {
 
   // cout << "Atomic " << atom.getAtomicNum() << " degree : "
-  //     << atom.getDegree() << " : " << atom.getTotalNumHs() << endl;
+  //      << atom.getDegree() << " : " << atom.getTotalNumHs() << endl;
+  // anything with a slope of more than 70 degrees is vertical. This way,
+  // the NH in an indole is vertical as RDKit lays it out normally (72ish
+  // degrees) but the 2 amino groups of c1ccccc1C1CCC(N)(N)CC1 are E and W
+  // when they are drawn at the bottom of the molecule.
+  static const double VERT_SLOPE = tan(70.0 * M_PI / 180.0);
+
   OrientType orient = C;
   if(atom.getDegree()) {
     double islope = 1000.0;
     if(fabs(nbr_sum.x) > 1.0e-4) {
       islope = nbr_sum.y / nbr_sum.x;
     }
-    if(fabs(islope) < 1.0) {
+    // cout << "islope : " << islope << " : " << atan(islope) * 180.0 / M_PI << endl;
+    if(fabs(islope) <= VERT_SLOPE) {
       if(nbr_sum.x > 0.0) {
         orient = W;
       } else {
@@ -1906,11 +1913,12 @@ MolDraw2D::OrientType MolDraw2D::getAtomOrientation(const RDKit::Atom &atom,
         orient = S;
       }
     }
+    // cout << "interim orient : " << orient << endl;
     // atoms of single degree should always be either W or E, never N or S.  If
     // either of the latter, make it E if the slope is close to vertical,
     // otherwise have it either as required.
     if(atom.getDegree() == 1 && (orient == N || orient == S)) {
-      if (fabs(islope) > 0.85) {
+      if (fabs(islope) > VERT_SLOPE) {
         orient = E;
       } else {
         if (nbr_sum.x > 0.0) {
