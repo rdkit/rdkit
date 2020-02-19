@@ -790,7 +790,7 @@ std::vector<std::pair<std::string, std::string>> canonTautomerData{
     {"CC(C)=O", "CC(C)=O"},
     {"OC(C)=C(C)C", "CC(=O)C(C)C"},
     {"c1(ccccc1)CC(=O)C", "CC(=O)Cc1ccccc1"},
-    {"Oc1nccc2cc[nH]c(=N)c12", "N=c1[nH]ccc2cc[nH]c(=O)c12"},
+    {"Oc1nccc2cc[nH]c(=N)c12", "Nc1nccc2cc[nH]c(=O)c12"},
     {"C1(C=CCCC1)=O", "O=C1C=CCCC1"},
     {"C1(CCCCC1)=N", "N=C1CCCCC1"},
     {"C1(=CCCCC1)N", "N=C1CCCCC1"},
@@ -804,7 +804,7 @@ std::vector<std::pair<std::string, std::string>> canonTautomerData{
     {"S=C(N)N", "NC(N)=S"},
     {"SC(N)=N", "NC(N)=S"},
     {"N=c1[nH]ccn(C)1", "Cn1cc[nH]c1=N"},
-    {"CN=c1[nH]cncc1", "CN=c1cc[nH]cn1"},
+    {"CN=c1[nH]cncc1", "CNc1ccncn1"},
     {"Oc1cccc2ccncc12", "Oc1cccc2ccncc12"},
     {"O=c1cccc2cc[nH]cc1-2", "Oc1cccc2ccncc12"},
     {"Cc1n[nH]c2ncnn12", "Cc1n[nH]c2ncnn12"},
@@ -812,19 +812,19 @@ std::vector<std::pair<std::string, std::string>> canonTautomerData{
     {"Oc1ccncc1", "O=c1cc[nH]cc1"},
     {"Oc1c(cccc3)c3nc2ccncc12", "O=c1c2ccccc2[nH]c2ccncc12"},
     {"Oc1ncncc1", "O=c1cc[nH]cn1"},
-    {"C2(=C1C(=NC=N1)[NH]C(=N2)N)O", "N=c1[nH]c(=O)c2[nH]cnc2[nH]1"},
-    {"C2(C1=C([NH]C=N1)[NH]C(=N2)N)=O", "N=c1[nH]c(=O)c2[nH]cnc2[nH]1"},
+    {"C2(=C1C(=NC=N1)[NH]C(=N2)N)O", "Nc1nc(=O)c2[nH]cnc2[nH]1"},
+    {"C2(C1=C([NH]C=N1)[NH]C(=N2)N)=O", "Nc1nc(=O)c2[nH]cnc2[nH]1"},
     {"Oc1n(C)ncc1", "Cn1[nH]ccc1=O"},
     {"O=c1nc2[nH]ccn2cc1", "O=c1ccn2cc[nH]c2n1"},
-    {"N=c1nc[nH]cc1", "N=c1cc[nH]cn1"},
-    {"N=c(c1)ccn2cc[nH]c12", "N=c1ccn2cc[nH]c2c1"},
-    {"CN=c1nc[nH]cc1", "CN=c1cc[nH]cn1"},
+    {"N=c1nc[nH]cc1", "Nc1ccncn1"},
+    {"N=c(c1)ccn2cc[nH]c12", "Nc1ccn2ccnc2c1"},
+    {"CN=c1nc[nH]cc1", "CNc1ccncn1"},
     {"c1ccc2[nH]c(-c3nc4ccccc4[nH]3)nc2c1",
      "c1ccc2[nH]c(-c3nc4ccccc4[nH]3)nc2c1"},
     {"c1ccc2c(c1)NC(=C1N=c3ccccc3=N1)N2",
      "c1ccc2[nH]c(-c3nc4ccccc4[nH]3)nc2c1"},
-    {"CNc1ccnc2ncnn21", "CN=c1cc[nH]c2ncnn12"},
-    {"CN=c1ccnc2nc[nH]n21", "CN=c1cc[nH]c2ncnn12"},
+    {"CNc1ccnc2ncnn21", "CNc1ccnc2ncnn12"},
+    {"CN=c1ccnc2nc[nH]n21", "CNc1ccnc2ncnn12"},
     {"Nc1ccc(C=C2C=CC(=O)C=C2)cc1", "Nc1ccc(C=C2C=CC(=O)C=C2)cc1"},
     {"N=C1C=CC(=Cc2ccc(O)cc2)C=C1", "Nc1ccc(C=C2C=CC(=O)C=C2)cc1"},
     {"n1ccc2ccc[nH]c12", "c1cnc2[nH]ccc2c1"},
@@ -858,18 +858,23 @@ void testCanonicalize() {
   std::string rdbase = getenv("RDBASE");
   std::string tautomerFile =
       rdbase + "/Data/MolStandardize/tautomerTransforms.in";
-  auto *tautparams = new TautomerCatalogParams(tautomerFile);
+  auto tautparams = std::unique_ptr<TautomerCatalogParams>(
+      new TautomerCatalogParams(tautomerFile));
   unsigned int ntautomers = tautparams->getNumTautomers();
   TEST_ASSERT(ntautomers == 34);
 
-  TautomerEnumerator te(new TautomerCatalog(tautparams));
+  TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
 
   for (const auto itm : canonTautomerData) {
     std::unique_ptr<ROMol> mol{SmilesToMol(itm.first)};
     TEST_ASSERT(mol);
     std::unique_ptr<ROMol> res{te.canonicalize(*mol)};
     TEST_ASSERT(res);
-    // std::cerr << itm.first<<" -> "<<MolToSmiles(*res)<<std::endl;
+    if (MolToSmiles(*res) != itm.second) {
+      std::cerr << itm.first << " -> " << MolToSmiles(*res) << " instead of "
+                << itm.second << std::endl;
+    }
+
     TEST_ASSERT(MolToSmiles(*res) == itm.second);
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
@@ -882,11 +887,12 @@ void testPickCanonical() {
   std::string rdbase = getenv("RDBASE");
   std::string tautomerFile =
       rdbase + "/Data/MolStandardize/tautomerTransforms.in";
-  auto *tautparams = new TautomerCatalogParams(tautomerFile);
+  auto tautparams = std::unique_ptr<TautomerCatalogParams>(
+      new TautomerCatalogParams(tautomerFile));
   unsigned int ntautomers = tautparams->getNumTautomers();
   TEST_ASSERT(ntautomers == 34);
 
-  TautomerEnumerator te(new TautomerCatalog(tautparams));
+  TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
 
   for (const auto itm : canonTautomerData) {
     std::unique_ptr<ROMol> mol{SmilesToMol(itm.first)};
@@ -908,11 +914,12 @@ void testCustomScoreFunc() {
   std::string rdbase = getenv("RDBASE");
   std::string tautomerFile =
       rdbase + "/Data/MolStandardize/tautomerTransforms.in";
-  auto *tautparams = new TautomerCatalogParams(tautomerFile);
+  auto tautparams = std::unique_ptr<TautomerCatalogParams>(
+      new TautomerCatalogParams(tautomerFile));
   unsigned int ntautomers = tautparams->getNumTautomers();
   TEST_ASSERT(ntautomers == 34);
 
-  TautomerEnumerator te(new TautomerCatalog(tautparams));
+  TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
 
   // silly examples just using the scoreRings() function
   std::vector<std::pair<std::string, std::string>> subsetTautomerData{
@@ -954,11 +961,12 @@ void testEnumerationProblems() {
   std::string rdbase = getenv("RDBASE");
   std::string tautomerFile =
       rdbase + "/Data/MolStandardize/tautomerTransforms.in";
-  auto *tautparams = new TautomerCatalogParams(tautomerFile);
+  auto tautparams = std::unique_ptr<TautomerCatalogParams>(
+      new TautomerCatalogParams(tautomerFile));
   unsigned int ntautomers = tautparams->getNumTautomers();
   TEST_ASSERT(ntautomers == 34);
 
-  TautomerEnumerator te(new TautomerCatalog(tautparams));
+  TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
 #if 1
   {  // from the discussion of #2908
     auto mol = "O=C(C1=C[NH+]=CC=C1)[O-]"_smiles;
@@ -981,6 +989,42 @@ void testEnumerationProblems() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testPickCanonical2() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing pickCanonical"
+                       << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  std::string tautomerFile =
+      rdbase + "/Data/MolStandardize/tautomerTransforms.in";
+  auto tautparams = std::unique_ptr<TautomerCatalogParams>(
+      new TautomerCatalogParams(tautomerFile));
+  unsigned int ntautomers = tautparams->getNumTautomers();
+  TEST_ASSERT(ntautomers == 34);
+
+  TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
+  {
+    auto mol = "CN=c1nc[nH]cc1"_smiles;
+    TEST_ASSERT(mol);
+    auto tauts = te.enumerate(*mol);
+    for (const auto taut : tauts) {
+      std::cerr << MolToSmiles(*taut) << std::endl;
+    }
+    std::unique_ptr<ROMol> canon{te.pickCanonical(tauts)};
+    std::cerr << "res: " << MolToSmiles(*canon) << std::endl;
+  }
+  {
+    auto mol = "CN=c1[nH]cccc1"_smiles;
+    TEST_ASSERT(mol);
+    auto tauts = te.enumerate(*mol);
+    for (const auto taut : tauts) {
+      std::cerr << MolToSmiles(*taut) << std::endl;
+    }
+    std::unique_ptr<ROMol> canon{te.pickCanonical(tauts)};
+    std::cerr << "res: " << MolToSmiles(*canon) << std::endl;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -988,7 +1032,8 @@ int main() {
   testCanonicalize();
   testPickCanonical();
   testCustomScoreFunc();
-#endif
   testEnumerationProblems();
+#endif
+  testPickCanonical2();
   return 0;
 }
