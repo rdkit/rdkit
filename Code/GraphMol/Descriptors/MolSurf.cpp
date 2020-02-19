@@ -74,7 +74,7 @@ double getLabuteAtomContribs(const ROMol &mol, std::vector<double> &Vi,
     Vi[i] = M_PI * Ri * (4. * Ri - Vi[i]);
     res += Vi[i];
   }
-  if (includeHs) {
+  if (includeHs && fabs(hContrib) > 1e-4) {
     double Rj = PeriodicTable::getTable()->getRb0(1);
     hContrib = M_PI * Rj * (4. * Rj - hContrib);
     res += hContrib;
