@@ -169,7 +169,6 @@ std::string vectToString(RDValue val) {
 }
 
 inline bool rdvalue_tostring(RDValue_cast_t val, std::string &res) {
-  Utils::LocaleSwitcher ls;  // for lexical cast...
   switch (val.getTag()) {
     case RDTypeTag::StringTag:
       res = rdvalue_cast<std::string>(val);
@@ -177,9 +176,11 @@ inline bool rdvalue_tostring(RDValue_cast_t val, std::string &res) {
     case RDTypeTag::IntTag:
       res = boost::lexical_cast<std::string>(rdvalue_cast<int>(val));
       break;
-    case RDTypeTag::DoubleTag:
+    case RDTypeTag::DoubleTag: {
+      Utils::LocaleSwitcher ls;  // for lexical cast...
       res = boost::lexical_cast<std::string>(rdvalue_cast<double>(val));
       break;
+    }
     case RDTypeTag::UnsignedIntTag:
       res = boost::lexical_cast<std::string>(rdvalue_cast<unsigned int>(val));
       break;
@@ -188,15 +189,21 @@ inline bool rdvalue_tostring(RDValue_cast_t val, std::string &res) {
       res = boost::lexical_cast<std::string>(rdvalue_cast<bool>(val));
       break;
 #endif
-    case RDTypeTag::FloatTag:
+    case RDTypeTag::FloatTag: {
+      Utils::LocaleSwitcher ls;  // for lexical cast...
       res = boost::lexical_cast<std::string>(rdvalue_cast<float>(val));
       break;
-    case RDTypeTag::VecDoubleTag:
+    }
+    case RDTypeTag::VecDoubleTag: {
+      // vectToString uses std::imbue for locale
       res = vectToString<double>(val);
       break;
-    case RDTypeTag::VecFloatTag:
+    }
+    case RDTypeTag::VecFloatTag: {
+      // vectToString uses std::imbue for locale
       res = vectToString<float>(val);
       break;
+    }
     case RDTypeTag::VecIntTag:
       res = vectToString<int>(val);
       break;
@@ -206,7 +213,8 @@ inline bool rdvalue_tostring(RDValue_cast_t val, std::string &res) {
     case RDTypeTag::VecStringTag:
       res = vectToString<std::string>(val);
       break;
-    case RDTypeTag::AnyTag:
+    case RDTypeTag::AnyTag: {
+      Utils::LocaleSwitcher ls;  // for lexical cast...
       try {
         res = boost::any_cast<std::string>(rdvalue_cast<boost::any &>(val));
       } catch (const boost::bad_any_cast &) {
@@ -223,6 +231,7 @@ inline bool rdvalue_tostring(RDValue_cast_t val, std::string &res) {
         }
       }
       break;
+    }
     default:
       res = "";
   }
