@@ -1250,8 +1250,8 @@ M  END";
     outs << text;
     outs.flush();
     TEST_ASSERT(
-        text.find("<path class='bond-1' d='M 130.309,117.496 L 194.727,89.1159 "
-                  "L 187.092,75.893 Z' "
+        text.find("<path class='bond-1' d='M 125.352,114.634 "
+                  "L 179.234,90.896 L 172.848,79.8357 Z' "
                   "style='fill:#000000") != std::string::npos);
     delete m;
   }
@@ -1302,8 +1302,8 @@ M  END";
     outs << text;
     outs.flush();
     TEST_ASSERT(
-        text.find("<path class='bond-3' d='M 107.911,115.963 L 80.5887,91.4454 "
-                  "L 75.9452,97.9126 Z' "
+        text.find("<path class='bond-3' d='M 101.742,115.477 L 79.4095,92.366 "
+                  "L 72.7039,101.705 Z' "
                   "style='fill:#000000;") != std::string::npos);
 
     MolDraw2DUtils::prepareMolForDrawing(*m);
@@ -1740,16 +1740,21 @@ void test13JSONConfig() {
     TEST_ASSERT(m);
     MolDraw2DUtils::prepareMolForDrawing(*m);
     MolDraw2DSVG drawer(250, 200);
-    const char *json = "{\"legendColour\":[1.0,0.5,1.0]}";
+    const char *json = "{\"legendColour\":[1.0,0.5,1.0], \"rotate\": 90, "
+                       "\"bondLineWidth\": 5}";
     MolDraw2DUtils::updateDrawerParamsFromJSON(drawer, json);
     drawer.drawMolecule(*m, "foo");
     drawer.finishDrawing();
     std::string text = drawer.getDrawingText();
-    std::ofstream outs("test13_1.svg");
+    std::ofstream outs("test983.svg");
     outs << text;
-    TEST_ASSERT(text.find("text-anchor:start;fill:#FF7FFF") !=
-                std::string::npos);
     outs.close();
+    TEST_ASSERT(text.find("sans-serif;fill:#FF7FFF") !=
+                std::string::npos);
+    TEST_ASSERT(text.find("'bond-0' d='M 129.799,9.09091 L 177.679,92.0201'")
+                != std::string::npos);
+    TEST_ASSERT(text.find("stroke-width:5px") !=
+                std::string::npos);
     delete m;
   }
   std::cerr << " Done" << std::endl;
