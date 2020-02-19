@@ -141,6 +141,7 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
   PT_OPT_GET(prepareMolsBeforeDrawing);
   PT_OPT_GET(fixedScale);
   PT_OPT_GET(fixedBondLength);
+  PT_OPT_GET(rotate);
   get_colour_option(&pt, "highlightColour", opts.highlightColour);
   get_colour_option(&pt, "backgroundColour", opts.backgroundColour);
   get_colour_option(&pt, "legendColour", opts.legendColour);
@@ -218,7 +219,6 @@ void contourAndDrawGrid(MolDraw2D &drawer, const double *grid,
             fracV *= -1;
           }
         }
-        DrawColour fillColour;
         auto c1 = (gridV < 0 || params.colourMap.size() == 2)
                       ? params.colourMap[1]
                       : params.colourMap[1];

@@ -137,6 +137,8 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
                           // won't make it larger.  Default -1.0 means no fix.
                           // If both fixedScale and fixedBondLength are > 0.0,
                           // fixedScale wins.
+  double rotate; // angle in degrees to rotate coords by about centre before
+                 // drawing. default=0.0.
 
   MolDrawOptions()
       : atomLabelDeuteriumTritium(false),
@@ -158,7 +160,8 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
         bondLineWidth(-1),
         prepareMolsBeforeDrawing(true),
         fixedScale(-1.0),
-        fixedBondLength(-1.0) {
+        fixedBondLength(-1.0),
+        rotate(0.0) {
     highlightColourPalette.emplace_back(DrawColour(1., 1., .67));  // popcorn yellow
     highlightColourPalette.emplace_back(DrawColour(1., .8, .6));  // sand
     highlightColourPalette.emplace_back(DrawColour(1., .71, .76));  // light pink

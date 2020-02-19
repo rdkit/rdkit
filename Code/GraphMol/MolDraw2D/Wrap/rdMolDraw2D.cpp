@@ -539,9 +539,11 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                      "If > 0.0, fixes bond length to this number of pixels"
                      "unless that would make it too big.  Default -1.0 means"
                      "no fix.  If both set, fixedScale takes precedence.")
-    .def_readwrite("fixedScale", &RDKit::MolDrawOptions::fixedScale,
-    "If > 0.0, fixes scale to that fraction of width of"
-    "draw window.  Default -1.0 means adjust scale to fit.")
+      .def_readwrite("fixedScale", &RDKit::MolDrawOptions::fixedScale,
+                     "If > 0.0, fixes scale to that fraction of width of"
+                     "draw window.  Default -1.0 means adjust scale to fit.")
+      .def_readwrite("rotate", &RDKit::MolDrawOptions::rotate,
+                     "Rotates molecule about centre by this number of degrees,")
       .def_readwrite("additionalAtomLabelPadding",
                      &RDKit::MolDrawOptions::additionalAtomLabelPadding,
                      "additional padding to leave around atom labels. "

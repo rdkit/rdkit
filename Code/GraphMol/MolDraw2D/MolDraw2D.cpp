@@ -863,7 +863,7 @@ void MolDraw2D::calculateScale(int width, int height,
   PRECONDITION(height > 0, "bad height");
   PRECONDITION(activeMolIdx_ >= 0, "bad active mol");
 
-  cout << "calculateScale" << endl;
+  // cout << "calculateScale" << endl;
   auto centre_picture = [&]() {
     double y_mid = y_min_ + 0.5 * y_range_;
     double x_mid = x_min_ + 0.5 * x_range_;
@@ -907,7 +907,7 @@ void MolDraw2D::calculateScale(int width, int height,
   // And now we need to take account of strings with N/S orientation
   // as well.
   while (scale_ > 1e-4) {
-    cout << "scale iteration : " << scale_ << endl;
+    // cout << "scale iteration : " << scale_ << endl;
     for (int i = 0, is = atom_syms_[activeMolIdx_].size(); i < is; ++i) {
       if (!atom_syms_[activeMolIdx_][i].first.empty()) {
         double atsym_width, atsym_height;
@@ -1002,8 +1002,8 @@ void MolDraw2D::calculateScale(int width, int height,
     y_trans_ = 0.;
   }
 
-  cout << "leaving calculateScale" << endl;
-  cout << "final scale : " << scale_ << endl;
+  // cout << "leaving calculateScale" << endl;
+  // cout << "final scale : " << scale_ << endl;
 
 }
 
@@ -1241,7 +1241,7 @@ void MolDraw2D::extractAtomCoords(const ROMol &mol, int confId,
   PRECONDITION(static_cast<int>(atomic_nums_.size()) > activeMolIdx_,
                "no space");
   PRECONDITION(static_cast<int>(mol.getNumConformers()) > 0,
-               "no coords")
+               "no coords");
 
   at_cds_[activeMolIdx_].clear();
   atomic_nums_[activeMolIdx_].clear();
@@ -1250,16 +1250,41 @@ void MolDraw2D::extractAtomCoords(const ROMol &mol, int confId,
     bbox_[1].x = bbox_[1].y = -1 * numeric_limits<double>::max();
   }
   const RDGeom::POINT3D_VECT &locs = mol.getConformer(confId).getPositions();
+
+  // the transformation rotates anti-clockwise, as is conventional, but
+  // probably not what our user expects.
+  double rot = - drawOptions().rotate * M_PI / 180.0;
+  // assuming that if drawOptions().rotate is set to 0.0, rot will be
+  // exactly 0.0 without worrying about floating point number dust.  Does
+  // anyone know if this is true?  It's not the end of the world if not,
+  // as it's just an extra largely pointless rotation.
+  // Floating point numbers are like piles of sand; every time you move
+  // them around, you lose a little sand and pick up a little dirt.
+  // — Brian Kernighan and P.J. Plauger
+  // Nothing brings fear to my heart more than a floating point number.
+  // — Gerald Jay Sussman
+  // Some developers, when encountering a problem, say: “I know, I’ll
+  // use floating-point numbers !”   Now, they have 1.9999999997 problems.
+  // — unknown
+  double costh = rot == 0.0 ? 0.0 : cos(rot);
+  double sinth = rot == 0.0 ? 0.0 : sin(rot);
+
   for(auto this_at: mol.atoms()) {
     int this_idx = this_at->getIdx();
     Point2D pt(locs[this_idx].x, locs[this_idx].y);
+    if(rot != 0.0) {
+      double new_x = pt.x * costh - pt.y * sinth;
+      double new_y = pt.x * sinth + pt.y * costh;
+      pt.x = new_x;
+      pt.y = new_y;
+    }
     at_cds_[activeMolIdx_].push_back(pt);
 
     if (updateBBox) {
-      bbox_[0].x = std::min(bbox_[0].x, locs[this_idx].x);
-      bbox_[0].y = std::min(bbox_[0].y, locs[this_idx].y);
-      bbox_[1].x = std::max(bbox_[1].x, locs[this_idx].x);
-      bbox_[1].y = std::max(bbox_[1].y, locs[this_idx].y);
+      bbox_[0].x = std::min(bbox_[0].x, pt.x);
+      bbox_[0].y = std::min(bbox_[0].y, pt.y);
+      bbox_[1].x = std::max(bbox_[1].x, pt.x);
+      bbox_[1].y = std::max(bbox_[1].y, pt.y);
     }
   }
 }
