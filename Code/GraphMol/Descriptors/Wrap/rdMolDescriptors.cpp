@@ -400,6 +400,54 @@ RDKit::SparseIntVect<std::uint32_t> *MorganFingerprintHelper(
   }
   return res;
 }
+
+std::pair<double,double> BCUT2D_list(const RDKit::ROMol &m, python::list atomprops)
+{
+  std::vector<double> dvec;
+  for (int i = 0; i < len(atomprops); ++i)
+  {
+    dvec.push_back(boost::python::extract<double>(atomprops[i]));
+  }
+  return RDKit::Descriptors::BCUT2D(m, dvec);
+}
+
+std::pair<double,double> BCUT2D_tuple(const RDKit::ROMol &m, python::tuple atomprops)
+{
+  std::vector<double> dvec;
+  for (int i = 0; i < len(atomprops); ++i)
+  {
+    dvec.push_back(boost::python::extract<double>(atomprops[i]));
+  }
+  return RDKit::Descriptors::BCUT2D(m, dvec);
+}
+
+// From boost::python examples
+// Converts a std::pair instance to a Python tuple.
+template <typename T1, typename T2>
+struct std_pair_to_tuple
+{
+  static PyObject* convert(std::pair<T1, T2> const& p)
+  {
+    return boost::python::incref(
+				 boost::python::make_tuple(p.first, p.second).ptr());
+  }
+  static PyTypeObject const *get_pytype () {return &PyTuple_Type; }
+};
+  
+// Helper for convenience.
+template <typename T1, typename T2>
+struct std_pair_to_python_converter
+{
+  std_pair_to_python_converter()
+  {
+    boost::python::to_python_converter<
+      std::pair<T1, T2>,
+      std_pair_to_tuple<T1, T2>,
+      true //std_pair_to_tuple has get_pytype
+      >();
+  }
+};
+  
 }  // namespace
 RDKit::SparseIntVect<std::uint32_t> *GetMorganFingerprint(
     const RDKit::ROMol &mol, int radius, python::object invariants,
@@ -1620,7 +1668,6 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::scope().attr("_BCUT2D_version") =
       RDKit::Descriptors::BCUT2DVersion;
   std::vector<double> (*BCUT)(const RDKit::ROMol&) = & RDKit::Descriptors::BCUT2D;
-  std::pair<double,double> (*BCUT_props)(const RDKit::ROMol&, const std::vector<double>&) = & RDKit::Descriptors::BCUT2D;
   std::pair<double,double> (*BCUT_atomprops)(const RDKit::ROMol&, const std::string&) = & RDKit::Descriptors::BCUT2D;
   docString = "Returns the standard 2D BCUT2D descriptors vector";
     
@@ -1628,14 +1675,12 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               (python::arg("mol")),
               docString.c_str());
 
-  python::class_<std::pair<double, double> >("BCUTPair")
-    .def_readwrite("first", &std::pair<double, double>::first)
-    .def_readwrite("second", &std::pair<double, double>::second)
-    .def_readwrite("higest", &std::pair<double, double>::first)
-    .def_readwrite("lowest", &std::pair<double, double>::second);
-  
+  std_pair_to_python_converter<double, double>();
   docString = "Returns a 2D BCUT given the molecule and the specified atom props";
-  python::def("BCUT2D", BCUT_props,
+  python::def("BCUT2D", BCUT2D_list,
+              (python::arg("mol"), python::arg("atom_props")),
+              docString.c_str());
+  python::def("BCUT2D", BCUT2D_tuple,
               (python::arg("mol"), python::arg("atom_props")),
               docString.c_str());
 

@@ -623,6 +623,31 @@ class TestCase(unittest.TestCase):
       self.assertEqual(len(res), 8)
       self.assertAlmostEqual(list(res), expected[i])
 
+  @unittest.skipIf(not haveBCUT, "BCUT descriptors not present")
+  def testBCUTUserProps(self):
+    m = Chem.MolFromSmiles("CCCCCC")
+    props = []
+    for a in m.GetAtoms():
+      a.SetDoubleProp("prop", a.GetIdx()+1)
+      props.append(float(a.GetIdx()+1))
+      
+    bcut1 = rdMD.BCUT2D(m, "prop")
+    m = Chem.MolFromSmiles("CCCCCC")
+    bcut2 = rdMD.BCUT2D(m, props)
+    bcut3 = rdMD.BCUT2D(m, tuple(props))
+
+    # might need feq
+    self.assertEqual(list(bcut1), list(bcut2))
+    self.assertEqual(list(bcut3), list(bcut2))
+
+    props.append(0.0)
+    try:
+      bcut2 = rdMD.BCUT2D(mol, props)
+      self.assertTrue(0, "Failed to handle bad prop size")
+    except:
+      pass
+      
+      
 
 if __name__ == '__main__':
   unittest.main()
