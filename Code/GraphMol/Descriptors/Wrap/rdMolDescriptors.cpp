@@ -1669,14 +1669,25 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       RDKit::Descriptors::BCUT2DVersion;
   std::vector<double> (*BCUT)(const RDKit::ROMol&) = & RDKit::Descriptors::BCUT2D;
   std::pair<double,double> (*BCUT_atomprops)(const RDKit::ROMol&, const std::string&) = & RDKit::Descriptors::BCUT2D;
-  docString = "Returns the standard 2D BCUT2D descriptors vector";
+  docString = \
+    "Implements BCUT descriptors From J. Chem. Inf. Comput. Sci., Vol. 39, No. 1, 1999"	\
+    "Diagonal elements are (currently) atomic mass, gasteiger charge,"\
+    "crippen logP and crippen MRReturns the 2D BCUT2D descriptors vector as described in\n"\
+    "returns [mass eigen value high, mass eigen value low,\n"\
+    "         gasteiger charge eigenvalue high, gasteiger charge low,\n"\
+    "         crippen lowgp  eigenvalue high, crippen lowgp  low,\n"\
+    "         crippen mr eigenvalue high, crippen mr low]\n"\
+    "";
     
   python::def("BCUT2D", BCUT,
               (python::arg("mol")),
               docString.c_str());
 
   std_pair_to_python_converter<double, double>();
-  docString = "Returns a 2D BCUT given the molecule and the specified atom props";
+  docString = \
+    "Returns a 2D BCUT (eigen value hi, eigenvalue low) given the molecule and the specified atom props\n"\
+    " there length ot atom_props must a list or tuple of floats equal in size to the number of atoms in mol";
+  
   python::def("BCUT2D", BCUT2D_list,
               (python::arg("mol"), python::arg("atom_props")),
               docString.c_str());
@@ -1684,7 +1695,9 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               (python::arg("mol"), python::arg("atom_props")),
               docString.c_str());
 
-  docString = "Returns a 2D BCUT given the molecule and the specified atom prop name";
+  docString = \
+    "Returns a 2D BCUT (eigen value high, eigen value low) given the molecule and the specified atom prop name\n" \
+    "atom_propname must exist on each aton and be convertable to a float";
   python::def("BCUT2D", BCUT_atomprops,
               (python::arg("mol"), python::arg("atom_propname")),
               docString.c_str());

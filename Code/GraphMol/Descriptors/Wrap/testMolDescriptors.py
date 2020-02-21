@@ -642,11 +642,27 @@ class TestCase(unittest.TestCase):
 
     props.append(0.0)
     try:
-      bcut2 = rdMD.BCUT2D(mol, props)
+      bcut2 = rdMD.BCUT2D(m, props)
       self.assertTrue(0, "Failed to handle bad prop size")
-    except:
-      pass
-      
+    except RuntimeError as e:
+      self.assertTrue("tom_props.size() == num_atoms" in str(e))
+
+    try:
+      bcut2 = rdMD.BCUT2D(m, "property not existing on the atom")
+      self.assertTrue(0, "Failed to handle not existing properties")
+    except KeyError as e:
+      self.assertEqual(e.args, ("property not existing on the atom",))
+
+    for atom in m.GetAtoms():
+      atom.SetProp("bad_prop", "not a double")
+      break
+    
+    try:
+      bcut2 = rdMD.BCUT2D(m, "bad_prop")
+      self.assertTrue(0, "Failed to handle bad prop (not a double)")
+    except RuntimeError as e:
+      self.assertTrue("boost::bad_any_cast" in str(e))
+    
       
 
 if __name__ == '__main__':
