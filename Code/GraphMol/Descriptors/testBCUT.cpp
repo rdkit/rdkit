@@ -12,6 +12,7 @@
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/FileParsers/MolSupplier.h>
 #include <RDGeneral/RDLog.h>
 #include <vector>
 
@@ -54,7 +55,34 @@ void test1(){
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void test2() {
+    BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+    BOOST_LOG(rdErrorLog) << "    Larger BCUT tests." << std::endl;
+
+    std::string pathName = getenv("RDBASE");
+    std::string sdfName =
+      pathName + "/Code/GraphMol/Descriptors/test_data/bace_200_bcut.sdf";
+    
+  RDKit::SDMolSupplier reader(sdfName, true, false);
+  while(!reader.atEnd()) {
+    std::unique_ptr<RDKit::ROMol> m(reader.next());
+    TEST_ASSERT(m.get());
+    std::vector<double> bcuts = Descriptors::BCUT2D(*m);
+    TEST_ASSERT(bcuts.size() == 8);
+    TEST_ASSERT(feq(bcuts[0], m->getProp<double>("bcut1")));
+    TEST_ASSERT(feq(bcuts[1], m->getProp<double>("bcut2")));
+    TEST_ASSERT(feq(bcuts[2], m->getProp<double>("bcut3")));
+    TEST_ASSERT(feq(bcuts[3], m->getProp<double>("bcut4")));
+    TEST_ASSERT(feq(bcuts[4], m->getProp<double>("bcut5")));
+    TEST_ASSERT(feq(bcuts[5], m->getProp<double>("bcut6")));
+    TEST_ASSERT(feq(bcuts[6], m->getProp<double>("bcut7")));
+    TEST_ASSERT(feq(bcuts[7], m->getProp<double>("bcut8")));
+  }
+}
+
+
 int main() {
   RDLog::InitLogs();
   test1();
+  test2();
 }
