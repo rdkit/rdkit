@@ -98,8 +98,6 @@ std::pair<double,double> BCUT2D(const ROMol &m, const std::string &atom_double_p
 
 std::vector<double> BCUT2D(const ROMol &m) {
   std::unique_ptr<ROMol> mol(MolOps::removeHs(m));
-  // Atom elemno?  atomic mass? so many options...
-  const std::string atom_prop = "atom_elemno";
   std::vector<double> masses;
   std::vector<double> charges;
   unsigned int num_atoms = mol->getNumAtoms();
