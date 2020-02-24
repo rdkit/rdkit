@@ -39,7 +39,7 @@ void arcPoints(const Point2D &cds1, const Point2D &cds2,
   float angle = M_PI * startAng / 180;
   for (int i = 0; i <= steps; ++i) {
     Point2D point(x + xScale * cos(angle), y - yScale * sin(angle));
-    res.push_back(point);
+    res.emplace_back(point);
     angle += step;
   }
 }

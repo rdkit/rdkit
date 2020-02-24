@@ -95,6 +95,7 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
                              // molecule
   bool fillHighlights;       // fill the areas used to highlight atoms and atom
                              // regions
+  double highlightRadius; // default if nothing given for a particular atom
   int flagCloseContactsDist;  // if positive, this will be used as a cutoff (in
                               // pixels) for highlighting close contacts
   bool includeAtomTags;  // toggles inclusion of atom tags in the output. does
@@ -147,6 +148,7 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
         highlightColour(1, .5, .5),
         continuousHighlight(true),
         fillHighlights(true),
+        highlightRadius(0.3),
         flagCloseContactsDist(3),
         includeAtomTags(false),
         clearBackground(true),
@@ -264,6 +266,28 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
       const std::map<int, DrawColour> *highlight_atom_map = nullptr,
       const std::map<int, DrawColour> *highlight_bond_map = nullptr,
       const std::map<int, double> *highlight_radii = nullptr, int confId = -1);
+
+  //! draw molecule with multiple colours allowed per atom.
+  /*!
+    \param mol             : the molecule to draw
+    \param legend          : the legend (to be drawn under the molecule)
+    \param highlight_atom_map   : map from atomId -> DrawColours
+    providing the highlight colours.
+    \param highlight_bond_map   : map from bondId -> DrawColours
+    providing the highlight colours.
+    \param highlight_radii : map from atomId -> radius (in molecule
+    coordinates) for the radii of atomic highlights. If not provided for an
+    index, the default value from \c drawOptions() will be used.
+    \param confId          : (optional) conformer ID to be used for atomic
+    coordinates
+  */
+  virtual void drawMoleculeWithHighlights(
+        const ROMol &mol, const std::string &legend,
+        const std::map<int, std::vector<DrawColour> > &highlight_atom_map,
+        const std::map<int, std::vector<DrawColour> > &highlight_bond_map,
+        const std::map<int, double> &highlight_radii,
+        const std::map<int, int> &highlight_linewidth_multipliers,
+        int confId = -1);
 
   //! draw multiple molecules in a grid
   /*!
@@ -445,6 +469,12 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
                             const Point2D &cds3);
   //! draw an ellipse
   virtual void drawEllipse(const Point2D &cds1, const Point2D &cds2);
+  // draw the arc of a circle between ang1 and ang2.  Note that 0 is
+  // at 3 o-clock and 90 at 12 o'clock as you'd expect from your maths.
+  // ang2 must be > ang1 - it won't draw backwards.  This is not enforced.
+  // angles in degrees.
+  virtual void drawArc(const Point2D &cds1, double radius,
+                              double ang1, double ang2);
   //! draw a rectangle
   virtual void drawRect(const Point2D &cds1, const Point2D &cds2);
   //! draw a line indicating the presence of an attachment point (normally a
@@ -519,6 +549,24 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
       const std::map<int, DrawColour> *highlight_map = nullptr);
   DrawColour getColourByAtomicNum(int atomic_num);
 
+  // do the initial setup bits for drawing a molecule.
+  std::unique_ptr<RWMol> setupMoleculeDraw(const ROMol &mol,
+                                           const std::vector<int> *highlight_atoms,
+                                           const std::map<int, double> *highlight_radii,
+                                           int confId = -1);
+  void drawBonds(const ROMol &draw_mol,
+                 const std::vector<int> *highlight_atoms = nullptr,
+                 const std::map<int, DrawColour> *highlight_atom_map = nullptr,
+                 const std::vector<int> *highlight_bonds = nullptr,
+                 const std::map<int, DrawColour> *highlight_bond_map = nullptr);
+  // do the finishing touches to the drawing
+  void finishMoleculeDraw(const ROMol &draw_mol,
+                          const std::vector<DrawColour> &atom_colours);
+  void drawLegend(const std::string &legend);
+  // draw a circle in the requested colour(s) around the atom.
+  void drawHighlightedAtom(int atom_idx, const std::vector<DrawColour> &colours,
+                           const std::map<int, double> *highlight_radii);
+
   void extractAtomCoords(const ROMol &mol, int confId, bool updateBBox);
   void extractAtomSymbols(const ROMol &mol);
 
@@ -530,6 +578,8 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   void drawAtomLabel(int atom_num,
                      const std::vector<int> *highlight_atoms = nullptr,
                      const std::map<int, DrawColour> *highlight_map = nullptr);
+  void drawAtomLabel(int atom_num, const DrawColour &draw_colour);
+
   // take the label for the given atom and return the individual pieces
   // that need to be drawn for it.  So NH<sub>2</sub> will return
   // "N", "H<sub>2</sub>".

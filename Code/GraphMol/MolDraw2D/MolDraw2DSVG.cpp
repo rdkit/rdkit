@@ -312,6 +312,7 @@ void MolDraw2DSVG::getStringSize(const std::string &label, double &label_width,
   if (had_a_sub) {
     label_height *= 1.1;
   }
+
 }
 
 namespace {

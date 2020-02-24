@@ -509,6 +509,8 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def_readwrite("continuousHighlight",
                      &RDKit::MolDrawOptions::continuousHighlight)
       .def_readwrite("fillHighlights", &RDKit::MolDrawOptions::fillHighlights)
+      .def_readwrite("highlightRadius", &RDKit::MolDrawOptions::highlightRadius,
+                     "Default radius for highlight circles.")
       .def_readwrite("flagCloseContactsDist",
                      &RDKit::MolDrawOptions::flagCloseContactsDist)
       .def_readwrite("atomRegions", &RDKit::MolDrawOptions::atomRegions,
