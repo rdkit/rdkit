@@ -361,16 +361,27 @@ void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds,
   poly.push_back(Point2D(draw_x,draw_y+string_height));
   drawPolygon(poly);
   setColour(tcolour);
+  draw_x = cds.x;
+  draw_y = cds.y;
 #endif
   std::string col = DrawColourToSVG(colour());
 
   std::string text_anchor = "middle";
+  double tmult = 0.0;
   if(align == END) {
     text_anchor = "end";
+    tmult = -1.0;
   } else if(align == START) {
     text_anchor = "start";
+    tmult = 1.0;
   }
   Point2D draw_coords = getDrawCoords(Point2D(draw_x, draw_y));
+  // fonts are laid out with room for wider letters like W and hanging bits like g.
+  // Very few atomic symbols need to care about this, and common ones look a bit
+  // out of line.  For example O sits to the left of a double bond.  This is an
+  // empirical tweak to push it back a bit.
+  draw_coords.x += string_height * tmult * 0.1 * scale();
+  draw_coords.y += string_height * 0.15  *scale();
 
   d_os << "<text dominant-baseline=\"central\" text-anchor=\""
        << text_anchor << "\"";
