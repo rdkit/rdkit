@@ -143,7 +143,11 @@ void MolDraw2DSVG::drawLine(const Point2D &cds1, const Point2D &cds2) {
   Point2D c1 = getDrawCoords(cds1);
   Point2D c2 = getDrawCoords(cds2);
   std::string col = DrawColourToSVG(colour());
-  unsigned int width = lineWidth();
+  // 0.02 is picked by eye
+  unsigned int width = lineWidth() * scale() * 0.02;
+  if(width < 2) {
+    width = 2;
+  }
   std::string dashString = "";
   const DashPattern &dashes = dash();
   if (dashes.size()) {

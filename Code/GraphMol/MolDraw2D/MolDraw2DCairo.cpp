@@ -37,7 +37,12 @@ void MolDraw2DCairo::drawLine(const Point2D &cds1, const Point2D &cds2) {
   Point2D c1 = getDrawCoords(cds1);
   Point2D c2 = getDrawCoords(cds2);
 
-  unsigned int width = lineWidth();
+  // 0.02 is picked by eye
+  unsigned int width = lineWidth() * scale() * 0.02;
+  if(width < 2) {
+    width = 2;
+  }
+
   std::string dashString = "";
 
   cairo_set_line_width(dp_cr, width);
