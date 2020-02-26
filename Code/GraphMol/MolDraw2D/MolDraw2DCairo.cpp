@@ -123,7 +123,6 @@ void MolDraw2DCairo::drawPolygon(const std::vector<Point2D> &cds) {
 
   cairo_set_line_cap(dp_cr, CAIRO_LINE_CAP_BUTT);
   cairo_set_line_join(dp_cr, CAIRO_LINE_JOIN_BEVEL);
-  cairo_set_line_width(dp_cr, lineWidth());
   cairo_set_dash(dp_cr, nullptr, 0, 0);
   cairo_set_line_width(dp_cr, width);
 

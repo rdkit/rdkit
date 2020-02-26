@@ -193,7 +193,6 @@ void MolDraw2DSVG::drawPolygon(const std::vector<Point2D> &cds) {
 
   std::string col = DrawColourToSVG(colour());
   unsigned int width = getDrawLineWidth();
-
   std::string dashString = "";
   d_os << "<path ";
   if (d_activeClass != "") {
@@ -208,7 +207,7 @@ void MolDraw2DSVG::drawPolygon(const std::vector<Point2D> &cds) {
   }
   if (fillPolys()) {
     // the Z closes the path which we don't want for unfilled polygons
-    d_os << "Z' style='fill:" << col << ";fill-rule:evenodd;fill-opacity=" << colour().a
+    d_os << " Z' style='fill:" << col << ";fill-rule:evenodd;fill-opacity=" << colour().a
          << ";";
   } else {
     d_os << "' style='fill:none;";
@@ -222,6 +221,7 @@ void MolDraw2DSVG::drawPolygon(const std::vector<Point2D> &cds) {
 
 // ****************************************************************************
 void MolDraw2DSVG::drawEllipse(const Point2D &cds1, const Point2D &cds2) {
+
   Point2D c1 = getDrawCoords(cds1);
   Point2D c2 = getDrawCoords(cds2);
   double w = c2.x - c1.x;
@@ -232,7 +232,7 @@ void MolDraw2DSVG::drawEllipse(const Point2D &cds1, const Point2D &cds2) {
   h = h > 0 ? h : -1 * h;
 
   std::string col = DrawColourToSVG(colour());
-  unsigned int width = lineWidth();
+  unsigned int width = getDrawLineWidth();
   std::string dashString = "";
   d_os << "<ellipse"
        << " cx='" << cx << "'"

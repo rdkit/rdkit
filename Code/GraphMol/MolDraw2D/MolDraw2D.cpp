@@ -114,6 +114,10 @@ void MolDraw2D::doContinuousHighlighting(
     }
   }
   if (highlight_atoms) {
+    if(!drawOptions().fillHighlights) {
+      // we need a narrower circle
+      setLineWidth(tgt_lw / 2);
+    }
     for(auto this_at: mol.atoms()) {
       int this_idx = this_at->getIdx();
       if (std::find(highlight_atoms->begin(), highlight_atoms->end(),
@@ -156,7 +160,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
                              highlight_atom_map, highlight_bond_map,
                              highlight_radii);
     // at this point we shouldn't be doing any more highlighting, so blow out
-    // those variables:
+    // those variables.  This alters the behaviour of drawBonds below.
     highlight_bonds = nullptr;
     highlight_atoms = nullptr;
   } else if (drawOptions().circleAtoms && highlight_atoms) {
@@ -1373,14 +1377,22 @@ void MolDraw2D::drawHighlightedAtom(int atom_idx, const vector<DrawColour> &colo
   int orig_lw = lineWidth();
   bool orig_fp = fillPolys();
   if(!drawOptions().fillHighlights) {
-    setLineWidth(orig_lw * drawOptions().highlightBondWidthMultiplier);
+    setLineWidth(getHighlightBondWidth(-1, nullptr));
     setFillPolys(false);
   } else {
     setFillPolys(true);
   }
   if(colours.size() == 1) {
     setColour(colours.front());
-    drawArc(centre, xradius, yradius, 0.0, 360.0);
+    Point2D offset(xradius, yradius);
+    Point2D p1 = centre - offset;
+    Point2D p2 = centre + offset;
+    if(fillPolys()) {
+      setLineWidth(1);
+    }
+    drawEllipse(p1, p2);
+
+    // drawArc(centre, xradius, yradius, 0.0, 360.0);
   } else {
     double arc_size = 360.0 / double(colours.size());
     double arc_start = -90.0;
@@ -1462,12 +1474,7 @@ void MolDraw2D::drawHighlightedBonds(const RDKit::ROMol &mol,
   for(auto hb: highlight_bond_map) {
     int bond_idx = hb.first;
     if(!drawOptions().fillHighlights) {
-      int lw_mult = drawOptions().highlightBondWidthMultiplier;
-      auto hw = highlight_linewidth_multipliers.find(bond_idx);
-      if(hw != highlight_linewidth_multipliers.end()) {
-        lw_mult = hw->second;
-      }
-      setLineWidth(orig_lw * lw_mult);
+      setLineWidth(getHighlightBondWidth(bond_idx, &highlight_linewidth_multipliers));
     }
     auto bond = mol.getBondWithIdx(bond_idx);
     int at1_idx = bond->getBeginAtomIdx();
@@ -1534,8 +1541,8 @@ void MolDraw2D::drawHighlightedBonds(const RDKit::ROMol &mol,
         }
       }
     }
+    setLineWidth(orig_lw);
   }
-  setLineWidth(orig_lw);
 
 }
 
@@ -1543,9 +1550,15 @@ void MolDraw2D::drawHighlightedBonds(const RDKit::ROMol &mol,
 int MolDraw2D::getHighlightBondWidth(int bond_idx,
                                      const map<int, int> *highlight_linewidth_multipliers) const {
 
-  int orig_lw = lineWidth();
-
   int bwm = drawOptions().highlightBondWidthMultiplier;
+  // if we're not doing filled highlights, the lines need to be narrower
+  if(!drawOptions().fillHighlights) {
+    bwm /= 2;
+    if(bwm < 1) {
+      bwm = 1;
+    }
+  }
+
   if(highlight_linewidth_multipliers && !highlight_linewidth_multipliers->empty()) {
     auto it = highlight_linewidth_multipliers->find(bond_idx);
     if(it != highlight_linewidth_multipliers->end()) {
@@ -1553,9 +1566,6 @@ int MolDraw2D::getHighlightBondWidth(int bond_idx,
     }
   }
   int tgt_lw = lineWidth() * bwm;
-  // try to scale lw to reflect the overall scaling:
-  // the 25 here is extremely empirical
-  tgt_lw = max(orig_lw * 2, min(tgt_lw, (int)(scale_ / 25. * tgt_lw)));
   return tgt_lw;
 
 }
@@ -1771,9 +1781,9 @@ void MolDraw2D::drawBond(const ROMol &mol, const Bond *bond, int at1_idx,
         col1 = col2 = drawOptions().highlightColour;
       }
       if (drawOptions().continuousHighlight) {
-        setLineWidth(orig_lw * drawOptions().highlightBondWidthMultiplier);
+        setLineWidth(getHighlightBondWidth(bond->getIdx(), nullptr));
       } else {
-        setLineWidth(orig_lw * 2);
+        setLineWidth(getHighlightBondWidth(bond->getIdx(), nullptr) / 4);
       }
     }
   }

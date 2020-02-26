@@ -121,7 +121,7 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   int bondLineWidth;  // if positive, this overrides the default line width
                       // when drawing bonds
   int highlightBondWidthMultiplier; // what to multiply standard bond width
-                                    // by for highlighting. Default is 2.
+                                    // by for highlighting. Default is 8.
   bool prepareMolsBeforeDrawing;  // call prepareMolForDrawing() on each
                                   // molecule passed to drawMolecules()
   std::vector<DrawColour> highlightColourPalette;  // defining 10 default colors
@@ -163,7 +163,7 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
         additionalAtomLabelPadding(0.0),
         symbolColour(0, 0, 0),
         bondLineWidth(-1),
-        highlightBondWidthMultiplier(2),
+        highlightBondWidthMultiplier(8),
         prepareMolsBeforeDrawing(true),
         fixedScale(-1.0),
         fixedBondLength(-1.0),

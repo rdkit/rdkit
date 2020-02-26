@@ -1753,7 +1753,9 @@ void test13JSONConfig() {
                 std::string::npos);
     TEST_ASSERT(text.find("'bond-0' d='M 129.799,9.09091 L 177.679,92.0201'")
                 != std::string::npos);
-    TEST_ASSERT(text.find("stroke-width:5px") !=
+    // these days the bond line width scales with the rest of the
+    // drawing, and at this size this comes out as 6px.
+    TEST_ASSERT(text.find("stroke-width:6px") !=
                 std::string::npos);
     delete m;
   }
@@ -2126,7 +2128,7 @@ void test15ContinuousHighlightingWithGrid() {
       std::ofstream outs("test15_1.svg");
       outs << text;
       outs.flush();
-      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:8px;") ==
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:4px;") ==
                   std::string::npos);
     }
 
@@ -2139,7 +2141,7 @@ void test15ContinuousHighlightingWithGrid() {
       std::ofstream outs("test15_2.svg");
       outs << text;
       outs.flush();
-      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:8px;") !=
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:4px;") !=
                   std::string::npos);
     }
     for (auto &&mol : mols) {
@@ -2311,11 +2313,11 @@ void testGithub2151() {
       outs << text;
       outs.flush();
       TEST_ASSERT(text.find("stroke-width:2px") != std::string::npos);
-      TEST_ASSERT(text.find("stroke-width:4px") == std::string::npos);
+      TEST_ASSERT(text.find("stroke-width:3px") == std::string::npos);
     }
     {
       MolDraw2DSVG drawer(200, 200);
-      drawer.drawOptions().bondLineWidth = 4;
+      drawer.drawOptions().bondLineWidth = 8;
       drawer.drawMolecule(*m1);
       drawer.addMoleculeMetadata(*m1);
       drawer.finishDrawing();
@@ -2323,8 +2325,10 @@ void testGithub2151() {
       std::ofstream outs("testGithub2151_2.svg");
       outs << text;
       outs.flush();
+      // the bonds are scaled in thickness, so it won't be 8 pixels.
+      // Experiment finds 3 on my machine.
       TEST_ASSERT(text.find("stroke-width:2px") == std::string::npos);
-      TEST_ASSERT(text.find("stroke-width:4px") != std::string::npos);
+      TEST_ASSERT(text.find("stroke-width:3px") != std::string::npos);
     }
   }
   std::cerr << " Done" << std::endl;
