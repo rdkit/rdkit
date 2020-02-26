@@ -95,7 +95,8 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
                              // molecule
   bool fillHighlights;       // fill the areas used to highlight atoms and atom
                              // regions
-  double highlightRadius; // default if nothing given for a particular atom
+  double highlightRadius; // default if nothing given for a particular atom.
+                          // default=0.3 "Angstrom".
   int flagCloseContactsDist;  // if positive, this will be used as a cutoff (in
                               // pixels) for highlighting close contacts
   bool includeAtomTags;  // toggles inclusion of atom tags in the output. does
@@ -107,7 +108,7 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   int legendFontSize;    // font size (in pixels) to be used for the legend (if
                          // present)
   DrawColour legendColour;    // color to be used for the legend (if present)
-  double multipleBondOffset;  // offset (in Angstroms) for the extra lines in a
+  double multipleBondOffset;  // offset (in Angstrom) for the extra lines in a
                               // multiple bond
   double padding;  // fraction of empty space to leave around the molecule
   double additionalAtomLabelPadding;  // additional padding to leave around atom
@@ -119,6 +120,8 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
       symbolColour;  // color to be used for the symbols and arrows in reactions
   int bondLineWidth;  // if positive, this overrides the default line width
                       // when drawing bonds
+  int highlightBondWidthMultiplier; // what to multiply standard bond width
+                                    // by for highlighting. Default is 2.
   bool prepareMolsBeforeDrawing;  // call prepareMolForDrawing() on each
                                   // molecule passed to drawMolecules()
   std::vector<DrawColour> highlightColourPalette;  // defining 10 default colors
@@ -160,6 +163,7 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
         additionalAtomLabelPadding(0.0),
         symbolColour(0, 0, 0),
         bondLineWidth(-1),
+        highlightBondWidthMultiplier(2),
         prepareMolsBeforeDrawing(true),
         fixedScale(-1.0),
         fixedBondLength(-1.0),
@@ -367,7 +371,6 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   //! returns the molecular coordinates of a particular atom
   virtual Point2D getAtomCoords(int at_num) const;
   //@}
-
   //! return the width of the drawing area.
   virtual int width() const { return width_; }
   //! return the height of the drawing area.
@@ -462,7 +465,9 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
                            const std::string &align_char, int align,
                            const Point2D &in_cds, Point2D &out_cds) const;
 
-  //! draw a polygon
+  //! draw a polygon.  Note that if fillPolys() returns false, it
+  //! doesn't close the path.  If you want it to in that case, you
+  //! do it explicitly yourself.
   virtual void drawPolygon(const std::vector<Point2D> &cds) = 0;
   //! draw a triangle
   virtual void drawTriangle(const Point2D &cds1, const Point2D &cds2,
@@ -472,9 +477,12 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   // draw the arc of a circle between ang1 and ang2.  Note that 0 is
   // at 3 o-clock and 90 at 12 o'clock as you'd expect from your maths.
   // ang2 must be > ang1 - it won't draw backwards.  This is not enforced.
-  // angles in degrees.
-  virtual void drawArc(const Point2D &cds1, double radius,
-                              double ang1, double ang2);
+  // Angles in degrees.
+  virtual void drawArc(const Point2D &centre, double radius,
+                       double ang1, double ang2);
+  // and a general ellipse form
+  virtual void drawArc(const Point2D &centre, double xradius,
+                       double yradius, double ang1, double ang2);
   //! draw a rectangle
   virtual void drawRect(const Point2D &cds1, const Point2D &cds2);
   //! draw a line indicating the presence of an attachment point (normally a
@@ -554,11 +562,15 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
                                            const std::vector<int> *highlight_atoms,
                                            const std::map<int, double> *highlight_radii,
                                            int confId = -1);
+  // if bond_colours is given, it must have an entry for every bond, and it
+  // trumps everything else.  First in pair is bonds begin atom, second is
+  // end atom.
   void drawBonds(const ROMol &draw_mol,
                  const std::vector<int> *highlight_atoms = nullptr,
                  const std::map<int, DrawColour> *highlight_atom_map = nullptr,
                  const std::vector<int> *highlight_bonds = nullptr,
-                 const std::map<int, DrawColour> *highlight_bond_map = nullptr);
+                 const std::map<int, DrawColour> *highlight_bond_map = nullptr,
+                 const std::vector<std::pair<DrawColour, DrawColour> > *bond_colours = nullptr);
   // do the finishing touches to the drawing
   void finishMoleculeDraw(const ROMol &draw_mol,
                           const std::vector<DrawColour> &atom_colours);
@@ -566,6 +578,20 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   // draw a circle in the requested colour(s) around the atom.
   void drawHighlightedAtom(int atom_idx, const std::vector<DrawColour> &colours,
                            const std::map<int, double> *highlight_radii);
+  // calculate parameters for an ellipse that roughly goes round the label
+  // of the given atom.
+  void calcLabelEllipse(int atom_idx, const std::map<int, double> *highlight_radii,
+                        Point2D &centre, double &xradius, double &yradius) const;
+  // draw 1 or more coloured line along bonds
+  void drawHighlightedBonds(const ROMol &mol,
+                            const std::map<int, std::vector<DrawColour> > &highlight_bond_map,
+                            const std::map<int, int> &highlight_linewidth_multipliers,
+                            const std::map<int, double> *highlight_radii);
+  int getHighlightBondWidth(int bond_idx, const std::map<int, int> *highlight_linewidth_multipliers) const;
+  // move p2 so that the line defined by p1 to p2 touches the ellipse for the
+  // atom highlighted.
+  void adjustLineEndForHighlight(int at_idx, const std::map<int, double> *highlight_radii,
+                                 Point2D p1, Point2D &p2) const;
 
   void extractAtomCoords(const ROMol &mol, int confId, bool updateBBox);
   void extractAtomSymbols(const ROMol &mol);
@@ -620,15 +646,23 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
       const std::map<int, double> *highlight_radii);
 
   virtual void highlightCloseContacts();
+  // if bond_colours is given, it must have an entry for every bond, and it
+  // trumps everything else.  First in pair is bonds begin atom, second is
+  // end atom.
   virtual void drawBond(
       const ROMol &mol, const Bond *bond, int at1_idx, int at2_idx,
       const std::vector<int> *highlight_atoms = nullptr,
       const std::map<int, DrawColour> *highlight_atom_map = nullptr,
       const std::vector<int> *highlight_bonds = nullptr,
-      const std::map<int, DrawColour> *highlight_bond_map = nullptr);
+      const std::map<int, DrawColour> *highlight_bond_map = nullptr,
+      const std::vector<std::pair<DrawColour, DrawColour> > *bond_colours = nullptr);
 
   // calculate normalised perpendicular to vector between two coords
   Point2D calcPerpendicular(const Point2D &cds1, const Point2D &cds2);
+
+  // calculate the width to draw a line in draw coords.
+  virtual unsigned int getDrawLineWidth();
+
 };
 }  // namespace RDKit
 

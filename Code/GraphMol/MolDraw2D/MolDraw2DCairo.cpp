@@ -37,11 +37,7 @@ void MolDraw2DCairo::drawLine(const Point2D &cds1, const Point2D &cds2) {
   Point2D c1 = getDrawCoords(cds1);
   Point2D c2 = getDrawCoords(cds2);
 
-  // 0.02 is picked by eye
-  unsigned int width = lineWidth() * scale() * 0.02;
-  if(width < 2) {
-    width = 2;
-  }
+  unsigned int width = getDrawLineWidth();
 
   std::string dashString = "";
 
@@ -120,6 +116,8 @@ void MolDraw2DCairo::drawPolygon(const std::vector<Point2D> &cds) {
   PRECONDITION(dp_cr, "no draw context");
   PRECONDITION(cds.size() >= 3, "must have at least three points");
 
+  unsigned int width = getDrawLineWidth();
+
   cairo_line_cap_t olinecap = cairo_get_line_cap(dp_cr);
   cairo_line_join_t olinejoin = cairo_get_line_join(dp_cr);
 
@@ -127,18 +125,19 @@ void MolDraw2DCairo::drawPolygon(const std::vector<Point2D> &cds) {
   cairo_set_line_join(dp_cr, CAIRO_LINE_JOIN_BEVEL);
   cairo_set_line_width(dp_cr, lineWidth());
   cairo_set_dash(dp_cr, nullptr, 0, 0);
+  cairo_set_line_width(dp_cr, width);
 
-  for (unsigned int i = 0; i < cds.size(); ++i) {
-    Point2D lc = getDrawCoords(cds[i]);
-    if (!i) {
-      cairo_move_to(dp_cr, lc.x, lc.y);
-    } else {
+  if(!cds.empty()) {
+    Point2D lc = getDrawCoords(cds.front());
+    cairo_move_to(dp_cr, lc.x, lc.y);
+    for (unsigned int i = 1; i < cds.size(); ++i) {
+      Point2D lc = getDrawCoords(cds[i]);
       cairo_line_to(dp_cr, lc.x, lc.y);
     }
   }
 
-  cairo_close_path(dp_cr);
   if (fillPolys()) {
+    cairo_close_path(dp_cr);
     cairo_fill_preserve(dp_cr);
   }
   cairo_stroke(dp_cr);
@@ -209,7 +208,7 @@ void MolDraw2DCairo::getStringSize(const std::string &label,
   }
   label_height *= 1.2;  // empirical
 }
-
+// ****************************************************************************
 namespace {
 cairo_status_t grab_str(void *closure, const unsigned char *data,
                         unsigned int len) {

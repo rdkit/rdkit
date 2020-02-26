@@ -126,15 +126,17 @@ void MolDraw2DSVG::drawBond(
     const std::vector<int> *highlight_atoms,
     const std::map<int, DrawColour> *highlight_atom_map,
     const std::vector<int> *highlight_bonds,
-    const std::map<int, DrawColour> *highlight_bond_map) {
+    const std::map<int, DrawColour> *highlight_bond_map,
+    const std::vector<std::pair<DrawColour, DrawColour> > *bond_colours) {
   PRECONDITION(bond, "bad bond");
   std::string o_class = d_activeClass;
-  if (d_activeClass != "") {
+  if (!d_activeClass.empty()) {
     d_activeClass += " ";
   }
   d_activeClass += boost::str(boost::format("bond-%d") % bond->getIdx());
   MolDraw2D::drawBond(mol, bond, at1_idx, at2_idx, highlight_atoms,
-                      highlight_atom_map, highlight_bonds, highlight_bond_map);
+                      highlight_atom_map, highlight_bonds, highlight_bond_map,
+                      bond_colours);
   d_activeClass = o_class;
 };
 
@@ -143,11 +145,7 @@ void MolDraw2DSVG::drawLine(const Point2D &cds1, const Point2D &cds2) {
   Point2D c1 = getDrawCoords(cds1);
   Point2D c2 = getDrawCoords(cds2);
   std::string col = DrawColourToSVG(colour());
-  // 0.02 is picked by eye
-  unsigned int width = lineWidth() * scale() * 0.02;
-  if(width < 2) {
-    width = 2;
-  }
+  unsigned int width = getDrawLineWidth();
   std::string dashString = "";
   const DashPattern &dashes = dash();
   if (dashes.size()) {
@@ -159,7 +157,7 @@ void MolDraw2DSVG::drawLine(const Point2D &cds1, const Point2D &cds2) {
     dashString = dss.str();
   }
   d_os << "<path ";
-  if (d_activeClass != "") {
+  if (!d_activeClass.empty()) {
     d_os << "class='" << d_activeClass << "' ";
   }
   d_os << "d='M " << c1.x << "," << c1.y << " L " << c2.x << "," << c2.y
@@ -194,7 +192,8 @@ void MolDraw2DSVG::drawPolygon(const std::vector<Point2D> &cds) {
   PRECONDITION(cds.size() >= 3, "must have at least three points");
 
   std::string col = DrawColourToSVG(colour());
-  unsigned int width = lineWidth();
+  unsigned int width = getDrawLineWidth();
+
   std::string dashString = "";
   d_os << "<path ";
   if (d_activeClass != "") {
@@ -207,13 +206,12 @@ void MolDraw2DSVG::drawPolygon(const std::vector<Point2D> &cds) {
     Point2D ci = getDrawCoords(cds[i]);
     d_os << " L " << ci.x << "," << ci.y;
   }
-  d_os << " Z";
-  d_os << "' style='";
   if (fillPolys()) {
-    d_os << "fill:" << col << ";fill-rule:evenodd;fill-opacity=" << colour().a
+    // the Z closes the path which we don't want for unfilled polygons
+    d_os << "Z' style='fill:" << col << ";fill-rule:evenodd;fill-opacity=" << colour().a
          << ";";
   } else {
-    d_os << "fill:none;";
+    d_os << "' style='fill:none;";
   }
 
   d_os << "stroke:" << col << ";stroke-width:" << width
@@ -222,6 +220,7 @@ void MolDraw2DSVG::drawPolygon(const std::vector<Point2D> &cds) {
   d_os << " />\n";
 }
 
+// ****************************************************************************
 void MolDraw2DSVG::drawEllipse(const Point2D &cds1, const Point2D &cds2) {
   Point2D c1 = getDrawCoords(cds1);
   Point2D c2 = getDrawCoords(cds2);

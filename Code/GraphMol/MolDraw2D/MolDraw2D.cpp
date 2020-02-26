@@ -84,13 +84,9 @@ void MolDraw2D::doContinuousHighlighting(
     const map<int, DrawColour> *highlight_bond_map,
     const std::map<int, double> *highlight_radii) {
   PRECONDITION(activeMolIdx_ >= 0, "bad active mol");
+
   int orig_lw = lineWidth();
-  int tgt_lw = lineWidth() * 8;
-  // try to scale lw to reflect the overall scaling:
-  tgt_lw = max(
-      orig_lw * 2,
-      min(tgt_lw,
-          (int)(scale_ / 25. * tgt_lw)));  // the 25 here is extremely empirical
+  int tgt_lw = getHighlightBondWidth(-1, nullptr);
   bool orig_fp = fillPolys();
   if (highlight_bonds) {
     for(auto this_at: mol.atoms()) {
@@ -245,22 +241,60 @@ void MolDraw2D::drawMoleculeWithHighlights(const ROMol &mol, const string &legen
     return;
   }
 
+  bool orig_fp = fillPolys();
+  setFillPolys(drawOptions().fillHighlights);
+
+  // draw the highlighted bonds first, so the atoms hide the ragged
+  // ends.  This only works with filled highlighting, obs.  If not, we need
+  // the highlight radii to work out the intersection of the bond highlight
+  // with the atom highlight.
+  drawHighlightedBonds(draw_mol, highlight_bond_map,
+                       highlight_linewidth_multipliers, &highlight_radii);
+
   for(auto ha: highlight_atom_map) {
-    cout << "highlighting atom " << ha.first << " with " << ha.second.size()
-         << " colours" << endl;
+    // cout << "highlighting atom " << ha.first << " with " << ha.second.size()
+    //      << " colours" << endl;
     drawHighlightedAtom(ha.first, ha.second, &highlight_radii);
   }
 
-  // draw plain bonds - bond highlights will go either side
-  drawBonds(draw_mol);
+  setFillPolys(orig_fp);
+
+  // draw plain bonds on top of highlights.  Use black if either highlight
+  // colour is the same as the colour it would have been.
+  vector<pair<DrawColour, DrawColour> > bond_colours;
+  for(auto bond: draw_mol.bonds()) {
+    int beg_at = bond->getBeginAtomIdx();
+    DrawColour col1 = getColour(beg_at);
+    int end_at = bond->getEndAtomIdx();
+    DrawColour col2 = getColour(end_at);
+    auto hb = highlight_bond_map.find(bond->getIdx());
+    if(hb != highlight_bond_map.end()) {
+      const vector<DrawColour> &cols = hb->second;
+      if (find(cols.begin(), cols.end(), col1) == cols.end()
+          || find(cols.begin(), cols.end(), col2) == cols.end()) {
+        col1 = DrawColour(0.0, 0.0, 0.0);
+        col2 = col1;
+      }
+    }
+    bond_colours.emplace_back(make_pair(col1, col2));
+  }
+  drawBonds(draw_mol, nullptr, nullptr, nullptr, nullptr, &bond_colours);
 
   vector<DrawColour> atom_colours;
   for(auto this_at: draw_mol.atoms()) {
-    // passing nullptr means that we'll get a colour based on atomic number
-    // only.  These colours are used for the atom labels, and it seems odd
-    // to make the labels the same colour as the highlights as they won't be
-    // visible and in any case we can't do multi-coloured text.
+    // Get colours together for the atom labels.
+    // Passing nullptr means that we'll get a colour based on atomic number
+    // only.
     atom_colours.emplace_back(getColour(this_at->getIdx(), nullptr, nullptr));
+    // if the chosen colour is a highlight colour for this atom, choose black
+    // instead so it is still visible.
+    auto ha = highlight_atom_map.find(this_at->getIdx());
+    if(ha != highlight_atom_map.end()) {
+      if(find(ha->second.begin(), ha->second.end(), atom_colours.back())
+         != ha->second.end()) {
+        atom_colours.back() = DrawColour(0.0, 0.0, 0.0);
+      }
+    }
   }
 
   // this puts on atom labels and such
@@ -1254,7 +1288,8 @@ void MolDraw2D::drawBonds(const ROMol &draw_mol,
                           const vector<int> *highlight_atoms,
                           const map<int, DrawColour> *highlight_atom_map,
                           const vector<int> *highlight_bonds,
-                          const map<int, DrawColour> *highlight_bond_map) {
+                          const map<int, DrawColour> *highlight_bond_map,
+                          const std::vector<std::pair<DrawColour, DrawColour> > *bond_colours) {
 
   for(auto this_at: draw_mol.atoms()) {
     int this_idx = this_at->getIdx();
@@ -1264,7 +1299,8 @@ void MolDraw2D::drawBonds(const ROMol &draw_mol,
       if (nbr_idx < static_cast<int>(at_cds_[activeMolIdx_].size()) &&
           nbr_idx > this_idx) {
         drawBond(draw_mol, bond, this_idx, nbr_idx, highlight_atoms,
-                 highlight_atom_map, highlight_bonds, highlight_bond_map);
+                 highlight_atom_map, highlight_bonds, highlight_bond_map,
+                 bond_colours);
       }
     }
   }
@@ -1329,35 +1365,271 @@ void MolDraw2D::drawLegend(const string &legend) {
 void MolDraw2D::drawHighlightedAtom(int atom_idx, const vector<DrawColour> &colours,
                                     const map<int, double> *highlight_radii) {
 
-  Point2D p1 = at_cds_[activeMolIdx_][atom_idx];
-  Point2D p2 = at_cds_[activeMolIdx_][atom_idx];
-  double radius = drawOptions().highlightRadius;
-  if (highlight_radii &&
-      highlight_radii->find(atom_idx) != highlight_radii->end()) {
-    radius = highlight_radii->find(atom_idx)->second;
-  }
+  double xradius, yradius;
+  Point2D centre;
 
-  setFillPolys(true);
-  setLineWidth(1);
+  calcLabelEllipse(atom_idx, highlight_radii, centre, xradius, yradius);
+
+  int orig_lw = lineWidth();
+  bool orig_fp = fillPolys();
+  if(!drawOptions().fillHighlights) {
+    setLineWidth(orig_lw * drawOptions().highlightBondWidthMultiplier);
+    setFillPolys(false);
+  } else {
+    setFillPolys(true);
+  }
   if(colours.size() == 1) {
     setColour(colours.front());
-    Point2D offset(radius, radius);
-    p1 -= offset;
-    p2 += offset;
-    drawEllipse(p1, p2);
+    drawArc(centre, xradius, yradius, 0.0, 360.0);
   } else {
     double arc_size = 360.0 / double(colours.size());
-    double arc_start = 90.0;
+    double arc_start = -90.0;
     for(size_t i = 0; i < colours.size() ; ++i) {
-      cout << "atom " << atom_idx << " arc " << i << " from " << arc_start
-           << " to " << arc_start + arc_size << " colour "
-           << colours[i].r << ", " << colours[i].g << ", "
-           << colours[i].b << endl;
       setColour(colours[i]);
-      drawArc(p1, radius, arc_start, arc_start + arc_size);
+      drawArc(centre, xradius, yradius, arc_start, arc_start + arc_size);
       arc_start += arc_size;
     }
   }
+
+  setFillPolys(orig_fp);
+  setLineWidth(orig_lw);
+
+}
+
+// ****************************************************************************
+void MolDraw2D::calcLabelEllipse(int atom_idx,
+                                 const map<int, double> *highlight_radii,
+                                 Point2D &centre, double &xradius, double &yradius) const {
+
+  centre = at_cds_[activeMolIdx_][atom_idx];
+  xradius = drawOptions().highlightRadius;
+  yradius = xradius;
+  if (highlight_radii &&
+      highlight_radii->find(atom_idx) != highlight_radii->end()) {
+    xradius = highlight_radii->find(atom_idx)->second;
+    yradius = xradius;
+  }
+
+  if (atom_syms_[activeMolIdx_][atom_idx].first.empty()) {
+    return;
+  }
+
+  string atsym = atom_syms_[activeMolIdx_][atom_idx].first;
+  OrientType orient = atom_syms_[activeMolIdx_][atom_idx].second;
+  // label_width and label_height should be in molecule coordinates
+  double label_width = 0, label_height = 0;
+  vector<string> label_pieces = atomLabelToPieces(atom_idx);
+  for(auto lab: label_pieces) {
+    double pwidth, pheight;
+    getStringSize(lab, pwidth, pheight);
+    if(orient == N || orient == S) {
+      label_height += pheight;
+      label_width = max(label_width, pwidth);
+    } else {
+      label_width += pwidth;
+      label_height = max(label_height, pheight);
+    }
+  }
+  static const double root2 = sqrt(2.0);
+  xradius = max(xradius, root2 * label_width / 2.0);
+  yradius = max(yradius, root2 * label_height / 2.0);
+
+  // need to move the centre
+  double cheight, cwidth;
+  if(orient == N) {
+    getStringSize(label_pieces.front(), cwidth, cheight);
+    centre.y -= 0.5 * (label_height - cheight);
+  } else if(orient == S) {
+    getStringSize(label_pieces.front(), cwidth, cheight);
+    centre.y += 0.5 * (label_height - cheight);
+  } else if(orient == E) {
+    getStringSize(label_pieces.front(), cwidth, cheight);
+    centre.x += 0.5 * (label_width - cwidth);
+  } else if(orient == W) {
+    getStringSize(label_pieces.back(), cwidth, cheight);
+    centre.x -= 0.5 * (label_width - cwidth);
+  }
+
+}
+
+// ****************************************************************************
+void MolDraw2D::drawHighlightedBonds(const RDKit::ROMol &mol,
+                                     const map<int, vector<DrawColour>> &highlight_bond_map,
+                                     const map<int, int> &highlight_linewidth_multipliers,
+                                     const map<int, double> *highlight_radii) {
+
+  int orig_lw = lineWidth();
+  for(auto hb: highlight_bond_map) {
+    int bond_idx = hb.first;
+    if(!drawOptions().fillHighlights) {
+      int lw_mult = drawOptions().highlightBondWidthMultiplier;
+      auto hw = highlight_linewidth_multipliers.find(bond_idx);
+      if(hw != highlight_linewidth_multipliers.end()) {
+        lw_mult = hw->second;
+      }
+      setLineWidth(orig_lw * lw_mult);
+    }
+    auto bond = mol.getBondWithIdx(bond_idx);
+    int at1_idx = bond->getBeginAtomIdx();
+    int at2_idx = bond->getEndAtomIdx();
+    Point2D at1_cds = at_cds_[activeMolIdx_][at1_idx];
+    Point2D at2_cds = at_cds_[activeMolIdx_][at2_idx];
+    Point2D perp = calcPerpendicular(at1_cds, at2_cds);
+    double rad = 0.7 * drawOptions().highlightRadius;
+
+    auto draw_adjusted_line = [&](Point2D p1, Point2D p2) {
+      adjustLineEndForHighlight(at1_idx, highlight_radii, p2, p1);
+      adjustLineEndForHighlight(at2_idx, highlight_radii, p1, p2);
+      drawLine(p1, p2);
+    };
+
+    if(hb.second.size() < 2) {
+      DrawColour col;
+      if(hb.second.empty()) {
+        col = drawOptions().highlightColour;
+      } else {
+        col = hb.second.front();
+      }
+      setColour(col);
+      if(drawOptions().fillHighlights) {
+        vector<Point2D> line_pts;
+        line_pts.emplace_back(at1_cds + perp * rad);
+        line_pts.emplace_back(at2_cds + perp * rad);
+        line_pts.emplace_back(at2_cds - perp * rad);
+        line_pts.emplace_back(at1_cds - perp * rad);
+        drawPolygon(line_pts);
+      } else {
+        draw_adjusted_line(at1_cds + perp * rad, at2_cds + perp * rad);
+        draw_adjusted_line(at1_cds - perp * rad, at2_cds - perp * rad);
+      }
+    } else {
+      double col_rad = 2.0 * rad / hb.second.size();
+      if(drawOptions().fillHighlights) {
+        Point2D p1 = at1_cds - perp * rad;
+        Point2D p2 = at2_cds - perp * rad;
+        vector<Point2D> line_pts;
+        for (size_t i = 0; i < hb.second.size(); ++i) {
+          setColour(hb.second[i]);
+          line_pts.clear();
+          line_pts.emplace_back(p1);
+          line_pts.emplace_back(p1 + perp * col_rad);
+          line_pts.emplace_back(p2 + perp * col_rad);
+          line_pts.emplace_back(p2);
+          drawPolygon(line_pts);
+          p1 += perp * col_rad;
+          p2 += perp * col_rad;
+        }
+      } else {
+        int step = 0;
+        for(size_t i = 0; i < hb.second.size(); ++i) {
+          setColour(hb.second[i]);
+          // draw even numbers from the bottom, odd from the top
+          Point2D offset = perp * (rad - step * col_rad);
+          if (!(i % 2)) {
+            draw_adjusted_line(at1_cds - offset, at2_cds - offset);
+          } else {
+            draw_adjusted_line(at1_cds + offset, at2_cds + offset);
+            step++;
+          }
+        }
+      }
+    }
+  }
+  setLineWidth(orig_lw);
+
+}
+
+// ****************************************************************************
+int MolDraw2D::getHighlightBondWidth(int bond_idx,
+                                     const map<int, int> *highlight_linewidth_multipliers) const {
+
+  int orig_lw = lineWidth();
+
+  int bwm = drawOptions().highlightBondWidthMultiplier;
+  if(highlight_linewidth_multipliers && !highlight_linewidth_multipliers->empty()) {
+    auto it = highlight_linewidth_multipliers->find(bond_idx);
+    if(it != highlight_linewidth_multipliers->end()) {
+      bwm = it->second;
+    }
+  }
+  int tgt_lw = lineWidth() * bwm;
+  // try to scale lw to reflect the overall scaling:
+  // the 25 here is extremely empirical
+  tgt_lw = max(orig_lw * 2, min(tgt_lw, (int)(scale_ / 25. * tgt_lw)));
+  return tgt_lw;
+
+}
+
+// ****************************************************************************
+void MolDraw2D::adjustLineEndForHighlight(int at_idx,
+                                          const map<int, double> *highlight_radii,
+                                          Point2D p1, Point2D &p2) const {
+
+  // this code is transliterated from
+  // http://csharphelper.com/blog/2017/08/calculate-where-a-line-segment-and-an-ellipse-intersect-in-c/
+  // which has it in C#
+  double xradius, yradius;
+  Point2D centre;
+  calcLabelEllipse(at_idx, highlight_radii, centre, xradius, yradius);
+
+  // cout << "ellipse is : " << centre.x << ", " << centre.y << " rads " << xradius << " and " << yradius << endl;
+  // cout << "p1 = " << p1.x << ", " << p1.y << endl << "p2 = " << p2.x << ", " << p2.y << endl;
+
+  // move everything so the ellipse is centred on the origin.
+  p1 -= centre;
+  p2 -= centre;
+  double a2 = xradius * xradius;
+  double b2 = yradius * yradius;
+  double A = (p2.x - p1.x) * (p2.x - p1.x) / a2
+             + (p2.y - p1.y) * (p2.y - p1.y) / b2;
+  double B = 2.0 * p1.x * (p2.x - p1.x) / a2
+             + 2.0 * p1.y * (p2.y - p1.y) / b2;
+  double C = p1.x * p1.x / a2 + p1.y * p1.y / b2 - 1.0;
+
+  auto t_to_point = [&](double t) -> Point2D
+  {
+    Point2D ret_val;
+    ret_val.x = p1.x + (p2.x - p1.x) * t + centre.x;
+    ret_val.y = p1.y + (p2.y - p1.y) * t + centre.y;
+    return ret_val;
+  };
+
+  double disc = B * B - 4.0 * A * C;
+  if(disc < 0.0) {
+    // no solutions, leave things as they are.  Bit crap, though.
+    return;
+  } else if(fabs(disc) < 1.0e-6) {
+    // 1 solution
+    double t = -B / (2.0 * A);
+    // cout << "t = " << t << endl;
+    p2 = t_to_point(t);
+  } else {
+    // 2 solutions - take the one nearest p1.
+    double disc_rt = sqrt(disc);
+    double t1 = (-B + disc_rt) / (2.0 * A);
+    double t2 = (-B - disc_rt) / (2.0 * A);
+    // cout << "t1 = " << t1 << "  t2 = " << t2 << endl;
+    double t;
+    // prefer the t between 0 and 1, as that must be between the original
+    // points.  If both are, prefer the lower, as that will be nearest p1,
+    // so on the bit of the ellipse the line comes to first.
+    bool t1_ok = (t1 >= 0.0 && t1 <= 1.0);
+    bool t2_ok = (t2 >= 0.0 && t2 <= 1.0);
+    if(t1_ok && !t2_ok) {
+      t = t1;
+    } else if(t2_ok && !t1_ok) {
+      t = t2;
+    } else if(t1_ok && t2_ok) {
+      t = min(t1, t2);
+    } else {
+      // the intersections are both outside the line between p1 and p2
+      // so don't do anything.
+      return;
+    }
+    // cout << "using t = " << t << endl;
+    p2 = t_to_point(t);
+  }
+  // cout << "p2 = " << p2.x << ", " << p2.y << endl;
 
 }
 
@@ -1446,7 +1718,8 @@ void MolDraw2D::drawBond(const ROMol &mol, const Bond *bond, int at1_idx,
                          int at2_idx, const vector<int> *highlight_atoms,
                          const map<int, DrawColour> *highlight_atom_map,
                          const vector<int> *highlight_bonds,
-                         const map<int, DrawColour> *highlight_bond_map) {
+                         const map<int, DrawColour> *highlight_bond_map,
+                         const std::vector<std::pair<DrawColour, DrawColour> > *bond_colours) {
   PRECONDITION(bond, "no bond");
   PRECONDITION(activeMolIdx_ >= 0, "bad mol idx");
   RDUNUSED_PARAM(highlight_atoms);
@@ -1483,20 +1756,25 @@ void MolDraw2D::drawBond(const ROMol &mol, const Bond *bond, int at1_idx,
 
   DrawColour col1, col2;
   int orig_lw = lineWidth();
-  if (!highlight_bond) {
-    col1 = getColour(at1_idx);
-    col2 = getColour(at2_idx);
+  if(bond_colours) {
+    col1 = (*bond_colours)[bond->getIdx()].first;
+    col2 = (*bond_colours)[bond->getIdx()].second;
   } else {
-    if (highlight_bond_map &&
-        highlight_bond_map->find(bond->getIdx()) != highlight_bond_map->end()) {
-      col1 = col2 = highlight_bond_map->find(bond->getIdx())->second;
+    if (!highlight_bond) {
+      col1 = getColour(at1_idx);
+      col2 = getColour(at2_idx);
     } else {
-      col1 = col2 = drawOptions().highlightColour;
-    }
-    if (drawOptions().continuousHighlight) {
-      setLineWidth(orig_lw * 8);
-    } else {
-      setLineWidth(orig_lw * 2);
+      if (highlight_bond_map &&
+          highlight_bond_map->find(bond->getIdx()) != highlight_bond_map->end()) {
+        col1 = col2 = highlight_bond_map->find(bond->getIdx())->second;
+      } else {
+        col1 = col2 = drawOptions().highlightColour;
+      }
+      if (drawOptions().continuousHighlight) {
+        setLineWidth(orig_lw * drawOptions().highlightBondWidthMultiplier);
+      } else {
+        setLineWidth(orig_lw * 2);
+      }
     }
   }
 
@@ -1805,6 +2083,18 @@ Point2D MolDraw2D::calcPerpendicular(const Point2D &cds1, const Point2D &cds2) {
   perp[1] /= perp_len;
 
   return Point2D(perp[0], perp[1]);
+}
+
+// ****************************************************************************
+unsigned int MolDraw2D::getDrawLineWidth() {
+
+  // This works fairly well for SVG and Cairo. 0.02 is picked by eye
+  unsigned int width = lineWidth() * scale() * 0.02;
+  if(width < 2) {
+    width = 2;
+  }
+  return width;
+
 }
 
 // ****************************************************************************
@@ -2160,26 +2450,34 @@ void MolDraw2D::drawEllipse(const Point2D &cds1, const Point2D &cds2) {
 }
 
 // ****************************************************************************
-void MolDraw2D::drawArc(const Point2D &cds1, double radius,
+void MolDraw2D::drawArc(const Point2D &centre, double radius,
                         double ang1, double ang2) {
+
+    drawArc(centre, radius, radius, ang1, ang2);
+
+}
+
+// ****************************************************************************
+void MolDraw2D::drawArc(const Point2D &centre, double xradius,
+                        double yradius, double ang1, double ang2) {
 
   std::vector<Point2D> pts;
   // 5 degree increments should be plenty, as the circles are probably
   // going to be small.
-  int num_steps = (ang2 - ang1) / 5.0;
-  double ang_incr = 5.0 * M_PI / 180.0;
+  int num_steps = 1 + int((ang2 - ang1) / 5.0);
+  double ang_incr = double((ang2 - ang1) / num_steps) * M_PI / 180.0;
   double start_ang_rads = ang2 * M_PI / 180.0;
   for(int i = 0; i <= num_steps; ++i) {
     double ang = start_ang_rads + double(i) * ang_incr;
-    double x = cds1.x + radius * cos(ang);
-    double y = cds1.y + radius * sin(ang);
+    double x = centre.x + xradius * cos(ang);
+    double y = centre.y + yradius * sin(ang);
     pts.emplace_back(Point2D(x, y));
   }
 
-  if(drawOptions().fillHighlights) {
+  if(fillPolys()) {
     // otherwise it draws an arc back to the pts.front() rather than filling
     // in the sector.
-    pts.emplace_back(cds1);
+    pts.emplace_back(centre);
   }
   drawPolygon(pts);
 

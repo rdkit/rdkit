@@ -101,7 +101,8 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
       const std::vector<int> *highlight_atoms = nullptr,
       const std::map<int, DrawColour> *highlight_atom_map = nullptr,
       const std::vector<int> *highlight_bonds = nullptr,
-      const std::map<int, DrawColour> *highlight_bond_map = nullptr) override;
+      const std::map<int, DrawColour> *highlight_bond_map = nullptr,
+      const std::vector<std::pair<DrawColour, DrawColour> > *bond_colours = nullptr) override;
 };
 }  // namespace RDKit
 #endif  // MOLDRAW2DSVG_H
