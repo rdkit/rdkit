@@ -81,6 +81,22 @@ std::map<int, double> *pyDictToDoubleMap(python::object pyo) {
   }
   return res;
 }
+void pyDictToIntMap(python::object pyo, std::map<int, int> &res) {
+  python::dict tDict = python::extract<python::dict>(pyo);
+  for (unsigned int i = 0;
+       i < python::extract<unsigned int>(tDict.keys().attr("__len__")()); ++i) {
+    int r = python::extract<int>(tDict.values()[i]);
+    res[python::extract<int>(tDict.keys()[i])] = r;
+  }
+}
+std::map<int, int> *pyDictToIntMap(python::object pyo) {
+  std::map<int, int> *res = nullptr;
+  if (pyo) {
+    res = new std::map<int, int>;
+    pyDictToIntMap(pyo, *res);
+  }
+  return res;
+}
 
 DrawColour pyTupleToDrawColour(const python::tuple tpl) {
   float r = python::extract<float>(tpl[0]);
@@ -116,6 +132,27 @@ void pyListToColourVec(python::object pyo, std::vector<DrawColour> &res) {
   }
 }
 }  // namespace
+
+void pyDictToMapColourVec(python::object pyo,
+                           std::map<int, std::vector<DrawColour> > &res) {
+  python::dict tDict = python::extract<python::dict>(pyo);
+  for (unsigned int i = 0;
+       i < python::extract<unsigned int>(tDict.keys().attr("__len__")()); ++i) {
+    python::list pl = python::extract<python::list>(tDict.values()[i]);
+    std::vector<DrawColour> v;
+    pyListToColourVec(pl, v);
+    res[python::extract<int>(tDict.keys()[i])] = v;
+  }
+
+}
+std::map<int, std::vector<DrawColour> > *pyDictToMapColourVec(python::object pyo) {
+  std::map<int, std::vector<DrawColour> > *res = nullptr;
+  if(pyo) {
+    res = new std::map<int, std::vector<DrawColour> >;
+    pyDictToMapColourVec(pyo, *res);
+  }
+  return res;
+}
 
 void drawMoleculeHelper1(MolDraw2D &self, const ROMol &mol,
                          python::object highlight_atoms,
@@ -154,6 +191,36 @@ void drawMoleculeHelper2(MolDraw2D &self, const ROMol &mol,
   delete ham;
   delete hbm;
   delete har;
+}
+
+void drawMoleculeWithHighlightsHelper(MolDraw2D &self, const ROMol &mol,
+                                      std::string legend,
+                                      python::object highlight_atom_map,
+                                      python::object highlight_bond_map,
+                                      python::object highlight_atom_radii,
+                                      python::object highlight_linewidth_multipliers,
+                                      int confId) {
+
+  std::cout << "top of drawMoleculeWithHighlightsHelper" << std::endl;
+  // highlight_atom_map and highlight_bond_map come in as a dict of
+  // lists of tuples of floats (the R, G, B values for the colours),
+  // and need to be changed to a map of vectors of DrawColour
+  std::map<int, std::vector<DrawColour> > *ham = pyDictToMapColourVec(highlight_atom_map);
+  std::cout << "got ham" << std::endl;
+  std::map<int, std::vector<DrawColour> > *hbm = pyDictToMapColourVec(highlight_bond_map);
+  std::cout << "got hbm" << std::endl;
+  std::map<int, double> *har = pyDictToDoubleMap(highlight_atom_radii);
+  std::cout << "got har" << std::endl;
+  std::map<int, int> *hlm = pyDictToIntMap(highlight_linewidth_multipliers);
+  std::cout << "got halm" << std::endl;
+  self.drawMoleculeWithHighlights(mol, legend, *ham, *hbm, *har, *hlm, confId);
+  std::cout << "drawn" << std::endl;
+
+  delete ham;
+  delete hbm;
+  delete har;
+  delete hlm;
+  std::cout << "out" << std::endl;
 }
 
 void prepareAndDrawMoleculeHelper(
@@ -576,6 +643,16 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
            python::arg("highlightAtomRadii") = python::object(),
            python::arg("confId") = -1, python::arg("legend") = std::string("")),
           "renders a molecule\n")
+          .def("DrawMoleculeWithHighlights",
+               RDKit::drawMoleculeWithHighlightsHelper,
+               (python::arg("self"), python::arg("mol"),
+                   python::arg("legend"),
+                   python::arg("highlight_atom_map"),
+                   python::arg("highlight_bond_map"),
+                   python::arg("highlight_radii"),
+                   python::arg("highlight_linewidth_multipliers"),
+                   python::arg("confId") = -1),
+                   "renders a molecule with multiple highlight colours\n")
       .def("DrawMolecules", RDKit::drawMoleculesHelper2,
            (python::arg("self"), python::arg("mols"),
             python::arg("highlightAtoms") = python::object(),
