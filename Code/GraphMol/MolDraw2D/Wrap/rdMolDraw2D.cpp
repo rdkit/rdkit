@@ -201,26 +201,20 @@ void drawMoleculeWithHighlightsHelper(MolDraw2D &self, const ROMol &mol,
                                       python::object highlight_linewidth_multipliers,
                                       int confId) {
 
-  std::cout << "top of drawMoleculeWithHighlightsHelper" << std::endl;
   // highlight_atom_map and highlight_bond_map come in as a dict of
   // lists of tuples of floats (the R, G, B values for the colours),
   // and need to be changed to a map of vectors of DrawColour
   std::map<int, std::vector<DrawColour> > *ham = pyDictToMapColourVec(highlight_atom_map);
-  std::cout << "got ham" << std::endl;
   std::map<int, std::vector<DrawColour> > *hbm = pyDictToMapColourVec(highlight_bond_map);
-  std::cout << "got hbm" << std::endl;
   std::map<int, double> *har = pyDictToDoubleMap(highlight_atom_radii);
-  std::cout << "got har" << std::endl;
   std::map<int, int> *hlm = pyDictToIntMap(highlight_linewidth_multipliers);
-  std::cout << "got halm" << std::endl;
   self.drawMoleculeWithHighlights(mol, legend, *ham, *hbm, *har, *hlm, confId);
-  std::cout << "drawn" << std::endl;
 
   delete ham;
   delete hbm;
   delete har;
   delete hlm;
-  std::cout << "out" << std::endl;
+
 }
 
 void prepareAndDrawMoleculeHelper(

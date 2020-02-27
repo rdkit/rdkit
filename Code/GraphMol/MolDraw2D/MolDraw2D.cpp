@@ -231,7 +231,6 @@ void MolDraw2D::drawMoleculeWithHighlights(const ROMol &mol, const string &legen
                                            const map<int, double> &highlight_radii,
                                            const map<int, int> &highlight_linewidth_multipliers,
                                            int confId) {
-  cout << "drawMoleculeWithHighlights" << endl;
 
   int origWidth = curr_width_;
   vector<int> highlight_atoms;
@@ -245,7 +244,6 @@ void MolDraw2D::drawMoleculeWithHighlights(const ROMol &mol, const string &legen
     // clearly, the molecule is in a sorry state.
     return;
   }
-  cout << "set it up" << endl;
 
   bool orig_fp = fillPolys();
   setFillPolys(drawOptions().fillHighlights);
@@ -256,14 +254,12 @@ void MolDraw2D::drawMoleculeWithHighlights(const ROMol &mol, const string &legen
   // with the atom highlight.
   drawHighlightedBonds(draw_mol, highlight_bond_map,
                        highlight_linewidth_multipliers, &highlight_radii);
-  cout << "drawing highlighted bonds" << endl;
 
   for(auto ha: highlight_atom_map) {
     // cout << "highlighting atom " << ha.first << " with " << ha.second.size()
     //      << " colours" << endl;
     drawHighlightedAtom(ha.first, ha.second, &highlight_radii);
   }
-  cout << "drawn highlighted atoms" << endl;
   setFillPolys(orig_fp);
 
   // draw plain bonds on top of highlights.  Use black if either highlight
@@ -286,7 +282,6 @@ void MolDraw2D::drawMoleculeWithHighlights(const ROMol &mol, const string &legen
     bond_colours.emplace_back(make_pair(col1, col2));
   }
   drawBonds(draw_mol, nullptr, nullptr, nullptr, nullptr, &bond_colours);
-  cout << "drawn bonds" << endl;
 
   vector<DrawColour> atom_colours;
   for(auto this_at: draw_mol.atoms()) {
@@ -307,12 +302,10 @@ void MolDraw2D::drawMoleculeWithHighlights(const ROMol &mol, const string &legen
 
   // this puts on atom labels and such
   finishMoleculeDraw(draw_mol, atom_colours);
-  cout << "finished molecule draw" << endl;
   curr_width_ = origWidth;
 
   drawLegend(legend);
 
-  cout << "leaving drawMoleculeWithHighlights" << endl;
 }
 
 // ****************************************************************************
@@ -1476,19 +1469,12 @@ void MolDraw2D::drawHighlightedBonds(const RDKit::ROMol &mol,
                                      const map<int, int> &highlight_linewidth_multipliers,
                                      const map<int, double> *highlight_radii) {
 
-  cout << "drawHighlightedBonds" << endl;
-  cout << "fillhighlights = " << drawOptions().fillHighlights << endl;
-
   int orig_lw = lineWidth();
   for(auto hb: highlight_bond_map) {
-    cout << "top of loop" << endl;
     int bond_idx = hb.first;
-    cout << "drawing bond " << bond_idx << endl;
-    cout << "number of colours : " << hb.second.size() << endl;
     if(!drawOptions().fillHighlights) {
       setLineWidth(getHighlightBondWidth(bond_idx, &highlight_linewidth_multipliers));
     }
-    cout << "line width = " << lineWidth() << endl;
     auto bond = mol.getBondWithIdx(bond_idx);
     int at1_idx = bond->getBeginAtomIdx();
     int at2_idx = bond->getEndAtomIdx();
@@ -1504,7 +1490,6 @@ void MolDraw2D::drawHighlightedBonds(const RDKit::ROMol &mol,
     };
 
     if(hb.second.size() < 2) {
-      cout << "single colour draw" << endl;
       DrawColour col;
       if(hb.second.empty()) {
         col = drawOptions().highlightColour;
@@ -1521,12 +1506,9 @@ void MolDraw2D::drawHighlightedBonds(const RDKit::ROMol &mol,
         drawPolygon(line_pts);
       } else {
         draw_adjusted_line(at1_cds + perp * rad, at2_cds + perp * rad);
-        cout << "drawn 1" << endl;
         draw_adjusted_line(at1_cds - perp * rad, at2_cds - perp * rad);
-        cout << "drawn 2" << endl;
       }
     } else {
-      cout << "mjulticolour draw" << endl;
       double col_rad = 2.0 * rad / hb.second.size();
       if(drawOptions().fillHighlights) {
         Point2D p1 = at1_cds - perp * rad;
@@ -1555,13 +1537,11 @@ void MolDraw2D::drawHighlightedBonds(const RDKit::ROMol &mol,
             draw_adjusted_line(at1_cds + offset, at2_cds + offset);
             step++;
           }
-          cout << "drawn " << i << endl;
         }
       }
     }
     setLineWidth(orig_lw);
   }
-  cout << "leaving drawHighlightedBonds" << endl;
 
 }
 
@@ -1569,13 +1549,7 @@ void MolDraw2D::drawHighlightedBonds(const RDKit::ROMol &mol,
 int MolDraw2D::getHighlightBondWidth(int bond_idx,
                                      const map<int, int> *highlight_linewidth_multipliers) const {
 
-  cout << "getHighlightBondWidth for " << bond_idx << endl;
-  cout << "ultipliers : " << highlight_linewidth_multipliers << endl;
-  if(highlight_linewidth_multipliers) {
-    cout << "number of multipliers : " << highlight_linewidth_multipliers->size() << endl;
-  }
   int bwm = drawOptions().highlightBondWidthMultiplier;
-  cout << "bwm : " << bwm << endl;
   // if we're not doing filled highlights, the lines need to be narrower
   if(!drawOptions().fillHighlights) {
     bwm /= 2;
@@ -1583,7 +1557,6 @@ int MolDraw2D::getHighlightBondWidth(int bond_idx,
       bwm = 1;
     }
   }
-  cout << "bwm 2 : " << bwm << endl;
 
   if(highlight_linewidth_multipliers && !highlight_linewidth_multipliers->empty()) {
     auto it = highlight_linewidth_multipliers->find(bond_idx);
@@ -1593,7 +1566,6 @@ int MolDraw2D::getHighlightBondWidth(int bond_idx,
   }
   int tgt_lw = lineWidth() * bwm;
 
-  cout << "bond width : " << tgt_lw << endl;
   return tgt_lw;
 
 }
