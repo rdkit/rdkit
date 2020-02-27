@@ -454,15 +454,16 @@ class TestCase(unittest.TestCase):
       "CC1(C)CNc2cc(NC(=O)c3cccnc3NCc3ccncc3)ccc21"
     ]
 
-    holder = rdSubstructLibrary.CachedSmilesMolHolder()
-    for smi in pdb_ligands:
-      holder.AddSmiles(smi)
-    
-    lib = rdSubstructLibrary.SubstructLibrary(holder)
-    rdSubstructLibrary.AddPatterns(lib, numThreads=-1)
-    self.assertEqual(len(lib.GetMolHolder()), len(lib.GetFpHolder()))
-    for smi in pdb_ligands:
-      self.assertTrue( lib.CountMatches(Chem.MolFromSmiles(smi)) )
+    for holder in [rdSubstructLibrary.CachedSmilesMolHolder(),
+                   rdSubstructLibrary.CachedTrustedSmilesMolHolder()]:
+      for smi in pdb_ligands:
+        holder.AddSmiles(smi)
+
+      lib = rdSubstructLibrary.SubstructLibrary(holder)
+      rdSubstructLibrary.AddPatterns(lib, numThreads=-1)
+      self.assertEqual(len(lib.GetMolHolder()), len(lib.GetFpHolder()))
+      for smi in pdb_ligands:
+        self.assertTrue( lib.CountMatches(Chem.MolFromSmiles(smi)) )
 
 if __name__ == '__main__':
   unittest.main()
