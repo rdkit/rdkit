@@ -34,6 +34,7 @@
 #include <RDBoost/python_streambuf.h>
 
 #include <GraphMol/SubstructLibrary/SubstructLibrary.h>
+#include <GraphMol/SubstructLibrary/pattern_factory.h>
 
 namespace python = boost::python;
 using boost_adaptbx::python::streambuf;
@@ -429,6 +430,10 @@ struct substructlibrary_wrapper {
     python::def("SubstructLibraryCanSerialize", SubstructLibraryCanSerialize,
                 "Returns True if the SubstructLibrary is serializable "
                 "(requires boost serialization");
+
+    python::def("AddPatterns", addPatterns,
+		"Add pattern fingerprints to the given library, use numThreads=-1 to use all available cores",
+		(python::arg("sslib"), python::arg("numThreads")=1));
 
   }
 };
