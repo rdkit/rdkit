@@ -2361,6 +2361,94 @@ void testGithub2762() {
   std::cerr << " Done" << std::endl;
 }
 
+void testGithub2931() {
+  std::cout << " ----------------- Testing testGithub2931: multi-coloured"
+               " molecule highlights."
+            << std::endl;
+
+  auto get_all_hit_atoms = [](ROMol &mol, const std::string &smt) -> std::vector<int> {
+    std::vector<int> hit_atoms;
+    RWMol *query = SmartsToMol(smt);
+    std::vector<MatchVectType> hits_vect;
+    SubstructMatch(mol, *query, hits_vect);
+    for (size_t i = 0; i < hits_vect.size(); ++i) {
+      for (size_t j = 0; j < hits_vect[i].size(); ++j) {
+        hit_atoms.emplace_back(hits_vect[i][j].second);
+      }
+    }
+    delete query;
+    return hit_atoms;
+  };
+
+  auto get_all_hit_bonds = [](ROMol &mol, const std::vector<int> &hit_atoms) -> std::vector<int> {
+    std::vector<int> hit_bonds;
+    for (int i: hit_atoms) {
+      for (int j: hit_atoms) {
+        if (i > j) {
+          Bond *bnd = mol.getBondBetweenAtoms(i, j);
+          if (bnd) {
+            hit_bonds.emplace_back(bnd->getIdx());
+          }
+        }
+      }
+    }
+    return hit_bonds;
+  };
+
+  auto update_colour_map = [](const std::vector<int> &ats, DrawColour col,
+                              std::map<int, std::vector<DrawColour> > &ha_map) {
+    for (auto h: ats) {
+      auto ex = ha_map.find(h);
+      if (ex == ha_map.end()) {
+        std::vector<DrawColour> cvec(1, col);
+        ha_map.insert(make_pair(h, cvec));
+      } else {
+        if (ex->second.end() == find(ex->second.begin(), ex->second.end(), col)) {
+          ex->second.emplace_back(col);
+        }
+      }
+    }
+  };
+
+  {
+    std::string smiles = "CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]";
+    ROMol *m = SmilesToMol(smiles);
+    RDDepict::compute2DCoords(*m);
+    WedgeMolBonds(*m, &(m->getConformer()));
+
+    std::vector<std::string> smarts = {"CONN", "N#CC~CO", "C=CON", "CONNCN"};
+    std::vector<DrawColour> colours = {DrawColour(1.0, 0.0, 0.0),
+                                       DrawColour(0.0, 1.0, 0.0),
+                                       DrawColour(0.0, 0.0, 1.0),
+                                       DrawColour(1.0, 0.55, 0.0)};
+    std::map<int, std::vector<DrawColour> > ha_map;
+    std::map<int, std::vector<DrawColour> > hb_map;
+    for(size_t i = 0; i < smarts.size(); ++i) {
+      std::vector<int> hit_atoms = get_all_hit_atoms(*m, smarts[i]);
+      std::vector<int> hit_bonds = get_all_hit_bonds(*m, hit_atoms);
+      update_colour_map(hit_atoms, colours[i], ha_map);
+      update_colour_map(hit_bonds, colours[i], hb_map);
+    }
+    std::map<int, double> h_rads;
+    std::map<int, int> h_lw_mult;
+
+    MolDraw2DSVG drawer(500, 500);
+    drawer.drawOptions().fillHighlights = false;
+    drawer.drawOptions().continuousHighlight = true;
+    drawer.drawMoleculeWithHighlights(*m, "Test 1", ha_map,
+                                      hb_map, h_rads, h_lw_mult);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("testGithub2931.svg");
+    outs << text;
+    outs.flush();
+    TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:5px") != std::string::npos);
+    TEST_ASSERT(text.find("ellipse cx='244.253' cy='386.518' rx='11.9872' ry='12.8346'"
+                          " style='fill:none;stroke:#00FF00") != std::string::npos);
+  }
+  std::cerr << " Done" << std::endl;
+}
+
 int main() {
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   RDDepict::preferCoordGen = false;
@@ -2405,4 +2493,5 @@ int main() {
   testGithub2063();
   testGithub2151();
   testGithub2762();
+  testGithub2931();
 }
