@@ -10,4 +10,5 @@ The two sdf files(hereby named "solubility dataset") are originated from the Huu
 This solubility dataset is originally downloaded from
 - http://cheminformatics.org/datasets/huuskonen/index.html
 
-But cheminformatics.org no longer exists.
+Although cheminformatics.org no longer exists, supplementary file from https://doi.org/10.1021/ci9901338 contains a list of all the structures and the corresponding data in PDF format.
+
