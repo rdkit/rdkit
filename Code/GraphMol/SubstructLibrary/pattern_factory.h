@@ -9,17 +9,17 @@
 //
 #ifndef RDK_SSSFACTORY
 #define RDK_SSSFACTORY
+#include <RDGeneral/export.h>
 #include "SubstructLibrary.h"
 #include <GraphMol/FileParsers/MolSupplier.h>
 
 namespace RDKit {
-  //! Create pattern fingerprints for the given substructure library
-  //!  The substructure library must not already have fingepints
-  /*
-       \param sslib The substructure library (without pattern fingerprints)
-       \param numThreads the number of threads to use, -1 for all threads [default 1]
-  */
-  void addPatterns(SubstructLibrary &sslib, int numThreads=1);
-  
+//! Create pattern fingerprints for the given substructure library
+//!  The substructure library must not already have fingepints
+/*
+     \param sslib The substructure library (without pattern fingerprints)
+     \param numThreads the number of threads to use, -1 for all threads [default 1]
+*/
+RDKIT_SUBSTRUCTLIBRARY_EXPORT void addPatterns(SubstructLibrary &sslib, int numThreads=1);  
 }
 #endif
