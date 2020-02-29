@@ -98,7 +98,7 @@ class Standardizer(object):
         mol = self.reionize(mol)
         Chem.AssignStereochemistry(mol, force=True, cleanIt=True)
         for k, v in mol_props.items():
-            mol.SetProp(k, v)
+            mol.SetProp(k, str(v))
         # TODO: Check this removes symmetric stereocenters
         return mol
 

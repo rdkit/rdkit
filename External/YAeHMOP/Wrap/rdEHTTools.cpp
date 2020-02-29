@@ -46,9 +46,10 @@ boost::python::object transfer_to_python(T *t) {
   return python::object(handle);
 }
 
-PyObject *getMatrixProp(const double *mat, unsigned int dim1, unsigned int dim2) {
+PyObject *getMatrixProp(const double *mat, unsigned int dim1,
+                        unsigned int dim2) {
   if (!mat) {
-    throw_value_error("matrix has not be initialized");
+    throw_value_error("matrix has not been initialized");
   }
   npy_intp dims[2];
   dims[0] = dim1;
@@ -63,7 +64,7 @@ PyObject *getMatrixProp(const double *mat, unsigned int dim1, unsigned int dim2)
 }
 PyObject *getSymmMatrixProp(const double *mat, unsigned int sz) {
   if (!mat) {
-    throw_value_error("matrix has not be initialized");
+    throw_value_error("matrix has not been initialized");
   }
   npy_intp dims[1];
   dims[0] = sz * (sz + 1) / 2;
@@ -77,7 +78,7 @@ PyObject *getSymmMatrixProp(const double *mat, unsigned int sz) {
 }
 PyObject *getVectorProp(const double *mat, unsigned int sz) {
   if (!mat) {
-    throw_value_error("vector has not be initialized");
+    throw_value_error("vector has not been initialized");
   }
   npy_intp dims[1];
   dims[0] = sz;
@@ -90,7 +91,8 @@ PyObject *getVectorProp(const double *mat, unsigned int sz) {
   return PyArray_Return(res);
 }
 PyObject *getChargeMatrix(EHTTools::EHTResults &self) {
-  return getMatrixProp(self.reducedChargeMatrix.get(), self.numAtoms, self.numOrbitals);
+  return getMatrixProp(self.reducedChargeMatrix.get(), self.numAtoms,
+                       self.numOrbitals);
 }
 
 PyObject *getOPMatrix(EHTTools::EHTResults &self) {
@@ -101,10 +103,34 @@ PyObject *getOPMatrix(EHTTools::EHTResults &self) {
 PyObject *getCharges(EHTTools::EHTResults &self) {
   return getVectorProp(self.atomicCharges.get(), self.numAtoms);
 }
-python::tuple runCalc(const RDKit::ROMol &mol, int confId) {
+
+PyObject *getOrbitalEnergies(EHTTools::EHTResults &self) {
+  return getVectorProp(self.orbitalEnergies.get(), self.numOrbitals);
+}
+
+python::tuple runCalc(const RDKit::ROMol &mol, int confId, bool keepMatrices) {
   auto eRes = new RDKit::EHTTools::EHTResults();
-  bool ok = RDKit::EHTTools::runMol(mol, *eRes, confId);
+  bool ok = RDKit::EHTTools::runMol(mol, *eRes, confId, keepMatrices);
   return python::make_tuple(ok, transfer_to_python(eRes));
+}
+PyObject *getHamiltonian(EHTTools::EHTResults &self) {
+  if (!self.hamiltonianMatrix) {
+    throw_value_error(
+        "Hamiltonian not available, set keepOverlapAndHamiltonianMatrices=True "
+        "to preserve it.");
+  }
+  return getMatrixProp(self.hamiltonianMatrix.get(), self.numOrbitals,
+                       self.numOrbitals);
+}
+PyObject *getOverlapMatrix(EHTTools::EHTResults &self) {
+  if (!self.overlapMatrix) {
+    throw_value_error(
+        "Overlap matrix not available, set "
+        "keepOverlapAndHamiltonianMatrices=True "
+        "to preserve it.");
+  }
+  return getMatrixProp(self.overlapMatrix.get(), self.numOrbitals,
+                       self.numOrbitals);
 }
 
 }  // end of anonymous namespace
@@ -116,7 +142,8 @@ struct EHT_wrapper {
     python::class_<RDKit::EHTTools::EHTResults, boost::noncopyable>(
         "EHTResults", docString.c_str(), python::no_init)
         .def_readonly("numOrbitals", &RDKit::EHTTools::EHTResults::numOrbitals)
-        .def_readonly("numElectrons", &RDKit::EHTTools::EHTResults::numElectrons)
+        .def_readonly("numElectrons",
+                      &RDKit::EHTTools::EHTResults::numElectrons)
         .def_readonly("fermiEnergy", &RDKit::EHTTools::EHTResults::fermiEnergy)
         .def_readonly("totalEnergy", &RDKit::EHTTools::EHTResults::totalEnergy)
         .def("GetReducedChargeMatrix", getChargeMatrix,
@@ -124,7 +151,13 @@ struct EHT_wrapper {
         .def("GetReducedOverlapPopulationMatrix", getOPMatrix,
              "returns the reduced overlap population matrix")
         .def("GetAtomicCharges", getCharges,
-             "returns the calculated atomic charges");
+             "returns the calculated atomic charges")
+        .def("GetHamiltonian", getHamiltonian,
+             "returns the symmetric Hamiltonian matrix")
+        .def("GetOverlapMatrix", getOverlapMatrix,
+             "returns the symmetric overlap matrix")
+        .def("GetOrbitalEnergies", getOrbitalEnergies,
+             "returns the energies of the molecular orbitals as a vector");
 
     docString =
         R"DOC(Runs an extended Hueckel calculation for a molecule.
@@ -133,13 +166,16 @@ The molecule should have at least one conformation
 ARGUMENTS:
    - mol: molecule to use
    - confId: (optional) conformation to use
+   - keepOverlapAndHamiltonianMatrices: (optional) triggers storing the overlap 
+     and hamiltonian matrices in the EHTResults object
 
 RETURNS: a 2-tuple:
    - a boolean indicating whether or not the calculation succeeded
    - an EHTResults object with the results
 )DOC";
     python::def("RunMol", runCalc,
-                (python::arg("mol"), python::arg("confId") = -1),
+                (python::arg("mol"), python::arg("confId") = -1,
+                 python::arg("keepOverlapAndHamiltonianMatrices") = false),
                 docString.c_str());
   }
 };

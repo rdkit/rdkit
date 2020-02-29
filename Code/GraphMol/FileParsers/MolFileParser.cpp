@@ -1275,7 +1275,7 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
       delete res;
       throw FileParseException(errout.str());
     }
-    res->setProp("molStereoCare", stereoCare);
+    res->setProp(common_properties::molStereoCare, stereoCare);
   }
   if (text.size() >= 51 && text.substr(48, 3) != "  0") {
     int totValence = 0;
@@ -1551,7 +1551,6 @@ void ParseMolBlockAtoms(std::istream *inStream, unsigned int &line,
   }
 }
 
-// returns whether or not any sign of chirality was detected
 void ParseMolBlockBonds(std::istream *inStream, unsigned int &line,
                         unsigned int nBonds, RWMol *mol,
                         bool &chiralityPossible) {
@@ -1575,6 +1574,19 @@ void ParseMolBlockBonds(std::istream *inStream, unsigned int &line,
     if (bond->getBondDir() != Bond::NONE &&
         bond->getBondDir() != Bond::UNKNOWN) {
       chiralityPossible = true;
+    }
+    // v2k has no way to set stereoCare on bonds, so set the property if both
+    // the beginning and end atoms have it set:
+    int care1 = 0;
+    int care2 = 0;
+    if (!bond->hasProp(common_properties::molStereoCare) &&
+        mol->getAtomWithIdx(bond->getBeginAtomIdx())
+            ->getPropIfPresent(common_properties::molStereoCare, care1) &&
+        mol->getAtomWithIdx(bond->getEndAtomIdx())
+            ->getPropIfPresent(common_properties::molStereoCare, care2)) {
+      if (care1 && care2) {
+        bond->setProp(common_properties::molStereoCare, 1);
+      }
     }
     mol->addBond(bond, true);
     mol->setBondBookmark(bond, i);
@@ -1875,7 +1887,7 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
     }
 
     if (prop == "CHG") {
-      int charge = FileParserUtils::toInt(val);
+      auto charge = FileParserUtils::toInt(val);
       if (!atom->hasQuery()) {
         atom->setFormalCharge(charge);
       } else {
@@ -1930,7 +1942,7 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
         }
       }
     } else if (prop == "CFG") {
-      int cfg = FileParserUtils::toInt(val);
+      auto cfg = FileParserUtils::toInt(val);
       switch (cfg) {
         case 0:
           break;
@@ -1946,7 +1958,7 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
       }
     } else if (prop == "HCOUNT") {
       if (val != "0") {
-        int hcount = FileParserUtils::toInt(val);
+        auto hcount = FileParserUtils::toInt(val);
         if (!atom->hasQuery()) {
           atom = FileParserUtils::replaceAtomWithQueryAtom(mol, atom);
         }
@@ -1964,7 +1976,7 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
       }
     } else if (prop == "RBCNT") {
       if (val != "0") {
-        int rbcount = FileParserUtils::toInt(val);
+        auto rbcount = FileParserUtils::toInt(val);
         if (!atom->hasQuery()) {
           atom = FileParserUtils::replaceAtomWithQueryAtom(mol, atom);
         }
@@ -1975,12 +1987,17 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
       }
     } else if (prop == "VAL") {
       if (val != "0") {
-        int totval = FileParserUtils::toInt(val);
+        auto totval = FileParserUtils::toInt(val);
         atom->setProp(common_properties::molTotValence, totval);
       }
     } else if (prop == "RGROUPS") {
       ParseV3000RGroups(mol, atom, val, line);
       // FIX
+    } else if (prop == "STBOX") {
+      if (val != "0") {
+        auto ival = FileParserUtils::toInt(val);
+        atom->setProp(common_properties::molStereoCare, ival);
+      }
     }
     ++token;
   }
@@ -2297,6 +2314,7 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
         int reactStatus = FileParserUtils::toInt(val);
         bond->setProp("molReactStatus", reactStatus);
       } else if (prop == "STBOX") {
+        bond->setProp(common_properties::molStereoCare, val);
       } else if (prop == "ENDPTS") {
         bond->setProp(common_properties::_MolFileBondEndPts, val);
       } else if (prop == "ATTACH") {
@@ -2313,6 +2331,20 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
       mol->getAtomWithIdx(bond->getEndAtomIdx())->setIsAromatic(true);
     }
     mol->setBondBookmark(bond, bondIdx);
+
+    // set the stereoCare property on the bond if it's not set already and both
+    // the beginning and end atoms have it set:
+    int care1 = 0;
+    int care2 = 0;
+    if (!bond->hasProp(common_properties::molStereoCare) &&
+        mol->getAtomWithIdx(bond->getBeginAtomIdx())
+            ->getPropIfPresent(common_properties::molStereoCare, care1) &&
+        mol->getAtomWithIdx(bond->getEndAtomIdx())
+            ->getPropIfPresent(common_properties::molStereoCare, care2)) {
+      if (care1 == care2) {
+        bond->setProp(common_properties::molStereoCare, care1);
+      }
+    }
   }
   tempStr = getV3000Line(inStream, line);
   if (tempStr.length() < 8 || tempStr.substr(0, 8) != "END BOND") {
@@ -2322,11 +2354,73 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
   }
 }
 
+namespace {
+// process (and remove) SGroups which modify the structure
+// and which we can unambiguously apply
+void processSGroups(RWMol *mol) {
+  std::vector<unsigned int> sgsToRemove;
+  unsigned int sgIdx = 0;
+  for (auto &sg : getSubstanceGroups(*mol)) {
+    if (sg.getProp<std::string>("TYPE") == "DAT") {
+      std::string fieldn;
+      if (sg.getPropIfPresent("FIELDNAME", fieldn) &&
+          fieldn == "MRV_IMPLICIT_H") {
+        // CXN extension to specify implicit Hs, used for aromatic rings
+        sgsToRemove.push_back(sgIdx);
+        std::vector<std::string> dataFields;
+        if (sg.getPropIfPresent("DATAFIELDS", dataFields)) {
+          for (const auto &df : dataFields) {
+            if (df.substr(0, 6) == "IMPL_H") {
+              auto val = FileParserUtils::toInt(df.substr(6));
+              for (auto atIdx : sg.getAtoms()) {
+                if (atIdx < mol->getNumAtoms()) {
+                  // if the atom has aromatic bonds to it, then set the explicit
+                  // value, otherwise skip it.
+                  auto atom = mol->getAtomWithIdx(atIdx);
+                  bool hasAromaticBonds = false;
+                  for (auto bndI :
+                       boost::make_iterator_range(mol->getAtomBonds(atom))) {
+                    auto bnd = (*mol)[bndI];
+                    if (bnd->getIsAromatic() ||
+                        bnd->getBondType() == Bond::AROMATIC) {
+                      hasAromaticBonds = true;
+                      break;
+                    }
+                  }
+                  if (hasAromaticBonds) {
+                    atom->setNumExplicitHs(val);
+                  } else {
+                    BOOST_LOG(rdWarningLog)
+                        << "MRV_IMPLICIT_H SGroup on atom without aromatic "
+                           "bonds, "
+                        << atIdx << ", ignored." << std::endl;
+                  }
+                } else {
+                  BOOST_LOG(rdWarningLog)
+                      << "bad atom index, " << atIdx
+                      << ", found in MRV_IMPLICIT_H SGroup. Ignoring it."
+                      << std::endl;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    ++sgIdx;
+  }
+  // now remove the S groups we processed, we saved indices so do this in
+  // backwards
+  auto &sgs = getSubstanceGroups(*mol);
+  for (auto it = sgsToRemove.rbegin(); it != sgsToRemove.rend(); ++it) {
+    sgs.erase(sgs.begin() + *it);
+  }
+}
+}  // namespace
+
 void ProcessMolProps(RWMol *mol) {
   PRECONDITION(mol, "no molecule");
-  for (RWMol::AtomIterator atomIt = mol->beginAtoms();
-       atomIt != mol->endAtoms(); ++atomIt) {
-    Atom *atom = *atomIt;
+  for (auto atom : mol->atoms()) {
     int totV;
     if (atom->getPropIfPresent(common_properties::molTotValence, totV) &&
         !atom->hasProp("_ZBO_H")) {
@@ -2351,6 +2445,7 @@ void ProcessMolProps(RWMol *mol) {
       }
     }
   }
+  processSGroups(mol);
 }
 
 }  // namespace

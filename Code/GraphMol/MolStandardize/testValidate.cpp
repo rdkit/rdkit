@@ -241,7 +241,6 @@ void testAllowedAtomsValidation() {
   vector<ValidationErrorInfo> errout1 = vm.validate(*m1, true);
   for (auto &query : errout1) {
     std::string msg = query.message();
-    std::cout << msg << std::endl;
     TEST_ASSERT(
         msg ==
         "INFO: [AllowedAtomsValidation] Atom F is not in allowedAtoms list");
@@ -271,7 +270,6 @@ void testDisallowedAtomsValidation() {
   vector<ValidationErrorInfo> errout1 = vm.validate(*m1, true);
   for (auto &query : errout1) {
     std::string msg = query.message();
-    std::cout << msg << std::endl;
     TEST_ASSERT(
         msg ==
         "INFO: [DisallowedAtomsValidation] Atom F is in disallowedAtoms list");
@@ -293,7 +291,6 @@ void testFragment() {
   vector<ValidationErrorInfo> errout1 = vm.validate(*m1, true);
   for (auto &query : errout1) {
     std::string msg = query.message();
-    std::cout << msg << std::endl;
     TEST_ASSERT(msg ==
                 "INFO: [FragmentValidation] 1,2-dichloroethane is present");
   }
@@ -303,7 +300,6 @@ void testFragment() {
   vector<ValidationErrorInfo> errout2 = vm.validate(*m2, true);
   for (auto &query : errout2) {
     std::string msg = query.message();
-    std::cout << msg << std::endl;
     TEST_ASSERT(msg ==
                 "INFO: [FragmentValidation] 1,2-dimethoxyethane is present");
   }
@@ -318,15 +314,14 @@ void testValidateSmiles() {
   try {
     vector<ValidationErrorInfo> errout1 = validateSmiles("3478q439g98h");
   } catch (const ValueErrorException &e) {
-    std::cout << e.message() << std::endl;
-    TEST_ASSERT(e.message() ==
+    std::string msg = e.message();
+    TEST_ASSERT(msg ==
                 "SMILES Parse Error: syntax error for input: 3478q439g98h")
   };
 
   vector<ValidationErrorInfo> errout2 = validateSmiles("");
   for (auto &query : errout2) {
     std::string msg = query.message();
-    std::cout << msg << std::endl;
     TEST_ASSERT(msg == "ERROR: [NoAtomValidation] Molecule has no atoms");
   }
 

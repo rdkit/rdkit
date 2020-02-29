@@ -636,76 +636,17 @@ extern "C" CROMol MolMurckoScaffold(CROMol i) {
   return (CROMol)mol;
 }
 
-namespace {
-typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
-
-unsigned int parseWhichString(const std::string &txt) {
-  unsigned int res = MolOps::ADJUST_IGNORENONE;
-  boost::char_separator<char> sep("|");
-  tokenizer tokens(txt, sep);
-  tokenizer::iterator token = tokens.begin();
-  while (token != tokens.end()) {
-    std::string v = *token;
-    ++token;
-    if (v == "IGNORENONE") {
-      res |= MolOps::ADJUST_IGNORENONE;
-    } else if (v == "IGNORERINGS") {
-      res |= MolOps::ADJUST_IGNORERINGS;
-    } else if (v == "IGNORECHAINS") {
-      res |= MolOps::ADJUST_IGNORECHAINS;
-    } else if (v == "IGNOREDUMMIES") {
-      res |= MolOps::ADJUST_IGNOREDUMMIES;
-    } else if (v == "IGNORENONDUMMIES") {
-      res |= MolOps::ADJUST_IGNORENONDUMMIES;
-    } else if (v == "IGNOREALL") {
-      res |= MolOps::ADJUST_IGNOREALL;
-    } else {
-      elog(ERROR, "bad which string provided '%s'", v.c_str());
-    }
-  }
-  return res;
-}
-
-void parseAdjustQueryParameters(MolOps::AdjustQueryParameters &p,
-                                const char *json) {
-  PRECONDITION(json && strlen(json), "empty json");
-  std::istringstream ss;
-  ss.str(json);
-
-  boost::property_tree::ptree pt;
-  boost::property_tree::read_json(ss, pt);
-  p.adjustDegree = pt.get("adjustDegree", p.adjustDegree);
-  p.adjustHeavyDegree = pt.get("adjustHeavyDegree", p.adjustHeavyDegree);
-  p.adjustRingCount = pt.get("adjustRingCount", p.adjustRingCount);
-  p.makeDummiesQueries = pt.get("makeDummiesQueries", p.makeDummiesQueries);
-  p.aromatizeIfPossible = pt.get("aromatizeIfPossible", p.aromatizeIfPossible);
-  p.makeAtomsGeneric = pt.get("makeAtomsGeneric", p.makeAtomsGeneric);
-  p.makeBondsGeneric = pt.get("makeBondsGeneric", p.makeBondsGeneric);
-  std::string which;
-  which = boost::to_upper_copy<std::string>(pt.get("adjustDegreeFlags", ""));
-  if (which != "") p.adjustDegreeFlags = parseWhichString(which);
-  which =
-      boost::to_upper_copy<std::string>(pt.get("adjustHeavyDegreeFlags", ""));
-  if (which != "") p.adjustHeavyDegreeFlags = parseWhichString(which);
-  which = boost::to_upper_copy<std::string>(pt.get("adjustRingCountFlags", ""));
-  if (which != "") p.adjustRingCountFlags = parseWhichString(which);
-  which =
-      boost::to_upper_copy<std::string>(pt.get("makeBondsGenericFlags", ""));
-  if (which != "") p.makeBondsGenericFlags = parseWhichString(which);
-  which =
-      boost::to_upper_copy<std::string>(pt.get("makeAtomsGenericFlags", ""));
-  if (which != "") p.makeAtomsGenericFlags = parseWhichString(which);
-}
-}  // namespace
-
 extern "C" CROMol MolAdjustQueryProperties(CROMol i, const char *params) {
   const ROMol *im = (ROMol *)i;
 
   MolOps::AdjustQueryParameters p;
 
   if (params && strlen(params)) {
+    std::string pstring(params);
     try {
-      parseAdjustQueryParameters(p, params);
+      MolOps::parseAdjustQueryParametersFromJSON(p, pstring);
+    } catch (const ValueErrorException &e) {
+      elog(ERROR, e.message());
     } catch (...) {
       elog(WARNING,
            "adjustQueryProperties: Invalid argument \'params\' ignored");
@@ -1009,7 +950,7 @@ extern "C" double calcSparseTanimotoSml(CSfp a, CSfp b) {
   try {
     res = TanimotoSimilarity(*(SparseFP *)a, *(SparseFP *)b);
   } catch (ValueErrorException &e) {
-    elog(ERROR, "TanimotoSimilarity: %s", e.message().c_str());
+    elog(ERROR, "TanimotoSimilarity: %s", e.message());
   } catch (...) {
     elog(ERROR, "calcSparseTanimotoSml: Unknown exception");
   }
@@ -1027,7 +968,7 @@ extern "C" double calcSparseDiceSml(CSfp a, CSfp b) {
   try {
     res = DiceSimilarity(*(SparseFP *)a, *(SparseFP *)b);
   } catch (ValueErrorException &e) {
-    elog(ERROR, "DiceSimilarity: %s", e.message().c_str());
+    elog(ERROR, "DiceSimilarity: %s", e.message());
   } catch (...) {
     elog(ERROR, "calcSparseDiceSml: Unknown exception");
   }

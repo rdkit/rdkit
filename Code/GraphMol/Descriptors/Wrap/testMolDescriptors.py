@@ -10,6 +10,8 @@ from rdkit.Geometry import rdGeometry as rdG
 import unittest
 
 
+haveBCUT = hasattr(rdMD, 'BCUT2D')
+
 def feq(v1, v2, tol=1.e-4):
   return abs(v1 - v2) < tol
 
@@ -503,7 +505,7 @@ class TestCase(unittest.TestCase):
     try:
       props = rdMD.Properties(["property that doesn't exist"])
       self.assertEqual("should not get here", "but did")
-    except RuntimeError:
+    except KeyError:
       pass
 
   def testPythonDescriptorFunctor(self):
@@ -601,6 +603,67 @@ class TestCase(unittest.TestCase):
       nTPSA = rdMD.CalcTPSA(mol, force=True, includeSandP=True)
       self.assertAlmostEqual(nTPSA, new_tpsa[i], 2)
 
+  @unittest.skipIf(not haveBCUT, "BCUT descriptors not present")
+  def testBCUT(self):
+    smiles = ("c1ccccc1S", "c1cscc1", "CC(=S)C", "CSC", "CS(=O)C", "CP(C)C", "CP=O", "CP(C)(C)=O",
+              "C[PH](C)=O")
+    expected = [
+      [32.11691025659743, 10.3711255714102, 1.7258015589384423, -1.813025067747632, 2.0032623406582895, -1.5648237280483932, 7.798895708674262, 1.480463460412681],
+      [32.133385673916855, 10.690498814349603, 1.5812862454321042, -1.3924158848795094, 1.9109090827066813, -1.1624011856503906, 7.073072952311218, 2.0294988143496093],
+      [32.09203038492705, 10.585642854940236, 1.5531725323483636, -1.6095571920399787, 1.6095355058255407, -1.6264025009240035, 7.798379459554676, 1.8522004089765778],
+      [32.16623472793675, 11.912765272063261, 1.3229624149945334, -1.5095023144073105, 1.699644712375421, -1.2539447123754206, 7.974132068991219, 2.370867931008784],
+      [32.19696040763111, 11.912196087574864, 1.571634336328628, -1.5986639964786287, 1.4708186703193278, -1.7011978973115978, 7.829987043024966, 0.6900118228151252],
+      [31.130920829765557, 11.856079170234391, 1.652795743173261, -1.8120831465729346, 2.1415709560249625, -1.4818709560249614, 7.546153955380794, 2.12884604461921],
+      [31.059700934072303, 11.958086319851176, 1.271920282698931, -1.2044337292760101, 1.6734005705339297, -0.9875941256320955, 7.220415332975225, 0.601201124030627],
+      [31.163638790374048, 11.855143433013291, 1.8876168729214116, -1.862911092419536, 2.279553713445213, -1.6070814330824321, 7.610231826377116, 0.5859042224902173],
+      [31.111807418763107, 11.906469225329653, 1.5848247701762241, -1.5909887821270712, 2.0038391834918317, -1.3277290609201042, 7.422700514979134, 0.5941465179281992] ]   
+    for i, smi in enumerate(smiles):
+      mol = Chem.MolFromSmiles(smi)
+      res = rdMD.BCUT2D(mol)
+      self.assertEqual(len(res), 8)
+      self.assertAlmostEqual(list(res), expected[i])
+
+  @unittest.skipIf(not haveBCUT, "BCUT descriptors not present")
+  def testBCUTUserProps(self):
+    m = Chem.MolFromSmiles("CCCCCC")
+    props = []
+    for a in m.GetAtoms():
+      a.SetDoubleProp("prop", a.GetIdx()+1)
+      props.append(float(a.GetIdx()+1))
+      
+    bcut1 = rdMD.BCUT2D(m, "prop")
+    m = Chem.MolFromSmiles("CCCCCC")
+    bcut2 = rdMD.BCUT2D(m, props)
+    bcut3 = rdMD.BCUT2D(m, tuple(props))
+
+    # might need feq
+    self.assertEqual(list(bcut1), list(bcut2))
+    self.assertEqual(list(bcut3), list(bcut2))
+
+    props.append(0.0)
+    try:
+      bcut2 = rdMD.BCUT2D(m, props)
+      self.assertTrue(0, "Failed to handle bad prop size")
+    except RuntimeError as e:
+      self.assertTrue("tom_props.size() == num_atoms" in str(e))
+
+    try:
+      bcut2 = rdMD.BCUT2D(m, "property not existing on the atom")
+      self.assertTrue(0, "Failed to handle not existing properties")
+    except KeyError as e:
+      self.assertEqual(e.args, ("property not existing on the atom",))
+
+    for atom in m.GetAtoms():
+      atom.SetProp("bad_prop", "not a double")
+      break
+    
+    try:
+      bcut2 = rdMD.BCUT2D(m, "bad_prop")
+      self.assertTrue(0, "Failed to handle bad prop (not a double)")
+    except RuntimeError as e:
+      self.assertTrue("boost::bad_any_cast" in str(e))
+    
+      
 
 if __name__ == '__main__':
   unittest.main()

@@ -23,6 +23,10 @@
 
 #include <GraphMol/Descriptors/USRDescriptor.h>
 
+#ifdef RDK_HAS_EIGEN3
+#include <GraphMol/Descriptors/BCUT.h>
+#endif
+
 #ifdef RDK_BUILD_DESCRIPTORS3D
 #include <GraphMol/Descriptors/MolDescriptors3D.h>
 #endif
@@ -396,6 +400,55 @@ RDKit::SparseIntVect<std::uint32_t> *MorganFingerprintHelper(
   }
   return res;
 }
+
+#ifdef RDK_HAS_EIGEN3  
+std::pair<double,double> BCUT2D_list(const RDKit::ROMol &m, python::list atomprops)
+{
+  std::vector<double> dvec;
+  for (int i = 0; i < len(atomprops); ++i)
+  {
+    dvec.push_back(boost::python::extract<double>(atomprops[i]));
+  }
+  return RDKit::Descriptors::BCUT2D(m, dvec);
+}
+
+std::pair<double,double> BCUT2D_tuple(const RDKit::ROMol &m, python::tuple atomprops)
+{
+  std::vector<double> dvec;
+  for (int i = 0; i < len(atomprops); ++i)
+  {
+    dvec.push_back(boost::python::extract<double>(atomprops[i]));
+  }
+  return RDKit::Descriptors::BCUT2D(m, dvec);
+}
+
+// From boost::python examples
+// Converts a std::pair instance to a Python tuple.
+template <typename T1, typename T2>
+struct std_pair_to_tuple
+{
+  static PyObject* convert(std::pair<T1, T2> const& p)
+  {
+    return boost::python::incref(
+				 boost::python::make_tuple(p.first, p.second).ptr());
+  }
+  static PyTypeObject const *get_pytype () {return &PyTuple_Type; }
+};
+  
+// Helper for convenience.
+template <typename T1, typename T2>
+struct std_pair_to_python_converter
+{
+  std_pair_to_python_converter()
+  {
+    boost::python::to_python_converter<
+      std::pair<T1, T2>,
+      std_pair_to_tuple<T1, T2>,
+      true //std_pair_to_tuple has get_pytype
+      >();
+  }
+};
+#endif  
 }  // namespace
 RDKit::SparseIntVect<std::uint32_t> *GetMorganFingerprint(
     const RDKit::ROMol &mol, int radius, python::object invariants,
@@ -759,64 +812,6 @@ unsigned int numBridgeheadAtoms(const RDKit::ROMol &mol,
   }
   return res;
 }
-
-/// Awesome StackOverflow response:
-/// http://stackoverflow.com/questions/15842126/feeding-a-python-list-into-a-function-taking-in-a-vector-with-boost-python
-/// I know a lot more about how boost works.
-/// @brief Type that allows for registration of conversions from
-///        python iterable types.
-struct iterable_converter {
-  /// @note Registers converter from a python iterable type to the
-  ///       provided type.
-  template <typename Container>
-  iterable_converter &from_python() {
-    boost::python::converter::registry::push_back(
-        &iterable_converter::convertible,
-        &iterable_converter::construct<Container>,
-        boost::python::type_id<Container>());
-
-    // Support chaining.
-    return *this;
-  }
-
-  /// @brief Check if PyObject is iterable.
-  static void *convertible(PyObject *object) {
-    return PyObject_GetIter(object) ? object : nullptr;
-  }
-
-  /// @brief Convert iterable PyObject to C++ container type.
-  ///
-  /// Container Concept requirements:
-  ///
-  ///   * Container::value_type is CopyConstructable.
-  ///   * Container can be constructed and populated with two iterators.
-  ///     I.e. Container(begin, end)
-  template <typename Container>
-  static void construct(
-      PyObject *object,
-      boost::python::converter::rvalue_from_python_stage1_data *data) {
-    namespace python = boost::python;
-    // Object is a borrowed reference, so create a handle indicting it is
-    // borrowed for proper reference counting.
-    python::handle<> handle(python::borrowed(object));
-
-    // Obtain a handle to the memory block that the converter has allocated
-    // for the C++ type.
-    typedef python::converter::rvalue_from_python_storage<Container>
-        storage_type;
-    void *storage = reinterpret_cast<storage_type *>(data)->storage.bytes;
-
-    typedef python::stl_input_iterator<typename Container::value_type> iterator;
-
-    // Allocate the C++ type into the converter's memory block, and assign
-    // its handle to the converter's convertible variable.  The C++
-    // container is populated by passing the begin and end iterators of
-    // the python object to the container's constructor.
-    new (storage) Container(iterator(python::object(handle)),  // begin
-                            iterator());                       // end
-    data->convertible = storage;
-  }
-};
 
 struct PythonPropertyFunctor : public RDKit::Descriptors::PropertyFunctor {
   PyObject *self;
@@ -1669,4 +1664,44 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               docString.c_str());
 
 #endif
+  
+#ifdef RDK_HAS_EIGEN3
+  python::scope().attr("_BCUT2D_version") =
+      RDKit::Descriptors::BCUT2DVersion;
+  std::vector<double> (*BCUT)(const RDKit::ROMol&) = & RDKit::Descriptors::BCUT2D;
+  std::pair<double,double> (*BCUT_atomprops)(const RDKit::ROMol&, const std::string&) = & RDKit::Descriptors::BCUT2D;
+  docString = \
+    "Implements BCUT descriptors From J. Chem. Inf. Comput. Sci., Vol. 39, No. 1, 1999"	\
+    "Diagonal elements are (currently) atomic mass, gasteiger charge,"\
+    "crippen logP and crippen MRReturns the 2D BCUT2D descriptors vector as described in\n"\
+    "returns [mass eigen value high, mass eigen value low,\n"\
+    "         gasteiger charge eigenvalue high, gasteiger charge low,\n"\
+    "         crippen lowgp  eigenvalue high, crippen lowgp  low,\n"\
+    "         crippen mr eigenvalue high, crippen mr low]\n"\
+    "";
+    
+  python::def("BCUT2D", BCUT,
+              (python::arg("mol")),
+              docString.c_str());
+
+  std_pair_to_python_converter<double, double>();
+  docString = \
+    "Returns a 2D BCUT (eigen value hi, eigenvalue low) given the molecule and the specified atom props\n"\
+    " there length ot atom_props must a list or tuple of floats equal in size to the number of atoms in mol";
+  
+  python::def("BCUT2D", BCUT2D_list,
+              (python::arg("mol"), python::arg("atom_props")),
+              docString.c_str());
+  python::def("BCUT2D", BCUT2D_tuple,
+              (python::arg("mol"), python::arg("atom_props")),
+              docString.c_str());
+
+  docString = \
+    "Returns a 2D BCUT (eigen value high, eigen value low) given the molecule and the specified atom prop name\n" \
+    "atom_propname must exist on each aton and be convertable to a float";
+  python::def("BCUT2D", BCUT_atomprops,
+              (python::arg("mol"), python::arg("atom_propname")),
+              docString.c_str());
+#endif
+
 }

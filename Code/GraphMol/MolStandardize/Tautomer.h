@@ -52,6 +52,11 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
   }
 
   //! returns all tautomers for the input molecule
+  /*!
+    The enumeration rules are inspired by the publication:
+    M. Sitzmann et al., “Tautomerism in Large Databases.”, JCAMD 24:521 (2010)
+    https://doi.org/10.1007/s10822-010-9346-4
+  */
   std::vector<ROMOL_SPTR> enumerate(const ROMol &mol) const;
 
   //! returns the canonical tautomer from a set of possible tautomers
@@ -61,6 +66,11 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
     "reasonable" tautomers, but the primary concern is that the results are
     canonical: you always get the same canonical tautomer for a molecule
     regardless of what the input tautomer or atom ordering were.
+
+    The default scoring scheme is inspired by the publication:
+    M. Sitzmann et al., “Tautomerism in Large Databases.”, JCAMD 24:521 (2010)
+    https://doi.org/10.1007/s10822-010-9346-4
+
   */
   ROMol *pickCanonical(const std::vector<ROMOL_SPTR> &tautomers,
                        boost::function<int(const ROMol &mol)> scoreFunc =
@@ -73,6 +83,11 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
     "reasonable" tautomers, but the primary concern is that the results are
     canonical: you always get the same canonical tautomer for a molecule
     regardless of what the input tautomer or atom ordering were.
+
+    The default scoring scheme is inspired by the publication:
+    M. Sitzmann et al., “Tautomerism in Large Databases.”, JCAMD 24:521 (2010)
+    https://doi.org/10.1007/s10822-010-9346-4
+
   */
   ROMol *canonicalize(const ROMol &mol,
                       boost::function<int(const ROMol &mol)> scoreFunc =

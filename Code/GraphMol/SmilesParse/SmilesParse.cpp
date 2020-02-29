@@ -347,7 +347,13 @@ Bond *SmilesToBond(const std::string &smiles) {
 
 RWMol *SmilesToMol(const std::string &smiles,
                    const SmilesParserParams &params) {
-  yysmiles_debug = params.debugParse;
+  // Calling SmilesToMol in a multithreaded context is generally safe *unless*
+  // the value of debugParse is different for different threads. The if
+  // statement below avoids a TSAN warning in the case where multiple threads
+  // all use the same value for debugParse.
+  if (yysmiles_debug != params.debugParse) {
+    yysmiles_debug = params.debugParse;
+  }
 
   std::string lsmiles, name, cxPart;
   preprocessSmiles(smiles, params, lsmiles, name, cxPart);
@@ -412,7 +418,13 @@ Bond *SmartsToBond(const std::string &smiles) {
 
 RWMol *SmartsToMol(const std::string &smarts, int debugParse, bool mergeHs,
                    std::map<std::string, std::string> *replacements) {
-  yysmarts_debug = debugParse;
+  // Calling SmartsToMol in a multithreaded context is generally safe *unless*
+  // the value of debugParse is different for different threads. The if
+  // statement below avoids a TSAN warning in the case where multiple threads
+  // all use the same value for debugParse.
+  if (yysmarts_debug != debugParse) {
+    yysmarts_debug = debugParse;
+  }
   // boost::trim_if(sma,boost::is_any_of(" \t\r\n"));
   std::string sma;
   RWMol *res;

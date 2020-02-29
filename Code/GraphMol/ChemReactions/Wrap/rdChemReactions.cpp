@@ -929,7 +929,7 @@ unrecognized final group types are returned as None:
   >>> nWarn,nError,nReacts,nProds,reactantLabels = PreprocessReaction(rxn)
   Traceback (most recent call last):
     ...
-  RuntimeError: KeyErrorException
+  KeyError: 'boromicacid'
 
 One unrecognized group type in a comma-separated list makes the whole thing fail:
   >>> testFile = os.path.join(RDConfig.RDCodeDir,'Chem','SimpleEnum','test_data','bad_value2.rxn')
@@ -938,14 +938,14 @@ One unrecognized group type in a comma-separated list makes the whole thing fail
   >>> nWarn,nError,nReacts,nProds,reactantLabels = PreprocessReaction(rxn)
   Traceback (most recent call last):
     ...
-  RuntimeError: KeyErrorException
+  KeyError: 'carboxylicacid,acidchlroide'
   >>> testFile = os.path.join(RDConfig.RDCodeDir,'Chem','SimpleEnum','test_data','bad_value3.rxn')
   >>> rxn = AllChem.ReactionFromRxnFile(testFile)
   >>> rxn.Initialize()
   >>> nWarn,nError,nReacts,nProds,reactantLabels = PreprocessReaction(rxn)
   Traceback (most recent call last):
     ...
-  RuntimeError: KeyErrorException
+  KeyError: 'carboxyliccaid,acidchloride'
   >>> rxn = rdChemReactions.ChemicalReaction()
   >>> rxn.Initialize()
   >>> nWarn,nError,nReacts,nProds,reactantLabels = PreprocessReaction(rxn)

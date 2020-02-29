@@ -120,7 +120,8 @@ int scoreSubstructs(const ROMol &mol) {
       {"C=O", "[#6]=,:[#8]", 2},
       {"N=O", "[#7]=,:[#8]", 2},
       {"P=O", "[#15]=,:[#8]", 2},
-      {"C=hetero", "[#6]=[!#1;!#6]", 1},
+      {"C=hetero", "[C]=[!#1;!#6]", 1},
+      {"aromatic C = exocyclic N", "[c]=!@[N]", -1},
       {"methyl", "[CX4H3]", 1},
       {"guanidine terminal=N", "[#7][#6](=[NR0])[#7H0]", 1},
       {"guanidine endocyclic=N", "[#7;R][#6;R]([N])=[#7;R]", 2},
@@ -171,6 +172,7 @@ ROMol *TautomerEnumerator::pickCanonical(
   ROMOL_SPTR bestMol;
   for (const auto t : tautomers) {
     auto score = scoreFunc(*t);
+    // std::cerr << "  " << MolToSmiles(*t) << " " << score << std::endl;
     if (score > bestScore) {
       bestScore = score;
       bestSmiles = MolToSmiles(*t);
@@ -243,9 +245,9 @@ std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(const ROMol &mol) const {
           } else {
             // std::cout << "kmol: " << kmol->first << std::endl;
             // std::cout << MolToSmiles(*(kmol->second)) << std::endl;
-            // std::cout << "transform mol: " << MolToSmiles(*(transform.Mol))
+            // std::cout << "transform mol: " << MolToSmarts(*(transform.Mol))
             //           << std::endl;
-            //
+
             // std::cout << "Matched: " << name << std::endl;
           }
           for (const auto &match : matches) {
@@ -310,6 +312,9 @@ std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(const ROMol &mol) const {
             }
 
             boost::shared_ptr<RWMol> wproduct(new RWMol(*product));
+            // wproduct->updatePropertyCache(false);
+            // std::cout << "pre-sanitization: "
+            //           << MolToSmiles(*wproduct, true, true) << std::endl;
             MolOps::sanitizeMol(*wproduct);
             //						MolOps::sanitizeMol(*static_cast<RWMol*>(product.get()));
             tsmiles = MolToSmiles(*wproduct, true);

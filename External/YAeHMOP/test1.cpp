@@ -37,7 +37,9 @@ TEST_CASE("benzene", "[basics]") {
   REQUIRE(mol);
   REQUIRE(mol->getNumAtoms() == 12);
   EHTTools::EHTResults res;
-  REQUIRE(EHTTools::runMol(*mol, res));
+  int confId = -1;
+  bool preserveMatrices = true;
+  REQUIRE(EHTTools::runMol(*mol, res, confId, preserveMatrices));
   CHECK(res.numElectrons == 30);
   CHECK(res.numOrbitals == 30);
   CHECK(res.numAtoms == 12);
@@ -48,17 +50,40 @@ TEST_CASE("benzene", "[basics]") {
     CHECK(res.atomicCharges[i] == Approx(0.026).margin(0.001));
   }
   for (unsigned int i = 0; i < 6; ++i) {
-    CHECK(res.reducedChargeMatrix[i*res.numOrbitals] == Approx(0.1615).margin(0.001));
-    CHECK(res.reducedChargeMatrix[i*res.numOrbitals+6] == Approx(0.1066).margin(0.001));
-    CHECK(res.reducedChargeMatrix[i*res.numOrbitals+9] == Approx(0.1667).margin(0.001));
+    CHECK(res.reducedChargeMatrix[i * res.numOrbitals] ==
+          Approx(0.1615).margin(0.001));
+    CHECK(res.reducedChargeMatrix[i * res.numOrbitals + 6] ==
+          Approx(0.1066).margin(0.001));
+    CHECK(res.reducedChargeMatrix[i * res.numOrbitals + 9] ==
+          Approx(0.1667).margin(0.001));
   }
   for (unsigned int i = 6; i < 12; ++i) {
-    CHECK(res.reducedChargeMatrix[i*res.numOrbitals] == Approx(0.0052).margin(0.001));
-    CHECK(res.reducedChargeMatrix[i*res.numOrbitals+6] == Approx(0.0600).margin(0.001));
-    CHECK(res.reducedChargeMatrix[i*res.numOrbitals+9] == Approx(0.0000).margin(0.001));
+    CHECK(res.reducedChargeMatrix[i * res.numOrbitals] ==
+          Approx(0.0052).margin(0.001));
+    CHECK(res.reducedChargeMatrix[i * res.numOrbitals + 6] ==
+          Approx(0.0600).margin(0.001));
+    CHECK(res.reducedChargeMatrix[i * res.numOrbitals + 9] ==
+          Approx(0.0000).margin(0.001));
   }
+  CHECK(res.orbitalEnergies[0] == Approx(-29.6302).margin(0.001));
+  CHECK(res.orbitalEnergies[14] == Approx(-12.804).margin(0.001));
+  CHECK(res.orbitalEnergies[29] == Approx(67.0404).margin(0.001));
+
   CHECK(res.totalEnergy == Approx(-535.026).margin(0.001));
   CHECK(res.fermiEnergy == Approx(-12.804).margin(0.001));
+
+  CHECK(res.hamiltonianMatrix[0 * res.numOrbitals + 0] ==
+        Approx(-21.4000).margin(0.001));
+  CHECK(res.hamiltonianMatrix[0 * res.numOrbitals + 4] ==
+        Approx(-15.3224).margin(0.001));
+  CHECK(res.hamiltonianMatrix[4 * res.numOrbitals + 0] ==
+        Approx(0.0000).margin(0.001));
+  CHECK(res.overlapMatrix[0 * res.numOrbitals + 0] ==
+        Approx(1.0000).margin(0.001));
+  CHECK(res.overlapMatrix[0 * res.numOrbitals + 4] ==
+        Approx(0.4091).margin(0.001));
+  CHECK(res.overlapMatrix[4 * res.numOrbitals + 0] ==
+        Approx(0.0000).margin(0.001));
 }
 #endif
 #if 1

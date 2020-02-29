@@ -158,6 +158,7 @@ RDKIT_RDGENERAL_EXPORT extern const std::string molFileAlias;      // string
 RDKIT_RDGENERAL_EXPORT extern const std::string molFileValue;      // string
 RDKIT_RDGENERAL_EXPORT extern const std::string molInversionFlag;  // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molParity;         // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molStereoCare;     // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molRxnComponent;   // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molRxnRole;        // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molTotValence;     // int
