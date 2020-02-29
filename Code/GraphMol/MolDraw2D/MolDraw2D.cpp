@@ -2291,6 +2291,11 @@ string MolDraw2D::getAtomSymbol(const RDKit::Atom &atom) const {
              atom.getAtomicNum() == 1 && (iso == 2 || iso == 3)) {
     symbol = ((iso == 2) ? "D" : "T");
     iso = 0;
+  } else if(atom.getNumRadicalElectrons()) {
+    symbol = atom.getSymbol();
+    for(unsigned int i = 0; i < atom.getNumRadicalElectrons(); ++i) {
+      symbol += "<sup>.</sup>";
+    }
   } else {
     literal_symbol = false;
     std::vector<std::string> preText, postText;
