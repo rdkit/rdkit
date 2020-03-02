@@ -288,6 +288,9 @@ void MolDraw2DSVG::getStringSize(const std::string &label, double &label_width,
   for (int i = 0, is = label.length(); i < is; ++i) {
     // setStringDrawMode moves i along to the end of any <sub> or <sup>
     // markup
+    // The drawString function turns <sup>.</sup> into &#x2219; (unicode
+    // bullet char) but we'll just hope for now that it's roughly the same
+    // size.
     if ('<' == label[i] && setStringDrawMode(label, draw_mode, i)) {
       continue;
     }
@@ -340,6 +343,8 @@ void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds) {
 void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds,
                               AlignType align) {
   unsigned int fontSz = scale() * fontSize();
+
+  std::cout << "drawing string " << str << std::endl;
 
   double string_width, string_height;
   getStringSize(str, string_width, string_height);
@@ -400,16 +405,30 @@ void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds,
       TextDrawNormal;  // 0 for normal, 1 for superscript, 2 for subscript
   std::string span;
   bool first_span = true;
+  auto write_span = [&]() {
+    if (!first_span) {
+      std::cout << "writing span : " << span << "XXX" << std::endl;
+      escape_xhtml(span);
+      d_os << span << "</tspan>";
+      span = "";
+    }
+    first_span = false;
+  };
+
   for (int i = 0, is = str.length(); i < is; ++i) {
+    // if the next bit is <sup>.</sup> assume it's a radical and do a bullet
+    // instead.
+    std::cout << str.substr(i, 12) << std::endl;
+    if(str.substr(i, 12) == "<sup>.</sup>") {
+      write_span();
+      d_os << "<tspan>&#x2219;";
+      i += 11;  // end of loop will add the extra 1.
+      continue;
+    }
     // setStringDrawMode moves i along to the end of any <sub> or <sup>
     // markup
     if ('<' == str[i] && setStringDrawMode(str, draw_mode, i)) {
-      if (!first_span) {
-        escape_xhtml(span);
-        d_os << span << "</tspan>";
-        span = "";
-      }
-      first_span = false;
+      write_span();
       d_os << "<tspan";
       switch (draw_mode) {
         // To save people time later - on macOS Catalina, at least, Firefox

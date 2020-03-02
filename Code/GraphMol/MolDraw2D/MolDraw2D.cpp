@@ -2036,7 +2036,8 @@ vector<string> MolDraw2D::atomLabelToPieces(int atom_num) const {
   for(size_t j = 0; j < label_pieces.size(); ++j) {
     if(label_pieces[j][0] == ':'
        || label_pieces[j].substr(0, 6) == "<sup>+"
-       || label_pieces[j].substr(0, 6) == "<sup>-") {
+       || label_pieces[j].substr(0, 6) == "<sup>-"
+       || label_pieces[j].substr(0, 6) == "<sup>.") {
       if (label_pieces[0].substr(0, 5) == "<sup>") {
         label_pieces[1] += label_pieces[j];
       } else {
@@ -2291,14 +2292,14 @@ string MolDraw2D::getAtomSymbol(const RDKit::Atom &atom) const {
              atom.getAtomicNum() == 1 && (iso == 2 || iso == 3)) {
     symbol = ((iso == 2) ? "D" : "T");
     iso = 0;
-  } else if(atom.getNumRadicalElectrons()) {
-    symbol = atom.getSymbol();
-    for(unsigned int i = 0; i < atom.getNumRadicalElectrons(); ++i) {
-      symbol += "<sup>.</sup>";
-    }
   } else {
     literal_symbol = false;
     std::vector<std::string> preText, postText;
+    if(atom.getNumRadicalElectrons()) {
+      for (unsigned int i = 0; i < atom.getNumRadicalElectrons(); ++i) {
+        postText.emplace_back("<sup>.</sup>");
+      }
+    }
     int num_h = (atom.getAtomicNum() == 6 && atom.getDegree() > 0)
                 ? 0
                 : atom.getTotalNumHs();  // FIX: still not quite right
