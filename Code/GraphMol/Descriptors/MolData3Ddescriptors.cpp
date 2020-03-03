@@ -89,24 +89,15 @@ std::vector<double> MolData3Ddescriptors::GetRelativeIonPol(
 }
 
 std::vector<double> MolData3Ddescriptors::GetCustomAtomProp(
-      const RDKit::ROMol& mol, const std::string customAtomPropName) {
-    int numAtoms = mol.getNumAtoms();
-    
-    std::vector<double> customAtomarray(numAtoms, 0.0);
-    for (int i = 0; i < numAtoms; ++i) {
-        
-        if (mol.getAtomWithIdx(i)->hasProp(customAtomPropName)) {
-            customAtomarray[i] = mol.getAtomWithIdx(i)->getProp<double>(customAtomPropName);
-        }
-        else {
-            customAtomarray[i] =1;
-        }
-    }
-    return customAtomarray;
+    const RDKit::ROMol& mol, const std::string& customAtomPropName) {
+  int numAtoms = mol.getNumAtoms();
+
+  std::vector<double> customAtomArray(numAtoms, 1.0);
+  for (auto& atom : mol.atoms()) {
+    atom->getPropIfPresent(customAtomPropName, customAtomArray[atom->getIdx()]);
+  }
+  return customAtomArray;
 }
-
-
-
 
 std::vector<double> MolData3Ddescriptors::GetCharges(const RDKit::ROMol& mol) {
   std::vector<double> charges(mol.getNumAtoms(), 0);

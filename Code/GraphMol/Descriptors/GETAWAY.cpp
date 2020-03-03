@@ -375,246 +375,231 @@ double getMax(const double* Rk) {
   return RTp;
 }
 
+void getGETAWAYDescCustom(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,
+                          std::vector<int> Heavylist, const ROMol& mol,
+                          std::vector<double>& res, unsigned int precision,
+                          const std::string& customAtomPropName) {
+  // prepare data for Getaway parameter computation
+  // compute parameters
 
+  VectorXd Lev = H.diagonal();
+  std::vector<double> heavyLev;
 
-    void getGETAWAYDescCustom(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,
-                        std::vector<int> Heavylist, const ROMol& mol,
-                        std::vector<double>& res, int precision,
-                        const std::string customAtomPropName) {
-      // prepare data for Getaway parameter computation
-      // compute parameters
+  for (int i = 0; i < numAtoms; i++) {
+    if (Heavylist[i] == 1) {
+      heavyLev.push_back(round_to_n_digits_(Lev(i), precision));
+    }
+  }
 
-      VectorXd Lev = H.diagonal();
-      std::vector<double> heavyLev;
+  std::vector<double> Clus = clusterArray2(heavyLev, precision);
 
-      for (int i = 0; i < numAtoms; i++) {
-        if (Heavylist[i] == 1) {
-          heavyLev.push_back(round_to_n_digits_(Lev(i), precision));
-        }
-      }
+  double numHeavy = heavyLev.size();
+  double ITH0 = numHeavy * log(numHeavy) / log(2.0);
+  double ITH = ITH0;
+  for (double Clu : Clus) {
+    ITH -= Clu * log(Clu) / log(2.0);
+  }
+  res[0] = roundn(ITH, 3);  // issue sometime with this due to cluster
+  double ISH = ITH / ITH0;
+  res[1] = roundn(ISH, 3);  // issue sometime with this due to cluster
 
-      std::vector<double> Clus = clusterArray2(heavyLev, precision);
+  // use the PBF to determine 2D vs 3D (with Threshold)
+  // determine if this is a plane molecule
+  double pbf = RDKit::Descriptors::PBF(mol);
+  double D;
+  if (pbf < 1.e-5) {
+    D = 2.0;
+  } else {
+    D = 3.0;
+  }
 
-      double numHeavy = heavyLev.size();
-      double ITH0 = numHeavy * log(numHeavy) / log(2.0);
-      double ITH = ITH0;
-      for (unsigned int j = 0; j < Clus.size(); j++) {
-        ITH -= Clus[j] * log(Clus[j]) / log(2.0);
-      }
-      res[0] = roundn(ITH, 3);  // issue somethime with this due to cluster
-      double ISH = ITH / ITH0;
-      res[1] = roundn(ISH, 3);  // issue somethime with this due to cluster
+  // what about linear molecule ie (D=1) ?
+  double HIC = 0.0;
+  for (int i = 0; i < numAtoms; i++) {
+    HIC -= H(i, i) / D * log(H(i, i) / D) / log(2);
+  }
+  res[2] = roundn(HIC, 3);
 
-      // use the PBF to determine 2D vs 3D (with Thresold)
-      // determine if this is a plane molecule
-      double pbf = RDKit::Descriptors::PBF(mol);
-      double D;
-      if (pbf < 1.e-5) {
-        D = 2.0;
-      } else {
-        D = 3.0;
-      }
+  double HGM = 1.0;
+  for (int i = 0; i < numAtoms; i++) {
+    HGM = HGM * H(i, i);
+  }
+  HGM = 100.0 * pow(HGM, 1.0 / numAtoms);
+  res[3] = roundn(HGM, 3);
 
-      // what about linear molecule ie (D=1) ?
-      double HIC = 0.0;
-      for (int i = 0; i < numAtoms; i++) {
-        HIC -= H(i, i) / D * log(H(i, i) / D) / log(2);
-      }
-      res[2] = roundn(HIC, 3);
+  double RARS = R.rowwise().sum().sum() / numAtoms;
 
-      double HGM = 1.0;
-      for (int i = 0; i < numAtoms; i++) {
-        HGM = HGM * H(i, i);
-      }
-      HGM = 100.0 * pow(HGM, 1.0 / numAtoms);
-      res[3] = roundn(HGM, 3);
+  JacobiSVD<MatrixXd> mysvd = getSVD(R);
 
-      double RARS = R.rowwise().sum().sum() / numAtoms;
+  VectorXd EIG = mysvd.singularValues();
 
-      JacobiSVD<MatrixXd> mysvd = getSVD(R);
+  double rcon = getRCON(R, std::move(Adj), numAtoms);
 
-      VectorXd EIG = mysvd.singularValues();
+  std::vector<double> customAtomArray =
+      moldata3D.GetCustomAtomProp(mol, customAtomPropName);
+  VectorXd Wc = getEigenVect(customAtomArray);
 
-      double rcon = getRCON(R, Adj, numAtoms);
+  MatrixXd Bi;
+  MatrixXd RBw;
+  double HATSc, HATSct, H0ct, R0ct, H0c, R0c, Rkmaxc, tmpc;
+  double HATSk[9];
+  double Hk[9];
+  double Rk[8];
+  double Rp[8];
 
-      std::vector<double> customAtomArray = moldata3D.GetCustomAtomProp(mol,customAtomPropName);
-      VectorXd Wc = getEigenVect(customAtomArray);
+  double* dist =
+      MolOps::getDistanceMat(mol, false);  // need to be be set to false to have
+  // topological distance not weighted!
 
-      MatrixXd Bi;
-      MatrixXd RBw;
-      double HATSc, HATSct, H0ct, R0ct, H0c, R0c, Rkmaxc, tmpc;
-      double HATSk[9];
-      double Hk[9];
-      double Rk[8];
-      double Rp[8];
+  Map<MatrixXd> D2(dist, numAtoms, numAtoms);
 
-      double* dist =
-              MolOps::getDistanceMat(mol, false);  // need to be be set to false to have
-      // topological distance not weigthed!
+  double Dmax = D2.colwise().maxCoeff().maxCoeff();
 
-      Map<MatrixXd> D2(dist, numAtoms, numAtoms);
+  HATSct = 0.0;
+  H0ct = 0.0;
+  R0ct = 0.0;
 
-      double Dmax = D2.colwise().maxCoeff().maxCoeff();
-
-      HATSct = 0.0;
-      H0ct = 0.0;
-      R0ct = 0.0;
-
-
-      // need to loop other all the D values so <= not <!
-      for (int i = 0; i <= Dmax; i++) {
-        if (i == 0) {
-          Bi = H.diagonal().asDiagonal();
-        }
-
-        HATSc = 0.0;
-        H0c = 0.0;
-
-
-        if (i == 0) {  // use Bi
-          for (int j = 0; j < numAtoms; j++) {
-            for (int k = j; k < numAtoms; k++) {
-              if (Bi(j, k) > 0) {
-                HATSc += getHATS((double)Wc(j), (double)Wc(j), (double)H(j, j),
-                                 (double)H(j, j));
-
-                if (H(j, k) > 0) {
-                  H0c += getH((double)Wc(j), (double)Wc(k), (double)H(j, k));
-
-                }
-              }
-            }
-          }
-        }
-        double* Bimat = GetGeodesicMatrix(dist, i, numAtoms);
-        Map<MatrixXd> Bj(Bimat, numAtoms, numAtoms);
-        if (i > 0 && i < 9) {  // use Bj
-          for (int j = 0; j < numAtoms - 1; j++) {
-            for (int k = j + 1; k < numAtoms; k++) {
-              if (Bj(j, k) == 1) {
-                HATSc += getHATS((double)Wc(j), (double)Wc(k), (double)H(j, j),
-                                 (double)H(k, k));
-
-                if (H(j, k) > 0) {
-                  H0c += getH((double)Wc(j), (double)Wc(k), (double)H(j, k));
-
-                }
-              }
-            }
-          }
-        }
-
-        if (i >= 9) {  // Totals missing part
-          for (int j = 0; j < numAtoms - 1; j++) {
-            for (int k = j + 1; k < numAtoms; k++) {
-              if (Bj(j, k) == 1) {
-                HATSct += 2 * getHATS((double)Wc(j), (double)Wc(k), (double)H(j, j),
-                                      (double)H(k, k));
-
-
-                if (H(j, k) > 0) {
-                  H0ct += 2 * getH((double)Wc(j), (double)Wc(k), (double)H(j, k));
-
-                }
-              }
-            }
-          }
-        }
-
-        if (i < 9) {
-          HATSk[i] = HATSc;
-          Hk[i] = H0c;
-
-        }
-
-        R0c = 0.0;
-        Rkmaxc = 0.0;
-
-
-        // from 1 to 8
-        if (i > 0 && i < 9) {
-          for (int j = 0; j < numAtoms - 1; j++) {
-            for (int k = j + 1; k < numAtoms; k++) {
-              if (Bj(j, k) == 1) {
-                tmpc = getH((double)Wc(j), (double)Wc(k),
-                            (double)R(j, k));  // Use same function but on all R not
-                // "H>0" like in the previous loop &
-                // i>0!
-
-                R0c += tmpc;
-
-                if (tmpc > Rkmaxc) {
-                  Rkmaxc = tmpc;
-                }
-              }
-            }
-          }
-
-          Rk[i - 1] = R0c;
-          Rp[i - 1] = Rkmaxc;
-
-        }
-
-        if (i >= 9) {
-          for (int j = 0; j < numAtoms - 1; j++) {
-            for (int k = j + 1; k < numAtoms; k++) {
-              if (Bj(j, k) == 1) {
-                R0ct += 2 * getH((double)Wc(j), (double)Wc(k),
-                                 (double)R(j, k));  // Use same function but on all
-                // R not "H>0" like in the
-                // previous loop & i>0!
-              }
-            }
-          }
-        }
-        delete[] Bimat;
-      }
-
-      // can be column vs row selecgted that can explain the issue!
-      double HATSTc = HATSk[0] + HATSct;
-      for (int ii = 1; ii < 9; ii++) {
-        HATSTc += 2 * HATSk[ii];
-
-      }
-
-      double HTc = Hk[0] + H0ct;
-      for (int ii = 1; ii < 9; ii++) {
-        HTc += 2.0 * Hk[ii];
-
-      }
-
-
-      double RTc = 0.0;
-      for (int ii = 0; ii < 8; ii++) {
-        RTc += 2.0 * Rk[ii];
-
-      }
-
-      double RTMc = getMax(Rp);
-
-      // create the output vector...
-      for (int i = 0; i < 9; i++) {
-        res[i + 4] = roundn(Hk[i], 3);
-        res[i + 14] = roundn(HATSk[i], 3);
-      }
-
-      res[13] = roundn(HTc, 3);
-      res[23] = roundn(HATSTc, 3);
-
-      res[24] = roundn(rcon, 3);
-      res[25] = roundn(RARS, 3);
-      res[26] = roundn(EIG(0), 3);
-
-      for (int i = 0; i < 8; i++) {
-        res[i + 27] = roundn(Rk[i], 3);
-        res[i + 36] = roundn(Rp[i], 3);
-      }
-
-      res[35] = roundn(RTc + R0ct, 3);
-      res[44] = roundn(RTMc, 3);
+  // need to loop other all the D values so <= not <!
+  for (int i = 0; i <= Dmax; i++) {
+    if (i == 0) {
+      Bi = H.diagonal().asDiagonal();
     }
 
-    void getGETAWAYDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,
+    HATSc = 0.0;
+    H0c = 0.0;
+
+    if (i == 0) {  // use Bi
+      for (int j = 0; j < numAtoms; j++) {
+        for (int k = j; k < numAtoms; k++) {
+          if (Bi(j, k) > 0) {
+            HATSc += getHATS((double)Wc(j), (double)Wc(j), (double)H(j, j),
+                             (double)H(j, j));
+
+            if (H(j, k) > 0) {
+              H0c += getH((double)Wc(j), (double)Wc(k), (double)H(j, k));
+            }
+          }
+        }
+      }
+    }
+    auto Bimat = GetGeodesicMatrix(dist, i, numAtoms);
+    Map<MatrixXd> Bj(Bimat.data(), numAtoms, numAtoms);
+    if (i > 0 && i < 9) {  // use Bj
+      for (int j = 0; j < numAtoms - 1; j++) {
+        for (int k = j + 1; k < numAtoms; k++) {
+          if (Bj(j, k) == 1) {
+            HATSc += getHATS((double)Wc(j), (double)Wc(k), (double)H(j, j),
+                             (double)H(k, k));
+
+            if (H(j, k) > 0) {
+              H0c += getH((double)Wc(j), (double)Wc(k), (double)H(j, k));
+            }
+          }
+        }
+      }
+    }
+
+    if (i >= 9) {  // Totals missing part
+      for (int j = 0; j < numAtoms - 1; j++) {
+        for (int k = j + 1; k < numAtoms; k++) {
+          if (Bj(j, k) == 1) {
+            HATSct += 2 * getHATS((double)Wc(j), (double)Wc(k), (double)H(j, j),
+                                  (double)H(k, k));
+
+            if (H(j, k) > 0) {
+              H0ct += 2 * getH((double)Wc(j), (double)Wc(k), (double)H(j, k));
+            }
+          }
+        }
+      }
+    }
+
+    if (i < 9) {
+      HATSk[i] = HATSc;
+      Hk[i] = H0c;
+    }
+
+    R0c = 0.0;
+    Rkmaxc = 0.0;
+
+    // from 1 to 8
+    if (i > 0 && i < 9) {
+      for (int j = 0; j < numAtoms - 1; j++) {
+        for (int k = j + 1; k < numAtoms; k++) {
+          if (Bj(j, k) == 1) {
+            tmpc = getH((double)Wc(j), (double)Wc(k),
+                        (double)R(j, k));  // Use same function but on all R not
+            // "H>0" like in the previous loop &
+            // i>0!
+
+            R0c += tmpc;
+
+            if (tmpc > Rkmaxc) {
+              Rkmaxc = tmpc;
+            }
+          }
+        }
+      }
+
+      Rk[i - 1] = R0c;
+      Rp[i - 1] = Rkmaxc;
+    }
+
+    if (i >= 9) {
+      for (int j = 0; j < numAtoms - 1; j++) {
+        for (int k = j + 1; k < numAtoms; k++) {
+          if (Bj(j, k) == 1) {
+            R0ct += 2 * getH((double)Wc(j), (double)Wc(k),
+                             (double)R(j, k));  // Use same function but on all
+            // R not "H>0" like in the
+            // previous loop & i>0!
+          }
+        }
+      }
+    }
+  }
+
+  // can be column vs row selected that can explain the issue!
+  double HATSTc = HATSk[0] + HATSct;
+  for (int ii = 1; ii < 9; ii++) {
+    HATSTc += 2 * HATSk[ii];
+  }
+
+  double HTc = Hk[0] + H0ct;
+  for (int ii = 1; ii < 9; ii++) {
+    HTc += 2.0 * Hk[ii];
+  }
+
+  double RTc = 0.0;
+  for (double rk_ii : Rk) {
+    RTc += 2.0 * rk_ii;
+  }
+
+  double RTMc = getMax(Rp);
+
+  // create the output vector...
+  for (int i = 0; i < 9; i++) {
+    res[i + 4] = roundn(Hk[i], 3);
+    res[i + 14] = roundn(HATSk[i], 3);
+  }
+
+  res[13] = roundn(HTc, 3);
+  res[23] = roundn(HATSTc, 3);
+
+  res[24] = roundn(rcon, 3);
+  res[25] = roundn(RARS, 3);
+  res[26] = roundn(EIG(0), 3);
+
+  for (int i = 0; i < 8; i++) {
+    res[i + 27] = roundn(Rk[i], 3);
+    res[i + 36] = roundn(Rp[i], 3);
+  }
+
+  res[35] = roundn(RTc + R0ct, 3);
+  res[44] = roundn(RTMc, 3);
+}
+
+void getGETAWAYDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,
                     std::vector<int> Heavylist, const ROMol& mol,
                     std::vector<double>& res, unsigned int precision) {
   // prepare data for Getaway parameter computation
@@ -1180,31 +1165,33 @@ GETAWAYNAMES={"ITH","ISH","HIC","HGM","H0u","H1u","H2u","H3u","H4u","H5u","H6u",
  */
 
 void GetGETAWAYone(double* dist3D, double* AdjMat, std::vector<double> Vpoints,
-                    const ROMol& mol, const Conformer& conf,
-                    std::vector<int> Heavylist, std::vector<double>& res,
-                    int precision, const std::string customAtomPropName) {
-      int numAtoms = conf.getNumAtoms();
+                   const ROMol& mol, const Conformer& conf,
+                   std::vector<int> Heavylist, std::vector<double>& res,
+                   unsigned int precision,
+                   const std::string& customAtomPropName) {
+  PRECONDITION(dist3D != nullptr, "no distance matrix");
+  PRECONDITION(AdjMat != nullptr, "no adjacency matrix");
+  int numAtoms = conf.getNumAtoms();
 
-      Map<MatrixXd> ADJ(AdjMat, numAtoms, numAtoms);
+  Map<MatrixXd> ADJ(AdjMat, numAtoms, numAtoms);
 
-      Map<MatrixXd> DM(dist3D, numAtoms, numAtoms);
+  Map<MatrixXd> DM(dist3D, numAtoms, numAtoms);
 
-      double* vpoints = &Vpoints[0];
+  double* vpoints = &Vpoints[0];
 
-      Map<MatrixXd> matorigin(vpoints, 3, numAtoms);
+  Map<MatrixXd> matorigin(vpoints, 3, numAtoms);
 
-      MatrixXd MatOrigin = matorigin.transpose();
+  MatrixXd MatOrigin = matorigin.transpose();
 
-      MatrixXd Xmean = GetCenterMatrix(MatOrigin);
+  MatrixXd Xmean = GetCenterMatrix(MatOrigin);
 
-      MatrixXd H = GetHmatrix(Xmean);
+  MatrixXd H = GetHmatrix(Xmean);
 
-      MatrixXd R = GetRmatrix(H, DM, numAtoms);
+  MatrixXd R = GetRmatrix(H, DM, numAtoms);
 
-      getGETAWAYDescCustom(H, R, ADJ, numAtoms, Heavylist, mol, res, precision,
-                           customAtomPropName);
-    }
-
+  getGETAWAYDescCustom(H, R, ADJ, numAtoms, std::move(Heavylist), mol, res,
+                       precision, customAtomPropName);
+}
 
 void GetGETAWAY(double* dist3D, double* AdjMat, std::vector<double> Vpoints,
                 const ROMol& mol, const Conformer& conf,
@@ -1238,7 +1225,7 @@ void GetGETAWAY(double* dist3D, double* AdjMat, std::vector<double> Vpoints,
 }  // end of anonymous namespace
 
 void GETAWAY(const ROMol& mol, std::vector<double>& res, int confId,
-             int precision, const std::string customAtomPropName) {
+             unsigned int precision, const std::string& customAtomPropName) {
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers")
 
   int numAtoms = mol.getNumAtoms();
@@ -1260,9 +1247,10 @@ void GETAWAY(const ROMol& mol, std::vector<double>& res, int confId,
   double* dist3D = MolOps::get3DDistanceMat(mol, confId);
 
   double* AdjMat = MolOps::getAdjacencyMatrix(
-      mol, false, 0, false, 0);  // false to have only the 1,0 matrix unweighted
+      mol, false, 0, false,
+      nullptr);  // false to have only the 1,0 matrix unweighted
 
-  if (customAtomPropName.size()>0) {
+  if (!customAtomPropName.empty()) {
     res.clear();
     res.resize(45);
     GetGETAWAYone(dist3D, AdjMat, Vpoints, mol, conf, Heavylist, res, precision,

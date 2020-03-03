@@ -39,12 +39,13 @@
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
 namespace RDKit {
-  class ROMol;
-  namespace Descriptors {
-    const std::string GETAWAYVersion = "1.0.0";
-    void GETAWAY(const ROMol&, std::vector<double> &res, int confId=-1, int precision=2,
-                 const std::string customAtomPropName="");
-  }
-}
+class ROMol;
+namespace Descriptors {
+const std::string GETAWAYVersion = "1.0.0";
+RDKIT_DESCRIPTORS_EXPORT void GETAWAY(
+    const ROMol &, std::vector<double> &res, int confId = -1,
+    unsigned int precision = 2, const std::string &customAtomPropName = "");
+}  // namespace Descriptors
+}  // namespace RDKit
 #endif
 #endif

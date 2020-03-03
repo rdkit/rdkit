@@ -27,41 +27,41 @@ _descList = []
 
 
 def _setupDescriptors(namespace):
-  global _descList, descList
-  from rdkit.Chem import GraphDescriptors, MolSurf, Lipinski, Fragments, Crippen, Descriptors3D
-  from rdkit.Chem.EState import EState_VSA
-  mods = [GraphDescriptors, MolSurf, EState_VSA, Lipinski, Crippen,Descriptors3D, Fragments]
+    global _descList, descList
+    from rdkit.Chem import GraphDescriptors, MolSurf, Lipinski, Fragments, Crippen, Descriptors3D
+    from rdkit.Chem.EState import EState_VSA
+    mods = [GraphDescriptors, MolSurf, EState_VSA, Lipinski, Crippen, Fragments]
 
-  otherMods = [Chem]
+    otherMods = [Chem]
 
-  for nm, thing in namespace.items():
-    if nm[0] != '_' and _isCallable(thing):
-      _descList.append((nm, thing))
+    for nm, thing in tuple(namespace.items()):
+        if nm[0] != '_' and _isCallable(thing):
+            _descList.append((nm, thing))
 
-  others = []
-  for mod in otherMods:
-    tmp = dir(mod)
-    for name in tmp:
-      if name[0] != '_':
-        thing = getattr(mod, name)
-        if _isCallable(thing):
-          others.append(name)
+    others = []
+    for mod in otherMods:
+        tmp = dir(mod)
+        for name in tmp:
+            if name[0] != '_':
+                thing = getattr(mod, name)
+                if _isCallable(thing):
+                    others.append(name)
 
-  for mod in mods:
-    tmp = dir(mod)
+    for mod in mods:
+        tmp = dir(mod)
 
-    for name in tmp:
-      if name[0] != '_' and name[-1] != '_' and name not in others:
-        # filter out python reference implementations:
-        if name[:2] == 'py' and name[2:] in tmp:
-          continue
-        if name == 'print_function':
-          continue
-        thing = getattr(mod, name)
-        if _isCallable(thing):
-          namespace[name] = thing
-          _descList.append((name, thing))
-  descList = _descList
+        for name in tmp:
+            if name[0] != '_' and name[-1] != '_' and name not in others:
+                # filter out python reference implementations:
+                if name[:2] == 'py' and name[2:] in tmp:
+                    continue
+                if name == 'print_function':
+                    continue
+                thing = getattr(mod, name)
+                if _isCallable(thing):
+                    namespace[name] = thing
+                    _descList.append((name, thing))
+    descList = _descList
 
 
 MolWt = lambda *x, **y: _rdMolDescriptors._CalcMolWt(*x, **y)

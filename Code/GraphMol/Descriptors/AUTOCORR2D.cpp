@@ -149,8 +149,9 @@ void get2DautocorrelationDesc(const double* dist, unsigned int numAtoms, const R
 }
 
     // this is the Broto-Moreau 2D descriptors (centered or not)
-    void get2DautocorrelationDescCustom(double* dist, int numAtoms, const ROMol& mol,
-                                  std::vector<double>& res, const std::string customAtomPropName) {
+    void get2DautocorrelationDescCustom(const double* dist, unsigned int numAtoms, const ROMol& mol,
+                                  std::vector<double>& res,
+                                  const std::string &customAtomPropName) {
 
         std::vector<double> wc = moldata3D.GetCustomAtomProp(mol,customAtomPropName);
       std::vector<double> w(numAtoms, 0.0);
@@ -186,7 +187,7 @@ void get2DautocorrelationDesc(const double* dist, unsigned int numAtoms, const R
 
           for (unsigned int t = 0; t < 1; ++t) {
           if (maxkVertexPairs > 0) {
-            TDBmat[k] = log(TDBmat[k] + 1);
+            TDBmat[k] = log1p(TDBmat[k]);
             TDBmatG[k] = TDBmatG[k]/ squaresumdiff / maxkVertexPairs * (numAtoms-1) / 2.0;
             TDBmatM[k] = TDBmatM[k]/ squaresumdiff / maxkVertexPairs * numAtoms ;
 
@@ -201,10 +202,10 @@ void get2DautocorrelationDesc(const double* dist, unsigned int numAtoms, const R
 
       // update the Output vector!
         for (unsigned int k = 0; k < 8; ++k) {
-          res[k] = round(1000 * TDBmat[k]) / 1000;
-          res[k + 8 ] = round(1000 * TDBmatC[k]) / 1000;
-          res[k + 16] = round(1000 * TDBmatM[k]) / 1000;
-          res[k + 24] = round(1000 * TDBmatG[k]) / 1000;
+          res[k] = std::round(1000 * TDBmat[k]) / 1000;
+          res[k + 8] = std::round(1000 * TDBmatC[k]) / 1000;
+          res[k + 16] = std::round(1000 * TDBmatM[k]) / 1000;
+          res[k + 24] = std::round(1000 * TDBmatG[k]) / 1000;
       }
 
       TDBmat.clear();
@@ -215,21 +216,21 @@ void get2DautocorrelationDesc(const double* dist, unsigned int numAtoms, const R
       wc.clear();
     }
 
-    void Get2Dauto(double* dist, int numAtoms, const ROMol& mol,
+    void Get2Dauto(const double* dist, unsigned int numAtoms, const ROMol& mol,
                    std::vector<double>& res) {
       get2DautocorrelationDesc(dist, numAtoms, mol, res);
     }
-    void Get2Dautoone(double* dist, int numAtoms, const ROMol& mol,
-                std::vector<double>& res, const std::string customAtomPropName) {
+    void Get2Dautoone(const double* dist, unsigned int numAtoms, const ROMol& mol,
+                std::vector<double>& res, const std::string &customAtomPropName) {
       get2DautocorrelationDescCustom(dist, numAtoms, mol, res, customAtomPropName);
     }
 }  // end of anonymous namespace
 
 void AUTOCORR2D(const ROMol& mol, std::vector<double>& result,
-                const std::string customAtomPropName) {
-  int numAtoms = mol.getNumAtoms();
+                const std::string &customAtomPropName) {
+  unsigned int numAtoms = mol.getNumAtoms();
   double* dist = MolOps::getDistanceMat(mol, false);  // topological matrix
-  if (customAtomPropName.size()>0) {
+  if (!customAtomPropName.empty()) {
     result.clear();
     result.resize(32);
     Get2Dautoone(dist, numAtoms, mol, result, customAtomPropName);
