@@ -344,8 +344,6 @@ void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds,
                               AlignType align) {
   unsigned int fontSz = scale() * fontSize();
 
-  std::cout << "drawing string " << str << std::endl;
-
   double string_width, string_height;
   getStringSize(str, string_width, string_height);
 
@@ -407,7 +405,6 @@ void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds,
   bool first_span = true;
   auto write_span = [&]() {
     if (!first_span) {
-      std::cout << "writing span : " << span << "XXX" << std::endl;
       escape_xhtml(span);
       d_os << span << "</tspan>";
       span = "";
@@ -418,7 +415,6 @@ void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds,
   for (int i = 0, is = str.length(); i < is; ++i) {
     // if the next bit is <sup>.</sup> assume it's a radical and do a bullet
     // instead.
-    std::cout << str.substr(i, 12) << std::endl;
     if(str.substr(i, 12) == "<sup>.</sup>") {
       write_span();
       d_os << "<tspan>&#x2219;";
