@@ -113,7 +113,7 @@ public:
     \returns the shingling of a molecule.
    */
   std::vector<std::string>
-  CreateShingling(ROMol& mol,
+  CreateShingling(const ROMol& mol,
           const unsigned char& radius = 3,
           const bool& rings = true,
           const bool& isomeric = false,

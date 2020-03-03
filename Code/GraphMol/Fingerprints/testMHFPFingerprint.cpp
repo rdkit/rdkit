@@ -1,3 +1,13 @@
+//
+//  2019, Daniel Probst, Reymond Group @ University of Bern
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
+
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/test.h>
@@ -48,7 +58,7 @@ void testMHFPInit() {
 
 void testMHFPHashing() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "Test MHFP hasing of string and uint arrays" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Test MHFP hashing of string and uint arrays" << std::endl;
 
   MHFPFingerprints::MHFPEncoder enc(8);
 

@@ -1,4 +1,14 @@
 
+//
+//  2019, Daniel Probst, Reymond Group @ University of Bern
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
+
 #include <algorithm>
 #include <iostream>
 #include <limits>
@@ -57,42 +67,35 @@ std::vector<uint32_t>
 MHFPEncoder::FromStringArray(const std::vector<std::string>& vec)
 {
   std::vector<uint32_t> mh(n_permutations_, max_hash_);
-  std::vector<uint32_t> tmp(n_permutations_);
 
   for (uint32_t i = 0; i < vec.size(); i++) {
-  for (size_t j = 0; j < n_permutations_; j++)
-    tmp[j] = (FastMod((perms_a_[j] * FNV::hash(vec[i]) + perms_b_[j]),
-                prime_)) &
-         max_hash_;
-
-  for (size_t j = 0; j < n_permutations_; j++)
-    mh[j] = std::min(tmp[j], mh[j]);
+    auto hashi = FNV::hash(vec[i]);
+    for (size_t j = 0; j < n_permutations_; j++){
+      uint32_t tmp = (FastMod((perms_a_[j] * hashi + perms_b_[j]), prime_)) & max_hash_;
+      mh[j] = std::min(tmp, mh[j]);
+    }
   }
 
-  return std::vector<uint32_t>(std::begin(mh), std::end(mh));
+  return mh;
 }
 
 std::vector<uint32_t>
 MHFPEncoder::FromArray(const std::vector<uint32_t>& vec)
 {
   std::vector<uint32_t> mh(n_permutations_, max_hash_);
-  std::vector<uint32_t> tmp(n_permutations_);
 
   for (uint32_t i = 0; i < vec.size(); i++) {
-  for (size_t j = 0; j < n_permutations_; j++)
-    tmp[j] = (FastMod(
-      (perms_a_[j] * vec[i] + perms_b_[j]), prime_
-    )) & max_hash_;
-
-  for (size_t j = 0; j < n_permutations_; j++)
-    mh[j] = std::min(tmp[j], mh[j]);
+    for (size_t j = 0; j < n_permutations_; j++){
+      uint32_t tmp = (FastMod((perms_a_[j] * vec[i] + perms_b_[j]), prime_)) & max_hash_;
+      mh[j] = std::min(tmp, mh[j]);
+    }
   }
 
-  return std::vector<uint32_t>(std::begin(mh), std::end(mh));
+  return mh;
 }
 
 std::vector<std::string>
-MHFPEncoder::CreateShingling(ROMol& mol, 
+MHFPEncoder::CreateShingling(const ROMol& mol, 
                const unsigned char& radius,
                const bool& rings,
                const bool& isomeric,
@@ -101,11 +104,11 @@ MHFPEncoder::CreateShingling(ROMol& mol,
   std::vector<std::string> shingling;
 
   if (rings) {
-    VECT_INT_VECT rings;
-    RDKit::MolOps::symmetrizeSSSR(mol, rings);
+    VECT_INT_VECT sssr_rings;
+    RDKit::MolOps::symmetrizeSSSR(mol, sssr_rings);
 
-    for (size_t i = 0; i < rings.size(); i++) {
-      INT_VECT ring = rings[i];
+    for (size_t i = 0; i < sssr_rings.size(); i++) {
+      INT_VECT ring = sssr_rings[i];
       std::set<unsigned int> bonds;
 
       for (size_t j = 0; j < ring.size(); j++) {
@@ -115,7 +118,7 @@ MHFPEncoder::CreateShingling(ROMol& mol,
           int atom_idx_b = ring[k];
 
           if (atom_idx_a != atom_idx_b) {
-            Bond* bond = mol.getBondBetweenAtoms(atom_idx_a, atom_idx_b);
+            const Bond* bond = mol.getBondBetweenAtoms(atom_idx_a, atom_idx_b);
 
             if (bond != nullptr) {
               bonds.insert(bond->getIdx());
