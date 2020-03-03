@@ -104,32 +104,10 @@ MHFPEncoder::CreateShingling(const ROMol& mol,
   std::vector<std::string> shingling;
 
   if (rings) {
-    VECT_INT_VECT sssr_rings;
-    RDKit::MolOps::symmetrizeSSSR(mol, sssr_rings);
+    VECT_INT_VECT bonds_vect = mol.getRingInfo()->bondRings();
 
-    for (size_t i = 0; i < sssr_rings.size(); i++) {
-      INT_VECT ring = sssr_rings[i];
-      std::set<unsigned int> bonds;
-
-      for (size_t j = 0; j < ring.size(); j++) {
-        int atom_idx_a = ring[j];
-
-        for (size_t k = 0; k < ring.size(); k++) {
-          int atom_idx_b = ring[k];
-
-          if (atom_idx_a != atom_idx_b) {
-            const Bond* bond = mol.getBondBetweenAtoms(atom_idx_a, atom_idx_b);
-
-            if (bond != nullptr) {
-              bonds.insert(bond->getIdx());
-            }
-          }
-        }
-      }
-
-      PATH_TYPE bonds_vect(bonds.size());
-      std::copy(bonds.begin(), bonds.end(), bonds_vect.begin());
-      std::unique_ptr<ROMol> m(Subgraphs::pathToSubmol(mol, bonds_vect));
+    for (size_t i = 0; i < bonds_vect.size(); i++) {
+      std::unique_ptr<ROMol> m(Subgraphs::pathToSubmol(mol, bonds_vect[i]));
       shingling.emplace_back(MolToSmiles(*m));
     }
   }
