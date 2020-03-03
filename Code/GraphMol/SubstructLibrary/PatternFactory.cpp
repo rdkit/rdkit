@@ -41,7 +41,7 @@ void addPatterns(SubstructLibrary &sslib, int numThreads) {
   std::vector<std::future<void>> thread_group;
     for (int thread_group_idx = 0; thread_group_idx < numThreads;
        ++thread_group_idx) {
-    // need to use boost::ref otherwise things are passed by value
+    // need to use std::ref otherwise things are passed by value
     thread_group.emplace_back(
 	    std::async(std::launch::async, fillPatterns,
 		       std::ref(sslib), std::ref(*ptr.get()), std::ref(fps), 
