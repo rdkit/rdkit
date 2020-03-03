@@ -538,5 +538,11 @@ M  END
                               " rx='11.9872' ry='12.8346'"
                               " style='fill:none;stroke:#00FF00'"), -1)
 
+    # test for no-longer-mysterious OSX crash.
+    smi = 'c1ccccc1Cl'
+    smarts = []
+    do_a_picture(smi, smarts, 'pyTest3')
+
+
 if __name__ == "__main__":
   unittest.main()

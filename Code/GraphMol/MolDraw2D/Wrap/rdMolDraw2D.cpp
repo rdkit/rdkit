@@ -203,11 +203,26 @@ void drawMoleculeWithHighlightsHelper(MolDraw2D &self, const ROMol &mol,
 
   // highlight_atom_map and highlight_bond_map come in as a dict of
   // lists of tuples of floats (the R, G, B values for the colours),
-  // and need to be changed to a map of vectors of DrawColour
+  // and need to be changed to a map of vectors of DrawColour.
+  // All of the dict to map converters return nullptr if the dict
+  // was empty.  We need real objects in all cases for
+  // drawMoleculeWithHighlights.
   std::map<int, std::vector<DrawColour> > *ham = pyDictToMapColourVec(highlight_atom_map);
+  if(!ham) {
+    ham = new std::map<int, std::vector<DrawColour> >();
+  }
   std::map<int, std::vector<DrawColour> > *hbm = pyDictToMapColourVec(highlight_bond_map);
+  if(!hbm) {
+    hbm = new std::map<int, std::vector<DrawColour> >();
+  }
   std::map<int, double> *har = pyDictToDoubleMap(highlight_atom_radii);
+  if(!har) {
+    har = new std::map<int, double>();
+  }
   std::map<int, int> *hlm = pyDictToIntMap(highlight_linewidth_multipliers);
+  if(!hlm) {
+    hlm = new std::map<int, int>();
+  }
   self.drawMoleculeWithHighlights(mol, legend, *ham, *hbm, *har, *hlm, confId);
 
   delete ham;
