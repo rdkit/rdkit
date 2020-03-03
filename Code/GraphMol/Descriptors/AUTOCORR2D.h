@@ -33,11 +33,10 @@
 //
 // Created by Guillaume GODIN, 2016
 
-
+#include <RDGeneral/export.h>
 #ifndef AUTOCORR2DRDKIT_H_SEPT2016
 #define AUTOCORR2DRDKIT_H_SEPT2016
 
-#ifdef RDK_BUILD_DESCRIPTORS3D
 namespace RDKit {
 class ROMol;
 namespace Descriptors {

@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef _RD_CANON_H_
 #define _RD_CANON_H_
 
@@ -48,7 +49,7 @@ typedef union {
 } MolStackUnion;
 
 //! these are the actual elements in the molecular stack
-class MolStackElem {
+class RDKIT_GRAPHMOL_EXPORT MolStackElem {
  public:
   //! construct an Atom node
   explicit MolStackElem(Atom *at) {
@@ -88,7 +89,8 @@ class MolStackElem {
   }
   MolStackTypes type;  //!< stores the type of node
   MolStackUnion obj;   //!< holds our pointer (if appropriate)
-  int number;  //!< stores our number (relevant for bonds and ring closures)
+  int number =
+      -1;  //!< stores our number (relevant for bonds and ring closures)
 };
 typedef std::vector<MolStackElem> MolStack;
 
@@ -109,13 +111,19 @@ typedef boost::tuple<int, int, Bond *> PossibleType;
       and the like are changed to fit the canonical traversal order
 
  */
-void canonicalizeFragment(ROMol &mol, int atomIdx,
-                          std::vector<AtomColors> &colors,
-                          const std::vector<unsigned int> &ranks,
-                          MolStack &molStack,
-                          const boost::dynamic_bitset<> *bondsInPlay = 0,
-                          const std::vector<std::string> *bondSymbols = 0,
-                          bool doIsomericSmiles = false);
+RDKIT_GRAPHMOL_EXPORT void canonicalizeFragment(
+    ROMol &mol, int atomIdx, std::vector<AtomColors> &colors,
+    const std::vector<unsigned int> &ranks, MolStack &molStack,
+    const boost::dynamic_bitset<> *bondsInPlay = 0,
+    const std::vector<std::string> *bondSymbols = 0,
+    bool doIsomericSmiles = false, bool doRandom = false);
+
+//! Check if a chiral atom needs to have its tag flipped after reading or before
+//! writing SMILES
+RDKIT_GRAPHMOL_EXPORT bool chiralAtomNeedsTagInversion(const RDKit::ROMol &mol,
+                                                       const RDKit::Atom *atom,
+                                                       bool isAtomFirst,
+                                                       size_t numClosures);
 
 }  // end of namespace Canon
 }  // end of namespace RDKit

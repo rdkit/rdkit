@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2003-2006 Rational Discovery LLC
+//  Copyright (C) 2003-2017 Rational Discovery LLC and Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -73,6 +72,9 @@ QAFUNC1(InNRings, makeAtomInNRingsQuery, int);
 QAFUNC1(MinRingSize, makeAtomMinRingSizeQuery, int);
 QAFUNC1(RingBondCount, makeAtomRingBondCountQuery, int);
 QAFUNC1(NumRadicalElectrons, makeAtomNumRadicalElectronsQuery, int);
+QAFUNC1(NumHeteroatomNeighbors, makeAtomNumHeteroatomNbrsQuery, int);
+QAFUNC1(NumAliphaticHeteroatomNeighbors,
+        makeAtomNumAliphaticHeteroatomNbrsQuery, int);
 
 QAFUNC2(IsUnsaturatedQueryAtom, makeAtomUnsaturatedQuery, int);
 QAFUNC2(IsAromaticQueryAtom, makeAtomAromaticQuery, int);
@@ -82,33 +84,52 @@ QAFUNC2(HasChiralTagQueryAtom, makeAtomHasChiralTagQuery, int);
 QAFUNC2(MissingChiralTagQueryAtom, makeAtomMissingChiralTagQuery, int);
 
 QueryAtom *HasPropQueryAtom(const std::string &propname, bool negate) {
-  QueryAtom *res = new QueryAtom();
+  auto *res = new QueryAtom();
   res->setQuery(makeHasPropQuery<Atom>(propname));
-  if (negate) res->getQuery()->setNegation(true);
+  if (negate) {
+    res->getQuery()->setNegation(true);
+  }
   return res;
 }
 
 QueryBond *HasPropQueryBond(const std::string &propname, bool negate) {
-  QueryBond *res = new QueryBond();
+  auto *res = new QueryBond();
   res->setQuery(makeHasPropQuery<Bond>(propname));
-  if (negate) res->getQuery()->setNegation(true);
+  if (negate) {
+    res->getQuery()->setNegation(true);
+  }
   return res;
 }
 
 template <class Ob, class Ret, class T>
 Ret *PropQuery(const std::string &propname, const T &v, bool negate) {
-  Ret *res = new Ret();
+  auto *res = new Ret();
   res->setQuery(makePropQuery<Ob, T>(propname, v));
-  if (negate) res->getQuery()->setNegation(true);
+  if (negate) {
+    res->getQuery()->setNegation(true);
+  }
   return res;
 }
 
 template <class Ob, class Ret, class T>
 Ret *PropQueryWithTol(const std::string &propname, const T &v, bool negate,
                       const T &tol = T()) {
-  Ret *res = new Ret();
+  auto *res = new Ret();
   res->setQuery(makePropQuery<Ob, T>(propname, v, tol));
-  if (negate) res->getQuery()->setNegation(true);
+  if (negate) {
+    res->getQuery()->setNegation(true);
+  }
+  return res;
+}
+
+template <class Ob, class Ret>
+Ret *PropQueryWithTol(const std::string &propname, const ExplicitBitVect &v,
+                      bool negate, float tol = 0.0) {
+  auto *res = new Ret();
+  res->setQuery(makePropQuery<Ob>(propname, v, tol));
+  if (negate) {
+    res->getQuery()->setNegation(true);
+  }
   return res;
 }
 
@@ -155,6 +176,8 @@ struct queries_wrapper {
     QADEF1(MinRingSize);
     QADEF1(RingBondCount);
     QADEF1(NumRadicalElectrons)
+    QADEF1(NumHeteroatomNeighbors)
+    QADEF1(NumAliphaticHeteroatomNeighbors)
 
     QADEF2(IsUnsaturated);
     QADEF2(IsAromatic);
@@ -210,6 +233,16 @@ struct queries_wrapper {
                 "value +- tolerance",
                 python::return_value_policy<python::manage_new_object>());
 
+    python::def("HasBitVectPropWithValueQueryAtom",
+                PropQueryWithTol<Atom, QueryAtom>,
+                (python::arg("propname"), python::arg("val"),
+                 python::arg("negate") = false, python::arg("tolerance") = 0),
+                "Returns a QueryAtom that matches when the propery 'propname' "
+                "has the specified explicit bit vector"
+                " value.  The Tolerance is the allowed Tanimoto difference",
+                python::return_value_policy<python::manage_new_object>());
+
+    
     /////////////////////////////////////////////////////////////////////////////////////
     //  Bond Queries
     python::def("HasPropQueryBond", HasPropQueryBond,

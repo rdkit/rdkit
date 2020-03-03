@@ -12,7 +12,7 @@
 
 """
 import unittest, os
-from rdkit.six.moves import cPickle
+import pickle
 from rdkit import RDConfig
 from rdkit import Chem
 from rdkit.Chem import AllChem
@@ -88,7 +88,7 @@ class TestCase(unittest.TestCase):
     assert m.GetBondBetweenAtoms(2, 3).GetBondType() == Chem.BondType.DOUBLE
 
   def test2(self):
-    """ editing/persistance basics """
+    """ editing/persistence basics """
     m = Chem.MolFromSmiles('COC(=C)O')
 
     a1 = m.GetAtomWithIdx(3)
@@ -132,8 +132,8 @@ class TestCase(unittest.TestCase):
 
     for smi in smis:
       m = Chem.MolFromSmiles(smi)
-      newM1 = cPickle.loads(cPickle.dumps(m))
-      newM2 = cPickle.loads(cPickle.dumps(newM1))
+      newM1 = pickle.loads(pickle.dumps(m))
+      newM2 = pickle.loads(pickle.dumps(newM1))
       oldSmi = Chem.MolToSmiles(newM1)
       newSmi = Chem.MolToSmiles(newM2)
       assert newM1.GetNumAtoms() == m.GetNumAtoms(), 'num atoms comparison failed'

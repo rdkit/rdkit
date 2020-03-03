@@ -1,5 +1,6 @@
 //  Created by Guillaume GODIN
 //  "Copyright 2013-2016 Tomas Racek (tom@krab1k.net)"
+
 //  Copyright (C) 2012-2017 Greg Landrum
 //   @@ All Rights Reserved @@
 //
@@ -8,6 +9,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
@@ -27,15 +29,18 @@ void testEEM() {
   std::string sdfName =
       pathName + "/Code/GraphMol/Descriptors/test_data/set00.sdf";
 
+
   RDKit::SDMolSupplier reader(sdfName, true, false);
 
   std::string fName =
-      pathName + "/Code/GraphMol/Descriptors/test_data/eem.out";
+        pathName + "/Code/GraphMol/Descriptors/test_data/eem.out";
+
 
   std::ifstream instrm(fName.c_str());
 
   std::string line;
   std::vector<std::vector<std::string> > data;
+
 
   while (std::getline(instrm, line)) {
     std::string phrase;
@@ -63,6 +68,7 @@ void testEEM() {
     TEST_ASSERT(inm == nm);
 
     int confId=-1;
+
     std::vector<double> charges;
 
     RDKit::Descriptors::EEM(*m, charges, confId);
@@ -70,6 +76,7 @@ void testEEM() {
 
     for (int i = 0; i < numAtoms; i++) {
       double ref = atof(myrow[i + 2].c_str());
+
       if(fabs(ref - charges[i]) >= 0.01) {
 
          //std::cout << inm << "," << "ref: " << ref << " ,val: "<<  charges[i] << "\n";
@@ -90,7 +97,6 @@ void testEEM() {
   }
     std::cout << "Errors:" <<  errorMols << "\n";
 
-
   BOOST_LOG(rdErrorLog) << "test on : " << nDone << " molecules done"
                         << std::endl;
 }
@@ -98,4 +104,5 @@ void testEEM() {
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
   testEEM();
+
 }

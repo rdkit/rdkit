@@ -15,6 +15,7 @@
   from molecules. It's exposed here so that it can be tested.
 
 */
+#include <RDGeneral/export.h>
 #ifndef _RD_FEATTREEUTILS_H_
 #define _RD_FEATTREEUTILS_H_
 
@@ -33,6 +34,6 @@ void addBondsFromNonringAtoms(const ROMol &mol, FeatTreeGraph &featGraph,
                               std::vector<unsigned int> &atomIndices);
 void addZeroNodes(FeatTreeGraph &featGraph);
 void replaceCycles(FeatTreeGraph &featGraph);
-}
-}
+}  // namespace FeatTrees
+}  // namespace RDKit
 #endif

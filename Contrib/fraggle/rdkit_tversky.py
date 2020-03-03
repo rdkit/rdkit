@@ -29,7 +29,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Created by Jameed Hussain, October 2013
-from __future__ import print_function
+
 import sys
 import re
 from optparse import OptionParser

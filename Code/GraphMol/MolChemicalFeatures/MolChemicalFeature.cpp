@@ -35,7 +35,9 @@ RDGeom::Point3D MolChemicalFeature::getPos() const {
 RDGeom::Point3D MolChemicalFeature::getPos(int confId) const {
   PRECONDITION(dp_mol, "bad molecule");
   PRECONDITION(dp_mol->getNumConformers(), "molecule has no conformers");
-  if (confId == -1) confId = (*dp_mol->beginConformers())->getId();
+  if (confId == -1) {
+    confId = (*dp_mol->beginConformers())->getId();
+  }
 
   // -------------
   // Check to see if we've got the value cached:
@@ -59,10 +61,10 @@ RDGeom::Point3D MolChemicalFeature::getPos(int confId) const {
     PRECONDITION(dp_def, "bad definition");
     PRECONDITION(dp_def->getNumWeights() == this->getNumAtoms(),
                  "weight/atom mismatch");
-    std::vector<double>::const_iterator weightIt = dp_def->beginWeights();
+    auto weightIt = dp_def->beginWeights();
     const Conformer &conf = dp_mol->getConformer(confId);
-    for (AtomPtrContainer::const_iterator atomIt = d_atoms.begin();
-         atomIt != d_atoms.end(); atomIt++, weightIt++) {
+    for (auto atomIt = d_atoms.begin(); atomIt != d_atoms.end();
+         atomIt++, weightIt++) {
       const Atom *atom = *atomIt;
       RDGeom::Point3D p = conf.getAtomPos(atom->getIdx());
       p *= *weightIt;

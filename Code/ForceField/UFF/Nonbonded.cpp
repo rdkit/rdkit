@@ -56,7 +56,9 @@ double vdWContrib::getEnergy(double *pos) const {
   PRECONDITION(pos, "bad vector");
 
   double dist = dp_forceField->distance(d_at1Idx, d_at2Idx, pos);
-  if (dist > d_thresh || dist <= 0.0) return 0.0;
+  if (dist > d_thresh || dist <= 0.0) {
+    return 0.0;
+  }
 
   double r = d_xij / dist;
   double r6 = int_pow<6>(r);
@@ -72,7 +74,9 @@ void vdWContrib::getGrad(double *pos, double *grad) const {
   PRECONDITION(grad, "bad vector");
 
   double dist = dp_forceField->distance(d_at1Idx, d_at2Idx, pos);
-  if (dist > d_thresh) return;
+  if (dist > d_thresh) {
+    return;
+  }
 
   if (dist <= 0) {
     for (int i = 0; i < 3; i++) {

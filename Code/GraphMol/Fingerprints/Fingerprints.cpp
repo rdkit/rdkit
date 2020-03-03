@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2003-2013 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2018 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -21,13 +20,14 @@
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/random.hpp>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 #include <RDGeneral/BoostEndInclude.h>
 #include <limits.h>
 #include <RDGeneral/hash/hash.hpp>
 #include <RDGeneral/types.h>
 #include <algorithm>
 #include <boost/dynamic_bitset.hpp>
+#include <GraphMol/Fingerprints/FingerprintUtil.h>
 
 //#define VERBOSE_FINGERPRINTING 1
 //#define REPORT_FP_STATS 1
@@ -37,17 +37,17 @@
 
 namespace RDKit {
 namespace Fingerprints {
-namespace detail {}  // end of detail namespace
-}  // end of Fingerprint namespace
+namespace detail {}  // namespace detail
+}  // namespace Fingerprints
 namespace {
 /*
-boost::uint32_t hashBond(const Bond *bnd,const std::vector<boost::uint32_t>
+std::uint32_t hashBond(const Bond *bnd,const std::vector<std::uint32_t>
 &atomInvariants,
-              const std::vector<boost::uint32_t> &atomDegrees,boost::uint32_t
+              const std::vector<std::uint32_t> &atomDegrees,std::uint32_t
 bondDegree,
               bool useBondOrder){
 PRECONDITION(bnd,"bad bond");
-boost::uint32_t res;
+std::uint32_t res;
 if(useBondOrder) {
 if(bnd->getIsAromatic()){
   res = Bond::AROMATIC;
@@ -57,10 +57,10 @@ if(bnd->getIsAromatic()){
 } else {
 res = 1;
 }
-boost::uint32_t iv1=atomInvariants[bnd->getBeginAtomIdx()];
-boost::uint32_t iv2=atomInvariants[bnd->getEndAtomIdx()];
-boost::uint32_t deg1=atomDegrees[bnd->getBeginAtomIdx()];
-boost::uint32_t deg2=atomDegrees[bnd->getEndAtomIdx()];
+std::uint32_t iv1=atomInvariants[bnd->getBeginAtomIdx()];
+std::uint32_t iv2=atomInvariants[bnd->getEndAtomIdx()];
+std::uint32_t deg1=atomDegrees[bnd->getBeginAtomIdx()];
+std::uint32_t deg2=atomDegrees[bnd->getEndAtomIdx()];
 
 if(iv1>iv2){
 std::swap(iv1,iv2);
@@ -79,12 +79,12 @@ res = (res%8) | (iv1%128)<<3 | (iv2%128)<<10 | (deg1%8)<<17 | (deg2%8)<<20 |
 return res;
 }
 
-boost::uint32_t canonicalPathHash(const PATH_TYPE &path,
+std::uint32_t canonicalPathHash(const PATH_TYPE &path,
                        const ROMol &mol,
                        const std::vector<const Bond *> &bondCache,
-                       const std::vector<boost::uint32_t> &bondHashes){
+                       const std::vector<std::uint32_t> &bondHashes){
 std::deque< std::pair<unsigned int,boost::dynamic_bitset<> > > stack;
-boost::uint32_t best;
+std::uint32_t best;
 //std::cerr<<" hash: ";
 //std::copy(path.begin(),path.end(),std::ostream_iterator<int>(std::cerr,", "));
 
@@ -111,10 +111,10 @@ if(i==0){
 }
 //std::cerr<<std::endl;
 
-boost::uint32_t res=best;
+std::uint32_t res=best;
 //std::cerr<<"  best: "<<best<<std::endl;
 if(path.size()==1) return res;
-best = std::numeric_limits<boost::uint32_t>::max();
+best = std::numeric_limits<std::uint32_t>::max();
 std::deque< std::pair<unsigned int,boost::dynamic_bitset<> > > newStack;
 while(!stack.empty()){
 // assumption: each element of the stack corresponds to
@@ -162,7 +162,7 @@ if(stack.empty()){
   //std::cerr<<" nres: "<<res<<std::endl;
   //stack=newStack;
   std::swap(stack,newStack);
-  best = std::numeric_limits<boost::uint32_t>::max();
+  best = std::numeric_limits<std::uint32_t>::max();
   newStack.clear();
 }
 }
@@ -173,195 +173,15 @@ return res;
 
 }  // end of anonymous namespace
 
-
-namespace utils {
-
-void buildDefaultRDKitFingerprintAtomInvariants(const ROMol &mol,
-  std::vector<boost::uint32_t>& lAtomInvariants){
-
-  lAtomInvariants.clear();
-  lAtomInvariants.reserve(mol.getNumAtoms());
-  for(ROMol::ConstAtomIterator atomIt=mol.beginAtoms();
-      atomIt!=mol.endAtoms();
-      ++atomIt){
-    unsigned int aHash = ((*atomIt)->getAtomicNum()%128)<<1 |
-       static_cast<unsigned int>((*atomIt)->getIsAromatic());
-    lAtomInvariants.push_back(aHash);
-  }
-}
-
-void enumerateAllPaths(const ROMol &mol, INT_PATH_LIST_MAP& allPaths,
-    const std::vector<boost::uint32_t> *fromAtoms,
-    bool branchedPaths, bool useHs,
-    unsigned int minPath, unsigned int maxPath){
-
-  if(!fromAtoms){
-    if(branchedPaths){
-      allPaths = findAllSubgraphsOfLengthsMtoN(mol,minPath,maxPath,
-          useHs);
-    }
-    else {
-      allPaths = findAllPathsOfLengthsMtoN(mol,minPath,maxPath,
-          useHs);
-    }
-  } else {
-    BOOST_FOREACH(boost::uint32_t aidx,*fromAtoms){
-      INT_PATH_LIST_MAP tPaths;
-      if(branchedPaths){
-        tPaths = findAllSubgraphsOfLengthsMtoN(mol,minPath,maxPath,
-            useHs,aidx);
-      }
-      else {
-        tPaths = findAllPathsOfLengthsMtoN(mol,minPath,maxPath,
-            true,useHs,aidx);
-      }
-      for(INT_PATH_LIST_MAP::const_iterator tpit=tPaths.begin();
-          tpit!=tPaths.end();++tpit){
-#ifdef VERBOSE_FINGERPRINTING
-        std::cerr << "paths from " << aidx << " size: " << tpit->first
-                  << std::endl;
-        BOOST_FOREACH (PATH_TYPE path, tpit->second) {
-          std::cerr << " path: ";
-          std::copy(path.begin(), path.end(),
-                    std::ostream_iterator<int>(std::cerr, ", "));
-          std::cerr << std::endl;
-        }
-#endif
-
-        allPaths[tpit->first].insert(allPaths[tpit->first].begin(),
-            tpit->second.begin(),tpit->second.end());
-      }
-    }
-  }
-}
-
-void identifyQueryBonds(const ROMol &mol,
-    std::vector<const Bond *>& bondCache,
-    std::vector<short>& isQueryBond){
-
-  bondCache.resize(mol.getNumBonds());
-  ROMol::EDGE_ITER firstB,lastB;
-  boost::tie(firstB,lastB) = mol.getEdges();
-  while(firstB!=lastB){
-    const Bond *bond = mol[*firstB].get();
-    isQueryBond[bond->getIdx()] = 0x0;
-    bondCache[bond->getIdx()]=bond;
-    if(isComplexQuery(bond)){
-      isQueryBond[bond->getIdx()] = 0x1;
-    }
-    if(isComplexQuery(bond->getBeginAtom())){
-      isQueryBond[bond->getIdx()] |= 0x2;
-    }
-    if(isComplexQuery(bond->getEndAtom())){
-      isQueryBond[bond->getIdx()] |= 0x4;
-    }
-    ++firstB;
-  }
-}
-
-std::vector<unsigned int> generateBondHashes(const ROMol &mol, boost::dynamic_bitset<>& atomsInPath,
-    const std::vector<const Bond *>& bondCache,
-    const std::vector<short>& isQueryBond,
-    const PATH_TYPE &path, bool useBondOrder,
-    std::vector<boost::uint32_t> *atomInvariants){
-
-  PRECONDITION(!atomInvariants || atomInvariants->size() >= mol.getNumAtoms(),
-               "bad atomInvariants size");
-
-  std::vector<unsigned int> bondHashes;
-  atomsInPath.reset();
-  bool queryInPath=false;
-  std::vector<unsigned int> atomDegrees(mol.getNumAtoms(),0);
-  for(unsigned int i=0;i<path.size() && !queryInPath;++i){
-    const Bond *bi = bondCache[path[i]];
-    atomDegrees[bi->getBeginAtomIdx()]++;
-    atomDegrees[bi->getEndAtomIdx()]++;
-    atomsInPath.set(bi->getBeginAtomIdx());
-    atomsInPath.set(bi->getEndAtomIdx());
-    if(isQueryBond[path[i]]) queryInPath=true;
-  }
-  if(queryInPath){
-    return bondHashes;
-  }
-
-  // -----------------
-  // calculate the bond hashes:
-  std::vector<unsigned int> bondNbrs(path.size(),0);
-  bondHashes.reserve(path.size()+1);
-
-  for(unsigned int i=0;i<path.size();++i){
-    const Bond *bi = bondCache[path[i]];
-#ifdef REPORT_FP_STATS
-        if (std::find(atomsToUse.begin(), atomsToUse.end(),
-                      bi->getBeginAtomIdx()) == atomsToUse.end()) {
-          atomsToUse.push_back(bi->getBeginAtomIdx());
-        }
-        if (std::find(atomsToUse.begin(), atomsToUse.end(),
-                      bi->getEndAtomIdx()) == atomsToUse.end()) {
-          atomsToUse.push_back(bi->getEndAtomIdx());
-        }
-#endif
-    for(unsigned int j=i+1;j<path.size();++j){
-      const Bond *bj = bondCache[path[j]];
-      if(bi->getBeginAtomIdx()==bj->getBeginAtomIdx() ||
-          bi->getBeginAtomIdx()==bj->getEndAtomIdx() ||
-          bi->getEndAtomIdx()==bj->getBeginAtomIdx() ||
-          bi->getEndAtomIdx()==bj->getEndAtomIdx() ){
-        ++bondNbrs[i];
-        ++bondNbrs[j];
-      }
-    }
-#ifdef VERBOSE_FINGERPRINTING
-        std::cerr << "   bond(" << i << "):" << bondNbrs[i] << std::endl;
-#endif
-    // we have the count of neighbors for bond bi, compute its hash:
-    unsigned int a1Hash = (*atomInvariants)[bi->getBeginAtomIdx()];
-    unsigned int a2Hash = (*atomInvariants)[bi->getEndAtomIdx()];
-    unsigned int deg1=atomDegrees[bi->getBeginAtomIdx()];
-    unsigned int deg2=atomDegrees[bi->getEndAtomIdx()];
-    if(a1Hash<a2Hash){
-      std::swap(a1Hash,a2Hash);
-      std::swap(deg1,deg2);
-    }
-    else if(a1Hash==a2Hash && deg1<deg2){
-      std::swap(deg1,deg2);
-    }
-    unsigned int bondHash=1;
-    if(useBondOrder){
-      if(bi->getIsAromatic() || bi->getBondType()==Bond::AROMATIC){
-        // makes sure aromatic bonds always hash as aromatic
-        bondHash = Bond::AROMATIC;
-      }
-      else {
-        bondHash = bi->getBondType();
-      }
-    }
-    boost::uint32_t ourHash=bondNbrs[i];
-    gboost::hash_combine(ourHash,bondHash);
-    gboost::hash_combine(ourHash,a1Hash);
-    gboost::hash_combine(ourHash,deg1);
-    gboost::hash_combine(ourHash,a2Hash);
-    gboost::hash_combine(ourHash,deg2);
-    bondHashes.push_back(ourHash);
-    //std::cerr<<"    "<<bi->getIdx()<<" "<<a1Hash<<"("<<deg1<<")"<<"-"<<a2Hash<<"("<<deg2<<")"<<" "<<bondHash<<" -> "<<ourHash<<std::endl;
-  }
-  return bondHashes;
-}
-
-}// end of namespace utils
-
-
-
-
 // caller owns the result, it must be deleted
 ExplicitBitVect *RDKFingerprintMol(
     const ROMol &mol, unsigned int minPath, unsigned int maxPath,
     unsigned int fpSize, unsigned int nBitsPerHash, bool useHs,
     double tgtDensity, unsigned int minSize, bool branchedPaths,
-    bool useBondOrder, std::vector<boost::uint32_t> *atomInvariants,
-    const std::vector<boost::uint32_t> *fromAtoms,
-    std::vector<std::vector<boost::uint32_t> > *atomBits,
-    std::map<boost::uint32_t,std::vector<std::vector<int> > > *bitInfo) {
+    bool useBondOrder, std::vector<std::uint32_t> *atomInvariants,
+    const std::vector<std::uint32_t> *fromAtoms,
+    std::vector<std::vector<std::uint32_t>> *atomBits,
+    std::map<std::uint32_t, std::vector<std::vector<int>>> *bitInfo) {
   PRECONDITION(minPath != 0, "minPath==0");
   PRECONDITION(maxPath >= minPath, "maxPath<minPath");
   PRECONDITION(fpSize != 0, "fpSize==0");
@@ -375,9 +195,10 @@ ExplicitBitVect *RDKFingerprintMol(
   // The standard parameters (used to create boost::mt19937)
   // result in an RNG that's much too computationally intensive
   // to seed.
-  typedef boost::random::mersenne_twister<boost::uint32_t, 32, 4, 2, 31,
+  typedef boost::random::mersenne_twister<std::uint32_t, 32, 4, 2, 31,
                                           0x9908b0df, 11, 7, 0x9d2c5680, 15,
-                                          0xefc60000, 18, 3346425566U> rng_type;
+                                          0xefc60000, 18, 3346425566U>
+      rng_type;
   typedef boost::uniform_int<> distrib_type;
   typedef boost::variate_generator<rng_type &, distrib_type> source_type;
   rng_type generator(42u);
@@ -392,22 +213,24 @@ ExplicitBitVect *RDKFingerprintMol(
   source_type randomSource(generator, dist);
 
   // build default atom invariants if need be:
-  std::vector<boost::uint32_t> lAtomInvariants;
-  if(!atomInvariants){
-    utils::buildDefaultRDKitFingerprintAtomInvariants(mol, lAtomInvariants);
-    atomInvariants= &lAtomInvariants;
+  std::vector<std::uint32_t> lAtomInvariants;
+  if (!atomInvariants) {
+    RDKitFPUtils::buildDefaultRDKitFingerprintAtomInvariants(mol,
+                                                             lAtomInvariants);
+    atomInvariants = &lAtomInvariants;
   }
 
-  ExplicitBitVect *res = new ExplicitBitVect(fpSize);
+  auto *res = new ExplicitBitVect(fpSize);
 
   // get all paths
   INT_PATH_LIST_MAP allPaths;
-  utils::enumerateAllPaths(mol, allPaths, fromAtoms, branchedPaths, useHs, minPath, maxPath);
+  RDKitFPUtils::enumerateAllPaths(mol, allPaths, fromAtoms, branchedPaths,
+                                  useHs, minPath, maxPath);
 
   // identify query bonds
-  std::vector<short> isQueryBond(mol.getNumBonds(),0);
+  std::vector<short> isQueryBond(mol.getNumBonds(), 0);
   std::vector<const Bond *> bondCache;
-  utils::identifyQueryBonds(mol, bondCache, isQueryBond);
+  RDKitFPUtils::identifyQueryBonds(mol, bondCache, isQueryBond);
 
   if (atomBits) {
     for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
@@ -424,7 +247,7 @@ ExplicitBitVect *RDKFingerprintMol(
 #endif
 
 #ifdef REPORT_FP_STATS
-  std::map<boost::uint32_t, std::set<std::string> > bitSmiles;
+  std::map<std::uint32_t, std::set<std::string>> bitSmiles;
 #endif
   boost::dynamic_bitset<> atomsInPath(mol.getNumAtoms());
   for (INT_PATH_LIST_MAP_CI paths = allPaths.begin(); paths != allPaths.end();
@@ -441,9 +264,10 @@ ExplicitBitVect *RDKFingerprintMol(
 #endif
 #if 1
       // the bond hashes of the path
-      std::vector<unsigned int> bondHashes = utils::generateBondHashes(
-          mol, atomsInPath, bondCache, isQueryBond, path, useBondOrder, atomInvariants);
-      if(!bondHashes.size()){
+      std::vector<unsigned int> bondHashes = RDKitFPUtils::generateBondHashes(
+          mol, atomsInPath, bondCache, isQueryBond, path, useBondOrder,
+          atomInvariants);
+      if (!bondHashes.size()) {
         continue;
       }
 
@@ -512,7 +336,7 @@ ExplicitBitVect *RDKFingerprintMol(
 #endif
 
       unsigned int bit = seed % fpSize;
-// std::cerr<<"bit: "<<bit<<" hash: "<<seed<<std::endl;
+      // std::cerr<<"bit: "<<bit<<" hash: "<<seed<<std::endl;
 
 #ifdef REPORT_FP_STATS
       std::string fsmi = MolFragmentToSmiles(mol, atomsToUse, &path);
@@ -553,6 +377,9 @@ ExplicitBitVect *RDKFingerprintMol(
                 << std::endl;
 #endif
 
+      if (bitInfo) {
+        (*bitInfo)[bit].push_back(path);
+      }
       if (nBitsPerHash > 1) {
         generator.seed(static_cast<rng_type::result_type>(seed));
         for (unsigned int i = 1; i < nBitsPerHash; i++) {
@@ -569,21 +396,16 @@ ExplicitBitVect *RDKFingerprintMol(
               aIdx = atomsInPath.find_next(aIdx);
             }
           }
+          if (bitInfo) {
+            (*bitInfo)[bit].push_back(path);
+          }
+
 #ifdef VERBOSE_FINGERPRINTING
           std::cerr << "   bit: " << i << " " << bit << " " << atomsInPath
                     << std::endl;
 #endif
         }
       }
-
-      if(bitInfo){
-        std::vector<int> p;
-        for(unsigned int i=0; i < path.size();++i){
-          p.push_back(path[i]);
-        }
-        (*bitInfo)[bit].push_back(p);
-      }
-
     }
   }
 
@@ -620,7 +442,7 @@ ExplicitBitVect *LayeredFingerprintMol(
     const ROMol &mol, unsigned int layerFlags, unsigned int minPath,
     unsigned int maxPath, unsigned int fpSize,
     std::vector<unsigned int> *atomCounts, ExplicitBitVect *setOnlyBits,
-    bool branchedPaths, const std::vector<boost::uint32_t> *fromAtoms) {
+    bool branchedPaths, const std::vector<std::uint32_t> *fromAtoms) {
   PRECONDITION(minPath != 0, "minPath==0");
   PRECONDITION(maxPath >= minPath, "maxPath<minPath");
   PRECONDITION(fpSize != 0, "fpSize==0");
@@ -639,7 +461,7 @@ ExplicitBitVect *LayeredFingerprintMol(
   ROMol::EDGE_ITER firstB, lastB;
   boost::tie(firstB, lastB) = mol.getEdges();
   while (firstB != lastB) {
-    const Bond *bond = mol[*firstB].get();
+    const Bond *bond = mol[*firstB];
     isQueryBond[bond->getIdx()] = 0x0;
     bondCache[bond->getIdx()] = bond;
     if (isComplexQuery(bond)) {
@@ -659,13 +481,15 @@ ExplicitBitVect *LayeredFingerprintMol(
   ROMol::VERTEX_ITER firstA, lastA;
   boost::tie(firstA, lastA) = mol.getVertices();
   while (firstA != lastA) {
-    const Atom *atom = mol[*firstA].get();
-    if (isAtomAromatic(atom)) aromaticAtoms[atom->getIdx()] = true;
+    const Atom *atom = mol[*firstA];
+    if (isAtomAromatic(atom)) {
+      aromaticAtoms[atom->getIdx()] = true;
+    }
     anums[atom->getIdx()] = atom->getAtomicNum();
     ++firstA;
   }
 
-  ExplicitBitVect *res = new ExplicitBitVect(fpSize);
+  auto *res = new ExplicitBitVect(fpSize);
 
   INT_PATH_LIST_MAP allPaths;
   if (!fromAtoms) {
@@ -675,7 +499,7 @@ ExplicitBitVect *LayeredFingerprintMol(
       allPaths = findAllPathsOfLengthsMtoN(mol, minPath, maxPath, false);
     }
   } else {
-    BOOST_FOREACH (boost::uint32_t aidx, *fromAtoms) {
+    BOOST_FOREACH (std::uint32_t aidx, *fromAtoms) {
       INT_PATH_LIST_MAP tPaths;
       if (branchedPaths) {
         tPaths =
@@ -696,9 +520,7 @@ ExplicitBitVect *LayeredFingerprintMol(
   boost::dynamic_bitset<> bondsInPath(mol.getNumBonds());
   for (INT_PATH_LIST_MAP_CI paths = allPaths.begin(); paths != allPaths.end();
        ++paths) {
-    for (PATH_LIST_CI pathIt = paths->second.begin();
-         pathIt != paths->second.end(); ++pathIt) {
-      const PATH_TYPE &path = *pathIt;
+    for (const auto &path : paths->second) {
 #ifdef VERBOSE_FINGERPRINTING
       std::cerr << "Path: ";
       std::copy(path.begin(), path.end(),
@@ -706,17 +528,18 @@ ExplicitBitVect *LayeredFingerprintMol(
       std::cerr << std::endl;
 #endif
 
-      std::vector<std::vector<unsigned int> > hashLayers(maxFingerprintLayers);
+      std::vector<std::vector<unsigned int>> hashLayers(maxFingerprintLayers);
       for (unsigned int i = 0; i < maxFingerprintLayers; ++i) {
-        if (layerFlags & (0x1 << i)) hashLayers[i].reserve(maxPath);
+        if (layerFlags & (0x1 << i)) {
+          hashLayers[i].reserve(maxPath);
+        }
       }
 
       // details about what kinds of query features appear on the path:
       unsigned int pathQueries = 0;
       // std::cerr<<" path: ";
-      for (PATH_TYPE::const_iterator pIt = path.begin(); pIt != path.end();
-           ++pIt) {
-        pathQueries |= isQueryBond[*pIt];
+      for (int pIt : path) {
+        pathQueries |= isQueryBond[pIt];
         // std::cerr<< *pIt <<"("<<isQueryBond[*pIt]<<") ";
       }
       // std::cerr<<" : "<<pathQueries<<std::endl;
@@ -726,8 +549,8 @@ ExplicitBitVect *LayeredFingerprintMol(
       atomsInPath.reset();
 
       std::vector<unsigned int> atomDegrees(mol.getNumAtoms(), 0);
-      for (unsigned int i = 0; i < path.size(); ++i) {
-        const Bond *bi = bondCache[path[i]];
+      for (int i : path) {
+        const Bond *bi = bondCache[i];
         atomDegrees[bi->getBeginAtomIdx()]++;
         atomDegrees[bi->getEndAtomIdx()]++;
         atomsInPath.set(bi->getBeginAtomIdx());
@@ -829,7 +652,9 @@ ExplicitBitVect *LayeredFingerprintMol(
           bool a1Hash = aromaticAtoms[bi->getBeginAtomIdx()];
           bool a2Hash = aromaticAtoms[bi->getEndAtomIdx()];
 
-          if ((!a1Hash) && a2Hash) std::swap(a1Hash, a2Hash);
+          if ((!a1Hash) && a2Hash) {
+            std::swap(a1Hash, a2Hash);
+          }
           ourHash = a1Hash;
           ourHash |= a2Hash << 1;
           ourHash |= (bondNbrs[i] % 8) << 5;
@@ -838,10 +663,11 @@ ExplicitBitVect *LayeredFingerprintMol(
       }
       unsigned int l = 0;
       bool flaggedPath = false;
-      for (std::vector<std::vector<unsigned int> >::iterator
-               layerIt = hashLayers.begin();
-           layerIt != hashLayers.end(); ++layerIt, ++l) {
-        if (!layerIt->size()) continue;
+      for (auto layerIt = hashLayers.begin(); layerIt != hashLayers.end();
+           ++layerIt, ++l) {
+        if (!layerIt->size()) {
+          continue;
+        }
         // ----
         std::sort(layerIt->begin(), layerIt->end());
 
@@ -883,117 +709,113 @@ ExplicitBitVect *LayeredFingerprintMol(
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
+// caller owns the result, it must be deleted
+SparseIntVect<boost::uint64_t> *getUnfoldedRDKFingerprintMol(
+    const ROMol &mol, unsigned int minPath, unsigned int maxPath, bool useHs,
+    bool branchedPaths, bool useBondOrder,
+    std::vector<std::uint32_t> *atomInvariants,
+    const std::vector<std::uint32_t> *fromAtoms,
+    std::vector<std::vector<boost::uint64_t>> *atomBits,
+    std::map<boost::uint64_t, std::vector<std::vector<int>>> *bitInfo) {
+  PRECONDITION(minPath != 0, "minPath==0");
+  PRECONDITION(maxPath >= minPath, "maxPath<minPath");
+  PRECONDITION(!atomInvariants || atomInvariants->size() >= mol.getNumAtoms(),
+               "bad atomInvariants size");
+  PRECONDITION(!atomBits || atomBits->size() >= mol.getNumAtoms(),
+               "bad atomBits size");
 
-
-  // caller owns the result, it must be deleted
-  SparseIntVect<boost::uint64_t> *getUnfoldedRDKFingerprintMol(const ROMol &mol,unsigned int minPath,
-      unsigned int maxPath,
-      bool useHs,
-      bool branchedPaths,
-      bool useBondOrder,
-      std::vector<boost::uint32_t> *atomInvariants,
-      const std::vector<boost::uint32_t> *fromAtoms,
-      std::vector<std::vector<boost::uint64_t> > *atomBits,
-      std::map<boost::uint64_t,std::vector<std::vector<int> > > *bitInfo
-  )
-  {
-    PRECONDITION(minPath!=0,"minPath==0");
-    PRECONDITION(maxPath>=minPath,"maxPath<minPath");
-    PRECONDITION(!atomInvariants||atomInvariants->size()>=mol.getNumAtoms(),"bad atomInvariants size");
-    PRECONDITION(!atomBits||atomBits->size()>=mol.getNumAtoms(),"bad atomBits size");
-
-    // build default atom invariants if need be:
-    std::vector<boost::uint32_t> lAtomInvariants;
-    if(!atomInvariants){
-      utils::buildDefaultRDKitFingerprintAtomInvariants(mol, lAtomInvariants);
-      atomInvariants= &lAtomInvariants;
-    }
-
-    // get all paths
-    INT_PATH_LIST_MAP allPaths;
-    utils::enumerateAllPaths(mol, allPaths, fromAtoms, branchedPaths, useHs, minPath, maxPath);
-
-    // identify query bonds
-    std::vector<short> isQueryBond(mol.getNumBonds(),0);
-    std::vector<const Bond *> bondCache;
-    utils::identifyQueryBonds(mol, bondCache, isQueryBond);
-
-    if(atomBits){
-      for(unsigned int i=0;i<mol.getNumAtoms();++i){
-        (*atomBits)[i].clear();
-      }
-    }
-
-    std::map<unsigned int,unsigned int> bitMap;
-
-    boost::dynamic_bitset<> atomsInPath(mol.getNumAtoms());
-    for(INT_PATH_LIST_MAP_CI paths=allPaths.begin();paths!=allPaths.end();paths++){
-      BOOST_FOREACH(const PATH_TYPE &path,paths->second){
-
-        // the bond hashes of the path
-        std::vector<unsigned int> bondHashes = utils::generateBondHashes(
-            mol, atomsInPath, bondCache, isQueryBond, path, useBondOrder, atomInvariants);
-        if(!bondHashes.size()){
-          continue;
-        }
-
-        // hash the path to generate a seed:
-        unsigned long seed;
-        if(path.size()>1){
-          std::sort(bondHashes.begin(),bondHashes.end());
-
-          // finally, we will add the number of distinct atoms in the path at the end
-          // of the vect. This allows us to distinguish C1CC1 from CC(C)C
-          bondHashes.push_back(static_cast<unsigned int>(atomsInPath.count()));
-          seed= gboost::hash_range(bondHashes.begin(),bondHashes.end());
-        }
-        else {
-          seed = bondHashes[0];
-        }
-
-        unsigned int bit = seed;
-
-        // count-based FP
-        if(bitMap.find(bit) != bitMap.end()){
-          bitMap[bit]++;
-        }
-        else{
-          bitMap.insert(std::make_pair(bit,1));
-        }
-
-        if(atomBits){
-          boost::dynamic_bitset<>::size_type aIdx=atomsInPath.find_first();
-          while(aIdx!=boost::dynamic_bitset<>::npos){
-            if(std::find((*atomBits)[aIdx].begin(),(*atomBits)[aIdx].end(),bit)==(*atomBits)[aIdx].end()){
-              (*atomBits)[aIdx].push_back(bit);
-            }
-            aIdx = atomsInPath.find_next(aIdx);
-          }
-        }
-
-        if(bitInfo){
-          std::vector<int> p;
-          for(unsigned int i=0; i < path.size();++i){
-            p.push_back(path[i]);
-          }
-          (*bitInfo)[bit].push_back(p);
-        }
-      }
-    }
-
-    unsigned int len=0;
-    if(bitMap.size()){
-      len=bitMap.rbegin()->first+1;
-    }
-    SparseIntVect<boost::uint64_t> *res = new SparseIntVect<boost::uint64_t>(len);
-    std::map<unsigned int, unsigned int>::iterator iter;
-    for(iter=bitMap.begin(); iter!=bitMap.end();++iter){
-      res->setVal(iter->first,iter->second);
-    }
-
-    return res;
+  // build default atom invariants if need be:
+  std::vector<std::uint32_t> lAtomInvariants;
+  if (!atomInvariants) {
+    RDKitFPUtils::buildDefaultRDKitFingerprintAtomInvariants(mol,
+                                                             lAtomInvariants);
+    atomInvariants = &lAtomInvariants;
   }
 
+  // get all paths
+  INT_PATH_LIST_MAP allPaths;
+  RDKitFPUtils::enumerateAllPaths(mol, allPaths, fromAtoms, branchedPaths,
+                                  useHs, minPath, maxPath);
 
+  // identify query bonds
+  std::vector<short> isQueryBond(mol.getNumBonds(), 0);
+  std::vector<const Bond *> bondCache;
+  RDKitFPUtils::identifyQueryBonds(mol, bondCache, isQueryBond);
 
+  if (atomBits) {
+    for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+      (*atomBits)[i].clear();
+    }
+  }
+
+  std::map<unsigned int, unsigned int> bitMap;
+
+  boost::dynamic_bitset<> atomsInPath(mol.getNumAtoms());
+  for (INT_PATH_LIST_MAP_CI paths = allPaths.begin(); paths != allPaths.end();
+       paths++) {
+    BOOST_FOREACH (const PATH_TYPE &path, paths->second) {
+      // the bond hashes of the path
+      std::vector<unsigned int> bondHashes = RDKitFPUtils::generateBondHashes(
+          mol, atomsInPath, bondCache, isQueryBond, path, useBondOrder,
+          atomInvariants);
+      if (!bondHashes.size()) {
+        continue;
+      }
+
+      // hash the path to generate a seed:
+      unsigned long seed;
+      if (path.size() > 1) {
+        std::sort(bondHashes.begin(), bondHashes.end());
+
+        // finally, we will add the number of distinct atoms in the path at the
+        // end
+        // of the vect. This allows us to distinguish C1CC1 from CC(C)C
+        bondHashes.push_back(static_cast<unsigned int>(atomsInPath.count()));
+        seed = gboost::hash_range(bondHashes.begin(), bondHashes.end());
+      } else {
+        seed = bondHashes[0];
+      }
+
+      unsigned int bit = seed;
+
+      // count-based FP
+      if (bitMap.find(bit) != bitMap.end()) {
+        bitMap[bit]++;
+      } else {
+        bitMap.insert(std::make_pair(bit, 1));
+      }
+
+      if (atomBits) {
+        boost::dynamic_bitset<>::size_type aIdx = atomsInPath.find_first();
+        while (aIdx != boost::dynamic_bitset<>::npos) {
+          if (std::find((*atomBits)[aIdx].begin(), (*atomBits)[aIdx].end(),
+                        bit) == (*atomBits)[aIdx].end()) {
+            (*atomBits)[aIdx].push_back(bit);
+          }
+          aIdx = atomsInPath.find_next(aIdx);
+        }
+      }
+
+      if (bitInfo) {
+        std::vector<int> p;
+        for (int i : path) {
+          p.push_back(i);
+        }
+        (*bitInfo)[bit].push_back(p);
+      }
+    }
+  }
+
+  unsigned int len = 0;
+  if (bitMap.size()) {
+    len = bitMap.rbegin()->first + 1;
+  }
+  auto *res = new SparseIntVect<boost::uint64_t>(len);
+  std::map<unsigned int, unsigned int>::iterator iter;
+  for (iter = bitMap.begin(); iter != bitMap.end(); ++iter) {
+    res->setVal(iter->first, iter->second);
+  }
+
+  return res;
 }
+}  // namespace RDKit

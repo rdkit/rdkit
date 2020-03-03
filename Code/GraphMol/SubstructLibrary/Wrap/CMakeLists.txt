@@ -1,3 +1,4 @@
+remove_definitions(-DRDKIT_SUBSTRUCTLIBRARY_BUILD)
 rdkit_python_extension(rdSubstructLibrary
                        rdSubstructLibrary.cpp
                        SubstructLibraryWrap.cpp

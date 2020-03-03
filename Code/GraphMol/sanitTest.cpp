@@ -9,6 +9,7 @@
 //  of the RDKit source tree.
 //
 
+#include <RDGeneral/test.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -85,7 +86,7 @@ int main(int argc, char *argv[]) {
 
       // MolOps::setHybridization(*m);
       delete m;
-    } catch (MolSanitizeException) {
+    } catch (MolSanitizeException &) {
       BOOST_LOG(rdErrorLog) << smi << "\n";
       delete m;
     }

@@ -3,7 +3,7 @@
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
-//modification, are permitted provided that the following conditions are
+// modification, are permitted provided that the following conditions are
 // met:
 //
 //     * Redistributions of source code must retain the above copyright
@@ -14,7 +14,8 @@
 //       with the distribution.
 //     * Neither the name of Institue of Cancer Research.
 //       nor the names of its contributors may be used to endorse or promote
-//       products derived from this software without specific prior written permission.
+//       products derived from this software without specific prior written
+//       permission.
 //
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 // "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -32,6 +33,7 @@
 //
 // Created by Guillaume GODIN
 
+#include <RDGeneral/export.h>
 #ifndef WHIMRDKIT_H_SEPT2016
 #define WHIMRDKIT_H_SEPT2016
 
@@ -44,5 +46,6 @@ namespace RDKit {
               const std::string customAtomPropName="");
   }
 }
+
 #endif
 #endif

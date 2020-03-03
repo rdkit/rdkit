@@ -31,12 +31,13 @@ SDMolSupplier::SDMolSupplier(const std::string &fileName, bool sanitize,
   // FIX: this binary mode of opening file is here because of a bug in VC++ 6.0
   // the function "tellg" does not work correctly if we do not open it this way
   //   Jan 2009: Confirmed that this is still the case in visual studio 2008
-  std::istream *tmpStream = 0;
+  std::istream *tmpStream = nullptr;
   tmpStream = static_cast<std::istream *>(
       new std::ifstream(fileName.c_str(), std::ios_base::binary));
-  if (!tmpStream || (!(*tmpStream)) || (tmpStream->bad())) {
+  if ((!(*tmpStream)) || (tmpStream->bad())) {
     std::ostringstream errout;
     errout << "Bad input file " << fileName;
+    delete tmpStream;
     throw BadFileException(errout.str());
   }
 
@@ -83,9 +84,11 @@ void SDMolSupplier::init() {
 
 void SDMolSupplier::setDataCommon(const std::string &text, bool sanitize,
                                   bool removeHs) {
-  if (dp_inStream && df_owner) delete dp_inStream;
+  if (dp_inStream && df_owner) {
+    delete dp_inStream;
+  }
   init();
-  std::istream *tmpStream = 0;
+  std::istream *tmpStream = nullptr;
   tmpStream = static_cast<std::istream *>(
       new std::istringstream(text, std::ios_base::binary));
   dp_inStream = tmpStream;
@@ -162,7 +165,7 @@ ROMol *SDMolSupplier::next() {
   dp_inStream->seekg(d_molpos[d_last]);
 
   std::string tempStr;
-  ROMol *res = NULL;
+  ROMol *res = nullptr;
   // finally if we reached the end of the file set end to be true
   if (dp_inStream->eof()) {
     // FIX: we should probably be throwing an exception here
@@ -198,7 +201,7 @@ std::string SDMolSupplier::getItemText(unsigned int idx) {
     endP = dp_inStream->tellg();
   }
   d_last = holder;
-  char *buff = new char[endP - begP];
+  auto *buff = new char[endP - begP];
   dp_inStream->seekg(begP);
   dp_inStream->read(buff, endP - begP);
   std::string res(buff, endP - begP);
@@ -221,7 +224,8 @@ void SDMolSupplier::moveTo(unsigned int idx) {
     std::string tempStr;
     dp_inStream->seekg(d_molpos.back());
     d_last = rdcast<int>(d_molpos.size()) - 1;
-    while ((d_last < static_cast<int>(idx)) && (!dp_inStream->eof())) {
+    while (d_last < static_cast<int>(idx) && !dp_inStream->eof() &&
+           !dp_inStream->fail()) {
       d_line++;
       tempStr = getLine(dp_inStream);
 
@@ -261,7 +265,7 @@ unsigned int SDMolSupplier::length() {
     std::string tempStr;
     d_len = rdcast<int>(d_molpos.size());
     dp_inStream->seekg(d_molpos.back());
-    while (!dp_inStream->eof()) {
+    while (!dp_inStream->eof() && !dp_inStream->fail()) {
       std::getline(*dp_inStream, tempStr);
       if (tempStr.length() >= 4 && tempStr[0] == '$' && tempStr[1] == '$' &&
           tempStr[2] == '$' && tempStr[3] == '$') {
@@ -274,7 +278,7 @@ unsigned int SDMolSupplier::length() {
         }
       }
     }
-    // now remember to set the stream to the last postion we want to read
+    // now remember to set the stream to the last position we want to read
     dp_inStream->clear();
     dp_inStream->seekg(d_molpos[d_last]);
     return d_len;
@@ -293,4 +297,4 @@ void SDMolSupplier::setStreamIndices(const std::vector<std::streampos> &locs) {
   this->reset();
   d_len = rdcast<int>(d_molpos.size());
 }
-}
+}  // namespace RDKit

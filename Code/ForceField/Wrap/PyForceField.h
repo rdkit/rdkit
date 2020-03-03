@@ -8,6 +8,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #include <ForceField/ForceField.h>
 #include <GraphMol/ForceFieldHelpers/MMFF/AtomTyper.h>
 #include <ForceField/MMFF/Params.h>
@@ -18,6 +19,7 @@
 #include <algorithm>
 #include <Geometry/point.h>
 
+namespace python = boost::python;
 namespace ForceFields {
 class PyForceField {
  public:
@@ -32,8 +34,8 @@ class PyForceField {
   }
 
   int addExtraPoint(double x, double y, double z, bool fixed = true) {
-    RDGeom::Point3D *pt = new RDGeom::Point3D(x, y, z);
     PRECONDITION(this->field, "no force field");
+    RDGeom::Point3D *pt = new RDGeom::Point3D(x, y, z);
     this->extraPoints.push_back(boost::shared_ptr<RDGeom::Point3D>(pt));
     unsigned int ptIdx = this->extraPoints.size() - 1;
     RDGeom::Point3D *ptr = this->extraPoints[ptIdx].get();
@@ -45,25 +47,39 @@ class PyForceField {
     return idx;
   }
 
-  double calcEnergy() {
-    PRECONDITION(this->field, "no force field");
-    return this->field->calcEnergy();
-  }
+  double calcEnergyWithPos(const python::object &pos = python::object());
+
+  double calcEnergy() { return calcEnergyWithPos(); }
+
+  PyObject *calcGradWithPos(const python::object &pos = python::object());
+
+  PyObject *positions();
 
   int minimize(int maxIts, double forceTol, double energyTol) {
     PRECONDITION(this->field, "no force field");
     return this->field->minimize(maxIts, forceTol, energyTol);
   }
 
-  boost::python::tuple minimizeTrajectory(unsigned int snapshotFreq, int maxIts, double forceTol, double energyTol);
+  boost::python::tuple minimizeTrajectory(unsigned int snapshotFreq, int maxIts,
+                                          double forceTol, double energyTol);
 
   void initialize() {
     PRECONDITION(this->field, "no force field");
     this->field->initialize();
   }
 
+  unsigned int dimension() {
+    PRECONDITION(this->field, "no force field");
+    return this->field->dimension();
+  }
+
+  unsigned int numPoints() {
+    PRECONDITION(this->field, "no force field");
+    return this->field->numPoints();
+  }
+
   // private:
-  std::vector<boost::shared_ptr<RDGeom::Point3D> > extraPoints;
+  std::vector<boost::shared_ptr<RDGeom::Point3D>> extraPoints;
   boost::shared_ptr<ForceField> field;
 };
 
@@ -104,7 +120,7 @@ class PyMMFFMolProperties {
                                  const unsigned int idx3,
                                  const unsigned int idx4);
   PyObject *getMMFFVdWParams(const unsigned int idx1, const unsigned int idx2);
-  void setMMFFDielectricModel(boost::uint8_t dielModel) {
+  void setMMFFDielectricModel(std::uint8_t dielModel) {
     mmffMolProperties->setMMFFDielectricModel(dielModel);
   };
   void setMMFFDielectricConstant(double dielConst) {
@@ -156,4 +172,4 @@ PyObject *getUFFInversionParams(const RDKit::ROMol &mol,
                                 const unsigned int idx4);
 PyObject *getUFFVdWParams(const RDKit::ROMol &mol, const unsigned int idx1,
                           const unsigned int idx2);
-}
+}  // namespace ForceFields

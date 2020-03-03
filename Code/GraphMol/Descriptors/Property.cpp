@@ -39,9 +39,7 @@
 #include <GraphMol/Descriptors/MolSurf.h>
 
 #ifdef RDK_THREADSAFE_SSS
-#include <RDGeneral/BoostStartInclude.h>
-#include <boost/thread/once.hpp>
-#include <RDGeneral/BoostEndInclude.h>
+#include <mutex>
 #endif
 
 namespace RDKit {
@@ -68,8 +66,9 @@ void _registerDescriptors() {
   REGISTER_DESCRIPTOR(NumAliphaticHeterocycles, calcNumAliphaticHeterocycles);
   REGISTER_DESCRIPTOR(NumSpiroAtoms, calcNumSpiroAtoms);
   REGISTER_DESCRIPTOR(NumBridgeheadAtoms, calcNumBridgeheadAtoms);
-  REGISTER_DESCRIPTOR(NumAtomStereoCenters, numAtomStereoCenters);  
-  REGISTER_DESCRIPTOR(NumUnspecifiedAtomStereoCenters, numUnspecifiedAtomStereoCenters);
+  REGISTER_DESCRIPTOR(NumAtomStereoCenters, numAtomStereoCenters);
+  REGISTER_DESCRIPTOR(NumUnspecifiedAtomStereoCenters,
+                      numUnspecifiedAtomStereoCenters);
   REGISTER_DESCRIPTOR(labuteASA, calcLabuteASA);
   REGISTER_DESCRIPTOR(tpsa, calcTPSA);
   REGISTER_DESCRIPTOR(CrippenClogP, calcClogP);
@@ -79,42 +78,45 @@ void _registerDescriptors() {
 
 void registerDescriptors() {
 #ifdef RDK_THREADSAFE_SSS
-  static boost::once_flag once = BOOST_ONCE_INIT;
-  boost::call_once(&_registerDescriptors, once);
+  static std::once_flag once;
+  std::call_once(once, _registerDescriptors);
 #else
   static bool initialized = false;
-  if(!initialized) {
+  if (!initialized) {
     _registerDescriptors();
-    initialized=true;
+    initialized = true;
   }
 #endif
 }
 
-std::vector<boost::shared_ptr<PropertyFunctor> > Properties::registry;
+std::vector<boost::shared_ptr<PropertyFunctor>> Properties::registry;
 int Properties::registerProperty(PropertyFunctor *prop) {
-  for(size_t i=0; i<Properties::registry.size(); ++i) {
+  for (size_t i = 0; i < Properties::registry.size(); ++i) {
     if (registry[i]->getName() == prop->getName()) {
       Properties::registry[i] = boost::shared_ptr<PropertyFunctor>(prop);
       return i;
     }
   }
   // XXX Add mutex?
-  Properties::registry.push_back( boost::shared_ptr<PropertyFunctor>(prop) );
+  Properties::registry.push_back(boost::shared_ptr<PropertyFunctor>(prop));
   return Properties::registry.size();
 }
 
 std::vector<std::string> Properties::getAvailableProperties() {
   registerDescriptors();
   std::vector<std::string> names;
-  BOOST_FOREACH(boost::shared_ptr<PropertyFunctor> prop, Properties::registry) {
+  BOOST_FOREACH (boost::shared_ptr<PropertyFunctor> prop,
+                 Properties::registry) {
     names.push_back(prop->getName());
   }
   return names;
 }
 
-boost::shared_ptr<PropertyFunctor> Properties::getProperty(const std::string &name) {
+boost::shared_ptr<PropertyFunctor> Properties::getProperty(
+    const std::string &name) {
   registerDescriptors();
-  BOOST_FOREACH(boost::shared_ptr<PropertyFunctor> prop, Properties::registry) {
+  BOOST_FOREACH (boost::shared_ptr<PropertyFunctor> prop,
+                 Properties::registry) {
     if (prop.get() && prop->getName() == name) {
       return prop;
     }
@@ -124,30 +126,32 @@ boost::shared_ptr<PropertyFunctor> Properties::getProperty(const std::string &na
 
 Properties::Properties() : m_properties() {
   registerDescriptors();
-  BOOST_FOREACH(boost::shared_ptr<PropertyFunctor> prop, Properties::registry) {
+  BOOST_FOREACH (boost::shared_ptr<PropertyFunctor> prop,
+                 Properties::registry) {
     m_properties.push_back(prop);
   }
 }
 
 Properties::Properties(const std::vector<std::string> &propNames) {
   registerDescriptors();
-  BOOST_FOREACH(const std::string &name, propNames) {
-    m_properties.push_back( Properties::getProperty(name) );
+  BOOST_FOREACH (const std::string &name, propNames) {
+    m_properties.push_back(Properties::getProperty(name));
   }
 }
 
 std::vector<std::string> Properties::getPropertyNames() const {
   std::vector<std::string> names;
-  BOOST_FOREACH(boost::shared_ptr<PropertyFunctor> prop, m_properties) {
+  BOOST_FOREACH (boost::shared_ptr<PropertyFunctor> prop, m_properties) {
     names.push_back(prop->getName());
   }
   return names;
 }
 
-std::vector<double> Properties::computeProperties(const RDKit::ROMol &mol, bool annotate) const {
+std::vector<double> Properties::computeProperties(const RDKit::ROMol &mol,
+                                                  bool annotate) const {
   std::vector<double> res;
   res.reserve(m_properties.size());
-  BOOST_FOREACH(boost::shared_ptr<PropertyFunctor> prop, m_properties) {
+  BOOST_FOREACH (boost::shared_ptr<PropertyFunctor> prop, m_properties) {
     res.push_back((*prop)(mol));
     if (annotate) {
       mol.setProp<double>(prop->getName(), (*prop)(mol));
@@ -157,18 +161,16 @@ std::vector<double> Properties::computeProperties(const RDKit::ROMol &mol, bool 
 }
 
 void Properties::annotateProperties(RDKit::ROMol &mol) const {
-  BOOST_FOREACH(boost::shared_ptr<PropertyFunctor> prop, m_properties) {
+  BOOST_FOREACH (boost::shared_ptr<PropertyFunctor> prop, m_properties) {
     mol.setProp<double>(prop->getName(), (*prop)(mol));
   }
 }
 
-PROP_RANGE_QUERY *makePropertyRangeQuery(const std::string &name,
-                                        double min,
-                                        double max) {
-  PROP_RANGE_QUERY *filter = new PROP_RANGE_QUERY(min, max);
-  filter->setDataFunc( Properties::getProperty(name)->d_dataFunc );
+PROP_RANGE_QUERY *makePropertyRangeQuery(const std::string &name, double min,
+                                         double max) {
+  auto *filter = new PROP_RANGE_QUERY(min, max);
+  filter->setDataFunc(Properties::getProperty(name)->d_dataFunc);
   return filter;
 }
-
 }
 }

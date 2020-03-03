@@ -28,12 +28,12 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-from __future__ import print_function
+
 
 import unittest
 import os,sys, copy
 
-from rdkit.six.moves import cPickle
+import pickle
 
 from rdkit import rdBase
 from rdkit import Chem
@@ -171,7 +171,7 @@ class TestCase(unittest.TestCase) :
       pairs02[p01] = pairs02.get(p02, 0) + 1
       count += 1
 
-    # each pair should be used rougly once
+    # each pair should be used roughly once
     self.assertEquals(np.median(list(pairs01.values())), 1.0)
     self.assertEquals(np.median(list(pairs02.values())), 1.0)
     self.assertEquals(np.median(list(pairs12.values())), 1.0)

@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 
+#include <RDGeneral/export.h>
 #ifndef _RD_FEATTREE_H_
 #define _RD_FEATTREE_H_
 
@@ -41,7 +42,8 @@ struct FeatTreeEdge_t {
 typedef boost::property<FeatTreeEdge_t, unsigned int> FeatTreeEdge;
 
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS,
-                              FeatTreeNode, FeatTreeEdge> FeatTreeGraph;
+                              FeatTreeNode, FeatTreeEdge>
+    FeatTreeGraph;
 typedef boost::shared_ptr<FeatTreeGraph> FeatTreeGraphSPtr;
 
 typedef boost::property_map<FeatTreeGraph, FeatTreeEdge_t>::type
@@ -55,6 +57,6 @@ typedef boost::property_map<FeatTreeGraph, FeatTreeNode_t>::type
 FeatTreeGraphSPtr molToBaseTree(const ROMol &mol);
 
 void baseTreeToFeatTree(FeatTreeGraph &baseTree);
-}
-}
+}  // namespace FeatTrees
+}  // namespace RDKit
 #endif

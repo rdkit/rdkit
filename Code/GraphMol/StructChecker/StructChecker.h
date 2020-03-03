@@ -17,6 +17,7 @@ future
 releases.
 
 */
+#include <RDGeneral/export.h>
 #pragma once
 #ifndef RD_STRUCTCHECKER_H_Oct2016
 #define RD_STRUCTCHECKER_H_Oct2016
@@ -59,7 +60,7 @@ enum AATopology {
   CHAIN = 2     // Chain
 };
 
-struct Ligand {
+struct RDKIT_STRUCTCHECKER_EXPORT Ligand {
   std::string AtomSymbol;
   int Charge;
   RadicalType Radical;
@@ -72,7 +73,7 @@ struct Ligand {
         BondType(ANY_BOND) {}
 };
 
-struct AugmentedAtom {
+struct RDKIT_STRUCTCHECKER_EXPORT AugmentedAtom {
   std::string AtomSymbol;
   std::string ShortName;
   int Charge;
@@ -92,7 +93,7 @@ struct AugmentedAtom {
         Topology(topology) {}
 };
 
-struct IncEntry {
+struct RDKIT_STRUCTCHECKER_EXPORT IncEntry {
   std::string AtomSymbol;
   double LocalInc;
   double AlphaInc;
@@ -106,7 +107,7 @@ struct IncEntry {
   int mult_inc_used;
 };
 
-struct PathEntry {
+struct RDKIT_STRUCTCHECKER_EXPORT PathEntry {
   AugmentedAtom Path;
   double Cond;
   // Used for logging
@@ -117,7 +118,7 @@ struct PathEntry {
 //! Structure Check Options
 //    Holds all the user options for the StructureChecking.
 //    Can be initialized from factory functions, perhaps serialized
-struct StructCheckerOptions {
+struct RDKIT_STRUCTCHECKER_EXPORT StructCheckerOptions {
   double AcidityLimit;
   bool RemoveMinorFragments;
   int DesiredCharge;
@@ -133,7 +134,7 @@ struct StructCheckerOptions {
   bool Verbose;
 
   // Internal data for struchk
-  std::vector<std::pair<AugmentedAtom, AugmentedAtom> > AugmentedAtomPairs;
+  std::vector<std::pair<AugmentedAtom, AugmentedAtom>> AugmentedAtomPairs;
   std::vector<AugmentedAtom> AcidicAtoms;
   std::vector<AugmentedAtom> GoodAtoms;
   std::vector<ROMOL_SPTR> Patterns;
@@ -148,10 +149,10 @@ struct StructCheckerOptions {
   std::vector<IncEntry> ChargeIncTable;
   // std::map AtomSymbol(or AtomicNumber) -> IncEntry
   /* [ReadTransformation() ]
-  * The alpha, beta coefficients of the transfomation function used
-  * to stretch the preliminary pKa values to the actual predictions.
-  * The function is pKa = 7 + (pKa'-7)*beta + ((pKa'-7)*alpha)^3.
-  */
+   * The alpha, beta coefficients of the transfomation function used
+   * to stretch the preliminary pKa values to the actual predictions.
+   * The function is pKa = 7 + (pKa'-7)*beta + ((pKa'-7)*alpha)^3.
+   */
 
   double Alpha, Beta;
   std::vector<PathEntry> AlphaPathTable, BetaPathTable;
@@ -163,7 +164,7 @@ struct StructCheckerOptions {
 
   bool loadAugmentedAtomTranslations(const std::string &path);
   void setAugmentedAtomTranslations(
-      const std::vector<std::pair<AugmentedAtom, AugmentedAtom> > &aaPairs);
+      const std::vector<std::pair<AugmentedAtom, AugmentedAtom>> &aaPairs);
 
   bool loadAcidicAugmentedAtoms(const std::string &path);
   void setAcidicAugmentedAtoms(const std::vector<AugmentedAtom> &acidicAtoms);
@@ -173,19 +174,19 @@ struct StructCheckerOptions {
 
   bool loadPatterns(const std::string &path);  // file with clean patterns
   void parsePatterns(
-      const std::vector<std::string> &smarts);  // can throw RDKit exeptions
+      const std::vector<std::string> &smarts);  // can throw RDKit exceptions
   void setPatterns(const std::vector<ROMOL_SPTR> &p);
 
   bool loadRotatePatterns(
       const std::string &path);  // file with rotate patterns
   void parseRotatePatterns(
-      const std::vector<std::string> &smarts);  // can throw RDKit exeptions
+      const std::vector<std::string> &smarts);  // can throw RDKit exceptions
   void setRotatePatterns(const std::vector<ROMOL_SPTR> &p);
 
   bool loadStereoPatterns(
       const std::string &path);  // file with stereo patterns
   void parseStereoPatterns(
-      const std::vector<std::string> &smarts);  // can throw RDKit exeptions
+      const std::vector<std::string> &smarts);  // can throw RDKit exceptions
   void setStereoPatterns(const std::vector<ROMOL_SPTR> &p);
 
   bool loadTautomerData(const std::string &path);  // file path
@@ -196,9 +197,10 @@ struct StructCheckerOptions {
   bool loadChargeDataTables(const std::string &path);  // file path
 };
 
-bool parseOptionsJSON(const std::string &json, StructCheckerOptions &op);
+RDKIT_STRUCTCHECKER_EXPORT bool parseOptionsJSON(const std::string &json,
+                                                 StructCheckerOptions &op);
 
-bool loadOptionsFromFiles(
+RDKIT_STRUCTCHECKER_EXPORT bool loadOptionsFromFiles(
     StructCheckerOptions &op,
     const std::string &augmentedAtomTranslationsFile = "",
     // ?? AcidicAtoms;
@@ -240,7 +242,7 @@ or
     }
 \endcode
 */
-class StructChecker {
+class RDKIT_STRUCTCHECKER_EXPORT StructChecker {
  public:
   typedef enum StructureFlags {
     NO_CHANGE = 0,
@@ -286,14 +288,14 @@ class StructChecker {
   // that describes what have been done
   unsigned checkMolStructure(RWMol &mol) const;
 
-  // an instance independed helper methods:
-  // Converts structure property flags to a comma seperated string
+  // an instance independent helper methods:
+  // Converts structure property flags to a comma separated string
   static std::string StructureFlagsToString(unsigned flags);
-  // Converts a comma seperated string to a StructureFlag unsigned integer
+  // Converts a comma separated string to a StructureFlag unsigned integer
   static unsigned StringToStructureFlags(const std::string &str);
   // internal implementation:
  private:
 };
-}
-}
+}  // namespace StructureCheck
+}  // namespace RDKit
 #endif

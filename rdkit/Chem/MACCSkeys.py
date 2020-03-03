@@ -8,7 +8,7 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-""" SMARTS definitions for the publically available MACCS keys
+""" SMARTS definitions for the publicly available MACCS keys
 and a MACCS fingerprinter
 
 I compared the MACCS fingerprints generated here with those from two
@@ -30,7 +30,7 @@ Rev history:
 May 2011 (gl): Update some definitions based on feedback from Andrew Dalke
 
 """
-from __future__ import print_function
+
 from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors
 from rdkit import DataStructs

@@ -131,7 +131,7 @@ public class DiversityPickerTests extends GraphMolTest {
 
 	@Test
 	public void test1() {
-		Int_Vect picks1 = RDKFuncs.pickUsingFingerprints(fps,5);
+		Int_Vect picks1 = RDKFuncs.pickUsingFingerprints(fps,5,42);
 		assertEquals(picks1.size(),5);
 		assertEquals(picks1.get(0),37);
 		assertEquals(picks1.get(1),1);
@@ -146,9 +146,21 @@ public class DiversityPickerTests extends GraphMolTest {
 		Int_Vect picks2 = RDKFuncs.pickUsingFingerprints(fps,5,0,avoid,true);
 		assertEquals(picks1.size(),5);
 		assertEquals(picks2.size(),5);
-
 		for(int i=0;i<picks1.size();++i)
 			assertEquals(picks1.get(i),picks2.get(i));
+	}
+	@Test
+	public void test3() {
+		Int_Vect avoid = new Int_Vect();
+		Int_Vect picks1 = RDKFuncs.pickUsingFingerprints(fps,5,-1);
+		Int_Vect picks2 = RDKFuncs.pickUsingFingerprints(fps,5,-1);
+		assertEquals(picks1.size(),5);
+		assertEquals(picks2.size(),5);
+		boolean allEqual=true;
+		for(int i=0;i<picks1.size();++i){
+			if(picks1.get(i)!=picks2.get(i)) allEqual=false;
+		}
+		assertFalse(allEqual);
 	}
 
 	public static void main(String args[]) {

@@ -37,7 +37,7 @@ void convertToNumpyArray(const T &v, python::object destArray) {
   if (!PyArray_Check(destArray.ptr())) {
     throw_value_error("Expecting a Numeric array object");
   }
-  PyArrayObject *destP = (PyArrayObject *)destArray.ptr();
+  auto *destP = (PyArrayObject *)destArray.ptr();
   npy_intp ndims[1];
   ndims[0] = v.size();
   PyArray_Dims dims;
@@ -85,7 +85,7 @@ BOOST_PYTHON_MODULE(cDataStructs) {
                         python::object))convertToNumpyArray,
               (python::arg("bv"), python::arg("destArray")));
   python::def("ConvertToNumpyArray",
-              (void (*)(const RDKit::SparseIntVect<boost::int32_t> &,
+              (void (*)(const RDKit::SparseIntVect<std::int32_t> &,
                         python::object))convertToNumpyArray,
               (python::arg("bv"), python::arg("destArray")));
   python::def("ConvertToNumpyArray",
@@ -93,7 +93,7 @@ BOOST_PYTHON_MODULE(cDataStructs) {
                         python::object))convertToNumpyArray,
               (python::arg("bv"), python::arg("destArray")));
   python::def("ConvertToNumpyArray",
-              (void (*)(const RDKit::SparseIntVect<boost::uint32_t> &,
+              (void (*)(const RDKit::SparseIntVect<std::uint32_t> &,
                         python::object))convertToNumpyArray,
               (python::arg("bv"), python::arg("destArray")));
   python::def("ConvertToNumpyArray",

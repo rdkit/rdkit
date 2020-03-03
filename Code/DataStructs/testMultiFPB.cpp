@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/test.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/Exceptions.h>
@@ -69,7 +70,7 @@ void test2MultiFPBReaderTanimoto() {
     TEST_ASSERT(mfps.length() == 2);
 
     {
-      boost::shared_array<boost::uint8_t> bytes =
+      boost::shared_array<std::uint8_t> bytes =
           mfps.getReader(0)->getBytes(0);
       TEST_ASSERT(bytes);
       std::vector<MultiFPBReader::ResultTuple> nbrs =
@@ -83,7 +84,7 @@ void test2MultiFPBReaderTanimoto() {
       TEST_ASSERT(nbrs[1].get<2>() == 1);
     }
     {  // with a threshold
-      boost::shared_array<boost::uint8_t> bytes =
+      boost::shared_array<std::uint8_t> bytes =
           mfps.getReader(0)->getBytes(0);
       TEST_ASSERT(bytes);
       std::vector<MultiFPBReader::ResultTuple> nbrs =
@@ -100,7 +101,7 @@ void test2MultiFPBReaderTanimoto() {
       TEST_ASSERT(nbrs[2].get<2>() == 0);
     }
     {  // with a threshold
-      boost::shared_array<boost::uint8_t> bytes =
+      boost::shared_array<std::uint8_t> bytes =
           mfps.getReader(0)->getBytes(95);
       TEST_ASSERT(bytes);
       std::vector<MultiFPBReader::ResultTuple> nbrs =
@@ -137,7 +138,7 @@ void test3MultiFPBReaderTversky() {
     TEST_ASSERT(mfps.length() == 2);
 
     {
-      boost::shared_array<boost::uint8_t> bytes =
+      boost::shared_array<std::uint8_t> bytes =
           mfps.getReader(0)->getBytes(0);
       TEST_ASSERT(bytes);
       std::vector<MultiFPBReader::ResultTuple> nbrs =
@@ -151,7 +152,7 @@ void test3MultiFPBReaderTversky() {
       TEST_ASSERT(nbrs[1].get<2>() == 1);
     }
     {  // with a threshold
-      boost::shared_array<boost::uint8_t> bytes =
+      boost::shared_array<std::uint8_t> bytes =
           mfps.getReader(0)->getBytes(0);
       TEST_ASSERT(bytes);
       std::vector<MultiFPBReader::ResultTuple> nbrs =
@@ -168,7 +169,7 @@ void test3MultiFPBReaderTversky() {
       TEST_ASSERT(nbrs[2].get<2>() == 0);
     }
     {  // with a threshold, asymmetric
-      boost::shared_array<boost::uint8_t> bytes =
+      boost::shared_array<std::uint8_t> bytes =
           mfps.getReader(0)->getBytes(0);
       TEST_ASSERT(bytes);
       std::vector<MultiFPBReader::ResultTuple> nbrs =
@@ -204,7 +205,7 @@ void test4MultiFPBReaderContains() {
     mfps.init();
     TEST_ASSERT(mfps.length() == 2);
     {
-      boost::shared_array<boost::uint8_t> bytes =
+      boost::shared_array<std::uint8_t> bytes =
           mfps.getReader(0)->getBytes(0);
       TEST_ASSERT(bytes);
       std::vector<std::pair<unsigned int, unsigned int> > nbrs =
@@ -216,7 +217,7 @@ void test4MultiFPBReaderContains() {
       TEST_ASSERT(nbrs[1].second == 1);
     }
     {
-      boost::shared_array<boost::uint8_t> bytes =
+      boost::shared_array<std::uint8_t> bytes =
           mfps.getReader(0)->getBytes(1);
       TEST_ASSERT(bytes);
       std::vector<std::pair<unsigned int, unsigned int> > nbrs =

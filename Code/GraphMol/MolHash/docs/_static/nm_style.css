@@ -1,0 +1,47 @@
+html *
+{
+   font-family: 'Helvetica Neue', Arial;
+}
+
+pre,
+pre *
+{
+  font-family: Consolas,"Andale Mono WT","Andale Mono","Lucida Console",
+               "Lucida Sans Typewriter","DejaVu Sans Mono",
+               "Bitstream Vera Sans Mono","Liberation Mono","Nimbus Mono L",
+               Monaco,"Courier New",Courier,monospace !important;  
+}
+
+.wy-side-nav-search {
+  background-color: #25B2AA;
+}
+
+.wy-nav-side {
+  background-color: #c8893a;
+}
+
+.wy-menu-vertical a {
+  color: #444444;
+}
+
+.wy-menu-vertical a:hover {
+  background-color: #c89b60;
+}
+
+a {
+  color: #25B2AA;
+}
+
+a.icon {
+  font-size: 22pt;
+}
+
+td,
+.wy-table-responsive table td  {
+  word-wrap:break-word;
+  white-space:normal;
+}
+
+.wy-nav-content {
+  max-width: 1000px;
+}

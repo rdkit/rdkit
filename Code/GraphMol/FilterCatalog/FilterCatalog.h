@@ -29,6 +29,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
+#include <RDGeneral/export.h>
 #ifndef _RD_FILTER_CATALOG_PARAMS_
 #define _RD_FILTER_CATALOG_PARAMS_
 
@@ -38,7 +39,8 @@
 
 namespace RDKit {
 class FilterCatalog;
-class FilterCatalogParams : public RDCatalog::CatalogParams {
+class RDKIT_FILTERCATALOG_EXPORT FilterCatalogParams
+    : public RDCatalog::CatalogParams {
  public:
   enum FilterCatalogs {
     PAINS_A = (1u << 1),
@@ -82,7 +84,7 @@ class FilterCatalogParams : public RDCatalog::CatalogParams {
   //! Returns the existing list of FilterCatalogs to be used.
   const std::vector<FilterCatalogs> &getCatalogs() const { return d_catalogs; }
   //! Fill a catalog with the appropriate entries
-  virtual void fillCatalog(FilterCatalog &catalog);
+  virtual void fillCatalog(FilterCatalog &catalog) const;
 
   //! serializes (pickles) to a stream
   virtual void toStream(std::ostream &ss) const;
@@ -107,32 +109,25 @@ class FilterCatalogParams : public RDCatalog::CatalogParams {
 };
 
 typedef RDCatalog::Catalog<FilterCatalogEntry, FilterCatalogParams> FCatalog;
-class FilterCatalog : public FCatalog {
+class RDKIT_FILTERCATALOG_EXPORT FilterCatalog : public FCatalog {
  public:
   // syntactic sugar for getMatch(es) return values.
   typedef boost::shared_ptr<FilterCatalogEntry> SENTRY;
 
-#if BOOST_VERSION / 100000 >= 1 && (BOOST_VERSION / 100 % 1000) > 44
-#define BOOST_PYTHON_SUPPORT_SHARED_CONST
-#endif
-
-#ifdef BOOST_PYTHON_SUPPORT_SHARED_CONST
   // If boost::python can support shared_ptr of const objects
   //  we can enable support for this feature
   typedef boost::shared_ptr<const entryType_t> CONST_SENTRY;
-#else
-  typedef boost::shared_ptr<entryType_t> CONST_SENTRY;
-#endif
 
   FilterCatalog() : FCatalog(), d_entries() {}
 
   FilterCatalog(FilterCatalogParams::FilterCatalogs catalogs)
       : FCatalog(), d_entries() {
-    setCatalogParams(new paramType_t(catalogs));
+    paramType_t temp_params(catalogs);
+    setCatalogParams(&temp_params);
   }
 
   FilterCatalog(const FilterCatalogParams &params) : FCatalog(), d_entries() {
-    setCatalogParams(new paramType_t(params));
+    setCatalogParams(&params);
   }
 
   FilterCatalog(const FilterCatalog &rhs)
@@ -172,7 +167,7 @@ class FilterCatalog : public FCatalog {
     Removes a FilterCatalogEntry from the catalog.
 
     \param idx          The FilterCatalogEntry index for the entry to remove.
-     n.b. removing an entry may change the indicies of other entries.
+     n.b. removing an entry may change the indices of other entries.
           To safely remove entries, remove entries with the highest idx
            first.
   */
@@ -197,7 +192,9 @@ class FilterCatalog : public FCatalog {
 
   //------------------------------------
   //! returns the number of entries in the catalog
-  virtual unsigned int getNumEntries() const { return static_cast<unsigned int>(d_entries.size()); }
+  virtual unsigned int getNumEntries() const {
+    return static_cast<unsigned int>(d_entries.size());
+  }
 
   //------------------------------------
   //! Reset the current catalog to match the specified FilterCatalogParameters
@@ -205,7 +202,7 @@ class FilterCatalog : public FCatalog {
     \param params  The new FilterCatalogParams specifying the new state of the
     catalog
   */
-  virtual void setCatalogParams(FilterCatalogParams *params);
+  virtual void setCatalogParams(const FilterCatalogParams *params);
 
   //------------------------------------
   //! Returns true if the molecule matches any entry in the catalog
@@ -240,7 +237,24 @@ class FilterCatalog : public FCatalog {
   std::vector<SENTRY> d_entries;
 };
 
-bool FilterCatalogCanSerialize();
-}
+RDKIT_FILTERCATALOG_EXPORT bool FilterCatalogCanSerialize();
+
+//! Run a filter catalog on a set of smiles strings
+/*
+  \param smiles vector of smiles strings to analyze
+  \param nthreads specify the number of threads to use or specify 0 to use all processors
+                         [default 1]
+  \returns a vector of vectors.  For each input smiles string, returns
+                   a vector of shared_ptr::FilterMatchEntry objects.
+                   If a molecule matches no filters, the vector will be empty.
+                   If a smiles can't be parsed, a 'no valid RDKit molecule' catalog entry is returned.
+
+*/
+RDKIT_FILTERCATALOG_EXPORT
+std::vector<std::vector<boost::shared_ptr<const FilterCatalogEntry>>> RunFilterCatalog(
+              const FilterCatalog &filterCatalog,
+	      const std::vector<std::string> &smiles,
+	      int numThreads=1);
+}  // namespace RDKit
 
 #endif

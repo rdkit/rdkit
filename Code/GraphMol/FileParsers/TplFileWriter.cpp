@@ -81,7 +81,8 @@ void writeBond(const ROMol &mol, unsigned int bondId,
       break;
     default:
       BOOST_LOG(rdWarningLog) << "TPL files only support single, double, "
-                                 "aromatic, and triple bonds." << std::endl;
+                                 "aromatic, and triple bonds."
+                              << std::endl;
       BOOST_LOG(rdWarningLog) << "Bond of with type " << bond->getBondType()
                               << " written as single in output." << std::endl;
       bondLabel = "1.0";
@@ -99,7 +100,7 @@ void writeBond(const ROMol &mol, unsigned int bondId,
 
   dest << std::endl;
 }
-}
+}  // namespace TPLWriter
 
 std::string MolToTPLText(const ROMol &mol, const std::string &partialChargeProp,
                          bool writeFirstConfTwice) {
@@ -123,7 +124,7 @@ std::string MolToTPLText(const ROMol &mol, const std::string &partialChargeProp,
   res << "PROP 7 1" << std::endl;
   res << mol.getNumAtoms() << " " << mol.getNumBonds() << std::endl;
 
-  ROMol::ConstConformerIterator confIt = mol.beginConformers();
+  auto confIt = mol.beginConformers();
   // write the atoms:
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
     TPLWriter::writeAtom(mol, i, confIt, res, partialChargeProp);
@@ -136,7 +137,9 @@ std::string MolToTPLText(const ROMol &mol, const std::string &partialChargeProp,
 
   // write the additional conformations:
   res << "CONFS " << mol.getNumConformers() - 1 << std::endl;
-  if (!writeFirstConfTwice) ++confIt;
+  if (!writeFirstConfTwice) {
+    ++confIt;
+  }
   while (confIt != mol.endConformers()) {
     std::stringstream tmpStrm;
     std::string confName;
@@ -162,8 +165,9 @@ std::string MolToTPLText(const ROMol &mol, const std::string &partialChargeProp,
 void MolToTPLFile(const ROMol &mol, const std::string &fName,
                   const std::string &partialChargeProp,
                   bool writeFirstConfTwice) {
-  std::ofstream *outStream = new std::ofstream(fName.c_str());
-  if (!outStream || !(*outStream) || outStream->bad()) {
+  auto *outStream = new std::ofstream(fName.c_str());
+  if (!(*outStream) || outStream->bad()) {
+    delete outStream;
     std::ostringstream errout;
     errout << "Bad output file " << fName;
     throw BadFileException(errout.str());
@@ -174,4 +178,4 @@ void MolToTPLFile(const ROMol &mol, const std::string &fName,
   *outStream << outString;
   delete outStream;
 }
-}
+}  // namespace RDKit

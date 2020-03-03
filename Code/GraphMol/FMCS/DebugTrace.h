@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #pragma once
 #include <stdio.h>
 #include <string.h>
@@ -46,7 +47,7 @@
                               // rings where seeds growing in both directions
                               // throw the same ring.
 
-#define FAST_INCREMENTAL_MATCH  // fast and some time very usefull. request
+#define FAST_INCREMENTAL_MATCH  // fast and some time very useful. request
                                 // PRECOMPUTED_TABLES_MATCH
 // previous match result based match checking without finding new matched
 // substructure location in the target
@@ -153,5 +154,5 @@ struct ExecStatistics {
         DupCacheFoundMatch(0) {}
 };
 #endif
-}
-}
+}  // namespace FMCS
+}  // namespace RDKit

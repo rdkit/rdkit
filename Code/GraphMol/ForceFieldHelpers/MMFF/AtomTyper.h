@@ -9,6 +9,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef _RD_MMFFATOMTYPER_H__
 #define _RD_MMFFATOMTYPER_H__
 
@@ -16,7 +17,7 @@
 #include <string>
 #include <iostream>
 #include <ForceField/MMFF/Params.h>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 
 namespace RDKit {
 class ROMol;
@@ -25,14 +26,30 @@ class Atom;
 class Bond;
 
 namespace MMFF {
+  
+namespace DefaultParameters {
+RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFPropCollection *getMMFFProp();
+RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFAromCollection *getMMFFArom();
+RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFDefCollection *getMMFFDef();
+RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFHerschbachLaurieCollection *
+  getMMFFHerschbachLaurie();
+RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFPBCICollection *getMMFFPBCI();
+RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFAngleCollection *getMMFFAngle();
+RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFStbnCollection *getMMFFStbn();
+RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFDfsbCollection *getMMFFDfsb();
+RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFTorCollection *getMMFFTor(const bool isMMFFs);
+RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFOopCollection *getMMFFOop(const bool isMMFFs);
+RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFVdWCollection *getMMFFVdW();
+}
+ 
 class RingMembershipSize;
 using namespace ForceFields::MMFF;
-class MMFFAtomProperties {
+class RDKIT_FORCEFIELDHELPERS_EXPORT MMFFAtomProperties {
  public:
   MMFFAtomProperties()
       : mmffAtomType(0), mmffFormalCharge(0.0), mmffPartialCharge(0.0){};
   ~MMFFAtomProperties(){};
-  boost::uint8_t mmffAtomType;
+  std::uint8_t mmffAtomType;
   double mmffFormalCharge;
   double mmffPartialCharge;
 };
@@ -44,10 +61,10 @@ enum {
   MMFF_VERBOSITY_LOW = 1,
   MMFF_VERBOSITY_HIGH = 2
 };
-class MMFFMolProperties {
+class RDKIT_FORCEFIELDHELPERS_EXPORT MMFFMolProperties {
  public:
   MMFFMolProperties(ROMol &mol, const std::string &mmffVariant = "MMFF94",
-                    boost::uint8_t verbosity = MMFF_VERBOSITY_NONE,
+                    std::uint8_t verbosity = MMFF_VERBOSITY_NONE,
                     std::ostream &oStream = std::cout);
   ~MMFFMolProperties(){};
   unsigned int getMMFFBondType(const Bond *bond);
@@ -62,7 +79,7 @@ class MMFFMolProperties {
       const ROMol &mol, unsigned int idx2, unsigned int idx3);
   const ForceFields::MMFF::MMFFBond *getMMFFBondStretchEmpiricalRuleParams(
       const ROMol &mol, const Bond *bond);
-  boost::uint8_t getMMFFAtomType(const unsigned int idx) {
+  std::uint8_t getMMFFAtomType(const unsigned int idx) {
     URANGE_CHECK(idx, this->d_MMFFAtomPropertiesPtrVect.size());
 
     return this->d_MMFFAtomPropertiesPtrVect[idx]->mmffAtomType;
@@ -108,21 +125,22 @@ class MMFFMolProperties {
     this->d_dielConst = dielConst;
   };
   double getMMFFDielectricConstant() { return this->d_dielConst; };
-  void setMMFFDielectricModel(boost::uint8_t dielModel) {
+  void setMMFFDielectricModel(std::uint8_t dielModel) {
     this->d_dielModel = dielModel;
   };
-  boost::uint8_t getMMFFDielectricModel() { return this->d_dielModel; };
-  void setMMFFVerbosity(boost::uint8_t verbosity) {
+  std::uint8_t getMMFFDielectricModel() { return this->d_dielModel; };
+  void setMMFFVerbosity(std::uint8_t verbosity) {
     this->d_verbosity = verbosity;
   };
-  boost::uint8_t getMMFFVerbosity() { return this->d_verbosity; };
+  std::uint8_t getMMFFVerbosity() { return this->d_verbosity; };
   void setMMFFOStream(std::ostream *oStream) { this->d_oStream = oStream; };
   std::ostream &getMMFFOStream() { return *(this->d_oStream); };
   bool isValid() { return d_valid; };
   bool getMMFFBondStretchParams(const ROMol &mol, const unsigned int idx1,
                                 const unsigned int idx2, unsigned int &bondType,
                                 MMFFBond &mmffBondStretchParams);
-  bool getMMFFAngleBendParams(const ROMol &mol, const unsigned int idx1,
+  bool getMMFFAngleBendParams(const ROMol &mol,
+			      const unsigned int idx1,
                               const unsigned int idx2, const unsigned int idx3,
                               unsigned int &angleType,
                               MMFFAngle &mmffAngleBendParams);
@@ -166,41 +184,44 @@ class MMFFMolProperties {
   bool d_torsionTerm;
   bool d_vdWTerm;
   bool d_eleTerm;
-  double d_dielConst;          //!< the dielectric constant
-  boost::uint8_t d_dielModel;  //!< the dielectric model (1 = constant, 2 =
+  double d_dielConst;        //!< the dielectric constant
+  std::uint8_t d_dielModel;  //!< the dielectric model (1 = constant, 2 =
   // distance-dependent)
-  boost::uint8_t d_verbosity;
+  std::uint8_t d_verbosity;
   std::ostream *d_oStream;
   std::vector<MMFFAtomPropertiesPtr> d_MMFFAtomPropertiesPtrVect;
 };
-unsigned int isAngleInRingOfSize3or4(const ROMol &mol, const unsigned int idx1,
-                                     const unsigned int idx2,
-                                     const unsigned int idx3);
-unsigned int isTorsionInRingOfSize4or5(const ROMol &mol,
-                                       const unsigned int idx1,
-                                       const unsigned int idx2,
-                                       const unsigned int idx3,
-                                       const unsigned int idx4);
-bool isRingAromatic(const ROMol &mol, const INT_VECT &ringIndxVect);
-bool isAtomInAromaticRingOfSize(const Atom *atom, const unsigned int ringSize);
-bool isAtomNOxide(const Atom *atom);
-bool areAtomsInSameAromaticRing(const ROMol &mol, const unsigned int idx1,
-                                const unsigned int idx2);
-bool areAtomsInSameRingOfSize(const ROMol &mol, const unsigned int ringSize,
-                              const unsigned int numAtoms, ...);
-unsigned int sanitizeMMFFMol(RWMol &mol);
-void setMMFFAromaticity(RWMol &mol);
-unsigned int getMMFFStretchBendType(const unsigned int angleType,
-                                    const unsigned int bondType1,
-                                    const unsigned int bondType2);
-unsigned int getPeriodicTableRow(const int atomicNum);
-const ForceFields::MMFF::MMFFAngle *getMMFFAngleBendEmpiricalRuleParams(
+RDKIT_FORCEFIELDHELPERS_EXPORT unsigned int isAngleInRingOfSize3or4(
+    const ROMol &mol, const unsigned int idx1, const unsigned int idx2,
+    const unsigned int idx3);
+RDKIT_FORCEFIELDHELPERS_EXPORT unsigned int isTorsionInRingOfSize4or5(
+    const ROMol &mol, const unsigned int idx1, const unsigned int idx2,
+    const unsigned int idx3, const unsigned int idx4);
+RDKIT_FORCEFIELDHELPERS_EXPORT bool isRingAromatic(
+    const ROMol &mol, const INT_VECT &ringIndxVect);
+RDKIT_FORCEFIELDHELPERS_EXPORT bool isAtomInAromaticRingOfSize(
+    const Atom *atom, const unsigned int ringSize);
+RDKIT_FORCEFIELDHELPERS_EXPORT bool isAtomNOxide(const Atom *atom);
+RDKIT_FORCEFIELDHELPERS_EXPORT bool areAtomsInSameAromaticRing(
+    const ROMol &mol, const unsigned int idx1, const unsigned int idx2);
+RDKIT_FORCEFIELDHELPERS_EXPORT bool areAtomsInSameRingOfSize(
+    const ROMol &mol, const unsigned int ringSize, const unsigned int numAtoms,
+    ...);
+RDKIT_FORCEFIELDHELPERS_EXPORT unsigned int sanitizeMMFFMol(RWMol &mol);
+RDKIT_FORCEFIELDHELPERS_EXPORT void setMMFFAromaticity(RWMol &mol);
+RDKIT_FORCEFIELDHELPERS_EXPORT unsigned int getMMFFStretchBendType(
+    const unsigned int angleType, const unsigned int bondType1,
+    const unsigned int bondType2);
+RDKIT_FORCEFIELDHELPERS_EXPORT unsigned int getPeriodicTableRow(
+    const int atomicNum);
+RDKIT_FORCEFIELDHELPERS_EXPORT const ForceFields::MMFF::MMFFAngle *
+getMMFFAngleBendEmpiricalRuleParams(
     const ROMol &mol, const ForceFields::MMFF::MMFFAngle *oldMMFFAngleParams,
     const ForceFields::MMFF::MMFFProp *mmffPropParamsCentralAtom,
     const ForceFields::MMFF::MMFFBond *mmffBondParams1,
     const ForceFields::MMFF::MMFFBond *mmffBondParams2, unsigned int idx1,
     unsigned int idx2, unsigned int idx3);
-}
-}
+}  // namespace MMFF
+}  // namespace RDKit
 
 #endif

@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2007-2011 Greg Landrum
+//  Copyright (C) 2007-2018 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -21,6 +20,7 @@
 
 namespace RDKit {
 namespace Descriptors {
+
 double getLabuteAtomContribs(const ROMol &mol, std::vector<double> &Vi,
                              double &hContrib, bool includeHs, bool force) {
   TEST_ASSERT(Vi.size() == mol.getNumAtoms());
@@ -74,7 +74,7 @@ double getLabuteAtomContribs(const ROMol &mol, std::vector<double> &Vi,
     Vi[i] = M_PI * Ri * (4. * Ri - Vi[i]);
     res += Vi[i];
   }
-  if (includeHs) {
+  if (includeHs && fabs(hContrib) > 1e-4) {
     double Rj = PeriodicTable::getTable()->getRb0(1);
     hContrib = M_PI * Rj * (4. * Rj - hContrib);
     res += hContrib;
@@ -100,7 +100,7 @@ double calcLabuteASA(const ROMol &mol, bool includeHs, bool force) {
 }
 
 double getTPSAAtomContribs(const ROMol &mol, std::vector<double> &Vi,
-                           bool force) {
+                           bool force, bool includeSandP) {
   TEST_ASSERT(Vi.size() >= mol.getNumAtoms());
   double res = 0;
   if (!force && mol.hasProp(common_properties::_tpsaAtomContribs)) {
@@ -146,7 +146,12 @@ double getTPSAAtomContribs(const ROMol &mol, std::vector<double> &Vi,
   for (unsigned int i = 0; i < nAtoms; ++i) {
     const Atom *atom = mol.getAtomWithIdx(i);
     int atNum = atom->getAtomicNum();
-    if (atNum != 7 && atNum != 8) continue;
+
+    if (atNum != 7 && atNum != 8 &&
+        (!includeSandP || (atNum != 15 && atNum != 16))) {
+      continue;
+    }
+
     nHs[i] += atom->getTotalNumHs();
     int chg = atom->getFormalCharge();
     bool in3Ring = mol.getRingInfo()->isAtomInRingOfSize(i, 3);
@@ -156,92 +161,172 @@ double getTPSAAtomContribs(const ROMol &mol, std::vector<double> &Vi,
     if (atNum == 7) {
       switch (nNbrs[i]) {
         case 1:
-          if (nHs[i] == 0 && chg == 0 && nTrip[i] == 1)
+          if (nHs[i] == 0 && chg == 0 && nTrip[i] == 1) {
             tmp = 23.79;
-          else if (nHs[i] == 1 && chg == 0 && nDoub[i] == 1)
+          } else if (nHs[i] == 1 && chg == 0 && nDoub[i] == 1) {
             tmp = 23.85;
-          else if (nHs[i] == 2 && chg == 0 && nSing[i] == 1)
+          } else if (nHs[i] == 2 && chg == 0 && nSing[i] == 1) {
             tmp = 26.02;
-          else if (nHs[i] == 2 && chg == 1 && nDoub[i] == 1)
+          } else if (nHs[i] == 2 && chg == 1 && nDoub[i] == 1) {
             tmp = 25.59;
-          else if (nHs[i] == 3 && chg == 1 && nSing[i] == 1)
+          } else if (nHs[i] == 3 && chg == 1 && nSing[i] == 1) {
             tmp = 27.64;
+          }
           break;
         case 2:
-          if (nHs[i] == 0 && chg == 0 && nSing[i] == 1 && nDoub[i] == 1)
+          if (nHs[i] == 0 && chg == 0 && nSing[i] == 1 && nDoub[i] == 1) {
             tmp = 12.36;
-          else if (nHs[i] == 0 && chg == 0 && nTrip[i] == 1 && nDoub[i] == 1)
+          } else if (nHs[i] == 0 && chg == 0 && nTrip[i] == 1 &&
+                     nDoub[i] == 1) {
             tmp = 13.60;
-          else if (nHs[i] == 1 && chg == 0 && nSing[i] == 2 && in3Ring)
+          } else if (nHs[i] == 1 && chg == 0 && nSing[i] == 2 && in3Ring) {
             tmp = 21.94;
-          else if (nHs[i] == 1 && chg == 0 && nSing[i] == 2 && !in3Ring)
+          } else if (nHs[i] == 1 && chg == 0 && nSing[i] == 2 && !in3Ring) {
             tmp = 12.03;
-          else if (nHs[i] == 0 && chg == 1 && nTrip[i] == 1 && nSing[i] == 1)
+          } else if (nHs[i] == 0 && chg == 1 && nTrip[i] == 1 &&
+                     nSing[i] == 1) {
             tmp = 4.36;
-          else if (nHs[i] == 1 && chg == 1 && nDoub[i] == 1 && nSing[i] == 1)
+          } else if (nHs[i] == 1 && chg == 1 && nDoub[i] == 1 &&
+                     nSing[i] == 1) {
             tmp = 13.97;
-          else if (nHs[i] == 2 && chg == 1 && nSing[i] == 2)
+          } else if (nHs[i] == 2 && chg == 1 && nSing[i] == 2) {
             tmp = 16.61;
-          else if (nHs[i] == 0 && chg == 0 && nArom[i] == 2)
+          } else if (nHs[i] == 0 && chg == 0 && nArom[i] == 2) {
             tmp = 12.89;
-          else if (nHs[i] == 1 && chg == 0 && nArom[i] == 2)
+          } else if (nHs[i] == 1 && chg == 0 && nArom[i] == 2) {
             tmp = 15.79;
-          else if (nHs[i] == 1 && chg == 1 && nArom[i] == 2)
+          } else if (nHs[i] == 1 && chg == 1 && nArom[i] == 2) {
             tmp = 14.14;
+          }
           break;
         case 3:
-          if (nHs[i] == 0 && chg == 0 && nSing[i] == 3 && in3Ring)
+          if (nHs[i] == 0 && chg == 0 && nSing[i] == 3 && in3Ring) {
             tmp = 3.01;
-          else if (nHs[i] == 0 && chg == 0 && nSing[i] == 3 && !in3Ring)
+          } else if (nHs[i] == 0 && chg == 0 && nSing[i] == 3 && !in3Ring) {
             tmp = 3.24;
 
-          else if (nHs[i] == 0 && chg == 0 && nSing[i] == 1 && nDoub[i] == 2)
+          } else if (nHs[i] == 0 && chg == 0 && nSing[i] == 1 &&
+                     nDoub[i] == 2) {
             tmp = 11.68;
-          else if (nHs[i] == 0 && chg == 1 && nSing[i] == 2 && nDoub[i] == 1)
+          } else if (nHs[i] == 0 && chg == 1 && nSing[i] == 2 &&
+                     nDoub[i] == 1) {
             tmp = 3.01;
-          else if (nHs[i] == 1 && chg == 1 && nSing[i] == 3)
+          } else if (nHs[i] == 1 && chg == 1 && nSing[i] == 3) {
             tmp = 4.44;
-          else if (nHs[i] == 0 && chg == 0 && nArom[i] == 3)
+          } else if (nHs[i] == 0 && chg == 0 && nArom[i] == 3) {
             tmp = 4.41;
-          else if (nHs[i] == 0 && chg == 0 && nSing[i] == 1 && nArom[i] == 2)
+          } else if (nHs[i] == 0 && chg == 0 && nSing[i] == 1 &&
+                     nArom[i] == 2) {
             tmp = 4.93;
-          else if (nHs[i] == 0 && chg == 0 && nDoub[i] == 1 && nArom[i] == 2)
+          } else if (nHs[i] == 0 && chg == 0 && nDoub[i] == 1 &&
+                     nArom[i] == 2) {
             tmp = 8.39;
-          else if (nHs[i] == 0 && chg == 1 && nArom[i] == 3)
+          } else if (nHs[i] == 0 && chg == 1 && nArom[i] == 3) {
             tmp = 4.10;
-          else if (nHs[i] == 0 && chg == 1 && nSing[i] == 1 && nArom[i] == 2)
+          } else if (nHs[i] == 0 && chg == 1 && nSing[i] == 1 &&
+                     nArom[i] == 2) {
             tmp = 3.88;
+          }
           break;
         case 4:
-          if (nHs[i] == 0 && nSing[i] == 4 && chg == 1) tmp = 0.0;
+          if (nHs[i] == 0 && nSing[i] == 4 && chg == 1) {
+            tmp = 0.0;
+          }
+          break;
+        default:
           break;
       }
       if (tmp < 0.0) {
         tmp = 30.5 - nNbrs[i] * 8.2 + nHs[i] * 1.5;
-        if (tmp < 0) tmp = 0.0;
+        if (tmp < 0) {
+          tmp = 0.0;
+        }
       }
     } else if (atNum == 8) {
       switch (nNbrs[i]) {
         case 1:
-          if (nHs[i] == 0 && chg == 0 && nDoub[i] == 1)
+          if (nHs[i] == 0 && chg == 0 && nDoub[i] == 1) {
             tmp = 17.07;
-          else if (nHs[i] == 1 && chg == 0 && nSing[i] == 1)
+          } else if (nHs[i] == 1 && chg == 0 && nSing[i] == 1) {
             tmp = 20.23;
-          else if (nHs[i] == 0 && chg == -1 && nSing[i] == 1)
+          } else if (nHs[i] == 0 && chg == -1 && nSing[i] == 1) {
             tmp = 23.06;
+          }
           break;
         case 2:
-          if (nHs[i] == 0 && chg == 0 && nSing[i] == 2 && in3Ring)
+          if (nHs[i] == 0 && chg == 0 && nSing[i] == 2 && in3Ring) {
             tmp = 12.53;
-          else if (nHs[i] == 0 && chg == 0 && nSing[i] == 2 && !in3Ring)
+          } else if (nHs[i] == 0 && chg == 0 && nSing[i] == 2 && !in3Ring) {
             tmp = 9.23;
-          else if (nHs[i] == 0 && chg == 0 && nArom[i] == 2)
+          } else if (nHs[i] == 0 && chg == 0 && nArom[i] == 2) {
             tmp = 13.14;
+          }
+          break;
+        default:
           break;
       }
       if (tmp < 0.0) {
         tmp = 28.5 - nNbrs[i] * 8.6 + nHs[i] * 1.5;
-        if (tmp < 0) tmp = 0.0;
+        if (tmp < 0) {
+          tmp = 0.0;
+        }
+      }
+    } else if (includeSandP && atNum == 15) {
+      tmp = 0.0;
+      switch (nNbrs[i]) {
+        case 2:
+          if (nHs[i] == 0 && chg == 0 && nSing[i] == 1 && nDoub[i] == 1) {
+            tmp = 34.14;
+          }
+          break;
+        case 3:
+          if (nHs[i] == 0 && chg == 0 && nSing[i] == 3) {
+            tmp = 13.59;
+          } else if (nHs[i] == 1 && chg == 0 && nSing[i] == 2 &&
+                     nDoub[i] == 1) {
+            tmp = 23.47;
+          }
+          break;
+        case 4:
+          if (nHs[i] == 0 && chg == 0 && nSing[i] == 3 && nDoub[i] == 1) {
+            tmp = 9.81;
+          }
+          break;
+        default:
+          break;
+      }
+    } else if (includeSandP && atNum == 16) {
+      tmp = 0.0;
+      switch (nNbrs[i]) {
+        case 1:
+          if (nHs[i] == 0 && chg == 0 && nDoub[i] == 1) {
+            tmp = 32.09;
+          } else if (nHs[i] == 1 && chg == 0 && nSing[i] == 1) {
+            tmp = 38.80;
+          }
+          break;
+        case 2:
+          if (nHs[i] == 0 && chg == 0 && nSing[i] == 2) {
+            tmp = 25.30;
+          } else if (nHs[i] == 0 && chg == 0 && nArom[i] == 2) {
+            tmp = 28.24;
+          }
+          break;
+        case 3:
+          if (nHs[i] == 0 && chg == 0 && nArom[i] == 2 && nDoub[i] == 1) {
+            tmp = 21.70;
+          } else if (nHs[i] == 0 && chg == 0 && nSing[i] == 2 &&
+                     nDoub[i] == 1) {
+            tmp = 19.21;
+          }
+          break;
+        case 4:
+          if (nHs[i] == 0 && chg == 0 && nSing[i] == 2 && nDoub[i] == 2) {
+            tmp = 8.38;
+          }
+          break;
+        default:
+          break;
       }
     }
     Vi[i] = tmp;
@@ -252,7 +337,7 @@ double getTPSAAtomContribs(const ROMol &mol, std::vector<double> &Vi,
   mol.setProp(common_properties::_tpsa, res, true);
   return res;
 }
-double calcTPSA(const ROMol &mol, bool force) {
+double calcTPSA(const ROMol &mol, bool force, bool includeSandP) {
   if (!force && mol.hasProp(common_properties::_tpsa)) {
     double res;
     mol.getProp(common_properties::_tpsa, res);
@@ -261,14 +346,15 @@ double calcTPSA(const ROMol &mol, bool force) {
   std::vector<double> contribs;
   contribs.resize(mol.getNumAtoms());
   double res;
-  res = getTPSAAtomContribs(mol, contribs, force);
+  res = getTPSAAtomContribs(mol, contribs, force, includeSandP);
   return res;
 }
 
 namespace {
 void assignContribsToBins(const std::vector<double> &contribs,
                           const std::vector<double> &binProp,
-                          std::vector<double> &bins, std::vector<double> &res) {
+                          const std::vector<double> &bins,
+                          std::vector<double> &res) {
   PRECONDITION(contribs.size() == binProp.size(), "mismatched array sizes");
   PRECONDITION(res.size() >= bins.size() + 1, "mismatched array sizes");
   for (unsigned int i = 0; i < contribs.size(); ++i) {
@@ -279,7 +365,7 @@ void assignContribsToBins(const std::vector<double> &contribs,
     res[idx] += cVal;
   }
 }
-}
+}  // namespace
 
 std::vector<double> calcSlogP_VSA(const ROMol &mol, std::vector<double> *bins,
                                   bool force) {
@@ -357,5 +443,28 @@ std::vector<double> calcPEOE_VSA(const ROMol &mol, std::vector<double> *bins,
 
   return res;
 }
+
+std::vector<double> calcCustomProp_VSA(const ROMol &mol,
+                                       const std::string &customPropName,
+                                       const std::vector<double> &bins,
+                                       bool force) {
+  std::vector<double> res(bins.size() + 1, 0);
+
+  std::vector<double> vsaContribs(mol.getNumAtoms());
+  double tmp;
+  getLabuteAtomContribs(mol, vsaContribs, tmp, true, force);
+
+  std::vector<double> prop(mol.getNumAtoms(), 0.0);
+  for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+    if (mol.getAtomWithIdx(i)->hasProp(customPropName)) {
+      prop[i] = mol.getAtomWithIdx(i)->getProp<double>(customPropName);
+    } else {
+      prop[i] = 1;
+    }
+  }
+  assignContribsToBins(vsaContribs, prop, bins, res);
+
+  return res;
+}
 }  // end of namespace Descriptors
-}  // end of namespace RDKit
+}  // namespace RDKit

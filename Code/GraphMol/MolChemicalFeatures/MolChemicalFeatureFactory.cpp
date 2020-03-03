@@ -24,7 +24,7 @@
 namespace RDKit {
 
 FeatSPtrList MolChemicalFeatureFactory::getFeaturesForMol(
-    const ROMol &mol, const char *includeOnly) const {
+    const ROMol &mol, const char *includeOnly, int confId) const {
   PRECONDITION(includeOnly, "bad limits");
   std::string limits(includeOnly);
 
@@ -33,12 +33,10 @@ FeatSPtrList MolChemicalFeatureFactory::getFeaturesForMol(
 #endif
   FeatSPtrList res;
   int idx = 1;
-  typedef std::vector<std::pair<std::string, std::set<int> > >
-      MatchSetCollection;
+  typedef std::vector<std::pair<std::string, std::set<int>>> MatchSetCollection;
   MatchSetCollection matchSets;
-  for (MolChemicalFeatureDef::CollectionType::const_iterator featDefIt =
-           beginFeatureDefs();
-       featDefIt != endFeatureDefs(); featDefIt++) {
+  for (auto featDefIt = beginFeatureDefs(); featDefIt != endFeatureDefs();
+       featDefIt++) {
     MolChemicalFeatureDef::CollectionType::value_type featDef = *featDefIt;
     if (limits == "" || limits == featDef->getFamily()) {
       std::vector<MatchVectType> matches;
@@ -52,9 +50,8 @@ FeatSPtrList MolChemicalFeatureFactory::getFeaturesForMol(
       for (unsigned int i = 0; i < numMatches; i++) {
         const MatchVectType &match = matches[i];
         std::set<int> matchSet;
-        for (MatchVectType::const_iterator mIt = match.begin();
-             mIt != match.end(); ++mIt) {
-          matchSet.insert(mIt->second);
+        for (const auto &mIt : match) {
+          matchSet.insert(mIt.second);
         }
 
         // loop over the matches we've already found and see if this one
@@ -73,16 +70,16 @@ FeatSPtrList MolChemicalFeatureFactory::getFeaturesForMol(
           matchSets.push_back(std::make_pair(featDef->getFamily(), matchSet));
 
           // Set up the feature:
-          MolChemicalFeature *newFeat =
+          auto *newFeat =
               new MolChemicalFeature(&mol, this, featDef.get(), idx++);
+          newFeat->setActiveConformer(confId);
           MolChemicalFeature::AtomPtrContainer &atoms = newFeat->d_atoms;
           atoms.resize(match.size());
 
           // set up the atoms:
-          for (MatchVectType::const_iterator matchIt = match.begin();
-               matchIt != match.end(); matchIt++) {
-            int atomIdx = matchIt->second;
-            int queryIdx = matchIt->first;
+          for (const auto &matchIt : match) {
+            int atomIdx = matchIt.second;
+            int queryIdx = matchIt.first;
             atoms[queryIdx] = mol.getAtomWithIdx(atomIdx);
           }
 
@@ -106,7 +103,7 @@ MolChemicalFeatureFactory *buildFeatureFactory(const std::string &featureData) {
 }
 
 MolChemicalFeatureFactory *buildFeatureFactory(std::istream &inStream) {
-  MolChemicalFeatureFactory *res = 0;
+  MolChemicalFeatureFactory *res = nullptr;
   MolChemicalFeatureDef::CollectionType featDefs;
 
   if (parseFeatureData(inStream, featDefs) == 0) {
@@ -122,4 +119,4 @@ MolChemicalFeatureFactory *buildFeatureFactory(std::istream &inStream) {
 
   return res;
 }
-}
+}  // namespace RDKit

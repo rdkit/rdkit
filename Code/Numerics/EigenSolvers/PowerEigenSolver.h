@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 
+#include <RDGeneral/export.h>
 #ifndef _RD_POWER_EIGENSOLVER_H
 #define _RD_POWER_EIGENSOLVER_H
 
@@ -18,7 +19,7 @@
 namespace RDNumeric {
 namespace EigenSolvers {
 //! Compute the \c numEig largest eigenvalues and, optionally,  the
-//corresponding
+// corresponding
 //! eigenvectors.
 /*!
 
@@ -46,22 +47,24 @@ We use the iterative power method, which works like this:
  while (abs(currEigVal - prevEigVal) > tol) :
      v = Au
      prevEigVal = currEigVal
-     currEigVal = v[i] // where i is the id os the largest absolute component
+     currEigVal = v[i] // where i is the id of the largest absolute component
      u = c*v
 \endverbatim
 
 
 */
-bool powerEigenSolver(unsigned int numEig, DoubleSymmMatrix &mat,
-                      DoubleVector &eigenValues, DoubleMatrix *eigenVectors = 0,
-                      int seed = -1);
+bool RDKIT_EIGENSOLVERS_EXPORT powerEigenSolver(unsigned int numEig,
+                                                DoubleSymmMatrix &mat,
+                                                DoubleVector &eigenValues,
+                                                DoubleMatrix *eigenVectors = 0,
+                                                int seed = -1);
 //! \overload
 static inline bool powerEigenSolver(unsigned int numEig, DoubleSymmMatrix &mat,
                                     DoubleVector &eigenValues,
                                     DoubleMatrix &eigenVectors, int seed = -1) {
   return powerEigenSolver(numEig, mat, eigenValues, &eigenVectors, seed);
 }
-};
-};
+};  // namespace EigenSolvers
+};  // namespace RDNumeric
 
 #endif

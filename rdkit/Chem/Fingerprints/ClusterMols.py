@@ -17,14 +17,14 @@ Sample Usage:
     --actTable="dop_test" --actName="moa_quant"
 
 """
-from __future__ import print_function
+
 
 import numpy
 
 from rdkit import DataStructs
 from rdkit.Chem.Fingerprints import FingerprintMols, MolSimilarity
 from rdkit.ML.Cluster import Murtagh
-from rdkit.six.moves import cPickle
+import pickle
 
 message = FingerprintMols.message
 error = FingerprintMols.error
@@ -39,7 +39,7 @@ def GetDistanceMatrix(data, metric, isSimilarity=1):
 
   """
   nPts = len(data)
-  res = numpy.zeros((nPts * (nPts - 1) / 2), numpy.float)
+  res = numpy.zeros((nPts * (nPts - 1) // 2), numpy.float)
   nSoFar = 0
   for col in range(1, nPts):
     for row in range(col):
@@ -110,7 +110,7 @@ def ClusterFromDetails(details):
 
   clustTree = ClusterPoints(data, details.metric, details.clusterAlgo, haveLabels=0, haveActs=1)
   if outF:
-    cPickle.dump(clustTree, outF)
+    pickle.dump(clustTree, outF)
   return clustTree
 
 

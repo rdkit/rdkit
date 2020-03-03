@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef __RD_SPARSEBITVECTS_H__
 #define __RD_SPARSEBITVECTS_H__
 
@@ -30,7 +31,7 @@ typedef IntSet::const_iterator IntSetConstIter;
     vectors but become rather a nightmare if they need to be negated.
 
  */
-class SparseBitVect : public BitVect {
+class RDKIT_DATASTRUCTS_EXPORT SparseBitVect : public BitVect {
  public:
   SparseBitVect() : dp_bits(0), d_size(0){};
   //! initialize with a particular size;
@@ -56,7 +57,7 @@ class SparseBitVect : public BitVect {
 
   bool operator[](const unsigned int which) const;
   SparseBitVect operator|(const SparseBitVect &) const;
-  SparseBitVect operator&(const SparseBitVect &) const;
+  SparseBitVect operator&(const SparseBitVect &)const;
   SparseBitVect operator^(const SparseBitVect &) const;
   SparseBitVect operator~() const;
 
@@ -71,8 +72,12 @@ class SparseBitVect : public BitVect {
   bool getBit(const IntVectIter which) const;
   bool getBit(const IntSetIter which) const;
 
-  unsigned int getNumOnBits() const { return static_cast<unsigned int>(dp_bits->size()); };
-  unsigned int getNumOffBits() const { return d_size - static_cast<unsigned int>(dp_bits->size()); };
+  unsigned int getNumOnBits() const {
+    return static_cast<unsigned int>(dp_bits->size());
+  };
+  unsigned int getNumOffBits() const {
+    return d_size - static_cast<unsigned int>(dp_bits->size());
+  };
 
   std::string toString() const;
 

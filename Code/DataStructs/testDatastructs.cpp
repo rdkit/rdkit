@@ -8,6 +8,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/test.h>
 #include <cstdlib>
 #include <iostream>
 #include <sstream>
@@ -23,7 +24,7 @@
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/Exceptions.h>
 #include <DataStructs/SparseIntVect.h>
-
+#include <DataStructs/DatastructsStreamOps.h>
 #include <stdlib.h>
 
 using namespace std;
@@ -115,7 +116,7 @@ void Test(T arg) {
 
   try {
     t3.getBit(4000);
-  } catch (IndexErrorException) {
+  } catch (IndexErrorException &) {
     std::cout << " except " << endl;
   } catch (...) {
     std::cout << " ERROR EXCEPT " << endl;
@@ -184,7 +185,9 @@ void ProbeTest(T &arg) {
   T t1(sz), t2(sz);
   for (int i = 0; i < sz; i += 2) {
     t1.setBit(i);
-    if (i < 3 * sz / 4) t2.setBit(i);
+    if (i < 3 * sz / 4) {
+      t2.setBit(i);
+    }
   }
   std::string pkl = t1.toString();
   TEST_ASSERT(AllProbeBitsMatch(t1, pkl));
@@ -520,31 +523,31 @@ void test6SparseIntVect() {
   try {
     iVect.setVal(-1, 13);
     TEST_ASSERT(0);
-  } catch (IndexErrorException &dexp) {
+  } catch (IndexErrorException &) {
     ;
   }
   try {
     iVect.setVal(255, 42);
     TEST_ASSERT(0);
-  } catch (IndexErrorException &dexp) {
+  } catch (IndexErrorException &) {
     ;
   }
   try {
     iVect.getVal(-1);
     TEST_ASSERT(0);
-  } catch (IndexErrorException &dexp) {
+  } catch (IndexErrorException &) {
     ;
   }
   try {
     iVect.getVal(255);
     TEST_ASSERT(0);
-  } catch (IndexErrorException &dexp) {
+  } catch (IndexErrorException &) {
     ;
   }
   try {
     iVect[-1];
     TEST_ASSERT(0);
-  } catch (IndexErrorException &dexp) {
+  } catch (IndexErrorException &) {
     ;
   }
 
@@ -553,8 +556,7 @@ void test6SparseIntVect() {
     iV1.setVal(4, 4);
     iV1.setVal(0, 2);
     iV1.setVal(3, 1);
-    SparseIntVect<int>::StorageType::const_iterator iter =
-        iV1.getNonzeroElements().begin();
+    auto iter = iV1.getNonzeroElements().begin();
     TEST_ASSERT(iter->first == 0);
     TEST_ASSERT(iter->second == 2);
     ++iter;
@@ -607,7 +609,7 @@ void test6SparseIntVect() {
     try {
       iV1 &= iVect;
       TEST_ASSERT(0);
-    } catch (ValueErrorException &dexp) {
+    } catch (ValueErrorException &) {
       ;
     }
   }
@@ -672,7 +674,7 @@ void test6SparseIntVect() {
     try {
       iV2 &= iVect;
       TEST_ASSERT(0);
-    } catch (ValueErrorException &dexp) {
+    } catch (ValueErrorException &) {
       ;
     }
   }
@@ -705,7 +707,7 @@ void test6SparseIntVect() {
     try {
       iV1 |= iVect;
       TEST_ASSERT(0);
-    } catch (ValueErrorException &dexp) {
+    } catch (ValueErrorException &) {
       ;
     }
   }
@@ -881,7 +883,7 @@ void test6SparseIntVect() {
   }
 
   {  // operator== and operator!=
-    SparseIntVect<int> iV1(5), iV2(5), iV3(3);
+    SparseIntVect<int> iV1(5), iV2(5), iV3(3), iV4(5);
     iV1.setVal(0, 2);
     iV1.setVal(2, 1);
     iV1.setVal(3, 4);
@@ -892,6 +894,11 @@ void test6SparseIntVect() {
     iV2.setVal(3, 4);
     iV2.setVal(4, 6);
 
+    iV4.setVal(1, 2);
+    iV4.setVal(2, 3);
+    iV4.setVal(3, 4);
+    iV4.setVal(4, 6);
+
     TEST_ASSERT(iV1 == iV1);
     TEST_ASSERT(iV2 == iV2);
     TEST_ASSERT(iV3 == iV3);
@@ -900,6 +907,8 @@ void test6SparseIntVect() {
     TEST_ASSERT(iV2 != iV1);
     TEST_ASSERT(iV3 != iV1);
     TEST_ASSERT(iV1 != iV3);
+    TEST_ASSERT(iV1 != iV4);
+    TEST_ASSERT(iV2 == iV4);
   }
 
   {  // test negative values (was sf.net Issue 3295215)
@@ -964,7 +973,7 @@ void test7SparseIntVectPickles() {
     try {
       iV2.fromString(pkl);
       TEST_ASSERT(0);
-    } catch (ValueErrorException &dexp) {
+    } catch (ValueErrorException &) {
       ;
     }
   }
@@ -999,7 +1008,7 @@ void test8BitVectPickles() {
     inS.open(pklName.c_str(), std::ios_base::binary);
     unsigned int length;
     inS >> length;
-    char *buff = new char[length];
+    auto *buff = new char[length];
     length = inS.readsome(buff, length);
     inS.close();
     std::string pkl(buff, length);
@@ -1092,8 +1101,8 @@ void test10BitVectBinaryText() {
 
     fps = BitVectToBinaryText(bv);
     TEST_ASSERT(fps.size() == 4);
-    for (unsigned int i = 0; i < fps.size(); ++i) {
-      TEST_ASSERT(fps[i] == 0);
+    for (char fp : fps) {
+      TEST_ASSERT(fp == 0);
     }
 
     bv.setBit(0);
@@ -1103,8 +1112,8 @@ void test10BitVectBinaryText() {
 
     fps = BitVectToBinaryText(bv);
     TEST_ASSERT(fps.size() == 4);
-    for (unsigned int i = 0; i < fps.size(); ++i) {
-      TEST_ASSERT(fps[i] != 0);
+    for (char fp : fps) {
+      TEST_ASSERT(fp != 0);
     }
   }
   {
@@ -1113,8 +1122,8 @@ void test10BitVectBinaryText() {
 
     fps = BitVectToBinaryText(bv);
     TEST_ASSERT(fps.size() == 4);
-    for (unsigned int i = 0; i < fps.size(); ++i) {
-      TEST_ASSERT(fps[i] == 0);
+    for (char fp : fps) {
+      TEST_ASSERT(fp == 0);
     }
     UpdateBitVectFromBinaryText(bv2, fps);
     TEST_ASSERT(bv == bv2);
@@ -1136,8 +1145,8 @@ void test10BitVectBinaryText() {
 
     fps = BitVectToBinaryText(bv);
     TEST_ASSERT(fps.size() == 5);
-    for (unsigned int i = 0; i < fps.size(); ++i) {
-      TEST_ASSERT(fps[i] == 0);
+    for (char fp : fps) {
+      TEST_ASSERT(fp == 0);
     }
 
     bv.setBit(0);
@@ -1392,11 +1401,42 @@ void test15BitmapOps() {
   }
 }
 
+void test16BitVectProps() {
+  ExplicitBitVect bv(32);
+  for(int i=0;i<32;i+=2){
+    bv.setBit(i);
+  }
+
+  ExplicitBitVect bv2(bv.toString());
+  TEST_ASSERT(bv == bv2);
+  
+  Dict d;
+  d.setVal<ExplicitBitVect>("exp", bv);
+  RDValue &value = d.getData()[0].val;
+  
+  DataStructsExplicitBitVecPropHandler bv_handler;
+  std::vector<CustomPropHandler*> handlers = {&bv_handler,
+                                              bv_handler.clone()};
+  for(auto handler: handlers)
+  {
+    TEST_ASSERT(handler->canSerialize(value));
+    RDValue bad_value = 1;
+    TEST_ASSERT(!handler->canSerialize(bad_value));
+    std::stringstream ss;
+    TEST_ASSERT(handler->write(ss, value));
+    RDValue newValue;
+    TEST_ASSERT(handler->read(ss, newValue));
+    TEST_ASSERT(from_rdvalue<ExplicitBitVect>(newValue) == bv);
+  }
+  delete handlers[1];
+}
+
+
 int main() {
   RDLog::InitLogs();
   try {
     throw IndexErrorException(3);
-  } catch (IndexErrorException) {
+  } catch (IndexErrorException &) {
     BOOST_LOG(rdInfoLog) << "pass" << endl;
   }
 
@@ -1491,5 +1531,9 @@ int main() {
                        << std::endl;
   test15BitmapOps();
 
+  BOOST_LOG(rdInfoLog) << " Test bitmaps as properties "
+                          "-------------------------------"
+                       << std::endl;
+  test16BitVectProps();
   return 0;
 }

@@ -23,7 +23,7 @@ def gif(req, smiles, width=100, height=100, highlight='[]', frame=0, dblSize=0, 
   highlight = eval(highlight)
   imgD = ''
   if smiles:
-    fName = tempfile.mktemp('.gif')
+    fName = tempfile.NamedTemporaryFile(suffix='.gif', delete=False).name
     cactvs.SmilesToGif(smiles, fName, (width, height), dblSize=dblSize, frame=frame)
     if os.path.exists(fName):
       imgD = open(fName, 'rb').read()

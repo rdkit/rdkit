@@ -26,7 +26,9 @@ double computeSignedDihedralAngle(const Point3D& pt1, const Point3D& pt2,
   // now calculate the sign:
   Point3D crs3 = crs1.crossProduct(crs2);
   double dot = crs3.dotProduct(begEndVec);
-  if (dot < 0.0) ang *= -1;
+  if (dot < 0.0) {
+    ang *= -1;
+  }
 
   return ang;
 }
@@ -116,7 +118,7 @@ PointND operator+(const PointND& p1, const PointND& p2) {
   if (p1.dimension() < p2.dimension()) {
     dim = p1.dimension();
   } else {
-    dim = p1.dimension();
+    dim = p2.dimension();
   }
   PointND res(dim);
   for (unsigned int i = 0; i < dim; ++i) {
@@ -129,7 +131,7 @@ PointND operator-(const PointND& p1, const PointND& p2) {
   if (p1.dimension() < p2.dimension()) {
     dim = p1.dimension();
   } else {
-    dim = p1.dimension();
+    dim = p2.dimension();
   }
   PointND res(dim);
   for (unsigned int i = 0; i < dim; ++i) {
@@ -153,4 +155,4 @@ PointND operator/(const PointND& p1, double v) {
   }
   return res;
 }
-}
+}  // namespace RDGeom

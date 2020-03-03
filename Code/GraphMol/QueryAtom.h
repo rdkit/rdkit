@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef _RD_QUERYATOM_H_
 #define _RD_QUERYATOM_H_
 
@@ -23,7 +24,7 @@ namespace RDKit {
   querying capabilities.
 
  */
-class QueryAtom : public Atom {
+class RDKIT_GRAPHMOL_EXPORT QueryAtom : public Atom {
  public:
   typedef Queries::Query<int, Atom const *, true> QUERYATOM_QUERY;
 
@@ -34,6 +35,13 @@ class QueryAtom : public Atom {
   QueryAtom(const QueryAtom &other) : Atom(other) {
     dp_query = other.dp_query->copy();
   };
+  QueryAtom &operator=(const QueryAtom &other) {
+    if (this == &other) return *this;
+    Atom::operator=(other);
+    delete dp_query;
+    dp_query = other.dp_query->copy();
+    return *this;
+  }
   ~QueryAtom();
 
   //! returns a copy of this query, owned by the caller
@@ -43,13 +51,19 @@ class QueryAtom : public Atom {
   bool hasQuery() const { return dp_query != 0; };
 
   //! replaces our current query with the value passed in
-  void setQuery(QUERYATOM_QUERY *what) { dp_query = what; }
+  void setQuery(QUERYATOM_QUERY *what) {
+    delete dp_query;
+    dp_query = what;
+  }
   //! returns our current query
   QUERYATOM_QUERY *getQuery() const { return dp_query; };
 
   //! expands our current query
   /*!
-    \param what          the Queries::Query to be added
+    \param what          the Queries::Query to be added. The ownership of
+                         the query is passed to the current object, where it
+                         might be deleted, so that the pointer should not be
+                         used again in the calling code.
     \param how           the operator to be used in the expansion
     \param maintainOrder (optional) flags whether the relative order of
                          the queries needs to be maintained, if this is
@@ -66,8 +80,6 @@ class QueryAtom : public Atom {
                    bool maintainOrder = true);
 
   //! returns true if we match Atom \c what
-  bool Match(const Atom::ATOM_SPTR &what) const;
-  //! \overload
   bool Match(Atom const *what) const;
 
   //! returns true if our query details match those of QueryAtom \c what
@@ -91,7 +103,7 @@ inline std::string qhelper(Atom::QUERYATOM_QUERY *q, unsigned int depth) {
   }
   return res;
 }
-}  // end of detail namespace
+}  // namespace detail
 inline std::string describeQuery(const Atom *atom) {
   PRECONDITION(atom, "bad atom");
   std::string res = "";
@@ -101,6 +113,6 @@ inline std::string describeQuery(const Atom *atom) {
   return res;
 }
 
-};  // end o' namespace
+};  // namespace RDKit
 
 #endif

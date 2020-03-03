@@ -28,9 +28,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
+#include <RDGeneral/test.h>
 #include "RDFreeSASA.h"
 
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/QueryAtom.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 
@@ -351,13 +353,12 @@ void testPDB() {
                        << std::endl;
 
   std::string rdbase = getenv("RDBASE");
-  std::string fName = rdbase +=
-      "/External/FreeSASA/freesasa-master/tests/data/1d3z.pdb";
+  std::string fName = rdbase += "/External/FreeSASA/test_data/1d3z.pdb";
 
   ROMol *m;
   {
-    const bool sanitize=true;
-    const bool removeHs=true;
+    const bool sanitize = true;
+    const bool removeHs = true;
     m = PDBFileToMol(fName, sanitize, removeHs);
   }
 
@@ -369,43 +370,66 @@ void testPDB() {
     TEST_ASSERT(idx == ExpectedProtor1d3z[idx].idx);
     TEST_ASSERT(atom->getProp<int>(common_properties::Atom::SASAClass) ==
                 ExpectedProtor1d3z[idx].cls);
-    TEST_ASSERT(atom->getProp<std::string>(common_properties::Atom::SASAClassName) ==
-                ExpectedProtor1d3z[idx].clsname);
+    TEST_ASSERT(
+        atom->getProp<std::string>(common_properties::Atom::SASAClassName) ==
+        ExpectedProtor1d3z[idx].clsname);
     TEST_ASSERT(radii[idx] == ExpectedProtor1d3z[idx].radius);
   }
 
-  FreeSASA::SASAOpts opts;
-  opts.algorithm = FreeSASA::SASAOpts::ShrakeRupley;
-
-  double sasa = FreeSASA::calcSASA(*m, radii, -1, NULL, opts);
-  TEST_ASSERT(fabs(sasa - 5000.340175) < 1e-5);
-
+  {
+    FreeSASA::SASAOpts opts;
+    opts.algorithm = FreeSASA::SASAOpts::ShrakeRupley;
+    double sasa = FreeSASA::calcSASA(*m, radii, -1, nullptr, opts);
+    TEST_ASSERT(fabs(sasa - 5000.340175) < 1e-5);
+  }
+  {
+    FreeSASA::SASAOpts opts;
+    opts.algorithm = FreeSASA::SASAOpts::ShrakeRupley;
+    opts.probeRadius = 2.0;
+    double sasa = FreeSASA::calcSASA(*m, radii, -1, nullptr, opts);
+    TEST_ASSERT(fabs(sasa - 4977.770911) < 1e-5);
+  }
 
   delete m;
   {
-    const bool sanitize=false;
-    const bool removeHs=false;
+    const bool sanitize = false;
+    const bool removeHs = false;
     m = PDBFileToMol(fName, sanitize, removeHs);
   }
   ROMol *mnoh = MolOps::removeHs(*m);
   FreeSASA::classifyAtoms(*mnoh, radii);
-  sasa = FreeSASA::calcSASA(*mnoh, radii, -1, NULL, opts);
-  TEST_ASSERT(fabs(sasa - 5000.340175) < 1e-5);
+  {
+    FreeSASA::SASAOpts opts;
+    opts.algorithm = FreeSASA::SASAOpts::ShrakeRupley;
+    double sasa = FreeSASA::calcSASA(*mnoh, radii, -1, nullptr, opts);
+    TEST_ASSERT(fabs(sasa - 5000.340175) < 1e-5);
+  }
+  {
+    FreeSASA::SASAOpts opts;
+    opts.algorithm = FreeSASA::SASAOpts::ShrakeRupley;
+    opts.probeRadius = 2.0;
+    double sasa = FreeSASA::calcSASA(*mnoh, radii, -1, nullptr, opts);
+    TEST_ASSERT(fabs(sasa - 4977.770911) < 1e-5);
+  }
 
   const QueryAtom *apolar = FreeSASA::makeFreeSasaAPolarAtomQuery();
   const QueryAtom *polar = FreeSASA::makeFreeSasaPolarAtomQuery();
-  double apolard = FreeSASA::calcSASA(*mnoh, radii, -1, apolar, opts);
-  double polard = FreeSASA::calcSASA(*mnoh, radii, -1, polar, opts);
-  std::cerr << " polar " << polard << std::endl;
-  std::cerr << " apolar " << apolard << std::endl;
+  {
+    FreeSASA::SASAOpts opts;
+    opts.algorithm = FreeSASA::SASAOpts::ShrakeRupley;
+    double apolard = FreeSASA::calcSASA(*mnoh, radii, -1, apolar, opts);
+    double polard = FreeSASA::calcSASA(*mnoh, radii, -1, polar, opts);
+    std::cerr << " polar " << polard << std::endl;
+    std::cerr << " apolar " << apolard << std::endl;
+    TEST_ASSERT(fabs(polard + apolard - 5000.340175) < 1e-5);
+  }
 
-  TEST_ASSERT(fabs(polard + apolard - 5000.340175) < 1e-5);
-
-
+  delete polar;
+  delete apolar;
   delete m;
   delete mnoh;
-  BOOST_LOG(rdInfoLog) << "Done" << std::endl;
 
+  BOOST_LOG(rdInfoLog) << "Done" << std::endl;
 }
 
 int main() {

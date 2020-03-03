@@ -29,7 +29,7 @@ And to improve search performance, I allowed postgresql to use more memory than 
 
 #### Creating a database from a file
 
-In this example I show how to load a database from the SMILES file of commercially available compounds that is downloadable from emolecules.com at URL <http://www.emolecules.com/doc/plus/download-database.php>
+In this example I show how to load a database from the SMILES file of commercially available compounds that is downloadable from emolecules.com at URL <http://downloads.emolecules.com/free/>
 
 If you choose to repeat this exact example yourself, please note that it takes several hours to load the 6 million row database and generate all fingerprints.
 
@@ -65,29 +65,29 @@ Start by downloading and installing the postgresql dump from the ChEMBL website 
 
 Connect to the database, install the cartridge, and create the schema that we'll use:
 
-    chembl_23=# create extension if not exists rdkit;
-    chembl_23=# create schema rdk;
+    chembl_25=# create extension if not exists rdkit;
+    chembl_25=# create schema rdk;
 
 Create the molecules and build the substructure search index:
 
-    chembl_23=# select * into rdk.mols from (select molregno,mol_from_ctab(molfile::cstring) m  from compound_structures) tmp where m is not null;
-    SELECT 1727081
-    chembl_23=# create index molidx on rdk.mols using gist(m);
+    chembl_25=# select * into rdk.mols from (select molregno,mol_from_ctab(molfile::cstring) m  from compound_structures) tmp where m is not null;
+    SELECT 1870451
+    chembl_25=# create index molidx on rdk.mols using gist(m);
     CREATE INDEX
-    chembl_23=# alter table rdk.mols add primary key (molregno);
+    chembl_25=# alter table rdk.mols add primary key (molregno);
     ALTER TABLE
 
 Create some fingerprints and build the similarity search index:
 
-    chembl_23=# select molregno,torsionbv_fp(m) as torsionbv,morganbv_fp(m) as mfp2,featmorganbv_fp(m) as ffp2 into rdk.fps from rdk.mols;
-    SELECT 1727081
-    chembl_23=# create index fps_ttbv_idx on rdk.fps using gist(torsionbv);
+    chembl_25=# select molregno,torsionbv_fp(m) as torsionbv,morganbv_fp(m) as mfp2,featmorganbv_fp(m) as ffp2 into rdk.fps from rdk.mols;
+    SELECT 1870451
+    chembl_25=# create index fps_ttbv_idx on rdk.fps using gist(torsionbv);
     CREATE INDEX
-    chembl_23=# create index fps_mfp2_idx on rdk.fps using gist(mfp2);
+    chembl_25=# create index fps_mfp2_idx on rdk.fps using gist(mfp2);
     CREATE INDEX
-    chembl_23=# create index fps_ffp2_idx on rdk.fps using gist(ffp2);
+    chembl_25=# create index fps_ffp2_idx on rdk.fps using gist(ffp2);
     CREATE INDEX
-    chembl_23=# alter table rdk.fps add primary key (molregno);
+    chembl_25=# alter table rdk.fps add primary key (molregno);
     ALTER TABLE
 
 Here is a group of the commands used here (and below) in one block so that you can just paste it in at the psql prompt:
@@ -103,7 +103,7 @@ Here is a group of the commands used here (and below) in one block so that you c
     create index fps_ffp2_idx on rdk.fps using gist(ffp2);
     alter table rdk.fps add primary key (molregno);
     create or replace function get_mfp2_neighbors(smiles text)
-    returns table(molregno integer, m mol, similarity double precision) as
+    returns table(molregno bigint, m mol, similarity double precision) as
     $$
     select molregno,m,tanimoto_sml(morganbv_fp(mol_from_smiles($1::cstring)),mfp2) as similarity
     from rdk.fps join rdk.mols using (molregno)
@@ -115,52 +115,52 @@ Here is a group of the commands used here (and below) in one block so that you c
 
 Example query molecules taken from the [eMolecules home page](http://www.emolecules.com/):
 
-    chembl_23=# select count(*) from rdk.mols where m@>'c1cccc2c1nncc2' ;
+    chembl_25=# select count(*) from rdk.mols where m@>'c1cccc2c1nncc2' ;
      count
     -------
-       447
+       461
     (1 row)
 
     Time: 107.602 ms
-    chembl_23=# select count(*) from rdk.mols where m@>'c1ccnc2c1nccn2' ;
+    chembl_25=# select count(*) from rdk.mols where m@>'c1ccnc2c1nccn2' ;
      count
     -------
-      1013
+      1124
     (1 row)
 
     Time: 216.222 ms
-    chembl_23=# select count(*) from rdk.mols where m@>'c1cncc2n1ccn2' ;
+    chembl_25=# select count(*) from rdk.mols where m@>'c1cncc2n1ccn2' ;
      count
     -------
-      1775
+      2233
     (1 row)
 
     Time: 88.266 ms
-    chembl_23=# select count(*) from rdk.mols where m@>'Nc1ncnc(N)n1' ;
+    chembl_25=# select count(*) from rdk.mols where m@>'Nc1ncnc(N)n1' ;
      count
     -------
-      5842
+      7095
     (1 row)
 
     Time: 327.855 ms
-    chembl_23=# select count(*) from rdk.mols where m@>'c1scnn1' ;
+    chembl_25=# select count(*) from rdk.mols where m@>'c1scnn1' ;
      count
     -------
-     15962
+     16526
     (1 row)
 
     Time: 568.675 ms
-    chembl_23=# select count(*) from rdk.mols where m@>'c1cccc2c1ncs2' ;
+    chembl_25=# select count(*) from rdk.mols where m@>'c1cccc2c1ncs2' ;
      count
     -------
-     18986
+     20745
     (1 row)
 
     Time: 998.104 ms
-    chembl_23=# select count(*) from rdk.mols where m@>'c1cccc2c1CNCCN2' ;
+    chembl_25=# select count(*) from rdk.mols where m@>'c1cccc2c1CNCCN2' ;
      count
     -------
-      1613
+      1788
     (1 row)
 
     Time: 1922.273 ms
@@ -171,45 +171,42 @@ Given we're searching through 1.7 million compounds these search times aren't in
 
 One easy way to speed things up, particularly for queries that return a large number of results, is to only retrieve a limited number of results:
 
-    chembl_23=# select * from rdk.mols where m@>'c1cccc2c1CNCCN2' limit 100;
-     molregno |                                                                                             m                                                             
-
-    ----------+-----------------------------------------------------------------------------------------------------------------------------------------------------------
-    --------------------------------
-       908048 | O=C1CN(C(=O)c2ccc(Br)o2)C(c2ccc(F)cc2)c2cc(F)ccc2N1
-       931972 | Cl.c1ccc(CC2CNc3ccccc3CN2)cc1
-       904450 | CCOC(=O)[C@H]1[C@H]2COc3ccc(Cl)cc3[C@@H]2N2C(=O)c3ccc(Cl)cc3NC(=O)[C@@]12C
-       226391 | C/C=C1/CC2C(OC)Nc3cc(OC)c(OC)cc3C(=O)N2C1
-       930820 | CN1CC(=O)N(CC(=O)Nc2ccc(N(C)C)cc2)c2ccccc2C1=O
-        18576 | CO[C@H]1Nc2c(ccc(C)c2O)C(=O)N2C=C(/C=C/C(N)=O)C[C@@H]12
-       249934 | O=C(c1cccc2ccccc12)N1CCN(Cc2cncn2Cc2ccccc2)c2ccccc2C1
-       ...
-        91020 | CC(C)C[C@H]1C(=O)N2c3ccccc3[C@@](O)(C[C@@H]3NC(=O)c4ccccc4N4C(=O)c5ccccc5NC34)[C@H]2N1C(=O)C(CCCNC(=O)OCc1ccccc1)NC(=O)OC(C)(C)C
-        91225 | CC(C)C[C@H]1C(=O)N2c3ccccc3[C@@](O)(C[C@@H]3NC(=O)c4ccccc4N4C(=O)c5ccccc5NC34)[C@H]2N1C(=O)CCC(=O)[O-].[Na+]
-       348798 | O=C(O)CN1C(=O)C(c2ccc(Cl)cc2)N(C(C(=O)O)c2ccc(Cl)cc2)C(=O)c2cc(I)ccc21
-       348972 | C[C@H](c1ccc(Cl)cc1)N1C(=O)c2cc(I)ccc2N(CCCCC(=O)O)C(=O)[C@@H]1c1ccc(C(F)(F)F)cc1
-
-    ...skipping 23 lines
+    chembl_25=# select * from rdk.mols where m@>'c1cccc2c1CNCCN2' limit 100;
+     molregno |                                                      m                                                       
+    ----------+--------------------------------------------------------------------------------------------------------------
+      1671940 | Cc1cccc(C)c1N1C(=O)c2ccccc2NC(=O)C1C(=O)NCc1ccco1
+      1318078 | COCN1C(=O)[C@@H]2C[C@@H](O)CN2C(=O)c2ccccc21
+      1318783 | O/N=C1/Nc2ccccc2C(=S)N2CSCC12
+      1318127 | CC(=O)O[C@H]1C[C@H]2C(=S)Nc3ccccc3C(=S)N2C1
+      1308578 | O=C1Nc2cc([N+](=O)[O-])ccc2C(=O)N2CCC[C@@H]12
+      1417168 | O=C(NCC(F)(F)F)C1C(=O)Nc2ccccc2C(=O)N1Cc1ccccc1
+      ...
+       793329 | Cc1ccc2c(c1)C(c1ccccc1)N(C(=O)c1ccc(OC(C)C)cc1)CC(=O)N2
+       921215 | O=C1CN(C(=O)c2cc([N+](=O)[O-])ccc2Cl)C(c2ccc(F)cc2)c2cc(F)ccc2N1
+       790949 | CCOC(=O)[C@H]1[C@H]2COc3ccc(Cl)cc3[C@@H]2N2C(=O)c3cc(C)ccc3NC(=O)[C@@]12C
+       760998 | CC(=O)N1CC(=O)Nc2ccc(Cl)cc2C1c1ccc(F)cc1
+    (100 rows)
+    
     Time: 97.357 ms
 
 #### SMARTS-based queries
 
 Oxadiazole or thiadiazole:
 
-    chembl_23=# select * from rdk.mols where m@>'c1[o,s]ncn1'::qmol limit 500;
-     molregno |                                                      m                                                       
-    ----------+--------------------------------------------------------------------------------------------------------------
-      1370170 | Fc1cccc(-c2nc(NCC3COc4ccccc4O3)no2)c1F
-      1370417 | COc1cc(CN2CCC(Cc3nc(-c4ccc5c(c4)CCO5)no3)C2)ccc1F
-      1370526 | Cl.Cn1cc(-c2noc(/C=C3/CCN4CCCC[C@@H]4C3)n2)c2ccccc21
-      1379267 | CCC(c1ccccc1)c1noc(CCN(CC)CC)n1
-      1404150 | OC[C@H]1O[C@H](c2nc(-c3nc(-c4cccs4)no3)cs2)C[C@@H]1O
-      1217463 | CC(C)(C)c1ccc(-c2noc(CCC(=O)N3CCCCC3)n2)cc1
+    chembl_25=# select * from rdk.mols where m@>'c1[o,s]ncn1'::qmol limit 500;
+     molregno |                                                 m
+    ----------+---------------------------------------------------------------------------------------------------
+      1882516 | COc1cccc(CN(C)Cc2nc(C(C)C)no2)c1
+      2194441 | Cc1nc([C@](C)(O)C#Cc2ccc3c(c2)-c2nc(C(N)=O)sc2[C@@H](F)CO3)no1
+      1881742 | CCOc1ccc(C(F)(F)F)cc1NC(=O)NCc1noc(C)n1
+      1949861 | FC(F)(F)c1ccc(-c2nc(-c3ccc4nc[nH]c4c3)no2)cc1
+      1949860 | FC(F)(F)c1cccc(-c2nc(-c3ccc4nc[nH]c4c3)no2)c1
+      2172627 | O=c1[nH]cc(-c2cc(Cl)ccc2Oc2cc(F)c(S(=O)(=O)Nc3ncns3)cc2F)n2cncc12
       ...
-      1517753 | CC(C)c1noc(N2CCC(CO[C@H]3CC[C@H](c4ccc(S(C)(=O)=O)cc4F)CC3)CC2)n1
-      1263024 | COc1cc(Nc2nc3c(s2)CCCC3c2ccccc2)ccc1-c1nc(C)no1
-      1264016 | O=C(O)CCc1nc2cc(-c3noc(-c4cc(C(F)(F)F)cc(C(F)(F)F)c4)n3)ccc2[nH]1
-      1847733 | Cc1cc(-c2noc([C@H]3CCCCN3C(=O)COc3ccccc3)n2)no1
+      1848026 | O=C1CCCN1c1cccc(-c2noc([C@H]3CCCCN3C(=O)COc3ccccc3)n2)c1
+      1848027 | O=C1CN(c2cccc(-c3noc([C@H]4CCCCN4C(=O)COc4ccccc4)n3)c2)C(=O)N1
+      1848036 | CN(C)C(=O)CCC(=O)Nc1cc(F)cc(-c2noc([C@H]3CCCCN3C(=O)COc3ccccc3)n2)c1
+      1852688 | CC(Sc1nc(N)cc(N)n1)c1nc(C(C)(C)C)no1
     (500 rows)
 
     Time: 761.847 ms
@@ -220,64 +217,39 @@ This is slower than the pure SMILES query, this is generally true of SMARTS-base
 
 Note that by default stereochemistry is not taken into account when doing substructure queries:
 
-    chembl_23=# select * from rdk.mols where m@>'NC(=O)[C@@H]1CCCN1C=O' limit 10;
-     molregno |                                                                                                                                                           
-                   m                                                                                                                                                      
-
-    ----------+-----------------------------------------------------------------------------------------------------------------------------------------------------------
-    ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    ---------------------
-        87611 | CNCC(=O)N[C@@H](CCCN=C(N)N)C(=O)N1C[C@H]2C[C@H]1C(=O)N[C@@H](Cc1ccc(O)cc1)C(=O)N[C@H](C(=O)N[C@@H](Cc1c[nH]cn1)C(=O)N1CCC[C@H]1C(=O)N[C@@H](Cc1ccccc1)C(=O
-    )O)CCSS2
-        88372 | CNCCCC[C@H](NC(=O)[C@H](Cc1ccccc1)NC(=O)[C@@H](CCCCNC)NC(=O)[C@H](Cc1ccc(O)cc1)NC(=O)[C@H](CO)NC(=O)[C@@H](Cc1ccccc1)NC(=O)[C@@H](Cc1ccccc1)NC(=O)[C@@H](C
-    c1ccc2ccccc2c1)NC(C)=O)C(=O)N1CCC[C@@H]1C(=O)N[C@H](C)C(=O)O
-        88322 | CC(=O)N[C@H](Cc1ccc2ccccc2c1)C(=O)N[C@H](Cc1ccccc1)C(=O)N[C@H](Cc1ccccc1)C(=O)N[C@@H](CO)C(=O)N[C@@H](Cc1ccc(O)cc1)C(=O)N[C@H](CCCCNC(C)C)C(=O)N[C@@H](Cc1
-    ccccc1)C(=O)N[C@@H](CCCCNC(C)C)C(=O)N1CCC[C@@H]1C(=O)N[C@H](C)C(=O)O
-        88168 | CC(=O)N[C@H](Cc1ccc2ccccc2c1)C(=O)N[C@H](Cc1ccccc1)C(=O)N[C@H](Cc1ccccc1)C(=O)N[C@@H](CO)C(=O)N[C@@H](Cc1ccc(O)cc1)C(=O)N[C@H](CCCN=C(N)N)C(=O)N[C@@H](Cc1
-    ccccc1)C(=O)N[C@@H](CCCCNC1CCCC1)C(=O)N1CCC[C@@H]1C(=O)N[C@H](C)C(=O)O
-        88150 | CC(=O)N[C@H](Cc1ccc2ccccc2c1)C(=O)N[C@H](Cc1ccccc1)C(=O)N[C@H](Cc1ccccc1)C(=O)N[C@@H](CO)C(=O)N[C@@H](Cc1ccc(O)cc1)C(=O)N[C@H](CCCN=C(N)N)C(=O)N[C@@H](Cc1
-    ccccc1)C(=O)N[C@@H](CCCCNCc1ccc(C)cc1)C(=O)N1CCC[C@@H]1C(=O)N[C@H](C)C(=O)O
-        88373 | CC(=O)N[C@H](Cc1ccc2ccccc2c1)C(=O)N[C@H](Cc1ccccc1)C(=O)N[C@H](Cc1ccccc1)C(=O)N[C@@H](CO)C(=O)N[C@@H](Cc1ccc(O)cc1)C(=O)N[C@H](CCCCNC1CCCCC1)C(=O)N[C@@H](
-    Cc1ccccc1)C(=O)N[C@@H](CCCCNC1CCCCC1)C(=O)N1CCC[C@@H]1C(=O)N[C@H](C)C(=O)O
-        93377 | CC(=O)N[C@@H](Cc1ccc([N+](=O)[O-])cc1)C(=O)N1CCC[C@H]1C(=O)N[C@@H](CCC/N=C(/N)NS(=O)(=O)c1c(C)c(C)c2c(c1C)CCC(C)(C)O2)C(=O)N[C@@H](Cc1ccccc1)C(=O)N[C@@H](
-    CCC/N=C(/N)NS(=O)(=O)c1c(C)c(C)c2c(c1C)CCC(C)(C)O2)C(=O)N[C@H](C(=O)NCC(=O)N[C@@H](COC(C)(C)C)C(=O)N[C@@H](CCCCNC(=O)c1ccccc1N)C(=O)NCC(=O)O)[C@@H](C)OC(C)(C)C
-        94493 | CC(C)C[C@@H]1NC(=O)[C@H]([C@@H](C)O)NC(=O)[C@H](Cc2c[nH]c3ccccc23)NC(=O)[C@H](C(C)C)NC(=O)[C@H](NC(=O)[C@H](CCCCN)NC(=O)[C@@H]2CCCN2C(=O)[C@H](CCC(N)=O)NC
-    (=O)CNC(=O)CN)CSSC[C@@H](C(=O)N[C@@H](Cc2ccc(O)cc2)C(=O)N[C@@H](CO)C(=O)N[C@H](C(=O)NCC(=O)NCC(N)=O)[C@@H](C)O)NC(=O)[C@H](Cc2c[nH]cn2)NC(=O)[C@H](Cc2ccccc2)NC(=O)CNC
-    (=O)[C@@H]2CCCN2C1=O
-
-    ...skipping 1 line
-        89559 | CC1(C)SSC(C)(C)[C@@H](C(=O)N[C@@H](Cc2c[nH]cn2)C(=O)N2CCC[C@H]2C(=O)N[C@@H](Cc2ccccc2)C(=O)O)NC(=O)[C@H](Cc2ccc(O)cc2)NC(=O)[C@H]1NC(=O)[C@H](CCCN=C(N)N)N
-    C(=O)[C@@H](N)CC(=O)O
+    chembl_25=# select * from rdk.mols where m@>'NC(=O)[C@@H]1CCCN1C=O' limit 10;
+     molregno |                                                 m
+    ----------+---------------------------------------------------------------------------------------------------
+      2213985 | CC[C@H](C)[C@@H]1NC(=O)[C@@H]2CCCN2C(=O)[C@@H]2CCCN2C(=O)[C@H]([C@@H](C)CC)NC(=O)[C@H](CO)NC(=O)[C@H](C)NC(=O)[C@H]([C@H](C)O)NC(=O)[C@@H]2CSSC[C@H](NC1=O)C(=O)N[C@@H](Cc1cnc[nH]1)C(=O)N[C@H](Cc1ccccc1)C(=O)N[C@@H](CCCNC(=N)N)C(=O)N[C@@H](Cc1c[nH]c3ccccc13)C(=O)N[C@@H](CCCNC(=N)N)C(=O)N2
+      1956682 | NC(=O)[C@@H]1CCCN1C(=O)[C@H](Cc1nc(I)[nH]c1I)NC(=O)c1cnccn1
+      2212188 | CN1C(=O)[C@H](CCCNC(=N)N)NC(=O)[C@@H](Cc2ccc(O)cc2)NC(=O)[C@@H]2CCCN2C(=O)[C@H](Cc2ccc3ccccc3c2)NC(=O)[C@@H]1CC(=O)O
+      2053463 | NCCCC[C@H](NC(=O)[C@H](Cc1ccc(OP(=O)(O)O)cc1)NC(=O)Cc1ccccc1)C(=O)N1CCC[C@H]1C(=O)N[C@@H](Cc1ccccc1)C(N)=O
+      2060743 | CCCCCCCCCCCCCCCCNC(=O)CN(CC(=O)NC(C)(C)C(=O)N[C@@H](Cc1ccccc1)C(=O)N[C@@H](CC(C)C)C(=O)N[C@@H](Cc1ccccc1)C(=O)N[C@@H](CCCNC(=N)N)C(=O)N1CCC[C@H]1C(=O)N[C@@H](CCCNC(=N)N)C(=O)N[C@@H](CC(N)=O)C(N)=O)C(=O)c1cccnc1
+      2060744 | CCCCCCCCCCCCCCCCN(CCCCCCCCCCCCCCCC)CCCCCC(=O)NC(C)(C)C(=O)NC(Cc1ccccc1)C(=O)NC(CC(C)C)C(=O)NC(Cc1ccccc1)C(=O)NC(CCCNC(=N)N)C(=O)N1CCCC1C(=O)NC(CCCNC(=N)N)C(=O)NC(CC(N)=O)C(N)=O
+      2077784 | CC[C@H](C)[C@@H]1NC(=O)[C@H](Cc2ccccc2)NC(=O)[C@H](CC(C)C)NC(=O)[C@@H]2CCCN2C(=O)[C@H](Cc2ccccc2)NC(=O)[C@H](C(C)C)NC(=O)[C@H](CC(C)C)NC(=O)[C@H](CCSC)NC1=O
+      2077779 | CC[C@H](C)[C@@H]1NC(=O)[C@H](Cc2ccccc2)NC(=O)[C@H](CC(C)C)NC(=O)[C@@H]2CCCN2C(=O)[C@H](Cc2ccccc2)NC(=O)[C@H](C(C)C)NC(=O)[C@H](CC(C)C)NC(=O)[C@H](CC[S+](C)[O-])NC1=O
+      2077782 | CC[C@H](C)[C@@H]1NC(=O)[C@H](Cc2c[nH]c3ccccc23)NC(=O)[C@H](Cc2ccccc2)NC(=O)[C@H](Cc2ccccc2)NC(=O)[C@@H]2CCCN2C(=O)[C@H](CCSC)NC(=O)[C@H](CC(C)C)NC(=O)[C@H](CC[S+](C)[O-])NC1=O
+      2077780 | CC(C)C[C@@H]1NC(=O)[C@H](CC[S+](C)[O-])NC(=O)[C@H](C(C)C)NC(=O)[C@H](Cc2c[nH]c3ccccc23)NC(=O)[C@H](Cc2ccccc2)NC(=O)[C@H](Cc2ccccc2)NC(=O)[C@@H]2CCCN2C(=O)[C@H](CC[S+](C)[O-])NC1=O
     (10 rows)
-
+    
 This can be changed using the rdkit.do\_chiral\_sss configuration variable:
 
-    chembl_23=# set rdkit.do_chiral_sss=true;
+    chembl_25=# set rdkit.do_chiral_sss=true;
     SET
     Time: 0.241 ms
-    chembl_23=# select * from rdk.mols where m@>'NC(=O)[C@@H]1CCCN1C=O' limit 10;
-     molregno |                                                                                                                                                              
-                m                                                                                                                                                            
-
-    ----------+--------------------------------------------------------------------------------------------------------------------------------------------------------------
-    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    ---------------
-        87611 | CNCC(=O)N[C@@H](CCCN=C(N)N)C(=O)N1C[C@H]2C[C@H]1C(=O)N[C@@H](Cc1ccc(O)cc1)C(=O)N[C@H](C(=O)N[C@@H](Cc1c[nH]cn1)C(=O)N1CCC[C@H]1C(=O)N[C@@H](Cc1ccccc1)C(=O)O)
-    CCSS2
-        93377 | CC(=O)N[C@@H](Cc1ccc([N+](=O)[O-])cc1)C(=O)N1CCC[C@H]1C(=O)N[C@@H](CCC/N=C(/N)NS(=O)(=O)c1c(C)c(C)c2c(c1C)CCC(C)(C)O2)C(=O)N[C@@H](Cc1ccccc1)C(=O)N[C@@H](CCC
-    /N=C(/N)NS(=O)(=O)c1c(C)c(C)c2c(c1C)CCC(C)(C)O2)C(=O)N[C@H](C(=O)NCC(=O)N[C@@H](COC(C)(C)C)C(=O)N[C@@H](CCCCNC(=O)c1ccccc1N)C(=O)NCC(=O)O)[C@@H](C)OC(C)(C)C
-        94493 | CC(C)C[C@@H]1NC(=O)[C@H]([C@@H](C)O)NC(=O)[C@H](Cc2c[nH]c3ccccc23)NC(=O)[C@H](C(C)C)NC(=O)[C@H](NC(=O)[C@H](CCCCN)NC(=O)[C@@H]2CCCN2C(=O)[C@H](CCC(N)=O)NC(=O
-    )CNC(=O)CN)CSSC[C@@H](C(=O)N[C@@H](Cc2ccc(O)cc2)C(=O)N[C@@H](CO)C(=O)N[C@H](C(=O)NCC(=O)NCC(N)=O)[C@@H](C)O)NC(=O)[C@H](Cc2c[nH]cn2)NC(=O)[C@H](Cc2ccccc2)NC(=O)CNC(=O)[C
-    @@H]2CCCN2C1=O
-        89558 | NC(N)=NCCC[C@H](NC(=O)[C@@H](N)CC(=O)O)C(=O)N[C@H]1CCSSC[C@@H](C(=O)N[C@@H](Cc2c[nH]cn2)C(=O)N2CCC[C@H]2C(=O)N[C@@H](Cc2ccccc2)C(=O)O)NC(=O)[C@H](Cc2ccc(O)cc
-    2)NC1=O
-        89559 | CC1(C)SSC(C)(C)[C@@H](C(=O)N[C@@H](Cc2c[nH]cn2)C(=O)N2CCC[C@H]2C(=O)N[C@@H](Cc2ccccc2)C(=O)O)NC(=O)[C@H](Cc2ccc(O)cc2)NC(=O)[C@H]1NC(=O)[C@H](CCCN=C(N)N)NC(=
-    O)[C@@H](N)CC(=O)O
-       126618 | NC(=O)[C@@H]1CCCN1C(=O)[C@@H]1CCCN1C(=O)[C@@H](O)[C@H](N)Cc1ccccc1
-       152339 | O=C(O)CN[C@H](CC1CCCCC1)C(=O)N1CCC[C@H]1C(=O)NCCCc1c[nH]cn1
-       152504 | N[C@H](CC1CCCCC1)C(=O)N1[C@H](C(=O)NC/C=C/c2c[nH]cn2)C[C@@H]2CCCC[C@@H]21
-       152383 | N[C@H](CC1CCCCC1)C(=O)N1CCC[C@H]1C(=O)NCCCCc1c[nH]cn1
-       151837 | N[C@H](CC1CCCCC1)C(=O)N1CCC[C@H]1C(=O)NC/C=C/c1c[nH]cn1
+    chembl_25=# select * from rdk.mols where m@>'NC(=O)[C@@H]1CCCN1C=O' limit 10;
+     molregno |                                                 m
+    ----------+---------------------------------------------------------------------------------------------------
+      2213985 | CC[C@H](C)[C@@H]1NC(=O)[C@@H]2CCCN2C(=O)[C@@H]2CCCN2C(=O)[C@H]([C@@H](C)CC)NC(=O)[C@H](CO)NC(=O)[C@H](C)NC(=O)[C@H]([C@H](C)O)NC(=O)[C@@H]2CSSC[C@H](NC1=O)C(=O)N[C@@H](Cc1cnc[nH]1)C(=O)N[C@H](Cc1ccccc1)C(=O)N[C@@H](CCCNC(=N)N)C(=O)N[C@@H](Cc1c[nH]c3ccccc13)C(=O)N[C@@H](CCCNC(=N)N)C(=O)N2
+      1956682 | NC(=O)[C@@H]1CCCN1C(=O)[C@H](Cc1nc(I)[nH]c1I)NC(=O)c1cnccn1
+      2212188 | CN1C(=O)[C@H](CCCNC(=N)N)NC(=O)[C@@H](Cc2ccc(O)cc2)NC(=O)[C@@H]2CCCN2C(=O)[C@H](Cc2ccc3ccccc3c2)NC(=O)[C@@H]1CC(=O)O
+      2053463 | NCCCC[C@H](NC(=O)[C@H](Cc1ccc(OP(=O)(O)O)cc1)NC(=O)Cc1ccccc1)C(=O)N1CCC[C@H]1C(=O)N[C@@H](Cc1ccccc1)C(N)=O
+      2060743 | CCCCCCCCCCCCCCCCNC(=O)CN(CC(=O)NC(C)(C)C(=O)N[C@@H](Cc1ccccc1)C(=O)N[C@@H](CC(C)C)C(=O)N[C@@H](Cc1ccccc1)C(=O)N[C@@H](CCCNC(=N)N)C(=O)N1CCC[C@H]1C(=O)N[C@@H](CCCNC(=N)N)C(=O)N[C@@H](CC(N)=O)C(N)=O)C(=O)c1cccnc1
+      2077784 | CC[C@H](C)[C@@H]1NC(=O)[C@H](Cc2ccccc2)NC(=O)[C@H](CC(C)C)NC(=O)[C@@H]2CCCN2C(=O)[C@H](Cc2ccccc2)NC(=O)[C@H](C(C)C)NC(=O)[C@H](CC(C)C)NC(=O)[C@H](CCSC)NC1=O
+      2077779 | CC[C@H](C)[C@@H]1NC(=O)[C@H](Cc2ccccc2)NC(=O)[C@H](CC(C)C)NC(=O)[C@@H]2CCCN2C(=O)[C@H](Cc2ccccc2)NC(=O)[C@H](C(C)C)NC(=O)[C@H](CC(C)C)NC(=O)[C@H](CC[S+](C)[O-])NC1=O
+      2077782 | CC[C@H](C)[C@@H]1NC(=O)[C@H](Cc2c[nH]c3ccccc23)NC(=O)[C@H](Cc2ccccc2)NC(=O)[C@H](Cc2ccccc2)NC(=O)[C@@H]2CCCN2C(=O)[C@H](CCSC)NC(=O)[C@H](CC(C)C)NC(=O)[C@H](CC[S+](C)[O-])NC1=O
+      2077780 | CC(C)C[C@@H]1NC(=O)[C@H](CC[S+](C)[O-])NC(=O)[C@H](C(C)C)NC(=O)[C@H](Cc2c[nH]c3ccccc23)NC(=O)[C@H](Cc2ccccc2)NC(=O)[C@H](Cc2ccccc2)NC(=O)[C@@H]2CCCN2C(=O)[C@H](CC[S+](C)[O-])NC1=O
+      2211488 | CC[C@H](C)[C@H](N)C(=O)N[C@H](C(=O)N[C@@H](CC(C)C)C(=O)N[C@H](C(=O)N1CCC[C@H]1C(=O)N1CCC[C@H]1C(=O)N[C@H](CCC(=O)N[C@@H](CCC(=O)N[C@@H](CC(C)C)C(=O)O)Cc1ccccc1)Cc1ccccc1)C(C)C)[C@@H](C)CC
     (10 rows)
 
     Time: 6.181 ms
@@ -289,19 +261,19 @@ having to construct complex SMARTS queries. The cartridge function `mol_adjust_q
 can be used to do just this. Here is an example of the default behavior, using a  
 query for 2,6 di-substituted pyridines:
 
-    chembl_23=# select molregno,m from rdk.mols where m@>mol_adjust_query_properties('*c1cccc(NC(=O)*)n1') limit 10;
-     molregno |                                             m                                             
-    ----------+-------------------------------------------------------------------------------------------
-      1993749 | Cn1c(Nc2c(Cl)ccc(CNC(=O)C(C)(C)C)c2Cl)nc2cc(C(=O)Nc3cccc(C(F)(F)F)n3)c(N3CCC(F)(F)C3)cc21
-      1988455 | Cc1cccc(C(=O)Nc2cccc(Oc3cccnc3)n2)c1
-      1870095 | COC(=O)CN(C(=O)C(C)c1c(F)cccc1F)c1cccc(C)n1
-      1870023 | CCC(C)C(=O)N(CC(=O)OC)c1cccc(C)n1
-      1873944 | Cc1ccc(C(=O)N(C)CC(=O)Nc2cccc(C)n2)cn1
-      1873968 | Cc1cccc(NC(=O)CN(C)C(=O)c2ccc(-n3cccc3)nc2)n1
-      1882693 | Cc1cccc(NC(=O)CCNCc2c(C)nn(C)c2N(C)C)n1
-      1882711 | COc1c(CNCCC(=O)Nc2cccc(C)n2)c(C)nn1C
-      1868705 | CCOc1cccc(NC(=O)c2cnc(C)cn2)n1
-      1875177 | Cc1cccc(NC(=O)[C@@H]2CCCN2Cc2nc(C)c(C)o2)n1
+    chembl_25=# select molregno,m from rdk.mols where m@>mol_adjust_query_properties('*c1cccc(NC(=O)*)n1') limit 10;
+     molregno |                                                 m
+    ----------+---------------------------------------------------------------------------------------------------
+      1609520 | Cc1cccc(NC(=O)c2cc(Br)ccc2C(=O)O)n1
+      1141456 | CCN(CC)CCCn1cc(NC(=O)Nc2cccc(-c3ccccc3)n2)c2ccccc21
+      1431198 | Cc1cccc(NC(=O)c2nc(C)sc2Nc2cccnc2)n1
+       734975 | Cc1cccc(NC(=O)CN(C)S(=O)(=O)c2ccc(Cl)cc2)n1
+       760426 | Cc1cccc(NC(=O)CCCn2cc([N+](=O)[O-])cn2)n1
+       782786 | Cc1cccc(NC(=O)CN2C(=O)NC(C)(c3ccc4ccccc4c3)C2=O)n1
+      1478990 | Cc1cccc(NC(=O)Cn2c(=O)sc3cc(C(=O)c4ccccc4)ccc32)n1
+      1478787 | Cc1cccc(NC(=O)Cn2c(=O)sc3cc(C(=O)c4ccccc4F)ccc32)n1
+      1955608 | C[C@H](N)C(=O)Nc1cccc(N)n1
+       773911 | Cc1cccc(NC(=O)c2c(-c3ccccc3)noc2C)n1
     (10 rows)
 
     Time: 11.895 ms
@@ -315,20 +287,20 @@ By default `mol_adjust_query_properties()` makes the following changes to the mo
 We can control the behavior by providing an additional JSON argument. Here's an example
 where we disable the additional degree queries:
 
-    chembl_23=# select molregno,m from rdk.mols where m@>mol_adjust_query_properties('*c1cccc(NC(=O)*)n1',
-    chembl_23(# '{"adjustDegree":false}') limit 10;
-     molregno |                                             m                                             
-    ----------+-------------------------------------------------------------------------------------------
-      1993749 | Cn1c(Nc2c(Cl)ccc(CNC(=O)C(C)(C)C)c2Cl)nc2cc(C(=O)Nc3cccc(C(F)(F)F)n3)c(N3CCC(F)(F)C3)cc21
-      1957849 | COc1ccc2ncc(F)c(C[C@H](O)C3CCC(NCc4nc5c(cc4F)OCC(=O)N5)CO3)c2n1
-      1959611 | O=C1COc2ccc(CNC3CCN(CCn4c(=O)ccc5ncc(OCc6cccnn6)cc54)CC3)nc2N1
-      1988455 | Cc1cccc(C(=O)Nc2cccc(Oc3cccnc3)n2)c1
-      1870095 | COC(=O)CN(C(=O)C(C)c1c(F)cccc1F)c1cccc(C)n1
-      1870023 | CCC(C)C(=O)N(CC(=O)OC)c1cccc(C)n1
-      1873944 | Cc1ccc(C(=O)N(C)CC(=O)Nc2cccc(C)n2)cn1
-      1873968 | Cc1cccc(NC(=O)CN(C)C(=O)c2ccc(-n3cccc3)nc2)n1
-      1882693 | Cc1cccc(NC(=O)CCNCc2c(C)nn(C)c2N(C)C)n1
-      1882711 | COc1c(CNCCC(=O)Nc2cccc(C)n2)c(C)nn1C
+    chembl_25=# select molregno,m from rdk.mols where m@>mol_adjust_query_properties('*c1cccc(NC(=O)*)n1',
+    chembl_25(# '{"adjustDegree":false}') limit 10;
+     molregno |                                                 m
+    ----------+---------------------------------------------------------------------------------------------------
+      2146308 | CCn1ncc2cc3nc(c21)NCCOC[C@H](c1ccccc1)NC(=O)N3
+      2137309 | CCn1ncc2cc3nc(c21)CCCO[C@@H](O)[C@H](c1ccccc1)NC(=O)N3
+      2102593 | CCn1ncc2cc3nc(c21)CCCO[C@@H]([C@@H](C)O)[C@@H](c1ccccc1)NC(=O)N3
+      2171613 | CCn1ncc2cc3nc(c21)CCCO[C@@H]([C@H](C)O)[C@@H](c1ccccc1)NC(=O)N3
+      2111904 | CCn1ncc2cc3nc(c21)C[C@H](O)COC[C@H](c1cccc(Cl)c1)NC(=O)N3
+      2173410 | CCn1ncc2cc3nc(c21)CCCOC[C@H](c1ccccc1)NC(=O)N3
+      2189450 | Cn1ncc2cc3nc(c21)CCCOC[C@H](c1ccccc1)NC(=O)N3
+      2195752 | CCn1ncc2cc3nc(c21)C[C@H](O)COC[C@H](c1ccccc1)NC(=O)N3
+      1609520 | Cc1cccc(NC(=O)c2cc(Br)ccc2C(=O)O)n1
+      1141456 | CCN(CC)CCCn1cc(NC(=O)Nc2cccc(-c3ccccc3)n2)c2ccccc21
     (10 rows)
 
     Time: 10.780 ms
@@ -336,20 +308,20 @@ where we disable the additional degree queries:
 or where we don't add the additional degree queries to ring atoms or dummies (they are only
 added to chain atoms):
 
-    chembl_23=# select molregno,m from rdk.mols where m@>mol_adjust_query_properties('*c1cccc(NC(=O)*)n1',
-    chembl_23(# '{"adjustDegree":true,"adjustDegreeFlags":"IGNORERINGS|IGNOREDUMMIES"}') limit 10;
-     molregno |                                             m                                             
-    ----------+-------------------------------------------------------------------------------------------
-      1993749 | Cn1c(Nc2c(Cl)ccc(CNC(=O)C(C)(C)C)c2Cl)nc2cc(C(=O)Nc3cccc(C(F)(F)F)n3)c(N3CCC(F)(F)C3)cc21
-      1957849 | COc1ccc2ncc(F)c(C[C@H](O)C3CCC(NCc4nc5c(cc4F)OCC(=O)N5)CO3)c2n1
-      1959611 | O=C1COc2ccc(CNC3CCN(CCn4c(=O)ccc5ncc(OCc6cccnn6)cc54)CC3)nc2N1
-      1988455 | Cc1cccc(C(=O)Nc2cccc(Oc3cccnc3)n2)c1
-      1873944 | Cc1ccc(C(=O)N(C)CC(=O)Nc2cccc(C)n2)cn1
-      1873968 | Cc1cccc(NC(=O)CN(C)C(=O)c2ccc(-n3cccc3)nc2)n1
-      1882693 | Cc1cccc(NC(=O)CCNCc2c(C)nn(C)c2N(C)C)n1
-      1882711 | COc1c(CNCCC(=O)Nc2cccc(C)n2)c(C)nn1C
-      1884388 | Cc1noc(COCC(=O)Nc2ccc(Br)c(C)n2)n1
-      1868705 | CCOc1cccc(NC(=O)c2cnc(C)cn2)n1
+    chembl_25=# select molregno,m from rdk.mols where m@>mol_adjust_query_properties('*c1cccc(NC(=O)*)n1',
+    chembl_25(# '{"adjustDegree":true,"adjustDegreeFlags":"IGNORERINGS|IGNOREDUMMIES"}') limit 10;
+     molregno |                                                 m
+    ----------+---------------------------------------------------------------------------------------------------
+      2146308 | CCn1ncc2cc3nc(c21)NCCOC[C@H](c1ccccc1)NC(=O)N3
+      2137309 | CCn1ncc2cc3nc(c21)CCCO[C@@H](O)[C@H](c1ccccc1)NC(=O)N3
+      2102593 | CCn1ncc2cc3nc(c21)CCCO[C@@H]([C@@H](C)O)[C@@H](c1ccccc1)NC(=O)N3
+      2171613 | CCn1ncc2cc3nc(c21)CCCO[C@@H]([C@H](C)O)[C@@H](c1ccccc1)NC(=O)N3
+      2111904 | CCn1ncc2cc3nc(c21)C[C@H](O)COC[C@H](c1cccc(Cl)c1)NC(=O)N3
+      2173410 | CCn1ncc2cc3nc(c21)CCCOC[C@H](c1ccccc1)NC(=O)N3
+      2189450 | Cn1ncc2cc3nc(c21)CCCOC[C@H](c1ccccc1)NC(=O)N3
+      2195752 | CCn1ncc2cc3nc(c21)C[C@H](O)COC[C@H](c1ccccc1)NC(=O)N3
+      1609520 | Cc1cccc(NC(=O)c2cc(Br)ccc2C(=O)O)n1
+      1141456 | CCN(CC)CCCn1cc(NC(=O)Nc2cccc(-c3ccccc3)n2)c2ccccc21
     (10 rows)
 
     Time: 12.827 ms
@@ -381,7 +353,7 @@ are constructed by combining operations from the list below with the `|` charact
 
 Basic similarity searching:
 
-    chembl_23=# select count(*) from rdk.fps where mfp2%morganbv_fp('Cc1ccc2nc(-c3ccc(NC(C4N(C(c5cccs5)=O)CCC4)=O)cc3)sc2c1');
+    chembl_25=# select count(*) from rdk.fps where mfp2%morganbv_fp('Cc1ccc2nc(-c3ccc(NC(C4N(C(c5cccs5)=O)CCC4)=O)cc3)sc2c1');
      count
     -------
         67
@@ -391,8 +363,8 @@ Basic similarity searching:
 
 Usually we'd like to find a sorted listed of neighbors along with the accompanying SMILES. This SQL function makes that pattern easy:
 
-    chembl_23=# create or replace function get_mfp2_neighbors(smiles text)
-        returns table(molregno integer, m mol, similarity double precision) as
+    chembl_25=# create or replace function get_mfp2_neighbors(smiles text)
+        returns table(molregno bigint, m mol, similarity double precision) as
       $$
       select molregno,m,tanimoto_sml(morganbv_fp(mol_from_smiles($1::cstring)),mfp2) as similarity
       from rdk.fps join rdk.mols using (molregno)
@@ -401,35 +373,35 @@ Usually we'd like to find a sorted listed of neighbors along with the accompanyi
       $$ language sql stable ;
     CREATE FUNCTION
     Time: 0.856 ms
-    chembl_23=# select * from get_mfp2_neighbors('Cc1ccc2nc(-c3ccc(NC(C4N(C(c5cccs5)=O)CCC4)=O)cc3)sc2c1') limit 10;
-     molregno |                             m                              |    similarity     
-    ----------+------------------------------------------------------------+-------------------
-       471319 | Cc1ccc2nc(-c3ccc(NC(=O)C4CCN(S(=O)(=O)c5cccs5)C4)cc3)sc2c1 | 0.638888888888889
-      1032469 | O=C(Nc1nc2ccc(Cl)cc2s1)[C@@H]1CCCN1C(=O)c1cccs1            | 0.623188405797101
-       751668 | COc1ccc2nc(NC(=O)[C@@H]3CCCN3C(=O)c3cccs3)sc2c1            | 0.619718309859155
-       471318 | Cc1ccc2nc(-c3ccc(NC(=O)C4CN(S(=O)(=O)c5cccs5)C4)cc3)sc2c1  | 0.611111111111111
-       740754 | Cc1ccc(NC(=O)C2CCCN2C(=O)c2cccs2)cc1C                      | 0.606060606060606
-       732905 | O=C(Nc1ccc(S(=O)(=O)N2CCCC2)cc1)C1CCCN1C(=O)c1cccs1        | 0.602941176470588
-      1087495 | Cc1ccc(NC(=O)C2CCCN2C(=O)c2cccs2)c(C)c1                    | 0.597014925373134
-       471462 | CCS(=O)(=O)N1CCC(C(=O)Nc2ccc(-c3nc4ccc(C)cc4s3)cc2)CC1     | 0.585714285714286
-       810850 | Cc1cc(C)n(-c2ccc(NC(=O)C3CCCCN3C(=O)c3cccs3)cc2)n1         | 0.583333333333333
-      1224407 | O=C(Nc1cccc(S(=O)(=O)N2CCCC2)c1)C1CCCN1C(=O)c1cccs1        | 0.579710144927536
+    chembl_25=# select * from get_mfp2_neighbors('Cc1ccc2nc(-c3ccc(NC(C4N(C(c5cccs5)=O)CCC4)=O)cc3)sc2c1') limit 10;
+     molregno |                                m                                 |    similarity
+    ----------+------------------------------------------------------------------+-------------------
+       751668 | COc1ccc2nc(NC(=O)[C@@H]3CCCN3C(=O)c3cccs3)sc2c1                  | 0.619718309859155
+       740754 | Cc1ccc(NC(=O)C2CCCN2C(=O)c2cccs2)cc1C                            | 0.606060606060606
+       732905 | O=C(Nc1ccc(S(=O)(=O)N2CCCC2)cc1)C1CCCN1C(=O)c1cccs1              | 0.602941176470588
+       810850 | Cc1cc(C)n(-c2ccc(NC(=O)C3CCCCN3C(=O)c3cccs3)cc2)n1               | 0.583333333333333
+      1224407 | O=C(Nc1cccc(S(=O)(=O)N2CCCC2)c1)C1CCCN1C(=O)c1cccs1              | 0.579710144927536
+       779258 | CC1CCN(S(=O)(=O)c2ccc(NC(=O)[C@@H]3CCCN3C(=O)c3cccs3)cc2)CC1     | 0.569444444444444
+       472441 | Cc1ccc2nc(-c3ccc(NC(=O)C4CCN(S(=O)(=O)C(C)C)CC4)cc3)sc2c1        | 0.569444444444444
+       745651 | Cc1ccc(NC(=O)[C@@H]2CCCN2C(=O)c2cccs2)cc1S(=O)(=O)N1CCCCC1       | 0.567567567567568
+       472510 | Cc1ccc2nc(-c3ccc(NC(=O)C4CCN(S(=O)(=O)c5cccc(Cl)c5)CC4)cc3)sc2c1 | 0.565789473684211
+      1233426 | Cc1cccc2sc(NC(=O)[C@@H]3CCCN3C(=O)c3cccs3)nc12                   | 0.563380281690141
     (10 rows)
 
     Time: 28.909 ms
-    chembl_23=# select * from get_mfp2_neighbors('Cc1ccc2nc(N(C)CC(=O)O)sc2c1') limit 10;
-     molregno |                           m                           |    similarity     
-    ----------+-------------------------------------------------------+-------------------
-      1044892 | Cc1ccc2nc(N(CCN(C)C)C(=O)c3cc(Cl)sc3Cl)sc2c1          | 0.518518518518518
-      1040496 | Cc1ccc2nc(N(CCCN(C)C)C(=O)CCc3ccccc3)sc2c1            | 0.517857142857143
-      1049393 | Cc1ccc2nc(N(CCCN(C)C)C(=O)CS(=O)(=O)c3ccccc3)sc2c1    | 0.517857142857143
-       441378 | Cc1ccc2nc(NC(=O)CCC(=O)O)sc2c1                        | 0.510204081632653
-      1047691 | Cc1ccc(S(=O)(=O)CC(=O)N(CCCN(C)C)c2nc3ccc(C)cc3s2)cc1 | 0.509090909090909
-       911501 | Cc1ccc2nc(N(CCN(C)C)C(=O)c3cc(Cl)sc3Cl)sc2c1.Cl       | 0.509090909090909
-      1042958 | Cc1ccc2nc(N(CCN(C)C)C(=O)c3ccc4ccccc4c3)sc2c1         | 0.509090909090909
-       775269 | Cc1ccc2nc(N(CCCN(C)C)C(=O)CCc3ccccc3)sc2c1.Cl         | 0.508771929824561
-      1045663 | Cc1ccc2nc(N(CCCN(C)C)C(=O)COc3ccc(Cl)cc3)sc2c1        |               0.5
-      1015485 | Cc1ccc2nc(N(Cc3cccnc3)C(=O)Cc3ccccc3)sc2c1            |               0.5
+    chembl_25=# select * from get_mfp2_neighbors('Cc1ccc2nc(N(C)CC(=O)O)sc2c1') limit 10;
+     molregno |                                m                         |    similarity
+    ----------+----------------------------------------------------------+-------------------
+      2138088 | CN(CC(=O)O)c1nc2ccc([N+](=O)[O-])cc2s1                   | 0.673913043478261
+      1040255 | CC(=O)N(CCCN(C)C)c1nc2ccc(C)cc2s1                        | 0.571428571428571
+       773946 | CC(=O)N(CCCN(C)C)c1nc2ccc(C)cc2s1.Cl                     |              0.56
+      1044892 | Cc1ccc2nc(N(CCN(C)C)C(=O)c3cc(Cl)sc3Cl)sc2c1             | 0.518518518518518
+       441378 | Cc1ccc2nc(NC(=O)CCC(=O)O)sc2c1                           | 0.510204081632653
+      1047691 | Cc1ccc(S(=O)(=O)CC(=O)N(CCCN(C)C)c2nc3ccc(C)cc3s2)cc1    | 0.509090909090909
+      1042958 | Cc1ccc2nc(N(CCN(C)C)C(=O)c3ccc4ccccc4c3)sc2c1            | 0.509090909090909
+      1015485 | Cc1ccc2nc(N(Cc3cccnc3)C(=O)Cc3ccccc3)sc2c1               |               0.5
+       994843 | Cc1ccc(S(=O)(=O)CC(=O)N(CCCN(C)C)c2nc3ccc(C)cc3s2)cc1.Cl |               0.5
+       841938 | Cc1ccc2nc(N(CCN(C)C)C(=O)c3ccc4ccccc4c3)sc2c1.Cl         |               0.5
     (10 rows)
 
     Time: 41.623 ms
@@ -438,40 +410,40 @@ Usually we'd like to find a sorted listed of neighbors along with the accompanyi
 
 By default, the minimum similarity returned with a similarity search is 0.5. This can be adjusted with the rdkit.tanimoto\_threshold (and rdkit.dice\_threshold) configuration variables:
 
-    chembl_23=# select count(*) from get_mfp2_neighbors('Cc1ccc2nc(N(C)CC(=O)O)sc2c1');
+    chembl_25=# select count(*) from get_mfp2_neighbors('Cc1ccc2nc(N(C)CC(=O)O)sc2c1');
      count
     -------
-        20
+        21
     (1 row)
 
     Time: 181.438 ms
-    chembl_23=# set rdkit.tanimoto_threshold=0.7;
+    chembl_25=# set rdkit.tanimoto_threshold=0.7;
     SET
     Time: 0.047 ms
-    chembl_23=# select count(*) from get_mfp2_neighbors('Cc1ccc2nc(N(C)CC(=O)O)sc2c1');
+    chembl_25=# select count(*) from get_mfp2_neighbors('Cc1ccc2nc(N(C)CC(=O)O)sc2c1');
      count
     -------
          0
     (1 row)
 
     Time: 161.228 ms
-    chembl_23=# set rdkit.tanimoto_threshold=0.6;
+    chembl_25=# set rdkit.tanimoto_threshold=0.6;
     SET
     Time: 0.045 ms
-    chembl_23=# select count(*) from get_mfp2_neighbors('Cc1ccc2nc(N(C)CC(=O)O)sc2c1');
+    chembl_25=# select count(*) from get_mfp2_neighbors('Cc1ccc2nc(N(C)CC(=O)O)sc2c1');
      count
     -------
-         1
+         2
     (1 row)
 
     Time: 184.275 ms
-    chembl_23=# set rdkit.tanimoto_threshold=0.5;
+    chembl_25=# set rdkit.tanimoto_threshold=0.5;
     SET
     Time: 0.055 ms
-    chembl_23=# select count(*) from get_mfp2_neighbors('Cc1ccc2nc(N(C)CC(=O)O)sc2c1');
+    chembl_25=# select count(*) from get_mfp2_neighbors('Cc1ccc2nc(N(C)CC(=O)O)sc2c1');
      count
     -------
-        20
+        21
     (1 row)
 
     Time: 181.100 ms
@@ -480,14 +452,14 @@ By default, the minimum similarity returned with a similarity search is 0.5. Thi
 
 The most straightforward use of the MCS code is to find the maximum common substructure of a group of molecules:
 
-    chembl_23=# select fmcs(m::text) from rdk.mols join compound_records using (molregno) where doc_id=4;
+    chembl_25=# select fmcs(m::text) from rdk.mols join compound_records using (molregno) where doc_id=4;
                                       fmcs                                  
     ------------------------------------------------------------------------
      [#6](-[#6]-[#7]-[#6]-[#6](-,:[#6])-,:[#6])-,:[#6]-,:[#6]-,:[#6]-,:[#6]
     (1 row)
 
     Time: 31.041 ms
-    chembl_23=# select fmcs(m::text) from rdk.mols join compound_records using (molregno) where doc_id=5;
+    chembl_25=# select fmcs(m::text) from rdk.mols join compound_records using (molregno) where doc_id=5;
                                                                        fmcs                                                                   
     ------------------------------------------------------------------------------------------------------------------------------------------
      [#6]-[#6](=[#8])-[#7]-[#6](-[#6](=[#8])-[#7]1-[#6]-[#6]-[#6]-[#6]-1-[#6](=[#8])-[#7]-[#6](-[#6](=[#8])-[#8])-[#6]-[#6])-[#6](-[#6])-[#6]
@@ -497,7 +469,7 @@ The most straightforward use of the MCS code is to find the maximum common subst
 
 The same thing can be done with a SMILES column:
 
-    chembl_23=# select fmcs(canonical_smiles) from compound_structures join compound_records using (molregno) where doc_id=4;
+    chembl_25=# select fmcs(canonical_smiles) from compound_structures join compound_records using (molregno) where doc_id=4;
                                       fmcs                                  
     ------------------------------------------------------------------------
      [#6](-[#7]-[#6]-[#6]-,:[#6]-,:[#6]-,:[#6]-,:[#6])-[#6](-,:[#6])-,:[#6]
@@ -507,9 +479,9 @@ The same thing can be done with a SMILES column:
 
 It's also possible to adjust some of the parameters to the FMCS algorithm, though this is somewhat more painful as of this writing (the 2017\_03 release cycle). Here are a couple of examples:
 
-    chembl_23=# select fmcs_smiles(str,'{"Threshold":0.8}') from
-    chembl_23-#    (select string_agg(m::text,' ') as str from rdk.mols
-    chembl_23(#    join compound_records using (molregno) where doc_id=4) as str ;
+    chembl_25=# select fmcs_smiles(str,'{"Threshold":0.8}') from
+    chembl_25-#    (select string_agg(m::text,' ') as str from rdk.mols
+    chembl_25(#    join compound_records using (molregno) where doc_id=4) as str ;
 
                                                                                fmcs_smiles                                                                            
     ------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -517,10 +489,10 @@ It's also possible to adjust some of the parameters to the FMCS algorithm, thoug
     (1 row)
 
     Time: 9673.949 ms
-    chembl_23=#
-    chembl_23=# select fmcs_smiles(str,'{"AtomCompare":"Any"}') from
-    chembl_23-#    (select string_agg(m::text,' ') as str from rdk.mols
-    chembl_23(#    join compound_records using (molregno) where doc_id=4) as str ;
+    chembl_25=#
+    chembl_25=# select fmcs_smiles(str,'{"AtomCompare":"Any"}') from
+    chembl_25-#    (select string_agg(m::text,' ') as str from rdk.mols
+    chembl_25(#    join compound_records using (molregno) where doc_id=4) as str ;
                                                                                   fmcs_smiles                                                                               
     ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
      [#6]-,:[#6,#7]-[#8,#6]-[#6,#7](-[#6,#8]-[#7,#6]-,:[#6,#7]-,:[#6,#7]-,:[#7,#6]-,:[#6])-[#6,#7]-[#6]-[#6](-[#8,#6]-[#6])-[#6,#7]-[#7,#6]-[#6]-,:[#6,#8]-,:[#7,#6]-,:[#6]
@@ -530,9 +502,9 @@ It's also possible to adjust some of the parameters to the FMCS algorithm, thoug
 
 *Note* The combination of `"AtomCompare":"Any"` and a value of `"Threshold"` that is less than 1.0 does a quite generic search and can results in very long search times. Using `"Timeout"` with this combination is recommended:
 
-    chembl_23=# select fmcs_smiles(str,'{"AtomCompare":"Any","CompleteRingsOnly":true,"Threshold":0.8,"Timeout":60}') from
-    chembl_23-#    (select string_agg(m::text,' ') as str from rdk.mols
-    chembl_23(#    join compound_records using (molregno) where doc_id=3) as str ;
+    chembl_25=# select fmcs_smiles(str,'{"AtomCompare":"Any","CompleteRingsOnly":true,"Threshold":0.8,"Timeout":60}') from
+    chembl_25-#    (select string_agg(m::text,' ') as str from rdk.mols
+    chembl_25(#    join compound_records using (molregno) where doc_id=3) as str ;
 
     WARNING:  findMCS timed out, result is not maximal
                                                                                               fmcs_smiles                                                                    
@@ -724,7 +696,7 @@ The recommended adapter for connecting to postgresql is pyscopg2 (<https://pypi.
 Here's an example of connecting to our local copy of ChEMBL and doing a basic substructure search:
 
     >>> import psycopg2
-    >>> conn = psycopg2.connect(database='chembl_16')
+    >>> conn = psycopg2.connect(database='chembl_25')
     >>> curs = conn.cursor()
     >>> curs.execute('select * from rdk.mols where m@>%s',('c1cccc2c1nncc2',))
     >>> curs.fetchone()
@@ -735,12 +707,12 @@ That returns a SMILES for each molecule. If you plan to do more work with the mo
     >>> curs.execute('select molregno,mol_send(m) from rdk.mols where m@>%s',('c1cccc2c1nncc2',))
     >>> row = curs.fetchone()
     >>> row
-    (9830, <read-only buffer for 0x...>)
+    (9830, <memory at 0x...>)
 
 These pickles can then be converted into molecules:
 
     >>> from rdkit import Chem
-    >>> m = Chem.Mol(str(row[1]))
+    >>> m = Chem.Mol(row[1].tobytes())
     >>> Chem.MolToSmiles(m,True)
     'CC(C)Sc1ccc(CC2CCN(C3CCN(C(=O)c4cnnc5ccccc54)CC3)CC2)cc1'
 

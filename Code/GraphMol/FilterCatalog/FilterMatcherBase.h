@@ -29,6 +29,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
+#include <RDGeneral/export.h>
 #ifndef __RD_FILTER_MATCHER_BASE_H__
 #define __RD_FILTER_MATCHER_BASE_H__
 #include <GraphMol/RDKitBase.h>
@@ -48,7 +49,7 @@ namespace RDKit {
 class FilterMatcherBase;  // Forward declaration
 
 //! Holds the atomPairs matched by the underlying matcher
-struct FilterMatch {
+struct RDKIT_FILTERCATALOG_EXPORT FilterMatch {
   boost::shared_ptr<FilterMatcherBase> filterMatch;
   MatchVectType atomPairs;
 
@@ -64,16 +65,15 @@ struct FilterMatch {
     return (filterMatch.get() == rhs.filterMatch.get() &&
             atomPairs == rhs.atomPairs);
   }
-  
+
   bool operator!=(const FilterMatch &rhs) const {
     return !(filterMatch.get() == rhs.filterMatch.get() &&
              atomPairs == rhs.atomPairs);
   }
-
 };
 
-extern const char *DEFAULT_FILTERMATCHERBASE_NAME;
-class FilterMatcherBase
+RDKIT_FILTERCATALOG_EXPORT extern const char *DEFAULT_FILTERMATCHERBASE_NAME;
+class RDKIT_FILTERCATALOG_EXPORT FilterMatcherBase
     : public boost::enable_shared_from_this<FilterMatcherBase> {
   //------------------------------------
   //! Virtual API for filter matching
@@ -120,10 +120,12 @@ class FilterMatcherBase
   //  Clones the current FilterMatcherBase into one that
   //   can be passed around safely.
   virtual boost::shared_ptr<FilterMatcherBase> Clone() const {
-    BOOST_LOG(rdWarningLog) << "FilterMatcherBase::Clone is deprecated, use copy instead" << std::endl;
+    BOOST_LOG(rdWarningLog)
+        << "FilterMatcherBase::Clone is deprecated, use copy instead"
+        << std::endl;
     return copy();
   }
-  
+
   //------------------------------------
   //! copy
   //  copies the current FilterMatcherBase into one that
@@ -144,5 +146,5 @@ class FilterMatcherBase
 #ifdef RDK_USE_BOOST_SERIALIZATION
 BOOST_SERIALIZATION_ASSUME_ABSTRACT(FilterMatcherBase)
 #endif
-}
+}  // namespace RDKit
 #endif

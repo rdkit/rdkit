@@ -30,7 +30,7 @@
 
 #include <GraphMol/RDKitBase.h>
 
-#include "WHIM.h"
+#include "EEM.h"
 #include "MolData3Ddescriptors.h"
 
 #include <math.h>
@@ -206,6 +206,7 @@ void getEEMs(const ROMol &mol, std::vector<double> &result, int numAtoms, int co
     result[i] = charges[i];
   }
 }
+
 
 
 }  // end of anonymous namespace

@@ -5,7 +5,7 @@
   (only the composition is required)
 
 """
-from __future__ import print_function
+
 
 from rdkit import RDConfig
 from rdkit.ML.Descriptors import Parser, Descriptors

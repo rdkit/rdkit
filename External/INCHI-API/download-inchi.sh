@@ -46,22 +46,21 @@ if [[ $DIR =~ External/INCHI-API$ ]]
 then
 	mkdir -p src
 	echo "================================================================"
-	echo "Downloading InChI software distribution version 1.04"
-	echo "  http://www.inchi-trust.org/wp/wp-content/uploads/2014/06/INCHI-1-API.zip"
+	echo "Downloading InChI software distribution version 1.05"
+	echo "  http://www.inchi-trust.org/download/105/INCHI-1-SRC.zip"
 	echo "  ====>"
 	echo "  $TEMPDIR"
 	echo "================================================================"
 	cd $TEMPDIR
-	wget http://www.inchi-trust.org/wp/wp-content/uploads/2014/06/INCHI-1-API.zip
-	
+	wget http://www.inchi-trust.org/download/105/INCHI-1-SRC.zip
 	echo "================================================================"
 	echo "Unarchiving"
 	echo "================================================================"
-	unzip INCHI-1-API
+	unzip INCHI-1-SRC
 	echo "================================================================"
 	echo "Copying files"
 	echo "================================================================"
-	cp INCHI-1-API/INCHI_API/inchi_dll/* "$DIR/src"
+	cp -a INCHI-1-SRC/* "$DIR/src"
 	echo "================================================================"
 	echo "Removing temporary files"
 	echo "================================================================"

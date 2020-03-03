@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2015 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2018 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -14,6 +14,7 @@
 
 */
 
+#include <RDGeneral/export.h>
 #ifndef __RD_ROMOL_H__
 #define __RD_ROMOL_H__
 
@@ -32,18 +33,17 @@
 #include <RDGeneral/RDProps.h>
 #include "Atom.h"
 #include "Bond.h"
-
 #include "Conformer.h"
+#include "SubstanceGroup.h"
+#include "StereoGroup.h"
 
 namespace RDKit {
+class SubstanceGroup;
 class Atom;
 class Bond;
-typedef boost::shared_ptr<Atom> ATOM_SPTR;
-typedef boost::shared_ptr<Bond> BOND_SPTR;
-
 //! This is the BGL type used to store the topology:
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS,
-                              ATOM_SPTR, BOND_SPTR>
+                              Atom *, Bond *>
     MolGraph;
 class MolPickler;
 class RWMol;
@@ -65,9 +65,9 @@ class QueryAtomIterator_;
 template <class T1, class T2>
 class MatchingAtomIterator_;
 
-extern const int ci_RIGHTMOST_ATOM;
-extern const int ci_LEADING_BOND;
-extern const int ci_ATOM_HOLDER;
+RDKIT_GRAPHMOL_EXPORT extern const int ci_RIGHTMOST_ATOM;
+RDKIT_GRAPHMOL_EXPORT extern const int ci_LEADING_BOND;
+RDKIT_GRAPHMOL_EXPORT extern const int ci_ATOM_HOLDER;
 
 //! ROMol is a molecule class that is intended to have a fixed topology
 /*!
@@ -100,7 +100,75 @@ extern const int ci_ATOM_HOLDER;
 
  */
 
-class ROMol : public RDProps {
+//! \name C++11 Iterators
+
+template <class Graph, class Vertex>
+struct CXXAtomIterator {
+  Graph *graph;
+  typename Graph::vertex_iterator vstart, vend;
+
+  struct CXXAtomIter {
+    Graph *graph;
+    typename Graph::vertex_iterator pos;
+    Atom *current;
+
+    CXXAtomIter(Graph *graph, typename Graph::vertex_iterator pos)
+        : graph(graph), pos(pos), current(nullptr) {}
+
+    Vertex &operator*() {
+      current = (*graph)[*pos];
+      return current;
+    }
+    CXXAtomIter &operator++() {
+      ++pos;
+      return *this;
+    }
+    bool operator!=(const CXXAtomIter &it) const { return pos != it.pos; }
+  };
+
+  CXXAtomIterator(Graph *graph) : graph(graph) {
+    auto vs = boost::vertices(*graph);
+    vstart = vs.first;
+    vend = vs.second;
+  }
+  CXXAtomIter begin() { return {graph, vstart}; }
+  CXXAtomIter end() { return {graph, vend}; }
+};
+
+template <class Graph, class Edge>
+struct CXXBondIterator {
+  Graph *graph;
+  typename Graph::edge_iterator vstart, vend;
+
+  struct CXXBondIter {
+    Graph *graph;
+    typename Graph::edge_iterator pos;
+    Bond *current;
+
+    CXXBondIter(Graph *graph, typename Graph::edge_iterator pos)
+        : graph(graph), pos(pos), current(nullptr) {}
+
+    Edge &operator*() {
+      current = (*graph)[*pos];
+      return current;
+    }
+    CXXBondIter &operator++() {
+      ++pos;
+      return *this;
+    }
+    bool operator!=(const CXXBondIter &it) const { return pos != it.pos; }
+  };
+
+  CXXBondIterator(Graph *graph) : graph(graph) {
+    auto vs = boost::edges(*graph);
+    vstart = vs.first;
+    vend = vs.second;
+  }
+  CXXBondIter begin() { return {graph, vstart}; }
+  CXXBondIter end() { return {graph, vend}; }
+};
+
+class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
  public:
   friend class MolPickler;
   friend class RWMol;
@@ -120,13 +188,6 @@ class ROMol : public RDProps {
   typedef std::pair<OEDGE_ITER, OEDGE_ITER> OBOND_ITER_PAIR;
   typedef std::pair<VERTEX_ITER, VERTEX_ITER> ATOM_ITER_PAIR;
   typedef std::pair<ADJ_ITER, ADJ_ITER> ADJ_ITER_PAIR;
-
-  typedef std::vector<ATOM_SPTR> ATOM_SPTR_VECT;
-  typedef ATOM_SPTR_VECT::iterator ATOM_SPTR_VECT_I;
-  typedef ATOM_SPTR_VECT::const_iterator ATOM_SPTR_VECT_CI;
-  typedef std::vector<BOND_SPTR> BOND_SPTR_VECT;
-  typedef BOND_SPTR_VECT::iterator BOND_SPTR_VECT_I;
-  typedef BOND_SPTR_VECT::const_iterator BOND_SPTR_VECT_CI;
 
   typedef std::vector<Atom *> ATOM_PTR_VECT;
   typedef ATOM_PTR_VECT::iterator ATOM_PTR_VECT_I;
@@ -174,6 +235,37 @@ class ROMol : public RDProps {
 
   //@}
   //! \endcond
+
+  //! C++11 Range iterator
+  /*!
+    <b>Usage</b>
+    \code
+      for(auto atom : mol.atoms()) {
+         atom->getIdx();
+      };
+    \endcode
+   */
+
+  CXXAtomIterator<MolGraph, Atom *> atoms() { return {&d_graph}; }
+
+  CXXAtomIterator<const MolGraph, Atom *const> atoms() const {
+    return {&d_graph};
+  }
+
+  /*!
+  <b>Usage</b>
+  \code
+    for(auto bond : mol.bonds()) {
+       bond->getIdx();
+    };
+  \endcode
+ */
+
+  CXXBondIterator<MolGraph, Bond *> bonds() { return {&d_graph}; }
+
+  CXXBondIterator<const MolGraph, Bond *const> bonds() const {
+    return {&d_graph};
+  }
 
   ROMol() : RDProps(), numBonds(0) { initMol(); }
 
@@ -223,8 +315,6 @@ class ROMol : public RDProps {
   }
   //! returns the degree (number of neighbors) of an Atom in the graph
   unsigned int getAtomDegree(const Atom *at) const;
-  //! \overload
-  unsigned int getAtomDegree(ATOM_SPTR at) const;
   //@}
 
   //! \name Bonds
@@ -269,35 +359,26 @@ class ROMol : public RDProps {
   //@{
 
   //! associates an Atom pointer with a bookmark
-  void setAtomBookmark(ATOM_SPTR at, int mark) {
-    d_atomBookmarks[mark].push_back(at.get());
-  };
-  //! \overload
   void setAtomBookmark(Atom *at, int mark) {
     d_atomBookmarks[mark].push_back(at);
   };
   //! associates an Atom pointer with a bookmark
-  void replaceAtomBookmark(ATOM_SPTR at, int mark) {
-    d_atomBookmarks[mark].clear();
-    d_atomBookmarks[mark].push_back(at.get());
-  };
-  //! \overload
   void replaceAtomBookmark(Atom *at, int mark) {
     d_atomBookmarks[mark].clear();
     d_atomBookmarks[mark].push_back(at);
   };
   //! returns the first Atom associated with the \c bookmark provided
   Atom *getAtomWithBookmark(int mark);
+  //! returns the Atom associated with the \c bookmark provided
+  //! a check is made to ensure it is the only atom with that bookmark
+  Atom *getUniqueAtomWithBookmark(int mark);
   //! returns all Atoms associated with the \c bookmark provided
   ATOM_PTR_LIST &getAllAtomsWithBookmark(int mark);
   //! removes a \c bookmark from our collection
-  void clearAtomBookmark(const int mark);
+  void clearAtomBookmark(int mark);
   //! removes a particular Atom from the list associated with the \c bookmark
-  void clearAtomBookmark(const int mark, const Atom *atom);
-  //! \overload
-  void clearAtomBookmark(const int mark, ATOM_SPTR atom) {
-    clearAtomBookmark(mark, atom.get());
-  };
+  void clearAtomBookmark(int mark, const Atom *atom);
+
   //! blows out all atomic \c bookmarks
   void clearAllAtomBookmarks() { d_atomBookmarks.clear(); };
   //! queries whether or not any atoms are associated with a \c bookmark
@@ -306,25 +387,21 @@ class ROMol : public RDProps {
   ATOM_BOOKMARK_MAP *getAtomBookmarks() { return &d_atomBookmarks; };
 
   //! associates a Bond pointer with a bookmark
-  void setBondBookmark(BOND_SPTR bond, int mark) {
-    d_bondBookmarks[mark].push_back(bond.get());
-  };
-  //! \overload
   void setBondBookmark(Bond *bond, int mark) {
     d_bondBookmarks[mark].push_back(bond);
   };
   //! returns the first Bond associated with the \c bookmark provided
   Bond *getBondWithBookmark(int mark);
+  //! returns the Bond associated with the \c bookmark provided
+  //! a check is made to ensure it is the only bond with that bookmark
+  Bond *getUniqueBondWithBookmark(int mark);
   //! returns all bonds associated with the \c bookmark provided
   BOND_PTR_LIST &getAllBondsWithBookmark(int mark);
   //! removes a \c bookmark from our collection
   void clearBondBookmark(int mark);
   //! removes a particular Bond from the list associated with the \c bookmark
   void clearBondBookmark(int mark, const Bond *bond);
-  //! \overload
-  void clearBondBookmark(int mark, BOND_SPTR bond) {
-    clearBondBookmark(mark, bond.get());
-  };
+
   //! blows out all bond \c bookmarks
   void clearAllBondBookmarks() { d_bondBookmarks.clear(); };
   //! queries whether or not any bonds are associated with a \c bookmark
@@ -356,7 +433,7 @@ class ROMol : public RDProps {
     \param conf - conformation to be added to the molecule, this molecule takes
     ownership
                   of the conformer
-    \param assignId - a unique ID will be assigned to the the conformation if
+    \param assignId - a unique ID will be assigned to the conformation if
     true
                       otherwise it is assumed that the conformation already has
     an (unique) ID set
@@ -366,8 +443,6 @@ class ROMol : public RDProps {
   inline unsigned int getNumConformers() const {
     return rdcast<unsigned int>(d_confs.size());
   }
-
-  //@}
 
   //! \name Topology
   //@{
@@ -382,21 +457,19 @@ class ROMol : public RDProps {
 
     <b>Usage</b>
     \code
-      ... molPtr is a const ROMol & ...
+      ... mol is a const ROMol & ...
       ... atomPtr is a const Atom * ...
-      ROMol::ADJ_ITER nbrIdx,endNbrs;
-      boost::tie(nbrIdx,endNbrs) = molPtr.getAtomNeighbors(atomPtr);
-      while(nbrIdx!=endNbrs){
-        const ATOM_SPTR at=molPtr[*nbrIdx];
-        ... do something with the Atom ...
-        ++nbrIdx;
+      ... requires #include <boost/range/iterator_range.hpp>
+      for (const auto &nbri :
+           boost::make_iterator_range(m.getAtomNeighbors(atomPtr))) {
+        const auto &nbr = (*m)[nbri];
+        // nbr is an atom pointer
       }
+
     \endcode
 
   */
   ADJ_ITER_PAIR getAtomNeighbors(Atom const *at) const;
-  //! \overload
-  ADJ_ITER_PAIR getAtomNeighbors(ATOM_SPTR at) const;
 
   //! provides access to all Bond objects connected to an Atom
   /*!
@@ -404,26 +477,24 @@ class ROMol : public RDProps {
 
     <b>Usage</b>
     \code
-      ... molPtr is a const ROMol * ...
+      ... mol is a const ROMol & ...
       ... atomPtr is a const Atom * ...
-      ROMol::OEDGE_ITER beg,end;
-      boost::tie(beg,end) = molPtr->getAtomBonds(atomPtr);
-      while(beg!=end){
-        const BOND_SPTR bond=(*molPtr)[*beg];
-        ... do something with the Bond ...
-        ++beg;
+      ... requires #include <boost/range/iterator_range.hpp>
+      for (const auto &nbri :
+           boost::make_iterator_range(m.getAtomBonds(atomPtr))) {
+        const auto &nbr = (*m)[nbri];
+        // nbr is a bond pointer
       }
     \endcode
     or, if you need a non-const Bond *:
     \code
-      ... molPtr is a ROMol * ...
+      ... mol is a const ROMol & ...
       ... atomPtr is a const Atom * ...
-      ROMol::OEDGE_ITER beg,end;
-      boost::tie(beg,end) = molPtr->getAtomBonds(atomPtr);
-      while(beg!=end){
-        BOND_SPTR bond=(*molPtr)[*beg];
-        ... do something with the Bond ...
-        ++beg;
+      ... requires #include <boost/range/iterator_range.hpp>
+      for (const auto &nbri :
+           boost::make_iterator_range(m.getAtomBonds(atomPtr))) {
+        auto nbr = (*m)[nbri];
+        // nbr is a bond pointer
       }
     \endcode
 
@@ -575,15 +646,22 @@ class ROMol : public RDProps {
   void debugMol(std::ostream &str) const;
   //@}
 
-  ATOM_SPTR operator[](const vertex_descriptor &v) { return d_graph[v]; };
-  const ATOM_SPTR operator[](const vertex_descriptor &v) const {
+  Atom *operator[](const vertex_descriptor &v) { return d_graph[v]; };
+  const Atom *operator[](const vertex_descriptor &v) const {
     return d_graph[v];
   };
 
-  BOND_SPTR operator[](const edge_descriptor &e) { return d_graph[e]; };
-  const BOND_SPTR operator[](const edge_descriptor &e) const {
-    return d_graph[e];
-  };
+  Bond *operator[](const edge_descriptor &e) { return d_graph[e]; };
+  const Bond *operator[](const edge_descriptor &e) const { return d_graph[e]; };
+
+  //! Gets a reference to the groups of atoms with relative stereochemistry
+  /*!
+    Stereo groups are also called enhanced stereochemistry in the SDF/Mol3000
+    file format.
+  */
+  const std::vector<StereoGroup> &getStereoGroups() const {
+    return d_stereo_groups;
+  }
 
  private:
   MolGraph d_graph;
@@ -591,6 +669,14 @@ class ROMol : public RDProps {
   BOND_BOOKMARK_MAP d_bondBookmarks;
   RingInfo *dp_ringInfo;
   CONF_SPTR_LIST d_confs;
+  std::vector<SubstanceGroup> d_sgroups;
+  friend RDKIT_GRAPHMOL_EXPORT std::vector<SubstanceGroup> &getSubstanceGroups(
+      ROMol &);
+  friend RDKIT_GRAPHMOL_EXPORT const std::vector<SubstanceGroup>
+      &getSubstanceGroups(const ROMol &);
+  void clearSubstanceGroups() { d_sgroups.clear(); }
+  std::vector<StereoGroup> d_stereo_groups;
+
   ROMol &operator=(
       const ROMol &);  // disable assignment, RWMol's support assignment
 
@@ -614,21 +700,6 @@ class ROMol : public RDProps {
   */
   unsigned int addAtom(Atom *atom, bool updateLabel = true,
                        bool takeOwnership = false);
-  //! adds an Atom to our collection
-  /*!
-    \param atom          pointer to the Atom to add
-    \param updateLabel   (optional) if this is true, the new Atom will be
-                         our \c activeAtom
-
-
-    \return the new number of atoms
-
-    <b>Note:</b> since this is using a smart pointer, we don't need to worry
-    about
-    issues of ownership.
-
-  */
-  unsigned int addAtom(ATOM_SPTR, bool updateLabel = true);
   //! adds a Bond to our collection
   /*!
     \param bond          pointer to the Bond to add
@@ -639,6 +710,15 @@ class ROMol : public RDProps {
     \return the new number of bonds
   */
   unsigned int addBond(Bond *bond, bool takeOwnership = false);
+
+  //! Sets groups of atoms with relative stereochemistry
+  /*!
+    \param stereo_groups the new set of stereo groups. All will be replaced.
+
+    Stereo groups are also called enhanced stereochemistry in the SDF/Mol3000
+    file format. stereo_groups should be std::move()ed into this function.
+  */
+  void setStereoGroups(std::vector<StereoGroup> stereo_groups);
   //! adds a Bond to our collection
   /*!
     \param bond          pointer to the Bond to add
@@ -648,18 +728,6 @@ class ROMol : public RDProps {
     <b>Note:</b> since this is using a smart pointer, we don't need to worry
     about
     issues of ownership.
-  */
-  unsigned int addBond(BOND_SPTR bsp);
-
-  //! initializes from the contents of another molecule
-  /*!
-    \param other     the molecule to be copied
-    \param quickCopy if this is true, we will not
-         copy any of the properties or bookmarks and conformers from \c other.
-    This can
-         make the copy substantially faster (thus the name).
-    \param confId if this is >=0, the resulting ROMol will contain only
-         the specified conformer from \c other.
   */
   void initFromOther(const ROMol &other, bool quickCopy, int confId);
 };
@@ -672,5 +740,5 @@ typedef std::vector<ROMOL_SPTR> MOL_SPTR_VECT;
 typedef MOL_PTR_VECT::const_iterator MOL_PTR_VECT_CI;
 typedef MOL_PTR_VECT::iterator MOL_PTR_VECT_I;
 
-};  // end of RDKit namespace
+};  // namespace RDKit
 #endif

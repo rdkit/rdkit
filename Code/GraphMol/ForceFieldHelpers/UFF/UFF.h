@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2015 Greg Landrum
+//  Copyright (C) 2015-2018 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -7,9 +7,11 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef RD_UFFCONVENIENCE_H
 #define RD_UFFCONVENIENCE_H
 #include <ForceField/ForceField.h>
+#include <GraphMol/ForceFieldHelpers/FFConvenience.h>
 #include <RDGeneral/RDThreads.h>
 #include "Builder.h"
 
@@ -40,34 +42,11 @@ std::pair<int, double> UFFOptimizeMolecule(
     bool ignoreInterfragInteractions = true) {
   ForceFields::ForceField *ff = UFF::constructForceField(
       mol, vdwThresh, confId, ignoreInterfragInteractions);
-  ff->initialize();
-  int res = ff->minimize(maxIters);
-  double e = ff->calcEnergy();
+  std::pair<int, double> res = ForceFieldsHelper::OptimizeMolecule(*ff, maxIters);
   delete ff;
-  return std::make_pair(res, e);
+  return res;
 }
-#ifdef RDK_THREADSAFE_SSS
-namespace detail {
-void UFFOptimizeMoleculeConfsHelper_(ForceFields::ForceField ff, ROMol *mol,
-                                     std::vector<std::pair<int, double> > *res,
-                                     unsigned int threadIdx,
-                                     unsigned int numThreads, int maxIters) {
-  unsigned int i = 0;
-  ff.positions().resize(mol->getNumAtoms());
-  for (ROMol::ConformerIterator cit = mol->beginConformers();
-       cit != mol->endConformers(); ++cit, ++i) {
-    if (i % numThreads != threadIdx) continue;
-    for (unsigned int aidx = 0; aidx < mol->getNumAtoms(); ++aidx) {
-      ff.positions()[aidx] = &(*cit)->getAtomPos(aidx);
-    }
-    ff.initialize();
-    int needsMore = ff.minimize(maxIters);
-    double e = ff.calcEnergy();
-    (*res)[i] = std::make_pair(needsMore, e);
-  }
-}
-}  // end of detail namespace
-#endif
+
 //! Convenience function for optimizing all of a molecule's conformations using
 // UFF
 /*
@@ -88,34 +67,14 @@ void UFFOptimizeMoleculeConfsHelper_(ForceFields::ForceField ff, ROMol *mol,
 
 */
 void UFFOptimizeMoleculeConfs(ROMol &mol,
-                              std::vector<std::pair<int, double> > &res,
+                              std::vector<std::pair<int, double>> &res,
                               int numThreads = 1, int maxIters = 1000,
                               double vdwThresh = 10.0,
                               bool ignoreInterfragInteractions = true) {
-  res.resize(mol.getNumConformers());
-  numThreads = getNumThreadsToUse(numThreads);
-  if (numThreads == 1) {
-    unsigned int i = 0;
-    for (ROMol::ConformerIterator cit = mol.beginConformers();
-         cit != mol.endConformers(); ++cit, ++i) {
-      res[i] = UFFOptimizeMolecule(mol, maxIters, vdwThresh, (*cit)->getId(),
-                                   ignoreInterfragInteractions);
-    }
-  }
-#ifdef RDK_THREADSAFE_SSS
-  else {
-    ForceFields::ForceField *ff = UFF::constructForceField(
-        mol, vdwThresh, -1, ignoreInterfragInteractions);
-    boost::thread_group tg;
-    for (int ti = 0; ti < numThreads; ++ti) {
-      tg.add_thread(new boost::thread(detail::UFFOptimizeMoleculeConfsHelper_,
-                                      *ff, &mol, &res, ti, numThreads,
-                                      maxIters));
-    }
-    tg.join_all();
-    delete ff;
-  }
-#endif
+  ForceFields::ForceField *ff = UFF::constructForceField(
+      mol, vdwThresh, -1, ignoreInterfragInteractions);
+  ForceFieldsHelper::OptimizeMoleculeConfs(mol, *ff, res, numThreads, maxIters);
+  delete ff;
 }
 }  // end of namespace UFF
 }  // end of namespace RDKit

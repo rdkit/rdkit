@@ -14,6 +14,7 @@
    <b>WARNING:</b> If you go changing the molecule underneath one of
    these iterators you will be sad...
 */
+#include <RDGeneral/export.h>
 #ifndef __RD_ATOM_ITERATORS_H__
 #define __RD_ATOM_ITERATORS_H__
 
@@ -27,10 +28,10 @@ class QueryAtom;
 
 //! A general random access iterator
 template <class Atom_, class Mol_>
-class AtomIterator_ {
+class RDKIT_GRAPHMOL_EXPORT AtomIterator_ {
  public:
   typedef AtomIterator_<Atom_, Mol_> ThisType;
-  AtomIterator_() : _pos(0), _max(-1), _mol(0){};
+  AtomIterator_() : _pos(-1), _max(-1), _mol(nullptr){};
   AtomIterator_(Mol_ *mol);
   AtomIterator_(Mol_ *mol, int pos);
   AtomIterator_(const ThisType &other);
@@ -69,10 +70,10 @@ class AtomIterator_ {
 
 //! Iterate over heteroatoms, this is bidirectional
 template <class Atom_, class Mol_>
-class HeteroatomIterator_ {
+class RDKIT_GRAPHMOL_EXPORT HeteroatomIterator_ {
  public:
   typedef HeteroatomIterator_<Atom_, Mol_> ThisType;
-  HeteroatomIterator_() : _mol(0){};
+  HeteroatomIterator_() : _end(-1), _pos(-1), _mol(nullptr){};
   HeteroatomIterator_(Mol_ *mol);
   HeteroatomIterator_(Mol_ *mol, int pos);
   ~HeteroatomIterator_();
@@ -105,10 +106,10 @@ class HeteroatomIterator_ {
 
 //! Iterate over aromatic atoms, this is bidirectional
 template <class Atom_, class Mol_>
-class AromaticAtomIterator_ {
+class RDKIT_GRAPHMOL_EXPORT AromaticAtomIterator_ {
  public:
   typedef AromaticAtomIterator_<Atom_, Mol_> ThisType;
-  AromaticAtomIterator_() : _mol(0){};
+  AromaticAtomIterator_() : _end(-1), _pos(-1), _mol(nullptr){};
   AromaticAtomIterator_(Mol_ *mol);
   AromaticAtomIterator_(Mol_ *mol, int pos);
   ~AromaticAtomIterator_();
@@ -137,10 +138,10 @@ class AromaticAtomIterator_ {
 
 //! Iterate over atoms matching a query. This is bidirectional.
 template <class Atom_, class Mol_>
-class QueryAtomIterator_ {
+class RDKIT_GRAPHMOL_EXPORT QueryAtomIterator_ {
  public:
   typedef QueryAtomIterator_<Atom_, Mol_> ThisType;
-  QueryAtomIterator_() : _mol(0), _qA(0){};
+  QueryAtomIterator_() : _end(-1), _pos(-1), _mol(nullptr), _qA(nullptr){};
   QueryAtomIterator_(Mol_ *mol, QueryAtom const *what);
   QueryAtomIterator_(Mol_ *mol, int pos);
   ~QueryAtomIterator_();
@@ -170,10 +171,10 @@ class QueryAtomIterator_ {
 
 //! Iterate over atoms matching a query function. This is bidirectional.
 template <class Atom_, class Mol_>
-class MatchingAtomIterator_ {
+class RDKIT_GRAPHMOL_EXPORT MatchingAtomIterator_ {
  public:
   typedef MatchingAtomIterator_<Atom_, Mol_> ThisType;
-  MatchingAtomIterator_() : _end(-1), _pos(-1), _mol(0), _qF(0){};
+  MatchingAtomIterator_() : _end(-1), _pos(-1), _mol(nullptr), _qF(nullptr){};
   MatchingAtomIterator_(Mol_ *mol, bool (*fn)(Atom_ *));
   MatchingAtomIterator_(Mol_ *mol, int pos);
   ~MatchingAtomIterator_();
@@ -201,6 +202,6 @@ class MatchingAtomIterator_ {
   int _findPrev(int from);
 };
 
-} /* end o namespace */
+}  // namespace RDKit
 
 #endif

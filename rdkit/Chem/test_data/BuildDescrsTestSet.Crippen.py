@@ -1,7 +1,7 @@
-from __future__ import print_function
+
 from rdkit import RDConfig
 import os.path
-from rdkit.six.moves import cPickle
+import pickle
 from rdkit import Chem
 from rdkit.Chem import Descriptors
 

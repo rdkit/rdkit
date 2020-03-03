@@ -76,9 +76,9 @@ public class DistanceGeometryTests extends GraphMolTest {
 						double d1 = pt1j.minus(pt1i).length();
 						double d2 = pt2j.minus(pt2i).length();
 						if(m.getBondBetweenAtoms(i,j) != null){
-							assertEquals(d1, d2, 0.06);
+							assertTrue(Math.abs(d1-d2)/d1<0.06);
                                                 } else {
-							assertEquals(d1, d2, 0.15);
+							assertTrue(Math.abs(d1-d2)/d1<0.12);
                                                 }
 					}
 				}
@@ -481,13 +481,30 @@ public class DistanceGeometryTests extends GraphMolTest {
 		ROMol ref=RWMol.MolFromMolFile(molFile.getPath(), true, false);;
 		ROMol test = RWMol.MolFromSmiles("OCCC").addHs(false,false);
     assertTrue(test.getNumAtoms()==ref.getNumAtoms());
-    EmbedParameters eps = RDKFuncs.getETKDG();
+
+	// basic embedding works:
+        // The default random seed is 42, but we don't want to start at the beginning
+        //  of the random source stream since this is also our explicit seed, so
+        //  ensure that we don't, otherwise we can't tell if we are really
+        //  using the seed specified in the parameter object.
+	int cid = DistanceGeom.EmbedMolecule(test);
+    assertTrue(cid>-1);
+
+	EmbedParameters eps = new EmbedParameters(RDKFuncs.getETKDG());
     eps.setRandomSeed(42);
-		int cid = DistanceGeom.EmbedMolecule(test,eps);
+		cid = DistanceGeom.EmbedMolecule(test,eps);
 		assertTrue(cid>-1);
     double ssd;
 		ssd = test.alignMol(ref);
 		assertTrue(ssd < 0.1);
+    // make sure we didn't change the global params
+	EmbedParameters eps2 = RDKFuncs.getETKDG();
+		assertEquals(eps2.getRandomSeed(),-1);
+		cid = DistanceGeom.EmbedMolecule(test,eps2);
+		assertTrue(cid>-1);
+		ssd = test.alignMol(ref);
+		assertTrue(ssd > 0.1);
+
 	}
   @Test
 	public void test9ETDGParams2() {
@@ -520,10 +537,10 @@ public class DistanceGeometryTests extends GraphMolTest {
 		assertTrue(ssd < 0.1);
 	}
 
-
-
 	public static void main(String args[]) {
+    System.out.print("STARTING\n");
 		org.junit.runner.JUnitCore.main("org.RDKit.DistanceGeometryTests");
+    System.out.print("FINISHED\n");
 	}
 
 }

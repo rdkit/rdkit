@@ -26,7 +26,7 @@ PyObject *getCorrMatrix(BitCorrMatGenerator *cmGen) {
   double *dres = cmGen->getCorrMat();
   unsigned int nb = cmGen->getCorrBitList().size();
   npy_intp dim = nb * (nb - 1) / 2;
-  PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(1, &dim, NPY_DOUBLE);
+  auto *res = (PyArrayObject *)PyArray_SimpleNew(1, &dim, NPY_DOUBLE);
   memcpy(static_cast<void *>(PyArray_DATA(res)), static_cast<void *>(dres),
          dim * sizeof(double));
   return PyArray_Return(res);
@@ -61,9 +61,9 @@ void CollectVotes(BitCorrMatGenerator *cmGen, python::object bitVect) {
 struct corrmat_wrap {
   static void wrap() {
     std::string docString =
-        "A class to generate a pariwise correlation matrix between a list of "
+        "A class to generate a pairwise correlation matrix between a list of "
         "bits\n"
-        "The mode of operation for this class is something like this\n"
+        "The mode of operation for this class is something like this\n\n"
         "   >>> cmg = BitCorrMatGenerator() \n"
         "   >>> cmg.SetBitList(blist) \n"
         "   >>> for fp in fpList:  \n"
@@ -77,7 +77,7 @@ struct corrmat_wrap {
                                         docString.c_str())
         .def("SetBitList", setBitList,
              "Set the list of bits that need to be correllated\n\n"
-             " This may for example be ther top ranking ensemble bits\n\n"
+             " This may for example be their top ranking ensemble bits\n\n"
              "ARGUMENTS:\n\n"
              "  - bitList : an integer list of bit IDs\n")
         .def("CollectVotes", CollectVotes,
@@ -90,6 +90,6 @@ struct corrmat_wrap {
              "from a bunch of fingerprints\n");
   };
 };
-}
+}  // namespace RDInfoTheory
 
 void wrap_corrmatgen() { RDInfoTheory::corrmat_wrap::wrap(); }

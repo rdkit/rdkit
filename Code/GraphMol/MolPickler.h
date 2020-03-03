@@ -1,4 +1,4 @@
-//
+///
 //  Copyright (C) 2001-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef _RD_MOLPICKLE_H
 #define _RD_MOLPICKLE_H
 
@@ -15,6 +16,7 @@
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/Bond.h>
 #include <GraphMol/QueryBond.h>
+#include <RDGeneral/StreamOps.h>
 #include <boost/utility/binary.hpp>
 // Std stuff
 #include <iostream>
@@ -24,19 +26,20 @@
 #ifdef WIN32
 #include <ios>
 #endif
-#include <boost/cstdint.hpp>
+#include <cstdint>
 
 namespace RDKit {
 class ROMol;
 class RingInfo;
 
 //! used to indicate exceptions whilst pickling (serializing) molecules
-class MolPicklerException : public std::exception {
+class RDKIT_GRAPHMOL_EXPORT MolPicklerException : public std::exception {
  public:
   MolPicklerException(const char *msg) : _msg(msg){};
   MolPicklerException(const std::string msg) : _msg(msg){};
-  const char *message() const { return _msg.c_str(); };
-  ~MolPicklerException() throw(){};
+  const char *what() const noexcept override { return _msg.c_str(); };
+  const char *message() const noexcept { return what(); };
+  ~MolPicklerException() noexcept {};
 
  private:
   std::string _msg;
@@ -44,24 +47,27 @@ class MolPicklerException : public std::exception {
 
 namespace PicklerOps {
 typedef enum {
-  NoProps = 0,     // no data pickled
-  MolProps      = BOOST_BINARY(1),  // only public non computed properties
-  AtomProps     = BOOST_BINARY(10),
-  BondProps     = BOOST_BINARY(100),
-  QueryAtomData = BOOST_BINARY(10), // n.b. DEPRECATED and set to AtomProps (does the same work)
-  PrivateProps  = BOOST_BINARY(10000),
+  NoProps = 0,                 // no data pickled (default pickling, single-precision coords)
+  MolProps = BOOST_BINARY(1),  // only public non computed properties
+  AtomProps = BOOST_BINARY(10),
+  BondProps = BOOST_BINARY(100),
+  QueryAtomData = BOOST_BINARY(
+      10),  // n.b. DEPRECATED and set to AtomProps (does the same work)
+  PrivateProps = BOOST_BINARY(10000),
   ComputedProps = BOOST_BINARY(100000),
   AllProps =
-      0x7FFFFFFF,  // all data pickled (only 31 bit flags in case enum==int)
+      0x0000FFFF,  // all data pickled
+  CoordsAsDouble = 0x0001FFFF // save coordinates in double precision
 } PropertyPickleOptions;
 }
 
 //! handles pickling (serializing) molecules
-class MolPickler {
+class RDKIT_GRAPHMOL_EXPORT MolPickler {
  public:
-  static const boost::int32_t versionMajor, versionMinor,
-      versionPatch;                      //!< mark the pickle version
-  static const boost::int32_t endianId;  //! mark the endian-ness of the pickle
+  static const std::int32_t versionMajor;  //!< mark the pickle major version
+  static const std::int32_t versionMinor;  //!< mark the pickle minor version
+  static const std::int32_t versionPatch;  //!< mark the pickle patch version
+  static const std::int32_t endianId;  //! mark the endian-ness of the pickle
 
   //! the pickle format is tagged using these tags:
   //! NOTE: if you add to this list, be sure to put new entries AT THE BOTTOM,
@@ -129,10 +135,17 @@ class MolPickler {
     BEGINATOMPROPS,
     BEGINBONDPROPS,
     BEGINQUERYATOMDATA,
+    BEGINSGROUP,
+    BEGINSTEREOGROUP,
+    BEGINCONFPROPS,
+    BEGINCONFS_DOUBLE,
   } Tags;
 
   static unsigned int getDefaultPickleProperties();
   static void setDefaultPickleProperties(unsigned int);
+
+  static const CustomPropHandlerVec &getCustomPropHandlers();
+  static void addCustomPropHandler(const CustomPropHandler &handler);
 
   //! pickles a molecule and sends the results to stream \c ss
   static void pickleMol(const ROMol *mol, std::ostream &ss);
@@ -170,7 +183,7 @@ class MolPickler {
 
  private:
   //! Pickle nonquery atom data
-  static boost::int32_t _pickleAtomData(std::ostream &tss, const Atom *atom);
+  static std::int32_t _pickleAtomData(std::ostream &tss, const Atom *atom);
   //! depickle nonquery atom data
   static void _unpickleAtomData(std::istream &tss, Atom *atom, int version);
 
@@ -195,8 +208,21 @@ class MolPickler {
   static void _pickleSSSR(std::ostream &ss, const RingInfo *ringInfo,
                           std::map<int, int> &atomIdxMap);
 
-  //! do the actual work of pickling a Conformer
+  //! do the actual work of pickling a SubstanceGroup
   template <typename T>
+  static void _pickleSubstanceGroup(std::ostream &ss,
+                                    const SubstanceGroup &sgroup,
+                                    std::map<int, int> &atomIdxMap,
+                                    std::map<int, int> &bondIdxMap);
+
+  //! do the actual work of pickling Stereo Group data
+  template <typename T>
+  static void _pickleStereo(std::ostream &ss,
+                            const std::vector<StereoGroup> &groups,
+                            std::map<int, int> &atomIdxMap);
+
+  //! do the actual work of pickling a Conformer
+  template <typename T, typename C>
   static void _pickleConformer(std::ostream &ss, const Conformer *conf);
 
   //! do the actual work of de-pickling a molecule
@@ -222,8 +248,16 @@ class MolPickler {
   static void _addRingInfoFromPickle(std::istream &ss, ROMol *mol, int version,
                                      bool directMap = false);
 
-  //! extract a conformation from a pickle
+  //! extract a SubstanceGroup from a pickle
   template <typename T>
+  static SubstanceGroup _getSubstanceGroupFromPickle(std::istream &ss,
+                                                     ROMol *mol, int version);
+
+  template <typename T>
+  static void _depickleStereo(std::istream &ss, ROMol *mol, int version);
+
+  //! extract a conformation from a pickle
+  template <typename T, typename C>
   static Conformer *_conformerFromPickle(std::istream &ss, int version);
 
   //! pickle standard properties
@@ -241,6 +275,6 @@ class MolPickler {
   //! backwards compatibility
   static void _addBondFromPickleV1(std::istream &ss, ROMol *mol);
 };
-};
+};  // namespace RDKit
 
 #endif

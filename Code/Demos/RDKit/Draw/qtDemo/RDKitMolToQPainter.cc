@@ -388,7 +388,7 @@ void MolToQPainter( vector<int> &drawing , int qp_width , int qp_height ,
   }
   pos += 3;
 
-  // save current tranformation matrix()
+  // save current transformation matrix()
   qp.save();
 
   set_font( qp );

@@ -31,6 +31,7 @@ void testRDF() {
   RDKit::SDMolSupplier reader(sdfName, true, false);
   std::string fName = pathName + "/Code/GraphMol/Descriptors/test_data/RDFcustom.out";
 
+
   std::ifstream instrm(fName.c_str());
 
   std::string line;
@@ -90,4 +91,5 @@ void testRDF() {
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
   testRDF();
+
 }

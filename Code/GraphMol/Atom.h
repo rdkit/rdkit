@@ -12,6 +12,7 @@
   \brief Defines the Atom class and associated typedefs
 
 */
+#include <RDGeneral/export.h>
 #ifndef _RD_ATOM_H
 #define _RD_ATOM_H
 
@@ -65,14 +66,12 @@ class AtomMonomerInfo;
   at the *end* of the list of other bonds.
 
 */
-class Atom : public RDProps {
+class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   friend class MolPickler;  //!< the pickler needs access to our privates
   friend class ROMol;
   friend class RWMol;
 
  public:
-  typedef boost::shared_ptr<Atom> ATOM_SPTR;
-  typedef boost::shared_ptr<const Atom> C_ATOM_SPTR;
   // FIX: grn...
   typedef Queries::Query<int, Atom const *, true> QUERYATOM_QUERY;
 
@@ -104,6 +103,7 @@ class Atom : public RDProps {
   // PeriodicTable)
   explicit Atom(const std::string &what);
   Atom(const Atom &other);
+  Atom &operator=(const Atom &other);
   virtual ~Atom();
 
   //! makes a copy of this Atom and returns a pointer to it.
@@ -120,7 +120,10 @@ class Atom : public RDProps {
   //! returns our symbol (determined by our atomic number)
   std::string getSymbol() const;
 
-  //! returns a reference to the ROMol that owns this Atom
+  //! returns whether or not this instance belongs to a molecule
+  bool hasOwningMol() const { return dp_mol != nullptr; };
+
+  //! returns a reference to the ROMol that owns this instance
   ROMol &getOwningMol() const {
     PRECONDITION(dp_mol, "no owner");
     return *dp_mol;
@@ -210,9 +213,9 @@ class Atom : public RDProps {
   //! returns the \c noImplicit flag
   bool getNoImplicit() const { return df_noImplicit; };
 
-  //! sets our number of explict Hs
+  //! sets our number of explicit Hs
   void setNumExplicitHs(unsigned int what) { d_numExplicitHs = what; };
-  //! returns our number of explict Hs
+  //! returns our number of explicit Hs
   unsigned int getNumExplicitHs() const { return d_numExplicitHs; };
 
   //! sets our \c isAromatic flag, indicating whether or not we are aromatic
@@ -303,10 +306,6 @@ class Atom : public RDProps {
         | [CH2]   | O[CH2]O | Yes   |
   */
   virtual bool Match(Atom const *what) const;
-  //! \overload
-  virtual inline bool Match(const ATOM_SPTR &what) const {
-    return Match(what.get());
-  };
 
   //! returns the perturbation order for a list of integers
   /*!
@@ -332,7 +331,7 @@ class Atom : public RDProps {
       - requires an owning molecule
 
   */
-  int getPerturbationOrder(INT_LIST probe) const;
+  int getPerturbationOrder(const INT_LIST &probe) const;
 
   //! calculates any of our lazy \c properties
   /*!
@@ -390,47 +389,54 @@ class Atom : public RDProps {
 
   bool df_isAromatic;
   bool df_noImplicit;
-  boost::uint8_t d_numExplicitHs;
-  boost::int8_t d_formalCharge;
-  boost::uint8_t d_atomicNum;
+  std::uint8_t d_numExplicitHs;
+  std::int8_t d_formalCharge;
+  std::uint8_t d_atomicNum;
   // NOTE that these cannot be signed, they are calculated using
   // a lazy scheme and are initialized to -1 to indicate that the
   // calculation has not yet been done.
-  boost::int8_t d_implicitValence, d_explicitValence;
-  boost::uint8_t d_numRadicalElectrons;
-  boost::uint8_t d_chiralTag;
-  boost::uint8_t d_hybrid;
+  std::int8_t d_implicitValence, d_explicitValence;
+  std::uint8_t d_numRadicalElectrons;
+  std::uint8_t d_chiralTag;
+  std::uint8_t d_hybrid;
 
+  std::uint16_t d_isotope;
   atomindex_t d_index;
-  boost::uint16_t d_isotope;
 
   ROMol *dp_mol;
   AtomMonomerInfo *dp_monomerInfo;
   void initAtom();
+  void initFromOther(const Atom &other);
 };
 
 //! Set the atom's MDL integer RLabel
 //   Setting to 0 clears the rlabel.  Rlabel must be in the range [0..99]
-void setAtomRLabel(Atom *atm, int rlabel);
-int getAtomRLabel(const Atom *atm);
+RDKIT_GRAPHMOL_EXPORT void setAtomRLabel(Atom *atm, int rlabel);
+RDKIT_GRAPHMOL_EXPORT int getAtomRLabel(const Atom *atm);
 
 //! Set the atom's MDL atom alias
 //   Setting to an empty string clears the alias
-void setAtomAlias(Atom *atom, const std::string &alias);
-std::string getAtomAlias(const Atom *atom);
+RDKIT_GRAPHMOL_EXPORT void setAtomAlias(Atom *atom, const std::string &alias);
+RDKIT_GRAPHMOL_EXPORT std::string getAtomAlias(const Atom *atom);
 
 //! Set the atom's MDL atom value
 //   Setting to an empty string clears the value
 //   This is where recursive smarts get stored in MolBlock Queries
-void setAtomValue(Atom *atom, const std::string &value);
-std::string getAtomValue(const Atom *atom);
+RDKIT_GRAPHMOL_EXPORT void setAtomValue(Atom *atom, const std::string &value);
+RDKIT_GRAPHMOL_EXPORT std::string getAtomValue(const Atom *atom);
 
 //! Sets the supplemental label that will follow the atom when writing
 //   smiles strings.
-void setSupplementalSmilesLabel(Atom *atom, const std::string &label);
-std::string getSupplementalSmilesLabel(const Atom *atom);
-};
+RDKIT_GRAPHMOL_EXPORT void setSupplementalSmilesLabel(Atom *atom,
+                                                      const std::string &label);
+RDKIT_GRAPHMOL_EXPORT std::string getSupplementalSmilesLabel(const Atom *atom);
+};  // namespace RDKit
 //! allows Atom objects to be dumped to streams
-std::ostream &operator<<(std::ostream &target, const RDKit::Atom &at);
+RDKIT_GRAPHMOL_EXPORT std::ostream &operator<<(std::ostream &target,
+                                               const RDKit::Atom &at);
 
+namespace RDKit {
+//! returns whether or not the atom is to the left of C
+RDKIT_GRAPHMOL_EXPORT bool isEarlyAtom(int atomicNum);
+}  // namespace RDKit
 #endif

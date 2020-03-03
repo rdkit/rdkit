@@ -22,8 +22,12 @@ namespace UFF {
 void _pretreatAngles(double &minAngleDeg, double &maxAngleDeg) {
   minAngleDeg = fmod(minAngleDeg, 360.0);
   maxAngleDeg = fmod(maxAngleDeg, 360.0);
-  if (minAngleDeg > 180.0) minAngleDeg -= 360.0;
-  if (maxAngleDeg > 180.0) maxAngleDeg -= 360.0;
+  if (minAngleDeg > 180.0) {
+    minAngleDeg -= 360.0;
+  }
+  if (maxAngleDeg > 180.0) {
+    maxAngleDeg -= 360.0;
+  }
   if ((minAngleDeg < 0.0) && (!(maxAngleDeg < 0.0))) {
     maxAngleDeg = std::max(fabs(maxAngleDeg), fabs(minAngleDeg));
     minAngleDeg = 0.0;

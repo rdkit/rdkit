@@ -42,15 +42,15 @@ void compute2DCoordsForReaction(RDKit::ChemicalReaction &rxn, double spacing,
                                 unsigned int nSamples, int sampleSeed,
                                 bool permuteDeg4Nodes) {
   double xOffset = 0.0;
-  for (RDKit::MOL_SPTR_VECT::iterator templIt = rxn.beginReactantTemplates();
+  for (auto templIt = rxn.beginReactantTemplates();
        templIt != rxn.endReactantTemplates(); ++templIt) {
     if (updateProps) {
       (*templIt)->updatePropertyCache(false);
       RDKit::MolOps::setConjugation(**templIt);
       RDKit::MolOps::setHybridization(**templIt);
     }
-    compute2DCoords(**templIt, 0, canonOrient, true, nFlipsPerSample, nSamples,
-                    sampleSeed, permuteDeg4Nodes);
+    compute2DCoords(**templIt, nullptr, canonOrient, true, nFlipsPerSample,
+                    nSamples, sampleSeed, permuteDeg4Nodes);
     double minX = 100., maxX = -100.;
     BOOST_FOREACH (RDGeom::Point3D &pt,
                    (*templIt)->getConformer().getPositions()) {
@@ -64,15 +64,15 @@ void compute2DCoordsForReaction(RDKit::ChemicalReaction &rxn, double spacing,
     }
     xOffset = maxX + spacing;
   }
-  for (RDKit::MOL_SPTR_VECT::iterator templIt = rxn.beginProductTemplates();
+  for (auto templIt = rxn.beginProductTemplates();
        templIt != rxn.endProductTemplates(); ++templIt) {
     if (updateProps) {
       (*templIt)->updatePropertyCache(false);
       RDKit::MolOps::setConjugation(**templIt);
       RDKit::MolOps::setHybridization(**templIt);
     }
-    compute2DCoords(**templIt, 0, canonOrient, true, nFlipsPerSample, nSamples,
-                    sampleSeed, permuteDeg4Nodes);
+    compute2DCoords(**templIt, nullptr, canonOrient, true, nFlipsPerSample,
+                    nSamples, sampleSeed, permuteDeg4Nodes);
     double minX = 100., maxX = -100.;
     BOOST_FOREACH (RDGeom::Point3D &pt,
                    (*templIt)->getConformer().getPositions()) {

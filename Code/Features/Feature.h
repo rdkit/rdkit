@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef __FEATURE_H_30112004_1121__
 #define __FEATURE_H_30112004_1121__
 
@@ -91,5 +92,5 @@ class ImplicitFeature {
   // FIX: add something correct for directions
   std::vector<LOCTYPE> d_dirs;
 };
-}
+}  // namespace RDFeatures
 #endif

@@ -32,7 +32,7 @@
 #
 # Modifications and optimizations by Greg Landrum, July 2015
 #
-from __future__ import print_function
+
 import sys
 import re
 from rdkit import Chem
@@ -77,7 +77,7 @@ def delete_bonds(smi, id, mol, bonds, out):
     #remove the bond
     em.RemoveBond(i[0], i[1])
 
-    #now add attachement points
+    #now add attachment points
     newAtomA = em.AddAtom(Chem.Atom(0))
     em.AddBond(i[0], newAtomA, Chem.BondType.SINGLE)
 
@@ -127,7 +127,7 @@ def delete_bonds(smi, id, mol, bonds, out):
     elif (isotope >= 2):
       #add the isotope labels
       for key in isotope_track:
-        #to add isotope lables
+        #to add isotope labels
         modifiedMol.GetAtomWithIdx(key).SetIsotope(isotope_track[key])
       fragmented_smi = Chem.MolToSmiles(modifiedMol, isomericSmiles=True)
 

@@ -10,7 +10,7 @@
 //
 #include <RDBoost/python.h>
 #include <RDGeneral/BoostStartInclude.h>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 #include <RDGeneral/BoostEndInclude.h>
 
 #include <RDGeneral/types.h>
@@ -49,8 +49,7 @@ void pyUpdateFromSequence(SparseIntVect<IndexType> &vect, python::object &seq) {
 template <typename IndexType>
 python::dict pyGetNonzeroElements(SparseIntVect<IndexType> &vect) {
   python::dict res;
-  typename SparseIntVect<IndexType>::StorageType::const_iterator iter =
-      vect.getNonzeroElements().begin();
+  auto iter = vect.getNonzeroElements().begin();
   while (iter != vect.getNonzeroElements().end()) {
     res[iter->first] = iter->second;
     ++iter;
@@ -197,9 +196,9 @@ struct sparseIntVec_wrapper {
   }
 
   static void wrap() {
-    wrapOne<boost::int32_t>("IntSparseIntVect");
+    wrapOne<std::int32_t>("IntSparseIntVect");
     wrapOne<boost::int64_t>("LongSparseIntVect");
-    wrapOne<boost::uint32_t>("UIntSparseIntVect");
+    wrapOne<std::uint32_t>("UIntSparseIntVect");
     wrapOne<boost::uint64_t>("ULongSparseIntVect");
   }
 };

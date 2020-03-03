@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 
+#include <RDGeneral/test.h>
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
@@ -18,8 +19,6 @@
 #include <fstream>
 
 #include <GraphMol/Descriptors/PBF.h>
-
-
 
 void test1(){
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
@@ -99,12 +98,14 @@ void testPBFEdges(){
   }
   {
     RDKit::RWMol m;
-    m.addAtom(new RDKit::Atom(6));
-    m.addAtom(new RDKit::Atom(6));
-    m.addAtom(new RDKit::Atom(6));
-    m.addAtom(new RDKit::Atom(6));
-    m.addAtom(new RDKit::Atom(6));
-    m.addAtom(new RDKit::Atom(6));
+	bool updateLabel = true;
+    bool takeOwnership = true;
+    m.addAtom(new RDKit::Atom(6), updateLabel, takeOwnership);
+    m.addAtom(new RDKit::Atom(6), updateLabel, takeOwnership);
+    m.addAtom(new RDKit::Atom(6), updateLabel, takeOwnership);
+    m.addAtom(new RDKit::Atom(6), updateLabel, takeOwnership);
+    m.addAtom(new RDKit::Atom(6), updateLabel, takeOwnership);
+    m.addAtom(new RDKit::Atom(6), updateLabel, takeOwnership);
     m.addConformer(new RDKit::Conformer(m.getNumAtoms()));
     double dpbf=RDKit::Descriptors::PBF(m);
     TEST_ASSERT(dpbf<=1e-4);
@@ -113,9 +114,7 @@ void testPBFEdges(){
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
-int
-main(int argc, char *argv[])
-{
+int main() {
   RDLog::InitLogs();
   test1();
   testPBFEdges();

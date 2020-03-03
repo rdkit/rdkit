@@ -24,8 +24,12 @@ void arcPoints(const Point2D &cds1, const Point2D &cds2,
   // Note: this implementation is simple and not particularly efficient.
   float xScale = (cds2.x - cds1.x) / 2.0;
   float yScale = (cds2.y - cds1.y) / 2.0;
-  if (xScale < 0) xScale *= -1;
-  if (yScale < 0) yScale *= -1;
+  if (xScale < 0) {
+    xScale *= -1;
+  }
+  if (yScale < 0) {
+    yScale *= -1;
+  }
 
   float x = std::min(cds1.x, cds2.x) + xScale;
   float y = std::min(cds1.y, cds2.y) + yScale;

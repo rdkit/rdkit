@@ -10,8 +10,8 @@ piddlePS - a PostScript backend for the PIDDLE drawing module
 
 # $Id$
 #
-# For each page, the coordinate system is intialized with "0 canvasHeight translate" so
-# that coordiante (0,0) is at the top left of the page
+# For each page, the coordinate system is initialized with "0 canvasHeight translate" so
+# that coordinate (0,0) is at the top left of the page
 # Therefore all y coordinates must be entered in opposite sign to go down
 # Also, remember that angles are reversed relative to postscript standard -cwl
 
@@ -26,22 +26,21 @@ piddlePS - a PostScript backend for the PIDDLE drawing module
 #     X drawArc stuff from Eric
 
 # In the Future:
-#    _ Base85 ecooding just use hex encoding involves 1:2 expansion of image data vs 4:5
+#    _ Base85 encoding just use hex encoding involves 1:2 expansion of image data vs 4:5
 #    _ Don't see a flate/deflate filter for Postscript, jpeg DCTEncode could be added.
 #         PIL may have a LZW encoder
-#    _ check Adobe Document struturing conventions (half done)
+#    _ check Adobe Document structuring conventions (half done)
 #    _ look at symbol's font metrics--they appear to be a little off
 #    X postscript native implementation of drawRoundRect
 #    _ improve underlining placement...doesn't look good for courier and symbol
 
 #  DSC: plan uses flags for keeping track of BeginX/EndX pairs.
 #            convention: use flag _inXFlag
-from __future__ import print_function
+
 from rdkit.sping.pid import *
 from io import StringIO
 from . import psmetrics  # for font info
 import math
-from rdkit.six import string_types
 
 
 class PostScriptLevelException(ValueError):
@@ -163,7 +162,7 @@ def dashLineDefinition():
 
 class PsDSC:
 
-  # remeber %% will be reduced to % when using string substitution
+  # remember %% will be reduced to % when using string substitution
   # returned strings do not end with \n
 
   def __init__(self):
@@ -262,7 +261,7 @@ class PSCanvas(Canvas):
     # Page Structure State
     #----------------------
     self._inDocumentFlag = 0  # this is set in psBeginDocument
-    self._inPageFlag = 0  # we have't started a page
+    self._inPageFlag = 0  # we haven't started a page
 
     self.pageNum = 1  # User is free to reset this or even make this a string
 
@@ -343,7 +342,7 @@ translate
   def _findFont(self, font):
 
     requested = font.face or "Serif"  # Serif is the default
-    if isinstance(requested, string_types):
+    if isinstance(requested, str):
       requested = [requested]
 
     # once again, fall back to default, redundant, no?
@@ -805,7 +804,7 @@ translate
 
   def _drawImageLevel1(self, image, x1, y1, x2=None, y2=None, **kwargs):
     # Postscript Level1 version available for fallback mode when Level2 doesn't work
-    """drawImage(self,image,x1,y1,x2=None,y2=None) : If x2 and y2 are ommitted, they are
+    """drawImage(self,image,x1,y1,x2=None,y2=None) : If x2 and y2 are omitted, they are
        calculated from image size.  (x1,y1) is upper left of image, (x2,y2) is lower right of
        image in piddle coordinates."""
     try:
@@ -832,7 +831,7 @@ translate
     # of the lower-left corner of the first sample is (0,0), of the
     # second (1,0) and so on" -PS2 ref manual p. 215
     #
-    # The ImageMatrix maps unit squre of user space to boundary of the source image
+    # The ImageMatrix maps unit square of user space to boundary of the source image
     #
 
     # The CurrentTransformationMatrix (CTM) maps the unit square of

@@ -10,7 +10,7 @@
 """ defines class _DbConnect_, for abstracting connections to databases
 
 """
-from __future__ import print_function
+
 
 from rdkit.Dbase import DbUtils, DbInfo, DbModule
 
@@ -210,7 +210,7 @@ class DbConnect(object):
 
       - tableName: the name of the table to add
 
-      - colString: a string containing column defintions
+      - colString: a string containing column definitions
 
     **Notes**
 

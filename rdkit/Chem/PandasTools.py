@@ -2,6 +2,7 @@
 Importing pandasTools enables several features that allow for using RDKit molecules as columns of a
 Pandas dataframe.
 If the dataframe is containing a molecule format in a column (e.g. smiles), like in this example:
+
 >>> from rdkit.Chem import PandasTools
 >>> import pandas as pd
 >>> import os
@@ -17,11 +18,11 @@ If the dataframe is containing a molecule format in a column (e.g. smiles), like
 ...   'Name':'Ampicilline'}, ignore_index=True)#Ampicilline
 >>> print([str(x) for x in  antibiotics.columns])
 ['Name', 'Smiles']
->>> print(antibiotics)
+>>> print(antibiotics) # doctest: +ELLIPSIS
             Name                                             Smiles
 0  Penicilline G    CC1(C(N2C(S1)C(C2=O)NC(=O)CC3=CC=CC=C3)C(=O)O)C
-1   Tetracycline  CC1(C2CC3C(C(=O)C(=C(C3(C(=O)C2=C(C4=C1C=CC=C4...
-2  Ampicilline  CC1(C(N2C(S1)C(C2=O)NC(=O)C(C3=CC=CC=C3)N)C(=O...
+1   Tetracycline  CC1(C2CC3C(C(=O)C(=C(C3(C(=O)C2=C(C4=C1C=CC=C4*...*
+2  Ampicilline  CC1(C(N2C(S1)C(C2=O)NC(=O)C(C3=CC=CC=C3)N)C(=O*...*
 
 a new column can be created holding the respective RDKit molecule objects. The fingerprint can be
 included to accelerate substructure searches on the dataframe.
@@ -36,10 +37,10 @@ Such the antibiotics containing the beta-lactam ring "C1C(=O)NC1" can be obtaine
 
 >>> beta_lactam = Chem.MolFromSmiles('C1C(=O)NC1')
 >>> beta_lactam_antibiotics = antibiotics[antibiotics['Molecule'] >= beta_lactam]
->>> print(beta_lactam_antibiotics[['Name','Smiles']])
+>>> print(beta_lactam_antibiotics[['Name','Smiles']]) # doctest: +ELLIPSIS
             Name                                             Smiles
 0  Penicilline G    CC1(C(N2C(S1)C(C2=O)NC(=O)CC3=CC=CC=C3)C(=O)O)C
-2  Ampicilline  CC1(C(N2C(S1)C(C2=O)NC(=O)C(C3=CC=CC=C3)N)C(=O...
+2  Ampicilline  CC1(C(N2C(S1)C(C2=O)NC(=O)C(C3=CC=CC=C3)N)C(=O*...*
 
 
 It is also possible to load an SDF file can be load into a dataframe.
@@ -73,13 +74,22 @@ SMILES                    200  non-null values
 Molecule                  200  non-null values
 dtypes: object(20)>
 
+The standard ForwardSDMolSupplier keywords are also available:
+
+>>> sdfFile = os.path.join(RDConfig.RDDataDir,'NCI/first_200.props.sdf')
+>>> frame = PandasTools.LoadSDF(sdfFile,smilesName='SMILES',molColName='Molecule',
+...            includeFingerprints=True, removeHs=False, strictParsing=True)
+
 Conversion to html is quite easy:
->>> htm = frame.to_html()
+
+>>> htm = frame.to_html() # doctest: +ELLIPSIS
+*...*
 >>> str(htm[:36])
 '<table border="1" class="dataframe">'
 
 In order to support rendering the molecules as images in the HTML export of the dataframe,
 the __str__ method is monkey-patched to return a base64 encoded PNG:
+
 >>> molX = Chem.MolFromSmiles('Fc1cNc2ccccc12')
 >>> print(molX) # doctest: +SKIP
 <img src="data:image/png;base64,..." alt="Mol"/>
@@ -92,22 +102,25 @@ This can be reverted using the ChangeMoleculeRendering method
 <img src="data:image/png;base64,..." alt="Mol"/>
 
 '''
-from __future__ import print_function
 
 from base64 import b64encode
 import sys
 import types
+import logging
 
 import numpy as np
 from rdkit import Chem
 from rdkit import DataStructs
 from rdkit.Chem import AllChem
 from rdkit.Chem import Draw
-from rdkit.Chem.Draw import rdMolDraw2D
 from rdkit.Chem import SDWriter
 from rdkit.Chem import rdchem
 from rdkit.Chem.Scaffolds import MurckoScaffold
-from rdkit.six import BytesIO, string_types, PY3
+from io import BytesIO
+from xml.dom import minidom
+from xml.parsers.expat import ExpatError
+
+log = logging.getLogger(__name__)
 
 try:
   import pandas as pd
@@ -122,21 +135,19 @@ try:
     v = re.split(r'[^0-9,.]', v)[0].split('.')
     return tuple(int(vi) for vi in v)
 
-  if _getPandasVersion() < (0, 10):
+  pandasVersion = _getPandasVersion()
+  if pandasVersion < (0, 10):
     print("Pandas version {0} not compatible with tests".format(_getPandasVersion()),
           file=sys.stderr)
     pd = None
   else:
-    if 'display.width' in pd.core.config._registered_options:
-      pd.set_option('display.width', 1000000000)
-    if 'display.max_rows' in pd.core.config._registered_options:
-      pd.set_option('display.max_rows', 1000000000)
-    elif 'display.height' in pd.core.config._registered_options:
-      pd.set_option('display.height', 1000000000)
-    if 'display.max_colwidth' in pd.core.config._registered_options:
-      pd.set_option('display.max_colwidth', 1000000000)
     # saves the default pandas rendering to allow restoration
     defPandasRendering = pd.core.frame.DataFrame.to_html
+    if pandasVersion > (0, 25, 0):
+      # this was github #2673
+      defPandasRepr = pd.core.frame.DataFrame._repr_html_
+    else:
+      defPandasRepr = None
 except ImportError:
   import traceback
   traceback.print_exc()
@@ -163,70 +174,163 @@ molRepresentation = 'png'  # supports also SVG
 molSize = (200, 200)
 
 
+def _patched_HTMLFormatter_write_cell(self, s, *args, **kwargs):
+  def_escape = self.escape
+  try:
+    if is_molecule_image(s):
+      self.escape = False
+    return defHTMLFormatter_write_cell(self, s, *args, **kwargs)
+  finally:
+    self.escape = def_escape
+
+
+def _patched_get_adjustment():
+  inner_adjustment = defPandasGetAdjustment()
+  return RenderMoleculeAdjustment(inner_adjustment)
+
+
+def patchPandasrepr(self, **kwargs):
+  """  used to patch DataFrame._repr_html_ in pandas version > 0.25.0
+  """
+  global defHTMLFormatter_write_cell
+  global defPandasGetAdjustment
+
+  import pandas.io.formats.html  # necessary for loading HTMLFormatter
+  defHTMLFormatter_write_cell = pandas.io.formats.html.HTMLFormatter._write_cell
+  pandas.io.formats.html.HTMLFormatter._write_cell = _patched_HTMLFormatter_write_cell
+  defPandasGetAdjustment = pandas.io.formats.format._get_adjustment
+  pandas.io.formats.format._get_adjustment = _patched_get_adjustment
+  res = defPandasRepr(self, **kwargs)
+  pandas.io.formats.format._get_adjustment = defPandasGetAdjustment
+  pandas.io.formats.html.HTMLFormatter._write_cell = defHTMLFormatter_write_cell
+  return res
+
+
 def patchPandasHTMLrepr(self, **kwargs):
-  '''
-  Patched default escaping of HTML control characters to allow molecule image rendering dataframes
-  '''
-  formatter = fmt.DataFrameFormatter(
-    self, buf=None, columns=None, col_space=None, colSpace=None, header=True, index=True,
-    na_rep='NaN', formatters=None, float_format=None, sparsify=None, index_names=True, justify=None,
-    force_unicode=None, bold_rows=True, classes=None, escape=False)
-  formatter.to_html()
-  html = formatter.buf.getvalue()
-  return html
+  """A patched version of the DataFrame.to_html method that allows rendering
+    molecule images in data frames.
+  """
+  global defHTMLFormatter_write_cell
+  global defPandasGetAdjustment
+
+  # Two things have to be done:
+  # 1. Disable escaping of HTML in order to render img / svg tags
+  # 2. Avoid truncation of data frame values that contain HTML content
+
+  # The correct patch requires that two private methods in pandas exist. If
+  # this is not the case, use a working but suboptimal patch:
+  def patch_v1():
+    with pd.option_context('display.max_colwidth', -1):  # do not truncate
+      kwargs['escape'] = False  # disable escaping
+      return defPandasRendering(self, **kwargs)
+
+  try:
+    import pandas.io.formats.html  # necessary for loading HTMLFormatter
+  except:
+    # this happens up until at least pandas v0.22
+    return patch_v1()
+  else:
+    if not hasattr(pd.io.formats.html, 'HTMLFormatter') or \
+      not hasattr(pd.io.formats.html.HTMLFormatter, '_write_cell') or \
+      not hasattr(pd.io.formats.format, '_get_adjustment'):
+      return patch_v1()
+
+  # The "clean" patch:
+  # 1. Temporarily set escape=False in HTMLFormatter._write_cell
+  defHTMLFormatter_write_cell = pd.io.formats.html.HTMLFormatter._write_cell
+
+  # 2. Pandas uses TextAdjustment objects to measure the length of texts
+  #    (e.g. for east asian languages). We take advantage of this mechanism
+  #    and replace the original text adjustment object with a custom one.
+  #    This "RenderMoleculeAdjustment" object assigns a length of 0 to a
+  #    given text if it is valid HTML. And a value having length 0 will not
+  #    be truncated.
+
+  # store original _get_adjustment method
+  defPandasGetAdjustment = pd.io.formats.format._get_adjustment
+
+  try:
+    # patch methods and call original to_html function
+    pd.io.formats.format._get_adjustment = _patched_get_adjustment
+    pd.io.formats.html.HTMLFormatter._write_cell = _patched_HTMLFormatter_write_cell
+    return defPandasRendering(self, **kwargs)
+  except:
+    pass
+  finally:
+    # restore original methods
+    pd.io.formats.format._get_adjustment = defPandasGetAdjustment
+    pd.io.formats.html.HTMLFormatter._write_cell = defHTMLFormatter_write_cell
+
+  # If this point is reached, an error occurred in the previous try block.
+  # Use old patch:
+  return patch_v1()
 
 
-def patchPandasHeadMethod(self, n=5):
-  '''Ensure inheritance of patched to_html in "head" subframe
-  '''
-  df = self[:n]
-  df.to_html = types.MethodType(patchPandasHTMLrepr, df)
-  df.head = types.MethodType(patchPandasHeadMethod, df)
-  return df
+def is_molecule_image(s):
+  result = False
+  try:
+    # is text valid XML / HTML?
+    xml = minidom.parseString(s)
+    root_node = xml.firstChild
+    # check data-content attribute
+    if root_node.nodeName in ['svg', 'img'] and \
+       'data-content' in root_node.attributes.keys() and \
+       root_node.attributes['data-content'].value == 'rdkit/molecule':
+      result = True
+  except ExpatError:
+    pass  # parsing xml failed and text is not a molecule image
+
+  return result
+
+
+class RenderMoleculeAdjustment:
+
+  def __init__(self, inner_adjustment):
+    """Creates a new instance.
+
+        @param inner_adjustment: The text adjustment that is used if the
+            specified text is not valid XML / HTML.
+        """
+    self.inner_adjustment = inner_adjustment
+
+  def len(self, text):
+    if is_molecule_image(text):
+      return 0
+    else:
+      return self.inner_adjustment.len(text)
+
+  def justify(self, texts, max_len, mode='right'):
+    return self.inner_adjustment.justify(texts, max_len, mode)
+
+  def adjoin(self, space, *lists, **kwargs):
+    return self.inner_adjustment.adjoin(space, *lists, **kwargs)
 
 
 def _get_image(x):
   """displayhook function for PNG data"""
-  s = b64encode(x).decode('ascii')
-  pd.set_option('display.max_columns', len(s) + 1000)
-  pd.set_option('display.max_rows', len(s) + 1000)
-  if len(s) + 100 > pd.get_option("display.max_colwidth"):
-    pd.set_option("display.max_colwidth", len(s) + 1000)
-  return s
-
-
-def _get_svg_image(mol, size=(200, 200), highlightAtoms=[]):
-  """ mol rendered as SVG """
-  from IPython.display import SVG
-  from rdkit.Chem import rdDepictor
-  from rdkit.Chem.Draw import rdMolDraw2D
-  try:
-    # If no coordinates, calculate 2D
-    mol.GetConformer(-1)
-  except ValueError:
-    rdDepictor.Compute2DCoords(mol)
-  drawer = rdMolDraw2D.MolDraw2DSVG(*size)
-  drawer.DrawMolecule(mol, highlightAtoms=highlightAtoms)
-  drawer.FinishDrawing()
-  svg = drawer.GetDrawingText().replace('svg:', '')
-  return SVG(svg).data  # IPython's SVG clears the svg text
+  return b64encode(x).decode('ascii')
 
 
 try:
   from rdkit.Avalon import pyAvalonTools as pyAvalonTools
+
   # Calculate the Avalon fingerprint
-  _fingerprinter = lambda x, y: pyAvalonTools.GetAvalonFP(x, isQuery=y, bitFlags=pyAvalonTools.avalonSSSBits)
+
+
+  def _fingerprinter(x, y):
+    return pyAvalonTools.GetAvalonFP(x, isQuery=y, bitFlags=pyAvalonTools.avalonSSSBits)
 except ImportError:
   # Calculate fingerprint using SMARTS patterns
-  _fingerprinter = lambda x, y: Chem.PatternFingerprint(x, fpSize=2048)
+  def _fingerprinter(x, y):
+    return Chem.PatternFingerprint(x, fpSize=2048)
 
 
 def _molge(x, y):
   """Allows for substructure check using the >= operator (X has substructure Y -> X >= Y) by
-  monkey-patching the __ge__ function
-  This has the effect that the pandas/numpy rowfilter can be used for substructure filtering
-  (filtered = dframe[dframe['RDKitColumn'] >= SubstructureMolecule])
-  """
+    monkey-patching the __ge__ function
+    This has the effect that the pandas/numpy rowfilter can be used for substructure filtering
+    (filtered = dframe[dframe['RDKitColumn'] >= SubstructureMolecule])
+    """
   if x is None or y is None:
     return False
   if hasattr(x, '_substructfp'):
@@ -246,18 +350,30 @@ def _molge(x, y):
 
 def PrintAsBase64PNGString(x, renderer=None):
   '''returns the molecules as base64 encoded PNG image
-  '''
+    '''
   if highlightSubstructures and hasattr(x, '__sssAtoms'):
     highlightAtoms = x.__sssAtoms
   else:
     highlightAtoms = []
+  # TODO: should we generate coordinates if no coordinates available?
+  # from rdkit.Chem import rdDepictor
+  # try:
+  #     # If no coordinates, calculate 2D
+  #     x.GetConformer(-1)
+  # except ValueError:
+  #     rdDepictor.Compute2DCoords(x)
   if molRepresentation.lower() == 'svg':
-    from IPython.display import SVG
     svg = Draw._moltoSVG(x, molSize, highlightAtoms, "", True)
-    return SVG(svg).data
+    svg = minidom.parseString(svg)
+    svg = svg.getElementsByTagName('svg')[0]
+    svg.attributes['viewbox'] = f'0 0 {molSize[0]} {molSize[1]}'
+    svg.attributes['style'] = f'max-width: {molSize[0]}px; height: {molSize[1]}px;'
+    svg.attributes['data-content'] = 'rdkit/molecule'
+    return svg.toxml()
   else:
-    data = Draw._moltoimg(x,molSize,highlightAtoms,"",returnPNG=True, kekulize=True)
-    return '<img src="data:image/png;base64,%s" alt="Mol"/>' % _get_image(data)
+    data = Draw._moltoimg(x, molSize, highlightAtoms, "", returnPNG=True, kekulize=True)
+    return '<img data-content="rdkit/molecule" src="data:image/png;base64,%s" alt="Mol"/>' % _get_image(
+      data)
 
 
 def PrintDefaultMolRep(x):
@@ -266,8 +382,8 @@ def PrintDefaultMolRep(x):
 
 def _MolPlusFingerprint(m):
   '''Precomputes fingerprints and stores results in molecule objects to accelerate
-     substructure matching
-  '''
+       substructure matching
+    '''
   if m is not None:
     m._substructfp = _fingerprinter(m, False)
   return m
@@ -275,57 +391,64 @@ def _MolPlusFingerprint(m):
 
 def RenderImagesInAllDataFrames(images=True):
   '''Changes the default dataframe rendering to not escape HTML characters, thus allowing
-  rendered images in all dataframes.
-  IMPORTANT: THIS IS A GLOBAL CHANGE THAT WILL AFFECT TO COMPLETE PYTHON SESSION. If you want
-  to change the rendering only for a single dataframe use the "ChangeMoleculeRendering" method
-  instead.
-  '''
+    rendered images in all dataframes.
+    IMPORTANT: THIS IS A GLOBAL CHANGE THAT WILL AFFECT TO COMPLETE PYTHON SESSION. If you want
+    to change the rendering only for a single dataframe use the "ChangeMoleculeRendering" method
+    instead.
+    '''
   if images:
     pd.core.frame.DataFrame.to_html = patchPandasHTMLrepr
+    if defPandasRepr is not None:
+      pd.core.frame.DataFrame._repr_html_ = patchPandasrepr
   else:
     pd.core.frame.DataFrame.to_html = defPandasRendering
+    if defPandasRepr is not None:
+      pd.core.frame.DataFrame._repr_html_ = defPandasRepr
 
 
 def AddMoleculeColumnToFrame(frame, smilesCol='Smiles', molCol='ROMol', includeFingerprints=False):
   '''Converts the molecules contains in "smilesCol" to RDKit molecules and appends them to the
-  dataframe "frame" using the specified column name.
-  If desired, a fingerprint can be computed and stored with the molecule objects to accelerate
-  substructure matching
-  '''
+    dataframe "frame" using the specified column name.
+    If desired, a fingerprint can be computed and stored with the molecule objects to accelerate
+    substructure matching
+    '''
   if not includeFingerprints:
     frame[molCol] = frame[smilesCol].map(Chem.MolFromSmiles)
   else:
-    frame[molCol] = frame[smilesCol].map(
-      lambda smiles: _MolPlusFingerprint(Chem.MolFromSmiles(smiles)))
+    frame[molCol] = frame[smilesCol].map(lambda smiles: _MolPlusFingerprint(
+      Chem.MolFromSmiles(smiles)))
   RenderImagesInAllDataFrames(images=True)
 
 
 def ChangeMoleculeRendering(frame=None, renderer='PNG'):
   '''Allows to change the rendering of the molecules between base64 PNG images and string
-  representations.
-  This serves two purposes: First it allows to avoid the generation of images if this is
-  not desired and, secondly, it allows to enable image rendering for newly created dataframe
-  that already contains molecules, without having to rerun the time-consuming
-  AddMoleculeColumnToFrame. Note: this behaviour is, because some pandas methods, e.g. head()
-  returns a new dataframe instance that uses the default pandas rendering (thus not drawing
-  images for molecules) instead of the monkey-patched one.
-  '''
+    representations.
+    This serves two purposes: First it allows to avoid the generation of images if this is
+    not desired and, secondly, it allows to enable image rendering for newly created dataframe
+    that already contains molecules, without having to rerun the time-consuming
+    AddMoleculeColumnToFrame. Note: this behaviour is, because some pandas methods, e.g. head()
+    returns a new dataframe instance that uses the default pandas rendering (thus not drawing
+    images for molecules) instead of the monkey-patched one.
+    '''
   if renderer == 'String':
     Chem.Mol.__str__ = PrintDefaultMolRep
   else:
     Chem.Mol.__str__ = PrintAsBase64PNGString
   if frame is not None:
     frame.to_html = types.MethodType(patchPandasHTMLrepr, frame)
+    if defPandasRepr is not None:
+      frame._repr_html_ = types.MethodType(defPandasRepr, frame)
 
 
 def LoadSDF(filename, idName='ID', molColName='ROMol', includeFingerprints=False,
-            isomericSmiles=False, smilesName=None, embedProps=False):
+            isomericSmiles=True, smilesName=None, embedProps=False, removeHs=True,
+            strictParsing=True):
   '''Read file in SDF format and return as Pandas data frame.
-  If embedProps=True all properties also get embedded in Mol objects in the molecule column.
-  If molColName=None molecules would not be present in resulting DataFrame (only properties
-  would be read).
-  '''
-  if isinstance(filename, string_types):
+    If embedProps=True all properties also get embedded in Mol objects in the molecule column.
+    If molColName=None molecules would not be present in resulting DataFrame (only properties
+    would be read).
+    '''
+  if isinstance(filename, str):
     if filename.lower()[-3:] == ".gz":
       import gzip
       f = gzip.open(filename, "rb")
@@ -337,7 +460,9 @@ def LoadSDF(filename, idName='ID', molColName='ROMol', includeFingerprints=False
     close = None  # don't close an open file that was passed in
   records = []
   indices = []
-  for i, mol in enumerate(Chem.ForwardSDMolSupplier(f, sanitize=(molColName is not None))):
+  for i, mol in enumerate(
+      Chem.ForwardSDMolSupplier(f, sanitize=(molColName is not None), removeHs=removeHs,
+                                strictParsing=strictParsing)):
     if mol is None:
       continue
     row = dict((k, mol.GetProp(k)) for k in mol.GetPropNames())
@@ -347,7 +472,11 @@ def LoadSDF(filename, idName='ID', molColName='ROMol', includeFingerprints=False
     if mol.HasProp('_Name'):
       row[idName] = mol.GetProp('_Name')
     if smilesName is not None:
-      row[smilesName] = Chem.MolToSmiles(mol, isomericSmiles=isomericSmiles)
+      try:
+        row[smilesName] = Chem.MolToSmiles(mol, isomericSmiles=isomericSmiles)
+      except:
+        log.warning('No valid smiles could be generated for molecule %s', i)
+        row[smilesName] = None
     if molColName is not None and not includeFingerprints:
       row[molColName] = mol
     elif molColName is not None:
@@ -363,21 +492,18 @@ def LoadSDF(filename, idName='ID', molColName='ROMol', includeFingerprints=False
 
 def WriteSDF(df, out, molColName='ROMol', idName=None, properties=None, allNumeric=False):
   '''Write an SD file for the molecules in the dataframe. Dataframe columns can be exported as
-  SDF tags if specified in the "properties" list. "properties=list(df.columns)" would export
-  all columns.
-  The "allNumeric" flag allows to automatically include all numeric columns in the output.
-  User has to make sure that correct data type is assigned to column.
-  "idName" can be used to select a column to serve as molecule title. It can be set to
-  "RowID" to use the dataframe row key as title.
-  '''
+    SDF tags if specified in the "properties" list. "properties=list(df.columns)" would export
+    all columns.
+    The "allNumeric" flag allows to automatically include all numeric columns in the output.
+    User has to make sure that correct data type is assigned to column.
+    "idName" can be used to select a column to serve as molecule title. It can be set to
+    "RowID" to use the dataframe row key as title.
+    '''
   close = None
-  if isinstance(out, string_types):
+  if isinstance(out, str):
     if out.lower()[-3:] == ".gz":
       import gzip
-      if PY3:
-        out = gzip.open(out, "wt")
-      else:
-        out = gzip.open(out, "wb")
+      out = gzip.open(out, "wt")
       close = out.close
 
   writer = SDWriter(out)
@@ -386,9 +512,10 @@ def WriteSDF(df, out, molColName='ROMol', idName=None, properties=None, allNumer
   else:
     properties = list(properties)
   if allNumeric:
-    properties.extend(
-      [dt for dt in df.dtypes.keys()
-       if (np.issubdtype(df.dtypes[dt], float) or np.issubdtype(df.dtypes[dt], int))])
+    properties.extend([
+      dt for dt in df.dtypes.keys()
+      if (np.issubdtype(df.dtypes[dt], np.floating) or np.issubdtype(df.dtypes[dt], np.integer))
+    ])
 
   if molColName in properties:
     properties.remove(molColName)
@@ -407,7 +534,7 @@ def WriteSDF(df, out, molColName='ROMol', idName=None, properties=None, allNumer
     for p in properties:
       cell_value = row[1][p]
       # Make sure float does not get formatted in E notation
-      if np.issubdtype(type(cell_value), float):
+      if np.issubdtype(type(cell_value), np.floating):
         s = '{:f}'.format(cell_value).rstrip("0")  # "f" will show 7.0 as 7.00000
         if s[-1] == ".":
           s += "0"  # put the "0" back on if it's something like "7."
@@ -425,8 +552,8 @@ _saltRemover = None
 
 def RemoveSaltsFromFrame(frame, molCol='ROMol'):
   '''
-  Removes salts from mols in pandas DataFrame's ROMol column
-  '''
+    Removes salts from mols in pandas DataFrame's ROMol column
+    '''
   global _saltRemover
   if _saltRemover is None:
     from rdkit.Chem import SaltRemover
@@ -436,9 +563,9 @@ def RemoveSaltsFromFrame(frame, molCol='ROMol'):
 
 def SaveSMILESFromFrame(frame, outFile, molCol='ROMol', NamesCol='', isomericSmiles=False):
   '''
-  Saves smi file. SMILES are generated from column with RDKit molecules. Column
-  with names is optional.
-  '''
+    Saves smi file. SMILES are generated from column with RDKit molecules. Column
+    with names is optional.
+    '''
   w = Chem.SmilesWriter(outFile, isomericSmiles=isomericSmiles)
   if NamesCol != '':
     for m, n in zip(frame[molCol], (str(c) for c in frame[NamesCol])):
@@ -453,19 +580,19 @@ def SaveSMILESFromFrame(frame, outFile, molCol='ROMol', NamesCol='', isomericSmi
 
 def SaveXlsxFromFrame(frame, outFile, molCol='ROMol', size=(300, 300)):
   """
-    Saves pandas DataFrame as a xlsx file with embedded images.
-    It maps numpy data types to excel cell types:
-    int, float -> number
-    datetime -> datetime
-    object -> string (limited to 32k character - xlsx limitations)
+      Saves pandas DataFrame as a xlsx file with embedded images.
+      It maps numpy data types to excel cell types:
+      int, float -> number
+      datetime -> datetime
+      object -> string (limited to 32k character - xlsx limitations)
 
-    Cells with compound images are a bit larger than images due to excel.
-    Column width weirdness explained (from xlsxwriter docs):
-    The width corresponds to the column width value that is specified in Excel.
-    It is approximately equal to the length of a string in the default font of Calibri 11.
-    Unfortunately, there is no way to specify "AutoFit" for a column in the Excel file format.
-    This feature is only available at runtime from within Excel.
-    """
+      Cells with compound images are a bit larger than images due to excel.
+      Column width weirdness explained (from xlsxwriter docs):
+      The width corresponds to the column width value that is specified in Excel.
+      It is approximately equal to the length of a string in the default font of Calibri 11.
+      Unfortunately, there is no way to specify "AutoFit" for a column in the Excel file format.
+      This feature is only available at runtime from within Excel.
+      """
 
   import xlsxwriter  # don't want to make this a RDKit dependency
 
@@ -495,7 +622,8 @@ def SaveXlsxFromFrame(frame, outFile, molCol='ROMol', size=(300, 300)):
     c2 = 1
     for x in cols:
       if str(dataTypes[x]) == "object":
-        worksheet.write_string(c, c2, str(row[x])[:32000])  # string length is limited in xlsx
+        # string length is limited in xlsx
+        worksheet.write_string(c, c2, str(row[x])[:32000])
       elif ('float' in str(dataTypes[x])) or ('int' in str(dataTypes[x])):
         if (row[x] != np.nan) or (row[x] != np.inf):
           worksheet.write_number(c, c2, row[x])
@@ -510,34 +638,39 @@ def SaveXlsxFromFrame(frame, outFile, molCol='ROMol', size=(300, 300)):
 
 def FrameToGridImage(frame, column='ROMol', legendsCol=None, **kwargs):
   '''
-  Draw grid image of mols in pandas DataFrame.
-  '''
+    Draw grid image of mols in pandas DataFrame.
+    '''
   if legendsCol:
     if legendsCol == frame.index.name:
       kwargs['legends'] = [str(c) for c in frame.index]
     else:
       kwargs['legends'] = [str(c) for c in frame[legendsCol]]
-  return Draw.MolsToGridImage(frame[column], **kwargs)
+  return Draw.MolsToGridImage(list(frame[column]), **kwargs)
 
 
 def AddMurckoToFrame(frame, molCol='ROMol', MurckoCol='Murcko_SMILES', Generic=False):
   '''
-  Adds column with SMILES of Murcko scaffolds to pandas DataFrame.
+    Adds column with SMILES of Murcko scaffolds to pandas DataFrame.
 
-  Generic set to true results in SMILES of generic framework.
-  '''
+    Generic set to true results in SMILES of generic framework.
+    '''
   if Generic:
-    func = lambda x: Chem.MolToSmiles(MurckoScaffold.MakeScaffoldGeneric(
-      MurckoScaffold.GetScaffoldForMol(x[molCol])))
+
+    def func(x):
+      return Chem.MolToSmiles(
+        MurckoScaffold.MakeScaffoldGeneric(MurckoScaffold.GetScaffoldForMol(x[molCol])))
   else:
-    func = lambda x: Chem.MolToSmiles(MurckoScaffold.GetScaffoldForMol(x[molCol]))
+
+    def func(x):
+      return Chem.MolToSmiles(MurckoScaffold.GetScaffoldForMol(x[molCol]))
+
   frame[MurckoCol] = frame.apply(func, axis=1)
 
 
 def AlignMol(mol, scaffold):
   """
-  Aligns mol (RDKit mol object) to scaffold (SMILES string)
-  """
+    Aligns mol (RDKit mol object) to scaffold (SMILES string)
+    """
   scaffold = Chem.MolFromSmiles(scaffold)
   AllChem.Compute2DCoords(scaffold)
   AllChem.GenerateDepictionMatching2DStructure(mol, scaffold)
@@ -546,9 +679,53 @@ def AlignMol(mol, scaffold):
 
 def AlignToScaffold(frame, molCol='ROMol', scaffoldCol='Murcko_SMILES'):
   '''
-  Aligns molecules in molCol to scaffolds in scaffoldCol
-  '''
+    Aligns molecules in molCol to scaffolds in scaffoldCol
+    '''
   frame[molCol] = frame.apply(lambda x: AlignMol(x[molCol], x[scaffoldCol]), axis=1)
+
+
+def RGroupDecompositionToFrame(groups, mols, include_core=False, redraw_sidechains=False):
+  """ returns a dataframe with the results of R-Group Decomposition
+
+  >>> from rdkit import Chem
+  >>> from rdkit.Chem import rdRGroupDecomposition
+  >>> from rdkit.Chem import PandasTools
+  >>> import pandas as pd
+  >>> scaffold = Chem.MolFromSmiles('c1ccccn1')
+  >>> mols = [Chem.MolFromSmiles(smi) for smi in 'c1c(F)cccn1 c1c(Cl)c(C)ccn1 c1c(O)cccn1 c1c(F)c(C)ccn1 c1cc(Cl)c(F)cn1'.split()]
+  >>> groups,_ = rdRGroupDecomposition.RGroupDecompose([scaffold],mols,asSmiles=False,asRows=False) 
+  >>> df = PandasTools.RGroupDecompositionToFrame(groups,mols,include_core=True)
+  >>> list(df.columns)
+  ['Mol', 'Core', 'R1', 'R2']
+  >>> len(df)
+  5
+  >>> df.columns() # doctest: +SKIP
+  <class 'pandas*...*DataFrame'>
+  RangeIndex: 5 entries, 0 to 4
+  Data columns (total 4 columns):
+  Mol     5 non-null object
+  Core    5 non-null object
+  R1      5 non-null object
+  R2      5 non-null object
+  dtypes: object(4)
+  memory usage: *...*
+
+  """
+  cols = ['Mol'] + list(groups.keys())
+  if redraw_sidechains:
+    for k, vl in groups.items():
+      if k == 'Core':
+        continue
+      for i, v in enumerate(vl):
+        vl[i] = Chem.RemoveHs(v)
+        rdDepictor.Compute2DCoords(vl[i])
+
+  if not include_core:
+    cols.remove('Core')
+    del groups['Core']
+  groups['Mol'] = mols
+  frame = pd.DataFrame(groups, columns=cols)
+  return frame
 
 
 # ==========================================================================================
@@ -582,37 +759,35 @@ def _runDoctests(verbose=None):  # pragma: nocover
   import doctest
   failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS + doctest.NORMALIZE_WHITESPACE,
                               verbose=verbose)
-  if(failed):
+  if (failed):
     sys.exit(failed)
+
 
 if __name__ == '__main__':  # pragma: nocover
   import unittest
   try:
     import xlsxwriter
   except ImportError:
-    print('not there')
     xlsxwriter = None
+
   class TestCase(unittest.TestCase):
-    @unittest.skipIf(xlsxwriter is None,'xlsxwriter not installed')
+
+    @unittest.skipIf(xlsxwriter is None, 'xlsxwriter not installed')
     def testGithub1507(self):
       import os
       from rdkit import RDConfig
-      sdfFile = os.path.join(RDConfig.RDDataDir,'NCI/first_200.props.sdf')
+      sdfFile = os.path.join(RDConfig.RDDataDir, 'NCI/first_200.props.sdf')
       frame = LoadSDF(sdfFile)
-      SaveXlsxFromFrame(frame,'foo.xlsx')
+      SaveXlsxFromFrame(frame, 'foo.xlsx')
 
   if pd is None:
     print("pandas installation not found, skipping tests", file=sys.stderr)
   elif _getPandasVersion() < (0, 10):
     print("pandas installation >=0.10 not found, skipping tests", file=sys.stderr)
   else:
-    _runDoctests();
+    _runDoctests()
     unittest.main()
 
-
-
-
-# $Id$
 #
 #  Copyright (c) 2013, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.

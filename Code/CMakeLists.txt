@@ -1,8 +1,9 @@
-
+createExportTestHeaders()
 add_subdirectory(RDGeneral)
 if(RDK_BUILD_PYTHON_WRAPPERS)
   add_subdirectory(RDBoost)
 endif(RDK_BUILD_PYTHON_WRAPPERS)
+add_subdirectory(RDStreams)
 add_subdirectory(DataStructs)
 add_subdirectory(Geometry)
 
@@ -32,3 +33,7 @@ endif()
 if(RDK_BUILD_PGSQL)
   add_subdirectory(PgSQL/rdkit)
 endif(RDK_BUILD_PGSQL)
+
+if(RDK_BUILD_MINIMAL_LIB)
+  add_subdirectory(MinimalLib)
+endif(RDK_BUILD_MINIMAL_LIB)

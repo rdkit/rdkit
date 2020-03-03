@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 from Numeric import *
 import linalg
 

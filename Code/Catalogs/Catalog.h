@@ -8,8 +8,9 @@
 //  of the RDKit source tree.
 //
 
-#ifndef __RD_CATALOG_H__
-#define __RD_CATALOG_H__
+#include <RDGeneral/export.h>
+#ifndef RD_CATALOG_H
+#define RD_CATALOG_H
 
 // Boost graph stuff
 #include <RDGeneral/BoostStartInclude.h>
@@ -81,9 +82,9 @@ class Catalog {
 
   //------------------------------------
   //! sets our parameters by copying the \c params argument
-  virtual void setCatalogParams(paramType *params) {
+  virtual void setCatalogParams(const paramType *params) {
     PRECONDITION(params, "bad parameter object");
-    // if we already have a paramter object throw an exception
+    // if we already have a parameter object throw an exception
     PRECONDITION(!dp_cParams,
                  "A parameter object already exists on the catalog");
     /*
@@ -148,7 +149,8 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
       boost::vecS,  // FIX: should be using setS for edges so that parallel
                     // edges are never added (page 225 BGL book)
       // but that seems result in compile errors
-      boost::bidirectionalS, EntryProperty> CatalogGraph;
+      boost::bidirectionalS, EntryProperty>
+      CatalogGraph;
 
   typedef boost::graph_traits<CatalogGraph> CAT_GRAPH_TRAITS;
   typedef typename CAT_GRAPH_TRAITS::vertex_iterator VER_ITER;
@@ -161,7 +163,7 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
 
   //------------------------------------
   //! Construct by making a copy of the input \c params object
-  HierarchCatalog<entryType, paramType, orderType>(paramType *params)
+  HierarchCatalog<entryType, paramType, orderType>(const paramType *params)
       : Catalog<entryType, paramType>() {
     this->setCatalogParams(params);
   }
@@ -254,6 +256,7 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
     paramType *params = new paramType();
     params->initFromStream(ss);
     this->setCatalogParams(params);
+    delete params;
 
     // std::cout << "\tparams: " << getCatalogParams()->getLowerFragLength();
     // std::cout << " " << getCatalogParams()->getUpperFragLength();
@@ -279,7 +282,9 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
   }
 
   //------------------------------------
-  unsigned int getNumEntries() const { return static_cast<unsigned int>(boost::num_vertices(d_graph)); }
+  unsigned int getNumEntries() const {
+    return static_cast<unsigned int>(boost::num_vertices(d_graph));
+  }
 
   //------------------------------------
   //! fills the contents of this object from a string containing a \c pickle
@@ -309,7 +314,8 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
       fpl++;
       this->setFPLength(fpl);
     }
-    unsigned int eid = static_cast<unsigned int>(boost::add_vertex(EntryProperty(entry), d_graph));
+    unsigned int eid = static_cast<unsigned int>(
+        boost::add_vertex(EntryProperty(entry), d_graph));
     orderType etype = entry->getOrder();
     // REVIEW: this initialization is not required: the STL map, in
     // theory, will create a new object when operator[] is called
@@ -428,7 +434,7 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
   }
 
  private:
-  // graphs that store the entries in the catalog in a hierachical manner
+  // graphs that store the entries in the catalog in a hierarchical manner
   CatalogGraph d_graph;
   // a  map that maps the order type of entries in the catalog to
   // a vector of vertex indices in the graphs above
@@ -450,28 +456,6 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
   }
 };
 
-//-----------------------------------------------------------------------------
-//! a linear Catalog (analogous to an std::vector)
-/*!
-  Here there is no particular hierarchy, simply a
-  collection of entries.
-*/
-template <class entryType, class orderType>
-class LinearCatalog : public Catalog<entryType, orderType> {
-  // here there is no particular hierarchy of entries
-  // we simply model it as a vector of entries
-  // FIX: for retrieval purposes a better model map be std::map
-
- public:
-  std::string Serialize();
-
-  unsigned int addEntry(entryType *entry, bool updateFPLength = true);
-
-  const entryType *getEntryWithIdx(unsigned int idx) const;
-
- private:
-  std::vector<entryType *> d_vector;
-};
-}
+}  // namespace RDCatalog
 
 #endif

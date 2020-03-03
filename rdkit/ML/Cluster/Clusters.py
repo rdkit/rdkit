@@ -11,303 +11,305 @@
 """ contains the Cluster class for representing hierarchical cluster trees
 
 """
-from __future__ import print_function
 
-from rdkit.six import cmp
+
+def cmp(t1, t2):
+    return (t1 < t2) * -1 or (t1 > t2) * 1
+
 
 CMPTOL = 1e-6
 
 
 class Cluster(object):
-  """a class for storing clusters/data
+    """a class for storing clusters/data
 
-    **General Remarks**
+      **General Remarks**
 
-     - It is assumed that the bottom of any cluster hierarchy tree is composed of
-       the individual data points which were clustered.
+       - It is assumed that the bottom of any cluster hierarchy tree is composed of
+         the individual data points which were clustered.
 
-     - Clusters objects store the following pieces of data, most are
-        accessible via standard Setters/Getters:
+       - Clusters objects store the following pieces of data, most are
+          accessible via standard Setters/Getters:
 
-       - Children: *Not Settable*, the list of children.  You can add children
-         with the _AddChild()_ and _AddChildren()_ methods.
+         - Children: *Not Settable*, the list of children.  You can add children
+           with the _AddChild()_ and _AddChildren()_ methods.
 
-         **Note** this can be of arbitrary length,
-         but the current algorithms I have only produce trees with two children
-         per cluster
+           **Note** this can be of arbitrary length,
+           but the current algorithms I have only produce trees with two children
+           per cluster
 
-       - Metric: the metric for this cluster (i.e. how far apart its children are)
+         - Metric: the metric for this cluster (i.e. how far apart its children are)
 
-       - Index: the order in which this cluster was generated
+         - Index: the order in which this cluster was generated
 
-       - Points: *Not Settable*, the list of original points in this cluster
-            (calculated recursively from the children)
+         - Points: *Not Settable*, the list of original points in this cluster
+              (calculated recursively from the children)
 
-       - PointsPositions: *Not Settable*, the list of positions of the original
-          points in this cluster (calculated recursively from the children)
+         - PointsPositions: *Not Settable*, the list of positions of the original
+            points in this cluster (calculated recursively from the children)
 
-       - Position: the location of the cluster **Note** for a cluster this
-         probably means the location of the average of all the Points which are
-         its children.
+         - Position: the location of the cluster **Note** for a cluster this
+           probably means the location of the average of all the Points which are
+           its children.
 
-       - Data: a data field.  This is used with the original points to store their
-         data value (i.e. the value we're using to classify)
+         - Data: a data field.  This is used with the original points to store their
+           data value (i.e. the value we're using to classify)
 
-       - Name: the name of this cluster
-
-  """
-
-  def __init__(self, metric=0.0, children=None, position=None, index=-1, name=None, data=None):
-    """Constructor
-
-      **Arguments**
-
-        see the class documentation for the meanings of these arguments
-
-        *my wrists are tired*
+         - Name: the name of this cluster
 
     """
-    if children is None:
-      children = []
-    if position is None:
-      position = []
-    self.metric = metric
-    self.children = children
-    self._UpdateLength()
-    self.pos = position
-    self.index = index
-    self.name = name
-    self._points = None
-    self._pointsPositions = None
-    self.data = data
 
-  def SetMetric(self, metric):
-    self.metric = metric
+    def __init__(self, metric=0.0, children=None, position=None, index=-1, name=None, data=None):
+        """Constructor
 
-  def GetMetric(self):
-    return self.metric
+          **Arguments**
 
-  def SetIndex(self, index):
-    self.index = index
+            see the class documentation for the meanings of these arguments
 
-  def GetIndex(self):
-    return self.index
+            *my wrists are tired*
 
-  def SetPosition(self, pos):
-    self.pos = pos
+        """
+        if children is None:
+            children = []
+        if position is None:
+            position = []
+        self.metric = metric
+        self.children = children
+        self._UpdateLength()
+        self.pos = position
+        self.index = index
+        self.name = name
+        self._points = None
+        self._pointsPositions = None
+        self.data = data
 
-  def GetPosition(self):
-    return self.pos
+    def SetMetric(self, metric):
+        self.metric = metric
 
-  def GetPointsPositions(self):
-    if self._pointsPositions is not None:
-      return self._pointsPositions
-    else:
-      self._GenPoints()
-      return self._pointsPositions
+    def GetMetric(self):
+        return self.metric
 
-  def GetPoints(self):
-    if self._points is not None:
-      return self._points
-    else:
-      self._GenPoints()
-      return self._points
+    def SetIndex(self, index):
+        self.index = index
 
-  def FindSubtree(self, index):
-    """ finds and returns the subtree with a particular index
-    """
-    res = None
-    if index == self.index:
-      res = self
-    else:
-      for child in self.children:
-        res = child.FindSubtree(index)
-        if res:
-          break
-    return res
+    def GetIndex(self):
+        return self.index
 
-  def _GenPoints(self):
-    """ Generates the _Points_ and _PointsPositions_ lists
+    def SetPosition(self, pos):
+        self.pos = pos
 
-     *intended for internal use*
+    def GetPosition(self):
+        return self.pos
 
-    """
-    if len(self) == 1:
-      self._points = [self]
-      self._pointsPositions = [self.GetPosition()]
-      return self._points
-    else:
-      res = []
-      children = self.GetChildren()
-      children.sort(key=lambda x: len(x), reverse=True)
-      for child in children:
-        res += child.GetPoints()
-      self._points = res
-      self._pointsPositions = [x.GetPosition() for x in res]
+    def GetPointsPositions(self):
+        if self._pointsPositions is not None:
+            return self._pointsPositions
+        else:
+            self._GenPoints()
+            return self._pointsPositions
 
-  def AddChild(self, child):
-    """Adds a child to our list
+    def GetPoints(self):
+        if self._points is not None:
+            return self._points
+        else:
+            self._GenPoints()
+            return self._points
 
-      **Arguments**
+    def FindSubtree(self, index):
+        """ finds and returns the subtree with a particular index
+        """
+        res = None
+        if index == self.index:
+            res = self
+        else:
+            for child in self.children:
+                res = child.FindSubtree(index)
+                if res:
+                    break
+        return res
 
-        - child: a Cluster
+    def _GenPoints(self):
+        """ Generates the _Points_ and _PointsPositions_ lists
 
-    """
-    self.children.append(child)
-    self._GenPoints()
-    self._UpdateLength()
+         *intended for internal use*
 
-  def AddChildren(self, children):
-    """Adds a bunch of children to our list
+        """
+        if len(self) == 1:
+            self._points = [self]
+            self._pointsPositions = [self.GetPosition()]
+            return self._points
+        else:
+            res = []
+            children = self.GetChildren()
+            children.sort(key=lambda x: len(x), reverse=True)
+            for child in children:
+                res += child.GetPoints()
+            self._points = res
+            self._pointsPositions = [x.GetPosition() for x in res]
 
-      **Arguments**
+    def AddChild(self, child):
+        """Adds a child to our list
 
-        - children: a list of Clusters
+          **Arguments**
 
-    """
-    self.children += children
-    self._GenPoints()
-    self._UpdateLength()
+            - child: a Cluster
 
-  def RemoveChild(self, child):
-    """Removes a child from our list
+        """
+        self.children.append(child)
+        self._GenPoints()
+        self._UpdateLength()
 
-      **Arguments**
+    def AddChildren(self, children):
+        """Adds a bunch of children to our list
 
-        - child: a Cluster
+          **Arguments**
 
-    """
-    self.children.remove(child)
-    self._UpdateLength()
+            - children: a list of Clusters
 
-  def GetChildren(self):
-    self.children.sort(key=lambda x: x.GetMetric())
-    return self.children
+        """
+        self.children += children
+        self._GenPoints()
+        self._UpdateLength()
 
-  def SetData(self, data):
-    self.data = data
+    def RemoveChild(self, child):
+        """Removes a child from our list
 
-  def GetData(self):
-    return self.data
+          **Arguments**
 
-  def SetName(self, name):
-    self.name = name
+            - child: a Cluster
 
-  def GetName(self):
-    if self.name is None:
-      return 'Cluster(%d)' % (self.GetIndex())
-    else:
-      return self.name
+        """
+        self.children.remove(child)
+        self._UpdateLength()
 
-  def Print(self, level=0, showData=0, offset='\t'):
-    if not showData or self.GetData() is None:
-      print('%s%s%s Metric: %f' % ('  ' * level, self.GetName(), offset, self.GetMetric()))
-    else:
-      print('%s%s%s Data: %f\t Metric: %f' %
-            ('  ' * level, self.GetName(), offset, self.GetData(), self.GetMetric()))
+    def GetChildren(self):
+        self.children.sort(key=lambda x: x.GetMetric())
+        return self.children
 
-    for child in self.GetChildren():
-      child.Print(level=level + 1, showData=showData, offset=offset)
+    def SetData(self, data):
+        self.data = data
 
-  def Compare(self, other, ignoreExtras=1):
-    """ not as choosy as self==other
+    def GetData(self):
+        return self.data
 
-    """
-    tv1, tv2 = str(type(self)), str(type(other))
-    tv = cmp(tv1, tv2)
-    if tv:
-      return tv
-    tv1, tv2 = len(self), len(other)
-    tv = cmp(tv1, tv2)
-    if tv:
-      return tv
+    def SetName(self, name):
+        self.name = name
 
-    if not ignoreExtras:
-      m1, m2 = self.GetMetric(), other.GetMetric()
-      if abs(m1 - m2) > CMPTOL:
-        return cmp(m1, m2)
+    def GetName(self):
+        if self.name is None:
+            return 'Cluster(%d)' % (self.GetIndex())
+        else:
+            return self.name
 
-      if cmp(self.GetName(), other.GetName()):
-        return cmp(self.GetName(), other.GetName())
+    def Print(self, level=0, showData=0, offset='\t'):
+        if not showData or self.GetData() is None:
+            print('%s%s%s Metric: %f' % ('  ' * level, self.GetName(), offset, self.GetMetric()))
+        else:
+            print('%s%s%s Data: %f\t Metric: %f' %
+                  ('  ' * level, self.GetName(), offset, self.GetData(), self.GetMetric()))
 
-      sP = self.GetPosition()
-      oP = other.GetPosition()
-      try:
-        r = cmp(len(sP), len(oP))
-      except Exception:
-        pass
-      else:
-        if r:
-          return r
+        for child in self.GetChildren():
+            child.Print(level=level + 1, showData=showData, offset=offset)
 
-      try:
-        r = cmp(sP, oP)
-      except Exception:
-        r = sum(sP - oP)
-      if r:
-        return r
+    def Compare(self, other, ignoreExtras=1):
+        """ not as choosy as self==other
 
-    c1, c2 = self.GetChildren(), other.GetChildren()
-    if cmp(len(c1), len(c2)):
-      return cmp(len(c1), len(c2))
-    for i in range(len(c1)):
-      t = c1[i].Compare(c2[i], ignoreExtras=ignoreExtras)
-      if t:
-        return t
+        """
+        tv1, tv2 = str(type(self)), str(type(other))
+        tv = cmp(tv1, tv2)
+        if tv:
+            return tv
+        tv1, tv2 = len(self), len(other)
+        tv = cmp(tv1, tv2)
+        if tv:
+            return tv
 
-    return 0
+        if not ignoreExtras:
+            m1, m2 = self.GetMetric(), other.GetMetric()
+            if abs(m1 - m2) > CMPTOL:
+                return cmp(m1, m2)
 
-  def _UpdateLength(self):
-    """ updates our length
+            if cmp(self.GetName(), other.GetName()):
+                return cmp(self.GetName(), other.GetName())
 
-     *intended for internal use*
+            sP = self.GetPosition()
+            oP = other.GetPosition()
+            try:
+                r = cmp(len(sP), len(oP))
+            except Exception:
+                pass
+            else:
+                if r:
+                    return r
 
-    """
-    self._len = sum(len(c) for c in self.children) + 1
+            try:
+                r = cmp(sP, oP)
+            except Exception:
+                r = sum(sP - oP)
+            if r:
+                return r
 
-  def IsTerminal(self):
-    return self._len <= 1
+        c1, c2 = self.GetChildren(), other.GetChildren()
+        if cmp(len(c1), len(c2)):
+            return cmp(len(c1), len(c2))
+        for i in range(len(c1)):
+            t = c1[i].Compare(c2[i], ignoreExtras=ignoreExtras)
+            if t:
+                return t
 
-  def __len__(self):
-    """ allows _len(cluster)_ to work
+        return 0
 
-    """
-    return self._len
+    def _UpdateLength(self):
+        """ updates our length
 
-  def __cmp__(self, other):
-    """ allows _cluster1 == cluster2_ to work
+         *intended for internal use*
 
-    """
-    if cmp(type(self), type(other)):
-      return cmp(type(self), type(other))
+        """
+        self._len = sum(len(c) for c in self.children) + 1
 
-    m1, m2 = self.GetMetric(), other.GetMetric()
-    if abs(m1 - m2) > CMPTOL:
-      return cmp(m1, m2)
+    def IsTerminal(self):
+        return self._len <= 1
 
-    if cmp(self.GetName(), other.GetName()):
-      return cmp(self.GetName(), other.GetName())
+    def __len__(self):
+        """ allows _len(cluster)_ to work
 
-    c1, c2 = self.GetChildren(), other.GetChildren()
-    return cmp(c1, c2)
+        """
+        return self._len
+
+    def __cmp__(self, other):
+        """ allows _cluster1 == cluster2_ to work
+
+        """
+        if cmp(type(self), type(other)):
+            return cmp(type(self), type(other))
+
+        m1, m2 = self.GetMetric(), other.GetMetric()
+        if abs(m1 - m2) > CMPTOL:
+            return cmp(m1, m2)
+
+        if cmp(self.GetName(), other.GetName()):
+            return cmp(self.GetName(), other.GetName())
+
+        c1, c2 = self.GetChildren(), other.GetChildren()
+        return cmp(c1, c2)
 
 
 if __name__ == '__main__':  # pragma: nocover
-  from rdkit.ML.Cluster import ClusterUtils
-  root = Cluster(index=1, metric=1000)
-  c1 = Cluster(index=10, metric=100)
-  c1.AddChild(Cluster(index=30, metric=10))
-  c1.AddChild(Cluster(index=31, metric=10))
-  c1.AddChild(Cluster(index=32, metric=10))
+    from rdkit.ML.Cluster import ClusterUtils
+    root = Cluster(index=1, metric=1000)
+    c1 = Cluster(index=10, metric=100)
+    c1.AddChild(Cluster(index=30, metric=10))
+    c1.AddChild(Cluster(index=31, metric=10))
+    c1.AddChild(Cluster(index=32, metric=10))
 
-  c2 = Cluster(index=11, metric=100)
-  c2.AddChild(Cluster(index=40, metric=10))
-  c2.AddChild(Cluster(index=41, metric=10))
+    c2 = Cluster(index=11, metric=100)
+    c2.AddChild(Cluster(index=40, metric=10))
+    c2.AddChild(Cluster(index=41, metric=10))
 
-  root.AddChild(c1)
-  root.AddChild(c2)
+    root.AddChild(c1)
+    root.AddChild(c2)
 
-  nodes = ClusterUtils.GetNodeList(root)
+    nodes = ClusterUtils.GetNodeList(root)
 
-  indices = [x.GetIndex() for x in nodes]
-  print('XXX:', indices)
+    indices = [x.GetIndex() for x in nodes]
+    print('XXX:', indices)

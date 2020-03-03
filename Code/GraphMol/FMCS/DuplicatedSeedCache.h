@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #pragma once
 #include <map>
 #include <vector>
@@ -52,7 +53,7 @@ class DuplicatedSeedCache {
       if (BondIdx.size() < right.BondIdx.size()) return true;
       if (BondIdx.size() > right.BondIdx.size()) return false;
 
-      // everything is equal -> perform straight comparision
+      // everything is equal -> perform straight comparison
       int diff;
       diff = memcmp(&AtomIdx[0], &right.AtomIdx[0],
                     AtomIdx.size() * sizeof(unsigned));
@@ -93,5 +94,5 @@ class DuplicatedSeedCache {
     return Index.size();  // for statistics only
   }
 };
-}
-}
+}  // namespace FMCS
+}  // namespace RDKit

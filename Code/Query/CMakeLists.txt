@@ -4,6 +4,7 @@ rdkit_headers(AndQuery.h
               GreaterQuery.h
               LessEqualQuery.h
               LessQuery.h
+              NullQueryAlgebra.h
               OrQuery.h
               Query.h
               QueryObjects.h

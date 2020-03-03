@@ -11,6 +11,7 @@
 #define PY_ARRAY_UNIQUE_SYMBOL rdalignment_array_API
 #include <RDBoost/python.h>
 #include <boost/python/numpy.hpp>
+
 #include <RDBoost/import_array.h>
 
 #include <RDBoost/PySequenceHolder.h>
@@ -30,36 +31,41 @@ void GetPointsFromPythonSequence(python::object &points,
   double *data;
   if (PyArray_Check(pyObj)) {
     // get the dimensions of the array
-    PyArrayObject *ptsMat = reinterpret_cast<PyArrayObject *>(pyObj);
+    auto *ptsMat = reinterpret_cast<PyArrayObject *>(pyObj);
     nrows = PyArray_DIM(ptsMat, 0);
     ncols = PyArray_DIM(ptsMat, 1);
 
-    if (ncols != 3) throw_value_error("Wrong dimension for the points array");
+    if (ncols != 3) {
+      throw_value_error("Wrong dimension for the points array");
+    }
 
     data = reinterpret_cast<double *>(PyArray_DATA(ptsMat));
 
     for (unsigned int i = 0; i < nrows; i++) {
-      RDGeom::Point3D *rpt =
+      auto *rpt =
           new RDGeom::Point3D(data[i * 3], data[i * 3 + 1], data[i * 3 + 2]);
       pts.push_back(rpt);
     }
   } else if (PySequence_Check(pyObj)) {
     nrows = PySequence_Size(pyObj);
-    if (nrows <= 0) throw_value_error("Empty sequence passed in");
+    if (nrows <= 0) {
+      throw_value_error("Empty sequence passed in");
+    }
     python::extract<RDGeom::Point3D> ptOk(points[0]);
     if (!ptOk.check()) {
       for (unsigned int i = 0; i < nrows; i++) {
         PySequenceHolder<double> row(points[i]);
-        if (row.size() != 3)
+        if (row.size() != 3) {
           throw_value_error("Wrong number of entries in the list of lists");
-        RDGeom::Point3D *rpt = new RDGeom::Point3D(row[0], row[1], row[2]);
+        }
+        auto *rpt = new RDGeom::Point3D(row[0], row[1], row[2]);
         pts.push_back(rpt);
       }
     } else {
       for (unsigned int i = 0; i < nrows; i++) {
         python::extract<RDGeom::Point3D> pt(points[i]);
         if (pt.check()) {
-          RDGeom::Point3D *rpt = new RDGeom::Point3D(pt);
+          auto *rpt = new RDGeom::Point3D(pt);
           pts.push_back(rpt);
         } else {
           throw_value_error("non-Point3D found in sequence of points");
@@ -75,7 +81,7 @@ PyObject *AlignPointPairs(python::object refPoints, python::object probePoints,
                           python::object weights = python::list(),
                           bool reflect = false,
                           unsigned int maxIterations = 50) {
-  // The reference and probe points can be specifed in two formats
+  // The reference and probe points can be specified in two formats
   // 1. A Numeric array of dimensions (N,3) where N is the number of points
   // 2. A list (or tuple) or lists (or tuples)
   //
@@ -90,19 +96,21 @@ PyObject *AlignPointPairs(python::object refPoints, python::object probePoints,
   GetPointsFromPythonSequence(probePoints, probePts);
 
   unsigned int npt = refPts.size();
-  if (npt != probePts.size())
+  if (npt != probePts.size()) {
     throw_value_error("Mis-match in number of points");
+  }
 
   PyObject *weightsObj = weights.ptr();
   RDNumeric::DoubleVector *wtsVec;
-  wtsVec = 0;
+  wtsVec = nullptr;
   double *data;
   if (PyArray_Check(weightsObj)) {
-    PyArrayObject *wtsMat = reinterpret_cast<PyArrayObject *>(weightsObj);
+    auto *wtsMat = reinterpret_cast<PyArrayObject *>(weightsObj);
     unsigned int nwts = PyArray_DIM(wtsMat, 0);
-    if (nwts != npt)
+    if (nwts != npt) {
       throw_value_error(
           "Number of weights supplied do not match the number of points");
+    }
     wtsVec = new RDNumeric::DoubleVector(nwts);
     data = reinterpret_cast<double *>(PyArray_DATA(wtsMat));
     for (unsigned int i = 0; i < nwts; i++) {
@@ -113,9 +121,10 @@ PyObject *AlignPointPairs(python::object refPoints, python::object probePoints,
     unsigned int nwts = wts.size();
 
     if (nwts > 0) {
-      if (nwts != npt)
+      if (nwts != npt) {
         throw_value_error(
             "Number of weights supplied do not match the number of points");
+      }
       wtsVec = new RDNumeric::DoubleVector(nwts);
       for (unsigned int i = 0; i < npt; i++) {
         wtsVec->setVal(i, wts[i]);
@@ -130,8 +139,8 @@ PyObject *AlignPointPairs(python::object refPoints, python::object probePoints,
   npy_intp dims[2];
   dims[0] = 4;
   dims[1] = 4;
-  PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
-  double *resData = reinterpret_cast<double *>(PyArray_DATA(res));
+  auto *res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
+  auto *resData = reinterpret_cast<double *>(PyArray_DATA(res));
   const double *tdata = trans.getData();
   for (unsigned int i = 0; i < trans.numRows(); ++i) {
     unsigned int itab = i * 4;
@@ -164,7 +173,7 @@ BOOST_PYTHON_MODULE(rdAlignment) {
       "Compute the optimal alignment (minimum RMSD) between two set of points \n\n\
  \n\
  ARGUMENTS:\n\n\
-    - refPoints : reference points sepcified as a N by 3 Numeric array or \n\
+    - refPoints : reference points specified as a N by 3 Numeric array or \n\
                   sequence of 3-sequences or sequence of Point3Ds \n\
     - probePoints : probe points to align to reference points - same format \n\
                   restrictions as reference points apply here \n\

@@ -1,6 +1,5 @@
-// $Id: MolPickler.cpp 1123 2009-06-01 13:04:33Z glandrum $
 //
-//  Copyright (C) 2009 Greg Landrum
+//  Copyright (C) 2009-2018 Greg Landrum
 //  Copyright (c) 2014, Novartis Institutes for BioMedical Research Inc.
 //
 //   @@ All Rights Reserved @@
@@ -18,13 +17,13 @@
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/StreamOps.h>
 #include <RDGeneral/types.h>
-#include <boost/cstdint.hpp>
-using boost::int32_t;
-using boost::uint32_t;
+#include <cstdint>
+using std::int32_t;
+using std::uint32_t;
 
 namespace RDKit {
-const int32_t ReactionPickler::versionMajor = 1;
-const int32_t ReactionPickler::versionMinor = 1;
+const int32_t ReactionPickler::versionMajor = 2;
+const int32_t ReactionPickler::versionMinor = 0;
 const int32_t ReactionPickler::versionPatch = 0;
 const int32_t ReactionPickler::endianId = 0xDEADBEEF;
 
@@ -46,20 +45,32 @@ void streamRead(std::istream &ss, ReactionPickler::Tags &tag) {
 
 void ReactionPickler::pickleReaction(const ChemicalReaction *rxn,
                                      std::ostream &ss) {
+  pickleReaction(rxn, ss, MolPickler::getDefaultPickleProperties());
+}
+
+void ReactionPickler::pickleReaction(const ChemicalReaction *rxn,
+                                     std::ostream &ss,
+                                     unsigned int propertyFlags) {
   PRECONDITION(rxn, "empty reaction");
   streamWrite(ss, endianId);
   streamWrite(ss, VERSION);
   streamWrite(ss, versionMajor);
   streamWrite(ss, versionMinor);
   streamWrite(ss, versionPatch);
-  _pickle(rxn, ss);
+  _pickle(rxn, ss, propertyFlags);
 }
+
 void ReactionPickler::pickleReaction(const ChemicalReaction *rxn,
                                      std::string &res) {
+  pickleReaction(rxn, res, MolPickler::getDefaultPickleProperties());
+}
+void ReactionPickler::pickleReaction(const ChemicalReaction *rxn,
+                                     std::string &res,
+                                     unsigned int propertyFlags) {
   PRECONDITION(rxn, "empty reaction");
   std::stringstream ss(std::ios_base::binary | std::ios_base::out |
                        std::ios_base::in);
-  ReactionPickler::pickleReaction(rxn, ss);
+  ReactionPickler::pickleReaction(rxn, ss, propertyFlags);
   res = ss.str();
 }
 
@@ -106,7 +117,8 @@ void ReactionPickler::reactionFromPickle(const std::string &pickle,
   ReactionPickler::reactionFromPickle(ss, rxn);
 }
 
-void ReactionPickler::_pickle(const ChemicalReaction *rxn, std::ostream &ss) {
+void ReactionPickler::_pickle(const ChemicalReaction *rxn, std::ostream &ss,
+                              unsigned int propertyFlags) {
   PRECONDITION(rxn, "empty reaction");
   uint32_t tmpInt;
 
@@ -118,8 +130,12 @@ void ReactionPickler::_pickle(const ChemicalReaction *rxn, std::ostream &ss) {
   streamWrite(ss, tmpInt);
 
   uint32_t flag = 0;
-  if (rxn->getImplicitPropertiesFlag()) flag |= 0x1;
-  if (rxn->df_needsInit) flag |= 0x2;
+  if (rxn->getImplicitPropertiesFlag()) {
+    flag |= 0x1;
+  }
+  if (rxn->df_needsInit) {
+    flag |= 0x2;
+  }
   streamWrite(ss, flag);
 
   // -------------------
@@ -128,14 +144,14 @@ void ReactionPickler::_pickle(const ChemicalReaction *rxn, std::ostream &ss) {
   //
   // -------------------
   streamWrite(ss, BEGINREACTANTS);
-  for (MOL_SPTR_VECT::const_iterator tmpl = rxn->beginReactantTemplates();
+  for (auto tmpl = rxn->beginReactantTemplates();
        tmpl != rxn->endReactantTemplates(); ++tmpl) {
     MolPickler::pickleMol(tmpl->get(), ss);
   }
   streamWrite(ss, ENDREACTANTS);
 
   streamWrite(ss, BEGINPRODUCTS);
-  for (MOL_SPTR_VECT::const_iterator tmpl = rxn->beginProductTemplates();
+  for (auto tmpl = rxn->beginProductTemplates();
        tmpl != rxn->endProductTemplates(); ++tmpl) {
     MolPickler::pickleMol(tmpl->get(), ss, PicklerOps::AllProps);
   }
@@ -143,14 +159,36 @@ void ReactionPickler::_pickle(const ChemicalReaction *rxn, std::ostream &ss) {
 
   if (rxn->getNumAgentTemplates()) {
     streamWrite(ss, BEGINAGENTS);
-    for (MOL_SPTR_VECT::const_iterator tmpl = rxn->beginAgentTemplates();
+    for (auto tmpl = rxn->beginAgentTemplates();
          tmpl != rxn->endAgentTemplates(); ++tmpl) {
       MolPickler::pickleMol(tmpl->get(), ss);
     }
     streamWrite(ss, ENDAGENTS);
   }
+
+  if (propertyFlags & PicklerOps::MolProps) {
+    streamWrite(ss, BEGINPROPS);
+    _pickleProperties(ss, *rxn, propertyFlags);
+    streamWrite(ss, ENDPROPS);
+  }
+
   streamWrite(ss, ENDREACTION);
 }  // end of _pickle
+
+void ReactionPickler::_pickleProperties(std::ostream &ss, const RDProps &props,
+                                        unsigned int pickleFlags) {
+  if (!pickleFlags) {
+    return;
+  }
+
+  streamWriteProps(ss, props, pickleFlags & PicklerOps::PrivateProps,
+                   pickleFlags & PicklerOps::ComputedProps);
+}
+
+//! unpickle standard properties
+void ReactionPickler::_unpickleProperties(std::istream &ss, RDProps &props) {
+  streamReadProps(ss, props);
+}
 
 void ReactionPickler::_depickle(std::istream &ss, ChemicalReaction *rxn,
                                 int version) {
@@ -181,7 +219,7 @@ void ReactionPickler::_depickle(std::istream &ss, ChemicalReaction *rxn,
         "Bad pickle format: BEGINREACTANTS tag not found.");
   }
   for (unsigned int i = 0; i < numReactants; ++i) {
-    ROMol *mol = new ROMol();
+    auto *mol = new ROMol();
     MolPickler::molFromPickle(ss, mol);
     rxn->addReactantTemplate(ROMOL_SPTR(mol));
   }
@@ -196,7 +234,7 @@ void ReactionPickler::_depickle(std::istream &ss, ChemicalReaction *rxn,
         "Bad pickle format: BEGINPRODUCTS tag not found.");
   }
   for (unsigned int i = 0; i < numProducts; ++i) {
-    ROMol *mol = new ROMol();
+    auto *mol = new ROMol();
     MolPickler::molFromPickle(ss, mol);
     rxn->addProductTemplate(ROMOL_SPTR(mol));
   }
@@ -212,7 +250,7 @@ void ReactionPickler::_depickle(std::istream &ss, ChemicalReaction *rxn,
           "Bad pickle format: BEGINAGENTS tag not found.");
     }
     for (unsigned int i = 0; i < numAgents; ++i) {
-      ROMol *mol = new ROMol();
+      auto *mol = new ROMol();
       MolPickler::molFromPickle(ss, mol);
       rxn->addAgentTemplate(ROMOL_SPTR(mol));
     }
@@ -220,6 +258,15 @@ void ReactionPickler::_depickle(std::istream &ss, ChemicalReaction *rxn,
     if (tag != ENDAGENTS) {
       throw ReactionPicklerException(
           "Bad pickle format: ENDAGENTS tag not found.");
+    }
+  }
+  streamRead(ss, tag);
+  if (tag == BEGINPROPS) {
+    _unpickleProperties(ss, *rxn);
+    streamRead(ss, tag);
+    if (tag != ENDPROPS) {
+      throw ReactionPicklerException(
+          "Bad pickle format: ENDPROPS tag not found.");
     }
   }
 

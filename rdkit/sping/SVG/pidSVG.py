@@ -46,7 +46,6 @@ Greg Landrum (greglandrum@earthlink.net) 3/10/2000
 
 from rdkit.sping.pid import *
 from rdkit.sping.PDF import pdfmetrics  # for font info
-from rdkit import six
 from math import *
 
 #SVG_HEADER = """<?xml version="1.0" encoding="iso-8859-1"?>
@@ -158,7 +157,7 @@ class SVGCanvas(Canvas):
     fontStr = ''
     if font.face is None:
       font.__dict__['face'] = 'sansserif'  # quick hack -cwl
-    if isinstance(font.face, six.string_types):
+    if isinstance(font.face, str):
       if len(font.face.split()) > 1:
         familyStr = '\'%s\'' % font.face
       else:
@@ -256,7 +255,7 @@ class SVGCanvas(Canvas):
     if file == None:
       file = self.name
 
-    if isinstance(file, six.string_types):
+    if isinstance(file, str):
       isFileName = 1
     else:
       isFileName = 0

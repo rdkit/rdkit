@@ -16,7 +16,7 @@
 
 
 """
-from __future__ import print_function
+
 import os
 from rdkit import RDConfig
 from rdkit import Chem

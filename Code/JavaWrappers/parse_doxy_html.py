@@ -8,7 +8,7 @@ processing the C++ code.  That html is viewed with Firefox and the appropriate p
 files don't have that section and for now this program can't handle them without some additional annotation
 by hand.
 """
-from __future__ import print_function
+
 
 from BeautifulSoup import *
 import os

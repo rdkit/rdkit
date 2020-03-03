@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/test.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/utils.h>
 #include <Geometry/Transform3D.h>
@@ -28,7 +29,7 @@ bool comparePts(const RDGeom::Point3D &pt1, const RDGeom::Point3D &pt2,
 
 void test1Canonicalization() {
   ROMol *mol = SmilesToMol("C", 0, 1);
-  Conformer *conf = new Conformer(1);
+  auto *conf = new Conformer(1);
   conf->setAtomPos(0, RDGeom::Point3D(4.0, 5.0, 6.0));
   int cid = mol->addConformer(conf, true);
   CHECK_INVARIANT(cid >= 0, "")
@@ -63,6 +64,7 @@ void test1Canonicalization() {
 
   conf->setAtomPos(0, RDGeom::Point3D(0.0, 0.0, 0.0));
   conf->setAtomPos(1, RDGeom::Point3D(0.0, 1.5, 0.0));
+  delete trans;
   trans = computeCanonicalTransform(*conf);
   canonicalizeConformer(*conf);
 
@@ -156,6 +158,7 @@ void testGetSetBondLength() {
   setBondLength(conf, 19, 0, 3.0);
   dist = getBondLength(conf, 0, 19);
   TEST_ASSERT(RDKit::feq(dist, 3.0));
+  delete m;
 }
 
 void testGetSetAngle() {
@@ -167,7 +170,7 @@ void testGetSetAngle() {
   TEST_ASSERT(m);
   Conformer &conf = m->getConformer();
   double angle = getAngleDeg(conf, 0, 19, 21);
-  TEST_ASSERT(RDKit::feq(RDKit::round(angle * 10) / 10, 109.7));
+  TEST_ASSERT(RDKit::feq(angle, 109.7, 0.05));
   setAngleDeg(conf, 0, 19, 21, 125.0);
   angle = getAngleDeg(conf, 0, 19, 21);
   TEST_ASSERT(RDKit::feq(angle, 125.0));
@@ -176,6 +179,7 @@ void testGetSetAngle() {
   TEST_ASSERT(RDKit::feq(angle, M_PI / 2.));
   angle = getAngleDeg(conf, 0, 19, 21);
   TEST_ASSERT(RDKit::feq(angle, 90.0));
+  delete m;
 }
 
 void testGetSetDihedral() {
@@ -187,7 +191,7 @@ void testGetSetDihedral() {
   TEST_ASSERT(m);
   Conformer &conf = m->getConformer();
   double dihedral = getDihedralDeg(conf, 0, 19, 21, 24);
-  TEST_ASSERT(RDKit::feq(RDKit::round(dihedral * 100) / 100, 176.05));
+  TEST_ASSERT(RDKit::feq(dihedral, 176.05, 0.05));
   setDihedralDeg(conf, 8, 0, 19, 21, 65.0);
   dihedral = getDihedralDeg(conf, 8, 0, 19, 21);
   TEST_ASSERT(RDKit::feq(dihedral, 65.0));
@@ -199,6 +203,38 @@ void testGetSetDihedral() {
   TEST_ASSERT(RDKit::feq(dihedral, -2. / 3. * M_PI));
   dihedral = getDihedralDeg(conf, 8, 0, 19, 21);
   TEST_ASSERT(RDKit::feq(dihedral, -120.0));
+  delete m;
+}
+
+void testGetSetDihedralThroughTripleBond() {
+  std::string rdbase = getenv("RDBASE");
+  std::string fName =
+      rdbase + "/Code/GraphMol/MolTransforms/test_data/github1262_2.mol";
+  RWMol *m = MolFileToMol(fName, true, false);
+  TEST_ASSERT(m);
+  Conformer &conf = m->getConformer();
+  setDihedralDeg(conf, 6, 1, 2, 9, 0.0);
+  double dihedral = getDihedralDeg(conf, 6, 1, 2, 9);
+  TEST_ASSERT(RDKit::feq(dihedral, 0.0));
+  double dist = getBondLength(conf, 6, 9);
+  setDihedralDeg(conf, 6, 1, 2, 9, 120.0);
+  dihedral = getDihedralDeg(conf, 6, 1, 2, 9);
+  TEST_ASSERT(RDKit::feq(dihedral, 120.0));
+  double dist2 = getBondLength(conf, 6, 7);
+  TEST_ASSERT(RDKit::feq(dist, dist2, 0.05));
+  setDihedralDeg(conf, 6, 1, 2, 9, 180.0);
+  dihedral = getDihedralDeg(conf, 6, 1, 2, 9);
+  TEST_ASSERT(RDKit::feq(dihedral, 180.0));
+  double dist3 = getBondLength(conf, 6, 9);
+  TEST_ASSERT(!RDKit::feq(dist, dist3, 0.3));
+  bool exceptionRaised = false;
+  try {
+    setDihedralDeg(conf, 6, 0, 3, 9, 0.0);
+  } catch (ValueErrorException &) {
+    exceptionRaised = true;
+  }
+  TEST_ASSERT(exceptionRaised);
+  delete m;
 }
 
 #ifndef RDK_HAS_EIGEN3
@@ -266,11 +302,62 @@ void testGithub1262() {
 }
 #endif
 
+void testGithub1908() {
+  std::string rdbase = getenv("RDBASE");
+  {  // a disc (benzene)
+    std::string fName =
+        rdbase + "/Code/GraphMol/MolTransforms/test_data/github1908_2.mol";
+    std::unique_ptr<RWMol> m(MolFileToMol(fName));
+    TEST_ASSERT(m);
+
+    Conformer &conf = m->getConformer();
+    double dist = getBondLength(conf, 0, 1);
+    //std::cerr << " 1: " << dist << std::endl;
+    TEST_ASSERT(feq(dist, 1.38, .02));
+    dist = getBondLength(conf, 1, 2);
+    //std::cerr << " 2: " << dist << std::endl;
+    TEST_ASSERT(feq(dist, 1.38, .02));
+
+    canonicalizeConformer(conf);
+
+    dist = getBondLength(conf, 0, 1);
+    //std::cerr << " 3: " << dist << std::endl;
+    TEST_ASSERT(feq(dist, 1.38, .02));
+    dist = getBondLength(conf, 1, 2);
+    //std::cerr << " 4: " << dist << std::endl;
+    TEST_ASSERT(feq(dist, 1.38, .02));
+  }
+  {  // a disc (benzene)
+    std::string fName =
+        rdbase + "/Code/GraphMol/MolTransforms/test_data/github1908_1.mol";
+    std::unique_ptr<RWMol> m(MolFileToMol(fName));
+    TEST_ASSERT(m);
+
+    Conformer &conf = m->getConformer();
+    double dist = getBondLength(conf, 0, 1);
+    //std::cerr << " 1: " << dist << std::endl;
+    TEST_ASSERT(feq(dist, 1.38, .02));
+    dist = getBondLength(conf, 1, 2);
+    //std::cerr << " 2: " << dist << std::endl;
+    TEST_ASSERT(feq(dist, 1.38, .02));
+
+    canonicalizeConformer(conf);
+
+    dist = getBondLength(conf, 0, 1);
+    //std::cerr << " 3: " << dist << std::endl;
+    TEST_ASSERT(feq(dist, 1.38, .02));
+    dist = getBondLength(conf, 1, 2);
+    //std::cerr << " 4: " << dist << std::endl;
+    TEST_ASSERT(feq(dist, 1.38, .02));
+  }
+}
+
 int main() {
   // test1();
   std::cout << "***********************************************************\n";
   std::cout << "Testing MolTransforms\n";
 
+#if 1
   std::cout << "\t---------------------------------\n";
   std::cout << "\t test1Canonicalization \n\n";
   test1Canonicalization();
@@ -284,8 +371,16 @@ int main() {
   std::cout << "\t testGetSetDihedral \n\n";
   testGetSetDihedral();
   std::cout << "\t---------------------------------\n";
+  std::cout << "\t testGetSetDihedralThroughTripleBond \n\n";
+  testGetSetDihedralThroughTripleBond();
+  std::cout << "\t---------------------------------\n";
   std::cout << "\t testGithub1262: PMI descriptors incorrect  \n\n";
   testGithub1262();
+#endif
+  std::cout << "\t---------------------------------\n";
+  std::cout
+      << "\t testGithub1908: CanonicalizeMol() distorting bond lengths\n\n";
+  testGithub1908();
   std::cout << "***********************************************************\n";
   return (0);
 }

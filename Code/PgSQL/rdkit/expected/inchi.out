@@ -67,3 +67,16 @@ select mol_inchikey('CC1=NC=CN1'::mol,'/FixedH');
  LXBGSDVWAMZHDD-JSWHHWTPNA-N
 (1 row)
 
+-- Non-InChI-able molecules should return NULL.
+select coalesce(mol_inchi('CC*'), '<NULL>');
+ coalesce 
+----------
+ <NULL>
+(1 row)
+
+select coalesce(mol_inchikey('CC*'), '<NULL>');
+ coalesce 
+----------
+ <NULL>
+(1 row)
+

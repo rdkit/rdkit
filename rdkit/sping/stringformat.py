@@ -26,7 +26,7 @@ StringFormat XML characters
 
        Greek Letter Symbols as specified in MathML 
 """
-from __future__ import print_function
+
 
 #       How it works: Each tag grouping <b></b> sets a flag upon entry and 
 #       clears the flag upon exit.  Each call to handle_data creates a 
@@ -176,7 +176,7 @@ class StringFormatter(xmllib.XMLParser):
   # At the start of each tag the corresponding field will
   # be set to 1 and at the end tag the corresponding field will
   # be set to 0.  Then when handle_data is called the options
-  # for that data will be aparent by the current settings.
+  # for that data will be apparent by the current settings.
   #----------------------------------------------------------
 
   #### bold
@@ -349,7 +349,7 @@ def stringWidth(canvas, s, font=None):
 
 
 def rotateXY(x, y, theta):
-  "Rotate (x,y) by theta degrees.  Got tranformation \
+  "Rotate (x,y) by theta degrees.  Got transformation \
         from page 299 in linear algebra book."
 
   radians = theta * math.pi / 180.0

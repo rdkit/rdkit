@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef __FREECHEMICALFEATURE_H_13012005_1023__
 #define __FREECHEMICALFEATURE_H_13012005_1023__
 
@@ -16,9 +17,10 @@
 namespace ChemicalFeatures {
 
 //------------------------------------------------------
-//! Class for chemical features that do not orignate from molecules
-//  e.g. pharamcophores, site-maps etc.
-class FreeChemicalFeature : public ChemicalFeature {
+//! Class for chemical features that do not originate from molecules
+//  e.g. pharmacophores, site-maps etc.
+class RDKIT_CHEMICALFEATURES_EXPORT FreeChemicalFeature
+    : public ChemicalFeature {
  public:
   //! start with everything specified
   FreeChemicalFeature(const std::string &family, std::string type,
@@ -88,6 +90,6 @@ class FreeChemicalFeature : public ChemicalFeature {
   std::string d_type;
   RDGeom::Point3D d_position;
 };
-}
+}  // namespace ChemicalFeatures
 
 #endif

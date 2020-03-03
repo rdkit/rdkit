@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2009-2012 Greg Landrum
+//  Copyright (C) 2009-2019 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -19,6 +18,7 @@
 
 #include "MolSupplier.h"
 #include "FileParsers.h"
+#include "FileParserUtils.h"
 
 #include <fstream>
 #include <iostream>
@@ -27,7 +27,7 @@
 
 namespace RDKit {
 std::string strip(const std::string &orig) {
-  // FIX: this can be more efficeint
+  // FIX: this can be more efficient
   // strip the end of line, white spaces and tabs
   std::string res =
       boost::trim_right_copy_if(orig, boost::is_any_of(" \t\r\n"));
@@ -49,10 +49,11 @@ ForwardSDMolSupplier::ForwardSDMolSupplier(std::istream *inStream,
 }
 
 void ForwardSDMolSupplier::init() {
-  dp_inStream = 0;
+  dp_inStream = nullptr;
   df_owner = false;
   df_end = false;
   d_line = 0;
+  df_processPropertyLists = true;
 }
 
 void ForwardSDMolSupplier::reset() {
@@ -70,24 +71,25 @@ void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
   std::getline(*dp_inStream, tempStr);
 
   // FIX: report files missing the $$$$ marker
-  while (!(dp_inStream->eof()) &&
+  while (!dp_inStream->eof() && !dp_inStream->fail() &&
          (tempStr[0] != '$' || tempStr.substr(0, 4) != "$$$$")) {
     tempStr = strip(tempStr);
     if (tempStr != "") {
       if (tempStr[0] == '>') {  // data header line: start of a data item
         // ignore all other crap and seek for for a data label enclosed
         // by '<' and '>'
-        // FIX: "CTfile.pdf" (page 51) says that the a data header line does not
+        // FIX: "CTfile.pdf" (page 51) says that the data header line does not
         // have to contain a data label (instead can have something line field
         // id into a MACCS db). But we do not currently know what to do in this
         // situation - so ignore such data items for now
         hasProp = true;
         warningIssued = false;
-        tempStr.erase(0, 1);         // remove the first ">" sign
+        tempStr.erase(0, 1);            // remove the first ">" sign
         size_t sl = tempStr.find("<");  // begin datalabel
         size_t se = tempStr.find(">");  // end datalabel
-        if ((sl == std::string::npos) || (se == std::string::npos) || (se == (sl + 1))) {
-          // we either do not have a data label or the label is emtpy
+        if ((sl == std::string::npos) || (se == std::string::npos) ||
+            (se == (sl + 1))) {
+          // we either do not have a data label or the label is empty
           // no data label ignore until next data item
           // i.e. until we hit a blank line
           d_line++;
@@ -96,8 +98,9 @@ void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
           while (stmp.length() != 0) {
             d_line++;
             std::getline(*dp_inStream, tempStr);
-            if (dp_inStream->eof())
+            if (dp_inStream->eof()) {
               throw FileParseException("End of data field name not found");
+            }
           }
         } else {
           dlabel = tempStr.substr(sl + 1, se - sl - 1);
@@ -129,6 +132,10 @@ void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
             stmp = strip(tempStr);
           }
           mol->setProp(dlabel, prop);
+          if (df_processPropertyLists) {
+            // apply this as an atom property list if that's appropriate
+            FileParserUtils::processMolPropertyList(*mol, dlabel);
+          }
         }
       } else {
         if (df_strictParsing) {
@@ -142,14 +149,16 @@ void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
           throw FileParseException("Problems encountered parsing data fields");
         } else {
           if (!warningIssued) {
-            if (hasProp)
-              BOOST_LOG(rdWarningLog) << "Property <" << dlabel
-                                      << "> will be truncated after "
-                                      << "the first blank line" << std::endl;
-            else
+            if (hasProp) {
+              BOOST_LOG(rdWarningLog)
+                  << "Property <" << dlabel << "> will be truncated after "
+                  << "the first blank line" << std::endl;
+            } else {
               BOOST_LOG(rdWarningLog)
                   << "Spurious data before the first property will be "
-                     "ignored" << std::endl;
+                     "ignored"
+                  << std::endl;
+            }
             warningIssued = true;
           }
         }
@@ -162,7 +171,7 @@ void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
 
 ROMol *ForwardSDMolSupplier::next() {
   PRECONDITION(dp_inStream, "no stream");
-  ROMol *res = NULL;
+  ROMol *res = nullptr;
 
   if (dp_inStream->eof()) {
     // FIX: we should probably be throwing an exception here
@@ -178,16 +187,23 @@ ROMol *ForwardSDMolSupplier::_next() {
   PRECONDITION(dp_inStream, "no stream");
 
   std::string tempStr;
-  ROMol *res = NULL;
+  ROMol *res = nullptr;
   if (dp_inStream->eof()) {
     df_end = true;
     return res;
   }
 
+  df_eofHitOnRead = false;
   unsigned int line = d_line;
   try {
     res = MolDataStreamToMol(dp_inStream, line, df_sanitize, df_removeHs,
                              df_strictParsing);
+    // there's a special case when trying to read an empty string that
+    // we get an empty molecule after only reading a single line without any
+    // additional error state.
+    if (!res && dp_inStream->eof() && (line - d_line < 2)) {
+      df_eofHitOnRead = true;
+    }
     d_line = line;
     if (res) {
       this->readMolProps(res);
@@ -195,30 +211,36 @@ ROMol *ForwardSDMolSupplier::_next() {
       // FIX: report files missing the $$$$ marker
       std::getline(*dp_inStream, tempStr);
       ++d_line;
-      while (!(dp_inStream->eof()) &&
+      while (!dp_inStream->eof() && !dp_inStream->fail() &&
              (tempStr[0] != '$' || tempStr.substr(0, 4) != "$$$$")) {
         std::getline(*dp_inStream, tempStr);
         ++d_line;
       }
     }
   } catch (FileParseException &fe) {
-    if (d_line < static_cast<int>(line)) d_line = line;
+    if (d_line < static_cast<int>(line)) {
+      d_line = line;
+    }
     // we couldn't read a mol block or the data for the molecule. In this case
     // advance forward in the stream until we hit the next record and then
     // rethrow
     // the exception. This should allow us to read the next molecule.
     BOOST_LOG(rdErrorLog) << "ERROR: " << fe.message() << std::endl;
     BOOST_LOG(rdErrorLog)
-        << "ERROR: moving to the begining of the next molecule\n";
+        << "ERROR: moving to the beginning of the next molecule\n";
 
     // FIX: report files missing the $$$$ marker
-    while (!(dp_inStream->eof()) &&
+    d_line++;
+    std::getline(*dp_inStream, tempStr);
+    while (!dp_inStream->eof() && !dp_inStream->fail() &&
            (tempStr[0] != '$' || tempStr.substr(0, 4) != "$$$$")) {
       d_line++;
       std::getline(*dp_inStream, tempStr);
     }
   } catch (MolSanitizeException &se) {
-    if (d_line < static_cast<int>(line)) d_line = line;
+    if (d_line < static_cast<int>(line)) {
+      d_line = line;
+    }
     // We couldn't sanitize a molecule we got - write out an error message and
     // move to
     // the beginning of the next molecule
@@ -227,19 +249,34 @@ ROMol *ForwardSDMolSupplier::_next() {
         << std::endl;
     BOOST_LOG(rdErrorLog) << "ERROR: " << se.message() << "\n";
 
-    while (!(dp_inStream->eof()) &&
+    d_line++;
+    std::getline(*dp_inStream, tempStr);
+    if (dp_inStream->eof()) {
+      df_eofHitOnRead = true;
+    }
+    while (!dp_inStream->eof() && !dp_inStream->fail() &&
            (tempStr[0] != '$' || tempStr.substr(0, 4) != "$$$$")) {
       d_line++;
       std::getline(*dp_inStream, tempStr);
     }
   } catch (...) {
-    if (d_line < static_cast<int>(line)) d_line = line;
+    if (dp_inStream->eof()) {
+      df_eofHitOnRead = true;
+    }
+    if (d_line < static_cast<int>(line)) {
+      d_line = line;
+    }
 
     BOOST_LOG(rdErrorLog) << "Unexpected error hit on line " << d_line
                           << std::endl;
     BOOST_LOG(rdErrorLog)
-        << "ERROR: moving to the begining of the next molecule\n";
-    while (!(dp_inStream->eof()) &&
+        << "ERROR: moving to the beginning of the next molecule\n";
+    d_line++;
+    std::getline(*dp_inStream, tempStr);
+    if (dp_inStream->eof()) {
+      df_eofHitOnRead = true;
+    }
+    while (!dp_inStream->eof() && !dp_inStream->fail() &&
            (tempStr[0] != '$' || tempStr.substr(0, 4) != "$$$$")) {
       d_line++;
       std::getline(*dp_inStream, tempStr);
@@ -282,4 +319,4 @@ bool ForwardSDMolSupplier::atEnd() {
   PRECONDITION(dp_inStream, "no stream");
   return df_end;
 }
-}
+}  // namespace RDKit

@@ -47,7 +47,7 @@
 #include <Numerics/SquareMatrix.h>
 #include <Numerics/SymmMatrix.h>
 #include <boost/foreach.hpp>
-#include <math.h>
+#include <cmath>
 #include <Eigen/Dense>
 #include <Eigen/SVD>
 #include <iostream>
@@ -66,7 +66,7 @@ namespace {
 MolData3Ddescriptors moldata3D;
 
 double roundn(double in, int factor) {
-  return round(in * pow(10, factor)) / pow(10, factor);
+  return std::round(in * pow(10., factor)) / pow(10., factor);
 }
 
 double* retreiveMat(MatrixXd matrix) {
@@ -87,27 +87,23 @@ VectorXd getEigenVect(std::vector<double> v) {
 
 double round_to_n_digits_(double x, int n) {
   char buff[32];
-  sprintf(buff, "%.*g", n, x);  // use g to have significative digits!
+  sprintf(buff, "%.*g", n, x);  // use g to have significant digits!
   return atof(buff);
 }
 
 double round_to_n_digits(double x, int n) {
-  double scale = pow(10.0, ceil(log10(abs(x))) + n);
-  return round(x * scale) / scale;
+  double scale = pow(10.0, ceil(log10(fabs(x))) + n);
+  return std::round(x * scale) / scale;
 }
 
-bool IsClose(double a, double b, unsigned int n) {
-  bool isclose = false;
-  if (fabs(a - b) <= pow(0.1, n) * 1.1) {
-    isclose = true;
-  }
-  return isclose;
+bool IsClose(double a, double b, int n) {
+  return (fabs(a - b) <= pow(0.1, n) * 1.1);
 }
 
 int countZeros(std::string ta) {
   int nbzero = 0;
-  for (unsigned int i = 0; i < ta.length(); i++) {
-    if (ta[i] != '0') {
+  for (char i : ta) {
+    if (i != '0') {
       break;
     }
     nbzero = nbzero + 1;
@@ -116,7 +112,8 @@ int countZeros(std::string ta) {
   return nbzero;
 }
 
-bool IsClose2(double a, double b, unsigned int n) {
+bool IsClose2(double a, double b, unsigned int precision) {
+  RDUNUSED_PARAM(precision);
   bool isclose = false;
 
   std::string sa, sb;
@@ -126,9 +123,8 @@ bool IsClose2(double a, double b, unsigned int n) {
   sa = outa.str();
   outb << b;
   sb = outb.str();
-  ta = sa.substr(sa.find(".") + 1);
-
-  tb = sb.substr(sb.find(".") + 1);
+  ta = sa.substr(sa.find('.') + 1);
+  tb = sb.substr(sb.find('.') + 1);
 
   // same number of digits!
   if (countZeros(ta) == countZeros(tb)) {
@@ -155,7 +151,8 @@ bool IsClose2(double a, double b, unsigned int n) {
   return isclose;
 }
 
-bool IsClose3(double a, double b, unsigned int n) {
+bool IsClose3(double a, double b, unsigned int precision) {
+  RDUNUSED_PARAM(precision);
   bool isclose = false;
   std::string sa, sb;
   std::string ta, tb;
@@ -164,8 +161,8 @@ bool IsClose3(double a, double b, unsigned int n) {
   sa = outa.str();
   outb << b;
   sb = outb.str();
-  ta = sa.substr(sa.find(".") + 1);
-  tb = sb.substr(sb.find(".") + 1);
+  ta = sa.substr(sa.find('.') + 1);
+  tb = sb.substr(sb.find('.') + 1);
   // same number of digits!
   if (ta.length() == tb.length()) {
     // last digit +/-1 deviation only!)
@@ -221,17 +218,13 @@ std::vector<double> clusterArray(std::vector<double> data, double precision) {
 // digit precision)
 // 0.012 and 0.013 are in the same group while 0.014 are not!
 // alternative clustering method not working as in Dragon
-std::vector<double> clusterArray2(std::vector<double> data, int precision) {
+std::vector<double> clusterArray2(std::vector<double> data,
+                                  unsigned int precision) {
   std::vector<double> Store;
 
   // sort the input data descend order!
   std::sort(data.begin(), data.end(), std::greater<double>());
-  std::deque<double> B;
-  for (unsigned int i = 0; i < data.size(); i++) {
-    B.push_back(data[i]);
-    // std::cout << data[i] << ",";
-  }
-  // std::cout << "\n";
+  std::deque<double> B(data.begin(), data.end());
 
   int count = 0;
   while (!B.empty()) {
@@ -265,35 +258,36 @@ std::vector<double> clusterArray2(std::vector<double> data, int precision) {
   return Store;
 }
 
-double* GetGeodesicMatrix(double* dist, int lag, int numAtoms) {
+std::vector<double> GetGeodesicMatrix(const double* dist, int lag,
+                                      int numAtoms) {
+  PRECONDITION(dist != nullptr, "bad array");
+
   int sizeArray = numAtoms * numAtoms;
-  double* Geodesic = new double[sizeArray];
-  for (int i = 0; i < sizeArray; i++) {
-    if (dist[i] == lag)
-      Geodesic[i] = 1;
-    else
-      Geodesic[i] = 0;
-  }
+  std::vector<double> Geodesic;
+  Geodesic.reserve(sizeArray);
+  std::transform(dist, dist + sizeArray, Geodesic.begin(),
+                 [&lag](const double& dist) { return int(dist == lag); });
 
   return Geodesic;
 }
 
-JacobiSVD<MatrixXd> getSVD(MatrixXd A) {
+JacobiSVD<MatrixXd> getSVD(const MatrixXd& A) {
   JacobiSVD<MatrixXd> mysvd(A, ComputeThinU | ComputeThinV);
   return mysvd;
 }
 
-MatrixXd GetPinv(MatrixXd A) {
+MatrixXd GetPinv(const MatrixXd& A) {
   JacobiSVD<MatrixXd> svd = getSVD(A);
   double pinvtoler = 1.e-3;  // choose your tolerance wisely!
   VectorXd vs = svd.singularValues();
   VectorXd vsinv = svd.singularValues();
 
   for (unsigned int i = 0; i < A.cols(); ++i) {
-    if (vs(i) > pinvtoler)
+    if (vs(i) > pinvtoler) {
       vsinv(i) = 1.0 / vs(i);
-    else
+    } else {
       vsinv(i) = 0.0;
+    }
   }
 
   MatrixXd S = vsinv.asDiagonal();
@@ -308,8 +302,8 @@ MatrixXd GetCenterMatrix(MatrixXd Mat) {
 }
 
 MatrixXd GetHmatrix(MatrixXd X) {
-  MatrixXd Weigthed = X.transpose() * X;
-  return X * GetPinv(Weigthed) * X.transpose();
+  MatrixXd Weighted = X.transpose() * X;
+  return X * GetPinv(Weighted) * X.transpose();
 }
 
 MatrixXd GetRmatrix(MatrixXd H, MatrixXd DM, int numAtoms) {
@@ -326,20 +320,19 @@ MatrixXd GetRmatrix(MatrixXd H, MatrixXd DM, int numAtoms) {
 
 std::vector<int> GetHeavyList(const ROMol& mol) {
   int numAtoms = mol.getNumAtoms();
-
   std::vector<int> HeavyList;
+  HeavyList.reserve(numAtoms);
   for (int i = 0; i < numAtoms; ++i) {
     const RDKit::Atom* atom = mol.getAtomWithIdx(i);
-
-    if (atom->getAtomicNum() > 1) {
-      HeavyList.push_back(1);
-    } else
-      HeavyList.push_back(0);
+    HeavyList.push_back(int(atom->getAtomicNum() > 1));
   }
   return HeavyList;
 }
 
-double* AppendDouble(double* w, double* Append, int length, int pos) {
+double* AppendDouble(double* w, const double* Append, int length, int pos) {
+  PRECONDITION(w != nullptr, "bad array");
+  PRECONDITION(Append != nullptr, "bad array");
+
   for (int i = pos; i < pos + length; i++) {
     w[i] = Append[i - pos];
   }
@@ -371,7 +364,8 @@ double getHATS(double W1, double W2, double H1, double H2) {
 
 double getH(double W1, double W2, double H) { return W1 * H * W2; }
 
-double getMax(double* Rk) {
+double getMax(const double* Rk) {
+  PRECONDITION(Rk != nullptr, "bad rK");
   double RTp = 0;
   for (int j = 0; j < 8; j++) {
     if (Rk[j] > RTp) {
@@ -622,7 +616,7 @@ double getMax(double* Rk) {
 
     void getGETAWAYDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,
                     std::vector<int> Heavylist, const ROMol& mol,
-                    std::vector<double>& res, int precision) {
+                    std::vector<double>& res, unsigned int precision) {
   // prepare data for Getaway parameter computation
   // compute parameters
 
@@ -640,14 +634,14 @@ double getMax(double* Rk) {
   double numHeavy = heavyLev.size();
   double ITH0 = numHeavy * log(numHeavy) / log(2.0);
   double ITH = ITH0;
-  for (unsigned int j = 0; j < Clus.size(); j++) {
-    ITH -= Clus[j] * log(Clus[j]) / log(2.0);
+  for (double Clu : Clus) {
+    ITH -= Clu * log(Clu) / log(2.0);
   }
-  res[0] = roundn(ITH, 3);  // issue somethime with this due to cluster
+  res[0] = roundn(ITH, 3);  // issue sometime with this due to cluster
   double ISH = ITH / ITH0;
-  res[1] = roundn(ISH, 3);  // issue somethime with this due to cluster
+  res[1] = roundn(ISH, 3);  // issue sometime with this due to cluster
 
-  // use the PBF to determine 2D vs 3D (with Thresold)
+  // use the PBF to determine 2D vs 3D (with Threshold)
   // determine if this is a plane molecule
   double pbf = RDKit::Descriptors::PBF(mol);
   double D;
@@ -660,7 +654,7 @@ double getMax(double* Rk) {
   // what about linear molecule ie (D=1) ?
   double HIC = 0.0;
   for (int i = 0; i < numAtoms; i++) {
-    HIC -= H(i, i) / D * log(H(i, i) / D) / log(2);
+    HIC -= H(i, i) / D * log(H(i, i) / D) / log(2.);
   }
   res[2] = roundn(HIC, 3);
 
@@ -677,7 +671,7 @@ double getMax(double* Rk) {
 
   VectorXd EIG = mysvd.singularValues();
 
-  double rcon = getRCON(R, Adj, numAtoms);
+  double rcon = getRCON(R, std::move(Adj), numAtoms);
 
   std::vector<double> wp = moldata3D.GetRelativePol(mol);
 
@@ -724,7 +718,7 @@ double getMax(double* Rk) {
 
   double* dist =
       MolOps::getDistanceMat(mol, false);  // need to be be set to false to have
-                                           // topological distance not weigthed!
+                                           // topological distance not weighted!
 
   Map<MatrixXd> D2(dist, numAtoms, numAtoms);
 
@@ -808,8 +802,8 @@ double getMax(double* Rk) {
         }
       }
     }
-    double* Bimat = GetGeodesicMatrix(dist, i, numAtoms);
-    Map<MatrixXd> Bj(Bimat, numAtoms, numAtoms);
+    auto Bimat = GetGeodesicMatrix(dist, i, numAtoms);
+    Map<MatrixXd> Bj(Bimat.data(), numAtoms, numAtoms);
     if (i > 0 && i < 9) {  // use Bj
       for (int j = 0; j < numAtoms - 1; j++) {
         for (int k = j + 1; k < numAtoms; k++) {
@@ -1028,10 +1022,9 @@ double getMax(double* Rk) {
         }
       }
     }
-    delete[] Bimat;
   }
 
-  // can be column vs row selecgted that can explain the issue!
+  // can be column vs row selected that can explain the issue!
   double HATSTu = HATSk[0][0] + HATSut;
   double HATSTm = HATSk[1][0] + HATSmt;
   double HATSTv = HATSk[2][0] + HATSvt;
@@ -1069,7 +1062,7 @@ double getMax(double* Rk) {
   }
 
   // 2*(Rk[1]+Rk[2]+Rk[3]+Rk[4]+Rk[5]+Rk[6]+Rk[7]+Rk[8]) // this is not true
-  // this is on all the elemen;
+  // this is on all the element
 
   double RTu = 0.0;
   double RTm = 0.0;
@@ -1186,7 +1179,7 @@ GETAWAYNAMES={"ITH","ISH","HIC","HGM","H0u","H1u","H2u","H3u","H4u","H5u","H6u",
 "R7i+","R8i+","RTi+","R1s","R2s","R3s","R4s","R5s","R6s","R7s","R8s","RTs","R1s+","R2s+","R3s+","R4s+","R5s+","R6s+","R7s+","R8s+","RTs+"};
  */
 
-    void GetGETAWAYone(double* dist3D, double* AdjMat, std::vector<double> Vpoints,
+void GetGETAWAYone(double* dist3D, double* AdjMat, std::vector<double> Vpoints,
                     const ROMol& mol, const Conformer& conf,
                     std::vector<int> Heavylist, std::vector<double>& res,
                     int precision, const std::string customAtomPropName) {
@@ -1212,10 +1205,14 @@ GETAWAYNAMES={"ITH","ISH","HIC","HGM","H0u","H1u","H2u","H3u","H4u","H5u","H6u",
                            customAtomPropName);
     }
 
+
 void GetGETAWAY(double* dist3D, double* AdjMat, std::vector<double> Vpoints,
                 const ROMol& mol, const Conformer& conf,
                 std::vector<int> Heavylist, std::vector<double>& res,
-                int precision) {
+                unsigned int precision) {
+  PRECONDITION(dist3D != nullptr, "no distance matrix");
+  PRECONDITION(AdjMat != nullptr, "no adjacency matrix");
+
   int numAtoms = conf.getNumAtoms();
 
   Map<MatrixXd> ADJ(AdjMat, numAtoms, numAtoms);
@@ -1234,7 +1231,8 @@ void GetGETAWAY(double* dist3D, double* AdjMat, std::vector<double> Vpoints,
 
   MatrixXd R = GetRmatrix(H, DM, numAtoms);
 
-  getGETAWAYDesc(H, R, ADJ, numAtoms, Heavylist, mol, res, precision);
+  getGETAWAYDesc(H, R, ADJ, numAtoms, std::move(Heavylist), mol, res,
+                 precision);
 }
 
 }  // end of anonymous namespace
@@ -1277,5 +1275,5 @@ void GETAWAY(const ROMol& mol, std::vector<double>& res, int confId,
   }
 }
 
-}  // end of Descriptors namespace
-}  // end of RDKit namespace
+}  // namespace Descriptors
+}  // namespace RDKit

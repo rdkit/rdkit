@@ -238,8 +238,7 @@ import sys
 
 try:
   from rdkit import Chem
-  from rdkit.six import next
-  from rdkit.six.moves import range
+  
 except ImportError:
   sys.stderr.write("Please install RDKit from http://www.rdkit.org/\n")
   raise
@@ -409,7 +408,7 @@ if hasattr(Chem.Atom, "GetIsotope"):
       atom.SetIsotope(isotope)
 
 else:
-  # Backards compatibility. Before mid-2012, RDKit only supported atomic mass, not isotope.
+  # Backward compatibility. Before mid-2012, RDKit only supported atomic mass, not isotope.
   def get_isotopes(mol):
     return [atom.GetMass() for atom in mol.GetAtoms()]
 
@@ -475,7 +474,7 @@ def assign_isotopes_from_class_tag(mol, atom_class_tag):
 
 # A TypedMolecule contains the input molecule, unmodified, along with
 # atom type, and bond type information; both as SMARTS fragments. The
-# "canonical_bondtypes" uniquely charactizes a bond; two bonds will
+# "canonical_bondtypes" uniquely characterizes a bond; two bonds will
 # match if and only if their canonical bondtypes match. (Meaning:
 # bonds must be of equivalent type, and must go between atoms of
 # equivalent types.)
@@ -676,7 +675,7 @@ def _check_atom_classes(molno, num_atoms, atom_classes):
 # that.
 
 
-# Return a dictionary mapping iterator item to occurence count
+# Return a dictionary mapping iterator item to occurrence count
 def get_counts(it):
   d = defaultdict(int)
   for item in it:
@@ -881,7 +880,7 @@ def fragmented_mol_to_enumeration_mols(typed_mol, minNumAtoms=2):
 ####### Canonical SMARTS generation using Weininger, Weininger, and Weininger's CANGEN
 
 # CANGEN "combines two separate algorithms, CANON and GENES.  The
-# first stage, CANON, labels a molecualr structure with canonical
+# first stage, CANON, labels a molecular structure with canonical
 # labels. ... Each atom is given a numerical label on the basis of its
 # topology. In the second stage, GENES generates the unique SMILES
 # ... . [It] selects the starting atom and makes branching decisions
@@ -1830,7 +1829,7 @@ def check_completeRingsOnly(smarts, subgraph, enumeration_mol):
               break
           else:
             # No more backtracking. We fail. Try next bond?
-            # (If it had been sucessful then the
+            # (If it had been successful then the
             #    len(confirmed_ring_bonds) == len(ring_bonds)
             # would have return True)
             break
@@ -2374,7 +2373,7 @@ def make_fragment_sdf(mcs, mol, subgraph, args):
     output_tag = args.save_atom_class_tag
     atom_classes = get_selected_atom_classes(mol, subgraph.atom_indices)
     if atom_classes is not None:
-      fragment.SetProp(output_tag, " ".join(map(str, atom_classes)))
+      fragment.SetProp(output_tag, " ".join(str(x) for x in atom_classes))
 
   _save_other_tags(fragment, fragment, mcs, mol, subgraph, args)
 
@@ -2661,7 +2660,7 @@ def main(args=None):
     if args.atom_class_tag is None:
       args.atomCompare = "elements"  # Default atom comparison
     else:
-      args.atomCompare = "isotopes"  # Assing the atom classes to the isotope fields
+      args.atomCompare = "isotopes"  # Assign the atom classes to the isotope fields
   else:
     if args.atom_class_tag is not None:
       parser.error("Cannot specify both --atom-compare and --atom-class-tag fields")

@@ -16,12 +16,15 @@
 #include <numpy/arrayobject.h>
 #include <map>
 
+#include "PickerHelpers.h"
+
 #include <DataStructs/BitVects.h>
 #include <DataStructs/BitOps.h>
 #include <SimDivPickers/DistPicker.h>
 #include <SimDivPickers/MaxMinPicker.h>
 #include <SimDivPickers/HierarchicalClusterPicker.h>
 #include <iostream>
+#include <utility>
 
 namespace python = boost::python;
 namespace RDPickers {
@@ -41,7 +44,7 @@ RDKit::INT_VECT MaxMinPicks(MaxMinPicker *picker, python::object distMat,
   PyArrayObject *copy;
   copy = (PyArrayObject *)PyArray_ContiguousFromObject(distMat.ptr(),
                                                        NPY_DOUBLE, 1, 1);
-  double *dMat = (double *)PyArray_DATA(copy);
+  auto *dMat = (double *)PyArray_DATA(copy);
 
   RDKit::INT_VECT firstPickVect;
   for (unsigned int i = 0;
@@ -53,18 +56,6 @@ RDKit::INT_VECT MaxMinPicks(MaxMinPicker *picker, python::object distMat,
   Py_DECREF(copy);
   return res;
 }
-
-class pyobjFunctor {
- public:
-  pyobjFunctor(python::object obj) : dp_obj(obj) {}
-  ~pyobjFunctor() {}
-  double operator()(unsigned int i, unsigned int j) {
-    return python::extract<double>(dp_obj(i, j));
-  }
-
- private:
-  python::object dp_obj;
-};
 
 namespace {
 template <typename T>
@@ -86,8 +77,8 @@ RDKit::INT_VECT LazyMaxMinPicks(MaxMinPicker *picker, python::object distFunc,
                                 python::object firstPicks, int seed,
                                 python::object useCache) {
   if (useCache != python::object()) {
-    BOOST_LOG(rdWarningLog)
-        << "the useCache argument is deprecated and ignored" << std::endl;
+    BOOST_LOG(rdWarningLog) << "the useCache argument is deprecated and ignored"
+                            << std::endl;
   }
   pyobjFunctor functor(distFunc);
   RDKit::INT_VECT res;
@@ -106,44 +97,13 @@ python::tuple LazyMaxMinPicksWithThreshold(
   return python::make_tuple(res, threshold);
 }
 
-// NOTE: TANIMOTO and DICE provably return the same results for the diversity
-// picking this is still here just in case we ever later want to support other
-//    methods.
-typedef enum { TANIMOTO = 1, DICE } DistanceMethod;
-
-template <typename BV>
-class pyBVFunctor {
- public:
-  pyBVFunctor(const std::vector<const BV *> &obj, DistanceMethod method)
-      : d_obj(obj), d_method(method) {}
-  ~pyBVFunctor() {}
-  double operator()(unsigned int i, unsigned int j) {
-    double res = 0.0;
-    switch (d_method) {
-      case TANIMOTO:
-        res = 1. - TanimotoSimilarity(*d_obj[i], *d_obj[j]);
-        break;
-      case DICE:
-        res = 1. - DiceSimilarity(*d_obj[i], *d_obj[j]);
-        break;
-      default:
-        throw_value_error("unsupported similarity value");
-    }
-    return res;
-  }
-
- private:
-  const std::vector<const BV *> &d_obj;
-  DistanceMethod d_method;
-};
-
 RDKit::INT_VECT LazyVectorMaxMinPicks(MaxMinPicker *picker, python::object objs,
                                       int poolSize, int pickSize,
                                       python::object firstPicks, int seed,
                                       python::object useCache) {
   if (useCache != python::object()) {
-    BOOST_LOG(rdWarningLog)
-        << "the useCache argument is deprecated and ignored" << std::endl;
+    BOOST_LOG(rdWarningLog) << "the useCache argument is deprecated and ignored"
+                            << std::endl;
   }
   std::vector<const ExplicitBitVect *> bvs(poolSize);
   for (int i = 0; i < poolSize; ++i) {

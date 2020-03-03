@@ -21,7 +21,7 @@ Sample Usage:
 
 """
 
-from __future__ import print_function
+
 
 import getopt
 import sys
@@ -30,7 +30,7 @@ from rdkit import Chem
 from rdkit import DataStructs
 from rdkit.Chem import MACCSkeys
 from rdkit.ML.Cluster import Murtagh
-from rdkit.six.moves import cPickle
+import pickle
 
 
 def error(msg):
@@ -44,7 +44,7 @@ def message(msg):
 def GetRDKFingerprint(mol):
   """ uses default parameters """
   details = FingerprinterDetails()
-  return apply(FingerprintMol, (mol, ), details.__dict__)
+  return FingerprintMol(mol, **details.__dict__)
 
 
 def FoldFingerprintToTargetDensity(fp, **fpArgs):
@@ -220,17 +220,17 @@ def FingerprintsFromDetails(details, reportFreq=10):
   if dataSet and not details.useSD:
     data = dataSet.GetNamedData()
     if not details.molPklName:
-      fps = apply(FingerprintsFromSmiles, (data, idCol, smiCol), details.__dict__)
+      fps = FingerprintsFromSmiles(data, idCol, smiCol, **details.__dict__)
     else:
-      fps = apply(FingerprintsFromPickles, (data, idCol, smiCol), details.__dict__)
+      fps = FingerprintsFromPickles(data, idCol, smiCol, **details.__dict__)
   elif dataSet and details.useSD:
-    fps = apply(FingerprintsFromMols, (dataSet, ), details.__dict__)
+    fps = FingerprintsFromMols(dataSet, **details.__dict__)
 
   if fps:
     if details.outFileName:
       outF = open(details.outFileName, 'wb+')
       for i in range(len(fps)):
-        cPickle.dump(fps[i], outF)
+        pickle.dump(fps[i], outF)
       outF.close()
     dbName = details.outDbName or details.dbName
     if details.outTableName and dbName:

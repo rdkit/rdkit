@@ -7,20 +7,20 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-import collections
+from collections import abc  # this won't work in python2, but we don't support that any more
 
 from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors as _rdMolDescriptors
 from rdkit.Chem import rdPartialCharges, rdMolDescriptors
 import rdkit.Chem.ChemUtils.DescriptorUtilities as _du
-from rdkit.Chem.EState.EState import (MaxEStateIndex, MinEStateIndex,
-                                      MaxAbsEStateIndex, MinAbsEStateIndex)
+from rdkit.Chem.EState.EState import (MaxEStateIndex, MinEStateIndex, MaxAbsEStateIndex,
+                                      MinAbsEStateIndex)
 from rdkit.Chem.QED import qed
 
 
 def _isCallable(thing):
-  return (hasattr(collections, 'Callable') and isinstance(thing, collections.Callable)) or \
-              hasattr(thing, '__call__')
+    return isinstance(thing, abc.Callable) or \
+                hasattr(thing, '__call__')
 
 
 _descList = []
@@ -75,7 +75,10 @@ MolWt.__doc__ = """The average molecular weight of the molecule
 
 """
 
-HeavyAtomMolWt = lambda x: MolWt(x, True)
+
+def HeavyAtomMolWt(x): return MolWt(x, True)
+
+
 HeavyAtomMolWt.__doc__ = """The average molecular weight of the molecule ignoring hydrogens
 
   >>> HeavyAtomMolWt(Chem.MolFromSmiles('CC'))
@@ -99,108 +102,114 @@ ExactMolWt.__doc__ = """The exact molecular weight of the molecule
 
 
 def NumValenceElectrons(mol):
-  """ The number of valence electrons the molecule has
+    """ The number of valence electrons the molecule has
 
-  >>> NumValenceElectrons(Chem.MolFromSmiles('CC'))
-  14
-  >>> NumValenceElectrons(Chem.MolFromSmiles('C(=O)O'))
-  18
-  >>> NumValenceElectrons(Chem.MolFromSmiles('C(=O)[O-]'))
-  18
-  >>> NumValenceElectrons(Chem.MolFromSmiles('C(=O)'))
-  12
+    >>> NumValenceElectrons(Chem.MolFromSmiles('CC'))
+    14
+    >>> NumValenceElectrons(Chem.MolFromSmiles('C(=O)O'))
+    18
+    >>> NumValenceElectrons(Chem.MolFromSmiles('C(=O)[O-]'))
+    18
+    >>> NumValenceElectrons(Chem.MolFromSmiles('C(=O)'))
+    12
 
-  """
-  tbl = Chem.GetPeriodicTable()
-  return sum(
-    tbl.GetNOuterElecs(atom.GetAtomicNum()) - atom.GetFormalCharge() + atom.GetTotalNumHs()
-    for atom in mol.GetAtoms())
+    """
+    tbl = Chem.GetPeriodicTable()
+    return sum(
+      tbl.GetNOuterElecs(atom.GetAtomicNum()) - atom.GetFormalCharge() + atom.GetTotalNumHs()
+      for atom in mol.GetAtoms())
 
 
 NumValenceElectrons.version = "1.1.0"
 
 
 def NumRadicalElectrons(mol):
-  """ The number of radical electrons the molecule has
-    (says nothing about spin state)
+    """ The number of radical electrons the molecule has
+      (says nothing about spin state)
 
-  >>> NumRadicalElectrons(Chem.MolFromSmiles('CC'))
-  0
-  >>> NumRadicalElectrons(Chem.MolFromSmiles('C[CH3]'))
-  0
-  >>> NumRadicalElectrons(Chem.MolFromSmiles('C[CH2]'))
-  1
-  >>> NumRadicalElectrons(Chem.MolFromSmiles('C[CH]'))
-  2
-  >>> NumRadicalElectrons(Chem.MolFromSmiles('C[C]'))
-  3
+    >>> NumRadicalElectrons(Chem.MolFromSmiles('CC'))
+    0
+    >>> NumRadicalElectrons(Chem.MolFromSmiles('C[CH3]'))
+    0
+    >>> NumRadicalElectrons(Chem.MolFromSmiles('C[CH2]'))
+    1
+    >>> NumRadicalElectrons(Chem.MolFromSmiles('C[CH]'))
+    2
+    >>> NumRadicalElectrons(Chem.MolFromSmiles('C[C]'))
+    3
 
-  """
-  return sum(atom.GetNumRadicalElectrons() for atom in mol.GetAtoms())
+    """
+    return sum(atom.GetNumRadicalElectrons() for atom in mol.GetAtoms())
 
 
 NumRadicalElectrons.version = "1.1.0"
 
 
 def _ChargeDescriptors(mol, force=False):
-  if not force and hasattr(mol, '_chargeDescriptors'):
-    return mol._chargeDescriptors
-  chgs = rdPartialCharges.ComputeGasteigerCharges(mol)
-  minChg = 500.
-  maxChg = -500.
-  for at in mol.GetAtoms():
-    chg = float(at.GetProp('_GasteigerCharge'))
-    minChg = min(chg, minChg)
-    maxChg = max(chg, maxChg)
-  res = (minChg, maxChg)
-  mol._chargeDescriptors = res
-  return res
+    if not force and hasattr(mol, '_chargeDescriptors'):
+        return mol._chargeDescriptors
+    chgs = rdPartialCharges.ComputeGasteigerCharges(mol)
+    minChg = 500.
+    maxChg = -500.
+    for at in mol.GetAtoms():
+        chg = float(at.GetProp('_GasteigerCharge'))
+        minChg = min(chg, minChg)
+        maxChg = max(chg, maxChg)
+    res = (minChg, maxChg)
+    mol._chargeDescriptors = res
+    return res
 
 
 def MaxPartialCharge(mol, force=False):
-  _, res = _ChargeDescriptors(mol, force)
-  return res
+    _, res = _ChargeDescriptors(mol, force)
+    return res
 
 
 MaxPartialCharge.version = "1.0.0"
 
 
 def MinPartialCharge(mol, force=False):
-  res, _ = _ChargeDescriptors(mol, force)
-  return res
+    res, _ = _ChargeDescriptors(mol, force)
+    return res
 
 
 MinPartialCharge.version = "1.0.0"
 
 
 def MaxAbsPartialCharge(mol, force=False):
-  v1, v2 = _ChargeDescriptors(mol, force)
-  return max(abs(v1), abs(v2))
+    v1, v2 = _ChargeDescriptors(mol, force)
+    return max(abs(v1), abs(v2))
 
 
 MaxAbsPartialCharge.version = "1.0.0"
 
 
 def MinAbsPartialCharge(mol, force=False):
-  v1, v2 = _ChargeDescriptors(mol, force)
-  return min(abs(v1), abs(v2))
+    v1, v2 = _ChargeDescriptors(mol, force)
+    return min(abs(v1), abs(v2))
 
 
 MinAbsPartialCharge.version = "1.0.0"
 
 
 def _FingerprintDensity(mol, func, *args, **kwargs):
-  fp = func(*((mol,) + args), **kwargs)
-  if hasattr(fp, 'GetNumOnBits'):
-    val = fp.GetNumOnBits()
-  else:
-    val = len(fp.GetNonzeroElements())
-  return float(val) / mol.GetNumHeavyAtoms()
+    fp = func(*((mol, ) + args), **kwargs)
+    if hasattr(fp, 'GetNumOnBits'):
+        val = fp.GetNumOnBits()
+    else:
+        val = len(fp.GetNonzeroElements())
+    return float(val) / mol.GetNumHeavyAtoms()
 
 
-FpDensityMorgan1 = lambda x: _FingerprintDensity(x, _rdMolDescriptors.GetMorganFingerprint, 1)
-FpDensityMorgan2 = lambda x: _FingerprintDensity(x, _rdMolDescriptors.GetMorganFingerprint, 2)
-FpDensityMorgan3 = lambda x: _FingerprintDensity(x, _rdMolDescriptors.GetMorganFingerprint, 3)
+def FpDensityMorgan1(x): return _FingerprintDensity(x, _rdMolDescriptors.GetMorganFingerprint, 1)
+
+
+def FpDensityMorgan2(x): return _FingerprintDensity(x, _rdMolDescriptors.GetMorganFingerprint, 2)
+
+
+def FpDensityMorgan3(x): return _FingerprintDensity(x, _rdMolDescriptors.GetMorganFingerprint, 3)
+
+
 _du.setDescriptorVersion('1.0.0')(FpDensityMorgan1)
 _du.setDescriptorVersion('1.0.0')(FpDensityMorgan2)
 _du.setDescriptorVersion('1.0.0')(FpDensityMorgan3)
@@ -209,28 +218,28 @@ _setupDescriptors(locals())
 
 
 class PropertyFunctor(rdMolDescriptors.PythonPropertyFunctor):
-  """Creates a python based property function that can be added to the
-  global property list.  To use, subclass this class and override the
-  __call__ method.  Then create an instance and add it to the
-  registry.  The __call__ method should return a numeric value.
+    """Creates a python based property function that can be added to the
+    global property list.  To use, subclass this class and override the
+    __call__ method.  Then create an instance and add it to the
+    registry.  The __call__ method should return a numeric value.
 
-  Example:
+    Example:
 
-    class NumAtoms(Descriptors.PropertyFunctor):
-      def __init__(self):
-        Descriptors.PropertyFunctor.__init__(self, "NumAtoms", "1.0.0")
-      def __call__(self, mol):
-        return mol.GetNumAtoms()
+      class NumAtoms(Descriptors.PropertyFunctor):
+        def __init__(self):
+          Descriptors.PropertyFunctor.__init__(self, "NumAtoms", "1.0.0")
+        def __call__(self, mol):
+          return mol.GetNumAtoms()
 
-    numAtoms = NumAtoms()
-    rdMolDescriptors.Properties.RegisterProperty(numAtoms)
-  """
+      numAtoms = NumAtoms()
+      rdMolDescriptors.Properties.RegisterProperty(numAtoms)
+    """
 
-  def __init__(self, name, version):
-    rdMolDescriptors.PythonPropertyFunctor.__init__(self, self, name, version)
+    def __init__(self, name, version):
+        rdMolDescriptors.PythonPropertyFunctor.__init__(self, self, name, version)
 
-  def __call__(self, mol):
-    raise NotImplementedError("Please implement the __call__ method")
+    def __call__(self, mol):
+        raise NotImplementedError("Please implement the __call__ method")
 
 
 # ------------------------------------
@@ -238,11 +247,11 @@ class PropertyFunctor(rdMolDescriptors.PythonPropertyFunctor):
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-  import sys
-  import doctest
-  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
-  sys.exit(failed)
+    import sys
+    import doctest
+    failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
+    sys.exit(failed)
 
 
 if __name__ == '__main__':  # pragma: nocover
-  _runDoctests()
+    _runDoctests()

@@ -137,28 +137,15 @@ void TorsionAngleContrib::getGrad(double *pos, double *grad) const {
   PRECONDITION(pos, "bad vector");
   PRECONDITION(grad, "bad vector");
 
-  RDGeom::Point3D iPoint(pos[3 * d_at1Idx], pos[3 * d_at1Idx + 1],
-                         pos[3 * d_at1Idx + 2]);
-  RDGeom::Point3D jPoint(pos[3 * d_at2Idx], pos[3 * d_at2Idx + 1],
-                         pos[3 * d_at2Idx + 2]);
-  RDGeom::Point3D kPoint(pos[3 * d_at3Idx], pos[3 * d_at3Idx + 1],
-                         pos[3 * d_at3Idx + 2]);
-  RDGeom::Point3D lPoint(pos[3 * d_at4Idx], pos[3 * d_at4Idx + 1],
-                         pos[3 * d_at4Idx + 2]);
   double *g[4] = {&(grad[3 * d_at1Idx]), &(grad[3 * d_at2Idx]),
                   &(grad[3 * d_at3Idx]), &(grad[3 * d_at4Idx])};
 
-  RDGeom::Point3D r[4] = {iPoint - jPoint, kPoint - jPoint, jPoint - kPoint,
-                          lPoint - kPoint};
-  RDGeom::Point3D t[2] = {r[0].crossProduct(r[1]), r[2].crossProduct(r[3])};
-  double d[2] = {t[0].length(), t[1].length()};
-  if (isDoubleZero(d[0]) || isDoubleZero(d[1])) {
-    return;
-  }
-  t[0] /= d[0];
-  t[1] /= d[1];
-  double cosPhi = t[0].dotProduct(t[1]);
-  clipToOne(cosPhi);
+  RDGeom::Point3D r[4];
+  RDGeom::Point3D t[2];
+  double d[2];
+  double cosPhi;
+  RDKit::ForceFieldsHelper::computeDihedral(
+      pos, d_at1Idx, d_at2Idx, d_at3Idx, d_at4Idx, nullptr, &cosPhi, r, t, d);
   double sinPhiSq = 1.0 - cosPhi * cosPhi;
   double sinPhi = ((sinPhiSq > 0.0) ? sqrt(sinPhiSq) : 0.0);
   double sin2Phi = 2.0 * sinPhi * cosPhi;

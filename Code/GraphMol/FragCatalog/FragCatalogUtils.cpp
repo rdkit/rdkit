@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2003-2006 Rational Discovery LLC
 //
@@ -19,14 +18,18 @@
 #include <string>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <boost/tokenizer.hpp>
-typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 #include <boost/algorithm/string.hpp>
 
 namespace RDKit {
 // local utility namespace
 namespace {
-ROMol *getSmarts(const std::string &tmpStr) {
-  ROMol *mol = 0;
+ROMol *getSmarts(std::string &&tmpStr) {
+  ROMol *mol = nullptr;
+
+  // Remove whitespace
+  boost::trim(tmpStr);
+
   if (tmpStr.length() == 0) {
     // empty line
     return mol;
@@ -45,6 +48,9 @@ ROMol *getSmarts(const std::string &tmpStr) {
   boost::erase_all(name, " ");
   ++token;
 
+  // There must be a SMARTS expression
+  CHECK_INVARIANT(token != tokens.end(), tmpStr);
+
   // grab the smarts:
   std::string smarts = *token;
   boost::erase_all(smarts, " ");
@@ -56,23 +62,22 @@ ROMol *getSmarts(const std::string &tmpStr) {
   mol->setProp(common_properties::_fragSMARTS, smarts);
   return mol;
 }
-}  // end of local utility namespace
+}  // namespace
 
 MOL_SPTR_VECT readFuncGroups(std::istream &inStream, int nToRead) {
-  MOL_SPTR_VECT funcGroups;
-  funcGroups.clear();
   if (inStream.bad()) {
     throw BadFileException("Bad stream contents.");
   }
-  const int MAX_LINE_LEN = 512;
-  char inLine[MAX_LINE_LEN];
-  std::string tmpstr;
+
   int nRead = 0;
-  while (!inStream.eof() && (nToRead < 0 || nRead < nToRead)) {
-    inStream.getline(inLine, MAX_LINE_LEN, '\n');
-    tmpstr = inLine;
+
+  MOL_SPTR_VECT funcGroups;
+  while (!inStream.eof() && !inStream.fail() &&
+         (nToRead < 0 || nRead < nToRead)) {
+    std::string tmpstr;
+    std::getline(inStream, tmpstr);
     // parse the molecule on this line (if there is one)
-    ROMol *mol = getSmarts(tmpstr);
+    ROMol *mol = getSmarts(std::move(tmpstr));
     if (mol) {
       funcGroups.push_back(ROMOL_SPTR(mol));
       nRead++;
@@ -204,4 +209,4 @@ ROMol *prepareMol(const ROMol &mol, const FragCatParams *fparams,
 
   return coreMol;
 }
-}
+}  // namespace RDKit

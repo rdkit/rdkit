@@ -486,6 +486,25 @@ public class ChemReactionTests extends GraphMolTest {
           
         }
   
+        @Test
+        public void test101RunSingleReactant() {
+          ChemicalReaction rxn = 
+              ChemicalReaction.ReactionFromSmarts("[N;!H0;$(N-c):1]>>[N:1]-c1cncnn1");
+          
+ 		  ROMol_Vect reacts = new ROMol_Vect(1);
+
+		  RWMol mol = RWMol.MolFromSmiles("CC(=O)/C=C(\\N)c1nonc1N");
+		  //mol.sanitizeMol();
+		  reacts.set(0,mol);
+         
+          ROMol_Vect_Vect prods = rxn.runReactants(reacts);;
+          assertEquals( 1,prods.size() );
+          assertEquals( 1,prods.get(0).size() );
+		  RWMol pmol = new RWMol(prods.get(0).get(0));
+		  assertEquals("CC(=O)/C=C(\\N)c1nonc1Nc1cncnn1",pmol.MolToSmiles(true));
+		}
+
+
         public static void main(String args[]) {
           org.junit.runner.JUnitCore.main("org.RDKit.ChemReactionTests");
         }

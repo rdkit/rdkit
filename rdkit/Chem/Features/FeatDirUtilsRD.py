@@ -15,7 +15,7 @@ import math
 
 # BIG NOTE: we are going assume atom IDs starting from 0 instead of 1
 # for all the functions in this file. This is so that they
-# are reasonably indepedent of the combicode. However when using
+# are reasonably independent of the combicode. However when using
 # with combicode the caller needs to make sure the atom IDs from combicode
 # are corrected before feeding them in here.
 
@@ -190,7 +190,7 @@ def GetDonor3FeatVects(conf, featAtoms, scale=1.5):
 
   This is a donor with three heavy atoms as neighbors. We will assume
   a tetrahedral arrangement of these neighbors. So the direction we are seeking
-  is the last fourth arm of the sp3 arrangment
+  is the last fourth arm of the sp3 arrangement
 
   ARGUMENTS:
     featAtoms - list of atoms that are part of the feature
@@ -209,7 +209,7 @@ def GetAcceptor3FeatVects(conf, featAtoms, scale=1.5):
 
   This is a donor with three heavy atoms as neighbors. We will assume
   a tetrahedral arrangement of these neighbors. So the direction we are seeking
-  is the last fourth arm of the sp3 arrangment
+  is the last fourth arm of the sp3 arrangement
 
   ARGUMENTS:
     featAtoms - list of atoms that are part of the feature
@@ -268,22 +268,20 @@ def GetDonor2FeatVects(conf, featAtoms, scale=1.5):
   # find the two atoms that are neighbors of this atoms
   nbrs = list(mol.GetAtomWithIdx(aid).GetNeighbors())
   assert len(nbrs) >= 2
-
+  
   hydrogens = []
-  tmp = []
-  while len(nbrs):
-    nbr = nbrs.pop()
+  heavy = []
+  for nbr in nbrs:
     if nbr.GetAtomicNum() == 1:
       hydrogens.append(nbr)
     else:
-      tmp.append(nbr)
-  nbrs = tmp
+      heavy.append(nbr) 
 
   if len(nbrs) == 2:
     # there should be no hydrogens in this case
     assert len(hydrogens) == 0
     # in this case the direction is the opposite of the average vector of the two neighbors
-    bvec = _findAvgVec(conf, cpt, nbrs)
+    bvec = _findAvgVec(conf, cpt, heavy)
     bvec *= (-1.0 * scale)
     bvec += cpt
     return ((cpt, bvec), ), 'linear'
@@ -299,12 +297,12 @@ def GetDonor2FeatVects(conf, featAtoms, scale=1.5):
     bvec.Normalize()
     bvec *= scale
     bvec += cpt
-    if _checkPlanarity(conf, cpt, nbrs):
+    if _checkPlanarity(conf, cpt, nbrs, tol=1.0e-2):
       # only the hydrogen atom direction needs to be used
       return ((cpt, bvec), ), 'linear'
     else:
       # we have a non-planar configuration - we will assume sp3 and compute a second direction vector
-      ovec = _findAvgVec(conf, cpt, nbrs)
+      ovec = _findAvgVec(conf, cpt, heavy)
       ovec *= (-1.0 * scale)
       ovec += cpt
       return ((cpt, bvec),
@@ -314,6 +312,7 @@ def GetDonor2FeatVects(conf, featAtoms, scale=1.5):
     # in this case we should have two or more hydrogens we will simple use there directions
     res = []
     for hid in hydrogens:
+      hid = hid.GetIdx()
       bvec = conf.GetAtomPosition(hid)
       bvec -= cpt
       bvec.Normalize()

@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef __RD_LESSEQUALQUERY_H__
 #define __RD_LESSEQUALQUERY_H__
 #include "Query.h"
@@ -73,5 +74,5 @@ class LessEqualQuery
     return res.str();
   };
 };
-}
+}  // namespace Queries
 #endif

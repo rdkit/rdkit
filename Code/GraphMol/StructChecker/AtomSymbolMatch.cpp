@@ -7,6 +7,11 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#if defined(__CYGWIN__) && !defined(_GNU_SOURCE)
+// -std=c++11 doesn't declare strtok_r
+#define _GNU_SOURCE
+#endif
+
 #include <string.h>
 #include <ctype.h>
 #include "Pattern.h"
@@ -74,136 +79,138 @@ unsigned getAtomicNumber(const std::string symbol) {
 
 // predefined generic atom type sets for use in STRUCHK
 static const char *HC_table[] = /* pseudosymbol "G" */
-    {"H", "C", NULL};
+    {"H", "C", nullptr};
 
 static const char *non_metal_hetero_elements[] = /* pseudosymbol "Q" */
     {
-        "He", "B",  "N",  "O",  "F",  "Ne", "Si", "P",  "S",  "Cl", "Ar",
-        "As", "Se", "Br", "Kr", "Sb", "Te", "I",  "Xe", "At", /* "Rn", This
-                                                                 element must be
-                                                                 removed */
-        NULL, /* because of a trick in utils.c */
+        "He",    "B",  "N",  "O",  "F",  "Ne", "Si", "P",  "S",  "Cl", "Ar",
+        "As",    "Se", "Br", "Kr", "Sb", "Te", "I",  "Xe", "At", /* "Rn", This
+                                                                    element must
+                                                                    be
+                                                                    removed */
+        nullptr, /* because of a trick in utils.c */
 };
 
 static const char *metals[] = /* pseudosymbol "M" */
     {
-        "Li", "Be", "Na", "Mg", "Al", "K",  "Ca", "Sc", "Ti", "V",  "Cr", "Mn",
-        "Fe", "Co", "Ni", "Cu", "Zn", "Ga", "Rb", "Sr", "Y",  "Zr", "Nb", "Mo",
-        "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In", "Sn", "Cs", "Ba", "La", "Ce",
-        "Pr", "Nd", "Pm", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb",
-        "Lu", "Hf", "Ta", "W",  "Re", "Os", "Ir", "Pt", "Au", "Hg", "Tl", "Pb",
-        "Bi", "Po", "Fr", "Ra", "Ac", "Th", "Pa", "U",  "Np", "Pu", NULL,
+        "Li", "Be", "Na", "Mg", "Al",    "K",  "Ca", "Sc", "Ti", "V",  "Cr",
+        "Mn", "Fe", "Co", "Ni", "Cu",    "Zn", "Ga", "Rb", "Sr", "Y",  "Zr",
+        "Nb", "Mo", "Tc", "Ru", "Rh",    "Pd", "Ag", "Cd", "In", "Sn", "Cs",
+        "Ba", "La", "Ce", "Pr", "Nd",    "Pm", "Sm", "Eu", "Gd", "Tb", "Dy",
+        "Ho", "Er", "Tm", "Yb", "Lu",    "Hf", "Ta", "W",  "Re", "Os", "Ir",
+        "Pt", "Au", "Hg", "Tl", "Pb",    "Bi", "Po", "Fr", "Ra", "Ac", "Th",
+        "Pa", "U",  "Np", "Pu", nullptr,
 };
 
 static const char *non_metal_small_solution[] = /* pseudosymbol "Qs" */
     {
         "H", "B", "C",  "N",  "O",  "F", "Si",
-        "P", "S", "Cl", "Se", "Br", "I", NULL,
+        "P", "S", "Cl", "Se", "Br", "I", nullptr,
 };
 
 static const char *alkali_metals[] = /* pseudosymbol "alk" */
     {
-        "Li", "Na", "K", "Rb", "Cs", "Fr", NULL,
+        "Li", "Na", "K", "Rb", "Cs", "Fr", nullptr,
 };
 
 static const char *gr2[] = /* pseudosymbol "gr2" */
     {
-        "Be", "Mg", "Ca", "Sr", "Ba", "Ra", NULL,
+        "Be", "Mg", "Ca", "Sr", "Ba", "Ra", nullptr,
 };
 
 static const char *gr3[] = /* pseudosymbol "gr3" */
     {
-        "B", "Al", "Ga", "In", "Tl", NULL,
+        "B", "Al", "Ga", "In", "Tl", nullptr,
 };
 
 static const char *gr4[] = /* pseudosymbol "gr4" */
     {
-        "C", "Si", "Ge", "Sn", "Pb", NULL,
+        "C", "Si", "Ge", "Sn", "Pb", nullptr,
 };
 
 static const char *ONS_table[] = /* pseudosymbol "ONS" or "ons" */
-    {"O", "N", "S", NULL};
+    {"O", "N", "S", nullptr};
 
 static const char *on2[] = /* pseudosymbol "on2" */
     {
-        "O", "N", "S", "P", "Se", "Te", "Po", NULL,
+        "O", "N", "S", "P", "Se", "Te", "Po", nullptr,
 };
 
 static const char *halogenes[] = /* pseudosymbol "X" or "hal" */
-    {"F", "Cl", "Br", "I", "At", NULL};
+    {"F", "Cl", "Br", "I", "At", nullptr};
 
 static const char *ha2[] = /* pseudosymbol "ha2" */
-    {"Cl", "Br", "I", "At", NULL};
+    {"Cl", "Br", "I", "At", nullptr};
 
 static const char *transition_metals[] = /* pseudosymbol "trn" */
     {
-        "Sc", "Ti", "V",  "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "Y",
-        "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "La", "Hf",
-        "Ta", "W",  "Re", "Os", "Ir", "Pt", "Au", "Hg", NULL,
+        "Sc", "Ti", "V",  "Cr", "Mn", "Fe", "Co", "Ni", "Cu",    "Zn", "Y",
+        "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd",    "La", "Hf",
+        "Ta", "W",  "Re", "Os", "Ir", "Pt", "Au", "Hg", nullptr,
 };
 
 static const char *tra[] = /* pseudosymbol "tra" */
     {
         "Ti", "V",  "Cr", "Mn", "Fe", "Co", "Ni", "Zr", "Nb", "Mo", "Tc",
-        "Ru", "Rh", "Pd", "Hf", "Ta", "W",  "Re", "Os", "Ir", "Pt", NULL,
+        "Ru", "Rh", "Pd", "Hf", "Ta", "W",  "Re", "Os", "Ir", "Pt", nullptr,
 };
 
 static const char *trb[] = /* pseudosymbol "trb" */
     {
-        "Cu", "Zn", "Ag", "Cd", "Au", "Hg", NULL,
+        "Cu", "Zn", "Ag", "Cd", "Au", "Hg", nullptr,
 };
 
 static const char *tm1[] = /* pseudosymbol "tm1" */
     {
-        "Cu", "Ag", "Au", NULL,
+        "Cu", "Ag", "Au", nullptr,
 };
 
 static const char *tm2[] = /* pseudosymbol "tm2" */
     {
-        "Zn", "Cd", "Hg", NULL,
+        "Zn", "Cd", "Hg", nullptr,
 };
 
 static const char *tm3[] = /* pseudosymbol "tm3" */
     {
-        "Sc", "Y", "La", NULL,
+        "Sc", "Y", "La", nullptr,
 };
 
 static const char *tm4[] = /* pseudosymbol "tm4" */
     {
-        "Ti", "Zr", "Hf", NULL,
+        "Ti", "Zr", "Hf", nullptr,
 };
 
 static const char *tm5[] = /* pseudosymbol "tm5" */
     {
-        "V", "Nb", "Ta", NULL,
+        "V", "Nb", "Ta", nullptr,
 };
 
 static const char *tm6[] = /* pseudosymbol "tm6" */
     {
-        "Cr", "Mo", "W", NULL,
+        "Cr", "Mo", "W", nullptr,
 };
 
 static const char *tm7[] = /* pseudosymbol "tm7" */
     {
-        "Mn", "Tc", "Re", NULL,
+        "Mn", "Tc", "Re", nullptr,
 };
 
 static const char *tm8[] = /* pseudosymbol "tm8" */
     {
-        "Fe", "Co", "Ni", "Ru", "Rh", "Pd", "Os", "Ir", "Pt", NULL,
+        "Fe", "Co", "Ni", "Ru", "Rh", "Pd", "Os", "Ir", "Pt", nullptr,
 };
 
 static const char *lanthanoids[] = /* pseudosymbol "lan" */
     {
-        "Ce", "Pr", "Nd", "Pm", "Sm", "Eu", "Gd", "Tb",
-        "Dy", "Ho", "Er", "Tm", "Yb", "Lu", NULL,
+        "Ce", "Pr", "Nd", "Pm", "Sm", "Eu", "Gd",    "Tb",
+        "Dy", "Ho", "Er", "Tm", "Yb", "Lu", nullptr,
 };
 
 static const char *amino_acids[] = /* pseudosymbol "Ami" or "ami"*/
     {
         "Ala", "Arg", "Asn", "Asp", "Cys", "Gln", "Glu",
         "Gly", "His", "Ile", "Leu", "Lys", "Met", "Phe",
-        "Pro", "Ser", "Thr", "Trp", "Tyr", "Val", NULL,
+        "Pro", "Ser", "Thr", "Trp", "Tyr", "Val", nullptr,
 };
 
 static bool IsInStringTable(const char *symbol, const char *table[]) {
@@ -232,7 +239,7 @@ bool AtomSymbolMatch(const std::string symbol, const std::string pattern) {
 
   strcpy(pat_buf, pattern.c_str());
   for (tokp = strtok_r(pat_buf, ",", &context); tokp;
-       tokp = strtok_r((char *)NULL, ",", &context)) {
+       tokp = strtok_r((char *)nullptr, ",", &context)) {
     if (islower(*tokp)) {
       if (0 == strcmp("alk", tokp)) {
         if (IsInStringTable(atsym, alkali_metals)) return true;

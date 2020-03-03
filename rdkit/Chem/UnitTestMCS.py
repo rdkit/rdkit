@@ -3,7 +3,7 @@ import time
 
 from rdkit import Chem
 from rdkit.Chem import rdFMCS
-
+from rdkit.TestRunner import isDebugBuild
 
 def load_smiles(text):
   mols = []
@@ -101,7 +101,7 @@ class TestAtomTypes(MCSTestCase):
                        bondCompare=rdFMCS.BondCompare.CompareOrderExact)
 
   def test_atom_compare_any(self):
-    # Note: bond aromaticies must still match!
+    # Note: bond aromaticities must still match!
     # 'cccccO' matches 'ccccnO'
     self.assert_search(atomtype_mols, 6, 5,
                        atomCompare=rdFMCS.AtomCompare.CompareAny,
@@ -321,6 +321,7 @@ lengthy_mols = [Chem.MolFromSmiles("Nc1ccccc1" * 20), Chem.MolFromSmiles("Nc1ccc
 
 class TestTimeout(MCSTestCase):
   # This should take over two minutes to process. Give it 1 seconds.
+  @unittest.skipIf(isDebugBuild(), "Timeout test will fail on debug builds.")
   def test_timeout(self):
     t1 = time.time()
     result = rdFMCS.FindMCS(lengthy_mols, timeout=1)

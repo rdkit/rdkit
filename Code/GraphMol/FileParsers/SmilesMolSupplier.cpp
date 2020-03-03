@@ -16,7 +16,7 @@
 #include "FileParsers.h"
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <boost/tokenizer.hpp>
-typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
 #include <fstream>
 #include <iostream>
@@ -36,12 +36,12 @@ SmilesMolSupplier::SmilesMolSupplier(const std::string &fileName,
   // FIX: this binary mode of opening file is here because of a bug in VC++ 6.0
   // the function "tellg" does not work correctly if we do not open it this way
   // Need to check if this has been fixed in VC++ 7.0
-  std::ifstream *tmpStream =
-      new std::ifstream(fileName.c_str(), std::ios_base::binary);
+  auto *tmpStream = new std::ifstream(fileName.c_str(), std::ios_base::binary);
 
-  if (!tmpStream || (!(*tmpStream)) || (tmpStream->bad())) {
+  if (!(*tmpStream) || tmpStream->bad()) {
     std::ostringstream errout;
     errout << "Bad input file " << fileName;
+    delete tmpStream;
     throw BadFileException(errout.str());
   }
   dp_inStream = static_cast<std::istream *>(tmpStream);
@@ -87,7 +87,7 @@ SmilesMolSupplier::~SmilesMolSupplier() {
 }
 
 void SmilesMolSupplier::init() {
-  dp_inStream = 0;
+  dp_inStream = nullptr;
   df_owner = true;
   df_end = false;
 
@@ -101,7 +101,9 @@ void SmilesMolSupplier::init() {
 void SmilesMolSupplier::setData(const std::string &text,
                                 const std::string &delimiter, int smilesColumn,
                                 int nameColumn, bool titleLine, bool sanitize) {
-  if (dp_inStream && df_owner) delete dp_inStream;
+  if (dp_inStream && df_owner) {
+    delete dp_inStream;
+  }
   init();
 
   dp_inStream = new std::stringstream(text);
@@ -146,7 +148,7 @@ void SmilesMolSupplier::reset() {
 }
 
 ROMol *SmilesMolSupplier::processLine(std::string inLine) {
-  ROMol *res = NULL;
+  ROMol *res = nullptr;
 
   try {
     // -----------
@@ -170,7 +172,11 @@ ROMol *SmilesMolSupplier::processLine(std::string inLine) {
     // -----------
     // get the smiles and create a molecule
     // -----------
-    res = SmilesToMol(recs[d_smi], 0, df_sanitize);
+    SmilesParserParams params;
+    params.sanitize = df_sanitize;
+    params.allowCXSMILES = false;
+    params.parseName = false;
+    res = SmilesToMol(recs[d_smi], params);
     if (!res) {
       std::stringstream errout;
       errout << "Cannot create molecule from : '" << recs[d_smi] << "'";
@@ -188,8 +194,8 @@ ROMol *SmilesMolSupplier::processLine(std::string inLine) {
       res->setProp(common_properties::_Name, mname);
     } else {
       if (d_name >= static_cast<int>(recs.size())) {
-        BOOST_LOG(rdWarningLog) << "WARNING: no name column found on line "
-                                << d_line << std::endl;
+        BOOST_LOG(rdWarningLog)
+            << "WARNING: no name column found on line " << d_line << std::endl;
       } else {
         res->setProp(common_properties::_Name, recs[d_name]);
       }
@@ -200,8 +206,9 @@ ROMol *SmilesMolSupplier::processLine(std::string inLine) {
     // -----------
     unsigned int iprop = 0;
     for (unsigned int col = 0; col < recs.size(); col++) {
-      if (static_cast<int>(col) == d_smi || static_cast<int>(col) == d_name)
+      if (static_cast<int>(col) == d_smi || static_cast<int>(col) == d_name) {
         continue;
+      }
       std::string pname, pval;
       if (d_props.size() > col) {
         pname = d_props[col];
@@ -223,19 +230,19 @@ ROMol *SmilesMolSupplier::processLine(std::string inLine) {
     BOOST_LOG(rdErrorLog) << "ERROR: Smiles parse error on line " << d_line
                           << "\n";
     BOOST_LOG(rdErrorLog) << "ERROR: " << pe.message() << "\n";
-    res = NULL;
+    res = nullptr;
   } catch (const MolSanitizeException &se) {
     // We couldn't sanitize the molecule
     //  write out an error message
     BOOST_LOG(rdErrorLog) << "ERROR: Could not sanitize molecule on line "
                           << d_line << std::endl;
     BOOST_LOG(rdErrorLog) << "ERROR: " << se.message() << "\n";
-    res = NULL;
+    res = nullptr;
   } catch (...) {
     //  write out an error message
     BOOST_LOG(rdErrorLog) << "ERROR: Could not process molecule on line "
                           << d_line << std::endl;
-    res = NULL;
+    res = nullptr;
   }
 
   return res;
@@ -254,7 +261,9 @@ ROMol *SmilesMolSupplier::processLine(std::string inLine) {
 // --------------------------------------------------
 std::string SmilesMolSupplier::nextLine() {
   PRECONDITION(dp_inStream, "bad stream");
-  if (df_end) return "";
+  if (df_end) {
+    return "";
+  }
   std::string tempStr = getLine(dp_inStream);
 
   if (tempStr == "") {
@@ -285,7 +294,9 @@ std::string SmilesMolSupplier::nextLine() {
 //
 long int SmilesMolSupplier::skipComments() {
   PRECONDITION(dp_inStream, "bad stream");
-  if (this->atEnd()) return -1;
+  if (this->atEnd()) {
+    return -1;
+  }
 
   std::streampos prev = dp_inStream->tellg();
   std::string tempStr = this->nextLine();
@@ -294,7 +305,9 @@ long int SmilesMolSupplier::skipComments() {
     while ((tempStr[0] == '#') || (strip(tempStr).size() == 0)) {
       prev = dp_inStream->tellg();
       tempStr = this->nextLine();
-      if (this->atEnd()) break;
+      if (this->atEnd()) {
+        break;
+      }
     }
   }
   // if we hit EOF without getting a proper line, return -1:
@@ -383,7 +396,9 @@ void SmilesMolSupplier::moveTo(unsigned int idx) {
   if (d_molpos.empty()) {
     // if we are just starting out, process the title line
     dp_inStream->seekg(0);
-    if (df_title) this->processTitleLine();
+    if (df_title) {
+      this->processTitleLine();
+    }
   } else {
     // move to the last position we've seen:
     dp_inStream->seekg(d_molpos.back());
@@ -430,7 +445,7 @@ void SmilesMolSupplier::moveTo(unsigned int idx) {
 //
 ROMol *SmilesMolSupplier::next() {
   PRECONDITION(dp_inStream, "no stream");
-  ROMol *res = NULL;
+  ROMol *res = nullptr;
 
   if (d_next < 0) {
     d_next = 0;
@@ -452,7 +467,6 @@ ROMol *SmilesMolSupplier::next() {
   std::string inLine = getLine(dp_inStream);
   // and process it:
   res = this->processLine(inLine);
-
   // if we don't already know the length of the supplier,
   // check if we can read another line:
   if (d_len < 0 && this->skipComments() < 0) {
@@ -513,7 +527,9 @@ unsigned int SmilesMolSupplier::length() {
       this->skipComments();
     } else {
       // process the title line if need be:
-      if (df_title) this->processTitleLine();
+      if (df_title) {
+        this->processTitleLine();
+      }
     }
     int pos = this->skipComments();
     while (pos >= 0) {
@@ -529,4 +545,4 @@ unsigned int SmilesMolSupplier::length() {
 }
 
 bool SmilesMolSupplier::atEnd() { return df_end; }
-}
+}  // namespace RDKit

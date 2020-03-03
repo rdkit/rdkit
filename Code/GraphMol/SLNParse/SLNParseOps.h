@@ -31,6 +31,7 @@
 //
 // Created by Greg Landrum, September 2006
 //
+#include <RDGeneral/export.h>
 #ifndef __RD_SLNPARSEOPS_H__
 #define __RD_SLNPARSEOPS_H__
 
@@ -187,7 +188,13 @@ void closeRingBond(std::vector<RWMol *> &molList, unsigned int molIdx,
 //! \overload
 void closeRingBond(std::vector<RWMol *> &molList, unsigned int molIdx,
                    unsigned int ringIdx) {
-  closeRingBond(molList, molIdx, ringIdx, new Bond(Bond::SINGLE));
+  auto *newBond = new Bond(Bond::SINGLE);
+  try {
+    closeRingBond(molList, molIdx, ringIdx, newBond);
+  } catch (...) {
+    delete newBond;
+    throw;
+  }
 };
 
 // ------------------------------------------------------------------------------------
@@ -281,7 +288,14 @@ int addBranchToMol(std::vector<RWMol *> &molList, unsigned int molIdx,
 int addBranchToMol(std::vector<RWMol *> &molList, unsigned int molIdx,
                    unsigned int branchIdx) {
   Bond *newBond = new Bond(Bond::SINGLE);
-  return addBranchToMol(molList, molIdx, branchIdx, newBond);
+  int ret = -1;
+  try {
+    ret = addBranchToMol(molList, molIdx, branchIdx, newBond);
+  } catch (...) {
+    delete newBond;
+    throw;
+  }
+  return ret;
 };
 
 // ------------------------------------------------------------------------------------
@@ -290,7 +304,14 @@ int addBranchToMol(std::vector<RWMol *> &molList, unsigned int molIdx,
 int addFragToMol(std::vector<RWMol *> &molList, unsigned int molIdx,
                  unsigned int fragIdx) {
   Bond *newBond = new Bond(Bond::IONIC);
-  return addBranchToMol(molList, molIdx, fragIdx, newBond);
+  int ret = -1;
+  try {
+    ret = addBranchToMol(molList, molIdx, fragIdx, newBond);
+  } catch (...) {
+    delete newBond;
+    throw;
+  }
+  return ret;
 }
 
 //! convenience function to convert the argument to a string
@@ -300,20 +321,6 @@ std::string convertToString(T val) {
   return res;
 }
 
-void CleanupAfterParseError(RWMol *mol) {
-  PRECONDITION(mol, "no molecule");
-  // blow out any partial bonds:
-  RWMol::BOND_BOOKMARK_MAP *marks = mol->getBondBookmarks();
-  RWMol::BOND_BOOKMARK_MAP::iterator markI = marks->begin();
-  while (markI != marks->end()) {
-    RWMol::BOND_PTR_LIST &bonds = markI->second;
-    for (RWMol::BOND_PTR_LIST::iterator bondIt = bonds.begin();
-         bondIt != bonds.end(); ++bondIt) {
-      delete *bondIt;
-    }
-    ++markI;
-  }
-}
 }  // end of namespace SLNParse
 }  // end of namespace RDKit
 #endif

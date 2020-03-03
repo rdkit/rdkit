@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.8)
 
 project (jGraphMolJava Java)
 
@@ -13,7 +13,7 @@ include(UseJava)
 find_jar(JUNIT_JAR junit PATHS ${RDKit_JavaLibDir})
 if (NOT JUNIT_JAR)
   if(NOT DEFINED JUNIT_URL)
-    set(JUNIT_URL "http://central.maven.org/maven2/junit/junit/4.10/junit-4.10.jar")
+    set(JUNIT_URL "https://repo1.maven.org/maven2/junit/junit/4.10/junit-4.10.jar")
   endif()
   if(NOT DEFINED JUNIT_MD5SUM)
     set(JUNIT_MD5SUM "68380001b88006ebe49be50cef5bb23a")
@@ -54,7 +54,7 @@ FILE(TO_NATIVE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/src/org/RDKit COPY_DEST)
 
 # Setup a few variables for environment-specific things
 if(WIN32)
-  ADD_DEFINITIONS("/W3 /wd4716 /bigobj")
+  ADD_DEFINITIONS("/W3 /wd4716 /wd4101 /bigobj")
   SET(PATH_SEP ";")
   SET(COPY_CMD xcopy ${COPY_SOURCE} ${COPY_DEST} /Y /I)
 else()
@@ -79,11 +79,15 @@ endif()
 SET(CMAKE_SWIG_OUTDIR ${CMAKE_CURRENT_SOURCE_DIR}/src/org/RDKit )
 
 if(RDK_BUILD_INCHI_SUPPORT)
-  SET(CMAKE_SWIG_FLAGS "-DBUILD_INCHI_SUPPORT" ${CMAKE_SWIG_FLAGS} )
+  SET(CMAKE_SWIG_FLAGS "-DRDK_BUILD_INCHI_SUPPORT" ${CMAKE_SWIG_FLAGS} )
 endif()
 if(RDK_BUILD_AVALON_SUPPORT)
-  SET(CMAKE_SWIG_FLAGS "-DBUILD_AVALON_SUPPORT" ${CMAKE_SWIG_FLAGS} )
+  SET(CMAKE_SWIG_FLAGS "-DRDK_BUILD_AVALON_SUPPORT" ${CMAKE_SWIG_FLAGS} )
 endif()
+if(RDK_USE_BOOST_IOSTREAMS)
+  SET(CMAKE_SWIG_FLAGS "-DRDK_USE_BOOST_IOSTREAMS" ${CMAKE_SWIG_FLAGS} )
+endif()
+
 
 
 # enable this line to build the ErrorGenerator class for testing handling of C++ errors in the JNI layer
@@ -102,13 +106,16 @@ endif()
 
 SET(SWIG_MODULE_GraphMolWrap_EXTRA_DEPS ${SWIG_SRC_FILES} )
 
-SWIG_ADD_MODULE(GraphMolWrap "java" GraphMolJava.i )
+SWIG_ADD_LIBRARY(GraphMolWrap TYPE MODULE LANGUAGE java SOURCES GraphMolJava.i )
 
 # it doesnt seem like the threading libs should need to be here, but
 # as of Oct 2012 using boost 1.51 under at least ubuntu 12.04 we get a
 # link error if they aren't there.
 SWIG_LINK_LIBRARIES(GraphMolWrap ${RDKit_Wrapper_Libs}
       ${Boost_SERIALIZATION_LIBRARY} ${RDKit_THREAD_LIBS})
+
+MESSAGE("serial: ${Boost_SERIALIZATION_LIBRARY}")
+MESSAGE("THREAD: ${RDKit_THREAD_LIBS}")
 
 # code adapted from the wrapper code for
 # GDCM: http://gdcm.svn.sf.net/viewvc/gdcm/trunk/Wrapping/Java/CMakeLists.txt?view=markup
@@ -337,6 +344,26 @@ ADD_TEST(JavaFilterCatalogTests
 	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 	org.RDKit.FilterCatalogTests)
 
+ADD_TEST(JavaSubstructLibraryTests
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
+	org.RDKit.SubstructLibraryTests)
+
+ADD_TEST(JavaRGroupDecompositionTests
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
+	org.RDKit.RGroupDecompositionTests)
+
+ADD_TEST(JavaScaffoldNetworkTests
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
+	org.RDKit.ScaffoldNetworkTests)
+
+ADD_TEST(JavaMolHashTest
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
+	org.RDKit.MolHashTest)
+
 ADD_TEST(JavaDiversityPickerTests
 	    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
 		-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
@@ -346,6 +373,11 @@ ADD_TEST(JavaBitOpsTests
 	    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
 		-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 		org.RDKit.BitOpsTests)
+
+    ADD_TEST(MolStandardizeTest
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+    -cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
+    org.RDKit.MolStandardizeTest)
 
 
 INSTALL(TARGETS GraphMolWrap

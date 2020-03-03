@@ -4,7 +4,7 @@
 """ unit testing code for the descriptor COM server
 
 """
-from __future__ import print_function
+
 
 import unittest
 

@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2014 Novartis Institutes for BioMedical Research
 //
@@ -8,24 +7,28 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #pragma once
 #include <map>
 #include <vector>
 #include <string>
 #include <stdexcept>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 #include "../RDKitBase.h"
+#include "nmmolhash.h"
 
 namespace RDKit {
 namespace MolHash {
-typedef boost::uint32_t HashCodeType;
+typedef std::uint32_t HashCodeType;
 
-HashCodeType generateMoleculeHashCode(
+// \deprecated This function will go away in a future release.
+// please use the MolHash() function instead
+RDKIT_MOLHASH_EXPORT HashCodeType generateMoleculeHashCode(
     const ROMol &mol, const std::vector<unsigned> *atomsToUse = 0,
     const std::vector<unsigned> *bondsToUse =
         0,  // ?? listed bonds between/to/from excluded atom(s) ??
-    const std::vector<boost::uint32_t> *atomCodes = 0,
-    const std::vector<boost::uint32_t> *bondCodes = 0);
+    const std::vector<std::uint32_t> *atomCodes = 0,
+    const std::vector<std::uint32_t> *bondCodes = 0);
 
 enum CodeFlags  // bitwise flags to combine and compute atom/bond codes
 { CF_NO_LABELS = 0x0000,
@@ -48,20 +51,21 @@ enum CodeFlags  // bitwise flags to combine and compute atom/bond codes
   CF_ALL = 0xFFFF,
 };
 
-void fillAtomBondCodes(
+// \deprecated This function will go away in a future release.
+RDKIT_MOLHASH_EXPORT void fillAtomBondCodes(
     const ROMol &mol, boost::uint64_t flags  // CodeFlags constants combination
     ,
-    std::vector<boost::uint32_t> *atomCodes  // NULL is allowed
+    std::vector<std::uint32_t> *atomCodes  // NULL is allowed
     ,
-    std::vector<boost::uint32_t> *bondCodes);  // NULL is allowed
+    std::vector<std::uint32_t> *bondCodes);  // NULL is allowed
 
 #pragma pack(push, 1)
-struct HashSet {
-  boost::uint16_t Version;
-  boost::uint16_t Reserved;
-  boost::uint16_t NumAtoms;
-  boost::uint16_t NumBonds;
-  boost::uint32_t FormulaCRC32;
+struct RDKIT_MOLHASH_EXPORT HashSet {
+  std::uint16_t Version;
+  std::uint16_t Reserved;
+  std::uint16_t NumAtoms;
+  std::uint16_t NumBonds;
+  std::uint32_t FormulaCRC32;
   HashCodeType NonChiralAtomsHash;
   HashCodeType NonChiralBondsHash;
   HashCodeType ChiralAtomsHash;
@@ -73,15 +77,19 @@ struct HashSet {
 };
 #pragma pack(pop)
 
-void generateMoleculeHashSet(const ROMol &mol, HashSet &res,
-                             const std::vector<unsigned> *atomsToUse = 0,
-                             const std::vector<unsigned> *bondsToUse = 0);
+// \deprecated This function will go away in a future release.
+RDKIT_MOLHASH_EXPORT void generateMoleculeHashSet(
+    const ROMol &mol, HashSet &res, const std::vector<unsigned> *atomsToUse = 0,
+    const std::vector<unsigned> *bondsToUse = 0);
 
-std::string generateMoleculeHashSet(
+// \deprecated This function will go away in a future release.
+RDKIT_MOLHASH_EXPORT std::string generateMoleculeHashSet(
     const ROMol &mol, const std::vector<unsigned> *atomsToUse = 0,
     const std::vector<unsigned> *bondsToUse = 0);
 
-std::string encode(const void *bin,
-                   size_t size);  // binary data to Base64 encoded string
-}
-}
+// \deprecated This function will go away in a future release.
+RDKIT_MOLHASH_EXPORT std::string encode(
+    const void *bin,
+    size_t size);  // binary data to Base64 encoded string
+}  // namespace MolHash
+}  // namespace RDKit

@@ -10,6 +10,7 @@
 //
 // There are chirality test cases spread all over the place. Many of the
 // tests here are repeats, but it's good to have everything in one place.
+#include <RDGeneral/test.h>
 #include <RDGeneral/utils.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
@@ -111,6 +112,7 @@ void testMol1() {
   TEST_ASSERT(cip == "R");
   MolOps::removeStereochemistry(*m);
   TEST_ASSERT(!m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
+  delete m;
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 };
@@ -268,6 +270,7 @@ void testRoundTrip() {
   TEST_ASSERT(smi == smi2);
 #endif
 
+  delete m;
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 };
 
@@ -335,6 +338,7 @@ void testMol2() {
   m->getAtomWithIdx(3)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "R");
 
+  delete m;
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 };
 
@@ -602,6 +606,7 @@ void testSmiles1() {
 
 void testChiralityCleanup() {
   ROMol *mol, *mol2;
+  Atom *chiral_center;
   std::string smi, cip;
 
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
@@ -629,6 +634,274 @@ void testChiralityCleanup() {
   MolOps::assignStereochemistry(*mol, true);
   TEST_ASSERT(!mol->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_UNSPECIFIED);
+  delete mol;
+
+  // The remaining examples are for github #1614 :
+  // AssignStereochemistry incorrectly removing CIS/TRANS bond stereo
+
+  // cleanIt=true, force=true should NOT remove this manual cis/trans stereo
+  // assignment
+  smi = "CC=CC(Cl)C";
+  mol = SmilesToMol(smi);
+  mol->getAtomWithIdx(4)->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+  TEST_ASSERT(mol->getBondWithIdx(1)->getBondType() == Bond::DOUBLE);
+  mol->getBondWithIdx(1)->setStereoAtoms(0, 3);
+  mol->getBondWithIdx(1)->setStereo(Bond::STEREOTRANS);
+  std::cerr << "--------------------------" << std::endl;
+  MolOps::setDoubleBondNeighborDirections(*mol);
+  std::cerr << "--------------------------" << std::endl;
+  MolOps::assignStereochemistry(*mol, true, true);
+  std::cerr << MolToSmiles(*mol, true) << std::endl;
+  TEST_ASSERT(MolToSmiles(*mol, true) == "C/C=C/C(C)Cl");
+  delete mol;
+
+  // cleanIt=true, force=true should NOT remove this manual cis/trans stereo
+  // assignment
+  smi = "CC(F)=CC(Cl)C";
+  mol = SmilesToMol(smi);
+  mol->getAtomWithIdx(4)->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+  TEST_ASSERT(mol->getBondWithIdx(2)->getBondType() == Bond::DOUBLE);
+  mol->getBondWithIdx(2)->setStereoAtoms(0, 4);
+  mol->getBondWithIdx(2)->setStereo(Bond::STEREOTRANS);
+  MolOps::setDoubleBondNeighborDirections(*mol);
+  MolOps::assignStereochemistry(*mol, true, true);
+  // std::cerr << MolToSmiles(*mol, true) << std::endl;
+  TEST_ASSERT(MolToSmiles(*mol, true) == "C/C(F)=C/[C@H](C)Cl");
+  delete mol;
+
+  // cleanIt=true, force=true should NOT remove this manual cis/trans stereo
+  // assignment
+  smi = "CC(F)=CC(Cl)C";
+  mol = SmilesToMol(smi);
+  mol->getAtomWithIdx(4)->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+  TEST_ASSERT(mol->getBondWithIdx(2)->getBondType() == Bond::DOUBLE);
+  mol->getBondWithIdx(2)->setStereoAtoms(2, 4);
+  mol->getBondWithIdx(2)->setStereo(Bond::STEREOCIS);
+  MolOps::setDoubleBondNeighborDirections(*mol);
+  MolOps::assignStereochemistry(*mol, true, true);
+  // std::cerr << MolToSmiles(*mol, true) << std::endl;
+  TEST_ASSERT(MolToSmiles(*mol, true) == "C/C(F)=C/[C@H](C)Cl");
+  delete mol;
+
+  // cleanIt=true, force=true should clean up these manual assignments
+  smi = "FC(F)=C(Cl)Cl";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol->getBondWithIdx(2)->getBondType() == Bond::DOUBLE);
+  mol->getBondWithIdx(2)->setStereoAtoms(2, 4);
+  mol->getBondWithIdx(2)->setStereo(Bond::STEREOCIS);
+  MolOps::setDoubleBondNeighborDirections(*mol);
+  MolOps::assignStereochemistry(*mol, true, true);
+  TEST_ASSERT(MolToSmiles(*mol, true) == "FC(F)=C(Cl)Cl");
+  delete mol;
+
+  smi = "FC=C1CCCCC1";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol->getBondWithIdx(1)->getBondType() == Bond::DOUBLE);
+  mol->getBondWithIdx(1)->setStereoAtoms(0, 3);
+  mol->getBondWithIdx(1)->setStereo(Bond::STEREOTRANS);
+  MolOps::setDoubleBondNeighborDirections(*mol);
+  MolOps::assignStereochemistry(*mol, true, true);
+  TEST_ASSERT(MolToSmiles(*mol, true) == "FC=C1CCCCC1");
+  delete mol;
+
+  smi = "C1CCCCC1=CF";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol->getBondWithIdx(5)->getBondType() == Bond::DOUBLE);
+  mol->getBondWithIdx(5)->setStereoAtoms(4, 7);
+  mol->getBondWithIdx(5)->setStereo(Bond::STEREOCIS);
+  MolOps::setDoubleBondNeighborDirections(*mol);
+  MolOps::assignStereochemistry(*mol, true, true);
+  TEST_ASSERT(MolToSmiles(*mol, true) == "FC=C1CCCCC1");
+  delete mol;
+
+///////////////////////////
+// Pseudo-stereo test cases
+// - bond stereo dependent on other bond stereo breaking symmetry - DOESN'T
+// CURRENTLY WORK
+// - bond stereo dependent on atom stereo breaking symmetry - DOESN'T CURRENTLY
+// WORK
+// - atom stereo dependent on other atom stereo breaking symmetry - WORKS
+// - atom stereo dependent on bond stereo breaking symmetry - WORKS
+///////////////////////////
+
+// Everything ifdef'd USE_NEW_STEREOCHEMISTRY are test cases that
+// should 'hopefully' work when switching to the new_canon.h ranking
+// for stereo perception. However, making USE_NEW_STEREOCHEMISTRY
+// copasetic with the current behavior is non-trivial, possibly
+// impossible?
+
+// bond stereo dependent on other bond stereo breaking symmetry
+// cleanIt=true, force=true should NOT remove this trickier case of
+// pseudo-stereo
+#ifdef USE_NEW_STEREOCHEMISTRY
+  smi = "CCC=CC(C=CCC)=C(CC)CO";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol->getBondWithIdx(2)->getBondType() == Bond::DOUBLE);
+  mol->getBondWithIdx(2)->setStereoAtoms(1, 4);
+  mol->getBondWithIdx(2)->setStereo(Bond::STEREOTRANS);
+
+  TEST_ASSERT(mol->getBondWithIdx(5)->getBondType() == Bond::DOUBLE);
+  mol->getBondWithIdx(5)->setStereoAtoms(4, 7);
+  mol->getBondWithIdx(5)->setStereo(Bond::STEREOCIS);
+
+  TEST_ASSERT(mol->getBondWithIdx(8)->getBondType() == Bond::DOUBLE);
+  mol->getBondWithIdx(8)->setStereoAtoms(3, 10);
+  mol->getBondWithIdx(8)->setStereo(Bond::STEREOCIS);
+
+  MolOps::setDoubleBondNeighborDirections(*mol);
+  MolOps::assignStereochemistry(*mol, true, true);
+  BOOST_LOG(rdInfoLog) << MolToSmiles(*mol, true) << std::endl;
+  TEST_ASSERT(MolToSmiles(*mol, true) == "CC/C=C\\C(\\C=C\\CC)=C(\\CC)CO");
+  delete mol;
+
+  // make sure there isn't a difference when the bond stereo is set from SMILES
+  smi = "CC/C=C\\C(\\C=C\\CC)=C(CC)CO";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol->getBondWithIdx(8)->getBondType() == Bond::DOUBLE);
+  TEST_ASSERT(mol->getBondWithIdx(8)->getStereo() == Bond::STEREONONE);
+  mol->getBondWithIdx(8)->setStereoAtoms(3, 10);
+  mol->getBondWithIdx(8)->setStereo(Bond::STEREOTRANS);
+
+  MolOps::setDoubleBondNeighborDirections(*mol);
+  MolOps::assignStereochemistry(*mol, true, true);
+  BOOST_LOG(rdInfoLog) << MolToSmiles(*mol, true) << std::endl;
+  TEST_ASSERT(MolToSmiles(*mol, true) == "CC/C=C\\C(\\C=C\\CC)=C(\\CC)CO");
+  delete mol;
+#endif
+
+  // cleanIt=true, force=true should remove this trickier case of pseudo-stereo
+  smi = "CCC=CC(=C(CC)CO)C=CCC";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol->getBondWithIdx(2)->getBondType() == Bond::DOUBLE);
+  mol->getBondWithIdx(2)->setStereoAtoms(1, 4);
+  mol->getBondWithIdx(2)->setStereo(Bond::STEREOCIS);
+
+  TEST_ASSERT(mol->getBondWithIdx(4)->getBondType() == Bond::DOUBLE);
+  mol->getBondWithIdx(4)->setStereoAtoms(10, 8);
+  mol->getBondWithIdx(4)->setStereo(Bond::STEREOCIS);
+
+  TEST_ASSERT(mol->getBondWithIdx(10)->getBondType() == Bond::DOUBLE);
+  mol->getBondWithIdx(10)->setStereoAtoms(4, 12);
+  mol->getBondWithIdx(10)->setStereo(Bond::STEREOCIS);
+  std::cerr << "3>>>--------------------------" << std::endl;
+  MolOps::setDoubleBondNeighborDirections(*mol);
+  std::cerr << "<<<--------------------------" << std::endl;
+  MolOps::assignStereochemistry(*mol, true, true);
+  BOOST_LOG(rdInfoLog) << MolToSmiles(*mol, true) << std::endl;
+  TEST_ASSERT(MolToSmiles(*mol, true) == "CC/C=C\\C(/C=C\\CC)=C(CC)CO");
+  delete mol;
+
+  // make sure there isn't a difference when the bond stereo is set from SMILES
+  smi = "CC/C=C\\C(\\C=C/CC)=C(CC)CO";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol->getBondWithIdx(8)->getBondType() == Bond::DOUBLE);
+  TEST_ASSERT(mol->getBondWithIdx(8)->getStereo() == Bond::STEREONONE);
+
+  mol->getBondWithIdx(8)->setStereoAtoms(3, 10);
+  mol->getBondWithIdx(8)->setStereo(Bond::STEREOCIS);
+  MolOps::setDoubleBondNeighborDirections(*mol);
+  MolOps::assignStereochemistry(*mol, true, true);
+  // BOOST_LOG(rdInfoLog) << MolToSmiles(*mol, true) << std::endl;
+  TEST_ASSERT(MolToSmiles(*mol, true) == "CC/C=C\\C(/C=C\\CC)=C(CC)CO");
+  delete mol;
+
+#ifdef USE_NEW_STEREOCHEMISTRY
+  // bond stereo dependent on atom stereo breaking symmetry
+  // cleanIt=true, force=true should NOT remove this trickier case of
+  // pseudo-stereo
+  smi = "CCC(CO)=C([C@H](C)F)[C@@H](C)F";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol->getBondWithIdx(4)->getBondType() == Bond::DOUBLE);
+  mol->getBondWithIdx(4)->setStereoAtoms(1, 6);
+  mol->getBondWithIdx(4)->setStereo(Bond::STEREOCIS);
+
+  MolOps::setDoubleBondNeighborDirections(*mol);
+  MolOps::assignStereochemistry(*mol, true, true);
+  BOOST_LOG(rdInfoLog) << MolToSmiles(*mol, true) << std::endl;
+  TEST_ASSERT(MolToSmiles(*mol, true) == "CC/C(CO)=C(/[C@@H](C)F)[C@H](C)F");
+  delete mol;
+#endif
+
+  // cleanIt=true, force=true should remove this manual assignment of bond
+  // stereochemistry since it's a pseudo-stereo center
+  smi = "CCC(CO)=C([C@@H](C)F)[C@@H](C)F";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol->getBondWithIdx(4)->getBondType() == Bond::DOUBLE);
+  mol->getBondWithIdx(4)->setStereoAtoms(1, 6);
+  mol->getBondWithIdx(4)->setStereo(Bond::STEREOCIS);
+
+  MolOps::setDoubleBondNeighborDirections(*mol);
+  MolOps::assignStereochemistry(*mol, true, true);
+  TEST_ASSERT(MolToSmiles(*mol, true) == "CCC(CO)=C([C@@H](C)F)[C@@H](C)F");
+  delete mol;
+
+  // atom stereo dependent on other atom stereo breaking symmetry
+  // cleanIt=true, force=true should remove this manual assignment of atom
+  // stereochemistry since it's a pseudo-stereo center
+  smi = "C[C@H]1CC(N2CCc3ccc(N)cc3C2)C[C@H](C)C1";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol->getRingInfo()->isAtomInRingOfSize(3, 6));
+  chiral_center = mol->getAtomWithIdx(3);
+  TEST_ASSERT(chiral_center->getAtomicNum() == 6);
+  TEST_ASSERT(chiral_center->getDegree() == 3);
+  TEST_ASSERT(!chiral_center->getIsAromatic());
+
+  chiral_center->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+  MolOps::setDoubleBondNeighborDirections(*mol);
+  MolOps::assignStereochemistry(*mol, true, true);
+  TEST_ASSERT(chiral_center->getChiralTag() == Atom::CHI_UNSPECIFIED);
+  TEST_ASSERT(MolToSmiles(*mol, true) ==
+              "C[C@H]1CC(N2CCc3ccc(N)cc3C2)C[C@H](C)C1");
+  delete mol;
+
+  // cleanIt=true, force=true should NOT remove this manual assignment of atom
+  // stereochemistry since it's a pseudo-stereo center
+  smi = "C[C@@H]1CC(N2CCc3ccc(N)cc3C2)C[C@H](C)C1";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol->getRingInfo()->isAtomInRingOfSize(3, 6));
+  chiral_center = mol->getAtomWithIdx(3);
+  TEST_ASSERT(chiral_center->getAtomicNum() == 6);
+  TEST_ASSERT(chiral_center->getDegree() == 3);
+  TEST_ASSERT(!chiral_center->getIsAromatic());
+
+  chiral_center->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+  MolOps::setDoubleBondNeighborDirections(*mol);
+  MolOps::assignStereochemistry(*mol, true, true);
+  TEST_ASSERT(chiral_center->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW);
+  TEST_ASSERT(MolToSmiles(*mol, true) ==
+              "C[C@H]1C[C@@H](C)C[C@H](N2CCc3ccc(N)cc3C2)C1");
+  delete mol;
+
+  // atom stereo dependent on bond stereo breaking symmetry
+  // cleanIt=true, force=true should remove this manual assignment of atom
+  // stereochemistry since it's a pseudo-stereo center
+  smi = "C/C=C/C(/C=C/C)(CC)CO";
+  mol = SmilesToMol(smi);
+  chiral_center = mol->getAtomWithIdx(3);
+  TEST_ASSERT(chiral_center->getAtomicNum() == 6);
+  TEST_ASSERT(chiral_center->getDegree() == 4);
+
+  chiral_center->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+  MolOps::setDoubleBondNeighborDirections(*mol);
+  MolOps::assignStereochemistry(*mol, true, true);
+  TEST_ASSERT(chiral_center->getChiralTag() == Atom::CHI_UNSPECIFIED);
+  TEST_ASSERT(MolToSmiles(*mol, true) == "C/C=C/C(/C=C/C)(CC)CO");
+  delete mol;
+
+  // atom stereo dependent on bond stereo breaking symmetry
+  // cleanIt=true, force=true should NOT remove this manual assignment of atom
+  // stereochemistry since it's a pseudo-stereo center
+  smi = "C/C=C\\C(/C=C/C)(CC)CO";
+  mol = SmilesToMol(smi);
+  chiral_center = mol->getAtomWithIdx(3);
+  TEST_ASSERT(chiral_center->getAtomicNum() == 6);
+  TEST_ASSERT(chiral_center->getDegree() == 4);
+
+  chiral_center->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+  MolOps::setDoubleBondNeighborDirections(*mol);
+  MolOps::assignStereochemistry(*mol, true, true);
+  TEST_ASSERT(chiral_center->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW);
+  TEST_ASSERT(MolToSmiles(*mol, true) == "C/C=C\\[C@@](/C=C/C)(CC)CO");
   delete mol;
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
@@ -741,7 +1014,7 @@ void testRingStereochemistry() {
     m = SmilesToMol(smi);
     std::string smi2 = MolToSmiles(*m, true);
     BOOST_LOG(rdInfoLog) << " : " << smi2 << " " << smi1 << std::endl;
-    TEST_ASSERT(smi2 == smi1);
+    TEST_ASSERT(smi2 != smi1);
     delete m;
   }
 
@@ -856,18 +1129,10 @@ void testChiralityFrom3D() {
   TEST_ASSERT(m->getNumAtoms() == 5);
 
   // this molecule starts out with incorrect stereochemistry (e.g. the bond
-  // wedging
-  // does not match the 3D structure. Start by verifying that the start position
-  // is bad:
+  // wedging does not match the 3D structure.
+  // This is handled automatically by the mol file parser as of github #1679,
+  // so we don't need to worry about it anymore
   MolOps::assignStereochemistry(*m, true);
-  TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
-  m->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
-  TEST_ASSERT(cip == "S");
-  // now assign the stereochem based on the 3D structure and check that we get
-  // it
-  // right:
-  MolOps::assignChiralTypesFrom3D(*m, -1, true);
-  MolOps::assignStereochemistry(*m, true, true);
   TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
   m->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "R");
@@ -1409,7 +1674,9 @@ void testBondDirRemoval() {
     std::vector<Canon::AtomColors> colors(m->getNumAtoms());
     Canon::MolStack stack;
     std::vector<unsigned int> ranks(oranks.size());
-    for (unsigned int i = 0; i < ranks.size(); ++i) ranks[i] = oranks[i];
+    for (unsigned int i = 0; i < ranks.size(); ++i) {
+      ranks[i] = oranks[i];
+    }
     Canon::canonicalizeFragment(*m, 0, colors, ranks, stack);
 
     TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getBondDir() == Bond::NONE);
@@ -2145,7 +2412,7 @@ void testGithub553() {
   }
 
   {
-    std::string smi = "[*][C@H]([*:2])[*:3]";
+    std::string smi = "*[C@H]([*:2])[*:3]";
     ROMol *m = SmilesToMol(smi);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 4);
@@ -2186,7 +2453,7 @@ void testGithub803() {
                        << std::endl;
 
   {
-    std::string smi = "[*][C@H]([9*])[8*]";
+    std::string smi = "*[C@H]([9*])[8*]";
     ROMol *m = SmilesToMol(smi);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 4);
@@ -2200,12 +2467,12 @@ void testGithub803() {
     TEST_ASSERT(cip == "S");
 
     smi = MolToSmiles(*m, true);
-    TEST_ASSERT(smi == "[*][C@@H]([8*])[9*]");
+    TEST_ASSERT(smi == "*[C@@H]([8*])[9*]");
 
     delete m;
   }
   {
-    std::string smi = "[*][C@H]([15*])[9*]";
+    std::string smi = "*[C@H]([15*])[9*]";
     ROMol *m = SmilesToMol(smi);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 4);
@@ -2219,7 +2486,7 @@ void testGithub803() {
     TEST_ASSERT(cip == "S");
 
     smi = MolToSmiles(*m, true);
-    TEST_ASSERT(smi == "[*][C@@H]([9*])[15*]");
+    TEST_ASSERT(smi == "*[C@@H]([9*])[15*]");
 
     delete m;
   }
@@ -2393,7 +2660,7 @@ void stereochemTester(RWMol *m, std::string expectedCIP,
                   common_properties::_CIPCode) == expectedCIP);
   TEST_ASSERT(m->getBondWithIdx(3)->getStereo() == expectedStereo);
 }
-}
+}  // namespace
 void testAssignStereochemistryFrom3D() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing assignStereochemistryFrom3D" << std::endl;
@@ -2403,25 +2670,25 @@ void testAssignStereochemistryFrom3D() {
   {
     SDMolSupplier suppl(pathName + "stereochem.sdf", false);  // don't sanitize
     {
-      RWMol *m = (RWMol *)suppl.next();
+      auto *m = (RWMol *)suppl.next();
       TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) == "R-Z");
       stereochemTester(m, "R", Bond::STEREOZ);
       delete m;
     }
     {
-      RWMol *m = (RWMol *)suppl.next();
+      auto *m = (RWMol *)suppl.next();
       TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) == "R-E");
       stereochemTester(m, "R", Bond::STEREOE);
       delete m;
     }
     {
-      RWMol *m = (RWMol *)suppl.next();
+      auto *m = (RWMol *)suppl.next();
       TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) == "S-Z");
       stereochemTester(m, "S", Bond::STEREOZ);
       delete m;
     }
     {
-      RWMol *m = (RWMol *)suppl.next();
+      auto *m = (RWMol *)suppl.next();
       TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) == "S-E");
       stereochemTester(m, "S", Bond::STEREOE);
       delete m;
@@ -2430,9 +2697,371 @@ void testAssignStereochemistryFrom3D() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testDoubleBondStereoInRings() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing double bond stereochemistry in rings"
+                       << std::endl;
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/GraphMol/test_data/";
+  {
+    RWMol *m = MolFileToMol(pathName + "cyclohexene_3D.mol", true,
+                            false);  // don't remove Hs
+    MolOps::detectBondStereochemistry(*m);
+    MolOps::assignChiralTypesFrom3D(*m);
+    MolOps::assignStereochemistry(*m, true, true);
+    const Bond *b = m->getBondBetweenAtoms(0, 1);
+    TEST_ASSERT(b);
+    TEST_ASSERT(b->getStereo() == Bond::STEREONONE);
+    delete m;
+  }
+  {
+    RWMol *m = MolFileToMol(pathName + "CHEMBL501674_3D.mol", true,
+                            false);  // don't remove Hs
+    MolOps::detectBondStereochemistry(*m);
+    MolOps::assignChiralTypesFrom3D(*m);
+    MolOps::assignStereochemistry(*m, true, true);
+    const Bond *b = m->getBondBetweenAtoms(6, 7);
+    TEST_ASSERT(b);
+    TEST_ASSERT(b->getStereo() == Bond::STEREOE);
+    b = m->getBondBetweenAtoms(11, 12);
+    TEST_ASSERT(b);
+    TEST_ASSERT(b->getStereo() == Bond::STEREOE);
+    delete m;
+  }
+  {
+    RWMol *m = MolFileToMol(pathName + "CHEMBL501674.mol");  // don't remove Hs
+    const Bond *b = m->getBondBetweenAtoms(6, 7);
+    TEST_ASSERT(b);
+    TEST_ASSERT(b->getStereo() == Bond::STEREOE);
+    b = m->getBondBetweenAtoms(11, 12);
+    TEST_ASSERT(b);
+    TEST_ASSERT(b->getStereo() == Bond::STEREOE);
+    delete m;
+  }
+  {
+    RWMol *m = MolFileToMol(pathName + "CHEMBL501674.mol");  // don't remove Hs
+    std::string smi = MolToSmiles(*m, true);
+    unsigned int nTrans = 0;
+    size_t pos = 0;
+    size_t len = smi.length();
+    bool keepCounting = true;
+    while (keepCounting) {
+      pos = smi.find("/C=C/", pos);
+      keepCounting = (pos != std::string::npos && ++nTrans && ++pos < len);
+    }
+    TEST_ASSERT(nTrans == 2);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testIssue1735() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing empty mols in rankMolAtoms" << std::endl;
+
+  RWMol m;
+  std::vector<unsigned int> oranks;
+  Canon::rankMolAtoms(m, oranks);
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testStereoGroupUpdating() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------------------------------------------"
+      << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Are stereo groups updated when atoms and bonds are deleted?"
+      << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  std::string fName =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/two_centers_or.mol";
+  std::unique_ptr<RWMol> m(MolFileToMol(fName));
+  TEST_ASSERT(m.get());
+
+  TEST_ASSERT(m->getStereoGroups().size() == 2);
+  m->removeAtom(3);
+  TEST_ASSERT(m->getStereoGroups().size() == 1);
+  m->removeAtom(m->getAtomWithIdx(0));
+  TEST_ASSERT(m->getStereoGroups().size() == 0u);
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+class TestAssignChiralTypesFromMolParity {
+ public:
+  TestAssignChiralTypesFromMolParity(const ROMol &mol) :
+    d_rwMol(new RWMol(mol)) {
+    assignMolParity();
+    fillBondDefVect();
+    MolOps::assignChiralTypesFromMolParity(*d_rwMol);
+    d_refSmiles = MolToSmiles(*d_rwMol);
+    heapPermutation();
+  }
+ private:
+  struct BondDef {
+    BondDef(unsigned int bi, unsigned int ei, Bond::BondType t) :
+      beginIdx(bi),
+      endIdx(ei),
+      type(t) {};
+    unsigned int beginIdx;
+    unsigned int endIdx;
+    Bond::BondType type;
+  };
+  void assignMolParity() {
+    static const std::map<Atom::ChiralType, int> parityMap {
+      { Atom::CHI_TETRAHEDRAL_CW, 1 },
+      { Atom::CHI_TETRAHEDRAL_CCW, 2 },
+      { Atom::CHI_UNSPECIFIED, 0 },
+      { Atom::CHI_OTHER, 0 }
+    };
+    MolOps::assignChiralTypesFrom3D(*d_rwMol);
+    for (auto ai = d_rwMol->beginAtoms(); ai != d_rwMol->endAtoms(); ++ai) {
+      int parity = parityMap.at((*ai)->getChiralTag());
+      (*ai)->setProp(common_properties::molParity, parity);
+      (*ai)->setChiralTag(Atom::CHI_UNSPECIFIED);
+    }
+  }
+  void fillBondDefVect() {
+    for (auto bi = d_rwMol->beginBonds(); bi != d_rwMol->endBonds(); ++bi) {
+      d_bondDefVect.emplace_back(BondDef((*bi)->getBeginAtomIdx(),
+        (*bi)->getEndAtomIdx(), (*bi)->getBondType()));
+    }
+  }
+  void stripBonds() {
+    for (unsigned int i = d_rwMol->getNumBonds(); i--;) {
+      const Bond *b = d_rwMol->getBondWithIdx(i);
+      d_rwMol->removeBond(b->getBeginAtomIdx(), b->getEndAtomIdx());
+    }
+  }
+  void addBonds() {
+    for (auto bondDef : d_bondDefVect) {
+      d_rwMol->addBond(bondDef.beginIdx, bondDef.endIdx, bondDef.type);
+    }
+  }
+  void checkBondPermutation() {
+    stripBonds();
+    addBonds();
+    MolOps::sanitizeMol(*d_rwMol);
+    MolOps::assignChiralTypesFromMolParity(*d_rwMol);
+    TEST_ASSERT(MolToSmiles(*d_rwMol) == d_refSmiles);
+  }
+  void heapPermutation(size_t s = 0) {
+    // if size becomes 1 the permutation is ready to use
+    if (s == 0) {
+      s = d_bondDefVect.size();
+    }
+    if (s == 1) {
+      checkBondPermutation();
+      return;
+    }
+    for (size_t i = 0; i < s; ++i) {
+      heapPermutation(s - 1);
+      // if size is odd, swap first and last element
+      size_t j = (s % 2 == 1) ? 0 : i;
+      swap(d_bondDefVect[j], d_bondDefVect[s - 1]);
+    }
+  }
+  std::unique_ptr<RWMol> d_rwMol;
+  std::vector<BondDef> d_bondDefVect;
+  std::string d_refSmiles;
+};
+
+void testAssignChiralTypesFromMolParity() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------------------------------------------"
+      << std::endl;
+  BOOST_LOG(rdInfoLog) << "testAssignChiralTypesFromMolParity"
+                       << std::endl;
+  {
+    std::string molb = R"CTAB(
+     RDKit          3D
+
+  6  5  0  0  1  0  0  0  0  0999 V2000
+   -2.9747    1.7234    0.0753 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.4586    1.4435    0.1253 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.5885    2.6215    1.4893 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+   -3.7306    0.3885   -0.0148 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3395    3.0471    0.1580 Br  0  0  0  0  0  0  0  0  0  0  0  0
+   -1.1574    0.7125    1.2684 F   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  1  3  1  0
+  1  4  1  0
+  2  5  1  0
+  2  6  1  0
+M  END)CTAB";
+    bool sanitize = true;
+    bool removeHs = false;
+    std::unique_ptr<RWMol> m(MolBlockToMol(molb, sanitize, removeHs));
+    TEST_ASSERT(m);
+    TestAssignChiralTypesFromMolParity test(*m);
+  }
+}
+
+void testClearDirsOnDoubleBondsWithoutStereo() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------------------------------------------"
+      << std::endl;
+  BOOST_LOG(rdInfoLog) << "Github #2422: Are bond directions around double "
+                          "bonds without stereo cleared?"
+                       << std::endl;
+  {  // base example
+    std::string molb = R"CTAB(
+     RDKit          3D
+
+  9  8  0  0  0  0  0  0  0  0999 V2000
+   -1.0935    0.1248    0.0275 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2207   -0.5165   -0.1416 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3334    0.2056    0.0404 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.8920   -0.6460   -0.0055 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.1652    0.5837    1.0507 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2163    0.8670   -0.7758 H   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2887   -1.5731   -0.4133 H   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2967   -0.2900   -0.0902 H   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2275    1.2444    0.3077 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  2  0
+  1  4  1  0
+  1  5  1  0
+  1  6  1  0
+  2  7  1  0
+  3  8  1  0
+  3  9  1  0
+M  END)CTAB";
+    bool sanitize = true;
+    bool removeHs = false;
+    std::unique_ptr<RWMol> m(MolBlockToMol(molb, sanitize, removeHs));
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 9);
+    TEST_ASSERT(m->getBondBetweenAtoms(1, 2)->getStereo() == Bond::STEREONONE);
+    TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getBondDir() == Bond::NONE);
+    TEST_ASSERT(m->getBondBetweenAtoms(2, 7)->getBondDir() == Bond::NONE);
+    TEST_ASSERT(m->getBondBetweenAtoms(2, 8)->getBondDir() == Bond::NONE);
+
+    MolOps::removeHs(*m);
+    TEST_ASSERT(m->getNumAtoms() == 3);
+  }
+  {  // base example with the double bond reversed
+    std::string molb = R"CTAB(
+     RDKit          3D
+
+  9  8  0  0  0  0  0  0  0  0999 V2000
+   -1.0935    0.1248    0.0275 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2207   -0.5165   -0.1416 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3334    0.2056    0.0404 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.8920   -0.6460   -0.0055 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.1652    0.5837    1.0507 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2163    0.8670   -0.7758 H   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2887   -1.5731   -0.4133 H   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2967   -0.2900   -0.0902 H   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2275    1.2444    0.3077 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  3  2  2  0
+  1  4  1  0
+  1  5  1  0
+  1  6  1  0
+  2  7  1  0
+  3  8  1  0
+  3  9  1  0
+M  END)CTAB";
+    bool sanitize = true;
+    bool removeHs = false;
+    std::unique_ptr<RWMol> m(MolBlockToMol(molb, sanitize, removeHs));
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 9);
+    TEST_ASSERT(m->getBondBetweenAtoms(1, 2)->getStereo() == Bond::STEREONONE);
+    TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getBondDir() == Bond::NONE);
+    TEST_ASSERT(m->getBondBetweenAtoms(2, 7)->getBondDir() == Bond::NONE);
+    TEST_ASSERT(m->getBondBetweenAtoms(2, 8)->getBondDir() == Bond::NONE);
+
+    MolOps::removeHs(*m);
+    TEST_ASSERT(m->getNumAtoms() == 3);
+  }
+  {  // make sure it behaves if there really is double bond stereo
+    std::string molb = R"CTAB(
+     RDKit          3D
+
+  9  8  0  0  0  0  0  0  0  0999 V2000
+   -1.0935    0.1248    0.0275 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2207   -0.5165   -0.1416 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3334    0.2056    0.0404 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.8920   -0.6460   -0.0055 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.1652    0.5837    1.0507 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2163    0.8670   -0.7758 H   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2887   -1.5731   -0.4133 H   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2967   -0.2900   -0.0902 F   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2275    1.2444    0.3077 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  2  0
+  1  4  1  0
+  1  5  1  0
+  1  6  1  0
+  2  7  1  0
+  3  8  1  0
+  3  9  1  0
+M  END)CTAB";
+    bool sanitize = true;
+    bool removeHs = false;
+    std::unique_ptr<RWMol> m(MolBlockToMol(molb, sanitize, removeHs));
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 9);
+    TEST_ASSERT(m->getBondBetweenAtoms(1, 2)->getStereo() != Bond::STEREONONE);
+    TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getBondDir() != Bond::NONE);
+    TEST_ASSERT(m->getBondBetweenAtoms(2, 7)->getBondDir() != Bond::NONE);
+    TEST_ASSERT(m->getBondBetweenAtoms(2, 8)->getBondDir() != Bond::NONE);
+
+    MolOps::removeHs(*m);
+    TEST_ASSERT(m->getNumAtoms() == 4);
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testIncorrectBondDirsOnWedging() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Bonds not being reversed when wedging is updated"
+                       << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  {
+    std::string fName =
+        rdbase + "/Code/GraphMol/test_data/wedging_problems1.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondBetweenAtoms(10, 4));
+    TEST_ASSERT(m->getBondBetweenAtoms(10, 4)->getBeginAtomIdx() == 10);
+    WedgeMolBonds(*m, &m->getConformer());
+    TEST_ASSERT(m->getBondBetweenAtoms(10, 4));
+    TEST_ASSERT(m->getBondBetweenAtoms(10, 4)->getBondDir() ==
+                Bond::BEGINWEDGE);
+    TEST_ASSERT(m->getBondBetweenAtoms(10, 4)->getBeginAtomIdx() == 4);
+
+    delete m;
+  }
+  {
+    std::string fName =
+        rdbase + "/Code/GraphMol/test_data/wedging_problems2.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondBetweenAtoms(3, 21));
+    TEST_ASSERT(m->getBondBetweenAtoms(3, 21)->getBeginAtomIdx() == 3);
+    TEST_ASSERT(m->getBondBetweenAtoms(2, 20));
+    TEST_ASSERT(m->getBondBetweenAtoms(2, 20)->getBeginAtomIdx() == 2);
+    WedgeMolBonds(*m, &m->getConformer());
+    TEST_ASSERT(m->getBondBetweenAtoms(3, 21));
+    TEST_ASSERT(m->getBondBetweenAtoms(3, 21)->getBeginAtomIdx() == 21);
+    TEST_ASSERT(m->getBondBetweenAtoms(2, 20));
+    TEST_ASSERT(m->getBondBetweenAtoms(2, 20)->getBeginAtomIdx() == 20);
+
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
-// boost::logging::enable_logs("rdApp.debug");
+  // boost::logging::enable_logs("rdApp.debug");
 
 #if 1
   testSmiles1();
@@ -2455,8 +3084,14 @@ int main() {
   testGithub553();
   testGithub803();
   testGithub1294();
-#endif
   testGithub1423();
   testAssignStereochemistryFrom3D();
+  testDoubleBondStereoInRings();
+  testIssue1735();
+  testStereoGroupUpdating();
+#endif
+  testClearDirsOnDoubleBondsWithoutStereo();
+  testAssignChiralTypesFromMolParity();
+  testIncorrectBondDirsOnWedging();
   return 0;
 }

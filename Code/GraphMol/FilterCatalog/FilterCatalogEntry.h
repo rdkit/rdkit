@@ -29,6 +29,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
+#include <RDGeneral/export.h>
 #ifndef __RD_FILTER_CATALOG_H__
 #define __RD_FILTER_CATALOG_H__
 
@@ -51,7 +52,8 @@
 namespace RDKit {
 typedef std::map<std::string, std::string> STRING_PROPS;
 
-class FilterCatalogEntry : public RDCatalog::CatalogEntry {
+class RDKIT_FILTERCATALOG_EXPORT FilterCatalogEntry
+    : public RDCatalog::CatalogEntry {
  private:
   boost::shared_ptr<FilterMatcherBase> d_matcher;
   Dict d_props;
@@ -60,7 +62,7 @@ class FilterCatalogEntry : public RDCatalog::CatalogEntry {
   FilterCatalogEntry() : d_matcher(), d_props() {}
 
   FilterCatalogEntry(const std::string &name, const FilterMatcherBase &matcher)
-      : RDCatalog::CatalogEntry(), d_matcher(matcher.Clone()) {
+      : RDCatalog::CatalogEntry(), d_matcher(matcher.copy()) {
     setDescription(name);
   }
 
@@ -264,7 +266,7 @@ class FilterCatalogEntry : public RDCatalog::CatalogEntry {
   BOOST_SERIALIZATION_SPLIT_MEMBER();
 #endif
 };
-}
+}  // namespace RDKit
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
 BOOST_CLASS_VERSION(RDKit::FilterCatalogEntry, 1);

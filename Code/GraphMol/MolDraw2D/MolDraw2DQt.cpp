@@ -27,8 +27,8 @@ MolDraw2DQt::MolDraw2DQt(int width, int height, QPainter &qp, int panelWidth,
 // ****************************************************************************
 void MolDraw2DQt::setColour(const DrawColour &col) {
   MolDraw2D::setColour(col);
-  QColor this_col(int(255.0 * col.get<0>()), int(255.0 * col.get<1>()),
-                  int(255.0 * col.get<2>()));
+  QColor this_col(int(255.0 * col.r), int(255.0 * col.g), int(255.0 * col.b),
+                  int(255.0 * col.a));
 
   QPen pen(this_col);
   pen.setJoinStyle(Qt::RoundJoin);
@@ -75,8 +75,7 @@ void MolDraw2DQt::drawPolygon(const vector<Point2D> &cds) {
   QBrush brush("Black");
   brush.setStyle(Qt::SolidPattern);
   DrawColour cc = colour();
-  brush.setColor(
-      QColor(255.0 * cc.get<0>(), 255.0 * cc.get<1>(), 255.0 * cc.get<2>()));
+  brush.setColor(QColor(255.0 * cc.r, 255.0 * cc.g, 255.0 * cc.b));
 #endif
 
   qp_.save();
@@ -98,9 +97,10 @@ void MolDraw2DQt::drawPolygon(const vector<Point2D> &cds) {
 
 // ****************************************************************************
 void MolDraw2DQt::clearDrawing() {
-  QColor this_col(int(255.0 * drawOptions().backgroundColour.get<0>()),
-                  int(255.0 * drawOptions().backgroundColour.get<1>()),
-                  int(255.0 * drawOptions().backgroundColour.get<2>()));
+  QColor this_col(int(255.0 * drawOptions().backgroundColour.r),
+                  int(255.0 * drawOptions().backgroundColour.g),
+                  int(255.0 * drawOptions().backgroundColour.b),
+                  int(255.0 * drawOptions().backgroundColour.a));
 
   qp_.setBackground(QBrush(this_col));
   qp_.fillRect(0, 0, width(), height(), this_col);
@@ -172,4 +172,4 @@ void MolDraw2DQt::getStringSize(const string &label, double &label_width,
   }
 }
 
-}  // EO namespace RDKit
+}  // namespace RDKit

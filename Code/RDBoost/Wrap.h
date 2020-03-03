@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef _RD_WRAP_H_
 #define _RD_WRAP_H_
 
@@ -19,41 +20,9 @@
 #include <boost/python.hpp>
 #include <boost/python/stl_iterator.hpp>
 #include <memory>
-// ha ha... we don't actually want to use this, but we need to keep support old
-// C++ versions:
-#if __cplusplus < 201103L
-#define rdk_auto_ptr std::auto_ptr
-#else
-template <typename T>
-using rdk_auto_ptr = std::unique_ptr<T>;
-#endif
-
-// code for windows DLL handling taken from
-// http://www.boost.org/more/separate_compilation.html
-#include <boost/config.hpp>
-
-#ifdef BOOST_HAS_DECLSPEC  // defined in config system
-// we need to import/export our code only if the user has specifically
-// asked for it by defining either BOOST_ALL_DYN_LINK if they want all boost
-// libraries to be dynamically linked, or RDKIT_WRAP_DYN_LINK
-// if they want just this one to be dynamically liked:
-#if defined(BOOST_ALL_DYN_LINK) || defined(RDKIT_WRAP_DYN_LINK)
-// export if this is our own source, otherwise import:
-#ifdef RDKIT_WRAP_SOURCE
-#define RDKIT_WRAP_DECL __declspec(dllexport)
-#else
-#define RDKIT_WRAP_DECL __declspec(dllimport)
-#endif  // RDKIT_WRAP_SOURCE
-#endif  // DYN_LINK
-#endif  // BOOST_HAS_DECLSPEC
-//
-// if RDKIT_WRAP_DECL isn't defined yet define it now:
-#ifndef RDKIT_WRAP_DECL
-#define RDKIT_WRAP_DECL
-#endif
 
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 #include "list_indexing_suite.hpp"
 #include <RDGeneral/BoostEndInclude.h>
 
@@ -64,17 +33,20 @@ using rdk_auto_ptr = std::unique_ptr<T>;
 
 namespace python = boost::python;
 
-RDKIT_WRAP_DECL void throw_index_error(
+RDKIT_RDBOOST_EXPORT void throw_index_error(
     int key);  //!< construct and throw an \c IndexError
-RDKIT_WRAP_DECL void throw_value_error(
+RDKIT_RDBOOST_EXPORT void throw_value_error(
     const std::string err);  //!< construct and throw a \c ValueError
-RDKIT_WRAP_DECL void translate_index_error(IndexErrorException const &e);
-RDKIT_WRAP_DECL void translate_value_error(ValueErrorException const &e);
+RDKIT_RDBOOST_EXPORT void throw_key_error(
+    const std::string key);  //!< construct and throw a \c KeyError
+RDKIT_RDBOOST_EXPORT void translate_index_error(IndexErrorException const &e);
+RDKIT_RDBOOST_EXPORT void translate_value_error(ValueErrorException const &e);
+RDKIT_RDBOOST_EXPORT void translate_key_error(KeyErrorException const &e);
 
 #ifdef INVARIANT_EXCEPTION_METHOD
-RDKIT_WRAP_DECL void throw_runtime_error(
+RDKIT_RDBOOST_EXPORT void throw_runtime_error(
     const std::string err);  //!< construct and throw a \c ValueError
-RDKIT_WRAP_DECL void translate_invariant_error(Invar::Invariant const &e);
+RDKIT_RDBOOST_EXPORT void translate_invariant_error(Invar::Invariant const &e);
 #endif
 //! \brief Registers a templated converter for returning \c vectors of a
 //!        particular type.
@@ -82,17 +54,22 @@ RDKIT_WRAP_DECL void translate_invariant_error(Invar::Invariant const &e);
 //!    directly because this will catch the appropriate exception if
 //!    the specified converter has already been registered.
 template <typename T>
+void RegisterVectorConverter(const char *name, bool noproxy = false) {
+  if (noproxy) {
+    python::class_<std::vector<T>>(name).def(
+        python::vector_indexing_suite<std::vector<T>, 1>());
+  } else {
+    python::class_<std::vector<T>>(name).def(
+        python::vector_indexing_suite<std::vector<T>>());
+  }
+}
+
+template <typename T>
 void RegisterVectorConverter(bool noproxy = false) {
   std::string name = "_vect";
   name += typeid(T).name();
 
-  if (noproxy) {
-    python::class_<std::vector<T> >(name.c_str())
-        .def(python::vector_indexing_suite<std::vector<T>, 1>());
-  } else {
-    python::class_<std::vector<T> >(name.c_str())
-        .def(python::vector_indexing_suite<std::vector<T> >());
-  }
+  RegisterVectorConverter<T>(name.c_str(), noproxy);
 }
 
 //! \brief Registers a templated converter for returning \c lists of a
@@ -106,18 +83,18 @@ void RegisterListConverter(bool noproxy = false) {
   name += typeid(T).name();
 
   if (noproxy) {
-    python::class_<std::list<T> >(name.c_str())
+    python::class_<std::list<T>>(name.c_str())
         .def(python::list_indexing_suite<std::list<T>, 1>());
   } else {
-    python::class_<std::list<T> >(name.c_str())
-        .def(python::list_indexing_suite<std::list<T> >());
+    python::class_<std::list<T>>(name.c_str())
+        .def(python::list_indexing_suite<std::list<T>>());
   }
 }
 
 template <typename T>
-rdk_auto_ptr<std::vector<T> > pythonObjectToVect(const python::object &obj,
-                                                 T maxV) {
-  rdk_auto_ptr<std::vector<T> > res;
+std::unique_ptr<std::vector<T>> pythonObjectToVect(const python::object &obj,
+                                                   T maxV) {
+  std::unique_ptr<std::vector<T>> res;
   if (obj) {
     res.reset(new std::vector<T>);
     python::stl_input_iterator<T> beg(obj), end;
@@ -133,8 +110,8 @@ rdk_auto_ptr<std::vector<T> > pythonObjectToVect(const python::object &obj,
   return res;
 }
 template <typename T>
-rdk_auto_ptr<std::vector<T> > pythonObjectToVect(const python::object &obj) {
-  rdk_auto_ptr<std::vector<T> > res;
+std::unique_ptr<std::vector<T>> pythonObjectToVect(const python::object &obj) {
+  std::unique_ptr<std::vector<T>> res;
   if (obj) {
     res.reset(new std::vector<T>);
     unsigned int nFrom = python::extract<unsigned int>(obj.attr("__len__")());
@@ -171,7 +148,7 @@ void pythonObjectToVect(const python::object &obj, std::vector<T> &res) {
 //  on destruction - grab the lock
 //  no entry into the python interpreter can be performed
 //   between releasing and grabbing the lock
-class RDUNUSED NOGIL {
+class RDKIT_RDBOOST_EXPORT RDUNUSED NOGIL {
  public:
   inline NOGIL() { m_thread_state = PyEval_SaveThread(); }
 
@@ -231,5 +208,63 @@ python::object generic__deepcopy__(python::object copyable, python::dict memo) {
   return result;
 }
 // -------------------
+
+/// Awesome StackOverflow response:
+/// http://stackoverflow.com/questions/15842126/feeding-a-python-list-into-a-function-taking-in-a-vector-with-boost-python
+/// I know a lot more about how boost works.
+/// @brief Type that allows for registration of conversions from
+///        python iterable types.
+struct iterable_converter {
+  /// @note Registers converter from a python iterable type to the
+  ///       provided type.
+  template <typename Container>
+  iterable_converter &from_python() {
+    boost::python::converter::registry::push_back(
+        &iterable_converter::convertible,
+        &iterable_converter::construct<Container>,
+        boost::python::type_id<Container>());
+
+    // Support chaining.
+    return *this;
+  }
+
+  /// @brief Check if PyObject is iterable.
+  static void *convertible(PyObject *object) {
+    return PyObject_GetIter(object) ? object : nullptr;
+  }
+
+  /// @brief Convert iterable PyObject to C++ container type.
+  ///
+  /// Container Concept requirements:
+  ///
+  ///   * Container::value_type is CopyConstructable.
+  ///   * Container can be constructed and populated with two iterators.
+  ///     I.e. Container(begin, end)
+  template <typename Container>
+  static void construct(
+      PyObject *object,
+      boost::python::converter::rvalue_from_python_stage1_data *data) {
+    namespace python = boost::python;
+    // Object is a borrowed reference, so create a handle indicting it is
+    // borrowed for proper reference counting.
+    python::handle<> handle(python::borrowed(object));
+
+    // Obtain a handle to the memory block that the converter has allocated
+    // for the C++ type.
+    typedef python::converter::rvalue_from_python_storage<Container>
+        storage_type;
+    void *storage = reinterpret_cast<storage_type *>(data)->storage.bytes;
+
+    typedef python::stl_input_iterator<typename Container::value_type> iterator;
+
+    // Allocate the C++ type into the converter's memory block, and assign
+    // its handle to the converter's convertible variable.  The C++
+    // container is populated by passing the begin and end iterators of
+    // the python object to the container's constructor.
+    new (storage) Container(iterator(python::object(handle)),  // begin
+                            iterator());                       // end
+    data->convertible = storage;
+  }
+};
 
 #endif

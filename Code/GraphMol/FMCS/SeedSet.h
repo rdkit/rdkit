@@ -8,6 +8,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #pragma once
 #include <map>
 #include <algorithm>
@@ -15,7 +16,7 @@
 
 namespace RDKit {
 namespace FMCS {
-class SeedSet {  // sorted by amount of bonds
+class RDKIT_FMCS_EXPORT SeedSet {  // sorted by amount of bonds
   typedef std::list<Seed> ValueSet;
   ValueSet Seeds;
   Seed EmptySeed;
@@ -55,5 +56,5 @@ class SeedSet {  // sorted by amount of bonds
     return val;
   }
 };
-}
-}
+}  // namespace FMCS
+}  // namespace RDKit

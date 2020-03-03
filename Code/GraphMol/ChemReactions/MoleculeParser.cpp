@@ -41,7 +41,7 @@ namespace {
 bool testForSameRXNRoleOfAllMoleculeAtoms(const RDKit::ROMol &mol, int role) {
   RDKit::ROMol::ATOM_ITER_PAIR atItP = mol.getVertices();
   while (atItP.first != atItP.second) {
-    const RDKit::Atom *oAtom = mol[*(atItP.first++)].get();
+    const RDKit::Atom *oAtom = mol[*(atItP.first++)];
     int current_role;
     if (oAtom->getPropIfPresent(RDKit::common_properties::molRxnRole,
                                 current_role) &&
@@ -55,7 +55,7 @@ bool testForSameRXNRoleOfAllMoleculeAtoms(const RDKit::ROMol &mol, int role) {
 int getRXNRoleOfMolecule(const RDKit::ROMol &mol) {
   RDKit::ROMol::ATOM_ITER_PAIR atItP = mol.getVertices();
   while (atItP.first != atItP.second) {
-    const RDKit::Atom *oAtom = mol[*(atItP.first++)].get();
+    const RDKit::Atom *oAtom = mol[*(atItP.first++)];
     int molRxnRole;
     if (oAtom->getPropIfPresent(RDKit::common_properties::molRxnRole,
                                 molRxnRole)) {
@@ -69,13 +69,13 @@ int getRXNRoleOfMolecule(const RDKit::ROMol &mol) {
 namespace RDKit {
 
 ChemicalReaction *RxnMolToChemicalReaction(const ROMol &mol) {
-  ChemicalReaction *rxn = new ChemicalReaction();
+  auto *rxn = new ChemicalReaction();
 
   MOL_SPTR_VECT fragments = MolOps::getMolFrags(mol);
 
   unsigned countFragments = 0;
-  for (MOL_SPTR_VECT::iterator iter = fragments.begin();
-       iter != fragments.end(); ++iter, countFragments++) {
+  for (auto iter = fragments.begin(); iter != fragments.end();
+       ++iter, countFragments++) {
     int role = getRXNRoleOfMolecule(*iter->get());
     if (!testForSameRXNRoleOfAllMoleculeAtoms(*iter->get(), role)) {
       BOOST_LOG(rdWarningLog)

@@ -1,5 +1,4 @@
 /* 
- * $Id: BasicMolecule2Tests.java 131 2011-01-20 22:01:29Z ebakke $
  *
  *  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
  *  All rights reserved.
@@ -174,6 +173,31 @@ public class BasicMolecule2Tests extends GraphMolTest {
 		assertEquals(1,mvv.size());
 		assertEquals(3,mvv.get(0).size());
 	}
+
+	@Test public void testDetectChemistryProblems() {
+		ROMol m2;
+		m2 = RWMol.MolFromSmiles("CFCc1cc1",0,false);
+		MolSanitizeException_Vect res;
+		res = RDKFuncs.detectChemistryProblems(m2);
+		assertEquals(res.size(),2);
+		assertEquals(res.get(0).getType(),"AtomValenceException");
+		assertEquals(res.get(1).getType(),"KekulizeException");
+		// fun with swig and C++ inheritance:
+		KekulizeException ke = KekulizeException.dynamic_cast(res.get(0));
+		assertNull(ke);
+		ke = KekulizeException.dynamic_cast(res.get(1));
+		assertNotNull(ke);
+		assertEquals(ke.getAtomIndices().size(),3);
+		assertEquals(ke.getAtomIndices().get(0),3);
+		assertEquals(ke.getAtomIndices().get(1),4);
+		assertEquals(ke.getAtomIndices().get(2),5);
+
+		AtomValenceException ave = AtomValenceException.dynamic_cast(res.get(0));
+		assertNotNull(ave);
+		assertEquals(ave.getAtomIdx(),1);
+
+	}
+
 
 	public static void main(String args[]) {
 		org.junit.runner.JUnitCore.main("org.RDKit.BasicMolecule2Tests");

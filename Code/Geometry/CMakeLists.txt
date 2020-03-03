@@ -1,3 +1,5 @@
+
+add_definitions(-DRDKIT_RDGEOMETRYLIB_BUILD)
 rdkit_library(RDGeometryLib 
               point.cpp Transform2D.cpp Transform3D.cpp 
               UniformGrid3D.cpp GridUtils.cpp
@@ -14,5 +16,9 @@ rdkit_headers(Grid3D.h
 
 rdkit_test(testTransforms testTransforms.cpp LINK_LIBRARIES RDGeometryLib DataStructs RDGeneral )
 rdkit_test(testGrid testGrid.cpp LINK_LIBRARIES RDGeometryLib DataStructs RDGeneral )
+rdkit_catch_test(geometryTestsCatch catch_tests.cpp
+           LINK_LIBRARIES RDGeometryLib RDGeneral)
 
+if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
+endif()

@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef _RD_FRAGCATALOGENTRY_H_
 #define _RD_FRAGCATALOGENTRY_H_
 
@@ -23,7 +24,8 @@
 
 namespace RDKit {
 
-class FragCatalogEntry : public RDCatalog::CatalogEntry {
+class RDKIT_FRAGCATALOG_EXPORT FragCatalogEntry
+    : public RDCatalog::CatalogEntry {
  public:
   FragCatalogEntry() : dp_mol(0), d_descrip(""), d_order(0) {
     dp_props = new Dict();
@@ -49,7 +51,7 @@ class FragCatalogEntry : public RDCatalog::CatalogEntry {
 
   void setDescription(const FragCatParams *params);
 
-  // check if this fragment macthes the one specified
+  // check if this fragment matches the one specified
   //
 
   bool match(const FragCatalogEntry *other, double tol) const;
@@ -127,6 +129,6 @@ class FragCatalogEntry : public RDCatalog::CatalogEntry {
   // group ID
   INT_INT_VECT_MAP d_aToFmap;
 };
-}
+}  // namespace RDKit
 
 #endif

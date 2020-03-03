@@ -55,7 +55,7 @@ gslfp_compress(PG_FUNCTION_ARGS)
 
     gistentryinit(*retval, PointerGetDatum(makeLowSparseFingerPrint(fp, NUMRANGE)),
                   entry->rel, entry->page,
-                  entry->offset, FALSE);
+                  entry->offset, false);
     freeCSfp(fp);
   }       
                 
@@ -76,7 +76,7 @@ gslfp_decompress(PG_FUNCTION_ARGS)
 
       gistentryinit(*retval, PointerGetDatum(key),
                     entry->rel, entry->page,
-                    entry->offset, FALSE);
+                    entry->offset, false);
 
       PG_RETURN_POINTER(retval);
     }

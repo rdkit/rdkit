@@ -88,7 +88,7 @@ python::tuple fragmentMolHelper3(const RDKit::ROMol& mol,
                                  unsigned int maxCuts,
                                  bool resultsAsMols) {
   std::vector<std::pair<RDKit::ROMOL_SPTR, RDKit::ROMOL_SPTR> > tres;
-  rdk_auto_ptr<std::vector<unsigned int> > v= pythonObjectToVect<unsigned int>(ob);
+  std::unique_ptr<std::vector<unsigned int> > v= pythonObjectToVect<unsigned int>(ob);
   bool ok = RDKit::MMPA::fragmentMol(mol, tres, *v, minCuts, maxCuts);
   python::list pyres;
   if (ok) {

@@ -59,23 +59,28 @@ void getCrippenAtomContribs(const ROMol &mol, std::vector<double> &logpContribs,
   boost::dynamic_bitset<> atomNeeded(mol.getNumAtoms());
   atomNeeded.set();
   const CrippenParamCollection *params = CrippenParamCollection::getParams();
-  for (CrippenParamCollection::ParamsVect::const_iterator it = params->begin();
-       it != params->end(); ++it) {
+  for (const auto &param : *params) {
     std::vector<MatchVectType> matches;
-    SubstructMatch(mol, *(it->dp_pattern.get()), matches, false, true);
+    SubstructMatch(mol, *(param.dp_pattern.get()), matches, false, true);
     for (std::vector<MatchVectType>::const_iterator matchIt = matches.begin();
          matchIt != matches.end(); ++matchIt) {
       int idx = (*matchIt)[0].second;
       if (atomNeeded[idx]) {
         atomNeeded[idx] = 0;
-        logpContribs[idx] = it->logp;
-        mrContribs[idx] = it->mr;
-        if (atomTypes) (*atomTypes)[idx] = it->idx;
-        if (atomTypeLabels) (*atomTypeLabels)[idx] = it->label;
+        logpContribs[idx] = param.logp;
+        mrContribs[idx] = param.mr;
+        if (atomTypes) {
+          (*atomTypes)[idx] = param.idx;
+        }
+        if (atomTypeLabels) {
+          (*atomTypeLabels)[idx] = param.label;
+        }
       }
     }
     // no need to keep matching stuff if we already found all the atoms:
-    if (atomNeeded.none()) break;
+    if (atomNeeded.none()) {
+      break;
+    }
   }
   mol.setProp(common_properties::_crippenLogPContribs, logpContribs, true);
   mol.setProp(common_properties::_crippenMRContribs, mrContribs, true);
@@ -90,7 +95,7 @@ void calcCrippenDescriptors(const ROMol &mol, double &logp, double &mr,
 
   // this isn't as bad as it looks, we aren't actually going
   // to harm the molecule in any way!
-  ROMol *workMol = const_cast<ROMol *>(&mol);
+  auto *workMol = const_cast<ROMol *>(&mol);
   if (includeHs) {
     workMol = MolOps::addHs(mol, false, false);
   }
@@ -141,10 +146,11 @@ const CrippenParamCollection *CrippenParamCollection::getParams(
 CrippenParamCollection::CrippenParamCollection(const std::string &paramData) {
   std::string params;
   boost::char_separator<char> tabSep("\t", "", boost::keep_empty_tokens);
-  if (paramData == "")
+  if (paramData == "") {
     params = defaultParamData;
-  else
+  } else {
     params = paramData;
+  }
   std::istringstream inStream(params);
 
   std::string inLine = RDKit::getLine(inStream);
@@ -169,7 +175,7 @@ CrippenParamCollection::CrippenParamCollection(const std::string &paramData) {
       if (*token != "") {
         try {
           paramObj.mr = boost::lexical_cast<double>(*token);
-        } catch (boost::bad_lexical_cast) {
+        } catch (boost::bad_lexical_cast &) {
           paramObj.mr = 0.0;
         }
       } else {

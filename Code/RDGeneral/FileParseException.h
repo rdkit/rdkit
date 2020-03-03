@@ -7,8 +7,9 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#ifndef _RD_FILEPARSEEXCEPTION_H
-#define _RD_FILEPARSEEXCEPTION_H
+#include <RDGeneral/export.h>
+#ifndef RD_FILEPARSEEXCEPTION_H
+#define RD_FILEPARSEEXCEPTION_H
 
 #include <string>
 #include <stdexcept>
@@ -24,12 +25,13 @@ class FileParseException : public std::runtime_error {
   explicit FileParseException(const std::string msg)
       : std::runtime_error("FileParseException"), _msg(msg){};
   //! get the error message
-  const char *message() const { return _msg.c_str(); };
-  ~FileParseException() throw(){};
+  const char *what() const noexcept override { return _msg.c_str(); };
+  const char *message() const noexcept { return what(); };
+  ~FileParseException() noexcept {};
 
  private:
   std::string _msg;
 };
-}
+}  // namespace RDKit
 
 #endif

@@ -38,3 +38,68 @@
 
 
 %include <GraphMol/SanitException.h>
+#ifdef SWIGJAVA
+// support upcasting from MolSanitizeException to the other exception types so that
+// we can do something with the output of detectChemistryProblems()
+
+// approach from: http://www.swig.org/Doc3.0/Java.html#Java_adding_downcasts
+%exception RDKit::AtomSanitizeException::dynamic_cast(RDKit::MolSanitizeException) {
+  $action
+    if(!result){
+      jclass excep = jenv->FindClass("java/lang/ClassCastException");
+      if (excep) {
+        jenv->ThrowNew(excep, "dynamic_cast exception");
+      }
+    }
+}
+%extend RDKit::AtomSanitizeException {
+    static RDKit::AtomSanitizeException *dynamic_cast(RDKit::MolSanitizeException *mse){
+        return dynamic_cast<RDKit::AtomSanitizeException *>(mse);
+    }
+};
+
+%exception RDKit::AtomValenceException::dynamic_cast(RDKit::MolSanitizeException) {
+  $action
+    if(!result){
+      jclass excep = jenv->FindClass("java/lang/ClassCastException");
+      if (excep) {
+        jenv->ThrowNew(excep, "dynamic_cast exception");
+      }
+    }
+}
+%extend RDKit::AtomValenceException {
+    static RDKit::AtomValenceException *dynamic_cast(RDKit::MolSanitizeException *mse){
+        return dynamic_cast<RDKit::AtomValenceException *>(mse);
+    }
+};
+
+%exception RDKit::AtomKekulizeException::dynamic_cast(RDKit::MolSanitizeException) {
+  $action
+    if(!result){
+      jclass excep = jenv->FindClass("java/lang/ClassCastException");
+      if (excep) {
+        jenv->ThrowNew(excep, "dynamic_cast exception");
+      }
+    }
+}
+%extend RDKit::AtomKekulizeException {
+    static RDKit::AtomKekulizeException *dynamic_cast(RDKit::MolSanitizeException *mse){
+        return dynamic_cast<RDKit::AtomKekulizeException *>(mse);
+    }
+};
+
+%exception RDKit::KekulizeException::dynamic_cast(RDKit::MolSanitizeException) {
+  $action
+    if(!result){
+      jclass excep = jenv->FindClass("java/lang/ClassCastException");
+      if (excep) {
+        jenv->ThrowNew(excep, "dynamic_cast exception");
+      }
+    }
+}
+%extend RDKit::KekulizeException {
+    static RDKit::KekulizeException *dynamic_cast(RDKit::MolSanitizeException *mse){
+        return dynamic_cast<RDKit::KekulizeException *>(mse);
+    }
+};
+#endif
