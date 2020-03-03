@@ -11,12 +11,13 @@ remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
 add_definitions(-DRDKIT_SUBSTRUCTLIBRARY_BUILD)
 rdkit_library(SubstructLibrary
               SubstructLibrary.cpp
-	      pattern_factory.cpp
+	      PatternFactory.cpp
               LINK_LIBRARIES Fingerprints SubstructMatch SmilesParse
               GraphMol RDGeometryLib Catalogs RDGeneral DataStructs ${RDKit_SERIALIZATION_LIBS})
 
 rdkit_headers(SubstructLibrary.h
               SubstructLibrarySerialization.h
+              PatternFactory.h
               DEST GraphMol/SubstructLibrary)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)

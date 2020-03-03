@@ -37,7 +37,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/SubstructLibrary/SubstructLibrary.h>
-#include <GraphMol/SubstructLibrary/pattern_factory.h>
+#include <GraphMol/SubstructLibrary/PatternFactory.h>
 
 #include <GraphMol/Substruct/SubstructMatch.h>
 

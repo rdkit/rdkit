@@ -34,7 +34,7 @@
 #include <RDBoost/python_streambuf.h>
 
 #include <GraphMol/SubstructLibrary/SubstructLibrary.h>
-#include <GraphMol/SubstructLibrary/pattern_factory.h>
+#include <GraphMol/SubstructLibrary/PatternFactory.h>
 
 namespace python = boost::python;
 using boost_adaptbx::python::streambuf;

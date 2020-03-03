@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 #include "SubstructLibrary.h"
-#include "pattern_factory.h"
+#include "PatternFactory.h"
 
 #ifdef RDK_THREADSAFE_SSS
 #include <thread>
