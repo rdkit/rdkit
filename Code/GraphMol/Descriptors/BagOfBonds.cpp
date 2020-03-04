@@ -219,8 +219,9 @@ unsigned int numAtoms, std::map<std::string, unsigned int> MaxBags, int alpha) {
   double *z = new double[numatoms];
   std::vector<std::string > S;
   for (int i=0; i< numatoms; i++){
-      z[i] = mol.getAtomWithIdx(i)->getAtomicNum();
-      S.push_back(mol.getAtomWithIdx(i)->getSymbol());
+      int atomicnum = mol.getAtomWithIdx(i)->getAtomicNum()
+      z[i] = atomicnum;
+      S.push_back(PeriodicTable::getTable()->getElementSymbol(atomicnum));
   }
 
    Eigen::VectorXd numbers = Map<VectorXd>(z, numatoms); // convert the number array to vector
