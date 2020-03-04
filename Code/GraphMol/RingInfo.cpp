@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2019 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -13,6 +12,15 @@
 #include <algorithm>
 
 namespace RDKit {
+RingInfo::INT_VECT RingInfo::atomRingSizes(unsigned int idx) const {
+  PRECONDITION(df_init, "RingInfo not initialized");
+
+  if (idx < d_atomMembers.size()) {
+    return d_atomMembers[idx];
+  } else {
+    return INT_VECT{0};
+  }
+}
 bool RingInfo::isAtomInRingOfSize(unsigned int idx, unsigned int size) const {
   PRECONDITION(df_init, "RingInfo not initialized");
 
@@ -40,6 +48,15 @@ unsigned int RingInfo::numAtomRings(unsigned int idx) const {
     return rdcast<unsigned int>(d_atomMembers[idx].size());
   } else {
     return 0;
+  }
+}
+RingInfo::INT_VECT RingInfo::bondRingSizes(unsigned int idx) const {
+  PRECONDITION(df_init, "RingInfo not initialized");
+
+  if (idx < d_bondMembers.size()) {
+    return d_bondMembers[idx];
+  } else {
+    return INT_VECT{0};
   }
 }
 bool RingInfo::isBondInRingOfSize(unsigned int idx, unsigned int size) const {
@@ -83,17 +100,17 @@ unsigned int RingInfo::addRing(const INT_VECT &atomIndices,
   PRECONDITION(df_init, "RingInfo not initialized");
   PRECONDITION(atomIndices.size() == bondIndices.size(), "length mismatch");
   int sz = rdcast<int>(atomIndices.size());
-  for (INT_VECT::const_iterator i = atomIndices.begin(); i < atomIndices.end();
-       i++) {
-    if (*i >= static_cast<int>(d_atomMembers.size()))
-      d_atomMembers.resize((*i) + 1);
-    d_atomMembers[*i].push_back(sz);
+  for (auto i : atomIndices) {
+    if (i >= static_cast<int>(d_atomMembers.size())) {
+      d_atomMembers.resize((i) + 1);
+    }
+    d_atomMembers[i].push_back(sz);
   }
-  for (INT_VECT::const_iterator i = bondIndices.begin(); i < bondIndices.end();
-       i++) {
-    if (*i >= static_cast<int>(d_bondMembers.size()))
-      d_bondMembers.resize((*i) + 1);
-    d_bondMembers[*i].push_back(sz);
+  for (auto i : bondIndices) {
+    if (i >= static_cast<int>(d_bondMembers.size())) {
+      d_bondMembers.resize((i) + 1);
+    }
+    d_bondMembers[i].push_back(sz);
   }
   d_atomRings.push_back(atomIndices);
   d_bondRings.push_back(bondIndices);
@@ -101,12 +118,37 @@ unsigned int RingInfo::addRing(const INT_VECT &atomIndices,
   return rdcast<unsigned int>(d_atomRings.size());
 }
 
+#ifdef RDK_USE_URF
+unsigned int RingInfo::numRingFamilies() const {
+  PRECONDITION(df_init, "RingInfo not initialized");
+  return d_atomRingFamilies.size();
+};
+
+unsigned int RingInfo::numRelevantCycles() const {
+  PRECONDITION(df_init, "RingInfo not initialized");
+  return rdcast<unsigned int>(RDL_getNofRC(dp_urfData.get()));
+};
+
+unsigned int RingInfo::addRingFamily(const INT_VECT &atomIndices,
+                                     const INT_VECT &bondIndices) {
+  PRECONDITION(df_init, "RingInfo not initialized");
+  d_atomRingFamilies.push_back(atomIndices);
+  d_bondRingFamilies.push_back(bondIndices);
+  POSTCONDITION(d_atomRingFamilies.size() == d_bondRingFamilies.size(),
+                "length mismatch");
+
+  return rdcast<unsigned int>(d_atomRingFamilies.size());
+}
+#endif
+
 void RingInfo::initialize() {
   PRECONDITION(!df_init, "already initialized");
   df_init = true;
 };
 void RingInfo::reset() {
-  if (!df_init) return;
+  if (!df_init) {
+    return;
+  }
   df_init = false;
   d_atomMembers.clear();
   d_bondMembers.clear();
@@ -117,4 +159,4 @@ void RingInfo::preallocate(unsigned int numAtoms, unsigned int numBonds) {
   d_atomMembers.resize(numAtoms);
   d_bondMembers.resize(numBonds);
 }
-}
+}  // namespace RDKit

@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #pragma once
 #include <vector>
 #include <stdexcept>
@@ -14,8 +15,9 @@
 namespace RDKit {
 namespace FMCS {
 template <typename T>
-class TArray2D {  // for scalar value types ! including bool with special STL
-                  // implementation (no reference to item - bitset used)
+class RDKIT_FMCS_EXPORT
+    TArray2D {  // for scalar value types ! including bool with special STL
+                // implementation (no reference to item - bitset used)
   size_t XSize;
   size_t YSize;
   std::vector<T> Data;
@@ -44,5 +46,5 @@ class TArray2D {  // for scalar value types ! including bool with special STL
 };
 
 typedef TArray2D<bool> MatchTable;  // row is index in QueryMolecule
-}
-}
+}  // namespace FMCS
+}  // namespace RDKit

@@ -9,6 +9,7 @@
 //  of the RDKit source tree.
 //
 
+#include <RDGeneral/export.h>
 #ifndef __RD_INVARIANT_H__
 #define __RD_INVARIANT_H__
 
@@ -47,7 +48,7 @@
 
 namespace Invar {
 
-class Invariant : public std::runtime_error {
+class RDKIT_RDGENERAL_EXPORT Invariant : public std::runtime_error {
  public:
   Invariant(const char* prefix, const char* mess, const char* expr,
             const char* const file, int line)
@@ -65,9 +66,10 @@ class Invariant : public std::runtime_error {
         prefix_d(prefix),
         file_dp(file),
         line_d(line) {}
-  ~Invariant() throw(){};
+  ~Invariant() noexcept {};
 
-  std::string getMessage() const { return mess_d; }
+  const char* what() const noexcept override { return mess_d.c_str(); }
+  std::string getMessage() const noexcept { return mess_d; }
 
   const char* getFile() const { return file_dp; }
 
@@ -76,7 +78,7 @@ class Invariant : public std::runtime_error {
   int getLine() const { return line_d; }
 
   std::string toString() const;
-  std::string toUserString() const; // strips build info, adds version
+  std::string toUserString() const;  // strips build info, adds version
 
  private:
   std::string mess_d, expr_d, prefix_d;
@@ -85,7 +87,8 @@ class Invariant : public std::runtime_error {
 
   int line_d;
 };
-std::ostream& operator<<(std::ostream& s, const Invariant& inv);
+RDKIT_RDGENERAL_EXPORT std::ostream& operator<<(std::ostream& s,
+                                                const Invariant& inv);
 }  // end of namespace Invar
 
 #define ASSERT_INVARIANT(expr, mess) assert(expr)
@@ -140,7 +143,7 @@ std::ostream& operator<<(std::ostream& s, const Invariant& inv);
 #define URANGE_CHECK(x, hi)                                                 \
   if (x >= (hi)) {                                                          \
     std::stringstream errstr;                                               \
-    errstr << x << " < " << hi;                                            \
+    errstr << x << " < " << hi;                                             \
     Invar::Invariant inv("Range Error", #x, errstr.str().c_str(), __FILE__, \
                          __LINE__);                                         \
     BOOST_LOG(rdErrorLog) << "\n\n****\n" << inv << "****\n\n";             \
@@ -163,7 +166,7 @@ std::ostream& operator<<(std::ostream& s, const Invariant& inv);
 #define UNDER_CONSTRUCTION(fn) assert(0);
 #define RANGE_CHECK(lo, x, hi) \
   assert((lo) <= (hi) && (x) >= (lo) && (x) <= (hi));
-#define URANGE_CHECK(lo, x, hi) assert((hi>0) && (x < hi));
+#define URANGE_CHECK(lo, x, hi) assert((hi > 0) && (x < hi));
 #define TEST_ASSERT(expr) assert(expr);
 
 #elif INVARIANT_SILENT_METHOD
@@ -191,6 +194,6 @@ std::ostream& operator<<(std::ostream& s, const Invariant& inv);
 
 // Silence warnings for unused params while
 //   still indicating that they are unused
-#define RDUNUSED_PARAM(x) (void) x;
+#define RDUNUSED_PARAM(x) (void)x;
 
 #endif

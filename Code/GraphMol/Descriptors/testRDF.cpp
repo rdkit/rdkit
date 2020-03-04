@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/test.h>
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
@@ -32,7 +33,7 @@ void testRDF() {
   std::ifstream instrm(fName.c_str());
 
   std::string line;
-  std::vector<std::vector<std::string> > data;
+  std::vector<std::vector<std::string>> data;
 
   while (std::getline(instrm, line)) {
     std::string phrase;
@@ -60,7 +61,7 @@ void testRDF() {
     std::string inm = myrow[0];
     TEST_ASSERT(inm == nm);
 
-    for (int i = 0; i < drdf.size(); i++) {
+    for (size_t i = 0; i < drdf.size(); i++) {
       double ref = atof(myrow[i + 1].c_str());
 
       if (fabs(ref) > 1) {
@@ -93,7 +94,7 @@ void testRDF() {
                         << std::endl;
 }
 
-int main(int argc, char *argv[]) {
+int main() {
   RDLog::InitLogs();
   testRDF();
 }

@@ -12,6 +12,7 @@
 #include <RDBoost/import_array.h>
 #include "numpy/arrayobject.h"
 #include <DistGeom/BoundsMatrix.h>
+#include <DistGeom/TriangleSmooth.h>
 
 #include <GraphMol/GraphMol.h>
 #include <RDBoost/Wrap.h>
@@ -36,7 +37,7 @@ int EmbedMolecule(ROMol &mol, unsigned int maxAttempts, int seed,
     unsigned int id = python::extract<unsigned int>(ks[i]);
     pMap[id] = python::extract<RDGeom::Point3D>(coordMap[id]);
   }
-  std::map<int, RDGeom::Point3D> *pMapPtr = 0;
+  std::map<int, RDGeom::Point3D> *pMapPtr = nullptr;
   if (nKeys) {
     pMapPtr = &pMap;
   }
@@ -83,7 +84,7 @@ INT_VECT EmbedMultipleConfs(
     unsigned int id = python::extract<unsigned int>(ks[i]);
     pMap[id] = python::extract<RDGeom::Point3D>(coordMap[id]);
   }
-  std::map<int, RDGeom::Point3D> *pMapPtr = 0;
+  std::map<int, RDGeom::Point3D> *pMapPtr = nullptr;
   if (nKeys) {
     pMapPtr = &pMap;
   }
@@ -115,7 +116,8 @@ INT_VECT EmbedMultipleConfs2(ROMol &mol, unsigned int numConfs,
 }
 
 PyObject *getMolBoundsMatrix(ROMol &mol, bool set15bounds = true,
-                             bool scaleVDW = false) {
+                             bool scaleVDW = false,
+                             bool doTriangleSmoothing = true) {
   unsigned int nats = mol.getNumAtoms();
   npy_intp dims[2];
   dims[0] = nats;
@@ -124,7 +126,10 @@ PyObject *getMolBoundsMatrix(ROMol &mol, bool set15bounds = true,
   DistGeom::BoundsMatPtr mat(new DistGeom::BoundsMatrix(nats));
   DGeomHelpers::initBoundsMat(mat);
   DGeomHelpers::setTopolBounds(mol, mat, set15bounds, scaleVDW);
-  PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
+  if (doTriangleSmoothing) {
+    DistGeom::triangleSmoothBounds(mat);
+  }
+  auto *res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
   memcpy(static_cast<void *>(PyArray_DATA(res)),
          static_cast<void *>(mat->getData()), nats * nats * sizeof(double));
 
@@ -142,7 +147,39 @@ DGeomHelpers::EmbedParameters *getKDG() {
 DGeomHelpers::EmbedParameters *getETDG() {
   return new DGeomHelpers::EmbedParameters(DGeomHelpers::ETDG);
 }
+
+void setBoundsMatrix(DGeomHelpers::EmbedParameters *self,
+                     python::object boundsMatArg) {
+  PyObject *boundsMatObj = boundsMatArg.ptr();
+  if (!PyArray_Check(boundsMatObj)) {
+    throw_value_error("Argument isn't an array");
+  }
+
+  auto *boundsMat = reinterpret_cast<PyArrayObject *>(boundsMatObj);
+  // get the dimensions of the array
+  int nrows = PyArray_DIM(boundsMat, 0);
+  int ncols = PyArray_DIM(boundsMat, 1);
+  if (nrows != ncols) {
+    throw_value_error("The array has to be square");
+  }
+  if (nrows <= 0) {
+    throw_value_error("The array has to have a nonzero size");
+  }
+  if (PyArray_DESCR(boundsMat)->type_num != NPY_DOUBLE) {
+    throw_value_error("Only double arrays are currently supported");
+  }
+
+  unsigned int dSize = nrows * nrows;
+  auto *cData = new double[dSize];
+  auto *inData = reinterpret_cast<double *>(PyArray_DATA(boundsMat));
+  memcpy(static_cast<void *>(cData), static_cast<const void *>(inData),
+         dSize * sizeof(double));
+  DistGeom::BoundsMatrix::DATA_SPTR sdata(cData);
+  self->boundsMat = boost::shared_ptr<const DistGeom::BoundsMatrix>(
+      new DistGeom::BoundsMatrix(nrows, sdata));
 }
+
+}  // namespace RDKit
 
 BOOST_PYTHON_MODULE(rdDistGeom) {
   python::scope().attr("__doc__") =
@@ -154,7 +191,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
   // RegisterListConverter<RDKit::Atom*>();
 
   std::string docString =
-      "Use distance geometry to obtain intial \n\
+      "Use distance geometry to obtain initial \n\
  coordinates for a molecule\n\n\
  \n\
  ARGUMENTS:\n\n\
@@ -201,8 +238,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
        python::arg("coordMap") = python::dict(), python::arg("forceTol") = 1e-3,
        python::arg("ignoreSmoothingFailures") = false,
        python::arg("enforceChirality") = true,
-       python::arg("useExpTorsionAnglePrefs") = false,
-       python::arg("useBasicKnowledge") = false,
+       python::arg("useExpTorsionAnglePrefs") = true,
+       python::arg("useBasicKnowledge") = true,
        python::arg("printExpTorsionAngles") = false),
       docString.c_str());
 
@@ -267,8 +304,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
        python::arg("coordMap") = python::dict(), python::arg("forceTol") = 1e-3,
        python::arg("ignoreSmoothingFailures") = false,
        python::arg("enforceChirality") = true, python::arg("numThreads") = 1,
-       python::arg("useExpTorsionAnglePrefs") = false,
-       python::arg("useBasicKnowledge") = false,
+       python::arg("useExpTorsionAnglePrefs") = true,
+       python::arg("useBasicKnowledge") = true,
        python::arg("printExpTorsionAngles") = false),
       docString.c_str());
 
@@ -333,7 +370,14 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
       .def_readwrite(
           "onlyHeavyAtomsForRMS",
           &RDKit::DGeomHelpers::EmbedParameters::onlyHeavyAtomsForRMS,
-          "Only consider heavy atoms when doing RMS filtering");
+          "Only consider heavy atoms when doing RMS filtering")
+      .def_readwrite(
+          "embedFragmentsSeparately",
+          &RDKit::DGeomHelpers::EmbedParameters::embedFragmentsSeparately,
+          "split the molecule into fragments and embed them separately")
+      .def("SetBoundsMat", &RDKit::setBoundsMatrix,
+           "set the distance-bounds matrix to be used (no triangle smoothing "
+           "will be done on this) from a Numpy array");
   docString =
       "Use distance geometry to obtain multiple sets of \n\
  coordinates for a molecule\n\
@@ -351,7 +395,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
       docString.c_str());
 
   docString =
-      "Use distance geometry to obtain intial \n\
+      "Use distance geometry to obtain initial \n\
  coordinates for a molecule\n\n\
  \n\
  ARGUMENTS:\n\n\
@@ -387,12 +431,15 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                     topology (otherwise stop at 1-4s)\n\
     - scaleVDW : scale down the sum of VDW radii when setting the \n\
                  lower bounds for atoms less than 5 bonds apart \n\
+    - doTriangleSmoothing : run triangle smoothing on the bounds \n\
+                 matrix before returning it \n\
  RETURNS:\n\n\
     the bounds matrix as a Numeric array with lower bounds in \n\
     the lower triangle and upper bounds in the upper triangle\n\
 \n";
   python::def("GetMoleculeBoundsMatrix", RDKit::getMolBoundsMatrix,
               (python::arg("mol"), python::arg("set15bounds") = true,
-               python::arg("scaleVDW") = false),
+               python::arg("scaleVDW") = false,
+               python::arg("doTriangleSmoothing") = true),
               docString.c_str());
 }

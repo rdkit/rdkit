@@ -6,7 +6,7 @@
 """ functionality to allow adjusting composite model contents
 
 """
-from __future__ import print_function
+
 
 import copy
 

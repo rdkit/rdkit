@@ -260,7 +260,7 @@ if (options.sma):
 
   outfile.close()
 
-  #set os enviroment for rdkit to use sqllite
+  #set os environment for rdkit to use sqllite
   os.environ['RD_USESQLLITE'] = '1'
   #use the DbCli utility in RDKit: http://code.google.com/p/rdkit/wiki/UsingTheDbCLI
   cmd = 'python $RDBASE/Projects/DbCLI/CreateDb.py --dbDir=%s_smarts --molFormat=smiles %s --noPairs --noFingerprints --noDescriptors --noProps --noMorganFps --noSmiles --silent' % (

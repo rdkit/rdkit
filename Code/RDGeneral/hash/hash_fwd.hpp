@@ -14,9 +14,9 @@
 # pragma once
 #endif
 
-#include <boost/cstdint.hpp>
+#include <cstdint>
 namespace std{
-  typedef boost::uint32_t hash_result_t;
+  typedef std::uint32_t hash_result_t;
 }
 
 #include <boost/config.hpp>

@@ -2,7 +2,7 @@
 # Copyright (C) 2007 by Greg Landrum 
 #  All rights reserved
 #
-from __future__ import print_function
+
 
 import copy
 import time
@@ -11,7 +11,7 @@ from rdkit import Chem, Geometry
 from rdkit.Chem import AllChem
 from rdkit.Chem.Subshape import BuilderUtils
 from rdkit.Chem.Subshape import SubshapeObjects
-from rdkit.six.moves import cPickle
+import pickle
 
 
 class SubshapeCombineOperations(object):
@@ -88,7 +88,7 @@ class SubshapeBuilder(object):
 
 if __name__ == '__main__':  # pragma: nocover
   from rdkit.Chem.PyMol import MolViewer
-  from rdkit.six.moves import cPickle
+  import pickle
   import tempfile
 
   # cmpd = Chem.MolFromSmiles('CCCc1cc(C(=O)O)ccc1')
@@ -107,7 +107,7 @@ if __name__ == '__main__':  # pragma: nocover
     shape = builder.GenerateSubshapeShape(cmpd)
   v = MolViewer()
   if 1:
-    tmpFile = tempfile.mktemp('.grd')
+    tmpFile = tempfile.NamedTemporaryFile(suffix='.grd', delete=False).name
     v.server.deleteAll()
     Geometry.WriteGridToFile(shape.grid, tmpFile)
     time.sleep(1)
@@ -116,7 +116,7 @@ if __name__ == '__main__':  # pragma: nocover
   v.server.resetCGO('*')
 
   with open('subshape.pkl', 'w+') as f:
-    cPickle.dump(shape, f)
+    pickle.dump(shape, f)
   for i, pt in enumerate(shape.skelPts):
     v.server.sphere(tuple(pt.location), .5, (1, 0, 1), 'Pt-%d' % i)
     if not hasattr(pt, 'shapeDirs'):

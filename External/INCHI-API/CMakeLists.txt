@@ -2,6 +2,7 @@ add_custom_target(inchi_support ALL)
 
 if(RDK_BUILD_INCHI_SUPPORT)
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/INCHI_BASE/src/ichican2.c)
+    add_definitions(-DRDKIT_INCHI_BUILD)
     rdkit_library(Inchi
       src/INCHI_BASE/src/ichi_bns.c
       src/INCHI_BASE/src/ichi_io.c
@@ -57,14 +58,21 @@ if(RDK_BUILD_INCHI_SUPPORT)
       src/INCHI_API/libinchi/src/ixa/ixa_builder.c
       src/INCHI_API/libinchi/src/ixa/ixa_inchikey_builder.c
       src/INCHI_API/libinchi/src/ixa/ixa_mol.c
-      src/INCHI_API/libinchi/src/ixa/ixa_read_inchi.c 
+      src/INCHI_API/libinchi/src/ixa/ixa_read_inchi.c
       src/INCHI_API/libinchi/src/ixa/ixa_read_mol.c
       src/INCHI_API/libinchi/src/ixa/ixa_status.c SHARED)
+      if((MSVC AND RDK_INSTALL_DLLS_MSVC) OR ((NOT MSVC) AND WIN32))
+        set_target_properties(Inchi PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+      endif()
     install(TARGETS Inchi DESTINATION ${RDKit_LibDir})
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/INCHI_BASE/src/)
     ADD_DEFINITIONS("-DTARGET_API_LIB")
   endif()
 
+     if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-parentheses -Wno-logical-op-parentheses")
+     endif()
+  add_definitions(-DRDKIT_RDINCHILIB_BUILD)
   rdkit_library(RDInchiLib inchi.cpp SHARED LINK_LIBRARIES ${INCHI_LIBRARIES}
                 GraphMol RDGeneral Depictor SubstructMatch SmilesParse
                 ${RDKit_THREAD_LIBS})
@@ -73,7 +81,7 @@ if(RDK_BUILD_INCHI_SUPPORT)
     add_subdirectory(Wrap)
   endif(RDK_BUILD_PYTHON_WRAPPERS)
 
-  add_definitions(-DBUILD_INCHI_SUPPORT)
+  add_definitions(-DRDK_BUILD_INCHI_SUPPORT)
 
   rdkit_test(testInchi test.cpp
     LINK_LIBRARIES

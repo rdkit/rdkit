@@ -40,7 +40,7 @@ RDKit::INT_VECT HierarchicalPicks(HierarchicalClusterPicker *picker,
   // CopyFromObject here instead of ContiguousFromObject
   copy =
       (PyArrayObject *)PyArray_CopyFromObject(distMat.ptr(), NPY_DOUBLE, 1, 1);
-  double *dMat = (double *)PyArray_DATA(copy);
+  auto *dMat = (double *)PyArray_DATA(copy);
   RDKit::INT_VECT res = picker->pick(dMat, poolSize, pickSize);
   Py_DECREF(copy);
   return res;
@@ -61,7 +61,7 @@ RDKit::VECT_INT_VECT HierarchicalClusters(HierarchicalClusterPicker *picker,
   // CopyFromObject here instead of ContiguousFromObject
   copy =
       (PyArrayObject *)PyArray_CopyFromObject(distMat.ptr(), NPY_DOUBLE, 1, 1);
-  double *dMat = (double *)PyArray_DATA(copy);
+  auto *dMat = (double *)PyArray_DATA(copy);
 
   RDKit::VECT_INT_VECT res = picker->cluster(dMat, poolSize, pickSize);
   Py_DECREF(copy);
@@ -88,7 +88,7 @@ struct HierarchCP_wrap {
              "  - pickSize: number of items to pick from the pool\n")
         .def("Cluster", HierarchicalClusters,
              "Return a list of clusters of item from the pool using "
-             "hierachical clustering\n"
+             "hierarchical clustering\n"
              "\n"
              "ARGUMENTS: \n"
              "  - distMat: 1D distance matrix (only the lower triangle "

@@ -1,3 +1,4 @@
+remove_definitions(-DRDKIT_DESCRIPTORS_BUILD)
 rdkit_python_extension(rdMolDescriptors rdMolDescriptors.cpp
                        DEST Chem
                        LINK_LIBRARIES

@@ -134,13 +134,12 @@ class MolViewer(object):
       obj = Displayable(self.doc)
     if not hasattr(obj, '_molBlock') or obj._molBlock != molB:
       obj._molBlock = molB
-      fN = tempfile.mktemp('.mol')
-      open(fN, 'w+').write(molB)
-      self.doc.DoCommand('PasteFrom %s' % fN)
+      with tempfile.NamedTemporaryFile('w+', suffix='.mol') as tmpf:
+        tmpf.write(molB)
+      self.doc.DoCommand('PasteFrom %s' % tmp.name)
       self.doc.DoCommand('SetProperty molecule id=0 : RD_Visual=%d' % (obj.id))
       self.doc.DoCommand('SetProperty molecule id=0 : id=%d' % (obj.id))
       self.doc.DoCommand('SetProperty molecule id=0 : select=off')
-      os.unlink(fN)
     else:
       obj.Select(state=True)
       self.doc.DoCommand('Show')

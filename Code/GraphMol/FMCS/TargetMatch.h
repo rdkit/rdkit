@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #pragma once
 #include <vector>
 #include "FMCS.h"
@@ -95,5 +96,5 @@ struct TargetMatch {
     Empty = false;
   }
 };
-}
-}
+}  // namespace FMCS
+}  // namespace RDKit

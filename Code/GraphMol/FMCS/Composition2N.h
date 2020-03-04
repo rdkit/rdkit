@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #pragma once
 namespace RDKit {
 namespace FMCS {
@@ -46,5 +47,5 @@ class Composition2N {  // generator of 2^N-1 possible bit combinations
   // unused:        bool nonZero() {return 0!=getBitSet();}
   bool isSet(unsigned bit) const { return 0 != (getBitSet() & (1uLL << bit)); }
 };
-}
-}
+}  // namespace FMCS
+}  // namespace RDKit

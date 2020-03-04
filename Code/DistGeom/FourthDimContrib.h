@@ -1,6 +1,7 @@
 //
 // Created by Santosh Putta, Nov 2006
 //
+#include <RDGeneral/export.h>
 #ifndef __RD_FOURTHDIMCONTRIB_H__
 #define __RD_FOURTHDIMCONTRIB_H__
 
@@ -11,7 +12,8 @@
 namespace DistGeom {
 //! A term used in penalizing chirality violations
 //!
-class FourthDimContrib : public ForceFields::ForceFieldContrib {
+class RDKIT_DISTGEOMETRY_EXPORT FourthDimContrib
+    : public ForceFields::ForceFieldContrib {
  public:
   FourthDimContrib() : d_idx(0), d_weight(0.0){};
 
@@ -41,7 +43,7 @@ class FourthDimContrib : public ForceFields::ForceFieldContrib {
   }
 
   //! calculate the contribution of this contrib to the gradient at a given
-  //state
+  // state
   void getGrad(double *pos, double *grad) const {
     PRECONDITION(dp_forceField, "no owner");
     PRECONDITION(dp_forceField->dimension() == 4,
@@ -58,6 +60,6 @@ class FourthDimContrib : public ForceFields::ForceFieldContrib {
   unsigned int d_idx;
   double d_weight;
 };
-}
+}  // namespace DistGeom
 
 #endif

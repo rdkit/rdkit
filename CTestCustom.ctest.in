@@ -1,0 +1,11 @@
+# Require us to have the $RDBASE env var set to run the tests
+IF(NOT DEFINED ENV{RDBASE})
+  MESSAGE(FATAL_ERROR "\n\nPlease set your RDBASE env variable before running the tests.\n\n")
+ENDIF(NOT DEFINED ENV{RDBASE})
+
+SET(CTEST_CUSTOM_MEMCHECK_IGNORE
+  ${CTEST_CUSTOM_MEMCHECK_IGNORE}
+
+  # python tests are not memchecked: these are slow, and difficult to interpret
+  ${RDKIT_PYTEST_CACHE}
+)

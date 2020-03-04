@@ -7,8 +7,9 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <boost/cstdint.hpp>
+#include <RDGeneral/export.h>
+#include <cstdint>
 
 namespace RDKit {
-typedef boost::uint16_t atomindex_t;
+typedef std::uint32_t atomindex_t;
 }

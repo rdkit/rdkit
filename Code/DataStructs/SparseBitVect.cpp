@@ -19,7 +19,7 @@
 #ifdef WIN32
 #include <ios>
 #endif
-#include <boost/cstdint.hpp>
+#include <cstdint>
 
 // """ -------------------------------------------------------
 //
@@ -30,7 +30,7 @@
 // """ -------------------------------------------------------
 SparseBitVect::SparseBitVect(const std::string &s) {
   d_size = 0;
-  dp_bits = 0;
+  dp_bits = nullptr;
   initFromText(s.c_str(), s.length());
 }
 
@@ -43,7 +43,7 @@ SparseBitVect::SparseBitVect(const std::string &s) {
 // """ -------------------------------------------------------
 SparseBitVect::SparseBitVect(const char *data, const unsigned int dataLen) {
   d_size = 0;
-  dp_bits = 0;
+  dp_bits = nullptr;
   initFromText(data, dataLen);
 }
 
@@ -62,10 +62,11 @@ bool SparseBitVect::operator[](const unsigned int which) const {
   if (which >= d_size) {
     throw IndexErrorException(which);
   }
-  if (dp_bits->count(which))
+  if (dp_bits->count(which)) {
     return true;
-  else
+  } else {
     return false;
+  }
 }
 
 // """ -------------------------------------------------------
@@ -75,6 +76,9 @@ bool SparseBitVect::operator[](const unsigned int which) const {
 //
 // """ -------------------------------------------------------
 SparseBitVect &SparseBitVect::operator=(const SparseBitVect &other) {
+  if (this == &other) {
+    return *this;
+  }
   IntSet *bv = other.dp_bits;
   delete dp_bits;
   d_size = other.getNumBits();
@@ -135,7 +139,9 @@ SparseBitVect SparseBitVect::operator^(const SparseBitVect &other) const {
 SparseBitVect SparseBitVect::operator~() const {
   SparseBitVect ans(d_size);
   for (unsigned int i = 0; i < d_size; i++) {
-    if (!getBit(i)) ans.setBit(i);
+    if (!getBit(i)) {
+      ans.setBit(i);
+    }
   }
 
   return (ans);
@@ -151,10 +157,11 @@ bool SparseBitVect::getBit(const unsigned int which) const {
   if (which >= d_size) {
     throw IndexErrorException(which);
   }
-  if (dp_bits->count(which))
+  if (dp_bits->count(which)) {
     return true;
-  else
+  } else {
     return false;
+  }
 }
 
 // """ -------------------------------------------------------
@@ -167,10 +174,11 @@ bool SparseBitVect::getBit(const IntVectIter which) const {
   if (*which < 0 || static_cast<unsigned int>(*which) >= d_size) {
     throw IndexErrorException(*which);
   }
-  if (dp_bits->count(*which))
+  if (dp_bits->count(*which)) {
     return true;
-  else
+  } else {
     return false;
+  }
 }
 
 // """ -------------------------------------------------------
@@ -183,10 +191,11 @@ bool SparseBitVect::getBit(const IntSetIter which) const {
   if (*which < 0 || static_cast<unsigned int>(*which) >= d_size) {
     throw IndexErrorException(*which);
   }
-  if (dp_bits->count(*which))
+  if (dp_bits->count(*which)) {
     return true;
-  else
+  } else {
     return false;
+  }
 }
 
 // """ -------------------------------------------------------
@@ -265,7 +274,9 @@ void SparseBitVect::getOnBits(IntVect &v) const {
     throw ValueErrorException("BitVect not properly initialized.");
   }
   unsigned int nOn = getNumOnBits();
-  if (!v.empty()) IntVect().swap(v);
+  if (!v.empty()) {
+    IntVect().swap(v);
+  }
   v.reserve(nOn);
   v.resize(nOn);
   std::copy(dp_bits->begin(), dp_bits->end(), v.begin());
@@ -296,7 +307,7 @@ std::string SparseBitVect::toString() const {
   std::stringstream ss(std::ios_base::binary | std::ios_base::out |
                        std::ios_base::in);
 
-  boost::int32_t tInt = ci_BITVECT_VERSION * -1;
+  std::int32_t tInt = ci_BITVECT_VERSION * -1;
   RDKit::streamWrite(ss, tInt);
   tInt = d_size;
   RDKit::streamWrite(ss, tInt);
@@ -305,10 +316,10 @@ std::string SparseBitVect::toString() const {
 
   int prev = -1;
   unsigned int zeroes;
-  for (IntSetIter i = dp_bits->begin(); i != dp_bits->end(); i++) {
-    zeroes = *i - prev - 1;
+  for (int dp_bit : *dp_bits) {
+    zeroes = dp_bit - prev - 1;
     RDKit::appendPackedIntToStream(ss, zeroes);
-    prev = *i;
+    prev = dp_bit;
   }
   zeroes = d_size - prev - 1;
   RDKit::appendPackedIntToStream(ss, zeroes);

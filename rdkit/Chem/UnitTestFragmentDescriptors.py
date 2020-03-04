@@ -162,7 +162,7 @@ class TestCase(unittest.TestCase):
 
   def test16(self):
     data = [
-      ('C1(CCC(O1)=O)(C)CC/C=C\CC', 1),
+      (r'C1(CCC(O1)=O)(C)CC/C=C\CC', 1),
       ('CN(CC3=CSC(C(C)C)=N3)C(N[C@@H]([C@H](C)C)C(N[C@@H](CC4=CC=CC=C4)C[C@H](O)[C@H](CC2=CC=CC=C2)NC(OCC1=CN=CS1)=O)=O)=O',
        0),  # ritonavir
       ('c1(C)ccccc1CCN', 0)
@@ -191,7 +191,7 @@ class TestCase(unittest.TestCase):
 
   def test19(self):
     data = [('CC(C)(C)NCC(O)C1=CC(O)=CC(O)=C1', 1),  # terbulatine
-            ('OCCN1CCN(CC/C=C2\C3=CC=CC=C3SC4C=CC(Cl)=CC2=4)CC1', 1),  # clopenthixol
+            (r'OCCN1CCN(CC/C=C2\C3=CC=CC=C3SC4C=CC(Cl)=CC2=4)CC1', 1),  # clopenthixol
             ('c1ccccc1-C(=O)-CCO', 0),
             ('CC(=O)NCCC', 0)]
     self._runTest(data, Fragments.fr_HOCCN)
@@ -203,7 +203,7 @@ class TestCase(unittest.TestCase):
     self._runTest(data, Fragments.fr_methoxy)
 
   def test21(self):
-    data = [('C/C(C(C)=O)=N\O', 1),
+    data = [(r'C/C(C(C)=O)=N\O', 1),
             ('C(=N/OC(C(=O)O)(C)C)(/C1=CS[N+](=N1)C)C(N[C@@H]2C(N([C@@H]2C)S(O)(=O)=O)=O)=O',
              1),  # aztreonam
             ('c1ccccc1OCC', 0), ]

@@ -37,6 +37,7 @@
 /*! \file MorganFingerprints.h
 
 */
+#include <RDGeneral/export.h>
 #ifndef __RD_MORGANFPS_H__
 #define __RD_MORGANFPS_H__
 
@@ -44,15 +45,14 @@
 #include <map>
 #include <DataStructs/SparseIntVect.h>
 #include <DataStructs/ExplicitBitVect.h>
-#include <boost/cstdint.hpp>
+#include <cstdint>
+#include <GraphMol/Fingerprints/FingerprintUtil.h>
 
 namespace RDKit {
 class ROMol;
 namespace MorganFingerprints {
-extern std::vector<std::string> defaultFeatureSmarts;
-
-typedef std::map<boost::uint32_t,
-                 std::vector<std::pair<boost::uint32_t, boost::uint32_t> > >
+typedef std::map<std::uint32_t,
+                 std::vector<std::pair<std::uint32_t, std::uint32_t>>>
     BitInfoMap;
 
 const std::string morganFingerprintVersion = "1.0.0";
@@ -65,7 +65,7 @@ const std::string morganFingerprintVersion = "1.0.0";
   The algorithm used is described in the paper
   Rogers, D. & Hahn, M. Extended-Connectivity Fingerprints. JCIM 50:742-54
   (2010)
-  http://dx.doi.org/10.1021/ci100050t
+  https://doi.org/10.1021/ci100050t
 
   The original implementation was done using this paper:
   D. Rogers, R.D. Brown, M. Hahn J. Biomol. Screen. 10:682-6 (2005)
@@ -102,7 +102,7 @@ const std::string morganFingerprintVersion = "1.0.0";
   responsible for calling delete on this.
 
 */
-SparseIntVect<boost::uint32_t> *getFingerprint(
+RDKIT_FINGERPRINTS_EXPORT SparseIntVect<std::uint32_t> *getFingerprint(
     const ROMol &mol, unsigned int radius,
     std::vector<boost::uint32_t> *invariants = 0,
     const std::vector<boost::uint32_t> *fromAtoms = 0,
@@ -118,7 +118,7 @@ SparseIntVect<boost::uint32_t> *getFingerprint(
   The algorithm used is described in the paper
   Rogers, D. & Hahn, M. Extended-Connectivity Fingerprints. JCIM 50:742-54
   (2010)
-  http://dx.doi.org/10.1021/ci100050t
+  https://doi.org/10.1021/ci100050t
 
   The original implementation was done using this paper:
   D. Rogers, R.D. Brown, M. Hahn J. Biomol. Screen. 10:682-6 (2005)
@@ -154,7 +154,7 @@ SparseIntVect<boost::uint32_t> *getFingerprint(
   responsible for calling delete on this.
 
 */
-SparseIntVect<boost::uint32_t> *getHashedFingerprint(
+RDKIT_FINGERPRINTS_EXPORT SparseIntVect<std::uint32_t> *getHashedFingerprint(
     const ROMol &mol, unsigned int radius, unsigned int nBits = 2048,
     std::vector<boost::uint32_t> *invariants = 0,
     const std::vector<boost::uint32_t> *fromAtoms = 0,
@@ -196,46 +196,15 @@ SparseIntVect<boost::uint32_t> *getHashedFingerprint(
   responsible for calling delete on this.
 
 */
-ExplicitBitVect *getFingerprintAsBitVect(
+RDKIT_FINGERPRINTS_EXPORT ExplicitBitVect *getFingerprintAsBitVect(
     const ROMol &mol, unsigned int radius, unsigned int nBits,
-    std::vector<boost::uint32_t> *invariants = 0,
-    const std::vector<boost::uint32_t> *fromAtoms = 0,
-    bool useChirality = false, bool useBondTypes = true,
-    bool onlyNonzeroInvariants = false, BitInfoMap *atomsSettingBits = 0,
+    std::vector<std::uint32_t> *invariants = 0,
+    const std::vector<std::uint32_t> *fromAtoms = 0, bool useChirality = false,
+    bool useBondTypes = true, bool onlyNonzeroInvariants = false,
+    BitInfoMap *atomsSettingBits = 0,
     bool includeRedundantEnvironments = false);
 
-//! returns the connectivity invariants for a molecule
-/*!
-
-  \param mol :    the molecule to be considered
-  \param invars : used to return the results
-  \param includeRingMembership : if set, whether or not the atom is in
-             a ring will be used in the invariant list.
-*/
-void getConnectivityInvariants(const ROMol &mol,
-                               std::vector<boost::uint32_t> &invars,
-                               bool includeRingMembership = true);
-const std::string morganConnectivityInvariantVersion = "1.0.0";
-
-//! returns the feature invariants for a molecule
-/*!
-
-  \param mol:    the molecule to be considered
-  \param invars : used to return the results
-  \param patterns: if provided should contain the queries used to assign
-  atom-types.
-                   if not provided, feature definitions adapted from reference:
-                   Gobbi and Poppinger, Biotech. Bioeng. _61_ 47-54 (1998)
-                   will be used for Donor, Acceptor, Aromatic, Halogen, Basic,
-  Acidic
-
-*/
-void getFeatureInvariants(const ROMol &mol,
-                          std::vector<boost::uint32_t> &invars,
-                          std::vector<const ROMol *> *patterns = 0);
-const std::string morganFeatureInvariantVersion = "0.1.0";
-
 }  // end of namespace MorganFingerprints
-}
+}  // namespace RDKit
 
 #endif

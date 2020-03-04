@@ -8,6 +8,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/test.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <RDGeneral/RDLog.h>
@@ -33,12 +34,11 @@
 
 using namespace RDKit;
 
-void testMols(std::vector<ROMol *> &mols, FragFPGenerator &fpGen,
+void testMols(std::vector<std::unique_ptr<ROMol>> &mols, FragFPGenerator &fpGen,
               FragCatalog &fcat) {
-  std::vector<ROMol *>::iterator mi;
   int nDone = 0;
-  for (mi = mols.begin(); mi != mols.end(); mi++) {
-    ExplicitBitVect *fp = fpGen.getFPForMol(*(*mi), fcat);
+  for (auto &&mi : mols) {
+    ExplicitBitVect *fp = fpGen.getFPForMol(*mi, fcat);
     switch (nDone) {
       case 0:
         TEST_ASSERT(fp->getNumOnBits() == 3);
@@ -83,6 +83,7 @@ void testMols(std::vector<ROMol *> &mols, FragFPGenerator &fpGen,
         TEST_ASSERT((*fp)[10]);
         break;
     }
+    delete fp;
     nDone += 1;
   }
 }
@@ -94,22 +95,22 @@ void test1() {
       rdbase + "/Code/GraphMol/FragCatalog/test_data/funcGroups.txt";
   SmilesMolSupplier suppl(fname, " ", 0, 1, false);
 
-  FragCatParams *fparams = new FragCatParams(1, 6, fgrpFile, 1.0e-8);
+  auto *fparams = new FragCatParams(1, 6, fgrpFile, 1.0e-8);
   TEST_ASSERT(fparams->getNumFuncGroups() == 15);
   FragCatalog fcat(fparams);
   FragCatGenerator catGen;
 
-  std::vector<ROMol *> mols;
+  std::vector<std::unique_ptr<ROMol>> mols;
   unsigned int nDone = 0;
   ROMol *m = suppl.next();
   while (m) {
-    mols.push_back(m);
+    mols.push_back(std::unique_ptr<ROMol>(m));
     nDone += 1;
     catGen.addFragsFromMol(*m, &fcat);
     try {
       m = suppl.next();
     } catch (FileParseException &) {
-      m = NULL;
+      m = nullptr;
     }
   }
   TEST_ASSERT(mols.size() == 16);
@@ -138,13 +139,14 @@ void test1() {
 
   // make sure we can pickle and unpickle catalog entries:
   const FragCatalogEntry *fpEntry = fcat.getEntryWithIdx(0);
-  FragCatalogEntry *fpEntry2 = new FragCatalogEntry();
+  auto *fpEntry2 = new FragCatalogEntry();
   fpEntry2->initFromString(fpEntry->Serialize());
   TEST_ASSERT(fpEntry->getDescription() == fpEntry2->getDescription());
   TEST_ASSERT(fpEntry->getOrder() == fpEntry2->getOrder());
   TEST_ASSERT(fpEntry->getBitId() == fpEntry2->getBitId());
   TEST_ASSERT(fpEntry2->match(fpEntry, 1e-8));
   TEST_ASSERT(fpEntry->match(fpEntry2, 1e-8));
+  delete fpEntry2;
 
   // test catalogs' initFromString:
   FragCatalog fcat2;
@@ -204,6 +206,8 @@ void test1() {
   BOOST_LOG(rdInfoLog) << "---- Done" << std::endl;
 
   delete tmpMol;
+  delete fparams;
+  delete fcat3;
 }
 
 void testIssue294() {
@@ -215,33 +219,78 @@ void testIssue294() {
       rdbase + "/Code/GraphMol/FragCatalog/test_data/funcGroups.txt";
   SmilesMolSupplier suppl(fname, " ", 0, 1, false);
 
-  FragCatParams *fparams = new FragCatParams(1, 6, fgrpFile, 1.0e-8);
+  auto *fparams = new FragCatParams(1, 6, fgrpFile, 1.0e-8);
   FragCatalog fcat(fparams);
   FragCatGenerator catGen;
 
-  std::vector<ROMol *> mols;
+  std::vector<std::unique_ptr<ROMol>> mols;
   ROMol *m = suppl.next();
   while (m) {
-    mols.push_back(m);
+    mols.push_back(std::unique_ptr<ROMol>(m));
     catGen.addFragsFromMol(*m, &fcat);
     try {
       m = suppl.next();
     } catch (FileParseException &) {
-      m = NULL;
+      m = nullptr;
     }
   }
   int nents = fcat.getNumEntries();
   TEST_ASSERT(nents == 21);
   FragFPGenerator fpGen;
 
-  m = mols[0];
-
   for (unsigned int i = 0; i < 200; i++) {
-    for (std::vector<ROMol *>::const_iterator mi = mols.begin();
-         mi != mols.end(); mi++) {
-      ExplicitBitVect *fp = fpGen.getFPForMol(*(*mi), fcat);
+    for (auto &&mi : mols) {
+      ExplicitBitVect *fp = fpGen.getFPForMol(*mi, fcat);
       delete fp;
     }
+  }
+  delete fparams;
+  BOOST_LOG(rdInfoLog) << "---- Done" << std::endl;
+}
+
+void testWhiteSpaceInSmarts() {
+  BOOST_LOG(rdInfoLog) << "----- Test Whitespace in SMARTS Fragment string."
+                       << std::endl;
+
+  std::vector<std::string> data({
+      "          ",    // whitespace only
+      "          \n",  // whitespace plus new line
+      " //   initial space plus comment\nfluorine\t[F]\n"
+  });
+
+  std::vector<size_t> reference_sizes({0, 0, 1});
+
+  auto reference = reference_sizes.cbegin();
+  for (const auto &smarts : data) {
+    std::istringstream input(smarts);
+    auto groups = readFuncGroups(input);
+    TEST_ASSERT(groups.size() == *reference);
+    ++reference;
+  }
+  BOOST_LOG(rdInfoLog) << "---- Done" << std::endl;
+}
+
+void testFragmentWithoutSmarts() {
+  BOOST_LOG(rdInfoLog) << "----- Test Fragment string without SMARTS."
+                       << std::endl;
+
+  std::vector<std::string> data({
+      "//   Name	SMARTS\nnonsense\n",
+      "//   Name	SMARTS\nnonsense no new line",
+      "//   Name	SMARTS\nnonsense with tab\t\n"
+  });
+
+  for (const auto &smarts : data) {
+    bool ok = false;
+    std::istringstream input(smarts);
+    RDKit::MOL_SPTR_VECT groups;
+    try {
+      groups = readFuncGroups(input);
+    } catch (const Invar::Invariant &) {
+      ok = true;
+    }
+    TEST_ASSERT(ok);
+    TEST_ASSERT(groups.empty());
   }
   BOOST_LOG(rdInfoLog) << "---- Done" << std::endl;
 }
@@ -250,5 +299,7 @@ int main() {
   RDLog::InitLogs();
   test1();
   testIssue294();
+  testWhiteSpaceInSmarts();
+  testFragmentWithoutSmarts();
   return 0;
 }

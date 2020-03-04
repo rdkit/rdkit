@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (c) 2009-2010, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
@@ -46,11 +45,7 @@
 #include <boost/foreach.hpp>
 #include <algorithm>
 
-#include <RDGeneral/BoostStartInclude.h>
-#include <boost/flyweight.hpp>
-#include <boost/flyweight/key_value.hpp>
-#include <boost/flyweight/no_tracking.hpp>
-#include <RDGeneral/BoostEndInclude.h>
+#include <GraphMol/Fingerprints/FingerprintUtil.h>
 
 namespace {
 class ss_matcher {
@@ -68,97 +63,10 @@ class ss_matcher {
  private:
   RDKit::ROMOL_SPTR m_matcher;
 };
-}
+}  // namespace
 
 namespace RDKit {
 namespace MorganFingerprints {
-using boost::uint32_t;
-using boost::int32_t;
-typedef boost::tuple<boost::dynamic_bitset<>, uint32_t, unsigned int>
-    AccumTuple;
-
-// Definitions for feature points adapted from:
-// Gobbi and Poppinger, Biotech. Bioeng. _61_ 47-54 (1998)
-const char *smartsPatterns[6] = {
-    "[$([N;!H0;v3,v4&+1]),\
-$([O,S;H1;+0]),\
-n&H1&+0]",                                                  // Donor
-    "[$([O,S;H1;v2;!$(*-*=[O,N,P,S])]),\
-$([O,S;H0;v2]),\
-$([O,S;-]),\
-$([N;v3;!$(N-*=[O,N,P,S])]),\
-n&H0&+0,\
-$([o,s;+0;!$([o,s]:n);!$([o,s]:c:n)])]",                    // Acceptor
-    "[a]",                                                  // Aromatic
-    "[F,Cl,Br,I]",                                          // Halogen
-    "[#7;+,\
-$([N;H2&+0][$([C,a]);!$([C,a](=O))]),\
-$([N;H1&+0]([$([C,a]);!$([C,a](=O))])[$([C,a]);!$([C,a](=O))]),\
-$([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]",  // Basic
-    "[$([C,S](=[O,S,P])-[O;H1,-1])]"                        // Acidic
-};
-std::vector<std::string> defaultFeatureSmarts(smartsPatterns,
-                                              smartsPatterns + 6);
-typedef boost::flyweight<boost::flyweights::key_value<std::string, ss_matcher>,
-                         boost::flyweights::no_tracking> pattern_flyweight;
-void getFeatureInvariants(const ROMol &mol, std::vector<uint32_t> &invars,
-                          std::vector<const ROMol *> *patterns) {
-  unsigned int nAtoms = mol.getNumAtoms();
-  PRECONDITION(invars.size() >= nAtoms, "vector too small");
-
-  std::vector<const ROMol *> featureMatchers;
-  if (!patterns) {
-    featureMatchers.reserve(defaultFeatureSmarts.size());
-    for (std::vector<std::string>::const_iterator smaIt =
-             defaultFeatureSmarts.begin();
-         smaIt != defaultFeatureSmarts.end(); ++smaIt) {
-      const ROMol *matcher = pattern_flyweight(*smaIt).get().getMatcher();
-      CHECK_INVARIANT(matcher, "bad smarts");
-      featureMatchers.push_back(matcher);
-    }
-    patterns = &featureMatchers;
-  }
-  std::fill(invars.begin(), invars.end(), 0);
-  for (unsigned int i = 0; i < patterns->size(); ++i) {
-    unsigned int mask = 1 << i;
-    std::vector<MatchVectType> matchVect;
-    // to maintain thread safety, we have to copy the pattern
-    // molecules:
-    SubstructMatch(mol, ROMol(*(*patterns)[i], true), matchVect);
-    for (std::vector<MatchVectType>::const_iterator mvIt = matchVect.begin();
-         mvIt != matchVect.end(); ++mvIt) {
-      for (MatchVectType::const_iterator mIt = mvIt->begin();
-           mIt != mvIt->end(); ++mIt) {
-        invars[mIt->second] |= mask;
-      }
-    }
-  }
-}  // end of getFeatureInvariants()
-
-void getConnectivityInvariants(const ROMol &mol, std::vector<uint32_t> &invars,
-                               bool includeRingMembership) {
-  unsigned int nAtoms = mol.getNumAtoms();
-  PRECONDITION(invars.size() >= nAtoms, "vector too small");
-  gboost::hash<std::vector<uint32_t> > vectHasher;
-  for (unsigned int i = 0; i < nAtoms; ++i) {
-    Atom const *atom = mol.getAtomWithIdx(i);
-    std::vector<uint32_t> components;
-    components.push_back(atom->getAtomicNum());
-    components.push_back(atom->getTotalDegree());
-    components.push_back(atom->getTotalNumHs());
-    components.push_back(atom->getFormalCharge());
-    int deltaMass = static_cast<int>(
-        atom->getMass() -
-        PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum()));
-    components.push_back(deltaMass);
-
-    if (includeRingMembership &&
-        atom->getOwningMol().getRingInfo()->numAtomRings(atom->getIdx())) {
-      components.push_back(1);
-    }
-    invars[i] = vectHasher(components);
-  }
-}  // end of getConnectivityInvariants()
 
 uint32_t updateElement(SparseIntVect<uint32_t> &v, unsigned int elem,
                        bool counting) {
@@ -185,12 +93,19 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
                      bool useBondTypes, bool useCounts,
                      bool onlyNonzeroInvariants, BitInfoMap *atomsSettingBits,
                      bool includeRedundantEnvironments, T &res) {
-  unsigned int nAtoms = mol.getNumAtoms();
+  const ROMol *lmol = &mol;
+  std::unique_ptr<ROMol> tmol;
+  if (useChirality && !mol.hasProp(common_properties::_StereochemDone)) {
+    tmol = std::unique_ptr<ROMol>(new ROMol(mol));
+    MolOps::assignStereochemistry(*tmol);
+    lmol = tmol.get();
+  }
+  unsigned int nAtoms = lmol->getNumAtoms();
   bool owner = false;
   if (!invariants) {
     invariants = new std::vector<uint32_t>(nAtoms);
     owner = true;
-    getConnectivityInvariants(mol, *invariants);
+    getConnectivityInvariants(*lmol, *invariants);
   }
   // Make a copy of the invariants:
   std::vector<uint32_t> invariantCpy(nAtoms);
@@ -198,13 +113,13 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
 
   // add the round 0 invariants to the result:
   for (unsigned int i = 0; i < nAtoms; ++i) {
-    if (!fromAtoms ||
-        std::find(fromAtoms->begin(), fromAtoms->end(), i) !=
-            fromAtoms->end()) {
+    if (!fromAtoms || std::find(fromAtoms->begin(), fromAtoms->end(), i) !=
+                          fromAtoms->end()) {
       if (!onlyNonzeroInvariants || (*invariants)[i]) {
         uint32_t bit = updateElement(res, (*invariants)[i], useCounts);
-        if (atomsSettingBits)
+        if (atomsSettingBits) {
           (*atomsSettingBits)[bit].push_back(std::make_pair(i, 0));
+        }
       }
     }
   }
@@ -213,9 +128,9 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
 
   // these are the neighborhoods that have already been added
   // to the fingerprint
-  std::vector<boost::dynamic_bitset<> > neighborhoods;
+  std::vector<boost::dynamic_bitset<>> neighborhoods;
   // these are the environments around each atom:
-  std::vector<boost::dynamic_bitset<> > atomNeighborhoods(
+  std::vector<boost::dynamic_bitset<>> atomNeighborhoods(
       nAtoms, boost::dynamic_bitset<>(mol.getNumBonds()));
   boost::dynamic_bitset<> deadAtoms(nAtoms);
 
@@ -228,12 +143,13 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
 
   std::vector<unsigned int> atomOrder(nAtoms);
   if (onlyNonzeroInvariants) {
-    std::vector<std::pair<int32_t, uint32_t> > ordering;
+    std::vector<std::pair<int32_t, uint32_t>> ordering;
     for (unsigned int i = 0; i < nAtoms; ++i) {
-      if (!(*invariants)[i])
+      if (!(*invariants)[i]) {
         ordering.push_back(std::make_pair(1, i));
-      else
+      } else {
         ordering.push_back(std::make_pair(0, i));
+      }
     }
     std::sort(ordering.begin(), ordering.end());
     for (unsigned int i = 0; i < nAtoms; ++i) {
@@ -247,22 +163,22 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
   // now do our subsequent rounds:
   for (unsigned int layer = 0; layer < radius; ++layer) {
     std::vector<uint32_t> roundInvariants(nAtoms);
-    std::vector<boost::dynamic_bitset<> > roundAtomNeighborhoods =
+    std::vector<boost::dynamic_bitset<>> roundAtomNeighborhoods =
         atomNeighborhoods;
     std::vector<AccumTuple> neighborhoodsThisRound;
 
     BOOST_FOREACH (unsigned int atomIdx, atomOrder) {
       if (!deadAtoms[atomIdx]) {
-        const Atom *tAtom = mol.getAtomWithIdx(atomIdx);
+        const Atom *tAtom = lmol->getAtomWithIdx(atomIdx);
         if (!tAtom->getDegree()) {
           deadAtoms.set(atomIdx, 1);
           continue;
         }
-        std::vector<std::pair<int32_t, uint32_t> > nbrs;
+        std::vector<std::pair<int32_t, uint32_t>> nbrs;
         ROMol::OEDGE_ITER beg, end;
-        boost::tie(beg, end) = mol.getAtomBonds(tAtom);
+        boost::tie(beg, end) = lmol->getAtomBonds(tAtom);
         while (beg != end) {
-          const BOND_SPTR bond = mol[*beg];
+          const Bond *bond = mol[*beg];
           roundAtomNeighborhoods[atomIdx][bond->getIdx()] = 1;
 
           unsigned int oIdx = bond->getOtherAtomIdx(atomIdx);
@@ -290,10 +206,10 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
         std::sort(nbrs.begin(), nbrs.end());
         // and now calculate the new invariant and test if the atom is newly
         // "chiral"
-        boost::uint32_t invar = layer;
+        std::uint32_t invar = layer;
         gboost::hash_combine(invar, (*invariants)[atomIdx]);
         bool looksChiral = (tAtom->getChiralTag() != Atom::CHI_UNSPECIFIED);
-        for (std::vector<std::pair<int32_t, uint32_t> >::const_iterator it =
+        for (std::vector<std::pair<int32_t, uint32_t>>::const_iterator it =
                  nbrs.begin();
              it != nbrs.end(); ++it) {
           // add the contribution to the new invariant:
@@ -349,13 +265,13 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
         if (!onlyNonzeroInvariants || invariantCpy[iter->get<2>()]) {
           if (includeAtoms[iter->get<2>()]) {
             uint32_t bit = updateElement(res, iter->get<1>(), useCounts);
-            if (atomsSettingBits)
+            if (atomsSettingBits) {
               (*atomsSettingBits)[bit].push_back(
                   std::make_pair(iter->get<2>(), layer + 1));
+            }
           }
-          if (!fromAtoms ||
-              std::find(fromAtoms->begin(), fromAtoms->end(), iter->get<2>()) !=
-                  fromAtoms->end()) {
+          if (!fromAtoms || std::find(fromAtoms->begin(), fromAtoms->end(),
+                                      iter->get<2>()) != fromAtoms->end()) {
             neighborhoods.push_back(iter->get<0>());
           }
         }
@@ -377,7 +293,9 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
     atomNeighborhoods = roundAtomNeighborhoods;
   }
 
-  if (owner) delete invariants;
+  if (owner) {
+    delete invariants;
+  }
 }
 
 SparseIntVect<uint32_t> *getFingerprint(
@@ -405,12 +323,15 @@ SparseIntVect<uint32_t> *getHashedFingerprint(
   return res;
 }
 
-ExplicitBitVect *getFingerprintAsBitVect(
-    const ROMol &mol, unsigned int radius, unsigned int nBits,
-    std::vector<uint32_t> *invariants, const std::vector<uint32_t> *fromAtoms,
-    bool useChirality, bool useBondTypes, bool onlyNonzeroInvariants,
-    BitInfoMap *atomsSettingBits, bool includeRedundantEnvironments) {
-  ExplicitBitVect *res = new ExplicitBitVect(nBits);
+ExplicitBitVect *getFingerprintAsBitVect(const ROMol &mol, unsigned int radius,
+                                         unsigned int nBits,
+                                         std::vector<uint32_t> *invariants,
+                                         const std::vector<uint32_t> *fromAtoms,
+                                         bool useChirality, bool useBondTypes,
+                                         bool onlyNonzeroInvariants,
+                                         BitInfoMap *atomsSettingBits,
+                                         bool includeRedundantEnvironments) {
+  auto *res = new ExplicitBitVect(nBits);
   calcFingerprint(mol, radius, invariants, fromAtoms, useChirality,
                   useBondTypes, false, onlyNonzeroInvariants, atomsSettingBits,
                   includeRedundantEnvironments, *res);

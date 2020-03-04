@@ -6,6 +6,9 @@
 /.project
 /.pydevproject
 
+#- CLion files
+/cmake-build-*
+
 #- IDEA files
 /.idea
 
@@ -23,6 +26,10 @@ __pycache__/
 /build*/
 /Docs/Book/_build*/
 
+/Code/RDBoost/test.h
+/Code/RDGeneral/RDConfig.h
+/Code/RDGeneral/export.h
+/Code/RDGeneral/versions.h
 /Code/RDGeneral/versions.cpp
 
 /Code/GraphMol/SLNParse/lex.yysln.cpp
@@ -35,6 +42,19 @@ __pycache__/
 /Code/GraphMol/SmilesParse/smarts.tab.hpp
 /Code/GraphMol/SmilesParse/smiles.tab.cpp
 /Code/GraphMol/SmilesParse/smiles.tab.hpp
+
+/Data/templates.mae
+
+/External/**/*.tar.gz
+/External/**/*.zip
+/External/catch/catch/
+/External/CoordGen/coordgen/
+/External/CoordGen/maeparser/
+/External/FreeSASA/freesasa-2.0.1/
+/External/INCHI-API/INCHI-1-SRC/
+/External/INCHI-API/src/
+/External/rapidjson-1.1.0/
+/External/RingFamilies/RingDecomposerLib/
 
 /rdkit/RDPaths.py
 /rdkit/Chem/inchi.py
@@ -61,6 +81,7 @@ __pycache__/
 /Code/GraphMol/FileParsers/test_data/outNCI_few.tdt
 /Code/GraphMol/FileParsers/test_data/outNCI_first_200.props.sdf
 /Code/GraphMol/FileParsers/test_data/outSmiles.csv
+/Code/GraphMol/FileParsers/test_data/testSGroupsSample_V?000.mol
 
 /Code/GraphMol/ForceFieldHelpers/UFF/test_data/Issue62.sdf
 
@@ -74,6 +95,9 @@ __pycache__/
 /Code/GraphMol/test_data/prop.pkl
 
 /Projects/DbCLI/testData/bzr/
+
+/rdkit/sping/tests/testallps.ps
+
 /rdkit/ML/Data/test_data/testgeneral.dat.pkl
 /rdkit/ML/Data/test_data/testquant.qdat.pkl
 .DS_Store

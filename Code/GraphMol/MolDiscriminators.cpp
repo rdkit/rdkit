@@ -26,7 +26,9 @@ double computeBalabanJ(double *distMat, int nb, int nAts) {
   int nActive = nAts;
   int mu = nb - nActive + 1;
 
-  if (mu == -1) return 0.0;
+  if (mu == -1) {
+    return 0.0;
+  }
 
   for (int i = 0; i < nAts; i++) {
     int iTab = i * nAts;
@@ -65,9 +67,8 @@ double computeBalabanJ(const ROMol &mol, bool useBO, bool force,
     if (bondPath) {
       boost::dynamic_bitset<> atomsUsed(mol.getNumAtoms());
       boost::dynamic_bitset<> bondsUsed(mol.getNumBonds());
-      for (std::vector<int>::const_iterator ci = bondPath->begin();
-           ci != bondPath->end(); ci++) {
-        bondsUsed[*ci] = 1;
+      for (int ci : *bondPath) {
+        bondsUsed[ci] = 1;
       }
       std::vector<const Bond *> bonds;
       bonds.reserve(bondPath->size());
@@ -77,7 +78,7 @@ double computeBalabanJ(const ROMol &mol, bool useBO, bool force,
       ROMol::EDGE_ITER beg, end;
       boost::tie(beg, end) = mol.getEdges();
       while (beg != end) {
-        const Bond *bond = mol[*beg].get();
+        const Bond *bond = mol[*beg];
         if (bondsUsed[bond->getIdx()]) {
           int begIdx = bond->getBeginAtomIdx();
           int endIdx = bond->getEndAtomIdx();
@@ -101,12 +102,14 @@ double computeBalabanJ(const ROMol &mol, bool useBO, bool force,
     } else {
       nb = mol.getNumBonds();
       nAts = mol.getNumAtoms();
-      dMat = MolOps::getDistanceMat(mol, true, true, true, 0);
+      dMat = MolOps::getDistanceMat(mol, true, true, true, nullptr);
       res = computeBalabanJ(dMat, nb, nAts);
       delete[] dMat;
     }
 
-    if (cacheIt) mol.setProp(common_properties::BalabanJ, res, true);
+    if (cacheIt) {
+      mol.setProp(common_properties::BalabanJ, res, true);
+    }
   }
   return res;
 }

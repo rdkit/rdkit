@@ -1,6 +1,6 @@
 # Run this with:
 #  python setup.py install --install-lib=.
-from __future__ import print_function
+
 from distutils.core import setup, Extension
 import RDConfig
 

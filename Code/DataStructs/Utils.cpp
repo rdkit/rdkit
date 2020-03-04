@@ -16,10 +16,10 @@
 //! Convert a SparseBitVector to an ExplicitBitVector
 ExplicitBitVect *convertToExplicit(const SparseBitVect *sbv) {
   unsigned int sl = sbv->getNumBits();
-  ExplicitBitVect *ebv = new ExplicitBitVect(sl);
+  auto *ebv = new ExplicitBitVect(sl);
   const IntSet *bset = sbv->getBitSet();
-  for (IntSetConstIter it = bset->begin(); it != bset->end(); it++) {
-    ebv->setBit(*it);
+  for (int it : *bset) {
+    ebv->setBit(it);
   }
   return ebv;
 }
@@ -31,10 +31,12 @@ void a2b(const char *, char *);
 template <typename T>
 void FromDaylightString(T &sbv, const std::string &s) {
   sbv.clearBits();
-  int length = s.length();
-  int nBits;
+  size_t length = s.length();
+  size_t nBits;
 
-  if (s[length - 1] == '\n') length -= 1;
+  if (s[length - 1] == '\n') {
+    length -= 1;
+  }
 
   // 4 bytes in the ascii correspond to 3 bytes in the binary
   //  plus there's one extra ascii byte for the pad marker
@@ -53,13 +55,13 @@ void FromDaylightString(T &sbv, const std::string &s) {
     default:
       throw "ValueError bad daylight fingerprint string";
   }
-  int i = 0, nBitsDone = 0;
+  size_t i = 0, nBitsDone = 0;
   while (i < length) {
     char bytes[3];
     a2b(s.c_str() + i, bytes);
-    for (int j = 0; j < 3 && nBitsDone < nBits; j++) {
+    for (size_t j = 0; j < 3 && nBitsDone < nBits; j++) {
       unsigned char query = 0x80;
-      for (int k = 0; k < 8; k++) {
+      for (size_t k = 0; k < 8; k++) {
         if (bytes[j] & query) {
           sbv.setBit(nBitsDone);
         }
@@ -71,8 +73,8 @@ void FromDaylightString(T &sbv, const std::string &s) {
   }
 }
 
-template void FromDaylightString(SparseBitVect &sbv, const std::string &s);
-template void FromDaylightString(ExplicitBitVect &sbv, const std::string &s);
+template RDKIT_DATASTRUCTS_EXPORT void FromDaylightString(SparseBitVect &sbv, const std::string &s);
+template RDKIT_DATASTRUCTS_EXPORT void FromDaylightString(ExplicitBitVect &sbv, const std::string &s);
 
 //! \brief Construct a BitVect from the ASCII representation of a
 //! BitString
@@ -81,12 +83,14 @@ void FromBitString(T &sbv, const std::string &s) {
   PRECONDITION(s.length() <= sbv.getNumBits(), "bad bitvect length");
   sbv.clearBits();
   for (unsigned int i = 0; i < sbv.getNumBits(); ++i) {
-    if (s[i] == '1') sbv.setBit(i);
+    if (s[i] == '1') {
+      sbv.setBit(i);
+    }
   }
 }
 
-template void FromBitString(SparseBitVect &sbv, const std::string &s);
-template void FromBitString(ExplicitBitVect &sbv, const std::string &s);
+template RDKIT_DATASTRUCTS_EXPORT void FromBitString(SparseBitVect &sbv, const std::string &s);
+template RDKIT_DATASTRUCTS_EXPORT void FromBitString(ExplicitBitVect &sbv, const std::string &s);
 
 //! converts 4 ascii bytes at a4 to 3 binary bytes
 /*!
@@ -322,16 +326,17 @@ void a2b(const char *a4, char *b3) {
     *** b3: |000000111111222222333333
     ***     |=====+=====+=====+=====|
     *********************************************/
-    if (i == 0)
+    if (i == 0) {
       b3[0] = (byte << 2); /*** 6 bits into 1st byte ***/
-    else if (i == 1) {
+    } else if (i == 1) {
       b3[0] |= ((b = byte) >> 4); /*** 2 bits into 1st byte ***/
       b3[1] = ((b = byte) << 4);  /*** 4 bits into 2nd byte ***/
     } else if (i == 2) {
       b3[1] |= ((b = byte) >> 2); /*** 4 bits into 2nd byte ***/
       b3[2] = ((b = byte) << 6);  /*** 2 bits into 3rd byte ***/
-    } else if (i == 3)
+    } else if (i == 3) {
       b3[2] |= byte; /*** 6 bits into 3rd byte ***/
+    }
   }
   return;
 }

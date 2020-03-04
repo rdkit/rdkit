@@ -22,9 +22,9 @@ Other compatibility notes:
 
 
 """
-from __future__ import print_function
+
 import numpy
-from rdkit.six.moves import cPickle
+import pickle
 from rdkit.ML.Data import DataUtils
 
 
@@ -511,7 +511,7 @@ class Composite(object):
       self.ClearModelExamples()
 
     pFile = open(fileName, 'wb+')
-    cPickle.dump(self, pFile, 1)
+    pickle.dump(self, pFile, 1)
     pFile.close()
 
   def AddModel(self, model, error, needsQuantization=1):
@@ -697,7 +697,7 @@ class Composite(object):
     """
     outStr = 'Composite\n'
     for i in range(len(self.modelList)):
-      outStr = (outStr + '  Model %4d:  %5d occurances  %%%5.2f average error\n' %
+      outStr = (outStr + '  Model %4d:  %5d occurrences  %%%5.2f average error\n' %
                 (i, self.countList[i], 100. * self.errList[i]))
     return outStr
 

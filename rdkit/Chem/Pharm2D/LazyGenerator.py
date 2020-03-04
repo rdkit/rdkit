@@ -10,7 +10,7 @@
 """ lazy generator of 2D pharmacophore signature data
 
 """
-from __future__ import print_function
+
 
 from rdkit.Chem.Pharm2D import SigFactory, Matcher
 

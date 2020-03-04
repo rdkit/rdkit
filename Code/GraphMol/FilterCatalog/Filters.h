@@ -29,6 +29,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
+#include <RDGeneral/export.h>
 #ifndef __RDKIT_FILTERDATA__
 #define __RDKIT_FILTERDATA__
 
@@ -57,6 +58,6 @@ const FilterProperty_t *GetFilterProperties(
 FilterCatalogEntry *MakeFilterCatalogEntry(const FilterData_t &,
                                            unsigned int num_props = 0,
                                            const FilterProperty_t *props = 0);
-}
+}  // namespace RDKit
 
 #endif

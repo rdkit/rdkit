@@ -721,6 +721,11 @@ static yyconst flex_int16_t yy_chk[776] =
 // Created by Greg Landrum, September 2006
 //
 
+#if defined(__CYGWIN__) && !defined(fileno)
+// -std=c++11 turns off recent posix features
+extern "C" int fileno(FILE*);
+#endif
+
 #include <cstdio>
 #ifdef WIN32
 #include <io.h> 	 
@@ -2584,7 +2589,8 @@ YY_BUFFER_STATE yysln__scan_bytes  (yyconst char * yybytes, yy_size_t  _yybytes_
 
 static void yy_fatal_error (yyconst char* msg , yyscan_t yyscanner)
 {
-    	(void) fprintf( stderr, "%s\n", msg );
+    RDUNUSED_PARAM(yyscanner);
+  	(void) fprintf( stderr, "%s\n", msg );
 	exit( YY_EXIT_FAILURE );
 }
 
@@ -2916,6 +2922,7 @@ static int yy_flex_strlen (yyconst char * s , yyscan_t yyscanner)
 
 void *yysln_alloc (yy_size_t  size , yyscan_t yyscanner)
 {
+    RDUNUSED_PARAM(yyscanner);
 	return (void *) malloc( size );
 }
 
@@ -2928,11 +2935,13 @@ void *yysln_realloc  (void * ptr, yy_size_t  size , yyscan_t yyscanner)
 	 * any pointer type to void*, and deal with argument conversions
 	 * as though doing an assignment.
 	 */
+    RDUNUSED_PARAM(yyscanner);
 	return (void *) realloc( (char *) ptr, size );
 }
 
 void yysln_free (void * ptr , yyscan_t yyscanner)
 {
+    RDUNUSED_PARAM(yyscanner);
 	free( (char *) ptr );	/* see yysln_realloc() for (char *) cast */
 }
 

@@ -13,7 +13,7 @@
 # peter ertl, august 2015
 #
 
-from __future__ import print_function
+
 from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors
 import sys, math, gzip, pickle

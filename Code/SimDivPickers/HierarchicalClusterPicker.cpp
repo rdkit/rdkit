@@ -26,15 +26,15 @@ RDKit::VECT_INT_VECT HierarchicalClusterPicker::cluster(
                "pickSize cannot be larger than the poolSize");
 
   // Do the clustering
-  long int method = (long int)d_method;
+  auto method = (long int)d_method;
   long int len = poolSize * (poolSize - 1);
-  long int *ia = (long int *)calloc(poolSize, sizeof(long int));
-  long int *ib = (long int *)calloc(poolSize, sizeof(long int));
+  auto *ia = (long int *)calloc(poolSize, sizeof(long int));
+  auto *ib = (long int *)calloc(poolSize, sizeof(long int));
   real *crit = (real *)calloc(poolSize, sizeof(real));
   CHECK_INVARIANT(ia, "failed to allocate memory");
   CHECK_INVARIANT(ib, "failed to allocate memory");
   CHECK_INVARIANT(crit, "failed to allocate memory");
-  long int poolSize2 = static_cast<long int>(poolSize);
+  auto poolSize2 = static_cast<long int>(poolSize);
 
   distdriver_(&poolSize2,       // number of items in the pool
               &len,             // number of entries in the distance matrix
@@ -62,7 +62,7 @@ RDKit::VECT_INT_VECT HierarchicalClusterPicker::cluster(
     clusters.push_back(cls);
   }
 
-  // do the merging, each round of of this loop eleminates one cluster
+  // do the merging, each round of of this loop eliminates one cluster
   RDKit::INT_VECT removed;
   for (unsigned int i = 0; i < (poolSize - pickSize); i++) {
     int cx1 = ia[i] - 1;

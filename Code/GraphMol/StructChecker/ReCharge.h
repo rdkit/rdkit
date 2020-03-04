@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #pragma once
 #include "StructChecker.h"
 #include "Pattern.h"
@@ -15,11 +16,11 @@
 namespace RDKit {
 namespace StructureCheck {
 /*
-* Returns the total charge of all atoms in molecule.
-*/
+ * Returns the total charge of all atoms in molecule.
+ */
 int TotalCharge(const ROMol &mol);
 
-class ChargeFix {
+class RDKIT_STRUCTCHECKER_EXPORT ChargeFix {
   const StructCheckerOptions &Options;
   RWMol &Mol;
   std::vector<unsigned> BondColor;
@@ -34,13 +35,13 @@ class ChargeFix {
     resetValues();
   }
   /*
-  * Removes hydrogens from *mp until desired_charge is reached. The
-  * positions for hydrogen removal are selected by "acidity" combined
-  * with a refinement algorithm. It returns TRUE if molecule could be
-  * neutralized and FALSE if any problem were encountered.
-  * *ndeprot and *nrefine are set to the number of deprotonations
-  * and refinement cycles performed.
-  */
+   * Removes hydrogens from *mp until desired_charge is reached. The
+   * positions for hydrogen removal are selected by "acidity" combined
+   * with a refinement algorithm. It returns TRUE if molecule could be
+   * neutralized and FALSE if any problem were encountered.
+   * *ndeprot and *nrefine are set to the number of deprotonations
+   * and refinement cycles performed.
+   */
   bool rechargeMolecule(unsigned &ndeprot, unsigned &nrefine);
 
  private:  // internal helpers:
@@ -51,5 +52,5 @@ class ChargeFix {
   void resetColors();
   void resetValues();
 };
-}
-}
+}  // namespace StructureCheck
+}  // namespace RDKit

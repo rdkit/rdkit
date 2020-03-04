@@ -3,7 +3,7 @@
 Replaced numpy.oldnumeric with numpy methods - Jan 2015, PGedeck
 """
 #pylint: disable=E1101,C0111,R0904
-from __future__ import print_function
+
 
 import rdkit.Numerics.rdAlignment as rdAlg
 from rdkit import Geometry

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2018 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -14,6 +14,7 @@
 
 */
 
+#include <RDGeneral/export.h>
 #ifndef _RDKIT_BASE_H
 #define _RDKIT_BASE_H
 
@@ -29,5 +30,6 @@
 #include <GraphMol/BondIterators.h>
 #include <GraphMol/PeriodicTable.h>
 #include <GraphMol/SanitException.h>
+#include <GraphMol/StereoGroup.h>
 
 #endif

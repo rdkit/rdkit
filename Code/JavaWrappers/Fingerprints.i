@@ -34,6 +34,7 @@
 %{
 #include <DataStructs/ExplicitBitVect.h>
 #include <DataStructs/BitOps.h>
+#include <GraphMol/Fingerprints/FingerprintUtil.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/Fingerprints/MACCS.h>
 %}
@@ -50,3 +51,5 @@
 %rename(MACCSFingerprintMol) RDKit::MACCSFingerprints::getFingerprintAsBitVect;
 %include <GraphMol/Fingerprints/MACCS.h>
 
+%ignore RDKit::RDKitFPUtils::enumerateAllPaths;
+%include <GraphMol/Fingerprints/FingerprintUtil.h>

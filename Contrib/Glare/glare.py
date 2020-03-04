@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 import random, operator, itertools, math
 
 """
@@ -309,7 +309,7 @@ class Glare:
         if self.initialFraction is None or self.initialFraction > 0.999:
             print ("INITIAL FRACTION TO KEEP : AUTOMATIC")
         else:
-            print ("INITAL FRACTION TO KEEP : %s%%"%(self.initialFraction*100))
+            print ("INITIAL FRACTION TO KEEP : %s%%"%(self.initialFraction*100))
         print ("Actual SIZE : %s = %s"%(
             " x ".join([str(len(rg.sidechains)) for rg in library.rgroups]),
             reduce(operator.mul, [len(rg.sidechains) for rg in library.rgroups])
@@ -319,8 +319,8 @@ class Glare:
         Gt = self.desiredFinalGoodness
 
         for iteration in range(1, self.maxIterations+1):
-            # chunk of the total library into smaller more managable sets
-            #  and run combinitorial analysis on the sub libraries
+            # chunk of the total library into smaller more manageable sets
+            #  and run combinatorial analysis on the sub libraries
             #  each of these records the number of times a sidechain is used
             #  in a successful enumeration which is then used to prune the
             #  library at the end
@@ -330,7 +330,7 @@ class Glare:
                 
             good = total = 0.0
             chunked_libs =  library.chunk(self.numPartitions)
-            # for each chunk, do the combinitorial check to see
+            # for each chunk, do the combinatorial check to see
             #  if reagents make good products
             for libidx, chunk in enumerate(chunked_libs):
                 g,t = chunk.evaluate(props)
@@ -364,7 +364,7 @@ class Glare:
                     Ki = (1.0 - K0) * (Gi - G0) / (Gt - G0) + K0;
                 fraction = min(1.0, Ki)
 
-            # prune the library to keep the highest occuring sidechains
+            # prune the library to keep the highest occurring sidechains
             #  note that even if all sidechains are acceptable,
             #  some will always get pruned
             
@@ -402,7 +402,7 @@ class Glare:
             ))
             print ("EFFECTIVENESS : %s%%"%(library.effectiveness()*100.))
 
-            # stopping critieria
+            # stopping criteria
             if iteration and Gi < 1e-12:
                 return
             elif abs(Gi - self.desiredFinalGoodness) < 0.001 or \

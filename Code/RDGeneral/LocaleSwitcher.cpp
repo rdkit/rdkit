@@ -28,6 +28,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
+#if defined(__CYGWIN__) && !defined(_GNU_SOURCE)
+// -std=c++11 turns off recent POSIX features!
+#define _GNU_SOURCE
+#endif
+
 #include "LocaleSwitcher.h"
 #include <string>
 
@@ -36,8 +41,11 @@
 #ifdef __APPLE__
 #include <xlocale.h>
 #endif
+#ifdef __CYGWIN__
+#include <locale.h>
+#endif
 #ifdef RDK_THREADSAFE_SSS
-#include <boost/thread/tss.hpp>
+#include <thread>
 #endif
 
 namespace RDKit {
@@ -70,15 +78,13 @@ static int recurseLocale(int state) {
     recursion--;
   return recursion;
 #else
-  static boost::thread_specific_ptr<int> recursion;
-  if (!recursion.get()) {
-    recursion.reset(new int(0));
+  static thread_local int recursion = 0;
+  if (state == SwitchLocale) {
+    recursion++;
+  } else if (state == ResetLocale) {
+    recursion--;
   }
-  if (state == SwitchLocale)
-    (*recursion)++;
-  else if (state == ResetLocale)
-    (*recursion)--;
-  return (*recursion);
+  return recursion;
 #endif
 }
 
@@ -92,6 +98,7 @@ class LocaleSwitcherImpl {
     if (!recurseLocale(CurrentState)) {
 #ifdef RDK_THREADSAFE_SSS
       _configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
+      old_locale = ::setlocale(LC_ALL, nullptr);
       ::setlocale(LC_ALL, "C");  // thread safe on windows
 #else
       std::setlocale(LC_ALL, "C");
@@ -103,31 +110,33 @@ class LocaleSwitcherImpl {
   ~LocaleSwitcherImpl() {
     if (switched) {
 #ifdef RDK_THREADSAFE_SSS
-      ::setlocale(LC_ALL, "C");
+      ::setlocale(LC_ALL, old_locale.c_str());
 #else
-      std::setlocale(LC_ALL, "");  // back to last (global?) locale
+      std::setlocale(LC_ALL, old_locale.c_str());  // back to last (global?) locale
 #endif  // RDK_THREADSAFE_SSS
       recurseLocale(ResetLocale);
     }
   }
 
  public:
-  bool switched;
+  bool switched = false;
+  std::string old_locale;
 #else  // _WIN32
   locale_t loc;      // current "C" locale
-  locale_t old_loc;  // locale we came frome
+  locale_t old_loc;  // locale we came from
 
-  LocaleSwitcherImpl() : old_locale(setlocale(LC_ALL, NULL)) {
+  LocaleSwitcherImpl() : old_locale(setlocale(LC_ALL, nullptr)) {
     // set locale for this thread
 
     if (!recurseLocale(CurrentState) && old_locale != "C") {
       recurseLocale(SwitchLocale);
-      old_loc = uselocale(0);
-      loc = newlocale(LC_ALL_MASK, "C", (locale_t)0);
+      old_loc = uselocale(nullptr);
+      loc = newlocale(LC_ALL_MASK, "C", (locale_t) nullptr);
       uselocale(loc);
       // Don't free "C" or "GLOBAL" Locales
-    } else
+    } else {
       old_locale = "C";  // prevents recursion
+    }
   }
   ~LocaleSwitcherImpl() {
     if (old_locale != "C") {

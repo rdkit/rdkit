@@ -13,6 +13,7 @@
   \brief Use MolDescriptors.h in client code.
 
 */
+#include <RDGeneral/export.h>
 #ifndef __RD_MOLSURF_H__
 #define __RD_MOLSURF_H__
 
@@ -30,7 +31,7 @@ const std::string labuteASAVersion = "1.0.2";
   (2000)
 
   \param mol        the molecule of interest
-  \param Vi         used to return the explict atom contribs
+  \param Vi         used to return the explicit atom contribs
   \param hContrib   used to return the H contributions (if calculated)
   \param includeHs  (optional) if this is true (the default),
       the contribution of H atoms to the ASA will be included.
@@ -39,9 +40,11 @@ const std::string labuteASAVersion = "1.0.2";
   \return the sum of the atomic contributions
 
 */
-double getLabuteAtomContribs(const ROMol &mol, std::vector<double> &Vi,
-                             double &hContrib, bool includeHs = true,
-                             bool force = false);
+RDKIT_DESCRIPTORS_EXPORT double getLabuteAtomContribs(const ROMol &mol,
+                                                      std::vector<double> &Vi,
+                                                      double &hContrib,
+                                                      bool includeHs = true,
+                                                      bool force = false);
 
 //! calculates Labute's Approximate Surface Area (ASA from MOE)
 /*!
@@ -55,10 +58,11 @@ double getLabuteAtomContribs(const ROMol &mol, std::vector<double> &Vi,
   \param force      (optional) calculate the value even if it's cached.
 
 */
-double calcLabuteASA(const ROMol &mol, bool includeHs = true,
-                     bool force = false);
+RDKIT_DESCRIPTORS_EXPORT double calcLabuteASA(const ROMol &mol,
+                                              bool includeHs = true,
+                                              bool force = false);
 
-const std::string tpsaVersion = "1.1.0";
+const std::string tpsaVersion = "2.0.0";
 //! calculates atomic contributions to the TPSA value
 /*!
   The TPSA definition is from:
@@ -66,16 +70,21 @@ const std::string tpsaVersion = "1.1.0";
    Fast Calculation of Molecular Polar Surface Area as a Sum of Fragment-based
    Contributions and Its Application to the Prediction of Drug Transport
    Properties, J.Med.Chem. 43, 3714-3717, 2000
+   By default the calculation does not include contributions from S or P atoms,
+   this can be be changed with the includeSandP argument.
 
-  \param mol        the molecule of interest
-  \param Vi         used to return the atom contribs
-  \param force      (optional) calculate the values even if they are cached.
+  \param mol          the molecule of interest
+  \param Vi           used to return the atom contribs
+  \param force        (optional) calculate the values even if they are cached.
+  \param includeSandP (optional) include contributions from S and P atoms
 
   \return the sum of the atomic contributions
 
 */
-double getTPSAAtomContribs(const ROMol &mol, std::vector<double> &Vi,
-                           bool force = false);
+RDKIT_DESCRIPTORS_EXPORT double getTPSAAtomContribs(const ROMol &mol,
+                                                    std::vector<double> &Vi,
+                                                    bool force = false,
+                                                    bool includeSandP = false);
 
 //! calculates the TPSA value for a molecule
 /*!
@@ -84,21 +93,26 @@ double getTPSAAtomContribs(const ROMol &mol, std::vector<double> &Vi,
    Fast Calculation of Molecular Polar Surface Area as a Sum of Fragment-based
    Contributions and Its Application to the Prediction of Drug Transport
    Properties, J.Med.Chem. 43, 3714-3717, 2000
+   By default the calculation does not include contributions from S or P atoms,
+   this can be be changed with the includeSandP argument.
 
-  \param mol        the molecule of interest
-  \param force      (optional) calculate the value even if it's cached.
+  \param mol          the molecule of interest
+  \param force        (optional) calculate the value even if it's cached.
+  \param includeSandP (optional) include contributions from S and P atoms
 
 */
-double calcTPSA(const ROMol &mol, bool force = false);
+RDKIT_DESCRIPTORS_EXPORT double calcTPSA(const ROMol &mol, bool force = false,
+                                         bool includeSandP = false);
 
-std::vector<double> calcSlogP_VSA(const ROMol &mol,
-                                  std::vector<double> *bins = 0,
-                                  bool force = false);
-std::vector<double> calcSMR_VSA(const ROMol &mol, std::vector<double> *bins = 0,
-                                bool force = false);
-std::vector<double> calcPEOE_VSA(const ROMol &mol,
-                                 std::vector<double> *bins = 0,
-                                 bool force = false);
+RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcSlogP_VSA(
+    const ROMol &mol, std::vector<double> *bins = 0, bool force = false);
+RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcSMR_VSA(
+    const ROMol &mol, std::vector<double> *bins = 0, bool force = false);
+RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcPEOE_VSA(
+    const ROMol &mol, std::vector<double> *bins = 0, bool force = false);
+RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcCustomProp_VSA(
+    const ROMol &mol, const std::string &customPropName,
+    const std::vector<double> &bins, bool force = false);
 
 }  // end of namespace Descriptors
 }  // end of namespace RDKit

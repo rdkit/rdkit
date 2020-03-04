@@ -37,7 +37,7 @@ def VSA_EState_(mol, bins=None, force=1):
     return mol._vsaEState
 
   if bins is None:
-    bins = estateBins
+    bins = vsaBins
   propContribs = EStateIndices_(mol, force=force)
   volContribs = VSAContribs_(mol)
 

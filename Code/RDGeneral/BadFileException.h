@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef _RD_BADFILEEXCEPTION_H
 #define _RD_BADFILEEXCEPTION_H
 
@@ -26,12 +27,13 @@ class BadFileException : public std::runtime_error {
   explicit BadFileException(const std::string &msg)
       : std::runtime_error("BadFileException"), _msg(msg){};
   //! get the error message
-  const char *message() const { return _msg.c_str(); };
-  ~BadFileException() throw(){};
+  const char *what() const noexcept override { return _msg.c_str(); };
+  const char *message() const noexcept { return what(); };
+  ~BadFileException() noexcept {};
 
  private:
   std::string _msg;
 };
-}
+}  // namespace RDKit
 
 #endif

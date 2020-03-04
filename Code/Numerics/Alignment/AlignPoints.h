@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef __RD_ALIGN_POINTS_H__
 #define __RD_ALIGN_POINTS_H__
 
@@ -19,7 +20,7 @@ namespace RDNumeric {
 namespace Alignments {
 
 //! \brief Compute an optimal alignment (minimum sum of squared distance)
-//between
+// between
 //! two sets of points in 3D
 /*!
   \param refPoints      A vector of pointers to the reference points
@@ -37,11 +38,12 @@ namespace Alignments {
   This function returns the sum of squared distance (SSR) not the RMSD
   RMSD = sqrt(SSR/numPoints)
 */
-double AlignPoints(const RDGeom::Point3DConstPtrVect &refPoints,
-                   const RDGeom::Point3DConstPtrVect &probePoints,
-                   RDGeom::Transform3D &trans, const DoubleVector *weights = 0,
-                   bool reflect = false, unsigned int maxIterations = 50);
-}
-}
+double RDKIT_ALIGNMENT_EXPORT
+AlignPoints(const RDGeom::Point3DConstPtrVect &refPoints,
+            const RDGeom::Point3DConstPtrVect &probePoints,
+            RDGeom::Transform3D &trans, const DoubleVector *weights = 0,
+            bool reflect = false, unsigned int maxIterations = 50);
+}  // namespace Alignments
+}  // namespace RDNumeric
 
 #endif

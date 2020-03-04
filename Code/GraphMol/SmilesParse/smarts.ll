@@ -4,12 +4,16 @@
 
 %{
 
-// $Id$
 //
-//  Copyright (C) 2003-2011 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2018 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
+
+#if defined(__CYGWIN__) && !defined(fileno)
+// -std=c++11 turns off recent posix features
+extern "C" int fileno(FILE*);
+#endif
 
 #include <cstdio>
 #ifdef WIN32
@@ -85,6 +89,15 @@ size_t setup_smarts_string(const std::string &text,yyscan_t yyscanner){
 %s IN_BRANCH_STATE
 %s IN_RECURSION_STATE
 %%
+
+%{
+  if (start_token)
+    {
+      int t = start_token;
+      start_token = 0;
+      return t;
+    }
+%}
 
 @[' ']*TH |
 @[' ']*AL |
@@ -226,6 +239,18 @@ size_t setup_smarts_string(const std::string &text,yyscan_t yyscanner){
 	return COMPLEX_ATOM_QUERY_TOKEN;
 }
 
+<IN_ATOM_STATE>z {
+	yylval->atom = new QueryAtom();
+	yylval->atom->setQuery(makeAtomHasHeteroatomNbrsQuery());
+	return HETERONEIGHBOR_ATOM_QUERY_TOKEN;
+}
+
+<IN_ATOM_STATE>Z {
+	yylval->atom = new QueryAtom();
+	yylval->atom->setQuery(makeAtomHasAliphaticHeteroatomNbrsQuery());
+	return ALIPHATICHETERONEIGHBOR_ATOM_QUERY_TOKEN;
+}
+
 <IN_ATOM_STATE>h {
 	yylval->atom = new QueryAtom();
         yylval->atom->setQuery(makeAtomHasImplicitHQuery());
@@ -279,6 +304,10 @@ o			{  yylval->ival = 8;  return AROMATIC_ATOM_TOKEN;  }
 p			{  yylval->ival = 15;  return AROMATIC_ATOM_TOKEN;  }
 
 s			{  yylval->ival = 16;  return AROMATIC_ATOM_TOKEN;  }
+
+<IN_ATOM_STATE>si	{  yylval->ival = 14;  return AROMATIC_ATOM_TOKEN;  }
+
+<IN_ATOM_STATE>as	{  yylval->ival = 33;  return AROMATIC_ATOM_TOKEN;  }
 
 <IN_ATOM_STATE>se	{  yylval->ival = 34;  return AROMATIC_ATOM_TOKEN;  }
 
@@ -347,6 +376,10 @@ A			{
 <IN_BRANCH_STATE>\)       	{ yy_pop_state(yyscanner); return GROUP_CLOSE_TOKEN; }
 <IN_RECURSION_STATE>\)       	{ yy_pop_state(yyscanner); return END_RECURSE; }
 
+\{       	{ return RANGE_OPEN_TOKEN; }
+\}       	{ return RANGE_CLOSE_TOKEN; }
+
+
 
 \[			{ yy_push_state(IN_ATOM_STATE,yyscanner); return ATOM_OPEN_TOKEN; }
 <IN_ATOM_STATE>\]	{ yy_pop_state(yyscanner); return ATOM_CLOSE_TOKEN; }
@@ -397,7 +430,16 @@ A			{
 	yylval->atom->setQuery(makeAtomHybridizationQuery(Atom::SP3));
 	return HYB_TOKEN;
 }
-
+\^4		{
+	yylval->atom = new QueryAtom();
+	yylval->atom->setQuery(makeAtomHybridizationQuery(Atom::SP3D));
+	return HYB_TOKEN;
+}
+\^5		{
+	yylval->atom = new QueryAtom();
+	yylval->atom->setQuery(makeAtomHybridizationQuery(Atom::SP3D2));
+	return HYB_TOKEN;
+}
 \n		return EOS_TOKEN;
 
 <<EOF>>		{ return EOS_TOKEN; }

@@ -50,7 +50,7 @@ Progress Reports:
 ##
 ##
 ##
-from __future__ import print_function
+
 import os
 import sys
 import time
@@ -63,7 +63,6 @@ from . import pdfutils
 from . import pdfdoc
 from . import pdfmetrics
 from . import pdfgeom
-from rdkit.six import string_types
 
 
 class PDFError(ValueError):
@@ -576,7 +575,7 @@ class Canvas:
       return
 
     self._currentPageHasImages = 1
-    if isinstance(image, string_types):
+    if isinstance(image, str):
       if os.path.splitext(image)[1] in ['.jpg', '.JPG']:
         #directly process JPEG files
         #open file, needs some error handling!!
@@ -1016,11 +1015,11 @@ class PDFTextObject:
 
   def textLines(self, stuff, trim=1):
     """prints multi-line or newlined strings, moving down.  One
-        comon use is to quote a multi-line block in your Python code;
+        common use is to quote a multi-line block in your Python code;
         since this may be indented, by default it trims whitespace
         off each line and from the beginning; set trim=0 to preserve
         whitespace."""
-    if isinstance(stuff, string_types):
+    if isinstance(stuff, str):
       lines = stuff.strip().split('\n')
       if trim == 1:
         lines = [s.strip() for s in lines]

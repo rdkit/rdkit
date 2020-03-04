@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2013-2014 Paolo Tosco
 //
@@ -8,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef _RD_O3AALIGNMOLECULES_H_
 #define _RD_O3AALIGNMOLECULES_H_
 
@@ -27,7 +27,7 @@
 
 namespace RDKit {
 namespace MolAlign {
-typedef struct O3AFuncData {
+struct RDKIT_MOLALIGN_EXPORT O3AFuncData {
   const Conformer *prbConf;
   const Conformer *refConf;
   void *prbProp;
@@ -35,7 +35,7 @@ typedef struct O3AFuncData {
   int coeff;
   int weight;
   bool useMMFFSim;
-} O3AFuncData;
+};
 inline bool isDoubleZero(const double x) {
   return ((x < 1.0e-10) && (x > -1.0e-10));
 };
@@ -46,7 +46,7 @@ class O3AConstraintVect;
 //! is defined by a pair of atom indexes (one for the probe,
 //! one for the reference) and a weight. Constraints can
 //! can be added via the O3AConstraintVect class.
-class O3AConstraint {
+class RDKIT_MOLALIGN_EXPORT O3AConstraint {
   friend class O3AConstraintVect;
 
  public:
@@ -66,7 +66,7 @@ class O3AConstraint {
 //! method is invoked, the vector is sorted to make lookup faster.
 //! Hence, constraints are not necessarily stored in the same order
 //! they were appended.
-class O3AConstraintVect {
+class RDKIT_MOLALIGN_EXPORT O3AConstraintVect {
  public:
   O3AConstraintVect() : d_count(0){};
   ~O3AConstraintVect(){};
@@ -82,7 +82,7 @@ class O3AConstraintVect {
               d_compareO3AConstraint);
     ++d_count;
   }
-  std::vector<boost::shared_ptr<O3AConstraint> >::size_type size() {
+  std::vector<boost::shared_ptr<O3AConstraint>>::size_type size() {
     return d_o3aConstraintVect.size();
   }
   O3AConstraint *operator[](unsigned int i) {
@@ -91,7 +91,7 @@ class O3AConstraintVect {
 
  private:
   unsigned int d_count;
-  std::vector<boost::shared_ptr<O3AConstraint> > d_o3aConstraintVect;
+  std::vector<boost::shared_ptr<O3AConstraint>> d_o3aConstraintVect;
   static bool d_compareO3AConstraint(boost::shared_ptr<O3AConstraint> a,
                                      boost::shared_ptr<O3AConstraint> b) {
     return (
@@ -129,7 +129,7 @@ enum {
   O3_LOCAL_ONLY = (1 << 2)
 };
 
-class MolHistogram {
+class RDKIT_MOLALIGN_EXPORT MolHistogram {
  public:
   MolHistogram(const ROMol &mol, const double *dmat, bool cleanupDmat = false);
   ~MolHistogram(){};
@@ -143,7 +143,7 @@ class MolHistogram {
   boost::multi_array<int, 2> d_h;
 };
 
-class LAP {
+class RDKIT_MOLALIGN_EXPORT LAP {
  public:
   LAP(unsigned int dim)
       : d_rowSol(dim),
@@ -185,7 +185,7 @@ class LAP {
   boost::multi_array<int, 2> d_cost;
 };
 
-class SDM {
+class RDKIT_MOLALIGN_EXPORT SDM {
  public:
   // constructor
   SDM(const Conformer *prbConf = NULL, const Conformer *refConf = NULL,
@@ -207,6 +207,7 @@ class SDM {
   };
   // assignment operator
   SDM &operator=(const SDM &other) {
+    if (this == &other) return *this;
     d_prbConf = other.d_prbConf;
     d_refConf = other.d_refConf;
     d_o3aConstraintVect = other.d_o3aConstraintVect;
@@ -246,7 +247,7 @@ class SDM {
   const Conformer *d_prbConf;
   const Conformer *d_refConf;
   O3AConstraintVect *d_o3aConstraintVect;
-  std::vector<boost::shared_ptr<SDMElement> > d_SDMPtrVect;
+  std::vector<boost::shared_ptr<SDMElement>> d_SDMPtrVect;
   static bool compareSDMScore(boost::shared_ptr<SDMElement> a,
                               boost::shared_ptr<SDMElement> b) {
     return ((a->score != b->score)
@@ -269,7 +270,7 @@ class SDM {
   };
 };
 
-class O3A {
+class RDKIT_MOLALIGN_EXPORT O3A {
  public:
   //! pre-defined atom typing schemes
   typedef enum { MMFF94 = 0, CRIPPEN } AtomTypeScheme;
@@ -285,8 +286,8 @@ class O3A {
       double (*weightFunc)(const unsigned int, const unsigned int, void *),
       double (*scoringFunc)(const unsigned int, const unsigned int, void *),
       void *data, ROMol &prbMol, const ROMol &refMol, const int prbCid,
-      const int refCid, boost::dynamic_bitset<> *prbHvyAtoms = NULL,
-      boost::dynamic_bitset<> *refHvyAtoms = NULL, const bool reflect = false,
+      const int refCid, const boost::dynamic_bitset<> &prbHvyAtoms,
+      const boost::dynamic_bitset<> &refHvyAtoms, const bool reflect = false,
       const unsigned int maxIters = 50, unsigned int options = 0,
       O3AConstraintVect *o3aConstraintVect = NULL, ROMol *extWorkPrbMol = NULL,
       LAP *extLAP = NULL, MolHistogram *extPrbHist = NULL,
@@ -317,28 +318,36 @@ class O3A {
   double d_o3aScore;
 };
 
-void randomTransform(ROMol &mol, const int cid = -1, const int seed = -1);
-const RDGeom::POINT3D_VECT *reflect(const Conformer &conf);
-int o3aMMFFCostFunc(const unsigned int prbIdx, const unsigned int refIdx,
-                    double hSum, void *data);
-double o3aMMFFWeightFunc(const unsigned int prbIdx, const unsigned int refIdx,
-                         void *data);
-double o3aMMFFScoringFunc(const unsigned int prbIdx, const unsigned int refIdx,
-                          void *data);
-int o3aCrippenCostFunc(const unsigned int prbIdx, const unsigned int refIdx,
-                       double hSum, void *data);
-double o3aCrippenWeightFunc(const unsigned int prbIdx,
-                            const unsigned int refIdx, void *data);
-double o3aCrippenScoringFunc(const unsigned int prbIdx,
-                             const unsigned int refIdx, void *data);
+RDKIT_MOLALIGN_EXPORT void randomTransform(ROMol &mol, const int cid = -1,
+                                           const int seed = -1);
+RDKIT_MOLALIGN_EXPORT const RDGeom::POINT3D_VECT *reflect(
+    const Conformer &conf);
+RDKIT_MOLALIGN_EXPORT int o3aMMFFCostFunc(const unsigned int prbIdx,
+                                          const unsigned int refIdx,
+                                          double hSum, void *data);
+RDKIT_MOLALIGN_EXPORT double o3aMMFFWeightFunc(const unsigned int prbIdx,
+                                               const unsigned int refIdx,
+                                               void *data);
+RDKIT_MOLALIGN_EXPORT double o3aMMFFScoringFunc(const unsigned int prbIdx,
+                                                const unsigned int refIdx,
+                                                void *data);
+RDKIT_MOLALIGN_EXPORT int o3aCrippenCostFunc(const unsigned int prbIdx,
+                                             const unsigned int refIdx,
+                                             double hSum, void *data);
+RDKIT_MOLALIGN_EXPORT double o3aCrippenWeightFunc(const unsigned int prbIdx,
+                                                  const unsigned int refIdx,
+                                                  void *data);
+RDKIT_MOLALIGN_EXPORT double o3aCrippenScoringFunc(const unsigned int prbIdx,
+                                                   const unsigned int refIdx,
+                                                   void *data);
 
-void getO3AForProbeConfs(
+RDKIT_MOLALIGN_EXPORT void getO3AForProbeConfs(
     ROMol &prbMol, const ROMol &refMol, void *prbProp, void *refProp,
-    std::vector<boost::shared_ptr<O3A> > &res, int numThreads = 1,
+    std::vector<boost::shared_ptr<O3A>> &res, int numThreads = 1,
     O3A::AtomTypeScheme atomTypes = O3A::MMFF94, const int refCid = -1,
     const bool reflect = false, const unsigned int maxIters = 50,
     unsigned int options = 0, const MatchVectType *constraintMap = NULL,
     const RDNumeric::DoubleVector *constraintWeights = NULL);
-}
-}
+}  // namespace MolAlign
+}  // namespace RDKit
 #endif

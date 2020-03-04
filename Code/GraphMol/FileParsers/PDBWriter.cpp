@@ -22,6 +22,7 @@
 #include <RDGeneral/LocaleSwitcher.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FileParsers/MolWriters.h>
+#include <GraphMol/FileParsers/FileParsers.h>
 
 #include <GraphMol/MonomerInfo.h>
 
@@ -53,31 +54,39 @@ std::string GetPDBAtomLine(const Atom *atom, const Conformer *conf,
     default:
       at1 = symb[0];
       at2 = symb[1];
-      if (at2 >= 'a' && at2 <= 'z') at2 -= 32;  // toupper
+      if (at2 >= 'a' && at2 <= 'z') {
+        at2 -= 32;  // toupper
+      }
       break;
   }
 
-  AtomPDBResidueInfo *info = (AtomPDBResidueInfo *)(atom->getMonomerInfo());
+  auto *info = (AtomPDBResidueInfo *)(atom->getMonomerInfo());
   if (info && info->getMonomerType() == AtomMonomerInfo::PDBRESIDUE) {
     ss << (info->getIsHeteroAtom() ? "HETATM" : "ATOM  ");
     ss << std::setw(5) << atom->getIdx() + 1;
     ss << ' ';
     ss << info->getName();  // Always 4 characters?
     const char *ptr = info->getAltLoc().c_str();
-    if (*ptr == '\0') ptr = " ";
+    if (*ptr == '\0') {
+      ptr = " ";
+    }
     ss << *ptr;
     ss << info->getResidueName();  // Always 3 characters?
     ss << ' ';
     ptr = info->getChainId().c_str();
-    if (*ptr == '\0') ptr = " ";
+    if (*ptr == '\0') {
+      ptr = " ";
+    }
     ss << *ptr;
     ss << std::setw(4) << info->getResidueNumber();
     ptr = info->getInsertionCode().c_str();
-    if (*ptr == '\0') ptr = " ";
+    if (*ptr == '\0') {
+      ptr = " ";
+    }
     ss << *ptr;
     ss << "   ";
   } else {
-    info = (AtomPDBResidueInfo *)0;
+    info = (AtomPDBResidueInfo *)nullptr;
     unsigned int atno = atom->getAtomicNum();
     if (elem.find(atno) == elem.end()) {
       elem[atno] = 1;
@@ -114,15 +123,16 @@ std::string GetPDBAtomLine(const Atom *atom, const Conformer *conf,
   if (conf) {
     const RDGeom::Point3D pos = conf->getAtomPos(atom->getIdx());
     ss << boost::format("%8.3f%8.3f%8.3f") % pos.x % pos.y % pos.z;
-  } else
+  } else {
     ss << "   0.000   0.000   0.000";
+  }
 
   if (info) {
-    ss << boost::format("%6.2f%6.2f") % info->getOccupancy() %
-              info->getTempFactor();
+    ss << boost::format("%6.2f%6.2f") % info->getOccupancy() % info->getTempFactor();
     ss << "          ";
-  } else
+  } else {
     ss << "  1.00  0.00          ";
+  }
 
   ss << at1;
   ss << at2;
@@ -133,8 +143,9 @@ std::string GetPDBAtomLine(const Atom *atom, const Conformer *conf,
   } else if (charge < 0 && charge > -10) {
     ss << (char)('0' - charge);
     ss << '-';
-  } else
+  } else {
     ss << "  ";
+  }
   return ss.str();
 }
 
@@ -147,36 +158,48 @@ std::string GetPDBBondLines(const Atom *atom, bool all, bool both, bool mult,
   ROMol *mol = &atom->getOwningMol();
   for (ROMol::OBOND_ITER_PAIR bondIt = mol->getAtomBonds(atom);
        bondIt.first != bondIt.second; ++bondIt.first) {
-    Bond *bptr = (*mol)[*bondIt.first].get();
+    Bond *bptr = (*mol)[*bondIt.first];
     Atom *nptr = bptr->getOtherAtom(atom);
     unsigned int dst = nptr->getIdx() + 1;
-    if (dst < src && !both) continue;
+    if (dst < src && !both) {
+      continue;
+    }
     Bond::BondType btype = Bond::SINGLE;
-    if (mult) btype = bptr->getBondType();
+    if (mult) {
+      btype = bptr->getBondType();
+    }
     switch (btype) {
       default:
       case Bond::SINGLE:
       case Bond::AROMATIC:
-        if (all) v.push_back(dst);
+        if (all) {
+          v.push_back(dst);
+        }
         break;
       case Bond::QUADRUPLE:
         v.push_back(dst);
+        /* FALLTHRU */
       case Bond::TRIPLE:
         v.push_back(dst);
+        /* FALLTHRU */
       case Bond::DOUBLE:
         v.push_back(dst);
         v.push_back(dst);
     }
   }
 
-  unsigned int count = rdcast<unsigned int>(v.size());
-  if (count == 0) return "";
+  auto count = rdcast<unsigned int>(v.size());
+  if (count == 0) {
+    return "";
+  }
 
   std::sort(v.begin(), v.end());
   std::stringstream ss;
   for (unsigned int i = 0; i < count; i++) {
     if ((i & 3) == 0) {
-      if (i != 0) ss << '\n';
+      if (i != 0) {
+        ss << '\n';
+      }
       ss << "CONECT";
       ss << std::setw(5) << src;
       conect_count++;
@@ -228,7 +251,7 @@ std::string MolToPDBBody(const ROMol &mol, const Conformer *conf,
 
 std::string MolToPDBBlock(const ROMol &imol, int confId, unsigned int flavor) {
   ROMol mol(imol);
-  RWMol &trwmol = static_cast<RWMol &>(mol);
+  auto &trwmol = static_cast<RWMol &>(mol);
   MolOps::Kekulize(trwmol);
   Utils::LocaleSwitcher ls;
 
@@ -262,7 +285,7 @@ std::string MolToPDBBlock(const ROMol &imol, int confId, unsigned int flavor) {
     }
   } else {
     if (confId < 0 && mol.getNumConformers() == 0) {
-      conf = 0;
+      conf = nullptr;
     } else {
       conf = &(mol.getConformer(confId));
     }
@@ -285,9 +308,10 @@ std::string MolToPDBBlock(const ROMol &imol, int confId, unsigned int flavor) {
 
 PDBWriter::PDBWriter(const std::string &fileName, unsigned int flavor) {
   if (fileName != "-") {
-    std::ofstream *tmpStream = new std::ofstream(fileName.c_str());
+    auto *tmpStream = new std::ofstream(fileName.c_str());
     df_owner = true;
-    if (!tmpStream || !(*tmpStream) || (tmpStream->bad())) {
+    if (!(*tmpStream) || (tmpStream->bad())) {
+      delete tmpStream;
       std::ostringstream errout;
       errout << "Bad output file " << fileName;
       throw BadFileException(errout.str());
@@ -315,7 +339,9 @@ PDBWriter::PDBWriter(std::ostream *outStream, bool takeOwnership,
 
 PDBWriter::~PDBWriter() {
   // close the writer if it's still open:
-  if (dp_ostream != NULL) close();
+  if (dp_ostream != nullptr) {
+    close();
+  }
 }
 
 void PDBWriter::write(const ROMol &mol, int confId) {
@@ -333,7 +359,9 @@ void PDBWriter::write(const ROMol &mol, int confId) {
   // write the molecule
   (*dp_ostream) << MolToPDBBlock(mol, confId, d_flavor);
 
-  if (d_flavor & 1) (*dp_ostream) << "ENDMDL\n";
+  if (d_flavor & 1) {
+    (*dp_ostream) << "ENDMDL\n";
+  }
 }
 
 void MolToPDBFile(const ROMol &mol, const std::string &fname, int confId,

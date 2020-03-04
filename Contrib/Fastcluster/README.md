@@ -22,7 +22,7 @@ FastCluster
 
 ## Basic usage
 
-- input file format is tab delimited text format, "SMILES" \t "ID" \n .....
+- input file format is tab delimited text format, "ID" \t "SMILES" \n .....
 - $ python fastcluster.py {input; inputfile} {N; number of clusters} { --output; filename of output} {--centroid; filename of centroid information} 
 - Example usage
 - $ ptyhon fastcluster.py cdk2.smi 5 # clustering 47 compounds to 5 clusters.

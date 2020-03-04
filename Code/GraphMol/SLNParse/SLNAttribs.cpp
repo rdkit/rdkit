@@ -47,8 +47,8 @@ namespace RDKit {
 namespace SLNParse {
 namespace {
 int parseIntAttribVal(std::string attribName, std::string attribVal,
-                      int (*defaultFunc)(Atom const *at) = NULL,
-                      Atom *atom = NULL) {
+                      int (*defaultFunc)(Atom const *at) = nullptr,
+                      Atom *atom = nullptr) {
   PRECONDITION((!defaultFunc) || atom,
                "If a default func is provided, an atom must be as well.");
   int iVal;
@@ -74,15 +74,15 @@ QueryAtom::QUERYATOM_QUERY *makeQueryFromOp(const std::string &op, int val,
                                             int (*func)(Atom const *at),
                                             std::string description) {
   PRECONDITION(func, "bad query function");
-  QueryAtom::QUERYATOM_QUERY *res = 0;
+  QueryAtom::QUERYATOM_QUERY *res = nullptr;
   if (op == "=") {
-    ATOM_EQUALS_QUERY *tmp = new ATOM_EQUALS_QUERY;
+    auto *tmp = new ATOM_EQUALS_QUERY;
     tmp->setVal(val);
     tmp->setDataFunc(func);
     tmp->setDescription(description);
     res = tmp;
   } else if (op == "!=") {
-    ATOM_EQUALS_QUERY *tmp = new ATOM_EQUALS_QUERY;
+    auto *tmp = new ATOM_EQUALS_QUERY;
     tmp->setVal(val);
     tmp->setDataFunc(func);
     tmp->setDescription(description);
@@ -98,25 +98,25 @@ QueryAtom::QUERYATOM_QUERY *makeQueryFromOp(const std::string &op, int val,
     // seeing if the value is greater than the target; this is equiv to asking
     // if
     // the target is < the value.
-    ATOM_LESS_QUERY *tmp = new ATOM_LESS_QUERY;
+    auto *tmp = new ATOM_LESS_QUERY;
     tmp->setVal(val);
     tmp->setDataFunc(func);
     tmp->setDescription(description);
     res = tmp;
   } else if (op == ">=") {
-    ATOM_LESSEQUAL_QUERY *tmp = new ATOM_LESSEQUAL_QUERY;
+    auto *tmp = new ATOM_LESSEQUAL_QUERY;
     tmp->setVal(val);
     tmp->setDataFunc(func);
     tmp->setDescription(description);
     res = tmp;
   } else if (op == "<") {
-    ATOM_GREATER_QUERY *tmp = new ATOM_GREATER_QUERY;
+    auto *tmp = new ATOM_GREATER_QUERY;
     tmp->setVal(val);
     tmp->setDataFunc(func);
     tmp->setDescription(description);
     res = tmp;
   } else if (op == "<=") {
-    ATOM_GREATEREQUAL_QUERY *tmp = new ATOM_GREATEREQUAL_QUERY;
+    auto *tmp = new ATOM_GREATEREQUAL_QUERY;
     tmp->setVal(val);
     tmp->setDataFunc(func);
     tmp->setDescription(description);
@@ -132,11 +132,11 @@ QueryAtom::QUERYATOM_QUERY *makeQueryFromOp(const std::string &op, int val,
 }
 
 void parseAtomAttribs(Atom *atom, AttribListType attribs, bool doingQuery) {
-  QueryAtom::QUERYATOM_QUERY *atomQuery = 0;
+  QueryAtom::QUERYATOM_QUERY *atomQuery = nullptr;
   bool lastWasLowPriAnd = false;
   for (AttribListType::const_iterator it = attribs.begin(); it != attribs.end();
        ++it) {
-    QueryAtom::QUERYATOM_QUERY *query = 0;
+    QueryAtom::QUERYATOM_QUERY *query = nullptr;
     AttribCombineOp how = it->first;
 
     boost::shared_ptr<AttribType> attribPtr = it->second;
@@ -224,27 +224,39 @@ void parseAtomAttribs(Atom *atom, AttribListType attribs, bool doingQuery) {
         val = -666;
       }
       if (attribName == "rbc") {
-        if (fTag == "") val = parseIntAttribVal(attribName, attribVal);
+        if (fTag == "") {
+          val = parseIntAttribVal(attribName, attribVal);
+        }
         query = makeQueryFromOp(attribPtr->op, val, queryAtomRingBondCount,
                                 fTag + "AtomRingBondCount");
       } else if (attribName == "tbo") {
-        if (fTag == "") val = parseIntAttribVal(attribName, attribVal);
+        if (fTag == "") {
+          val = parseIntAttribVal(attribName, attribVal);
+        }
         query = makeQueryFromOp(attribPtr->op, val, queryAtomTotalValence,
                                 fTag + "AtomTotalValence");
       } else if (attribName == "tac") {
-        if (fTag == "") val = parseIntAttribVal(attribName, attribVal);
+        if (fTag == "") {
+          val = parseIntAttribVal(attribName, attribVal);
+        }
         query = makeQueryFromOp(attribPtr->op, val, queryAtomTotalDegree,
                                 fTag + "AtomTotalDegree");
       } else if (attribName == "hc") {
-        if (fTag == "") val = parseIntAttribVal(attribName, attribVal);
+        if (fTag == "") {
+          val = parseIntAttribVal(attribName, attribVal);
+        }
         query = makeQueryFromOp(attribPtr->op, val, queryAtomHCount,
                                 fTag + "AtomHCount");
       } else if (attribName == "hac") {
-        if (fTag == "") val = parseIntAttribVal(attribName, attribVal);
-        query = makeQueryFromOp(attribPtr->op, val, queryAtomHeavyAtomDegree,
+        if (fTag == "") {
+          val = parseIntAttribVal(attribName, attribVal);
+        }
+        query = makeQueryFromOp(attribPtr->op, val, queryAtomNonHydrogenDegree,
                                 fTag + "AtomHeavyAtomDegree");
       } else if (attribName == "f") {
-        if (fTag == "") val = parseIntAttribVal(attribName, attribVal);
+        if (fTag == "") {
+          val = parseIntAttribVal(attribName, attribVal);
+        }
         query = makeQueryFromOp(
             "=", val, (int (*)(const RDKit::Atom *))(queryAtomAllBondProduct),
             fTag + "AtomBondEnvironment");
@@ -262,7 +274,9 @@ void parseAtomAttribs(Atom *atom, AttribListType attribs, bool doingQuery) {
                                 << "' ignored on non-query atom\n";
         delete query;
       } else {
-        if (attribPtr->negated) query->setNegation(!query->getNegation());
+        if (attribPtr->negated) {
+          query->setNegation(!query->getNegation());
+        }
         if (!atomQuery) {
           // first one is easy:
           atomQuery = query;
@@ -296,8 +310,7 @@ void parseAtomAttribs(Atom *atom, AttribListType attribs, bool doingQuery) {
                 QueryAtom::QUERYATOM_QUERY *newAndQuery;
                 newAndQuery = new ATOM_AND_QUERY;
                 newAndQuery->setDescription("AtomAnd");
-                QueryAtom::QUERYATOM_QUERY::CHILD_VECT_CI andChild =
-                    atomQuery->beginChildren();
+                auto andChild = atomQuery->beginChildren();
                 newAndQuery->addChild(*andChild);
                 ++andChild;
 
@@ -339,8 +352,9 @@ void parseFinalAtomAttribs(Atom *atom, bool doingQuery) {
   // attributes that had "f" in the original SLN. We will recognize
   // these by the fact that their names start with "_SLN_"
   if (!doingQuery || !atom->hasQuery() ||
-      !atom->hasProp(common_properties::_Unfinished_SLN_))
+      !atom->hasProp(common_properties::_Unfinished_SLN_)) {
     return;
+  }
   atom->clearProp(common_properties::_Unfinished_SLN_);
   std::list<QueryAtom::QUERYATOM_QUERY *> q;
   q.push_back(atom->getQuery());
@@ -356,8 +370,8 @@ void parseFinalAtomAttribs(Atom *atom, bool doingQuery) {
           (int)(query->getDataFunc()(atom)));
     }
     // now add the query's children to the queue and continue:
-    for (QueryAtom::QUERYATOM_QUERY::CHILD_VECT_CI cIt = query->beginChildren();
-         cIt != query->endChildren(); ++cIt) {
+    for (auto cIt = query->beginChildren(); cIt != query->endChildren();
+         ++cIt) {
       q.push_back(const_cast<QueryAtom::QUERYATOM_QUERY *>(cIt->get()));
     }
   }
@@ -406,7 +420,9 @@ void parseBondAttribs(Bond *bond, AttribListType attribs, bool doingQuery) {
         bond->setBondType(bondType);
       } else {
         QueryBond::QUERYBOND_QUERY *query = makeBondOrderEqualsQuery(bondType);
-        if (attribPtr->negated) query->setNegation(!query->getNegation());
+        if (attribPtr->negated) {
+          query->setNegation(!query->getNegation());
+        }
         if (seenTypeQuery) {
           static_cast<RDKit::QueryBond *>(bond)->expandQuery(query, how, true);
         } else {
@@ -427,7 +443,9 @@ void parseBondAttribs(Bond *bond, AttribListType attribs, bool doingQuery) {
                                 << "' ignored on non-query bond\n";
       } else {
         QueryBond::QUERYBOND_QUERY *query = makeBondIsInRingQuery();
-        if (attribPtr->negated) query->setNegation(true);
+        if (attribPtr->negated) {
+          query->setNegation(true);
+        }
         static_cast<QueryBond *>(bond)->expandQuery(query, how);
       }
     } else {

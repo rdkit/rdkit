@@ -8,6 +8,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/test.h>
 #include "MetricFuncs.h"
 #include "MetricMatrixCalc.h"
 
@@ -20,8 +21,8 @@ int main() {
   int m = 3;
   int dlen = n * (n - 1) / 2;
   int i, j;
-  double *desc = new double[n * m];
-  double **desc2D = new double *[n];
+  auto *desc = new double[n * m];
+  auto **desc2D = new double *[n];
 
   for (i = 0; i < n; i++) {
     desc2D[i] = desc;
@@ -36,7 +37,7 @@ int main() {
   }
 
   // double x = EuclideanDistanceMetric(desc2D[0], desc2D[1], m);
-  double *dmat = new double[dlen];
+  auto *dmat = new double[dlen];
   MetricMatrixCalc<double **, double *> mmCalc;
   mmCalc.setMetricFunc(&EuclideanDistanceMetric<double *, double *>);
   mmCalc.calcMetricMatrix(desc2D, n, m, dmat);

@@ -28,7 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-# Retrieve stereo and tautomer information from the the InChI string
+# Retrieve stereo and tautomer information from the InChI string
 # Created on Sep 23, 2010
 # Original author: Thomas Muellerk muelleth
 import logging
@@ -38,7 +38,7 @@ from rdkit import Chem
 
 from rdkit.Chem import inchi
 if not inchi.INCHI_AVAILABLE:
-  raise ImportError("This code requires the RDKit to be built with InChI suport")
+  raise ImportError("This code requires the RDKit to be built with InChI support")
 
 
 def _is_achiral_by_symmetry(INCHI):

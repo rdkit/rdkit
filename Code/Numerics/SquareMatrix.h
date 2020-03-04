@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef __RD_SQUARE_MATRIX_H__
 #define __RD_SQUARE_MATRIX_H__
 
@@ -83,6 +84,6 @@ class SquareMatrix : public Matrix<TYPE> {
   }
 };
 typedef SquareMatrix<double> DoubleSquareMatrix;
-}
+}  // namespace RDNumeric
 
 #endif

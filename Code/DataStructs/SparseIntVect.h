@@ -8,6 +8,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef __RD_SPARSE_INT_VECT_20070921__
 #define __RD_SPARSE_INT_VECT_20070921__
 
@@ -17,7 +18,7 @@
 #include <sstream>
 #include <RDGeneral/Exceptions.h>
 #include <RDGeneral/StreamOps.h>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 
 const int ci_SPARSEINTVECT_VERSION =
     0x0001;  //!< version number to use in pickles
@@ -323,7 +324,7 @@ class SparseIntVect {
   std::string toString() const {
     std::stringstream ss(std::ios_base::binary | std::ios_base::out |
                          std::ios_base::in);
-    boost::uint32_t tInt;
+    std::uint32_t tInt;
     tInt = ci_SPARSEINTVECT_VERSION;
     streamWrite(ss, tInt);
     tInt = sizeof(IndexType);
@@ -335,7 +336,7 @@ class SparseIntVect {
     typename StorageType::const_iterator iter = d_data.begin();
     while (iter != d_data.end()) {
       streamWrite(ss, iter->first);
-      boost::int32_t tInt = iter->second;
+      std::int32_t tInt = iter->second;
       streamWrite(ss, tInt);
       ++iter;
     }
@@ -356,21 +357,21 @@ class SparseIntVect {
                          std::ios_base::in);
     ss.write(pkl, len);
 
-    boost::uint32_t vers;
+    std::uint32_t vers;
     streamRead(ss, vers);
     if (vers == 0x0001) {
-      boost::uint32_t tInt;
+      std::uint32_t tInt;
       streamRead(ss, tInt);
       if (tInt > sizeof(IndexType)) {
         throw ValueErrorException(
-            "IndexType cannot accomodate index size in SparseIntVect pickle");
+            "IndexType cannot accommodate index size in SparseIntVect pickle");
       }
       switch (tInt) {
         case sizeof(char):
           readVals<unsigned char>(ss);
           break;
-        case sizeof(boost::int32_t):
-          readVals<boost::uint32_t>(ss);
+        case sizeof(std::int32_t):
+          readVals<std::uint32_t>(ss);
           break;
         case sizeof(boost::int64_t):
           readVals<boost::uint64_t>(ss);
@@ -392,7 +393,7 @@ class SparseIntVect {
     streamRead(ss, nEntries);
     for (T i = 0; i < nEntries; ++i) {
       streamRead(ss, tVal);
-      boost::int32_t val;
+      std::int32_t val;
       streamRead(ss, val);
       d_data[tVal] = val;
     }
@@ -463,7 +464,7 @@ void calcVectParams(const SparseIntVect<IndexType> &v1,
     }
   }
 }
-}
+}  // namespace
 
 template <typename IndexType>
 double DiceSimilarity(const SparseIntVect<IndexType> &v1,
@@ -479,11 +480,8 @@ double DiceSimilarity(const SparseIntVect<IndexType> &v1,
     v2Sum = v2.getTotalVal(true);
     double denom = v1Sum + v2Sum;
     if (fabs(denom) < 1e-6) {
-      if (returnDistance) {
-        return 1.0;
-      } else {
-        return 0.0;
-      }
+      // no need to worry about returnDistance here
+      return 0.0;
     }
     double minV = v1Sum < v2Sum ? v1Sum : v2Sum;
     if (2. * minV / denom < bounds) {
@@ -542,6 +540,6 @@ double TanimotoSimilarity(const SparseIntVect<IndexType> &v1,
                           bool returnDistance = false, double bounds = 0.0) {
   return TverskySimilarity(v1, v2, 1.0, 1.0, returnDistance, bounds);
 }
-}
+}  // namespace RDKit
 
 #endif

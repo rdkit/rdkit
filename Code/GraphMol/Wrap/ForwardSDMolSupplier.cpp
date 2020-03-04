@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2011  Greg Landrum
+//  Copyright (C) 2011-2019  Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -35,7 +34,7 @@ class LocalForwardSDMolSupplier : public RDKit::ForwardSDMolSupplier {
   LocalForwardSDMolSupplier(python::object &input, bool sanitize, bool removeHs,
                             bool strictParsing) {
     // FIX: minor leak here
-    streambuf *sb = new streambuf(input);
+    auto *sb = new streambuf(input, 'b');
     dp_inStream = new streambuf::istream(*sb);
     df_owner = true;
     df_sanitize = sanitize;
@@ -54,10 +53,11 @@ class LocalForwardSDMolSupplier : public RDKit::ForwardSDMolSupplier {
   }
   LocalForwardSDMolSupplier(std::string filename, bool sanitize, bool removeHs,
                             bool strictParsing) {
-    std::istream *tmpStream = 0;
+    std::istream *tmpStream = nullptr;
     tmpStream = static_cast<std::istream *>(
         new std::ifstream(filename.c_str(), std::ios_base::binary));
-    if (!tmpStream || (!(*tmpStream)) || (tmpStream->bad())) {
+    if (!(*tmpStream) || tmpStream->bad()) {
+      delete tmpStream;
       std::ostringstream errout;
       errout << "Bad input file " << filename;
       throw RDKit::BadFileException(errout.str());
@@ -74,7 +74,7 @@ class LocalForwardSDMolSupplier : public RDKit::ForwardSDMolSupplier {
 LocalForwardSDMolSupplier *FwdMolSupplIter(LocalForwardSDMolSupplier *self) {
   return self;
 }
-}
+}  // namespace
 
 namespace RDKit {
 
@@ -83,15 +83,15 @@ std::string fsdMolSupplierClassDoc =
 \n\
   Usage examples:\n\
 \n\
-    1) Lazy evaluation: the molecules are not constructed until we ask for them:\n\
+    1) Lazy evaluation: the molecules are not constructed until we ask for them:\n\n\
        >>> suppl = ForwardSDMolSupplier(file('in.sdf'))\n\
        >>> for mol in suppl:\n\
        ...    if mol is not None: mol.GetNumAtoms()\n\
 \n\
-    2) we can also read from compressed files: \n\
+    2) we can also read from compressed files: \n\n\
        >>> import gzip\n\
        >>> suppl = ForwardSDMolSupplier(gzip.open('in.sdf.gz'))\n\
-       >>> for mol in suppl:\n \
+       >>> for mol in suppl:\n\
        ...   if mol is not None: print mol.GetNumAtoms()\n\
 \n\
   Properties in the SD file are used to set properties on each molecule.\n\
@@ -116,16 +116,27 @@ struct forwardsdmolsup_wrap {
              python::arg("removeHs") = true,
              python::arg("strictParsing") = true)))
         .def(NEXT_METHOD,
-             (ROMol * (*)(LocalForwardSDMolSupplier *)) & MolSupplNext,
+             (ROMol * (*)(LocalForwardSDMolSupplier *)) & MolForwardSupplNext,
              "Returns the next molecule in the file.  Raises _StopIteration_ "
              "on EOF.\n",
              python::return_value_policy<python::manage_new_object>())
         .def("atEnd", &ForwardSDMolSupplier::atEnd,
              "Returns whether or not we have hit EOF.\n")
+        .def("GetEOFHitOnRead", &ForwardSDMolSupplier::getEOFHitOnRead,
+             "Returns whether or EOF was hit while parsing the previous "
+             "entry.\n")
         .def("__iter__", &FwdMolSupplIter,
-             python::return_internal_reference<1>());
+             python::return_internal_reference<1>())
+        .def("GetProcessPropertyLists",
+             &ForwardSDMolSupplier::getProcessPropertyLists,
+             "returns whether or not any property lists that are present will "
+             "be processed when reading molecules")
+        .def("SetProcessPropertyLists",
+             &ForwardSDMolSupplier::setProcessPropertyLists,
+             "sets whether or not any property lists that are present will be "
+             "processed when reading molecules");
   };
 };
-}
+}  // namespace RDKit
 
 void wrap_forwardsdsupplier() { RDKit::forwardsdmolsup_wrap::wrap(); }

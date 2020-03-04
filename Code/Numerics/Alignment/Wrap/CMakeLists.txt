@@ -1,3 +1,4 @@
+remove_definitions(-DRDKIT_ALIGNMENT_BUILD)
 rdkit_python_extension(rdAlignment
                        rdAlignment.cpp
                        DEST Numerics 

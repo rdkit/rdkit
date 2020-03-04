@@ -13,17 +13,12 @@
 #include <GraphMol/SanitException.h>
 #include <RDGeneral/RDLog.h>
 #include <boost/dynamic_bitset.hpp>
+#include <utility>
 
 // end of namespace Kekulize
 namespace RDKit {
 // Local utility namespace
 namespace {
-
-// Determine whether or not a molecule is to the left of Carbon
-bool isEarlyAtom(int atomicNum) {
-  // FIX: this is duplicated from Atom.cpp. It should be defined once!
-  return (4 - PeriodicTable::getTable()->getNouterElecs(atomicNum)) > 0;
-}
 
 void backTrack(RWMol &mol, INT_INT_DEQ_MAP &options, int lastOpt,
                INT_VECT &done, INT_DEQUE &aqueue,
@@ -33,7 +28,7 @@ void backTrack(RWMol &mol, INT_INT_DEQ_MAP &options, int lastOpt,
   // so we made a wrong turn at the lastOpt
   // remove on done list that comes after the lastOpt including itself
 
-  INT_VECT_I ei = std::find(done.begin(), done.end(), lastOpt);
+  auto ei = std::find(done.begin(), done.end(), lastOpt);
   INT_VECT tdone;
   tdone.insert(tdone.end(), done.begin(), ei);
 
@@ -53,7 +48,7 @@ void backTrack(RWMol &mol, INT_INT_DEQ_MAP &options, int lastOpt,
       int aid1 = bnd->getBeginAtomIdx();
       int aid2 = bnd->getEndAtomIdx();
       // if one of these atoms has been dealt with before lastOpt
-      // we don't have to chnage the double bond addition
+      // we don't have to change the double bond addition
       if ((std::find(tdone.begin(), tdone.end(), aid1) == tdone.end()) &&
           (std::find(tdone.begin(), tdone.end(), aid2) == tdone.end())) {
         // otherwise strip the double bond and set it back to single
@@ -78,9 +73,9 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
   // - marks atoms that can take a double bond
 
   bool hasAromaticOrDummyAtom = false;
-  for (INT_VECT_CI adx = allAtms.begin(); adx != allAtms.end(); ++adx) {
-    if (mol.getAtomWithIdx(*adx)->getIsAromatic() ||
-        !mol.getAtomWithIdx(*adx)->getAtomicNum()) {
+  for (int allAtm : allAtms) {
+    if (mol.getAtomWithIdx(allAtm)->getIsAromatic() ||
+        !mol.getAtomWithIdx(allAtm)->getAtomicNum()) {
       hasAromaticOrDummyAtom = true;
       break;
     }
@@ -88,15 +83,17 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
   // if there's not at least one atom in the ring that's
   // marked as being aromatic or a dummy,
   // there's no point in continuing:
-  if (!hasAromaticOrDummyAtom) return;
+  if (!hasAromaticOrDummyAtom) {
+    return;
+  }
 
   std::vector<Bond *> makeSingle;
 
-  for (INT_VECT_CI adx = allAtms.begin(); adx != allAtms.end(); ++adx) {
-    Atom *at = mol.getAtomWithIdx(*adx);
+  for (int allAtm : allAtms) {
+    Atom *at = mol.getAtomWithIdx(allAtm);
 
     if (!at->getIsAromatic() && at->getAtomicNum()) {
-      done.push_back(*adx);
+      done.push_back(allAtm);
       // make sure all the bonds on this atom are also non aromatic
       // i.e. can't have aromatic bond onto a non-aromatic atom
       RWMol::OEDGE_ITER beg, end;
@@ -108,7 +105,7 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
           errout << "Aromatic bonds on non aromatic atom " << at->getIdx();
           std::string msg = errout.str();
           BOOST_LOG(rdErrorLog) << msg << std::endl;
-          throw MolSanitizeException(msg);
+          throw AtomKekulizeException(msg, at->getIdx());
         }
         ++beg;
       }
@@ -123,7 +120,7 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
     RWMol::OEDGE_ITER beg, end;
     boost::tie(beg, end) = mol.getAtomBonds(at);
     while (beg != end) {
-      Bond *bond = mol[*beg].get();
+      Bond *bond = mol[*beg];
       if (bond->getIsAromatic() && (bond->getBondType() == Bond::SINGLE ||
                                     bond->getBondType() == Bond::DOUBLE ||
                                     bond->getBondType() == Bond::AROMATIC)) {
@@ -133,18 +130,20 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
         // valence calculation to determine the number of hydrogens below
         makeSingle.push_back(bond);
       } else {
-        int bondContrib = int(bond->getValenceContrib(at));
+        int bondContrib = std::lround(bond->getValenceContrib(at));
         sbo += bondContrib;
-        if (!bondContrib) ++nToIgnore;
+        if (!bondContrib) {
+          ++nToIgnore;
+        }
       }
       ++beg;
     }
 
     if (!at->getAtomicNum()) {
       // dummies always start as candidates to have a double bond:
-      dBndCands[*adx] = 1;
+      dBndCands[allAtm] = 1;
       // but they don't have to have one, so mark them as questionable:
-      questions.push_back(*adx);
+      questions.push_back(allAtm);
     } else {
       // for non dummies, it's a bit more work to figure out if they
       // can take a double bond:
@@ -152,9 +151,13 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
       sbo += at->getTotalNumHs();
       int dv = PeriodicTable::getTable()->getDefaultValence(at->getAtomicNum());
       int chrg = at->getFormalCharge();
-      if (isEarlyAtom(at->getAtomicNum())) chrg *= -1;  // fix for GitHub #65
+      if (isEarlyAtom(at->getAtomicNum())) {
+        chrg *= -1;  // fix for GitHub #65
+      }
       // special case for carbon - see GitHub #539
-      if (at->getAtomicNum() == 6 && chrg > 0) chrg = -chrg;
+      if (at->getAtomicNum() == 6 && chrg > 0) {
+        chrg = -chrg;
+      }
       dv += chrg;
       int tbo = at->getTotalValence();
       int nRadicals = at->getNumRadicalElectrons();
@@ -183,19 +186,18 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
       // matches the valence state
       // (including nRadicals here was SF.net issue 3349243)
       if (dv == (sbo + 1 + nRadicals)) {
-        dBndCands[*adx] = 1;
+        dBndCands[allAtm] = 1;
       } else if (!nRadicals && at->getNoImplicit() && dv == (sbo + 2)) {
         // special case: there is currently no radical on the atom, but if
         // if we allow one then this is a candidate:
-        dBndCands[*adx] = 1;
+        dBndCands[allAtm] = 1;
       }
     }
   }  // loop over all atoms in the fused system
 
   // now turn all the aromatic bond in this fused system to single
-  for (std::vector<Bond *>::iterator bi = makeSingle.begin();
-       bi != makeSingle.end(); ++bi) {
-    (*bi)->setBondType(Bond::SINGLE);
+  for (auto &bi : makeSingle) {
+    bi->setBondType(Bond::SINGLE);
   }
 }
 
@@ -224,7 +226,7 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
   //   earlier by picking a wrong candidate for double bond
   // - in this case back track to where we made the mistake
 
-  int curr;
+  int curr = -1;
   INT_DEQUE btmoves;
   unsigned int numBT = 0;  // number of back tracks so far
   while ((done.size() < allAtms.size()) || (astack.size() > 0)) {
@@ -233,13 +235,14 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
       curr = astack.front();
       astack.pop_front();
     } else {
-      for (INT_VECT_CI ai = allAtms.begin(); ai != allAtms.end(); ++ai) {
-        if (std::find(done.begin(), done.end(), (*ai)) == done.end()) {
-          curr = (*ai);
+      for (int allAtm : allAtms) {
+        if (std::find(done.begin(), done.end(), allAtm) == done.end()) {
+          curr = allAtm;
           break;
         }
       }
     }
+    CHECK_INVARIANT(curr >= 0, "staring point not found");
     done.push_back(curr);
 
     // loop over the neighbors if we can add double bonds or
@@ -369,8 +372,8 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
 
 class QuestionEnumerator {
  public:
-  QuestionEnumerator(const INT_VECT &questions)
-      : d_questions(questions), d_pos(1){};
+  QuestionEnumerator(INT_VECT questions)
+      : d_questions(std::move(questions)), d_pos(1){};
   INT_VECT next() {
     INT_VECT res;
     if (d_pos >= (0x1u << d_questions.size())) {
@@ -395,8 +398,8 @@ bool permuteDummiesAndKekulize(RWMol &mol, const INT_VECT &allAtms,
                                INT_VECT &questions,
                                unsigned int maxBackTracks) {
   boost::dynamic_bitset<> atomsInPlay(mol.getNumAtoms());
-  for (INT_VECT_CI ai = allAtms.begin(); ai != allAtms.end(); ++ai) {
-    atomsInPlay[*ai] = 1;
+  for (int allAtm : allAtms) {
+    atomsInPlay[allAtm] = 1;
   }
   bool kekulized = false;
   QuestionEnumerator qEnum(questions);
@@ -416,10 +419,12 @@ bool permuteDummiesAndKekulize(RWMol &mol, const INT_VECT &allAtms,
 #endif
     // pick a new permutation of the questionable atoms:
     const INT_VECT &switchOff = qEnum.next();
-    if (!switchOff.size()) break;
+    if (!switchOff.size()) {
+      break;
+    }
     boost::dynamic_bitset<> tCands = dBndCands;
-    for (INT_VECT_CI it = switchOff.begin(); it != switchOff.end(); ++it) {
-      tCands[*it] = 0;
+    for (int it : switchOff) {
+      tCands[it] = 0;
     }
 #if 0
         std::cerr<<"permute: ";
@@ -471,19 +476,23 @@ void kekulizeFused(RWMol &mol, const VECT_INT_VECT &arings,
     // we exhausted all option (or crossed the allowed
     // number of backTracks) and we still need to backtrack
     // can't kekulize this thing
+    std::vector<unsigned int> problemAtoms;
     std::ostringstream errout;
     errout << "Can't kekulize mol.";
     errout << "  Unkekulized atoms:";
     for (unsigned int i = 0; i < nats; ++i) {
-      if (dBndCands[i]) errout << " " << i;
+      if (dBndCands[i]) {
+        errout << " " << i;
+        problemAtoms.push_back(i);
+      }
     }
     errout << std::endl;
     std::string msg = errout.str();
     BOOST_LOG(rdErrorLog) << msg << std::endl;
-    throw MolSanitizeException(msg);
+    throw KekulizeException(msg, problemAtoms);
   }
 }
-}  // end of utility namespace
+}  // namespace
 
 namespace MolOps {
 void Kekulize(RWMol &mol, bool markAtomsBonds, unsigned int maxBackTracks) {
@@ -491,7 +500,9 @@ void Kekulize(RWMol &mol, bool markAtomsBonds, unsigned int maxBackTracks) {
   bool foundAromatic = false;
   for (ROMol::BondIterator bi = mol.beginBonds();
        bi != mol.endBonds() && !foundAromatic; ++bi) {
-    if ((*bi)->getIsAromatic()) foundAromatic = true;
+    if ((*bi)->getIsAromatic()) {
+      foundAromatic = true;
+    }
   }
 
   // before everything do implicit valence calculation and store them
@@ -503,9 +514,13 @@ void Kekulize(RWMol &mol, bool markAtomsBonds, unsigned int maxBackTracks) {
   for (ROMol::AtomIterator ai = mol.beginAtoms(); ai != mol.endAtoms(); ++ai) {
     (*ai)->calcImplicitValence(false);
     valences.push_back((*ai)->getTotalValence());
-    if (!foundAromatic && (*ai)->getIsAromatic()) foundAromatic = true;
+    if (!foundAromatic && (*ai)->getIsAromatic()) {
+      foundAromatic = true;
+    }
   }
-  if (!foundAromatic) return;
+  if (!foundAromatic) {
+    return;
+  }
 
   // A bit on the state of the molecule at this point
   // - aromatic and non aromatic atoms and bonds may be mixed up
@@ -522,7 +537,9 @@ void Kekulize(RWMol &mol, bool markAtomsBonds, unsigned int maxBackTracks) {
   boost::dynamic_bitset<> dummyAts(mol.getNumAtoms());
   for (ROMol::AtomIterator atit = mol.beginAtoms(); atit != mol.endAtoms();
        ++atit) {
-    if (!(*atit)->getAtomicNum()) dummyAts[(*atit)->getIdx()] = 1;
+    if (!(*atit)->getAtomicNum()) {
+      dummyAts[(*atit)->getIdx()] = 1;
+    }
   }
   if (dummyAts.any()) {
     VECT_INT_VECT allrings;
@@ -552,7 +569,7 @@ void Kekulize(RWMol &mol, bool markAtomsBonds, unsigned int maxBackTracks) {
   // brings = mol.getRingInfo()->bondRings();
   RingUtils::convertToBonds(arings, brings, mol);
 
-  // make a the neighbor map for the rings i.e. a ring is a
+  // make a neighbor map for the rings i.e. a ring is a
   // neighbor to another candidate ring if it shares at least
   // one bond
   // useful to figure out fused systems
@@ -597,7 +614,7 @@ void Kekulize(RWMol &mol, bool markAtomsBonds, unsigned int maxBackTracks) {
           errout << "non-ring atom " << (*ai)->getIdx() << " marked aromatic";
           std::string msg = errout.str();
           BOOST_LOG(rdErrorLog) << msg << std::endl;
-          throw MolSanitizeException(msg);
+          throw AtomKekulizeException(msg, (*ai)->getIdx());
         }
         (*ai)->setIsAromatic(false);
         // make sure "explicit" Hs on things like pyrroles don't hang around
@@ -624,7 +641,7 @@ void Kekulize(RWMol &mol, bool markAtomsBonds, unsigned int maxBackTracks) {
              << ": " << val << "!=" << valences[i] << std::endl;
       std::string msg = errout.str();
       BOOST_LOG(rdErrorLog) << msg << std::endl;
-      throw MolSanitizeException(msg);
+      throw AtomKekulizeException(msg, (*ai)->getIdx());
     }
     i++;
   }

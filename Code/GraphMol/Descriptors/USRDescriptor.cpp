@@ -158,7 +158,7 @@ typedef boost::flyweight<boost::flyweights::key_value<std::string, ss_matcher>,
     pattern_flyweight;
 
 void getAtomIdsForFeatures(const ROMol &mol,
-                           std::vector<std::vector<unsigned int> > &atomIds) {
+                           std::vector<std::vector<unsigned int>> &atomIds) {
   unsigned int numFeatures = featureSmarts.size();
   PRECONDITION(atomIds.size() == numFeatures,
                "atomIds must have be the same size as featureSmarts");
@@ -204,7 +204,7 @@ void USR(const ROMol &mol, std::vector<double> &descriptor, int confId) {
     coords[ai] = &conf.getAtomPos(ai);
   }
   // the four distances
-  std::vector<std::vector<double> > dist(4);
+  std::vector<std::vector<double>> dist(4);
   std::vector<RDGeom::Point3D> points(4);
   calcUSRDistributions(coords, dist, points);
 
@@ -212,7 +212,7 @@ void USR(const ROMol &mol, std::vector<double> &descriptor, int confId) {
 }
 
 void USRCAT(const ROMol &mol, std::vector<double> &descriptor,
-            std::vector<std::vector<unsigned int> > &atomIds, int confId) {
+            std::vector<std::vector<unsigned int>> &atomIds, int confId) {
   unsigned int na = mol.getNumAtoms();
   // check that number of atoms > 3
   if (na < 3) {
@@ -240,7 +240,7 @@ void USRCAT(const ROMol &mol, std::vector<double> &descriptor,
     coords[ai] = &conf.getAtomPos(ai);
   }
   // the original USR
-  std::vector<std::vector<double> > distribs(4);
+  std::vector<std::vector<double>> distribs(4);
   std::vector<RDGeom::Point3D> points(4);
   calcUSRDistributions(coords, distribs, points);
   std::vector<double> tmpDescriptor(12);
@@ -265,7 +265,7 @@ void USRCAT(const ROMol &mol, std::vector<double> &descriptor,
 }
 
 void calcUSRDistributions(const RDGeom::Point3DConstPtrVect &coords,
-                          std::vector<std::vector<double> > &dist,
+                          std::vector<std::vector<double>> &dist,
                           std::vector<RDGeom::Point3D> &points) {
   PRECONDITION(dist.size() == 4, "dist must have 4 elements");
   PRECONDITION(points.size() == 4, "points must have 4 elements");
@@ -285,7 +285,7 @@ void calcUSRDistributions(const RDGeom::Point3DConstPtrVect &coords,
 
 void calcUSRDistributionsFromPoints(const RDGeom::Point3DConstPtrVect &coords,
                                     const std::vector<RDGeom::Point3D> &points,
-                                    std::vector<std::vector<double> > &dist) {
+                                    std::vector<std::vector<double>> &dist) {
   PRECONDITION(points.size() == dist.size(),
                "points and dist must have the same size");
   for (unsigned int i = 0; i < points.size(); ++i) {
@@ -293,7 +293,7 @@ void calcUSRDistributionsFromPoints(const RDGeom::Point3DConstPtrVect &coords,
   }
 }
 
-void calcUSRFromDistributions(const std::vector<std::vector<double> > &dist,
+void calcUSRFromDistributions(const std::vector<std::vector<double>> &dist,
                               std::vector<double> &descriptor) {
   PRECONDITION(descriptor.size() == 3 * dist.size(),
                "descriptor must have 3 times more elements than dist");

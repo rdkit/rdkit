@@ -1,21 +1,21 @@
-/* 
+/*
  * $Id: FingerprintsTests.java 131 2011-01-20 22:01:29Z ebakke $
  *
  *  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
  *  All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
- * met: 
+ * met:
  *
- *     * Redistributions of source code must retain the above copyright 
+ *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
  *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following 
- *       disclaimer in the documentation and/or other materials provided 
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
  *       with the distribution.
- *     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
- *       nor the names of its contributors may be used to endorse or promote 
+ *     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+ *       nor the names of its contributors may be used to endorse or promote
  *       products derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -39,11 +39,12 @@ import org.junit.Test;
 public class FingerprintsTests extends GraphMolTest {
 
 	public void compareVectors(Int_Vect v1, Int_Vect v2) {
+		assertEquals(v1.size(), v2.size());
 		for (int i = 0; i < v1.size(); i++) {
 			assertEquals(v1.get(i),v2.get(i));
 		}
 	}
-	
+
 	private void checkTargets(String smi, String[] matches) {
 		ROMol m = RWMol.MolFromSmiles(smi);
 		ExplicitBitVect fp1 = RDKFuncs.RDKFingerprintMol(m, 2, 7, 9192, 4, false);
@@ -52,9 +53,9 @@ public class FingerprintsTests extends GraphMolTest {
 			ExplicitBitVect fp2 = RDKFuncs.RDKFingerprintMol(m2, 2, 7, 9192, 4, false);
 			Double_Vect v = RDKFuncs.OnBitProjSimilarity(fp2, fp1);
 			assertEquals("substuct " + match + " is not properly contained in " + smi,1.000,v.get(0),defaultDoubleTol);
-		}		
+		}
 	}
-	
+
 	// check containing mols, no Hs, no valence
 	@Test
 	public void test4 () {
@@ -102,6 +103,54 @@ public class FingerprintsTests extends GraphMolTest {
                 ExplicitBitVect fp2 = RDKFuncs.MACCSFingerprintMol(m2);
                 assertEquals(RDKFuncs.DiceSimilarity(fp1,fp2),0.5454,0.001);
 	}
+
+	@Test
+	public void test8() {
+		ReactionFingerprintParams params = new ReactionFingerprintParams();
+		params.setFpType(FingerprintType.PatternFP);
+		params.setFpSize(4096);
+		{
+			String smi1 = "C1CCCCC1>>C1CCNCC1";
+	    String smi2 = "C1CCCCC1>>C1CCNCC1";
+			ChemicalReaction r1 = ChemicalReaction.ReactionFromSmarts(smi1,true);
+			ChemicalReaction r2 = ChemicalReaction.ReactionFromSmarts(smi2,true);
+	    ExplicitBitVect fp1 = RDKFuncs.StructuralFingerprintChemReaction(r1,params);
+	    ExplicitBitVect fp2 = RDKFuncs.StructuralFingerprintChemReaction(r2,params);
+	    assertTrue(RDKFuncs.AllProbeBitsMatch(fp1,fp2));
+	}
+	{
+		String smi1 = "C1CCCCC1>>C1CCNCC1";
+		String smi2 = "C1CCCCC1>>C1CCOCC1";
+		ChemicalReaction r1 = ChemicalReaction.ReactionFromSmarts(smi1,true);
+		ChemicalReaction r2 = ChemicalReaction.ReactionFromSmarts(smi2,true);
+		ExplicitBitVect fp1 = RDKFuncs.StructuralFingerprintChemReaction(r1,params);
+		ExplicitBitVect fp2 = RDKFuncs.StructuralFingerprintChemReaction(r2,params);
+		assertFalse(RDKFuncs.AllProbeBitsMatch(fp1,fp2));
+	}
+	{
+		String smi1 = "C1CCCCC1>>C1CCNCC1";
+		String smi2 = ">>C1CCNCC1";
+		ChemicalReaction r1 = ChemicalReaction.ReactionFromSmarts(smi1,true);
+		ChemicalReaction r2 = ChemicalReaction.ReactionFromSmarts(smi2,true);
+		ExplicitBitVect fp1 = RDKFuncs.StructuralFingerprintChemReaction(r1,params);
+		ExplicitBitVect fp2 = RDKFuncs.StructuralFingerprintChemReaction(r2,params);
+		assertFalse(RDKFuncs.AllProbeBitsMatch(fp1,fp2));
+		assertTrue(RDKFuncs.AllProbeBitsMatch(fp2,fp1));
+	}
+}
+
+    @Test
+    public void testToByteArray() {
+        String smiles = "Cc2nc1ccccc1o2";
+        ROMol mol = RWMol.MolFromSmiles(smiles);
+        ExplicitBitVect fp1 = RDKFuncs.PatternFingerprintMol(mol, 2048);
+        byte[] fpBytes = fp1.toByteArray();
+        ExplicitBitVect fp2 = ExplicitBitVect.fromByteArray(fpBytes);
+        Int_Vect fp1Bits = fp1.getOnBits();
+        Int_Vect fp2Bits = fp2.getOnBits();
+        compareVectors(fp1Bits, fp2Bits);
+    }
+
 	public static void main(String args[]) {
 		org.junit.runner.JUnitCore.main("org.RDKit.FingerprintsTests");
 	}

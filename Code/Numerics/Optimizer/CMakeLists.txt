@@ -1,6 +1,8 @@
+
+add_definitions(-DRDKIT_OPTIMIZER_BUILD)
 rdkit_library(Optimizer 
               BFGSOpt.cpp LinearSearch.cpp
-              LINK_LIBRARIES RDGeometryLib)
+              LINK_LIBRARIES RDGeometryLib Trajectory)
 
 rdkit_headers(BFGSOpt.h DEST Numerics/Optimizer)
 

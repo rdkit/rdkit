@@ -1,10 +1,10 @@
 This directory contains scripts for carrying out the calculations and analyis from the publications:
 
 1) A. Vulpetti, U. Hommel, G. Landrum, R. Lewis and C. Dalvit, "Design and NMR-based screening of LEF,
-a library of chemical fragments with different Local Environment of Fluorine" J. Am. Chem. Soc. 131 (2009) 12949-12959. http://dx.doi.org/10.1021/ja905207t
+a library of chemical fragments with different Local Environment of Fluorine" J. Am. Chem. Soc. 131 (2009) 12949-12959. https://doi.org/10.1021/ja905207t
 
 2) A. Vulpetti, G. Landrum, S. Ruedisser, P. Erbel and C. Dalvit, "19F NMR Chemical Shift Prediction with 
-Fluorine Fingerprint Descriptor" J. of Fluorine Chemistry (2010). http://dx.doi.org/10.1016/j.jfluchem.2009.12.024
+Fluorine Fingerprint Descriptor" J. of Fluorine Chemistry (2010). https://doi.org/10.1016/j.jfluchem.2009.12.024
 
 The scripts require that the RDKit (www.rdkit.org) be installed and properly configured.
 
@@ -34,8 +34,8 @@ Commands to run:
 In the event you use the scripts for publication please reference the original publications:
 
 1) A. Vulpetti, U. Hommel, G. Landrum, R. Lewis and C. Dalvit, "Design and NMR-based screening of LEF,
-a library of chemical fragments with different Local Environment of Fluorine" J. Am. Chem. Soc. 131 (2009) 12949-12959. http://dx.doi.org/10.1021/ja905207t
+a library of chemical fragments with different Local Environment of Fluorine" J. Am. Chem. Soc. 131 (2009) 12949-12959. https://doi.org/10.1021/ja905207t
 
 2) A. Vulpetti, G. Landrum, S. Ruedisser, P. Erbel and C. Dalvit, "19F NMR Chemical Shift Prediction with 
-Fluorine Fingerprint Descriptor" J. of Fluorine Chemistry (2010). http://dx.doi.org/10.1016/j.jfluchem.2009.12.024
+Fluorine Fingerprint Descriptor" J. of Fluorine Chemistry (2010). https://doi.org/10.1016/j.jfluchem.2009.12.024
 

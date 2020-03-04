@@ -19,7 +19,7 @@
   main node list.
 
 """
-from __future__ import print_function
+
 import numpy
 import random
 

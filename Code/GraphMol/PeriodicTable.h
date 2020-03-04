@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef _RD_PERIODIC_TABLE_H
 #define _RD_PERIODIC_TABLE_H
 
@@ -28,7 +29,7 @@ namespace RDKit {
   \endverbatim
 
 */
-class PeriodicTable {
+class RDKIT_GRAPHMOL_EXPORT PeriodicTable {
  public:
   //! returns a pointer to the singleton PeriodicTable
   /*
@@ -231,9 +232,9 @@ class PeriodicTable {
   //! isotope is unknown.
   double getMassForIsotope(UINT atomicNumber, UINT isotope) const {
     PRECONDITION(atomicNumber < byanum.size(), "Atomic number not found");
-    const std::map<unsigned int, std::pair<double, double> > &m =
+    const std::map<unsigned int, std::pair<double, double>> &m =
         byanum[atomicNumber].d_isotopeInfoMap;
-    std::map<unsigned int, std::pair<double, double> >::const_iterator item =
+    std::map<unsigned int, std::pair<double, double>>::const_iterator item =
         m.find(isotope);
     if (item == m.end()) {
       return 0.0;
@@ -256,9 +257,9 @@ class PeriodicTable {
   //! isotope is unknown.
   double getAbundanceForIsotope(UINT atomicNumber, UINT isotope) const {
     PRECONDITION(atomicNumber < byanum.size(), "Atomic number not found");
-    const std::map<unsigned int, std::pair<double, double> > &m =
+    const std::map<unsigned int, std::pair<double, double>> &m =
         byanum[atomicNumber].d_isotopeInfoMap;
-    std::map<unsigned int, std::pair<double, double> >::const_iterator item =
+    std::map<unsigned int, std::pair<double, double>>::const_iterator item =
         m.find(isotope);
     if (item == m.end()) {
       return 0.0;
@@ -312,11 +313,11 @@ class PeriodicTable {
   PeriodicTable &operator=(const PeriodicTable &);
   static void initInstance();
 
-  static class PeriodicTable *ds_instance;
+  static class std::unique_ptr<PeriodicTable> ds_instance;
 
   std::vector<atomicData> byanum;
   STR_UINT_MAP byname;
 };
-};
+};  // namespace RDKit
 
 #endif

@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef _RD_CORRMATGENERATOR_H_
 #define _RD_CORRMATGENERATOR_H_
 
@@ -67,18 +68,18 @@ class BitCorrMatGenerator {
   };
 
   //! \brief get the number of examples we used so far to compute the
-  //correlation matrix
+  // correlation matrix
   int getNumExamples() const { return d_nExamples; };
 
   //! \brief Get the list of bits ID that are used to generate the correlation
-  //matrix
+  // matrix
   RDKit::INT_VECT getCorrBitList() const { return d_descs; };
 
   //! \brief Gets a pointer to the correlation matrix
   double *getCorrMat() { return dp_corrMat; };
 
   //! \brief For each pair of on bits (bi, bj) in fp increase the correlation
-  //count
+  // count
   //    for the pair by 1
   void collectVotes(const BitVect &fp) {
     unsigned int nd = d_descs.size();
@@ -109,6 +110,6 @@ class BitCorrMatGenerator {
   double *dp_corrMat;
   int d_nExamples;
 };
-}
+}  // namespace RDInfoTheory
 
 #endif

@@ -23,8 +23,7 @@ RDKit::SparseIntVect<boost::uint32_t> *getAvalonCountFP(const RDKit::ROMol &mol,
                                                         unsigned int nBits,
                                                         bool isQuery,
                                                         unsigned int bitFlags) {
-  RDKit::SparseIntVect<boost::uint32_t> *res =
-      new RDKit::SparseIntVect<boost::uint32_t>(nBits);
+  auto *res = new RDKit::SparseIntVect<boost::uint32_t>(nBits);
   AvalonTools::getAvalonCountFP(mol, *res, nBits, isQuery, bitFlags);
   return res;
 }
@@ -33,8 +32,7 @@ RDKit::SparseIntVect<boost::uint32_t> *getAvalonCountFP(const std::string &data,
                                                         unsigned int nBits,
                                                         bool isQuery,
                                                         unsigned int bitFlags) {
-  RDKit::SparseIntVect<boost::uint32_t> *res =
-      new RDKit::SparseIntVect<boost::uint32_t>(nBits);
+  auto *res = new RDKit::SparseIntVect<boost::uint32_t>(nBits);
   AvalonTools::getAvalonCountFP(data, isSmiles, *res, nBits, isQuery, bitFlags);
   return res;
 }
@@ -42,7 +40,7 @@ RDKit::SparseIntVect<boost::uint32_t> *getAvalonCountFP(const std::string &data,
 ExplicitBitVect *getAvalonFP(const RDKit::ROMol &mol, unsigned int nBits,
                              bool isQuery, bool resetVect,
                              unsigned int bitFlags) {
-  ExplicitBitVect *res = new ExplicitBitVect(nBits);
+  auto *res = new ExplicitBitVect(nBits);
   AvalonTools::getAvalonFP(mol, *res, nBits, isQuery, resetVect, bitFlags);
   return res;
 }
@@ -62,7 +60,7 @@ python::list getAvalonFPAsWords(const RDKit::ROMol &mol, unsigned int nBits,
 ExplicitBitVect *getAvalonFP(const std::string &data, bool isSmiles,
                              unsigned int nBits, bool isQuery, bool resetVect,
                              unsigned int bitFlags) {
-  ExplicitBitVect *res = new ExplicitBitVect(nBits);
+  auto *res = new ExplicitBitVect(nBits);
   AvalonTools::getAvalonFP(data, isSmiles, *res, nBits, isQuery, resetVect,
                            bitFlags);
   return res;

@@ -12,42 +12,49 @@
 //
 // Generic Wrapper utility functionality
 //
-#define RDKIT_WRAP_SOURCE
 #include "Wrap.h"
 #include "pyint_api.h"
 #include <sstream>
 #include <iostream>
 
 // A helper function for dealing with errors. Throw a Python IndexError
-RDKIT_WRAP_DECL void throw_index_error(int key) {
+void throw_index_error(int key) {
   PyErr_SetObject(PyExc_IndexError, PyInt_FromLong(key));
   python::throw_error_already_set();
 }
 
 // A helper function for dealing with errors. Throw a Python ValueError
-RDKIT_WRAP_DECL void throw_value_error(const std::string err) {
+void throw_value_error(const std::string err) {
   PyErr_SetString(PyExc_ValueError, err.c_str());
   python::throw_error_already_set();
 }
 
-RDKIT_WRAP_DECL void translate_index_error(IndexErrorException const& e) {
+// A helper function for dealing with errors. Throw a Python KeyError
+void throw_key_error(const std::string key) {
+  PyErr_SetString(PyExc_KeyError, key.c_str());
+  python::throw_error_already_set();
+}
+
+void translate_index_error(IndexErrorException const& e) {
   throw_index_error(e.index());
 }
 
-RDKIT_WRAP_DECL void translate_value_error(ValueErrorException const& e) {
+void translate_value_error(ValueErrorException const& e) {
   throw_value_error(e.message());
+}
+
+void translate_key_error(KeyErrorException const& e) {
+  throw_key_error(e.key());
 }
 
 #ifdef INVARIANT_EXCEPTION_METHOD
 // A helper function for dealing with errors. Throw a Python RuntimeError
-RDKIT_WRAP_DECL void throw_runtime_error(const std::string err) {
+void throw_runtime_error(const std::string err) {
   PyErr_SetString(PyExc_RuntimeError, err.c_str());
   python::throw_error_already_set();
 }
 
-
-RDKIT_WRAP_DECL void translate_invariant_error(Invar::Invariant const &e) {
+void translate_invariant_error(Invar::Invariant const& e) {
   throw_runtime_error(e.toUserString());
 }
-#endif                                               
-
+#endif

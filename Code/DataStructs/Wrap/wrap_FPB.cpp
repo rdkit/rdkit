@@ -19,36 +19,33 @@ using namespace RDKit;
 namespace {
 python::tuple taniNbrHelper(const FPBReader *self, const std::string &bytes,
                             double threshold) {
-  const boost::uint8_t *bv =
-      reinterpret_cast<const boost::uint8_t *>(bytes.c_str());
-  std::vector<std::pair<double, unsigned int> > nbrs =
+  const auto *bv = reinterpret_cast<const std::uint8_t *>(bytes.c_str());
+  std::vector<std::pair<double, unsigned int>> nbrs =
       self->getTanimotoNeighbors(bv, threshold);
   python::list result;
-  for (unsigned int i = 0; i < nbrs.size(); ++i) {
-    result.append(python::make_tuple(nbrs[i].first, nbrs[i].second));
+  for (auto &nbr : nbrs) {
+    result.append(python::make_tuple(nbr.first, nbr.second));
   }
   return python::tuple(result);
 }
 python::tuple tverskyNbrHelper(const FPBReader *self, const std::string &bytes,
                                double ca, double cb, double threshold) {
-  const boost::uint8_t *bv =
-      reinterpret_cast<const boost::uint8_t *>(bytes.c_str());
-  std::vector<std::pair<double, unsigned int> > nbrs =
+  const auto *bv = reinterpret_cast<const std::uint8_t *>(bytes.c_str());
+  std::vector<std::pair<double, unsigned int>> nbrs =
       self->getTverskyNeighbors(bv, ca, cb, threshold);
   python::list result;
-  for (unsigned int i = 0; i < nbrs.size(); ++i) {
-    result.append(python::make_tuple(nbrs[i].first, nbrs[i].second));
+  for (auto &nbr : nbrs) {
+    result.append(python::make_tuple(nbr.first, nbr.second));
   }
   return python::tuple(result);
 }
 python::tuple containingNbrHelper(const FPBReader *self,
                                   const std::string &bytes) {
-  const boost::uint8_t *bv =
-      reinterpret_cast<const boost::uint8_t *>(bytes.c_str());
+  const auto *bv = reinterpret_cast<const std::uint8_t *>(bytes.c_str());
   std::vector<unsigned int> nbrs = self->getContainingNeighbors(bv);
   python::list result;
-  for (unsigned int i = 0; i < nbrs.size(); ++i) {
-    result.append(nbrs[i]);
+  for (auto &nbr : nbrs) {
+    result.append(nbr);
   }
   return python::tuple(result);
 }
@@ -56,14 +53,12 @@ python::tuple containingNbrHelper(const FPBReader *self,
 python::tuple multiTaniNbrHelper(const MultiFPBReader *self,
                                  const std::string &bytes, double threshold,
                                  unsigned int numThreads) {
-  const boost::uint8_t *bv =
-      reinterpret_cast<const boost::uint8_t *>(bytes.c_str());
+  const auto *bv = reinterpret_cast<const std::uint8_t *>(bytes.c_str());
   std::vector<MultiFPBReader::ResultTuple> nbrs =
       self->getTanimotoNeighbors(bv, threshold, numThreads);
   python::list result;
-  for (unsigned int i = 0; i < nbrs.size(); ++i) {
-    result.append(python::make_tuple(nbrs[i].get<0>(), nbrs[i].get<1>(),
-                                     nbrs[i].get<2>()));
+  for (auto &nbr : nbrs) {
+    result.append(python::make_tuple(nbr.get<0>(), nbr.get<1>(), nbr.get<2>()));
   }
   return python::tuple(result);
 }
@@ -71,33 +66,30 @@ python::tuple multiTverskyNbrHelper(const MultiFPBReader *self,
                                     const std::string &bytes, double ca,
                                     double cb, double threshold,
                                     unsigned int numThreads) {
-  const boost::uint8_t *bv =
-      reinterpret_cast<const boost::uint8_t *>(bytes.c_str());
+  const auto *bv = reinterpret_cast<const std::uint8_t *>(bytes.c_str());
   std::vector<MultiFPBReader::ResultTuple> nbrs =
       self->getTverskyNeighbors(bv, ca, cb, threshold, numThreads);
   python::list result;
-  for (unsigned int i = 0; i < nbrs.size(); ++i) {
-    result.append(python::make_tuple(nbrs[i].get<0>(), nbrs[i].get<1>(),
-                                     nbrs[i].get<2>()));
+  for (auto &nbr : nbrs) {
+    result.append(python::make_tuple(nbr.get<0>(), nbr.get<1>(), nbr.get<2>()));
   }
   return python::tuple(result);
 }
 python::tuple multiContainingNbrHelper(const MultiFPBReader *self,
                                        const std::string &bytes,
                                        unsigned int numThreads) {
-  const boost::uint8_t *bv =
-      reinterpret_cast<const boost::uint8_t *>(bytes.c_str());
-  std::vector<std::pair<unsigned int, unsigned int> > nbrs =
+  const auto *bv = reinterpret_cast<const std::uint8_t *>(bytes.c_str());
+  std::vector<std::pair<unsigned int, unsigned int>> nbrs =
       self->getContainingNeighbors(bv, numThreads);
   python::list result;
-  for (unsigned int i = 0; i < nbrs.size(); ++i) {
-    result.append(python::make_tuple(nbrs[i].first, nbrs[i].second));
+  for (auto &nbr : nbrs) {
+    result.append(python::make_tuple(nbr.first, nbr.second));
   }
   return python::tuple(result);
 }
 
 python::object getBytesHelper(const FPBReader *self, unsigned int which) {
-  boost::shared_array<boost::uint8_t> bv = self->getBytes(which);
+  boost::shared_array<std::uint8_t> bv = self->getBytes(which);
   python::object retval =
       python::object(python::handle<>(PyBytes_FromStringAndSize(
           reinterpret_cast<const char *>(bv.get()), self->nBits() / 8)));
@@ -106,8 +98,7 @@ python::object getBytesHelper(const FPBReader *self, unsigned int which) {
 
 double getTaniHelper(const FPBReader *self, unsigned int which,
                      const std::string &bytes) {
-  const boost::uint8_t *bv =
-      reinterpret_cast<const boost::uint8_t *>(bytes.c_str());
+  const auto *bv = reinterpret_cast<const std::uint8_t *>(bytes.c_str());
   return self->getTanimoto(which, bv);
 }
 python::tuple getItemHelper(const FPBReader *self, unsigned int which) {
@@ -116,8 +107,7 @@ python::tuple getItemHelper(const FPBReader *self, unsigned int which) {
 }
 double getTverskyHelper(const FPBReader *self, unsigned int which,
                         const std::string &bytes, double ca, double cb) {
-  const boost::uint8_t *bv =
-      reinterpret_cast<const boost::uint8_t *>(bytes.c_str());
+  const auto *bv = reinterpret_cast<const std::uint8_t *>(bytes.c_str());
   return self->getTversky(which, bv, ca, cb);
 }
 }
@@ -130,7 +120,7 @@ struct FPB_wrapper {
     change in future releases.\n";
     python::class_<FPBReader, boost::noncopyable>(
         "FPBReader", FPBReaderClassDoc.c_str(),
-        python::init<std::string, python::optional<bool> >(
+        python::init<std::string, python::optional<bool>>(
             (python::arg("filename"), python::arg("lazy") = false),
             "docstring"))
         .def("Init", &FPBReader::init,
@@ -172,7 +162,7 @@ struct FPB_wrapper {
 
     python::class_<MultiFPBReader, boost::noncopyable>(
         "MultiFPBReader", MultiFPBReaderClassDoc.c_str(),
-        python::init<python::optional<bool> >(
+        python::init<python::optional<bool>>(
             (python::arg("initOnSearch") = false), "docstring"))
         .def("Init", &MultiFPBReader::init,
              "Call Init() on each of our children. This can take a while.\n")

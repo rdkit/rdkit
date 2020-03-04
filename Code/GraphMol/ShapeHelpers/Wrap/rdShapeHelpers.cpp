@@ -32,11 +32,12 @@ void _copyTransform(const PyArrayObject *transMat, RDGeom::Transform3D &trans) {
     throw_value_error("The transform has to be square matrix, of size 4x4");
   }
   if (PyArray_DESCR(const_cast<PyArrayObject *>(transMat))->type_num !=
-      NPY_DOUBLE)
+      NPY_DOUBLE) {
     throw_value_error("Only double arrays allowed for transform object ");
+  }
 
   unsigned int dSize = nrows * nrows;
-  const double *inData = reinterpret_cast<const double *>(
+  const auto *inData = reinterpret_cast<const double *>(
       PyArray_DATA(const_cast<PyArrayObject *>(transMat)));
   double *tData = trans.getData();
   memcpy(static_cast<void *>(tData), static_cast<const void *>(inData),
@@ -49,12 +50,12 @@ python::tuple getConformerDimsAndOffset(const Conformer &conf,
   RDGeom::Point3D dims, offSet;
   PyObject *transObj = trans.ptr();
   if (PyArray_Check(transObj)) {
-    PyArrayObject *transMat = reinterpret_cast<PyArrayObject *>(transObj);
+    auto *transMat = reinterpret_cast<PyArrayObject *>(transObj);
     RDGeom::Transform3D ctrans;
     _copyTransform(transMat, ctrans);
     MolShapes::computeConfDimsAndOffset(conf, dims, offSet, &ctrans, padding);
   } else {
-    MolShapes::computeConfDimsAndOffset(conf, dims, offSet, 0, padding);
+    MolShapes::computeConfDimsAndOffset(conf, dims, offSet, nullptr, padding);
   }
 
   python::tuple res = python::make_tuple(dims, offSet);
@@ -67,12 +68,12 @@ python::tuple getConfBox(const Conformer &conf,
   RDGeom::Point3D lowerCorner, upperCorner;
   PyObject *transObj = trans.ptr();
   if (PyArray_Check(transObj)) {
-    PyArrayObject *transMat = reinterpret_cast<PyArrayObject *>(transObj);
+    auto *transMat = reinterpret_cast<PyArrayObject *>(transObj);
     RDGeom::Transform3D ctrans;
     _copyTransform(transMat, ctrans);
     MolShapes::computeConfBox(conf, lowerCorner, upperCorner, &ctrans, padding);
   } else {
-    MolShapes::computeConfBox(conf, lowerCorner, upperCorner, 0, padding);
+    MolShapes::computeConfBox(conf, lowerCorner, upperCorner, nullptr, padding);
   }
   python::tuple res = python::make_tuple(lowerCorner, upperCorner);
   return res;
@@ -110,15 +111,25 @@ void EncodeMolShape(
   PyObject *transObj = trans.ptr();
 
   if (PyArray_Check(transObj)) {
-    PyArrayObject *transMat = reinterpret_cast<PyArrayObject *>(transObj);
+    auto *transMat = reinterpret_cast<PyArrayObject *>(transObj);
     RDGeom::Transform3D ctrans;
     _copyTransform(transMat, ctrans);
     MolShapes::EncodeShape(mol, grid, confId, &ctrans, vdwScale, stepSize,
                            maxLayers, ignoreHs);
   } else {
-    MolShapes::EncodeShape(mol, grid, confId, 0, vdwScale, stepSize, maxLayers,
-                           ignoreHs);
+    MolShapes::EncodeShape(mol, grid, confId, nullptr, vdwScale, stepSize,
+                           maxLayers, ignoreHs);
   }
+}
+double tverskyMolShapes(const ROMol &mol1, const ROMol &mol2, double alpha, double beta, int confId1 = -1,
+                         int confId2 = -1, double gridSpacing = 0.5,
+                         DiscreteValueVect::DiscreteValueType bitsPerPoint =
+                             DiscreteValueVect::TWOBITVALUE,
+                         double vdwScale = 0.8, double stepSize = 0.25,
+                         int maxLayers = -1, bool ignoreHs = true) {
+  return MolShapes::tverskyIndex(mol1, mol2, alpha, beta, confId1, confId2, gridSpacing,
+                                     bitsPerPoint, vdwScale, stepSize,
+                                     maxLayers, ignoreHs);
 }
 
 double tanimotoMolShapes(const ROMol &mol1, const ROMol &mol2, int confId1 = -1,
@@ -175,6 +186,38 @@ BOOST_PYTHON_MODULE(rdShapeHelpers) {
        python::arg("stepSize") = 0.25, python::arg("maxLayers") = -1,
        python::arg("ignoreHs") = true),
       docString.c_str());
+
+  docString =
+      "Compute the shape tversky index between two molecule based on a predefined alignment\n\
+  \n\
+  ARGUMENTS:\n\
+    - mol1 : The first molecule of interest \n\
+    - mol2 : The second molecule of interest \n\
+    - alpha : first parameter of the Tversky index\n\
+    - beta : second parameter of the Tversky index\n\
+    - confId1 : Conformer in the first molecule (defaults to first conformer) \n\
+    - confId2 : Conformer in the second molecule (defaults to first conformer) \n\
+    - gridSpacing : resolution of the grid used to encode the molecular shapes \n\
+    - bitsPerPoint : number of bits used to encode the occupancy at each grid point \n\
+                          defaults to two bits per grid point \n\
+    - vdwScale : Scaling factor for the radius of the atoms to determine the base radius \n\
+                used in the encoding - grid points inside this sphere carry the maximum occupancy \n\
+    - stepSize : thickness of the each layer outside the base radius, the occupancy value is decreased \n\
+                 from layer to layer from the maximum value \n\
+    - maxLayers : the maximum number of layers - defaults to the number of bits \n\
+                  used per grid point - e.g. two bits per grid point will allow 3 layers \n\
+    - ignoreHs : when set, the contribution of Hs to the shape will be ignored\n";
+
+  python::def(
+      "ShapeTverskyIndex", RDKit::tverskyMolShapes,
+      (python::arg("mol1"), python::arg("mol2"), python::arg("alpha"), python::arg("beta"),
+       python::arg("confId1") = -1,
+       python::arg("confId2") = -1, python::arg("gridSpacing") = 0.5,
+       python::arg("bitsPerPoint") = RDKit::DiscreteValueVect::TWOBITVALUE,
+       python::arg("vdwScale") = 0.8, python::arg("stepSize") = 0.25,
+       python::arg("maxLayers") = -1, python::arg("ignoreHs") = true),
+      docString.c_str());
+
 
   docString =
       "Compute the shape tanimoto distance between two molecule based on a predefined alignment\n\

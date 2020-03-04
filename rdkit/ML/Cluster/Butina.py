@@ -42,7 +42,7 @@ def ClusterData(data, nPts, distThresh, isDistData=False, distFunc=EuclideanDist
       - distFunc: a function to calculate distances between points.
            Receives 2 points as arguments, should return a float
 
-      - reodering: if this toggle is set, the number of neighbors is updated
+      - reordering: if this toggle is set, the number of neighbors is updated
            for the unassigned molecules after a new cluster is created such
            that always the molecule with the largest number of unassigned
            neighbors is selected as the next cluster center.

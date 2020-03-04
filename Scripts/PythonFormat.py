@@ -11,7 +11,7 @@ all non-conformant files are listed and the required yapf command(s) printed.
 If changes are found, the script will exit with error code 1, otherwise 0.
 
 '''
-from __future__ import print_function
+
 import os
 from yapf.yapflib.yapf_api import FormatCode
 import sys

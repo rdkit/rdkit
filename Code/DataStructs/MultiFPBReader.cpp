@@ -13,6 +13,10 @@
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/Ranking.h>
 #include <RDGeneral/RDThreads.h>
+#ifdef RDK_THREADSAFE_SSS
+#include <thread>
+#include <future>
+#endif
 
 #include <boost/foreach.hpp>
 #include "MultiFPBReader.h"
@@ -21,7 +25,7 @@
 namespace RDKit {
 
 namespace detail {
-boost::uint8_t *bitsetToBytes(const boost::dynamic_bitset<> &bitset);
+std::uint8_t *bitsetToBytes(const boost::dynamic_bitset<> &bitset);
 }
 
 namespace {
@@ -55,24 +59,26 @@ struct pairSorter
 };
 
 struct sim_args {
-  const boost::uint8_t *bv;
+  const std::uint8_t *bv;
   double ca, cb;
   double threshold;
   const std::vector<FPBReader *> &readers;
-  std::vector<std::vector<MultiFPBReader::ResultTuple> > *res;
+  std::vector<std::vector<MultiFPBReader::ResultTuple>> *res;
   bool initOnSearch;
 };
 
 void tversky_helper(unsigned int threadId, unsigned int numThreads,
                     const sim_args *args) {
   for (unsigned int i = threadId; i < args->readers.size(); i += numThreads) {
-    if (args->initOnSearch) args->readers[i]->init();
-    std::vector<std::pair<double, unsigned int> > r_res =
+    if (args->initOnSearch) {
+      args->readers[i]->init();
+    }
+    std::vector<std::pair<double, unsigned int>> r_res =
         args->readers[i]->getTverskyNeighbors(args->bv, args->ca, args->cb,
                                               args->threshold);
     (*args->res)[i].clear();
     (*args->res)[i].reserve(r_res.size());
-    for (std::vector<std::pair<double, unsigned int> >::const_iterator rit =
+    for (std::vector<std::pair<double, unsigned int>>::const_iterator rit =
              r_res.begin();
          rit != r_res.end(); ++rit) {
       (*args->res)[i].push_back(
@@ -83,12 +89,14 @@ void tversky_helper(unsigned int threadId, unsigned int numThreads,
 void tani_helper(unsigned int threadId, unsigned int numThreads,
                  const sim_args *args) {
   for (unsigned int i = threadId; i < args->readers.size(); i += numThreads) {
-    if (args->initOnSearch) args->readers[i]->init();
-    std::vector<std::pair<double, unsigned int> > r_res =
+    if (args->initOnSearch) {
+      args->readers[i]->init();
+    }
+    std::vector<std::pair<double, unsigned int>> r_res =
         args->readers[i]->getTanimotoNeighbors(args->bv, args->threshold);
     (*args->res)[i].clear();
     (*args->res)[i].reserve(r_res.size());
-    for (std::vector<std::pair<double, unsigned int> >::const_iterator rit =
+    for (std::vector<std::pair<double, unsigned int>>::const_iterator rit =
              r_res.begin();
          rit != r_res.end(); ++rit) {
       (*args->res)[i].push_back(
@@ -104,7 +112,7 @@ void generic_nbr_helper(std::vector<MultiFPBReader::ResultTuple> &res, T func,
   res.resize(0);
   numThreads = getNumThreadsToUse(numThreads);
 #ifdef RDK_THREADSAFE_SSS
-  boost::thread_group tg;
+  std::vector<std::future<void>> tg;
 #endif
   if (numThreads == 1) {
     func(0, 1, &args);
@@ -113,9 +121,12 @@ void generic_nbr_helper(std::vector<MultiFPBReader::ResultTuple> &res, T func,
   else {
     for (unsigned int tid = 0; tid < numThreads && tid < args.readers.size();
          ++tid) {
-      tg.add_thread(new boost::thread(func, tid, numThreads, &args));
+      tg.emplace_back(
+          std::async(std::launch::async, func, tid, numThreads, &args));
     }
-    tg.join_all();
+    for (auto &fut : tg) {
+      fut.get();
+    }
   }
 #endif
 
@@ -126,47 +137,47 @@ void generic_nbr_helper(std::vector<MultiFPBReader::ResultTuple> &res, T func,
   std::sort(res.begin(), res.end(), tplSorter());
 }
 void get_tani_nbrs(const std::vector<FPBReader *> &d_readers,
-                   const boost::uint8_t *bv, double threshold,
+                   const std::uint8_t *bv, double threshold,
                    std::vector<MultiFPBReader::ResultTuple> &res,
                    int numThreads, bool initOnSearch) {
-  std::vector<std::vector<MultiFPBReader::ResultTuple> > accum(
-      d_readers.size());
+  std::vector<std::vector<MultiFPBReader::ResultTuple>> accum(d_readers.size());
   sim_args args = {bv, 0., 0., threshold, d_readers, &accum, initOnSearch};
   generic_nbr_helper(res, tani_helper, args, numThreads);
 }
 
 void get_tversky_nbrs(const std::vector<FPBReader *> &d_readers,
-                      const boost::uint8_t *bv, double a, double b,
+                      const std::uint8_t *bv, double a, double b,
                       double threshold,
                       std::vector<MultiFPBReader::ResultTuple> &res,
                       int numThreads, bool initOnSearch) {
-  std::vector<std::vector<MultiFPBReader::ResultTuple> > accum(
-      d_readers.size());
+  std::vector<std::vector<MultiFPBReader::ResultTuple>> accum(d_readers.size());
   sim_args args = {bv, a, b, threshold, d_readers, &accum, initOnSearch};
   generic_nbr_helper(res, tversky_helper, args, numThreads);
 }
 
 void contain_helper(unsigned int threadId, unsigned int numThreads,
-                    const boost::uint8_t *bv,
+                    const std::uint8_t *bv,
                     const std::vector<FPBReader *> *readers,
-                    std::vector<std::vector<unsigned int> > *accum,
+                    std::vector<std::vector<unsigned int>> *accum,
                     bool initOnSearch) {
   for (unsigned int i = threadId; i < readers->size(); i += numThreads) {
-    if (initOnSearch) (*readers)[i]->init();
+    if (initOnSearch) {
+      (*readers)[i]->init();
+    }
     (*accum)[i] = (*readers)[i]->getContainingNeighbors(bv);
   }
 }
 
 void get_containing_nbrs(
-    const std::vector<FPBReader *> &d_readers, const boost::uint8_t *bv,
-    std::vector<std::pair<unsigned int, unsigned int> > &res,
+    const std::vector<FPBReader *> &d_readers, const std::uint8_t *bv,
+    std::vector<std::pair<unsigned int, unsigned int>> &res,
     unsigned int numThreads, bool initOnSearch) {
   numThreads = getNumThreadsToUse(numThreads);
 #ifdef RDK_THREADSAFE_SSS
-  boost::thread_group tg;
+  std::vector<std::future<void>> tg;
 #endif
 
-  std::vector<std::vector<unsigned int> > accum(d_readers.size());
+  std::vector<std::vector<unsigned int>> accum(d_readers.size());
   if (numThreads == 1) {
     contain_helper(0, 1, bv, &d_readers, &accum, initOnSearch);
   }
@@ -174,10 +185,13 @@ void get_containing_nbrs(
   else {
     for (unsigned int tid = 0; tid < numThreads && tid < d_readers.size();
          ++tid) {
-      tg.add_thread(new boost::thread(contain_helper, tid, numThreads, bv,
-                                      &d_readers, &accum, initOnSearch));
+      tg.emplace_back(std::async(std::launch::async, contain_helper, tid,
+                                 numThreads, bv, &d_readers, &accum,
+                                 initOnSearch));
     }
-    tg.join_all();
+    for (auto &fut : tg) {
+      fut.get();
+    }
   }
 #endif
 
@@ -201,8 +215,9 @@ void MultiFPBReader::init() {
     if (!nBits) {
       nBits = rdr->nBits();
     } else {
-      if (rdr->nBits() != nBits)
+      if (rdr->nBits() != nBits) {
         throw ValueErrorException("bit lengths of child readers don't match");
+      }
     }
   }
   df_init = true;
@@ -214,7 +229,7 @@ MultiFPBReader::MultiFPBReader(std::vector<FPBReader *> &readers,
   df_takeOwnership = takeOwnership;
   df_initOnSearch = initOnSearch;
   BOOST_FOREACH (FPBReader *rdr, readers) {
-    PRECONDITION(rdr != NULL, "bad reader");
+    PRECONDITION(rdr != nullptr, "bad reader");
   }
   d_readers = readers;
 }
@@ -230,7 +245,7 @@ unsigned int MultiFPBReader::nBits() const {
 }
 
 std::vector<MultiFPBReader::ResultTuple> MultiFPBReader::getTanimotoNeighbors(
-    const boost::uint8_t *bv, double threshold, int numThreads) const {
+    const std::uint8_t *bv, double threshold, int numThreads) const {
   PRECONDITION(df_init || df_initOnSearch, "not initialized");
 
   std::vector<MultiFPBReader::ResultTuple> res;
@@ -242,14 +257,14 @@ std::vector<MultiFPBReader::ResultTuple> MultiFPBReader::getTanimotoNeighbors(
     const ExplicitBitVect &ebv, double threshold, int numThreads) const {
   PRECONDITION(df_init || df_initOnSearch, "not initialized");
   std::vector<MultiFPBReader::ResultTuple> res;
-  boost::uint8_t *bv = detail::bitsetToBytes(*(ebv.dp_bits));
+  std::uint8_t *bv = detail::bitsetToBytes(*(ebv.dp_bits));
   get_tani_nbrs(d_readers, bv, threshold, res, numThreads, df_initOnSearch);
   delete[] bv;
   return res;
 }
 
 std::vector<MultiFPBReader::ResultTuple> MultiFPBReader::getTverskyNeighbors(
-    const boost::uint8_t *bv, double ca, double cb, double threshold,
+    const std::uint8_t *bv, double ca, double cb, double threshold,
     int numThreads) const {
   PRECONDITION(df_init || df_initOnSearch, "not initialized");
   std::vector<MultiFPBReader::ResultTuple> res;
@@ -263,28 +278,28 @@ std::vector<MultiFPBReader::ResultTuple> MultiFPBReader::getTverskyNeighbors(
     int numThreads) const {
   PRECONDITION(df_init || df_initOnSearch, "not initialized");
   std::vector<MultiFPBReader::ResultTuple> res;
-  boost::uint8_t *bv = detail::bitsetToBytes(*(ebv.dp_bits));
+  std::uint8_t *bv = detail::bitsetToBytes(*(ebv.dp_bits));
   get_tversky_nbrs(d_readers, bv, ca, cb, threshold, res, numThreads,
                    df_initOnSearch);
   delete[] bv;
   return res;
 }
 
-std::vector<std::pair<unsigned int, unsigned int> >
-MultiFPBReader::getContainingNeighbors(const boost::uint8_t *bv,
+std::vector<std::pair<unsigned int, unsigned int>>
+MultiFPBReader::getContainingNeighbors(const std::uint8_t *bv,
                                        int numThreads) const {
   PRECONDITION(df_init || df_initOnSearch, "not initialized");
-  std::vector<std::pair<unsigned int, unsigned int> > res;
+  std::vector<std::pair<unsigned int, unsigned int>> res;
   get_containing_nbrs(d_readers, bv, res, numThreads, df_initOnSearch);
   return res;
 }
 
-std::vector<std::pair<unsigned int, unsigned int> >
+std::vector<std::pair<unsigned int, unsigned int>>
 MultiFPBReader::getContainingNeighbors(const ExplicitBitVect &ebv,
                                        int numThreads) const {
   PRECONDITION(df_init || df_initOnSearch, "not initialized");
-  std::vector<std::pair<unsigned int, unsigned int> > res;
-  boost::uint8_t *bv = detail::bitsetToBytes(*(ebv.dp_bits));
+  std::vector<std::pair<unsigned int, unsigned int>> res;
+  std::uint8_t *bv = detail::bitsetToBytes(*(ebv.dp_bits));
   get_containing_nbrs(d_readers, bv, res, numThreads, df_initOnSearch);
   delete[] bv;
   return res;

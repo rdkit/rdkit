@@ -20,7 +20,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <fstream>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 #include <RDGeneral/hash/hash.hpp>
 
 namespace RDKit {
@@ -39,17 +39,16 @@ FragCatalogEntry::FragCatalogEntry(const ROMol *omol, const PATH_TYPE &path,
 
   // using aIdxMap initialize the location (and their IDs) of the
   // functional groups on dp_mol
-  for (MatchVectType::const_iterator mvtci = aidToFid.begin();
-       mvtci != aidToFid.end(); mvtci++) {
-    int oldAid = mvtci->first;
+  for (const auto &mvtci : aidToFid) {
+    int oldAid = mvtci.first;
     if (aIdxMap.find(oldAid) != aIdxMap.end()) {
       int newAid = aIdxMap[oldAid];
       if (d_aToFmap.find(newAid) != d_aToFmap.end()) {
-        d_aToFmap[newAid].push_back(mvtci->second);
+        d_aToFmap[newAid].push_back(mvtci.second);
       } else {
         INT_VECT tmpVect;
         tmpVect.clear();
-        tmpVect.push_back(mvtci->second);
+        tmpVect.push_back(mvtci.second);
         d_aToFmap[newAid] = tmpVect;
       }
     }
@@ -149,7 +148,7 @@ bool FragCatalogEntry::match(const FragCatalogEntry *other, double tol) const {
   }
 
   // FIX: this may not be enough
-  // we may have to do teh actual isomorphism mapping
+  // we may have to do the actual isomorphism mapping
   return true;
 }
 
@@ -159,17 +158,19 @@ Subgraphs::DiscrimTuple FragCatalogEntry::getDiscrims() const {
     this->getProp(common_properties::Discrims, res);
   } else {
     PATH_TYPE path;
-    for (unsigned int i = 0; i < dp_mol->getNumBonds(); ++i) path.push_back(i);
+    for (unsigned int i = 0; i < dp_mol->getNumBonds(); ++i) {
+      path.push_back(i);
+    }
 
     // create invariant additions to reflect the functional groups attached to
     // the atoms
-    std::vector<boost::uint32_t> funcGpInvars;
+    std::vector<std::uint32_t> funcGpInvars;
     gboost::hash<INT_VECT> vectHasher;
     for (ROMol::AtomIterator atomIt = dp_mol->beginAtoms();
          atomIt != dp_mol->endAtoms(); ++atomIt) {
       unsigned int aid = (*atomIt)->getIdx();
-      boost::uint32_t invar = 0;
-      INT_INT_VECT_MAP_CI mapPos = d_aToFmap.find(aid);
+      std::uint32_t invar = 0;
+      auto mapPos = d_aToFmap.find(aid);
       if (mapPos != d_aToFmap.end()) {
         INT_VECT fGroups = mapPos->second;
         std::sort(fGroups.begin(), fGroups.end());
@@ -190,7 +191,7 @@ Subgraphs::DiscrimTuple FragCatalogEntry::getDiscrims() const {
 void FragCatalogEntry::toStream(std::ostream &ss) const {
   MolPickler::pickleMol(*dp_mol, ss);
 
-  boost::int32_t tmpInt;
+  std::int32_t tmpInt;
   tmpInt = getBitId();
   streamWrite(ss, tmpInt);
 
@@ -203,11 +204,10 @@ void FragCatalogEntry::toStream(std::ostream &ss) const {
 
   tmpInt = d_aToFmap.size();
   streamWrite(ss, tmpInt);
-  for (INT_INT_VECT_MAP::const_iterator iivmci = d_aToFmap.begin();
-       iivmci != d_aToFmap.end(); iivmci++) {
-    tmpInt = iivmci->first;
+  for (const auto &iivmci : d_aToFmap) {
+    tmpInt = iivmci.first;
     streamWrite(ss, tmpInt);
-    INT_VECT tmpVect = iivmci->second;
+    INT_VECT tmpVect = iivmci.second;
     tmpInt = tmpVect.size();
     streamWrite(ss, tmpInt);
     for (INT_VECT_CI ivci = tmpVect.begin(); ivci != tmpVect.end(); ivci++) {
@@ -229,14 +229,14 @@ void FragCatalogEntry::initFromStream(std::istream &ss) {
   dp_mol = new ROMol();
   MolPickler::molFromPickle(ss, *dp_mol);
 
-  boost::int32_t tmpInt;
+  std::int32_t tmpInt;
   // the bitId:
   streamRead(ss, tmpInt);
   setBitId(tmpInt);
 
   // the description:
   streamRead(ss, tmpInt);
-  char *tmpText = new char[tmpInt + 1];
+  auto *tmpText = new char[tmpInt + 1];
   ss.read(tmpText, tmpInt * sizeof(char));
   tmpText[tmpInt] = 0;
   d_descrip = tmpText;
@@ -248,7 +248,7 @@ void FragCatalogEntry::initFromStream(std::istream &ss) {
   // now the map:
   streamRead(ss, tmpInt);
   for (int i = 0; i < tmpInt; i++) {
-    boost::int32_t key, value, size;
+    std::int32_t key, value, size;
     streamRead(ss, key);
     streamRead(ss, size);
     INT_VECT tmpVect;

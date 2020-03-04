@@ -9,6 +9,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef __RD_MMFFANGLEBEND_H__
 #define __RD_MMFFANGLEBEND_H__
 
@@ -22,7 +23,7 @@ class MMFFAngle;
 class MMFFProp;
 
 //! The angle-bend term for MMFF
-class AngleBendContrib : public ForceFieldContrib {
+class RDKIT_FORCEFIELD_EXPORT AngleBendContrib : public ForceFieldContrib {
  public:
   AngleBendContrib() : d_at1Idx(-1), d_at2Idx(-1), d_at3Idx(-1){};
   //! Constructor
@@ -52,18 +53,26 @@ class AngleBendContrib : public ForceFieldContrib {
 };
 namespace Utils {
 //! returns the MMFF rest value for an angle
-double calcAngleRestValue(const MMFFAngle *mmffAngleParams);
+RDKIT_FORCEFIELD_EXPORT double calcAngleRestValue(
+    const MMFFAngle *mmffAngleParams);
 //! returns the MMFF force constant for an angle
-double calcAngleForceConstant(const MMFFAngle *mmffAngleParams);
+RDKIT_FORCEFIELD_EXPORT double calcAngleForceConstant(
+    const MMFFAngle *mmffAngleParams);
 //! calculates and returns the cosine of the angle between points p1, p2, p3
-double calcCosTheta(RDGeom::Point3D p1, RDGeom::Point3D p2, RDGeom::Point3D p3,
-                    double dist1, double dist2);
+RDKIT_FORCEFIELD_EXPORT double calcCosTheta(RDGeom::Point3D p1,
+                                            RDGeom::Point3D p2,
+                                            RDGeom::Point3D p3, double dist1,
+                                            double dist2);
 //! calculates and returns the angle bending MMFF energy
-double calcAngleBendEnergy(const double theta0, const double ka, bool isLinear,
-                           const double cosTheta);
-void calcAngleBendGrad(RDGeom::Point3D *r, double *dist, double **g,
-                       double &dE_dTheta, double &cosTheta, double &sinTheta);
-}
-}
-}
+RDKIT_FORCEFIELD_EXPORT double calcAngleBendEnergy(const double theta0,
+                                                   const double ka,
+                                                   bool isLinear,
+                                                   const double cosTheta);
+RDKIT_FORCEFIELD_EXPORT void calcAngleBendGrad(RDGeom::Point3D *r, double *dist,
+                                               double **g, double &dE_dTheta,
+                                               double &cosTheta,
+                                               double &sinTheta);
+}  // namespace Utils
+}  // namespace MMFF
+}  // namespace ForceFields
 #endif

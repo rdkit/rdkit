@@ -15,7 +15,7 @@ import math
 
 # BIG NOTE: we are going assume atom IDs starting from 0 instead of 1
 # for all the functions in this file. This is so that they
-# are reasonably indepedent of the combicode. However when using
+# are reasonably independent of the combicode. However when using
 # with combicode the caller needs to make sure the atom IDs from combicode
 # are corrected before feeding them in here.
 
@@ -190,7 +190,7 @@ def GetDonor3FeatVects(conf, featAtoms, scale=1.5):
 
   This is a donor with three heavy atoms as neighbors. We will assume
   a tetrahedral arrangement of these neighbors. So the direction we are seeking
-  is the last fourth arm of the sp3 arrangment
+  is the last fourth arm of the sp3 arrangement
 
   ARGUMENTS:
     featAtoms - list of atoms that are part of the feature
@@ -209,7 +209,7 @@ def GetAcceptor3FeatVects(conf, featAtoms, scale=1.5):
 
   This is a donor with three heavy atoms as neighbors. We will assume
   a tetrahedral arrangement of these neighbors. So the direction we are seeking
-  is the last fourth arm of the sp3 arrangment
+  is the last fourth arm of the sp3 arrangement
 
   ARGUMENTS:
     featAtoms - list of atoms that are part of the feature

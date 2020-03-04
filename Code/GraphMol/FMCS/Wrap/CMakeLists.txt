@@ -1,3 +1,4 @@
+remove_definitions(-DRDKIT_FMCS_BUILD)
 rdkit_python_extension(rdFMCS
                        rdFMCS.cpp
                        DEST Chem 

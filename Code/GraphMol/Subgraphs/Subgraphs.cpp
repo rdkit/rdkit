@@ -43,7 +43,7 @@ void getNbrsList(const ROMol &mol, bool useHs, INT_INT_VECT_MAP &nbrs) {
       ROMol::OEDGE_ITER bIt1, end;
       boost::tie(bIt1, end) = mol.getAtomBonds(atom);
       while (bIt1 != end) {
-        const BOND_SPTR bond1 = mol[*bIt1];
+        const Bond* bond1 = mol[*bIt1];
         // if this bond connect to a hydrogen and we are not interested
         // in it ignore
         if (useHs || bond1->getOtherAtom(atom)->getAtomicNum() != 1) {
@@ -54,7 +54,7 @@ void getNbrsList(const ROMol &mol, bool useHs, INT_INT_VECT_MAP &nbrs) {
           }
           ROMol::OEDGE_ITER bIt2 = mol.getAtomBonds(atom).first;
           while (bIt2 != end) {
-            const BOND_SPTR bond2 = mol[*bIt2];
+            const Bond* bond2 = mol[*bIt2];
             int bid2 = bond2->getIdx();
             if (bid1 != bid2 &&
                 (useHs || bond2->getOtherAtom(atom)->getAtomicNum() != 1)) {
@@ -79,7 +79,7 @@ void recurseWalk(
     boost::dynamic_bitset<> forbidden,  // bonds that have been covered already
     // we don't want reference passing for forbidden,
     // it gets altered through the processand we want
-    // fresh start everytime we buble back up to "FindAllSubGraphs"
+    // fresh start every time we buble back up to "FindAllSubGraphs"
     PATH_LIST &res  // the final list of subgraphs
     ) {
   // end case for recursion
@@ -93,7 +93,7 @@ void recurseWalk(
     return;
   }
 
-  // we  have the cndidates that can be used to add to the existing path
+  // we have the candidates that can be used to add to the existing path
   // try extending the subgraphs
   while (cands.size() != 0) {
     int next = cands.back();  // start with the last one in the candidate list
@@ -105,10 +105,9 @@ void recurseWalk(
 
       // update a local stack before the next recursive call
       INT_VECT tstack = cands;
-      for (INT_VECT::iterator bid = nbrs[next].begin(); bid != nbrs[next].end();
-           bid++) {
-        if (!forbidden[*bid]) {
-          tstack.push_back(*bid);
+      for (int &bid : nbrs[next]) {
+        if (!forbidden[bid]) {
+          tstack.push_back(bid);
         }
       }
 
@@ -131,7 +130,7 @@ void recurseWalkRange(
     boost::dynamic_bitset<> forbidden,  // bonds that have been covered already
     // we don't want reference passing for forbidden,
     // it gets altered through the processand we want
-    // fresh start everytime we buble back up to "FindAllSubGraphs"
+    // fresh start every time we buble back up to "FindAllSubGraphs"
     INT_PATH_LIST_MAP &res  // the final list of subgraphs
     ) {
   unsigned int nsize = spath.size();
@@ -153,7 +152,7 @@ void recurseWalkRange(
     return;
   }
 
-  // we  have the cndidates that can be used to add to the existing path
+  // we have the candidates that can be used to add to the existing path
   // try extending the subgraphs
   while (cands.size() != 0) {
     int next = cands.back();  // start with the last one in the candidate list
@@ -165,10 +164,9 @@ void recurseWalkRange(
 
       // update a local stack before the next recursive call
       INT_VECT tstack = cands;
-      for (INT_VECT::iterator bid = nbrs[next].begin(); bid != nbrs[next].end();
-           bid++) {
-        if (!forbidden[*bid]) {
-          tstack.push_back(*bid);
+      for (int &bid : nbrs[next]) {
+        if (!forbidden[bid]) {
+          tstack.push_back(bid);
         }
       }
 
@@ -226,7 +224,7 @@ extendPaths(int *adjMat, unsigned int dim, const PATH_LIST &paths,
           // We *might* be adding the atom, but we need to make sure
           // that we're not just duplicating the second to last
           // element of the path:
-          PATH_TYPE::const_reverse_iterator rIt = path->rbegin();
+          auto rIt = path->rbegin();
           rIt++;
           if (*rIt != static_cast<int>(otherIdx)) {
             // PATH_TYPE newPath=*path;
@@ -272,7 +270,9 @@ pathFinderHelper(int *adjMat, unsigned int dim, unsigned int minLen,
   // and build them up one index at a time:
   for (unsigned int length = 1; length < maxLen; length++) {
     // extend each path:
-    if (length >= minLen) res[length] = paths;
+    if (length >= minLen) {
+      res[length] = paths;
+    }
     paths = extendPaths(adjMat, dim, paths, maxLen);
   }
   res[maxLen] = paths;
@@ -288,7 +288,7 @@ PATH_LIST findAllSubgraphsOfLengthN(const ROMol &mol, unsigned int targetLen,
     - pathListType is defined as a container of "pathType", should it be a
   container
     of "pointers to pathtype"
-    - to make few things clear it might be useful to typdef a "subgraphListType"
+    - to make few things clear it might be useful to typedef a "subgraphListType"
     even if it is exactly same as the "pathListType", just to not confuse
   between
     path vs. subgraph definitions
@@ -307,8 +307,7 @@ PATH_LIST findAllSubgraphsOfLengthN(const ROMol &mol, unsigned int targetLen,
   PATH_LIST res;
 
   // start paths at each bond:
-  for (INT_INT_VECT_MAP::iterator nbi = nbrs.begin(); nbi != nbrs.end();
-       ++nbi) {
+  for (auto nbi = nbrs.begin(); nbi != nbrs.end(); ++nbi) {
     // don't come back to this bond in the later subgraphs
     int i = (*nbi).first;
 
@@ -363,8 +362,7 @@ INT_PATH_LIST_MAP findAllSubgraphsOfLengthsMtoN(const ROMol &mol,
   }
 
   // start paths at each bond:
-  for (INT_INT_VECT_MAP::iterator nbi = nbrs.begin(); nbi != nbrs.end();
-       nbi++) {
+  for (auto nbi = nbrs.begin(); nbi != nbrs.end(); nbi++) {
     int i = (*nbi).first;
 
     // if we're only returning paths rooted at a particular atom, check now
@@ -416,7 +414,7 @@ PATH_LIST findUniqueSubgraphsOfLengthN(const ROMol &mol, unsigned int targetLen,
 //
 //  You may find yourself wondering: "what's the difference between
 //  a subgraph and path?"  Well, let me tell you: there's a big
-//  diffference!
+//  difference!
 //
 //  Subgraphs are potentially branched, whereas paths (in our
 //  terminology at least) cannot be.  So, the following graph:
@@ -544,15 +542,16 @@ findAllPathsOfLengthN(const ROMol &mol, unsigned int targetLen, bool useBonds,
 
 PATH_TYPE findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius,
                                        unsigned int rootedAtAtom, bool useHs) {
-  if (rootedAtAtom >= mol.getNumAtoms())
+  if (rootedAtAtom >= mol.getNumAtoms()) {
     throw ValueErrorException("bad atom index");
+  }
 
   PATH_TYPE res;
   std::list<std::pair<int, int> > nbrStack;
   ROMol::OEDGE_ITER beg, end;
   boost::tie(beg, end) = mol.getAtomBonds(mol.getAtomWithIdx(rootedAtAtom));
   while (beg != end) {
-    BOND_SPTR bond = mol[*beg];
+    const Bond* bond = mol[*beg];
     if (useHs ||
         mol.getAtomWithIdx(bond->getOtherAtomIdx(rootedAtAtom))
                 ->getAtomicNum() != 1) {
@@ -580,7 +579,7 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius,
         int oAtom = mol.getBondWithIdx(bondIdx)->getOtherAtomIdx(startAtom);
         boost::tie(beg, end) = mol.getAtomBonds(mol.getAtomWithIdx(oAtom));
         while (beg != end) {
-          BOND_SPTR bond = mol[*beg];
+          const Bond* bond = mol[*beg];
           if (!bondsIn.test(bond->getIdx())) {
             if (useHs ||
                 mol.getAtomWithIdx(bond->getOtherAtomIdx(oAtom))

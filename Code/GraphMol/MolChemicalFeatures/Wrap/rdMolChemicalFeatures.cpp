@@ -31,13 +31,13 @@ MolChemicalFeatureFactory *buildFeatFactory(std::string fileName) {
     PyErr_SetString(PyExc_IOError, errorstring.c_str());
     python::throw_error_already_set();
   }
-  std::istream &instrm = static_cast<std::istream &>(inStream);
+  auto &instrm = static_cast<std::istream &>(inStream);
   return buildFeatureFactory(instrm);
 }
 
 MolChemicalFeatureFactory *buildFeatFactoryFromString(std::string fdefString) {
   std::istringstream inStream(fdefString);
-  std::istream &instrm = static_cast<std::istream &>(inStream);
+  auto &instrm = static_cast<std::istream &>(inStream);
   return buildFeatureFactory(instrm);
 }
 }

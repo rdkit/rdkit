@@ -27,61 +27,61 @@ namespace RDKit {
 SmilesMolSupplier *SmilesSupplierFromText(
     std::string text, std::string delimiter = " ", int smilesColumn = 0,
     int nameColumn = 1, bool titleLine = true, bool sanitize = true) {
-  SmilesMolSupplier *res = new SmilesMolSupplier();
+  auto *res = new SmilesMolSupplier();
   res->setData(text, delimiter, smilesColumn, nameColumn, titleLine, sanitize);
   return res;
 }
 
 std::string smilesMolSupplierClassDoc =
-    "A class which supplies molecules from a text file.\n \
-\n \
-  Usage examples:\n \
-\n \
-    1) Lazy evaluation: the molecules are not constructed until we ask for them:\n \
-       >>> suppl = SmilesMolSupplier('in.smi')\n \
-       >>> for mol in suppl:\n \
-       ...    mol.GetNumAtoms()\n \
-\n \
-    2) Lazy evaluation 2:\n \
-       >>> suppl = SmilesMolSupplier('in.smi')\n \
-       >>> mol1 = suppl.next()\n \
-       >>> mol2 = suppl.next()\n \
-       >>> suppl.reset()\n \
-       >>> mol3 = suppl.next()\n \
-       # mol3 and mol1 are the same: \
-       >>> MolToSmiles(mol3)==MolToSmiles(mol1)\n \
-\n \
-    3) Random Access:  all molecules are constructed as soon as we ask for the\n \
-       length:\n \
-       >>> suppl = SmilesMolSupplier('in.smi')\n \
-       >>> nMols = len(suppl)\n \
-       >>> for i in range(nMols):\n \
-       ...   suppl[i].GetNumAtoms()\n \
-\n \
+    "A class which supplies molecules from a text file.\n\
+\n\
+  Usage examples:\n\
+\n\
+    1) Lazy evaluation: the molecules are not constructed until we ask for them:\n\n\
+       >>> suppl = SmilesMolSupplier('in.smi')\n\
+       >>> for mol in suppl:\n\
+       ...    mol.GetNumAtoms()\n\
+\n\
+    2) Lazy evaluation 2:\n\n\
+       >>> suppl = SmilesMolSupplier('in.smi')\n\
+       >>> mol1 = next(suppl)\n\
+       >>> mol2 = next(suppl)\n\
+       >>> suppl.reset()\n\
+       >>> mol3 = next(suppl)\n\
+       # mol3 and mol1 are the same:\n\
+       >>> MolToSmiles(mol3)==MolToSmiles(mol1)\n\
+\n\
+    3) Random Access:  all molecules are constructed as soon as we ask for the\n\
+       length:\n\n\
+       >>> suppl = SmilesMolSupplier('in.smi')\n\
+       >>> nMols = len(suppl)\n\
+       >>> for i in range(nMols):\n\
+       ...   suppl[i].GetNumAtoms()\n\
+\n\
   If the input file has a title line and more than two columns (smiles and id), the\n\
   additional columns will be used to set properties on each molecule.  The properties\n\
   are accessible using the mol.GetProp(propName) method.\n\
 \n";
 
 std::string smsDocStr =
-    "Constructor\n \n \
-  ARGUMENTS: \n \
-\n \
-    - fileName: name of the file to be read\n \
-\n \
-    - delimiter: (optional) text delimiter (a string).  Defauts to ' '.\n \
-\n \
-    - smilesColumn: (optional) index of the column containing the SMILES\n \
-      data.  Defaults to 0.\n \
-\n \
-    - nameColumn: (optional) index of the column containing molecule names.\n \
-      Defaults to 1.\n \
-\n \
-    - titleLine: (optional) set this toggle if the file contains a title line.\n \
-      Defaults to 1.\n \
-\n \
-    - sanitize: (optional) toggles sanitization of molecules as they are read.\n \
-      Defaults to 1.\n \
+    "Constructor\n\n\
+  ARGUMENTS: \n\
+\n\
+    - fileName: name of the file to be read\n\
+\n\
+    - delimiter: (optional) text delimiter (a string).  Defauts to ' '.\n\
+\n\
+    - smilesColumn: (optional) index of the column containing the SMILES\n\
+      data.  Defaults to 0.\n\
+\n\
+    - nameColumn: (optional) index of the column containing molecule names.\n\
+      Defaults to 1.\n\
+\n\
+    - titleLine: (optional) set this toggle if the file contains a title line.\n\
+      Defaults to 1.\n\
+\n\
+    - sanitize: (optional) toggles sanitization of molecules as they are read.\n\
+      Defaults to 1.\n\
 \n";
 struct smimolsup_wrap {
   static void wrap() {
@@ -124,6 +124,6 @@ struct smimolsup_wrap {
         python::return_value_policy<python::manage_new_object>());
   }
 };
-}
+}  // namespace RDKit
 
 void wrap_smisupplier() { RDKit::smimolsup_wrap::wrap(); }

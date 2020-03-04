@@ -30,23 +30,23 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
+#include <RDGeneral/export.h>
 #ifndef RDKIT_FUNCTIONAL_GROUP_HIERARCHY_H
 #define RDKIT_FUNCTIONAL_GROUP_HIERARCHY_H
 #include "FilterCatalog.h"
 
-
 namespace RDKit {
 //! Return the functional group hierarchy as a FilterCatalog
-const FilterCatalog &GetFunctionalGroupHierarchy();
+RDKIT_FILTERCATALOG_EXPORT const FilterCatalog &GetFunctionalGroupHierarchy();
 //! Return the flattened functional group hierarchy as a string->ROMOL_SPTR map
 //!  The label is the name of the functional group in the hiearchy
 //!   e.g. Halogen.Bromine.Aliphatic
 /*
     /param normalized If set to true, return the flattened hierarchy
                       with lower case labels.  [default false]
-*/                      
-const std::map<std::string, ROMOL_SPTR> &GetFlattenedFunctionalGroupHierarchy(
-    bool normalized=false);
-}
+*/
+RDKIT_FILTERCATALOG_EXPORT const std::map<std::string, ROMOL_SPTR>
+    &GetFlattenedFunctionalGroupHierarchy(bool normalized = false);
+}  // namespace RDKit
 
 #endif

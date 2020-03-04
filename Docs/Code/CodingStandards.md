@@ -8,6 +8,10 @@ If you find mistakes, or have suggestions for improvements, please either fix th
 
 ## C++
 
+### A note on Modern C++
+
+In order to continue to allow the code to be built on older systems, the RDKit is currently using a subset of what's available in modern C++ compilers (by which I mean C++11, C++14, etc.). The expectation is that it should be possible to build the RDKit with g++ v4.8.
+
 ### Naming conventions
 
 We use camelCase for everything.

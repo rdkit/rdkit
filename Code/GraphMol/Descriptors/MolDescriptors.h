@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 
+#include <RDGeneral/export.h>
 #ifndef _RD_MOLDESCRIPTORS_H_
 #define _RD_MOLDESCRIPTORS_H_
 
@@ -30,8 +31,9 @@ namespace Descriptors {
 
   \return the AMW
 */
-extern const std::string amwVersion;
-double calcAMW(const ROMol &mol, bool onlyHeavy = false);
+RDKIT_DESCRIPTORS_EXPORT extern const std::string amwVersion;
+RDKIT_DESCRIPTORS_EXPORT double calcAMW(const ROMol &mol,
+                                        bool onlyHeavy = false);
 /*!
   Calculates a molecule's exact molecular weight
 
@@ -41,8 +43,9 @@ double calcAMW(const ROMol &mol, bool onlyHeavy = false);
 
   \return the exact MW
 */
-extern const std::string exactmwVersion;
-double calcExactMW(const ROMol &mol, bool onlyHeavy = false);
+RDKIT_DESCRIPTORS_EXPORT extern const std::string exactmwVersion;
+RDKIT_DESCRIPTORS_EXPORT double calcExactMW(const ROMol &mol,
+                                            bool onlyHeavy = false);
 /*!
   Calculates a molecule's formula
 
@@ -55,8 +58,9 @@ double calcExactMW(const ROMol &mol, bool onlyHeavy = false);
 
   \return the formula as a string
 */
-std::string calcMolFormula(const ROMol &mol, bool separateIsotopes = false,
-                           bool abbreviateHIsotopes = true);
+RDKIT_DESCRIPTORS_EXPORT std::string calcMolFormula(
+    const ROMol &mol, bool separateIsotopes = false,
+    bool abbreviateHIsotopes = true);
 
 }  // end of namespace Descriptors
 }  // end of namespace RDKit

@@ -62,7 +62,7 @@ void readChunkData(std::istream &istrm, boost::uint64_t &sz,
     data = new boost::uint8_t[sz];
     istrm.read(reinterpret_cast<char *>(data), sz);
   } else {
-    data = NULL;
+    data = nullptr;
   }
   // std::cerr << "  CHUNKSZ: " << sz << " name: " << nm << std::endl;
 }
@@ -73,11 +73,13 @@ void extractPopCounts(FPBReader_impl *dp_impl, boost::uint64_t sz,
   /* this section of the FPB format is under-documented in Andrew's code,
    * fortunately it looks pretty simple
   */
-  if (sz % 4)
+  if (sz % 4) {
     throw ValueErrorException("POPC chunk size must be a multiple of 4 bytes");
+  }
   unsigned int nEntries = sz / 4;
-  if (nEntries < 9)
+  if (nEntries < 9) {
     throw ValueErrorException("POPC must contain at least 9 offsets");
+  }
 
   dp_impl->popCountOffsets.reserve(nEntries);
   for (unsigned int i = 0; i < nEntries; ++i) {
@@ -88,7 +90,7 @@ void extractPopCounts(FPBReader_impl *dp_impl, boost::uint64_t sz,
 };
 
 //-----------------------------------------------------
-//  Arena procesing
+//  Arena processing
 
 /* Documentation from Andrew's code on the structure of the arena:
 The 'AREN'a starts with a header:
@@ -128,9 +130,10 @@ void extractArenaDetails(FPBReader_impl *dp_impl, boost::uint64_t sz) {
 
   // streamRead(*dp_impl->istrm, spacer);
   // now move forward the length of the spacer
-  if (spacer)
+  if (spacer) {
     dp_impl->istrm->seekg(static_cast<std::streamoff>(spacer),
                           std::ios_base::cur);
+  }
   dp_impl->fpDataOffset = dp_impl->istrm->tellg();
   dp_impl->istrm->seekg(
       static_cast<std::streamoff>(numBytesStoredPerFingerprint * dp_impl->len),
@@ -188,7 +191,7 @@ boost::uint8_t *copyBytes(const FPBReader_impl *dp_impl, unsigned int which) {
   boost::uint8_t *res;
   res = new boost::uint8_t[dp_impl->numBytesStoredPerFingerprint];
   if (!dp_impl->df_lazy) {
-    boost::uint8_t *fpData = NULL;
+    boost::uint8_t *fpData = nullptr;
     extractBytes(dp_impl, which, fpData);
     memcpy(static_cast<void *>(res), fpData,
            dp_impl->numBytesStoredPerFingerprint);
@@ -199,13 +202,13 @@ boost::uint8_t *copyBytes(const FPBReader_impl *dp_impl, unsigned int which) {
 };
 
 // caller is responsible for delete'ing the result
-boost::dynamic_bitset<> *bytesToBitset(const boost::uint8_t *fpData,
+RDKIT_DATASTRUCTS_EXPORT boost::dynamic_bitset<> *bytesToBitset(const boost::uint8_t *fpData,
                                        boost::uint32_t nBits) {
   unsigned int nBytes = nBits / 8;
   if (!(nBytes % sizeof(boost::dynamic_bitset<>::block_type))) {
     // I believe this could be faster (needs to be verified of course)
     unsigned int nBlocks = nBytes / sizeof(boost::dynamic_bitset<>::block_type);
-    const boost::dynamic_bitset<>::block_type *fpBlocks =
+    const auto *fpBlocks =
         reinterpret_cast<const boost::dynamic_bitset<>::block_type *>(fpData);
     return new boost::dynamic_bitset<>(fpBlocks, fpBlocks + nBlocks);
   } else {
@@ -215,11 +218,11 @@ boost::dynamic_bitset<> *bytesToBitset(const boost::uint8_t *fpData,
 }
 
 // caller is responsible for delete []'ing the result
-boost::uint8_t *bitsetToBytes(const boost::dynamic_bitset<> &bitset) {
+RDKIT_DATASTRUCTS_EXPORT boost::uint8_t *bitsetToBytes(const boost::dynamic_bitset<> &bitset) {
   unsigned int nBits = bitset.size();
   unsigned int nBytes = nBits / 8;
 
-  boost::uint8_t *res = new boost::uint8_t[nBytes];
+  auto *res = new boost::uint8_t[nBytes];
   boost::to_block_range(
       bitset, reinterpret_cast<boost::dynamic_bitset<>::block_type *>(res));
   return res;
@@ -234,7 +237,9 @@ ExplicitBitVect *extractFP(const FPBReader_impl *dp_impl, unsigned int which) {
   }
   extractBytes(dp_impl, which, fpData);
   boost::dynamic_bitset<> *resDBS = bytesToBitset(fpData, dp_impl->nBits);
-  if (dp_impl->df_lazy) delete[] fpData;
+  if (dp_impl->df_lazy) {
+    delete[] fpData;
+  }
   return new ExplicitBitVect(resDBS);
 };
 
@@ -252,7 +257,9 @@ double tanimoto(const FPBReader_impl *dp_impl, unsigned int which,
   extractBytes(dp_impl, which, fpData);
   double res =
       CalcBitmapTanimoto(fpData, bv, dp_impl->numBytesStoredPerFingerprint);
-  if (dp_impl->df_lazy) delete[] fpData;
+  if (dp_impl->df_lazy) {
+    delete[] fpData;
+  }
   return res;
 };
 
@@ -270,7 +277,9 @@ double tversky(const FPBReader_impl *dp_impl, unsigned int which,
   extractBytes(dp_impl, which, fpData);
   double res = CalcBitmapTversky(fpData, bv,
                                  dp_impl->numBytesStoredPerFingerprint, ca, cb);
-  if (dp_impl->df_lazy) delete[] fpData;
+  if (dp_impl->df_lazy) {
+    delete[] fpData;
+  }
   return res;
 };
 
@@ -281,7 +290,7 @@ double tversky(const FPBReader_impl *dp_impl, unsigned int which,
 The actual layout inside of the chunk is:
  <num_4byte_elements: 4 bytes> -- the number of 4 byte offsets.
  <num_8byte_elements: 4 bytes> -- the number of 8 byte offsets
- Note: the number of indicies is num_4byte_elements + num_8byte_elements + 1
+ Note: the number of indices is num_4byte_elements + num_8byte_elements + 1
  because even with no elements there will be the initial '\0\0\0\0'.
 
  <id 0> + NUL   -- the first string, with an added NUL terminator
@@ -434,7 +443,7 @@ void tanimotoNeighbors(const FPBReader_impl *dp_impl, const boost::uint8_t *bv,
     // Searches of Chemical Fingerprints in Linear and Sublinear Time. J. Chem.
     // Inf. Model. 47, 302–317 (2007).
     // http://pubs.acs.org/doi/abs/10.1021/ci600358f
-    boost::uint32_t minDbCount =
+    auto minDbCount =
         static_cast<boost::uint32_t>(floor(threshold * probeCount));
     boost::uint32_t maxDbCount =
         (threshold > 1e-6)
@@ -465,7 +474,9 @@ void tanimotoNeighbors(const FPBReader_impl *dp_impl, const boost::uint8_t *bv,
       }
     }
   }
-  if (dp_impl->df_lazy) delete[] dbv;
+  if (dp_impl->df_lazy) {
+    delete[] dbv;
+  }
 }
 
 void tverskyNeighbors(const FPBReader_impl *dp_impl, const boost::uint8_t *bv,
@@ -487,7 +498,7 @@ void tverskyNeighbors(const FPBReader_impl *dp_impl, const boost::uint8_t *bv,
     // Searches of Chemical Fingerprints in Linear and Sublinear Time. J. Chem.
     // Inf. Model. 47, 302–317 (2007).
     // http://pubs.acs.org/doi/abs/10.1021/ci600358f
-    boost::uint32_t minDbCount = static_cast<boost::uint32_t>(floor(
+    auto minDbCount = static_cast<boost::uint32_t>(floor(
         (threshold * probeCount * ca) / (1. - threshold + threshold * ca)));
     boost::uint32_t maxDbCount =
         ((threshold * cb) > 1e-6)
@@ -516,7 +527,9 @@ void tverskyNeighbors(const FPBReader_impl *dp_impl, const boost::uint8_t *bv,
       res.push_back(std::make_pair(sim, i));
     }
   }
-  if (dp_impl->df_lazy) delete[] dbv;
+  if (dp_impl->df_lazy) {
+    delete[] dbv;
+  }
 }
 
 void containingNeighbors(const FPBReader_impl *dp_impl,
@@ -544,14 +557,18 @@ void containingNeighbors(const FPBReader_impl *dp_impl,
       res.push_back(i);
     }
   }
-  if (dp_impl->df_lazy) delete[] dbv;
+  if (dp_impl->df_lazy) {
+    delete[] dbv;
+  }
 }
 
 }  // end of detail namespace
 
 void FPBReader::init() {
   PRECONDITION(dp_istrm, "no stream");
-  if (df_init) return;
+  if (df_init) {
+    return;
+  }
 
   dp_impl = new detail::FPBReader_impl;
   dp_impl->istrm = dp_istrm;
@@ -563,10 +580,12 @@ void FPBReader::init() {
     throw BadFileException("Invalid FPB magic");
   }
   while (1) {
-    if (dp_istrm->eof()) throw BadFileException("EOF hit before FEND record");
+    if (dp_istrm->eof()) {
+      throw BadFileException("EOF hit before FEND record");
+    }
     std::string chunkNm;
     boost::uint64_t chunkSz;
-    boost::uint8_t *chunk = NULL;
+    boost::uint8_t *chunk = nullptr;
     detail::readChunkDetails(*dp_istrm, chunkNm, chunkSz);
     // std::cerr << " Chunk: " << chunkNm << " " << chunkSz << std::endl;
     if (!df_lazyRead || (chunkNm != "AREN" && chunkNm != "FPID")) {
@@ -578,11 +597,11 @@ void FPBReader::init() {
       } else if (chunkNm == "AREN") {
         dp_impl->dp_arenaChunk.reset(chunk);
         detail::extractArena(dp_impl, chunkSz, chunk);
-        chunk = NULL;
+        chunk = nullptr;
       } else if (chunkNm == "FPID") {
         dp_impl->dp_idChunk.reset(chunk);
         detail::extractIds(dp_impl, chunkSz, chunk);
-        chunk = NULL;
+        chunk = nullptr;
       } else if (chunkNm == "META") {
         // currently ignored
       } else if (chunkNm == "HASH") {
@@ -604,11 +623,13 @@ void FPBReader::init() {
     }
   }
   if ((!df_lazyRead && !dp_impl->dp_arenaChunk) ||
-      (df_lazyRead && !dp_impl->fpDataOffset))
+      (df_lazyRead && !dp_impl->fpDataOffset)) {
     throw BadFileException("No AREN record found");
+  }
   if ((!df_lazyRead && !dp_impl->dp_idChunk) ||
-      (df_lazyRead && !dp_impl->idDataOffset))
+      (df_lazyRead && !dp_impl->idDataOffset)) {
     throw BadFileException("No FPID record found");
+  }
 
   df_init = true;
 };
@@ -618,11 +639,11 @@ void FPBReader::destroy() {
     dp_impl->dp_arenaChunk.reset();
     dp_impl->dp_idChunk.reset();
 
-    dp_impl->dp_fpData = NULL;
-    dp_impl->dp_idOffsets = NULL;
+    dp_impl->dp_fpData = nullptr;
+    dp_impl->dp_idOffsets = nullptr;
   }
   delete dp_impl;
-  dp_impl = NULL;
+  dp_impl = nullptr;
 };
 
 boost::shared_ptr<ExplicitBitVect> FPBReader::getFP(unsigned int idx) const {

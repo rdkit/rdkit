@@ -28,7 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-from __future__ import print_function
+
 
 import unittest
 import os,sys, copy
@@ -373,6 +373,15 @@ class TestCase(unittest.TestCase) :
         leeRichards = 5004.79964427
         shrakerupley = 5000.340175
         opts = rdFreeSASA.SASAOpts()
+        for alg, res in ( (rdFreeSASA.ShrakeRupley, shrakerupley),
+                          (rdFreeSASA.LeeRichards, leeRichards)):
+            opts.algorithm = alg
+            sasa = rdFreeSASA.CalcSASA(mol, radii=radii, opts=opts)
+            self.assertTrue( abs(sasa-res) < 1e-5 )
+        leeRichards = 5009.93014166
+        shrakerupley = 4977.7709106
+        opts = rdFreeSASA.SASAOpts()
+        opts.probeRadius = 2.0
         for alg, res in ( (rdFreeSASA.ShrakeRupley, shrakerupley),
                           (rdFreeSASA.LeeRichards, leeRichards)):
             opts.algorithm = alg

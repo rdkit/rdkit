@@ -1,3 +1,6 @@
+
+remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
+add_definitions(-DRDKIT_MOLCATALOG_BUILD)
 rdkit_library(MolCatalog MolCatalogEntry.cpp MolCatalogParams.cpp
               LINK_LIBRARIES GraphMol Catalogs)
 
@@ -8,7 +11,9 @@ rdkit_headers(MolCatalogEntry.h
 rdkit_test(testMolCatalog test1.cpp LINK_LIBRARIES 
 MolCatalog FileParsers Catalogs SmilesParse GraphMol DataStructs RDGeneral RDGeometryLib )
 
+if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
+endif()
 
 
 

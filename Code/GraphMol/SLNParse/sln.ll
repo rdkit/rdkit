@@ -39,6 +39,11 @@
 // Created by Greg Landrum, September 2006
 //
 
+#if defined(__CYGWIN__) && !defined(fileno)
+// -std=c++11 turns off recent posix features
+extern "C" int fileno(FILE*);
+#endif
+
 #include <cstdio>
 #ifdef WIN32
 #include <io.h> 	 

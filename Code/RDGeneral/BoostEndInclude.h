@@ -33,6 +33,7 @@
 //  # include boost stuff
 //  #include <RDGeneral/BoostEndInclude.h>
 
+#include <RDGeneral/export.h>
 #if defined(__clang__)
 /* Clang/LLVM. ---------------------------------------------- */
 #pragma GCC diagnostic pop

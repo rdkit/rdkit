@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/test.h>
 #include "../RDKitBase.h"
 #include "../FileParsers/FileParsers.h"  //MOL single molecule !
 #include "../FileParsers/MolSupplier.h"  //SDF
@@ -18,6 +19,7 @@
 #include "../../RDGeneral/BadFileException.h"
 
 #include "StructChecker.h"
+#include "StructCheckerOptions.h"
 #include "Stereo.h"
 #include "Pattern.h"
 
@@ -136,7 +138,7 @@ void testLoadOptionsFromFiles() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
   BOOST_LOG(rdInfoLog)
       << "testLoadOptionsFromFiles FROM CURRENT (.../test) DIRECTORY\n";
-  bool ok;
+
   StructCheckerOptions options;
   // options.Verbose = true;
   doLoadOptionsFromFiles(options);
@@ -165,14 +167,14 @@ void test1() {
       TEST_ASSERT(ok);
   */
   StructChecker chk(options);
-  for (int i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
-    RWMol* mol = SmilesToMol(smols[i]);
+  for (auto& smol : smols) {
+    RWMol* mol = SmilesToMol(smol);
     TEST_ASSERT(mol);
     unsigned flags = chk.checkMolStructure(*mol);
-    delete mol;
     BOOST_LOG(rdInfoLog) << StructChecker::StructureFlagsToString(flags)
                          << "\n";
     BOOST_LOG(rdInfoLog) << MolToSmarts(*mol) << "\n";
+    delete mol;
     TEST_ASSERT(true);
   }
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -192,14 +194,14 @@ void test2() {
   // options.Verbose = true;
 
   StructChecker chk(options);
-  for (int i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
-    RWMol* mol = SmilesToMol(smols[i]);
+  for (auto& smol : smols) {
+    RWMol* mol = SmilesToMol(smol);
     TEST_ASSERT(mol);
     unsigned flags = chk.checkMolStructure(*mol);
-    delete mol;
     BOOST_LOG(rdInfoLog) << StructChecker::StructureFlagsToString(flags)
                          << "\n";
     BOOST_LOG(rdInfoLog) << MolToSmarts(*mol) << "\n";
+    delete mol;
     TEST_ASSERT(true);
   }
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -321,7 +323,7 @@ void testStereo()  // stereochemistry
   TEST_ASSERT(options.loadAcidicAugmentedAtoms(testDataDir + "checkfgs.aci"));
   //  options.Verbose = true;
   StructChecker chk(options);
-  for (int i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
+  for (size_t i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
     BOOST_LOG(rdInfoLog) << i << " : " << smols[i] << "\n";
     RWMol* mol = SmilesToMol(smols[i]);
     TEST_ASSERT(mol);
@@ -397,7 +399,7 @@ void testOptionsDefault() {
   StructCheckerOptions options;
   //  options.Verbose = true;
   StructChecker chk(options);
-  for (int i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
+  for (size_t i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
     BOOST_LOG(rdInfoLog) << i << " : " << smols[i] << "\n";
     RWMol* mol = SmilesToMol(smols[i]);
     TEST_ASSERT(mol);
@@ -421,7 +423,7 @@ void testCheckAtomWithDefaultGoodAtoms() {
   StructCheckerOptions options;
   //  options.Verbose = true;
   StructChecker chk(options);
-  for (int i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
+  for (size_t i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
     BOOST_LOG(rdInfoLog) << i << " : " << smols[i] << "\n";
     RWMol* mol = SmilesToMol(smols[i]);
     TEST_ASSERT(mol);
@@ -445,7 +447,7 @@ void testCheckAtom() {
   doLoadOptionsFromFiles(options);
   //  options.Verbose = true;
   StructChecker chk(options);
-  for (int i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
+  for (size_t i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
     BOOST_LOG(rdInfoLog) << i << " : " << smols[i] << "\n";
     RWMol* mol = SmilesToMol(smols[i]);
     TEST_ASSERT(mol);
@@ -468,7 +470,10 @@ void testCheckAtomFiles() {
       "Substance_310925001_310950000-021442.sdf",
   };
   unsigned ref[] = {
-      (StructChecker::ATOM_CHECK_FAILED | StructChecker::TRANSFORMED), 0, 0, 0,
+      (StructChecker::ATOM_CHECK_FAILED | StructChecker::TRANSFORMED),
+      0,
+      0,
+      0,
   };
   StructCheckerOptions options;
   doLoadOptionsFromFiles(options);
@@ -498,11 +503,6 @@ void testCheckAtomFiles() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
-namespace RDKit {
-namespace StructureCheck {
-bool StringToAugmentedAtom(const char* str, AugmentedAtom& aa);
-}
-}
 void testCheckMatch() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
   BOOST_LOG(rdInfoLog) << "testCheckMatch\n";
@@ -572,7 +572,7 @@ void testNitro() {
 
   ROMOL_SPTR mol(MolBlockToMol(nitro));
   RWMol* rwmol = dynamic_cast<RWMol*>(mol.get());
-  TEST_ASSERT(rwmol != 0);
+  TEST_ASSERT(rwmol != nullptr);
   unsigned flags = chk.checkMolStructure(*rwmol);
   // N+1 should match N+1(=N,O)(-N,O-1)(-C,N,S) but doesn't
   std::cerr << "flags " << flags << std::endl;
@@ -600,7 +600,7 @@ void testSpecificExamples() {
         "CC(=C)C(OCC[N+](C)(C)C)=[N+](S(=O)(=O)C(F)(F)F)S(=O)(=O)C(F)(F)F",
         "OC(=O)[C@@H]1CC=CN1"};
 
-    for (int i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
+    for (size_t i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
       BOOST_LOG(rdInfoLog) << i << " : " << smols[i] << "\n";
       RWMol* mol = SmilesToMol(smols[i]);
       TEST_ASSERT(mol);
@@ -673,7 +673,7 @@ void testSpecificOrder() {
   StructChecker chk(options);
   const char* smols[] = {"FC(F)O", "OC(F)F"};
 
-  for (int i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
+  for (size_t i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
     BOOST_LOG(rdInfoLog) << i << " : " << smols[i] << "\n";
     RWMol* mol = SmilesToMol(smols[i]);
     TEST_ASSERT(mol);
@@ -702,7 +702,7 @@ void testTransformTau() {
   StructChecker chk(options);
   const char* smols[] = {"FC=C(F)O"};
 
-  for (int i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
+  for (size_t i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
     BOOST_LOG(rdInfoLog) << i << " : " << smols[i] << "\n";
     RWMol* mol = SmilesToMol(smols[i]);
     //      TEST_ASSERT(mol);
@@ -746,7 +746,7 @@ void testTransformAtoms() {
   StructChecker chk(options);
   const char* smols[] = {"C(=O)C", "FC=CO"};
 
-  for (int i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
+  for (size_t i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
     BOOST_LOG(rdInfoLog) << i << " : " << smols[i] << "\n";
     RWMol* mol = SmilesToMol(smols[i]);
     TEST_ASSERT(mol);
@@ -784,8 +784,8 @@ void testAugmentedAtomTranslationsToAtomListQuery() {
       "C(=O)C",
   };
   StructChecker chk(options);
-  for (int i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
-    RWMol* mol = SmilesToMol(smols[i]);
+  for (auto& smol : smols) {
+    RWMol* mol = SmilesToMol(smol);
     TEST_ASSERT(mol);
     unsigned flags = chk.checkMolStructure(*mol);
     BOOST_LOG(rdInfoLog) << "FLAGs: "
@@ -841,7 +841,7 @@ void testCarboxylicAcids() {
 
 //==============================================================================
 
-int main(int argc, const char* argv[]) {
+int main() {
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
   BOOST_LOG(rdInfoLog) << "StructChecker Unit Test \n";
@@ -853,7 +853,7 @@ int main(int argc, const char* argv[]) {
   try {
     testLoadOptionsFromFiles();
   } catch (...) {
-    // relative path to patern files must be correct !
+    // relative path to pattern files must be correct !
   }
   testOptionsDefault();
 

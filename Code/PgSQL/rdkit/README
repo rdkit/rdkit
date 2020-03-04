@@ -8,6 +8,10 @@ Compatibility: PostgreSQL 9.1+
  that you have the -devel package installed.
 
 Installation:
+Cartridge is build from the root RDKit level, i.e. you need to tell CMake to 
+build it too by including the following switch:
+    -D RDK_BUILD_PGSQL=ON
+
 if PostgreSQL is installed in a location where CMake is unable to find it,
 either set the environment variable PostgreSQL_ROOT or add a
 "-DPostgreSQL_ROOT" switch to the cmake command line, pointing to the
@@ -32,7 +36,7 @@ After building the RDKit, carry out the following steps:
    -w stop (Windows)
    service postgresql stop (Linux)
    
-3) run the "pgsql_install" script:
+3) run the "pgsql_install" script (note that it is built by the root CMake):
    
    ${CMAKE_BINARY_DIR}\Code\PgSQL\rdkit\pgsql_install.bat (Windows)
    sh ${CMAKE_BINARY_DIR}/Code/PgSQL/rdkit/pgsql_install.sh (Linux)
@@ -125,3 +129,7 @@ Indexes:
 Example:
 
   See sql/* for examples.
+
+Further Reading:
+
+Cartridge tutorial (https://github.com/rdkit/rdkit/blob/master/Docs/Book/Cartridge.md)

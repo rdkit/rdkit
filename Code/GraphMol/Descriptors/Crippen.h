@@ -13,6 +13,7 @@
   \brief Use MolDescriptors.h in client code.
 
 */
+#include <RDGeneral/export.h>
 #ifndef __RD_CRIPPEN_H__
 #define __RD_CRIPPEN_H__
 
@@ -46,10 +47,11 @@ const std::string crippenVersion = "1.2.0";
                           number of atoms
 
 */
-void getCrippenAtomContribs(const ROMol &mol, std::vector<double> &logpContribs,
-                            std::vector<double> &mrContribs, bool force = false,
-                            std::vector<unsigned int> *atomTypes = 0,
-                            std::vector<std::string> *atomTypeLabels = 0);
+RDKIT_DESCRIPTORS_EXPORT void getCrippenAtomContribs(
+    const ROMol &mol, std::vector<double> &logpContribs,
+    std::vector<double> &mrContribs, bool force = false,
+    std::vector<unsigned int> *atomTypes = 0,
+    std::vector<std::string> *atomTypeLabels = 0);
 
 //! generate Wildman-Crippen LogP and MR estimates for a molecule
 /*!
@@ -67,11 +69,13 @@ void getCrippenAtomContribs(const ROMol &mol, std::vector<double> &logpContribs,
                     pulled from the cache
 
 */
-void calcCrippenDescriptors(const ROMol &mol, double &logp, double &mr,
-                            bool includeHs = true, bool force = false);
+RDKIT_DESCRIPTORS_EXPORT void calcCrippenDescriptors(const ROMol &mol,
+                                                     double &logp, double &mr,
+                                                     bool includeHs = true,
+                                                     bool force = false);
 
 //! a class used to store Crippen parameters
-class CrippenParams {
+class RDKIT_DESCRIPTORS_EXPORT CrippenParams {
  public:
   boost::shared_ptr<const ROMol> dp_pattern;
   unsigned int idx;
@@ -88,7 +92,7 @@ const std::string CrippenClogPVersion = crippenVersion;
   See calcCrippenDescriptors
     \param mol        the molecule of interest
  */
-double calcClogP(const ROMol &mol);
+RDKIT_DESCRIPTORS_EXPORT double calcClogP(const ROMol &mol);
 
 const std::string CrippenMRVersion = crippenVersion;
 //! calculate the default Wildman-Crippen MR Estimate for a molecule
@@ -96,8 +100,7 @@ const std::string CrippenMRVersion = crippenVersion;
   See calcCrippenDescriptors
     \param mol        the molecule of interest
  */
-double calcMR(const ROMol &mol);
-
+RDKIT_DESCRIPTORS_EXPORT double calcMR(const ROMol &mol);
 
 //! singleton class for retrieving Crippen parameters
 /*!
@@ -115,7 +118,7 @@ double calcMR(const ROMol &mol);
   format (see Crippen.cpp for an example).
 
 */
-class CrippenParamCollection {
+class RDKIT_DESCRIPTORS_EXPORT CrippenParamCollection {
  public:
   typedef std::vector<CrippenParams> ParamsVect;
   static const CrippenParamCollection *getParams(
@@ -129,6 +132,6 @@ class CrippenParamCollection {
   ParamsVect d_params;  //!< the parameters
 };
 }  // end of namespace Descriptors
-}
+}  // namespace RDKit
 
 #endif

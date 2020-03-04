@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2013 greg landrum, Rational Discovery LLC
+//  Copyright (C) 2002-2019 greg landrum, Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -7,19 +7,30 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#ifndef _RD_MOLSUPPLIER_H
-#define _RD_MOLSUPPLIER_H
+#include <RDGeneral/export.h>
+#ifndef RD_MOLSUPPLIER_H
+#define RD_MOLSUPPLIER_H
 
 #include <RDGeneral/types.h>
 
 #include <string>
 #include <list>
+#include <memory>
 #include <vector>
 #include <iostream>
 #include <GraphMol/ROMol.h>
 
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
+namespace schrodinger {
+namespace mae {
+class Reader;
+class Block;
+}  // namespace mae
+}  // namespace schrodinger
+#endif  // RDK_BUILD_COORDGEN_SUPPORT
+
 namespace RDKit {
-std::string strip(const std::string &orig);
+RDKIT_FILEPARSERS_EXPORT std::string strip(const std::string &orig);
 
 /*!
 //
@@ -42,7 +53,7 @@ std::string strip(const std::string &orig);
 //
 //
 */
-class MolSupplier {
+class RDKIT_FILEPARSERS_EXPORT MolSupplier {
   // this is an abstract base class to supply molecules one at a time
  public:
   MolSupplier(){};
@@ -62,13 +73,13 @@ class MolSupplier {
 
  protected:
   // stream to read the molecules from:
-  std::istream *dp_inStream;
+  std::istream *dp_inStream = nullptr;
   // do we own dp_inStream?
-  bool df_owner;
+  bool df_owner = false;
 };
 
 // \brief a supplier from an SD file that only reads forward:
-class ForwardSDMolSupplier : public MolSupplier {
+class RDKIT_FILEPARSERS_EXPORT ForwardSDMolSupplier : public MolSupplier {
   /*************************************************************************
    * A lazy mol supplier from a SD file.
    *  - When new molecules are read using "next" their positions in the file are
@@ -95,17 +106,24 @@ class ForwardSDMolSupplier : public MolSupplier {
   virtual ROMol *next();
   virtual bool atEnd();
 
+  void setProcessPropertyLists(bool val) { df_processPropertyLists = val; }
+  bool getProcessPropertyLists() const { return df_processPropertyLists; }
+
+  bool getEOFHitOnRead() const { return df_eofHitOnRead; }
+
  protected:
   virtual void checkForEnd();
   ROMol *_next();
   virtual void readMolProps(ROMol *);
-  bool df_end;
-  int d_line;  // line number we are currently on
-  bool df_sanitize, df_removeHs, df_strictParsing;
+  bool df_end = false;
+  int d_line = 0;  // line number we are currently on
+  bool df_sanitize = true, df_removeHs = true, df_strictParsing = true;
+  bool df_processPropertyLists = true;
+  bool df_eofHitOnRead = false;
 };
 
 // \brief a lazy supplier from an SD file
-class SDMolSupplier : public ForwardSDMolSupplier {
+class RDKIT_FILEPARSERS_EXPORT SDMolSupplier : public ForwardSDMolSupplier {
   /*************************************************************************
    * A lazy mol supplier from a SD file.
    *  - When new molecules are read using "next" their positions in the file are
@@ -172,13 +190,13 @@ class SDMolSupplier : public ForwardSDMolSupplier {
  private:
   void checkForEnd();
   void setDataCommon(const std::string &text, bool sanitize, bool removeHs);
-  int d_len;   // total number of mol blocks in the file (initialized to -1)
-  int d_last;  // the molecule we are ready to read
+  int d_len = 0;   // total number of mol blocks in the file (initialized to -1)
+  int d_last = 0;  // the molecule we are ready to read
   std::vector<std::streampos> d_molpos;
 };
 
 //! lazy file parser for Smiles tables
-class SmilesMolSupplier : public MolSupplier {
+class RDKIT_FILEPARSERS_EXPORT SmilesMolSupplier : public MolSupplier {
   /**************************************************************************
    * Lazy file parser for Smiles table file, similar to the lazy SD
    * file parser above
@@ -204,7 +222,7 @@ class SmilesMolSupplier : public MolSupplier {
    *     available for the molecule and the name is defaulted to the
    *     smiles string
    *   \param titleLine - if true, the first line is assumed to list the
-   *     names of properties in order seperated by 'delimiter'. It is
+   *     names of properties in order separated by 'delimiter'. It is
    *     also assume that the 'SMILES' column and the 'name' column
    *     are not specified here if false - no title line is assumed
    *     and the properties are recorded as the "columnX" where "X" is
@@ -245,23 +263,23 @@ class SmilesMolSupplier : public MolSupplier {
   long int skipComments();
   void checkForEnd();
 
-  bool df_end;  // have we reached the end of the file?
-  int d_len;    // total number of smiles in the file
-  int d_next;   // the  molecule we are ready to read
-  int d_line;   // line number we are currently on
+  bool df_end = false;  // have we reached the end of the file?
+  int d_len = 0;        // total number of smiles in the file
+  int d_next = 0;       // the  molecule we are ready to read
+  int d_line = 0;       // line number we are currently on
   std::vector<std::streampos>
       d_molpos;  // vector of positions in the file for molecules
   std::vector<int> d_lineNums;
-  std::string d_delim;  // the delimiter string
-  bool df_sanitize;     // sanitize molecules before returning them?
-  STR_VECT d_props;     // vector of property names
-  bool df_title;        // do we have a title line?
-  int d_smi;            // column id for the smile string
-  int d_name;           // column id for the name
+  std::string d_delim;      // the delimiter string
+  bool df_sanitize = true;  // sanitize molecules before returning them?
+  STR_VECT d_props;         // vector of property names
+  bool df_title = true;     // do we have a title line?
+  int d_smi = 0;            // column id for the smile string
+  int d_name = 1;           // column id for the name
 };
 
 //! lazy file parser for TDT files
-class TDTMolSupplier : public MolSupplier {
+class RDKIT_FILEPARSERS_EXPORT TDTMolSupplier : public MolSupplier {
   /**************************************************************************
    * Lazy file parser for TDT files, similar to the lazy SD
    * file parser above
@@ -314,24 +332,26 @@ class TDTMolSupplier : public MolSupplier {
   void checkForEnd();
   ROMol *parseMol(std::string inLine);
 
-  bool df_end;     // have we reached the end of the file?
-  int d_len;       // total number of mols in the file
-  int d_last;      // the molecule we are ready to read
-  int d_line;      // line number we are currently on
-  int d_confId2D;  // id to use for 2D conformers
-  int d_confId3D;  // id to use for 3D conformers
+  bool df_end = false;  // have we reached the end of the file?
+  int d_len = 0;        // total number of mols in the file
+  int d_last = 0;       // the molecule we are ready to read
+  int d_line = 0;       // line number we are currently on
+  int d_confId2D = -1;  // id to use for 2D conformers
+  int d_confId3D = 0;   // id to use for 3D conformers
   std::vector<std::streampos>
-      d_molpos;            // vector of positions in the file for molecules
-  bool df_sanitize;        // sanitize molecules before returning them?
-  std::string d_nameProp;  // local storage for the property providing mol names
+      d_molpos;             // vector of positions in the file for molecules
+  bool df_sanitize = true;  // sanitize molecules before returning them?
+  std::string d_nameProp =
+      "";  // local storage for the property providing mol names
 };
 
 //! lazy file parser for PDB files
-class PDBMolSupplier : public MolSupplier {
+class RDKIT_FILEPARSERS_EXPORT PDBMolSupplier : public MolSupplier {
  public:
   explicit PDBMolSupplier(std::istream *inStream, bool takeOwnership = true,
                           bool sanitize = true, bool removeHs = true,
-                          unsigned int flavor = 0, bool proximityBonding = true);
+                          unsigned int flavor = 0,
+                          bool proximityBonding = true);
   explicit PDBMolSupplier(const std::string &fname, bool sanitize = true,
                           bool removeHs = true, unsigned int flavor = 0,
                           bool proximityBonding = true);
@@ -349,6 +369,44 @@ class PDBMolSupplier : public MolSupplier {
   bool df_sanitize, df_removeHs, df_proximityBonding;
   unsigned int d_flavor;
 };
-}
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
+//! lazy file parser for MAE files
+class RDKIT_FILEPARSERS_EXPORT MaeMolSupplier : public MolSupplier {
+  /**
+   * Due to maeparser's shared_ptr<istream> Reader interface, MaeMolSupplier
+   * always requires taking ownership of the istream ptr, as the shared ptr will
+   * always clear it upon destruction.
+   */
+
+ public:
+  MaeMolSupplier() { init(); };
+
+  explicit MaeMolSupplier(std::shared_ptr<std::istream> inStream,
+                          bool sanitize = true, bool removeHs = true);
+
+  explicit MaeMolSupplier(std::istream *inStream, bool takeOwnership = true,
+                          bool sanitize = true, bool removeHs = true);
+
+  explicit MaeMolSupplier(const std::string &fname, bool sanitize = true,
+                          bool removeHs = true);
+
+  virtual ~MaeMolSupplier(){
+      // The dp_sInStream shared_ptr will take care of cleaning up.
+  };
+
+  virtual void init();
+  virtual void reset();
+  virtual ROMol *next();
+  virtual bool atEnd();
+
+ protected:
+  bool df_sanitize, df_removeHs;
+  std::shared_ptr<schrodinger::mae::Reader> d_reader;
+  std::shared_ptr<schrodinger::mae::Block> d_next_struct;
+  std::shared_ptr<std::istream> dp_sInStream;
+  std::string d_stored_exc;
+};
+#endif  // RDK_BUILD_COORDGEN_SUPPORT
+}  // namespace RDKit
 
 #endif

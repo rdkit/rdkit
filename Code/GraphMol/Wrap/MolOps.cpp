@@ -40,14 +40,14 @@ std::string molToSVG(const ROMol &mol, unsigned int width, unsigned int height,
                      unsigned int lineWidthMult, unsigned int fontSize,
                      bool includeAtomCircles, int confId) {
   RDUNUSED_PARAM(kekulize);
-  rdk_auto_ptr<std::vector<int> > highlightAtoms =
+  std::unique_ptr<std::vector<int>> highlightAtoms =
       pythonObjectToVect(pyHighlightAtoms, static_cast<int>(mol.getNumAtoms()));
   std::stringstream outs;
   MolDraw2DSVG drawer(width, height, outs);
   drawer.setFontSize(fontSize / 24.);
   drawer.setLineWidth(drawer.lineWidth() * lineWidthMult);
   drawer.drawOptions().circleAtoms = includeAtomCircles;
-  drawer.drawMolecule(mol, highlightAtoms.get(), NULL, NULL, confId);
+  drawer.drawMolecule(mol, highlightAtoms.get(), nullptr, nullptr, confId);
   drawer.finishDrawing();
   return outs.str();
 }
@@ -57,22 +57,24 @@ python::tuple fragmentOnSomeBondsHelper(const ROMol &mol,
                                         python::object pyDummyLabels,
                                         python::object pyBondTypes,
                                         bool returnCutsPerAtom) {
-  rdk_auto_ptr<std::vector<unsigned int> > bondIndices =
+  std::unique_ptr<std::vector<unsigned int>> bondIndices =
       pythonObjectToVect(pyBondIndices, mol.getNumBonds());
-  if (!bondIndices.get()) throw_value_error("empty bond indices");
+  if (!bondIndices.get()) {
+    throw_value_error("empty bond indices");
+  }
 
-  std::vector<std::pair<unsigned int, unsigned int> > *dummyLabels = 0;
+  std::vector<std::pair<unsigned int, unsigned int>> *dummyLabels = nullptr;
   if (pyDummyLabels) {
     unsigned int nVs =
         python::extract<unsigned int>(pyDummyLabels.attr("__len__")());
-    dummyLabels = new std::vector<std::pair<unsigned int, unsigned int> >(nVs);
+    dummyLabels = new std::vector<std::pair<unsigned int, unsigned int>>(nVs);
     for (unsigned int i = 0; i < nVs; ++i) {
       unsigned int v1 = python::extract<unsigned int>(pyDummyLabels[i][0]);
       unsigned int v2 = python::extract<unsigned int>(pyDummyLabels[i][1]);
       (*dummyLabels)[i] = std::make_pair(v1, v2);
     }
   }
-  std::vector<Bond::BondType> *bondTypes = 0;
+  std::vector<Bond::BondType> *bondTypes = nullptr;
   if (pyBondTypes) {
     unsigned int nVs =
         python::extract<unsigned int>(pyBondTypes.attr("__len__")());
@@ -84,9 +86,9 @@ python::tuple fragmentOnSomeBondsHelper(const ROMol &mol,
       (*bondTypes)[i] = python::extract<Bond::BondType>(pyBondTypes[i]);
     }
   }
-  std::vector<std::vector<unsigned int> > *cutsPerAtom = 0;
+  std::vector<std::vector<unsigned int>> *cutsPerAtom = nullptr;
   if (returnCutsPerAtom) {
-    cutsPerAtom = new std::vector<std::vector<unsigned int> >;
+    cutsPerAtom = new std::vector<std::vector<unsigned int>>;
   }
 
   std::vector<ROMOL_SPTR> frags;
@@ -94,17 +96,17 @@ python::tuple fragmentOnSomeBondsHelper(const ROMol &mol,
                                      addDummies, dummyLabels, bondTypes,
                                      cutsPerAtom);
   python::list res;
-  for (unsigned int i = 0; i < frags.size(); ++i) {
-    res.append(frags[i]);
+  for (auto &frag : frags) {
+    res.append(frag);
   }
   delete dummyLabels;
   delete bondTypes;
   if (cutsPerAtom) {
     python::list pyCutsPerAtom;
-    for (unsigned int i = 0; i < cutsPerAtom->size(); ++i) {
+    for (auto &cut : *cutsPerAtom) {
       python::list localL;
       for (unsigned int j = 0; j < mol.getNumAtoms(); ++j) {
-        localL.append((*cutsPerAtom)[i][j]);
+        localL.append(cut[j]);
       }
       pyCutsPerAtom.append(python::tuple(localL));
     }
@@ -130,21 +132,23 @@ ROMol *fragmentOnBondsHelper(const ROMol &mol, python::object pyBondIndices,
                              bool addDummies, python::object pyDummyLabels,
                              python::object pyBondTypes,
                              python::list pyCutsPerAtom) {
-  rdk_auto_ptr<std::vector<unsigned int> > bondIndices =
+  std::unique_ptr<std::vector<unsigned int>> bondIndices =
       pythonObjectToVect(pyBondIndices, mol.getNumBonds());
-  if (!bondIndices.get()) throw_value_error("empty bond indices");
-  std::vector<std::pair<unsigned int, unsigned int> > *dummyLabels = 0;
+  if (!bondIndices.get()) {
+    throw_value_error("empty bond indices");
+  }
+  std::vector<std::pair<unsigned int, unsigned int>> *dummyLabels = nullptr;
   if (pyDummyLabels) {
     unsigned int nVs =
         python::extract<unsigned int>(pyDummyLabels.attr("__len__")());
-    dummyLabels = new std::vector<std::pair<unsigned int, unsigned int> >(nVs);
+    dummyLabels = new std::vector<std::pair<unsigned int, unsigned int>>(nVs);
     for (unsigned int i = 0; i < nVs; ++i) {
       unsigned int v1 = python::extract<unsigned int>(pyDummyLabels[i][0]);
       unsigned int v2 = python::extract<unsigned int>(pyDummyLabels[i][1]);
       (*dummyLabels)[i] = std::make_pair(v1, v2);
     }
   }
-  std::vector<Bond::BondType> *bondTypes = 0;
+  std::vector<Bond::BondType> *bondTypes = nullptr;
   if (pyBondTypes) {
     unsigned int nVs =
         python::extract<unsigned int>(pyBondTypes.attr("__len__")());
@@ -156,7 +160,7 @@ ROMol *fragmentOnBondsHelper(const ROMol &mol, python::object pyBondIndices,
       (*bondTypes)[i] = python::extract<Bond::BondType>(pyBondTypes[i]);
     }
   }
-  std::vector<unsigned int> *cutsPerAtom = 0;
+  std::vector<unsigned int> *cutsPerAtom = nullptr;
   if (pyCutsPerAtom) {
     cutsPerAtom = new std::vector<unsigned int>;
     unsigned int nAts =
@@ -186,7 +190,7 @@ ROMol *renumberAtomsHelper(const ROMol &mol, python::object &pyNewOrder) {
       mol.getNumAtoms()) {
     throw_value_error("atomCounts shorter than the number of atoms");
   }
-  rdk_auto_ptr<std::vector<unsigned int> > newOrder =
+  std::unique_ptr<std::vector<unsigned int>> newOrder =
       pythonObjectToVect(pyNewOrder, mol.getNumAtoms());
   ROMol *res = MolOps::renumberAtoms(mol, *newOrder);
   return res;
@@ -195,22 +199,24 @@ ROMol *renumberAtomsHelper(const ROMol &mol, python::object &pyNewOrder) {
 namespace {
 std::string getResidue(const ROMol &m, const Atom *at) {
   RDUNUSED_PARAM(m);
-  if (at->getMonomerInfo()->getMonomerType() != AtomMonomerInfo::PDBRESIDUE)
+  if (at->getMonomerInfo()->getMonomerType() != AtomMonomerInfo::PDBRESIDUE) {
     return "";
+  }
   return static_cast<const AtomPDBResidueInfo *>(at->getMonomerInfo())
       ->getResidueName();
 }
 std::string getChainId(const ROMol &m, const Atom *at) {
   RDUNUSED_PARAM(m);
-  if (at->getMonomerInfo()->getMonomerType() != AtomMonomerInfo::PDBRESIDUE)
+  if (at->getMonomerInfo()->getMonomerType() != AtomMonomerInfo::PDBRESIDUE) {
     return "";
+  }
   return static_cast<const AtomPDBResidueInfo *>(at->getMonomerInfo())
       ->getChainId();
 }
-}
+}  // namespace
 python::dict splitMolByPDBResidues(const ROMol &mol, python::object pyWhiteList,
                                    bool negateList) {
-  std::vector<std::string> *whiteList = NULL;
+  std::vector<std::string> *whiteList = nullptr;
   if (pyWhiteList) {
     unsigned int nVs =
         python::extract<unsigned int>(pyWhiteList.attr("__len__")());
@@ -219,13 +225,13 @@ python::dict splitMolByPDBResidues(const ROMol &mol, python::object pyWhiteList,
       (*whiteList)[i] = python::extract<std::string>(pyWhiteList[i]);
     }
   }
-  std::map<std::string, boost::shared_ptr<ROMol> > res =
+  std::map<std::string, boost::shared_ptr<ROMol>> res =
       MolOps::getMolFragsWithQuery(mol, getResidue, false, whiteList,
                                    negateList);
   delete whiteList;
 
   python::dict pyres;
-  for (std::map<std::string, boost::shared_ptr<ROMol> >::const_iterator iter =
+  for (std::map<std::string, boost::shared_ptr<ROMol>>::const_iterator iter =
            res.begin();
        iter != res.end(); ++iter) {
     pyres[iter->first] = iter->second;
@@ -234,7 +240,7 @@ python::dict splitMolByPDBResidues(const ROMol &mol, python::object pyWhiteList,
 }
 python::dict splitMolByPDBChainId(const ROMol &mol, python::object pyWhiteList,
                                   bool negateList) {
-  std::vector<std::string> *whiteList = NULL;
+  std::vector<std::string> *whiteList = nullptr;
   if (pyWhiteList) {
     unsigned int nVs =
         python::extract<unsigned int>(pyWhiteList.attr("__len__")());
@@ -243,13 +249,13 @@ python::dict splitMolByPDBChainId(const ROMol &mol, python::object pyWhiteList,
       (*whiteList)[i] = python::extract<std::string>(pyWhiteList[i]);
     }
   }
-  std::map<std::string, boost::shared_ptr<ROMol> > res =
+  std::map<std::string, boost::shared_ptr<ROMol>> res =
       MolOps::getMolFragsWithQuery(mol, getChainId, false, whiteList,
                                    negateList);
   delete whiteList;
 
   python::dict pyres;
-  for (std::map<std::string, boost::shared_ptr<ROMol> >::const_iterator iter =
+  for (std::map<std::string, boost::shared_ptr<ROMol>>::const_iterator iter =
            res.begin();
        iter != res.end(); ++iter) {
     pyres[iter->first] = iter->second;
@@ -268,7 +274,7 @@ python::dict parseQueryDefFileHelper(python::object &input, bool standardize,
     parseQueryDefFile(get_filename(), queryDefs, standardize, delimiter,
                       comment, nameColumn, smartsColumn);
   } else {
-    streambuf *sb = new streambuf(input);
+    auto *sb = new streambuf(input);
     std::istream *istr = new streambuf::istream(*sb);
     parseQueryDefFile(istr, queryDefs, standardize, delimiter, comment,
                       nameColumn, smartsColumn);
@@ -302,11 +308,12 @@ void addRecursiveQueriesHelper(ROMol &mol, python::dict replDict,
 
 ROMol *addHs(const ROMol &orig, bool explicitOnly, bool addCoords,
              python::object onlyOnAtoms, bool addResidueInfo) {
-  rdk_auto_ptr<std::vector<unsigned int> > onlyOn;
+  std::unique_ptr<std::vector<unsigned int>> onlyOn;
   if (onlyOnAtoms) {
     onlyOn = pythonObjectToVect(onlyOnAtoms, orig.getNumAtoms());
   }
-  ROMol *res = MolOps::addHs(orig, explicitOnly, addCoords, onlyOn.get(), addResidueInfo);
+  ROMol *res = MolOps::addHs(orig, explicitOnly, addCoords, onlyOn.get(),
+                             addResidueInfo);
   return res;
 }
 int getSSSR(ROMol &mol) {
@@ -335,7 +342,7 @@ void addRecursiveQuery(ROMol &mol, const ROMol &query, unsigned int atomIdx,
   if (atomIdx >= mol.getNumAtoms()) {
     throw_value_error("atom index exceeds mol.GetNumAtoms()");
   }
-  RecursiveStructureQuery *q = new RecursiveStructureQuery(new ROMol(query));
+  auto *q = new RecursiveStructureQuery(new ROMol(query));
 
   Atom *oAt = mol.getAtomWithIdx(atomIdx);
   if (!oAt->hasQuery()) {
@@ -350,13 +357,18 @@ void addRecursiveQuery(ROMol &mol, const ROMol &query, unsigned int atomIdx,
     oAt->expandQuery(q, Queries::COMPOSITE_AND);
   }
 }
+
 MolOps::SanitizeFlags sanitizeMol(ROMol &mol, boost::uint64_t sanitizeOps,
                                   bool catchErrors) {
-  RWMol &wmol = static_cast<RWMol &>(mol);
+  auto &wmol = static_cast<RWMol &>(mol);
   unsigned int operationThatFailed;
   if (catchErrors) {
     try {
       MolOps::sanitizeMol(wmol, operationThatFailed, sanitizeOps);
+    } catch (const MolSanitizeException &e) {
+      // this really should not be necessary, but at some point it
+      // started to be required with VC++17. Doesn't seem like it does
+      // any harm.
     } catch (...) {
     }
   } else {
@@ -366,42 +378,42 @@ MolOps::SanitizeFlags sanitizeMol(ROMol &mol, boost::uint64_t sanitizeOps,
 }
 
 RWMol *getEditable(const ROMol &mol) {
-  RWMol *res = static_cast<RWMol *>(new ROMol(mol, false));
+  auto *res = new RWMol(mol, false);
   return res;
 }
 
 ROMol *getNormal(const RWMol &mol) {
-  ROMol *res = static_cast<ROMol *>(new RWMol(mol));
+  auto *res = static_cast<ROMol *>(new RWMol(mol));
   return res;
 }
 
 void kekulizeMol(ROMol &mol, bool clearAromaticFlags = false) {
-  RWMol &wmol = static_cast<RWMol &>(mol);
+  auto &wmol = static_cast<RWMol &>(mol);
   MolOps::Kekulize(wmol, clearAromaticFlags);
 }
 
 void cleanupMol(ROMol &mol) {
-  RWMol &rwmol = static_cast<RWMol &>(mol);
+  auto &rwmol = static_cast<RWMol &>(mol);
   MolOps::cleanUp(rwmol);
 }
 
 void setAromaticityMol(ROMol &mol, MolOps::AromaticityModel model) {
-  RWMol &wmol = static_cast<RWMol &>(mol);
+  auto &wmol = static_cast<RWMol &>(mol);
   MolOps::setAromaticity(wmol, model);
 }
 
 void setConjugationMol(ROMol &mol) {
-  RWMol &wmol = static_cast<RWMol &>(mol);
+  auto &wmol = static_cast<RWMol &>(mol);
   MolOps::setConjugation(wmol);
 }
 
 void assignRadicalsMol(ROMol &mol) {
-  RWMol &wmol = static_cast<RWMol &>(mol);
+  auto &wmol = static_cast<RWMol &>(mol);
   MolOps::assignRadicals(wmol);
 }
 
 void setHybridizationMol(ROMol &mol) {
-  RWMol &wmol = static_cast<RWMol &>(mol);
+  auto &wmol = static_cast<RWMol &>(mol);
   MolOps::setHybridization(wmol);
 }
 
@@ -412,7 +424,7 @@ VECT_INT_VECT getSymmSSSR(ROMol &mol) {
 }
 PyObject *getDistanceMatrix(ROMol &mol, bool useBO = false,
                             bool useAtomWts = false, bool force = false,
-                            const char *prefix = 0) {
+                            const char *prefix = nullptr) {
   int nats = mol.getNumAtoms();
   npy_intp dims[2];
   dims[0] = nats;
@@ -421,7 +433,7 @@ PyObject *getDistanceMatrix(ROMol &mol, bool useBO = false,
 
   distMat = MolOps::getDistanceMat(mol, useBO, useAtomWts, force, prefix);
 
-  PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
+  auto *res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
 
   memcpy(PyArray_DATA(res), static_cast<void *>(distMat),
          nats * nats * sizeof(double));
@@ -430,7 +442,7 @@ PyObject *getDistanceMatrix(ROMol &mol, bool useBO = false,
 }
 PyObject *get3DDistanceMatrix(ROMol &mol, int confId = -1,
                               bool useAtomWts = false, bool force = false,
-                              const char *prefix = 0) {
+                              const char *prefix = nullptr) {
   int nats = mol.getNumAtoms();
   npy_intp dims[2];
   dims[0] = nats;
@@ -439,16 +451,19 @@ PyObject *get3DDistanceMatrix(ROMol &mol, int confId = -1,
 
   distMat = MolOps::get3DDistanceMat(mol, confId, useAtomWts, force, prefix);
 
-  PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
+  auto *res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
 
   memcpy(PyArray_DATA(res), static_cast<void *>(distMat),
          nats * nats * sizeof(double));
 
+  if (prefix == nullptr || std::string(prefix) == "") {
+    delete[] distMat;
+  }
   return PyArray_Return(res);
 }
 
 PyObject *getAdjacencyMatrix(ROMol &mol, bool useBO = false, int emptyVal = 0,
-                             bool force = false, const char *prefix = 0) {
+                             bool force = false, const char *prefix = nullptr) {
   int nats = mol.getNumAtoms();
   npy_intp dims[2];
   dims[0] = nats;
@@ -468,55 +483,62 @@ PyObject *getAdjacencyMatrix(ROMol &mol, bool useBO = false, int emptyVal = 0,
     int *data = static_cast<int *>(PyArray_DATA(res));
     for (int i = 0; i < nats; i++) {
       for (int j = 0; j < nats; j++) {
-        data[i * nats + j] = (int)round(tmpMat[i * nats + j]);
+        data[i * nats + j] = (int)std::round(tmpMat[i * nats + j]);
       }
     }
   }
   return PyArray_Return(res);
 }
 
-python::tuple GetMolFragsWithMapping(const ROMol &mol,
-  bool asMols, bool sanitizeFrags, python::object frags = python::object(),
-  python::object fragsMolAtomMapping = python::object()) {
+python::tuple GetMolFragsWithMapping(
+    const ROMol &mol, bool asMols, bool sanitizeFrags,
+    python::object frags = python::object(),
+    python::object fragsMolAtomMapping = python::object()) {
   python::list res;
 
   if (!asMols) {
     VECT_INT_VECT fragsVec;
     MolOps::getMolFrags(mol, fragsVec);
 
-    for (unsigned int i = 0; i < fragsVec.size(); ++i) {
+    for (auto &i : fragsVec) {
       python::list tpl;
-      for (unsigned int j = 0; j < fragsVec[i].size(); ++j) {
-        tpl.append(fragsVec[i][j]);
+      for (unsigned int j = 0; j < i.size(); ++j) {
+        tpl.append(i[j]);
       }
       res.append(python::tuple(tpl));
     }
   } else {
-    std::vector<std::vector<int> > fragsMolAtomMappingVec;
+    std::vector<std::vector<int>> fragsMolAtomMappingVec;
     std::vector<int> fragsVec;
-    std::vector<boost::shared_ptr<ROMol> > molFrags;
-    python::list &fragsList = reinterpret_cast<python::list &>(frags);
-    python::list &fragsMolAtomMappingList = reinterpret_cast<python::list &>(fragsMolAtomMapping);
+    std::vector<boost::shared_ptr<ROMol>> molFrags;
+    auto &fragsList = reinterpret_cast<python::list &>(frags);
+    auto &fragsMolAtomMappingList =
+        reinterpret_cast<python::list &>(fragsMolAtomMapping);
     bool hasFrags = fragsList != python::object();
     bool hasFragsMolAtomMapping = fragsMolAtomMappingList != python::object();
-    molFrags = hasFrags || hasFragsMolAtomMapping
-      ? MolOps::getMolFrags(mol, sanitizeFrags, hasFrags ? &fragsVec : NULL,
-      hasFragsMolAtomMapping ? &fragsMolAtomMappingVec : NULL)
-      : MolOps::getMolFrags(mol, sanitizeFrags);
+    molFrags =
+        hasFrags || hasFragsMolAtomMapping
+            ? MolOps::getMolFrags(
+                  mol, sanitizeFrags, hasFrags ? &fragsVec : nullptr,
+                  hasFragsMolAtomMapping ? &fragsMolAtomMappingVec : nullptr)
+            : MolOps::getMolFrags(mol, sanitizeFrags);
     if (hasFrags) {
-      for (unsigned int i = 0; i < fragsVec.size(); ++i)
-        fragsList.append(fragsVec[i]);
+      for (int i : fragsVec) {
+        fragsList.append(i);
+      }
     }
     if (hasFragsMolAtomMapping) {
-      for (unsigned int i = 0; i < fragsMolAtomMappingVec.size(); ++i) {
+      for (auto &i : fragsMolAtomMappingVec) {
         python::list perFragMolAtomMappingTpl;
-        for (unsigned int j = 0; j < fragsMolAtomMappingVec[i].size(); ++j)
-          perFragMolAtomMappingTpl.append(fragsMolAtomMappingVec[i][j]);
+        for (unsigned int j = 0; j < i.size(); ++j) {
+          perFragMolAtomMappingTpl.append(i[j]);
+        }
         fragsMolAtomMappingList.append(python::tuple(perFragMolAtomMappingTpl));
       }
     }
-    for (unsigned int i = 0; i < molFrags.size(); ++i)
-      res.append(molFrags[i]);
+    for (const auto &molFrag : molFrags) {
+      res.append(molFrag);
+    }
   }
   return python::tuple(res);
 }
@@ -530,9 +552,9 @@ ExplicitBitVect *wrapLayeredFingerprint(
     unsigned int maxPath, unsigned int fpSize, python::list atomCounts,
     ExplicitBitVect *includeOnlyBits, bool branchedPaths,
     python::object fromAtoms) {
-  rdk_auto_ptr<std::vector<unsigned int> > lFromAtoms =
+  std::unique_ptr<std::vector<unsigned int>> lFromAtoms =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
-  std::vector<unsigned int> *atomCountsV = 0;
+  std::vector<unsigned int> *atomCountsV = nullptr;
   if (atomCounts) {
     atomCountsV = new std::vector<unsigned int>;
     unsigned int nAts =
@@ -563,7 +585,7 @@ ExplicitBitVect *wrapLayeredFingerprint(
 ExplicitBitVect *wrapPatternFingerprint(const ROMol &mol, unsigned int fpSize,
                                         python::list atomCounts,
                                         ExplicitBitVect *includeOnlyBits) {
-  std::vector<unsigned int> *atomCountsV = 0;
+  std::vector<unsigned int> *atomCountsV = nullptr;
   if (atomCounts) {
     atomCountsV = new std::vector<unsigned int>;
     unsigned int nAts =
@@ -596,19 +618,18 @@ ExplicitBitVect *wrapRDKFingerprintMol(
     double tgtDensity, unsigned int minSize, bool branchedPaths,
     bool useBondOrder, python::object atomInvariants, python::object fromAtoms,
     python::object atomBits, python::object bitInfo) {
-  rdk_auto_ptr<std::vector<unsigned int> > lAtomInvariants =
+  std::unique_ptr<std::vector<unsigned int>> lAtomInvariants =
       pythonObjectToVect<unsigned int>(atomInvariants);
-  rdk_auto_ptr<std::vector<unsigned int> > lFromAtoms =
+  std::unique_ptr<std::vector<unsigned int>> lFromAtoms =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
-  std::vector<std::vector<boost::uint32_t> > *lAtomBits = 0;
-  std::map<boost::uint32_t, std::vector<std::vector<int> > > *lBitInfo = 0;
+  std::vector<std::vector<std::uint32_t>> *lAtomBits = nullptr;
+  std::map<std::uint32_t, std::vector<std::vector<int>>> *lBitInfo = nullptr;
   // if(!(atomBits.is_none())){
   if (atomBits != python::object()) {
-    lAtomBits =
-        new std::vector<std::vector<boost::uint32_t> >(mol.getNumAtoms());
+    lAtomBits = new std::vector<std::vector<std::uint32_t>>(mol.getNumAtoms());
   }
   if (bitInfo != python::object()) {
-    lBitInfo = new std::map<boost::uint32_t, std::vector<std::vector<int> > >;
+    lBitInfo = new std::map<std::uint32_t, std::vector<std::vector<int>>>;
   }
   ExplicitBitVect *res;
   res = RDKit::RDKFingerprintMol(mol, minPath, maxPath, fpSize, nBitsPerHash,
@@ -617,30 +638,28 @@ ExplicitBitVect *wrapRDKFingerprintMol(
                                  lFromAtoms.get(), lAtomBits, lBitInfo);
 
   if (lAtomBits) {
-    python::list &pyl = static_cast<python::list &>(atomBits);
+    auto &pyl = static_cast<python::list &>(atomBits);
     for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
       python::list tmp;
-      BOOST_FOREACH (boost::uint32_t v, (*lAtomBits)[i]) { tmp.append(v); }
+      BOOST_FOREACH (std::uint32_t v, (*lAtomBits)[i]) { tmp.append(v); }
       pyl.append(tmp);
     }
     delete lAtomBits;
   }
   if (lBitInfo) {
-    python::dict &pyd = static_cast<python::dict &>(bitInfo);
-    typedef std::map<boost::uint32_t, std::vector<std::vector<int> > >::iterator
-        it_type;
-    for (it_type it = (*lBitInfo).begin(); it != (*lBitInfo).end(); ++it) {
+    auto &pyd = static_cast<python::dict &>(bitInfo);
+    for (auto &it : (*lBitInfo)) {
       python::list temp;
-      std::vector<std::vector<int> >::iterator itset;
-      for (itset = it->second.begin(); itset != it->second.end(); ++itset) {
+      std::vector<std::vector<int>>::iterator itset;
+      for (itset = it.second.begin(); itset != it.second.end(); ++itset) {
         python::list temp2;
-        for (unsigned int i = 0; i < itset->size(); ++i) {
-          temp2.append(itset->at(i));
+        for (int &i : *itset) {
+          temp2.append(i);
         }
         temp.append(temp2);
       }
-      if (!pyd.has_key(it->first)) {
-        pyd[it->first] = temp;
+      if (!pyd.has_key(it.first)) {
+        pyd[it.first] = temp;
       }
     }
     delete lBitInfo;
@@ -653,20 +672,20 @@ SparseIntVect<boost::uint64_t> *wrapUnfoldedRDKFingerprintMol(
     const ROMol &mol, unsigned int minPath, unsigned int maxPath, bool useHs,
     bool branchedPaths, bool useBondOrder, python::object atomInvariants,
     python::object fromAtoms, python::object atomBits, python::object bitInfo) {
-  rdk_auto_ptr<std::vector<unsigned int> > lAtomInvariants =
+  std::unique_ptr<std::vector<unsigned int>> lAtomInvariants =
       pythonObjectToVect<unsigned int>(atomInvariants);
-  rdk_auto_ptr<std::vector<unsigned int> > lFromAtoms =
+  std::unique_ptr<std::vector<unsigned int>> lFromAtoms =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
-  std::vector<std::vector<boost::uint64_t> > *lAtomBits = 0;
-  std::map<boost::uint64_t, std::vector<std::vector<int> > > *lBitInfo = 0;
+  std::vector<std::vector<boost::uint64_t>> *lAtomBits = nullptr;
+  std::map<boost::uint64_t, std::vector<std::vector<int>>> *lBitInfo = nullptr;
 
   // if(!(atomBits.is_none())){
   if (atomBits != python::object()) {
     lAtomBits =
-        new std::vector<std::vector<boost::uint64_t> >(mol.getNumAtoms());
+        new std::vector<std::vector<boost::uint64_t>>(mol.getNumAtoms());
   }
   if (bitInfo != python::object()) {
-    lBitInfo = new std::map<boost::uint64_t, std::vector<std::vector<int> > >;
+    lBitInfo = new std::map<boost::uint64_t, std::vector<std::vector<int>>>;
   }
 
   SparseIntVect<boost::uint64_t> *res;
@@ -675,7 +694,7 @@ SparseIntVect<boost::uint64_t> *wrapUnfoldedRDKFingerprintMol(
       lAtomInvariants.get(), lFromAtoms.get(), lAtomBits, lBitInfo);
 
   if (lAtomBits) {
-    python::list &pyl = static_cast<python::list &>(atomBits);
+    auto &pyl = static_cast<python::list &>(atomBits);
     for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
       python::list tmp;
       BOOST_FOREACH (boost::uint64_t v, (*lAtomBits)[i]) { tmp.append(v); }
@@ -684,21 +703,19 @@ SparseIntVect<boost::uint64_t> *wrapUnfoldedRDKFingerprintMol(
     delete lAtomBits;
   }
   if (lBitInfo) {
-    python::dict &pyd = static_cast<python::dict &>(bitInfo);
-    typedef std::map<boost::uint64_t, std::vector<std::vector<int> > >::iterator
-        it_type;
-    for (it_type it = (*lBitInfo).begin(); it != (*lBitInfo).end(); ++it) {
+    auto &pyd = static_cast<python::dict &>(bitInfo);
+    for (auto &it : (*lBitInfo)) {
       python::list temp;
-      std::vector<std::vector<int> >::iterator itset;
-      for (itset = it->second.begin(); itset != it->second.end(); ++itset) {
+      std::vector<std::vector<int>>::iterator itset;
+      for (itset = it.second.begin(); itset != it.second.end(); ++itset) {
         python::list temp2;
-        for (unsigned int i = 0; i < itset->size(); ++i) {
-          temp2.append(itset->at(i));
+        for (int &i : *itset) {
+          temp2.append(i);
         }
         temp.append(temp2);
       }
-      if (!pyd.has_key(it->first)) {
-        pyd[it->first] = temp;
+      if (!pyd.has_key(it.first)) {
+        pyd[it.first] = temp;
       }
     }
     delete lBitInfo;
@@ -722,8 +739,8 @@ python::object findAllSubgraphsOfLengthsMtoNHelper(const ROMol &mol,
   for (unsigned int i = lowerLen; i <= upperLen; ++i) {
     python::list tmp;
     const PATH_LIST &pth = oMap[i];
-    for (PATH_LIST_CI pthit = pth.begin(); pthit != pth.end(); ++pthit) {
-      tmp.append(python::tuple(*pthit));
+    for (const auto &pthit : pth) {
+      tmp.append(python::tuple(pthit));
     }
     res.append(tmp);
   }
@@ -758,6 +775,16 @@ ROMol *adjustQueryPropertiesHelper(const ROMol &mol, python::object pyparams) {
     params = python::extract<MolOps::AdjustQueryParameters>(pyparams);
   }
   return MolOps::adjustQueryProperties(mol, &params);
+}
+
+python::tuple detectChemistryProblemsHelper(const ROMol &mol,
+                                            unsigned int sanitizeOps) {
+  auto probs = MolOps::detectChemistryProblems(mol, sanitizeOps);
+  python::list res;
+  for (const auto &exc_ptr : probs) {
+    res.append(boost::shared_ptr<MolSanitizeException>(exc_ptr->copy()));
+  }
+  return python::tuple(res);
 }
 
 ROMol *replaceCoreHelper(const ROMol &mol, const ROMol &core,
@@ -807,6 +834,14 @@ ROMol *replaceCoreHelper(const ROMol &mol, const ROMol &core,
                      requireDummyMatch);
 }
 
+void setDoubleBondNeighborDirectionsHelper(ROMol &mol, python::object confObj) {
+  Conformer *conf = nullptr;
+  if (confObj) {
+    conf = python::extract<Conformer *>(confObj);
+  }
+  MolOps::setDoubleBondNeighborDirections(mol, conf);
+}
+
 struct molops_wrapper {
   static void wrap() {
     std::string docString;
@@ -829,7 +864,7 @@ struct molops_wrapper {
     // ------------------------------------------------------------------------
     docString =
         "Assign stereochemistry to bonds based on coordinates and a conformer.\n\
-        DEPRECATED: Please use the version that takes a conformer ID instead.\n\
+        DEPRECATED\n\
         \n\
   ARGUMENTS:\n\
   \n\
@@ -840,8 +875,7 @@ struct molops_wrapper {
                 (python::arg("mol"), python::arg("conformer")),
                 docString.c_str());
     docString =
-        "Assign stereochemistry to bonds based on coordinates.\n\
-        \n\
+        "DEPRECATED, use SetDoubleBondNeighborDirections() instead\n\
   ARGUMENTS:\n\
   \n\
     - mol: the molecule to be modified\n\
@@ -849,6 +883,29 @@ struct molops_wrapper {
 \n";
     python::def("DetectBondStereochemistry", MolOps::detectBondStereochemistry,
                 (python::arg("mol"), python::arg("confId") = -1),
+                docString.c_str());
+
+    docString =
+        "Uses the stereo info on double bonds to set the directions of neighboring single bonds\n\
+        \n\
+  ARGUMENTS:\n\
+  \n\
+    - mol: the molecule to be modified\n\
+\n";
+    python::def("SetDoubleBondNeighborDirections",
+                setDoubleBondNeighborDirectionsHelper,
+                (python::arg("mol"), python::arg("conf") = python::object()),
+                docString.c_str());
+
+    docString =
+        "Uses the directions of neighboring bonds to set cis/trans stereo on double bonds.\n\
+        \n\
+  ARGUMENTS:\n\
+  \n\
+    - mol: the molecule to be modified\n\
+\n";
+    python::def("SetBondStereoFromDirections",
+                MolOps::setBondStereoFromDirections, (python::arg("mol")),
                 docString.c_str());
 
     // ------------------------------------------------------------------------
@@ -863,12 +920,12 @@ struct molops_wrapper {
 \n\
     - mol: the molecule to be modified\n\
     - sanitizeOps: (optional) sanitization operations to be carried out\n\
-                   these should be constructed by or'ing together the\n\
-                   operations in rdkit.Chem.SanitizeFlags\n\
+      these should be constructed by or'ing together the\n\
+      operations in rdkit.Chem.SanitizeFlags\n\
     - catchErrors: (optional) if provided, instead of raising an exception\n\
-                   when sanitization fails (the default behavior), the \n\
-                   first operation that failed (as defined in rdkit.Chem.SanitizeFlags)\n\
-                   is returned. Zero is returned on success.\n\
+      when sanitization fails (the default behavior), the \n\
+      first operation that failed (as defined in rdkit.Chem.SanitizeFlags)\n\
+      is returned. Zero is returned on success.\n\
 \n";
     python::def(
         "SanitizeMol", sanitizeMol,
@@ -916,7 +973,10 @@ struct molops_wrapper {
   RETURNS: Nothing\n\
 \n";
     python::def("FastFindRings", MolOps::fastFindRings, docString.c_str());
-
+#ifdef RDK_USE_URF
+    python::def("FindRingFamilies", MolOps::findRingFamilies,
+                "generate Unique Ring Families");
+#endif
     // ------------------------------------------------------------------------
     docString =
         "Adds hydrogens to the graph of a molecule.\n\
@@ -977,7 +1037,17 @@ struct molops_wrapper {
   NOTES:\n\
 \n\
     - The original molecule is *not* modified.\n\
-\n";
+    - Hydrogens which aren't connected to a heavy atom will not be\n\
+      removed.  This prevents molecules like [H][H] from having\n\
+      all atoms removed.\n\
+    - Labelled hydrogen (e.g. atoms with atomic number=1, but isotope > 1),\n\
+      will not be removed.\n\
+    - two coordinate Hs, like the central H in C[H-]C, will not be removed\n\
+    - Hs connected to dummy atoms will not be removed\n\
+    - Hs that are part of the definition of double bond Stereochemistry\n\
+      will not be removed\n\
+    - Hs that are not connected to anything else will not be removed\n\
+\n ";
     python::def("RemoveHs",
                 (ROMol * (*)(const ROMol &, bool, bool, bool)) MolOps::removeHs,
                 (python::arg("mol"), python::arg("implicitOnly") = false,
@@ -986,6 +1056,60 @@ struct molops_wrapper {
                 docString.c_str(),
                 python::return_value_policy<python::manage_new_object>());
 
+    // ------------------------------------------------------------------------
+    docString = R"DOC(Parameters controlling which Hs are removed.)DOC";
+    python::class_<MolOps::RemoveHsParameters>("RemoveHsParameters",
+                                               docString.c_str())
+        .def_readwrite("removeDegreeZero",
+                       &MolOps::RemoveHsParameters::removeDegreeZero,
+                       "hydrogens that have no bonds")
+        .def_readwrite("removeHigherDegrees",
+                       &MolOps::RemoveHsParameters::removeHigherDegrees,
+                       "hydrogens with two (or more) bonds")
+        .def_readwrite("removeOnlyHNeighbors",
+                       &MolOps::RemoveHsParameters::removeOnlyHNeighbors,
+                       "hydrogens with bonds only to other hydrogens")
+        .def_readwrite("removeIsotopes",
+                       &MolOps::RemoveHsParameters::removeIsotopes,
+                       "hydrogens with non-default isotopes")
+        .def_readwrite("removeDummyNeighbors",
+                       &MolOps::RemoveHsParameters::removeDummyNeighbors,
+                       "hydrogens with at least one dummy-atom neighbor")
+        .def_readwrite("removeDefiningBondStereo",
+                       &MolOps::RemoveHsParameters::removeDefiningBondStereo,
+                       "hydrogens defining bond stereochemistry")
+        .def_readwrite("removeWithWedgedBond",
+                       &MolOps::RemoveHsParameters::removeWithWedgedBond,
+                       "hydrogens with wedged bonds to them")
+        .def_readwrite("removeWithQuery",
+                       &MolOps::RemoveHsParameters::removeWithQuery,
+                       "hydrogens with queries defined")
+        .def_readwrite("removeMapped",
+                       &MolOps::RemoveHsParameters::removeMapped,
+                       "mapped hydrogens")
+        .def_readwrite("removeNonimplicit",
+                       &MolOps::RemoveHsParameters::removeNonimplicit,
+                       "DEPRECATED")
+        .def_readwrite(
+            "showWarnings", &MolOps::RemoveHsParameters::showWarnings,
+            "display warning messages for some classes of removed Hs")
+        .def_readwrite("updateExplicitCount",
+                       &MolOps::RemoveHsParameters::updateExplicitCount,
+                       "DEPRECATED");
+    python::def(
+        "RemoveHs",
+        (ROMol * (*)(const ROMol &, const MolOps::RemoveHsParameters &, bool)) &
+            MolOps::removeHs,
+        (python::arg("mol"), python::arg("params"),
+         python::arg("sanitize") = true),
+        "Returns a copy of the molecule with Hs removed. Which Hs are "
+        "removed is controlled by the params argument",
+        python::return_value_policy<python::manage_new_object>());
+    python::def("RemoveAllHs",
+                (ROMol * (*)(const ROMol &, bool)) & MolOps::removeAllHs,
+                (python::arg("mol"), python::arg("sanitize") = true),
+                "Returns a copy of the molecule with all Hs removed.",
+                python::return_value_policy<python::manage_new_object>());
     python::def("MergeQueryHs",
                 (ROMol * (*)(const ROMol &, bool)) & MolOps::mergeQueryHs,
                 (python::arg("mol"), python::arg("mergeUnmappedOnly") = false),
@@ -1231,6 +1355,7 @@ struct molops_wrapper {
         .value("AROMATICITY_DEFAULT", MolOps::AROMATICITY_DEFAULT)
         .value("AROMATICITY_RDKIT", MolOps::AROMATICITY_RDKIT)
         .value("AROMATICITY_SIMPLE", MolOps::AROMATICITY_SIMPLE)
+        .value("AROMATICITY_MDL", MolOps::AROMATICITY_MDL)
         .value("AROMATICITY_CUSTOM", MolOps::AROMATICITY_CUSTOM)
         .export_values();
 
@@ -1544,7 +1669,9 @@ struct molops_wrapper {
     - mol: the molecule to use\n\
     - cleanIt: (optional) if provided, atoms with a chiral specifier that aren't\n\
       actually chiral (e.g. atoms with duplicate substituents or only 2 substituents,\n\
-      etc.) will have their chiral code set to CHI_UNSPECIFIED\n\
+      etc.) will have their chiral code set to CHI_UNSPECIFIED. Bonds with \n\
+      STEREOCIS/STEREOTRANS specified that have duplicate substituents based upon the CIP \n\
+      atom ranks will be marked STEREONONE. \n\
     - force: (optional) causes the calculation to be repeated, even if it has already\n\
       been done\n\
     - flagPossibleStereoCenters (optional)   set the _ChiralityPossible property on\n\
@@ -1554,6 +1681,38 @@ struct molops_wrapper {
                 (python::arg("mol"), python::arg("cleanIt") = false,
                  python::arg("force") = false,
                  python::arg("flagPossibleStereoCenters") = false),
+                docString.c_str());
+
+    // ------------------------------------------------------------------------
+    docString =
+        "Uses bond directions to assign ChiralTypes to a molecule's atoms.\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use\n\
+    - confId: (optional) the conformation to use \n\
+    - replaceExistingTags: (optional) replace any existing information about stereochemistry\n\
+\n";
+    python::def("AssignChiralTypesFromBondDirs",
+                MolOps::assignChiralTypesFromBondDirs,
+                (python::arg("mol"), python::arg("confId") = -1,
+                 python::arg("replaceExistingTags") = true),
+                docString.c_str());
+    // ------------------------------------------------------------------------
+    docString =
+        "Uses a conformer (should be 3D) to assign ChiralTypes to a molecule's atoms\n\
+        and stereo flags to its bonds\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use\n\
+    - confId: (optional) the conformation to use \n\
+    - replaceExistingTags: (optional) replace any existing information about stereochemistry\n\
+\n";
+    python::def("AssignStereochemistryFrom3D",
+                MolOps::assignStereochemistryFrom3D,
+                (python::arg("mol"), python::arg("confId") = -1,
+                 python::arg("replaceExistingTags") = true),
                 docString.c_str());
 
     // ------------------------------------------------------------------------
@@ -1581,20 +1740,36 @@ struct molops_wrapper {
 
     // ------------------------------------------------------------------------
     docString =
-        "Sets the chiral tags on a molecule's atoms based on \n\
+        "Sets the chiral tags on a molecule's atoms based on\n\
   a 3D conformation.\n\
 \n\
   ARGUMENTS:\n\
 \n\
     - mol: the molecule to use\n\
     - confId: the conformer id to use, -1 for the default \n\
-    - replaceExistingTags: if True, existing stereochemistry information will be cleared \n\
-                           before running the calculation. \n\
+    - replaceExistingTags: if True, existing stereochemistry information will be cleared\n\
+    before running the calculation.\n\
 \n";
     python::def("AssignAtomChiralTagsFromStructure",
                 MolOps::assignChiralTypesFrom3D,
                 (python::arg("mol"), python::arg("confId") = -1,
                  python::arg("replaceExistingTags") = true),
+                docString.c_str());
+
+    // ------------------------------------------------------------------------
+    docString =
+        "Sets the chiral tags on a molecule's atoms based on\n\
+  the molParity atom property.\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use\n\
+    - replaceExistingTags: if True, existing stereochemistry information will be cleared\n\
+    before running the calculation.\n\
+\n";
+    python::def("AssignAtomChiralTagsFromMolParity",
+                MolOps::assignChiralTypesFromMolParity,
+                (python::arg("mol"), python::arg("replaceExistingTags") = true),
                 docString.c_str());
 
     // ------------------------------------------------------------------------
@@ -1649,9 +1824,9 @@ struct molops_wrapper {
       containing the bits each atom sets.\n\
       Defaults to empty.\n\
 \n\
-   - bitInfo: (optional) an empty dict. If provided, the result will contain a dict \n\
-     with bits as keys and corresponding bond paths as values.\n\
-     Defaults to empty.\n\
+    - bitInfo: (optional) an empty dict. If provided, the result will contain a dict \n\
+      with bits as keys and corresponding bond paths as values.\n\
+      Defaults to empty.\n\
 \n\
   RETURNS: a DataStructs.ExplicitBitVect with _fpSize_ bits\n\
 \n\
@@ -1719,9 +1894,9 @@ ARGUMENTS:\n\
           containing the bits each atom sets.\n\
           Defaults to empty.\n\
     \n\
-       - bitInfo: (optional) an empty dict. If provided, the result will contain a dict \n\
-         with bits as keys and corresponding bond paths as values.\n\
-         Defaults to empty.\n\
+        - bitInfo: (optional) an empty dict. If provided, the result will contain a dict \n\
+          with bits as keys and corresponding bond paths as values.\n\
+          Defaults to empty.\n\
      \n\
      \n";
 
@@ -1763,16 +1938,16 @@ ARGUMENTS:\n\
       Defaults to 2048.\n\
 \n\
     - atomCounts: (optional) \n\
-        if provided, this should be a list at least as long as the number of atoms\n\
-        in the molecule. It will be used to provide the count of the number \n\
-        of paths that set bits each atom is involved in.\n\
-        NOTE: the list is not zeroed out here.\n\
+      if provided, this should be a list at least as long as the number of atoms\n\
+      in the molecule. It will be used to provide the count of the number \n\
+      of paths that set bits each atom is involved in.\n\
+      NOTE: the list is not zeroed out here.\n\
 \n\
     - setOnlyBits: (optional) \n\
-        if provided, only bits that are set in this bit vector will be set\n\
-        in the result. This is essentially the same as doing:\n\
+      if provided, only bits that are set in this bit vector will be set\n\
+      in the result. This is essentially the same as doing:\n\
            res &= setOnlyBits\n\
-        but also has an impact on the atomCounts (if being used)\n\
+      but also has an impact on the atomCounts (if being used)\n\
 \n\
     - branchedPaths: (optional) if set both branched and unbranched paths will be\n\
       used in the fingerprint.\n\
@@ -1799,7 +1974,7 @@ ARGUMENTS:\n\
          python::arg("minPath") = 1, python::arg("maxPath") = 7,
          python::arg("fpSize") = 2048,
          python::arg("atomCounts") = python::list(),
-         python::arg("setOnlyBits") = (ExplicitBitVect *)0,
+         python::arg("setOnlyBits") = (ExplicitBitVect *)nullptr,
          python::arg("branchedPaths") = true, python::arg("fromAtoms") = 0),
         docString.c_str(),
         python::return_value_policy<python::manage_new_object>());
@@ -1817,7 +1992,7 @@ ARGUMENTS:\n\
     python::def("PatternFingerprint", wrapPatternFingerprint,
                 (python::arg("mol"), python::arg("fpSize") = 2048,
                  python::arg("atomCounts") = python::list(),
-                 python::arg("setOnlyBits") = (ExplicitBitVect *)0),
+                 python::arg("setOnlyBits") = (ExplicitBitVect *)nullptr),
                 docString.c_str(),
                 python::return_value_policy<python::manage_new_object>());
 
@@ -1828,9 +2003,23 @@ ARGUMENTS:\n\
   ARGUMENTS:\n\
 \n\
     - molecule: the molecule to update\n\
+    - conformer: the conformer to use to determine wedge direction\n\
 \n\
 \n";
     python::def("WedgeMolBonds", WedgeMolBonds, docString.c_str());
+
+    docString =
+        "Set the wedging on an individual bond from a molecule.\n\
+   The wedging scheme used is that from Mol files.\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - bond: the bond to update\n\
+    - atom ID: the atom from which to do the wedging\n\
+    - conformer: the conformer to use to determine wedge direction\n\
+\n\
+\n";
+    python::def("WedgeBond", WedgeBond, docString.c_str());
 
     // ------------------------------------------------------------------------
     docString =
@@ -1885,28 +2074,27 @@ Calling:\n\
     - replaceDummies: toggles replacement of atoms that match dummies in the query\n\
 \n\
     - labelByIndex: toggles labeling the attachment point dummy atoms with \n\
-                    the index of the core atom they're attached to.\n\
+      the index of the core atom they're attached to.\n\
 \n\
     - requireDummyMatch: if the molecule has side chains that attach at points not\n\
-                         flagged with a dummy, it will be rejected (None is returned)\n\
+      flagged with a dummy, it will be rejected (None is returned)\n\
 \n\
   RETURNS: a new molecule with the core removed\n\
 \n\
   NOTES:\n\
 \n\
     - The original molecule is *not* modified.\n\
-EXAMPLES:\n\
+EXAMPLES:\n\n\
     >>> from rdkit.Chem import MolToSmiles, MolFromSmiles, ReplaceCore\n\
     >>> mol = MolFromSmiles('C1ONNCC1')\n\
     >>> core = MolFromSmiles('NN')\n\
 \n\
-    Note: Using isomericSmiles is necessary to see the labels.\n\
-    >>> MolToSmiles(ReplaceCore(mol, core, mol.GetSubstructMatch(core)), isomericSmiles=True)\n\
+    >>> MolToSmiles(ReplaceCore(mol, core, mol.GetSubstructMatch(core)))\n\
     '[1*]OCCC[2*]'\n\
 \n\
     Since NN is symmetric, we should actually get two matches here if we don't\n\
-    uniquify the matches.\n\
-    >>> [MolToSmiles(ReplaceCore(mol, core, match), isomericSmiles=True)\n\
+    uniquify the matches.\n\n\
+    >>> [MolToSmiles(ReplaceCore(mol, core, match))\n\
     ...     for match in mol.GetSubstructMatches(core, uniquify=False)]\n\
     ['[1*]OCCC[2*]', '[1*]CCCO[2*]']\n\
 \n\
@@ -1931,10 +2119,10 @@ EXAMPLES:\n\
     - replaceDummies: toggles replacement of atoms that match dummies in the query\n\
 \n\
     - labelByIndex: toggles labeling the attachment point dummy atoms with \n\
-                    the index of the core atom they're attached to.\n\
+      the index of the core atom they're attached to.\n\
 \n\
     - requireDummyMatch: if the molecule has side chains that attach at points not\n\
-                         flagged with a dummy, it will be rejected (None is returned)\n\
+      flagged with a dummy, it will be rejected (None is returned)\n\
 \n\
     - useChirality: use chirality matching in the coreQuery\n\
 \n\
@@ -1962,16 +2150,16 @@ EXAMPLES:\n\
    The isotope label by default is matched by the first connection found. In order to\n\
    indicate which atom the decoration is attached in the core query, use labelByIndex=True.\n\
    Here the attachment is from the third atom in the smiles string, which is indexed by 3\n\
-   in the core, like all good computer scientists expect, atoms indices start at 0.\n\
+   in the core, like all good computer scientists expect, atoms indices start at 0.\n\n\
    >>> MolToSmiles(ReplaceCore(MolFromSmiles('CCN1CCC1'),MolFromSmiles('C1CCN1'),\n\
    ...                         labelByIndex=True),\n\
    ...   isomericSmiles=True)\n\
    '[3*]CC'\n\
 \n\
-   Non-core matches just return None\n\
+   Non-core matches just return None\n\n\
    >>> ReplaceCore(MolFromSmiles('CCC1CC1'),MolFromSmiles('C1CCC1'))\n\
 \n\
-   The bond between atoms are considered part of the core and are removed as well\n\
+   The bond between atoms are considered part of the core and are removed as well\n\n\
    >>> MolToSmiles(ReplaceCore(MolFromSmiles('C1CC2C1CCC2'),MolFromSmiles('C1CCC1')),\n\
    ...             isomericSmiles=True)\n\
    '[1*]CCC[2*]'\n\
@@ -1982,7 +2170,7 @@ EXAMPLES:\n\
    When using dummy atoms, cores should be read in as SMARTS.  When read as SMILES\n\
    dummy atoms only match other dummy atoms.\n\
    The replaceDummies flag indicates whether matches to the dummy atoms should be considered as part\n\
-   of the core or as part of the decoration (r-group)\n\
+   of the core or as part of the decoration (r-group)\n\n\
    >>> MolToSmiles(ReplaceCore(MolFromSmiles('C1CNCC1'),MolFromSmarts('[*]N[*]'),\n\
    ...                         replaceDummies=True),\n\
    ...             isomericSmiles=True)\n\
@@ -1999,8 +2187,9 @@ EXAMPLES:\n\
    '[1*]CN'\n\
 \n\
 \n";
-    python::def("ReplaceCore", (ROMol * (*)(const ROMol &, const ROMol &, bool,
-                                            bool, bool, bool)) replaceCore,
+    python::def("ReplaceCore",
+                (ROMol * (*)(const ROMol &, const ROMol &, bool, bool, bool,
+                             bool)) replaceCore,
                 (python::arg("mol"), python::arg("coreQuery"),
                  python::arg("replaceDummies") = true,
                  python::arg("labelByIndex") = false,
@@ -2022,14 +2211,14 @@ EXAMPLES:\n\
       - mol            - the molecule to be modified\n\
       - bondIndices    - indices of the bonds to be broken\n\
       - addDummies  - toggles addition of dummy atoms to indicate where \n\
-          bonds were broken\n\
+        bonds were broken\n\
       - dummyLabels - used to provide the labels to be used for the dummies.\n\
-          the first element in each pair is the label for the dummy\n\
-          that replaces the bond's beginAtom, the second is for the \n\
-          dummy that replaces the bond's endAtom. If not provided, the\n\
-          dummies are labeled with atom indices.\n\
+        the first element in each pair is the label for the dummy\n\
+        that replaces the bond's beginAtom, the second is for the \n\
+        dummy that replaces the bond's endAtom. If not provided, the\n\
+        dummies are labeled with atom indices.\n\
       - bondTypes - used to provide the bond type to use between the\n\
-          fragments and the dummy atoms. If not provided, defaults to single. \n\
+        fragments and the dummy atoms. If not provided, defaults to single. \n\
       - cutsPerAtom - used to return the number of cuts made at each atom. \n\
 \n\
   RETURNS:\n\
@@ -2084,8 +2273,8 @@ EXAMPLES:\n\
     - mol: the molecule to be modified\n\
 \n\
     - newOrder: the new ordering the atoms (should be numAtoms long)\n\
-         for example: if newOrder is [3,2,0,1], then atom 3 in the original \n\
-         molecule will be atom 0 in the new one\n\
+      for example: if newOrder is [3,2,0,1], then atom 3 in the original \n\
+      molecule will be atom 0 in the new one\n\
 \n\
 \n";
     python::def("RenumberAtoms", renumberAtomsHelper,
@@ -2118,33 +2307,38 @@ EXAMPLES:\n\
 \n\
 Attributes:\n\
   - adjustDegree: \n\
-      modified atoms have an explicit-degree query added based on their degree in the query \n\
+    modified atoms have an explicit-degree query added based on their degree in the query \n\
   - adjustHeavyDegree: \n\
-      modified atoms have a heavy-atom-degree query added based on their degree in the query \n\
+    modified atoms have a heavy-atom-degree query added based on their degree in the query \n\
   - adjustDegreeFlags: \n\
-      controls which atoms have a degree query added \n\
+    controls which atoms have a degree query added \n\
   - adjustRingCount: \n\
-      modified atoms have a ring-count query added based on their ring count in the query \n\
+    modified atoms have a ring-count query added based on their ring count in the query \n\
   - adjustRingCountFlags: \n\
-      controls which atoms have a ring-cout query added \n\
+    controls which atoms have a ring-count query added \n\
   - makeDummiesQueries: \n\
-      dummy atoms that do not have a specified isotope are converted to any-atom queries \n\
+    dummy atoms that do not have a specified isotope are converted to any-atom queries \n\
   - aromatizeIfPossible: \n\
-      attempts aromaticity perception on the molecule \n\
+    attempts aromaticity perception on the molecule \n\
   - makeBondsGeneric: \n\
-      convert bonds to generic (any) bonds \n\
+    convert bonds to generic (any) bonds \n\
   - makeBondsGenericFlags: \n\
-      controls which bonds are made generic \n\
+    controls which bonds are made generic \n\
   - makeAtomsGeneric: \n\
-      convert atoms to generic (any) atoms \n\
+    convert atoms to generic (any) atoms \n\
   - makeAtomsGenericFlags: \n\
-      controls which atoms are made generic \n\
+    controls which atoms are made generic \n\
+  - adjustRingChain: \n\
+    modified atoms have a ring-chain query added based on whether or not they are in a ring \n\
+  - adjustRingChainFlags: \n\
+    controls which atoms have a ring-chain query added \n\
 \n\
 A note on the flags controlling which atoms/bonds are modified: \n\
    These generally limit the set of atoms/bonds to be modified.\n\
-   For example if ADJUST_RINGSONLY is set, then only atoms in rings will be modified.\n\
-       ADJUST_IGNORENONE causes all atoms to be modified\n\
-       ADJUST_SETALL sets all of the ADJUST flags\n\
+   For example:\n\
+       - ADJUST_IGNORERINGS atoms/bonds in rings will not be modified.\n\
+       - ADJUST_IGNORENONE causes all atoms/bonds to be modified\n\
+       - ADJUST_IGNOREALL no atoms/bonds will be modified\n\
    Some of the options obviously make no sense for bonds\n\
 ";
     python::class_<MolOps::AdjustQueryParameters>("AdjustQueryParameters",
@@ -2172,7 +2366,11 @@ A note on the flags controlling which atoms/bonds are modified: \n\
         .def_readwrite("makeAtomsGeneric",
                        &MolOps::AdjustQueryParameters::makeAtomsGeneric)
         .def_readwrite("makeAtomsGenericFlags",
-                       &MolOps::AdjustQueryParameters::makeAtomsGenericFlags);
+                       &MolOps::AdjustQueryParameters::makeAtomsGenericFlags)
+        .def_readwrite("adjustRingChain",
+                       &MolOps::AdjustQueryParameters::adjustRingChain)
+        .def_readwrite("adjustRingChainFlags",
+                       &MolOps::AdjustQueryParameters::adjustRingChainFlags);
 
     docString =
         "Returns a new molecule where the query properties of atoms have been "
@@ -2181,8 +2379,13 @@ A note on the flags controlling which atoms/bonds are modified: \n\
                 (python::arg("mol"), python::arg("params") = python::object()),
                 docString.c_str(),
                 python::return_value_policy<python::manage_new_object>());
+    docString = "checks for chemistry problems";
+    python::def(
+        "DetectChemistryProblems", detectChemistryProblemsHelper,
+        (python::arg("mol"), python::arg("sanitizeOps") = MolOps::SANITIZE_ALL),
+        docString.c_str());
   };
 };
-}
+}  // namespace RDKit
 
 void wrap_molops() { RDKit::molops_wrapper::wrap(); }

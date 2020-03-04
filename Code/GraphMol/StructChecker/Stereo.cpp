@@ -44,7 +44,7 @@ static double Angle(double x1, double y1, double x2, double y2) {
   if (l1 < 0.00001 || l2 < 0.00001) return (0.0);
 
   cos_alpha = (x1 * x2 + y1 * y2) / (l1 * l2);
-  if (cos_alpha > 1.0)  // safeguard against round off erros
+  if (cos_alpha > 1.0)  // safeguard against round off errors
     cos_alpha = 1.0;
   else if (cos_alpha < -1.0)
     cos_alpha = -1.0;
@@ -110,10 +110,8 @@ int DubiousStereochemistry(RWMol &mol) {
         nmulti++;
         if (RDKit::Bond::DOUBLE == bond.getBondType()) {
           unsigned jatom = nbp.Atoms[j];
-          for (unsigned jj = 0; jj < neighbour_array[jatom].Bonds.size(); jj++)
-            if (RDKit::Bond::DOUBLE ==
-                mol.getBondWithIdx(neighbour_array[jatom].Bonds[jj])
-                    ->getBondType())
+          for (unsigned int jj : neighbour_array[jatom].Bonds)
+            if (RDKit::Bond::DOUBLE == mol.getBondWithIdx(jj)->getBondType())
               ndb++;
         }
         if (2 == ndb) is_allene = true;
@@ -132,9 +130,9 @@ int DubiousStereochemistry(RWMol &mol) {
            n_ligands > 3 && n_ligands <= 4 && nmulti == 0) ||
           (15 == element &&  // "P"
            n_ligands > 2 && n_ligands <= 4) ||
-          (14 == element &&  // "Si"
-           n_ligands > 2 && n_ligands <= 4) &&
-              nmulti == 0))
+          ((14 == element &&  // "Si"
+            n_ligands > 2 && n_ligands <= 4) &&
+           nmulti == 0)))
 
       for (unsigned j = 0; j < n_ligands; j++) {
         const Bond &bj = *mol.getBondWithIdx(nbp.Bonds[j]);
@@ -219,8 +217,8 @@ int FixDubious3DMolecule(RWMol &mol) {
     for (j = 0; j < mol.getNumBonds(); j++) {
       const Bond *bond = mol.getBondWithIdx(j);
       if (RDKit::Bond::BEGINWEDGE == bond->getBondDir() ||
-          RDKit::Bond::BEGINDASH == bond->getBondDir() &&
-              i == bond->getBeginAtomIdx())
+          (RDKit::Bond::BEGINDASH == bond->getBondDir() &&
+           i == bond->getBeginAtomIdx()))
         break;
     }
     if (j < mol.getNumBonds()) continue;  // no stereo designation
@@ -330,9 +328,9 @@ void RemoveDubiousStereochemistry(RWMol &mol) {
            n_ligands > 3 && n_ligands <= 4 && nmulti == 0) ||
           (15 == element &&  // "P"
            n_ligands > 2 && n_ligands <= 4) ||
-          (14 == element &&  // "Si"
-           n_ligands > 2 && n_ligands <= 4) &&
-              nmulti == 0)) {
+          ((14 == element &&  // "Si"
+            n_ligands > 2 && n_ligands <= 4) &&
+           nmulti == 0))) {
       for (unsigned j = 0; j < n_ligands; j++) {
         Bond &bj = *mol.getBondWithIdx(nbp.Bonds[j]);
         if (bj.getBeginAtomIdx() == i &&
@@ -365,22 +363,27 @@ static int Atom3Parity(struct stereo_bond_t ligands[3]) {
   int maxnum;
 
   maxnum = ligands[0].number;
-  for (unsigned i = 1; i < 3; i++)
+  for (unsigned i = 1; i < 3; i++) {
     if (maxnum < ligands[i].number) maxnum = ligands[i].number;
+  }
 
   reference = (-1);
-  for (unsigned i = 0; i < 3; i++)
-    if (ligands[i].direction != RDKit::Bond::NONE)
-      if (reference == (-1))
+  for (unsigned i = 0; i < 3; i++) {
+    if (ligands[i].direction != RDKit::Bond::NONE) {
+      if (reference == (-1)) {
         reference = i;
-      else {
+      } else {
         // stereo_error = "three attachments with more than 2 stereobonds";
         std::cerr << "three attachments with more than 2 stereobonds"
                   << std::endl;
         return (ILLEGAL_REPRESENTATION);
       }
+    }
+  }
 
-  if (reference == (-1)) return (UNDEFINED_PARITY);
+  if (reference == (-1)) {
+      return (UNDEFINED_PARITY);
+  }
 
   if (reference == 0) {
     a = 1;
@@ -687,7 +690,7 @@ bool AtomClash(RWMol &mol, double clash_limit) {
   bool twod=true;
   getMolAtomPoints(mol, atomPoint, twod);
 
-  // compute median of square of bond lenght (quick/dirty)
+  // compute median of square of bond length (quick/dirty)
   if (mol.getNumBonds() == 0) return false;
   std::vector<double> blengths(mol.getNumBonds());
   blengths[0] = 1.0;
@@ -779,7 +782,7 @@ int CisTransPerception(const ROMol &mol,
   std::vector<Neighbourhood> nba(mol.getNumAtoms());
   SetupNeighbourhood(mol, nba);
 
-  for (unsigned i = 0; i < bondColor.size(); i++) bondColor[i] = 0;
+  for (unsigned int &i : bondColor) i = 0;
   for (unsigned i = 0; i < nba.size(); i++)  // n_atoms
     if (numbering[i] > maxnum) maxnum = numbering[i];
 

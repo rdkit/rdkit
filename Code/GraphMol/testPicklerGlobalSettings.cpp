@@ -29,6 +29,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
+#include <RDGeneral/test.h>
 #include <RDGeneral/utils.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
@@ -253,7 +254,7 @@ void testGlobalPickleProps() {
 }
 
 
-int main(int argc, char *argv[]) {
+int main(int, char**) {
   RDLog::InitLogs();
 
   testGlobalPickleProps();

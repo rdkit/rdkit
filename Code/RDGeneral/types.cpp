@@ -1,5 +1,5 @@
 //
-//  Copyright 2001-2016 Greg Landrum and Rational Discovery LLC
+//  Copyright 2001-2018 Greg Landrum and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -12,9 +12,9 @@
 #include "types.h"
 
 namespace RDKit {
-  namespace detail {
-  const std::string computedPropName = "__computedProps";
-  }
+namespace detail {
+const std::string computedPropName = "__computedProps";
+}
 
 namespace common_properties {
 const std::string TWOD = "2D";
@@ -36,7 +36,16 @@ const std::string _CrippenLogP = "_CrippenLogP";
 const std::string _CrippenMR = "_CrippenMR";
 const std::string _MMFFSanitized = "_MMFFSanitized";
 const std::string _MolFileChiralFlag = "_MolFileChiralFlag";
+const std::string MRV_SMA = "MRV SMA";
 const std::string _MolFileRLabel = "_MolFileRLabel";
+const std::string _MolFileAtomQuery = "_MolFileAtomQuery";
+const std::string _MolFileBondQuery = "_MolFileBondQuery";
+const std::string _MolFileBondEndPts = "_MolFileBondEndPts";
+const std::string _MolFileBondAttach = "_MolFileBondAttach";
+const std::string _MolFileBondType = "_MolFileBondType";
+const std::string _MolFileBondStereo = "_MolFileBondStereo";
+const std::string _MolFileBondCfg = "_MolFileBondCfg";
+
 const std::string _Name = "_Name";
 const std::string _NeedsQueryScan = "_NeedsQueryScan";
 const std::string _QueryFormalCharge = "_QueryFormalCharge";
@@ -44,6 +53,9 @@ const std::string _QueryHCount = "_QueryHCount";
 const std::string _QueryIsotope = "_QueryIsotope";
 const std::string _QueryMass = "_QueryMass";
 const std::string _ReactionDegreeChanged = "_ReactionDegreeChanged";
+const std::string reactantAtomIdx = "react_atom_idx";
+const std::string reactionMapNum = "old_mapno";
+
 const std::string _RingClosures = "_RingClosures";
 const std::string _SLN_s = "_SLN_s";
 const std::string _SmilesStart = "_SmilesStart";
@@ -60,6 +72,8 @@ const std::string _crippenLogP = "_crippenLogP";
 const std::string _crippenLogPContribs = "_crippenLogPContribs";
 const std::string _crippenMR = "_crippenMR";
 const std::string _crippenMRContribs = "_crippenMRContribs";
+const std::string _GasteigerCharge = "_GasteigerCharge";
+const std::string _GasteigerHCharge = "_GasteigerHCharge";
 const std::string _doIsoSmiles = "_doIsoSmiles";
 const std::string _fragSMARTS = "_fragSMARTS";
 const std::string _hasMassQuery = "_hasMassQuery";
@@ -89,6 +103,7 @@ const std::string molFileAlias = "molFileAlias";
 const std::string molFileValue = "molFileValue";
 const std::string molInversionFlag = "molInversionFlag";
 const std::string molParity = "molParity";
+const std::string molStereoCare = "molStereoCare";
 const std::string molRxnComponent = "molRxnComponent";
 const std::string molRxnRole = "molRxnRole";
 const std::string molTotValence = "molTotValence";
@@ -98,7 +113,8 @@ const std::string ringMembership = "ringMembership";
 const std::string smilesSymbol = "smilesSymbol";
 const std::string atomLabel = "atomLabel";
 const std::string internalRgroupSmiles = "internalRgroupSmiles";
-}  // end common_properties
+
+}  // namespace common_properties
 
 const double MAX_DOUBLE = std::numeric_limits<double>::max();
 const double EPS_DOUBLE = std::numeric_limits<double>::epsilon();
@@ -109,12 +125,6 @@ const double MAX_LONGINT =
 
 //  template <typename T>
 //  T larger_of(T arg1,T arg2) { return arg1>arg2 ? arg1 : arg2; };
-
-double round(double num) {
-  double floorVal = floor(num);
-  double ceilVal = ceil(num);
-  return num - floorVal > ceilVal - num ? ceilVal : floorVal;
-};
 
 void Union(const INT_VECT &r1, const INT_VECT &r2, INT_VECT &res) {
   res.resize(0);
@@ -141,7 +151,7 @@ void Union(const VECT_INT_VECT &rings, INT_VECT &res, const INT_VECT *exclude) {
   res.resize(0);
   INT_VECT ring;
   unsigned int id;
-  unsigned int nrings = static_cast<unsigned int>(rings.size());
+  auto nrings = static_cast<unsigned int>(rings.size());
   INT_VECT_CI ri;
 
   for (id = 0; id < nrings; id++) {
@@ -178,4 +188,4 @@ int nextCombination(INT_VECT &comb, int tot) {
   }
   return celem;
 }
-}
+}  // namespace RDKit

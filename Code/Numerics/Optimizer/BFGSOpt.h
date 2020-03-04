@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #include <math.h>
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/Trajectory/Snapshot.h>
@@ -15,6 +16,8 @@
 #include <algorithm>
 
 namespace BFGSOpt {
+RDKIT_OPTIMIZER_EXPORT extern int HEAD_ONLY_LIBRARY;
+RDKIT_OPTIMIZER_EXPORT extern int REALLY_A_HEADER_ONLY_LIBRARY;
 const double FUNCTOL =
     1e-4;  //!< Default tolerance for function convergence in the minimizer
 const double MOVETOL =
@@ -23,7 +26,7 @@ const int MAXITS = 200;   //!< Default maximum number of iterations
 const double EPS = 3e-8;  //!< Default gradient tolerance in the minimizer
 const double TOLX =
     4. * EPS;  //!< Default direction vector tolerance in the minimizer
-const double MAXSTEP = 100.0;  //!< Default maximim step size in the minimizer
+const double MAXSTEP = 100.0;  //!< Default maximum step size in the minimizer
 
 //! Do a Quasi-Newton minimization along a line.
 /*!
@@ -172,9 +175,9 @@ void linearSearch(unsigned int dim, double *oldPt, double oldVal, double *grad,
                            will be stored after as many steps as indicated
                            through this parameter; defaults to 0 (no
                            snapshots stored)
-   \param snapshotVect     pointer to a std::vector<Snapshot> object that will receive
-                           the coordinates and energies every snapshotFreq steps;
-                           defaults to NULL (no snapshots stored)
+   \param snapshotVect     pointer to a std::vector<Snapshot> object that will
+   receive the coordinates and energies every snapshotFreq steps; defaults to
+   NULL (no snapshots stored)
 
    \return a flag indicating success (or type of failure). Possible values are:
     -  0: success
@@ -379,8 +382,8 @@ int minimize(unsigned int dim, double *pos, double gradTol,
              unsigned int &numIters, double &funcVal, EnergyFunctor func,
              GradientFunctor gradFunc, double funcTol = TOLX,
              unsigned int maxIts = MAXITS) {
-  return minimize(dim, pos, gradTol, numIters, funcVal, func,
-             gradFunc, 0, NULL, funcTol, maxIts);
+  return minimize(dim, pos, gradTol, numIters, funcVal, func, gradFunc, 0, NULL,
+                  funcTol, maxIts);
 }
 
-}
+}  // namespace BFGSOpt

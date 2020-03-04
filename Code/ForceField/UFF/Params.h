@@ -7,9 +7,11 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef __RD_UFFPARAMS_H__
 #define __RD_UFFPARAMS_H__
 
+#include <memory>
 #include <string>
 #include <cmath>
 #include <map>
@@ -35,40 +37,40 @@ inline void clipToOne(double &x) {
 }
 
 //! class to store UFF parameters for bond stretching
-class UFFBond {
+class RDKIT_FORCEFIELD_EXPORT UFFBond {
  public:
   double kb;
   double r0;
 };
 
 //! class to store UFF parameters for angle bending
-class UFFAngle {
+class RDKIT_FORCEFIELD_EXPORT UFFAngle {
  public:
   double ka;
   double theta0;
 };
 
 //! class to store UFF parameters for torsions
-class UFFTor {
+class RDKIT_FORCEFIELD_EXPORT UFFTor {
  public:
   double V;
 };
 
 //! class to store UFF parameters for inversions
-class UFFInv {
+class RDKIT_FORCEFIELD_EXPORT UFFInv {
  public:
   double K;
 };
 
 //! class to store UFF parameters for van der Waals interactions
-class UFFVdW {
+class RDKIT_FORCEFIELD_EXPORT UFFVdW {
  public:
   double x_ij;
   double D_ij;
 };
 
 //! class to store atomic parameters for the Universal Force Field
-class AtomicParams {
+class RDKIT_FORCEFIELD_EXPORT AtomicParams {
  public:
   double r1;            //!<  valence bond radius
   double theta0;        //!< valence angle
@@ -88,7 +90,7 @@ const double lambda = 0.1332;  //!< scaling factor for rBO correction
 const double G = 332.06;       //!< bond force constant prefactor
 const double amideBondOrder =
     1.41;  //!< special case bond order for amide C-N bonds.
-};
+};         // namespace Params
 
 //! singleton class for retrieving UFF AtomParams
 /*!
@@ -108,7 +110,7 @@ const double amideBondOrder =
   format (see Params.cpp for an example).
 
 */
-class ParamCollection {
+class RDKIT_FORCEFIELD_EXPORT ParamCollection {
  public:
   //! gets a pointer to the singleton ParamCollection
   /*!
@@ -144,9 +146,9 @@ class ParamCollection {
  private:
   //! to force this to be a singleton, the constructor must be private
   ParamCollection(std::string paramData);
-  static class ParamCollection *ds_instance;     //!< the singleton
+  static class std::unique_ptr<ParamCollection> ds_instance;  //!< the singleton
   std::map<std::string, AtomicParams> d_params;  //!< the parameter map
 };
-}
-}
+}  // namespace UFF
+}  // namespace ForceFields
 #endif

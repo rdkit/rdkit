@@ -1,3 +1,4 @@
+remove_definitions(-DRDKIT_MOLHASH_BUILD)
 rdkit_python_extension(rdMolHash
                        rdMolHash.cpp
                        DEST Chem 

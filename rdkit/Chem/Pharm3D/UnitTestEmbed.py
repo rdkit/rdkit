@@ -7,7 +7,6 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from __future__ import print_function
 
 import doctest
 import gzip
@@ -22,8 +21,7 @@ from rdkit import RDConfig
 from rdkit.Chem import ChemicalFeatures, rdDistGeom
 from rdkit.Chem.Pharm3D import EmbedLib
 from rdkit.Chem.Pharm3D import Pharmacophore
-from rdkit.six import PY3
-from rdkit.six.moves import cPickle
+import pickle
 
 
 def feq(n1, n2, tol=1e-5):
@@ -56,12 +54,14 @@ class TestCase(unittest.TestCase):
                    EndFeature\n"""
 
     self.featFactory = ChemicalFeatures.BuildFeatureFactoryFromString(self.fdefBlock)
-    self.feats = [ChemicalFeatures.FreeChemicalFeature('HBondAcceptor', 'HAcceptor1',
-                                                       Geometry.Point3D(0.0, 0.0, 0.0)),
-                  ChemicalFeatures.FreeChemicalFeature('HBondDonor', 'HDonor1',
-                                                       Geometry.Point3D(2.65, 0.0, 0.0)),
-                  ChemicalFeatures.FreeChemicalFeature('Aromatic', 'Aromatic1',
-                                                       Geometry.Point3D(5.12, 0.908, 0.0)), ]
+    self.feats = [
+      ChemicalFeatures.FreeChemicalFeature('HBondAcceptor', 'HAcceptor1',
+                                           Geometry.Point3D(0.0, 0.0, 0.0)),
+      ChemicalFeatures.FreeChemicalFeature('HBondDonor', 'HDonor1',
+                                           Geometry.Point3D(2.65, 0.0, 0.0)),
+      ChemicalFeatures.FreeChemicalFeature('Aromatic', 'Aromatic1',
+                                           Geometry.Point3D(5.12, 0.908, 0.0)),
+    ]
     self.pcophore = Pharmacophore.Pharmacophore(self.feats)
     self.pcophore.setLowerBound(0, 1, 2.0)
     self.pcophore.setUpperBound(0, 1, 3.3)
@@ -90,11 +90,10 @@ class TestCase(unittest.TestCase):
     nHits = 0
     while 1:
       try:
-        tpl = cPickle.load(inF, encoding='latin1')
-        if PY3:
-          tpl = tpl[0], tpl[1].encode('latin1'), tpl[2]
+        tpl = pickle.load(inF, encoding='latin1')
+        tpl = tpl[0], tpl[1].encode('latin1'), tpl[2]
         # tpl=tpl[0],tpl[1],numpy.array(tpl[2])
-        # cPickle.dump(tpl,outF)
+        # pickle.dump(tpl,outF)
       except Exception:
         break
       if self._matchMol(tpl, self.pcophore, self.featFactory, 0):
@@ -110,9 +109,8 @@ class TestCase(unittest.TestCase):
     nHits = 0
     while 1:
       try:
-        tpl = cPickle.load(inF, encoding='latin1')
-        if PY3:
-          tpl = tpl[0], tpl[1].encode('latin1'), tpl[2]
+        tpl = pickle.load(inF, encoding='latin1')
+        tpl = tpl[0], tpl[1].encode('latin1'), tpl[2]
       except Exception:
         break
       if self._matchMol(tpl, self.pcophore, self.featFactory, 1):
@@ -124,18 +122,17 @@ class TestCase(unittest.TestCase):
 
   def test3Embed(self):
     testResults = {
-      'mol_197': (218.80, 35.75, 110.33, 11.58, 109.66, 11.09, 90.35, 2.95, 0.00),
-      'mol_223': (259.19, 6.27, 134.13, 1.12, 134.06, 1.12, 85.74, 0.61, 0.00),
-      'mol_269': (204.51, 7.89, 103.89, 1.20, 102.66, 1.20, 88.07, 1.21, 6.00),
+      'mol_197': (219.10, 35.89, 110.98, 11.56, 110.32, 11.04, 95.23, 10.25, 0.00),
+      'mol_223': (250.46, 7.24, 134.74, 1.55, 134.66, 1.55, 85.27, 0.61, 0.00),
+      'mol_269': (215.52, 6.07, 103.94, 0.21, 102.76, 0.27, 88.22, 0.36, 6.00),
     }
     inF = gzip.open(os.path.join(self.dataDir, 'cdk2-syn-clip100.pkl.gz'), 'rb')
     nDone = 0
     nHits = 0
     while 1:
       try:
-        name, molPkl, _ = cPickle.load(inF, encoding='latin1')
-        if PY3:
-          molPkl = bytes(molPkl, encoding='latin1')
+        name, molPkl, _ = pickle.load(inF, encoding='latin1')
+        molPkl = bytes(molPkl, encoding='latin1')
       except Exception:
         break
 
@@ -156,8 +153,8 @@ class TestCase(unittest.TestCase):
                                       randomSeed=23)
             tgt = testResults[name]
             self.assertEqual(len(tgt), len(stats))
-            # print(name)
-            # print(','.join(['%.2f' % x for x in stats]))
+            print(name)
+            print(','.join(['%.2f' % x for x in stats]))
             # we'll use different tolerances for the different values:
             self.assertTrue(feq(tgt[0], stats[0], 5.0), (tgt[0], stats[0]))
             for i in range(2, len(tgt)):
@@ -171,11 +168,11 @@ class TestCase(unittest.TestCase):
     featFactory = ChemicalFeatures.BuildFeatureFactory(
       os.path.join(self.dataDir, 'BaseFeatures.fdef'))
 
-    activeFeats = [ChemicalFeatures.FreeChemicalFeature('Acceptor',
-                                                        Geometry.Point3D(0.0, 0.0, 0.0)),
-                   ChemicalFeatures.FreeChemicalFeature('Donor', Geometry.Point3D(0.0, 0.0, 0.0)),
-                   ChemicalFeatures.FreeChemicalFeature('Aromatic',
-                                                        Geometry.Point3D(0.0, 0.0, 0.0))]
+    activeFeats = [
+      ChemicalFeatures.FreeChemicalFeature('Acceptor', Geometry.Point3D(0.0, 0.0, 0.0)),
+      ChemicalFeatures.FreeChemicalFeature('Donor', Geometry.Point3D(0.0, 0.0, 0.0)),
+      ChemicalFeatures.FreeChemicalFeature('Aromatic', Geometry.Point3D(0.0, 0.0, 0.0))
+    ]
     pcophore = Pharmacophore.Pharmacophore(activeFeats)
     pcophore.setLowerBound(0, 1, 2.251)
     pcophore.setUpperBound(0, 1, 2.451)
@@ -196,9 +193,8 @@ class TestCase(unittest.TestCase):
 
     while 1:
       try:
-        _, molPkl, boundsMat = cPickle.load(inF, encoding='latin1')
-        if PY3:
-          molPkl = bytes(molPkl, encoding='latin1')
+        _, molPkl, boundsMat = pickle.load(inF, encoding='latin1')
+        molPkl = bytes(molPkl, encoding='latin1')
       except Exception:
         break
 
@@ -230,10 +226,10 @@ class TestCase(unittest.TestCase):
       buf = inTF.read().replace('\r\n', '\n').encode('utf-8')
       inTF.close()
     with io.BytesIO(buf) as inF:
-      pcop = cPickle.load(inF, encoding='latin1')
+      pcop = pickle.load(inF, encoding='latin1')
     # pcop._boundsMat=numpy.array(pcop._boundsMat)
     # pcop._boundsMat2D=numpy.array(pcop._boundsMat2D)
-    # cPickle.dump(pcop,file(os.path.join(self.dataDir,
+    # pickle.dump(pcop,file(os.path.join(self.dataDir,
     #                                    'Issue268_Pcop.new.pkl'),'wb+'))
     _, mList1 = EmbedLib.MatchFeatsToMol(m1, featFactory, pcop.getFeatures())
     _, mList2 = EmbedLib.MatchFeatsToMol(m2, featFactory, pcop.getFeatures())

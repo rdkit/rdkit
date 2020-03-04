@@ -33,7 +33,7 @@ ROMol *renumberAtoms(const ROMol &mol,
   // ------
   // newOrder[i] : which atom should be in position i of the new mol
   // revOrder[i] : where atom i of the original mol landed in the new mol
-  RWMol *res = new RWMol();
+  auto *res = new RWMol();
 
   // copy over the atoms:
   for (unsigned int nIdx = 0; nIdx < nAts; ++nIdx) {
@@ -70,9 +70,9 @@ ROMol *renumberAtoms(const ROMol &mol,
   }
 
   // Conformers:
-  for (ROMol::ConstConformerIterator oConf = mol.beginConformers();
-       oConf != mol.endConformers(); ++oConf) {
-    Conformer *nConf = new Conformer(nAts);
+  for (auto oConf = mol.beginConformers(); oConf != mol.endConformers();
+       ++oConf) {
+    auto *nConf = new Conformer(nAts);
     for (unsigned int i = 0; i < nAts; ++i) {
       nConf->setAtomPos(i, (*oConf)->getAtomPos(newOrder[i]));
     }

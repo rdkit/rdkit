@@ -9,6 +9,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef __RD_MMFFNONBONDED_H__
 #define __RD_MMFFNONBONDED_H__
 #include <ForceField/Contrib.h>
@@ -20,7 +21,7 @@ namespace MMFF {
 class MMFFVdWCollection;
 class MMFFVdW;
 //! the van der Waals term for MMFF
-class VdWContrib : public ForceFieldContrib {
+class RDKIT_FORCEFIELD_EXPORT VdWContrib : public ForceFieldContrib {
  public:
   VdWContrib() : d_at1Idx(-1), d_at2Idx(-1){};
 
@@ -44,7 +45,7 @@ class VdWContrib : public ForceFieldContrib {
 };
 
 //! the electrostatic term for MMFF
-class EleContrib : public ForceFieldContrib {
+class RDKIT_FORCEFIELD_EXPORT EleContrib : public ForceFieldContrib {
  public:
   EleContrib() : d_at1Idx(-1), d_at2Idx(-1){};
 
@@ -56,7 +57,7 @@ class EleContrib : public ForceFieldContrib {
 
   */
   EleContrib(ForceField *owner, unsigned int idx1, unsigned int idx2,
-             double chargeTerm, boost::uint8_t dielModel, bool is1_4);
+             double chargeTerm, std::uint8_t dielModel, bool is1_4);
   double getEnergy(double *pos) const;
   void getGrad(double *pos, double *grad) const;
 
@@ -65,34 +66,39 @@ class EleContrib : public ForceFieldContrib {
  private:
   int d_at1Idx, d_at2Idx;
   double d_chargeTerm;  //!< q1 * q2 / D
-  boost::uint8_t
+  std::uint8_t
       d_dielModel;  //!< dielectric model (1: constant; 2: distance-dependent)
   bool d_is1_4;     //!< flag set for atoms in a 1,4 relationship
 };
 
 namespace Utils {
 //! calculates and returns the unscaled minimum distance (R*ij) for a MMFF VdW
-//contact
-double calcUnscaledVdWMinimum(MMFFVdWCollection *mmffVdW,
-                              const MMFFVdW *mmffVdWParamsAtom1,
-                              const MMFFVdW *mmffVdWParamsAtom2);
+// contact
+RDKIT_FORCEFIELD_EXPORT double calcUnscaledVdWMinimum(
+    const MMFFVdWCollection *mmffVdW, const MMFFVdW *mmffVdWParamsAtom1,
+    const MMFFVdW *mmffVdWParamsAtom2);
 //! calculates and returns the unscaled well depth (epsilon) for a MMFF VdW
-//contact
-double calcUnscaledVdWWellDepth(double R_star_ij,
-                                const MMFFVdW *mmffVdWParamsIAtom,
-                                const MMFFVdW *mmffVdWParamsJAtom);
+// contact
+RDKIT_FORCEFIELD_EXPORT double calcUnscaledVdWWellDepth(
+    double R_star_ij, const MMFFVdW *mmffVdWParamsIAtom,
+    const MMFFVdW *mmffVdWParamsJAtom);
 //! scales the VdW parameters
-void scaleVdWParams(double &R_star_ij, double &wellDepth,
-                    MMFFVdWCollection *mmffVdW,
-                    const MMFFVdW *mmffVdWParamsIAtom,
-                    const MMFFVdW *mmffVdWParamsJAtom);
+RDKIT_FORCEFIELD_EXPORT void scaleVdWParams(double &R_star_ij,
+                                            double &wellDepth,
+                                            const MMFFVdWCollection *mmffVdW,
+                                            const MMFFVdW *mmffVdWParamsIAtom,
+                                            const MMFFVdW *mmffVdWParamsJAtom);
 //! calculates and returns the Van der Waals MMFF energy
-double calcVdWEnergy(const double dist, const double R_star_ij,
-                     const double wellDepth);
+RDKIT_FORCEFIELD_EXPORT double calcVdWEnergy(const double dist,
+                                             const double R_star_ij,
+                                             const double wellDepth);
 //! calculates and returns the electrostatic MMFF energy
-double calcEleEnergy(unsigned int idx1, unsigned int idx2, double dist,
-                     double chargeTerm, boost::uint8_t dielModel, bool is1_4);
-}
-}
-}
+RDKIT_FORCEFIELD_EXPORT double calcEleEnergy(unsigned int idx1,
+                                             unsigned int idx2, double dist,
+                                             double chargeTerm,
+                                             std::uint8_t dielModel,
+                                             bool is1_4);
+}  // namespace Utils
+}  // namespace MMFF
+}  // namespace ForceFields
 #endif

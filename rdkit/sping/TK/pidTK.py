@@ -115,7 +115,7 @@ class FontManager:
             '-underline %(underline)s' % tkfont.config())
 
   def getTkFontName(self, font):
-    """Return a the name associated with the piddle-style FONT"""
+    """Return a name associated with the piddle-style FONT"""
     tkfont = self.piddleToTkFont(font)
     return str(tkfont)
 
@@ -133,7 +133,7 @@ class FontManager:
 
     if font.face:
       # check if the user specified a generic face type
-      # like serif or monospaced. check is case-insenstive.
+      # like serif or monospaced. check is case-insensitive.
       f = font.face.lower()
       if f in self.__alt_faces:
         family = self.__alt_faces[f]
@@ -160,7 +160,7 @@ class FontManager:
       # nope, let's create a new tk font.
       # this way we will return info about the actual font
       # selected by Tk, which may be different than what we ask
-      # for if it's not availible.
+      # for if it's not available.
       font = tkFont.Font(self.master, family=family, size=size, weight=weight, slant=slant,
                          underline=underline)
       self.font_cache[(family, size, weight, slant, underline)] = font

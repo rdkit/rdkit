@@ -20,7 +20,7 @@ SQLITE_EXTENSION_INIT1
 #include <DataStructs/SparseIntVect.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 #include <string>
 #include <map>
 
@@ -362,17 +362,17 @@ static void sivDiceSim(sqlite3_context *context, int argc,
   int nB2 = sqlite3_value_bytes(argv[1]);
 
   // check the version flags:
-  boost::uint32_t tmp;
-  tmp = *(reinterpret_cast<const boost::uint32_t *>(t1));
-  t1 += sizeof(boost::uint32_t);
+  std::uint32_t tmp;
+  tmp = *(reinterpret_cast<const std::uint32_t *>(t1));
+  t1 += sizeof(std::uint32_t);
   if (tmp != ci_SPARSEINTVECT_VERSION) {
     std::string errorMsg =
         "BLOB (argument 1) could not be converted into an int vector";
     sqlite3_result_error(context, errorMsg.c_str(), errorMsg.length());
     return;
   }
-  tmp = *(reinterpret_cast<const boost::uint32_t *>(t2));
-  t2 += sizeof(boost::uint32_t);
+  tmp = *(reinterpret_cast<const std::uint32_t *>(t2));
+  t2 += sizeof(std::uint32_t);
   if (tmp != ci_SPARSEINTVECT_VERSION) {
     std::string errorMsg =
         "BLOB (argument 2) could not be converted into an int vector";
@@ -381,17 +381,17 @@ static void sivDiceSim(sqlite3_context *context, int argc,
   }
 
   // check the element size:
-  tmp = *(reinterpret_cast<const boost::uint32_t *>(t1));
-  t1 += sizeof(boost::uint32_t);
-  if (tmp != sizeof(boost::uint32_t)) {
+  tmp = *(reinterpret_cast<const std::uint32_t *>(t1));
+  t1 += sizeof(std::uint32_t);
+  if (tmp != sizeof(std::uint32_t)) {
     std::string errorMsg =
         "BLOB (argument 1) could not be converted into an uint32_t vector";
     sqlite3_result_error(context, errorMsg.c_str(), errorMsg.length());
     return;
   }
-  tmp = *(reinterpret_cast<const boost::uint32_t *>(t2));
-  t2 += sizeof(boost::uint32_t);
-  if (tmp != sizeof(boost::uint32_t)) {
+  tmp = *(reinterpret_cast<const std::uint32_t *>(t2));
+  t2 += sizeof(std::uint32_t);
+  if (tmp != sizeof(std::uint32_t)) {
     std::string errorMsg =
         "BLOB (argument 2) could not be converted into an uint32_t vector";
     sqlite3_result_error(context, errorMsg.c_str(), errorMsg.length());
@@ -400,11 +400,11 @@ static void sivDiceSim(sqlite3_context *context, int argc,
 
   double res = 0.;
   // start reading:
-  boost::uint32_t len1, len2;
-  len1 = *(reinterpret_cast<const boost::uint32_t *>(t1));
-  t1 += sizeof(boost::uint32_t);
-  len2 = *(reinterpret_cast<const boost::uint32_t *>(t2));
-  t2 += sizeof(boost::uint32_t);
+  std::uint32_t len1, len2;
+  len1 = *(reinterpret_cast<const std::uint32_t *>(t1));
+  t1 += sizeof(std::uint32_t);
+  len2 = *(reinterpret_cast<const std::uint32_t *>(t2));
+  t2 += sizeof(std::uint32_t);
   if (len1 != len2) {
     std::string errorMsg =
         "attempt to compare fingerprints of different length";
@@ -412,11 +412,11 @@ static void sivDiceSim(sqlite3_context *context, int argc,
     return;
   }
 
-  boost::uint32_t nElem1, nElem2;
-  nElem1 = *(reinterpret_cast<const boost::uint32_t *>(t1));
-  t1 += sizeof(boost::uint32_t);
-  nElem2 = *(reinterpret_cast<const boost::uint32_t *>(t2));
-  t2 += sizeof(boost::uint32_t);
+  std::uint32_t nElem1, nElem2;
+  nElem1 = *(reinterpret_cast<const std::uint32_t *>(t1));
+  t1 += sizeof(std::uint32_t);
+  nElem2 = *(reinterpret_cast<const std::uint32_t *>(t2));
+  t2 += sizeof(std::uint32_t);
 
   if (!nElem1 || !nElem2) {
     res = 0.0;
@@ -424,30 +424,30 @@ static void sivDiceSim(sqlite3_context *context, int argc,
   }
 
   double v1Sum = 0, v2Sum = 0, numer = 0;
-  boost::uint32_t idx1 = 0;
-  boost::int32_t v1;
-  boost::uint32_t idx2 = 0;
-  boost::int32_t v2;
-  idx1 = *(reinterpret_cast<const boost::uint32_t *>(t1));
-  t1 += sizeof(boost::uint32_t);
-  v1 = *(reinterpret_cast<const boost::int32_t *>(t1));
-  t1 += sizeof(boost::int32_t);
+  std::uint32_t idx1 = 0;
+  std::int32_t v1;
+  std::uint32_t idx2 = 0;
+  std::int32_t v2;
+  idx1 = *(reinterpret_cast<const std::uint32_t *>(t1));
+  t1 += sizeof(std::uint32_t);
+  v1 = *(reinterpret_cast<const std::int32_t *>(t1));
+  t1 += sizeof(std::int32_t);
   nElem1--;
   v1Sum += v1;
 
-  idx2 = *(reinterpret_cast<const boost::uint32_t *>(t2));
-  t2 += sizeof(boost::uint32_t);
-  v2 = *(reinterpret_cast<const boost::int32_t *>(t2));
-  t2 += sizeof(boost::int32_t);
+  idx2 = *(reinterpret_cast<const std::uint32_t *>(t2));
+  t2 += sizeof(std::uint32_t);
+  v2 = *(reinterpret_cast<const std::int32_t *>(t2));
+  t2 += sizeof(std::int32_t);
   nElem2--;
   v2Sum += v2;
 
   while (1) {
     while (nElem2 && idx2 < idx1) {
-      idx2 = *(reinterpret_cast<const boost::uint32_t *>(t2));
-      t2 += sizeof(boost::uint32_t);
-      v2 = *(reinterpret_cast<const boost::int32_t *>(t2));
-      t2 += sizeof(boost::int32_t);
+      idx2 = *(reinterpret_cast<const std::uint32_t *>(t2));
+      t2 += sizeof(std::uint32_t);
+      v2 = *(reinterpret_cast<const std::int32_t *>(t2));
+      t2 += sizeof(std::int32_t);
       nElem2--;
       v2Sum += v2;
     }
@@ -456,10 +456,10 @@ static void sivDiceSim(sqlite3_context *context, int argc,
       numer += std::min(v1, v2);
     }
     if (nElem1) {
-      idx1 = *(reinterpret_cast<const boost::uint32_t *>(t1));
-      t1 += sizeof(boost::uint32_t);
-      v1 = *(reinterpret_cast<const boost::int32_t *>(t1));
-      t1 += sizeof(boost::int32_t);
+      idx1 = *(reinterpret_cast<const std::uint32_t *>(t1));
+      t1 += sizeof(std::uint32_t);
+      v1 = *(reinterpret_cast<const std::int32_t *>(t1));
+      t1 += sizeof(std::int32_t);
       nElem1--;
       v1Sum += v1;
     } else {
@@ -467,10 +467,10 @@ static void sivDiceSim(sqlite3_context *context, int argc,
     }
   }
   while (nElem2) {
-    idx2 = *(reinterpret_cast<const boost::uint32_t *>(t2));
-    t2 += sizeof(boost::uint32_t);
-    v2 = *(reinterpret_cast<const boost::int32_t *>(t2));
-    t2 += sizeof(boost::int32_t);
+    idx2 = *(reinterpret_cast<const std::uint32_t *>(t2));
+    t2 += sizeof(std::uint32_t);
+    v2 = *(reinterpret_cast<const std::int32_t *>(t2));
+    t2 += sizeof(std::int32_t);
     nElem2--;
     v2Sum += v2;
   }

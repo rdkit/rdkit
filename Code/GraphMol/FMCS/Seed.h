@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #pragma once
 #include <map>
 #include "../RDKitBase.h"
@@ -20,17 +21,18 @@ namespace FMCS {
 class MaximumCommonSubgraph;
 struct TargetMatch;
 
-struct MolFragment {  // Reference to a fragment of source molecule
+struct RDKIT_FMCS_EXPORT
+    MolFragment {  // Reference to a fragment of source molecule
   std::vector<const Atom*> Atoms;
   std::vector<const Bond*> Bonds;
   std::vector<unsigned> AtomsIdx;
   std::vector<unsigned> BondsIdx;  // need for results and size() only !
   std::map<unsigned, unsigned> SeedAtomIdxMap;  // Full Query Molecule to Seed
-                                                // indeces backward conversion
+                                                // indices backward conversion
                                                 // map
 };
 
-struct NewBond {
+struct RDKIT_FMCS_EXPORT NewBond {
   unsigned SourceAtomIdx;  // index in the seed. Atom is already in the seed
   unsigned BondIdx;     // index in qmol of new bond scheduled to be added into
                         // seed. This is outgoing bond from SourceAtomIdx
@@ -57,13 +59,13 @@ struct NewBond {
         EndAtomIdx(to_atom) {}
 };
 
-class Seed {
+class RDKIT_FMCS_EXPORT Seed {
  private:
   mutable std::vector<NewBond> NewBonds;  // for multistage growing. all
                                           // directly connected outgoing bonds
  public:
   bool CopyComplete;  // this seed has been completely copied into list.
-                      // postponed non0locked copy for MULTI_THREAD
+                      // postponed non-locked copy for MULTI_THREAD
   mutable unsigned GrowingStage;  // 0 new seed; -1 finished; n>0 in progress,
                                   // exact stage of growing for SDF
   MolFragment MoleculeFragment;   // Reference to a fragment of source molecule
@@ -138,5 +140,5 @@ class Seed {
   unsigned addBond(const Bond* bond);
   void fillNewBonds(const ROMol& qmol);
 };
-}
-}
+}  // namespace FMCS
+}  // namespace RDKit

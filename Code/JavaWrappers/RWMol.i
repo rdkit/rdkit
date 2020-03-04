@@ -41,11 +41,10 @@
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 %}
 
-%ignore RDKit::RWMol::addAtom(Atom *atom);
-%ignore RDKit::RWMol::addAtom(Atom *atom,bool updateLabel);
-%ignore RDKit::RWMol::addBond(Atom *beginAtom, Atom *endAtom, Bond::BondType order);
-%ignore RDKit::RWMol::addBond(Atom *beginAtom, Atom *endAtom);
-%ignore RDKit::RWMol::addBond(Bond *bond);
+// ignore the methods that allow the molecule to take ownership of atoms/Bonds
+// (instead of copying them). This just leads to memory problems with Java
+%ignore RDKit::RWMol::addAtom(Atom *atom,bool updateLabel,bool takeOwnership);
+%ignore RDKit::RWMol::addBond(Bond *bond,bool takeOwnership);
 
 %shared_ptr(RDKit::RWMol)
 %include "enums.swg"
@@ -83,15 +82,15 @@ static RDKit::RWMOL_SPTR MolFromTPLFile(std::string fName,bool sanitize=true,
   return RDKit::RWMOL_SPTR(mol);
 }
 static RDKit::RWMOL_SPTR MolFromMol2File(std::string fName,bool sanitize=true,bool removeHs=true,
-                       RDKit::Mol2Type variant=RDKit::CORINA) {
+                       RDKit::Mol2Type variant=RDKit::CORINA, bool cleanupSubstructures=true) {
   RDKit::RWMol *mol=0;
-  mol=RDKit::Mol2FileToMol(fName, sanitize, removeHs, variant);
+  mol=RDKit::Mol2FileToMol(fName, sanitize, removeHs, variant, cleanupSubstructures);
   return RDKit::RWMOL_SPTR(mol);
 }
 static RDKit::RWMOL_SPTR MolFromMol2Block(const std::string &molBlock,bool sanitize=true,bool removeHs=true,
-                        RDKit::Mol2Type variant=RDKit::CORINA) {
+                        RDKit::Mol2Type variant=RDKit::CORINA, bool cleanupSubstructures=true) {
   RDKit::RWMol *mol=0;
-    mol=RDKit::Mol2BlockToMol(molBlock, sanitize, removeHs, variant);
+    mol=RDKit::Mol2BlockToMol(molBlock, sanitize, removeHs, variant, cleanupSubstructures);
   return RDKit::RWMOL_SPTR(mol);
 }
 

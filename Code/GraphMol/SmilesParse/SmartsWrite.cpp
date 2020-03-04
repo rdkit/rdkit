@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2002-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2019 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -10,11 +9,14 @@
 //
 #include "SmartsWrite.h"
 #include <sstream>
+#include <cstdint>
+#include <boost/algorithm/string.hpp>
 #include "SmilesWrite.h"
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/Canon.h>
 #include <GraphMol/new_canon.h>
+#include <RDGeneral/Exceptions.h>
 #include <RDGeneral/RDLog.h>
 
 namespace RDKit {
@@ -23,58 +25,68 @@ using namespace Canon;
 // local utility namespace
 namespace {
 
-std::string _recurseGetSmarts(const QueryAtom::QUERYATOM_QUERY *node,
-                              bool negate);
+enum class QueryBoolFeatures {
+  HAS_AND = 0x1,
+  HAS_LOWAND = 0x2,
+  HAS_OR = 0x4,
+  HAS_RECURSION = 0x8
+};
+
+std::string _recurseGetSmarts(const QueryAtom *qatom,
+                              const QueryAtom::QUERYATOM_QUERY *node,
+                              bool negate, unsigned int &features);
 std::string _recurseBondSmarts(const Bond *bond,
                                const QueryBond::QUERYBOND_QUERY *node,
-                               bool negate, int atomToLeftIdx);
+                               bool negate, int atomToLeftIdx,
+                               unsigned int &features);
 
-bool _checkForOrAndLowAnd(std::string smarts) {
-  size_t orLoc, andLoc;
-  // if we're a pure recursive smarts, we don't need to worry about this
-  if (smarts[0] == '$' && smarts[smarts.size() - 1] == ')') return false;
-  orLoc = smarts.find(",");
-  andLoc = smarts.find(";");
-  if ((orLoc != std::string::npos) && (andLoc != std::string::npos)) {
-    return true;
-  } else {
-    return false;
-  }
-}
-
-std::string _combineChildSmarts(std::string cs1, std::string cs2,
-                                std::string descrip) {
+std::string _combineChildSmarts(std::string cs1, unsigned int features1,
+                                std::string cs2, unsigned int features2,
+                                std::string descrip, unsigned int &features) {
   std::string res = "";
   if ((descrip.find("Or") > 0) && (descrip.find("Or") < descrip.length())) {
     // if either of child smarts already have a "," and ";" we can't have one
     // more OR here
-    if (_checkForOrAndLowAnd(cs1) || _checkForOrAndLowAnd(cs2)) {
-      throw "This is a non-smartable query - OR above and below AND in the binary tree";
+    if ((features1 & static_cast<unsigned int>(QueryBoolFeatures::HAS_LOWAND) &&
+         features1 & static_cast<unsigned int>(QueryBoolFeatures::HAS_OR)) ||
+        (features2 & static_cast<unsigned int>(QueryBoolFeatures::HAS_LOWAND) &&
+         features2 & static_cast<unsigned int>(QueryBoolFeatures::HAS_OR))) {
+      throw ValueErrorException(
+          "This is a non-smartable query - OR above and below AND in the "
+          "binary tree");
     }
     res += cs1;
-    res += ",";
+    if (!(cs1.empty() || cs2.empty())) {
+      res += ",";
+    }
     res += cs2;
+    features |= static_cast<unsigned int>(QueryBoolFeatures::HAS_OR);
   } else if ((descrip.find("And") > 0) &&
              (descrip.find("And") < descrip.length())) {
-    size_t orLoc1, orLoc2;
     std::string symb;
-    orLoc1 = cs1.find(',');
-    orLoc2 = cs2.find(',');
-    if ((orLoc1 != std::string::npos) || (orLoc2 != std::string::npos)) {
+    if (features1 & static_cast<unsigned int>(QueryBoolFeatures::HAS_OR) ||
+        features2 & static_cast<unsigned int>(QueryBoolFeatures::HAS_OR)) {
       symb = ";";
+      features |= static_cast<unsigned int>(QueryBoolFeatures::HAS_LOWAND);
     } else {
       symb = "&";
+      features |= static_cast<unsigned int>(QueryBoolFeatures::HAS_AND);
     }
     res += cs1;
-    res += symb;
+    if (!(cs1.empty() || cs2.empty())) {
+      res += symb;
+    }
     res += cs2;
   } else {
     std::stringstream err;
     err << "Don't know how to combine using " << descrip;
-    throw err.str();
+    throw ValueErrorException(err.str());
   }
+  features |= features1;
+  features |= features2;
+
   return res;
-}
+}  // namespace
 
 template <typename T>
 void describeQuery(const T *query, std::string leader = "\t") {
@@ -85,72 +97,56 @@ void describeQuery(const T *query, std::string leader = "\t") {
   }
 }
 
-// called with the children of AND queries:
-std::string smartsOrganicAtom(const QueryAtom::QUERYATOM_QUERY *child1,
-                              const QueryAtom::QUERYATOM_QUERY *child2) {
-  PRECONDITION(child1 && child2, "bad query");
-
-  std::string desc1 = child1->getDescription();
-  std::string desc2 = child2->getDescription();
-  const QueryAtom::QUERYATOM_QUERY *origA, *otherA;
-  if (desc1 == "AtomAtomicNum") {
-    origA = child1;
-    otherA = child2;
-  } else {
-    origA = child2;
-    otherA = child1;
-  }
-
-  std::string odsc = otherA->getDescription();
-  CHECK_INVARIANT(((odsc == "AtomIsAliphatic") || (odsc == "AtomIsAromatic")),
-                  "Should be either an aromatic or Aliphatic atom");
-
-  const ATOM_EQUALS_QUERY *torig =
-      static_cast<const ATOM_EQUALS_QUERY *>(origA);
-  int val = torig->getVal();
-  std::string res = PeriodicTable::getTable()->getElementSymbol(val);
-  if (odsc == "AtomIsAromatic") {
-    // if aromatic convert the first leter to a small letter
-    res[0] += ('a' - 'A');
-    if (res.length() > 1) {
-      res = "[" + res + "]";
-    }
-  }
-  if (torig->getNegation()) {
-    res = "!" + res;
-  }
-  return res;
-}
-
-std::string getAtomSmartsSimple(const ATOM_EQUALS_QUERY *query,
+const static std::string _qatomHasStereoSet = "_qatomHasStereoSet";
+std::string getAtomSmartsSimple(const QueryAtom *qatom,
+                                const ATOM_EQUALS_QUERY *query,
                                 bool &needParen) {
   PRECONDITION(query, "bad query");
 
   std::string descrip = query->getDescription();
+  bool hasVal = false;
+  enum class Modifiers : std::uint8_t { NONE, RANGE, LESS, GREATER };
+  Modifiers mods = Modifiers::NONE;
+  if (boost::starts_with(descrip, "range_")) {
+    mods = Modifiers::RANGE;
+    descrip = descrip.substr(6);
+  } else if (boost::starts_with(descrip, "less_")) {
+    mods = Modifiers::LESS;
+    descrip = descrip.substr(5);
+  } else if (boost::starts_with(descrip, "greater_")) {
+    mods = Modifiers::GREATER;
+    descrip = descrip.substr(8);
+  }
   std::stringstream res;
   if (descrip == "AtomImplicitHCount") {
-    res << "h" << query->getVal();
+    res << "h";
+    hasVal = true;
     needParen = true;
   } else if (descrip == "AtomHasImplicitH") {
     res << "h";
     needParen = true;
   } else if (descrip == "AtomTotalValence") {
-    res << "v" << query->getVal();
+    res << "v";
+    hasVal = true;
     needParen = true;
   } else if (descrip == "AtomAtomicNum") {
-    res << "#" << query->getVal();
+    res << "#";
+    hasVal = true;
     needParen = true;
   } else if (descrip == "AtomExplicitDegree") {
-    res << "D" << query->getVal();
+    res << "D";
+    hasVal = true;
     needParen = true;
   } else if (descrip == "AtomTotalDegree") {
-    res << "X" << query->getVal();
+    res << "X";
+    hasVal = true;
     needParen = true;
   } else if (descrip == "AtomHasRingBond") {
     res << "x";
     needParen = true;
   } else if (descrip == "AtomHCount") {
-    res << "H" << query->getVal();
+    res << "H";
+    hasVal = true;
     needParen = true;
   } else if (descrip == "AtomIsAliphatic") {
     res << "A";
@@ -165,13 +161,28 @@ std::string getAtomSmartsSimple(const ATOM_EQUALS_QUERY *query,
     res << "R";
     needParen = true;
   } else if (descrip == "AtomMinRingSize") {
-    res << "r" << query->getVal();
+    res << "r";
+    hasVal = true;
     needParen = true;
   } else if (descrip == "AtomInNRings") {
     res << "R";
-    if (query->getVal() >= 0) {
-      res << query->getVal();
+    if (mods == Modifiers::NONE && query->getVal() >= 0) {
+      hasVal = true;
     }
+    needParen = true;
+  } else if (descrip == "AtomHasHeteroatomNeighbors") {
+    res << "z";
+    needParen = true;
+  } else if (descrip == "AtomNumHeteroatomNeighbors") {
+    res << "z";
+    hasVal = true;
+    needParen = true;
+  } else if (descrip == "AtomHasAliphaticHeteroatomNeighbors") {
+    res << "Z";
+    needParen = true;
+  } else if (descrip == "AtomNumAliphaticHeteroatomNeighbors") {
+    res << "Z";
+    hasVal = true;
     needParen = true;
   } else if (descrip == "AtomFormalCharge") {
     int val = query->getVal();
@@ -180,7 +191,18 @@ std::string getAtomSmartsSimple(const ATOM_EQUALS_QUERY *query,
     } else {
       res << "+";
     }
-    if (abs(val) != 1) {
+    if (mods == Modifiers::NONE && abs(val) != 1) {
+      res << abs(val);
+    }
+    needParen = true;
+  } else if (descrip == "AtomNegativeFormalCharge") {
+    int val = query->getVal();
+    if (val < 0) {
+      res << "+";
+    } else {
+      res << "-";
+    }
+    if (mods == Modifiers::NONE && abs(val) != 1) {
       res << abs(val);
     }
     needParen = true;
@@ -199,28 +221,89 @@ std::string getAtomSmartsSimple(const ATOM_EQUALS_QUERY *query,
       case Atom::SP3:
         res << "3";
         break;
+      case Atom::SP3D:
+        res << "4";
+        break;
+      case Atom::SP3D2:
+        res << "5";
+        break;
     }
+    needParen = true;
   } else if (descrip == "AtomMass") {
     res << query->getVal() / massIntegerConversionFactor << "*";
     needParen = true;
   } else if (descrip == "AtomIsotope") {
     res << query->getVal() << "*";
     needParen = true;
-  } else if (descrip == "AtomHasRingBond") {
-    res << "x";
-    needParen = true;
   } else if (descrip == "AtomRingBondCount") {
-    res << "x" << query->getVal();
+    res << "x";
+    hasVal = true;
     needParen = true;
   } else if (descrip == "AtomUnsaturated") {
     res << "$(*=,:,#*)";
     needParen = true;
+  } else if (descrip == "AtomType") {
+    int atNum;
+    bool isAromatic;
+    parseAtomType(query->getVal(), atNum, isAromatic);
+    std::string symbol = PeriodicTable::getTable()->getElementSymbol(atNum);
+    if (isAromatic) {
+      symbol[0] += ('a' - 'A');
+    }
+    res << symbol;
+    if (!SmilesWrite::inOrganicSubset(atNum)) {
+      needParen = true;
+    }
   } else {
     BOOST_LOG(rdWarningLog)
         << "Cannot write SMARTS for query type : " << descrip
         << ". Ignoring it." << std::endl;
     res << "*";
   }
+
+  if (mods != Modifiers::NONE) {
+    res << "{";
+    switch (mods) {
+      case Modifiers::LESS:
+        res << ((const ATOM_LESSEQUAL_QUERY *)query)->getVal() << "-";
+        break;
+      case Modifiers::RANGE:
+        res << ((const ATOM_RANGE_QUERY *)query)->getLower() << "-"
+            << ((const ATOM_RANGE_QUERY *)query)->getUpper();
+        break;
+      case Modifiers::GREATER:
+        res << "-" << ((const ATOM_GREATEREQUAL_QUERY *)query)->getVal();
+        break;
+      default:
+        break;
+    }
+    res << "}";
+  } else if (hasVal) {
+    res << query->getVal();
+  }
+
+  // handle atomic stereochemistry
+  if (qatom->hasOwningMol() &&
+      qatom->getOwningMol().hasProp(common_properties::_doIsoSmiles)) {
+    if (qatom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
+        !qatom->hasProp(_qatomHasStereoSet) &&
+        !qatom->hasProp(common_properties::_brokenChirality)) {
+      qatom->setProp(_qatomHasStereoSet, 1);
+      switch (qatom->getChiralTag()) {
+        case Atom::CHI_TETRAHEDRAL_CW:
+          res << "@@";
+          needParen = true;
+          break;
+        case Atom::CHI_TETRAHEDRAL_CCW:
+          res << "@";
+          needParen = true;
+          break;
+        default:
+          break;
+      }
+    }
+  }
+
   return res.str();
 }
 
@@ -228,9 +311,8 @@ std::string getRecursiveStructureQuerySmarts(
     const QueryAtom::QUERYATOM_QUERY *query) {
   PRECONDITION(query, "bad query");
   PRECONDITION(query->getDescription() == "RecursiveStructure", "bad query");
-  const RecursiveStructureQuery *rquery =
-      static_cast<const RecursiveStructureQuery *>(query);
-  ROMol *qmol = const_cast<ROMol *>(rquery->getQueryMol());
+  const auto *rquery = static_cast<const RecursiveStructureQuery *>(query);
+  auto *qmol = const_cast<ROMol *>(rquery->getQueryMol());
   std::string res = MolToSmarts(*qmol);
   res = "$(" + res + ")";
   if (rquery->getNegation()) {
@@ -238,6 +320,42 @@ std::string getRecursiveStructureQuerySmarts(
   }
   return res;
 }
+
+std::string getBasicBondRepr(Bond::BondType typ, Bond::BondDir dir,
+                             bool doIsomericSmiles, bool reverseDative) {
+  std::string res;
+  switch (typ) {
+    case Bond::SINGLE:
+      res = "-";
+      if (doIsomericSmiles) {
+        if (dir == Bond::ENDDOWNRIGHT) {
+          res = "\\";
+        } else if (dir == Bond::ENDUPRIGHT) {
+          res = "/";
+        }
+      }
+      break;
+    case Bond::DOUBLE:
+      res = "=";
+      break;
+    case Bond::TRIPLE:
+      res = "#";
+      break;
+    case Bond::AROMATIC:
+      res = ":";
+      break;
+    case Bond::DATIVE:
+      if (reverseDative) {
+        res = "<-";
+      } else {
+        res = "->";
+      }
+      break;
+    default:
+      res = "";
+  }
+  return res;
+}  // namespace
 
 std::string getBondSmartsSimple(const Bond *bond,
                                 const BOND_EQUALS_QUERY *bquery,
@@ -251,6 +369,8 @@ std::string getBondSmartsSimple(const Bond *bond,
     res += "~";
   } else if (descrip == "BondInRing") {
     res += "@";
+  } else if (descrip == "SingleOrAromaticBond") {
+    // don't need to do anything here... :-)
   } else if (descrip == "BondDir") {
     int val = bquery->getVal();
     if (val == static_cast<int>(Bond::ENDDOWNRIGHT)) {
@@ -261,32 +381,25 @@ std::string getBondSmartsSimple(const Bond *bond,
       throw "Can't write smarts for this bond dir type";
     }
   } else if (descrip == "BondOrder") {
-    int val = bquery->getVal();
-    if (val == static_cast<int>(Bond::SINGLE)) {
-      res += "-";
-    } else if (val == static_cast<int>(Bond::DOUBLE)) {
-      res += "=";
-    } else if (val == static_cast<int>(Bond::TRIPLE)) {
-      res += "#";
-    } else if (val == static_cast<int>(Bond::AROMATIC)) {
-      res += ":";
-    } else if (val == static_cast<int>(Bond::DATIVE)) {
-      if (atomToLeftIdx >= 0 &&
-          bond->getBeginAtomIdx() == static_cast<unsigned int>(atomToLeftIdx))
-        res = "->";
-      else
-        res = "<-";
-    }
+    bool reverseDative =
+        (atomToLeftIdx >= 0 &&
+         bond->getBeginAtomIdx() == static_cast<unsigned int>(atomToLeftIdx));
+    bool doIsoSmiles =
+        !bond->hasOwningMol() ||
+        bond->getOwningMol().hasProp(common_properties::_doIsoSmiles);
+    res += getBasicBondRepr(static_cast<Bond::BondType>(bquery->getVal()),
+                            bond->getBondDir(), doIsoSmiles, reverseDative);
   } else {
     std::stringstream msg;
-    msg << "Canot write smarts for this query bond type : " << descrip;
+    msg << "Can't write smarts for this query bond type: " << descrip;
     throw msg.str().c_str();
   }
   return res;
 }
 
-std::string _recurseGetSmarts(const QueryAtom::QUERYATOM_QUERY *node,
-                              bool negate) {
+std::string _recurseGetSmarts(const QueryAtom *qatom,
+                              const QueryAtom::QUERYATOM_QUERY *node,
+                              bool negate, unsigned int &features) {
   PRECONDITION(node, "bad node");
   // the algorithm goes something like this
   // - recursively get the smarts for the child queries
@@ -294,7 +407,8 @@ std::string _recurseGetSmarts(const QueryAtom::QUERYATOM_QUERY *node,
   //      - if we are currently at an OR query, combine the subqueries with a
   //      ",",
   //        but only if neither of child smarts do not contain "," and ";"
-  //        This situation leads to a no smartable situation and throw an error
+  //        This situation leads to a no smartable situation and throw an
+  //        error
   //      - if we are currently at an and query, combine the child smarts with
   //      "&"
   //        if neither of the child smarts contain a "," - otherwise combine
@@ -303,8 +417,8 @@ std::string _recurseGetSmarts(const QueryAtom::QUERYATOM_QUERY *node,
   //
   // There is an additional complication with composite nodes that carry a
   // negation - in this
-  // case we will propogate the neagtion to the child nodes using the following
-  // rules
+  // case we will propagate the negation to the child nodes using the
+  // following rules
   //   NOT (a AND b) = ( NOT (a)) AND ( NOT (b))
   //   NOT (a OR b) = ( NOT (a)) OR ( NOT (b))
 
@@ -313,6 +427,8 @@ std::string _recurseGetSmarts(const QueryAtom::QUERYATOM_QUERY *node,
 
   const QueryAtom::QUERYATOM_QUERY *child1;
   const QueryAtom::QUERYATOM_QUERY *child2;
+  unsigned int child1Features = 0;
+  unsigned int child2Features = 0;
   QueryAtom::QUERYATOM_QUERY::CHILD_VECT_CI chi;
   chi = node->beginChildren();
   child1 = chi->get();
@@ -330,39 +446,14 @@ std::string _recurseGetSmarts(const QueryAtom::QUERYATOM_QUERY *node,
   std::string csmarts1, csmarts2;
 
   bool needParen;
-
-  // deal with any special AND cases
-  //  1. This "node" is an AtomAnd between a AliphaticAtom (or AromaticAtom) and
-  //      an organic atom e.g. "C"
-  if (descrip == "AtomAnd") {
-    bool specialCase = false;
-    // case 1
-    if ((!child1->getNegation() && !child2->getNegation()) &&
-        (((dsc1 == "AtomAtomicNum") &&
-          ((dsc2 == "AtomIsAliphatic") || (dsc2 == "AtomIsAromatic"))) ||
-         ((dsc2 == "AtomAtomicNum") &&
-          ((dsc1 == "AtomIsAliphatic") || (dsc1 == "AtomIsAromatic"))))) {
-      // we trap this one because it's nicer to see
-      //   "CC" in the output than "[#6&A][#6&A]"
-      res = smartsOrganicAtom(child1, child2);
-      specialCase = true;
-    }
-    if (specialCase) {
-      if (negate) {
-        res = "!" + res;
-      }
-      return res;
-    }
-  }
-
   // deal with the first child
   if (dsc1 == "RecursiveStructure") {
     csmarts1 = getRecursiveStructureQuerySmarts(child1);
+    features |= static_cast<unsigned int>(QueryBoolFeatures::HAS_RECURSION);
   } else if ((dsc1 != "AtomOr") && (dsc1 != "AtomAnd")) {
     // child 1 is a simple node
-    const ATOM_EQUALS_QUERY *tchild =
-        static_cast<const ATOM_EQUALS_QUERY *>(child1);
-    csmarts1 = getAtomSmartsSimple(tchild, needParen);
+    const auto *tchild = static_cast<const ATOM_EQUALS_QUERY *>(child1);
+    csmarts1 = getAtomSmartsSimple(qatom, tchild, needParen);
     bool nneg = (negate) ^ (tchild->getNegation());
     if (nneg) {
       csmarts1 = "!" + csmarts1;
@@ -370,28 +461,28 @@ std::string _recurseGetSmarts(const QueryAtom::QUERYATOM_QUERY *node,
   } else {
     // child 1 is composite node - recurse
     bool nneg = (negate) ^ (child1->getNegation());
-    csmarts1 = _recurseGetSmarts(child1, nneg);
+    csmarts1 = _recurseGetSmarts(qatom, child1, nneg, child1Features);
   }
 
   // deal with the second child
   if (dsc2 == "RecursiveStructure") {
     csmarts2 = getRecursiveStructureQuerySmarts(child2);
+    features |= static_cast<unsigned int>(QueryBoolFeatures::HAS_RECURSION);
   } else if ((dsc2 != "AtomOr") && (dsc2 != "AtomAnd")) {
     // child 2 is a simple node
-    const ATOM_EQUALS_QUERY *tchild =
-        static_cast<const ATOM_EQUALS_QUERY *>(child2);
-    csmarts2 = getAtomSmartsSimple(tchild, needParen);
+    const auto *tchild = static_cast<const ATOM_EQUALS_QUERY *>(child2);
+    csmarts2 = getAtomSmartsSimple(qatom, tchild, needParen);
     bool nneg = (negate) ^ (tchild->getNegation());
     if (nneg) {
       csmarts2 = "!" + csmarts2;
     }
   } else {
     bool nneg = (negate) ^ (child2->getNegation());
-    csmarts2 = _recurseGetSmarts(child2, nneg);
+    csmarts2 = _recurseGetSmarts(qatom, child2, nneg, child2Features);
   }
 
   // ok if we have a negation and we have an OR , we have to change to
-  // an AND since we propogated the negation
+  // an AND since we propagated the negation
   // i.e NOT (A OR B) = (NOT (A)) AND (NOT(B))
   if (negate) {
     if (descrip == "AtomOr") {
@@ -401,20 +492,23 @@ std::string _recurseGetSmarts(const QueryAtom::QUERYATOM_QUERY *node,
     }
   }
 
-  res += _combineChildSmarts(csmarts1, csmarts2, descrip);
+  res += _combineChildSmarts(csmarts1, child1Features, csmarts2, child2Features,
+                             descrip, features);
   return res;
 }
 
 std::string _recurseBondSmarts(const Bond *bond,
                                const QueryBond::QUERYBOND_QUERY *node,
-                               bool negate, int atomToLeftIdx) {
+                               bool negate, int atomToLeftIdx,
+                               unsigned int &features) {
   // the algorithm goes something like this
   // - recursively get the smarts for the child query bonds
   // - combine the child smarts using the following rules:
   //      - if we are currently at an OR query, combine the subqueries with a
   //      ",",
   //        but only if neither of child smarts do not contain "," and ";"
-  //        This situation leads to a no smartable situation and throw an error
+  //        This situation leads to a no smartable situation and throw an
+  //        error
   //      - if we are currently at an and query, combine the child smarts with
   //      "&"
   //        if neither of the child smarts contain a "," - otherwise combine
@@ -423,8 +517,8 @@ std::string _recurseBondSmarts(const Bond *bond,
   //
   // There is an additional complication with composite nodes that carry a
   // negation - in this
-  // case we will propogate the neagtion to the child nodes using the following
-  // rules
+  // case we will propagate the negation to the child nodes using the
+  // following rules
   //   NOT (a AND b) = ( NOT (a)) AND ( NOT (b))
   //   NOT (a OR b) = ( NOT (a)) OR ( NOT (b))
   PRECONDITION(bond, "bad bond");
@@ -434,6 +528,8 @@ std::string _recurseBondSmarts(const Bond *bond,
 
   const QueryBond::QUERYBOND_QUERY *child1;
   const QueryBond::QUERYBOND_QUERY *child2;
+  unsigned int child1Features = 0;
+  unsigned int child2Features = 0;
   QueryBond::QUERYBOND_QUERY::CHILD_VECT_CI chi;
 
   chi = node->beginChildren();
@@ -443,7 +539,7 @@ std::string _recurseBondSmarts(const Bond *bond,
   chi++;
   // OK we should be at the end of vector by now - since we can have only two
   // children,
-  // well - atleat in this case
+  // well - at least in this case
   CHECK_INVARIANT(chi == node->endChildren(), "Too many children on the query");
 
   std::string dsc1, dsc2;
@@ -453,9 +549,8 @@ std::string _recurseBondSmarts(const Bond *bond,
 
   if ((dsc1 != "BondOr") && (dsc1 != "BondAnd")) {
     // child1 is  simple node get the smarts directly
-    const BOND_EQUALS_QUERY *tchild =
-        static_cast<const BOND_EQUALS_QUERY *>(child1);
-    csmarts1 = getBondSmartsSimple(bond,tchild, atomToLeftIdx);
+    const auto *tchild = static_cast<const BOND_EQUALS_QUERY *>(child1);
+    csmarts1 = getBondSmartsSimple(bond, tchild, atomToLeftIdx);
     bool nneg = (negate) ^ (tchild->getNegation());
     if (nneg) {
       csmarts1 = "!" + csmarts1;
@@ -463,15 +558,15 @@ std::string _recurseBondSmarts(const Bond *bond,
   } else {
     // child1 is a composite node recurse further
     bool nneg = (negate) ^ (child1->getNegation());
-    csmarts1 = _recurseBondSmarts(bond, child1, nneg, atomToLeftIdx);
+    csmarts1 =
+        _recurseBondSmarts(bond, child1, nneg, atomToLeftIdx, child1Features);
   }
 
   // now deal with the second child
   if ((dsc2 != "BondOr") && (dsc2 != "BondAnd")) {
     // child 2 is a simple node
-    const BOND_EQUALS_QUERY *tchild =
-        static_cast<const BOND_EQUALS_QUERY *>(child2);
-    csmarts2 = getBondSmartsSimple(bond,tchild, atomToLeftIdx);
+    const auto *tchild = static_cast<const BOND_EQUALS_QUERY *>(child2);
+    csmarts2 = getBondSmartsSimple(bond, tchild, atomToLeftIdx);
     bool nneg = (negate) ^ (tchild->getNegation());
     if (nneg) {
       csmarts2 = "!" + csmarts2;
@@ -479,12 +574,13 @@ std::string _recurseBondSmarts(const Bond *bond,
   } else {
     // child two is a composite node - recurse
     bool nneg = (negate) ^ (child2->getNegation());
-    csmarts1 = _recurseBondSmarts(bond, child2, nneg, atomToLeftIdx);
+    csmarts1 =
+        _recurseBondSmarts(bond, child2, nneg, atomToLeftIdx, child2Features);
   }
 
-  // ok if we have a negation and we have to change the underlying logic, since
-  // we propogated the negation
-  // i.e NOT (A OR B) = (NOT (A)) AND (NOT(B))
+  // ok if we have a negation and we have to change the underlying logic,
+  // since we propagated the negation i.e NOT (A OR B) = (NOT (A)) AND
+  // (NOT(B))
   if (negate) {
     if (descrip == "BondOr") {
       descrip = "BondAnd";
@@ -492,13 +588,15 @@ std::string _recurseBondSmarts(const Bond *bond,
       descrip = "BondOr";
     }
   }
-  res += _combineChildSmarts(csmarts1, csmarts2, descrip);
+  res += _combineChildSmarts(csmarts1, child1Features, csmarts2, child2Features,
+                             descrip, features);
   return res;
 }
 
-std::string FragmentSmartsConstruct(ROMol &mol, unsigned int atomIdx,
-                                    std::vector<Canon::AtomColors> &colors,
-                                    UINT_VECT &ranks) {
+std::string FragmentSmartsConstruct(
+    ROMol &mol, unsigned int atomIdx, std::vector<Canon::AtomColors> &colors,
+    UINT_VECT &ranks, bool doIsomericSmiles,
+    const boost::dynamic_bitset<> *bondsInPlay = nullptr) {
   Canon::MolStack molStack;
   molStack.reserve(mol.getNumAtoms() + mol.getNumBonds());
   std::stringstream res;
@@ -507,31 +605,52 @@ std::string FragmentSmartsConstruct(ROMol &mol, unsigned int atomIdx,
   // thinks we already called findSSSR - to do some atom ranking
   // but for smarts we are going to ignore that part. We will artificially
   // set the "SSSR" property to an empty property
-  VECT_INT_VECT rings;
   mol.getRingInfo()->reset();
   mol.getRingInfo()->initialize();
-  Canon::canonicalizeFragment(mol, atomIdx, colors, ranks, molStack);
+  for (auto &atom : mol.atoms()) {
+    atom->updatePropertyCache(false);
+  }
+
+  // Another dirty trick to avoid reordering of lead chiral atoms in
+  // canonicalizeFragment: since we are writing SMARTS, there won't be a
+  // reordering on parsing.
+  // The trick is as easy as choosing the first non-chiral atom we can find as
+  // root of the string. This should not be a problem, since SMARTS do not get
+  // canonicalized.
+  if (molStack.empty()) {
+    for (const auto atom : mol.atoms()) {
+      if (colors[atom->getIdx()] == Canon::WHITE_NODE &&
+          atom->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW &&
+          atom->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW) {
+        atomIdx = atom->getIdx();
+        break;
+      }
+    }
+  }
+
+  Canon::canonicalizeFragment(mol, atomIdx, colors, ranks, molStack,
+                              bondsInPlay, nullptr, doIsomericSmiles);
 
   // now clear the "SSSR" property
   mol.getRingInfo()->reset();
-  Canon::MolStack::const_iterator msCI;
-  for (msCI = molStack.begin(); msCI != molStack.end(); msCI++) {
-    switch (msCI->type) {
+  for (auto &msCI : molStack) {
+    switch (msCI.type) {
       case Canon::MOL_STACK_ATOM: {
-        QueryAtom *qatm = static_cast<QueryAtom *>(msCI->obj.atom);
+        auto *qatm = static_cast<QueryAtom *>(msCI.obj.atom);
         res << SmartsWrite::GetAtomSmarts(qatm);
         break;
       }
       case Canon::MOL_STACK_BOND: {
-        QueryBond *qbnd = static_cast<QueryBond *>(msCI->obj.bond);
-        res << SmartsWrite::GetBondSmarts(qbnd, msCI->number);
+        auto *qbnd = static_cast<QueryBond *>(msCI.obj.bond);
+        res << SmartsWrite::GetBondSmarts(qbnd, msCI.number);
         break;
       }
       case Canon::MOL_STACK_RING: {
-        if (msCI->number < 10)
-          res << msCI->number;
-        else
-          res << "%" << msCI->number;
+        if (msCI.number < 10) {
+          res << msCI.number;
+        } else {
+          res << "%" << msCI.number;
+        }
         break;
       }
       case Canon::MOL_STACK_BRANCH_OPEN: {
@@ -558,22 +677,44 @@ std::string getNonQueryAtomSmarts(const QueryAtom *qatom) {
   res << "[";
 
   int isotope = qatom->getIsotope();
-  if(isotope){
-    res<<isotope;
+  if (isotope) {
+    res << isotope;
   }
-  
+
   if (SmilesWrite::inOrganicSubset(qatom->getAtomicNum())) {
     res << "#" << qatom->getAtomicNum();
   } else {
     res << qatom->getSymbol();
   }
-  int hs = qatom->getNumExplicitHs();
+
+  if (qatom->hasOwningMol() &&
+      qatom->getOwningMol().hasProp(common_properties::_doIsoSmiles)) {
+    if (qatom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
+        !qatom->hasProp(_qatomHasStereoSet) &&
+        !qatom->hasProp(common_properties::_brokenChirality)) {
+      qatom->setProp(_qatomHasStereoSet, 1);
+      switch (qatom->getChiralTag()) {
+        case Atom::CHI_TETRAHEDRAL_CW:
+          res << "@@";
+          break;
+        case Atom::CHI_TETRAHEDRAL_CCW:
+          res << "@";
+          break;
+        default:
+          break;
+      }
+    }
+  }
+
+  auto hs = qatom->getNumExplicitHs();
   // FIX: probably should be smarter about Hs:
   if (hs) {
     res << "H";
-    if (hs > 1) res << hs;
+    if (hs > 1) {
+      res << hs;
+    }
   }
-  int chg = qatom->getFormalCharge();
+  auto chg = qatom->getFormalCharge();
   if (chg) {
     if (chg == -1) {
       res << "-";
@@ -599,34 +740,69 @@ std::string getNonQueryAtomSmarts(const QueryAtom *qatom) {
 std::string getNonQueryBondSmarts(const QueryBond *qbond, int atomToLeftIdx) {
   PRECONDITION(qbond, "bad bond");
   PRECONDITION(!qbond->hasQuery(), "bond should not have query");
+  RDUNUSED_PARAM(atomToLeftIdx);
   std::string res;
 
   if (qbond->getIsAromatic()) {
     res = ":";
   } else {
-    switch (qbond->getBondType()) {
-      case Bond::SINGLE:
-        res = "-";
-        break;
-      case Bond::DOUBLE:
-        res = "=";
-        break;
-      case Bond::TRIPLE:
-        res = "#";
-        break;
-      case Bond::AROMATIC:
-        res = ":";
-        break;
-      default:
-        // do nothing (i.e. match anything)
-        res = "";
-        break;
+    bool reverseDative =
+        (atomToLeftIdx >= 0 &&
+         qbond->getBeginAtomIdx() == static_cast<unsigned int>(atomToLeftIdx));
+    bool doIsoSmiles =
+        !qbond->hasOwningMol() ||
+        qbond->getOwningMol().hasProp(common_properties::_doIsoSmiles);
+    res = getBasicBondRepr(qbond->getBondType(), qbond->getBondDir(),
+                           doIsoSmiles, reverseDative);
+  }
+
+  return res;
+}
+
+std::string molToSmarts(const ROMol &inmol, bool doIsomericSmiles,
+                        std::vector<AtomColors> &&colors,
+                        const boost::dynamic_bitset<> *bondsInPlay = nullptr) {
+  ROMol mol(inmol);
+  const unsigned int nAtoms = mol.getNumAtoms();
+  UINT_VECT ranks;
+  ranks.reserve(nAtoms);
+  // For smiles writing we would be canonicalizing but we will not do that here.
+  // We will simply use the atom indices as the rank
+  for (const auto &atom : mol.atoms()) {
+    ranks.push_back(atom->getIdx());
+  }
+
+  if (doIsomericSmiles) {
+    mol.setProp(common_properties::_doIsoSmiles, 1);
+  }
+
+  std::string res;
+  auto colorIt = std::find(colors.begin(), colors.end(), Canon::WHITE_NODE);
+  while (colorIt != colors.end()) {
+    unsigned int nextAtomIdx = 0;
+    unsigned int nextRank;
+    std::string subSmi;
+    nextRank = nAtoms + 1;
+    for (unsigned int i = 0; i < nAtoms; ++i) {
+      if (colors[i] == Canon::WHITE_NODE && ranks[i] < nextRank) {
+        nextRank = ranks[i];
+        nextAtomIdx = i;
+      }
+    }
+
+    subSmi = FragmentSmartsConstruct(mol, nextAtomIdx, colors, ranks,
+                                     doIsomericSmiles, bondsInPlay);
+    res += subSmi;
+
+    colorIt = std::find(colors.begin(), colors.end(), Canon::WHITE_NODE);
+    if (colorIt != colors.end()) {
+      res += ".";
     }
   }
   return res;
 }
 
-}  // end of local utility namespace
+}  // namespace
 
 namespace SmartsWrite {
 std::string GetAtomSmarts(const QueryAtom *qatom) {
@@ -640,12 +816,12 @@ std::string GetAtomSmarts(const QueryAtom *qatom) {
     // BOOST_LOG(rdInfoLog)<<"\tno query:" <<res;
     return res;
   }
-  QueryAtom::QUERYATOM_QUERY *query = qatom->getQuery();
-  // describeQuery(query);
-
+  const auto query = qatom->getQuery();
   PRECONDITION(query, "atom has no query");
+  // describeQuery(query);
+  unsigned int queryFeatures = 0;
   std::string descrip = qatom->getQuery()->getDescription();
-  if (descrip == "") {
+  if (descrip.empty()) {
     // we have simple atom - just generate the smiles and return
     res = SmilesWrite::GetAtomSmiles(qatom);
     if (res[0] == '[') {
@@ -656,7 +832,7 @@ std::string GetAtomSmarts(const QueryAtom *qatom) {
   } else if ((descrip == "AtomOr") || (descrip == "AtomAnd")) {
     // we have a composite query
     needParen = true;
-    res = _recurseGetSmarts(query, query->getNegation());
+    res = _recurseGetSmarts(qatom, query, query->getNegation(), queryFeatures);
     if (res.length() == 1) {  // single atom symbol we don't need parens
       needParen = false;
     }
@@ -665,9 +841,8 @@ std::string GetAtomSmarts(const QueryAtom *qatom) {
     res = getRecursiveStructureQuerySmarts(query);
     needParen = true;
   } else {  // we have a simple smarts
-    ATOM_EQUALS_QUERY *tquery =
-        static_cast<ATOM_EQUALS_QUERY *>(qatom->getQuery());
-    res = getAtomSmartsSimple(tquery, needParen);
+    auto *tquery = static_cast<ATOM_EQUALS_QUERY *>(qatom->getQuery());
+    res = getAtomSmartsSimple(qatom, tquery, needParen);
     if (tquery->getNegation()) {
       res = "!" + res;
     }
@@ -687,83 +862,86 @@ std::string GetBondSmarts(const QueryBond *bond, int atomToLeftIdx) {
   PRECONDITION(bond, "bad bond");
   std::string res = "";
 
-  // BOOST_LOG(rdInfoLog)<<"bond: " <<bond->getIdx()<<std::endl;;
+  // BOOST_LOG(rdInfoLog) << "bond: " << bond->getIdx() << std::endl;
+  ;
   // it is possible that we are regular single bond and we don't need to write
   // anything
   if (!bond->hasQuery()) {
     res = getNonQueryBondSmarts(bond, atomToLeftIdx);
-    // BOOST_LOG(rdInfoLog)<<"\tno query:" <<res;
+    // BOOST_LOG(rdInfoLog) << "\tno query:" << res << std::endl;
     return res;
   }
   // describeQuery(bond->getQuery());
   if ((typeid(*bond) == typeid(Bond)) &&
       ((bond->getBondType() == Bond::SINGLE) ||
        (bond->getBondType() == Bond::AROMATIC))) {
+    BOOST_LOG(rdInfoLog) << "\tbasic:" << res << std::endl;
     return res;
   }
-  const QueryBond::QUERYBOND_QUERY *query = bond->getQuery();
+  const auto query = bond->getQuery();
   PRECONDITION(query, "bond has no query");
-  std::string descrip = query->getDescription();
 
+  unsigned int queryFeatures = 0;
+  auto descrip = query->getDescription();
   if ((descrip == "BondAnd") || (descrip == "BondOr")) {
     // composite query
-    res = _recurseBondSmarts(bond, query, query->getNegation(), atomToLeftIdx);
+    res = _recurseBondSmarts(bond, query, query->getNegation(), atomToLeftIdx,
+                             queryFeatures);
   } else {
     // simple query
     if (query->getNegation()) {
       res = "!";
     }
-    const BOND_EQUALS_QUERY *tquery =
-        static_cast<const BOND_EQUALS_QUERY *>(query);
-    res += getBondSmartsSimple(bond,tquery, atomToLeftIdx);
+    const auto *tquery = static_cast<const BOND_EQUALS_QUERY *>(query);
+    res += getBondSmartsSimple(bond, tquery, atomToLeftIdx);
   }
+  // BOOST_LOG(rdInfoLog) << "\t  query:" << descrip << " " << res << std::endl;
   return res;
 }
+
 }  // end of namespace SmartsWrite
 
-std::string MolToSmarts(ROMol &inmol, bool doIsomericSmiles) {
-  RDUNUSED_PARAM(doIsomericSmiles);  // does this parameter even make sense?
-  std::string res;
-  unsigned int nAtoms = inmol.getNumAtoms();
-  if (!nAtoms) return "";
-
-  ROMol mol(inmol);
-  UINT_VECT ranks;
-  ranks.resize(nAtoms);
-  // For smiles writing we would be canonicalizing but we will not do that here.
-  // We will simple use the atom indices as the rank
-  for (ROMol::AtomIterator atIt = mol.beginAtoms(); atIt != mol.endAtoms();
-       atIt++) {
-    ranks.push_back((*atIt)->getIdx());
+std::string MolToSmarts(const ROMol &mol, bool doIsomericSmarts) {
+  const unsigned int nAtoms = mol.getNumAtoms();
+  if (!nAtoms) {
+    return "";
   }
 
-  std::vector<AtomColors> colors;
-  colors.resize(nAtoms);
-  std::vector<AtomColors>::iterator colorIt;
-  for (colorIt = colors.begin(); colorIt != colors.end(); colorIt++)
-    *colorIt = Canon::WHITE_NODE;
+  std::vector<AtomColors> colors(nAtoms, Canon::WHITE_NODE);
+  return molToSmarts(mol, doIsomericSmarts, std::move(colors));
+}
 
-  colorIt = std::find(colors.begin(), colors.end(), Canon::WHITE_NODE);
-  while (colorIt != colors.end()) {
-    unsigned int nextAtomIdx = 0;
-    unsigned int nextRank;
-    std::string subSmi;
-    nextRank = nAtoms + 1;
-    for (unsigned int i = 0; i < nAtoms; i++) {
-      if (colors[i] == Canon::WHITE_NODE && ranks[i] < nextRank) {
-        nextRank = ranks[i];
-        nextAtomIdx = i;
-      }
-    }
+std::string MolFragmentToSmarts(const ROMol &mol,
+                                const std::vector<int> &atomsToUse,
+                                const std::vector<int> *bondsToUse,
+                                bool doIsomericSmarts) {
+  PRECONDITION(!atomsToUse.empty(), "no atoms provided");
+  PRECONDITION(!bondsToUse || !bondsToUse->empty(), "no bonds provided");
 
-    subSmi = FragmentSmartsConstruct(mol, nextAtomIdx, colors, ranks);
-    res += subSmi;
+  auto nAtoms = mol.getNumAtoms();
+  if (!nAtoms) {
+    return "";
+  }
 
-    colorIt = std::find(colors.begin(), colors.end(), Canon::WHITE_NODE);
-    if (colorIt != colors.end()) {
-      res += ".";
+  std::unique_ptr<boost::dynamic_bitset<>> bondsInPlay(nullptr);
+  if (bondsToUse != nullptr) {
+    bondsInPlay.reset(new boost::dynamic_bitset<>(mol.getNumBonds(), 0));
+    for (auto bidx : *bondsToUse) {
+      bondsInPlay->set(bidx);
     }
   }
-  return res;
+
+  // Mark all atoms except the ones in atomIndices as already processed.
+  // white: unprocessed
+  // grey: partial
+  // black: complete
+  std::vector<AtomColors> colors(nAtoms, Canon::BLACK_NODE);
+  for (const auto &idx : atomsToUse) {
+    colors[idx] = Canon::WHITE_NODE;
+  }
+
+  return molToSmarts(mol, doIsomericSmarts, std::move(colors),
+                     bondsInPlay.get());
 }
-}
+
+}  // namespace RDKit

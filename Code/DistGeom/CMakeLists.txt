@@ -1,5 +1,7 @@
 ### ISSUE: This library was originally named DistGeom. I've renamed it here
 ### to avoid a target name clash in ./Wrap
+
+add_definitions(-DRDKIT_DISTGEOMETRY_BUILD)
 rdkit_library(DistGeometry
               DistGeomUtils.cpp TriangleSmooth.cpp DistViolationContrib.cpp 
               ChiralViolationContrib.cpp
@@ -16,4 +18,6 @@ rdkit_headers(BoundsMatrix.h
 rdkit_test(testDistGeom testDistGeom.cpp 
 LINK_LIBRARIES DistGeometry EigenSolvers ForceField ForceFieldHelpers Optimizer RDGeneral RDGeometryLib )
 
+if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
+endif()

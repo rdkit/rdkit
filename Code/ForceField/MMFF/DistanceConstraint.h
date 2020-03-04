@@ -9,6 +9,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef __RD_MMFFDISTANCECONSTRAINT_H__
 #define __RD_MMFFDISTANCECONSTRAINT_H__
 #include <iostream>
@@ -18,7 +19,8 @@ namespace ForceFields {
 namespace MMFF {
 
 //! A distance range constraint modelled after a BondStretchContrib
-class DistanceConstraintContrib : public ForceFieldContrib {
+class RDKIT_FORCEFIELD_EXPORT DistanceConstraintContrib
+    : public ForceFieldContrib {
  public:
   DistanceConstraintContrib() : d_end1Idx(-1), d_end2Idx(-1){};
   //! Constructor
@@ -54,6 +56,6 @@ class DistanceConstraintContrib : public ForceFieldContrib {
   double d_minLen, d_maxLen;  //!< rest length of the bond
   double d_forceConstant;     //!< force constant of the bond
 };
-}
-}
+}  // namespace MMFF
+}  // namespace ForceFields
 #endif

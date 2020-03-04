@@ -35,33 +35,24 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/shared_ptr.hpp>
-#include <boost/thread/once.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #include <GraphMol/FilterCatalog/FunctionalGroupHierarchy.h>
 
 namespace RDKit {
 
-bool preprocessReaction(ChemicalReaction &rxn,
-                        const std::string &propName)
-{
-  const bool normalized=true;
-  return preprocessReaction(rxn,
-                           GetFlattenedFunctionalGroupHierarchy(normalized),
-                           propName);
+bool preprocessReaction(ChemicalReaction &rxn, const std::string &propName) {
+  const bool normalized = true;
+  return preprocessReaction(
+      rxn, GetFlattenedFunctionalGroupHierarchy(normalized), propName);
 }
 
-bool preprocessReaction(ChemicalReaction &rxn,
-                        unsigned int &numWarnings,
-                        unsigned int &numErrors,
-                        std::vector<
-                          std::vector<std::pair<unsigned int,std::string> > >&reactantLabels,                        
-                        const std::string &propName)
-{
+bool preprocessReaction(
+    ChemicalReaction &rxn, unsigned int &numWarnings, unsigned int &numErrors,
+    std::vector<std::vector<std::pair<unsigned int, std::string>>>
+        &reactantLabels,
+    const std::string &propName) {
   const bool normalized = true;
-  return preprocessReaction(rxn,
-                            numWarnings,
-                            numErrors,
-                            reactantLabels,
+  return preprocessReaction(rxn, numWarnings, numErrors, reactantLabels,
                             GetFlattenedFunctionalGroupHierarchy(normalized),
                             propName);
 }
@@ -70,36 +61,26 @@ bool preprocessReaction(ChemicalReaction &rxn,
                         const std::map<std::string, ROMOL_SPTR> &queries,
                         const std::string &propName) {
   unsigned int numWarnings, numErrors;
-  std::vector<
-    std::vector<std::pair<unsigned int,std::string> > >reactantLabels;
+  std::vector<std::vector<std::pair<unsigned int, std::string>>> reactantLabels;
 
-  return preprocessReaction(rxn,
-                            numWarnings,
-                            numErrors,
-                            reactantLabels,
-                            queries,
-                            propName);
+  return preprocessReaction(rxn, numWarnings, numErrors, reactantLabels,
+                            queries, propName);
 }
 
-bool preprocessReaction(ChemicalReaction &rxn,
-                        unsigned int &numWarnings,
-                        unsigned int &numErrors,
-                        std::vector<
-                          std::vector<std::pair<unsigned int,std::string> > >&reactantLabels,
-                        const std::map<std::string, ROMOL_SPTR> &queries,
-                        const std::string &propName) {
+bool preprocessReaction(
+    ChemicalReaction &rxn, unsigned int &numWarnings, unsigned int &numErrors,
+    std::vector<std::vector<std::pair<unsigned int, std::string>>>
+        &reactantLabels,
+    const std::map<std::string, ROMOL_SPTR> &queries,
+    const std::string &propName) {
   rxn.setImplicitPropertiesFlag(true);
   rxn.initReactantMatchers();
 
   if (rxn.validate(numWarnings, numErrors)) {
-    addRecursiveQueriesToReaction(rxn,
-                                  queries,
-                                  propName,
-                                  &reactantLabels);
+    addRecursiveQueriesToReaction(rxn, queries, propName, &reactantLabels);
     return true;
   }
 
   return false;
 }
-
 }

@@ -1,6 +1,6 @@
 # coding=utf-8
 # Copyright (c) 2014 Merck KGaA
-from __future__ import print_function
+
 import os, re, gzip, json, requests, sys, optparse, csv
 from rdkit import Chem
 from rdkit.Chem import AllChem
@@ -16,7 +16,7 @@ from sklearn.cross_validation import train_test_split
 from sklearn.metrics import roc_curve, auc
 from sklearn.metrics import precision_score, recall_score
 from sklearn import preprocessing
-import cPickle
+import pickle
 from pickle import Unpickler
 import numpy as np
 import math
@@ -317,7 +317,7 @@ def to_table(data, bins=None):
     #alternative implementation with double loop
     #tt = np.asarray([[(x == [i,j]).all(1).sum() for j in cat_uni]
     #                 for i in cat_uni] )
-    #other altervative: unique rows and bincount
+    #other alternative: unique rows and bincount
   elif np.isscalar(bins):
     bins_ = np.arange(bins + 1) - 0.5
     data_ = data
@@ -335,7 +335,7 @@ class p_con:
     using threshold for value in training-data"""
 
   def __init__(self, acc_id=None, proxy={}):
-    """Constructor to initialize Object, use proxy if neccessary"""
+    """Constructor to initialize Object, use proxy if necessary"""
     self.request_data = {"acc_id": acc_id, "proxy": proxy}
     self.acc_id = acc_id
     self.proxy = proxy
@@ -1207,8 +1207,8 @@ table th[class*="col-"] {
     return
 
   def save_model(self, outfile, model_number=0):
-    """save Model to file using cPickle.dump"""
-    cPickle.dump(self.model[model_number], file(outfile, "wb+"))
+    """save Model to file using pickle.dump"""
+    pickle.dump(self.model[model_number], file(outfile, "wb+"))
     return
 
   def load_models(self, model_files):

@@ -29,7 +29,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Created by Jameed Hussain, May 2013
-from __future__ import print_function
+
 from rdkit import Chem
 from rdkit.Chem.Fraggle import FraggleSim
 

@@ -51,7 +51,7 @@ def PyInfoEntropy(results):
   #   functionality to calculate the informational entropy.
   #    The problem is that the system log function pitches a fit
   #    when you call log(0.0).  We are perfectly happy with that
-  #    returning *anything* because we're gonna mutiply by 0 anyway.
+  #    returning *anything* because we're gonna multiply by 0 anyway.
 
   # Here's the risky (but marginally faster way to do it:
   #    add a small number to probs and hope it doesn't screw
@@ -69,7 +69,7 @@ def PyInfoGain(varMat):
 
     **Arguments**
 
-      varMat is a Numeric array with the number of possible occurances
+      varMat is a Numeric array with the number of possible occurrences
         of each result for reach possible value of the given variable.
 
       So, for a variable which adopts 4 possible values and a result which

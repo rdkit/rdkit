@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #include <list>
 #include <algorithm>
 #include <math.h>
@@ -14,7 +15,7 @@
 
 namespace RDKit {
 namespace FMCS {
-class RingMatchTableSet {
+class RDKIT_FMCS_EXPORT RingMatchTableSet {
   class RingMatchTable {
     FMCS::MatchTable MatchMatrix;
     std::map<const INT_VECT*, unsigned> RingIndex;
@@ -54,8 +55,8 @@ class RingMatchTableSet {
   };
 
  private:
-  std::vector<std::vector<size_t> >* QueryBondRingsIndeces;
-  std::map<const ROMol*, std::vector<std::vector<size_t> > >
+  std::vector<std::vector<size_t>>* QueryBondRingsIndeces;
+  std::map<const ROMol*, std::vector<std::vector<size_t>>>
       TargetBondRingsIndecesSet;  // by target molecules
 
   std::map<const ROMol*, RingMatchTable> MatchMatrixSet;  // by target molecules
@@ -79,15 +80,15 @@ class RingMatchTableSet {
   }
 
   inline bool isTargetBondInRing(const ROMol* target, unsigned bi) const {
-    std::map<const ROMol*, std::vector<std::vector<size_t> > >::const_iterator
-        i = TargetBondRingsIndecesSet.find(target);
+    std::map<const ROMol*, std::vector<std::vector<size_t>>>::const_iterator i =
+        TargetBondRingsIndecesSet.find(target);
     if (TargetBondRingsIndecesSet.end() == i) throw - 1;  // never
     return i->second[bi].empty();
   }
   inline const std::vector<size_t>& getTargetBondRings(const ROMol* target,
                                                        unsigned bi) const {
-    std::map<const ROMol*, std::vector<std::vector<size_t> > >::const_iterator
-        i = TargetBondRingsIndecesSet.find(target);
+    std::map<const ROMol*, std::vector<std::vector<size_t>>>::const_iterator i =
+        TargetBondRingsIndecesSet.find(target);
     if (TargetBondRingsIndecesSet.end() == i) throw - 1;  // never
     return i->second[bi];
   }
@@ -118,7 +119,7 @@ class RingMatchTableSet {
         (*QueryBondRingsIndeces)[*bi].push_back(ri);
   }
   inline void addTargetBondRingsIndeces(const ROMol* mol2) {
-    std::vector<std::vector<size_t> >& m = TargetBondRingsIndecesSet[mol2];
+    std::vector<std::vector<size_t>>& m = TargetBondRingsIndecesSet[mol2];
     m.resize(mol2->getNumBonds());
 
     size_t ri = 0;
@@ -162,11 +163,11 @@ class RingMatchTableSet {
         bp.CompleteRingsOnly = false;
         bool match =
 #ifdef NEVER_xxx_PRECOMPUTED_TABLES_MATCH  // not computed yet, because
-                                           // MatchTable computation usees this
+                                           // MatchTable computation uses this
                                            // ring info table
             FMCS::SubstructMatchCustomTable(graph2, graph1, tag->AtomMatchTable,
                                             tag->BondMatchTable);
-#else  // noticable slowly:
+#else  // noticeable slowly:
             FMCS::SubstructMatchCustom(
                 graph2, *targetMolecule, graph1, *query, parameters.AtomTyper,
                 parameters.BondTyper, NULL, parameters.AtomCompareParameters,
@@ -228,5 +229,5 @@ class RingMatchTableSet {
     return m;
   }
 };
-}
+}  // namespace FMCS
 }  // namespace RDKit

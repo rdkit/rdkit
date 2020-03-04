@@ -50,7 +50,9 @@ char *Base64Encode(const unsigned char *inText, const unsigned int inLen) {
   char *res;
   int resSize;
   resSize = (4 * inLen) / 3;
-  while (resSize % 4) resSize++;
+  while (resSize % 4) {
+    resSize++;
+  }
   res = new char[resSize + 1];
   unsigned int i = 0;
   int pos = 0;
@@ -84,23 +86,29 @@ char *Base64Decode(const char *inText, unsigned int *size) {
   //   - whoever calls us is responsible for free'ing the result we return
 
   unsigned char transTable[256];
-  int inLen = strlen(inText);
+  size_t inLen = strlen(inText);
 
-  int i;
+  size_t i;
   // FIX: we don't really need to build this table here
   for (i = 0; i < 255; i++) {
     transTable[i] = 0x80;
   }
-  for (i = 'A'; i <= 'Z'; i++) transTable[i] = (unsigned char)i - 'A';
-  for (i = 'a'; i <= 'z'; i++) transTable[i] = (unsigned char)i - 'a' + 26;
-  for (i = '0'; i <= '9'; i++) transTable[i] = (unsigned char)i - '0' + 52;
+  for (i = 'A'; i <= 'Z'; i++) {
+    transTable[i] = (unsigned char)i - 'A';
+  }
+  for (i = 'a'; i <= 'z'; i++) {
+    transTable[i] = (unsigned char)i - 'a' + 26;
+  }
+  for (i = '0'; i <= '9'; i++) {
+    transTable[i] = (unsigned char)i - '0' + 52;
+  }
   transTable[static_cast<int>('+')] = 62;
   transTable[static_cast<int>('/')] = 63;
 
-  int outLen = 3 * inLen / 4;
-  char *res = new char[outLen];
+  size_t outLen = 3 * inLen / 4;
+  auto *res = new char[outLen];
   res[outLen - 1] = 0;
-  int pos = 0;
+  size_t pos = 0;
   i = 0;
   // decode 4 bytes at a time
   unsigned char block[4];

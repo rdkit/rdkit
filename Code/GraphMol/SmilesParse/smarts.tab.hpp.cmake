@@ -45,41 +45,49 @@ extern int yysmarts_debug;
 # define YYTOKENTYPE
   enum yytokentype
   {
-    AROMATIC_ATOM_TOKEN = 258,
-    ORGANIC_ATOM_TOKEN = 259,
-    ATOM_TOKEN = 260,
-    SIMPLE_ATOM_QUERY_TOKEN = 261,
-    COMPLEX_ATOM_QUERY_TOKEN = 262,
-    RINGSIZE_ATOM_QUERY_TOKEN = 263,
-    RINGBOND_ATOM_QUERY_TOKEN = 264,
-    IMPLICIT_H_ATOM_QUERY_TOKEN = 265,
-    HYB_TOKEN = 266,
-    ZERO_TOKEN = 267,
-    NONZERO_DIGIT_TOKEN = 268,
-    GROUP_OPEN_TOKEN = 269,
-    GROUP_CLOSE_TOKEN = 270,
-    SEPARATOR_TOKEN = 271,
-    HASH_TOKEN = 272,
-    MINUS_TOKEN = 273,
-    PLUS_TOKEN = 274,
-    CHIRAL_MARKER_TOKEN = 275,
-    CHI_CLASS_TOKEN = 276,
-    CHI_CLASS_OH_TOKEN = 277,
-    H_TOKEN = 278,
-    AT_TOKEN = 279,
-    PERCENT_TOKEN = 280,
-    ATOM_OPEN_TOKEN = 281,
-    ATOM_CLOSE_TOKEN = 282,
-    NOT_TOKEN = 283,
-    AND_TOKEN = 284,
-    OR_TOKEN = 285,
-    SEMI_TOKEN = 286,
-    BEGIN_RECURSE = 287,
-    END_RECURSE = 288,
-    COLON_TOKEN = 289,
-    UNDERSCORE_TOKEN = 290,
-    BOND_TOKEN = 291,
-    EOS_TOKEN = 292
+    START_MOL = 258,
+    START_ATOM = 259,
+    START_BOND = 260,
+    AROMATIC_ATOM_TOKEN = 261,
+    ORGANIC_ATOM_TOKEN = 262,
+    ATOM_TOKEN = 263,
+    SIMPLE_ATOM_QUERY_TOKEN = 264,
+    COMPLEX_ATOM_QUERY_TOKEN = 265,
+    RINGSIZE_ATOM_QUERY_TOKEN = 266,
+    RINGBOND_ATOM_QUERY_TOKEN = 267,
+    IMPLICIT_H_ATOM_QUERY_TOKEN = 268,
+    HYB_TOKEN = 269,
+    HETERONEIGHBOR_ATOM_QUERY_TOKEN = 270,
+    ALIPHATIC = 271,
+    ALIPHATICHETERONEIGHBOR_ATOM_QUERY_TOKEN = 272,
+    ZERO_TOKEN = 273,
+    NONZERO_DIGIT_TOKEN = 274,
+    GROUP_OPEN_TOKEN = 275,
+    GROUP_CLOSE_TOKEN = 276,
+    SEPARATOR_TOKEN = 277,
+    RANGE_OPEN_TOKEN = 278,
+    RANGE_CLOSE_TOKEN = 279,
+    HASH_TOKEN = 280,
+    MINUS_TOKEN = 281,
+    PLUS_TOKEN = 282,
+    CHIRAL_MARKER_TOKEN = 283,
+    CHI_CLASS_TOKEN = 284,
+    CHI_CLASS_OH_TOKEN = 285,
+    H_TOKEN = 286,
+    AT_TOKEN = 287,
+    PERCENT_TOKEN = 288,
+    ATOM_OPEN_TOKEN = 289,
+    ATOM_CLOSE_TOKEN = 290,
+    NOT_TOKEN = 291,
+    AND_TOKEN = 292,
+    OR_TOKEN = 293,
+    SEMI_TOKEN = 294,
+    BEGIN_RECURSE = 295,
+    END_RECURSE = 296,
+    COLON_TOKEN = 297,
+    UNDERSCORE_TOKEN = 298,
+    BOND_TOKEN = 299,
+    EOS_TOKEN = 300
   };
 #endif
 
@@ -88,14 +96,14 @@ extern int yysmarts_debug;
 
 union YYSTYPE
 {
-#line 51 "smarts.yy" /* yacc.c:1909  */
+#line 67 "smarts.yy" /* yacc.c:1909  */
 
   int                      moli;
   RDKit::QueryAtom * atom;
   RDKit::QueryBond * bond;
   int                      ival;
 
-#line 99 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.hpp" /* yacc.c:1909  */
+#line 107 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.hpp" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;
@@ -105,6 +113,13 @@ typedef union YYSTYPE YYSTYPE;
 
 
 
-int yysmarts_parse (const char *input, std::vector<RDKit::RWMol *> *molList, void *scanner);
+int yysmarts_parse (const char *input, std::vector<RDKit::RWMol *> *molList, RDKit::Atom* &lastAtom, RDKit::Bond* &lastBond, void *scanner, int& start_token);
+/* "%code provides" blocks.  */
+#line 62 "smarts.yy" /* yacc.c:1909  */
+
+#define YY_DECL int yylex \
+               (YYSTYPE * yylval_param , yyscan_t yyscanner, int& start_token)
+
+#line 124 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.hpp" /* yacc.c:1909  */
 
 #endif /* !YY_YYSMARTS_SCRATCH_RDKIT_GIT_CODE_GRAPHMOL_SMILESPARSE_SMARTS_TAB_HPP_INCLUDED  */

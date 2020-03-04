@@ -34,7 +34,7 @@
 it is intended to be shallow but broad.
 """
 
-from __future__ import print_function
+
 import doctest, unittest, os
 import pickle
 from rdkit import RDConfig
@@ -153,6 +153,10 @@ class TestCase(unittest.TestCase):
           # http://chemistrycompass.com/chemsearch/58909/
           mol = Chem.MolFromSmiles("O=C(Cn1cnc2c1c(=O)n(C)c(=O)n2C)N/N=C/c1c(O)ccc2c1cccc2")
           entry = catalog.GetFirstMatch(mol)
+          prop_list = entry.GetPropList()
+          self.assertTrue("Reference" in prop_list)
+          self.assertTrue("Scope" in prop_list)
+          self.assertTrue("FilterSet" in prop_list)
           for key in entry.GetPropList():
             if key == "Reference":
               self.assertEquals(
@@ -163,6 +167,8 @@ class TestCase(unittest.TestCase):
                 "doi:10.1021/jm901137j.")
             elif key == "Scope":
               self.assertEquals(entry.GetProp(key), "PAINS filters (family A)")
+            elif key == "FilterSet":
+              self.assertEquals(entry.GetProp(key), "PAINS_A")
 
           self.assertEqual(entry.GetDescription(), "hzone_phenol_A(479)")
           result = catalog.GetMatches(mol)
@@ -507,6 +513,35 @@ class TestCase(unittest.TestCase):
     for mol, res in matches:
       hits = [name for name, pat in items if mol.HasSubstructMatch(pat)]
       self.assertEquals(hits, res)
+
+  def testThreadedRunner(self):
+    path = os.path.join(os.environ['RDBASE'], 'Code', 'GraphMol', 'test_data', 'pains.smi')
+    with open(path) as f:
+      smiles = [f.strip() for f in f.readlines()][1:]
+
+    self.assertEquals(len(smiles), 3)
+    params = FilterCatalog.FilterCatalogParams()
+    params.AddCatalog(FilterCatalogParams.FilterCatalogs.PAINS_A)
+    params.AddCatalog(FilterCatalogParams.FilterCatalogs.PAINS_B)
+    params.AddCatalog(FilterCatalogParams.FilterCatalogs.PAINS_C)
+    fc = FilterCatalog.FilterCatalog(params)
+    
+    results = FilterCatalog.RunFilterCatalog(fc, smiles)
+    self.assertEquals(len(results), 3)
+
+    descriptions = ["hzone_phenol_A(479)",
+                    "cyano_imine_B(17)",
+                    "keto_keto_gamma(5)"]
+
+    for i, res in enumerate(results):
+      self.assertTrue(len(res) > 0)
+      self.assertEquals(res[0].GetDescription(), descriptions[i])
+
+    # Test with some bad input
+    smiles = ['mydoghasfleas']
+    results = FilterCatalog.RunFilterCatalog(fc, smiles, numThreads=3)
+    self.assertEquals(len(results[0]), 1)
+    self.assertEquals(results[0][0].GetDescription(), "no valid RDKit molecule");
 
 
 if __name__ == '__main__':

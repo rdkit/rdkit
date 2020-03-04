@@ -2,6 +2,7 @@
 //
 //  Copyright (C) 2006 Greg Landrum
 //
+#include <RDGeneral/test.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <RDGeneral/RDLog.h>
@@ -27,11 +28,13 @@ void test1() {
   BOOST_LOG(rdInfoLog) << ">>------------- Test 1" << std::endl;
 
   // MolCatalogParams are currently unused, so testing is easy:
-  MolCatalogParams *mparams = new MolCatalogParams();
+  auto *mparams = new MolCatalogParams();
   std::string pkl = mparams->Serialize();
-  TEST_ASSERT(pkl == "");
+  TEST_ASSERT(pkl.empty());
 
-  MolCatalog *mcat = new MolCatalog(mparams);
+  auto *mcat = new MolCatalog(mparams);
+  delete mparams;
+
   TEST_ASSERT(mcat->getNumEntries() == 0);
   TEST_ASSERT(mcat->getFPLength() == 0);
 
@@ -57,6 +60,7 @@ void test1() {
   entry->setDescription("child1");
   entry->setOrder(1);
   mcat->addEntry(entry);
+
   mol = SmilesToMol("C(=O)O");
   entry = new MolCatalogEntry(mol);
   entry->setDescription("child2");
@@ -91,6 +95,7 @@ void test1() {
 
   pkl = mcat->Serialize();
   delete mcat;
+
   mcat = new MolCatalog(pkl);
   TEST_ASSERT(mcat->getNumEntries() == 3);
   TEST_ASSERT(mcat->getFPLength() == 3);
@@ -105,6 +110,8 @@ void test1() {
   TEST_ASSERT(mcat->getEntryWithBitId(0)->getMol()->getNumAtoms() == 10);
   TEST_ASSERT(mcat->getEntryWithBitId(1)->getMol()->getNumAtoms() == 1);
   TEST_ASSERT(mcat->getEntryWithBitId(2)->getMol()->getNumAtoms() == 3);
+
+  delete mcat;
 
   BOOST_LOG(rdInfoLog) << "<<-------------- Done" << std::endl;
 }

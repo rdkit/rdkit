@@ -13,7 +13,7 @@
  
   RD Version: $Rev$            
 """
-from __future__ import print_function
+
 import SimpleXMLRPCServer
 import threading, sys, time, types, os, tempfile
 from pymol import cmd, cgo
@@ -455,10 +455,10 @@ def rpcLoadSurfaceData(data, objName='surface', format='', surfaceLevel=1.0):
   gridName = 'grid-%s' % objName
   # it would be nice if we didn't have to go by way of the temporary file,
   # but at the moment pymol will only read shapes from files
-  tempnm = tempfile.mktemp('.grd')
-  open(tempnm, 'w+').write(data)
-  res = rpcLoadSurface(tempnm, objName, format='', surfaceLevel=surfaceLevel)
-  os.unlink(tempnm)
+  with tempfile.NamedTemporaryFile('w+', suffix='.grd', delete=False) as tmp:
+    tmp.write(data)
+  res = rpcLoadSurface(tmp.name, objName, format='', surfaceLevel=surfaceLevel)
+  os.unlink(tmp.name)
   if res is not None:
     return res
   else:

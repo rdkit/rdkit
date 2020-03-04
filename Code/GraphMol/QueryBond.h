@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef _RD_QUERYBOND_H
 #define _RD_QUERYBOND_H
 
@@ -24,7 +25,7 @@ namespace RDKit {
 
  */
 
-class QueryBond : public Bond {
+class RDKIT_GRAPHMOL_EXPORT QueryBond : public Bond {
  public:
   typedef Queries::Query<int, Bond const *, true> QUERYBOND_QUERY;
 
@@ -50,8 +51,6 @@ class QueryBond : public Bond {
   void setBondDir(BondDir bD);
 
   //! returns true if we match Bond \c what
-  bool Match(const Bond::BOND_SPTR what) const;
-  //! \overload
   bool Match(Bond const *what) const;
 
   //! returns true if our query details match those of QueryBond \c what
@@ -71,7 +70,10 @@ class QueryBond : public Bond {
 
   //! expands our current query
   /*!
-    \param what          the Queries::Query to be added
+    \param what          the Queries::Query to be added. The ownership of
+                         the query is passed to the current object, where it
+                         might be deleted, so that the pointer should not be
+                         used again in the calling code.
     \param how           the operator to be used in the expansion
     \param maintainOrder (optional) flags whether the relative order of
                          the queries needs to be maintained, if this is
@@ -105,7 +107,7 @@ inline std::string qhelper(Bond::QUERYBOND_QUERY *q, unsigned int depth) {
   }
   return res;
 }
-}  // end of detail namespace
+}  // namespace detail
 inline std::string describeQuery(const Bond *bond) {
   PRECONDITION(bond, "bad bond");
   std::string res = "";
@@ -114,6 +116,6 @@ inline std::string describeQuery(const Bond *bond) {
   }
   return res;
 }
-};
+};  // namespace RDKit
 
 #endif

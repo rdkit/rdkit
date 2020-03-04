@@ -38,12 +38,16 @@ CREATE INDEX mol_idx2 ON chemblmol using gist(m);
 select * into chemblmol2 from chemblmol order by molregno asc limit 10;
 CREATE INDEX mol_idx22 ON chemblmol2 using gist(m);
 
+
 -- start with a direct seq scan to verify that there is a result
 SET enable_indexscan=off;
 SET enable_bitmapscan=off;
 SET enable_seqscan=on;
 select count(*) from chemblmol where m@='Cc1cc(-n2ncc(=O)[nH]c2=O)ccc1C(=O)c1ccccc1Cl'::mol;
 select count(*) from chemblmol join chemblmol2 using (m);
+set rdkit.do_chiral_sss=true;
+select count(*) from chemblmol c2 join chemblmol using (m);
+set rdkit.do_chiral_sss=false;
 select count(*) from chemblmol c2 join chemblmol using (m);
 
 -- now enable the index to trigger the bug:
@@ -52,6 +56,9 @@ SET enable_bitmapscan=off;
 SET enable_seqscan=on;
 select count(*) from chemblmol where m@='Cc1cc(-n2ncc(=O)[nH]c2=O)ccc1C(=O)c1ccccc1Cl'::mol;
 select count(*) from chemblmol join chemblmol2 using (m);
+set rdkit.do_chiral_sss=true;
+select count(*) from chemblmol c2 join chemblmol using (m);
+set rdkit.do_chiral_sss=false;
 select count(*) from chemblmol c2 join chemblmol using (m);
 
 

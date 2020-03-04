@@ -1,5 +1,4 @@
 /* 
- * $Id: SmilesTests.java 131 2011-01-20 22:01:29Z ebakke $
  *
  *  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
  *  All rights reserved.
@@ -136,7 +135,43 @@ public class SmilesTests extends GraphMolTest {
             assertEquals("bad smiles: "+nsmi+"!="+expected,nsmi,expected);
 	}
 
-    
+        @Test
+	public void testRankAtoms(){
+	    //Need a molecule to canonicalise
+	    // expected ordering here: [11, 8, 3, 5, 0, 9, 7, 10, 6, 1, 4, 2]
+	    ROMol m1 = RWMol.MolFromSmiles("C(CO)(C=C)CCC(CC)C#N");
+
+	    // same molecule, different atom ordering:
+	    // expected ordering here: [11, 5, 0, 8, 3, 9, 7, 10, 4, 2, 6, 1] 
+	    ROMol m2 = RWMol.MolFromSmiles("C(C=C)(CO)CCC(C#N)CC");
+
+	    UInt_Vect ranks1 = new UInt_Vect();
+	    m1.rankMolAtoms(ranks1);
+	    assertEquals("Wrong size ranks - " + ranks1.size() + " != " + 
+	  		m1.getNumAtoms(), ranks1.size(), m1.getNumAtoms());
+
+	    UInt_Vect ranks2 = new UInt_Vect();
+	    m2.rankMolAtoms(ranks2);
+	    assertEquals("Wrong size ranks - " + ranks2.size() + " != " + 
+	  		m2.getNumAtoms(), ranks2.size(), m2.getNumAtoms());
+
+	    Match_Vect_Vect matches = m1.getSubstructMatches(m2);
+	    assertEquals("bad matches size: "+matches.size(),matches.size(),1);
+	    Match_Vect match = matches.get(0);
+	    assertEquals("bad match size: "+match.size(),match.size(),m1.getNumAtoms());
+	    for(int i=0;i<match.size();i++){
+	 	assertEquals("bad rank: "+match.get(i)+" "+ranks1+" "+ranks2,
+			ranks1.get(match.get(i).getSecond()),
+			ranks2.get(match.get(i).getFirst()));
+	    }
+	    
+	    m1.delete();
+	    m2.delete();
+	    ranks1.delete();
+	    ranks2.delete();
+	    matches.delete();
+	}
+
 	public static void main(String args[]) {
 		org.junit.runner.JUnitCore.main("org.RDKit.SmilesTests");
 	}

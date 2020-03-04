@@ -45,37 +45,37 @@ PyObject *GetResonanceSubstructMatches(
 }
 
 std::string resonanceMolSupplierClassDoc =
-    "A class which supplies resonance structures (as mols) from a mol.\n \
-\n \
-  Usage examples:\n \
-\n \
-    1) Lazy evaluation: the resonance structures are not constructed\n \
-       until we ask for them:\n \
-       >>> suppl = ResonanceMolSupplier(mol)\n \
-       >>> for resMol in suppl:\n \
-       ...    resMol.GetNumAtoms()\n \
-\n \
-    2) Lazy evaluation 2:\n \
-       >>> suppl = ResonanceMolSupplier(mol)\n \
-       >>> resMol1 = suppl.next()\n \
-       >>> resMol2 = suppl.next()\n \
-       >>> suppl.reset()\n \
-       >>> resMol3 = suppl.next()\n \
-       # resMol3 and resMol1 are the same: \n \
-       >>> MolToSmiles(resMol3)==MolToSmiles(resMol1)\n \
-\n \
-    3) Random Access:\n \
-       >>> suppl = ResonanceMolSupplier(mol)\n \
-       >>> resMol1 = suppl[0] \n \
-       >>> resMol2 = suppl[1] \n \
-       NOTE: this will generate an IndexError if the supplier doesn't have that many\n \
-       molecules.\n \
-\n \
-    4) Random Access 2: looping over all resonance structures\n \
-       >>> suppl = ResonanceMolSupplier(mol)\n \
-       >>> nResMols = len(suppl)\n \
-       >>> for i in range(nResMols):\n \
-       ...   suppl[i].GetNumAtoms()\n \
+    "A class which supplies resonance structures (as mols) from a mol.\n\
+\n\
+  Usage examples:\n\
+\n\
+    1) Lazy evaluation: the resonance structures are not constructed\n\
+       until we ask for them:\n\n\
+       >>> suppl = ResonanceMolSupplier(mol)\n\
+       >>> for resMol in suppl:\n\
+       ...    resMol.GetNumAtoms()\n\
+\n\
+    2) Lazy evaluation 2:\n\n\
+       >>> suppl = ResonanceMolSupplier(mol)\n\
+       >>> resMol1 = next(suppl)\n\
+       >>> resMol2 = next(suppl)\n\
+       >>> suppl.reset()\n\
+       >>> resMol3 = next(suppl)\n\
+       # resMol3 and resMol1 are the same: \n\
+       >>> MolToSmiles(resMol3)==MolToSmiles(resMol1)\n\
+\n\
+    3) Random Access:\n\n\
+       >>> suppl = ResonanceMolSupplier(mol)\n\
+       >>> resMol1 = suppl[0] \n\
+       >>> resMol2 = suppl[1] \n\n\
+       NOTE: this will generate an IndexError if the supplier doesn't have that many\n\
+       molecules.\n\
+\n\
+    4) Random Access 2: looping over all resonance structures\n\
+       >>> suppl = ResonanceMolSupplier(mol)\n\
+       >>> nResMols = len(suppl)\n\
+       >>> for i in range(nResMols):\n\
+       ...   suppl[i].GetNumAtoms()\n\
 \n";
 struct resmolsup_wrap {
   static void wrap() {
@@ -210,6 +210,6 @@ struct resmolsup_wrap {
              "query.\n");
   };
 };
-}
+}  // namespace RDKit
 
 void wrap_resmolsupplier() { RDKit::resmolsup_wrap::wrap(); }

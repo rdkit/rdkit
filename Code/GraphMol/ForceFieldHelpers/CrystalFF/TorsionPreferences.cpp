@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include "TorsionPreferences.h"
 #include <GraphMol/RDKitBase.h>
 #include <Geometry/Utils.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -22,7 +23,7 @@
 
 #include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
-typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 #include <boost/flyweight.hpp>
 #include <boost/flyweight/key_value.hpp>
 #include <boost/flyweight/no_tracking.hpp>
@@ -58,7 +59,7 @@ class ExpTorsionAngleCollection {
  public:
   typedef std::vector<ExpTorsionAngle> ParamsVect;
   static const ExpTorsionAngleCollection *getParams(
-		  unsigned int version, const std::string &paramData = "");
+      unsigned int version, const std::string &paramData = "");
   ParamsVect::const_iterator begin() const { return d_params.begin(); };
   ParamsVect::const_iterator end() const { return d_params.end(); };
   ExpTorsionAngleCollection(const std::string &paramData);
@@ -76,18 +77,18 @@ const ExpTorsionAngleCollection *ExpTorsionAngleCollection::getParams(
     unsigned int version, const std::string &paramData) {
   std::string params;
   if (paramData == "") {
-	switch (version) {
-	case 1:
-	  params = torsionPreferencesV1;
-	  break;
-	case 2:
-	  params = torsionPreferencesV2;
-	  break;
-	default:
-	  throw ValueErrorException("ETversion must be 1 or 2.");
-	}
+    switch (version) {
+      case 1:
+        params = torsionPreferencesV1;
+        break;
+      case 2:
+        params = torsionPreferencesV2;
+        break;
+      default:
+        throw ValueErrorException("ETversion must be 1 or 2.");
+    }
   } else {
-	params = paramData;
+    params = paramData;
   }
   const ExpTorsionAngleCollection *res = &(param_flyweight(params).get());
   return res;
@@ -133,12 +134,9 @@ ExpTorsionAngleCollection::ExpTorsionAngleCollection(
   //    << d_params[d_params.size()-1].smarts << std::endl;
 }
 
-void getExperimentalTorsions(
-    const RDKit::ROMol &mol, std::vector<std::vector<int> > &expTorsionAtoms,
-    std::vector<std::pair<std::vector<int>, std::vector<double> > >
-        &expTorsionAngles,
-    std::vector<std::vector<int> > &improperAtoms, bool useExpTorsions,
-    bool useBasicKnowledge, unsigned int version, bool verbose) {
+void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
+                             bool useExpTorsions, bool useBasicKnowledge,
+                             unsigned int version, bool verbose) {
   unsigned int nb = mol.getNumBonds();
   unsigned int na = mol.getNumAtoms();
   if (!na) {
@@ -146,9 +144,9 @@ void getExperimentalTorsions(
   }
 
   // check that vectors are empty
-  expTorsionAtoms.clear();
-  expTorsionAngles.clear();
-  improperAtoms.clear();
+  details.expTorsionAtoms.clear();
+  details.expTorsionAngles.clear();
+  details.improperAtoms.clear();
 
   unsigned int aid1, aid2, aid3, aid4;
   unsigned int bid2;
@@ -161,20 +159,18 @@ void getExperimentalTorsions(
         ExpTorsionAngleCollection::getParams(version);
 
     // loop over patterns
-    for (ExpTorsionAngleCollection::ParamsVect::const_iterator it =
-             params->begin();
-         it != params->end(); ++it) {
+    for (const auto &param : *params) {
       std::vector<MatchVectType> matches;
-      SubstructMatch(mol, *(it->dp_pattern.get()), matches, false, true);
+      SubstructMatch(mol, *(param.dp_pattern.get()), matches, false, true);
 
       // loop over matches
       for (std::vector<MatchVectType>::const_iterator matchIt = matches.begin();
            matchIt != matches.end(); ++matchIt) {
         // get bond indices
-        aid1 = (*matchIt)[it->idx[0]].second;
-        aid2 = (*matchIt)[it->idx[1]].second;
-        aid3 = (*matchIt)[it->idx[2]].second;
-        aid4 = (*matchIt)[it->idx[3]].second;
+        aid1 = (*matchIt)[param.idx[0]].second;
+        aid2 = (*matchIt)[param.idx[1]].second;
+        aid3 = (*matchIt)[param.idx[2]].second;
+        aid4 = (*matchIt)[param.idx[3]].second;
         // FIX: check if bond is NULL
         bid2 = mol.getBondBetweenAtoms(aid2, aid3)->getIdx();
         if (!doneBonds[bid2]) {
@@ -184,15 +180,16 @@ void getExperimentalTorsions(
           atoms[1] = aid2;
           atoms[2] = aid3;
           atoms[3] = aid4;
-          expTorsionAtoms.push_back(atoms);
-          expTorsionAngles.push_back(std::make_pair(it->signs, it->V));
+          details.expTorsionAtoms.push_back(atoms);
+          details.expTorsionAngles.push_back(
+              std::make_pair(param.signs, param.V));
           if (verbose) {
-            std::cout << it->smarts << ": " << aid1 << " " << aid2 << " "
+            std::cout << param.smarts << ": " << aid1 << " " << aid2 << " "
                       << aid3 << " " << aid4 << ", (";
-            for (unsigned int i = 0; i < it->V.size() - 1; ++i) {
-              std::cout << it->V[i] << ", ";
+            for (unsigned int i = 0; i < param.V.size() - 1; ++i) {
+              std::cout << param.V[i] << ", ";
             }
-            std::cout << it->V[it->V.size() - 1] << ") " << std::endl;
+            std::cout << param.V[param.V.size() - 1] << ") " << std::endl;
           }
         }  // if not donePaths
       }    // end loop over matches
@@ -229,7 +226,7 @@ void getExperimentalTorsions(
           unsigned int i = 0;
           unsigned int isBoundToSP2O = 0;  // false
           for (; nbrIdx != endNbrs; ++nbrIdx) {
-            const Atom *atomX = mol[*nbrIdx].get();
+            const Atom *atomX = mol[*nbrIdx];
             atoms[i] = atomX->getIdx();
             // if the central atom is sp2 carbon and is bound to sp2 oxygen, set
             // a flag
@@ -245,7 +242,7 @@ void getExperimentalTorsions(
           }
           atoms.push_back(at2AtomicNum);
           atoms.push_back(isBoundToSP2O);
-          improperAtoms.push_back(atoms);
+          details.improperAtoms.push_back(atoms);
           /*if (verbose) {
             std::cout << "out-of-plane bend: " << atoms[0] << " " << atoms[1] <<
           " "
@@ -260,9 +257,8 @@ void getExperimentalTorsions(
         mol.getRingInfo();  // FIX: make sure we have ring info
     CHECK_INVARIANT(rinfo, "");
     const VECT_INT_VECT &atomRings = rinfo->atomRings();
-    for (VECT_INT_VECT_CI rii = atomRings.begin(); rii != atomRings.end();
-         rii++) {
-      unsigned int rSize = rii->size();
+    for (const auto &atomRing : atomRings) {
+      unsigned int rSize = atomRing.size();
       // we don't need to deal with 3 membered rings
       // and we do not treat rings greater than 6
       if (rSize < 4 || rSize > 6) {
@@ -271,10 +267,10 @@ void getExperimentalTorsions(
       // loop over ring atoms
       for (unsigned int i = 0; i < rSize; ++i) {
         // proper torsions
-        aid1 = (*rii)[i];
-        aid2 = (*rii)[(i + 1) % rSize];
-        aid3 = (*rii)[(i + 2) % rSize];
-        aid4 = (*rii)[(i + 3) % rSize];
+        aid1 = atomRing[i];
+        aid2 = atomRing[(i + 1) % rSize];
+        aid3 = atomRing[(i + 2) % rSize];
+        aid4 = atomRing[(i + 3) % rSize];
         bid2 = mol.getBondBetweenAtoms(aid2, aid3)->getIdx();
         // if all 4 atoms are SP2, add torsion
         if (!(doneBonds[bid2]) &&
@@ -288,12 +284,12 @@ void getExperimentalTorsions(
           atoms[1] = aid2;
           atoms[2] = aid3;
           atoms[3] = aid4;
-          expTorsionAtoms.push_back(atoms);
+          details.expTorsionAtoms.push_back(atoms);
           std::vector<int> signs(6, 1);
           signs[1] = -1;  // MMFF sign for m = 2
           std::vector<double> fconsts(6, 0.0);
           fconsts[1] = 100.0;  // 7.0 is MMFF force constants for aromatic rings
-          expTorsionAngles.push_back(std::make_pair(signs, fconsts));
+          details.expTorsionAngles.push_back(std::make_pair(signs, fconsts));
           /*if (verbose) {
             std::cout << "SP2 ring: " << aid1 << " " << aid2 << " " << aid3 << "
           " << aid4 << std::endl;
@@ -307,4 +303,4 @@ void getExperimentalTorsions(
 }  // end function
 
 }  // namespace CrystalFF
-}
+}  // namespace ForceFields

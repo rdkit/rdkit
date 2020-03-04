@@ -29,6 +29,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
+#include <RDGeneral/export.h>
 #ifndef RDKIT_ENUMERATEBASE_H
 #define RDKIT_ENUMERATEBASE_H
 
@@ -59,7 +60,7 @@ namespace RDKit {
   See Reaction.h for more details on how ChemicalReactions are
   used.
 */
-class EnumerateLibraryBase {
+class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibraryBase {
  protected:
   ChemicalReaction m_rxn;
   boost::shared_ptr<EnumerationStrategyBase> m_enumerator;
@@ -119,7 +120,7 @@ class EnumerateLibraryBase {
   //! get the next set of products as smiles
   //  This returns a vector of a vector strings.
   //  Each result vector corresponds for a product template.
-  virtual std::vector<std::vector<std::string> > nextSmiles();
+  virtual std::vector<std::vector<std::string>> nextSmiles();
 
   //! Get the current position into the reagent vectors
   //   Use getState/setState to save/restart the enumeration
@@ -195,5 +196,5 @@ class EnumerateLibraryBase {
 #ifdef RDK_USE_BOOST_SERIALIZATION
 BOOST_SERIALIZATION_ASSUME_ABSTRACT(EnumerateLibraryBase)
 #endif
-}
+}  // namespace RDKit
 #endif

@@ -5,6 +5,7 @@
 SET client_min_messages = warning;
 \set ECHO none
 RESET client_min_messages;
+SET extra_float_digits=0;
 SELECT is_valid_smiles('c1ccccc1');
  is_valid_smiles 
 -----------------
@@ -52,7 +53,7 @@ SELECT is_valid_smarts('c1ccc[n,c]1');
 SELECT mol_from_smarts('c1ccc[n,c]1');
  mol_from_smarts 
 -----------------
- c1ccnc1
+ *1cccc1
 (1 row)
 
 SELECT is_valid_smarts('c1ccc');
@@ -81,15 +82,15 @@ SELECT mol_to_smarts(mol_from_smiles('c1ccccc1'));
 (1 row)
 
 SELECT mol_to_smarts('c1cccc[n,c]1'::qmol);
-         mol_to_smarts          
---------------------------------
- c1:,-c:,-c:,-c:,-c:,-[n,c]:,-1
+ mol_to_smarts 
+---------------
+ c1cccc[n,c]1
 (1 row)
 
 SELECT mol_to_smiles('c1cccc[n,c]1'::qmol);
  mol_to_smiles 
 ---------------
- c1ccncc1
+ *1ccccc1
 (1 row)
 
 SELECT is_valid_smiles('');
@@ -430,12 +431,12 @@ select mol_to_ctab(mol('CCC'), false);
                               mol_to_ctab                              
 -----------------------------------------------------------------------
                                                                       +
-      RDKit                                                           +
+      RDKit          2D                                               +
                                                                       +
    3  2  0  0  0  0  0  0  0  0999 V2000                              +
      0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0+
-     0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0+
-     0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0+
+     1.2990    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0+
+     2.5981   -0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0+
    1  2  1  0                                                         +
    2  3  1  0                                                         +
  M  END                                                               +
@@ -558,6 +559,7 @@ select 'C1CC2CC3C45C2C2C6C7C8C9C%10C(C1)C1C%11%10C%109C98C87C76C42C24C65C3C3C56C
 (1 row)
 
 -- chiral matching
+set rdkit.do_chiral_sss=false;
 select 'C[C@H](F)Cl'::mol@>'CC(F)Cl'::mol as match;
  match 
 -------
@@ -593,6 +595,82 @@ select 'C[C@H](F)Cl'::mol@>'C[C@@H](F)Cl'::mol as match;
  match 
 -------
  f
+(1 row)
+
+set rdkit.do_chiral_sss=false;
+-- github #2790
+set rdkit.do_chiral_sss=false;
+select 'C[C@H](F)Cl'::mol@='C[C@H](F)Cl'::mol;
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'C[C@H](F)Cl'::mol@='C[C@@H](F)Cl'::mol;
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'C[C@H](F)Cl'::mol@='CC(F)Cl'::mol;
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'CC(F)Cl'::mol@='C[C@@H](F)Cl'::mol;
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'CC(F)Cl'::mol@='C[C@H](F)Cl'::mol;
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'CC(F)Cl'::mol@='CC(F)Cl'::mol;
+ ?column? 
+----------
+ t
+(1 row)
+
+set rdkit.do_chiral_sss=true;
+select 'C[C@H](F)Cl'::mol@='C[C@H](F)Cl'::mol;
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'C[C@H](F)Cl'::mol@='C[C@@H](F)Cl'::mol;
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'C[C@H](F)Cl'::mol@='CC(F)Cl'::mol;
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'CC(F)Cl'::mol@='C[C@@H](F)Cl'::mol;
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'CC(F)Cl'::mol@='C[C@H](F)Cl'::mol;
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'CC(F)Cl'::mol@='CC(F)Cl'::mol;
+ ?column? 
+----------
+ t
 (1 row)
 
 set rdkit.do_chiral_sss=false;
@@ -844,7 +922,7 @@ select 'C1C(C)C1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"adju
 (1 row)
 
 select 'C1C(C)C1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"adjustDegreeFlags":"bogus"}');
-ERROR:  bad which string provided 'BOGUS'
+ERROR:  Unknown flag value: 'BOGUS'. Flags ignored.
 select 'C1C([2H])C1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol);
  ?column? 
 ----------
@@ -861,5 +939,18 @@ select 'C1C([2H])C1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"a
  ?column? 
 ----------
  t
+(1 row)
+
+-- CXSmiles
+SELECT mol_to_smiles(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:4,5|'));
+        mol_to_smiles         
+------------------------------
+ C[C@H](F)[C@H](C)[C@@H](C)Br
+(1 row)
+
+SELECT mol_to_cxsmiles(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:4,5|'));
+              mol_to_cxsmiles              
+-------------------------------------------
+ C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:4,5|
 (1 row)
 

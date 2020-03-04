@@ -69,7 +69,7 @@ compressAllTrue(GISTENTRY *entry)
   
   gistentryinit(*retval, PointerGetDatum(b),
 		entry->rel, entry->page,
-		entry->offset, FALSE);
+		entry->offset, false);
   
   return retval;
 }
@@ -89,7 +89,7 @@ gmol_compress(PG_FUNCTION_ARGS)
 
     gistentryinit(*retval, PointerGetDatum(makeMolSignature(m)),
                   entry->rel, entry->page,
-                  entry->offset, FALSE);
+                  entry->offset, false);
     freeCROMol(m);
   }       
   else if ( !ISALLTRUE(DatumGetPointer(entry->key)) ) {
@@ -114,7 +114,7 @@ gsfp_compress(PG_FUNCTION_ARGS)
 
     gistentryinit(*retval, PointerGetDatum(makeSfpSignature(fp, NUMBITS)),
                   entry->rel, entry->page,
-                  entry->offset, FALSE);
+                  entry->offset, false);
     freeCSfp(fp);
   }       
   else if ( !ISALLTRUE(DatumGetPointer(entry->key)) ) {
@@ -137,7 +137,7 @@ gmol_decompress(PG_FUNCTION_ARGS)
 
     gistentryinit(*retval, PointerGetDatum(key),
 		  entry->rel, entry->page,
-		  entry->offset, FALSE);
+		  entry->offset, false);
     
     PG_RETURN_POINTER(retval);
   }
@@ -738,7 +738,7 @@ greaction_compress(PG_FUNCTION_ARGS)
     
     gistentryinit(*retval, PointerGetDatum(makeReactionSign(rxn)),
                   entry->rel, entry->page,
-                  entry->offset, FALSE);
+                  entry->offset, false);
     freeChemReaction(rxn);
   }
   else if ( !ISALLTRUE(DatumGetPointer(entry->key)) ) {

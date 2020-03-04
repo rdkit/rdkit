@@ -26,8 +26,9 @@
 namespace RDKit {
 TDTWriter::TDTWriter(const std::string &fileName) {
   if (fileName != "-") {
-    std::ofstream *tmpStream = new std::ofstream(fileName.c_str());
-    if (!tmpStream || !(*tmpStream) || (tmpStream->bad())) {
+    auto *tmpStream = new std::ofstream(fileName.c_str());
+    if (!(*tmpStream) || (tmpStream->bad())) {
+      delete tmpStream;
       std::ostringstream errout;
       errout << "Bad output file " << fileName;
       throw BadFileException(errout.str());
@@ -59,15 +60,9 @@ TDTWriter::TDTWriter(std::ostream *outStream, bool takeOwnership) {
 }
 
 TDTWriter::~TDTWriter() {
-  // if we've written any mols, finish with a "|" line
-  if (d_molid > 0) {
-    CHECK_INVARIANT(dp_ostream,
-                    "null outstream even though molecules were written");
-    (*dp_ostream) << "|\n";
-  }
-
-  if (df_owner) {
-    delete dp_ostream;
+  // close the writer if it's still open:
+  if (dp_ostream != nullptr) {
+    close();
   }
 }
 
@@ -118,7 +113,9 @@ void TDTWriter::write(const ROMol &mol, int confId) {
         (*dp_ostream) << "," << std::setprecision(d_numDigits)
                       << coords[atomOrdering[i]].z;
       }
-      if (i != nAts - 1) (*dp_ostream) << ",";
+      if (i != nAts - 1) {
+        (*dp_ostream) << ",";
+      }
     }
     (*dp_ostream) << ";>\n";
   }
@@ -172,4 +169,4 @@ void TDTWriter::writeProperty(const ROMol &mol, const std::string &name) {
   boost::replace_all(pval, "\n", " ");
   (*dp_ostream) << pval << ">\n";
 }
-}
+}  // namespace RDKit

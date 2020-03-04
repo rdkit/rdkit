@@ -30,6 +30,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
+#include <RDGeneral/test.h>
 #include <RDGeneral/utils.h>
 #include <RDGeneral/Exceptions.h>
 #include <GraphMol/RDKitBase.h>
@@ -84,15 +85,18 @@ void pickleTest(EnumerationStrategyBase &en, size_t len) {
 void testSamplers() {
   EnumerationTypes::BBS bbs;
   bbs.resize(3);
-  for (int i = 0; i < 10; ++i)
+  for (int i = 0; i < 10; ++i) {
     bbs[0].push_back(boost::shared_ptr<ROMol>(SmilesToMol("C=CCN=C=S")));
+  }
 
-  for (int i = 0; i < 5; ++i)
+  for (int i = 0; i < 5; ++i) {
     bbs[1].push_back(boost::shared_ptr<ROMol>(SmilesToMol("NCc1ncc(Cl)cc1Br")));
+  }
 
-  for (int i = 0; i < 6; ++i)
+  for (int i = 0; i < 6; ++i) {
     bbs[2].push_back(
         boost::shared_ptr<ROMol>(SmilesToMol("NCCCc1ncc(Cl)cc1Br")));
+  }
 
   ChemicalReaction rxn;
   CartesianProductStrategy cart;
@@ -103,7 +107,7 @@ void testSamplers() {
   randBBs.initialize(rxn, bbs);
   EvenSamplePairsStrategy even;
   even.initialize(rxn, bbs);
-  std::vector<boost::shared_ptr<EnumerationStrategyBase> > enumerators;
+  std::vector<boost::shared_ptr<EnumerationStrategyBase>> enumerators;
   enumerators.push_back(
       boost::shared_ptr<EnumerationStrategyBase>(cart.copy()));
   enumerators.push_back(
@@ -113,9 +117,9 @@ void testSamplers() {
   enumerators.push_back(
       boost::shared_ptr<EnumerationStrategyBase>(even.copy()));
 #ifdef RDK_USE_BOOST_SERIALIZATION
-  for (size_t i = 0; i < enumerators.size(); ++i) {
-    TEST_ASSERT(enumerators[i]->getNumPermutations() == 10 * 5 * 6);
-    pickleTest(*enumerators[i], 10 * 5 * 6);
+  for (auto &enumerator : enumerators) {
+    TEST_ASSERT(enumerator->getNumPermutations() == 10 * 5 * 6);
+    pickleTest(*enumerator, 10 * 5 * 6);
   }
 #endif
   // for(auto&& i: enumerators) {
@@ -126,18 +130,21 @@ void testSamplers() {
 void testEvenSamplers() {
   EnumerationTypes::BBS bbs;
   bbs.resize(3);
-  unsigned long R1 = 6000;
-  unsigned long R2 = 500;
-  unsigned long R3 = 10000;
-  for (unsigned long i = 0; i < R1; ++i)
+  boost::uint64_t R1 = 6000;
+  boost::uint64_t R2 = 500;
+  boost::uint64_t R3 = 10000;
+  for (unsigned long i = 0; i < R1; ++i) {
     bbs[0].push_back(boost::shared_ptr<ROMol>(SmilesToMol("C=CCN=C=S")));
+  }
 
-  for (unsigned long i = 0; i < R2; ++i)
+  for (unsigned long i = 0; i < R2; ++i) {
     bbs[1].push_back(boost::shared_ptr<ROMol>(SmilesToMol("NCc1ncc(Cl)cc1Br")));
+  }
 
-  for (unsigned long i = 0; i < R3; ++i)
+  for (unsigned long i = 0; i < R3; ++i) {
     bbs[2].push_back(
         boost::shared_ptr<ROMol>(SmilesToMol("NCCCc1ncc(Cl)cc1Br")));
+  }
 
   ChemicalReaction rxn;
   EvenSamplePairsStrategy even;
@@ -176,7 +183,7 @@ void testEnumerations() {
     EnumerateLibrary en(*rxn, bbs);
     size_t i = 0;
     for (; (bool)en; ++i) {
-      std::vector<std::vector<std::string> > res = en.nextSmiles();
+      std::vector<std::vector<std::string>> res = en.nextSmiles();
       TEST_ASSERT(res.size() == 1);
       TEST_ASSERT(res[0].size() == 1);
       TEST_ASSERT(res[0][0] == smiresults[i]);
@@ -187,7 +194,7 @@ void testEnumerations() {
     en.resetState();
     i = 0;
     for (; (bool)en; ++i) {
-      std::vector<std::vector<std::string> > res = en.nextSmiles();
+      std::vector<std::vector<std::string>> res = en.nextSmiles();
       TEST_ASSERT(res.size() == 1);
       TEST_ASSERT(res[0].size() == 1);
       TEST_ASSERT(res[0][0] == smiresults[i]);
@@ -201,9 +208,9 @@ void testEnumerations() {
     boost::shared_ptr<EnumerateLibrary> en(
         new EnumerateLibrary(*rxn, bbs, RandomSampleStrategy()));
 
-    std::vector<std::vector<std::vector<std::string> > > smir;
+    std::vector<std::vector<std::vector<std::string>>> smir;
     for (size_t j = 0; j < 10; ++j) {
-      std::vector<std::vector<std::string> > smiles = en->nextSmiles();
+      std::vector<std::vector<std::string>> smiles = en->nextSmiles();
       smir.push_back(smiles);
     }
 
@@ -325,6 +332,7 @@ void testInsaneEnumerations() {
   delete rxn2;
 }
 
+#ifdef RDK_USE_BOOST_SERIALIZATION
 void testGithub1657() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing github #1657: EnumerateLibrary with "
@@ -366,15 +374,12 @@ void testGithub1657() {
   delete rxn;
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
+#else
+void testGithub1657() {}
+#endif
 
-int main(int argc, char *argv[]) {
+int main() {
   RDLog::InitLogs();
-  bool doLong = false;
-  if (argc > 1) {
-    if (!strncmp(argv[1], "-l", 2)) {
-      doLong = true;
-    }
-  }
 #if 1
   testSamplers();
   testEvenSamplers();
