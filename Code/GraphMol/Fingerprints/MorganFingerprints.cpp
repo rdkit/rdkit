@@ -344,7 +344,7 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
          iter != neighborhoodsThisRound.end(); ++iter) {
       // if we haven't seen this exact environment before, update the
       // fingerprint:
-      if (std::find(neighborhoods.begin(), neighborhoods.end(),
+      if (includeRedundantEnvironments || std::find(neighborhoods.begin(), neighborhoods.end(),
                     iter->get<0>()) == neighborhoods.end()) {
         if (!onlyNonzeroInvariants || invariantCpy[iter->get<2>()]) {
           if (includeAtoms[iter->get<2>()]) {
