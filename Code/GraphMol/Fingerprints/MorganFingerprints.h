@@ -95,6 +95,8 @@ const std::string morganFingerprintVersion = "1.0.0";
                            about the atoms that set each particular bit.
                            The keys are the map are bit ids, the values
                            are lists of (atomId, radius) pairs.
+  \param includeRedundantEnvironments : if set, the check for redundant atom
+                           environments will not be done.
 
   \return a pointer to the fingerprint. The client is
   responsible for calling delete on this.
@@ -102,10 +104,11 @@ const std::string morganFingerprintVersion = "1.0.0";
 */
 RDKIT_FINGERPRINTS_EXPORT SparseIntVect<std::uint32_t> *getFingerprint(
     const ROMol &mol, unsigned int radius,
-    std::vector<std::uint32_t> *invariants = 0,
-    const std::vector<std::uint32_t> *fromAtoms = 0, bool useChirality = false,
-    bool useBondTypes = true, bool useCounts = true,
-    bool onlyNonzeroInvariants = false, BitInfoMap *atomsSettingBits = 0);
+    std::vector<boost::uint32_t> *invariants = 0,
+    const std::vector<boost::uint32_t> *fromAtoms = 0,
+    bool useChirality = false, bool useBondTypes = true, bool useCounts = true,
+    bool onlyNonzeroInvariants = false, BitInfoMap *atomsSettingBits = 0,
+    bool includeRedundantEnvironments = false);
 
 //! returns the Morgan fingerprint for a molecule
 /*!
@@ -144,6 +147,8 @@ RDKIT_FINGERPRINTS_EXPORT SparseIntVect<std::uint32_t> *getFingerprint(
                            about the atoms that set each particular bit.
                            The keys are the map are bit ids, the values
                            are lists of (atomId, radius) pairs.
+  \param includeRedundantEnvironments : if set, the check for redundant atom
+                           environments will not be done.
 
   \return a pointer to the fingerprint. The client is
   responsible for calling delete on this.
@@ -151,10 +156,11 @@ RDKIT_FINGERPRINTS_EXPORT SparseIntVect<std::uint32_t> *getFingerprint(
 */
 RDKIT_FINGERPRINTS_EXPORT SparseIntVect<std::uint32_t> *getHashedFingerprint(
     const ROMol &mol, unsigned int radius, unsigned int nBits = 2048,
-    std::vector<std::uint32_t> *invariants = 0,
-    const std::vector<std::uint32_t> *fromAtoms = 0, bool useChirality = false,
-    bool useBondTypes = true, bool onlyNonzeroInvariants = false,
-    BitInfoMap *atomsSettingBits = 0);
+    std::vector<boost::uint32_t> *invariants = 0,
+    const std::vector<boost::uint32_t> *fromAtoms = 0,
+    bool useChirality = false, bool useBondTypes = true,
+    bool onlyNonzeroInvariants = false, BitInfoMap *atomsSettingBits = 0,
+    bool includeRedundantEnvironments = false);
 
 //! returns the Morgan fingerprint for a molecule as a bit vector
 /*!
@@ -183,6 +189,8 @@ RDKIT_FINGERPRINTS_EXPORT SparseIntVect<std::uint32_t> *getHashedFingerprint(
                            about the atoms that set each particular bit.
                            The keys are the map are bit ids, the values
                            are lists of (atomId, radius) pairs.
+  \param includeRedundantEnvironments : if set, the check for redundant atom
+                           environments will not be done.
 
   \return a pointer to the fingerprint. The client is
   responsible for calling delete on this.
@@ -193,7 +201,8 @@ RDKIT_FINGERPRINTS_EXPORT ExplicitBitVect *getFingerprintAsBitVect(
     std::vector<std::uint32_t> *invariants = 0,
     const std::vector<std::uint32_t> *fromAtoms = 0, bool useChirality = false,
     bool useBondTypes = true, bool onlyNonzeroInvariants = false,
-    BitInfoMap *atomsSettingBits = 0);
+    BitInfoMap *atomsSettingBits = 0,
+    bool includeRedundantEnvironments = false);
 
 }  // end of namespace MorganFingerprints
 }  // namespace RDKit
