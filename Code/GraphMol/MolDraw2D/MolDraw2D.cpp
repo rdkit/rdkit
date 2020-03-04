@@ -1126,12 +1126,30 @@ void MolDraw2D::drawStrings(const std::vector<std::string> &labels,
     }
 
     Point2D next_cds(cds);
+    // put the first piece central, but the rest centred on the first
+    // char that isn't a super- or sub-script.
+    AlignType align = MIDDLE;
     for (auto lab: labels) {
-      drawString(lab, next_cds, MIDDLE);
+      Point2D new_cds = next_cds;
+      if(align == START) {
+        size_t n = 0;
+        if(lab[0] == '<') {
+          // shoot through to second >, end of markup
+          n = lab.find('>' , 1);
+          if(n != string::npos) {
+            n = lab.find('>', n+1) + 1;
+          }
+        }
+        if(n < lab.length()-1) {
+          alignString(lab, lab.substr(n, 1), 0, next_cds, new_cds);
+        }
+      }
+      drawString(lab, new_cds, align);
       double width, height;
       getStringSize(lab, width, height);
       next_cds.x += x_scale * width;
       next_cds.y += y_scale * height;
+      align = START;
     }
   }
 
@@ -1992,6 +2010,8 @@ vector<string> MolDraw2D::atomLabelToPieces(int atom_num) const {
 
   vector<string> label_pieces;
   const string &atsym = atom_syms_[activeMolIdx_][atom_num].first;
+  OrientType orient = atom_syms_[activeMolIdx_][atom_num].second;
+  // cout << "splitting " << atsym << " : " << orient << endl;
 
   // if we have the mark-up <lit>XX</lit> the symbol is to be used
   // without modification
@@ -2023,20 +2043,16 @@ vector<string> MolDraw2D::atomLabelToPieces(int atom_num) const {
     }
     next_piece += atsym[i++];
   }
-
   if(label_pieces.size() < 2) {
     return label_pieces;
   }
 
   // now some re-arrangement to make things look nicer
-  // if there's an atom map (:nn) or a charge it needs to go after the
+  // if there's an atom map (:nn) it needs to go after the
   // first atomic symbol which, because of <sup> might not be the first
   // piece.
   for(size_t j = 0; j < label_pieces.size(); ++j) {
-    if(label_pieces[j][0] == ':'
-       || label_pieces[j].substr(0, 6) == "<sup>+"
-       || label_pieces[j].substr(0, 6) == "<sup>-"
-       || label_pieces[j].substr(0, 6) == "<sup>.") {
+    if(label_pieces[j][0] == ':') {
       if (label_pieces[0].substr(0, 5) == "<sup>") {
         label_pieces[1] += label_pieces[j];
       } else {
@@ -2046,8 +2062,26 @@ vector<string> MolDraw2D::atomLabelToPieces(int atom_num) const {
       break;
     }
   }
+  // if there's a charge, it always needs to be at the end.
+  string charge_piece;
+  for(size_t j = 0; j < label_pieces.size(); ++j) {
+    if(label_pieces[j].substr(0, 6) == "<sup>+"
+       || label_pieces[j].substr(0, 6) == "<sup>-"
+       || label_pieces[j].substr(0, 6) == "<sup>.") {
+      charge_piece += label_pieces[j];
+      label_pieces[j].clear();
+    }
+  }
   label_pieces.erase(remove(label_pieces.begin(), label_pieces.end(), ""),
                      label_pieces.end());
+  // if orient is W charge goes to front, otherwise to end.
+  if(!charge_piece.empty()) {
+    if(orient == W) {
+      label_pieces.insert(label_pieces.begin(), charge_piece);
+    } else {
+      label_pieces.emplace_back(charge_piece);
+    }
+  }
 
   // if there's a <sub> piece, attach it to the one before.
   for(size_t j = 1; j < label_pieces.size(); ++j) {
@@ -2063,11 +2097,26 @@ vector<string> MolDraw2D::atomLabelToPieces(int atom_num) const {
   // if there's a <sup> piece, attach it to the one after.
   if(label_pieces.size() > 1) {
     for (size_t j = 0; j < label_pieces.size() - 1; ++j) {
-      if (label_pieces[j].substr(0, 5) == "<sup>") {
-        label_pieces[j+1] = label_pieces[j] + label_pieces[j+1];
+      if(label_pieces[j].substr(0, 5) == "<sup>") {
+        if(orient == W
+           && (label_pieces[j][5] == '+' || label_pieces[j][5] == '-'
+               || label_pieces[j][5] == '.')) {
+          label_pieces[j+1] = label_pieces[j+1] + label_pieces[j];
+        } else {
+          label_pieces[j+1] = label_pieces[j] + label_pieces[j+1];
+        }
         label_pieces[j].clear();
         break;
       }
+    }
+  }
+  // and if orient is N or S and the last piece is a charge, attach it to the
+  // one before
+  if(orient == N || orient == S) {
+    if(label_pieces.back().substr(0, 6) == "<sup>+"
+       || label_pieces.back().substr(0, 6) == "<sup>-") {
+      label_pieces[label_pieces.size()-2] += label_pieces.back();
+      label_pieces.back().clear();
     }
   }
   label_pieces.erase(remove(label_pieces.begin(), label_pieces.end(), ""),
