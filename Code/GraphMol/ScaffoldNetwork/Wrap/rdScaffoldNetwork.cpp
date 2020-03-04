@@ -94,7 +94,7 @@ BOOST_PYTHON_MODULE(rdScaffoldNetwork) {
           "include scaffolds with all atoms replaced by dummies")
       .def_readwrite(
           "includeGenericBondScaffolds",
-          &ScaffoldNetwork::ScaffoldNetworkParams::includeGenericScaffolds,
+          &ScaffoldNetwork::ScaffoldNetworkParams::includeGenericBondScaffolds,
           "include scaffolds with all bonds replaced by single bonds")
       .def_readwrite(
           "includeScaffoldsWithoutAttachments",
