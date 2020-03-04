@@ -112,6 +112,39 @@ class TestScaffoldNetwork(unittest.TestCase):
     self.assertEqual(len(net.nodes), 5)
     self.assertEqual(len(net.edges), 7)
 
+  def test6Options(self):
+    smis = ["C1OC1Cc1ccccc1"]
+    ms = [Chem.MolFromSmiles(x) for x in smis]
+    params = rdScaffoldNetwork.ScaffoldNetworkParams()
+    net = rdScaffoldNetwork.CreateScaffoldNetwork(ms, params)
+    self.assertEqual(len(net.nodes), 9)
+    self.assertEqual(len(net.edges), 8)
+
+    params = rdScaffoldNetwork.ScaffoldNetworkParams()
+    params.keepOnlyFirstFragment = False
+    net = rdScaffoldNetwork.CreateScaffoldNetwork(ms, params)
+    self.assertEqual(len(net.nodes), 19)
+    self.assertEqual(len(net.edges), 23)
+
+    params = rdScaffoldNetwork.ScaffoldNetworkParams()
+    params.includeGenericScaffolds = False
+    net = rdScaffoldNetwork.CreateScaffoldNetwork(ms, params)
+    self.assertEqual(len(net.nodes), 5)
+    self.assertEqual(len(net.edges), 4)
+
+    params = rdScaffoldNetwork.ScaffoldNetworkParams()
+    params.includeGenericBondScaffolds = True
+    net = rdScaffoldNetwork.CreateScaffoldNetwork(ms, params)
+    self.assertEqual(len(net.nodes), 11)
+    self.assertEqual(len(net.edges), 11)
+
+    
+
+
+
+
+
+
 
 if __name__ == '__main__':
   unittest.main()
