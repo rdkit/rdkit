@@ -268,7 +268,7 @@ std::string SmilesMolSupplier::nextLine() {
 
   if (tempStr == "") {
     // got an empty string, check to see if we hit EOF:
-    if (dp_inStream->eof()) {
+    if (dp_inStream->eof() || dp_inStream->bad()) {
       // yes, set our flag:
       df_end = true;
     }

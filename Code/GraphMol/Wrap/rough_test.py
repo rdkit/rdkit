@@ -15,7 +15,7 @@ from rdkit import DataStructs
 from rdkit import Chem
 import rdkit.Chem.rdDepictor
 from rdkit.Chem import rdqueries
-
+import tempfile
 from rdkit import __version__
 
 # Boost functions are NOT found by doctest, this "fixes" them
@@ -5875,9 +5875,27 @@ M  END
     self.assertEqual(len(m.GetSubstructMatches(p,ps)),1)
 
 
+  def testSuppliersReadingDirectories(self):
+    # this is an odd one, basically we need to check that we don't hang
+    #  which is pretty much a bad test in my opinion, but YMMV
+    d = tempfile.mkdtemp()
+    self.assertTrue(os.path.exists(d))
     
+    for supplier in [Chem.SmilesMolSupplier,
+                     Chem.SDMolSupplier,
+                     Chem.TDTMolSupplier,
+                     #Chem.CompressedSDMolSupplier,
+                     Chem.MaeMolSupplier
+    ]:
+      print("supplier:", supplier)
+      try:
+        for i,m in enumerate(supplier(d)):
+          self.assertFalse(0)
+      except:
+        # throwing an exception is fine
+        continue
     
-    
+    os.rmdir(d)
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:

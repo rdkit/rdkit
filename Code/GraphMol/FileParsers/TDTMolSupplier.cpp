@@ -158,7 +158,7 @@ bool TDTMolSupplier::advanceToNextRecord() {
   std::streampos pos;
   bool res = false;
   while (1) {
-    if (dp_inStream->eof()) {
+    if (dp_inStream->eof() || dp_inStream->bad()) {
       return false;
     }
     pos = dp_inStream->tellg();
@@ -176,7 +176,7 @@ bool TDTMolSupplier::advanceToNextRecord() {
 
 void TDTMolSupplier::checkForEnd() {
   PRECONDITION(dp_inStream, "no stream");
-  if (dp_inStream->eof()) {
+  if (dp_inStream->eof() || dp_inStream->bad()) {
     df_end = true;
     // the -1 here is because by the time we get here we've already pushed on
     // the
