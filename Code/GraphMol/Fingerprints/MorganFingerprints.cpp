@@ -100,8 +100,7 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]",  // Basic
 std::vector<std::string> defaultFeatureSmarts(smartsPatterns,
                                               smartsPatterns + 6);
 typedef boost::flyweight<boost::flyweights::key_value<std::string, ss_matcher>,
-                         boost::flyweights::no_tracking>
-    pattern_flyweight;
+                         boost::flyweights::no_tracking> pattern_flyweight;
 void getFeatureInvariants(const ROMol &mol, std::vector<uint32_t> &invars,
                           std::vector<const ROMol *> *patterns) {
   unsigned int nAtoms = mol.getNumAtoms();
