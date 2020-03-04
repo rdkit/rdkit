@@ -7,3 +7,6 @@ GraphMol RDGeometryLib RDGeneral DataStructs
 RDBoost) 
 
 add_pytest(pyScaffoldNetwork ${CMAKE_CURRENT_SOURCE_DIR}/testScaffoldNetwork.py)
+if (RDK_USE_BOOST_SERIALIZATION)
+    add_pytest(pyScaffoldNetworkPickling ${CMAKE_CURRENT_SOURCE_DIR}/testPickleScaffoldNetwork.py)
+endif()

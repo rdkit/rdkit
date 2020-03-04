@@ -144,9 +144,11 @@ BOOST_PYTHON_MODULE(rdScaffoldNetwork) {
 
   python::class_<ScaffoldNetwork::ScaffoldNetwork>(
       "ScaffoldNetwork", "A scaffold network", python::init<>())
+#ifdef RDK_USE_BOOST_SERIALIZATION
       .def(python::init<const std::string &>())
       // enable pickle support
       .def_pickle(scaffoldnetwork_pickle_suite())
+#endif
       .def_readonly("nodes", &ScaffoldNetwork::ScaffoldNetwork::nodes,
                     "the sequence of SMILES defining the nodes")
       .def_readonly("counts", &ScaffoldNetwork::ScaffoldNetwork::counts,
