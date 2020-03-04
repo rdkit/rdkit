@@ -97,7 +97,7 @@ void MolDraw2DSVG::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
   Point2D c1 = getDrawCoords(cds1);
 
   std::string col = DrawColourToSVG(colour());
-  unsigned int width = lineWidth();
+  unsigned int width = getDrawLineWidth();
   d_os << "<path ";
   if (d_activeClass != "") {
     d_os << "class='" << d_activeClass << "' ";

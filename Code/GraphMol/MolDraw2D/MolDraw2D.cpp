@@ -1992,7 +1992,6 @@ vector<string> MolDraw2D::atomLabelToPieces(int atom_num) const {
 
   vector<string> label_pieces;
   const string &atsym = atom_syms_[activeMolIdx_][atom_num].first;
-  // cout << "Splitting string " << atsym << endl;
 
   // if we have the mark-up <lit>XX</lit> the symbol is to be used
   // without modification
@@ -2286,6 +2285,7 @@ string MolDraw2D::getAtomSymbol(const RDKit::Atom &atom) const {
   } else if (drawOptions().dummiesAreAttachments && atom.getAtomicNum() == 0 &&
              atom.getDegree() == 1) {
     symbol = "";
+    literal_symbol = false;
   } else if (isComplexQuery(&atom)) {
     symbol = "?";
   } else if (drawOptions().atomLabelDeuteriumTritium &&
@@ -2347,7 +2347,7 @@ string MolDraw2D::getAtomSymbol(const RDKit::Atom &atom) const {
     for(const std::string &se: postText) { symbol += se; }
   }
 
-  if(literal_symbol) {
+  if(literal_symbol && !symbol.empty()) {
     symbol = "<lit>" + symbol + "</lit>";
   }
   // cout << "Atom symbol " << atom.getIdx() << " : " << symbol << endl;
