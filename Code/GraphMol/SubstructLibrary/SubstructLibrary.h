@@ -239,6 +239,10 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT FPHolderBase {
     for (size_t i = 0; i < fps.size(); ++i) delete fps[i];
   }
 
+  virtual unsigned int size() const {
+    return rdcast<unsigned int>(fps.size());
+  }
+  
   //! Adds a molecule to the fingerprinter
   unsigned int addMol(const ROMol &m) {
     fps.push_back(makeFingerprint(m));

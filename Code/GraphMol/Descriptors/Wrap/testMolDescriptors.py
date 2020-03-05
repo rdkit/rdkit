@@ -239,6 +239,20 @@ class TestCase(unittest.TestCase):
     fp1 = rdMD.GetMorganFingerprint(mol, 0, invariants=vs1)
     fp2 = rdMD.GetMorganFingerprint(mol, 0, useFeatures=True)
     self.assertEqual(fp1, fp2)
+    
+    mol = Chem.MolFromSmiles('CCCC(N)(O)')
+    info ={}
+    fp = rdMD.GetMorganFingerprint(mol, 2, bitInfo=info, includeRedundantEnvironments=True)
+    self.assertEqual(len(info), 17)
+
+    info1 ={}
+    fp1 = rdMD.GetMorganFingerprint(mol, 2, bitInfo=info1, includeRedundantEnvironments=False)
+    self.assertEqual(len(info1), 14)
+
+    info2 ={}
+    fp1 = rdMD.GetMorganFingerprint(mol, 2, bitInfo=info2)
+    self.assertEqual(len(info2), 14)
+    
 
   def testCrippen(self):
     mol = Chem.MolFromSmiles("n1ccccc1CO")

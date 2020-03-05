@@ -34,6 +34,7 @@
 #include <RDBoost/python_streambuf.h>
 
 #include <GraphMol/SubstructLibrary/SubstructLibrary.h>
+#include <GraphMol/SubstructLibrary/PatternFactory.h>
 
 namespace python = boost::python;
 using boost_adaptbx::python::streambuf;
@@ -210,15 +211,28 @@ void toStream(const SubstructLibrary &cat, python::object &fileobj) {
   cat.initFromStream(is);
 }
 
+boost::shared_ptr<MolHolderBase> GetMolHolder(SubstructLibrary &sslib)
+{
+  // need to convert from a ref to a real shared_ptr
+  return sslib.getMolHolder();
+}
+
+boost::shared_ptr<FPHolderBase> GetFpHolder(SubstructLibrary &sslib)
+{
+  // need to convert from a ref to a real shared_ptr
+  return sslib.getFpHolder();
+}
+
 struct substructlibrary_wrapper {
   static void wrap() {
     // n.b. there can only be one of these in all wrappings
     // python::class_<std::vector<unsigned int> >("UIntVect").def(
     //  python::vector_indexing_suite<std::vector<unsigned int>, true>());
 
-    python::class_<MolHolderBase, boost::noncopyable>("MolHolderBase", "",
-                                                      python::no_init)
-
+    python::class_<MolHolderBase, boost::shared_ptr<MolHolderBase>,
+		   boost::noncopyable>("MolHolderBase", "",
+				       python::no_init)
+        .def("__len__", &MolHolderBase::size)
         .def("AddMol", &MolHolderBase::addMol,
              "Adds molecle to the molecule holder")
         .def("GetMol", &MolHolderBase::getMol,
@@ -261,6 +275,8 @@ struct substructlibrary_wrapper {
 
     python::class_<FPHolderBase, boost::shared_ptr<FPHolderBase>,
                    boost::noncopyable>("FPHolderBase", "", python::no_init)
+        .def("__len__", &FPHolderBase::size)
+      
         .def("AddMol", &FPHolderBase::addMol,
              "Adds a molecule to the fingerprint database, returns the index "
              "of the new pattern")
@@ -290,11 +306,15 @@ struct substructlibrary_wrapper {
         .def(python::init<boost::shared_ptr<MolHolderBase>,
                           boost::shared_ptr<FPHolderBase>>())
         .def(python::init<std::string>())
+      
+        .def("GetMolHolder", &GetMolHolder)
+        .def("GetFpHolder", &GetFpHolder)      
+      
         .def("AddMol", &SubstructLibrary::addMol, (python::arg("mol")),
              "Adds a molecule to the substruct library")
 
         .def("GetMatches", (std::vector<unsigned int>(SubstructLibrary::*)(
-                               const ROMol &, bool, bool, bool, int, int)) &
+			       const ROMol &, bool, bool, bool, int, int)) &
                                SubstructLibrary::getMatches,
              (python::arg("query"), python::arg("recursionPossible") = true,
               python::arg("useChirality") = true,
@@ -399,8 +419,8 @@ struct substructlibrary_wrapper {
 	     "  >>> stream = io.StringIO()\n"
 	     "  >>> lib.ToStream(stream)\n\n"
 	     "   or\n"
-	     "  >>> stream = open('rdkit.sslib', 'w')\n"
-	     "  >>> lib.ToStream(stream)\n"
+	     "  >>> with open('rdkit.sslib', 'w') as stream:\n"
+	     "  ...  lib.ToStream(stream)\n"
 	     )
 
         .def("InitFromStream", &initFromStream,
@@ -429,6 +449,10 @@ struct substructlibrary_wrapper {
     python::def("SubstructLibraryCanSerialize", SubstructLibraryCanSerialize,
                 "Returns True if the SubstructLibrary is serializable "
                 "(requires boost serialization");
+
+    python::def("AddPatterns", addPatterns,
+		"Add pattern fingerprints to the given library, use numThreads=-1 to use all available cores",
+		(python::arg("sslib"), python::arg("numThreads")=1));
 
   }
 };
