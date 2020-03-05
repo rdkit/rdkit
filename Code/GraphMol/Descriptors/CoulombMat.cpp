@@ -55,8 +55,8 @@ std::unique_ptr<double[]> randnormal(const int nrolls) {
 }
 
 VectorXd getUpperMat(MatrixXd mat) {
+  PRECONDITION(mat.rows()==mat.cols(), "Mat must be symetrical");
   
-  PRECONDITION(mat.rows()!=mat.cols(), "Mat must be symetrical");
   VectorXd res(mat.rows()*(mat.cols()+1)/2);
   Index size = mat.rows();
   Index offset = 0;
