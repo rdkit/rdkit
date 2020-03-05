@@ -31,23 +31,23 @@ class TestScaffoldNetwork(unittest.TestCase):
 
     net = rdScaffoldNetwork.CreateScaffoldNetwork(ms, params)
     self.assertEqual(len(net.nodes), 12)
-    self.assertEqual(len(net.edges), 12)
+    self.assertEqual(len(net.edges), 13)
     self.assertEqual(len(net.counts), len(net.nodes))
+    self.assertEqual(len([x for x in net.edges if x.type == rdScaffoldNetwork.EdgeType.Fragment]),
+                     4)
+    self.assertEqual(len([x for x in net.edges if x.type == rdScaffoldNetwork.EdgeType.Generic]), 6)
     self.assertEqual(
-      len([x for x in net.edges if x.type == rdScaffoldNetwork.EdgeType.Fragment]), 4)
-    self.assertEqual(len([x for x in net.edges if x.type == rdScaffoldNetwork.EdgeType.Generic]), 3)
-    self.assertEqual(
-      len([x for x in net.edges if x.type == rdScaffoldNetwork.EdgeType.RemoveAttachment]), 5)
+      len([x for x in net.edges if x.type == rdScaffoldNetwork.EdgeType.RemoveAttachment]), 3)
 
     net = rdScaffoldNetwork.ScaffoldNetwork()
     rdScaffoldNetwork.UpdateScaffoldNetwork(ms, net, params)
     self.assertEqual(len(net.nodes), 12)
-    self.assertEqual(len(net.edges), 12)
+    self.assertEqual(len(net.edges), 13)
+    self.assertEqual(len([x for x in net.edges if x.type == rdScaffoldNetwork.EdgeType.Fragment]),
+                     4)
+    self.assertEqual(len([x for x in net.edges if x.type == rdScaffoldNetwork.EdgeType.Generic]), 6)
     self.assertEqual(
-      len([x for x in net.edges if x.type == rdScaffoldNetwork.EdgeType.Fragment]), 4)
-    self.assertEqual(len([x for x in net.edges if x.type == rdScaffoldNetwork.EdgeType.Generic]), 3)
-    self.assertEqual(
-      len([x for x in net.edges if x.type == rdScaffoldNetwork.EdgeType.RemoveAttachment]), 5)
+      len([x for x in net.edges if x.type == rdScaffoldNetwork.EdgeType.RemoveAttachment]), 3)
 
   def test2Basics(self):
     smis = ["c1ccccc1CC1NC(=O)CCC1", "c1cccnc1CC1NC(=O)CCC1"]
@@ -57,8 +57,8 @@ class TestScaffoldNetwork(unittest.TestCase):
     net = rdScaffoldNetwork.CreateScaffoldNetwork(ms, params)
     self.assertEqual(len(net.nodes), 7)
     self.assertEqual(len(net.edges), 7)
-    self.assertEqual(
-      len([x for x in net.edges if x.type == rdScaffoldNetwork.EdgeType.Fragment]), 4)
+    self.assertEqual(len([x for x in net.edges if x.type == rdScaffoldNetwork.EdgeType.Fragment]),
+                     4)
     self.assertEqual(len([x for x in net.edges if x.type == rdScaffoldNetwork.EdgeType.Generic]), 3)
 
   def test3Update(self):
@@ -73,23 +73,23 @@ class TestScaffoldNetwork(unittest.TestCase):
     self.assertEqual(list(net.counts).count(1), len(net.counts))
     rdScaffoldNetwork.UpdateScaffoldNetwork(ms[1:2], net, params)
     self.assertEqual(len(net.nodes), 12)
-    self.assertEqual(len(net.edges), 12)
+    self.assertEqual(len(net.edges), 13)
     self.assertEqual(len(net.counts), len(net.nodes))
+    self.assertEqual(len([x for x in net.edges if x.type == rdScaffoldNetwork.EdgeType.Fragment]),
+                     4)
+    self.assertEqual(len([x for x in net.edges if x.type == rdScaffoldNetwork.EdgeType.Generic]), 6)
     self.assertEqual(
-      len([x for x in net.edges if x.type == rdScaffoldNetwork.EdgeType.Fragment]), 4)
-    self.assertEqual(len([x for x in net.edges if x.type == rdScaffoldNetwork.EdgeType.Generic]), 3)
-    self.assertEqual(
-      len([x for x in net.edges if x.type == rdScaffoldNetwork.EdgeType.RemoveAttachment]), 5)
+      len([x for x in net.edges if x.type == rdScaffoldNetwork.EdgeType.RemoveAttachment]), 3)
 
     net = rdScaffoldNetwork.CreateScaffoldNetwork(ms[0:1], params)
     rdScaffoldNetwork.UpdateScaffoldNetwork(ms[1:2], net, params)
     self.assertEqual(len(net.nodes), 12)
-    self.assertEqual(len(net.edges), 12)
+    self.assertEqual(len(net.edges), 13)
+    self.assertEqual(len([x for x in net.edges if x.type == rdScaffoldNetwork.EdgeType.Fragment]),
+                     4)
+    self.assertEqual(len([x for x in net.edges if x.type == rdScaffoldNetwork.EdgeType.Generic]), 6)
     self.assertEqual(
-      len([x for x in net.edges if x.type == rdScaffoldNetwork.EdgeType.Fragment]), 4)
-    self.assertEqual(len([x for x in net.edges if x.type == rdScaffoldNetwork.EdgeType.Generic]), 3)
-    self.assertEqual(
-      len([x for x in net.edges if x.type == rdScaffoldNetwork.EdgeType.RemoveAttachment]), 5)
+      len([x for x in net.edges if x.type == rdScaffoldNetwork.EdgeType.RemoveAttachment]), 3)
 
   def test4Str(self):
     smis = ["c1ccccc1CC1NC(=O)CCC1"]
@@ -136,14 +136,7 @@ class TestScaffoldNetwork(unittest.TestCase):
     params.includeGenericBondScaffolds = True
     net = rdScaffoldNetwork.CreateScaffoldNetwork(ms, params)
     self.assertEqual(len(net.nodes), 11)
-    self.assertEqual(len(net.edges), 11)
-
-    
-
-
-
-
-
+    self.assertEqual(len(net.edges), 10)
 
 
 if __name__ == '__main__':
