@@ -111,7 +111,7 @@ ROMol *flattenMol(const ROMol &mol, const ScaffoldNetworkParams &params) {
     res = new RWMol(mol);
   }
   for (auto atom : res->atoms()) {
-    if (params.flattenIsotopes){ 
+    if (params.flattenIsotopes) {
       atom->setIsotope(0);
     }
     if (params.flattenChirality) {
@@ -188,7 +188,7 @@ size_t addEntryIfMissing(T &vect, const V &e,
   if (viter == vect.end()) {
     vect.push_back(e);
     res = vect.size() - 1;
-    if (counts){ 
+    if (counts) {
       counts->push_back(0);
     }
   } else {
@@ -233,7 +233,7 @@ void addMolToNetwork(const ROMol &mol, ScaffoldNetwork &network,
         auto gbsmi = MolToSmiles(*gbmol);
         auto gbidx = addEntryIfMissing(network.nodes, gbsmi, &network.counts);
         addEntryIfMissing(network.edges,
-                          NetworkEdge({fidx, gbidx, EdgeType::GenericBond}));
+                          NetworkEdge({gidx, gbidx, EdgeType::GenericBond}));
       }
     }
   } else {
@@ -280,7 +280,7 @@ void addMolToNetwork(const ROMol &mol, ScaffoldNetwork &network,
         auto gbsmi = MolToSmiles(*gbmol);
         auto gbidx = addEntryIfMissing(network.nodes, gbsmi, &network.counts);
         addEntryIfMissing(network.edges,
-                          NetworkEdge({lidx, gbidx, EdgeType::GenericBond}));
+                          NetworkEdge({gidx, gbidx, EdgeType::GenericBond}));
         if (params.includeScaffoldsWithAttachments &&
             params.includeScaffoldsWithoutAttachments) {
           std::unique_ptr<ROMol> amol(removeAttachmentPoints(*gbmol, params));
