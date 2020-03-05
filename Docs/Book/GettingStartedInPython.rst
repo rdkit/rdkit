@@ -33,7 +33,6 @@ The majority of the basic molecular functionality is found in module :py:mod:`rd
 
 .. doctest::
 
-  >>> from __future__ import print_function
   >>> from rdkit import Chem
 
 Individual molecules can be constructed using a variety of approaches:
