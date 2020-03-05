@@ -80,7 +80,7 @@ void testBagofBonds(){
 
     // BoB tests
     std::string fNamebob =
-         pathName + "/Code/GraphMol/Descriptors/test_data/BoBnew.out";
+         pathName + "/Code/GraphMol/Descriptors/test_data/BoB.out";
 
     std::ifstream instrmbob(fNamebob.c_str());
     std::string lineBoB;
