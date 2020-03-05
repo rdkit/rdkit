@@ -256,46 +256,6 @@ void addMolToNetwork(const ROMol &mol, ScaffoldNetwork &network,
     addEntryIfMissing(network.edges,
                       NetworkEdge({iidx, lidx, EdgeType::Fragment}));
 
-#if 0
-    if (params.includeGenericScaffolds) {
-      bool doAtoms = true;
-      bool doBonds = false;
-      std::unique_ptr<ROMol> gmol(
-          makeScaffoldGeneric(*fragMol, doAtoms, doBonds));
-      auto gsmi = MolToSmiles(*gmol);
-      auto gidx = addEntryIfMissing(network.nodes, gsmi, &network.counts);
-      addEntryIfMissing(network.edges,
-                        NetworkEdge({lidx, gidx, EdgeType::Generic}));
-      if (params.includeScaffoldsWithAttachments &&
-          params.includeScaffoldsWithoutAttachments) {
-        std::unique_ptr<ROMol> amol(removeAttachmentPoints(*gmol, params));
-        auto asmi = MolToSmiles(*amol);
-        auto aidx = addEntryIfMissing(network.nodes, asmi, &network.counts);
-        addEntryIfMissing(
-            network.edges,
-            NetworkEdge({gidx, aidx, EdgeType::RemoveAttachment}));
-      }
-      if (params.includeGenericBondScaffolds) {
-        bool doAtoms = true;
-        bool doBonds = true;
-        std::unique_ptr<ROMol> gbmol(
-            makeScaffoldGeneric(*fragMol, doAtoms, doBonds));
-        auto gbsmi = MolToSmiles(*gbmol);
-        auto gbidx = addEntryIfMissing(network.nodes, gbsmi, &network.counts);
-        addEntryIfMissing(network.edges,
-                          NetworkEdge({gidx, gbidx, EdgeType::GenericBond}));
-        if (params.includeScaffoldsWithAttachments &&
-            params.includeScaffoldsWithoutAttachments) {
-          std::unique_ptr<ROMol> amol(removeAttachmentPoints(*gbmol, params));
-          auto asmi = MolToSmiles(*amol);
-          auto aidx = addEntryIfMissing(network.nodes, asmi, &network.counts);
-          addEntryIfMissing(
-              network.edges,
-              NetworkEdge({gbidx, aidx, EdgeType::RemoveAttachment}));
-        }
-      }
-    }
-#else
     if (params.includeGenericScaffolds) {
       bool doAtoms = true;
       bool doBonds = false;
@@ -318,7 +278,6 @@ void addMolToNetwork(const ROMol &mol, ScaffoldNetwork &network,
         }
       }
     }
-#endif
     if (params.includeScaffoldsWithAttachments &&
         params.includeScaffoldsWithoutAttachments) {
       // we're including both scaffolds without attachments and those with.
