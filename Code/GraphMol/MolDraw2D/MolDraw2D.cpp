@@ -622,32 +622,13 @@ void MolDraw2D::drawMolecules(
     return;
   }
 
-  std::vector<RWMol> tmols;
-  tmols.reserve(mols.size());
-  Point2D minP, maxP;
-  minP.x = minP.y = numeric_limits<double>::max();
-  maxP.x = maxP.y = -numeric_limits<double>::max();
-  for (unsigned int i = 0; i < mols.size(); ++i) {
-    if (!mols[i]) {
-      tmols.push_back(RWMol());
-      continue;
-    }
-    tmols.push_back(*(mols[i]));
-    if (drawOptions().prepareMolsBeforeDrawing) {
-      MolDraw2DUtils::prepareMolForDrawing(tmols[i]);
-    }
-    Conformer &conf = tmols[i].getConformer(confIds ? (*confIds)[i] : -1);
-    RDGeom::Point3D centroid = MolTransforms::computeCentroid(conf, false);
-    for (unsigned int j = 0; j < conf.getNumAtoms(); ++j) {
-      RDGeom::Point3D &pj = conf.getAtomPos(j);
-      pj -= centroid;
-      minP.x = std::min(minP.x, pj.x);
-      minP.y = std::min(minP.y, pj.y);
-      maxP.x = std::max(maxP.x, pj.x);
-      maxP.y = std::max(maxP.y, pj.y);
-    }
-  }
-  setScale(panelWidth(), panelHeight(), minP, maxP);
+  vector<unique_ptr<RWMol> > tmols;
+  calculateScale(panelWidth(), panelHeight(), mols, highlight_atoms,
+                 highlight_radii, confIds, tmols);
+  // so drawMolecule doesn't recalculate the scale each time, and
+  // undo all the good work.
+  needs_scale_ = false;
+
   int nCols = width() / panelWidth();
   int nRows = height() / panelHeight();
   for (unsigned int i = 0; i < mols.size(); ++i) {
@@ -667,18 +648,19 @@ void MolDraw2D::drawMolecules(
     }
     setOffset(col * panelWidth(), row * panelHeight());
 
-    vector<int> *lhighlight_bonds = nullptr;
+    ROMol *draw_mol = tmols[i] ? tmols[i].get() : mols[i];
+    unique_ptr<vector<int> >lhighlight_bonds;
     if (highlight_bonds) {
-      lhighlight_bonds = new std::vector<int>((*highlight_bonds)[i]);
+      lhighlight_bonds.reset(new std::vector<int>((*highlight_bonds)[i]));
     } else if (drawOptions().continuousHighlight && highlight_atoms) {
-      lhighlight_bonds = new vector<int>();
-      getBondHighlightsForAtoms(tmols[i], (*highlight_atoms)[i],
+      lhighlight_bonds.reset(new vector<int>());
+      getBondHighlightsForAtoms(*draw_mol, (*highlight_atoms)[i],
                                 *lhighlight_bonds);
     };
 
-    drawMolecule(tmols[i], legends ? (*legends)[i] : "",
+    drawMolecule(*draw_mol, legends ? (*legends)[i] : "",
                  highlight_atoms ? &(*highlight_atoms)[i] : nullptr,
-                 lhighlight_bonds,
+                 lhighlight_bonds.get(),
                  highlight_atom_maps ? &(*highlight_atom_maps)[i] : nullptr,
                  highlight_bond_maps ? &(*highlight_bond_maps)[i] : nullptr,
                  highlight_radii ? &(*highlight_radii)[i] : nullptr,
@@ -691,9 +673,9 @@ void MolDraw2D::drawMolecules(
       auto pt = getDrawCoords(j);
       mols[i]->getAtomWithIdx(j)->setProp(tag, pt, true);
     }
-    delete lhighlight_bonds;
   }
-};
+
+}
 
 // ****************************************************************************
 void MolDraw2D::highlightCloseContacts() {
@@ -741,14 +723,16 @@ void MolDraw2D::highlightCloseContacts() {
 // transform a set of coords in the molecule's coordinate system
 // to drawing system coordinates
 Point2D MolDraw2D::getDrawCoords(const Point2D &mol_cds) const {
+
   double x = scale_ * (mol_cds.x - x_min_ + x_trans_);
   double y = scale_ * (mol_cds.y - y_min_ + y_trans_);
   // y is now the distance from the top of the image, we need to
   // invert that:
   x += x_offset_;
   y -= y_offset_;
-  y = height() - y;
+  y = panelHeight() - y;
   return Point2D(x, y);
+
 }
 
 // ****************************************************************************
@@ -815,6 +799,7 @@ void MolDraw2D::setScale(int width, int height, const Point2D &minv,
   scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
   double y_mid = y_min_ + 0.5 * y_range_;
   double x_mid = x_min_ + 0.5 * x_range_;
+  x_trans_ = y_trans_ = 0.0;  // getDrawCoords uses [xy_]trans_
   Point2D mid = getDrawCoords(Point2D(x_mid, y_mid));
   // that used the offset, we need to remove that:
   mid.x -= x_offset_;
@@ -832,17 +817,6 @@ void MolDraw2D::calculateScale(int width, int height,
   PRECONDITION(activeMolIdx_ >= 0, "bad active mol");
 
   // cout << "calculateScale" << endl;
-  auto centre_picture = [&]() {
-    double y_mid = y_min_ + 0.5 * y_range_;
-    double x_mid = x_min_ + 0.5 * x_range_;
-    Point2D mid = getDrawCoords(Point2D(x_mid, y_mid));
-    // that used the offset, we need to remove that:
-    mid.x -= x_offset_;
-    mid.y += y_offset_;
-    x_trans_ = (width / 2 - mid.x) / scale_;
-    y_trans_ = (mid.y - height / 2) / scale_;
-  };
-
   x_min_ = y_min_ = numeric_limits<double>::max();
   double x_max(-numeric_limits<double>::max()),
       y_max(-numeric_limits<double>::max());
@@ -966,7 +940,7 @@ void MolDraw2D::calculateScale(int width, int height,
     if(scale_ > fix_scale) {
       scale_ = fix_scale;
     }
-    centre_picture();
+    centrePicture(width, height);
   } else {
     scale_ = 1;
     x_trans_ = 0.;
@@ -977,6 +951,78 @@ void MolDraw2D::calculateScale(int width, int height,
   // cout << "final scale : " << scale_ << endl;
 
 }
+
+// ****************************************************************************
+void MolDraw2D::calculateScale(int width, int height, const vector<ROMol *> &mols,
+                               const vector<vector<int> > *highlight_atoms,
+                               const vector<map<int, double> > *highlight_radii,
+                               const vector<int> *confIds,
+                               vector<unique_ptr<RWMol> > &tmols) {
+
+  double global_scale, global_x_min, global_x_max, global_y_min, global_y_max;
+  global_scale = global_x_min = global_y_min = numeric_limits<double>::max();
+  global_x_max = global_y_max = -numeric_limits<double>::max();
+
+  for(size_t i = 0; i < mols.size(); ++i) {
+    tabulaRasa();
+    if(!mols[i]) {
+      tmols.emplace_back(unique_ptr<RWMol>(new RWMol));
+      continue;
+    }
+    const vector<int> *ha = highlight_atoms ? &(*highlight_atoms)[i] : nullptr;
+    const map<int, double> *hr = highlight_radii ? &(*highlight_radii)[i] : nullptr;
+    int id = confIds ? (*confIds)[i] : -1;
+    unique_ptr<RWMol> rwmol = setupDrawMolecule(*mols[i], ha, hr, id,
+                                                width, height);
+    double x_max = x_min_ + x_range_;
+    double y_max = y_min_ + y_range_;
+    global_scale = scale() < global_scale ? scale() : global_scale;
+    global_x_min = x_min_ < global_x_min ? x_min_ : global_x_min;
+    global_x_max = x_max > global_x_max ? x_max : global_x_max;
+    global_y_min = y_min_ < global_y_min ? y_min_ : global_y_min;
+    global_y_max = y_max > global_y_max ? y_max : global_y_max;
+
+    tmols.emplace_back(std::move(rwmol));
+    --activeMolIdx_;
+    atom_syms_.pop_back();
+    atomic_nums_.pop_back();
+    at_cds_.pop_back();
+    needs_scale_ = true;
+  }
+
+  scale_ = global_scale;
+  x_min_ = global_x_min;
+  y_min_ = global_y_min;
+  x_range_ = global_x_max - global_x_min;
+  y_range_ = global_y_max - global_y_min;
+  centrePicture(width, height);
+
+}
+
+// ****************************************************************************
+void MolDraw2D::centrePicture(int width, int height) {
+
+  double y_mid = y_min_ + 0.5 * y_range_;
+  double x_mid = x_min_ + 0.5 * x_range_;
+  Point2D mid;
+  // this is getDrawCoords() but using height rather than height()
+  // to turn round the y coord and not using x_trans_ and y_trans_
+  // which we are trying to calculate at this point.
+  mid.x = scale_ * (x_mid - x_min_);
+  mid.y = scale_ * (y_mid - y_min_);
+  // y is now the distance from the top of the image, we need to
+  // invert that:
+  mid.x += x_offset_;
+  mid.y -= y_offset_;
+  mid.y = height - mid.y;
+
+  // that used the offset, we need to remove that:
+  mid.x -= x_offset_;
+  mid.y += y_offset_;
+  x_trans_ = (width / 2 - mid.x) / scale_;
+  y_trans_ = (mid.y - height / 2) / scale_;
+
+};
 
 // ****************************************************************************
 // establishes whether to put string draw mode into super- or sub-script
@@ -1131,6 +1177,9 @@ void MolDraw2D::drawStrings(const std::vector<std::string> &labels,
     AlignType align = MIDDLE;
     for (auto lab: labels) {
       Point2D new_cds = next_cds;
+      // if on 2nd or subsequent bits of label, offset so that when
+      // drawn with MIDDLE alignment the first character is centred
+      // on next_cds.
       if(align == START) {
         size_t n = 0;
         if(lab[0] == '<') {
@@ -1140,14 +1189,13 @@ void MolDraw2D::drawStrings(const std::vector<std::string> &labels,
             n = lab.find('>', n+1) + 1;
           }
         }
-        if(n < lab.length()-1) {
+        if(n < lab.length()) {
           alignString(lab, lab.substr(n, 1), 0, next_cds, new_cds);
         }
       }
       drawString(lab, new_cds, align);
       double width, height;
       getStringSize(lab, width, height);
-      next_cds.x += x_scale * width;
       next_cds.y += y_scale * height;
       align = START;
     }
@@ -1172,7 +1220,7 @@ void MolDraw2D::alignString(const string &str, const string &align_char,
   // align == 0 is left align - first char to go at in_cds.
   double dir = align == 0 ? 1.0 : -1.0;
   out_cds.x = in_cds.x + dir * 0.5 * (str_width - ac_width);
-  // assuming we centre the string one the draw coords.
+  // assuming we centre the string on the draw coords.
   out_cds.y = in_cds.y;
 
 }
@@ -1224,10 +1272,10 @@ DrawColour MolDraw2D::getColourByAtomicNum(int atomic_num) {
 }
 
 // ****************************************************************************
-unique_ptr<RWMol> MolDraw2D::setupMoleculeDraw(const ROMol &mol,
+unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(const ROMol &mol,
                                                const vector<int> *highlight_atoms,
                                                const map<int, double> *highlight_radii,
-                                               int confId) {
+                                               int confId, int width, int height) {
 
   at_cds_.push_back(std::vector<Point2D>());
   atomic_nums_.push_back(std::vector<int>());
@@ -1256,8 +1304,7 @@ unique_ptr<RWMol> MolDraw2D::setupMoleculeDraw(const ROMol &mol,
     extractAtomCoords(draw_mol, confId, true);
     extractAtomSymbols(draw_mol);
     if (needs_scale_) {
-      calculateScale(panel_width_, panel_height_, highlight_atoms,
-                     highlight_radii);
+      calculateScale(width, height, highlight_atoms, highlight_radii);
       needs_scale_ = false;
     }
     // make sure the font doesn't end up too large (the constants are
@@ -1272,6 +1319,20 @@ unique_ptr<RWMol> MolDraw2D::setupMoleculeDraw(const ROMol &mol,
     extractAtomCoords(draw_mol, confId, false);
     extractAtomSymbols(draw_mol);
   }
+
+  return rwmol;
+
+}
+
+// ****************************************************************************
+unique_ptr<RWMol> MolDraw2D::setupMoleculeDraw(const ROMol &mol,
+                                               const vector<int> *highlight_atoms,
+                                               const map<int, double> *highlight_radii,
+                                               int confId) {
+
+  unique_ptr<RWMol> rwmol = setupDrawMolecule(mol, highlight_atoms, highlight_radii,
+                                              confId, panel_width_, panel_height_);
+  ROMol const &draw_mol = rwmol ? *(rwmol) : mol;
 
   if (drawOptions().includeAtomTags) {
     tagAtoms(draw_mol);
@@ -2503,6 +2564,17 @@ void MolDraw2D::drawArrow(const Point2D &arrowBegin, const Point2D &arrowEnd,
     std::vector<Point2D> pts = {p1, arrowEnd, p2};
     drawPolygon(pts);
   }
+}
+
+// ****************************************************************************
+void MolDraw2D::tabulaRasa() {
+
+  scale_ = 1.0;
+  x_trans_ = y_trans_ = 0.0;
+  x_offset_ = y_offset_ = 0;
+  font_size_ = 0.5;
+  curr_width_ = 2;
+
 }
 
 // ****************************************************************************

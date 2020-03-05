@@ -2182,13 +2182,13 @@ void test16MoleculeMetadata() {
       drawer.addMoleculeMetadata(*m1);
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
+      std::ofstream outs("test16_1.svg");
+      outs << text;
+      outs.flush();
       TEST_ASSERT(text.find("idx=\"2\" atom-smiles=\"[NH]\" drawing-x=\"52.") !=
                   std::string::npos);
       TEST_ASSERT(text.find("idx=\"2\" begin-atom-idx=\"3\" end-atom-idx=\"2\" "
                             "bond-smiles=\"-\"") != std::string::npos);
-      std::ofstream outs("test16_1.svg");
-      outs << text;
-      outs.flush();
     }
 
 #if 1
@@ -2201,15 +2201,15 @@ void test16MoleculeMetadata() {
       drawer.addMoleculeMetadata(ms);
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
-
-      TEST_ASSERT(text.find("atom-smiles=\"[NH]\" drawing-x=\"60.") !=
-                  std::string::npos);
-      TEST_ASSERT(text.find("atom-smiles=\"[NH]\" drawing-x=\"260.") !=
-                  std::string::npos);
-
       std::ofstream outs("test16_2.svg");
       outs << text;
       outs.flush();
+
+      TEST_ASSERT(text.find("atom-smiles=\"[NH]\" drawing-x=\"52.") !=
+                  std::string::npos);
+      TEST_ASSERT(text.find("atom-smiles=\"[NH]\" drawing-x=\"252.") !=
+                  std::string::npos);
+
       for (auto ptr : ms) {
         delete ptr;
       }
@@ -2494,4 +2494,5 @@ int main() {
   testGithub2151();
   testGithub2762();
   testGithub2931();
+
 }

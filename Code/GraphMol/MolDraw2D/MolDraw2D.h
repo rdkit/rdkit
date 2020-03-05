@@ -315,7 +315,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
     The \c panelWidth and \c panelHeight values will be used to determine the
     number of rows and columns to be drawn. Theres not a lot of error checking
     here, so if you provide too many molecules for the number of panes things
-    are likely to get screweed up.
+    are likely to get screwed up.
     If the number of rows or columns ends up being <= 1, molecules will be
     being drawn in a single row/column.
   */
@@ -390,6 +390,19 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
                       const std::map<int, double> *highlight_radii = nullptr);
   //! \overload
   void calculateScale() { calculateScale(panel_width_, panel_height_); };
+  //! overload
+  // calculate a single scale that will suit all molecules.  For use by
+  // drawMolecules primarily.
+  void calculateScale(
+      int width, int height,
+      const std::vector<ROMol *> &mols,
+      const std::vector<std::vector<int>> *highlight_atoms,
+      const std::vector<std::map<int, double>> *highlight_radii,
+      const std::vector<int> *confIds,
+      std::vector<std::unique_ptr<RWMol> > &tmols);
+  // set [xy]_trans_ to the middle of the draw area in molecule coords
+  void centrePicture(int width, int height);
+
   //! explicitly sets the scaling factors for the drawing
   void setScale(int width, int height, const Point2D &minv,
                 const Point2D &maxv);
@@ -524,6 +537,9 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
                          bool asPolygon = false, double frac = 0.05,
                          double angle = M_PI / 6);
 
+  // reset to default values all the things the c'tor sets
+  void tabulaRasa();
+
  private:
   bool needs_scale_;
   int width_, height_, panel_width_, panel_height_;
@@ -557,6 +573,11 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
       const std::map<int, DrawColour> *highlight_map = nullptr);
   DrawColour getColourByAtomicNum(int atomic_num);
 
+  // set the system up to draw the molecule including calculating the scale.
+  std::unique_ptr<RWMol> setupDrawMolecule(const ROMol &mol,
+                                           const std::vector<int> *highlight_atoms,
+                                           const std::map<int, double> *highlight_radii,
+                                           int confId, int width, int height);
   // do the initial setup bits for drawing a molecule.
   std::unique_ptr<RWMol> setupMoleculeDraw(const ROMol &mol,
                                            const std::vector<int> *highlight_atoms,
