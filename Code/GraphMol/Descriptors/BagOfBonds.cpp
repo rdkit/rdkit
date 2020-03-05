@@ -47,7 +47,7 @@ namespace {
 
   VectorXd getUpperMat(MatrixXd mat) {
     // add precondition work on symetric matrix only ie mat.rows()==mat.cols()
-  PRECONDITION(mat.rows()!=mat.cols(), "Mat must be symetrical");
+  PRECONDITION(mat.rows()==mat.cols(), "Mat must be symetrical");
 
   VectorXd res(mat.rows()*(mat.cols()+1)/2);
   Index size = mat.rows();
@@ -67,10 +67,10 @@ namespace {
   std::string key;
   const RDKit::PeriodicTable *table = RDKit::PeriodicTable::getTable();
   for(const auto atom : mol.atoms()) {
-    int atNum = (*atom)->getAtomicNum();
+    int atNum = (*atom).getAtomicNum();
     key = table->getElementSymbol(atNum);
     if (separateIsotopes) {
-      unsigned int isotope = (*atom)->getIsotope();
+      unsigned int isotope = (*atom).getIsotope();
       if (abbreviateHIsotopes && atNum == 1 && (isotope == 2 || isotope == 3)) {
         if (isotope == 2)
           key = "D";
@@ -83,7 +83,7 @@ namespace {
     } else {
       counts[key] = 1;
     }
-    nHs += (*atom)->getTotalNumHs();
+    nHs += (*atom).getTotalNumHs();
   }
 
    if (nHs) {
@@ -97,9 +97,9 @@ namespace {
 
   // create the Diagonal single atoms count
   std::list<std::pair<std::string, unsigned int> > ks;
-  for(const auto &count : counts) {
+  for(const auto &countIt : counts) {
     // store the diagonal (individual atoms)
-    std::pair<std::string, unsigned int > key = std::make_pair(countIt->first, countIt->second);
+    std::pair<std::string, unsigned int > key = std::make_pair(countIt.first, countIt.second);
     ks.push_back(key);
   }
 
@@ -130,9 +130,9 @@ namespace {
 
   for(const auto &countIt : counts) {
     //"homologues":
-    unsigned int nbElementAtom = countIt->second;
+    unsigned int nbElementAtom = countIt.second;
     unsigned int res =nbElementAtom*(nbElementAtom-1)/2;
-    std::string PairString = countIt->first+countIt->first;
+    std::string PairString = countIt.first+countIt.first;
     if (res>0) {
       std::pair<std::string,unsigned int > key = std::make_pair(PairString, res);
       ks.push_back(key);
@@ -143,7 +143,7 @@ namespace {
  }
 
 
-  BagMatrix getCoulombMatBags(Eigen::VectorXd numbers, int numatoms, Eigen::MatrixXd Distance3D,  std::vector<std::string > S, int alpha) {
+  BagMatrix getCoulombMatBags(Eigen::VectorXd numbers, unsigned int numatoms, Eigen::MatrixXd Distance3D,  std::vector<std::string > S, int alpha) {
   // 3D distance matrix
   Eigen::MatrixXd ProdV = numbers*numbers.transpose(); // outer products of vector ie (z[i] * z[j])
 
@@ -180,14 +180,12 @@ namespace {
  ///// code to be expose to python directly not simple
 // we can parallelized cause we need the max value per key
  std::map<std::string, unsigned int> getBoBSizefromSmiles(std::vector<std::string> smiles) {
-    //unsigned int idx = 0;
     std::list<std::pair<std::string, unsigned int> > fulldata;
     std::map<std::string, unsigned int> Global;
     std::string key;
 
     for (auto const& smi :  smiles) {
-      std::unique_ptr<RDKit::ROMol> *mol;
-      mol = RDKit::SmilesToMol(smi);
+      std::unique_ptr<RDKit::ROMol> mol(RDKit::SmilesToMol(smi));
       std::list<std::pair<std::string, unsigned int>> data = EnumeratesAtomsPair(*mol, false, false);
 
        for (auto const& pair :  data) {
@@ -203,32 +201,31 @@ namespace {
           }
       }
 
-       //++idx;
-      delete mol;
     }
 
 
      return Global;
 }
 
+
 void getBagOfBonds(const RDKit::ROMol &mol, std::vector<double> &res, double *dist3D, 
 unsigned int numAtoms, std::map<std::string, unsigned int> MaxBags, int alpha) {
 
    // initialize the variables for the getCoulombMat
-  int numatoms= mol.getNumAtoms();
-  double *z = new double[numatoms];
+  //int numatoms= mol.getNumAtoms();
+  double *z = new double[numAtoms];
   std::vector<std::string > S;
-  for (int i=0; i< numatoms; i++){
-      int atomicnum = mol.getAtomWithIdx(i)->getAtomicNum()
+  for (unsigned int i=0; i< numAtoms; i++){
+      int atomicnum = mol.getAtomWithIdx(i)->getAtomicNum();
       z[i] = atomicnum;
       S.push_back(PeriodicTable::getTable()->getElementSymbol(atomicnum));
   }
 
-   Eigen::VectorXd numbers = Map<VectorXd>(z, numatoms); // convert the number array to vector
+   Eigen::VectorXd numbers = Map<VectorXd>(z, numAtoms); // convert the number array to vector
 
-   Eigen::MatrixXd Distance3D = Map<MatrixXd>(dist3D, numatoms, numatoms); // convert the result array to matrix (1 column)
+   Eigen::MatrixXd Distance3D = Map<MatrixXd>(dist3D, numAtoms, numAtoms); // convert the result array to matrix (1 column)
 
-   BagMatrix CMBags = getCoulombMatBags(numbers,  numatoms,  Distance3D, S ,alpha);
+   BagMatrix CMBags = getCoulombMatBags(numbers,  numAtoms,  Distance3D, S ,alpha);
   // return the BagTag and UCM values as "upper Diagonal elements" only
 
    // extract the bag CM values index from BagMatrix into sorted vectors padded using MaxBags order & position index!
@@ -289,6 +286,8 @@ unsigned int numAtoms, std::map<std::string, unsigned int> MaxBags, int alpha) {
     getBagOfBonds(mol, res, dist3D, numAtoms,  MaxBags, alpha);
 }
 }  // end of anonymous namespace
+
+
 
  void BagOfBondsVector(const ROMol &mol, std::vector<double> &res, int confId, int alpha,
     std::map<std::string, unsigned int> MaxBags) {
