@@ -16,6 +16,7 @@
 #include <RDGeneral/BoostEndInclude.h>
 
 #include <GraphMol/Descriptors/MolDescriptors.h>
+#include <GraphMol/Descriptors/ATOMFEAT.h>
 #include <GraphMol/Fingerprints/AtomPairs.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
 #include <GraphMol/Fingerprints/MACCS.h>
@@ -518,6 +519,17 @@ ExplicitBitVect *GetMorganFingerprintBV(
   }
   delete invars;
   return res;
+}
+
+python::list GetAtomFeatures(const RDKit::ROMol &mol,
+                                       int atomid,
+                                       bool addchiral) {
+
+  std::vector<double> res;
+  RDKit::Descriptors::ATOMFEAT(mol, res, atomid, addchiral );
+  python::list pyres;
+  BOOST_FOREACH (double iv, res) { pyres.append(iv); }
+  return pyres;
 }
 
 python::list GetConnectivityInvariants(const RDKit::ROMol &mol,
@@ -1395,6 +1407,13 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               RDKit::MACCSFingerprints::getFingerprintAsBitVect,
               (python::arg("mol")), docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
+
+  python::scope().attr("_GetAtomFeatures_version") = RDKit::Descriptors::ATOMFEATVersion;
+  docString = "Returns the Atom Features vector";
+  python::def(
+      "GetAtomFeatures", GetAtomFeatures,
+      (python::arg("mol"), python::arg("atomid") = 0, python::arg("addchirald") = false),
+      docString.c_str());
 
   python::scope().attr("_CalcNumSpiroAtoms_version") =
       RDKit::Descriptors::NumSpiroAtomsVersion;
