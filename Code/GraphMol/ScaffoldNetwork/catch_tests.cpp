@@ -198,12 +198,12 @@ TEST_CASE("addMolToNetwork", "[unittest, scaffolds]") {
     CHECK(std::count_if(net.edges.begin(), net.edges.end(),
                         [](ScaffoldNetwork::NetworkEdge e) {
                           return e.type == ScaffoldNetwork::EdgeType::Generic;
-                        }) == 2);
+                        }) == 4);
     CHECK(std::count_if(net.edges.begin(), net.edges.end(),
                         [](ScaffoldNetwork::NetworkEdge e) {
                           return e.type ==
                                  ScaffoldNetwork::EdgeType::RemoveAttachment;
-                        }) == 4);
+                        }) == 2);
     CHECK(std::count(net.counts.begin(), net.counts.end(), 1) ==
           net.counts.size());
 
@@ -285,7 +285,7 @@ TEST_CASE("Network defaults", "[scaffolds]") {
     ScaffoldNetwork::updateScaffoldNetwork(ms, net, ps);
     CHECK(net.nodes.size() == 12);
     CHECK(net.counts.size() == net.nodes.size());
-    CHECK(net.edges.size() == 12);
+    CHECK(net.edges.size() == 13);
     CHECK(std::count_if(net.edges.begin(), net.edges.end(),
                         [](ScaffoldNetwork::NetworkEdge e) {
                           return e.type == ScaffoldNetwork::EdgeType::Fragment;
@@ -293,12 +293,12 @@ TEST_CASE("Network defaults", "[scaffolds]") {
     CHECK(std::count_if(net.edges.begin(), net.edges.end(),
                         [](ScaffoldNetwork::NetworkEdge e) {
                           return e.type == ScaffoldNetwork::EdgeType::Generic;
-                        }) == 3);
+                        }) == 6);
     CHECK(std::count_if(net.edges.begin(), net.edges.end(),
                         [](ScaffoldNetwork::NetworkEdge e) {
                           return e.type ==
                                  ScaffoldNetwork::EdgeType::RemoveAttachment;
-                        }) == 5);
+                        }) == 3);
   }
   SECTION("don't remove attachments (makes sure parameters actually work)") {
     ScaffoldNetwork::ScaffoldNetworkParams ps;
@@ -323,7 +323,7 @@ TEST_CASE("Network defaults", "[scaffolds]") {
         ScaffoldNetwork::createScaffoldNetwork(ms, ps);
     CHECK(net.nodes.size() == 12);
     CHECK(net.counts.size() == net.nodes.size());
-    CHECK(net.edges.size() == 12);
+    CHECK(net.edges.size() == 13);
     CHECK(std::count_if(net.edges.begin(), net.edges.end(),
                         [](ScaffoldNetwork::NetworkEdge e) {
                           return e.type == ScaffoldNetwork::EdgeType::Fragment;
@@ -331,12 +331,12 @@ TEST_CASE("Network defaults", "[scaffolds]") {
     CHECK(std::count_if(net.edges.begin(), net.edges.end(),
                         [](ScaffoldNetwork::NetworkEdge e) {
                           return e.type == ScaffoldNetwork::EdgeType::Generic;
-                        }) == 3);
+                        }) == 6);
     CHECK(std::count_if(net.edges.begin(), net.edges.end(),
                         [](ScaffoldNetwork::NetworkEdge e) {
                           return e.type ==
                                  ScaffoldNetwork::EdgeType::RemoveAttachment;
-                        }) == 5);
+                        }) == 3);
   }
 }
 TEST_CASE("ostream integration", "[scaffolds]") {
@@ -413,7 +413,7 @@ TEST_CASE("no attachment points", "[unittest, scaffolds]") {
     ScaffoldNetwork::detail::addMolToNetwork(*m, net, ps);
     CHECK(net.nodes.size() == 9);
     CHECK(net.counts.size() == net.nodes.size());
-    CHECK(net.edges.size() == 9);
+    CHECK(net.edges.size() == 8);
     CHECK(std::count_if(net.edges.begin(), net.edges.end(),
                         [](ScaffoldNetwork::NetworkEdge e) {
                           return e.type == ScaffoldNetwork::EdgeType::Fragment;
@@ -431,7 +431,7 @@ TEST_CASE("no attachment points", "[unittest, scaffolds]") {
                         [](ScaffoldNetwork::NetworkEdge e) {
                           return e.type ==
                                  ScaffoldNetwork::EdgeType::GenericBond;
-                        }) == 3);
+                        }) == 2);
     // std::copy(net.nodes.begin(), net.nodes.end(),
     //           std::ostream_iterator<std::string>(std::cerr, " "));
     // std::cerr << std::endl;
@@ -439,6 +439,38 @@ TEST_CASE("no attachment points", "[unittest, scaffolds]") {
           net.nodes.end());
     CHECK(std::find(net.nodes.begin(), net.nodes.end(), "**1*****1") !=
           net.nodes.end());
+  }
+  SECTION("generic bonds 2") {
+    // this tests a very particular case where the generic bond scaffold is the
+    // same as the generic scaffold that leads to it. Make sure we do not end up
+    // with this kind of self edge
+    auto m = "Cc1ccccc1OC1C(C)C1"_smiles;
+    REQUIRE(m);
+    ScaffoldNetwork::ScaffoldNetworkParams ps;
+    ps.includeGenericBondScaffolds = true;
+    ScaffoldNetwork::ScaffoldNetwork net;
+    ScaffoldNetwork::detail::addMolToNetwork(*m, net, ps);
+    CHECK(net.nodes.size() == 14);
+    CHECK(net.counts.size() == net.nodes.size());
+    CHECK(net.edges.size() == 13);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type == ScaffoldNetwork::EdgeType::Fragment;
+                        }) == 2);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type ==
+                                 ScaffoldNetwork::EdgeType::Initialize;
+                        }) == 1);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type == ScaffoldNetwork::EdgeType::Generic;
+                        }) == 5);
+    CHECK(std::count_if(net.edges.begin(), net.edges.end(),
+                        [](ScaffoldNetwork::NetworkEdge e) {
+                          return e.type ==
+                                 ScaffoldNetwork::EdgeType::GenericBond;
+                        }) == 3);
   }
   SECTION("generic + no attach") {
     auto m = "Cc1ccccc1OC1C(C)C1"_smiles;
@@ -465,12 +497,12 @@ TEST_CASE("no attachment points", "[unittest, scaffolds]") {
     CHECK(std::count_if(net.edges.begin(), net.edges.end(),
                         [](ScaffoldNetwork::NetworkEdge e) {
                           return e.type == ScaffoldNetwork::EdgeType::Generic;
-                        }) == 3);
+                        }) == 5);
     CHECK(std::count_if(net.edges.begin(), net.edges.end(),
                         [](ScaffoldNetwork::NetworkEdge e) {
                           return e.type ==
                                  ScaffoldNetwork::EdgeType::RemoveAttachment;
-                        }) == 4);
+                        }) == 2);
     // std::copy(net.nodes.begin(), net.nodes.end(),
     //           std::ostream_iterator<std::string>(std::cerr, " "));
     // std::cerr << std::endl;
@@ -730,7 +762,7 @@ TEST_CASE("Serialization", "[serialization]") {
     ScaffoldNetwork::updateScaffoldNetwork(ms, net, ps);
     CHECK(net.nodes.size() == 12);
     CHECK(net.counts.size() == net.nodes.size());
-    CHECK(net.edges.size() == 12);
+    CHECK(net.edges.size() == 13);
     std::stringstream ss;
     boost::archive::text_oarchive oa(ss);
     oa << net;
@@ -742,7 +774,7 @@ TEST_CASE("Serialization", "[serialization]") {
       ia >> net2;
       CHECK(net2.nodes.size() == 12);
       CHECK(net2.counts.size() == net2.nodes.size());
-      CHECK(net2.edges.size() == 12);
+      CHECK(net2.edges.size() == 13);
       CHECK(net2.nodes == net.nodes);
       CHECK(net2.counts == net.counts);
       CHECK(net2.edges == net.edges);
@@ -753,7 +785,7 @@ TEST_CASE("Serialization", "[serialization]") {
       ScaffoldNetwork::ScaffoldNetwork net2(pkl);
       CHECK(net2.nodes.size() == 12);
       CHECK(net2.counts.size() == net2.nodes.size());
-      CHECK(net2.edges.size() == 12);
+      CHECK(net2.edges.size() == 13);
       CHECK(net2.nodes == net.nodes);
       CHECK(net2.counts == net.counts);
       CHECK(net2.edges == net.edges);
