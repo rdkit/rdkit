@@ -67,67 +67,6 @@ namespace Descriptors {
 
 namespace {
 
-double roundn(double in, int factor) {
-  return std::round(in * pow(10., factor)) / pow(10., factor);
-}
-
-double* retreiveMat(MatrixXd matrix) {
-  double* arrayd = matrix.data();
-  return arrayd;
-}
-
-double* retreiveVect(VectorXd matrix) {
-  double* arrayd = matrix.data();
-  return arrayd;
-}
-
-VectorXd getEigenVect(std::vector<double> v) {
-  double* varray_ptr = &v[0];
-  Map<VectorXd> V(varray_ptr, v.size());
-  return V;
-}
-
-
-JacobiSVD<MatrixXd> getSVD(const MatrixXd& A) {
-  JacobiSVD<MatrixXd> mysvd(A, ComputeThinU | ComputeThinV);
-  return mysvd;
-}
-
-MatrixXd GetPinv(const MatrixXd& A) {
-  JacobiSVD<MatrixXd> svd = getSVD(A);
-  double pinvtoler = 1.e-3;  // choose your tolerance wisely!
-  VectorXd vs = svd.singularValues();
-  VectorXd vsinv = svd.singularValues();
-
-  for (unsigned int i = 0; i < A.cols(); ++i) {
-    if (vs(i) > pinvtoler) {
-      vsinv(i) = 1.0 / vs(i);
-    } else {
-      vsinv(i) = 0.0;
-    }
-  }
-
-  MatrixXd S = vsinv.asDiagonal();
-  MatrixXd Ap = svd.matrixV() * S * svd.matrixU().transpose();
-  return Ap;
-}
-
-
-std::vector <int> integerToArray(int x)
-{
-    int l = 10;
-    int pos = 1;
-    std::vector <int> resultArray(l);
-    while (true)
-    {
-    resultArray[l-pos]= x%10;
-    x /= 10;
-    pos +=1;
-    if (x == 0) return resultArray;
-    }
-}
-
-
 
 void AtomFeat1(const RDKit::Atom* atom, const ROMol* mol, std::vector <double> &feats,  bool addchiral) {
 
