@@ -3141,24 +3141,16 @@ CAS<~>
   def test83GitHubIssue19(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'empty2.sdf')
-    sdSup = Chem.SDMolSupplier(fileN)
-    self.assertTrue(sdSup.atEnd())
-    self.assertRaises(IndexError, lambda: sdSup[0])
+    with self.assertRaises(OSError):
+      sdSup = Chem.SDMolSupplier(fileN)
 
+    sdSup = Chem.SDMolSupplier()
     sdSup.SetData('')
     self.assertTrue(sdSup.atEnd())
     self.assertRaises(IndexError, lambda: sdSup[0])
 
-    sdSup = Chem.SDMolSupplier(fileN)
-    self.assertRaises(IndexError, lambda: sdSup[0])
-
     sdSup.SetData('')
     self.assertRaises(IndexError, lambda: sdSup[0])
-
-    sdSup = Chem.SDMolSupplier(fileN)
-    self.assertEqual(len(sdSup), 0)
-
-    sdSup.SetData('')
     self.assertEqual(len(sdSup), 0)
 
   def test84PDBBasics(self):

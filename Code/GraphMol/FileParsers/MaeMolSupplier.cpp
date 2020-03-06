@@ -399,7 +399,7 @@ MaeMolSupplier::MaeMolSupplier(const std::string &fileName, bool sanitize,
   }
   // check to make sure that we can actually read from the stream
   ifs->peek();
-  if (ifs->bad()) {
+  if (ifs->bad() || ifs->eof()) {
     std::ostringstream errout;
     errout << "Invalid input file " << fileName;
     delete ifs;

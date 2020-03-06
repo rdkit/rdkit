@@ -46,7 +46,7 @@ SmilesMolSupplier::SmilesMolSupplier(const std::string &fileName,
   }
   // check to make sure that we can actually read from the stream
   tmpStream->peek();
-  if (tmpStream->bad()) {
+  if (tmpStream->bad() || tmpStream->eof()) {
     std::ostringstream errout;
     errout << "Invalid input file " << fileName;
     delete tmpStream;
