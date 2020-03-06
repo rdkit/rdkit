@@ -65,10 +65,28 @@ function test_sketcher_services(){
     assert.equal(tags,'{"CIP_atoms":[[1,"(S)"],[6,"(?)"]],"CIP_bonds":[[4,5,"(E)"]]}');
 }
 
+function test_sketcher_services2(){
+    var mol = Module.get_mol("c1ccccc1");
+    assert.equal(mol.is_valid(),1);
+    var molb = mol.add_hs();
+    assert(molb.search(" H ")>0);
+    assert.equal((molb.match(/ H /g) || []).length,6);
+
+    var mol2 = Module.get_mol(molb);
+    assert.equal(mol2.is_valid(),1);
+    var molb2 = mol2.get_molblock();
+    assert(molb2.search(" H ")>0); 
+    assert.equal((molb2.match(/ H /g) || []).length,6);
+
+    molb2 = mol2.remove_hs();
+    assert(molb2.search(" H ")<0); 
+}
+
 Module.onRuntimeInitialized = () => {
     console.log(Module.version());
     test_basics();
     test_sketcher_services();
+    test_sketcher_services2();
 };
 
 

@@ -397,6 +397,14 @@ MaeMolSupplier::MaeMolSupplier(const std::string &fileName, bool sanitize,
     errout << "Bad input file " << fileName;
     throw BadFileException(errout.str());
   }
+  // check to make sure that we can actually read from the stream
+  ifs->peek();
+  if (ifs->bad() || ifs->eof()) {
+    std::ostringstream errout;
+    errout << "Invalid input file " << fileName;
+    delete ifs;
+    throw BadFileException(errout.str());
+  }
   dp_inStream = static_cast<std::istream *>(ifs);
   dp_sInStream.reset(dp_inStream);
   df_sanitize = sanitize;

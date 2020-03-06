@@ -37,6 +37,8 @@ class JSMol {
   std::string get_kekule_form() const;
   std::string get_new_coords(bool useCoordGen) const;
   std::string get_new_coords() const { return get_new_coords(false); };
+  std::string remove_hs() const;
+  std::string add_hs() const;
 
  private:
   std::unique_ptr<RDKit::ROMol> d_mol;

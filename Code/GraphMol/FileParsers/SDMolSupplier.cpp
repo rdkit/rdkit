@@ -40,6 +40,14 @@ SDMolSupplier::SDMolSupplier(const std::string &fileName, bool sanitize,
     delete tmpStream;
     throw BadFileException(errout.str());
   }
+  // check to make sure that we can actually read from the stream
+  tmpStream->peek();
+  if (tmpStream->bad() || tmpStream->eof()) {
+    std::ostringstream errout;
+    errout << "Invalid input file " << fileName;
+    delete tmpStream;
+    throw BadFileException(errout.str());
+  }
 
   // dp_inStream = static_cast<std::istream *>(tmpStream);
   dp_inStream = tmpStream;

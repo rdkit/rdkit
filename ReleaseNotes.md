@@ -12,6 +12,9 @@
   now use the `do_chiral_sss` option. So if `do_chiral_sss` is false (the
   default), the molecules `CC(F)Cl` and `C[C@H](F)Cl` will be considered to be equal.
   Previously these molecules were always considered to be different.
+- Attempting to create a MolSupplier from a filename pointing to an empty file,
+  a file that does not exist or sometihing that is not a standard file (i.e.
+  something like a directory) now generates an exception.
 
 
 # Release_2019.09.1
