@@ -32,20 +32,20 @@
 // Created by Guillaume Godin 2020
 
 #include <RDGeneral/export.h>
-#ifndef ATOMFEATRDKIT_H_MARC2020
-#define ATOMFEATRDKIT_H_MARC2020
+#ifndef AtomFeatRDKIT_H_MARC2020
+#define AtomFeatRDKIT_H_MARC2020
 
 namespace RDKit {
 class ROMol;
 namespace Descriptors {
-const std::string ATOMFEATVersion = "1.0.0";
+const std::string AtomFeatVersion = "1.0.0";
 
 std::vector <Atom::ChiralType> RS {  Atom::CHI_TETRAHEDRAL_CW, Atom::CHI_TETRAHEDRAL_CCW, Atom::CHI_OTHER };
 std::vector <std::string> Symbols {"B", "C", "N", "O", "S", "F", "Si", "P", "Cl", "Br", "I", "H", "*"};
 std::vector <Atom::HybridizationType> HS {  Atom::SP, Atom::SP2, Atom::SP3, Atom::SP3D,  Atom::SP3D2};
 
 
-RDKIT_DESCRIPTORS_EXPORT void ATOMFEAT(
+RDKIT_DESCRIPTORS_EXPORT void AtomFeat(
     const ROMol &, std::vector<double> &res, int atomid = 0,  bool addchiral = false );
 }  // namespace Descriptors
 }  // namespace RDKit

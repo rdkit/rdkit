@@ -22,7 +22,7 @@
 
 #include <chrono>  // for high_resolution_clock
 
-#include <GraphMol/Descriptors/ATOMFEAT.h>
+#include <GraphMol/Descriptors/AtomFeat.h>
 
 void test1() {
  
@@ -33,7 +33,7 @@ void test1() {
     std::vector<double> res;
 
     int atomid = 0;
-    RDKit::Descriptors::ATOMFEAT(*m, res, atomid);
+    RDKit::Descriptors::AtomFeat(*m, res, atomid);
 
     std::vector <double > exp{ 0. , 1. , 0. , 0. , 0. , 0. , 0. , 0. , 0. , 0. , 0. , 0. , 0. ,
        0. , 0. , 1. , 0. , 0. , 0. , 0. , 0. , 0. , 0. , 1. , 0. , 0. ,

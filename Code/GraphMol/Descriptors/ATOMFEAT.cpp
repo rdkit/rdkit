@@ -35,7 +35,7 @@
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <iostream>
 
-#include "ATOMFEAT.h"
+#include "AtomFeat.h"
 
 #include "GraphMol/PartialCharges/GasteigerCharges.h"
 #include "GraphMol/PartialCharges/GasteigerParams.h"
@@ -151,7 +151,7 @@ void AtomFeat1(const RDKit::Atom* atom, const ROMol* mol, std::vector <double> &
 }  // end of anonymous namespace
 
 // entry point
-void ATOMFEAT(const ROMol& mol, std::vector<double>& res, int atomid,  bool addchiral) {
+void AtomFeat(const ROMol& mol, std::vector<double>& res, int atomid,  bool addchiral) {
 
 
   AtomFeat1( mol.getAtomWithIdx(atomid),  &mol, res, addchiral);

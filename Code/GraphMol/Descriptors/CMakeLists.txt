@@ -13,7 +13,7 @@ rdkit_library(Descriptors
               MQN.cpp
               Property.cpp
               AUTOCORR2D.cpp Data3Ddescriptors.cpp MolData3Ddescriptors.cpp
-              USRDescriptor.cpp ATOMFEAT.cpp
+              USRDescriptor.cpp AtomFeat.cpp
               ${DESC3D_SOURCES}
               LINK_LIBRARIES PartialCharges SmilesParse FileParsers Subgraphs SubstructMatch MolTransforms GraphMol Fingerprints
                  EigenSolvers ${RDKit_THREAD_LIBS})
@@ -25,7 +25,7 @@ rdkit_headers(Crippen.h BCUT.h Lipinski.h
               RegisterDescriptor.h
               Property.h
               AUTOCORR2D.h Data3Ddescriptors.h MolData3Ddescriptors.h
-              USRDescriptor.h ATOMFEAT.h
+              USRDescriptor.h AtomFeat.h
               ${DESC3D_HDRS}
               DEST GraphMol/Descriptors)
 

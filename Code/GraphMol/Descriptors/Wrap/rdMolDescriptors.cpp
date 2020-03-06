@@ -16,7 +16,7 @@
 #include <RDGeneral/BoostEndInclude.h>
 
 #include <GraphMol/Descriptors/MolDescriptors.h>
-#include <GraphMol/Descriptors/ATOMFEAT.h>
+#include <GraphMol/Descriptors/AtomFeat.h>
 #include <GraphMol/Fingerprints/AtomPairs.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
 #include <GraphMol/Fingerprints/MACCS.h>
@@ -526,7 +526,7 @@ python::list GetAtomFeatures(const RDKit::ROMol &mol,
                                        bool addchiral) {
 
   std::vector<double> res;
-  RDKit::Descriptors::ATOMFEAT(mol, res, atomid, addchiral );
+  RDKit::Descriptors::AtomFeat(mol, res, atomid, addchiral );
   python::list pyres;
   BOOST_FOREACH (double iv, res) { pyres.append(iv); }
   return pyres;
@@ -1408,7 +1408,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               (python::arg("mol")), docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
 
-  python::scope().attr("_GetAtomFeatures_version") = RDKit::Descriptors::ATOMFEATVersion;
+  python::scope().attr("_GetAtomFeatures_version") = RDKit::Descriptors::AtomFeatVersion;
   docString = "Returns the Atom Features vector";
   python::def(
       "GetAtomFeatures", GetAtomFeatures,
