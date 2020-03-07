@@ -29,14 +29,7 @@ PDBMolSupplier::PDBMolSupplier(std::istream *inStream, bool takeOwnership,
 PDBMolSupplier::PDBMolSupplier(const std::string &fileName, bool sanitize,
                                bool removeHs, unsigned int flavor,
                                bool proximityBonding) {
-  auto *ifs = new std::ifstream(fileName.c_str(), std::ios_base::binary);
-  if (!(*ifs) || ifs->bad()) {
-    delete ifs;
-    std::ostringstream errout;
-    errout << "Bad input file " << fileName;
-    throw BadFileException(errout.str());
-  }
-  dp_inStream = (std::istream *)ifs;
+  dp_inStream = openAndCheckStream(fileName);
   df_owner = true;
   df_sanitize = sanitize;
   df_removeHs = removeHs;
