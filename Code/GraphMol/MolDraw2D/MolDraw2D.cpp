@@ -2637,6 +2637,7 @@ void MolDraw2D::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
   RDUNUSED_PARAM(vertOffset);
   drawLine(cds1, cds2, col1, col2);
 }
+
 // ****************************************************************************
 //  we draw the line at cds2, perpendicular to the line cds1-cds2
 void MolDraw2D::drawAttachmentLine(const Point2D &cds1, const Point2D &cds2,
