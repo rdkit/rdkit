@@ -38,10 +38,6 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
     initDrawing();
   };
 
-  // set font size in molecule coordinate units. That's probably Angstrom for
-  // RDKit. It will turned into drawing units using scale_, which might be
-  // changed as a result, to make sure things still appear in the window.
-  void setFontSize(double new_size) override;
   void setColour(const DrawColour &col) override;
 
   // not sure if this goes here or if we should do a dtor since initDrawing() is

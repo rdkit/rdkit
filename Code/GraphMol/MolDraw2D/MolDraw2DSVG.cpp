@@ -172,7 +172,7 @@ void MolDraw2DSVG::drawLine(const Point2D &cds1, const Point2D &cds2) {
 // ****************************************************************************
 // draw the char, with the bottom left hand corner at cds
 void MolDraw2DSVG::drawChar(char c, const Point2D &cds) {
-  unsigned int fontSz = scale() * fontSize();
+  unsigned int fontSz = drawFontSize();
   std::string col = DrawColourToSVG(colour());
 
   d_os << "<text";
@@ -267,12 +267,6 @@ void MolDraw2DSVG::clearDrawing() {
 }
 
 // ****************************************************************************
-void MolDraw2DSVG::setFontSize(double new_size) {
-  MolDraw2D::setFontSize(new_size);
-  // double font_size_in_points = fontSize() * scale();
-}
-
-// ****************************************************************************
 // using the current scale, work out the size of the label in molecule
 // coordinates
 void MolDraw2DSVG::getStringSize(const std::string &label, double &label_width,
@@ -285,6 +279,7 @@ void MolDraw2DSVG::getStringSize(const std::string &label, double &label_width,
   bool had_a_super = false;
   bool had_a_sub = false;
 
+  double act_font_size = drawFontSize() / scale();
   for (int i = 0, is = label.length(); i < is; ++i) {
     // setStringDrawMode moves i along to the end of any <sub> or <sup>
     // markup
@@ -295,9 +290,9 @@ void MolDraw2DSVG::getStringSize(const std::string &label, double &label_width,
       continue;
     }
 
-    label_height = fontSize();
+    label_height = act_font_size;
     double char_width =
-        fontSize() *
+        act_font_size *
         static_cast<double>(MolDraw2D_detail::char_widths[(int)label[i]]) /
         MolDraw2D_detail::char_widths[(int)'M'];
     if (TextDrawSubscript == draw_mode) {
@@ -342,8 +337,7 @@ void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds) {
 // draws the string aligned as requested.
 void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds,
                               AlignType align) {
-  unsigned int fontSz = scale() * fontSize();
-
+  unsigned int fontSz = drawFontSize();
   double string_width, string_height;
   getStringSize(str, string_width, string_height);
 

@@ -1250,8 +1250,8 @@ M  END";
     outs << text;
     outs.flush();
     TEST_ASSERT(
-        text.find("<path class='bond-1' d='M 125.352,114.634 "
-                  "L 179.234,90.896 L 172.848,79.8357 Z' "
+        text.find("<path class='bond-1' d='M 125.358,114.638 "
+                  "L 179.254,90.8937 L 172.866,79.8306 Z' "
                   "style='fill:#000000") != std::string::npos);
     delete m;
   }
@@ -1302,8 +1302,8 @@ M  END";
     outs << text;
     outs.flush();
     TEST_ASSERT(
-        text.find("<path class='bond-3' d='M 101.742,115.477 L 79.4095,92.366 "
-                  "L 72.7039,101.705 Z' "
+        text.find("<path class='bond-3' d='M 101.811,115.504 L 79.4403,92.3527 "
+                  "L 72.723,101.708 Z' "
                   "style='fill:#000000;") != std::string::npos);
 
     MolDraw2DUtils::prepareMolForDrawing(*m);
@@ -1746,12 +1746,12 @@ void test13JSONConfig() {
     drawer.drawMolecule(*m, "foo");
     drawer.finishDrawing();
     std::string text = drawer.getDrawingText();
-    std::ofstream outs("test983.svg");
+    std::ofstream outs("test13_1.svg");
     outs << text;
     outs.close();
     TEST_ASSERT(text.find("sans-serif;fill:#FF7FFF") !=
                 std::string::npos);
-    TEST_ASSERT(text.find("'bond-0' d='M 129.799,9.09091 L 177.679,92.0201'")
+    TEST_ASSERT(text.find("'bond-0' d='M 129.678,9.09091 L 177.575,92.0514'")
                 != std::string::npos);
     // these days the bond line width scales with the rest of the
     // drawing, and at this size this comes out as 6px.
@@ -2220,6 +2220,56 @@ void test16MoleculeMetadata() {
   std::cerr << " Done" << std::endl;
 }
 
+void test17MaxFontSize() {
+  std::cout << " ----------------- Test 16 - Testing maximum font size"
+            << std::endl;
+  {
+    std::string fName = getenv("RDBASE");
+    fName += "/Code/GraphMol/MolDraw2D/test_dir";
+    fName += "/clash.mol";
+    ROMol *m = MolFileToMol(fName);
+    std::string nameBase = "test16_";
+    TEST_ASSERT(m);
+
+    {
+      std::ofstream outs((nameBase + "1.svg").c_str());
+      MolDraw2DSVG drawer(300, 300);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      outs << text;
+      outs.flush();
+      TEST_ASSERT(text.find("font-size:40px") != std::string::npos);
+    }
+    {
+      std::ofstream outs((nameBase + "2.svg").c_str());
+      MolDraw2DSVG drawer(300, 300);
+      drawer.drawOptions().maxFontSize = -1;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      outs << text;
+      outs.flush();
+      TEST_ASSERT(text.find("font-size:47px") != std::string::npos);
+    }
+    {
+      std::ofstream outs((nameBase + "3.svg").c_str());
+      MolDraw2DSVG drawer(300, 300);
+      drawer.drawOptions().maxFontSize = 20;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      outs << text;
+      outs.flush();
+      TEST_ASSERT(text.find("font-size:20px") != std::string::npos);
+    }
+    delete m;
+  }
+
+  std::cout << " Done" << std::endl;
+
+}
+
 void testGithub2063() {
   std::cout << " ----------------- Testing Github2063: Drawing racemic bond "
                "stereo as crossed bonds should be the default"
@@ -2443,7 +2493,7 @@ void testGithub2931() {
     outs << text;
     outs.flush();
     TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:5px") != std::string::npos);
-    TEST_ASSERT(text.find("ellipse cx='244.253' cy='386.518' rx='11.9872' ry='12.8346'"
+    TEST_ASSERT(text.find("ellipse cx='244.231' cy='386.539' rx='11.8875' ry='12.7279'"
                           " style='fill:none;stroke:#00FF00") != std::string::npos);
   }
   std::cerr << " Done" << std::endl;
@@ -2487,6 +2537,7 @@ int main() {
   testGithub565();
   test14BWPalette();
   test15ContinuousHighlightingWithGrid();
+  test17MaxFontSize();
   testGithub1829();
 #endif
   test16MoleculeMetadata();
@@ -2494,5 +2545,4 @@ int main() {
   testGithub2151();
   testGithub2762();
   testGithub2931();
-
 }

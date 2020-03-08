@@ -157,6 +157,9 @@ void MolDraw2DCairo::setFontSize(double new_size) {
   PRECONDITION(dp_cr, "no draw context");
   MolDraw2D::setFontSize(new_size);
   double font_size_in_points = fontSize() * scale();
+  if(font_size_in_points > drawOptions().maxFontSize) {
+    font_size_in_points = drawOptions().maxFontSize;
+  }
   cairo_set_font_size(dp_cr, font_size_in_points);
 }
 

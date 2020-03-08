@@ -762,6 +762,15 @@ Point2D MolDraw2D::getAtomCoords(int at_num) const {
 }
 
 // ****************************************************************************
+int MolDraw2D::drawFontSize() const {
+  int fontSz = scale() * fontSize();
+  if(drawOptions().maxFontSize > 0 && fontSz > drawOptions().maxFontSize) {
+    fontSz = drawOptions().maxFontSize;
+  }
+  return fontSz;
+}
+
+// ****************************************************************************
 void MolDraw2D::setFontSize(double new_size) {
   font_size_ = new_size;
 }

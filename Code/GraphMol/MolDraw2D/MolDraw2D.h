@@ -107,6 +107,8 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
       backgroundColour;  // color to be used while clearing the background
   int legendFontSize;    // font size (in pixels) to be used for the legend (if
                          // present)
+  int maxFontSize;  // maximum size in pixels for font in drawn molecule.
+                    // default=40. -1 means no max.
   DrawColour legendColour;    // color to be used for the legend (if present)
   double multipleBondOffset;  // offset (in Angstrom) for the extra lines in a
                               // multiple bond
@@ -157,6 +159,7 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
         clearBackground(true),
         backgroundColour(1, 1, 1),
         legendFontSize(12),
+        maxFontSize(40),
         legendColour(0, 0, 0),
         multipleBondOffset(0.15),
         padding(0.05),
@@ -421,6 +424,8 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
 
   //! returns the font size (in molecule units)
   virtual double fontSize() const { return font_size_; }
+  int drawFontSize() const;
+
   //! set font size in molecule coordinate units. That's probably Angstrom for
   //! RDKit.
   virtual void setFontSize(double new_size);
