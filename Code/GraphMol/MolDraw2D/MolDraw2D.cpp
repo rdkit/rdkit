@@ -2627,6 +2627,11 @@ void MolDraw2D::drawRect(const Point2D &cds1, const Point2D &cds2) {
   pts[1] = Point2D(cds1.x, cds2.y);
   pts[2] = cds2;
   pts[3] = Point2D(cds2.x, cds1.y);
+  // if fillPolys() is false, it doesn't close the polygon because of
+  // its use for drawing filled or open ellipse segments.
+  if(!fillPolys()) {
+    pts.emplace_back(cds1);
+  }
   drawPolygon(pts);
 }
 
