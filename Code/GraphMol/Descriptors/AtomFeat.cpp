@@ -1,21 +1,11 @@
 //
-//  Copyright (c) 2020, Guillaume GODIN
-//  All rights reserved.
+//  Copyright (C) 2020 Guillaume GODIN
+//   @@ All Rights Reserved @@
 //
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-//
-//     * Redistributions of source code must retain the above copyright
-//       notice, this list of conditions and the following disclaimer.
-//     * Redistributions in binary form must reproduce the above
-//       copyright notice, this list of conditions and the following
-//       disclaimer in the documentation and/or other materials provided
-//       with the distribution.
-//     * Neither the name of Institue of Cancer Research.
-//       nor the names of its contributors may be used to endorse or promote
-//       products derived from this software without specific prior written
-//       permission.
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
 //
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 // "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -32,34 +22,19 @@
 // Adding ATOM FEATURES descriptors by Guillaume Godin
 
 #include <GraphMol/RDKitBase.h>
-#include <GraphMol/MolTransforms/MolTransforms.h>
 #include <iostream>
 
 #include "AtomFeat.h"
 
-#include "GraphMol/PartialCharges/GasteigerCharges.h"
-#include "GraphMol/PartialCharges/GasteigerParams.h"
-#include <Numerics/EigenSolvers/PowerEigenSolver.h>
-#include <GraphMol/Fingerprints/MorganFingerprints.h>
-#include <GraphMol/Fingerprints/FingerprintUtil.h>
+#include <GraphMol/PartialCharges/GasteigerCharges.h>
+#include <GraphMol/PartialCharges/GasteigerParams.h>
 #include <GraphMol/Atom.h>
 
 #include <GraphMol/MolOps.h>
-#include <Numerics/Matrix.h>
-#include <Numerics/SquareMatrix.h>
-#include <Numerics/SymmMatrix.h>
 #include <boost/foreach.hpp>
 #include <cmath>
-#include <Eigen/Dense>
-#include <Eigen/SVD>
-#include <iostream>
-#include <deque>
-#include <Eigen/Core>
-#include <Eigen/QR>
 #include <vector>
 
-
-using namespace Eigen;
 
 namespace RDKit {
 
@@ -67,17 +42,33 @@ namespace Descriptors {
 
 namespace {
 
-void AtomFeat1(const RDKit::Atom* atom, const ROMol* mol, std::vector <double> &feats,  bool addchiral) {
+
+std::vector < Atom::ChiralType> RS {   Atom::CHI_TETRAHEDRAL_CW,  Atom::CHI_TETRAHEDRAL_CCW, Atom::CHI_OTHER };
+std::vector < std::string> Symbols {"B", "C", "N", "O", "S", "F", "Si", "P", "Cl", "Br", "I", "H", "*"};
+std::vector < Atom::HybridizationType> HS {  Atom::SP,  Atom::SP2,  Atom::SP3,  Atom::SP3D,  Atom::SP3D2};
+
+
+
+void AtomFeatVect(const RDKit::Atom* atom, const ROMol* mol, std::vector <double> &feats,  bool addchiral) {
+
+    PRECONDITION(atom,"bad atom");
+    PRECONDITION(mol,"bad mol");
+
+    if (addchiral) {
+      feats.reserve(52);
+    }
+    else {
+      feats.reserve(49);
+
+    } 
 
     // initiate ring info if not already done
     if( !mol->getRingInfo()->isInitialized() ) {
       RDKit::MolOps::findSSSR( *mol );
     }
 
-    int atomid = atom->getIdx();
-    int d = atom->getDegree();
-    std::string s = atom->getSymbol();
     // one hot atom symbols
+    std::string s = atom->getSymbol();
     bool inlist = false;
     int indx = 0;
     for (auto ind : Symbols) {
@@ -97,8 +88,10 @@ void AtomFeat1(const RDKit::Atom* atom, const ROMol* mol, std::vector <double> &
     feats[indx] = (inlist ? 0 : 1);
     indx+=1;
 
+
     // one hot degree
-    for (int i=0;  i<7; i++) {
+    int d = atom->getDegree();
+    for (unsigned int i=0;  i<7; i++) {
           feats[indx] = (d == i ? 1 : 0);
           indx+=1;
     }
@@ -113,7 +106,7 @@ void AtomFeat1(const RDKit::Atom* atom, const ROMol* mol, std::vector <double> &
 
     // one hot  Implicit Valence
     int IV = atom->getImplicitValence();
-    for (int i=0;  i<7; i++) {
+    for (unsigned int i=0;  i<7; i++) {
           feats[indx] = (IV == i ? 1 : 0);
           indx+=1;
     }
@@ -126,7 +119,8 @@ void AtomFeat1(const RDKit::Atom* atom, const ROMol* mol, std::vector <double> &
     }
 
     // one hot ring size
-    for (int i=3;  i<9; i++) {
+    int atomid = atom->getIdx();
+    for (unsigned int i=3;  i<9; i++) {
           feats[indx] = (mol->getRingInfo()->isAtomInRingOfSize( atomid , i ) ? 1 : 0);
           indx+=1;
     }
@@ -137,7 +131,7 @@ void AtomFeat1(const RDKit::Atom* atom, const ROMol* mol, std::vector <double> &
 
     // one hot  Total NumH
     int toth = atom->getTotalNumHs(false);
-    for (int i=0;  i<5; i++) {
+    for (unsigned int i=0;  i<5; i++) {
           feats[indx] = (toth == i ? 1 : 0);
           indx+=1;
     }
@@ -172,11 +166,7 @@ void AtomFeat(const ROMol& mol, std::vector<double>& res, int atomid,  bool addc
     res.resize(49);
   }
 
-  AtomFeat1( mol.getAtomWithIdx(atomid),  &mol, res, addchiral);
-
-
-
-
+  AtomFeatVect( mol.getAtomWithIdx(atomid),  &mol, res, addchiral);
 }
 
 }  // namespace Descriptors

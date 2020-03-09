@@ -1,21 +1,11 @@
 //
-//  Copyright (c) 2020, Guillaume GODIN
-//  All rights reserved.
+//  Copyright (C) 2020 Guillaume GODIN
+//   @@ All Rights Reserved @@
 //
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-//
-//     * Redistributions of source code must retain the above copyright
-//       notice, this list of conditions and the following disclaimer.
-//     * Redistributions in binary form must reproduce the above
-//       copyright notice, this list of conditions and the following
-//       disclaimer in the documentation and/or other materials provided
-//       with the distribution.
-//     * Neither the name of Institue of Cancer Research.
-//       nor the names of its contributors may be used to endorse or promote
-//       products derived from this software without specific prior written
-//       permission.
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
 //
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 // "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -39,11 +29,6 @@ namespace RDKit {
 class ROMol;
 namespace Descriptors {
 const std::string AtomFeatVersion = "1.0.0";
-
-std::vector <Atom::ChiralType> RS {  Atom::CHI_TETRAHEDRAL_CW, Atom::CHI_TETRAHEDRAL_CCW, Atom::CHI_OTHER };
-std::vector <std::string> Symbols {"B", "C", "N", "O", "S", "F", "Si", "P", "Cl", "Br", "I", "H", "*"};
-std::vector <Atom::HybridizationType> HS {  Atom::SP, Atom::SP2, Atom::SP3, Atom::SP3D,  Atom::SP3D2};
-
 
 RDKIT_DESCRIPTORS_EXPORT void AtomFeat(
     const ROMol &, std::vector<double> &res, int atomid = 0,  bool addchiral = false );

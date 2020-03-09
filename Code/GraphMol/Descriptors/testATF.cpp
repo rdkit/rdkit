@@ -24,10 +24,14 @@
 
 #include <GraphMol/Descriptors/AtomFeat.h>
 
+
+
+using namespace RDKit;
+
 void test1() {
  
-  
-    RDKit::ROMOL_SPTR m( RDKit::SmilesToMol( "CO") );    
+    auto m = "CO"_smiles; 
+
     TEST_ASSERT(m);
     
     std::vector<double> res;
@@ -45,11 +49,11 @@ void test1() {
 
     for (std::size_t i = 0; i < res.size() ; i++) {
      	TEST_ASSERT(fabs( res[i]-exp[i])< 0.001);
-      std::cout << res[i] << "," ;
+      //std::cout << res[i] << "," ;
     }
-    std::cout << "\nnum features: " << res.size()  << "\n" ; 
+    //std::cout << "\nnum features: " << res.size()  << "\n" ; 
 
-    std::cout << "DONE\n"; 
+    //std::cout << "DONE\n"; 
     
 }
 

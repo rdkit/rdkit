@@ -528,7 +528,9 @@ python::list GetAtomFeatures(const RDKit::ROMol &mol,
   std::vector<double> res;
   RDKit::Descriptors::AtomFeat(mol, res, atomid, addchiral );
   python::list pyres;
-  BOOST_FOREACH (double iv, res) { pyres.append(iv); }
+  for( auto iv : res ) { 
+    pyres.append(iv); 
+  }
   return pyres;
 }
 
@@ -1412,7 +1414,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   docString = "Returns the Atom Features vector";
   python::def(
       "GetAtomFeatures", GetAtomFeatures,
-      (python::arg("mol"), python::arg("atomid") = 0, python::arg("addchirald") = false),
+      (python::arg("mol"), python::arg("atomid"), python::arg("addchiral") = false),
       docString.c_str());
 
   python::scope().attr("_CalcNumSpiroAtoms_version") =
