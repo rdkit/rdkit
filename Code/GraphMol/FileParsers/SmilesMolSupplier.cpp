@@ -32,28 +32,7 @@ SmilesMolSupplier::SmilesMolSupplier(const std::string &fileName,
                                      int smilesColumn, int nameColumn,
                                      bool titleLine, bool sanitize) {
   init();
-
-  // FIX: this binary mode of opening file is here because of a bug in VC++ 6.0
-  // the function "tellg" does not work correctly if we do not open it this way
-  // Need to check if this has been fixed in VC++ 7.0
-  auto *tmpStream = new std::ifstream(fileName.c_str(), std::ios_base::binary);
-
-  if (!(*tmpStream) || tmpStream->bad()) {
-    std::ostringstream errout;
-    errout << "Bad input file " << fileName;
-    delete tmpStream;
-    throw BadFileException(errout.str());
-  }
-  // check to make sure that we can actually read from the stream
-  tmpStream->peek();
-  if (tmpStream->bad() || tmpStream->eof()) {
-    std::ostringstream errout;
-    errout << "Invalid input file " << fileName;
-    delete tmpStream;
-    throw BadFileException(errout.str());
-  }
-
-  dp_inStream = static_cast<std::istream *>(tmpStream);
+  dp_inStream = openAndCheckStream(fileName);
   CHECK_INVARIANT(dp_inStream, "bad instream");
   CHECK_INVARIANT(!(dp_inStream->eof()), "early EOF");
 
