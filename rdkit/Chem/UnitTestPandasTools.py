@@ -1,17 +1,15 @@
-from __future__ import print_function
-
-import doctest
-import gzip
-import os
-import shutil
-import tempfile
-import unittest
-
-import numpy
-
-from rdkit.Chem import PandasTools
-from rdkit.six import PY3, StringIO, BytesIO
 from rdkit import RDConfig, rdBase, Chem
+from io import StringIO, BytesIO
+from rdkit.Chem import PandasTools
+import numpy
+import unittest
+import tempfile
+import shutil
+import os
+import gzip
+import doctest
+if (getattr(doctest, 'ELLIPSIS_MARKER')):
+  doctest.ELLIPSIS_MARKER = '*...*'
 
 try:
   import IPython
@@ -33,6 +31,7 @@ class TestPandasTools(unittest.TestCase):
   def setUp(self):
     PandasTools.InstallPandasTools()
     PandasTools.ChangeMoleculeRendering(renderer='PNG')
+    PandasTools.pd.set_option('display.max_columns', None)
     self._molRepresentation = PandasTools.molRepresentation
     self._highlightSubstructures = PandasTools.highlightSubstructures
 
@@ -120,17 +119,17 @@ class TestPandasTools(unittest.TestCase):
   @unittest.skipIf(IPython is None, 'Package IPython required for testing')
   def test_svgRendering(self):
     df = PandasTools.LoadSDF(getStreamIO(methane + peroxide))
-    self.assertIn('image/png', str(df))
-    self.assertNotIn('svg', str(df))
+    self.assertIn('image/png', df.to_html())
+    self.assertNotIn('svg', df.to_html())
 
     PandasTools.molRepresentation = 'svg'
-    self.assertIn('svg', str(df))
-    self.assertNotIn('image/png', str(df))
+    self.assertIn('svg', df.to_html())
+    self.assertNotIn('image/png', df.to_html())
 
     # we can use upper case for the molRepresentation
     PandasTools.molRepresentation = 'PNG'
-    self.assertNotIn('svg', str(df))
-    self.assertIn('image/png', str(df))
+    self.assertNotIn('svg', df.to_html())
+    self.assertIn('image/png', df.to_html())
 
   def test_patchHeadFrame(self):
     df = self.df.copy()
@@ -139,8 +138,8 @@ class TestPandasTools(unittest.TestCase):
     self.assertNotIn('35024985', result)
 
   def test_AddMoleculeColumnToFrame(self):
-    df = PandasTools.LoadSDF(
-      getStreamIO(methane + peroxide), isomericSmiles=True, smilesName='Smiles')
+    df = PandasTools.LoadSDF(getStreamIO(methane + peroxide), isomericSmiles=True,
+                             smilesName='Smiles')
     PandasTools.ChangeMoleculeRendering(frame=df, renderer='String')
     del df['ROMol']
     self.assertNotIn('ROMol', str(df))
@@ -175,6 +174,34 @@ class TestPandasTools(unittest.TestCase):
 
     self.assertFalse(molge(mol1, mol3))
     self.assertEqual(mol1.__dict__['__sssAtoms'], [])
+
+  @unittest.skipIf(IPython is None, 'Package IPython required for testing')
+  def test_github2380(self):
+    from rdkit.Chem.Draw import IPythonConsole
+    IPythonConsole.ipython_useSVG = True
+    df = PandasTools.LoadSDF(getStreamIO(methane + peroxide))
+    _ = PandasTools.FrameToGridImage(df)
+
+  def test_RGD(self):
+    from rdkit.Chem import rdRGroupDecomposition
+    scaffold = Chem.MolFromSmiles('c1ccccn1')
+    mols = [
+      Chem.MolFromSmiles(smi)
+      for smi in 'c1c(F)cccn1 c1c(Cl)c(C)ccn1 c1c(O)cccn1 c1c(F)c(C)ccn1 c1cc(Cl)c(F)cn1'.split()
+    ]
+    groups, _ = rdRGroupDecomposition.RGroupDecompose([scaffold], mols, asSmiles=True, asRows=False)
+    df = PandasTools.RGroupDecompositionToFrame(groups, mols, include_core=True)
+    self.assertEqual(len(df), len(mols))
+    self.assertEqual(list(df.columns), ['Mol', 'Core', 'R1', 'R2'])
+    self.assertEqual(list(df.R1), ['F[*:1]', 'Cl[*:1]', 'O[*:1]', 'F[*:1]', 'F[*:1]'])
+
+    groups, _ = rdRGroupDecomposition.RGroupDecompose([scaffold], mols, asSmiles=False,
+                                                      asRows=False)
+    df = PandasTools.RGroupDecompositionToFrame(groups, mols, include_core=True)
+    self.assertEqual(len(df), len(mols))
+    self.assertEqual(list(df.columns), ['Mol', 'Core', 'R1', 'R2'])
+    self.assertEqual([Chem.MolToSmiles(x) for x in df.R1],
+                     ['F[*:1]', 'Cl[*:1]', 'O[*:1]', 'F[*:1]', 'F[*:1]'])
 
 
 @unittest.skipIf(PandasTools.pd is None, 'Pandas not installed, skipping')
@@ -320,8 +347,7 @@ class TestWriteSDF(unittest.TestCase):
       PandasTools.WriteSDF(self.df, filename)
       with gzip.open(filename) as f:
         s = f.read()
-      if PY3:
-        s = s.decode('utf-8')
+      s = s.decode('utf-8')
       s = s.replace(os.linesep, '\n')
       self.assertEqual(s.count("\n$$$$\n"), 2)
       self.assertEqual(s.split("\n", 1)[0], "Methane")
@@ -331,10 +357,7 @@ class TestWriteSDF(unittest.TestCase):
 
 def getStreamIO(sdfString):
   """ Return a StringIO/BytesIO for the string """
-  if PY3:
-    sio = BytesIO() if sdfString is None else BytesIO(sdfString.encode('utf-8'))
-  else:  # pragma: nocover
-    sio = StringIO() if sdfString is None else StringIO(sdfString)
+  sio = BytesIO() if sdfString is None else BytesIO(sdfString.encode('utf-8'))
   return sio
 
 

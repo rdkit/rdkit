@@ -16,7 +16,7 @@
 #include <GraphMol/MolPickler.h>
 #include <iostream>
 #include <sstream>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 
 namespace RDKit {
 
@@ -26,28 +26,30 @@ MolCatalogEntry::MolCatalogEntry(const ROMol *omol) {
   dp_props = new Dict();
   d_descrip = "";
   dp_mol = omol;
+  d_order = 0;
 }
 
 MolCatalogEntry::MolCatalogEntry(const MolCatalogEntry &other) {
   setBitId(other.getBitId());
   d_descrip = other.d_descrip;
-  dp_props = 0;
-  dp_mol = 0;
+  dp_props = nullptr;
+  dp_mol = nullptr;
   if (other.dp_props) {
     dp_props = new Dict(*other.dp_props);
   }
   if (other.dp_mol) {
     dp_mol = new ROMol(*other.dp_mol);
   }
+  d_order = other.d_order;
 }
 
 MolCatalogEntry::~MolCatalogEntry() {
   // std::cerr << "mce: " << dp_mol <<" " <<dp_props << std::endl;
   delete dp_mol;
-  dp_mol = NULL;
+  dp_mol = nullptr;
 
   delete dp_props;
-  dp_props = NULL;
+  dp_props = nullptr;
 
   // std::cerr << "<< done" << std::endl;
 }
@@ -62,7 +64,7 @@ void MolCatalogEntry::toStream(std::ostream &ss) const {
   PRECONDITION(dp_mol, "bad mol");
   MolPickler::pickleMol(*dp_mol, ss);
 
-  boost::int32_t tmpInt;
+  std::int32_t tmpInt;
   tmpInt = getBitId();
   streamWrite(ss, tmpInt);
 
@@ -83,9 +85,9 @@ std::string MolCatalogEntry::Serialize() const {
 
 void MolCatalogEntry::initFromStream(std::istream &ss) {
   delete dp_mol;
-  dp_mol = NULL;
+  dp_mol = nullptr;
   delete dp_props;
-  dp_props = NULL;
+  dp_props = nullptr;
 
   // the molecule:
   dp_mol = new ROMol();
@@ -93,7 +95,7 @@ void MolCatalogEntry::initFromStream(std::istream &ss) {
 
   dp_props = new Dict();
 
-  boost::int32_t tmpInt;
+  std::int32_t tmpInt;
   // the bitId:
   streamRead(ss, tmpInt);
   setBitId(tmpInt);
@@ -104,7 +106,7 @@ void MolCatalogEntry::initFromStream(std::istream &ss) {
 
   // the description:
   streamRead(ss, tmpInt);
-  char *tmpText = new char[tmpInt + 1];
+  auto *tmpText = new char[tmpInt + 1];
   ss.read(tmpText, tmpInt * sizeof(char));
   tmpText[tmpInt] = 0;
   d_descrip = tmpText;
@@ -119,4 +121,4 @@ void MolCatalogEntry::initFromString(const std::string &text) {
   // now start reading out values:
   initFromStream(ss);
 }
-}
+}  // namespace RDKit

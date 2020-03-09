@@ -14,7 +14,7 @@ import unittest
 from rdkit import Chem
 from rdkit import RDConfig
 from rdkit.Chem import FragmentCatalog, BuildFragmentCatalog
-from rdkit.six.moves import cPickle
+import pickle
 
 
 def feq(n1, n2, tol=1e-4):
@@ -87,13 +87,13 @@ class TestCase(unittest.TestCase):
     self._fillCat(self.smiList2)
 
     # test non-binary pickle:
-    cat2 = cPickle.loads(cPickle.dumps(self.fragCat))
+    cat2 = pickle.loads(pickle.dumps(self.fragCat))
     assert cat2.GetNumEntries() == 21
     assert cat2.GetFPLength() == 21
     self._testBits(cat2)
 
     # test binary pickle:
-    cat2 = cPickle.loads(cPickle.dumps(self.fragCat, 1))
+    cat2 = pickle.loads(pickle.dumps(self.fragCat, 1))
     assert cat2.GetNumEntries() == 21
     assert cat2.GetFPLength() == 21
     self._testBits(cat2)
@@ -104,7 +104,7 @@ class TestCase(unittest.TestCase):
       buf = pklTFile.read().replace('\r\n', '\n').encode('utf-8')
       pklTFile.close()
     with io.BytesIO(buf) as pklFile:
-      cat = cPickle.load(pklFile, encoding='bytes')
+      cat = pickle.load(pklFile, encoding='bytes')
     assert cat.GetNumEntries() == 21
     assert cat.GetFPLength() == 21
     self._testBits(cat)

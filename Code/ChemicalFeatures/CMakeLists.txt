@@ -1,4 +1,7 @@
-rdkit_library(ChemicalFeatures FreeChemicalFeature.cpp)
+
+add_definitions(-DRDKIT_CHEMICALFEATURES_BUILD)
+rdkit_library(ChemicalFeatures FreeChemicalFeature.cpp
+              LINK_LIBRARIES RDGeneral RDGeometryLib)
 
 rdkit_headers(ChemicalFeature.h
               FreeChemicalFeature.h DEST ChemicalFeatures)
@@ -6,7 +9,8 @@ rdkit_headers(ChemicalFeature.h
 rdkit_test(testChemicalFeatures testChemicalFeatures.cpp 
            LINK_LIBRARIES ChemicalFeatures RDGeneral)
 
+if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
-
+endif()
 
 

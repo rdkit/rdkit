@@ -1,3 +1,6 @@
+
+remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
+add_definitions(-DRDKIT_DISTGEOMHELPERS_BUILD)
 rdkit_library(DistGeomHelpers BoundsMatrixBuilder.cpp Embedder.cpp
               LINK_LIBRARIES ForceFieldHelpers DistGeometry Alignment
                 ${RDKit_THREAD_LIBS})
@@ -7,8 +10,9 @@ rdkit_headers(BoundsMatrixBuilder.h
 
 rdkit_test(testDistGeomHelpers testDgeomHelpers.cpp
            LINK_LIBRARIES
-           DistGeomHelpers DistGeometry ForceFieldHelpers ForceField MolAlign MolTransforms  FileParsers SmilesParse SubstructMatch Optimizer EigenSolvers Alignment GraphMol RDGeometryLib RDGeneral ${RDKit_THREAD_LIBS} )
+           DistGeomHelpers DistGeometry ForceFieldHelpers ForceField
+	   MolAlign MolTransforms  FileParsers SmilesParse SubstructMatch Optimizer EigenSolvers Alignment GraphMol RDGeometryLib RDGeneral ${RDKit_THREAD_LIBS} )
 
+if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
-
-
+endif()

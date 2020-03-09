@@ -2,7 +2,7 @@
 #
 # Created by Greg Landrum, July 2008
 #
-from __future__ import print_function
+
 from rdkit import RDConfig
 import os, sys
 import unittest
@@ -262,6 +262,30 @@ class TestCase(unittest.TestCase):
     self.assertEqual(m.GetNumConformers(), 1)
     self.assertTrue(m.GetConformer(0).Is3D() == False)
 
+  def testGitHub1062(self):
+    s0 = 'C/C=C\C'
+    m1 = Chem.MolFromSmiles(s0)
+    s1 = Chem.MolToSmiles(m1)
+    pyAvalonTools.Generate2DCoords(m1)
+    mb = Chem.MolToMolBlock(m1)
+    m2 = Chem.MolFromMolBlock(mb)
+    s2 = Chem.MolToSmiles(m2)
+    self.assertEqual(s1, s2)
+
+    # repeat the test with an input smiles that is not canonical
+    # to verify that the implementation is not sensitive to the
+    # ordering of atoms
+    s0 = 'C/C=C(F)\C'
+    m1 = Chem.MolFromSmiles(s0)
+    s1 = Chem.MolToSmiles(m1)
+    self.assertNotEqual(s1, s0)
+    pyAvalonTools.Generate2DCoords(m1)
+    mb = Chem.MolToMolBlock(m1)
+    m2 = Chem.MolFromMolBlock(mb)
+    s2 = Chem.MolToSmiles(m2)
+    self.assertEqual(s1, s2)
+
+
   def testRDK151(self):
     smi = "C[C@H](F)Cl"
     m = Chem.MolFromSmiles(smi)
@@ -301,7 +325,7 @@ class TestCase(unittest.TestCase):
       (err, fixed_mol) = pyAvalonTools.CheckMoleculeString(atom_clash, False)
       log =  pyAvalonTools.GetCheckMolLog()
       self.assertTrue("of average bond length from bond" in log)
-      
+
       # make sure that the log is cleared for the next molecule
       (err, fixed_mol) = pyAvalonTools.CheckMoleculeString("c1ccccc1", True)
       log =  pyAvalonTools.GetCheckMolLog()
@@ -309,7 +333,7 @@ class TestCase(unittest.TestCase):
 
     finally:
       pyAvalonTools.CloseCheckMolFiles()
-    
+
 
   #   def testIsotopeBug(self):
   #     mb="""D isotope problem.mol
@@ -385,7 +409,7 @@ class TestCase(unittest.TestCase):
   #     self.assertNotEqual(fixed_mol.GetAtomWithIdx(0).GetChiralTag(),Chem.rdchem.ChiralType.CHI_UNSPECIFIED)
 
   def testAvalonCountFPs(self):
-    # need to go to longer bit counts to avoid collions:
+    # need to go to longer bit counts to avoid collisions:
     cv1 = pyAvalonTools.GetAvalonCountFP('c1ccccc1', True, nBits=6000)
     cv2 = pyAvalonTools.GetAvalonCountFP('c1ccccc1.c1ccccc1', True, nBits=6000)
     for idx, v in cv1.GetNonzeroElements().items():

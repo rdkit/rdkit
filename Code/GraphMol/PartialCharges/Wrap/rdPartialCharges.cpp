@@ -17,9 +17,9 @@
 namespace python = boost::python;
 
 namespace RDKit {
-void ComputeGasteigerCharges(const ROMol *mol, int nIter = 12,
-                             bool throwOnParamFailure = false) {
-  computeGasteigerCharges(mol, nIter, throwOnParamFailure);
+void ComputeGasteigerCharges(const ROMol &mol, int nIter,
+                             bool throwOnParamFailure) {
+  computeGasteigerCharges(&mol, nIter, throwOnParamFailure);
 }
 }
 

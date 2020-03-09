@@ -13,16 +13,25 @@
 
 namespace RDKit {
 
-Conformer::Conformer(const Conformer &conf) {
-  dp_mol = 0;
-  int i, nat = conf.getNumAtoms();
-  d_positions.reserve(nat);
-
-  for (i = 0; i < nat; i++) {
-    d_positions.push_back(conf.getAtomPos(i));
+void Conformer::initFromOther(const Conformer &conf) {
+  RDProps::operator=(conf);
+  dp_mol = conf.dp_mol;
+  auto nat = conf.getNumAtoms();
+  d_positions.resize(nat);
+  for (unsigned i = 0; i < nat; i++) {
+    d_positions[i] = conf.getAtomPos(i);
   }
   d_id = conf.getId();
   df_is3D = conf.is3D();
+}
+
+Conformer::Conformer(const Conformer &conf) : RDProps() { initFromOther(conf); }
+Conformer &Conformer::operator=(const Conformer &other) {
+  if (this == &other) {
+    return *this;
+  }
+  initFromOther(other);
+  return *this;
 }
 
 void Conformer::setOwningMol(ROMol *mol) {
@@ -61,4 +70,4 @@ RDGeom::Point3D &Conformer::getAtomPos(unsigned int atomId) {
   URANGE_CHECK(atomId, d_positions.size());
   return d_positions[atomId];
 }
-}
+}  // namespace RDKit

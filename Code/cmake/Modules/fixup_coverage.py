@@ -3,7 +3,7 @@ the coverage tool mistakenly finds in the build tree.
 It replaces the paths with the ones from the source tree
 n.b. if a file with the same name (i.e. sln.yy) is found twice
  in the source tree, this will break"""
-from __future__ import print_function
+
 import os, sys
 source_dir, info_file = sys.argv[1:3]
 print(source_dir, info_file)

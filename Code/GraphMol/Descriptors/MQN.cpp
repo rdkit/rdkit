@@ -18,7 +18,7 @@
 
 namespace RDKit {
 namespace Descriptors {
-std::vector<unsigned int> calcMQNs(const ROMol &mol, bool force) {
+std::vector<unsigned int> calcMQNs(const ROMol& mol, bool force) {
   RDUNUSED_PARAM(force);
   // FIX: use force value to enable caching
   std::vector<unsigned int> res(42, 0);
@@ -32,7 +32,7 @@ std::vector<unsigned int> calcMQNs(const ROMol &mol, bool force) {
   ROMol::VERTEX_ITER atBegin, atEnd;
   boost::tie(atBegin, atEnd) = mol.getVertices();
   while (atBegin != atEnd) {
-    const ATOM_SPTR at = mol[*atBegin];
+    const Atom* at = mol[*atBegin];
     ++atBegin;
     unsigned int nHs = at->getTotalNumHs();
     unsigned int nRings = mol.getRingInfo()->numAtomRings(at->getIdx());
@@ -62,10 +62,11 @@ std::vector<unsigned int> calcMQNs(const ROMol &mol, bool force) {
         res[6]++;
         break;
       case 7:
-        if (!nRings)
+        if (!nRings) {
           res[7]++;
-        else
+        } else {
           res[8]++;
+        }
         if (at->getDegree() != 4) {
           res[19]++;  // number of acceptor sites
           res[20]++;  // number of acceptor atoms
@@ -76,10 +77,11 @@ std::vector<unsigned int> calcMQNs(const ROMol &mol, bool force) {
         }
         break;
       case 8:
-        if (!nRings)
+        if (!nRings) {
           res[9]++;
-        else
+        } else {
           res[10]++;
+        }
         res[20]++;  // number of acceptor atoms
         if (at->getFormalCharge() != -1) {
           res[19] += 2;  // number of acceptor sites
@@ -95,10 +97,11 @@ std::vector<unsigned int> calcMQNs(const ROMol &mol, bool force) {
         break;
     }
 
-    if (at->getFormalCharge() > 0)
+    if (at->getFormalCharge() > 0) {
       res[24]++;  // positive charges
-    else if (at->getFormalCharge() < 0)
+    } else if (at->getFormalCharge() < 0) {
       res[23]++;  // negative charges
+    }
 
     if (at->getAtomicNum() != 1) {
       switch (at->getDegree()) {
@@ -106,25 +109,30 @@ std::vector<unsigned int> calcMQNs(const ROMol &mol, bool force) {
           res[25]++;
           break;
         case 2:
-          if (!nRings)
+          if (!nRings) {
             res[26]++;
-          else
+          } else {
             res[29]++;
+          }
           break;
         case 3:
-          if (!nRings)
+          if (!nRings) {
             res[27]++;
-          else
+          } else {
             res[30]++;
+          }
           break;
         case 4:
-          if (!nRings)
+          if (!nRings) {
             res[28]++;
-          else
+          } else {
             res[31]++;
+          }
           break;
       }
-      if (nRings >= 2) res[40]++;
+      if (nRings >= 2) {
+        res[40]++;
+      }
     }
   }
   res[11] = mol.getNumHeavyAtoms();
@@ -135,32 +143,39 @@ std::vector<unsigned int> calcMQNs(const ROMol &mol, bool force) {
   ROMol::EDGE_ITER firstB, lastB;
   boost::tie(firstB, lastB) = mol.getEdges();
   while (firstB != lastB) {
-    const BOND_SPTR bond = mol[*firstB];
-    if (bond->getIsAromatic()) ++nAromatic;
+    const Bond* bond = mol[*firstB];
+    if (bond->getIsAromatic()) {
+      ++nAromatic;
+    }
     unsigned int nRings = mol.getRingInfo()->numBondRings(bond->getIdx());
     switch (bond->getBondType()) {
       case Bond::SINGLE:
-        if (!nRings)
+        if (!nRings) {
           res[12]++;
-        else
+        } else {
           res[15]++;
+        }
         break;
       case Bond::DOUBLE:
-        if (!nRings)
+        if (!nRings) {
           res[13]++;
-        else
+        } else {
           res[16]++;
+        }
         break;
       case Bond::TRIPLE:
-        if (!nRings)
+        if (!nRings) {
           res[14]++;
-        else
+        } else {
           res[17]++;
+        }
         break;
       default:
         break;
     }
-    if (nRings >= 2) res[41]++;
+    if (nRings >= 2) {
+      res[41]++;
+    }
     ++firstB;
   }
   // rather than do the work to kekulize the molecule, we cheat
@@ -169,12 +184,14 @@ std::vector<unsigned int> calcMQNs(const ROMol &mol, bool force) {
   // remainder to the single bonds
   res[15] += nAromatic / 2;
   res[16] += nAromatic / 2;
-  if (nAromatic % 2) res[15]++;
+  if (nAromatic % 2) {
+    res[15]++;
+  }
   res[18] = calcNumRotatableBonds(mol);
 
   // ---------------------------------------------------
   //  ring size counts
-  BOOST_FOREACH (const INT_VECT &iv, mol.getRingInfo()->atomRings()) {
+  BOOST_FOREACH (const INT_VECT& iv, mol.getRingInfo()->atomRings()) {
     if (iv.size() < 10) {
       res[iv.size() + 29]++;
     } else {

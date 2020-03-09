@@ -18,6 +18,30 @@
 
 using namespace RDKit;
 namespace RDGeom {
+
+template <class GRIDTYPE>
+double tverskyIndex(const GRIDTYPE &grid1, const GRIDTYPE &grid2, double alpha, double beta) {
+  if (!grid1.compareParams(grid2)) {
+    throw ValueErrorException("Grid parameters do not match");
+  }
+  const DiscreteValueVect *v1 = grid1.getOccupancyVect();
+  const DiscreteValueVect *v2 = grid2.getOccupancyVect();
+  unsigned int dist = computeL1Norm(*v1, *v2);
+  unsigned int totv1 = v1->getTotalVal();
+  unsigned int totv2 = v2->getTotalVal();
+  double inter = 0.5 * (totv1 + totv2 - dist);
+//  double alpha = 1.0;
+//  double beta = 1.0;
+  double tversky_res = inter / (alpha * (1.0 * totv1 - inter) + beta * (1.0 * totv2 - inter) + inter);
+//  double res = dist / (dist + inter);
+  return tversky_res;
+}
+
+template RDKIT_RDGEOMETRYLIB_EXPORT double tverskyIndex(const UniformGrid3D &grid1,
+                                 const UniformGrid3D &grid2, 
+				 double alpha, 
+				 double beta);
+
 template <class GRIDTYPE>
 double tanimotoDistance(const GRIDTYPE &grid1, const GRIDTYPE &grid2) {
   if (!grid1.compareParams(grid2)) {
@@ -33,7 +57,7 @@ double tanimotoDistance(const GRIDTYPE &grid1, const GRIDTYPE &grid2) {
   return res;
 }
 
-template double tanimotoDistance(const UniformGrid3D &grid1,
+template RDKIT_RDGEOMETRYLIB_EXPORT double tanimotoDistance(const UniformGrid3D &grid1,
                                  const UniformGrid3D &grid2);
 
 template <class GRIDTYPE>
@@ -51,7 +75,7 @@ double protrudeDistance(const GRIDTYPE &grid1, const GRIDTYPE &grid2) {
   return res;
 }
 
-template double protrudeDistance(const UniformGrid3D &grid1,
+template RDKIT_RDGEOMETRYLIB_EXPORT double protrudeDistance(const UniformGrid3D &grid1,
                                  const UniformGrid3D &grid2);
 
 std::map<int, std::vector<int> > gridIdxCache;

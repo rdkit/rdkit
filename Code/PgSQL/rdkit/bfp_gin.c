@@ -116,7 +116,7 @@ Datum gin_bfp_consistent(PG_FUNCTION_ARGS) {
 
   int32 i, nCommon = 0;
   for (i = 0; i < nkeys; ++i) {
-    if (check[i] == TRUE) {
+    if (check[i] == true) {
       ++nCommon;
     }
   }

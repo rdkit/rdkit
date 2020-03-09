@@ -1,0 +1,474 @@
+
+
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Introduction &mdash; MolHash 1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/nm_style.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Installation" href="installation.html" />
+    <link rel="prev" title="MolHash" href="index.html" /> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> MolHash
+          
+
+          
+            
+            <img src="_static/nextmove_logo.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#anonymous-graph">Anonymous Graph</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#arthor-substructure-order">Arthor Substructure Order</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#canonical-smiles">Canonical SMILES</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#element-graph">Element Graph</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#heteroatom-protomer-tautomer">Heteroatom Protomer/Tautomer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#mesomer-redox-pair">Mesomer/Redox Pair</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#molecular-formula">Molecular Formula</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#murcko-scaffold-and-extended-murcko">Murcko Scaffold and Extended Murcko</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#regioisomer">Regioisomer</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="commandline.html">molhash application</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">MolHash</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Introduction</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="introduction">
+<h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h1>
+<p>MolHash is a command-line application and programming library for generating hashes from molecular structures. This section gives an overview of each of the most useful hash functions in turn. The user should find it straightforward to add additional hash functions, or tweak the existing ones.</p>
+<p>To begin with, the following table summarises the available molecular hashes, whether their calculation alters the structure (this is only relevant to API use, not via the command-line), and whether they are sensitive (or invariant) to the presence of particular molecular features. If a particular hash function is sensitive to a molecular feature but this is not desired, then the molecule should be normalized accordingly with the provided normalization methods/options.</p>
+<table border="1" class="docutils" id="id1">
+<caption><span class="caption-text">Hash function summary</span><a class="headerlink" href="#id1" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col width="25%" />
+<col width="20%" />
+<col width="11%" />
+<col width="8%" />
+<col width="11%" />
+<col width="12%" />
+<col width="12%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head" rowspan="2">Hash functions</th>
+<th class="head" rowspan="2">May alter structure</th>
+<th class="head" colspan="5">Sensitive to</th>
+</tr>
+<tr class="row-even"><th class="head">Explicit H</th>
+<th class="head">Isotope</th>
+<th class="head">Atom class</th>
+<th class="head">Atom stereo</th>
+<th class="head">Bond Stereo</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-odd"><td>Anonymous Graph</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>N</td>
+</tr>
+<tr class="row-even"><td>Arthor Substructure Order</td>
+<td>N</td>
+<td>Y</td>
+<td>Y</td>
+<td>N</td>
+<td>N</td>
+<td>N</td>
+</tr>
+<tr class="row-odd"><td>Atom &amp; Bond Counts</td>
+<td>N</td>
+<td>Y</td>
+<td>N</td>
+<td>N</td>
+<td>N</td>
+<td>N</td>
+</tr>
+<tr class="row-even"><td>Canonical Smiles</td>
+<td>N</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+</tr>
+<tr class="row-odd"><td>Degree Vector</td>
+<td>N</td>
+<td>Y</td>
+<td>N</td>
+<td>N</td>
+<td>N</td>
+<td>N</td>
+</tr>
+<tr class="row-even"><td>Element Graph</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>N</td>
+</tr>
+<tr class="row-odd"><td>Heteroatom Protomer</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>N</td>
+</tr>
+<tr class="row-even"><td>Heteroatom Tautomer</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>N</td>
+</tr>
+<tr class="row-odd"><td>Mesomer</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>N</td>
+</tr>
+<tr class="row-even"><td>Molecular Formula</td>
+<td>N</td>
+<td>N</td>
+<td>N</td>
+<td>N</td>
+<td>N</td>
+<td>N</td>
+</tr>
+<tr class="row-odd"><td>Murcko Scaffold</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+</tr>
+<tr class="row-even"><td>Extended Murcko</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+</tr>
+<tr class="row-odd"><td>Net Charge</td>
+<td>N</td>
+<td>N</td>
+<td>N</td>
+<td>N</td>
+<td>N</td>
+<td>N</td>
+</tr>
+<tr class="row-even"><td>Redox Pair</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>N</td>
+</tr>
+<tr class="row-odd"><td>Regioisomer</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+</tr>
+<tr class="row-even"><td>SmallWorld Index BR</td>
+<td>N</td>
+<td>Y</td>
+<td>N</td>
+<td>N</td>
+<td>N</td>
+<td>N</td>
+</tr>
+<tr class="row-odd"><td>SmallWorld Index BRL</td>
+<td>N</td>
+<td>Y</td>
+<td>N</td>
+<td>N</td>
+<td>N</td>
+<td>N</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="anonymous-graph">
+<h2>Anonymous Graph<a class="headerlink" href="#anonymous-graph" title="Permalink to this headline">¶</a></h2>
+<div class="figure align-right">
+<img alt="_images/anonymous-graph.svg" src="_images/anonymous-graph.svg" /></div>
+<p>This is the canonical SMILES string for a molecule after setting all of its atoms to asterisks, and its bonds to single bonds. It can be used to identify molecules that have the same graph structure independent of atom identity, bond order or hydrogen count.</p>
+</div>
+<div class="section" id="arthor-substructure-order">
+<h2>Arthor Substructure Order<a class="headerlink" href="#arthor-substructure-order" title="Permalink to this headline">¶</a></h2>
+<p><strong>Arthor</strong> is a substructure/similarity search engine developed by NextMove Software. When performing a substructure search, results are returned in the order in which they are present in the database. If users sort their database entries by this hash, results will be returned based in an order that approximates similarity to the query but favoring ‘plain’ molecules.</p>
+<div class="figure align-center">
+<img alt="_images/arthor-order.png" src="_images/arthor-order.png" />
+</div>
+</div>
+<div class="section" id="canonical-smiles">
+<h2>Canonical SMILES<a class="headerlink" href="#canonical-smiles" title="Permalink to this headline">¶</a></h2>
+<p>Generate a canonical SMILES string that includes each of the following (if present, and if the toolkit supports its inclusion): atom and bond stereo, atom maps, explicit hydrogens and isotopes.</p>
+</div>
+<div class="section" id="element-graph">
+<h2>Element Graph<a class="headerlink" href="#element-graph" title="Permalink to this headline">¶</a></h2>
+<div class="figure align-right">
+<img alt="_images/element-graph.svg" src="_images/element-graph.svg" /></div>
+<p>This is the canonical SMILES string for a molecule after settings all its bonds to single bonds and normalizing hydrogen counts. It can be used to identify molecules that have the same bonding arrangement but different bond order.</p>
+</div>
+<div class="section" id="heteroatom-protomer-tautomer">
+<h2>Heteroatom Protomer/Tautomer<a class="headerlink" href="#heteroatom-protomer-tautomer" title="Permalink to this headline">¶</a></h2>
+<p>These molhashes are minor variations of each other, and consist of a SMILES component followed by one or two integers. The SMILES is a canonical SMILES generated after stripping all hydrogens and charges, and setting all bond orders to 1. The tautomer variant appends two integers, the total number of hydrogens on non-carbon atoms, and the total charge; the protomer variant subtracts the charge from hydrogen count to yield a single value.</p>
+<div class="figure align-center">
+<img alt="_images/tautomer-hash-1.svg" src="_images/tautomer-hash-1.svg" /></div>
+<div class="figure align-center">
+<img alt="_images/tautomer-hash-2.svg" src="_images/tautomer-hash-2.svg" /></div>
+<div class="figure align-center">
+<img alt="_images/tautomer-hash-3.svg" src="_images/tautomer-hash-3.svg" /></div>
+<p>To illustrate their use and their difference, consider the structures above on the left-hand side, which all hash to the same SMILES component (depicted on the right). These three all have the same protomer hash (<code class="docutils literal notranslate"><span class="pre">C[C]1[CH][N][CH][N]1_1</span></code>) but because they have different total charges, the tautomer hash shared by the first two (<code class="docutils literal notranslate"><span class="pre">C[C]1[CH][N][CH][N]1_1_0</span></code>) is different for the third (<code class="docutils literal notranslate"><span class="pre">C[C]1[CH][N][CH][N]1_2_1</span></code>). In other words, the protomer variant may be used to find tautomers independent of the charge state.</p>
+</div>
+<div class="section" id="mesomer-redox-pair">
+<h2>Mesomer/Redox Pair<a class="headerlink" href="#mesomer-redox-pair" title="Permalink to this headline">¶</a></h2>
+<p>These two molhashes are minor variations of each other, and consist of a SMILES component which is followed by a single integer in the case of the mesomer hash. The SMILES is a canonical SMILES generated after setting all charges to zero and bond orders to 1. The mesomer variants appends the total charge to the hash.</p>
+<div class="figure align-center">
+<img alt="_images/mesomer-hash-1.svg" src="_images/mesomer-hash-1.svg" /></div>
+<div class="figure align-center">
+<img alt="_images/mesomer-hash-2.svg" src="_images/mesomer-hash-2.svg" /></div>
+<p>The example above shows two redox pairs. These have the same redox pair hash (<code class="docutils literal notranslate"><span class="pre">[CH]1[CH][CH][C]2[C]([CH]1)[N][C]([C]([N]2)[O])[O]</span></code>) but different overall charge and hence have different mesomer hashes (the first has <code class="docutils literal notranslate"><span class="pre">_-2</span></code> appended, while the second has <code class="docutils literal notranslate"><span class="pre">_0</span></code> appended).</p>
+<div class="figure align-center">
+<img alt="_images/mesomer-hash-3.svg" src="_images/mesomer-hash-3.svg" /></div>
+<div class="figure align-center">
+<img alt="_images/mesomer-hash-4.svg" src="_images/mesomer-hash-4.svg" /></div>
+<p>As an example of a mesomeric pair, consider the charge-separated and hypervalent forms of nitros above. These have the same mesomer hash (<code class="docutils literal notranslate"><span class="pre">CCN([O])[O]_0</span></code>).</p>
+</div>
+<div class="section" id="molecular-formula">
+<h2>Molecular Formula<a class="headerlink" href="#molecular-formula" title="Permalink to this headline">¶</a></h2>
+<p>The molecular formula is possibly the most widely used molecular hash, a concise description of the atomic composition and formal charge, that excludes information on bonding. The molecular formula can be used to identify isomers, constitutional or otherwise.</p>
+</div>
+<div class="section" id="murcko-scaffold-and-extended-murcko">
+<h2>Murcko Scaffold and Extended Murcko<a class="headerlink" href="#murcko-scaffold-and-extended-murcko" title="Permalink to this headline">¶</a></h2>
+<p>The Murcko scaffold hash is the canonical SMILES of a molecule after removing all substituents.</p>
+<div class="figure align-center">
+<img alt="_images/murcko.svg" src="_images/murcko.svg" /></div>
+<p>The extended Murcko hash is the canonical SMILES of a molecule after replacing all substituents with attachment points (an asterisk in SMILES).</p>
+<div class="figure align-center">
+<img alt="_images/extendedmurcko.svg" src="_images/extendedmurcko.svg" /></div>
+</div>
+<div class="section" id="regioisomer">
+<h2>Regioisomer<a class="headerlink" href="#regioisomer" title="Permalink to this headline">¶</a></h2>
+<p>The regioisomer hash is the canonical SMILES for a molecule after breaking a subset of acyclic single bonds and replacing the connection by an asterisk or hydrogen. Specifically, acyclic single bonds are cut if either end of the bond is involved in a ring or if the bond is between a non sp<sup>2</sup>-hybridized carbon atom and a non-carbon atom.</p>
+<div class="figure align-center">
+<img alt="_images/regioisomer.svg" src="_images/regioisomer.svg" /></div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="installation.html" class="btn btn-neutral float-right" title="Installation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral" title="MolHash" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015-2019, NextMove Software.
+
+    </p>
+  </div> 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'1.0',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          
+          SphinxRtdTheme.Navigation.enableSticky();
+          
+      });
+  </script> 
+
+</body>
+</html>

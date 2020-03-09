@@ -42,6 +42,7 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 %}
 
+%include "Streams.i"
 
 %newobject RDKit::ForwardSDMolSupplier::next;
 %newobject RDKit::ResonanceMolSupplier::next;
@@ -50,7 +51,22 @@
 %newobject RDKit::TDTMolSupplier::next;
 %newobject RDKit::PDBMolSupplier::next;
 
+
 %include <GraphMol/FileParsers/MolSupplier.h>
+
+%extend RDKit::ForwardSDMolSupplier {
+    ForwardSDMolSupplier(RDKit::gzstream *strm, bool sanitize=true, bool removeHs = true,
+                  bool strictParsing = true) {
+    const bool takeOwnership = false;
+    RDKit::ForwardSDMolSupplier*foo = new RDKit::ForwardSDMolSupplier(
+                                     (std::istream*)strm,
+                                     takeOwnership,
+                                     sanitize, removeHs, strictParsing);
+    PRECONDITION(!foo->atEnd(), "LDJKLJF");
+    return foo;
+  }
+};
+
 %include <GraphMol/Resonance.h>
 
 %extend RDKit::ResonanceMolSupplier {
@@ -60,3 +76,4 @@
     return mv;
   }
 }
+

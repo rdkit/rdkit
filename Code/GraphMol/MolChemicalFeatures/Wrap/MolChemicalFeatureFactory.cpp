@@ -44,17 +44,17 @@ int getNumMolFeatures(const MolChemicalFeatureFactory &factory,
 }
 
 FeatSPtr getMolFeature(const MolChemicalFeatureFactory &factory,
-                       const ROMol &mol, int idx, std::string includeOnly = "",
-                       bool recompute = true) {
+                       const ROMol &mol, int idx, std::string includeOnly,
+                       bool recompute, int confId) {
   static FeatSPtrList feats;
   if (recompute) {
-    feats = factory.getFeaturesForMol(mol, includeOnly.c_str());
+    feats = factory.getFeaturesForMol(mol, includeOnly.c_str(), confId);
   }
   if (idx < 0 || idx >= static_cast<int>(feats.size())) {
     throw IndexErrorException(idx);
   }
 
-  FeatSPtrList_I fi = feats.begin();
+  auto fi = feats.begin();
   for (int i = 0; i < idx; ++i) {
     ++fi;
   }
@@ -68,7 +68,9 @@ python::tuple getFeatureFamilies(const MolChemicalFeatureFactory &factory) {
   for (iter = factory.beginFeatureDefs(); iter != factory.endFeatureDefs();
        ++iter) {
     std::string fam = (*iter)->getFamily();
-    if (res.count(fam) == 0) res.append(fam);
+    if (res.count(fam) == 0) {
+      res.append(fam);
+    }
   }
   return python::tuple(res);
 }
@@ -102,11 +104,12 @@ struct featfactory_wrapper {
         .def("GetMolFeature", getMolFeature,
              (python::arg("mol"), python::arg("idx"),
               python::arg("includeOnly") = std::string(""),
-              python::arg("recompute") = true),
-             python::with_custodian_and_ward_postcall<0, 2>(),
+              python::arg("recompute") = true, python::arg("confId") = -1),
+             python::with_custodian_and_ward_postcall<
+                 0, 2, python::with_custodian_and_ward_postcall<0, 1>>(),
              "returns a particular feature (by index)");
   };
 };
-}
+}  // namespace RDKit
 
 void wrap_factory() { RDKit::featfactory_wrapper::wrap(); }

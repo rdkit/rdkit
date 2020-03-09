@@ -30,7 +30,7 @@ PyObject *getTopNbits(InfoBitRanker *ranker,
   npy_intp dims[2];
   dims[0] = num;
   dims[1] = ranker->getNumClasses() + 2;
-  PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
+  auto *res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
   memcpy(static_cast<void *>(PyArray_DATA(res)), static_cast<void *>(dres),
          dims[0] * dims[1] * sizeof(double));
   return PyArray_Return(res);
@@ -85,55 +85,55 @@ struct ranker_wrap {
     std::string docString =
         "A class to rank the bits from a series of labelled fingerprints\n"
         "A simple demonstration may help clarify what this class does. \n"
-        "Here's a small set of vectors:\n"
-        ">>> for i,bv in enumerate(bvs): print bv.ToBitString(),acts[i]\n"
+        "Here's a small set of vectors:\n\n"
+        ">>> for i,bv in enumerate(bvs): print(bv.ToBitString(),acts[i])\n"
         "... \n"
         "0001 0\n"
         "0101 0\n"
         "0010 1\n"
         "1110 1\n"
         "\n"
-        "Default ranker, using infogain:\n"
+        "Default ranker, using infogain:\n\n"
         ">>> ranker = InfoBitRanker(4,2)  \n"
         ">>> for i,bv in enumerate(bvs): ranker.AccumulateVotes(bv,acts[i])\n"
         "... \n"
-        ">>> for bit,gain,n0,n1 in ranker.GetTopN(3): print "
-        "int(bit),'%.3f'%gain,int(n0),int(n1)\n"
+        ">>> for bit,gain,n0,n1 in ranker.GetTopN(3): "
+        "print(int(bit),'%.3f'%gain,int(n0),int(n1))\n"
         "... \n"
         "3 1.000 2 0\n"
         "2 1.000 0 2\n"
         "0 0.311 0 1\n"
         "\n"
-        "Using the biased infogain:\n"
+        "Using the biased infogain:\n\n"
         ">>> ranker = InfoBitRanker(4,2,InfoTheory.InfoType.BIASENTROPY)\n"
         ">>> ranker.SetBiasList((1,))\n"
         ">>> for i,bv in enumerate(bvs): ranker.AccumulateVotes(bv,acts[i])\n"
         "... \n"
-        ">>> for bit,gain,n0,n1 in ranker.GetTopN(3): print "
-        "int(bit),'%.3f'%gain,int(n0),int(n1)\n"
+        ">>> for bit,gain,n0,n1 in ranker.GetTopN(3): print("
+        "int(bit),'%.3f'%gain,int(n0),int(n1))\n"
         "... \n"
         "2 1.000 0 2\n"
         "0 0.311 0 1\n"
         "1 0.000 1 1\n"
         "\n"
-        "A chi squared ranker is also available:\n"
+        "A chi squared ranker is also available:\n\n"
         ">>> ranker = InfoBitRanker(4,2,InfoTheory.InfoType.CHISQUARE)\n"
         ">>> for i,bv in enumerate(bvs): ranker.AccumulateVotes(bv,acts[i])\n"
         "... \n"
-        ">>> for bit,gain,n0,n1 in ranker.GetTopN(3): print "
-        "int(bit),'%.3f'%gain,int(n0),int(n1)\n"
+        ">>> for bit,gain,n0,n1 in ranker.GetTopN(3): print("
+        "int(bit),'%.3f'%gain,int(n0),int(n1))\n"
         "... \n"
         "3 4.000 2 0\n"
         "2 4.000 0 2\n"
         "0 1.333 0 1\n"
         "\n"
-        "As is a biased chi squared:\n"
+        "As is a biased chi squared:\n\n"
         ">>> ranker = InfoBitRanker(4,2,InfoTheory.InfoType.BIASCHISQUARE)\n"
         ">>> ranker.SetBiasList((1,))\n"
         ">>> for i,bv in enumerate(bvs): ranker.AccumulateVotes(bv,acts[i])\n"
         "... \n"
-        ">>> for bit,gain,n0,n1 in ranker.GetTopN(3): print "
-        "int(bit),'%.3f'%gain,int(n0),int(n1)\n"
+        ">>> for bit,gain,n0,n1 in ranker.GetTopN(3): print("
+        "int(bit),'%.3f'%gain,int(n0),int(n1))\n"
         "... \n"
         "2 4.000 0 2\n"
         "0 1.333 0 1\n"
@@ -188,6 +188,6 @@ struct ranker_wrap {
     ;
   };
 };
-}
+}  // namespace RDInfoTheory
 
 void wrap_ranker() { RDInfoTheory::ranker_wrap::wrap(); }

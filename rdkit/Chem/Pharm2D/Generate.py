@@ -15,7 +15,7 @@
     terms used here mean:
 
       1) *N-point pharmacophore* a combination of N features along with
-         distances betwen them.
+         distances between them.
 
       2) *N-point proto-pharmacophore*: a combination of N feature
          definitions without distances.  Each N-point
@@ -32,7 +32,7 @@
   numbering
 
 """
-from __future__ import print_function
+
 
 from rdkit.Chem.Pharm2D import Utils, SigFactory
 from rdkit.RDLogger import logger

@@ -26,7 +26,7 @@ from rdkit.Chem.Fingerprints import FingerprintMols, DbFpSupplier
 from rdkit.DataStructs.TopNContainer import TopNContainer
 from rdkit.Dbase import DbModule
 from rdkit.Dbase.DbConnection import DbConnect
-from rdkit.six.moves import cPickle
+import pickle
 
 try:
   from rdkit.VLib.NodeLib.DbPickleSupplier import _lazyDataSeq as _dataSeq
@@ -56,7 +56,7 @@ def _ConstructSQL(details, extraFields=''):
 
 def ScreenInDb(details, mol):
   try:
-    probeFp = apply(FingerprintMols.FingerprintMol, (mol, ), details.__dict__)
+    probeFp = FingerprintMols.FingerprintMol(mol, **details.__dict__)
   except Exception:
     import traceback
     FingerprintMols.error('Error: problems fingerprinting molecule.\n')
@@ -146,7 +146,7 @@ def GetFingerprints(details):
     done = 0
     while not done:
       try:
-        ID, fp = cPickle.load(inF)
+        ID, fp = pickle.load(inF)
       except Exception:
         done = 1
       else:
@@ -164,7 +164,7 @@ def ScreenFingerprints(details, data, mol=None, probeFp=None):
   """
   if probeFp is None:
     try:
-      probeFp = apply(FingerprintMols.FingerprintMol, (mol, ), details.__dict__)
+      probeFp = FingerprintMols.FingerprintMol(mol, **details.__dict__)
     except Exception:
       import traceback
       FingerprintMols.error('Error: problems fingerprinting molecule.\n')

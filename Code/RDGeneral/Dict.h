@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
+// Copyright (C) 2003-2020 Greg Landrum and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -12,8 +12,9 @@
   \brief Defines the Dict class
 
 */
-#ifndef __RD_DICT_H__
-#define __RD_DICT_H__
+#include <RDGeneral/export.h>
+#ifndef RD_DICT_H_012020
+#define RD_DICT_H_012020
 
 #include <map>
 #include <string>
@@ -32,24 +33,24 @@ typedef std::vector<std::string> STR_VECT;
 //!
 //!  The actual storage is done using \c RDValue objects.
 //!
-class Dict {
+class RDKIT_RDGENERAL_EXPORT Dict {
  public:
   struct Pair {
     std::string key;
     RDValue val;
 
     Pair() : key(), val() {}
-    Pair(const std::string &s) : key(s), val() {}
-    Pair(const std::string &s, const RDValue &v) : key(s), val(v) {}
+    explicit Pair(std::string s) : key(std::move(s)), val() {}
+    Pair(std::string s, const RDValue &v) : key(std::move(s)), val(v) {}
   };
 
   typedef std::vector<Pair> DataType;
 
-  Dict() : _data(), _hasNonPodData(false){};
+  Dict() : _data(), _hasNonPodData(false) {}
 
   Dict(const Dict &other) : _data(other._data) {
     _hasNonPodData = other._hasNonPodData;
-    if (_hasNonPodData) {
+    if (other._hasNonPodData) {  // other has non pod data, need to copy
       std::vector<Pair> data(other._data.size());
       _data.swap(data);
       for (size_t i = 0; i < _data.size(); ++i) {
@@ -91,8 +92,10 @@ class Dict {
   }
 
   Dict &operator=(const Dict &other) {
-    _hasNonPodData = other._hasNonPodData;
-    if (_hasNonPodData) {
+    if (this == &other) return *this;
+    if (_hasNonPodData) reset();
+
+    if (other._hasNonPodData) {
       std::vector<Pair> data(other._data.size());
       _data.swap(data);
       for (size_t i = 0; i < _data.size(); ++i) {
@@ -102,8 +105,14 @@ class Dict {
     } else {
       _data = other._data;
     }
+    _hasNonPodData = other._hasNonPodData;
     return *this;
-  };
+  }
+
+  //----------------------------------------------------------
+  //! \brief Access to the underlying non-POD containment flag
+  //! This is meant to be used only in bulk updates of _data.
+  bool &getNonPODStatus() { return _hasNonPodData; }
 
   //----------------------------------------------------------
   //! \brief Access to the underlying data.
@@ -115,11 +124,11 @@ class Dict {
   //! \brief Returns whether or not the dictionary contains a particular
   //!        key.
   bool hasVal(const std::string &what) const {
-    for (size_t i = 0; i < _data.size(); ++i) {
-      if (_data[i].key == what) return true;
+    for (const auto &data : _data) {
+      if (data.key == what) return true;
     }
     return false;
-  };
+  }
 
   //----------------------------------------------------------
   //! Returns the set of keys in the dictionary
@@ -128,9 +137,9 @@ class Dict {
   */
   STR_VECT keys() const {
     STR_VECT res;
-    DataType::const_iterator item;
-    for (item = _data.begin(); item != _data.end(); item++) {
-      res.push_back(item->key);
+    res.reserve(_data.size());
+    for (const auto &item : _data) {
+      res.push_back(item.key);
     }
     return res;
   }
@@ -151,20 +160,29 @@ class Dict {
   template <typename T>
   void getVal(const std::string &what, T &res) const {
     res = getVal<T>(what);
-  };
+  }
+
   //! \overload
   template <typename T>
   T getVal(const std::string &what) const {
-    for (size_t i = 0; i < _data.size(); ++i) {
-      if (_data[i].key == what) {
-        return from_rdvalue<T>(_data[i].val);
+    for (auto &data : _data) {
+      if (data.key == what) {
+        return from_rdvalue<T>(data.val);
       }
     }
     throw KeyErrorException(what);
   }
 
   //! \overload
-  void getVal(const std::string &what, std::string &res) const;
+  void getVal(const std::string &what, std::string &res) const {
+    for (const auto &i : _data) {
+      if (i.key == what) {
+        rdvalue_tostring(i.val, res);
+        return;
+      }
+    }
+    throw KeyErrorException(what);
+  }
 
   //----------------------------------------------------------
   //! \brief Potentially gets the value associated with a particular key
@@ -180,20 +198,27 @@ class Dict {
       - If the dictionary does not contain the key \c what,
         a KeyErrorException will be thrown.
   */
-
   template <typename T>
   bool getValIfPresent(const std::string &what, T &res) const {
-    for (size_t i = 0; i < _data.size(); ++i) {
-      if (_data[i].key == what) {
-        res = from_rdvalue<T>(_data[i].val);
+    for (const auto &data : _data) {
+      if (data.key == what) {
+        res = from_rdvalue<T>(data.val);
         return true;
       }
     }
     return false;
-  };
+  }
 
   //! \overload
-  bool getValIfPresent(const std::string &what, std::string &res) const;
+  bool getValIfPresent(const std::string &what, std::string &res) const {
+    for (const auto &i : _data) {
+      if (i.key == what) {
+        rdvalue_tostring(i.val, res);
+        return true;
+      }
+    }
+    return false;
+  }
 
   //----------------------------------------------------------
   //! \brief Sets the value associated with a key
@@ -211,28 +236,28 @@ class Dict {
   template <typename T>
   void setVal(const std::string &what, T &val) {
     _hasNonPodData = true;
-    for (size_t i = 0; i < _data.size(); ++i) {
-      if (_data[i].key == what) {
-        RDValue::cleanup_rdvalue(_data[i].val);
-        _data[i].val = val;
+    for (auto &&data : _data) {
+      if (data.key == what) {
+        RDValue::cleanup_rdvalue(data.val);
+        data.val = val;
         return;
       }
     }
     _data.push_back(Pair(what, val));
-  };
+  }
 
   template <typename T>
   void setPODVal(const std::string &what, T val) {
     // don't change the hasNonPodData status
-    for (size_t i = 0; i < _data.size(); ++i) {
-      if (_data[i].key == what) {
-        RDValue::cleanup_rdvalue(_data[i].val);
-        _data[i].val = val;
+    for (auto &&data : _data) {
+      if (data.key == what) {
+        RDValue::cleanup_rdvalue(data.val);
+        data.val = val;
         return;
       }
     }
     _data.push_back(Pair(what, val));
-  };
+  }
 
   void setVal(const std::string &what, bool val) { setPODVal(what, val); }
 
@@ -259,9 +284,6 @@ class Dict {
 
      \param what the key to clear
 
-   <b>Notes:</b>
-      - If the dictionary does not contain the key \c what,
-        a KeyErrorException will be thrown.
   */
   void clearVal(const std::string &what) {
     for (DataType::iterator it = _data.begin(); it < _data.end(); ++it) {
@@ -273,52 +295,33 @@ class Dict {
         return;
       }
     }
-    throw KeyErrorException(what);
-  };
+  }
 
   //----------------------------------------------------------
   //! \brief Clears all keys (and values) from the dictionary.
   //!
   void reset() {
     if (_hasNonPodData) {
-      for (size_t i = 0; i < _data.size(); ++i) {
-        RDValue::cleanup_rdvalue(_data[i].val);
+      for (auto &&data : _data) {
+        RDValue::cleanup_rdvalue(data.val);
       }
     }
     DataType data;
     _data.swap(data);
-  };
-
-  //----------------------------------------------------------
-  //! Converts a \c RDAny to type \c T
-  /*!
-     \param arg a \c RDAny reference
-
-     \returns the converted object of type \c T
-  */
-  /*
-  template <typename T>
-      T fromany(const RDAny &arg) const {
-    return from_rdany<T>(arg);
   }
-  */
-  //----------------------------------------------------------
-  //! Converts an instance of type \c T to \c RDAny
-  /*!
-     \param arg the object to be converted
 
-     \returns a \c RDAny instance
-  */
-  /*
-  template <typename T>
-      RDAny toany(T arg) const {
-    return RDAny(arg);
-  };
-  */
  private:
   DataType _data;       //!< the actual dictionary
   bool _hasNonPodData;  // if true, need a deep copy
                         //  (copy_rdvalue)
 };
+
+template <>
+inline std::string Dict::getVal<std::string>(const std::string &what) const {
+  std::string res;
+  getVal(what, res);
+  return res;
 }
+
+}  // namespace RDKit
 #endif

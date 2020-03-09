@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #pragma once
 #include <vector>
 #include <string>
@@ -24,14 +25,18 @@
 
 namespace RDKit {
 
-bool FinalChiralityCheckFunction(const short unsigned c1[],
-                                 const short unsigned c2[], const ROMol& mol1,
-                                 const FMCS::Graph& query, const ROMol& mol2,
-                                 const FMCS::Graph& target,
-                                 const MCSParameters* p);
+inline bool FinalChiralityCheckFunction(
+    const std::uint32_t c1[], const std::uint32_t c2[], const ROMol& mol1,
+    const FMCS::Graph& query, const ROMol& mol2, const FMCS::Graph& target,
+    const MCSParameters* p);
+
+bool FinalMatchCheckFunction(const std::uint32_t c1[], const std::uint32_t c2[],
+                             const ROMol& mol1, const FMCS::Graph& query,
+                             const ROMol& mol2, const FMCS::Graph& target,
+                             const MCSParameters* p);
 
 namespace FMCS {
-class MaximumCommonSubgraph {
+class RDKIT_FMCS_EXPORT MaximumCommonSubgraph {
   struct MCS {  // current result. Reference to a fragment of source molecule
     std::vector<const Atom*> Atoms;
     std::vector<const Bond*> Bonds;
@@ -91,10 +96,12 @@ class MaximumCommonSubgraph {
   void makeInitialSeeds();
   bool createSeedFromMCS(size_t newQueryTarget, Seed& seed);
   bool growSeeds();  // returns false if canceled
-  std::string generateResultSMARTS(const MCS& McsIdx) const;
+  std::pair<std::string, RWMol*> generateResultSMARTSAndQueryMol(
+      const MCS& mcsIdx) const;
+  bool addFusedBondQueries(const MCS& McsIdx, RWMol* rwMol) const;
 
   bool match(Seed& seed);
   bool matchIncrementalFast(Seed& seed, unsigned itarget);
 };
-}
+}  // namespace FMCS
 }  // namespace RDKit

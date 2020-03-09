@@ -17,19 +17,21 @@ namespace RDKit {
 
 PDBMolSupplier::PDBMolSupplier(std::istream *inStream, bool takeOwnership,
                                bool sanitize, bool removeHs,
-                               unsigned int flavor) {
+                               unsigned int flavor, bool proximityBonding) {
   dp_inStream = inStream;
   df_owner = takeOwnership;
   df_sanitize = sanitize;
   df_removeHs = removeHs;
   d_flavor = flavor;
+  df_proximityBonding = proximityBonding;
 }
 
 PDBMolSupplier::PDBMolSupplier(const std::string &fileName, bool sanitize,
-                               bool removeHs, unsigned int flavor) {
-  std::ifstream *ifs =
-      new std::ifstream(fileName.c_str(), std::ios_base::binary);
-  if (!ifs || !(*ifs) || ifs->bad()) {
+                               bool removeHs, unsigned int flavor,
+                               bool proximityBonding) {
+  auto *ifs = new std::ifstream(fileName.c_str(), std::ios_base::binary);
+  if (!(*ifs) || ifs->bad()) {
+    delete ifs;
     std::ostringstream errout;
     errout << "Bad input file " << fileName;
     throw BadFileException(errout.str());
@@ -39,6 +41,7 @@ PDBMolSupplier::PDBMolSupplier(const std::string &fileName, bool sanitize,
   df_sanitize = sanitize;
   df_removeHs = removeHs;
   d_flavor = flavor;
+  df_proximityBonding = proximityBonding;
 }
 
 void PDBMolSupplier::init() {}
@@ -46,12 +49,14 @@ void PDBMolSupplier::reset() {}
 
 ROMol *PDBMolSupplier::next() {
   return (ROMol *)PDBDataStreamToMol(dp_inStream, df_sanitize, df_removeHs,
-                                     d_flavor);
+                                     d_flavor, df_proximityBonding);
 }
 
 bool PDBMolSupplier::atEnd() {
-  if (dp_inStream->eof()) return true;
+  if (dp_inStream->eof()) {
+    return true;
+  }
   int ch = dp_inStream->peek();
   return ch == -1;
 }
-}
+}  // namespace RDKit

@@ -27,8 +27,9 @@ SmilesWriter::SmilesWriter(const std::string &fileName,
                            const std::string &nameHeader, bool includeHeader,
                            bool isomericSmiles, bool kekuleSmiles) {
   if (fileName != "-") {
-    std::ofstream *tmpStream = new std::ofstream(fileName.c_str());
-    if (!tmpStream || !(*tmpStream) || (tmpStream->bad())) {
+    auto *tmpStream = new std::ofstream(fileName.c_str());
+    if (!(*tmpStream) || (tmpStream->bad())) {
+      delete tmpStream;
       std::ostringstream errout;
       errout << "Bad output file " << fileName;
       throw BadFileException(errout.str());
@@ -85,10 +86,12 @@ void SmilesWriter::dumpHeader() const {
   CHECK_INVARIANT(dp_ostream, "no output stream");
   if (df_includeHeader) {
     (*dp_ostream) << "SMILES" << d_delim;
-    if (d_nameHeader != "") (*dp_ostream) << d_nameHeader << d_delim;
+    if (d_nameHeader != "") {
+      (*dp_ostream) << d_nameHeader << d_delim;
+    }
 
     if (d_props.size() > 0) {
-      STR_VECT_CI pi = d_props.begin();
+      auto pi = d_props.begin();
       (*dp_ostream) << (*pi);
       pi++;
       while (pi != d_props.end()) {
@@ -101,12 +104,9 @@ void SmilesWriter::dumpHeader() const {
 }
 
 SmilesWriter::~SmilesWriter() {
-  if (df_owner) {
-    // this has to be froma ofstream
-    // cast it back to fstream and clsoe it
-    // std::ofstream *tmpStream = static_cast<std::ofstream *>(dp_ostream);
-    // tmpStream->close();
-    delete dp_ostream;
+  // close the writer if it's still open:
+  if (dp_ostream != nullptr) {
+    close();
   }
 }
 
@@ -146,4 +146,4 @@ void SmilesWriter::write(const ROMol &mol, int confId) {
   (*dp_ostream) << "\n";
   d_molid++;
 }
-}
+}  // namespace RDKit

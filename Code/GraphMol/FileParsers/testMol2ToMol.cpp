@@ -32,6 +32,7 @@
 //  created by Nik Stiefl May 2008
 //
 
+#include <RDGeneral/test.h>
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
 #include "FileParsers.h"
@@ -58,7 +59,7 @@ void testGeneral(std::string rdbase) {
     try {
       RWMol *m = Mol2FileToMol(fName);
       delete m;
-    } catch (const BadFileException &e) {
+    } catch (const BadFileException &) {
       ok = true;
     }
     TEST_ASSERT(ok);
@@ -94,7 +95,7 @@ void testGeneral(std::string rdbase) {
     try {
       RWMol *m = Mol2FileToMol(fName);
       delete m;
-    } catch (const FileParseException &e) {
+    } catch (const FileParseException &) {
       ok = true;
     }
     TEST_ASSERT(ok);
@@ -106,7 +107,7 @@ void testGeneral(std::string rdbase) {
     try {
       RWMol *m = Mol2FileToMol(fName);
       delete m;
-    } catch (const FileParseException &e) {
+    } catch (const FileParseException &) {
       ok = true;
     }
     TEST_ASSERT(ok);
@@ -238,7 +239,7 @@ void testGeneral(std::string rdbase) {
     delete m;
   }
 
-#if 0  
+#if 0
   {
     std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/Sulfonate.mol2";
     RWMol *m = Mol2FileToMol(fName);
@@ -362,6 +363,44 @@ void testGithub438(std::string rdbase) {
   BOOST_LOG(rdInfoLog) << "------------------------------------" << std::endl;
 }
 
+void testDisableCleanup(std::string rdbase) {
+  BOOST_LOG(rdInfoLog) << "-----------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "-- testing disabling cleanup of substructures in Mol2 parsing  --"
+      << std::endl;
+  BOOST_LOG(rdInfoLog) << "-----------------------------------" << std::endl;
+
+  {
+    std::string fName =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/3505.mol2";
+    bool sanitize = true, removeHs = true;
+    Mol2Type variant = CORINA;
+    {
+      bool cleanupSubstructures = true;  // the default
+      std::unique_ptr<ROMol> mol(Mol2FileToMol(fName, sanitize, removeHs,
+                                               variant, cleanupSubstructures));
+      TEST_ASSERT(mol);
+      TEST_ASSERT(mol->getBondBetweenAtoms(3, 12));
+      TEST_ASSERT(mol->getBondBetweenAtoms(3, 12)->getBondType() ==
+                  Bond::SINGLE);
+      TEST_ASSERT(mol->getAtomWithIdx(12)->getFormalCharge() == 0);
+    }
+    {
+      bool cleanupSubstructures = false;
+      std::unique_ptr<ROMol> mol(Mol2FileToMol(fName, sanitize, removeHs,
+                                               variant, cleanupSubstructures));
+      TEST_ASSERT(mol);
+      TEST_ASSERT(mol->getBondBetweenAtoms(3, 12));
+      TEST_ASSERT(mol->getBondBetweenAtoms(3, 12)->getBondType() ==
+                  Bond::DOUBLE);
+      TEST_ASSERT(mol->getAtomWithIdx(12)->getFormalCharge() == 1);
+    }
+  }
+  BOOST_LOG(rdInfoLog) << "------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "-- DONE                           --" << std::endl;
+  BOOST_LOG(rdInfoLog) << "------------------------------------" << std::endl;
+}
+
 // FIX still missing chirality by 3D structure
 //  still missing input std::string
 
@@ -377,6 +416,7 @@ int main(int argc, char *argv[]) {
   testIssue3399798(rdbase);
   testIssue114(rdbase);
   testGithub438(rdbase);
+  testDisableCleanup(rdbase);
 
   return 0;
 }

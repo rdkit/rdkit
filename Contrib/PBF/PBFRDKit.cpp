@@ -56,7 +56,7 @@ void getSmallestEigenVector(double fSumXX,double fSumXY,double fSumXZ,
 
 double distanceFromAPlane(const RDGeom::Point3D &pt,const std::vector<double> &plane, double denom){
   double numer=0.0;
-  numer = std::abs(pt.x*plane[0]+pt.y*plane[1]+pt.z*plane[2]+plane[3]);
+  numer = std::fabs(pt.x*plane[0]+pt.y*plane[1]+pt.z*plane[2]+plane[3]);
 
   return numer/denom;
 }

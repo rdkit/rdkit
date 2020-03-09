@@ -3,7 +3,7 @@
 #  Copyright (C) 2003 Rational Discovery LLC
 #     All Rights Reserved
 #
-from __future__ import print_function
+
 from rdkit import RDConfig
 from rdkit import Chem
 import os.path

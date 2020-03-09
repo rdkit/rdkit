@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef __RD_CATALOGENTRY_H__
 #define __RD_CATALOGENTRY_H__
 
@@ -16,7 +17,7 @@
 namespace RDCatalog {
 
 //! Abstract base class to be used to represent an entry in a Catalog
-class CatalogEntry {
+class RDKIT_CATALOGS_EXPORT CatalogEntry {
  public:
   virtual ~CatalogEntry() = 0;
 
@@ -40,8 +41,8 @@ class CatalogEntry {
 
  private:
   int d_bitId;  //!< our bit Id. This needs to be signed so that we can mark
-                //uninitialized entries.
+                // uninitialized entries.
 };
-}
+}  // namespace RDCatalog
 
 #endif

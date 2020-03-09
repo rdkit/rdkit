@@ -91,7 +91,7 @@ mol_out(PG_FUNCTION_ARGS) {
                                             fcinfo->flinfo->fn_mcxt,
                                             PG_GETARG_DATUM(0),
                                             NULL, &mol, NULL);
-  str = makeMolText(mol, &len,false);
+  str = makeMolText(mol, &len,false,true);
 
   PG_RETURN_CSTRING( pnstrdup(str, len) );
 }
@@ -127,7 +127,9 @@ mol_from_ctab(PG_FUNCTION_ARGS) {
   Mol     *res;
 
   mol = parseMolCTAB(data,keepConformer,true,false);
-  if(!mol) PG_RETURN_NULL();
+  if (!mol) {
+    PG_RETURN_NULL();
+  }
   res = deconstructROMol(mol);
   freeCROMol(mol);
 
@@ -144,7 +146,9 @@ qmol_from_ctab(PG_FUNCTION_ARGS) {
   Mol     *res;
 
   mol = parseMolCTAB(data,keepConformer,true,true);
-  if(!mol) PG_RETURN_NULL();
+  if (!mol) {
+    PG_RETURN_NULL();
+  }
   res = deconstructROMol(mol);
   freeCROMol(mol);
 
@@ -160,7 +164,9 @@ mol_from_smarts(PG_FUNCTION_ARGS) {
   Mol     *res;
 
   mol = parseMolText(data,true,true,false);
-  if(!mol) PG_RETURN_NULL();
+  if (!mol) {
+    PG_RETURN_NULL();
+  }
   res = deconstructROMol(mol);
   freeCROMol(mol);
 
@@ -176,7 +182,9 @@ mol_from_smiles(PG_FUNCTION_ARGS) {
   Mol     *res;
 
   mol = parseMolText(data,false,true,false);
-  if(!mol) PG_RETURN_NULL();
+  if (!mol) {
+    PG_RETURN_NULL();
+  }
   res = deconstructROMol(mol);
   freeCROMol(mol);
 
@@ -192,7 +200,9 @@ qmol_from_smiles(PG_FUNCTION_ARGS) {
   Mol     *res;
 
   mol = parseMolText(data,false,true,true);
-  if(!mol) PG_RETURN_NULL();
+  if (!mol) {
+    PG_RETURN_NULL();
+  }
   res = deconstructROMol(mol);
   freeCROMol(mol);
 
@@ -233,7 +243,25 @@ mol_to_smiles(PG_FUNCTION_ARGS) {
                                             fcinfo->flinfo->fn_mcxt,
                                             PG_GETARG_DATUM(0),
                                             NULL, &mol, NULL);
-  str = makeMolText(mol, &len,false);
+  str = makeMolText(mol, &len,false,false);
+
+  PG_RETURN_CSTRING( pnstrdup(str, len) );
+}
+
+PGDLLEXPORT Datum           mol_to_cxsmiles(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(mol_to_cxsmiles);
+Datum
+mol_to_cxsmiles(PG_FUNCTION_ARGS) {
+  CROMol  mol;
+  char    *str;
+  int     len;
+
+  fcinfo->flinfo->fn_extra = searchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(0),
+                                            NULL, &mol, NULL);
+  str = makeMolText(mol, &len,false,true);
 
   PG_RETURN_CSTRING( pnstrdup(str, len) );
 }
@@ -251,7 +279,7 @@ mol_to_smarts(PG_FUNCTION_ARGS) {
                                             fcinfo->flinfo->fn_mcxt,
                                             PG_GETARG_DATUM(0),
                                             NULL, &mol, NULL);
-  str = makeMolText(mol, &len,true);
+  str = makeMolText(mol, &len,true,false);
 
   PG_RETURN_CSTRING( pnstrdup(str, len) );
 }
@@ -328,7 +356,7 @@ qmol_out(PG_FUNCTION_ARGS) {
                                             fcinfo->flinfo->fn_mcxt,
                                             PG_GETARG_DATUM(0),
                                             NULL, &mol, NULL);
-  str = makeMolText(mol, &len,true);
+  str = makeMolText(mol, &len,true,false);
 
   PG_RETURN_CSTRING( pnstrdup(str, len) );
 }
@@ -513,7 +541,9 @@ reaction_from_ctab(PG_FUNCTION_ARGS) {
   Reaction *rxn;
 
   crxn = parseChemReactCTAB(data,true);
-  if(!crxn) PG_RETURN_NULL();
+  if (!crxn) {
+    PG_RETURN_NULL();
+  }
   rxn = deconstructChemReact(crxn);
   freeChemReaction(crxn);
 
@@ -529,7 +559,9 @@ reaction_from_smarts(PG_FUNCTION_ARGS) {
   Reaction *rxn;
 
   crxn = parseChemReactText(data,true,true);
-  if(!crxn) PG_RETURN_NULL();
+  if (!crxn) {
+    PG_RETURN_NULL();
+  }
   rxn = deconstructChemReact(crxn);
   freeChemReaction(crxn);
 
@@ -545,7 +577,9 @@ reaction_from_smiles(PG_FUNCTION_ARGS) {
   Reaction *rxn;
 
   crxn = parseChemReactText(data,false,true);
-  if(!crxn) PG_RETURN_NULL();
+  if (!crxn) {
+    PG_RETURN_NULL();
+  }
   rxn = deconstructChemReact(crxn);
   freeChemReaction(crxn);
 

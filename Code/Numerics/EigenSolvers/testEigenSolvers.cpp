@@ -8,6 +8,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/test.h>
 #include "PowerEigenSolver.h"
 #include <Numerics/Matrix.h>
 #include <Numerics/SquareMatrix.h>

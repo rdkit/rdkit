@@ -21,12 +21,14 @@
 #include <Geometry/point.h>
 
 #include <cstdlib>
+#include <cmath>
 #include <limits>
 
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/tuple/tuple_comparison.hpp>
 #include <boost/assign/list_of.hpp>
+#include <boost/format.hpp>
 
 using namespace boost;
 using namespace std;
@@ -38,33 +40,18 @@ void getBondHighlightsForAtoms(const ROMol &mol,
                                const vector<int> &highlight_atoms,
                                vector<int> &highlight_bonds) {
   highlight_bonds.clear();
-  for (vector<int>::const_iterator ai = highlight_atoms.begin();
-       ai != highlight_atoms.end(); ++ai) {
-    for (vector<int>::const_iterator aj = ai + 1; aj != highlight_atoms.end();
-         ++aj) {
+  for (auto ai = highlight_atoms.begin(); ai != highlight_atoms.end(); ++ai) {
+    for (auto aj = ai + 1; aj != highlight_atoms.end(); ++aj) {
       const Bond *bnd = mol.getBondBetweenAtoms(*ai, *aj);
-      if (bnd) highlight_bonds.push_back(bnd->getIdx());
+      if (bnd) {
+        highlight_bonds.push_back(bnd->getIdx());
+      }
     }
   }
 }
-}
+}  // namespace
 
 // ****************************************************************************
-MolDraw2D::MolDraw2D(int width, int height, int panelWidth, int panelHeight)
-    : needs_scale_(true),
-      width_(width),
-      height_(height),
-      panel_width_(panelWidth > 0 ? panelWidth : width),
-      panel_height_(panelHeight > 0 ? panelHeight : height),
-      scale_(1.0),
-      x_trans_(0.0),
-      y_trans_(0.0),
-      x_offset_(0),
-      y_offset_(0),
-      font_size_(0.5),
-      curr_width_(2),
-      fill_polys_(true),
-      activeMolIdx_(-1) {}
 
 // ****************************************************************************
 void MolDraw2D::drawMolecule(const ROMol &mol,
@@ -87,7 +74,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
     getBondHighlightsForAtoms(mol, *highlight_atoms, highlight_bonds);
   }
   drawMolecule(mol, legend, highlight_atoms, &highlight_bonds,
-               highlight_atom_map, NULL, highlight_radii, confId);
+               highlight_atom_map, nullptr, highlight_radii, confId);
 }
 
 void MolDraw2D::doContinuousHighlighting(
@@ -111,9 +98,9 @@ void MolDraw2D::doContinuousHighlighting(
     while (this_at != end_at) {
       int this_idx = mol[*this_at]->getIdx();
       ROMol::OEDGE_ITER nbr, end_nbr;
-      boost::tie(nbr, end_nbr) = mol.getAtomBonds(mol[*this_at].get());
+      boost::tie(nbr, end_nbr) = mol.getAtomBonds(mol[*this_at]);
       while (nbr != end_nbr) {
-        const BOND_SPTR bond = mol[*nbr];
+        const Bond *bond = mol[*nbr];
         ++nbr;
         int nbr_idx = bond->getOtherAtomIdx(this_idx);
         if (nbr_idx < static_cast<int>(at_cds_[activeMolIdx_].size()) &&
@@ -179,8 +166,13 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
                              int confId) {
   at_cds_.push_back(std::vector<Point2D>());
   atomic_nums_.push_back(std::vector<int>());
-  atom_syms_.push_back(std::vector<std::pair<std::string, OrientType> >());
+  atom_syms_.push_back(std::vector<std::pair<std::string, OrientType>>());
   activeMolIdx_++;
+
+  int origWidth = curr_width_;
+  if (drawOptions().bondLineWidth >= 0) {
+    curr_width_ = drawOptions().bondLineWidth;
+  }
 
   if (!activeMolIdx_) {  // on the first pass we need to do some work
     if (drawOptions().clearBackground) {
@@ -189,10 +181,12 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
     extractAtomCoords(mol, confId, true);
     extractAtomSymbols(mol);
     if (needs_scale_) {
-      calculateScale();
+      calculateScale(panel_width_, panel_height_, highlight_atoms,
+                     highlight_radii);
       needs_scale_ = false;
     }
-    // make sure the font doesn't end up too large (the constants are empirical)
+    // make sure the font doesn't end up too large (the constants are
+    // empirical)
     if (scale_ <= 40.) {
       setFontSize(font_size_);
     } else {
@@ -237,10 +231,10 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
     doContinuousHighlighting(mol, highlight_atoms, highlight_bonds,
                              highlight_atom_map, highlight_bond_map,
                              highlight_radii);
-    // at this point we shouldn't be doing any more higlighting, so blow out
+    // at this point we shouldn't be doing any more highlighting, so blow out
     // those variables:
-    highlight_bonds = NULL;
-    highlight_atoms = NULL;
+    highlight_bonds = nullptr;
+    highlight_atoms = nullptr;
   } else if (drawOptions().circleAtoms && highlight_atoms) {
     ROMol::VERTEX_ITER this_at, end_at;
     boost::tie(this_at, end_at) = mol.getVertices();
@@ -277,9 +271,9 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
   while (this_at != end_at) {
     int this_idx = mol[*this_at]->getIdx();
     ROMol::OEDGE_ITER nbr, end_nbr;
-    boost::tie(nbr, end_nbr) = mol.getAtomBonds(mol[*this_at].get());
+    boost::tie(nbr, end_nbr) = mol.getAtomBonds(mol[*this_at]);
     while (nbr != end_nbr) {
-      const BOND_SPTR bond = mol[*nbr];
+      const Bond *bond = mol[*nbr];
       ++nbr;
       int nbr_idx = bond->getOtherAtomIdx(this_idx);
       if (nbr_idx < static_cast<int>(at_cds_[activeMolIdx_].size()) &&
@@ -295,7 +289,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
     ROMol::VERTEX_ITER atom, end_atom;
     boost::tie(atom, end_atom) = mol.getVertices();
     while (atom != end_atom) {
-      const Atom *at1 = mol[*atom].get();
+      const Atom *at1 = mol[*atom];
       ++atom;
       if (at1->hasProp(common_properties::atomLabel) ||
           drawOptions().atomLabels.find(at1->getIdx()) !=
@@ -307,7 +301,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
         Point2D &at1_cds = at_cds_[activeMolIdx_][at1->getIdx()];
         ROMol::ADJ_ITER nbrIdx, endNbrs;
         boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(at1);
-        const ATOM_SPTR at2 = mol[*nbrIdx];
+        const Atom *at2 = mol[*nbrIdx];
         Point2D &at2_cds = at_cds_[activeMolIdx_][at2->getIdx()];
         drawAttachmentLine(at2_cds, at1_cds, DrawColour(.5, .5, .5));
       }
@@ -323,6 +317,9 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
   if (drawOptions().flagCloseContactsDist >= 0) {
     highlightCloseContacts();
   }
+
+  curr_width_ = origWidth;
+
   // {
   //   Point2D p1(x_min_, y_min_), p2(x_min_ + x_range_, y_min_ + y_range_);
   //   setColour(DrawColour(0, 0, 0));
@@ -362,18 +359,18 @@ void get2DCoordsMol(RWMol &mol, double &offset, double spacing, double &maxY,
                     double coordScale) {
   try {
     MolOps::sanitizeMol(mol);
-  } catch (const MolSanitizeException &e) {
+  } catch (const MolSanitizeException &) {
     mol.updatePropertyCache(false);
     try {
       MolOps::Kekulize(mol, false);  // kekulize, but keep the aromatic flags!
-    } catch (const MolSanitizeException &e) {
+    } catch (const MolSanitizeException &) {
       // don't need to do anything
     }
     MolOps::setHybridization(mol);
   }
 
   const bool canonOrient = true;
-  RDDepict::compute2DCoords(mol, NULL, canonOrient);
+  RDDepict::compute2DCoords(mol, nullptr, canonOrient);
   MolDraw2DUtils::prepareMolForDrawing(
       mol, false);  // don't kekulize, we just did that
   double minX = 1e8;
@@ -389,7 +386,7 @@ void get2DCoordsMol(RWMol &mol, double &offset, double spacing, double &maxY,
     p *= coordScale;
     minX = std::min(minX, conf.getAtomPos(i).x);
   }
-  offset += abs(minX);
+  offset += fabs(minX);
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
     RDGeom::Point3D &p = conf.getAtomPos(i);
     p.y += vShift;
@@ -406,6 +403,7 @@ void get2DCoordsForReaction(ChemicalReaction &rxn, const MolDrawOptions &opts,
                             Point2D &arrowBegin, Point2D &arrowEnd,
                             std::vector<double> &plusLocs, double spacing,
                             const std::vector<int> *confIds) {
+  RDUNUSED_PARAM(opts);
   plusLocs.resize(0);
   double maxY = -1e8, minY = 1e8;
   double offset = 0.0;
@@ -419,7 +417,9 @@ void get2DCoordsForReaction(ChemicalReaction &rxn, const MolDrawOptions &opts,
     }
     ROMOL_SPTR reactant = rxn.getReactants()[midx];
     int cid = -1;
-    if (confIds) cid = (*confIds)[midx];
+    if (confIds) {
+      cid = (*confIds)[midx];
+    }
     get2DCoordsMol(*(RWMol *)reactant.get(), offset, spacing, maxY, minY, cid,
                    false, 1.0);
   }
@@ -440,9 +440,10 @@ void get2DCoordsForReaction(ChemicalReaction &rxn, const MolDrawOptions &opts,
     }
     ROMOL_SPTR product = rxn.getProducts()[midx];
     int cid = -1;
-    if (confIds)
+    if (confIds) {
       cid = (*confIds)[rxn.getNumReactantTemplates() +
                        rxn.getNumAgentTemplates() + midx];
+    }
     get2DCoordsMol(*(RWMol *)product.get(), offset, spacing, maxY, minY, cid,
                    false, 1.0);
   }
@@ -452,7 +453,9 @@ void get2DCoordsForReaction(ChemicalReaction &rxn, const MolDrawOptions &opts,
   for (unsigned int midx = 0; midx < rxn.getNumAgentTemplates(); ++midx) {
     ROMOL_SPTR agent = rxn.getAgents()[midx];
     int cid = -1;
-    if (confIds) cid = (*confIds)[rxn.getNumReactantTemplates() + midx];
+    if (confIds) {
+      cid = (*confIds)[rxn.getNumReactantTemplates() + midx];
+    }
     get2DCoordsMol(*(RWMol *)agent.get(), offset, spacing, maxY, minY, cid,
                    true, 0.45);
   }
@@ -467,9 +470,10 @@ void get2DCoordsForReaction(ChemicalReaction &rxn, const MolDrawOptions &opts,
   for (unsigned int midx = 0; midx < rxn.getNumProductTemplates(); ++midx) {
     ROMOL_SPTR product = rxn.getProducts()[midx];
     int cid = -1;
-    if (confIds)
+    if (confIds) {
       cid = (*confIds)[rxn.getNumReactantTemplates() +
                        rxn.getNumAgentTemplates() + midx];
+    }
     Conformer &conf = product->getConformer(cid);
     for (unsigned int aidx = 0; aidx < product->getNumAtoms(); ++aidx) {
       conf.getAtomPos(aidx).x += offset;
@@ -487,7 +491,8 @@ void get2DCoordsForReaction(ChemicalReaction &rxn, const MolDrawOptions &opts,
 
   arrowBegin.y = arrowEnd.y = minY + (maxY - minY) / 2;
 }
-}
+
+}  // namespace
 
 void MolDraw2D::drawReaction(
     const ChemicalReaction &rxn, bool highlightByReactant,
@@ -507,7 +512,7 @@ void MolDraw2D::drawReaction(
       (!nrxn.getNumReactantTemplates() || !nrxn.getNumProductTemplates())) {
     // drawMolecule() will figure out the scaling so that the molecule
     // fits the drawing pane. In order to ensure that we have space for the
-    // arrow, we need to figoure out the scaling on our own.
+    // arrow, we need to figure out the scaling on our own.
     RWMol tmol2;
     tmol2.addAtom(new Atom(0), true, true);
     tmol2.addAtom(new Atom(0), true, true);
@@ -520,7 +525,7 @@ void MolDraw2D::drawReaction(
     tmol2.insertMol(*tmol);
     at_cds_.push_back(std::vector<Point2D>());
     atomic_nums_.push_back(std::vector<int>());
-    atom_syms_.push_back(std::vector<std::pair<std::string, OrientType> >());
+    atom_syms_.push_back(std::vector<std::pair<std::string, OrientType>>());
     activeMolIdx_++;
     extractAtomCoords(tmol2, 0, true);
     calculateScale();
@@ -531,10 +536,10 @@ void MolDraw2D::drawReaction(
     atom_syms_.pop_back();
   }
 
-  std::vector<int> *atom_highlights = NULL;
-  std::map<int, DrawColour> *atom_highlight_colors = NULL;
-  std::vector<int> *bond_highlights = NULL;
-  std::map<int, DrawColour> *bond_highlight_colors = NULL;
+  std::vector<int> *atom_highlights = nullptr;
+  std::map<int, DrawColour> *atom_highlight_colors = nullptr;
+  std::vector<int> *bond_highlights = nullptr;
+  std::map<int, DrawColour> *bond_highlight_colors = nullptr;
   if (highlightByReactant) {
     const std::vector<DrawColour> *colors =
         &drawOptions().highlightColourPalette;
@@ -565,7 +570,7 @@ void MolDraw2D::drawReaction(
         ROMol::ADJ_ITER nbrIdx, endNbrs;
         boost::tie(nbrIdx, endNbrs) = tmol->getAtomNeighbors(atom);
         while (nbrIdx != endNbrs) {
-          const ATOM_SPTR nbr = (*tmol)[*nbrIdx];
+          const Atom *nbr = (*tmol)[*nbrIdx];
           if (nbr->getIdx() < aidx &&
               atomfragmap[nbr->getIdx()] == atomfragmap[aidx]) {
             int bondIdx =
@@ -594,10 +599,9 @@ void MolDraw2D::drawReaction(
         ROMol::ADJ_ITER nbrIdx, endNbrs;
         boost::tie(nbrIdx, endNbrs) = tmol->getAtomNeighbors(atom);
         while (nbrIdx != endNbrs) {
-          const ATOM_SPTR nbr = (*tmol)[*nbrIdx];
-          if (nbr->getIdx() < aidx &&
-              (*atom_highlight_colors)[nbr->getIdx()] ==
-                  (*atom_highlight_colors)[aidx]) {
+          const Atom *nbr = (*tmol)[*nbrIdx];
+          if (nbr->getIdx() < aidx && (*atom_highlight_colors)[nbr->getIdx()] ==
+                                          (*atom_highlight_colors)[aidx]) {
             int bondIdx =
                 tmol->getBondBetweenAtoms(aidx, nbr->getIdx())->getIdx();
             bond_highlights->push_back(bondIdx);
@@ -630,36 +634,19 @@ void MolDraw2D::drawReaction(
   }
 
   // The arrow:
-  {
-    Point2D arrowBegin_canvas = getDrawCoords(arrowBegin);
-    Point2D arrowEnd_canvas = getDrawCoords(arrowEnd);
+  drawArrow(arrowBegin, arrowEnd);
 
-    double arrowStart = arrowBegin_canvas.x;
-    double arrowEnd = arrowEnd_canvas.x;
-    double headx = 0.05 * (arrowEnd - arrowStart);
-    double heady = 2 * headx / 3;
-    Point2D loc1 =
-        getAtomCoords(std::make_pair(arrowStart, arrowBegin_canvas.y));
-    Point2D loc2 = getAtomCoords(std::make_pair(arrowEnd, arrowBegin_canvas.y));
-    drawLine(loc1, loc2);
-    loc1 = getAtomCoords(
-        std::make_pair(arrowEnd - headx, arrowBegin_canvas.y + heady));
-    drawLine(loc1, loc2);
-    loc1 = getAtomCoords(
-        std::make_pair(arrowEnd - headx, arrowBegin_canvas.y - heady));
-    drawLine(loc1, loc2);
-  }
   setColour(odc);
   setFontSize(o_font_size);
 }
 
 void MolDraw2D::drawMolecules(
     const std::vector<ROMol *> &mols, const std::vector<std::string> *legends,
-    const std::vector<std::vector<int> > *highlight_atoms,
-    const std::vector<std::vector<int> > *highlight_bonds,
-    const std::vector<std::map<int, DrawColour> > *highlight_atom_maps,
-    const std::vector<std::map<int, DrawColour> > *highlight_bond_maps,
-    const std::vector<std::map<int, double> > *highlight_radii,
+    const std::vector<std::vector<int>> *highlight_atoms,
+    const std::vector<std::vector<int>> *highlight_bonds,
+    const std::vector<std::map<int, DrawColour>> *highlight_atom_maps,
+    const std::vector<std::map<int, DrawColour>> *highlight_bond_maps,
+    const std::vector<std::map<int, double>> *highlight_radii,
     const std::vector<int> *confIds) {
   PRECONDITION(!legends || legends->size() == mols.size(), "bad size");
   PRECONDITION(!highlight_atoms || highlight_atoms->size() == mols.size(),
@@ -677,6 +664,9 @@ void MolDraw2D::drawMolecules(
   PRECONDITION(!confIds || confIds->size() == mols.size(), "bad size");
   PRECONDITION(panel_width_ != 0, "panel width cannot be zero");
   PRECONDITION(panel_height_ != 0, "panel height cannot be zero");
+  if (!mols.size()) {
+    return;
+  }
 
   std::vector<RWMol> tmols;
   tmols.reserve(mols.size());
@@ -689,7 +679,9 @@ void MolDraw2D::drawMolecules(
       continue;
     }
     tmols.push_back(*(mols[i]));
-    MolDraw2DUtils::prepareMolForDrawing(tmols[i]);
+    if (drawOptions().prepareMolsBeforeDrawing) {
+      MolDraw2DUtils::prepareMolForDrawing(tmols[i]);
+    }
     Conformer &conf = tmols[i].getConformer(confIds ? (*confIds)[i] : -1);
     RDGeom::Point3D centroid = MolTransforms::computeCentroid(conf, false);
     for (unsigned int j = 0; j < conf.getNumAtoms(); ++j) {
@@ -705,17 +697,23 @@ void MolDraw2D::drawMolecules(
   int nCols = width() / panelWidth();
   int nRows = height() / panelHeight();
   for (unsigned int i = 0; i < mols.size(); ++i) {
-    if (!mols[i]) continue;
+    if (!mols[i]) {
+      continue;
+    }
 
     int row = 0;
     // note that this also works when no panel size is specified since
     // the panel dimensions defaults to -1
-    if (nRows > 1) row = i / nCols;
+    if (nRows > 1) {
+      row = i / nCols;
+    }
     int col = 0;
-    if (nCols > 1) col = i % nCols;
+    if (nCols > 1) {
+      col = i % nCols;
+    }
     setOffset(col * panelWidth(), row * panelHeight());
 
-    vector<int> *lhighlight_bonds = NULL;
+    vector<int> *lhighlight_bonds = nullptr;
     if (highlight_bonds) {
       lhighlight_bonds = new std::vector<int>((*highlight_bonds)[i]);
     } else if (drawOptions().continuousHighlight && highlight_atoms) {
@@ -725,26 +723,40 @@ void MolDraw2D::drawMolecules(
     };
 
     drawMolecule(tmols[i], legends ? (*legends)[i] : "",
-                 highlight_atoms ? &(*highlight_atoms)[i] : NULL,
+                 highlight_atoms ? &(*highlight_atoms)[i] : nullptr,
                  lhighlight_bonds,
-                 highlight_atom_maps ? &(*highlight_atom_maps)[i] : NULL,
-                 highlight_bond_maps ? &(*highlight_bond_maps)[i] : NULL,
-                 highlight_radii ? &(*highlight_radii)[i] : NULL,
+                 highlight_atom_maps ? &(*highlight_atom_maps)[i] : nullptr,
+                 highlight_bond_maps ? &(*highlight_bond_maps)[i] : nullptr,
+                 highlight_radii ? &(*highlight_radii)[i] : nullptr,
                  confIds ? (*confIds)[i] : -1);
+    // save the drawn positions of the atoms on the molecule. This is the only
+    // way that we can later add metadata
+    auto tag = boost::str(boost::format("_atomdrawpos_%d") %
+                          (confIds ? (*confIds)[i] : -1));
+    for (unsigned int j = 0; j < mols[i]->getNumAtoms(); ++j) {
+      auto pt = getDrawCoords(j);
+      mols[i]->getAtomWithIdx(j)->setProp(tag, pt, true);
+    }
     delete lhighlight_bonds;
   }
 };
 
 void MolDraw2D::highlightCloseContacts() {
-  if (drawOptions().flagCloseContactsDist < 0) return;
+  if (drawOptions().flagCloseContactsDist < 0) {
+    return;
+  }
   int tol =
       drawOptions().flagCloseContactsDist * drawOptions().flagCloseContactsDist;
   boost::dynamic_bitset<> flagged(at_cds_[activeMolIdx_].size());
   for (unsigned int i = 0; i < at_cds_[activeMolIdx_].size(); ++i) {
-    if (flagged[i]) continue;
+    if (flagged[i]) {
+      continue;
+    }
     Point2D ci = getDrawCoords(at_cds_[activeMolIdx_][i]);
     for (unsigned int j = i + 1; j < at_cds_[activeMolIdx_].size(); ++j) {
-      if (flagged[j]) continue;
+      if (flagged[j]) {
+        continue;
+      }
       Point2D cj = getDrawCoords(at_cds_[activeMolIdx_][j]);
       double d = (cj - ci).lengthSq();
       if (d <= tol) {
@@ -799,9 +811,8 @@ Point2D MolDraw2D::getAtomCoords(const pair<int, int> &screen_cds) const {
 }
 
 Point2D MolDraw2D::getAtomCoords(const pair<double, double> &screen_cds) const {
-  double x = double(screen_cds.first / scale_ + x_min_ - x_trans_);
-  double y =
-      double(y_min_ - y_trans_ - (screen_cds.second - height()) / scale_);
+  auto x = double(screen_cds.first / scale_ + x_min_ - x_trans_);
+  auto y = double(y_min_ - y_trans_ - (screen_cds.second - height()) / scale_);
   return Point2D(x, y);
 }
 
@@ -828,36 +839,37 @@ void MolDraw2D::setScale(int width, int height, const Point2D &minv,
 
   x_range_ = x_max - x_min_;
   y_range_ = y_max - y_min_;
-  if (x_range_ > 1e-4 && y_range_ > 1e-4) {
-    scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
-  } else {
-    scale_ = 0;
+
+  if (x_range_ < 1.0e-4) {
+    x_range_ = 1.0;
+    x_min_ = -0.5;
   }
+  if (y_range_ < 1.0e-4) {
+    y_range_ = 1.0;
+    y_min_ = -0.5;
+  }
+
   // put a buffer round the drawing and calculate a final scale
   x_min_ -= drawOptions().padding * x_range_;
   x_range_ *= 1 + 2 * drawOptions().padding;
   y_min_ -= drawOptions().padding * y_range_;
   y_range_ *= 1 + 2 * drawOptions().padding;
 
-  if (x_range_ > 1e-4 && y_range_ > 1e-4) {
-    scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
-    double y_mid = y_min_ + 0.5 * y_range_;
-    double x_mid = x_min_ + 0.5 * x_range_;
-    Point2D mid = getDrawCoords(Point2D(x_mid, y_mid));
-    // that used the offset, we need to remove that:
-    mid.x -= x_offset_;
-    mid.y += y_offset_;
-    x_trans_ = (width / 2 - mid.x) / scale_;
-    y_trans_ = (mid.y - height / 2) / scale_;
-  } else {
-    scale_ = 0.;
-    x_trans_ = 0.;
-    y_trans_ = 0.;
-  }
+  scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
+  double y_mid = y_min_ + 0.5 * y_range_;
+  double x_mid = x_min_ + 0.5 * x_range_;
+  Point2D mid = getDrawCoords(Point2D(x_mid, y_mid));
+  // that used the offset, we need to remove that:
+  mid.x -= x_offset_;
+  mid.y += y_offset_;
+  x_trans_ = (width / 2 - mid.x) / scale_;
+  y_trans_ = (mid.y - height / 2) / scale_;
 }
 
 // ****************************************************************************
-void MolDraw2D::calculateScale(int width, int height) {
+void MolDraw2D::calculateScale(int width, int height,
+                               const std::vector<int> *highlight_atoms,
+                               const std::map<int, double> *highlight_radii) {
   PRECONDITION(width > 0, "bad width");
   PRECONDITION(height > 0, "bad height");
   PRECONDITION(activeMolIdx_ >= 0, "bad active mol");
@@ -865,8 +877,7 @@ void MolDraw2D::calculateScale(int width, int height) {
   x_min_ = y_min_ = numeric_limits<double>::max();
   double x_max(-numeric_limits<double>::max()),
       y_max(-numeric_limits<double>::max());
-  for (int i = 0, is = at_cds_[activeMolIdx_].size(); i < is; ++i) {
-    const Point2D &pt = at_cds_[activeMolIdx_][i];
+  for (auto &pt : at_cds_[activeMolIdx_]) {
     x_min_ = std::min(pt.x, x_min_);
     y_min_ = std::min(pt.y, y_min_);
     x_max = std::max(pt.x, x_max);
@@ -890,6 +901,7 @@ void MolDraw2D::calculateScale(int width, int height) {
   // we may need to adjust the scale if there are atom symbols that go off
   // the edges, and we probably need to do it iteratively because
   // get_string_size uses the current value of scale_.
+  // We also need to adjust for highlighted atoms if there are any.
   while (scale_ > 1e-4) {
     for (int i = 0, is = atom_syms_[activeMolIdx_].size(); i < is; ++i) {
       if (!atom_syms_[activeMolIdx_][i].first.empty()) {
@@ -911,12 +923,34 @@ void MolDraw2D::calculateScale(int width, int height) {
         x_min_ = std::min(x_min_, this_x_min);
         y_max = std::max(y_max, this_y);
       }
+      if (highlight_atoms) {
+        if (highlight_atoms->end() !=
+            find(highlight_atoms->begin(), highlight_atoms->end(), i)) {
+          double radius = 0.4;
+          if (highlight_radii &&
+              highlight_radii->find(i) != highlight_radii->end()) {
+            radius = highlight_radii->find(i)->second;
+          }
+          double this_x_min = at_cds_[activeMolIdx_][i].x - radius;
+          double this_x_max = at_cds_[activeMolIdx_][i].x + radius;
+          double this_y_min = at_cds_[activeMolIdx_][i].y - radius;
+          double this_y_max = at_cds_[activeMolIdx_][i].y + radius;
+          x_max = std::max(x_max, this_x_max);
+          x_min_ = std::min(x_min_, this_x_min);
+          y_max = std::max(y_max, this_y_max);
+          y_min_ = std::min(y_min_, this_y_min);
+        }
+      }
     }
     double old_scale = scale_;
     x_range_ = x_max - x_min_;
     y_range_ = y_max - y_min_;
-    if (x_range_ < 1e-4) x_range_ = 1.;
-    if (y_range_ < 1e-4) y_range_ = 1.;
+    if (x_range_ < 1e-4) {
+      x_range_ = 1.;
+    }
+    if (y_range_ < 1e-4) {
+      y_range_ = 1.;
+    }
     scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
     if (fabs(scale_ - old_scale) < 0.1) {
       break;
@@ -948,8 +982,9 @@ void MolDraw2D::calculateScale(int width, int height) {
 
 // ****************************************************************************
 // establishes whether to put string draw mode into super- or sub-script
-// mode based on contents of instring from i onwards. Increments i appropriately
-// and returns true or false depending on whether it did something or not.
+// mode based on contents of instring from i onwards. Increments i
+// appropriately and returns true or false depending on whether it did
+// something or not.
 bool MolDraw2D::setStringDrawMode(const string &instring,
                                   TextDrawType &draw_mode, int &i) const {
   string bit1 = instring.substr(i, 5);
@@ -1069,7 +1104,7 @@ DrawColour MolDraw2D::getColour(
     }
     // over-ride with explicit colour from highlight_map if there is one
     if (highlight_map) {
-      map<int, DrawColour>::const_iterator p = highlight_map->find(atom_idx);
+      auto p = highlight_map->find(atom_idx);
       if (p != highlight_map->end()) {
         retval = p->second;
       }
@@ -1084,9 +1119,8 @@ DrawColour MolDraw2D::getColourByAtomicNum(int atomic_num) {
   if (drawOptions().atomColourPalette.find(atomic_num) !=
       drawOptions().atomColourPalette.end()) {
     res = drawOptions().atomColourPalette[atomic_num];
-  } else if (atomic_num != -1 &&
-             drawOptions().atomColourPalette.find(-1) !=
-                 drawOptions().atomColourPalette.end()) {
+  } else if (atomic_num != -1 && drawOptions().atomColourPalette.find(-1) !=
+                                     drawOptions().atomColourPalette.end()) {
     // if -1 is in the palette, we use that for undefined colors
     res = drawOptions().atomColourPalette[-1];
   } else {
@@ -1115,8 +1149,8 @@ void MolDraw2D::extractAtomCoords(const ROMol &mol, int confId,
   boost::tie(this_at, end_at) = mol.getVertices();
   while (this_at != end_at) {
     int this_idx = mol[*this_at]->getIdx();
-    at_cds_[activeMolIdx_].push_back(
-        Point2D(locs[this_idx].x, locs[this_idx].y));
+    Point2D pt(locs[this_idx].x, locs[this_idx].y);
+    at_cds_[activeMolIdx_].push_back(pt);
 
     if (updateBBox) {
       bbox_[0].x = std::min(bbox_[0].x, locs[this_idx].x);
@@ -1139,12 +1173,12 @@ void MolDraw2D::extractAtomSymbols(const ROMol &mol) {
   boost::tie(atom, end_atom) = mol.getVertices();
   while (atom != end_atom) {
     ROMol::OEDGE_ITER nbr, end_nbrs;
-    const Atom *at1 = mol[*atom].get();
+    const Atom *at1 = mol[*atom];
     boost::tie(nbr, end_nbrs) = mol.getAtomBonds(at1);
     Point2D &at1_cds = at_cds_[activeMolIdx_][at1->getIdx()];
     Point2D nbr_sum(0.0, 0.0);
     while (nbr != end_nbrs) {
-      const BOND_SPTR bond = mol[*nbr];
+      const Bond *bond = mol[*nbr];
       ++nbr;
       Point2D &at2_cds =
           at_cds_[activeMolIdx_][bond->getOtherAtomIdx(at1->getIdx())];
@@ -1158,17 +1192,19 @@ void MolDraw2D::extractAtomSymbols(const ROMol &mol) {
 }
 
 // ****************************************************************************
-void MolDraw2D::drawBond(const ROMol &mol, const BOND_SPTR &bond, int at1_idx,
+void MolDraw2D::drawBond(const ROMol &mol, const Bond *bond, int at1_idx,
                          int at2_idx, const vector<int> *highlight_atoms,
                          const map<int, DrawColour> *highlight_atom_map,
                          const vector<int> *highlight_bonds,
                          const map<int, DrawColour> *highlight_bond_map) {
+  PRECONDITION(bond, "no bond");
   PRECONDITION(activeMolIdx_ >= 0, "bad mol idx");
   RDUNUSED_PARAM(highlight_atoms);
   RDUNUSED_PARAM(highlight_atom_map);
   static const DashPattern noDash;
   static const DashPattern dots = assign::list_of(2)(6);
   static const DashPattern dashes = assign::list_of(6)(6);
+  static const DashPattern shortDashes = assign::list_of(2)(2);
   // the percent shorter that the extra bonds in a double bond are
   const double multipleBondTruncation = 0.15;
 
@@ -1181,7 +1217,9 @@ void MolDraw2D::drawBond(const ROMol &mol, const BOND_SPTR &bond, int at1_idx,
   // mol files from, for example, Marvin use a bond length of 1 for just about
   // everything. When this is the case, the default multipleBondOffset is just
   // too much, so scale it back.
-  if ((at1_cds - at2_cds).lengthSq() < 1.4) double_bond_offset *= 0.6;
+  if ((at1_cds - at2_cds).lengthSq() < 1.4) {
+    double_bond_offset *= 0.6;
+  }
 
   adjustBondEndForLabel(at1_idx, at2_cds, at1_cds);
   adjustBondEndForLabel(at2_idx, at1_cds, at2_cds);
@@ -1261,15 +1299,35 @@ void MolDraw2D::drawBond(const ROMol &mol, const BOND_SPTR &bond, int at1_idx,
     } else if (Bond::SINGLE == bt && Bond::UNKNOWN == bond->getBondDir()) {
       // unspecified stereo
       drawWavyLine(at1_cds, at2_cds, col1, col2);
-    } else if (Bond::DOUBLE == bt && Bond::EITHERDOUBLE == bond->getBondDir()) {
+    } else if (Bond::DOUBLE == bt &&
+               ((Bond::EITHERDOUBLE == bond->getBondDir()) ||
+                (Bond::STEREOANY == bond->getStereo()))) {
       // crossed bond
       Point2D perp = calcPerpendicular(at1_cds, at2_cds);
       perp *= double_bond_offset;
       drawLine(at1_cds + perp, at2_cds - perp, col1, col2);
       drawLine(at1_cds - perp, at2_cds + perp, col1, col2);
+    } else if (Bond::DATIVE == bt || Bond::DATIVEL == bt ||
+               Bond::DATIVER == bt) {
+      bool fps = fillPolys();
+      setFillPolys(true);
+      // draw an arrow for dative bonds
+      bool asPolygon = true;
+      double frac = 0.1;
+      double angle = M_PI / 8;
+      if (at1_idx == bond->getBeginAtomIdx()) {
+        drawArrow(at1_cds, at2_cds, asPolygon, frac, angle);
+      } else {
+        drawArrow(at2_cds, at1_cds, asPolygon, frac, angle);
+      }
+      setFillPolys(fps);
+    } else if (Bond::ZERO == bt) {
+      setDash(shortDashes);
+      drawLine(at1_cds, at2_cds, col1, col2);
+      setDash(noDash);
     } else {
-      // in all other cases, we will definitely want to draw a line between the
-      // two atoms
+      // in all other cases, we will definitely want to draw a line between
+      // the two atoms
       drawLine(at1_cds, at2_cds, col1, col2);
       if (Bond::TRIPLE == bt) {
         // 2 further lines, a bit shorter and offset on the perpendicular
@@ -1286,10 +1344,9 @@ void MolDraw2D::drawBond(const ROMol &mol, const BOND_SPTR &bond, int at1_idx,
         p1 = at1_cds - (bv * end1_trunc) - perp * dbo;
         p2 = at2_cds + (bv * end2_trunc) - perp * dbo;
         drawLine(p1, p2, col1, col2);
-      }
-      // all we have left now are double bonds in a ring or not in a ring
-      // and multiply connected
-      else if (Bond::DOUBLE == bt || Bond::AROMATIC == bt) {
+      } else if (Bond::DOUBLE == bt || Bond::AROMATIC == bt) {
+        // all we have left now are double bonds in a ring or not in a ring
+        // and multiply connected
         Point2D perp;
         if (mol.getRingInfo()->numBondRings(bond->getIdx())) {
           // in a ring, we need to draw the bond inside the ring
@@ -1301,9 +1358,13 @@ void MolDraw2D::drawBond(const ROMol &mol, const BOND_SPTR &bond, int at1_idx,
         Point2D bv = at1_cds - at2_cds;
         Point2D p1 = at1_cds - bv * multipleBondTruncation + perp * dbo;
         Point2D p2 = at2_cds + bv * multipleBondTruncation + perp * dbo;
-        if (bt == Bond::AROMATIC) setDash(dashes);
+        if (bt == Bond::AROMATIC) {
+          setDash(dashes);
+        }
         drawLine(p1, p2, col1, col2);
-        if (bt == Bond::AROMATIC) setDash(noDash);
+        if (bt == Bond::AROMATIC) {
+          setDash(noDash);
+        }
       }
     }
   }
@@ -1320,17 +1381,22 @@ void MolDraw2D::drawWedgedBond(const Point2D &cds1, const Point2D &cds2,
   Point2D disp = perp * 0.15;
   // make sure the displacement isn't too large using the current scale factor
   // (part of github #985)
-  // the constants are empirical to make sure that the wedge is visible, but not
-  // absurdly large.
-  if (scale_ > 40) disp *= .6;
+  // the constants are empirical to make sure that the wedge is visible, but
+  // not absurdly large.
+  if (scale_ > 40) {
+    disp *= .6;
+  }
   Point2D end1 = cds2 + disp;
   Point2D end2 = cds2 - disp;
 
   setColour(col1);
   if (draw_dashed) {
     unsigned int nDashes = 10;
-    // empirical cutoff to make sure we don't have too many dashes in the wedge:
-    if ((cds1 - cds2).lengthSq() < 1.0) nDashes /= 2;
+    // empirical cutoff to make sure we don't have too many dashes in the
+    // wedge:
+    if ((cds1 - cds2).lengthSq() < 1.0) {
+      nDashes /= 2;
+    }
 
     int orig_lw = lineWidth();
     int tgt_lw = 1;  // use the minimum line width
@@ -1386,15 +1452,15 @@ Point2D MolDraw2D::calcPerpendicular(const Point2D &cds1, const Point2D &cds2) {
 }
 
 // ****************************************************************************
-// cds1 and cds2 are 2 atoms in a ring.  Returns the perpendicular pointing into
-// the ring
-Point2D MolDraw2D::bondInsideRing(const ROMol &mol, const BOND_SPTR &bond,
+// cds1 and cds2 are 2 atoms in a ring.  Returns the perpendicular pointing
+// into the ring
+Point2D MolDraw2D::bondInsideRing(const ROMol &mol, const Bond *bond,
                                   const Point2D &cds1, const Point2D &cds2) {
   Atom *bgn_atom = bond->getBeginAtom();
   ROMol::OEDGE_ITER nbr2, end_nbrs2;
   boost::tie(nbr2, end_nbrs2) = mol.getAtomBonds(bgn_atom);
   while (nbr2 != end_nbrs2) {
-    const BOND_SPTR bond2 = mol[*nbr2];
+    const Bond *bond2 = mol[*nbr2];
     ++nbr2;
     if (bond2->getIdx() == bond->getIdx() ||
         !mol.getRingInfo()->numBondRings(bond2->getIdx())) {
@@ -1420,10 +1486,9 @@ Point2D MolDraw2D::bondInsideRing(const ROMol &mol, const BOND_SPTR &bond,
 }
 
 // ****************************************************************************
-// cds1 and cds2 are 2 atoms in a chain double bond.  Returns the perpendicular
-// pointing into the inside of the bond
-Point2D MolDraw2D::bondInsideDoubleBond(const ROMol &mol,
-                                        const BOND_SPTR &bond) {
+// cds1 and cds2 are 2 atoms in a chain double bond.  Returns the
+// perpendicular pointing into the inside of the bond
+Point2D MolDraw2D::bondInsideDoubleBond(const ROMol &mol, const Bond *bond) {
   // a chain double bond, were it looks nicer IMO if the 2nd line is inside
   // the angle of outgoing bond. Unless it's an allene, where nothing
   // looks great.
@@ -1441,7 +1506,7 @@ Point2D MolDraw2D::bondInsideDoubleBond(const ROMol &mol,
   ROMol::OEDGE_ITER nbr2, end_nbrs2;
   boost::tie(nbr2, end_nbrs2) = mol.getAtomBonds(bond_atom);
   while (nbr2 != end_nbrs2) {
-    const BOND_SPTR bond2 = mol[*nbr2];
+    const Bond *bond2 = mol[*nbr2];
     ++nbr2;
     if (bond != bond2) {
       at3 = bond2->getOtherAtomIdx(bond_atom->getIdx());
@@ -1532,7 +1597,8 @@ void MolDraw2D::adjustBondEndForLabel(int atnum, const Point2D &nbr_cds,
 
 // ****************************************************************************
 // adds XML-like annotation for super- and sub-script, in the same manner
-// as MolDrawing.py. My first thought was for a LaTeX-like system, obviously...
+// as MolDrawing.py. My first thought was for a LaTeX-like system,
+// obviously...
 pair<string, MolDraw2D::OrientType> MolDraw2D::getAtomSymbolAndOrientation(
     const Atom &atom, const Point2D &nbr_sum) {
   string symbol("");
@@ -1587,12 +1653,12 @@ pair<string, MolDraw2D::OrientType> MolDraw2D::getAtomSymbolAndOrientation(
                     ? 0
                     : atom.getTotalNumHs();  // FIX: still not quite right
     if (num_h > 0 && !atom.hasQuery()) {
-      // the H text can come before or after the atomic symbol, depending on the
-      // orientation
+      // the H text can come before or after the atomic symbol, depending on
+      // the orientation
       std::string h = "H";
       if (num_h > 1) {
         // put the number as a subscript
-        h += string("<sub>") + lexical_cast<string>(num_h) + string("</sub>");
+        h += string("<sub>") + std::to_string(num_h) + string("</sub>");
       }
       // last check: degree zero atoms from the last three periods should have
       // the Hs first
@@ -1615,7 +1681,7 @@ pair<string, MolDraw2D::OrientType> MolDraw2D::getAtomSymbolAndOrientation(
 
     if (0 != iso) {
       // isotope always comes before the symbol
-      preText.push_back(std::string("<sup>") + lexical_cast<string>(iso) +
+      preText.push_back(std::string("<sup>") + std::to_string(iso) +
                         std::string("</sup>"));
     }
 
@@ -1625,7 +1691,7 @@ pair<string, MolDraw2D::OrientType> MolDraw2D::getAtomSymbolAndOrientation(
       string sgn = ichg > 0 ? string("+") : string("-");
       ichg = abs(ichg);
       if (ichg > 1) {
-        sgn += lexical_cast<string>(ichg);
+        sgn += std::to_string(ichg);
       }
       // put the charge as a superscript
       postText.push_back(string("<sup>") + sgn + string("</sup>"));
@@ -1662,6 +1728,30 @@ void MolDraw2D::drawTriangle(const Point2D &cds1, const Point2D &cds2,
 };
 
 // ****************************************************************************
+void MolDraw2D::drawArrow(const Point2D &arrowBegin, const Point2D &arrowEnd,
+                          bool asPolygon, double frac, double angle) {
+  Point2D delta = arrowBegin - arrowEnd;
+  double cos_angle = std::cos(angle), sin_angle = std::sin(angle);
+
+  Point2D p1 = arrowEnd;
+  p1.x += frac * (delta.x * cos_angle + delta.y * sin_angle);
+  p1.y += frac * (delta.y * cos_angle - delta.x * sin_angle);
+
+  Point2D p2 = arrowEnd;
+  p2.x += frac * (delta.x * cos_angle - delta.y * sin_angle);
+  p2.y += frac * (delta.y * cos_angle + delta.x * sin_angle);
+
+  drawLine(arrowBegin, arrowEnd);
+  if (!asPolygon) {
+    drawLine(arrowEnd, p1);
+    drawLine(arrowEnd, p2);
+  } else {
+    std::vector<Point2D> pts = {p1, arrowEnd, p2};
+    drawPolygon(pts);
+  }
+}
+
+// ****************************************************************************
 void MolDraw2D::drawEllipse(const Point2D &cds1, const Point2D &cds2) {
   std::vector<Point2D> pts;
   MolDraw2D_detail::arcPoints(cds1, cds2, pts, 0, 360);
@@ -1695,4 +1785,4 @@ void MolDraw2D::drawAttachmentLine(const Point2D &cds1, const Point2D &cds2,
   drawWavyLine(p1, p2, col, col, nSegments);
 }
 
-}  // EO namespace RDKit
+}  // namespace RDKit

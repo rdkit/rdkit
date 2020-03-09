@@ -28,7 +28,8 @@ class TestCase(unittest.TestCase):
     self.colHeads = ('int_col', 'floatCol', 'strCol')
     self.colTypes = ('integer', 'float', 'string')
     if RDConfig.useSqlLite:
-      _, tempName = tempfile.mkstemp(suffix='sqlt')
+      fd, tempName = tempfile.mkstemp(suffix='sqlt')
+      self.fd = fd
       self.tempDbName = tempName
       shutil.copyfile(self.dbName, self.tempDbName)
     else:
@@ -36,6 +37,7 @@ class TestCase(unittest.TestCase):
 
   def tearDown(self):
     if RDConfig.useSqlLite and os.path.exists(self.tempDbName):
+      os.close(self.fd)
       try:
         os.unlink(self.tempDbName)
       except:

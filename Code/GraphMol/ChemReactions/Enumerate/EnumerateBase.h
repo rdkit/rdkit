@@ -29,6 +29,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
+#include <RDGeneral/export.h>
 #ifndef RDKIT_ENUMERATEBASE_H
 #define RDKIT_ENUMERATEBASE_H
 
@@ -59,24 +60,22 @@ namespace RDKit {
   See Reaction.h for more details on how ChemicalReactions are
   used.
 */
-class EnumerateLibraryBase {
+class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibraryBase {
  protected:
   ChemicalReaction m_rxn;
   boost::shared_ptr<EnumerationStrategyBase> m_enumerator;
   boost::shared_ptr<EnumerationStrategyBase> m_initialEnumerator;
+
  public:
   //! default constructor
-EnumerateLibraryBase() : m_rxn(),
-      m_enumerator(),
-      m_initialEnumerator() {}
+  EnumerateLibraryBase() : m_rxn(), m_enumerator(), m_initialEnumerator() {}
 
   //! construct with a chemical reaction and an enumeration strategy
   EnumerateLibraryBase(const ChemicalReaction &rxn,
                        EnumerationStrategyBase *enumerator = 0)
       : m_rxn(rxn),
         m_enumerator(enumerator ? enumerator : new CartesianProductStrategy),
-        m_initialEnumerator( m_enumerator->copy() )
-      {
+        m_initialEnumerator(m_enumerator->copy()) {
     m_rxn.initReactantMatchers();
   }
 
@@ -84,7 +83,7 @@ EnumerateLibraryBase() : m_rxn(),
   EnumerateLibraryBase(const EnumerateLibraryBase &rhs)
       : m_rxn(rhs.m_rxn),
         m_enumerator(rhs.m_enumerator ? rhs.m_enumerator->copy() : 0),
-        m_initialEnumerator( m_enumerator->copy() ) {}
+        m_initialEnumerator(m_enumerator->copy()) {}
 
   virtual ~EnumerateLibraryBase() {}
 
@@ -96,14 +95,14 @@ EnumerateLibraryBase() : m_rxn(),
 
   //! reset the enumeration to the beginning.
   void reset() {
-    if(m_initialEnumerator.get()) {
+    if (m_initialEnumerator.get()) {
       m_enumerator.reset(m_initialEnumerator->copy());
     }
   }
 
   //! returns the underlying chemical reaction
   const ChemicalReaction &getReaction() const { return m_rxn; }
-  
+
   //! return the current enumeration strategy
   const EnumerationStrategyBase &getEnumerator() {
     PRECONDITION(m_enumerator.get(), "Null Enumerator");
@@ -121,30 +120,29 @@ EnumerateLibraryBase() : m_rxn(),
   //! get the next set of products as smiles
   //  This returns a vector of a vector strings.
   //  Each result vector corresponds for a product template.
-  virtual std::vector<std::vector<std::string> > nextSmiles();
+  virtual std::vector<std::vector<std::string>> nextSmiles();
 
   //! Get the current position into the reagent vectors
   //   Use getState/setState to save/restart the enumeration
   //   from this position.
   const EnumerationTypes::RGROUPS &getPosition() const;
-  
+
   //! Get the current state of the enumerator
   //   This is the position of the enumerator and the enumerators
   //   state that can be used to restart enumerating
   //   from this position.
   std::string getState() const;
-  
+
   //! Set the current state of the enumerator
   //   Restart the enumerator from this position.
   void setState(const std::string &);
-  
+
   //! Reset the enumerator to the beginning
   void resetState();
 
-
   //! serializes (pickles) to a stream
   virtual void toStream(std::ostream &ss) const = 0;
-  
+
   //! returns a string with a serialized (pickled) representation
   virtual std::string Serialize() const {
     std::stringstream ss;
@@ -154,7 +152,7 @@ EnumerateLibraryBase() : m_rxn(),
 
   //! initializes from a stream pickle
   virtual void initFromStream(std::istream &ss) = 0;
-  
+
   //! initializes from a string pickle
   virtual void initFromString(const std::string &text) {
     std::stringstream ss(text);
@@ -162,7 +160,7 @@ EnumerateLibraryBase() : m_rxn(),
   }
 
  private:
-#ifdef RDK_USE_BOOST_SERIALIZATION  
+#ifdef RDK_USE_BOOST_SERIALIZATION
   friend class boost::serialization::access;
   template <class Archive>
   void save(Archive &ar, const unsigned int) const {
@@ -173,20 +171,22 @@ EnumerateLibraryBase() : m_rxn(),
     // we handle the m_initialEnumerator from a string
     //  for backwards compatibility with a unreleased
     //  version
-    EnumerationStrategyPickler::pickle(m_initialEnumerator,
-                                       pickle);
+    EnumerationStrategyPickler::pickle(m_initialEnumerator, pickle);
     ar &pickle;
   }
   template <class Archive>
   void load(Archive &ar, const unsigned int /*version*/) {
+    // this should only be called on non-initialized reactions
+    if (m_rxn.getNumReactantTemplates() || m_rxn.getNumProductTemplates() ||
+        m_rxn.getNumAgentTemplates()) {
+      throw ValueErrorException("EnumerateBase already created from archive.");
+    }
     std::string pickle;
     ar &pickle;
     ReactionPickler::reactionFromPickle(pickle, m_rxn);
     ar &m_enumerator;
     ar &pickle;
-    m_initialEnumerator = \
-        EnumerationStrategyPickler::fromPickle(pickle);
-
+    m_initialEnumerator = EnumerationStrategyPickler::fromPickle(pickle);
   }
 
   BOOST_SERIALIZATION_SPLIT_MEMBER();
@@ -196,5 +196,5 @@ EnumerateLibraryBase() : m_rxn(),
 #ifdef RDK_USE_BOOST_SERIALIZATION
 BOOST_SERIALIZATION_ASSUME_ABSTRACT(EnumerateLibraryBase)
 #endif
-}
+}  // namespace RDKit
 #endif

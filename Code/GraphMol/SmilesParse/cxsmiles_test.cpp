@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/test.h>
 #include <string>
 #include <GraphMol/RDKitBase.h>
 #include "SmilesParse.h"
@@ -98,6 +99,8 @@ void testAtomLabels() {
     TEST_ASSERT(m->getAtomWithIdx(5)->getProp<std::string>(
                     common_properties::atomLabel) == "_AP2");
     TEST_ASSERT(m->getAtomWithIdx(5)->getAtomMapNum() == 2);
+
+    delete m;
   }
   {  // query properties
     std::string smiles = "**C |$Q_e;QH_p;;$|";
@@ -188,6 +191,7 @@ void testCXSmilesAndName() {
     TEST_ASSERT(m->getNumAtoms() == 3);
     TEST_ASSERT(m->getAtomWithIdx(0)->getProp<std::string>(
                     common_properties::atomLabel) == "foo");
+    TEST_ASSERT(m->getProp<std::string>("_CXSMILES_Data") == "|$foo;;bar$|");
     TEST_ASSERT(!m->hasProp("_Name"));
     delete m;
   }
@@ -202,6 +206,7 @@ void testCXSmilesAndName() {
     TEST_ASSERT(m->getNumAtoms() == 3);
     TEST_ASSERT(m->getAtomWithIdx(0)->getProp<std::string>(
                     common_properties::atomLabel) == "foo");
+    TEST_ASSERT(m->getProp<std::string>("_CXSMILES_Data") == "|$foo;;bar$|");
     TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) == "ourname");
     delete m;
   }
@@ -376,6 +381,160 @@ void testAtomProps() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub1968() {
+  BOOST_LOG(rdInfoLog)
+      << "testing Github1968: CXSMILES should be parsed before H removal"
+      << std::endl;
+  {  // the original report
+    std::string smiles = "[H]C* |$;;X$|";
+    SmilesParserParams params;
+    params.allowCXSMILES = true;
+    ROMol *m = SmilesToMol(smiles, params);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 2);
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::atomLabel));
+    TEST_ASSERT(m->getAtomWithIdx(1)->getProp<std::string>(
+                    common_properties::atomLabel) == "X");
+    TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp(common_properties::atomLabel));
+    delete m;
+  }
+  {
+    std::string smiles = "C([H])* |$;Y;X$|";
+    SmilesParserParams params;
+    params.allowCXSMILES = true;
+    ROMol *m = SmilesToMol(smiles, params);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 2);
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::atomLabel));
+    TEST_ASSERT(m->getAtomWithIdx(1)->getProp<std::string>(
+                    common_properties::atomLabel) == "X");
+    TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp(common_properties::atomLabel));
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testEnhancedStereo() {
+  BOOST_LOG(rdInfoLog) << "Testing CXSMILES Enhanced Stereo" << std::endl;
+
+  std::vector<unsigned int> atom_ref1({4, 5});
+  {
+    std::string smiles = "C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:4,5|";
+    SmilesParserParams params;
+    params.allowCXSMILES = true;
+    ROMol *m = SmilesToMol(smiles, params);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 8);
+
+    auto &stereo_groups = m->getStereoGroups();
+
+    TEST_ASSERT(stereo_groups.size() == 2);
+
+    auto stg = stereo_groups.begin();
+    TEST_ASSERT(stg->getGroupType() == StereoGroupType::STEREO_ABSOLUTE);
+    {
+      auto &atoms = stg->getAtoms();
+      TEST_ASSERT(atoms.size() == 1);
+      TEST_ASSERT(atoms[0]->getIdx() == 1);
+    }
+    ++stg;
+    TEST_ASSERT(stg->getGroupType() == StereoGroupType::STEREO_OR);
+    {
+      auto &atoms = stg->getAtoms();
+      TEST_ASSERT(atoms.size() == 2);
+      TEST_ASSERT(atoms[0]->getIdx() == 4);
+      TEST_ASSERT(atoms[1]->getIdx() == 5);
+    }
+    delete m;
+  }
+  {
+    std::string smiles = "C[C@H](F)[C@H](C)[C@@H](C)Br |&1:4,5,a:1|";
+    SmilesParserParams params;
+    params.allowCXSMILES = true;
+    ROMol *m = SmilesToMol(smiles, params);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 8);
+
+    auto &stereo_groups = m->getStereoGroups();
+
+    TEST_ASSERT(stereo_groups.size() == 2);
+
+    auto stg = stereo_groups.begin();
+    TEST_ASSERT(stg->getGroupType() == StereoGroupType::STEREO_AND);
+    {
+      auto &atoms = stg->getAtoms();
+      TEST_ASSERT(atoms.size() == 2);
+      TEST_ASSERT(atoms[0]->getIdx() == 4);
+      TEST_ASSERT(atoms[1]->getIdx() == 5);
+    }
+    ++stg;
+    TEST_ASSERT(stg->getGroupType() == StereoGroupType::STEREO_ABSOLUTE);
+    {
+      auto &atoms = stg->getAtoms();
+      TEST_ASSERT(atoms.size() == 1);
+      TEST_ASSERT(atoms[0]->getIdx() == 1);
+    }
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testHTMLCharCodes() {
+  BOOST_LOG(rdInfoLog) << "Testing CXSMILES with HTML char codes" << std::endl;
+
+  {
+    std::string smiles = R"(CCCC* |$;;;;_AP1$,Sg:n:2:2&#44;6-7:ht|)";
+    SmilesParserParams params;
+    params.allowCXSMILES = true;
+
+    ROMol *m = SmilesToMol(smiles, params);
+    TEST_ASSERT(m);
+
+    TEST_ASSERT(m->getNumAtoms() == 5);
+
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testErrorsInCXSmiles() {
+  BOOST_LOG(rdInfoLog) << "Testing handling of errors in CXSMILES" << std::endl;
+
+  {
+    std::string smiles = R"(CC |failure)";
+    SmilesParserParams params;
+
+    ROMol *m = nullptr;
+    try {
+      m = SmilesToMol(smiles, params);
+    } catch (const SmilesParseException &e) {
+    }
+    TEST_ASSERT(!m);
+
+    params.strictCXSMILES = false;
+    m = SmilesToMol(smiles, params);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 2);
+
+    delete m;
+  }
+
+  {  // sure partial parsing also works
+    std::string smiles = "[O][C][O] |^1:0,2,^4:1 FAILURE|";
+    SmilesParserParams params;
+    params.strictCXSMILES = false;
+    ROMol *m = SmilesToMol(smiles, params);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 3);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons() == 2);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getNumRadicalElectrons() == 1);
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -390,4 +549,8 @@ int main(int argc, char *argv[]) {
   testAtomValues();
 #endif
   testAtomProps();
+  testGithub1968();
+  testEnhancedStereo();
+  testHTMLCharCodes();
+  testErrorsInCXSmiles();
 }

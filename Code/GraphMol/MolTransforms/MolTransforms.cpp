@@ -18,7 +18,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/Exceptions.h>
 
-#define EIGEN_TOLERANCE 1.0e-2
+#define EIGEN_TOLERANCE 5.0e-2
 namespace MolTransforms {
 
 using namespace RDKit;
@@ -103,8 +103,8 @@ RDNumeric::DoubleSymmMatrix *computeCovarianceMatrix(
     bool ignoreHs) {
   double xx, xy, xz, yy, yz, zz;
   computeCovarianceTerms(conf, center, xx, xy, xz, yy, yz, zz, normalize,
-                         ignoreHs, NULL);
-  RDNumeric::DoubleSymmMatrix *res = new RDNumeric::DoubleSymmMatrix(3, 3);
+                         ignoreHs, nullptr);
+  auto *res = new RDNumeric::DoubleSymmMatrix(3, 3);
   res->setVal(0, 0, xx);
   res->setVal(0, 1, xy);
   res->setVal(0, 2, xz);
@@ -166,7 +166,9 @@ bool computePrincipalAxesAndMoments(const RDKit::Conformer &conf,
   RDGeom::Point3D origin(0, 0, 0);
   double wSum = 0.0;
   for (unsigned int i = 0; i < conf.getNumAtoms(); ++i) {
-    if (ignoreHs && mol.getAtomWithIdx(i)->getAtomicNum() == 1) continue;
+    if (ignoreHs && mol.getAtomWithIdx(i)->getAtomicNum() == 1) {
+      continue;
+    }
     double w = 1.0;
     if (weights) {
       w = (*weights)[i];
@@ -219,7 +221,9 @@ bool computePrincipalAxesAndMomentsFromGyrationMatrix(
   RDGeom::Point3D origin(0, 0, 0);
   double wSum = 0.0;
   for (unsigned int i = 0; i < conf.getNumAtoms(); ++i) {
-    if (ignoreHs && mol.getAtomWithIdx(i)->getAtomicNum() == 1) continue;
+    if (ignoreHs && mol.getAtomWithIdx(i)->getAtomicNum() == 1) {
+      continue;
+    }
     double w = 1.0;
     if (weights) {
       w = (*weights)[i];
@@ -273,7 +277,7 @@ RDGeom::Transform3D *computeCanonicalTransform(const Conformer &conf,
   // setting translation
   // translation
   unsigned int nAtms = conf.getNumAtoms();
-  RDGeom::Transform3D *trans = new RDGeom::Transform3D;
+  auto *trans = new RDGeom::Transform3D;
 
   // set the translation
   origin *= -1.0;
@@ -286,6 +290,7 @@ RDGeom::Transform3D *computeCanonicalTransform(const Conformer &conf,
     // deal with zero eigen value systems
     unsigned int i, j, dim = 3;
     for (i = 0; i < 3; ++i) {
+      // std::cerr<<"  ev: "<<i<<": "<<eigVals.getVal(i)<<std::endl;
       if (fabs(eigVals.getVal(i)) < EIGEN_TOLERANCE) {
         dim--;
       }
@@ -352,7 +357,7 @@ void canonicalizeConformer(Conformer &conf, const RDGeom::Point3D *center,
 void canonicalizeMol(RDKit::ROMol &mol, bool normalizeCovar, bool ignoreHs) {
   ROMol::ConformerIterator ci;
   for (ci = mol.beginConformers(); ci != mol.endConformers(); ci++) {
-    canonicalizeConformer(*(*ci), 0, normalizeCovar, ignoreHs);
+    canonicalizeConformer(*(*ci), nullptr, normalizeCovar, ignoreHs);
   }
 }
 
@@ -377,7 +382,7 @@ void _toBeMovedIdxList(const ROMol &mol, unsigned int iAtomId,
     boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(tAtom);
     unsigned int eIdx;
     for (eIdx = 0; nbrIdx != endNbrs; ++nbrIdx, ++eIdx) {
-      wIdx = (mol[*nbrIdx].get())->getIdx();
+      wIdx = (mol[*nbrIdx])->getIdx();
       if (!visitedIdx[wIdx]) {
         visitedIdx[wIdx] = 1;
         stack.push(wIdx);
@@ -415,21 +420,24 @@ void setBondLength(Conformer &conf, unsigned int iAtomId, unsigned int jAtomId,
   URANGE_CHECK(jAtomId, pos.size());
   ROMol &mol = conf.getOwningMol();
   Bond *bond = mol.getBondBetweenAtoms(iAtomId, jAtomId);
-  if (!bond) throw ValueErrorException("atoms i and j must be bonded");
-  if (queryIsBondInRing(bond))
+  if (!bond) {
+    throw ValueErrorException("atoms i and j must be bonded");
+  }
+  if (queryIsBondInRing(bond)) {
     throw ValueErrorException("bond (i,j) must not belong to a ring");
+  }
   RDGeom::Point3D v = pos[iAtomId] - pos[jAtomId];
   double origValue = v.length();
-  if (origValue <= 1.e-8)
+  if (origValue <= 1.e-8) {
     throw ValueErrorException("atoms i and j have identical 3D coordinates");
+  }
 
   // get all atoms bonded to j
   std::list<unsigned int> alist;
   _toBeMovedIdxList(mol, iAtomId, jAtomId, alist);
   v *= (value / origValue - 1.);
-  for (std::list<unsigned int>::iterator it = alist.begin(); it != alist.end();
-       ++it) {
-    pos[*it] -= v;
+  for (unsigned int &it : alist) {
+    pos[it] -= v;
   }
 }
 
@@ -441,12 +449,14 @@ double getAngleRad(const Conformer &conf, unsigned int iAtomId,
   URANGE_CHECK(kAtomId, pos.size());
   RDGeom::Point3D rJI = pos[iAtomId] - pos[jAtomId];
   double rJISqLength = rJI.lengthSq();
-  if (rJISqLength <= 1.e-16)
+  if (rJISqLength <= 1.e-16) {
     throw ValueErrorException("atoms i and j have identical 3D coordinates");
+  }
   RDGeom::Point3D rJK = pos[kAtomId] - pos[jAtomId];
   double rJKSqLength = rJK.lengthSq();
-  if (rJKSqLength <= 1.e-16)
+  if (rJKSqLength <= 1.e-16) {
     throw ValueErrorException("atoms j and k have identical 3D coordinates");
+  }
   return rJI.angleTo(rJK);
 }
 
@@ -458,21 +468,28 @@ void setAngleRad(Conformer &conf, unsigned int iAtomId, unsigned int jAtomId,
   URANGE_CHECK(kAtomId, pos.size());
   ROMol &mol = conf.getOwningMol();
   Bond *bondJI = mol.getBondBetweenAtoms(jAtomId, iAtomId);
-  if (!bondJI) throw ValueErrorException("atoms i and j must be bonded");
+  if (!bondJI) {
+    throw ValueErrorException("atoms i and j must be bonded");
+  }
   Bond *bondJK = mol.getBondBetweenAtoms(jAtomId, kAtomId);
-  if (!bondJK) throw ValueErrorException("atoms j and k must be bonded");
-  if (queryIsBondInRing(bondJI) && queryIsBondInRing(bondJK))
+  if (!bondJK) {
+    throw ValueErrorException("atoms j and k must be bonded");
+  }
+  if (queryIsBondInRing(bondJI) && queryIsBondInRing(bondJK)) {
     throw ValueErrorException(
         "bonds (i,j) and (j,k) must not both belong to a ring");
+  }
 
   RDGeom::Point3D rJI = pos[iAtomId] - pos[jAtomId];
   double rJISqLength = rJI.lengthSq();
-  if (rJISqLength <= 1.e-16)
+  if (rJISqLength <= 1.e-16) {
     throw ValueErrorException("atoms i and j have identical 3D coordinates");
+  }
   RDGeom::Point3D rJK = pos[kAtomId] - pos[jAtomId];
   double rJKSqLength = rJK.lengthSq();
-  if (rJKSqLength <= 1.e-16)
+  if (rJKSqLength <= 1.e-16) {
     throw ValueErrorException("atoms j and k have identical 3D coordinates");
+  }
 
   // we only need to rotate by delta with respect to the current angle value
   value -= rJI.angleTo(rJK);
@@ -484,16 +501,15 @@ void setAngleRad(Conformer &conf, unsigned int iAtomId, unsigned int jAtomId,
   // get all atoms bonded to j and loop through them
   std::list<unsigned int> alist;
   _toBeMovedIdxList(mol, jAtomId, kAtomId, alist);
-  for (std::list<unsigned int>::iterator it = alist.begin(); it != alist.end();
-       ++it) {
+  for (unsigned int &it : alist) {
     // translate atom so that it coincides with the origin of rotation
-    pos[*it] -= rotAxisBegin;
+    pos[it] -= rotAxisBegin;
     // rotate around our rotation axis
     RDGeom::Transform3D rotByAngle;
     rotByAngle.SetRotation(value, rotAxis);
-    rotByAngle.TransformPoint(pos[*it]);
+    rotByAngle.TransformPoint(pos[it]);
     // translate atom back
-    pos[*it] += rotAxisBegin;
+    pos[it] += rotAxisBegin;
   }
 }
 
@@ -507,16 +523,19 @@ double getDihedralRad(const Conformer &conf, unsigned int iAtomId,
   URANGE_CHECK(lAtomId, pos.size());
   RDGeom::Point3D rIJ = pos[jAtomId] - pos[iAtomId];
   double rIJSqLength = rIJ.lengthSq();
-  if (rIJSqLength <= 1.e-16)
+  if (rIJSqLength <= 1.e-16) {
     throw ValueErrorException("atoms i and j have identical 3D coordinates");
+  }
   RDGeom::Point3D rJK = pos[kAtomId] - pos[jAtomId];
   double rJKSqLength = rJK.lengthSq();
-  if (rJKSqLength <= 1.e-16)
+  if (rJKSqLength <= 1.e-16) {
     throw ValueErrorException("atoms j and k have identical 3D coordinates");
+  }
   RDGeom::Point3D rKL = pos[lAtomId] - pos[kAtomId];
   double rKLSqLength = rKL.lengthSq();
-  if (rKLSqLength <= 1.e-16)
+  if (rKLSqLength <= 1.e-16) {
     throw ValueErrorException("atoms k and l have identical 3D coordinates");
+  }
 
   RDGeom::Point3D nIJK = rIJ.crossProduct(rJK);
   double nIJKSqLength = nIJK.lengthSq();
@@ -536,27 +555,29 @@ void setDihedralRad(Conformer &conf, unsigned int iAtomId, unsigned int jAtomId,
   URANGE_CHECK(kAtomId, pos.size());
   URANGE_CHECK(lAtomId, pos.size());
   ROMol &mol = conf.getOwningMol();
-  Bond *bondIJ = mol.getBondBetweenAtoms(iAtomId, jAtomId);
-  if (!bondIJ) throw ValueErrorException("atoms i and j must be bonded");
   Bond *bondJK = mol.getBondBetweenAtoms(jAtomId, kAtomId);
-  if (!bondJK) throw ValueErrorException("atoms j and k must be bonded");
-  Bond *bondKL = mol.getBondBetweenAtoms(kAtomId, lAtomId);
-  if (!bondKL) throw ValueErrorException("atoms k and l must be bonded");
+  if (!bondJK) {
+    throw ValueErrorException("atoms j and k must be bonded");
+  }
 
-  if (queryIsBondInRing(bondJK))
+  if (queryIsBondInRing(bondJK)) {
     throw ValueErrorException("bond (j,k) must not belong to a ring");
+  }
   RDGeom::Point3D rIJ = pos[jAtomId] - pos[iAtomId];
   double rIJSqLength = rIJ.lengthSq();
-  if (rIJSqLength <= 1.e-16)
+  if (rIJSqLength <= 1.e-16) {
     throw ValueErrorException("atoms i and j have identical 3D coordinates");
+  }
   RDGeom::Point3D rJK = pos[kAtomId] - pos[jAtomId];
   double rJKSqLength = rJK.lengthSq();
-  if (rJKSqLength <= 1.e-16)
+  if (rJKSqLength <= 1.e-16) {
     throw ValueErrorException("atoms j and k have identical 3D coordinates");
+  }
   RDGeom::Point3D rKL = pos[lAtomId] - pos[kAtomId];
   double rKLSqLength = rKL.lengthSq();
-  if (rKLSqLength <= 1.e-16)
+  if (rKLSqLength <= 1.e-16) {
     throw ValueErrorException("atoms k and l have identical 3D coordinates");
+  }
 
   RDGeom::Point3D nIJK = rIJ.crossProduct(rJK);
   double nIJKSqLength = nIJK.lengthSq();
@@ -574,16 +595,15 @@ void setDihedralRad(Conformer &conf, unsigned int iAtomId, unsigned int jAtomId,
   // get all atoms bonded to k and loop through them
   std::list<unsigned int> alist;
   _toBeMovedIdxList(mol, jAtomId, kAtomId, alist);
-  for (std::list<unsigned int>::iterator it = alist.begin(); it != alist.end();
-       ++it) {
+  for (unsigned int &it : alist) {
     // translate atom so that it coincides with the origin of rotation
-    pos[*it] -= rotAxisBegin;
+    pos[it] -= rotAxisBegin;
     // rotate around our rotation axis
     RDGeom::Transform3D rotByAngle;
     rotByAngle.SetRotation(value, rotAxis);
-    rotByAngle.TransformPoint(pos[*it]);
+    rotByAngle.TransformPoint(pos[it]);
     // translate atom back
-    pos[*it] += rotAxisBegin;
+    pos[it] += rotAxisBegin;
   }
 }
 }

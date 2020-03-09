@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 
+#include <RDGeneral/test.h>
 #include <RDGeneral/utils.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
@@ -32,7 +33,7 @@
 
 using namespace RDKit;
 
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
 #include <cairo.h>
 #include "MolDraw2DCairo.h"
 #endif
@@ -40,12 +41,12 @@ using namespace RDKit;
 namespace {
 void drawit(ChemicalReaction *rxn, std::string nameBase,
             bool highlight_map = false,
-            const std::vector<DrawColour> *highlight_colors = NULL) {
+            const std::vector<DrawColour> *highlight_colors = nullptr) {
   double panex = 200, paney = 150;
   double width = panex * (rxn->getNumReactantTemplates() +
                           rxn->getNumProductTemplates() + 1);
   double height = paney;
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
   {
     MolDraw2DCairo drawer(width, height);
     drawer.drawReaction(*rxn, highlight_map, highlight_colors);
@@ -72,7 +73,7 @@ void test1() {
     std::string nameBase = "rxn_test1_1";
     bool useSmiles = true;
     ChemicalReaction *rxn =
-        RxnSmartsToChemicalReaction(smiles, NULL, useSmiles);
+        RxnSmartsToChemicalReaction(smiles, nullptr, useSmiles);
     TEST_ASSERT(rxn);
     drawit(rxn, nameBase);
     delete rxn;
@@ -85,7 +86,7 @@ void test1() {
     std::string nameBase = "rxn_test1_2";
     bool useSmiles = true;
     ChemicalReaction *rxn =
-        RxnSmartsToChemicalReaction(smiles, NULL, useSmiles);
+        RxnSmartsToChemicalReaction(smiles, nullptr, useSmiles);
     TEST_ASSERT(rxn);
     drawit(rxn, nameBase);
     delete rxn;
@@ -98,7 +99,7 @@ void test1() {
     std::string nameBase = "rxn_test1_3";
     bool useSmiles = true;
     ChemicalReaction *rxn =
-        RxnSmartsToChemicalReaction(smiles, NULL, useSmiles);
+        RxnSmartsToChemicalReaction(smiles, nullptr, useSmiles);
     TEST_ASSERT(rxn);
     drawit(rxn, nameBase);
     delete rxn;
@@ -109,7 +110,7 @@ void test1() {
     std::string nameBase = "rxn_test1_4";
     bool useSmiles = true;
     ChemicalReaction *rxn =
-        RxnSmartsToChemicalReaction(smiles, NULL, useSmiles);
+        RxnSmartsToChemicalReaction(smiles, nullptr, useSmiles);
     TEST_ASSERT(rxn);
     drawit(rxn, nameBase);
     delete rxn;
@@ -121,7 +122,7 @@ void test1() {
     std::string nameBase = "rxn_test1_5";
     bool useSmiles = true;
     ChemicalReaction *rxn =
-        RxnSmartsToChemicalReaction(smiles, NULL, useSmiles);
+        RxnSmartsToChemicalReaction(smiles, nullptr, useSmiles);
     TEST_ASSERT(rxn);
     drawit(rxn, nameBase);
     delete rxn;
@@ -134,7 +135,7 @@ void test1() {
     std::string nameBase = "rxn_test1_6";
     bool useSmiles = true;
     ChemicalReaction *rxn =
-        RxnSmartsToChemicalReaction(smiles, NULL, useSmiles);
+        RxnSmartsToChemicalReaction(smiles, nullptr, useSmiles);
     TEST_ASSERT(rxn);
     drawit(rxn, nameBase, true);
     delete rxn;
@@ -147,7 +148,7 @@ void test1() {
     std::string nameBase = "rxn_test1_7";
     bool useSmiles = true;
     ChemicalReaction *rxn =
-        RxnSmartsToChemicalReaction(smiles, NULL, useSmiles);
+        RxnSmartsToChemicalReaction(smiles, nullptr, useSmiles);
     TEST_ASSERT(rxn);
     drawit(rxn, nameBase, true);
     delete rxn;
@@ -168,7 +169,7 @@ void test2() {
     std::string nameBase = "rxn_test2_1";
     bool useSmiles = true;
     ChemicalReaction *rxn =
-        RxnSmartsToChemicalReaction(smiles, NULL, useSmiles);
+        RxnSmartsToChemicalReaction(smiles, nullptr, useSmiles);
     TEST_ASSERT(rxn);
     drawit(rxn, nameBase);
     delete rxn;
@@ -192,11 +193,10 @@ C3)c4cccc(c4Cl)Cl	CCc1nc(c(n1c2ccccc2)C)C(=O)NCCN3CCN(CC3)c4cccc(c4Cl)Cl\n\
       if (tokens.size() > 2) {
         ++idx;
 
-        std::string nameBase =
-            "rxn_test2_2_" + boost::lexical_cast<std::string>(idx);
+        std::string nameBase = "rxn_test2_2_" + std::to_string(idx);
         bool useSmiles = true;
         ChemicalReaction *rxn =
-            RxnSmartsToChemicalReaction(tokens[0], NULL, useSmiles);
+            RxnSmartsToChemicalReaction(tokens[0], nullptr, useSmiles);
         TEST_ASSERT(rxn);
         drawit(rxn, nameBase);
         delete rxn;
@@ -218,7 +218,7 @@ void test3() {
     std::string nameBase = "rxn_test3_1";
     bool useSmiles = true;
     ChemicalReaction *rxn =
-        RxnSmartsToChemicalReaction(smiles, NULL, useSmiles);
+        RxnSmartsToChemicalReaction(smiles, nullptr, useSmiles);
     TEST_ASSERT(rxn);
     std::vector<DrawColour> highlight_colors;
     highlight_colors.push_back(DrawColour(1., 1., .67));
@@ -244,7 +244,7 @@ void test4() {
     std::string nameBase = "rxn_test4_1";
     bool useSmiles = false;
     ChemicalReaction *rxn =
-        RxnSmartsToChemicalReaction(smiles, NULL, useSmiles);
+        RxnSmartsToChemicalReaction(smiles, nullptr, useSmiles);
     TEST_ASSERT(rxn);
     std::cerr << "draw!" << std::endl;
     drawit(rxn, nameBase, true);
@@ -262,7 +262,7 @@ void test4() {
     std::string nameBase = "rxn_test4_2";
     bool useSmiles = false;
     ChemicalReaction *rxn =
-        RxnSmartsToChemicalReaction(smiles, NULL, useSmiles);
+        RxnSmartsToChemicalReaction(smiles, nullptr, useSmiles);
     TEST_ASSERT(rxn);
     drawit(rxn, nameBase, true);
     delete rxn;

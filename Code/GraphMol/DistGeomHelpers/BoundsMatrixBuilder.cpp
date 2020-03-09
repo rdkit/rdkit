@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2019 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -67,10 +67,9 @@ class ComputedData {
  public:
   ComputedData(unsigned int nAtoms, unsigned int nBonds) {
     bondLengths.resize(nBonds);
-    RDNumeric::IntSymmMatrix *bAdj = new RDNumeric::IntSymmMatrix(nBonds, -1);
+    auto *bAdj = new RDNumeric::IntSymmMatrix(nBonds, -1);
     bondAdj.reset(bAdj);
-    RDNumeric::DoubleSymmMatrix *bAngles =
-        new RDNumeric::DoubleSymmMatrix(nBonds, -1.0);
+    auto *bAngles = new RDNumeric::DoubleSymmMatrix(nBonds, -1.0);
     bondAngles.reset(bAngles);
     cisPaths.resize(nBonds * nBonds * nBonds);
     transPaths.resize(nBonds * nBonds * nBonds);
@@ -130,7 +129,7 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
 /*!
   These are computed using the range of allowed torsion angles. There are
   several
-  special casses and the rest are computed using 0 and 180 deg as the min.
+  special cases and the rest are computed using 0 and 180 deg as the min.
   and max. torsion angles. The special cases deal with ring systems, double
   bonds
   with cis-trans specifications, and a few special sub-structures
@@ -183,7 +182,7 @@ namespace RDKit {
 namespace DGeomHelpers {
 void _checkAndSetBounds(unsigned int i, unsigned int j, double lb, double ub,
                         DistGeom::BoundsMatPtr mmat) {
-  // get the exisiting bounds
+  // get the existing bounds
   double clb = mmat->getLowerBound(i, j);
   double cub = mmat->getUpperBound(i, j);
 
@@ -407,7 +406,7 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
         // this invar stuff is to deal with bridged systems (Issue 215). In
         // bridged
         // systems we may be covering the same 13 (ring) paths multiple times
-        // and unnecssarily
+        // and unnecessarily
         // increasing the angleTaken at the central atom.
         _setRingAngle(mol.getAtomWithIdx(aid2)->getHybridization(), rSize,
                       angle);
@@ -444,12 +443,12 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
       //  system
 
       while (beg1 != end1) {
-        const BOND_SPTR bnd1 = mol[*beg1];
+        const Bond* bnd1 = mol[*beg1];
         bid1 = bnd1->getIdx();
         aid1 = bnd1->getOtherAtomIdx(aid2);
         boost::tie(beg2, end2) = mol.getAtomBonds(atom);
         while (beg2 != beg1) {
-          const BOND_SPTR bnd2 = mol[*beg2];
+          const Bond* bnd2 = mol[*beg2];
           bid2 = bnd2->getIdx();
           // invar = firstThousandPrimes[bid1]*firstThousandPrimes[bid2];
           if (accumData.bondAngles->getVal(bid1, bid2) < 0.0) {
@@ -467,7 +466,7 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
               // but with some special cases
               angle = 109.5 * M_PI / 180;
               // we will special-case a little bit here for 3, 4 members ring
-              // atoms that are sp3 hybirdized
+              // atoms that are sp3 hybridized
               // beyond that the angle reasonably close to the tetrahedral angle
               if (rinfo->isAtomInRingOfSize(aid2, 3)) {
                 angle = 116.0 * M_PI / 180;
@@ -498,14 +497,14 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
         ++beg1;
       }  // while loop over the first bond
     } else if (visited[aid2] == 0) {
-      // non-ring atoms - we will simply use angles based on hydridization
+      // non-ring atoms - we will simply use angles based on hybridization
       while (beg1 != end1) {
-        const BOND_SPTR bnd1 = mol[*beg1];
+        const Bond* bnd1 = mol[*beg1];
         bid1 = bnd1->getIdx();
         aid1 = bnd1->getOtherAtomIdx(aid2);
         boost::tie(beg2, end2) = mol.getAtomBonds(atom);
         while (beg2 != beg1) {
-          const BOND_SPTR bnd2 = mol[*beg2];
+          const Bond* bnd2 = mol[*beg2];
           bid2 = bnd2->getIdx();
           if (ahyb == Atom::SP) {
             angle = M_PI;
@@ -514,7 +513,7 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
           } else if (ahyb == Atom::SP3) {
             angle = 109.5 * M_PI / 180;
           } else if (ahyb == Atom::SP3D) {
-            // FIX: this and the remaining two hybirdization states below should
+            // FIX: this and the remaining two hybridization states below should
             // probably be special
             // cased. These defaults below are probably not the best we can do
             // particularly when
@@ -651,7 +650,9 @@ void _setInRing14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
     // basically we will assume 0 to 180 allowed
     dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
     du = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
-    if (du < dl) std::swap(du, dl);
+    if (du < dl) {
+      std::swap(du, dl);
+    }
     if (fabs(du - dl) < DIST12_DELTA) {
       dl -= GEN_DIST_TOL;
       du += GEN_DIST_TOL;
@@ -781,8 +782,8 @@ bool _checkH2NX3H1OX2(const Atom *atm) {
     return true;
   } else if ((atm->getAtomicNum() == 7) && (atm->getDegree() == 3) &&
              (atm->getTotalNumHs() == 1)) {
-    // FIX: assumming hydrogen is not in the graph
-    // this si NX3H1 situation
+    // FIX: assuming hydrogen is not in the graph
+    // this is NX3H1 situation
     return true;
   }
   return false;
@@ -1172,12 +1173,12 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
     aid3 = (*bi)->getEndAtomIdx();
     boost::tie(beg1, end1) = mol.getAtomBonds(mol.getAtomWithIdx(aid2));
     while (beg1 != end1) {
-      const Bond *bnd1 = mol[*beg1].get();
+      const Bond *bnd1 = mol[*beg1];
       bid1 = bnd1->getIdx();
       if (bid1 != bid2) {
         boost::tie(beg2, end2) = mol.getAtomBonds(mol.getAtomWithIdx(aid3));
         while (beg2 != end2) {
-          const Bond *bnd3 = mol[*beg2].get();
+          const Bond *bnd3 = mol[*beg2];
           bid3 = bnd3->getIdx();
           if (bid3 != bid2) {
             id1 = nb * nb * bid1 + nb * bid2 + bid3;
@@ -1256,7 +1257,7 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
     throw ValueErrorException("molecule has no atoms");
   }
   ComputedData accumData(na, nb);
-  double *distMatrix = 0;
+  double *distMatrix = nullptr;
   distMatrix = MolOps::getDistanceMat(mol);
 
   set12Bounds(mol, mmat, accumData);
@@ -1269,6 +1270,53 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   }
 
   setLowerBoundVDW(mol, mmat, scaleVDW, distMatrix);
+}
+
+void collectBondsAndAngles(const ROMol &mol,
+                    std::vector<std::pair<int, int> > &bonds,
+                    std::vector<std::vector<int> > &angles){
+  bonds.resize(0);
+  angles.resize(0);
+  bonds.reserve(mol.getNumBonds());
+  for (const auto bondi : mol.bonds()) {
+    bonds.push_back(std::make_pair(bondi->getBeginAtomIdx(), bondi->getEndAtomIdx()));
+
+    for(unsigned int j=bondi->getIdx()+1;j<mol.getNumBonds();++j){
+      const Bond *bondj = mol.getBondWithIdx(j);
+      int aid11 = bondi->getBeginAtomIdx();
+      int aid12 = bondi->getEndAtomIdx();
+      int aid21 = bondj->getBeginAtomIdx();
+      int aid22 = bondj->getEndAtomIdx();
+      if( aid11!=aid21 && aid11!=aid22 && aid12!=aid21 && aid12!=aid22 ){
+        continue;
+      }
+      std::vector<int> tmp(4,
+                            0);  // elements: aid1, aid2, flag for triple bonds
+      if ((bondi->getBondType() == Bond::TRIPLE) ||
+          (bondj->getBondType() == Bond::TRIPLE)) {
+        tmp[3] = 1;
+      }
+
+      if (aid12 == aid21) {
+        tmp[0] = aid11;
+        tmp[1] = aid12;
+        tmp[2] = aid22;
+      } else if (aid12 == aid22) {
+        tmp[0] = aid11;
+        tmp[1] = aid12;
+        tmp[2] = aid21;
+      } else if (aid11 == aid21) {
+        tmp[0] = aid12;
+        tmp[1] = aid11;
+        tmp[2] = aid22;
+      } else if (aid11 == aid22) {
+        tmp[0] = aid12;
+        tmp[1] = aid11;
+        tmp[2] = aid21;
+      }
+      angles.push_back(tmp);
+    }
+  }
 }
 
 void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
@@ -1284,58 +1332,11 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
     throw ValueErrorException("molecule has no atoms");
   }
   ComputedData accumData(na, nb);
-  double *distMatrix = 0;
+  double *distMatrix = nullptr;
   distMatrix = MolOps::getDistanceMat(mol);
 
   set12Bounds(mol, mmat, accumData);
-
-  // store the 1,2-interactions
-  ROMol::ConstBondIterator bi;
-  for (bi = mol.beginBonds(); bi != mol.endBonds(); ++bi) {
-    unsigned int begId = (*bi)->getBeginAtomIdx();
-    unsigned int endId = (*bi)->getEndAtomIdx();
-    bonds.push_back(std::make_pair(begId, endId));
-  }
-
   set13Bounds(mol, mmat, accumData);
-
-  // store the 1,3-interactions
-  for (unsigned int bid1 = 0; bid1 < nb - 1; ++bid1) {
-    for (unsigned int bid2 = bid1 + 1; bid2 < nb; ++bid2) {
-      if (accumData.bondAngles->getVal(bid1, bid2) != -1.0) {
-        int aid11 = mol.getBondWithIdx(bid1)->getBeginAtomIdx();
-        int aid12 = mol.getBondWithIdx(bid1)->getEndAtomIdx();
-        int aid21 = mol.getBondWithIdx(bid2)->getBeginAtomIdx();
-        int aid22 = mol.getBondWithIdx(bid2)->getEndAtomIdx();
-        std::vector<int> tmp(4,
-                             0);  // elements: aid1, aid2, flag for triple bonds
-        if ((mol.getBondWithIdx(bid1)->getBondType() == Bond::TRIPLE) ||
-            (mol.getBondWithIdx(bid2)->getBondType() == Bond::TRIPLE)) {
-          tmp[3] = 1;
-        }
-
-        if (aid12 == aid21) {
-          tmp[0] = aid11;
-          tmp[1] = aid12;
-          tmp[2] = aid22;
-        } else if (aid12 == aid22) {
-          tmp[0] = aid11;
-          tmp[1] = aid12;
-          tmp[2] = aid21;
-        } else if (aid11 == aid21) {
-          tmp[0] = aid12;
-          tmp[1] = aid11;
-          tmp[2] = aid22;
-        } else if (aid11 == aid22) {
-          tmp[0] = aid12;
-          tmp[1] = aid11;
-          tmp[2] = aid21;
-        }
-        angles.push_back(tmp);
-      }
-    }
-  }
-
   set14Bounds(mol, mmat, accumData, distMatrix);
 
   if (set15bounds) {
@@ -1343,6 +1344,8 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   }
 
   setLowerBoundVDW(mol, mmat, scaleVDW, distMatrix);
+
+  collectBondsAndAngles(mol,bonds,angles);
 }
 
 // some helper functions to set 15 distances
@@ -1430,7 +1433,7 @@ double _compute15DistsCisTrans(double d1, double d2, double d3, double d4,
 }
 
 /*
- compute the lower and upper bounds for the dsitance between 15 atoms given
+ compute the lower and upper bounds for the distance between 15 atoms given
  than
  the first
  four atoms are in trans configuration. The 15 limits are computed assuming
@@ -1474,7 +1477,7 @@ double _compute15DistsTransTrans(double d1, double d2, double d3, double d4,
 }
 
 /*
- compute the lower and upper bounds for the dsitance between 15 atoms given
+ compute the lower and upper bounds for the distance between 15 atoms given
  than
  the first
  four atoms are in trans configuration. The 15 limits are computed assuming
@@ -1646,7 +1649,7 @@ void set15Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
     // 15 distances going one way with with 14 paths
     _set15BoundsHelper(mol, bid1, bid2, bid3, type, accumData, mmat,
                        distMatrix);
-    // goign the other way - reverse the 14 path
+    // going the other way - reverse the 14 path
     _set15BoundsHelper(mol, bid3, bid2, bid1, type, accumData, mmat,
                        distMatrix);
   }

@@ -1,6 +1,5 @@
-//  $Id$
 //
-//   Copyright (C) 2002-2008 Greg Landrum and Rational Discovery LLC
+//   Copyright (C) 2002-2019 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,28 +7,30 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/test.h>
 #include <GraphMol/RDKitBase.h>
 #include <string>
 #include <iostream>
 #include <fstream>
 #include <map>
+#include <memory>
 
 #include "MolSupplier.h"
 #include "MolWriters.h"
 #include "FileParsers.h"
+#include "FileParserUtils.h"
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/RDLog.h>
+#include <RDStreams/streams.h>
+#include <GraphMol/MonomerInfo.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Depictor/RDDepictor.h>
 
-#ifdef TEST_GZIP_SD
 #include <boost/iostreams/device/file.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
-#include <boost/iostreams/filter/gzip.hpp>
 namespace io = boost::iostreams;
-#endif
 
 using namespace RDKit;
 
@@ -88,7 +89,7 @@ int testMolSup() {
     TEST_ASSERT(i == 16);
   }
   {
-    std::ifstream *strm = new std::ifstream(fname.c_str());
+    auto *strm = new std::ifstream(fname.c_str());
     SDMolSupplier sdsup(strm, true);
     unsigned int i = 0;
     while (!sdsup.atEnd()) {
@@ -102,6 +103,187 @@ int testMolSup() {
     }
     TEST_ASSERT(i == 16);
   }
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
+  {  // Test reading properties
+    fname = rdbase + "/Code/GraphMol/FileParsers/test_data/props_test.mae";
+
+    MaeMolSupplier maesup(fname);
+    std::unique_ptr<ROMol> nmol(maesup.next());
+    TEST_ASSERT(nmol);
+
+    // Test mol properties
+    TEST_ASSERT(nmol->hasProp(common_properties::_Name));
+    TEST_ASSERT(nmol->hasProp("b_sd_chiral_flag"));
+    TEST_ASSERT(nmol->getProp<bool>("b_sd_chiral_flag") == false);
+    TEST_ASSERT(nmol->hasProp("i_sd_NSC"));
+    TEST_ASSERT(nmol->getProp<int>("i_sd_NSC") == 48);
+    TEST_ASSERT(nmol->hasProp("s_m_entry_name"));
+    TEST_ASSERT(nmol->getProp<std::string>("s_m_entry_name") ==
+                "NCI_aids_few.1");
+    TEST_ASSERT(nmol->hasProp("r_f3d_dummy"));
+    TEST_ASSERT(abs(nmol->getProp<double>("r_f3d_dummy") - 42.123) < 0.0001);
+
+    // Test atom properties
+    TEST_ASSERT(nmol->getNumAtoms() == 19);
+    for (int i = 0; i < 19; ++i) {
+      const auto *atom = nmol->getAtomWithIdx(i);
+
+      // The integer property is present for all atoms
+      TEST_ASSERT(atom->hasProp("i_m_minimize_atom_index"));
+      TEST_ASSERT(atom->getProp<int>("i_m_minimize_atom_index") == 1 + i);
+
+      // The bool property is only defined for i < 10
+      if (i < 10) {
+        TEST_ASSERT(atom->hasProp("b_m_dummy"));
+        TEST_ASSERT(atom->getProp<bool>("b_m_dummy") ==
+                    static_cast<bool>(i % 2));
+      } else {
+        TEST_ASSERT(!atom->hasProp("b_m_dummy"));
+      }
+
+      // The real property is only defined for i >= 10
+      if (i >= 10) {
+        TEST_ASSERT(atom->hasProp("r_f3d_dummy"));
+        TEST_ASSERT(
+            abs(atom->getProp<double>("r_f3d_dummy") - (19.1 - i) < 0.0001));
+      } else {
+        TEST_ASSERT(!atom->hasProp("r_f3d_dummy"));
+      }
+
+      // All atoms have the string prop
+      TEST_ASSERT(atom->hasProp("s_m_dummy"));
+      TEST_ASSERT(atom->getProp<std::string>("s_m_dummy") ==
+                  std::to_string(19 - i));
+    }
+
+    TEST_ASSERT(maesup.atEnd());
+  }
+  {  // Test parsing stereo properties. Mol is 2D and has stereo labels.
+    fname = rdbase + "/Code/GraphMol/FileParsers/test_data/stereochem.mae";
+    MaeMolSupplier maesup(fname);
+
+    {  // Stereo bonds. These get overwritten by the double bond detection.
+      std::unique_ptr<ROMol> nmol(maesup.next());
+      TEST_ASSERT(nmol);
+      {
+        Bond *bnd = nmol->getBondWithIdx(1);
+        TEST_ASSERT(bnd);
+        TEST_ASSERT(bnd->getStereoAtoms() == INT_VECT({0, 3}));
+        TEST_ASSERT(bnd->getStereo() == Bond::STEREOTRANS);
+      }
+      {
+        Bond *bnd = nmol->getBondWithIdx(3);
+        TEST_ASSERT(bnd);
+        TEST_ASSERT(bnd->getStereoAtoms() == INT_VECT({2, 5}));
+        TEST_ASSERT(bnd->getStereo() == Bond::STEREOCIS);
+      }
+    }
+    {  // Chiralities (these get CIP codes)
+      std::unique_ptr<ROMol> nmol(maesup.next());
+      TEST_ASSERT(nmol);
+      {
+        Atom *at = nmol->getAtomWithIdx(1);
+        TEST_ASSERT(at);
+        TEST_ASSERT(at->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
+        TEST_ASSERT(at->getProp<std::string>(common_properties::_CIPCode) ==
+                    "R");
+      }
+      {
+        Atom *at = nmol->getAtomWithIdx(3);
+        TEST_ASSERT(at);
+        TEST_ASSERT(at->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
+        TEST_ASSERT(at->getProp<std::string>(common_properties::_CIPCode) ==
+                    "S");
+      }
+    }
+    {  // Pseudochiralities (no CIP codes)
+      std::unique_ptr<ROMol> nmol(maesup.next());
+      TEST_ASSERT(nmol);
+      {
+        Atom *at = nmol->getAtomWithIdx(2);
+        TEST_ASSERT(at);
+        TEST_ASSERT(at->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW);
+        TEST_ASSERT(!at->hasProp(common_properties::_CIPCode));
+      }
+      {
+        Atom *at = nmol->getAtomWithIdx(5);
+        TEST_ASSERT(at);
+        TEST_ASSERT(at->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW);
+        TEST_ASSERT(!at->hasProp(common_properties::_CIPCode));
+      }
+    }
+
+    TEST_ASSERT(maesup.atEnd());
+  }
+  {  // Test loop reading
+    fname = rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.mae";
+    MaeMolSupplier maesup(fname);
+    std::shared_ptr<ROMol> nmol;
+    for (unsigned int i = 0; i < 16; ++i) {
+      nmol.reset(maesup.next());
+      if (nmol) {
+        TEST_ASSERT(nmol->hasProp(common_properties::_Name));
+        TEST_ASSERT(nmol->getNumAtoms() > 0);
+        if (i == 0) {
+          auto smiles = MolToSmiles(*nmol);
+          TEST_ASSERT(smiles ==
+                      "CCC1=[O+][Cu@]2([O+]=C(CC)CC(CC)=[O+]2)[O+]=C(CC)C1");
+        }
+      }
+    }
+    TEST_ASSERT(maesup.atEnd());
+    bool ok = false;
+    try {
+      maesup.next();
+    } catch (FileParseException &) {
+      ok = true;
+    }
+    TEST_ASSERT(ok);
+  }
+
+  {
+    fname = rdbase + "/Code/GraphMol/FileParsers/test_data/bad_ppty.mae";
+    const std::string err_msg_substr = "Bad format for property";
+
+    bool ok = false;
+    std::unique_ptr<ROMol> mol;
+    MaeMolSupplier maesup(fname);
+
+    // This is in excess: there are only 3 mols in the file, and the second one
+    // has an invalid property name, so it won't be read
+    for (unsigned int i = 0; i < 5; ++i) {
+      try {
+        mol.reset(maesup.next());
+      } catch (const FileParseException &e) {
+        const std::string err_msg(e.message());
+        TEST_ASSERT(i == 1);
+        TEST_ASSERT(err_msg.find(err_msg_substr) != std::string::npos);
+        ok = true;
+        break;
+      }
+      TEST_ASSERT(mol);
+      TEST_ASSERT(mol->hasProp(common_properties::_Name));
+      TEST_ASSERT(mol->getNumAtoms() == 1);
+      TEST_ASSERT(!maesup.atEnd());
+    }
+    TEST_ASSERT(!maesup.atEnd());
+    TEST_ASSERT(ok);
+  }
+
+  {  // Test Maestro PDB property reading
+    fname = rdbase + "/Code/GraphMol/FileParsers/test_data/1kv1.maegz";
+    auto *strm = new gzstream(fname);
+    MaeMolSupplier maesup(strm);
+
+    std::shared_ptr<ROMol> nmol;
+    nmol.reset(maesup.next());
+    const Atom *atom = nmol->getAtomWithIdx(0);
+    auto *info = (AtomPDBResidueInfo *)(atom->getMonomerInfo());
+    TEST_ASSERT(info->getResidueName() == "ARG ");
+    TEST_ASSERT(info->getChainId() == "A");
+    TEST_ASSERT(info->getResidueNumber() == 5);
+  }
+#endif  // RDK_BUILD_COORDGEN_SUPPORT
   return 1;
 }
 
@@ -266,15 +448,16 @@ void testSmilesSup() {
   nSup = new SmilesMolSupplier(fname, ",", 1, 0, false);
   unsigned int nRead = 0;
   while (!nSup->atEnd()) {
+    delete mol;
     mol = nSup->next();
     TEST_ASSERT(mol);
-    delete mol;
     nRead++;
   }
   TEST_ASSERT(nSup->length() == 10);
   TEST_ASSERT(nRead == 10);
 
   delete nSup;
+  delete mol;
 }
 
 void testSmilesSupFromText() {
@@ -300,14 +483,19 @@ void testSmilesSupFromText() {
     //  BOOST_LOG(rdErrorLog) << "SIZE: " << nSup2.length() << std::endl;
     mol = nSup2.next();
     nAts = mol->getNumAtoms();
+    delete mol;
     TEST_ASSERT(nAts == 2);
+
     mol = nSup2[3];
     nAts = mol->getNumAtoms();
+    delete mol;
     TEST_ASSERT(nAts == 6);
     TEST_ASSERT(nSup2.length() == 4);
+
     failed = false;
     try {
       mol = nSup2[4];
+      delete mol;
     } catch (FileParseException &) {
       failed = true;
     }
@@ -318,6 +506,7 @@ void testSmilesSupFromText() {
     TEST_ASSERT(mol->hasProp(common_properties::_Name));
     mol->getProp(common_properties::_Name, mname);
     TEST_ASSERT(mname == "2");
+    delete mol;
   }
   {
     nSup2.setData(text, " ", 0, -1, false, true);
@@ -328,6 +517,8 @@ void testSmilesSupFromText() {
     TEST_ASSERT(mol->hasProp(common_properties::_Name));
     mol->getProp(common_properties::_Name, mname);
     TEST_ASSERT(mname == "2");
+    delete mol;
+
     mol = nSup2[3];
     TEST_ASSERT(mol);
     nAts = mol->getNumAtoms();
@@ -335,6 +526,7 @@ void testSmilesSupFromText() {
     TEST_ASSERT(mol->hasProp(common_properties::_Name));
     mol->getProp(common_properties::_Name, mname);
     TEST_ASSERT(mname == "3");
+    delete mol;
   }
   {
     nSup2.setData(text, " ", 0, -1, false, true);
@@ -345,6 +537,8 @@ void testSmilesSupFromText() {
     TEST_ASSERT(mol->hasProp(common_properties::_Name));
     mol->getProp(common_properties::_Name, mname);
     TEST_ASSERT(mname == "3");
+
+    delete mol;
     mol = nSup2[2];
     TEST_ASSERT(mol);
     nAts = mol->getNumAtoms();
@@ -352,6 +546,7 @@ void testSmilesSupFromText() {
     TEST_ASSERT(mol->hasProp(common_properties::_Name));
     mol->getProp(common_properties::_Name, mname);
     TEST_ASSERT(mname == "2");
+    delete mol;
   }
   // --------------
   // basics:
@@ -370,6 +565,7 @@ void testSmilesSupFromText() {
   TEST_ASSERT(mname == "mol-4");
   mol->getProp("Column_2", mname);
   TEST_ASSERT(mname == "16.0");
+  delete mol;
 
   // ensure that we can call setData a second time:
   text =
@@ -384,6 +580,7 @@ void testSmilesSupFromText() {
   TEST_ASSERT(mname == "mol-3");
   mol->getProp("Column_2", mname);
   TEST_ASSERT(mname == "9.0");
+  delete mol;
 
   // now test for failure handling:
   text =
@@ -400,10 +597,14 @@ void testSmilesSupFromText() {
   TEST_ASSERT(mname == "mol-4");
   mol->getProp("Column_2", mname);
   TEST_ASSERT(mname == "16.0");
+  delete mol;
+
   // failures should give null molecules:
   mol = nSup2[2];
   TEST_ASSERT(!mol);
+  delete mol;
 #endif
+
   // issue 114, no \n at EOF:
   text =
       "Id SMILES Column_2\n"
@@ -420,6 +621,7 @@ void testSmilesSupFromText() {
   mol->getProp("Column_2", mname);
   TEST_ASSERT(mname == "16.0");
   TEST_ASSERT(nSup2.atEnd());
+  delete mol;
 
   text =
       "Id SMILES Column_2\n"
@@ -436,9 +638,11 @@ void testSmilesSupFromText() {
   mol->getProp("Column_2", mname);
   TEST_ASSERT(mname == "16.0");
   TEST_ASSERT(nSup2.atEnd());
+  delete mol;
 
   try {
     mol = nSup2[3];
+    delete mol;
   } catch (FileParseException &) {
     failed = true;
   }
@@ -457,6 +661,7 @@ void testSmilesSupFromText() {
   TEST_ASSERT(mname == "mol-4");
   mol->getProp("Column_2", mname);
   TEST_ASSERT(mname == "16.0");
+  delete mol;
 
   text =
       "C\n"
@@ -468,6 +673,7 @@ void testSmilesSupFromText() {
   mol = nSup2[2];
   TEST_ASSERT(mol);
   TEST_ASSERT(mol->getNumAtoms() == 4);
+  delete mol;
 
   // this was a delightful boundary condition:
   BOOST_LOG(rdErrorLog)
@@ -479,12 +685,17 @@ void testSmilesSupFromText() {
       "CCCCOC";
   nSup2.setData(text, " ", 0, -1, false, true);
   //  BOOST_LOG(rdErrorLog) << "SIZE: " << nSup2.length() << std::endl;
-  nSup2.next();
+  mol = nSup2.next();
+  delete mol;
+
   mol = nSup2[3];
   TEST_ASSERT(nSup2.length() == 4);
+  delete mol;
+
   failed = false;
   try {
     mol = nSup2[4];
+    delete mol;
   } catch (FileParseException &) {
     failed = true;
   }
@@ -503,12 +714,14 @@ void testSmilesSupFromText() {
   failed = false;
   try {
     mol = nSup2[4];
+    delete mol;
   } catch (FileParseException &) {
     failed = true;
   }
   TEST_ASSERT(failed);
   BOOST_LOG(rdErrorLog) << ">>> This may result in an infinite loop.  It "
-                           "should finish almost immediately:" << std::endl;
+                           "should finish almost immediately:"
+                        << std::endl;
   TEST_ASSERT(nSup2.length() == 4);
   BOOST_LOG(rdErrorLog) << "<<< done." << std::endl;
 
@@ -535,11 +748,14 @@ void testSmilesSupFromText() {
   TEST_ASSERT(mname == "mol-3");
   mol->getProp("Column_2", mname);
   TEST_ASSERT(mname == "9.0");
+  delete mol;
+
   mol = nSup2[1];
   mol->getProp(common_properties::_Name, mname);
   TEST_ASSERT(mname == "mol-2");
   mol->getProp("Column_2", mname);
   TEST_ASSERT(mname == "4.0");
+  delete mol;
 
   // this was a delightful boundary condition:
   text =
@@ -568,7 +784,7 @@ void testSmilesWriter() {
   // std::string fname = "../test_data/fewSmi.csv";
   SmilesMolSupplier *nSup = new SmilesMolSupplier(fname, ",", 1, 0, false);
   std::string oname =
-      rdbase + "/Code/GraphMol/FileParsers/test_data/outSmiles.csv";
+      rdbase + "/Code/GraphMol/FileParsers/test_data/outSmiles_molsupplier.csv";
   // std::string oname = "../test_data/outSmiles.csv";
 
   STR_VECT propNames;
@@ -596,7 +812,6 @@ void testSmilesWriter() {
     }
   }
   writer->flush();
-  delete writer;
   delete nSup;
 
   // now read the molecules back in a check if we have the same properties etc
@@ -617,6 +832,10 @@ void testSmilesWriter() {
       break;
     }
   }
+  TEST_ASSERT(nSup->length() == writer->numMols());
+  writer->close();
+  delete writer;
+  delete nSup;
 }
 
 void testSDWriter() {
@@ -626,9 +845,10 @@ void testSDWriter() {
   SDMolSupplier sdsup(fname);
 
   std::string ofile =
-      rdbase + "/Code/GraphMol/FileParsers/test_data/outNCI_few.sdf";
+      rdbase +
+      "/Code/GraphMol/FileParsers/test_data/outNCI_few_molsupplier.sdf";
 
-  SDWriter *writer = new SDWriter(ofile);
+  auto *writer = new SDWriter(ofile);
 
   STR_VECT names;
 
@@ -643,6 +863,7 @@ void testSDWriter() {
   }
   writer->flush();
   CHECK_INVARIANT(writer->numMols() == 16, "");
+  writer->close();
   delete writer;
 
   // now read in the file we just finished writing
@@ -659,6 +880,7 @@ void testSDWriter() {
     delete mol;
     i++;
   }
+
   BOOST_LOG(rdInfoLog) << i << "\n";
   /*
   // now read in a file with aromatic information on the bonds
@@ -788,7 +1010,7 @@ void testCisTrans() {
   SmilesMolSupplier smiSup;
   smiSup.setData(text, " ", 1, 0, false, true);
 
-  std::string ofile = "cisTrans.sdf";
+  std::string ofile = "cisTrans_molsupplier.sdf";
   SDWriter writer(ofile);
   while (!smiSup.atEnd()) {
     ROMol *mol = smiSup.next();
@@ -797,14 +1019,15 @@ void testCisTrans() {
     writer.write(*mol);
     delete mol;
   }
-  // do the round test
+  writer.close();
+  // do the round t;est
   // parse the sd file and write it out to smiles
 
   SDMolSupplier *reader;
   try {
-    reader = new SDMolSupplier("cisTrans.sdf");
+    reader = new SDMolSupplier("cisTrans_molsupplier.sdf");
   } catch (FileParseException &) {
-    reader = 0;
+    reader = nullptr;
   }
   TEST_ASSERT(reader);
   while (!reader->atEnd()) {
@@ -830,13 +1053,14 @@ void testStereoRound() {
   try {
     smiSup = new SmilesMolSupplier(infile, ",", 0, 1, false, true);
   } catch (FileParseException &) {
-    smiSup = 0;
+    smiSup = nullptr;
   }
   TEST_ASSERT(smiSup)
   std::map<std::string, std::string> nameSmi;
   std::string ofile =
-      rdbase + "/Code/GraphMol/FileParsers/test_data/cdk2_stereo.sdf";
-  SDWriter *writer = new SDWriter(ofile);
+      rdbase +
+      "/Code/GraphMol/FileParsers/test_data/cdk2_stereo_molsupplier.sdf";
+  auto *writer = new SDWriter(ofile);
   int count = 0;
 
   while (!smiSup->atEnd()) {
@@ -865,6 +1089,7 @@ void testStereoRound() {
       BOOST_LOG(rdInfoLog) << count << " " << mname << "\n";
     }
   }
+  writer->close();
   delete smiSup;
   delete writer;
 
@@ -873,7 +1098,7 @@ void testStereoRound() {
   try {
     reader = new SDMolSupplier(ofile);
   } catch (FileParseException &) {
-    reader = 0;
+    reader = nullptr;
   }
   TEST_ASSERT(reader);
   count = 0;
@@ -888,6 +1113,7 @@ void testStereoRound() {
       BOOST_LOG(rdInfoLog) << mname << " " << nameSmi[mname] << " " << smiles
                            << "\n";
     }
+    delete mol;
     count++;
   }
   delete reader;
@@ -906,10 +1132,12 @@ void testIssue226() {
   TEST_ASSERT(mol->hasProp("E1"));
   TEST_ASSERT(mol->hasProp("E2"));
   delete mol;
+
   mol = sdsup.next();
   TEST_ASSERT(mol);
   TEST_ASSERT(mol->hasProp("E1"));
   TEST_ASSERT(mol->hasProp("E2"));
+  delete mol;
 }
 
 int testTDTSupplier1() {
@@ -1208,7 +1436,9 @@ void testSDSupplierFromTextStrLax1() {
     while (!reader.atEnd()) {
       ROMol *mol = reader.next();
       TEST_ASSERT(mol->hasProp(common_properties::_Name));
-      if (i == 0) TEST_ASSERT(!mol->hasProp("ID"));
+      if (i == 0) {
+        TEST_ASSERT(!mol->hasProp("ID"));
+      }
       TEST_ASSERT(!mol->hasProp("ANOTHER_PROPERTY"));
       i++;
       delete mol;
@@ -1343,7 +1573,9 @@ void testSDSupplierStrLax1() {
     while (!reader.atEnd()) {
       ROMol *mol = reader.next();
       TEST_ASSERT(mol->hasProp(common_properties::_Name));
-      if (i == 0) TEST_ASSERT(!mol->hasProp("ID"));
+      if (i == 0) {
+        TEST_ASSERT(!mol->hasProp("ID"));
+      }
       TEST_ASSERT(!mol->hasProp("ANOTHER_PROPERTY"));
       i++;
       delete mol;
@@ -1452,7 +1684,7 @@ void testSDErrorHandling() {
   std::string fname =
       rdbase + "/Code/GraphMol/FileParsers/test_data/sdErrors1.sdf";
   SDMolSupplier *sdsup;
-  ROMol *nmol = 0;
+  ROMol *nmol = nullptr;
 
   // entry 1: bad properties
   sdsup = new SDMolSupplier(fname);
@@ -1461,6 +1693,7 @@ void testSDErrorHandling() {
   TEST_ASSERT(nmol);
   TEST_ASSERT(!nmol->hasProp("ID"));
   delete sdsup;
+  delete nmol;
 
   // case 2: can't be sanitized
   fname = rdbase + "/Code/GraphMol/FileParsers/test_data/sdErrors2.sdf";
@@ -1470,6 +1703,7 @@ void testSDErrorHandling() {
   TEST_ASSERT(!nmol);
   TEST_ASSERT(sdsup->atEnd());
   delete sdsup;
+  delete nmol;
 
   // entry 3: bad number of atoms
   fname = rdbase + "/Code/GraphMol/FileParsers/test_data/sdErrors3.sdf";
@@ -1479,6 +1713,7 @@ void testSDErrorHandling() {
   TEST_ASSERT(!nmol);
   TEST_ASSERT(sdsup->atEnd());
   delete sdsup;
+  delete nmol;
 
   // entry 4: bad number of bonds
   fname = rdbase + "/Code/GraphMol/FileParsers/test_data/sdErrors4.sdf";
@@ -1488,6 +1723,7 @@ void testSDErrorHandling() {
   TEST_ASSERT(!nmol);
   TEST_ASSERT(sdsup->atEnd());
   delete sdsup;
+  delete nmol;
 }
 
 void testIssue381() {
@@ -1496,7 +1732,7 @@ void testIssue381() {
       rdbase + "/Code/GraphMol/FileParsers/test_data/Issue381.sdf";
   SDMolSupplier *sdsup;
 
-  ROMol *nmol = 0;
+  ROMol *nmol = nullptr;
   int count;
 
   // entry 1: bad properties
@@ -1505,7 +1741,9 @@ void testIssue381() {
   count = 0;
   while (!sdsup->atEnd()) {
     nmol = sdsup->next();
-    if (nmol) delete nmol;
+    if (nmol) {
+      delete nmol;
+    }
     count++;
   }
   TEST_ASSERT(sdsup->atEnd());
@@ -1527,17 +1765,21 @@ void testSetStreamIndices() {
   std::streampos pos = 0;
   std::string line;
   while (notEof) {
-    if (addIndex) pos = ifs.tellg();
+    if (addIndex) {
+      pos = ifs.tellg();
+    }
     notEof = (std::getline(ifs, line) ? true : false);
     if (notEof) {
-      if (addIndex) indices.push_back(pos);
+      if (addIndex) {
+        indices.push_back(pos);
+      }
       addIndex = (line.substr(0, 4) == "$$$$");
     }
   }
   ifs.close();
   SDMolSupplier *sdsup;
 
-  ROMol *nmol = 0;
+  ROMol *nmol = nullptr;
   int count;
 
   sdsup = new SDMolSupplier(fname);
@@ -1548,7 +1790,9 @@ void testSetStreamIndices() {
   count = 0;
   while (!sdsup->atEnd()) {
     nmol = sdsup->next();
-    if (nmol) delete nmol;
+    if (nmol) {
+      delete nmol;
+    }
     count++;
   }
   TEST_ASSERT(sdsup->atEnd());
@@ -1657,7 +1901,7 @@ int testMixIterAndRandom() {
 
   nSup = new SmilesMolSupplier(fname, ",", 1, 0, false);
   TEST_ASSERT(nSup);
-  mol = 0;
+  mol = nullptr;
   try {
     mol = (*nSup)[20];
     ok = false;
@@ -1694,15 +1938,21 @@ int testMixIterAndRandom() {
   TEST_ASSERT(mol->getNumAtoms() == 9);
   TEST_ASSERT(tSup->length() == 10);
   delete mol;
+
   mol = (*tSup)[0];
   TEST_ASSERT(mol);
   TEST_ASSERT(mol->getNumAtoms() == 9);
   TEST_ASSERT(tSup->length() == 10);
   delete mol;
+
   mol = tSup->next();
   TEST_ASSERT(mol);
+  delete mol;
+
   mol = tSup->next();
   TEST_ASSERT(mol);
+  delete mol;
+
   mol = tSup->next();
   TEST_ASSERT(mol);
   TEST_ASSERT(mol->getNumAtoms() == 10);
@@ -1711,9 +1961,10 @@ int testMixIterAndRandom() {
 
   tSup = new TDTMolSupplier(fname);
   TEST_ASSERT(tSup);
-  mol = 0;
+  mol = nullptr;
   try {
     mol = (*tSup)[20];
+    delete mol;
     ok = false;
   } catch (FileParseException &) {
     ok = true;
@@ -1999,7 +2250,7 @@ int testForwardSDSupplier() {
     }
     TEST_ASSERT(i == 16);
   }
-#ifdef TEST_GZIP_SD
+#ifdef RDK_USE_BOOST_IOSTREAMS
   // make sure the boost::iostreams are working
   {
     io::filtering_istream strm;
@@ -2009,34 +2260,33 @@ int testForwardSDSupplier() {
     while (!strm.eof()) {
       std::string line;
       std::getline(strm, line);
-      if (!strm.eof()) ++i;
-      if (i > 1000) break;
+      if (!strm.eof()) {
+        ++i;
+      }
+      if (i > 1000) {
+        break;
+      }
     }
     TEST_ASSERT(i == 998);
   }
   {
-    io::filtering_istream strm;
-    // the stream must be opened in binary mode otherwise it won't work on Windows
-    std::ifstream is(fname2.c_str(), std::ios_base::binary);
-    strm.push(io::gzip_decompressor());
-    strm.push(is);
-
+    gzstream strm(fname2);
     unsigned int i = 0;
     while (!strm.eof()) {
       std::string line;
       std::getline(strm, line);
-      if (!strm.eof()) ++i;
-      if (i > 1000) break;
+      if (!strm.eof()) {
+        ++i;
+      }
+      if (i > 1000) {
+        break;
+      }
     }
     TEST_ASSERT(i == 997);
   }
   // looks good, now do a supplier:
   {
-    io::filtering_istream strm;
-    // the stream must be opened in binary mode otherwise it won't work on Windows
-    std::ifstream is(fname2.c_str(), std::ios_base::binary);
-    strm.push(io::gzip_decompressor());
-    strm.push(is);
+    gzstream strm(fname2);
 
     ForwardSDMolSupplier sdsup(&strm, false);
     unsigned int i = 0;
@@ -2052,6 +2302,63 @@ int testForwardSDSupplier() {
     TEST_ASSERT(i == 16);
   }
 #endif
+
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
+  // Now test that Maestro parsing of gz files works
+  std::string maefname =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.mae";
+  std::string maefname2 =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.maegz";
+  {
+    io::filtering_istream strm;
+    strm.push(io::file_source(maefname));
+
+    unsigned int i = 0;
+    while (!strm.eof()) {
+      std::string line;
+      std::getline(strm, line);
+      if (!strm.eof()) {
+        ++i;
+      }
+      if (i > 1700) {
+        break;
+      }
+    }
+    TEST_ASSERT(i == 1663);
+  }
+  {
+    gzstream strm(maefname2);
+
+    unsigned int i = 0;
+    while (!strm.eof()) {
+      std::string line;
+      std::getline(strm, line);
+      if (!strm.eof()) {
+        ++i;
+      }
+      if (i > 1700) {
+        break;
+      }
+    }
+    TEST_ASSERT(i == 1663);
+  }
+  // looks good, now do a supplier:
+  {
+    auto *strm = new gzstream(maefname2);
+
+    MaeMolSupplier maesup(strm);
+    unsigned int i = 0;
+    std::shared_ptr<ROMol> nmol;
+    while (!maesup.atEnd()) {
+      nmol.reset(maesup.next());
+      if (nmol != nullptr) {
+        i++;
+      }
+    }
+    TEST_ASSERT(i == 16);
+  }
+#endif  // RDK_BUILD_COORDGEN_SUPPORT
+
   return 1;
 }
 
@@ -2060,7 +2367,8 @@ void testMissingCRSDSupplier() {
   std::string infile =
       rdbase + "/Code/GraphMol/FileParsers/test_data/missingCR.sdf";
   SDMolSupplier reader(infile);
-  reader.next();
+  auto *mol = reader.next();
+  delete mol;
   TEST_ASSERT(reader.atEnd());
 }
 
@@ -2085,7 +2393,8 @@ void testIssue3525673() {
   ROMol *nmol;
 
   nmol = reader.next();
-  TEST_ASSERT(!nmol);
+  TEST_ASSERT(nmol);
+  delete nmol;
 
   nmol = reader.next();
   TEST_ASSERT(nmol);
@@ -2093,10 +2402,12 @@ void testIssue3525673() {
   delete nmol;
 
   nmol = reader.next();
-  TEST_ASSERT(!nmol);
+  TEST_ASSERT(nmol);
+  delete nmol;
 
   nmol = reader.next();
-  TEST_ASSERT(!nmol);
+  TEST_ASSERT(nmol);
+  delete nmol;
 
   nmol = reader.next();
   TEST_ASSERT(nmol);
@@ -2104,10 +2415,11 @@ void testIssue3525673() {
   delete nmol;
 
   nmol = reader.next();
-  TEST_ASSERT(!nmol);
+  TEST_ASSERT(nmol);
+  delete nmol;
 
   nmol = reader.next();
-  TEST_ASSERT(!nmol);
+  TEST_ASSERT(!nmol);  // broken due to 'foo' in counts line!
 
   nmol = reader.next();
   TEST_ASSERT(nmol);
@@ -2115,7 +2427,8 @@ void testIssue3525673() {
   delete nmol;
 
   nmol = reader.next();
-  TEST_ASSERT(!nmol);
+  TEST_ASSERT(nmol);
+  delete nmol;
 }
 
 void testBlankLinesInProps() {
@@ -2158,8 +2471,9 @@ void testSkipLines() {
 
 void testGitHub23() {
   std::string rdbase = getenv("RDBASE");
-  std::string ofile = rdbase + "/Code/GraphMol/FileParsers/test_data/blah.sdf";
-  SDWriter *writer = new SDWriter(ofile);
+  std::string ofile =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/blah_molsupplier.sdf";
+  auto *writer = new SDWriter(ofile);
 
   ROMol *mol = SmilesToMol("CCCC");
   INT_VECT iv;
@@ -2169,7 +2483,7 @@ void testGitHub23() {
   writer->write(*mol);
   delete mol;
 
-  writer->flush();
+  writer->close();
   delete writer;
 }
 
@@ -2190,6 +2504,318 @@ void testGitHub88() {
   TEST_ASSERT(pval == "4");
   delete nmol;
 }
+
+void testGitHub2285() {
+  std::string rdbase = getenv("RDBASE");
+  std::string fname =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/github2285.sdf";
+
+  std::vector<std::string> smiles;
+  {
+    SDMolSupplier sdsup(fname);
+    while (!sdsup.atEnd()) {
+      ROMol *nmol = sdsup.next();
+      TEST_ASSERT(nmol);
+      smiles.push_back(MolToSmiles(*nmol));
+      delete nmol;
+    }
+  }
+  {
+    SDMolSupplier sdsup(fname, true, false);
+    int i = 0;
+    while (!sdsup.atEnd()) {
+      ROMol *nmol = sdsup.next();
+      TEST_ASSERT(nmol);
+      ROMol *m = MolOps::removeHs(*nmol);
+      TEST_ASSERT(MolToSmiles(*m) == smiles[i++]);
+      delete nmol;
+      delete m;
+    }
+    TEST_ASSERT(i > 0);
+  }
+}
+
+void testGitHub2479() {
+  std::string smiles1 = R"DATA(smiles id
+c1ccccc duff
+c1ccccc1 ok
+C(C garbage
+C1CC1 ok2
+CC(C)(C)(C)C duff2
+)DATA";
+  {
+    SmilesMolSupplier suppl;
+    suppl.setData(smiles1);
+    unsigned int cnt = 0;
+    while (!suppl.atEnd()) {
+      std::unique_ptr<ROMol> mol(suppl.next());
+      if (cnt % 2) {
+        TEST_ASSERT(mol);
+      }
+      ++cnt;
+    }
+    TEST_ASSERT(cnt == 5);
+  }
+
+  std::string sdf1 = R"SDF(
+  Mrv1810 06051911332D          
+
+  3  2  0  0  0  0            999 V2000
+  -13.3985    4.9850    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -12.7066    5.4343    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  -12.0654    4.9151    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+M  END
+$$$$
+
+  Mrv1810 06051911332D          
+
+  3  2  0  0  0  0            999 V2000
+  -10.3083    4.8496    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.6408    5.3345    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.0277    4.7825    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+M  END
+$$$$
+)SDF";
+  {
+    std::stringstream iss(sdf1);
+    SDMolSupplier suppl(&iss, false);
+    std::unique_ptr<ROMol> mol1(suppl.next());
+    TEST_ASSERT(mol1);
+    std::unique_ptr<ROMol> mol2(suppl.next());
+    TEST_ASSERT(!mol2);
+    TEST_ASSERT(suppl.atEnd());
+  }
+  {
+    std::stringstream iss(sdf1);
+    ForwardSDMolSupplier suppl(&iss, false);
+    std::unique_ptr<ROMol> mol1(suppl.next());
+    TEST_ASSERT(mol1);
+    std::unique_ptr<ROMol> mol2(suppl.next());
+    TEST_ASSERT(!mol2);
+    TEST_ASSERT(!suppl.atEnd());
+    TEST_ASSERT(!suppl.getEOFHitOnRead());
+    std::unique_ptr<ROMol> mol3(suppl.next());
+    TEST_ASSERT(!mol3);
+    TEST_ASSERT(suppl.atEnd());
+    TEST_ASSERT(suppl.getEOFHitOnRead());
+  }
+
+  // truncated file1
+  std::string sdf2 = R"SDF(
+  Mrv1810 06051911332D          
+
+  3  2  0  0  0  0            999 V2000
+  -13.3985    4.9850    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -12.7066    5.4343    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  -12.0654    4.9151    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+M  END
+$$$$
+
+  Mrv1810 06051911332D          
+
+  3  2  0  0  0  0            999 V2000
+  -10.3083    4.8496    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.6408    5.3345    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.0277    4.7825    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+M  END
+$$$$
+
+  Mrv1810 06051911332D          
+
+  3  2  0  0  0  0            999 V2000
+  -10.3083    4.8496    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.6
+)SDF";
+  {
+    std::stringstream iss(sdf2);
+    SDMolSupplier suppl(&iss, false);
+    std::unique_ptr<ROMol> mol1(suppl.next());
+    TEST_ASSERT(mol1);
+    std::unique_ptr<ROMol> mol2(suppl.next());
+    TEST_ASSERT(!mol2);
+    std::unique_ptr<ROMol> mol3(suppl.next());
+    TEST_ASSERT(!mol3);
+    TEST_ASSERT(suppl.atEnd());
+  }
+  {
+    std::stringstream iss(sdf2);
+    ForwardSDMolSupplier suppl(&iss, false);
+    std::unique_ptr<ROMol> mol1(suppl.next());
+    TEST_ASSERT(mol1);
+    std::unique_ptr<ROMol> mol2(suppl.next());
+    TEST_ASSERT(!mol2);
+    TEST_ASSERT(!suppl.atEnd());
+    TEST_ASSERT(!suppl.getEOFHitOnRead());
+    std::unique_ptr<ROMol> mol3(suppl.next());
+    TEST_ASSERT(!mol3);
+    TEST_ASSERT(suppl.atEnd());
+    TEST_ASSERT(!suppl.getEOFHitOnRead());
+  }
+  // truncated file2
+  std::string sdf3 = R"SDF(
+  Mrv1810 06051911332D          
+
+  3  2  0  0  0  0            999 V2000
+  -13.3985    4.9850    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -12.7066    5.4343    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  -12.0654    4.9151    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+M  END
+>  <pval>  (1) 
+[1,2,]
+
+$$$$
+
+  Mrv1810 06051911332D          
+
+  3  2  0  0  0  0            999 V2000
+  -10.3083    4.8496    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.6408    5.3345    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.0277    4.7825    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+M  END
+>  <pval>  (1) 
+[1,2,]
+)SDF";
+  {
+    std::stringstream iss(sdf3);
+    SDMolSupplier suppl(&iss, false);
+    std::unique_ptr<ROMol> mol1(suppl.next());
+    TEST_ASSERT(mol1);
+    std::unique_ptr<ROMol> mol2(suppl.next());
+    TEST_ASSERT(mol2);
+    TEST_ASSERT(suppl.atEnd());
+  }
+  {
+    std::stringstream iss(sdf3);
+    ForwardSDMolSupplier suppl(&iss, false);
+    std::unique_ptr<ROMol> mol1(suppl.next());
+    TEST_ASSERT(mol1);
+    std::unique_ptr<ROMol> mol2(suppl.next());
+    TEST_ASSERT(mol2);
+    TEST_ASSERT(suppl.atEnd());
+  }
+}
+
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
+void testGitHub2881() {
+  std::string data = R"DATA(f_m_ct { 
+ s_m_title
+ s_m_entry_id
+ s_m_entry_name
+ s_m_Source_Path
+ s_m_Source_File
+ i_m_Source_File_Index
+ s_st_Chirality_1
+ s_st_Chirality_2
+ s_m_subgroup_title
+ s_m_subgroupid
+ b_m_subgroup_collapsed
+ i_m_ct_format
+ :::
+ "Untitled Document-4" 
+  17 
+  newTemplates2.1 
+  /Users/nicola/schrodinger/coordgen_standalone 
+  templates.mae 
+  17
+  3_S_4_6_2 
+  7_S_8_9_6_10 
+  templates->templates->templates 
+  templates->templates1->templates11 
+  0
+  2
+ m_depend[2] { 
+  # First column is dependency index #
+  i_m_depend_dependency
+  s_m_depend_property
+  :::
+  1 10 s_st_Chirality_1 
+  2 10 s_st_Chirality_2 
+  :::
+ } 
+ m_atom[15] { 
+  # First column is atom index #
+  i_m_mmod_type
+  r_m_x_coord
+  r_m_y_coord
+  r_m_z_coord
+  i_m_residue_number
+  i_m_color
+  i_m_atomic_number
+  s_m_color_rgb
+  s_m_atom_name
+  :::
+  1 5 1.186400 1.035900 0.000000 900 2 6 A0A0A0  C1 
+  2 5 0.370300 1.157000 0.000000 900 2 6 A0A0A0  C2 
+  3 4 -0.326500 0.715300 0.000000 900 2 6 A0A0A0  C3 
+  4 5 0.085100 0.000400 0.000000 900 2 6 A0A0A0  C4 
+  5 26 -0.328300 -0.713600 0.000000 900 43 7 5757FF  N5 
+  6 5 -1.151500 0.716400 0.000000 900 2 6 A0A0A0  C6 
+  7 5 -1.564900 0.002400 0.000000 900 2 6 A0A0A0  C7 
+  8 5 -1.153300 -0.712600 0.000000 900 2 6 A0A0A0  C9 
+  9 2 1.724800 0.410800 0.000000 900 2 6 A0A0A0  C12 
+  10 2 1.723800 -0.414200 0.000000 900 2 6 A0A0A0  C13 
+  11 5 1.183800 -1.037900 0.000000 900 2 6 A0A0A0  C14 
+  12 5 0.367400 -1.157000 0.000000 900 2 6 A0A0A0  C15 
+  13 7 2.508100 -0.670100 0.000000 900 2 6 A0A0A0  C16 
+  14 7 2.993800 -0.003300 0.000000 900 2 6 A0A0A0  C17 
+  15 29 2.509700 0.664800 0.000000 900 43 7 5757FF  N18 
+  :::
+ } 
+ m_bond[17] { 
+  # First column is bond index #
+  i_m_from
+  i_m_to
+  i_m_order
+  :::
+  1 1 2 1
+  2 1 9 1
+  3 2 3 1
+  4 3 4 1
+  5 3 6 1
+  6 4 5 1
+  7 5 8 1
+  8 5 12 1
+  9 6 7 1
+  10 7 8 1
+  11 9 10 2
+  12 9 15 1
+  13 10 11 1
+  14 10 13 1
+  15 11 12 1
+  16 13 14 2
+  17 14 15 1
+  :::
+ } 
+} 
+)DATA";
+  {
+    auto *iss = new std::istringstream(data);
+    bool sanitize = false;
+    bool takeOwnership = true;
+    MaeMolSupplier suppl(iss, takeOwnership, sanitize);
+    ROMol *mol = nullptr;
+    try {
+      mol = suppl.next();
+    } catch (Invar::Invariant) {
+    }
+    TEST_ASSERT(!mol);
+  }
+}
+#else
+void testGitHub2881() {}
+#endif
 
 int main() {
   RDLog::InitLogs();
@@ -2339,7 +2965,6 @@ int main() {
   testIssue3482695();
   BOOST_LOG(rdErrorLog) << "Finished: testIssue3482695()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-#endif
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
   testIssue3525673();
   BOOST_LOG(rdErrorLog) << "Finished: testIssue3525673()\n";
@@ -2363,6 +2988,22 @@ int main() {
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
   testGitHub88();
   BOOST_LOG(rdErrorLog) << "Finished: testGitHub88()\n";
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  testGitHub2285();
+  BOOST_LOG(rdErrorLog) << "Finished: testGitHub2285()\n";
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+#endif
+
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  testGitHub2479();
+  BOOST_LOG(rdErrorLog) << "Finished: testGitHub2479()\n";
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  testGitHub2881();
+  BOOST_LOG(rdErrorLog) << "Finished: testGitHub2881()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
   return 0;

@@ -10,7 +10,7 @@
 #define PY_ARRAY_UNIQUE_SYMBOL Py_Array_API_Clustering
 
 #include <RDBoost/Wrap.h>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 
 namespace python = boost::python;
 
@@ -38,6 +38,7 @@ void clusterit(real *dataP, boost::int64_t n, boost::int64_t m,
   double tmp;
   len = (n * (n - 1)) / 2;
   dists = (real *)calloc(len, sizeof(real));
+  CHECK_INVARIANT(dists, "failed to allocate memory");
   for (i = 1; i < n; i++) {
     iTab = i * m;
     for (j = 0; j < i; j++) {
@@ -67,7 +68,7 @@ static PyObject *Clustering_MurtaghCluster(python::object data, int nPts,
         PyArray_ContiguousFromObject(data.ptr(), NPY_DOUBLE, 2, 2));
   } else {
     throw_value_error("PyArray_Type expected as input");
-    return NULL;
+    return nullptr;
   }
 
   ia = (boost::int64_t *)calloc(nPts, sizeof(boost::int64_t));
@@ -117,7 +118,7 @@ static PyObject *Clustering_MurtaghDistCluster(python::object data, int nPts,
         PyArray_ContiguousFromObject(data.ptr(), NPY_DOUBLE, 1, 1));
   } else {
     throw_value_error("PyArray_Type expected as input");
-    return NULL;
+    return nullptr;
   }
 
   ia = (boost::int64_t *)calloc(nPts, sizeof(boost::int64_t));

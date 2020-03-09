@@ -14,7 +14,7 @@
 #include <RDGeneral/Exceptions.h>
 #include "point.h"
 #include <fstream>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 
 #define OFFSET_TOL 1.e-8
 #define SPACING_TOL 1.e-8
@@ -24,12 +24,24 @@ namespace RDGeom {
 unsigned int ci_GRIDPICKLE_VERSION = 0x1;
 
 UniformGrid3D::UniformGrid3D(const UniformGrid3D &other) : Grid3D(other) {
-  PRECONDITION(other.dp_storage, "cannot copy an unintialized grid");
-  RDKit::DiscreteValueVect *data =
-      new RDKit::DiscreteValueVect(*other.dp_storage);
+  PRECONDITION(other.dp_storage, "cannot copy an uninitialized grid");
+  auto *data = new RDKit::DiscreteValueVect(*other.dp_storage);
   initGrid(other.d_numX * other.d_spacing, other.d_numY * other.d_spacing,
            other.d_numZ * other.d_spacing, other.d_spacing,
            other.dp_storage->getValueType(), other.d_offSet, data);
+}
+
+UniformGrid3D &UniformGrid3D::operator=(const UniformGrid3D &other) {
+  if (&other == this) {
+    return *this;
+  }
+  PRECONDITION(other.dp_storage, "cannot copy an uninitialized grid");
+  delete dp_storage;
+  auto *data = new RDKit::DiscreteValueVect(*other.dp_storage);
+  initGrid(other.d_numX * other.d_spacing, other.d_numY * other.d_spacing,
+           other.d_numZ * other.d_spacing, other.d_spacing,
+           other.dp_storage->getValueType(), other.d_offSet, data);
+  return *this;
 }
 
 void UniformGrid3D::initGrid(
@@ -59,17 +71,17 @@ void UniformGrid3D::initGrid(
 }
 
 UniformGrid3D::UniformGrid3D(const std::string &pkl) {
-  dp_storage = 0;
+  dp_storage = nullptr;
   this->initFromText(pkl.c_str(), pkl.size());
 }
 UniformGrid3D::UniformGrid3D(const char *pkl, const unsigned int len) {
-  dp_storage = 0;
+  dp_storage = nullptr;
   this->initFromText(pkl, len);
 }
 
 UniformGrid3D::~UniformGrid3D() {
   delete dp_storage;
-  dp_storage = NULL;
+  dp_storage = nullptr;
 }
 
 int UniformGrid3D::getGridIndex(unsigned int xi, unsigned int yi,
@@ -145,8 +157,10 @@ Point3D UniformGrid3D::getGridPointLoc(unsigned int pointId) const {
   }
   Point3D res;
   res.x = (pointId % d_numX) * d_spacing;
-  res.y = ((pointId % (d_numX * d_numY)) / d_numX) * d_spacing;
-  res.z = (pointId / (d_numX * d_numY)) * d_spacing;
+  // the rounding here is intentional, we want the coordinates of a grid point
+  res.y =
+      static_cast<double>((pointId % (d_numX * d_numY)) / d_numX) * d_spacing;
+  res.z = static_cast<double>(pointId / (d_numX * d_numY)) * d_spacing;
   res += d_offSet;  // d_origin;
   return res;
 }
@@ -156,10 +170,18 @@ void UniformGrid3D::setVal(unsigned int pointId, unsigned int val) {
 }
 
 bool UniformGrid3D::compareParams(const UniformGrid3D &other) const {
-  if (d_numX != other.getNumX()) return false;
-  if (d_numY != other.getNumY()) return false;
-  if (d_numZ != other.getNumZ()) return false;
-  if (fabs(d_spacing - other.getSpacing()) > SPACING_TOL) return false;
+  if (d_numX != other.getNumX()) {
+    return false;
+  }
+  if (d_numY != other.getNumY()) {
+    return false;
+  }
+  if (d_numZ != other.getNumZ()) {
+    return false;
+  }
+  if (fabs(d_spacing - other.getSpacing()) > SPACING_TOL) {
+    return false;
+  }
   Point3D dOffset = d_offSet;
   dOffset -= other.getOffset();
   if (dOffset.lengthSq() > OFFSET_TOL) {
@@ -196,7 +218,7 @@ void UniformGrid3D::setSphereOccupancy(const Point3D &center, double radius,
     nLayers = maxNumLayers;
     valStep = (maxVal + 1) / nLayers;
   }
-  double bgRad = radius / d_spacing;  // base radius in grid coords
+  double bgRad = radius / d_spacing;        // base radius in grid coords
   double gStepSize = stepSize / d_spacing;  // step size in grid coords
   double gRadius =
       bgRad + nLayers * gStepSize;  // largest radius in grid coords
@@ -264,8 +286,8 @@ void UniformGrid3D::setSphereOccupancy(const Point3D &center, double radius,
 }
 
 UniformGrid3D &UniformGrid3D::operator|=(const UniformGrid3D &other) {
-  PRECONDITION(dp_storage, "unintialized grid");
-  PRECONDITION(other.dp_storage, "unintialized grid");
+  PRECONDITION(dp_storage, "uninitialized grid");
+  PRECONDITION(other.dp_storage, "uninitialized grid");
   PRECONDITION(compareParams(other), "incompatible grids");
 
   // EFF: we're probably doing too much copying here:
@@ -277,8 +299,8 @@ UniformGrid3D &UniformGrid3D::operator|=(const UniformGrid3D &other) {
 }
 
 UniformGrid3D &UniformGrid3D::operator&=(const UniformGrid3D &other) {
-  PRECONDITION(dp_storage, "unintialized grid");
-  PRECONDITION(other.dp_storage, "unintialized grid");
+  PRECONDITION(dp_storage, "uninitialized grid");
+  PRECONDITION(other.dp_storage, "uninitialized grid");
   PRECONDITION(compareParams(other), "incompatible grids");
 
   // EFF: we're probably doing too much copying here:
@@ -290,8 +312,8 @@ UniformGrid3D &UniformGrid3D::operator&=(const UniformGrid3D &other) {
 }
 
 UniformGrid3D &UniformGrid3D::operator+=(const UniformGrid3D &other) {
-  PRECONDITION(dp_storage, "unintialized grid");
-  PRECONDITION(other.dp_storage, "unintialized grid");
+  PRECONDITION(dp_storage, "uninitialized grid");
+  PRECONDITION(other.dp_storage, "uninitialized grid");
   PRECONDITION(compareParams(other), "incompatible grids");
 
   // EFF: we're probably doing too much copying here:
@@ -300,8 +322,8 @@ UniformGrid3D &UniformGrid3D::operator+=(const UniformGrid3D &other) {
 }
 
 UniformGrid3D &UniformGrid3D::operator-=(const UniformGrid3D &other) {
-  PRECONDITION(dp_storage, "unintialized grid");
-  PRECONDITION(other.dp_storage, "unintialized grid");
+  PRECONDITION(dp_storage, "uninitialized grid");
+  PRECONDITION(other.dp_storage, "uninitialized grid");
   PRECONDITION(compareParams(other), "incompatible grids");
 
   // EFF: we're probably doing too much copying here:
@@ -312,9 +334,9 @@ UniformGrid3D &UniformGrid3D::operator-=(const UniformGrid3D &other) {
 std::string UniformGrid3D::toString() const {
   std::stringstream ss(std::ios_base::binary | std::ios_base::out |
                        std::ios_base::in);
-  boost::int32_t tVers = ci_GRIDPICKLE_VERSION * -1;
+  std::int32_t tVers = ci_GRIDPICKLE_VERSION * -1;
   streamWrite(ss, tVers);
-  boost::uint32_t tInt;
+  std::uint32_t tInt;
   tInt = d_numX;
   streamWrite(ss, tInt);
   tInt = d_numY;
@@ -327,7 +349,7 @@ std::string UniformGrid3D::toString() const {
   streamWrite(ss, d_offSet.z);
 
   std::string storePkl = dp_storage->toString();
-  boost::uint32_t pklSz = storePkl.size();
+  std::uint32_t pklSz = storePkl.size();
   streamWrite(ss, pklSz);
   ss.write(storePkl.c_str(), pklSz * sizeof(char));
 
@@ -338,14 +360,14 @@ void UniformGrid3D::initFromText(const char *pkl, const unsigned int length) {
   std::stringstream ss(std::ios_base::binary | std::ios_base::in |
                        std::ios_base::out);
   ss.write(pkl, length);
-  boost::int32_t tVers;
+  std::int32_t tVers;
   streamRead(ss, tVers);
   tVers *= -1;
   if (tVers == 0x1) {
   } else {
     throw ValueErrorException("bad version in UniformGrid3D pickle");
   }
-  boost::uint32_t tInt;
+  std::uint32_t tInt;
   streamRead(ss, tInt);
   d_numX = tInt;
   streamRead(ss, tInt);
@@ -359,9 +381,9 @@ void UniformGrid3D::initFromText(const char *pkl, const unsigned int length) {
   streamRead(ss, oZ);
   d_offSet = Point3D(oX, oY, oZ);
 
-  boost::uint32_t pklSz;
+  std::uint32_t pklSz;
   streamRead(ss, pklSz);
-  char *buff = new char[pklSz];
+  auto *buff = new char[pklSz];
   ss.read(buff, pklSz * sizeof(char));
   delete dp_storage;
   dp_storage = new RDKit::DiscreteValueVect(buff, pklSz);
@@ -387,7 +409,7 @@ void writeGridToStream(const UniformGrid3D &grid, std::ostream &outStrm) {
   int outX2 = (int)(floor(offSet.x + 0.5)) + (int)(dimX - 1);
   // REVIEW: ok - here is a fix to try and make the grid closer to the molecule
   // when displayed
-  // (atleast in PyMol). The difference between the pair of values (outX1,
+  // (at least in PyMol). The difference between the pair of values (outX1,
   // outX2) is (dimX-1),
   // that is not the case with pairs the (outY1, outY2) a (outZ1, outZ2). In
   // these cases, the difference is
@@ -410,9 +432,9 @@ void writeGridToStream(const UniformGrid3D &grid, std::ostream &outStrm) {
 
 void writeGridToFile(const UniformGrid3D &grid, const std::string &filename) {
   // std::ofstream ofStrm(filename.c_str());
-  std::ofstream *ofStrm = new std::ofstream(filename.c_str());
-  std::ostream *oStrm = static_cast<std::ostream *>(ofStrm);
+  auto *ofStrm = new std::ofstream(filename.c_str());
+  auto *oStrm = static_cast<std::ostream *>(ofStrm);
   writeGridToStream(grid, *oStrm);
   delete ofStrm;
 }
-}
+}  // namespace RDGeom

@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef _RD_FRAG_FP_GENERATOR_H_
 #define _RD_FRAG_FP_GENERATOR_H_
 
@@ -20,9 +21,9 @@ namespace RDKit {
 class ROMol;
 typedef RDCatalog::HierarchCatalog<FragCatalogEntry, FragCatParams, int>
     FragCatalog;
-typedef std::vector<std::pair<int, int> > MatchVectType;
+typedef std::vector<std::pair<int, int>> MatchVectType;
 
-class FragFPGenerator {
+class RDKIT_FRAGCATALOG_EXPORT FragFPGenerator {
  public:
   FragFPGenerator() {}
 
@@ -32,6 +33,6 @@ class FragFPGenerator {
   void computeFP(const ROMol &mol, const FragCatalog &fcat,
                  const MatchVectType &aidToFid, ExplicitBitVect *fp);
 };
-}
+}  // namespace RDKit
 
 #endif

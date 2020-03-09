@@ -3,13 +3,13 @@
 //
 
 #include <boost/python.hpp>
-#include <boost/python/numeric.hpp>
+#include <RDBoost/boost_numpy.h>
 #define PY_ARRAY_UNIQUE_SYMBOL RD_array_API
 #include <numpy/arrayobject.h>
 
 namespace python = boost::python;
 
-double GetFirstElement(python::numeric::array &x) {
+double GetFirstElement(NumpyArrayType &x) {
   PyArrayObject *ptr = (PyArrayObject *)x.ptr();
   void *data = PyArray_DATA(ptr);
   double res = 0.0;

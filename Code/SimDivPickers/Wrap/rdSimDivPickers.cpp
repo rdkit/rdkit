@@ -1,6 +1,6 @@
-// $Id$
 //
 //  Copyright (C) 2003-2006 Rational Discovery LLC
+//  Copyright (C) 2019 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -15,6 +15,7 @@
 namespace python = boost::python;
 
 void wrap_maxminpick();
+void wrap_leaderpick();
 void wrap_HierarchCP();
 
 BOOST_PYTHON_MODULE(rdSimDivPickers) {
@@ -24,5 +25,6 @@ BOOST_PYTHON_MODULE(rdSimDivPickers) {
   rdkit_import_array();
 
   wrap_maxminpick();
+  wrap_leaderpick();
   wrap_HierarchCP();
 }

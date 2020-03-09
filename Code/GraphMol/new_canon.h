@@ -9,11 +9,12 @@
 //  of the RDKit source tree.
 //
 
+#include <RDGeneral/export.h>
 #include <RDGeneral/hanoiSort.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/RingInfo.h>
 #include <RDGeneral/BoostStartInclude.h>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 #include <boost/foreach.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/BoostEndInclude.h>
@@ -28,7 +29,7 @@
 namespace RDKit {
 namespace Canon {
 
-struct bondholder {
+struct RDKIT_GRAPHMOL_EXPORT bondholder {
   Bond::BondType bondType;
   unsigned int bondStereo;
   unsigned int nbrSymClass;
@@ -73,7 +74,8 @@ struct bondholder {
   }
 };
 
-struct canon_atom {
+class RDKIT_GRAPHMOL_EXPORT canon_atom {
+ public:
   const Atom *atom;
   int index;
   unsigned int degree;
@@ -95,13 +97,16 @@ struct canon_atom {
         isRingStereoAtom(false),
         nbrIds(NULL),
         p_symbol(NULL){};
+
+  ~canon_atom() { free(nbrIds); }
 };
 
-void updateAtomNeighborIndex(canon_atom *atoms, std::vector<bondholder> &nbrs);
+RDKIT_GRAPHMOL_EXPORT void updateAtomNeighborIndex(
+    canon_atom *atoms, std::vector<bondholder> &nbrs);
 
-void updateAtomNeighborNumSwaps(
+RDKIT_GRAPHMOL_EXPORT void updateAtomNeighborNumSwaps(
     canon_atom *atoms, std::vector<bondholder> &nbrs, unsigned int atomIdx,
-    std::vector<std::pair<unsigned int, unsigned int> > &result);
+    std::vector<std::pair<unsigned int, unsigned int>> &result);
 
 /*
  * Different types of atom compare functions:
@@ -114,7 +119,7 @@ void updateAtomNeighborNumSwaps(
  *include neighbors within the ranking
  */
 
-class SpecialChiralityAtomCompareFunctor {
+class RDKIT_GRAPHMOL_EXPORT SpecialChiralityAtomCompareFunctor {
  public:
   Canon::canon_atom *dp_atoms;
   const ROMol *dp_mol;
@@ -141,10 +146,10 @@ class SpecialChiralityAtomCompareFunctor {
       return 0;
     }
 
-    if ((dp_atomsInPlay && (*dp_atomsInPlay)[i]) || !dp_atomsInPlay) {
+    if (!dp_atomsInPlay || (*dp_atomsInPlay)[i]) {
       updateAtomNeighborIndex(dp_atoms, dp_atoms[i].bonds);
     }
-    if ((dp_atomsInPlay && (*dp_atomsInPlay)[j]) || !dp_atomsInPlay) {
+    if (!dp_atomsInPlay || (*dp_atomsInPlay)[j]) {
       updateAtomNeighborIndex(dp_atoms, dp_atoms[j].bonds);
     }
     for (unsigned int ii = 0;
@@ -154,12 +159,12 @@ class SpecialChiralityAtomCompareFunctor {
       if (cmp) return cmp;
     }
 
-    std::vector<std::pair<unsigned int, unsigned int> > swapsi;
-    std::vector<std::pair<unsigned int, unsigned int> > swapsj;
-    if ((dp_atomsInPlay && (*dp_atomsInPlay)[i]) || !dp_atomsInPlay) {
+    std::vector<std::pair<unsigned int, unsigned int>> swapsi;
+    std::vector<std::pair<unsigned int, unsigned int>> swapsj;
+    if (!dp_atomsInPlay || (*dp_atomsInPlay)[i]) {
       updateAtomNeighborNumSwaps(dp_atoms, dp_atoms[i].bonds, i, swapsi);
     }
-    if ((dp_atomsInPlay && (*dp_atomsInPlay)[j]) || !dp_atomsInPlay) {
+    if (!dp_atomsInPlay || (*dp_atomsInPlay)[j]) {
       updateAtomNeighborNumSwaps(dp_atoms, dp_atoms[j].bonds, j, swapsj);
     }
     for (unsigned int ii = 0; ii < swapsi.size() && ii < swapsj.size(); ++ii) {
@@ -170,7 +175,7 @@ class SpecialChiralityAtomCompareFunctor {
   }
 };
 
-class SpecialSymmetryAtomCompareFunctor {
+class RDKIT_GRAPHMOL_EXPORT SpecialSymmetryAtomCompareFunctor {
  public:
   Canon::canon_atom *dp_atoms;
   const ROMol *dp_mol;
@@ -209,10 +214,10 @@ class SpecialSymmetryAtomCompareFunctor {
       return 1;
     }
 
-    if ((dp_atomsInPlay && (*dp_atomsInPlay)[i]) || !dp_atomsInPlay) {
+    if (!dp_atomsInPlay || (*dp_atomsInPlay)[i]) {
       updateAtomNeighborIndex(dp_atoms, dp_atoms[i].bonds);
     }
-    if ((dp_atomsInPlay && (*dp_atomsInPlay)[j]) || !dp_atomsInPlay) {
+    if (!dp_atomsInPlay || (*dp_atomsInPlay)[j]) {
       updateAtomNeighborIndex(dp_atoms, dp_atoms[j].bonds);
     }
     for (unsigned int ii = 0;
@@ -231,7 +236,7 @@ class SpecialSymmetryAtomCompareFunctor {
   }
 };
 
-class AtomCompareFunctor {
+class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
   unsigned int getAtomRingNbrCode(unsigned int i) const {
     if (!dp_atoms[i].hasRingNbr) return 0;
 
@@ -408,10 +413,10 @@ class AtomCompareFunctor {
     }
 
     if (df_useNbrs) {
-      if ((dp_atomsInPlay && (*dp_atomsInPlay)[i]) || !dp_atomsInPlay) {
+      if (!dp_atomsInPlay || (*dp_atomsInPlay)[i]) {
         updateAtomNeighborIndex(dp_atoms, dp_atoms[i].bonds);
       }
-      if ((dp_atomsInPlay && (*dp_atomsInPlay)[j]) || !dp_atomsInPlay) {
+      if (!dp_atomsInPlay || (*dp_atomsInPlay)[j]) {
         updateAtomNeighborIndex(dp_atoms, dp_atoms[j].bonds);
       }
 
@@ -439,7 +444,7 @@ class AtomCompareFunctor {
  */
 
 const unsigned int ATNUM_CLASS_OFFSET = 10000;
-class ChiralAtomCompareFunctor {
+class RDKIT_GRAPHMOL_EXPORT ChiralAtomCompareFunctor {
   void getAtomNeighborhood(std::vector<bondholder> &nbrs) const {
     for (unsigned j = 0; j < nbrs.size(); ++j) {
       unsigned int nbrIdx = nbrs[j].nbrIdx;
@@ -702,27 +707,33 @@ void BreakTies(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
   }
 }  // end of BreakTies()
 
-void CreateSinglePartition(unsigned int nAtoms, int *order, int *count,
-                           canon_atom *atoms);
+RDKIT_GRAPHMOL_EXPORT void CreateSinglePartition(unsigned int nAtoms,
+                                                 int *order, int *count,
+                                                 canon_atom *atoms);
 
-void ActivatePartitions(unsigned int nAtoms, int *order, int *count,
-                        int &activeset, int *next, int *changed);
+RDKIT_GRAPHMOL_EXPORT void ActivatePartitions(unsigned int nAtoms, int *order,
+                                              int *count, int &activeset,
+                                              int *next, int *changed);
 
-void rankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res,
-                  bool breakTies = true, bool includeChirality = true,
-                  bool includeIsotopes = true);
+RDKIT_GRAPHMOL_EXPORT void rankMolAtoms(const ROMol &mol,
+                                        std::vector<unsigned int> &res,
+                                        bool breakTies = true,
+                                        bool includeChirality = true,
+                                        bool includeIsotopes = true);
 
-void rankFragmentAtoms(const ROMol &mol, std::vector<unsigned int> &res,
-                       const boost::dynamic_bitset<> &atomsInPlay,
-                       const boost::dynamic_bitset<> &bondsInPlay,
-                       const std::vector<std::string> *atomSymbols = NULL,
-                       bool breakTies = true, bool includeChirality = true,
-                       bool includeIsotopes = true);
+RDKIT_GRAPHMOL_EXPORT void rankFragmentAtoms(
+    const ROMol &mol, std::vector<unsigned int> &res,
+    const boost::dynamic_bitset<> &atomsInPlay,
+    const boost::dynamic_bitset<> &bondsInPlay,
+    const std::vector<std::string> *atomSymbols = NULL, bool breakTies = true,
+    bool includeChirality = true, bool includeIsotopes = true);
 
-void chiralRankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res);
+RDKIT_GRAPHMOL_EXPORT void chiralRankMolAtoms(const ROMol &mol,
+                                              std::vector<unsigned int> &res);
 
-void initCanonAtoms(const ROMol &mol, std::vector<Canon::canon_atom> &atoms,
-                    bool includeChirality = true);
+RDKIT_GRAPHMOL_EXPORT void initCanonAtoms(const ROMol &mol,
+                                          std::vector<Canon::canon_atom> &atoms,
+                                          bool includeChirality = true);
 
-}  // end of Canon namespace
-}  // end of RDKit namespace
+}  // namespace Canon
+}  // namespace RDKit

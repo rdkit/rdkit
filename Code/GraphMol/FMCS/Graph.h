@@ -8,7 +8,8 @@
 //  of the RDKit source tree.
 //
 
-// graph topology in terms of indeces in source molecule
+// graph topology in terms of indices in source molecule
+#include <RDGeneral/export.h>
 #pragma once
 #include <boost/graph/adjacency_list.hpp>
 
@@ -17,9 +18,10 @@ namespace FMCS {
 typedef unsigned AtomIdx_t;
 typedef unsigned BondIdx_t;
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS,
-                              AtomIdx_t, BondIdx_t> Graph_t;
+                              AtomIdx_t, BondIdx_t>
+    Graph_t;
 
-class Graph : public Graph_t {
+class RDKIT_FMCS_EXPORT Graph : public Graph_t {
  public:
   typedef edge_iterator EDGE_ITER;
   typedef std::pair<EDGE_ITER, EDGE_ITER> BOND_ITER_PAIR;
@@ -35,5 +37,5 @@ class Graph : public Graph_t {
     (*this)[which] = bond;
   }
 };
-}
-}
+}  // namespace FMCS
+}  // namespace RDKit

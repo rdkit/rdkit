@@ -23,6 +23,10 @@
 
 #include <GraphMol/Descriptors/USRDescriptor.h>
 
+#ifdef RDK_HAS_EIGEN3
+#include <GraphMol/Descriptors/BCUT.h>
+#endif
+
 #ifdef RDK_BUILD_DESCRIPTORS3D
 #include <GraphMol/Descriptors/MolDescriptors3D.h>
 #endif
@@ -45,9 +49,10 @@ python::tuple computeASAContribs(const RDKit::ROMol &mol, bool includeHs = true,
   python::tuple pycontribs(contribs);
   return python::make_tuple(contribs, hContrib);
 }
-python::tuple computeTPSAContribs(const RDKit::ROMol &mol, bool force = false) {
+python::tuple computeTPSAContribs(const RDKit::ROMol &mol, bool force,
+                                  bool includeSandP) {
   std::vector<double> contribs(mol.getNumAtoms());
-  RDKit::Descriptors::getTPSAAtomContribs(mol, contribs, force);
+  RDKit::Descriptors::getTPSAAtomContribs(mol, contribs, force, includeSandP);
   python::tuple pycontribs(contribs);
   return pycontribs;
 }
@@ -56,8 +61,8 @@ python::list computeCrippenContribs(
     const RDKit::ROMol &mol, bool force = false,
     python::list atomTypes = python::list(),
     python::list atomTypeLabels = python::list()) {
-  std::vector<unsigned int> *tAtomTypes = 0;
-  std::vector<std::string> *tAtomTypeLabels = 0;
+  std::vector<unsigned int> *tAtomTypes = nullptr;
+  std::vector<std::string> *tAtomTypeLabels = nullptr;
   if (python::extract<unsigned int>(atomTypes.attr("__len__")()) != 0) {
     if (python::extract<unsigned int>(atomTypes.attr("__len__")()) !=
         mol.getNumAtoms()) {
@@ -112,7 +117,16 @@ python::tuple calcCrippenDescriptors(const RDKit::ROMol &mol,
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
 
-python::list calcWHIMs(const RDKit::ROMol &mol, int confId, double thresh, const std::string CustomAtomProperty) {
+python::list calcEEMcharges(RDKit::ROMol &mol, int confId) {
+  std::vector<double> res;
+  RDKit::Descriptors::EEM(mol, res, confId);
+  python::list pyres;
+  BOOST_FOREACH (double iv, res) { pyres.append(iv); }
+  return pyres;
+}
+
+python::list calcWHIMs(const RDKit::ROMol &mol, int confId, double thresh,
+                       const std::string CustomAtomProperty) {
   std::vector<double> res;
   RDKit::Descriptors::WHIM(mol, res, confId, thresh, CustomAtomProperty);
   python::list pyres;
@@ -120,8 +134,8 @@ python::list calcWHIMs(const RDKit::ROMol &mol, int confId, double thresh, const
   return pyres;
 }
 
-python::list calcGETAWAYs(const RDKit::ROMol &mol, int confId,
-                          double precision, const std::string CustomAtomProperty) {
+python::list calcGETAWAYs(const RDKit::ROMol &mol, int confId, double precision,
+                          const std::string CustomAtomProperty) {
   std::vector<double> res;
   RDKit::Descriptors::GETAWAY(mol, res, confId, precision, CustomAtomProperty);
   python::list pyres;
@@ -129,7 +143,8 @@ python::list calcGETAWAYs(const RDKit::ROMol &mol, int confId,
   return pyres;
 }
 
-python::list calcRDFs(const RDKit::ROMol &mol, int confId, const std::string CustomAtomProperty) {
+python::list calcRDFs(const RDKit::ROMol &mol, int confId,
+                      const std::string CustomAtomProperty) {
   std::vector<double> res;
   RDKit::Descriptors::RDF(mol, res, confId, CustomAtomProperty);
   python::list pyres;
@@ -137,15 +152,8 @@ python::list calcRDFs(const RDKit::ROMol &mol, int confId, const std::string Cus
   return pyres;
 }
 
-python::list calcEEMcharges(RDKit::ROMol &mol, int confId) {
-        std::vector<double> res;
-        RDKit::Descriptors::EEM(mol, res, confId);
-        python::list pyres;
-        BOOST_FOREACH (double iv, res) { pyres.append(iv); }
-        return pyres;
-}
-    
-python::list calcMORSEs(const RDKit::ROMol &mol, int confId, const std::string CustomAtomProperty) {
+python::list calcMORSEs(const RDKit::ROMol &mol, int confId,
+                        const std::string CustomAtomProperty) {
   std::vector<double> res;
   RDKit::Descriptors::MORSE(mol, res, confId, CustomAtomProperty);
   python::list pyres;
@@ -153,7 +161,8 @@ python::list calcMORSEs(const RDKit::ROMol &mol, int confId, const std::string C
   return pyres;
 }
 
-python::list calcAUTOCORR3Ds(const RDKit::ROMol &mol, int confId, const std::string CustomAtomProperty) {
+python::list calcAUTOCORR3Ds(const RDKit::ROMol &mol, int confId,
+                             const std::string CustomAtomProperty) {
   std::vector<double> res;
   RDKit::Descriptors::AUTOCORR3D(mol, res, confId, CustomAtomProperty);
   python::list pyres;
@@ -161,7 +170,8 @@ python::list calcAUTOCORR3Ds(const RDKit::ROMol &mol, int confId, const std::str
   return pyres;
 }
 
-python::list calcAUTOCORR2Ds(const RDKit::ROMol &mol, const std::string CustomAtomProperty) {
+python::list calcAUTOCORR2Ds(const RDKit::ROMol &mol,
+                             const std::string CustomAtomProperty) {
   std::vector<double> res;
   RDKit::Descriptors::AUTOCORR2D(mol, res, CustomAtomProperty);
   python::list pyres;
@@ -171,37 +181,37 @@ python::list calcAUTOCORR2Ds(const RDKit::ROMol &mol, const std::string CustomAt
 
 #endif
 
-RDKit::SparseIntVect<boost::int32_t> *GetAtomPairFingerprint(
+RDKit::SparseIntVect<std::int32_t> *GetAtomPairFingerprint(
     const RDKit::ROMol &mol, unsigned int minLength, unsigned int maxLength,
     python::object fromAtoms, python::object ignoreAtoms,
     python::object atomInvariants, bool includeChirality, bool use2D,
     int confId) {
-  rdk_auto_ptr<std::vector<boost::uint32_t> > fvect =
+  std::unique_ptr<std::vector<std::uint32_t>> fvect =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
-  rdk_auto_ptr<std::vector<boost::uint32_t> > ivect =
+  std::unique_ptr<std::vector<std::uint32_t>> ivect =
       pythonObjectToVect(ignoreAtoms, mol.getNumAtoms());
-  rdk_auto_ptr<std::vector<boost::uint32_t> > invvect = pythonObjectToVect(
+  std::unique_ptr<std::vector<std::uint32_t>> invvect = pythonObjectToVect(
       atomInvariants,
       static_cast<unsigned int>(1 << RDKit::AtomPairs::codeSize));
-  RDKit::SparseIntVect<boost::int32_t> *res;
+  RDKit::SparseIntVect<std::int32_t> *res;
   res = RDKit::AtomPairs::getAtomPairFingerprint(
       mol, minLength, maxLength, fvect.get(), ivect.get(), invvect.get(),
       includeChirality, use2D, confId);
   return res;
 }
-RDKit::SparseIntVect<boost::int32_t> *GetHashedAtomPairFingerprint(
+RDKit::SparseIntVect<std::int32_t> *GetHashedAtomPairFingerprint(
     const RDKit::ROMol &mol, unsigned int nBits, unsigned int minLength,
     unsigned int maxLength, python::object fromAtoms,
     python::object ignoreAtoms, python::object atomInvariants,
     bool includeChirality, bool use2D, int confId) {
-  rdk_auto_ptr<std::vector<boost::uint32_t> > fvect =
+  std::unique_ptr<std::vector<std::uint32_t>> fvect =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
-  rdk_auto_ptr<std::vector<boost::uint32_t> > ivect =
+  std::unique_ptr<std::vector<std::uint32_t>> ivect =
       pythonObjectToVect(ignoreAtoms, mol.getNumAtoms());
-  rdk_auto_ptr<std::vector<boost::uint32_t> > invvect = pythonObjectToVect(
+  std::unique_ptr<std::vector<std::uint32_t>> invvect = pythonObjectToVect(
       atomInvariants,
       static_cast<unsigned int>(1 << RDKit::AtomPairs::codeSize));
-  RDKit::SparseIntVect<boost::int32_t> *res;
+  RDKit::SparseIntVect<std::int32_t> *res;
   res = RDKit::AtomPairs::getHashedAtomPairFingerprint(
       mol, nBits, minLength, maxLength, fvect.get(), ivect.get(), invvect.get(),
       includeChirality, use2D, confId);
@@ -212,11 +222,11 @@ RDKit::SparseIntVect<boost::int64_t> *GetTopologicalTorsionFingerprint(
     const RDKit::ROMol &mol, unsigned int targetSize, python::object fromAtoms,
     python::object ignoreAtoms, python::object atomInvariants,
     bool includeChirality) {
-  rdk_auto_ptr<std::vector<boost::uint32_t> > fvect =
+  std::unique_ptr<std::vector<std::uint32_t>> fvect =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
-  rdk_auto_ptr<std::vector<boost::uint32_t> > ivect =
+  std::unique_ptr<std::vector<std::uint32_t>> ivect =
       pythonObjectToVect(ignoreAtoms, mol.getNumAtoms());
-  rdk_auto_ptr<std::vector<boost::uint32_t> > invvect = pythonObjectToVect(
+  std::unique_ptr<std::vector<std::uint32_t>> invvect = pythonObjectToVect(
       atomInvariants,
       static_cast<unsigned int>(1 << RDKit::AtomPairs::codeSize));
   if (targetSize * RDKit::AtomPairs::codeSize > 64) {
@@ -237,11 +247,11 @@ RDKit::SparseIntVect<boost::int64_t> *GetHashedTopologicalTorsionFingerprint(
     const RDKit::ROMol &mol, unsigned int nBits, unsigned int targetSize,
     python::object fromAtoms, python::object ignoreAtoms,
     python::object atomInvariants, bool includeChirality) {
-  rdk_auto_ptr<std::vector<boost::uint32_t> > fvect =
+  std::unique_ptr<std::vector<std::uint32_t>> fvect =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
-  rdk_auto_ptr<std::vector<boost::uint32_t> > ivect =
+  std::unique_ptr<std::vector<std::uint32_t>> ivect =
       pythonObjectToVect(ignoreAtoms, mol.getNumAtoms());
-  rdk_auto_ptr<std::vector<boost::uint32_t> > invvect = pythonObjectToVect(
+  std::unique_ptr<std::vector<std::uint32_t>> invvect = pythonObjectToVect(
       atomInvariants,
       static_cast<unsigned int>(1 << RDKit::AtomPairs::codeSize));
   RDKit::SparseIntVect<boost::int64_t> *res;
@@ -256,11 +266,11 @@ ExplicitBitVect *GetHashedTopologicalTorsionFingerprintAsBitVect(
     python::object fromAtoms, python::object ignoreAtoms,
     python::object atomInvariants, unsigned int nBitsPerEntry,
     bool includeChirality) {
-  rdk_auto_ptr<std::vector<boost::uint32_t> > fvect =
+  std::unique_ptr<std::vector<std::uint32_t>> fvect =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
-  rdk_auto_ptr<std::vector<boost::uint32_t> > ivect =
+  std::unique_ptr<std::vector<std::uint32_t>> ivect =
       pythonObjectToVect(ignoreAtoms, mol.getNumAtoms());
-  rdk_auto_ptr<std::vector<boost::uint32_t> > invvect = pythonObjectToVect(
+  std::unique_ptr<std::vector<std::uint32_t>> invvect = pythonObjectToVect(
       atomInvariants,
       static_cast<unsigned int>(1 << RDKit::AtomPairs::codeSize));
   ExplicitBitVect *res;
@@ -275,11 +285,11 @@ ExplicitBitVect *GetHashedAtomPairFingerprintAsBitVect(
     unsigned int maxLength, python::object fromAtoms,
     python::object ignoreAtoms, python::object atomInvariants,
     unsigned int nBitsPerEntry, bool includeChirality, bool use2D, int confId) {
-  rdk_auto_ptr<std::vector<boost::uint32_t> > fvect =
+  std::unique_ptr<std::vector<std::uint32_t>> fvect =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
-  rdk_auto_ptr<std::vector<boost::uint32_t> > ivect =
+  std::unique_ptr<std::vector<std::uint32_t>> ivect =
       pythonObjectToVect(ignoreAtoms, mol.getNumAtoms());
-  rdk_auto_ptr<std::vector<boost::uint32_t> > invvect = pythonObjectToVect(
+  std::unique_ptr<std::vector<std::uint32_t>> invvect = pythonObjectToVect(
       atomInvariants,
       static_cast<unsigned int>(1 << RDKit::AtomPairs::codeSize));
   ExplicitBitVect *res;
@@ -292,7 +302,7 @@ ExplicitBitVect *GetHashedAtomPairFingerprintAsBitVect(
 namespace {
 double kappaHelper(double (*fn)(const RDKit::ROMol &, std::vector<double> *),
                    const RDKit::ROMol &mol, python::object atomContribs) {
-  std::vector<double> *lContribs = 0;
+  std::vector<double> *lContribs = nullptr;
   if (atomContribs != python::object()) {
     // make sure the optional argument actually was a list
     python::list typecheck = python::extract<python::list>(atomContribs);
@@ -318,11 +328,11 @@ double hkAlphaHelper(const RDKit::ROMol &mol, python::object atomContribs) {
   return kappaHelper(RDKit::Descriptors::calcHallKierAlpha, mol, atomContribs);
 }
 
-RDKit::SparseIntVect<boost::uint32_t> *MorganFingerprintHelper(
+RDKit::SparseIntVect<std::uint32_t> *MorganFingerprintHelper(
     const RDKit::ROMol &mol, int radius, int nBits, python::object invariants,
     python::object fromAtoms, bool useChirality, bool useBondTypes,
-    bool useFeatures, bool useCounts, python::object bitInfo) {
-  std::vector<boost::uint32_t> *invars = 0;
+    bool useFeatures, bool useCounts, python::object bitInfo, bool includeRedundantEnvironments) {
+  std::vector<boost::uint32_t> *invars = nullptr;
   if (invariants) {
     unsigned int nInvar =
         python::extract<unsigned int>(invariants.attr("__len__")());
@@ -330,87 +340,138 @@ RDKit::SparseIntVect<boost::uint32_t> *MorganFingerprintHelper(
       if (nInvar != mol.getNumAtoms()) {
         throw_value_error("length of invariant vector != number of atoms");
       }
-      invars = new std::vector<boost::uint32_t>(mol.getNumAtoms());
+      invars = new std::vector<std::uint32_t>(mol.getNumAtoms());
       for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-        (*invars)[i] = python::extract<boost::uint32_t>(invariants[i]);
+        (*invars)[i] = python::extract<std::uint32_t>(invariants[i]);
       }
     }
   } else if (useFeatures) {
-    invars = new std::vector<boost::uint32_t>(mol.getNumAtoms());
+    invars = new std::vector<std::uint32_t>(mol.getNumAtoms());
     RDKit::MorganFingerprints::getFeatureInvariants(mol, *invars);
   }
-  std::vector<boost::uint32_t> *froms = 0;
+  std::vector<std::uint32_t> *froms = nullptr;
   if (fromAtoms) {
     unsigned int nFrom =
         python::extract<unsigned int>(fromAtoms.attr("__len__")());
     if (nFrom) {
-      froms = new std::vector<boost::uint32_t>();
+      froms = new std::vector<std::uint32_t>();
       for (unsigned int i = 0; i < nFrom; ++i) {
-        froms->push_back(python::extract<boost::uint32_t>(fromAtoms[i]));
+        froms->push_back(python::extract<std::uint32_t>(fromAtoms[i]));
       }
     }
   }
-  RDKit::MorganFingerprints::BitInfoMap *bitInfoMap = 0;
+  RDKit::MorganFingerprints::BitInfoMap *bitInfoMap = nullptr;
   if (bitInfo != python::object()) {
     // make sure the optional argument actually was a dictionary
     python::dict typecheck = python::extract<python::dict>(bitInfo);
     bitInfoMap = new RDKit::MorganFingerprints::BitInfoMap();
   }
-  RDKit::SparseIntVect<boost::uint32_t> *res;
+  RDKit::SparseIntVect<std::uint32_t> *res;
   if (nBits < 0) {
     res = RDKit::MorganFingerprints::getFingerprint(
         mol, static_cast<unsigned int>(radius), invars, froms, useChirality,
-        useBondTypes, useCounts, false, bitInfoMap);
+        useBondTypes, useCounts, false, bitInfoMap, includeRedundantEnvironments);
   } else {
     res = RDKit::MorganFingerprints::getHashedFingerprint(
         mol, static_cast<unsigned int>(radius),
         static_cast<unsigned int>(nBits), invars, froms, useChirality,
-        useBondTypes, false, bitInfoMap);
+        useBondTypes, false, bitInfoMap, includeRedundantEnvironments);
   }
   if (bitInfoMap) {
     bitInfo.attr("clear")();
     for (RDKit::MorganFingerprints::BitInfoMap::const_iterator iter =
              bitInfoMap->begin();
          iter != bitInfoMap->end(); ++iter) {
-      const std::vector<std::pair<boost::uint32_t, boost::uint32_t> > &v =
+      const std::vector<std::pair<std::uint32_t, std::uint32_t>> &v =
           iter->second;
       python::list localL;
-      for (std::vector<std::pair<boost::uint32_t, boost::uint32_t> >::
-               const_iterator vIt = v.begin();
-           vIt != v.end(); ++vIt) {
-        localL.append(python::make_tuple(vIt->first, vIt->second));
+      for (const auto &vIt : v) {
+        localL.append(python::make_tuple(vIt.first, vIt.second));
       }
       bitInfo[iter->first] = python::tuple(localL);
     }
     delete bitInfoMap;
   }
-  if (invars) delete invars;
-  if (froms) delete froms;
+  if (invars) {
+    delete invars;
+  }
+  if (froms) {
+    delete froms;
+  }
   return res;
 }
+
+#ifdef RDK_HAS_EIGEN3  
+std::pair<double,double> BCUT2D_list(const RDKit::ROMol &m, python::list atomprops)
+{
+  std::vector<double> dvec;
+  for (int i = 0; i < len(atomprops); ++i)
+  {
+    dvec.push_back(boost::python::extract<double>(atomprops[i]));
+  }
+  return RDKit::Descriptors::BCUT2D(m, dvec);
 }
-RDKit::SparseIntVect<boost::uint32_t> *GetMorganFingerprint(
+
+std::pair<double,double> BCUT2D_tuple(const RDKit::ROMol &m, python::tuple atomprops)
+{
+  std::vector<double> dvec;
+  for (int i = 0; i < len(atomprops); ++i)
+  {
+    dvec.push_back(boost::python::extract<double>(atomprops[i]));
+  }
+  return RDKit::Descriptors::BCUT2D(m, dvec);
+}
+
+// From boost::python examples
+// Converts a std::pair instance to a Python tuple.
+template <typename T1, typename T2>
+struct std_pair_to_tuple
+{
+  static PyObject* convert(std::pair<T1, T2> const& p)
+  {
+    return boost::python::incref(
+				 boost::python::make_tuple(p.first, p.second).ptr());
+  }
+  static PyTypeObject const *get_pytype () {return &PyTuple_Type; }
+};
+  
+// Helper for convenience.
+template <typename T1, typename T2>
+struct std_pair_to_python_converter
+{
+  std_pair_to_python_converter()
+  {
+    boost::python::to_python_converter<
+      std::pair<T1, T2>,
+      std_pair_to_tuple<T1, T2>,
+      true //std_pair_to_tuple has get_pytype
+      >();
+  }
+};
+#endif  
+}  // namespace
+RDKit::SparseIntVect<std::uint32_t> *GetMorganFingerprint(
     const RDKit::ROMol &mol, int radius, python::object invariants,
     python::object fromAtoms, bool useChirality, bool useBondTypes,
-    bool useFeatures, bool useCounts, python::object bitInfo) {
+    bool useFeatures, bool useCounts, python::object bitInfo, bool includeRedundantEnvironments) {
   return MorganFingerprintHelper(mol, radius, -1, invariants, fromAtoms,
                                  useChirality, useBondTypes, useFeatures,
-                                 useCounts, bitInfo);
+                                 useCounts, bitInfo, includeRedundantEnvironments);
 }
-RDKit::SparseIntVect<boost::uint32_t> *GetHashedMorganFingerprint(
+RDKit::SparseIntVect<std::uint32_t> *GetHashedMorganFingerprint(
     const RDKit::ROMol &mol, int radius, int nBits, python::object invariants,
     python::object fromAtoms, bool useChirality, bool useBondTypes,
-    bool useFeatures, python::object bitInfo) {
+    bool useFeatures, python::object bitInfo, bool includeRedundantEnvironments) {
   return MorganFingerprintHelper(mol, radius, nBits, invariants, fromAtoms,
                                  useChirality, useBondTypes, useFeatures, true,
-                                 bitInfo);
+                                 bitInfo, includeRedundantEnvironments);
 }
 
 ExplicitBitVect *GetMorganFingerprintBV(
     const RDKit::ROMol &mol, int radius, unsigned int nBits,
     python::object invariants, python::object fromAtoms, bool useChirality,
-    bool useBondTypes, bool useFeatures, python::object bitInfo) {
-  std::vector<boost::uint32_t> *invars = 0;
+    bool useBondTypes, bool useFeatures, python::object bitInfo, bool includeRedundantEnvironments) {
+  std::vector<boost::uint32_t> *invars = nullptr;
   if (invariants) {
     unsigned int nInvar =
         python::extract<unsigned int>(invariants.attr("__len__")());
@@ -418,28 +479,19 @@ ExplicitBitVect *GetMorganFingerprintBV(
       if (nInvar != mol.getNumAtoms()) {
         throw_value_error("length of invariant vector != number of atoms");
       }
-      invars = new std::vector<boost::uint32_t>(mol.getNumAtoms());
+      invars = new std::vector<std::uint32_t>(mol.getNumAtoms());
       for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-        (*invars)[i] = python::extract<boost::uint32_t>(invariants[i]);
+        (*invars)[i] = python::extract<std::uint32_t>(invariants[i]);
       }
     }
   } else if (useFeatures) {
-    invars = new std::vector<boost::uint32_t>(mol.getNumAtoms());
+    invars = new std::vector<std::uint32_t>(mol.getNumAtoms());
     RDKit::MorganFingerprints::getFeatureInvariants(mol, *invars);
   }
 
-  std::vector<boost::uint32_t> *froms = 0;
-  if (fromAtoms) {
-    unsigned int nFrom =
-        python::extract<unsigned int>(fromAtoms.attr("__len__")());
-    if (nFrom) {
-      froms = new std::vector<boost::uint32_t>();
-      for (unsigned int i = 0; i < nFrom; ++i) {
-        froms->push_back(python::extract<boost::uint32_t>(fromAtoms[i]));
-      }
-    }
-  }
-  RDKit::MorganFingerprints::BitInfoMap *bitInfoMap = 0;
+  std::unique_ptr<std::vector<std::uint32_t>> froms =
+      pythonObjectToVect(fromAtoms, mol.getNumAtoms());
+  RDKit::MorganFingerprints::BitInfoMap *bitInfoMap = nullptr;
   if (bitInfo != python::object()) {
     // make sure the optional argument actually was a dictionary
     python::dict typecheck = python::extract<python::dict>(bitInfo);
@@ -447,44 +499,41 @@ ExplicitBitVect *GetMorganFingerprintBV(
   }
   ExplicitBitVect *res;
   res = RDKit::MorganFingerprints::getFingerprintAsBitVect(
-      mol, static_cast<unsigned int>(radius), nBits, invars, froms,
-      useChirality, useBondTypes, false, bitInfoMap);
+      mol, static_cast<unsigned int>(radius), nBits, invars, froms.get(),
+      useChirality, useBondTypes, false, bitInfoMap, includeRedundantEnvironments);
   if (bitInfoMap) {
     bitInfo.attr("clear")();
     for (RDKit::MorganFingerprints::BitInfoMap::const_iterator iter =
              bitInfoMap->begin();
          iter != bitInfoMap->end(); ++iter) {
-      const std::vector<std::pair<boost::uint32_t, boost::uint32_t> > &v =
+      const std::vector<std::pair<std::uint32_t, std::uint32_t>> &v =
           iter->second;
       python::list localL;
-      for (std::vector<std::pair<boost::uint32_t, boost::uint32_t> >::
-               const_iterator vIt = v.begin();
-           vIt != v.end(); ++vIt) {
-        localL.append(python::make_tuple(vIt->first, vIt->second));
+      for (const auto &vIt : v) {
+        localL.append(python::make_tuple(vIt.first, vIt.second));
       }
       bitInfo[iter->first] = python::tuple(localL);
     }
     delete bitInfoMap;
   }
-  if (invars) delete invars;
-  if (froms) delete froms;
+  delete invars;
   return res;
 }
 
 python::list GetConnectivityInvariants(const RDKit::ROMol &mol,
                                        bool includeRingMembership) {
-  std::vector<boost::uint32_t> invars(mol.getNumAtoms());
+  std::vector<std::uint32_t> invars(mol.getNumAtoms());
   RDKit::MorganFingerprints::getConnectivityInvariants(mol, invars,
                                                        includeRingMembership);
   python::list res;
-  BOOST_FOREACH (boost::uint32_t iv, invars) { res.append(python::long_(iv)); }
+  BOOST_FOREACH (std::uint32_t iv, invars) { res.append(python::long_(iv)); }
   return res;
 }
 python::list GetFeatureInvariants(const RDKit::ROMol &mol) {
-  std::vector<boost::uint32_t> invars(mol.getNumAtoms());
+  std::vector<std::uint32_t> invars(mol.getNumAtoms());
   RDKit::MorganFingerprints::getFeatureInvariants(mol, invars);
   python::list res;
-  BOOST_FOREACH (boost::uint32_t iv, invars) { res.append(python::long_(iv)); }
+  BOOST_FOREACH (std::uint32_t iv, invars) { res.append(python::long_(iv)); }
   return res;
 }
 
@@ -510,12 +559,12 @@ python::list GetUSRDistributions(python::object coords, python::object points) {
   }
   RDGeom::Point3DConstPtrVect c(numCoords);
   for (unsigned int i = 0; i < numCoords; ++i) {
-    RDGeom::Point3D *pt = new RDGeom::Point3D;
+    auto *pt = new RDGeom::Point3D;
     *pt = python::extract<RDGeom::Point3D>(coords[i]);
     c[i] = pt;
   }
   std::vector<RDGeom::Point3D> pts(4);
-  std::vector<std::vector<double> > distances(4);
+  std::vector<std::vector<double>> distances(4);
   RDKit::Descriptors::calcUSRDistributions(c, distances, pts);
   if (points != python::object()) {
     // make sure the optional argument actually was a list
@@ -543,7 +592,7 @@ python::list GetUSRDistributionsFromPoints(python::object coords,
   }
   RDGeom::Point3DConstPtrVect c(numCoords);
   for (unsigned int i = 0; i < numCoords; ++i) {
-    RDGeom::Point3D *pt = new RDGeom::Point3D;
+    auto *pt = new RDGeom::Point3D;
     *pt = python::extract<RDGeom::Point3D>(coords[i]);
     c[i] = pt;
   }
@@ -554,7 +603,7 @@ python::list GetUSRDistributionsFromPoints(python::object coords,
   for (unsigned int i = 0; i < numPts; ++i) {
     p[i] = python::extract<RDGeom::Point3D>(points[i]);
   }
-  std::vector<std::vector<double> > distances(numPts);
+  std::vector<std::vector<double>> distances(numPts);
   RDKit::Descriptors::calcUSRDistributionsFromPoints(c, p, distances);
   python::list pyDist;
   BOOST_FOREACH (std::vector<double> dist, distances) {
@@ -572,7 +621,7 @@ python::list GetUSRFromDistributions(python::object distances) {
   if (numDist == 0) {
     throw_value_error("no distances");
   }
-  std::vector<std::vector<double> > dist(numDist);
+  std::vector<std::vector<double>> dist(numDist);
   for (unsigned int i = 0; i < numDist; ++i) {
     unsigned int numPts =
         python::extract<unsigned int>(distances[i].attr("__len__")());
@@ -631,7 +680,7 @@ python::list GetUSRCAT(const RDKit::ROMol &mol, python::object atomSelections,
   }
 
   // check if there is an atom selection provided
-  std::vector<std::vector<unsigned int> > atomIds;
+  std::vector<std::vector<unsigned int>> atomIds;
   unsigned int sizeDescriptor = 60;
   if (atomSelections != python::object()) {
     // make sure the optional argument actually was a list
@@ -662,7 +711,7 @@ python::list GetUSRCAT(const RDKit::ROMol &mol, python::object atomSelections,
 
 python::list CalcSlogPVSA(const RDKit::ROMol &mol, python::object bins,
                           bool force) {
-  std::vector<double> *lbins = 0;
+  std::vector<double> *lbins = nullptr;
   if (bins) {
     unsigned int nBins = python::extract<unsigned int>(bins.attr("__len__")());
     if (nBins) {
@@ -681,7 +730,7 @@ python::list CalcSlogPVSA(const RDKit::ROMol &mol, python::object bins,
 }
 python::list CalcSMRVSA(const RDKit::ROMol &mol, python::object bins,
                         bool force) {
-  std::vector<double> *lbins = 0;
+  std::vector<double> *lbins = nullptr;
   if (bins) {
     unsigned int nBins = python::extract<unsigned int>(bins.attr("__len__")());
     if (nBins) {
@@ -700,7 +749,7 @@ python::list CalcSMRVSA(const RDKit::ROMol &mol, python::object bins,
 }
 python::list CalcPEOEVSA(const RDKit::ROMol &mol, python::object bins,
                          bool force) {
-  std::vector<double> *lbins = 0;
+  std::vector<double> *lbins = nullptr;
   if (bins) {
     unsigned int nBins = python::extract<unsigned int>(bins.attr("__len__")());
     if (nBins) {
@@ -712,6 +761,22 @@ python::list CalcPEOEVSA(const RDKit::ROMol &mol, python::object bins,
   }
   std::vector<double> res;
   res = RDKit::Descriptors::calcPEOE_VSA(mol, lbins, force);
+
+  python::list pyres;
+  BOOST_FOREACH (double dv, res) { pyres.append(dv); }
+  return pyres;
+}
+python::list CalcCustomPropVSA(const RDKit::ROMol &mol,
+                               const std::string customPropName,
+                               python::object bins, bool force) {
+  unsigned int nBins = python::extract<unsigned int>(bins.attr("__len__")());
+  std::vector<double> lbins = std::vector<double>(nBins, 0.0);
+  for (unsigned int i = 0; i < nBins; ++i) {
+    lbins[i] = python::extract<double>(bins[i]);
+  }
+  std::vector<double> res;
+  res =
+      RDKit::Descriptors::calcCustomProp_VSA(mol, customPropName, lbins, force);
 
   python::list pyres;
   BOOST_FOREACH (double dv, res) { pyres.append(dv); }
@@ -729,7 +794,7 @@ python::list CalcMQNs(const RDKit::ROMol &mol, bool force) {
 unsigned int numSpiroAtoms(const RDKit::ROMol &mol, python::object pyatoms) {
   std::vector<unsigned int> ats;
   unsigned int res = RDKit::Descriptors::calcNumSpiroAtoms(
-      mol, pyatoms != python::object() ? &ats : NULL);
+      mol, pyatoms != python::object() ? &ats : nullptr);
   if (pyatoms != python::object()) {
     python::list pyres = python::extract<python::list>(pyatoms);
     BOOST_FOREACH (unsigned int iv, ats) { pyres.append(iv); }
@@ -740,71 +805,13 @@ unsigned int numBridgeheadAtoms(const RDKit::ROMol &mol,
                                 python::object pyatoms) {
   std::vector<unsigned int> ats;
   unsigned int res = RDKit::Descriptors::calcNumBridgeheadAtoms(
-      mol, pyatoms != python::object() ? &ats : NULL);
+      mol, pyatoms != python::object() ? &ats : nullptr);
   if (pyatoms != python::object()) {
     python::list pyres = python::extract<python::list>(pyatoms);
     BOOST_FOREACH (unsigned int iv, ats) { pyres.append(iv); }
   }
   return res;
 }
-
-/// Awesome StackOverflow response:
-/// http://stackoverflow.com/questions/15842126/feeding-a-python-list-into-a-function-taking-in-a-vector-with-boost-python
-/// I know a lot more about how boost works.
-/// @brief Type that allows for registration of conversions from
-///        python iterable types.
-struct iterable_converter {
-  /// @note Registers converter from a python interable type to the
-  ///       provided type.
-  template <typename Container>
-  iterable_converter &from_python() {
-    boost::python::converter::registry::push_back(
-        &iterable_converter::convertible,
-        &iterable_converter::construct<Container>,
-        boost::python::type_id<Container>());
-
-    // Support chaining.
-    return *this;
-  }
-
-  /// @brief Check if PyObject is iterable.
-  static void *convertible(PyObject *object) {
-    return PyObject_GetIter(object) ? object : NULL;
-  }
-
-  /// @brief Convert iterable PyObject to C++ container type.
-  ///
-  /// Container Concept requirements:
-  ///
-  ///   * Container::value_type is CopyConstructable.
-  ///   * Container can be constructed and populated with two iterators.
-  ///     I.e. Container(begin, end)
-  template <typename Container>
-  static void construct(
-      PyObject *object,
-      boost::python::converter::rvalue_from_python_stage1_data *data) {
-    namespace python = boost::python;
-    // Object is a borrowed reference, so create a handle indicting it is
-    // borrowed for proper reference counting.
-    python::handle<> handle(python::borrowed(object));
-
-    // Obtain a handle to the memory block that the converter has allocated
-    // for the C++ type.
-    typedef python::converter::rvalue_from_python_storage<Container>
-        storage_type;
-    void *storage = reinterpret_cast<storage_type *>(data)->storage.bytes;
-
-    typedef python::stl_input_iterator<typename Container::value_type> iterator;
-
-    // Allocate the C++ type into the converter's memory block, and assign
-    // its handle to the converter's convertible variable.  The C++
-    // container is populated by passing the begin and end iterators of
-    // the python object to the container's constructor.
-    new (storage) Container(iterator(python::object(handle)),  // begin
-                            iterator());                       // end
-    data->convertible = storage;
-  }
-};
 
 struct PythonPropertyFunctor : public RDKit::Descriptors::PropertyFunctor {
   PyObject *self;
@@ -817,13 +824,13 @@ struct PythonPropertyFunctor : public RDKit::Descriptors::PropertyFunctor {
     python::incref(self);
   }
 
-  ~PythonPropertyFunctor() { python::decref(self); }
+  ~PythonPropertyFunctor() override { python::decref(self); }
 
-  double operator()(const RDKit::ROMol &mol) const {
+  double operator()(const RDKit::ROMol &mol) const override {
     return python::call_method<double>(self, "__call__", boost::ref(mol));
   }
 };
-}
+}  // namespace
 
 BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::scope().attr("__doc__") =
@@ -941,7 +948,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
        python::arg("fromAtoms") = python::list(),
        python::arg("useChirality") = false, python::arg("useBondTypes") = true,
        python::arg("useFeatures") = false, python::arg("useCounts") = true,
-       python::arg("bitInfo") = python::object()),
+       python::arg("bitInfo") = python::object(),
+       python::arg("includeRedundantEnvironments") = false),
       docString.c_str(),
       python::return_value_policy<python::manage_new_object>());
   docString = "Returns a hashed Morgan fingerprint for a molecule";
@@ -952,7 +960,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
        python::arg("fromAtoms") = python::list(),
        python::arg("useChirality") = false, python::arg("useBondTypes") = true,
        python::arg("useFeatures") = false,
-       python::arg("bitInfo") = python::object()),
+       python::arg("bitInfo") = python::object(),
+       python::arg("includeRedundantEnvironments") = false),
       docString.c_str(),
       python::return_value_policy<python::manage_new_object>());
   docString = "Returns a Morgan fingerprint for a molecule as a bit vector";
@@ -963,7 +972,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
        python::arg("fromAtoms") = python::list(),
        python::arg("useChirality") = false, python::arg("useBondTypes") = true,
        python::arg("useFeatures") = false,
-       python::arg("bitInfo") = python::object()),
+       python::arg("bitInfo") = python::object(),
+       python::arg("includeRedundantEnvironments") = false),
       docString.c_str(),
       python::return_value_policy<python::manage_new_object>());
   python::scope().attr("_MorganFingerprint_version") =
@@ -1044,13 +1054,15 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 
   docString = "returns the TPSA value for a molecule";
   python::def("CalcTPSA", RDKit::Descriptors::calcTPSA,
-              (python::arg("mol"), python::arg("force") = false),
+              (python::arg("mol"), python::arg("force") = false,
+               python::arg("includeSandP") = false),
               docString.c_str());
   python::scope().attr("_CalcTPSA_version") = RDKit::Descriptors::tpsaVersion;
 
   docString = "returns a list of atomic contributions to the TPSA";
   python::def("_CalcTPSAContribs", computeTPSAContribs,
-              (python::arg("mol"), python::arg("force") = false),
+              (python::arg("mol"), python::arg("force") = false,
+               python::arg("includeSandP") = false),
               docString.c_str());
 
   docString = "returns the molecule's molecular weight";
@@ -1265,6 +1277,11 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::def("PEOE_VSA_", CalcPEOEVSA,
               (python::arg("mol"), python::arg("bins") = python::list(),
                python::arg("force") = false));
+  docString =
+      "returns the VSA contributions based on a custom property for a molecule";
+  python::def("CustomProp_VSA_", CalcCustomPropVSA,
+              (python::arg("mol"), python::arg("customPropName"),
+               python::arg("bins"), python::arg("force") = false));
   docString = "returns the MQN descriptors for a molecule";
   python::def("MQNs_", CalcMQNs,
               (python::arg("mol"), python::arg("force") = false));
@@ -1432,7 +1449,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       .def("GetVersion", &RDKit::Descriptors::PropertyFunctor::getVersion,
            "Return the version of the calculated property");
 
-  iterable_converter().from_python<std::vector<std::string> >();
+  iterable_converter().from_python<std::vector<std::string>>();
 
   docString =
       "Property computation and registry system.  To compute all registered "
@@ -1482,7 +1499,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       .staticmethod("RegisterProperty");
 
   python::class_<PythonPropertyFunctor, boost::noncopyable,
-                 python::bases<RDKit::Descriptors::PropertyFunctor> >(
+                 python::bases<RDKit::Descriptors::PropertyFunctor>>(
       "PythonPropertyFunctor", "",
       python::init<PyObject *, const std::string &, const std::string &>())
       .def("__call__", &PythonPropertyFunctor::operator(),
@@ -1509,25 +1526,30 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
 
-
-
 #ifdef RDK_BUILD_DESCRIPTORS3D
+  python::scope().attr("_CalcEMMcharges_version") =
+      RDKit::Descriptors::EEMVersion;
+  docString = "Returns EEM atomic partial charges";
+  python::def("CalcEEMcharges", calcEEMcharges,
+              (python::arg("mol"), python::arg("confId") = -1),
+              docString.c_str());
+
   python::scope().attr("_CalcWHIM_version") = RDKit::Descriptors::WHIMVersion;
   docString = "Returns the WHIM descriptors vector";
-  python::def("CalcWHIM", calcWHIMs,
-              (python::arg("mol"), python::arg("confId") = -1,
-               python::arg("thresh") = 0.001,
-               python::arg("CustomAtomProperty") = ""),
-              docString.c_str());
+  python::def(
+      "CalcWHIM", calcWHIMs,
+      (python::arg("mol"), python::arg("confId") = -1,
+       python::arg("thresh") = 0.001, python::arg("CustomAtomProperty") = ""),
+      docString.c_str());
 
   python::scope().attr("_CalcGETAWAY_version") =
       RDKit::Descriptors::GETAWAYVersion;
   docString = "Returns the GETAWAY descriptors vector";
-  python::def("CalcGETAWAY", calcGETAWAYs,
-              (python::arg("mol"), python::arg("confId") = -1,
-               python::arg("precision") = 2,
-               python::arg("CustomAtomProperty") = ""),
-              docString.c_str());
+  python::def(
+      "CalcGETAWAY", calcGETAWAYs,
+      (python::arg("mol"), python::arg("confId") = -1,
+       python::arg("precision") = 2, python::arg("CustomAtomProperty") = ""),
+      docString.c_str());
 
   python::scope().attr("_CalcRDF_version") = RDKit::Descriptors::RDFVersion;
   docString = "Returns radial distribution fonction descriptors (RDF)";
@@ -1536,12 +1558,6 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
                python::arg("CustomAtomProperty") = ""),
               docString.c_str());
 
-  python::scope().attr("_CalcEMMcharges_version") = RDKit::Descriptors::EEMVersion;
-  docString = "Returns EEM atomic partial charges";
-  python::def("CalcEEMcharges", calcEEMcharges,
-                (python::arg("mol"), python::arg("confId") = -1),
-                docString.c_str());
-    
   python::scope().attr("_CalcMORSE_version") = RDKit::Descriptors::MORSEVersion;
   docString =
       "Returns Molecule Representation of Structures based on Electron "
@@ -1549,7 +1565,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::def("CalcMORSE", calcMORSEs,
               (python::arg("mol"), python::arg("confId") = -1,
                python::arg("CustomAtomProperty") = ""),
-               docString.c_str());
+              docString.c_str());
 
   python::scope().attr("_CalcAUTOCORR3D_version") =
       RDKit::Descriptors::AUTOCORR3DVersion;
@@ -1557,89 +1573,138 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::def("CalcAUTOCORR3D", calcAUTOCORR3Ds,
               (python::arg("mol"), python::arg("confId") = -1,
                python::arg("CustomAtomProperty") = ""),
-               docString.c_str());
+              docString.c_str());
 
   python::scope().attr("_CalcPBF_version") = RDKit::Descriptors::PBFVersion;
   docString =
       "Returns the PBF (plane of best fit) descriptor "
-      "(http://dx.doi.org/10.1021/ci300293f)";
+      "(https://doi.org/10.1021/ci300293f)";
   python::def("CalcPBF", RDKit::Descriptors::PBF,
               (python::arg("mol"), python::arg("confId") = -1),
               docString.c_str());
   python::scope().attr("_CalcNPR1_version") = RDKit::Descriptors::NPR1Version;
   docString = "";
-  python::def("CalcNPR1", RDKit::Descriptors::NPR1,
-              (python::arg("mol"), python::arg("confId") = -1,
-               python::arg("useAtomicMasses") = true),
-              docString.c_str());
+  python::def(
+      "CalcNPR1", RDKit::Descriptors::NPR1,
+      (python::arg("mol"), python::arg("confId") = -1,
+       python::arg("useAtomicMasses") = true, python::arg("force") = true),
+      docString.c_str());
   python::scope().attr("_CalcNPR2_version") = RDKit::Descriptors::NPR2Version;
   docString = "";
-  python::def("CalcNPR2", RDKit::Descriptors::NPR2,
-              (python::arg("mol"), python::arg("confId") = -1,
-               python::arg("useAtomicMasses") = true),
-              docString.c_str());
+  python::def(
+      "CalcNPR2", RDKit::Descriptors::NPR2,
+      (python::arg("mol"), python::arg("confId") = -1,
+       python::arg("useAtomicMasses") = true, python::arg("force") = true),
+      docString.c_str());
   python::scope().attr("_CalcPMI1_version") = RDKit::Descriptors::PMI1Version;
   docString = "";
-  python::def("CalcPMI1", RDKit::Descriptors::PMI1,
-              (python::arg("mol"), python::arg("confId") = -1,
-               python::arg("useAtomicMasses") = true),
-              docString.c_str());
+  python::def(
+      "CalcPMI1", RDKit::Descriptors::PMI1,
+      (python::arg("mol"), python::arg("confId") = -1,
+       python::arg("useAtomicMasses") = true, python::arg("force") = true),
+      docString.c_str());
   python::scope().attr("_CalcPMI2_version") = RDKit::Descriptors::PMI2Version;
   docString = "";
-  python::def("CalcPMI2", RDKit::Descriptors::PMI2,
-              (python::arg("mol"), python::arg("confId") = -1,
-               python::arg("useAtomicMasses") = true),
-              docString.c_str());
+  python::def(
+      "CalcPMI2", RDKit::Descriptors::PMI2,
+      (python::arg("mol"), python::arg("confId") = -1,
+       python::arg("useAtomicMasses") = true, python::arg("force") = true),
+      docString.c_str());
   python::scope().attr("_CalcPMI3_version") = RDKit::Descriptors::PMI3Version;
   docString = "";
-  python::def("CalcPMI3", RDKit::Descriptors::PMI3,
-              (python::arg("mol"), python::arg("confId") = -1,
-               python::arg("useAtomicMasses") = true),
-              docString.c_str());
+  python::def(
+      "CalcPMI3", RDKit::Descriptors::PMI3,
+      (python::arg("mol"), python::arg("confId") = -1,
+       python::arg("useAtomicMasses") = true, python::arg("force") = true),
+      docString.c_str());
 
   python::scope().attr("_CalcRadiusOfGyration_version") =
       RDKit::Descriptors::radiusOfGyrationVersion;
   docString = "";
-  python::def("CalcRadiusOfGyration", RDKit::Descriptors::radiusOfGyration,
-              (python::arg("mol"), python::arg("confId") = -1,
-               python::arg("useAtomicMasses") = true),
-              docString.c_str());
+  python::def(
+      "CalcRadiusOfGyration", RDKit::Descriptors::radiusOfGyration,
+      (python::arg("mol"), python::arg("confId") = -1,
+       python::arg("useAtomicMasses") = true, python::arg("force") = true),
+      docString.c_str());
   python::scope().attr("_CalcInertialShapeFactor_version") =
       RDKit::Descriptors::inertialShapeFactorVersion;
   docString = "";
-  python::def("CalcInertialShapeFactor",
-              RDKit::Descriptors::inertialShapeFactor,
-              (python::arg("mol"), python::arg("confId") = -1,
-               python::arg("useAtomicMasses") = true),
-              docString.c_str());
+  python::def(
+      "CalcInertialShapeFactor", RDKit::Descriptors::inertialShapeFactor,
+      (python::arg("mol"), python::arg("confId") = -1,
+       python::arg("useAtomicMasses") = true, python::arg("force") = true),
+      docString.c_str());
 
   python::scope().attr("_CalcEccentricity_version") =
       RDKit::Descriptors::eccentricityVersion;
   docString = "";
-  python::def("CalcEccentricity", RDKit::Descriptors::eccentricity,
-              (python::arg("mol"), python::arg("confId") = -1,
-               python::arg("useAtomicMasses") = true),
-              docString.c_str());
+  python::def(
+      "CalcEccentricity", RDKit::Descriptors::eccentricity,
+      (python::arg("mol"), python::arg("confId") = -1,
+       python::arg("useAtomicMasses") = true, python::arg("force") = true),
+      docString.c_str());
   python::scope().attr("_CalcAsphericity_version") =
       RDKit::Descriptors::asphericityVersion;
   docString = "";
-  python::def("CalcAsphericity", RDKit::Descriptors::asphericity,
-              (python::arg("mol"), python::arg("confId") = -1,
-               python::arg("useAtomicMasses") = true),
-              docString.c_str());
+  python::def(
+      "CalcAsphericity", RDKit::Descriptors::asphericity,
+      (python::arg("mol"), python::arg("confId") = -1,
+       python::arg("useAtomicMasses") = true, python::arg("force") = true),
+      docString.c_str());
   python::scope().attr("_CalcSpherocityIndex_version") =
       RDKit::Descriptors::spherocityIndexVersion;
   docString = "";
   python::def("CalcSpherocityIndex", RDKit::Descriptors::spherocityIndex,
-              (python::arg("mol"), python::arg("confId") = -1),
+              (python::arg("mol"), python::arg("confId") = -1,
+               python::arg("force") = true),
               docString.c_str());
 
-    python::scope().attr("_CalcAUTOCORR2D_version") =
-            RDKit::Descriptors::AUTOCORR2DVersion;
-    docString = "Returns 2D Autocorrelation descriptors vector";
-    python::def("CalcAUTOCORR2D", calcAUTOCORR2Ds, (python::arg("mol"),
-                python::arg("CustomAtomProperty") = ""),
-            docString.c_str());
+  python::scope().attr("_CalcAUTOCORR2D_version") =
+      RDKit::Descriptors::AUTOCORR2DVersion;
+  docString = "Returns 2D Autocorrelation descriptors vector";
+  python::def("CalcAUTOCORR2D", calcAUTOCORR2Ds,
+              (python::arg("mol"), python::arg("CustomAtomProperty") = ""),
+              docString.c_str());
 
 #endif
+  
+#ifdef RDK_HAS_EIGEN3
+  python::scope().attr("_BCUT2D_version") =
+      RDKit::Descriptors::BCUT2DVersion;
+  std::vector<double> (*BCUT)(const RDKit::ROMol&) = & RDKit::Descriptors::BCUT2D;
+  std::pair<double,double> (*BCUT_atomprops)(const RDKit::ROMol&, const std::string&) = & RDKit::Descriptors::BCUT2D;
+  docString = \
+    "Implements BCUT descriptors From J. Chem. Inf. Comput. Sci., Vol. 39, No. 1, 1999"	\
+    "Diagonal elements are (currently) atomic mass, gasteiger charge,"\
+    "crippen logP and crippen MRReturns the 2D BCUT2D descriptors vector as described in\n"\
+    "returns [mass eigen value high, mass eigen value low,\n"\
+    "         gasteiger charge eigenvalue high, gasteiger charge low,\n"\
+    "         crippen lowgp  eigenvalue high, crippen lowgp  low,\n"\
+    "         crippen mr eigenvalue high, crippen mr low]\n"\
+    "";
+    
+  python::def("BCUT2D", BCUT,
+              (python::arg("mol")),
+              docString.c_str());
+
+  std_pair_to_python_converter<double, double>();
+  docString = \
+    "Returns a 2D BCUT (eigen value hi, eigenvalue low) given the molecule and the specified atom props\n"\
+    " there length ot atom_props must a list or tuple of floats equal in size to the number of atoms in mol";
+  
+  python::def("BCUT2D", BCUT2D_list,
+              (python::arg("mol"), python::arg("atom_props")),
+              docString.c_str());
+  python::def("BCUT2D", BCUT2D_tuple,
+              (python::arg("mol"), python::arg("atom_props")),
+              docString.c_str());
+
+  docString = \
+    "Returns a 2D BCUT (eigen value high, eigen value low) given the molecule and the specified atom prop name\n" \
+    "atom_propname must exist on each aton and be convertable to a float";
+  python::def("BCUT2D", BCUT_atomprops,
+              (python::arg("mol"), python::arg("atom_propname")),
+              docString.c_str());
+#endif
+
 }

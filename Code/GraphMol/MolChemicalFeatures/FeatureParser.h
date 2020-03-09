@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef __FEATUREPARSER_H_02122004_1810__
 #define __FEATUREPARSER_H_02122004_1810__
 
@@ -18,36 +19,40 @@
 namespace RDKit {
 //! \brief class used to indicate errors in parsing feature definition
 //!   files.
-class FeatureFileParseException : public std::exception {
+class RDKIT_MOLCHEMICALFEATURES_EXPORT FeatureFileParseException
+    : public std::exception {
  public:
   FeatureFileParseException(unsigned int lineNo, std::string line,
                             std::string msg)
       : d_lineNo(lineNo), d_line(line), d_msg(msg){};
   unsigned int lineNo() const { return d_lineNo; };
   std::string line() const { return d_line; };
-  std::string message() const { return d_msg; };
-  ~FeatureFileParseException() throw(){};
+  const char *what() const noexcept override { return d_msg.c_str(); };
+  const char *message() const noexcept { return what(); };
+  ~FeatureFileParseException() noexcept {};
 
  private:
   unsigned int d_lineNo;
   std::string d_line, d_msg;
 };
 
-int parseFeatureData(const std::string &defnText,
-                     MolChemicalFeatureDef::CollectionType &featDefs);
-int parseFeatureData(std::istream &istream,
-                     MolChemicalFeatureDef::CollectionType &featDefs);
-int parseFeatureFile(const std::string &fileName,
-                     MolChemicalFeatureDef::CollectionType &featDefs);
+RDKIT_MOLCHEMICALFEATURES_EXPORT int parseFeatureData(
+    const std::string &defnText,
+    MolChemicalFeatureDef::CollectionType &featDefs);
+RDKIT_MOLCHEMICALFEATURES_EXPORT int parseFeatureData(
+    std::istream &istream, MolChemicalFeatureDef::CollectionType &featDefs);
+RDKIT_MOLCHEMICALFEATURES_EXPORT int parseFeatureFile(
+    const std::string &fileName,
+    MolChemicalFeatureDef::CollectionType &featDefs);
 
 namespace Local {
 // these functions are exposed only so they can be tested
-void parseAtomType(const std::string &inLine,
-                   std::map<std::string, std::string> &atomTypeDefs,
-                   const unsigned int &lineNo);
-MolChemicalFeatureDef *parseFeatureDef(
+RDKIT_MOLCHEMICALFEATURES_EXPORT void parseAtomType(
+    const std::string &inLine, std::map<std::string, std::string> &atomTypeDefs,
+    const unsigned int &lineNo);
+RDKIT_MOLCHEMICALFEATURES_EXPORT MolChemicalFeatureDef *parseFeatureDef(
     std::istream &inStream, const std::string &inLine, unsigned int &lineNo,
     const std::map<std::string, std::string> &atomTypeDefs);
-}
+}  // namespace Local
 }  // end of namespace RDKit
 #endif

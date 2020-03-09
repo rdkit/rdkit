@@ -1,7 +1,9 @@
-if(RDK_OPTIMIZE_NATIVE)
+if(RDK_OPTIMIZE_POPCNT)
   ADD_DEFINITIONS("-DUSE_BUILTIN_POPCOUNT")
 endif()
 
+
+add_definitions(-DRDKIT_DATASTRUCTS_BUILD)
 rdkit_library(DataStructs
               BitVect.cpp SparseBitVect.cpp ExplicitBitVect.cpp Utils.cpp
               base64.cpp BitOps.cpp DiscreteDistMat.cpp
@@ -14,6 +16,7 @@ rdkit_headers(base64.h
               BitVects.h
               BitVectUtils.h
               DatastructsException.h
+              DatastructsStreamOps.h
               DiscreteDistMat.h
               DiscreteValueVect.h
               ExplicitBitVect.h
@@ -32,4 +35,6 @@ rdkit_test(testFPB testFPB.cpp
 rdkit_test(testMultiFPB testMultiFPB.cpp
            LINK_LIBRARIES DataStructs RDGeneral)
 
+if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
+endif()

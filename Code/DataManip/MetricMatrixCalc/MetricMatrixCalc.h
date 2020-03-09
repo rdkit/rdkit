@@ -8,6 +8,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef __RD_METRICMATRIXCAL_H__
 #define __RD_METRICMATRIXCAL_H__
 
@@ -42,7 +43,7 @@ class MetricMatrixCalc {
    *
    * ARGUMENTS:
    *
-   *  mFunc - pointer to the metric funtion
+   *  mFunc - pointer to the metric function
    */
   void setMetricFunc(double (*mFunc)(const entryType &, const entryType &,
                                      unsigned int)) {
@@ -100,6 +101,6 @@ class MetricMatrixCalc {
    */
   double (*dp_metricFunc)(const entryType &, const entryType &, unsigned int);
 };
-};
+};  // namespace RDDataManip
 
 #endif

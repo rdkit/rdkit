@@ -30,6 +30,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
+#include <RDGeneral/export.h>
 #ifndef CARTESIANPRODUCT_H
 #define CARTESIANPRODUCT_H
 
@@ -66,7 +67,8 @@ namespace RDKit {
 See EnumerationStrategyBase for more details and usage.
 */
 
-class CartesianProductStrategy : public EnumerationStrategyBase {
+class RDKIT_CHEMREACTIONS_EXPORT CartesianProductStrategy
+    : public EnumerationStrategyBase {
   size_t m_numPermutationsProcessed;
 
  public:
@@ -75,7 +77,8 @@ class CartesianProductStrategy : public EnumerationStrategyBase {
 
   using EnumerationStrategyBase::initialize;
 
-  virtual void initializeStrategy(const ChemicalReaction &, const EnumerationTypes::BBS &) {
+  virtual void initializeStrategy(const ChemicalReaction &,
+                                  const EnumerationTypes::BBS &) {
     m_numPermutationsProcessed = 0;
   }
 
@@ -92,7 +95,8 @@ class CartesianProductStrategy : public EnumerationStrategyBase {
   }
 
   virtual boost::uint64_t getPermutationIdx() const {
-    return m_numPermutationsProcessed; }
+    return m_numPermutationsProcessed;
+  }
 
   virtual operator bool() const { return hasNext(); }
 
@@ -127,18 +131,18 @@ class CartesianProductStrategy : public EnumerationStrategyBase {
   }
 
  private:
-#ifdef RDK_USE_BOOST_SERIALIZATION    
+#ifdef RDK_USE_BOOST_SERIALIZATION
   friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive &ar, const unsigned int /*version*/) {
     ar &boost::serialization::base_object<EnumerationStrategyBase>(*this);
     ar &m_numPermutationsProcessed;
   }
-#endif  
+#endif
 };
-}
+}  // namespace RDKit
 
-#ifdef RDK_USE_BOOST_SERIALIZATION  
+#ifdef RDK_USE_BOOST_SERIALIZATION
 BOOST_CLASS_VERSION(RDKit::CartesianProductStrategy, 1)
 #endif
 

@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef __RD_FORCEFIELD_H__
 #define __RD_FORCEFIELD_H__
 
@@ -15,6 +16,27 @@
 #include <boost/foreach.hpp>
 #include <Geometry/point.h>
 #include <GraphMol/Trajectory/Snapshot.h>
+
+namespace RDKit {
+namespace ForceFieldsHelper {
+  void RDKIT_FORCEFIELD_EXPORT normalizeAngleDeg(double &angleDeg);
+  void RDKIT_FORCEFIELD_EXPORT computeDihedral(const RDGeom::PointPtrVect &pos, unsigned int idx1,
+    unsigned int idx2, unsigned int idx3, unsigned int idx4,
+    double *dihedral = NULL, double *cosPhi = NULL,
+    RDGeom::Point3D r[4] = NULL, RDGeom::Point3D t[2] = NULL,
+    double d[2] = NULL);
+  void RDKIT_FORCEFIELD_EXPORT computeDihedral(const double *pos, unsigned int idx1,
+    unsigned int idx2, unsigned int idx3, unsigned int idx4,
+    double *dihedral = NULL, double *cosPhi = NULL,
+    RDGeom::Point3D r[4] = NULL, RDGeom::Point3D t[2] = NULL,
+    double d[2] = NULL);
+  void RDKIT_FORCEFIELD_EXPORT computeDihedral(const RDGeom::Point3D *p1, const RDGeom::Point3D *p2,
+    const RDGeom::Point3D *p3, const RDGeom::Point3D *p4,
+    double *dihedral = NULL, double *cosPhi = NULL,
+    RDGeom::Point3D r[4] = NULL, RDGeom::Point3D t[2] = NULL,
+    double d[2] = NULL);
+}
+}
 
 namespace ForceFields {
 class ForceFieldContrib;
@@ -54,7 +76,7 @@ typedef std::vector<ContribPtr> ContribPtrVect;
        this is almost certainly inefficient.
 
 */
-class ForceField {
+class RDKIT_FORCEFIELD_EXPORT ForceField {
  public:
   //! construct with a dimension
   ForceField(unsigned int dimension = 3)
@@ -212,7 +234,7 @@ class ForceField {
   RDGeom::PointPtrVect d_positions;  //!< pointers to the points we're using
   ContribPtrVect d_contribs;         //!< contributions to the energy
   INT_VECT d_fixedPoints;
-  unsigned int d_matSize;
+  unsigned int d_matSize = 0;
   //! scatter our positions into an array
   /*!
       \param pos     should be \c 3*this->numPoints() long;
@@ -228,5 +250,5 @@ class ForceField {
   //! initializes our internal distance matrix
   void initDistanceMatrix();
 };
-}
+}  // namespace ForceFields
 #endif

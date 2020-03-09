@@ -4,6 +4,7 @@
 
         - From The Shogakukan DICTIONARY OF NEW ENGLISH (Second edition) */
 
+#include <RDGeneral/export.h>
 #ifndef F2C_INCLUDE
 #define F2C_INCLUDE
 
@@ -13,8 +14,12 @@ typedef char *address;
 typedef short int shortint;
 typedef float real;
 typedef double doublereal;
-typedef struct { real r, i; } complex;
-typedef struct { doublereal r, i; } doublecomplex;
+typedef struct {
+  real r, i;
+} complex;
+typedef struct {
+  doublereal r, i;
+} doublecomplex;
 typedef long int logical;
 typedef short int shortlogical;
 typedef char logical1;
@@ -124,7 +129,7 @@ typedef struct {
 
 #define VOID void
 
-union Multitype {/* for multiple entry points */
+union Multitype { /* for multiple entry points */
   integer1 g;
   shortint h;
   integer i;
@@ -139,7 +144,7 @@ typedef union Multitype Multitype;
 
 /*typedef long int Long;*/ /* No longer used; formerly in Namelist */
 
-struct Vardesc {/* for Namelist */
+struct Vardesc { /* for Namelist */
   char *name;
   char *addr;
   ftnlen *dims;

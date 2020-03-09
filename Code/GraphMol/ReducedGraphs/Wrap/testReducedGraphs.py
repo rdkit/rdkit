@@ -16,18 +16,18 @@ class TestCase(unittest.TestCase):
     m = Chem.MolFromSmiles('OCCc1ccccc1')
     mrg = rdRG.GenerateMolExtendedReducedGraph(m)
     mrg.UpdatePropertyCache(False)
-    self.failUnlessEqual('[*]cCCO', Chem.MolToSmiles(mrg))
+    self.failUnlessEqual('*cCCO', Chem.MolToSmiles(mrg))
 
     m = Chem.MolFromSmiles('OCCC1CCCCC1')
     mrg = rdRG.GenerateMolExtendedReducedGraph(m)
     mrg.UpdatePropertyCache(False)
-    self.failUnlessEqual('[*]CCCO', Chem.MolToSmiles(mrg))
+    self.failUnlessEqual('*CCCO', Chem.MolToSmiles(mrg))
 
   def test2(self):
     m = Chem.MolFromSmiles('OCCc1ccccc1')
     mrg = rdRG.GenerateMolExtendedReducedGraph(m)
     mrg.UpdatePropertyCache(False)
-    self.failUnlessEqual('[*]cCCO', Chem.MolToSmiles(mrg))
+    self.failUnlessEqual('*cCCO', Chem.MolToSmiles(mrg))
 
     fp1 = rdRG.GenerateErGFingerprintForReducedGraph(mrg)
     fp2 = rdRG.GetErGFingerprint(m)

@@ -29,10 +29,7 @@ namespace {
 class EditableMol : boost::noncopyable {
  public:
   EditableMol(const ROMol &m) { dp_mol = new RWMol(m); };
-  ~EditableMol() {
-    PRECONDITION(dp_mol, "no molecule");
-    delete dp_mol;
-  };
+  ~EditableMol() noexcept { delete dp_mol; };
 
   void RemoveAtom(unsigned int idx) {
     PRECONDITION(dp_mol, "no molecule");
@@ -52,8 +49,8 @@ class EditableMol : boost::noncopyable {
     PRECONDITION(atom, "bad atom");
     return dp_mol->addAtom(atom, true, false);
   };
-  void ReplaceAtom(unsigned int idx, Atom *atom,
-                   bool updateLabels, bool preserveProps) {
+  void ReplaceAtom(unsigned int idx, Atom *atom, bool updateLabels,
+                   bool preserveProps) {
     PRECONDITION(dp_mol, "no molecule");
     PRECONDITION(atom, "bad atom");
     dp_mol->replaceAtom(idx, atom, updateLabels, preserveProps);
@@ -63,17 +60,17 @@ class EditableMol : boost::noncopyable {
     PRECONDITION(bond, "bad bond");
     dp_mol->replaceBond(idx, bond, preserveProps);
   };
-  
+
   ROMol *GetMol() const {
     PRECONDITION(dp_mol, "no molecule");
-    ROMol *res = new ROMol(*dp_mol);
+    auto *res = new ROMol(*dp_mol);
     return res;
   };
 
  private:
   RWMol *dp_mol;
 };
-}
+}  // namespace
 
 struct EditableMol_wrapper {
   static void wrap() {
@@ -82,7 +79,7 @@ struct EditableMol_wrapper {
    This class can be used to add/remove bonds and atoms to\n\
    a molecule.\n\
    In order to use it, you need to first construct an EditableMol\n\
-   from a standard Mol:\n\
+   from a standard Mol:\n\n\
    >>> m = Chem.MolFromSmiles('CCC')\n\
    >>> em = Chem.EditableMol(m)\n\
    >>> em.AddAtom(Chem.Atom(8))\n\
@@ -104,32 +101,33 @@ struct EditableMol_wrapper {
              "Remove the specified bond from the molecule")
 
         .def("AddBond", &EditableMol::AddBond,
-             (python::arg("beginAtomIdx"),
-              python::arg("endAtomIdx"),
+             (python::arg("beginAtomIdx"), python::arg("endAtomIdx"),
               python::arg("order") = Bond::UNSPECIFIED),
              "add a bond, returns the index of the newly added bond")
 
-        .def("AddAtom", &EditableMol::AddAtom,
-             (python::arg("atom")),
+        .def("AddAtom", &EditableMol::AddAtom, (python::arg("atom")),
              "add an atom, returns the index of the newly added atom")
-        
+
         .def("ReplaceAtom", &EditableMol::ReplaceAtom,
              (python::arg("index"), python::arg("newAtom"),
-              python::arg("updateLabel")=false, python::arg("preserveProps")=false),
+              python::arg("updateLabel") = false,
+              python::arg("preserveProps") = false),
              "replaces the specified atom with the provided one\n"
              "If updateLabel is True, the new atom becomes the active atom\n"
-             "If preserveProps is True preserve keep the existing props unless explicit set on the new atom")
+             "If preserveProps is True preserve keep the existing props unless "
+             "explicit set on the new atom")
         .def("ReplaceBond", &EditableMol::ReplaceBond,
              (python::arg("index"), python::arg("newBond"),
-              python::arg("preserveProps")=false),
+              python::arg("preserveProps") = false),
              "replaces the specified bond with the provided one.\n"
-             "If preserveProps is True preserve keep the existing props unless explicit set on the new bond")
-        
+             "If preserveProps is True preserve keep the existing props unless "
+             "explicit set on the new bond")
+
         .def("GetMol", &EditableMol::GetMol,
              "Returns a Mol (a normal molecule)",
              python::return_value_policy<python::manage_new_object>());
   };
 };
 
-}  // end of namespace
+}  // namespace RDKit
 void wrap_EditableMol() { RDKit::EditableMol_wrapper::wrap(); }

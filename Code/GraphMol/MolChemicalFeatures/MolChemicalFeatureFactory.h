@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef __CHEMICALFEATUREFACTORY_H_02122004_1545__
 #define __CHEMICALFEATUREFACTORY_H_02122004_1545__
 
@@ -21,7 +22,7 @@ typedef std::list<FeatSPtr> FeatSPtrList;
 typedef FeatSPtrList::iterator FeatSPtrList_I;
 
 //! The class for finding chemical features in molecules
-class MolChemicalFeatureFactory {
+class RDKIT_MOLCHEMICALFEATURES_EXPORT MolChemicalFeatureFactory {
  public:
   //! returns the number of feature definitions
   int getNumFeatureDefs() const { return d_featDefs.size(); };
@@ -56,18 +57,21 @@ class MolChemicalFeatureFactory {
     \param mol          The molecule of interest
     \param includeOnly  (optional) if this is non-null, only features in this
                         family will be returned
+    \param confId       (optional) the conformer id to use
   */
-  FeatSPtrList getFeaturesForMol(const ROMol &mol,
-                                 const char *includeOnly = "") const;
+  FeatSPtrList getFeaturesForMol(const ROMol &mol, const char *includeOnly = "",
+                                 int confId = -1) const;
 
  private:
   MolChemicalFeatureDef::CollectionType d_featDefs;
 };
 
 //! constructs a MolChemicalFeatureFactory from the data in a stream
-MolChemicalFeatureFactory *buildFeatureFactory(std::istream &inStream);
+RDKIT_MOLCHEMICALFEATURES_EXPORT MolChemicalFeatureFactory *buildFeatureFactory(
+    std::istream &inStream);
 //! constructs a MolChemicalFeatureFactory from the data in a string
-MolChemicalFeatureFactory *buildFeatureFactory(const std::string &featureData);
+RDKIT_MOLCHEMICALFEATURES_EXPORT MolChemicalFeatureFactory *buildFeatureFactory(
+    const std::string &featureData);
 
 }  // end of namespace RDKit
 

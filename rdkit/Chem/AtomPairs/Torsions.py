@@ -44,6 +44,7 @@ def pyScorePath(mol, path, size, atomCodes=None):
   1
 
   The scores are path direction independent:
+
   >>> pyScorePath(m,(3,2,1,0),4)==t
   1
 
@@ -97,6 +98,7 @@ def ExplainPathScore(score, size=4):
   (('C', 1, 0), ('C', 2, 1), ('C', 1, 1))
 
   Again, it's order independent:
+
   >>> score=pyScorePath(m,(2,1,0),3)
   >>> ExplainPathScore(score,3)
   (('C', 1, 0), ('C', 2, 1), ('C', 1, 1))

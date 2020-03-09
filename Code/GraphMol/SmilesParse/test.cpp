@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2016 Greg Landrum and  Rational Discovery LLC
+//  Copyright (C) 2003-2018 Greg Landrum and  Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/test.h>
 #include <iostream>
 #include <string>
 #include <GraphMol/RDKitBase.h>
@@ -108,6 +109,8 @@ void testPass() {
                                                       // elements
     "['Db']['Sg']['Bh']['Hs']['Mt']['Ds']['Rg']['Cn']['Nh']['Fl']['Mc']['Lv']['"
     "Ts']['Og']",  // a biovia pathology
+    "[#6]",        // feature borrowed from SMARTS
+    "[12#6]",
     "EOS"
   };
   while (smis[i] != "EOS") {
@@ -162,8 +165,8 @@ void testFail() {
     boost::logging::disable_logs("rdApp.error");
     try {
       mol = SmilesToMol(smi);
-    } catch (MolSanitizeException) {
-      mol = (Mol *)0;
+    } catch (MolSanitizeException &) {
+      mol = (Mol *)nullptr;
     }
     boost::logging::enable_logs("rdApp.error");
     if (!(i % 2)) {
@@ -2420,6 +2423,7 @@ void testBug3139534() {
 
   {
     RWMol *m;
+    // the 2 initial directed bonds are redundant (/bad ??)
     std::string smiles = "CCC/[N+]/1=C/c2ccccc2OC(=O)/C=C1/O";
     m = SmilesToMol(smiles);
     TEST_ASSERT(m);
@@ -2429,7 +2433,54 @@ void testBug3139534() {
 
     smiles = MolToSmiles(*m, true);
     BOOST_LOG(rdInfoLog) << "smiles: " << smiles << std::endl;
-    TEST_ASSERT(smiles == "CCC/[N+]1=C/c2ccccc2OC(=O)\\C=C/1O");
+    TEST_ASSERT(smiles == R"(CCC[N+]1=C/c2ccccc2OC(=O)/C=C\1O)");
+
+    delete m;
+
+    // 2nd pass to check stability
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+
+    TEST_ASSERT(m->getBondWithIdx(3)->getStereo() == Bond::STEREOZ);
+    TEST_ASSERT(m->getBondWithIdx(14)->getStereo() == Bond::STEREOE);
+
+    smiles = MolToSmiles(*m, true);
+    BOOST_LOG(rdInfoLog) << "smiles: " << smiles << std::endl;
+    TEST_ASSERT(smiles == R"(CCC[N+]1=C/c2ccccc2OC(=O)/C=C\1O)");
+
+    delete m;
+  }
+
+  {  // Github #2023
+    RWMol *m;
+    // the initial directed bond is redundant
+    std::string smiles = R"(CO/C1=C/C=C\C=C/C=N\1)";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+
+    TEST_ASSERT(m->getBondWithIdx(2)->getStereo() == Bond::STEREOE);
+    TEST_ASSERT(m->getBondWithIdx(4)->getStereo() == Bond::STEREOZ);
+    TEST_ASSERT(m->getBondWithIdx(6)->getStereo() == Bond::STEREOZ);
+    TEST_ASSERT(m->getBondWithIdx(8)->getStereo() == Bond::STEREOZ);
+
+    smiles = MolToSmiles(*m, true);
+    BOOST_LOG(rdInfoLog) << "smiles: " << smiles << std::endl;
+    TEST_ASSERT(smiles == R"(COC1=C/C=C\C=C/C=N\1)");
+
+    delete m;
+
+    // 2nd pass to check stability
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+
+    TEST_ASSERT(m->getBondWithIdx(2)->getStereo() == Bond::STEREOE);
+    TEST_ASSERT(m->getBondWithIdx(4)->getStereo() == Bond::STEREOZ);
+    TEST_ASSERT(m->getBondWithIdx(6)->getStereo() == Bond::STEREOZ);
+    TEST_ASSERT(m->getBondWithIdx(8)->getStereo() == Bond::STEREOZ);
+
+    smiles = MolToSmiles(*m, true);
+    BOOST_LOG(rdInfoLog) << "smiles: " << smiles << std::endl;
+    TEST_ASSERT(smiles == R"(COC1=C/C=C\C=C/C=N\1)");
 
     delete m;
   }
@@ -2805,10 +2856,10 @@ void testBug3525799() {
     m = SmilesToMol(smiles);
     TEST_ASSERT(m);
     smiles = MolToSmiles(*m, true);
-    TEST_ASSERT(smiles == "[*]CC");
+    TEST_ASSERT(smiles == "*CC");
     m->getAtomWithIdx(2)->setProp(common_properties::dummyLabel, "foo");
     smiles = MolToSmiles(*m, true);
-    TEST_ASSERT(smiles == "[*]CC");
+    TEST_ASSERT(smiles == "*CC");
     delete m;
   }
 
@@ -2818,7 +2869,7 @@ void testBug3525799() {
     m = SmilesToMol(smiles);
     TEST_ASSERT(m);
     smiles = MolToSmiles(*m, true);
-    TEST_ASSERT(smiles == "[*]CC");
+    TEST_ASSERT(smiles == "*CC");
     m->getAtomWithIdx(2)->setProp(common_properties::smilesSymbol, "Xa");
     smiles = MolToSmiles(*m, true);
     TEST_ASSERT(smiles == "[Xa]CC");
@@ -3075,7 +3126,8 @@ void testFragmentSmiles() {
     std::vector<int> atomsToUse(as, as + sizeof(as) / sizeof(int));
     std::string labels[5] = {"[A]", "[B]", "[B]", "", ""};
     std::vector<std::string> atomLabels(labels, labels + 5);
-    std::string csmiles = MolFragmentToSmiles(*m, atomsToUse, 0, &atomLabels);
+    std::string csmiles =
+        MolFragmentToSmiles(*m, atomsToUse, nullptr, &atomLabels);
     TEST_ASSERT(csmiles == "[A][B][B]");
     delete m;
   }
@@ -3088,7 +3140,8 @@ void testFragmentSmiles() {
     std::vector<int> atomsToUse(as, as + sizeof(as) / sizeof(int));
     std::string labels[5] = {"", "", "[B]", "[B]", "[A]"};
     std::vector<std::string> atomLabels(labels, labels + 5);
-    std::string csmiles = MolFragmentToSmiles(*m, atomsToUse, 0, &atomLabels);
+    std::string csmiles =
+        MolFragmentToSmiles(*m, atomsToUse, nullptr, &atomLabels);
     TEST_ASSERT(csmiles == "[A][B][B]");
     delete m;
   }
@@ -3101,7 +3154,8 @@ void testFragmentSmiles() {
     std::vector<int> atomsToUse(as, as + sizeof(as) / sizeof(int));
     std::string labels[5] = {"", "", "[B]", "[A]", "[B]"};
     std::vector<std::string> atomLabels(labels, labels + 5);
-    std::string csmiles = MolFragmentToSmiles(*m, atomsToUse, 0, &atomLabels);
+    std::string csmiles =
+        MolFragmentToSmiles(*m, atomsToUse, nullptr, &atomLabels);
     TEST_ASSERT(csmiles == "[B][A][B]");
     delete m;
   }
@@ -3112,7 +3166,8 @@ void testFragmentSmiles() {
     TEST_ASSERT(m);
     int as[] = {0, 1, 2, 3};
     std::vector<int> atomsToUse(as, as + sizeof(as) / sizeof(int));
-    std::string csmiles = MolFragmentToSmiles(*m, atomsToUse, 0, 0, 0);
+    std::string csmiles =
+        MolFragmentToSmiles(*m, atomsToUse, nullptr, nullptr, nullptr);
     TEST_ASSERT(csmiles == "CC(=O)O");
     delete m;
   }
@@ -3126,7 +3181,7 @@ void testFragmentSmiles() {
     std::string labels[5] = {"-", "=", "-", "", ""};
     std::vector<std::string> bondLabels(labels, labels + 5);
     std::string csmiles =
-        MolFragmentToSmiles(*m, atomsToUse, 0, 0, &bondLabels);
+        MolFragmentToSmiles(*m, atomsToUse, nullptr, nullptr, &bondLabels);
     TEST_ASSERT(csmiles == "C-C(=O)-O");
     delete m;
   }
@@ -3140,7 +3195,7 @@ void testFragmentSmiles() {
     std::string labels[5] = {"a", "b", "a", "", ""};
     std::vector<std::string> bondLabels(labels, labels + 5);
     std::string csmiles =
-        MolFragmentToSmiles(*m, atomsToUse, 0, 0, &bondLabels);
+        MolFragmentToSmiles(*m, atomsToUse, nullptr, nullptr, &bondLabels);
     TEST_ASSERT(csmiles == "CaC(bO)aO");
     delete m;
   }
@@ -3165,7 +3220,7 @@ void testFragmentSmiles() {
     std::string labels[6] = {"a", "b", "", "a", "", ""};
     std::vector<std::string> bondLabels(labels, labels + 6);
     std::string csmiles =
-        MolFragmentToSmiles(*m, atomsToUse, 0, 0, &bondLabels);
+        MolFragmentToSmiles(*m, atomsToUse, nullptr, nullptr, &bondLabels);
     std::cerr << csmiles << std::endl;
     TEST_ASSERT(csmiles == "CbC(aC)aC");
     delete m;
@@ -3180,7 +3235,7 @@ void testFragmentSmiles() {
     std::string labels[6] = {"b", "a", "", "a", "", ""};
     std::vector<std::string> bondLabels(labels, labels + 6);
     std::string csmiles =
-        MolFragmentToSmiles(*m, atomsToUse, 0, 0, &bondLabels);
+        MolFragmentToSmiles(*m, atomsToUse, nullptr, nullptr, &bondLabels);
     std::cerr << csmiles << std::endl;
     TEST_ASSERT(csmiles == "CaC(bC)aC" || csmiles == "CbC(ac)ac");
     delete m;
@@ -3195,7 +3250,7 @@ void testFragmentSmiles() {
     std::string labels[6] = {"b", "b", "", "a", "", ""};
     std::vector<std::string> bondLabels(labels, labels + 6);
     std::string csmiles =
-        MolFragmentToSmiles(*m, atomsToUse, 0, 0, &bondLabels);
+        MolFragmentToSmiles(*m, atomsToUse, nullptr, nullptr, &bondLabels);
     std::cerr << csmiles << std::endl;
     TEST_ASSERT(csmiles == "CaC(bC)bC" || csmiles == "CbC(bC)aC");
     delete m;
@@ -3207,8 +3262,8 @@ void testFragmentSmiles() {
     TEST_ASSERT(m);
     int as[] = {0, 4};
     std::vector<int> atomsToUse(as, as + sizeof(as) / sizeof(int));
-    std::string csmiles =
-        MolFragmentToSmiles(*m, atomsToUse, 0, 0, 0, false, false, -1, false);
+    std::string csmiles = MolFragmentToSmiles(*m, atomsToUse, nullptr, nullptr,
+                                              nullptr, false, false, -1, false);
     std::cerr << csmiles << std::endl;
     TEST_ASSERT(csmiles == "O.C");
     delete m;
@@ -3390,13 +3445,13 @@ void testGithub45() {
     std::string smiles = "CC1CCC[13C]2(C)C1CC[14CH]2C(C)=O";
     m = SmilesToMol(smiles);
     TEST_ASSERT(m);
-    std::string csmiles1a = MolToSmiles(*m);
+    std::string csmiles1a = MolToSmiles(*m, false);
     std::string csmiles1b = MolToSmiles(*m, true);
     std::string smiles2 = "CC1CCC[C]2(C)C1CC[CH]2C(C)=O";
     delete m;
     m = SmilesToMol(smiles2);
     TEST_ASSERT(m);
-    std::string csmiles2a = MolToSmiles(*m);
+    std::string csmiles2a = MolToSmiles(*m, false);
     std::string csmiles2b = MolToSmiles(*m, true);
 
     TEST_ASSERT(csmiles1a == csmiles2a);
@@ -3408,13 +3463,13 @@ void testGithub45() {
     std::string smiles = "CC1CCC[C@@]2(C)C1CC[C@@H]2C(C)=O";
     m = SmilesToMol(smiles);
     TEST_ASSERT(m);
-    std::string csmiles1a = MolToSmiles(*m);
+    std::string csmiles1a = MolToSmiles(*m, false);
     std::string csmiles1b = MolToSmiles(*m, true);
     std::string smiles2 = "CC1CCC[C]2(C)C1CC[CH]2C(C)=O";
     delete m;
     m = SmilesToMol(smiles2);
     TEST_ASSERT(m);
-    std::string csmiles2a = MolToSmiles(*m);
+    std::string csmiles2a = MolToSmiles(*m, false);
     std::string csmiles2b = MolToSmiles(*m, true);
 
     TEST_ASSERT(csmiles1a == csmiles2a);
@@ -3780,6 +3835,41 @@ void testGithub786() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub1652() {
+  BOOST_LOG(rdInfoLog)
+      << "testing github issue 1652: chiral order for "
+         "ring closure after branch for the first atom in the SMILES string"
+      << std::endl;
+  {
+    std::string smiles = "Cl[C@](F)1CC[C@H](F)CC1";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string csmi = MolToSmiles(*m, true);
+    delete m;
+
+    smiles = "[C@](Cl)(F)1CC[C@H](F)CC1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string csmi2 = MolToSmiles(*m, true);
+    TEST_ASSERT(csmi == csmi2);
+    delete m;
+  }
+  {
+    std::string smiles = "F[C@@]1(C)CCO1";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string csmi = MolToSmiles(*m, true);
+    delete m;
+
+    smiles = "[C@@](F)1(C)CCO1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string csmi2 = MolToSmiles(*m, true);
+    TEST_ASSERT(csmi == csmi2);
+    delete m;
+  }
+}
+
 void testDativeBonds() {
   BOOST_LOG(rdInfoLog) << "testing dative bond support" << std::endl;
   {
@@ -3789,8 +3879,9 @@ void testDativeBonds() {
 
     int dative_bond_count = 0;
     for (size_t i = 0; i < m->getNumBonds(); i++) {
-      if (m->getBondWithIdx(i)->getBondType() == Bond::DATIVE)
+      if (m->getBondWithIdx(i)->getBondType() == Bond::DATIVE) {
         dative_bond_count++;
+      }
     }
     TEST_ASSERT(dative_bond_count == 1);
 
@@ -3805,8 +3896,9 @@ void testDativeBonds() {
 
     int dative_bond_count = 0;
     for (size_t i = 0; i < m->getNumBonds(); i++) {
-      if (m->getBondWithIdx(i)->getBondType() == Bond::DATIVE)
+      if (m->getBondWithIdx(i)->getBondType() == Bond::DATIVE) {
         dative_bond_count++;
+      }
     }
     TEST_ASSERT(dative_bond_count == 2);
 
@@ -3899,13 +3991,14 @@ void testSmilesParseParams() {
   {  // basic name parsing
     std::string smiles = "CCCC the_name";
     ROMol *m = SmilesToMol(smiles);
-    TEST_ASSERT(!m);
-    {  // no removeHs, no sanitization
+    TEST_ASSERT(m);
+    {  // it's ignored
       SmilesParserParams params;
       m = SmilesToMol(smiles, params);
-      TEST_ASSERT(!m);
+      TEST_ASSERT(m);
+      TEST_ASSERT(!m->hasProp(common_properties::_Name));
     }
-    {  // no removeHs, no sanitization
+    {
       SmilesParserParams params;
       params.parseName = true;
       m = SmilesToMol(smiles, params);
@@ -3945,6 +4038,243 @@ void testSmilesParseParams() {
       delete m;
     }
   }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testRingClosureNumberWithBrackets() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
+  BOOST_LOG(rdInfoLog)
+      << "Testing the %(....) notation for SMILES ring closure numbers\n"
+      << std::endl;
+  {
+    const char *benzenes[6] = {
+        "c1ccccc1",           "c%(1)ccccc%(1)",       "c%(12)ccccc%(12)",
+        "c%(123)ccccc%(123)", "c%(1234)ccccc%(1234)", "c%(99999)ccccc%(99999)"};
+    for (auto &i : benzenes) {
+      BOOST_LOG(rdInfoLog) << "Test: " << i << " (should be read)" << std::endl;
+      ROMol *m = SmilesToMol(i);
+      TEST_ASSERT(m);
+      TEST_ASSERT(m->getNumAtoms() == 6);
+      TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic());
+      std::string benzene = MolToSmiles(*m, false, false, -1, false);
+      TEST_ASSERT(benzene == "c1ccccc1");
+      delete m;
+    }
+
+    const char *not_allowed[2] = {"c%()ccccc%()", "c%(100000)ccccc%(100000)"};
+    for (auto &i : not_allowed) {
+      BOOST_LOG(rdInfoLog) << "Test: " << i << " (should NOT be read)"
+                           << std::endl;
+      ROMol *m = SmilesToMol(i);
+      TEST_ASSERT(m == (ROMol *)nullptr);
+      delete m;
+    }
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testIsomericSmilesIsDefault() {
+  BOOST_LOG(rdInfoLog)
+      << "Testing that isomeric SMILES is now the default output" << std::endl;
+  {
+    std::string smi = "C[C@H](Cl)Br";
+    auto m = SmilesToMol(smi);
+    TEST_ASSERT(m)
+    auto csmi = MolToSmiles(*m);
+    TEST_ASSERT(csmi.find("@") != std::string::npos);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testHashAtomExtension() {
+  BOOST_LOG(rdInfoLog) << "Testing constructs like [#6]" << std::endl;
+  {
+    std::string smi = "[#6][12#6]";
+    auto m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getAtomicNum() == 6);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getIsotope() == 0);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getAtomicNum() == 6);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getIsotope() == 12);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testGithub1925() {
+  BOOST_LOG(rdInfoLog) << "Testing Github #1925: Atom with bond to itself is "
+                          "accepted by the SMILES parser."
+                       << std::endl;
+  {
+    std::string smi = "C1CC111";
+    RWMol *m = nullptr;
+    m = SmilesToMol(smi);
+    TEST_ASSERT(!m);
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testdoRandomSmileGeneration() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "Testing the random Generator for SMILES"
+                       << std::endl;
+  {
+    // it's not trivial to test this because we're using std::rand(), which does
+    // not give consistent results across platforms. It's not worth adding the
+    // complexity of a real RNG, so we do some hand waving in the tests
+    std::srand(0xf00d);  // be sure we use it for testcase!
+    const std::vector<std::string> benzenes = {"COc1ccnc(CC)c1C"};
+
+    const std::vector<std::string> rulesmiles = {
+        "COc1ccnc(CC)c1C",     "O(C)c1ccnc(CC)c1C",   "c1(OC)ccnc(CC)c1C",
+        "c1c(OC)c(C)c(CC)nc1", "c1cc(OC)c(C)c(CC)n1", "n1ccc(OC)c(C)c1CC",
+        "c1(CC)nccc(OC)c1C",   "C(c1nccc(OC)c1C)C",   "CCc1nccc(OC)c1C",
+        "c1(C)c(OC)ccnc1CC",   "Cc1c(OC)ccnc1CC"};
+
+    for (auto bz : benzenes) {
+      ROMol *m = SmilesToMol(bz);
+      TEST_ASSERT(m);
+      TEST_ASSERT(m->getNumAtoms() == 11);
+      for (unsigned int j = 0; j < m->getNumAtoms(); ++j) {
+        auto rulebenzene =
+            MolToSmiles(*m, true, false, j, false, false, false, false);
+        // BOOST_LOG(rdInfoLog) << "rule :" << rulebenzene << std::endl;
+        // std::cout << "\"" << rulebenzene << "\", ";
+        TEST_ASSERT(rulebenzene == rulesmiles[j]);
+        std::set<std::string> rsmis;
+        for (unsigned int iter = 0; iter < 10; ++iter) {
+          auto randombenzene =
+              MolToSmiles(*m, true, false, j, false, false, false, true);
+          // BOOST_LOG(rdInfoLog) << "random :" << j << " " << iter << " "
+          //                      << randombenzene << std::endl;
+          rsmis.insert(randombenzene);
+        }
+        // we will get dupes, but there's enough choice available here that we
+        // should have gotten at least 3 unique
+        TEST_ASSERT(rsmis.size() >= 3);
+      }
+      // std::cout << std::endl;
+
+      // confirm that we also use random starting points:
+      std::set<char> starts;
+      for (unsigned int iter = 0; iter < 50; ++iter) {
+        auto randombenzene =
+            MolToSmiles(*m, true, false, -1, false, false, false, true);
+        // BOOST_LOG(rdInfoLog) << "random :" << j << " " << iter << " "
+        //                      << randombenzene << std::endl;
+        starts.insert(randombenzene[0]);
+      }
+      // we will get dupes, but there's enough choice available here that we
+      // should have gotten at least 3 unique
+      TEST_ASSERT(starts.find('C') != starts.end());
+      TEST_ASSERT(starts.find('c') != starts.end());
+      TEST_ASSERT(starts.find('n') != starts.end() ||
+                  starts.find('O') != starts.end());
+
+      delete m;
+    }
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testGithub1972() {
+  BOOST_LOG(rdInfoLog)
+      << "Testing Github #1972: Incorrect tetrahedral stereo when reading "
+         "SMILES with ring closure as last neighbor"
+      << std::endl;
+  {
+    std::vector<std::vector<std::string>> smiles = {
+        {"[C@@]1(Cl)(F)(I).Br1", "[C@@](Br)(Cl)(F)(I)"},
+        {"[C@@](Cl)(F)(I)1.Br1", "[C@@](Cl)(F)(I)Br"},
+        {"[C@@](Cl)1(F)(I).Br1", "[C@@](Cl)(Br)(F)(I)"},
+        {"[C@@](Cl)(F)1(I).Br1", "[C@@](Cl)(F)(Br)(I)"}};
+    for (const auto &pr : smiles) {
+      // std::cerr << "--------------------------" << std::endl;
+      // std::cerr << pr[0] << " " << pr[1] << std::endl;
+      std::unique_ptr<ROMol> m1(SmilesToMol(pr[0]));
+      // std::cerr << "------------" << std::endl;
+      std::unique_ptr<ROMol> m2(SmilesToMol(pr[1]));
+      TEST_ASSERT(m1);
+      TEST_ASSERT(m2);
+      // m1->debugMol(std::cerr);
+      // std::cerr << "------------" << std::endl;
+      // m2->debugMol(std::cerr);
+      auto csmi1 = MolToSmiles(*m1);
+      auto csmi2 = MolToSmiles(*m2);
+      // std::cerr << ">>> " << (csmi1 == csmi2) << " " << csmi1 << " " << csmi2
+      //           << std::endl;
+      TEST_ASSERT(csmi1 == csmi2);
+    }
+  }
+  {  // even stupider examples
+    std::vector<std::vector<std::string>> smiles = {
+        {"[C@@]1(Cl)2(I).Br1.F2", "[C@@](Br)(Cl)(F)(I)"},
+        {"[C@@](Cl)2(I)1.Br1.F2", "[C@@](Cl)(F)(I)Br"},
+        {"[C@@]12(Cl)(I).Br1.F2", "[C@@](Br)(F)(Cl)(I)"},
+        {"[C@@]21(Cl)(I).Br1.F2", "[C@@](F)(Br)(Cl)(I)"},
+        {"[C@@](Cl)12(I).Br1.F2", "[C@@](Cl)(Br)(F)(I)"},
+        {"[C@@](Cl)21(I).Br1.F2", "[C@@](Cl)(F)(Br)(I)"},
+        {"[C@@](Cl)(I)21.Br1.F2", "[C@@](Cl)(I)(F)(Br)"},
+        {"[C@@](Cl)(I)12.Br1.F2", "[C@@](Cl)(I)(Br)(F)"}};
+    for (const auto &pr : smiles) {
+      // std::cerr << "--------------------------" << std::endl;
+      // std::cerr << pr[0] << " " << pr[1] << std::endl;
+      std::unique_ptr<ROMol> m1(SmilesToMol(pr[0]));
+      // std::cerr << "------------" << std::endl;
+      std::unique_ptr<ROMol> m2(SmilesToMol(pr[1]));
+      TEST_ASSERT(m1);
+      TEST_ASSERT(m2);
+      // m1->debugMol(std::cerr);
+      // std::cerr << "------------" << std::endl;
+      // m2->debugMol(std::cerr);
+      auto csmi1 = MolToSmiles(*m1);
+      auto csmi2 = MolToSmiles(*m2);
+      // std::cerr << ">>> " << (csmi1 == csmi2) << " " << csmi1 << " " << csmi2
+      //           << std::endl;
+      TEST_ASSERT(csmi1 == csmi2);
+    }
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testGithub2556() {
+  BOOST_LOG(rdInfoLog) << "Testing Github #2556: Test correct parsing and fix "
+                          "memory leak for C1C1"
+                       << std::endl;
+  RWMol *m = nullptr;
+  m = SmilesToMol("C1C1");
+  TEST_ASSERT(!m);
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testGithub1028() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing github issue #1028: Alternating canonical "
+                          "SMILES for ring with chiral N"
+                       << std::endl;
+
+  {
+    const std::string smi = "O[C@H]1CC2CCC(C1)[N@@]2C";
+    const std::string ref = "C[N@]1C2CCC1C[C@H](O)C2";
+    for (int i = 0; i < 3; ++i) {
+      const auto mol = std::unique_ptr<ROMol>(SmilesToMol(smi));
+      TEST_ASSERT(mol);
+      const std::string out = MolToSmiles(*mol);
+      TEST_ASSERT(out == ref);
+    }
+
+    {
+      const std::string smi = "C[N@]1C[C@@H](O)C1";
+      for (int i = 0; i < 3; ++i) {
+        const auto mol = std::unique_ptr<ROMol>(SmilesToMol(smi));
+        TEST_ASSERT(mol);
+        const std::string out = MolToSmiles(*mol);
+        TEST_ASSERT(out == smi);
+      }
+    }
+  }
+
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
@@ -4002,8 +4332,8 @@ int main(int argc, char *argv[]) {
   testGithub378();
   testGithub389();
   testBug1719046();
-#endif
   testBug1844617();
+
 #if 1  // POSTPONED during canonicalization rewrite
   // testGithub298();
   testFragmentSmiles();
@@ -4016,4 +4346,14 @@ int main(int argc, char *argv[]) {
   testDativeBonds();
   testGithub1219();
   testSmilesParseParams();
+  testRingClosureNumberWithBrackets();
+  testGithub1652();
+  testIsomericSmilesIsDefault();
+  testHashAtomExtension();
+  testGithub1925();
+  testGithub1972();
+  testGithub2556();
+#endif
+  testdoRandomSmileGeneration();
+  testGithub1028();
 }

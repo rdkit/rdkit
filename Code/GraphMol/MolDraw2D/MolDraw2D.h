@@ -19,6 +19,7 @@
 // library-specific drawing code such as drawing lines, writing strings
 // etc.
 
+#include <RDGeneral/export.h>
 #ifndef RDKITMOLDRAW2D_H
 #define RDKITMOLDRAW2D_H
 
@@ -28,14 +29,40 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/ChemReactions/Reaction.h>
 
-#include <boost/tuple/tuple.hpp>
-
 // ****************************************************************************
 using RDGeom::Point2D;
 
 namespace RDKit {
 
-typedef boost::tuple<float, float, float> DrawColour;
+struct DrawColour {
+  double r = 0.0, g = 0.0, b = 0.0, a = 1.0;
+  DrawColour(){};
+  DrawColour(double r, double g, double b, double a = 1.0)
+      : r(r), g(g), b(b), a(a){};
+  bool operator==(const DrawColour &other) const {
+    return r == other.r && g == other.g && b == other.b && a == other.a;
+  }
+  bool feq(const DrawColour &other, double tol = 0.001,
+           bool ignoreAlpha = true) const {
+    return fabs(r - other.r) <= tol && fabs(g - other.g) <= tol &&
+           fabs(b - other.b) <= tol &&
+           (ignoreAlpha || fabs(a - other.a) <= tol);
+  };
+  DrawColour operator+(const DrawColour &other) const {
+    return DrawColour(r + other.r, g + other.g, b + other.b, a + other.a);
+  }
+  DrawColour operator-(const DrawColour &other) const {
+    return DrawColour(r - other.r, g - other.g, b - other.b, a - other.a);
+  }
+  DrawColour operator/(double v) const {
+    PRECONDITION(v != 0.0, "divide by zero");
+    return DrawColour(r / v, g / v, b / v, a / v);
+  }
+  DrawColour operator*(double v) const {
+    return DrawColour(r * v, g * v, b * v, a * v);
+  }
+};
+
 typedef std::map<int, DrawColour> ColourPalette;
 typedef std::vector<unsigned int> DashPattern;
 
@@ -59,7 +86,7 @@ inline void assignBWPalette(ColourPalette &palette) {
   palette[-1] = DrawColour(0, 0, 0);
 };
 
-struct MolDrawOptions {
+struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   bool atomLabelDeuteriumTritium;  // toggles replacing 2H with D and 3H with T
   bool dummiesAreAttachments;      // draws "breaks" at dummy atoms
   bool circleAtoms;                // draws circles under highlighted atoms
@@ -85,10 +112,14 @@ struct MolDrawOptions {
   double additionalAtomLabelPadding;  // additional padding to leave around atom
                                       // labels. Expressed as a fraction of the
                                       // font size.
-  std::map<int, std::string> atomLabels;       // replacement labels for atoms
-  std::vector<std::vector<int> > atomRegions;  // regions
+  std::map<int, std::string> atomLabels;      // replacement labels for atoms
+  std::vector<std::vector<int>> atomRegions;  // regions
   DrawColour
       symbolColour;  // color to be used for the symbols and arrows in reactions
+  int bondLineWidth;  // if positive, this overrides the default line width
+                      // when drawing bonds
+  bool prepareMolsBeforeDrawing;  // call prepareMolForDrawing() on each
+                                  // molecule passed to drawMolecules()
   std::vector<DrawColour> highlightColourPalette;  // defining 10 default colors
   // for highlighting atoms and bonds
   // or reactants in a reactions
@@ -112,7 +143,9 @@ struct MolDrawOptions {
         multipleBondOffset(0.15),
         padding(0.05),
         additionalAtomLabelPadding(0.0),
-        symbolColour(0, 0, 0) {
+        symbolColour(0, 0, 0),
+        bondLineWidth(-1),
+        prepareMolsBeforeDrawing(true) {
     highlightColourPalette.push_back(
         DrawColour(1., 1., .67));                              // popcorn yellow
     highlightColourPalette.push_back(DrawColour(1., .8, .6));  // sand
@@ -129,7 +162,7 @@ struct MolDrawOptions {
 };
 
 //! MolDraw2D is the base class for doing 2D renderings of molecules
-class MolDraw2D {
+class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
  public:
   typedef enum { C = 0, N, E, S, W } OrientType;
   typedef enum {
@@ -149,7 +182,21 @@ class MolDraw2D {
     sizes of the panels individual molecules are drawn in when
     \c drawMolecules() is called.
   */
-  MolDraw2D(int width, int height, int panelWidth = -1, int panelHeight = -1);
+  MolDraw2D(int width, int height, int panelWidth, int panelHeight)
+      : needs_scale_(true),
+        width_(width),
+        height_(height),
+        panel_width_(panelWidth > 0 ? panelWidth : width),
+        panel_height_(panelHeight > 0 ? panelHeight : height),
+        scale_(1.0),
+        x_trans_(0.0),
+        y_trans_(0.0),
+        x_offset_(0),
+        y_offset_(0),
+        font_size_(0.5),
+        curr_width_(2),
+        fill_polys_(true),
+        activeMolIdx_(-1) {}
 
   virtual ~MolDraw2D() {}
 
@@ -176,30 +223,30 @@ class MolDraw2D {
       const ROMol &mol, const std::string &legend,
       const std::vector<int> *highlight_atoms,
       const std::vector<int> *highlight_bonds,
-      const std::map<int, DrawColour> *highlight_atom_map = NULL,
-      const std::map<int, DrawColour> *highlight_bond_map = NULL,
-      const std::map<int, double> *highlight_radii = NULL, int confId = -1);
+      const std::map<int, DrawColour> *highlight_atom_map = nullptr,
+      const std::map<int, DrawColour> *highlight_bond_map = nullptr,
+      const std::map<int, double> *highlight_radii = nullptr, int confId = -1);
 
   //! \overload
   virtual void drawMolecule(
-      const ROMol &mol, const std::vector<int> *highlight_atoms = NULL,
-      const std::map<int, DrawColour> *highlight_map = NULL,
-      const std::map<int, double> *highlight_radii = NULL, int confId = -1);
+      const ROMol &mol, const std::vector<int> *highlight_atoms = nullptr,
+      const std::map<int, DrawColour> *highlight_map = nullptr,
+      const std::map<int, double> *highlight_radii = nullptr, int confId = -1);
 
   //! \overload
   virtual void drawMolecule(
       const ROMol &mol, const std::string &legend,
-      const std::vector<int> *highlight_atoms = NULL,
-      const std::map<int, DrawColour> *highlight_map = NULL,
-      const std::map<int, double> *highlight_radii = NULL, int confId = -1);
+      const std::vector<int> *highlight_atoms = nullptr,
+      const std::map<int, DrawColour> *highlight_map = nullptr,
+      const std::map<int, double> *highlight_radii = nullptr, int confId = -1);
 
   //! \overload
   virtual void drawMolecule(
       const ROMol &mol, const std::vector<int> *highlight_atoms,
       const std::vector<int> *highlight_bonds,
-      const std::map<int, DrawColour> *highlight_atom_map = NULL,
-      const std::map<int, DrawColour> *highlight_bond_map = NULL,
-      const std::map<int, double> *highlight_radii = NULL, int confId = -1);
+      const std::map<int, DrawColour> *highlight_atom_map = nullptr,
+      const std::map<int, DrawColour> *highlight_bond_map = nullptr,
+      const std::map<int, double> *highlight_radii = nullptr, int confId = -1);
 
   //! draw multiple molecules in a grid
   /*!
@@ -229,13 +276,15 @@ class MolDraw2D {
   */
   virtual void drawMolecules(
       const std::vector<ROMol *> &mols,
-      const std::vector<std::string> *legends = NULL,
-      const std::vector<std::vector<int> > *highlight_atoms = NULL,
-      const std::vector<std::vector<int> > *highlight_bonds = NULL,
-      const std::vector<std::map<int, DrawColour> > *highlight_atom_maps = NULL,
-      const std::vector<std::map<int, DrawColour> > *highlight_bond_maps = NULL,
-      const std::vector<std::map<int, double> > *highlight_radii = NULL,
-      const std::vector<int> *confIds = NULL);
+      const std::vector<std::string> *legends = nullptr,
+      const std::vector<std::vector<int>> *highlight_atoms = nullptr,
+      const std::vector<std::vector<int>> *highlight_bonds = nullptr,
+      const std::vector<std::map<int, DrawColour>> *highlight_atom_maps =
+          nullptr,
+      const std::vector<std::map<int, DrawColour>> *highlight_bond_maps =
+          nullptr,
+      const std::vector<std::map<int, double>> *highlight_radii = nullptr,
+      const std::vector<int> *confIds = nullptr);
 
   //! draw a ChemicalReaction
   /*!
@@ -251,8 +300,8 @@ class MolDraw2D {
   */
   virtual void drawReaction(
       const ChemicalReaction &rxn, bool highlightByReactant = false,
-      const std::vector<DrawColour> *highlightColorsReactants = NULL,
-      const std::vector<int> *confIds = NULL);
+      const std::vector<DrawColour> *highlightColorsReactants = nullptr,
+      const std::vector<int> *confIds = nullptr);
 
   //! \name Transformations
   //@{
@@ -292,7 +341,9 @@ class MolDraw2D {
   double scale() const { return scale_; }
   //! calculates the drawing scale (conversion from molecular coords -> drawing
   // coords)
-  void calculateScale(int width, int height);
+  void calculateScale(int width, int height,
+                      const std::vector<int> *highlight_atoms = nullptr,
+                      const std::map<int, double> *highlight_radii = nullptr);
   //! \overload
   void calculateScale() { calculateScale(panel_width_, panel_height_); };
   //! explicitly sets the scaling factors for the drawing
@@ -304,8 +355,14 @@ class MolDraw2D {
     y_offset_ = y;
   }
   //! returns the drawing offset (in drawing coords)
-  Point2D offset() { return Point2D(x_offset_, y_offset_); }
-  //! returns the font size (in nolecule units)
+  Point2D offset() const { return Point2D(x_offset_, y_offset_); }
+
+  //! returns the minimum point of the drawing (in molecular coords)
+  Point2D minPt() const { return Point2D(x_min_, y_min_); }
+  //! returns the width and height of the grid (in molecular coords)
+  Point2D range() const { return Point2D(x_range_, y_range_); }
+
+  //! returns the font size (in molecule units)
   virtual double fontSize() const { return font_size_; }
   //! set font size in molecule coordinate units. That's probably Angstrom for
   //! RDKit.
@@ -331,7 +388,7 @@ class MolDraw2D {
   //! \returns true or false depending on whether it did something or not
   bool setStringDrawMode(const std::string &instring, TextDrawType &draw_mode,
                          int &i) const;
-  //! clears the contes of the drawingd]
+  //! clears the contents of the drawing
   virtual void clearDrawing() = 0;
   //! draws a line from \c cds1 to \c cds2 using the current drawing style
   virtual void drawLine(const Point2D &cds1, const Point2D &cds2) = 0;
@@ -350,7 +407,7 @@ class MolDraw2D {
 
   //! draw a polygon
   virtual void drawPolygon(const std::vector<Point2D> &cds) = 0;
-  //! draw a triange
+  //! draw a triangle
   virtual void drawTriangle(const Point2D &cds1, const Point2D &cds2,
                             const Point2D &cds3);
   //! draw an ellipse
@@ -372,7 +429,7 @@ class MolDraw2D {
   virtual void tagAtoms(const ROMol &mol) { RDUNUSED_PARAM(mol); };
   //! set whether or not polygons are being filled
   virtual bool fillPolys() const { return fill_polys_; }
-  //! returns ehther or not polygons should be filled
+  //! returns either or not polygons should be filled
   virtual void setFillPolys(bool val) { fill_polys_ = val; }
 
   //! returns our current drawing options
@@ -387,10 +444,14 @@ class MolDraw2D {
     return at_cds_[activeMolIdx_];
   };
   //! returns the atomic symbols of the current molecule
-  const std::vector<std::pair<std::string, OrientType> > &atomSyms() const {
+  const std::vector<std::pair<std::string, OrientType>> &atomSyms() const {
     PRECONDITION(activeMolIdx_ >= 0, "no index");
     return atom_syms_[activeMolIdx_];
   };
+  //! Draw an arrow with either lines or a filled head (when asPolygon is true)
+  virtual void drawArrow(const Point2D &cds1, const Point2D &cds2,
+                         bool asPolygon = false, double frac = 0.05,
+                         double angle = M_PI / 6);
 
  private:
   bool needs_scale_;
@@ -410,9 +471,9 @@ class MolDraw2D {
   DashPattern curr_dash_;
   MolDrawOptions options_;
 
-  std::vector<std::vector<Point2D> > at_cds_;  // from mol
-  std::vector<std::vector<int> > atomic_nums_;
-  std::vector<std::vector<std::pair<std::string, OrientType> > > atom_syms_;
+  std::vector<std::vector<Point2D>> at_cds_;  // from mol
+  std::vector<std::vector<int>> atomic_nums_;
+  std::vector<std::vector<std::pair<std::string, OrientType>>> atom_syms_;
   Point2D bbox_[2];
 
   // draw the char, with the bottom left hand corner at cds
@@ -420,9 +481,9 @@ class MolDraw2D {
 
   // return a DrawColour based on the contents of highlight_atoms or
   // highlight_map, falling back to atomic number by default
-  DrawColour getColour(int atom_idx,
-                       const std::vector<int> *highlight_atoms = NULL,
-                       const std::map<int, DrawColour> *highlight_map = NULL);
+  DrawColour getColour(
+      int atom_idx, const std::vector<int> *highlight_atoms = nullptr,
+      const std::map<int, DrawColour> *highlight_map = nullptr);
   DrawColour getColourByAtomicNum(int atomic_num);
 
   void extractAtomCoords(const ROMol &mol, int confId, bool updateBBox);
@@ -430,26 +491,21 @@ class MolDraw2D {
 
   virtual void drawLine(const Point2D &cds1, const Point2D &cds2,
                         const DrawColour &col1, const DrawColour &col2);
-  void drawBond(const ROMol &mol, const BOND_SPTR &bond, int at1_idx,
-                int at2_idx, const std::vector<int> *highlight_atoms = NULL,
-                const std::map<int, DrawColour> *highlight_atom_map = NULL,
-                const std::vector<int> *highlight_bonds = NULL,
-                const std::map<int, DrawColour> *highlight_bond_map = NULL);
   void drawWedgedBond(const Point2D &cds1, const Point2D &cds2,
                       bool draw_dashed, const DrawColour &col1,
                       const DrawColour &col2);
   void drawAtomLabel(int atom_num,
-                     const std::vector<int> *highlight_atoms = NULL,
-                     const std::map<int, DrawColour> *highlight_map = NULL);
+                     const std::vector<int> *highlight_atoms = nullptr,
+                     const std::map<int, DrawColour> *highlight_map = nullptr);
   // cds1 and cds2 are 2 atoms in a ring.  Returns the perpendicular pointing
   // into
   // the ring.
-  Point2D bondInsideRing(const ROMol &mol, const BOND_SPTR &bond,
+  Point2D bondInsideRing(const ROMol &mol, const Bond *bond,
                          const Point2D &cds1, const Point2D &cds2);
   // cds1 and cds2 are 2 atoms in a chain double bond.  Returns the
   // perpendicular
   // pointing into the inside of the bond
-  Point2D bondInsideDoubleBond(const ROMol &mol, const BOND_SPTR &bond);
+  Point2D bondInsideDoubleBond(const ROMol &mol, const Bond *bond);
   // calculate normalised perpendicular to vector between two coords, such
   // that
   // it's inside the angle made between (1 and 2) and (2 and 3).
@@ -475,10 +531,16 @@ class MolDraw2D {
       const std::map<int, double> *highlight_radii);
 
   virtual void highlightCloseContacts();
+  virtual void drawBond(
+      const ROMol &mol, const Bond *bond, int at1_idx, int at2_idx,
+      const std::vector<int> *highlight_atoms = nullptr,
+      const std::map<int, DrawColour> *highlight_atom_map = nullptr,
+      const std::vector<int> *highlight_bonds = nullptr,
+      const std::map<int, DrawColour> *highlight_bond_map = nullptr);
 
   // calculate normalised perpendicular to vector between two coords
   Point2D calcPerpendicular(const Point2D &cds1, const Point2D &cds2);
 };
-}
+}  // namespace RDKit
 
 #endif  // RDKITMOLDRAW2D_H

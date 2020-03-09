@@ -28,7 +28,7 @@ void MolDraw2DCairo::finishDrawing() {}
 void MolDraw2DCairo::setColour(const DrawColour &col) {
   PRECONDITION(dp_cr, "no draw context");
   MolDraw2D::setColour(col);
-  cairo_set_source_rgb(dp_cr, col.get<0>(), col.get<1>(), col.get<2>());
+  cairo_set_source_rgb(dp_cr, col.r, col.g, col.b);
 }
 
 // ****************************************************************************
@@ -44,11 +44,12 @@ void MolDraw2DCairo::drawLine(const Point2D &cds1, const Point2D &cds2) {
 
   const DashPattern &dashes = dash();
   if (dashes.size()) {
-    double dd[dashes.size()];
+    auto *dd = new double[dashes.size()];
     std::copy(dashes.begin(), dashes.end(), dd);
     cairo_set_dash(dp_cr, dd, dashes.size(), 0);
+    delete[] dd;
   } else {
-    cairo_set_dash(dp_cr, 0, 0, 0);
+    cairo_set_dash(dp_cr, nullptr, 0, 0);
   }
 
   cairo_move_to(dp_cr, c1.x, c1.y);
@@ -62,9 +63,11 @@ void MolDraw2DCairo::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
                                   unsigned int nSegments, double vertOffset) {
   PRECONDITION(dp_cr, "no draw context");
   PRECONDITION(nSegments > 1, "too few segments");
+  RDUNUSED_PARAM(col2);
 
-  if (nSegments % 2)
+  if (nSegments % 2) {
     ++nSegments;  // we're going to assume an even number of segments
+  }
 
   Point2D perp = calcPerpendicular(cds1, cds2);
   Point2D delta = (cds2 - cds1);
@@ -75,7 +78,7 @@ void MolDraw2DCairo::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
 
   unsigned int width = lineWidth();
   cairo_set_line_width(dp_cr, width);
-  cairo_set_dash(dp_cr, 0, 0, 0);
+  cairo_set_dash(dp_cr, nullptr, 0, 0);
   setColour(col1);
   cairo_move_to(dp_cr, c1.x, c1.y);
   for (unsigned int i = 0; i < nSegments; ++i) {
@@ -118,18 +121,21 @@ void MolDraw2DCairo::drawPolygon(const std::vector<Point2D> &cds) {
   cairo_set_line_cap(dp_cr, CAIRO_LINE_CAP_BUTT);
   cairo_set_line_join(dp_cr, CAIRO_LINE_JOIN_BEVEL);
   cairo_set_line_width(dp_cr, lineWidth());
-  cairo_set_dash(dp_cr, 0, 0, 0);
+  cairo_set_dash(dp_cr, nullptr, 0, 0);
 
   for (unsigned int i = 0; i < cds.size(); ++i) {
     Point2D lc = getDrawCoords(cds[i]);
-    if (!i)
+    if (!i) {
       cairo_move_to(dp_cr, lc.x, lc.y);
-    else
+    } else {
       cairo_line_to(dp_cr, lc.x, lc.y);
+    }
   }
 
   cairo_close_path(dp_cr);
-  if (fillPolys()) cairo_fill_preserve(dp_cr);
+  if (fillPolys()) {
+    cairo_fill_preserve(dp_cr);
+  }
   cairo_stroke(dp_cr);
   cairo_set_line_cap(dp_cr, olinecap);
   cairo_set_line_join(dp_cr, olinejoin);
@@ -202,11 +208,11 @@ void MolDraw2DCairo::getStringSize(const std::string &label,
 namespace {
 cairo_status_t grab_str(void *closure, const unsigned char *data,
                         unsigned int len) {
-  std::string *str_ptr = (std::string *)closure;
+  auto *str_ptr = (std::string *)closure;
   (*str_ptr) += std::string((const char *)data, len);
   return CAIRO_STATUS_SUCCESS;
 }
-}
+}  // namespace
 std::string MolDraw2DCairo::getDrawingText() const {
   PRECONDITION(dp_cr, "no draw context");
   std::string res = "";
@@ -221,4 +227,4 @@ void MolDraw2DCairo::writeDrawingText(const std::string &fName) const {
   cairo_surface_write_to_png(surf, fName.c_str());
 };
 
-}  // EO namespace RDKit
+}  // namespace RDKit

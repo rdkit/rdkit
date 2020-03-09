@@ -9,6 +9,7 @@
 //  of the RDKit source tree.
 //
 
+#include <RDGeneral/export.h>
 #ifndef HANOISORT_H_
 #define HANOISORT_H_
 
@@ -19,12 +20,16 @@
 
 #if defined(_MSC_VER)
 #pragma warning(push, 1)
-#pragma warning(disable: 4800)
+#pragma warning(disable : 4800)
 #endif
 namespace RDKit {
 template <typename CompareFunc>
 bool hanoi(int *base, int nel, int *temp, int *count, int *changed,
            CompareFunc compar) {
+  assert(base);
+  assert(temp);
+  assert(count);
+  assert(changed);
   // std::cerr<<"  hanoi: "<<nel<< " start " << (*base)+1 << std::endl;
   int *b1, *b2;
   int *t1, *t2;
@@ -139,14 +144,14 @@ bool hanoi(int *base, int nel, int *temp, int *count, int *changed,
 template <typename CompareFunc>
 void hanoisort(int *base, int nel, int *count, int *changed,
                CompareFunc compar) {
-  int *temp;
-
-  temp = (int *)malloc(nel * sizeof(int));
+  assert(base);
+  int *temp = (int *)malloc(nel * sizeof(int));
+  assert(temp);
   if (hanoi(base, nel, temp, count, changed, compar))
     memmove(base, temp, nel * sizeof(int));
   free(temp);
 }
-}
+}  // namespace RDKit
 
 #if defined(_MSC_VER)
 #pragma warning(pop)

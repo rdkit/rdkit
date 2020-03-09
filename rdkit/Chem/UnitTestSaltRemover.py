@@ -4,8 +4,7 @@ import unittest
 import os
 from rdkit import Chem
 
-import Chem.SaltRemover
-from Chem.SaltRemover import SaltRemover, InputFormat
+from rdkit.Chem.SaltRemover import SaltRemover, InputFormat
 
 def load_tests(loader, tests, ignore):
   """ Add the Doctests from the module """

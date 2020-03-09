@@ -28,7 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-from __future__ import print_function
+
 
 import unittest
 import os,sys, copy
@@ -343,14 +343,14 @@ expected = [
 class TestCase(unittest.TestCase) :
     def test_basics(self):
         fname = os.path.join(os.environ["RDBASE"],
-                             "External", "FreeSASA", "freesasa-master", "tests", "data", "1d3z.pdb")
+                             "External", "FreeSASA", "test_data", "1d3z.pdb")
         mol = Chem.MolFromPDBFile(fname)
         radii = rdFreeSASA.classifyAtoms(mol)
         for atom in mol.GetAtoms():
             self.assertEqual( expected[atom.GetIdx()][3], radii[atom.GetIdx()] )
         leeRichards = 5004.79964427
         shrakerupley = 5000.340175
-        
+
         sasa = rdFreeSASA.CalcSASA(mol, radii=radii)
         self.assertTrue( (sasa-leeRichards) < 1e-5 )
 
@@ -360,12 +360,12 @@ class TestCase(unittest.TestCase) :
 
         apolar = rdFreeSASA.CalcSASA(mol, radii, query=rdFreeSASA.MakeFreeSasaAPolarAtomQuery(), opts=opts);
         polar = rdFreeSASA.CalcSASA(mol, radii, query=rdFreeSASA.MakeFreeSasaPolarAtomQuery(), opts=opts);
-        
+
         self.assertTrue( (polar + apolar - 5000.340175) < 1e-5 )
 
     def test_opts(self):
         fname = os.path.join(os.environ["RDBASE"],
-                             "External", "FreeSASA", "freesasa-master", "tests", "data", "1d3z.pdb")
+                             "External", "FreeSASA", "test_data", "1d3z.pdb")
         mol = Chem.MolFromPDBFile(fname)
         radii = rdFreeSASA.classifyAtoms(mol)
         for atom in mol.GetAtoms():
@@ -373,6 +373,15 @@ class TestCase(unittest.TestCase) :
         leeRichards = 5004.79964427
         shrakerupley = 5000.340175
         opts = rdFreeSASA.SASAOpts()
+        for alg, res in ( (rdFreeSASA.ShrakeRupley, shrakerupley),
+                          (rdFreeSASA.LeeRichards, leeRichards)):
+            opts.algorithm = alg
+            sasa = rdFreeSASA.CalcSASA(mol, radii=radii, opts=opts)
+            self.assertTrue( abs(sasa-res) < 1e-5 )
+        leeRichards = 5009.93014166
+        shrakerupley = 4977.7709106
+        opts = rdFreeSASA.SASAOpts()
+        opts.probeRadius = 2.0
         for alg, res in ( (rdFreeSASA.ShrakeRupley, shrakerupley),
                           (rdFreeSASA.LeeRichards, leeRichards)):
             opts.algorithm = alg

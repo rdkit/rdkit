@@ -29,7 +29,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Created by Jameed Hussain, July 2013
-from __future__ import print_function
+
 import sys
 import re
 from optparse import OptionParser
@@ -91,7 +91,7 @@ if __name__ == '__main__':
   for transform in infile:
     transform = transform.rstrip()
 
-    #need to conver the smiles to smart to get rid of any potential issues
+    #need to convert the smiles to smart to get rid of any potential issues
     lhs, rhs = transform.split(">>")
 
     if (lhs == "[*:1][H]"):

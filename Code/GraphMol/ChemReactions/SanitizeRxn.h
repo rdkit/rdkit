@@ -29,6 +29,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
+#include <RDGeneral/export.h>
 #ifndef RDKIT_SANITIZERXN_H
 #define RDKIT_SANITIZERXN_H
 
@@ -40,34 +41,35 @@
 namespace RDKit {
 
 //! class for flagging sanitization errors
-class RxnSanitizeException : public std::exception {
+class RDKIT_CHEMREACTIONS_EXPORT RxnSanitizeException : public std::exception {
  public:
   RxnSanitizeException(const char *msg) : _msg(msg){};
   RxnSanitizeException(const std::string &msg) : _msg(msg){};
-  const char *message() const { return _msg.c_str(); };
-  ~RxnSanitizeException() throw(){};
+  const char *what() const noexcept override { return _msg.c_str(); };
+  const char *message() const noexcept { return what(); };
+  ~RxnSanitizeException() noexcept {};
 
  private:
   std::string _msg;
 };
 
-
 namespace RxnOps {
 //! Any dummy atom with a map but no RGroup label, should be an RGroup
 //!  in RDKit's view of a reaction.
 //!  See if these atoms can be salvaged into RGroups.
-void fixRGroups(ChemicalReaction &rxn);
+RDKIT_CHEMREACTIONS_EXPORT void fixRGroups(ChemicalReaction &rxn);
 
-//! If atom maps are not defined on rgroups, attempt to deduce them from the RGroup
+//! If atom maps are not defined on rgroups, attempt to deduce them from the
+//! RGroup
 //!  labels, or add new ones if possible.
-void fixAtomMaps(ChemicalReaction &rxn);
-
+RDKIT_CHEMREACTIONS_EXPORT void fixAtomMaps(ChemicalReaction &rxn);
 
 //! Adjusts the reactant templates to properly match reagents
-void adjustTemplates(ChemicalReaction &rxn, const MolOps::AdjustQueryParameters &params);
+RDKIT_CHEMREACTIONS_EXPORT void adjustTemplates(
+    ChemicalReaction &rxn, const MolOps::AdjustQueryParameters &params);
 
 //! merge query Hs if appropriate
-void fixHs(ChemicalReaction &rxn);
+RDKIT_CHEMREACTIONS_EXPORT void fixHs(ChemicalReaction &rxn);
 
 // Default adjustment parameters for matching reagents
 inline const MolOps::AdjustQueryParameters DefaultRxnAdjustParams() {
@@ -85,8 +87,9 @@ inline const MolOps::AdjustQueryParameters DefaultRxnAdjustParams() {
 //  -- deprecated - renamed MatchOnlyAtRgroupsAdjustParams
 //  -- this doesn't match sciquest style searching
 inline const MolOps::AdjustQueryParameters ChemDrawRxnAdjustParams() {
-  BOOST_LOG(rdWarningLog) <<
-      " deprecated -- please use MatchOnlyAtRgroupsAdjustParams instead" << std::endl;
+  BOOST_LOG(rdWarningLog)
+      << " deprecated -- please use MatchOnlyAtRgroupsAdjustParams instead"
+      << std::endl;
   MolOps::AdjustQueryParameters params;
   params.adjustDegree = true;
   params.adjustDegreeFlags = MolOps::ADJUST_IGNOREDUMMIES;
@@ -143,7 +146,7 @@ typedef enum {
 
    <b>Notes:</b>
     - This attempts to fix known issues with certain reaction drawers.
-       HOWEVER, if any flag is returned in operationsPerformed, 
+       HOWEVER, if any flag is returned in operationsPerformed,
        the reaction may still be suspect to its validity.
     - Aromaticity can be tricky when starting with Kekule structures that
       have query features, aromaticity works well for non-query rings, however
@@ -151,15 +154,16 @@ typedef enum {
       aromatic) may not have enough information.
 */
 
-void sanitizeRxn(ChemicalReaction &rxn,
-                 unsigned int &operationsThatFailed,
-                 unsigned int sanitizeOps = SANITIZE_ALL,
-                 const MolOps::AdjustQueryParameters &params = DefaultRxnAdjustParams());
+RDKIT_CHEMREACTIONS_EXPORT void sanitizeRxn(
+    ChemicalReaction &rxn, unsigned int &operationsThatFailed,
+    unsigned int sanitizeOps = SANITIZE_ALL,
+    const MolOps::AdjustQueryParameters &params = DefaultRxnAdjustParams());
 //! \overload
-void sanitizeRxn(ChemicalReaction &rxn,
-                 const MolOps::AdjustQueryParameters &params = DefaultRxnAdjustParams());
+RDKIT_CHEMREACTIONS_EXPORT void sanitizeRxn(
+    ChemicalReaction &rxn,
+    const MolOps::AdjustQueryParameters &params = DefaultRxnAdjustParams());
 
-}
-}
+}  // namespace RxnOps
+}  // namespace RDKit
 
 #endif

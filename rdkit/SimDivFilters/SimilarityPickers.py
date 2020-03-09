@@ -3,7 +3,7 @@
 # Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 #  All Rights Reserved
 #
-from __future__ import print_function
+
 
 import bisect
 
@@ -32,6 +32,7 @@ class TopNOverallPicker(GenericPicker):
   """  A class for picking the top N overall best matches across a library
 
   Connect to a database and build molecules:
+
   >>> from rdkit import Chem
   >>> from rdkit import RDConfig
   >>> import os.path
@@ -49,6 +50,7 @@ class TopNOverallPicker(GenericPicker):
   12
 
   Calculate fingerprints:
+
   >>> probefps = []
   >>> for mol in mols:
   ...   fp = Chem.RDKFingerprint(mol)
@@ -57,6 +59,7 @@ class TopNOverallPicker(GenericPicker):
 
   Start by finding the top matches for a single probe.  This ether should pull
   other ethers from the db:
+
   >>> mol = Chem.MolFromSmiles('COC')
   >>> probeFp = Chem.RDKFingerprint(mol)
   >>> picker = TopNOverallPicker(numToPick=2,probeFps=[probeFp],dataSet=probefps)
@@ -70,12 +73,14 @@ class TopNOverallPicker(GenericPicker):
   1.0
 
   The results come back in order:
+
   >>> fp,score = picker[1]
   >>> id = fp._id
   >>> str(id)
   'ether-2'
 
   Now find the top matches for 2 probes.  We'll get one ether and one acid:
+
   >>> fps = []
   >>> fps.append(Chem.RDKFingerprint(Chem.MolFromSmiles('COC')))
   >>> fps.append(Chem.RDKFingerprint(Chem.MolFromSmiles('CC(=O)O')))
@@ -133,6 +138,7 @@ class SpreadPicker(GenericPicker):
   """  A class for picking the best matches across a library
 
   Connect to a database:
+
   >>> from rdkit import Chem
   >>> from rdkit import RDConfig
   >>> import os.path
@@ -150,6 +156,7 @@ class SpreadPicker(GenericPicker):
   12
 
   Calculate fingerprints:
+
   >>> probefps = []
   >>> for mol in mols:
   ...   fp = Chem.RDKFingerprint(mol)
@@ -158,6 +165,7 @@ class SpreadPicker(GenericPicker):
 
   Start by finding the top matches for a single probe.  This ether should pull
   other ethers from the db:
+
   >>> mol = Chem.MolFromSmiles('COC')
   >>> probeFp = Chem.RDKFingerprint(mol)
   >>> picker = SpreadPicker(numToPick=2,probeFps=[probeFp],dataSet=probefps)
@@ -171,12 +179,14 @@ class SpreadPicker(GenericPicker):
   1.0
 
   The results come back in order:
+
   >>> fp,score = picker[1]
   >>> id = fp._id
   >>> str(id)
   'ether-2'
 
   Now find the top matches for 2 probes.  We'll get one ether and one acid:
+
   >>> fps = []
   >>> fps.append(Chem.RDKFingerprint(Chem.MolFromSmiles('COC')))
   >>> fps.append(Chem.RDKFingerprint(Chem.MolFromSmiles('CC(=O)O')))

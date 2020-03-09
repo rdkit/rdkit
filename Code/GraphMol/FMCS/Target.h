@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #pragma once
 #include <vector>
 #include <stdexcept>
@@ -23,5 +24,5 @@ struct Target {
   MatchTable AtomMatchTable;
   MatchTable BondMatchTable;
 };
-}
-}
+}  // namespace FMCS
+}  // namespace RDKit

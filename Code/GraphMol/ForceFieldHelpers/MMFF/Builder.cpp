@@ -1,6 +1,4 @@
-// $Id$
-//
-//  Copyright (C) 2013-2016 Paolo Tosco
+//  Copyright (C) 2013-2018 Paolo Tosco
 //
 //  Copyright (C) 2004-2010 Greg Landrum and Rational Discovery LLC
 //
@@ -51,7 +49,8 @@ void addBonds(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
                  "  I        J          I    J   CLASS   LENGTH   LENGTH    "
                  "DIFF.    ENERGY   CONSTANT\n"
                  "-------------------------------------------------------------"
-                 "------------------------" << std::endl;
+                 "------------------------"
+              << std::endl;
     }
   }
   for (ROMol::ConstBondIterator bi = mol.beginBonds(); bi != mol.endBonds();
@@ -62,7 +61,8 @@ void addBonds(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
     MMFFBond mmffBondParams;
     if (mmffMolProperties->getMMFFBondStretchParams(mol, idx1, idx2, bondType,
                                                     mmffBondParams)) {
-      BondStretchContrib *contrib = new BondStretchContrib(field, idx1, idx2, &mmffBondParams);
+      auto *contrib =
+          new BondStretchContrib(field, idx1, idx2, &mmffBondParams);
       field->contribs().push_back(ForceFields::ContribPtr(contrib));
       if (mmffMolProperties->getMMFFVerbosity()) {
         unsigned int iAtomType = mmffMolProperties->getMMFFAtomType(idx1);
@@ -99,24 +99,26 @@ void addBonds(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
 }
 
 unsigned int twoBitCellPos(unsigned int nAtoms, int i, int j) {
-  if (j < i) std::swap(i, j);
+  if (j < i) {
+    std::swap(i, j);
+  }
 
   return i * (nAtoms - 1) + i * (1 - i) / 2 + j;
 }
 
-void setTwoBitCell(boost::shared_array<boost::uint8_t> &res, unsigned int pos,
-                   boost::uint8_t value) {
+void setTwoBitCell(boost::shared_array<std::uint8_t> &res, unsigned int pos,
+                   std::uint8_t value) {
   unsigned int twoBitPos = pos / 4;
   unsigned int shift = 2 * (pos % 4);
-  boost::uint8_t twoBitMask = 3 << shift;
+  std::uint8_t twoBitMask = 3 << shift;
   res[twoBitPos] = ((res[twoBitPos] & (~twoBitMask)) | (value << shift));
 }
 
-boost::uint8_t getTwoBitCell(boost::shared_array<boost::uint8_t> &res,
+std::uint8_t getTwoBitCell(boost::shared_array<std::uint8_t> &res,
                              unsigned int pos) {
   unsigned int twoBitPos = pos / 4;
   unsigned int shift = 2 * (pos % 4);
-  boost::uint8_t twoBitMask = 3 << shift;
+  std::uint8_t twoBitMask = 3 << shift;
 
   return ((res[twoBitPos] & twoBitMask) >> shift);
 }
@@ -133,16 +135,19 @@ boost::uint8_t getTwoBitCell(boost::shared_array<boost::uint8_t> &res,
 //  on the result
 //
 // ------------------------------------------------------------------------
-boost::shared_array<boost::uint8_t> buildNeighborMatrix(const ROMol &mol) {
-  const boost::uint8_t RELATION_1_X_INIT = RELATION_1_X
-    | (RELATION_1_X << 2) | (RELATION_1_X << 4) | (RELATION_1_X << 6);
+boost::shared_array<std::uint8_t> buildNeighborMatrix(const ROMol &mol) {
+  const std::uint8_t RELATION_1_X_INIT = RELATION_1_X | (RELATION_1_X << 2) |
+                                           (RELATION_1_X << 4) |
+                                           (RELATION_1_X << 6);
   unsigned int nAtoms = mol.getNumAtoms();
   unsigned nTwoBitCells = (nAtoms * (nAtoms + 1) - 1) / 8 + 1;
-  boost::shared_array<boost::uint8_t> res(new boost::uint8_t[nTwoBitCells]);
+  boost::shared_array<std::uint8_t> res(new std::uint8_t[nTwoBitCells]);
   std::memset(res.get(), RELATION_1_X_INIT, nTwoBitCells);
-  for (ROMol::ConstBondIterator bondi = mol.beginBonds(); bondi != mol.endBonds(); ++bondi) {
+  for (ROMol::ConstBondIterator bondi = mol.beginBonds();
+       bondi != mol.endBonds(); ++bondi) {
     setTwoBitCell(res, twoBitCellPos(nAtoms, (*bondi)->getBeginAtomIdx(),
-                  (*bondi)->getEndAtomIdx()), RELATION_1_2);
+                                     (*bondi)->getEndAtomIdx()),
+                  RELATION_1_2);
     unsigned int bondiBeginAtomIdx = (*bondi)->getBeginAtomIdx();
     unsigned int bondiEndAtomIdx = (*bondi)->getEndAtomIdx();
     for (ROMol::ConstBondIterator bondj = bondi; ++bondj != mol.endBonds();) {
@@ -164,17 +169,17 @@ boost::shared_array<boost::uint8_t> buildNeighborMatrix(const ROMol &mol) {
         idx3 = bondjBeginAtomIdx;
       } else {
         // check if atoms i and j are in a 1,4-relationship
-        if ((mol.getBondBetweenAtoms(bondiBeginAtomIdx,
-                                     bondjBeginAtomIdx)) &&
+        if ((mol.getBondBetweenAtoms(bondiBeginAtomIdx, bondjBeginAtomIdx)) &&
             (getTwoBitCell(res, twoBitCellPos(nAtoms, bondiEndAtomIdx,
-                                    bondjEndAtomIdx)) == RELATION_1_X)) {
-          setTwoBitCell(
-              res, twoBitCellPos(nAtoms, bondiEndAtomIdx, bondjEndAtomIdx),
-              RELATION_1_4);
+                                              bondjEndAtomIdx)) ==
+             RELATION_1_X)) {
+          setTwoBitCell(res,
+                        twoBitCellPos(nAtoms, bondiEndAtomIdx, bondjEndAtomIdx),
+                        RELATION_1_4);
         } else if ((mol.getBondBetweenAtoms(bondiBeginAtomIdx,
                                             bondjEndAtomIdx)) &&
                    (getTwoBitCell(res, twoBitCellPos(nAtoms, bondiEndAtomIdx,
-                                           bondjBeginAtomIdx)) ==
+                                                     bondjBeginAtomIdx)) ==
                     RELATION_1_X)) {
           setTwoBitCell(
               res, twoBitCellPos(nAtoms, bondiEndAtomIdx, bondjBeginAtomIdx),
@@ -182,7 +187,7 @@ boost::shared_array<boost::uint8_t> buildNeighborMatrix(const ROMol &mol) {
         } else if ((mol.getBondBetweenAtoms(bondiEndAtomIdx,
                                             bondjBeginAtomIdx)) &&
                    (getTwoBitCell(res, twoBitCellPos(nAtoms, bondiBeginAtomIdx,
-                                           bondjEndAtomIdx)) ==
+                                                     bondjEndAtomIdx)) ==
                     RELATION_1_X)) {
           setTwoBitCell(
               res, twoBitCellPos(nAtoms, bondiBeginAtomIdx, bondjEndAtomIdx),
@@ -190,7 +195,7 @@ boost::shared_array<boost::uint8_t> buildNeighborMatrix(const ROMol &mol) {
         } else if ((mol.getBondBetweenAtoms(bondiEndAtomIdx,
                                             bondjEndAtomIdx)) &&
                    (getTwoBitCell(res, twoBitCellPos(nAtoms, bondiBeginAtomIdx,
-                                           bondjBeginAtomIdx)) ==
+                                                     bondjBeginAtomIdx)) ==
                     RELATION_1_X)) {
           setTwoBitCell(
               res, twoBitCellPos(nAtoms, bondiBeginAtomIdx, bondjBeginAtomIdx),
@@ -219,7 +224,7 @@ void addAngles(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
 
   std::ostream &oStream = mmffMolProperties->getMMFFOStream();
   unsigned int idx[3];
-  MMFFPropCollection *mmffProp = MMFFPropCollection::getMMFFProp();
+  const MMFFPropCollection *mmffProp = DefaultParameters::getMMFFProp();
   ROMol::ADJ_ITER nbr1Idx;
   ROMol::ADJ_ITER end1Nbrs;
   ROMol::ADJ_ITER nbr2Idx;
@@ -237,7 +242,8 @@ void addAngles(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
                  "  I        J        K          I    J    K   CLASS    ANGLE  "
                  "   ANGLE      DIFF.    ENERGY   CONSTANT\n"
                  "-------------------------------------------------------------"
-                 "-----------------------------------------" << std::endl;
+                 "-----------------------------------------"
+              << std::endl;
     }
     points = field->positions();
   }
@@ -250,23 +256,24 @@ void addAngles(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
     const MMFFProp *mmffPropParamsCentralAtom = (*mmffProp)(jAtomType);
     boost::tie(nbr1Idx, end1Nbrs) = mol.getAtomNeighbors(jAtom);
     for (; nbr1Idx != end1Nbrs; ++nbr1Idx) {
-      const Atom *iAtom = mol[*nbr1Idx].get();
+      const Atom *iAtom = mol[*nbr1Idx];
       idx[0] = iAtom->getIdx();
       boost::tie(nbr2Idx, end2Nbrs) = mol.getAtomNeighbors(jAtom);
       for (; nbr2Idx != end2Nbrs; ++nbr2Idx) {
         if (nbr2Idx < (nbr1Idx + 1)) {
           continue;
         }
-        const Atom *kAtom = mol[*nbr2Idx].get();
+        const Atom *kAtom = mol[*nbr2Idx];
         idx[2] = kAtom->getIdx();
         unsigned int angleType;
         MMFFAngle mmffAngleParams;
         if (mmffMolProperties->getMMFFAngleBendParams(
                 mol, idx[0], idx[1], idx[2], angleType, mmffAngleParams)) {
-          AngleBendContrib *contrib = new AngleBendContrib(
-              field, idx[0], idx[1], idx[2],
-              &mmffAngleParams, mmffPropParamsCentralAtom);
-          field->contribs().push_back(ForceFields::ContribPtr(contrib));
+          auto *contrib =
+              new AngleBendContrib(field, idx[0], idx[1], idx[2],
+                                   &mmffAngleParams, mmffPropParamsCentralAtom);
+	  auto sptr = ForceFields::ContribPtr(contrib);
+          field->contribs().push_back(sptr);
           if (mmffMolProperties->getMMFFVerbosity()) {
             unsigned int iAtomType = mmffMolProperties->getMMFFAtomType(idx[0]);
             unsigned int kAtomType = mmffMolProperties->getMMFFAtomType(idx[2]);
@@ -279,9 +286,9 @@ void addAngles(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
             const RDGeom::Point3D p3((*(points[idx[2]]))[0],
                                      (*(points[idx[2]]))[1],
                                      (*(points[idx[2]]))[2]);
-            const double cosTheta =
-                MMFF::Utils::calcCosTheta(p1, p2, p3, field->distance(idx[0], idx[1]),
-                                          field->distance(idx[1], idx[2]));
+            const double cosTheta = MMFF::Utils::calcCosTheta(
+                p1, p2, p3, field->distance(idx[0], idx[1]),
+                field->distance(idx[1], idx[2]));
             const double theta = RAD2DEG * acos(cosTheta);
             const double angleBendEnergy = MMFF::Utils::calcAngleBendEnergy(
                 mmffAngleParams.theta0, mmffAngleParams.ka,
@@ -331,7 +338,7 @@ void addStretchBend(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
 
   std::ostream &oStream = mmffMolProperties->getMMFFOStream();
   unsigned int idx[3];
-  MMFFPropCollection *mmffProp = MMFFPropCollection::getMMFFProp();
+  const MMFFPropCollection *mmffProp = DefaultParameters::getMMFFProp();
   std::pair<bool, const MMFFStbn *> mmffStbnParams;
   ROMol::ADJ_ITER nbr1Idx;
   ROMol::ADJ_ITER end1Nbrs;
@@ -368,11 +375,11 @@ void addStretchBend(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
     boost::tie(nbr1Idx, end1Nbrs) = mol.getAtomNeighbors(jAtom);
     unsigned int i = 0;
     for (; nbr1Idx != end1Nbrs; ++nbr1Idx) {
-      const Atom *iAtom = mol[*nbr1Idx].get();
+      const Atom *iAtom = mol[*nbr1Idx];
       boost::tie(nbr2Idx, end2Nbrs) = mol.getAtomNeighbors(jAtom);
       unsigned int j = 0;
       for (; nbr2Idx != end2Nbrs; ++nbr2Idx) {
-        const Atom *kAtom = mol[*nbr2Idx].get();
+        const Atom *kAtom = mol[*nbr2Idx];
         if (j < (i + 1)) {
           ++j;
           continue;
@@ -386,7 +393,7 @@ void addStretchBend(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
         if (mmffMolProperties->getMMFFStretchBendParams(
                 mol, idx[0], idx[1], idx[2], stretchBendType, mmffStbnParams,
                 mmffBondParams, mmffAngleParams)) {
-          StretchBendContrib *contrib = new StretchBendContrib(
+          auto *contrib = new StretchBendContrib(
               field, idx[0], idx[1], idx[2], &mmffStbnParams, &mmffAngleParams,
               &mmffBondParams[0], &mmffBondParams[1]);
           field->contribs().push_back(ForceFields::ContribPtr(contrib));
@@ -493,7 +500,8 @@ void addOop(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
                  "  I        J        K        L          I    J    K    L     "
                  "ANGLE    ENERGY   CONSTANT\n"
                  "-------------------------------------------------------------"
-                 "-----------------------------" << std::endl;
+                 "-----------------------------"
+              << std::endl;
     }
     points = field->positions();
   }
@@ -506,7 +514,7 @@ void addOop(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
     boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atom[1]);
     unsigned int i = 0;
     for (; nbrIdx != endNbrs; ++nbrIdx) {
-      atom[i] = mol[*nbrIdx].get();
+      atom[i] = mol[*nbrIdx];
       idx[i] = atom[i]->getIdx();
       atomType[i] = mmffMolProperties->getMMFFAtomType(idx[i]);
       if (!i) {
@@ -541,8 +549,8 @@ void addOop(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
           n[3] = 0;
           break;
       }
-      OopBendContrib *contrib = new OopBendContrib(
-          field, idx[n[0]], idx[n[1]], idx[n[2]], idx[n[3]], &mmffOopParams);
+      auto *contrib = new OopBendContrib(field, idx[n[0]], idx[n[1]], idx[n[2]],
+                                         idx[n[3]], &mmffOopParams);
       field->contribs().push_back(ForceFields::ContribPtr(contrib));
       if (mmffMolProperties->getMMFFVerbosity()) {
         const RDGeom::Point3D p1((*(points[idx[n[0]]]))[0],
@@ -593,21 +601,20 @@ void addOop(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
 //
 //
 // ------------------------------------------------------------------------
-const std::string DefaultTorsionBondSmarts::ds_string = "[!$(*#*)&!D1]~[!$(*#*)&!D1]";
+const std::string DefaultTorsionBondSmarts::ds_string =
+    "[!$(*#*)&!D1]~[!$(*#*)&!D1]";
 boost::scoped_ptr<const ROMol> DefaultTorsionBondSmarts::ds_instance;
-#ifdef BOOST_THREAD_PROVIDES_ONCE_CXX11
-boost::once_flag DefaultTorsionBondSmarts::ds_flag;
-#else
-boost::once_flag DefaultTorsionBondSmarts::ds_flag = BOOST_ONCE_INIT;
-#endif
 
 void DefaultTorsionBondSmarts::create() {
   ds_instance.reset(SmartsToMol(ds_string));
 }
 
+#ifdef RDK_THREADSAFE_SSS
+std::once_flag DefaultTorsionBondSmarts::ds_flag;
+#endif
 const ROMol *DefaultTorsionBondSmarts::query() {
 #ifdef RDK_THREADSAFE_SSS
-  boost::call_once(&create, ds_flag);
+  std::call_once(ds_flag, create);
 #else
   static bool created = false;
   if (!created) {
@@ -650,10 +657,13 @@ void addTorsions(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
   std::vector<MatchVectType> matchVect;
   const ROMol *defaultQuery = DefaultTorsionBondSmarts::query();
   const ROMol *query = (torsionBondSmarts == DefaultTorsionBondSmarts::string())
-                       ? defaultQuery : SmartsToMol(torsionBondSmarts);
+                           ? defaultQuery
+                           : SmartsToMol(torsionBondSmarts);
   TEST_ASSERT(query);
   unsigned int nHits = SubstructMatch(mol, *query, matchVect);
-  if (query != defaultQuery) delete query;
+  if (query != defaultQuery) {
+    delete query;
+  }
 
   for (unsigned int i = 0; i < nHits; ++i) {
     MatchVectType match = matchVect[i];
@@ -671,13 +681,13 @@ void addTorsions(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
       ROMol::OEDGE_ITER beg1, end1;
       boost::tie(beg1, end1) = mol.getAtomBonds(jAtom);
       while (beg1 != end1) {
-        const Bond *tBond1 = mol[*beg1].get();
+        const Bond *tBond1 = mol[*beg1];
         if (tBond1 != bond) {
           int idx1 = tBond1->getOtherAtomIdx(idx2);
           ROMol::OEDGE_ITER beg2, end2;
           boost::tie(beg2, end2) = mol.getAtomBonds(kAtom);
           while (beg2 != end2) {
-            const Bond *tBond2 = mol[*beg2].get();
+            const Bond *tBond2 = mol[*beg2];
             if ((tBond2 != bond) && (tBond2 != tBond1)) {
               int idx4 = tBond2->getOtherAtomIdx(idx3);
               // make sure this isn't a three-membered ring:
@@ -688,7 +698,7 @@ void addTorsions(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
                 MMFFTor mmffTorParams;
                 if (mmffMolProperties->getMMFFTorsionParams(
                         mol, idx1, idx2, idx3, idx4, torType, mmffTorParams)) {
-                  TorsionAngleContrib *contrib = new TorsionAngleContrib(
+                  auto *contrib = new TorsionAngleContrib(
                       field, idx1, idx2, idx3, idx4, &mmffTorParams);
                   field->contribs().push_back(ForceFields::ContribPtr(contrib));
                   if (mmffMolProperties->getMMFFVerbosity()) {
@@ -767,7 +777,7 @@ void addTorsions(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
 // ------------------------------------------------------------------------
 void addVdW(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
             ForceFields::ForceField *field,
-            boost::shared_array<boost::uint8_t> neighborMatrix,
+            boost::shared_array<std::uint8_t> neighborMatrix,
             double nonBondedThresh, bool ignoreInterfragInteractions) {
   PRECONDITION(field, "bad ForceField");
   PRECONDITION(mmffMolProperties, "bad MMFFMolProperties");
@@ -792,7 +802,8 @@ void addVdW(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
                  "  I        J          I    J    DISTANCE   ENERGY     R*     "
                  " DEPTH\n"
                  "-------------------------------------------------------------"
-                 "-------" << std::endl;
+                 "-------"
+              << std::endl;
     }
   }
   const Conformer &conf = mol.getConformer(confId);
@@ -801,14 +812,15 @@ void addVdW(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
       if (ignoreInterfragInteractions && (fragMapping[i] != fragMapping[j])) {
         continue;
       }
-      if (getTwoBitCell(neighborMatrix, twoBitCellPos(nAtoms, i, j)) >= RELATION_1_4) {
+      if (getTwoBitCell(neighborMatrix, twoBitCellPos(nAtoms, i, j)) >=
+          RELATION_1_4) {
         double dist = (conf.getAtomPos(i) - conf.getAtomPos(j)).length();
         if (dist > nonBondedThresh) {
           continue;
         }
         MMFFVdWRijstarEps mmffVdWConstants;
         if (mmffMolProperties->getMMFFVdWParams(i, j, mmffVdWConstants)) {
-          VdWContrib *contrib = new VdWContrib(field, i, j, &mmffVdWConstants);
+          auto *contrib = new VdWContrib(field, i, j, &mmffVdWConstants);
           field->contribs().push_back(ForceFields::ContribPtr(contrib));
           if (mmffMolProperties->getMMFFVerbosity()) {
             const Atom *iAtom = mol.getAtomWithIdx(i);
@@ -824,8 +836,8 @@ void addVdW(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
                       << std::right << std::setw(5) << iAtomType << std::setw(5)
                       << jAtomType << "  " << std::fixed << std::setprecision(3)
                       << std::setw(9) << dist << std::setw(10) << vdWEnergy
-                      << std::setw(9) << mmffVdWConstants.R_ij_star << std::setw(9)
-                      << mmffVdWConstants.epsilon << std::endl;
+                      << std::setw(9) << mmffVdWConstants.R_ij_star
+                      << std::setw(9) << mmffVdWConstants.epsilon << std::endl;
             }
             totalVdWEnergy += vdWEnergy;
           }
@@ -850,7 +862,7 @@ void addVdW(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
 // ------------------------------------------------------------------------
 void addEle(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
             ForceFields::ForceField *field,
-            boost::shared_array<boost::uint8_t> neighborMatrix,
+            boost::shared_array<std::uint8_t> neighborMatrix,
             double nonBondedThresh, bool ignoreInterfragInteractions) {
   PRECONDITION(field, "bad ForceField");
   PRECONDITION(mmffMolProperties, "bad MMFFMolProperties");
@@ -877,18 +889,20 @@ void addEle(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
   }
   const Conformer &conf = mol.getConformer(confId);
   double dielConst = mmffMolProperties->getMMFFDielectricConstant();
-  boost::uint8_t dielModel = mmffMolProperties->getMMFFDielectricModel();
+  std::uint8_t dielModel = mmffMolProperties->getMMFFDielectricModel();
   for (unsigned int i = 0; i < nAtoms; ++i) {
     for (unsigned int j = i + 1; j < nAtoms; ++j) {
       if (ignoreInterfragInteractions && (fragMapping[i] != fragMapping[j])) {
         continue;
       }
-      boost::uint8_t cell = getTwoBitCell(neighborMatrix, twoBitCellPos(nAtoms, i, j));
+      std::uint8_t cell =
+          getTwoBitCell(neighborMatrix, twoBitCellPos(nAtoms, i, j));
       bool is1_4 = (cell == RELATION_1_4);
       if (cell >= RELATION_1_4) {
-        if (isDoubleZero(mmffMolProperties->getMMFFPartialCharge(i))
-          || isDoubleZero(mmffMolProperties->getMMFFPartialCharge(j)))
+        if (isDoubleZero(mmffMolProperties->getMMFFPartialCharge(i)) ||
+            isDoubleZero(mmffMolProperties->getMMFFPartialCharge(j))) {
           continue;
+        }
         double dist = (conf.getAtomPos(i) - conf.getAtomPos(j)).length();
         if (dist > nonBondedThresh) {
           continue;
@@ -896,8 +910,8 @@ void addEle(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
         double chargeTerm = mmffMolProperties->getMMFFPartialCharge(i) *
                             mmffMolProperties->getMMFFPartialCharge(j) /
                             dielConst;
-        EleContrib *contrib = new EleContrib(
-          field, i, j, chargeTerm, dielModel, is1_4);
+        auto *contrib =
+            new EleContrib(field, i, j, chargeTerm, dielModel, is1_4);
         field->contribs().push_back(ForceFields::ContribPtr(contrib));
         if (mmffMolProperties->getMMFFVerbosity()) {
           const unsigned int iAtomType = mmffMolProperties->getMMFFAtomType(i);
@@ -905,7 +919,7 @@ void addEle(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
           const Atom *iAtom = mol.getAtomWithIdx(i);
           const Atom *jAtom = mol.getAtomWithIdx(j);
           const double eleEnergy = MMFF::Utils::calcEleEnergy(
-            i, j, dist, chargeTerm, dielModel, is1_4);
+              i, j, dist, chargeTerm, dielModel, is1_4);
           if (mmffMolProperties->getMMFFVerbosity() == MMFF_VERBOSITY_HIGH) {
             oStream << std::left << std::setw(2) << iAtom->getSymbol() << " #"
                     << std::setw(5) << i + 1 << std::setw(2)
@@ -962,7 +976,7 @@ ForceFields::ForceField *constructForceField(
   PRECONDITION(mmffMolProperties->isValid(),
                "missing atom types - invalid force-field");
 
-  ForceFields::ForceField *res = new ForceFields::ForceField();
+  auto *res = new ForceFields::ForceField();
   // add the atomic positions:
   Conformer &conf = mol.getConformer(confId);
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
@@ -987,7 +1001,7 @@ ForceFields::ForceField *constructForceField(
   }
   if (mmffMolProperties->getMMFFVdWTerm() ||
       mmffMolProperties->getMMFFEleTerm()) {
-    boost::shared_array<boost::uint8_t> neighborMat =
+    boost::shared_array<std::uint8_t> neighborMat =
         Tools::buildNeighborMatrix(mol);
     if (mmffMolProperties->getMMFFVdWTerm()) {
       Tools::addVdW(mol, confId, mmffMolProperties, res, neighborMat,

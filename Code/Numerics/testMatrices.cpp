@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2019 Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/test.h>
 #include "Matrix.h"
 #include "SquareMatrix.h"
 #include "SymmMatrix.h"
@@ -31,7 +31,7 @@ void test1Vector() {
   CHECK_INVARIANT(RDKit::feq(v1.getVal(1), 2.0), "");
   CHECK_INVARIANT(RDKit::feq(v1.normL1(), 8.0), "");
 
-  double *data = new double[3];
+  auto *data = new double[3];
   data[0] = 1.0;
   data[1] = 2.0;
   data[2] = 3.0;
@@ -98,6 +98,42 @@ void test2Matrix() {
   CHECK_INVARIANT(RDKit::feq(C.getVal(0, 1), 10), "");
   CHECK_INVARIANT(RDKit::feq(C.getVal(1, 0), 10), "");
   CHECK_INVARIANT(RDKit::feq(C.getVal(1, 1), 10.25), "");
+
+  auto Ccp(C);
+  Ccp += C;
+  CHECK_INVARIANT(RDKit::feq(Ccp.getVal(0, 0), 20.5), "");
+  CHECK_INVARIANT(RDKit::feq(Ccp.getVal(0, 1), 20), "");
+  CHECK_INVARIANT(RDKit::feq(Ccp.getVal(1, 0), 20), "");
+  CHECK_INVARIANT(RDKit::feq(Ccp.getVal(1, 1), 20.5), "");
+
+  Ccp -= C;
+  CHECK_INVARIANT(RDKit::feq(Ccp.getVal(0, 0), 10.25), "");
+  CHECK_INVARIANT(RDKit::feq(Ccp.getVal(0, 1), 10), "");
+  CHECK_INVARIANT(RDKit::feq(Ccp.getVal(1, 0), 10), "");
+  CHECK_INVARIANT(RDKit::feq(Ccp.getVal(1, 1), 10.25), "");
+
+  C *= 2.;
+  CHECK_INVARIANT(RDKit::feq(C.getVal(0, 0), 20.5), "");
+  CHECK_INVARIANT(RDKit::feq(C.getVal(0, 1), 20), "");
+  CHECK_INVARIANT(RDKit::feq(C.getVal(1, 0), 20), "");
+  CHECK_INVARIANT(RDKit::feq(C.getVal(1, 1), 20.5), "");
+
+  C /= 2.;
+  CHECK_INVARIANT(RDKit::feq(C.getVal(0, 0), 10.25), "");
+  CHECK_INVARIANT(RDKit::feq(C.getVal(0, 1), 10), "");
+  CHECK_INVARIANT(RDKit::feq(C.getVal(1, 0), 10), "");
+  CHECK_INVARIANT(RDKit::feq(C.getVal(1, 1), 10.25), "");
+
+  Vector<double> tRow(A.numCols());
+  A.getRow(1, tRow);
+  for (unsigned int i = 0; i < A.numCols(); ++i) {
+    TEST_ASSERT(RDKit::feq(A.getVal(1, i), tRow.getVal(i)));
+  }
+  Vector<double> tCol(A.numRows());
+  A.getCol(1, tCol);
+  for (unsigned int i = 0; i < A.numRows(); ++i) {
+    TEST_ASSERT(RDKit::feq(A.getVal(i, 1), tCol.getVal(i)));
+  }
 }
 
 void test3SquareMatrix() {
@@ -119,7 +155,7 @@ void test3SquareMatrix() {
   CHECK_INVARIANT(RDKit::feq(B.getVal(1, 0), 15.0), "");
   CHECK_INVARIANT(RDKit::feq(B.getVal(1, 1), 22.0), "");
 
-  double *data = new double[4];
+  auto *data = new double[4];
   data[0] = 1.0;
   data[1] = 2.0;
   data[2] = 3.0;

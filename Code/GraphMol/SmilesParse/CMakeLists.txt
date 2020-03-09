@@ -50,6 +50,9 @@ else(BISON_EXECUTABLE)
   FILE(GLOB BISON_OUTPUT_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.tab.?pp")
 endif(BISON_EXECUTABLE)
 
+
+remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
+add_definitions(-DRDKIT_SMILESPARSE_BUILD)
 rdkit_library(SmilesParse
               SmilesParse.cpp SmilesParseOps.cpp
               SmilesWrite.cpp SmartsWrite.cpp CXSmilesOps.cpp
@@ -64,6 +67,8 @@ rdkit_headers(primes.h
               SmilesWrite.h DEST GraphMol/SmilesParse)
 
 rdkit_test(smiTest1 test.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )
+rdkit_test(smiTest2 test2.cpp LINK_LIBRARIES SmilesParse GraphMol RDGeneral RDGeometryLib )
 rdkit_test(cxsmilesTest cxsmiles_test.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )
 
 rdkit_test(smaTest1 smatest.cpp LINK_LIBRARIES SmilesParse SubstructMatch GraphMol RDGeneral RDGeometryLib )
+rdkit_catch_test(smiTestCatch catch_tests.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )

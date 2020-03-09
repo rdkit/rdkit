@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2001-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2019 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -23,12 +22,31 @@
 #include <RDGeneral/Dict.h>
 
 namespace RDKit {
-namespace {
+
 // Determine whether or not a molecule is to the left of Carbon
 bool isEarlyAtom(int atomicNum) {
-  return (4 - PeriodicTable::getTable()->getNouterElecs(atomicNum)) > 0;
+  switch (PeriodicTable::getTable()->getNouterElecs(atomicNum)) {
+    case 1:
+    case 2:
+    case 3:
+      return true;
+    case 4:
+      // we make an arbitrary decision that Ge, Sn, and Pb
+      // are treated like early elements (part of github #2606)
+      return atomicNum > 14;
+    case 5:
+      // we make an arbitrary decision that Sb and Bi
+      // are treated like early elements (part of github #2775)
+      return atomicNum > 33;
+    case 6:
+    case 7:
+    case 8:
+      return false;
+    default:
+      return false;
+  }
 }
-}
+
 Atom::Atom() : RDProps() {
   d_atomicNum = 0;
   initAtom();
@@ -44,10 +62,11 @@ Atom::Atom(const std::string &what) : RDProps() {
   initAtom();
 };
 
-Atom::Atom(const Atom &other) : RDProps(other) {
+void Atom::initFromOther(const Atom &other) {
+  RDProps::operator=(other);
   // NOTE: we do *not* copy ownership!
+  dp_mol = nullptr;
   d_atomicNum = other.d_atomicNum;
-  dp_mol = 0;
   d_index = 0;
   d_formalCharge = other.d_formalCharge;
   df_noImplicit = other.df_noImplicit;
@@ -63,9 +82,20 @@ Atom::Atom(const Atom &other) : RDProps(other) {
   if (other.dp_monomerInfo) {
     dp_monomerInfo = other.dp_monomerInfo->copy();
   } else {
-    dp_monomerInfo = 0;
+    dp_monomerInfo = nullptr;
   }
 }
+
+Atom::Atom(const Atom &other) : RDProps() { initFromOther(other); }
+
+Atom &Atom::operator=(const Atom &other) {
+  if (this == &other) {
+    return *this;
+  }
+  initFromOther(other);
+  return *this;
+}
+
 void Atom::initAtom() {
   df_isAromatic = false;
   df_noImplicit = false;
@@ -76,8 +106,8 @@ void Atom::initAtom() {
   d_isotope = 0;
   d_chiralTag = CHI_UNSPECIFIED;
   d_hybrid = UNSPECIFIED;
-  dp_mol = 0;
-  dp_monomerInfo = 0;
+  dp_mol = nullptr;
+  dp_monomerInfo = nullptr;
 
   d_implicitValence = -1;
   d_explicitValence = -1;
@@ -90,7 +120,7 @@ Atom::~Atom() {
 }
 
 Atom *Atom::copy() const {
-  Atom *res = new Atom(*this);
+  auto *res = new Atom(*this);
   return res;
 }
 
@@ -138,7 +168,9 @@ unsigned int Atom::getTotalNumHs(bool includeNeighbors) const {
     boost::tie(begin, end) = parent->getAtomNeighbors(this);
     while (begin != end) {
       const Atom *at = parent->getAtomWithIdx(*begin);
-      if (at->getAtomicNum() == 1) res++;
+      if (at->getAtomicNum() == 1) {
+        res++;
+      }
       ++begin;
     }
   }
@@ -146,7 +178,9 @@ unsigned int Atom::getTotalNumHs(bool includeNeighbors) const {
 }
 
 unsigned int Atom::getNumImplicitHs() const {
-  if (df_noImplicit) return 0;
+  if (df_noImplicit) {
+    return 0;
+  }
 
   PRECONDITION(d_implicitValence > -1,
                "getNumImplicitHs() called without preceding call to "
@@ -187,10 +221,13 @@ int Atom::calcExplicitValence(bool strict) {
   // check accum is greater than the default valence
   unsigned int dv = PeriodicTable::getTable()->getDefaultValence(d_atomicNum);
   int chr = getFormalCharge();
-  if (isEarlyAtom(d_atomicNum))
+  if (isEarlyAtom(d_atomicNum)) {
     chr *= -1;  // <- the usual correction for early atoms
+  }
   // special case for carbon - see GitHub #539
-  if (d_atomicNum == 6 && chr > 0) chr = -chr;
+  if (d_atomicNum == 6 && chr > 0) {
+    chr = -chr;
+  }
   if (accum > (dv + chr) && this->getIsAromatic()) {
     // this needs some explanation : if the atom is aromatic and
     // accum > (dv + chr) we assume that no hydrogen can be added
@@ -205,8 +242,7 @@ int Atom::calcExplicitValence(bool strict) {
     int pval = dv + chr;
     const INT_VECT &valens =
         PeriodicTable::getTable()->getValenceList(d_atomicNum);
-    for (INT_VECT_CI vi = valens.begin(); vi != valens.end() && *vi != -1;
-         ++vi) {
+    for (auto vi = valens.begin(); vi != valens.end() && *vi != -1; ++vi) {
       int val = (*vi) + chr;
       if (val > accum) {
         break;
@@ -214,7 +250,15 @@ int Atom::calcExplicitValence(bool strict) {
         pval = val;
       }
     }
-    accum = pval;
+    // if we're within 1.5 of the allowed valence, go ahead and take it.
+    // this reflects things like the N in c1cccn1C, which starts with
+    // accum of 4, but which can be kekulized to C1=CC=CN1C, where
+    // the valence is 3 or the bridging N in c1ccn2cncc2c1, which starts
+    // with a valence of 4.5, but can be happily kekulized down to a valence
+    // of 3
+    if (accum - pval <= 1.5) {
+      accum = pval;
+    }
   }
   // despite promising to not to blame it on him - this a trick Greg
   // came up with: if we have a bond order sum of x.5 (i.e. 1.5, 2.5
@@ -230,7 +274,7 @@ int Atom::calcExplicitValence(bool strict) {
   // correctly.
   accum += 0.1;
 
-  res = static_cast<int>(round(accum));
+  res = static_cast<int>(std::round(accum));
 
   if (strict) {
     int effectiveValence;
@@ -254,7 +298,7 @@ int Atom::calcExplicitValence(bool strict) {
              << effectiveValence << ", is greater than permitted";
       std::string msg = errout.str();
       BOOST_LOG(rdErrorLog) << msg << std::endl;
-      throw MolSanitizeException(msg);
+      throw AtomValenceException(msg, getIdx());
     }
   }
   d_explicitValence = res;
@@ -265,7 +309,9 @@ int Atom::calcExplicitValence(bool strict) {
 int Atom::getImplicitValence() const {
   PRECONDITION(dp_mol,
                "valence not defined for atoms not associated with molecules");
-  if (df_noImplicit) return 0;
+  if (df_noImplicit) {
+    return 0;
+  }
   return d_implicitValence;
 }
 
@@ -274,8 +320,12 @@ int Atom::getImplicitValence() const {
 int Atom::calcImplicitValence(bool strict) {
   PRECONDITION(dp_mol,
                "valence not defined for atoms not associated with molecules");
-  if (df_noImplicit) return 0;
-  if (d_explicitValence == -1) this->calcExplicitValence(strict);
+  if (df_noImplicit) {
+    return 0;
+  }
+  if (d_explicitValence == -1) {
+    this->calcExplicitValence(strict);
+  }
   // this is basically the difference between the allowed valence of
   // the atom and the explicit valence already specified - tells how
   // many Hs to add
@@ -339,7 +389,9 @@ int Atom::calcImplicitValence(bool strict) {
     chg *= -1;
   }
   // special case for carbon - see GitHub #539
-  if (d_atomicNum == 6 && chg > 0) chg = -chg;
+  if (d_atomicNum == 6 && chg > 0) {
+    chg = -chg;
+  }
 
   // if we have an aromatic case treat it differently
   if (getIsAromatic()) {
@@ -356,8 +408,7 @@ int Atom::calcImplicitValence(bool strict) {
       // atom. The only diff I can think of is in the way we handle
       // formal charge here vs the explicit valence function.
       bool satis = false;
-      for (INT_VECT_CI vi = valens.begin(); vi != valens.end() && *vi > 0;
-           ++vi) {
+      for (auto vi = valens.begin(); vi != valens.end() && *vi > 0; ++vi) {
         if (explicitPlusRadV == ((*vi) + chg)) {
           satis = true;
           break;
@@ -369,7 +420,7 @@ int Atom::calcImplicitValence(bool strict) {
                << " not equal to any accepted valence\n";
         std::string msg = errout.str();
         BOOST_LOG(rdErrorLog) << msg << std::endl;
-        throw MolSanitizeException(msg);
+        throw AtomValenceException(msg, getIdx());
       }
       res = 0;
     }
@@ -377,8 +428,7 @@ int Atom::calcImplicitValence(bool strict) {
     // non-aromatic case we are allowed to have non default valences
     // and be able to add hydrogens
     res = -1;
-    for (INT_VECT_CI vi = valens.begin(); vi != valens.end() && *vi >= 0;
-         ++vi) {
+    for (auto vi = valens.begin(); vi != valens.end() && *vi >= 0; ++vi) {
       int tot = (*vi) + chg;
       if (explicitPlusRadV <= tot) {
         res = tot - explicitPlusRadV;
@@ -395,7 +445,7 @@ int Atom::calcImplicitValence(bool strict) {
                << " greater than permitted";
         std::string msg = errout.str();
         BOOST_LOG(rdErrorLog) << msg << std::endl;
-        throw MolSanitizeException(msg);
+        throw AtomValenceException(msg, getIdx());
       } else {
         res = 0;
       }
@@ -412,7 +462,9 @@ double Atom::getMass() const {
   if (d_isotope) {
     double res =
         PeriodicTable::getTable()->getMassForIsotope(d_atomicNum, d_isotope);
-    if (d_atomicNum != 0 && res == 0.0) res = d_isotope;
+    if (d_atomicNum != 0 && res == 0.0) {
+      res = d_isotope;
+    }
     return res;
   } else {
     return PeriodicTable::getTable()->getAtomicWeight(d_atomicNum);
@@ -424,7 +476,7 @@ void Atom::setQuery(Atom::QUERYATOM_QUERY *what) {
   //  Atoms don't have complex queries so this has to fail
   PRECONDITION(0, "plain atoms have no Query");
 }
-Atom::QUERYATOM_QUERY *Atom::getQuery() const { return NULL; };
+Atom::QUERYATOM_QUERY *Atom::getQuery() const { return nullptr; };
 void Atom::expandQuery(Atom::QUERYATOM_QUERY *what,
                        Queries::CompositeQueryType how, bool maintainOrder) {
   RDUNUSED_PARAM(what);
@@ -489,7 +541,7 @@ bool Atom::needsUpdatePropertyCache() const {
 //   getPerturbationOrder([1,0,2,3]) = 1
 //   getPerturbationOrder([1,2,3,0]) = 3
 //   getPerturbationOrder([1,2,0,3]) = 2
-int Atom::getPerturbationOrder(INT_LIST probe) const {
+int Atom::getPerturbationOrder(const INT_LIST &probe) const {
   PRECONDITION(
       dp_mol,
       "perturbation order not defined for atoms not associated with molecules")
@@ -500,7 +552,7 @@ int Atom::getPerturbationOrder(INT_LIST probe) const {
     ref.push_back(getOwningMol()[*beg]->getIdx());
     ++beg;
   }
-  int nSwaps = static_cast<int>(countSwapsToInterconvert(ref, probe));
+  int nSwaps = static_cast<int>(countSwapsToInterconvert(probe, ref));
   return nSwaps;
 }
 
@@ -586,7 +638,7 @@ std::string getSupplementalSmilesLabel(const Atom *atom) {
   return label;
 }
 
-}  // end o' namespace RDKit
+}  // namespace RDKit
 
 std::ostream &operator<<(std::ostream &target, const RDKit::Atom &at) {
   target << at.getIdx() << " " << at.getAtomicNum() << " " << at.getSymbol();

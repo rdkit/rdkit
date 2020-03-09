@@ -8,6 +8,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/test.h>
 #include <iostream>
 #include <iomanip>
 #include <math.h>
@@ -1449,7 +1450,7 @@ void testUFFAllConstraints() {
   field = RDKit::UFF::constructForceField(*mol);
   field->initialize();
   tc = new ForceFields::UFF::TorsionConstraintContrib(field, 1, 3, 6, 8, true,
-                                                      -10.0, -8.0, 1.0e5);
+                                                      -10.0, 8.0, 1.0e5);
   field->contribs().push_back(ForceFields::ContribPtr(tc));
   field->minimize();
   TEST_ASSERT(
@@ -1460,7 +1461,7 @@ void testUFFAllConstraints() {
   field = RDKit::UFF::constructForceField(*mol);
   field->initialize();
   tc = new ForceFields::UFF::TorsionConstraintContrib(field, 1, 3, 6, 8, false,
-                                                      -10.0, -8.0, 1.0e6);
+                                                      -10.0, 8.0, 1.0e6);
   field->contribs().push_back(ForceFields::ContribPtr(tc));
   field->minimize(500);
   TEST_ASSERT(
@@ -1548,20 +1549,19 @@ void testUFFCopy() {
   {
     RDKit::RWMol *mol = RDKit::MolBlockToMol(molBlock, true, false);
     TEST_ASSERT(mol);
-    RDKit::RWMol *cmol = new RDKit::RWMol(*mol);
+    auto *cmol = new RDKit::RWMol(*mol);
     TEST_ASSERT(cmol);
 
     ForceFields::ForceField *field = RDKit::UFF::constructForceField(*mol);
     TEST_ASSERT(field);
     field->initialize();
-    ForceFields::UFF::DistanceConstraintContrib *dc =
-        new ForceFields::UFF::DistanceConstraintContrib(field, 1, 3, 2.0, 2.0,
-                                                        1.0e5);
+    auto *dc = new ForceFields::UFF::DistanceConstraintContrib(field, 1, 3, 2.0,
+                                                               2.0, 1.0e5);
     field->contribs().push_back(ForceFields::ContribPtr(dc));
     field->minimize();
     TEST_ASSERT(MolTransforms::getBondLength(mol->getConformer(), 1, 3) > 1.99);
 
-    ForceFields::ForceField *cfield = new ForceFields::ForceField(*field);
+    auto *cfield = new ForceFields::ForceField(*field);
     cfield->positions().clear();
 
     for (unsigned int i = 0; i < cmol->getNumAtoms(); i++) {

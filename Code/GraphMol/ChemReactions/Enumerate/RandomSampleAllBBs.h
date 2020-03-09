@@ -30,6 +30,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
+#include <RDGeneral/export.h>
 #ifndef RGROUP_RANDOM_SAMPLE_ALLBBS_H
 #define RGROUP_RANDOM_SAMPLE_ALLBBS_H
 
@@ -64,13 +65,14 @@ namespace RDKit {
   See EnumerationStrategyBase for more details and usage.
 */
 
-class RandomSampleAllBBsStrategy : public EnumerationStrategyBase {
+class RDKIT_CHEMREACTIONS_EXPORT RandomSampleAllBBsStrategy
+    : public EnumerationStrategyBase {
   boost::uint64_t m_numPermutationsProcessed;
   size_t m_offset;
   size_t m_maxoffset;
 
   boost::minstd_rand m_rng;
-  std::vector<boost::random::uniform_int_distribution<> > m_distributions;
+  std::vector<boost::random::uniform_int_distribution<>> m_distributions;
 
  public:
   RandomSampleAllBBsStrategy()
@@ -87,10 +89,10 @@ class RandomSampleAllBBsStrategy : public EnumerationStrategyBase {
   }
   using EnumerationStrategyBase::initialize;
 
-  void initializeStrategy(const ChemicalReaction &, const EnumerationTypes::BBS &) {
+  void initializeStrategy(const ChemicalReaction &,
+                          const EnumerationTypes::BBS &) {
     m_distributions.clear();
     m_permutation.resize(m_permutationSizes.size());
-    m_permutationSizes = m_permutationSizes;
     m_offset = 0;
     m_maxoffset =
         *std::max_element(m_permutationSizes.begin(), m_permutationSizes.end());
@@ -123,7 +125,8 @@ class RandomSampleAllBBsStrategy : public EnumerationStrategyBase {
   }
 
   virtual boost::uint64_t getPermutationIdx() const {
-    return m_numPermutationsProcessed; }
+    return m_numPermutationsProcessed;
+  }
 
   virtual operator bool() const { return true; }
 
@@ -132,7 +135,7 @@ class RandomSampleAllBBsStrategy : public EnumerationStrategyBase {
   }
 
  private:
-#ifdef RDK_USE_BOOST_SERIALIZATION      
+#ifdef RDK_USE_BOOST_SERIALIZATION
   friend class boost::serialization::access;
 
   template <class Archive>
@@ -177,9 +180,9 @@ class RandomSampleAllBBsStrategy : public EnumerationStrategyBase {
   }
 #endif
 };
-}
+}  // namespace RDKit
 
-#ifdef RDK_USE_BOOST_SERIALIZATION    
+#ifdef RDK_USE_BOOST_SERIALIZATION
 BOOST_CLASS_VERSION(RDKit::RandomSampleAllBBsStrategy, 1)
 #endif
 

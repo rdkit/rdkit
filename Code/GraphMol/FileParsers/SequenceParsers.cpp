@@ -13,6 +13,7 @@
 #include <vector>
 #include <map>
 
+#include "SequenceParsers.h"
 #include <GraphMol/GraphMol.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/MonomerInfo.h>
@@ -21,7 +22,7 @@ namespace RDKit {
 
 static Atom *CreateAAAtom(RWMol *mol, const char *name,
                           AtomPDBResidueInfo &info) {
-  Atom *atom = (Atom *)0;
+  Atom *atom = (Atom *)nullptr;
 
   if (name[0] == ' ' && name[1] == 'C') {
     atom = new Atom(6);
@@ -35,10 +36,11 @@ static Atom *CreateAAAtom(RWMol *mol, const char *name,
     atom = new Atom(16);
   } else if (name[0] == 'S' && name[1] == 'E') {
     atom = new Atom(34);
-  } else
+  } else {
     atom = new Atom(0);
+  }
   mol->addAtom(atom, true, true);
-  AtomPDBResidueInfo *copy = (AtomPDBResidueInfo *)info.copy();
+  auto *copy = (AtomPDBResidueInfo *)info.copy();
   copy->setName(name);
   atom->setMonomerInfo(copy);
 
@@ -49,10 +51,11 @@ static Atom *CreateAAAtom(RWMol *mol, const char *name,
 
 static void CreateAABond(RWMol *mol, Atom *beg, Atom *end, unsigned int order) {
   Bond *bond;
-  if (order == 2)
+  if (order == 2) {
     bond = new Bond(Bond::DOUBLE);
-  else
+  } else {
     bond = new Bond(Bond::SINGLE);
+  }
   bond->setOwningMol(mol);
   bond->setBeginAtom(beg);
   bond->setEndAtom(end);
@@ -71,10 +74,11 @@ static void CreateAABackbone(RWMol *mol, Atom *&r1, Atom *&r2, Atom *&cb,
   CreateAABond(mol, r2, o, 2);
   CreateAABond(mol, ca, cb, 1);
 
-  if (ldstereo > 0)  // L-stereo
+  if (ldstereo > 0) {  // L-stereo
     ca->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
-  else if (ldstereo < 0)  // D-stereo
+  } else if (ldstereo < 0) {  // D-stereo
     ca->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+  }
 }
 
 // aa is a three letter PDB residue code
@@ -82,9 +86,9 @@ static void CreateAminoAcid(RWMol *mol, const char *aa, Atom *&r1, Atom *&r2,
                             Atom *&r3, AtomPDBResidueInfo &info) {
   Atom *atom[10];
 
-  r1 = (Atom *)0;
-  r2 = (Atom *)0;
-  r3 = (Atom *)0;
+  r1 = (Atom *)nullptr;
+  r2 = (Atom *)nullptr;
+  r3 = (Atom *)nullptr;
 
   int resno = info.getResidueNumber();
   info.setResidueNumber(resno + 1);
@@ -582,7 +586,7 @@ static void CreateAminoAcid(RWMol *mol, const char *aa, Atom *&r1, Atom *&r2,
 
 static RWMol *AASequenceToMol(const char *seq, bool lowerD) {
   AtomPDBResidueInfo info;
-  Atom *prev = (Atom *)0;
+  Atom *prev = (Atom *)nullptr;
   char chain[2];
 
   chain[0] = 'A';
@@ -593,12 +597,12 @@ static RWMol *AASequenceToMol(const char *seq, bool lowerD) {
   info.setResidueNumber(0);
   info.setInsertionCode(" ");
   info.setChainId(chain);
-  RWMol *mol = new RWMol();
+  auto *mol = new RWMol();
 
   while (*seq) {
-    Atom *r1 = (Atom *)0;
-    Atom *r2 = (Atom *)0;
-    Atom *r3 = (Atom *)0;
+    Atom *r1 = (Atom *)nullptr;
+    Atom *r2 = (Atom *)nullptr;
+    Atom *r3 = (Atom *)nullptr;
 
     switch (*seq) {
       case '\n':
@@ -621,14 +625,14 @@ static RWMol *AASequenceToMol(const char *seq, bool lowerD) {
             info.setChainId(chain);
           }
           info.setResidueNumber(0);
-          prev = (Atom *)0;
+          prev = (Atom *)nullptr;
         }
         seq++;
         continue;
 
       default:
         delete mol;
-        return (RWMol *)0;
+        return (RWMol *)nullptr;
 
       case 'A':
         CreateAminoAcid(mol, "ALA", r1, r2, r3, info);
@@ -750,7 +754,9 @@ static RWMol *AASequenceToMol(const char *seq, bool lowerD) {
         CreateAminoAcid(mol, lowerD ? "DTY" : "TYR", r1, r2, r3, info);
         break;
     }
-    if (prev && r1) CreateAABond(mol, prev, r1, 1);
+    if (prev && r1) {
+      CreateAABond(mol, prev, r1, 1);
+    }
     prev = r2;
     seq++;
   }
@@ -767,8 +773,8 @@ static void CreateNucleicAcid(RWMol *mol, const char *na, Atom *&r1, Atom *&r2,
 {
   Atom *atom[32];
 
-  r1 = (Atom *)0;
-  r2 = (Atom *)0;
+  r1 = (Atom *)nullptr;
+  r2 = (Atom *)nullptr;
 
   int resno = info.getResidueNumber();
   info.setResidueNumber(resno + 1);
@@ -972,18 +978,18 @@ static RWMol *NASequenceToMol(const char *seq, bool Dna,
   chain[0] = 'A';
   chain[1] = '\0';
 
-  Atom *prev = (Atom *)0;
+  Atom *prev = (Atom *)nullptr;
   AtomPDBResidueInfo info;
   info.setSerialNumber(1);
   info.setAltLoc(" ");
   info.setResidueNumber(0);
   info.setInsertionCode(" ");
   info.setChainId(chain);
-  RWMol *mol = new RWMol();
+  auto *mol = new RWMol();
 
   while (*seq) {
-    Atom *r1 = (Atom *)0;
-    Atom *r2 = (Atom *)0;
+    Atom *r1 = (Atom *)nullptr;
+    Atom *r2 = (Atom *)nullptr;
 
     switch (*seq) {
       case '\n':
@@ -999,21 +1005,22 @@ static RWMol *NASequenceToMol(const char *seq, bool Dna,
 
       case '.':
         if (prev) {
-          if (PCap3)
+          if (PCap3) {
             CreatePCap3(mol, prev, info);
+          }
           if (chain[0] < 'Z') {
             chain[0]++;
             info.setChainId(chain);
           }
           info.setResidueNumber(0);
         }
-        prev = (Atom *)0;
+        prev = (Atom *)nullptr;
         seq++;
         continue;
 
       default:
         delete mol;
-        return (RWMol *)0;
+        return (RWMol *)nullptr;
 
       case 'A':
       case 'a':
@@ -1036,18 +1043,23 @@ static RWMol *NASequenceToMol(const char *seq, bool Dna,
         CreateNucleicAcid(mol, Dna ? " DU" : "  U", r1, r2, info, PCap5);
         break;
     }
-    if (prev && r1) CreateAABond(mol, prev, r1, 1);
+    if (prev && r1) {
+      CreateAABond(mol, prev, r1, 1);
+    }
     prev = r2;
     seq++;
   }
-  if (prev && PCap3)
+  if (prev && PCap3) {
     CreatePCap3(mol, prev, info);
+  }
   return mol;
 }
 
 
 RWMol *SequenceToMol(const char *seq, bool sanitize, int flavor) {
-  if (!seq) return (RWMol *)0;
+  if (!seq) {
+    return (RWMol *)nullptr;
+  }
   RWMol *mol;
 
   switch (flavor) {
@@ -1068,10 +1080,11 @@ RWMol *SequenceToMol(const char *seq, bool sanitize, int flavor) {
     case 9:  mol = NASequenceToMol(seq,true,true,true);    break;
 
     default:
-      return (RWMol*)0;
+      return (RWMol *)nullptr;
   }
-  if (sanitize && mol)
+  if (sanitize && mol) {
     MolOps::sanitizeMol(*mol);
+  }
   return mol;
 }
 
@@ -1089,15 +1102,21 @@ RWMol *SequenceToMol(const std::string &seq, bool sanitize, bool lowerD) {
 }
 
 RWMol *FASTAToMol(const char *seq, bool sanitize, int flavor) {
-  if (!seq) return (RWMol *)0;
+  if (!seq) {
+    return (RWMol *)nullptr;
+  }
 
   std::string title;
   if (seq[0] == '>') {
     seq++;
-    while (*seq && *seq != '\n' && *seq != '\r') title += *seq++;
+    while (*seq && *seq != '\n' && *seq != '\r') {
+      title += *seq++;
+    }
   }
   RWMol *mol = SequenceToMol(seq, sanitize, flavor);
-  if (!title.empty()) mol->setProp(common_properties::_Name, title);
+  if (!title.empty()) {
+    mol->setProp(common_properties::_Name, title);
+  }
   return mol;
 }
 
@@ -1119,8 +1138,8 @@ struct HELMMonomer {
   Atom *r3;
   Atom *oxt;
 
-  HELMMonomer() : r1(0), r2(0), r3(0), oxt(0) {}
-  HELMMonomer(Atom *x, Atom *y, Atom *z) : r1(x), r2(y), r3(z), oxt(0) {}
+  HELMMonomer() : r1(nullptr), r2(nullptr), r3(nullptr), oxt(nullptr) {}
+  HELMMonomer(Atom *x, Atom *y, Atom *z) : r1(x), r2(y), r3(z), oxt(nullptr) {}
 };
 
 static const char *GetHELMOneLetterCode(char ch) {
@@ -1166,153 +1185,253 @@ static const char *GetHELMOneLetterCode(char ch) {
     case 'Y':
       return "TYR";
   }
-  return (char *)0;
+  return (char *)nullptr;
 }
 
 static bool IsHELMMonomerIDChar(char ch) {
-  if (ch >= 'A' && ch <= 'Z') return true;
-  if (ch >= 'a' && ch <= 'z') return true;
-  if (ch >= '0' && ch <= '9') return true;
+  if (ch >= 'A' && ch <= 'Z') {
+    return true;
+  }
+  if (ch >= 'a' && ch <= 'z') {
+    return true;
+  }
+  if (ch >= '0' && ch <= '9') {
+    return true;
+  }
   return false;
 }
 
 static const char *LookupHELMPeptideMonomer(const char *ptr) {
   switch (ptr[0]) {
     case 'A':
-      if (ptr[1] == '\0') return "ALA";
-      if (ptr[1] == 'b' && ptr[2] == 'u' && ptr[3] == '\0') return "ABA";
+      if (ptr[1] == '\0') {
+        return "ALA";
+      }
+      if (ptr[1] == 'b' && ptr[2] == 'u' && ptr[3] == '\0') {
+        return "ABA";
+      }
       break;
     case 'C':
-      if (ptr[1] == '\0') return "CYS";
+      if (ptr[1] == '\0') {
+        return "CYS";
+      }
       break;
     case 'D':
-      if (ptr[1] == '\0') return "ASP";
+      if (ptr[1] == '\0') {
+        return "ASP";
+      }
       break;
     case 'E':
-      if (ptr[1] == '\0') return "GLU";
+      if (ptr[1] == '\0') {
+        return "GLU";
+      }
       break;
     case 'F':
-      if (ptr[1] == '\0') return "PHE";
+      if (ptr[1] == '\0') {
+        return "PHE";
+      }
       break;
     case 'G':
-      if (ptr[1] == '\0') return "GLY";
-      if (ptr[1] == 'l' && ptr[2] == 'p' && ptr[3] == '\0') return "PCA";
+      if (ptr[1] == '\0') {
+        return "GLY";
+      }
+      if (ptr[1] == 'l' && ptr[2] == 'p' && ptr[3] == '\0') {
+        return "PCA";
+      }
       break;
     case 'H':
-      if (ptr[1] == '\0') return "HIS";
+      if (ptr[1] == '\0') {
+        return "HIS";
+      }
       break;
     case 'I':
-      if (ptr[1] == '\0') return "ILE";
+      if (ptr[1] == '\0') {
+        return "ILE";
+      }
       break;
     case 'K':
-      if (ptr[1] == '\0') return "LYS";
+      if (ptr[1] == '\0') {
+        return "LYS";
+      }
       break;
     case 'L':
-      if (ptr[1] == '\0') return "LEU";
+      if (ptr[1] == '\0') {
+        return "LEU";
+      }
       break;
     case 'M':
-      if (ptr[1] == '\0') return "MET";
+      if (ptr[1] == '\0') {
+        return "MET";
+      }
       break;
     case 'N':
-      if (ptr[1] == '\0') return "ASN";
-      if (ptr[1] == 'a' && ptr[2] == 'l' && ptr[3] == '\0') return "NAL";
-      if (ptr[1] == 'l' && ptr[2] == 'e' && ptr[3] == '\0') return "NLE";
-      if (ptr[1] == 'v' && ptr[2] == 'a' && ptr[3] == '\0') return "NVA";
+      if (ptr[1] == '\0') {
+        return "ASN";
+      }
+      if (ptr[1] == 'a' && ptr[2] == 'l' && ptr[3] == '\0') {
+        return "NAL";
+      }
+      if (ptr[1] == 'l' && ptr[2] == 'e' && ptr[3] == '\0') {
+        return "NLE";
+      }
+      if (ptr[1] == 'v' && ptr[2] == 'a' && ptr[3] == '\0') {
+        return "NVA";
+      }
       break;
     case 'O':
-      if (ptr[1] == 'r' && ptr[2] == 'n' && ptr[3] == '\0') return "ORN";
+      if (ptr[1] == 'r' && ptr[2] == 'n' && ptr[3] == '\0') {
+        return "ORN";
+      }
       break;
     case 'P':
-      if (ptr[1] == '\0') return "PRO";
+      if (ptr[1] == '\0') {
+        return "PRO";
+      }
       break;
     case 'Q':
-      if (ptr[1] == '\0') return "GLN";
+      if (ptr[1] == '\0') {
+        return "GLN";
+      }
       break;
     case 'R':
-      if (ptr[1] == '\0') return "ARG";
+      if (ptr[1] == '\0') {
+        return "ARG";
+      }
       break;
     case 'S':
-      if (ptr[1] == '\0') return "SER";
-      if (ptr[1] == 'a' && ptr[2] == 'r' && ptr[3] == '\0') return "SAR";
+      if (ptr[1] == '\0') {
+        return "SER";
+      }
+      if (ptr[1] == 'a' && ptr[2] == 'r' && ptr[3] == '\0') {
+        return "SAR";
+      }
       break;
     case 'T':
-      if (ptr[1] == '\0') return "THR";
+      if (ptr[1] == '\0') {
+        return "THR";
+      }
       break;
     case 'V':
-      if (ptr[1] == '\0') return "VAL";
+      if (ptr[1] == '\0') {
+        return "VAL";
+      }
       break;
     case 'W':
-      if (ptr[1] == '\0') return "TRP";
+      if (ptr[1] == '\0') {
+        return "TRP";
+      }
       break;
     case 'Y':
-      if (ptr[1] == '\0') return "TYR";
+      if (ptr[1] == '\0') {
+        return "TYR";
+      }
       break;
     case 'd':
       switch (ptr[1]) {
         case 'A':
-          if (ptr[2] == '\0') return "DAL";
+          if (ptr[2] == '\0') {
+            return "DAL";
+          }
           break;
         case 'C':
-          if (ptr[2] == '\0') return "DCY";
+          if (ptr[2] == '\0') {
+            return "DCY";
+          }
           break;
         case 'D':
-          if (ptr[2] == '\0') return "DAS";
+          if (ptr[2] == '\0') {
+            return "DAS";
+          }
           break;
         case 'E':
-          if (ptr[2] == '\0') return "DGL";
+          if (ptr[2] == '\0') {
+            return "DGL";
+          }
           break;
         case 'F':
-          if (ptr[2] == '\0') return "DPN";
+          if (ptr[2] == '\0') {
+            return "DPN";
+          }
           break;
         case 'H':
-          if (ptr[2] == '\0') return "DHI";
+          if (ptr[2] == '\0') {
+            return "DHI";
+          }
           break;
         case 'I':
-          if (ptr[2] == '\0') return "DIL";
+          if (ptr[2] == '\0') {
+            return "DIL";
+          }
           break;
         case 'K':
-          if (ptr[2] == '\0') return "DLY";
+          if (ptr[2] == '\0') {
+            return "DLY";
+          }
           break;
         case 'L':
-          if (ptr[2] == '\0') return "DLE";
+          if (ptr[2] == '\0') {
+            return "DLE";
+          }
           break;
         case 'M':
-          if (ptr[2] == '\0') return "MED";
+          if (ptr[2] == '\0') {
+            return "MED";
+          }
           break;
         case 'N':
-          if (ptr[2] == '\0') return "DSG";
+          if (ptr[2] == '\0') {
+            return "DSG";
+          }
           break;
         case 'P':
-          if (ptr[2] == '\0') return "DPR";
+          if (ptr[2] == '\0') {
+            return "DPR";
+          }
           break;
         case 'Q':
-          if (ptr[2] == '\0') return "DGN";
+          if (ptr[2] == '\0') {
+            return "DGN";
+          }
           break;
         case 'R':
-          if (ptr[2] == '\0') return "DAR";
+          if (ptr[2] == '\0') {
+            return "DAR";
+          }
           break;
         case 'S':
-          if (ptr[2] == '\0') return "DSN";
+          if (ptr[2] == '\0') {
+            return "DSN";
+          }
           break;
         case 'T':
-          if (ptr[2] == '\0') return "DTH";
+          if (ptr[2] == '\0') {
+            return "DTH";
+          }
           break;
         case 'V':
-          if (ptr[2] == '\0') return "DVA";
+          if (ptr[2] == '\0') {
+            return "DVA";
+          }
           break;
         case 'W':
-          if (ptr[2] == '\0') return "DTR";
+          if (ptr[2] == '\0') {
+            return "DTR";
+          }
           break;
         case 'Y':
-          if (ptr[2] == '\0') return "DTY";
+          if (ptr[2] == '\0') {
+            return "DTY";
+          }
           break;
       }
       break;
     case 's':
-      if (ptr[1] == 'e' && ptr[2] == 'C' && ptr[3] == '\0') return "MSE";
+      if (ptr[1] == 'e' && ptr[2] == 'C' && ptr[3] == '\0') {
+        return "MSE";
+      }
       break;
   }
-  return (const char *)0;
+  return (const char *)nullptr;
 }
 
 static const char *ParseHELMPeptide(RWMol *mol, const char *ptr,
@@ -1322,7 +1441,9 @@ static const char *ParseHELMPeptide(RWMol *mol, const char *ptr,
   HELMMonomer curr;
 
   vseq.clear();
-  if (ptr[0] == '}') return ptr;
+  if (ptr[0] == '}') {
+    return ptr;
+  }
 
   AtomPDBResidueInfo info;
   info.setSerialNumber(1);
@@ -1332,7 +1453,9 @@ static const char *ParseHELMPeptide(RWMol *mol, const char *ptr,
   info.setChainId(chain);
 
   if (ptr[0] == '[' && ptr[1] == 'a' && ptr[2] == 'c' && ptr[3] == ']') {
-    if (ptr[4] != '.') return (const char *)0;
+    if (ptr[4] != '.') {
+      return (const char *)nullptr;
+    }
     info.setResidueNumber(-2);
     CreateAminoAcid(mol, "ACE", curr.r1, curr.r2, curr.r3, info);
     vseq.push_back(curr);
@@ -1342,22 +1465,29 @@ static const char *ParseHELMPeptide(RWMol *mol, const char *ptr,
   }
 
   for (;;) {
-    const char *name = 0;
+    const char *name = nullptr;
     if (*ptr == '[') {
       std::string tmp;
       ptr++;
-      while (IsHELMMonomerIDChar(*ptr)) tmp += *ptr++;
-      if (*ptr != ']') return (char *)0;
+      while (IsHELMMonomerIDChar(*ptr)) {
+        tmp += *ptr++;
+      }
+      if (*ptr != ']') {
+        return (char *)nullptr;
+      }
       name = LookupHELMPeptideMonomer(tmp.c_str());
-    } else
+    } else {
       name = GetHELMOneLetterCode(*ptr);
-    if (!name) return (const char *)0;
+    }
+    if (!name) {
+      return (const char *)nullptr;
+    }
     ptr++;
 
     CreateAminoAcid(mol, name, curr.r1, curr.r2, curr.r3, info);
     if (len && vseq[len - 1].r2 && curr.r1) {
       CreateAABond(mol, vseq[len - 1].r2, curr.r1, 1);
-      vseq[len - 1].r2 = 0;
+      vseq[len - 1].r2 = nullptr;
     }
     vseq.push_back(curr);
     len++;
@@ -1365,40 +1495,45 @@ static const char *ParseHELMPeptide(RWMol *mol, const char *ptr,
     if (*ptr == '.') {
       if (ptr[1] == '[' && ptr[2] == 'a' && ptr[3] == 'm' && ptr[4] == ']' &&
           ptr[5] == '}') {
-        if (!vseq[len - 1].r2) return (const char *)0;
+        if (!vseq[len - 1].r2) {
+          return (const char *)nullptr;
+        }
         int resno = info.getResidueNumber();
         info.setResidueNumber(resno + 1);
         info.setIsHeteroAtom(true);
         info.setResidueName("NH2");
         Atom *n = CreateAAAtom(mol, " N  ", info);
         CreateAABond(mol, vseq[len - 1].r2, n, 1);
-        vseq[len - 1].r2 = (Atom *)0;
+        vseq[len - 1].r2 = (Atom *)nullptr;
         vseq.push_back(HELMMonomer());
         len++;
         return ptr + 5;
       }
       ptr++;
     } else if (*ptr == '}') {
-      if (!vseq[len - 1].r2) return (const char *)0;
+      if (!vseq[len - 1].r2) {
+        return (const char *)nullptr;
+      }
       Atom *oxt = CreateAAAtom(mol, " OXT", info);
       CreateAABond(mol, vseq[len - 1].r2, oxt, 1);
       vseq[len - 1].oxt = oxt;
       return ptr;
-    } else
-      return (const char *)0;
+    } else {
+      return (const char *)nullptr;
+    }
   }
 }
 
 static const char *ParseHELMNucleic(RWMol *mol, const char *ptr,
                                     const char *chain) {
-  if (ptr[0] == '}')
+  if (ptr[0] == '}') {
     return ptr;
+  }
 
   bool PCap5 = false;
-  Atom *prev = 0;
-  Atom *r1 = 0;
-  Atom *r2 = 0;
-
+  Atom *prev = nullptr;
+  Atom *r1 = nullptr;
+  Atom *r2 = nullptr;
 
   AtomPDBResidueInfo info;
   info.setSerialNumber(1);
@@ -1410,12 +1545,13 @@ static const char *ParseHELMNucleic(RWMol *mol, const char *ptr,
   if (*ptr=='P') {
     PCap5 = true;
     ptr++;
-    if (*ptr=='.')
+    if (*ptr == '.') {
       ptr++;
+    }
   }
 
   for (;;) {
-    const char *name = 0;
+    const char *name = nullptr;
     if (*ptr == 'R' && ptr[1]=='(') {
       if (ptr[2]=='A') {
         if (ptr[3]==')') {
@@ -1472,28 +1608,34 @@ static const char *ParseHELMNucleic(RWMol *mol, const char *ptr,
         }
       }
     }
-    if (!name)
-      return (const char *)0;
+    if (!name) {
+      return (const char *)nullptr;
+    }
 
     CreateNucleicAcid(mol,name,r1,r2,info,PCap5);
-    if (prev && r1)
+    if (prev && r1) {
       CreateAABond(mol, prev, r1, 1);
+    }
     prev = r2;
 
-    if (*ptr == '}')
+    if (*ptr == '}') {
       return ptr;
-    if (*ptr == '.')
+    }
+    if (*ptr == '.') {
       ptr++;
-    if (*ptr != 'P')
-      return (const char*)0;
+    }
+    if (*ptr != 'P') {
+      return (const char *)nullptr;
+    }
     ptr++;
     if (*ptr == '}') {
       CreatePCap3(mol,prev,info);
       return ptr;
     }
     PCap5 = true;
-    if (*ptr == '.')
+    if (*ptr == '.') {
       ptr++;
+    }
   }
 }
 
@@ -1511,33 +1653,54 @@ static bool ParseHELM(RWMol *mol, const char *ptr) {
         ptr[4] == 'I' && ptr[5] == 'D' && ptr[6] == 'E' && ptr[7] >= '1' &&
         ptr[7] <= '9') {
       ptr += 8;
-      while (*ptr >= '0' && *ptr <= '9') ptr++;
-      if (*ptr != '{') return false;
+      while (*ptr >= '0' && *ptr <= '9') {
+        ptr++;
+      }
+      if (*ptr != '{') {
+        return false;
+      }
       std::string id(orig, ptr - orig);
       chain[0] = 'A' + (orig[7] - '1');
       ptr = ParseHELMPeptide(mol, ptr + 1, chain, seqs[id]);
-      if (!ptr || *ptr != '}') return false;
+      if (!ptr || *ptr != '}') {
+        return false;
+      }
       ptr++;
     } else if (ptr[0]=='R' && ptr[1]=='N' && ptr[2]=='A' &&
                ptr[3]>='1' && ptr[3]<='9') {
       ptr += 4;
-      while (*ptr >= '0' && *ptr <= '9') ptr++;
-      if (*ptr != '{') return false;
+      while (*ptr >= '0' && *ptr <= '9') {
+        ptr++;
+      }
+      if (*ptr != '{') {
+        return false;
+      }
       chain[0] = 'A' + (orig[3] - '1');
       ptr = ParseHELMNucleic(mol, ptr + 1, chain);
-      if (!ptr || *ptr != '}') return false;
+      if (!ptr || *ptr != '}') {
+        return false;
+      }
       ptr++;
-    } else
+    } else {
       return false;
+    }
 
-    if (*ptr == '$') break;
-    if (*ptr == '\0') return true;
-    if (*ptr != '|') return false;
+    if (*ptr == '$') {
+      break;
+    }
+    if (*ptr == '\0') {
+      return true;
+    }
+    if (*ptr != '|') {
+      return false;
+    }
     ptr++;
   }
   ptr++;
 
-  if (ptr[0] == '$' && ptr[1] == '$' && ptr[2] == '$') return true;
+  if (ptr[0] == '$' && ptr[1] == '$' && ptr[2] == '$') {
+    return true;
+  }
 
   for (;;) {
     orig = ptr;
@@ -1545,10 +1708,15 @@ static bool ParseHELM(RWMol *mol, const char *ptr) {
         ptr[4] == 'I' && ptr[5] == 'D' && ptr[6] == 'E' && ptr[7] >= '1' &&
         ptr[7] <= '9') {
       ptr += 8;
-    } else
+    } else {
       return false;
-    while (*ptr >= '0' && *ptr <= '9') ptr++;
-    if (*ptr != ',') return false;
+    }
+    while (*ptr >= '0' && *ptr <= '9') {
+      ptr++;
+    }
+    if (*ptr != ',') {
+      return false;
+    }
 
     std::string id1(orig, ptr - orig);
     ptr++;
@@ -1558,10 +1726,15 @@ static bool ParseHELM(RWMol *mol, const char *ptr) {
         ptr[4] == 'I' && ptr[5] == 'D' && ptr[6] == 'E' && ptr[7] >= '1' &&
         ptr[7] <= '9') {
       ptr += 8;
-    } else
+    } else {
       return false;
-    while (*ptr >= '0' && *ptr <= '9') ptr++;
-    if (*ptr != ',') return false;
+    }
+    while (*ptr >= '0' && *ptr <= '9') {
+      ptr++;
+    }
+    if (*ptr != ',') {
+      return false;
+    }
 
     std::string id2(orig, ptr - orig);
     ptr++;
@@ -1573,48 +1746,66 @@ static bool ParseHELM(RWMol *mol, const char *ptr) {
 
     if (*ptr >= '1' && *ptr <= '9') {
       res1 = (*ptr++) - '0';
-      while (*ptr >= '0' && *ptr <= '9') res1 = 10 * res1 + ((*ptr++) - '0');
-    } else
+      while (*ptr >= '0' && *ptr <= '9') {
+        res1 = 10 * res1 + ((*ptr++) - '0');
+      }
+    } else {
       return false;
+    }
     if (ptr[0] == ':' && ptr[1] == 'R' && ptr[2] >= '1' && ptr[2] <= '9') {
       res1r = ptr[2] - '0';
       ptr += 3;
-    } else
+    } else {
       return false;
-    if (*ptr != '-') return false;
+    }
+    if (*ptr != '-') {
+      return false;
+    }
     ptr++;
 
     if (*ptr >= '1' && *ptr <= '9') {
       res2 = (*ptr++) - '0';
-      while (*ptr >= '0' && *ptr <= '9') res2 = 10 * res2 + ((*ptr++) - '0');
-    } else
+      while (*ptr >= '0' && *ptr <= '9') {
+        res2 = 10 * res2 + ((*ptr++) - '0');
+      }
+    } else {
       return false;
+    }
     if (ptr[0] == ':' && ptr[1] == 'R' && ptr[2] >= '1' && ptr[2] <= '9') {
       res2r = ptr[2] - '0';
       ptr += 3;
-    } else
+    } else {
       return false;
+    }
 
     // printf("%s:%u:R%u - %s:%u:R%u\n",id1.c_str(),res1,res1r,
     //                                  id2.c_str(),res2,res2r);
 
-    if (res1 < 1 || res2 < 1) return false;
-    if (seqs.find(id1) == seqs.end() || seqs.find(id2) == seqs.end())
+    if (res1 < 1 || res2 < 1) {
       return false;
+    }
+    if (seqs.find(id1) == seqs.end() || seqs.find(id2) == seqs.end()) {
+      return false;
+    }
     std::vector<HELMMonomer> *vseq1 = &seqs[id1];
-    if (res1 > (unsigned int)vseq1->size()) return false;
+    if (res1 > (unsigned int)vseq1->size()) {
+      return false;
+    }
     std::vector<HELMMonomer> *vseq2 = &seqs[id2];
-    if (res2 > (unsigned int)vseq2->size()) return false;
+    if (res2 > (unsigned int)vseq2->size()) {
+      return false;
+    }
 
     if (res1r == 3 && res2r == 3) {
       Atom *src = (*vseq1)[res1 - 1].r3;
       Atom *dst = (*vseq2)[res2 - 1].r3;
       if (src && dst && src != dst) {
         CreateAABond(mol, src, dst, 1);
-        (*vseq1)[res1 - 1].r3 = (Atom *)0;
-        (*vseq2)[res2 - 1].r3 = (Atom *)0;
-      } else
+        (*vseq1)[res1 - 1].r3 = (Atom *)nullptr;
+        (*vseq2)[res2 - 1].r3 = (Atom *)nullptr;
+      } else {
         return false;
+      }
     } else if (res1r == 1 && res2r == 2) {
       Atom *src = (*vseq1)[res1 - 1].r1;
       Atom *dst = (*vseq2)[res2 - 1].r2;
@@ -1622,10 +1813,11 @@ static bool ParseHELM(RWMol *mol, const char *ptr) {
       if (src && dst && oxt && src != dst) {
         mol->removeAtom(oxt);
         CreateAABond(mol, src, dst, 1);
-        (*vseq1)[res1 - 1].r1 = (Atom *)0;
-        (*vseq2)[res2 - 1].r2 = (Atom *)0;
-      } else
+        (*vseq1)[res1 - 1].r1 = (Atom *)nullptr;
+        (*vseq2)[res2 - 1].r2 = (Atom *)nullptr;
+      } else {
         return false;
+      }
     } else if (res1r == 2 && res2r == 1) {
       Atom *src = (*vseq2)[res2 - 1].r1;
       Atom *dst = (*vseq1)[res1 - 1].r2;
@@ -1633,15 +1825,21 @@ static bool ParseHELM(RWMol *mol, const char *ptr) {
       if (src && dst && oxt && src != dst) {
         mol->removeAtom(oxt);
         CreateAABond(mol, dst, src, 1);
-        (*vseq1)[res1 - 1].r2 = (Atom *)0;
-        (*vseq2)[res2 - 1].r1 = (Atom *)0;
-      } else
+        (*vseq1)[res1 - 1].r2 = (Atom *)nullptr;
+        (*vseq2)[res2 - 1].r1 = (Atom *)nullptr;
+      } else {
         return false;
-    } else
+      }
+    } else {
       return false;
+    }
 
-    if (*ptr == '$') break;
-    if (*ptr != '|') return false;
+    if (*ptr == '$') {
+      break;
+    }
+    if (*ptr != '|') {
+      return false;
+    }
     ptr++;
   }
   ptr++;
@@ -1649,18 +1847,21 @@ static bool ParseHELM(RWMol *mol, const char *ptr) {
 }
 
 RWMol *HELMToMol(const char *helm, bool sanitize) {
-  RWMol *mol = new RWMol();
+  auto *mol = new RWMol();
 
   const char *ptr = helm;
-  if (ptr[0] == '$' && ptr[1] == '$' && ptr[2] == '$' && ptr[3] == '$')
+  if (ptr[0] == '$' && ptr[1] == '$' && ptr[2] == '$' && ptr[3] == '$') {
     return mol;
+  }
 
   if (ParseHELM(mol, ptr)) {
-    if (sanitize) MolOps::sanitizeMol(*mol);
+    if (sanitize) {
+      MolOps::sanitizeMol(*mol);
+    }
     return mol;
   }
   delete mol;
-  return (RWMol *)0;
+  return (RWMol *)nullptr;
 }
 
 RWMol *HELMToMol(const std::string &helm, bool sanitize) {

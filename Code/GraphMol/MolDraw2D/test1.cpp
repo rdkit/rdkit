@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 
+#include <RDGeneral/test.h>
 #include <RDGeneral/utils.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
@@ -55,8 +56,8 @@ void test1() {
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
     std::string text = drawer.getDrawingText();
-    TEST_ASSERT(text.find("<svg:svg") != std::string::npos);
-    TEST_ASSERT(text.find("</svg:svg>") != std::string::npos);
+    TEST_ASSERT(text.find("<svg") != std::string::npos);
+    TEST_ASSERT(text.find("</svg>") != std::string::npos);
     delete m;
   }
   {
@@ -108,7 +109,7 @@ void test1() {
   std::cout << " Done" << std::endl;
 }
 
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
 #include <cairo.h>
 #include "MolDraw2DCairo.h"
 void test2() {
@@ -139,6 +140,7 @@ void test2() {
     drawer.finishDrawing();
 
     std::string drawing = drawer.getDrawingText();
+    TEST_ASSERT(drawing.size() > 0);
     std::ofstream ofs("test2_2.png");
     ofs.write(drawing.c_str(), drawing.size());
     delete m;
@@ -171,7 +173,7 @@ void test2() {
   }
   std::cout << " Done" << std::endl;
 }
-#else  // RDK_CAIRO_BUILD
+#else  // RDK_BUILD_CAIRO_SUPPORT
 void test2() {}
 #endif
 
@@ -192,7 +194,7 @@ void test3() {
     atomLabels[0] = "[CH2;X2:4]";
     atomLabels[6] = "[NH2+:7]";
 
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(300, 300);
       drawer.drawOptions().atomLabels = atomLabels;
@@ -223,7 +225,7 @@ void test3() {
     static const int ha[] = {0, 3, 4, 5};
     std::vector<int> highlight_atoms(ha, ha + sizeof(ha) / sizeof(int));
 
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(300, 300);
       drawer.drawOptions().circleAtoms = false;
@@ -255,7 +257,7 @@ void test3() {
     highlight_colors[12] = DrawColour(0, 0, 1);
     highlight_colors[13] = DrawColour(0, 1, 0);
 
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(300, 300);
       drawer.drawOptions().circleAtoms = true;
@@ -291,7 +293,7 @@ void test3() {
     options.highlightColour = DrawColour(1, .5, .5);
     options.continuousHighlight = true;
 
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(300, 300);
       drawer.drawOptions() = options;
@@ -327,7 +329,7 @@ void test3() {
     options.highlightColour = DrawColour(1, .5, .5);
     options.continuousHighlight = true;
 
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(200, 200);
       drawer.drawOptions() = options;
@@ -365,7 +367,7 @@ void test3() {
     options.atomRegions.push_back(highlight_atoms2);
     options.includeAtomTags = true;
 
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(300, 300);
       drawer.drawOptions() = options;
@@ -403,7 +405,7 @@ void test3() {
     std::map<int, DrawColour> highlight_colors;
     highlight_colors[17] = DrawColour(.5, .5, 1.);
 
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(300, 300);
       drawer.drawOptions() = options;
@@ -438,7 +440,7 @@ void test4() {
     std::string nameBase = "test4_1";
     TEST_ASSERT(m);
 
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(300, 300);
       drawer.drawMolecule(*m);
@@ -471,7 +473,7 @@ void test5() {
     MolDrawOptions options;
     options.dummiesAreAttachments = true;
     options.atomLabels[0] = "R1";
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(300, 300);
       drawer.drawOptions() = options;
@@ -495,11 +497,11 @@ void test5() {
     std::string nameBase = "test5_2";
     ROMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
-    RDDepict::compute2DCoords(*m, 0, true);
+    RDDepict::compute2DCoords(*m, nullptr, true);
     WedgeMolBonds(*m, &(m->getConformer()));
     MolDrawOptions options;
     options.dummiesAreAttachments = true;
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(300, 300);
       drawer.drawOptions() = options;
@@ -524,11 +526,11 @@ void test5() {
     ROMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
     m->getBondBetweenAtoms(1, 2)->setBondDir(Bond::UNKNOWN);
-    RDDepict::compute2DCoords(*m, 0, true);
+    RDDepict::compute2DCoords(*m, nullptr, true);
     WedgeMolBonds(*m, &(m->getConformer()));
     MolDrawOptions options;
     options.dummiesAreAttachments = true;
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(300, 300);
       drawer.drawOptions() = options;
@@ -551,16 +553,17 @@ void test5() {
 }
 
 #ifdef RDK_TEST_MULTITHREADED
-#include <RDGeneral/BoostStartInclude.h>
-#include <boost/thread.hpp>
-#include <RDGeneral/BoostEndInclude.h>
+#include <thread>
+#include <future>
 namespace {
 void runblock(const std::vector<ROMol *> &mols,
               const std::vector<std::string> &refData, unsigned int count,
               unsigned int idx) {
   for (unsigned int j = 0; j < 200; j++) {
     for (unsigned int i = 0; i < mols.size(); ++i) {
-      if (i % count != idx) continue;
+      if (i % count != idx) {
+        continue;
+      }
       ROMol *mol = mols[i];
       MolDraw2DSVG drawer(300, 300);
       drawer.drawMolecule(*mol);
@@ -570,7 +573,7 @@ void runblock(const std::vector<ROMol *> &mols,
     }
   }
 }
-}
+}  // namespace
 
 void testMultiThreaded() {
   std::cout << " ----------------- Test multi-threaded drawing" << std::endl;
@@ -580,13 +583,15 @@ void testMultiThreaded() {
   std::cerr << "reading molecules" << std::endl;
   std::vector<ROMol *> mols;
   while (!suppl.atEnd() && mols.size() < 100) {
-    ROMol *mol = 0;
+    ROMol *mol = nullptr;
     try {
       mol = suppl.next();
     } catch (...) {
       continue;
     }
-    if (!mol) continue;
+    if (!mol) {
+      continue;
+    }
     mols.push_back(mol);
   }
 
@@ -597,19 +602,25 @@ void testMultiThreaded() {
     drawer.drawMolecule(*(mols[i]));
     drawer.finishDrawing();
     refData[i] = drawer.getDrawingText();
-    TEST_ASSERT(refData[i].find("<svg:svg") != std::string::npos);
-    TEST_ASSERT(refData[i].find("</svg:svg>") != std::string::npos);
+    TEST_ASSERT(refData[i].find("<svg") != std::string::npos);
+    TEST_ASSERT(refData[i].find("</svg>") != std::string::npos);
   }
 
-  boost::thread_group tg;
+  std::vector<std::future<void>> tg;
   unsigned int count = 4;
   std::cerr << "processing" << std::endl;
   for (unsigned int i = 0; i < count; ++i) {
     std::cerr << " launch :" << i << std::endl;
     std::cerr.flush();
-    tg.add_thread(new boost::thread(runblock, mols, refData, count, i));
+    tg.emplace_back(
+        std::async(std::launch::async, runblock, mols, refData, count, i));
   }
-  tg.join_all();
+  for (auto &fut : tg) {
+    fut.get();
+  }
+  for (auto &&mol : mols) {
+    delete mol;
+  }
   std::cerr << " Done" << std::endl;
 }
 #else
@@ -631,7 +642,8 @@ void test6() {
     std::string txt = drawer.getDrawingText();
     std::ofstream outs("test6_1.svg");
     outs << txt;
-    // TEST_ASSERT(txt.find("<svg:svg")!=std::string::npos);
+    // TEST_ASSERT(txt.find("<svg")!=std::string::npos);
+    delete m;
   }
   std::cerr << " Done" << std::endl;
 }
@@ -651,10 +663,10 @@ void test7() {
     std::string txt = drawer.getDrawingText();
     std::ofstream outs((nameBase + ".svg").c_str());
     outs << txt;
-    TEST_ASSERT(txt.find("<svg:svg") != std::string::npos);
-    TEST_ASSERT(txt.find("<svg:rect") == std::string::npos);
+    TEST_ASSERT(txt.find("<svg") != std::string::npos);
+    TEST_ASSERT(txt.find("<rect") == std::string::npos);
   }
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
   {
     std::string nameBase = "test7_1";
     MolDraw2DCairo drawer(300, 300);
@@ -673,11 +685,11 @@ void test7() {
     std::string txt = drawer.getDrawingText();
     std::ofstream outs((nameBase + ".svg").c_str());
     outs << txt;
-    TEST_ASSERT(txt.find("<svg:svg") != std::string::npos);
-    TEST_ASSERT(txt.find("<svg:rect") != std::string::npos);
+    TEST_ASSERT(txt.find("<svg") != std::string::npos);
+    TEST_ASSERT(txt.find("<rect") != std::string::npos);
     TEST_ASSERT(txt.find("fill:#CCCCCC") != std::string::npos);
   }
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
   {
     std::string nameBase = "test7_2";
     MolDraw2DCairo drawer(300, 300);
@@ -687,6 +699,7 @@ void test7() {
     drawer.writeDrawingText(nameBase + ".png");
   }
 #endif
+  delete m;
   std::cerr << " Done" << std::endl;
 }
 
@@ -832,8 +845,8 @@ void testGithub781() {
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
     std::string txt = drawer.getDrawingText();
-    TEST_ASSERT(txt.find("<svg:svg") != std::string::npos);
-    TEST_ASSERT(txt.find("<svg:tspan>CH</svg:tspan>") != std::string::npos);
+    TEST_ASSERT(txt.find("<svg") != std::string::npos);
+    TEST_ASSERT(txt.find("<tspan>CH</tspan>") != std::string::npos);
     delete m;
   }
   {
@@ -845,8 +858,8 @@ void testGithub781() {
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
     std::string txt = drawer.getDrawingText();
-    TEST_ASSERT(txt.find("<svg:svg") != std::string::npos);
-    TEST_ASSERT(txt.find("<svg:tspan>OH</svg:tspan>") == std::string::npos);
+    TEST_ASSERT(txt.find("<svg") != std::string::npos);
+    TEST_ASSERT(txt.find("<tspan>OH</tspan>") == std::string::npos);
     delete m;
   }
   {
@@ -858,8 +871,8 @@ void testGithub781() {
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
     std::string txt = drawer.getDrawingText();
-    TEST_ASSERT(txt.find("<svg:svg") != std::string::npos);
-    TEST_ASSERT(txt.find("<svg:tspan>C</svg:tspan>") != std::string::npos);
+    TEST_ASSERT(txt.find("<svg") != std::string::npos);
+    TEST_ASSERT(txt.find("<tspan>C</tspan>") != std::string::npos);
     delete m;
   }
   {
@@ -871,21 +884,21 @@ void testGithub781() {
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
     std::string txt = drawer.getDrawingText();
-    TEST_ASSERT(txt.find("<svg:svg") != std::string::npos);
-    TEST_ASSERT(txt.find("<svg:tspan>CH</svg:tspan>") != std::string::npos);
-    TEST_ASSERT(txt.find("<svg:tspan>Cl</svg:tspan>") != std::string::npos);
+    TEST_ASSERT(txt.find("<svg") != std::string::npos);
+    TEST_ASSERT(txt.find("<tspan>CH</tspan>") != std::string::npos);
+    TEST_ASSERT(txt.find("<tspan>Cl</tspan>") != std::string::npos);
     delete m;
   }
   {  // empty molecule
-    ROMol *m = new ROMol();
+    auto *m = new ROMol();
     TEST_ASSERT(m);
     RDDepict::compute2DCoords(*m);
     MolDraw2DSVG drawer(300, 300);
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
     std::string txt = drawer.getDrawingText();
-    TEST_ASSERT(txt.find("<svg:svg") != std::string::npos);
-    TEST_ASSERT(txt.find("<svg:tspan>") == std::string::npos);
+    TEST_ASSERT(txt.find("<svg") != std::string::npos);
+    TEST_ASSERT(txt.find("<tspan>") == std::string::npos);
     delete m;
   }
   std::cerr << " Done" << std::endl;
@@ -903,7 +916,7 @@ void testGithub774() {
     WedgeMolBonds(*m, &(m->getConformer()));
     MolOps::Kekulize(*m);
 
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(300, 300);
       drawer.drawMolecule(*m);
@@ -938,7 +951,7 @@ void testGithub774() {
     WedgeMolBonds(*m, &(m->getConformer()));
     MolOps::Kekulize(*m);
 
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(300, 300);
       drawer.drawMolecule(*m);
@@ -975,7 +988,8 @@ void test9MolLegends() {
     std::string txt = drawer.getDrawingText();
     std::ofstream outs("test9_1.svg");
     outs << txt;
-    // TEST_ASSERT(txt.find("<svg:svg")!=std::string::npos);
+    // TEST_ASSERT(txt.find("<svg")!=std::string::npos);
+    delete m;
   }
   std::cerr << " Done" << std::endl;
 }
@@ -992,7 +1006,7 @@ void testGithub852() {
     TEST_ASSERT(m);
     MolDraw2DUtils::prepareMolForDrawing(*m);
 
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(300, 300);
       drawer.drawMolecule(*m);
@@ -1017,7 +1031,7 @@ void testGithub852() {
     TEST_ASSERT(m);
     MolDraw2DUtils::prepareMolForDrawing(*m);
 
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(300, 300);
       drawer.drawMolecule(*m);
@@ -1048,7 +1062,7 @@ void testGithub860() {
     TEST_ASSERT(m);
     MolDraw2DUtils::prepareMolForDrawing(*m);
 
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(300, 300);
       drawer.drawMolecule(*m);
@@ -1063,6 +1077,7 @@ void testGithub860() {
       drawer.finishDrawing();
       outs.flush();
     }
+    delete m;
   }
   {
     std::string smiles =
@@ -1072,7 +1087,7 @@ void testGithub860() {
     TEST_ASSERT(m);
     MolDraw2DUtils::prepareMolForDrawing(*m);
 
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(300, 300);
       drawer.drawMolecule(*m);
@@ -1087,6 +1102,7 @@ void testGithub860() {
       drawer.finishDrawing();
       outs.flush();
     }
+    delete m;
   }
   {
     std::string smiles = "[15NH3+:1]-CCCCCCCC-[15NH3+:4]";
@@ -1095,7 +1111,7 @@ void testGithub860() {
     TEST_ASSERT(m);
     MolDraw2DUtils::prepareMolForDrawing(*m);
 
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(300, 300);
       drawer.drawMolecule(*m);
@@ -1110,6 +1126,7 @@ void testGithub860() {
       drawer.finishDrawing();
       outs.flush();
     }
+    delete m;
   }
   std::cerr << " Done" << std::endl;
 }
@@ -1232,9 +1249,10 @@ M  END";
     std::ofstream outs("test983_1.svg");
     outs << text;
     outs.flush();
-    TEST_ASSERT(text.find("<svg:path d='M 130.309,117.496 73.5169,75.8928 "
-                          "65.8827,89.1161 130.309,117.496' "
-                          "style='fill:#000000") != std::string::npos);
+    TEST_ASSERT(
+        text.find("<path class='bond-1' d='M 130.309,117.496 L 194.727,89.1159 "
+                  "L 187.092,75.893 Z' "
+                  "style='fill:#000000") != std::string::npos);
     delete m;
   }
   {
@@ -1283,9 +1301,10 @@ M  END";
     std::ofstream outs("test983_2.svg");
     outs << text;
     outs.flush();
-    TEST_ASSERT(text.find("<svg:path d='M 107.911,115.963 80.5887,91.4454 "
-                          "75.9452,97.9126 107.911,115.963' "
-                          "style='fill:#000000;") != std::string::npos);
+    TEST_ASSERT(
+        text.find("<path class='bond-3' d='M 107.911,115.963 L 80.5887,91.4454 "
+                  "L 75.9452,97.9126 Z' "
+                  "style='fill:#000000;") != std::string::npos);
 
     MolDraw2DUtils::prepareMolForDrawing(*m);
     TEST_ASSERT(m->getBondBetweenAtoms(2, 1)->getBondType() == Bond::SINGLE);
@@ -1326,11 +1345,14 @@ void testDeuteriumTritium() {
       std::string line;
       std::getline(ins, line);
       ok = (ins.good() && !ins.eof());
-      if (!ok) continue;
+      if (!ok) {
+        continue;
+      }
       if ((line.find("baseline-shift:super") != std::string::npos) &&
           (line.find(">2<") != std::string::npos) &&
-          (line.find(">H<") != std::string::npos))
+          (line.find(">H<") != std::string::npos)) {
         ++count;
+      }
     }
     TEST_ASSERT(count == 4);
     delete m;
@@ -1353,11 +1375,14 @@ void testDeuteriumTritium() {
       std::string line;
       std::getline(ins, line);
       ok = (ins.good() && !ins.eof());
-      if (!ok) continue;
+      if (!ok) {
+        continue;
+      }
       if ((line.find("baseline-shift:super") != std::string::npos) &&
           (line.find(">3<") != std::string::npos) &&
-          (line.find(">H<") != std::string::npos))
+          (line.find(">H<") != std::string::npos)) {
         ++count;
+      }
     }
     TEST_ASSERT(count == 4);
     delete m;
@@ -1380,11 +1405,14 @@ void testDeuteriumTritium() {
       std::string line;
       std::getline(ins, line);
       ok = (ins.good() && !ins.eof());
-      if (!ok) continue;
+      if (!ok) {
+        continue;
+      }
       if ((line.find("baseline-shift:super") == std::string::npos) &&
           (line.find(">2<") == std::string::npos) &&
-          (line.find(">D<") != std::string::npos))
+          (line.find(">D<") != std::string::npos)) {
         ++count;
+      }
     }
     TEST_ASSERT(count == 4);
     delete m;
@@ -1407,11 +1435,14 @@ void testDeuteriumTritium() {
       std::string line;
       std::getline(ins, line);
       ok = (ins.good() && !ins.eof());
-      if (!ok) continue;
+      if (!ok) {
+        continue;
+      }
       if ((line.find("baseline-shift:super") == std::string::npos) &&
           (line.find(">3<") == std::string::npos) &&
-          (line.find(">T<") != std::string::npos))
+          (line.find(">T<") != std::string::npos)) {
         ++count;
+      }
     }
     TEST_ASSERT(count == 4);
     delete m;
@@ -1434,6 +1465,7 @@ void testCrossedBonds() {
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
     outs.close();
+    delete m;
   }
   std::cerr << " Done" << std::endl;
 }
@@ -1684,8 +1716,8 @@ void test12DrawMols() {
     outs.flush();
   }
   {
-    mols[2] = NULL;
-    mols[4] = NULL;
+    mols[2] = nullptr;
+    mols[4] = nullptr;
     MolDraw2DSVG drawer(750, 400, 250, 200);
     drawer.drawMolecules(mols);
     drawer.finishDrawing();
@@ -1718,6 +1750,7 @@ void test13JSONConfig() {
     TEST_ASSERT(text.find("text-anchor:start;fill:#FF7FFF") !=
                 std::string::npos);
     outs.close();
+    delete m;
   }
   std::cerr << " Done" << std::endl;
 }
@@ -1770,7 +1803,7 @@ void testGithub1035() {
     bool ok = false;
     try {
       drawer.drawMolecule(*m1, &highlights);
-    } catch (const ValueErrorException &e) {
+    } catch (const ValueErrorException &) {
       ok = true;
     }
     TEST_ASSERT(ok);
@@ -1781,7 +1814,7 @@ void testGithub1035() {
     bool ok = false;
     try {
       drawer.drawMolecule(*m1, &highlights);
-    } catch (const ValueErrorException &e) {
+    } catch (const ValueErrorException &) {
       ok = true;
     }
     TEST_ASSERT(ok);
@@ -1792,7 +1825,7 @@ void testGithub1035() {
     bool ok = false;
     try {
       drawer.drawMolecule(*m1, &highlights);
-    } catch (const ValueErrorException &e) {
+    } catch (const ValueErrorException &) {
       ok = true;
     }
     TEST_ASSERT(ok);
@@ -2047,6 +2080,7 @@ void test14BWPalette() {
       outs << text;
       outs.flush();
     }
+    delete m1;
   }
   std::cerr << " Done" << std::endl;
 }
@@ -2067,7 +2101,7 @@ void test15ContinuousHighlightingWithGrid() {
     std::vector<ROMol *> mols;
     mols.push_back(m1);
     mols.push_back(m2);
-    std::vector<std::vector<int> > atHighlights(2);
+    std::vector<std::vector<int>> atHighlights(2);
     atHighlights[0].push_back(0);
     atHighlights[0].push_back(1);
     atHighlights[0].push_back(2);
@@ -2081,7 +2115,7 @@ void test15ContinuousHighlightingWithGrid() {
     {
       MolDraw2DSVG drawer(500, 200, 250, 200);
       drawer.drawOptions().continuousHighlight = false;
-      drawer.drawMolecules(mols, NULL, &atHighlights);
+      drawer.drawMolecules(mols, nullptr, &atHighlights);
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
       std::ofstream outs("test15_1.svg");
@@ -2094,7 +2128,7 @@ void test15ContinuousHighlightingWithGrid() {
     {
       MolDraw2DSVG drawer(500, 200, 250, 200);
       drawer.drawOptions().continuousHighlight = true;
-      drawer.drawMolecules(mols, NULL, &atHighlights);
+      drawer.drawMolecules(mols, nullptr, &atHighlights);
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
       std::ofstream outs("test15_2.svg");
@@ -2103,12 +2137,226 @@ void test15ContinuousHighlightingWithGrid() {
       TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:8px;") !=
                   std::string::npos);
     }
+    for (auto &&mol : mols) {
+      delete mol;
+    }
   }
 
   std::cerr << " Done" << std::endl;
 }
 
+void testGithub1829() {
+  std::cerr << " ----------------- Testing github 1829: crash when "
+               "drawMolecules() is called with an empty list"
+            << std::endl;
+  {
+    std::vector<ROMol *> mols;
+    MolDraw2DSVG drawer(750, 400, 250, 200);
+    // this should run quietly without complaining
+    drawer.drawMolecules(mols);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+  }
+  std::cerr << " Done" << std::endl;
+}
+
+void test16MoleculeMetadata() {
+  std::cout << " ----------------- Testing inclusion of molecule metadata"
+            << std::endl;
+  {
+    std::string smiles = "CN[C@H](Cl)C(=O)O";
+    std::unique_ptr<RWMol> m1(SmilesToMol(smiles));
+    TEST_ASSERT(m1);
+    MolDraw2DUtils::prepareMolForDrawing(*m1);
+
+    {  // one molecule
+      MolDraw2DSVG drawer(200, 200);
+      drawer.drawMolecule(*m1, "m1");
+      drawer.addMoleculeMetadata(*m1);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      TEST_ASSERT(text.find("idx=\"2\" atom-smiles=\"[NH]\" drawing-x=\"52.") !=
+                  std::string::npos);
+      TEST_ASSERT(text.find("idx=\"2\" begin-atom-idx=\"3\" end-atom-idx=\"2\" "
+                            "bond-smiles=\"-\"") != std::string::npos);
+      std::ofstream outs("test16_1.svg");
+      outs << text;
+      outs.flush();
+    }
+
+#if 1
+    {  // multiple molecules
+      MolDraw2DSVG drawer(400, 400, 200, 200);
+      auto *rom = rdcast<ROMol *>(m1.get());
+      std::vector<ROMol *> ms = {new ROMol(*rom), new ROMol(*rom),
+                                 new ROMol(*rom), new ROMol(*rom)};
+      drawer.drawMolecules(ms);
+      drawer.addMoleculeMetadata(ms);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+
+      TEST_ASSERT(text.find("atom-smiles=\"[NH]\" drawing-x=\"60.") !=
+                  std::string::npos);
+      TEST_ASSERT(text.find("atom-smiles=\"[NH]\" drawing-x=\"260.") !=
+                  std::string::npos);
+
+      std::ofstream outs("test16_2.svg");
+      outs << text;
+      outs.flush();
+      for (auto ptr : ms) {
+        delete ptr;
+      }
+    }
+#endif
+  }
+
+  std::cerr << " Done" << std::endl;
+}
+
+void testGithub2063() {
+  std::cout << " ----------------- Testing Github2063: Drawing racemic bond "
+               "stereo as crossed bonds should be the default"
+            << std::endl;
+  {
+    std::string molb = R"molb(squiggle bond
+  Mrv1810 09301816112D          
+
+  4  3  0  0  0  0            999 V2000
+    0.5804   -0.3125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2948    0.1000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.1341    0.1000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.0093   -0.3125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  1  3  1  0  0  0  0
+  2  4  1  4  0  0  0
+M  END)molb";
+    std::unique_ptr<RWMol> m1(MolBlockToMol(molb));
+    TEST_ASSERT(m1);
+    MolDraw2DUtils::prepareMolForDrawing(*m1);
+
+    MolDraw2DSVG drawer(200, 200);
+    drawer.drawMolecule(*m1, "m1");
+    drawer.addMoleculeMetadata(*m1);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("testGithub2063_1.svg");
+    outs << text;
+    outs.flush();
+    TEST_ASSERT(
+        text.find(
+            "<path class='bond-0' d='M 65.8823,110.884 L 134.118,89.1159'") !=
+        std::string::npos);
+    TEST_ASSERT(
+        text.find(
+            "<path class='bond-1' d='M 69.6998,117.496 L 9.09091,82.5044'") !=
+        std::string::npos);
+  }
+  {
+    std::string molb = R"molb(crossed bond
+  Mrv1810 09301816112D          
+
+  4  3  0  0  0  0            999 V2000
+    0.5804   -0.3125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2948    0.1000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.1341    0.1000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.0093   -0.3125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  3  0  0  0
+  1  3  1  0  0  0  0
+  2  4  1  0  0  0  0
+M  END)molb";
+    std::unique_ptr<RWMol> m1(MolBlockToMol(molb));
+    TEST_ASSERT(m1);
+    MolDraw2DUtils::prepareMolForDrawing(*m1);
+
+    MolDraw2DSVG drawer(200, 200);
+    drawer.drawMolecule(*m1, "m1");
+    drawer.addMoleculeMetadata(*m1);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("testGithub2063_2.svg");
+    outs << text;
+    outs.flush();
+    TEST_ASSERT(
+        text.find(
+            "<path class='bond-0' d='M 65.8823,110.884 L 134.118,89.1159'") !=
+        std::string::npos);
+    TEST_ASSERT(
+        text.find(
+            "<path class='bond-1' d='M 69.6998,117.496 L 9.09091,82.5044'") !=
+        std::string::npos);
+  }
+  std::cerr << " Done" << std::endl;
+}
+
+void testGithub2151() {
+  std::cout << " ----------------- Testing Github2151: MolDraw2D: line width "
+               "should be controlled by MolDrawOptions"
+            << std::endl;
+  {
+    auto m1 = "C[C@H](F)c1ccc(C#N)cc1"_smiles;
+    TEST_ASSERT(m1);
+    MolDraw2DUtils::prepareMolForDrawing(*m1);
+    {
+      MolDraw2DSVG drawer(200, 200);
+      drawer.drawMolecule(*m1);
+      drawer.addMoleculeMetadata(*m1);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testGithub2151_1.svg");
+      outs << text;
+      outs.flush();
+      TEST_ASSERT(text.find("stroke-width:2px") != std::string::npos);
+      TEST_ASSERT(text.find("stroke-width:4px") == std::string::npos);
+    }
+    {
+      MolDraw2DSVG drawer(200, 200);
+      drawer.drawOptions().bondLineWidth = 4;
+      drawer.drawMolecule(*m1);
+      drawer.addMoleculeMetadata(*m1);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testGithub2151_2.svg");
+      outs << text;
+      outs.flush();
+      TEST_ASSERT(text.find("stroke-width:2px") == std::string::npos);
+      TEST_ASSERT(text.find("stroke-width:4px") != std::string::npos);
+    }
+  }
+  std::cerr << " Done" << std::endl;
+}
+
+void testGithub2762() {
+  std::cout << " ----------------- Testing testGithub2762: MolDraw2D: HCl "
+               "and ethane should be drawn"
+            << std::endl;
+  {
+    auto m1 = "Cl"_smiles;
+    TEST_ASSERT(m1);
+    auto m2 = "CC"_smiles;
+    TEST_ASSERT(m2);
+    MolDraw2DUtils::prepareMolForDrawing(*m1);
+    MolDraw2DUtils::prepareMolForDrawing(*m2);
+    std::vector<ROMol *> mols;
+    mols.push_back(m1.get());
+    mols.push_back(m2.get());
+    MolDraw2DSVG drawer(500, 250, 250, 250);
+    drawer.drawMolecules(mols);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("testGithub2762.svg");
+    outs << text;
+    outs.flush();
+    TEST_ASSERT(text.find("font-size:0px") == std::string::npos);
+    TEST_ASSERT(text.find("'bond-0' d='M 0,200 L 0,200'") == std::string::npos);
+  }
+  std::cerr << " Done" << std::endl;
+}
+
 int main() {
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
+  RDDepict::preferCoordGen = false;
+#endif
+
   RDLog::InitLogs();
 #if 1
   test1();
@@ -2137,10 +2385,15 @@ int main() {
   test13JSONConfig();
   testGithub1090();
   testGithub1035();
-#endif
   testGithub1271();
   testGithub1322();
   testGithub565();
   test14BWPalette();
   test15ContinuousHighlightingWithGrid();
+  testGithub1829();
+#endif
+  test16MoleculeMetadata();
+  testGithub2063();
+  testGithub2151();
+  testGithub2762();
 }

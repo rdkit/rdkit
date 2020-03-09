@@ -37,6 +37,7 @@
 #include <RDGeneral/types.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/Conformer.h>
+#include <GraphMol/StereoGroup.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -51,7 +52,6 @@
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
-#include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/MolPickler.h>
 #include <DistGeom/BoundsMatrix.h>
 #include <GraphMol/DistGeomHelpers/Embedder.h>
@@ -60,27 +60,22 @@
 #include <GraphMol/MolAlign/O3AAlignMolecules.h>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/PartialCharges/GasteigerCharges.h>
+#include <GraphMol/new_canon.h>
 #include <sstream>
 %}
 
 %template(ROMol_Vect) std::vector< boost::shared_ptr<RDKit::ROMol> >;
 %template(ROMol_Vect_Vect) std::vector< std::vector< boost::shared_ptr<RDKit::ROMol> > >;
 %template(Atom_Vect) std::vector<RDKit::Atom*>;
+%template(StereoGroup_Vect) std::vector<RDKit::StereoGroup>;
 
 // These prevent duplicate definitions in Java code
-%ignore RDKit::ROMol::getAtomDegree(const Atom *) const;
-%ignore RDKit::ROMol::setAtomBookmark(Atom *,int);
-%ignore RDKit::ROMol::clearAtomBookmark(const int, const Atom *);
-%ignore RDKit::ROMol::setBondBookmark(Bond *,int);
-%ignore RDKit::ROMol::clearBondBookmark(int, const Bond *);
-%ignore RDKit::ROMol::replaceAtomBookmark(Atom *,int);
 %ignore RDKit::ROMol::hasProp(std::string const) const ;
 %ignore RDKit::ROMol::clearProp(std::string const) const ;
 %ignore RDKit::ROMol::getAtomWithIdx(unsigned int) const ;
 %ignore RDKit::ROMol::getBondWithIdx(unsigned int) const ;
 %ignore RDKit::ROMol::getBondBetweenAtoms(unsigned int,unsigned int) const ;
 %ignore RDKit::ROMol::getAtomNeighbors(Atom const *at) const;
-%ignore RDKit::ROMol::getAtomNeighbors(ATOM_SPTR at) const;
 %ignore RDKit::ROMol::getAtomBonds(Atom const *at) const;
 %ignore RDKit::ROMol::getVertices() ;
 %ignore RDKit::ROMol::getVertices() const ;
@@ -110,6 +105,13 @@
 %}
 %include <GraphMol/ROMol.h>
 
+%ignore SubstructMatch;
+%include <GraphMol/Substruct/SubstructMatch.h>
+
+%ignore RDKit::MolPickler;
+%include <GraphMol/MolPickler.h>
+
+
 
 %newobject removeHs;
 %newobject addHs;
@@ -118,7 +120,28 @@
 %newobject replaceSidechains;
 %newobject deleteSubstructs;
 %newobject getAtoms;
+%newobject getAtomNeighbors;
+%newobject getAtomBonds;
 
+%{
+#ifdef BUILD_COORDGEN_SUPPORT
+bool getPreferCoordGen() {
+  return RDDepict::preferCoordGen;
+}
+void setPreferCoordGen(bool val) {
+  RDDepict::preferCoordGen = val;
+}
+#else
+bool getPreferCoordGen() {
+  return false;
+}
+void setPreferCoordGen(bool val) {
+}
+#endif
+%}
+
+bool getPreferCoordGen();
+void setPreferCoordGen(bool);
 
 %extend RDKit::ROMol {
   std::string getProp(const std::string key){
@@ -166,9 +189,34 @@
     return RDKit::MolToHELM(*($self));
   }
 
+  std::string MolToXYZBlock(int confId=-1) {
+    return RDKit::MolToXYZBlock(*($self), confId);
+  }
+  void MolToXYZFile(std::string fName, int confId=-1) {
+    RDKit::MolToXYZFile(*($self), fName, confId);
+  }
+
   bool hasSubstructMatch(RDKit::ROMol &query,bool useChirality=false){
     RDKit::MatchVectType mv;
     return SubstructMatch(*($self),query,mv,true,useChirality);
+  };
+
+  bool hasSubstructMatch(RDKit::ROMol &query,RDKit::SubstructMatchParameters ps){
+    ps.maxMatches = 1;
+    std::vector<RDKit::MatchVectType> mv = SubstructMatch(*($self),query,ps);
+    return mv.size()>0;
+  };
+
+  std::vector<std::pair<int, int> > getSubstructMatch(RDKit::ROMol &query,RDKit::SubstructMatchParameters ps){
+    std::vector<RDKit::MatchVectType> mvs = SubstructMatch(*($self),query,ps);
+    RDKit::MatchVectType mv;
+    if(mvs.size()) mv = mvs[0];
+    return mv;
+  };
+
+  std::vector< std::vector<std::pair<int, int> > > getSubstructMatches(RDKit::ROMol &query,RDKit::SubstructMatchParameters ps){
+    std::vector<RDKit::MatchVectType> mvs = SubstructMatch(*($self),query,ps);
+    return mvs;
   };
 
   /* From MolOps, Substruct/SubstructMatch */
@@ -235,7 +283,8 @@
                                unsigned int nFlipsPerSample=0,
                                unsigned int nSamples=0,
                                int sampleSeed=0,
-                               bool permuteDeg4Nodes=false) {
+                               bool permuteDeg4Nodes=false,
+			       bool forceRDKit=false) {
     return RDDepict::compute2DCoords(*($self),
                                coordMap,
                                canonOrient,
@@ -243,7 +292,7 @@
                                nFlipsPerSample,
                                nSamples,
                                sampleSeed,
-                               permuteDeg4Nodes);
+				     permuteDeg4Nodes, forceRDKit);
   }
 
   unsigned int compute2DCoords(RDKit::ROMol &templ){
@@ -272,7 +321,7 @@
                                            unsigned int nFlipsPerSample=3,
                                            unsigned int nSamples=100,
                                            int sampleSeed=25,
-                                           bool permuteDeg4Nodes=true) {
+                                           bool permuteDeg4Nodes=true, bool forceRDKit=false) {
     return RDDepict::compute2DCoordsMimicDistMat(*($self),
                                                  dmat,
                                                  canonOrient,
@@ -281,8 +330,22 @@
                                                  nFlipsPerSample,
                                                  nSamples,
                                                  sampleSeed,
-                                                 permuteDeg4Nodes);
+                                                 permuteDeg4Nodes, forceRDKit);
 
+  }
+
+  void generateDepictionMatching2DStructure(RDKit::ROMol &reference,
+                                          int confId=-1,
+                                           bool acceptFailure=false, bool forceRDKit=false) {
+    RDDepict::generateDepictionMatching2DStructure(*($self),reference,confId,nullptr,
+            acceptFailure,forceRDKit);
+  }
+  void generateDepictionMatching2DStructure(RDKit::ROMol &reference,
+                                          int confId,
+                                          RDKit::ROMol referencePattern,
+                                          bool acceptFailure=false, bool forceRDKit=false) {
+    RDDepict::generateDepictionMatching2DStructure(*($self),reference,confId,
+           &referencePattern,acceptFailure,forceRDKit);
   }
 
   /* From FindRings.cpp, MolOps.h */
@@ -343,6 +406,22 @@
     return atoms;
   }
 
+  std::vector<RDKit::Atom*> *getAtomNeighbors(RDKit::Atom *at) {
+    std::vector<RDKit::Atom*> *atoms = new std::vector<RDKit::Atom*>;
+    for(const auto &nbri : boost::make_iterator_range(($self)->getAtomNeighbors(at))){
+      atoms->push_back((*($self))[nbri]);
+    }
+    return atoms;
+  }
+
+  std::vector<RDKit::Bond*> *getAtomBonds(RDKit::Atom *at) {
+    std::vector<RDKit::Bond*> *bonds = new std::vector<RDKit::Bond*>;
+    for(const auto &nbri : boost::make_iterator_range(($self)->getAtomBonds(at))){
+      bonds->push_back((*($self))[nbri]);
+    }
+    return bonds;
+  }
+
   /* From MolPickler.h */
   std::vector<int> ToBinary(){
     std::string sres;
@@ -355,7 +434,13 @@
     std::string sres;
     sres.resize(pkl.size());
     std::copy(pkl.begin(),pkl.end(),sres.begin());
-    RDKit::ROMol *res=new RDKit::ROMol(sres);
+    RDKit::ROMol *res;
+    try {
+      res = new RDKit::ROMol(sres);
+    } catch (const RDKit::MolPicklerException &e) {
+      res = nullptr;
+      throw;
+    }
     return RDKit::ROMOL_SPTR(res);
   }
 
@@ -420,6 +505,13 @@
                                std::vector<double> &charges,
                                int nIter=12,bool throwOnParamFailure=false){
     RDKit::computeGasteigerCharges(*mol,charges,nIter,throwOnParamFailure);
+  }
+
+  /* From new_canon.h*/
+  void rankMolAtoms(UINT_VECT &ranks,
+                  bool breakTies = true, bool includeChirality = true,
+                  bool includeIsotopes = true){
+	RDKit::Canon::rankMolAtoms(*($self), ranks, breakTies, includeChirality, includeIsotopes);
   }
 }
 

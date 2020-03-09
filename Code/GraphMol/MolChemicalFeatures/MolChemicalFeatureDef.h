@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef __CHEMICALFEATUREDEF_H_02122004_1750__
 #define __CHEMICALFEATUREDEF_H_02122004_1750__
 
@@ -21,13 +22,13 @@ namespace RDKit {
 class ROMol;
 class MolChemicalFeatureDef;
 
-class MolChemicalFeatureDef {
+class RDKIT_MOLCHEMICALFEATURES_EXPORT MolChemicalFeatureDef {
  public:
-  typedef std::list<boost::shared_ptr<MolChemicalFeatureDef> > CollectionType;
+  typedef std::list<boost::shared_ptr<MolChemicalFeatureDef>> CollectionType;
 
   MolChemicalFeatureDef() : d_family(""), d_type(""), d_smarts(""){};
-  MolChemicalFeatureDef(const std::string &smarts, const std::string &family,
-                        const std::string &type);
+  MolChemicalFeatureDef(const std::string &smarts, std::string family,
+                        std::string type);
 
   unsigned int getNumWeights() const { return d_weights.size(); };
   std::vector<double>::iterator beginWeights() { return d_weights.begin(); };
@@ -63,5 +64,5 @@ class MolChemicalFeatureDef {
   boost::shared_ptr<ROMol> dp_pattern;
   std::vector<double> d_weights;
 };
-}
+}  // namespace RDKit
 #endif

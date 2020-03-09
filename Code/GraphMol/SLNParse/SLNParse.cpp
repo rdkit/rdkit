@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (c) 2008, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
@@ -40,7 +39,7 @@
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/Invariant.h>
 #include <boost/algorithm/string.hpp>
-#include <boost/regex.hpp>
+#include <regex>
 
 int yysln_parse(const char *, std::vector<RDKit::RWMol *> *, bool, void *);
 int yysln_lex_init(void **);
@@ -55,8 +54,21 @@ int sln_parse(const std::string &inp, bool doQueries,
   TEST_ASSERT(!yysln_lex_init(&scanner));
   setup_sln_string(inp, scanner);
   yysln_set_extra((void *)doQueries, scanner);
-  int res = yysln_parse(inp.c_str(), &molVect, doQueries, scanner);
+  int res = 1;  // initialize with failed state
+  try {
+    res = yysln_parse(inp.c_str(), &molVect, doQueries, scanner);
+  } catch (...) {
+    yysln_lex_destroy(scanner);
+    throw;
+  }
   yysln_lex_destroy(scanner);
+
+  if (res == 1) {
+    std::stringstream errout;
+    errout << "Failed parsing SLN '" << inp << "'";
+    throw RDKit::SLNParseException(errout.str());
+  }
+
   return res;
 }
 
@@ -73,8 +85,8 @@ void finalizeQueryMol(ROMol *mol, bool mergeHs) {
          atomIt != mol->endAtoms(); ++atomIt) {
       // set a query for the H count:
       if ((*atomIt)->getNumExplicitHs()) {
-        (*atomIt)
-            ->expandQuery(makeAtomHCountQuery((*atomIt)->getNumExplicitHs()));
+        (*atomIt)->expandQuery(
+            makeAtomHCountQuery((*atomIt)->getNumExplicitHs()));
       }
     }
   }
@@ -89,7 +101,7 @@ void finalizeQueryMol(ROMol *mol, bool mergeHs) {
     SLNParse::parseFinalAtomAttribs(*atomIt, true);
     if ((*atomIt)->hasProp(common_properties::_starred)) {
       if (rootIdx > -1) {
-        BOOST_LOG(rdErrorLog) << "SLN Error: mulitple starred atoms in a "
+        BOOST_LOG(rdErrorLog) << "SLN Error: multiple starred atoms in a "
                                  "recursive query. Extra stars ignored"
                               << std::endl;
       } else {
@@ -104,13 +116,14 @@ void finalizeQueryMol(ROMol *mol, bool mergeHs) {
 
 std::string replaceSLNMacroAtoms(std::string inp, int debugParse) {
   RDUNUSED_PARAM(debugParse);
-  const boost::regex defn("\\{(.+?):(.+?)\\}");
+  const std::regex defn("\\{(.+?):(.+?)\\}");
   const char *empty = "";
 
   std::string res;
   // remove any macro definitions:
-  res = boost::regex_replace(inp, defn, empty,
-                             boost::match_default | boost::format_all);
+  res = std::regex_replace(
+      inp, defn, empty,
+      std::regex_constants::match_default | std::regex_constants::format_sed);
 
   if (res != inp) {
     // there are macro definitions, we're going to replace
@@ -118,38 +131,38 @@ std::string replaceSLNMacroAtoms(std::string inp, int debugParse) {
     std::string::const_iterator start, end;
     start = inp.begin();
     end = inp.end();
-    boost::match_results<std::string::const_iterator> what;
-    boost::match_flag_type flags = boost::match_default;
-    while (regex_search(start, end, what, defn, flags)) {
+    std::match_results<std::string::const_iterator> what;
+    std::regex_constants::match_flag_type flags =
+        std::regex_constants::match_default;
+    while (std::regex_search(start, end, what, defn, flags)) {
       std::string macroNm(what[1].first, what[1].second);
       std::string macroVal(what[2].first, what[2].second);
-      res = boost::regex_replace(res, boost::regex(macroNm), macroVal.c_str(),
-                                 boost::match_default | boost::format_all);
+      res = std::regex_replace(res, std::regex(macroNm), macroVal.c_str(),
+                               std::regex_constants::match_default |
+                                   std::regex_constants::format_sed);
       // update search position:
       start = what[0].second;
       // update flags:
-      flags |= boost::match_prev_avail;
-      flags |= boost::match_not_bob;
+      flags |= std::regex_constants::match_prev_avail;
     }
   }
   return res;
 }
 
 RWMol *toMol(std::string inp, bool doQueries, int debugParse) {
-  RWMol *res;
   boost::trim_if(inp, boost::is_any_of(" \t\r\n"));
   inp = replaceSLNMacroAtoms(inp, debugParse);
   if (debugParse) {
     std::cerr << "****** PARSING SLN: ->" << inp << "<-" << std::endl;
   }
+
+  RWMol *res = nullptr;
   std::vector<RDKit::RWMol *> molVect;
   try {
     sln_parse(inp, doQueries, molVect);
-    if (molVect.size() <= 0) {
-      res = 0;
-    } else {
+    if (molVect.size() > 0) {
       res = molVect[0];
-      molVect[0] = 0;
+
       for (ROMol::BOND_BOOKMARK_MAP::const_iterator bmIt =
                res->getBondBookmarks()->begin();
            bmIt != res->getBondBookmarks()->end(); ++bmIt) {
@@ -161,10 +174,13 @@ RWMol *toMol(std::string inp, bool doQueries, int debugParse) {
           throw SLNParseException(err.str());
         }
       }
+
+      molVect[0] = nullptr;
     }
+
   } catch (SLNParseException &e) {
     BOOST_LOG(rdErrorLog) << e.message() << std::endl;
-    res = 0;
+    res = nullptr;
   }
   if (res) {
     // cleanup:
@@ -175,13 +191,17 @@ RWMol *toMol(std::string inp, bool doQueries, int debugParse) {
     // since we'll be removing Hs later and that will break things:
     adjustAtomChiralities(res);
   }
-  for (std::vector<RDKit::RWMol *>::iterator iter = molVect.begin();
-       iter != molVect.end(); ++iter) {
-    if (*iter) delete *iter;
+
+  for (auto &iter : molVect) {
+    if (iter) {
+      CleanupAfterParse(iter);
+      delete iter;
+    }
   }
+
   return res;
 };
-}  // end of SLNParse namespace
+}  // namespace SLNParse
 
 RWMol *SLNToMol(const std::string &sln, bool sanitize, int debugParse) {
   // FIX: figure out how to reset lexer state
@@ -220,4 +240,19 @@ RWMol *SLNQueryToMol(const std::string &sln, bool mergeHs, int debugParse) {
   }
   return res;
 };
+
+void SLNParse::CleanupAfterParse(RWMol *mol) {
+  PRECONDITION(mol, "no molecule");
+  // blow out any partial bonds:
+  RWMol::BOND_BOOKMARK_MAP *marks = mol->getBondBookmarks();
+  auto markI = marks->begin();
+  while (markI != marks->end()) {
+    RWMol::BOND_PTR_LIST &bonds = markI->second;
+    for (auto &bond : bonds) {
+      delete bond;
+    }
+    ++markI;
+  }
 }
+
+}  // namespace RDKit

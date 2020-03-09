@@ -36,23 +36,35 @@ namespace {
   boost::python::tuple MolToInchi(const RDKit::ROMol &mol, std::string options)
   {
     RDKit::ExtraInchiReturnValues rv;
-    const char* _options = NULL;
-    if (options.size())
+    const char* _options = nullptr;
+    if (options.size()) {
       _options = options.c_str();
+    }
     std::string inchi = RDKit::MolToInchi(mol, rv, _options);
     return boost::python::make_tuple(inchi, rv.returnCode, rv.messagePtr, rv.logPtr,
                                      rv.auxInfoPtr);
   }
 
+  boost::python::tuple MolBlockToInchi(const std::string &molblock, std::string options)
+  {
+    RDKit::ExtraInchiReturnValues rv;
+    const char* _options = nullptr;
+    if (options.size()) {
+      _options = options.c_str();
+    }
+    std::string inchi = RDKit::MolBlockToInchi(molblock, rv, _options);
+    return boost::python::make_tuple(inchi, rv.returnCode, rv.messagePtr, rv.logPtr,
+                                     rv.auxInfoPtr);
+  }
   boost::python::tuple InchiToMol(const std::string &inchi, bool sanitize,
                                   bool removeHs)
   {
     RDKit::ExtraInchiReturnValues rv;
     RDKit::ROMol* mol = RDKit::InchiToMol(inchi, rv, sanitize, removeHs);
-    if (mol == NULL)
+    if (mol == nullptr) {
       return boost::python::make_tuple(boost::python::object(), rv.returnCode,
                                        rv.messagePtr, rv.logPtr);
-    else {
+    } else {
       return boost::python::make_tuple(RDKit::ROMOL_SPTR(mol), rv.returnCode,
                                        rv.messagePtr, rv.logPtr);
     }
@@ -95,10 +107,48 @@ BOOST_PYTHON_MODULE(rdinchi) {
                       boost::python::arg("options")=std::string()),
                      docString.c_str()
                      );
+  docString = "return the InChI for a ROMol molecule.\n\
+\n\
+  Arguments:\n\
+    - molblock: the mol block to use.\n\
+    - options: the InChI generation options.\n\
+      Options should be prefixed with either a - or a /\n\
+      Available options are explained in the InChI technical FAQ:\n\
+      http://www.inchi-trust.org/fileadmin/user_upload/html/inchifaq/inchi-faq.html#15.14\n\
+      and the User Guide:\n\
+      http://www.inchi-trust.org/fileadmin/user_upload/software/inchi-v1.04/InChI_UserGuide.pdf\n\
+  Returns:\n\
+    a tuple with:\n\
+      - the InChI\n\
+      - the return code from the InChI conversion\n\
+      - a string with any messages from the InChI conversion\n\
+      - a string with any log messages from the InChI conversion\n\
+      - a string with the InChI AuxInfo\n";
+  boost::python::def("MolBlockToInchi", MolBlockToInchi,
+                     (boost::python::arg("molblock"),
+                      boost::python::arg("options")=std::string()),
+                     docString.c_str()
+                     );
   docString = "return the InChI key for an InChI string";
   boost::python::def("InchiToInchiKey", RDKit::InchiToInchiKey,
                      (boost::python::arg("inchi")),
                      docString.c_str()
                     );
-}
+  docString = "return the InChI key for a ROMol molecule.\n\
+\n\
+  Arguments:\n\
+    - mol: the molecule to use.\n\
+    - options: the InChI generation options.\n\
+      Options should be prefixed with either a - or a /\n\
+      Available options are explained in the InChI technical FAQ:\n\
+      http://www.inchi-trust.org/fileadmin/user_upload/html/inchifaq/inchi-faq.html#15.14\n\
+      and the User Guide:\n\
+      http://www.inchi-trust.org/fileadmin/user_upload/software/inchi-v1.04/InChI_UserGuide.pdf\n\
+  Returns: the InChI key\n";
+  boost::python::def("MolToInchiKey", RDKit::MolToInchiKey,
+                     (boost::python::arg("mol"),
+                      boost::python::arg("options")=""),
+                     docString.c_str()
+                     );
 
+}

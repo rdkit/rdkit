@@ -33,10 +33,8 @@ bool StructCheckTautomer::applyTautomer(unsigned it) {
     return false;
   }
   const unsigned nta = toTautomer.getNumAtoms();
-  const unsigned ntb = toTautomer.getNumBonds();
   MatchVectType match;  // The format is (queryAtomIdx, molAtomIdx)
-  std::vector<unsigned> atomIdxMap(
-      Mol.getNumAtoms());  // matched tau atom indeces
+
 
   if (!SubstructMatch(Mol, *Options.FromTautomer[it],
                       match))  // SSMatch(mp, from_tautomer, SINGLE_MATCH);
@@ -45,9 +43,10 @@ bool StructCheckTautomer::applyTautomer(unsigned it) {
     BOOST_LOG(rdInfoLog) << "found match for from_tautomer with " << nta
                          << " atoms\n";
   // init
-  for (unsigned i = 0; i < Mol.getNumAtoms(); i++) atomIdxMap[i] = -1;
+  size_t invalid_idx = 1 + Mol.getNumAtoms();
+  std::vector<unsigned> atomIdxMap(Mol.getNumAtoms(), invalid_idx);  // matched tau atom indices
   for (MatchVectType::const_iterator mit = match.begin(); mit != match.end();
-       mit++) {
+       ++mit) {
     unsigned tai = mit->first;   // From and To Tautomer Atom index
     unsigned mai = mit->second;  // Mol Atom index
     atomIdxMap[mai] = tai;
@@ -55,19 +54,21 @@ bool StructCheckTautomer::applyTautomer(unsigned it) {
   // scan for completely mapped bonds and replace bond order with mapped bond
   // from to_tautomer
   for (RDKit::BondIterator_ bond = Mol.beginBonds(); bond != Mol.endBonds();
-       bond++) {
+       ++bond) {
     unsigned ti = atomIdxMap[(*bond)->getBeginAtomIdx()];
     unsigned tj = atomIdxMap[(*bond)->getEndAtomIdx()];
-    if (-1 == ti || -1 == tj) continue;
+    if (invalid_idx == ti || invalid_idx == tj) {
+      continue;
+    }
     const Bond *tb = toTautomer.getBondBetweenAtoms(ti, tj);
     if (tb && (*bond)->getBondType() != tb->getBondType()) {
       (*bond)->setBondType(tb->getBondType());
     }
   }
   // apply charge/radical fixes if any
-  for (unsigned i = 0; i < match.size(); i++) {
-    Atom &atom = *Mol.getAtomWithIdx(match[i].second);
-    const Atom &ta = *toTautomer.getAtomWithIdx(match[i].first);
+  for (auto &i : match) {
+    Atom &atom = *Mol.getAtomWithIdx(i.second);
+    const Atom &ta = *toTautomer.getAtomWithIdx(i.first);
     atom.setFormalCharge(ta.getFormalCharge());
     atom.setNumRadicalElectrons(ta.getNumRadicalElectrons());
   }

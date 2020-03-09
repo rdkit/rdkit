@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/test.h>
 #include "AlignPoints.h"
 #include <Numerics/Vector.h>
 #include <RDGeneral/utils.h>
@@ -190,7 +191,7 @@ void testReflection() {
   double ssr = AlignPoints(rpts, qpts, trans);
   CHECK_INVARIANT(RDKit::feq(ssr, 1.0), "");
 
-  ssr = AlignPoints(rpts, qpts, trans, 0, true);
+  ssr = AlignPoints(rpts, qpts, trans, nullptr, true);
   CHECK_INVARIANT(RDKit::feq(ssr, 0.0), "");
 
   trans.TransformPoint(qpt1);

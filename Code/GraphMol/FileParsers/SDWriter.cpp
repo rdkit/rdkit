@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
 //
@@ -24,9 +23,10 @@
 namespace RDKit {
 SDWriter::SDWriter(const std::string &fileName) {
   if (fileName != "-") {
-    std::ofstream *tmpStream = new std::ofstream(fileName.c_str());
+    auto *tmpStream = new std::ofstream(fileName.c_str());
     df_owner = true;
-    if (!tmpStream || !(*tmpStream) || (tmpStream->bad())) {
+    if (!(*tmpStream) || (tmpStream->bad())) {
+      delete tmpStream;
       std::ostringstream errout;
       errout << "Bad output file " << fileName;
       throw BadFileException(errout.str());
@@ -55,7 +55,9 @@ SDWriter::SDWriter(std::ostream *outStream, bool takeOwnership) {
 
 SDWriter::~SDWriter() {
   // close the writer if it's still open:
-  if (dp_ostream != NULL) close();
+  if (dp_ostream != nullptr) {
+    close();
+  }
 }
 
 void SDWriter::setProps(const STR_VECT &propNames) {
@@ -84,7 +86,9 @@ void _writePropToStream(std::ostream *dp_ostream, const ROMol &mol,
 
   // write the property header line
   (*dp_ostream) << ">  <" << name << ">  ";
-  if (d_molid >= 0) (*dp_ostream) << "(" << d_molid + 1 << ") ";
+  if (d_molid >= 0) {
+    (*dp_ostream) << "(" << d_molid + 1 << ") ";
+  }
   (*dp_ostream) << "\n";
 
   (*dp_ostream) << pval << "\n";
@@ -136,7 +140,7 @@ void _MolToSDStream(std::ostream *dp_ostream, const ROMol &mol, int confId,
   // add the $$$$ that marks the end of a molecule
   (*dp_ostream) << "$$$$\n";
 }
-}
+}  // namespace
 
 std::string SDWriter::getText(const ROMol &mol, int confId, bool kekulize,
                               bool forceV3000, int molid, STR_VECT *propNames) {
@@ -157,4 +161,4 @@ void SDWriter::writeProperty(const ROMol &mol, const std::string &name) {
 
   _writePropToStream(dp_ostream, mol, name, d_molid);
 }
-}
+}  // namespace RDKit

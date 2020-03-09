@@ -3,11 +3,11 @@
 #  Copyright (C) 2004 Rational Discovery LLC
 #     All Rights Reserved
 #
-from __future__ import print_function
+
 from rdkit import RDConfig
 import sys, os.path
 from rdkit.VLib.Supply import SupplyNode
-from rdkit.six.moves import cPickle
+import pickle
 
 if RDConfig.usePgSQL:
   from pyPgSQL import PgSQL as sql
@@ -18,7 +18,7 @@ if RDConfig.usePgSQL:
     pulling pickled objects from PostgreSQL databases.  Instead of
     having to use all of PgSQL's typechecking, we'll make a lot of
     assumptions about what's coming out of the Db and its layout.
-    The results can lead to drastic improvements in perfomance.
+    The results can lead to drastic improvements in performance.
     
     """
 
@@ -81,7 +81,7 @@ if RDConfig.usePgSQL:
         self._first = 0
       if self._depickle:
         if not self._klass:
-          fp = cPickle.loads(val)
+          fp = pickle.loads(val)
         else:
           fp = self._klass(val)
         fields = list(t)
@@ -149,7 +149,7 @@ if RDConfig.usePgSQL:
         t = [self.res.getvalue(self.idx - 1, x) for x in range(self.res.nfields)]
       if self._depickle:
         try:
-          fp = cPickle.loads(val)
+          fp = pickle.loads(val)
         except Exception:
           import logging
           del t[self._pickleCol]

@@ -137,7 +137,7 @@ gbfp_compress(PG_FUNCTION_ARGS)
     
     gistentryinit(*retval, PointerGetDatum(gbfp),
 		  entry->rel, entry->page,
-		  entry->offset, FALSE);
+		  entry->offset, false);
   }
   /* no change should be required on inner nodes */
   else {
@@ -166,7 +166,7 @@ gbfp_decompress(PG_FUNCTION_ARGS)
     retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
     gistentryinit(*retval, PointerGetDatum(key),
 		  entry->rel, entry->page,
-		  entry->offset, FALSE);
+		  entry->offset, false);
     PG_RETURN_POINTER(retval);
   }
 
@@ -680,7 +680,7 @@ gbfp_fetch(PG_FUNCTION_ARGS)
   retval = palloc(sizeof(GISTENTRY));
   
   gistentryinit(*retval, PointerGetDatum(bfp),
-		entry->rel, entry->page, entry->offset, FALSE);
+		entry->rel, entry->page, entry->offset, false);
   
   PG_RETURN_POINTER(retval);
 }

@@ -12,7 +12,7 @@
 # pragma once
 #endif
 
-// The C++ standard requires that the C float functions are overloarded
+// The C++ standard requires that the C float functions are overloaded
 // for float, double and long double in the std namespace, but some of the older
 // library implementations don't support this. On some that don't, the C99
 // float functions (frexpf, frexpl, etc.) are available.

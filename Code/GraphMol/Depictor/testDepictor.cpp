@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2018 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/test.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
@@ -28,7 +29,7 @@
 #include <stdlib.h>
 
 #include <boost/tokenizer.hpp>
-typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
 using namespace RDKit;
 
@@ -189,6 +190,7 @@ void test2() {
       // wmol = static_cast<RWMol *>(mol);
       RDDepict::compute2DCoords(*mol);
       writer.write(*mol);
+      delete mol;
     } catch (FileParseException &) {
       break;
     }
@@ -212,6 +214,7 @@ void test3() {
       // wmol = static_cast<RWMol *>(mol);
       RDDepict::compute2DCoords(*mol);
       writer.write(*mol);
+      delete mol;
     } catch (FileParseException &) {
       break;
     }
@@ -277,7 +280,7 @@ void test4() {
   // MolToMolFile(m1, "junk1.mol");
   delete mref;
   mref = SmilesToMol(smi, 0, 1);
-  RDDepict::compute2DCoords(*mref, 0, false);
+  RDDepict::compute2DCoords(*mref, nullptr, false);
   _compareCoords(m1, cid1, mref, cid2);
   delete m1;
 
@@ -311,7 +314,7 @@ void test4() {
 
   delete mref;
   mref = SmilesToMol(smi, 0, 1);
-  cid2 = RDDepict::compute2DCoords(*mref, 0, false);
+  cid2 = RDDepict::compute2DCoords(*mref, nullptr, false);
   crdMap.erase(crdMap.find(5));
   // MolToMolFile(mref, "junk1.mol");
   m1 = SmilesToMol(smi, 0, 1);
@@ -492,7 +495,7 @@ void testIssue2821647() {
   {
     std::string smi = "CCCCC";
     RWMol *m1 = SmilesToMol(smi);
-    unsigned int cid1 = RDDepict::compute2DCoords(*m1, 0, true);
+    unsigned int cid1 = RDDepict::compute2DCoords(*m1, nullptr, true);
     double xx = 0, yy = 0;
     for (unsigned int i = 0; i < m1->getNumAtoms(); i++) {
       const Conformer &conf = m1->getConformer(cid1);
@@ -506,7 +509,7 @@ void testIssue2821647() {
   {
     std::string smi = "c1ccccc1CCCCCC1CC1";
     RWMol *m1 = SmilesToMol(smi);
-    unsigned int cid1 = RDDepict::compute2DCoords(*m1, 0, true);
+    unsigned int cid1 = RDDepict::compute2DCoords(*m1, nullptr, true);
     double xx = 0, yy = 0;
     for (unsigned int i = 0; i < m1->getNumAtoms(); i++) {
       const Conformer &conf = m1->getConformer(cid1);
@@ -520,7 +523,7 @@ void testIssue2821647() {
   {
     std::string smi = "c1ccc2c(c1)oc1c3ccccc3oc21";
     RWMol *m1 = SmilesToMol(smi);
-    unsigned int cid1 = RDDepict::compute2DCoords(*m1, 0, true);
+    unsigned int cid1 = RDDepict::compute2DCoords(*m1, nullptr, true);
     double xx = 0, yy = 0;
     for (unsigned int i = 0; i < m1->getNumAtoms(); i++) {
       const Conformer &conf = m1->getConformer(cid1);
@@ -534,7 +537,7 @@ void testIssue2821647() {
   {
     std::string smi = "[H]n1c2ccccc2c2n([H])c3ccccc3c12";
     RWMol *m1 = SmilesToMol(smi);
-    unsigned int cid1 = RDDepict::compute2DCoords(*m1, 0, true);
+    unsigned int cid1 = RDDepict::compute2DCoords(*m1, nullptr, true);
     double xx = 0, yy = 0;
     for (unsigned int i = 0; i < m1->getNumAtoms(); i++) {
       const Conformer &conf = m1->getConformer(cid1);
@@ -551,7 +554,7 @@ void testIssue2948402() {
   {
     std::string smi = "C1C2CC3=CC=CC(C2)CC(O3)C1";
     RWMol *m1 = SmilesToMol(smi);
-    unsigned int cid1 = RDDepict::compute2DCoords(*m1, 0, true);
+    unsigned int cid1 = RDDepict::compute2DCoords(*m1, nullptr, true);
     (void)cid1;
     // TEST_ASSERT(cid1>=0);
     delete m1;
@@ -563,7 +566,7 @@ void testIssue2995724() {
     // the original problem from Thomas Heller:
     std::string smi = "OC(=O)[C@@H]1CCCN1";
     RWMol *m1 = SmilesToMol(smi);
-    unsigned int cid1 = RDDepict::compute2DCoords(*m1, 0, true);
+    unsigned int cid1 = RDDepict::compute2DCoords(*m1, nullptr, true);
 
     const Conformer &conf = m1->getConformer(cid1);
     for (unsigned int i = 0; i < m1->getNumAtoms(); i++) {
@@ -582,9 +585,9 @@ void testIssue2995724() {
                           "CN(C)S(=O)(=O)N1CCN(CC1)S(=O)(=O)N(C)C",
                           "Cc1ccc(cc1C)Nc2nc(nc(n2)N)CN3CCN(CC3)C",
                           "CC1(OC(=C(C(=O)O1)C2=NCCC2)O)C"};
-    for (unsigned int j = 0; j < 4; j++) {
-      RWMol *m1 = SmilesToMol(smis[j]);
-      unsigned int cid1 = RDDepict::compute2DCoords(*m1, 0, true);
+    for (const auto &smi : smis) {
+      RWMol *m1 = SmilesToMol(smi);
+      unsigned int cid1 = RDDepict::compute2DCoords(*m1, nullptr, true);
 
       const Conformer &conf = m1->getConformer(cid1);
       for (unsigned int i = 0; i < m1->getNumAtoms(); i++) {
@@ -603,7 +606,7 @@ void testBondLengthChange() {
   {
     std::string smi = "CC";
     RWMol *m1 = SmilesToMol(smi);
-    unsigned int cid1 = RDDepict::compute2DCoords(*m1, 0, true);
+    unsigned int cid1 = RDDepict::compute2DCoords(*m1, nullptr, true);
 
     const Conformer &conf = m1->getConformer(cid1);
     TEST_ASSERT(feq(conf.getAtomPos(0).x, -0.75));
@@ -615,7 +618,7 @@ void testBondLengthChange() {
     std::string smi = "CC";
     RWMol *m1 = SmilesToMol(smi);
     RDDepict::BOND_LEN = 1.0;
-    unsigned int cid1 = RDDepict::compute2DCoords(*m1, 0, true);
+    unsigned int cid1 = RDDepict::compute2DCoords(*m1, nullptr, true);
 
     const Conformer &conf = m1->getConformer(cid1);
     TEST_ASSERT(feq(conf.getAtomPos(0).x, -0.5));
@@ -673,7 +676,7 @@ void testIssue3487469() {
     RWMol *m1 = SmilesToMol(smi);
     TEST_ASSERT(m1);
     TEST_ASSERT(m1->getAtomWithIdx(1)->getHybridization() == Atom::UNSPECIFIED);
-    unsigned int cid1 = RDDepict::compute2DCoords(*m1, 0, true);
+    unsigned int cid1 = RDDepict::compute2DCoords(*m1, nullptr, true);
     const Conformer &conf = m1->getConformer(cid1);
     RDGeom::Point3D p0 = conf.getAtomPos(0);
     RDGeom::Point3D p1 = conf.getAtomPos(1);
@@ -737,8 +740,8 @@ void testGitHubIssue78() {
                            "C1=CC=C2C(=C1)C=C3C=CC4=C5C3=C2C6C(C5=CC=C4)O6"};
     RWMol *p = SmartsToMol("[#6]~[#6]~1-[#8]-[#6]~1~[#6]");
     TEST_ASSERT(p);
-    for (unsigned int i = 0; i < 4; ++i) {
-      RWMol *m = SmilesToMol(smis[i]);
+    for (const auto &smi : smis) {
+      RWMol *m = SmilesToMol(smi);
       TEST_ASSERT(m);
       MatchVectType mv;
       TEST_ASSERT(SubstructMatch(*m, *p, mv));
@@ -787,8 +790,11 @@ void testGitHubIssue910() {
       }
     }
     MolOps::addHs(*m, false, false, &chiralAts);
-    RDDepict::compute2DCoords(*m, NULL, true);
-
+    RDDepict::compute2DCoords(*m, nullptr, true);
+#if 0
+    m->setProp("_Name", "github910");
+    std::cerr << MolToMolBlock(*m);
+#endif
     // now look for close contacts.
     const Conformer &conf = m->getConformer();
     for (unsigned int i = 0; i < conf.getNumAtoms(); ++i) {
@@ -850,7 +856,7 @@ void testConstrainedCoords() {
   std::string xp0_file =
       rdbase + "/Code/GraphMol/Depictor/test_data/1XP0_ligand.sdf";
   RDKit::ROMol *xp0_lig = RDKit::MolFileToMol(xp0_file);
-  RDKit::ROMol *xp0_lig_2d = new RDKit::ROMol(*xp0_lig);
+  auto *xp0_lig_2d = new RDKit::ROMol(*xp0_lig);
   RDDepict::compute2DCoords(*xp0_lig_2d);
   writer.write(*xp0_lig_2d);
   RDDepict::generateDepictionMatching3DStructure(*xp0_lig_2d, *xp0_lig);
@@ -951,7 +957,118 @@ void testGitHubIssue1286() {
   }
 }
 
+void testGithub1691() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing Github issue "
+         "1691: Acetylenic hydrogens not given appropriate 2D coordinates"
+      << std::endl;
+#if 1
+  {
+    SmilesParserParams ps;
+    ps.removeHs = false;
+    std::unique_ptr<RWMol> mol(SmilesToMol("C1#C2.[F]1.[F]2", ps));
+
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 4);
+    TEST_ASSERT(mol->getBondBetweenAtoms(0, 2));
+    TEST_ASSERT(mol->getBondBetweenAtoms(1, 3));
+    RDDepict::compute2DCoords(*mol);
+
+    // std::cerr << MolToMolBlock(*mol) << std::endl;
+    const Conformer &conf = mol->getConformer();
+    RDGeom::Point3D v20 = conf.getAtomPos(2) - conf.getAtomPos(0);
+    RDGeom::Point3D v10 = conf.getAtomPos(1) - conf.getAtomPos(0);
+    RDGeom::Point3D v31 = conf.getAtomPos(3) - conf.getAtomPos(1);
+    RDGeom::Point3D v01 = conf.getAtomPos(0) - conf.getAtomPos(1);
+    // std::cerr << v20.dotProduct(v10) << std::endl;
+    // std::cerr << v31.dotProduct(v01) << std::endl;
+    TEST_ASSERT(v20.dotProduct(v10) <= -1.0);
+    TEST_ASSERT(v31.dotProduct(v01) <= -1.0);
+  }
+#endif
+  {
+    SmilesParserParams ps;
+    ps.removeHs = false;
+    std::unique_ptr<RWMol> mol(SmilesToMol("C1#C2.[H]1.[H]2", ps));
+
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 4);
+    TEST_ASSERT(mol->getBondBetweenAtoms(0, 2));
+    TEST_ASSERT(mol->getBondBetweenAtoms(1, 3));
+    RDDepict::compute2DCoords(*mol);
+
+    // std::cerr << MolToMolBlock(*mol) << std::endl;
+    const Conformer &conf = mol->getConformer();
+    RDGeom::Point3D v20 = conf.getAtomPos(2) - conf.getAtomPos(0);
+    RDGeom::Point3D v10 = conf.getAtomPos(1) - conf.getAtomPos(0);
+    RDGeom::Point3D v31 = conf.getAtomPos(3) - conf.getAtomPos(1);
+    RDGeom::Point3D v01 = conf.getAtomPos(0) - conf.getAtomPos(1);
+    // std::cerr << v20.dotProduct(v10) << std::endl;
+    // std::cerr << v31.dotProduct(v01) << std::endl;
+    TEST_ASSERT(v20.dotProduct(v10) <= -1.0);
+    TEST_ASSERT(v31.dotProduct(v01) <= -1.0);
+  }
+  {
+    std::unique_ptr<RWMol> mol(SmilesToMol("C#C"));
+
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 2);
+    MolOps::addHs(*mol);
+    TEST_ASSERT(mol->getNumAtoms() == 4);
+    TEST_ASSERT(mol->getBondBetweenAtoms(0, 2));
+    TEST_ASSERT(mol->getBondBetweenAtoms(1, 3));
+    RDDepict::compute2DCoords(*mol);
+
+    // std::cerr << MolToMolBlock(*mol) << std::endl;
+    const Conformer &conf = mol->getConformer();
+    RDGeom::Point3D v20 = conf.getAtomPos(2) - conf.getAtomPos(0);
+    RDGeom::Point3D v10 = conf.getAtomPos(1) - conf.getAtomPos(0);
+    RDGeom::Point3D v31 = conf.getAtomPos(3) - conf.getAtomPos(1);
+    RDGeom::Point3D v01 = conf.getAtomPos(0) - conf.getAtomPos(1);
+    // std::cerr << v20.dotProduct(v10) << std::endl;
+    // std::cerr << v31.dotProduct(v01) << std::endl;
+    TEST_ASSERT(v20.dotProduct(v10) <= -1.0);
+    TEST_ASSERT(v31.dotProduct(v01) <= -1.0);
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+void testGithub2027() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Github issue "
+                          "2027: \"linear\" fragments not canonically oriented"
+                       << std::endl;
+  {
+    std::unique_ptr<RWMol> mol(SmilesToMol("C#CC#CC#CC#CC#CC#CC#C"));
+    TEST_ASSERT(mol);
+    RDDepict::compute2DCoords(*mol, nullptr, true);
+    const Conformer &conf = mol->getConformer();
+    TEST_ASSERT(feq(conf.getAtomPos(0).y, 0.0));
+    TEST_ASSERT(feq(conf.getAtomPos(1).y, 0.0));
+    TEST_ASSERT(feq(conf.getAtomPos(2).y, 0.0));
+  }
+  {
+    std::unique_ptr<RWMol> mol(SmilesToMol("C1=CC=CC2=CC3=CC=CC=C3C=C12"));
+    TEST_ASSERT(mol);
+    RDDepict::compute2DCoords(*mol, nullptr, true);
+
+    // a stupidly simple test to ensure that we're oriented along the x axis:
+    const Conformer &conf = mol->getConformer();
+    RDGeom::Point2D paccum(0, 0);
+    for (const auto &pt : conf.getPositions()) {
+      paccum.x += fabs(pt.x);
+      paccum.y += fabs(pt.y);
+    }
+    TEST_ASSERT(paccum.x > paccum.y);
+  }
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main() {
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
+  RDDepict::preferCoordGen = false;
+#endif
+
   RDLog::InitLogs();
 #if 1
   BOOST_LOG(rdInfoLog)
@@ -1136,8 +1253,6 @@ int main() {
   testIssue2303566();
   BOOST_LOG(rdInfoLog)
       << "***********************************************************\n";
-#endif
-
   BOOST_LOG(rdInfoLog)
       << "***********************************************************\n";
   BOOST_LOG(rdInfoLog) << "   Test GitHub Issue 1286: "
@@ -1146,6 +1261,9 @@ int main() {
   testGitHubIssue1286();
   BOOST_LOG(rdInfoLog)
       << "***********************************************************\n";
+  testGithub1691();
+#endif
+  testGithub2027();
 
   return (0);
 }

@@ -1,6 +1,5 @@
-// $Id$
 //
-//   Copyright (C) 2005-2006 Rational Discovery LLC
+//   Copyright (C) 2005-2019 Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,14 +8,12 @@
 //  of the RDKit source tree.
 //
 
+#include <RDGeneral/test.h>
 #include <Geometry/UniformGrid3D.h>
 #include "ShapeEncoder.h"
 #include "ShapeUtils.h"
 #include <GraphMol/RDKitBase.h>
-//#include <GraphMol/DistGeomHelpers/Embedder.h>
 #include <GraphMol/FileParsers/FileParsers.h>
-//#include <GraphMol/ForceFieldHelpers/UFF/Builder.h>
-//#include <ForceField/ForceField.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <Geometry/GridUtils.h>
 #include <GraphMol/MolAlign/AlignMolecules.h>
@@ -34,9 +31,9 @@ void test1Encode() {
   MolTransforms::canonicalizeMol(*m);
 
   MolShapes::EncodeShape(*m, grd, 0);
-  // RDGeom::writeGridToFile(grd, "junk.grd");
-  // MolToMolFile(m, "junk.mol", 0);
-  CHECK_INVARIANT(grd.getOccupancyVect()->getTotalVal() == 9250, "");
+  delete m;
+
+  CHECK_INVARIANT(grd.getOccupancyVect()->getTotalVal() == 7405, "");
 }
 
 void test2Compare() {
@@ -52,6 +49,8 @@ void test2Compare() {
 
   double dist = MolShapes::tanimotoDistance(*m, *mdup);
   CHECK_INVARIANT(dist == 0.0, "");
+  dist = MolShapes::tverskyIndex(*m, *mdup, 1.0, 1.0);
+  CHECK_INVARIANT(dist == 1.0, "");
 
   delete m;
   delete mdup;
@@ -63,7 +62,9 @@ void test2Compare() {
   double rmsd = MolAlign::alignMol(*m, *m2);
   CHECK_INVARIANT(rmsd >= 0.0, "");
   dist = MolShapes::tanimotoDistance(*m, *m2);
-  CHECK_INVARIANT(RDKit::feq(dist, 0.2813), "");
+  CHECK_INVARIANT(RDKit::feq(dist, 0.31, 0.01), "");
+  dist = MolShapes::tverskyIndex(*m, *m2, 1.0, 1.0);
+  CHECK_INVARIANT(RDKit::feq(dist, 0.68, 0.01), "");
   delete m2;
 
   m2 = MolFileToMol(fname2);
@@ -77,23 +78,9 @@ void test2Compare() {
   rmsd = MolAlign::alignMol(*m2, *m, 0, 0, &atomMap);
   dist = MolShapes::tanimotoDistance(*m, *m2);
 
-  CHECK_INVARIANT(RDKit::feq(dist, 0.3244), "");
+  CHECK_INVARIANT(RDKit::feq(dist, 0.3593), "");
   delete m;
   delete m2;
-}
-
-void test3Methane() {
-  std::string rdbase = getenv("RDBASE");
-  std::string fname =
-      rdbase + "/Code/GraphMol/ShapeHelpers/test_data/methane.mol";
-  ROMol *m = MolFileToMol(fname);
-  RDGeom::Point3D dims, offSet;
-  MolShapes::computeConfDimsAndOffset(m->getConformer(), dims, offSet, 0, 3.0);
-  std::cout << dims << " " << offSet << "\n";
-  RDGeom::UniformGrid3D grd(6.5, 6.5, 6.5);
-  // dims.x, dims.y, dims.z, 0.5, DiscreteValueVect::TWOBITVALUE, &offSet);
-  MolShapes::EncodeShape(*m, grd, 0);
-  RDGeom::writeGridToFile(grd, "methane.grd");
 }
 
 int main() {
@@ -110,6 +97,5 @@ int main() {
   test2Compare();
   std::cout << "***********************************************************\n";
 #endif
-  // test3Methane();
   return 0;
 }

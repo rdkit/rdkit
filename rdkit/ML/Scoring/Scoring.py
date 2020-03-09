@@ -14,6 +14,7 @@ after a file from Peter Gedeck, Greg Landrum
 """
 
 import math
+from collections import namedtuple
 
 
 def CalcROC(scores, col):
@@ -21,8 +22,8 @@ def CalcROC(scores, col):
   numMol = len(scores)
   if numMol == 0:
     raise ValueError('score list is empty')
-  TPR = [0] * numMol  # True positive rate: TP/(TP+FP)
-  TNR = [0] * numMol  # True negative rate: TN/(TN+FN)
+  TPR = [0] * numMol  # True positive rate: TP/(TP+FN)
+  FPR = [0] * numMol  # False positive rate: FP/(TN+FP)
   numActives = 0
   numInactives = 0
 
@@ -33,30 +34,31 @@ def CalcROC(scores, col):
     else:
       numInactives += 1
     TPR[i] = numActives  # TP
-    TNR[i] = numInactives  # TN
+    FPR[i] = numInactives  # FP
 
   # normalize, check that there are actives and inactives
   if numActives > 0:
     TPR = [1.0 * i / numActives for i in TPR]
   if numInactives > 0:
-    TNR = [1.0 * i / numInactives for i in TNR]
+    FPR = [1.0 * i / numInactives for i in FPR]
 
-  return [TNR, TPR]
+  RocCurve = namedtuple('RocCurve', ['FPR', 'TPR'])
+  return RocCurve(FPR=FPR, TPR=TPR)
 
 
 def CalcAUC(scores, col):
   """ Determines the area under the ROC curve """
   # determine the ROC curve
   roc = CalcROC(scores, col)
-  TNR = roc[0]
-  TPR = roc[1]
+  FPR = roc.FPR
+  TPR = roc.TPR
 
   numMol = len(scores)
   AUC = 0
 
   # loop over score list
   for i in range(0, numMol - 1):
-    AUC += (TNR[i + 1] - TNR[i]) * (TPR[i + 1] + TPR[i])
+    AUC += (FPR[i + 1] - FPR[i]) * (TPR[i + 1] + TPR[i])
 
   return 0.5 * AUC
 
@@ -103,6 +105,19 @@ def CalcBEDROC(scores, col, alpha):
     Truchon, J. & Bayly, C.I.
     Evaluating Virtual Screening Methods: Good and Bad Metric for the "Early Recognition"
     Problem. J. Chem. Inf. Model. 47, 488-508 (2007).
+    ** Arguments**
+
+      - scores: 2d list or numpy array
+             0th index representing sample
+             scores must be in sorted order with low indexes "better"
+             scores[sample_id] = vector of sample data
+      -  col: int
+             Index of sample data which reflects true label of a sample
+             scores[sample_id][col] = True iff that sample is active
+      -  alpha: float
+             hyper parameter from the initial paper for how much to enrich the top
+     **Returns**
+       float BedROC score
     """
   # calculate RIE
   RIE, numActives = _RIEHelper(scores, col, alpha)

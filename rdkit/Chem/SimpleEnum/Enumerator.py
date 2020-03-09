@@ -29,7 +29,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Created by Greg Landrum, May 2009
-from __future__ import print_function
+
 
 import os
 
@@ -60,6 +60,7 @@ def PreprocessReaction(reaction, funcGroupFilename=None, propName='molFileValue'
   If there are functional group labels in the input reaction (via atoms with molFileValue
   properties), the corresponding atoms will have queries added to them so that they only
   match such things. We can see this here:
+
   >>> rxn = AllChem.ReactionFromRxnFile(testFile)
   >>> rxn.Initialize()
   >>> r1 = rxn.GetReactantTemplate(0)
@@ -67,12 +68,14 @@ def PreprocessReaction(reaction, funcGroupFilename=None, propName='molFileValue'
   >>> m2 = Chem.MolFromSmiles('c1ccccc1Br')
 
   These both match because the reaction file itself just has R1-Br:
+
   >>> m1.HasSubstructMatch(r1)
   True
   >>> m2.HasSubstructMatch(r1)
   True
 
   After preprocessing, we only match the aromatic Br:
+
   >>> d = PreprocessReaction(rxn)
   >>> m1.HasSubstructMatch(r1)
   False
@@ -80,6 +83,7 @@ def PreprocessReaction(reaction, funcGroupFilename=None, propName='molFileValue'
   True
 
   We also support or queries in the values field (separated by commas):
+
   >>> testFile = os.path.join(RDConfig.RDCodeDir,'Chem','SimpleEnum','test_data','azide_reaction.rxn')
   >>> rxn = AllChem.ReactionFromRxnFile(testFile)
   >>> rxn.Initialize()
@@ -98,6 +102,7 @@ def PreprocessReaction(reaction, funcGroupFilename=None, propName='molFileValue'
   False
 
   unrecognized final group types are returned as None:
+
   >>> testFile = os.path.join(RDConfig.RDCodeDir,'Chem','SimpleEnum','test_data','bad_value1.rxn')
   >>> rxn = AllChem.ReactionFromRxnFile(testFile)
   >>> rxn.Initialize()
@@ -109,9 +114,10 @@ def PreprocessReaction(reaction, funcGroupFilename=None, propName='molFileValue'
       nWarn,nError,nReacts,nProds,reactantLabels = PreprocessReaction(rxn)
     File "Enumerator.py", line 105, in PreprocessReaction
       reactantLabels = reaction.AddRecursiveQueriesToReaction(queryDict, propName='molFileValue', getLabels=True)
-  RuntimeError: KeyErrorException
+  KeyError: 'boromicacid'
 
   One unrecognized group type in a comma-separated list makes the whole thing fail:
+
   >>> testFile = os.path.join(RDConfig.RDCodeDir,'Chem','SimpleEnum','test_data','bad_value2.rxn')
   >>> rxn = AllChem.ReactionFromRxnFile(testFile)
   >>> rxn.Initialize()
@@ -123,7 +129,7 @@ def PreprocessReaction(reaction, funcGroupFilename=None, propName='molFileValue'
       nWarn,nError,nReacts,nProds,reactantLabels = PreprocessReaction(rxn)
     File "Enumerator.py", line 105, in PreprocessReaction
       reactantLabels = reaction.AddRecursiveQueriesToReaction(queryDict, propName='molFileValue', getLabels=True)
-  RuntimeError: KeyErrorException
+  KeyError: 'carboxylicacid,acidchlroide'
   >>> testFile = os.path.join(RDConfig.RDCodeDir,'Chem','SimpleEnum','test_data','bad_value3.rxn')
   >>> rxn = AllChem.ReactionFromRxnFile(testFile)
   >>> rxn.Initialize()
@@ -135,7 +141,7 @@ def PreprocessReaction(reaction, funcGroupFilename=None, propName='molFileValue'
       nWarn,nError,nReacts,nProds,reactantLabels = PreprocessReaction(rxn)
     File "Enumerator.py", line 105, in PreprocessReaction
       reactantLabels = reaction.AddRecursiveQueriesToReaction(queryDict, propName='molFileValue', getLabels=True)
-  RuntimeError: KeyErrorException
+  KeyError: 'carboxyliccaid,acidchloride'
   >>> rxn = rdChemReactions.ChemicalReaction()
   >>> rxn.Initialize()
   >>> nWarn,nError,nReacts,nProds,reactantLabels = PreprocessReaction(rxn)
@@ -172,6 +178,7 @@ def EnumerateReaction(
   >>> prods = list(prods)
 
   This is a bit nasty because of the symmetry of the boronic acid:
+
   >>> len(prods)
   12
 
@@ -183,6 +190,7 @@ def EnumerateReaction(
   ['CCCc1ccccc1', 'CCCc1ccccn1', 'CCCc1cccnc1', 'CCc1ccccc1', 'CCc1ccccn1', 'CCc1cccnc1']
 
   The nastiness can be avoided at the cost of some memory by asking for only unique products:
+
   >>> prods = EnumerateReaction(rxn,(reacts1,reacts2),uniqueProductsOnly=True)
   >>> prods = list(prods)
   >>> len(prods)

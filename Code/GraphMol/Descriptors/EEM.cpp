@@ -1,6 +1,6 @@
 //
 //  Copyright (c) 2017, Guillaume GODIN
-//  "Copyright 2013-2016 Tomas Racek (tom@krab1k.net)"
+//  inspired by Thomas Racek's EEM reference implementation
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,9 +30,8 @@
 
 #include <GraphMol/RDKitBase.h>
 
-#include "WHIM.h"
+#include "EEM.h"
 #include "MolData3Ddescriptors.h"
-
 #include <math.h>
 #include <Eigen/Dense>
 #include <Eigen/SVD>
@@ -43,190 +42,209 @@ namespace RDKit {
 namespace Descriptors {
 namespace {
 
+// Those Parameters change to adapted to the molecule dataset using the
+// optimization method: The best parameters published in the NEEMP article
+// (https://jcheminf.springeropen.com/articles/10.1186/s13321-016-0171-1), are
+// CCD_gen_DE_RMSD_B3LYP_6311G_NPA.par from Additional file 6 was built using
+// the larger dataset with B3LYP_6311G ab initio => 17769 molecules H 1, C 6, N
+// 7, O 8, F 9, P 15, S 16, Cl 17, Br 35 Caution: Iodine is not in this training
+// set of molecules!!!
+const double kappa = 0.5125;
+// 0   1      2   3   4   5   6       7      8      9     10  11  12  13  14  15
+// 16    17    18  19  20  21  22  23  24  25  26  27  28  29  30  31  32  33 34
+// 35
+const double A1[] = {0.0,    2.5473, 0.0, 0.0,   0.0, 0.0, 2.7221, 2.9750,
+                     3.1503, 2.9976, 0.0, 0.0,   0.0, 0.0, 0.0,    0.0,
+                     2.6511, 2.7026, 0.0, 0.0,   0.0, 0.0, 0.0,    0.0,
+                     0.0,    0.0,    0.0, 0.0,   0.0, 0.0, 0.0,    0.0,
+                     0.0,    0.0,    0.0, 2.6263};
+const double A2[] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.7667, 2.8895, 3.0486,
+                     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.2933, 2.6471, 0.0,
+                     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,    0.0,    0.0,
+                     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,    0.0,    0.0};
+const double A3[] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.6944, 3.0240, 0.0,
+                     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,    0.0,    0.0,
+                     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,    0.0,    0.0,
+                     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,    0.0,    0.0};
+// 0   1      2   3   4   5   6       7      8      9     10  11  12  13  14  15
+// 16    17     18  19  20  21  22  23  24  25  26  27  28  29  30  31  32  33
+// 34 35
+const double B1[] = {0.0,    1.1641, 0.0, 0.0,   0.0, 0.0, 0.6403, 0.9083,
+                     1.0577, 0.9983, 0.0, 0.0,   0.0, 0.0, 0.0,    0.0,
+                     0.4897, 1.1537, 0.0, 0.0,   0.0, 0.0, 0.0,    0.0,
+                     0.0,    0.0,    0.0, 0.0,   0.0, 0.0, 0.0,    0.0,
+                     0.0,    0.0,    0.0, 1.1105};
+const double B2[] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.6513, 0.6647, 0.8410,
+                     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5759, 0.4512, 0.0,
+                     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,    0.0,    0.0,
+                     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,    0.0,    0.0};
+const double B3[] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.6776, 1.4240, 0.0,
+                     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,    0.0,    0.0,
+                     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,    0.0,    0.0,
+                     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,    0.0,    0.0};
+
+/* simple Parameters trained using the small 500 molecules dataset.
 const float kappa = 0.1960;
 
-const float A1[] = {0.0,2.3594,0.0,0.0,0.0,0.0,2.4541,2.5908,2.7130,0.0,0.0,0.0,0.0,0.0,0.0,0.0,2.3833};
-const float A2[] = {0.0,0.0,0.0,0.0,0.0,0.0,2.4726,2.5409,2.6766,0.0,0.0,0.0,0.0,0.0,0.0,0.0,2.4956};
-const float A3[] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
+const float A1[] =
+{0.0,2.3594,0.0,0.0,0.0,0.0,2.4541,2.5908,2.7130,0.0,0.0,0.0,0.0,0.0,0.0,0.0,2.3833};
+const float A2[] =
+{0.0,0.0,0.0,0.0,0.0,0.0,2.4726,2.5409,2.6766,0.0,0.0,0.0,0.0,0.0,0.0,0.0,2.4956};
+const float A3[] =
+{0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
 
-const float B1[] = {0.0,0.5962,0.0,0.0,0.0,0.0,0.2591,0.3316,0.5028,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.4564};
-const float B2[] = {0.0,0.0,0.0,0.0,0.0,0.0,0.2268,0.2319,0.4992,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.1493};
-const float B3[] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
+const float B1[] =
+{0.0,0.5962,0.0,0.0,0.0,0.0,0.2591,0.3316,0.5028,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.4564};
+const float B2[] =
+{0.0,0.0,0.0,0.0,0.0,0.0,0.2268,0.2319,0.4992,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.1493};
+const float B3[] =
+{0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
+*/
 
-// function to retreive the atomtype value based on the highest bond type of an atom
-// in the publication they don't have access to "Aromatic type"
-double getAtomtype(const RDKit::ROMol mol, const RDKit::Atom *atom) {
-      double t=1.0;
-      double a;
-      RDKit::ROMol::ADJ_ITER nbrIdx, endNbrs;
-      boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atom);
-      while (nbrIdx != endNbrs) {
-        const RDKit::Bond *bond = mol.getBondBetweenAtoms(*nbrIdx, atom->getIdx());
-        a = bond->getBondTypeAsDouble();
-        if (a == 1.5) {
-             t = 2.0;
-            }
-        if (a == 2.0) {
-             t = 2.0;
-            }
-        if (a == 3.0) {
-             t = 3.0;
-            }
-        ++nbrIdx;
+// function to retrieve the atomtype value based on the "highest" (e.g. max)
+// bond type of an atom potential improvement : in the original publication they
+// don't have access to "Aromatic type" like in RDKit
+unsigned int getAtomtype(const ROMol &mol, const RDKit::Atom *atom) {
+  PRECONDITION(atom != nullptr, "bad atom argument")
+  unsigned int t = 1;
+  RDKit::ROMol::OEDGE_ITER beg, end;
+  boost::tie(beg, end) = mol.getAtomBonds(atom);
+  while (beg != end) {
+    const Bond *bond = mol[*beg];
+    double a = bond->getBondTypeAsDouble();
+    if (a == 1.5) {
+      a = 2.0;
+    }
+    t = std::max(t, (unsigned int)a);
+    ++beg;
   }
   return t;
 }
 
-
-double* getEEMMatrix(RDKit::ROMol mol, double * dist3D, int n) {
-  int sizeArray = (n+1) * (n+1);
-  double* EEM = new double[sizeArray](); // declaration to set all elements to zeros!
-  #define IDX(x, y) (x * (n+1) + y)
-    /* Fill the full n * n block */
-    for(long int i = 0; i < n; i++) {
-        int idx=mol.getAtomWithIdx(i)->getAtomicNum();
-        double t = getAtomtype(mol,mol.getAtomWithIdx(i));
-        double v;
-        if (t== 1.0) {
-                v=  B1[idx];
-        }
-        if (t== 2.0) {
-                v = B2[idx];
-        }
-        if (t== 3.0) {
-                v = B3[idx];
-        }
-        //std::cout << "v: " << v <<  "\n";
-
-        EEM[IDX(i, i)] = v;
-        for(long int j = i + 1; j < n; j++) {
-                EEM[IDX(i, j)] = kappa / dist3D[i*n+j];
-                EEM[IDX(j, i)] = EEM[IDX(i, j)];
-            }
-        }
-    /* Fill last column & row */
-    for(long int i = 0; i < n; i++) {
-        EEM[IDX(n, i)] = 1.0; // column
-        EEM[IDX(i, n)] = -1.0; // row
-
+std::unique_ptr<double[]> getEEMMatrix(double *dist3D, unsigned int n,
+                                       const EEM_arrays& EEMatoms) {
+  PRECONDITION(dist3D != nullptr, "bad dist3D argument")
+  int sizeArray = (n + 1) * (n + 1);
+  auto *EEM =
+      new double[sizeArray]();  // declaration to set all elements to zeros!
+  /* Fill the full n * n block */
+  for (unsigned int i = 0; i < n; i++) {
+    unsigned int t = EEMatoms.EEMatomtype[i];
+    unsigned int idx = EEMatoms.Atomindex[i];
+    double v = 0.0;
+    if (t == 1) {
+      v = B1[idx];
     }
-    #undef IDX
-    return EEM;
-}
-
-
-double* getBVector(RDKit::ROMol mol, int n) {
-       /* Fill vector b i.e. -A */
-        double * b = new double[n+1];
-        for(int j = 0; j < n; j++) {
-            double t = getAtomtype(mol,mol.getAtomWithIdx(j));
-            int idx=mol.getAtomWithIdx(j)->getAtomicNum();
-            if (t== 1.0) {
-                b[j] = -A1[idx];
-            }
-            if (t== 2.0) {
-                b[j] = -A2[idx];
-            }
-            if (t== 3.0) {
-                b[j] = -A3[idx];
-            }
-        }
-
-        b[n] = RDKit::MolOps::getFormalCharge(mol); // sum of charges
-
-    return b;
-}
-
-
-
-JacobiSVD<MatrixXd> *getSVD(MatrixXd &Mat) {
-  JacobiSVD<MatrixXd> *svd =
-      new JacobiSVD<MatrixXd>(Mat, ComputeThinU | ComputeThinV);
-  return svd;
-}
-
-double* retreiveVect(VectorXd matrix) {
-  double* arrayd = matrix.data();
-  return arrayd;
-}
-
-/* Calculate charges for a particular kappa_data structure */
-std::vector<double> calculate_charges(RDKit::ROMol mol, double * dist3D, int numAtoms) {
-        double * A = new double[(numAtoms+1)*(numAtoms+1)];
-        A = getEEMMatrix(mol,dist3D,numAtoms);
-        double * b = new double[numAtoms+1];
-        b = getBVector(mol,  numAtoms);
-
-        MatrixXd AM = Map<MatrixXd>(A, numAtoms+1, numAtoms+1);
-        VectorXd bv = Map<VectorXd>(b, numAtoms+1);
-
-    
-        // all methods failed over 139 molecules in the test script ... can be a parameter issue or a AM, bv definition issue need to check what is wrong in my code ;-)
-        VectorXd Res(numAtoms+1);
-        // this is one way to do so but not so stable ?
-        LDLT<MatrixXd> ldlt(AM);
-        Res = ldlt.solve(bv);
-        // can also work ... (AM.transpose() * AM).ldlt().solve(AM.transpose() * bv)
-
-        // another to solve linear system of equations
-        //FullPivLU<MatrixXd> lu(AM);
-        //Res = lu.solve(bv);
-        //ColPivHouseholderQR<MatrixXd> qr(AM); // 2 errors with kekulized molecule
-        //Res = qr.solve(bv);
-    
-    
-        // SVD method
-        //JacobiSVD<MatrixXd> *svd = getSVD(AM);
-        //Res = svd->solve(bv);
-
-        std::vector<double> charges(Res.data(), Res.data() + Res.size());
-
-    
-    for(long int aix = 0; aix < numAtoms; aix++) {
-        mol.getAtomWithIdx(aix)->setProp("_EEMCharge", charges[aix], true);
-
+    if (t == 2) {
+      v = B2[idx];
     }
-    
-       delete[] A;
-       delete[] b;
+    if (t == 3) {
+      v = B3[idx];
+    }
 
-    return charges;
+    EEM[i * (n + 1) + i] = v;
+    for (unsigned int j = i + 1; j < n; j++) {
+      EEM[i * (n + 1) + j] = kappa / dist3D[i * n + j];
+      EEM[j * (n + 1) + i] = EEM[i * (n + 1) + j];
+    }
+  }
+  /* Fill last column & row */
+  for (unsigned int i = 0; i < n; i++) {
+    EEM[n * (n + 1) + i] = 1.0;   // column
+    EEM[i * (n + 1) + n] = -1.0;  // row
+  }
+  return std::unique_ptr<double[]>(EEM);
 }
 
+std::unique_ptr<double[]> getBVector(const ROMol &mol, unsigned int n,
+                                     const EEM_arrays &EEMatoms) {
+  /* Fill vector b i.e. -A */
+  auto *b = new double[n + 1];
+  for (unsigned int j = 0; j < n; j++) {
+    unsigned int t = EEMatoms.EEMatomtype[j];
+    unsigned int idx = EEMatoms.Atomindex[j];
+    if (t == 1) {
+      b[j] = -A1[idx];
+    }
+    if (t == 2) {
+      b[j] = -A2[idx];
+    }
+    if (t == 3) {
+      b[j] = -A3[idx];
+    }
+  }
 
-void getEEMs(const ROMol &mol, std::vector<double> &result, int numAtoms, int confId) {
-  // 3D distance matrix
-  double * dist3D = MolOps::get3DDistanceMat(mol, confId, false, true);
-  std::vector<double> charges = calculate_charges(mol, dist3D, numAtoms);
+  b[n] = MolOps::getFormalCharge(mol);  // sum of charges
 
-  result.clear();
-  result.resize(numAtoms);
+  return std::unique_ptr<double[]>(b);
+}
 
-  for (int i = 0; i < numAtoms; i++) {
-    result[i] = charges[i];
+EEM_arrays::EEM_arrays(const ROMol &mol, unsigned int sz) : n(sz) {
+  /* Fill vector b i.e. -A */
+  Atomindex = new unsigned int[n];
+  EEMatomtype = new unsigned int[n];
+
+  for (unsigned int j = 0; j < n; j++) {
+    EEMatomtype[j] = getAtomtype(mol, mol.getAtomWithIdx(j));
+    Atomindex[j] = mol.getAtomWithIdx(j)->getAtomicNum();
   }
 }
 
+EEM_arrays::~EEM_arrays() {
+  if (Atomindex != nullptr) {
+    delete[] Atomindex;
+  }
+  if (EEMatomtype != nullptr) {
+    delete[] EEMatomtype;
+  }
+}
+
+/* Calculate charges for a particular kappa_data structure */
+void calculate_charges(ROMol mol, double *dist3D, unsigned int numAtoms,
+                       const EEM_arrays& EEMatoms, std::vector<double> &res) {
+  std::unique_ptr<double[]> A = getEEMMatrix(dist3D, numAtoms, EEMatoms);
+  std::unique_ptr<double[]> b = getBVector(mol, numAtoms, EEMatoms);
+
+  MatrixXd AM = Map<MatrixXd>(A.get(), numAtoms + 1, numAtoms + 1);
+  VectorXd bv = Map<VectorXd>(b.get(), numAtoms + 1);
+  VectorXd Res(numAtoms + 1);
+
+  FullPivLU<MatrixXd> lu(AM);
+  Res = lu.solve(bv);
+
+  for (unsigned int aix = 0; aix < numAtoms; aix++) {
+    res[aix] = Res.data()[aix];
+    mol.getAtomWithIdx(aix)->setProp("_EEMCharge", res[aix], true);
+  }
+}
+
+void getEEMs(const ROMol &mol, std::vector<double> &result,
+             unsigned int numAtoms, int confId) {
+  // 3D distance matrix
+  double *dist3D = MolOps::get3DDistanceMat(mol, confId, false, true);
+  EEM_arrays EEMatoms(mol, numAtoms);
+
+  result.clear();
+  result.resize(numAtoms);
+  calculate_charges(mol, dist3D, numAtoms, EEMatoms, result);
+}
 
 }  // end of anonymous namespace
 
 void EEM(ROMol &mol, std::vector<double> &res, int confId) {
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers")
-  int numAtoms = mol.getNumAtoms();
+  unsigned int numAtoms = mol.getNumAtoms();
 
   res.clear();
   res.resize(numAtoms);
-    
-  // cast ROMol to RWMol
-  RWMol &wmol = static_cast<RWMol &>(mol);
-    
-  // kekulize
+  // copy molecule so that we can kekulize it
+  RWMol wmol(mol);
+  // kekulize is currently required but it could be remove if and only if:
+  // we use "Aromatic type"  in RDKit retrain the model without Kekulize
+  // that would be part of a future release if it's really important
   MolOps::Kekulize(wmol, true);
-    
-  // recast to ROMol
-  ROMol *remol = static_cast<ROMol *>(&wmol);
-    
-  getEEMs(*remol, res, numAtoms, confId);
+
+  getEEMs(wmol, res, numAtoms, confId);
 }
-}  // end of Descriptors namespace
-}  // end of RDKit namespace
+}  // namespace Descriptors
+}  // namespace RDKit

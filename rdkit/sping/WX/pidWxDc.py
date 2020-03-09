@@ -16,7 +16,7 @@ Code factoring and pil image support by Jeffrey Kunce
 
 see also piddleWxDcDemo.py
 '''
-from __future__ import print_function
+
 from wxPython.wx import *
 from rdkit.sping import pid as sping_pid
 
@@ -89,7 +89,7 @@ class PiddleWxDc(sping_pid.Canvas):
       font = self.defaultFont
     #  PIDDLE fonts are matched to wxFont families.  While it is possible to
     #  match them to individual fonts, this is difficult to do in a platform
-    #  independant way
+    #  independent way
     if font.face is None or font.face == 'times':
       family = wxDEFAULT
     elif font.face == 'courier' or font.face == 'monospaced':
@@ -231,7 +231,7 @@ class PiddleWxDc(sping_pid.Canvas):
         """
 
     # Because wxPython automatically closes polygons, the polygon fill and the border
-    # are drawn seperately, so open polygons will display correctly
+    # are drawn separately, so open polygons will display correctly
     self.dc.SetPen(wxTRANSPARENT_PEN)
     self.dc.SetBrush(self._getWXbrush(fillColor, self.defaultFillColor))
 

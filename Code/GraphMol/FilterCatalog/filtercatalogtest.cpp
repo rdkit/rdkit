@@ -28,12 +28,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
+#include <RDGeneral/test.h>
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/FilterCatalog/FilterCatalog.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
-
+#include <fstream>
 #include <iostream>
 #include <map>
 #include <algorithm>
@@ -97,8 +98,9 @@ void testFilterCatalog() {
                                 {8, 16},
                                 {9, 21}};
     MatchVectType matchvec1;
-    for (int i = 0; i < 10; ++i)
-      matchvec1.push_back(std::make_pair(match1[i].first, match1[i].second));
+    for (auto i : match1) {
+      matchvec1.push_back(std::make_pair(i.first, i.second));
+    }
 
     const IntPair match2[13] = {{0, 11},
                                 {1, 12},
@@ -114,8 +116,9 @@ void testFilterCatalog() {
                                 {11, 17},
                                 {12, 16}};
     MatchVectType matchvec2;
-    for (int i = 0; i < 13; ++i)
-      matchvec2.push_back(std::make_pair(match2[i].first, match2[i].second));
+    for (auto i : match2) {
+      matchvec2.push_back(std::make_pair(i.first, i.second));
+    }
 
     const IntPair match3[12] = {{0, 0},
                                 {1, 1},
@@ -130,8 +133,9 @@ void testFilterCatalog() {
                                 {10, 15},
                                 {11, 16}};
     MatchVectType matchvec3;
-    for (int i = 0; i < 12; ++i)
-      matchvec3.push_back(std::make_pair(match3[i].first, match3[i].second));
+    for (auto i : match3) {
+      matchvec3.push_back(std::make_pair(i.first, i.second));
+    }
     int count = 0;
     while (!suppl.atEnd()) {
       mol.reset(suppl.next());
@@ -143,6 +147,7 @@ void testFilterCatalog() {
       }
       // More detailed
       FilterCatalog::CONST_SENTRY entry = catalog.getFirstMatch(*mol);
+      TEST_ASSERT(entry);
       if (entry) {
         std::cerr << "Warning: molecule failed filter: reason "
                   << entry->getDescription() << std::endl;
@@ -200,7 +205,7 @@ void testFilterCatalogEntry() {
   const int debugParse = 0;
   const bool mergeHs = true;
   ROMOL_SPTR pattern(SmartsToMol("c:c:c:c:c", debugParse, mergeHs));
-  TEST_ASSERT(pattern.get() != 0);
+  TEST_ASSERT(pattern.get() != nullptr);
   sm->setPattern(pattern);
   sm->setMinCount(1);
   FilterCatalogEntry entry("Bar", matcher);
@@ -221,11 +226,60 @@ void testFilterCatalogEntry() {
   delete newM;
 }
 
+void testFilterCatalogThreadedRunner() {
+    FilterCatalogParams params;
+    params.addCatalog(FilterCatalogParams::PAINS_A);
+    params.addCatalog(FilterCatalogParams::PAINS_B);
+    params.addCatalog(FilterCatalogParams::PAINS_C);
+
+    FilterCatalog catalog(params);
+    
+    std::string pathName = getenv("RDBASE");
+    pathName += "/Code/GraphMol/test_data/pains.smi";
+
+    std::ifstream infile(pathName);
+    std::vector<std::string> smiles;
+
+    std::string line;
+    int count=0;
+    while (std::getline(infile, line))
+    {
+      if (count) {
+	std::cerr << line << std::endl;
+	smiles.push_back(line);
+      }
+      count += 1;
+    }
+    TEST_ASSERT(smiles.size() == 3);
+
+    int numThreads = 3;  // one per entry
+    auto results = RunFilterCatalog(catalog, smiles, numThreads);
+    TEST_ASSERT(results.size() == smiles.size());
+    count=0;
+    for(auto &entries : results) {
+      TEST_ASSERT(entries.size() > 0);
+      std::cerr << count << " " << entries[0]->getDescription() << std::endl;
+      switch (count) {
+      case 0:
+	TEST_ASSERT(entries[0]->getDescription() == "hzone_phenol_A(479)");
+	break;
+      case 1:
+	TEST_ASSERT(entries[0]->getDescription() == "cyano_imine_B(17)");
+	break;
+      case 2:
+	TEST_ASSERT(entries[0]->getDescription() == "keto_keto_gamma(5)");
+	break;
+      }
+      count += 1;
+    }
+}
+
 int main() {
   RDLog::InitLogs();
   // boost::logging::enable_logs("rdApp.debug");
 
   testFilterCatalog();
   testFilterCatalogEntry();
+  testFilterCatalogThreadedRunner();
   return 0;
 }

@@ -67,7 +67,7 @@ double distanceFromAPlane(const RDGeom::Point3D &pt,
                           const std::vector<double> &plane, double denom) {
   double numer = 0.0;
   numer =
-      std::abs(pt.x * plane[0] + pt.y * plane[1] + pt.z * plane[2] + plane[3]);
+      std::fabs(pt.x * plane[0] + pt.y * plane[1] + pt.z * plane[2] + plane[3]);
 
   return numer / denom;
 }
@@ -115,10 +115,14 @@ bool getBestFitPlane(const Conformer &conf,
 double PBF(const ROMol &mol, int confId) {
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers")
   unsigned int numAtoms = mol.getNumAtoms();
-  if (numAtoms < 4) return 0;
+  if (numAtoms < 4) {
+    return 0;
+  }
 
   const Conformer &conf = mol.getConformer(confId);
-  if (!conf.is3D()) return 0;
+  if (!conf.is3D()) {
+    return 0;
+  }
 
   std::vector<RDGeom::Point3D> points;
   points.reserve(numAtoms);
@@ -127,7 +131,7 @@ double PBF(const ROMol &mol, int confId) {
   }
 
   std::vector<double> plane(4);
-  if (!getBestFitPlane(conf, points, plane, NULL)) {
+  if (!getBestFitPlane(conf, points, plane, nullptr)) {
     // the eigenvalue calculation failed, return 0
     // FIX: throw an exception here?
     return 0.0;

@@ -38,11 +38,11 @@ bool feq(double v1, double v2, double tol) { return fabs(v1 - v2) <= tol; }
 
 double computeIntVectPrimesProduct(const INT_VECT &vect) {
   double invr = 1.0;
-  for (INT_VECT_CI ci = vect.begin(); ci != vect.end(); ++ci) {
+  for (int ci : vect) {
     // this thing with using mod introduces a slight risk of
     // getting collisions. We'll have to either live with that
     // or switch to using a different hashing algorithm
-    invr *= firstThousandPrimes[(*ci) % NUM_PRIMES_AVAIL];
+    invr *= firstThousandPrimes[ci % NUM_PRIMES_AVAIL];
   }
   return invr;
 }

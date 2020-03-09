@@ -1,3 +1,6 @@
+
+remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
+add_definitions(-DRDKIT_CHEMTRANSFORMS_BUILD)
 rdkit_library(ChemTransforms ChemTransforms.cpp MolFragmenter.cpp LINK_LIBRARIES
   SubstructMatch SmilesParse 
   ${RDKit_THREAD_LIBS})
@@ -15,5 +18,5 @@ rdkit_test(testChemTransforms testChemTransforms.cpp
            LINK_LIBRARIES ChemTransforms FileParsers SmilesParse SubstructMatch
            GraphMol RDGeometryLib RDGeneral ${RDKit_THREAD_LIBS})
 
-
-
+rdkit_catch_test(chemTransformsTestCatch catch_tests.cpp LINK_LIBRARIES ChemTransforms FileParsers SmilesParse 
+    SubstructMatch GraphMol RDGeometryLib RDGeneral ${RDKit_THREAD_LIBS} )

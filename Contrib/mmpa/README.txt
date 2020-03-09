@@ -3,7 +3,7 @@ The fragment indexing algorithm used in the scripts is described in the followin
 
 Hussain, J., & Rea, C. (2010). "Computationally efficient algorithm to identify matched molecular pairs (MMPs) 
 in large data sets." Journal of chemical information and modeling, 50(3), 339-348.
-http://dx.doi.org/10.1021/ci900450m
+https://doi.org/10.1021/ci900450m
 	
 Wagener, M., & Lommerse, J. P. (2006). "The quest for bioisosteric replacements." 
 Journal of chemical information and modeling, 46(2), 677-685.
@@ -233,7 +233,7 @@ a) mmp: Find all MMPs of a input/query compound to the compounds in the db
 
 b) subs: Find all MMPs in the db where the LHS of the transform matches an input
 substructure. Make sure the attached points are donated by an asterisk and the
-input substructure has been canonicalised (eg. [*]c1ccccc1). Note: Up to 3 attachement
+input substructure has been canonicalised (eg. [*]c1ccccc1). Note: Up to 3 attachment
 points are allowed.
 
 c) trans: Find all MMPs that match the input transform/SMIRKS. Make sure the input
@@ -300,4 +300,4 @@ In the event you use the scripts for publication please reference the original p
 
 Hussain, J., & Rea, C. (2010). "Computationally efficient algorithm to identify matched molecular pairs (MMPs) 
 in large data sets." Journal of chemical information and modeling, 50(3), 339-348.
-http://dx.doi.org/10.1021/ci900450m
+https://doi.org/10.1021/ci900450m

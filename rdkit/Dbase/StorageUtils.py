@@ -88,22 +88,26 @@ def IndexToRDId(idx, leadText='RDCmpd'):
 
   The format of the ID is:
     leadText-xxx-xxx-xxx-y
-  The number blocks are zero padded and the the final digit (y)
+  The number blocks are zero padded and the final digit (y)
   is a checksum:
+
   >>> str(IndexToRDId(9))
   'RDCmpd-000-009-9'
   >>> str(IndexToRDId(9009))
   'RDCmpd-009-009-8'
 
   A millions block is included if it's nonzero:
+
   >>> str(IndexToRDId(9000009))
   'RDCmpd-009-000-009-8'
 
   The text at the beginning can be altered:
+
   >>> str(IndexToRDId(9,leadText='RDAlt'))
   'RDAlt-000-009-9'
 
   Negative indices are errors:
+
   >>> try:
   ...   IndexToRDId(-1)
   ... except ValueError:
@@ -187,6 +191,7 @@ def RegisterItem(conn, table, value, columnName, data=None, id='', idColName='Id
   True
 
   It's also possible to provide ids by hand:
+
   >>> RegisterItem(conn,tblName,'label10','label',['label10',1],
   ...              id='RDCmpd-000-010-1')==(1, 'RDCmpd-000-010-1')
   True

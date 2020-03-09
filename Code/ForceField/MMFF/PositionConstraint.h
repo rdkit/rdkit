@@ -9,6 +9,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef __RD_MMFFPOSITIONCONSTRAINT_H__
 #define __RD_MMFFPOSITIONCONSTRAINT_H__
 #include <iostream>
@@ -19,7 +20,8 @@ namespace ForceFields {
 namespace MMFF {
 
 //! A position constraint of the type 0.5k * deltaX^2
-class PositionConstraintContrib : public ForceFieldContrib {
+class RDKIT_FORCEFIELD_EXPORT PositionConstraintContrib
+    : public ForceFieldContrib {
  public:
   PositionConstraintContrib() : d_atIdx(-1){};
   //! Constructor
@@ -48,6 +50,6 @@ class PositionConstraintContrib : public ForceFieldContrib {
   RDGeom::Point3D d_pos0;  //!< reference position
   double d_forceConstant;  //!< force constant of the bond
 };
-}
-}
+}  // namespace MMFF
+}  // namespace ForceFields
 #endif

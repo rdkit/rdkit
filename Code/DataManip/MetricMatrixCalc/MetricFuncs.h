@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef __RD_METRICFUNCS_H__
 #define __RD_METRICFUNCS_H__
 #include <cmath>
@@ -48,6 +49,6 @@ double TanimotoSimilarityMetric(const T1 &bv1, const T2 &bv2,
   return SimilarityWrapper(
       bv1, bv2, (double (*)(const T1 &, const T2 &))TanimotoSimilarity);
 };
-}
+}  // namespace RDDataManip
 
 #endif

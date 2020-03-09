@@ -89,23 +89,15 @@ std::vector<double> MolData3Ddescriptors::GetRelativeIonPol(
 }
 
 std::vector<double> MolData3Ddescriptors::GetCustomAtomProp(
-      const RDKit::ROMol& mol, const std::string customAtomPropName) {
-    int numAtoms = mol.getNumAtoms();
-    
-    std::vector<double> customAtomarray(numAtoms, 0.0);
-    for (int i = 0; i < numAtoms; ++i) {
-        
-        if (mol.getAtomWithIdx(i)->hasProp(customAtomPropName)) {
-            customAtomarray[i] = mol.getAtomWithIdx(i)->getProp<double>(customAtomPropName);
-        }
-        else {
-            customAtomarray[i] =1;
-        }
-    }
-    return customAtomarray;
+    const RDKit::ROMol& mol, const std::string& customAtomPropName) {
+  int numAtoms = mol.getNumAtoms();
+
+  std::vector<double> customAtomArray(numAtoms, 1.0);
+  for (auto& atom : mol.atoms()) {
+    atom->getPropIfPresent(customAtomPropName, customAtomArray[atom->getIdx()]);
+  }
+  return customAtomArray;
 }
-
-
 
 std::vector<double> MolData3Ddescriptors::GetCharges(const RDKit::ROMol& mol) {
   std::vector<double> charges(mol.getNumAtoms(), 0);
@@ -115,20 +107,21 @@ std::vector<double> MolData3Ddescriptors::GetCharges(const RDKit::ROMol& mol) {
 }
 
 int MolData3Ddescriptors::GetPrincipalQuantumNumber(int AtomicNum) {
-  if (AtomicNum <= 2)
+  if (AtomicNum <= 2) {
     return 1;
-  else if (AtomicNum <= 10)
+  } else if (AtomicNum <= 10) {
     return 2;
-  else if (AtomicNum <= 18)
+  } else if (AtomicNum <= 18) {
     return 3;
-  else if (AtomicNum <= 36)
+  } else if (AtomicNum <= 36) {
     return 4;
-  else if (AtomicNum <= 54)
+  } else if (AtomicNum <= 54) {
     return 5;
-  else if (AtomicNum <= 86)
+  } else if (AtomicNum <= 86) {
     return 6;
-  else
+  } else {
     return 7;
+  }
 }
 
 std::vector<double> MolData3Ddescriptors::GetIState(const RDKit::ROMol& mol) {
@@ -147,7 +140,7 @@ std::vector<double> MolData3Ddescriptors::GetIState(const RDKit::ROMol& mol) {
       int N = GetPrincipalQuantumNumber(atNum);  // principal quantum number
       double d = (double)degree - h;             // degree-h
       if (d > 0) {
-        Is[i] = round(1000 * (4.0 / (N * N) * dv + 1.0) / d) / 1000;
+        Is[i] = std::round(1000 * (4.0 / (N * N) * dv + 1.0) / d) / 1000;
       }
     }
   }
@@ -172,7 +165,7 @@ std::vector<double> MolData3Ddescriptors::GetIStateDrag(
       int N = GetPrincipalQuantumNumber(atNum);  // principal quantum number
       double d = (double)degree - h;             // degree-h
       if (d > 0) {
-        Is[i] = round(1000 * (4.0 / (N * N) * dv + 1.0) / d) / 1000;
+        Is[i] = std::round(1000 * (4.0 / (N * N) * dv + 1.0) / d) / 1000;
       }
     }
   }

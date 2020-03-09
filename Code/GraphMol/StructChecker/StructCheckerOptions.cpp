@@ -18,7 +18,7 @@
 #include "../FileParsers/FileParsers.h"
 #include "../FileParsers/MolSupplier.h"  //SDF
 #include "../SmilesParse/SmilesParse.h"
-#include "StructChecker.h"
+#include "StructCheckerOptions.h"
 
 #include "AugmentedAtomData.cpp"
 
@@ -30,7 +30,6 @@ bool parseOptionsJSON(const std::string &json, StructCheckerOptions &op) {
   try {
     std::istringstream ss;
     ss.str(json);
-    std::istream &iss = ss;
     boost::property_tree::ptree pt;
     boost::property_tree::read_json(ss, pt);
     op = StructCheckerOptions();  // reset to default values
@@ -87,8 +86,8 @@ bool loadOptionsFromFiles(
 //=====================================================================
 // File parsers helper functions:
 
-static const char *
-    bond_to_string[] =  // ordered in according with BondType values
+static const char
+    *bond_to_string[] =  // ordered in according with BondType values
     {"?", "-", "=", "#", "~", "-=", "-~", "=~", "*"};
 
 // used in unit test
@@ -333,7 +332,7 @@ static bool ReadAugmentedAtoms(const std::string &path,
 
 static bool ReadAAPairs(
     const std::string &path,
-    std::vector<std::pair<AugmentedAtom, AugmentedAtom> > &trans_pairs) {
+    std::vector<std::pair<AugmentedAtom, AugmentedAtom>> &trans_pairs) {
   /*
   * '*.trn' file loader
   * Reads file and constructs an array of pairs of augmented atom
@@ -352,8 +351,8 @@ static bool ReadAAPairs(
     return false;
   }
   unsigned n = 0;
-
-  unsigned k = fscanf(fp, "%d", &n);
+  int num_scan = fscanf(fp, "%d", &n);
+  TEST_ASSERT(num_scan == 1);
 
   char buffer[80];
 
@@ -430,10 +429,9 @@ static void loadDefaultAugmentedAtoms(StructCheckerOptions &struchkOpts) {
   std::vector<AugmentedAtom> good;
   good.reserve(sizeof(DefaultGoodAtoms) / sizeof(*DefaultGoodAtoms));
 
-  for (size_t i = 0; i < sizeof(DefaultGoodAtoms) / sizeof(*DefaultGoodAtoms);
-       ++i) {
+  for (const auto &DefaultGoodAtom : DefaultGoodAtoms) {
     good.push_back(AugmentedAtom());
-    if (!StringToAugmentedAtom(DefaultGoodAtoms[i].str, good.back())) {
+    if (!StringToAugmentedAtom(DefaultGoodAtom.str, good.back())) {
       throw "INTERNAL ERROR in default data";
     }
   }
@@ -441,19 +439,19 @@ static void loadDefaultAugmentedAtoms(StructCheckerOptions &struchkOpts) {
   std::vector<AugmentedAtom> acidic;
   acidic.reserve(sizeof(DefaultAcidicAtoms) / sizeof(*DefaultAcidicAtoms));
 
-  for (size_t i = 0;
-       i < sizeof(DefaultAcidicAtoms) / sizeof(*DefaultAcidicAtoms); ++i) {
+  for (const auto &DefaultAcidicAtom : DefaultAcidicAtoms) {
     acidic.push_back(AugmentedAtom());
-    if (!StringToAugmentedAtom(DefaultAcidicAtoms[i].str, acidic.back())) {
+    if (!StringToAugmentedAtom(DefaultAcidicAtom.str, acidic.back())) {
       throw "INTERNAL ERROR in default data";
     }
   }
 
-  std::vector<std::pair<AugmentedAtom, AugmentedAtom> > trans_pairs;
-  trans_pairs.resize(sizeof(DefaultAugmentedAtomTransforms)/
+  std::vector<std::pair<AugmentedAtom, AugmentedAtom>> trans_pairs;
+  trans_pairs.resize(sizeof(DefaultAugmentedAtomTransforms) /
                      sizeof(*DefaultAugmentedAtomTransforms));
-  for(size_t i=0; i< sizeof(DefaultAugmentedAtomTransforms)/
-                     sizeof(*DefaultAugmentedAtomTransforms); ++i) {
+  for (size_t i = 0; i < sizeof(DefaultAugmentedAtomTransforms) /
+                             sizeof(*DefaultAugmentedAtomTransforms);
+       ++i) {
     if (!StringToAugmentedAtom(DefaultAugmentedAtomTransforms[i].from,
                                trans_pairs[i].first)) {
       throw "INTERNAL Error in default augmented atom transforms";
@@ -463,7 +461,7 @@ static void loadDefaultAugmentedAtoms(StructCheckerOptions &struchkOpts) {
       throw "INTERNAL Error in default augmented atom transforms";
     }
   }
-  
+
   struchkOpts.setGoodAugmentedAtoms(good);
   struchkOpts.setAcidicAugmentedAtoms(acidic);
   struchkOpts.setAugmentedAtomTranslations(trans_pairs);
@@ -478,7 +476,7 @@ bool StructCheckerOptions::loadAugmentedAtomTranslations(
 }
 
 void StructCheckerOptions::setAugmentedAtomTranslations(
-    const std::vector<std::pair<AugmentedAtom, AugmentedAtom> > &aaPairs) {
+    const std::vector<std::pair<AugmentedAtom, AugmentedAtom>> &aaPairs) {
   AugmentedAtomPairs = aaPairs;
 }
 
@@ -634,8 +632,8 @@ void StructCheckerOptions::setTautomerData(const std::vector<ROMOL_SPTR> &from,
 static void parseSMARTS(std::vector<ROMOL_SPTR> &mols,
                         const std::vector<std::string> &smarts) {
   mols.clear();
-  for (size_t i = 0; i < smarts.size(); i++) {
-    ROMol *m = SmartsToMol(smarts[i]);
+  for (const auto &patt : smarts) {
+    ROMol *m = SmartsToMol(patt);
     if (m) mols.push_back(ROMOL_SPTR(m));
   }
 }
@@ -663,8 +661,9 @@ void StructCheckerOptions::parseTautomerData(
 }
 //--------------------------------------------------------------------------
 
-bool loadChargeDataTables(const std::string &path) {
+bool loadChargeDataTables(const std::string& path) {
   // TODO: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  RDUNUSED_PARAM(path);
   /*
       double Elneg0; // elneg_table[0].value;
       std::map<unsigned, double> ElnegTable;   // AtomicNumber -> eleng

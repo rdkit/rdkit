@@ -145,7 +145,7 @@ chain-only version are "[C;!R]" and "=;!@".
 # grow, which is just the powerset of the available bonds, excluding the
 # no-growth case.
 #
-# This breadth-first growth takes into account all possibilties of using
+# This breadth-first growth takes into account all possibilities of using
 # the available N bonds so all of those bonds are added to the exclusion
 # set of the newly expanded subgraphs.
 #

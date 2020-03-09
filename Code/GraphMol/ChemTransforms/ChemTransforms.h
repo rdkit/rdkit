@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef _RD_CHEMTRANSFORMS_H__
 #define _RD_CHEMTRANSFORMS_H__
 
@@ -34,8 +35,10 @@ typedef boost::shared_ptr<ROMol> ROMOL_SPTR;
     \return a copy of \c mol with the matching atoms and bonds (if any)
             removed.
 */
-ROMol *deleteSubstructs(const ROMol &mol, const ROMol &query,
-                        bool onlyFrags = false, bool useChirality = false);
+RDKIT_CHEMTRANSFORMS_EXPORT ROMol *deleteSubstructs(const ROMol &mol,
+                                                    const ROMol &query,
+                                                    bool onlyFrags = false,
+                                                    bool useChirality = false);
 
 //! \brief Returns a list of copies of an ROMol with the atoms and bonds that
 //!      match a pattern replaced with the atoms contained in another molecule.
@@ -65,7 +68,7 @@ ROMol *deleteSubstructs(const ROMol &mol, const ROMol &query,
     \param replaceAll  if this is true, only a single result, with all
     \param useChirality - if set, match the coreQuery using chirality
 
-   occurances
+   occurrences
                        of the substructure replaced, will be returned.
     \param replacementConnectionPoint   index of the atom in the replacement
    that
@@ -75,7 +78,7 @@ ROMol *deleteSubstructs(const ROMol &mol, const ROMol &query,
         and bonds (if any) replaced
 
 */
-std::vector<ROMOL_SPTR> replaceSubstructs(
+RDKIT_CHEMTRANSFORMS_EXPORT std::vector<ROMOL_SPTR> replaceSubstructs(
     const ROMol &mol, const ROMol &query, const ROMol &replacement,
     bool replaceAll = false, unsigned int replacementConnectionPoint = 0,
     bool useChirality = false);
@@ -94,9 +97,9 @@ std::vector<ROMOL_SPTR> replaceSubstructs(
             removed and dummies at the connection points.
 */
 
-
-ROMol *replaceSidechains(const ROMol &mol, const ROMol &coreQuery,
-                         bool useChirality = false);
+RDKIT_CHEMTRANSFORMS_EXPORT ROMol *replaceSidechains(const ROMol &mol,
+                                                     const ROMol &coreQuery,
+                                                     bool useChirality = false);
 
 //! \brief Returns a copy of an ROMol with the atoms and bonds that
 //!      are referenced by the MatchVector removed.
@@ -114,16 +117,12 @@ ROMol *replaceSidechains(const ROMol &mol, const ROMol &coreQuery,
 
     \param mol            - the ROMol of interest
     \param core           - the core being matched against
-    \param matchVect      - a matchVect of the type returned by Substructure Matching
-    \param replaceDummies - if set, atoms matching dummies in the core will also
-   be replaced
-    \param labelByIndex  - if set, the dummy atoms at attachment points are
-   labelled with the
-                           index+1 of the corresponding atom in the core
-    \param requireDummyMatch - if set, only side chains that are connected to
-   atoms in
-                               the core that have attached dummies will be
-   considered.
+    \param matchVect      - a matchVect of the type returned by Substructure
+   Matching \param replaceDummies - if set, atoms matching dummies in the core
+   will also be replaced \param labelByIndex  - if set, the dummy atoms at
+   attachment points are labelled with the index+1 of the corresponding atom in
+   the core \param requireDummyMatch - if set, only side chains that are
+   connected to atoms in the core that have attached dummies will be considered.
                                Molecules that have sidechains that are attached
                                at other points will be rejected (NULL returned).
     \param useChirality - if set, match the coreQuery using chirality
@@ -134,11 +133,12 @@ ROMol *replaceSidechains(const ROMol &mol, const ROMol &coreQuery,
             for deleting this molecule. If the core query is not matched, NULL
    is returned.
 */
-ROMol *replaceCore(const ROMol &mol, const ROMol &core,
-                   const MatchVectType &matchVect,
-                   bool replaceDummies = true,
-                   bool labelByIndex = false,
-                   bool requireDummyMatch = false);
+RDKIT_CHEMTRANSFORMS_EXPORT ROMol *replaceCore(const ROMol &mol,
+                                               const ROMol &core,
+                                               const MatchVectType &matchVect,
+                                               bool replaceDummies = true,
+                                               bool labelByIndex = false,
+                                               bool requireDummyMatch = false);
 
 //! \brief Returns a copy of an ROMol with the atoms and bonds that
 //!      do fall within a substructure match removed.
@@ -171,9 +171,12 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
             for deleting this molecule. If the core query is not matched, NULL
    is returned.
 */
-ROMol *replaceCore(const ROMol &mol, const ROMol &coreQuery,
-                   bool replaceDummies = true, bool labelByIndex = false,
-                   bool requireDummyMatch = false, bool useChirality = false);
+RDKIT_CHEMTRANSFORMS_EXPORT ROMol *replaceCore(const ROMol &mol,
+                                               const ROMol &coreQuery,
+                                               bool replaceDummies = true,
+                                               bool labelByIndex = false,
+                                               bool requireDummyMatch = false,
+                                               bool useChirality = false);
 
 //! \brief Carries out a Murcko decomposition on the molecule provided
 //!
@@ -184,7 +187,7 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &coreQuery,
     \return a new ROMol with the Murcko scaffold
             The client is responsible for deleting this molecule.
 */
-ROMol *MurckoDecompose(const ROMol &mol);
+RDKIT_CHEMTRANSFORMS_EXPORT ROMol *MurckoDecompose(const ROMol &mol);
 
 //! \brief Combined two molecules to create a new one
 //!
@@ -199,8 +202,9 @@ ROMol *MurckoDecompose(const ROMol &mol);
             The new molecule has not been sanitized.
             The client is responsible for deleting this molecule.
 */
-ROMol *combineMols(const ROMol &mol1, const ROMol &mol2,
-                   RDGeom::Point3D offset = RDGeom::Point3D(0, 0, 0));
+RDKIT_CHEMTRANSFORMS_EXPORT ROMol *combineMols(
+    const ROMol &mol1, const ROMol &mol2,
+    RDGeom::Point3D offset = RDGeom::Point3D(0, 0, 0));
 
 //! \brief Adds named recursive queries to a molecule's atoms based on atom
 // labels
@@ -223,10 +227,10 @@ ROMol *combineMols(const ROMol &mol1, const ROMol &mol2,
         in \c queries
 
 */
-void addRecursiveQueries(
+RDKIT_CHEMTRANSFORMS_EXPORT void addRecursiveQueries(
     ROMol &mol, const std::map<std::string, ROMOL_SPTR> &queries,
     const std::string &propName,
-    std::vector<std::pair<unsigned int, std::string> > *reactantLabels = NULL);
+    std::vector<std::pair<unsigned int, std::string>> *reactantLabels = NULL);
 
 //! \brief parses a query definition file and sets up a set of definitions
 //!  suitable for use by addRecursiveQueries()
@@ -242,30 +246,24 @@ void addRecursiveQueries(
     \param smartsColumn     - column with the SMARTS definitions of the queries
 
 */
-void parseQueryDefFile(const std::string &filename,
-                       std::map<std::string, ROMOL_SPTR> &queryDefs,
-                       bool standardize = true,
-                       const std::string &delimiter = "\t",
-                       const std::string &comment = "//",
-                       unsigned int nameColumn = 0,
-                       unsigned int smartsColumn = 1);
+RDKIT_CHEMTRANSFORMS_EXPORT void parseQueryDefFile(
+    const std::string &filename, std::map<std::string, ROMOL_SPTR> &queryDefs,
+    bool standardize = true, const std::string &delimiter = "\t",
+    const std::string &comment = "//", unsigned int nameColumn = 0,
+    unsigned int smartsColumn = 1);
 //! \overload
-void parseQueryDefFile(std::istream *inStream,
-                       std::map<std::string, ROMOL_SPTR> &queryDefs,
-                       bool standardize = true,
-                       const std::string &delimiter = "\t",
-                       const std::string &comment = "//",
-                       unsigned int nameColumn = 0,
-                       unsigned int smartsColumn = 1);
+RDKIT_CHEMTRANSFORMS_EXPORT void parseQueryDefFile(
+    std::istream *inStream, std::map<std::string, ROMOL_SPTR> &queryDefs,
+    bool standardize = true, const std::string &delimiter = "\t",
+    const std::string &comment = "//", unsigned int nameColumn = 0,
+    unsigned int smartsColumn = 1);
 //! \brief equivalent to parseQueryDefFile() but the query definitions are
 // explicitly passed in
-void parseQueryDefText(const std::string &queryDefText,
-                       std::map<std::string, ROMOL_SPTR> &queryDefs,
-                       bool standardize = true,
-                       const std::string &delimiter = "\t",
-                       const std::string &comment = "//",
-                       unsigned int nameColumn = 0,
-                       unsigned int smartsColumn = 1);
-}
+RDKIT_CHEMTRANSFORMS_EXPORT void parseQueryDefText(
+    const std::string &queryDefText,
+    std::map<std::string, ROMOL_SPTR> &queryDefs, bool standardize = true,
+    const std::string &delimiter = "\t", const std::string &comment = "//",
+    unsigned int nameColumn = 0, unsigned int smartsColumn = 1);
+}  // namespace RDKit
 
 #endif

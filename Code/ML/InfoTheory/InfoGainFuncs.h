@@ -3,6 +3,7 @@
 //  Copyright (C) 2003 Rational Discovery LLC
 //
 
+#include <RDGeneral/export.h>
 #ifndef INFOGAINFUNC_H
 #define INFOGAINFUNC_H
 
@@ -134,5 +135,5 @@ double InfoEntropyGain(T *dMat, long int dim1, long int dim2) {
   delete[] variableRes;
   return gain;
 }
-}
+}  // namespace RDInfoTheory
 #endif

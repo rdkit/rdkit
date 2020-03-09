@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2015 Greg Landrum
+//  Copyright (C) 2015-2019 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -12,7 +12,11 @@
 
 #include "MolDraw2DSVG.h"
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <Geometry/point.h>
+
 #include <boost/algorithm/string.hpp>
+#include <boost/format.hpp>
 #include <sstream>
 
 namespace RDKit {
@@ -23,44 +27,50 @@ std::string DrawColourToSVG(const DrawColour &col) {
   res[0] = '#';
   unsigned int v;
   unsigned int i = 1;
-  v = int(255 * col.get<0>());
-  if (v > 255)
+  v = int(255 * col.r);
+  if (v > 255) {
     throw ValueErrorException(
         "elements of the color should be between 0 and 1");
+  }
   res[i++] = convert[v / 16];
   res[i++] = convert[v % 16];
-  v = int(255 * col.get<1>());
-  if (v > 255)
+  v = int(255 * col.g);
+  if (v > 255) {
     throw ValueErrorException(
         "elements of the color should be between 0 and 1");
+  }
   res[i++] = convert[v / 16];
   res[i++] = convert[v % 16];
-  v = int(255 * col.get<2>());
-  if (v > 255)
+  v = int(255 * col.b);
+  if (v > 255) {
     throw ValueErrorException(
         "elements of the color should be between 0 and 1");
+  }
   res[i++] = convert[v / 16];
   res[i++] = convert[v % 16];
   return res;
 }
-}
+}  // namespace
 
 void MolDraw2DSVG::initDrawing() {
   d_os << "<?xml version='1.0' encoding='iso-8859-1'?>\n";
-  d_os << "<svg:svg version='1.1' baseProfile='full'\n      \
-        xmlns:svg='http://www.w3.org/2000/svg'\n              \
+  d_os << "<svg version='1.1' baseProfile='full'\n      \
+        xmlns='http://www.w3.org/2000/svg'\n              \
         xmlns:rdkit='http://www.rdkit.org/xml'\n              \
         xmlns:xlink='http://www.w3.org/1999/xlink'\n          \
         xml:space='preserve'\n";
-  d_os << "width='" << width() << "px' height='" << height() << "px' >\n";
-  // d_os<<"<svg:g transform='translate("<<width()*.05<<","<<height()*.05<<")
+  d_os << boost::format{"width='%1%px' height='%2%px' viewBox='0 0 %1% %2%'>\n"}
+      % width() % height();
+  d_os << "<!-- END OF HEADER -->\n";
+
+  // d_os<<"<g transform='translate("<<width()*.05<<","<<height()*.05<<")
   // scale(.85,.85)'>";
 }
 
 // ****************************************************************************
 void MolDraw2DSVG::finishDrawing() {
-  // d_os << "</svg:g>";
-  d_os << "</svg:svg>\n";
+  // d_os << "</g>";
+  d_os << "</svg>\n";
 }
 
 // ****************************************************************************
@@ -72,9 +82,11 @@ void MolDraw2DSVG::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
                                 const DrawColour &col1, const DrawColour &col2,
                                 unsigned int nSegments, double vertOffset) {
   PRECONDITION(nSegments > 1, "too few segments");
+  RDUNUSED_PARAM(col2);
 
-  if (nSegments % 2)
+  if (nSegments % 2) {
     ++nSegments;  // we're going to assume an even number of segments
+  }
   setColour(col1);
 
   Point2D perp = calcPerpendicular(cds1, cds2);
@@ -86,7 +98,10 @@ void MolDraw2DSVG::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
 
   std::string col = DrawColourToSVG(colour());
   unsigned int width = lineWidth();
-  d_os << "<svg:path ";
+  d_os << "<path ";
+  if (d_activeClass != "") {
+    d_os << "class='" << d_activeClass << "' ";
+  }
   d_os << "d='M" << c1.x << "," << c1.y;
   for (unsigned int i = 0; i < nSegments; ++i) {
     Point2D startpt = cds1 + delta * i;
@@ -106,6 +121,23 @@ void MolDraw2DSVG::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
   d_os << " />\n";
 }
 
+void MolDraw2DSVG::drawBond(
+    const ROMol &mol, const Bond *bond, int at1_idx, int at2_idx,
+    const std::vector<int> *highlight_atoms,
+    const std::map<int, DrawColour> *highlight_atom_map,
+    const std::vector<int> *highlight_bonds,
+    const std::map<int, DrawColour> *highlight_bond_map) {
+  PRECONDITION(bond, "bad bond");
+  std::string o_class = d_activeClass;
+  if (d_activeClass != "") {
+    d_activeClass += " ";
+  }
+  d_activeClass += boost::str(boost::format("bond-%d") % bond->getIdx());
+  MolDraw2D::drawBond(mol, bond, at1_idx, at2_idx, highlight_atoms,
+                      highlight_atom_map, highlight_bonds, highlight_bond_map);
+  d_activeClass = o_class;
+};
+
 // ****************************************************************************
 void MolDraw2DSVG::drawLine(const Point2D &cds1, const Point2D &cds2) {
   Point2D c1 = getDrawCoords(cds1);
@@ -122,8 +154,12 @@ void MolDraw2DSVG::drawLine(const Point2D &cds1, const Point2D &cds2) {
     dss << dashes.back();
     dashString = dss.str();
   }
-  d_os << "<svg:path ";
-  d_os << "d='M " << c1.x << "," << c1.y << " " << c2.x << "," << c2.y << "' ";
+  d_os << "<path ";
+  if (d_activeClass != "") {
+    d_os << "class='" << d_activeClass << "' ";
+  }
+  d_os << "d='M " << c1.x << "," << c1.y << " L " << c2.x << "," << c2.y
+       << "' ";
   d_os << "style='fill:none;fill-rule:evenodd;stroke:" << col
        << ";stroke-width:" << width
        << "px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
@@ -137,7 +173,7 @@ void MolDraw2DSVG::drawChar(char c, const Point2D &cds) {
   unsigned int fontSz = scale() * fontSize();
   std::string col = DrawColourToSVG(colour());
 
-  d_os << "<svg:text";
+  d_os << "<text";
   d_os << " x='" << cds.x;
   d_os << "' y='" << cds.y << "'";
   d_os << " style='font-size:" << fontSz
@@ -146,7 +182,7 @@ void MolDraw2DSVG::drawChar(char c, const Point2D &cds) {
        << "fill:" << col << "'";
   d_os << " >";
   d_os << c;
-  d_os << "</svg:text>";
+  d_os << "</text>";
 }
 
 // ****************************************************************************
@@ -156,24 +192,29 @@ void MolDraw2DSVG::drawPolygon(const std::vector<Point2D> &cds) {
   std::string col = DrawColourToSVG(colour());
   unsigned int width = lineWidth();
   std::string dashString = "";
-  d_os << "<svg:path ";
+  d_os << "<path ";
+  if (d_activeClass != "") {
+    d_os << "class='" << d_activeClass << "' ";
+  }
   d_os << "d='M";
   Point2D c0 = getDrawCoords(cds[0]);
   d_os << " " << c0.x << "," << c0.y;
   for (unsigned int i = 1; i < cds.size(); ++i) {
     Point2D ci = getDrawCoords(cds[i]);
-    d_os << " " << ci.x << "," << ci.y;
+    d_os << " L " << ci.x << "," << ci.y;
   }
-  d_os << " " << c0.x << "," << c0.y;
+  d_os << " Z";
   d_os << "' style='";
-  if (fillPolys())
-    d_os << "fill:" << col << ";fill-rule:evenodd;";
-  else
+  if (fillPolys()) {
+    d_os << "fill:" << col << ";fill-rule:evenodd;fill-opacity=" << colour().a
+         << ";";
+  } else {
     d_os << "fill:none;";
+  }
 
   d_os << "stroke:" << col << ";stroke-width:" << width
-       << "px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       << dashString << "'";
+       << "px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:"
+       << colour().a << ";" << dashString << "'";
   d_os << " />\n";
 }
 
@@ -190,17 +231,21 @@ void MolDraw2DSVG::drawEllipse(const Point2D &cds1, const Point2D &cds2) {
   std::string col = DrawColourToSVG(colour());
   unsigned int width = lineWidth();
   std::string dashString = "";
-  d_os << "<svg:ellipse"
+  d_os << "<ellipse"
        << " cx='" << cx << "'"
        << " cy='" << cy << "'"
        << " rx='" << w / 2 << "'"
        << " ry='" << h / 2 << "'";
 
+  if (d_activeClass != "") {
+    d_os << " class='" << d_activeClass << "'";
+  }
   d_os << " style='";
-  if (fillPolys())
+  if (fillPolys()) {
     d_os << "fill:" << col << ";fill-rule:evenodd;";
-  else
+  } else {
     d_os << "fill:none;";
+  }
 
   d_os << "stroke:" << col << ";stroke-width:" << width
        << "px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
@@ -211,11 +256,11 @@ void MolDraw2DSVG::drawEllipse(const Point2D &cds1, const Point2D &cds2) {
 // ****************************************************************************
 void MolDraw2DSVG::clearDrawing() {
   std::string col = DrawColourToSVG(drawOptions().backgroundColour);
-  d_os << "<svg:rect";
+  d_os << "<rect";
   d_os << " style='opacity:1.0;fill:" << col << ";stroke:none'";
   d_os << " width='" << width() << "' height='" << height() << "'";
   d_os << " x='0' y='0'";
-  d_os << "> </svg:rect>\n";
+  d_os << "> </rect>\n";
 }
 
 // ****************************************************************************
@@ -277,7 +322,7 @@ void escape_xhtml(std::string &data) {
   boost::algorithm::replace_all(data, "<", "&lt;");
   boost::algorithm::replace_all(data, ">", "&gt;");
 }
-}
+}  // namespace
 
 // ****************************************************************************
 // draws the string centred on cds
@@ -306,11 +351,13 @@ void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds) {
 
   Point2D draw_coords = getDrawCoords(Point2D(draw_x, draw_y));
 
-  d_os << "<svg:text";
+  d_os << "<text";
   d_os << " x='" << draw_coords.x;
-
   d_os << "' y='" << draw_coords.y << "'";
 
+  if (d_activeClass != "") {
+    d_os << " class='" << d_activeClass << "'";
+  }
   d_os << " style='font-size:" << fontSz
        << "px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;"
           "font-family:sans-serif;text-anchor:start;"
@@ -327,11 +374,11 @@ void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds) {
     if ('<' == str[i] && setStringDrawMode(str, draw_mode, i)) {
       if (!first_span) {
         escape_xhtml(span);
-        d_os << span << "</svg:tspan>";
+        d_os << span << "</tspan>";
         span = "";
       }
       first_span = false;
-      d_os << "<svg:tspan";
+      d_os << "<tspan";
       switch (draw_mode) {
         case TextDrawSuperscript:
           d_os << " style='baseline-shift:super;font-size:" << fontSz * 0.75
@@ -351,34 +398,116 @@ void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds) {
     }
     if (first_span) {
       first_span = false;
-      d_os << "<svg:tspan>";
+      d_os << "<tspan>";
       span = "";
     }
     span += str[i];
   }
   escape_xhtml(span);
-  d_os << span << "</svg:tspan>";
-  d_os << "</svg:text>\n";
+  d_os << span << "</tspan>";
+  d_os << "</text>\n";
 }
 
-void MolDraw2DSVG::tagAtoms(const ROMol &mol) {
+static const char *RDKIT_SVG_VERSION = "0.9";
+void MolDraw2DSVG::addMoleculeMetadata(const ROMol &mol, int confId) const {
   PRECONDITION(d_os, "no output stream");
-  ROMol::VERTEX_ITER this_at, end_at;
-  boost::tie(this_at, end_at) = mol.getVertices();
-  while (this_at != end_at) {
-    int this_idx = mol[*this_at]->getIdx();
-    ++this_at;
-    Point2D pos = getDrawCoords(atomCoords()[this_idx]);
-    std::string lbl = atomSyms()[this_idx].first;
+  d_os << "<metadata>" << std::endl;
+  d_os << "<rdkit:mol"
+       << " xmlns:rdkit = \"http://www.rdkit.org/xml\""
+       << " version=\"" << RDKIT_SVG_VERSION << "\""
+       << ">" << std::endl;
+  for (const auto atom : mol.atoms()) {
+    d_os << "<rdkit:atom idx=\"" << atom->getIdx() + 1 << "\"";
+    bool doKekule = false, allHsExplicit = true, isomericSmiles = true;
+    d_os << " atom-smiles=\""
+         << SmilesWrite::GetAtomSmiles(atom, doKekule, nullptr, allHsExplicit,
+                                       isomericSmiles)
+         << "\"";
+    auto tag = boost::str(boost::format("_atomdrawpos_%d") % confId);
 
-    d_os << "<rdkit:atom"
-         << " idx=\"" << this_idx + 1 << "\"";
-    if (lbl != "") {
-      d_os << " label=\"" << lbl << "\"";
+    const Conformer &conf = mol.getConformer(confId);
+    RDGeom::Point3D pos = conf.getAtomPos(atom->getIdx());
+
+    Point2D dpos(pos.x, pos.y);
+    if (atom->hasProp(tag)) {
+      dpos = atom->getProp<Point2D>(tag);
+    } else {
+      dpos = getDrawCoords(dpos);
     }
+    d_os << " drawing-x=\"" << dpos.x << "\""
+         << " drawing-y=\"" << dpos.y << "\"";
     d_os << " x=\"" << pos.x << "\""
          << " y=\"" << pos.y << "\""
-         << " />" << std::endl;
+         << " z=\"" << pos.z << "\"";
+
+    d_os << " />" << std::endl;
+  }
+  for (const auto bond : mol.bonds()) {
+    d_os << "<rdkit:bond idx=\"" << bond->getIdx() + 1 << "\"";
+    d_os << " begin-atom-idx=\"" << bond->getBeginAtomIdx() + 1 << "\"";
+    d_os << " end-atom-idx=\"" << bond->getEndAtomIdx() + 1 << "\"";
+    bool doKekule = false, allBondsExplicit = true;
+    d_os << " bond-smiles=\""
+         << SmilesWrite::GetBondSmiles(bond, -1, doKekule, allBondsExplicit)
+         << "\"";
+    d_os << " />" << std::endl;
+  }
+  d_os << "</rdkit:mol></metadata>" << std::endl;
+}
+
+void MolDraw2DSVG::addMoleculeMetadata(const std::vector<ROMol *> &mols,
+                                       const std::vector<int> confIds) const {
+  for (unsigned int i = 0; i < mols.size(); ++i) {
+    int confId = -1;
+    if (confIds.size() == mols.size()) {
+      confId = confIds[i];
+    }
+    addMoleculeMetadata(*(mols[i]), confId);
+  }
+};
+
+void MolDraw2DSVG::tagAtoms(const ROMol &mol, double radius,
+                            const std::map<std::string, std::string> &events) {
+  PRECONDITION(d_os, "no output stream");
+  // first bonds so that they are under the atoms
+  for (const auto &bond : mol.bonds()) {
+    auto this_idx = bond->getIdx();
+    auto a1pos = getDrawCoords(atomCoords()[bond->getBeginAtomIdx()]);
+    auto a2pos = getDrawCoords(atomCoords()[bond->getEndAtomIdx()]);
+    auto width = 2 + lineWidth();
+    d_os << "<path "
+         << " d='M " << a1pos.x << "," << a1pos.y << " L " << a2pos.x << ","
+         << a2pos.y << "'";
+    d_os << " class='bond-selector bond-" << this_idx;
+    if (d_activeClass != "") {
+      d_os << " " << d_activeClass;
+    }
+    d_os << "'";
+    d_os << " style='fill:#fff;stroke:#fff;stroke-width:" << width
+         << "px;fill-opacity:0;"
+            "stroke-opacity:0' ";
+    d_os << "/>\n";
+  }
+  for (const auto &at : mol.atoms()) {
+    auto this_idx = at->getIdx();
+    auto pos = getDrawCoords(atomCoords()[this_idx]);
+    d_os << "<circle "
+         << " cx='" << pos.x << "'"
+         << " cy='" << pos.y << "'"
+         << " r='" << (scale() * radius) << "'";
+    d_os << " class='atom-selector atom-" << this_idx;
+    if (d_activeClass != "") {
+      d_os << " " << d_activeClass;
+    }
+    d_os << "'";
+    d_os << " style='fill:#fff;stroke:#fff;stroke-width:1px;fill-opacity:0;"
+            "stroke-opacity:0' ";
+    for (const auto &event : events) {
+      d_os << " " << event.first << "='" << event.second << "(" << this_idx
+           << ");"
+           << "'";
+    }
+    d_os << "/>\n";
   }
 }
-}  // EO namespace RDKit
+}  // namespace RDKit

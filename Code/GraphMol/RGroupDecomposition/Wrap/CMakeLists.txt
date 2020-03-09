@@ -1,3 +1,4 @@
+remove_definitions(-DRDKIT_RGROUPDECOMPOSITION_BUILD)
 rdkit_python_extension(rdRGroupDecomposition
                        rdRGroupComposition.cpp
                        DEST Chem 

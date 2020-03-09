@@ -1,0 +1,163 @@
+#
+# This suppressions file was generated on a Linux-x86_64 machine,
+# inside a conda environment. Used relevant software was:
+#
+# - valgrind: v3.14.0 final, built from git sources under the same env.
+# - Boost libs: conda package, v1.67.0 (py36_4)
+# - Compiler: conda package, gxx_linux-64 7.2.0 (h550dcbe_27)
+#
+# CMake command/options was:
+# cmake .. \
+#    -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+#    -DCMAKE_BUILD_TYPE=Debug \
+#    -DPy_ENABLE_SHARED=1 \
+#    -DRDK_INSTALL_INTREE=ON \
+#    -DRDK_INSTALL_STATIC_LIBS=OFF \
+#    -DRDK_BUILD_CPP_TESTS=ON \
+#    -DRDK_OPTIMIZE_NATIVE=OFF \
+#    -DRDK_BUILD_TEST_GZIP=ON \
+#    -DRDK_BUILD_AVALON_SUPPORT=ON \
+#    -DRDK_BUILD_INCHI_SUPPORT=ON \
+#    -DRDK_BUILD_THREADSAFE_SSS=ON \
+#    -DRDK_TEST_MULTITHREADED=ON \
+#    -DRDK_BUILD_FREESASA_SUPPORT=ON \
+#    -DRDK_USE_BOOST_REGEX=ON \
+#    -DPYTHON_NUMPY_INCLUDE_PATH="$CONDA_PREFIX/lib/python3.6/site-packages/numpy/core/include"
+#
+{
+   Avalon #1
+   Memcheck:Cond
+   fun:SmilesBranch
+   fun:SmilesBranch
+   fun:MOLToSMIExt
+   fun:CanSmilesStep
+   fun:CanSmiles
+   fun:_ZN11AvalonTools14getCanonSmilesERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
+{
+   Avalon #2
+   Memcheck:Cond
+   fun:SmilesBranch
+   fun:MOLToSMIExt
+   fun:CanSmilesStep
+   fun:CanSmiles
+   fun:_ZN11AvalonTools14getCanonSmilesERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
+{
+   Avalon #3
+   Memcheck:Cond
+   fun:SmilesBranch
+   fun:SmilesBranch
+   fun:MOLToSMIExt
+   fun:MOLToSMI
+   fun:_ZN11AvalonTools14getCanonSmilesERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
+{
+   Avalon #4
+   Memcheck:Cond
+   fun:SmilesBranch
+   fun:MOLToSMIExt
+   fun:MOLToSMI
+   fun:_ZN11AvalonTools14getCanonSmilesERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
+{
+   Avalon #5
+   Memcheck:Cond
+   fun:SmilesBranch
+   fun:SmilesBranch
+   fun:SmilesBranch
+   fun:SmilesBranch
+   fun:MOLToSMIExt
+   fun:MOLToSMI
+   fun:_ZN11AvalonTools14getCanonSmilesERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
+{
+   Avalon #6
+   Memcheck:Cond
+   fun:SmilesBranch
+   fun:SmilesBranch
+   fun:SmilesBranch
+   fun:SmilesBranch
+   fun:MOLToSMIExt
+   fun:CanSmilesStep
+   fun:CanSmiles
+   fun:_ZN11AvalonTools14getCanonSmilesERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEbi
+}
+{
+   boost::singleton #1
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:_Znwm
+   fun:get_instance
+   fun:_Z41__static_initialization_and_destruction_0ii.constprop.*
+}
+{
+   boost::singleton #2
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:_Znwm
+   fun:_ZN5boost13serialization*
+}
+{
+   boost::singleton #3
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:_Znwm
+   fun:_ZN5boost7archive6detail20basic_serializer_map*
+   fun:_ZN5boost7archive6detail19pointer_*
+   fun:singleton_wrapper
+}
+{
+   boost::singleton #4
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:_Znwm
+   fun:_ZNSt8_Rb_treeIPKN5boost13serialization*
+   fun:_ZNK5boost13serialization*
+   fun:void_caster_primitive
+   fun:singleton_wrapper
+}
+{
+   boost::singleton #5
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:_Znwm
+   fun:_GLOBAL__sub_I_*.cpp
+   fun:_dl_init
+}
+{
+   boost::singleton #6
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:_Znwm
+   fun:_ZNK5boost13serialization*
+   fun:extended_type_info_typeid
+   fun:singleton_wrapper
+   fun:_ZN5boost13serialization*
+   fun:get_const_instance
+   fun:_ZN5boost7archive*
+   fun:singleton_wrapper
+   fun:get_instance
+   fun:_Z41__static_initialization_and_destruction_0ii.constprop.*
+   fun:_dl_init
+}
+{
+   boost::singleton #7
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:_Znwm
+   fun:_ZNK5boost13serialization*
+   fun:extended_type_info_typeid
+   fun:singleton_wrapper
+}
+{
+   boost::singleton #8
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:_Znwm
+   fun:_ZNSt8_Rb_treeIPKN5boost13serialization*
+   fun:_ZNK5boost13serialization*
+   fun:singleton_wrapper
+
+}
+

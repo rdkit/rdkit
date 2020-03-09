@@ -9,6 +9,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef __RD_UFFINVERSION_H__
 #define __RD_UFFINVERSION_H__
 #include <ForceField/Contrib.h>
@@ -20,7 +21,7 @@ namespace UFF {
 class AtomicParams;
 
 //! The inversion term for the Universal Force Field
-class InversionContrib : public ForceFieldContrib {
+class RDKIT_FORCEFIELD_EXPORT InversionContrib : public ForceFieldContrib {
  public:
   InversionContrib() : d_at1Idx(-1), d_at2Idx(-1), d_at3Idx(-1), d_at4Idx(-1){};
   //! Constructor
@@ -54,10 +55,10 @@ class InversionContrib : public ForceFieldContrib {
 namespace Utils {
 //! calculates and returns the cosine of the Y angle in an improper torsion
 //! (see UFF paper, equation 19)
-double calculateCosY(const RDGeom::Point3D &iPoint,
-                     const RDGeom::Point3D &jPoint,
-                     const RDGeom::Point3D &kPoint,
-                     const RDGeom::Point3D &lPoint);
+RDKIT_FORCEFIELD_EXPORT double calculateCosY(const RDGeom::Point3D &iPoint,
+                                             const RDGeom::Point3D &jPoint,
+                                             const RDGeom::Point3D &kPoint,
+                                             const RDGeom::Point3D &lPoint);
 
 //! calculates and returns the UFF force constant for an improper torsion
 /*!
@@ -69,9 +70,9 @@ double calculateCosY(const RDGeom::Point3D &iPoint,
   \return the force constant
 
 */
-boost::tuple<double, double, double, double>
+RDKIT_FORCEFIELD_EXPORT boost::tuple<double, double, double, double>
 calcInversionCoefficientsAndForceConstant(int at2AtomicNum, bool isCBoundToO);
-}
-}
-}
+}  // namespace Utils
+}  // namespace UFF
+}  // namespace ForceFields
 #endif

@@ -25,7 +25,7 @@
        '(col*(col-1))/2 + row'
 
 """
-from __future__ import print_function
+
 
 import numpy
 

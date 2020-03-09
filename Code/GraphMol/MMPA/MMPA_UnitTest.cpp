@@ -31,6 +31,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 #ifndef _MSC_VER
+#include <RDGeneral/test.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/time.h>
@@ -106,7 +107,7 @@ static inline int gettimeofday(struct timeval* tv, struct timezone* tz) {
 static inline unsigned long long nanoClock(
     void) {  // actually returns microseconds
   struct timeval t;
-  gettimeofday(&t, (struct timezone*)0);
+  gettimeofday(&t, (struct timezone*)nullptr);
   return t.tv_usec + t.tv_sec * 1000000ULL;
 }
 
@@ -119,10 +120,12 @@ void printTime() {
 
 std::string getSmilesOnly(
     const char* smiles,
-    std::string* id = 0) {  // remove label, because RDKit parse FAILED
+    std::string* id = nullptr) {  // remove label, because RDKit parse FAILED
   const char* sp = strchr(smiles, ' ');
   unsigned n = (sp ? sp - smiles + 1 : strlen(smiles));
-  if (id) *id = std::string(smiles + (n--));
+  if (id) {
+    *id = std::string(smiles + (n--));
+  }
   return std::string(smiles, n);
 }
 
@@ -312,14 +315,17 @@ void test1() {
           break;
         }
       }
-      if (j < 9) std::cout << " ";
+      if (j < 9) {
+        std::cout << " ";
+      }
       if (failed) {
         test_failed = true;
         std::cout << j + 1 << ": NOREF. Reference data NOT LISTED in test case."
                   << ss.str() << "\n";  // << "FS: " << fs[j] <<"\n";
-      } else
+      } else {
         std::cout << j + 1 << ": PASSED. matchedRefRes = " << matchedRefRes + 1
                   << "\n";  // ok: << "ss: " << ss.str() <<"\n";
+      }
       std::cout.flush();
     }
     std::cout << "\n --- UNMATCHED Reference RESULTS: --- \n";
@@ -331,7 +337,9 @@ void test1() {
     }
     std::cout << " -----------------------------------\n"
               << "DO TEST_ASSERT():\n";
-    if (test_failed) n_failed++;
+    if (test_failed) {
+      n_failed++;
+    }
     TEST_ASSERT(!test_failed);
   }
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -406,10 +414,12 @@ void test2() {
       int token_num = 0;
       ref_str.str("");
       while (getline(ss_token, s_token, ',')) {
-        if (token_num == 2)
+        if (token_num == 2) {
           ref_str << createCanonicalFromSmiles(s_token.c_str()) << ",";
-        if (token_num == 3)
+        }
+        if (token_num == 3) {
           ref_str << createCanonicalFromSmiles(s_token.c_str());
+        }
         token_num++;
       }
       ref_map[ref_str.str()] = r;
@@ -438,7 +448,9 @@ void test2() {
       std::stringstream res_str;
       res_str << first_res << "," << second_res;
 
-      if (res_idx < 9) std::cout << " ";
+      if (res_idx < 9) {
+        std::cout << " ";
+      }
 
       if (ref_map.find(res_str.str()) != ref_map.end()) {
         size_t matchedRefRes = ref_map[res_str.str()];
@@ -458,8 +470,9 @@ void test2() {
       n_failed++;
       std::cout << "\n --- UNMATCHED Reference RESULTS: --- \n";
       for (size_t r = 0; r < sizeof(fs) / sizeof(fs[0]); r++) {
-        if (fs2res.end() == fs2res.find(r))
+        if (fs2res.end() == fs2res.find(r)) {
           std::cout << (r < 9 ? " " : "") << r + 1 << ": " << fs[r] << "\n";
+        }
       }
     } else {
       std::cout << "\n --- ALL PASSED --- \n";
@@ -494,9 +507,12 @@ void doTest(const char* smi, const char* fs[], unsigned fs_size) {
     int token_num = 0;
     ref_str.str("");
     while (getline(ss_token, s_token, ',')) {
-      if (token_num == 2)
+      if (token_num == 2) {
         ref_str << createCanonicalFromSmiles(s_token.c_str()) << ",";
-      if (token_num == 3) ref_str << createCanonicalFromSmiles(s_token.c_str());
+      }
+      if (token_num == 3) {
+        ref_str << createCanonicalFromSmiles(s_token.c_str());
+      }
       token_num++;
     }
     ref_map[ref_str.str()] = r;
@@ -504,7 +520,9 @@ void doTest(const char* smi, const char* fs[], unsigned fs_size) {
 
   bool has_failed = false;
   for (size_t res_idx = 0; res_idx < res.size(); res_idx++) {
-    if (res_idx < 9) std::cout << " ";
+    if (res_idx < 9) {
+      std::cout << " ";
+    }
     std::cout << res_idx + 1 << ": res= ";
     /*
         * Somehow canonical smiles does not return the same result after just
@@ -526,7 +544,9 @@ void doTest(const char* smi, const char* fs[], unsigned fs_size) {
     std::stringstream res_str;
     res_str << first_res << "," << second_res;
 
-    if (res_idx < 9) std::cout << " ";
+    if (res_idx < 9) {
+      std::cout << " ";
+    }
 
     if (ref_map.find(res_str.str()) != ref_map.end()) {
       size_t matchedRefRes = ref_map[res_str.str()];
@@ -546,8 +566,9 @@ void doTest(const char* smi, const char* fs[], unsigned fs_size) {
     n_failed++;
     std::cout << "\n --- UNMATCHED Reference RESULTS: --- \n";
     for (size_t r = 0; r < fs_size; r++) {
-      if (fs2res.end() == fs2res.find(r))
+      if (fs2res.end() == fs2res.find(r)) {
         std::cout << (r < 9 ? " " : "") << r + 1 << ": " << fs[r] << "\n";
+      }
     }
   } else {
     std::cout << "\n --- ALL PASSED --- \n";
@@ -701,8 +722,9 @@ int main() {
   if (0 != n_failed) {
     std::cout << n_failed << " TEST CASES FAILED \n";
     TEST_ASSERT(0 != n_failed);
-  } else
+  } else {
     std::cout << " --- ALL TEST CASES PASSED --- \n";
+  }
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
   return 0;

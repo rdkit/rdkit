@@ -39,8 +39,8 @@ bool getMolAtomPoints(const ROMol &mol,
   atomPoint.resize(mol.getNumAtoms());
   // take X,Y,Z coordinates of each atom
   if (0 != mol.getNumConformers())
-    for (RDKit::ROMol::ConstConformerIterator cnfi = mol.beginConformers();
-         cnfi != mol.endConformers(); cnfi++) {
+    for (auto cnfi = mol.beginConformers(); cnfi != mol.endConformers();
+         cnfi++) {
       const Conformer &conf = **cnfi;  // mol.getConformer(confId);
       if (twod || conf.is3D()) {
         for (unsigned i = 0; i < mol.getNumAtoms(); i++) {
@@ -105,8 +105,7 @@ std::string LogNeighbourhood(
   }
 
   std::sort(nbrs.begin(), nbrs.end(), lessTuple);
-  for (size_t i = 0; i < nbrs.size(); ++i) {
-    NbrData &nbr = nbrs[i];
+  for (auto &nbr : nbrs) {
     std::string bs = "";
     switch (nbr.get<1>()) {
       case Bond::SINGLE:

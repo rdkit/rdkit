@@ -1,4 +1,4 @@
-#  Copyright (c) 2017, Novartis Institutes for BioMedical Research Inc.
+#  Copyright (c) 2018, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,12 +28,12 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-from __future__ import print_function
+
 
 import unittest
 import os,sys, copy
 
-from rdkit.six.moves import cPickle
+import pickle
 
 from rdkit import rdBase
 from rdkit import Chem
@@ -41,7 +41,7 @@ from rdkit.Chem.rdRGroupDecomposition import RGroupDecompose, RGroupDecompositio
 from collections import OrderedDict
 
 class TestCase(unittest.TestCase) :
-    def atest_multicores(self):
+    def test_multicores(self):
         cores_smi_easy = OrderedDict()
         cores_smi_hard = OrderedDict()
 
@@ -142,16 +142,16 @@ C1CCO[C@@](S)(P)1
             rgd.Add(m)
         rgd.Process()
         columns = rgd.GetRGroupsAsColumns()
-        self.assertEqual(columns['R2'][0].GetNumAtoms(),12)
+        self.assertEqual(columns['R2'][0].GetNumAtoms(),7)
 
-        params.removeHydrogensPostMatch = True
+        params.removeHydrogensPostMatch = False
         rgd = RGroupDecomposition(core,params)
         for smi in smiles:
             m = Chem.MolFromSmiles(smi)
             rgd.Add(m)
         rgd.Process()
         columns = rgd.GetRGroupsAsColumns()
-        self.assertEqual(columns['R2'][0].GetNumAtoms(),7)
+        self.assertEqual(columns['R2'][0].GetNumAtoms(),12)
 
     def test_unmatched(self):
         cores = [Chem.MolFromSmiles("N")]
@@ -162,9 +162,114 @@ C1CCO[C@@](S)(P)1
                 Chem.MolFromSmiles("CC")]
 
         res, unmatched = RGroupDecompose(cores, mols)
-        self.assertEquals(len(res), 1)
-        self.assertEquals(unmatched, [0,1,2,4])
-        
+        self.assertEqual(len(res), 1)
+        self.assertEqual(unmatched, [0,1,2,4])
 
+    def test_userlabels(self):
+        smis = ["C(Cl)N(N)O(O)"]
+        mols = [Chem.MolFromSmiles(smi) for smi in smis]
+        smarts = 'C([*:1])N([*:5])O([*:6])'
+        core = Chem.MolFromSmarts(smarts)
+        rg = RGroupDecomposition(core)
+        for m in mols:
+            rg.Add(m)
+        rg.Process()
+        self.assertEqual(rg.GetRGroupsAsColumns(asSmiles=True),
+                         {'Core': ['C(N(O[*:6])[*:5])[*:1]'],
+                          'R1': ['Cl[*:1]'],
+                          'R5': ['N[*:5]'],
+                          'R6': ['O[*:6]']})
+
+        smarts = 'C([*:4])N([*:5])O([*:6])'
+
+        core = Chem.MolFromSmarts(smarts)
+        rg = RGroupDecomposition(core)
+        for m in mols:
+            rg.Add(m)
+        rg.Process()
+        self.assertEqual(rg.GetRGroupsAsColumns(asSmiles=True),
+                         {'Core': ['C(N(O[*:6])[*:5])[*:4]'],
+                          'R4': ['Cl[*:4]'],
+                          'R5': ['N[*:5]'],
+                          'R6': ['O[*:6]']})
+
+    def test_match_only_at_rgroups(self):
+        smiles = ['c1ccccc1']#, 'c1(Cl)ccccc1', 'c1(Cl)cc(Br)ccc1']
+        mols = [Chem.MolFromSmiles(smi) for smi in smiles]
+
+        core1 = Chem.MolFromSmiles("c1([*:5])cc([*:6])ccc1")
+        params = RGroupDecompositionParameters()
+        params.onlyMatchAtRGroups=True
+        rg = RGroupDecomposition(core1, params)
+        for smi,m in zip(smiles,mols):
+            self.assertTrue(rg.Add(m)!=-1, smi)
+
+
+    def test_incorrect_multiple_rlabels(self):
+        mols = [Chem.MolFromSmiles(smi) for smi in ( 
+            "C1NC(Cl)CC1",   
+            "C1OC(Cl)CC1",
+            "C1(Cl)OCCC1", )]
+
+        scaffolds = [Chem.MolFromSmarts(x) for x in ("C1NCCC1",)]
+        groups,unmatched = RGroupDecompose(scaffolds, mols,
+                                               asSmiles=True, asRows=False) 
+            
+        self.assertEqual(groups,
+                         {'Core': ['C1CNC([*:1])C1'],
+                          'R1': ['Cl[*:1].[H][*:1]']})
+        
+        scaffolds = [Chem.MolFromSmarts(x) for x in ("C1OCCC1",)]
+        groups,unmatched = RGroupDecompose(scaffolds, mols,
+                                               asSmiles=True, asRows=False) 
+        self.assertEqual(groups,
+                         {'Core': ['C1COC([*:1])C1', 'C1COC([*:1])C1'],
+                          'R1': ['Cl[*:1].[H][*:1]', 'Cl[*:1].[H][*:1]']})
+        scaffolds = [Chem.MolFromSmarts(x) for x in ("C1NCCC1","C1OCCC1")]
+        groups,unmatched = RGroupDecompose(scaffolds, mols,
+                                           asSmiles=True, asRows=False)
+        self.assertEqual(groups,
+                         {'Core': ['C1CNC([*:1])C1', 'C1COC([*:1])C1', 'C1COC([*:1])C1'],
+                          'R1': ['Cl[*:1].[H][*:1]', 'Cl[*:1].[H][*:1]', 'Cl[*:1].[H][*:1]']})
+
+    def test_aligned_cores(self):
+        scaffolds = [Chem.MolFromSmarts(x) for x in ("C1NC1OC", "C1NC1NC")]
+        mols = [Chem.MolFromSmiles(smi) for smi in ("C1NC1OCCC", "C1NC1NCCC")]
+        groups,unmatched = RGroupDecompose(scaffolds, mols,
+                                           asSmiles=True, asRows=True)
+        #print("test_aligned_Cores")
+        #print("groups:", groups)
+        self.assertEqual(groups,
+                         [{'Core': 'C1NC1OC[*:1]',
+                           'R1': 'CC[*:1].[H][*:1].[H][*:1]'},
+                          {'Core': 'C1NC1NC[*:2]',
+                           'R2': 'CC[*:2].[H][*:2].[H][*:2]'}])
+                          
+    def test_aligned_cores2(self):
+        scaffolds = [Chem.MolFromSmarts(x) for x in ("C1NCC1", "C1SCC1")]
+        mols = [Chem.MolFromSmiles(smi) for smi in ("C1N(P)CC1", "C1S(P)CC1")]
+        #print("test_aligned_Cores2")
+        groups,unmatched = RGroupDecompose(scaffolds, mols,
+                                           asSmiles=True, asRows=True)
+        #print("groups: ", groups)
+        self.assertEqual(groups,
+                         [{'Core': 'C1CN([*:1])C1',
+                           'R1': 'P[*:1]'},
+                          {'Core': 'C1C[SH]([*:2])C1',
+                           'R2': 'P[*:2].[H][*:2]'}])
+
+    def test_getrgrouplabels(self):
+        smis = ["C(Cl)N(N)O(O)"]
+        mols = [Chem.MolFromSmiles(smi) for smi in smis]
+        smarts = 'C([*:1])N([*:5])O([*:6])'
+        core = Chem.MolFromSmarts(smarts)
+        rg = RGroupDecomposition(core)
+        for m in mols:
+            rg.Add(m)
+        rg.Process()
+        self.assertEqual(set(rg.GetRGroupLabels()),
+                         set(rg.GetRGroupsAsColumns()))
+
+        
 if __name__ == '__main__':
   unittest.main()

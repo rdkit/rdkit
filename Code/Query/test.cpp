@@ -9,6 +9,7 @@
 //  of the RDKit source tree.
 //
 
+#include <RDGeneral/test.h>
 #include "QueryObjects.h"
 #include <iostream>
 #include <math.h>
@@ -42,7 +43,9 @@ void test1() {
   CHECK_INVARIANT(newQ->Match(1.001), "");
   CHECK_INVARIANT(!newQ->Match(1.1), "");
   CHECK_INVARIANT(!newQ->Match(-2), "");
+  delete newQ;
 }
+
 
 void test2() {
   cout << "Set" << endl;
@@ -62,14 +65,15 @@ void test2() {
   CHECK_INVARIANT(newQ->Match(1), "");
   CHECK_INVARIANT(newQ->Match(3), "");
   CHECK_INVARIANT(!newQ->Match(-3), "");
+  delete newQ;
 }
 
 void test3() {
   cout << "And" << endl;
-  AndQuery<int> *q = new AndQuery<int>;
-  LessQuery<int> *l = new LessQuery<int>;
+  auto *q = new AndQuery<int>;
+  auto *l = new LessQuery<int>;
   l->setVal(0);
-  GreaterEqualQuery<int> *g = new GreaterEqualQuery<int>;
+  auto *g = new GreaterEqualQuery<int>;
   g->setVal(3);
 
   q->addChild(Query<int>::CHILD_TYPE(l));
@@ -86,14 +90,17 @@ void test3() {
   CHECK_INVARIANT(newQ->Match(1), "");
   CHECK_INVARIANT(newQ->Match(3), "");
   CHECK_INVARIANT(!newQ->Match(-3), "");
+
+  delete newQ;
+  delete q;
 }
 
 void test4() {
   cout << "Or" << endl;
-  OrQuery<int> *q = new OrQuery<int>;
-  LessQuery<int> *l = new LessQuery<int>;
+  auto *q = new OrQuery<int>;
+  auto *l = new LessQuery<int>;
   l->setVal(0);
-  GreaterEqualQuery<int> *g = new GreaterEqualQuery<int>;
+  auto *g = new GreaterEqualQuery<int>;
   g->setVal(3);
 
   q->addChild(Query<int>::CHILD_TYPE(l));
@@ -110,14 +117,17 @@ void test4() {
   CHECK_INVARIANT(newQ->Match(1), "");
   CHECK_INVARIANT(newQ->Match(3), "");
   CHECK_INVARIANT(newQ->Match(-3), "");
+
+  delete newQ;
+  delete q;
 }
 
 void test5() {
   cout << "XOr" << endl;
-  XOrQuery<int> *q = new XOrQuery<int>;
-  LessQuery<int> *l = new LessQuery<int>;
+  auto *q = new XOrQuery<int>;
+  auto *l = new LessQuery<int>;
   l->setVal(0);
-  GreaterEqualQuery<int> *g = new GreaterEqualQuery<int>;
+  auto *g = new GreaterEqualQuery<int>;
   g->setVal(3);
 
   q->addChild(Query<int>::CHILD_TYPE(l));
@@ -136,6 +146,9 @@ void test5() {
   CHECK_INVARIANT(!newQ->Match(1), "");
   CHECK_INVARIANT(!newQ->Match(3), "");
   CHECK_INVARIANT(newQ->Match(-3), "");
+
+  delete newQ;
+  delete q;
 }
 
 int foofun(double bar) { return int(floor(bar)); };
@@ -165,6 +178,9 @@ void test6() {
   CHECK_INVARIANT(newQ3->Match(6.0), "");
   CHECK_INVARIANT(newQ3->Match(6.1), "");
   CHECK_INVARIANT(!newQ3->Match(5.0), "");
+
+  delete newQ;
+  delete newQ3;
 }
 
 bool matchF(int v) { return v == 3; }
@@ -274,6 +290,8 @@ void test7() {
   CHECK_INVARIANT(newQ->Match("1"), "");
   CHECK_INVARIANT(newQ->Match("3"), "");
   CHECK_INVARIANT(!newQ->Match("-3"), "");
+
+  delete newQ;
 }
 
 int main() {
