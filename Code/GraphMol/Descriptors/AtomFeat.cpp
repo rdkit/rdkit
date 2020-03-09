@@ -49,7 +49,7 @@ std::vector < Atom::HybridizationType> HS {  Atom::SP,  Atom::SP2,  Atom::SP3,  
 
 
 
-void AtomFeatVect(const RDKit::Atom* atom, const ROMol* mol, std::vector <double> &feats,  bool addchiral) {
+void AtomFeatVector(const RDKit::Atom* atom, const ROMol* mol, std::vector <double> &feats,  bool addchiral) {
 
     PRECONDITION(atom,"bad atom");
     PRECONDITION(mol,"bad mol");
@@ -91,7 +91,7 @@ void AtomFeatVect(const RDKit::Atom* atom, const ROMol* mol, std::vector <double
 
     // one hot degree
     int d = atom->getDegree();
-    for (unsigned int i=0;  i<7; i++) {
+    for ( int i=0;  i<7; i++) {
           feats[indx] = (d == i ? 1 : 0);
           indx+=1;
     }
@@ -156,7 +156,7 @@ void AtomFeatVect(const RDKit::Atom* atom, const ROMol* mol, std::vector <double
 }  // end of anonymous namespace
 
 // entry point
-void AtomFeat(const ROMol& mol, std::vector<double>& res, int atomid,  bool addchiral) {
+void AtomFeatVect(const ROMol& mol, std::vector<double>& res, int atomid,  bool addchiral) {
 
   res.clear();
   if (addchiral) {
@@ -166,7 +166,7 @@ void AtomFeat(const ROMol& mol, std::vector<double>& res, int atomid,  bool addc
     res.resize(49);
   }
 
-  AtomFeatVect( mol.getAtomWithIdx(atomid),  &mol, res, addchiral);
+  AtomFeatVector( mol.getAtomWithIdx(atomid),  &mol, res, addchiral);
 }
 
 }  // namespace Descriptors

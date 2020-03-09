@@ -526,7 +526,7 @@ python::list GetAtomFeatures(const RDKit::ROMol &mol,
                                        bool addchiral) {
 
   std::vector<double> res;
-  RDKit::Descriptors::AtomFeat(mol, res, atomid, addchiral );
+  RDKit::Descriptors::AtomFeatVect(mol, res, atomid, addchiral );
   python::list pyres;
   for( auto iv : res ) { 
     pyres.append(iv); 

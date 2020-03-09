@@ -35,7 +35,7 @@ void test1() {
     std::vector<double> res;
 
     int atomid = 0;
-    RDKit::Descriptors::AtomFeat(*m, res, atomid);
+    RDKit::Descriptors::AtomFeatVect(*m, res, atomid);
 
     std::vector <double > exp{ 0. , 1. , 0. , 0. , 0. , 0. , 0. , 0. , 0. , 0. , 0. , 0. , 0. ,
        0. , 0. , 1. , 0. , 0. , 0. , 0. , 0. , 0. , 0. , 1. , 0. , 0. ,
@@ -71,7 +71,7 @@ void test2() {
 
     for (unsigned int j=0; j< m->getNumAtoms(); j++) {
 
-      RDKit::Descriptors::AtomFeat(*m, res, j);
+      RDKit::Descriptors::AtomFeatVect(*m, res, j);
 
       // 49 features
       TEST_ASSERT(res.size() == 49);
@@ -103,7 +103,7 @@ void test3() {
 
     for (unsigned int j=0; j< m->getNumAtoms(); j++) {
 
-      RDKit::Descriptors::AtomFeat(*m, res, j);
+      RDKit::Descriptors::AtomFeatVect(*m, res, j);
 
 
       // 49 features
@@ -134,7 +134,7 @@ void test4() {
     0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0.166667,0,0,0};
 
     for (unsigned int j=0; j< m->getNumAtoms(); j++) {
-      RDKit::Descriptors::AtomFeat(*m, res, j, true);
+      RDKit::Descriptors::AtomFeatVect(*m, res, j, true);
 
       // 52 features
       TEST_ASSERT(res.size() == 52);
@@ -164,7 +164,7 @@ void test5() {
     0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0.166667,0,0,0};
 
     for (unsigned int j=0; j< m->getNumAtoms(); j++) {
-      RDKit::Descriptors::AtomFeat(*m, res, j, true);
+      RDKit::Descriptors::AtomFeatVect(*m, res, j, true);
 
       // 52 features
       TEST_ASSERT(res.size() == 52);

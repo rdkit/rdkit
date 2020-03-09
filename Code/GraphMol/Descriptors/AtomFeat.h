@@ -30,7 +30,7 @@ class ROMol;
 namespace Descriptors {
 const std::string AtomFeatVersion = "1.0.0";
 
-RDKIT_DESCRIPTORS_EXPORT void AtomFeat(
+RDKIT_DESCRIPTORS_EXPORT void AtomFeatVect(
     const ROMol &, std::vector<double> &res, int atomid = 0,  bool addchiral = false );
 }  // namespace Descriptors
 }  // namespace RDKit
