@@ -28,21 +28,7 @@ namespace RDKit {
 SDMolSupplier::SDMolSupplier(const std::string &fileName, bool sanitize,
                              bool removeHs, bool strictParsing) {
   init();
-  // FIX: this binary mode of opening file is here because of a bug in VC++ 6.0
-  // the function "tellg" does not work correctly if we do not open it this way
-  //   Jan 2009: Confirmed that this is still the case in visual studio 2008
-  std::istream *tmpStream = nullptr;
-  tmpStream = static_cast<std::istream *>(
-      new std::ifstream(fileName.c_str(), std::ios_base::binary));
-  if ((!(*tmpStream)) || (tmpStream->bad())) {
-    std::ostringstream errout;
-    errout << "Bad input file " << fileName;
-    delete tmpStream;
-    throw BadFileException(errout.str());
-  }
-
-  // dp_inStream = static_cast<std::istream *>(tmpStream);
-  dp_inStream = tmpStream;
+  dp_inStream = openAndCheckStream(fileName);
   df_owner = true;
   d_molpos.push_back(dp_inStream->tellg());
   df_sanitize = sanitize;

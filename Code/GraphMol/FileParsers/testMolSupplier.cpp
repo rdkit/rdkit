@@ -923,7 +923,7 @@ void testSDSupplierEnding() {
 
 void testSuppliersEmptyFile() {
   std::string rdbase = getenv("RDBASE");
-  {
+  {  // contains no records
     std::string infile =
         rdbase + "/Code/GraphMol/FileParsers/test_data/empty.sdf";
     SDMolSupplier reader(infile);
@@ -936,38 +936,16 @@ void testSuppliersEmptyFile() {
     TEST_ASSERT(smiSup.atEnd());
   }
   // tests for GitHub issue 19:
-  {
+  {  // actually an empty file, throws an exception:
     std::string infile =
         rdbase + "/Code/GraphMol/FileParsers/test_data/empty2.sdf";
-    SDMolSupplier reader(infile);
-    TEST_ASSERT(reader.length() == 0);
-  }
-  {
-    std::string infile =
-        rdbase + "/Code/GraphMol/FileParsers/test_data/empty2.sdf";
-    SDMolSupplier reader(infile);
-    TEST_ASSERT(reader.atEnd());
     bool failed = false;
     try {
-      reader[0];
-    } catch (FileParseException &) {
+      SDMolSupplier reader(infile);
+    } catch (BadFileException &) {
       failed = true;
     }
     TEST_ASSERT(failed);
-    TEST_ASSERT(reader.length() == 0);
-  }
-  {
-    std::string infile =
-        rdbase + "/Code/GraphMol/FileParsers/test_data/empty2.sdf";
-    SDMolSupplier reader(infile);
-    bool failed = false;
-    try {
-      reader[0];
-    } catch (FileParseException &) {
-      failed = true;
-    }
-    TEST_ASSERT(failed);
-    TEST_ASSERT(reader.length() == 0);
   }
   {
     SDMolSupplier reader;
