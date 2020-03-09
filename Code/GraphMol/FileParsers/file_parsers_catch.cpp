@@ -1339,6 +1339,91 @@ M  END
   }
 }
 
+TEST_CASE("CML writer", "[CML][writer]") {
+  SECTION("basics") {
+    std::unique_ptr<RWMol> mol{new RWMol{}};
+    mol->setProp(common_properties::_Name, "S-lactic acid");
+
+    for (auto z : {6u, 1u, 1u, 1u, 6u, 1u, 8u, 1u, 6u, 8u, 8u}) {
+      auto *a = new Atom{z};
+      mol->addAtom(a, false, true);
+    }
+    mol->getAtomWithIdx(0u)->setNumExplicitHs(3u);
+    mol->getAtomWithIdx(4u)->setNumExplicitHs(1u);
+    mol->getAtomWithIdx(6u)->setNumExplicitHs(1u);
+    mol->getAtomWithIdx(7u)->setIsotope(2u);
+    mol->getAtomWithIdx(10u)->setFormalCharge(-1);
+
+    mol->getAtomWithIdx(4u)->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+
+    mol->addBond(0u, 1u, Bond::SINGLE);
+    mol->addBond(0u, 2u, Bond::SINGLE);
+    mol->addBond(0u, 3u, Bond::SINGLE);
+    mol->addBond(0u, 4u, Bond::SINGLE);
+    mol->addBond(4u, 5u, Bond::SINGLE);
+    mol->addBond(4u, 6u, Bond::SINGLE);
+    mol->addBond(4u, 8u, Bond::SINGLE);
+    mol->addBond(6u, 7u, Bond::SINGLE);
+    mol->addBond(8u, 9u, Bond::DOUBLE);
+    mol->addBond(8u, 10u, Bond::SINGLE);
+
+    auto *conf = new Conformer{11u};
+    conf->setId(0u);
+
+    conf->setAtomPos(0u, RDGeom::Point3D{-0.95330, 0.60416, 1.01609});
+    conf->setAtomPos(1u, RDGeom::Point3D{-1.00832, 1.68746, 0.83520});
+    conf->setAtomPos(2u, RDGeom::Point3D{-1.96274, 0.16103, 0.94471});
+    conf->setAtomPos(3u, RDGeom::Point3D{-0.57701, 0.44737, 2.04167});
+    conf->setAtomPos(4u, RDGeom::Point3D{0.00000, 0.00000, 0.00000});
+    conf->setAtomPos(5u, RDGeom::Point3D{-0.43038, 0.18596, -1.01377});
+    conf->setAtomPos(6u, RDGeom::Point3D{0.22538, -1.36531, 0.19373});
+    conf->setAtomPos(7u, RDGeom::Point3D{1.21993, -1.33937, 0.14580});
+    conf->setAtomPos(8u, RDGeom::Point3D{1.38490, 0.73003, 0.00000});
+    conf->setAtomPos(9u, RDGeom::Point3D{1.38490, 1.96795, 0.00000});
+    conf->setAtomPos(10u, RDGeom::Point3D{2.35253, -0.07700, 0.00000});
+
+    mol->addConformer(conf);
+
+    const std::string cmlblock = MolToCMLBlock(*mol);
+    const std::string cmlblock_expected =
+        R"CML(<?xml version="1.0" encoding="utf-8"?>
+<cml:cml xmlns:cml="http://www.xml-cml.org/schema" xmlns:convention="http://www.xml-cml.org/convention/" convention="convention:molecular">
+  <cml:molecule id="m-1" formalCharge="-1" spinMultiplicity="1">
+    <cml:name>S-lactic acid</cml:name>
+    <cml:atomArray>
+      <cml:atom id="a0" elementType="C" formalCharge="0" hydrogenCount="3" x3="-0.953300" y3="0.604160" z3="1.016090"/>
+      <cml:atom id="a1" elementType="H" formalCharge="0" hydrogenCount="0" x3="-1.008320" y3="1.687460" z3="0.835200"/>
+      <cml:atom id="a2" elementType="H" formalCharge="0" hydrogenCount="0" x3="-1.962740" y3="0.161030" z3="0.944710"/>
+      <cml:atom id="a3" elementType="H" formalCharge="0" hydrogenCount="0" x3="-0.577010" y3="0.447370" z3="2.041670"/>
+      <cml:atom id="a4" elementType="C" formalCharge="0" hydrogenCount="1" x3="0.000000" y3="0.000000" z3="0.000000">
+        <cml:atomParity atomRefs4="a0 a5 a6 a8">-1</cml:atomParity>
+      </cml:atom>
+      <cml:atom id="a5" elementType="H" formalCharge="0" hydrogenCount="0" x3="-0.430380" y3="0.185960" z3="-1.013770"/>
+      <cml:atom id="a6" elementType="O" formalCharge="0" hydrogenCount="1" x3="0.225380" y3="-1.365310" z3="0.193730"/>
+      <cml:atom id="a7" elementType="H" formalCharge="0" hydrogenCount="0" isotopeNumber="2" x3="1.219930" y3="-1.339370" z3="0.145800"/>
+      <cml:atom id="a8" elementType="C" formalCharge="0" hydrogenCount="0" x3="1.384900" y3="0.730030" z3="0.000000"/>
+      <cml:atom id="a9" elementType="O" formalCharge="0" hydrogenCount="0" x3="1.384900" y3="1.967950" z3="0.000000"/>
+      <cml:atom id="a10" elementType="O" formalCharge="-1" hydrogenCount="0" x3="2.352530" y3="-0.077000" z3="0.000000"/>
+    </cml:atomArray>
+    <cml:bondArray>
+      <cml:bond atomRefs2="a0 a1" id="b0" order="S"/>
+      <cml:bond atomRefs2="a0 a2" id="b1" order="S"/>
+      <cml:bond atomRefs2="a0 a3" id="b2" order="S"/>
+      <cml:bond atomRefs2="a0 a4" id="b3" order="S"/>
+      <cml:bond atomRefs2="a4 a5" id="b4" order="S"/>
+      <cml:bond atomRefs2="a4 a6" id="b5" order="S"/>
+      <cml:bond atomRefs2="a4 a8" id="b6" order="S"/>
+      <cml:bond atomRefs2="a6 a7" id="b7" order="S"/>
+      <cml:bond atomRefs2="a8 a9" id="b8" order="D"/>
+      <cml:bond atomRefs2="a8 a10" id="b9" order="S"/>
+    </cml:bondArray>
+  </cml:molecule>
+</cml:cml>
+)CML";
+    CHECK(cmlblock == cmlblock_expected);
+  }
+}
+
 TEST_CASE("XYZ", "[XYZ][writer]") {
   SECTION("basics") {
     std::unique_ptr<RWMol> mol{new RWMol{}};
