@@ -37,8 +37,10 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/SubstructLibrary/SubstructLibrary.h>
+#include <GraphMol/SubstructLibrary/PatternFactory.h>
 
 #include <GraphMol/Substruct/SubstructMatch.h>
+
 
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
@@ -401,6 +403,63 @@ void ringTest() {
   BOOST_LOG(rdErrorLog) << "    Done (C++ ring query tests)" << std::endl;
 }
 
+void testAddPatterns() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "   Add Patterns " << std::endl;
+  std::vector<std::string> pdb_ligands = {
+      "CCS(=O)(=O)c1ccc(OC)c(Nc2ncc(-c3cccc(-c4ccccn4)c3)o2)c1",
+      "COc1ccc(S(=O)(=O)NCC2CC2)cc1Nc1ncc(-c2cccc(-c3cccnc3)c2)o1",
+      "COc1ccc(-c2oc3ncnc(N)c3c2-c2ccc(NC(=O)Nc3cc(C(F)(F)F)ccc3F)cc2)cc1",
+      "COC(=O)Nc1nc2ccc(Oc3ccc(NC(=O)Nc4cc(C(F)(F)F)ccc4F)cc3)cc2[nH]1",
+      "COc1cc(Nc2ncnc(-c3cccnc3Nc3ccccc3)n2)cc(OC)c1OC",
+      "O=C(Nc1ccc(Oc2ccccc2)cc1)c1cccnc1NCc1ccncc1",
+      "O=C(Nc1ccc(Oc2ccccc2)cc1)c1cccnc1NCc1ccncc1",
+      "CNC(=O)c1cc(Oc2ccc3[nH]c(Nc4ccc(Cl)c(C(F)(F)F)c4)nc3c2)ccn1",
+      "CNC(=O)c1cc(Oc2ccc3oc(Nc4ccc(Cl)c(OCC5CCC[NH+]5C)c4)nc3c2)ccn1",
+      "CNC(=O)c1cc(Oc2ccc3oc(Nc4ccc(Cl)c(OCC5CCC[NH+]5C)c4)nc3c2)ccn1",
+      "COc1cc2nccc(Oc3ccc4c(c3)OCCN4C(=O)Nc3ccc(Cl)cc3)c2cc1OC",
+      "CNC(=O)c1c(C)oc2cc(Oc3cc[nH+]c4cc(OCCN5CCOCC5)ccc34)ccc12",
+      "COc1cc2[nH+]ccc(Oc3ccc4c(C(=O)Nc5ccc(Cl)cc5)cccc4c3)c2cc1OC",
+      "COc1cc2[nH+]ccc(Oc3ccc4c(C(=O)Nc5ccc(Cl)cc5)cccc4c3)c2cc1OC",
+      "COc1cc2[nH+]ccc(Oc3ccc4c(C(=O)NC5CC5)cccc4c3)c2cc1OC",
+      "COc1cc2[nH+]ccc(Oc3ccc4c(C(=O)NC5CC5)cccc4c3)c2cc1OC",
+      "Cc1ccc(C(=O)Nc2cc(CCC[NH+](C)C)cc(C(F)(F)F)c2)cc1Nc1ncccc1-c1ccncn1",
+      "COc1cc(Nc2nccc(Nc3ccc4c(C)n[nH]c4c3)n2)cc(OC)c1OC",
+      "COc1cc(Nc2nccc(N(C)c3ccc4c(C)n[nH]c4c3)n2)cc(OC)c1OC",
+      "Cc1ccn(-c2ccc3c(c2)NCC3(C)C)c(=O)c1-c1ccc2nc(N)ncc2c1",
+      "Cc1ccn(-c2ccc3c(c2)NCC3(C)C)c(=O)c1-c1ccc2nc(N)ncc2c1",
+      "Cc1ccc(C(=O)NCCC2CCCC2)cc1C(=O)Nc1ccc(N)nc1",
+      "Cc1ccc(C(=O)NCCC2CCCC2)cc1C(=O)Nc1ccc(N)nc1",
+      "Cc1ccn(-c2cccc(C(F)(F)F)c2)c(=O)c1-c1ccc2nc(N)ncc2c1",
+      "Cc1ccn(-c2cccc(C(F)(F)F)c2)c(=O)c1-c1ccc2nc(N)ncc2c1",
+      "O=C(Nc1cncnc1)c1c(Cl)ccc2c(Nc3cccc(C(F)(F)F)c3)noc12",
+      "O=C(Nc1cncnc1)c1c(Cl)ccc2c(Nc3cccc(C(F)(F)F)c3)noc12",
+      "CC1(C)CNc2cc(NC(=O)c3cccnc3NCc3ccncc3)ccc21",
+      "CC1(C)CNc2cc(NC(=O)c3cccnc3NCc3ccncc3)ccc21"};
+
+  boost::shared_ptr<CachedSmilesMolHolder> holder =
+    boost::make_shared<CachedSmilesMolHolder>();
+
+  for(auto s : pdb_ligands) {
+    holder->addSmiles(s);
+  }
+
+  SubstructLibrary ssslib(holder);
+  std::vector<int> num_threads = { 1, 0 };
+  for(auto nthreads : num_threads) {
+    SubstructLibrary ssslib_with_patterns(holder);
+    addPatterns(ssslib_with_patterns, nthreads);
+    for(unsigned int i=0; i<ssslib.size(); ++i) {
+      TEST_ASSERT( ssslib.countMatches( *ssslib.getMol(i).get() ) ==
+		   ssslib_with_patterns.countMatches( *ssslib.getMol(i).get() ) );
+    }
+  }
+
+  
+
+
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -410,6 +469,7 @@ int main() {
   test4();
   docTest();
   ringTest();
+  testAddPatterns();
 #endif
   return 0;
 }

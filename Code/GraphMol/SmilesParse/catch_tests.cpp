@@ -613,3 +613,12 @@ TEST_CASE(
     REQUIRE(q2);
   }
 }
+
+TEST_CASE("large rings", "[smarts]") {
+  auto query = "[r24]"_smarts;
+  auto m_r24 = "C1CCCCCCCCCCCCCCCCCCCCCCC1"_smiles;
+  auto m_r23 = "C1CCCCCCCCCCCCCCCCCCCCCC1"_smiles;
+
+  CHECK(SubstructMatch(*m_r23, *query).empty());
+  CHECK(SubstructMatch(*m_r24, *query).size() == 24);
+}
