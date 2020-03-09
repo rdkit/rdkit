@@ -130,8 +130,8 @@ void MolDraw2DCairo::drawPolygon(const std::vector<Point2D> &cds) {
     Point2D lc = getDrawCoords(cds.front());
     cairo_move_to(dp_cr, lc.x, lc.y);
     for (unsigned int i = 1; i < cds.size(); ++i) {
-      Point2D lc = getDrawCoords(cds[i]);
-      cairo_line_to(dp_cr, lc.x, lc.y);
+      Point2D lci = getDrawCoords(cds[i]);
+      cairo_line_to(dp_cr, lci.x, lci.y);
     }
   }
 

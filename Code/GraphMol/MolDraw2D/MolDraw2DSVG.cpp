@@ -375,7 +375,8 @@ void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds,
   // fonts are laid out with room for wider letters like W and hanging bits like g.
   // Very few atomic symbols need to care about this, and common ones look a bit
   // out of line.  For example O sits to the left of a double bond.  This is an
-  // empirical tweak to push it back a bit.
+  // empirical tweak to push it back a bit.  Use the string_height in x and y
+  // as it's just a correction factor based on the scaled font size.
   draw_coords.x += string_height * tmult * 0.1 * scale();
   draw_coords.y += string_height * 0.15  *scale();
 

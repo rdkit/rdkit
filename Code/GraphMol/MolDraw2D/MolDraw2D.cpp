@@ -19,6 +19,7 @@
 #include <GraphMol/ChemReactions/ReactionParser.h>
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <Geometry/point.h>
+#include <Geometry/Transform2D.h>
 
 #include <algorithm>
 #include <cstdlib>
@@ -581,7 +582,7 @@ void MolDraw2D::drawReaction(
   setColour(options_.symbolColour);
 
   // now add the symbols
-  for(double plusLoc: plusLocs) {
+  for(auto plusLoc: plusLocs) {
     Point2D loc(plusLoc, arrowBegin.y);
     drawString("+", loc);
   }
@@ -872,22 +873,28 @@ void MolDraw2D::calculateScale(int width, int height,
         double this_y_min = at_cds_[activeMolIdx_][i].y - atsym_height / 2;
         double this_y_max = at_cds_[activeMolIdx_][i].y + atsym_height / 2;
         OrientType orient = atom_syms_[activeMolIdx_][i].second;
-        if (orient == W) {
-          this_x_min -= atsym_width;
-        } else if (orient == E) {
-          this_x_max += atsym_width;
-        } else if(orient == N || orient == S) {
-          vector<string> sym_bits = atomLabelToPieces(i);
-          double height, width, cumm_height = 0.0;
-          for (auto bit: sym_bits) {
-            getStringSize(bit, width, height);
-            cumm_height += height;
+        switch(orient) {
+          case W:
+            this_x_min -= atsym_width;
+            break;
+          case E:
+            this_x_max += atsym_width;
+            break;
+          case N: case S:
+          {
+            vector<string> sym_bits = atomLabelToPieces(i);
+            double height, width, cumm_height = 0.0;
+            for (auto bit: sym_bits) {
+              getStringSize(bit, width, height);
+              cumm_height += height;
+            }
+            this_y_min = at_cds_[activeMolIdx_][i].y - cumm_height / 2;
+            this_y_max = at_cds_[activeMolIdx_][i].y + cumm_height / 2;
           }
-          this_y_min = at_cds_[activeMolIdx_][i].y - cumm_height / 2;
-          this_y_max = at_cds_[activeMolIdx_][i].y + cumm_height / 2;
-        } else {
-          this_x_max += atsym_width / 2;
-          this_x_min -= atsym_width / 2;
+            break;
+          default:
+            this_x_max += atsym_width / 2;
+            this_x_min -= atsym_width / 2;
         }
         x_max = std::max(x_max, this_x_max);
         x_min_ = std::min(x_min_, this_x_min);
@@ -1535,18 +1542,25 @@ void MolDraw2D::calcLabelEllipse(int atom_idx,
 
   // need to move the centre
   double cheight, cwidth;
-  if(orient == N) {
-    getStringSize(label_pieces.front(), cwidth, cheight);
-    centre.y -= 0.5 * (label_height - cheight);
-  } else if(orient == S) {
-    getStringSize(label_pieces.front(), cwidth, cheight);
-    centre.y += 0.5 * (label_height - cheight);
-  } else if(orient == E) {
-    getStringSize(label_pieces.front(), cwidth, cheight);
-    centre.x += 0.5 * (label_width - cwidth);
-  } else if(orient == W) {
-    getStringSize(label_pieces.back(), cwidth, cheight);
-    centre.x -= 0.5 * (label_width - cwidth);
+  switch(orient) {
+    case N:
+      getStringSize(label_pieces.front(), cwidth, cheight);
+      centre.y -= 0.5 * (label_height - cheight);
+      break;
+    case S:
+      getStringSize(label_pieces.front(), cwidth, cheight);
+      centre.y += 0.5 * (label_height - cheight);
+      break;
+    case E:
+      getStringSize(label_pieces.front(), cwidth, cheight);
+      centre.x += 0.5 * (label_width - cwidth);
+      break;
+    case W:
+      getStringSize(label_pieces.back(), cwidth, cheight);
+      centre.x -= 0.5 * (label_width - cwidth);
+    break;
+    default:
+      break;
   }
 
 }
@@ -1669,9 +1683,11 @@ void MolDraw2D::adjustLineEndForHighlight(int at_idx,
   double xradius, yradius;
   Point2D centre;
   calcLabelEllipse(at_idx, highlight_radii, centre, xradius, yradius);
-
   // cout << "ellipse is : " << centre.x << ", " << centre.y << " rads " << xradius << " and " << yradius << endl;
   // cout << "p1 = " << p1.x << ", " << p1.y << endl << "p2 = " << p2.x << ", " << p2.y << endl;
+  if(xradius < 1.0e-6 || yradius < 1.0e-6) {
+    return;
+  }
 
   // move everything so the ellipse is centred on the origin.
   p1 -= centre;
@@ -1762,27 +1778,23 @@ void MolDraw2D::extractAtomCoords(const ROMol &mol, int confId,
   // Nothing brings fear to my heart more than a floating point number.
   // — Gerald Jay Sussman
   // Some developers, when encountering a problem, say: “I know, I’ll
-  // use floating-point numbers !”   Now, they have 1.9999999997 problems.
+  // use floating-point numbers!”   Now, they have 1.9999999997 problems.
   // — unknown
-  double costh = rot == 0.0 ? 0.0 : cos(rot);
-  double sinth = rot == 0.0 ? 0.0 : sin(rot);
+  if(rot != 0.0) {
+    RDGeom::Transform2D trans;
+    trans.SetTransform(Point2D(0.0, 0.0), rot);
+    for(auto this_at: mol.atoms()) {
+      int this_idx = this_at->getIdx();
+      Point2D pt(locs[this_idx].x, locs[this_idx].y);
+      trans.TransformPoint(pt);
+      at_cds_[activeMolIdx_].push_back(pt);
 
-  for(auto this_at: mol.atoms()) {
-    int this_idx = this_at->getIdx();
-    Point2D pt(locs[this_idx].x, locs[this_idx].y);
-    if(rot != 0.0) {
-      double new_x = pt.x * costh - pt.y * sinth;
-      double new_y = pt.x * sinth + pt.y * costh;
-      pt.x = new_x;
-      pt.y = new_y;
-    }
-    at_cds_[activeMolIdx_].push_back(pt);
-
-    if (updateBBox) {
-      bbox_[0].x = std::min(bbox_[0].x, pt.x);
-      bbox_[0].y = std::min(bbox_[0].y, pt.y);
-      bbox_[1].x = std::max(bbox_[1].x, pt.x);
-      bbox_[1].y = std::max(bbox_[1].y, pt.y);
+      if (updateBBox) {
+        bbox_[0].x = std::min(bbox_[0].x, pt.x);
+        bbox_[0].y = std::min(bbox_[0].y, pt.y);
+        bbox_[1].x = std::max(bbox_[1].x, pt.x);
+        bbox_[1].y = std::max(bbox_[1].y, pt.y);
+      }
     }
   }
 }

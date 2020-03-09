@@ -2227,7 +2227,7 @@ void test17MaxFontSize() {
     std::string fName = getenv("RDBASE");
     fName += "/Code/GraphMol/MolDraw2D/test_dir";
     fName += "/clash.mol";
-    ROMol *m = MolFileToMol(fName);
+    std::unique_ptr<ROMol> m(MolFileToMol(fName));
     std::string nameBase = "test16_";
     TEST_ASSERT(m);
 
@@ -2263,11 +2263,121 @@ void test17MaxFontSize() {
       outs.flush();
       TEST_ASSERT(text.find("font-size:20px") != std::string::npos);
     }
-    delete m;
   }
 
   std::cout << " Done" << std::endl;
 
+}
+
+void test18FixedScales() {
+  std::cout << " ----------------- Testing use of fixed scales for drawing."
+            << std::endl;
+  std::string nameBase = "test18_";
+  {
+    std::string smi = "Clc1ccccc1";
+    std::unique_ptr<ROMol> m(SmilesToMol(smi));
+    TEST_ASSERT(m);
+    {
+      MolDraw2DSVG drawer(300, 300);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs((nameBase + "1.svg").c_str());
+      outs << text;
+      outs.flush();
+      TEST_ASSERT(text.find("font-size:26px") != std::string::npos);
+    }
+    {
+      MolDraw2DSVG drawer(300, 300);
+      // fix scale so bond is 5% if window width.
+      drawer.drawOptions().fixedScale = 0.05;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs((nameBase + "2.svg").c_str());
+      outs << text;
+      outs.flush();
+      TEST_ASSERT(text.find("font-size:7px") != std::string::npos);
+    }
+  }
+  {
+    std::string smi = "C[C@@H](N[C@@H]1CC[C@@H](C(=O)N2CCC(C(=O)N3CCCC3)"
+                      "(c3ccccc3)CC2)C(C)(C)C1)c1ccc(Cl)cc1";
+    std::unique_ptr<ROMol> m(SmilesToMol(smi));
+    TEST_ASSERT(m);
+
+    {
+      MolDraw2DSVG drawer(300, 300);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs((nameBase + "3.svg").c_str());
+      outs << text;
+      outs.flush();
+      TEST_ASSERT(text.find("font-size:8px") != std::string::npos);
+    }
+    {
+      // fix bond length to 10 pixels.
+      MolDraw2DSVG drawer(300, 300);
+      drawer.drawOptions().fixedBondLength = 10;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs((nameBase + "4.svg").c_str());
+      outs << text;
+      outs.flush();
+      TEST_ASSERT(text.find("font-size:5px") != std::string::npos);
+    }
+    {
+      // this one should be the same size as the first, as it won't scale
+      // up if the picture won't fit.
+      MolDraw2DSVG drawer(300, 300);
+      drawer.drawOptions().fixedBondLength = 30;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs((nameBase + "5.svg").c_str());
+      outs << text;
+      outs.flush();
+      TEST_ASSERT(text.find("font-size:8px") != std::string::npos);
+    }
+  }
+  std::cerr << " Done" << std::endl;
+}
+
+void test19RotateDrawing() {
+  std::cout << " ----------------- Testing rotation of 2D drawing."
+            << std::endl;
+  std::string nameBase = "test19_";
+  {
+    std::string smi = "Clc1ccccc1";
+    std::unique_ptr<ROMol> m(SmilesToMol(smi));
+    TEST_ASSERT(m);
+    {
+      MolDraw2DSVG drawer(300, 300);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs((nameBase + "1.svg").c_str());
+      outs << text;
+      outs.flush();
+      TEST_ASSERT(text.find("text-anchor=\"start\" x='244.002' y='153.9'")
+                  != std::string::npos);
+    }
+    {
+      MolDraw2DSVG drawer(300, 300);
+      drawer.drawOptions().rotate = 90.0;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs((nameBase + "2.svg").c_str());
+      outs << text;
+      outs.flush();
+      TEST_ASSERT(text.find("text-anchor=\"start\" x='136.934' y='276.346'")
+                  != std::string::npos);
+    }
+
+  }
 }
 
 void testGithub2063() {
@@ -2539,6 +2649,8 @@ int main() {
   test15ContinuousHighlightingWithGrid();
   test17MaxFontSize();
   testGithub1829();
+  test18FixedScales();
+  test19RotateDrawing();
 #endif
   test16MoleculeMetadata();
   testGithub2063();
