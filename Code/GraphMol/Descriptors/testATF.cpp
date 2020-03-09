@@ -30,7 +30,7 @@ void test1() {
     RDKit::ROMOL_SPTR m( RDKit::SmilesToMol( "CO") );    
     TEST_ASSERT(m);
     
-    std::vector<double> res;
+    std::vector<double> res(49);
 
     int atomid = 0;
     RDKit::Descriptors::AtomFeat(*m, res, atomid);
@@ -50,6 +50,9 @@ void test1() {
     std::cout << "\nnum features: " << res.size()  << "\n" ; 
 
     std::cout << "DONE\n"; 
+    
+    res.clear();
+    res.resize(0);
     
 }
 
