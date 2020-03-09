@@ -363,6 +363,32 @@ std::string JSMol::get_new_coords(bool useCoordGen) const {
   return MolToMolBlock(molCopy);
 }
 
+std::string JSMol::remove_hs() const {
+  if (!d_mol) return "";
+
+  RWMol molCopy(*d_mol);
+  MolOps::removeAllHs(molCopy);
+
+  bool includeStereo = true;
+  int confId = -1;
+  bool kekulize = true;
+  return MolToMolBlock(molCopy, includeStereo, confId, kekulize);
+}
+
+std::string JSMol::add_hs() const {
+  if (!d_mol) return "";
+
+  RWMol molCopy(*d_mol);
+  MolOps::addHs(molCopy);
+
+  // RDDepict::generateDepictionMatching2DStructure(molCopy, *d_mol);
+
+  bool includeStereo = true;
+  int confId = -1;
+  bool kekulize = true;
+  return MolToMolBlock(molCopy, includeStereo, confId, kekulize);
+}
+
 std::string get_inchikey_for_inchi(const std::string &input) {
   return InchiToInchiKey(input);
 }

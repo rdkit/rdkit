@@ -94,7 +94,7 @@ BOOST_PYTHON_MODULE(rdScaffoldNetwork) {
           "include scaffolds with all atoms replaced by dummies")
       .def_readwrite(
           "includeGenericBondScaffolds",
-          &ScaffoldNetwork::ScaffoldNetworkParams::includeGenericScaffolds,
+          &ScaffoldNetwork::ScaffoldNetworkParams::includeGenericBondScaffolds,
           "include scaffolds with all bonds replaced by single bonds")
       .def_readwrite(
           "includeScaffoldsWithoutAttachments",
@@ -144,9 +144,11 @@ BOOST_PYTHON_MODULE(rdScaffoldNetwork) {
 
   python::class_<ScaffoldNetwork::ScaffoldNetwork>(
       "ScaffoldNetwork", "A scaffold network", python::init<>())
+#ifdef RDK_USE_BOOST_SERIALIZATION
       .def(python::init<const std::string &>())
       // enable pickle support
       .def_pickle(scaffoldnetwork_pickle_suite())
+#endif
       .def_readonly("nodes", &ScaffoldNetwork::ScaffoldNetwork::nodes,
                     "the sequence of SMILES defining the nodes")
       .def_readonly("counts", &ScaffoldNetwork::ScaffoldNetwork::counts,

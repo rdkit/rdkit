@@ -1953,6 +1953,43 @@ void testMorganAtomInfo() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testMorganAtomInfoRedundantEnv() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test atom info from morgan fingerprints including Info Redundant Environments."
+                        << std::endl;
+
+  {
+    ROMol *mol;
+    SparseIntVect<std::uint32_t> *fp;
+    MorganFingerprints::BitInfoMap bitInfo;
+    SparseIntVect<std::uint32_t>::StorageType nze;
+
+    mol = SmilesToMol("CCCC(N)(O)");
+
+
+
+    fp = MorganFingerprints::getFingerprint(*mol, 2, nullptr, nullptr, false,
+                                            true, true, false, &bitInfo, false);
+    
+    TEST_ASSERT(bitInfo.size() == 14);
+    
+
+    delete fp;
+
+    bitInfo.clear();
+    fp = MorganFingerprints::getFingerprint(*mol, 2, nullptr, nullptr, false,
+                                            true, true, false, &bitInfo, true);
+    TEST_ASSERT(bitInfo.size() == 17);
+    
+    delete fp;
+
+    delete mol;
+  }
+
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 void testRDKitFPOptions() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "testing RDKit fingerprint options" << std::endl;
@@ -3875,6 +3912,7 @@ int main(int argc, char *argv[]) {
   testRootedTorsions();
   testIgnoreTorsions();
   testMorganAtomInfo();
+  testMorganAtomInfoRedundantEnv();
   testRDKitFPOptions();
   testPairsAndTorsionsOptions();
   testMACCS();

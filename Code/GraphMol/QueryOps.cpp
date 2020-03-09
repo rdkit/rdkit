@@ -87,6 +87,7 @@ ATOM_EQUALS_QUERY *makeAtomInRingOfSizeQuery(int tgt) {
   res->setDescription("AtomRingSize");
   return res;
 }
+
 BOND_EQUALS_QUERY *makeBondInRingOfSizeQuery(int tgt) {
   RANGE_CHECK(3, tgt, 20);
   auto *res = new BOND_EQUALS_QUERY;
@@ -152,7 +153,6 @@ BOND_EQUALS_QUERY *makeBondInRingOfSizeQuery(int tgt) {
 }
 
 ATOM_EQUALS_QUERY *makeAtomMinRingSizeQuery(int tgt) {
-  RANGE_CHECK(3, tgt, 20);
   auto *res = new ATOM_EQUALS_QUERY;
   res->setVal(tgt);
   res->setDataFunc(queryAtomMinRingSize);
@@ -160,7 +160,6 @@ ATOM_EQUALS_QUERY *makeAtomMinRingSizeQuery(int tgt) {
   return res;
 }
 BOND_EQUALS_QUERY *makeBondMinRingSizeQuery(int tgt) {
-  RANGE_CHECK(3, tgt, 20);
   auto *res = new BOND_EQUALS_QUERY;
   res->setVal(tgt);
   res->setDataFunc(queryBondMinRingSize);

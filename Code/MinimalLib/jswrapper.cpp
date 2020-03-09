@@ -41,7 +41,9 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("get_new_coords",
                 select_overload<std::string() const>(&JSMol::get_new_coords))
       .function("get_new_coords", select_overload<std::string(bool) const>(
-                                      &JSMol::get_new_coords));
+                                      &JSMol::get_new_coords))
+      .function("add_hs", &JSMol::add_hs)
+      .function("remove_hs", &JSMol::remove_hs);
 
   function("version", &version);
   function("get_inchikey_for_inchi", &get_inchikey_for_inchi);
