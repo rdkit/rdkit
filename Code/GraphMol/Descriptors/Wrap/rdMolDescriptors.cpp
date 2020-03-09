@@ -16,6 +16,7 @@
 #include <RDGeneral/BoostEndInclude.h>
 
 #include <GraphMol/Descriptors/MolDescriptors.h>
+#include <GraphMol/Descriptors/AtomFeat.h>
 #include <GraphMol/Fingerprints/AtomPairs.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
 #include <GraphMol/Fingerprints/MACCS.h>
@@ -430,7 +431,7 @@ struct std_pair_to_tuple
   static PyObject* convert(std::pair<T1, T2> const& p)
   {
     return boost::python::incref(
-				 boost::python::make_tuple(p.first, p.second).ptr());
+         boost::python::make_tuple(p.first, p.second).ptr());
   }
   static PyTypeObject const *get_pytype () {return &PyTuple_Type; }
 };
@@ -518,6 +519,17 @@ ExplicitBitVect *GetMorganFingerprintBV(
   }
   delete invars;
   return res;
+}
+
+python::list GetAtomFeatures(const RDKit::ROMol &mol,
+                                       int atomid,
+                                       bool addchiral) {
+
+  std::vector<double> res;
+  RDKit::Descriptors::AtomFeat(mol, res, atomid, addchiral );
+  python::list pyres;
+  BOOST_FOREACH (double iv, res) { pyres.append(iv); }
+  return pyres;
 }
 
 python::list GetConnectivityInvariants(const RDKit::ROMol &mol,
@@ -1396,6 +1408,13 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               (python::arg("mol")), docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
 
+  python::scope().attr("_GetAtomFeatures_version") = RDKit::Descriptors::AtomFeatVersion;
+  docString = "Returns the Atom Features vector";
+  python::def(
+      "GetAtomFeatures", GetAtomFeatures,
+      (python::arg("mol"), python::arg("atomid") = 0, python::arg("addchirald") = false),
+      docString.c_str());
+
   python::scope().attr("_CalcNumSpiroAtoms_version") =
       RDKit::Descriptors::NumSpiroAtomsVersion;
   docString =
@@ -1671,7 +1690,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   std::vector<double> (*BCUT)(const RDKit::ROMol&) = & RDKit::Descriptors::BCUT2D;
   std::pair<double,double> (*BCUT_atomprops)(const RDKit::ROMol&, const std::string&) = & RDKit::Descriptors::BCUT2D;
   docString = \
-    "Implements BCUT descriptors From J. Chem. Inf. Comput. Sci., Vol. 39, No. 1, 1999"	\
+    "Implements BCUT descriptors From J. Chem. Inf. Comput. Sci., Vol. 39, No. 1, 1999" \
     "Diagonal elements are (currently) atomic mass, gasteiger charge,"\
     "crippen logP and crippen MRReturns the 2D BCUT2D descriptors vector as described in\n"\
     "returns [mass eigen value high, mass eigen value low,\n"\
