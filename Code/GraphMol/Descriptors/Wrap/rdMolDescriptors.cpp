@@ -118,6 +118,31 @@ python::tuple calcCrippenDescriptors(const RDKit::ROMol &mol,
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
 
+python::dict calcBagOfBondsMap(std::vector<std::string> smiles) {
+    std::map<std::string, unsigned int> res = RDKit::Descriptors::BagOfBondsMap(smiles);
+    typename std::map<std::string, unsigned int>::iterator iter;
+    python::dict dictionary;
+    for (iter = res.begin(); iter != res.end(); ++iter) {
+    dictionary[iter->first] = iter->second;
+  }
+    return dictionary;
+}
+
+python::list calcBagOfBondVector(RDKit::ROMol &mol, int confId,  int alpha,  python::dict bagsDict) {
+    std::map<std::string, unsigned int> MaxBags;
+    for (unsigned int i = 0;
+       i < python::extract<unsigned int>(bagsDict.keys().attr("__len__")());
+       ++i) {
+        MaxBags[python::extract<std::string>(bagsDict.keys()[i])] =
+        python::extract<unsigned int>(bagsDict.values()[i]);
+    }
+    std::vector<double> res;
+    RDKit::Descriptors::BagOfBondsVector(mol, res, confId,  alpha, MaxBags);
+    python::list pyres;
+    BOOST_FOREACH (double iv, res) { pyres.append(iv); }
+    return pyres;
+}
+
 python::list calcEEMcharges(RDKit::ROMol &mol, int confId) {
   std::vector<double> res;
   RDKit::Descriptors::EEM(mol, res, confId);
@@ -1548,6 +1573,21 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               python::return_value_policy<python::manage_new_object>());
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
+  python::scope().attr("_CalcBagOfBondVector_version") = RDKit::Descriptors::BagOfBondsVersion;
+  docString = "Returns vector of bag of Bond based on Coulomb Matrix and on Dictionary of BoB";
+  python::def("CalcBagOfBondVector", calcBagOfBondVector,
+                (python::arg("mol"), 
+                python::arg("confId") = -1, 
+                python::arg("alpha") = 1,
+                python::arg("MaxBags") = python::dict()),
+                docString.c_str());
+
+  python::scope().attr("_CalcBagOfBondMap_version") = RDKit::Descriptors::BagOfBondsVersion;
+  docString = "Returns Map of bag of Bond from a list of smiles";
+  python::def("CalcBagOfBondsMap", calcBagOfBondsMap,
+                (python::arg("smiles") = python::list()),
+                docString.c_str());
+  
   python::scope().attr("_CalcEMMcharges_version") =
       RDKit::Descriptors::EEMVersion;
   docString = "Returns EEM atomic partial charges";
