@@ -1780,21 +1780,21 @@ void MolDraw2D::extractAtomCoords(const ROMol &mol, int confId,
   // Some developers, when encountering a problem, say: “I know, I’ll
   // use floating-point numbers!”   Now, they have 1.9999999997 problems.
   // — unknown
-  if(rot != 0.0) {
-    RDGeom::Transform2D trans;
-    trans.SetTransform(Point2D(0.0, 0.0), rot);
-    for(auto this_at: mol.atoms()) {
-      int this_idx = this_at->getIdx();
-      Point2D pt(locs[this_idx].x, locs[this_idx].y);
+  RDGeom::Transform2D trans;
+  trans.SetTransform(Point2D(0.0, 0.0), rot);
+  for(auto this_at: mol.atoms()) {
+    int this_idx = this_at->getIdx();
+    Point2D pt(locs[this_idx].x, locs[this_idx].y);
+    if(rot != 0.0) {
       trans.TransformPoint(pt);
-      at_cds_[activeMolIdx_].push_back(pt);
+    }
+    at_cds_[activeMolIdx_].emplace_back(pt);
 
-      if (updateBBox) {
-        bbox_[0].x = std::min(bbox_[0].x, pt.x);
-        bbox_[0].y = std::min(bbox_[0].y, pt.y);
-        bbox_[1].x = std::max(bbox_[1].x, pt.x);
-        bbox_[1].y = std::max(bbox_[1].y, pt.y);
-      }
+    if (updateBBox) {
+      bbox_[0].x = std::min(bbox_[0].x, pt.x);
+      bbox_[0].y = std::min(bbox_[0].y, pt.y);
+      bbox_[1].x = std::max(bbox_[1].x, pt.x);
+      bbox_[1].y = std::max(bbox_[1].y, pt.y);
     }
   }
 }
