@@ -141,9 +141,10 @@ ExpTorsionAngleCollection::ExpTorsionAngleCollection(
 }
 
 void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
-                             bool useExpTorsions, bool useBasicKnowledge,
-                             unsigned int version, bool verbose, 
-			     bool useSmallRingTorsions,bool useMacrocycleTorsions) {
+                             bool useExpTorsions, 
+                             bool useSmallRingTorsions,bool useMacrocycleTorsions,
+                             bool useBasicKnowledge,
+                             unsigned int version, bool verbose) {
   unsigned int nb = mol.getNumBonds();
   unsigned int na = mol.getNumAtoms();
   if (!na) {

@@ -821,8 +821,11 @@ bool _checkAmideEster14(const Bond *bnd1, const Bond *bnd3, const Atom *atm1,
   }
   return false;
 }
+    
 bool _checkMacrocycleAmideEster14(const ROMol &mol, const Bond *bnd1, const Bond *bnd3, const Atom *atm1,
                         const Atom *atm2, const Atom *atm3, const Atom *atm4) {
+//   This is a re-write of `_checkAmideEster14` with more explicit logic on the checks
+//   It is interesting that we find with this function we get better macrocycle sampling than `_checkAmideEster14`
   unsigned int a1Num = atm1->getAtomicNum();
   unsigned int a2Num = atm2->getAtomicNum();
   unsigned int a3Num = atm3->getAtomicNum();
@@ -831,10 +834,8 @@ bool _checkMacrocycleAmideEster14(const ROMol &mol, const Bond *bnd1, const Bond
   if (a3Num != 6)  return false;
 
   ROMol::ADJ_ITER nbrIdx, endNbrs;
-  if (a2Num == 7 || a2Num == 8) { // amide case
-    //std::cout << "amidetest 1" << std::endl;
+  if (a2Num == 7 || a2Num == 8) { 
       if (mol.getAtomDegree(atm2) == 3 && mol.getAtomDegree(atm3) == 3) {
-    //std::cout << "amidetest 2" << std::endl;
 
         {
           const Atom *res;
@@ -848,7 +849,6 @@ bool _checkMacrocycleAmideEster14(const ROMol &mol, const Bond *bnd1, const Bond
             }
             ++nbrIdx;
           }
-    //std::cout << "amidetest 3 " << res->getAtomicNum() << " " << resbnd->getBondType() << std::endl;
           if ((res->getAtomicNum() != 6 && res->getAtomicNum() != 1) || resbnd->getBondType() != Bond::SINGLE)
             return false;
         }
@@ -865,19 +865,14 @@ bool _checkMacrocycleAmideEster14(const ROMol &mol, const Bond *bnd1, const Bond
             }
             ++nbrIdx;
           }
-    //std::cout << "amidetest 4 " << res->getAtomicNum() << " " << resbnd->getBondType() << std::endl;
           if (res->getAtomicNum() != 8 || resbnd->getBondType() != Bond::DOUBLE)
             return false;
         }
 
-    //std::cout << "amidetest 5" << std::endl;
         return true;
       }
   }
   return false;
-
-  //if (a2Num == 8 ) //TODO  ester case
-    //return false;
 
 }
 
@@ -1176,6 +1171,7 @@ void _record14Path(const ROMol &mol, unsigned int bid1, unsigned int bid2,
 void _setMacrocycle14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
                        const Bond *bnd3, ComputedData &accumData,
                        DistGeom::BoundsMatPtr mmat, double *dmat) {
+    // This is adapted from `_setChain14Bounds`, with changes on how trans amide is handled
   RDUNUSED_PARAM(dmat);
   PRECONDITION(bnd1, "");
   PRECONDITION(bnd2, "");
@@ -1292,48 +1288,12 @@ void _setMacrocycle14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2
         // "\n";
       } else if ((_checkMacrocycleAmideEster14(mol, bnd1, bnd3, atm1, atm2, atm3, atm4)) ||
                  (_checkMacrocycleAmideEster14(mol, bnd3, bnd1, atm4, atm3, atm2, atm1))) {
-// It's an amide or ester:
-//
-//        4    <- 4 is the O
-//        |    <- That's the double bond
-//    1   3
-//     \ / \                                         T.S.I.Left Blank
-//      2   5  <- 2 is an oxygen/nitrogen
-//
-// Here we set the distance between atoms 1 and 4,
-//  we'll handle atoms 1 and 5 below.
 
-// fix for issue 251 - we were marking this as a cis configuration earlier
-// -------------------------------------------------------
-// Issue284:
-//   As this code originally stood, we forced amide bonds to be trans. This is
-//   convenient a lot of the time for generating nice-looking structures, but is
-//   unfortunately totally bogus.  So here we'll allow the distance to
-//   roam from cis to trans and hope that the force field planarizes things
-//   later.
-//
-//   What we'd really like to be able to do is specify multiple possible ranges
-//   for the distances, but a single bounds matrix doesn't support this kind
-//   of fanciness.
-//
-// #ifdef FORCE_TRANS_AMIDES
-        dl = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23) + 0.1; //TODO 0.1 is the max that works without triangular smoothing error
+        dl = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23) + 0.1; //we saw that the currently defined max distance for trans is still a bit too short, thus we add an additional 0.1, which is the max that works without triangular smoothing error
         path14.type = Path14Configuration::TRANS;
         accumData.transPaths[bid1 * nb * nb + bid2 * nb + bid3] = 1;
         accumData.transPaths[bid3 * nb * nb + bid2 * nb + bid1] = 1;
-// #else
-//         if (atm2->getAtomicNum() == 7 && atm2->getDegree() == 3 &&
-//             atm1->getAtomicNum() == 1 && atm2->getTotalNumHs(true) == 1) {
-//           // secondary amide, this is the H
-//           setTheBound = false;
-//         } else {
-//           // force the amide to be cis:
-//           dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
-//           path14.type = Path14Configuration::CIS;
-//           accumData.cisPaths[bid1 * nb * nb + bid2 * nb + bid3] = 1;
-//           accumData.cisPaths[bid3 * nb * nb + bid2 * nb + bid1] = 1;
-//         }
-// #endif
+
         du = dl;
         dl -= GEN_DIST_TOL;
         du += GEN_DIST_TOL;
@@ -1344,21 +1304,7 @@ void _setMacrocycle14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2
                                      atm4)) ||
                  (_checkAmideEster15(mol, bnd3, bnd1, atm4, atm3, atm2,
                                      atm1))) {
-// it's an amide or ester.
-//
-//        4    <- 4 is the O
-//        |    <- That's the double bond
-//    1   3
-//     \ / \                                          T.S.I.Left Blank
-//      2   5  <- 2 is oxygen or nitrogen
-//
-// we set the 1-4 contact above.
 
-// If we're going to have a hope of getting good geometries
-// out of here we need to set some reasonably smart bounds between 1
-// and 5 (ref Issue355):
-
-// NOTE THAT WE REVERSE THE ORDER HERE:
 
 #ifdef FORCE_TRANS_AMIDES
         // amide is trans, we're cis:
@@ -1496,8 +1442,6 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
 
                 _setTwoInSameRing14Bounds(mol, bnd1, (*bi), bnd3, accumData,
                                           mmat, distMatrix);
-                // _setChain14Bounds(mol, bnd1, (*bi), bnd3, accumData, mmat,
-                //                   distMatrix);
               } else if (((rinfo->numBondRings(bid1) > 0) &&
                           (rinfo->numBondRings(bid2) > 0)) ||
                          ((rinfo->numBondRings(bid2) > 0) &&
@@ -1519,8 +1463,6 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
 
                 _setShareRingBond14Bounds(mol, bnd1, (*bi), bnd3, accumData,
                                           mmat, distMatrix);
-                // _setChain14Bounds(mol, bnd1, (*bi), bnd3, accumData, mmat,
-                //                   distMatrix);
               } else {
                 // middle bond not a ring
                 _setChain14Bounds(mol, bnd1, (*bi), bnd3, accumData, mmat,

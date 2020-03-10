@@ -69,6 +69,8 @@ const EmbedParameters KDG(0,      // maxIterations
                           false,  // ignoreSmoothingFailures
                           true,   // enforceChirality
                           false,  // useExpTorsionAnglePrefs
+                          false,  // useSmallRingTorsions
+                          false,  // useMacrocycleTorsions
                           true,   // useBasicKnowledge
                           false,  // verbose
                           5.0,    // basinThresh
@@ -91,6 +93,8 @@ const EmbedParameters ETDG(0,      // maxIterations
                            false,  // ignoreSmoothingFailures
                            false,  // enforceChirality
                            true,   // useExpTorsionAnglePrefs
+                           false,  // useSmallRingTorsions
+                           false,  // useMacrocycleTorsions                        
                            false,  // useBasicKnowledge
                            false,  // verbose
                            5.0,    // basinThresh
@@ -112,6 +116,8 @@ const EmbedParameters ETKDG(0,      // maxIterations
                             false,  // ignoreSmoothingFailures
                             true,   // enforceChirality
                             true,   // useExpTorsionAnglePrefs
+                            false,  // useSmallRingTorsions
+                            false,  // useMacrocycleTorsions                            
                             true,   // useBasicKnowledge
                             false,  // verbose
                             5.0,    // basinThresh
@@ -134,6 +140,8 @@ const EmbedParameters ETKDGv2(0,      // maxIterations
                               false,  // ignoreSmoothingFailures
                               true,   // enforceChirality
                               true,   // useExpTorsionAnglePrefs
+                              false,  // useSmallRingTorsions
+                              false,  // useMacrocycleTorsions                              
                               true,   // useBasicKnowledge
                               false,  // verbose
                               5.0,    // basinThresh
@@ -752,8 +760,8 @@ void initETKDG(ROMol *mol, const EmbedParameters &params,
   if (params.useExpTorsionAnglePrefs || params.useBasicKnowledge) {
     ForceFields::CrystalFF::getExperimentalTorsions(
         *mol, etkdgDetails, params.useExpTorsionAnglePrefs,
-        params.useBasicKnowledge, params.ETversion, params.verbose, 
-	params.useSmallRingTorsions, params.useMacrocycleTorsions);
+        params.useSmallRingTorsions, params.useMacrocycleTorsions,
+        params.useBasicKnowledge, params.ETversion, params.verbose);
     etkdgDetails.atomNums.resize(nAtoms);
     for (unsigned int i = 0; i < nAtoms; ++i) {
       etkdgDetails.atomNums[i] = mol->getAtomWithIdx(i)->getAtomicNum();
@@ -984,7 +992,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
            "does not work with molecules that have multiple fragments. The "
            "boundsMat will be ignored."
         << std::endl;
-    coordMap = nullptr; //FIXME this is a bug!!!!!!!!!!!!!!!!!!
+    coordMap = nullptr; //FIXME not directly related to ETKDG, but here I think it should be params.boundsMat = nullptr
   }
 
   // we will generate conformations for each fragment in the molecule

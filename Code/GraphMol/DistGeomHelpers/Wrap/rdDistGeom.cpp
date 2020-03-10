@@ -20,6 +20,8 @@
 #include <GraphMol/DistGeomHelpers/BoundsMatrixBuilder.h>
 #include <GraphMol/DistGeomHelpers/Embedder.h>
 
+// #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
+
 namespace python = boost::python;
 
 namespace RDKit {
@@ -28,7 +30,8 @@ int EmbedMolecule(ROMol &mol, unsigned int maxAttempts, int seed,
                   bool randNegEig, unsigned int numZeroFail,
                   python::dict &coordMap, double forceTol,
                   bool ignoreSmoothingFailures, bool enforceChirality,
-                  bool useExpTorsionAnglePrefs, bool useBasicKnowledge,
+                  bool useExpTorsionAnglePrefs, bool useSmallRingTorsions, bool useMacrocycleTorsions,
+                  bool useBasicKnowledge,
                   bool printExpTorsionAngles) {
   std::map<int, RDGeom::Point3D> pMap;
   python::list ks = coordMap.keys();
@@ -50,7 +53,8 @@ int EmbedMolecule(ROMol &mol, unsigned int maxAttempts, int seed,
   DGeomHelpers::EmbedParameters params(
       maxAttempts, numThreads, seed, clearConfs, useRandomCoords, boxSizeMult,
       randNegEig, numZeroFail, pMapPtr, forceTol, ignoreSmoothingFailures,
-      enforceChirality, useExpTorsionAnglePrefs, useBasicKnowledge, verbose,
+      enforceChirality, useExpTorsionAnglePrefs, useSmallRingTorsions, useMacrocycleTorsions,
+      useBasicKnowledge, verbose,
       basinThresh, pruneRmsThresh, onlyHeavyAtomsForRMS);
 
   int res;
@@ -75,7 +79,8 @@ INT_VECT EmbedMultipleConfs(
     bool clearConfs, bool useRandomCoords, double boxSizeMult, bool randNegEig,
     unsigned int numZeroFail, double pruneRmsThresh, python::dict &coordMap,
     double forceTol, bool ignoreSmoothingFailures, bool enforceChirality,
-    int numThreads, bool useExpTorsionAnglePrefs, bool useBasicKnowledge,
+    int numThreads, bool useExpTorsionAnglePrefs, bool useSmallRingTorsions, bool useMacrocycleTorsions,
+    bool useBasicKnowledge,
     bool printExpTorsionAngles) {
   std::map<int, RDGeom::Point3D> pMap;
   python::list ks = coordMap.keys();
@@ -94,7 +99,8 @@ INT_VECT EmbedMultipleConfs(
   DGeomHelpers::EmbedParameters params(
       maxAttempts, numThreads, seed, clearConfs, useRandomCoords, boxSizeMult,
       randNegEig, numZeroFail, pMapPtr, forceTol, ignoreSmoothingFailures,
-      enforceChirality, useExpTorsionAnglePrefs, useBasicKnowledge, verbose,
+      enforceChirality, useExpTorsionAnglePrefs, useSmallRingTorsions, useMacrocycleTorsions,
+      useBasicKnowledge, verbose,
       basinThresh, pruneRmsThresh, onlyHeavyAtomsForRMS);
 
   INT_VECT res;
@@ -148,6 +154,30 @@ DGeomHelpers::EmbedParameters *getETDG() {
   return new DGeomHelpers::EmbedParameters(DGeomHelpers::ETDG);
 }
 
+// void setCPCI(ForceFields::CrystalFF::CrystalFFDetails *self,
+//                      python::dict &CPCIdict) {
+//   //CPCI has the atom pair tuple as key and charge product as value
+// //   std::map<std::pair<unsigned int, unsigned int>, double> *CPCI;
+// //   CPCI = new std::map<std::pair<unsigned int, unsigned int>, double>;
+
+//   python::list ks = CPCIdict.keys();
+//   unsigned int nKeys = python::extract<unsigned int>(ks.attr("__len__")());
+
+//   for (unsigned int i = 0; i < nKeys; ++i) {
+//     python::tuple id = python::extract<python::tuple>(ks[i]);
+//     unsigned int a = python::extract<unsigned int>(id[0]);
+//     unsigned int b = python::extract<unsigned int>(id[1]);
+//     self->CPCI[std::make_pair(a, b)] = python::extract<double>(CPCIdict[id]);
+//   }
+//   //std::map<std::pair<unsigned int, unsigned int>,double> *CPCI_Ptr = nullptr;
+//   //if (nKeys){
+//   //  CPCI_Ptr =  &CPCI;
+//   //}
+//   //self->CPCI =  CPCI_Ptr;
+// //   self->CPCI = CPCI;
+
+// }
+    
 void setCPCI(DGeomHelpers::EmbedParameters *self,
                      python::dict &CPCIdict) {
   //CPCI has the atom pair tuple as key and charge product as value
@@ -163,13 +193,8 @@ void setCPCI(DGeomHelpers::EmbedParameters *self,
     unsigned int b = python::extract<unsigned int>(id[1]);
     (*CPCI)[std::make_pair(a, b)] = python::extract<double>(CPCIdict[id]);
   }
-  //std::map<std::pair<unsigned int, unsigned int>,double> *CPCI_Ptr = nullptr;
-  //if (nKeys){
-  //  CPCI_Ptr =  &CPCI;
-  //}
-  //self->CPCI =  CPCI_Ptr;
-  self->CPCI = CPCI;
 
+  self->CPCI = CPCI;
 }
 
 void setBoundsMatrix(DGeomHelpers::EmbedParameters *self,
@@ -209,7 +234,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
   // RegisterListConverter<RDKit::Atom*>();
 
   std::string docString =
-      "Use distance geometry to obtain intial \n\
+      "Use distance geometry to obtain initial \n\
  coordinates for a molecule\n\n\
  \n\
  ARGUMENTS:\n\n\
@@ -257,6 +282,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
        python::arg("ignoreSmoothingFailures") = false,
        python::arg("enforceChirality") = true,
        python::arg("useExpTorsionAnglePrefs") = true,
+       python::arg("useSmallRingTorsions") = false,
+       python::arg("useMacrocycleTorsions") = false,
        python::arg("useBasicKnowledge") = true,
        python::arg("printExpTorsionAngles") = false),
       docString.c_str());
@@ -323,6 +350,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
        python::arg("ignoreSmoothingFailures") = false,
        python::arg("enforceChirality") = true, python::arg("numThreads") = 1,
        python::arg("useExpTorsionAnglePrefs") = true,
+       python::arg("useSmallRingTorsions") = false,
+       python::arg("useMacrocycleTorsions") = false,
        python::arg("useBasicKnowledge") = true,
        python::arg("printExpTorsionAngles") = false),
       docString.c_str());
