@@ -110,7 +110,7 @@ void testCoulombMat2(){
     std::string line;
     std::vector<std::string> tokens; 
 
-    RDKit::ROMOL_SPTR mol( RDKit::MolFileToMol( mol_file , removeHs = false) );
+    RDKit::ROMOL_SPTR mol( RDKit::MolFileToMol( mol_file , true, false) );
 
     std::vector<std::vector<double>> Mres;
     int nbmats= 10;
