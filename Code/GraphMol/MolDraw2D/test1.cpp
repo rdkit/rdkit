@@ -1250,8 +1250,8 @@ M  END";
     outs << text;
     outs.flush();
     TEST_ASSERT(
-        text.find("<path class='bond-1' d='M 125.358,114.638 "
-                  "L 179.254,90.8937 L 172.866,79.8306 Z' "
+        text.find("<path class='bond-1' d='M 126.077,115.053"
+                  " L 181.502,90.6354 L 174.933,79.2584 Z' "
                   "style='fill:#000000") != std::string::npos);
     delete m;
   }
@@ -1302,8 +1302,8 @@ M  END";
     outs << text;
     outs.flush();
     TEST_ASSERT(
-        text.find("<path class='bond-3' d='M 101.811,115.504 L 79.4403,92.3527 "
-                  "L 72.723,101.708 Z' "
+        text.find("<path class='bond-3' d='M 101.742,115.477"
+                  " L 79.4095,92.366 L 72.7039,101.705 Z' "
                   "style='fill:#000000;") != std::string::npos);
 
     MolDraw2DUtils::prepareMolForDrawing(*m);
@@ -1751,7 +1751,7 @@ void test13JSONConfig() {
     outs.close();
     TEST_ASSERT(text.find("sans-serif;fill:#FF7FFF") !=
                 std::string::npos);
-    TEST_ASSERT(text.find("'bond-0' d='M 129.678,9.09091 L 177.575,92.0514'")
+    TEST_ASSERT(text.find("'bond-0' d='M 129.799,9.09091 L 177.679,92.0201'")
                 != std::string::npos);
     // these days the bond line width scales with the rest of the
     // drawing, and at this size this comes out as 6px.
@@ -2361,7 +2361,7 @@ void test19RotateDrawing() {
       std::ofstream outs((nameBase + "1.svg").c_str());
       outs << text;
       outs.flush();
-      TEST_ASSERT(text.find("text-anchor=\"start\" x='244.002' y='153.9'")
+      TEST_ASSERT(text.find("text-anchor=\"start\" x='243.304' y='154.037'")
                   != std::string::npos);
     }
     {
@@ -2373,7 +2373,7 @@ void test19RotateDrawing() {
       std::ofstream outs((nameBase + "2.svg").c_str());
       outs << text;
       outs.flush();
-      TEST_ASSERT(text.find("text-anchor=\"start\" x='136.934' y='276.346'")
+      TEST_ASSERT(text.find("text-anchor=\"start\" x='136.604' y='276.316'")
                   != std::string::npos);
     }
   }
@@ -2603,7 +2603,7 @@ void testGithub2931() {
     outs << text;
     outs.flush();
     TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:5px") != std::string::npos);
-    TEST_ASSERT(text.find("ellipse cx='244.231' cy='386.539' rx='11.8875' ry='12.7279'"
+    TEST_ASSERT(text.find("ellipse cx='244.253' cy='386.518' rx='11.9872' ry='12.8346'"
                           " style='fill:none;stroke:#00FF00") != std::string::npos);
   }
   std::cerr << " Done" << std::endl;
