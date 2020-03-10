@@ -228,8 +228,8 @@ TEST_CASE("dative bonds", "[drawing, organometallics]") {
     outs << text;
     outs.flush();
 
-    CHECK(text.find("<path class='bond-0' d='M 64.0554,102.283"
-                    " L 58.5436,100 L 64.0554,97.717") != std::string::npos);
+    CHECK(text.find("<path class='bond-0' d='M 62.0224,102.827"
+                    " L 55.1975,100 L 62.0224,97.173") != std::string::npos);
   }
   SECTION("more complex") {
     auto m1 = "N->1[C@@H]2CCCC[C@H]2N->[Pt]11OC(=O)C(=O)O1"_smiles;
@@ -243,8 +243,8 @@ TEST_CASE("dative bonds", "[drawing, organometallics]") {
     outs << text;
     outs.flush();
 
-    CHECK(text.find("<path class='bond-7' d='M 95.6856,94.0417"
-                    " L 94.1218,95 L 94.55,93.2166") !=
+    CHECK(text.find("<path class='bond-7' d='M 95.8722,93.948"
+                    " L 94.3351,94.8899 L 94.7559,93.137") !=
           std::string::npos);
   }
 }
