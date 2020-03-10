@@ -84,9 +84,14 @@ void prepareAndDrawMolecule(MolDraw2D &drawer, const ROMol &mol,
                             int confId) {
   RWMol cpy(mol);
   prepareMolForDrawing(cpy);
+  // having done the prepare, we don't want to do it again in drawMolecule.
+  bool old_prep_mol = drawer.drawOptions().prepareMolsBeforeDrawing;
+  drawer.drawOptions().prepareMolsBeforeDrawing = false;
   drawer.drawMolecule(cpy, legend, highlight_atoms, highlight_bonds,
                       highlight_atom_map, highlight_bond_map, highlight_radii,
                       confId);
+  drawer.drawOptions().prepareMolsBeforeDrawing = old_prep_mol;
+
 }
 
 void updateDrawerParamsFromJSON(MolDraw2D &drawer, const char *json) {
@@ -124,6 +129,7 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
   PT_OPT_GET(dummiesAreAttachments);
   PT_OPT_GET(circleAtoms);
   PT_OPT_GET(continuousHighlight);
+  PT_OPT_GET(fillHighlights);
   PT_OPT_GET(flagCloseContactsDist);
   PT_OPT_GET(includeAtomTags);
   PT_OPT_GET(clearBackground);
@@ -131,6 +137,11 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
   PT_OPT_GET(multipleBondOffset);
   PT_OPT_GET(padding);
   PT_OPT_GET(additionalAtomLabelPadding);
+  PT_OPT_GET(bondLineWidth);
+  PT_OPT_GET(prepareMolsBeforeDrawing);
+  PT_OPT_GET(fixedScale);
+  PT_OPT_GET(fixedBondLength);
+  PT_OPT_GET(rotate);
   get_colour_option(&pt, "highlightColour", opts.highlightColour);
   get_colour_option(&pt, "backgroundColour", opts.backgroundColour);
   get_colour_option(&pt, "legendColour", opts.legendColour);
@@ -208,7 +219,6 @@ void contourAndDrawGrid(MolDraw2D &drawer, const double *grid,
             fracV *= -1;
           }
         }
-        DrawColour fillColour;
         auto c1 = (gridV < 0 || params.colourMap.size() == 2)
                       ? params.colourMap[1]
                       : params.colourMap[1];
