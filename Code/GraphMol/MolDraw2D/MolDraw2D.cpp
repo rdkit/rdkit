@@ -2134,7 +2134,7 @@ vector<string> MolDraw2D::atomLabelToPieces(int atom_num) const {
 vector<string> MolDraw2D::atomLabelToPieces(const string &label,
                                             OrientType orient) const {
 
-  // cout << "splitting " << label << " : " << orient << endl;
+  // cout << "ZZZZZZZZZZ\nsplitting " << label << " : " << orient << endl;
   vector<string> label_pieces;
   if(label.empty()) {
     return label_pieces;
@@ -2189,6 +2189,18 @@ vector<string> MolDraw2D::atomLabelToPieces(const string &label,
       break;
     }
   }
+
+  // if there's isotope info, and orient is W we want it after the first
+  // symbol.  It will be the first piece as getAtomSymbol puts it
+  // together.
+  if(orient == W && label_pieces[0].substr(0, 5) == "<sup>"
+      && isdigit(label_pieces[0][6])) {
+    label_pieces[1] = label_pieces[0]+ label_pieces[1];
+    label_pieces[0].clear();
+    label_pieces.erase(remove(label_pieces.begin(), label_pieces.end(), ""),
+                       label_pieces.end());
+  }
+
   // if there's a charge, it always needs to be at the end.
   string charge_piece;
   for(size_t j = 0; j < label_pieces.size(); ++j) {
@@ -2199,6 +2211,7 @@ vector<string> MolDraw2D::atomLabelToPieces(const string &label,
       label_pieces[j].clear();
     }
   }
+
   label_pieces.erase(remove(label_pieces.begin(), label_pieces.end(), ""),
                      label_pieces.end());
   // if orient is W charge goes to front, otherwise to end.
@@ -2221,7 +2234,7 @@ vector<string> MolDraw2D::atomLabelToPieces(const string &label,
   label_pieces.erase(remove(label_pieces.begin(), label_pieces.end(), ""),
                      label_pieces.end());
 
-  // if there's a <sup> piece, attach it to the one after.
+  // if there's a <sup>[+-.] piece, attach it to the one after.
   if(label_pieces.size() > 1) {
     for (size_t j = 0; j < label_pieces.size() - 1; ++j) {
       if(label_pieces[j].substr(0, 5) == "<sup>") {
@@ -2251,7 +2264,7 @@ vector<string> MolDraw2D::atomLabelToPieces(const string &label,
 
   // cout << "Final pieces : ";
   // for(auto l: label_pieces) {
-  //   cout << l << " X ";
+  //   cout << l << endl;
   // }
   // cout << endl;
 
