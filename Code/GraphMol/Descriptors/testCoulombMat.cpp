@@ -31,10 +31,15 @@
 
 using namespace Eigen;
 
-struct BagMatrix {
-  VectorXd UCM;
-  std::vector<std::string > BagTag;
-};
+std::vector<std::string> tokenize(const std::string &s) {
+        boost::char_separator<char> sep(", \n\r\t");
+        boost::tokenizer<boost::char_separator<char>> tok(s, sep);
+        std::vector<std::string> tokens;
+        std::copy(tok.begin(), tok.end(), std::back_inserter<std::vector<std::string> >(tokens));
+  return tokens;
+}
+
+
 
 void testCoulombMat1(){
     std::cout << "===================== Testing CoulombMat GLobal =======================\n";
@@ -52,14 +57,8 @@ void testCoulombMat1(){
     std::string line;
     std::vector<std::string> tokens; 
 
-RDKit::MolFileToMol( mol_file , removeHs = false) 
+    RDKit::ROMOL_SPTR mol( RDKit::MolFileToMol( mol_file , true, false) );
 
-    RDKit::ROMOL_SPTR mol( RDKit::MolFileToMol( mol_file , removeHs = false) );
-    //RDKit::ROMOL_SPTR mol( RDKit::MolOps::addHs( *mol1 ) );
-
-    //RDKit::DGeomHelpers::EmbedParameters params( RDKit::DGeomHelpers::ETKDGv2 );
-    //params.randomSeed = 0xf00d;
-    //RDKit::DGeomHelpers::EmbedMolecule( *mol , params );
     std::vector<std::vector<double>> Mres;
     int nbmats= 10;
     int confId = -1;
@@ -163,7 +162,7 @@ void testCoulombMat3(){
     std::string line;
     std::vector<std::string> tokens; 
 
-    RDKit::ROMOL_SPTR mol( RDKit::MolFileToMol( mol_file , removeHs = false) );
+    RDKit::ROMOL_SPTR mol( RDKit::MolFileToMol( mol_file , true, false) );
 
     std::vector<std::vector<double>> Mres;
     int nbmats= 10;
@@ -217,7 +216,7 @@ void testCoulombMat4(){
     std::string line;
     std::vector<std::string> tokens; 
 
-    RDKit::ROMOL_SPTR mol( RDKit::MolFileToMol( mol_file , removeHs = false) );
+    RDKit::ROMOL_SPTR mol( RDKit::MolFileToMol( mol_file , true, false) );
 
     std::vector<std::vector<double>> Mres;
     int nbmats= 10;
@@ -270,7 +269,7 @@ void testCoulombMat5(){
     std::string line;
     std::vector<std::string> tokens; 
 
-    RDKit::ROMOL_SPTR mol( RDKit::MolFileToMol( mol_file , removeHs = false) );
+    RDKit::ROMOL_SPTR mol( RDKit::MolFileToMol( mol_file , true, false) );
 
     std::vector<std::vector<double>> Mres;
     int nbmats= 10;
