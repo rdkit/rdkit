@@ -50,9 +50,6 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DCairo : public MolDraw2D {
     }
   }
 
-  // this over-ride of setFontSize sets the font size to drawFontSize()
-  // and sets it on the Cairo canvas.
-  void setFontSize(double new_size) override;
   void setColour(const DrawColour &col) override;
 
   // not sure if this goes here or if we should do a dtor since initDrawing() is

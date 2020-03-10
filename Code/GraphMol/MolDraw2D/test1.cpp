@@ -2376,8 +2376,8 @@ void test19RotateDrawing() {
       TEST_ASSERT(text.find("text-anchor=\"start\" x='136.934' y='276.346'")
                   != std::string::npos);
     }
-
   }
+  std::cerr << " Done" << std::endl;
 }
 
 void testGithub2063() {

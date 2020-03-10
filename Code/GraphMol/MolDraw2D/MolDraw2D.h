@@ -190,7 +190,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
  public:
   typedef enum { C = 0, N, E, S, W } OrientType;
   // for aligning the drawing of text to the passed in coords.
-  typedef enum {START, MIDDLE, END} AlignType;
+  typedef enum { START, MIDDLE, END } AlignType;
   typedef enum {
     TextDrawNormal = 0,
     TextDrawSuperscript,
@@ -289,12 +289,12 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
     coordinates
   */
   virtual void drawMoleculeWithHighlights(
-        const ROMol &mol, const std::string &legend,
-        const std::map<int, std::vector<DrawColour> > &highlight_atom_map,
-        const std::map<int, std::vector<DrawColour> > &highlight_bond_map,
-        const std::map<int, double> &highlight_radii,
-        const std::map<int, int> &highlight_linewidth_multipliers,
-        int confId = -1);
+      const ROMol &mol, const std::string &legend,
+      const std::map<int, std::vector<DrawColour>> &highlight_atom_map,
+      const std::map<int, std::vector<DrawColour>> &highlight_bond_map,
+      const std::map<int, double> &highlight_radii,
+      const std::map<int, int> &highlight_linewidth_multipliers,
+      int confId = -1);
 
   //! draw multiple molecules in a grid
   /*!
@@ -396,13 +396,11 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   //! overload
   // calculate a single scale that will suit all molecules.  For use by
   // drawMolecules primarily.
-  void calculateScale(
-      int width, int height,
-      const std::vector<ROMol *> &mols,
-      const std::vector<std::vector<int>> *highlight_atoms,
-      const std::vector<std::map<int, double>> *highlight_radii,
-      const std::vector<int> *confIds,
-      std::vector<std::unique_ptr<RWMol> > &tmols);
+  void calculateScale(int width, int height, const std::vector<ROMol *> &mols,
+                      const std::vector<std::vector<int>> *highlight_atoms,
+                      const std::vector<std::map<int, double>> *highlight_radii,
+                      const std::vector<int> *confIds,
+                      std::vector<std::unique_ptr<RWMol>> &tmols);
   // set [xy]_trans_ to the middle of the draw area in molecule coords
   void centrePicture(int width, int height);
 
@@ -424,7 +422,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
 
   //! returns the font size (in molecule units)
   virtual double fontSize() const { return font_size_; }
-  int drawFontSize() const;
+  double drawFontSize() const;
 
   //! set font size in molecule coordinate units. That's probably Angstrom for
   //! RDKit.
@@ -464,6 +462,10 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
    */
   virtual void getStringSize(const std::string &label, double &label_width,
                              double &label_height) const = 0;
+  // get the overall size of the label, allowing for it being split
+  // into pieces according to orientation.
+  void getLabelSize(const std::string &label, OrientType orient,
+                    double &label_width, double &label_height) const;
   //! drawString centres the string on cds.
   virtual void drawString(const std::string &str, const Point2D &cds);
   // unless the specific drawer over-rides this overload, it will just call
@@ -496,11 +498,11 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   // at 3 o-clock and 90 at 12 o'clock as you'd expect from your maths.
   // ang2 must be > ang1 - it won't draw backwards.  This is not enforced.
   // Angles in degrees.
-  virtual void drawArc(const Point2D &centre, double radius,
-                       double ang1, double ang2);
+  virtual void drawArc(const Point2D &centre, double radius, double ang1,
+                       double ang2);
   // and a general ellipse form
-  virtual void drawArc(const Point2D &centre, double xradius,
-                       double yradius, double ang1, double ang2);
+  virtual void drawArc(const Point2D &centre, double xradius, double yradius,
+                       double ang1, double ang2);
   //! draw a rectangle
   virtual void drawRect(const Point2D &cds1, const Point2D &cds2);
   //! draw a line indicating the presence of an attachment point (normally a
@@ -579,15 +581,14 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   DrawColour getColourByAtomicNum(int atomic_num);
 
   // set the system up to draw the molecule including calculating the scale.
-  std::unique_ptr<RWMol> setupDrawMolecule(const ROMol &mol,
-                                           const std::vector<int> *highlight_atoms,
-                                           const std::map<int, double> *highlight_radii,
-                                           int confId, int width, int height);
+  std::unique_ptr<RWMol> setupDrawMolecule(
+      const ROMol &mol, const std::vector<int> *highlight_atoms,
+      const std::map<int, double> *highlight_radii, int confId, int width,
+      int height);
   // do the initial setup bits for drawing a molecule.
-  std::unique_ptr<RWMol> setupMoleculeDraw(const ROMol &mol,
-                                           const std::vector<int> *highlight_atoms,
-                                           const std::map<int, double> *highlight_radii,
-                                           int confId = -1);
+  std::unique_ptr<RWMol> setupMoleculeDraw(
+      const ROMol &mol, const std::vector<int> *highlight_atoms,
+      const std::map<int, double> *highlight_radii, int confId = -1);
   // if bond_colours is given, it must have an entry for every bond, and it
   // trumps everything else.  First in pair is bonds begin atom, second is
   // end atom.
@@ -596,7 +597,8 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
                  const std::map<int, DrawColour> *highlight_atom_map = nullptr,
                  const std::vector<int> *highlight_bonds = nullptr,
                  const std::map<int, DrawColour> *highlight_bond_map = nullptr,
-                 const std::vector<std::pair<DrawColour, DrawColour> > *bond_colours = nullptr);
+                 const std::vector<std::pair<DrawColour, DrawColour>>
+                     *bond_colours = nullptr);
   // do the finishing touches to the drawing
   void finishMoleculeDraw(const ROMol &draw_mol,
                           const std::vector<DrawColour> &atom_colours);
@@ -606,17 +608,23 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
                            const std::map<int, double> *highlight_radii);
   // calculate parameters for an ellipse that roughly goes round the label
   // of the given atom.
-  void calcLabelEllipse(int atom_idx, const std::map<int, double> *highlight_radii,
-                        Point2D &centre, double &xradius, double &yradius) const;
+  void calcLabelEllipse(int atom_idx,
+                        const std::map<int, double> *highlight_radii,
+                        Point2D &centre, double &xradius,
+                        double &yradius) const;
   // draw 1 or more coloured line along bonds
-  void drawHighlightedBonds(const ROMol &mol,
-                            const std::map<int, std::vector<DrawColour> > &highlight_bond_map,
-                            const std::map<int, int> &highlight_linewidth_multipliers,
-                            const std::map<int, double> *highlight_radii);
-  int getHighlightBondWidth(int bond_idx, const std::map<int, int> *highlight_linewidth_multipliers) const;
+  void drawHighlightedBonds(
+      const ROMol &mol,
+      const std::map<int, std::vector<DrawColour>> &highlight_bond_map,
+      const std::map<int, int> &highlight_linewidth_multipliers,
+      const std::map<int, double> *highlight_radii);
+  int getHighlightBondWidth(
+      int bond_idx,
+      const std::map<int, int> *highlight_linewidth_multipliers) const;
   // move p2 so that the line defined by p1 to p2 touches the ellipse for the
   // atom highlighted.
-  void adjustLineEndForHighlight(int at_idx, const std::map<int, double> *highlight_radii,
+  void adjustLineEndForHighlight(int at_idx,
+                                 const std::map<int, double> *highlight_radii,
                                  Point2D p1, Point2D &p2) const;
 
   void extractAtomCoords(const ROMol &mol, int confId, bool updateBBox);
@@ -636,6 +644,8 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   // that need to be drawn for it.  So NH<sub>2</sub> will return
   // "N", "H<sub>2</sub>".
   std::vector<std::string> atomLabelToPieces(int atom_num) const;
+  std::vector<std::string> atomLabelToPieces(const std::string &label,
+                                             OrientType orient) const;
   // cds1 and cds2 are 2 atoms in a ring.  Returns the perpendicular pointing
   // into
   // the ring.
@@ -659,7 +669,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
 
   // adds LaTeX-like annotation for super- and sub-script.
   std::pair<std::string, OrientType> getAtomSymbolAndOrientation(
-      const Atom &atom, const Point2D &nbr_sum) const;
+      const Atom &atom, const ROMol &mol) const;
   std::string getAtomSymbol(const Atom &atom) const;
   OrientType getAtomOrientation(const Atom &atom, const Point2D &nbr_sum) const;
 
@@ -681,13 +691,24 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
       const std::map<int, DrawColour> *highlight_atom_map = nullptr,
       const std::vector<int> *highlight_bonds = nullptr,
       const std::map<int, DrawColour> *highlight_bond_map = nullptr,
-      const std::vector<std::pair<DrawColour, DrawColour> > *bond_colours = nullptr);
+      const std::vector<std::pair<DrawColour, DrawColour>> *bond_colours =
+          nullptr);
 
   // calculate normalised perpendicular to vector between two coords
   Point2D calcPerpendicular(const Point2D &cds1, const Point2D &cds2);
 
   // calculate the width to draw a line in draw coords.
   virtual unsigned int getDrawLineWidth();
+
+  // sort out coords and scale for drawing reactions.
+  void get2DCoordsForReaction(ChemicalReaction &rxn, Point2D &arrowBegin,
+                              Point2D &arrowEnd, std::vector<double> &plusLocs,
+                              double spacing,
+                              const std::vector<int> *confIds);
+  // despite the name, this is only ever used for molecules in a reaction.
+  void get2DCoordsMol(RWMol &mol, double &offset, double spacing,
+                      double &maxY, double &minY, int confId,
+                      bool shiftAgents, double coordScale);
 
 };
 }  // namespace RDKit

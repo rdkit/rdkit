@@ -18,6 +18,7 @@ void MolDraw2DCairo::initDrawing() {
   PRECONDITION(dp_cr, "no draw context");
   cairo_select_font_face(dp_cr, "sans", CAIRO_FONT_SLANT_NORMAL,
                          CAIRO_FONT_WEIGHT_NORMAL);
+  cairo_set_font_size(dp_cr, fontSize());
   cairo_set_line_cap(dp_cr, CAIRO_LINE_CAP_BUTT);
 }
 
@@ -103,12 +104,16 @@ void MolDraw2DCairo::drawChar(char c, const Point2D &cds) {
   txt[0] = c;
   txt[1] = 0;
 
+  cairo_set_font_size(dp_cr, drawFontSize());
   cairo_text_extents_t extents;
   cairo_text_extents(dp_cr, txt, &extents);
   Point2D c1 = cds;
   cairo_move_to(dp_cr, c1.x, c1.y);
   cairo_show_text(dp_cr, txt);
   cairo_stroke(dp_cr);
+  // set the font size back to molecule units so getStringSize
+  // still works properly.
+  cairo_set_font_size(dp_cr, fontSize());
 }
 
 // ****************************************************************************
@@ -153,17 +158,6 @@ void MolDraw2DCairo::clearDrawing() {
 }
 
 // ****************************************************************************
-void MolDraw2DCairo::setFontSize(double new_size) {
-  PRECONDITION(dp_cr, "no draw context");
-  MolDraw2D::setFontSize(new_size);
-  double font_size_in_points = fontSize() * scale();
-  if(font_size_in_points > drawOptions().maxFontSize) {
-    font_size_in_points = drawOptions().maxFontSize;
-  }
-  cairo_set_font_size(dp_cr, font_size_in_points);
-}
-
-// ****************************************************************************
 // using the current scale, work out the size of the label in molecule
 // coordinates
 void MolDraw2DCairo::getStringSize(const std::string &label,
@@ -174,6 +168,7 @@ void MolDraw2DCairo::getStringSize(const std::string &label,
   label_height = 0.0;
 
   TextDrawType draw_mode = TextDrawNormal;
+  cairo_set_font_size(dp_cr, fontSize());
 
   bool had_a_super = false;
 
@@ -191,9 +186,8 @@ void MolDraw2DCairo::getStringSize(const std::string &label,
     cairo_text_extents(dp_cr, txt, &extents);
     double twidth = extents.x_advance, theight = extents.height;
 
-    label_height = std::max(label_height, theight / scale());
-    double char_width = twidth / scale();
-
+    label_height = std::max(label_height, theight);
+    double char_width = twidth;
     if (TextDrawSubscript == draw_mode) {
       char_width *= 0.75;
     } else if (TextDrawSuperscript == draw_mode) {
@@ -209,6 +203,7 @@ void MolDraw2DCairo::getStringSize(const std::string &label,
     label_height *= 1.25;
   }
   label_height *= 1.2;  // empirical
+
 }
 // ****************************************************************************
 namespace {
