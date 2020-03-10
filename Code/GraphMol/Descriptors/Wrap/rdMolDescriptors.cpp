@@ -23,6 +23,7 @@
 #include <DataStructs/BitVects.h>
 
 #include <GraphMol/Descriptors/USRDescriptor.h>
+#include <GraphMol/Descriptors/Augmentation.h>
 
 #ifdef RDK_HAS_EIGEN3
 #include <GraphMol/Descriptors/BCUT.h>
@@ -181,6 +182,15 @@ python::list calcAUTOCORR2Ds(const RDKit::ROMol &mol,
 }
 
 #endif
+
+python::list getAugmentation(const RDKit::ROMol &mol,
+                             int naug, bool addcanonical = true) {
+  std::vector<std::string> res;
+  RDKit::Descriptors::AugmentationVect(mol, res, naug, addcanonical);
+  python::list pyres;
+  BOOST_FOREACH (std::string iv, res) { pyres.append(iv); }
+  return pyres;
+}
 
 RDKit::SparseIntVect<std::int32_t> *GetAtomPairFingerprint(
     const RDKit::ROMol &mol, unsigned int minLength, unsigned int maxLength,
@@ -1689,6 +1699,14 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 
 #endif
   
+  python::scope().attr("_getAugmentation_version") =
+      RDKit::Descriptors::AugmentationVersion;
+  docString = "Returns 2D Autocorrelation descriptors vector";
+  python::def("getAugmentation", getAugmentation,
+              (python::arg("mol"), python::arg("naug") = 10,
+               python::arg("addcanonical") = true),
+              docString.c_str());
+
 #ifdef RDK_HAS_EIGEN3
   python::scope().attr("_BCUT2D_version") =
       RDKit::Descriptors::BCUT2DVersion;

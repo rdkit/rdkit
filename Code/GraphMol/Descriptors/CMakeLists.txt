@@ -13,7 +13,7 @@ rdkit_library(Descriptors
               MQN.cpp
               Property.cpp
               AUTOCORR2D.cpp Data3Ddescriptors.cpp MolData3Ddescriptors.cpp
-              USRDescriptor.cpp AtomFeat.cpp
+              USRDescriptor.cpp AtomFeat.cpp Augmentation.cpp
               ${DESC3D_SOURCES}
               LINK_LIBRARIES PartialCharges SmilesParse FileParsers Subgraphs SubstructMatch MolTransforms GraphMol
                  EigenSolvers ${RDKit_THREAD_LIBS})
@@ -25,7 +25,7 @@ rdkit_headers(Crippen.h BCUT.h Lipinski.h
               RegisterDescriptor.h
               Property.h
               AUTOCORR2D.h Data3Ddescriptors.h MolData3Ddescriptors.h
-              USRDescriptor.h AtomFeat.h
+              USRDescriptor.h AtomFeat.h Augmentation.h
               ${DESC3D_HDRS}
               DEST GraphMol/Descriptors)
 
@@ -37,6 +37,9 @@ LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms PartialCharges
 
 rdkit_test(testATF testATF.cpp
 LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms PartialCharges GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
+
+rdkit_test(testAugmentation testAugmentation.cpp
+LINK_LIBRARIES  Descriptors  SmilesParse  GraphMol RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
 
 if(RDK_HAS_EIGEN)
   rdkit_test(testBCUT testBCUT.cpp
