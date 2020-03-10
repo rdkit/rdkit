@@ -59,6 +59,7 @@ void testCoulombMat1(){
 
     RDKit::ROMOL_SPTR mol( RDKit::MolFileToMol( mol_file , true, false) );
 
+
     std::vector<std::vector<double>> Mres;
     int nbmats= 10;
     int confId = -1;
@@ -68,7 +69,7 @@ void testCoulombMat1(){
 
     RDKit::Descriptors::CoulombMat(*mol, Mres, confId, nbmats, seed, padding, rcut, false, false, false, false, false, 2);
 
-    //std::cout << "===================== vis BoB ========================\n";
+    //std::cout << "===================== vis CM1 ========================\n";
 
     for ( const auto &v : Mres ) {
 
@@ -122,7 +123,7 @@ void testCoulombMat2(){
     // so local is ture 
     RDKit::Descriptors::CoulombMat(*mol, Mres, confId, nbmats, seed, padding, rcut, true, false, false, false, false, 1);
 
-    //std::cout << "===================== vis BoB ========================\n";
+    //std::cout << "===================== vis CM2 ========================\n";
 
     for ( const auto &v : Mres ) {
 
@@ -175,7 +176,7 @@ void testCoulombMat3(){
     // so local is ture 
     RDKit::Descriptors::CoulombMat(*mol, Mres, confId, nbmats, seed, padding, rcut, true, true, false, false, false, 1);
 
-    //std::cout << "===================== vis BoB ========================\n";
+    //std::cout << "===================== vis CM3 ========================\n";
 
     for ( const auto &v : Mres ) {
 
@@ -229,7 +230,7 @@ void testCoulombMat4(){
     // so local is ture 
     RDKit::Descriptors::CoulombMat(*mol, Mres, confId, nbmats, seed, padding, rcut, true, true, false, false, false, alpha);
 
-    //std::cout << "===================== vis BoB ========================\n";
+    std::cout << "===================== vis CM4 ========================\n";
 
     for ( const auto &v : Mres ) {
 
@@ -282,7 +283,7 @@ void testCoulombMat5(){
     // so local is ture 
     RDKit::Descriptors::CoulombMat(*mol, Mres, confId, nbmats, seed, padding, rcut, true, true, true, false, false, alpha);
 
-    //std::cout << "===================== vis BoB ========================\n";
+    //std::cout << "===================== vis CM5 ========================\n";
 
     for ( const auto &v : Mres ) {
 
