@@ -105,6 +105,9 @@ void MolDraw2DCairo::drawChar(char c, const Point2D &cds) {
   txt[1] = 0;
 
   cairo_set_font_size(dp_cr, drawFontSize());
+  if(c == '.') {
+    cairo_set_font_size(dp_cr, 1.5 * drawFontSize());
+  }
   cairo_text_extents_t extents;
   cairo_text_extents(dp_cr, txt, &extents);
   Point2D c1 = cds;
@@ -225,7 +228,9 @@ std::string MolDraw2DCairo::getDrawingText() const {
 void MolDraw2DCairo::writeDrawingText(const std::string &fName) const {
   PRECONDITION(dp_cr, "no draw context");
   cairo_surface_t *surf = cairo_get_target(dp_cr);
-  cairo_surface_write_to_png(surf, fName.c_str());
+  if(cairo_surface_write_to_png(surf, fName.c_str()) != CAIRO_STATUS_SUCCESS) {
+    std::cerr << "Failed to write PNG file " << fName << std::endl;
+  }
 };
 
 }  // namespace RDKit
