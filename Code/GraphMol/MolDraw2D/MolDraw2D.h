@@ -109,6 +109,8 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
                          // present)
   int maxFontSize;  // maximum size in pixels for font in drawn molecule.
                     // default=40. -1 means no max.
+  double annotationFontScale;  // scales font relative to atom labels for
+                               // atom and bond annotation. default=0.75.
   DrawColour legendColour;    // color to be used for the legend (if present)
   double multipleBondOffset;  // offset (in Angstrom) for the extra lines in a
                               // multiple bond
@@ -160,6 +162,7 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
         backgroundColour(1, 1, 1),
         legendFontSize(12),
         maxFontSize(40),
+        annotationFontScale(0.75),
         legendColour(0, 0, 0),
         multipleBondOffset(0.15),
         padding(0.05),
@@ -606,6 +609,10 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   // draw a circle in the requested colour(s) around the atom.
   void drawHighlightedAtom(int atom_idx, const std::vector<DrawColour> &colours,
                            const std::map<int, double> *highlight_radii);
+  // calculate the rectangle that goes round the string, taking its
+  // orientation into account.  Returns centre, width and height.
+  void calcLabelRect(const std::string &label, OrientType orient, Point2D &centre,
+                     double &width, double &height) const;
   // calculate parameters for an ellipse that roughly goes round the label
   // of the given atom.
   void calcLabelEllipse(int atom_idx,
@@ -623,8 +630,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
       const std::map<int, int> *highlight_linewidth_multipliers) const;
   // move p2 so that the line defined by p1 to p2 touches the ellipse for the
   // atom highlighted.
-  void adjustLineEndForHighlight(int at_idx,
-                                 const std::map<int, double> *highlight_radii,
+  void adjustLineEndForHighlight(int at_idx, const std::map<int, double> *highlight_radii,
                                  Point2D p1, Point2D &p2) const;
 
   void extractAtomCoords(const ROMol &mol, int confId, bool updateBBox);
@@ -639,6 +645,26 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
                      const std::vector<int> *highlight_atoms = nullptr,
                      const std::map<int, DrawColour> *highlight_map = nullptr);
   void drawAtomLabel(int atom_num, const DrawColour &draw_colour);
+  void drawAtomAnnotation(const ROMol &mol, const Atom *atom);
+  void drawBondAnnotation(const ROMol &mol, const Bond *bond);
+  // find a good starting point for scanning round the annotation
+  // atom.  If we choose well, the first angle should be the one.
+  // Returns angle in radians.
+  double getNoteStartAngle(const ROMol &mol, const Atom *atom) const;
+  // see if the note will clash with anything else drawn on the molecule.
+  // note_vec should have unit length.  note_rad is the radius along
+  // note_vec that the note will be drawn.
+  bool doesNoteClash(const std::string &note, const Point2D &note_vec,
+                     const ROMol &mol, int atom_idx, double note_rad) const;
+  // does the note_vec form an unacceptably acute angle with one of the
+  // bonds from atom to its neighbours.
+  bool doesNoteClashNbourBonds(const Point2D &note_vec,
+                               const ROMol &mol, const Atom *atom) const;
+  // does the note, when placed note_rad out along note_vec overlap with
+  // any atom label on the atom.
+  bool doesNoteClashAtomLabel(const std::string &note,
+                              const Point2D &note_vec, double note_rad,
+                              const ROMol &mol, int atom_idx) const;
 
   // take the label for the given atom and return the individual pieces
   // that need to be drawn for it.  So NH<sub>2</sub> will return
@@ -647,13 +673,11 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   std::vector<std::string> atomLabelToPieces(const std::string &label,
                                              OrientType orient) const;
   // cds1 and cds2 are 2 atoms in a ring.  Returns the perpendicular pointing
-  // into
-  // the ring.
+  // into the ring.
   Point2D bondInsideRing(const ROMol &mol, const Bond *bond,
                          const Point2D &cds1, const Point2D &cds2);
   // cds1 and cds2 are 2 atoms in a chain double bond.  Returns the
-  // perpendicular
-  // pointing into the inside of the bond
+  // perpendicular pointing into the inside of the bond
   Point2D bondInsideDoubleBond(const ROMol &mol, const Bond *bond);
   // calculate normalised perpendicular to vector between two coords, such
   // that

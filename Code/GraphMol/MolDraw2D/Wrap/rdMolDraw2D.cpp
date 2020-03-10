@@ -600,6 +600,9 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def_readwrite("maxFontSize", &RDKit::MolDrawOptions::maxFontSize,
                      "maximum font size in pixels. default=40, -1 means no"
                      " maximum.")
+      .def_readwrite("annotationFontScale", &RDKit::MolDrawOptions::annotationFontScale,
+                    "Scale of font for atom and bond annotation relative to atom"
+                    "label font.  Default=0.75.")
       .def_readwrite(
           "multipleBondOffset", &RDKit::MolDrawOptions::multipleBondOffset,
           "offset (in Angstroms) for the extra lines in a multiple bond")
