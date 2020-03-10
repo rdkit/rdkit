@@ -45,16 +45,21 @@ void testCoulombMat1(){
     std::string fNameCM =
          pathName + "/Code/GraphMol/Descriptors/test_data/CM1.out";
 
+    std::string mol_file =
+         pathName + "/Code/GraphMol/Descriptors/test_data/bobmol.sdf";
+
     std::ifstream instrmCM(fNameCM.c_str());
     std::string line;
     std::vector<std::string> tokens; 
 
-    RDKit::ROMOL_SPTR mol1( RDKit::SmilesToMol( "NCCCCCO" ) );
-    RDKit::ROMOL_SPTR mol( RDKit::MolOps::addHs( *mol1 ) );
+RDKit::MolFileToMol( mol_file , removeHs = false) 
 
-    RDKit::DGeomHelpers::EmbedParameters params( RDKit::DGeomHelpers::ETKDGv2 );
-    params.randomSeed = 0xf00d;
-    RDKit::DGeomHelpers::EmbedMolecule( *mol , params );
+    RDKit::ROMOL_SPTR mol( RDKit::MolFileToMol( mol_file , removeHs = false) );
+    //RDKit::ROMOL_SPTR mol( RDKit::MolOps::addHs( *mol1 ) );
+
+    //RDKit::DGeomHelpers::EmbedParameters params( RDKit::DGeomHelpers::ETKDGv2 );
+    //params.randomSeed = 0xf00d;
+    //RDKit::DGeomHelpers::EmbedMolecule( *mol , params );
     std::vector<std::vector<double>> Mres;
     int nbmats= 10;
     int confId = -1;
@@ -98,17 +103,16 @@ void testCoulombMat2(){
     std::string fNameCM2 =
          pathName + "/Code/GraphMol/Descriptors/test_data/CM2.out";
 
+    std::string mol_file =
+         pathName + "/Code/GraphMol/Descriptors/test_data/bobmol.sdf";
+
     std::ifstream instrmCM2(fNameCM2.c_str());
 
     std::string line;
     std::vector<std::string> tokens; 
 
-    RDKit::ROMOL_SPTR mol1( RDKit::SmilesToMol( "NCCCCCO" ) );
-    RDKit::ROMOL_SPTR mol( RDKit::MolOps::addHs( *mol1 ) );
+    RDKit::ROMOL_SPTR mol( RDKit::MolFileToMol( mol_file , removeHs = false) );
 
-    RDKit::DGeomHelpers::EmbedParameters params( RDKit::DGeomHelpers::ETKDGv2 );
-    params.randomSeed = 0xf00d;
-    RDKit::DGeomHelpers::EmbedMolecule( *mol , params );
     std::vector<std::vector<double>> Mres;
     int nbmats= 10;
     int confId = -1;
@@ -152,16 +156,15 @@ void testCoulombMat3(){
     std::string fNameCM3 =
          pathName + "/Code/GraphMol/Descriptors/test_data/CM3.out";
 
+    std::string mol_file =
+         pathName + "/Code/GraphMol/Descriptors/test_data/bobmol.sdf";
+ 
     std::ifstream instrmCM3(fNameCM3.c_str());
     std::string line;
     std::vector<std::string> tokens; 
 
-    RDKit::ROMOL_SPTR mol1( RDKit::SmilesToMol( "NCCCCCO" ) );
-    RDKit::ROMOL_SPTR mol( RDKit::MolOps::addHs( *mol1 ) );
+    RDKit::ROMOL_SPTR mol( RDKit::MolFileToMol( mol_file , removeHs = false) );
 
-    RDKit::DGeomHelpers::EmbedParameters params( RDKit::DGeomHelpers::ETKDGv2 );
-    params.randomSeed = 0xf00d;
-    RDKit::DGeomHelpers::EmbedMolecule( *mol , params );
     std::vector<std::vector<double>> Mres;
     int nbmats= 10;
     int confId = -1;
@@ -207,16 +210,15 @@ void testCoulombMat4(){
     std::string fNameCM4 =
          pathName + "/Code/GraphMol/Descriptors/test_data/CM4.out";
 
+    std::string mol_file =
+         pathName + "/Code/GraphMol/Descriptors/test_data/bobmol.sdf";
+
     std::ifstream instrmCM4(fNameCM4.c_str());
     std::string line;
     std::vector<std::string> tokens; 
 
-    RDKit::ROMOL_SPTR mol1( RDKit::SmilesToMol( "NCCCCCO" ) );
-    RDKit::ROMOL_SPTR mol( RDKit::MolOps::addHs( *mol1 ) );
+    RDKit::ROMOL_SPTR mol( RDKit::MolFileToMol( mol_file , removeHs = false) );
 
-    RDKit::DGeomHelpers::EmbedParameters params( RDKit::DGeomHelpers::ETKDGv2 );
-    params.randomSeed = 0xf00d;
-    RDKit::DGeomHelpers::EmbedMolecule( *mol , params );
     std::vector<std::vector<double>> Mres;
     int nbmats= 10;
     int confId = -1;
@@ -261,16 +263,15 @@ void testCoulombMat5(){
     std::string fNameCM5 =
          pathName + "/Code/GraphMol/Descriptors/test_data/CM5.out";
 
+    std::string mol_file =
+         pathName + "/Code/GraphMol/Descriptors/test_data/bobmol.sdf";
+
     std::ifstream instrmCM5(fNameCM5.c_str());
     std::string line;
     std::vector<std::string> tokens; 
 
-    RDKit::ROMOL_SPTR mol1( RDKit::SmilesToMol( "NCCCCCO" ) );
-    RDKit::ROMOL_SPTR mol( RDKit::MolOps::addHs( *mol1 ) );
+    RDKit::ROMOL_SPTR mol( RDKit::MolFileToMol( mol_file , removeHs = false) );
 
-    RDKit::DGeomHelpers::EmbedParameters params( RDKit::DGeomHelpers::ETKDGv2 );
-    params.randomSeed = 0xf00d;
-    RDKit::DGeomHelpers::EmbedMolecule( *mol , params );
     std::vector<std::vector<double>> Mres;
     int nbmats= 10;
     int confId = -1;
