@@ -588,3 +588,16 @@ TEST_CASE("github #2792: carbon in the uncharger", "[uncharger,bug]") {
     CHECK(outm->getAtomWithIdx(5)->getTotalNumHs() == 2);
   }
 }
+
+TEST_CASE("github #2965: molecules properties not retained after cleanup", "[cleanup, bug]") {
+  SECTION("example 1") {
+	MolStandardize::CleanupParameters params;
+	std::unique_ptr<RWMol> m(SmilesToMol("Cl.c1cnc(OCCCC2CCNCC2)cn1"));
+	REQUIRE(m);
+	m->setProp("testing_prop", "1234");
+	std::unique_ptr<RWMol> res(MolStandardize::cleanup(*m, params));
+        REQUIRE(res);
+	auto x = res->getDict(); 
+	CHECK(x.getVal<std::string>("testing_prop") == "1234");
+  }
+} 
