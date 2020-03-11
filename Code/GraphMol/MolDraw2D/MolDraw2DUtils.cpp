@@ -46,7 +46,11 @@ bool isAtomCandForChiralH(const RWMol &mol, const Atom *atom) {
 void prepareMolForDrawing(RWMol &mol, bool kekulize, bool addChiralHs,
                           bool wedgeBonds, bool forceCoords) {
   if (kekulize) {
-    MolOps::Kekulize(mol, false);  // kekulize, but keep the aromatic flags!
+    try {
+      MolOps::Kekulize(mol, false);  // kekulize, but keep the aromatic flags!
+    } catch(const RDKit::AtomKekulizeException &e) {
+      std::cerr << e.what() << std::endl;
+    }
   }
   if (addChiralHs) {
     std::vector<unsigned int> chiralAts;
