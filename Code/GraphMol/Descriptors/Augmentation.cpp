@@ -58,16 +58,38 @@ void AugmentationVector(const ROMol* mol, std::vector <std::string> &res, unsign
     // make a unique list
     std::sort(nonuniqueres.begin(), nonuniqueres.end());
     std::unique_copy(nonuniqueres.begin(), nonuniqueres.end(), std::back_inserter(res));
-    //std::set_difference(nonuniqueres.begin(), nonuniqueres.end(), res.begin(), res.end(), std::ostream_iterator<std::string>(std::cout, " "));
-
 
 }
+
+
+void AugmentationSet(const ROMol* mol, std::vector <std::string> &res, unsigned int naug, bool addcanonical) {
+
+    PRECONDITION(mol,"bad mol");
+
+    std::set<std::string> dst;
+
+    if (addcanonical) {
+        dst.insert( MolToSmiles( *mol ) );
+    }
+
+
+    std::string smile;
+    for (unsigned int i = 0 ; i < naug; i++) {
+        smile = MolToSmiles( *mol, true, false, -1, false, false, false, true ) ;
+        dst.insert(smile);
+    }
+
+    std::copy(dst.begin(), dst.end(), std::back_inserter(res));
+
+}
+
 }  // end of anonymous namespace
+
 
 // entry point
 void AugmentationVect(const ROMol& mol, std::vector <std::string>& res, unsigned int naug, bool addcanonical) {
 
-  AugmentationVector( &mol, res, naug, addcanonical);
+  AugmentationSet( &mol, res, naug, addcanonical);
 }
 
 }  // namespace Descriptors
