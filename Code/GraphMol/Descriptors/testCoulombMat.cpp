@@ -27,9 +27,7 @@
 #include <GraphMol/DistGeomHelpers/Embedder.h>
 #include <GraphMol/ForceFieldHelpers/MMFF/MMFF.h>
 #include <GraphMol/ForceFieldHelpers/UFF/UFF.h>
-#include <Eigen/Dense>
 
-using namespace Eigen;
 
 std::vector<std::string> tokenize(const std::string &s) {
         boost::char_separator<char> sep(", \n\r\t");
@@ -42,7 +40,7 @@ std::vector<std::string> tokenize(const std::string &s) {
 
 
 void testCoulombMat1(){
-    std::cout << "===================== Testing CoulombMat GLobal =======================\n";
+    std::cerr << "===================== Testing CoulombMat  =======================\n";
  
     std::string pathName = getenv("RDBASE");
 
@@ -61,257 +59,28 @@ void testCoulombMat1(){
 
 
     std::vector<std::vector<double>> Mres;
-    int nbmats= 10;
     int confId = -1;
-    int padding = 23; // padding is the size of the result matrix so >= size max(atoms)
-    int seed = 0xf00d;
-    double rcut = 0; // not used if local is false
-
-    RDKit::Descriptors::CoulombMat(*mol, Mres, confId, nbmats, seed, padding, rcut, false, false, false, false, false, 2);
-
-    //std::cout << "===================== vis CM1 ========================\n";
+    RDKit::Descriptors::CoulombMat(*mol, Mres, confId);
 
     for ( const auto &v : Mres ) {
-
       std::getline(instrmCM, line);
       tokens = tokenize(line);
 
-      int ti = 0;
+      unsigned int ti = 0;
       for ( double x : v )  {
-          //std::cout << x << ",";
+          // std::cout << x << ",";
           TEST_ASSERT(std::fabs(std::stof(tokens[ti]) - x)< 0.001);
           ti++;
       } 
-      //std::cout << "\n";
+      // std::cout << "\n";
     }
-    //std::cout << "\n";
-    Mres.clear();
-    Mres.resize(nbmats);
-
+    // std::cout << "\n";
     
-    std::cout << "CM test 1 mat Done\n";
+    std::cerr << "CM test 1 mat Done\n";
 }
 
-
-void testCoulombMat2(){
-    std::cout << "===================== Testing CoulombMat Local 1 =======================\n";
- 
-    std::string pathName = getenv("RDBASE");
-
-    ///////////////////////
-    // TEST 1 LOCAL
-    std::string fNameCM2 =
-         pathName + "/Code/GraphMol/Descriptors/test_data/CM2.out";
-
-    std::string mol_file =
-         pathName + "/Code/GraphMol/Descriptors/test_data/bobmol.sdf";
-
-    std::ifstream instrmCM2(fNameCM2.c_str());
-
-    std::string line;
-    std::vector<std::string> tokens; 
-
-    RDKit::ROMOL_SPTR mol( RDKit::MolFileToMol( mol_file , true, false) );
-
-    std::vector<std::vector<double>> Mres;
-    int nbmats= 10;
-    int confId = -1;
-    int padding = 23; // padding is the size of the result matrix so >= size max(atoms)
-    int seed = 0xf00d; 
-
-    double rcut = 2.0; 
-    // so local is ture 
-    RDKit::Descriptors::CoulombMat(*mol, Mres, confId, nbmats, seed, padding, rcut, true, false, false, false, false, 1);
-
-    //std::cout << "===================== vis CM2 ========================\n";
-
-    for ( const auto &v : Mres ) {
-
-      std::getline(instrmCM2, line);
-      tokens = tokenize(line);
-
-      int ti = 0;
-      for ( double x : v )  {
-          //std::cout << x << ",";
-          TEST_ASSERT(std::fabs(std::stof(tokens[ti]) - x)< 0.001);
-          ti++;
-      } 
-      //std::cout << "\n";
-    }
-    //std::cout << "\n";
-    Mres.clear();
-    Mres.resize(nbmats);
-
-    std::cout << "CM test 2 mat Done\n";
-}
-
-
-void testCoulombMat3(){
-    std::cout << "===================== Testing CoulombMat Local 2 =======================\n";
- 
-    std::string pathName = getenv("RDBASE");
-
-    //////////////
-    // TEST 2 LOCAL decaying
-    std::string fNameCM3 =
-         pathName + "/Code/GraphMol/Descriptors/test_data/CM3.out";
-
-    std::string mol_file =
-         pathName + "/Code/GraphMol/Descriptors/test_data/bobmol.sdf";
- 
-    std::ifstream instrmCM3(fNameCM3.c_str());
-    std::string line;
-    std::vector<std::string> tokens; 
-
-    RDKit::ROMOL_SPTR mol( RDKit::MolFileToMol( mol_file , true, false) );
-
-    std::vector<std::vector<double>> Mres;
-    int nbmats= 10;
-    int confId = -1;
-    int padding = 23; // padding is the size of the result matrix so >= size max(atoms)
-    int seed = 0xf00d;
-   
-    double rcut = 2.0; 
-
-    // so local is ture 
-    RDKit::Descriptors::CoulombMat(*mol, Mres, confId, nbmats, seed, padding, rcut, true, true, false, false, false, 1);
-
-    //std::cout << "===================== vis CM3 ========================\n";
-
-    for ( const auto &v : Mres ) {
-
-      std::getline(instrmCM3, line);
-      tokens = tokenize(line);
-
-      int ti = 0;
-      for ( double x : v )  {
-          //std::cout << x << ",";
-          TEST_ASSERT(std::fabs(std::stof(tokens[ti]) - x)< 0.001);
-          ti++;
-      } 
-      //std::cout << "\n";
-    }
-    //std::cout << "\n";
-    Mres.clear();
-    Mres.resize(nbmats);
-
-    std::cout << "CM test 3 mat Done\n";
-}
-
-
-
-void testCoulombMat4(){
-    std::cout << "===================== Testing CoulombMat Local 3 =======================\n";
- 
-    std::string pathName = getenv("RDBASE");
-
-    //////////////
-    // TEST 3 LOCAL decaying 
-    std::string fNameCM4 =
-         pathName + "/Code/GraphMol/Descriptors/test_data/CM4.out";
-
-    std::string mol_file =
-         pathName + "/Code/GraphMol/Descriptors/test_data/bobmol.sdf";
-
-    std::ifstream instrmCM4(fNameCM4.c_str());
-    std::string line;
-    std::vector<std::string> tokens; 
-
-    RDKit::ROMOL_SPTR mol( RDKit::MolFileToMol( mol_file , true, false) );
-
-    std::vector<std::vector<double>> Mres;
-    int nbmats= 10;
-    int confId = -1;
-    int padding = 23; // padding is the size of the result matrix so >= size max(atoms)
-    int seed = 0xf00d;
-    double rcut = 2.5;
-    int alpha = 3; 
-
-    // so local is ture 
-    RDKit::Descriptors::CoulombMat(*mol, Mres, confId, nbmats, seed, padding, rcut, true, true, false, false, false, alpha);
-
-    std::cout << "===================== vis CM4 ========================\n";
-
-    for ( const auto &v : Mres ) {
-
-      std::getline(instrmCM4, line);
-      tokens = tokenize(line);
-
-      int ti = 0;
-      for ( double x : v )  {
-          //std::cout << x << ",";
-          TEST_ASSERT(std::fabs(std::stof(tokens[ti]) - x)< 0.001);
-          ti++;
-      } 
-      //std::cout << "\n";
-    }
-    //std::cout << "\n";
-    Mres.clear();
-    Mres.resize(nbmats);
-
-    std::cout << "CM test 4 mat Done\n";
-}
-
-
-void testCoulombMat5(){
-    std::cout << "===================== Testing CoulombMat Local 4 =======================\n";
- 
-    std::string pathName = getenv("RDBASE");
-
-    //////////////
-    // TEST 4 LOCAL decaying & reduced
-    std::string fNameCM5 =
-         pathName + "/Code/GraphMol/Descriptors/test_data/CM5.out";
-
-    std::string mol_file =
-         pathName + "/Code/GraphMol/Descriptors/test_data/bobmol.sdf";
-
-    std::ifstream instrmCM5(fNameCM5.c_str());
-    std::string line;
-    std::vector<std::string> tokens; 
-
-    RDKit::ROMOL_SPTR mol( RDKit::MolFileToMol( mol_file , true, false) );
-
-    std::vector<std::vector<double>> Mres;
-    int nbmats= 10;
-    int confId = -1;
-    int padding = 23; // padding is the size of the result matrix so >= size max(atoms)
-    int seed = 0xf00d;
-    double rcut = 2.5;
-    int alpha = 3; 
-
-    // so local is ture 
-    RDKit::Descriptors::CoulombMat(*mol, Mres, confId, nbmats, seed, padding, rcut, true, true, true, false, false, alpha);
-
-    //std::cout << "===================== vis CM5 ========================\n";
-
-    for ( const auto &v : Mres ) {
-
-      std::getline(instrmCM5, line);
-      tokens = tokenize(line);
-
-      int ti = 0;
-      for ( double x : v )  {
-          //std::cout << x << ",";
-          TEST_ASSERT(std::fabs(std::stof(tokens[ti]) - x)< 0.001);
-          ti++;
-      } 
-      //std::cout << "\n";
-    }
-    //std::cout << "\n";
-    Mres.clear();
-    Mres.resize(nbmats);
-
-    std::cout << "CM test 5 mat Done\n";
-
-} 
 
 int main() {
   RDLog::InitLogs();
   testCoulombMat1();
-  testCoulombMat2();
-  testCoulombMat3();
-  testCoulombMat4();
-  testCoulombMat5();
-
 }
