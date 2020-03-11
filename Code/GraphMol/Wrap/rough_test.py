@@ -5874,8 +5874,19 @@ M  END
     ps.setExtraFinalCheck(accept_large)
     self.assertEqual(len(m.GetSubstructMatches(p,ps)),1)
 
-
+  def testRandomSmilesVect(self):
+    m = Chem.MolFromSmiles("C1OCC1N(CO)(Cc1ccccc1NCCl)")
+    v = Chem.MolToRandomSmilesVect(m,5,randomSeed=0xf00d)
+    self.assertEqual(v,["OCN(Cc1c(cccc1)NCCl)C1COC1", "c1ccc(CN(C2COC2)CO)c(c1)NCCl",
+        "c1(NCCl)c(cccc1)CN(C1COC1)CO", "c1(NCCl)c(CN(CO)C2COC2)cccc1",
+        "C(c1ccccc1NCCl)N(C1COC1)CO"])
     
+    v = Chem.MolToRandomSmilesVect(m,5,randomSeed=0xf00d,allHsExplicit=True)
+    self.assertEqual(v,["[OH][CH2][N]([CH2][c]1[c]([cH][cH][cH][cH]1)[NH][CH2][Cl])[CH]1[CH2][O][CH2]1",
+        "[cH]1[cH][cH][c]([CH2][N]([CH]2[CH2][O][CH2]2)[CH2][OH])[c]([cH]1)[NH][CH2][Cl]",
+        "[c]1([NH][CH2][Cl])[c]([cH][cH][cH][cH]1)[CH2][N]([CH]1[CH2][O][CH2]1)[CH2][OH]",
+        "[c]1([NH][CH2][Cl])[c]([CH2][N]([CH2][OH])[CH]2[CH2][O][CH2]2)[cH][cH][cH][cH]1",
+        "[CH2]([c]1[cH][cH][cH][cH][c]1[NH][CH2][Cl])[N]([CH]1[CH2][O][CH2]1)[CH2][OH]"])
     
     
 
