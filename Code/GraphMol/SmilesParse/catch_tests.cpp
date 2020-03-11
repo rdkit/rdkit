@@ -622,3 +622,60 @@ TEST_CASE("large rings", "[smarts]") {
   CHECK(SubstructMatch(*m_r23, *query).empty());
   CHECK(SubstructMatch(*m_r24, *query).size() == 24);
 }
+
+TEST_CASE("random smiles vectors", "[smiles]") {
+  auto m = "C1OCC1N(CO)(Cc1ccccc1NCCl)"_smiles;
+  REQUIRE(m);
+  SECTION("basics") {
+    std::vector<std::string> tgt = {
+        "OCN(Cc1c(cccc1)NCCl)C1COC1", "c1ccc(CN(C2COC2)CO)c(c1)NCCl",
+        "c1(NCCl)c(cccc1)CN(C1COC1)CO", "c1(NCCl)c(CN(CO)C2COC2)cccc1",
+        "C(c1ccccc1NCCl)N(C1COC1)CO"};
+    unsigned int randomSeed = 0xf00d;
+    auto smiV = MolToRandomSmilesVect(*m, 5, randomSeed);
+    CHECK(smiV == tgt);
+  }
+  SECTION("options1") {
+    std::vector<std::string> tgt = {
+        "O-C-N(-C-C1-C(=C-C=C-C=1)-N-C-Cl)-C1-C-O-C-1",
+        "C1=C-C=C(-C-N(-C2-C-O-C-2)-C-O)-C(=C-1)-N-C-Cl",
+        "C1(-N-C-Cl)-C(=C-C=C-C=1)-C-N(-C1-C-O-C-1)-C-O",
+        "C1(-N-C-Cl)-C(-C-N(-C-O)-C2-C-O-C-2)=C-C=C-C=1",
+        "C(-C1=C-C=C-C=C-1-N-C-Cl)-N(-C1-C-O-C-1)-C-O"};
+    RWMol nm(*m);
+    MolOps::Kekulize(nm, true);
+    unsigned int randomSeed = 0xf00d;
+    bool isomericSmiles = true;
+    bool kekuleSmiles = true;
+    bool allBondsExplicit = true;
+    bool allHsExplicit = false;
+    auto smiV =
+        MolToRandomSmilesVect(nm, 5, randomSeed, isomericSmiles, kekuleSmiles,
+                              allBondsExplicit, allHsExplicit);
+    CHECK(smiV == tgt);
+  }
+  SECTION("options2") {
+    std::vector<std::string> tgt = {
+        "[OH][CH2][N]([CH2][c]1[c]([cH][cH][cH][cH]1)[NH][CH2][Cl])[CH]1[CH2]["
+        "O][CH2]1",
+        "[cH]1[cH][cH][c]([CH2][N]([CH]2[CH2][O][CH2]2)[CH2][OH])[c]([cH]1)[NH]"
+        "[CH2][Cl]",
+        "[c]1([NH][CH2][Cl])[c]([cH][cH][cH][cH]1)[CH2][N]([CH]1[CH2][O][CH2]1)"
+        "[CH2][OH]",
+        "[c]1([NH][CH2][Cl])[c]([CH2][N]([CH2][OH])[CH]2[CH2][O][CH2]2)[cH][cH]"
+        "[cH][cH]1",
+        "[CH2]([c]1[cH][cH][cH][cH][c]1[NH][CH2][Cl])[N]([CH]1[CH2][O][CH2]1)["
+        "CH2][OH]"};
+    RWMol nm(*m);
+    MolOps::Kekulize(nm, false);
+    unsigned int randomSeed = 0xf00d;
+    bool isomericSmiles = true;
+    bool kekuleSmiles = false;
+    bool allBondsExplicit = false;
+    bool allHsExplicit = true;
+    auto smiV =
+        MolToRandomSmilesVect(nm, 5, randomSeed, isomericSmiles, kekuleSmiles,
+                              allBondsExplicit, allHsExplicit);
+    CHECK(smiV == tgt);
+  }
+}

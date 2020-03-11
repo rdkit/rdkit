@@ -76,6 +76,24 @@ RDKIT_SMILESPARSE_EXPORT std::string MolToSmiles(
     int rootedAtAtom = -1, bool canonical = true, bool allBondsExplicit = false,
     bool allHsExplicit = false, bool doRandom = false);
 
+//! \brief returns a vector of random SMILES for a molecule (may contain
+//! duplicates)
+/*!
+  \param mol : the molecule in question.
+  \param numSmiles : the number of SMILES to return
+  \param randomSeed : if >0, will be used to seed the random number generator
+  \param doIsomericSmiles : include stereochemistry and isotope information
+      in the SMILES
+  \param doKekule : do Kekule smiles (i.e. don't use aromatic bonds)
+  \param allBondsExplicit : if true, symbols will be included for all bonds.
+  \param allHsExplicit : if true, hydrogen counts will be provided for every
+  atom.
+ */
+RDKIT_SMILESPARSE_EXPORT std::vector<std::string> MolToRandomSmilesVect(
+    const ROMol &mol, unsigned int numSmiles, unsigned int randomSeed = 0,
+    bool doIsomericSmiles = true, bool doKekule = false,
+    bool allBondsExplicit = false, bool allHsExplicit = false);
+
 //! \brief returns canonical SMILES for part of a molecule
 /*!
   \param mol : the molecule in question.
