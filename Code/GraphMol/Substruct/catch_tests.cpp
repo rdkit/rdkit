@@ -7,6 +7,8 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+// Tests of substructure searching
+//
 
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
@@ -15,10 +17,48 @@
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 
 using namespace RDKit;
 typedef std::tuple<std::string, std::string, size_t> matchCase;
+
+class _IsSubstructOf : public Catch::MatcherBase<const ROMol &> {
+  ROMol const *m_mol;
+  SubstructMatchParameters m_ps;
+
+ public:
+  _IsSubstructOf(const ROMol &m) : m_mol(&m) {}
+
+  _IsSubstructOf(const ROMol &m, SubstructMatchParameters ps)
+      : m_mol(&m), m_ps(ps) {}
+
+  virtual bool match(const ROMol &query) const override {
+    return !SubstructMatch(*m_mol, query, m_ps).empty();
+  }
+
+  virtual std::string describe() const override {
+    std::ostringstream ss;
+    ss << "is not a substructure of " << MolToCXSmiles(*m_mol);
+    return ss.str();
+  }
+};
+
+static _IsSubstructOf IsSubstructOf(const ROMol &m,
+                                    const SubstructMatchParameters &ps) {
+  return _IsSubstructOf(m, ps);
+}
+
+static _IsSubstructOf IsSubstructOf(const ROMol &m) {
+  return _IsSubstructOf(m);
+}
+
+namespace Catch {
+template <>
+struct StringMaker<RDKit::RWMol> {
+  static std::string convert(RDKit::RWMol const &m) { return MolToCXSmiles(m); }
+};
+}
 
 TEST_CASE("substructure parameters", "[substruct]") {
   SECTION("chirality") {
@@ -33,7 +73,7 @@ TEST_CASE("substructure parameters", "[substruct]") {
     CHECK(SubstructMatch(*mol1, *mol1, ps).size() == 1);
 
     ps.useChirality = true;
-    CHECK(SubstructMatch(*mol1, *mol2, ps).size() == 0);
+    CHECK_THAT(*mol2, !IsSubstructOf(*mol1, ps));
     CHECK(SubstructMatch(*mol1, *mol1, ps).size() == 1);
   }
   SECTION("conjugated matching aromaticity 1") {
@@ -55,8 +95,8 @@ TEST_CASE("substructure parameters", "[substruct]") {
     RWMol mol2(*mol1);
     MolOps::Kekulize(mol2);
     SubstructMatchParameters ps;
-    CHECK(SubstructMatch(*mol1, mol2, ps).size() == 0);
-    CHECK(SubstructMatch(mol2, *mol1, ps).size() == 0);
+    CHECK_THAT(mol2, !IsSubstructOf(*mol1));
+    CHECK_THAT(*mol1, !IsSubstructOf(mol2));
 
     ps.aromaticMatchesConjugated = true;
     CHECK(SubstructMatch(*mol1, mol2, ps).size() == 1);
@@ -126,5 +166,73 @@ TEST_CASE("providing a final match function", "[substruct]") {
     CHECK(SubstructMatch(*mol1, *mol2, ps).size() == 2);
     ps.extraFinalCheck = &bigger;
     CHECK(SubstructMatch(*mol1, *mol2, ps).size() == 1);
+  }
+}
+
+TEST_CASE("Enhanced stereochemistry", "[substruct,StereoGroup]") {
+  // Chirality specifications.
+  // 1. An achiral molecule: CC(O)C(CC)F means unknown/all stereoisomers
+  // 2. A chiral molecule: C[C@H](O)[C@H](CC)F means 1 stereoisomer
+  // 3. A chiral molecule with an AND specifier: C[C@H](O)[C@H](CC)F |a1:1,3|
+  // means both stereoisomers
+  // 4. A chiral molecule with an OR specifier: C[C@H](O)[C@H](CC)F |o1:1,3|
+  // means one of the two stereoisomers
+  auto mol_achiral = "CC(O)C(CC)F"_smiles;
+  auto mol_chiral = "C[C@H](O)[C@H](CC)F"_smiles;
+  auto mol_and = "C[C@H](O)[C@H](CC)F |&1:1,3|"_smiles;
+  auto mol_or = "C[C@H](O)[C@H](CC)F |o1:1,3|"_smiles;
+  auto mol_absolute = "C[C@H](O)[C@H](CC)F |a:1,3|"_smiles;
+
+  SubstructMatchParameters ps;
+  ps.useChirality = true;
+  ps.useEnhancedStereo = true;
+
+  SECTION("achiral search matches anything") {
+    CHECK_THAT(*mol_achiral, IsSubstructOf(*mol_chiral, ps));
+    CHECK_THAT(*mol_achiral, IsSubstructOf(*mol_and, ps));
+    CHECK_THAT(*mol_achiral, IsSubstructOf(*mol_or, ps));
+    CHECK_THAT(*mol_achiral, IsSubstructOf(*mol_absolute, ps));
+  }
+  SECTION("chiral molecule (absolute configuration) only matches itself") {
+    CHECK_THAT(*mol_chiral, !IsSubstructOf(*mol_achiral, ps));
+    CHECK_THAT(*mol_chiral, !IsSubstructOf(*mol_and, ps));
+    CHECK_THAT(*mol_chiral, !IsSubstructOf(*mol_or, ps));
+    CHECK_THAT(*mol_absolute, !IsSubstructOf(*mol_achiral, ps));
+    CHECK_THAT(*mol_absolute, !IsSubstructOf(*mol_and, ps));
+    CHECK_THAT(*mol_absolute, !IsSubstructOf(*mol_or, ps));
+  }
+  SECTION("AND query may match absolute or OR, but not achiral") {
+    CHECK_THAT(*mol_and, IsSubstructOf(*mol_or, ps));
+    CHECK_THAT(*mol_and, IsSubstructOf(*mol_and, ps));
+    CHECK_THAT(*mol_and, IsSubstructOf(*mol_absolute, ps));
+    CHECK_THAT(*mol_and, IsSubstructOf(*mol_chiral, ps));
+    CHECK_THAT(*mol_and, !IsSubstructOf(*mol_achiral, ps));
+  }
+  SECTION("An OR query may match absolute, but not AND") {
+    CHECK_THAT(*mol_or, IsSubstructOf(*mol_chiral, ps));
+    CHECK_THAT(*mol_or, IsSubstructOf(*mol_absolute, ps));
+    CHECK_THAT(*mol_or, IsSubstructOf(*mol_or, ps));
+    CHECK_THAT(*mol_or, !IsSubstructOf(*mol_and, ps));
+  }
+  SECTION("AND and OR match their enantiomer") {
+    auto opposite_mol = "C[C@@H](O)[C@@H](CC)F"_smiles;
+    CHECK_THAT(*opposite_mol, IsSubstructOf(*mol_and, ps));
+    CHECK_THAT(*opposite_mol, IsSubstructOf(*mol_or, ps));
+  }
+  SECTION("But not some arbitrary diastereomer") {
+    auto diastereomer = "C[C@H](O)[C@@H](CC)F"_smiles;
+    CHECK_THAT(*diastereomer, !IsSubstructOf(*mol_and, ps));
+    CHECK_THAT(*diastereomer, !IsSubstructOf(*mol_or, ps));
+  }
+  SECTION("And not mixed stereo groups") {
+    // I'm not sure about this?
+    auto mol_mixed_or = "C[C@H](O)[C@H](CC)F |o1:1,o2:3|"_smiles;
+    CHECK_THAT(*mol_mixed_or, !IsSubstructOf(*mol_and, ps));
+    CHECK_THAT(*mol_mixed_or, !IsSubstructOf(*mol_or, ps));
+  }
+  SECTION("It's OK to match part of a stereo group, though") {
+    auto mol_and_long = "C[C@@H](O)C[C@@H](CC)F |&1:1,3|"_smiles;
+    auto mol_and_partial = "C[C@@H](O)C |&1:1|"_smiles;
+    CHECK_THAT(*mol_and_partial, !IsSubstructOf(*mol_and_long, ps));
   }
 }
