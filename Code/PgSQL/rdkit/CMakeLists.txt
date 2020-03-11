@@ -50,7 +50,6 @@ endif(NOT DEFINED PostgreSQL_CONFIG_DIR)
 if(NOT DEFINED PostgreSQL_CONFIG)
   set(PostgreSQL_CONFIG "${PostgreSQL_CONFIG_DIR}/pg_config")
 endif(NOT DEFINED PostgreSQL_CONFIG)
-set(PostgreSQL_CONFIG /usr/bin/pg_config)
 macro (run_pg_config arg var)
   execute_process(COMMAND ${PostgreSQL_CONFIG} ${arg}
                   RESULT_VARIABLE pgsql_config_result
