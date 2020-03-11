@@ -18,16 +18,16 @@
 #include <GraphMol/MolOps.h>
 #include <GraphMol/MolStandardize/TransformCatalog/TransformCatalogParams.h>
 #include "Charge.h"
-
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
-using namespace std;
 
+using namespace std;
 namespace RDKit {
 namespace MolStandardize {
 const CleanupParameters defaultCleanupParameters;
 
-RWMol *cleanup(const RWMol &mol, const CleanupParameters &params) {
+RWMol *cleanup(const RWMol &mol, const CleanupParameters &params) 
+{
   RWMol m(mol);
   MolOps::removeHs(m);
 
@@ -36,6 +36,8 @@ RWMol *cleanup(const RWMol &mol, const CleanupParameters &params) {
   RWMOL_SPTR normalized(MolStandardize::normalize(&m, params));
   RWMol *reionized = MolStandardize::reionize(normalized.get(), params);
   MolOps::assignStereochemistry(*reionized);
+
+  reionized->updateProps(m);
 
   return reionized;
 }
