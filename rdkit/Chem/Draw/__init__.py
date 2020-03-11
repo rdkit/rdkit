@@ -442,8 +442,12 @@ def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **
     if 'highlightColor' in kwargs:
       d2d.drawOptions().setHighlightColor(kwargs['highlightColor'])
 
-    d2d.DrawMolecule(mc, legend=legend, highlightAtoms=highlights, 
-                     highlightBonds = kwargs.get('highlightBonds',[]))
+    bondHighlights = kwargs.get('highlightBonds',None)
+    if bondHighlights is not None:
+      d2d.DrawMolecule(mc, legend=legend, highlightAtoms=highlights, 
+                      highlightBonds=bondHighlights)
+    else:
+      d2d.DrawMolecule(mc, legend=legend, highlightAtoms=highlights)
     d2d.FinishDrawing()
     if returnPNG:
       img = d2d.GetDrawingText()
@@ -468,7 +472,12 @@ def _moltoSVG(mol, sz, highlights, legend, kekulize, drawOptions=None, **kwargs)
   if drawOptions is not None:
     d2d.SetDrawOptions(drawOptions)
 
-  d2d.DrawMolecule(mc, legend=legend, highlightAtoms=highlights)
+  bondHighlights = kwargs.get('highlightBonds',None)
+  if bondHighlights is not None:
+    d2d.DrawMolecule(mc, legend=legend, highlightAtoms=highlights, 
+                    highlightBonds=bondHighlights)
+  else:
+    d2d.DrawMolecule(mc, legend=legend, highlightAtoms=highlights)
   d2d.FinishDrawing()
   svg = d2d.GetDrawingText()
   return svg
