@@ -64,7 +64,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Transform2D
    *
    * ARGUMENTS:
    *   - pt : point about which to rotate
-   *   - angle : the angle byt which to rotate
+   *   - angle : the angle by which to rotate, in radians
    */
   void SetTransform(const Point2D &pt, double angle);
 

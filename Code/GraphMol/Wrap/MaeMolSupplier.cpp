@@ -74,30 +74,9 @@ class LocalMaeMolSupplier : public RDKit::MaeMolSupplier {
   }
 
   LocalMaeMolSupplier(const std::string &fname, bool sanitize = true,
-                      bool removeHs = true) {
-    df_owner = true;
-    auto *ifs = new std::ifstream(fname.c_str(), std::ios_base::binary);
-    if (!(*ifs) || ifs->bad()) {
-      delete ifs;
-      std::ostringstream errout;
-      errout << "Bad input file " << fname;
-      throw RDKit::BadFileException(errout.str());
-    }
-    dp_inStream = (std::istream *)ifs;
-    dp_sInStream.reset(dp_inStream);
-    df_sanitize = sanitize;
-    df_removeHs = removeHs;
-
-    d_reader.reset(new mae::Reader(dp_sInStream));
-    CHECK_INVARIANT(streamIsGoodOrExhausted(dp_inStream), "bad instream");
-
-    try {
-      d_next_struct = d_reader->next(mae::CT_BLOCK);
-    } catch (const mae::read_exception &e) {
-      throw RDKit::FileParseException(e.what());
-    }
-  };
-};
+                      bool removeHs = true)
+      : RDKit::MaeMolSupplier(fname, sanitize, removeHs) {}
+};  // namespace
 
 LocalMaeMolSupplier *FwdMolSupplIter(LocalMaeMolSupplier *self) { return self; }
 }  // namespace

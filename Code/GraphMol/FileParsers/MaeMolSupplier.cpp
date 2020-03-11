@@ -390,14 +390,7 @@ MaeMolSupplier::MaeMolSupplier(std::istream *inStream, bool takeOwnership,
 MaeMolSupplier::MaeMolSupplier(const std::string &fileName, bool sanitize,
                                bool removeHs) {
   df_owner = true;
-  auto *ifs = new std::ifstream(fileName.c_str(), std::ios_base::binary);
-  if (!(*ifs) || ifs->bad()) {
-    delete ifs;
-    std::ostringstream errout;
-    errout << "Bad input file " << fileName;
-    throw BadFileException(errout.str());
-  }
-  dp_inStream = static_cast<std::istream *>(ifs);
+  dp_inStream = openAndCheckStream(fileName);
   dp_sInStream.reset(dp_inStream);
   df_sanitize = sanitize;
   df_removeHs = removeHs;

@@ -281,6 +281,15 @@ DrawRDKitBits.__doc__ = Draw.DrawRDKitBits.__doc__
 _rendererInstalled = False
 
 
+def EnableSubstructMatchRendering():
+  if not hasattr(rdchem.Mol, '__GetSubstructMatch'):
+    rdchem.Mol.__GetSubstructMatch = rdchem.Mol.GetSubstructMatch
+  rdchem.Mol.GetSubstructMatch = _GetSubstructMatch
+  if not hasattr(rdchem.Mol, '__GetSubstructMatches'):
+    rdchem.Mol.__GetSubstructMatches = rdchem.Mol.GetSubstructMatches
+  rdchem.Mol.GetSubstructMatches = _GetSubstructMatches
+
+
 def InstallIPythonRenderer():
   global _MolsToGridImageSaved, _DrawRDKitBitSaved, _DrawRDKitBitsSaved, _DrawMorganBitSaved, _DrawMorganBitsSaved
   global _rendererInstalled
@@ -292,12 +301,7 @@ def InstallIPythonRenderer():
     rdchem.Mol._repr_html_ = _toJSON
   rdChemReactions.ChemicalReaction._repr_png_ = _toReactionPNG
   rdChemReactions.ChemicalReaction._repr_svg_ = _toReactionSVG
-  if not hasattr(rdchem.Mol, '__GetSubstructMatch'):
-    rdchem.Mol.__GetSubstructMatch = rdchem.Mol.GetSubstructMatch
-  rdchem.Mol.GetSubstructMatch = _GetSubstructMatch
-  if not hasattr(rdchem.Mol, '__GetSubstructMatches'):
-    rdchem.Mol.__GetSubstructMatches = rdchem.Mol.GetSubstructMatches
-  rdchem.Mol.GetSubstructMatches = _GetSubstructMatches
+  EnableSubstructMatchRendering()
   Image.Image._repr_png_ = display_pil_image
   _MolsToGridImageSaved = Draw.MolsToGridImage
   Draw.MolsToGridImage = ShowMols
@@ -317,6 +321,15 @@ def InstallIPythonRenderer():
 InstallIPythonRenderer()
 
 
+def DisableSubstructMatchRendering():
+  if hasattr(rdchem.Mol, '__GetSubstructMatch'):
+    rdchem.Mol.GetSubstructMatch = rdchem.Mol.__GetSubstructMatch
+    del rdchem.Mol.__GetSubstructMatch
+  if hasattr(rdchem.Mol, '__GetSubstructMatches'):
+    rdchem.Mol.GetSubstructMatches = rdchem.Mol.__GetSubstructMatches
+    del rdchem.Mol.__GetSubstructMatches
+
+
 def UninstallIPythonRenderer():
   global _MolsToGridImageSaved, _DrawRDKitBitSaved, _DrawMorganBitSaved, _DrawMorganBitsSaved
   global _rendererInstalled
@@ -327,12 +340,7 @@ def UninstallIPythonRenderer():
   if _canUse3D:
     del rdchem.Mol._repr_html_
   del rdChemReactions.ChemicalReaction._repr_png_
-  if hasattr(rdchem.Mol, '__GetSubstructMatch'):
-    rdchem.Mol.GetSubstructMatch = rdchem.Mol.__GetSubstructMatch
-    del rdchem.Mol.__GetSubstructMatch
-  if hasattr(rdchem.Mol, '__GetSubstructMatches'):
-    rdchem.Mol.GetSubstructMatches = rdchem.Mol.__GetSubstructMatches
-    del rdchem.Mol.__GetSubstructMatches
+  DisableSubstructMatchRendering()
   del Image.Image._repr_png_
   if _MolsToGridImageSaved is not None:
     Draw.MolsToGridImage = _MolsToGridImageSaved
@@ -348,3 +356,4 @@ def UninstallIPythonRenderer():
     rdchem.Mol.Debug = rdchem.Mol.__DebugMol
     del rdchem.Mol.__DebugMol
   _rendererInstalled = False
+

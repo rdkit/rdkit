@@ -97,7 +97,7 @@ void MolDraw2DSVG::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
   Point2D c1 = getDrawCoords(cds1);
 
   std::string col = DrawColourToSVG(colour());
-  unsigned int width = lineWidth();
+  unsigned int width = getDrawLineWidth();
   d_os << "<path ";
   if (d_activeClass != "") {
     d_os << "class='" << d_activeClass << "' ";
@@ -126,15 +126,17 @@ void MolDraw2DSVG::drawBond(
     const std::vector<int> *highlight_atoms,
     const std::map<int, DrawColour> *highlight_atom_map,
     const std::vector<int> *highlight_bonds,
-    const std::map<int, DrawColour> *highlight_bond_map) {
+    const std::map<int, DrawColour> *highlight_bond_map,
+    const std::vector<std::pair<DrawColour, DrawColour> > *bond_colours) {
   PRECONDITION(bond, "bad bond");
   std::string o_class = d_activeClass;
-  if (d_activeClass != "") {
+  if (!d_activeClass.empty()) {
     d_activeClass += " ";
   }
   d_activeClass += boost::str(boost::format("bond-%d") % bond->getIdx());
   MolDraw2D::drawBond(mol, bond, at1_idx, at2_idx, highlight_atoms,
-                      highlight_atom_map, highlight_bonds, highlight_bond_map);
+                      highlight_atom_map, highlight_bonds, highlight_bond_map,
+                      bond_colours);
   d_activeClass = o_class;
 };
 
@@ -143,7 +145,7 @@ void MolDraw2DSVG::drawLine(const Point2D &cds1, const Point2D &cds2) {
   Point2D c1 = getDrawCoords(cds1);
   Point2D c2 = getDrawCoords(cds2);
   std::string col = DrawColourToSVG(colour());
-  unsigned int width = lineWidth();
+  unsigned int width = getDrawLineWidth();
   std::string dashString = "";
   const DashPattern &dashes = dash();
   if (dashes.size()) {
@@ -155,7 +157,7 @@ void MolDraw2DSVG::drawLine(const Point2D &cds1, const Point2D &cds2) {
     dashString = dss.str();
   }
   d_os << "<path ";
-  if (d_activeClass != "") {
+  if (!d_activeClass.empty()) {
     d_os << "class='" << d_activeClass << "' ";
   }
   d_os << "d='M " << c1.x << "," << c1.y << " L " << c2.x << "," << c2.y
@@ -170,7 +172,7 @@ void MolDraw2DSVG::drawLine(const Point2D &cds1, const Point2D &cds2) {
 // ****************************************************************************
 // draw the char, with the bottom left hand corner at cds
 void MolDraw2DSVG::drawChar(char c, const Point2D &cds) {
-  unsigned int fontSz = scale() * fontSize();
+  unsigned int fontSz = drawFontSize();
   std::string col = DrawColourToSVG(colour());
 
   d_os << "<text";
@@ -190,7 +192,7 @@ void MolDraw2DSVG::drawPolygon(const std::vector<Point2D> &cds) {
   PRECONDITION(cds.size() >= 3, "must have at least three points");
 
   std::string col = DrawColourToSVG(colour());
-  unsigned int width = lineWidth();
+  unsigned int width = getDrawLineWidth();
   std::string dashString = "";
   d_os << "<path ";
   if (d_activeClass != "") {
@@ -203,13 +205,12 @@ void MolDraw2DSVG::drawPolygon(const std::vector<Point2D> &cds) {
     Point2D ci = getDrawCoords(cds[i]);
     d_os << " L " << ci.x << "," << ci.y;
   }
-  d_os << " Z";
-  d_os << "' style='";
   if (fillPolys()) {
-    d_os << "fill:" << col << ";fill-rule:evenodd;fill-opacity=" << colour().a
+    // the Z closes the path which we don't want for unfilled polygons
+    d_os << " Z' style='fill:" << col << ";fill-rule:evenodd;fill-opacity=" << colour().a
          << ";";
   } else {
-    d_os << "fill:none;";
+    d_os << "' style='fill:none;";
   }
 
   d_os << "stroke:" << col << ";stroke-width:" << width
@@ -218,7 +219,9 @@ void MolDraw2DSVG::drawPolygon(const std::vector<Point2D> &cds) {
   d_os << " />\n";
 }
 
+// ****************************************************************************
 void MolDraw2DSVG::drawEllipse(const Point2D &cds1, const Point2D &cds2) {
+
   Point2D c1 = getDrawCoords(cds1);
   Point2D c2 = getDrawCoords(cds2);
   double w = c2.x - c1.x;
@@ -229,7 +232,7 @@ void MolDraw2DSVG::drawEllipse(const Point2D &cds1, const Point2D &cds2) {
   h = h > 0 ? h : -1 * h;
 
   std::string col = DrawColourToSVG(colour());
-  unsigned int width = lineWidth();
+  unsigned int width = getDrawLineWidth();
   std::string dashString = "";
   d_os << "<ellipse"
        << " cx='" << cx << "'"
@@ -264,12 +267,6 @@ void MolDraw2DSVG::clearDrawing() {
 }
 
 // ****************************************************************************
-void MolDraw2DSVG::setFontSize(double new_size) {
-  MolDraw2D::setFontSize(new_size);
-  // double font_size_in_points = fontSize() * scale();
-}
-
-// ****************************************************************************
 // using the current scale, work out the size of the label in molecule
 // coordinates
 void MolDraw2DSVG::getStringSize(const std::string &label, double &label_width,
@@ -282,16 +279,20 @@ void MolDraw2DSVG::getStringSize(const std::string &label, double &label_width,
   bool had_a_super = false;
   bool had_a_sub = false;
 
+  double act_font_size = drawFontSize() / scale();
   for (int i = 0, is = label.length(); i < is; ++i) {
     // setStringDrawMode moves i along to the end of any <sub> or <sup>
     // markup
+    // The drawString function turns <sup>.</sup> into &#x2219; (unicode
+    // bullet char) but we'll just hope for now that it's roughly the same
+    // size.
     if ('<' == label[i] && setStringDrawMode(label, draw_mode, i)) {
       continue;
     }
 
-    label_height = fontSize();
+    label_height = act_font_size;
     double char_width =
-        fontSize() *
+        act_font_size *
         static_cast<double>(MolDraw2D_detail::char_widths[(int)label[i]]) /
         MolDraw2D_detail::char_widths[(int)'M'];
     if (TextDrawSubscript == draw_mode) {
@@ -312,6 +313,7 @@ void MolDraw2DSVG::getStringSize(const std::string &label, double &label_width,
   if (had_a_sub) {
     label_height *= 1.1;
   }
+
 }
 
 namespace {
@@ -325,18 +327,27 @@ void escape_xhtml(std::string &data) {
 }  // namespace
 
 // ****************************************************************************
-// draws the string centred on cds
 void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds) {
-  unsigned int fontSz = scale() * fontSize();
 
+  drawString(str, cds, MIDDLE);
+
+}
+
+// ****************************************************************************
+// draws the string aligned as requested.
+void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds,
+                              AlignType align) {
+  unsigned int fontSz = drawFontSize();
   double string_width, string_height;
   getStringSize(str, string_width, string_height);
 
-  double draw_x = cds.x - string_width / 2.0;
-  double draw_y = cds.y - string_height / 2.0;
+  double draw_x = cds.x;
+  double draw_y = cds.y;
 
-#if 0
   // for debugging text output
+#if 0
+  draw_x = cds.x - string_width / 2.0;
+  draw_y = cds.y - string_height / 2.0;
   DrawColour tcolour =colour();
   setColour(DrawColour(.8,.8,.8));
   std::vector<Point2D> poly;
@@ -346,21 +357,40 @@ void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds) {
   poly.push_back(Point2D(draw_x,draw_y+string_height));
   drawPolygon(poly);
   setColour(tcolour);
+  draw_x = cds.x;
+  draw_y = cds.y;
 #endif
   std::string col = DrawColourToSVG(colour());
 
+  std::string text_anchor = "middle";
+  double tmult = 0.0;
+  if(align == END) {
+    text_anchor = "end";
+    tmult = -1.0;
+  } else if(align == START) {
+    text_anchor = "start";
+    tmult = 1.0;
+  }
   Point2D draw_coords = getDrawCoords(Point2D(draw_x, draw_y));
+  // fonts are laid out with room for wider letters like W and hanging bits like g.
+  // Very few atomic symbols need to care about this, and common ones look a bit
+  // out of line.  For example O sits to the left of a double bond.  This is an
+  // empirical tweak to push it back a bit.  Use the string_height in x and y
+  // as it's just a correction factor based on the scaled font size.
+  draw_coords.x += string_height * tmult * 0.1 * scale();
+  draw_coords.y += string_height * 0.15  *scale();
 
-  d_os << "<text";
+  d_os << "<text dominant-baseline=\"central\" text-anchor=\""
+       << text_anchor << "\"";
   d_os << " x='" << draw_coords.x;
   d_os << "' y='" << draw_coords.y << "'";
 
-  if (d_activeClass != "") {
+  if (!d_activeClass.empty()) {
     d_os << " class='" << d_activeClass << "'";
   }
   d_os << " style='font-size:" << fontSz
        << "px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;"
-          "font-family:sans-serif;text-anchor:start;"
+          "font-family:sans-serif;"
        << "fill:" << col << "'";
   d_os << " >";
 
@@ -368,18 +398,32 @@ void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds) {
       TextDrawNormal;  // 0 for normal, 1 for superscript, 2 for subscript
   std::string span;
   bool first_span = true;
+  auto write_span = [&]() {
+    if (!first_span) {
+      escape_xhtml(span);
+      d_os << span << "</tspan>";
+      span = "";
+    }
+    first_span = false;
+  };
+
   for (int i = 0, is = str.length(); i < is; ++i) {
+    // if the next bit is <sup>.</sup> assume it's a radical and do a bullet
+    // instead.
+    if(str.substr(i, 12) == "<sup>.</sup>") {
+      write_span();
+      d_os << "<tspan>&#x2219;";
+      i += 11;  // end of loop will add the extra 1.
+      continue;
+    }
     // setStringDrawMode moves i along to the end of any <sub> or <sup>
     // markup
     if ('<' == str[i] && setStringDrawMode(str, draw_mode, i)) {
-      if (!first_span) {
-        escape_xhtml(span);
-        d_os << span << "</tspan>";
-        span = "";
-      }
-      first_span = false;
+      write_span();
       d_os << "<tspan";
       switch (draw_mode) {
+        // To save people time later - on macOS Catalina, at least, Firefox
+        // renders the superscript as a subscript.  It's fine on Safari.
         case TextDrawSuperscript:
           d_os << " style='baseline-shift:super;font-size:" << fontSz * 0.75
                << "px;"
@@ -408,6 +452,31 @@ void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds) {
   d_os << "</text>\n";
 }
 
+// ****************************************************************************
+void MolDraw2DSVG::alignString(const std::string &str, const std::string &align_char,
+                               int align, const Point2D &in_cds,
+                               Point2D &out_cds) const {
+
+  RDUNUSED_PARAM(str);
+
+  if(align != 0 && align != 1) {
+    out_cds = in_cds;
+    return;
+  }
+
+  double ac_width, ac_height;
+  getStringSize(align_char, ac_width, ac_height);
+  // align == 0 is left align - first char to go at in_cds.
+  double dir = align == 0 ? 1.0 : -1.0;
+  // this works with SVG, so long as we use the correct text anchor -
+  // W => end, E => start, N, S => middle
+  out_cds.x = in_cds.x - dir * 0.5 * ac_width;
+  // and this assumes dominant-baseline="central"
+  out_cds.y = in_cds.y;
+
+}
+
+// ****************************************************************************
 static const char *RDKIT_SVG_VERSION = "0.9";
 void MolDraw2DSVG::addMoleculeMetadata(const ROMol &mol, int confId) const {
   PRECONDITION(d_os, "no output stream");
