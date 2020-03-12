@@ -2627,7 +2627,8 @@ void test20Annotate() {
   auto addStereoAnnotation = [](ROMol &mol) {
     for(auto atom: mol.atoms()) {
       if(atom->hasProp("_CIPCode")) {
-        atom->setProp("atomNote", atom->getProp<std::string>("_CIPCode"));
+        std::string lab = "(" + atom->getProp<std::string>("_CIPCode") + ")";
+        atom->setProp("atomNote", lab);
       }
     }
     for(auto bond: mol.bonds()) {
@@ -2647,6 +2648,17 @@ void test20Annotate() {
     drawer.finishDrawing();
     std::string text = drawer.getDrawingText();
     std::ofstream outs("test20_1.svg");
+    outs << text;
+    outs.flush();
+  }
+  {
+    auto m1 = "C[C@@H](F)/C=C/[C@H](O)C"_smiles;
+    addStereoAnnotation(*m1);
+    MolDraw2DSVG drawer(500, 500);
+    drawer.drawMolecule(*m1);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("test20_2.svg");
     outs << text;
     outs.flush();
   }
