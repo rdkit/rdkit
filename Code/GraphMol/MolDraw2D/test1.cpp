@@ -2624,25 +2624,23 @@ void test20Annotate() {
       bond->setProp("bondNote", bond->getIdx());
     }
   };
-  auto addStereoAnnotation = [](ROMol &mol) {
-    for(auto atom: mol.atoms()) {
-      if(atom->hasProp("_CIPCode")) {
-        std::string lab = "(" + atom->getProp<std::string>("_CIPCode") + ")";
-        atom->setProp("atomNote", lab);
-      }
-    }
-    for(auto bond: mol.bonds()) {
-      if (bond->getStereo() == Bond::STEREOE) {
-        bond->setProp("bondNote", "(E)");
-      } else if (bond->getStereo() == Bond::STEREOZ) {
-        bond->setProp("bondNote", "(Z)");
-      }
-    }
-  };
   {
     auto m1 = "S=C1N=C(NC(CC#N)(C)C=C=C)NC2=NNN=C21"_smiles;
     addAtomSerialNumbers(*m1);
     addBondSerialNumbers(*m1);
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+    {
+      MolDraw2DCairo drawer(300, 300);
+      drawer.drawMolecule(*m1);
+      drawer.finishDrawing();
+
+      std::string drawing = drawer.getDrawingText();
+      TEST_ASSERT(drawing.size() > 0);
+      std::ofstream ofs("test20_1.png");
+      ofs.write(drawing.c_str(), drawing.size());
+    }
+#endif
+
     MolDraw2DSVG drawer(500, 500);
     drawer.drawMolecule(*m1);
     drawer.finishDrawing();
@@ -2653,8 +2651,21 @@ void test20Annotate() {
   }
   {
     auto m1 = "C[C@@H](F)/C=C/[C@H](O)C"_smiles;
-    addStereoAnnotation(*m1);
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+    {
+      MolDraw2DCairo drawer(300, 300);
+      drawer.drawOptions().addStereoAnnotation = true;
+      drawer.drawMolecule(*m1);
+      drawer.finishDrawing();
+
+      std::string drawing = drawer.getDrawingText();
+      TEST_ASSERT(drawing.size() > 0);
+      std::ofstream ofs("test20_2.png");
+      ofs.write(drawing.c_str(), drawing.size());
+    }
+#endif
     MolDraw2DSVG drawer(500, 500);
+    drawer.drawOptions().addStereoAnnotation = true;
     drawer.drawMolecule(*m1);
     drawer.finishDrawing();
     std::string text = drawer.getDrawingText();

@@ -525,7 +525,7 @@ void MolDraw2D::drawReaction(
     tmol2.insertMol(*tmol);
     pushDrawDetails();
     extractAtomCoords(tmol2, 0, true);
-    calculateScale(panelWidth(), panelHeight(), tmol2);
+    calculateScale(panelWidth(), panelHeight());
     needs_scale_ = false;
     popDrawDetails();
   }
@@ -853,7 +853,7 @@ void MolDraw2D::setScale(int width, int height, const Point2D &minv,
 }
 
 // ****************************************************************************
-void MolDraw2D::calculateScale(int width, int height, const ROMol &mol,
+void MolDraw2D::calculateScale(int width, int height,
                                const std::vector<int> *highlight_atoms,
                                const std::map<int, double> *highlight_radii) {
   PRECONDITION(width > 0, "bad width");
@@ -893,7 +893,8 @@ void MolDraw2D::calculateScale(int width, int height, const ROMol &mol,
   // as well.
   while (scale_ > 1e-4) {
     adjustScaleForAtomLabels(highlight_atoms, highlight_radii);
-    adjustScaleForAnnotation();
+    adjustScaleForAnnotation(atom_notes_[activeMolIdx_]);
+    adjustScaleForAnnotation(bond_notes_[activeMolIdx_]);
 
     double old_scale = scale_;
     scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
@@ -1298,6 +1299,9 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(const ROMol &mol,
   if (drawOptions().bondLineWidth >= 0) {
     curr_width_ = drawOptions().bondLineWidth;
   }
+  if(drawOptions().addStereoAnnotation) {
+    addStereoAnnotation(draw_mol);
+  }
   if (!activeMolIdx_) {  // on the first pass we need to do some work
     if (drawOptions().clearBackground) {
       clearDrawing();
@@ -1307,7 +1311,7 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(const ROMol &mol,
     extractAtomNotes(draw_mol);
     extractBondNotes(draw_mol);
     if (needs_scale_) {
-      calculateScale(width, height, draw_mol, highlight_atoms, highlight_radii);
+      calculateScale(width, height, highlight_atoms, highlight_radii);
       needs_scale_ = false;
     }
   } else {
@@ -3043,11 +3047,11 @@ void MolDraw2D::adjustScaleForAtomLabels(const std::vector<int> *highlight_atoms
 }
 
 // ****************************************************************************
-void MolDraw2D::adjustScaleForAnnotation() {
+void MolDraw2D::adjustScaleForAnnotation(const vector<unique_ptr<StringRect>> &notes) {
 
   double x_max(x_min_ + x_range_), y_max(y_min_ + y_range_);
 
-  for(auto const &note_rect: atom_notes_[activeMolIdx_]) {
+  for(auto const &note_rect: notes) {
     if(note_rect) {
       double this_x_max = note_rect->centre_.x + note_rect->width_ / 2.0;
       double this_x_min = note_rect->centre_.x - note_rect->width_ / 2.0;
@@ -3106,6 +3110,25 @@ void MolDraw2D::tabulaRasa() {
   x_offset_ = y_offset_ = 0;
   font_size_ = 0.5;
   curr_width_ = 2;
+
+}
+
+// ****************************************************************************
+void MolDraw2D::addStereoAnnotation(const ROMol &mol) {
+
+  for(auto atom: mol.atoms()) {
+    if(atom->hasProp("_CIPCode")) {
+      std::string lab = "(" + atom->getProp<std::string>("_CIPCode") + ")";
+      atom->setProp("atomNote", lab);
+    }
+  }
+  for(auto bond: mol.bonds()) {
+    if (bond->getStereo() == Bond::STEREOE) {
+      bond->setProp("bondNote", "(E)");
+    } else if (bond->getStereo() == Bond::STEREOZ) {
+      bond->setProp("bondNote", "(Z)");
+    }
+  }
 
 }
 

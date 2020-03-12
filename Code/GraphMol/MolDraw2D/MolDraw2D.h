@@ -162,6 +162,7 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
                           // fixedScale wins.
   double rotate; // angle in degrees to rotate coords by about centre before
                  // drawing. default=0.0.
+  bool addStereoAnnotation; // adds E/Z and R/S to drawings.  Default false.
 
   MolDrawOptions()
       : atomLabelDeuteriumTritium(false),
@@ -188,7 +189,8 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
         prepareMolsBeforeDrawing(true),
         fixedScale(-1.0),
         fixedBondLength(-1.0),
-        rotate(0.0) {
+        rotate(0.0),
+        addStereoAnnotation(false) {
     highlightColourPalette.emplace_back(DrawColour(1., 1., .67));  // popcorn yellow
     highlightColourPalette.emplace_back(DrawColour(1., .8, .6));  // sand
     highlightColourPalette.emplace_back(DrawColour(1., .71, .76));  // light pink
@@ -406,7 +408,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   double scale() const { return scale_; }
   //! calculates the drawing scale (conversion from molecular coords -> drawing
   // coords)
-  void calculateScale(int width, int height, const ROMol &mol,
+  void calculateScale(int width, int height,
                       const std::vector<int> *highlight_atoms = nullptr,
                       const std::map<int, double> *highlight_radii = nullptr);
   //! overload
@@ -562,6 +564,9 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
 
   // reset to default values all the things the c'tor sets
   void tabulaRasa();
+
+  // add R/S and E/Z annotation to atoms and bonds respectively.
+  void addStereoAnnotation(const ROMol &mol);
 
  private:
   bool needs_scale_;
@@ -734,7 +739,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   // things used by calculateScale.
   void adjustScaleForAtomLabels(const std::vector<int> *highlight_atoms,
                                 const std::map<int, double> *highlight_radii);
-  void adjustScaleForAnnotation();
+  void adjustScaleForAnnotation(const std::vector<std::unique_ptr<StringRect>> &notes);
 
  protected:
   virtual void doContinuousHighlighting(

@@ -631,6 +631,9 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                      "draw window.  Default -1.0 means adjust scale to fit.")
       .def_readwrite("rotate", &RDKit::MolDrawOptions::rotate,
                      "Rotates molecule about centre by this number of degrees,")
+      .def_readwrite("addStereoAnnotation",
+                     &RDKit::MolDrawOptions::addStereoAnnotation,
+                     "Adds R/S and E/Z to drawings. Default False.")
       .def_readwrite("additionalAtomLabelPadding",
                      &RDKit::MolDrawOptions::additionalAtomLabelPadding,
                      "additional padding to leave around atom labels. "
