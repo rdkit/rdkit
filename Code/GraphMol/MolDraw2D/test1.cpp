@@ -1632,6 +1632,15 @@ void test11DrawMolGrid() {
     RDGeom::Point3D &p = m2->getConformer().getAtomPos(i);
     p -= c2;
   }
+  smiles = "BrCNC(=O)[C@H](Cl)Sc1ncns1";  // made up
+  RWMol *m3 = SmilesToMol(smiles);
+  TEST_ASSERT(m3);
+  MolDraw2DUtils::prepareMolForDrawing(*m3);
+  RDGeom::Point3D c3 = MolTransforms::computeCentroid(m3->getConformer());
+  for (unsigned int i = 0; i < m3->getNumAtoms(); ++i) {
+    RDGeom::Point3D &p = m3->getConformer().getAtomPos(i);
+    p -= c3;
+  }
 
   {
     MolDraw2DSVG drawer(500, 400, 250, 200);
@@ -1639,7 +1648,7 @@ void test11DrawMolGrid() {
     drawer.setOffset(250, 0);
     drawer.drawMolecule(*m2, "m2");
     drawer.setOffset(0, 200);
-    drawer.drawMolecule(*m2, "m3");
+    drawer.drawMolecule(*m3, "m3");
     drawer.setOffset(250, 200);
     drawer.drawMolecule(*m1, "m4");
     drawer.finishDrawing();
@@ -1672,23 +1681,30 @@ void test11DrawMolGrid() {
 void test12DrawMols() {
   std::cout << " ----------------- Testing drawMolecules" << std::endl;
 
-  std::string smiles =
-      "COc1cccc(NC(=O)[C@H](Cl)Sc2nc(ns2)c3ccccc3Cl)c1";  // made up
-  RWMol *m1 = SmilesToMol(smiles);
-  TEST_ASSERT(m1);
-  smiles = "NC(=O)[C@H](Cl)Sc1ncns1";  // made up
-  RWMol *m2 = SmilesToMol(smiles);
-  TEST_ASSERT(m2);
+  auto setup_mol = [](const std::string &smi, const std::string leg,
+                      std::vector<ROMol *> &mols,
+                      std::vector<std::string> &legends) {
+    mols.push_back(SmilesToMol(smi));
+    TEST_ASSERT(mols.back());
+    legends.push_back(leg);
+  };
   std::vector<ROMol *> mols;
-  mols.push_back(m1);
-  mols.push_back(m2);
-  mols.push_back(m1);
-  mols.push_back(m2);
-  mols.push_back(m1);
-  mols.push_back(m2);
+  std::unique_ptr<std::vector<std::string>> legends(new std::vector<std::string>());
+  // made up SMILES, each with sequence F, Cl, Br so we can see which
+  // ones are drawn, which ones are missing.
+  setup_mol("COc1cccc(NC(=O)[C@H](F)Sc2nc(ns2)c3ccccc3F)c1", "m1",
+            mols, *legends);
+  setup_mol("NC(=O)[C@H](F)Sc1ncns1", "m2", mols, *legends);
+  setup_mol("COc1cccc(NC(=O)[C@H](Cl)Sc2nc(ns2)c3ccccc3F)c1", "m3",
+            mols, *legends);
+  setup_mol("NC(=O)[C@H](Cl)Sc1ncns1", "m4", mols, *legends);
+  setup_mol("COc1cccc(NC(=O)[C@H](Br)Sc2nc(ns2)c3ccccc3F)c1", "m5",
+            mols, *legends);
+  setup_mol("NC(=O)[C@H](Br)Sc1ncns1", "m6", mols, *legends);
+
   {
     MolDraw2DSVG drawer(750, 400, 250, 200);
-    drawer.drawMolecules(mols);
+    drawer.drawMolecules(mols, legends.get());
     drawer.finishDrawing();
     std::string text = drawer.getDrawingText();
     std::ofstream outs("test12_1.svg");
@@ -1726,9 +1742,9 @@ void test12DrawMols() {
     outs << text;
     outs.flush();
   }
-
-  delete m1;
-  delete m2;
+  for(auto m: mols) {
+    delete m;
+  }
   std::cerr << " Done" << std::endl;
 }
 
@@ -2682,7 +2698,8 @@ int main() {
 #endif
 
   RDLog::InitLogs();
-#if 0
+
+#if 1
   test1();
   test2();
   test4();
@@ -2719,12 +2736,10 @@ int main() {
   test18FixedScales();
   test19RotateDrawing();
 #endif
-#if 0
   test16MoleculeMetadata();
   testGithub2063();
   testGithub2151();
   testGithub2762();
   testGithub2931();
-#endif
   test20Annotate();
 }

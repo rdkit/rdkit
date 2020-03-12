@@ -201,7 +201,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
                                         highlight_atom_map));
   }
   finishMoleculeDraw(draw_mol, atom_colours);
-  popDrawDetails();
+  // popDrawDetails();
   curr_width_ = origWidth;
 
   // {
@@ -780,13 +780,13 @@ Point2D MolDraw2D::getDrawCoords(int at_num) const {
 Point2D MolDraw2D::getAtomCoords(const pair<int, int> &screen_cds) const {
   int x = int(double(screen_cds.first) / scale_ + x_min_ - x_trans_);
   int y =
-      int(double(y_min_ - y_trans_ - (screen_cds.second - height()) / scale_));
+      int(double(y_min_ - y_trans_ - (screen_cds.second - panelHeight()) / scale_));
   return Point2D(x, y);
 }
 
 Point2D MolDraw2D::getAtomCoords(const pair<double, double> &screen_cds) const {
   auto x = double(screen_cds.first / scale_ + x_min_ - x_trans_);
-  auto y = double(y_min_ - y_trans_ - (screen_cds.second - height()) / scale_);
+  auto y = double(y_min_ - y_trans_ - (screen_cds.second - panelHeight()) / scale_);
   return Point2D(x, y);
 }
 
@@ -961,6 +961,7 @@ void MolDraw2D::calculateScale(int width, int height, const vector<ROMol *> &mol
     int id = confIds ? (*confIds)[i] : -1;
 
     pushDrawDetails();
+    needs_scale_ = true;
     unique_ptr<RWMol> rwmol = setupDrawMolecule(*mols[i], ha, hr, id,
                                                 width, height);
     double x_max = x_min_ + x_range_;
