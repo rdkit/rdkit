@@ -2265,8 +2265,7 @@ void test17MaxFontSize() {
     }
   }
 
-  std::cout << " Done" << std::endl;
-
+  std::cerr << " Done" << std::endl;
 }
 
 void test18FixedScales() {
@@ -2572,7 +2571,7 @@ void testGithub2931() {
 
   {
     std::string smiles = "CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]";
-    ROMol *m = SmilesToMol(smiles);
+    std::unique_ptr<ROMol> m(SmilesToMol(smiles));
     RDDepict::compute2DCoords(*m);
     WedgeMolBonds(*m, &(m->getConformer()));
 
@@ -2609,13 +2608,58 @@ void testGithub2931() {
   std::cerr << " Done" << std::endl;
 }
 
+void test20Annotate() {
+  std::cout << " ----------------- Testing annotation of 2D Drawing."
+            << std::endl;
+
+  // add serial numbers to the atoms in the molecule
+  auto addAtomSerialNumbers = [](ROMol &mol) {
+      for(auto atom: mol.atoms()) {
+        atom->setProp("atomNote", atom->getIdx());
+      }
+  };
+  // add serial numbers to the atoms in the molecule
+  auto addBondSerialNumbers = [](ROMol &mol) {
+    for(auto bond: mol.bonds()) {
+      bond->setProp("bondNote", bond->getIdx());
+    }
+  };
+  auto addStereoAnnotation = [](ROMol &mol) {
+    for(auto atom: mol.atoms()) {
+      if(atom->hasProp("_CIPCode")) {
+        atom->setProp("atomNote", atom->getProp<std::string>("_CIPCode"));
+      }
+    }
+    for(auto bond: mol.bonds()) {
+      if (bond->getStereo() == Bond::STEREOE) {
+        bond->setProp("bondNote", "(E)");
+      } else if (bond->getStereo() == Bond::STEREOZ) {
+        bond->setProp("bondNote", "(Z)");
+      }
+    }
+  };
+  {
+    auto m1 = "S=C1N=C(NC(CC#N)(C)C=C=C)NC2=NNN=C21"_smiles;
+    addAtomSerialNumbers(*m1);
+    addBondSerialNumbers(*m1);
+    MolDraw2DSVG drawer(500, 500);
+    drawer.drawMolecule(*m1);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("test20_1.svg");
+    outs << text;
+    outs.flush();
+  }
+  std::cerr << " Done" << std::endl;
+}
+
 int main() {
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   RDDepict::preferCoordGen = false;
 #endif
 
   RDLog::InitLogs();
-#if 1
+#if 0
   test1();
   test2();
   test4();
@@ -2652,9 +2696,12 @@ int main() {
   test18FixedScales();
   test19RotateDrawing();
 #endif
+#if 0
   test16MoleculeMetadata();
   testGithub2063();
   testGithub2151();
   testGithub2762();
   testGithub2931();
+#endif
+  test20Annotate();
 }

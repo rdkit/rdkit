@@ -530,7 +530,7 @@ void MolDraw2D::drawReaction(
     atom_syms_.push_back(std::vector<std::pair<std::string, OrientType>>());
     activeMolIdx_++;
     extractAtomCoords(tmol2, 0, true);
-    calculateScale();
+    calculateScale(panelWidth(), panelHeight(), tmol2);
     needs_scale_ = false;
     activeMolIdx_--;
     at_cds_.pop_back();
@@ -861,7 +861,7 @@ void MolDraw2D::setScale(int width, int height, const Point2D &minv,
 }
 
 // ****************************************************************************
-void MolDraw2D::calculateScale(int width, int height,
+void MolDraw2D::calculateScale(int width, int height, const ROMol &mol,
                                const std::vector<int> *highlight_atoms,
                                const std::map<int, double> *highlight_radii) {
   PRECONDITION(width > 0, "bad width");
@@ -870,8 +870,8 @@ void MolDraw2D::calculateScale(int width, int height,
 
   // cout << "calculateScale  width = " << width << "  height = " << height << endl;
   x_min_ = y_min_ = numeric_limits<double>::max();
-  double x_max(-numeric_limits<double>::max()),
-      y_max(-numeric_limits<double>::max());
+  double x_max(-x_min_), y_max(-y_min_);
+
   for (auto &pt : at_cds_[activeMolIdx_]) {
     x_min_ = std::min(pt.x, x_min_);
     y_min_ = std::min(pt.y, y_min_);
@@ -900,73 +900,17 @@ void MolDraw2D::calculateScale(int width, int height,
   // And now we need to take account of strings with N/S orientation
   // as well.
   while (scale_ > 1e-4) {
-    cout << "scale iteration : " << scale_ << endl;
-    // just in case the drawer uses its own font size that depends on scale.
-    // MolDraw2DCairo is one such.
-    setFontSize(font_size_);
-    for (int i = 0, is = atom_syms_[activeMolIdx_].size(); i < is; ++i) {
-      if (!atom_syms_[activeMolIdx_][i].first.empty()) {
-        Point2D centre = at_cds_[activeMolIdx_][i];
-        cout << "atom coords for " << i << " = " << centre.x << ", " << centre.y << endl;
-        double atsym_width, atsym_height;
-        calcLabelRect(atom_syms_[activeMolIdx_][i].first,
-                      atom_syms_[activeMolIdx_][i].second,
-                      centre, atsym_width, atsym_height);
-        {
-          double this_x_max = centre.x + atsym_width / 2.0;
-          double this_y_max = centre.y + atsym_height / 2.0;
-          double this_x_min = centre.x - atsym_width / 2.0;
-          double this_y_min = centre.y - atsym_height / 2.0;
-          x_max = std::max(x_max, this_x_max);
-          x_min_ = std::min(x_min_, this_x_min);
-          y_max = std::max(y_max, this_y_max);
-          y_min_ = std::min(y_min_, this_y_min);
-          cout << "new extremes : " << std::min(x_min_, this_x_min)
-               << " to " << std::max(x_max, this_x_max)
-               << " and " << std::min(y_min_, this_y_min)
-               << " to " << std::max(y_max, this_y_max) << endl;
-        }
-      }
-      if (highlight_atoms) {
-#ifdef NOTYET
-        if (highlight_atoms->end() !=
-            find(highlight_atoms->begin(), highlight_atoms->end(), i)) {
-          double radius = 0.4;
-          if (highlight_radii &&
-              highlight_radii->find(i) != highlight_radii->end()) {
-            radius = highlight_radii->find(i)->second;
-          }
-          double this_x_min = at_cds_[activeMolIdx_][i].x - radius;
-          double this_x_max = at_cds_[activeMolIdx_][i].x + radius;
-          double this_y_min = at_cds_[activeMolIdx_][i].y - radius;
-          double this_y_max = at_cds_[activeMolIdx_][i].y + radius;
-          }
-#endif
-        Point2D centre;
-        double xradius, yradius;
-        // this involves a 2nd call to calcLabelRect, but never mind
-        calcLabelEllipse(i, highlight_radii, centre, xradius, yradius);
-        double this_x_min = centre.x - xradius;
-        double this_x_max = centre.x + xradius;
-        double this_y_min = centre.y - yradius;
-        double this_y_max = centre.y + yradius;
-        x_max = std::max(x_max, this_x_max);
-        x_min_ = std::min(x_min_, this_x_min);
-        y_max = std::max(y_max, this_y_max);
-        y_min_ = std::min(y_min_, this_y_min);
-      }
-    }
+    cout << "scale iteration : " << scale_ << " for ranges " << x_range_
+         << " and " << y_range_ << endl;
+
+    adjustScaleForAtomLabels(highlight_radii);
+    cout << "after labels ranges : " << x_range_ << " to " << y_range_ << endl;
+    adjustScaleForAnnotation(mol);
+    cout << "after annotation ranges : " << x_range_ << " to " << y_range_ << endl;
+
     double old_scale = scale_;
-    x_range_ = x_max - x_min_;
-    y_range_ = y_max - y_min_;
-    cout << "ranges : " << x_range_ << " to " << y_range_ << endl;
-    if (x_range_ < 1e-4) {
-      x_range_ = 1.;
-    }
-    if (y_range_ < 1e-4) {
-      y_range_ = 1.;
-    }
     scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
+    cout << "ranges : " << x_range_ << " to " << y_range_ << endl;
     cout << "new scale : " << scale_ << " old scale ; " << old_scale << endl;
     cout << "new draw size : " << x_range_ * scale_ << " by " << y_range_ * scale_ << endl;
     int new_draw_w = x_range_ * scale_;
@@ -1367,7 +1311,7 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(const ROMol &mol,
   unique_ptr<RWMol> rwmol;
   if(drawOptions().prepareMolsBeforeDrawing || !mol.getNumConformers()) {
     rwmol.reset(new RWMol(mol));
-    MolDraw2DUtils::prepareMolForDrawing(*rwmol, false);
+    MolDraw2DUtils::prepareMolForDrawing(*rwmol);
   }
   ROMol const &draw_mol = rwmol ? *(rwmol) : mol;
   if(!draw_mol.getNumConformers()) {
@@ -1384,7 +1328,7 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(const ROMol &mol,
     extractAtomCoords(draw_mol, confId, true);
     extractAtomSymbols(draw_mol);
     if (needs_scale_) {
-      calculateScale(width, height, highlight_atoms, highlight_radii);
+      calculateScale(width, height, draw_mol, highlight_atoms, highlight_radii);
       needs_scale_ = false;
     }
   } else {
@@ -1488,6 +1432,7 @@ void MolDraw2D::finishMoleculeDraw(const RDKit::ROMol &draw_mol,
       drawAtomLabel(i, atom_colours[i]);
     }
   }
+  setColour(DrawColour(0.0, 0.0, 0.0));
   for(auto atom: draw_mol.atoms()) {
     drawAtomAnnotation(draw_mol, atom);
   }
@@ -1564,47 +1509,54 @@ void MolDraw2D::drawHighlightedAtom(int atom_idx, const vector<DrawColour> &colo
 }
 
 // ****************************************************************************
-void MolDraw2D::calcLabelRect(const string &label, OrientType orient,
-                              Point2D &centre, double &width,
-                              double &height) const {
+MolDraw2D::StringRect MolDraw2D::calcLabelRect(const string &label,
+                                               OrientType orient,
+                                               const Point2D &label_coords) const {
 
+  StringRect string_rect(label_coords);
   if(label.empty()) {
-    width = 0.0;
-    height = 0.0;
-    return;
+    return string_rect;
   }
-  vector<string> label_pieces = atomLabelToPieces(label);
+  vector<string> label_pieces = atomLabelToPieces(label, orient);
   for(auto lab: label_pieces) {
     double pwidth, pheight;
     getStringSize(lab, pwidth, pheight);
     if(orient == N || orient == S) {
-      height += pheight;
-      width = max(width, pwidth);
+      string_rect.height_ += pheight;
+      string_rect.width_ = max(string_rect.width_, pwidth);
     } else {
-      width += pwidth;
-      height = max(height, pheight);
+      string_rect.width_ += pwidth;
+      string_rect.height_ = max(string_rect.height_, pheight);
     }
   }
 
   // need to move the centre
   double cheight, cwidth;
-  if(orient == N) {
-    getStringSize(label_pieces.front(), cwidth, cheight);
-    centre.y -= 0.5 * (height - cheight);
-  } else if(orient == S) {
-    getStringSize(label_pieces.front(), cwidth, cheight);
-    centre.y += 0.5 * (height - cheight);
-  } else if(orient == E) {
-    getStringSize(label_pieces.front(), cwidth, cheight);
-    centre.x += 0.5 * (width - cwidth);
-  } else if(orient == W) {
-    getStringSize(label_pieces.back(), cwidth, cheight);
-    centre.x -= 0.5 * (width - cwidth);
+  switch(orient) {
+    case N:
+      getStringSize(label_pieces.front(), cwidth, cheight);
+      string_rect.centre_.y -= 0.5 * (string_rect.height_ - cheight);
+      break;
+    case S:
+      getStringSize(label_pieces.front(), cwidth, cheight);
+      string_rect.centre_.y += 0.5 * (string_rect.height_ - cheight);
+      break;
+    case E:
+      getStringSize(label_pieces.front(), cwidth, cheight);
+      string_rect.centre_.x += 0.5 * (string_rect.width_ - cwidth);
+      break;
+    case W:
+      getStringSize(label_pieces.back(), cwidth, cheight);
+      string_rect.centre_.x -= 0.5 * (string_rect.width_ - cwidth);
+      break;
+    default:
+      break;
   }
+  cout << "rect for " << label << " centre : " << string_rect.centre_.x << ", "
+       << string_rect.centre_.y << " and w= " << string_rect.width_
+       << " by h= " << string_rect.height_ << endl;
 
-  cout << "rect for " << label << " centre : " << centre.x << ", "
-       << centre.y << " and w= " << width << " by h= " << height << endl;
-
+  return string_rect;
 }
 
 // ****************************************************************************
@@ -1627,36 +1579,76 @@ void MolDraw2D::calcLabelEllipse(int atom_idx,
 
   string atsym = atom_syms_[activeMolIdx_][atom_idx].first;
   OrientType orient = atom_syms_[activeMolIdx_][atom_idx].second;
-  // label_width and label_height should be in molecule coordinates
-  double label_width = 0, label_height = 0;
-  calcLabelRect(atsym, orient, centre, label_width, label_height);
+  StringRect lab_rect = calcLabelRect(atsym, orient, centre);
+  centre = lab_rect.centre_;
 
   static const double root2 = sqrt(2.0);
-  xradius = max(xradius, root2 * label_width / 2.0);
-  yradius = max(yradius, root2 * label_height / 2.0);
+  xradius = max(xradius, root2 * lab_rect.width_ / 2.0);
+  yradius = max(yradius, root2 * lab_rect.height_ / 2.0);
 
-  // need to move the centre
-  double cheight, cwidth;
-  switch(orient) {
-    case N:
-      getStringSize(label_pieces.front(), cwidth, cheight);
-      centre.y -= 0.5 * (label_height - cheight);
-      break;
-    case S:
-      getStringSize(label_pieces.front(), cwidth, cheight);
-      centre.y += 0.5 * (label_height - cheight);
-      break;
-    case E:
-      getStringSize(label_pieces.front(), cwidth, cheight);
-      centre.x += 0.5 * (label_width - cwidth);
-      break;
-    case W:
-      getStringSize(label_pieces.back(), cwidth, cheight);
-      centre.x -= 0.5 * (label_width - cwidth);
-    break;
-    default:
-      break;
+}
+
+// ****************************************************************************
+MolDraw2D::StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol,
+                                                        const Atom *atom) {
+
+  StringRect note_rect;
+  string note = atom->getProp<string>("atomNote");
+  cout << "XXXXXXXXXXXXX\nAdding " << note << " to atom " << atom->getIdx() << endl;
+  if(note.empty()) {
+    note_rect.width_ = -1.0; // so we know it's not valid.
+    return note_rect;
   }
+
+  double full_font_size = fontSize();
+  Point2D at_cds = at_cds_[activeMolIdx_][atom->getIdx()];
+  // scan at 30 degree intervals around the atom looking for somewhere
+  // clear for the annotation.  Start at 12 o'clock as the default.
+  double start_ang = getNoteStartAngle(mol, atom);
+  cout << "atom " << atom->getIdx() << " "
+       << atom_syms_[activeMolIdx_][atom->getIdx()].first
+       << " start ang = " << 180.0 * start_ang / M_PI << endl;
+  StringRect sym_rect = calcLabelRect(atom_syms_[activeMolIdx_][atom->getIdx()].first,
+                                      atom_syms_[activeMolIdx_][atom->getIdx()].second,
+                                      at_cds);
+  setFontSize(drawOptions().annotationFontScale * full_font_size);
+  note_rect = calcLabelRect(note, C, at_cds);
+  setFontSize(full_font_size);
+  // make it a bit bigger for padding - mostly so it cant tuck in underneath
+  // the end of a double bond.
+  note_rect.width_ *= 1 + drawOptions().multipleBondOffset;
+  note_rect.height_ *= 1 + drawOptions().multipleBondOffset;
+
+  double rad_step = 0.25;
+  bool pos_ok = false;
+  for(int j = 0; j < 3; ++j) {
+    double note_rad = j * rad_step;
+    // experience suggests if there's an atom symbol, the close in
+    // radius won't work.
+    if(!j && !atom_syms_[activeMolIdx_][atom->getIdx()].first.empty()) {
+      continue;
+    }
+    for (int i = 0; i < 12; ++i) {
+      double ang = start_ang + i * 30.0 * M_PI / 180.0;
+      note_rect.centre_.x = at_cds.x + cos(ang) * note_rad;
+      note_rect.centre_.y = at_cds.y + sin(ang) * note_rad;
+      if (!doesNoteClash(note_rect, sym_rect, mol, atom->getIdx())) {
+        cout << atom->getIdx() << " : " << note << " ok at rad = " << note_rad << endl;
+        pos_ok = true;
+        break;
+      }
+    }
+    if(pos_ok) {
+      break;
+    }
+  }
+
+  if(!pos_ok) {
+    cout << "Nowhere for note " << note << endl;
+    note_rect.width_ = -1.0; // so we know it's not valid
+  }
+
+  return note_rect;
 
 }
 
@@ -1993,11 +1985,15 @@ void MolDraw2D::drawBond(const ROMol &mol, const Bond *bond, int at1_idx,
   if (!isComplex) {
     // it's a double bond and one end is 1-connected, do two lines parallel
     // to the atom-atom line.
-    if ((bt == Bond::DOUBLE) &&
-        (1 == at1->getDegree() || 1 == at2->getDegree())) {
-      Point2D perp = calcPerpendicular(at1_cds, at2_cds) * double_bond_offset;
-      drawLine(at1_cds + perp, at2_cds + perp, col1, col2);
-      drawLine(at1_cds - perp, at2_cds - perp, col1, col2);
+    if(bt == Bond::DOUBLE || bt == Bond::AROMATIC) {
+      Point2D l1s, l1f, l2s, l2f;
+      calcDoubleBondLines(mol, double_bond_offset, bond, at1_cds, at2_cds,
+                          l1s, l1f, l2s, l2f);
+      drawLine(l1s, l1f, col1, col2);
+      if (bt == Bond::AROMATIC) {
+        setDash(dashes);
+      }
+      drawLine(l2s, l2f, col1, col2);
     } else if (Bond::SINGLE == bt && (Bond::BEGINWEDGE == bond->getBondDir() ||
                                       Bond::BEGINDASH == bond->getBondDir())) {
       // std::cerr << "WEDGE: from " << at1->getIdx() << " | "
@@ -2022,14 +2018,6 @@ void MolDraw2D::drawBond(const ROMol &mol, const Bond *bond, int at1_idx,
     } else if (Bond::SINGLE == bt && Bond::UNKNOWN == bond->getBondDir()) {
       // unspecified stereo
       drawWavyLine(at1_cds, at2_cds, col1, col2);
-    } else if (Bond::DOUBLE == bt &&
-               ((Bond::EITHERDOUBLE == bond->getBondDir()) ||
-                (Bond::STEREOANY == bond->getStereo()))) {
-      // crossed bond
-      Point2D perp = calcPerpendicular(at1_cds, at2_cds);
-      perp *= double_bond_offset;
-      drawLine(at1_cds + perp, at2_cds - perp, col1, col2);
-      drawLine(at1_cds - perp, at2_cds + perp, col1, col2);
     } else if (Bond::DATIVE == bt || Bond::DATIVEL == bt ||
                Bond::DATIVER == bt) {
       bool fps = fillPolys();
@@ -2053,41 +2041,11 @@ void MolDraw2D::drawBond(const ROMol &mol, const Bond *bond, int at1_idx,
       // the two atoms
       drawLine(at1_cds, at2_cds, col1, col2);
       if (Bond::TRIPLE == bt) {
-        // 2 further lines, a bit shorter and offset on the perpendicular
-        double dbo = 2.0 * double_bond_offset;
-        Point2D perp = calcPerpendicular(at1_cds, at2_cds);
-        double end1_trunc =
-            1 == at1->getDegree() ? 0.0 : multipleBondTruncation;
-        double end2_trunc =
-            1 == at2->getDegree() ? 0.0 : multipleBondTruncation;
-        Point2D bv = at1_cds - at2_cds;
-        Point2D p1 = at1_cds - (bv * end1_trunc) + perp * dbo;
-        Point2D p2 = at2_cds + (bv * end2_trunc) + perp * dbo;
-        drawLine(p1, p2, col1, col2);
-        p1 = at1_cds - (bv * end1_trunc) - perp * dbo;
-        p2 = at2_cds + (bv * end2_trunc) - perp * dbo;
-        drawLine(p1, p2, col1, col2);
-      } else if (Bond::DOUBLE == bt || Bond::AROMATIC == bt) {
-        // all we have left now are double bonds in a ring or not in a ring
-        // and multiply connected
-        Point2D perp;
-        if (mol.getRingInfo()->numBondRings(bond->getIdx())) {
-          // in a ring, we need to draw the bond inside the ring
-          perp = bondInsideRing(mol, bond, at1_cds, at2_cds);
-        } else {
-          perp = bondInsideDoubleBond(mol, bond);
-        }
-        double dbo = 2.0 * double_bond_offset;
-        Point2D bv = at1_cds - at2_cds;
-        Point2D p1 = at1_cds - bv * multipleBondTruncation + perp * dbo;
-        Point2D p2 = at2_cds + bv * multipleBondTruncation + perp * dbo;
-        if (bt == Bond::AROMATIC) {
-          setDash(dashes);
-        }
-        drawLine(p1, p2, col1, col2);
-        if (bt == Bond::AROMATIC) {
-          setDash(noDash);
-        }
+        Point2D l1s, l1f, l2s, l2f;
+        calcTripleBondLines(double_bond_offset, bond, at1_cds, at2_cds,
+                            l1s, l1f, l2s, l2f);
+        drawLine(l1s, l1f, col1, col2);
+        drawLine(l2s, l2f, col1, col2);
       }
     }
   }
@@ -2166,8 +2124,8 @@ void MolDraw2D::drawAtomLabel(int atom_num,
 void MolDraw2D::drawAtomLabel(int atom_num, const DrawColour &draw_colour) {
 
   setColour(draw_colour);
+  vector<string> label_pieces = atomLabelToPieces(atom_num);
   OrientType orient = atom_syms_[activeMolIdx_][atom_num].second;
-  vector<string> label_pieces = atomLabelToPieces(atom_syms_[activeMolIdx_][atom_num].first);
   drawStrings(label_pieces, at_cds_[activeMolIdx_][atom_num], orient);
 
 }
@@ -2179,37 +2137,16 @@ void MolDraw2D::drawAtomAnnotation(const ROMol &mol, const Atom *atom) {
     return;
   }
   string note = atom->getProp<string>("atomNote");
+  cout << "XXXXXXXXXXXXX\nAdding " << note << " to atom " << atom->getIdx() << endl;
   if(note.empty()) {
     return;
   }
+  StringRect note_rect = calcAnnotationPosition(mol, atom);
 
   double full_font_size = fontSize();
-
-  double note_width, note_height;
-  getStringSize(note, note_width, note_height);
-  Point2D note_rect(note_width, note_height);
-  Point2D at_cds = at_cds_[activeMolIdx_][atom->getIdx()];
-  // scan at 30 degree intervals around the atom looking for somewhere
-  // clear for the annotation.  Start at 12 o'clock as the default.
-  double start_ang = getNoteStartAngle(mol, atom);
-  cout << "atom " << atom->getIdx() << atom_syms_[activeMolIdx_][atom->getIdx()].first
-       << " start ang = " << 180.0 * start_ang / M_PI << endl;
-  double note_rad = 0.5;
-  for(int i = 0; i < 12; ++i) {
-    cout << endl << atom->getIdx() << " : " << i << " : "
-         << 180.0 * start_ang / M_PI + 30 * i << endl;
-    double ang = start_ang + i * 30.0 * M_PI / 180.0;
-    Point2D note_vec;
-    note_vec.x = cos(ang);
-    note_vec.y = sin(ang);
-    if(!doesNoteClash(note, note_vec, mol, atom->getIdx(), note_rad)) {
-      Point2D note_pos = at_cds + note_vec * note_rad;
-      setFontSize(drawOptions().annotationFontScale * full_font_size);
-      drawString(note, note_pos);
-      setFontSize(full_font_size);
-      break;
-    }
-  }
+  setFontSize(drawOptions().annotationFontScale * full_font_size);
+  drawString(note, note_rect.centre_);
+  setFontSize(full_font_size);
 
 }
 
@@ -2233,24 +2170,21 @@ double MolDraw2D::getNoteStartAngle(const ROMol &mol, const Atom *atom) const {
     return M_PI / 2.0;
   }
   Point2D at_cds = at_cds_[activeMolIdx_][atom->getIdx()];
-  Point2D ret_vec;
   vector<Point2D> bond_vecs;
-  int num_bonds = 0;
   for(const auto &nbr: make_iterator_range(mol.getAtomNeighbors(atom))) {
+    cout << "bond " << bond_vecs.size() << " between " << atom->getIdx() << " and "
+        << nbr << endl;
     Point2D bond_vec = at_cds.directionVector(at_cds_[activeMolIdx_][nbr]);
     bond_vec.normalize();
-    ret_vec += bond_vec;
     bond_vecs.emplace_back(bond_vec);
-    ++num_bonds;
-  }
-  if(ret_vec.lengthSq() > 1.0e-6) {
-    ret_vec.normalize();
   }
 
-  ret_vec.normalize();
-  if(num_bonds == 1) {
-    ret_vec *= -1.0;
-  } else if(num_bonds == 2) {
+  cout << "num_bonds = " << bond_vecs.size() << endl;
+  Point2D ret_vec;
+  if(bond_vecs.size() == 1) {
+    ret_vec = -bond_vecs[0];
+  } else if(bond_vecs.size() == 2) {
+    ret_vec = bond_vecs[0] + bond_vecs[1];
     if(ret_vec.lengthSq() > 1.0e-6) {
       if(!atom->getNumImplicitHs() || atom->getAtomicNum() == 6) {
         // prefer outside the angle, unless there are Hs that will be in
@@ -2267,10 +2201,12 @@ double MolDraw2D::getNoteStartAngle(const ROMol &mol, const Atom *atom) const {
   } else {
     // just take 2 that are probably adjacent
     double discrim = 4.0 * M_PI / bond_vecs.size();
-    for(int i = 0; i < num_bonds -1; ++i) {
-      for(int j = i; j < num_bonds; ++j) {
+    for(size_t i = 0; i < bond_vecs.size()-1; ++i) {
+      for(size_t j = i+1; j < bond_vecs.size(); ++j) {
         double ang = acos(bond_vecs[i].dotProduct(bond_vecs[j]));
+        cout << i << " and " << j << " ang = " << ang << " vs discrim = " << discrim << endl;
         if(ang < discrim) {
+          cout << "selected bonds " << i << " and " << j << endl;
           ret_vec = bond_vecs[i] + bond_vecs[j];
           ret_vec.normalize();
           discrim = -1.0;
@@ -2278,7 +2214,7 @@ double MolDraw2D::getNoteStartAngle(const ROMol &mol, const Atom *atom) const {
         }
       }
     }
-    if(discrim < 0.0) {
+    if(discrim > 0.0) {
       ret_vec = bond_vecs[0] + bond_vecs[1];
       ret_vec *= -1.0;
     }
@@ -2290,39 +2226,33 @@ double MolDraw2D::getNoteStartAngle(const ROMol &mol, const Atom *atom) const {
 }
 
 // ****************************************************************************
-bool MolDraw2D::doesNoteClash(const string &note, const Point2D &note_vec,
-                              const ROMol &mol, int atom_idx,
-                              double note_rad) const {
+bool MolDraw2D::doesNoteClash(const StringRect &note_rect,
+                              const StringRect &atsym_rect,
+                              const ROMol &mol, unsigned int atom_idx) {
 
   // check bond vectors. note_vec is expected to be unit length.
   auto atom = mol.getAtomWithIdx(atom_idx);
-  if(doesNoteClashNbourBonds(note_vec, mol, atom)) {
+  if(doesNoteClashNbourBonds(note_rect, mol, atom)) {
     return true;
   }
-  if(doesNoteClashAtomLabel(note, note_vec, note_rad, mol, atom_idx)) {
+  if(doesNoteClashAtomLabel(note_rect, atsym_rect)) {
     return true;
-  }
-  return false;
-
-}
-
-// ****************************************************************************
-bool MolDraw2D::doesNoteClashNbourBonds(const Point2D &note_vec,
-                                        const ROMol &mol,
-                                        const Atom *atom) const {
-
-  static const double cutoff = cos(40.0 * M_PI / 180.0);
-
-  int atom_idx = atom->getIdx();
-  for(const auto &nbr: make_iterator_range(mol.getAtomNeighbors(atom))) {
-    cout << "atom " << atom_idx << " to " << nbr << endl;
-    Point2D bvec = at_cds_[activeMolIdx_][nbr] - at_cds_[activeMolIdx_][atom_idx];
-    bvec.normalize();
-    cout << "bond vector : " << bvec.x << ", " << bvec.y << endl;
-    double dp = bvec.dotProduct(note_vec);
-    cout << "dot product = " << dp << endl;
-    if(dp > cutoff) {
-      return true; // within cutoff degrees so probably not good
+  } else {
+    // if it's cluttered, it might clash with other labels.
+    const auto &at_cds = at_cds_[activeMolIdx_];
+    for(auto atom: mol.atoms()) {
+      if(atom_idx == atom->getIdx()) {
+        continue;
+      }
+      if((at_cds[atom_idx] - at_cds[atom->getIdx()]).lengthSq() < 4.0) {
+        cout << "checking clash with atom " << atom->getIdx() << endl;
+        const auto &atsym = atom_syms_[activeMolIdx_][atom->getIdx()];
+        StringRect near_at_rect = calcLabelRect(atsym.first, atsym.second,
+                                                at_cds[atom->getIdx()]);
+        if(doesNoteClashAtomLabel(note_rect, near_at_rect)) {
+          return true;
+        }
+      }
     }
   }
   return false;
@@ -2330,42 +2260,78 @@ bool MolDraw2D::doesNoteClashNbourBonds(const Point2D &note_vec,
 }
 
 // ****************************************************************************
-bool MolDraw2D::doesNoteClashAtomLabel(const string &note,
-                                       const Point2D &note_vec, double note_rad,
-                                       const ROMol &mol, int atom_idx) const {
+bool MolDraw2D::doesNoteClashNbourBonds(const StringRect &note_rect,
+                                        const ROMol &mol,
+                                        const Atom *atom) const {
 
-  Point2D lab_centre = at_cds_[activeMolIdx_][atom_idx];
-  string atsym = atom_syms_[activeMolIdx_][atom_idx].first;
-  cout << "Checking atom label clash between " << atsym << " and " << note << endl;
-  cout << "Atom at " << lab_centre.x << ", " << lab_centre.y << endl;
-  cout << "Note vec : " << note_vec.x << ", " << note_vec.y << " at rad "
-       << note_rad << endl;
-  if(atsym.empty()) {
-    return false;
+  double double_bond_offset = -1.0;
+  for(const auto &nbr: make_iterator_range(mol.getAtomNeighbors(atom))) {
+    Point2D const &at1_cds = at_cds_[activeMolIdx_][nbr];
+    Point2D const &at2_cds = at_cds_[activeMolIdx_][atom->getIdx()];
+    if(doesLineIntersectLabel(at1_cds, at2_cds, note_rect)) {
+      return true;
+    }
+    // now see about clashing with other lines if not single
+    auto bond = mol.getBondBetweenAtoms(atom->getIdx(), nbr);
+    Bond::BondType bt = bond->getBondType();
+    if(bt == Bond::SINGLE) {
+      continue;
+    }
+    if (double_bond_offset < 0.0) {
+      double_bond_offset = options_.multipleBondOffset;
+      // mol files from, for example, Marvin use a bond length of 1 for just
+      // about everything. When this is the case, the default multipleBondOffset
+      // is just too much, so scale it back.
+      if ((at1_cds - at2_cds).lengthSq() < 1.4) {
+        double_bond_offset *= 0.6;
+      }
+    }
+    if(bt == Bond::DOUBLE || bt == Bond::AROMATIC || bt == Bond::TRIPLE) {
+      Point2D l1s, l1f, l2s, l2f;
+      if(bt == Bond::DOUBLE || bt == Bond::AROMATIC) {
+        calcDoubleBondLines(mol, double_bond_offset, bond, at1_cds, at2_cds,
+                            l1s, l1f, l2s, l2f);
+      } else {
+        calcTripleBondLines(double_bond_offset, bond, at1_cds, at2_cds, l1s,
+                            l1f, l2s, l2f);
+      }
+      if (doesLineIntersectLabel(l1s, l1f, note_rect) ||
+          doesLineIntersectLabel(l2s, l2f, note_rect)) {
+        return true;
+      }
+    }
   }
-  OrientType orient = atom_syms_[activeMolIdx_][atom_idx].second;
-  double lab_width, lab_height;
-  calcLabelRect(atsym, orient, lab_centre, lab_width, lab_height);
-  cout << "atsym centre and dims : " << lab_centre.x << ", " << lab_centre.y
-       << " : " << lab_width << " by " << lab_height << endl;
-
-  Point2D note_centre = at_cds_[activeMolIdx_][atom_idx];
-  note_centre += note_vec * note_rad;
-  double note_width, note_height;
-  calcLabelRect(note, W, note_centre, note_width, note_height);
-  cout << "note centre and dims : " << note_centre.x << ", " << note_centre.y
-       << " : " << note_width << " by " << note_height << endl;
-  if(fabs(lab_centre.x - note_centre.x) < lab_width + note_width
-     || fabs(lab_centre.y - note_centre.y) < lab_height + note_height) {
-    return true;
-  }
-
   return false;
 
 }
 
 // ****************************************************************************
-vector<string> MolDraw2D::atomLabelToPieces(const string &label) const {
+bool MolDraw2D::doesNoteClashAtomLabel(const StringRect &note_rect,
+                                       const StringRect &atsym_rect) {
+
+  cout << "note centre and dims : " << note_rect.centre_.x
+       << ", " << note_rect.centre_.y
+       << " : " << note_rect.width_ << " by " << note_rect.height_ << endl;
+  cout << "x centre diff " << fabs(atsym_rect.centre_.x - note_rect.centre_.x)
+       << " vs " << (atsym_rect.width_ + note_rect.width_) / 2.0 << endl;
+  cout << "y centre diff " << fabs(atsym_rect.centre_.y - note_rect.centre_.y)
+       << " vs " << (atsym_rect.height_ + note_rect.height_) / 2.0 << endl;
+
+  if(fabs(atsym_rect.centre_.x - note_rect.centre_.x)
+          < (atsym_rect.width_ + note_rect.width_) / 2.0
+     && fabs(atsym_rect.centre_.y - note_rect.centre_.y)
+             < (atsym_rect.height_ + note_rect.height_) / 2.0) {
+    cout << "CLASH" << endl;
+    return true;
+  }
+
+  cout << "NO CLASH" << endl;
+  return false;
+
+}
+
+// ****************************************************************************
+vector<string> MolDraw2D::atomLabelToPieces(int atom_num) const {
 
   return atomLabelToPieces(atom_syms_[activeMolIdx_][atom_num].first,
                            atom_syms_[activeMolIdx_][atom_num].second);
@@ -2516,7 +2482,7 @@ vector<string> MolDraw2D::atomLabelToPieces(const string &label,
 
 // ****************************************************************************
 // calculate normalised perpendicular to vector between two coords
-Point2D MolDraw2D::calcPerpendicular(const Point2D &cds1, const Point2D &cds2) {
+Point2D MolDraw2D::calcPerpendicular(const Point2D &cds1, const Point2D &cds2) const {
   double bv[2] = {cds1.x - cds2.x, cds1.y - cds2.y};
   double perp[2] = {-bv[1], bv[0]};
   double perp_len = sqrt(perp[0] * perp[0] + perp[1] * perp[1]);
@@ -2524,6 +2490,77 @@ Point2D MolDraw2D::calcPerpendicular(const Point2D &cds1, const Point2D &cds2) {
   perp[1] /= perp_len;
 
   return Point2D(perp[0], perp[1]);
+}
+
+// ****************************************************************************
+void MolDraw2D::calcDoubleBondLines(const ROMol &mol, double offset,
+                                    const Bond *bond,
+                                    const Point2D &at1_cds, const Point2D &at2_cds,
+                                    Point2D &l1s, Point2D &l1f,
+                                    Point2D &l2s, Point2D &l2f) const {
+
+  // the percent shorter that the extra bonds in a double bond are
+  const double multipleBondTruncation = 0.15;
+
+  Atom *at1 = bond->getBeginAtom();
+  Atom *at2 = bond->getEndAtom();
+  Point2D perp;
+  if(1 == at1->getDegree() || 1 == at2->getDegree()) {
+    perp = calcPerpendicular(at1_cds, at2_cds) * offset;
+    l1s = at1_cds + perp;
+    l1f = at2_cds + perp;
+    l2s = at1_cds - perp;
+    l2f = at2_cds - perp;
+  } else if((Bond::EITHERDOUBLE == bond->getBondDir()) ||
+            (Bond::STEREOANY == bond->getStereo())){
+    // crossed bond
+    perp = calcPerpendicular(at1_cds, at2_cds) * offset;
+    l1s = at1_cds + perp;
+    l1f = at2_cds - perp;
+    l2s = at1_cds - perp;
+    l2f = at2_cds + perp;
+  } else {
+    l1s = at1_cds;
+    l1f = at2_cds;
+    offset *= 2.0;
+    if (mol.getRingInfo()->numBondRings(bond->getIdx())) {
+      // in a ring, we need to draw the bond inside the ring
+      perp = bondInsideRing(mol, bond, at1_cds, at2_cds);
+    } else {
+      perp = bondInsideDoubleBond(mol, bond);
+    }
+    Point2D bv = at1_cds - at2_cds;
+    l2s = at1_cds - bv * multipleBondTruncation + perp * offset;
+    l2f = at2_cds + bv * multipleBondTruncation + perp * offset;
+  }
+
+}
+
+// ****************************************************************************
+void MolDraw2D::calcTripleBondLines(double offset, const Bond *bond,
+                                    const Point2D &at1_cds, const Point2D &at2_cds,
+                                    Point2D &l1s, Point2D &l1f,
+                                    Point2D &l2s, Point2D &l2f) const {
+
+  // the percent shorter that the extra bonds in a double bond are
+  const double multipleBondTruncation = 0.15;
+
+  Atom *at1 = bond->getBeginAtom();
+  Atom *at2 = bond->getEndAtom();
+
+  // 2 lines, a bit shorter and offset on the perpendicular
+  double dbo = 2.0 * offset;
+  Point2D perp = calcPerpendicular(at1_cds, at2_cds);
+  double end1_trunc =
+      1 == at1->getDegree() ? 0.0 : multipleBondTruncation;
+  double end2_trunc =
+      1 == at2->getDegree() ? 0.0 : multipleBondTruncation;
+  Point2D bv = at1_cds - at2_cds;
+  l1s = at1_cds - (bv * end1_trunc) + perp * dbo;
+  l1f = at2_cds + (bv * end2_trunc) + perp * dbo;
+  l2s= at1_cds - (bv * end1_trunc) - perp * dbo;
+  l2f = at2_cds + (bv * end2_trunc) - perp * dbo;
+
 }
 
 // ****************************************************************************
@@ -2542,7 +2579,7 @@ unsigned int MolDraw2D::getDrawLineWidth() {
 // cds1 and cds2 are 2 atoms in a ring.  Returns the perpendicular pointing
 // into the ring
 Point2D MolDraw2D::bondInsideRing(const ROMol &mol, const Bond *bond,
-                                  const Point2D &cds1, const Point2D &cds2) {
+                                  const Point2D &cds1, const Point2D &cds2) const {
   Atom *bgn_atom = bond->getBeginAtom();
   for(const auto &nbri2: make_iterator_range(mol.getAtomBonds(bgn_atom))) {
     const Bond *bond2 = mol[nbri2];
@@ -2579,7 +2616,7 @@ Point2D MolDraw2D::bondInsideRing(const ROMol &mol, const Bond *bond,
 // ****************************************************************************
 // cds1 and cds2 are 2 atoms in a chain double bond.  Returns the
 // perpendicular pointing into the inside of the bond
-Point2D MolDraw2D::bondInsideDoubleBond(const ROMol &mol, const Bond *bond) {
+Point2D MolDraw2D::bondInsideDoubleBond(const ROMol &mol, const Bond *bond) const {
   // a chain double bond, where it looks nicer IMO if the 2nd line is inside
   // the angle of outgoing bond. Unless it's an allene, where nothing
   // looks great.
@@ -2612,7 +2649,7 @@ Point2D MolDraw2D::bondInsideDoubleBond(const ROMol &mol, const Bond *bond) {
 // it's inside the angle made between (1 and 2) and (2 and 3).
 Point2D MolDraw2D::calcInnerPerpendicular(const Point2D &cds1,
                                           const Point2D &cds2,
-                                          const Point2D &cds3) {
+                                          const Point2D &cds3) const {
   Point2D perp = calcPerpendicular(cds1, cds2);
   double v1[2] = {cds1.x - cds2.x, cds1.y - cds2.y};
   double v2[2] = {cds2.x - cds3.x, cds2.y - cds3.y};
@@ -2639,7 +2676,7 @@ void MolDraw2D::adjustBondEndForLabel(int atnum, const Point2D &nbr_cds,
 
   double label_width, label_height;
   // These days, labels only have the first character in the way.
-  vector<string> label_bits = atomLabelToPieces(atom_syms_[activeMolIdx_][atnum].first);
+  vector<string> label_bits = atomLabelToPieces(atnum);
   getStringSize(label_bits.front(), label_width, label_height);
 
   double additional_width = 0.0;
@@ -2864,6 +2901,79 @@ MolDraw2D::OrientType MolDraw2D::getAtomOrientation(const RDKit::Atom &atom,
 }
 
 // ****************************************************************************
+void MolDraw2D::adjustScaleForAtomLabels(const map<int, double> *highlight_radii) {
+
+  double x_max(x_min_ + x_range_), y_max(y_min_ + y_range_);
+  for (size_t i=0; i < atom_syms_[activeMolIdx_].size(); ++i) {
+    if (!atom_syms_[activeMolIdx_][i].first.empty()) {
+      Point2D centre = at_cds_[activeMolIdx_][i];
+      cout << "atom coords for " << i << " = "
+           << centre.x << ", " << centre.y << endl;
+      StringRect sym_rect = calcLabelRect(atom_syms_[activeMolIdx_][i].first,
+                                          atom_syms_[activeMolIdx_][i].second,
+                                          centre);
+      double this_x_max = sym_rect.centre_.x + sym_rect.width_ / 2.0;
+      double this_y_max = sym_rect.centre_.y + sym_rect.height_ / 2.0;
+      double this_x_min = sym_rect.centre_.x - sym_rect.width_ / 2.0;
+      double this_y_min = sym_rect.centre_.y - sym_rect.height_ / 2.0;
+      x_max = std::max(x_max, this_x_max);
+      x_min_ = std::min(x_min_, this_x_min);
+      y_max = std::max(y_max, this_y_max);
+      y_min_ = std::min(y_min_, this_y_min);
+      cout << "new extremes : " << std::min(x_min_, this_x_min)
+           << " to " << std::max(x_max, this_x_max)
+           << " and " << std::min(y_min_, this_y_min)
+           << " to " << std::max(y_max, this_y_max) << endl;
+    }
+    if (highlight_radii) {
+      Point2D centre;
+      double xradius, yradius;
+      // this involves a 2nd call to calcLabelRect, but never mind
+      calcLabelEllipse(i, highlight_radii, centre, xradius, yradius);
+      double this_x_min = centre.x - xradius;
+      double this_x_max = centre.x + xradius;
+      double this_y_min = centre.y - yradius;
+      double this_y_max = centre.y + yradius;
+      x_max = std::max(x_max, this_x_max);
+      x_min_ = std::min(x_min_, this_x_min);
+      y_max = std::max(y_max, this_y_max);
+      y_min_ = std::min(y_min_, this_y_min);
+    }
+  }
+  x_range_ = max(x_max - x_min_, x_range_);
+  y_range_ = max(y_max - y_min_, y_range_);
+
+}
+
+// ****************************************************************************
+void MolDraw2D::adjustScaleForAnnotation(const ROMol &mol) {
+
+  double x_max(x_min_ + x_range_), y_max(y_min_ + y_range_);
+
+  for(auto atom: mol.atoms()) {
+    if(!atom->hasProp("atomNote")) {
+      return;
+    }
+    string note = atom->getProp<string>("atomNote");
+    if(note.empty()) {
+      return;
+    }
+    StringRect note_rect = calcAnnotationPosition(mol, atom);
+    double this_x_max = note_rect.centre_.x + note_rect.width_ / 2.0;
+    double this_x_min = note_rect.centre_.x - note_rect.width_ / 2.0;
+    double this_y_max = note_rect.centre_.y + note_rect.height_ / 2.0;
+    double this_y_min = note_rect.centre_.y - note_rect.height_ / 2.0;
+    x_max = std::max(x_max, this_x_max);
+    x_min_ = std::min(x_min_, this_x_min);
+    y_max = std::max(y_max, this_y_max);
+    y_min_ = std::min(y_min_, this_y_min);
+  }
+  x_range_ = max(x_max - x_min_, x_range_);
+  y_range_ = max(y_max - y_min_, y_range_);
+
+}
+
+// ****************************************************************************
 void MolDraw2D::drawTriangle(const Point2D &cds1, const Point2D &cds2,
                              const Point2D &cds3) {
   std::vector<Point2D> pts(3);
@@ -2983,6 +3093,60 @@ void MolDraw2D::drawAttachmentLine(const Point2D &cds1, const Point2D &cds2,
   Point2D p1 = Point2D(cds2.x - perp.x * len / 2, cds2.y - perp.y * len / 2);
   Point2D p2 = Point2D(cds2.x + perp.x * len / 2, cds2.y + perp.y * len / 2);
   drawWavyLine(p1, p2, col, col, nSegments);
+}
+
+// ****************************************************************************
+bool doLinesIntersect(const Point2D &l1s, const Point2D &l1f,
+                      const Point2D &l2s, const Point2D &l2f) {
+
+  // using spell from answer 2 of
+  // https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect
+  double s1_x = l1f.x - l1s.x;
+  double s1_y = l1f.y - l1s.y;
+  double s2_x = l2f.x - l2s.x;
+  double s2_y = l2f.y - l2s.y;
+
+  double d = (-s2_x * s1_y + s1_x * s2_y);
+  if(d == 0.0) {
+    // parallel lines.
+    return false;
+  }
+  double s, t;
+  s = (-s1_y * (l1s.x - l2s.x) + s1_x * (l1s.y - l2s.y)) / d;
+  t = ( s2_x * (l1s.y - l2s.y) - s2_y * (l1s.x - l2s.x)) / d;
+
+  if (s >= 0 && s <= 1 && t >= 0 && t <= 1) {
+    return true;
+  }
+
+  return false;
+
+}
+
+// ****************************************************************************
+bool doesLineIntersectLabel(const Point2D &ls, const Point2D &lf,
+                            const MolDraw2D::StringRect &lab_rect) {
+
+  double wb2 = lab_rect.width_ / 2.0;
+  double hb2 = lab_rect.height_ / 2.0;
+  Point2D p1(lab_rect.centre_.x - wb2, lab_rect.centre_.y + hb2);
+  Point2D p2(lab_rect.centre_.x + wb2, lab_rect.centre_.y + hb2);
+  Point2D p3(lab_rect.centre_.x + wb2, lab_rect.centre_.y - hb2);
+  Point2D p4(lab_rect.centre_.x - wb2, lab_rect.centre_.y - hb2);
+
+  // first check if line is completely inside label.  Unlikely, but who
+  // knows?
+  if(ls.x >= p1.x && ls.x <= p3.x && lf.x >= p1.x && lf.x <= p3.x
+     && ls.y <= p1.y && ls.y >= p3.y && lf.y <= p1.y && lf.y >= p3.y) {
+    return true;
+  }
+  if(doLinesIntersect(ls, lf, p1, p2) || doLinesIntersect(ls, lf, p2, p3)
+     || doLinesIntersect(ls, lf, p3, p4) || doLinesIntersect(ls, lf, p4, p1)) {
+    return true;
+  }
+
+  return false;
+
 }
 
 }  // namespace RDKit
