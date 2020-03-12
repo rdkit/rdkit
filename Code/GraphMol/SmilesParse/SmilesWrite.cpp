@@ -14,7 +14,7 @@
 #include <GraphMol/new_canon.h>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
-#include <cstdlib>
+#include <RDGeneral/utils.h>
 #include <RDGeneral/BoostEndInclude.h>
 
 #include <sstream>
@@ -455,7 +455,7 @@ std::string MolToSmiles(const ROMol &mol, bool doIsomericSmiles, bool doKekule,
     if (doRandom && rootedAtAtom == -1) {
       // need to find a random atom id between 0 and mol.getNumAtoms()
       // exclusively
-      rootedAtAtom = std::rand() % mol.getNumAtoms();
+      rootedAtAtom = getRandomGenerator()() % mol.getNumAtoms();
     }
 
     std::string res;
@@ -578,7 +578,7 @@ std::vector<std::string> MolToRandomSmilesVect(
     bool doIsomericSmiles, bool doKekule, bool allBondsExplicit,
     bool allHsExplicit) {
   if (randomSeed > 0) {
-    std::srand(randomSeed);
+    getRandomGenerator(rdcast<int>(randomSeed));
   }
   std::vector<std::string> res;
   res.reserve(numSmiles);
