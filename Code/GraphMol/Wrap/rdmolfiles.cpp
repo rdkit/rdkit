@@ -377,6 +377,21 @@ ROMol *MolFromSmilesHelper(python::object ismiles,
 
   return SmilesToMol(smiles, params);
 }
+
+python::list MolToRandomSmilesHelper(const ROMol &mol, unsigned int numSmiles,
+                                     unsigned int randomSeed,
+                                     bool doIsomericSmiles, bool doKekule,
+                                     bool allBondsExplicit,
+                                     bool allHsExplicit) {
+  auto res = MolToRandomSmilesVect(mol, numSmiles, randomSeed, doIsomericSmiles,
+                                   doKekule, allBondsExplicit, allHsExplicit);
+  python::list pyres;
+  for (auto smi : res) {
+    pyres.append(smi);
+  }
+  return pyres;
+}
+
 }  // namespace RDKit
 
 // MolSupplier stuff
@@ -1380,6 +1395,15 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
        python::arg("missingValueMarker") = "", python::arg("lineSize") = 190),
       "creates a list property on the molecule from individual atom property "
       "values");
+
+  python::def(
+      "MolToRandomSmilesVect", RDKit::MolToRandomSmilesHelper,
+      (python::arg("mol"), python::arg("numSmiles"),
+       python::arg("randomSeed") = 0, python::arg("isomericSmiles") = true,
+       python::arg("kekuleSmiles") = false,
+       python::arg("allBondsExplicit") = false,
+       python::arg("allHsExplicit") = false),
+      "returns a list of SMILES generated using the randomSmiles algorithm");
 
 /********************************************************
  * MolSupplier stuff
