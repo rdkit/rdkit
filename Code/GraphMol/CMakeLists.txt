@@ -1,5 +1,6 @@
 
 add_definitions(-DRDKIT_GRAPHMOL_BUILD)
+
 rdkit_library(GraphMol
               Atom.cpp QueryAtom.cpp QueryBond.cpp Bond.cpp
               MolOps.cpp FindRings.cpp ROMol.cpp RWMol.cpp PeriodicTable.cpp
@@ -9,6 +10,11 @@ rdkit_library(GraphMol
               Matrices.cpp Chirality.cpp RingInfo.cpp Conformer.cpp
               Renumber.cpp AdjustQuery.cpp Resonance.cpp StereoGroup.cpp
               new_canon.cpp SubstanceGroup.cpp
+
+              NewCIPLabelling/RDKitCipMol.cpp
+              NewCIPLabelling/RDKitCipLabeller.cpp
+
+
               SHARED
               LINK_LIBRARIES RDGeometryLib RDGeneral  )
 if(RDK_USE_URF)
@@ -150,3 +156,7 @@ rdkit_catch_test(graphmolTestsCatch catch_graphmol.cpp catch_main.cpp
 
 rdkit_catch_test(graphmolSGroupCatch catch_sgroups.cpp  catch_main.cpp
            LINK_LIBRARIES SmilesParse GraphMol )
+
+rdkit_catch_test(accurateCipTestCatch NewCIPLabelling/catch_tests.cpp NewCIPLabelling/RDKitCipMol.cpp
+        NewCIPLabelling/RDKitCipLabeller.cpp LINK_LIBRARIES SmilesParse GraphMol)
+
