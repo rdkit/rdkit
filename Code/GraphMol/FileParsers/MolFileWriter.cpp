@@ -998,6 +998,10 @@ const std::string GetV3000MolFileAtomLine(
         iprop) {
       ss << " STBOX=" << iprop;
     }
+    if (atom->getPropIfPresent(common_properties::molSubstCount, iprop) &&
+        iprop) {
+      ss << " SUBST=" << iprop;
+    }
   }
   {
     std::string sprop;
