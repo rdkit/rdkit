@@ -2665,6 +2665,7 @@ void test20Annotate() {
     outs << text;
     outs.flush();
   }
+
   {
     auto m1 = "C[C@@H](F)/C=C/[C@H](O)C"_smiles;
 #ifdef RDK_BUILD_CAIRO_SUPPORT
@@ -2699,7 +2700,7 @@ int main() {
 
   RDLog::InitLogs();
 
-#if 1
+#if 0
   test1();
   test2();
   test4();
@@ -2736,10 +2737,10 @@ int main() {
   test18FixedScales();
   test19RotateDrawing();
 #endif
-  test16MoleculeMetadata();
-  testGithub2063();
-  testGithub2151();
-  testGithub2762();
-  testGithub2931();
+//  test16MoleculeMetadata();
+//  testGithub2063();
+//  testGithub2151();
+//  testGithub2762();
+//  testGithub2931();
   test20Annotate();
 }

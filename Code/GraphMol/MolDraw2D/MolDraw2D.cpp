@@ -1671,19 +1671,20 @@ StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol, const Bond *bond)
   Point2D perp = calcPerpendicular(at1_cds, at2_cds);
   Point2D bond_vec = at1_cds.directionVector(at2_cds);
   double bond_len = (at1_cds - at2_cds).length();
-  Point2D mid = at1_cds + bond_vec * bond_len * 0.5;
+  vector<double> mid_offsets{0.5, 0.33, 0.66, 0.25, 0.75};
   double offset_step = drawOptions().multipleBondOffset;
-  for(int j=1; j<4; ++j) {
-    double offset = j * offset_step;
-    Point2D p = mid + perp * offset;
-    note_rect.centre_ = p;
-    if(!doesBondNoteClash(note_rect, mol, bond)) {
-      return note_rect;
-    }
-    p = mid - perp * offset;
-    note_rect.centre_ = p;
-    if(!doesBondNoteClash(note_rect, mol, bond)) {
-      return note_rect;
+  for(auto mo: mid_offsets) {
+    Point2D mid = at1_cds + bond_vec * bond_len * mo;
+    for(int j=1; j<6; ++j) {
+      double offset = j * offset_step;
+      note_rect.centre_ = mid + perp * offset;
+      if (!doesBondNoteClash(note_rect, mol, bond)) {
+        return note_rect;
+      }
+      note_rect.centre_ = mid - perp * offset;
+      if (!doesBondNoteClash(note_rect, mol, bond)) {
+        return note_rect;
+      }
     }
   }
   note_rect.width_ = -1.0; // so we know it's not valid
@@ -1955,6 +1956,12 @@ void MolDraw2D::extractAtomNotes(const ROMol &mol) {
         note_rect = nullptr;
       } else {
         note_rect = new StringRect(calcAnnotationPosition(mol, atom));
+        if(note_rect->width_ < 0.0) {
+          cerr << "Couldn't find good place for note " << note << " for atom "
+               << atom->getIdx() << endl;
+          delete note_rect;
+          note_rect = nullptr;
+        }
       }
     }
     atom_notes_[activeMolIdx_].push_back(unique_ptr<StringRect>(note_rect));
@@ -1978,6 +1985,12 @@ void MolDraw2D::extractBondNotes(const ROMol &mol) {
         note_rect = nullptr;
       } else {
         note_rect = new StringRect(calcAnnotationPosition(mol, bond));
+        if(note_rect->width_ < 0.0) {
+          cerr << "Couldn't find good place for note " << note << " for bond "
+               << bond->getIdx() << endl;
+          delete note_rect;
+          note_rect = nullptr;
+        }
       }
     }
     bond_notes_[activeMolIdx_].push_back(unique_ptr<StringRect>(note_rect));
@@ -3236,7 +3249,6 @@ bool doesLineIntersectLabel(const Point2D &ls, const Point2D &lf,
      || doLinesIntersect(ls, lf, p3, p4) || doLinesIntersect(ls, lf, p4, p1)) {
     return true;
   }
-
   return false;
 
 }
