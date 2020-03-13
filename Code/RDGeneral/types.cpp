@@ -120,6 +120,7 @@ const std::string molAttachOrder = "molAttchord";
 const std::string molAtomClass = "molClass";
 const std::string molAtomSeqId = "molSeqid";
 const std::string molRxnExactChange = "molRxnExachg";
+const std::string molReactStatus = "molReactStatus";
 
 }  // namespace common_properties
 

@@ -1103,6 +1103,31 @@ const std::string GetV3000MolFileBondLine(const Bond *bond,
       ss << " TOPO=" << topol;
     }
   }
+
+  {
+    int iprop;
+    if (bond->getPropIfPresent(common_properties::molReactStatus, iprop) &&
+        iprop) {
+      ss << " RXCTR=" << iprop;
+    }
+  }
+
+  {
+    std::string sprop;
+    if (bond->getPropIfPresent(common_properties::molStereoCare, sprop) &&
+        sprop != "0") {
+      ss << " STBOX=" << sprop;
+    }
+    if (bond->getPropIfPresent(common_properties::_MolFileBondEndPts, sprop) &&
+        sprop != "0") {
+      ss << " ENDPTS=" << sprop;
+    }
+    if (bond->getPropIfPresent(common_properties::_MolFileBondAttach, sprop) &&
+        sprop != "0") {
+      ss << " ATTACH=" << sprop;
+    }
+  }
+
   return ss.str();
 }
 

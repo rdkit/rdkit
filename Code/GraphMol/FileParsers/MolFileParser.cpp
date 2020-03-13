@@ -2344,7 +2344,7 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
         }
       } else if (prop == "RXCTR") {
         int reactStatus = FileParserUtils::toInt(val);
-        bond->setProp("molReactStatus", reactStatus);
+        bond->setProp(common_properties::molReactStatus, reactStatus);
       } else if (prop == "STBOX") {
         bond->setProp(common_properties::molStereoCare, val);
       } else if (prop == "ENDPTS") {
