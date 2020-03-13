@@ -1364,20 +1364,22 @@ M  END
     CHECK(molb.find("SEQID=4") != std::string::npos);
   }
   SECTION("SUBST") {
-    auto mol = R"CTAB(
-  Mrv2007 03132014352D          
+    auto mol = R"CTAB(test
+  Mrv2007 03132018122D          
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
-M  V30 COUNTS 3 2 0 0 0
+M  V30 COUNTS 4 3 0 0 0
 M  V30 BEGIN ATOM
-M  V30 1 C -16.625 7.1667 0 0 SUBST=3
-M  V30 2 C -15.2913 7.9367 0 0 SUBST=-2
-M  V30 3 N -13.9576 7.1667 0 0 SUBST=-1
+M  V30 1 C -16.6248 7.1666 0 0 SUBST=3
+M  V30 2 C -15.2911 7.9366 0 0 SUBST=-2
+M  V30 3 N -13.9574 7.1666 0 0 SUBST=-1
+M  V30 4 C -17.9585 7.9366 0 0 SUBST=6
 M  V30 END ATOM
 M  V30 BEGIN BOND
 M  V30 1 1 1 2
 M  V30 2 1 2 3
+M  V30 3 1 1 4
 M  V30 END BOND
 M  V30 END CTAB
 M  END
@@ -1385,7 +1387,7 @@ M  END
     REQUIRE(mol);
 
     auto smarts = MolToSmarts(*mol);
-    CHECK(smarts == "[#6&D3]-[#6&D2]-[#7&D0]");
+    CHECK(smarts == "[#6&D3](-[#6&D2]-[#7&D0])-[#6&D{6-}]");
 
     auto molb = MolToV3KMolBlock(*mol);
     CHECK(molb.find("SUBST=3") != std::string::npos);

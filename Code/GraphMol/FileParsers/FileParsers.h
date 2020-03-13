@@ -157,7 +157,7 @@ RDKIT_FILEPARSERS_EXPORT void MolToMolFile(
 inline void MolToV3KMolFile(const ROMol &mol, const std::string &fName,
                             bool includeStereo = true, int confId = -1,
                             bool kekulize = true) {
-  MolToMolFile(mol, fName, includeStereo, confId, kekulize);
+  MolToMolFile(mol, fName, includeStereo, confId, kekulize, true);
 }
 
 RDKIT_FILEPARSERS_EXPORT std::string MolToXYZBlock(const ROMol &mol,

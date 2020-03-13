@@ -2468,7 +2468,7 @@ void ProcessMolProps(RWMol *mol) {
       } else if (ival == -2) {
         // as drawn
         ival = atom->getDegree();
-      } else if (ival == 6) {
+      } else if (ival >= 6) {
         // 6 or more
         gtQuery = true;
       }
