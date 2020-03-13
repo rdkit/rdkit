@@ -1392,4 +1392,38 @@ M  END
     CHECK(molb.find("SUBST=-2") != std::string::npos);
     CHECK(molb.find("SUBST=-1") != std::string::npos);
   }
+  SECTION("bond props") {
+    auto mol = R"CTAB(bogus example
+  Mrv2007 03132017102D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 8 7 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -28.125 8.2067 0 0
+M  V30 2 C -26.7913 7.4367 0 0
+M  V30 3 C -26.7913 5.8967 0 0
+M  V30 4 C -28.125 5.1267 0 0
+M  V30 5 N -29.4587 5.8967 0 0
+M  V30 6 C -29.4587 7.4367 0 0
+M  V30 7 * -27.2359 7.18 0 0
+M  V30 8 R# -25.2354 8.335 0 0 RGROUPS=(1 1)
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 4 2 4 5
+M  V30 5 1 5 6 
+M  V30 6 2 1 6 RXCTR=1
+M  V30 7 1 7 8 ENDPTS=(3 1 2 3) ATTACH=ANY
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(mol);
+
+    auto molb = MolToV3KMolBlock(*mol);
+    CHECK(molb.find("ENDPTS=(3 1 2 3) ATTACH=ANY") != std::string::npos);
+    CHECK(molb.find("RXCTR=1") != std::string::npos);
+  }
 }
