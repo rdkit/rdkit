@@ -2596,11 +2596,11 @@ void MolDraw2D::calcDoubleBondLines(const ROMol &mol, double offset,
 
   // the percent shorter that the extra bonds in a double bond are
   const double multipleBondTruncation = 0.15;
-
   Atom *at1 = bond->getBeginAtom();
   Atom *at2 = bond->getEndAtom();
   Point2D perp;
-  if(1 == at1->getDegree() || 1 == at2->getDegree()) {
+  if(1 == at1->getDegree() || 1 == at2->getDegree()
+      || isLinearAtom(*at1) || isLinearAtom(*at2)) {
     perp = calcPerpendicular(at1_cds, at2_cds) * offset;
     l1s = at1_cds + perp;
     l1f = at2_cds + perp;
@@ -2628,6 +2628,28 @@ void MolDraw2D::calcDoubleBondLines(const ROMol &mol, double offset,
     l2s = at1_cds - bv * multipleBondTruncation + perp * offset;
     l2f = at2_cds + bv * multipleBondTruncation + perp * offset;
   }
+
+}
+
+// ****************************************************************************
+bool MolDraw2D::isLinearAtom(const Atom &atom) const {
+
+  if(atom.getDegree() == 2) {
+    Point2D bond_vecs[2];
+    Bond::BondType bts[2];
+    Point2D const &at_cds = at_cds_[activeMolIdx_][atom.getIdx()];
+    ROMol const &mol = atom.getOwningMol();
+    int i = 0;
+    for (const auto &nbr : make_iterator_range(mol.getAtomNeighbors(&atom))) {
+      Point2D bond_vec = at_cds.directionVector(at_cds_[activeMolIdx_][nbr]);
+      bond_vec.normalize();
+      bond_vecs[i] = bond_vec;
+      bts[i] = mol.getBondBetweenAtoms(atom.getIdx(), nbr)->getBondType();
+      ++i;
+    }
+    return (bts[0] == bts[1] && bond_vecs[0].dotProduct(bond_vecs[1]) < -0.95);
+  }
+  return false;
 
 }
 
@@ -2913,8 +2935,12 @@ string MolDraw2D::getAtomSymbol(const RDKit::Atom &atom) const {
 
     symbol = "";
     for(const std::string &se: preText) { symbol += se; }
-    if (atom.getAtomicNum() != 6 || atom.getDegree() == 0 || preText.size() ||
-        postText.size()) {
+
+    // allenes need a C, but extend to any atom with degree 2 and both
+    // bonds in a line.
+    if (isLinearAtom(atom) ||
+        (atom.getAtomicNum() != 6 || atom.getDegree() == 0
+         || preText.size() || postText.size())) {
       symbol += atom.getSymbol();
     }
     for(const std::string &se: postText) { symbol += se; }

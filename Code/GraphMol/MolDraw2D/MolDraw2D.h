@@ -772,6 +772,9 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
                            const Point2D &at1_cds, const Point2D &at2_cds,
                            Point2D &l1s, Point2D &l1f,
                            Point2D &l2s, Point2D &l2f) const;
+  // returns true if atom has degree 2 and both bonds are close to
+  // linear.
+  bool isLinearAtom(const Atom &atom) const;
   // and the same for triple bonds.  One line is from atom to atom,
   // so it doesn't need a separate return.
   void calcTripleBondLines(double offset, const Bond *bond,
