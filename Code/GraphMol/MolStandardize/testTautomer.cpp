@@ -1025,6 +1025,29 @@ void testPickCanonical2() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testGithub2990() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing Github #2990: Tautomer enumeration "
+         "should remove stereo in all tautomers"
+      << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  std::string tautomerFile =
+      rdbase + "/Data/MolStandardize/tautomerTransforms.in";
+  auto tautparams = std::unique_ptr<TautomerCatalogParams>(
+      new TautomerCatalogParams(tautomerFile));
+  TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
+  {
+    auto mol = "COC(=O)[C@@H](N)CO"_smiles;
+    TEST_ASSERT(mol);
+    auto tauts = te.enumerate(*mol);
+    for (const auto taut : tauts) {
+      auto smi = MolToSmiles(*taut);
+      std::cerr << smi << std::endl;
+      TEST_ASSERT(smi.find("@") == std::string::npos);
+    }
+  }
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -1035,5 +1058,6 @@ int main() {
   testEnumerationProblems();
 #endif
   testPickCanonical2();
+  testGithub2990();
   return 0;
 }
