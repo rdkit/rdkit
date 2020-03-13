@@ -76,14 +76,15 @@ class MolMatchFinalCheckFunctor {
  public:
   MolMatchFinalCheckFunctor(const ROMol &query, const ROMol &mol,
                             const SubstructMatchParameters &ps)
-      : d_query(query), d_mol(mol), d_params(ps){};
-  bool operator()(const boost::detail::node_id c1[],
-                  const boost::detail::node_id c2[]) const {
+      : d_query(query), d_mol(mol), d_params(ps) {}
+
+  bool operator()(const boost::detail::node_id q_c[],
+                  const boost::detail::node_id m_c[]) const {
     if (d_params.extraFinalCheck) {
       // EFF: we can no-doubt do better than this
       std::vector<unsigned int> aids(d_query.getNumAtoms());
       for (unsigned int i = 0; i < d_query.getNumAtoms(); ++i) {
-        aids[i] = c2[i];
+        aids[i] = m_c[i];
       }
       if (!d_params.extraFinalCheck(d_mol, aids)) {
         return false;
@@ -93,16 +94,17 @@ class MolMatchFinalCheckFunctor {
       return true;
     }
 
+
     // check chiral atoms:
     for (unsigned int i = 0; i < d_query.getNumAtoms(); ++i) {
-      const Atom *qAt = d_query.getAtomWithIdx(c1[i]);
+      const Atom *qAt = d_query.getAtomWithIdx(q_c[i]);
 
       // With less than 3 neighbors we can't establish CW/CCW parity,
       // so query will be a match if it has any kind of chirality.
       if (qAt->getDegree() < 3 || !hasChiralLabel(qAt)) {
         continue;
       }
-      const Atom *mAt = d_mol.getAtomWithIdx(c2[i]);
+      const Atom *mAt = d_mol.getAtomWithIdx(m_c[i]);
       if (!hasChiralLabel(mAt)) {
         return false;
       }
@@ -110,11 +112,12 @@ class MolMatchFinalCheckFunctor {
         return false;
       }
 
+
       INT_LIST qOrder;
       INT_LIST mOrder;
       for (unsigned int j = 0; j < d_query.getNumAtoms(); ++j) {
-        const Bond *qB = d_query.getBondBetweenAtoms(c1[i], c1[j]);
-        const Bond *mB = d_mol.getBondBetweenAtoms(c2[i], c2[j]);
+        const Bond *qB = d_query.getBondBetweenAtoms(q_c[i], q_c[j]);
+        const Bond *mB = d_mol.getBondBetweenAtoms(m_c[i], m_c[j]);
         if (qB && mB) {
           mOrder.push_back(mB->getIdx());
           qOrder.push_back(qB->getIdx());
@@ -155,8 +158,7 @@ class MolMatchFinalCheckFunctor {
     }
 
     // now check double bonds
-    for (unsigned int i = 0; i < d_query.getNumBonds(); ++i) {
-      const Bond *qBnd = d_query.getBondWithIdx(i);
+    for (const auto& qBnd: d_query.bonds()) {
       if (qBnd->getBondType() != Bond::DOUBLE ||
           qBnd->getStereo() <= Bond::STEREOANY) {
         continue;
@@ -169,10 +171,10 @@ class MolMatchFinalCheckFunctor {
 
       std::map<unsigned int, unsigned int> qMap;
       for (unsigned int j = 0; j < d_query.getNumAtoms(); ++j) {
-        qMap[c1[j]] = j;
+        qMap[q_c[j]] = j;
       }
       const Bond *mBnd = d_mol.getBondBetweenAtoms(
-          c2[qMap[qBnd->getBeginAtomIdx()]], c2[qMap[qBnd->getEndAtomIdx()]]);
+          m_c[qMap[qBnd->getBeginAtomIdx()]], m_c[qMap[qBnd->getEndAtomIdx()]]);
       CHECK_INVARIANT(mBnd, "Matching bond not found");
       if (mBnd->getBondType() != Bond::DOUBLE ||
           qBnd->getStereo() <= Bond::STEREOANY) {
@@ -185,20 +187,20 @@ class MolMatchFinalCheckFunctor {
 
       unsigned int end1Matches = 0;
       unsigned int end2Matches = 0;
-      if (c2[qMap[qBnd->getBeginAtomIdx()]] == mBnd->getBeginAtomIdx()) {
+      if (m_c[qMap[qBnd->getBeginAtomIdx()]] == mBnd->getBeginAtomIdx()) {
         // query Begin == mol Begin
-        if (c2[qMap[qBnd->getStereoAtoms()[0]]] == mBnd->getStereoAtoms()[0]) {
+        if (m_c[qMap[qBnd->getStereoAtoms()[0]]] == mBnd->getStereoAtoms()[0]) {
           end1Matches = 1;
         }
-        if (c2[qMap[qBnd->getStereoAtoms()[1]]] == mBnd->getStereoAtoms()[1]) {
+        if (m_c[qMap[qBnd->getStereoAtoms()[1]]] == mBnd->getStereoAtoms()[1]) {
           end2Matches = 1;
         }
       } else {
         // query End == mol Begin
-        if (c2[qMap[qBnd->getStereoAtoms()[0]]] == mBnd->getStereoAtoms()[1]) {
+        if (m_c[qMap[qBnd->getStereoAtoms()[0]]] == mBnd->getStereoAtoms()[1]) {
           end1Matches = 1;
         }
-        if (c2[qMap[qBnd->getStereoAtoms()[1]]] == mBnd->getStereoAtoms()[0]) {
+        if (m_c[qMap[qBnd->getStereoAtoms()[1]]] == mBnd->getStereoAtoms()[0]) {
           end2Matches = 1;
         }
       }
