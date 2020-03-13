@@ -1290,3 +1290,77 @@ M  END
     CHECK(getSubstanceGroups(*mol).size() == 1);
   }
 }
+
+TEST_CASE("extra v3k mol file properties", "[ctab,v3k]") {
+  SECTION("ATTCHPT") {
+    auto mol = R"CTAB(
+  Mrv2007 03132014352D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 2 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -16.625 7.1667 0 0 ATTCHPT=2
+M  V30 2 C -15.2913 7.9367 0 0 ATTCHPT=1
+M  V30 3 N -13.9576 7.1667 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(0)->getProp<int>(
+              common_properties::molAttachPoint) == 2);
+    CHECK(mol->getAtomWithIdx(1)->getProp<int>(
+              common_properties::molAttachPoint) == 1);
+    auto molb = MolToV3KMolBlock(*mol);
+    CHECK(molb.find("ATTCHPT=1") != std::string::npos);
+    CHECK(molb.find("ATTCHPT=2") != std::string::npos);
+  }
+  SECTION("others") {
+    // this is not reasonable; just there to ensure that the reading/writing is
+    // working
+    auto mol = R"CTAB(really fake
+  Mrv2007 03132015062D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -22.5833 11.0833 0 0 EXACHG=1
+M  V30 2 C -21.2497 11.8533 0 0 INVRET=2
+M  V30 3 C -23.917 11.8533 0 0 ATTCHORD=3
+M  V30 4 C -25.2507 11.0833 0 0 CLASS=foo
+M  V30 5 C -26.5844 11.8533 0 0 SEQID=4
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 1 3
+M  V30 3 1 3 4
+M  V30 4 1 4 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(0)->getProp<int>(
+              common_properties::molRxnExactChange) == 1);
+    CHECK(mol->getAtomWithIdx(1)->getProp<int>(
+              common_properties::molInversionFlag) == 2);
+    CHECK(mol->getAtomWithIdx(2)->getProp<int>(
+              common_properties::molAttachOrder) == 3);
+    CHECK(mol->getAtomWithIdx(3)->getProp<std::string>(
+              common_properties::molAtomClass) == "foo");
+    CHECK(mol->getAtomWithIdx(4)->getProp<int>(
+              common_properties::molAtomSeqId) == 4);
+    auto molb = MolToV3KMolBlock(*mol);
+    CHECK(molb.find("EXACHG=1") != std::string::npos);
+    CHECK(molb.find("INVRET=2") != std::string::npos);
+    CHECK(molb.find("ATTCHORD=3") != std::string::npos);
+    CHECK(molb.find("CLASS=foo") != std::string::npos);
+    CHECK(molb.find("SEQID=4") != std::string::npos);
+  }
+}

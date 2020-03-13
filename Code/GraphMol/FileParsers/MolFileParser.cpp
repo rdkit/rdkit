@@ -1998,6 +1998,39 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
         auto ival = FileParserUtils::toInt(val);
         atom->setProp(common_properties::molStereoCare, ival);
       }
+    } else if (prop == "SUBST") {
+      if (val != "0") {
+        auto ival = FileParserUtils::toInt(val);
+        atom->setProp("molAtomSubstCount", ival);
+        // FIX: FINISH THIS
+      }
+    } else if (prop == "EXACHG") {
+      if (val != "0") {
+        auto ival = FileParserUtils::toInt(val);
+        atom->setProp(common_properties::molRxnExactChange, ival);
+      }
+    } else if (prop == "INVRET") {
+      if (val != "0") {
+        auto ival = FileParserUtils::toInt(val);
+        atom->setProp(common_properties::molInversionFlag, ival);
+      }
+    } else if (prop == "ATTCHPT") {
+      if (val != "0") {
+        auto ival = FileParserUtils::toInt(val);
+        atom->setProp(common_properties::molAttachPoint, ival);
+      }
+    } else if (prop == "ATTCHORD") {
+      if (val != "0") {
+        auto ival = FileParserUtils::toInt(val);
+        atom->setProp(common_properties::molAttachOrder, ival);
+      }
+    } else if (prop == "CLASS") {
+      atom->setProp(common_properties::molAtomClass, val);
+    } else if (prop == "SEQID") {
+      if (val != "0") {
+        auto ival = FileParserUtils::toInt(val);
+        atom->setProp(common_properties::molAtomSeqId, ival);
+      }
     }
     ++token;
   }
