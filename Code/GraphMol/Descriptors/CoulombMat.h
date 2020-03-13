@@ -34,7 +34,8 @@ namespace RDKit {
 class ROMol;
 namespace Descriptors {
 const std::string CoulombMatVersion = "1.0.0";
-	void CoulombMat(const ROMol &mol, std::vector<std::vector<double>> &res, int confId=-1);
+RDKIT_DESCRIPTORS_EXPORT void CoulombMat(const ROMol &mol, std::vector<std::vector<double>> &res, 
+					 int confId=-1);
 }
 }
 #endif
