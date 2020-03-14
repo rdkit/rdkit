@@ -115,6 +115,20 @@ RDKIT_FILEPARSERS_EXPORT std::string MolToMolBlock(const ROMol &mol,
                                                    int confId = -1,
                                                    bool kekulize = true,
                                                    bool forceV3000 = false);
+
+// \brief generates an MDL v3000 mol block for a molecule
+/*!
+ *   \param mol           - the molecule in question
+ *   \param includeStereo - toggles inclusion of stereochemistry information
+ *   \param confId        - selects the conformer to be used
+ *   \param kekulize      - triggers kekulization of the molecule before it is
+ * written
+ */
+inline std::string MolToV3KMolBlock(const ROMol &mol, bool includeStereo = true,
+                                    int confId = -1, bool kekulize = true) {
+  return MolToMolBlock(mol, includeStereo, confId, kekulize, true);
+}
+
 // \brief Writes a molecule to an MDL mol file
 /*!
  *   \param mol           - the molecule in question
@@ -130,6 +144,21 @@ RDKIT_FILEPARSERS_EXPORT std::string MolToMolBlock(const ROMol &mol,
 RDKIT_FILEPARSERS_EXPORT void MolToMolFile(
     const ROMol &mol, const std::string &fName, bool includeStereo = true,
     int confId = -1, bool kekulize = true, bool forceV3000 = false);
+
+// \brief Writes a molecule to an MDL V3000 mol file
+/*!
+ *   \param mol           - the molecule in question
+ *   \param fName         - the name of the file to use
+ *   \param includeStereo - toggles inclusion of stereochemistry information
+ *   \param confId        - selects the conformer to be used
+ *   \param kekulize      - triggers kekulization of the molecule before it is
+ * written
+ */
+inline void MolToV3KMolFile(const ROMol &mol, const std::string &fName,
+                            bool includeStereo = true, int confId = -1,
+                            bool kekulize = true) {
+  MolToMolFile(mol, fName, includeStereo, confId, kekulize, true);
+}
 
 RDKIT_FILEPARSERS_EXPORT std::string MolToXYZBlock(const ROMol &mol,
                                                    int confId = -1);
