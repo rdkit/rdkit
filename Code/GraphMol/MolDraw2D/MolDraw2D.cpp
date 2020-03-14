@@ -898,10 +898,7 @@ void MolDraw2D::calculateScale(int width, int height,
 
     double old_scale = scale_;
     scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
-    int new_draw_w = x_range_ * scale_;
-    int new_draw_h = y_range_ * scale_;
-    if((new_draw_w <= width && new_draw_h <= height)
-       || fabs(scale_ - old_scale) < 0.1) {
+    if (fabs(scale_ - old_scale) < 0.1) {
       break;
     }
   }
@@ -934,8 +931,8 @@ void MolDraw2D::calculateScale(int width, int height,
     y_trans_ = 0.;
   }
 
-   // cout << "leaving calculateScale" << endl;
-   // cout << "final scale : " << scale_ << endl;
+  // cout << "leaving calculateScale" << endl;
+  // cout << "final scale : " << scale_ << endl;
 
 }
 
@@ -2116,6 +2113,7 @@ void MolDraw2D::drawBond(const ROMol &mol, const Bond *bond, int at1_idx,
       drawWavyLine(at1_cds, at2_cds, col1, col2);
     } else if (Bond::DATIVE == bt || Bond::DATIVEL == bt ||
                Bond::DATIVER == bt) {
+      setColour(DrawColour(0.0, 0.0, 0.0));
       bool fps = fillPolys();
       setFillPolys(true);
       // draw an arrow for dative bonds
@@ -3098,6 +3096,7 @@ void MolDraw2D::drawTriangle(const Point2D &cds1, const Point2D &cds2,
 // ****************************************************************************
 void MolDraw2D::drawArrow(const Point2D &arrowBegin, const Point2D &arrowEnd,
                           bool asPolygon, double frac, double angle) {
+
   Point2D delta = arrowBegin - arrowEnd;
   double cos_angle = std::cos(angle), sin_angle = std::sin(angle);
 
