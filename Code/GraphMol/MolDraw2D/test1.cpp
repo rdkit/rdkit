@@ -2663,6 +2663,10 @@ void test20Annotate() {
     std::ofstream outs("test20_1.svg");
     outs << text;
     outs.flush();
+    TEST_ASSERT(text.find("x='402.344' y='249.673' style='font-size:14px;"
+                          "font-style:normal;font-weight:normal;"
+                          "fill-opacity:1;stroke:none;font-family:sans-serif;"
+                          "fill:#000000' ><tspan>11") != std::string::npos);
   }
 
   {
@@ -2688,6 +2692,10 @@ void test20Annotate() {
     std::ofstream outs("test20_2.svg");
     outs << text;
     outs.flush();
+    TEST_ASSERT(text.find("x='278.629' y='221.042' style='font-size:27px;"
+                          "font-style:normal;font-weight:normal;"
+                          "fill-opacity:1;stroke:none;font-family:sans-serif;"
+                          "fill:#000000") != std::string::npos);
   }
   std::cerr << " Done" << std::endl;
 }
