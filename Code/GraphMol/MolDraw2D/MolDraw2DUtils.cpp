@@ -46,7 +46,11 @@ bool isAtomCandForChiralH(const RWMol &mol, const Atom *atom) {
 void prepareMolForDrawing(RWMol &mol, bool kekulize, bool addChiralHs,
                           bool wedgeBonds, bool forceCoords) {
   if (kekulize) {
-    MolOps::Kekulize(mol, false);  // kekulize, but keep the aromatic flags!
+    try {
+      MolOps::Kekulize(mol, false);  // kekulize, but keep the aromatic flags!
+    } catch(const RDKit::AtomKekulizeException &e) {
+      std::cerr << e.what() << std::endl;
+    }
   }
   if (addChiralHs) {
     std::vector<unsigned int> chiralAts;
@@ -134,14 +138,18 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
   PT_OPT_GET(includeAtomTags);
   PT_OPT_GET(clearBackground);
   PT_OPT_GET(legendFontSize);
+  PT_OPT_GET(maxFontSize);
+  PT_OPT_GET(annotationFontScale);
   PT_OPT_GET(multipleBondOffset);
   PT_OPT_GET(padding);
   PT_OPT_GET(additionalAtomLabelPadding);
   PT_OPT_GET(bondLineWidth);
+  PT_OPT_GET(highlightBondWidthMultiplier);
   PT_OPT_GET(prepareMolsBeforeDrawing);
   PT_OPT_GET(fixedScale);
   PT_OPT_GET(fixedBondLength);
   PT_OPT_GET(rotate);
+  PT_OPT_GET(addStereoAnnotation);
   get_colour_option(&pt, "highlightColour", opts.highlightColour);
   get_colour_option(&pt, "backgroundColour", opts.backgroundColour);
   get_colour_option(&pt, "legendColour", opts.legendColour);

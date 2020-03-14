@@ -171,7 +171,7 @@ void MolDraw2DCairo::getStringSize(const std::string &label,
   label_height = 0.0;
 
   TextDrawType draw_mode = TextDrawNormal;
-  cairo_set_font_size(dp_cr, fontSize());
+  cairo_set_font_size(dp_cr, drawFontSize() / scale());
 
   bool had_a_super = false;
 
