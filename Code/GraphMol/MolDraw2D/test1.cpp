@@ -1250,9 +1250,9 @@ M  END";
     outs << text;
     outs.flush();
     TEST_ASSERT(
-        text.find("<path class='bond-1' d='M 126.077,115.053"
-                  " L 181.502,90.6354 L 174.933,79.2584 Z' "
-                  "style='fill:#000000") != std::string::npos);
+        text.find("<path class='bond-1' d='M 125.352,114.634"
+                  " L 179.234,90.896 L 172.848,79.8357 Z'"
+                  " style='fill:#000000") != std::string::npos);
     delete m;
   }
   {
@@ -1302,9 +1302,9 @@ M  END";
     outs << text;
     outs.flush();
     TEST_ASSERT(
-        text.find("<path class='bond-3' d='M 101.742,115.477"
-                  " L 79.4095,92.366 L 72.7039,101.705 Z' "
-                  "style='fill:#000000;") != std::string::npos);
+        text.find("<path class='bond-3' d='M 102.962,116.968 L"
+                  " 77.0085,93.6784 L 72.5976,99.8217 Z'"
+                  " style='fill:#000000;") != std::string::npos);
 
     MolDraw2DUtils::prepareMolForDrawing(*m);
     TEST_ASSERT(m->getBondBetweenAtoms(2, 1)->getBondType() == Bond::SINGLE);
@@ -1767,7 +1767,7 @@ void test13JSONConfig() {
     outs.close();
     TEST_ASSERT(text.find("sans-serif;fill:#FF7FFF") !=
                 std::string::npos);
-    TEST_ASSERT(text.find("'bond-0' d='M 129.799,9.09091 L 177.679,92.0201'")
+    TEST_ASSERT(text.find("'bond-0' d='M 122.883,9.09091 L 170.762,92.0201'")
                 != std::string::npos);
     // these days the bond line width scales with the rest of the
     // drawing, and at this size this comes out as 6px.
@@ -2201,13 +2201,12 @@ void test16MoleculeMetadata() {
       std::ofstream outs("test16_1.svg");
       outs << text;
       outs.flush();
-      TEST_ASSERT(text.find("idx=\"2\" atom-smiles=\"[NH]\" drawing-x=\"52.") !=
+      TEST_ASSERT(text.find("idx=\"2\" atom-smiles=\"[NH]\" drawing-x=\"54.") !=
                   std::string::npos);
       TEST_ASSERT(text.find("idx=\"2\" begin-atom-idx=\"3\" end-atom-idx=\"2\" "
                             "bond-smiles=\"-\"") != std::string::npos);
     }
 
-#if 1
     {  // multiple molecules
       MolDraw2DSVG drawer(400, 400, 200, 200);
       auto *rom = rdcast<ROMol *>(m1.get());
@@ -2221,16 +2220,15 @@ void test16MoleculeMetadata() {
       outs << text;
       outs.flush();
 
-      TEST_ASSERT(text.find("atom-smiles=\"[NH]\" drawing-x=\"52.") !=
+      TEST_ASSERT(text.find("atom-smiles=\"[NH]\" drawing-x=\"54.") !=
                   std::string::npos);
-      TEST_ASSERT(text.find("atom-smiles=\"[NH]\" drawing-x=\"252.") !=
+      TEST_ASSERT(text.find("atom-smiles=\"[NH]\" drawing-x=\"254.") !=
                   std::string::npos);
 
       for (auto ptr : ms) {
         delete ptr;
       }
     }
-#endif
   }
 
   std::cerr << " Done" << std::endl;
@@ -2300,7 +2298,7 @@ void test18FixedScales() {
       std::ofstream outs((nameBase + "1.svg").c_str());
       outs << text;
       outs.flush();
-      TEST_ASSERT(text.find("font-size:26px") != std::string::npos);
+      TEST_ASSERT(text.find("font-size:28px") != std::string::npos);
     }
     {
       MolDraw2DSVG drawer(300, 300);
@@ -2376,7 +2374,7 @@ void test19RotateDrawing() {
       std::ofstream outs((nameBase + "1.svg").c_str());
       outs << text;
       outs.flush();
-      TEST_ASSERT(text.find("text-anchor=\"start\" x='243.304' y='154.037'")
+      TEST_ASSERT(text.find("text-anchor=\"start\" x='256.907' y='154.276'")
                   != std::string::npos);
     }
     {
@@ -2618,8 +2616,9 @@ void testGithub2931() {
     outs << text;
     outs.flush();
     TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:5px") != std::string::npos);
-    TEST_ASSERT(text.find("ellipse cx='244.253' cy='386.518' rx='11.9872' ry='12.8346'"
-                          " style='fill:none;stroke:#00FF00") != std::string::npos);
+    TEST_ASSERT(text.find("<ellipse cx='241.942' cy='386.438'"
+                          " rx='11.9978' ry='12.846'"
+                          " style='fill:none;stroke:#00FF00;") != std::string::npos);
   }
   std::cerr << " Done" << std::endl;
 }
