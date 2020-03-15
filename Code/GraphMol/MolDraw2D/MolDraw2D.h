@@ -652,6 +652,10 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   // width of -1.0 if there's a problem.
   StringRect calcAnnotationPosition(const ROMol &mol, const Atom *atom);
   StringRect calcAnnotationPosition(const ROMol &mol, const Bond *bond);
+  // find where to put the given annotation around an atom.  Starting
+  // search at angle start_ang, in degrees.
+  void calcAtomAnnotationPosition(const ROMol &mol, const Atom *atom,
+                                  double start_ang, StringRect &rect);
 
   // draw 1 or more coloured line along bonds
   void drawHighlightedBonds(
@@ -684,6 +688,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   void drawAtomLabel(int atom_num, const DrawColour &draw_colour);
   void drawAnnotation(const std::string &note,
                       const std::unique_ptr<StringRect> &note_rect);
+  void drawRadicals(const ROMol &mol);
   // find a good starting point for scanning round the annotation
   // atom.  If we choose well, the first angle should be the one.
   // Returns angle in radians.
