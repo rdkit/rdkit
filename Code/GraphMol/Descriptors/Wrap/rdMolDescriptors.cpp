@@ -1558,7 +1558,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 #ifdef RDK_BUILD_DESCRIPTORS3D
   python::scope().attr("_CalcCoulombMat_version") =
       RDKit::Descriptors::CoulombMatVersion;
-  docString = "Returns severals Coulomb randomized matrixes";
+  docString = "Returns severals Coulomb randomized matrices";
   python::def("CalcCoulombMat", calcCoulombMat,
               (python::arg("mol"), python::arg("confId") = -1),
               docString.c_str());
@@ -1741,7 +1741,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   docString =
       "Returns a 2D BCUT (eigen value high, eigen value low) given the "
       "molecule and the specified atom prop name\n"
-      "atom_propname must exist on each aton and be convertible to a float";
+      "atom_propname must exist on each atom and be convertible to a float";
   python::def("BCUT2D", BCUT_atomprops,
               (python::arg("mol"), python::arg("atom_propname")),
               docString.c_str());
